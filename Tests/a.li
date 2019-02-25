@@ -1,0 +1,27 @@
+type t is int * string
+type u is t
+type v is record foo: key; bar: mutez; baz: address end
+type w is K of v * u
+
+parameter p : v
+storage w
+operations u
+
+function f (const x : int) : int is
+  var y : int := 5 - x;
+  const z : int = 6
+  begin
+    y := x + y
+  end with y * 2
+
+procedure g (const l : list (int)) is
+  begin
+     match l with
+         [] -> null
+     | h<:t -> q (h+2)
+     end
+  end
+
+begin
+  g (Unit)
+end

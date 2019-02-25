@@ -1,0 +1,38 @@
+(ocamllex LexToken)
+(ocamllex Lexer)
+
+(menhir
+ (merge_into Parser)
+ (modules ParToken Parser)
+ (flags -la 1 --explain --external-tokens LexToken)
+)
+
+(executables
+ (names LexerMain ParserMain)
+ (public_names ligo-lexer ligo-parser)
+ (package ligo-parser)
+ (modules_without_implementation
+   Error
+ )
+ (libraries
+   hex
+   zarith
+   getopt
+   uutf
+   str
+ )
+)
+
+(rule
+  (targets Parser.exe)
+  (deps ParserMain.exe)
+  (action (copy ParserMain.exe Parser.exe))
+  (mode promote-until-clean)
+)
+
+(rule
+  (targets Lexer.exe)
+  (deps LexerMain.exe)
+  (action (copy LexerMain.exe Lexer.exe))
+  (mode promote-until-clean)
+)
