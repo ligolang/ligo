@@ -23,6 +23,9 @@
  )
 )
 
+;; Les deux directives (rule) qui suivent sont pour le dev local.
+;; Il suffit de faire "dune build Parser.exe" pour avoir un Parser.exe dans le dossier.
+;; Pour le purger, il faut faire "dune clean".
 (rule
   (targets Parser.exe)
   (deps ParserMain.exe)
