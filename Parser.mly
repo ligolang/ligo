@@ -7,6 +7,8 @@ open AST
 (* END HEADER *)
 %}
 
+(* See [ParToken.mly] for the definition of tokens. *)
+
 (* Entry points *)
 
 %start program
@@ -86,21 +88,24 @@ sepseq(X,Sep):
 
 program:
   seq(type_decl)
+  seq(const_decl)
   parameter_decl
   storage_decl
   operations_decl
   seq(lambda_decl)
   block
-  EOF {
-    object
-      method types      = $1
-      method parameter  = $2
-      method storage    = $3
-      method operations = $4
-      method lambdas    = $5
-      method block      = $6
-      method eof        = $7
-    end
+  EOF
+  {
+   object
+     method types      = $1
+     method constants  = $2
+     method parameter  = $3
+     method storage    = $4
+     method operations = $5
+     method lambdas    = $6
+     method block      = $7
+     method eof        = $8
+   end
   }
 
 parameter_decl:
@@ -173,14 +178,15 @@ variant:
 record_type:
   Record
     nsepseq(field_decl,SEMI)
-  End {
-    let region = cover $1 $3
-    in {region; value = $1,$2,$3}
+  End
+  {
+   let region = cover $1 $3
+   in {region; value = $1,$2,$3}
   }
 
 field_decl:
   field_name COLON type_expr {
-    let stop = type_expr_to_region $3 in
+    let stop   = type_expr_to_region $3 in
     let region = cover $1.region stop
     in {region; value = $1,$2,$3}
   }
@@ -193,101 +199,105 @@ lambda_decl:
 
 fun_decl:
   Function fun_name parameters COLON type_expr Is
+    seq(local_decl)
     block
-  With expr {
-    let region = cover $1 (expr_to_region $9) in
-    let value =
-      object
-        method kwd_function = $1
-        method var          = $2
-        method param        = $3
-        method colon        = $4
-        method ret_type     = $5
-        method kwd_is       = $6
-        method body         = $7
-        method kwd_with     = $8
-        method return       = $9
-      end
-    in {region; value}
+  With expr
+  {
+   let region = cover $1 (expr_to_region $10) in
+   let value =
+     object
+       method kwd_function = $1
+       method name         = $2
+       method param        = $3
+       method colon        = $4
+       method ret_type     = $5
+       method kwd_is       = $6
+       method local_decls  = $7
+       method block        = $8
+       method kwd_with     = $9
+       method return       = $10
+     end
+   in {region; value}
   }
 
 proc_decl:
   Procedure fun_name parameters Is
-    block {
-      let region = cover $1 $5.region in
-      let value =
-        object
-          method kwd_procedure = $1
-          method var           = $2
-          method param         = $3
-          method kwd_is        = $4
-          method body          = $5
-        end
-      in {region; value}
+    seq(local_decl)
+    block
+  {
+   let region = cover $1 $6.region in
+   let value =
+     object
+       method kwd_procedure = $1
+       method name          = $2
+       method param         = $3
+       method kwd_is        = $4
+       method local_decls   = $5
+       method block         = $6
+     end
+   in {region; value}
   }
 
 parameters:
   par(nsepseq(param_decl,SEMI)) { $1 }
 
 param_decl:
-  var_kind var COLON type_expr {
-    let start  = var_kind_to_region $1 in
+  Var var COLON type_expr {
     let stop   = type_expr_to_region $4 in
-    let region = cover start stop
-    in {region; value = $1,$2,$3,$4}
+    let region = cover $1 stop
+    in ParamVar {region; value = $1,$2,$3,$4}
   }
-
-var_kind:
-  Var   { Mutable $1 }
-| Const { Const   $1 }
+| Const var COLON type_expr {
+    let stop   = type_expr_to_region $4 in
+    let region = cover $1 stop
+    in ParamConst {region; value = $1,$2,$3,$4}
+  }
 
 block:
-  value_decls
   Begin
     instructions
-  End {
-    let region = cover $1.region $4 in
-    let value =
-      object
-        method decls   = $1
-        method opening = $2
-        method instr   = $3
-        method close   = $4
-      end
-    in {region; value}
+  End
+  {
+   let region = cover $1 $3 in
+   let value =
+     object
+       method opening = $1
+       method instr   = $2
+       method close   = $3
+     end
+   in {region; value}
   }
 
-value_decls:
-  sepseq(var_decl,SEMI) {
-    let region = sepseq_to_region (fun x -> x.region) $1
-    in {region; value=$1}
+local_decl:
+  lambda_decl { LocalLam   $1 }
+| const_decl  { LocalConst $1 }
+| var_decl    { LocalVar   $1 }
+
+const_decl:
+  Const var COLON type_expr EQUAL expr {
+    let region = cover $1 (expr_to_region $6) in
+    let value  = object
+                   method kwd_const = $1
+                   method name      = $2
+                   method colon     = $3
+                   method vtype     = $4
+                   method equal     = $5
+                   method init      = $6
+                 end
+    in {region; value}
   }
 
 var_decl:
   Var var COLON type_expr ASGNMNT expr {
     let region = cover $1 (expr_to_region $6) in
-    let value =
-      object
-        method kind   = Mutable $1
-        method var    = $2
-        method colon  = $3
-        method vtype  = $4
-        method setter = $5
-        method init   = $6
-      end
-    in {region; value}
-  }
-| Const var COLON type_expr EQUAL expr {
-    let region = cover $1 (expr_to_region $6) in
-    let value =
-      object
-        method kind   = Const $1
-        method var    = $2
-        method colon  = $3
-        method vtype  = $4
-        method setter = $5
-        method init   = $6
-      end
+    let value  = object
+                   method kwd_var = $1
+                   method name    = $2
+                   method colon   = $3
+                   method vtype   = $4
+                   method asgnmnt = $5
+                   method init    = $6
+                 end
     in {region; value}
   }
 
@@ -308,6 +318,10 @@ single_instr:
 | loop        {     Loop $1 }
 | proc_call   { ProcCall $1 }
 | Null        {     Null $1 }
+| Fail expr   {
+    let region = cover $1 (expr_to_region $2)
+    in Fail {region; value = $1,$2}
+  }
 
 proc_call:
   fun_call { $1 }

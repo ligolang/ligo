@@ -69,6 +69,7 @@ type t =
 | Begin      of Region.t
 | Const      of Region.t
 | Down       of Region.t
+| Fail       of Region.t
 | If         of Region.t
 | In         of Region.t
 | Is         of Region.t
@@ -187,6 +188,7 @@ let proj_token = function
 | Begin      region -> region, "Begin"
 | Const      region -> region, "Const"
 | Down       region -> region, "Down"
+| Fail       region -> region, "Fail"
 | If         region -> region, "If"
 | In         region -> region, "In"
 | Is         region -> region, "Is"
@@ -270,6 +272,7 @@ let to_lexeme = function
 | Begin      _ -> "begin"
 | Const      _ -> "const"
 | Down       _ -> "down"
+| Fail       _ -> "fail"
 | If         _ -> "if"
 | In         _ -> "in"
 | Is         _ -> "is"
@@ -321,6 +324,7 @@ let keywords = [
   (fun reg -> Begin      reg);
   (fun reg -> Const      reg);
   (fun reg -> Down       reg);
+  (fun reg -> Fail       reg);
   (fun reg -> If         reg);
   (fun reg -> In         reg);
   (fun reg -> Is         reg);
@@ -544,6 +548,7 @@ let is_kwd = function
 | Begin      _
 | Const      _
 | Down       _
+| Fail       _
 | If         _
 | In         _
 | Is         _

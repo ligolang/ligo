@@ -166,14 +166,15 @@ module Make (Token: TOKEN) : (S with module Token = Token) =
 
     (* When scanning structured constructs, like strings and comments,
        we need to keep the region of the opening symbol (like double
-       quote, "#" or "/*") in order to report any error more
+       quote, "#" or "(*") in order to report any error more
        precisely. Since ocamllex is byte-oriented, we need to store
-       the parsed bytes are characters in an accumulator [acc] and
+       the parsed bytes as characters in an accumulator [acc] and
        also its length [len], so, we are done, it is easy to build the
        string making up the structured construct with [mk_str] (see
        above).
 
        The resulting data structure is called a _thread_.
+       (Note for Emacs: "*)".)
     *)
 
     type thread = {
@@ -350,7 +351,7 @@ module Make (Token: TOKEN) : (S with module Token = Token) =
          Hint: Add or remove a digit.\n"
     | Unterminated_comment ->
         "Unterminated comment.\n\
-         Hint: Close with \"*/\".\n"
+         Hint: Close with \"*)\".\n"
     | Orphan_minus ->
         "Orphan minus sign.\n\
          Hint: Remove the trailing space.\n"
@@ -476,8 +477,8 @@ and scan state = parse
          let thread = {opening; len=1; acc=['"']} in
          scan_string thread state lexbuf |> mk_string |> enqueue }
 
-| "/*" { let opening, _, state = sync state lexbuf in
-         let thread = {opening; len=2; acc=['*';'/']} in
+| "(*" { let opening, _, state = sync state lexbuf in
+         let thread = {opening; len=2; acc=['*';'(']} in
          let state = scan_block thread state lexbuf |> push_block
          in scan state lexbuf }
 
@@ -535,14 +536,15 @@ and scan_string thread state = parse
 
 (* Finishing a block comment
 
+   (Note for Emacs: ("(*")
    The lexing of block comments must take care of embedded block
    comments that may occur within, as well as strings, so no substring
-   "*/" may inadvertantly close the block. This is the purpose of the
-   first case of the scanner [scan_block].
+   "*)" may inadvertently close the block. This is the purpose
+   of the first case of the scanner [scan_block].
 *)
 
 and scan_block thread state = parse
-  '"' | "/*" { let opening = thread.opening in
+  '"' | "(*" { let opening = thread.opening in
                let opening', lexeme, state = sync state lexbuf in
                let thread = push_string lexeme thread in
                let thread = {thread with opening=opening'} in
@@ -551,7 +553,7 @@ and scan_block thread state = parse
                let thread, state = next thread state lexbuf in
                let thread = {thread with opening}
                in scan_block thread state lexbuf }
-| "*/"       { let _, lexeme, state = sync state lexbuf
+| "*)"       { let _, lexeme, state = sync state lexbuf
                in push_string lexeme thread, state }
 | nl as nl   { let ()     = Lexing.new_line lexbuf
                and state  = {state with pos = state.pos#new_line nl}

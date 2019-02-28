@@ -3,18 +3,19 @@ type u is t
 type v is record foo: key; bar: mutez; baz: address end
 type w is K of v * u
 
-parameter p : v
+parameter p : v   # Line comment
 storage w
 operations u
 
-function f (const x : int) : int is
-  var y : int := 5 - x;
-  const z : int = 6
-  begin
-    y := x + y
-  end with y * 2
+(* Block comment *)
 
 procedure g (const l : list (int)) is
+   function f (const x : int) : int is
+     var y : int := 5 - x
+     const z : int = 6
+     begin
+       y := x + y
+     end with y * 2
   begin
      match l with
          [] -> null
@@ -23,5 +24,6 @@ procedure g (const l : list (int)) is
   end
 
 begin
-  g (Unit)
+  g (Unit) (*;
+  fail K (3, "foo")*)
 end
