@@ -39,3 +39,15 @@
   (action (copy LexerMain.exe Lexer.exe))
   (mode promote-until-clean)
 )
+
+(rule
+  (targets vera)
+  (deps hd)
+  (action (run "sh" "-c" "if git symbolic-ref HEAD; then ln -s ../../.git/\"$(git symbolic-ref HEAD)\" vera; else ln -s hd vera; fi"))
+)
+
+(rule
+  (targets verb)
+  (deps vera)
+  (action (run "sh" "-c" "cat vera > verb"))
+)
