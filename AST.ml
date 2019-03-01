@@ -1,5 +1,4 @@
 (* Abstract Syntax Tree (AST) for Ligo *)
-
 open Utils
 
 (* Regions
@@ -460,457 +459,580 @@ let core_pattern_to_region = function
 
 (* Printing the tokens with their source regions *)
 
+type xyz =
+< asgnmnt_instr : asgnmnt_instr -> unit;
+  bind_to : (region * variable) option -> unit; block : block reg -> unit;
+  bytes : (string * MBytes.t) reg -> unit; cartesian : cartesian -> unit;
+  case : case -> unit; cases : cases -> unit;
+  conditional : conditional -> unit; constr : constr -> unit;
+  constr_app : constr_app -> unit; core_pattern : core_pattern -> unit;
+  down : region option -> unit; empty_list : empty_list -> unit;
+  empty_set : empty_set -> unit; expr : expr -> unit;
+  field_decl : field_decl -> unit; field_decls : field_decls -> unit;
+  for_collect : for_collect reg -> unit; for_int : for_int reg -> unit;
+  for_loop : for_loop -> unit; fun_call : fun_call -> unit;
+  fun_decl : fun_decl reg -> unit; instruction : instruction -> unit;
+  instructions : instructions -> unit; int : (string * Z.t) reg -> unit;
+  lambda_decl : lambda_decl -> unit;
+  list : (expr, region) nsepseq brackets -> unit;
+  list_pattern : list_pattern -> unit; loop : loop -> unit;
+  map_lookup : map_lookup reg -> unit; match_instr : match_instr -> unit;
+  none_expr : none_expr -> unit;
+  nsepseq : 'a. string -> ('a -> unit) -> 'a * (region * 'a) list -> unit;
+  operations_decl : (region * type_expr) reg -> unit;
+  par_expr : expr par -> unit; par_type : type_expr par -> unit;
+  param_decl : param_decl -> unit;
+  parameter_decl : (region * variable * region * type_expr) reg -> unit;
+  parameters : parameters -> unit; pattern : pattern -> unit;
+  patterns : core_pattern par -> unit; proc_decl : proc_decl reg -> unit;
+  psome : (region * core_pattern par) reg -> unit;
+  ptuple : (core_pattern, region) nsepseq par -> unit;
+  raw : (core_pattern * region * pattern) par -> unit;
+  record_type : record_type -> unit;
+  sepseq : 'a.
+             string ->
+             ('a -> unit) -> ('a * (region * 'a) list) option -> unit;
+  set : (expr, region) nsepseq braces -> unit;
+  single_instr : single_instr -> unit;
+  some_app : (region * arguments) reg -> unit;
+  step : (region * expr) option -> unit;
+  storage_decl : (region * type_expr) reg -> unit;
+  string : string reg -> unit;
+  sugar : (core_pattern, region) sepseq brackets -> unit;
+  sum_type : (variant, region) nsepseq reg -> unit;
+  token : region -> string -> unit;
+  tuple : arguments -> unit; type_app : (type_name * type_tuple) reg -> unit;
+  type_decl : (region * variable * region * type_expr) reg -> unit;
+  type_expr : type_expr -> unit; type_tuple : type_tuple -> unit;
+  value_decls : value_decls -> unit; var : variable -> unit;
+  var_decl : var_decl reg -> unit; var_kind : var_kind -> unit;
+  variant : variant -> unit; while_loop : while_loop -> unit > ;;
+
 let printf = Printf.printf
 
 let compact (region: Region.t) =
   region#compact ~offsets:EvalOpt.offsets EvalOpt.mode
 
-let print_nsepseq sep print (head,tail) =
+let rec print_nsepseq : 'a . string -> ('a -> unit) -> ('a * (Region.t * 'a) list) -> unit = fun sep visit (head,tail) ->
   let print_aux (sep_reg, item) =
     printf "%s: %s\n" (compact sep_reg) sep;
-    print item
-  in print head; List.iter print_aux tail
+    visit item
+  in visit head; List.iter print_aux tail
 
-let print_sepseq sep print = function
+and print_sepseq : 'a . string -> ('a -> unit) -> ('a * (Region.t * 'a) list) option -> unit = fun sep visit -> function
       None -> ()
-| Some seq -> print_nsepseq sep print seq
+| Some seq -> print_nsepseq sep visit seq
 
-let print_token region lexeme =
+and print_token (_visitor : xyz) region lexeme =
   printf "%s: %s\n"(compact region) lexeme
 
-let print_var {region; value=lexeme} =
+and print_var (_visitor : xyz) {region; value=lexeme} =
   printf "%s: Ident \"%s\"\n" (compact region) lexeme
 
-let print_constr {region; value=lexeme} =
+and print_constr (_visitor : xyz) {region; value=lexeme} =
   printf "%s: Constr \"%s\"\n"
          (compact region) lexeme
 
-let print_string {region; value=lexeme} =
+and print_string (_visitor : xyz) {region; value=lexeme} =
   printf "%s: String \"%s\"\n"
          (compact region) lexeme
 
-let print_bytes {region; value = lexeme, abstract} =
+and print_bytes (_visitor : xyz) {region; value = lexeme, abstract} =
   printf "%s: Bytes (\"%s\", \"0x%s\")\n"
          (compact region) lexeme
          (MBytes.to_hex abstract |> Hex.to_string)
 
-let print_int {region; value = lexeme, abstract} =
+and print_int (_visitor : xyz) {region; value = lexeme, abstract} =
   printf "%s: Int (\"%s\", %s)\n"
          (compact region) lexeme
          (Z.to_string abstract)
 
-let rec print_tokens ast =
-  List.iter print_type_decl   ast#types;
-  print_parameter_decl        ast#parameter;
-  print_storage_decl          ast#storage;
-  print_operations_decl       ast#operations;
-  List.iter print_lambda_decl ast#lambdas;
-  print_block                 ast#block;
-  print_token                 ast#eof "EOF"
+(* main print function *)
+and print_tokens (visitor : xyz) ast =
+  List.iter visitor#type_decl   ast#types;
+  visitor#parameter_decl        ast#parameter;
+  visitor#storage_decl          ast#storage;
+  visitor#operations_decl       ast#operations;
+  List.iter visitor#lambda_decl ast#lambdas;
+  visitor#block                 ast#block;
+  visitor#token                 ast#eof "EOF"
 
-and print_parameter_decl {value=node; _} =
+and print_parameter_decl (visitor : xyz) {value=node; _} =
   let kwd_parameter, variable, colon, type_expr = node in
-  print_token     kwd_parameter "parameter";
-  print_var       variable;
-  print_token     colon ":";
-  print_type_expr type_expr
+  visitor#token     kwd_parameter "parameter";
+  visitor#var       variable;
+  visitor#token     colon ":";
+  visitor#type_expr type_expr
 
-and print_storage_decl {value=node; _} =
+and print_storage_decl (visitor : xyz) {value=node; _} =
   let kwd_storage, type_expr = node in
-  print_token     kwd_storage "storage";
-  print_type_expr type_expr
+  visitor#token     kwd_storage "storage";
+  visitor#type_expr type_expr
 
-and print_operations_decl {value=node; _} =
+and print_operations_decl (visitor : xyz) {value=node; _} =
   let kwd_operations, type_expr = node in
-  print_token     kwd_operations "operations";
-  print_type_expr type_expr
+  visitor#token     kwd_operations "operations";
+  visitor#type_expr type_expr
 
-and print_type_decl {value=node; _} =
+and print_type_decl (visitor : xyz) {value=node; _} =
   let kwd_type, type_name, kwd_is, type_expr = node in
-  print_token     kwd_type "type";
-  print_var       type_name;
-  print_token     kwd_is "is";
-  print_type_expr type_expr
+  visitor#token     kwd_type "type";
+  visitor#var       type_name;
+  visitor#token     kwd_is "is";
+  visitor#type_expr type_expr
 
-and print_type_expr = function
-  Prod    cartesian   -> print_cartesian   cartesian
-| Sum     sum_type    -> print_sum_type    sum_type
-| Record  record_type -> print_record_type record_type
-| TypeApp type_app    -> print_type_app    type_app
-| ParType par_type    -> print_par_type    par_type
-| TAlias  type_alias  -> print_var         type_alias
+and print_type_expr (visitor : xyz) = function
+  Prod    cartesian   -> visitor#cartesian   cartesian
+| Sum     sum_type    -> visitor#sum_type    sum_type
+| Record  record_type -> visitor#record_type record_type
+| TypeApp type_app    -> visitor#type_app    type_app
+| ParType par_type    -> visitor#par_type    par_type
+| TAlias  type_alias  -> visitor#var         type_alias
 
-and print_cartesian {value=sequence; _} =
-  print_nsepseq "*" print_type_expr sequence
+and print_cartesian (visitor : xyz) {value=sequence; _} =
+  visitor#nsepseq "*" visitor#type_expr sequence
 
-and print_variant {value=node; _} =
+and print_variant (visitor : xyz) {value=node; _} =
   let constr, kwd_of, cartesian = node in
-  print_constr    constr;
-  print_token     kwd_of "of";
-  print_cartesian cartesian
+  visitor#constr    constr;
+  visitor#token     kwd_of "of";
+  visitor#cartesian cartesian
 
-and print_sum_type {value=sequence; _} =
-  print_nsepseq "|" print_variant sequence
+and print_sum_type (visitor : xyz) {value=sequence; _} =
+  visitor#nsepseq "|" visitor#variant sequence
 
-and print_record_type {value=node; _} =
+and print_record_type (visitor : xyz) {value=node; _} =
   let kwd_record, field_decls, kwd_end = node in
-  print_token       kwd_record "record";
-  print_field_decls field_decls;
-  print_token       kwd_end "end"
+  visitor#token       kwd_record "record";
+  visitor#field_decls field_decls;
+  visitor#token       kwd_end "end"
 
-and print_type_app {value=node; _} =
+and print_type_app (visitor : xyz) {value=node; _} =
   let type_name, type_tuple = node in
-  print_var        type_name;
-  print_type_tuple type_tuple
+  visitor#var        type_name;
+  visitor#type_tuple type_tuple
 
-and print_par_type {value=node; _} =
+and print_par_type (visitor : xyz) {value=node; _} =
   let lpar, type_expr, rpar = node in
-  print_token     lpar "(";
-  print_type_expr type_expr;
-  print_token     rpar ")"
+  visitor#token     lpar "(";
+  visitor#type_expr type_expr;
+  visitor#token     rpar ")"
 
-and print_field_decls sequence =
-  print_nsepseq ";" print_field_decl sequence
+and print_field_decls (visitor : xyz) sequence =
+  visitor#nsepseq ";" visitor#field_decl sequence
 
-and print_field_decl {value=node; _} =
+and print_field_decl (visitor : xyz) {value=node; _} =
   let var, colon, type_expr = node in
-  print_var       var;
-  print_token     colon ":";
-  print_type_expr type_expr
+  visitor#var       var;
+  visitor#token     colon ":";
+  visitor#type_expr type_expr
 
-and print_type_tuple {value=node; _} =
+and print_type_tuple (visitor : xyz) {value=node; _} =
   let lpar, sequence, rpar = node in
-  print_token lpar "(";
-  print_nsepseq "," print_var sequence;
-  print_token rpar ")"
+  visitor#token lpar "(";
+  visitor#nsepseq "," visitor#var sequence;
+  visitor#token rpar ")"
 
-and print_lambda_decl = function
-  FunDecl   fun_decl -> print_fun_decl fun_decl
-| ProcDecl proc_decl -> print_proc_decl proc_decl
+and print_lambda_decl (visitor : xyz) = function
+  FunDecl   fun_decl -> visitor#fun_decl fun_decl
+| ProcDecl proc_decl -> visitor#proc_decl proc_decl
 
-and print_fun_decl {value=node; _} =
-  print_token      node#kwd_function "function";
-  print_var        node#var;
-  print_parameters node#param;
-  print_token      node#colon ":";
-  print_type_expr  node#ret_type;
-  print_token      node#kwd_is "is";
-  print_block      node#body;
-  print_token      node#kwd_with "with";
-  print_expr       node#return
+and print_fun_decl (visitor : xyz) {value=node; _} =
+  visitor#token      node#kwd_function "function";
+  visitor#var        node#var;
+  visitor#parameters node#param;
+  visitor#token      node#colon ":";
+  visitor#type_expr  node#ret_type;
+  visitor#token      node#kwd_is "is";
+  visitor#block      node#body;
+  visitor#token      node#kwd_with "with";
+  visitor#expr       node#return
 
-and print_proc_decl {value=node; _} =
-  print_token      node#kwd_procedure "procedure";
-  print_var        node#var;
-  print_parameters node#param;
-  print_token      node#kwd_is "is";
-  print_block      node#body
+and print_proc_decl (visitor : xyz) {value=node; _} =
+  visitor#token      node#kwd_procedure "procedure";
+  visitor#var        node#var;
+  visitor#parameters node#param;
+  visitor#token      node#kwd_is "is";
+  visitor#block      node#body
 
-and print_parameters {value=node; _} =
+and print_parameters (visitor : xyz) {value=node; _} =
   let lpar, sequence, rpar = node in
-  print_token lpar "(";
-  print_nsepseq ";" print_param_decl sequence;
-  print_token rpar ")"
+  visitor#token lpar "(";
+  visitor#nsepseq ";" visitor#param_decl sequence;
+  visitor#token rpar ")"
 
-and print_param_decl {value=node; _} =
+and print_param_decl (visitor : xyz) {value=node; _} =
   let var_kind, variable, colon, type_expr = node in
-  print_var_kind  var_kind;
-  print_var       variable;
-  print_token     colon ":";
-  print_type_expr type_expr
+  visitor#var_kind  var_kind;
+  visitor#var       variable;
+  visitor#token     colon ":";
+  visitor#type_expr type_expr
 
-and print_var_kind = function
-  Mutable kwd_var -> print_token kwd_var "var"
-| Const kwd_const -> print_token kwd_const "const"
+and print_var_kind (visitor : xyz) = function
+  Mutable kwd_var -> visitor#token kwd_var "var"
+| Const kwd_const -> visitor#token kwd_const "const"
 
-and print_block {value=node; _} =
-  print_value_decls  node#decls;
-  print_token        node#opening "begin";
-  print_instructions node#instr;
-  print_token        node#close "end"
+and print_block (visitor : xyz) {value=node; _} =
+  visitor#value_decls  node#decls;
+  visitor#token        node#opening "begin";
+  visitor#instructions node#instr;
+  visitor#token        node#close "end"
 
-and print_value_decls {value=sequence; _} =
-  print_sepseq ";" print_var_decl sequence
+and print_value_decls (visitor : xyz) {value=sequence; _} =
+  visitor#sepseq ";" visitor#var_decl sequence
 
-and print_var_decl {value=node; _} =
+and print_var_decl (visitor : xyz) {value=node; _} =
   let setter =
     match node#kind with
       Mutable _ -> ":="
     |   Const _ -> "=" in
-  print_var_kind  node#kind;
-  print_var       node#var;
-  print_token     node#colon ":";
-  print_type_expr node#vtype;
-  print_token     node#setter setter;
-  print_expr      node#init
+  visitor#var_kind  node#kind;
+  visitor#var       node#var;
+  visitor#token     node#colon ":";
+  visitor#type_expr node#vtype;
+  visitor#token     node#setter setter;
+  visitor#expr      node#init
 
-and print_instructions {value=sequence; _} =
-  print_nsepseq ";" print_instruction sequence
+and print_instructions (visitor : xyz) {value=sequence; _} =
+  visitor#nsepseq ";" visitor#instruction sequence
 
-and print_instruction = function
-  Single instr -> print_single_instr instr
-|  Block block -> print_block block
+and print_instruction (visitor : xyz) = function
+  Single instr -> visitor#single_instr instr
+|  Block block -> visitor#block block
 
-and print_single_instr = function
-  Cond     {value; _} -> print_conditional value
-| Match    {value; _} -> print_match_instr value
-| Asgnmnt  instr      -> print_asgnmnt_instr instr
-| Loop     loop       -> print_loop loop
-| ProcCall fun_call   -> print_fun_call fun_call
-| Null     kwd_null   -> print_token kwd_null "null"
+and print_single_instr (visitor : xyz) = function
+  Cond     {value; _} -> visitor#conditional value
+| Match    {value; _} -> visitor#match_instr value
+| Asgnmnt  instr      -> visitor#asgnmnt_instr instr
+| Loop     loop       -> visitor#loop loop
+| ProcCall fun_call   -> visitor#fun_call fun_call
+| Null     kwd_null   -> visitor#token kwd_null "null"
 
-and print_conditional node =
-  print_token       node#kwd_if "if";
-  print_expr        node#test;
-  print_token       node#kwd_then "then";
-  print_instruction node#ifso;
-  print_token       node#kwd_else "else";
-  print_instruction node#ifnot
+and print_conditional (visitor : xyz) node =
+  visitor#token       node#kwd_if "if";
+  visitor#expr        node#test;
+  visitor#token       node#kwd_then "then";
+  visitor#instruction node#ifso;
+  visitor#token       node#kwd_else "else";
+  visitor#instruction node#ifnot
 
-and print_match_instr node =
-  print_token node#kwd_match "match";
-  print_expr  node#expr;
-  print_token node#kwd_with "with";
-  print_cases node#cases;
-  print_token node#kwd_end "end"
+and print_match_instr (visitor : xyz) node =
+  visitor#token node#kwd_match "match";
+  visitor#expr  node#expr;
+  visitor#token node#kwd_with "with";
+  visitor#cases node#cases;
+  visitor#token node#kwd_end "end"
 
-and print_cases {value=sequence; _} =
-  print_nsepseq "|" print_case sequence
+and print_cases (visitor : xyz) {value=sequence; _} =
+  visitor#nsepseq "|" visitor#case sequence
 
-and print_case {value=node; _} =
+and print_case (visitor : xyz) {value=node; _} =
   let pattern, arrow, instruction = node in
-  print_pattern pattern;
-  print_token arrow "->";
-  print_instruction instruction
+  visitor#pattern pattern;
+  visitor#token arrow "->";
+  visitor#instruction instruction
 
-and print_asgnmnt_instr {value=node; _} =
+and print_asgnmnt_instr (visitor : xyz) {value=node; _} =
   let variable, asgnmnt, expr = node in
-  print_var variable;
-  print_token asgnmnt ":=";
-  print_expr expr
+  visitor#var variable;
+  visitor#token asgnmnt ":=";
+  visitor#expr expr
 
-and print_loop = function
-  While while_loop -> print_while_loop while_loop
-| For     for_loop -> print_for_loop for_loop
+and print_loop (visitor : xyz) = function
+  While while_loop -> visitor#while_loop while_loop
+| For     for_loop -> visitor#for_loop for_loop
 
-and print_while_loop {value=node; _} =
+and print_while_loop (visitor : xyz) {value=node; _} =
   let kwd_while, expr, block = node in
-  print_token kwd_while "while";
-  print_expr expr;
-  print_block block
+  visitor#token kwd_while "while";
+  visitor#expr expr;
+  visitor#block block
 
-and print_for_loop = function
-  ForInt     for_int     -> print_for_int for_int
-| ForCollect for_collect -> print_for_collect for_collect
+and print_for_loop (visitor : xyz) = function
+  ForInt     for_int     -> visitor#for_int for_int
+| ForCollect for_collect -> visitor#for_collect for_collect
 
-and print_for_int {value=node; _} =
-  print_token         node#kwd_for "for";
-  print_asgnmnt_instr node#asgnmnt;
-  print_down          node#down;
-  print_token         node#kwd_to "to";
-  print_expr          node#bound;
-  print_step          node#step;
-  print_block         node#block
+and print_for_int (visitor : xyz) {value=node; _} =
+  visitor#token         node#kwd_for "for";
+  visitor#asgnmnt_instr node#asgnmnt;
+  visitor#down          node#down;
+  visitor#token         node#kwd_to "to";
+  visitor#expr          node#bound;
+  visitor#step          node#step;
+  visitor#block         node#block
 
-and print_down = function
-  Some kwd_down -> print_token kwd_down "down"
+and print_down (visitor : xyz) = function
+  Some kwd_down -> visitor#token kwd_down "down"
 | None -> ()
 
-and print_step = function
+and print_step (visitor : xyz) = function
   Some (kwd_step, expr) ->
-    print_token kwd_step "step";
-    print_expr expr
+    visitor#token kwd_step "step";
+    visitor#expr expr
 | None -> ()
 
-and print_for_collect {value=node; _} =
-  print_token   node#kwd_for "for";
-  print_var     node#var;
-  print_bind_to node#bind_to;
-  print_token   node#kwd_in "in";
-  print_expr    node#expr;
-  print_block   node#block
+and print_for_collect (visitor : xyz) {value=node; _} =
+  visitor#token   node#kwd_for "for";
+  visitor#var     node#var;
+  visitor#bind_to node#bind_to;
+  visitor#token   node#kwd_in "in";
+  visitor#expr    node#expr;
+  visitor#block   node#block
 
-and print_bind_to = function
+and print_bind_to (visitor : xyz) = function
   Some (arrow, variable) ->
-    print_token arrow "->";
-    print_var   variable
+    visitor#token arrow "->";
+    visitor#var   variable
 | None -> ()
 
-and print_expr = function
+and print_expr (visitor : xyz) = function
   Or {value = expr1, bool_or, expr2; _} ->
-    print_expr expr1; print_token bool_or "||"; print_expr expr2
+    visitor#expr expr1; visitor#token bool_or "||"; visitor#expr expr2
 | And {value = expr1, bool_and, expr2; _} ->
-    print_expr expr1; print_token bool_and "&&"; print_expr expr2
+    visitor#expr expr1; visitor#token bool_and "&&"; visitor#expr expr2
 | Lt {value = expr1, lt, expr2; _} ->
-    print_expr expr1; print_token lt "<"; print_expr expr2
+    visitor#expr expr1; visitor#token lt "<"; visitor#expr expr2
 | Leq {value = expr1, leq, expr2; _} ->
-    print_expr expr1; print_token leq "<="; print_expr expr2
+    visitor#expr expr1; visitor#token leq "<="; visitor#expr expr2
 | Gt {value = expr1, gt, expr2; _} ->
-    print_expr expr1; print_token gt ">"; print_expr expr2
+    visitor#expr expr1; visitor#token gt ">"; visitor#expr expr2
 | Geq {value = expr1, geq, expr2; _} ->
-    print_expr expr1; print_token geq ">="; print_expr expr2
+    visitor#expr expr1; visitor#token geq ">="; visitor#expr expr2
 | Equal {value = expr1, equal, expr2; _} ->
-    print_expr expr1; print_token equal "="; print_expr expr2
+    visitor#expr expr1; visitor#token equal "="; visitor#expr expr2
 | Neq {value = expr1, neq, expr2; _} ->
-    print_expr expr1; print_token neq "=/="; print_expr expr2
+    visitor#expr expr1; visitor#token neq "=/="; visitor#expr expr2
 | Cat {value = expr1, cat, expr2; _} ->
-    print_expr expr1; print_token cat "^"; print_expr expr2
+    visitor#expr expr1; visitor#token cat "^"; visitor#expr expr2
 | Cons {value = expr1, cons, expr2; _} ->
-    print_expr expr1; print_token cons "<:"; print_expr expr2
+    visitor#expr expr1; visitor#token cons "<:"; visitor#expr expr2
 | Add {value = expr1, add, expr2; _} ->
-    print_expr expr1; print_token add "+"; print_expr expr2
+    visitor#expr expr1; visitor#token add "+"; visitor#expr expr2
 | Sub {value = expr1, sub, expr2; _} ->
-    print_expr expr1; print_token sub "-"; print_expr expr2
+    visitor#expr expr1; visitor#token sub "-"; visitor#expr expr2
 | Mult {value = expr1, mult, expr2; _} ->
-    print_expr expr1; print_token mult "*"; print_expr expr2
+    visitor#expr expr1; visitor#token mult "*"; visitor#expr expr2
 | Div {value = expr1, div, expr2; _} ->
-    print_expr expr1; print_token div "/"; print_expr expr2
+    visitor#expr expr1; visitor#token div "/"; visitor#expr expr2
 | Mod {value = expr1, kwd_mod, expr2; _} ->
-    print_expr expr1; print_token kwd_mod "mod"; print_expr expr2
+    visitor#expr expr1; visitor#token kwd_mod "mod"; visitor#expr expr2
 | Neg {value = minus, expr; _} ->
-    print_token minus "-"; print_expr expr
+    visitor#token minus "-"; visitor#expr expr
 | Not {value = kwd_not, expr; _} ->
-    print_token kwd_not "not"; print_expr expr
-| Int i            -> print_int i
-| Var v            -> print_var v
-| String s         -> print_string s
-| Bytes b          -> print_bytes b
-| False region     -> print_token region "False"
-| True region      -> print_token region "True"
-| Unit region      -> print_token region "Unit"
-| Tuple tuple      -> print_tuple tuple
-| List list        -> print_list list
-| EmptyList elist  -> print_empty_list elist
-| Set set          -> print_set set
-| EmptySet eset    -> print_empty_set eset
-| NoneExpr nexpr   -> print_none_expr nexpr
-| FunCall fun_call -> print_fun_call fun_call
-| ConstrApp capp   -> print_constr_app capp
-| SomeApp sapp     -> print_some_app sapp
-| MapLookUp lookup -> print_map_lookup lookup
-| ParExpr pexpr    -> print_par_expr pexpr
+    visitor#token kwd_not "not"; visitor#expr expr
+| Int i            -> visitor#int i
+| Var v            -> visitor#var v
+| String s         -> visitor#string s
+| Bytes b          -> visitor#bytes b
+| False region     -> visitor#token region "False"
+| True region      -> visitor#token region "True"
+| Unit region      -> visitor#token region "Unit"
+| Tuple tuple      -> visitor#tuple tuple
+| List list        -> visitor#list list
+| EmptyList elist  -> visitor#empty_list elist
+| Set set          -> visitor#set set
+| EmptySet eset    -> visitor#empty_set eset
+| NoneExpr nexpr   -> visitor#none_expr nexpr
+| FunCall fun_call -> visitor#fun_call fun_call
+| ConstrApp capp   -> visitor#constr_app capp
+| SomeApp sapp     -> visitor#some_app sapp
+| MapLookUp lookup -> visitor#map_lookup lookup
+| ParExpr pexpr    -> visitor#par_expr pexpr
 
-and print_tuple {value=node; _} =
+and print_tuple (visitor : xyz) {value=node; _} =
   let lpar, sequence, rpar = node in
-  print_token lpar "(";
-  print_nsepseq "," print_expr sequence;
-  print_token rpar ")"
+  visitor#token lpar "(";
+  visitor#nsepseq "," visitor#expr sequence;
+  visitor#token rpar ")"
 
-and print_list {value=node; _} =
+and print_list (visitor : xyz) {value=node; _} =
   let lbra, sequence, rbra = node in
-  print_token lbra "[";
-  print_nsepseq "," print_expr sequence;
-  print_token rbra "]"
+  visitor#token lbra "[";
+  visitor#nsepseq "," visitor#expr sequence;
+  visitor#token rbra "]"
 
-and print_empty_list {value=node; _} =
+and print_empty_list (visitor : xyz) {value=node; _} =
   let lpar, (lbracket, rbracket, colon, type_expr), rpar = node in
-  print_token     lpar "(";
-  print_token     lbracket "[";
-  print_token     rbracket "]";
-  print_token     colon ":";
-  print_type_expr type_expr;
-  print_token     rpar ")"
+  visitor#token     lpar "(";
+  visitor#token     lbracket "[";
+  visitor#token     rbracket "]";
+  visitor#token     colon ":";
+  visitor#type_expr type_expr;
+  visitor#token     rpar ")"
 
-and print_set {value=node; _} =
+and print_set (visitor : xyz) {value=node; _} =
   let lbrace, sequence, rbrace = node in
-  print_token lbrace "{";
-  print_nsepseq "," print_expr sequence;
-  print_token rbrace "}"
+  visitor#token lbrace "{";
+  visitor#nsepseq "," visitor#expr sequence;
+  visitor#token rbrace "}"
 
-and print_empty_set {value=node; _} =
+and print_empty_set (visitor : xyz) {value=node; _} =
   let lpar, (lbrace, rbrace, colon, type_expr), rpar = node in
-  print_token     lpar "(";
-  print_token     lbrace "{";
-  print_token     rbrace "}";
-  print_token     colon ":";
-  print_type_expr type_expr;
-  print_token     rpar ")"
+  visitor#token     lpar "(";
+  visitor#token     lbrace "{";
+  visitor#token     rbrace "}";
+  visitor#token     colon ":";
+  visitor#type_expr type_expr;
+  visitor#token     rpar ")"
 
-and print_none_expr {value=node; _} =
+and print_none_expr (visitor : xyz) {value=node; _} =
   let lpar, (c_None, colon, type_expr), rpar = node in
-  print_token     lpar "(";
-  print_token     c_None "None";
-  print_token     colon ":";
-  print_type_expr type_expr;
-  print_token     rpar ")"
+  visitor#token     lpar "(";
+  visitor#token     c_None "None";
+  visitor#token     colon ":";
+  visitor#type_expr type_expr;
+  visitor#token     rpar ")"
 
-and print_fun_call {value=node; _} =
+and print_fun_call (visitor : xyz) {value=node; _} =
   let fun_name, arguments = node in
-  print_var   fun_name;
-  print_tuple arguments
+  visitor#var   fun_name;
+  visitor#tuple arguments
 
-and print_constr_app {value=node; _} =
+and print_constr_app (visitor : xyz) {value=node; _} =
   let constr, arguments = node in
-  print_constr constr;
-  print_tuple  arguments
+  visitor#constr constr;
+  visitor#tuple  arguments
 
-and print_some_app {value=node; _} =
+and print_some_app (visitor : xyz) {value=node; _} =
   let c_Some, arguments = node in
-  print_token c_Some "Some";
-  print_tuple arguments
+  visitor#token c_Some "Some";
+  visitor#tuple arguments
 
-and print_map_lookup {value=node; _} =
+and print_map_lookup (visitor : xyz) {value=node; _} =
   let {value = lbracket, expr, rbracket; _} = node#index in
-  print_var   node#map_name;
-  print_token node#selector ".";
-  print_token lbracket "[";
-  print_expr  expr;
-  print_token rbracket "]"
+  visitor#var   node#map_name;
+  visitor#token node#selector ".";
+  visitor#token lbracket "[";
+  visitor#expr  expr;
+  visitor#token rbracket "]"
 
-and print_par_expr {value=node; _} =
+and print_par_expr (visitor : xyz) {value=node; _} =
   let lpar, expr, rpar = node in
-  print_token lpar "(";
-  print_expr  expr;
-  print_token rpar ")"
+  visitor#token lpar "(";
+  visitor#expr  expr;
+  visitor#token rpar ")"
 
-and print_pattern {value=sequence; _} =
-  print_nsepseq "<:" print_core_pattern sequence
+and print_pattern (visitor : xyz) {value=sequence; _} =
+  visitor#nsepseq "<:" visitor#core_pattern sequence
 
-and print_core_pattern = function
-  PVar var      -> print_var var
-| PWild wild    -> print_token wild "_"
-| PInt i        -> print_int i
-| PBytes b      -> print_bytes b
-| PString s     -> print_string s
-| PUnit region  -> print_token region "Unit"
-| PFalse region -> print_token region "False"
-| PTrue region  -> print_token region "True"
-| PNone region  -> print_token region "None"
-| PSome psome   -> print_psome psome
-| PList pattern -> print_list_pattern pattern
-| PTuple ptuple -> print_ptuple ptuple
+and print_core_pattern (visitor : xyz) = function
+  PVar var      -> visitor#var var
+| PWild wild    -> visitor#token wild "_"
+| PInt i        -> visitor#int i
+| PBytes b      -> visitor#bytes b
+| PString s     -> visitor#string s
+| PUnit region  -> visitor#token region "Unit"
+| PFalse region -> visitor#token region "False"
+| PTrue region  -> visitor#token region "True"
+| PNone region  -> visitor#token region "None"
+| PSome psome   -> visitor#psome psome
+| PList pattern -> visitor#list_pattern pattern
+| PTuple ptuple -> visitor#ptuple ptuple
 
-and print_psome {value=node; _} =
+and print_psome (visitor : xyz) {value=node; _} =
   let c_Some, patterns = node in
-  print_token    c_Some "Some";
-  print_patterns patterns
+  visitor#token    c_Some "Some";
+  visitor#patterns patterns
 
-and print_patterns {value=node; _} =
+and print_patterns (visitor : xyz) {value=node; _} =
   let lpar, core_pattern, rpar = node in
-  print_token lpar "(";
-  print_core_pattern core_pattern;
-  print_token rpar ")"
+  visitor#token lpar "(";
+  visitor#core_pattern core_pattern;
+  visitor#token rpar ")"
 
-and print_list_pattern = function
-  Sugar sugar -> print_sugar sugar
-| Raw     raw -> print_raw raw
+and print_list_pattern (visitor : xyz) = function
+  Sugar sugar -> visitor#sugar sugar
+| Raw     raw -> visitor#raw raw
 
-and print_sugar {value=node; _} =
+and print_sugar (visitor : xyz) {value=node; _} =
   let lbracket, sequence, rbracket = node in
-  print_token lbracket "[";
-  print_sepseq "," print_core_pattern sequence;
-  print_token rbracket "]"
+  visitor#token lbracket "[";
+  visitor#sepseq "," visitor#core_pattern sequence;
+  visitor#token rbracket "]"
 
-and print_raw {value=node; _} =
+and print_raw (visitor : xyz) {value=node; _} =
   let lpar, (core_pattern, cons, pattern), rpar = node in
-  print_token        lpar "(";
-  print_core_pattern core_pattern;
-  print_token        cons "<:";
-  print_pattern      pattern;
-  print_token        rpar ")"
+  visitor#token        lpar "(";
+  visitor#core_pattern core_pattern;
+  visitor#token        cons "<:";
+  visitor#pattern      pattern;
+  visitor#token        rpar ")"
 
-and print_ptuple {value=node; _} =
+and print_ptuple (visitor : xyz) {value=node; _} =
   let lpar, sequence, rpar = node in
-  print_token lpar "(";
-  print_nsepseq "," print_core_pattern sequence;
-  print_token rpar ")"
+  visitor#token lpar "(";
+  visitor#nsepseq "," visitor#core_pattern sequence;
+  visitor#token rpar ")"
+
+let rec visitor : unit -> xyz = fun () -> object
+    method nsepseq : 'a . string -> ('a -> unit) -> ('a * (Region.t * 'a) list)        -> unit = print_nsepseq
+    method sepseq  : 'a . string -> ('a -> unit) -> ('a * (Region.t * 'a) list) option -> unit = print_sepseq
+    method token           = print_token           (visitor ())
+    method var             = print_var             (visitor ())
+    method constr          = print_constr          (visitor ())
+    method string          = print_string          (visitor ())
+    method bytes           = print_bytes           (visitor ())
+    method int             = print_int             (visitor ())
+
+    method parameter_decl  = print_parameter_decl  (visitor ())
+    method storage_decl    = print_storage_decl    (visitor ())
+    method operations_decl = print_operations_decl (visitor ())
+    method type_decl       = print_type_decl       (visitor ())
+    method type_expr       = print_type_expr       (visitor ())
+    method cartesian       = print_cartesian       (visitor ())
+    method variant         = print_variant         (visitor ())
+    method sum_type        = print_sum_type        (visitor ())
+    method record_type     = print_record_type     (visitor ())
+    method type_app        = print_type_app        (visitor ())
+    method par_type        = print_par_type        (visitor ())
+    method field_decls     = print_field_decls     (visitor ())
+    method field_decl      = print_field_decl      (visitor ())
+    method type_tuple      = print_type_tuple      (visitor ())
+    method lambda_decl     = print_lambda_decl     (visitor ())
+    method fun_decl        = print_fun_decl        (visitor ())
+    method proc_decl       = print_proc_decl       (visitor ())
+    method parameters      = print_parameters      (visitor ())
+    method param_decl      = print_param_decl      (visitor ())
+    method var_kind        = print_var_kind        (visitor ())
+    method block           = print_block           (visitor ())
+    method value_decls     = print_value_decls     (visitor ())
+    method var_decl        = print_var_decl        (visitor ())
+    method instructions    = print_instructions    (visitor ())
+    method instruction     = print_instruction     (visitor ())
+    method single_instr    = print_single_instr    (visitor ())
+    method conditional     = print_conditional     (visitor ())
+    method match_instr     = print_match_instr     (visitor ())
+    method cases           = print_cases           (visitor ())
+    method case            = print_case            (visitor ())
+    method asgnmnt_instr   = print_asgnmnt_instr   (visitor ())
+    method loop            = print_loop            (visitor ())
+    method while_loop      = print_while_loop      (visitor ())
+    method for_loop        = print_for_loop        (visitor ())
+    method for_int         = print_for_int         (visitor ())
+    method down            = print_down            (visitor ())
+    method step            = print_step            (visitor ())
+    method for_collect     = print_for_collect     (visitor ())
+    method bind_to         = print_bind_to         (visitor ())
+    method expr            = print_expr            (visitor ())
+    method tuple           = print_tuple           (visitor ())
+    method list            = print_list            (visitor ())
+    method empty_list      = print_empty_list      (visitor ())
+    method set             = print_set             (visitor ())
+    method empty_set       = print_empty_set       (visitor ())
+    method none_expr       = print_none_expr       (visitor ())
+    method fun_call        = print_fun_call        (visitor ())
+    method constr_app      = print_constr_app      (visitor ())
+    method some_app        = print_some_app        (visitor ())
+    method map_lookup      = print_map_lookup      (visitor ())
+    method par_expr        = print_par_expr        (visitor ())
+    method pattern         = print_pattern         (visitor ())
+    method core_pattern    = print_core_pattern    (visitor ())
+    method psome           = print_psome           (visitor ())
+    method patterns        = print_patterns        (visitor ())
+    method list_pattern    = print_list_pattern    (visitor ())
+    method sugar           = print_sugar           (visitor ())
+    method raw             = print_raw             (visitor ())
+    method ptuple          = print_ptuple          (visitor ())
+  end
+
+let print_tokens = print_tokens (visitor ())
