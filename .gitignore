@@ -4,3 +4,4 @@ _build/*
 .merlin
 */.merlin
 *.install
+/Version.ml
