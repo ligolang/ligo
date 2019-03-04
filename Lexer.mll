@@ -333,7 +333,7 @@ module Make (Token: TOKEN) : (S with module Token = Token) =
       Invalid_utf8_sequence ->
         "Invalid UTF-8 sequence.\n"
     | Unexpected_character c ->
-        sprintf "Unexpected character '%c'.\n" c
+        sprintf "Unexpected character '%s'.\n" (Char.escaped c)
     | Undefined_escape_sequence ->
         "Undefined escape sequence.\n\
          Hint: Remove or replace the sequence.\n"
