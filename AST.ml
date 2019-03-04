@@ -460,38 +460,55 @@ let core_pattern_to_region = function
 (* Printing the tokens with their source regions *)
 
 type xyz =
-< asgnmnt_instr : asgnmnt_instr -> unit;
-  bind_to : (region * variable) option -> unit; block : block reg -> unit;
-  bytes : (string * MBytes.t) reg -> unit; cartesian : cartesian -> unit;
-  case : case -> unit; cases : cases -> unit;
-  conditional : conditional -> unit; constr : constr -> unit;
-  constr_app : constr_app -> unit; core_pattern : core_pattern -> unit;
-  down : region option -> unit; empty_list : empty_list -> unit;
-  empty_set : empty_set -> unit; expr : expr -> unit;
-  field_decl : field_decl -> unit; field_decls : field_decls -> unit;
-  for_collect : for_collect reg -> unit; for_int : for_int reg -> unit;
-  for_loop : for_loop -> unit; fun_call : fun_call -> unit;
-  fun_decl : fun_decl reg -> unit; instruction : instruction -> unit;
-  instructions : instructions -> unit; int : (string * Z.t) reg -> unit;
+  < asgnmnt_instr : asgnmnt_instr -> unit;
+  bind_to : (region * variable) option -> unit;
+  block : block reg -> unit;
+  bytes : (string * MBytes.t) reg -> unit;
+  cartesian : cartesian -> unit;
+  case : case -> unit;
+  cases : cases -> unit;
+  conditional : conditional -> unit;
+  constr : constr -> unit;
+  constr_app : constr_app -> unit;
+  core_pattern : core_pattern -> unit;
+  down : region option -> unit;
+  empty_list : empty_list -> unit;
+  empty_set : empty_set -> unit;
+  expr : expr -> unit;
+  field_decl : field_decl -> unit;
+  field_decls : field_decls -> unit;
+  for_collect : for_collect reg -> unit;
+  for_int : for_int reg -> unit;
+  for_loop : for_loop -> unit;
+  fun_call : fun_call -> unit;
+  fun_decl : fun_decl reg -> unit;
+  instruction : instruction -> unit;
+  instructions : instructions -> unit;
+  int : (string * Z.t) reg -> unit;
   lambda_decl : lambda_decl -> unit;
   list : (expr, region) nsepseq brackets -> unit;
-  list_pattern : list_pattern -> unit; loop : loop -> unit;
-  map_lookup : map_lookup reg -> unit; match_instr : match_instr -> unit;
+  list_pattern : list_pattern -> unit;
+  loop : loop -> unit;
+  map_lookup : map_lookup reg -> unit;
+  match_instr : match_instr -> unit;
   none_expr : none_expr -> unit;
   nsepseq : 'a. string -> ('a -> unit) -> 'a * (region * 'a) list -> unit;
   operations_decl : (region * type_expr) reg -> unit;
-  par_expr : expr par -> unit; par_type : type_expr par -> unit;
+  par_expr : expr par -> unit;
+  par_type : type_expr par -> unit;
   param_decl : param_decl -> unit;
   parameter_decl : (region * variable * region * type_expr) reg -> unit;
-  parameters : parameters -> unit; pattern : pattern -> unit;
-  patterns : core_pattern par -> unit; proc_decl : proc_decl reg -> unit;
+  parameters : parameters -> unit;
+  pattern : pattern -> unit;
+  patterns : core_pattern par -> unit;
+  proc_decl : proc_decl reg -> unit;
   psome : (region * core_pattern par) reg -> unit;
   ptuple : (core_pattern, region) nsepseq par -> unit;
   raw : (core_pattern * region * pattern) par -> unit;
   record_type : record_type -> unit;
   sepseq : 'a.
-             string ->
-             ('a -> unit) -> ('a * (region * 'a) list) option -> unit;
+           string ->
+           ('a -> unit) -> ('a * (region * 'a) list) option -> unit;
   set : (expr, region) nsepseq braces -> unit;
   single_instr : single_instr -> unit;
   some_app : (region * arguments) reg -> unit;
@@ -501,12 +518,17 @@ type xyz =
   sugar : (core_pattern, region) sepseq brackets -> unit;
   sum_type : (variant, region) nsepseq reg -> unit;
   token : region -> string -> unit;
-  tuple : arguments -> unit; type_app : (type_name * type_tuple) reg -> unit;
+  tuple : arguments -> unit;
+  type_app : (type_name * type_tuple) reg -> unit;
   type_decl : (region * variable * region * type_expr) reg -> unit;
-  type_expr : type_expr -> unit; type_tuple : type_tuple -> unit;
-  value_decls : value_decls -> unit; var : variable -> unit;
-  var_decl : var_decl reg -> unit; var_kind : var_kind -> unit;
-  variant : variant -> unit; while_loop : while_loop -> unit > ;;
+  type_expr : type_expr -> unit;
+  type_tuple : type_tuple -> unit;
+  value_decls : value_decls -> unit;
+  var : variable -> unit;
+  var_decl : var_decl reg -> unit;
+  var_kind : var_kind -> unit;
+  variant : variant -> unit;
+  while_loop : while_loop -> unit >
 
 let printf = Printf.printf
 
