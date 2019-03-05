@@ -57,10 +57,8 @@ let tokeniser = read ~log
 let () =
   try
     let ast = Parser.program tokeniser buffer in
-    let () = if Utils.String.Set.mem "parser" EvalOpt.verbose
-             then Print.print_tokens ast in
-    let _ = Typecheck2.tc_ast ast
-    in ()
+    if Utils.String.Set.mem "parser" EvalOpt.verbose
+    then Print.print_tokens ast
   with
     Lexer.Error err ->
       close_all ();

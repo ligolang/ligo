@@ -171,9 +171,9 @@ type_decl:
     in {region; value}}
 
 type_expr:
-  cartesian   { Prod   (Present $1) }
-| sum_type    { Sum    (Present $1) }
-| record_type { Record (Present $1) }
+  cartesian   { Prod   $1 }
+| sum_type    { Sum    $1 }
+| record_type { Record $1 }
 
 cartesian:
   nsepseq(core_type,TIMES) {
@@ -183,14 +183,14 @@ cartesian:
 
 core_type:
   type_name {
-    TAlias (Present $1)
+    TAlias $1
   }
 | type_name type_tuple {
     let region = cover $1.region $2.region
-    in TypeApp (Present {region; value = $1,$2})
+    in TypeApp {region; value = $1,$2}
   }
 | par(type_expr) {
-   ParType (Present $1)
+   ParType $1
   }
 
 type_tuple:

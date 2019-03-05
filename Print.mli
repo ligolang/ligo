@@ -2,4 +2,4 @@
 
 open AST
 
-val print_tokens : parse_phase ast -> unit
+val print_tokens : t -> unit
