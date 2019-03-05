@@ -58,7 +58,7 @@ let () =
   try
     let ast = Parser.program tokeniser buffer in
     if Utils.String.Set.mem "parser" EvalOpt.verbose
-    then Print.print_tokens ast
+    then AST.print_tokens ast
   with
     Lexer.Error err ->
       close_all ();
