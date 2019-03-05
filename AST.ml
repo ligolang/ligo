@@ -142,9 +142,45 @@ type 'a braces = (lbrace * 'a * rbrace) reg
 
 (* The Abstract Syntax Tree *)
 
-type t = < ty: unit > ast
+type ttrue = TTrue
+type tfalse = TFalse
+type ('a, 'type_expr_typecheck) gadt_if =
+  Present : 'a -> ('a, ttrue) gadt_if
 
-and 'x ast = {
+(* It is possible to further ensure well-typedness at the meta level
+   by using the following constraint:
+
+       type ttrue = [`True]
+       type tfalse = [`False]
+
+       type 'x x_sig = 'x
+       constraint 'x = < ty:                  'ty;
+                         type_expr_typecheck: [< `True | `False] >
+
+   we could also use a single selector for type_expr, as long as
+   the fields are monotonic:
+
+       type    z = [`Z]
+       type 'i s = [`S of 'i]
+       type 'is type_level_int = [< `S of 'i | `Z]
+       constraint 'i = 'prev type_level_int
+
+       type     parse_phase = z
+       type typecheck_phase = z s
+       type   further_phase = z s s
+
+       type 'x x_sig = 'x
+       constraint 'x = < ty:                  'ty;
+                         type_expr:           'type_expr >
+
+   These schemes provide more guidance but the simple one below is
+   sufficient.
+ *)
+type 'x x_sig = 'x
+constraint 'x = < annot:               'type_annotation;
+                  type_expr_typecheck: 'bool1 >
+
+type 'x ast = {
   types      : 'x type_decl reg list;
   constants  : 'x const_decl reg list;
   parameter  : 'x parameter_decl reg;
@@ -154,6 +190,7 @@ and 'x ast = {
   block      : 'x block reg;
   eof        :    eof
 }
+constraint 'x = 'x x_sig
 
 and 'x parameter_decl = {
   kwd_parameter :    kwd_parameter;
@@ -162,18 +199,21 @@ and 'x parameter_decl = {
   param_type    : 'x type_expr;
   terminator    :    semi option
 }
+constraint 'x = 'x x_sig
 
 and 'x storage_decl = {
   kwd_storage :    kwd_storage;
   store_type  : 'x type_expr;
   terminator  :    semi option
 }
+constraint 'x = 'x x_sig
 
 and 'x operations_decl = {
   kwd_operations :    kwd_operations;
   op_type        : 'x type_expr;
   terminator     :    semi option
 }
+constraint 'x = 'x x_sig
 
 (* Type declarations *)
 
@@ -184,32 +224,79 @@ and 'x type_decl = {
   type_expr  : 'x type_expr;
   terminator :    semi option
 }
+constraint 'x = 'x x_sig
 
 and 'x type_expr =
-  Prod    of 'x cartesian
-| Sum     of ('x variant, vbar) nsepseq reg
-| Record  of 'x record_type
-| TypeApp of ('x type_name * 'x type_tuple) reg
-| ParType of 'x type_expr par
-| TAlias  of 'x variable
+  Prod     of ('x cartesian,                                      ttrue) gadt_if
+| Sum      of (('x variant, vbar) nsepseq reg,                    ttrue) gadt_if
+| Record   of ('x record_type,                                    ttrue) gadt_if
+| TypeApp  of (('x type_name * 'x type_tuple) reg,                ttrue) gadt_if
+| ParType  of ('x type_expr par,                                  ttrue) gadt_if
+| TAlias   of ('x variable,                                       ttrue) gadt_if
+
+| Function of (('x type_expr list) * 'x type_expr, 'type_expr_typecheck) gadt_if
+| Mutable  of ('x type_expr,                       'type_expr_typecheck) gadt_if
+| Unit     of (unit,                               'type_expr_typecheck) gadt_if
+constraint 'x = < type_expr_typecheck: 'type_expr_typecheck;
+                  .. >
+constraint 'x = 'x x_sig
+
+(*
+and 'x type_expr = ('x cartesian,
+                    ('x variant, vbar) nsepseq reg,
+                    'x record_type,
+                    ('x type_name * 'x type_tuple) reg,
+                    'x type_expr par,
+                    'x variable,
+
+                    ('x type_expr list) * 'x type_expr,
+                    'x type_expr,
+                    unit,
+
+                    'type_expr_parse,
+                    'type_expr_typecheck) type_expr_gadt
+constraint 'x = < type_expr_parse:     'type_expr_parse;
+                  type_expr_typecheck: 'type_expr_typecheck;
+                  .. >
+constraint 'x = 'x x_sig
+
+and ('a, 'b, 'c, 'd, 'e, 'f, 'g, 'h, 'i, 'type_expr_parse, 'type_expr_typecheck) type_expr_gadt =
+  Prod     : 'a -> ('a, 'b, 'c, 'd, 'e, 'f, 'g, 'h, 'i, ttrue,  ttrue) type_expr_gadt
+| Sum      : 'b -> ('a, 'b, 'c, 'd, 'e, 'f, 'g, 'h, 'i, ttrue,  ttrue) type_expr_gadt
+| Record   : 'c -> ('a, 'b, 'c, 'd, 'e, 'f, 'g, 'h, 'i, ttrue,  ttrue) type_expr_gadt
+| TypeApp  : 'd -> ('a, 'b, 'c, 'd, 'e, 'f, 'g, 'h, 'i, ttrue,  ttrue) type_expr_gadt
+| ParType  : 'e -> ('a, 'b, 'c, 'd, 'e, 'f, 'g, 'h, 'i, ttrue,  ttrue) type_expr_gadt
+| TAlias   : 'f -> ('a, 'b, 'c, 'd, 'e, 'f, 'g, 'h, 'i, ttrue,  ttrue) type_expr_gadt
+
+| Function : 'g -> ('a, 'b, 'c, 'd, 'e, 'f, 'g, 'h, 'i, tfalse, ttrue) type_expr_gadt
+| Mutable  : 'h -> ('a, 'b, 'c, 'd, 'e, 'f, 'g, 'h, 'i, tfalse, ttrue) type_expr_gadt
+| Unit     : 'i -> ('a, 'b, 'c, 'd, 'e, 'f, 'g, 'h, 'i, tfalse, ttrue) type_expr_gadt
+ *)
 
 and 'x cartesian = ('x type_expr, times) nsepseq reg
+constraint 'x = 'x x_sig
 
 and 'x variant = ('x constr * kwd_of * 'x cartesian) reg
+constraint 'x = 'x x_sig
 
 and 'x record_type = (kwd_record * 'x field_decls * kwd_end) reg
+constraint 'x = 'x x_sig
 
 and 'x field_decls = ('x field_decl, semi) nsepseq
+constraint 'x = 'x x_sig
 
 and 'x field_decl = ('x variable * colon * 'x type_expr) reg
+constraint 'x = 'x x_sig
 
 and 'x type_tuple = ('x type_name, comma) nsepseq par
+constraint 'x = 'x x_sig
 
 (* Function and procedure declarations *)
 
 and 'x lambda_decl =
   FunDecl  of 'x fun_decl reg
 | ProcDecl of 'x proc_decl reg
+constraint 'x = 'x x_sig
 
 and 'x fun_decl = {
   kwd_function :    kwd_function;
@@ -224,6 +311,7 @@ and 'x fun_decl = {
   return       : 'x expr;
   terminator   :    semi option
 }
+constraint 'x = 'x x_sig
 
 and 'x proc_decl = {
   kwd_procedure :    kwd_procedure;
@@ -234,16 +322,21 @@ and 'x proc_decl = {
   block         : 'x block reg;
   terminator    :    semi option
 }
+constraint 'x = 'x x_sig
 
 and 'x parameters = ('x param_decl, semi) nsepseq par
+constraint 'x = 'x x_sig
 
 and 'x param_decl =
   ParamConst of 'x param_const
 | ParamVar   of 'x param_var
+constraint 'x = 'x x_sig
 
 and 'x param_const = (kwd_const * 'x variable * colon * 'x type_expr) reg
+constraint 'x = 'x x_sig
 
 and 'x param_var = (kwd_var * 'x variable * colon * 'x type_expr) reg
+constraint 'x = 'x x_sig
 
 and 'x block = {
   opening    :    kwd_begin;
@@ -251,11 +344,13 @@ and 'x block = {
   terminator :    semi option;
   close      :    kwd_end
 }
+constraint 'x = 'x x_sig
 
 and 'x local_decl =
   LocalLam   of 'x lambda_decl
 | LocalConst of 'x const_decl reg
 | LocalVar   of 'x var_decl reg
+constraint 'x = 'x x_sig
 
 and 'x const_decl = {
   kwd_const  :    kwd_const;
@@ -266,6 +361,7 @@ and 'x const_decl = {
   init       : 'x expr;
   terminator :    semi option
 }
+constraint 'x = 'x x_sig
 
 and 'x var_decl = {
   kwd_var    :    kwd_var;
@@ -276,12 +372,15 @@ and 'x var_decl = {
   init       : 'x expr;
   terminator :    semi option
 }
+constraint 'x = 'x x_sig
 
 and 'x instructions = ('x instruction, semi) nsepseq reg
+constraint 'x = 'x x_sig
 
 and 'x instruction =
   Single of 'x single_instr
 | Block  of 'x block reg
+constraint 'x = 'x x_sig
 
 and 'x single_instr =
   Cond     of 'x conditional reg
@@ -291,6 +390,7 @@ and 'x single_instr =
 | ProcCall of 'x fun_call
 | Null     of kwd_null
 | Fail     of (kwd_fail * 'x expr) reg
+constraint 'x = 'x x_sig
 
 and 'x conditional = {
   kwd_if   :    kwd_if;
@@ -300,6 +400,7 @@ and 'x conditional = {
   kwd_else :    kwd_else;
   ifnot    : 'x instruction
 }
+constraint 'x = 'x x_sig
 
 and 'x match_instr = {
   kwd_match :    kwd_match;
@@ -309,22 +410,29 @@ and 'x match_instr = {
   cases     : 'x cases;
   kwd_end   :    kwd_end
 }
+constraint 'x = 'x x_sig
 
 and 'x cases = ('x case, vbar) nsepseq reg
+constraint 'x = 'x x_sig
 
 and 'x case = ('x pattern * arrow * 'x instruction) reg
+constraint 'x = 'x x_sig
 
 and 'x ass_instr = ('x variable * ass * 'x expr) reg
+constraint 'x = 'x x_sig
 
 and 'x loop =
   While of 'x while_loop
 | For   of 'x for_loop
+constraint 'x = 'x x_sig
 
 and 'x while_loop = (kwd_while * 'x expr * 'x block reg) reg
+constraint 'x = 'x x_sig
 
 and 'x for_loop =
   ForInt     of 'x for_int reg
 | ForCollect of 'x for_collect reg
+constraint 'x = 'x x_sig
 
 and 'x for_int = {
   kwd_for :    kwd_for;
@@ -335,6 +443,7 @@ and 'x for_int = {
   step    : (kwd_step * 'x expr) option;
   block   : 'x block reg
 }
+constraint 'x = 'x x_sig
 
 and 'x for_collect = {
   kwd_for :    kwd_for;
@@ -344,6 +453,7 @@ and 'x for_collect = {
   expr    : 'x expr;
   block   : 'x block reg
 }
+constraint 'x = 'x x_sig
 
 (* Expressions *)
 
@@ -383,33 +493,43 @@ and 'x expr =
 | SomeApp   of (c_Some * 'x arguments) reg
 | MapLookUp of 'x map_lookup reg
 | ParExpr   of 'x expr par
+constraint 'x = 'x x_sig
 
 and 'x tuple = ('x expr, comma) nsepseq par
+constraint 'x = 'x x_sig
 
 and 'x empty_list =
   (lbracket * rbracket * colon * 'x type_expr) par
+constraint 'x = 'x x_sig
 
 and 'x empty_set =
   (lbrace * rbrace * colon * 'x type_expr) par
+constraint 'x = 'x x_sig
 
 and 'x none_expr =
   (c_None * colon * 'x type_expr) par
+constraint 'x = 'x x_sig
 
 and 'x fun_call = ('x fun_name * 'x arguments) reg
+constraint 'x = 'x x_sig
 
 and 'x arguments = 'x tuple
+constraint 'x = 'x x_sig
 
 and 'x constr_app = ('x constr * 'x arguments) reg
+constraint 'x = 'x x_sig
 
 and 'x map_lookup = {
   map_name : 'x variable;
   selector : dot;
   index    : 'x expr brackets
 }
+constraint 'x = 'x x_sig
 
 (* Patterns *)
 
 and 'x pattern = ('x core_pattern, cons) nsepseq reg
+constraint 'x = 'x x_sig
 
 and 'x core_pattern =
   PVar    of Lexer.lexeme reg
@@ -424,22 +544,39 @@ and 'x core_pattern =
 | PSome   of (c_Some * 'x core_pattern par) reg
 | PList   of 'x list_pattern
 | PTuple  of ('x core_pattern, comma) nsepseq par
+constraint 'x = 'x x_sig
 
 and 'x list_pattern =
   Sugar of ('x core_pattern, comma) sepseq brackets
 | Raw   of ('x core_pattern * cons * 'x pattern) par
+constraint 'x = 'x x_sig
+
+(* Variations on the AST *)
+
+type parse_phase = <
+  annot:               unit;
+  type_expr_typecheck: tfalse;
+>
+
+type typecheck_phase = <
+  annot:               typecheck_phase type_expr;
+  type_expr_typecheck: ttrue;
+>
+
+type t = parse_phase ast
 
 (* Projecting regions *)
 
 open! Region
 
-let type_expr_to_region = function
-  Prod    node -> node.region
-| Sum     node -> node.region
-| Record  node -> node.region
-| TypeApp node -> node.region
-| ParType node -> node.region
-| TAlias  node -> node.region
+let type_expr_to_region : parse_phase type_expr -> region = function
+  Prod    (Present node) -> node.region
+| Sum     (Present node) -> node.region
+| Record  (Present node) -> node.region
+| TypeApp (Present node) -> node.region
+| ParType (Present node) -> node.region
+| TAlias  (Present node) -> node.region
+| _ -> .
 
 let expr_to_region = function
   Or        {region; _}
