@@ -5,80 +5,81 @@
 
   (* Literals *)
 
-%token <LexToken.lexeme Region.reg> String
+%token              <LexToken.lexeme Region.reg> String
 %token <(LexToken.lexeme * MBytes.t) Region.reg> Bytes
-%token <(LexToken.lexeme * Z.t) Region.reg> Int
-%token <LexToken.lexeme Region.reg> Ident
-%token <LexToken.lexeme Region.reg> Constr
+%token      <(LexToken.lexeme * Z.t) Region.reg> Int
+%token              <LexToken.lexeme Region.reg> Ident
+%token              <LexToken.lexeme Region.reg> Constr
 
   (* Symbols *)
 
-%token <Region.t> SEMI
-%token <Region.t> COMMA
-%token <Region.t> LPAR
-%token <Region.t> RPAR
-%token <Region.t> LBRACE
-%token <Region.t> RBRACE
-%token <Region.t> LBRACKET
-%token <Region.t> RBRACKET
-%token <Region.t> CONS
-%token <Region.t> VBAR
-%token <Region.t> ARROW
-%token <Region.t> ASGNMNT
-%token <Region.t> EQUAL
-%token <Region.t> COLON
-%token <Region.t> OR
-%token <Region.t> AND
-%token <Region.t> LT
-%token <Region.t> LEQ
-%token <Region.t> GT
-%token <Region.t> GEQ
-%token <Region.t> NEQ
-%token <Region.t> PLUS
-%token <Region.t> MINUS
-%token <Region.t> SLASH
-%token <Region.t> TIMES
-%token <Region.t> DOT
-%token <Region.t> WILD
-%token <Region.t> CAT
+%token <Region.t> SEMI        (* ";"   *)
+%token <Region.t> COMMA       (* ","   *)
+%token <Region.t> LPAR        (* "("   *)
+%token <Region.t> RPAR        (* ")"   *)
+%token <Region.t> LBRACE      (* "{"   *)
+%token <Region.t> RBRACE      (* "}"   *)
+%token <Region.t> LBRACKET    (* "["   *)
+%token <Region.t> RBRACKET    (* "]"   *)
+%token <Region.t> CONS        (* "<:"  *)
+%token <Region.t> VBAR        (* "|"   *)
+%token <Region.t> ARROW       (* "->"  *)
+%token <Region.t> ASGNMNT     (* ":="  *)
+%token <Region.t> EQUAL       (* "="   *)
+%token <Region.t> COLON       (* ":"   *)
+%token <Region.t> OR          (* "||"  *)
+%token <Region.t> AND         (* "&&"  *)
+%token <Region.t> LT          (* "<"   *)
+%token <Region.t> LEQ         (* "<="  *)
+%token <Region.t> GT          (* ">"   *)
+%token <Region.t> GEQ         (* ">="  *)
+%token <Region.t> NEQ         (* "=/=" *)
+%token <Region.t> PLUS        (* "+"   *)
+%token <Region.t> MINUS       (* "-"   *)
+%token <Region.t> SLASH       (* "/"   *)
+%token <Region.t> TIMES       (* "*"   *)
+%token <Region.t> DOT         (* "."   *)
+%token <Region.t> WILD        (* "_"   *)
+%token <Region.t> CAT         (* "^"   *)
 
   (* Keywords *)
 
-%token <Region.t> Begin
-%token <Region.t> Const
-%token <Region.t> Down
-%token <Region.t> If
-%token <Region.t> In
-%token <Region.t> Is
-%token <Region.t> For
-%token <Region.t> Function
-%token <Region.t> Parameter
-%token <Region.t> Storage
-%token <Region.t> Type
-%token <Region.t> Of
-%token <Region.t> Operations
-%token <Region.t> Var
-%token <Region.t> End
-%token <Region.t> Then
-%token <Region.t> Else
-%token <Region.t> Match
-%token <Region.t> Null
-%token <Region.t> Procedure
-%token <Region.t> Record
-%token <Region.t> Step
-%token <Region.t> To
-%token <Region.t> Mod
-%token <Region.t> Not
-%token <Region.t> While
-%token <Region.t> With
+%token <Region.t> Begin       (* "begin"      *)
+%token <Region.t> Const       (* "const"      *)
+%token <Region.t> Down        (* "down"       *)
+%token <Region.t> Fail        (* "fail"       *)
+%token <Region.t> If          (* "if"         *)
+%token <Region.t> In          (* "in"         *)
+%token <Region.t> Is          (* "is"         *)
+%token <Region.t> For         (* "for"        *)
+%token <Region.t> Function    (* "function"   *)
+%token <Region.t> Parameter   (* "parameter"  *)
+%token <Region.t> Storage     (* "storage"    *)
+%token <Region.t> Type        (* "type"       *)
+%token <Region.t> Of          (* "of"         *)
+%token <Region.t> Operations  (* "operations" *)
+%token <Region.t> Var         (* "var"        *)
+%token <Region.t> End         (* "end"        *)
+%token <Region.t> Then        (* "then"       *)
+%token <Region.t> Else        (* "else"       *)
+%token <Region.t> Match       (* "match"      *)
+%token <Region.t> Null        (* "null"       *)
+%token <Region.t> Procedure   (* "procedure"  *)
+%token <Region.t> Record      (* "record"     *)
+%token <Region.t> Step        (* "step"       *)
+%token <Region.t> To          (* "to"         *)
+%token <Region.t> Mod         (* "mod"        *)
+%token <Region.t> Not         (* "not"        *)
+%token <Region.t> While       (* "while"      *)
+%token <Region.t> With        (* "with"       *)
 
   (* Data constructors *)
 
-%token <Region.t> C_False
-%token <Region.t> C_None
-%token <Region.t> C_Some
-%token <Region.t> C_True
-%token <Region.t> C_Unit
+%token <Region.t> C_False     (* "False" *)
+%token <Region.t> C_None      (* "None"  *)
+%token <Region.t> C_Some      (* "Some"  *)
+%token <Region.t> C_True      (* "True"  *)
+%token <Region.t> C_Unit      (* "Unit"  *)
 
   (* Virtual tokens *)
 

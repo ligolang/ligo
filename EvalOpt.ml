@@ -14,15 +14,20 @@ let help () =
   printf "Usage: %s [<option> ...] [<input>.li | \"-\"]\n" file;
   print_endline "where <input>.li is the Ligo source file (default: stdin),";
   print_endline "and each <option> (if any) is one of the following:";
-  print_endline "  -c, --copy            Print lexemes of tokens and markup (lexer)";
-  print_endline "  -t, --tokens          Print tokens (lexer)";
-  print_endline "  -u, --units           Print tokens and markup (lexer)";
-  print_endline "  -q, --quiet           No output, except errors (default)";
-  print_endline "      --columns         Columns for source locations";
-  print_endline "      --bytes           Bytes for source locations";
-  print_endline "  -v, --verbose=<stage> cmdline, parser";
-  print_endline "  -h, --help            This help";
+  print_endline "  -c, --copy             Print lexemes of tokens and markup (lexer)";
+  print_endline "  -t, --tokens           Print tokens (lexer)";
+  print_endline "  -u, --units            Print tokens and markup (lexer)";
+  print_endline "  -q, --quiet            No output, except errors (default)";
+  print_endline "      --columns          Columns for source locations";
+  print_endline "      --bytes            Bytes for source locations";
+  print_endline "      --verbose=<stages> cmdline, parser";
+  print_endline "      --version          Commit hash on stdout";
+  print_endline "  -h, --help             This help";
   exit 0
+
+(* Version *)
+
+let version () = printf "%s\n" Version.version; exit 0
 
 (* Specifying the command-line options a la GNU *)
 
@@ -44,14 +49,15 @@ let add_verbose d =
 
 let specs =
   let open! Getopt in [
-  'c',     "copy",    set copy true, None;
-  't',     "tokens",  set tokens true, None;
-  'u',     "units",   set units true, None;
-  'q',     "quiet",   set quiet true, None;
-  noshort, "columns", set columns true, None;
-  noshort, "bytes",   set bytes true, None;
-  'v',     "verbose", None, Some add_verbose;
-  'h',     "help",    Some help, None
+    'c',     "copy",    set copy true, None;
+    't',     "tokens",  set tokens true, None;
+    'u',     "units",   set units true, None;
+    'q',     "quiet",   set quiet true, None;
+    noshort, "columns", set columns true, None;
+    noshort, "bytes",   set bytes true, None;
+    noshort, "verbose", None, Some add_verbose;
+    'h',     "help",    Some help, None;
+    noshort, "version", Some version, None
   ]
 ;;
 
@@ -115,7 +121,7 @@ let input =
       then if   Sys.file_exists file_path
            then Some file_path
            else abort "Source file not found."
-      else abort "Source file lacks the extension .ti."
+      else abort "Source file lacks the extension .li."
 
 (* Exporting remaining options as non-mutable values *)
 

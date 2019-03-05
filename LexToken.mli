@@ -67,33 +67,34 @@ type t =
 
   (* Keywords *)
 
-| Begin      of Region.t
-| Const      of Region.t
-| Down       of Region.t
-| If         of Region.t
-| In         of Region.t
-| Is         of Region.t
-| For        of Region.t
-| Function   of Region.t
-| Parameter  of Region.t
-| Storage    of Region.t
-| Type       of Region.t
-| Of         of Region.t
-| Operations of Region.t
-| Var        of Region.t
-| End        of Region.t
-| Then       of Region.t
-| Else       of Region.t
-| Match      of Region.t
-| Null       of Region.t
-| Procedure  of Region.t
-| Record     of Region.t
-| Step       of Region.t
-| To         of Region.t
-| Mod        of Region.t
-| Not        of Region.t
-| While      of Region.t
-| With       of Region.t
+| Begin      of Region.t  (* "begin"      *)
+| Const      of Region.t  (* "const"      *)
+| Down       of Region.t  (* "down"       *)
+| Fail       of Region.t  (* "fail"       *)
+| If         of Region.t  (* "if"         *)
+| In         of Region.t  (* "in"         *)
+| Is         of Region.t  (* "is"         *)
+| For        of Region.t  (* "for"        *)
+| Function   of Region.t  (* "function"   *)
+| Parameter  of Region.t  (* "parameter"  *)
+| Storage    of Region.t  (* "storage"    *)
+| Type       of Region.t  (* "type"       *)
+| Of         of Region.t  (* "of"         *)
+| Operations of Region.t  (* "operations" *)
+| Var        of Region.t  (* "var"        *)
+| End        of Region.t  (* "end"        *)
+| Then       of Region.t  (* "then"       *)
+| Else       of Region.t  (* "else"       *)
+| Match      of Region.t  (* "match"      *)
+| Null       of Region.t  (* "null"       *)
+| Procedure  of Region.t  (* "procedure"  *)
+| Record     of Region.t  (* "record"     *)
+| Step       of Region.t  (* "step"       *)
+| To         of Region.t  (* "to"         *)
+| Mod        of Region.t  (* "mod"        *)
+| Not        of Region.t  (* "not"        *)
+| While      of Region.t  (* "while"      *)
+| With       of Region.t  (* "with"       *)
 
   (* Data constructors *)
 

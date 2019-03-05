@@ -37,6 +37,7 @@ let sepseq_to_region to_region = function
 type kwd_begin      = Region.t
 type kwd_const      = Region.t
 type kwd_down       = Region.t
+type kwd_fail       = Region.t
 type kwd_if         = Region.t
 type kwd_in         = Region.t
 type kwd_is         = Region.t
@@ -138,6 +139,7 @@ type 'a braces = (lbrace * 'a * rbrace) reg
 
 type t = {
   types      : type_decl list;
+  constants  : const_decl reg list;
   parameter  : parameter_decl;
   storage    : storage_decl;
   operations : operations_decl;
@@ -186,48 +188,62 @@ and lambda_decl =
 
 and fun_decl = {
   kwd_function : kwd_function;
-  var          : variable;
+  name         : variable;
   param        : parameters;
   colon        : colon;
   ret_type     : type_expr;
   kwd_is       : kwd_is;
-  body         : block reg;
+  local_decls  : local_decl list;
+  block        : block reg;
   kwd_with     : kwd_with;
   return       : expr
 }
 
 and proc_decl = {
   kwd_procedure : kwd_procedure;
-  var           : variable;
+  name          : variable;
   param         : parameters;
   kwd_is        : kwd_is;
-  body          : block reg
+  local_decls   : local_decl list;
+  block         : block reg
 }
 
 and parameters = (param_decl, semi) nsepseq par
 
-and param_decl = (var_kind * variable * colon * type_expr) reg
+and param_const = (kwd_const * variable * colon * type_expr) reg
 
-and var_kind =
-  Mutable of kwd_var
-| Const   of kwd_const
+and param_var = (kwd_var * variable * colon * type_expr) reg
+
+and param_decl =
+  ParamConst of param_const
+| ParamVar   of param_var
 
 and block = {
-  decls   : value_decls;
   opening : kwd_begin;
   instr   : instructions;
   close   : kwd_end
 }
 
-and value_decls = (var_decl reg, semi) sepseq reg
+and local_decl =
+  LocalLam   of lambda_decl
+| LocalConst of const_decl reg
+| LocalVar   of var_decl reg
 
+and const_decl = {
+  kwd_const : kwd_const;
+  name      : variable;
+  colon     : colon;
+  vtype     : type_expr;
+  equal     : equal;
+  init      : expr
+}
 and var_decl = {
-  kind   : var_kind;
-  var    : variable;
-  colon  : colon;
-  vtype  : type_expr;
-  setter : Region.t;  (* "=" or ":=" *)
-  init   : expr
+  kwd_var : kwd_var;
+  name    : variable;
+  colon   : colon;
+  vtype   : type_expr;
+  asgnmnt : asgnmnt;
+  init    : expr
 }
 
 and instructions = (instruction, semi) nsepseq reg
@@ -243,6 +259,7 @@ and single_instr =
 | Loop     of loop
 | ProcCall of fun_call
 | Null     of kwd_null
+| Fail     of (kwd_fail * expr) reg
 
 and conditional = {
   kwd_if   : kwd_if;
@@ -429,10 +446,6 @@ let expr_to_region = function
 | MapLookUp {region; _}
 | ParExpr   {region; _} -> region
 
-let var_kind_to_region = function
-  Mutable region
-| Const   region -> region
-
 let instr_to_region = function
   Single Cond                {region;_}
 | Single Match               {region; _}
@@ -442,6 +455,7 @@ let instr_to_region = function
 | Single Loop For ForCollect {region; _}
 | Single ProcCall            {region; _}
 | Single Null                 region
+| Single Fail                {region; _}
 | Block                      {region; _} -> region
 
 let core_pattern_to_region = function
@@ -459,6 +473,12 @@ let core_pattern_to_region = function
 | PList Raw   {region; _}
 | PTuple      {region; _} -> region
 
+let local_decl_to_region = function
+  LocalLam FunDecl  {region; _}
+| LocalLam ProcDecl {region; _}
+| LocalConst        {region; _}
+| LocalVar          {region; _} -> region
+
 (* Printing the tokens with their source regions *)
 
 type xyz = {
@@ -470,6 +490,7 @@ type xyz = {
   case : case -> unit;
   cases : cases -> unit;
   conditional : conditional -> unit;
+  const_decl : const_decl reg -> unit;
   constr : constr -> unit;
   constr_app : constr_app -> unit;
   core_pattern : core_pattern -> unit;
@@ -477,6 +498,7 @@ type xyz = {
   empty_list : empty_list -> unit;
   empty_set : empty_set -> unit;
   expr : expr -> unit;
+  fail : (kwd_fail * expr) -> unit;
   field_decl : field_decl -> unit;
   field_decls : field_decls -> unit;
   for_collect : for_collect reg -> unit;
@@ -501,6 +523,8 @@ type xyz = {
   param_decl : param_decl -> unit;
   parameter_decl : (region * variable * region * type_expr) reg -> unit;
   parameters : parameters -> unit;
+  param_const : param_const -> unit;
+  param_var : param_var -> unit;
   pattern : pattern -> unit;
   patterns : core_pattern par -> unit;
   proc_decl : proc_decl reg -> unit;
@@ -525,10 +549,10 @@ type xyz = {
   type_decl : (region * variable * region * type_expr) reg -> unit;
   type_expr : type_expr -> unit;
   type_tuple : type_tuple -> unit;
-  value_decls : value_decls -> unit;
+  local_decl : local_decl -> unit;
+  local_decls : local_decl list -> unit;
   var : variable -> unit;
   var_decl : var_decl reg -> unit;
-  var_kind : var_kind -> unit;
   variant : variant -> unit;
   while_loop : while_loop -> unit
 }
@@ -663,22 +687,24 @@ and print_lambda_decl (visitor : xyz) = function
 | ProcDecl proc_decl -> visitor.proc_decl proc_decl
 
 and print_fun_decl (visitor : xyz) {value=node; _} =
-  visitor.token      node.kwd_function "function";
-  visitor.var        node.var;
-  visitor.parameters node.param;
-  visitor.token      node.colon ":";
-  visitor.type_expr  node.ret_type;
-  visitor.token      node.kwd_is "is";
-  visitor.block      node.body;
-  visitor.token      node.kwd_with "with";
-  visitor.expr       node.return
+  visitor.token       node.kwd_function "function";
+  visitor.var         node.name;
+  visitor.parameters  node.param;
+  visitor.token       node.colon ":";
+  visitor.type_expr   node.ret_type;
+  visitor.token       node.kwd_is "is";
+  visitor.local_decls node.local_decls;
+  visitor.block       node.block;
+  visitor.token       node.kwd_with "with";
+  visitor.expr        node.return
 
 and print_proc_decl (visitor : xyz) {value=node; _} =
-  visitor.token      node.kwd_procedure "procedure";
-  visitor.var        node.var;
-  visitor.parameters node.param;
-  visitor.token      node.kwd_is "is";
-  visitor.block      node.body
+  visitor.token       node.kwd_procedure "procedure";
+  visitor.var         node.name;
+  visitor.parameters  node.param;
+  visitor.token       node.kwd_is "is";
+  visitor.local_decls node.local_decls;
+  visitor.block       node.block
 
 and print_parameters (visitor : xyz) {value=node; _} =
   let lpar, sequence, rpar = node in
@@ -686,36 +712,51 @@ and print_parameters (visitor : xyz) {value=node; _} =
   visitor.nsepseq ";" visitor.param_decl sequence;
   visitor.token rpar ")"
 
-and print_param_decl (visitor : xyz) {value=node; _} =
-  let var_kind, variable, colon, type_expr = node in
-  visitor.var_kind  var_kind;
+and print_param_decl (visitor : xyz) = function
+  ParamConst param_const -> visitor.param_const param_const
+| ParamVar   param_var   -> visitor.param_var   param_var
+
+and print_param_const (visitor : xyz) {value=node; _} =
+  let kwd_const, variable, colon, type_expr = node in
+  visitor.token     kwd_const "const";
   visitor.var       variable;
   visitor.token     colon ":";
   visitor.type_expr type_expr
 
-and print_var_kind (visitor : xyz) = function
-  Mutable kwd_var -> visitor.token kwd_var "var"
-| Const kwd_const -> visitor.token kwd_const "const"
+and print_param_var (visitor : xyz) {value=node; _} =
+  let kwd_var, variable, colon, type_expr = node in
+  visitor.token     kwd_var "var";
+  visitor.var       variable;
+  visitor.token     colon ":";
+  visitor.type_expr type_expr
 
 and print_block (visitor : xyz) {value=node; _} =
-  visitor.value_decls  node.decls;
   visitor.token        node.opening "begin";
   visitor.instructions node.instr;
   visitor.token        node.close "end"
 
-and print_value_decls (visitor : xyz) {value=sequence; _} =
-  visitor.sepseq ";" visitor.var_decl sequence
+and print_local_decls (visitor : xyz) sequence =
+  List.iter visitor.local_decl sequence
 
-and print_var_decl (visitor : xyz) {value=node; _} =
-  let setter =
-    match node.kind with
-      Mutable _ -> ":="
-    |   Const _ -> "=" in
-  visitor.var_kind  node.kind;
-  visitor.var       node.var;
+and print_local_decl (visitor : xyz) = function
+  LocalLam   decl -> visitor.lambda_decl decl
+| LocalConst decl -> visitor.const_decl  decl
+| LocalVar   decl -> visitor.var_decl    decl
+
+and print_const_decl (visitor : xyz) {value=node; _} =
+  visitor.token     node.kwd_const "const";
+  visitor.var       node.name;
   visitor.token     node.colon ":";
   visitor.type_expr node.vtype;
-  visitor.token     node.setter setter;
+  visitor.token     node.equal "=";
+  visitor.expr      node.init
+
+and print_var_decl (visitor : xyz) {value=node; _} =
+  visitor.token     node.kwd_var "var";
+  visitor.var       node.name;
+  visitor.token     node.colon ":";
+  visitor.type_expr node.vtype;
+  visitor.token     node.asgnmnt ":=";
   visitor.expr      node.init
 
 and print_instructions (visitor : xyz) {value=sequence; _} =
@@ -732,6 +773,11 @@ and print_single_instr (visitor : xyz) = function
 | Loop     loop       -> visitor.loop loop
 | ProcCall fun_call   -> visitor.fun_call fun_call
 | Null     kwd_null   -> visitor.token kwd_null "null"
+| Fail     {value; _} -> visitor.fail value
+
+and print_fail (visitor : xyz) (kwd_fail, expr) =
+  visitor.token kwd_fail "fail";
+  visitor.expr expr
 
 and print_conditional (visitor : xyz) node =
   visitor.token       node.kwd_if "if";
@@ -999,6 +1045,11 @@ let rec visitor () : xyz = {
     bytes           = print_bytes           (visitor ());
     int             = print_int             (visitor ());
 
+    local_decl      = print_local_decl      (visitor ());
+    fail            = print_fail            (visitor ());
+    param_var       = print_param_var       (visitor ());
+    param_const     = print_param_const     (visitor ());
+    const_decl      = print_const_decl      (visitor ());
     parameter_decl  = print_parameter_decl  (visitor ());
     storage_decl    = print_storage_decl    (visitor ());
     operations_decl = print_operations_decl (visitor ());
@@ -1018,9 +1069,8 @@ let rec visitor () : xyz = {
     proc_decl       = print_proc_decl       (visitor ());
     parameters      = print_parameters      (visitor ());
     param_decl      = print_param_decl      (visitor ());
-    var_kind        = print_var_kind        (visitor ());
     block           = print_block           (visitor ());
-    value_decls     = print_value_decls     (visitor ());
+    local_decls     = print_local_decls     (visitor ());
     var_decl        = print_var_decl        (visitor ());
     instructions    = print_instructions    (visitor ());
     instruction     = print_instruction     (visitor ());

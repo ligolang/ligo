@@ -26,6 +26,7 @@ val sepseq_to_region  : ('a -> Region.t) -> ('a,'sep) sepseq -> Region.t
 type kwd_begin      = Region.t
 type kwd_const      = Region.t
 type kwd_down       = Region.t
+type kwd_fail       = Region.t
 type kwd_if         = Region.t
 type kwd_in         = Region.t
 type kwd_is         = Region.t
@@ -127,6 +128,7 @@ type 'a braces = (lbrace * 'a * rbrace) reg
 
 type t = {
   types      : type_decl list;
+  constants  : const_decl reg list;
   parameter  : parameter_decl;
   storage    : storage_decl;
   operations : operations_decl;
@@ -175,48 +177,59 @@ and lambda_decl =
 
 and fun_decl = {
   kwd_function : kwd_function;
-  var          : variable;
+  name         : variable;
   param        : parameters;
   colon        : colon;
   ret_type     : type_expr;
   kwd_is       : kwd_is;
-  body         : block reg;
+  local_decls  : local_decl list;
+  block        : block reg;
   kwd_with     : kwd_with;
   return       : expr
 }
 
 and proc_decl = {
   kwd_procedure : kwd_procedure;
-  var           : variable;
+  name          : variable;
   param         : parameters;
   kwd_is        : kwd_is;
-  body          : block reg
+  local_decls   : local_decl list;
+  block         : block reg
 }
 
 and parameters = (param_decl, semi) nsepseq par
 
-and param_decl = (var_kind * variable * colon * type_expr) reg
-
-and var_kind =
-  Mutable of kwd_var
-| Const   of kwd_const
+and param_decl =
+  ParamConst of (kwd_const * variable * colon * type_expr) reg
+| ParamVar   of (kwd_var * variable * colon * type_expr) reg
 
 and block = {
-  decls   : value_decls;
   opening : kwd_begin;
   instr   : instructions;
   close   : kwd_end
 }
 
-and value_decls = (var_decl reg, semi) sepseq reg
+and local_decl =
+  LocalLam   of lambda_decl
+| LocalConst of const_decl reg
+| LocalVar   of var_decl reg
+
+and const_decl = {
+  kwd_const : kwd_const;
+  name      : variable;
+  colon     : colon;
+  vtype     : type_expr;
+  equal     : equal;
+  init      : expr
+}
 
 and var_decl = {
-  kind   : var_kind;
-  var    : variable;
-  colon  : colon;
-  vtype  : type_expr;
-  setter : Region.t;  (* "=" or ":=" *)
-  init   : expr
+  kwd_var : kwd_var;
+  name    : variable;
+  colon   : colon;
+  vtype   : type_expr;
+  asgnmnt : asgnmnt;
+  init    : expr
 }
 
 and instructions = (instruction, semi) nsepseq reg
@@ -232,6 +245,7 @@ and single_instr =
 | Loop     of loop
 | ProcCall of fun_call
 | Null     of kwd_null
+| Fail     of (kwd_fail * expr) reg
 
 and conditional = {
   kwd_if   : kwd_if;
@@ -375,11 +389,11 @@ val type_expr_to_region : type_expr -> Region.t
 
 val expr_to_region : expr -> Region.t
 
-val var_kind_to_region : var_kind -> Region.t
-
 val instr_to_region : instruction -> Region.t
 
 val core_pattern_to_region : core_pattern -> Region.t
+
+val local_decl_to_region : local_decl -> Region.t
 
 (* Printing *)
 
