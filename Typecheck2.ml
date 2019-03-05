@@ -3,10 +3,7 @@ module SMap = Map.Make(String)
 open AST
 
 type i = parse_phase
-type typecheck_phase = <
-  annot:               typecheck_phase type_expr;
-  type_expr_typecheck: tfalse;
->
+type typecheck_phase = (parse_phase type_expr *  tfalse)
 type o = typecheck_phase
 
 type te = o type_expr list SMap.t (* Type environment *)

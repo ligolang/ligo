@@ -161,8 +161,7 @@ type ('a, 'type_expr_typecheck) gadt_if =
    sufficient.
  *)
 type 'x x_sig = 'x
-constraint 'x = < annot:               'type_annotation;
-                  type_expr_typecheck: 'bool1 >
+constraint 'x = 'type_annotation * 'type_expr_typecheck
 
 type 'x ast = {
   types      : 'x type_decl reg list;
@@ -221,8 +220,7 @@ and 'x type_expr =
 | Function of (('x type_expr list) * 'x type_expr, 'type_expr_typecheck) gadt_if
 | Mutable  of ('x type_expr,                       'type_expr_typecheck) gadt_if
 | Unit     of (unit,                               'type_expr_typecheck) gadt_if
-constraint 'x = < type_expr_typecheck: 'type_expr_typecheck;
-                  .. >
+constraint 'x = ('type_annotation * 'type_expr_typecheck)
 constraint 'x = 'x x_sig
 
 and 'x cartesian = ('x type_expr, times) nsepseq reg
@@ -505,15 +503,9 @@ constraint 'x = 'x x_sig
 
 (* Variations on the AST *)
 
-type parse_phase = <
-  annot:               unit;
-  type_expr_typecheck: tfalse;
->
+type parse_phase = (unit * tfalse)
 
-type typecheck_phase = <
-  annot:               typecheck_phase type_expr;
-  type_expr_typecheck: ttrue;
->
+type typecheck_phase = (parse_phase type_expr *  ttrue)
 
 type t = parse_phase ast
 
