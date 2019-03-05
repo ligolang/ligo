@@ -53,5 +53,5 @@
 (rule
   (targets Version.ml)
   (deps Version.gitHEAD)
-  (action (run "sh" "-c" "printf 'let version = \"%s\"'\\\\n \"$(cat Version.gitHEAD)\" > Version.ml"))
+  (action (run "sh" "-c" "printf 'let version = \"%s\"'\\\\n \"$(git describe --always --dirty --abbrev=0)\" > Version.ml"))
   (mode promote-until-clean))
