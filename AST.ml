@@ -113,12 +113,12 @@ type eof = Region.t
 
 (* Literals *)
 
-type 'x variable   = string reg
-type 'x fun_name   = string reg
-type 'x type_name  = string reg
-type 'x field_name = string reg
-type 'x map_name   = string reg
-type 'x constr     = string reg
+type 'a variable   = string reg
+type 'a fun_name   = string reg
+type 'a type_name  = string reg
+type 'a field_name = string reg
+type 'a map_name   = string reg
+type 'a constr     = string reg
 
 (* Comma-separated non-empty lists *)
 
@@ -144,227 +144,227 @@ type 'a braces = (lbrace * 'a * rbrace) reg
 
 type t = < ty: unit > ast
 
-and 'x ast = {
-  types      : 'x type_decl reg list;
-  constants  : 'x const_decl reg list;
-  parameter  : 'x parameter_decl reg;
-  storage    : 'x storage_decl reg;
-  operations : 'x operations_decl reg;
-  lambdas    : 'x lambda_decl list;
-  block      : 'x block reg;
+and 'a ast = {
+  types      : 'a type_decl reg list;
+  constants  : 'a const_decl reg list;
+  parameter  : 'a parameter_decl reg;
+  storage    : 'a storage_decl reg;
+  operations : 'a operations_decl reg;
+  lambdas    : 'a lambda_decl list;
+  block      : 'a block reg;
   eof        :    eof
 }
 
-and 'x parameter_decl = {
+and 'a parameter_decl = {
   kwd_parameter :    kwd_parameter;
-  name          : 'x variable;
+  name          : 'a variable;
   colon         :    colon;
-  param_type    : 'x type_expr;
+  param_type    : 'a type_expr;
   terminator    :    semi option
 }
 
-and 'x storage_decl = {
+and 'a storage_decl = {
   kwd_storage :    kwd_storage;
-  store_type  : 'x type_expr;
+  store_type  : 'a type_expr;
   terminator  :    semi option
 }
 
-and 'x operations_decl = {
+and 'a operations_decl = {
   kwd_operations :    kwd_operations;
-  op_type        : 'x type_expr;
+  op_type        : 'a type_expr;
   terminator     :    semi option
 }
 
 (* Type declarations *)
 
-and 'x type_decl = {
+and 'a type_decl = {
   kwd_type   :    kwd_type;
-  name       : 'x type_name;
+  name       : 'a type_name;
   kwd_is     :    kwd_is;
-  type_expr  : 'x type_expr;
+  type_expr  : 'a type_expr;
   terminator :    semi option
 }
 
-and 'x type_expr =
-  Prod    of 'x cartesian
-| Sum     of ('x variant, vbar) nsepseq reg
-| Record  of 'x record_type
-| TypeApp of ('x type_name * 'x type_tuple) reg
-| ParType of 'x type_expr par
-| TAlias  of 'x variable
+and 'a type_expr =
+  Prod    of 'a cartesian
+| Sum     of ('a variant, vbar) nsepseq reg
+| Record  of 'a record_type
+| TypeApp of ('a type_name * 'a type_tuple) reg
+| ParType of 'a type_expr par
+| TAlias  of 'a variable
 
-and 'x cartesian = ('x type_expr, times) nsepseq reg
+and 'a cartesian = ('a type_expr, times) nsepseq reg
 
-and 'x variant = ('x constr * kwd_of * 'x cartesian) reg
+and 'a variant = ('a constr * kwd_of * 'a cartesian) reg
 
-and 'x record_type = (kwd_record * 'x field_decls * kwd_end) reg
+and 'a record_type = (kwd_record * 'a field_decls * kwd_end) reg
 
-and 'x field_decls = ('x field_decl, semi) nsepseq
+and 'a field_decls = ('a field_decl, semi) nsepseq
 
-and 'x field_decl = ('x variable * colon * 'x type_expr) reg
+and 'a field_decl = ('a variable * colon * 'a type_expr) reg
 
-and 'x type_tuple = ('x type_name, comma) nsepseq par
+and 'a type_tuple = ('a type_name, comma) nsepseq par
 
 (* Function and procedure declarations *)
 
-and 'x lambda_decl =
-  FunDecl  of 'x fun_decl reg
-| ProcDecl of 'x proc_decl reg
+and 'a lambda_decl =
+  FunDecl  of 'a fun_decl reg
+| ProcDecl of 'a proc_decl reg
 
-and 'x fun_decl = {
+and 'a fun_decl = {
   kwd_function :    kwd_function;
-  name         : 'x variable;
-  param        : 'x parameters;
+  name         : 'a variable;
+  param        : 'a parameters;
   colon        :    colon;
-  ret_type     : 'x type_expr;
+  ret_type     : 'a type_expr;
   kwd_is       :    kwd_is;
-  local_decls  : 'x local_decl list;
-  block        : 'x block reg;
+  local_decls  : 'a local_decl list;
+  block        : 'a block reg;
   kwd_with     :    kwd_with;
-  return       : 'x expr;
+  return       : 'a expr;
   terminator   :    semi option
 }
 
-and 'x proc_decl = {
+and 'a proc_decl = {
   kwd_procedure :    kwd_procedure;
-  name          : 'x variable;
-  param         : 'x parameters;
+  name          : 'a variable;
+  param         : 'a parameters;
   kwd_is        :    kwd_is;
-  local_decls   : 'x local_decl list;
-  block         : 'x block reg;
+  local_decls   : 'a local_decl list;
+  block         : 'a block reg;
   terminator    :    semi option
 }
 
-and 'x parameters = ('x param_decl, semi) nsepseq par
+and 'a parameters = ('a param_decl, semi) nsepseq par
 
-and 'x param_decl =
-  ParamConst of 'x param_const
-| ParamVar   of 'x param_var
+and 'a param_decl =
+  ParamConst of 'a param_const
+| ParamVar   of 'a param_var
 
-and 'x param_const = (kwd_const * 'x variable * colon * 'x type_expr) reg
+and 'a param_const = (kwd_const * 'a variable * colon * 'a type_expr) reg
 
-and 'x param_var = (kwd_var * 'x variable * colon * 'x type_expr) reg
+and 'a param_var = (kwd_var * 'a variable * colon * 'a type_expr) reg
 
-and 'x block = {
+and 'a block = {
   opening    :    kwd_begin;
-  instr      : 'x instructions;
+  instr      : 'a instructions;
   terminator :    semi option;
   close      :    kwd_end
 }
 
-and 'x local_decl =
-  LocalLam   of 'x lambda_decl
-| LocalConst of 'x const_decl reg
-| LocalVar   of 'x var_decl reg
+and 'a local_decl =
+  LocalLam   of 'a lambda_decl
+| LocalConst of 'a const_decl reg
+| LocalVar   of 'a var_decl reg
 
-and 'x const_decl = {
+and 'a const_decl = {
   kwd_const  :    kwd_const;
-  name       : 'x variable;
+  name       : 'a variable;
   colon      :    colon;
-  vtype      : 'x type_expr;
+  vtype      : 'a type_expr;
   equal      :    equal;
-  init       : 'x expr;
+  init       : 'a expr;
   terminator :    semi option
 }
 
-and 'x var_decl = {
+and 'a var_decl = {
   kwd_var    :    kwd_var;
-  name       : 'x variable;
+  name       : 'a variable;
   colon      :    colon;
-  vtype      : 'x type_expr;
+  vtype      : 'a type_expr;
   ass        :    ass;
-  init       : 'x expr;
+  init       : 'a expr;
   terminator :    semi option
 }
 
-and 'x instructions = ('x instruction, semi) nsepseq reg
+and 'a instructions = ('a instruction, semi) nsepseq reg
 
-and 'x instruction =
-  Single of 'x single_instr
-| Block  of 'x block reg
+and 'a instruction =
+  Single of 'a single_instr
+| Block  of 'a block reg
 
-and 'x single_instr =
-  Cond     of 'x conditional reg
-| Match    of 'x match_instr reg
-| Ass      of 'x ass_instr
-| Loop     of 'x loop
-| ProcCall of 'x fun_call
+and 'a single_instr =
+  Cond     of 'a conditional reg
+| Match    of 'a match_instr reg
+| Ass      of 'a ass_instr
+| Loop     of 'a loop
+| ProcCall of 'a fun_call
 | Null     of kwd_null
-| Fail     of (kwd_fail * 'x expr) reg
+| Fail     of (kwd_fail * 'a expr) reg
 
-and 'x conditional = {
+and 'a conditional = {
   kwd_if   :    kwd_if;
-  test     : 'x expr;
+  test     : 'a expr;
   kwd_then :    kwd_then;
-  ifso     : 'x instruction;
+  ifso     : 'a instruction;
   kwd_else :    kwd_else;
-  ifnot    : 'x instruction
+  ifnot    : 'a instruction
 }
 
-and 'x match_instr = {
+and 'a match_instr = {
   kwd_match :    kwd_match;
-  expr      : 'x expr;
+  expr      : 'a expr;
   kwd_with  :    kwd_with;
   lead_vbar :    vbar option;
-  cases     : 'x cases;
+  cases     : 'a cases;
   kwd_end   :    kwd_end
 }
 
-and 'x cases = ('x case, vbar) nsepseq reg
+and 'a cases = ('a case, vbar) nsepseq reg
 
-and 'x case = ('x pattern * arrow * 'x instruction) reg
+and 'a case = ('a pattern * arrow * 'a instruction) reg
 
-and 'x ass_instr = ('x variable * ass * 'x expr) reg
+and 'a ass_instr = ('a variable * ass * 'a expr) reg
 
-and 'x loop =
-  While of 'x while_loop
-| For   of 'x for_loop
+and 'a loop =
+  While of 'a while_loop
+| For   of 'a for_loop
 
-and 'x while_loop = (kwd_while * 'x expr * 'x block reg) reg
+and 'a while_loop = (kwd_while * 'a expr * 'a block reg) reg
 
-and 'x for_loop =
-  ForInt     of 'x for_int reg
-| ForCollect of 'x for_collect reg
+and 'a for_loop =
+  ForInt     of 'a for_int reg
+| ForCollect of 'a for_collect reg
 
-and 'x for_int = {
+and 'a for_int = {
   kwd_for :    kwd_for;
-  ass     : 'x ass_instr;
+  ass     : 'a ass_instr;
   down    :    kwd_down option;
   kwd_to  :    kwd_to;
-  bound   : 'x expr;
-  step    : (kwd_step * 'x expr) option;
-  block   : 'x block reg
+  bound   : 'a expr;
+  step    : (kwd_step * 'a expr) option;
+  block   : 'a block reg
 }
 
-and 'x for_collect = {
+and 'a for_collect = {
   kwd_for :    kwd_for;
-  var     : 'x variable;
-  bind_to : (arrow * 'x variable) option;
+  var     : 'a variable;
+  bind_to : (arrow * 'a variable) option;
   kwd_in  :    kwd_in;
-  expr    : 'x expr;
-  block   : 'x block reg
+  expr    : 'a expr;
+  block   : 'a block reg
 }
 
 (* Expressions *)
 
-and 'x expr =
-  Or        of ('x expr * bool_or * 'x expr) reg
-| And       of ('x expr * bool_and * 'x expr) reg
-| Lt        of ('x expr * lt * 'x expr) reg
-| Leq       of ('x expr * leq * 'x expr) reg
-| Gt        of ('x expr * gt * 'x expr) reg
-| Geq       of ('x expr * geq * 'x expr) reg
-| Equal     of ('x expr * equal * 'x expr) reg
-| Neq       of ('x expr * neq * 'x expr) reg
-| Cat       of ('x expr * cat * 'x expr) reg
-| Cons      of ('x expr * cons * 'x expr) reg
-| Add       of ('x expr * plus * 'x expr) reg
-| Sub       of ('x expr * minus * 'x expr) reg
-| Mult      of ('x expr * times * 'x expr) reg
-| Div       of ('x expr * slash * 'x expr) reg
-| Mod       of ('x expr * kwd_mod * 'x expr) reg
-| Neg       of (minus * 'x expr) reg
-| Not       of (kwd_not * 'x expr) reg
+and 'a expr =
+  Or        of ('a expr * bool_or * 'a expr) reg
+| And       of ('a expr * bool_and * 'a expr) reg
+| Lt        of ('a expr * lt * 'a expr) reg
+| Leq       of ('a expr * leq * 'a expr) reg
+| Gt        of ('a expr * gt * 'a expr) reg
+| Geq       of ('a expr * geq * 'a expr) reg
+| Equal     of ('a expr * equal * 'a expr) reg
+| Neq       of ('a expr * neq * 'a expr) reg
+| Cat       of ('a expr * cat * 'a expr) reg
+| Cons      of ('a expr * cons * 'a expr) reg
+| Add       of ('a expr * plus * 'a expr) reg
+| Sub       of ('a expr * minus * 'a expr) reg
+| Mult      of ('a expr * times * 'a expr) reg
+| Div       of ('a expr * slash * 'a expr) reg
+| Mod       of ('a expr * kwd_mod * 'a expr) reg
+| Neg       of (minus * 'a expr) reg
+| Not       of (kwd_not * 'a expr) reg
 | Int       of (Lexer.lexeme * Z.t) reg
 | Var       of Lexer.lexeme reg
 | String    of Lexer.lexeme reg
@@ -372,46 +372,46 @@ and 'x expr =
 | False     of c_False
 | True      of c_True
 | Unit      of c_Unit
-| Tuple     of 'x tuple
-| List      of ('x expr, comma) nsepseq brackets
-| EmptyList of 'x empty_list
-| Set       of ('x expr, comma) nsepseq braces
-| EmptySet  of 'x empty_set
-| NoneExpr  of 'x none_expr
-| FunCall   of 'x fun_call
-| ConstrApp of 'x constr_app
-| SomeApp   of (c_Some * 'x arguments) reg
-| MapLookUp of 'x map_lookup reg
-| ParExpr   of 'x expr par
+| Tuple     of 'a tuple
+| List      of ('a expr, comma) nsepseq brackets
+| EmptyList of 'a empty_list
+| Set       of ('a expr, comma) nsepseq braces
+| EmptySet  of 'a empty_set
+| NoneExpr  of 'a none_expr
+| FunCall   of 'a fun_call
+| ConstrApp of 'a constr_app
+| SomeApp   of (c_Some * 'a arguments) reg
+| MapLookUp of 'a map_lookup reg
+| ParExpr   of 'a expr par
 
-and 'x tuple = ('x expr, comma) nsepseq par
+and 'a tuple = ('a expr, comma) nsepseq par
 
-and 'x empty_list =
-  (lbracket * rbracket * colon * 'x type_expr) par
+and 'a empty_list =
+  (lbracket * rbracket * colon * 'a type_expr) par
 
-and 'x empty_set =
-  (lbrace * rbrace * colon * 'x type_expr) par
+and 'a empty_set =
+  (lbrace * rbrace * colon * 'a type_expr) par
 
-and 'x none_expr =
-  (c_None * colon * 'x type_expr) par
+and 'a none_expr =
+  (c_None * colon * 'a type_expr) par
 
-and 'x fun_call = ('x fun_name * 'x arguments) reg
+and 'a fun_call = ('a fun_name * 'a arguments) reg
 
-and 'x arguments = 'x tuple
+and 'a arguments = 'a tuple
 
-and 'x constr_app = ('x constr * 'x arguments) reg
+and 'a constr_app = ('a constr * 'a arguments) reg
 
-and 'x map_lookup = {
-  map_name : 'x variable;
+and 'a map_lookup = {
+  map_name : 'a variable;
   selector : dot;
-  index    : 'x expr brackets
+  index    : 'a expr brackets
 }
 
 (* Patterns *)
 
-and 'x pattern = ('x core_pattern, cons) nsepseq reg
+and 'a pattern = ('a core_pattern, cons) nsepseq reg
 
-and 'x core_pattern =
+and 'a core_pattern =
   PVar    of Lexer.lexeme reg
 | PWild   of wild
 | PInt    of (Lexer.lexeme * Z.t) reg
@@ -421,13 +421,13 @@ and 'x core_pattern =
 | PFalse  of c_False
 | PTrue   of c_True
 | PNone   of c_None
-| PSome   of (c_Some * 'x core_pattern par) reg
-| PList   of 'x list_pattern
-| PTuple  of ('x core_pattern, comma) nsepseq par
+| PSome   of (c_Some * 'a core_pattern par) reg
+| PList   of 'a list_pattern
+| PTuple  of ('a core_pattern, comma) nsepseq par
 
-and 'x list_pattern =
-  Sugar of ('x core_pattern, comma) sepseq brackets
-| Raw   of ('x core_pattern * cons * 'x pattern) par
+and 'a list_pattern =
+  Sugar of ('a core_pattern, comma) sepseq brackets
+| Raw   of ('a core_pattern * cons * 'a pattern) par
 
 (* Projecting regions *)
 
@@ -513,77 +513,77 @@ let local_decl_to_region = function
 
 (* Printing the tokens with their source regions *)
 
-type 'x visitor = {
-  ass_instr       : 'x ass_instr -> unit;
-  bind_to         : (region * 'x variable) option -> unit;
-  block           : 'x block reg -> unit;
+type 'a visitor = {
+  ass_instr       : 'a ass_instr -> unit;
+  bind_to         : (region * 'a variable) option -> unit;
+  block           : 'a block reg -> unit;
   bytes           : (string * MBytes.t) reg -> unit;
-  cartesian       : 'x cartesian -> unit;
-  case            : 'x case -> unit;
-  cases           : 'x cases -> unit;
-  conditional     : 'x conditional -> unit;
-  const_decl      : 'x const_decl reg -> unit;
-  constr          : 'x constr -> unit;
-  constr_app      : 'x constr_app -> unit;
-  core_pattern    : 'x core_pattern -> unit;
+  cartesian       : 'a cartesian -> unit;
+  case            : 'a case -> unit;
+  cases           : 'a cases -> unit;
+  conditional     : 'a conditional -> unit;
+  const_decl      : 'a const_decl reg -> unit;
+  constr          : 'a constr -> unit;
+  constr_app      : 'a constr_app -> unit;
+  core_pattern    : 'a core_pattern -> unit;
   down            : region option -> unit;
-  empty_list      : 'x empty_list -> unit;
-  empty_set       : 'x empty_set -> unit;
-  expr            : 'x expr -> unit;
-  fail            : (kwd_fail * 'x expr) -> unit;
-  field_decl      : 'x field_decl -> unit;
-  field_decls     : 'x field_decls -> unit;
-  for_collect     : 'x for_collect reg -> unit;
-  for_int         : 'x for_int reg -> unit;
-  for_loop        : 'x for_loop -> unit;
-  fun_call        : 'x fun_call -> unit;
-  fun_decl        : 'x fun_decl reg -> unit;
-  instruction     : 'x instruction -> unit;
-  instructions    : 'x instructions -> unit;
+  empty_list      : 'a empty_list -> unit;
+  empty_set       : 'a empty_set -> unit;
+  expr            : 'a expr -> unit;
+  fail            : (kwd_fail * 'a expr) -> unit;
+  field_decl      : 'a field_decl -> unit;
+  field_decls     : 'a field_decls -> unit;
+  for_collect     : 'a for_collect reg -> unit;
+  for_int         : 'a for_int reg -> unit;
+  for_loop        : 'a for_loop -> unit;
+  fun_call        : 'a fun_call -> unit;
+  fun_decl        : 'a fun_decl reg -> unit;
+  instruction     : 'a instruction -> unit;
+  instructions    : 'a instructions -> unit;
   int             : (string * Z.t) reg -> unit;
-  lambda_decl     : 'x lambda_decl -> unit;
-  list            : ('x expr, region) nsepseq brackets -> unit;
-  list_pattern    : 'x list_pattern -> unit;
-  loop            : 'x loop -> unit;
-  map_lookup      : 'x map_lookup reg -> unit;
-  match_instr     : 'x match_instr -> unit;
-  none_expr       : 'x none_expr -> unit;
+  lambda_decl     : 'a lambda_decl -> unit;
+  list            : ('a expr, region) nsepseq brackets -> unit;
+  list_pattern    : 'a list_pattern -> unit;
+  loop            : 'a loop -> unit;
+  map_lookup      : 'a map_lookup reg -> unit;
+  match_instr     : 'a match_instr -> unit;
+  none_expr       : 'a none_expr -> unit;
   nsepseq         : 'a.string -> ('a -> unit) -> ('a, region) nsepseq -> unit;
-  operations_decl : 'x operations_decl reg -> unit;
-  par_expr        : 'x expr par -> unit;
-  par_type        : 'x type_expr par -> unit;
-  param_decl      : 'x param_decl -> unit;
-  parameter_decl  : 'x parameter_decl reg -> unit;
-  parameters      : 'x parameters -> unit;
-  param_const     : 'x param_const -> unit;
-  param_var       : 'x param_var -> unit;
-  pattern         : 'x pattern -> unit;
-  patterns        : 'x core_pattern par -> unit;
-  proc_decl       : 'x proc_decl reg -> unit;
-  psome           : (region * 'x core_pattern par) reg -> unit;
-  ptuple          : ('x core_pattern, region) nsepseq par -> unit;
-  raw             : ('x core_pattern * region * 'x pattern) par -> unit;
-  record_type     : 'x record_type -> unit;
+  operations_decl : 'a operations_decl reg -> unit;
+  par_expr        : 'a expr par -> unit;
+  par_type        : 'a type_expr par -> unit;
+  param_decl      : 'a param_decl -> unit;
+  parameter_decl  : 'a parameter_decl reg -> unit;
+  parameters      : 'a parameters -> unit;
+  param_const     : 'a param_const -> unit;
+  param_var       : 'a param_var -> unit;
+  pattern         : 'a pattern -> unit;
+  patterns        : 'a core_pattern par -> unit;
+  proc_decl       : 'a proc_decl reg -> unit;
+  psome           : (region * 'a core_pattern par) reg -> unit;
+  ptuple          : ('a core_pattern, region) nsepseq par -> unit;
+  raw             : ('a core_pattern * region * 'a pattern) par -> unit;
+  record_type     : 'a record_type -> unit;
   sepseq          : 'a.string -> ('a -> unit) -> ('a, region) sepseq -> unit;
-  set             : ('x expr, region) nsepseq braces -> unit;
-  single_instr    : 'x single_instr -> unit;
-  some_app        : (region * 'x arguments) reg -> unit;
-  step            : (region * 'x expr) option -> unit;
-  storage_decl    : 'x storage_decl reg -> unit;
+  set             : ('a expr, region) nsepseq braces -> unit;
+  single_instr    : 'a single_instr -> unit;
+  some_app        : (region * 'a arguments) reg -> unit;
+  step            : (region * 'a expr) option -> unit;
+  storage_decl    : 'a storage_decl reg -> unit;
   string          : string reg -> unit;
-  sugar           : ('x core_pattern, region) sepseq brackets -> unit;
-  sum_type        : ('x variant, region) nsepseq reg -> unit;
+  sugar           : ('a core_pattern, region) sepseq brackets -> unit;
+  sum_type        : ('a variant, region) nsepseq reg -> unit;
   terminator      : semi option -> unit;
   token           : region -> string -> unit;
-  tuple           : 'x arguments -> unit;
-  type_app        : ('x type_name * 'x type_tuple) reg -> unit;
-  type_decl       : 'x type_decl reg -> unit;
-  type_expr       : 'x type_expr -> unit;
-  type_tuple      : 'x type_tuple -> unit;
-  local_decl      : 'x local_decl -> unit;
-  local_decls     : 'x local_decl list -> unit;
-  var             : 'x variable -> unit;
-  var_decl        : 'x var_decl reg -> unit;
-  variant         : 'x variant -> unit;
-  while_loop      : 'x while_loop -> unit
+  tuple           : 'a arguments -> unit;
+  type_app        : ('a type_name * 'a type_tuple) reg -> unit;
+  type_decl       : 'a type_decl reg -> unit;
+  type_expr       : 'a type_expr -> unit;
+  type_tuple      : 'a type_tuple -> unit;
+  local_decl      : 'a local_decl -> unit;
+  local_decls     : 'a local_decl list -> unit;
+  var             : 'a variable -> unit;
+  var_decl        : 'a var_decl reg -> unit;
+  variant         : 'a variant -> unit;
+  while_loop      : 'a while_loop -> unit
 }
