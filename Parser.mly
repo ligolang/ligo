@@ -92,15 +92,15 @@ program:
   seq(lambda_decl)
   block
   EOF {
-    object
-      method types      = $1
-      method parameter  = $2
-      method storage    = $3
-      method operations = $4
-      method lambdas    = $5
-      method block      = $6
-      method eof        = $7
-    end
+    {
+      types      = $1;
+      parameter  = $2;
+      storage    = $3;
+      operations = $4;
+      lambdas    = $5;
+      block      = $6;
+      eof        = $7;
+    }
   }
 
 parameter_decl:
@@ -197,17 +197,17 @@ fun_decl:
   With expr {
     let region = cover $1 (expr_to_region $9) in
     let value =
-      object
-        method kwd_function = $1
-        method var          = $2
-        method param        = $3
-        method colon        = $4
-        method ret_type     = $5
-        method kwd_is       = $6
-        method body         = $7
-        method kwd_with     = $8
-        method return       = $9
-      end
+      {
+        kwd_function = $1;
+        var          = $2;
+        param        = $3;
+        colon        = $4;
+        ret_type     = $5;
+        kwd_is       = $6;
+        body         = $7;
+        kwd_with     = $8;
+        return       = $9;
+      }
     in {region; value}
   }
 
@@ -216,13 +216,13 @@ proc_decl:
     block {
       let region = cover $1 $5.region in
       let value =
-        object
-          method kwd_procedure = $1
-          method var           = $2
-          method param         = $3
-          method kwd_is        = $4
-          method body          = $5
-        end
+        {
+          kwd_procedure = $1;
+          var           = $2;
+          param         = $3;
+          kwd_is        = $4;
+          body          = $5;
+        }
       in {region; value}
   }
 
@@ -248,12 +248,12 @@ block:
   End {
     let region = cover $1.region $4 in
     let value =
-      object
-        method decls   = $1
-        method opening = $2
-        method instr   = $3
-        method close   = $4
-      end
+      {
+        decls   = $1;
+        opening = $2;
+        instr   = $3;
+        close   = $4;
+      }
     in {region; value}
   }
 
@@ -267,27 +267,27 @@ var_decl:
   Var var COLON type_expr ASGNMNT expr {
     let region = cover $1 (expr_to_region $6) in
     let value =
-      object
-        method kind   = Mutable $1
-        method var    = $2
-        method colon  = $3
-        method vtype  = $4
-        method setter = $5
-        method init   = $6
-      end
+      {
+        kind   = Mutable $1;
+        var    = $2;
+        colon  = $3;
+        vtype  = $4;
+        setter = $5;
+        init   = $6;
+      }
     in {region; value}
   }
 | Const var COLON type_expr EQUAL expr {
     let region = cover $1 (expr_to_region $6) in
     let value =
-      object
-        method kind   = Const $1
-        method var    = $2
-        method colon  = $3
-        method vtype  = $4
-        method setter = $5
-        method init   = $6
-      end
+      {
+        kind   = Const $1;
+        var    = $2;
+        colon  = $3;
+        vtype  = $4;
+        setter = $5;
+        init   = $6;
+      }
     in {region; value}
   }
 
@@ -316,14 +316,14 @@ conditional:
   If expr Then instruction Else instruction {
     let region = cover $1 (instr_to_region $6) in
     let value =
-      object
-        method kwd_if   = $1
-        method test     = $2
-        method kwd_then = $3
-        method ifso     = $4
-        method kwd_else = $5
-        method ifnot    = $6
-      end
+      {
+        kwd_if   = $1;
+        test     = $2;
+        kwd_then = $3;
+        ifso     = $4;
+        kwd_else = $5;
+        ifnot    = $6;
+      }
     in {region; value}
   }
 
@@ -331,13 +331,13 @@ match_instr:
   Match expr With cases End {
     let region = cover $1 $5 in
     let value =
-      object
-        method kwd_match = $1
-        method expr      = $2
-        method kwd_with  = $3
-        method cases     = $4
-        method kwd_end   = $5
-      end
+      {
+        kwd_match = $1;
+        expr      = $2;
+        kwd_with  = $3;
+        cases     = $4;
+        kwd_end   = $5;
+      }
     in {region; value}
   }
 
@@ -373,29 +373,29 @@ for_loop:
   For asgnmnt Down? To expr option(step_clause) block {
     let region = cover $1 $7.region in
     let value =
-      object
-        method kwd_for  = $1
-        method asgnmnt  = $2
-        method down     = $3
-        method kwd_to   = $4
-        method bound    = $5
-        method step     = $6
-        method block    = $7
-      end
+      {
+        kwd_for  = $1;
+        asgnmnt  = $2;
+        down     = $3;
+        kwd_to   = $4;
+        bound    = $5;
+        step     = $6;
+        block    = $7;
+      }
     in For (ForInt {region; value})
   }
 
 | For var option(arrow_clause) In expr block {
     let region = cover $1 $6.region in
     let value =
-      object
-        method kwd_for = $1
-        method var     = $2
-        method bind_to = $3
-        method kwd_in  = $4
-        method expr    = $5
-        method block   = $6
-      end
+      {
+        kwd_for = $1;
+        var     = $2;
+        bind_to = $3;
+        kwd_in  = $4;
+        expr    = $5;
+        block   = $6;
+      }
     in For (ForCollect {region; value})
   }
 
@@ -557,11 +557,11 @@ core_expr:
 | map_name DOT brackets(expr) {
     let region = cover $1.region $3.region in
     let value =
-      object
-        method map_name = $1
-        method selector = $2
-        method index    = $3
-      end
+      {
+        map_name = $1;
+        selector = $2;
+        index    = $3;
+      }
     in MapLookUp {region; value}
   }
 

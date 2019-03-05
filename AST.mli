@@ -1,5 +1,7 @@
 (* Abstract Syntax Tree (AST) for Ligo *)
 
+[@@@warning "-30"]
+
 open Utils
 
 (* Regions
@@ -123,7 +125,7 @@ type 'a braces = (lbrace * 'a * rbrace) reg
 
 (* The Abstract Syntax Tree *)
 
-type t = <
+type t = {
   types      : type_decl list;
   parameter  : parameter_decl;
   storage    : storage_decl;
@@ -131,7 +133,7 @@ type t = <
   lambdas    : lambda_decl list;
   block      : block reg;
   eof        : eof
->
+}
 
 and ast = t
 
@@ -171,7 +173,7 @@ and lambda_decl =
   FunDecl  of fun_decl reg
 | ProcDecl of proc_decl reg
 
-and fun_decl = <
+and fun_decl = {
   kwd_function : kwd_function;
   var          : variable;
   param        : parameters;
@@ -181,15 +183,15 @@ and fun_decl = <
   body         : block reg;
   kwd_with     : kwd_with;
   return       : expr
->
+}
 
-and proc_decl = <
+and proc_decl = {
   kwd_procedure : kwd_procedure;
   var           : variable;
   param         : parameters;
   kwd_is        : kwd_is;
   body          : block reg
->
+}
 
 and parameters = (param_decl, semi) nsepseq par
 
@@ -199,23 +201,23 @@ and var_kind =
   Mutable of kwd_var
 | Const   of kwd_const
 
-and block = <
+and block = {
   decls   : value_decls;
   opening : kwd_begin;
   instr   : instructions;
   close   : kwd_end
->
+}
 
 and value_decls = (var_decl reg, semi) sepseq reg
 
-and var_decl = <
+and var_decl = {
   kind   : var_kind;
   var    : variable;
   colon  : colon;
   vtype  : type_expr;
   setter : Region.t;  (* "=" or ":=" *)
   init   : expr
->
+}
 
 and instructions = (instruction, semi) nsepseq reg
 
@@ -231,22 +233,22 @@ and single_instr =
 | ProcCall of fun_call
 | Null     of kwd_null
 
-and conditional = <
+and conditional = {
   kwd_if   : kwd_if;
   test     : expr;
   kwd_then : kwd_then;
   ifso     : instruction;
   kwd_else : kwd_else;
   ifnot    : instruction
->
+}
 
-and match_instr = <
+and match_instr = {
   kwd_match : kwd_match;
   expr      : expr;
   kwd_with  : kwd_with;
   cases     : cases;
   kwd_end   : kwd_end
->
+}
 
 and cases = (case, vbar) nsepseq reg
 
@@ -264,7 +266,7 @@ and for_loop =
   ForInt     of for_int reg
 | ForCollect of for_collect reg
 
-and for_int = <
+and for_int = {
   kwd_for : kwd_for;
   asgnmnt : asgnmnt_instr;
   down    : kwd_down option;
@@ -272,16 +274,16 @@ and for_int = <
   bound   : expr;
   step    : (kwd_step * expr) option;
   block   : block reg
->
+}
 
-and for_collect = <
+and for_collect = {
   kwd_for : kwd_for;
   var     : variable;
   bind_to : (arrow * variable) option;
   kwd_in  : kwd_in;
   expr    : expr;
   block   : block reg
->
+}
 
 (* Expressions *)
 
@@ -339,11 +341,11 @@ and arguments = tuple
 
 and constr_app = (constr * arguments) reg
 
-and map_lookup = <
+and map_lookup = {
   map_name : variable;
   selector : dot;
   index    : expr brackets
->
+}
 
 (* Patterns *)
 
