@@ -1,5 +1,7 @@
 [@@@warning "-30"]
 
+exception TODO of string
+
 module I = AST
 
 open Region
@@ -8,6 +10,7 @@ module SMap = Map.Make(String)
 
 module O = struct
   type type_name = string
+  type var_name = string
   type ast = {
       types        : type_decl list;
       parameter    : typed_var;
@@ -16,9 +19,9 @@ module O = struct
       declarations : decl list;
       prev         : I.ast;
     }
-  and typed_var = { name:string; ty:type_expr }
+  and typed_var = { name:var_name; ty:type_expr }
   and type_decl = { name:string; ty:type_expr }
-  and decl = { name:string; ty:type_expr; value: expr }
+  and decl = { name:var_name; ty:type_expr; value: expr }
   and type_expr =
     Prod     of type_expr list
   | Sum      of (type_name * type_expr) list
@@ -27,19 +30,44 @@ module O = struct
   | Function of { args: type_expr list; ret: type_expr }
   | Ref      of type_expr
   | Unit
+  | Int
+  | TODO
+  and expr =
+    App      of { operator: operator; arguments: expr list }
+  | Variable of var_name
+  | Constant of constant
   | Lambda   of {
       parameters:   type_expr SMap.t;
       declarations: decl list;
       instructions: instr list;
-      body:         expr;
+      result:       expr;
     }
-  | TODO
-  and expr =
-    Binary   of { operator: string; left: expr; right: expr }
-  | Variable of string
-  | UnitExpr
+  and operator = Add | Sub | Lt | Gt | Function of string
+  and constant =
+    Unit
+  | Int of int
   and instr =
-    Fail
+  | Assignment    of { name: var_name; value: expr }
+  | While         of { condition: expr; body: instr list }
+  | ForCollection of { list: expr; key: var_name; value: var_name option; body: instr list }
+  | If            of { condition: expr; ifso: instr list; ifnot: instr list }
+  | Match         of { expr: expr; cases: (pattern * instr list) list }
+  | DropUnit      of expr       (* expr returns unit, drop the result. *)
+  | Fail          of { expr: expr }
+  and pattern =
+    PVar    of var_name
+  | PWild
+  | PInt    of Z.t
+  | PBytes  of MBytes.t
+  | PString of string
+  | PUnit
+  | PFalse
+  | PTrue
+  | PNone
+  | PSome   of pattern
+  | Cons    of pattern * pattern
+  | Null
+  | PTuple  of pattern list
 end
 
 (* open Sanity: *)
@@ -47,6 +75,11 @@ let (|>) v f = f v       (* pipe f to v *)
 let (@@) f v = f v       (* apply f on v *)
 let (@.) f g x = f (g x) (* compose *)
 let map f l = List.rev (List.rev_map f l)
+(* TODO: check that List.to_seq, List.append and SMap.of_seq are not broken
+   (i.e. check that they are tail-recursive) *)
+let append_map f l = map f l |>  List.flatten
+let append l1 l2 = List.append l1 l2
+let list_to_map l = l |> List.to_seq |> SMap.of_seq
 let fold_map f a l =
   let f (acc, l) elem =
     let acc', elem' = f acc elem
@@ -64,23 +97,27 @@ let s_sepseq : ('a,'sep) Utils.sepseq -> 'a list =
     None         -> []
   | Some nsepseq -> s_nsepseq nsepseq
 
-let s_name {value=name; region} : string =
-  let _ = region in
+let s_name {value=name; region} : O.var_name =
+  let () = ignore (region) in
   name
 
-let s_sum_type {value=sequence; region} : O.type_expr =
-  let _ = region in
+let rec s_cartesian {value=sequence; region} : O.type_expr =
+  let () = ignore (region) in
+  Prod (map s_type_expr (s_nsepseq sequence))
+
+and s_sum_type {value=sequence; region} : O.type_expr =
+  let () = ignore (region) in
   let _todo = sequence in
-(*  Sum (List.map s_type_expr (s_nsepseq sequence)) *)
+(*  Sum (map s_type_expr (s_nsepseq sequence)) *)
   TODO
 
 and s_record_type {value=(kwd_record, field_decls, kwd_end); region} : O.type_expr =
-  let _ = kwd_record,region,kwd_end in
+  let () = ignore (kwd_record,region,kwd_end) in
   let _todo = (* s_field_decls *) field_decls in
   TODO
 
 and s_type_app {value=node; region} : O.type_expr =
-  let _ = region in
+  let () = ignore (region) in
   let _todo = node in
   TODO
   (* let type_name, type_tuple = node in *)
@@ -88,12 +125,12 @@ and s_type_app {value=node; region} : O.type_expr =
   (* s_type_tuple type_tuple *)
 
 and s_par_type {value=node; region} : O.type_expr =
-  let _ = region in
+  let () = ignore (region) in
   let _todo = node in
   TODO
 
 and s_var {region; value=lexeme} : O.type_expr =
-  let _ = region in
+  let () = ignore (region) in
   let _todo = lexeme in
   TODO
 
@@ -101,18 +138,6 @@ and s_var {region; value=lexeme} : O.type_expr =
   s_token     lpar "(";
   s_type_expr type_expr;
   s_token     rpar ")"*)
-
-(* I.{value=sequence; region} *)
-(*   (\* let _ = region in *\) *)
-(* (\*  Prod (List.map s_type_expr (s_nsepseq sequence)) *\) *)
-
-let s_cartesian   _x = O.TODO
-let s_sum_type    _x = O.TODO
-and s_record_type _x = O.TODO
-and s_type_app    _x = O.TODO
-and s_par_type    _x = O.TODO
-and s_var         _x = O.TODO
-
 
 and s_type_expr : I.type_expr -> O.type_expr = function
   Prod    cartesian   -> s_cartesian   cartesian
@@ -123,69 +148,218 @@ and s_type_expr : I.type_expr -> O.type_expr = function
 | TAlias  type_alias  -> s_var         type_alias
 
 
-(* let s_ast (ast : I.ast) : O.ast = *)
-(*   let I.{types;constants;parameter;storage;operations;lambdas;block;eof} = ast in *)
-(*   let _ = eof in *)
-(*   O.{ *)
-(*       types        = List.map s_type_decl types; *)
-(*       parameter    = s_parameter parameter; *)
-(*       storage      = s_storage storage; *)
-(*       operations   = s_operations operations; *)
-(*       declarations = List.append (List.map s_const_decl  constants) *)
-(*                                  (List.map s_lambda_decl lambdas) *)
-(*                                  [s_main_block block]; *)
-(*       prev         = ast *)
-(*   } *)
+let s_type_decl I.{value={kwd_type;name;kwd_is;type_expr;terminator}; region} : O.type_decl =
+  let () = ignore (kwd_type,kwd_is,terminator,region) in
+  O.{ name = s_name name; ty = s_type_expr type_expr }
 
-(* and s_type_decl I.{value={kwd_type;name;kwd_is;type_expr;terminator}; region} : O.type_decl = *)
-(*   let _ = kwd_type,kwd_is,terminator,region in *)
-(*   O.{ name = s_name name; ty = s_type_expr type_expr } *)
+let s_parameter_decl I.{value={kwd_parameter;name;colon;param_type;terminator};region} : O.typed_var =
+  let () = ignore (kwd_parameter,colon,terminator,region) in
+  O.{ name = s_name name; ty = s_type_expr param_type }
 
-(* and s_parameter_decl I.{value={kwd_parameter;name;colon;param_type;terminator};region} : O.typed_var = *)
-(*   let _ = region in *)
-(*   O.{ name = s_name name; ty = s_type_expr param_type } *)
+let s_storage_decl I.{value={kwd_storage; store_type; terminator}; region} : O.typed_var =
+  let () = ignore (kwd_storage,terminator,region) in
+  O.{ name = "storage"; ty = s_type_expr store_type }
 
-(* and s_storage_decl I.{value={kwd_storage; store_type; terminator}; region} : O.typed_var = *)
-(*   let _ = kwd_storage,terminator,region in *)
-(*   O.{ name = "storage"; ty = s_type_expr store_type } *)
+let s_operations_decl I.{value={kwd_operations;op_type;terminator}; region} : O.typed_var =
+  let () = ignore (kwd_operations,terminator,region) in
+  O.{ name = "operations"; ty = s_type_expr op_type }
 
-(* and s_operations_decl I.{value={kwd_operations;op_type;terminator}; region} : O.typed_var = *)
-(*   let _ = kwd_operations,terminator,region in *)
-(*   O.{ name = "operations"; ty = s_type_expr op_type } *)
+let s_expr : I.expr -> O.expr = function
+  | _ -> raise (TODO "simplify expressions")
 
-(* and s_const_decl I.{value={kwd_const;name;colon;vtype;equal;init;terminator}; region} : O.decl = *)
-(*   let _ = kwd_const,colon,equal,terminator in *)
-(*   O.{ name = s_name name; ty = s_type_expr vtype; value = s_expr init } *)
+let s_case : I.case -> O.pattern * (O.instr list) = function
+  | _ -> raise (TODO "simplify pattern matching cases")
 
-(* and s_lambda_decl : I.lambda_decl -> O.decl = function *)
-(*   FunDecl   fun_decl -> s_fun_decl fun_decl *)
-(* | ProcDecl proc_decl -> s_proc_decl proc_decl *)
+let s_const_decl I.{value={kwd_const;name;colon;vtype;equal;init;terminator}; region} : O.decl =
+  let () = ignore (kwd_const,colon,equal,terminator,region) in
+  O.{ name = s_name name; ty = s_type_expr vtype; value = s_expr init }
 
-(* and s_fun_decl I.{value={kwd_function;name;param;colon;ret_type;kwd_is;local_decls;block;kwd_with;return;terminator}; region} : O.decl = *)
-(*   let _ = kwd_function,colon,kwd_is,kwd_with,terminator in *)
-(*   O.{ *)
-(*       name = s_name name; *)
-(*       ty = Function { args = s_type_expr param; ret = s_type_expr ret_type }; *)
-(*       value = Lambda { *)
-(*                   parameters   = s_type_expr param; *)
-(*                   declarations = List.map s_local_decls local_decls; *)
-(*                   instructions = s_block block; *)
-(*                   body         = s_expr return *)
-(*                 } *)
-(*   } *)
+let s_param_const {value=(kwd_const,variable,colon,type_expr); region} : string * O.type_expr =
+  let () = ignore (kwd_const,colon,region) in
+  s_name variable, s_type_expr type_expr
 
-(* and s_proc_decl I.{value={kwd_procedure;name;param;kwd_is;local_decls;block;terminator}; region} = *)
-(*   let _ = kwd_procedure,kwd_is,terminator in *)
-(*   O.{ *)
-(*       name = s_name name; *)
-(*       ty = Function { args = s_type_expr param; ret = Unit }; *)
-(*       value = Lambda { *)
-(*                   parameters   = s_type_expr param; *)
-(*                   declarations = List.map s_local_decls local_decls; *)
-(*                   instructions = s_block block; *)
-(*                   body         = O.UnitExpr *)
-(*                 } *)
-(*   } *)
+let s_param_var {value=(kwd_var,variable,colon,type_expr); region} : string * O.type_expr =
+  let () = ignore (kwd_var,colon,region) in
+  s_name variable, s_type_expr type_expr
+
+let s_param_decl : I.param_decl -> string * O.type_expr = function
+    ParamConst p ->  s_param_const p
+  | ParamVar p ->    s_param_var p
+
+let s_parameters ({value=(lpar,param_decl,rpar);region} : I.parameters) : (string * O.type_expr) list =
+  let () = ignore (lpar,rpar,region) in
+  let l = (s_nsepseq param_decl) in
+  map s_param_decl l
+
+let rec s_var_decl I.{value={kwd_var;name;colon;vtype;ass;init;terminator}; region} : O.decl =
+  let () = ignore (kwd_var,colon,ass,terminator,region) in
+  O.{
+      name = s_name name;
+      ty = s_type_expr vtype;
+      value = s_expr init
+  }
+
+and s_local_decl : I.local_decl -> O.decl = function
+  LocalLam   decl -> s_lambda_decl decl
+| LocalConst decl -> s_const_decl  decl
+| LocalVar   decl -> s_var_decl    decl
+
+and s_instructions ({value=sequence; region} : I.instructions) : O.instr list =
+  let () = ignore (region) in
+  append_map s_instruction (s_nsepseq sequence)
+
+and s_instruction : I.instruction -> O.instr list = function
+  Single instr -> s_single_instr instr
+|  Block block -> (s_block block)
+
+and s_conditional I.{kwd_if;test;kwd_then;ifso;kwd_else;ifnot} : O.instr =
+  let () = ignore (kwd_if,kwd_then,kwd_else) in
+  If { condition = s_expr test; ifso = s_instruction ifso; ifnot = s_instruction ifnot }
+
+and s_match_instr I.{kwd_match;expr;kwd_with;lead_vbar;cases;kwd_end} : O.instr =
+  let {value=cases;region} = cases in
+  let () = ignore (kwd_match,kwd_with,lead_vbar,kwd_end,region) in
+  Match { expr = s_expr expr; cases = map s_case (s_nsepseq cases) }
+
+and s_ass_instr {value=(variable,ass,expr); region} : O.instr =
+  let () = ignore (ass,region) in
+  Assignment { name = s_name variable; value = s_expr expr }
+
+and s_while_loop {value=(kwd_while, expr, block); region} : O.instr list =
+  let () = ignore (kwd_while,region) in
+  [While {condition = s_expr expr; body = s_block block}]
+
+and s_for_loop : I.for_loop -> O.instr list = function
+  ForInt     for_int     -> s_for_int     for_int
+| ForCollect for_collect -> s_for_collect for_collect
+
+and s_for_int ({value={kwd_for;ass;down;kwd_to;bound;step;block}; region} : I.for_int reg) : O.instr list =
+  let {value=(variable,ass_kwd,expr);region = ass_region} = ass in
+  let () = ignore (kwd_for,ass_region,ass_kwd,kwd_to,region) in
+  let name = s_name variable in
+  let condition, operator = match down with Some kwd_down -> ignore kwd_down; O.Gt, O.Sub
+                                          | None          ->                  O.Lt, O.Add in
+  let step = s_step step
+  in [
+      Assignment { name; value = s_expr expr };
+      (* TODO: lift the declaration of the variable *)
+      While {
+          condition = App { operator = condition;
+                            arguments = [Variable name; s_expr bound] };
+          body = append (s_block block)
+                        [O.Assignment { name;
+                                        value = App { operator;
+                                                      arguments = [Variable name; step]}}]
+        }
+    ]
+
+and s_for_collect ({value={kwd_for;var;bind_to;kwd_in;expr;block}; _} : I.for_collect reg) : O.instr list =
+  let () = ignore (kwd_for,kwd_in) in
+  [
+    O.ForCollection {
+        list = s_expr expr;
+        key = s_name var;
+        value = s_bind_to bind_to;
+        body = s_block block
+      }
+  ]
+
+and s_step : (I.kwd_step * I.expr) option -> O.expr = function
+  Some (kwd_step, expr) -> let () = ignore (kwd_step) in s_expr expr
+| None -> Constant (Int 1)
+
+and s_bind_to : (I.arrow * I.variable) option -> O.var_name option = function
+    Some (arrow, variable) -> let () = ignore (arrow) in Some (s_name variable)
+  | None -> None
+
+and s_loop : I.loop -> O.instr list = function
+    While while_loop -> s_while_loop while_loop
+  | For     for_loop -> s_for_loop for_loop
+
+and s_fun_call {value=(fun_name, arguments); region} : O.expr =
+  let () = ignore (region) in
+  App { operator = Function (s_name fun_name); arguments = s_arguments arguments }
+
+and s_arguments {value=(lpar, sequence, rpar); region} =
+  let () = ignore (lpar,rpar,region) in
+  map s_expr (s_nsepseq sequence);
+
+and s_fail ((kwd_fail, expr) : (I.kwd_fail * I.expr)) : O.instr =
+  let () = ignore (kwd_fail) in
+  Fail { expr = s_expr expr }
+
+
+
+
+and s_single_instr : I.single_instr -> O.instr list = function
+  Cond     {value; _} -> [s_conditional value]
+| Match    {value; _} -> [s_match_instr value]
+| Ass      instr      -> [s_ass_instr instr]
+| Loop     loop       -> s_loop loop
+| ProcCall fun_call   -> [DropUnit (s_fun_call fun_call)]
+| Null     kwd_null   -> let () = ignore (kwd_null) in
+                         []
+| Fail     {value; _} -> [s_fail value]
+
+and s_block I.{value={opening;instr;terminator;close}; _} : O.instr list =
+  let () = ignore (opening,terminator,close) in
+  s_instructions instr
+
+and s_fun_decl I.{value={kwd_function;name;param;colon;ret_type;kwd_is;local_decls;block;kwd_with;return;terminator}; region} : O.decl =
+  let () = ignore (kwd_function,colon,kwd_is,kwd_with,terminator,region) in
+  O.{
+      name = s_name name;
+      ty = Function { args = map snd (s_parameters param); ret = s_type_expr ret_type };
+      value = Lambda {
+                  parameters   = s_parameters param |> list_to_map;
+                  declarations = map s_local_decl local_decls;
+                  instructions = s_block block;
+                  result       = s_expr return
+                }
+  }
+
+and s_proc_decl I.{value={kwd_procedure;name;param;kwd_is;local_decls;block;terminator}; region} =
+  let () = ignore (kwd_procedure,kwd_is,terminator,region) in
+  O.{
+      name = s_name name;
+      ty = Function { args = map snd (s_parameters param); ret = Unit };
+      value = Lambda {
+                  parameters   = s_parameters param |> list_to_map;
+                  declarations = map s_local_decl local_decls;
+                  instructions = s_block block;
+                  result       = O.Constant O.Unit
+                }
+  }
+
+and s_lambda_decl : I.lambda_decl -> O.decl = function
+  FunDecl   fun_decl -> s_fun_decl fun_decl
+| ProcDecl proc_decl -> s_proc_decl proc_decl
+
+let s_main_block (block: I.block reg) : O.decl =
+  O.{
+      name = "main";
+      ty = Function { args = []; ret = Unit };
+      value = Lambda {
+                  parameters   = SMap.empty;
+                  declarations = [];
+                  instructions = s_block block;
+                  result       = O.Constant O.Unit
+                }
+  }
+
+let s_ast (ast : I.ast) : O.ast =
+  let I.{types;constants;parameter;storage;operations;lambdas;block;eof} = ast in
+  let () = ignore (eof) in
+  O.{
+      types        = map s_type_decl types;
+      parameter    = s_parameter_decl parameter;
+      storage      = s_storage_decl storage;
+      operations   = s_operations_decl operations;
+      declarations = List.flatten [(map s_const_decl  constants);
+                                   (map s_lambda_decl lambdas);
+                                   [s_main_block block]];
+      prev         = ast
+  }
 
 
 
@@ -250,63 +424,6 @@ and s_type_expr : I.type_expr -> O.type_expr = function
 (*   ParamConst param_const -> s_param_const param_const *)
 (* | ParamVar   param_var   -> s_param_var   param_var *)
 
-(* and s_param_const {value=node; _} = *)
-(*   let kwd_const, variable, colon, type_expr = node in *)
-(*   s_token     kwd_const "const"; *)
-(*   s_var       variable; *)
-(*   s_token     colon ":"; *)
-(*   s_type_expr type_expr *)
-
-(* and s_param_var {value=node; _} = *)
-(*   let kwd_var, variable, colon, type_expr = node in *)
-(*   s_token     kwd_var "var"; *)
-(*   s_var       variable; *)
-(*   s_token     colon ":"; *)
-(*   s_type_expr type_expr *)
-
-(* and s_block {value=node; _} = *)
-(*   s_token        node.opening "begin"; *)
-(*   s_instructions node.instr; *)
-(*   s_terminator   node.terminator; *)
-(*   s_token        node.close "end" *)
-
-(* and s_local_decls sequence = *)
-(*   List.iter s_local_decl sequence *)
-
-(* and s_local_decl = function *)
-(*   LocalLam   decl -> s_lambda_decl decl *)
-(* | LocalConst decl -> s_const_decl  decl *)
-(* | LocalVar   decl -> s_var_decl    decl *)
-
-(* and s_var_decl {value={kwd_var;name;colon;vtype;ass;init;terminator}; region} = *)
-
-
-(* and s_instructions {value=sequence; _} = *)
-(*   s_nsepseq ";" s_instruction sequence *)
-
-(* and s_instruction = function *)
-(*   Single instr -> s_single_instr instr *)
-(* |  Block block -> s_block block *)
-
-(* and s_single_instr = function *)
-(*   Cond     {value; _} -> s_conditional value *)
-(* | Match    {value; _} -> s_match_instr value *)
-(* | Ass      instr      -> s_ass_instr instr *)
-(* | Loop     loop       -> s_loop loop *)
-(* | ProcCall fun_call   -> s_fun_call fun_call *)
-(* | Null     kwd_null   -> s_token kwd_null "null" *)
-(* | Fail     {value; _} -> s_fail value *)
-
-(* and s_fail (kwd_fail, expr) = *)
-(*   s_token kwd_fail "fail"; *)
-(*   s_expr expr *)
-
-(* and s_conditional node ={kwd_if;test;kwd_then;ifso;kwd_else;ifnot} *)
-
-
-(* and s_regionmatch_instr node ={kwd_match;expr;kwd_with;cases;kwd_end} *)
-
-
 (* and s_region_cases {value=sequence; _} = *)
 (*   s_nsepseq "|" s_case sequence *)
 
@@ -315,53 +432,6 @@ and s_type_expr : I.type_expr -> O.type_expr = function
 (*   s_pattern pattern; *)
 (*   s_token arrow "->"; *)
 (*   s_instruction instruction *)
-
-(* and s_ass_instr {value=node; _} = *)
-(*   let variable, ass, expr = node in *)
-(*   s_var variable; *)
-(*   s_token ass ":="; *)
-(*   s_expr expr *)
-
-(* and s_loop = function *)
-(*   While while_loop -> s_while_loop while_loop *)
-(* | For     for_loop -> s_for_loop for_loop *)
-
-(* and s_while_loop {value=node; _} = *)
-(*   let kwd_while, expr, block = node in *)
-(*   s_token kwd_while "while"; *)
-(*   s_expr expr; *)
-(*   s_block block *)
-
-(* and s_for_loop = function *)
-(*   ForInt     for_int     -> s_for_int for_int *)
-(* | ForCollect for_collect -> s_for_collect for_collect *)
-
-(* and s_for_int ({value={kwd_for;ass;down;kwd_to;bound;step;block}; region} : for_int reg) = *)
-
-
-(* and s_down = function *)
-(*   Some kwd_down -> s_token kwd_down "down" *)
-(* | None -> () *)
-
-(* and s_step = function *)
-(*   Some (kwd_step, expr) -> *)
-(*     s_token kwd_step "step"; *)
-(*     s_expr expr *)
-(* | None -> () *)
-
-(* and s_for_collect ({value=node; _} : for_collect reg) = *)
-(*   s_token   node.kwd_for "for"; *)
-(*   s_var     node.var; *)
-(*   s_bind_to node.bind_to; *)
-(*   s_token   node.kwd_in "in"; *)
-(*   s_expr    node.expr; *)
-(*   s_block   node.block *)
-
-(* and s_bind_to = function *)
-(*   Some (arrow, variable) -> *)
-(*     s_token arrow "->"; *)
-(*     s_var   variable *)
-(* | None -> () *)
 
 (* and s_expr = function *)
 (*   Or {value = expr1, bool_or, expr2; _} -> *)
@@ -417,12 +487,6 @@ and s_type_expr : I.type_expr -> O.type_expr = function
 (* | MapLookUp lookup -> s_map_lookup lookup *)
 (* | ParExpr pexpr    -> s_par_expr pexpr *)
 
-(* and s_tuple {value=node; _} = *)
-(*   let lpar, sequence, rpar = node in *)
-(*   s_token lpar "("; *)
-(*   s_nsepseq "," s_expr sequence; *)
-(*   s_token rpar ")" *)
-
 (* and s_list {value=node; _} = *)
 (*   let lbra, sequence, rbra = node in *)
 (*   s_token lbra "["; *)
@@ -460,11 +524,6 @@ and s_type_expr : I.type_expr -> O.type_expr = function
 (*   s_token     colon ":"; *)
 (*   s_type_expr type_expr; *)
 (*   s_token     rpar ")" *)
-
-(* and s_fun_call {value=node; _} = *)
-(*   let fun_name, arguments = node in *)
-(*   s_var   fun_name; *)
-(*   s_tuple arguments *)
 
 (* and s_constr_app {value=node; _} = *)
 (*   let constr, arguments = node in *)
