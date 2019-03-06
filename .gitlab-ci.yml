@@ -5,13 +5,16 @@ before_script:
   - mkdir ~/opam-bin
   - mv opam-2.0.1-x86_64-linux ~/opam-bin/opam
   - export PATH="$HOME/opam-bin/opam${PATH:+:}${PATH:-}"
-  - opam init
-  - opam repository add jgb https://gitlab.com/gabriel.alfour/tezos-opam-repository.git
-  - eval $(opam env)
+  - echo "$PATH"
+  - ~/opam-bin/opam init
+  - eval $(~/opam-bin/opam env)
+  - ~/opam-bin/opam repository add jgb https://gitlab.com/gabriel.alfour/tezos-opam-repository.git
+  - eval $(~/opam-bin/opam env)
 
 default-job:
   script:
-    - opam install --working-dir .
+    - ~/opam-bin/opam install --working-dir .
+    - opam --version
   artifacts:
     paths:
       - parser.exe
