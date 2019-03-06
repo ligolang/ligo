@@ -1,6 +1,6 @@
 before_script:
   - apt-get update -qq
-  - apt-get -y -qq install libhidapi-dev libcap-dev
+  - apt-get -y -qq install libhidapi-dev libcap-dev bubblewrap
   - wget https://github.com/ocaml/opam/releases/download/2.0.1/opam-2.0.1-x86_64-linux -O opam-2.0.1-x86_64-linux
   - mkdir ~/opam-bin
   - mv opam-2.0.1-x86_64-linux ~/opam-bin/opam
