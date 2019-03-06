@@ -4,6 +4,7 @@ before_script:
   - wget https://github.com/ocaml/opam/releases/download/2.0.1/opam-2.0.1-x86_64-linux -O opam-2.0.1-x86_64-linux
   - mkdir ~/opam-bin
   - mv opam-2.0.1-x86_64-linux ~/opam-bin/opam
+  - chmod +x ~/opam-bin/opam
   - export PATH="$HOME/opam-bin/opam${PATH:+:}${PATH:-}"
   - echo "$PATH"
   - ~/opam-bin/opam init
