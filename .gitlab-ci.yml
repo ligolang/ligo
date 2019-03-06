@@ -5,7 +5,7 @@ before_script:
   - sudo mv opam-2.0.1-x86_64-linux /usr/local/bin/opam
 
 default-job:
-  script
+  script:
     - opam install --working-dir .
   artifacts:
     paths:
