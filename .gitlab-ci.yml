@@ -1,0 +1,12 @@
+before_script:
+  - apt-get update -qq
+  - apt-get -y -qq install libhidapi-dev libcap-dev
+  - wget https://github.com/ocaml/opam/releases/download/2.0.1/opam-2.0.1-x86_64-linux -O opam-2.0.1-x86_64-linux
+  - sudo mv opam-2.0.1-x86_64-linux /usr/local/bin/opam
+
+default-job:
+  script
+    - opam install --working-dir .
+  artifacts:
+    paths:
+      - parser.exe
