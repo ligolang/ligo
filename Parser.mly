@@ -98,45 +98,77 @@ program:
   block
   EOF {
     {
-      types      = $1;
-      constants  = $2;
-      parameter  = $3;
-      storage    = $4;
-      operations = $5;
-      lambdas    = $6;
-      block      = $7;
-      eof        = $8;
+     types      = $1;
+     constants  = $2;
+     parameter  = $3;
+     storage    = $4;
+     operations = $5;
+     lambdas    = $6;
+     block      = $7;
+     eof        = $8;
     }
   }
 
 parameter_decl:
-  Parameter var COLON type_expr {
-    let stop = type_expr_to_region $4
-    in {region = cover $1 stop;
-        value  = $1,$2,$3,$4}
+  Parameter var COLON type_expr option(SEMI) {
+    let stop =
+      match $5 with
+               None -> type_expr_to_region $4
+      | Some region -> region in
+    let region = cover $1 stop in
+    let value = {
+      kwd_parameter = $1;
+      name          = $2;
+      colon         = $3;
+      param_type    = $4;
+      terminator    = $5}
+    in {region; value}
   }
 
 storage_decl:
-  Storage type_expr {
-    let stop = type_expr_to_region $2
-    in {region = cover $1 stop;
-        value  = $1,$2}
+  Storage type_expr option(SEMI) {
+    let stop =
+      match $3 with
+               None -> type_expr_to_region $2
+      | Some region -> region in
+    let region = cover $1 stop in
+    let value = {
+      kwd_storage = $1;
+      store_type  = $2;
+      terminator  = $3}
+    in {region; value}
   }
 
 operations_decl:
-  Operations type_expr {
-    let stop = type_expr_to_region $2
-    in {region = cover $1 stop;
-        value  = $1,$2}
+  Operations type_expr option(SEMI) {
+    let stop =
+      match $3 with
+              None -> type_expr_to_region $2
+     | Some region -> region in
+    let region = cover $1 stop in
+    let value = {
+      kwd_operations = $1;
+      op_type        = $2;
+      terminator     = $3}
+    in {region; value}
   }
 
 (* Type declarations *)
 
 type_decl:
-  Type type_name Is type_expr {
-    {region = cover $1 (type_expr_to_region $4);
-     value  = $1,$2,$3,$4}
-  }
+  Type type_name Is type_expr option(SEMI) {
+    let stop =
+      match $5 with
+        None -> type_expr_to_region $4
+      | Some region -> region in
+    let region = cover $1 stop in
+    let value = {
+      kwd_type   = $1;
+      name       = $2;
+      kwd_is     = $3;
+      type_expr  = $4;
+      terminator = $5}
+    in {region; value}}
 
 type_expr:
   cartesian   { Prod   $1 }
@@ -202,40 +234,46 @@ fun_decl:
   Function fun_name parameters COLON type_expr Is
     seq(local_decl)
     block
-  With expr {
-    let region = cover $1 (expr_to_region $10) in
-    let value =
-      {
-        kwd_function = $1;
-        name         = $2;
-        param        = $3;
-        colon        = $4;
-        ret_type     = $5;
-        kwd_is       = $6;
-        local_decls  = $7;
-        block        = $8;
-        kwd_with     = $9;
-        return       = $10;
-      }
+  With expr option(SEMI) {
+    let stop =
+      match $11 with
+               None -> expr_to_region $10
+      | Some region -> region in
+    let region = cover $1 stop in
+    let value = {
+      kwd_function = $1;
+      name         = $2;
+      param        = $3;
+      colon        = $4;
+      ret_type     = $5;
+      kwd_is       = $6;
+      local_decls  = $7;
+      block        = $8;
+      kwd_with     = $9;
+      return       = $10;
+      terminator   = $11}
     in {region; value}
   }
 
 proc_decl:
   Procedure fun_name parameters Is
     seq(local_decl)
-    block
+    block option(SEMI)
     {
-      let region = cover $1 $6.region in
-      let value =
-        {
-          kwd_procedure = $1;
-          name          = $2;
-          param         = $3;
-          kwd_is        = $4;
-          local_decls   = $5;
-          block         = $6;
-        }
-      in {region; value}
+     let stop =
+       match $7 with
+         None -> $6.region
+       | Some region -> region in
+     let region = cover $1 stop in
+     let value = {
+       kwd_procedure = $1;
+       name          = $2;
+       param         = $3;
+       kwd_is        = $4;
+       local_decls   = $5;
+       block         = $6;
+       terminator    = $7}
+     in {region; value}
   }
 
 parameters:
@@ -255,17 +293,38 @@ param_decl:
 
 block:
   Begin
-    instructions
-  End
+    instruction after_instr
   {
-   let region = cover $1 $3 in
-   let value =
-     {
-       opening = $1;
-       instr   = $2;
-       close   = $3;
-     }
+   let instrs, terminator, close = $3 in
+   let region = cover $1 close in
+   let value = {
+     opening     = $1;
+     instr       = (let value = $2, instrs in
+                    let region = nsepseq_to_region instr_to_region value
+                    in {value; region});
+     terminator;
+     close}
    in {region; value}
+  }
+
+after_instr:
+  SEMI instr_or_end {
+    match $2 with
+      `Some (instr, instrs, term, close) ->
+        ($1, instr)::instrs, term, close
+    | `End close ->
+        [], Some $1, close
+  }
+| End {
+   [], None, $1
+  }
+
+instr_or_end:
+  End {
+    `End $1 }
+| instruction after_instr {
+    let instrs, term, close = $2 in
+    `Some ($1, instrs, term, close)
   }
 
 local_decl:
@@ -274,37 +333,39 @@ local_decl:
 | var_decl    { LocalVar   $1 }
 
 const_decl:
-  Const var COLON type_expr EQUAL expr {
-    let region = cover $1 (expr_to_region $6) in
+  Const var COLON type_expr EQUAL expr option(SEMI) {
+    let stop =
+      match $7 with
+        None -> expr_to_region $6
+      | Some region -> region in
+    let region = cover $1 stop in
     let value  = {
-                   kwd_const = $1;
-                   name      = $2;
-                   colon     = $3;
-                   vtype     = $4;
-                   equal     = $5;
-                   init      = $6;
-                 }
+      kwd_const  = $1;
+      name       = $2;
+      colon      = $3;
+      vtype      = $4;
+      equal      = $5;
+      init       = $6;
+      terminator = $7}
     in {region; value}
   }
 
 var_decl:
-  Var var COLON type_expr ASGNMNT expr {
-    let region = cover $1 (expr_to_region $6) in
+  Var var COLON type_expr ASS expr option(SEMI) {
+    let stop =
+      match $7 with
+               None -> expr_to_region $6
+      | Some region -> region in
+    let region = cover $1 stop in
     let value = {
-                   kwd_var = $1;
-                   name    = $2;
-                   colon   = $3;
-                   vtype   = $4;
-                   asgnmnt = $5;
-                   init    = $6;
-                 }
+      kwd_var    = $1;
+      name       = $2;
+      colon      = $3;
+      vtype      = $4;
+      ass        = $5;
+      init       = $6;
+      terminator = $7}
     in {region; value}
-  }
-
-instructions:
-  nsepseq(instruction,SEMI) {
-    let region = nsepseq_to_region instr_to_region $1
-    in {region; value=$1}
   }
 
 instruction:
@@ -314,14 +375,12 @@ instruction:
 single_instr:
   conditional {     Cond $1 }
 | match_instr {    Match $1 }
-| asgnmnt     {  Asgnmnt $1 }
+| ass         {      Ass $1 }
 | loop        {     Loop $1 }
 | proc_call   { ProcCall $1 }
 | Null        {     Null $1 }
-| Fail expr   {
-    let region = cover $1 (expr_to_region $2)
-    in Fail {region; value = $1,$2}
-  }
+| Fail expr   { let region = cover $1 (expr_to_region $2)
+                in Fail {region; value = $1,$2} }
 
 proc_call:
   fun_call { $1 }
@@ -329,29 +388,26 @@ proc_call:
 conditional:
   If expr Then instruction Else instruction {
     let region = cover $1 (instr_to_region $6) in
-    let value =
-      {
-        kwd_if   = $1;
-        test     = $2;
-        kwd_then = $3;
-        ifso     = $4;
-        kwd_else = $5;
-        ifnot    = $6;
-      }
+    let value = {
+      kwd_if   = $1;
+      test     = $2;
+      kwd_then = $3;
+      ifso     = $4;
+      kwd_else = $5;
+      ifnot    = $6}
     in {region; value}
   }
 
 match_instr:
-  Match expr With cases End {
-    let region = cover $1 $5 in
-    let value =
-      {
-        kwd_match = $1;
-        expr      = $2;
-        kwd_with  = $3;
-        cases     = $4;
-        kwd_end   = $5;
-      }
+  Match expr With option(VBAR) cases End {
+    let region = cover $1 $6 in
+    let value = {
+      kwd_match = $1;
+      expr      = $2;
+      kwd_with  = $3;
+      lead_vbar = $4;
+      cases     = $5;
+      kwd_end   = $6}
     in {region; value}
   }
 
@@ -367,8 +423,8 @@ case:
     in {region; value = $1,$2,$3}
   }
 
-asgnmnt:
-  var ASGNMNT expr {
+ass:
+  var ASS expr {
     let region = cover $1.region (expr_to_region $3)
     in {region; value = $1,$2,$3}
   }
@@ -384,12 +440,12 @@ while_loop:
   }
 
 for_loop:
-  For asgnmnt Down? To expr option(step_clause) block {
+  For ass Down? To expr option(step_clause) block {
     let region = cover $1 $7.region in
     let value =
       {
         kwd_for  = $1;
-        asgnmnt  = $2;
+        ass      = $2;
         down     = $3;
         kwd_to   = $4;
         bound    = $5;

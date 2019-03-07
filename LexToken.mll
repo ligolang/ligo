@@ -46,7 +46,7 @@ type t =
 | CONS     of Region.t
 | VBAR     of Region.t
 | ARROW    of Region.t
-| ASGNMNT  of Region.t
+| ASS      of Region.t
 | EQUAL    of Region.t
 | COLON    of Region.t
 | OR       of Region.t
@@ -165,7 +165,7 @@ let proj_token = function
 | CONS     region -> region, "CONS"
 | VBAR     region -> region, "VBAR"
 | ARROW    region -> region, "ARROW"
-| ASGNMNT  region -> region, "ASGNMNT"
+| ASS      region -> region, "ASS"
 | EQUAL    region -> region, "EQUAL"
 | COLON    region -> region, "COLON"
 | OR       region -> region, "OR"
@@ -249,7 +249,7 @@ let to_lexeme = function
 | CONS     _ -> "<:"
 | VBAR     _ -> "|"
 | ARROW    _ -> "->"
-| ASGNMNT  _ -> ":="
+| ASS      _ -> ":="
 | EQUAL    _ -> "="
 | COLON    _ -> ":"
 | OR       _ -> "||"
@@ -493,7 +493,7 @@ let mk_sym lexeme region =
   | "<:"  -> CONS     region
   | "|"   -> VBAR     region
   | "->"  -> ARROW    region
-  | ":="  -> ASGNMNT  region
+  | ":="  -> ASS      region
   | "="   -> EQUAL    region
   | ":"   -> COLON    region
   | "||"  -> OR       region
@@ -596,7 +596,7 @@ let is_sym = function
 | CONS     _
 | VBAR     _
 | ARROW    _
-| ASGNMNT  _
+| ASS      _
 | EQUAL    _
 | COLON    _
 | OR       _

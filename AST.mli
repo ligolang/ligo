@@ -73,7 +73,7 @@ type rbracket = Region.t
 type cons     = Region.t
 type vbar     = Region.t
 type arrow    = Region.t
-type asgnmnt  = Region.t
+type ass      = Region.t
 type equal    = Region.t
 type colon    = Region.t
 type bool_or  = Region.t
@@ -127,11 +127,11 @@ type 'a braces = (lbrace * 'a * rbrace) reg
 (* The Abstract Syntax Tree *)
 
 type t = {
-  types      : type_decl list;
+  types      : type_decl reg list;
   constants  : const_decl reg list;
-  parameter  : parameter_decl;
-  storage    : storage_decl;
-  operations : operations_decl;
+  parameter  : parameter_decl reg;
+  storage    : storage_decl reg;
+  operations : operations_decl reg;
   lambdas    : lambda_decl list;
   block      : block reg;
   eof        : eof
@@ -139,15 +139,35 @@ type t = {
 
 and ast = t
 
-and parameter_decl = (kwd_parameter * variable * colon * type_expr) reg
+and parameter_decl = {
+  kwd_parameter : kwd_parameter;
+  name          : variable;
+  colon         : colon;
+  param_type    : type_expr;
+  terminator    : semi option
+}
 
-and storage_decl = (kwd_storage * type_expr) reg
+and storage_decl = {
+  kwd_storage : kwd_storage;
+  store_type  : type_expr;
+  terminator  : semi option
+}
 
-and operations_decl = (kwd_operations * type_expr) reg
+and operations_decl = {
+  kwd_operations : kwd_operations;
+  op_type        : type_expr;
+  terminator     : semi option
+}
 
 (* Type declarations *)
 
-and type_decl = (kwd_type * type_name * kwd_is * type_expr) reg
+and type_decl = {
+  kwd_type   : kwd_type;
+  name       : type_name;
+  kwd_is     : kwd_is;
+  type_expr  : type_expr;
+  terminator : semi option
+}
 
 and type_expr =
   Prod    of cartesian
@@ -185,7 +205,8 @@ and fun_decl = {
   local_decls  : local_decl list;
   block        : block reg;
   kwd_with     : kwd_with;
-  return       : expr
+  return       : expr;
+  terminator   : semi option
 }
 
 and proc_decl = {
@@ -194,19 +215,25 @@ and proc_decl = {
   param         : parameters;
   kwd_is        : kwd_is;
   local_decls   : local_decl list;
-  block         : block reg
+  block         : block reg;
+  terminator    : semi option
 }
 
 and parameters = (param_decl, semi) nsepseq par
 
 and param_decl =
-  ParamConst of (kwd_const * variable * colon * type_expr) reg
-| ParamVar   of (kwd_var * variable * colon * type_expr) reg
+  ParamConst of param_const
+| ParamVar   of param_var
+
+and param_const = (kwd_const * variable * colon * type_expr) reg
+
+and param_var = (kwd_var * variable * colon * type_expr) reg
 
 and block = {
-  opening : kwd_begin;
-  instr   : instructions;
-  close   : kwd_end
+  opening    : kwd_begin;
+  instr      : instructions;
+  terminator : semi option;
+  close      : kwd_end
 }
 
 and local_decl =
@@ -215,21 +242,23 @@ and local_decl =
 | LocalVar   of var_decl reg
 
 and const_decl = {
-  kwd_const : kwd_const;
-  name      : variable;
-  colon     : colon;
-  vtype     : type_expr;
-  equal     : equal;
-  init      : expr
+  kwd_const  : kwd_const;
+  name       : variable;
+  colon      : colon;
+  vtype      : type_expr;
+  equal      : equal;
+  init       : expr;
+  terminator : semi option
 }
 
 and var_decl = {
-  kwd_var : kwd_var;
-  name    : variable;
-  colon   : colon;
-  vtype   : type_expr;
-  asgnmnt : asgnmnt;
-  init    : expr
+  kwd_var    : kwd_var;
+  name       : variable;
+  colon      : colon;
+  vtype      : type_expr;
+  ass        : ass;
+  init       : expr;
+  terminator : semi option
 }
 
 and instructions = (instruction, semi) nsepseq reg
@@ -241,7 +270,7 @@ and instruction =
 and single_instr =
   Cond     of conditional reg
 | Match    of match_instr reg
-| Asgnmnt  of asgnmnt_instr
+| Ass      of ass_instr
 | Loop     of loop
 | ProcCall of fun_call
 | Null     of kwd_null
@@ -260,6 +289,7 @@ and match_instr = {
   kwd_match : kwd_match;
   expr      : expr;
   kwd_with  : kwd_with;
+  lead_vbar : vbar option;
   cases     : cases;
   kwd_end   : kwd_end
 }
@@ -268,7 +298,7 @@ and cases = (case, vbar) nsepseq reg
 
 and case = (pattern * arrow * instruction) reg
 
-and asgnmnt_instr = (variable * asgnmnt * expr) reg
+and ass_instr = (variable * ass * expr) reg
 
 and loop =
   While of while_loop
@@ -282,7 +312,7 @@ and for_loop =
 
 and for_int = {
   kwd_for : kwd_for;
-  asgnmnt : asgnmnt_instr;
+  ass     : ass_instr;
   down    : kwd_down option;
   kwd_to  : kwd_to;
   bound   : expr;

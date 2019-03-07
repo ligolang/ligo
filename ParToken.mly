@@ -24,7 +24,7 @@
 %token <Region.t> CONS        (* "<:"  *)
 %token <Region.t> VBAR        (* "|"   *)
 %token <Region.t> ARROW       (* "->"  *)
-%token <Region.t> ASGNMNT     (* ":="  *)
+%token <Region.t> ASS         (* ":="  *)
 %token <Region.t> EQUAL       (* "="   *)
 %token <Region.t> COLON       (* ":"   *)
 %token <Region.t> OR          (* "||"  *)
