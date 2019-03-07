@@ -1,6 +1,8 @@
 %{
 (* START HEADER *)
 
+[@@@warning "-42"]
+
 open Region
 open AST
 
@@ -288,7 +290,7 @@ const_decl:
 var_decl:
   Var var COLON type_expr ASGNMNT expr {
     let region = cover $1 (expr_to_region $6) in
-    let value  = {
+    let value = {
                    kwd_var = $1;
                    name    = $2;
                    colon   = $3;
