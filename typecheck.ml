@@ -1,3 +1,12 @@
+(* module I = AST (\* In *\) *)
+
+(* module SMap = Map.Make(String) *)
+
+(* type te = type_expr list SMap.t *)
+(* type ve = type_expr list SMap.t *)
+(* type tve = te * ve *)
+
+(*
 module I = AST (* In *)
 
 module SMap = Map.Make(String)
@@ -86,17 +95,6 @@ let mk_ast ~lambdas ~block = {lambdas;block}
 let mk_fun_decl ~kwd_function ~var ~param ~colon ~ret_type ~kwd_is ~body ~kwd_with ~return =
   O.{kwd_function; var; param; colon; ret_type; kwd_is; body; kwd_with; return}
 
-(* open Sanity: *)
-let (|>) v f = f v       (* pipe f to v *)
-let (@@) f v = f v       (* apply f on v *)
-let (@.) f g x = f (g x) (* compose *)
-let map f l = List.rev (List.rev_map f l)
-let fold_map f a l =
-  let f (acc, l) elem =
-    let acc', elem' = f acc elem
-    in acc', (elem' :: l) in
-  let last_acc, last_l = List.fold_left f (a, []) l
-  in last_acc, List.rev last_l
 
 let unreg : 'a reg -> 'a = fun {value; _} -> value
 let unpar : 'a par -> 'a = (fun (_left_par, x, _right_par) -> x) @. unreg
@@ -228,3 +226,4 @@ let tc_ast (ast : I.ast) : O.ast =
   let _ve'' = ve'' in (* not needed anymore *)
   let _te'' = te'' in (* not needed anymore *)
   mk_ast ~lambdas ~block
+ *)
