@@ -166,7 +166,7 @@ module Make (Token: TOKEN) : (S with module Token = Token) =
 
     (* When scanning structured constructs, like strings and comments,
        we need to keep the region of the opening symbol (like double
-       quote, "#" or "(*") in order to report any error more
+       quote, "//" or "(*") in order to report any error more
        precisely. Since ocamllex is byte-oriented, we need to store
        the parsed bytes as characters in an accumulator [acc] and
        also its length [len], so, we are done, it is easy to build the
@@ -443,7 +443,7 @@ let esc        = "\\n" | "\\\"" | "\\\\" | "\\b"
                | "\\r" | "\\t" | "\\x" byte
 let symbol     = ';' | ','
                | '(' | ')' | '{' | '}' | '[' | ']'
-               | "<:" | '|' | "->" | ":=" | '=' | ':'
+               | "#" | '|' | "->" | ":=" | '=' | ':'
                | "||" | "&&" | '<' | "<=" | '>' | ">=" | "=/="
                | '+' | '-' | '*' | '.' | '_' | '^'
 
@@ -482,8 +482,8 @@ and scan state = parse
          let state = scan_block thread state lexbuf |> push_block
          in scan state lexbuf }
 
-| '#'  { let opening, _, state = sync state lexbuf in
-         let thread = {opening; len=1; acc=['#']} in
+| "//"  { let opening, _, state = sync state lexbuf in
+         let thread = {opening; len=2; acc=['/';'/']} in
          let state = scan_line thread state lexbuf |> push_line
          in scan state lexbuf }
 

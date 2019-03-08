@@ -246,7 +246,7 @@ let to_lexeme = function
 | RBRACE   _ -> "}"
 | LBRACKET _ -> "["
 | RBRACKET _ -> "]"
-| CONS     _ -> "<:"
+| CONS     _ -> "#"
 | VBAR     _ -> "|"
 | ARROW    _ -> "->"
 | ASS      _ -> ":="
@@ -490,7 +490,7 @@ let mk_sym lexeme region =
   | "}"   -> RBRACE   region
   | "["   -> LBRACKET region
   | "]"   -> RBRACKET region
-  | "<:"  -> CONS     region
+  | "#"   -> CONS     region
   | "|"   -> VBAR     region
   | "->"  -> ARROW    region
   | ":="  -> ASS      region
