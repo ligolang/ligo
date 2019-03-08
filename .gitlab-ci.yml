@@ -2,10 +2,10 @@ before_script:
   - apt-get update -qq
   - apt-get -y -qq install libhidapi-dev libcap-dev bubblewrap
   - wget https://github.com/ocaml/opam/releases/download/2.0.1/opam-2.0.1-x86_64-linux -O opam-2.0.1-x86_64-linux
-  - mkdir ~/opam-bin
   - cp opam-2.0.1-x86_64-linux /usr/local/bin/opam
   - chmod +x /usr/local/bin/opam
   - export PATH="/usr/local/bin${PATH:+:}${PATH:-}"
+  - opam --version
   - echo "$PATH"
   - printf '' | opam init
   - eval $(opam config env)
