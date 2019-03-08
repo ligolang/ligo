@@ -3,19 +3,21 @@ before_script:
   - apt-get -y -qq install libhidapi-dev libcap-dev bubblewrap
   - wget https://github.com/ocaml/opam/releases/download/2.0.1/opam-2.0.1-x86_64-linux -O opam-2.0.1-x86_64-linux
   - mkdir ~/opam-bin
-  - mv opam-2.0.1-x86_64-linux ~/opam-bin/opam
-  - chmod +x ~/opam-bin/opam
-  - export PATH="$HOME/opam-bin/opam${PATH:+:}${PATH:-}"
+  - cp opam-2.0.1-x86_64-linux /usr/local/bin/opam
+  - chmod +x /usr/local/bin/opam
+  - export PATH="/usr/local/bin${PATH:+:}${PATH:-}"
   - echo "$PATH"
-  - ~/opam-bin/opam init
-  - eval $(~/opam-bin/opam env)
-  - ~/opam-bin/opam repository add jgb https://gitlab.com/gabriel.alfour/tezos-opam-repository.git
-  - eval $(~/opam-bin/opam env)
+  - printf '' | opam init
+  - eval $(opam config env)
+  - opam repository add tezos-opam-repository https://gitlab.com/gabriel.alfour/tezos-opam-repository.git
+  - eval $(opam config env)
+  - opam -y install --unlock-base ocaml.4.07.0
+  - opam --version
+  - printf '' | ocaml
 
 default-job:
   script:
-    - ~/opam-bin/opam install --working-dir .
-    - opam --version
+    - opam -y install --working-dir .
   artifacts:
     paths:
       - parser.exe
