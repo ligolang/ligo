@@ -5,13 +5,11 @@ before_script:
   - cp opam-2.0.1-x86_64-linux /usr/local/bin/opam
   - chmod +x /usr/local/bin/opam
   - export PATH="/usr/local/bin${PATH:+:}${PATH:-}"
-  - opam --version
   - echo "$PATH"
   - printf '' | opam init
   - eval $(opam config env)
   - opam repository add tezos-opam-repository https://gitlab.com/gabriel.alfour/tezos-opam-repository.git
   - eval $(opam config env)
-  - opam -y install --unlock-base ocaml.4.07.0
   - opam --version
   - printf '' | ocaml
 
