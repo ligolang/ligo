@@ -15,7 +15,7 @@ before_script:
 
 default-job:
   script:
-    - opam -y install --working-dir .
+    - opam install -y --working-dir .
   artifacts:
     paths:
       - parser.exe
