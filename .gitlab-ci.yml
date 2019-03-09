@@ -18,4 +18,4 @@ default-job:
     - opam install -y --working-dir .
   artifacts:
     paths:
-      - parser.exe
+      - Parser.exe
