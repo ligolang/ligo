@@ -26,7 +26,7 @@ module O = struct
     Prod     of type_expr list
   | Sum      of (type_name * type_expr) list
   | Record   of (type_name * type_expr) list
-  | TypeApp  of type_name * type_expr list
+  | TypeApp  of type_name * (type_expr list)
   | Function of { args: type_expr list; ret: type_expr }
   | Ref      of type_expr
   | Unit
@@ -34,7 +34,7 @@ module O = struct
   | TODO
   and expr =
     App      of { operator: operator; arguments: expr list }
-  | Variable of var_name
+  | Var of var_name
   | Constant of constant
   | Lambda   of {
       parameters:   type_expr SMap.t;
@@ -42,10 +42,12 @@ module O = struct
       instructions: instr list;
       result:       expr;
     }
-  and operator = Add | Sub | Lt | Gt | Function of string
+  and operator =
+    Or | And | Lt | Leq | Gt | Geq | Equal | Neq | Cat | Cons | Add | Sub | Mult | Div | Mod
+    | Neg | Not
+    | Function of string
   and constant =
-    Unit
-  | Int of int
+    Unit | Int of Z.t | String of string | Bytes of MBytes.t | False | True
   and instr =
   | Assignment    of { name: var_name; value: expr }
   | While         of { condition: expr; body: instr list }
@@ -107,37 +109,36 @@ let rec s_cartesian {value=sequence; region} : O.type_expr =
 
 and s_sum_type {value=sequence; region} : O.type_expr =
   let () = ignore (region) in
-  let _todo = sequence in
-(*  Sum (map s_type_expr (s_nsepseq sequence)) *)
-  TODO
+  Sum (map s_variant (s_nsepseq sequence))
+
+and s_variant {value=(constr, kwd_of, cartesian); region} =
+  let () = ignore (kwd_of,region) in
+  (s_name constr, s_cartesian cartesian)
 
 and s_record_type {value=(kwd_record, field_decls, kwd_end); region} : O.type_expr =
   let () = ignore (kwd_record,region,kwd_end) in
-  let _todo = (* s_field_decls *) field_decls in
-  TODO
+  Record (map s_field_decl (s_nsepseq field_decls))
 
-and s_type_app {value=node; region} : O.type_expr =
+and s_field_decl {value=(var, colon, type_expr); region} =
+  let () = ignore (colon,region) in
+  (s_name var, s_type_expr type_expr)
+
+and s_type_app {value=(type_name,type_tuple); region} : O.type_expr =
   let () = ignore (region) in
-  let _todo = node in
-  TODO
-  (* let type_name, type_tuple = node in *)
-  (* s_var        type_name; *)
-  (* s_type_tuple type_tuple *)
+  TypeApp (s_name type_name, s_type_tuple type_tuple)
 
-and s_par_type {value=node; region} : O.type_expr =
-  let () = ignore (region) in
-  let _todo = node in
-  TODO
+and s_type_tuple ({value=(lpar, sequence, rpar); region} : (I.type_name, I.comma) Utils.nsepseq I.par) : O.type_expr list =
+  let () = ignore (lpar,rpar,region) in
+  (* TODO: the grammar should allow any type expr, not just type_name in the tuple elements *)
+  map s_type_expr (map (fun a -> I.TAlias a) (s_nsepseq sequence))
 
-and s_var {region; value=lexeme} : O.type_expr =
-  let () = ignore (region) in
-  let _todo = lexeme in
-  TODO
+and s_par_type {value=(lpar, type_expr, rpar); region} : O.type_expr =
+  let () = ignore (lpar,rpar,region) in
+  s_type_expr type_expr
 
-(*  let lpar, type_expr, rpar = node in
-  s_token     lpar "(";
-  s_type_expr type_expr;
-  s_token     rpar ")"*)
+and s_type_alias name : O.type_expr =
+  let () = ignore () in
+  TypeApp (s_name name, [])
 
 and s_type_expr : I.type_expr -> O.type_expr = function
   Prod    cartesian   -> s_cartesian   cartesian
@@ -145,7 +146,7 @@ and s_type_expr : I.type_expr -> O.type_expr = function
 | Record  record_type -> s_record_type record_type
 | TypeApp type_app    -> s_type_app    type_app
 | ParType par_type    -> s_par_type    par_type
-| TAlias  type_alias  -> s_var         type_alias
+| TAlias  type_alias  -> s_type_alias  type_alias
 
 
 let s_type_decl I.{value={kwd_type;name;kwd_is;type_expr;terminator}; region} : O.type_decl =
@@ -164,8 +165,45 @@ let s_operations_decl I.{value={kwd_operations;op_type;terminator}; region} : O.
   let () = ignore (kwd_operations,terminator,region) in
   O.{ name = "operations"; ty = s_type_expr op_type }
 
-let s_expr : I.expr -> O.expr = function
-  | _ -> raise (TODO "simplify expressions")
+let rec bin l operator r = O.App { operator; arguments = [s_expr l; s_expr r] }
+and     una operator v = O.App { operator; arguments = [s_expr v] }
+and s_expr : I.expr -> O.expr =
+  function
+    Or        {value=(l, bool_or, r);     region} -> let () = ignore (region, bool_or) in bin l Or    r
+  | And       {value=(l, bool_and, r);    region} -> let () = ignore (region,bool_and) in bin l And   r
+  | Lt        {value=(l, lt, r);          region} -> let () = ignore (region,      lt) in bin l Lt    r
+  | Leq       {value=(l, leq, r);         region} -> let () = ignore (region,     leq) in bin l Leq   r
+  | Gt        {value=(l, gt, r);          region} -> let () = ignore (region,      gt) in bin l Gt    r
+  | Geq       {value=(l, geq, r);         region} -> let () = ignore (region,     geq) in bin l Geq   r
+  | Equal     {value=(l, equal, r);       region} -> let () = ignore (region,   equal) in bin l Equal r
+  | Neq       {value=(l, neq, r);         region} -> let () = ignore (region,     neq) in bin l Neq   r
+  | Cat       {value=(l, cat, r);         region} -> let () = ignore (region,     cat) in bin l Cat   r
+  | Cons      {value=(l, cons, r);        region} -> let () = ignore (region,    cons) in bin l Cons  r
+  | Add       {value=(l, plus, r);        region} -> let () = ignore (region,    plus) in bin l Add   r
+  | Sub       {value=(l, minus, r);       region} -> let () = ignore (region,   minus) in bin l Sub   r
+  | Mult      {value=(l, times, r);       region} -> let () = ignore (region,   times) in bin l Mult  r
+  | Div       {value=(l, slash, r);       region} -> let () = ignore (region,   slash) in bin l Div   r
+  | Mod       {value=(l, kwd_mod, r);     region} -> let () = ignore (region, kwd_mod) in bin l Mod   r
+  | Neg       {value=(minus, expr);       region} -> let () = ignore (region,   minus) in una Neg expr
+  | Not       {value=(kwd_not, expr);     region} -> let () = ignore (region, kwd_not) in una Not expr
+  | Int       {value=(lexeme, z);         region} -> let () = ignore (region,  lexeme) in Constant (Int z)
+  | Var       {value=lexeme;              region} -> let () = ignore (region)          in Var lexeme
+  | String    {value=s;                   region} -> let () = ignore (region)          in Constant (String s)
+  | Bytes     {value=(lexeme, mbytes);    region} -> let () = ignore (region,  lexeme) in Constant (Bytes mbytes)
+  | False     c_False                             -> let () = ignore (c_False)         in Constant (False)
+  | True      c_True                              -> let () = ignore (c_True)          in Constant (True)
+  | Unit      c_Unit                              -> let () = ignore (c_Unit)          in Constant (Unit)
+  | Tuple     tuple                               -> let _todo = tuple in raise (TODO "simplify tuple")
+  | List      {value=(lbrkt,lst,rbrkt);   region} -> let () = ignore (lbrkt,rbrkt,region) in let _todo = lst in raise (TODO "simplify (expr,comma) list")
+  | EmptyList empty_list                          -> let _todo = empty_list in raise (TODO "simplify (lbracket,rbracket,colon,type_expr) par")
+  | Set       set                                 -> let _todo = set        in raise (TODO "simplify (expr, comma) nsepseq braces")
+  | EmptySet  empty_set                           -> let _todo = empty_set  in raise (TODO "simplify empty_set")
+  | NoneExpr  none_expr                           -> let _todo = none_expr  in raise (TODO "simplify (c_None,colon,type_expr) par")
+  | FunCall   fun_call                            -> let _todo = fun_call   in raise (TODO "simplify FunCall")
+  | ConstrApp constr_app                          -> let _todo = constr_app in raise (TODO "simplify ConstrApp")
+  | SomeApp   {value=(c_Some, arguments); region} -> let _todo = arguments  in let () = ignore (region,c_Some) in raise (TODO "simplify SomeApp")
+  | MapLookUp {value=map_lookup;          region} -> let _todo = map_lookup in let () = ignore (region) in raise (TODO "simplify MapLookUp")
+  | ParExpr   {value=(lpar,expr,rpar);    region} -> let () = ignore (lpar,rpar,region) in s_expr expr
 
 let s_case : I.case -> O.pattern * (O.instr list) = function
   | _ -> raise (TODO "simplify pattern matching cases")
@@ -245,11 +283,11 @@ and s_for_int ({value={kwd_for;ass;down;kwd_to;bound;step;block}; region} : I.fo
       (* TODO: lift the declaration of the variable *)
       While {
           condition = App { operator = condition;
-                            arguments = [Variable name; s_expr bound] };
+                            arguments = [Var name; s_expr bound] };
           body = append (s_block block)
                         [O.Assignment { name;
                                         value = App { operator;
-                                                      arguments = [Variable name; step]}}]
+                                                      arguments = [Var name; step]}}]
         }
     ]
 
@@ -266,7 +304,7 @@ and s_for_collect ({value={kwd_for;var;bind_to;kwd_in;expr;block}; _} : I.for_co
 
 and s_step : (I.kwd_step * I.expr) option -> O.expr = function
   Some (kwd_step, expr) -> let () = ignore (kwd_step) in s_expr expr
-| None -> Constant (Int 1)
+| None -> Constant (Int (Z.of_int 1))
 
 and s_bind_to : (I.arrow * I.variable) option -> O.var_name option = function
     Some (arrow, variable) -> let () = ignore (arrow) in Some (s_name variable)
@@ -388,30 +426,6 @@ let s_ast (ast : I.ast) : O.ast =
 (*   printf "%s: Int (\"%s\", %s)\n" *)
 (*          (compact region) lexeme *)
 (*          (Z.to_string abstract) *)
-
-(* and s_cartesian {value=sequence; _} = *)
-(*   s_nsepseq "*" s_type_expr sequence *)
-
-(* and s_variant {value=node; _} = *)
-(*   let constr, kwd_of, cartesian = node in *)
-(*   s_constr    constr; *)
-(*   s_token     kwd_of "of"; *)
-(*   s_cartesian cartesian *)
-
-(* and s_field_decls sequence = *)
-(*   s_nsepseq ";" s_field_decl sequence *)
-
-(* and s_field_decl {value=node; _} = *)
-(*   let var, colon, type_expr = node in *)
-(*   s_var       var; *)
-(*   s_token     colon ":"; *)
-(*   s_type_expr type_expr *)
-
-(* and s_type_tuple {value=node; _} = *)
-(*   let lpar, sequence, rpar = node in *)
-(*   s_token lpar "("; *)
-(*   s_nsepseq "," s_var sequence; *)
-(*   s_token rpar ")" *)
 
 
 (* and s_parameters {value=node; _} = *)
