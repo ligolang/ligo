@@ -13,7 +13,6 @@ module O = struct
   type var_name = string
   type ast = {
       types        : type_decl list;
-      parameter    : typed_var;
       storage      : typed_var;
       operations   : typed_var;
       declarations : decl list;
@@ -153,17 +152,13 @@ let s_type_decl I.{value={kwd_type;name;kwd_is;type_expr;terminator}; region} : 
   let () = ignore (kwd_type,kwd_is,terminator,region) in
   O.{ name = s_name name; ty = s_type_expr type_expr }
 
-let s_parameter_decl I.{value={kwd_parameter;name;colon;param_type;terminator};region} : O.typed_var =
-  let () = ignore (kwd_parameter,colon,terminator,region) in
-  O.{ name = s_name name; ty = s_type_expr param_type }
+let s_storage_decl I.{value={kwd_storage; name; colon; store_type; terminator}; region} : O.typed_var =
+  let () = ignore (kwd_storage,colon,terminator,region) in
+  O.{ name = s_name name; ty = s_type_expr store_type }
 
-let s_storage_decl I.{value={kwd_storage; store_type; terminator}; region} : O.typed_var =
-  let () = ignore (kwd_storage,terminator,region) in
-  O.{ name = "storage"; ty = s_type_expr store_type }
-
-let s_operations_decl I.{value={kwd_operations;op_type;terminator}; region} : O.typed_var =
-  let () = ignore (kwd_operations,terminator,region) in
-  O.{ name = "operations"; ty = s_type_expr op_type }
+let s_operations_decl I.{value={kwd_operations;name;colon;op_type;terminator}; region} : O.typed_var =
+  let () = ignore (kwd_operations,colon,terminator,region) in
+  O.{ name = s_name name; ty = s_type_expr op_type }
 
 let rec bin l operator r = O.App { operator; arguments = [s_expr l; s_expr r] }
 and     una operator v = O.App { operator; arguments = [s_expr v] }
@@ -208,9 +203,9 @@ and s_expr : I.expr -> O.expr =
 let s_case : I.case -> O.pattern * (O.instr list) = function
   | _ -> raise (TODO "simplify pattern matching cases")
 
-let s_const_decl I.{value={kwd_const;name;colon;vtype;equal;init;terminator}; region} : O.decl =
+let s_const_decl I.{value={kwd_const;name;colon;const_type;equal;init;terminator}; region} : O.decl =
   let () = ignore (kwd_const,colon,equal,terminator,region) in
-  O.{ name = s_name name; ty = s_type_expr vtype; value = s_expr init }
+  O.{ name = s_name name; ty = s_type_expr const_type; value = s_expr init }
 
 let s_param_const {value=(kwd_const,variable,colon,type_expr); region} : string * O.type_expr =
   let () = ignore (kwd_const,colon,region) in
@@ -229,11 +224,11 @@ let s_parameters ({value=(lpar,param_decl,rpar);region} : I.parameters) : (strin
   let l = (s_nsepseq param_decl) in
   map s_param_decl l
 
-let rec s_var_decl I.{value={kwd_var;name;colon;vtype;ass;init;terminator}; region} : O.decl =
+let rec s_var_decl I.{value={kwd_var;name;colon;var_type;ass;init;terminator}; region} : O.decl =
   let () = ignore (kwd_var,colon,ass,terminator,region) in
   O.{
       name = s_name name;
-      ty = s_type_expr vtype;
+      ty = s_type_expr var_type;
       value = s_expr init
   }
 
@@ -369,9 +364,23 @@ and s_proc_decl I.{value={kwd_procedure;name;param;kwd_is;local_decls;block;term
                 }
   }
 
+and s_entry_decl I.{value={kwd_entrypoint;name;param;kwd_is;local_decls;block;terminator}; region} =
+  let () = ignore (kwd_entrypoint,kwd_is,terminator,region) in
+  O.{
+      name = s_name name;
+      ty = Function { args = map snd (s_parameters param); ret = Unit };
+      value = Lambda {
+                  parameters   = s_parameters param |> list_to_map;
+                  declarations = map s_local_decl local_decls;
+                  instructions = s_block block;
+                  result       = O.Constant O.Unit
+                }
+  }
+
 and s_lambda_decl : I.lambda_decl -> O.decl = function
-  FunDecl   fun_decl -> s_fun_decl fun_decl
-| ProcDecl proc_decl -> s_proc_decl proc_decl
+  FunDecl     fun_decl -> s_fun_decl fun_decl
+| EntryDecl entry_decl -> s_entry_decl entry_decl
+| ProcDecl   proc_decl -> s_proc_decl proc_decl
 
 let s_main_block (block: I.block reg) : O.decl =
   O.{
@@ -386,11 +395,10 @@ let s_main_block (block: I.block reg) : O.decl =
   }
 
 let s_ast (ast : I.ast) : O.ast =
-  let I.{types;constants;parameter;storage;operations;lambdas;block;eof} = ast in
+  let I.{types;constants;storage;operations;lambdas;block;eof} = ast in
   let () = ignore (eof) in
   O.{
       types        = map s_type_decl types;
-      parameter    = s_parameter_decl parameter;
       storage      = s_storage_decl storage;
       operations   = s_operations_decl operations;
       declarations = List.flatten [(map s_const_decl  constants);
