@@ -3,13 +3,12 @@ type u is t
 type v is record foo: key; bar: mutez; baz: address end
 type w is K of (U of int) (*v * u*)
 
-parameter p : v;   // Line comment
-storage w
+storage w     // Line comment
 operations u
 
 (* Block comment *)
 
-procedure g (const l : list (int)) is
+entrypoint g (const l : list (int)) is
    function f (const x : int) : int is
      var y : int := 5 - x
      const z : int = 6
