@@ -24,5 +24,5 @@ entrypoint g (const l : list (int)) is
 
 begin
   g (Unit);
-  fail K "in extremis"
+  fail "in extremis"
 end

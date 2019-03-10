@@ -42,29 +42,29 @@ let sepseq_to_region to_region = function
 type kwd_begin      = Region.t
 type kwd_const      = Region.t
 type kwd_down       = Region.t
+type kwd_else       = Region.t
+type kwd_end        = Region.t
+type kwd_entrypoint = Region.t
 type kwd_fail       = Region.t
+type kwd_for        = Region.t
+type kwd_function   = Region.t
 type kwd_if         = Region.t
 type kwd_in         = Region.t
 type kwd_is         = Region.t
-type kwd_for        = Region.t
-type kwd_function   = Region.t
-type kwd_parameter  = Region.t
-type kwd_storage    = Region.t
-type kwd_type       = Region.t
-type kwd_of         = Region.t
-type kwd_operations = Region.t
-type kwd_var        = Region.t
-type kwd_end        = Region.t
-type kwd_then       = Region.t
-type kwd_else       = Region.t
 type kwd_match      = Region.t
-type kwd_procedure  = Region.t
-type kwd_null       = Region.t
-type kwd_record     = Region.t
-type kwd_step       = Region.t
-type kwd_to         = Region.t
 type kwd_mod        = Region.t
 type kwd_not        = Region.t
+type kwd_null       = Region.t
+type kwd_of         = Region.t
+type kwd_operations = Region.t
+type kwd_procedure  = Region.t
+type kwd_record     = Region.t
+type kwd_step       = Region.t
+type kwd_storage    = Region.t
+type kwd_then       = Region.t
+type kwd_to         = Region.t
+type kwd_type       = Region.t
+type kwd_var        = Region.t
 type kwd_while      = Region.t
 type kwd_with       = Region.t
 
@@ -145,7 +145,6 @@ type 'a braces = (lbrace * 'a * rbrace) reg
 type t = {
   types      : type_decl reg list;
   constants  : const_decl reg list;
-  parameter  : parameter_decl reg;
   storage    : storage_decl reg;
   operations : operations_decl reg;
   lambdas    : lambda_decl list;
@@ -154,14 +153,6 @@ type t = {
 }
 
 and ast = t
-
-and parameter_decl = {
-  kwd_parameter : kwd_parameter;
-  name          : variable;
-  colon         : colon;
-  param_type    : type_expr;
-  terminator    : semi option
-}
 
 and storage_decl = {
   kwd_storage : kwd_storage;
@@ -208,8 +199,9 @@ and type_tuple = (type_name, comma) nsepseq par
 (* Function and procedure declarations *)
 
 and lambda_decl =
-  FunDecl  of fun_decl reg
-| ProcDecl of proc_decl reg
+  FunDecl   of fun_decl   reg
+| ProcDecl  of proc_decl  reg
+| EntryDecl of entry_decl reg
 
 and fun_decl = {
   kwd_function : kwd_function;
@@ -233,6 +225,16 @@ and proc_decl = {
   local_decls   : local_decl list;
   block         : block reg;
   terminator    : semi option
+}
+
+and entry_decl = {
+  kwd_entrypoint : kwd_entrypoint;
+  name           : variable;
+  param          : parameters;
+  kwd_is         : kwd_is;
+  local_decls    : local_decl list;
+  block          : block reg;
+  terminator     : semi option
 }
 
 and parameters = (param_decl, semi) nsepseq par
@@ -506,10 +508,11 @@ let core_pattern_to_region = function
 | PTuple      {region; _} -> region
 
 let local_decl_to_region = function
-  LocalLam FunDecl  {region; _}
-| LocalLam ProcDecl {region; _}
-| LocalConst        {region; _}
-| LocalVar          {region; _} -> region
+  LocalLam FunDecl   {region; _}
+| LocalLam ProcDecl  {region; _}
+| LocalLam EntryDecl {region; _}
+| LocalConst         {region; _}
+| LocalVar           {region; _} -> region
 
 (* Printing the tokens with their source regions *)
 
@@ -543,7 +546,7 @@ let print_constr {region; value=lexeme} =
          (compact region) lexeme
 
 let print_string {region; value=lexeme} =
-  printf "%s: String \"%s\"\n"
+  printf "%s: String %s\n"
          (compact region) lexeme
 
 let print_bytes {region; value = lexeme, abstract} =
@@ -560,19 +563,11 @@ let print_int {region; value = lexeme, abstract} =
 
 let rec print_tokens ast =
   List.iter print_type_decl   ast.types;
-  print_parameter_decl        ast.parameter; (* TODO: Constants *)
   print_storage_decl          ast.storage;
   print_operations_decl       ast.operations;
   List.iter print_lambda_decl ast.lambdas;
   print_block                 ast.block;
   print_token                 ast.eof "EOF"
-
-and print_parameter_decl {value=node; _} =
-  print_token      node.kwd_parameter "parameter";
-  print_var        node.name;
-  print_token      node.colon ":";
-  print_type_expr  node.param_type;
-  print_terminator node.terminator
 
 and print_storage_decl {value=node; _} =
   print_token      node.kwd_storage "storage";
@@ -644,8 +639,9 @@ and print_type_tuple {value=node; _} =
   print_token rpar ")"
 
 and print_lambda_decl = function
-  FunDecl   fun_decl -> print_fun_decl fun_decl
-| ProcDecl proc_decl -> print_proc_decl proc_decl
+  FunDecl     fun_decl -> print_fun_decl   fun_decl
+| ProcDecl   proc_decl -> print_proc_decl  proc_decl
+| EntryDecl entry_decl -> print_entry_decl entry_decl
 
 and print_fun_decl {value=node; _} =
   print_token       node.kwd_function "function";
@@ -662,6 +658,15 @@ and print_fun_decl {value=node; _} =
 
 and print_proc_decl {value=node; _} =
   print_token       node.kwd_procedure "procedure";
+  print_var         node.name;
+  print_parameters  node.param;
+  print_token       node.kwd_is "is";
+  print_local_decls node.local_decls;
+  print_block       node.block;
+  print_terminator  node.terminator
+
+and print_entry_decl {value=node; _} =
+  print_token       node.kwd_entrypoint "entrypoint";
   print_var         node.name;
   print_parameters  node.param;
   print_token       node.kwd_is "is";

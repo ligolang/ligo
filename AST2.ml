@@ -13,7 +13,6 @@ module O = struct
   type var_name = string
   type ast = {
       types        : type_decl list;
-      parameter    : typed_var;
       storage      : typed_var;
       operations   : typed_var;
       declarations : decl list;
@@ -151,10 +150,6 @@ and s_type_expr : I.type_expr -> O.type_expr = function
 let s_type_decl I.{value={kwd_type;name;kwd_is;type_expr;terminator}; region} : O.type_decl =
   let () = ignore (kwd_type,kwd_is,terminator,region) in
   O.{ name = s_name name; ty = s_type_expr type_expr }
-
-let s_parameter_decl I.{value={kwd_parameter;name;colon;param_type;terminator};region} : O.typed_var =
-  let () = ignore (kwd_parameter,colon,terminator,region) in
-  O.{ name = s_name name; ty = s_type_expr param_type }
 
 let s_storage_decl I.{value={kwd_storage; store_type; terminator}; region} : O.typed_var =
   let () = ignore (kwd_storage,terminator,region) in
@@ -348,11 +343,10 @@ let s_main_block (block: I.block reg) : O.decl =
   }
 
 let s_ast (ast : I.ast) : O.ast =
-  let I.{types;constants;parameter;storage;operations;lambdas;block;eof} = ast in
+  let I.{types;constants;storage;operations;lambdas;block;eof} = ast in
   let () = ignore (eof) in
   O.{
       types        = map s_type_decl types;
-      parameter    = s_parameter_decl parameter;
       storage      = s_storage_decl storage;
       operations   = s_operations_decl operations;
       declarations = List.flatten [(map s_const_decl  constants);

@@ -91,7 +91,6 @@ sepseq(X,Sep):
 program:
   seq(type_decl)
   seq(const_decl)
-  parameter_decl
   storage_decl
   operations_decl
   seq(lambda_decl)
@@ -100,29 +99,12 @@ program:
     {
      types      = $1;
      constants  = $2;
-     parameter  = $3;
-     storage    = $4;
-     operations = $5;
-     lambdas    = $6;
-     block      = $7;
-     eof        = $8;
+     storage    = $3;
+     operations = $4;
+     lambdas    = $5;
+     block      = $6;
+     eof        = $7;
     }
-  }
-
-parameter_decl:
-  Parameter var COLON type_expr option(SEMI) {
-    let stop =
-      match $5 with
-               None -> type_expr_to_region $4
-      | Some region -> region in
-    let region = cover $1 stop in
-    let value = {
-      kwd_parameter = $1;
-      name          = $2;
-      colon         = $3;
-      param_type    = $4;
-      terminator    = $5}
-    in {region; value}
   }
 
 storage_decl:
@@ -227,8 +209,9 @@ field_decl:
 (* Function and procedure declarations *)
 
 lambda_decl:
-  fun_decl  { FunDecl  $1 }
-| proc_decl { ProcDecl $1 }
+  fun_decl   { FunDecl   $1 }
+| proc_decl  { ProcDecl  $1 }
+| entry_decl { EntryDecl $1 }
 
 fun_decl:
   Function fun_name parameters COLON type_expr Is
@@ -273,6 +256,27 @@ proc_decl:
        local_decls   = $5;
        block         = $6;
        terminator    = $7}
+     in {region; value}
+  }
+
+entry_decl:
+  Entrypoint fun_name parameters Is
+    seq(local_decl)
+    block option(SEMI)
+    {
+     let stop =
+       match $7 with
+         None -> $6.region
+       | Some region -> region in
+     let region = cover $1 stop in
+     let value = {
+       kwd_entrypoint = $1;
+       name           = $2;
+       param          = $3;
+       kwd_is         = $4;
+       local_decls    = $5;
+       block          = $6;
+       terminator     = $7}
      in {region; value}
   }
 

@@ -26,29 +26,29 @@ val sepseq_to_region  : ('a -> Region.t) -> ('a,'sep) sepseq -> Region.t
 type kwd_begin      = Region.t
 type kwd_const      = Region.t
 type kwd_down       = Region.t
+type kwd_else       = Region.t
+type kwd_end        = Region.t
+type kwd_entrypoint = Region.t
 type kwd_fail       = Region.t
+type kwd_for        = Region.t
+type kwd_function   = Region.t
 type kwd_if         = Region.t
 type kwd_in         = Region.t
 type kwd_is         = Region.t
-type kwd_for        = Region.t
-type kwd_function   = Region.t
-type kwd_parameter  = Region.t
-type kwd_storage    = Region.t
-type kwd_type       = Region.t
-type kwd_of         = Region.t
-type kwd_operations = Region.t
-type kwd_var        = Region.t
-type kwd_end        = Region.t
-type kwd_then       = Region.t
-type kwd_else       = Region.t
 type kwd_match      = Region.t
-type kwd_procedure  = Region.t
-type kwd_null       = Region.t
-type kwd_record     = Region.t
-type kwd_step       = Region.t
-type kwd_to         = Region.t
 type kwd_mod        = Region.t
 type kwd_not        = Region.t
+type kwd_null       = Region.t
+type kwd_of         = Region.t
+type kwd_operations = Region.t
+type kwd_procedure  = Region.t
+type kwd_record     = Region.t
+type kwd_step       = Region.t
+type kwd_storage    = Region.t
+type kwd_then       = Region.t
+type kwd_to         = Region.t
+type kwd_type       = Region.t
+type kwd_var        = Region.t
 type kwd_while      = Region.t
 type kwd_with       = Region.t
 
@@ -129,7 +129,6 @@ type 'a braces = (lbrace * 'a * rbrace) reg
 type t = {
   types      : type_decl reg list;
   constants  : const_decl reg list;
-  parameter  : parameter_decl reg;
   storage    : storage_decl reg;
   operations : operations_decl reg;
   lambdas    : lambda_decl list;
@@ -138,14 +137,6 @@ type t = {
 }
 
 and ast = t
-
-and parameter_decl = {
-  kwd_parameter : kwd_parameter;
-  name          : variable;
-  colon         : colon;
-  param_type    : type_expr;
-  terminator    : semi option
-}
 
 and storage_decl = {
   kwd_storage : kwd_storage;
@@ -192,8 +183,9 @@ and type_tuple = (type_name, comma) nsepseq par
 (* Function and procedure declarations *)
 
 and lambda_decl =
-  FunDecl  of fun_decl reg
-| ProcDecl of proc_decl reg
+  FunDecl   of fun_decl  reg
+| ProcDecl  of proc_decl reg
+| EntryDecl of entry_decl reg
 
 and fun_decl = {
   kwd_function : kwd_function;
@@ -217,6 +209,16 @@ and proc_decl = {
   local_decls   : local_decl list;
   block         : block reg;
   terminator    : semi option
+}
+
+and entry_decl = {
+  kwd_entrypoint : kwd_entrypoint;
+  name           : variable;
+  param          : parameters;
+  kwd_is         : kwd_is;
+  local_decls    : local_decl list;
+  block          : block reg;
+  terminator     : semi option
 }
 
 and parameters = (param_decl, semi) nsepseq par
