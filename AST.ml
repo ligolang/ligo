@@ -154,14 +154,28 @@ type t = {
 
 and ast = t
 
+and const_decl = {
+  kwd_const  : kwd_const;
+  name       : variable;
+  colon      : colon;
+  const_type : type_expr;
+  equal      : equal;
+  init       : expr;
+  terminator : semi option
+}
+
 and storage_decl = {
   kwd_storage : kwd_storage;
+  name        : variable;
+  colon       : colon;
   store_type  : type_expr;
   terminator  : semi option
 }
 
 and operations_decl = {
   kwd_operations : kwd_operations;
+  name           : variable;
+  colon          : colon;
   op_type        : type_expr;
   terminator     : semi option
 }
@@ -259,21 +273,11 @@ and local_decl =
 | LocalConst of const_decl reg
 | LocalVar   of var_decl reg
 
-and const_decl = {
-  kwd_const  : kwd_const;
-  name       : variable;
-  colon      : colon;
-  vtype      : type_expr;
-  equal      : equal;
-  init       : expr;
-  terminator : semi option
-}
-
 and var_decl = {
   kwd_var    : kwd_var;
   name       : variable;
   colon      : colon;
-  vtype      : type_expr;
+  var_type   : type_expr;
   ass        : ass;
   init       : expr;
   terminator : semi option
@@ -436,12 +440,12 @@ and list_pattern =
 open! Region
 
 let type_expr_to_region = function
-  Prod    node -> node.region
-| Sum     node -> node.region
-| Record  node -> node.region
-| TypeApp node -> node.region
-| ParType node -> node.region
-| TAlias  node -> node.region
+  Prod    {region; _}
+| Sum     {region; _}
+| Record  {region; _}
+| TypeApp {region; _}
+| ParType {region; _}
+| TAlias  {region; _} -> region
 
 let expr_to_region = function
   Or        {region; _}
@@ -562,29 +566,53 @@ let print_int {region; value = lexeme, abstract} =
 (* Main printing function *)
 
 let rec print_tokens ast =
-  List.iter print_type_decl   ast.types;
-  print_storage_decl          ast.storage;
-  print_operations_decl       ast.operations;
-  List.iter print_lambda_decl ast.lambdas;
-  print_block                 ast.block;
-  print_token                 ast.eof "EOF"
+  let {types; constants; storage; operations;
+       lambdas; block; eof} = ast in
+  List.iter print_type_decl   types;
+  List.iter print_const_decl  constants;
+  print_storage_decl          storage;
+  print_operations_decl       operations;
+  List.iter print_lambda_decl lambdas;
+  print_block                 block;
+  print_token                 eof "EOF"
 
-and print_storage_decl {value=node; _} =
-  print_token      node.kwd_storage "storage";
-  print_type_expr  node.store_type;
-  print_terminator node.terminator
+and print_const_decl {value; _} =
+  let {kwd_const; name; colon; const_type;
+       equal; init; terminator} = value in
+  print_token      kwd_const "const";
+  print_var        name;
+  print_token      colon ":";
+  print_type_expr  const_type;
+  print_token      equal "=";
+  print_expr       init;
+  print_terminator terminator
 
-and print_operations_decl {value=node; _} =
-  print_token      node.kwd_operations "operations";
-  print_type_expr  node.op_type;
-  print_terminator node.terminator
+and print_storage_decl {value; _} =
+  let {kwd_storage; name; colon;
+       store_type; terminator} = value in
+  print_token      kwd_storage "storage";
+  print_var        name;
+  print_token      colon ":";
+  print_type_expr  store_type;
+  print_terminator terminator
 
-and print_type_decl {value=node; _} =
-  print_token      node.kwd_type "type";
-  print_var        node.name;
-  print_token      node.kwd_is "is";
-  print_type_expr  node.type_expr;
-  print_terminator node.terminator
+and print_operations_decl {value; _} =
+  let {kwd_operations; name; colon;
+       op_type; terminator} = value in
+  print_token      kwd_operations "operations";
+  print_var        name;
+  print_token      colon ":";
+  print_type_expr  op_type;
+  print_terminator terminator
+
+and print_type_decl {value; _} =
+  let {kwd_type; name; kwd_is;
+       type_expr; terminator} = value in
+  print_token      kwd_type "type";
+  print_var        name;
+  print_token      kwd_is "is";
+  print_type_expr  type_expr;
+  print_terminator terminator
 
 and print_type_expr = function
   Prod    cartesian   -> print_cartesian   cartesian
@@ -594,31 +622,31 @@ and print_type_expr = function
 | ParType par_type    -> print_par_type    par_type
 | TAlias  type_alias  -> print_var         type_alias
 
-and print_cartesian {value=sequence; _} =
-  print_nsepseq "*" print_type_expr sequence
+and print_cartesian {value; _} =
+  print_nsepseq "*" print_type_expr value
 
-and print_variant {value=node; _} =
-  let constr, kwd_of, cartesian = node in
+and print_variant {value; _} =
+  let constr, kwd_of, cartesian = value in
   print_constr    constr;
   print_token     kwd_of "of";
   print_cartesian cartesian
 
-and print_sum_type {value=sequence; _} =
-  print_nsepseq "|" print_variant sequence
+and print_sum_type {value; _} =
+  print_nsepseq "|" print_variant value
 
-and print_record_type {value=node; _} =
-  let kwd_record, field_decls, kwd_end = node in
+and print_record_type {value; _} =
+  let kwd_record, field_decls, kwd_end = value in
   print_token       kwd_record "record";
   print_field_decls field_decls;
   print_token       kwd_end "end"
 
-and print_type_app {value=node; _} =
-  let type_name, type_tuple = node in
+and print_type_app {value; _} =
+  let type_name, type_tuple = value in
   print_var        type_name;
   print_type_tuple type_tuple
 
-and print_par_type {value=node; _} =
-  let lpar, type_expr, rpar = node in
+and print_par_type {value; _} =
+  let lpar, type_expr, rpar = value in
   print_token     lpar "(";
   print_type_expr type_expr;
   print_token     rpar ")"
@@ -626,14 +654,14 @@ and print_par_type {value=node; _} =
 and print_field_decls sequence =
   print_nsepseq ";" print_field_decl sequence
 
-and print_field_decl {value=node; _} =
-  let var, colon, type_expr = node in
+and print_field_decl {value; _} =
+  let var, colon, type_expr = value in
   print_var       var;
   print_token     colon ":";
   print_type_expr type_expr
 
-and print_type_tuple {value=node; _} =
-  let lpar, sequence, rpar = node in
+and print_type_tuple {value; _} =
+  let lpar, sequence, rpar = value in
   print_token lpar "(";
   print_nsepseq "," print_var sequence;
   print_token rpar ")"
@@ -643,39 +671,46 @@ and print_lambda_decl = function
 | ProcDecl   proc_decl -> print_proc_decl  proc_decl
 | EntryDecl entry_decl -> print_entry_decl entry_decl
 
-and print_fun_decl {value=node; _} =
-  print_token       node.kwd_function "function";
-  print_var         node.name;
-  print_parameters  node.param;
-  print_token       node.colon ":";
-  print_type_expr   node.ret_type;
-  print_token       node.kwd_is "is";
-  print_local_decls node.local_decls;
-  print_block       node.block;
-  print_token       node.kwd_with "with";
-  print_expr        node.return;
-  print_terminator  node.terminator
+and print_fun_decl {value; _} =
+  let {kwd_function; name; param; colon;
+       ret_type; kwd_is; local_decls;
+       block; kwd_with; return; terminator} = value in
+  print_token       kwd_function "function";
+  print_var         name;
+  print_parameters  param;
+  print_token       colon ":";
+  print_type_expr   ret_type;
+  print_token       kwd_is "is";
+  print_local_decls local_decls;
+  print_block       block;
+  print_token       kwd_with "with";
+  print_expr        return;
+  print_terminator  terminator
 
-and print_proc_decl {value=node; _} =
-  print_token       node.kwd_procedure "procedure";
-  print_var         node.name;
-  print_parameters  node.param;
-  print_token       node.kwd_is "is";
-  print_local_decls node.local_decls;
-  print_block       node.block;
-  print_terminator  node.terminator
+and print_proc_decl {value; _} =
+  let {kwd_procedure; name; param; kwd_is;
+       local_decls; block; terminator} = value in
+  print_token       kwd_procedure "procedure";
+  print_var         name;
+  print_parameters  param;
+  print_token       kwd_is "is";
+  print_local_decls local_decls;
+  print_block       block;
+  print_terminator  terminator
 
-and print_entry_decl {value=node; _} =
-  print_token       node.kwd_entrypoint "entrypoint";
-  print_var         node.name;
-  print_parameters  node.param;
-  print_token       node.kwd_is "is";
-  print_local_decls node.local_decls;
-  print_block       node.block;
-  print_terminator  node.terminator
+and print_entry_decl {value; _} =
+  let {kwd_entrypoint; name; param; kwd_is;
+       local_decls; block; terminator} = value in
+  print_token       kwd_entrypoint "entrypoint";
+  print_var         name;
+  print_parameters  param;
+  print_token       kwd_is "is";
+  print_local_decls local_decls;
+  print_block       block;
+  print_terminator  terminator
 
-and print_parameters {value=node; _} =
-  let lpar, sequence, rpar = node in
+and print_parameters {value; _} =
+  let lpar, sequence, rpar = value in
   print_token lpar "(";
   print_nsepseq ";" print_param_decl sequence;
   print_token rpar ")"
@@ -684,25 +719,26 @@ and print_param_decl = function
   ParamConst param_const -> print_param_const param_const
 | ParamVar   param_var   -> print_param_var   param_var
 
-and print_param_const {value=node; _} =
-  let kwd_const, variable, colon, type_expr = node in
+and print_param_const {value; _} =
+  let kwd_const, variable, colon, type_expr = value in
   print_token     kwd_const "const";
   print_var       variable;
   print_token     colon ":";
   print_type_expr type_expr
 
-and print_param_var {value=node; _} =
-  let kwd_var, variable, colon, type_expr = node in
+and print_param_var {value; _} =
+  let kwd_var, variable, colon, type_expr = value in
   print_token     kwd_var "var";
   print_var       variable;
   print_token     colon ":";
   print_type_expr type_expr
 
-and print_block {value=node; _} =
-  print_token        node.opening "begin";
-  print_instructions node.instr;
-  print_terminator   node.terminator;
-  print_token        node.close "end"
+and print_block {value; _} =
+  let {opening; instr; terminator; close} = value in
+  print_token        opening "begin";
+  print_instructions instr;
+  print_terminator   terminator;
+  print_token        close "end"
 
 and print_local_decls sequence =
   List.iter print_local_decl sequence
@@ -712,26 +748,19 @@ and print_local_decl = function
 | LocalConst decl -> print_const_decl  decl
 | LocalVar   decl -> print_var_decl    decl
 
-and print_const_decl {value=node; _} =
-  print_token      node.kwd_const "const";
-  print_var        node.name;
-  print_token      node.colon ":";
-  print_type_expr  node.vtype;
-  print_token      node.equal "=";
-  print_expr       node.init;
-  print_terminator node.terminator
+and print_var_decl {value; _} =
+  let {kwd_var; name; colon; var_type;
+       ass; init; terminator} = value in
+  print_token      kwd_var "var";
+  print_var        name;
+  print_token      colon ":";
+  print_type_expr  var_type;
+  print_token      ass ":=";
+  print_expr       init;
+  print_terminator terminator
 
-and print_var_decl {value=node; _} =
-  print_token      node.kwd_var "var";
-  print_var        node.name;
-  print_token      node.colon ":";
-  print_type_expr  node.vtype;
-  print_token      node.ass ":=";
-  print_expr       node.init;
-  print_terminator node.terminator
-
-and print_instructions {value=sequence; _} =
-  print_nsepseq ";" print_instruction sequence
+and print_instructions {value; _} =
+  print_nsepseq ";" print_instruction value
 
 and print_instruction = function
   Single instr -> print_single_instr instr
@@ -751,31 +780,40 @@ and print_fail (kwd_fail, expr) =
   print_expr expr
 
 and print_conditional node =
-  print_token       node.kwd_if "if";
-  print_expr        node.test;
-  print_token       node.kwd_then "then";
-  print_instruction node.ifso;
-  print_token       node.kwd_else "else";
-  print_instruction node.ifnot
+  let {kwd_if; test; kwd_then; ifso;
+       kwd_else; ifnot} = node in
+  print_token       kwd_if "if";
+  print_expr        test;
+  print_token       kwd_then "then";
+  print_instruction ifso;
+  print_token       kwd_else "else";
+  print_instruction ifnot
 
 and print_match_instr node =
-  print_token node.kwd_match "match";
-  print_expr  node.expr;
-  print_token node.kwd_with "with";
-  print_cases node.cases;
-  print_token node.kwd_end "end"
+  let {kwd_match; expr; kwd_with;
+       lead_vbar; cases; kwd_end} = node in
+  print_token kwd_match "match";
+  print_expr  expr;
+  print_token kwd_with "with";
+  print_token_opt lead_vbar "|";
+  print_cases cases;
+  print_token kwd_end "end"
 
-and print_cases {value=sequence; _} =
-  print_nsepseq "|" print_case sequence
+and print_token_opt = function
+         None -> fun _ -> ()
+| Some region -> print_token region
 
-and print_case {value=node; _} =
-  let pattern, arrow, instruction = node in
+and print_cases {value; _} =
+  print_nsepseq "|" print_case value
+
+and print_case {value; _} =
+  let pattern, arrow, instruction = value in
   print_pattern pattern;
   print_token arrow "->";
   print_instruction instruction
 
-and print_ass_instr {value=node; _} =
-  let variable, ass, expr = node in
+and print_ass_instr {value; _} =
+  let variable, ass, expr = value in
   print_var variable;
   print_token ass ":=";
   print_expr expr
@@ -784,8 +822,8 @@ and print_loop = function
   While while_loop -> print_while_loop while_loop
 | For     for_loop -> print_for_loop for_loop
 
-and print_while_loop {value=node; _} =
-  let kwd_while, expr, block = node in
+and print_while_loop {value; _} =
+  let kwd_while, expr, block = value in
   print_token kwd_while "while";
   print_expr expr;
   print_block block
@@ -794,14 +832,16 @@ and print_for_loop = function
   ForInt     for_int     -> print_for_int for_int
 | ForCollect for_collect -> print_for_collect for_collect
 
-and print_for_int ({value=node; _} : for_int reg) =
-  print_token     node.kwd_for "for";
-  print_ass_instr node.ass;
-  print_down      node.down;
-  print_token     node.kwd_to "to";
-  print_expr      node.bound;
-  print_step      node.step;
-  print_block     node.block
+and print_for_int ({value; _} : for_int reg) =
+  let {kwd_for; ass; down; kwd_to;
+       bound; step; block} = value in
+  print_token     kwd_for "for";
+  print_ass_instr ass;
+  print_down      down;
+  print_token     kwd_to "to";
+  print_expr      bound;
+  print_step      step;
+  print_block     block
 
 and print_down = function
   Some kwd_down -> print_token kwd_down "down"
@@ -813,13 +853,15 @@ and print_step = function
     print_expr expr
 | None -> ()
 
-and print_for_collect ({value=node; _} : for_collect reg) =
-  print_token   node.kwd_for "for";
-  print_var     node.var;
-  print_bind_to node.bind_to;
-  print_token   node.kwd_in "in";
-  print_expr    node.expr;
-  print_block   node.block
+and print_for_collect ({value; _} : for_collect reg) =
+  let {kwd_for; var; bind_to;
+       kwd_in; expr; block} = value in
+  print_token   kwd_for "for";
+  print_var     var;
+  print_bind_to bind_to;
+  print_token   kwd_in "in";
+  print_expr    expr;
+  print_block   block
 
 and print_bind_to = function
   Some (arrow, variable) ->
@@ -847,7 +889,7 @@ and print_expr = function
 | Cat {value = expr1, cat, expr2; _} ->
     print_expr expr1; print_token cat "^"; print_expr expr2
 | Cons {value = expr1, cons, expr2; _} ->
-    print_expr expr1; print_token cons "<:"; print_expr expr2
+    print_expr expr1; print_token cons "#"; print_expr expr2
 | Add {value = expr1, add, expr2; _} ->
     print_expr expr1; print_token add "+"; print_expr expr2
 | Sub {value = expr1, sub, expr2; _} ->
@@ -881,20 +923,21 @@ and print_expr = function
 | MapLookUp lookup -> print_map_lookup lookup
 | ParExpr pexpr    -> print_par_expr pexpr
 
-and print_tuple {value=node; _} =
-  let lpar, sequence, rpar = node in
+and print_tuple {value; _} =
+  let lpar, sequence, rpar = value in
   print_token lpar "(";
   print_nsepseq "," print_expr sequence;
   print_token rpar ")"
 
-and print_list {value=node; _} =
-  let lbra, sequence, rbra = node in
+and print_list {value; _} =
+  let lbra, sequence, rbra = value in
   print_token lbra "[";
   print_nsepseq "," print_expr sequence;
   print_token rbra "]"
 
-and print_empty_list {value=node; _} =
-  let lpar, (lbracket, rbracket, colon, type_expr), rpar = node in
+and print_empty_list {value; _} =
+  let lpar, (lbracket, rbracket, colon, type_expr),
+      rpar = value in
   print_token     lpar "(";
   print_token     lbracket "[";
   print_token     rbracket "]";
@@ -902,14 +945,15 @@ and print_empty_list {value=node; _} =
   print_type_expr type_expr;
   print_token     rpar ")"
 
-and print_set {value=node; _} =
-  let lbrace, sequence, rbrace = node in
+and print_set {value; _} =
+  let lbrace, sequence, rbrace = value in
   print_token lbrace "{";
   print_nsepseq "," print_expr sequence;
   print_token rbrace "}"
 
-and print_empty_set {value=node; _} =
-  let lpar, (lbrace, rbrace, colon, type_expr), rpar = node in
+and print_empty_set {value; _} =
+  let lpar, (lbrace, rbrace, colon, type_expr),
+      rpar = value in
   print_token     lpar "(";
   print_token     lbrace "{";
   print_token     rbrace "}";
@@ -917,45 +961,46 @@ and print_empty_set {value=node; _} =
   print_type_expr type_expr;
   print_token     rpar ")"
 
-and print_none_expr {value=node; _} =
-  let lpar, (c_None, colon, type_expr), rpar = node in
+and print_none_expr {value; _} =
+  let lpar, (c_None, colon, type_expr), rpar = value in
   print_token     lpar "(";
   print_token     c_None "None";
   print_token     colon ":";
   print_type_expr type_expr;
   print_token     rpar ")"
 
-and print_fun_call {value=node; _} =
-  let fun_name, arguments = node in
+and print_fun_call {value; _} =
+  let fun_name, arguments = value in
   print_var   fun_name;
   print_tuple arguments
 
-and print_constr_app {value=node; _} =
-  let constr, arguments = node in
+and print_constr_app {value; _} =
+  let constr, arguments = value in
   print_constr constr;
   print_tuple  arguments
 
-and print_some_app {value=node; _} =
-  let c_Some, arguments = node in
+and print_some_app {value; _} =
+  let c_Some, arguments = value in
   print_token c_Some "Some";
   print_tuple arguments
 
-and print_map_lookup {value=node; _} =
-  let {value = lbracket, expr, rbracket; _} = node.index in
-  print_var   node.map_name;
-  print_token node.selector ".";
+and print_map_lookup {value; _} =
+  let {map_name; selector; index} = value in
+  let {value = lbracket, expr, rbracket; _} = index in
+  print_var   map_name;
+  print_token selector ".";
   print_token lbracket "[";
   print_expr  expr;
   print_token rbracket "]"
 
-and print_par_expr {value=node; _} =
-  let lpar, expr, rpar = node in
+and print_par_expr {value; _} =
+  let lpar, expr, rpar = value in
   print_token lpar "(";
   print_expr  expr;
   print_token rpar ")"
 
-and print_pattern {value=sequence; _} =
-  print_nsepseq "<:" print_core_pattern sequence
+and print_pattern {value; _} =
+  print_nsepseq "#" print_core_pattern value
 
 and print_core_pattern = function
   PVar var      -> print_var var
@@ -971,13 +1016,13 @@ and print_core_pattern = function
 | PList pattern -> print_list_pattern pattern
 | PTuple ptuple -> print_ptuple ptuple
 
-and print_psome {value=node; _} =
-  let c_Some, patterns = node in
+and print_psome {value; _} =
+  let c_Some, patterns = value in
   print_token    c_Some "Some";
   print_patterns patterns
 
-and print_patterns {value=node; _} =
-  let lpar, core_pattern, rpar = node in
+and print_patterns {value; _} =
+  let lpar, core_pattern, rpar = value in
   print_token lpar "(";
   print_core_pattern core_pattern;
   print_token rpar ")"
@@ -986,22 +1031,22 @@ and print_list_pattern = function
   Sugar sugar -> print_sugar sugar
 | Raw     raw -> print_raw raw
 
-and print_sugar {value=node; _} =
-  let lbracket, sequence, rbracket = node in
+and print_sugar {value; _} =
+  let lbracket, sequence, rbracket = value in
   print_token lbracket "[";
   print_sepseq "," print_core_pattern sequence;
   print_token rbracket "]"
 
-and print_raw {value=node; _} =
-  let lpar, (core_pattern, cons, pattern), rpar = node in
+and print_raw {value; _} =
+  let lpar, (core_pattern, cons, pattern), rpar = value in
   print_token        lpar "(";
   print_core_pattern core_pattern;
-  print_token        cons "<:";
+  print_token        cons "#";
   print_pattern      pattern;
   print_token        rpar ")"
 
-and print_ptuple {value=node; _} =
-  let lpar, sequence, rpar = node in
+and print_ptuple {value; _} =
+  let lpar, sequence, rpar = value in
   print_token lpar "(";
   print_nsepseq "," print_core_pattern sequence;
   print_token rpar ")"

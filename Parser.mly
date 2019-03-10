@@ -108,30 +108,34 @@ program:
   }
 
 storage_decl:
-  Storage type_expr option(SEMI) {
+  Storage var COLON type_expr option(SEMI) {
     let stop =
-      match $3 with
-               None -> type_expr_to_region $2
+      match $5 with
+               None -> type_expr_to_region $4
       | Some region -> region in
     let region = cover $1 stop in
     let value = {
       kwd_storage = $1;
-      store_type  = $2;
-      terminator  = $3}
+      name        = $2;
+      colon       = $3;
+      store_type  = $4;
+      terminator  = $5}
     in {region; value}
   }
 
 operations_decl:
-  Operations type_expr option(SEMI) {
+  Operations var COLON type_expr option(SEMI) {
     let stop =
-      match $3 with
-              None -> type_expr_to_region $2
+      match $5 with
+              None -> type_expr_to_region $4
      | Some region -> region in
     let region = cover $1 stop in
     let value = {
       kwd_operations = $1;
-      op_type        = $2;
-      terminator     = $3}
+      name           = $2;
+      colon          = $3;
+      op_type        = $4;
+      terminator     = $5}
     in {region; value}
   }
 
@@ -347,7 +351,7 @@ const_decl:
       kwd_const  = $1;
       name       = $2;
       colon      = $3;
-      vtype      = $4;
+      const_type = $4;
       equal      = $5;
       init       = $6;
       terminator = $7}
@@ -365,7 +369,7 @@ var_decl:
       kwd_var    = $1;
       name       = $2;
       colon      = $3;
-      vtype      = $4;
+      var_type   = $4;
       ass        = $5;
       init       = $6;
       terminator = $7}

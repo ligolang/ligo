@@ -138,14 +138,28 @@ type t = {
 
 and ast = t
 
+and const_decl = {
+  kwd_const  : kwd_const;
+  name       : variable;
+  colon      : colon;
+  const_type : type_expr;
+  equal      : equal;
+  init       : expr;
+  terminator : semi option
+}
+
 and storage_decl = {
   kwd_storage : kwd_storage;
+  name        : variable;
+  colon       : colon;
   store_type  : type_expr;
   terminator  : semi option
 }
 
 and operations_decl = {
   kwd_operations : kwd_operations;
+  name           : variable;
+  colon          : colon;
   op_type        : type_expr;
   terminator     : semi option
 }
@@ -243,21 +257,11 @@ and local_decl =
 | LocalConst of const_decl reg
 | LocalVar   of var_decl reg
 
-and const_decl = {
-  kwd_const  : kwd_const;
-  name       : variable;
-  colon      : colon;
-  vtype      : type_expr;
-  equal      : equal;
-  init       : expr;
-  terminator : semi option
-}
-
 and var_decl = {
   kwd_var    : kwd_var;
   name       : variable;
   colon      : colon;
-  vtype      : type_expr;
+  var_type   : type_expr;
   ass        : ass;
   init       : expr;
   terminator : semi option

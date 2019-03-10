@@ -3,8 +3,8 @@ type u is t
 type v is record foo: key; bar: mutez; baz: address end
 type w is K of (U of int) (*v * u*)
 
-storage w     // Line comment
-operations u
+storage s : w     // Line comment
+operations o : u;
 
 (* Block comment *)
 
