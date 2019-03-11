@@ -60,7 +60,7 @@ module O = struct
   and operator =
     Or | And | Lt | Leq | Gt | Geq | Equal | Neq | Cat | Cons | Add | Sub | Mult | Div | Mod
     | Neg | Not
-    | Tuple | Set
+    | Tuple | Set | List
     | Function of string
 
   and constant =
@@ -210,7 +210,7 @@ and s_expr : I.expr -> O.expr =
   | True      c_True                              -> let () = ignore (c_True)          in Constant (True)
   | Unit      c_Unit                              -> let () = ignore (c_Unit)          in Constant (Unit)
   | Tuple     {value=(l,tuple,r);         region} -> let () = ignore (l,r,region)      in App { operator = Tuple; arguments = map s_expr (s_nsepseq tuple)}
-  | List      {value=(lbrkt,lst,rbrkt);   region} -> let () = ignore (lbrkt,rbrkt,region) in let _todo = lst in raise (TODO "simplify (expr,comma) list")
+  | List      list                                -> s_list list
   | EmptyList empty_list                          -> s_empty_list empty_list
   | Set       set                                 -> s_set set
   | EmptySet  empty_set                           -> s_empty_set empty_set
@@ -220,6 +220,10 @@ and s_expr : I.expr -> O.expr =
   | SomeApp   {value=(c_Some, arguments); region} -> let _todo = arguments  in let () = ignore (region,c_Some) in raise (TODO "simplify SomeApp")
   | MapLookUp {value=map_lookup;          region} -> let _todo = map_lookup in let () = ignore (region) in raise (TODO "simplify MapLookUp")
   | ParExpr   {value=(lpar,expr,rpar);    region} -> let () = ignore (lpar,rpar,region) in s_expr expr
+
+and s_list I.{value=(l, list, r); region} : O.expr =
+  let () = ignore (l, r, region) in
+  App { operator = List; arguments = map s_expr (s_nsepseq list) }
 
 and s_set I.{value=(l, set, r); region} : O.expr =
   let () = ignore (l, r, region) in
