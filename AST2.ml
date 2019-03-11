@@ -60,10 +60,12 @@ module O = struct
   and operator =
     Or | And | Lt | Leq | Gt | Geq | Equal | Neq | Cat | Cons | Add | Sub | Mult | Div | Mod
     | Neg | Not
+    | Tuple | Set
     | Function of string
 
   and constant =
     Unit | Int of Z.t | String of string | Bytes of MBytes.t | False | True
+    | Null of type_expr
 
   and instr =
     Assignment    of { name: var_name; value: expr }
@@ -171,6 +173,14 @@ let s_operations_decl I.{value={kwd_operations;name;colon;op_type;terminator}; r
   let () = ignore (kwd_operations,colon,terminator,region) in
   O.{ name = s_name name; ty = s_type_expr op_type }
 
+let s_empty_list I.{value=(l, (lbracket, rbracket, colon, type_expr), r); region} : O.expr =
+  let () = ignore (l, lbracket, rbracket, colon, r, region) in
+  Constant (Null (s_type_expr type_expr))
+
+let s_empty_set I.{value=(l, (lbrace, rbrace, colon, type_expr), r); region} : O.expr =
+  let () = ignore (l, lbrace, rbrace, colon, r, region) in
+  Constant (Null (s_type_expr type_expr))
+
 let rec bin l operator r = O.App { operator; arguments = [s_expr l; s_expr r] }
 and     una operator v = O.App { operator; arguments = [s_expr v] }
 and s_expr : I.expr -> O.expr =
@@ -199,17 +209,21 @@ and s_expr : I.expr -> O.expr =
   | False     c_False                             -> let () = ignore (c_False)         in Constant (False)
   | True      c_True                              -> let () = ignore (c_True)          in Constant (True)
   | Unit      c_Unit                              -> let () = ignore (c_Unit)          in Constant (Unit)
-  | Tuple     tuple                               -> let _todo = tuple in raise (TODO "simplify tuple")
+  | Tuple     {value=(l,tuple,r);         region} -> let () = ignore (l,r,region)      in App { operator = Tuple; arguments = map s_expr (s_nsepseq tuple)}
   | List      {value=(lbrkt,lst,rbrkt);   region} -> let () = ignore (lbrkt,rbrkt,region) in let _todo = lst in raise (TODO "simplify (expr,comma) list")
-  | EmptyList empty_list                          -> let _todo = empty_list in raise (TODO "simplify (lbracket,rbracket,colon,type_expr) par")
-  | Set       set                                 -> let _todo = set        in raise (TODO "simplify (expr, comma) nsepseq braces")
-  | EmptySet  empty_set                           -> let _todo = empty_set  in raise (TODO "simplify empty_set")
+  | EmptyList empty_list                          -> s_empty_list empty_list
+  | Set       set                                 -> s_set set
+  | EmptySet  empty_set                           -> s_empty_set empty_set
   | NoneExpr  none_expr                           -> let _todo = none_expr  in raise (TODO "simplify (c_None,colon,type_expr) par")
   | FunCall   fun_call                            -> let _todo = fun_call   in raise (TODO "simplify FunCall")
   | ConstrApp constr_app                          -> let _todo = constr_app in raise (TODO "simplify ConstrApp")
   | SomeApp   {value=(c_Some, arguments); region} -> let _todo = arguments  in let () = ignore (region,c_Some) in raise (TODO "simplify SomeApp")
   | MapLookUp {value=map_lookup;          region} -> let _todo = map_lookup in let () = ignore (region) in raise (TODO "simplify MapLookUp")
   | ParExpr   {value=(lpar,expr,rpar);    region} -> let () = ignore (lpar,rpar,region) in s_expr expr
+
+and s_set I.{value=(l, set, r); region} : O.expr =
+  let () = ignore (l, r, region) in
+  App { operator = Set; arguments = map s_expr (s_nsepseq set) }
 
 let s_case : I.case -> O.pattern * (O.instr list) = function
   | _ -> raise (TODO "simplify pattern matching cases")
