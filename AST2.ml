@@ -11,51 +11,8 @@ module SMap = Map.Make(String)
 module O = struct
   type type_name = string
   type var_name = string
-  type ast = {
-      types        : type_decl list;
-      storage      : typed_var;
-      operations   : typed_var;
-      declarations : decl list;
-      prev         : I.ast;
-    }
-  and typed_var = { name:var_name; ty:type_expr }
-  and type_decl = { name:string; ty:type_expr }
-  and decl = { name:var_name; ty:type_expr; value: expr }
-  and type_expr =
-    Prod     of type_expr list
-  | Sum      of (type_name * type_expr) list
-  | Record   of (type_name * type_expr) list
-  | TypeApp  of type_name * (type_expr list)
-  | Function of { args: type_expr list; ret: type_expr }
-  | Ref      of type_expr
-  | Unit
-  | Int
-  | TODO
-  and expr =
-    App      of { operator: operator; arguments: expr list }
-  | Var of var_name
-  | Constant of constant
-  | Lambda   of {
-      parameters:   type_expr SMap.t;
-      declarations: decl list;
-      instructions: instr list;
-      result:       expr;
-    }
-  and operator =
-    Or | And | Lt | Leq | Gt | Geq | Equal | Neq | Cat | Cons | Add | Sub | Mult | Div | Mod
-    | Neg | Not
-    | Function of string
-  and constant =
-    Unit | Int of Z.t | String of string | Bytes of MBytes.t | False | True
-  and instr =
-  | Assignment    of { name: var_name; value: expr }
-  | While         of { condition: expr; body: instr list }
-  | ForCollection of { list: expr; key: var_name; value: var_name option; body: instr list }
-  | If            of { condition: expr; ifso: instr list; ifnot: instr list }
-  | Match         of { expr: expr; cases: (pattern * instr list) list }
-  | DropUnit      of expr       (* expr returns unit, drop the result. *)
-  | Fail          of { expr: expr }
-  and pattern =
+
+  type pattern =
     PVar    of var_name
   | PWild
   | PInt    of Z.t
@@ -69,6 +26,60 @@ module O = struct
   | Cons    of pattern * pattern
   | Null
   | PTuple  of pattern list
+
+  type type_expr =
+    Prod     of type_expr list
+  | Sum      of (type_name * type_expr) list
+  | Record   of (type_name * type_expr) list
+  | TypeApp  of type_name * (type_expr list)
+  | Function of { args: type_expr list; ret: type_expr }
+  | Ref      of type_expr
+  | Unit
+  | Int
+  | TODO
+
+  type typed_var = { name:var_name; ty:type_expr }
+
+  type type_decl = { name:string; ty:type_expr }
+
+  type expr =
+    App      of { operator: operator; arguments: expr list }
+  | Var of var_name
+  | Constant of constant
+  | Lambda   of lambda
+
+  and decl = { name:var_name; ty:type_expr; value: expr }
+
+  and lambda = {
+      parameters:   type_expr SMap.t;
+      declarations: decl list;
+      instructions: instr list;
+      result:       expr;
+    }
+
+  and operator =
+    Or | And | Lt | Leq | Gt | Geq | Equal | Neq | Cat | Cons | Add | Sub | Mult | Div | Mod
+    | Neg | Not
+    | Function of string
+
+  and constant =
+    Unit | Int of Z.t | String of string | Bytes of MBytes.t | False | True
+
+  and instr =
+    Assignment    of { name: var_name; value: expr }
+  | While         of { condition: expr; body: instr list }
+  | ForCollection of { list: expr; key: var_name; value: var_name option; body: instr list }
+  | If            of { condition: expr; ifso: instr list; ifnot: instr list }
+  | Match         of { expr: expr; cases: (pattern * instr list) list }
+  | DropUnit      of expr       (* expr returns unit, drop the result. *)
+  | Fail          of { expr: expr }
+
+  type ast = {
+      types           : type_decl list;
+      storage_decl    : typed_var;
+      operations_decl : typed_var;
+      declarations    : decl list;
+    }
 end
 
 (* open Sanity: *)
@@ -382,31 +393,38 @@ and s_lambda_decl : I.lambda_decl -> O.decl = function
 | EntryDecl entry_decl -> s_entry_decl entry_decl
 | ProcDecl   proc_decl -> s_proc_decl proc_decl
 
-let s_main_block (block: I.block reg) : O.decl =
-  O.{
-      name = "main";
-      ty = Function { args = []; ret = Unit };
-      value = Lambda {
-                  parameters   = SMap.empty;
-                  declarations = [];
-                  instructions = s_block block;
-                  result       = O.Constant O.Unit
-                }
+type tmp_ast = {
+    types           : O.type_decl list;
+    storage_decl    : O.typed_var option;
+    operations_decl : O.typed_var option;
+    declarations    : O.decl list;
   }
+
+
+let s_declaration (ast : tmp_ast) : I.declaration -> tmp_ast = function
+    TypeDecl    t -> { ast with types           = (s_type_decl    t) :: ast.types }
+  | ConstDecl   c -> { ast with declarations    = (s_const_decl   c) :: ast.declarations }
+  | StorageDecl s -> { ast with storage_decl    = Some (s_storage_decl    s) }
+  | OpDecl      o -> { ast with operations_decl = Some (s_operations_decl o) }
+  | LambdaDecl  l -> { ast with declarations    = (s_lambda_decl  l) :: ast.declarations }
 
 let s_ast (ast : I.ast) : O.ast =
-  let I.{types;constants;storage;operations;lambdas;block;eof} = ast in
+  let I.{decl=(decl1,decls);eof} = ast in
   let () = ignore (eof) in
-  O.{
-      types        = map s_type_decl types;
-      storage      = s_storage_decl storage;
-      operations   = s_operations_decl operations;
-      declarations = List.flatten [(map s_const_decl  constants);
-                                   (map s_lambda_decl lambdas);
-                                   [s_main_block block]];
-      prev         = ast
-  }
-
+  let {types; storage_decl; operations_decl; declarations} =
+    List.fold_left s_declaration
+                   { types = [];
+                     storage_decl = None;
+                     operations_decl = None;
+                     declarations = [] }
+                   ( decl1 :: decls ) in
+  let storage_decl = match storage_decl with
+      Some x -> x
+    | None -> failwith "Missing storage declaration" in
+  let operations_decl = match operations_decl with
+      Some x -> x
+    | None -> failwith "Missing storage declaration"
+  in {types; storage_decl; operations_decl; declarations}
 
 
 
