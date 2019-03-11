@@ -61,6 +61,7 @@ module O = struct
     Or | And | Lt | Leq | Gt | Geq | Equal | Neq | Cat | Cons | Add | Sub | Mult | Div | Mod
     | Neg | Not
     | Tuple | Set | List
+    | MapLookup
     | Function of string
 
   and constant =
@@ -220,10 +221,22 @@ and s_expr : I.expr -> O.expr =
   | EmptySet  empty_set                           -> s_empty_set empty_set
   | NoneExpr  none_expr                           -> s_none none_expr
   | FunCall   fun_call                            -> s_fun_call fun_call
-  | ConstrApp constr_app                          -> let _todo = constr_app in raise (TODO "simplify ConstrApp")
-  | SomeApp   {value=(c_Some, arguments); region} -> let _todo = arguments  in let () = ignore (region,c_Some) in raise (TODO "simplify SomeApp")
-  | MapLookUp {value=map_lookup;          region} -> let _todo = map_lookup in let () = ignore (region) in raise (TODO "simplify MapLookUp")
+  | ConstrApp constr_app                          -> s_constr_app constr_app
+  | SomeApp   some_app                            -> s_some_app some_app
+  | MapLookUp map_lookup                          -> s_map_lookup map_lookup
   | ParExpr   {value=(lpar,expr,rpar);    region} -> let () = ignore (lpar,rpar,region) in s_expr expr
+
+and s_map_lookup I.{value = {map_name; selector; index}; region} : O.expr =
+  let {value = lbracket, index_expr, rbracket; region=region2} = index in
+  let () = ignore (selector, lbracket, rbracket, region2, region) in
+  App { operator = MapLookup; arguments = [Var (s_name map_name); s_expr index_expr] }
+
+and s_some_app I.{value=(c_Some, {value=(l,arguments,r); region=region2}); region} : O.expr =
+  let () = ignore (c_Some,l,r,region2,region) in
+  match s_nsepseq arguments with
+    [] -> Constant Unit
+  | [a] -> s_expr a
+  | l -> App { operator = Tuple; arguments = map s_expr l }
 
 and s_list I.{value=(l, list, r); region} : O.expr =
   let () = ignore (l, r, region) in
@@ -345,6 +358,10 @@ and s_loop : I.loop -> O.instr list = function
 and s_fun_call {value=(fun_name, arguments); region} : O.expr =
   let () = ignore (region) in
   App { operator = Function (s_name fun_name); arguments = s_arguments arguments }
+
+and s_constr_app {value=(constr, arguments); region} : O.expr =
+  let () = ignore (region) in
+  App { operator = Function (s_name constr); arguments = s_arguments arguments }
 
 and s_arguments {value=(lpar, sequence, rpar); region} =
   let () = ignore (lpar,rpar,region) in
@@ -597,13 +614,6 @@ let s_ast (ast : I.ast) : O.ast =
 (*   s_token c_Some "Some"; *)
 (*   s_tuple arguments *)
 
-(* and s_map_lookup {value=node; _} = *)
-(*   let {value = lbracket, expr, rbracket; _} = node.index in *)
-(*   s_var   node.map_name; *)
-(*   s_token node.selector "."; *)
-(*   s_token lbracket "["; *)
-(*   s_expr  expr; *)
-(*   s_token rbracket "]" *)
 
 (* and s_par_expr {value=node; _} = *)
 (*   let lpar, expr, rpar = node in *)
