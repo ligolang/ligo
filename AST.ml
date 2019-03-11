@@ -143,16 +143,18 @@ type 'a braces = (lbrace * 'a * rbrace) reg
 (* The Abstract Syntax Tree *)
 
 type t = {
-  types      : type_decl reg list;
-  constants  : const_decl reg list;
-  storage    : storage_decl reg;
-  operations : operations_decl reg;
-  lambdas    : lambda_decl list;
-  block      : block reg;
-  eof        : eof
+  decl : declaration nseq;
+  eof  : eof
 }
 
 and ast = t
+
+and declaration =
+  TypeDecl    of type_decl reg
+| ConstDecl   of const_decl reg
+| StorageDecl of storage_decl reg
+| OpDecl      of operations_decl reg
+| LambdaDecl  of lambda_decl
 
 and const_decl = {
   kwd_const  : kwd_const;
@@ -566,15 +568,16 @@ let print_int {region; value = lexeme, abstract} =
 (* Main printing function *)
 
 let rec print_tokens ast =
-  let {types; constants; storage; operations;
-       lambdas; block; eof} = ast in
-  List.iter print_type_decl   types;
-  List.iter print_const_decl  constants;
-  print_storage_decl          storage;
-  print_operations_decl       operations;
-  List.iter print_lambda_decl lambdas;
-  print_block                 block;
-  print_token                 eof "EOF"
+  let {decl; eof} = ast in
+  Utils.nseq_iter print_decl decl;
+  print_token eof "EOF"
+
+and print_decl = function
+  TypeDecl    decl -> print_type_decl       decl
+| ConstDecl   decl -> print_const_decl      decl
+| StorageDecl decl -> print_storage_decl    decl
+| OpDecl      decl -> print_operations_decl decl
+| LambdaDecl  decl -> print_lambda_decl     decl
 
 and print_const_decl {value; _} =
   let {kwd_const; name; colon; const_type;

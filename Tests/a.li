@@ -6,6 +6,8 @@ type w is K of (U of int) (*v * u*)
 storage s : w     // Line comment
 operations o : u;
 
+type i is int;
+
 (* Block comment *)
 
 entrypoint g (const l : list (int)) is
@@ -19,10 +21,9 @@ entrypoint g (const l : list (int)) is
      match l with
          [] -> null
      | h#t -> q (h+2)
+     end;
+     begin
+       g (Unit);
+       fail "in extremis"
      end
   end
-
-begin
-  g (Unit);
-  fail "in extremis"
-end

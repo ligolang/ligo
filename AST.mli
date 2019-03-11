@@ -127,16 +127,18 @@ type 'a braces = (lbrace * 'a * rbrace) reg
 (* The Abstract Syntax Tree *)
 
 type t = {
-  types      : type_decl reg list;
-  constants  : const_decl reg list;
-  storage    : storage_decl reg;
-  operations : operations_decl reg;
-  lambdas    : lambda_decl list;
-  block      : block reg;
-  eof        : eof
+  decl : declaration nseq;
+  eof  : eof
 }
 
 and ast = t
+
+and declaration =
+  TypeDecl    of type_decl reg
+| ConstDecl   of const_decl reg
+| StorageDecl of storage_decl reg
+| OpDecl      of operations_decl reg
+| LambdaDecl  of lambda_decl
 
 and const_decl = {
   kwd_const  : kwd_const;

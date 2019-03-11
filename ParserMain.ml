@@ -69,7 +69,3 @@ let () =
       let () = close_all () in
       print_error ~offsets EvalOpt.mode error
   | Sys_error msg -> Utils.highlight msg
-
-let _ =
-  let open AST2 in
-  map

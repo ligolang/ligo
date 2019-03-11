@@ -13,8 +13,9 @@ open AST
 
 (* Entry points *)
 
-%start program
+%start program interactive_expr
 %type <AST.t> program
+%type <AST.expr> interactive_expr
 
 %%
 
@@ -89,23 +90,16 @@ sepseq(X,Sep):
 (* Main *)
 
 program:
-  seq(type_decl)
-  seq(const_decl)
-  storage_decl
-  operations_decl
-  seq(lambda_decl)
-  block
-  EOF {
-    {
-     types      = $1;
-     constants  = $2;
-     storage    = $3;
-     operations = $4;
-     lambdas    = $5;
-     block      = $6;
-     eof        = $7;
-    }
+  nseq(declaration) EOF {
+    {decl = $1; eof = $2}
   }
+
+declaration:
+  type_decl       {    TypeDecl $1 }
+| const_decl      {   ConstDecl $1 }
+| storage_decl    { StorageDecl $1 }
+| operations_decl {      OpDecl $1 }
+| lambda_decl     {  LambdaDecl $1 }
 
 storage_decl:
   Storage var COLON type_expr option(SEMI) {
@@ -484,6 +478,9 @@ arrow_clause:
   ARROW var { $1,$2 }
 
 (* Expressions *)
+
+interactive_expr:
+  expr EOF { $1 }
 
 expr:
   expr OR conj_expr {
