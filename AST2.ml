@@ -174,15 +174,15 @@ let s_operations_decl I.{value={kwd_operations;name;colon;op_type;terminator}; r
   let () = ignore (kwd_operations,colon,terminator,region) in
   O.{ name = s_name name; ty = s_type_expr op_type }
 
-let s_empty_list I.{value=(l, (lbracket, rbracket, colon, type_expr), r); region} : O.expr =
+let s_empty_list {value=(l, (lbracket, rbracket, colon, type_expr), r); region} : O.expr =
   let () = ignore (l, lbracket, rbracket, colon, r, region) in
   Constant (Null (s_type_expr type_expr))
 
-let s_empty_set I.{value=(l, (lbrace, rbrace, colon, type_expr), r); region} : O.expr =
+let s_empty_set {value=(l, (lbrace, rbrace, colon, type_expr), r); region} : O.expr =
   let () = ignore (l, lbrace, rbrace, colon, r, region) in
   Constant (EmptySet (s_type_expr type_expr))
 
-let s_none I.{value=(l, (c_None, colon, type_expr), r); region} : O.expr =
+let s_none {value=(l, (c_None, colon, type_expr), r); region} : O.expr =
   let () = ignore (l, c_None, colon, r, region) in
   Constant (CNone (s_type_expr type_expr))
 
@@ -231,18 +231,18 @@ and s_map_lookup I.{value = {map_name; selector; index}; region} : O.expr =
   let () = ignore (selector, lbracket, rbracket, region2, region) in
   App { operator = MapLookup; arguments = [Var (s_name map_name); s_expr index_expr] }
 
-and s_some_app I.{value=(c_Some, {value=(l,arguments,r); region=region2}); region} : O.expr =
+and s_some_app {value=(c_Some, {value=(l,arguments,r); region=region2}); region} : O.expr =
   let () = ignore (c_Some,l,r,region2,region) in
   match s_nsepseq arguments with
     [] -> Constant Unit
   | [a] -> s_expr a
   | l -> App { operator = Tuple; arguments = map s_expr l }
 
-and s_list I.{value=(l, list, r); region} : O.expr =
+and s_list {value=(l, list, r); region} : O.expr =
   let () = ignore (l, r, region) in
   App { operator = List; arguments = map s_expr (s_nsepseq list) }
 
-and s_set I.{value=(l, set, r); region} : O.expr =
+and s_set {value=(l, set, r); region} : O.expr =
   let () = ignore (l, r, region) in
   App { operator = Set; arguments = map s_expr (s_nsepseq set) }
 
