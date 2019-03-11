@@ -23,8 +23,8 @@ module O = struct
   | PTrue
   | PNone
   | PSome   of pattern
-  | Cons    of pattern * pattern
-  | Null
+  | PCons   of pattern * pattern
+  | PNull
   | PTuple  of pattern list
 
   type type_expr =
@@ -65,7 +65,7 @@ module O = struct
 
   and constant =
     Unit | Int of Z.t | String of string | Bytes of MBytes.t | False | True
-    | Null of type_expr
+    | Null of type_expr | EmptySet of type_expr | CNone of type_expr
 
   and instr =
     Assignment    of { name: var_name; value: expr }
@@ -179,7 +179,11 @@ let s_empty_list I.{value=(l, (lbracket, rbracket, colon, type_expr), r); region
 
 let s_empty_set I.{value=(l, (lbrace, rbrace, colon, type_expr), r); region} : O.expr =
   let () = ignore (l, lbrace, rbrace, colon, r, region) in
-  Constant (Null (s_type_expr type_expr))
+  Constant (EmptySet (s_type_expr type_expr))
+
+let s_none I.{value=(l, (c_None, colon, type_expr), r); region} : O.expr =
+  let () = ignore (l, c_None, colon, r, region) in
+  Constant (CNone (s_type_expr type_expr))
 
 let rec bin l operator r = O.App { operator; arguments = [s_expr l; s_expr r] }
 and     una operator v = O.App { operator; arguments = [s_expr v] }
@@ -214,8 +218,8 @@ and s_expr : I.expr -> O.expr =
   | EmptyList empty_list                          -> s_empty_list empty_list
   | Set       set                                 -> s_set set
   | EmptySet  empty_set                           -> s_empty_set empty_set
-  | NoneExpr  none_expr                           -> let _todo = none_expr  in raise (TODO "simplify (c_None,colon,type_expr) par")
-  | FunCall   fun_call                            -> let _todo = fun_call   in raise (TODO "simplify FunCall")
+  | NoneExpr  none_expr                           -> s_none none_expr
+  | FunCall   fun_call                            -> s_fun_call fun_call
   | ConstrApp constr_app                          -> let _todo = constr_app in raise (TODO "simplify ConstrApp")
   | SomeApp   {value=(c_Some, arguments); region} -> let _todo = arguments  in let () = ignore (region,c_Some) in raise (TODO "simplify SomeApp")
   | MapLookUp {value=map_lookup;          region} -> let _todo = map_lookup in let () = ignore (region) in raise (TODO "simplify MapLookUp")
@@ -229,31 +233,31 @@ and s_set I.{value=(l, set, r); region} : O.expr =
   let () = ignore (l, r, region) in
   App { operator = Set; arguments = map s_expr (s_nsepseq set) }
 
-let s_case : I.case -> O.pattern * (O.instr list) = function
+and s_case : I.case -> O.pattern * (O.instr list) = function
   | _ -> raise (TODO "simplify pattern matching cases")
 
-let s_const_decl I.{value={kwd_const;name;colon;const_type;equal;init;terminator}; region} : O.decl =
+and s_const_decl I.{value={kwd_const;name;colon;const_type;equal;init;terminator}; region} : O.decl =
   let () = ignore (kwd_const,colon,equal,terminator,region) in
   O.{ name = s_name name; ty = s_type_expr const_type; value = s_expr init }
 
-let s_param_const {value=(kwd_const,variable,colon,type_expr); region} : string * O.type_expr =
+and s_param_const {value=(kwd_const,variable,colon,type_expr); region} : string * O.type_expr =
   let () = ignore (kwd_const,colon,region) in
   s_name variable, s_type_expr type_expr
 
-let s_param_var {value=(kwd_var,variable,colon,type_expr); region} : string * O.type_expr =
+and s_param_var {value=(kwd_var,variable,colon,type_expr); region} : string * O.type_expr =
   let () = ignore (kwd_var,colon,region) in
   s_name variable, s_type_expr type_expr
 
-let s_param_decl : I.param_decl -> string * O.type_expr = function
+and s_param_decl : I.param_decl -> string * O.type_expr = function
     ParamConst p ->  s_param_const p
   | ParamVar p ->    s_param_var p
 
-let s_parameters ({value=(lpar,param_decl,rpar);region} : I.parameters) : (string * O.type_expr) list =
+and s_parameters ({value=(lpar,param_decl,rpar);region} : I.parameters) : (string * O.type_expr) list =
   let () = ignore (lpar,rpar,region) in
   let l = (s_nsepseq param_decl) in
   map s_param_decl l
 
-let rec s_var_decl I.{value={kwd_var;name;colon;var_type;ass;init;terminator}; region} : O.decl =
+and s_var_decl I.{value={kwd_var;name;colon;var_type;ass;init;terminator}; region} : O.decl =
   let () = ignore (kwd_var,colon,ass,terminator,region) in
   O.{
       name = s_name name;
