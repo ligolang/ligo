@@ -24,10 +24,12 @@ type t = <
      translation of region [region] of [n] bytes forward in the
      file. The call [region#shift_one_uchar n] is similar, except that
      it assumes that [n] is the number of bytes making up one unicode
-     point. *)
+     point. The call [region#set_file f] sets the file name to be
+     [f]. *)
 
   shift_bytes     : int -> t;
   shift_one_uchar : int -> t;
+  set_file        : string -> t;
 
   (* Getters *)
 

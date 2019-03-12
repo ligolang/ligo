@@ -20,7 +20,7 @@ let help () =
   print_endline "  -q, --quiet            No output, except errors (default)";
   print_endline "      --columns          Columns for source locations";
   print_endline "      --bytes            Bytes for source locations";
-  print_endline "      --verbose=<stages> cmdline, ast";
+  print_endline "      --verbose=<stages> cmdline, cpp, ast";
   print_endline "      --version          Commit hash on stdout";
   print_endline "  -h, --help             This help";
   exit 0

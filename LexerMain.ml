@@ -9,9 +9,38 @@ let () = Printexc.record_backtrace true
 let external_ text =
   Utils.highlight (Printf.sprintf "External error: %s" text); exit 1;;
 
+(* Preprocessing the input source and opening the input channels *)
+
+let prefix =
+  match EvalOpt.input with
+    None | Some "-" -> "temp"
+  | Some file ->  Filename.(file |> basename |> remove_extension)
+
+let suffix = ".pp.li"
+
+let pp_input =
+  if Utils.String.Set.mem "cpp" EvalOpt.verbose
+  then prefix ^ suffix
+  else let pp_input, pp_out = Filename.open_temp_file prefix suffix
+       in close_out pp_out; pp_input
+
+let cpp_cmd =
+  match EvalOpt.input with
+    None | Some "-" ->
+      Printf.sprintf "cpp -traditional-cpp - -o %s" pp_input
+  | Some file ->
+      Printf.sprintf "cpp -traditional-cpp %s -o %s" file pp_input
+
+let () =
+  if Utils.String.Set.mem "cpp" EvalOpt.verbose
+  then Printf.eprintf "%s\n%!" cpp_cmd;
+  if Sys.command cpp_cmd <> 0 then
+    external_ (Printf.sprintf "the command \"%s\" failed." cpp_cmd)
+
 (* Running the lexer on the input file *)
 
 module Lexer = Lexer.Make (LexToken)
 
+
 let () = Lexer.trace ~offsets:EvalOpt.offsets
-                     EvalOpt.mode EvalOpt.input EvalOpt.cmd
+                     EvalOpt.mode (Some pp_input) EvalOpt.cmd

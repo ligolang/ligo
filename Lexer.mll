@@ -46,13 +46,30 @@ let reset_file ~file buffer =
   let open Lexing in
   buffer.lex_curr_p <- {buffer.lex_curr_p with pos_fname = file}
 
-let reset_line line_num buffer =
+let reset_line ~line buffer =
+  assert (line >= 0);
   let open Lexing in
-  buffer.lex_curr_p <- {buffer.lex_curr_p with pos_lnum = line_num}
+  buffer.lex_curr_p <- {buffer.lex_curr_p with pos_lnum = line}
 
-let reset ~file ?(line=1) buffer =
-  (* Default value per the [Lexing] standard module convention *)
-  reset_file ~file buffer; reset_line line buffer
+let reset_offset ~offset buffer =
+  assert (offset >= 0);
+  Printf.printf "[reset] offset=%i\n" offset;
+  let open Lexing in
+  let bol = buffer.lex_curr_p.pos_bol in
+  buffer.lex_curr_p <- {buffer.lex_curr_p with pos_cnum = bol (*+ offset*)}
+
+let reset ?file ?line ?offset buffer =
+  let () =
+    match file with
+      Some file -> reset_file ~file buffer
+    |      None -> () in
+  let () =
+    match line with
+      Some line -> reset_line ~line buffer
+    |      None -> () in
+  match offset with
+    Some offset -> reset_offset ~offset buffer
+  |        None -> ()
 
 (* Rolling back one lexeme _within the current semantic action_ *)
 
@@ -192,14 +209,14 @@ module Make (Token: TOKEN) : (S with module Token = Token) =
 
     (* STATE *)
 
-    (* Beyond tokens, the result of lexing is a state (a so-called
-       _state monad_). The type [state] represents the logical state
-       of the lexing engine, that is, a value which is threaded during
-       scanning and which denotes useful, high-level information
-       beyond what the type [Lexing.lexbuf] in the standard library
-       already provides for all generic lexers.
+    (* Beyond tokens, the result of lexing is a state. The type
+       [state] represents the logical state of the lexing engine, that
+       is, a value which is threaded during scanning and which denotes
+       useful, high-level information beyond what the type
+       [Lexing.lexbuf] in the standard library already provides for
+       all generic lexers.
 
-        Tokens are the smallest units used by the parser to build the
+         Tokens are the smallest units used by the parser to build the
        abstract syntax tree. The state includes a queue of recognised
        tokens, with the markup at the left of its lexeme until either
        the start of the file or the end of the previously recognised
@@ -225,7 +242,7 @@ module Make (Token: TOKEN) : (S with module Token = Token) =
        [supply] that takes a byte, a start index and a length and feed
        it to [decoder]. See the documentation of the third-party
        library Uutf.
-    *)
+     *)
 
     type state = {
       units   : (Markup.t list * token) FQueue.t;
@@ -427,6 +444,7 @@ module Make (Token: TOKEN) : (S with module Token = Token) =
 
 let utf8_bom   = "\xEF\xBB\xBF" (* Byte Order Mark for UTF-8 *)
 let nl         = ['\n' '\r'] | "\r\n"
+let blank      = ' ' | '\t'
 let digit      = ['0'-'9']
 let natural    = digit | digit (digit | '_')* digit
 let integer    = '-'? natural
@@ -446,6 +464,7 @@ let symbol     = ';' | ','
                | '#' | '|' | "->" | ":=" | '=' | ':'
                | "||" | "&&" | '<' | "<=" | '>' | ">=" | "=/="
                | '+' | '-' | '*' | '.' | '_' | '^'
+let string     = [^'"' '\\' '\n']*  (* For strings of #include *)
 
 (* RULES *)
 
@@ -479,13 +498,50 @@ and scan state = parse
 
 | "(*" { let opening, _, state = sync state lexbuf in
          let thread = {opening; len=2; acc=['*';'(']} in
-         let state = scan_block thread state lexbuf |> push_block
+         let state  = scan_block thread state lexbuf |> push_block
          in scan state lexbuf }
 
-| "//"  { let opening, _, state = sync state lexbuf in
+| "//" { let opening, _, state = sync state lexbuf in
          let thread = {opening; len=2; acc=['/';'/']} in
-         let state = scan_line thread state lexbuf |> push_line
+         let state  = scan_line thread state lexbuf |> push_line
          in scan state lexbuf }
+
+  (* Management of #include CPP directives
+
+    An input Ligo program may contain GNU CPP (C preprocessor)
+    directives, and the entry modules (named *Main.ml) run CPP on them
+    in traditional mode:
+
+    https://gcc.gnu.org/onlinedocs/cpp/Traditional-Mode.html
+
+      The main interest in using CPP is that it can stand for a poor
+    man's (flat) module system for Ligo thanks to #include
+    directives, and the traditional mode leaves the markup mostly
+    undisturbed.
+
+      Some of the #line resulting from processing #include directives
+    deal with system file headers and thus have to be ignored for our
+    purpose. Moreover, these #line directives may also carry some
+    additional flags:
+
+    https://gcc.gnu.org/onlinedocs/cpp/Preprocessor-Output.html
+
+    of which 1 and 2 indicate, respectively, the start of a new file
+    and the return from a file (after its inclusion has been
+    processed).
+  *)
+
+| '#' blank* ("line" blank+)? (integer as line) blank+
+    '"' (string as file) '"' {
+    let  _, _, state = sync state lexbuf in
+    let flags, state = scan_flags state [] lexbuf in
+    let           () = ignore flags in
+    let line         = int_of_string line
+    and file         = Filename.basename file in
+    let pos          = state.pos#set ~file ~line ~offset:0 in
+    let state        = {state with pos} in
+    scan state lexbuf
+  }
 
   (* Some special errors
 
@@ -516,6 +572,18 @@ and scan state = parse
 
 | _ as c { let region, _, _ = sync state lexbuf
            in fail region (Unexpected_character c) }
+
+(* Scanning CPP #include flags *)
+
+and scan_flags state acc = parse
+  blank+          { let _, _, state = sync state lexbuf
+                    in scan_flags state acc lexbuf          }
+| integer as code { let _, _, state = sync state lexbuf in
+                    let acc = int_of_string code :: acc
+                    in scan_flags state acc lexbuf          }
+| nl              { List.rev acc, push_newline state lexbuf }
+| eof             { let _, _, state = sync state lexbuf
+                    in List.rev acc, state       (* TODO *) }
 
 (* Finishing a string *)
 
