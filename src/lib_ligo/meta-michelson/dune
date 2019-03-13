@@ -1,0 +1,9 @@
+(library
+ (name meta_michelson)
+ (public_name meta-michelson)
+ (libraries
+   tezos-utils
+   michelson-parser
+   tezos-micheline
+ )
+)

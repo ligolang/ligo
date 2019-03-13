@@ -1,0 +1,21 @@
+name: "meta-michelson"
+opam-version: "2.0"
+version: "1.0"
+maintainer: "gabriel.alfour@gmail.com"
+authors: [ "Galfour" ]
+homepage: "https://gitlab.com/gabriel.alfour/tezos"
+bug-reports: "https://gitlab.com/gabriel.alfour/tezos/issues"
+dev-repo: "git+https://gitlab.com/gabriel.alfour/tezos.git"
+license: "MIT"
+depends: [
+  "ocamlfind" { build }
+  "dune" { build & >= "1.0.1" }
+  "tezos-utils"
+  "michelson-parser"
+]
+build: [
+  [ "dune" "build" "-p" name "-j" jobs ]
+]
+url {
+  src: "https://gitlab.com/gabriel.alfour/tezos/-/archive/master/tezos.tar.gz"
+}
