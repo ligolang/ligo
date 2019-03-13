@@ -234,7 +234,7 @@ and s_map_lookup I.{value = {map_name; selector; index}; region} : O.expr =
 and s_some_app {value=(c_Some, {value=(l,arguments,r); region=region2}); region} : O.expr =
   let () = ignore (c_Some,l,r,region2,region) in
   match s_nsepseq arguments with
-    [] -> Constant Unit
+    [] -> failwith "tuple cannot be empty"
   | [a] -> s_expr a
   | l -> App { operator = Tuple; arguments = map s_expr l }
 
@@ -246,8 +246,59 @@ and s_set {value=(l, set, r); region} : O.expr =
   let () = ignore (l, r, region) in
   App { operator = Set; arguments = map s_expr (s_nsepseq set) }
 
-and s_case : I.case -> O.pattern * (O.instr list) = function
-  | _ -> raise (TODO "simplify pattern matching cases")
+and s_pattern {value=sequence; region} : O.pattern =
+  let () = ignore (region) in
+  s_pattern_conses (s_nsepseq sequence)
+
+and s_pattern_conses : I.core_pattern list -> O.pattern = function
+    [] -> assert false
+  | [p] -> s_core_pattern p
+  | hd :: tl -> PCons (s_core_pattern hd, s_pattern_conses tl)
+
+and s_case ({value=(pattern, arrow, instruction); region} : I.case) : O.pattern * O.instr list =
+  let () = ignore (arrow,region) in
+  s_pattern pattern, s_instruction instruction
+
+and s_core_pattern : I.core_pattern -> O.pattern = function
+  PVar var                     -> PVar (s_name var)
+| PWild wild                   -> let () = ignore      (wild) in PWild
+| PInt {value=(si,i);region}   -> let () = ignore (si,region) in PInt i
+| PBytes {value=(sb,b);region} -> let () = ignore (sb,region) in PBytes b
+| PString {value=s;region}     -> let () = ignore    (region) in PString s
+| PUnit region                 -> let () = ignore    (region) in PUnit
+| PFalse region                -> let () = ignore    (region) in PFalse
+| PTrue region                 -> let () = ignore    (region) in PTrue
+| PNone region                 -> let () = ignore    (region) in PNone
+| PSome psome                  -> s_psome psome
+| PList pattern                -> s_list_pattern pattern
+| PTuple ptuple                -> s_ptuple ptuple
+
+and s_list_pattern = function
+  Sugar sugar -> s_sugar sugar
+| Raw     raw -> s_raw raw
+
+and s_sugar {value=(lbracket, sequence, rbracket); _} : O.pattern =
+  List.fold_left (fun acc p -> O.PCons (s_core_pattern p, acc))
+                 O.PNull
+                 (s_sepseq sequence);
+
+and s_raw {value=node; _} =
+  let lpar, (core_pattern, cons, pattern), rpar = node in
+  s_token        lpar "(";
+  s_core_pattern core_pattern;
+  s_token        cons "<:";
+  s_pattern      pattern;
+  s_token        rpar ")"
+
+and s_ptuple {value=node; _} =
+  let lpar, sequence, rpar = node in
+  s_token lpar "(";
+  s_nsepseq "," s_core_pattern sequence;
+  s_token rpar ")"
+
+and s_psome {value=(c_Some,{value=(l,psome,r);region=region2});region} : O.pattern =
+  let () = ignore    (c_Some,l,r,region2,region) in
+  PSome (s_core_pattern psome)
 
 and s_const_decl I.{value={kwd_const;name;colon;const_type;equal;init;terminator}; region} : O.decl =
   let () = ignore (kwd_const,colon,equal,terminator,region) in
@@ -506,12 +557,6 @@ let s_ast (ast : I.ast) : O.ast =
 (* and s_region_cases {value=sequence; _} = *)
 (*   s_nsepseq "|" s_case sequence *)
 
-(* and s_case {value=node; _} = *)
-(*   let pattern, arrow, instruction = node in *)
-(*   s_pattern pattern; *)
-(*   s_token arrow "->"; *)
-(*   s_instruction instruction *)
-
 (* and s_expr = function *)
 (*   Or {value = expr1, bool_or, expr2; _} -> *)
 (*     s_expr expr1; s_token bool_or "||"; s_expr expr2 *)
@@ -621,57 +666,11 @@ let s_ast (ast : I.ast) : O.ast =
 (*   s_expr  expr; *)
 (*   s_token rpar ")" *)
 
-(* and s_pattern {value=sequence; _} = *)
-(*   s_nsepseq "<:" s_core_pattern sequence *)
-
-(* and s_core_pattern = function *)
-(*   PVar var      -> s_var var *)
-(* | PWild wild    -> s_token wild "_" *)
-(* | PInt i        -> s_int i *)
-(* | PBytes b      -> s_bytes b *)
-(* | PString s     -> s_string s *)
-(* | PUnit region  -> s_token region "Unit" *)
-(* | PFalse region -> s_token region "False" *)
-(* | PTrue region  -> s_token region "True" *)
-(* | PNone region  -> s_token region "None" *)
-(* | PSome psome   -> s_psome psome *)
-(* | PList pattern -> s_list_pattern pattern *)
-(* | PTuple ptuple -> s_ptuple ptuple *)
-
 (* and s_psome {value=node; _} = *)
 (*   let c_Some, patterns = node in *)
 (*   s_token    c_Some "Some"; *)
 (*   s_patterns patterns *)
 
-(* and s_patterns {value=node; _} = *)
-(*   let lpar, core_pattern, rpar = node in *)
-(*   s_token lpar "("; *)
-(*   s_core_pattern core_pattern; *)
-(*   s_token rpar ")" *)
-
-(* and s_list_pattern = function *)
-(*   Sugar sugar -> s_sugar sugar *)
-(* | Raw     raw -> s_raw raw *)
-
-(* and s_sugar {value=node; _} = *)
-(*   let lbracket, sequence, rbracket = node in *)
-(*   s_token lbracket "["; *)
-(*   s_sepseq "," s_core_pattern sequence; *)
-(*   s_token rbracket "]" *)
-
-(* and s_raw {value=node; _} = *)
-(*   let lpar, (core_pattern, cons, pattern), rpar = node in *)
-(*   s_token        lpar "("; *)
-(*   s_core_pattern core_pattern; *)
-(*   s_token        cons "<:"; *)
-(*   s_pattern      pattern; *)
-(*   s_token        rpar ")" *)
-
-(* and s_ptuple {value=node; _} = *)
-(*   let lpar, sequence, rpar = node in *)
-(*   s_token lpar "("; *)
-(*   s_nsepseq "," s_core_pattern sequence; *)
-(*   s_token rpar ")" *)
 
 (* and s_terminator = function *)
 (*   Some semi -> s_token semi ";" *)
