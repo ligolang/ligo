@@ -1,0 +1,8 @@
+(library
+  (libraries
+    tezos-base
+    tezos-utils
+  )
+  (name ligo_helpers)
+  (public_name ligo-helpers)
+)
