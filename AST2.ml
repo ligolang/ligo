@@ -1,7 +1,5 @@
 [@@@warning "-30"]
 
-exception TODO of string
-
 module I = AST
 
 open Region
@@ -36,7 +34,6 @@ module O = struct
   | Ref      of type_expr
   | Unit
   | Int
-  | TODO
 
   type typed_var = { name:var_name; ty:type_expr }
 
@@ -94,7 +91,7 @@ let map f l = List.rev (List.rev_map f l)
    (i.e. check that they are tail-recursive) *)
 let append_map f l = map f l |>  List.flatten
 let append l1 l2 = List.append l1 l2
-let list_to_map l = l |> List.to_seq |> SMap.of_seq
+let list_to_map l = List.fold_left (fun m (k,v) -> SMap.add k v m) SMap.empty l
 let fold_map f a l =
   let f (acc, l) elem =
     let acc', elem' = f acc elem
@@ -367,7 +364,7 @@ and s_for_int ({value={kwd_for;ass;down;kwd_to;bound;step;block}; region} : I.fo
   let step = s_step step
   in [
       Assignment { name; value = s_expr expr };
-      (* TODO: lift the declaration of the variable *)
+      (* TODO: lift the declaration of the variable, to avoid creating a nested scope here. *)
       While {
           condition = App { operator = condition;
                             arguments = [Var name; s_expr bound] };
