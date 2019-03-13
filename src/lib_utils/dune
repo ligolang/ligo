@@ -1,0 +1,13 @@
+(library
+  (name tezos_utils)
+  (public_name tezos-utils)
+  (libraries
+    tezos-stdlib-unix
+    tezos-crypto
+    tezos-data-encoding
+    tezos-protocol-environment
+    tezos-protocol-alpha
+    tezos-micheline
+    michelson-parser
+  )
+)
