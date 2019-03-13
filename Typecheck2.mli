@@ -5,8 +5,9 @@ module SMap : Map.S with type key = string
 module O : sig
   type asttodo = [`TODO] (* occurrences of asttodo will point to some part of the original parser AST *)
 
-  type type_name = string
-  type var_name = { name: string; orig: asttodo }
+  type type_name = {name: string; orig: Region.t}
+  type var_name = type_name
+
   type record_key = [`Field of string | `Component of int]
 
   type pattern =
@@ -22,7 +23,9 @@ module O : sig
   | PSome   of pattern
   | PCons   of pattern * pattern
   | PNull
-  | PRecord  of pattern list
+  | PRecord of record_key precord
+
+  and 'key precord = ('key * pattern) list
 
   type type_constructor =
   | Option
