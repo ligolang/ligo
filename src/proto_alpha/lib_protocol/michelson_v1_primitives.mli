@@ -91,6 +91,7 @@ type prim =
   | I_NEQ
   | I_NIL
   | I_NONE
+  | I_NOP
   | I_NOT
   | I_NOW
   | I_OR

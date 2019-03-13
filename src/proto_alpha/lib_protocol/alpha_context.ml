@@ -65,6 +65,13 @@ module Script_timestamp = struct
     Raw_context.current_timestamp ctxt
     |> Timestamp.to_seconds
     |> of_int64
+
+  let set_now ctxt timestamp =
+    timestamp
+    |> to_zint
+    |> Z.to_int64
+    |> Time.of_seconds
+    |> (Raw_context.set_current_timestamp ctxt)
 end
 module Script = struct
   include Michelson_v1_primitives

@@ -80,6 +80,7 @@ val recover: context -> Context.t
 
 val current_level: context -> Level_repr.t
 val current_timestamp: context -> Time.t
+val set_current_timestamp: context -> Time.t -> context
 
 val current_fitness: context -> Int64.t
 val set_current_fitness: context -> Int64.t -> t

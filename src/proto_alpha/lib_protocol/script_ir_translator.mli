@@ -32,11 +32,14 @@ type ex_comparable_ty = Ex_comparable_ty : 'a Script_typed_ir.comparable_ty -> e
 type ex_ty = Ex_ty : 'a Script_typed_ir.ty -> ex_ty
 type ex_stack_ty = Ex_stack_ty : 'a Script_typed_ir.stack_ty -> ex_stack_ty
 type ex_script = Ex_script : ('a, 'b) Script_typed_ir.script -> ex_script
+type ex_typed_value = Ex_typed_value : ('a Script_typed_ir.ty * 'a) -> ex_typed_value
 
 type unparsing_mode = Optimized | Readable
 
 type type_logger =
   int -> (Script.expr * Script.annot) list -> (Script.expr * Script.annot)  list -> unit
+
+val ty_of_comparable_ty : 'a Script_typed_ir.comparable_ty -> 'a Script_typed_ir.ty
 
 (* ---- Sets and Maps -------------------------------------------------------*)
 
@@ -77,12 +80,19 @@ val ty_eq :
   'ta Script_typed_ir.ty -> 'tb Script_typed_ir.ty ->
   (('ta Script_typed_ir.ty, 'tb Script_typed_ir.ty) eq * context) tzresult
 
+val stack_ty_eq :
+  context -> int ->
+  'ta Script_typed_ir.stack_ty -> 'tb Script_typed_ir.stack_ty ->
+  (('ta Script_typed_ir.stack_ty, 'tb Script_typed_ir.stack_ty) eq * context) tzresult
+
 val parse_data :
   ?type_logger: type_logger ->
   context ->
   'a Script_typed_ir.ty -> Script.node -> ('a * context) tzresult Lwt.t
+
 val unparse_data :
-  context -> unparsing_mode -> 'a Script_typed_ir.ty -> 'a ->
+  context -> ?mapper:(ex_typed_value -> Script.node option tzresult Lwt.t)
+  -> unparsing_mode -> 'a Script_typed_ir.ty -> 'a ->
   (Script.node * context) tzresult Lwt.t
 
 val parse_ty :
@@ -93,6 +103,30 @@ val parse_ty :
 
 val unparse_ty :
   context -> 'a Script_typed_ir.ty -> (Script.node * context) tzresult Lwt.t
+
+val parse_storage_ty :
+  context ->
+  Script.node -> (ex_ty * context) tzresult
+
+type tc_context =
+  | Lambda : tc_context
+  | Dip : 'a Script_typed_ir.stack_ty * tc_context -> tc_context
+  | Toplevel : { storage_type : 'sto Script_typed_ir.ty ; param_type : 'param Script_typed_ir.ty } -> tc_context
+
+type 'bef judgement =
+  | Typed : ('bef, 'aft) Script_typed_ir.descr -> 'bef judgement
+  | Failed : { descr : 'aft. 'aft Script_typed_ir.stack_ty -> ('bef, 'aft) Script_typed_ir.descr } -> 'bef judgement
+
+val parse_instr :
+  ?type_logger: type_logger ->
+  tc_context -> context ->
+  Script.node -> 'bef Script_typed_ir.stack_ty -> ('bef judgement * context) tzresult Lwt.t
+
+val parse_returning :
+  ?type_logger: type_logger ->
+  tc_context -> context ->
+  'arg Script_typed_ir.ty * Script_typed_ir.var_annot option -> 'ret Script_typed_ir.ty -> Script.node ->
+  (('arg, 'ret) Script_typed_ir.lambda * context) tzresult Lwt.t
 
 val parse_toplevel :
   Script.expr -> (Script.node * Script.node * Script.node) tzresult

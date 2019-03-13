@@ -51,6 +51,7 @@ type root_context = t
 
 let current_level ctxt = ctxt.level
 let current_timestamp ctxt = ctxt.timestamp
+let set_current_timestamp ctxt timestamp = { ctxt with timestamp }
 let current_fitness ctxt = ctxt.fitness
 let first_level ctxt = ctxt.first_level
 let constants ctxt = ctxt.constants

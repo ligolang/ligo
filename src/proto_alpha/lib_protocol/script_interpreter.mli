@@ -61,3 +61,27 @@ val trace:
   parameter: Script.expr ->
   amount: Tez.t ->
   (execution_result * execution_trace) tzresult Lwt.t
+
+val interp:
+  (?log: execution_trace ref ->
+   context ->
+   source: Contract.t -> payer:Contract.t -> self: Contract.t -> Tez.t ->
+   ('p, 'r) Script_typed_ir.lambda -> 'p ->
+   ('r * context) tzresult Lwt.t)
+
+type 'tys stack =
+  | Item : 'ty * 'rest stack -> ('ty * 'rest) stack
+  | Empty : Script_typed_ir.end_of_stack stack
+
+type ex_descr_stack = Ex_descr_stack : (('a, 'b) Script_typed_ir.descr * 'a stack) -> ex_descr_stack
+
+val step:
+  ?log:execution_trace ref ->
+  context ->
+  source:Contract.t ->
+  self:Contract.t ->
+  payer:Contract.t ->
+  ?visitor: (ex_descr_stack -> unit) ->
+  Tez.t -> ('b, 'a) Script_typed_ir.descr
+  -> 'b stack
+  -> ('a stack * context) tzresult Lwt.t

@@ -93,6 +93,7 @@ type prim =
   | I_NEQ
   | I_NIL
   | I_NONE
+  | I_NOP
   | I_NOT
   | I_NOW
   | I_OR
@@ -226,6 +227,7 @@ let string_of_prim = function
   | I_NEQ -> "NEQ"
   | I_NIL -> "NIL"
   | I_NONE -> "NONE"
+  | I_NOP -> "NOP"
   | I_NOT -> "NOT"
   | I_NOW -> "NOW"
   | I_OR -> "OR"
@@ -340,6 +342,7 @@ let prim_of_string = function
   | "NEQ" -> ok I_NEQ
   | "NIL" -> ok I_NIL
   | "NONE" -> ok I_NONE
+  | "NOP" -> ok I_NOP
   | "NOT" -> ok I_NOT
   | "NOW" -> ok I_NOW
   | "OR" -> ok I_OR
