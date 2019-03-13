@@ -1,0 +1,8 @@
+(executable
+  (name cli)
+  (public_name ligo)
+  (package ligo)
+  (preprocess
+    (pps ppx_let)
+  )
+)

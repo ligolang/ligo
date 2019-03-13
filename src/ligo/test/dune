@@ -1,0 +1,10 @@
+(executable
+  (name test)
+  (libraries
+    ligo
+    alcotest
+  )
+  (preprocess
+    (pps ppx_let)
+  )
+)

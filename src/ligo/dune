@@ -1,0 +1,20 @@
+(ocamllex
+  (modules lexer))
+
+(menhir
+ (modules parser))
+
+(library
+  (name ligo)
+  (public_name ligo)
+  (libraries
+    tezos-utils
+    tezos-micheline
+    meta-michelson
+    ligo-helpers
+  )
+  (preprocess
+    (pps ppx_let)
+  )
+  (flags (:standard -w +1..62-4-44-40-42-9@39@33 ))
+)
