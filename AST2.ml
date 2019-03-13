@@ -277,24 +277,19 @@ and s_list_pattern = function
   Sugar sugar -> s_sugar sugar
 | Raw     raw -> s_raw raw
 
-and s_sugar {value=(lbracket, sequence, rbracket); _} : O.pattern =
+and s_sugar {value=(lbracket, sequence, rbracket); region} : O.pattern =
+  let () = ignore (lbracket, rbracket, region) in
   List.fold_left (fun acc p -> O.PCons (s_core_pattern p, acc))
                  O.PNull
                  (s_sepseq sequence);
 
-and s_raw {value=node; _} =
-  let lpar, (core_pattern, cons, pattern), rpar = node in
-  s_token        lpar "(";
-  s_core_pattern core_pattern;
-  s_token        cons "<:";
-  s_pattern      pattern;
-  s_token        rpar ")"
+and s_raw {value=(lpar, (core_pattern, cons, pattern), rpar); region} =
+  let () = ignore (lpar, cons, rpar, region) in
+  O.PCons (s_core_pattern core_pattern, s_pattern pattern)
 
-and s_ptuple {value=node; _} =
-  let lpar, sequence, rpar = node in
-  s_token lpar "(";
-  s_nsepseq "," s_core_pattern sequence;
-  s_token rpar ")"
+and s_ptuple {value=(lpar, sequence, rpar); region} =
+  let () = ignore (lpar, rpar, region) in
+  PTuple (map s_core_pattern (s_nsepseq sequence))
 
 and s_psome {value=(c_Some,{value=(l,psome,r);region=region2});region} : O.pattern =
   let () = ignore    (c_Some,l,r,region2,region) in
