@@ -120,25 +120,29 @@ type field_name = string reg
 type map_name   = string reg
 type constr     = string reg
 
-(* Comma-separated non-empty lists *)
-
-type 'a csv = ('a, comma) nsepseq
-
-(* Bar-separated non-empty lists *)
-
-type 'a bsv = ('a, vbar) nsepseq
-
 (* Parentheses *)
 
-type 'a par = (lpar * 'a * rpar) reg
+type 'a par = {
+  lpar   : lpar;
+  inside : 'a;
+  rpar   : rpar
+}
 
 (* Brackets compounds *)
 
-type 'a brackets = (lbracket * 'a * rbracket) reg
+type 'a brackets = {
+  lbracket : lbracket;
+  inside   : 'a;
+  rbracket : rbracket
+}
 
 (* Braced compounds *)
 
-type 'a braces = (lbrace * 'a * rbrace) reg
+type 'a braces = {
+  lbrace : lbrace;
+  inside : 'a;
+  rbrace : rbrace
+}
 
 (* The Abstract Syntax Tree *)
 
@@ -194,23 +198,35 @@ and type_decl = {
 
 and type_expr =
   Prod    of cartesian
-| Sum     of (variant, vbar) nsepseq reg
-| Record  of record_type
+| Sum     of (variant reg, vbar) nsepseq reg
+| Record  of record_type reg
 | TypeApp of (type_name * type_tuple) reg
-| ParType of type_expr par
+| ParType of type_expr par reg
 | TAlias  of variable
 
 and cartesian = (type_expr, times) nsepseq reg
 
-and variant = (constr * kwd_of * cartesian) reg
+and variant = {
+  constr  : constr;
+  kwd_of  : kwd_of;
+  product : cartesian
+}
 
-and record_type = (kwd_record * field_decls * kwd_end) reg
+and record_type = {
+  kwd_record : kwd_record;
+  fields     : field_decls;
+  kwd_end    : kwd_end
+}
 
-and field_decls = (field_decl, semi) nsepseq
+and field_decls = (field_decl reg, semi) nsepseq
 
-and field_decl = (variable * colon * type_expr) reg
+and field_decl = {
+  var        : variable;
+  colon      : colon;
+  field_type : type_expr
+}
 
-and type_tuple = (type_name, comma) nsepseq par
+and type_tuple = (type_name, comma) nsepseq par reg
 
 (* Function and procedure declarations *)
 
@@ -253,15 +269,25 @@ and entry_decl = {
   terminator     : semi option
 }
 
-and parameters = (param_decl, semi) nsepseq par
+and parameters = (param_decl, semi) nsepseq par reg
 
 and param_decl =
-  ParamConst of param_const
-| ParamVar   of param_var
+  ParamConst of param_const reg
+| ParamVar   of param_var reg
 
-and param_const = (kwd_const * variable * colon * type_expr) reg
+and param_const = {
+  kwd_const  : kwd_const;
+  var        : variable;
+  colon      : colon;
+  param_type : type_expr
+}
 
-and param_var = (kwd_var * variable * colon * type_expr) reg
+and param_var = {
+  kwd_var    : kwd_var;
+  var        : variable;
+  colon      : colon;
+  param_type : type_expr
+}
 
 and block = {
   opening    : kwd_begin;
@@ -294,11 +320,16 @@ and instruction =
 and single_instr =
   Cond     of conditional reg
 | Match    of match_instr reg
-| Ass      of ass_instr
+| Ass      of ass_instr reg
 | Loop     of loop
 | ProcCall of fun_call
 | Null     of kwd_null
-| Fail     of (kwd_fail * expr) reg
+| Fail     of fail_instr reg
+
+and fail_instr = {
+  kwd_fail  : kwd_fail;
+  fail_expr : expr
+}
 
 and conditional = {
   kwd_if   : kwd_if;
@@ -318,17 +349,29 @@ and match_instr = {
   kwd_end   : kwd_end
 }
 
-and cases = (case, vbar) nsepseq reg
+and cases = (case reg, vbar) nsepseq reg
 
-and case = (pattern * arrow * instruction) reg
+and case = {
+  pattern : pattern;
+  arrow   : arrow;
+  instr   : instruction
+}
 
-and ass_instr = (variable * ass * expr) reg
+and ass_instr = {
+  var  : variable;
+  ass  : ass;
+  expr : expr
+}
 
 and loop =
-  While of while_loop
+  While of while_loop reg
 | For   of for_loop
 
-and while_loop = (kwd_while * expr * block reg) reg
+and while_loop = {
+  kwd_while : kwd_while;
+  cond      : expr;
+  block     : block reg
+}
 
 and for_loop =
   ForInt     of for_int reg
@@ -336,7 +379,7 @@ and for_loop =
 
 and for_int = {
   kwd_for : kwd_for;
-  ass     : ass_instr;
+  ass     : ass_instr reg;
   down    : kwd_down option;
   kwd_to  : kwd_to;
   bound   : expr;
@@ -356,71 +399,120 @@ and for_collect = {
 (* Expressions *)
 
 and expr =
-  Or        of (expr * bool_or * expr) reg
-| And       of (expr * bool_and * expr) reg
-| Lt        of (expr * lt * expr) reg
-| Leq       of (expr * leq * expr) reg
-| Gt        of (expr * gt * expr) reg
-| Geq       of (expr * geq * expr) reg
-| Equal     of (expr * equal * expr) reg
-| Neq       of (expr * neq * expr) reg
-| Cat       of (expr * cat * expr) reg
-| Cons      of (expr * cons * expr) reg
-| Add       of (expr * plus * expr) reg
-| Sub       of (expr * minus * expr) reg
-| Mult      of (expr * times * expr) reg
-| Div       of (expr * slash * expr) reg
-| Mod       of (expr * kwd_mod * expr) reg
-| Neg       of (minus * expr) reg
-| Not       of (kwd_not * expr) reg
-| Int       of (Lexer.lexeme * Z.t) reg
-| Var       of Lexer.lexeme reg
-| String    of Lexer.lexeme reg
-| Bytes     of (Lexer.lexeme * MBytes.t) reg
-| False     of c_False
-| True      of c_True
-| Unit      of c_Unit
-| Tuple     of tuple
-| List      of (expr, comma) nsepseq brackets
-| EmptyList of empty_list
-| Set       of (expr, comma) nsepseq braces
-| EmptySet  of empty_set
-| NoneExpr  of none_expr
-| FunCall   of fun_call
-| ConstrApp of constr_app
-| SomeApp   of (c_Some * arguments) reg
-| MapLookUp of map_lookup reg
-| ParExpr   of expr par
+  LogicExpr  of logic_expr
+| ArithExpr  of arith_expr
+| StringExpr of string_expr
+| ListExpr   of list_expr
+| SetExpr    of set_expr
+| ConstrExpr of constr_expr
+| Var        of Lexer.lexeme reg
+| FunCall    of fun_call
+| Bytes      of (Lexer.lexeme * MBytes.t) reg
+| Unit       of c_Unit
+| Tuple      of tuple
+| MapLookUp  of map_lookup reg
+| ParExpr    of expr par reg
 
-and tuple = (expr, comma) nsepseq par
+and logic_expr =
+  BoolExpr of bool_expr
+| CompExpr of comp_expr
 
-and empty_list =
-  (lbracket * rbracket * colon * type_expr) par
+and bool_expr =
+  Or    of bool_or bin_op reg
+| And   of bool_and bin_op reg
+| Not   of kwd_not un_op reg
+| False of c_False
+| True  of c_True
 
-and empty_set =
-  (lbrace * rbrace * colon * type_expr) par
+and 'a bin_op = {
+  op1 : expr;
+  op  : 'a;
+  op2 : expr
+}
 
-and none_expr =
-  (c_None * colon * type_expr) par
+and 'a un_op = {
+  op  : 'a;
+  op1 : expr
+}
+
+and comp_expr =
+  Lt    of lt    bin_op reg
+| Leq   of leq   bin_op reg
+| Gt    of gt    bin_op reg
+| Geq   of geq   bin_op reg
+| Equal of equal bin_op reg
+| Neq   of neq   bin_op reg
+
+and arith_expr =
+  Add  of plus    bin_op reg
+| Sub  of minus   bin_op reg
+| Mult of times   bin_op reg
+| Div  of slash   bin_op reg
+| Mod  of kwd_mod bin_op reg
+| Neg  of minus   un_op reg
+| Int  of (Lexer.lexeme * Z.t) reg
+
+and string_expr =
+  Cat    of cat bin_op reg
+| String of Lexer.lexeme reg
+
+and list_expr =
+  Cons      of cons bin_op reg
+| List      of (expr, comma) nsepseq brackets reg
+| EmptyList of empty_list reg
+
+and set_expr =
+  Set       of (expr, comma) nsepseq braces reg
+| EmptySet  of empty_set reg
+
+and constr_expr =
+  SomeApp   of (c_Some * arguments) reg
+| NoneExpr  of none_expr reg
+| ConstrApp of (constr * arguments) reg
+
+and tuple = (expr, comma) nsepseq par reg
+
+and empty_list = typed_empty_list par
+
+and typed_empty_list = {
+  lbracket  : lbracket;
+  rbracket  : rbracket;
+  colon     : colon;
+  list_type : type_expr
+}
+
+and empty_set = typed_empty_set par
+
+and typed_empty_set = {
+  lbrace   : lbrace;
+  rbrace   : rbrace;
+  colon    : colon;
+  set_type : type_expr
+}
+
+and none_expr = typed_none_expr par
+
+and typed_none_expr = {
+  c_None   : c_None;
+  colon    : colon;
+  opt_type : type_expr
+}
 
 and fun_call = (fun_name * arguments) reg
 
 and arguments = tuple
 
-and constr_app = (constr * arguments) reg
-
 and map_lookup = {
   map_name : variable;
   selector : dot;
-  index    : expr brackets
+  index    : expr brackets reg
 }
 
 (* Patterns *)
 
-and pattern = (core_pattern, cons) nsepseq reg
-
-and core_pattern =
-  PVar    of Lexer.lexeme reg
+and pattern =
+  PCons   of (pattern, cons) nsepseq reg
+| PVar    of Lexer.lexeme reg
 | PWild   of wild
 | PInt    of (Lexer.lexeme * Z.t) reg
 | PBytes  of (Lexer.lexeme * MBytes.t) reg
@@ -429,13 +521,13 @@ and core_pattern =
 | PFalse  of c_False
 | PTrue   of c_True
 | PNone   of c_None
-| PSome   of (c_Some * core_pattern par) reg
+| PSome   of (c_Some * pattern par reg) reg
 | PList   of list_pattern
-| PTuple  of (core_pattern, comma) nsepseq par
+| PTuple  of (pattern, comma) nsepseq par reg
 
 and list_pattern =
-  Sugar of (core_pattern, comma) sepseq brackets
-| Raw   of (core_pattern * cons * pattern) par
+  Sugar of (pattern, comma) sepseq brackets reg
+| Raw   of (pattern * cons * pattern) par reg
 
 (* Projecting regions *)
 
@@ -449,42 +541,66 @@ let type_expr_to_region = function
 | ParType {region; _}
 | TAlias  {region; _} -> region
 
-let expr_to_region = function
-  Or        {region; _}
-| And       {region; _}
-| Lt        {region; _}
-| Leq       {region; _}
-| Gt        {region; _}
-| Geq       {region; _}
-| Equal     {region; _}
-| Neq       {region; _}
-| Cat       {region; _}
-| Cons      {region; _}
-| Add       {region; _}
-| Sub       {region; _}
-| Mult      {region; _}
-| Div       {region; _}
-| Mod       {region; _}
-| Neg       {region; _}
-| Not       {region; _}
-| Int       {region; _}
+let rec expr_to_region = function
+  LogicExpr  e -> logic_expr_to_region e
+| ArithExpr  e -> arith_expr_to_region e
+| StringExpr e -> string_expr_to_region e
+| ListExpr   e -> list_expr_to_region e
+| SetExpr    e -> set_expr_to_region e
+| ConstrExpr e -> constr_expr_to_region e
 | Var       {region; _}
-| String    {region; _}
+| FunCall   {region; _}
 | Bytes     {region; _}
-| False     region
-| True      region
 | Unit      region
 | Tuple     {region; _}
-| List      {region; _}
-| EmptyList {region; _}
-| Set       {region; _}
-| EmptySet  {region; _}
-| NoneExpr  {region; _}
-| FunCall   {region; _}
-| ConstrApp {region; _}
-| SomeApp   {region; _}
 | MapLookUp {region; _}
 | ParExpr   {region; _} -> region
+
+and logic_expr_to_region = function
+  BoolExpr e -> bool_expr_to_region e
+| CompExpr e -> comp_expr_to_region e
+
+and bool_expr_to_region = function
+  Or        {region; _}
+| And       {region; _}
+| Not       {region; _}
+| False     region
+| True      region -> region
+
+and comp_expr_to_region = function
+  Lt    {region; _}
+| Leq   {region; _}
+| Gt    {region; _}
+| Geq   {region; _}
+| Equal {region; _}
+| Neq   {region; _} -> region
+
+and arith_expr_to_region = function
+| Add  {region; _}
+| Sub  {region; _}
+| Mult {region; _}
+| Div  {region; _}
+| Mod  {region; _}
+| Neg  {region; _}
+| Int  {region; _} -> region
+
+and string_expr_to_region = function
+  Cat    {region; _}
+| String {region; _} -> region
+
+and list_expr_to_region = function
+  Cons      {region; _}
+| List      {region; _}
+| EmptyList {region; _} -> region
+
+and set_expr_to_region = function
+  Set      {region; _}
+| EmptySet {region; _} -> region
+
+and constr_expr_to_region = function
+  NoneExpr  {region; _}
+| ConstrApp {region; _}
+| SomeApp   {region; _} -> region
 
 let instr_to_region = function
   Single Cond                {region;_}
@@ -498,8 +614,9 @@ let instr_to_region = function
 | Single Fail                {region; _}
 | Block                      {region; _} -> region
 
-let core_pattern_to_region = function
-  PVar        {region; _}
+let pattern_to_region = function
+  PCons       {region; _}
+| PVar        {region; _}
 | PWild        region
 | PInt        {region; _}
 | PBytes      {region; _}
@@ -629,18 +746,18 @@ and print_cartesian {value; _} =
   print_nsepseq "*" print_type_expr value
 
 and print_variant {value; _} =
-  let constr, kwd_of, cartesian = value in
+  let {constr; kwd_of; product} = value in
   print_constr    constr;
   print_token     kwd_of "of";
-  print_cartesian cartesian
+  print_cartesian product
 
 and print_sum_type {value; _} =
   print_nsepseq "|" print_variant value
 
 and print_record_type {value; _} =
-  let kwd_record, field_decls, kwd_end = value in
+  let {kwd_record; fields; kwd_end} = value in
   print_token       kwd_record "record";
-  print_field_decls field_decls;
+  print_field_decls fields;
   print_token       kwd_end "end"
 
 and print_type_app {value; _} =
@@ -649,24 +766,24 @@ and print_type_app {value; _} =
   print_type_tuple type_tuple
 
 and print_par_type {value; _} =
-  let lpar, type_expr, rpar = value in
+  let {lpar; inside; rpar} = value in
   print_token     lpar "(";
-  print_type_expr type_expr;
+  print_type_expr inside;
   print_token     rpar ")"
 
 and print_field_decls sequence =
   print_nsepseq ";" print_field_decl sequence
 
 and print_field_decl {value; _} =
-  let var, colon, type_expr = value in
+  let {var; colon; field_type} = value in
   print_var       var;
   print_token     colon ":";
-  print_type_expr type_expr
+  print_type_expr field_type
 
 and print_type_tuple {value; _} =
-  let lpar, sequence, rpar = value in
+  let {lpar; inside; rpar} = value in
   print_token lpar "(";
-  print_nsepseq "," print_var sequence;
+  print_nsepseq "," print_var inside;
   print_token rpar ")"
 
 and print_lambda_decl = function
@@ -713,9 +830,9 @@ and print_entry_decl {value; _} =
   print_terminator  terminator
 
 and print_parameters {value; _} =
-  let lpar, sequence, rpar = value in
+  let {lpar; inside; rpar} = value in
   print_token lpar "(";
-  print_nsepseq ";" print_param_decl sequence;
+  print_nsepseq ";" print_param_decl inside;
   print_token rpar ")"
 
 and print_param_decl = function
@@ -723,18 +840,18 @@ and print_param_decl = function
 | ParamVar   param_var   -> print_param_var   param_var
 
 and print_param_const {value; _} =
-  let kwd_const, variable, colon, type_expr = value in
+  let {kwd_const; var; colon; param_type} = value in
   print_token     kwd_const "const";
-  print_var       variable;
+  print_var       var;
   print_token     colon ":";
-  print_type_expr type_expr
+  print_type_expr param_type
 
 and print_param_var {value; _} =
-  let kwd_var, variable, colon, type_expr = value in
+  let {kwd_var; var; colon; param_type} = value in
   print_token     kwd_var "var";
-  print_var       variable;
+  print_var       var;
   print_token     colon ":";
-  print_type_expr type_expr
+  print_type_expr param_type
 
 and print_block {value; _} =
   let {opening; instr; terminator; close} = value in
@@ -778,9 +895,9 @@ and print_single_instr = function
 | Null     kwd_null   -> print_token kwd_null "null"
 | Fail     {value; _} -> print_fail value
 
-and print_fail (kwd_fail, expr) =
+and print_fail {kwd_fail; fail_expr} =
   print_token kwd_fail "fail";
-  print_expr expr
+  print_expr fail_expr
 
 and print_conditional node =
   let {kwd_if; test; kwd_then; ifso;
@@ -810,25 +927,25 @@ and print_cases {value; _} =
   print_nsepseq "|" print_case value
 
 and print_case {value; _} =
-  let pattern, arrow, instruction = value in
+  let {pattern; arrow; instr} = value in
   print_pattern pattern;
   print_token arrow "->";
-  print_instruction instruction
+  print_instruction instr
 
 and print_ass_instr {value; _} =
-  let variable, ass, expr = value in
-  print_var variable;
+  let {var; ass; expr} = value in
+  print_var var;
   print_token ass ":=";
   print_expr expr
 
 and print_loop = function
-  While while_loop -> print_while_loop while_loop
+  While {value; _} -> print_while_loop value
 | For     for_loop -> print_for_loop for_loop
 
-and print_while_loop {value; _} =
-  let kwd_while, expr, block = value in
+and print_while_loop value =
+  let {kwd_while; cond; block} = value in
   print_token kwd_while "while";
-  print_expr expr;
+  print_expr cond;
   print_block block
 
 and print_for_loop = function
@@ -857,8 +974,7 @@ and print_step = function
 | None -> ()
 
 and print_for_collect ({value; _} : for_collect reg) =
-  let {kwd_for; var; bind_to;
-       kwd_in; expr; block} = value in
+  let {kwd_for; var; bind_to; kwd_in; expr; block} = value in
   print_token   kwd_for "for";
   print_var     var;
   print_bind_to bind_to;
@@ -873,103 +989,128 @@ and print_bind_to = function
 | None -> ()
 
 and print_expr = function
-  Or {value = expr1, bool_or, expr2; _} ->
-    print_expr expr1; print_token bool_or "||"; print_expr expr2
-| And {value = expr1, bool_and, expr2; _} ->
-    print_expr expr1; print_token bool_and "&&"; print_expr expr2
-| Lt {value = expr1, lt, expr2; _} ->
-    print_expr expr1; print_token lt "<"; print_expr expr2
-| Leq {value = expr1, leq, expr2; _} ->
-    print_expr expr1; print_token leq "<="; print_expr expr2
-| Gt {value = expr1, gt, expr2; _} ->
-    print_expr expr1; print_token gt ">"; print_expr expr2
-| Geq {value = expr1, geq, expr2; _} ->
-    print_expr expr1; print_token geq ">="; print_expr expr2
-| Equal {value = expr1, equal, expr2; _} ->
-    print_expr expr1; print_token equal "="; print_expr expr2
-| Neq {value = expr1, neq, expr2; _} ->
-    print_expr expr1; print_token neq "=/="; print_expr expr2
-| Cat {value = expr1, cat, expr2; _} ->
-    print_expr expr1; print_token cat "^"; print_expr expr2
-| Cons {value = expr1, cons, expr2; _} ->
-    print_expr expr1; print_token cons "#"; print_expr expr2
-| Add {value = expr1, add, expr2; _} ->
-    print_expr expr1; print_token add "+"; print_expr expr2
-| Sub {value = expr1, sub, expr2; _} ->
-    print_expr expr1; print_token sub "-"; print_expr expr2
-| Mult {value = expr1, mult, expr2; _} ->
-    print_expr expr1; print_token mult "*"; print_expr expr2
-| Div {value = expr1, div, expr2; _} ->
-    print_expr expr1; print_token div "/"; print_expr expr2
-| Mod {value = expr1, kwd_mod, expr2; _} ->
-    print_expr expr1; print_token kwd_mod "mod"; print_expr expr2
-| Neg {value = minus, expr; _} ->
-    print_token minus "-"; print_expr expr
-| Not {value = kwd_not, expr; _} ->
-    print_token kwd_not "not"; print_expr expr
-| Int i            -> print_int i
-| Var var          -> print_var var
-| String s         -> print_string s
-| Bytes b          -> print_bytes b
-| False region     -> print_token region "False"
-| True region      -> print_token region "True"
-| Unit region      -> print_token region "Unit"
-| Tuple tuple      -> print_tuple tuple
-| List list        -> print_list list
-| EmptyList elist  -> print_empty_list elist
-| Set set          -> print_set set
-| EmptySet eset    -> print_empty_set eset
-| NoneExpr nexpr   -> print_none_expr nexpr
-| FunCall fun_call -> print_fun_call fun_call
-| ConstrApp capp   -> print_constr_app capp
-| SomeApp sapp     -> print_some_app sapp
-| MapLookUp lookup -> print_map_lookup lookup
-| ParExpr pexpr    -> print_par_expr pexpr
+  LogicExpr e  -> print_logic_expr e
+| ArithExpr e  -> print_arith_expr e
+| StringExpr e -> print_string_expr e
+| ListExpr e   -> print_list_expr e
+| SetExpr e    -> print_set_expr e
+| ConstrExpr e -> print_constr_expr e
+| Var var      -> print_var var
+| FunCall e    -> print_fun_call e
+| Bytes b      -> print_bytes b
+| Unit region  -> print_token region "Unit"
+| Tuple e      -> print_tuple e
+| MapLookUp e  -> print_map_lookup e
+| ParExpr e    -> print_par_expr e
+
+and print_logic_expr = function
+  BoolExpr e -> print_bool_expr e
+| CompExpr e -> print_comp_expr e
+
+and print_bool_expr = function
+  Or {value = {op1; op; op2}; _} ->
+    print_expr op1; print_token op "||"; print_expr op2
+| And {value = {op1; op; op2}; _} ->
+    print_expr op1; print_token op "&&"; print_expr op2
+| Not {value = {op; op1}; _} ->
+    print_token op "not"; print_expr op1
+| False region -> print_token region "False"
+| True region  -> print_token region "True"
+
+and print_comp_expr = function
+  Lt {value = {op1; op; op2}; _} ->
+    print_expr op1; print_token op "<"; print_expr op2
+| Leq {value = {op1; op; op2}; _} ->
+    print_expr op1; print_token op "<="; print_expr op2
+| Gt {value = {op1; op; op2}; _} ->
+    print_expr op1; print_token op ">"; print_expr op2
+| Geq {value = {op1; op; op2}; _} ->
+    print_expr op1; print_token op ">="; print_expr op2
+| Equal {value = {op1; op; op2}; _} ->
+    print_expr op1; print_token op "="; print_expr op2
+| Neq {value = {op1; op; op2}; _} ->
+    print_expr op1; print_token op "=/="; print_expr op2
+
+and print_arith_expr = function
+  Add {value = {op1; op; op2}; _} ->
+    print_expr op1; print_token op "+"; print_expr op2
+| Sub {value = {op1; op; op2}; _} ->
+    print_expr op1; print_token op "-"; print_expr op2
+| Mult {value = {op1; op; op2}; _} ->
+    print_expr op1; print_token op "*"; print_expr op2
+| Div {value = {op1; op; op2}; _} ->
+    print_expr op1; print_token op "/"; print_expr op2
+| Mod {value = {op1; op; op2}; _} ->
+    print_expr op1; print_token op "mod"; print_expr op2
+| Neg {value = {op; op1}; _} ->
+    print_token op "-"; print_expr op1
+| Int i -> print_int i
+
+and print_string_expr = function
+  Cat {value = {op1; op; op2}; _} ->
+    print_expr op1; print_token op "^"; print_expr op2
+| String s -> print_string s
+
+and print_list_expr = function
+  Cons {value = {op1; op; op2}; _} ->
+    print_expr op1; print_token op "#"; print_expr op2
+| List e       -> print_list e
+| EmptyList e  -> print_empty_list e
+
+and print_set_expr = function
+  Set e      -> print_set e
+| EmptySet e -> print_empty_set e
+
+and print_constr_expr = function
+  SomeApp e   -> print_some_app e
+| NoneExpr e  -> print_none_expr e
+| ConstrApp e -> print_constr_app e
 
 and print_tuple {value; _} =
-  let lpar, sequence, rpar = value in
+  let {lpar; inside; rpar} = value in
   print_token lpar "(";
-  print_nsepseq "," print_expr sequence;
+  print_nsepseq "," print_expr inside;
   print_token rpar ")"
 
 and print_list {value; _} =
-  let lbra, sequence, rbra = value in
-  print_token lbra "[";
-  print_nsepseq "," print_expr sequence;
-  print_token rbra "]"
+  let {lbracket; inside; rbracket} = value in
+  print_token lbracket "[";
+  print_nsepseq "," print_expr inside;
+  print_token rbracket "]"
 
 and print_empty_list {value; _} =
-  let lpar, (lbracket, rbracket, colon, type_expr),
-      rpar = value in
+  let {lpar; inside; rpar} = value in
+  let {lbracket; rbracket; colon; list_type} = inside in
   print_token     lpar "(";
   print_token     lbracket "[";
   print_token     rbracket "]";
   print_token     colon ":";
-  print_type_expr type_expr;
+  print_type_expr list_type;
   print_token     rpar ")"
 
 and print_set {value; _} =
-  let lbrace, sequence, rbrace = value in
+  let {lbrace; inside; rbrace} = value in
   print_token lbrace "{";
-  print_nsepseq "," print_expr sequence;
+  print_nsepseq "," print_expr inside;
   print_token rbrace "}"
 
 and print_empty_set {value; _} =
-  let lpar, (lbrace, rbrace, colon, type_expr),
-      rpar = value in
+  let {lpar; inside; rpar} = value in
+  let {lbrace; rbrace; colon; set_type} = inside in
   print_token     lpar "(";
   print_token     lbrace "{";
   print_token     rbrace "}";
   print_token     colon ":";
-  print_type_expr type_expr;
+  print_type_expr set_type;
   print_token     rpar ")"
 
 and print_none_expr {value; _} =
-  let lpar, (c_None, colon, type_expr), rpar = value in
+  let {lpar; inside; rpar} = value in
+  let {c_None; colon; opt_type} = inside in
   print_token     lpar "(";
   print_token     c_None "None";
   print_token     colon ":";
-  print_type_expr type_expr;
+  print_type_expr opt_type;
   print_token     rpar ")"
 
 and print_fun_call {value; _} =
@@ -989,35 +1130,33 @@ and print_some_app {value; _} =
 
 and print_map_lookup {value; _} =
   let {map_name; selector; index} = value in
-  let {value = lbracket, expr, rbracket; _} = index in
+  let {lbracket; inside; rbracket} = index.value in
   print_var   map_name;
   print_token selector ".";
   print_token lbracket "[";
-  print_expr  expr;
+  print_expr  inside;
   print_token rbracket "]"
 
 and print_par_expr {value; _} =
-  let lpar, expr, rpar = value in
+  let {lpar; inside; rpar} = value in
   print_token lpar "(";
-  print_expr  expr;
+  print_expr  inside;
   print_token rpar ")"
 
-and print_pattern {value; _} =
-  print_nsepseq "#" print_core_pattern value
-
-and print_core_pattern = function
-  PVar var      -> print_var var
-| PWild wild    -> print_token wild "_"
-| PInt i        -> print_int i
-| PBytes b      -> print_bytes b
-| PString s     -> print_string s
-| PUnit region  -> print_token region "Unit"
-| PFalse region -> print_token region "False"
-| PTrue region  -> print_token region "True"
-| PNone region  -> print_token region "None"
-| PSome psome   -> print_psome psome
-| PList pattern -> print_list_pattern pattern
-| PTuple ptuple -> print_ptuple ptuple
+and print_pattern = function
+  PCons {value; _} -> print_nsepseq "#" print_pattern value
+| PVar var         -> print_var var
+| PWild wild       -> print_token wild "_"
+| PInt i           -> print_int i
+| PBytes b         -> print_bytes b
+| PString s        -> print_string s
+| PUnit region     -> print_token region "Unit"
+| PFalse region    -> print_token region "False"
+| PTrue region     -> print_token region "True"
+| PNone region     -> print_token region "None"
+| PSome psome      -> print_psome psome
+| PList pattern    -> print_list_pattern pattern
+| PTuple ptuple    -> print_ptuple ptuple
 
 and print_psome {value; _} =
   let c_Some, patterns = value in
@@ -1025,9 +1164,9 @@ and print_psome {value; _} =
   print_patterns patterns
 
 and print_patterns {value; _} =
-  let lpar, core_pattern, rpar = value in
+  let {lpar; inside; rpar} = value in
   print_token lpar "(";
-  print_core_pattern core_pattern;
+  print_pattern inside;
   print_token rpar ")"
 
 and print_list_pattern = function
@@ -1035,23 +1174,24 @@ and print_list_pattern = function
 | Raw     raw -> print_raw raw
 
 and print_sugar {value; _} =
-  let lbracket, sequence, rbracket = value in
+  let {lbracket; inside; rbracket} = value in
   print_token lbracket "[";
-  print_sepseq "," print_core_pattern sequence;
+  print_sepseq "," print_pattern inside;
   print_token rbracket "]"
 
 and print_raw {value; _} =
-  let lpar, (core_pattern, cons, pattern), rpar = value in
-  print_token        lpar "(";
-  print_core_pattern core_pattern;
-  print_token        cons "#";
-  print_pattern      pattern;
-  print_token        rpar ")"
+  let {lpar; inside; rpar} = value in
+  let head, cons, tail = inside in
+  print_token   lpar "(";
+  print_pattern head;
+  print_token   cons "#";
+  print_pattern tail;
+  print_token   rpar ")"
 
 and print_ptuple {value; _} =
-  let lpar, sequence, rpar = value in
+  let {lpar; inside; rpar} = value in
   print_token lpar "(";
-  print_nsepseq "," print_core_pattern sequence;
+  print_nsepseq "," print_pattern inside;
   print_token rpar ")"
 
 and print_terminator = function

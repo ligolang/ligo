@@ -104,25 +104,29 @@ type field_name = string reg
 type map_name   = string reg
 type constr     = string reg
 
-(* Comma-separated non-empty lists *)
-
-type 'a csv = ('a, comma) nsepseq
-
-(* Bar-separated non-empty lists *)
-
-type 'a bsv = ('a, vbar) nsepseq
-
 (* Parentheses *)
 
-type 'a par = (lpar * 'a * rpar) reg
+type 'a par = {
+  lpar   : lpar;
+  inside : 'a;
+  rpar   : rpar
+}
 
 (* Brackets compounds *)
 
-type 'a brackets = (lbracket * 'a * rbracket) reg
+type 'a brackets = {
+  lbracket : lbracket;
+  inside   : 'a;
+  rbracket : rbracket
+}
 
 (* Braced compounds *)
 
-type 'a braces = (lbrace * 'a * rbrace) reg
+type 'a braces = {
+  lbrace : lbrace;
+  inside : 'a;
+  rbrace : rbrace
+}
 
 (* The Abstract Syntax Tree *)
 
@@ -178,29 +182,41 @@ and type_decl = {
 
 and type_expr =
   Prod    of cartesian
-| Sum     of (variant, vbar) nsepseq reg
-| Record  of record_type
+| Sum     of (variant reg, vbar) nsepseq reg
+| Record  of record_type reg
 | TypeApp of (type_name * type_tuple) reg
-| ParType of type_expr par
+| ParType of type_expr par reg
 | TAlias  of variable
 
 and cartesian = (type_expr, times) nsepseq reg
 
-and variant = (constr * kwd_of * cartesian) reg
+and variant = {
+  constr  : constr;
+  kwd_of  : kwd_of;
+  product : cartesian
+}
 
-and record_type = (kwd_record * field_decls * kwd_end) reg
+and record_type = {
+  kwd_record : kwd_record;
+  fields     : field_decls;
+  kwd_end    : kwd_end
+}
 
-and field_decls = (field_decl, semi) nsepseq
+and field_decls = (field_decl reg, semi) nsepseq
 
-and field_decl = (variable * colon * type_expr) reg
+and field_decl = {
+  var        : variable;
+  colon      : colon;
+  field_type : type_expr
+}
 
-and type_tuple = (type_name, comma) nsepseq par
+and type_tuple = (type_name, comma) nsepseq par reg
 
 (* Function and procedure declarations *)
 
 and lambda_decl =
-  FunDecl   of fun_decl  reg
-| ProcDecl  of proc_decl reg
+  FunDecl   of fun_decl   reg
+| ProcDecl  of proc_decl  reg
 | EntryDecl of entry_decl reg
 
 and fun_decl = {
@@ -237,15 +253,25 @@ and entry_decl = {
   terminator     : semi option
 }
 
-and parameters = (param_decl, semi) nsepseq par
+and parameters = (param_decl, semi) nsepseq par reg
 
 and param_decl =
-  ParamConst of param_const
-| ParamVar   of param_var
+  ParamConst of param_const reg
+| ParamVar   of param_var reg
 
-and param_const = (kwd_const * variable * colon * type_expr) reg
+and param_const = {
+  kwd_const  : kwd_const;
+  var        : variable;
+  colon      : colon;
+  param_type : type_expr
+}
 
-and param_var = (kwd_var * variable * colon * type_expr) reg
+and param_var = {
+  kwd_var    : kwd_var;
+  var        : variable;
+  colon      : colon;
+  param_type : type_expr
+}
 
 and block = {
   opening    : kwd_begin;
@@ -278,11 +304,16 @@ and instruction =
 and single_instr =
   Cond     of conditional reg
 | Match    of match_instr reg
-| Ass      of ass_instr
+| Ass      of ass_instr reg
 | Loop     of loop
 | ProcCall of fun_call
 | Null     of kwd_null
-| Fail     of (kwd_fail * expr) reg
+| Fail     of fail_instr reg
+
+and fail_instr = {
+  kwd_fail  : kwd_fail;
+  fail_expr : expr
+}
 
 and conditional = {
   kwd_if   : kwd_if;
@@ -302,17 +333,29 @@ and match_instr = {
   kwd_end   : kwd_end
 }
 
-and cases = (case, vbar) nsepseq reg
+and cases = (case reg, vbar) nsepseq reg
 
-and case = (pattern * arrow * instruction) reg
+and case = {
+  pattern : pattern;
+  arrow   : arrow;
+  instr   : instruction
+}
 
-and ass_instr = (variable * ass * expr) reg
+and ass_instr = {
+  var  : variable;
+  ass  : ass;
+  expr : expr
+}
 
 and loop =
-  While of while_loop
+  While of while_loop reg
 | For   of for_loop
 
-and while_loop = (kwd_while * expr * block reg) reg
+and while_loop = {
+  kwd_while : kwd_while;
+  cond      : expr;
+  block     : block reg
+}
 
 and for_loop =
   ForInt     of for_int reg
@@ -320,7 +363,7 @@ and for_loop =
 
 and for_int = {
   kwd_for : kwd_for;
-  ass     : ass_instr;
+  ass     : ass_instr reg;
   down    : kwd_down option;
   kwd_to  : kwd_to;
   bound   : expr;
@@ -340,71 +383,120 @@ and for_collect = {
 (* Expressions *)
 
 and expr =
-  Or        of (expr * bool_or * expr) reg
-| And       of (expr * bool_and * expr) reg
-| Lt        of (expr * lt * expr) reg
-| Leq       of (expr * leq * expr) reg
-| Gt        of (expr * gt * expr) reg
-| Geq       of (expr * geq * expr) reg
-| Equal     of (expr * equal * expr) reg
-| Neq       of (expr * neq * expr) reg
-| Cat       of (expr * cat * expr) reg
-| Cons      of (expr * cons * expr) reg
-| Add       of (expr * plus * expr) reg
-| Sub       of (expr * minus * expr) reg
-| Mult      of (expr * times * expr) reg
-| Div       of (expr * slash * expr) reg
-| Mod       of (expr * kwd_mod * expr) reg
-| Neg       of (minus * expr) reg
-| Not       of (kwd_not * expr) reg
-| Int       of (Lexer.lexeme * Z.t) reg
-| Var       of Lexer.lexeme reg
-| String    of Lexer.lexeme reg
-| Bytes     of (Lexer.lexeme * MBytes.t) reg
-| False     of c_False
-| True      of c_True
-| Unit      of c_Unit
-| Tuple     of tuple
-| List      of (expr, comma) nsepseq brackets
-| EmptyList of empty_list
-| Set       of (expr, comma) nsepseq braces
-| EmptySet  of empty_set
-| NoneExpr  of none_expr
-| FunCall   of fun_call
-| ConstrApp of constr_app
-| SomeApp   of (c_Some * arguments) reg
-| MapLookUp of map_lookup reg
-| ParExpr   of expr par
+  LogicExpr  of logic_expr
+| ArithExpr  of arith_expr
+| StringExpr of string_expr
+| ListExpr   of list_expr
+| SetExpr    of set_expr
+| ConstrExpr of constr_expr
+| Var        of Lexer.lexeme reg
+| FunCall    of fun_call
+| Bytes      of (Lexer.lexeme * MBytes.t) reg
+| Unit       of c_Unit
+| Tuple      of tuple
+| MapLookUp  of map_lookup reg
+| ParExpr    of expr par reg
 
-and tuple = (expr, comma) nsepseq par
+and logic_expr =
+  BoolExpr of bool_expr
+| CompExpr of comp_expr
 
-and empty_list =
-  (lbracket * rbracket * colon * type_expr) par
+and bool_expr =
+  Or    of bool_or bin_op reg
+| And   of bool_and bin_op reg
+| Not   of kwd_not un_op reg
+| False of c_False
+| True  of c_True
 
-and empty_set =
-  (lbrace * rbrace * colon * type_expr) par
+and 'a bin_op = {
+  op1 : expr;
+  op  : 'a;
+  op2 : expr
+}
 
-and none_expr =
-  (c_None * colon * type_expr) par
+and 'a un_op = {
+  op  : 'a;
+  op1 : expr
+}
+
+and comp_expr =
+  Lt    of lt    bin_op reg
+| Leq   of leq   bin_op reg
+| Gt    of gt    bin_op reg
+| Geq   of geq   bin_op reg
+| Equal of equal bin_op reg
+| Neq   of neq   bin_op reg
+
+and arith_expr =
+  Add  of plus    bin_op reg
+| Sub  of minus   bin_op reg
+| Mult of times   bin_op reg
+| Div  of slash   bin_op reg
+| Mod  of kwd_mod bin_op reg
+| Neg  of minus   un_op reg
+| Int  of (Lexer.lexeme * Z.t) reg
+
+and string_expr =
+  Cat    of cat bin_op reg
+| String of Lexer.lexeme reg
+
+and list_expr =
+  Cons      of cons bin_op reg
+| List      of (expr, comma) nsepseq brackets reg
+| EmptyList of empty_list reg
+
+and set_expr =
+  Set       of (expr, comma) nsepseq braces reg
+| EmptySet  of empty_set reg
+
+and constr_expr =
+  SomeApp   of (c_Some * arguments) reg
+| NoneExpr  of none_expr reg
+| ConstrApp of (constr * arguments) reg
+
+and tuple = (expr, comma) nsepseq par reg
+
+and empty_list = typed_empty_list par
+
+and typed_empty_list = {
+  lbracket  : lbracket;
+  rbracket  : rbracket;
+  colon     : colon;
+  list_type : type_expr
+}
+
+and empty_set = typed_empty_set par
+
+and typed_empty_set = {
+  lbrace   : lbrace;
+  rbrace   : rbrace;
+  colon    : colon;
+  set_type : type_expr
+}
+
+and none_expr = typed_none_expr par
+
+and typed_none_expr = {
+  c_None   : c_None;
+  colon    : colon;
+  opt_type : type_expr
+}
 
 and fun_call = (fun_name * arguments) reg
 
 and arguments = tuple
 
-and constr_app = (constr * arguments) reg
-
 and map_lookup = {
   map_name : variable;
   selector : dot;
-  index    : expr brackets
+  index    : expr brackets reg
 }
 
 (* Patterns *)
 
-and pattern = (core_pattern, cons) nsepseq reg
-
-and core_pattern =
-  PVar    of Lexer.lexeme reg
+and pattern =
+  PCons   of (pattern, cons) nsepseq reg
+| PVar    of Lexer.lexeme reg
 | PWild   of wild
 | PInt    of (Lexer.lexeme * Z.t) reg
 | PBytes  of (Lexer.lexeme * MBytes.t) reg
@@ -413,13 +505,13 @@ and core_pattern =
 | PFalse  of c_False
 | PTrue   of c_True
 | PNone   of c_None
-| PSome   of (c_Some * core_pattern par) reg
+| PSome   of (c_Some * pattern par reg) reg
 | PList   of list_pattern
-| PTuple  of (core_pattern, comma) nsepseq par
+| PTuple  of (pattern, comma) nsepseq par reg
 
 and list_pattern =
-  Sugar of (core_pattern, comma) sepseq brackets
-| Raw   of (core_pattern * cons * pattern) par
+  Sugar of (pattern, comma) sepseq brackets reg
+| Raw   of (pattern * cons * pattern) par reg
 
 (* Projecting regions *)
 
@@ -429,7 +521,7 @@ val expr_to_region : expr -> Region.t
 
 val instr_to_region : instruction -> Region.t
 
-val core_pattern_to_region : core_pattern -> Region.t
+val pattern_to_region : pattern -> Region.t
 
 val local_decl_to_region : local_decl -> Region.t
 

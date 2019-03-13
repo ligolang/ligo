@@ -98,6 +98,7 @@ let () =
       print_error ~offsets EvalOpt.mode error
   | Sys_error msg -> Utils.highlight msg
 
+(*
 (* Temporary: force dune to build AST2.ml *)
 let () =
   let open AST2 in
@@ -109,3 +110,4 @@ let () =
   let open Typecheck2 in
   let _ = temporary_force_dune in
   ()
+ *)
