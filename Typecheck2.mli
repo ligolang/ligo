@@ -1,12 +1,13 @@
 [@@@warning "-30"]
 
-module SMap = Map.Make(String)
+module SMap : Map.S with type key = string
 
-module O = struct
+module O : sig
   type asttodo = [`TODO] (* occurrences of asttodo will point to some part of the original parser AST *)
 
   type type_name = string
   type var_name = { name: string; orig: asttodo }
+  type record_key = [`Field of string | `Component of int]
 
   type pattern =
     PVar    of var_name
@@ -21,7 +22,7 @@ module O = struct
   | PSome   of pattern
   | PCons   of pattern * pattern
   | PNull
-  | PTuple  of pattern list
+  | PRecord  of pattern list
 
   type type_constructor =
   | Option
@@ -30,9 +31,8 @@ module O = struct
   | Map
 
   type type_expr_case =
-    Prod     of type_expr_case list
   | Sum      of (type_name * type_expr_case) list
-  | Record   of (type_name * type_expr_case) list
+  | Record   of record_key type_record
   | TypeApp  of type_constructor * (type_expr_case list)
   | Function of { args: type_expr_case list; ret: type_expr_case }
   | Ref      of type_expr_case
@@ -41,7 +41,7 @@ module O = struct
   | Int
   | Unit
   | Bool
-
+  and 'key type_record = ('key * type_expr_case) list
 
   type type_expr = { type_expr: type_expr_case; name: string option; orig: AST.type_expr }
 
@@ -53,7 +53,10 @@ module O = struct
     App      of { operator: operator; arguments: expr list }
   | Var      of typed_var
   | Constant of constant
+  | Record   of record_key expr_record
   | Lambda   of lambda
+
+  and 'key expr_record = ('key * expr list)
 
   and expr = { expr: expr_case; ty:type_expr; orig: asttodo }
 
@@ -70,7 +73,7 @@ module O = struct
     Function of string
   | Or | And | Lt | Leq | Gt | Geq | Equal | Neq | Cat | Cons | Add | Sub | Mult | Div | Mod
   | Neg | Not
-  | Tuple | Set | List
+  | Set
   | MapLookup
 
   and operator = { operator: operator_case; ty:type_expr; orig: asttodo }
@@ -101,4 +104,4 @@ module O = struct
     }
 end
 
-let temporary_force_dune = 123
+val temporary_force_dune : int
