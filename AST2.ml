@@ -93,7 +93,6 @@ module O = struct
   type ast = {
       types           : type_decl list;
       storage_decl    : typed_var;
-      operations_decl : typed_var;
       declarations    : decl list;
     }
 end
@@ -591,10 +590,10 @@ let s_ast (ast : I.ast) : O.ast =
   let storage_decl = match storage_decl with
       Some x -> x
     | None -> failwith "Missing storage declaration" in
-  let operations_decl = match operations_decl with
-      Some x -> x
-    | None -> failwith "Missing storage declaration"
-  in {types; storage_decl; operations_decl; declarations}
+  let () = match operations_decl with
+      Some _ -> failwith "Operations declaration is not allowed anymore TODO"
+    | None -> ()
+  in {types; storage_decl; declarations}
 
 
 
