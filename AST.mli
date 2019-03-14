@@ -25,6 +25,7 @@ val sepseq_to_region  : ('a -> Region.t) -> ('a,'sep) sepseq -> Region.t
 
 type kwd_begin      = Region.t
 type kwd_const      = Region.t
+type kwd_copy       = Region.t
 type kwd_down       = Region.t
 type kwd_else       = Region.t
 type kwd_end        = Region.t
@@ -205,7 +206,7 @@ and record_type = {
 and field_decls = (field_decl reg, semi) nsepseq
 
 and field_decl = {
-  var        : variable;
+  field_name : field_name;
   colon      : colon;
   field_type : type_expr
 }
@@ -295,7 +296,7 @@ and var_decl = {
   terminator : semi option
 }
 
-and instructions = (instruction, semi) nsepseq reg
+and instructions = (instruction, semi) nsepseq
 
 and instruction =
   Single of single_instr
@@ -389,6 +390,7 @@ and expr =
 | ListExpr   of list_expr
 | SetExpr    of set_expr
 | ConstrExpr of constr_expr
+| RecordExpr of record_expr
 | Var        of Lexer.lexeme reg
 | FunCall    of fun_call
 | Bytes      of (Lexer.lexeme * MBytes.t) reg
@@ -453,6 +455,37 @@ and constr_expr =
   SomeApp   of (c_Some * arguments) reg
 | NoneExpr  of none_expr reg
 | ConstrApp of (constr * arguments) reg
+
+and record_expr =
+  RecordInj  of record_injection reg
+| RecordProj of record_projection reg
+| RecordCopy of record_copy reg
+
+and record_injection = {
+  opening    : kwd_record;
+  fields     : (field_ass reg, semi) nsepseq;
+  terminator : semi option;
+  close      : kwd_end
+}
+
+and field_ass = {
+  field_name : field_name;
+  equal      : equal;
+  field_expr : expr
+}
+
+and record_projection = {
+  record_name : variable;
+  selector    : dot;
+  field_name  : field_name
+}
+
+and record_copy = {
+  kwd_copy    : kwd_copy;
+  record_name : variable;
+  kwd_with    : kwd_with;
+  delta       : record_injection reg
+}
 
 and tuple = (expr, comma) nsepseq par reg
 

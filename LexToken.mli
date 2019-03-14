@@ -69,6 +69,7 @@ type t =
 
 | Begin      of Region.t  (* "begin"      *)
 | Const      of Region.t  (* "const"      *)
+| Copy       of Region.t  (* "copy"       *)
 | Down       of Region.t  (* "down"       *)
 | Fail       of Region.t  (* "fail"       *)
 | If         of Region.t  (* "if"         *)

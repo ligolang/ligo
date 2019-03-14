@@ -41,6 +41,7 @@ let sepseq_to_region to_region = function
 
 type kwd_begin      = Region.t
 type kwd_const      = Region.t
+type kwd_copy       = Region.t
 type kwd_down       = Region.t
 type kwd_else       = Region.t
 type kwd_end        = Region.t
@@ -221,7 +222,7 @@ and record_type = {
 and field_decls = (field_decl reg, semi) nsepseq
 
 and field_decl = {
-  var        : variable;
+  field_name : field_name;
   colon      : colon;
   field_type : type_expr
 }
@@ -311,7 +312,7 @@ and var_decl = {
   terminator : semi option
 }
 
-and instructions = (instruction, semi) nsepseq reg
+and instructions = (instruction, semi) nsepseq
 
 and instruction =
   Single of single_instr
@@ -405,6 +406,7 @@ and expr =
 | ListExpr   of list_expr
 | SetExpr    of set_expr
 | ConstrExpr of constr_expr
+| RecordExpr of record_expr
 | Var        of Lexer.lexeme reg
 | FunCall    of fun_call
 | Bytes      of (Lexer.lexeme * MBytes.t) reg
@@ -469,6 +471,37 @@ and constr_expr =
   SomeApp   of (c_Some * arguments) reg
 | NoneExpr  of none_expr reg
 | ConstrApp of (constr * arguments) reg
+
+and record_expr =
+  RecordInj  of record_injection reg
+| RecordProj of record_projection reg
+| RecordCopy of record_copy reg
+
+and record_injection = {
+  opening    : kwd_record;
+  fields     : (field_ass reg, semi) nsepseq;
+  terminator : semi option;
+  close      : kwd_end
+}
+
+and field_ass = {
+  field_name : field_name;
+  equal      : equal;
+  field_expr : expr
+}
+
+and record_projection = {
+  record_name : variable;
+  selector    : dot;
+  field_name  : field_name
+}
+
+and record_copy = {
+  kwd_copy    : kwd_copy;
+  record_name : variable;
+  kwd_with    : kwd_with;
+  delta       : record_injection reg
+}
 
 and tuple = (expr, comma) nsepseq par reg
 
@@ -548,6 +581,7 @@ let rec expr_to_region = function
 | ListExpr   e -> list_expr_to_region e
 | SetExpr    e -> set_expr_to_region e
 | ConstrExpr e -> constr_expr_to_region e
+| RecordExpr e -> record_expr_to_region e
 | Var       {region; _}
 | FunCall   {region; _}
 | Bytes     {region; _}
@@ -602,8 +636,13 @@ and constr_expr_to_region = function
 | ConstrApp {region; _}
 | SomeApp   {region; _} -> region
 
+and record_expr_to_region = function
+  RecordInj  {region; _}
+| RecordProj {region; _}
+| RecordCopy {region; _} -> region
+
 let instr_to_region = function
-  Single Cond                {region;_}
+  Single Cond                {region; _}
 | Single Match               {region; _}
 | Single Ass                 {region; _}
 | Single Loop While          {region; _}
@@ -775,8 +814,8 @@ and print_field_decls sequence =
   print_nsepseq ";" print_field_decl sequence
 
 and print_field_decl {value; _} =
-  let {var; colon; field_type} = value in
-  print_var       var;
+  let {field_name; colon; field_type} = value in
+  print_var       field_name;
   print_token     colon ":";
   print_type_expr field_type
 
@@ -879,8 +918,8 @@ and print_var_decl {value; _} =
   print_expr       init;
   print_terminator terminator
 
-and print_instructions {value; _} =
-  print_nsepseq ";" print_instruction value
+and print_instructions sequence =
+  print_nsepseq ";" print_instruction sequence
 
 and print_instruction = function
   Single instr -> print_single_instr instr
@@ -995,6 +1034,7 @@ and print_expr = function
 | ListExpr e   -> print_list_expr e
 | SetExpr e    -> print_set_expr e
 | ConstrExpr e -> print_constr_expr e
+| RecordExpr e -> print_record_expr e
 | Var var      -> print_var var
 | FunCall e    -> print_fun_call e
 | Bytes b      -> print_bytes b
@@ -1065,6 +1105,37 @@ and print_constr_expr = function
   SomeApp e   -> print_some_app e
 | NoneExpr e  -> print_none_expr e
 | ConstrApp e -> print_constr_app e
+
+and print_record_expr = function
+  RecordInj  e -> print_record_injection e
+| RecordProj e -> print_record_projection e
+| RecordCopy e -> print_record_copy e
+
+and print_record_injection {value; _} =
+  let {opening; fields; terminator; close} = value in
+  print_token opening "record";
+  print_nsepseq ";" print_field_ass fields;
+  print_terminator terminator;
+  print_token close "end"
+
+and print_field_ass {value; _} =
+  let {field_name; equal; field_expr} = value in
+  print_var field_name;
+  print_token equal "=";
+  print_expr field_expr
+
+and print_record_projection {value; _} =
+  let {record_name; selector; field_name} = value in
+  print_var record_name;
+  print_token selector ".";
+  print_var field_name
+
+and print_record_copy {value; _} =
+  let {kwd_copy; record_name; kwd_with; delta} = value in
+  print_token kwd_copy "copy";
+  print_var record_name;
+  print_token kwd_with "with";
+  print_record_injection delta
 
 and print_tuple {value; _} =
   let {lpar; inside; rpar} = value in

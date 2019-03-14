@@ -93,11 +93,12 @@ sepseq(X,Sep):
 
 (* Inlines *)
 
-%inline var        : Ident { $1 }
-%inline type_name  : Ident { $1 }
-%inline fun_name   : Ident { $1 }
-%inline field_name : Ident { $1 }
-%inline map_name   : Ident { $1 }
+%inline var         : Ident { $1 }
+%inline type_name   : Ident { $1 }
+%inline fun_name    : Ident { $1 }
+%inline field_name  : Ident { $1 }
+%inline record_name : Ident { $1 }
+%inline map_name    : Ident { $1 }
 
 (* Main *)
 
@@ -117,8 +118,8 @@ storage_decl:
   Storage var COLON type_expr option(SEMI) {
     let stop =
       match $5 with
-               None -> type_expr_to_region $4
-      | Some region -> region in
+        Some region -> region
+      |        None -> type_expr_to_region $4 in
     let region = cover $1 stop in
     let value = {
       kwd_storage = $1;
@@ -133,8 +134,8 @@ operations_decl:
   Operations var COLON type_expr option(SEMI) {
     let stop =
       match $5 with
-              None -> type_expr_to_region $4
-     | Some region -> region in
+        Some region -> region
+      |        None -> type_expr_to_region $4 in
     let region = cover $1 stop in
     let value = {
       kwd_operations = $1;
@@ -151,8 +152,8 @@ type_decl:
   Type type_name Is type_expr option(SEMI) {
     let stop =
       match $5 with
-        None -> type_expr_to_region $4
-      | Some region -> region in
+        Some region -> region
+      |        None -> type_expr_to_region $4 in
     let region = cover $1 stop in
     let value = {
       kwd_type   = $1;
@@ -191,16 +192,13 @@ type_tuple:
 sum_type:
   nsepseq(variant,VBAR) {
     let region = nsepseq_to_region (fun x -> x.region) $1
-    in {region; value=$1}
+    in {region; value = $1}
   }
 
 variant:
   Constr Of cartesian {
     let region = cover $1.region $3.region
-    and value = {
-      constr  = $1;
-      kwd_of  = $2;
-      product = $3}
+    and value = {constr = $1; kwd_of = $2; product = $3}
     in {region; value}
   }
 
@@ -210,10 +208,7 @@ record_type:
   End
   {
    let region = cover $1 $3
-   and value = {
-     kwd_record = $1;
-     fields     = $2;
-     kwd_end    = $3}
+   and value  = {kwd_record = $1; fields = $2; kwd_end = $3}
    in {region; value}
   }
 
@@ -221,10 +216,7 @@ field_decl:
   field_name COLON type_expr {
     let stop   = type_expr_to_region $3 in
     let region = cover $1.region stop
-    and value  = {
-      var        = $1;
-      colon      = $2;
-      field_type = $3}
+    and value  = {field_name = $1; colon = $2; field_type = $3}
     in {region; value}
   }
 
@@ -242,8 +234,8 @@ fun_decl:
   With expr option(SEMI) {
     let stop =
       match $11 with
-               None -> expr_to_region $10
-      | Some region -> region in
+        Some region -> region
+      |        None -> expr_to_region $10 in
     let region = cover $1 stop in
     let value = {
       kwd_function = $1;
@@ -267,8 +259,8 @@ proc_decl:
     {
      let stop =
        match $7 with
-         None -> $6.region
-       | Some region -> region in
+         Some region -> region
+       |        None -> $6.region in
      let region = cover $1 stop in
      let value = {
        kwd_procedure = $1;
@@ -288,8 +280,8 @@ entry_decl:
     {
      let stop =
        match $7 with
-         None -> $6.region
-       | Some region -> region in
+         Some region -> region
+       |        None -> $6.region in
      let region = cover $1 stop in
      let value = {
        kwd_entrypoint = $1;
@@ -332,12 +324,10 @@ block:
     instruction after_instr
   {
    let instrs, terminator, close = $3 in
-   let region = cover $1 close in
-   let value = {
-     opening     = $1;
-     instr       = (let value = $2, instrs in
-                    let region = nsepseq_to_region instr_to_region value
-                    in {value; region});
+   let region = cover $1 close
+   and value = {
+     opening = $1;
+     instr   = $2, instrs;
      terminator;
      close}
    in {region; value}
@@ -372,8 +362,8 @@ const_decl:
   Const var COLON type_expr EQUAL expr option(SEMI) {
     let stop =
       match $7 with
-        None -> expr_to_region $6
-      | Some region -> region in
+        Some region -> region
+      |        None -> expr_to_region $6 in
     let region = cover $1 stop in
     let value  = {
       kwd_const  = $1;
@@ -390,8 +380,8 @@ var_decl:
   Var var COLON type_expr ASS expr option(SEMI) {
     let stop =
       match $7 with
-               None -> expr_to_region $6
-      | Some region -> region in
+        Some region -> region
+      |        None -> expr_to_region $6 in
     let region = cover $1 stop in
     let value = {
       kwd_var    = $1;
@@ -420,9 +410,7 @@ single_instr:
 fail_instr:
   Fail expr {
     let region = cover $1 (expr_to_region $2)
-    and value  = {
-      kwd_fail  = $1;
-      fail_expr = $2}
+    and value  = {kwd_fail = $1; fail_expr = $2}
     in {region; value}}
 
 proc_call:
@@ -457,26 +445,20 @@ match_instr:
 cases:
   nsepseq(case,VBAR) {
     let region = nsepseq_to_region (fun x -> x.region) $1
-    in {region; value=$1}
+    in {region; value = $1}
   }
 
 case:
   pattern ARROW instruction {
     let region = cover (pattern_to_region $1) (instr_to_region $3)
-    and value  = {
-      pattern = $1;
-      arrow   = $2;
-      instr   = $3}
+    and value  = {pattern = $1; arrow = $2; instr = $3}
     in {region; value}
   }
 
 ass:
   var ASS expr {
     let region = cover $1.region (expr_to_region $3)
-    and value  = {
-      var  = $1;
-      ass  = $2;
-      expr = $3}
+    and value  = {var = $1; ass = $2; expr = $3}
     in {region; value}
   }
 
@@ -512,15 +494,13 @@ for_loop:
 
 | For var option(arrow_clause) In expr block {
     let region = cover $1 $6.region in
-    let value =
-      {
-        kwd_for = $1;
-        var     = $2;
-        bind_to = $3;
-        kwd_in  = $4;
-        expr    = $5;
-        block   = $6;
-      }
+    let value = {
+      kwd_for = $1;
+      var     = $2;
+      bind_to = $3;
+      kwd_in  = $4;
+      expr    = $5;
+      block   = $6}
     in For (ForCollect {region; value})
   }
 
@@ -701,13 +681,82 @@ core_expr:
   }
 | map_name DOT brackets(expr) {
     let region = cover $1.region $3.region in
-    let value =
-      {
-        map_name = $1;
-        selector = $2;
-        index    = $3;
-      }
+    let value  = {
+      map_name = $1;
+      selector = $2;
+      index    = $3}
     in MapLookUp {region; value}
+  }
+| record_expr { RecordExpr $1 }
+
+record_expr:
+  record_injection  { RecordInj  $1 }
+| record_projection { RecordProj $1 }
+| record_copy       { RecordCopy $1 }
+
+record_injection:
+  Record
+    field_assignment after_field
+  {
+   let fields, terminator, close = $3 in
+   let region = cover $1 close
+   and value = {
+     opening = $1;
+     fields  = $2, fields;
+     terminator;
+     close}
+   in {region; value}
+  }
+
+after_field:
+  SEMI field_or_end {
+    match $2 with
+      `Some (field, fields, term, close) ->
+        ($1, field)::fields, term, close
+    | `End close ->
+        [], Some $1, close
+  }
+| End {
+   [], None, $1
+  }
+
+field_or_end:
+  End {
+    `End $1 }
+| field_assignment after_field {
+    let fields, term, close = $2 in
+    `Some ($1, fields, term, close)
+  }
+
+field_assignment:
+  field_name EQUAL expr {
+    let region = cover $1.region (expr_to_region $3)
+    and value = {
+      field_name = $1;
+      equal      = $2;
+      field_expr = $3}
+    in {region; value}
+  }
+
+record_projection:
+  record_name DOT field_name {
+    let region = cover $1.region $3.region in
+    let value  = {
+      record_name = $1;
+      selector    = $2;
+      field_name  = $3}
+    in {region; value}
+  }
+
+record_copy:
+  Copy record_name With record_injection {
+    let region = cover $1 $4.region in
+    let value  = {
+      kwd_copy    = $1;
+      record_name = $2;
+      kwd_with    = $3;
+      delta       = $4}
+    in {region; value}
   }
 
 fun_call:

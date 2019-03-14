@@ -68,6 +68,7 @@ type t =
 
 | Begin      of Region.t
 | Const      of Region.t
+| Copy       of Region.t
 | Down       of Region.t
 | Fail       of Region.t
 | If         of Region.t
@@ -187,6 +188,7 @@ let proj_token = function
 
 | Begin      region -> region, "Begin"
 | Const      region -> region, "Const"
+| Copy       region -> region, "Copy"
 | Down       region -> region, "Down"
 | Fail       region -> region, "Fail"
 | If         region -> region, "If"
@@ -271,6 +273,7 @@ let to_lexeme = function
 
 | Begin      _ -> "begin"
 | Const      _ -> "const"
+| Copy       _ -> "copy"
 | Down       _ -> "down"
 | Fail       _ -> "fail"
 | If         _ -> "if"
@@ -323,6 +326,7 @@ let to_region token = proj_token token |> fst
 let keywords = [
   (fun reg -> Begin      reg);
   (fun reg -> Const      reg);
+  (fun reg -> Copy       reg);
   (fun reg -> Down       reg);
   (fun reg -> Fail       reg);
   (fun reg -> If         reg);
@@ -545,8 +549,9 @@ let is_ident = function
 |       _ -> false
 
 let is_kwd = function
-| Begin      _
+  Begin      _
 | Const      _
+| Copy       _
 | Down       _
 | Fail       _
 | If         _
