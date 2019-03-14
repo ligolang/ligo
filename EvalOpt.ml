@@ -14,13 +14,14 @@ let help () =
   printf "Usage: %s [<option> ...] [<input>.li | \"-\"]\n" file;
   print_endline "where <input>.li is the Ligo source file (default: stdin),";
   print_endline "and each <option> (if any) is one of the following:";
+  print_endline "  -I <paths>             Library paths (colon-separated)";
   print_endline "  -c, --copy             Print lexemes of tokens and markup (lexer)";
   print_endline "  -t, --tokens           Print tokens (lexer)";
   print_endline "  -u, --units            Print tokens and markup (lexer)";
   print_endline "  -q, --quiet            No output, except errors (default)";
   print_endline "      --columns          Columns for source locations";
   print_endline "      --bytes            Bytes for source locations";
-  print_endline "      --verbose=<stages> cmdline, cpp, ast";
+  print_endline "      --verbose=<stages> cmdline, cpp, ast (colon-separated)";
   print_endline "      --version          Commit hash on stdout";
   print_endline "  -h, --help             This help";
   exit 0
@@ -39,8 +40,11 @@ and columns = ref false
 and bytes   = ref false
 and verbose = ref Utils.String.Set.empty
 and input   = ref None
+and libs    = ref []
 
 let split_at_colon = Str.(split (regexp ":"))
+
+let add_path p = libs := !libs @ split_at_colon p
 
 let add_verbose d =
   verbose := List.fold_left (Utils.swap Utils.String.Set.add)
@@ -49,6 +53,7 @@ let add_verbose d =
 
 let specs =
   let open! Getopt in [
+    'I',     nolong,    None, Some add_path;
     'c',     "copy",    set copy true, None;
     't',     "tokens",  set tokens true, None;
     'u',     "units",   set units true, None;
@@ -92,6 +97,10 @@ let string_of convert = function
     None -> "None"
 | Some s -> sprintf "Some %s" (convert s)
 
+let string_of_path p =
+  let apply s a = if a = "" then s else s ^ ":" ^ a
+  in List.fold_right apply p ""
+
 let quote s = sprintf "\"%s\"" s
 
 let verbose_str =
@@ -108,7 +117,8 @@ let print_opt () =
   printf "columns  = %b\n" !columns;
   printf "bytes    = %b\n" !bytes;
   printf "verbose  = \"%s\"\n" verbose_str;
-  printf "input    = %s\n" (string_of quote !input)
+  printf "input    = %s\n" (string_of quote !input);
+  printf "libs     = %s\n" (string_of_path !libs)
 ;;
 
 if Utils.String.Set.mem "cmdline" !verbose then print_opt ();;
@@ -132,6 +142,7 @@ and quiet   = !quiet
 and offsets = not !columns
 and mode    = if !bytes then `Byte else `Point
 and verbose = !verbose
+and libs    = !libs
 ;;
 
 if Utils.String.Set.mem "cmdline" verbose then
@@ -144,6 +155,7 @@ if Utils.String.Set.mem "cmdline" verbose then
     printf "offsets  = %b\n" offsets;
     printf "mode     = %s\n" (if mode = `Byte then "`Byte" else "`Point");
     printf "verbose  = \"%s\"\n" verbose_str;
-    printf "input    = %s\n" (string_of quote input)
+    printf "input    = %s\n" (string_of quote input);
+    printf "I        = %s\n" (string_of_path libs)
   end
 ;;

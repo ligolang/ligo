@@ -25,6 +25,10 @@ val verbose : Utils.String.Set.t
 
 val input : string option
 
+(* Paths where to find Ligo files for inclusion *)
+
+val libs : string list
+
 (* If the value [cmd] is
     * [Quiet], then no output from the lexer and parser should be
       expected, safe error messages: this is the default value;

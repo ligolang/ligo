@@ -25,14 +25,13 @@ let print_error ?(offsets=true) mode Region.{region; value} =
   let  reg = region#to_string ~file ~offsets mode in
   Utils.highlight (sprintf "Parse error %s:\n%s%!" reg msg)
 
-(* Path to the Ligo standard library *)
-(*
+(* Path for CPP inclusions (#include) *)
+
 let lib_path =
   match EvalOpt.libs with
       [] -> ""
   | libs -> let mk_I dir path = Printf.sprintf " -I %s%s" dir path
             in List.fold_right mk_I libs ""
-*)
 
 (* Preprocessing the input source and opening the input channels *)
 
@@ -52,9 +51,11 @@ let pp_input =
 let cpp_cmd =
   match EvalOpt.input with
     None | Some "-" ->
-      Printf.sprintf "cpp -traditional-cpp - -o %s" pp_input
+      Printf.sprintf "cpp -traditional-cpp%s - -o %s"
+                     lib_path pp_input
   | Some file ->
-      Printf.sprintf "cpp -traditional-cpp %s -o %s" file pp_input
+      Printf.sprintf "cpp -traditional-cpp%s %s -o %s"
+                     lib_path file pp_input
 
 let () =
   if Utils.String.Set.mem "cpp" EvalOpt.verbose
@@ -97,17 +98,3 @@ let () =
       let () = close_all () in
       print_error ~offsets EvalOpt.mode error
   | Sys_error msg -> Utils.highlight msg
-
-(*
-(* Temporary: force dune to build AST2.ml *)
-let () =
-  let open AST2 in
-  let _ = s_ast in
-  ()
-
-(* Temporary: force dune to build AST2.ml *)
-let () =
-  let open Typecheck2 in
-  let _ = temporary_force_dune in
-  ()
- *)
