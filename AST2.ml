@@ -468,7 +468,13 @@ and s_loop : I.loop -> O.instr list = function
 
 and s_fun_call {value=(fun_name, arguments); region} : O.expr =
   let () = ignore (region) in
-  App { operator = Function (s_name fun_name); arguments = s_arguments arguments }
+  let {value=fun_name_string;_} = fun_name in
+  let firstchar = String.sub fun_name_string 0 1 in
+  (* If it starts with a capital letter, then it is a constructor *)
+  if String.equal firstchar (String.uppercase_ascii firstchar) then
+    App { operator = Constructor (s_name fun_name); arguments = s_arguments arguments }
+  else
+    App { operator = Function (s_name fun_name); arguments = s_arguments arguments }
 
 and s_constr_app {value=(constr, arguments); region} : O.expr =
   let () = ignore (region) in
