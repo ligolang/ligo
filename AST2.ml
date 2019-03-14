@@ -70,7 +70,7 @@ module O = struct
 
   and operator =
     Function    of var_name
-  | Construcor  of var_name
+  | Constructor of var_name
   | UpdateField of field_name
   | GetField    of field_name
   | Or | And | Lt | Leq | Gt | Geq | Equal | Neq | Cat | Cons | Add | Sub | Mult | Div | Mod
