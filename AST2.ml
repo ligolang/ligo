@@ -87,7 +87,7 @@ module O = struct
   | ForCollection of { list: expr; key: var_name; value: var_name option; body: instr list }
   | If            of { condition: expr; ifso: instr list; ifnot: instr list }
   | Match         of { expr: expr; cases: (pattern * instr list) list }
-  | DropUnit      of expr       (* expr returns unit, drop the result. *)
+  | ProcedureCall of expr (* expr returns unit, drop the result. *)
   | Fail          of { expr: expr }
 
   type ast = {
@@ -485,7 +485,7 @@ and s_single_instr : I.single_instr -> O.instr list = function
 | Match    {value; _} -> [s_match_instr value]
 | Ass      instr      -> [s_ass_instr instr]
 | Loop     loop       -> s_loop loop
-| ProcCall fun_call   -> [DropUnit (s_fun_call fun_call)]
+| ProcCall fun_call   -> [ProcedureCall (s_fun_call fun_call)]
 | Null     kwd_null   -> let () = ignore (kwd_null) in
                          []
 | Fail     {value; _} -> [s_fail value]
