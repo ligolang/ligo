@@ -305,7 +305,7 @@ and instruction =
 and single_instr =
   Cond     of conditional reg
 | Match    of match_instr reg
-| Ass      of ass_instr reg
+| Ass      of ass_instr
 | Loop     of loop
 | ProcCall of fun_call
 | Null     of kwd_null
@@ -342,10 +342,20 @@ and case = {
   instr   : instruction
 }
 
-and ass_instr = {
+and ass_instr =
+  VarAss of var_ass reg
+| MapAss of map_ass reg
+
+and var_ass = {
   var  : variable;
   ass  : ass;
   expr : expr
+}
+
+and map_ass = {
+  lookup : map_lookup reg;
+  ass    : ass;
+  expr   : expr
 }
 
 and loop =
@@ -364,7 +374,7 @@ and for_loop =
 
 and for_int = {
   kwd_for : kwd_for;
-  ass     : ass_instr reg;
+  var_ass : var_ass reg;
   down    : kwd_down option;
   kwd_to  : kwd_to;
   bound   : expr;

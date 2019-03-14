@@ -321,7 +321,7 @@ and instruction =
 and single_instr =
   Cond     of conditional reg
 | Match    of match_instr reg
-| Ass      of ass_instr reg
+| Ass      of ass_instr
 | Loop     of loop
 | ProcCall of fun_call
 | Null     of kwd_null
@@ -358,10 +358,20 @@ and case = {
   instr   : instruction
 }
 
-and ass_instr = {
+and ass_instr =
+  VarAss of var_ass reg
+| MapAss of map_ass reg
+
+and var_ass = {
   var  : variable;
   ass  : ass;
   expr : expr
+}
+
+and map_ass = {
+  lookup : map_lookup reg;
+  ass    : ass;
+  expr   : expr
 }
 
 and loop =
@@ -380,7 +390,7 @@ and for_loop =
 
 and for_int = {
   kwd_for : kwd_for;
-  ass     : ass_instr reg;
+  var_ass : var_ass reg;
   down    : kwd_down option;
   kwd_to  : kwd_to;
   bound   : expr;
@@ -644,7 +654,8 @@ and record_expr_to_region = function
 let instr_to_region = function
   Single Cond                {region; _}
 | Single Match               {region; _}
-| Single Ass                 {region; _}
+| Single Ass VarAss          {region; _}
+| Single Ass MapAss          {region; _}
 | Single Loop While          {region; _}
 | Single Loop For ForInt     {region; _}
 | Single Loop For ForCollect {region; _}
@@ -971,9 +982,19 @@ and print_case {value; _} =
   print_token arrow "->";
   print_instruction instr
 
-and print_ass_instr {value; _} =
+and print_ass_instr = function
+  VarAss a -> print_var_ass a
+| MapAss a -> print_map_ass a
+
+and print_var_ass {value; _} =
   let {var; ass; expr} = value in
   print_var var;
+  print_token ass ":=";
+  print_expr expr
+
+and print_map_ass {value; _} =
+  let {lookup; ass; expr} = value in
+  print_map_lookup lookup;
   print_token ass ":=";
   print_expr expr
 
@@ -992,15 +1013,15 @@ and print_for_loop = function
 | ForCollect for_collect -> print_for_collect for_collect
 
 and print_for_int ({value; _} : for_int reg) =
-  let {kwd_for; ass; down; kwd_to;
+  let {kwd_for; var_ass; down; kwd_to;
        bound; step; block} = value in
-  print_token     kwd_for "for";
-  print_ass_instr ass;
-  print_down      down;
-  print_token     kwd_to "to";
-  print_expr      bound;
-  print_step      step;
-  print_block     block
+  print_token   kwd_for "for";
+  print_var_ass var_ass;
+  print_down    down;
+  print_token   kwd_to "to";
+  print_expr    bound;
+  print_step    step;
+  print_block   block
 
 and print_down = function
   Some kwd_down -> print_token kwd_down "down"

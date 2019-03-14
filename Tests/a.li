@@ -6,7 +6,6 @@ type w is K of (U of int) (*v * u*)
 storage s : w     // Line comment
 type i is int;
 operations o : u;
-const pi : int = 314159
 
 const x : v =
    record
@@ -18,7 +17,7 @@ const x : v =
 (* Block comment *)
 
 entrypoint g (const l : list (int)) is
-
+  var m : map (int, string) := empty_map;
   var y : v := copy x with record bar = 7 end;
 
   function f (const x : int) : int is
@@ -29,6 +28,7 @@ entrypoint g (const l : list (int)) is
      end with y * 2
 
   begin
+     y.[4] := "hello";
      match l with
         [] -> null
      | h#t -> q (h+2)

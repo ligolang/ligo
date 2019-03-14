@@ -347,10 +347,11 @@ after_instr:
 
 instr_or_end:
   End {
-    `End $1 }
+   `End $1
+  }
 | instruction after_instr {
     let instrs, term, close = $2 in
-    `Some ($1, instrs, term, close)
+   `Some ($1, instrs, term, close)
   }
 
 local_decl:
@@ -456,6 +457,16 @@ case:
   }
 
 ass:
+  var_ass {
+    VarAss $1
+  }
+| map_selection ASS expr {
+    let region = cover $1.region (expr_to_region $3)
+    and value  = {lookup = $1; ass = $2; expr = $3}
+    in MapAss {region; value}
+  }
+
+var_ass:
   var ASS expr {
     let region = cover $1.region (expr_to_region $3)
     and value  = {var = $1; ass = $2; expr = $3}
@@ -477,12 +488,12 @@ while_loop:
   }
 
 for_loop:
-  For ass Down? To expr option(step_clause) block {
+  For var_ass Down? To expr option(step_clause) block {
     let region = cover $1 $7.region in
     let value =
       {
         kwd_for  = $1;
-        ass      = $2;
+        var_ass  = $2;
         down     = $3;
         kwd_to   = $4;
         bound    = $5;
@@ -657,20 +668,22 @@ unary_expr:
 | core_expr { $1 }
 
 core_expr:
-  Int        { ArithExpr (Int $1) }
-| var        { Var $1 }
-| String     { StringExpr (String $1) }
-| Bytes      { Bytes $1 }
-| C_False    { LogicExpr (BoolExpr (False $1)) }
-| C_True     { LogicExpr (BoolExpr (True $1)) }
-| C_Unit     { Unit $1 }
-| tuple      { Tuple $1 }
-| list_expr  { ListExpr (List $1) }
-| empty_list { ListExpr (EmptyList $1) }
-| set_expr   { SetExpr (Set $1) }
-| empty_set  { SetExpr (EmptySet $1) }
-| none_expr  { ConstrExpr (NoneExpr $1) }
-| fun_call   { FunCall $1 }
+  Int              { ArithExpr (Int $1) }
+| var              { Var $1 }
+| String           { StringExpr (String $1) }
+| Bytes            { Bytes $1 }
+| C_False          { LogicExpr (BoolExpr (False $1)) }
+| C_True           { LogicExpr (BoolExpr (True $1)) }
+| C_Unit           { Unit $1 }
+| tuple            { Tuple $1 }
+| list_expr        { ListExpr (List $1) }
+| empty_list       { ListExpr (EmptyList $1) }
+| set_expr         { SetExpr (Set $1) }
+| empty_set        { SetExpr (EmptySet $1) }
+| none_expr        { ConstrExpr (NoneExpr $1) }
+| fun_call         { FunCall $1 }
+| map_selection    { MapLookUp $1 }
+| record_expr      { RecordExpr $1 }
 | Constr arguments {
     let region = cover $1.region $2.region in
     ConstrExpr (ConstrApp {region; value = $1,$2})
@@ -679,15 +692,16 @@ core_expr:
     let region = cover $1 $2.region in
     ConstrExpr (SomeApp {region; value = $1,$2})
   }
-| map_name DOT brackets(expr) {
+
+map_selection:
+  map_name DOT brackets(expr) {
     let region = cover $1.region $3.region in
     let value  = {
       map_name = $1;
       selector = $2;
       index    = $3}
-    in MapLookUp {region; value}
+    in {region; value}
   }
-| record_expr { RecordExpr $1 }
 
 record_expr:
   record_injection  { RecordInj  $1 }
@@ -722,10 +736,11 @@ after_field:
 
 field_or_end:
   End {
-    `End $1 }
+   `End $1
+  }
 | field_assignment after_field {
     let fields, term, close = $2 in
-    `Some ($1, fields, term, close)
+   `Some ($1, fields, term, close)
   }
 
 field_assignment:
