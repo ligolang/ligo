@@ -110,41 +110,7 @@ program:
 declaration:
   type_decl       {    TypeDecl $1 }
 | const_decl      {   ConstDecl $1 }
-| storage_decl    { StorageDecl $1 }
-| operations_decl {      OpDecl $1 }
 | lambda_decl     {  LambdaDecl $1 }
-
-storage_decl:
-  Storage var COLON type_expr option(SEMI) {
-    let stop =
-      match $5 with
-        Some region -> region
-      |        None -> type_expr_to_region $4 in
-    let region = cover $1 stop in
-    let value = {
-      kwd_storage = $1;
-      name        = $2;
-      colon       = $3;
-      store_type  = $4;
-      terminator  = $5}
-    in {region; value}
-  }
-
-operations_decl:
-  Operations var COLON type_expr option(SEMI) {
-    let stop =
-      match $5 with
-        Some region -> region
-      |        None -> type_expr_to_region $4 in
-    let region = cover $1 stop in
-    let value = {
-      kwd_operations = $1;
-      name           = $2;
-      colon          = $3;
-      op_type        = $4;
-      terminator     = $5}
-    in {region; value}
-  }
 
 (* Type declarations *)
 
@@ -252,6 +218,31 @@ fun_decl:
     in {region; value}
   }
 
+entry_decl:
+  Entrypoint fun_name parameters COLON type_expr Is
+    seq(local_decl)
+    block
+  With expr option(SEMI) {
+    let stop =
+      match $11 with
+        Some region -> region
+      |        None -> expr_to_region $10 in
+    let region = cover $1 stop in
+    let value = {
+      kwd_entrypoint = $1;
+      name           = $2;
+      param          = $3;
+      colon          = $4;
+      ret_type       = $5;
+      kwd_is         = $6;
+      local_decls    = $7;
+      block          = $8;
+      kwd_with       = $9;
+      return         = $10;
+      terminator     = $11}
+    in {region; value}
+  }
+
 proc_decl:
   Procedure fun_name parameters Is
     seq(local_decl)
@@ -270,27 +261,6 @@ proc_decl:
        local_decls   = $5;
        block         = $6;
        terminator    = $7}
-     in {region; value}
-  }
-
-entry_decl:
-  Entrypoint fun_name parameters Is
-    seq(local_decl)
-    block option(SEMI)
-    {
-     let stop =
-       match $7 with
-         Some region -> region
-       |        None -> $6.region in
-     let region = cover $1 stop in
-     let value = {
-       kwd_entrypoint = $1;
-       name           = $2;
-       param          = $3;
-       kwd_is         = $4;
-       local_decls    = $5;
-       block          = $6;
-       terminator     = $7}
      in {region; value}
   }
 

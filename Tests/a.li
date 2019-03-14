@@ -1,11 +1,9 @@
 type t is int * string
 type u is t
 type v is record foo: key; bar: mutez; baz: address end
-type w is K of (U of int) (*v * u*)
+type w is K of (U of int) // v * u
 
-storage s : w     // Line comment
 type i is int;
-operations o : u;
 
 const x : v =
    record
@@ -16,7 +14,8 @@ const x : v =
 
 (* Block comment *)
 
-entrypoint g (const l : list (int)) is
+entrypoint g (var s : storage; const l : list (int))
+  : operation (list) is
   var m : map (int, string) := empty_map;
   var y : v := copy x with record bar = 7 end;
 
@@ -37,4 +36,4 @@ entrypoint g (const l : list (int)) is
        g (Unit);
        fail "in extremis"
      end
-  end
+  end with ([]: operation (list))

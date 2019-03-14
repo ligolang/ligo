@@ -57,11 +57,9 @@ type kwd_mod        = Region.t
 type kwd_not        = Region.t
 type kwd_null       = Region.t
 type kwd_of         = Region.t
-type kwd_operations = Region.t
 type kwd_procedure  = Region.t
 type kwd_record     = Region.t
 type kwd_step       = Region.t
-type kwd_storage    = Region.t
 type kwd_then       = Region.t
 type kwd_to         = Region.t
 type kwd_type       = Region.t
@@ -157,8 +155,6 @@ and ast = t
 and declaration =
   TypeDecl    of type_decl reg
 | ConstDecl   of const_decl reg
-| StorageDecl of storage_decl reg
-| OpDecl      of operations_decl reg
 | LambdaDecl  of lambda_decl
 
 and const_decl = {
@@ -169,22 +165,6 @@ and const_decl = {
   equal      : equal;
   init       : expr;
   terminator : semi option
-}
-
-and storage_decl = {
-  kwd_storage : kwd_storage;
-  name        : variable;
-  colon       : colon;
-  store_type  : type_expr;
-  terminator  : semi option
-}
-
-and operations_decl = {
-  kwd_operations : kwd_operations;
-  name           : variable;
-  colon          : colon;
-  op_type        : type_expr;
-  terminator     : semi option
 }
 
 (* Type declarations *)
@@ -264,9 +244,13 @@ and entry_decl = {
   kwd_entrypoint : kwd_entrypoint;
   name           : variable;
   param          : parameters;
+  colon          : colon;
+  ret_type       : type_expr;
   kwd_is         : kwd_is;
   local_decls    : local_decl list;
   block          : block reg;
+  kwd_with       : kwd_with;
+  return         : expr;
   terminator     : semi option
 }
 
@@ -742,8 +726,6 @@ let rec print_tokens ast =
 and print_decl = function
   TypeDecl    decl -> print_type_decl       decl
 | ConstDecl   decl -> print_const_decl      decl
-| StorageDecl decl -> print_storage_decl    decl
-| OpDecl      decl -> print_operations_decl decl
 | LambdaDecl  decl -> print_lambda_decl     decl
 
 and print_const_decl {value; _} =
@@ -755,24 +737,6 @@ and print_const_decl {value; _} =
   print_type_expr  const_type;
   print_token      equal "=";
   print_expr       init;
-  print_terminator terminator
-
-and print_storage_decl {value; _} =
-  let {kwd_storage; name; colon;
-       store_type; terminator} = value in
-  print_token      kwd_storage "storage";
-  print_var        name;
-  print_token      colon ":";
-  print_type_expr  store_type;
-  print_terminator terminator
-
-and print_operations_decl {value; _} =
-  let {kwd_operations; name; colon;
-       op_type; terminator} = value in
-  print_token      kwd_operations "operations";
-  print_var        name;
-  print_token      colon ":";
-  print_type_expr  op_type;
   print_terminator terminator
 
 and print_type_decl {value; _} =
@@ -869,14 +833,19 @@ and print_proc_decl {value; _} =
   print_terminator  terminator
 
 and print_entry_decl {value; _} =
-  let {kwd_entrypoint; name; param; kwd_is;
-       local_decls; block; terminator} = value in
+  let {kwd_entrypoint; name; param; colon;
+       ret_type; kwd_is; local_decls;
+       block; kwd_with; return; terminator} = value in
   print_token       kwd_entrypoint "entrypoint";
   print_var         name;
   print_parameters  param;
+  print_token       colon ":";
+  print_type_expr   ret_type;
   print_token       kwd_is "is";
   print_local_decls local_decls;
   print_block       block;
+  print_token       kwd_with "with";
+  print_expr        return;
   print_terminator  terminator
 
 and print_parameters {value; _} =

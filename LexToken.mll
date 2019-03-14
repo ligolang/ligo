@@ -77,10 +77,8 @@ type t =
 | Entrypoint of Region.t
 | For        of Region.t
 | Function   of Region.t
-| Storage    of Region.t
 | Type       of Region.t
 | Of         of Region.t
-| Operations of Region.t
 | Var        of Region.t
 | End        of Region.t
 | Then       of Region.t
@@ -197,10 +195,8 @@ let proj_token = function
 | Entrypoint region -> region, "Entrypoint"
 | For        region -> region, "For"
 | Function   region -> region, "Function"
-| Storage    region -> region, "Storage"
 | Type       region -> region, "Type"
 | Of         region -> region, "Of"
-| Operations region -> region, "Operations"
 | Var        region -> region, "Var"
 | End        region -> region, "End"
 | Then       region -> region, "Then"
@@ -282,10 +278,8 @@ let to_lexeme = function
 | Entrypoint _ -> "entrypoint"
 | For        _ -> "for"
 | Function   _ -> "function"
-| Storage    _ -> "storage"
 | Type       _ -> "type"
 | Of         _ -> "of"
-| Operations _ -> "operations"
 | Var        _ -> "var"
 | End        _ -> "end"
 | Then       _ -> "then"
@@ -335,10 +329,8 @@ let keywords = [
   (fun reg -> Entrypoint reg);
   (fun reg -> For        reg);
   (fun reg -> Function   reg);
-  (fun reg -> Storage    reg);
   (fun reg -> Type       reg);
   (fun reg -> Of         reg);
-  (fun reg -> Operations reg);
   (fun reg -> Var        reg);
   (fun reg -> End        reg);
   (fun reg -> Then       reg);
@@ -560,10 +552,8 @@ let is_kwd = function
 | Entrypoint _
 | For        _
 | Function   _
-| Storage    _
 | Type       _
 | Of         _
-| Operations _
 | Var        _
 | End        _
 | Then       _

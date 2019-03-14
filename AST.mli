@@ -41,11 +41,9 @@ type kwd_mod        = Region.t
 type kwd_not        = Region.t
 type kwd_null       = Region.t
 type kwd_of         = Region.t
-type kwd_operations = Region.t
 type kwd_procedure  = Region.t
 type kwd_record     = Region.t
 type kwd_step       = Region.t
-type kwd_storage    = Region.t
 type kwd_then       = Region.t
 type kwd_to         = Region.t
 type kwd_type       = Region.t
@@ -141,8 +139,6 @@ and ast = t
 and declaration =
   TypeDecl    of type_decl reg
 | ConstDecl   of const_decl reg
-| StorageDecl of storage_decl reg
-| OpDecl      of operations_decl reg
 | LambdaDecl  of lambda_decl
 
 and const_decl = {
@@ -153,22 +149,6 @@ and const_decl = {
   equal      : equal;
   init       : expr;
   terminator : semi option
-}
-
-and storage_decl = {
-  kwd_storage : kwd_storage;
-  name        : variable;
-  colon       : colon;
-  store_type  : type_expr;
-  terminator  : semi option
-}
-
-and operations_decl = {
-  kwd_operations : kwd_operations;
-  name           : variable;
-  colon          : colon;
-  op_type        : type_expr;
-  terminator     : semi option
 }
 
 (* Type declarations *)
@@ -248,9 +228,13 @@ and entry_decl = {
   kwd_entrypoint : kwd_entrypoint;
   name           : variable;
   param          : parameters;
+  colon          : colon;
+  ret_type       : type_expr;
   kwd_is         : kwd_is;
   local_decls    : local_decl list;
   block          : block reg;
+  kwd_with       : kwd_with;
+  return         : expr;
   terminator     : semi option
 }
 
