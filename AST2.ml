@@ -41,8 +41,8 @@ module O = struct
 
   type type_expr_case =
     Sum      of (type_name * type_expr) list
-  | Record   of (record_key * type_expr) list
-  | TypeApp  of type_name * (type_expr list)
+  | Record   of record_key type_record
+  | TypeApp  of type_constructor * (type_expr list)
   | Function of { args: type_expr list; ret: type_expr }
   | Ref      of type_expr
   | String
@@ -142,6 +142,16 @@ let name_to_string {value=name; region} : string =
 let type_expr (orig : Region.t) (e : O.type_expr_case) : O.type_expr =
   { type_expr = e; name = None; orig }
 
+let s_type_constructor {value=name;region} : O.type_constructor =
+  let () = ignore (region) in
+  match name with
+     "Option" -> Option
+   | "List"   -> List
+   | "Map"    -> Map
+   | "Set"    -> Set
+   (* TODO: escape the name, prevent any \x1b and other weird characters from appearing in the output *)
+   | _ -> failwith ("Unknown type constructor: " ^ name)
+
 let rec s_cartesian {value=sequence; region} : O.type_expr =
   let () = ignore (region) in
   s_nsepseq sequence
@@ -168,7 +178,7 @@ and s_field_decl {value=(var, colon, type_expr); region} =
 
 and s_type_app {value=(type_name,type_tuple); region} : O.type_expr =
   let () = ignore (region) in
-  type_expr region (TypeApp (s_name type_name, s_type_tuple type_tuple))
+  type_expr region (TypeApp (s_type_constructor type_name, s_type_tuple type_tuple))
 
 and s_type_tuple ({value=(lpar, sequence, rpar); region} : (I.type_name, I.comma) Utils.nsepseq I.par) : O.type_expr list =
   let () = ignore (lpar,rpar,region) in
@@ -181,7 +191,7 @@ and s_par_type {value=(lpar, type_expr, rpar); region} : O.type_expr =
 
 and s_type_alias name : O.type_expr =
   let () = ignore () in
-  type_expr name.region (TypeApp (s_name name, []))
+  type_expr name.region (TypeApp (s_type_constructor name, []))
 
 and s_type_expr (orig : I.type_expr) : O.type_expr = match orig with
   Prod    cartesian   -> s_cartesian   cartesian
