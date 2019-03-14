@@ -44,7 +44,7 @@ module O = struct
   | Bool
   and 'key type_record = ('key * type_expr) list
 
-  and type_expr = { type_expr: type_expr_case; name: type_name option; orig: AST.type_expr }
+  and type_expr = { type_expr: type_expr_case; name: type_name option; orig: Region.t }
 
   type typed_var = { name:var_name; ty:type_expr }
 
@@ -132,32 +132,32 @@ let name_to_string {value=name; region} : string =
   let () = ignore (region) in
   name
 
-let type_expr (orig : I.type_expr) (e : O.type_expr_case) : O.type_expr =
+let type_expr (orig : Region.t) (e : O.type_expr_case) : O.type_expr =
   { type_expr = e; name = None; orig }
 
-let rec s_cartesian {value=sequence; region} : O.type_expr_case =
+let rec s_cartesian {value=sequence; region} : O.type_expr =
   let () = ignore (region) in
-  Prod (map s_type_expr (s_nsepseq sequence))
+  type_expr region (Prod (map s_type_expr (s_nsepseq sequence)))
 
-and s_sum_type {value=sequence; region} : O.type_expr_case =
+and s_sum_type {value=sequence; region} : O.type_expr =
   let () = ignore (region) in
-  Sum (map s_variant (s_nsepseq sequence))
+  type_expr region (Sum (map s_variant (s_nsepseq sequence)))
 
 and s_variant {value=(constr, kwd_of, cartesian); region} =
   let () = ignore (kwd_of,region) in
-  (s_name constr, type_expr "_" (s_cartesian cartesian))
+  (s_name constr, s_cartesian cartesian)
 
-and s_record_type {value=(kwd_record, field_decls, kwd_end); region} : O.type_expr_case =
+and s_record_type {value=(kwd_record, field_decls, kwd_end); region} : O.type_expr =
   let () = ignore (kwd_record,region,kwd_end) in
-  Record (map s_field_decl (s_nsepseq field_decls))
+  type_expr region (Record (map s_field_decl (s_nsepseq field_decls)))
 
 and s_field_decl {value=(var, colon, type_expr); region} =
   let () = ignore (colon,region) in
   (s_name var, s_type_expr type_expr)
 
-and s_type_app {value=(type_name,type_tuple); region} : O.type_expr_case =
+and s_type_app {value=(type_name,type_tuple); region} : O.type_expr =
   let () = ignore (region) in
-  TypeApp (s_name type_name, s_type_tuple type_tuple)
+  type_expr region (TypeApp (s_name type_name, s_type_tuple type_tuple))
 
 and s_type_tuple ({value=(lpar, sequence, rpar); region} : (I.type_name, I.comma) Utils.nsepseq I.par) : O.type_expr list =
   let () = ignore (lpar,rpar,region) in
@@ -168,17 +168,17 @@ and s_par_type {value=(lpar, type_expr, rpar); region} : O.type_expr =
   let () = ignore (lpar,rpar,region) in
   s_type_expr type_expr
 
-and s_type_alias name : O.type_expr_case =
+and s_type_alias name : O.type_expr =
   let () = ignore () in
-  TypeApp (s_name name, [])
+  type_expr name.region (TypeApp (s_name name, []))
 
 and s_type_expr (orig : I.type_expr) : O.type_expr = match orig with
-  Prod    cartesian   -> type_expr orig (s_cartesian   cartesian)
-| Sum     sum_type    -> type_expr orig (s_sum_type    sum_type)
-| Record  record_type -> type_expr orig (s_record_type record_type)
-| TypeApp type_app    -> type_expr orig (s_type_app    type_app)
+  Prod    cartesian   -> s_cartesian   cartesian
+| Sum     sum_type    -> s_sum_type    sum_type
+| Record  record_type -> s_record_type record_type
+| TypeApp type_app    -> s_type_app    type_app
 | ParType par_type    -> s_par_type    par_type
-| TAlias  type_alias  -> type_expr orig (s_type_alias  type_alias)
+| TAlias  type_alias  -> s_type_alias  type_alias
 
 
 let s_type_decl I.{value={kwd_type;name;kwd_is;type_expr;terminator}; region} : O.type_decl =
@@ -461,8 +461,8 @@ and s_fun_decl I.{value={kwd_function;name;param;colon;ret_type;kwd_is;local_dec
   let () = ignore (kwd_function,colon,kwd_is,kwd_with,terminator,region) in
   O.{
       name = s_name name;
-      ty = type_expr "_" (Function { args = map snd (s_parameters param);
-                                     ret = s_type_expr ret_type });
+      ty = type_expr region (Function { args = map snd (s_parameters param);
+                                        ret = s_type_expr ret_type });
       value = Lambda {
                   parameters   = s_parameters param |> list_to_map;
                   declarations = map s_local_decl local_decls;
@@ -475,8 +475,8 @@ and s_proc_decl I.{value={kwd_procedure;name;param;kwd_is;local_decls;block;term
   let () = ignore (kwd_procedure,kwd_is,terminator,region) in
   O.{
       name = s_name name;
-      ty = type_expr "_" (Function { args = map snd (s_parameters param);
-                                     ret = type_expr "_" Unit });
+      ty = type_expr region (Function { args = map snd (s_parameters param);
+                                        ret = type_expr region Unit });
       value = Lambda {
                   parameters   = s_parameters param |> list_to_map;
                   declarations = map s_local_decl local_decls;
@@ -489,8 +489,8 @@ and s_entry_decl I.{value={kwd_entrypoint;name;param;kwd_is;local_decls;block;te
   let () = ignore (kwd_entrypoint,kwd_is,terminator,region) in
   O.{
       name = s_name name;
-      ty = type_expr "_" (Function { args = map snd (s_parameters param);
-                                     ret = type_expr "_" Unit });
+      ty = type_expr region (Function { args = map snd (s_parameters param);
+                                        ret = type_expr region Unit });
       value = Lambda {
                   parameters   = s_parameters param |> list_to_map;
                   declarations = map s_local_decl local_decls;
