@@ -89,7 +89,7 @@ module O = struct
   and instr =
     Assignment    of { name: var_name; value: expr; orig: asttodo }
   | While         of { condition: expr; body: instr list; orig: asttodo }
-  | ForCollection of { list: expr; key: var_name; value: var_name option; body: instr list; orig: asttodo }
+  | ForCollection of { list: expr; var: var_name; body: instr list; orig: asttodo }
   | If            of { condition: expr; ifso: instr list; ifnot: instr list; orig: asttodo }
   | Match         of { expr: expr; cases: (pattern * instr list) list; orig: asttodo }
   | ProcedureCall of { expr: expr; orig: asttodo } (* expr returns unit, drop the result. Similar to OCaml's ";". *)
@@ -448,15 +448,18 @@ and s_for_int ({value={kwd_for;ass;down;kwd_to;bound;step;block}; region} : I.fo
 
 and s_for_collect ({value={kwd_for;var;bind_to;kwd_in;expr;block}; _} : I.for_collect reg) : O.instr list =
   let () = ignore (kwd_for,kwd_in) in
-  [
-    O.ForCollection {
-        list = s_expr expr;
-        key = s_name var;
-        value = s_bind_to bind_to;
-        body = s_block block;
-        orig = `TODO
-      }
-  ]
+  let for_instr =
+    match s_bind_to bind_to with
+      Some _ ->
+      failwith "TODO: For on maps is not supported yet!"
+    | None ->
+       O.ForCollection {
+           list = s_expr expr;
+           var = s_name var;
+           body = s_block block;
+           orig = `TODO
+         }
+  in [for_instr]
 
 and s_step : (I.kwd_step * I.expr) option -> O.expr = function
   Some (kwd_step, expr) -> let () = ignore (kwd_step) in s_expr expr
