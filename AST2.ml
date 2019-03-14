@@ -42,6 +42,7 @@ module O = struct
   | Function of { arg: type_expr; ret: type_expr }
   | Ref      of type_expr
   | String
+  | Bytes
   | Int
   | Unit
   | Bool

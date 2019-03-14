@@ -42,6 +42,7 @@ module O = struct
   | Function of { arg: type_expr; ret: type_expr }
   | Ref      of type_expr
   | String
+  | Bytes
   | Int
   | Unit
   | Bool
@@ -116,6 +117,8 @@ let fold_map f a l =
     in acc', (elem' :: l) in
   let last_acc, last_l = List.fold_left f (a, []) l
   in last_acc, List.rev last_l
+
+let map f l = List.rev (List.rev_map f l)
 
 let shadow (name : string) (typ : O.type_expr) (env : O.type_expr list SMap.t)
     : O.type_expr list SMap.t =
@@ -194,11 +197,56 @@ let a_var_expr (te,ve : tve) (expected : O.type_expr) (var_name : I.name_and_reg
         ty   = expected;
         orig = `TODO }
 
+let a_constant_expr (tve : tve) (expected : O.type_expr) (constant : I.constant) : O.expr_case =
+  let to_type_expr type_expr_case : O.type_expr =
+    { type_expr = type_expr_case; name = None; orig = Region.ghost } in
+  let actual : O.type_expr = match constant with
+      Unit       -> to_type_expr Unit
+    | Int      _ -> to_type_expr Int
+    | String   _ -> to_type_expr String
+    | Bytes    _ -> to_type_expr Bytes
+    | False      -> to_type_expr Bool
+    | True       -> to_type_expr Bool
+    | Null     t -> a_type_expr tve t
+    | EmptySet t -> a_type_expr tve t
+    | CNone    t -> a_type_expr tve t
+  in
+  check_type_expr_equal expected actual;
+  let c : O.constant = match constant with
+      Unit       -> Unit
+    | Int      i -> Int      i
+    | String   s -> String   s
+    | Bytes    b -> Bytes    b
+    | False      -> False
+    | True       -> True
+    | Null     _ -> Null
+    | EmptySet _ -> EmptySet
+    | CNone    _ -> CNone
+  in Constant c
+
+let map_to_list m =
+  List.rev (SMap.fold (fun field_name_string p l -> p :: l) m [])
+
+let a_field tve (expected,expr) =
+  failwith "TODO"
+
+let a_record (tve : tve) (expected : O.type_expr) (record : (I.field_name * I.expr) list)
+    : O.expr_case =
+  let {type_expr = expected; _} : O.type_expr = expected in
+  let expected = match expected with
+      Record fields -> fields
+    | _ -> failwith "expected some_type but got record" in
+  let expected_and_field =
+    List.combine
+      (map_to_list expected)
+      record (* TODO SHOULD BE (map_to_list record) *) in
+  Record (map (a_field tve) expected_and_field)
+
 let a_expr_case (te,ve : tve) (expected : O.type_expr) : I.expr -> O.expr_case = function
     App      {operator;arguments} -> failwith "TODO"
-  | Var      var_name             -> a_var_expr (te,ve) expected var_name
-  | Constant constant             -> failwith "TODO"
-  | Record   record               -> failwith "TODO"
+  | Var      var_name             -> a_var_expr      (te,ve) expected var_name
+  | Constant constant             -> a_constant_expr (te,ve) expected constant
+  | Record   record               -> a_record        (te,ve) expected record
   | Lambda   lambda               -> failwith "TODO"
 
 let a_expr (te,ve : tve) (expected : O.type_expr) (e : I.expr) : O.expr =
