@@ -68,14 +68,14 @@ module O = struct
     }
 
   and operator =
-      Function    of var_name
-    | Construcor  of var_name
-    | UpdateField of field_name
-    | GetField    of field_name
-    | Or | And | Lt | Leq | Gt | Geq | Equal | Neq | Cat | Cons | Add | Sub | Mult | Div | Mod
-    | Neg | Not
-    | Tuple | Set | List
-    | MapLookup
+    Function    of var_name
+  | Construcor  of var_name
+  | UpdateField of field_name
+  | GetField    of field_name
+  | Or | And | Lt | Leq | Gt | Geq | Equal | Neq | Cat | Cons | Add | Sub | Mult | Div | Mod
+  | Neg | Not
+  | Set | List
+  | MapLookup
 
   and constant =
     Unit | Int of Z.t | String of string | Bytes of MBytes.t | False | True
