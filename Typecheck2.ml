@@ -37,7 +37,7 @@ module O = struct
   | Sum      of (type_name * type_expr_case) list
   | Record   of record_key type_record
   | TypeApp  of type_constructor * (type_expr_case list)
-  | Function of { args: type_expr_case list; ret: type_expr_case }
+  | Function of { arg: type_expr_case; ret: type_expr_case }
   | Ref      of type_expr_case
   | TC       of type_constructor
   | String
@@ -73,7 +73,10 @@ module O = struct
     }
 
   and operator_case =
-    Function of string
+    Function    of var_name
+  | Construcor  of var_name
+  | UpdateField of record_key
+  | GetField    of record_key
   | Or | And | Lt | Leq | Gt | Geq | Equal | Neq | Cat | Cons | Add | Sub | Mult | Div | Mod
   | Neg | Not
   | Set
@@ -92,16 +95,14 @@ module O = struct
   and instr =
     Assignment    of { name: var_name; value: expr; orig: asttodo }
   | While         of { condition: expr; body: instr list; orig: asttodo }
-  | ForCollection of { list: expr; key: var_name; value: var_name option; body: instr list; orig: asttodo }
-  | If            of { condition: expr; ifso: instr list; ifnot: instr list; orig: asttodo }
+  | ForCollection of { list: expr; var: var_name; body: instr list; orig: asttodo }
   | Match         of { expr: expr; cases: (pattern * instr list) list; orig: asttodo }
-  | DropUnit      of { expr: expr; orig: asttodo } (* expr returns unit, drop the result. Similar to OCaml's ";". *)
+  | ProcedureCall of { expr: expr; orig: asttodo } (* expr returns unit, drop the result. Similar to OCaml's ";". *)
   | Fail          of { expr: expr; orig: asttodo }
 
   type ast = {
       types           : type_decl list;
       storage_decl    : typed_var;
-      operations_decl : typed_var;
       declarations    : decl list;
       orig: AST.t
     }
