@@ -90,7 +90,6 @@ module O = struct
     Assignment    of { name: var_name; value: expr; orig: asttodo }
   | While         of { condition: expr; body: instr list; orig: asttodo }
   | ForCollection of { list: expr; var: var_name; body: instr list; orig: asttodo }
-  | If            of { condition: expr; ifso: instr list; ifnot: instr list; orig: asttodo }
   | Match         of { expr: expr; cases: (pattern * instr list) list; orig: asttodo }
   | ProcedureCall of { expr: expr; orig: asttodo } (* expr returns unit, drop the result. Similar to OCaml's ";". *)
   | Fail          of { expr: expr; orig: asttodo }
