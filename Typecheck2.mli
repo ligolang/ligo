@@ -44,7 +44,7 @@ module O : sig
   | Unit
   | Bool
 
-  and type_expr = { type_expr: type_expr_case; name: string option; orig: AST.type_expr }
+  and type_expr = { type_expr: type_expr_case; name: string option; orig: Region.t }
 
   type typed_var = { name:var_name; ty:type_expr; orig: asttodo }
 

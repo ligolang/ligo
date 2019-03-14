@@ -48,9 +48,9 @@ module O = struct
 
   and type_expr = { type_expr: type_expr_case; name: type_name option; orig: Region.t }
 
-  type typed_var = { name:var_name; ty:type_expr }
+  type typed_var = { name:var_name; ty:type_expr; orig: asttodo }
 
-  type type_decl = { name:type_name; ty:type_expr }
+  type type_decl = { name:type_name; ty:type_expr; orig: asttodo }
 
   type expr =
     App      of { operator: operator; arguments: expr list }
@@ -205,15 +205,15 @@ and s_type_expr (orig : I.type_expr) : O.type_expr = match orig with
 let s_type_decl I.{value={kwd_type;name;kwd_is;type_expr;terminator}; region} : O.type_decl =
   let () = ignore (kwd_type,kwd_is,terminator,region) in
   let ty = s_type_expr type_expr in
-  O.{ name = s_name name; ty = { ty with name = Some (s_name name) } }
+  O.{ name = s_name name; ty = { ty with name = Some (s_name name) }; orig = `TODO }
 
 let s_storage_decl I.{value={kwd_storage; name; colon; store_type; terminator}; region} : O.typed_var =
   let () = ignore (kwd_storage,colon,terminator,region) in
-  O.{ name = s_name name; ty = s_type_expr store_type }
+  O.{ name = s_name name; ty = s_type_expr store_type; orig = `TODO }
 
 let s_operations_decl I.{value={kwd_operations;name;colon;op_type;terminator}; region} : O.typed_var =
   let () = ignore (kwd_operations,colon,terminator,region) in
-  O.{ name = s_name name; ty = s_type_expr op_type }
+  O.{ name = s_name name; ty = s_type_expr op_type; orig = `TODO }
 
 let s_empty_list {value=(l, (lbracket, rbracket, colon, type_expr), r); region} : O.expr =
   let () = ignore (l, lbracket, rbracket, colon, r, region) in
@@ -504,13 +504,13 @@ and gensym =
   fun ty ->
   i := !i + 1;
   (* TODO: Region.ghost *)
-  ({name = {name=(string_of_int !i) ^ "gensym"; orig = Region.ghost}; ty} : O.typed_var)
+  ({name = {name=(string_of_int !i) ^ "gensym"; orig = Region.ghost}; ty; orig = `TODO} : O.typed_var)
 
 and s_fun_decl I.{value={kwd_function;name;param;colon;ret_type;kwd_is;local_decls;block;kwd_with;return;terminator}; region} : O.decl =
   let () = ignore (kwd_function,colon,kwd_is,kwd_with,terminator,region) in
   let tuple_type = s_parameters param |> parameters_to_tuple in
   let single_argument = gensym tuple_type in
-  let ({name = single_argument_xxx; ty = _} : O.typed_var) = single_argument in
+  let ({name = single_argument_xxx; ty = _; orig = `TODO} : O.typed_var) = single_argument in
   O.{
       name = s_name name;
       ty = type_expr region (Function { arg = tuple_type;
@@ -529,7 +529,7 @@ and s_proc_decl I.{value={kwd_procedure;name;param;kwd_is;local_decls;block;term
   let () = ignore (kwd_procedure,kwd_is,terminator,region) in
   let tuple_type = s_parameters param |> parameters_to_tuple in
   let single_argument = gensym tuple_type in
-  let ({name = single_argument_xxx; ty = _} : O.typed_var) = single_argument in
+  let ({name = single_argument_xxx; ty = _; orig = `TODO} : O.typed_var) = single_argument in
   O.{
       name = s_name name;
       ty = type_expr region (Function { arg = tuple_type;
@@ -548,7 +548,7 @@ and s_entry_decl I.{value={kwd_entrypoint;name;param;kwd_is;local_decls;block;te
   let () = ignore (kwd_entrypoint,kwd_is,terminator,region) in
   let tuple_type = s_parameters param |> parameters_to_tuple in
   let single_argument = gensym tuple_type in
-  let ({name = single_argument_xxx; ty = _} : O.typed_var) = single_argument in
+  let ({name = single_argument_xxx; ty = _; orig = `TODO} : O.typed_var) = single_argument in
   O.{
       name = s_name name;
       ty = type_expr region (Function { arg = tuple_type;
