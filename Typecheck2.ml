@@ -121,6 +121,11 @@ let shadow (name : string) (typ : O.type_expr) (env : O.type_expr list SMap.t)
     : O.type_expr list SMap.t =
   SMap.update name (function None -> Some [typ] | Some tl -> Some (typ :: tl)) env
 
+let lookup (name : string) (env : O.type_expr list SMap.t) : O.type_expr =
+  match SMap.find name env with
+    latest :: shadowed -> latest
+  | []                 -> failwith "Unbound variable"
+
 let string_of_name ({name;_} : I.name_and_region) = name
 
 let a_name_and_region ({name; orig} : I.name_and_region) : O.name_and_region =
@@ -162,8 +167,53 @@ let a_types (tve : tve) (l : I.type_decl list) : tve * O.type_decl list =
 let a_storage_decl : tve -> I.typed_var -> tve * O.typed_var =
   failwith "TODO"
 
-let a_declarations : tve -> I.decl list -> tve * O.decl list =
-  failwith "TODO"
+let type_expr_case_equal (t1 : O.type_expr_case) (t2 : O.type_expr_case) : bool = match t1,t2 with
+    Sum      m1,                  Sum      m2                  -> failwith "TODO" (* of (O.name_and_region * O.type_expr) SMap.t *)
+  | Record   m1,                  Record   m2                  -> failwith "TODO" (* of (O.name_and_region * O.type_expr) SMap.t *)
+  | TypeApp  (tc1, args1),        TypeApp  (tc2, args2)        -> failwith "TODO" (* of O.type_constructor * O.type_expr list *)
+  | Function {arg=arg1;ret=ret1}, Function {arg=arg2;ret=ret2} -> failwith "TODO" (* of { arg : O.type_expr; ret : O.type_expr; } *)
+  | Ref      t1,                  Ref      t2                  -> failwith "TODO" (* of O.type_expr *)
+  | String,                       String                       -> true
+  | Int,                          Int                          -> true
+  | Unit,                         Unit                         -> true
+  | Bool,                         Bool                         -> true
+  | _                                                          -> false
+
+let type_expr_equal (t1 : O.type_expr) (t2 : O.type_expr) : bool =
+  type_expr_case_equal t1.type_expr t2.type_expr
+
+let check_type_expr_equal (expected : O.type_expr) (actual : O.type_expr) : unit =
+  if type_expr_equal expected actual then
+    ()
+  else
+    failwith "got [actual] but expected [expected]"
+
+let a_var_expr (te,ve : tve) (expected : O.type_expr) (var_name : I.name_and_region) : O.expr_case =
+  check_type_expr_equal expected (lookup (string_of_name var_name) ve);
+  Var { name = a_name_and_region var_name;
+        ty   = expected;
+        orig = `TODO }
+
+let a_expr_case (te,ve : tve) (expected : O.type_expr) : I.expr -> O.expr_case = function
+    App      {operator;arguments} -> failwith "TODO"
+  | Var      var_name             -> a_var_expr (te,ve) expected var_name
+  | Constant constant             -> failwith "TODO"
+  | Record   record               -> failwith "TODO"
+  | Lambda   lambda               -> failwith "TODO"
+
+let a_expr (te,ve : tve) (expected : O.type_expr) (e : I.expr) : O.expr =
+  let expr_case = a_expr_case (te,ve) expected e in
+  { expr = expr_case; ty = expected; orig = `TODO }
+
+let a_declaration (te,ve : tve) ({name;ty;value} : I.decl) : tve * O.decl =
+  let ty = a_type_expr (te,ve) ty in
+  let value = a_expr (te,ve) ty value in
+  let ve = shadow (string_of_name name) ty ve in
+  let name = a_name_and_region name in
+  (te,ve), {var={name;ty;orig=`TODO};value;orig = `TODO}
+
+let a_declarations (tve : tve) (l : I.decl list) : tve * O.decl list =
+  fold_map a_declaration tve l
 
 let a_ast I.{types; storage_decl; declarations; orig} =
   let tve = SMap.empty, SMap.empty in
