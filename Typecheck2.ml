@@ -10,8 +10,6 @@ module O = struct
   type var_name   = name_and_region
   type field_name = name_and_region
 
-  type record_key = [`Field of field_name | `Component of int]
-
   type pattern =
     PVar    of var_name
   | PWild
@@ -25,19 +23,17 @@ module O = struct
   | PSome   of pattern
   | PCons   of pattern * pattern
   | PNull
-  | PRecord of record_key precord
-
-  and 'key precord = ('key * pattern) list
+  | PRecord of (field_name * pattern) list
 
   type type_constructor =
-  | Option
+    Option
   | List
   | Set
   | Map
 
   type type_expr_case =
-  | Sum      of (type_name * type_expr) list
-  | Record   of record_key type_record
+    Sum      of (type_name * type_expr) list
+  | Record   of (field_name * type_expr) list
   | TypeApp  of type_constructor * (type_expr list)
   | Function of { arg: type_expr; ret: type_expr }
   | Ref      of type_expr
@@ -45,7 +41,6 @@ module O = struct
   | Int
   | Unit
   | Bool
-  and 'key type_record = ('key * type_expr) list
 
   and type_expr = { type_expr: type_expr_case; name: string option; orig: AST.type_expr }
 
@@ -57,10 +52,8 @@ module O = struct
     App      of { operator: operator; arguments: expr list }
   | Var      of typed_var
   | Constant of constant
-  | Record   of record_key expr_record
+  | Record   of (field_name * expr) list
   | Lambda   of lambda
-
-  and 'key expr_record = ('key * expr) list
 
   and expr = { expr: expr_case; ty:type_expr; orig: asttodo }
 
@@ -76,8 +69,8 @@ module O = struct
   and operator_case =
     Function    of var_name
   | Construcor  of var_name
-  | UpdateField of record_key
-  | GetField    of record_key
+  | UpdateField of field_name
+  | GetField    of field_name
   | Or | And | Lt | Leq | Gt | Geq | Equal | Neq | Cat | Cons | Add | Sub | Mult | Div | Mod
   | Neg | Not
   | Set
