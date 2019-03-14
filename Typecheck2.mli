@@ -5,10 +5,12 @@ module SMap : Map.S with type key = string
 module O : sig
   type asttodo = [`TODO] (* occurrences of asttodo will point to some part of the original parser AST *)
 
-  type type_name = {name: string; orig: Region.t}
-  type var_name = type_name
+  type name_and_region = {name: string; orig: Region.t}
+  type type_name  = name_and_region
+  type var_name   = name_and_region
+  type field_name = name_and_region
 
-  type record_key = [`Field of string | `Component of int]
+  type record_key = [`Field of field_name | `Component of int]
 
   type pattern =
     PVar    of var_name

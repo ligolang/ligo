@@ -9,10 +9,12 @@ module SMap = Map.Make(String)
 module O = struct
   type asttodo = [`TODO]
 
-  type type_name = {name: string; orig: Region.t}
-  type var_name = type_name
+  type name_and_region = {name: string; orig: Region.t}
+  type type_name  = name_and_region
+  type var_name   = name_and_region
+  type field_name = name_and_region
 
-  type record_key = [`Field of string | `Component of int]
+  type record_key = [`Field of field_name | `Component of int]
 
   type pattern =
     PVar    of var_name
@@ -31,10 +33,15 @@ module O = struct
 
   and 'key precord = ('key * pattern) list
 
+  type type_constructor =
+    Option
+  | List
+  | Set
+  | Map
+
   type type_expr_case =
-    Prod     of type_expr list
-  | Sum      of (type_name * type_expr) list
-  | Record   of (type_name * type_expr) list
+    Sum      of (type_name * type_expr) list
+  | Record   of (record_key * type_expr) list
   | TypeApp  of type_name * (type_expr list)
   | Function of { args: type_expr list; ret: type_expr }
   | Ref      of type_expr
@@ -137,7 +144,11 @@ let type_expr (orig : Region.t) (e : O.type_expr_case) : O.type_expr =
 
 let rec s_cartesian {value=sequence; region} : O.type_expr =
   let () = ignore (region) in
-  type_expr region (Prod (map s_type_expr (s_nsepseq sequence)))
+  s_nsepseq sequence
+  |>map s_type_expr
+  |> mapi (fun i p -> `Component i, p)
+  |> (fun x -> (Record x : O.type_expr_case))
+  |> type_expr region
 
 and s_sum_type {value=sequence; region} : O.type_expr =
   let () = ignore (region) in
@@ -153,7 +164,7 @@ and s_record_type {value=(kwd_record, field_decls, kwd_end); region} : O.type_ex
 
 and s_field_decl {value=(var, colon, type_expr); region} =
   let () = ignore (colon,region) in
-  (s_name var, s_type_expr type_expr)
+  (`Field (s_name var), s_type_expr type_expr)
 
 and s_type_app {value=(type_name,type_tuple); region} : O.type_expr =
   let () = ignore (region) in
