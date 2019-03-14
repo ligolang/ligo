@@ -61,7 +61,7 @@ module O : sig
   | Record   of record_key expr_record
   | Lambda   of lambda
 
-  and 'key expr_record = ('key * expr list)
+  and 'key expr_record = ('key * expr) list
 
   and expr = { expr: expr_case; ty:type_expr; orig: asttodo }
 
