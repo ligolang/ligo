@@ -88,6 +88,7 @@ type t =
 | Procedure  of Region.t
 | Record     of Region.t
 | Step       of Region.t
+| Storage    of Region.t
 | To         of Region.t
 | Mod        of Region.t
 | Not        of Region.t
@@ -206,6 +207,7 @@ let proj_token = function
 | Procedure  region -> region, "Procedure"
 | Record     region -> region, "Record"
 | Step       region -> region, "Step"
+| Storage    region -> region, "Storage"
 | To         region -> region, "To"
 | Mod        region -> region, "Mod"
 | Not        region -> region, "Not"
@@ -289,6 +291,7 @@ let to_lexeme = function
 | Procedure  _ -> "procedure"
 | Record     _ -> "record"
 | Step       _ -> "step"
+| Storage    _ -> "storage"
 | To         _ -> "to"
 | Mod        _ -> "mod"
 | Not        _ -> "not"
@@ -340,6 +343,7 @@ let keywords = [
   (fun reg -> Procedure  reg);
   (fun reg -> Record     reg);
   (fun reg -> Step       reg);
+  (fun reg -> Storage    reg);
   (fun reg -> To         reg);
   (fun reg -> Mod        reg);
   (fun reg -> Not        reg);
@@ -563,6 +567,7 @@ let is_kwd = function
 | Procedure  _
 | Record     _
 | Step       _
+| Storage    _
 | To         _
 | Mod        _
 | Not        _

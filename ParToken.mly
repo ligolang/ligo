@@ -66,6 +66,7 @@
 %token <Region.t> Procedure   (* "procedure"  *)
 %token <Region.t> Record      (* "record"     *)
 %token <Region.t> Step        (* "step"       *)
+%token <Region.t> Storage     (* "storage"    *)
 %token <Region.t> To          (* "to"         *)
 %token <Region.t> Mod         (* "mod"        *)
 %token <Region.t> Not         (* "not"        *)

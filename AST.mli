@@ -44,6 +44,7 @@ type kwd_of         = Region.t
 type kwd_procedure  = Region.t
 type kwd_record     = Region.t
 type kwd_step       = Region.t
+type kwd_storage    = Region.t
 type kwd_then       = Region.t
 type kwd_to         = Region.t
 type kwd_type       = Region.t
@@ -227,7 +228,7 @@ and proc_decl = {
 and entry_decl = {
   kwd_entrypoint : kwd_entrypoint;
   name           : variable;
-  param          : parameters;
+  param          : entry_params;
   colon          : colon;
   ret_type       : type_expr;
   kwd_is         : kwd_is;
@@ -239,6 +240,20 @@ and entry_decl = {
 }
 
 and parameters = (param_decl, semi) nsepseq par reg
+
+and entry_params = (entry_param_decl, semi) nsepseq par reg
+
+and entry_param_decl =
+  EntryConst of param_const reg
+| EntryVar   of param_var reg
+| EntryStore of storage reg
+
+and storage = {
+  kwd_storage  : kwd_storage;
+  var          : variable;
+  colon        : colon;
+  storage_type : type_expr
+}
 
 and param_decl =
   ParamConst of param_const reg

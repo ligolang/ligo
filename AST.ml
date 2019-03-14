@@ -60,6 +60,7 @@ type kwd_of         = Region.t
 type kwd_procedure  = Region.t
 type kwd_record     = Region.t
 type kwd_step       = Region.t
+type kwd_storage    = Region.t
 type kwd_then       = Region.t
 type kwd_to         = Region.t
 type kwd_type       = Region.t
@@ -243,7 +244,7 @@ and proc_decl = {
 and entry_decl = {
   kwd_entrypoint : kwd_entrypoint;
   name           : variable;
-  param          : parameters;
+  param          : entry_params;
   colon          : colon;
   ret_type       : type_expr;
   kwd_is         : kwd_is;
@@ -255,6 +256,20 @@ and entry_decl = {
 }
 
 and parameters = (param_decl, semi) nsepseq par reg
+
+and entry_params = (entry_param_decl, semi) nsepseq par reg
+
+and entry_param_decl =
+  EntryConst of param_const reg
+| EntryVar   of param_var reg
+| EntryStore of storage reg
+
+and storage = {
+  kwd_storage  : kwd_storage;
+  var          : variable;
+  colon        : colon;
+  storage_type : type_expr
+}
 
 and param_decl =
   ParamConst of param_const reg
@@ -836,17 +851,35 @@ and print_entry_decl {value; _} =
   let {kwd_entrypoint; name; param; colon;
        ret_type; kwd_is; local_decls;
        block; kwd_with; return; terminator} = value in
-  print_token       kwd_entrypoint "entrypoint";
-  print_var         name;
-  print_parameters  param;
-  print_token       colon ":";
-  print_type_expr   ret_type;
-  print_token       kwd_is "is";
-  print_local_decls local_decls;
-  print_block       block;
-  print_token       kwd_with "with";
-  print_expr        return;
-  print_terminator  terminator
+  print_token        kwd_entrypoint "entrypoint";
+  print_var          name;
+  print_entry_params param;
+  print_token        colon ":";
+  print_type_expr    ret_type;
+  print_token        kwd_is "is";
+  print_local_decls  local_decls;
+  print_block        block;
+  print_token        kwd_with "with";
+  print_expr         return;
+  print_terminator   terminator
+
+and print_entry_params {value; _} =
+  let {lpar; inside; rpar} = value in
+  print_token lpar "(";
+  print_nsepseq ";" print_entry_param_decl inside;
+  print_token rpar ")"
+
+and print_entry_param_decl = function
+  EntryConst param_const -> print_param_const param_const
+| EntryVar   param_var   -> print_param_var   param_var
+| EntryStore param_store -> print_storage     param_store
+
+and print_storage {value; _} =
+  let {kwd_storage; var; colon; storage_type} = value in
+  print_token kwd_storage "storage";
+  print_var var;
+  print_token colon ":";
+  print_type_expr storage_type
 
 and print_parameters {value; _} =
   let {lpar; inside; rpar} = value in
