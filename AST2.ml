@@ -27,7 +27,7 @@ module O = struct
   | PSome   of pattern
   | PCons   of pattern * pattern
   | PNull
-  | PRecord of (field_name * pattern) list
+  | PRecord of (field_name * pattern) SMap.t
 
   type type_constructor =
     Option
@@ -36,8 +36,8 @@ module O = struct
   | Map
 
   type type_expr_case =
-    Sum      of (type_name * type_expr) list
-  | Record   of (field_name * type_expr) list
+    Sum      of (type_name * type_expr) SMap.t
+  | Record   of (field_name * type_expr) SMap.t
   | TypeApp  of type_constructor * (type_expr list)
   | Function of { arg: type_expr; ret: type_expr }
   | Ref      of type_expr
@@ -156,17 +156,26 @@ let s_type_constructor {value=name;region} : O.type_constructor =
    (* TODO: escape the name, prevent any \x1b and other weird characters from appearing in the output *)
    | _ -> failwith ("Unknown type constructor: " ^ name)
 
+let named_list_to_map (l : (O.name_and_region * 'a) list) : (O.name_and_region * 'a) SMap.t =
+  List.fold_left
+    (fun m ((x,_) as p) ->
+      let {name;_} : O.name_and_region = x in
+      SMap.add name p m)
+    SMap.empty
+    l
+
 let rec s_cartesian {value=sequence; region} : O.type_expr =
   let () = ignore (region) in
   s_nsepseq sequence
   |>map s_type_expr
   |> mapi (fun i p -> name_and_region_of_int i, p)
+  |> named_list_to_map
   |> (fun x -> (Record x : O.type_expr_case))
   |> type_expr region
 
 and s_sum_type {value=sequence; region} : O.type_expr =
   let () = ignore (region) in
-  type_expr region (Sum (map s_variant (s_nsepseq sequence)))
+  type_expr region (Sum (map s_variant (s_nsepseq sequence) |> named_list_to_map))
 
 and s_variant {value=(constr, kwd_of, cartesian); region} =
   let () = ignore (kwd_of,region) in
@@ -174,7 +183,7 @@ and s_variant {value=(constr, kwd_of, cartesian); region} =
 
 and s_record_type {value=(kwd_record, field_decls, kwd_end); region} : O.type_expr =
   let () = ignore (kwd_record,region,kwd_end) in
-  type_expr region (Record (map s_field_decl (s_nsepseq field_decls)) : O.type_expr_case)
+  type_expr region (Record (map s_field_decl (s_nsepseq field_decls) |> named_list_to_map) : O.type_expr_case)
 
 and s_field_decl {value=(var, colon, type_expr); region} : O.type_name * O.type_expr =
   let () = ignore (colon,region) in
@@ -234,7 +243,7 @@ let s_none {value=(l, (c_None, colon, type_expr), r); region} : O.expr =
 let parameters_to_tuple (parameters : (string * O.type_expr) list) : O.type_expr =
   (* TODO: use records with named fields to have named arguments. *)
   let parameter_tuple : O.type_expr_case =
-    Record (mapi (fun i (_name,ty) -> name_and_region_of_int i, ty) parameters) in
+    Record (mapi (fun i (_name,ty) -> name_and_region_of_int i, ty) parameters |> named_list_to_map) in
   O.{ type_expr = parameter_tuple; name = None; orig = Region.ghost }
 
 and parameters_to_decls singleparam (parameters : (string * O.type_expr) list) : O.decl list =
@@ -354,7 +363,7 @@ and s_ptuple {value=(lpar, sequence, rpar); region} =
   s_nsepseq sequence
   |> map s_core_pattern
   |> mapi (fun i p -> name_and_region_of_int i, p)
-  |> fun x -> O.PRecord x
+  |> fun x -> O.PRecord (x |> named_list_to_map)
 
 and s_psome {value=(c_Some,{value=(l,psome,r);region=region2});region} : O.pattern =
   let () = ignore    (c_Some,l,r,region2,region) in

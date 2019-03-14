@@ -25,7 +25,7 @@ module O : sig
   | PSome   of pattern
   | PCons   of pattern * pattern
   | PNull
-  | PRecord of (field_name * pattern) list
+  | PRecord of (field_name * pattern) SMap.t
 
   type type_constructor =
     Option
@@ -34,8 +34,8 @@ module O : sig
   | Map
 
   type type_expr_case =
-    Sum      of (type_name * type_expr) list
-  | Record   of (field_name * type_expr) list
+    Sum      of (type_name * type_expr) SMap.t
+  | Record   of (field_name * type_expr) SMap.t
   | TypeApp  of type_constructor * (type_expr list)
   | Function of { arg: type_expr; ret: type_expr }
   | Ref      of type_expr

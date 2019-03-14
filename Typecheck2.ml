@@ -1,3 +1,5 @@
+[@@@warning "-27"] (* TODO *)
+[@@@warning "-32"] (* TODO *)
 [@@@warning "-30"]
 
 module SMap = Map.Make(String)
@@ -25,7 +27,7 @@ module O = struct
   | PSome   of pattern
   | PCons   of pattern * pattern
   | PNull
-  | PRecord of (field_name * pattern) list
+  | PRecord of (field_name * pattern) SMap.t
 
   type type_constructor =
     Option
@@ -34,8 +36,8 @@ module O = struct
   | Map
 
   type type_expr_case =
-    Sum      of (type_name * type_expr) list
-  | Record   of (field_name * type_expr) list
+    Sum      of (type_name * type_expr) SMap.t
+  | Record   of (field_name * type_expr) SMap.t
   | TypeApp  of type_constructor * (type_expr list)
   | Function of { arg: type_expr; ret: type_expr }
   | Ref      of type_expr
@@ -114,6 +116,27 @@ let fold_map f a l =
     in acc', (elem' :: l) in
   let last_acc, last_l = List.fold_left f (a, []) l
   in last_acc, List.rev last_l
+
+let a_type_constructor (tve : tve) : I.type_constructor -> O.type_constructor = function
+  Option -> failwith "TODO"
+| List   -> failwith "TODO"
+| Set    -> failwith "TODO"
+| Map    -> failwith "TODO"
+
+let a_type_expr_case (tve : tve) : I.type_expr_case -> O.type_expr_case = function
+    Sum      l          -> failwith "TODO"
+  | Record   l          -> failwith "TODO"
+  | TypeApp  (tc, args) -> failwith "TODO"
+  | Function {arg;ret}  -> failwith "TODO"
+  | Ref      t          -> failwith "TODO"
+  | String              -> failwith "TODO"
+  | Int                 -> failwith "TODO"
+  | Unit                -> failwith "TODO"
+  | Bool                -> failwith "TODO"
+
+
+let a_type_expr (tve : tve) ({type_expr;name;orig} : I.type_expr) : O.type_expr =
+  failwith "TODO"
 
 let a_type (tve : tve) ({name;ty;orig} : I.type_decl) : tve * O.type_decl =
   failwith "TODO"
