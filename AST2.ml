@@ -79,8 +79,12 @@ module O = struct
   | MapLookup
 
   and constant =
-    Unit | Int of Z.t | String of string | Bytes of MBytes.t | False | True
-    | Null of type_expr | EmptySet of type_expr | CNone of type_expr
+    Unit
+  | Int of Z.t | String of string | Bytes of MBytes.t
+  | False | True
+  | Null of type_expr
+  | EmptySet of type_expr
+  | CNone of type_expr
 
   and instr =
     Assignment    of { name: var_name; value: expr }
