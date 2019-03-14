@@ -104,5 +104,26 @@ module O = struct
     }
 end
 
-let annotate : I.ast -> O.ast =
-  failwith "type annotator is not implemented yet"
+type te = O.type_expr list SMap.t
+type ve = O.type_expr list SMap.t
+type tve = te * ve
+
+let a_types : tve -> I.type_decl list -> tve * O.type_decl list =
+  failwith "TODO"
+
+let a_storage_decl : tve -> I.typed_var -> tve * O.typed_var =
+  failwith "TODO"
+
+let a_declarations : tve -> I.decl list -> tve * O.decl list =
+  failwith "TODO"
+
+let a_ast I.{types; storage_decl; declarations; orig} =
+  let tve = SMap.empty, SMap.empty in
+  let tve, types = a_types tve types in
+  let tve, storage_decl = a_storage_decl tve storage_decl in
+  let tve, declarations = a_declarations tve declarations in
+  let _ = tve in
+  O.{types; storage_decl; declarations; orig}
+
+let annotate : I.ast -> O.ast = a_ast
+
