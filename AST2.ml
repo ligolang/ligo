@@ -56,6 +56,7 @@ module O = struct
     App      of { operator: operator; arguments: expr list }
   | Var      of var_name
   | Constant of constant
+  | Record   of (field_name * expr) list
   | Lambda   of lambda
 
   and decl = { name:var_name; ty:type_expr; value: expr }
@@ -228,8 +229,10 @@ let s_none {value=(l, (c_None, colon, type_expr), r); region} : O.expr =
 
 let parameters_to_tuple (parameters : (string * O.type_expr) list) : O.type_expr =
   (* TODO: use records with named fields to have named arguments. *)
-  let parameter_tuple = O.Record (mapi (fun i (_name,ty) -> name_and_region_of_int i, ty) parameters) in
+  let parameter_tuple : O.type_expr_case =
+    Record (mapi (fun i (_name,ty) -> name_and_region_of_int i, ty) parameters) in
   O.{ type_expr = parameter_tuple; name = None; orig = Region.ghost }
+
 and parameters_to_decls singleparam (parameters : (string * O.type_expr) list) : O.decl list =
   let f i (name,ty) =
     O.{ name = {name; orig=Region.ghost};
@@ -266,7 +269,7 @@ and s_expr : I.expr -> O.expr =
   | False     c_False                             -> let () = ignore (c_False)         in Constant (False)
   | True      c_True                              -> let () = ignore (c_True)          in Constant (True)
   | Unit      c_Unit                              -> let () = ignore (c_Unit)          in Constant (Unit)
-  | Tuple     {value=(l,tuple,r);         region} -> let () = ignore (l,r,region)      in App { operator = Tuple; arguments = map s_expr (s_nsepseq tuple)}
+  | Tuple     {value=(l,tuple,r);         region} -> let () = ignore (l,r,region)      in s_tuple_expr (tuple |> s_nsepseq |> map s_expr)
   | List      list                                -> s_list list
   | EmptyList empty_list                          -> s_empty_list empty_list
   | Set       set                                 -> s_set set
@@ -278,6 +281,9 @@ and s_expr : I.expr -> O.expr =
   | MapLookUp map_lookup                          -> s_map_lookup map_lookup
   | ParExpr   {value=(lpar,expr,rpar);    region} -> let () = ignore (lpar,rpar,region) in s_expr expr
 
+and s_tuple_expr tuple : O.expr =
+  Record (mapi (fun i e -> name_and_region_of_int i, e) tuple)
+
 and s_map_lookup I.{value = {map_name; selector; index}; region} : O.expr =
   let {value = lbracket, index_expr, rbracket; region=region2} = index in
   let () = ignore (selector, lbracket, rbracket, region2, region) in
@@ -288,7 +294,7 @@ and s_some_app {value=(c_Some, {value=(l,arguments,r); region=region2}); region}
   match s_nsepseq arguments with
     [] -> failwith "tuple cannot be empty"
   | [a] -> s_expr a
-  | l -> App { operator = Tuple; arguments = map s_expr l }
+  | l -> s_tuple_expr (map s_expr l)
 
 and s_list {value=(l, list, r); region} : O.expr =
   let () = ignore (l, r, region) in
@@ -470,7 +476,7 @@ and s_arguments {value=(lpar, sequence, rpar); region} : O.expr list =
   match map s_expr (s_nsepseq sequence) with
     []                -> [Constant Unit]
   | [single_argument] -> [single_argument]
-  | args              -> [App { operator = Tuple; arguments = args }] ;
+  | args              -> [s_tuple_expr args] ;
 
 and s_fail ((kwd_fail, expr) : (I.kwd_fail * I.expr)) : O.instr =
   let () = ignore (kwd_fail) in
