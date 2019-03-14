@@ -7,8 +7,14 @@ open Region
 module SMap = Map.Make(String)
 
 module O = struct
-  type type_name = string
-  type var_name = string
+  type asttodo = [`TODO]
+
+  type name_and_region = {name: string; orig: Region.t}
+  type type_name  = name_and_region
+  type var_name   = name_and_region
+  type field_name = name_and_region
+
+  type record_key = [`Field of field_name | `Component of int]
 
   type pattern =
     PVar    of var_name
@@ -23,43 +29,58 @@ module O = struct
   | PSome   of pattern
   | PCons   of pattern * pattern
   | PNull
-  | PTuple  of pattern list
+  | PRecord of record_key precord
 
-  type type_expr =
-    Prod     of type_expr list
-  | Sum      of (type_name * type_expr) list
-  | Record   of (type_name * type_expr) list
-  | TypeApp  of type_name * (type_expr list)
-  | Function of { args: type_expr list; ret: type_expr }
+  and 'key precord = ('key * pattern) list
+
+  type type_constructor =
+    Option
+  | List
+  | Set
+  | Map
+
+  type type_expr_case =
+    Sum      of (type_name * type_expr) list
+  | Record   of record_key type_record
+  | TypeApp  of type_constructor * (type_expr list)
+  | Function of { arg: type_expr; ret: type_expr }
   | Ref      of type_expr
-  | Unit
+  | String
   | Int
+  | Unit
+  | Bool
+  and 'key type_record = ('key * type_expr) list
+
+  and type_expr = { type_expr: type_expr_case; name: type_name option; orig: Region.t }
 
   type typed_var = { name:var_name; ty:type_expr }
 
-  type type_decl = { name:string; ty:type_expr }
+  type type_decl = { name:type_name; ty:type_expr }
 
   type expr =
     App      of { operator: operator; arguments: expr list }
-  | Var of var_name
+  | Var      of var_name
   | Constant of constant
   | Lambda   of lambda
 
   and decl = { name:var_name; ty:type_expr; value: expr }
 
   and lambda = {
-      parameters:   type_expr SMap.t;
+      parameter:    typed_var;
       declarations: decl list;
       instructions: instr list;
       result:       expr;
     }
 
   and operator =
-    Or | And | Lt | Leq | Gt | Geq | Equal | Neq | Cat | Cons | Add | Sub | Mult | Div | Mod
+      Function    of var_name
+    | Construcor  of var_name
+    | UpdateField of record_key
+    | GetField    of record_key
+    | Or | And | Lt | Leq | Gt | Geq | Equal | Neq | Cat | Cons | Add | Sub | Mult | Div | Mod
     | Neg | Not
     | Tuple | Set | List
     | MapLookup
-    | Function of string
 
   and constant =
     Unit | Int of Z.t | String of string | Bytes of MBytes.t | False | True
@@ -87,8 +108,12 @@ let (|>) v f = f v       (* pipe f to v *)
 let (@@) f v = f v       (* apply f on v *)
 let (@.) f g x = f (g x) (* compose *)
 let map f l = List.rev (List.rev_map f l)
-(* TODO: check that List.to_seq, List.append and SMap.of_seq are not broken
-   (i.e. check that they are tail-recursive) *)
+let mapi f l =
+  let f (i, l) elem =
+    (i + 1, (f i elem) :: l)
+  in snd (List.fold_left f (0,[]) l)
+(* TODO: check that List.append is not broken
+   (i.e. check that it is tail-recursive) *)
 let append_map f l = map f l |>  List.flatten
 let append l1 l2 = List.append l1 l2
 let list_to_map l = List.fold_left (fun m (k,v) -> SMap.add k v m) SMap.empty l
@@ -111,15 +136,36 @@ let s_sepseq : ('a,'sep) Utils.sepseq -> 'a list =
 
 let s_name {value=name; region} : O.var_name =
   let () = ignore (region) in
+  {name;orig = region}
+
+let name_to_string {value=name; region} : string =
+  let () = ignore (region) in
   name
+
+let type_expr (orig : Region.t) (e : O.type_expr_case) : O.type_expr =
+  { type_expr = e; name = None; orig }
+
+let s_type_constructor {value=name;region} : O.type_constructor =
+  let () = ignore (region) in
+  match name with
+     "Option" -> Option
+   | "List"   -> List
+   | "Map"    -> Map
+   | "Set"    -> Set
+   (* TODO: escape the name, prevent any \x1b and other weird characters from appearing in the output *)
+   | _ -> failwith ("Unknown type constructor: " ^ name)
 
 let rec s_cartesian {value=sequence; region} : O.type_expr =
   let () = ignore (region) in
-  Prod (map s_type_expr (s_nsepseq sequence))
+  s_nsepseq sequence
+  |>map s_type_expr
+  |> mapi (fun i p -> `Component i, p)
+  |> (fun x -> (Record x : O.type_expr_case))
+  |> type_expr region
 
 and s_sum_type {value=sequence; region} : O.type_expr =
   let () = ignore (region) in
-  Sum (map s_variant (s_nsepseq sequence))
+  type_expr region (Sum (map s_variant (s_nsepseq sequence)))
 
 and s_variant {value=(constr, kwd_of, cartesian); region} =
   let () = ignore (kwd_of,region) in
@@ -127,15 +173,15 @@ and s_variant {value=(constr, kwd_of, cartesian); region} =
 
 and s_record_type {value=(kwd_record, field_decls, kwd_end); region} : O.type_expr =
   let () = ignore (kwd_record,region,kwd_end) in
-  Record (map s_field_decl (s_nsepseq field_decls))
+  type_expr region (Record (map s_field_decl (s_nsepseq field_decls)))
 
 and s_field_decl {value=(var, colon, type_expr); region} =
   let () = ignore (colon,region) in
-  (s_name var, s_type_expr type_expr)
+  (`Field (s_name var), s_type_expr type_expr)
 
 and s_type_app {value=(type_name,type_tuple); region} : O.type_expr =
   let () = ignore (region) in
-  TypeApp (s_name type_name, s_type_tuple type_tuple)
+  type_expr region (TypeApp (s_type_constructor type_name, s_type_tuple type_tuple))
 
 and s_type_tuple ({value=(lpar, sequence, rpar); region} : (I.type_name, I.comma) Utils.nsepseq I.par) : O.type_expr list =
   let () = ignore (lpar,rpar,region) in
@@ -148,9 +194,9 @@ and s_par_type {value=(lpar, type_expr, rpar); region} : O.type_expr =
 
 and s_type_alias name : O.type_expr =
   let () = ignore () in
-  TypeApp (s_name name, [])
+  type_expr name.region (TypeApp (s_type_constructor name, []))
 
-and s_type_expr : I.type_expr -> O.type_expr = function
+and s_type_expr (orig : I.type_expr) : O.type_expr = match orig with
   Prod    cartesian   -> s_cartesian   cartesian
 | Sum     sum_type    -> s_sum_type    sum_type
 | Record  record_type -> s_record_type record_type
@@ -161,7 +207,8 @@ and s_type_expr : I.type_expr -> O.type_expr = function
 
 let s_type_decl I.{value={kwd_type;name;kwd_is;type_expr;terminator}; region} : O.type_decl =
   let () = ignore (kwd_type,kwd_is,terminator,region) in
-  O.{ name = s_name name; ty = s_type_expr type_expr }
+  let ty = s_type_expr type_expr in
+  O.{ name = s_name name; ty = { ty with name = Some (s_name name) } }
 
 let s_storage_decl I.{value={kwd_storage; name; colon; store_type; terminator}; region} : O.typed_var =
   let () = ignore (kwd_storage,colon,terminator,region) in
@@ -182,6 +229,18 @@ let s_empty_set {value=(l, (lbrace, rbrace, colon, type_expr), r); region} : O.e
 let s_none {value=(l, (c_None, colon, type_expr), r); region} : O.expr =
   let () = ignore (l, c_None, colon, r, region) in
   Constant (CNone (s_type_expr type_expr))
+
+let parameters_to_tuple (parameters : (string * O.type_expr) list) : O.type_expr =
+  (* TODO: use records with named fields to have named arguments. *)
+  let parameter_tuple = O.Record (mapi (fun i (_name,ty) -> `Component i, ty) parameters) in
+  O.{ type_expr = parameter_tuple; name = None; orig = Region.ghost }
+and parameters_to_decls singleparam (parameters : (string * O.type_expr) list) : O.decl list =
+  let f i (name,ty) =
+    O.{ name = {name; orig=Region.ghost};
+        ty = ty;
+        value = App { operator = O.GetField (`Component i);
+                      arguments = [Var singleparam] } }
+  in mapi f parameters
 
 let rec bin l operator r = O.App { operator; arguments = [s_expr l; s_expr r] }
 and     una operator v = O.App { operator; arguments = [s_expr v] }
@@ -205,7 +264,7 @@ and s_expr : I.expr -> O.expr =
   | Neg       {value=(minus, expr);       region} -> let () = ignore (region,   minus) in una Neg expr
   | Not       {value=(kwd_not, expr);     region} -> let () = ignore (region, kwd_not) in una Not expr
   | Int       {value=(lexeme, z);         region} -> let () = ignore (region,  lexeme) in Constant (Int z)
-  | Var       {value=lexeme;              region} -> let () = ignore (region)          in Var lexeme
+  | Var       lexeme                              ->                                      Var (s_name lexeme)
   | String    {value=s;                   region} -> let () = ignore (region)          in Constant (String s)
   | Bytes     {value=(lexeme, mbytes);    region} -> let () = ignore (region,  lexeme) in Constant (Bytes mbytes)
   | False     c_False                             -> let () = ignore (c_False)         in Constant (False)
@@ -286,7 +345,10 @@ and s_raw {value=(lpar, (core_pattern, cons, pattern), rpar); region} =
 
 and s_ptuple {value=(lpar, sequence, rpar); region} =
   let () = ignore (lpar, rpar, region) in
-  PTuple (map s_core_pattern (s_nsepseq sequence))
+  s_nsepseq sequence
+  |> map s_core_pattern
+  |> mapi (fun i p -> `Component i, p)
+  |> fun x -> O.PRecord x
 
 and s_psome {value=(c_Some,{value=(l,psome,r);region=region2});region} : O.pattern =
   let () = ignore    (c_Some,l,r,region2,region) in
@@ -298,11 +360,11 @@ and s_const_decl I.{value={kwd_const;name;colon;const_type;equal;init;terminator
 
 and s_param_const {value=(kwd_const,variable,colon,type_expr); region} : string * O.type_expr =
   let () = ignore (kwd_const,colon,region) in
-  s_name variable, s_type_expr type_expr
+  name_to_string variable, s_type_expr type_expr
 
 and s_param_var {value=(kwd_var,variable,colon,type_expr); region} : string * O.type_expr =
   let () = ignore (kwd_var,colon,region) in
-  s_name variable, s_type_expr type_expr
+  name_to_string variable, s_type_expr type_expr
 
 and s_param_decl : I.param_decl -> string * O.type_expr = function
     ParamConst p ->  s_param_const p
@@ -406,9 +468,13 @@ and s_constr_app {value=(constr, arguments); region} : O.expr =
   let () = ignore (region) in
   App { operator = Function (s_name constr); arguments = s_arguments arguments }
 
-and s_arguments {value=(lpar, sequence, rpar); region} =
+and s_arguments {value=(lpar, sequence, rpar); region} : O.expr list =
+  (* TODO: should return a tuple *)
   let () = ignore (lpar,rpar,region) in
-  map s_expr (s_nsepseq sequence);
+  match map s_expr (s_nsepseq sequence) with
+    []                -> [Constant Unit]
+  | [single_argument] -> [single_argument]
+  | args              -> [App { operator = Tuple; arguments = args }] ;
 
 and s_fail ((kwd_fail, expr) : (I.kwd_fail * I.expr)) : O.instr =
   let () = ignore (kwd_fail) in
@@ -431,14 +497,27 @@ and s_block I.{value={opening;instr;terminator;close}; _} : O.instr list =
   let () = ignore (opening,terminator,close) in
   s_instructions instr
 
+and gensym =
+  let i = ref 0 in
+  fun ty ->
+  i := !i + 1;
+  (* TODO: Region.ghost *)
+  ({name = {name=(string_of_int !i) ^ "gensym"; orig = Region.ghost}; ty} : O.typed_var)
+
 and s_fun_decl I.{value={kwd_function;name;param;colon;ret_type;kwd_is;local_decls;block;kwd_with;return;terminator}; region} : O.decl =
   let () = ignore (kwd_function,colon,kwd_is,kwd_with,terminator,region) in
+  let tuple_type = s_parameters param |> parameters_to_tuple in
+  let single_argument = gensym tuple_type in
+  let ({name = single_argument_xxx; ty = _} : O.typed_var) = single_argument in
   O.{
       name = s_name name;
-      ty = Function { args = map snd (s_parameters param); ret = s_type_expr ret_type };
+      ty = type_expr region (Function { arg = tuple_type;
+                                        ret = s_type_expr ret_type });
       value = Lambda {
-                  parameters   = s_parameters param |> list_to_map;
-                  declarations = map s_local_decl local_decls;
+                  parameter    = single_argument;
+                  declarations = append
+                                   (s_parameters param |> parameters_to_decls single_argument_xxx)
+                                   (map s_local_decl local_decls);
                   instructions = s_block block;
                   result       = s_expr return
                 }
@@ -446,12 +525,18 @@ and s_fun_decl I.{value={kwd_function;name;param;colon;ret_type;kwd_is;local_dec
 
 and s_proc_decl I.{value={kwd_procedure;name;param;kwd_is;local_decls;block;terminator}; region} =
   let () = ignore (kwd_procedure,kwd_is,terminator,region) in
+  let tuple_type = s_parameters param |> parameters_to_tuple in
+  let single_argument = gensym tuple_type in
+  let ({name = single_argument_xxx; ty = _} : O.typed_var) = single_argument in
   O.{
       name = s_name name;
-      ty = Function { args = map snd (s_parameters param); ret = Unit };
+      ty = type_expr region (Function { arg = tuple_type;
+                                        ret = type_expr region Unit });
       value = Lambda {
-                  parameters   = s_parameters param |> list_to_map;
-                  declarations = map s_local_decl local_decls;
+                  parameter    = single_argument;
+                  declarations = append
+                                   (s_parameters param |> parameters_to_decls single_argument_xxx)
+                                   (map s_local_decl local_decls);
                   instructions = s_block block;
                   result       = O.Constant O.Unit
                 }
@@ -459,12 +544,18 @@ and s_proc_decl I.{value={kwd_procedure;name;param;kwd_is;local_decls;block;term
 
 and s_entry_decl I.{value={kwd_entrypoint;name;param;kwd_is;local_decls;block;terminator}; region} =
   let () = ignore (kwd_entrypoint,kwd_is,terminator,region) in
+  let tuple_type = s_parameters param |> parameters_to_tuple in
+  let single_argument = gensym tuple_type in
+  let ({name = single_argument_xxx; ty = _} : O.typed_var) = single_argument in
   O.{
       name = s_name name;
-      ty = Function { args = map snd (s_parameters param); ret = Unit };
+      ty = type_expr region (Function { arg = tuple_type;
+                                        ret = type_expr region Unit });
       value = Lambda {
-                  parameters   = s_parameters param |> list_to_map;
-                  declarations = map s_local_decl local_decls;
+                  parameter    = single_argument;
+                  declarations = append
+                                   (s_parameters param |> parameters_to_decls single_argument_xxx)
+                                   (map s_local_decl local_decls);
                   instructions = s_block block;
                   result       = O.Constant O.Unit
                 }

@@ -12,9 +12,10 @@
     tezos-micheline
     meta-michelson
     ligo-helpers
+    ligo-parser
   )
   (preprocess
     (pps ppx_let)
   )
-  (flags (:standard -w +1..62-4-44-40-42-9@39@33 ))
+  (flags (:standard -w +1..62-4-9-44-40-42@39@33 ))
 )

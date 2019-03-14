@@ -8,6 +8,7 @@ open Script_ir_translator
 module Michelson = Tezos_utils.Micheline.Michelson
 module Stack = Meta_michelson.Wrap.Stack
 module Types = Meta_michelson.Contract.Types
+module Append_tree = Tree.Append
 
 type type_name = string
 
@@ -27,16 +28,9 @@ type type_value = [
 
 and environment_element = string * type_value
 
-and environment_small' =
-  | Leaf of environment_element
-  | Node of {
-      a : environment_small' ;
-      b : environment_small' ;
-      size : int ;
-      full : bool ;
-    }
+and environment_small' = environment_element Append_tree.t'
 
-and environment_small = Empty | Full of environment_small'
+and environment_small = environment_element Append_tree.t
 
 and environment = environment_small list
 
@@ -124,7 +118,7 @@ module PP = struct
   and environment_element ppf ((s, tv) : environment_element) =
     Format.fprintf ppf "%s : %a" s type_ tv
 
-  and environment_small' ppf = function
+  and environment_small' ppf = let open Append_tree in function
     | Leaf x -> environment_element ppf x
     | Node {a; b ; full ; size} ->
       fprintf ppf "@[<v 2>N(f:%b,s:%d)[@;%a,@;%a@]@;]"
@@ -135,14 +129,14 @@ module PP = struct
     | Empty -> fprintf ppf "[]"
     | Full x -> environment_small' ppf x
 
-  and environment_small_hlist' ppf = function
+  and environment_small_hlist' ppf = let open Append_tree in function
     | Leaf x -> environment_element ppf x
     | Node {a;b} ->
       fprintf ppf "%a, %a"
         environment_small_hlist' a
         environment_small_hlist' b
 
-  and environment_small_hlist ppf = function
+  and environment_small_hlist ppf = let open Append_tree in function
     | Empty -> fprintf ppf ""
     | Full x -> environment_small_hlist' ppf x
 
@@ -267,7 +261,7 @@ module Translate_type = struct
         let%bind (Ex_ty ret) = type_ ret in
         ok @@ Ex_ty Types.(pair capture @@ lambda (pair capture arg) ret)
 
-    and environment_small' = function
+    and environment_small' = let open Append_tree in function
       | Leaf (_, x) -> type_ x
       | Node {a;b} ->
         let%bind (Ex_ty a) = environment_small' a in
@@ -322,7 +316,7 @@ module Translate_type = struct
     let%bind michelson_type = type_ tyv in
     ok @@ annotate ("@" ^ name) michelson_type
 
-  and environment_small' = function
+  and environment_small' = let open Append_tree in function
     | Leaf x -> environment_element x
     | Node {a;b} ->
       let%bind a = environment_small' a in
@@ -403,44 +397,19 @@ module Environment = struct
   type element = environment_element
 
   module Small = struct
+    open Append_tree
+
     type t' = environment_small'
     type t = environment_small
 
-    let node (a, b, size, full) = Node {a;b;size;full}
-
-    let rec has' s = function
-      | Leaf (s',_) when s = s' -> true
-      | Leaf _ -> false
-      | Node{a;b} -> has' s a || has' s b
+    let has' s = exists' (fun ((x, _):element) -> x = s)
     let has s = function
       | Empty -> false
       | Full x -> has' s x
 
-    let empty : t = Empty
+    let empty : t = empty
 
-    let size' = function
-      | Leaf _ -> 1
-      | Node {size} -> size
-
-    let size = function
-      | Empty -> 0
-      | Full x -> size' x
-
-    let rec append' x = function
-      | Leaf e -> node (Leaf e, Leaf x, 1, true)
-      | Node({full=true;size}) as n -> node(n, Leaf x, size + 1, false)
-      | Node({a=Node a;b;full=false} as n) -> (
-          match append' x b with
-          | Node{full=false} as b -> Node{n with b}
-          | Node({full=true} as b) -> Node{n with b = Node b ; full = b.size = a.size}
-          | Leaf _ -> assert false
-        )
-      | Node{a=Leaf _;full=false} -> assert false
-
-    let append ((s, _) as x) = function
-      | Empty -> Full (Leaf x)
-      | Full t ->
-        if has' s t then Full (t) else Full (append' x t)
+    let append s (e:t) = if has (fst s) e then e else append s e
 
     let of_list lst =
       let rec aux = function
@@ -640,7 +609,7 @@ module Environment = struct
           Tezos_utils.Micheline.Michelson.pp schema_michelson
       in
       let%bind _ =
-        Trace.trace_tzresult_lwt (error "error parsing big.get code" error_message) @@
+        trace_tzresult_lwt (error "error parsing big.get code" error_message) @@
         Tezos_utils.Memory_proto_alpha.parse_michelson code
           input_stack_ty output_stack_ty
       in
@@ -1013,6 +982,207 @@ module Translate_ir = struct
           Alpha_context.Script_int.to_int n in
         ok @@ `Nat n
     | _ -> simple_fail "this value can't be transpiled back yet"
+end
+
+module Translate_AST = struct
+
+  module AST = Ligo_parser.Typed.O
+  module SMap = Ligo_parser.Typed.SMap
+
+  module Rename = struct
+    open! AST
+
+    let rec rename_expr_case (src:string) (dst:string) : expr_case -> expr_case = function
+      | App {operator;arguments} -> App {operator = rename_operator src dst operator ; arguments = rename_exprs src dst arguments}
+      | Var n when n.name.name = src -> Var {n with name = {n.name with name = dst}}
+      | Var n -> Var n
+      | Constant c -> Constant c
+      | Record r -> Record (List.map (fun (key, expr) -> key, rename_expr src dst expr) r)
+      | Lambda {parameter} as l when parameter.name.name = src -> l
+      | Lambda ({instructions;declarations} as l) ->
+         Lambda {l with instructions = rename_instrs src dst instructions ; declarations = rename_declarations src dst declarations}
+
+    and rename_expr (src:string) (dst:string) (e : expr) : expr =
+      { e with expr = rename_expr_case src dst e.expr }
+
+    and rename_exprs src dst exprs = List.map (rename_expr src dst) exprs
+
+    and rename_operator_case (src:string) (dst:string) : operator_case -> operator_case = function
+      | Function n when n.name = src -> Function {n with name = dst}
+      | x -> x
+
+    and rename_operator src dst (o:operator) : operator = {o with operator = rename_operator_case src dst o.operator}
+
+    and rename_var src dst (v:var_name) : var_name =
+      if v.name = src
+      then {v with name = dst}
+      else v
+
+    and rename_instr (src:string) (dst:string) : instr -> instr = function
+      | Assignment {name;value;orig} when name.name = src -> Assignment {name = {name with name = dst};value;orig}
+      | Assignment {name;value;orig} -> Assignment {value = rename_expr src dst value;name;orig}
+      | While {condition;body;orig} -> While {condition = rename_expr src dst condition;body=rename_instrs src dst body;orig}
+      | ForCollection {list;var;body;orig} -> ForCollection {list = rename_expr src dst list;var = rename_var src dst var;
+                                                             body = rename_instrs src dst body;orig}
+      | Match ({expr;cases} as a) -> Match {a with expr = rename_expr src dst expr ; cases = rename_match_cases src dst cases}
+      | ProcedureCall {expr;orig} -> ProcedureCall {expr = rename_expr src dst expr;orig}
+      | Fail {expr;orig} -> Fail {expr = rename_expr src dst expr;orig}
+
+    and rename_instrs src dst : instr list -> instr list = List.map (rename_instr src dst)
+
+    and rename_match_cases (src:string) (dst:string) (m:(_ * instr list) list) =
+      List.map (fun (x, y) -> x, rename_instrs src dst y) m
+
+    and rename_declaration (src:string) (dst:string) ({var} as d: decl) : decl =
+      if var.name.name = src
+      then {d with var = {var with name = {var.name with name = dst}}}
+      else d
+
+    and rename_declarations (src:string) (dst:string) (decls:decl list) =
+      List.map (rename_declaration src dst) decls
+  end
+
+  let rec translate_type : AST.type_expr -> type_value result = fun {type_expr}  ->
+    match type_expr with
+    | Unit -> ok (`Base Unit)
+    | Int -> ok (`Base Int)
+    | String -> ok (`Base String)
+    | Bool -> ok (`Base Bool)
+    | Sum lst ->
+       let node = Append_tree.of_list @@ List.map snd lst in
+       let aux a b : type_value result =
+         let%bind a = a in
+         let%bind b = b in
+         ok (`Or (a, b))
+       in
+       Append_tree.fold_ne translate_type aux node
+    | Record r ->
+       let node = Append_tree.of_list @@ List.map snd r in
+       let aux a b : type_value result =
+         let%bind a = a in
+         let%bind b = b in
+         ok (`Pair (a, b))
+       in
+       Append_tree.fold_ne translate_type aux node
+    | Ref t -> translate_type t
+    | Function {arg;ret} ->
+       let%bind arg = translate_type arg in
+       let%bind ret = translate_type ret in
+       ok (`Function(arg, ret))
+    | TypeApp _ -> simple_fail "No type application"
+
+  let translate_constant : AST.constant -> value result = function
+    | Unit -> ok `Unit
+    | String s -> ok (`String s)
+    | Int n -> ok (`Int (Z.to_int n))
+    | False -> ok (`Bool false)
+    | True -> ok (`Bool true)
+    | _ -> simple_fail ""
+
+  let rec translate_lambda : AST.lambda -> anon_function result =
+    fun {declarations;parameter;instructions;result} ->
+       let ({name;ty}:AST.typed_var) = parameter in
+       let%bind input_ty = translate_type ty in
+       let declarations : AST.decl list = Rename.rename_declarations name.name "input" declarations in
+       let instructions : AST.instr list = Rename.rename_instrs name.name "input" instructions in
+       let%bind output_statement =
+         let%bind (output_expr : expression) = translate_expr result in
+         ok (Assignment (Variable("output", output_expr)))
+       in
+       let%bind output_ty = translate_type result.ty in
+       let%bind (declaration_statements : statement list) = translate_declarations declarations in
+       let%bind (instruction_statements : statement list) = translate_instructions instructions in
+       let body = declaration_statements @ instruction_statements @ [output_statement] in
+       ok {input=input_ty;output=output_ty;body}
+
+  and translate_expr' : AST.expr_case -> expression' result = function
+    | Var {name} -> ok (Var name.name)
+    | Constant cst ->
+       let%bind value = translate_constant cst in
+       ok (Literal value)
+    | Lambda _ -> simple_fail "Mini_c doesn't deal with lambda in expressions yet"
+    | _ -> simple_fail ""
+
+  and translate_expr : AST.expr -> expression result = fun {expr;ty} ->
+    let%bind expr = translate_expr' expr in
+    let%bind ty = translate_type ty in
+    ok (expr, ty)
+
+  and translate_declaration : AST.decl -> statement result = fun {var;value} ->
+    let%bind expr = translate_expr value in
+    ok (Assignment(Variable(var.name.name, expr)))
+
+  and translate_declarations : AST.decl list -> statement list result = fun declarations ->
+    bind_list @@ List.map translate_declaration declarations
+
+  and translate_match (expr:AST.expr) (cases: (AST.pattern * AST.instr list) list) : statement result =
+    match cases with
+    | [(AST.PTrue, instrs_true) ; (AST.PFalse, instrs_false) ] ->
+       let%bind cond = translate_expr expr in
+       let%bind b_true = translate_instructions instrs_true in
+       let%bind b_false = translate_instructions instrs_false in
+       ok (Cond (cond, b_true, b_false))
+    | [(AST.PFalse, instrs_false) ; (AST.PTrue, instrs_true) ] ->
+       let%bind cond = translate_expr expr in
+       let%bind b_true = translate_instructions instrs_true in
+       let%bind b_false = translate_instructions instrs_false in
+       ok (Cond (cond, b_true, b_false))
+    | _ -> simple_fail "unrecognized pattern"
+
+  and translate_instruction : AST.instr -> statement result = function
+    | Assignment {name ; value} ->
+       let%bind expr = translate_expr value in
+       ok (Assignment (Variable(name.name, expr)))
+    | While {condition ; body} ->
+       let%bind block = translate_instructions body in
+       let%bind cond = translate_expr condition in
+       ok (While (cond, block))
+    | ForCollection _ -> simple_fail "We don't deal with for collection yet"
+    | Match {expr;cases} -> translate_match expr cases
+    | Fail _ -> simple_fail "Fail have to be added in Mini_C"
+    | ProcedureCall _ -> simple_fail "Drop Unit have to be added in Mini_C"
+
+  and translate_instructions : AST.instr list -> statement list result = fun instrs ->
+    bind_list @@ List.map translate_instruction instrs
+
+  let translate_program : AST.ast -> block result = fun {declarations} ->
+    translate_declarations declarations
+
+  let rec to_mini_c_value' : (AST.expr_case * AST.type_expr) -> value result = function
+    | Constant c, _ -> translate_constant c
+    | App {arguments;operator = {operator = Construcor c ; ty = {type_expr = Sum lst}}}, _ ->
+       let node = Append_tree.of_list @@ List.map fst lst in
+       let%bind lst =
+         trace_option (simple_error "Not constructor of variant type") @@
+         Append_tree.exists_path (fun (x:AST.name_and_region) -> x.name = c.name) node in
+       let arg = List.hd arguments in
+       let%bind arg = to_mini_c_value arg in
+       let ors = List.fold_left (fun b a -> if a then `Right b else `Left b) arg (List.rev lst) in
+       ok ors
+    | App _, _ -> simple_fail "Applications aren't value"
+    | Record lst, _ ->
+       let node = Append_tree.of_list @@ List.map snd lst in
+       let aux a b =
+         let%bind a = a in
+         let%bind b = b in
+         ok (`Pair (a, b))
+       in
+       Append_tree.fold_ne to_mini_c_value aux node
+    | Lambda _, _-> simple_fail "Lambda aren't value yet"
+    | Var _, _-> simple_fail "Var aren't value yet"
+
+  and to_mini_c_value : AST.expr -> value result = fun {expr;ty} ->
+    to_mini_c_value' (expr, ty)
+
+  let ghost expr ty : AST.expr = {expr;ty;orig=`TODO}
+
+  let of_mini_c_value ({type_expr} as ty, v : AST.type_expr * value) : AST.expr result = match (type_expr, v) with
+    | String, `String s -> ok @@ ghost (Constant (String s)) ty
+    | Bool, `Bool b -> ok @@ ghost (Constant (if b then True else False)) ty
+    | Unit, `Unit -> ok @@ ghost (Constant (Unit)) ty
+    | Int, `Int n -> ok @@ ghost (Constant (Int (Z.of_int n))) ty
+    | Function _, _ -> simple_fail "Functions aren't retrieved from Mini_C yet"
+    | _ -> simple_fail "of_mini_c_value error"
 end
 
 module Run = struct

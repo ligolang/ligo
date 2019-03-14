@@ -6,24 +6,31 @@
  (modules ParToken Parser)
  (flags -la 1 --explain --external-tokens LexToken))
 
-(executables
- (names LexerMain ParserMain)
- (public_names ligo-lexer ligo-parser)
- (package ligo-parser)
- (modules_without_implementation Error)
- (libraries getopt hex str uutf zarith))
+(library
+  (name ligo_parser)
+  (public_name ligo-parser)
+  (modules_without_implementation Error)
+  (libraries getopt hex str uutf zarith)
+)
+
+;; (executables
+;;  (names LexerMain ParserMain)
+;;  (public_names ligo-lexer ligo-parser)
+;;  (package ligo-parser)
+;;  (modules_without_implementation Error)
+;;  (libraries getopt hex str uutf zarith))
 
 ;; Les deux directives (rule) qui suivent sont pour le dev local.
 ;; Il suffit de faire "dune build Parser.exe" pour avoir un Parser.exe dans le dossier.
 ;; Pour le purger, il faut faire "dune clean".
-(rule
-  (targets Parser.exe)
-  (deps ParserMain.exe)
-  (action (copy ParserMain.exe Parser.exe))
-  (mode promote-until-clean))
+;; (rule
+;;   (targets Parser.exe)
+;;   (deps ParserMain.exe)
+;;   (action (copy ParserMain.exe Parser.exe))
+;;   (mode promote-until-clean))
 
-(rule
-  (targets Lexer.exe)
-  (deps LexerMain.exe)
-  (action (copy LexerMain.exe Lexer.exe))
-  (mode promote-until-clean))
+;; (rule
+;;   (targets Lexer.exe)
+;;   (deps LexerMain.exe)
+;;   (action (copy LexerMain.exe Lexer.exe))
+;;   (mode promote-until-clean))
