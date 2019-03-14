@@ -405,7 +405,14 @@ and s_instruction : I.instruction -> O.instr list = function
 
 and s_conditional I.{kwd_if;test;kwd_then;ifso;kwd_else;ifnot} : O.instr =
   let () = ignore (kwd_if,kwd_then,kwd_else) in
-  If { condition = s_expr test; ifso = s_instruction ifso; ifnot = s_instruction ifnot; orig = `TODO }
+  let test = s_expr test in
+  let ifso = O.PTrue, s_instruction ifso in
+  let ifnot = O.PFalse, s_instruction ifnot in
+  Match {
+      expr  = test;
+      cases = [ifso; ifnot];
+      orig  = `TODO
+    }
 
 and s_match_instr I.{kwd_match;expr;kwd_with;lead_vbar;cases;kwd_end} : O.instr =
   let {value=cases;region} = cases in
