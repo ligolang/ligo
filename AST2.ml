@@ -87,18 +87,19 @@ module O = struct
   | CNone of type_expr
 
   and instr =
-    Assignment    of { name: var_name; value: expr }
-  | While         of { condition: expr; body: instr list }
-  | ForCollection of { list: expr; key: var_name; value: var_name option; body: instr list }
-  | If            of { condition: expr; ifso: instr list; ifnot: instr list }
-  | Match         of { expr: expr; cases: (pattern * instr list) list }
-  | ProcedureCall of expr (* expr returns unit, drop the result. *)
-  | Fail          of { expr: expr }
+    Assignment    of { name: var_name; value: expr; orig: asttodo }
+  | While         of { condition: expr; body: instr list; orig: asttodo }
+  | ForCollection of { list: expr; key: var_name; value: var_name option; body: instr list; orig: asttodo }
+  | If            of { condition: expr; ifso: instr list; ifnot: instr list; orig: asttodo }
+  | Match         of { expr: expr; cases: (pattern * instr list) list; orig: asttodo }
+  | ProcedureCall of { expr: expr; orig: asttodo } (* expr returns unit, drop the result. Similar to OCaml's ";". *)
+  | Fail          of { expr: expr; orig: asttodo }
 
   type ast = {
       types           : type_decl list;
       storage_decl    : typed_var;
       declarations    : decl list;
+      orig            : I.t
     }
 end
 
@@ -404,20 +405,20 @@ and s_instruction : I.instruction -> O.instr list = function
 
 and s_conditional I.{kwd_if;test;kwd_then;ifso;kwd_else;ifnot} : O.instr =
   let () = ignore (kwd_if,kwd_then,kwd_else) in
-  If { condition = s_expr test; ifso = s_instruction ifso; ifnot = s_instruction ifnot }
+  If { condition = s_expr test; ifso = s_instruction ifso; ifnot = s_instruction ifnot; orig = `TODO }
 
 and s_match_instr I.{kwd_match;expr;kwd_with;lead_vbar;cases;kwd_end} : O.instr =
   let {value=cases;region} = cases in
   let () = ignore (kwd_match,kwd_with,lead_vbar,kwd_end,region) in
-  Match { expr = s_expr expr; cases = map s_case (s_nsepseq cases) }
+  Match { expr = s_expr expr; cases = map s_case (s_nsepseq cases); orig = `TODO }
 
 and s_ass_instr {value=(variable,ass,expr); region} : O.instr =
   let () = ignore (ass,region) in
-  Assignment { name = s_name variable; value = s_expr expr }
+  Assignment { name = s_name variable; value = s_expr expr; orig = `TODO }
 
 and s_while_loop {value=(kwd_while, expr, block); region} : O.instr list =
   let () = ignore (kwd_while,region) in
-  [While {condition = s_expr expr; body = s_block block}]
+  [While {condition = s_expr expr; body = s_block block; orig = `TODO}]
 
 and s_for_loop : I.for_loop -> O.instr list = function
   ForInt     for_int     -> s_for_int     for_int
@@ -431,15 +432,17 @@ and s_for_int ({value={kwd_for;ass;down;kwd_to;bound;step;block}; region} : I.fo
                                           | None          ->                  O.Lt, O.Add in
   let step = s_step step
   in [
-      Assignment { name; value = s_expr expr };
+      Assignment { name; value = s_expr expr; orig = `TODO };
       (* TODO: lift the declaration of the variable, to avoid creating a nested scope here. *)
       While {
           condition = App { operator = condition;
-                            arguments = [Var name; s_expr bound] };
+                            arguments = [Var name; s_expr bound]};
           body = append (s_block block)
                         [O.Assignment { name;
                                         value = App { operator;
-                                                      arguments = [Var name; step]}}]
+                                                      arguments = [Var name; step]};
+                                        orig = `TODO }];
+          orig = `TODO
         }
     ]
 
@@ -450,7 +453,8 @@ and s_for_collect ({value={kwd_for;var;bind_to;kwd_in;expr;block}; _} : I.for_co
         list = s_expr expr;
         key = s_name var;
         value = s_bind_to bind_to;
-        body = s_block block
+        body = s_block block;
+        orig = `TODO
       }
   ]
 
@@ -490,7 +494,7 @@ and s_arguments {value=(lpar, sequence, rpar); region} : O.expr list =
 
 and s_fail ((kwd_fail, expr) : (I.kwd_fail * I.expr)) : O.instr =
   let () = ignore (kwd_fail) in
-  Fail { expr = s_expr expr }
+  Fail { expr = s_expr expr; orig = `TODO }
 
 
 
@@ -500,7 +504,7 @@ and s_single_instr : I.single_instr -> O.instr list = function
 | Match    {value; _} -> [s_match_instr value]
 | Ass      instr      -> [s_ass_instr instr]
 | Loop     loop       -> s_loop loop
-| ProcCall fun_call   -> [ProcedureCall (s_fun_call fun_call)]
+| ProcCall fun_call   -> [ProcedureCall { expr = s_fun_call fun_call; orig = `TODO }]
 | Null     kwd_null   -> let () = ignore (kwd_null) in
                          []
 | Fail     {value; _} -> [s_fail value]
@@ -609,7 +613,7 @@ let s_ast (ast : I.ast) : O.ast =
   let () = match operations_decl with
       Some _ -> failwith "Operations declaration is not allowed anymore TODO"
     | None -> ()
-  in {types; storage_decl; declarations}
+  in {types; storage_decl; declarations; orig = ast}
 
 
 
