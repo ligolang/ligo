@@ -2,6 +2,8 @@
 
 module SMap : Map.S with type key = string
 
+module I = AST2.O
+
 module O : sig
   type asttodo = [`TODO] (* occurrences of asttodo will point to some part of the original parser AST *)
 
@@ -102,4 +104,4 @@ module O : sig
     }
 end
 
-val temporary_force_dune : int
+val annotate : I.ast -> O.ast

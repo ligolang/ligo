@@ -106,6 +106,8 @@ let () =
 
 (* Temporary: force dune to build AST2.ml *)
 let () =
-  let open Typecheck2 in
-  let _ = temporary_force_dune in
-  ()
+  if false then
+    let _ = Typecheck2.annotate in
+    ()
+  else
+    ()

@@ -2,6 +2,8 @@
 
 module SMap = Map.Make(String)
 
+module I = AST2.O
+
 module O = struct
   type asttodo = [`TODO] (* occurrences of asttodo will point to some part of the original parser AST *)
 
@@ -102,4 +104,5 @@ module O = struct
     }
 end
 
-let temporary_force_dune = 123
+let annotate : I.ast -> O.ast =
+  failwith "type annotator is not implemented yet"
