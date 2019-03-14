@@ -41,7 +41,6 @@ module O : sig
   | TypeApp  of type_constructor * (type_expr list)
   | Function of { arg: type_expr; ret: type_expr }
   | Ref      of type_expr
-  | TC       of type_constructor
   | String
   | Int
   | Unit
@@ -68,7 +67,7 @@ module O : sig
   and decl = { var: typed_var; value: expr; orig: asttodo }
 
   and lambda = {
-      parameters:   typed_var SMap.t;
+      parameter:    typed_var;
       declarations: decl list;
       instructions: instr list;
       result:       expr;
