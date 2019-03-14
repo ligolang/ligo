@@ -100,7 +100,7 @@ module O : sig
       types           : type_decl list;
       storage_decl    : typed_var;
       declarations    : decl list;
-      orig: AST.t
+      orig            : AST.t
     }
 end
 

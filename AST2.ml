@@ -99,7 +99,7 @@ module O = struct
       types           : type_decl list;
       storage_decl    : typed_var;
       declarations    : decl list;
-      orig            : I.t
+      orig            : AST.t
     }
 end
 
