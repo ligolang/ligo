@@ -14,8 +14,6 @@ module O = struct
   type var_name   = name_and_region
   type field_name = name_and_region
 
-  type record_key = [`Field of field_name | `Component of int]
-
   type pattern =
     PVar    of var_name
   | PWild
@@ -29,9 +27,7 @@ module O = struct
   | PSome   of pattern
   | PCons   of pattern * pattern
   | PNull
-  | PRecord of record_key precord
-
-  and 'key precord = ('key * pattern) list
+  | PRecord of (field_name * pattern) list
 
   type type_constructor =
     Option
@@ -41,7 +37,7 @@ module O = struct
 
   type type_expr_case =
     Sum      of (type_name * type_expr) list
-  | Record   of record_key type_record
+  | Record   of (field_name * type_expr) list
   | TypeApp  of type_constructor * (type_expr list)
   | Function of { arg: type_expr; ret: type_expr }
   | Ref      of type_expr
@@ -75,8 +71,8 @@ module O = struct
   and operator =
       Function    of var_name
     | Construcor  of var_name
-    | UpdateField of record_key
-    | GetField    of record_key
+    | UpdateField of field_name
+    | GetField    of field_name
     | Or | And | Lt | Leq | Gt | Geq | Equal | Neq | Cat | Cons | Add | Sub | Mult | Div | Mod
     | Neg | Not
     | Tuple | Set | List
@@ -126,6 +122,8 @@ let fold_map f a l =
 
 (* Simplify the AST *)
 
+let name_and_region_of_int i = O.{name = string_of_int i; orig = Region.ghost}
+
 let s_nsepseq : ('a,'sep) Utils.nsepseq -> 'a list =
   fun (first, rest) -> first :: (map snd rest)
 
@@ -159,7 +157,7 @@ let rec s_cartesian {value=sequence; region} : O.type_expr =
   let () = ignore (region) in
   s_nsepseq sequence
   |>map s_type_expr
-  |> mapi (fun i p -> `Component i, p)
+  |> mapi (fun i p -> name_and_region_of_int i, p)
   |> (fun x -> (Record x : O.type_expr_case))
   |> type_expr region
 
@@ -173,11 +171,11 @@ and s_variant {value=(constr, kwd_of, cartesian); region} =
 
 and s_record_type {value=(kwd_record, field_decls, kwd_end); region} : O.type_expr =
   let () = ignore (kwd_record,region,kwd_end) in
-  type_expr region (Record (map s_field_decl (s_nsepseq field_decls)))
+  type_expr region (Record (map s_field_decl (s_nsepseq field_decls)) : O.type_expr_case)
 
-and s_field_decl {value=(var, colon, type_expr); region} =
+and s_field_decl {value=(var, colon, type_expr); region} : O.type_name * O.type_expr =
   let () = ignore (colon,region) in
-  (`Field (s_name var), s_type_expr type_expr)
+  ((s_name var), (s_type_expr type_expr))
 
 and s_type_app {value=(type_name,type_tuple); region} : O.type_expr =
   let () = ignore (region) in
@@ -232,13 +230,13 @@ let s_none {value=(l, (c_None, colon, type_expr), r); region} : O.expr =
 
 let parameters_to_tuple (parameters : (string * O.type_expr) list) : O.type_expr =
   (* TODO: use records with named fields to have named arguments. *)
-  let parameter_tuple = O.Record (mapi (fun i (_name,ty) -> `Component i, ty) parameters) in
+  let parameter_tuple = O.Record (mapi (fun i (_name,ty) -> name_and_region_of_int i, ty) parameters) in
   O.{ type_expr = parameter_tuple; name = None; orig = Region.ghost }
 and parameters_to_decls singleparam (parameters : (string * O.type_expr) list) : O.decl list =
   let f i (name,ty) =
     O.{ name = {name; orig=Region.ghost};
         ty = ty;
-        value = App { operator = O.GetField (`Component i);
+        value = App { operator = O.GetField (name_and_region_of_int i);
                       arguments = [Var singleparam] } }
   in mapi f parameters
 
@@ -347,7 +345,7 @@ and s_ptuple {value=(lpar, sequence, rpar); region} =
   let () = ignore (lpar, rpar, region) in
   s_nsepseq sequence
   |> map s_core_pattern
-  |> mapi (fun i p -> `Component i, p)
+  |> mapi (fun i p -> name_and_region_of_int i, p)
   |> fun x -> O.PRecord x
 
 and s_psome {value=(c_Some,{value=(l,psome,r);region=region2});region} : O.pattern =
