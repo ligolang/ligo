@@ -7,7 +7,7 @@ open Region
 module SMap = Map.Make(String)
 
 module O = struct
-  type asttodo = [`TODO]
+  type asttodo = [`TODO] (* occurrences of asttodo will point to some part of the original parser AST *)
 
   type name_and_region = {name: string; orig: Region.t}
   type type_name  = name_and_region
@@ -45,7 +45,6 @@ module O = struct
   | Int
   | Unit
   | Bool
-  and 'key type_record = ('key * type_expr) list
 
   and type_expr = { type_expr: type_expr_case; name: type_name option; orig: Region.t }
 
