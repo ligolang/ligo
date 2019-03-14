@@ -36,19 +36,19 @@ module O = struct
   | Map
 
   type type_expr_case =
-  | Sum      of (type_name * type_expr_case) list
+  | Sum      of (type_name * type_expr) list
   | Record   of record_key type_record
-  | TypeApp  of type_constructor * (type_expr_case list)
-  | Function of { arg: type_expr_case; ret: type_expr_case }
-  | Ref      of type_expr_case
+  | TypeApp  of type_constructor * (type_expr list)
+  | Function of { arg: type_expr; ret: type_expr }
+  | Ref      of type_expr
   | TC       of type_constructor
   | String
   | Int
   | Unit
   | Bool
-  and 'key type_record = ('key * type_expr_case) list
+  and 'key type_record = ('key * type_expr) list
 
-  type type_expr = { type_expr: type_expr_case; name: string option; orig: AST.type_expr }
+  and type_expr = { type_expr: type_expr_case; name: string option; orig: AST.type_expr }
 
   type typed_var = { name:var_name; ty:type_expr; orig: asttodo }
 
