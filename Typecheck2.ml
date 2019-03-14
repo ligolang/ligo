@@ -108,8 +108,18 @@ type te = O.type_expr list SMap.t
 type ve = O.type_expr list SMap.t
 type tve = te * ve
 
-let a_types : tve -> I.type_decl list -> tve * O.type_decl list =
+let fold_map f a l =
+  let f (acc, l) elem =
+    let acc', elem' = f acc elem
+    in acc', (elem' :: l) in
+  let last_acc, last_l = List.fold_left f (a, []) l
+  in last_acc, List.rev last_l
+
+let a_type (tve : tve) ({name;ty;orig} : I.type_decl) : tve * O.type_decl =
   failwith "TODO"
+
+let a_types (tve : tve) (l : I.type_decl list) : tve * O.type_decl list =
+  fold_map a_type tve l
 
 let a_storage_decl : tve -> I.typed_var -> tve * O.typed_var =
   failwith "TODO"
