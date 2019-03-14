@@ -44,11 +44,11 @@ module O : sig
   | Unit
   | Bool
 
-  and type_expr = { type_expr: type_expr_case; name: string option; orig: Region.t }
+  and type_expr = { type_expr: type_expr_case; name: type_name option; orig: Region.t }
 
   type typed_var = { name:var_name; ty:type_expr; orig: asttodo }
 
-  type type_decl = { name:string; ty:type_expr; orig: asttodo }
+  type type_decl = { name:type_name; ty:type_expr; orig: asttodo }
 
   type expr_case =
     App      of { operator: operator; arguments: expr list }

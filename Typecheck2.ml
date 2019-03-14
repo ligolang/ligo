@@ -46,11 +46,11 @@ module O = struct
   | Unit
   | Bool
 
-  and type_expr = { type_expr: type_expr_case; name: string option; orig: Region.t }
+  and type_expr = { type_expr: type_expr_case; name: type_name option; orig: Region.t }
 
   type typed_var = { name:var_name; ty:type_expr; orig: asttodo }
 
-  type type_decl = { name:string; ty:type_expr; orig: asttodo }
+  type type_decl = { name: type_name; ty:type_expr; orig: asttodo }
 
   type expr_case =
     App      of { operator: operator; arguments: expr list }
@@ -117,29 +117,44 @@ let fold_map f a l =
   let last_acc, last_l = List.fold_left f (a, []) l
   in last_acc, List.rev last_l
 
+let shadow (name : string) (typ : O.type_expr) (env : O.type_expr list SMap.t)
+    : O.type_expr list SMap.t =
+  SMap.update name (function None -> Some [typ] | Some tl -> Some (typ :: tl)) env
+
+let string_of_name ({name;_} : I.name_and_region) = name
+
+let a_name_and_region ({name; orig} : I.name_and_region) : O.name_and_region =
+  {name; orig}
+
 let a_type_constructor (tve : tve) : I.type_constructor -> O.type_constructor = function
-  Option -> failwith "TODO"
-| List   -> failwith "TODO"
-| Set    -> failwith "TODO"
-| Map    -> failwith "TODO"
+  Option -> Option
+| List   -> List
+| Set    -> Set
+| Map    -> Map
 
 let a_type_expr_case (tve : tve) : I.type_expr_case -> O.type_expr_case = function
-    Sum      l          -> failwith "TODO"
-  | Record   l          -> failwith "TODO"
+    Sum      lt         -> failwith "TODO"
+  | Record   lt         -> failwith "TODO"
   | TypeApp  (tc, args) -> failwith "TODO"
   | Function {arg;ret}  -> failwith "TODO"
   | Ref      t          -> failwith "TODO"
-  | String              -> failwith "TODO"
-  | Int                 -> failwith "TODO"
-  | Unit                -> failwith "TODO"
-  | Bool                -> failwith "TODO"
-
+  | String              -> String
+  | Int                 -> Int
+  | Unit                -> Unit
+  | Bool                -> Bool
 
 let a_type_expr (tve : tve) ({type_expr;name;orig} : I.type_expr) : O.type_expr =
-  failwith "TODO"
+  let type_expr = a_type_expr_case tve type_expr in
+  let name = match name with
+      None -> None
+     |Some name -> Some (a_name_and_region name)
+  in {type_expr;name;orig}
 
-let a_type (tve : tve) ({name;ty;orig} : I.type_decl) : tve * O.type_decl =
-  failwith "TODO"
+let a_type (te,ve : tve) ({name;ty;orig} : I.type_decl) : tve * O.type_decl =
+  let ty = a_type_expr (te,ve) ty in
+  let tve = shadow (string_of_name name) ty te, ve in
+  let name = (a_name_and_region name) in
+  tve, {name; ty; orig}
 
 let a_types (tve : tve) (l : I.type_decl list) : tve * O.type_decl list =
   fold_map a_type tve l
