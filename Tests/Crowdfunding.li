@@ -1,0 +1,68 @@
+type state =
+  record
+    goal     : nat;
+    deadline : timestamp;
+    backers  : map (address, nat);
+    funded   : bool
+  end
+
+entrypoint donate (storage store : state;
+                   const sender  : address;
+                   const amount  : mutez)
+  : storage * list (operation) is
+  var operations : list (operation) := []
+  begin
+    if now > store.deadline then
+      fail "Deadline passed"
+    else
+      if store.backers.[sender] = None then
+        store :=
+          copy store with
+            record
+              backers = map_add store.backers (sender, amount)
+            end
+      else null
+  end with (store, operations)
+
+entrypoint get_funds (storage store : state; const sender : address)
+  : storage * list (operation) is
+  var operations : list (operation) := []
+  begin
+    if sender = owner then
+      if now >= store.deadline then
+        if balance >= store.goal then
+          begin
+            store := copy store with record funded = true end;
+            operations := [Transfer (owner, balance)]
+          end
+        else fail "Below target"
+      else fail "Too soon"
+    else null
+  end with (store, operations)
+
+entrypoint claim (storage store : state; const sender : address)
+  : storage * list (operation) is
+  var operations : list (operation) := [];
+  var amount : mutez := 0
+  begin
+    if now <= store.deadline then
+      fail "Too soon"
+    else
+      match store.backers.[sender] with
+        None ->
+          fail "Not a backer"
+      | Some amount ->
+          if balance >= store.goal || store.funded then
+            fail "Cannot refund"
+          else
+            begin
+              amount := store.backers.[sender];
+              store :=
+                copy store with
+                  record
+                    backers = map_remove store.backers sender
+                  end;
+              operations := [Transfer (sender, amount)]
+            end
+      end
+  end with (store, operations)
