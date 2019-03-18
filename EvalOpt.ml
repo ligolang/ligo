@@ -1,4 +1,4 @@
-(* Parsing the command-line option for testing the Ligo lexer and
+(* Parsing the command-line option for testing the LIGO lexer and
    parser *)
 
 let  printf = Printf.printf
@@ -11,8 +11,8 @@ let abort msg =
 
 let help () =
   let file = Filename.basename Sys.argv.(0) in
-  printf "Usage: %s [<option> ...] [<input>.li | \"-\"]\n" file;
-  print_endline "where <input>.li is the Ligo source file (default: stdin),";
+  printf "Usage: %s [<option> ...] [<input>.ligo | \"-\"]\n" file;
+  print_endline "where <input>.ligo is the LIGO source file (default: stdin),";
   print_endline "and each <option> (if any) is one of the following:";
   print_endline "  -I <paths>             Library paths (colon-separated)";
   print_endline "  -c, --copy             Print lexemes of tokens and markup (lexer)";
@@ -127,11 +127,11 @@ let input =
   match !input with
     None | Some "-" -> !input
   | Some file_path ->
-      if   Filename.check_suffix file_path ".li"
+      if   Filename.check_suffix file_path ".ligo"
       then if   Sys.file_exists file_path
            then Some file_path
            else abort "Source file not found."
-      else abort "Source file lacks the extension .li."
+      else abort "Source file lacks the extension .ligo."
 
 (* Exporting remaining options as non-mutable values *)
 

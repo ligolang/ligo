@@ -1,4 +1,4 @@
-(* Lexer specification for Ligo, to be processed by [ocamllex]. *)
+(* Lexer specification for LIGO, to be processed by [ocamllex]. *)
 
 {
 (* START HEADER *)
@@ -231,13 +231,13 @@ module Make (Token: TOKEN) : (S with module Token = Token) =
        lexer.
 
          The state also includes a field [pos] which holds the current
-       position in the Ligo source file. The position is not always
+       position in the LIGO source file. The position is not always
        updated after a single character has been matched: that depends
        on the regular expression that matched the lexing buffer.
 
          The fields [decoder] and [supply] offer the support needed
        for the lexing of UTF-8 encoded characters in comments (the
-       only place where they are allowed in Ligo). The former is the
+       only place where they are allowed in LIGO). The former is the
        decoder proper and the latter is the effectful function
        [supply] that takes a byte, a start index and a length and feed
        it to [decoder]. See the documentation of the third-party
@@ -508,14 +508,14 @@ and scan state = parse
 
   (* Management of #include CPP directives
 
-    An input Ligo program may contain GNU CPP (C preprocessor)
+    An input LIGO program may contain GNU CPP (C preprocessor)
     directives, and the entry modules (named *Main.ml) run CPP on them
     in traditional mode:
 
     https://gcc.gnu.org/onlinedocs/cpp/Traditional-Mode.html
 
       The main interest in using CPP is that it can stand for a poor
-    man's (flat) module system for Ligo thanks to #include
+    man's (flat) module system for LIGO thanks to #include
     directives, and the traditional mode leaves the markup mostly
     undisturbed.
 

@@ -1,4 +1,4 @@
-(* Abstract Syntax Tree (AST) for Ligo *)
+(* Abstract Syntax Tree (AST) for LIGO *)
 
 [@@@warning "-30"]
 
@@ -21,7 +21,7 @@ val nseq_to_region    : ('a -> Region.t) -> 'a nseq -> Region.t
 val nsepseq_to_region : ('a -> Region.t) -> ('a,'sep) nsepseq -> Region.t
 val sepseq_to_region  : ('a -> Region.t) -> ('a,'sep) sepseq -> Region.t
 
-(* Keywords of Ligo *)
+(* Keywords of LIGO *)
 
 type kwd_begin      = Region.t
 type kwd_const      = Region.t
@@ -39,7 +39,6 @@ type kwd_is         = Region.t
 type kwd_match      = Region.t
 type kwd_mod        = Region.t
 type kwd_not        = Region.t
-type kwd_null       = Region.t
 type kwd_of         = Region.t
 type kwd_procedure  = Region.t
 type kwd_record     = Region.t
@@ -62,34 +61,34 @@ type c_Unit  = Region.t
 
 (* Symbols *)
 
-type semi     = Region.t
-type comma    = Region.t
-type lpar     = Region.t
-type rpar     = Region.t
-type lbrace   = Region.t
-type rbrace   = Region.t
-type lbracket = Region.t
-type rbracket = Region.t
-type cons     = Region.t
-type vbar     = Region.t
-type arrow    = Region.t
-type ass      = Region.t
-type equal    = Region.t
-type colon    = Region.t
-type bool_or  = Region.t
-type bool_and = Region.t
-type lt       = Region.t
-type leq      = Region.t
-type gt       = Region.t
-type geq      = Region.t
-type neq      = Region.t
-type plus     = Region.t
-type minus    = Region.t
-type slash    = Region.t
-type times    = Region.t
-type dot      = Region.t
-type wild     = Region.t
-type cat      = Region.t
+type semi     = Region.t  (* ";"   *)
+type comma    = Region.t  (* ","   *)
+type lpar     = Region.t  (* "("   *)
+type rpar     = Region.t  (* ")"   *)
+type lbrace   = Region.t  (* "{"   *)
+type rbrace   = Region.t  (* "}"   *)
+type lbracket = Region.t  (* "["   *)
+type rbracket = Region.t  (* "]"   *)
+type cons     = Region.t  (* "#"   *)
+type vbar     = Region.t  (* "|"   *)
+type arrow    = Region.t  (* "->"  *)
+type assign   = Region.t  (* ":="  *)
+type equal    = Region.t  (* "="   *)
+type colon    = Region.t  (* ":"   *)
+type bool_or  = Region.t  (* "||"  *)
+type bool_and = Region.t  (* "&&"  *)
+type lt       = Region.t  (* "<"   *)
+type leq      = Region.t  (* "<="  *)
+type gt       = Region.t  (* ">"   *)
+type geq      = Region.t  (* ">="  *)
+type neq      = Region.t  (* "=/=" *)
+type plus     = Region.t  (* "+"   *)
+type minus    = Region.t  (* "-"   *)
+type slash    = Region.t  (* "/"   *)
+type times    = Region.t  (* "*"   *)
+type dot      = Region.t  (* "."   *)
+type wild     = Region.t  (* "_"   *)
+type cat      = Region.t  (* "^"   *)
 
 (* Virtual tokens *)
 
@@ -192,7 +191,7 @@ and field_decl = {
   field_type : type_expr
 }
 
-and type_tuple = (type_name, comma) nsepseq par reg
+and type_tuple = (type_expr, comma) nsepseq par reg
 
 (* Function and procedure declarations *)
 
@@ -290,7 +289,7 @@ and var_decl = {
   name       : variable;
   colon      : colon;
   var_type   : type_expr;
-  ass        : ass;
+  assign     : assign;
   init       : expr;
   terminator : semi option
 }
@@ -302,13 +301,13 @@ and instruction =
 | Block  of block reg
 
 and single_instr =
-  Cond     of conditional reg
-| Match    of match_instr reg
-| Ass      of ass_instr
-| Loop     of loop
-| ProcCall of fun_call
-| Null     of kwd_null
-| Fail     of fail_instr reg
+  Cond      of conditional reg
+| Match     of match_instr reg
+| Assign    of assignment reg
+| Loop      of loop
+| ProcCall  of fun_call
+| Fail      of fail_instr reg
+| DoNothing of Region.t
 
 and fail_instr = {
   kwd_fail  : kwd_fail;
@@ -341,19 +340,9 @@ and case = {
   instr   : instruction
 }
 
-and ass_instr =
-  VarAss of var_ass reg
-| MapAss of map_ass reg
-
-and var_ass = {
-  var  : variable;
-  ass  : ass;
-  expr : expr
-}
-
-and map_ass = {
-  lookup : map_lookup reg;
-  ass    : ass;
+and assignment = {
+  var    : variable;
+  assign : assign;
   expr   : expr
 }
 
@@ -373,7 +362,7 @@ and for_loop =
 
 and for_int = {
   kwd_for : kwd_for;
-  var_ass : var_ass reg;
+  assign  : assignment reg;
   down    : kwd_down option;
   kwd_to  : kwd_to;
   bound   : expr;
@@ -413,21 +402,21 @@ and logic_expr =
 | CompExpr of comp_expr
 
 and bool_expr =
-  Or    of bool_or bin_op reg
+  Or    of bool_or  bin_op reg
 | And   of bool_and bin_op reg
-| Not   of kwd_not un_op reg
+| Not   of kwd_not   un_op reg
 | False of c_False
 | True  of c_True
 
 and 'a bin_op = {
-  op1 : expr;
-  op  : 'a;
-  op2 : expr
+  op   : 'a;
+  arg1 : expr;
+  arg2 : expr
 }
 
 and 'a un_op = {
   op  : 'a;
-  op1 : expr
+  arg : expr
 }
 
 and comp_expr =
@@ -444,7 +433,7 @@ and arith_expr =
 | Mult of times   bin_op reg
 | Div  of slash   bin_op reg
 | Mod  of kwd_mod bin_op reg
-| Neg  of minus   un_op reg
+| Neg  of minus    un_op reg
 | Int  of (Lexer.lexeme * Z.t) reg
 
 and string_expr =
@@ -472,12 +461,12 @@ and record_expr =
 
 and record_injection = {
   opening    : kwd_record;
-  fields     : (field_ass reg, semi) nsepseq;
+  fields     : (field_assign reg, semi) nsepseq;
   terminator : semi option;
   close      : kwd_end
 }
 
-and field_ass = {
+and field_assign = {
   field_name : field_name;
   equal      : equal;
   field_expr : expr
@@ -486,7 +475,7 @@ and field_ass = {
 and record_projection = {
   record_name : variable;
   selector    : dot;
-  field_name  : field_name
+  field_path  : (field_name, dot) nsepseq
 }
 
 and record_copy = {
@@ -529,10 +518,13 @@ and fun_call = (fun_name * arguments) reg
 and arguments = tuple
 
 and map_lookup = {
-  map_name : variable;
-  selector : dot;
+  map_path : map_path;
   index    : expr brackets reg
 }
+
+and map_path =
+  Map     of map_name
+| MapPath of record_projection reg
 
 (* Patterns *)
 

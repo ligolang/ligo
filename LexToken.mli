@@ -1,4 +1,4 @@
-(* This signature defines the lexical tokens for Ligo
+(* This signature defines the lexical tokens for LIGO
 
    _Tokens_ are the abstract units which are used by the parser to
    build the abstract syntax tree (AST), in other words, the stream of
@@ -70,6 +70,7 @@ type t =
 | Begin      of Region.t  (* "begin"      *)
 | Const      of Region.t  (* "const"      *)
 | Copy       of Region.t  (* "copy"       *)
+| Do         of Region.t  (* "do"         *)
 | Down       of Region.t  (* "down"       *)
 | Fail       of Region.t  (* "fail"       *)
 | If         of Region.t  (* "if"         *)
@@ -85,7 +86,7 @@ type t =
 | Then       of Region.t  (* "then"       *)
 | Else       of Region.t  (* "else"       *)
 | Match      of Region.t  (* "match"      *)
-| Null       of Region.t  (* "null"       *)
+| Nothing    of Region.t  (* "nothing"    *)
 | Procedure  of Region.t  (* "procedure"  *)
 | Record     of Region.t  (* "record"     *)
 | Step       of Region.t  (* "step"       *)

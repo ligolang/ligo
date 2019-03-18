@@ -1,4 +1,4 @@
-(* Lexer specification for Ligo, to be processed by [ocamllex] *)
+(* Lexer specification for LIGO, to be processed by [ocamllex] *)
 
 {
 (* START HEADER *)
@@ -69,6 +69,7 @@ type t =
 | Begin      of Region.t
 | Const      of Region.t
 | Copy       of Region.t
+| Do         of Region.t
 | Down       of Region.t
 | Fail       of Region.t
 | If         of Region.t
@@ -84,7 +85,7 @@ type t =
 | Then       of Region.t
 | Else       of Region.t
 | Match      of Region.t
-| Null       of Region.t
+| Nothing    of Region.t
 | Procedure  of Region.t
 | Record     of Region.t
 | Step       of Region.t
@@ -188,6 +189,7 @@ let proj_token = function
 | Begin      region -> region, "Begin"
 | Const      region -> region, "Const"
 | Copy       region -> region, "Copy"
+| Do         region -> region, "Do"
 | Down       region -> region, "Down"
 | Fail       region -> region, "Fail"
 | If         region -> region, "If"
@@ -203,7 +205,7 @@ let proj_token = function
 | Then       region -> region, "Then"
 | Else       region -> region, "Else"
 | Match      region -> region, "Match"
-| Null       region -> region, "Null"
+| Nothing    region -> region, "Nothing"
 | Procedure  region -> region, "Procedure"
 | Record     region -> region, "Record"
 | Step       region -> region, "Step"
@@ -272,6 +274,7 @@ let to_lexeme = function
 | Begin      _ -> "begin"
 | Const      _ -> "const"
 | Copy       _ -> "copy"
+| Do         _ -> "do"
 | Down       _ -> "down"
 | Fail       _ -> "fail"
 | If         _ -> "if"
@@ -287,7 +290,7 @@ let to_lexeme = function
 | Then       _ -> "then"
 | Else       _ -> "else"
 | Match      _ -> "match"
-| Null       _ -> "null"
+| Nothing    _ -> "nothing"
 | Procedure  _ -> "procedure"
 | Record     _ -> "record"
 | Step       _ -> "step"
@@ -324,6 +327,7 @@ let keywords = [
   (fun reg -> Begin      reg);
   (fun reg -> Const      reg);
   (fun reg -> Copy       reg);
+  (fun reg -> Do         reg);
   (fun reg -> Down       reg);
   (fun reg -> Fail       reg);
   (fun reg -> If         reg);
@@ -339,7 +343,7 @@ let keywords = [
   (fun reg -> Then       reg);
   (fun reg -> Else       reg);
   (fun reg -> Match      reg);
-  (fun reg -> Null       reg);
+  (fun reg -> Nothing    reg);
   (fun reg -> Procedure  reg);
   (fun reg -> Record     reg);
   (fun reg -> Step       reg);
@@ -359,7 +363,6 @@ let reserved =
         |> add "assert"
         |> add "class"
         |> add "constraint"
-        |> add "do"
         |> add "done"
         |> add "downto"
         |> add "exception"
@@ -548,6 +551,7 @@ let is_kwd = function
   Begin      _
 | Const      _
 | Copy       _
+| Do         _
 | Down       _
 | Fail       _
 | If         _
@@ -563,7 +567,7 @@ let is_kwd = function
 | Then       _
 | Else       _
 | Match      _
-| Null       _
+| Nothing    _
 | Procedure  _
 | Record     _
 | Step       _

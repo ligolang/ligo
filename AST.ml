@@ -1,4 +1,4 @@
-(* Abstract Syntax Tree (AST) for Ligo *)
+(* Abstract Syntax Tree (AST) for LIGO *)
 
 (* To disable warning about multiply-defined record labels. *)
 
@@ -37,7 +37,7 @@ let sepseq_to_region to_region = function
       None -> Region.ghost
 | Some seq -> nsepseq_to_region to_region seq
 
-(* Keywords of Ligo *)
+(* Keywords of LIGO *)
 
 type kwd_begin      = Region.t
 type kwd_const      = Region.t
@@ -55,7 +55,6 @@ type kwd_is         = Region.t
 type kwd_match      = Region.t
 type kwd_mod        = Region.t
 type kwd_not        = Region.t
-type kwd_null       = Region.t
 type kwd_of         = Region.t
 type kwd_procedure  = Region.t
 type kwd_record     = Region.t
@@ -89,7 +88,7 @@ type rbracket = Region.t
 type cons     = Region.t
 type vbar     = Region.t
 type arrow    = Region.t
-type ass      = Region.t
+type assign   = Region.t
 type equal    = Region.t
 type colon    = Region.t
 type bool_or  = Region.t
@@ -208,7 +207,7 @@ and field_decl = {
   field_type : type_expr
 }
 
-and type_tuple = (type_name, comma) nsepseq par reg
+and type_tuple = (type_expr, comma) nsepseq par reg
 
 (* Function and procedure declarations *)
 
@@ -306,7 +305,7 @@ and var_decl = {
   name       : variable;
   colon      : colon;
   var_type   : type_expr;
-  ass        : ass;
+  assign     : assign;
   init       : expr;
   terminator : semi option
 }
@@ -318,13 +317,13 @@ and instruction =
 | Block  of block reg
 
 and single_instr =
-  Cond     of conditional reg
-| Match    of match_instr reg
-| Ass      of ass_instr
-| Loop     of loop
-| ProcCall of fun_call
-| Null     of kwd_null
-| Fail     of fail_instr reg
+  Cond      of conditional reg
+| Match     of match_instr reg
+| Assign    of assignment reg
+| Loop      of loop
+| ProcCall  of fun_call
+| Fail      of fail_instr reg
+| DoNothing of Region.t
 
 and fail_instr = {
   kwd_fail  : kwd_fail;
@@ -357,19 +356,9 @@ and case = {
   instr   : instruction
 }
 
-and ass_instr =
-  VarAss of var_ass reg
-| MapAss of map_ass reg
-
-and var_ass = {
-  var  : variable;
-  ass  : ass;
-  expr : expr
-}
-
-and map_ass = {
-  lookup : map_lookup reg;
-  ass    : ass;
+and assignment = {
+  var    : variable;
+  assign : assign;
   expr   : expr
 }
 
@@ -389,7 +378,7 @@ and for_loop =
 
 and for_int = {
   kwd_for : kwd_for;
-  var_ass : var_ass reg;
+  assign  : assignment reg;
   down    : kwd_down option;
   kwd_to  : kwd_to;
   bound   : expr;
@@ -429,21 +418,21 @@ and logic_expr =
 | CompExpr of comp_expr
 
 and bool_expr =
-  Or    of bool_or bin_op reg
+  Or    of bool_or  bin_op reg
 | And   of bool_and bin_op reg
-| Not   of kwd_not un_op reg
+| Not   of kwd_not   un_op reg
 | False of c_False
 | True  of c_True
 
 and 'a bin_op = {
-  op1 : expr;
-  op  : 'a;
-  op2 : expr
+  op   : 'a;
+  arg1 : expr;
+  arg2 : expr
 }
 
 and 'a un_op = {
   op  : 'a;
-  op1 : expr
+  arg : expr
 }
 
 and comp_expr =
@@ -460,7 +449,7 @@ and arith_expr =
 | Mult of times   bin_op reg
 | Div  of slash   bin_op reg
 | Mod  of kwd_mod bin_op reg
-| Neg  of minus   un_op reg
+| Neg  of minus    un_op reg
 | Int  of (Lexer.lexeme * Z.t) reg
 
 and string_expr =
@@ -488,12 +477,12 @@ and record_expr =
 
 and record_injection = {
   opening    : kwd_record;
-  fields     : (field_ass reg, semi) nsepseq;
+  fields     : (field_assign reg, semi) nsepseq;
   terminator : semi option;
   close      : kwd_end
 }
 
-and field_ass = {
+and field_assign = {
   field_name : field_name;
   equal      : equal;
   field_expr : expr
@@ -502,7 +491,7 @@ and field_ass = {
 and record_projection = {
   record_name : variable;
   selector    : dot;
-  field_name  : field_name
+  field_path  : (field_name, dot) nsepseq
 }
 
 and record_copy = {
@@ -545,10 +534,13 @@ and fun_call = (fun_name * arguments) reg
 and arguments = tuple
 
 and map_lookup = {
-  map_name : variable;
-  selector : dot;
+  map_path : map_path;
   index    : expr brackets reg
 }
+
+and map_path =
+  Map     of map_name
+| MapPath of record_projection reg
 
 (* Patterns *)
 
@@ -653,13 +645,12 @@ and record_expr_to_region = function
 let instr_to_region = function
   Single Cond                {region; _}
 | Single Match               {region; _}
-| Single Ass VarAss          {region; _}
-| Single Ass MapAss          {region; _}
+| Single Assign              {region; _}
 | Single Loop While          {region; _}
 | Single Loop For ForInt     {region; _}
 | Single Loop For ForCollect {region; _}
 | Single ProcCall            {region; _}
-| Single Null                 region
+| Single DoNothing            region
 | Single Fail                {region; _}
 | Block                      {region; _} -> region
 
@@ -812,7 +803,7 @@ and print_field_decl {value; _} =
 and print_type_tuple {value; _} =
   let {lpar; inside; rpar} = value in
   print_token lpar "(";
-  print_nsepseq "," print_var inside;
+  print_nsepseq "," print_type_expr inside;
   print_token rpar ")"
 
 and print_lambda_decl = function
@@ -922,12 +913,12 @@ and print_local_decl = function
 
 and print_var_decl {value; _} =
   let {kwd_var; name; colon; var_type;
-       ass; init; terminator} = value in
+       assign; init; terminator} = value in
   print_token      kwd_var "var";
   print_var        name;
   print_token      colon ":";
   print_type_expr  var_type;
-  print_token      ass ":=";
+  print_token      assign ":=";
   print_expr       init;
   print_terminator terminator
 
@@ -941,11 +932,11 @@ and print_instruction = function
 and print_single_instr = function
   Cond     {value; _} -> print_conditional value
 | Match    {value; _} -> print_match_instr value
-| Ass      instr      -> print_ass_instr instr
+| Assign   assign     -> print_assignment assign
 | Loop     loop       -> print_loop loop
 | ProcCall fun_call   -> print_fun_call fun_call
-| Null     kwd_null   -> print_token kwd_null "null"
 | Fail     {value; _} -> print_fail value
+| DoNothing region    -> print_token region "do nothing"
 
 and print_fail {kwd_fail; fail_expr} =
   print_token kwd_fail "fail";
@@ -984,20 +975,10 @@ and print_case {value; _} =
   print_token arrow "->";
   print_instruction instr
 
-and print_ass_instr = function
-  VarAss a -> print_var_ass a
-| MapAss a -> print_map_ass a
-
-and print_var_ass {value; _} =
-  let {var; ass; expr} = value in
+and print_assignment {value; _} =
+  let {var; assign; expr} = value in
   print_var var;
-  print_token ass ":=";
-  print_expr expr
-
-and print_map_ass {value; _} =
-  let {lookup; ass; expr} = value in
-  print_map_lookup lookup;
-  print_token ass ":=";
+  print_token assign ":=";
   print_expr expr
 
 and print_loop = function
@@ -1015,15 +996,15 @@ and print_for_loop = function
 | ForCollect for_collect -> print_for_collect for_collect
 
 and print_for_int ({value; _} : for_int reg) =
-  let {kwd_for; var_ass; down; kwd_to;
+  let {kwd_for; assign; down; kwd_to;
        bound; step; block} = value in
-  print_token   kwd_for "for";
-  print_var_ass var_ass;
-  print_down    down;
-  print_token   kwd_to "to";
-  print_expr    bound;
-  print_step    step;
-  print_block   block
+  print_token      kwd_for "for";
+  print_assignment assign;
+  print_down       down;
+  print_token      kwd_to "to";
+  print_expr       bound;
+  print_step       step;
+  print_block      block
 
 and print_down = function
   Some kwd_down -> print_token kwd_down "down"
@@ -1071,52 +1052,52 @@ and print_logic_expr = function
 | CompExpr e -> print_comp_expr e
 
 and print_bool_expr = function
-  Or {value = {op1; op; op2}; _} ->
-    print_expr op1; print_token op "||"; print_expr op2
-| And {value = {op1; op; op2}; _} ->
-    print_expr op1; print_token op "&&"; print_expr op2
-| Not {value = {op; op1}; _} ->
-    print_token op "not"; print_expr op1
+  Or {value = {arg1; op; arg2}; _} ->
+    print_expr arg1; print_token op "||"; print_expr arg2
+| And {value = {arg1; op; arg2}; _} ->
+    print_expr arg1; print_token op "&&"; print_expr arg2
+| Not {value = {op; arg}; _} ->
+    print_token op "not"; print_expr arg
 | False region -> print_token region "False"
 | True region  -> print_token region "True"
 
 and print_comp_expr = function
-  Lt {value = {op1; op; op2}; _} ->
-    print_expr op1; print_token op "<"; print_expr op2
-| Leq {value = {op1; op; op2}; _} ->
-    print_expr op1; print_token op "<="; print_expr op2
-| Gt {value = {op1; op; op2}; _} ->
-    print_expr op1; print_token op ">"; print_expr op2
-| Geq {value = {op1; op; op2}; _} ->
-    print_expr op1; print_token op ">="; print_expr op2
-| Equal {value = {op1; op; op2}; _} ->
-    print_expr op1; print_token op "="; print_expr op2
-| Neq {value = {op1; op; op2}; _} ->
-    print_expr op1; print_token op "=/="; print_expr op2
+  Lt {value = {arg1; op; arg2}; _} ->
+    print_expr arg1; print_token op "<"; print_expr arg2
+| Leq {value = {arg1; op; arg2}; _} ->
+    print_expr arg1; print_token op "<="; print_expr arg2
+| Gt {value = {arg1; op; arg2}; _} ->
+    print_expr arg1; print_token op ">"; print_expr arg2
+| Geq {value = {arg1; op; arg2}; _} ->
+    print_expr arg1; print_token op ">="; print_expr arg2
+| Equal {value = {arg1; op; arg2}; _} ->
+    print_expr arg1; print_token op "="; print_expr arg2
+| Neq {value = {arg1; op; arg2}; _} ->
+    print_expr arg1; print_token op "=/="; print_expr arg2
 
 and print_arith_expr = function
-  Add {value = {op1; op; op2}; _} ->
-    print_expr op1; print_token op "+"; print_expr op2
-| Sub {value = {op1; op; op2}; _} ->
-    print_expr op1; print_token op "-"; print_expr op2
-| Mult {value = {op1; op; op2}; _} ->
-    print_expr op1; print_token op "*"; print_expr op2
-| Div {value = {op1; op; op2}; _} ->
-    print_expr op1; print_token op "/"; print_expr op2
-| Mod {value = {op1; op; op2}; _} ->
-    print_expr op1; print_token op "mod"; print_expr op2
-| Neg {value = {op; op1}; _} ->
-    print_token op "-"; print_expr op1
+  Add {value = {arg1; op; arg2}; _} ->
+    print_expr arg1; print_token op "+"; print_expr arg2
+| Sub {value = {arg1; op; arg2}; _} ->
+    print_expr arg1; print_token op "-"; print_expr arg2
+| Mult {value = {arg1; op; arg2}; _} ->
+    print_expr arg1; print_token op "*"; print_expr arg2
+| Div {value = {arg1; op; arg2}; _} ->
+    print_expr arg1; print_token op "/"; print_expr arg2
+| Mod {value = {arg1; op; arg2}; _} ->
+    print_expr arg1; print_token op "mod"; print_expr arg2
+| Neg {value = {op; arg}; _} ->
+    print_token op "-"; print_expr arg
 | Int i -> print_int i
 
 and print_string_expr = function
-  Cat {value = {op1; op; op2}; _} ->
-    print_expr op1; print_token op "^"; print_expr op2
+  Cat {value = {arg1; op; arg2}; _} ->
+    print_expr arg1; print_token op "^"; print_expr arg2
 | String s -> print_string s
 
 and print_list_expr = function
-  Cons {value = {op1; op; op2}; _} ->
-    print_expr op1; print_token op "#"; print_expr op2
+  Cons {value = {arg1; op; arg2}; _} ->
+    print_expr arg1; print_token op "#"; print_expr arg2
 | List e       -> print_list e
 | EmptyList e  -> print_empty_list e
 
@@ -1137,21 +1118,24 @@ and print_record_expr = function
 and print_record_injection {value; _} =
   let {opening; fields; terminator; close} = value in
   print_token opening "record";
-  print_nsepseq ";" print_field_ass fields;
+  print_nsepseq ";" print_field_assign fields;
   print_terminator terminator;
   print_token close "end"
 
-and print_field_ass {value; _} =
+and print_field_assign {value; _} =
   let {field_name; equal; field_expr} = value in
   print_var field_name;
   print_token equal "=";
   print_expr field_expr
 
 and print_record_projection {value; _} =
-  let {record_name; selector; field_name} = value in
+  let {record_name; selector; field_path} = value in
   print_var record_name;
   print_token selector ".";
-  print_var field_name
+  print_field_path field_path
+
+and print_field_path sequence =
+  print_nsepseq "." print_var sequence
 
 and print_record_copy {value; _} =
   let {kwd_copy; record_name; kwd_with; delta} = value in
@@ -1223,13 +1207,16 @@ and print_some_app {value; _} =
   print_tuple arguments
 
 and print_map_lookup {value; _} =
-  let {map_name; selector; index} = value in
+  let {map_path; index} = value in
   let {lbracket; inside; rbracket} = index.value in
-  print_var   map_name;
-  print_token selector ".";
-  print_token lbracket "[";
-  print_expr  inside;
-  print_token rbracket "]"
+  print_map_path map_path;
+  print_token    lbracket "[";
+  print_expr     inside;
+  print_token    rbracket "]"
+
+and print_map_path = function
+  Map map_name -> print_var map_name
+| MapPath path -> print_record_projection path
 
 and print_par_expr {value; _} =
   let {lpar; inside; rpar} = value in

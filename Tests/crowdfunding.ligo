@@ -1,4 +1,4 @@
-type state =
+type state is
   record
     goal     : nat;
     deadline : timestamp;
@@ -6,61 +6,63 @@ type state =
     funded   : bool
   end
 
-entrypoint donate (storage store : state;
-                   const sender  : address;
-                   const amount  : mutez)
-  : storage * list (operation) is
-  var operations : list (operation) := []
+entrypoint contribute (storage store : state;
+                       const sender  : address;
+                       const amount  : mutez)
+  : state * list (operation) is
+  var operations : list (operation) := ([] : list (operation)) // TODO
   begin
     if now > store.deadline then
       fail "Deadline passed"
     else
-      if store.backers.[sender] = None then
-        store :=
-          copy store with
-            record
-              backers = map_add store.backers (sender, amount)
-            end
-      else null
+      match store.backers[sender] with
+        None ->
+          store :=
+            copy store with
+              record
+                backers = add_binding ((sender, amount), store.backers)
+              end
+      | _ -> do nothing
+      end
   end with (store, operations)
 
 entrypoint get_funds (storage store : state; const sender : address)
-  : storage * list (operation) is
-  var operations : list (operation) := []
+  : state * list (operation) is
+  var operations : list (operation) := ([] : list (operation)) // TODO
   begin
     if sender = owner then
       if now >= store.deadline then
         if balance >= store.goal then
           begin
-            store := copy store with record funded = true end;
+            store := copy store with record funded = True end;
             operations := [Transfer (owner, balance)]
           end
         else fail "Below target"
       else fail "Too soon"
-    else null
+    else do nothing
   end with (store, operations)
 
 entrypoint claim (storage store : state; const sender : address)
-  : storage * list (operation) is
-  var operations : list (operation) := [];
+  : state * list (operation) is
+  var operations : list (operation) := ([] : list (operation)) // TODO
   var amount : mutez := 0
   begin
     if now <= store.deadline then
       fail "Too soon"
     else
-      match store.backers.[sender] with
+      match store.backers[sender] with
         None ->
           fail "Not a backer"
-      | Some amount ->
+      | Some (amount) ->
           if balance >= store.goal || store.funded then
             fail "Cannot refund"
           else
             begin
-              amount := store.backers.[sender];
+              amount := store.backers[sender];
               store :=
                 copy store with
                   record
-                    backers = map_remove store.backers sender
+                    backers = remove_entry (sender, store.backers)
                   end;
               operations := [Transfer (sender, amount)]
             end

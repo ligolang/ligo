@@ -1,4 +1,4 @@
-(* Parsing the command-line option for testing the Ligo lexer and
+(* Parsing the command-line option for testing the LIGO lexer and
    parser *)
 
 (* If the value [offsets] is [true], then the user requested that
@@ -25,7 +25,7 @@ val verbose : Utils.String.Set.t
 
 val input : string option
 
-(* Paths where to find Ligo files for inclusion *)
+(* Paths where to find LIGO files for inclusion *)
 
 val libs : string list
 

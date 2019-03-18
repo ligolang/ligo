@@ -1,4 +1,4 @@
-(* Driver for the lexer of Ligo *)
+(* Driver for the lexer of LIGO *)
 
 open! EvalOpt (* Reads the command-line options: Effectful! *)
 

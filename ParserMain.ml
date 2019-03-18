@@ -1,4 +1,4 @@
-(* Driver for the parser of Ligo *)
+(* Driver for the parser of LIGO *)
 
 open! EvalOpt (* Reads the command-line options: Effectful! *)
 
@@ -99,12 +99,14 @@ let () =
       print_error ~offsets EvalOpt.mode error
   | Sys_error msg -> Utils.highlight msg
 
+                                    (*
 (* Temporary: force dune to build AST2.ml *)
 let () =
   let open AST2 in
   let _ = s_ast in
   ()
 
+    (*
 (* Temporary: force dune to build AST2.ml *)
 let () =
   if false then
@@ -112,3 +114,5 @@ let () =
     ()
   else
     ()
+     *)
+     *)

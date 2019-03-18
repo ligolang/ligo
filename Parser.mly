@@ -149,11 +149,11 @@ core_type:
     in TypeApp {region; value = $1,$2}
   }
 | par(type_expr) {
-   ParType $1
+    ParType $1
   }
 
 type_tuple:
-  par(nsepseq(type_name,COMMA)) { $1 }
+  par(nsepseq(type_expr,COMMA)) { $1 }
 
 sum_type:
   nsepseq(variant,VBAR) {
@@ -379,24 +379,47 @@ var_decl:
       name       = $2;
       colon      = $3;
       var_type   = $4;
+      assign     = $5;
+      init       = $6;
+      terminator = $7}
+    in {region; value}
+  }
+(*
+| Var var COLON type_name type_tuple
+  ASS extended_expr option(SEMI) {
+    let stop =
+      match $7 with
+        Some region -> region
+      |        None -> expr_to_region $6 in
+    let region = cover $1 stop in
+    let value = {
+      kwd_var    = $1;
+      name       = $2;
+      colon      = $3;
+      var_type   = $4;
       ass        = $5;
       init       = $6;
       terminator = $7}
     in {region; value}
   }
 
+extended_expr:
+  expr              { }
+| LBRACKET RBRACKET { }
+| C_None            { }
+ *)
 instruction:
   single_instr { Single $1 }
 | block        { Block  $1 }
 
 single_instr:
-  conditional {     Cond $1 }
-| match_instr {    Match $1 }
-| ass         {      Ass $1 }
-| loop        {     Loop $1 }
-| proc_call   { ProcCall $1 }
-| Null        {     Null $1 }
-| fail_instr  {     Fail $1 }
+  conditional {      Cond $1 }
+| match_instr {     Match $1 }
+| assignment  {    Assign $1 }
+| loop        {      Loop $1 }
+| proc_call   {  ProcCall $1 }
+| fail_instr  {      Fail $1 }
+| Do Nothing  { let region = cover $1 $2 in DoNothing region }
 
 fail_instr:
   Fail expr {
@@ -446,20 +469,10 @@ case:
     in {region; value}
   }
 
-ass:
-  var_ass {
-    VarAss $1
-  }
-| map_selection ASS expr {
-    let region = cover $1.region (expr_to_region $3)
-    and value  = {lookup = $1; ass = $2; expr = $3}
-    in MapAss {region; value}
-  }
-
-var_ass:
+assignment:
   var ASS expr {
     let region = cover $1.region (expr_to_region $3)
-    and value  = {var = $1; ass = $2; expr = $3}
+    and value  = {var = $1; assign = $2; expr = $3}
     in {region; value}
   }
 
@@ -478,12 +491,12 @@ while_loop:
   }
 
 for_loop:
-  For var_ass Down? To expr option(step_clause) block {
+  For assignment Down? To expr option(step_clause) block {
     let region = cover $1 $7.region in
     let value =
       {
         kwd_for  = $1;
-        var_ass  = $2;
+        assign   = $2;
         down     = $3;
         kwd_to   = $4;
         bound    = $5;
@@ -521,7 +534,7 @@ expr:
     let start  = expr_to_region $1
     and stop   = expr_to_region $3 in
     let region = cover start stop
-    and value  = {op1 = $1; op = $2; op2 = $3} in
+    and value  = {arg1 = $1; op = $2; arg2 = $3} in
     LogicExpr (BoolExpr (Or {region; value}))
   }
 | conj_expr { $1 }
@@ -531,7 +544,7 @@ conj_expr:
     let start  = expr_to_region $1
     and stop   = expr_to_region $3 in
     let region = cover start stop
-    and value  = {op1 = $1; op = $2; op2 = $3} in
+    and value  = {arg1 = $1; op = $2; arg2 = $3} in
     LogicExpr (BoolExpr (And {region; value}))
   }
 | comp_expr { $1 }
@@ -541,42 +554,42 @@ comp_expr:
     let start  = expr_to_region $1
     and stop   = expr_to_region $3 in
     let region = cover start stop
-    and value  = {op1 = $1; op = $2; op2 = $3} in
+    and value  = {arg1 = $1; op = $2; arg2 = $3} in
     LogicExpr (CompExpr (Lt {region; value}))
   }
 | comp_expr LEQ cat_expr {
     let start  = expr_to_region $1
     and stop   = expr_to_region $3 in
     let region = cover start stop
-    and value  = {op1 = $1; op = $2; op2 = $3}
+    and value  = {arg1 = $1; op = $2; arg2 = $3}
     in LogicExpr (CompExpr (Leq {region; value}))
   }
 | comp_expr GT cat_expr {
     let start  = expr_to_region $1
     and stop   = expr_to_region $3 in
     let region = cover start stop
-    and value  = {op1 = $1; op = $2; op2 = $3}
+    and value  = {arg1 = $1; op = $2; arg2 = $3}
     in LogicExpr (CompExpr (Gt {region; value}))
   }
 | comp_expr GEQ cat_expr {
     let start  = expr_to_region $1
     and stop   = expr_to_region $3 in
     let region = cover start stop
-    and value  = {op1 = $1; op = $2; op2 = $3}
+    and value  = {arg1 = $1; op = $2; arg2 = $3}
     in LogicExpr (CompExpr (Geq {region; value}))
   }
 | comp_expr EQUAL cat_expr {
     let start  = expr_to_region $1
     and stop   = expr_to_region $3 in
     let region = cover start stop
-    and value  = {op1 = $1; op = $2; op2 = $3}
+    and value  = {arg1 = $1; op = $2; arg2 = $3}
     in LogicExpr (CompExpr (Equal {region; value}))
   }
 | comp_expr NEQ cat_expr {
     let start  = expr_to_region $1
     and stop   = expr_to_region $3 in
     let region = cover start stop
-    and value  = {op1 = $1; op = $2; op2 = $3}
+    and value  = {arg1 = $1; op = $2; arg2 = $3}
     in LogicExpr (CompExpr (Neq {region; value}))
   }
 | cat_expr { $1 }
@@ -586,7 +599,7 @@ cat_expr:
     let start  = expr_to_region $1
     and stop   = expr_to_region $3 in
     let region = cover start stop
-    and value  = {op1 = $1; op = $2; op2 = $3}
+    and value  = {arg1 = $1; op = $2; arg2 = $3}
     in StringExpr (Cat {region; value})
   }
 | cons_expr { $1 }
@@ -596,7 +609,7 @@ cons_expr:
     let start  = expr_to_region $1
     and stop   = expr_to_region $3 in
     let region = cover start stop
-    and value  = {op1 = $1; op = $2; op2 = $3}
+    and value  = {arg1 = $1; op = $2; arg2 = $3}
     in ListExpr (Cons {region; value})
   }
 | add_expr { $1 }
@@ -606,14 +619,14 @@ add_expr:
     let start  = expr_to_region $1
     and stop   = expr_to_region $3 in
     let region = cover start stop
-    and value  = {op1 = $1; op = $2; op2 = $3}
+    and value  = {arg1 = $1; op = $2; arg2 = $3}
     in ArithExpr (Add {region; value})
   }
 | add_expr MINUS mult_expr {
     let start  = expr_to_region $1
     and stop   = expr_to_region $3 in
     let region = cover start stop
-    and value  = {op1 = $1; op = $2; op2 = $3}
+    and value  = {arg1 = $1; op = $2; arg2 = $3}
     in ArithExpr (Sub {region; value})
   }
 | mult_expr { $1 }
@@ -623,21 +636,21 @@ mult_expr:
     let start  = expr_to_region $1
     and stop   = expr_to_region $3 in
     let region = cover start stop
-    and value  = {op1 = $1; op = $2; op2 = $3}
+    and value  = {arg1 = $1; op = $2; arg2 = $3}
     in ArithExpr (Mult {region; value})
   }
 | mult_expr SLASH unary_expr {
     let start  = expr_to_region $1
     and stop   = expr_to_region $3 in
     let region = cover start stop
-    and value  = {op1 = $1; op = $2; op2 = $3}
+    and value  = {arg1 = $1; op = $2; arg2 = $3}
     in ArithExpr (Div {region; value})
   }
 | mult_expr Mod unary_expr {
     let start  = expr_to_region $1
     and stop   = expr_to_region $3 in
     let region = cover start stop
-    and value  = {op1 = $1; op = $2; op2 = $3}
+    and value  = {arg1 = $1; op = $2; arg2 = $3}
     in ArithExpr (Mod {region; value})
   }
 | unary_expr { $1 }
@@ -646,13 +659,13 @@ unary_expr:
   MINUS core_expr {
     let stop   = expr_to_region $2 in
     let region = cover $1 stop
-    and value  = {op = $1; op1 = $2}
+    and value  = {op = $1; arg = $2}
     in ArithExpr (Neg {region; value})
   }
 | Not core_expr {
     let stop   = expr_to_region $2 in
     let region = cover $1 stop
-    and value  = {op = $1; op1 = $2} in
+    and value  = {op = $1; arg = $2} in
     LogicExpr (BoolExpr (Not {region; value}))
   }
 | core_expr { $1 }
@@ -684,14 +697,20 @@ core_expr:
   }
 
 map_selection:
-  map_name DOT brackets(expr) {
-    let region = cover $1.region $3.region in
+  map_name brackets(expr) {
+    let region = cover $1.region $2.region in
     let value  = {
-      map_name = $1;
-      selector = $2;
-      index    = $3}
+      map_path = Map $1;
+      index    = $2}
     in {region; value}
   }
+| record_projection brackets(expr) {
+    let region = cover $1.region $2.region in
+    let value  = {
+      map_path = MapPath $1;
+      index    = $2}
+    in {region; value}
+ }
 
 record_expr:
   record_injection  { RecordInj  $1 }
@@ -744,12 +763,13 @@ field_assignment:
   }
 
 record_projection:
-  record_name DOT field_name {
-    let region = cover $1.region $3.region in
-    let value  = {
+  record_name DOT nsepseq(field_name,DOT) {
+    let stop   = nsepseq_to_region (fun x -> x.region) $3 in
+    let region = cover $1.region stop
+    and value  = {
       record_name = $1;
       selector    = $2;
-      field_name  = $3}
+      field_path  = $3}
     in {region; value}
   }
 
