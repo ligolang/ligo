@@ -413,13 +413,13 @@ instruction:
 | block        { Block  $1 }
 
 single_instr:
-  conditional {      Cond $1 }
-| match_instr {     Match $1 }
-| assignment  {    Assign $1 }
-| loop        {      Loop $1 }
-| proc_call   {  ProcCall $1 }
-| fail_instr  {      Fail $1 }
-| Do Nothing  { let region = cover $1 $2 in DoNothing region }
+  conditional {     Cond $1 }
+| match_instr {    Match $1 }
+| assignment  {   Assign $1 }
+| loop        {     Loop $1 }
+| proc_call   { ProcCall $1 }
+| fail_instr  {     Fail $1 }
+| Skip        {     Skip $1 }
 
 fail_instr:
   Fail expr {

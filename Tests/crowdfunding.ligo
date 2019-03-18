@@ -22,7 +22,7 @@ entrypoint contribute (storage store : state;
               record
                 backers = add_binding ((sender, amount), store.backers)
               end
-      | _ -> do nothing
+      | _ -> skip
       end
   end with (store, operations)
 
@@ -39,7 +39,7 @@ entrypoint get_funds (storage store : state; const sender : address)
           end
         else fail "Below target"
       else fail "Too soon"
-    else do nothing
+    else skip
   end with (store, operations)
 
 entrypoint claim (storage store : state; const sender : address)

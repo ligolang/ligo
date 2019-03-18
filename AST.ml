@@ -58,6 +58,7 @@ type kwd_not        = Region.t
 type kwd_of         = Region.t
 type kwd_procedure  = Region.t
 type kwd_record     = Region.t
+type kwd_skip       = Region.t
 type kwd_step       = Region.t
 type kwd_storage    = Region.t
 type kwd_then       = Region.t
@@ -323,7 +324,7 @@ and single_instr =
 | Loop      of loop
 | ProcCall  of fun_call
 | Fail      of fail_instr reg
-| DoNothing of Region.t
+| Skip      of kwd_skip
 
 and fail_instr = {
   kwd_fail  : kwd_fail;
@@ -650,7 +651,7 @@ let instr_to_region = function
 | Single Loop For ForInt     {region; _}
 | Single Loop For ForCollect {region; _}
 | Single ProcCall            {region; _}
-| Single DoNothing            region
+| Single Skip                region
 | Single Fail                {region; _}
 | Block                      {region; _} -> region
 
@@ -936,7 +937,7 @@ and print_single_instr = function
 | Loop     loop       -> print_loop loop
 | ProcCall fun_call   -> print_fun_call fun_call
 | Fail     {value; _} -> print_fail value
-| DoNothing region    -> print_token region "do nothing"
+| Skip     kwd_skip   -> print_token kwd_skip "skip"
 
 and print_fail {kwd_fail; fail_expr} =
   print_token kwd_fail "fail";
