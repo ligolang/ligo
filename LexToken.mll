@@ -67,6 +67,7 @@ type t =
   (* Keywords *)
 
 | Begin      of Region.t
+| Case       of Region.t
 | Const      of Region.t
 | Copy       of Region.t
 | Down       of Region.t
@@ -83,7 +84,6 @@ type t =
 | End        of Region.t
 | Then       of Region.t
 | Else       of Region.t
-| Match      of Region.t
 | Procedure  of Region.t
 | Record     of Region.t
 | Skip       of Region.t
@@ -186,6 +186,7 @@ let proj_token = function
   (* Keywords *)
 
 | Begin      region -> region, "Begin"
+| Case       region -> region, "Case"
 | Const      region -> region, "Const"
 | Copy       region -> region, "Copy"
 | Down       region -> region, "Down"
@@ -202,7 +203,6 @@ let proj_token = function
 | End        region -> region, "End"
 | Then       region -> region, "Then"
 | Else       region -> region, "Else"
-| Match      region -> region, "Match"
 | Procedure  region -> region, "Procedure"
 | Record     region -> region, "Record"
 | Skip       region -> region, "Skip"
@@ -270,6 +270,7 @@ let to_lexeme = function
   (* Keywords *)
 
 | Begin      _ -> "begin"
+| Case       _ -> "case"
 | Const      _ -> "const"
 | Copy       _ -> "copy"
 | Down       _ -> "down"
@@ -286,7 +287,6 @@ let to_lexeme = function
 | End        _ -> "end"
 | Then       _ -> "then"
 | Else       _ -> "else"
-| Match      _ -> "match"
 | Procedure  _ -> "procedure"
 | Record     _ -> "record"
 | Skip       _ -> "skip"
@@ -322,6 +322,7 @@ let to_region token = proj_token token |> fst
 
 let keywords = [
   (fun reg -> Begin      reg);
+  (fun reg -> Case       reg);
   (fun reg -> Const      reg);
   (fun reg -> Copy       reg);
   (fun reg -> Down       reg);
@@ -338,7 +339,6 @@ let keywords = [
   (fun reg -> End        reg);
   (fun reg -> Then       reg);
   (fun reg -> Else       reg);
-  (fun reg -> Match      reg);
   (fun reg -> Procedure  reg);
   (fun reg -> Record     reg);
   (fun reg -> Skip       reg);
@@ -546,6 +546,7 @@ let is_ident = function
 
 let is_kwd = function
   Begin      _
+| Case       _
 | Const      _
 | Copy       _
 | Down       _
@@ -562,7 +563,6 @@ let is_kwd = function
 | End        _
 | Then       _
 | Else       _
-| Match      _
 | Procedure  _
 | Record     _
 | Skip       _

@@ -68,6 +68,7 @@ type t =
   (* Keywords *)
 
 | Begin      of Region.t  (* "begin"      *)
+| Case       of Region.t  (* "case"       *)
 | Const      of Region.t  (* "const"      *)
 | Copy       of Region.t  (* "copy"       *)
 | Down       of Region.t  (* "down"       *)
@@ -84,7 +85,6 @@ type t =
 | End        of Region.t  (* "end"        *)
 | Then       of Region.t  (* "then"       *)
 | Else       of Region.t  (* "else"       *)
-| Match      of Region.t  (* "match"      *)
 | Procedure  of Region.t  (* "procedure"  *)
 | Record     of Region.t  (* "record"     *)
 | Skip       of Region.t  (* "skip"       *)

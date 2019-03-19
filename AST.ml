@@ -40,6 +40,7 @@ let sepseq_to_region to_region = function
 (* Keywords of LIGO *)
 
 type kwd_begin      = Region.t
+type kwd_case       = Region.t
 type kwd_const      = Region.t
 type kwd_copy       = Region.t
 type kwd_down       = Region.t
@@ -52,7 +53,6 @@ type kwd_function   = Region.t
 type kwd_if         = Region.t
 type kwd_in         = Region.t
 type kwd_is         = Region.t
-type kwd_match      = Region.t
 type kwd_mod        = Region.t
 type kwd_not        = Region.t
 type kwd_of         = Region.t
@@ -319,7 +319,7 @@ and instruction =
 
 and single_instr =
   Cond      of conditional reg
-| Match     of match_instr reg
+| Case      of case_instr reg
 | Assign    of assignment reg
 | Loop      of loop
 | ProcCall  of fun_call
@@ -340,10 +340,10 @@ and conditional = {
   ifnot    : instruction
 }
 
-and match_instr = {
-  kwd_match : kwd_match;
+and case_instr = {
+  kwd_case  : kwd_case;
   expr      : expr;
-  kwd_with  : kwd_with;
+  kwd_of    : kwd_of;
   lead_vbar : vbar option;
   cases     : cases;
   kwd_end   : kwd_end
@@ -645,7 +645,7 @@ and record_expr_to_region = function
 
 let instr_to_region = function
   Single Cond                {region; _}
-| Single Match               {region; _}
+| Single Case                {region; _}
 | Single Assign              {region; _}
 | Single Loop While          {region; _}
 | Single Loop For ForInt     {region; _}
@@ -932,7 +932,7 @@ and print_instruction = function
 
 and print_single_instr = function
   Cond     {value; _} -> print_conditional value
-| Match    {value; _} -> print_match_instr value
+| Case     {value; _} -> print_case_instr value
 | Assign   assign     -> print_assignment assign
 | Loop     loop       -> print_loop loop
 | ProcCall fun_call   -> print_fun_call fun_call
@@ -953,12 +953,12 @@ and print_conditional node =
   print_token       kwd_else "else";
   print_instruction ifnot
 
-and print_match_instr node =
-  let {kwd_match; expr; kwd_with;
+and print_case_instr (node : case_instr) =
+  let {kwd_case; expr; kwd_of;
        lead_vbar; cases; kwd_end} = node in
-  print_token kwd_match "match";
+  print_token kwd_case "case";
   print_expr  expr;
-  print_token kwd_with "with";
+  print_token kwd_of "of";
   print_token_opt lead_vbar "|";
   print_cases cases;
   print_token kwd_end "end"

@@ -24,6 +24,7 @@ val sepseq_to_region  : ('a -> Region.t) -> ('a,'sep) sepseq -> Region.t
 (* Keywords of LIGO *)
 
 type kwd_begin      = Region.t
+type kwd_case      = Region.t
 type kwd_const      = Region.t
 type kwd_copy       = Region.t
 type kwd_down       = Region.t
@@ -36,7 +37,6 @@ type kwd_function   = Region.t
 type kwd_if         = Region.t
 type kwd_in         = Region.t
 type kwd_is         = Region.t
-type kwd_match      = Region.t
 type kwd_mod        = Region.t
 type kwd_not        = Region.t
 type kwd_of         = Region.t
@@ -302,13 +302,13 @@ and instruction =
 | Block  of block reg
 
 and single_instr =
-  Cond      of conditional reg
-| Match     of match_instr reg
-| Assign    of assignment reg
-| Loop      of loop
-| ProcCall  of fun_call
-| Fail      of fail_instr reg
-| Skip      of kwd_skip
+  Cond     of conditional reg
+| Case     of case_instr reg
+| Assign   of assignment reg
+| Loop     of loop
+| ProcCall of fun_call
+| Fail     of fail_instr reg
+| Skip     of kwd_skip
 
 and fail_instr = {
   kwd_fail  : kwd_fail;
@@ -324,10 +324,10 @@ and conditional = {
   ifnot    : instruction
 }
 
-and match_instr = {
-  kwd_match : kwd_match;
+and case_instr = {
+  kwd_case  : kwd_case;
   expr      : expr;
-  kwd_with  : kwd_with;
+  kwd_of    : kwd_of;
   lead_vbar : vbar option;
   cases     : cases;
   kwd_end   : kwd_end

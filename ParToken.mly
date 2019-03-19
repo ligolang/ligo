@@ -45,6 +45,7 @@
   (* Keywords *)
 
 %token <Region.t> Begin       (* "begin"      *)
+%token <Region.t> Case        (* "case"       *)
 %token <Region.t> Const       (* "const"      *)
 %token <Region.t> Copy        (* "copy"       *)
 %token <Region.t> Down        (* "down"       *)
@@ -61,7 +62,6 @@
 %token <Region.t> End         (* "end"        *)
 %token <Region.t> Then        (* "then"       *)
 %token <Region.t> Else        (* "else"       *)
-%token <Region.t> Match       (* "match"      *)
 %token <Region.t> Procedure   (* "procedure"  *)
 %token <Region.t> Record      (* "record"     *)
 %token <Region.t> Skip        (* "skip"       *)

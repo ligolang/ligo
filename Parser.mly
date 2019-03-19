@@ -457,7 +457,7 @@ instruction:
 
 single_instr:
   conditional {     Cond $1 }
-| match_instr {    Match $1 }
+| case_instr  {     Case $1 }
 | assignment  {   Assign $1 }
 | loop        {     Loop $1 }
 | proc_call   { ProcCall $1 }
@@ -486,13 +486,13 @@ conditional:
     in {region; value}
   }
 
-match_instr:
-  Match expr With option(VBAR) cases End {
+case_instr:
+  Case expr Of option(VBAR) cases End {
     let region = cover $1 $6 in
     let value = {
-      kwd_match = $1;
+      kwd_case  = $1;
       expr      = $2;
-      kwd_with  = $3;
+      kwd_of    = $3;
       lead_vbar = $4;
       cases     = $5;
       kwd_end   = $6}
