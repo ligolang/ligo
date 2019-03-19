@@ -368,42 +368,21 @@ const_decl:
   }
 
 var_decl:
-  Var var COLON var_decl_type_expr ASS expr option(SEMI) {
-    let stop =
-      match $7 with
-        Some region -> region
-      |        None -> expr_to_region $6 in
+  Var var COLON type_expr ASS extended_expr option(SEMI) {
+    let stop   = match $7 with
+                   Some region -> region
+                 |        None -> $6.region in
     let region = cover $1 stop in
-    let value = {
-      kwd_var    = $1;
-      name       = $2;
-      colon      = $3;
-      var_type   = $4;
-      assign     = $5;
-      init       = $6;
-      terminator = $7}
-    in {region; value}
-  }
-| Var var COLON type_name type_tuple
-  ASS extended_expr option(SEMI) {
-    let region    = cover $4.region $5.region in
-    let type_app  = TypeApp {region; value=$4,$5} in
-    let cartesian = {region; value = type_app, []} in
-    let var_type  = Prod cartesian in
-    let stop      = match $8 with
-                      Some region -> region
-                    |        None -> $7.region in
-    let region    = cover $1 stop in
     let init =
-      match $7.value with
+      match $6.value with
         `Expr e -> e
       | `EList (lbracket, rbracket) ->
-           let region = $7.region
+           let region = $6.region
            and value = {
              lbracket;
              rbracket;
              colon = Region.ghost;
-             list_type = var_type} in
+             list_type = $4} in
            let value = {
              lpar   = Region.ghost;
              inside = value;
@@ -415,17 +394,17 @@ var_decl:
              inside = {
                c_None   = region;
                colon    = Region.ghost;
-               opt_type = var_type};
+               opt_type = $4};
              rpar = Region.ghost}
            in ConstrExpr (NoneExpr {region; value}) in
     let value = {
       kwd_var    = $1;
       name       = $2;
       colon      = $3;
-      var_type;
-      assign     = $6;
+      var_type   = $4;
+      assign     = $5;
       init;
-      terminator = $8}
+      terminator = $7}
     in {region; value}
   }
 
@@ -435,21 +414,6 @@ extended_expr:
 | LBRACKET RBRACKET { {region = cover $1 $2;
                        value  = `EList ($1,$2)} }
 | C_None            { {region = $1; value = `ENone $1} }
-
-var_decl_type_expr:
-  var_decl_cartesian { Prod   $1 }
-| sum_type           { Sum    $1 }
-| record_type        { Record $1 }
-
-var_decl_cartesian:
-  nsepseq(var_decl_core_type,TIMES) {
-    let region = nsepseq_to_region type_expr_to_region $1
-    in {region; value=$1}
-  }
-
-var_decl_core_type:
-  type_name      { TAlias  $1 }
-| par(type_expr) { ParType $1 }
 
 instruction:
   single_instr { Single $1 }

@@ -15,7 +15,7 @@ entrypoint contribute (storage store : state;
     if now > store.deadline then
       fail "Deadline passed"
     else
-      match store.backers[sender] with
+      case store.backers[sender] of
         None ->
           store :=
             copy store with
@@ -50,7 +50,7 @@ entrypoint claim (storage store : state; const sender : address)
     if now <= store.deadline then
       fail "Too soon"
     else
-      match store.backers[sender] with
+      case store.backers[sender] of
         None ->
           fail "Not a backer"
       | Some (amount) ->
