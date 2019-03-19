@@ -420,13 +420,26 @@ instruction:
 | block        { Block  $1 }
 
 single_instr:
-  conditional {     Cond $1 }
-| case_instr  {     Case $1 }
-| assignment  {   Assign $1 }
-| loop        {     Loop $1 }
-| proc_call   { ProcCall $1 }
-| fail_instr  {     Fail $1 }
-| Skip        {     Skip $1 }
+  conditional  {     Cond $1 }
+| case_instr   {     Case $1 }
+| assignment   {   Assign $1 }
+| loop         {     Loop $1 }
+| proc_call    { ProcCall $1 }
+| fail_instr   {     Fail $1 }
+| Skip         {     Skip $1 }
+| record_patch {    Patch $1 }
+
+record_patch:
+  Patch record_name With record_injection {
+    let region = cover $1 $4.region in
+    let value  = {
+      kwd_patch   = $1;
+      record_name = $2;
+      kwd_with    = $3;
+      delta       = $4}
+    in {region; value}
+  }
+
 
 fail_instr:
   Fail expr {
@@ -722,7 +735,6 @@ map_selection:
 record_expr:
   record_injection  { RecordInj  $1 }
 | record_projection { RecordProj $1 }
-| record_copy       { RecordCopy $1 }
 
 record_injection:
   Record
@@ -777,17 +789,6 @@ record_projection:
       record_name = $1;
       selector    = $2;
       field_path  = $3}
-    in {region; value}
-  }
-
-record_copy:
-  Copy record_name With record_injection {
-    let region = cover $1 $4.region in
-    let value  = {
-      kwd_copy    = $1;
-      record_name = $2;
-      kwd_with    = $3;
-      delta       = $4}
     in {region; value}
   }
 

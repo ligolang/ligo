@@ -42,7 +42,6 @@ let sepseq_to_region to_region = function
 type kwd_begin      = Region.t
 type kwd_case       = Region.t
 type kwd_const      = Region.t
-type kwd_copy       = Region.t
 type kwd_down       = Region.t
 type kwd_else       = Region.t
 type kwd_end        = Region.t
@@ -56,6 +55,7 @@ type kwd_is         = Region.t
 type kwd_mod        = Region.t
 type kwd_not        = Region.t
 type kwd_of         = Region.t
+type kwd_patch      = Region.t
 type kwd_procedure  = Region.t
 type kwd_record     = Region.t
 type kwd_skip       = Region.t
@@ -318,13 +318,21 @@ and instruction =
 | Block  of block reg
 
 and single_instr =
-  Cond      of conditional reg
-| Case      of case_instr reg
-| Assign    of assignment reg
-| Loop      of loop
-| ProcCall  of fun_call
-| Fail      of fail_instr reg
-| Skip      of kwd_skip
+  Cond     of conditional reg
+| Case     of case_instr reg
+| Assign   of assignment reg
+| Loop     of loop
+| ProcCall of fun_call
+| Fail     of fail_instr reg
+| Skip     of kwd_skip
+| Patch    of record_patch reg
+
+and record_patch = {
+  kwd_patch    : kwd_patch;
+  record_name  : variable;
+  kwd_with     : kwd_with;
+  delta        : record_injection reg
+}
 
 and fail_instr = {
   kwd_fail  : kwd_fail;
@@ -474,7 +482,6 @@ and constr_expr =
 and record_expr =
   RecordInj  of record_injection reg
 | RecordProj of record_projection reg
-| RecordCopy of record_copy reg
 
 and record_injection = {
   opening    : kwd_record;
@@ -493,13 +500,6 @@ and record_projection = {
   record_name : variable;
   selector    : dot;
   field_path  : (field_name, dot) nsepseq
-}
-
-and record_copy = {
-  kwd_copy    : kwd_copy;
-  record_name : variable;
-  kwd_with    : kwd_with;
-  delta       : record_injection reg
 }
 
 and tuple = (expr, comma) nsepseq par reg
@@ -640,8 +640,7 @@ and constr_expr_to_region = function
 
 and record_expr_to_region = function
   RecordInj  {region; _}
-| RecordProj {region; _}
-| RecordCopy {region; _} -> region
+| RecordProj {region; _} -> region
 
 let instr_to_region = function
   Single Cond                {region; _}
@@ -653,6 +652,7 @@ let instr_to_region = function
 | Single ProcCall            {region; _}
 | Single Skip                region
 | Single Fail                {region; _}
+| Single Patch               {region; _}
 | Block                      {region; _} -> region
 
 let pattern_to_region = function
@@ -938,6 +938,7 @@ and print_single_instr = function
 | ProcCall fun_call   -> print_fun_call fun_call
 | Fail     {value; _} -> print_fail value
 | Skip     kwd_skip   -> print_token kwd_skip "skip"
+| Patch    {value; _} -> print_patch value
 
 and print_fail {kwd_fail; fail_expr} =
   print_token kwd_fail "fail";
@@ -1114,7 +1115,6 @@ and print_constr_expr = function
 and print_record_expr = function
   RecordInj  e -> print_record_injection e
 | RecordProj e -> print_record_projection e
-| RecordCopy e -> print_record_copy e
 
 and print_record_injection {value; _} =
   let {opening; fields; terminator; close} = value in
@@ -1138,9 +1138,9 @@ and print_record_projection {value; _} =
 and print_field_path sequence =
   print_nsepseq "." print_var sequence
 
-and print_record_copy {value; _} =
-  let {kwd_copy; record_name; kwd_with; delta} = value in
-  print_token kwd_copy "copy";
+and print_patch (node: record_patch) =
+  let {kwd_patch; record_name; kwd_with; delta} = node in
+  print_token kwd_patch "patch";
   print_var record_name;
   print_token kwd_with "with";
   print_record_injection delta
