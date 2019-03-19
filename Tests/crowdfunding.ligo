@@ -10,7 +10,7 @@ entrypoint contribute (storage store : state;
                        const sender  : address;
                        const amount  : mutez)
   : state * list (operation) is
-  var operations : list (operation) := ([] : list (operation)) // TODO
+  var operations : list (operation) := []
   begin
     if now > store.deadline then
       fail "Deadline passed"
@@ -26,9 +26,9 @@ entrypoint contribute (storage store : state;
       end
   end with (store, operations)
 
-entrypoint get_funds (storage store : state; const sender : address)
+entrypoint withdraw (storage store : state; const sender : address)
   : state * list (operation) is
-  var operations : list (operation) := ([] : list (operation)) // TODO
+  var operations : list (operation) := []
   begin
     if sender = owner then
       if now >= store.deadline then
@@ -44,7 +44,7 @@ entrypoint get_funds (storage store : state; const sender : address)
 
 entrypoint claim (storage store : state; const sender : address)
   : state * list (operation) is
-  var operations : list (operation) := ([] : list (operation)) // TODO
+  var operations : list (operation) := []
   var amount : mutez := 0
   begin
     if now <= store.deadline then
