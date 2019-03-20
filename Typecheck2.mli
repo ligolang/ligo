@@ -16,7 +16,7 @@ module O : sig
     PVar    of var_name
   | PWild
   | PInt    of Z.t
-  | PBytes  of MBytes.t
+  | PBytes  of Hex.t
   | PString of string
   | PUnit
   | PFalse
@@ -83,7 +83,7 @@ module O : sig
 
   and constant =
     Unit
-  | Int of Z.t | String of string | Bytes of MBytes.t
+  | Int of Z.t | String of string | Bytes of Hex.t
   | False | True
   | Null
   | EmptySet

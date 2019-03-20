@@ -19,7 +19,7 @@ entrypoint contribute (storage store : store;
     else
       case store.backers[sender] of
         None -> store.backers[sender] := Some (amount)
-//        patch store.backers with map sender -> amount end
+//        None -> patch store.backers with map sender -> amount end
       |    _ -> skip
       end
   end with (store, operations)
@@ -32,8 +32,8 @@ entrypoint withdraw (storage store : store; const sender : address)
       if now >= store.deadline then
         if balance >= store.goal then
           begin
-//           patch store with record funded = True end;
              store.funded := True;
+//           patch store with record funded = True end;
              operations := [Transfer (owner, balance)]
           end
         else fail "Below target"

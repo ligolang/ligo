@@ -437,7 +437,7 @@ and expr =
 | MapExpr    of map_expr
 | Var        of Lexer.lexeme reg
 | FunCall    of fun_call
-| Bytes      of (Lexer.lexeme * MBytes.t) reg
+| Bytes      of (Lexer.lexeme * Hex.t) reg
 | Unit       of c_Unit
 | Tuple      of tuple
 | ParExpr    of expr par reg
@@ -574,7 +574,7 @@ and pattern =
 | PVar    of Lexer.lexeme reg
 | PWild   of wild
 | PInt    of (Lexer.lexeme * Z.t) reg
-| PBytes  of (Lexer.lexeme * MBytes.t) reg
+| PBytes  of (Lexer.lexeme * Hex.t) reg
 | PString of Lexer.lexeme reg
 | PUnit   of c_Unit
 | PFalse  of c_False

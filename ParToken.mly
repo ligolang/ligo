@@ -5,11 +5,11 @@
 
   (* Literals *)
 
-%token              <LexToken.lexeme Region.reg> String
-%token <(LexToken.lexeme * MBytes.t) Region.reg> Bytes
-%token      <(LexToken.lexeme * Z.t) Region.reg> Int
-%token              <LexToken.lexeme Region.reg> Ident
-%token              <LexToken.lexeme Region.reg> Constr
+%token           <LexToken.lexeme Region.reg> String
+%token <(LexToken.lexeme * Hex.t) Region.reg> Bytes
+%token   <(LexToken.lexeme * Z.t) Region.reg> Int
+%token           <LexToken.lexeme Region.reg> Ident
+%token           <LexToken.lexeme Region.reg> Constr
 
   (* Symbols *)
 

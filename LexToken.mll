@@ -28,7 +28,7 @@ type t =
   (* Literals *)
 
   String of lexeme Region.reg
-| Bytes  of (lexeme * MBytes.t) Region.reg
+| Bytes  of (lexeme * Hex.t) Region.reg
 | Int    of (lexeme * Z.t) Region.reg
 | Ident  of lexeme Region.reg
 | Constr of lexeme Region.reg
@@ -142,7 +142,7 @@ let proj_token = function
 | Bytes Region.{region; value = s,b} ->
     region,
     sprintf "Bytes (\"%s\", \"0x%s\")"
-      s (MBytes.to_hex b |> Hex.to_string)
+      s (Hex.to_string b)
 
 | Int Region.{region; value = s,n} ->
     region, sprintf "Int (\"%s\", %s)" s (Z.to_string n)
@@ -470,7 +470,7 @@ let mk_string lexeme region = String Region.{region; value=lexeme}
 
 let mk_bytes lexeme region =
   let norm = Str.(global_replace (regexp "_") "" lexeme) in
-  let value = lexeme, MBytes.of_hex (Hex.of_string norm)
+  let value = lexeme, Hex.of_string norm
   in Bytes Region.{region; value}
 
 type int_err = Non_canonical_zero

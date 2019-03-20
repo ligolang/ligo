@@ -29,7 +29,7 @@ type t =
   (* Literals *)
 
   String of lexeme Region.reg
-| Bytes  of (lexeme * MBytes.t) Region.reg
+| Bytes  of (lexeme * Hex.t) Region.reg
 | Int    of (lexeme * Z.t) Region.reg
 | Ident  of lexeme Region.reg
 | Constr of lexeme Region.reg
