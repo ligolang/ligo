@@ -123,6 +123,10 @@ and type_match (e:environment) : I.matching -> O.matching result = function
       ok (O.Match_tuple lst')
 
 and evaluate_type (e:environment) : I.type_expression -> O.type_value result = function
+  | Type_function (a, b) ->
+      let%bind a' = evaluate_type e a in
+      let%bind b' = evaluate_type e b in
+      ok (O.Type_function (a', b'))
   | Type_tuple lst ->
       let%bind lst' = bind_list @@ List.map (evaluate_type e) lst in
       ok (O.Type_tuple lst')
@@ -170,6 +174,9 @@ and type_annotated_expression (e:environment) (ae:I.annotated_expression) : O.an
   | Literal (String s) ->
       let%bind type_annotation = check O.t_string in
       ok O.{expression = Literal (String s) ; type_annotation }
+  | Literal (Bytes s) ->
+      let%bind type_annotation = check O.t_bytes in
+      ok O.{expression = Literal (Bytes s) ; type_annotation }
   | Literal (Number n) ->
       let%bind type_annotation = check O.t_int in
       ok O.{expression = Literal (Int n) ; type_annotation }
@@ -214,4 +221,33 @@ and type_annotated_expression (e:environment) (ae:I.annotated_expression) : O.an
         @@ (fun () -> SMap.find ind r_tv) in
       let%bind type_annotation = check tv in
       ok O.{expression = O.Record_accessor (r', ind) ; type_annotation }
-  | _ -> simple_fail "default"
+  | Lambda {
+      binder ;
+      input_type ;
+      output_type ;
+      result ;
+      body ;
+    } ->
+      let%bind input_type = evaluate_type e input_type in
+      let%bind output_type = evaluate_type e output_type in
+      let e' = Environment.add e binder input_type in
+      let%bind result = type_annotated_expression e' result in
+      let%bind body = type_block e' body in
+      let%bind type_annotation = check O.(Type_function (input_type, output_type)) in
+      ok O.{expression = Lambda {binder;input_type;output_type;result;body} ; type_annotation}
+  | Constant (name, lst) ->
+      let%bind lst' = bind_list @@ List.map (type_annotated_expression e) lst in
+      let tv_lst = List.map O.get_annotation lst' in
+      let%bind (name', tv) = type_constant name tv_lst in
+      let%bind type_annotation = check tv in
+      ok O.{expression = O.Constant (name', lst') ; type_annotation}
+
+and type_constant (name:string) (lst:O.type_value list) : (string * O.type_value) result =
+  (* Constant poorman's polymorphism *)
+  let open O in
+  match (name, lst) with
+  | "add", [a ; b] when a = t_int && b = t_int -> ok ("add_int", t_int)
+  | "add", [a ; b] when a = t_string && b = t_string -> ok ("concat_string", t_string)
+  | "add", [_ ; _] -> simple_fail "bad types to add"
+  | "add", _ -> simple_fail "bad number of params to add"
+  | _ -> simple_fail "unrecognized constant"

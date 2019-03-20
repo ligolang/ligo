@@ -37,6 +37,7 @@ and type_expression =
   | Type_tuple of te list
   | Type_sum of te_map
   | Type_record of te_map
+  | Type_function of te * te
   | Type_variable of type_name
   | Type_constant of type_name * te list
 

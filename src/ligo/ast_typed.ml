@@ -35,6 +35,7 @@ and type_value =
   | Type_sum of tv_map
   | Type_record of tv_map
   | Type_constant of type_name * tv list
+  | Type_function of tv * tv
 
 and expression =
   (* Base *)
@@ -148,6 +149,7 @@ let merge_annotation (a:type_value option) (b:type_value option) : type_value re
 
 let t_bool : type_value = Type_constant ("bool", [])
 let t_string : type_value = Type_constant ("string", [])
+let t_bytes : type_value = Type_constant ("bytes", [])
 let t_int : type_value = Type_constant ("int", [])
 
 let get_annotation (x:annotated_expression) = x.type_annotation
