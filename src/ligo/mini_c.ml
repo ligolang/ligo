@@ -1042,14 +1042,16 @@ module Translate_AST = struct
       List.map (rename_declaration src dst) decls
   end
 
+  let list_of_map m = List.rev @@ SMap.fold (fun _ v prev -> v :: prev) m []
+
   let rec translate_type : AST.type_expr -> type_value result = fun {type_expr}  ->
     match type_expr with
     | Unit -> ok (`Base Unit)
     | Int -> ok (`Base Int)
     | String -> ok (`Base String)
     | Bool -> ok (`Base Bool)
-    | Sum lst ->
-       let node = Append_tree.of_list @@ List.map snd lst in
+    | Sum m ->
+       let node = Append_tree.of_list @@ List.map snd @@ list_of_map m in
        let aux a b : type_value result =
          let%bind a = a in
          let%bind b = b in
@@ -1057,7 +1059,7 @@ module Translate_AST = struct
        in
        Append_tree.fold_ne translate_type aux node
     | Record r ->
-       let node = Append_tree.of_list @@ List.map snd r in
+       let node = Append_tree.of_list @@ List.map snd @@ list_of_map r in
        let aux a b : type_value result =
          let%bind a = a in
          let%bind b = b in
@@ -1150,8 +1152,8 @@ module Translate_AST = struct
 
   let rec to_mini_c_value' : (AST.expr_case * AST.type_expr) -> value result = function
     | Constant c, _ -> translate_constant c
-    | App {arguments;operator = {operator = Construcor c ; ty = {type_expr = Sum lst}}}, _ ->
-       let node = Append_tree.of_list @@ List.map fst lst in
+    | App {arguments;operator = {operator = Constructor c ; ty = {type_expr = Sum lst}}}, _ ->
+       let node = Append_tree.of_list @@ List.map fst @@ list_of_map lst in
        let%bind lst =
          trace_option (simple_error "Not constructor of variant type") @@
          Append_tree.exists_path (fun (x:AST.name_and_region) -> x.name = c.name) node in

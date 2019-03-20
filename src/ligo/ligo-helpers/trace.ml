@@ -50,6 +50,17 @@ let rec bind_list = function
       ok @@ hd :: tl
     )
 
+let bind_fold_list f init lst =
+  let aux x y =
+    x >>? fun x ->
+    f x y
+  in
+  List.fold_left aux (ok init) lst
+
+let bind_list_iter f lst =
+  let aux () y = f y in
+  bind_fold_list aux () lst
+
 let bind_or (a, b) =
   match a with
   | Ok x -> ok x

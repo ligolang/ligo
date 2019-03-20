@@ -1,8 +1,12 @@
+[@@@warning "-27"] (* TODO *)
+[@@@warning "-32"] (* TODO *)
 [@@@warning "-30"]
 
-module SMap : Map.S with type key = string
+module SMap = Map.Make(String)
 
-module O : sig
+module I = AST2.O
+
+module O = struct
   type asttodo = [`TODO] (* occurrences of asttodo will point to some part of the original parser AST *)
 
   type name_and_region = {name: string; orig: Region.t}
@@ -23,7 +27,7 @@ module O : sig
   | PSome   of pattern
   | PCons   of pattern * pattern
   | PNull
-  | PRecord of (field_name * pattern) list
+  | PRecord of (field_name * pattern) SMap.t
 
   type type_constructor =
     Option
@@ -32,8 +36,8 @@ module O : sig
   | Map
 
   type type_expr_case =
-    Sum      of (type_name * type_expr) list
-  | Record   of (field_name * type_expr) list
+    Sum      of (type_name * type_expr) SMap.t
+  | Record   of (field_name * type_expr) SMap.t
   | TypeApp  of type_constructor * (type_expr list)
   | Function of { arg: type_expr; ret: type_expr }
   | Ref      of type_expr
@@ -42,7 +46,7 @@ module O : sig
   | Unit
   | Bool
 
-  and type_expr = { type_expr: type_expr_case; name: string option; orig: AST.type_expr }
+  and type_expr = { type_expr: type_expr_case; name: string option; orig: Region.t }
 
   type typed_var = { name:var_name; ty:type_expr; orig: asttodo }
 
@@ -68,7 +72,7 @@ module O : sig
 
   and operator_case =
     Function    of var_name
-  | Construcor  of var_name
+  | Constructor of var_name
   | UpdateField of field_name
   | GetField    of field_name
   | Or | And | Lt | Leq | Gt | Geq | Equal | Neq | Cat | Cons | Add | Sub | Mult | Div | Mod
@@ -98,8 +102,61 @@ module O : sig
       types           : type_decl list;
       storage_decl    : typed_var;
       declarations    : decl list;
-      orig: AST.t
+      orig            : AST.t
     }
 end
 
-val temporary_force_dune : int
+type te = O.type_expr list SMap.t
+type ve = O.type_expr list SMap.t
+type tve = te * ve
+
+let fold_map f a l =
+  let f (acc, l) elem =
+    let acc', elem' = f acc elem
+    in acc', (elem' :: l) in
+  let last_acc, last_l = List.fold_left f (a, []) l
+  in last_acc, List.rev last_l
+
+let a_type_constructor (tve : tve) : I.type_constructor -> O.type_constructor = function
+  Option -> failwith "TODO"
+| List   -> failwith "TODO"
+| Set    -> failwith "TODO"
+| Map    -> failwith "TODO"
+
+let a_type_expr_case (tve : tve) : I.type_expr_case -> O.type_expr_case = function
+    Sum      l          -> failwith "TODO"
+  | Record   l          -> failwith "TODO"
+  | TypeApp  (tc, args) -> failwith "TODO"
+  | Function {arg;ret}  -> failwith "TODO"
+  | Ref      t          -> failwith "TODO"
+  | String              -> failwith "TODO"
+  | Int                 -> failwith "TODO"
+  | Unit                -> failwith "TODO"
+  | Bool                -> failwith "TODO"
+
+
+let a_type_expr (tve : tve) ({type_expr;name;orig} : I.type_expr) : O.type_expr =
+  failwith "TODO"
+
+let a_type (tve : tve) ({name;ty;orig} : I.type_decl) : tve * O.type_decl =
+  failwith "TODO"
+
+let a_types (tve : tve) (l : I.type_decl list) : tve * O.type_decl list =
+  fold_map a_type tve l
+
+let a_storage_decl : tve -> I.typed_var -> tve * O.typed_var =
+  failwith "TODO"
+
+let a_declarations : tve -> I.decl list -> tve * O.decl list =
+  failwith "TODO"
+
+let a_ast I.{types; storage_decl; declarations; orig} =
+  let tve = SMap.empty, SMap.empty in
+  let tve, types = a_types tve types in
+  let tve, storage_decl = a_storage_decl tve storage_decl in
+  let tve, declarations = a_declarations tve declarations in
+  let _ = tve in
+  O.{types; storage_decl; declarations; orig}
+
+let annotate : I.ast -> O.ast = a_ast
+

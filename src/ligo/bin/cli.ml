@@ -1,1 +1,1 @@
-let () = print_int 42
+let () = ()

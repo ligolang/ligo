@@ -34,12 +34,40 @@ let lib_path =
             in List.fold_right mk_I libs ""
 *)
 
+(* Preprocessing the input source and opening the input channels *)
+
+let prefix =
+  match EvalOpt.input with
+    None | Some "-" -> "temp"
+  | Some file ->  Filename.(file |> basename |> remove_extension)
+
+let suffix = ".pp.li"
+
+let pp_input =
+  if Utils.String.Set.mem "cpp" EvalOpt.verbose
+  then prefix ^ suffix
+  else let pp_input, pp_out = Filename.open_temp_file prefix suffix
+       in close_out pp_out; pp_input
+
+let cpp_cmd =
+  match EvalOpt.input with
+    None | Some "-" ->
+      Printf.sprintf "cpp -traditional-cpp - -o %s" pp_input
+  | Some file ->
+      Printf.sprintf "cpp -traditional-cpp %s -o %s" file pp_input
+
+let () =
+  if Utils.String.Set.mem "cpp" EvalOpt.verbose
+  then Printf.eprintf "%s\n%!" cpp_cmd;
+  if Sys.command cpp_cmd <> 0 then
+    external_ (Printf.sprintf "the command \"%s\" failed." cpp_cmd)
+
 (* Instanciating the lexer *)
 
 module Lexer = Lexer.Make (LexToken)
 
 let Lexer.{read; buffer; get_pos; get_last; close} =
-  Lexer.open_token_stream EvalOpt.input
+  Lexer.open_token_stream (Some pp_input)
 
 and cout = stdout
 
@@ -78,6 +106,8 @@ let () =
 
 (* Temporary: force dune to build AST2.ml *)
 let () =
-  let open Typecheck2 in
-  let _ = temporary_force_dune in
-  ()
+  if false then
+    let _ = Typecheck2.annotate in
+    ()
+  else
+    ()

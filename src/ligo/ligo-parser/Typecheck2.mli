@@ -1,8 +1,10 @@
 [@@@warning "-30"]
 
-module SMap = Map.Make(String)
+module SMap : Map.S with type key = string
 
-module O = struct
+module I = AST2.O
+
+module O : sig
   type asttodo = [`TODO] (* occurrences of asttodo will point to some part of the original parser AST *)
 
   type name_and_region = {name: string; orig: Region.t}
@@ -23,7 +25,7 @@ module O = struct
   | PSome   of pattern
   | PCons   of pattern * pattern
   | PNull
-  | PRecord of (field_name * pattern) list
+  | PRecord of (field_name * pattern) SMap.t
 
   type type_constructor =
     Option
@@ -32,8 +34,8 @@ module O = struct
   | Map
 
   type type_expr_case =
-    Sum      of (type_name * type_expr) list
-  | Record   of (field_name * type_expr) list
+    Sum      of (type_name * type_expr) SMap.t
+  | Record   of (field_name * type_expr) SMap.t
   | TypeApp  of type_constructor * (type_expr list)
   | Function of { arg: type_expr; ret: type_expr }
   | Ref      of type_expr
@@ -42,7 +44,7 @@ module O = struct
   | Unit
   | Bool
 
-  and type_expr = { type_expr: type_expr_case; name: string option; orig: AST.type_expr }
+  and type_expr = { type_expr: type_expr_case; name: string option; orig: Region.t }
 
   type typed_var = { name:var_name; ty:type_expr; orig: asttodo }
 
@@ -68,7 +70,7 @@ module O = struct
 
   and operator_case =
     Function    of var_name
-  | Construcor  of var_name
+  | Constructor of var_name
   | UpdateField of field_name
   | GetField    of field_name
   | Or | And | Lt | Leq | Gt | Geq | Equal | Neq | Cat | Cons | Add | Sub | Mult | Div | Mod
@@ -98,8 +100,8 @@ module O = struct
       types           : type_decl list;
       storage_decl    : typed_var;
       declarations    : decl list;
-      orig: AST.t
+      orig            : AST.t
     }
 end
 
-let temporary_force_dune = 123
+val annotate : I.ast -> O.ast
