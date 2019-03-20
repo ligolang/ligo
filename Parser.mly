@@ -21,6 +21,34 @@ open AST
 
 (* RULES *)
 
+(* The rule [series(Item)] parses a list of [Item] separated by
+   semi-colons and optionally terminated by a semi-colon, then the
+   keyword [End]. *)
+
+series(Item):
+  Item after_item(Item) { $1,$2 }
+
+after_item(Item):
+  SEMI item_or_end(Item) {
+    match $2 with
+      `Some (item, items, term, close) ->
+        ($1, item)::items, term, close
+    | `End close ->
+        [], Some $1, close
+  }
+| End {
+   [], None, $1
+  }
+
+item_or_end(Item):
+  End {
+   `End $1
+  }
+| series(Item) {
+    let item, (items, term, close) = $1
+    in `Some (item, items, term, close)
+  }
+
 (* Compound constructs *)
 
 par(X):
@@ -130,8 +158,8 @@ type_decl:
     in {region; value}}
 
 type_expr:
-  cartesian   { Prod   $1 }
-| sum_type    { Sum    $1 }
+  cartesian   {   Prod $1 }
+| sum_type    {    Sum $1 }
 | record_type { Record $1 }
 
 cartesian:
@@ -147,6 +175,11 @@ core_type:
 | type_name type_tuple {
     let region = cover $1.region $2.region
     in TypeApp {region; value = $1,$2}
+  }
+| Map type_tuple {
+    let region = cover $1 $2.region in
+    let value = {value="map"; region=$1}
+    in TypeApp {region; value = value, $2}
   }
 | par(type_expr) {
     ParType $1
@@ -310,38 +343,15 @@ entry_param_decl:
   }
 
 block:
-  Begin
-    instruction after_instr
-  {
-   let instrs, terminator, close = $3 in
+  Begin series(instruction) {
+   let first, (others, terminator, close) = $2 in
    let region = cover $1 close
    and value = {
      opening = $1;
-     instr   = $2, instrs;
+     instr   = first, others;
      terminator;
      close}
    in {region; value}
-  }
-
-after_instr:
-  SEMI instr_or_end {
-    match $2 with
-      `Some (instr, instrs, term, close) ->
-        ($1, instr)::instrs, term, close
-    | `End close ->
-        [], Some $1, close
-  }
-| End {
-   [], None, $1
-  }
-
-instr_or_end:
-  End {
-   `End $1
-  }
-| instruction after_instr {
-    let instrs, term, close = $2 in
-   `Some ($1, instrs, term, close)
   }
 
 local_decl:
@@ -397,6 +407,8 @@ var_decl:
                opt_type = $4};
              rpar = Region.ghost}
            in ConstrExpr (NoneExpr {region; value}) in
+    (*      | `EMap inj ->*)
+
     let value = {
       kwd_var    = $1;
       name       = $2;
@@ -414,20 +426,59 @@ extended_expr:
 | LBRACKET RBRACKET { {region = cover $1 $2;
                        value  = `EList ($1,$2)} }
 | C_None            { {region = $1; value = `ENone $1} }
+(*
+| map_injection     { {region = $1.region; value = `EMap $1} }
+ *)
 
 instruction:
   single_instr { Single $1 }
 | block        { Block  $1 }
 
 single_instr:
-  conditional  {     Cond $1 }
-| case_instr   {     Case $1 }
-| assignment   {   Assign $1 }
-| loop         {     Loop $1 }
-| proc_call    { ProcCall $1 }
-| fail_instr   {     Fail $1 }
-| Skip         {     Skip $1 }
-| record_patch {    Patch $1 }
+  conditional  {        Cond $1 }
+| case_instr   {        Case $1 }
+| assignment   {      Assign $1 }
+| loop         {        Loop $1 }
+| proc_call    {    ProcCall $1 }
+| fail_instr   {        Fail $1 }
+| Skip         {        Skip $1 }
+| record_patch { RecordPatch $1 }
+| map_patch    {    MapPatch $1 }
+
+map_patch:
+  Map map_name With map_injection {
+    let region = cover $1 $4.region in
+    let value  = {
+      kwd_patch   = $1;
+      map_name = $2;
+      kwd_with    = $3;
+      delta       = $4}
+    in {region; value}
+  }
+
+map_injection:
+  Map series(binding) {
+    let first, (others, terminator, close) = $2 in
+    let region = cover $1 close
+    and value = {
+      opening  = $1;
+      bindings = first, others;
+      terminator;
+      close}
+    in {region; value}
+  }
+
+binding:
+  expr ARROW expr {
+    let start  = expr_to_region $1
+    and stop   = expr_to_region $3 in
+    let region = cover start stop
+    and value  = {
+      source = $1;
+      arrow  = $2;
+      image  = $3}
+    in {region; value}
+  }
 
 record_patch:
   Patch record_name With record_injection {
@@ -439,7 +490,6 @@ record_patch:
       delta       = $4}
     in {region; value}
   }
-
 
 fail_instr:
   Fail expr {
@@ -705,7 +755,7 @@ core_expr:
 | empty_set        { SetExpr (EmptySet $1) }
 | none_expr        { ConstrExpr (NoneExpr $1) }
 | fun_call         { FunCall $1 }
-| map_selection    { MapLookUp $1 }
+| map_expr         { MapExpr $1 }
 | record_expr      { RecordExpr $1 }
 | Constr arguments {
     let region = cover $1.region $2.region in
@@ -715,6 +765,9 @@ core_expr:
     let region = cover $1 $2.region in
     ConstrExpr (SomeApp {region; value = $1,$2})
   }
+
+map_expr:
+  map_selection { MapLookUp $1 }
 
 map_selection:
   map_name brackets(expr) {
@@ -737,38 +790,15 @@ record_expr:
 | record_projection { RecordProj $1 }
 
 record_injection:
-  Record
-    field_assignment after_field
-  {
-   let fields, terminator, close = $3 in
-   let region = cover $1 close
-   and value = {
-     opening = $1;
-     fields  = $2, fields;
-     terminator;
-     close}
-   in {region; value}
-  }
-
-after_field:
-  SEMI field_or_end {
-    match $2 with
-      `Some (field, fields, term, close) ->
-        ($1, field)::fields, term, close
-    | `End close ->
-        [], Some $1, close
-  }
-| End {
-   [], None, $1
-  }
-
-field_or_end:
-  End {
-   `End $1
-  }
-| field_assignment after_field {
-    let fields, term, close = $2 in
-   `Some ($1, fields, term, close)
+  Record series(field_assignment) {
+    let first, (others, terminator, close) = $2 in
+    let region = cover $1 close
+    and value = {
+      opening = $1;
+      fields  = first, others;
+      terminator;
+      close}
+    in {region; value}
   }
 
 field_assignment:

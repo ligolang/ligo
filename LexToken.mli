@@ -84,6 +84,7 @@ type t =
 | End        of Region.t  (* "end"        *)
 | Then       of Region.t  (* "then"       *)
 | Else       of Region.t  (* "else"       *)
+| Map        of Region.t  (* "map"        *)
 | Patch      of Region.t  (* "patch"      *)
 | Procedure  of Region.t  (* "procedure"  *)
 | Record     of Region.t  (* "record"     *)

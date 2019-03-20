@@ -61,6 +61,7 @@
 %token <Region.t> End         (* "end"        *)
 %token <Region.t> Then        (* "then"       *)
 %token <Region.t> Else        (* "else"       *)
+%token <Region.t> Map         (* "map"        *)
 %token <Region.t> Patch       (* "patch"      *)
 %token <Region.t> Procedure   (* "procedure"  *)
 %token <Region.t> Record      (* "record"     *)

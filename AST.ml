@@ -52,6 +52,7 @@ type kwd_function   = Region.t
 type kwd_if         = Region.t
 type kwd_in         = Region.t
 type kwd_is         = Region.t
+type kwd_map        = Region.t
 type kwd_mod        = Region.t
 type kwd_not        = Region.t
 type kwd_of         = Region.t
@@ -318,14 +319,35 @@ and instruction =
 | Block  of block reg
 
 and single_instr =
-  Cond     of conditional reg
-| Case     of case_instr reg
-| Assign   of assignment reg
-| Loop     of loop
-| ProcCall of fun_call
-| Fail     of fail_instr reg
-| Skip     of kwd_skip
-| Patch    of record_patch reg
+  Cond        of conditional reg
+| Case        of case_instr reg
+| Assign      of assignment reg
+| Loop        of loop
+| ProcCall    of fun_call
+| Fail        of fail_instr reg
+| Skip        of kwd_skip
+| RecordPatch of record_patch reg
+| MapPatch    of map_patch reg
+
+and map_patch  = {
+  kwd_patch : kwd_patch;
+  map_name  : variable;
+  kwd_with  : kwd_with;
+  delta     : map_injection reg
+}
+
+and map_injection = {
+  opening    : kwd_map;
+  bindings   : (binding reg, semi) nsepseq;
+  terminator : semi option;
+  close      : kwd_end
+}
+
+and binding = {
+  source : expr;
+  arrow  : arrow;
+  image  : expr
+}
 
 and record_patch = {
   kwd_patch    : kwd_patch;
@@ -414,13 +436,25 @@ and expr =
 | SetExpr    of set_expr
 | ConstrExpr of constr_expr
 | RecordExpr of record_expr
+| MapExpr    of map_expr
 | Var        of Lexer.lexeme reg
 | FunCall    of fun_call
 | Bytes      of (Lexer.lexeme * MBytes.t) reg
 | Unit       of c_Unit
 | Tuple      of tuple
-| MapLookUp  of map_lookup reg
 | ParExpr    of expr par reg
+
+and map_expr =
+  MapLookUp  of map_lookup reg
+
+and map_lookup = {
+  map_path : map_path;
+  index    : expr brackets reg
+}
+
+and map_path =
+  Map     of map_name
+| MapPath of record_projection reg
 
 and logic_expr =
   BoolExpr of bool_expr
@@ -534,15 +568,6 @@ and fun_call = (fun_name * arguments) reg
 
 and arguments = tuple
 
-and map_lookup = {
-  map_path : map_path;
-  index    : expr brackets reg
-}
-
-and map_path =
-  Map     of map_name
-| MapPath of record_projection reg
-
 (* Patterns *)
 
 and pattern =
@@ -584,13 +609,16 @@ let rec expr_to_region = function
 | SetExpr    e -> set_expr_to_region e
 | ConstrExpr e -> constr_expr_to_region e
 | RecordExpr e -> record_expr_to_region e
+| MapExpr    e -> map_expr_to_region e
 | Var       {region; _}
 | FunCall   {region; _}
 | Bytes     {region; _}
 | Unit      region
 | Tuple     {region; _}
-| MapLookUp {region; _}
 | ParExpr   {region; _} -> region
+
+and map_expr_to_region = function
+  MapLookUp {region; _} -> region
 
 and logic_expr_to_region = function
   BoolExpr e -> bool_expr_to_region e
@@ -652,7 +680,8 @@ let instr_to_region = function
 | Single ProcCall            {region; _}
 | Single Skip                region
 | Single Fail                {region; _}
-| Single Patch               {region; _}
+| Single RecordPatch         {region; _}
+| Single MapPatch            {region; _}
 | Block                      {region; _} -> region
 
 let pattern_to_region = function
@@ -931,14 +960,15 @@ and print_instruction = function
 |  Block block -> print_block block
 
 and print_single_instr = function
-  Cond     {value; _} -> print_conditional value
-| Case     {value; _} -> print_case_instr value
-| Assign   assign     -> print_assignment assign
-| Loop     loop       -> print_loop loop
-| ProcCall fun_call   -> print_fun_call fun_call
-| Fail     {value; _} -> print_fail value
-| Skip     kwd_skip   -> print_token kwd_skip "skip"
-| Patch    {value; _} -> print_patch value
+  Cond        {value; _} -> print_conditional value
+| Case        {value; _} -> print_case_instr value
+| Assign      assign     -> print_assignment assign
+| Loop        loop       -> print_loop loop
+| ProcCall    fun_call   -> print_fun_call fun_call
+| Fail        {value; _} -> print_fail value
+| Skip        kwd_skip   -> print_token kwd_skip "skip"
+| RecordPatch {value; _} -> print_record_patch value
+| MapPatch    {value; _} -> print_map_patch value
 
 and print_fail {kwd_fail; fail_expr} =
   print_token kwd_fail "fail";
@@ -1041,13 +1071,26 @@ and print_expr = function
 | SetExpr e    -> print_set_expr e
 | ConstrExpr e -> print_constr_expr e
 | RecordExpr e -> print_record_expr e
+| MapExpr    e -> print_map_expr e
 | Var var      -> print_var var
 | FunCall e    -> print_fun_call e
 | Bytes b      -> print_bytes b
 | Unit region  -> print_token region "Unit"
 | Tuple e      -> print_tuple e
-| MapLookUp e  -> print_map_lookup e
 | ParExpr e    -> print_par_expr e
+
+and print_map_expr = function
+  MapLookUp {value; _} ->
+    let {map_path; index} = value in
+    let {lbracket; inside; rbracket} = index.value in
+    print_map_path map_path;
+    print_token    lbracket "[";
+    print_expr     inside;
+    print_token    rbracket "]"
+
+and print_map_path = function
+  Map map_name -> print_var map_name
+| MapPath path -> print_record_projection path
 
 and print_logic_expr = function
   BoolExpr e -> print_bool_expr e
@@ -1138,12 +1181,32 @@ and print_record_projection {value; _} =
 and print_field_path sequence =
   print_nsepseq "." print_var sequence
 
-and print_patch (node: record_patch) =
+and print_record_patch node =
   let {kwd_patch; record_name; kwd_with; delta} = node in
   print_token kwd_patch "patch";
   print_var record_name;
   print_token kwd_with "with";
   print_record_injection delta
+
+and print_map_patch node =
+  let {kwd_patch; map_name; kwd_with; delta} = node in
+  print_token kwd_patch "patch";
+  print_var map_name;
+  print_token kwd_with "with";
+  print_map_injection delta
+
+and print_map_injection {value; _} =
+  let {opening; bindings; terminator; close} = value in
+  print_token opening "record";
+  print_nsepseq ";" print_binding bindings;
+  print_terminator terminator;
+  print_token close "end"
+
+and print_binding {value; _} =
+  let {source; arrow; image} = value in
+  print_expr source;
+  print_token arrow "->";
+  print_expr image
 
 and print_tuple {value; _} =
   let {lpar; inside; rpar} = value in
@@ -1206,18 +1269,6 @@ and print_some_app {value; _} =
   let c_Some, arguments = value in
   print_token c_Some "Some";
   print_tuple arguments
-
-and print_map_lookup {value; _} =
-  let {map_path; index} = value in
-  let {lbracket; inside; rbracket} = index.value in
-  print_map_path map_path;
-  print_token    lbracket "[";
-  print_expr     inside;
-  print_token    rbracket "]"
-
-and print_map_path = function
-  Map map_name -> print_var map_name
-| MapPath path -> print_record_projection path
 
 and print_par_expr {value; _} =
   let {lpar; inside; rpar} = value in

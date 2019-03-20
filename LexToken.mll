@@ -83,6 +83,7 @@ type t =
 | End        of Region.t
 | Then       of Region.t
 | Else       of Region.t
+| Map        of Region.t
 | Patch      of Region.t
 | Procedure  of Region.t
 | Record     of Region.t
@@ -202,6 +203,7 @@ let proj_token = function
 | End        region -> region, "End"
 | Then       region -> region, "Then"
 | Else       region -> region, "Else"
+| Map        region -> region, "Map"
 | Patch      region -> region, "Patch"
 | Procedure  region -> region, "Procedure"
 | Record     region -> region, "Record"
@@ -286,6 +288,7 @@ let to_lexeme = function
 | End        _ -> "end"
 | Then       _ -> "then"
 | Else       _ -> "else"
+| Map        _ -> "map"
 | Patch      _ -> "patch"
 | Procedure  _ -> "procedure"
 | Record     _ -> "record"
@@ -338,6 +341,7 @@ let keywords = [
   (fun reg -> End        reg);
   (fun reg -> Then       reg);
   (fun reg -> Else       reg);
+  (fun reg -> Map        reg);
   (fun reg -> Patch      reg);
   (fun reg -> Procedure  reg);
   (fun reg -> Record     reg);
@@ -562,6 +566,7 @@ let is_kwd = function
 | End        _
 | Then       _
 | Else       _
+| Map        _
 | Patch      _
 | Procedure  _
 | Record     _

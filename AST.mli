@@ -36,6 +36,7 @@ type kwd_function   = Region.t
 type kwd_if         = Region.t
 type kwd_in         = Region.t
 type kwd_is         = Region.t
+type kwd_map        = Region.t
 type kwd_mod        = Region.t
 type kwd_not        = Region.t
 type kwd_of         = Region.t
@@ -302,14 +303,35 @@ and instruction =
 | Block  of block reg
 
 and single_instr =
-  Cond     of conditional reg
-| Case     of case_instr reg
-| Assign   of assignment reg
-| Loop     of loop
-| ProcCall of fun_call
-| Fail     of fail_instr reg
-| Skip     of kwd_skip
-| Patch    of record_patch reg
+  Cond        of conditional reg
+| Case        of case_instr reg
+| Assign      of assignment reg
+| Loop        of loop
+| ProcCall    of fun_call
+| Fail        of fail_instr reg
+| Skip        of kwd_skip
+| RecordPatch of record_patch reg
+| MapPatch    of map_patch reg
+
+and map_patch  = {
+  kwd_patch : kwd_patch;
+  map_name  : variable;
+  kwd_with  : kwd_with;
+  delta     : map_injection reg
+}
+
+and map_injection = {
+  opening    : kwd_map;
+  bindings   : (binding reg, semi) nsepseq;
+  terminator : semi option;
+  close      : kwd_end
+}
+
+and binding = {
+  source : expr;
+  arrow  : arrow;
+  image  : expr
+}
 
 and record_patch = {
   kwd_patch    : kwd_patch;
@@ -398,13 +420,25 @@ and expr =
 | SetExpr    of set_expr
 | ConstrExpr of constr_expr
 | RecordExpr of record_expr
+| MapExpr    of map_expr
 | Var        of Lexer.lexeme reg
 | FunCall    of fun_call
 | Bytes      of (Lexer.lexeme * MBytes.t) reg
 | Unit       of c_Unit
 | Tuple      of tuple
-| MapLookUp  of map_lookup reg
 | ParExpr    of expr par reg
+
+and map_expr =
+  MapLookUp  of map_lookup reg
+
+and map_lookup = {
+  map_path : map_path;
+  index    : expr brackets reg
+}
+
+and map_path =
+  Map     of map_name
+| MapPath of record_projection reg
 
 and logic_expr =
   BoolExpr of bool_expr
@@ -517,15 +551,6 @@ and typed_none_expr = {
 and fun_call = (fun_name * arguments) reg
 
 and arguments = tuple
-
-and map_lookup = {
-  map_path : map_path;
-  index    : expr brackets reg
-}
-
-and map_path =
-  Map     of map_name
-| MapPath of record_projection reg
 
 (* Patterns *)
 
