@@ -445,16 +445,16 @@ and expr =
 | ParExpr    of expr par reg
 
 and map_expr =
-  MapLookUp  of map_lookup reg
+  MapLookUp of map_lookup reg
 
 and map_lookup = {
-  map_path : map_path;
-  index    : expr brackets reg
+  path  : path;
+  index : expr brackets reg
 }
 
-and map_path =
-  Map     of map_name
-| MapPath of record_projection reg
+and path =
+  Name       of variable
+| RecordPath of record_projection reg
 
 and logic_expr =
   BoolExpr of bool_expr
@@ -1081,16 +1081,16 @@ and print_expr = function
 
 and print_map_expr = function
   MapLookUp {value; _} ->
-    let {map_path; index} = value in
+    let {path; index} = value in
     let {lbracket; inside; rbracket} = index.value in
-    print_map_path map_path;
+    print_path path;
     print_token    lbracket "[";
     print_expr     inside;
     print_token    rbracket "]"
 
-and print_map_path = function
-  Map map_name -> print_var map_name
-| MapPath path -> print_record_projection path
+and print_path = function
+  Name var        -> print_var var
+| RecordPath path -> print_record_projection path
 
 and print_logic_expr = function
   BoolExpr e -> print_bool_expr e

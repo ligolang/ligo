@@ -773,15 +773,15 @@ map_selection:
   map_name brackets(expr) {
     let region = cover $1.region $2.region in
     let value  = {
-      map_path = Map $1;
-      index    = $2}
+      path  = Name $1;
+      index = $2}
     in {region; value}
   }
 | record_projection brackets(expr) {
     let region = cover $1.region $2.region in
     let value  = {
-      map_path = MapPath $1;
-      index    = $2}
+      path  = RecordPath $1;
+      index = $2}
     in {region; value}
  }
 

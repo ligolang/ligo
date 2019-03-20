@@ -429,16 +429,16 @@ and expr =
 | ParExpr    of expr par reg
 
 and map_expr =
-  MapLookUp  of map_lookup reg
+  MapLookUp of map_lookup reg
 
 and map_lookup = {
-  map_path : map_path;
-  index    : expr brackets reg
+  path  : path;
+  index : expr brackets reg
 }
 
-and map_path =
-  Map     of map_name
-| MapPath of record_projection reg
+and path =
+  Name       of variable
+| RecordPath of record_projection reg
 
 and logic_expr =
   BoolExpr of bool_expr
