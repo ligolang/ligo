@@ -28,7 +28,7 @@ and named_expression = {
 and tv = type_value
 and ae = annotated_expression
 and tv_map = type_value type_name_map
-and e_map = expression name_map
+and ae_map = annotated_expression name_map
 
 and type_value =
   | Type_tuple of tv list
@@ -37,21 +37,31 @@ and type_value =
   | Type_constant of type_name * tv list
 
 and expression =
+  (* Base *)
   | Literal of literal
   | Constant of name * ae list (* For language constants, like (Cons hd tl) or (plus i j) *)
   | Variable of name
-  | Tuple of ae list
-  | Constructor of name * ae list (* For user defined constructors *)
   | Lambda of {
       binder: name ;
-      input_type: type_value ;
-      output_type: type_value ;
+      input_type: tv ;
+      output_type: tv ;
+      result: ae ;
       body: block ;
     }
+  (* Tuple *)
+  | Tuple of ae list
+  | Tuple_accessor of ae * int (* Access n'th tuple's element *)
+  (* Sum *)
+  | Constructor of name * ae (* For user defined constructors *)
+  (* Record *)
+  | Record of ae_map
+  | Record_accessor of ae * string
+
 
 and literal =
   | Bool of bool
-  | Number of int
+  | Int of int
+  | Nat of int
   | String of string
   | Bytes of bytes
 
@@ -60,7 +70,7 @@ and b = block
 
 and instruction =
   | Assignment of named_expression
-  | Matching of matching
+  | Matching of ae * matching
   | Loop of ae * b
   | Skip
   | Fail of ae
@@ -127,11 +137,29 @@ let rec type_value_eq (ab: (type_value * type_value)) : unit result = match ab w
     )
   | _ -> simple_fail "Different kinds of types"
 
-let merge_annotation (a:type_value option) (b:type_value option) : type_value option result =
+let merge_annotation (a:type_value option) (b:type_value option) : type_value result =
   match a, b with
-  | None, None -> ok None
-  | Some a, None -> ok (Some a)
-  | None, Some b -> ok (Some b)
+  | None, None -> simple_fail "no annotation"
+  | Some a, None -> ok a
+  | None, Some b -> ok b
   | Some a, Some b ->
       let%bind _ = type_value_eq (a, b) in
-      ok (Some a)
+      ok a
+
+let t_bool : type_value = Type_constant ("bool", [])
+let t_string : type_value = Type_constant ("string", [])
+let t_int : type_value = Type_constant ("int", [])
+
+let get_annotation (x:annotated_expression) = x.type_annotation
+
+let get_t_tuple : type_value -> type_value list result = function
+  | Type_tuple lst -> ok lst
+  | _ -> simple_fail "not a tuple"
+
+let get_t_sum : type_value -> type_value SMap.t result = function
+  | Type_sum m -> ok m
+  | _ -> simple_fail "not a sum"
+
+let get_t_record : type_value -> type_value SMap.t result = function
+  | Type_record m -> ok m
+  | _ -> simple_fail "not a record"

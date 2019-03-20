@@ -31,7 +31,7 @@ and named_type_expression = {
 and te = type_expression
 and ae = annotated_expression
 and te_map = type_expression type_name_map
-and e_map = expression name_map
+and ae_map = annotated_expression name_map
 
 and type_expression =
   | Type_tuple of te list
@@ -41,17 +41,25 @@ and type_expression =
   | Type_constant of type_name * te list
 
 and expression =
+  (* Base *)
   | Literal of literal
   | Constant of name * ae list (* For language constants, like (Cons hd tl) or (plus i j) *)
   | Variable of name
-  | Tuple of ae list
-  | Constructor of name * ae list (* For user defined constructors *)
   | Lambda of {
       binder: name ;
       input_type: type_expression ;
       output_type: type_expression ;
+      result: ae ;
       body: block ;
     }
+  (* Tuple *)
+  | Tuple of ae list
+  | Tuple_accessor of ae * int (* Access n'th tuple's element *)
+  (* Sum *)
+  | Constructor of name * ae (* For user defined constructors *)
+  (* Record *)
+  | Record of ae_map
+  | Record_accessor of ae * string
 
 and literal =
   | Bool of bool
@@ -64,7 +72,7 @@ and b = block
 
 and instruction =
   | Assignment of named_expression
-  | Matching of matching
+  | Matching of ae * matching
   | Loop of ae * b
   | Skip
   | Fail of ae

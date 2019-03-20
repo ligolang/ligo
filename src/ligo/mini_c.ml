@@ -1225,6 +1225,82 @@ module Run = struct
 
 end
 
+module Translate_new_AST = struct
+
+  module AST = Ast_typed
+
+  let list_of_map m = List.rev @@ Ligo_helpers.X_map.String.fold (fun _ v prev -> v :: prev) m []
+
+  let rec translate_type (t:AST.type_value) : type_value result =
+    match t with
+    | Type_constant ("bool", []) -> ok (`Base Bool)
+    | Type_constant ("int", []) -> ok (`Base Int)
+    | Type_constant ("string", []) -> ok (`Base String)
+    | Type_sum m ->
+        let node = Append_tree.of_list @@ list_of_map m in
+        let aux a b : type_value result =
+          let%bind a = a in
+          let%bind b = b in
+          ok (`Or (a, b))
+        in
+        Append_tree.fold_ne translate_type aux node
+    | Type_record m ->
+        let node = Append_tree.of_list @@ list_of_map m in
+        let aux a b : type_value result =
+          let%bind a = a in
+          let%bind b = b in
+          ok (`Pair (a, b))
+        in
+        Append_tree.fold_ne translate_type aux node
+    | Type_tuple lst ->
+        let node = Append_tree.of_list lst in
+        let aux a b : type_value result =
+          let%bind a = a in
+          let%bind b = b in
+          ok (`Pair (a, b))
+        in
+        Append_tree.fold_ne translate_type aux node
+    | _ -> simple_fail "todo"
+
+  let rec translate_block (b:AST.block) : block result =
+    bind_list @@ List.map translate_instruction b
+
+  and translate_instruction (i:AST.instruction) : statement result =
+    match i with
+    | Assignment {name;annotated_expression} ->
+        let%bind expression = translate_annotated_expression annotated_expression in
+        ok @@ Assignment (Variable (name, expression))
+    | Matching (expr, Match_bool {match_true ; match_false}) ->
+        let%bind expr' = translate_annotated_expression expr in
+        let%bind true_branch = translate_block match_true in
+        let%bind false_branch = translate_block match_false in
+        ok @@ Cond (expr', true_branch, false_branch)
+    | Loop (expr, body) ->
+        let%bind expr' = translate_annotated_expression expr in
+        let%bind body' = translate_block body in
+        ok @@ While (expr', body')
+    | _ -> simple_fail "todo"
+
+  and translate_annotated_expression (ae:AST.annotated_expression) : expression result =
+    let%bind tv = translate_type ae.type_annotation in
+    match ae.expression with
+    | Literal (Bool b) -> ok (Literal (`Bool b), tv)
+    | Literal (Number n) -> ok (Literal (`Int n), tv)
+    | Literal (String s) -> ok (Literal (`String s), tv)
+    | Variable name -> ok (Var name, tv)
+    | _ -> simple_fail "todo"
+
+
+  let translate_declaration (d:AST.declaration) : toplevel_statement result =
+    match d with
+    | Constant_declaration {name;annotated_expression} ->
+        let%bind expression = translate_annotated_expression annotated_expression in
+        ok @@ Variable (name, expression)
+
+  let translate_program (lst:AST.program) : program result =
+    bind_list @@ List.map translate_declaration lst
+end
+
 module Combinators = struct
 
   let var x : expression' = Var x
