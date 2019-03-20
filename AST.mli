@@ -315,9 +315,9 @@ and single_instr =
 
 and map_patch  = {
   kwd_patch : kwd_patch;
-  map_name  : variable;
+  path      : path;
   kwd_with  : kwd_with;
-  delta     : map_injection reg
+  map_inj   : map_injection reg
 }
 
 and map_injection = {
@@ -334,10 +334,10 @@ and binding = {
 }
 
 and record_patch = {
-  kwd_patch    : kwd_patch;
-  record_name  : variable;
-  kwd_with     : kwd_with;
-  delta        : record_injection reg
+  kwd_patch  : kwd_patch;
+  path       : path;
+  kwd_with   : kwd_with;
+  record_inj : record_injection reg
 }
 
 and fail_instr = {
@@ -575,15 +575,12 @@ and list_pattern =
 
 (* Projecting regions *)
 
-val type_expr_to_region : type_expr -> Region.t
-
-val expr_to_region : expr -> Region.t
-
-val instr_to_region : instruction -> Region.t
-
-val pattern_to_region : pattern -> Region.t
-
+val type_expr_to_region  : type_expr -> Region.t
+val expr_to_region       : expr -> Region.t
+val instr_to_region      : instruction -> Region.t
+val pattern_to_region    : pattern -> Region.t
 val local_decl_to_region : local_decl -> Region.t
+val path_to_region       : path -> Region.t
 
 (* Printing *)
 

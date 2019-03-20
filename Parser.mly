@@ -126,7 +126,6 @@ sepseq(X,Sep):
 %inline fun_name    : Ident { $1 }
 %inline field_name  : Ident { $1 }
 %inline record_name : Ident { $1 }
-%inline map_name    : Ident { $1 }
 
 (* Main *)
 
@@ -446,13 +445,13 @@ single_instr:
 | map_patch    {    MapPatch $1 }
 
 map_patch:
-  Map map_name With map_injection {
+  Patch path With map_injection {
     let region = cover $1 $4.region in
     let value  = {
-      kwd_patch   = $1;
-      map_name = $2;
-      kwd_with    = $3;
-      delta       = $4}
+      kwd_patch = $1;
+      path      = $2;
+      kwd_with  = $3;
+      map_inj   = $4}
     in {region; value}
   }
 
@@ -481,13 +480,13 @@ binding:
   }
 
 record_patch:
-  Patch record_name With record_injection {
+  Patch path With record_injection {
     let region = cover $1 $4.region in
     let value  = {
-      kwd_patch   = $1;
-      record_name = $2;
-      kwd_with    = $3;
-      delta       = $4}
+      kwd_patch  = $1;
+      path       = $2;
+      kwd_with   = $3;
+      record_inj = $4}
     in {region; value}
   }
 
@@ -769,21 +768,18 @@ core_expr:
 map_expr:
   map_selection { MapLookUp $1 }
 
+path:
+  var               {       Name $1 }
+| record_projection { RecordPath $1 }
+
 map_selection:
-  map_name brackets(expr) {
-    let region = cover $1.region $2.region in
+  path brackets(expr) {
+    let region = cover (path_to_region $1) $2.region in
     let value  = {
-      path  = Name $1;
+      path  = $1;
       index = $2}
     in {region; value}
   }
-| record_projection brackets(expr) {
-    let region = cover $1.region $2.region in
-    let value  = {
-      path  = RecordPath $1;
-      index = $2}
-    in {region; value}
- }
 
 record_expr:
   record_injection  { RecordInj  $1 }

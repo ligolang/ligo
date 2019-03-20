@@ -16,12 +16,9 @@ entrypoint contribute (storage store : store;
       fail "Deadline passed"
     else
       case store.backers[sender] of
-        None ->
-          patch store with
-            record
-              backers = add_binding ((sender, amount), store.backers)
-            end
-      | _ -> skip
+        None -> //store.backers[sender] := amount
+          patch store.backers with map sender -> amount end
+      |    _ -> skip
       end
   end with (store, operations)
 
@@ -33,8 +30,10 @@ entrypoint withdraw (storage store : store; const sender : address)
       if now >= store.deadline then
         if balance >= store.goal then
           begin
-            patch store with record funded = True end;
-            operations := [Transfer (owner, balance)]
+             patch store with record funded = True end;
+//             patch store.funded with True end;
+//             store.funded := True;
+             operations := [Transfer (owner, balance)]
           end
         else fail "Below target"
       else fail "Too soon"
@@ -57,12 +56,8 @@ entrypoint claim (storage store : store; const sender : address)
             fail "Cannot refund"
           else
             begin
-              amount := store.backers[sender];
-              patch store with
-                record
-                  backers = remove_entry (sender, store.backers)
-                end;
-              operations := [Transfer (sender, amount)]
+              operations := [Transfer (sender, amount)];
+//              patch store.backers without key sender;
             end
       end
   end with (store, operations)

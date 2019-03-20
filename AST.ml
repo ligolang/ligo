@@ -331,9 +331,9 @@ and single_instr =
 
 and map_patch  = {
   kwd_patch : kwd_patch;
-  map_name  : variable;
+  path      : path;
   kwd_with  : kwd_with;
-  delta     : map_injection reg
+  map_inj   : map_injection reg
 }
 
 and map_injection = {
@@ -350,10 +350,10 @@ and binding = {
 }
 
 and record_patch = {
-  kwd_patch    : kwd_patch;
-  record_name  : variable;
-  kwd_with     : kwd_with;
-  delta        : record_injection reg
+  kwd_patch  : kwd_patch;
+  path       : path;
+  kwd_with   : kwd_with;
+  record_inj : record_injection reg
 }
 
 and fail_instr = {
@@ -625,11 +625,11 @@ and logic_expr_to_region = function
 | CompExpr e -> comp_expr_to_region e
 
 and bool_expr_to_region = function
-  Or        {region; _}
-| And       {region; _}
-| Not       {region; _}
-| False     region
-| True      region -> region
+  Or    {region; _}
+| And   {region; _}
+| Not   {region; _}
+| False region
+| True  region -> region
 
 and comp_expr_to_region = function
   Lt    {region; _}
@@ -669,6 +669,10 @@ and constr_expr_to_region = function
 and record_expr_to_region = function
   RecordInj  {region; _}
 | RecordProj {region; _} -> region
+
+let path_to_region = function
+  Name var -> var.region
+| RecordPath {region; _} -> region
 
 let instr_to_region = function
   Single Cond                {region; _}
@@ -1182,18 +1186,18 @@ and print_field_path sequence =
   print_nsepseq "." print_var sequence
 
 and print_record_patch node =
-  let {kwd_patch; record_name; kwd_with; delta} = node in
+  let {kwd_patch; path; kwd_with; record_inj} = node in
   print_token kwd_patch "patch";
-  print_var record_name;
+  print_path path;
   print_token kwd_with "with";
-  print_record_injection delta
+  print_record_injection record_inj
 
 and print_map_patch node =
-  let {kwd_patch; map_name; kwd_with; delta} = node in
+  let {kwd_patch; path; kwd_with; map_inj} = node in
   print_token kwd_patch "patch";
-  print_var map_name;
+  print_path path;
   print_token kwd_with "with";
-  print_map_injection delta
+  print_map_injection map_inj
 
 and print_map_injection {value; _} =
   let {opening; bindings; terminator; close} = value in
