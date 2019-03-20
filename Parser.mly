@@ -13,8 +13,8 @@ open AST
 
 (* Entry points *)
 
-%start program interactive_expr
-%type <AST.t> program
+%start contract interactive_expr
+%type <AST.t> contract
 %type <AST.expr> interactive_expr
 
 %%
@@ -129,7 +129,7 @@ sepseq(X,Sep):
 
 (* Main *)
 
-program:
+contract:
   nseq(declaration) EOF {
     {decl = $1; eof = $2}
   }
@@ -358,40 +358,21 @@ local_decl:
 | const_decl  { LocalConst $1 }
 | var_decl    { LocalVar   $1 }
 
-const_decl:
-  Const var COLON type_expr EQUAL expr option(SEMI) {
-    let stop =
-      match $7 with
-        Some region -> region
-      |        None -> expr_to_region $6 in
-    let region = cover $1 stop in
-    let value  = {
-      kwd_const  = $1;
-      name       = $2;
-      colon      = $3;
-      const_type = $4;
-      equal      = $5;
-      init       = $6;
-      terminator = $7}
-    in {region; value}
-  }
-
-var_decl:
-  Var var COLON type_expr ASS extended_expr option(SEMI) {
-    let stop   = match $7 with
-                   Some region -> region
-                 |        None -> $6.region in
-    let region = cover $1 stop in
+unqualified_decl:
+  var COLON type_expr EQUAL extended_expr option(SEMI) {
+    let stop = match $6 with
+                 Some region -> region
+               |        None -> $5.region in
     let init =
-      match $6.value with
+      match $5.value with
         `Expr e -> e
       | `EList (lbracket, rbracket) ->
-           let region = $6.region
+           let region = $5.region
            and value = {
              lbracket;
              rbracket;
              colon = Region.ghost;
-             list_type = $4} in
+             list_type = $3} in
            let value = {
              lpar   = Region.ghost;
              inside = value;
@@ -403,19 +384,43 @@ var_decl:
              inside = {
                c_None   = region;
                colon    = Region.ghost;
-               opt_type = $4};
+               opt_type = $3};
              rpar = Region.ghost}
-           in ConstrExpr (NoneExpr {region; value}) in
-    (*      | `EMap inj ->*)
+           in ConstrExpr (NoneExpr {region; value})
+(*      | `EMap inj ->
+           MapExpr ( ) *)
+    in $1, $2, $3, $4, init, $6, stop
+  }
 
+const_decl:
+  Const unqualified_decl {
+    let name, colon, const_type, equal,
+        init, terminator, stop = $2 in
+    let region = cover $1 stop in
     let value = {
-      kwd_var    = $1;
-      name       = $2;
-      colon      = $3;
-      var_type   = $4;
-      assign     = $5;
+      kwd_const = $1;
+      name;
+      colon;
+      const_type;
+      equal;
       init;
-      terminator = $7}
+      terminator}
+    in {region; value}
+  }
+
+var_decl:
+  Var unqualified_decl {
+    let name, colon, var_type, assign,
+        init, terminator, stop = $2 in
+    let region = cover $1 stop in
+    let value = {
+      kwd_var = $1;
+      name;
+      colon;
+      var_type;
+      assign;
+      init;
+      terminator}
     in {region; value}
   }
 
