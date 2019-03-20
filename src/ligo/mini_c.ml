@@ -22,7 +22,8 @@ type type_value = [
   | `Pair of type_value * type_value
   | `Or of type_value * type_value
   | `Function of type_value * type_value
-  | `Closure of environment_small * type_value * type_value
+  | `Deep_closure of environment_small * type_value * type_value
+  (* | `Shallow_closure of environment_small * type_value * type_value *)
   | `Base of type_base
 ]
 
@@ -50,15 +51,17 @@ type value = [
   | `Nat of int
   | `Int of int
   | `String of string
+  | `Bytes of bytes
   | `Pair of value * value
   | `Left of value
   | `Right of value
-  | `Function of anon_function (* Actually a macro *)
-  | `Closure of anon_closure
+  (* | `Macro of anon_macro ... The future. *)
+  | `Function of anon_function
 ]
 
 and expression' =
   | Literal of value
+  | Function_expression of anon_function_expression
   | Predicate of string * expression list
   | Apply of expression * expression
   | Var of var_name
@@ -66,7 +69,6 @@ and expression' =
 and expression = expression' * type_value
 
 and assignment =
-  | Fun of fun_name * anon_function
   | Variable of var_name * expression
 
 and statement =
@@ -74,16 +76,25 @@ and statement =
   | Cond of expression * block * block
   | While of expression * block
 
-and anon_function = {
+and anon_function_content = {
+  binder : string ;
   input : type_value ;
   output : type_value ;
   body : block ;
+  result : expression ;
 }
 
-and anon_closure = {
-  capture : value ;
-  anon_function : anon_function ;
+and anon_function = {
+  content : anon_function_content ;
+  capture : capture ;
 }
+
+and anon_function_expression = anon_function_content
+
+and capture =
+  | No_capture (* For functions that don't capture their environments. Quotes. *)
+  | Shallow_capture of (environment * value) (* Duplicates the whole environment. A single DUP. Heavier GETs and SETs at use. *)
+  | Deep_capture of (environment_small * value) (* Retrieves only the values it needs. Multiple SETs on init. Lighter GETs and SETs at use. *)
 
 and block = statement list
 
@@ -110,7 +121,7 @@ module PP = struct
     | `Pair(a, b) -> fprintf ppf "(%a) & (%a)" type_ a type_ b
     | `Base b -> type_base ppf b
     | `Function(a, b) -> fprintf ppf "(%a) -> (%a)" type_ a type_ b
-    | `Closure(c, arg, ret) ->
+    | `Deep_closure(c, arg, ret) ->
       fprintf ppf "[%a](%a)->(%a)"
         environment_small c
         type_ arg type_ ret
@@ -148,22 +159,20 @@ module PP = struct
     | `Nat n -> fprintf ppf "%d" n
     | `Unit -> fprintf ppf " "
     | `String s -> fprintf ppf "\"%s\"" s
+    | `Bytes _ -> fprintf ppf "[bytes]"
     | `Pair (a, b) -> fprintf ppf "(%a), (%a)" value a value b
     | `Left a -> fprintf ppf "L(%a)" value a
     | `Right b -> fprintf ppf "R(%a)" value b
-    | `Function x -> function_ ppf x
-    | `Closure {capture;anon_function} ->
-      fprintf ppf "[%a]%a"
-        value capture
-        function_ anon_function
+    | `Function x -> function_ ppf x.content
 
   and expression ppf ((e, _):expression) = match e with
     | Var v -> fprintf ppf "%s" v
     | Apply(a, b) -> fprintf ppf "(%a)@(%a)" expression a expression b
     | Predicate(p, lst) -> fprintf ppf "%s %a" p (pp_print_list ~pp_sep:space_sep expression) lst
     | Literal v -> fprintf ppf "%a" value v
+    | Function_expression c -> function_ ppf c
 
-  and function_ ppf ({input ; output ; body}:anon_function) =
+  and function_ ppf ({input ; output ; body}:anon_function_content) =
         fprintf ppf "fun (%a) : %a %a"
           type_ input
           type_ output
@@ -172,7 +181,6 @@ module PP = struct
   and assignment ppf (ass:assignment) =
     match ass with
     | Variable (n, e) -> fprintf ppf "let %s = %a;" n expression e
-    | Fun (n, f) -> fprintf ppf "let %s = %a" n function_ f
 
   and statement ppf : statement -> _ = function
     | Assignment ass -> assignment ppf ass
@@ -206,12 +214,12 @@ module Free_variables = struct
     | Var x -> append_wd bound x []
     | Predicate(_, exprs) -> List.(concat @@ map (expression bound) exprs)
     | Apply(a, b) -> List.(concat @@ map (expression bound) [a;b])
+    | Function_expression {binder;body;result} -> block (binder :: bound) body @ expression (binder :: bound) result
 
   and expression bound expr = expression' bound (fst expr)
 
-  let rec statement bound : statement -> (t * t) = function
+  and statement bound : statement -> (t * t) = function
     | Assignment (Variable (n, e)) -> append_bound n bound, expression bound e
-    | Assignment (Fun (n, f)) -> append_bound n bound, block (append_bound "input" @@ append_bound "output" bound) f.body
     | Cond (e, a, b) -> bound, (expression bound e) @ (block bound a) @ (block bound b)
     | While (e, b) -> bound, (expression bound e) @ (block bound b)
 
@@ -222,8 +230,8 @@ module Free_variables = struct
       let fv' = block bound tl in
       fv @ fv'
 
-  let function_ ({body} : anon_function) : t =
-    block ["input" ; "output"] body
+  let function_ ({content = {body ; binder ; result}} : anon_function) : t =
+    block [binder] body @ expression [binder] result
 end
 
 module Translate_type = struct
@@ -255,7 +263,7 @@ module Translate_type = struct
         let%bind (Ex_ty arg) = type_ arg in
         let%bind (Ex_ty ret) = type_ ret in
         ok @@ Ex_ty (Types.lambda arg ret)
-      | `Closure (c, arg, ret) ->
+      | `Deep_closure (c, arg, ret) ->
         let%bind (Ex_ty capture) = environment_small c in
         let%bind (Ex_ty arg) = type_ arg in
         let%bind (Ex_ty ret) = type_ ret in
@@ -306,7 +314,7 @@ module Translate_type = struct
       let%bind arg = type_ arg in
       let%bind ret = type_ ret in
       ok @@ prim ~children:[arg;ret] T_lambda
-    | `Closure (c, arg, ret) ->
+    | `Deep_closure (c, arg, ret) ->
       let%bind capture = environment_small c in
       let%bind arg = type_ arg in
       let%bind ret = type_ ret in
@@ -429,36 +437,39 @@ module Environment = struct
         prev
       | Predicate (_, exprs) ->
         List.fold_left (env_of_expression bound) prev exprs
+      | Function_expression anon ->
+          let (bound, prev) = env_of_block (anon.binder :: bound) prev anon.body in
+          let prev = env_of_expression bound prev anon.result in
+          prev
 
-    let rec env_of_statement bound prev : statement -> (bound * t) = function
+    and env_of_statement bound prev : statement -> (bound * t) = function
       | Assignment (Variable (n, expr)) ->
         let bound = n :: bound in
         bound, env_of_expression bound prev expr
-      | Assignment (Fun (n, {body})) ->
-        let bound = n :: bound in
-        bound, env_of_block bound prev body
       | Cond (expr, ba, bb) ->
         let prev = env_of_expression bound prev expr in
-        let prev = env_of_block bound prev ba in
-        let prev = env_of_block bound prev bb in
+        let (_, prev) = env_of_block bound prev ba in
+        let (_, prev) = env_of_block bound prev bb in
         (bound, prev)
       | While (expr, b) ->
         let prev = env_of_expression bound prev expr in
-        let prev = env_of_block bound prev b in
+        let (_, prev) = env_of_block bound prev b in
         (bound, prev)
 
-    and env_of_block (bound:string list) prev : block -> t = function
-      | [] -> prev
+    and env_of_block (bound:string list) prev : block -> (bound * t) = function
+      | [] -> bound, prev
       | hd :: tl ->
         let (bound, prev) = env_of_statement bound prev hd in
         env_of_block bound prev tl
 
-    let env_of_anon ({body} : anon_function) : t =
+    let env_of_anon_content ({body;binder} : anon_function_content) =
       let init = empty in
-      env_of_block ["input"] init body
+      snd @@ env_of_block [binder] init body
 
-    let init_function input : t =
-      append ("input", input) @@
+    let env_of_anon ({content} : anon_function) : t = env_of_anon_content content
+
+    let init_function binder input : t =
+      append (binder, input) @@
       empty
 
     open Michelson
@@ -533,7 +544,7 @@ module Environment = struct
     | [] -> raise (Failure "Schema.Big.add")
     | hd :: tl -> Small.append x hd :: tl
 
-  let init_function f : t = [Small.init_function f]
+  let init_function (f:type_value) (binder:string) : t = [Small.init_function binder f]
 
   let to_michelson_extend = Michelson.(
       seq [i_push_unit ; i_pair]
@@ -683,6 +694,7 @@ module Translate_program = struct
     | `Int n -> ok @@ int (Z.of_int n)
     | `Nat n -> ok @@ int (Z.of_int n)
     | `String s -> ok @@ string s
+    | `Bytes s -> ok @@ bytes (Tezos_stdlib.MBytes.of_string s)
     | `Unit -> ok @@ prim D_Unit
     | `Pair (a, b) -> (
         let%bind a = translate_value s a in
@@ -691,8 +703,24 @@ module Translate_program = struct
       )
     | `Left a -> translate_value s a >>? fun a -> ok @@ prim ~children:[a] D_Left
     | `Right b -> translate_value s b >>? fun b -> ok @@ prim ~children:[b] D_Right
-    | `Function _ -> simple_fail "translating value : function"
-    | `Closure _ -> simple_fail "translating value : closure"
+    | `Function anon -> translate_function s anon
+
+  and translate_function (_:Environment.t) ({capture;content}:anon_function) : michelson result =
+    match capture with
+    | No_capture ->
+        let env = Environment.init_function content.input content.binder in
+        let%bind body = translate_function_body env content in
+        ok @@ seq [ body ]
+    | Deep_capture (small_env, value) -> (
+        let env = Environment.(of_small @@ Small.append (content.binder, content.input) small_env) in
+        let%bind body = translate_function_body env content in
+        let%bind capture_m = translate_value env value in
+        ok @@ d_pair capture_m body
+      )
+    | Shallow_capture (env, value) ->
+        let%bind body = translate_function_body env content in
+        let%bind capture_m = translate_value env value in
+        ok @@ d_pair capture_m body
 
   and translate_expression (s:Environment.t) ((e, ty):expression) : michelson result =
     let error_message = Format.asprintf  "%a" PP.expression (e, ty) in
@@ -718,7 +746,7 @@ module Translate_program = struct
                 i_pair ;
               ]
             )
-          | `Closure _ -> (
+          | `Deep_closure _ -> (
               let%bind f = translate_expression s f in
               let%bind arg = translate_expression s arg in
               ok @@ seq [
@@ -751,7 +779,37 @@ module Translate_program = struct
           | _ -> simple_fail "bad arity"
         in
         ok code
-    in
+      | Function_expression anon -> (
+          match ty with
+          | `Function (_, _) ->
+              let env = Environment.init_function anon.input anon.binder in
+              let input = Environment.to_mini_c_type env in
+              let%bind body = translate_function_body env anon in
+              let%bind input_type = Translate_type.type_ input in
+              let%bind output_type = Translate_type.type_ anon.output in
+              let code = seq [
+                  i_lambda input_type output_type body ;
+                  i_pair ;
+                ] in
+              ok code
+          | `Deep_closure (small_env, _, _) ->
+              let env = Environment.(of_small @@ Small.append (anon.binder, anon.input) small_env) in
+              let input = Environment.to_mini_c_type env in
+              let%bind body = translate_function_body env anon in
+              let%bind capture = Environment.Small.to_mini_c_capture small_env in
+              let%bind capture = translate_expression env capture in
+              let%bind input_type = Translate_type.type_ input in
+              let%bind output_type = Translate_type.type_ anon.output in
+              let code = seq [
+                  capture ;
+                  i_unpair ;
+                  i_lambda input_type output_type body ;
+                  i_piar ;
+                  i_pair ;
+                ] in
+              ok code
+          | _ -> simple_fail "expected function code"
+        ) in
 
     let%bind () =
       let%bind (Ex_ty schema_ty) = Environment.to_ty s in
@@ -802,42 +860,6 @@ module Translate_program = struct
             add ;
           ];
         ], new_schema)
-    | Assignment (Fun (s, anon)) -> (
-        match Environment.Small.env_of_anon anon with
-        | Empty -> ( (* If there is no free variable, translate as a quote *)
-            let env = Environment.init_function anon.input in
-            let%bind body = translate_function_body env anon in
-            let%bind input = Translate_type.type_ anon.input in
-            let%bind output = Translate_type.type_ anon.output in
-            let tv = `Function(anon.input, anon.output) in
-            let new_schema = Environment.add (s, tv) schema in
-            let%bind set = Environment.to_michelson_add (s, tv) schema in
-            ok @@ (seq [
-                i_lambda input output body ;
-                set ;
-              ], new_schema)
-          )
-        | (Full _) as small_env -> ( (* If there are free variables, translate as a closure *)
-            let env = Environment.(of_small @@ Small.append ("input", anon.input) small_env) in
-            let input = Environment.to_mini_c_type env in
-            let%bind body = translate_function_body env ({anon with input}) in
-            let%bind capture = Environment.Small.to_mini_c_capture small_env in
-            let%bind capture = translate_expression schema capture in
-            let tv : type_value = `Closure(small_env, anon.input, anon.output) in
-            let%bind add = Environment.to_michelson_add (s, tv) schema in
-            let%bind input_type = Translate_type.type_ input in
-            let%bind output_type = Translate_type.type_ anon.output in
-            let code = seq [
-                i_push_unit ; capture ; i_car ;
-                i_lambda input_type output_type body ;
-                i_piar ;
-                add ;
-              ] in
-
-            let new_schema = Environment.add (s, tv) schema in
-            ok (code, new_schema)
-          )
-      )
     | Cond (expr, a, b) ->
       let new_schema = Environment.extend schema in
       let%bind expr = translate_expression schema expr in
@@ -904,13 +926,13 @@ module Translate_program = struct
     let code = seq (List.rev codes) in
     ok (code, last_schema)
 
-  and translate_function_body env ({body} as f:anon_function) : michelson result =
-    let schema = env in
-    let%bind (body, post_schema) = translate_regular_block schema body in
-    let%bind (get_output, _) = Environment.to_michelson_get post_schema "output" in
+  and translate_function_body (env:Environment.t) ({body;result} as f:anon_function_content) : michelson result =
+    let%bind (body, env') = translate_regular_block env body in
+    let%bind expr = translate_expression env' result in
     let code = seq [
         body ;
-        get_output ;
+        expr ; i_car ;
+        dip i_drop ;
       ] in
 
     let%bind _assert_type =
@@ -941,13 +963,13 @@ module Translate_program = struct
 
   let translate (p:program) : compiled_program result =
     let is_main = function
-      | Fun ("main", f) -> Some f
+      | Variable ("main", f) -> Some f
       | _ -> None in
     let%bind main =
       trace_option (simple_error "no main") @@
       Tezos_utils.List.find_map is_main p in
-    let {input;output} : anon_function = main in
-    let%bind body = translate_function_body (Environment.init_function input) main in
+    let {input;output;binder} : anon_function = main in
+    let%bind body = translate_function_body (Environment.init_function input binder) main in
     let%bind input = Translate_type.Ty.type_ input in
     let%bind output = Translate_type.Ty.type_ output in
     ok ({input;output;body}:compiled_program)
@@ -1085,17 +1107,12 @@ module Translate_AST = struct
     fun {declarations;parameter;instructions;result} ->
        let ({name;ty}:AST.typed_var) = parameter in
        let%bind input_ty = translate_type ty in
-       let declarations : AST.decl list = Rename.rename_declarations name.name "input" declarations in
-       let instructions : AST.instr list = Rename.rename_instrs name.name "input" instructions in
-       let%bind output_statement =
-         let%bind (output_expr : expression) = translate_expr result in
-         ok (Assignment (Variable("output", output_expr)))
-       in
        let%bind output_ty = translate_type result.ty in
+       let%bind result = translate_expr result in
        let%bind (declaration_statements : statement list) = translate_declarations declarations in
        let%bind (instruction_statements : statement list) = translate_instructions instructions in
-       let body = declaration_statements @ instruction_statements @ [output_statement] in
-       ok {input=input_ty;output=output_ty;body}
+       let body = declaration_statements @ instruction_statements in
+       ok {content={binder=name.name;input=input_ty;output=output_ty;body;result} ; capture = No_capture}
 
   and translate_expr' : AST.expr_case -> expression' result = function
     | Var {name} -> ok (Var name.name)
@@ -1230,6 +1247,7 @@ module Translate_new_AST = struct
   module AST = Ast_typed
 
   let list_of_map m = List.rev @@ Ligo_helpers.X_map.String.fold (fun _ v prev -> v :: prev) m []
+  let kv_list_of_map m = List.rev @@ Ligo_helpers.X_map.String.fold (fun k v prev -> (k, v) :: prev) m []
 
   let rec translate_type (t:AST.type_value) : type_value result =
     match t with
@@ -1285,11 +1303,118 @@ module Translate_new_AST = struct
     let%bind tv = translate_type ae.type_annotation in
     match ae.expression with
     | Literal (Bool b) -> ok (Literal (`Bool b), tv)
-    | Literal (Number n) -> ok (Literal (`Int n), tv)
+    | Literal (Int n) -> ok (Literal (`Int n), tv)
+    | Literal (Nat n) -> ok (Literal (`Nat n), tv)
+    | Literal (Bytes s) -> ok (Literal (`Bytes s), tv)
     | Literal (String s) -> ok (Literal (`String s), tv)
     | Variable name -> ok (Var name, tv)
-    | _ -> simple_fail "todo"
-
+    | Constructor (m, param) ->
+        let%bind param' = translate_annotated_expression ae in
+        let%bind map_tv = AST.get_t_sum ae.type_annotation in
+        let node_tv = Append_tree.of_list @@ kv_list_of_map map_tv in
+        let%bind ae' =
+          let leaf (k, tv) : (expression' option * type_value) result =
+            if k = m then (
+              let%bind _ =
+                trace (simple_error "constructor parameter doesn't have expected type (shouldn't happen here)")
+                @@ AST.type_value_eq (tv, param.type_annotation) in
+              ok (Some (fst param'), snd param')
+            ) else (
+              let%bind tv = translate_type tv in
+              ok (None, tv)
+            ) in
+          let node a b : (expression' option * type_value) result =
+            let%bind a = a in
+            let%bind b = b in
+            match (a, b) with
+            | (None, a), (None, b) -> ok (None, `Or (a, b))
+            | (Some _, _), (Some _, _) -> simple_fail "several identical constructors in the same variant (shouldn't happen here)"
+            | (Some v, a), (None, b) -> ok (Some (Predicate ("LEFT", [v, a])), `Or (a, b))
+            | (None, a), (Some v, b) -> ok (Some (Predicate ("RIGHT", [v, b])), `Or (a, b))
+          in
+          let%bind (ae_opt, tv) = Append_tree.fold_ne leaf node node_tv in
+          let%bind ae =
+            trace_option (simple_error "constructor doesn't exist in claimed type (shouldn't happen here)")
+            ae_opt in
+          ok (ae, tv) in
+        ok ae'
+    | Tuple lst ->
+       let node = Append_tree.of_list lst in
+       let aux a b : expression result =
+         let%bind (_, a_ty) as a = a in
+         let%bind (_, b_ty) as b = b in
+         ok (Predicate ("pair", [a; b]), `Pair(a_ty, b_ty))
+       in
+       Append_tree.fold_ne translate_annotated_expression aux node
+    | Tuple_accessor (tpl, ind) ->
+        let%bind tpl' = translate_annotated_expression tpl in
+        let%bind tpl_tv = AST.get_t_tuple ae.type_annotation in
+        let node_tv = Append_tree.of_list @@ List.mapi (fun i a -> (a, i)) tpl_tv in
+        let%bind ae' =
+          let leaf (tv, i) : (expression' option * type_value) result =
+            let%bind tv = translate_type tv in
+            if i = ind then (
+              ok (Some (fst tpl'), tv)
+            ) else (
+              ok (None, tv)
+            ) in
+          let node a b : (expression' option * type_value) result =
+            let%bind a = a in
+            let%bind b = b in
+            match (a, b) with
+            | (None, a), (None, b) -> ok (None, `Pair (a, b))
+            | (Some _, _), (Some _, _) -> simple_fail "several identical indexes in the same tuple (shouldn't happen here)"
+            | (Some v, a), (None, b) -> ok (Some (Predicate ("CAR", [v, a])), `Pair (a, b))
+            | (None, a), (Some v, b) -> ok (Some (Predicate ("CDR", [v, b])), `Pair (a, b))
+          in
+          let%bind (ae_opt, tv) = Append_tree.fold_ne leaf node node_tv in
+          let%bind ae = trace_option (simple_error "bad index in tuple (shouldn't happen here)")
+              ae_opt in
+          ok (ae, tv) in
+        ok ae'
+    | Record m ->
+       let node = Append_tree.of_list @@ list_of_map m in
+       let aux a b : expression result =
+         let%bind (_, a_ty) as a = a in
+         let%bind (_, b_ty) as b = b in
+         ok (Predicate ("PAIR", [a; b]), `Pair(a_ty, b_ty))
+       in
+       Append_tree.fold_ne translate_annotated_expression aux node
+    | Record_accessor (r, key) ->
+        let%bind r' = translate_annotated_expression r in
+        let%bind r_tv = AST.get_t_record ae.type_annotation in
+        let node_tv = Append_tree.of_list @@ kv_list_of_map r_tv in
+        let%bind ae' =
+          let leaf (key', tv) : (expression' option * type_value) result =
+            let%bind tv = translate_type tv in
+            if key = key' then (
+              ok (Some (fst r'), tv)
+            ) else (
+              ok (None, tv)
+            ) in
+          let node a b : (expression' option * type_value) result =
+            let%bind a = a in
+            let%bind b = b in
+            match (a, b) with
+            | (None, a), (None, b) -> ok (None, `Pair (a, b))
+            | (Some _, _), (Some _, _) -> simple_fail "several identical keys in the same record (shouldn't happen here)"
+            | (Some v, a), (None, b) -> ok (Some (Predicate ("CAR", [v, a])), `Pair (a, b))
+            | (None, a), (Some v, b) -> ok (Some (Predicate ("CDR", [v, b])), `Pair (a, b))
+          in
+          let%bind (ae_opt, tv) = Append_tree.fold_ne leaf node node_tv in
+          let%bind ae = trace_option (simple_error "bad key in record (shouldn't happen here)")
+              ae_opt in
+          ok (ae, tv) in
+        ok ae'
+    | Constant (name, lst) ->
+        let%bind lst' = bind_list @@ List.map translate_annotated_expression lst in
+        ok (Predicate (name, lst'), tv)
+    | Lambda { binder ; input_type ; output_type ; body ; result } ->
+        let%bind input = translate_type input_type in
+        let%bind output = translate_type output_type in
+        let%bind body = translate_block body in
+        let%bind result = translate_annotated_expression result in
+        ok (Literal (`Function {binder ; input ; output ; body ; result}), tv)
 
   let translate_declaration (d:AST.declaration) : toplevel_statement result =
     match d with
@@ -1309,7 +1434,7 @@ module Combinators = struct
   let t_int : type_value = `Base Int
   let type_int x : expression = x, `Base Int
   let type_f_int x : expression = x,`Function (`Base Int, `Base Int)
-  let type_closure_int t x : expression = x, `Closure (t, `Base Int, `Base Int)
+  let type_closure_int t x : expression = x, `Deep_closure (t, `Base Int, `Base Int)
   let int n = type_int @@ Literal(`Int n)
   let neg_int x = type_int @@ Predicate("NEG", [x])
   let add_int x y = type_int @@ Predicate("ADD_INT", [x ; y])
@@ -1317,11 +1442,11 @@ module Combinators = struct
   let apply_int a b = type_int @@ apply a b
 
   let assign_variable v expr = Assignment (Variable (v, expr))
-  let assign_function v anon = Assignment (Fun (v, anon))
-  let function_int body = {
+  let assign_function v anon = Assignment (Variable (v, anon))
+  let function_int body binder result = {
     input = `Base Int ;
     output = `Base Int ;
-    body ;
+    body ; binder ; result ;
   }
 
 end
