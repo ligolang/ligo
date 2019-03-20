@@ -446,6 +446,7 @@ and expr =
 
 and map_expr =
   MapLookUp of map_lookup reg
+| MapInj    of map_injection reg
 
 and map_lookup = {
   path  : path;
@@ -618,7 +619,8 @@ let rec expr_to_region = function
 | ParExpr   {region; _} -> region
 
 and map_expr_to_region = function
-  MapLookUp {region; _} -> region
+  MapLookUp {region; _}
+| MapInj    {region; _} -> region
 
 and logic_expr_to_region = function
   BoolExpr e -> bool_expr_to_region e
@@ -1091,6 +1093,8 @@ and print_map_expr = function
     print_token    lbracket "[";
     print_expr     inside;
     print_token    rbracket "]"
+| MapInj inj ->
+    print_map_injection inj
 
 and print_path = function
   Name var        -> print_var var

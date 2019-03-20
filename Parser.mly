@@ -358,8 +358,8 @@ local_decl:
 | const_decl  { LocalConst $1 }
 | var_decl    { LocalVar   $1 }
 
-unqualified_decl:
-  var COLON type_expr EQUAL extended_expr option(SEMI) {
+unqualified_decl(OP):
+  var COLON type_expr OP extended_expr option(SEMI) {
     let stop = match $6 with
                  Some region -> region
                |        None -> $5.region in
@@ -387,13 +387,13 @@ unqualified_decl:
                opt_type = $3};
              rpar = Region.ghost}
            in ConstrExpr (NoneExpr {region; value})
-(*      | `EMap inj ->
-           MapExpr ( ) *)
+      | `EMap inj ->
+           MapExpr (MapInj inj)
     in $1, $2, $3, $4, init, $6, stop
   }
 
 const_decl:
-  Const unqualified_decl {
+  Const unqualified_decl(EQUAL) {
     let name, colon, const_type, equal,
         init, terminator, stop = $2 in
     let region = cover $1 stop in
@@ -409,7 +409,7 @@ const_decl:
   }
 
 var_decl:
-  Var unqualified_decl {
+  Var unqualified_decl(ASS) {
     let name, colon, var_type, assign,
         init, terminator, stop = $2 in
     let region = cover $1 stop in
@@ -430,9 +430,8 @@ extended_expr:
 | LBRACKET RBRACKET { {region = cover $1 $2;
                        value  = `EList ($1,$2)} }
 | C_None            { {region = $1; value = `ENone $1} }
-(*
 | map_injection     { {region = $1.region; value = `EMap $1} }
- *)
+
 
 instruction:
   single_instr { Single $1 }

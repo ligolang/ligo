@@ -430,6 +430,7 @@ and expr =
 
 and map_expr =
   MapLookUp of map_lookup reg
+| MapInj    of map_injection reg
 
 and map_lookup = {
   path  : path;
