@@ -388,10 +388,14 @@ and case = {
 }
 
 and assignment = {
-  path   : path;
+  lhs    : lhs;
   assign : assign;
   expr   : expr
 }
+
+and lhs =
+  Path    of path
+| MapPath of map_lookup reg
 
 and loop =
   While of while_loop reg
@@ -409,12 +413,18 @@ and for_loop =
 
 and for_int = {
   kwd_for : kwd_for;
-  assign  : assignment reg;
+  assign  : var_assign reg;
   down    : kwd_down option;
   kwd_to  : kwd_to;
   bound   : expr;
   step    : (kwd_step * expr) option;
   block   : block reg
+}
+
+and var_assign = {
+  name   : variable;
+  assign : assign;
+  expr   : expr
 }
 
 and for_collect = {
@@ -712,6 +722,10 @@ let local_decl_to_region = function
 | LocalLam EntryDecl {region; _}
 | LocalConst         {region; _}
 | LocalVar           {region; _} -> region
+
+let lhs_to_region = function
+  Path path -> path_to_region path
+| MapPath {region; _} -> region
 
 (* Printing the tokens with their source regions *)
 
@@ -1014,10 +1028,14 @@ and print_case {value; _} =
   print_instruction instr
 
 and print_assignment {value; _} =
-  let {path; assign; expr} = value in
-  print_path path;
+  let {lhs; assign; expr} = value in
+  print_lhs lhs;
   print_token assign ":=";
   print_expr expr
+
+and print_lhs = function
+  Path path -> print_path path
+| MapPath {value; _} -> print_map_lookup value
 
 and print_loop = function
   While {value; _} -> print_while_loop value
@@ -1037,12 +1055,18 @@ and print_for_int ({value; _} : for_int reg) =
   let {kwd_for; assign; down; kwd_to;
        bound; step; block} = value in
   print_token      kwd_for "for";
-  print_assignment assign;
+  print_var_assign assign;
   print_down       down;
   print_token      kwd_to "to";
   print_expr       bound;
   print_step       step;
   print_block      block
+
+and print_var_assign {value; _} =
+  let {name; assign; expr} = value in
+  print_var name;
+  print_token assign ":=";
+  print_expr expr
 
 and print_down = function
   Some kwd_down -> print_token kwd_down "down"
@@ -1086,15 +1110,16 @@ and print_expr = function
 | ParExpr e    -> print_par_expr e
 
 and print_map_expr = function
-  MapLookUp {value; _} ->
-    let {path; index} = value in
-    let {lbracket; inside; rbracket} = index.value in
-    print_path  path;
-    print_token lbracket "[";
-    print_expr  inside;
-    print_token rbracket "]"
+  MapLookUp {value; _} -> print_map_lookup value
 | MapInj inj ->
     print_map_injection inj
+
+and print_map_lookup {path; index} =
+  let {lbracket; inside; rbracket} = index.value in
+  print_path  path;
+  print_token lbracket "[";
+  print_expr  inside;
+  print_token rbracket "]"
 
 and print_path = function
   Name var        -> print_var var

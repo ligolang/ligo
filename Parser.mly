@@ -543,11 +543,15 @@ case:
   }
 
 assignment:
-  path ASS expr {
-    let region = cover (path_to_region $1) (expr_to_region $3)
-    and value  = {path = $1; assign = $2; expr = $3}
+  lhs ASS expr {
+    let region = cover (lhs_to_region $1) (expr_to_region $3)
+    and value  = {lhs = $1; assign = $2; expr = $3}
     in {region; value}
   }
+
+lhs:
+  path       {    Path $1 }
+| map_lookup { MapPath $1 }
 
 loop:
   while_loop { $1 }
@@ -564,7 +568,7 @@ while_loop:
   }
 
 for_loop:
-  For assignment Down? To expr option(step_clause) block {
+  For var_assign Down? To expr option(step_clause) block {
     let region = cover $1 $7.region in
     let value = {
       kwd_for  = $1;
@@ -587,6 +591,13 @@ for_loop:
       expr    = $5;
       block   = $6}
     in For (ForCollect {region; value})
+  }
+
+var_assign:
+  var ASS expr {
+    let region = cover $1.region (expr_to_region $3)
+    and value  = {name = $1; assign = $2; expr = $3}
+    in {region; value}
   }
 
 step_clause:
@@ -768,13 +779,13 @@ core_expr:
   }
 
 map_expr:
-  map_selection { MapLookUp $1 }
+  map_lookup { MapLookUp $1 }
 
 path:
   var               {       Name $1 }
 | record_projection { RecordPath $1 }
 
-map_selection:
+map_lookup:
   path brackets(expr) {
     let region = cover (path_to_region $1) $2.region in
     let value  = {

@@ -372,10 +372,14 @@ and case = {
 }
 
 and assignment = {
-  path   : path;
+  lhs    : lhs;
   assign : assign;
   expr   : expr
 }
+
+and lhs =
+  Path    of path
+| MapPath of map_lookup reg
 
 and loop =
   While of while_loop reg
@@ -393,12 +397,18 @@ and for_loop =
 
 and for_int = {
   kwd_for : kwd_for;
-  assign  : assignment reg;
+  assign  : var_assign reg;
   down    : kwd_down option;
   kwd_to  : kwd_to;
   bound   : expr;
   step    : (kwd_step * expr) option;
   block   : block reg
+}
+
+and var_assign = {
+  name   : variable;
+  assign : assign;
+  expr   : expr
 }
 
 and for_collect = {
@@ -582,6 +592,7 @@ val instr_to_region      : instruction -> Region.t
 val pattern_to_region    : pattern -> Region.t
 val local_decl_to_region : local_decl -> Region.t
 val path_to_region       : path -> Region.t
+val lhs_to_region        : lhs -> Region.t
 
 (* Printing *)
 
