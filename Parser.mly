@@ -543,9 +543,9 @@ case:
   }
 
 assignment:
-  var ASS expr {
-    let region = cover $1.region (expr_to_region $3)
-    and value  = {var = $1; assign = $2; expr = $3}
+  path ASS expr {
+    let region = cover (path_to_region $1) (expr_to_region $3)
+    and value  = {path = $1; assign = $2; expr = $3}
     in {region; value}
   }
 
@@ -566,16 +566,14 @@ while_loop:
 for_loop:
   For assignment Down? To expr option(step_clause) block {
     let region = cover $1 $7.region in
-    let value =
-      {
-        kwd_for  = $1;
-        assign   = $2;
-        down     = $3;
-        kwd_to   = $4;
-        bound    = $5;
-        step     = $6;
-        block    = $7;
-      }
+    let value = {
+      kwd_for  = $1;
+      assign   = $2;
+      down     = $3;
+      kwd_to   = $4;
+      bound    = $5;
+      step     = $6;
+      block    = $7}
     in For (ForInt {region; value})
   }
 

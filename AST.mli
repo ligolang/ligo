@@ -372,7 +372,7 @@ and case = {
 }
 
 and assignment = {
-  var    : variable;
+  path   : path;
   assign : assign;
   expr   : expr
 }

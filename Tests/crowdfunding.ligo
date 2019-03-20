@@ -33,8 +33,8 @@ entrypoint withdraw (storage store : store; const sender : address)
       if now >= store.deadline then
         if balance >= store.goal then
           begin
-             patch store with record funded = True end;
-//             store.funded := True;
+//             patch store with record funded = True end;
+             store.funded := True;
              operations := [Transfer (owner, balance)]
           end
         else fail "Below target"

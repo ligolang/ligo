@@ -388,7 +388,7 @@ and case = {
 }
 
 and assignment = {
-  var    : variable;
+  path   : path;
   assign : assign;
   expr   : expr
 }
@@ -1014,8 +1014,8 @@ and print_case {value; _} =
   print_instruction instr
 
 and print_assignment {value; _} =
-  let {var; assign; expr} = value in
-  print_var var;
+  let {path; assign; expr} = value in
+  print_path path;
   print_token assign ":=";
   print_expr expr
 
@@ -1089,10 +1089,10 @@ and print_map_expr = function
   MapLookUp {value; _} ->
     let {path; index} = value in
     let {lbracket; inside; rbracket} = index.value in
-    print_path path;
-    print_token    lbracket "[";
-    print_expr     inside;
-    print_token    rbracket "]"
+    print_path  path;
+    print_token lbracket "[";
+    print_expr  inside;
+    print_token rbracket "]"
 | MapInj inj ->
     print_map_injection inj
 
@@ -1192,7 +1192,7 @@ and print_field_path sequence =
 and print_record_patch node =
   let {kwd_patch; path; kwd_with; record_inj} = node in
   print_token kwd_patch "patch";
-  print_path path;
+  print_path  path;
   print_token kwd_with "with";
   print_record_injection record_inj
 
