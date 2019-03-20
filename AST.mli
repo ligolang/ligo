@@ -139,9 +139,9 @@ type t = {
 and ast = t
 
 and declaration =
-  TypeDecl    of type_decl reg
-| ConstDecl   of const_decl reg
-| LambdaDecl  of lambda_decl
+  TypeDecl   of type_decl reg
+| ConstDecl  of const_decl reg
+| LambdaDecl of lambda_decl
 
 and const_decl = {
   kwd_const  : kwd_const;
@@ -164,11 +164,11 @@ and type_decl = {
 }
 
 and type_expr =
-  Prod    of cartesian
-| Sum     of (variant reg, vbar) nsepseq reg
-| Record  of record_type reg
-| TypeApp of (type_name * type_tuple) reg
-| ParType of type_expr par reg
+  TProd   of cartesian
+| TSum    of (variant reg, vbar) nsepseq reg
+| TRecord of record_type reg
+| TApp    of (type_name * type_tuple) reg
+| TPar    of type_expr par reg
 | TAlias  of variable
 
 and cartesian = (type_expr, times) nsepseq reg
@@ -427,20 +427,20 @@ and for_collect = {
 (* Expressions *)
 
 and expr =
-  LogicExpr  of logic_expr
-| ArithExpr  of arith_expr
-| StringExpr of string_expr
-| ListExpr   of list_expr
-| SetExpr    of set_expr
-| ConstrExpr of constr_expr
-| RecordExpr of record_expr
-| MapExpr    of map_expr
-| Var        of Lexer.lexeme reg
-| FunCall    of fun_call
-| Bytes      of (Lexer.lexeme * Hex.t) reg
-| Unit       of c_Unit
-| Tuple      of tuple
-| ParExpr    of expr par reg
+  ELogic  of logic_expr
+| EArith  of arith_expr
+| EString of string_expr
+| EList   of list_expr
+| ESet    of set_expr
+| EConstr of constr_expr
+| ERecord of record_expr
+| EMap    of map_expr
+| EVar    of Lexer.lexeme reg
+| ECall   of fun_call
+| EBytes  of (Lexer.lexeme * Hex.t) reg
+| EUnit   of c_Unit
+| ETuple  of tuple
+| EPar    of expr par reg
 
 and map_expr =
   MapLookUp of map_lookup reg

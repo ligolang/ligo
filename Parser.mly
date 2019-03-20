@@ -157,9 +157,9 @@ type_decl:
     in {region; value}}
 
 type_expr:
-  cartesian   {   Prod $1 }
-| sum_type    {    Sum $1 }
-| record_type { Record $1 }
+  cartesian   {   TProd $1 }
+| sum_type    {    TSum $1 }
+| record_type { TRecord $1 }
 
 cartesian:
   nsepseq(core_type,TIMES) {
@@ -173,15 +173,15 @@ core_type:
   }
 | type_name type_tuple {
     let region = cover $1.region $2.region
-    in TypeApp {region; value = $1,$2}
+    in TApp {region; value = $1,$2}
   }
 | Map type_tuple {
     let region = cover $1 $2.region in
     let value = {value="map"; region=$1}
-    in TypeApp {region; value = value, $2}
+    in TApp {region; value = value, $2}
   }
 | par(type_expr) {
-    ParType $1
+    TPar $1
   }
 
 type_tuple:
@@ -377,7 +377,7 @@ unqualified_decl(OP):
              lpar   = Region.ghost;
              inside = value;
              rpar   = Region.ghost} in
-           ListExpr (EmptyList {region; value})
+           EList (EmptyList {region; value})
       | `ENone region ->
            let value = {
              lpar = Region.ghost;
@@ -386,9 +386,9 @@ unqualified_decl(OP):
                colon    = Region.ghost;
                opt_type = $3};
              rpar = Region.ghost}
-           in ConstrExpr (NoneExpr {region; value})
+           in EConstr (NoneExpr {region; value})
       | `EMap inj ->
-           MapExpr (MapInj inj)
+           EMap (MapInj inj)
     in $1, $2, $3, $4, init, $6, stop
   }
 
@@ -621,7 +621,7 @@ expr:
     and stop   = expr_to_region $3 in
     let region = cover start stop
     and value  = {arg1 = $1; op = $2; arg2 = $3} in
-    LogicExpr (BoolExpr (Or {region; value}))
+    ELogic (BoolExpr (Or {region; value}))
   }
 | conj_expr { $1 }
 
@@ -630,8 +630,8 @@ conj_expr:
     let start  = expr_to_region $1
     and stop   = expr_to_region $3 in
     let region = cover start stop
-    and value  = {arg1 = $1; op = $2; arg2 = $3} in
-    LogicExpr (BoolExpr (And {region; value}))
+    and value  = {arg1 = $1; op = $2; arg2 = $3}
+    in ELogic (BoolExpr (And {region; value}))
   }
 | comp_expr { $1 }
 
@@ -640,43 +640,43 @@ comp_expr:
     let start  = expr_to_region $1
     and stop   = expr_to_region $3 in
     let region = cover start stop
-    and value  = {arg1 = $1; op = $2; arg2 = $3} in
-    LogicExpr (CompExpr (Lt {region; value}))
+    and value  = {arg1 = $1; op = $2; arg2 = $3}
+    in ELogic (CompExpr (Lt {region; value}))
   }
 | comp_expr LEQ cat_expr {
     let start  = expr_to_region $1
     and stop   = expr_to_region $3 in
     let region = cover start stop
     and value  = {arg1 = $1; op = $2; arg2 = $3}
-    in LogicExpr (CompExpr (Leq {region; value}))
+    in ELogic (CompExpr (Leq {region; value}))
   }
 | comp_expr GT cat_expr {
     let start  = expr_to_region $1
     and stop   = expr_to_region $3 in
     let region = cover start stop
     and value  = {arg1 = $1; op = $2; arg2 = $3}
-    in LogicExpr (CompExpr (Gt {region; value}))
+    in ELogic (CompExpr (Gt {region; value}))
   }
 | comp_expr GEQ cat_expr {
     let start  = expr_to_region $1
     and stop   = expr_to_region $3 in
     let region = cover start stop
     and value  = {arg1 = $1; op = $2; arg2 = $3}
-    in LogicExpr (CompExpr (Geq {region; value}))
+    in ELogic (CompExpr (Geq {region; value}))
   }
 | comp_expr EQUAL cat_expr {
     let start  = expr_to_region $1
     and stop   = expr_to_region $3 in
     let region = cover start stop
     and value  = {arg1 = $1; op = $2; arg2 = $3}
-    in LogicExpr (CompExpr (Equal {region; value}))
+    in ELogic (CompExpr (Equal {region; value}))
   }
 | comp_expr NEQ cat_expr {
     let start  = expr_to_region $1
     and stop   = expr_to_region $3 in
     let region = cover start stop
     and value  = {arg1 = $1; op = $2; arg2 = $3}
-    in LogicExpr (CompExpr (Neq {region; value}))
+    in ELogic (CompExpr (Neq {region; value}))
   }
 | cat_expr { $1 }
 
@@ -686,7 +686,7 @@ cat_expr:
     and stop   = expr_to_region $3 in
     let region = cover start stop
     and value  = {arg1 = $1; op = $2; arg2 = $3}
-    in StringExpr (Cat {region; value})
+    in EString (Cat {region; value})
   }
 | cons_expr { $1 }
 
@@ -696,7 +696,7 @@ cons_expr:
     and stop   = expr_to_region $3 in
     let region = cover start stop
     and value  = {arg1 = $1; op = $2; arg2 = $3}
-    in ListExpr (Cons {region; value})
+    in EList (Cons {region; value})
   }
 | add_expr { $1 }
 
@@ -706,14 +706,14 @@ add_expr:
     and stop   = expr_to_region $3 in
     let region = cover start stop
     and value  = {arg1 = $1; op = $2; arg2 = $3}
-    in ArithExpr (Add {region; value})
+    in EArith (Add {region; value})
   }
 | add_expr MINUS mult_expr {
     let start  = expr_to_region $1
     and stop   = expr_to_region $3 in
     let region = cover start stop
     and value  = {arg1 = $1; op = $2; arg2 = $3}
-    in ArithExpr (Sub {region; value})
+    in EArith (Sub {region; value})
   }
 | mult_expr { $1 }
 
@@ -723,21 +723,21 @@ mult_expr:
     and stop   = expr_to_region $3 in
     let region = cover start stop
     and value  = {arg1 = $1; op = $2; arg2 = $3}
-    in ArithExpr (Mult {region; value})
+    in EArith (Mult {region; value})
   }
 | mult_expr SLASH unary_expr {
     let start  = expr_to_region $1
     and stop   = expr_to_region $3 in
     let region = cover start stop
     and value  = {arg1 = $1; op = $2; arg2 = $3}
-    in ArithExpr (Div {region; value})
+    in EArith (Div {region; value})
   }
 | mult_expr Mod unary_expr {
     let start  = expr_to_region $1
     and stop   = expr_to_region $3 in
     let region = cover start stop
     and value  = {arg1 = $1; op = $2; arg2 = $3}
-    in ArithExpr (Mod {region; value})
+    in EArith (Mod {region; value})
   }
 | unary_expr { $1 }
 
@@ -746,40 +746,40 @@ unary_expr:
     let stop   = expr_to_region $2 in
     let region = cover $1 stop
     and value  = {op = $1; arg = $2}
-    in ArithExpr (Neg {region; value})
+    in EArith (Neg {region; value})
   }
 | Not core_expr {
     let stop   = expr_to_region $2 in
     let region = cover $1 stop
     and value  = {op = $1; arg = $2} in
-    LogicExpr (BoolExpr (Not {region; value}))
+    ELogic (BoolExpr (Not {region; value}))
   }
 | core_expr { $1 }
 
 core_expr:
-  Int              { ArithExpr (Int $1) }
-| var              { Var $1 }
-| String           { StringExpr (String $1) }
-| Bytes            { Bytes $1 }
-| C_False          { LogicExpr (BoolExpr (False $1)) }
-| C_True           { LogicExpr (BoolExpr (True $1)) }
-| C_Unit           { Unit $1 }
-| tuple            { Tuple $1 }
-| list_expr        { ListExpr (List $1) }
-| empty_list       { ListExpr (EmptyList $1) }
-| set_expr         { SetExpr (Set $1) }
-| empty_set        { SetExpr (EmptySet $1) }
-| none_expr        { ConstrExpr (NoneExpr $1) }
-| fun_call         { FunCall $1 }
-| map_expr         { MapExpr $1 }
-| record_expr      { RecordExpr $1 }
+  Int              { EArith (Int $1) }
+| var              { EVar $1 }
+| String           { EString (String $1) }
+| Bytes            { EBytes $1 }
+| C_False          { ELogic (BoolExpr (False $1)) }
+| C_True           { ELogic (BoolExpr (True $1)) }
+| C_Unit           { EUnit $1 }
+| tuple            { ETuple $1 }
+| list_expr        { EList (List $1) }
+| empty_list       { EList (EmptyList $1) }
+| set_expr         { ESet (Set $1) }
+| empty_set        { ESet (EmptySet $1) }
+| none_expr        { EConstr (NoneExpr $1) }
+| fun_call         { ECall $1 }
+| map_expr         { EMap $1 }
+| record_expr      { ERecord $1 }
 | Constr arguments {
     let region = cover $1.region $2.region in
-    ConstrExpr (ConstrApp {region; value = $1,$2})
+    EConstr (ConstrApp {region; value = $1,$2})
   }
 | C_Some arguments {
     let region = cover $1 $2.region in
-    ConstrExpr (SomeApp {region; value = $1,$2})
+    EConstr (SomeApp {region; value = $1,$2})
   }
 
 map_expr:

@@ -155,9 +155,9 @@ type t = {
 and ast = t
 
 and declaration =
-  TypeDecl    of type_decl reg
-| ConstDecl   of const_decl reg
-| LambdaDecl  of lambda_decl
+  TypeDecl   of type_decl reg
+| ConstDecl  of const_decl reg
+| LambdaDecl of lambda_decl
 
 and const_decl = {
   kwd_const  : kwd_const;
@@ -180,11 +180,11 @@ and type_decl = {
 }
 
 and type_expr =
-  Prod    of cartesian
-| Sum     of (variant reg, vbar) nsepseq reg
-| Record  of record_type reg
-| TypeApp of (type_name * type_tuple) reg
-| ParType of type_expr par reg
+  TProd   of cartesian
+| TSum    of (variant reg, vbar) nsepseq reg
+| TRecord of record_type reg
+| TApp    of (type_name * type_tuple) reg
+| TPar    of type_expr par reg
 | TAlias  of variable
 
 and cartesian = (type_expr, times) nsepseq reg
@@ -443,20 +443,20 @@ and for_collect = {
 (* Expressions *)
 
 and expr =
-  LogicExpr  of logic_expr
-| ArithExpr  of arith_expr
-| StringExpr of string_expr
-| ListExpr   of list_expr
-| SetExpr    of set_expr
-| ConstrExpr of constr_expr
-| RecordExpr of record_expr
-| MapExpr    of map_expr
-| Var        of Lexer.lexeme reg
-| FunCall    of fun_call
-| Bytes      of (Lexer.lexeme * Hex.t) reg
-| Unit       of c_Unit
-| Tuple      of tuple
-| ParExpr    of expr par reg
+  ELogic  of logic_expr
+| EArith  of arith_expr
+| EString of string_expr
+| EList   of list_expr
+| ESet    of set_expr
+| EConstr of constr_expr
+| ERecord of record_expr
+| EMap    of map_expr
+| EVar    of Lexer.lexeme reg
+| ECall   of fun_call
+| EBytes  of (Lexer.lexeme * Hex.t) reg
+| EUnit   of c_Unit
+| ETuple  of tuple
+| EPar    of expr par reg
 
 and map_expr =
   MapLookUp of map_lookup reg
@@ -609,28 +609,28 @@ and list_pattern =
 open! Region
 
 let type_expr_to_region = function
-  Prod    {region; _}
-| Sum     {region; _}
-| Record  {region; _}
-| TypeApp {region; _}
-| ParType {region; _}
+  TProd   {region; _}
+| TSum    {region; _}
+| TRecord {region; _}
+| TApp    {region; _}
+| TPar    {region; _}
 | TAlias  {region; _} -> region
 
 let rec expr_to_region = function
-  LogicExpr  e -> logic_expr_to_region e
-| ArithExpr  e -> arith_expr_to_region e
-| StringExpr e -> string_expr_to_region e
-| ListExpr   e -> list_expr_to_region e
-| SetExpr    e -> set_expr_to_region e
-| ConstrExpr e -> constr_expr_to_region e
-| RecordExpr e -> record_expr_to_region e
-| MapExpr    e -> map_expr_to_region e
-| Var       {region; _}
-| FunCall   {region; _}
-| Bytes     {region; _}
-| Unit      region
-| Tuple     {region; _}
-| ParExpr   {region; _} -> region
+  ELogic  e -> logic_expr_to_region e
+| EArith  e -> arith_expr_to_region e
+| EString e -> string_expr_to_region e
+| EList   e -> list_expr_to_region e
+| ESet    e -> set_expr_to_region e
+| EConstr e -> constr_expr_to_region e
+| ERecord e -> record_expr_to_region e
+| EMap    e -> map_expr_to_region e
+| EVar   {region; _}
+| ECall  {region; _}
+| EBytes {region; _}
+| EUnit   region
+| ETuple {region; _}
+| EPar   {region; _} -> region
 
 and map_expr_to_region = function
   MapLookUp {region; _}
@@ -788,9 +788,9 @@ let rec print_tokens ast =
   print_token eof "EOF"
 
 and print_decl = function
-  TypeDecl    decl -> print_type_decl       decl
-| ConstDecl   decl -> print_const_decl      decl
-| LambdaDecl  decl -> print_lambda_decl     decl
+  TypeDecl   decl -> print_type_decl       decl
+| ConstDecl  decl -> print_const_decl      decl
+| LambdaDecl decl -> print_lambda_decl     decl
 
 and print_const_decl {value; _} =
   let {kwd_const; name; colon; const_type;
@@ -813,11 +813,11 @@ and print_type_decl {value; _} =
   print_terminator terminator
 
 and print_type_expr = function
-  Prod    cartesian   -> print_cartesian   cartesian
-| Sum     sum_type    -> print_sum_type    sum_type
-| Record  record_type -> print_record_type record_type
-| TypeApp type_app    -> print_type_app    type_app
-| ParType par_type    -> print_par_type    par_type
+  TProd   cartesian   -> print_cartesian   cartesian
+| TSum    sum_type    -> print_sum_type    sum_type
+| TRecord record_type -> print_record_type record_type
+| TApp    type_app    -> print_type_app    type_app
+| TPar    par_type    -> print_par_type    par_type
 | TAlias  type_alias  -> print_var         type_alias
 
 and print_cartesian {value; _} =
@@ -1106,20 +1106,20 @@ and print_bind_to = function
 | None -> ()
 
 and print_expr = function
-  LogicExpr e  -> print_logic_expr e
-| ArithExpr e  -> print_arith_expr e
-| StringExpr e -> print_string_expr e
-| ListExpr e   -> print_list_expr e
-| SetExpr e    -> print_set_expr e
-| ConstrExpr e -> print_constr_expr e
-| RecordExpr e -> print_record_expr e
-| MapExpr    e -> print_map_expr e
-| Var var      -> print_var var
-| FunCall e    -> print_fun_call e
-| Bytes b      -> print_bytes b
-| Unit region  -> print_token region "Unit"
-| Tuple e      -> print_tuple e
-| ParExpr e    -> print_par_expr e
+  ELogic  e -> print_logic_expr e
+| EArith  e -> print_arith_expr e
+| EString e -> print_string_expr e
+| EList   e -> print_list_expr e
+| ESet    e -> print_set_expr e
+| EConstr e -> print_constr_expr e
+| ERecord e -> print_record_expr e
+| EMap    e -> print_map_expr e
+| EVar    v -> print_var v
+| ECall   e -> print_fun_call e
+| EBytes  b -> print_bytes b
+| EUnit   r -> print_token r "Unit"
+| ETuple  e -> print_tuple e
+| EPar    e -> print_par_expr e
 
 and print_map_expr = function
   MapLookUp {value; _} -> print_map_lookup value
