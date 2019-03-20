@@ -374,12 +374,16 @@ and case = {
 and assignment = {
   lhs    : lhs;
   assign : assign;
-  expr   : expr
+  rhs    : rhs;
 }
 
 and lhs =
   Path    of path
 | MapPath of map_lookup reg
+
+and rhs =
+      Expr of expr
+| NoneExpr of c_None
 
 and loop =
   While of while_loop reg
@@ -593,6 +597,7 @@ val pattern_to_region    : pattern -> Region.t
 val local_decl_to_region : local_decl -> Region.t
 val path_to_region       : path -> Region.t
 val lhs_to_region        : lhs -> Region.t
+val rhs_to_region        : rhs -> Region.t
 
 (* Printing *)
 

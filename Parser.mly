@@ -543,11 +543,16 @@ case:
   }
 
 assignment:
-  lhs ASS expr {
-    let region = cover (lhs_to_region $1) (expr_to_region $3)
-    and value  = {lhs = $1; assign = $2; expr = $3}
+  lhs ASS rhs {
+    let stop   = rhs_to_region $3 in
+    let region = cover (lhs_to_region $1) stop
+    and value  = {lhs = $1; assign = $2; rhs = $3}
     in {region; value}
   }
+
+rhs:
+  expr   {     Expr $1 }
+| C_None { NoneExpr $1 : rhs }
 
 lhs:
   path       {    Path $1 }
@@ -580,7 +585,6 @@ for_loop:
       block    = $7}
     in For (ForInt {region; value})
   }
-
 | For var option(arrow_clause) In expr block {
     let region = cover $1 $6.region in
     let value = {

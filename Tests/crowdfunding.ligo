@@ -58,7 +58,7 @@ entrypoint claim (storage store : store; const sender : address)
           else
             begin
               operations := [Transfer (sender, amount)];
-              store.backers[sender] := (None : option (nat))
+              store.backers[sender] := None
             end
       end
   end with (store, operations)

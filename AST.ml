@@ -390,12 +390,16 @@ and case = {
 and assignment = {
   lhs    : lhs;
   assign : assign;
-  expr   : expr
+  rhs    : rhs
 }
 
 and lhs =
   Path    of path
 | MapPath of map_lookup reg
+
+and rhs =
+      Expr of expr
+| NoneExpr of c_None
 
 and loop =
   While of while_loop reg
@@ -727,6 +731,10 @@ let lhs_to_region = function
   Path path -> path_to_region path
 | MapPath {region; _} -> region
 
+let rhs_to_region = function
+      Expr e -> expr_to_region e
+| NoneExpr r -> r
+
 (* Printing the tokens with their source regions *)
 
 let printf = Printf.printf
@@ -1028,10 +1036,14 @@ and print_case {value; _} =
   print_instruction instr
 
 and print_assignment {value; _} =
-  let {lhs; assign; expr} = value in
+  let {lhs; assign; rhs} = value in
   print_lhs lhs;
   print_token assign ":=";
-  print_expr expr
+  print_rhs rhs
+
+and print_rhs = function
+      Expr e -> print_expr e
+| NoneExpr r -> print_token r "None"
 
 and print_lhs = function
   Path path -> print_path path
