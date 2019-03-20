@@ -27,8 +27,6 @@
 %token <Region.t> ASS         (* ":="  *)
 %token <Region.t> EQUAL       (* "="   *)
 %token <Region.t> COLON       (* ":"   *)
-%token <Region.t> OR          (* "||"  *)
-%token <Region.t> AND         (* "&&"  *)
 %token <Region.t> LT          (* "<"   *)
 %token <Region.t> LEQ         (* "<="  *)
 %token <Region.t> GT          (* ">"   *)
@@ -44,6 +42,7 @@
 
   (* Keywords *)
 
+%token <Region.t> And         (* "and"        *)
 %token <Region.t> Begin       (* "begin"      *)
 %token <Region.t> Case        (* "case"       *)
 %token <Region.t> Const       (* "const"      *)
@@ -57,6 +56,7 @@
 %token <Region.t> Function    (* "function"   *)
 %token <Region.t> Type        (* "type"       *)
 %token <Region.t> Of          (* "of"         *)
+%token <Region.t> Or          (* "or"         *)
 %token <Region.t> Var         (* "var"        *)
 %token <Region.t> End         (* "end"        *)
 %token <Region.t> Then        (* "then"       *)

@@ -603,7 +603,7 @@ interactive_expr:
   expr EOF { $1 }
 
 expr:
-  expr OR conj_expr {
+  expr Or conj_expr {
     let start  = expr_to_region $1
     and stop   = expr_to_region $3 in
     let region = cover start stop
@@ -613,7 +613,7 @@ expr:
 | conj_expr { $1 }
 
 conj_expr:
-  conj_expr AND comp_expr {
+  conj_expr And comp_expr {
     let start  = expr_to_region $1
     and stop   = expr_to_region $3 in
     let region = cover start stop

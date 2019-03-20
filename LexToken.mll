@@ -49,8 +49,6 @@ type t =
 | ASS      of Region.t
 | EQUAL    of Region.t
 | COLON    of Region.t
-| OR       of Region.t
-| AND      of Region.t
 | LT       of Region.t
 | LEQ      of Region.t
 | GT       of Region.t
@@ -66,35 +64,37 @@ type t =
 
   (* Keywords *)
 
-| Begin      of Region.t
-| Case       of Region.t
-| Const      of Region.t
-| Down       of Region.t
-| Fail       of Region.t
-| If         of Region.t
-| In         of Region.t
-| Is         of Region.t
-| Entrypoint of Region.t
-| For        of Region.t
-| Function   of Region.t
-| Type       of Region.t
-| Of         of Region.t
-| Var        of Region.t
-| End        of Region.t
-| Then       of Region.t
-| Else       of Region.t
-| Map        of Region.t
-| Patch      of Region.t
-| Procedure  of Region.t
-| Record     of Region.t
-| Skip       of Region.t
-| Step       of Region.t
-| Storage    of Region.t
-| To         of Region.t
-| Mod        of Region.t
-| Not        of Region.t
-| While      of Region.t
-| With       of Region.t
+| And        of Region.t  (* "and"        *)
+| Begin      of Region.t  (* "begin"      *)
+| Case       of Region.t  (* "case"       *)
+| Const      of Region.t  (* "const"      *)
+| Down       of Region.t  (* "down"       *)
+| Else       of Region.t  (* "else"       *)
+| End        of Region.t  (* "end"        *)
+| Entrypoint of Region.t  (* "entrypoint" *)
+| Fail       of Region.t  (* "fail"       *)
+| For        of Region.t  (* "for"        *)
+| Function   of Region.t  (* "function"   *)
+| If         of Region.t  (* "if"         *)
+| In         of Region.t  (* "in"         *)
+| Is         of Region.t  (* "is"         *)
+| Map        of Region.t  (* "map"        *)
+| Mod        of Region.t  (* "mod"        *)
+| Not        of Region.t  (* "not"        *)
+| Of         of Region.t  (* "of"         *)
+| Or         of Region.t  (* "or"         *)
+| Patch      of Region.t  (* "patch"      *)
+| Procedure  of Region.t  (* "procedure"  *)
+| Record     of Region.t  (* "record"     *)
+| Skip       of Region.t  (* "skip"       *)
+| Step       of Region.t  (* "step"       *)
+| Storage    of Region.t  (* "storage"    *)
+| Then       of Region.t  (* "then"       *)
+| To         of Region.t  (* "to"         *)
+| Type       of Region.t  (* "type"       *)
+| Var        of Region.t  (* "var"        *)
+| While      of Region.t  (* "while"      *)
+| With       of Region.t  (* "with"       *)
 
   (* Types *)
 (*
@@ -169,8 +169,6 @@ let proj_token = function
 | ASS      region -> region, "ASS"
 | EQUAL    region -> region, "EQUAL"
 | COLON    region -> region, "COLON"
-| OR       region -> region, "OR"
-| AND      region -> region, "AND"
 | LT       region -> region, "LT"
 | LEQ      region -> region, "LEQ"
 | GT       region -> region, "GT"
@@ -186,33 +184,35 @@ let proj_token = function
 
   (* Keywords *)
 
+| And        region -> region, "And"
 | Begin      region -> region, "Begin"
 | Case       region -> region, "Case"
 | Const      region -> region, "Const"
 | Down       region -> region, "Down"
+| Else       region -> region, "Else"
+| End        region -> region, "End"
+| Entrypoint region -> region, "Entrypoint"
 | Fail       region -> region, "Fail"
+| For        region -> region, "For"
+| Function   region -> region, "Function"
 | If         region -> region, "If"
 | In         region -> region, "In"
 | Is         region -> region, "Is"
-| Entrypoint region -> region, "Entrypoint"
-| For        region -> region, "For"
-| Function   region -> region, "Function"
-| Type       region -> region, "Type"
-| Of         region -> region, "Of"
-| Var        region -> region, "Var"
-| End        region -> region, "End"
-| Then       region -> region, "Then"
-| Else       region -> region, "Else"
 | Map        region -> region, "Map"
+| Mod        region -> region, "Mod"
+| Not        region -> region, "Not"
+| Of         region -> region, "Of"
+| Or         region -> region, "Or"
 | Patch      region -> region, "Patch"
 | Procedure  region -> region, "Procedure"
 | Record     region -> region, "Record"
 | Skip       region -> region, "Skip"
 | Step       region -> region, "Step"
 | Storage    region -> region, "Storage"
+| Then       region -> region, "Then"
 | To         region -> region, "To"
-| Mod        region -> region, "Mod"
-| Not        region -> region, "Not"
+| Type       region -> region, "Type"
+| Var        region -> region, "Var"
 | While      region -> region, "While"
 | With       region -> region, "With"
 
@@ -254,8 +254,6 @@ let to_lexeme = function
 | ASS      _ -> ":="
 | EQUAL    _ -> "="
 | COLON    _ -> ":"
-| OR       _ -> "||"
-| AND      _ -> "&&"
 | LT       _ -> "<"
 | LEQ      _ -> "<="
 | GT       _ -> ">"
@@ -271,6 +269,7 @@ let to_lexeme = function
 
   (* Keywords *)
 
+| And        _ -> "and"
 | Begin      _ -> "begin"
 | Case       _ -> "case"
 | Const      _ -> "const"
@@ -284,6 +283,7 @@ let to_lexeme = function
 | Function   _ -> "function"
 | Type       _ -> "type"
 | Of         _ -> "of"
+| Or         _ -> "or"
 | Var        _ -> "var"
 | End        _ -> "end"
 | Then       _ -> "then"
@@ -324,6 +324,7 @@ let to_region token = proj_token token |> fst
 (* LEXIS *)
 
 let keywords = [
+  (fun reg -> And        reg);
   (fun reg -> Begin      reg);
   (fun reg -> Case       reg);
   (fun reg -> Const      reg);
@@ -337,6 +338,7 @@ let keywords = [
   (fun reg -> Function   reg);
   (fun reg -> Type       reg);
   (fun reg -> Of         reg);
+  (fun reg -> Or         reg);
   (fun reg -> Var        reg);
   (fun reg -> End        reg);
   (fun reg -> Then       reg);
@@ -357,8 +359,7 @@ let keywords = [
 
 let reserved =
   let open SSet in
-  empty |> add "and"
-        |> add "as"
+  empty |> add "as"
         |> add "asr"
         |> add "assert"
         |> add "class"
@@ -388,7 +389,6 @@ let reserved =
         |> add "nonrec"
         |> add "object"
         |> add "open"
-        |> add "or"
         |> add "private"
         |> add "rec"
         |> add "sig"
@@ -500,8 +500,6 @@ let mk_sym lexeme region =
   | ":="  -> ASS      region
   | "="   -> EQUAL    region
   | ":"   -> COLON    region
-  | "||"  -> OR       region
-  | "&&"  -> AND      region
   | "<"   -> LT       region
   | "<="  -> LEQ      region
   | ">"   -> GT       region
@@ -549,7 +547,8 @@ let is_ident = function
 |       _ -> false
 
 let is_kwd = function
-  Begin      _
+  And        _
+| Begin      _
 | Case       _
 | Const      _
 | Down       _
@@ -562,6 +561,7 @@ let is_kwd = function
 | Function   _
 | Type       _
 | Of         _
+| Or         _
 | Var        _
 | End        _
 | Then       _
@@ -604,8 +604,6 @@ let is_sym = function
 | ASS      _
 | EQUAL    _
 | COLON    _
-| OR       _
-| AND      _
 | LT       _
 | LEQ      _
 | GT       _
