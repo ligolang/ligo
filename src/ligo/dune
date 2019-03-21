@@ -13,3 +13,10 @@
   )
   (flags (:standard -w +1..62-4-9-44-40-42-48@39@33 ))
 )
+
+(alias
+  (name runtest)
+  (action (run test/test.exe))
+  (deps (glob_files contracts/*))
+
+)

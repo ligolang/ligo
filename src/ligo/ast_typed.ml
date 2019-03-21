@@ -42,6 +42,7 @@ and expression =
   | Literal of literal
   | Constant of name * ae list (* For language constants, like (Cons hd tl) or (plus i j) *)
   | Variable of name
+  | Application of ae * ae
   | Lambda of {
       binder: name ;
       input_type: tv ;
@@ -60,6 +61,7 @@ and expression =
 
 
 and literal =
+  | Unit
   | Bool of bool
   | Int of int
   | Nat of int
@@ -91,22 +93,59 @@ and matching =
     }
   | Match_tuple of (name * b) list
 
+module PP = struct
+  open Format
+  open Ligo_helpers.PP
+
+  let rec type_value ppf (tv:type_value) : unit =
+    match tv with
+    | Type_tuple lst -> fprintf ppf "tuple[%a]" (list_sep type_value) lst
+    | Type_sum m -> fprintf ppf "sum[%a]" (smap_sep type_value) m
+    | Type_record m -> fprintf ppf "record[%a]" (smap_sep type_value) m
+    | Type_function (a, b) -> fprintf ppf "%a -> %a" type_value a type_value b
+    | Type_constant (c, []) -> fprintf ppf "%s" c
+    | Type_constant (c, n) -> fprintf ppf "%s(%a)" c (list_sep type_value) n
+end
+
 open Ligo_helpers.Trace
 
+module Errors = struct
+  let different_kinds a b =
+    let title = "different kinds" in
+    let full = Format.asprintf "(%a) VS (%a)" PP.type_value a PP.type_value b in
+    error title full
+
+  let different_constants a b =
+    let title = "different constants" in
+    let full = Format.asprintf "%s VS %s" a b in
+    error title full
+
+  let different_size_constants a b =
+    let title = "constants have different sizes" in
+    let full = Format.asprintf "%a VS %a" PP.type_value a PP.type_value b in
+    error title full
+
+  let different_size_tuples a b =
+    let title = "tuple have different sizes" in
+    let full = Format.asprintf "%a VS %a" PP.type_value a PP.type_value b in
+    error title full
+end
+open Errors
+
 let rec type_value_eq (ab: (type_value * type_value)) : unit result = match ab with
-  | Type_tuple a, Type_tuple b -> (
+  | Type_tuple a as ta, (Type_tuple b as tb) -> (
       let%bind _ =
-        Assert.assert_true ~msg:"tuples with different sizes"
-        @@ List.(length a = length b) in
+        trace_strong (different_size_tuples ta tb)
+        @@ Assert.assert_true List.(length a = length b) in
       bind_list_iter type_value_eq (List.combine a b)
     )
-  | Type_constant (a, a'), Type_constant (b, b') -> (
+  | Type_constant (a, a') as ca, (Type_constant (b, b') as cb) -> (
       let%bind _ =
-        Assert.assert_true ~msg:"constants with different sizes"
-        @@ List.(length a' = length b') in
+        trace_strong (different_size_constants ca cb)
+        @@ Assert.assert_true List.(length a' = length b') in
       let%bind _ =
-        Assert.assert_true ~msg:"constants with different names"
-        @@ (a = b) in
+        trace_strong (different_constants a b)
+        @@ Assert.assert_true (a = b) in
       trace (simple_error "constant sub-expression")
       @@ bind_list_iter type_value_eq (List.combine a' b')
     )
@@ -136,7 +175,7 @@ let rec type_value_eq (ab: (type_value * type_value)) : unit result = match ab w
       @@ bind_list_iter aux (List.combine a' b')
 
     )
-  | _ -> simple_fail "Different kinds of types"
+  | a, b -> fail @@ different_kinds a b
 
 let merge_annotation (a:type_value option) (b:type_value option) : type_value result =
   match a, b with
@@ -151,6 +190,7 @@ let t_bool : type_value = Type_constant ("bool", [])
 let t_string : type_value = Type_constant ("string", [])
 let t_bytes : type_value = Type_constant ("bytes", [])
 let t_int : type_value = Type_constant ("int", [])
+let t_unit : type_value = Type_constant ("unit", [])
 
 let get_annotation (x:annotated_expression) = x.type_annotation
 

@@ -48,8 +48,8 @@ let parse (s:string) : AST_Raw.t result =
   ok program_cst
 
 
-let abstract (p:AST_Raw.t) : AST_Simplified.program result = AST_Simplified.Simplify.program p
+let simplify (p:AST_Raw.t) : Ast_simplified.program result = AST_Simplified.Simplify.simpl_program p
 
-let annotate_types (p:AST_Simplified.program) : AST_Typed.program result = Typer.type_program p
+let type_ (p:AST_Simplified.program) : AST_Typed.program result = Typer.type_program p
 
 let transpile (p:AST_Typed.program) : Mini_c.program result = Transpiler.translate_program p

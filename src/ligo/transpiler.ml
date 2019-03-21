@@ -66,7 +66,12 @@ and translate_annotated_expression (env:Environment.t) (ae:AST.annotated_express
   | Literal (Nat n) -> ok (Literal (`Nat n), tv, env)
   | Literal (Bytes s) -> ok (Literal (`Bytes s), tv, env)
   | Literal (String s) -> ok (Literal (`String s), tv, env)
+  | Literal Unit -> ok (Literal `Unit, tv, env)
   | Variable name -> ok (Var name, tv, env)
+  | Application (a, b) ->
+      let%bind a = translate_annotated_expression env a in
+      let%bind b = translate_annotated_expression env b in
+      ok (Apply (a, b), tv, env)
   | Constructor (m, param) ->
       let%bind (param'_expr, param'_tv, _) = translate_annotated_expression env ae in
       let%bind map_tv = AST.get_t_sum ae.type_annotation in

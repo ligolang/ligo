@@ -6,7 +6,7 @@ __pycache__
 *.pyc
 
 /_build
-*/_build
+**/_build
 /_opam
 /_docker_build
 /docs/_build

@@ -34,6 +34,10 @@ module Let_syntax = struct
   let bind m ~f = m >>? f
 end
 
+let trace_strong err = function
+  | Ok _ as o -> o
+  | Errors _ -> Errors [err]
+
 let trace err = function
   | Ok _ as o -> o
   | Errors errs -> Errors (err :: errs)
@@ -151,9 +155,9 @@ let pp_to_string pp () x =
 let errors_to_string = pp_to_string errors_pp
 
 module Assert = struct
-  let assert_true ~msg = function
+  let assert_true ?msg = function
     | true -> ok ()
-    | false -> simple_fail msg
+    | false -> simple_fail @@ Option.unopt ~default:"not true" msg
 
   let assert_equal_int ?msg a b =
     let msg = Option.unopt ~default:"not equal int" msg in

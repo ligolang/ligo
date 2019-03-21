@@ -32,9 +32,38 @@ module Environment = struct
     List.assoc_opt s e.type_environment
   let add_type (e:t) (s:string) (tv:ele) : t =
     {e with type_environment = (s, tv) :: e.type_environment}
+
+  module PP = struct
+    open Format
+    open Ligo_helpers.PP
+
+    let value ppf (e:t) =
+      let pp ppf (s, e) = fprintf ppf "%s -> %a" s O.PP.type_value e in
+      fprintf ppf "ValueEnv[%a]" (list_sep pp) e.environment
+
+    let type_ ppf e =
+      let pp ppf (s, e) = fprintf ppf "%s -> %a" s O.PP.type_value e in
+      fprintf ppf "TypeEnv[%a]" (list_sep pp) e.type_environment
+
+    let full ppf e =
+      fprintf ppf "%a\n%a" value e type_ e
+  end
 end
 
 type environment = Environment.t
+
+module Errors = struct
+  let unbound_type_variable (e:environment) (n:string) =
+    let title = "unbound type variable" in
+    let full = Format.asprintf "%s in %a" n Environment.PP.type_ e in
+    error title full
+
+  let unrecognized_constant (n:string) =
+    let title = "unrecognized constant" in
+    let full = n in
+    error title full
+end
+open Errors
 
 let rec type_program (p:I.program) : O.program result =
   let aux (e, acc:(environment * O.declaration list)) (d:I.declaration) =
@@ -99,6 +128,7 @@ and type_instruction (e:environment) : I.instruction -> (environment * O.instruc
       let%bind m' = type_match e m in
       let%bind ex' = type_annotated_expression e ex in
       ok (e, O.Matching (ex', m'))
+  | Record_patch _ -> simple_fail "no record_patch yet"
 
 and type_match (e:environment) : I.matching -> O.matching result = function
   | Match_bool {match_true ; match_false} ->
@@ -148,7 +178,7 @@ and evaluate_type (e:environment) : I.type_expression -> O.type_value result = f
       ok (O.Type_record m)
   | Type_variable name ->
       let%bind tv =
-        trace_option (simple_error "unbound type variable")
+        trace_option (unbound_type_variable e name)
         @@ Environment.get_type e name in
       ok tv
   | Type_constant (cst, lst) ->
@@ -171,6 +201,9 @@ and type_annotated_expression (e:environment) (ae:I.annotated_expression) : O.an
   | Literal (Bool b) ->
       let%bind type_annotation = check O.t_bool in
       ok O.{expression = Literal (Bool b) ; type_annotation }
+  | Literal Unit ->
+      let%bind type_annotation = check O.t_unit in
+      ok O.{expression = Literal (Unit) ; type_annotation }
   | Literal (String s) ->
       let%bind type_annotation = check O.t_string in
       ok O.{expression = Literal (String s) ; type_annotation }
@@ -241,13 +274,23 @@ and type_annotated_expression (e:environment) (ae:I.annotated_expression) : O.an
       let%bind (name', tv) = type_constant name tv_lst in
       let%bind type_annotation = check tv in
       ok O.{expression = O.Constant (name', lst') ; type_annotation}
+  | Application (f, arg) ->
+      let%bind f = type_annotated_expression e f in
+      let%bind arg = type_annotated_expression e arg in
+      let%bind type_annotation = match f.type_annotation with
+        | Type_function (param, result) ->
+            let%bind _ = O.type_value_eq (param, arg.type_annotation) in
+            ok result
+        | _ -> simple_fail "applying to not-a-function"
+      in
+      ok O.{expression = Application (f, arg) ; type_annotation}
 
 and type_constant (name:string) (lst:O.type_value list) : (string * O.type_value) result =
   (* Constant poorman's polymorphism *)
   let open O in
   match (name, lst) with
-  | "add", [a ; b] when a = t_int && b = t_int -> ok ("add_int", t_int)
-  | "add", [a ; b] when a = t_string && b = t_string -> ok ("concat_string", t_string)
-  | "add", [_ ; _] -> simple_fail "bad types to add"
-  | "add", _ -> simple_fail "bad number of params to add"
-  | _ -> simple_fail "unrecognized constant"
+  | "ADD", [a ; b] when a = t_int && b = t_int -> ok ("ADD_INT", t_int)
+  | "ADD", [a ; b] when a = t_string && b = t_string -> ok ("CONCAT", t_string)
+  | "ADD", [_ ; _] -> simple_fail "bad types to add"
+  | "ADD", _ -> simple_fail "bad number of params to add"
+  | name, _ -> fail @@ unrecognized_constant name
