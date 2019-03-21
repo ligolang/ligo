@@ -39,6 +39,7 @@ let sepseq_to_region to_region = function
 
 (* Keywords of LIGO *)
 
+type kwd_and        = Region.t
 type kwd_begin      = Region.t
 type kwd_case       = Region.t
 type kwd_const      = Region.t
@@ -56,6 +57,7 @@ type kwd_map        = Region.t
 type kwd_mod        = Region.t
 type kwd_not        = Region.t
 type kwd_of         = Region.t
+type kwd_or         = Region.t
 type kwd_patch      = Region.t
 type kwd_procedure  = Region.t
 type kwd_record     = Region.t
@@ -93,8 +95,6 @@ type arrow    = Region.t
 type assign   = Region.t
 type equal    = Region.t
 type colon    = Region.t
-type bool_or  = Region.t
-type bool_and = Region.t
 type lt       = Region.t
 type leq      = Region.t
 type gt       = Region.t
@@ -476,9 +476,9 @@ and logic_expr =
 | CompExpr of comp_expr
 
 and bool_expr =
-  Or    of bool_or  bin_op reg
-| And   of bool_and bin_op reg
-| Not   of kwd_not   un_op reg
+  Or    of kwd_or  bin_op reg
+| And   of kwd_and bin_op reg
+| Not   of kwd_not un_op reg
 | False of c_False
 | True  of c_True
 
