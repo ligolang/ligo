@@ -74,6 +74,7 @@ type t =
 | Entrypoint of Region.t  (* "entrypoint" *)
 | Fail       of Region.t  (* "fail"       *)
 | For        of Region.t  (* "for"        *)
+| From       of Region.t  (* "from"       *)
 | Function   of Region.t  (* "function"   *)
 | If         of Region.t  (* "if"         *)
 | In         of Region.t  (* "in"         *)
@@ -86,6 +87,7 @@ type t =
 | Patch      of Region.t  (* "patch"      *)
 | Procedure  of Region.t  (* "procedure"  *)
 | Record     of Region.t  (* "record"     *)
+| Remove     of Region.t  (* "remove"     *)
 | Skip       of Region.t  (* "skip"       *)
 | Step       of Region.t  (* "step"       *)
 | Storage    of Region.t  (* "storage"    *)
@@ -194,6 +196,7 @@ let proj_token = function
 | Entrypoint region -> region, "Entrypoint"
 | Fail       region -> region, "Fail"
 | For        region -> region, "For"
+| From       region -> region, "From"
 | Function   region -> region, "Function"
 | If         region -> region, "If"
 | In         region -> region, "In"
@@ -206,6 +209,7 @@ let proj_token = function
 | Patch      region -> region, "Patch"
 | Procedure  region -> region, "Procedure"
 | Record     region -> region, "Record"
+| Remove     region -> region, "Remove"
 | Skip       region -> region, "Skip"
 | Step       region -> region, "Step"
 | Storage    region -> region, "Storage"
@@ -280,6 +284,7 @@ let to_lexeme = function
 | Is         _ -> "is"
 | Entrypoint _ -> "entrypoint"
 | For        _ -> "for"
+| From       _ -> "from"
 | Function   _ -> "function"
 | Type       _ -> "type"
 | Of         _ -> "of"
@@ -292,6 +297,7 @@ let to_lexeme = function
 | Patch      _ -> "patch"
 | Procedure  _ -> "procedure"
 | Record     _ -> "record"
+| Remove     _ -> "remove"
 | Skip       _ -> "skip"
 | Step       _ -> "step"
 | Storage    _ -> "storage"
@@ -335,6 +341,7 @@ let keywords = [
   (fun reg -> Is         reg);
   (fun reg -> Entrypoint reg);
   (fun reg -> For        reg);
+  (fun reg -> From       reg);
   (fun reg -> Function   reg);
   (fun reg -> Type       reg);
   (fun reg -> Of         reg);
@@ -347,6 +354,7 @@ let keywords = [
   (fun reg -> Patch      reg);
   (fun reg -> Procedure  reg);
   (fun reg -> Record     reg);
+  (fun reg -> Remove     reg);
   (fun reg -> Skip       reg);
   (fun reg -> Step       reg);
   (fun reg -> Storage    reg);
@@ -558,6 +566,7 @@ let is_kwd = function
 | Is         _
 | Entrypoint _
 | For        _
+| From       _
 | Function   _
 | Type       _
 | Of         _
@@ -570,6 +579,7 @@ let is_kwd = function
 | Patch      _
 | Procedure  _
 | Record     _
+| Remove     _
 | Skip       _
 | Step       _
 | Storage    _

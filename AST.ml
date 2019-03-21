@@ -49,6 +49,7 @@ type kwd_end        = Region.t
 type kwd_entrypoint = Region.t
 type kwd_fail       = Region.t
 type kwd_for        = Region.t
+type kwd_from       = Region.t
 type kwd_function   = Region.t
 type kwd_if         = Region.t
 type kwd_in         = Region.t
@@ -61,6 +62,7 @@ type kwd_or         = Region.t
 type kwd_patch      = Region.t
 type kwd_procedure  = Region.t
 type kwd_record     = Region.t
+type kwd_remove     = Region.t
 type kwd_skip       = Region.t
 type kwd_step       = Region.t
 type kwd_storage    = Region.t
@@ -329,6 +331,15 @@ and single_instr =
 | Skip        of kwd_skip
 | RecordPatch of record_patch reg
 | MapPatch    of map_patch reg
+| MapRemove   of map_remove reg
+
+and map_remove = {
+  kwd_remove : kwd_remove;
+  key        : expr;
+  kwd_from   : kwd_from;
+  kwd_map    : kwd_map;
+  map        : path
+}
 
 and map_patch  = {
   kwd_patch : kwd_patch;
@@ -703,6 +714,7 @@ let instr_to_region = function
 | Single Fail                {region; _}
 | Single RecordPatch         {region; _}
 | Single MapPatch            {region; _}
+| Single MapRemove           {region; _}
 | Block                      {region; _} -> region
 
 let pattern_to_region = function
@@ -999,6 +1011,7 @@ and print_single_instr = function
 | Skip        kwd_skip   -> print_token kwd_skip "skip"
 | RecordPatch {value; _} -> print_record_patch value
 | MapPatch    {value; _} -> print_map_patch value
+| MapRemove   {value; _} -> print_map_remove value
 
 and print_fail {kwd_fail; fail_expr} =
   print_token kwd_fail "fail";
@@ -1241,6 +1254,14 @@ and print_map_patch node =
   print_path path;
   print_token kwd_with "with";
   print_map_injection map_inj
+
+and print_map_remove node =
+  let {kwd_remove; key; kwd_from; kwd_map; map} = node in
+  print_token kwd_remove "remove";
+  print_expr  key;
+  print_token kwd_from "from";
+  print_token kwd_map "map";
+  print_path  map
 
 and print_map_injection {value; _} =
   let {opening; bindings; terminator; close} = value in

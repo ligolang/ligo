@@ -464,6 +464,19 @@ single_instr:
 | Skip         {        Skip $1 }
 | record_patch { RecordPatch $1 }
 | map_patch    {    MapPatch $1 }
+| map_remove   {   MapRemove $1 }
+
+map_remove:
+  Remove expr From Map path {
+    let region = cover $1 (path_to_region $5) in
+    let value  = {
+      kwd_remove = $1;
+      key        = $2;
+      kwd_from   = $3;
+      kwd_map    = $4;
+      map        = $5}
+    in {region; value}
+  }
 
 map_patch:
   Patch path With map_injection {
