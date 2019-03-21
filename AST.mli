@@ -462,7 +462,7 @@ and logic_expr =
 and bool_expr =
   Or    of kwd_or  bin_op reg
 | And   of kwd_and bin_op reg
-| Not   of kwd_not un_op reg
+| Not   of kwd_not  un_op reg
 | False of c_False
 | True  of c_True
 

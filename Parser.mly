@@ -303,7 +303,7 @@ parameters:
   par(nsepseq(param_decl,SEMI)) { $1 }
 
 param_decl:
-  Var var COLON type_expr {
+  Var var COLON param_type {
     let stop   = type_expr_to_region $4 in
     let region = cover $1 stop
     and value  = {
@@ -313,7 +313,7 @@ param_decl:
       param_type = $4}
     in ParamVar {region; value}
   }
-| Const var COLON type_expr {
+| Const var COLON param_type {
     let stop   = type_expr_to_region $4 in
     let region = cover $1 stop
     and value  = {
@@ -330,7 +330,7 @@ entry_param_decl:
       ParamConst const -> EntryConst const
     | ParamVar     var -> EntryVar   var
   }
-| Storage var COLON type_expr {
+| Storage var COLON param_type {
     let stop   = type_expr_to_region $4 in
     let region = cover $1 stop
     and value  = {
@@ -339,6 +339,21 @@ entry_param_decl:
       colon        = $3;
       storage_type = $4}
     in EntryStore {region; value}
+  }
+
+param_type:
+  nsepseq(core_param_type,TIMES) {
+    let region = nsepseq_to_region type_expr_to_region $1
+    in TProd {region; value=$1}
+  }
+
+core_param_type:
+  type_name {
+    TAlias $1
+  }
+| type_name type_tuple {
+    let region = cover $1.region $2.region
+    in TApp {region; value = $1,$2}
   }
 
 block:
