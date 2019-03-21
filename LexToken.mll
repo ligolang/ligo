@@ -88,6 +88,7 @@ type t =
 | Procedure  of Region.t  (* "procedure"  *)
 | Record     of Region.t  (* "record"     *)
 | Remove     of Region.t  (* "remove"     *)
+| Set        of Region.t  (* "set"        *)
 | Skip       of Region.t  (* "skip"       *)
 | Step       of Region.t  (* "step"       *)
 | Storage    of Region.t  (* "storage"    *)
@@ -210,6 +211,7 @@ let proj_token = function
 | Procedure  region -> region, "Procedure"
 | Record     region -> region, "Record"
 | Remove     region -> region, "Remove"
+| Set        region -> region, "Set"
 | Skip       region -> region, "Skip"
 | Step       region -> region, "Step"
 | Storage    region -> region, "Storage"
@@ -298,6 +300,7 @@ let to_lexeme = function
 | Procedure  _ -> "procedure"
 | Record     _ -> "record"
 | Remove     _ -> "remove"
+| Set        _ -> "set"
 | Skip       _ -> "skip"
 | Step       _ -> "step"
 | Storage    _ -> "storage"
@@ -355,6 +358,7 @@ let keywords = [
   (fun reg -> Procedure  reg);
   (fun reg -> Record     reg);
   (fun reg -> Remove     reg);
+  (fun reg -> Set        reg);
   (fun reg -> Skip       reg);
   (fun reg -> Step       reg);
   (fun reg -> Storage    reg);
@@ -580,6 +584,7 @@ let is_kwd = function
 | Procedure  _
 | Record     _
 | Remove     _
+| Set        _
 | Skip       _
 | Step       _
 | Storage    _

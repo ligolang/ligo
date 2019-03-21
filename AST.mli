@@ -47,6 +47,7 @@ type kwd_patch      = Region.t
 type kwd_procedure  = Region.t
 type kwd_record     = Region.t
 type kwd_remove     = Region.t
+type kwd_set        = Region.t
 type kwd_skip       = Region.t
 type kwd_step       = Region.t
 type kwd_storage    = Region.t
@@ -105,6 +106,7 @@ type fun_name   = string reg
 type type_name  = string reg
 type field_name = string reg
 type map_name   = string reg
+type set_name   = string reg
 type constr     = string reg
 
 (* Parentheses *)
@@ -454,6 +456,16 @@ and expr =
 | ETuple  of tuple
 | EPar    of expr par reg
 
+and set_expr =
+  SetInj of set_injection reg
+
+and set_injection = {
+  opening    : kwd_set;
+  elements   : (expr, semi) nsepseq;
+  terminator : semi option;
+  close      : kwd_end
+}
+
 and map_expr =
   MapLookUp of map_lookup reg
 | MapInj    of map_injection reg
@@ -515,10 +527,6 @@ and list_expr =
 | List      of (expr, comma) nsepseq brackets reg
 | EmptyList of empty_list reg
 
-and set_expr =
-  Set       of (expr, comma) nsepseq braces reg
-| EmptySet  of empty_set reg
-
 and constr_expr =
   SomeApp   of (c_Some * arguments) reg
 | NoneExpr  of none_expr reg
@@ -556,15 +564,6 @@ and typed_empty_list = {
   rbracket  : rbracket;
   colon     : colon;
   list_type : type_expr
-}
-
-and empty_set = typed_empty_set par
-
-and typed_empty_set = {
-  lbrace   : lbrace;
-  rbrace   : rbrace;
-  colon    : colon;
-  set_type : type_expr
 }
 
 and none_expr = typed_none_expr par

@@ -89,6 +89,7 @@ type t =
 | Procedure  of Region.t  (* "procedure"  *)
 | Record     of Region.t  (* "record"     *)
 | Remove     of Region.t  (* "remove"     *)
+| Set        of Region.t  (* "set"        *)
 | Skip       of Region.t  (* "skip"       *)
 | Step       of Region.t  (* "step"       *)
 | Storage    of Region.t  (* "storage"    *)

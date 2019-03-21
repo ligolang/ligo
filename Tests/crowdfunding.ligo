@@ -6,7 +6,8 @@ type store is
     funded   : bool;
   end
 
-const foo : store = map "X" -> 10; "Y" -> 11 end
+const foo : map (string, nat) = map "X" -> 10; "Y" -> 11 end
+const bar : set (int) =  set 1; 1+1; f(3); end
 
 entrypoint contribute (storage store : store;
                        const sender  : address;

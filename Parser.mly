@@ -177,8 +177,15 @@ core_type:
   }
 | Map type_tuple {
     let region = cover $1 $2.region in
-    let value = {value="map"; region=$1}
-    in TApp {region; value = value, $2}
+    let type_constr = {value="map"; region=$1}
+    in TApp {region; value = type_constr, $2}
+  }
+| Set par(type_expr) {
+    let total = cover $1 $2.region in
+    let type_constr = {value="set"; region=$1} in
+    let {region; value = {lpar; inside; rpar}} = $2 in
+    let tuple = {region; value={lpar; inside=inside,[]; rpar}}
+    in TApp {region=total; value = type_constr, tuple}
   }
 | par(type_expr) {
     TPar $1
@@ -405,7 +412,9 @@ unqualified_decl(OP):
              rpar = Region.ghost}
            in EConstr (NoneExpr {region; value})
       | `EMap inj ->
-           EMap (MapInj inj)
+          EMap (MapInj inj)
+      | `ESet inj ->
+          ESet (SetInj inj)
     in $1, $2, $3, $4, init, $6, stop
   }
 
@@ -448,6 +457,7 @@ extended_expr:
                        value  = `EList ($1,$2)} }
 | C_None            { {region = $1; value = `ENone $1} }
 | map_injection     { {region = $1.region; value = `EMap $1} }
+| set_injection     { {region = $1.region; value = `ESet $1} }
 
 
 instruction:
@@ -486,6 +496,18 @@ map_patch:
       path      = $2;
       kwd_with  = $3;
       map_inj   = $4}
+    in {region; value}
+  }
+
+set_injection:
+  Set series(expr) {
+    let first, (others, terminator, close) = $2 in
+    let region = cover $1 close
+    and value = {
+      opening  = $1;
+      elements = first, others;
+      terminator;
+      close}
     in {region; value}
   }
 
@@ -797,8 +819,6 @@ core_expr:
 | tuple            { ETuple $1 }
 | list_expr        { EList (List $1) }
 | empty_list       { EList (EmptyList $1) }
-| set_expr         { ESet (Set $1) }
-| empty_set        { ESet (EmptySet $1) }
 | none_expr        { EConstr (NoneExpr $1) }
 | fun_call         { ECall $1 }
 | map_expr         { EMap $1 }
@@ -889,20 +909,6 @@ typed_empty_list:
      rbracket  = $2;
      colon     = $3;
      list_type = $4}
-  }
-
-set_expr:
-  braces(nsepseq(expr,COMMA)) { $1 }
-
-empty_set:
-  par(typed_empty_set) { $1 }
-
-typed_empty_set:
-  LBRACE RBRACE COLON type_expr {
-    {lbrace   = $1;
-     rbrace   = $2;
-     colon    = $3;
-     set_type = $4}
   }
 
 none_expr:

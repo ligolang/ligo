@@ -63,6 +63,7 @@ type kwd_patch      = Region.t
 type kwd_procedure  = Region.t
 type kwd_record     = Region.t
 type kwd_remove     = Region.t
+type kwd_set        = Region.t
 type kwd_skip       = Region.t
 type kwd_step       = Region.t
 type kwd_storage    = Region.t
@@ -121,6 +122,7 @@ type fun_name   = string reg
 type type_name  = string reg
 type field_name = string reg
 type map_name   = string reg
+type set_name   = string reg
 type constr     = string reg
 
 (* Parentheses *)
@@ -470,6 +472,16 @@ and expr =
 | ETuple  of tuple
 | EPar    of expr par reg
 
+and set_expr =
+  SetInj of set_injection reg
+
+and set_injection = {
+  opening    : kwd_set;
+  elements   : (expr, semi) nsepseq;
+  terminator : semi option;
+  close      : kwd_end
+}
+
 and map_expr =
   MapLookUp of map_lookup reg
 | MapInj    of map_injection reg
@@ -531,10 +543,6 @@ and list_expr =
 | List      of (expr, comma) nsepseq brackets reg
 | EmptyList of empty_list reg
 
-and set_expr =
-  Set       of (expr, comma) nsepseq braces reg
-| EmptySet  of empty_set reg
-
 and constr_expr =
   SomeApp   of (c_Some * arguments) reg
 | NoneExpr  of none_expr reg
@@ -572,15 +580,6 @@ and typed_empty_list = {
   rbracket  : rbracket;
   colon     : colon;
   list_type : type_expr
-}
-
-and empty_set = typed_empty_set par
-
-and typed_empty_set = {
-  lbrace   : lbrace;
-  rbrace   : rbrace;
-  colon    : colon;
-  set_type : type_expr
 }
 
 and none_expr = typed_none_expr par
@@ -648,6 +647,9 @@ and map_expr_to_region = function
   MapLookUp {region; _}
 | MapInj    {region; _} -> region
 
+and set_expr_to_region = function
+  SetInj {region; _} -> region
+
 and logic_expr_to_region = function
   BoolExpr e -> bool_expr_to_region e
 | CompExpr e -> comp_expr_to_region e
@@ -684,10 +686,6 @@ and list_expr_to_region = function
   Cons      {region; _}
 | List      {region; _}
 | EmptyList {region; _} -> region
-
-and set_expr_to_region = function
-  Set      {region; _}
-| EmptySet {region; _} -> region
 
 and constr_expr_to_region = function
   NoneExpr  {region; _}
@@ -1138,8 +1136,10 @@ and print_expr = function
 
 and print_map_expr = function
   MapLookUp {value; _} -> print_map_lookup value
-| MapInj inj ->
-    print_map_injection inj
+| MapInj inj           -> print_map_injection inj
+
+and print_set_expr = function
+  SetInj inj -> print_set_injection inj
 
 and print_map_lookup {path; index} =
   let {lbracket; inside; rbracket} = index.value in
@@ -1206,10 +1206,6 @@ and print_list_expr = function
 | List e       -> print_list e
 | EmptyList e  -> print_empty_list e
 
-and print_set_expr = function
-  Set e      -> print_set e
-| EmptySet e -> print_empty_set e
-
 and print_constr_expr = function
   SomeApp e   -> print_some_app e
 | NoneExpr e  -> print_none_expr e
@@ -1265,8 +1261,15 @@ and print_map_remove node =
 
 and print_map_injection {value; _} =
   let {opening; bindings; terminator; close} = value in
-  print_token opening "record";
+  print_token opening "map";
   print_nsepseq ";" print_binding bindings;
+  print_terminator terminator;
+  print_token close "end"
+
+and print_set_injection {value; _} =
+  let {opening; elements; terminator; close} = value in
+  print_token opening "set";
+  print_nsepseq ";" print_expr elements;
   print_terminator terminator;
   print_token close "end"
 
@@ -1296,22 +1299,6 @@ and print_empty_list {value; _} =
   print_token     rbracket "]";
   print_token     colon ":";
   print_type_expr list_type;
-  print_token     rpar ")"
-
-and print_set {value; _} =
-  let {lbrace; inside; rbrace} = value in
-  print_token lbrace "{";
-  print_nsepseq "," print_expr inside;
-  print_token rbrace "}"
-
-and print_empty_set {value; _} =
-  let {lpar; inside; rpar} = value in
-  let {lbrace; rbrace; colon; set_type} = inside in
-  print_token     lpar "(";
-  print_token     lbrace "{";
-  print_token     rbrace "}";
-  print_token     colon ":";
-  print_type_expr set_type;
   print_token     rpar ")"
 
 and print_none_expr {value; _} =
