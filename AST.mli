@@ -317,6 +317,7 @@ and single_instr =
 | Skip        of kwd_skip
 | RecordPatch of record_patch reg
 | MapPatch    of map_patch reg
+| SetPatch    of set_patch reg
 | MapRemove   of map_remove reg
 | SetRemove   of set_remove reg
 
@@ -334,6 +335,13 @@ and map_remove = {
   kwd_from   : kwd_from;
   kwd_map    : kwd_map;
   map        : path
+}
+
+and set_patch  = {
+  kwd_patch : kwd_patch;
+  path      : path;
+  kwd_with  : kwd_with;
+  set_inj   : set_injection reg
 }
 
 and map_patch  = {

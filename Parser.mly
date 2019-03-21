@@ -474,6 +474,7 @@ single_instr:
 | Skip         {        Skip $1 }
 | record_patch { RecordPatch $1 }
 | map_patch    {    MapPatch $1 }
+| set_patch    {    SetPatch $1 }
 | map_remove   {   MapRemove $1 }
 | set_remove   {   SetRemove $1 }
 
@@ -498,6 +499,17 @@ map_remove:
       kwd_from   = $3;
       kwd_map    = $4;
       map        = $5}
+    in {region; value}
+  }
+
+set_patch:
+  Patch path With set_injection {
+    let region = cover $1 $4.region in
+    let value  = {
+      kwd_patch = $1;
+      path      = $2;
+      kwd_with  = $3;
+      set_inj   = $4}
     in {region; value}
   }
 

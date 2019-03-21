@@ -333,6 +333,7 @@ and single_instr =
 | Skip        of kwd_skip
 | RecordPatch of record_patch reg
 | MapPatch    of map_patch reg
+| SetPatch    of set_patch reg
 | MapRemove   of map_remove reg
 | SetRemove   of set_remove reg
 
@@ -350,6 +351,13 @@ and map_remove = {
   kwd_from   : kwd_from;
   kwd_map    : kwd_map;
   map        : path
+}
+
+and set_patch  = {
+  kwd_patch : kwd_patch;
+  path      : path;
+  kwd_with  : kwd_with;
+  set_inj   : set_injection reg
 }
 
 and map_patch  = {
@@ -721,6 +729,7 @@ let instr_to_region = function
 | Single Fail                {region; _}
 | Single RecordPatch         {region; _}
 | Single MapPatch            {region; _}
+| Single SetPatch            {region; _}
 | Single MapRemove           {region; _}
 | Single SetRemove           {region; _}
 | Block                      {region; _} -> region
@@ -1019,6 +1028,7 @@ and print_single_instr = function
 | Skip        kwd_skip   -> print_token kwd_skip "skip"
 | RecordPatch {value; _} -> print_record_patch value
 | MapPatch    {value; _} -> print_map_patch value
+| SetPatch    {value; _} -> print_set_patch value
 | MapRemove   {value; _} -> print_map_remove value
 | SetRemove   {value; _} -> print_set_remove value
 
@@ -1254,6 +1264,13 @@ and print_record_patch node =
   print_path  path;
   print_token kwd_with "with";
   print_record_injection record_inj
+
+and print_set_patch node =
+  let {kwd_patch; path; kwd_with; set_inj} = node in
+  print_token kwd_patch "patch";
+  print_path path;
+  print_token kwd_with "with";
+  print_set_injection set_inj
 
 and print_map_patch node =
   let {kwd_patch; path; kwd_with; map_inj} = node in
