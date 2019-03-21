@@ -334,6 +334,15 @@ and single_instr =
 | RecordPatch of record_patch reg
 | MapPatch    of map_patch reg
 | MapRemove   of map_remove reg
+| SetRemove   of set_remove reg
+
+and set_remove = {
+  kwd_remove : kwd_remove;
+  element    : expr;
+  kwd_from   : kwd_from;
+  kwd_set    : kwd_set;
+  set        : path
+}
 
 and map_remove = {
   kwd_remove : kwd_remove;
@@ -713,6 +722,7 @@ let instr_to_region = function
 | Single RecordPatch         {region; _}
 | Single MapPatch            {region; _}
 | Single MapRemove           {region; _}
+| Single SetRemove           {region; _}
 | Block                      {region; _} -> region
 
 let pattern_to_region = function
@@ -1010,6 +1020,7 @@ and print_single_instr = function
 | RecordPatch {value; _} -> print_record_patch value
 | MapPatch    {value; _} -> print_map_patch value
 | MapRemove   {value; _} -> print_map_remove value
+| SetRemove   {value; _} -> print_set_remove value
 
 and print_fail {kwd_fail; fail_expr} =
   print_token kwd_fail "fail";
@@ -1258,6 +1269,14 @@ and print_map_remove node =
   print_token kwd_from "from";
   print_token kwd_map "map";
   print_path  map
+
+and print_set_remove node =
+  let {kwd_remove; element; kwd_from; kwd_set; set} = node in
+  print_token kwd_remove "remove";
+  print_expr  element;
+  print_token kwd_from "from";
+  print_token kwd_set "set";
+  print_path  set
 
 and print_map_injection {value; _} =
   let {opening; bindings; terminator; close} = value in

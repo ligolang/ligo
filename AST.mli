@@ -318,6 +318,15 @@ and single_instr =
 | RecordPatch of record_patch reg
 | MapPatch    of map_patch reg
 | MapRemove   of map_remove reg
+| SetRemove   of set_remove reg
+
+and set_remove = {
+  kwd_remove : kwd_remove;
+  element    : expr;
+  kwd_from   : kwd_from;
+  kwd_set    : kwd_set;
+  set        : path
+}
 
 and map_remove = {
   kwd_remove : kwd_remove;
