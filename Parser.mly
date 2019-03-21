@@ -581,15 +581,16 @@ proc_call:
   fun_call { $1 }
 
 conditional:
-  If expr Then instruction Else instruction {
-    let region = cover $1 (instr_to_region $6) in
+  If expr Then instruction option(SEMI) Else instruction {
+    let region = cover $1 (instr_to_region $7) in
     let value = {
-      kwd_if   = $1;
-      test     = $2;
-      kwd_then = $3;
-      ifso     = $4;
-      kwd_else = $5;
-      ifnot    = $6}
+      kwd_if     = $1;
+      test       = $2;
+      kwd_then   = $3;
+      ifso       = $4;
+      terminator = $5;
+      kwd_else   = $6;
+      ifnot      = $7}
     in {region; value}
   }
 

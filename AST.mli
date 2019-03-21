@@ -377,12 +377,13 @@ and fail_instr = {
 }
 
 and conditional = {
-  kwd_if   : kwd_if;
-  test     : expr;
-  kwd_then : kwd_then;
-  ifso     : instruction;
-  kwd_else : kwd_else;
-  ifnot    : instruction
+  kwd_if     : kwd_if;
+  test       : expr;
+  kwd_then   : kwd_then;
+  ifso       : instruction;
+  terminator : semi option;
+  kwd_else   : kwd_else;
+  ifnot      : instruction
 }
 
 and case_instr = {

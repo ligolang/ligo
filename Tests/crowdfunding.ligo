@@ -6,9 +6,6 @@ type store is
     funded   : bool;
   end
 
-const foo : map (string, nat) = map "X" -> 10; "Y" -> 11 end
-const bar : set (int) =  set 1; 1+1; f(3); end
-
 entrypoint contribute (storage store : store;
                        const sender  : address;
                        const amount  : mutez)
@@ -16,7 +13,7 @@ entrypoint contribute (storage store : store;
   var operations : list (operation) := []
   begin
     if now > store.deadline then
-      fail "Deadline passed"
+       fail "Deadline passed";
     else
       case store.backers[sender] of
         None -> store.backers[sender] := Some (amount)
@@ -59,7 +56,7 @@ entrypoint claim (storage store : store; const sender : address)
           else
             begin
               operations := [Transfer (sender, amount)];
-              remove sender from map store.backers
+              remove sender from map store.backers;
             end
       end
   end with (store, operations)

@@ -393,12 +393,13 @@ and fail_instr = {
 }
 
 and conditional = {
-  kwd_if   : kwd_if;
-  test     : expr;
-  kwd_then : kwd_then;
-  ifso     : instruction;
-  kwd_else : kwd_else;
-  ifnot    : instruction
+  kwd_if     : kwd_if;
+  test       : expr;
+  kwd_then   : kwd_then;
+  ifso       : instruction;
+  terminator : semi option;
+  kwd_else   : kwd_else;
+  ifnot      : instruction
 }
 
 and case_instr = {
@@ -1037,12 +1038,13 @@ and print_fail {kwd_fail; fail_expr} =
   print_expr fail_expr
 
 and print_conditional node =
-  let {kwd_if; test; kwd_then; ifso;
+  let {kwd_if; test; kwd_then; ifso; terminator;
        kwd_else; ifnot} = node in
   print_token       kwd_if "if";
   print_expr        test;
   print_token       kwd_then "then";
   print_instruction ifso;
+  print_terminator  terminator;
   print_token       kwd_else "else";
   print_instruction ifnot
 
