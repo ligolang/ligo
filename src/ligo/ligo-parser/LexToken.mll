@@ -1,4 +1,4 @@
-(* Lexer specification for Ligo, to be processed by [ocamllex] *)
+(* Lexer specification for LIGO, to be processed by [ocamllex] *)
 
 {
 (* START HEADER *)
@@ -28,7 +28,7 @@ type t =
   (* Literals *)
 
   String of lexeme Region.reg
-| Bytes  of (lexeme * MBytes.t) Region.reg
+| Bytes  of (lexeme * Hex.t) Region.reg
 | Int    of (lexeme * Z.t) Region.reg
 | Ident  of lexeme Region.reg
 | Constr of lexeme Region.reg
@@ -49,8 +49,6 @@ type t =
 | ASS      of Region.t
 | EQUAL    of Region.t
 | COLON    of Region.t
-| OR       of Region.t
-| AND      of Region.t
 | LT       of Region.t
 | LEQ      of Region.t
 | GT       of Region.t
@@ -66,34 +64,37 @@ type t =
 
   (* Keywords *)
 
-| Begin      of Region.t
-| Const      of Region.t
-| Down       of Region.t
-| Fail       of Region.t
-| If         of Region.t
-| In         of Region.t
-| Is         of Region.t
-| Entrypoint of Region.t
-| For        of Region.t
-| Function   of Region.t
-| Storage    of Region.t
-| Type       of Region.t
-| Of         of Region.t
-| Operations of Region.t
-| Var        of Region.t
-| End        of Region.t
-| Then       of Region.t
-| Else       of Region.t
-| Match      of Region.t
-| Null       of Region.t
-| Procedure  of Region.t
-| Record     of Region.t
-| Step       of Region.t
-| To         of Region.t
-| Mod        of Region.t
-| Not        of Region.t
-| While      of Region.t
-| With       of Region.t
+| And        of Region.t  (* "and"        *)
+| Begin      of Region.t  (* "begin"      *)
+| Case       of Region.t  (* "case"       *)
+| Const      of Region.t  (* "const"      *)
+| Down       of Region.t  (* "down"       *)
+| Else       of Region.t  (* "else"       *)
+| End        of Region.t  (* "end"        *)
+| Entrypoint of Region.t  (* "entrypoint" *)
+| Fail       of Region.t  (* "fail"       *)
+| For        of Region.t  (* "for"        *)
+| Function   of Region.t  (* "function"   *)
+| If         of Region.t  (* "if"         *)
+| In         of Region.t  (* "in"         *)
+| Is         of Region.t  (* "is"         *)
+| Map        of Region.t  (* "map"        *)
+| Mod        of Region.t  (* "mod"        *)
+| Not        of Region.t  (* "not"        *)
+| Of         of Region.t  (* "of"         *)
+| Or         of Region.t  (* "or"         *)
+| Patch      of Region.t  (* "patch"      *)
+| Procedure  of Region.t  (* "procedure"  *)
+| Record     of Region.t  (* "record"     *)
+| Skip       of Region.t  (* "skip"       *)
+| Step       of Region.t  (* "step"       *)
+| Storage    of Region.t  (* "storage"    *)
+| Then       of Region.t  (* "then"       *)
+| To         of Region.t  (* "to"         *)
+| Type       of Region.t  (* "type"       *)
+| Var        of Region.t  (* "var"        *)
+| While      of Region.t  (* "while"      *)
+| With       of Region.t  (* "with"       *)
 
   (* Types *)
 (*
@@ -141,7 +142,7 @@ let proj_token = function
 | Bytes Region.{region; value = s,b} ->
     region,
     sprintf "Bytes (\"%s\", \"0x%s\")"
-      s (MBytes.to_hex b |> Hex.to_string)
+      s (Hex.to_string b)
 
 | Int Region.{region; value = s,n} ->
     region, sprintf "Int (\"%s\", %s)" s (Z.to_string n)
@@ -168,8 +169,6 @@ let proj_token = function
 | ASS      region -> region, "ASS"
 | EQUAL    region -> region, "EQUAL"
 | COLON    region -> region, "COLON"
-| OR       region -> region, "OR"
-| AND      region -> region, "AND"
 | LT       region -> region, "LT"
 | LEQ      region -> region, "LEQ"
 | GT       region -> region, "GT"
@@ -185,32 +184,35 @@ let proj_token = function
 
   (* Keywords *)
 
+| And        region -> region, "And"
 | Begin      region -> region, "Begin"
+| Case       region -> region, "Case"
 | Const      region -> region, "Const"
 | Down       region -> region, "Down"
+| Else       region -> region, "Else"
+| End        region -> region, "End"
+| Entrypoint region -> region, "Entrypoint"
 | Fail       region -> region, "Fail"
+| For        region -> region, "For"
+| Function   region -> region, "Function"
 | If         region -> region, "If"
 | In         region -> region, "In"
 | Is         region -> region, "Is"
-| Entrypoint region -> region, "Entrypoint"
-| For        region -> region, "For"
-| Function   region -> region, "Function"
-| Storage    region -> region, "Storage"
-| Type       region -> region, "Type"
-| Of         region -> region, "Of"
-| Operations region -> region, "Operations"
-| Var        region -> region, "Var"
-| End        region -> region, "End"
-| Then       region -> region, "Then"
-| Else       region -> region, "Else"
-| Match      region -> region, "Match"
-| Null       region -> region, "Null"
-| Procedure  region -> region, "Procedure"
-| Record     region -> region, "Record"
-| Step       region -> region, "Step"
-| To         region -> region, "To"
+| Map        region -> region, "Map"
 | Mod        region -> region, "Mod"
 | Not        region -> region, "Not"
+| Of         region -> region, "Of"
+| Or         region -> region, "Or"
+| Patch      region -> region, "Patch"
+| Procedure  region -> region, "Procedure"
+| Record     region -> region, "Record"
+| Skip       region -> region, "Skip"
+| Step       region -> region, "Step"
+| Storage    region -> region, "Storage"
+| Then       region -> region, "Then"
+| To         region -> region, "To"
+| Type       region -> region, "Type"
+| Var        region -> region, "Var"
 | While      region -> region, "While"
 | With       region -> region, "With"
 
@@ -252,8 +254,6 @@ let to_lexeme = function
 | ASS      _ -> ":="
 | EQUAL    _ -> "="
 | COLON    _ -> ":"
-| OR       _ -> "||"
-| AND      _ -> "&&"
 | LT       _ -> "<"
 | LEQ      _ -> "<="
 | GT       _ -> ">"
@@ -269,7 +269,9 @@ let to_lexeme = function
 
   (* Keywords *)
 
+| And        _ -> "and"
 | Begin      _ -> "begin"
+| Case       _ -> "case"
 | Const      _ -> "const"
 | Down       _ -> "down"
 | Fail       _ -> "fail"
@@ -279,19 +281,20 @@ let to_lexeme = function
 | Entrypoint _ -> "entrypoint"
 | For        _ -> "for"
 | Function   _ -> "function"
-| Storage    _ -> "storage"
 | Type       _ -> "type"
 | Of         _ -> "of"
-| Operations _ -> "operations"
+| Or         _ -> "or"
 | Var        _ -> "var"
 | End        _ -> "end"
 | Then       _ -> "then"
 | Else       _ -> "else"
-| Match      _ -> "match"
-| Null       _ -> "null"
+| Map        _ -> "map"
+| Patch      _ -> "patch"
 | Procedure  _ -> "procedure"
 | Record     _ -> "record"
+| Skip       _ -> "skip"
 | Step       _ -> "step"
+| Storage    _ -> "storage"
 | To         _ -> "to"
 | Mod        _ -> "mod"
 | Not        _ -> "not"
@@ -321,7 +324,9 @@ let to_region token = proj_token token |> fst
 (* LEXIS *)
 
 let keywords = [
+  (fun reg -> And        reg);
   (fun reg -> Begin      reg);
+  (fun reg -> Case       reg);
   (fun reg -> Const      reg);
   (fun reg -> Down       reg);
   (fun reg -> Fail       reg);
@@ -331,19 +336,20 @@ let keywords = [
   (fun reg -> Entrypoint reg);
   (fun reg -> For        reg);
   (fun reg -> Function   reg);
-  (fun reg -> Storage    reg);
   (fun reg -> Type       reg);
   (fun reg -> Of         reg);
-  (fun reg -> Operations reg);
+  (fun reg -> Or         reg);
   (fun reg -> Var        reg);
   (fun reg -> End        reg);
   (fun reg -> Then       reg);
   (fun reg -> Else       reg);
-  (fun reg -> Match      reg);
-  (fun reg -> Null       reg);
+  (fun reg -> Map        reg);
+  (fun reg -> Patch      reg);
   (fun reg -> Procedure  reg);
   (fun reg -> Record     reg);
+  (fun reg -> Skip       reg);
   (fun reg -> Step       reg);
+  (fun reg -> Storage    reg);
   (fun reg -> To         reg);
   (fun reg -> Mod        reg);
   (fun reg -> Not        reg);
@@ -353,8 +359,7 @@ let keywords = [
 
 let reserved =
   let open SSet in
-  empty |> add "and"
-        |> add "as"
+  empty |> add "as"
         |> add "asr"
         |> add "assert"
         |> add "class"
@@ -384,7 +389,6 @@ let reserved =
         |> add "nonrec"
         |> add "object"
         |> add "open"
-        |> add "or"
         |> add "private"
         |> add "rec"
         |> add "sig"
@@ -466,7 +470,7 @@ let mk_string lexeme region = String Region.{region; value=lexeme}
 
 let mk_bytes lexeme region =
   let norm = Str.(global_replace (regexp "_") "" lexeme) in
-  let value = lexeme, MBytes.of_hex (Hex.of_string norm)
+  let value = lexeme, Hex.of_string norm
   in Bytes Region.{region; value}
 
 type int_err = Non_canonical_zero
@@ -496,8 +500,6 @@ let mk_sym lexeme region =
   | ":="  -> ASS      region
   | "="   -> EQUAL    region
   | ":"   -> COLON    region
-  | "||"  -> OR       region
-  | "&&"  -> AND      region
   | "<"   -> LT       region
   | "<="  -> LEQ      region
   | ">"   -> GT       region
@@ -545,7 +547,9 @@ let is_ident = function
 |       _ -> false
 
 let is_kwd = function
+  And        _
 | Begin      _
+| Case       _
 | Const      _
 | Down       _
 | Fail       _
@@ -555,19 +559,20 @@ let is_kwd = function
 | Entrypoint _
 | For        _
 | Function   _
-| Storage    _
 | Type       _
 | Of         _
-| Operations _
+| Or         _
 | Var        _
 | End        _
 | Then       _
 | Else       _
-| Match      _
-| Null       _
+| Map        _
+| Patch      _
 | Procedure  _
 | Record     _
+| Skip       _
 | Step       _
+| Storage    _
 | To         _
 | Mod        _
 | Not        _
@@ -599,8 +604,6 @@ let is_sym = function
 | ASS      _
 | EQUAL    _
 | COLON    _
-| OR       _
-| AND      _
 | LT       _
 | LEQ      _
 | GT       _

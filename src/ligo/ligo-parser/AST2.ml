@@ -18,7 +18,7 @@ module O = struct
     PVar    of var_name
   | PWild
   | PInt    of Z.t
-  | PBytes  of MBytes.t
+  | PBytes  of Hex.t
   | PString of string
   | PUnit
   | PFalse
@@ -42,6 +42,7 @@ module O = struct
   | Function of { arg: type_expr; ret: type_expr }
   | Ref      of type_expr
   | String
+  | Bytes
   | Int
   | Unit
   | Bool
@@ -80,7 +81,7 @@ module O = struct
 
   and constant =
     Unit
-  | Int of Z.t | String of string | Bytes of MBytes.t
+  | Int of Z.t | String of string | Bytes of Hex.t
   | False | True
   | Null of type_expr
   | EmptySet of type_expr
@@ -653,7 +654,7 @@ let s_ast (ast : I.ast) : O.ast =
 (* and s_bytes {region; value = lexeme, abstract} = *)
 (*   printf "%s: Bytes (\"%s\", \"0x%s\")\n" *)
 (*          (compact region) lexeme *)
-(*          (MBytes.to_hex abstract |> Hex.to_string) *)
+(*          (Hex.to_string abstract) *)
 
 (* and s_int {region; value = lexeme, abstract} = *)
 (*   printf "%s: Int (\"%s\", %s)\n" *)

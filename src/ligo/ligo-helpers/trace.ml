@@ -38,6 +38,10 @@ let trace err = function
   | Ok _ as o -> o
   | Errors errs -> Errors (err :: errs)
 
+let to_option = function
+  | Ok o -> Some o
+  | Errors _ -> None
+
 let trace_option error = function
   | None -> fail error
   | Some s -> ok s

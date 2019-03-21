@@ -10,6 +10,7 @@ type t = <
 
   shift_bytes     : int -> t;
   shift_one_uchar : int -> t;
+  set_file        : string -> t;
 
   (* Getters *)
 
@@ -53,6 +54,11 @@ let make ~(start: Pos.t) ~(stop: Pos.t) =
       method shift_one_uchar len =
         let start = start#shift_one_uchar len
         and stop  = stop#shift_one_uchar len
+        in {< start = start; stop = stop >}
+
+      method set_file name =
+        let start = start#set_file name
+        and stop  = stop#set_file name
         in {< start = start; stop = stop >}
 
       (* Getters *)

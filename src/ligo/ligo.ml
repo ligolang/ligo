@@ -2,13 +2,13 @@ open Ligo_parser
 
 module Parser = Parser
 module Lexer = Lexer
-module CST = AST
-module AST = AST2
-module Typed = Typed
+module AST_Raw = AST
+module AST_Simplified = Ast_simplified
+module AST_Typed = Ast_typed
 module Mini_c = Mini_c
 
 open Ligo_helpers.Trace
-let parse_file (source:string) : CST.t result =
+let parse_file (source:string) : AST_Raw.t result =
   let channel = open_in source in
   let lexbuf = Lexing.from_channel channel in
   let Lexer.{read ; _} =
@@ -25,10 +25,10 @@ let parse_file (source:string) : CST.t result =
           simple_error str
         )
       | _ -> simple_error "unrecognized parse_ error"
-    ) @@ (fun () -> Parser.program read lexbuf) >>? fun program_cst ->
+    ) @@ (fun () -> Parser.contract read lexbuf) >>? fun program_cst ->
   ok program_cst
 
-let parse (s:string) : CST.t result =
+let parse (s:string) : AST_Raw.t result =
   let lexbuf = Lexing.from_string s in
   let Lexer.{read ; _} =
     Lexer.open_token_stream None in
@@ -44,10 +44,12 @@ let parse (s:string) : CST.t result =
           simple_error str
         )
       | _ -> simple_error "unrecognized parse_ error"
-    ) @@ (fun () -> Parser.program read lexbuf) >>? fun program_cst ->
+    ) @@ (fun () -> Parser.contract read lexbuf) >>? fun program_cst ->
   ok program_cst
 
 
-let abstract (cst:CST.t) : AST.O.ast result = ok @@ AST.s_ast cst
+let abstract (p:AST_Raw.t) : AST_Simplified.program result = AST_Simplified.Simplify.program p
 
-let annotate_types (ast:AST.O.ast) = ok @@ Typed.annotate ast
+let annotate_types (p:AST_Simplified.program) : AST_Typed.program result = Typer.type_program p
+
+let transpile (p:AST_Typed.program) : Mini_c.program result = Transpiler.translate_program p

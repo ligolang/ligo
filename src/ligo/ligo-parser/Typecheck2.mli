@@ -16,7 +16,7 @@ module O : sig
     PVar    of var_name
   | PWild
   | PInt    of Z.t
-  | PBytes  of MBytes.t
+  | PBytes  of Hex.t
   | PString of string
   | PUnit
   | PFalse
@@ -40,15 +40,16 @@ module O : sig
   | Function of { arg: type_expr; ret: type_expr }
   | Ref      of type_expr
   | String
+  | Bytes
   | Int
   | Unit
   | Bool
 
-  and type_expr = { type_expr: type_expr_case; name: string option; orig: Region.t }
+  and type_expr = { type_expr: type_expr_case; name: type_name option; orig: Region.t }
 
   type typed_var = { name:var_name; ty:type_expr; orig: asttodo }
 
-  type type_decl = { name:string; ty:type_expr; orig: asttodo }
+  type type_decl = { name:type_name; ty:type_expr; orig: asttodo }
 
   type expr_case =
     App      of { operator: operator; arguments: expr list }
@@ -82,7 +83,7 @@ module O : sig
 
   and constant =
     Unit
-  | Int of Z.t | String of string | Bytes of MBytes.t
+  | Int of Z.t | String of string | Bytes of Hex.t
   | False | True
   | Null
   | EmptySet

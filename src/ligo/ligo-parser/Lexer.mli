@@ -1,16 +1,16 @@
-(* Lexer specification for Ligo, to be processed by [ocamllex].
+(* Lexer specification for LIGO, to be processed by [ocamllex].
 
    The underlying design principles are:
 
      (1) enforce stylistic constraints at a lexical level, in order to
          early reject potentially misleading or poorly written
-         Ligo contracts;
+         LIGO contracts;
 
      (2) provide precise error messages with hint as how to fix the
          issue, which is achieved by consulting the lexical
          right-context of lexemes;
 
-     (3) be as independent as possible from the Ligo version, so
+     (3) be as independent as possible from the LIGO version, so
          upgrades have as little impact as possible on this
          specification: this is achieved by using the most general
          regular expressions to match the lexing buffer and broadly
@@ -27,7 +27,7 @@
    be contextualised by the lexer in terms of input source regions, so
    useful error messages can be printed, therefore they are part of
    the signature [TOKEN] that parameterise the functor generated
-   here. For instance, if, in a future release of Ligo, new tokens may
+   here. For instance, if, in a future release of LIGO, new tokens may
    be added, and the recognition of their lexemes may entail new
    errors, the signature [TOKEN] will have to be augmented and the
    lexer specification changed. However, it is more likely that

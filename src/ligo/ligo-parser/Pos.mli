@@ -34,8 +34,10 @@ type t = <
 
   (* Setters *)
 
-  set_file : string -> t;
-  set_line : int -> t;
+  set_file   : string -> t;
+  set_line   : int -> t;
+  set_offset : int -> t;
+  set        : file:string -> line:int -> offset:int -> t;
 
   (* The call [pos#new_line s], where the string [s] is either "\n" or
      "\c\r", updates the position [pos] with a new line. *)

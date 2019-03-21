@@ -7,6 +7,8 @@ type t = <
 
   set_file   : string -> t;
   set_line   : int -> t;
+  set_offset : int -> t;
+  set        : file:string -> line:int -> offset:int -> t;
   new_line   : string -> t;
   add_nl     : t;
 
@@ -44,8 +46,20 @@ let make ~byte ~point_num ~point_bol =
     val    point_bol = point_bol
     method point_bol = point_bol
 
-    method set_file file = {< byte = Lexing.{byte with pos_fname = file} >}
-    method set_line line = {< byte = Lexing.{byte with pos_lnum  = line} >}
+    method set_file file =
+      {< byte = Lexing.{byte with pos_fname = file} >}
+
+    method set_line line =
+      {< byte = Lexing.{byte with pos_lnum = line} >}
+
+    method set_offset offset =
+      {< byte = Lexing.{byte with pos_cnum = byte.pos_bol + offset} >}
+
+    method set ~file ~line ~offset =
+      let pos = self#set_file file in
+      let pos = pos#set_line line in
+      let pos = pos#set_offset offset
+      in pos
 
     (* The string must not contain '\n'. See [new_line]. *)
 

@@ -1,4 +1,4 @@
-(* This signature defines the lexical tokens for Ligo
+(* This signature defines the lexical tokens for LIGO
 
    _Tokens_ are the abstract units which are used by the parser to
    build the abstract syntax tree (AST), in other words, the stream of
@@ -29,7 +29,7 @@ type t =
   (* Literals *)
 
   String of lexeme Region.reg
-| Bytes  of (lexeme * MBytes.t) Region.reg
+| Bytes  of (lexeme * Hex.t) Region.reg
 | Int    of (lexeme * Z.t) Region.reg
 | Ident  of lexeme Region.reg
 | Constr of lexeme Region.reg
@@ -50,8 +50,6 @@ type t =
 | ASS      of Region.t  (* ":="  *)
 | EQUAL    of Region.t  (* "="   *)
 | COLON    of Region.t  (* ":"   *)
-| OR       of Region.t  (* "||"  *)
-| AND      of Region.t  (* "&&"  *)
 | LT       of Region.t  (* "<"   *)
 | LEQ      of Region.t  (* "<="  *)
 | GT       of Region.t  (* ">"   *)
@@ -67,32 +65,35 @@ type t =
 
   (* Keywords *)
 
+| And        of Region.t  (* "and"        *)
 | Begin      of Region.t  (* "begin"      *)
+| Case       of Region.t  (* "case"       *)
 | Const      of Region.t  (* "const"      *)
 | Down       of Region.t  (* "down"       *)
+| Else       of Region.t  (* "else"       *)
+| End        of Region.t  (* "end"        *)
+| Entrypoint of Region.t  (* "entrypoint" *)
 | Fail       of Region.t  (* "fail"       *)
+| For        of Region.t  (* "for"        *)
+| Function   of Region.t  (* "function"   *)
 | If         of Region.t  (* "if"         *)
 | In         of Region.t  (* "in"         *)
 | Is         of Region.t  (* "is"         *)
-| Entrypoint of Region.t  (* "entrypoint" *)
-| For        of Region.t  (* "for"        *)
-| Function   of Region.t  (* "function"   *)
-| Storage    of Region.t  (* "storage"    *)
-| Type       of Region.t  (* "type"       *)
-| Of         of Region.t  (* "of"         *)
-| Operations of Region.t  (* "operations" *)
-| Var        of Region.t  (* "var"        *)
-| End        of Region.t  (* "end"        *)
-| Then       of Region.t  (* "then"       *)
-| Else       of Region.t  (* "else"       *)
-| Match      of Region.t  (* "match"      *)
-| Null       of Region.t  (* "null"       *)
-| Procedure  of Region.t  (* "procedure"  *)
-| Record     of Region.t  (* "record"     *)
-| Step       of Region.t  (* "step"       *)
-| To         of Region.t  (* "to"         *)
+| Map        of Region.t  (* "map"        *)
 | Mod        of Region.t  (* "mod"        *)
 | Not        of Region.t  (* "not"        *)
+| Of         of Region.t  (* "of"         *)
+| Or         of Region.t  (* "or"         *)
+| Patch      of Region.t  (* "patch"      *)
+| Procedure  of Region.t  (* "procedure"  *)
+| Record     of Region.t  (* "record"     *)
+| Skip       of Region.t  (* "skip"       *)
+| Step       of Region.t  (* "step"       *)
+| Storage    of Region.t  (* "storage"    *)
+| Then       of Region.t  (* "then"       *)
+| To         of Region.t  (* "to"         *)
+| Type       of Region.t  (* "type"       *)
+| Var        of Region.t  (* "var"        *)
 | While      of Region.t  (* "while"      *)
 | With       of Region.t  (* "with"       *)
 

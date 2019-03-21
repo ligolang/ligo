@@ -5,11 +5,11 @@
 
   (* Literals *)
 
-%token              <LexToken.lexeme Region.reg> String
-%token <(LexToken.lexeme * MBytes.t) Region.reg> Bytes
-%token      <(LexToken.lexeme * Z.t) Region.reg> Int
-%token              <LexToken.lexeme Region.reg> Ident
-%token              <LexToken.lexeme Region.reg> Constr
+%token           <LexToken.lexeme Region.reg> String
+%token <(LexToken.lexeme * Hex.t) Region.reg> Bytes
+%token   <(LexToken.lexeme * Z.t) Region.reg> Int
+%token           <LexToken.lexeme Region.reg> Ident
+%token           <LexToken.lexeme Region.reg> Constr
 
   (* Symbols *)
 
@@ -27,8 +27,6 @@
 %token <Region.t> ASS         (* ":="  *)
 %token <Region.t> EQUAL       (* "="   *)
 %token <Region.t> COLON       (* ":"   *)
-%token <Region.t> OR          (* "||"  *)
-%token <Region.t> AND         (* "&&"  *)
 %token <Region.t> LT          (* "<"   *)
 %token <Region.t> LEQ         (* "<="  *)
 %token <Region.t> GT          (* ">"   *)
@@ -44,7 +42,9 @@
 
   (* Keywords *)
 
+%token <Region.t> And         (* "and"        *)
 %token <Region.t> Begin       (* "begin"      *)
+%token <Region.t> Case        (* "case"       *)
 %token <Region.t> Const       (* "const"      *)
 %token <Region.t> Down        (* "down"       *)
 %token <Region.t> Fail        (* "fail"       *)
@@ -54,19 +54,20 @@
 %token <Region.t> Entrypoint  (* "entrypoint" *)
 %token <Region.t> For         (* "for"        *)
 %token <Region.t> Function    (* "function"   *)
-%token <Region.t> Storage     (* "storage"    *)
 %token <Region.t> Type        (* "type"       *)
 %token <Region.t> Of          (* "of"         *)
-%token <Region.t> Operations  (* "operations" *)
+%token <Region.t> Or          (* "or"         *)
 %token <Region.t> Var         (* "var"        *)
 %token <Region.t> End         (* "end"        *)
 %token <Region.t> Then        (* "then"       *)
 %token <Region.t> Else        (* "else"       *)
-%token <Region.t> Match       (* "match"      *)
-%token <Region.t> Null        (* "null"       *)
+%token <Region.t> Map         (* "map"        *)
+%token <Region.t> Patch       (* "patch"      *)
 %token <Region.t> Procedure   (* "procedure"  *)
 %token <Region.t> Record      (* "record"     *)
+%token <Region.t> Skip        (* "skip"       *)
 %token <Region.t> Step        (* "step"       *)
+%token <Region.t> Storage     (* "storage"    *)
 %token <Region.t> To          (* "to"         *)
 %token <Region.t> Mod         (* "mod"        *)
 %token <Region.t> Not         (* "not"        *)

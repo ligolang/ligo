@@ -1,4 +1,4 @@
-(* This module defines the sorts of markup recognised by the Ligo
+(* This module defines the sorts of markup recognised by the LIGO
    lexer *)
 
 (* A lexeme is piece of concrete syntax belonging to a token. In
