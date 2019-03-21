@@ -180,9 +180,10 @@ and variant = {
 }
 
 and record_type = {
-  kwd_record : kwd_record;
-  fields     : field_decls;
-  kwd_end    : kwd_end
+  opening     : kwd_record;
+  field_decls : field_decls;
+  terminator  : semi option;
+  close       : kwd_end
 }
 
 and field_decls = (field_decl reg, semi) nsepseq

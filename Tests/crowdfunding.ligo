@@ -3,7 +3,7 @@ type store is
     goal     : nat;
     deadline : timestamp;
     backers  : map (address, nat);
-    funded   : bool
+    funded   : bool;
   end
 
 const foo : store = map "X" -> 10; "Y" -> 11 end

@@ -196,9 +196,10 @@ and variant = {
 }
 
 and record_type = {
-  kwd_record : kwd_record;
-  fields     : field_decls;
-  kwd_end    : kwd_end
+  opening     : kwd_record;
+  field_decls : field_decls;
+  terminator  : semi option;
+  close       : kwd_end
 }
 
 and field_decls = (field_decl reg, semi) nsepseq
@@ -833,10 +834,11 @@ and print_sum_type {value; _} =
   print_nsepseq "|" print_variant value
 
 and print_record_type {value; _} =
-  let {kwd_record; fields; kwd_end} = value in
-  print_token       kwd_record "record";
-  print_field_decls fields;
-  print_token       kwd_end "end"
+  let {opening; field_decls; terminator; close} = value in
+  print_token       opening "record";
+  print_field_decls field_decls;
+  print_terminator  terminator;
+  print_token       close "end"
 
 and print_type_app {value; _} =
   let type_name, type_tuple = value in

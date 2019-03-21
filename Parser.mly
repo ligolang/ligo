@@ -201,12 +201,14 @@ variant:
   }
 
 record_type:
-  Record
-    nsepseq(field_decl,SEMI)
-  End
-  {
-   let region = cover $1 $3
-   and value  = {kwd_record = $1; fields = $2; kwd_end = $3}
+  Record series(field_decl) {
+   let first, (others, terminator, close) = $2 in
+   let region = cover $1 close
+   and value  = {
+     opening = $1;
+     field_decls = first, others;
+     terminator;
+     close}
    in {region; value}
   }
 
