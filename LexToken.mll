@@ -68,6 +68,7 @@ type t =
 | Begin      of Region.t  (* "begin"      *)
 | Case       of Region.t  (* "case"       *)
 | Const      of Region.t  (* "const"      *)
+| Contains   of Region.t  (* "contains"   *)
 | Down       of Region.t  (* "down"       *)
 | Else       of Region.t  (* "else"       *)
 | End        of Region.t  (* "end"        *)
@@ -191,6 +192,7 @@ let proj_token = function
 | Begin      region -> region, "Begin"
 | Case       region -> region, "Case"
 | Const      region -> region, "Const"
+| Contains   region -> region, "Contains"
 | Down       region -> region, "Down"
 | Else       region -> region, "Else"
 | End        region -> region, "End"
@@ -279,6 +281,7 @@ let to_lexeme = function
 | Begin      _ -> "begin"
 | Case       _ -> "case"
 | Const      _ -> "const"
+| Contains   _ -> "contains"
 | Down       _ -> "down"
 | Fail       _ -> "fail"
 | If         _ -> "if"
@@ -337,6 +340,7 @@ let keywords = [
   (fun reg -> Begin      reg);
   (fun reg -> Case       reg);
   (fun reg -> Const      reg);
+  (fun reg -> Contains   reg);
   (fun reg -> Down       reg);
   (fun reg -> Fail       reg);
   (fun reg -> If         reg);
@@ -563,6 +567,7 @@ let is_kwd = function
 | Begin      _
 | Case       _
 | Const      _
+| Contains   _
 | Down       _
 | Fail       _
 | If         _

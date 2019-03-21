@@ -27,6 +27,7 @@ type kwd_and        = Region.t
 type kwd_begin      = Region.t
 type kwd_case       = Region.t
 type kwd_const      = Region.t
+type kwd_contains   = Region.t
 type kwd_down       = Region.t
 type kwd_else       = Region.t
 type kwd_end        = Region.t
@@ -378,12 +379,22 @@ and fail_instr = {
 
 and conditional = {
   kwd_if     : kwd_if;
-  test       : expr;
+  test       : test_expr;
   kwd_then   : kwd_then;
   ifso       : instruction;
   terminator : semi option;
   kwd_else   : kwd_else;
   ifnot      : instruction
+}
+
+and test_expr =
+  GenExpr of expr
+| SetMem  of set_membership reg
+
+and set_membership = {
+  set          : expr;
+  kwd_contains : kwd_contains;
+  element      : expr
 }
 
 and case_instr = {

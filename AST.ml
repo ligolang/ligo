@@ -43,6 +43,7 @@ type kwd_and        = Region.t
 type kwd_begin      = Region.t
 type kwd_case       = Region.t
 type kwd_const      = Region.t
+type kwd_contains   = Region.t
 type kwd_down       = Region.t
 type kwd_else       = Region.t
 type kwd_end        = Region.t
@@ -394,12 +395,22 @@ and fail_instr = {
 
 and conditional = {
   kwd_if     : kwd_if;
-  test       : expr;
+  test       : test_expr;
   kwd_then   : kwd_then;
   ifso       : instruction;
   terminator : semi option;
   kwd_else   : kwd_else;
   ifnot      : instruction
+}
+
+and test_expr =
+  GenExpr of expr
+| SetMem  of set_membership reg
+
+and set_membership = {
+  set          : expr;
+  kwd_contains : kwd_contains;
+  element      : expr
 }
 
 and case_instr = {
@@ -1041,12 +1052,22 @@ and print_conditional node =
   let {kwd_if; test; kwd_then; ifso; terminator;
        kwd_else; ifnot} = node in
   print_token       kwd_if "if";
-  print_expr        test;
+  print_test_expr   test;
   print_token       kwd_then "then";
   print_instruction ifso;
   print_terminator  terminator;
   print_token       kwd_else "else";
   print_instruction ifnot
+
+and print_test_expr = function
+  GenExpr e -> print_expr e
+| SetMem  m -> print_set_membership m
+
+and print_set_membership {value; _} =
+  let {set; kwd_contains; element} = value in
+  print_expr set;
+  print_token kwd_contains "contains";
+  print_expr element
 
 and print_case_instr (node : case_instr) =
   let {kwd_case; expr; kwd_of;

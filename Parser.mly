@@ -581,7 +581,7 @@ proc_call:
   fun_call { $1 }
 
 conditional:
-  If expr Then instruction option(SEMI) Else instruction {
+  If test_expr Then instruction option(SEMI) Else instruction {
     let region = cover $1 (instr_to_region $7) in
     let value = {
       kwd_if     = $1;
@@ -591,6 +591,22 @@ conditional:
       terminator = $5;
       kwd_else   = $6;
       ifnot      = $7}
+    in {region; value}
+  }
+
+test_expr:
+  expr           { GenExpr $1 }
+| set_membership {  SetMem $1 }
+
+set_membership:
+  expr Contains expr {
+    let start  = expr_to_region $1
+    and stop   = expr_to_region $3 in
+    let region = cover start stop in
+    let value  = {
+      set          = $1;
+      kwd_contains = $2;
+      element      = $3}
     in {region; value}
   }
 

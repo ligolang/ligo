@@ -46,6 +46,7 @@
 %token <Region.t> Begin       (* "begin"      *)
 %token <Region.t> Case        (* "case"       *)
 %token <Region.t> Const       (* "const"      *)
+%token <Region.t> Contains    (* "contains"   *)
 %token <Region.t> Down        (* "down"       *)
 %token <Region.t> Fail        (* "fail"       *)
 %token <Region.t> From        (* "from"       *)
