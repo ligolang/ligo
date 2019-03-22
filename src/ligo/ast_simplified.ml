@@ -96,11 +96,75 @@ and matching =
       match_none : b ;
       match_some : name * b ;
     }
-  | Match_tuple of (name * b) list
+  | Match_tuple of name list * b
 
 let ae expression = {expression ; type_annotation = None}
 
 open Ligo_helpers.Trace
+
+module PP = struct
+  open Ligo_helpers.PP
+  open Format
+
+  let rec type_expression ppf (te:type_expression) = match te with
+    | Type_tuple lst -> fprintf ppf "tuple[%a]" (list_sep type_expression) lst
+    | Type_sum m -> fprintf ppf "sum[%a]" (smap_sep type_expression) m
+    | Type_record m -> fprintf ppf "record[%a]" (smap_sep type_expression) m
+    | Type_function (p, r) -> fprintf ppf "%a -> %a" type_expression p type_expression r
+    | Type_variable name -> fprintf ppf "%s" name
+    | Type_constant (name, lst) -> fprintf ppf "%s(%a)" name (list_sep type_expression) lst
+
+  let literal ppf (l:literal) = match l with
+    | Unit -> fprintf ppf "Unit"
+    | Bool b -> fprintf ppf "%b" b
+    | Number n -> fprintf ppf "%d" n
+    | String s -> fprintf ppf "%S" s
+    | Bytes b -> fprintf ppf "0x%s" @@ Bytes.to_string @@ Bytes.escaped b
+
+  let rec expression ppf (e:expression) = match e with
+    | Literal l -> literal ppf l
+    | Variable name -> fprintf ppf "%s" name
+    | Application (f, arg) -> fprintf ppf "(%a) (%a)" annotated_expression f annotated_expression arg
+    | Constructor (name, ae) -> fprintf ppf "%s(%a)" name annotated_expression ae
+    | Constant (name, lst) -> fprintf ppf "%s(%a)" name (list_sep annotated_expression) lst
+    | Tuple lst -> fprintf ppf "tuple[%a]" (list_sep annotated_expression) lst
+    | Tuple_accessor (ae, i) -> fprintf ppf "%a.%d" annotated_expression ae i
+    | Record m -> fprintf ppf "record[%a]" (smap_sep annotated_expression) m
+    | Record_accessor (ae, s) -> fprintf ppf "%a.%s" annotated_expression ae s
+    | Lambda {binder;input_type;output_type;result;body} ->
+        fprintf ppf "lambda (%s:%a) : %a {%a} return %a"
+          binder type_expression input_type type_expression output_type
+          block body annotated_expression result
+
+  and annotated_expression ppf (ae:annotated_expression) = match ae.type_annotation with
+    | None -> fprintf ppf "%a" expression ae.expression
+    | Some t -> fprintf ppf "(%a) : %a" expression ae.expression type_expression t
+
+  and block ppf (b:block) = (list_sep instruction) ppf b
+
+  and single_record_patch ppf ((s, ae) : string * ae) =
+    fprintf ppf "%s <- %a" s annotated_expression ae
+
+  and matching ppf (m:matching) = match m with
+    | Match_tuple (lst, b) ->
+        fprintf ppf "let (%a) = %a" (list_sep (fun ppf -> fprintf ppf "%s")) lst block b
+    | Match_bool {match_true ; match_false} ->
+        fprintf ppf "| True -> %a @.| False -> %a" block match_true block match_false
+    | Match_list {match_nil ; match_cons = (hd, tl, match_cons)} ->
+        fprintf ppf "| Nil -> %a @.| %s :: %s -> %a" block match_nil hd tl block match_cons
+    | Match_option {match_none ; match_some = (some, match_some)} ->
+        fprintf ppf "| None -> %a @.| Some %s -> %a" block match_none some block match_some
+
+  and instruction ppf (i:instruction) = match i with
+    | Skip -> fprintf ppf "skip"
+    | Fail ae -> fprintf ppf "fail with (%a)" annotated_expression ae
+    | Record_patch (ae, lst) -> fprintf ppf "%a.[%a]" annotated_expression ae (list_sep single_record_patch) lst
+    | Loop (cond, b) -> fprintf ppf "while (%a) { %a }" annotated_expression cond block b
+    | Assignment {name;annotated_expression = ae} ->
+        fprintf ppf "%s := %a" name annotated_expression ae
+    | Matching (ae, m) ->
+        fprintf ppf "match %a with %a" annotated_expression ae matching m
+end
 
 module Simplify = struct
   module Raw = Ligo_parser.AST

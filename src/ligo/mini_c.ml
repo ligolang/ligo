@@ -99,6 +99,11 @@ and block = block' * environment (* Environment at the beginning of the block *)
 
 and program = toplevel_statement list
 
+let expression_to_value ((e, _, _):expression) : value result =
+  match e with
+  | Literal v -> ok v
+  | _ -> simple_fail "not a value"
+
 module PP = struct
   open Format
 

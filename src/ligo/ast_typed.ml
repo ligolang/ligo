@@ -194,6 +194,18 @@ let t_unit : type_value = Type_constant ("unit", [])
 
 let get_annotation (x:annotated_expression) = x.type_annotation
 
+let get_t_bool : type_value -> unit result = function
+  | Type_constant ("bool", []) -> ok ()
+  | _ -> simple_fail "not a bool"
+
+let get_t_option : type_value -> type_value result = function
+  | Type_constant ("option", [o]) -> ok o
+  | _ -> simple_fail "not a option"
+
+let get_t_list : type_value -> type_value result = function
+  | Type_constant ("list", [o]) -> ok o
+  | _ -> simple_fail "not a list"
+
 let get_t_tuple : type_value -> type_value list result = function
   | Type_tuple lst -> ok lst
   | _ -> simple_fail "not a tuple"
@@ -205,3 +217,4 @@ let get_t_sum : type_value -> type_value SMap.t result = function
 let get_t_record : type_value -> type_value SMap.t result = function
   | Type_record m -> ok m
   | _ -> simple_fail "not a record"
+

@@ -125,27 +125,42 @@ and type_instruction (e:environment) : I.instruction -> (environment * O.instruc
           ok (e', O.Assignment {name;annotated_expression})
     )
   | Matching (ex, m) ->
-      let%bind m' = type_match e m in
       let%bind ex' = type_annotated_expression e ex in
+      let%bind m' = type_match e ex'.type_annotation m in
       ok (e, O.Matching (ex', m'))
   | Record_patch _ -> simple_fail "no record_patch yet"
 
-and type_match (e:environment) : I.matching -> O.matching result = function
+and type_match (e:environment) (t:O.type_value) : I.matching -> O.matching result = function
   | Match_bool {match_true ; match_false} ->
+      let%bind _ =
+        trace_strong (simple_error "Matching bool on not-a-bool")
+        @@ O.get_t_bool t in
       let%bind match_true = type_block e match_true in
       let%bind match_false = type_block e match_false in
       ok (O.Match_bool {match_true ; match_false})
   | Match_option {match_none ; match_some} ->
+      let%bind t_opt =
+        trace_strong (simple_error "Matching option on not-an-option")
+        @@ O.get_t_option t in
       let%bind match_none = type_block e match_none in
       let (n, b) = match_some in
-      let%bind b' = type_block e b in
+      let e' = Environment.add e n t_opt in
+      let%bind b' = type_block e' b in
       ok (O.Match_option {match_none ; match_some = (n, b')})
   | Match_list {match_nil ; match_cons} ->
+      let%bind t_list =
+        trace_strong (simple_error "Matching list on not-an-list")
+        @@ O.get_t_list t in
       let%bind match_nil = type_block e match_nil in
-      let (n, m, b) = match_cons in
-      let%bind b' = type_block e b in
-      ok (O.Match_list {match_nil ; match_cons = (n, m, b')})
-  | Match_tuple lst ->
+      let (hd, tl, b) = match_cons in
+      let e' = Environment.add e hd t_list in
+      let e' = Environment.add e' tl t in
+      let%bind b' = type_block e' b in
+      ok (O.Match_list {match_nil ; match_cons = (hd, tl, b')})
+  | Match_tuple (lst, b) ->
+      let%bind lst =
+        trace_strong (simple_error "Matching tuple on not-a-tuple")
+        get_tuple
       let aux (x, y) =
         let%bind y = type_block e y in
         ok (x, y) in
