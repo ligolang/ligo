@@ -17,8 +17,6 @@
 %token <Region.t> COMMA       (* ","   *)
 %token <Region.t> LPAR        (* "("   *)
 %token <Region.t> RPAR        (* ")"   *)
-%token <Region.t> LBRACE      (* "{"   *)
-%token <Region.t> RBRACE      (* "}"   *)
 %token <Region.t> LBRACKET    (* "["   *)
 %token <Region.t> RBRACKET    (* "]"   *)
 %token <Region.t> CONS        (* "#"   *)

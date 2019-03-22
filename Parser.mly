@@ -61,16 +61,6 @@ par(X):
     in {region; value}
   }
 
-braces(X):
-  LBRACE X RBRACE {
-    let region = cover $1 $3
-    and value = {
-      lbrace = $1;
-      inside = $2;
-      rbrace = $3}
-    in {region; value}
-  }
-
 brackets(X):
   LBRACKET X RBRACKET {
     let region = cover $1 $3

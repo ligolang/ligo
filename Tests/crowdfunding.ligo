@@ -13,7 +13,7 @@ entrypoint contribute (storage store : store;
   var operations : list (operation) := []
   begin
     if now > store.deadline then
-       fail "Deadline passed";
+      fail "Deadline passed";
     else
       case store.backers[sender] of
         None -> store.backers[sender] := Some (amount)
@@ -56,7 +56,7 @@ entrypoint claim (storage store : store; const sender : address)
           else
             begin
               operations := [Transfer (sender, amount)];
-              remove sender from map store.backers;
+              remove sender from map store.backers
             end
       end
   end with (store, operations)
