@@ -100,6 +100,8 @@ and matching =
 
 let ae expression = {expression ; type_annotation = None}
 
+let annotated_expression expression type_annotation = {expression ; type_annotation}
+
 open Ligo_helpers.Trace
 
 module PP = struct

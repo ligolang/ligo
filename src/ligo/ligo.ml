@@ -75,12 +75,16 @@ let type_ (p:AST_Simplified.program) : AST_Typed.program result = Typer.type_pro
 let type_expression ?(env:Typer.Environment.t = Typer.Environment.empty)
     (e:AST_Simplified.annotated_expression) : AST_Typed.annotated_expression result =
   Typer.type_annotated_expression env e
-let untype_expression (e:AST_Typed.annotated_expression) : AST_Simplified.annotated_expression = Typer.untype_annotated_expression e
+let untype_expression (e:AST_Typed.annotated_expression) : AST_Simplified.annotated_expression result = Typer.untype_annotated_expression e
 
 let transpile (p:AST_Typed.program) : Mini_c.program result = Transpiler.translate_program p
 let transpile_expression ?(env:Mini_c.Environment.t = Mini_c.Environment.empty)
     (e:AST_Typed.annotated_expression) : Mini_c.expression result = Transpiler.translate_annotated_expression env e
 let transpile_value ?(env:Mini_c.Environment.t = Mini_c.Environment.empty)
-    (e:AST_Typed.annotated_expression) : Mini_c.expression result =
+    (e:AST_Typed.annotated_expression) : Mini_c.value result =
   let%bind e = Transpiler.translate_annotated_expression env e in
   Mini_c.expression_to_value e
+
+let untranspile_value (v : Mini_c.value) (e:AST_Typed.type_value) : AST_Typed.annotated_expression result =
+  Transpiler.untranspile v e
+

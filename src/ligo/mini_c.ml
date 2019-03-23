@@ -360,59 +360,6 @@ module Translate_type = struct
 
 end
 
-module Math = struct
-
-  let lt_power_of_two n =
-    let rec aux prev n =
-      let cur = prev * 2 in
-      if cur >= n
-      then prev
-      else aux cur n
-    in
-    if n > 0
-    then ok (aux 1 n)
-    else fail @@ error "lt_power_of_two" (string_of_int n)
-
-  let ge_power_of_two n =
-    let rec aux c n =
-      if c >= n
-      then c
-      else aux (c * 2) n
-    in
-    if n > 0
-    then ok (aux 1 n)
-    else fail @@ error "ge_power_of_two" (string_of_int n)
-
-  let rec exp x n =
-    if n = 0
-    then 1
-    else
-      let exp' = exp (x * x) (n / 2) in
-      let m = if n mod 2 = 0 then 1 else x in
-      m * exp'
-
-  let exp2 = exp 2
-
-  let log2_c n =
-    let rec aux acc n =
-      if n = 1
-      then acc
-      else aux (acc + 1) (n / 2)
-    in
-    if n < 1 then raise @@ Failure ("log_2") ;
-    let n' = aux 0 n in
-    if exp2 n' = n then n' else n' + 1
-
-  let int_to_bools n l =
-    let rec aux acc n = function
-      | 0 -> acc
-      | s -> aux ((n mod 2 = 0) :: acc) (n / 2) (s - 1)
-    in
-    List.rev @@ aux [] n l
-
-end
-
-
 module Environment = struct
   open Tezos_utils.Micheline
 
@@ -1020,27 +967,43 @@ module Run = struct
 end
 
 
-(* module Combinators = struct
- *
- *   let var x : expression' = Var x
- *   let apply a b : expression' = Apply(a, b)
- *
- *   let t_int : type_value = `Base Int
- *   let type_int x : expression = x, `Base Int
- *   let type_f_int x : expression = x,`Function (`Base Int, `Base Int)
- *   let type_closure_int t x : expression = x, `Deep_closure (t, `Base Int, `Base Int)
- *   let int n = type_int @@ Literal(`Int n)
- *   let neg_int x = type_int @@ Predicate("NEG", [x])
- *   let add_int x y = type_int @@ Predicate("ADD_INT", [x ; y])
- *   let var_int x = type_int @@ var x
- *   let apply_int a b = type_int @@ apply a b
- *
- *   let assign_variable v expr = Assignment (Variable (v, expr))
- *   let assign_function v anon = Assignment (Variable (v, anon))
- *   let function_int body binder result = {
- *     input = `Base Int ;
- *     output = `Base Int ;
- *     body ; binder ; result ;
- *   }
- *
- * end *)
+module Combinators = struct
+
+  let get_bool (v:value) = match v with
+    | `Bool b -> ok b
+    | _ -> simple_fail "not a bool"
+
+  let get_int (v:value) = match v with
+    | `Int n -> ok n
+    | _ -> simple_fail "not an int"
+
+  let get_string (v:value) = match v with
+    | `String s -> ok s
+    | _ -> simple_fail "not a string"
+
+  let get_bytes (v:value) = match v with
+    | `Bytes b -> ok b
+    | _ -> simple_fail "not a bytes"
+
+  let get_unit (v:value) = match v with
+    | `Unit -> ok ()
+    | _ -> simple_fail "not a bool"
+
+  let get_pair (v:value) = match v with
+    | `Pair (a, b) -> ok (a, b)
+    | _ -> simple_fail "not a pair"
+
+  let get_left (v:value) = match v with
+    | `Left b -> ok b
+    | _ -> simple_fail "not a left"
+
+  let get_right (v:value) = match v with
+    | `Right b -> ok b
+    | _ -> simple_fail "not a right"
+
+  let get_or (v:value) = match v with
+    | `Left b -> ok (false, b)
+    | `Right b -> ok (true, b)
+    | _ -> simple_fail "not a left/right"
+
+end

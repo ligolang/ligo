@@ -5,9 +5,12 @@ module AST = Ast_typed
 
 let list_of_map m = List.rev @@ Ligo_helpers.X_map.String.fold (fun _ v prev -> v :: prev) m []
 let kv_list_of_map m = List.rev @@ Ligo_helpers.X_map.String.fold (fun k v prev -> (k, v) :: prev) m []
+let map_of_kv_list lst =
+  let open AST.SMap in
+  List.fold_left (fun prev (k, v) -> add k v prev) empty lst
 
 let rec translate_type (t:AST.type_value) : type_value result =
-  match t with
+  match t.type_value with
   | Type_constant ("bool", []) -> ok (`Base Bool)
   | Type_constant ("int", []) -> ok (`Base Int)
   | Type_constant ("string", []) -> ok (`Base String)
@@ -81,7 +84,7 @@ and translate_annotated_expression (env:Environment.t) (ae:AST.annotated_express
           if k = m then (
             let%bind _ =
               trace (simple_error "constructor parameter doesn't have expected type (shouldn't happen here)")
-              @@ AST.type_value_eq (tv, param.type_annotation) in
+              @@ AST.assert_type_value_eq (tv, param.type_annotation) in
             ok (Some (param'_expr), param'_tv)
           ) else (
             let%bind tv = translate_type tv in
@@ -213,3 +216,98 @@ let translate_program (lst:AST.program) : program result =
   in
   let%bind (statements, _) = List.fold_left aux (ok ([], Environment.empty)) lst in
   ok statements
+
+open Combinators
+
+let rec exp x n =
+  if n = 0
+  then 1
+  else
+    let exp' = exp (x * x) (n / 2) in
+    let m = if n mod 2 = 0 then 1 else x in
+    m * exp'
+
+let exp2 = exp 2
+
+let extract_constructor (v : value) (tree : _ Append_tree.t') : (string * value * AST.type_value) result =
+  let open Append_tree in
+  let rec aux tv : (string * value * AST.type_value) result=
+    match tv with
+    | Leaf (k, t), v -> ok (k, v, t)
+    | Node {a}, `Left v -> aux (a, v)
+    | Node {b}, `Right v -> aux (b, v)
+    | _ -> simple_fail "bad constructor path"
+  in
+  let%bind (s, v, t) = aux (tree, v) in
+  ok (s, v, t)
+
+let extract_tuple (v : value) (tree : AST.type_value Append_tree.t') : ((value * AST.type_value) list) result =
+  let open Append_tree in
+  let rec aux tv : ((value * AST.type_value) list) result =
+    match tv with
+    | Leaf t, v -> ok @@ [v, t]
+    | Node {a;b}, `Pair (va, vb) ->
+        let%bind a' = aux (a, va) in
+        let%bind b' = aux (b, vb) in
+        ok (a' @ b')
+    | _ -> simple_fail "bad tuple path"
+  in
+  aux (tree, v)
+
+let extract_record (v : value) (tree : _ Append_tree.t') : (_ list) result =
+  let open Append_tree in
+  let rec aux tv : ((string * (value * AST.type_value)) list) result =
+    match tv with
+    | Leaf (s, t), v -> ok @@ [s, (v, t)]
+    | Node {a;b}, `Pair (va, vb) ->
+        let%bind a' = aux (a, va) in
+        let%bind b' = aux (b, vb) in
+        ok (a' @ b')
+    | _ -> simple_fail "bad record path"
+  in
+  aux (tree, v)
+
+
+let rec untranspile (v : value) (t : AST.type_value) : AST.annotated_expression result =
+  let open! AST in
+  let return e = ok AST.(annotated_expression e t) in
+  match t.type_value with
+  | Type_constant ("bool", []) ->
+      let%bind b = get_bool v in
+      return (Literal (Bool b))
+  | Type_constant ("int", []) ->
+      let%bind n = get_int v in
+      return (Literal (Int n))
+  | Type_constant ("string", []) ->
+      let%bind n = get_string v in
+      return (Literal (String n))
+  | Type_constant _ ->
+      simple_fail "unknown type_constant"
+  | Type_sum m ->
+      let lst = kv_list_of_map m in
+      let%bind node = match Append_tree.of_list lst with
+        | Empty -> simple_fail "empty sum type"
+        | Full t -> ok t
+      in
+      let%bind (name, v, tv) = extract_constructor v node in
+      let%bind sub = untranspile v tv in
+      return (Constructor (name, sub))
+  | Type_tuple lst ->
+      let%bind node = match Append_tree.of_list lst with
+        | Empty -> simple_fail "empty tuple"
+        | Full t -> ok t in
+      let%bind tpl = extract_tuple v node in
+      let%bind tpl' = bind_list
+        @@ List.map (fun (x, y) -> untranspile x y) tpl in
+      return (Tuple tpl')
+  | Type_record m ->
+      let lst = kv_list_of_map m in
+      let%bind node = match Append_tree.of_list lst with
+        | Empty -> simple_fail "empty tuple"
+        | Full t -> ok t in
+      let%bind lst = extract_record v node in
+      let%bind lst = bind_list
+        @@ List.map (fun (x, (y, z)) -> let%bind yz = untranspile y z in ok (x, yz)) lst in
+      let m' = map_of_kv_list lst in
+      return (Record m')
+  | Type_function _ -> simple_fail "no untranspilation for functions yet"

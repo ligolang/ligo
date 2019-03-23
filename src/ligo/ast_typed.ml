@@ -1,3 +1,5 @@
+module S = Ast_simplified
+
 module SMap = Ligo_helpers.X_map.String
 
 let list_of_smap (s:'a SMap.t) : (string * 'a) list =
@@ -30,12 +32,17 @@ and ae = annotated_expression
 and tv_map = type_value type_name_map
 and ae_map = annotated_expression name_map
 
-and type_value =
+and type_value' =
   | Type_tuple of tv list
   | Type_sum of tv_map
   | Type_record of tv_map
   | Type_constant of type_name * tv list
   | Type_function of tv * tv
+
+and type_value = {
+  type_value : type_value' ;
+  simplified : S.type_expression option ;
+}
 
 and expression =
   (* Base *)
@@ -91,23 +98,29 @@ and matching =
       match_none : b ;
       match_some : name * b ;
     }
-  | Match_tuple of (name * b) list
+  | Match_tuple of name list * b
+
+let type_value type_value simplified = { type_value ; simplified }
+let annotated_expression expression type_annotation = { expression ; type_annotation }
 
 module PP = struct
   open Format
   open Ligo_helpers.PP
 
-  let rec type_value ppf (tv:type_value) : unit =
-    match tv with
+  let rec type_value' ppf (tv':type_value') : unit =
+    match tv' with
     | Type_tuple lst -> fprintf ppf "tuple[%a]" (list_sep type_value) lst
     | Type_sum m -> fprintf ppf "sum[%a]" (smap_sep type_value) m
     | Type_record m -> fprintf ppf "record[%a]" (smap_sep type_value) m
     | Type_function (a, b) -> fprintf ppf "%a -> %a" type_value a type_value b
     | Type_constant (c, []) -> fprintf ppf "%s" c
     | Type_constant (c, n) -> fprintf ppf "%s(%a)" c (list_sep type_value) n
+
+  and type_value ppf (tv:type_value) : unit =
+    type_value' ppf tv.type_value
 end
 
-open Ligo_helpers.Trace
+open! Ligo_helpers.Trace
 
 module Errors = struct
   let different_kinds a b =
@@ -132,22 +145,22 @@ module Errors = struct
 end
 open Errors
 
-let rec type_value_eq (ab: (type_value * type_value)) : unit result = match ab with
-  | Type_tuple a as ta, (Type_tuple b as tb) -> (
+let rec assert_type_value_eq (a, b: (type_value * type_value)) : unit result = match (a.type_value, b.type_value) with
+  | Type_tuple ta, Type_tuple tb -> (
       let%bind _ =
-        trace_strong (different_size_tuples ta tb)
-        @@ Assert.assert_true List.(length a = length b) in
-      bind_list_iter type_value_eq (List.combine a b)
+        trace_strong (different_size_tuples a b)
+        @@ Assert.assert_true List.(length ta = length tb) in
+      bind_list_iter assert_type_value_eq (List.combine ta tb)
     )
-  | Type_constant (a, a') as ca, (Type_constant (b, b') as cb) -> (
+  | Type_constant (ca, lsta), Type_constant (cb, lstb) -> (
       let%bind _ =
-        trace_strong (different_size_constants ca cb)
-        @@ Assert.assert_true List.(length a' = length b') in
+        trace_strong (different_size_constants a b)
+        @@ Assert.assert_true List.(length lsta = length lstb) in
       let%bind _ =
-        trace_strong (different_constants a b)
+        trace_strong (different_constants ca cb)
         @@ Assert.assert_true (a = b) in
       trace (simple_error "constant sub-expression")
-      @@ bind_list_iter type_value_eq (List.combine a' b')
+      @@ bind_list_iter assert_type_value_eq (List.combine lsta lstb)
     )
   | Type_sum a, Type_sum b -> (
       let a' = list_of_smap a in
@@ -156,7 +169,7 @@ let rec type_value_eq (ab: (type_value * type_value)) : unit result = match ab w
         let%bind _ =
           Assert.assert_true ~msg:"different keys in sum types"
           @@ (ka = kb) in
-        type_value_eq (va, vb)
+        assert_type_value_eq (va, vb)
       in
       trace (simple_error "sum type")
       @@ bind_list_iter aux (List.combine a' b')
@@ -169,13 +182,18 @@ let rec type_value_eq (ab: (type_value * type_value)) : unit result = match ab w
         let%bind _ =
           Assert.assert_true ~msg:"different keys in record types"
           @@ (ka = kb) in
-        type_value_eq (va, vb)
+        assert_type_value_eq (va, vb)
       in
       trace (simple_error "record type")
       @@ bind_list_iter aux (List.combine a' b')
 
     )
-  | a, b -> fail @@ different_kinds a b
+  | _ -> fail @@ different_kinds a b
+
+(* No information about what made it fail *)
+let type_value_eq ab = match assert_type_value_eq ab with
+  | Ok _ -> true
+  | _ -> false
 
 let merge_annotation (a:type_value option) (b:type_value option) : type_value result =
   match a, b with
@@ -183,38 +201,68 @@ let merge_annotation (a:type_value option) (b:type_value option) : type_value re
   | Some a, None -> ok a
   | None, Some b -> ok b
   | Some a, Some b ->
-      let%bind _ = type_value_eq (a, b) in
-      ok a
+      let%bind _ = assert_type_value_eq (a, b) in
+      match a.simplified, b.simplified with
+      | _, None -> ok a
+      | None, Some _ -> ok b
+      | _ -> simple_fail "both have simplified ASTs"
 
-let t_bool : type_value = Type_constant ("bool", [])
-let t_string : type_value = Type_constant ("string", [])
-let t_bytes : type_value = Type_constant ("bytes", [])
-let t_int : type_value = Type_constant ("int", [])
-let t_unit : type_value = Type_constant ("unit", [])
+let t_bool s : type_value = type_value (Type_constant ("bool", [])) s
+let simplify_t_bool s = t_bool (Some s)
+let make_t_bool = t_bool None
+
+let t_string s : type_value = type_value (Type_constant ("string", [])) s
+let simplify_t_string s = t_string (Some s)
+let make_t_string = t_string None
+
+let t_bytes s : type_value = type_value (Type_constant ("bytes", [])) s
+let simplify_t_bytes s = t_bytes (Some s)
+let make_t_bytes = t_bytes None
+
+let t_int s : type_value = type_value (Type_constant ("int", [])) s
+let simplify_t_int s = t_int (Some s)
+let make_t_int = t_int None
+
+let t_unit s : type_value = type_value (Type_constant ("unit", [])) s
+let simplify_t_unit s = t_unit (Some s)
+let make_t_unit = t_unit None
+
+let t_tuple lst s : type_value = type_value (Type_tuple lst) s
+let simplify_t_tuple lst s = t_tuple lst (Some s)
+let make_t_tuple lst = t_tuple lst None
+
+let t_record m s : type_value = type_value (Type_record m) s
+let make_t_record m = t_record m None
+
+let t_sum m s : type_value = type_value (Type_sum m) s
+let make_t_sum m = t_sum m None
+
+let t_function (param, result) s : type_value = type_value (Type_function (param, result)) s
+let make_t_function f = t_function f None
 
 let get_annotation (x:annotated_expression) = x.type_annotation
 
-let get_t_bool : type_value -> unit result = function
+let get_t_bool (t:type_value) : unit result = match t.type_value with
   | Type_constant ("bool", []) -> ok ()
   | _ -> simple_fail "not a bool"
 
-let get_t_option : type_value -> type_value result = function
+let get_t_option (t:type_value) : type_value result = match t.type_value with
   | Type_constant ("option", [o]) -> ok o
   | _ -> simple_fail "not a option"
 
-let get_t_list : type_value -> type_value result = function
+let get_t_list (t:type_value) : type_value result = match t.type_value with
   | Type_constant ("list", [o]) -> ok o
   | _ -> simple_fail "not a list"
 
-let get_t_tuple : type_value -> type_value list result = function
+let get_t_tuple (t:type_value) : type_value list result = match t.type_value with
   | Type_tuple lst -> ok lst
   | _ -> simple_fail "not a tuple"
 
-let get_t_sum : type_value -> type_value SMap.t result = function
+let get_t_sum (t:type_value) : type_value SMap.t result = match t.type_value with
   | Type_sum m -> ok m
   | _ -> simple_fail "not a sum"
 
-let get_t_record : type_value -> type_value SMap.t result = function
+let get_t_record (t:type_value) : type_value SMap.t result = match t.type_value with
   | Type_record m -> ok m
   | _ -> simple_fail "not a record"
 

@@ -58,6 +58,14 @@ let rec bind_list = function
       ok @@ hd :: tl
     )
 
+let bind_smap (s:_ X_map.String.t) =
+  let open X_map.String in
+  let aux k v prev =
+    prev >>? fun prev' ->
+    v >>? fun v' ->
+    ok @@ add k v' prev' in
+  fold aux s (ok empty)
+
 let bind_fold_list f init lst =
   let aux x y =
     x >>? fun x ->
@@ -155,16 +163,18 @@ let pp_to_string pp () x =
 let errors_to_string = pp_to_string errors_pp
 
 module Assert = struct
-  let assert_true ?msg = function
+  let assert_true ?(msg="not true") = function
     | true -> ok ()
-    | false -> simple_fail @@ Option.unopt ~default:"not true" msg
+    | false -> simple_fail msg
 
-  let assert_equal_int ?msg a b =
-    let msg = Option.unopt ~default:"not equal int" msg in
+  let assert_equal_int ?(msg="not equal int") a b =
     assert_true ~msg (a = b)
 
-  let assert_list_size ~msg lst n =
-    assert_true ~msg (List.length lst = n)
+  let assert_list_size ?(msg="lst doesn't have the right size") lst n =
+    assert_true ~msg List.(length lst = n)
+
+  let assert_list_same_size ?(msg="lists don't have same size") a b =
+    assert_true ~msg List.(length a = length b)
 
   let assert_list_size_2 ~msg = function
     | [a;b] -> ok (a, b)
