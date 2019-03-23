@@ -22,14 +22,22 @@ module Ligo = struct
     let%bind typed =
       trace (simple_error "typing") @@
       type_ simplified in
-    let%bind _mini_c =
+    let%bind mini_c =
       trace (simple_error "transpiling") @@
       transpile typed in
+    Format.printf "mini_c code : %a" Mini_c.PP.program mini_c ;
     ok ()
 
   let basic () : unit result =
     Format.printf "basic test" ;
     pass "./contracts/toto.ligo"
+
+  let function_ () : unit result =
+    Format.printf "function test" ;
+    let%bind _ = pass "./contracts/function.ligo" in
+    let%bind result = easy_run_main "./contracts/function.ligo" "2" in
+    Format.printf "result : %a" AST_Typed.PP.annotated_expression result ;
+    ok ()
 
   (* let display_basic () : unit result =
    *   parse_file "./contracts/toto.ligo" >>? fun program_ast ->
@@ -42,6 +50,7 @@ module Ligo = struct
 
   let main = "Ligo", [
       test "basic" basic ;
+      test "function" function_ ;
     ]
 end
 

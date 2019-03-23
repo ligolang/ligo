@@ -132,6 +132,61 @@ module PP = struct
 
   and type_value ppf (tv:type_value) : unit =
     type_value' ppf tv.type_value
+
+  let rec annotated_expression ppf (ae:annotated_expression) : unit =
+    match ae.type_annotation.simplified with
+    | Some _ -> fprintf ppf "%a:%a" expression ae.expression type_value ae.type_annotation
+    | _ -> expression ppf ae.expression
+
+  and expression ppf (e:expression) : unit =
+    match e with
+    | Literal l -> literal ppf l
+    | Constant (c, lst) -> fprintf ppf "%s(%a)" c (list_sep annotated_expression) lst
+    | Constructor (c, lst) -> fprintf ppf "%s(%a)" c annotated_expression lst
+    | Variable a -> fprintf ppf "%s" a
+    | Application (f, arg) -> fprintf ppf "(%a) (%a)" annotated_expression f annotated_expression arg
+    | Tuple lst -> fprintf ppf "tuple[%a]" (list_sep annotated_expression) lst
+    | Lambda {binder;input_type;output_type;result;body} ->
+        fprintf ppf "lambda (%s:%a) : %a {%a} return %a"
+          binder type_value input_type type_value output_type
+          block body annotated_expression result
+    | Tuple_accessor (ae, i) -> fprintf ppf "%a.%d" annotated_expression ae i
+    | Record_accessor (ae, s) -> fprintf ppf "%a.%s" annotated_expression ae s
+    | Record m -> fprintf ppf "record[%a]" (smap_sep annotated_expression) m
+
+  and literal ppf (l:literal) : unit =
+    match l with
+    | Unit -> fprintf ppf "unit"
+    | Bool b -> fprintf ppf "%b" b
+    | Int n -> fprintf ppf "%d" n
+    | Nat n -> fprintf ppf "%d" n
+    | String s -> fprintf ppf "%s" s
+    | Bytes b -> fprintf ppf "0x%s" @@ Bytes.to_string @@ Bytes.escaped b
+
+  and block ppf (b:block) = (list_sep instruction) ppf b
+
+  and single_record_patch ppf ((s, ae) : string * ae) =
+    fprintf ppf "%s <- %a" s annotated_expression ae
+
+  and matching ppf (m:matching) = match m with
+    | Match_tuple (lst, b) ->
+        fprintf ppf "let (%a) = %a" (list_sep (fun ppf -> fprintf ppf "%s")) lst block b
+    | Match_bool {match_true ; match_false} ->
+        fprintf ppf "| True -> %a @.| False -> %a" block match_true block match_false
+    | Match_list {match_nil ; match_cons = (hd, tl, match_cons)} ->
+        fprintf ppf "| Nil -> %a @.| %s :: %s -> %a" block match_nil hd tl block match_cons
+    | Match_option {match_none ; match_some = (some, match_some)} ->
+        fprintf ppf "| None -> %a @.| Some %s -> %a" block match_none some block match_some
+
+  and instruction ppf (i:instruction) = match i with
+    | Skip -> fprintf ppf "skip"
+    | Fail ae -> fprintf ppf "fail with (%a)" annotated_expression ae
+    | Loop (cond, b) -> fprintf ppf "while (%a) { %a }" annotated_expression cond block b
+    | Assignment {name;annotated_expression = ae} ->
+        fprintf ppf "%s := %a" name annotated_expression ae
+    | Matching (ae, m) ->
+        fprintf ppf "match %a with %a" annotated_expression ae matching m
+
 end
 
 
@@ -165,16 +220,18 @@ let rec assert_type_value_eq (a, b: (type_value * type_value)) : unit result = m
         @@ Assert.assert_true List.(length ta = length tb) in
       bind_list_iter assert_type_value_eq (List.combine ta tb)
     )
+  | Type_tuple _, _ -> fail @@ different_kinds a b
   | Type_constant (ca, lsta), Type_constant (cb, lstb) -> (
       let%bind _ =
         trace_strong (different_size_constants a b)
         @@ Assert.assert_true List.(length lsta = length lstb) in
       let%bind _ =
         trace_strong (different_constants ca cb)
-        @@ Assert.assert_true (a = b) in
+        @@ Assert.assert_true (ca = cb) in
       trace (simple_error "constant sub-expression")
       @@ bind_list_iter assert_type_value_eq (List.combine lsta lstb)
     )
+  | Type_constant _, _ -> fail @@ different_kinds a b
   | Type_sum a, Type_sum b -> (
       let a' = list_of_smap a in
       let b' = list_of_smap b in
@@ -188,6 +245,7 @@ let rec assert_type_value_eq (a, b: (type_value * type_value)) : unit result = m
       @@ bind_list_iter aux (List.combine a' b')
 
     )
+  | Type_sum _, _ -> fail @@ different_kinds a b
   | Type_record a, Type_record b -> (
       let a' = list_of_smap a in
       let b' = list_of_smap b in
@@ -201,7 +259,12 @@ let rec assert_type_value_eq (a, b: (type_value * type_value)) : unit result = m
       @@ bind_list_iter aux (List.combine a' b')
 
     )
-  | _ -> fail @@ different_kinds a b
+  | Type_record _, _ -> fail @@ different_kinds a b
+  | Type_function (param, result), Type_function (param', result') ->
+      let%bind _ = assert_type_value_eq (param, param') in
+      let%bind _ = assert_type_value_eq (result, result') in
+      ok ()
+  | Type_function _, _ -> fail @@ different_kinds a b
 
 (* No information about what made it fail *)
 let type_value_eq ab = match assert_type_value_eq ab with

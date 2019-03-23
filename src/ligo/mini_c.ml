@@ -175,11 +175,13 @@ module PP = struct
     | Literal v -> fprintf ppf "%a" value v
     | Function_expression c -> function_ ppf c
 
-  and function_ ppf ({input ; output ; body}:anon_function_content) =
-        fprintf ppf "fun (%a) : %a %a"
+  and function_ ppf ({binder ; input ; output ; body ; result}:anon_function_content) =
+        fprintf ppf "fun (%s:%a) : %a %a return %a"
+          binder
           type_ input
           type_ output
           block body
+          expression result
 
   and assignment ppf ((n, e):assignment) = fprintf ppf "let %s = %a;" n expression e
 
@@ -852,7 +854,7 @@ module Translate_program = struct
     let%bind expr = translate_expression result in
     let code = seq [
         body ;
-        expr ; i_car ;
+        i_push_unit ; expr ; i_car ;
         dip i_drop ;
       ] in
 

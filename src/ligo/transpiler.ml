@@ -14,6 +14,7 @@ let rec translate_type (t:AST.type_value) : type_value result =
   | Type_constant ("bool", []) -> ok (`Base Bool)
   | Type_constant ("int", []) -> ok (`Base Int)
   | Type_constant ("string", []) -> ok (`Base String)
+  | Type_constant _ -> simple_fail "unrecognized constant"
   | Type_sum m ->
       let node = Append_tree.of_list @@ list_of_map m in
       let aux a b : type_value result =
@@ -38,28 +39,35 @@ let rec translate_type (t:AST.type_value) : type_value result =
         ok (`Pair (a, b))
       in
       Append_tree.fold_ne translate_type aux node
-  | _ -> simple_fail "todo"
+  | Type_function (param, result) ->
+      let%bind param' = translate_type param in
+      let%bind result' = translate_type result in
+      ok (`Function (param', result'))
 
 let rec translate_block env (b:AST.block) : block result =
   let env' = Environment.extend env in
-  let%bind instructions = bind_list @@ List.map (translate_instruction env) b in
+  let%bind instructionss = bind_list @@ List.map (translate_instruction env) b in
+  let instructions = List.concat instructionss in
   ok (instructions, env')
 
-and translate_instruction (env:Environment.t) (i:AST.instruction) : statement result =
+and translate_instruction (env:Environment.t) (i:AST.instruction) : statement list result =
+  let return x = ok [x] in
   match i with
   | Assignment {name;annotated_expression} ->
       let%bind expression = translate_annotated_expression env annotated_expression in
-      ok @@ (Assignment (name, expression), env)
+      return (Assignment (name, expression), env)
   | Matching (expr, Match_bool {match_true ; match_false}) ->
       let%bind expr' = translate_annotated_expression env expr in
       let%bind true_branch = translate_block env match_true in
       let%bind false_branch = translate_block env match_false in
-      ok @@ (Cond (expr', true_branch, false_branch), env)
+      return (Cond (expr', true_branch, false_branch), env)
+  | Matching _ -> simple_fail "todo : match"
   | Loop (expr, body) ->
       let%bind expr' = translate_annotated_expression env expr in
       let%bind body' = translate_block env body in
-      ok @@ (While (expr', body'), env)
-  | _ -> simple_fail "todo"
+      return (While (expr', body'), env)
+  | Skip -> ok []
+  | Fail _ -> simple_fail "todo : fail"
 
 and translate_annotated_expression (env:Environment.t) (ae:AST.annotated_expression) : expression result =
   let%bind tv = translate_type ae.type_annotation in

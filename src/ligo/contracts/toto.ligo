@@ -4,5 +4,3 @@ type toto is record
 end
 
 const foo : int = 3
-
-
