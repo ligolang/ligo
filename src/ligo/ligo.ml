@@ -88,3 +88,21 @@ let transpile_value ?(env:Mini_c.Environment.t = Mini_c.Environment.empty)
 let untranspile_value (v : Mini_c.value) (e:AST_Typed.type_value) : AST_Typed.annotated_expression result =
   Transpiler.untranspile v e
 
+let easy_run_main (path:string) (input:string) : AST_Typed.annotated_expression result =
+  let%bind raw = parse_file path in
+  let%bind simpl = simplify raw in
+  let%bind typed = type_ simpl in
+  let%bind typed_main = Ast_typed.get_entry typed "main" in
+  let%bind main_result_type = match (snd typed_main).type_value with
+    | Type_function (_, result) -> ok result
+    | _ -> simple_fail "main doesn't have fun type" in
+  let%bind mini_c_main = Transpiler.translate_main (fst typed_main) (snd typed_main) in
+
+  let%bind raw_expr = parse_expression input in
+  let%bind simpl_expr = simplify_expr raw_expr in
+  let%bind typed_expr = type_expression simpl_expr in
+  let%bind mini_c_value = transpile_value typed_expr in
+
+  let%bind mini_c_result = Mini_c.Run.run_entry mini_c_main mini_c_value in
+  let%bind typed_result = untranspile_value mini_c_result main_result_type in
+  ok typed_result

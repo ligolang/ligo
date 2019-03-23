@@ -44,19 +44,21 @@ and type_value = {
   simplified : S.type_expression option ;
 }
 
+and lambda = {
+  binder: name ;
+  input_type: tv ;
+  output_type: tv ;
+  result: ae ;
+  body: block ;
+}
+
 and expression =
   (* Base *)
   | Literal of literal
   | Constant of name * ae list (* For language constants, like (Cons hd tl) or (plus i j) *)
   | Variable of name
   | Application of ae * ae
-  | Lambda of {
-      binder: name ;
-      input_type: tv ;
-      output_type: tv ;
-      result: ae ;
-      body: block ;
-    }
+  | Lambda of lambda
   (* Tuple *)
   | Tuple of ae list
   | Tuple_accessor of ae * int (* Access n'th tuple's element *)
@@ -100,8 +102,20 @@ and matching =
     }
   | Match_tuple of name list * b
 
+open! Ligo_helpers.Trace
+
+
 let type_value type_value simplified = { type_value ; simplified }
 let annotated_expression expression type_annotation = { expression ; type_annotation }
+let get_entry (p:program) (entry : string) =
+  let aux (d:declaration) =
+    match d with
+    | Constant_declaration {name ; annotated_expression = {expression = Lambda l ; type_annotation}} when entry = name ->
+        Some (l, type_annotation)
+    | _ -> None
+  in
+  trace_option (simple_error "no entry point with given name")
+  @@ Tezos_utils.List.find_map aux p
 
 module PP = struct
   open Format
@@ -120,7 +134,6 @@ module PP = struct
     type_value' ppf tv.type_value
 end
 
-open! Ligo_helpers.Trace
 
 module Errors = struct
   let different_kinds a b =

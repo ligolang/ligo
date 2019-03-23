@@ -176,30 +176,33 @@ and translate_annotated_expression (env:Environment.t) (ae:AST.annotated_express
   | Constant (name, lst) ->
       let%bind lst' = bind_list @@ List.map (translate_annotated_expression env) lst in
       ok (Predicate (name, lst'), tv, env)
-  | Lambda { binder ; input_type ; output_type ; body ; result } ->
-      (* Try to type it in an empty env, if it succeeds, transpiles it as a quote value, else, as a closure expression. *)
-      let%bind empty_env =
-        let%bind input = translate_type input_type in
-        ok Environment.(add (binder, input) empty) in
-      match to_option (translate_block empty_env body), to_option (translate_annotated_expression empty_env result) with
-      | Some body, Some result ->
-          let capture_type = No_capture in
-          let%bind input = translate_type input_type in
-          let%bind output = translate_type output_type in
-          let content = {binder;input;output;body;result;capture_type} in
-          ok (Literal (`Function {capture=None;content}), tv, env)
-      | _ ->
-          (* Shallow capture. Capture the whole environment. Extend it with a new scope. Append it the input. *)
-          let%bind input = translate_type input_type in
-          let sub_env = Environment.extend env in
-          let full_env = Environment.add (binder, input) sub_env in
-          let%bind (_, post_env) as body = translate_block full_env body in
-          let%bind result = translate_annotated_expression post_env result in
-          let capture_type = Shallow_capture sub_env in
-          let input = Environment.to_mini_c_type full_env in
-          let%bind output = translate_type output_type in
-          let content = {binder;input;output;body;result;capture_type} in
-          ok (Function_expression content, tv, env)
+  | Lambda l -> translate_lambda env l tv
+
+and translate_lambda env l tv =
+  let { binder ; input_type ; output_type ; body ; result } : AST.lambda = l in
+  (* Try to type it in an empty env, if it succeeds, transpiles it as a quote value, else, as a closure expression. *)
+  let%bind empty_env =
+    let%bind input = translate_type input_type in
+    ok Environment.(add (binder, input) empty) in
+  match to_option (translate_block empty_env body), to_option (translate_annotated_expression empty_env result) with
+  | Some body, Some result ->
+      let capture_type = No_capture in
+      let%bind input = translate_type input_type in
+      let%bind output = translate_type output_type in
+      let content = {binder;input;output;body;result;capture_type} in
+      ok (Literal (`Function {capture=None;content}), tv, env)
+  | _ ->
+      (* Shallow capture. Capture the whole environment. Extend it with a new scope. Append it the input. *)
+      let%bind input = translate_type input_type in
+      let sub_env = Environment.extend env in
+      let full_env = Environment.add (binder, input) sub_env in
+      let%bind (_, post_env) as body = translate_block full_env body in
+      let%bind result = translate_annotated_expression post_env result in
+      let capture_type = Shallow_capture sub_env in
+      let input = Environment.to_mini_c_type full_env in
+      let%bind output = translate_type output_type in
+      let content = {binder;input;output;body;result;capture_type} in
+      ok (Function_expression content, tv, env)
 
 let translate_declaration env (d:AST.declaration) : toplevel_statement result =
   match d with
@@ -216,6 +219,13 @@ let translate_program (lst:AST.program) : program result =
   in
   let%bind (statements, _) = List.fold_left aux (ok ([], Environment.empty)) lst in
   ok statements
+
+let translate_main (l:AST.lambda) (t:AST.type_value) : anon_function result =
+  let%bind t' = translate_type t in
+  let%bind (expr, _, _) = translate_lambda Environment.empty l t' in
+  match expr with
+  | Literal (`Function f) -> ok f
+  | _ -> simple_fail "main is not a function"
 
 open Combinators
 
@@ -303,7 +313,7 @@ let rec untranspile (v : value) (t : AST.type_value) : AST.annotated_expression 
   | Type_record m ->
       let lst = kv_list_of_map m in
       let%bind node = match Append_tree.of_list lst with
-        | Empty -> simple_fail "empty tuple"
+        | Empty -> simple_fail "empty record"
         | Full t -> ok t in
       let%bind lst = extract_record v node in
       let%bind lst = bind_list

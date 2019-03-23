@@ -882,15 +882,22 @@ module Translate_program = struct
     body : michelson ;
   }
 
-  let translate (p:program) : compiled_program result =
+  let translate_program (p:program) (entry:string) : compiled_program result =
     let is_main ((s, _):toplevel_statement) = match s with
-      | "main", (Function_expression f, `Function (_, _), _) when f.capture_type = No_capture -> Some f
+      | name , (Function_expression f, `Function (_, _), _) when f.capture_type = No_capture && name = entry -> Some f
       | _ -> None in
     let%bind main =
-      trace_option (simple_error "no functional main") @@
+      trace_option (simple_error "no functional entry") @@
       Tezos_utils.List.find_map is_main p in
     let {input;output} : anon_function_content = main in
     let%bind body = translate_function_body main in
+    let%bind input = Translate_type.Ty.type_ input in
+    let%bind output = Translate_type.Ty.type_ output in
+    ok ({input;output;body}:compiled_program)
+
+  let translate_entry (p:anon_function) : compiled_program result =
+    let {input;output} : anon_function_content = p.content in
+    let%bind body = translate_function_body p.content in
     let%bind input = Translate_type.Ty.type_ input in
     let%bind output = Translate_type.Ty.type_ output in
     ok ({input;output;body}:compiled_program)
@@ -931,10 +938,11 @@ end
 module Run = struct
 
   open Tezos_utils.Micheline
+  open! Translate_program
 
-  let run_aux (program:program) (input_michelson:Michelson.t) : ex_typed_value result =
+  let run_aux (program:compiled_program) (input_michelson:Michelson.t) : ex_typed_value result =
     let open Meta_michelson.Wrap in
-    let%bind {input;output;body} = Translate_program.translate program in
+    let {input;output;body} : compiled_program = program in
     let (Ex_ty input_ty) = input in
     let (Ex_ty output_ty) = output in
     let%bind input =
@@ -952,15 +960,24 @@ module Run = struct
     ok (Ex_typed_value (output_ty, output))
 
   let run_node (program:program) (input:Michelson.t) : Michelson.t result =
-    let%bind (Ex_typed_value (output_ty, output)) = run_aux program input in
+    let%bind compiled = translate_program program "main" in
+    let%bind (Ex_typed_value (output_ty, output)) = run_aux compiled input in
     let%bind output =
       Trace.trace_tzresult_lwt (simple_error "error unparsing output") @@
       Tezos_utils.Memory_proto_alpha.unparse_michelson_data output_ty output in
     ok output
 
+  let run_entry (entry:anon_function) (input:value) : value result =
+    let%bind compiled = translate_entry entry in
+    let%bind input_michelson = translate_value input in
+    let%bind ex_ty_value = run_aux compiled input_michelson in
+    let%bind (result : value) = Translate_ir.translate_value ex_ty_value in
+    ok result
+
   let run (program:program) (input:value) : value result =
-    let%bind input_michelson = Translate_program.translate_value input in
-    let%bind ex_ty_value = run_aux program input_michelson in
+    let%bind input_michelson = translate_value input in
+    let%bind compiled = translate_program program "main" in
+    let%bind ex_ty_value = run_aux compiled input_michelson in
     let%bind (result : value) = Translate_ir.translate_value ex_ty_value in
     ok result
 
