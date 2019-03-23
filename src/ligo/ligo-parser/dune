@@ -29,42 +29,7 @@
   (mode promote-until-clean))
 
 (rule
-  (targets dot_git_is_dir)
-  (deps check_dot_git_is_dir.sh)
-  (action (run "sh" "check_dot_git_is_dir.sh")))
-
-(rule
-  (targets .git_main_dir)
-  (deps dot_git_is_dir check_dot_git_is_dir.sh)
-  (action
-    (progn (run "sh" "check_dot_git_is_dir.sh")
-           (run "sh" "-c" "if \"$(cat dot_git_is_dir)\" = true; then printf %s '../../.git' > .git_main_dir; else cat ../../.git | sed -e 's/^gitdir: //' | sed -e 's|$|/../..|' > .git_main_dir; fi"))))
-
-(rule
-  (targets .git_worktree_dir)
-  (deps dot_git_is_dir check_dot_git_is_dir.sh)
-  (action
-    (progn (run "sh" "check_dot_git_is_dir.sh")
-           (run "sh" "-c" "if \"$(cat dot_git_is_dir)\" = true; then printf %s '../../.git' > .git_worktree_dir; else cat ../../.git | sed -e 's/^gitdir: //' > .git_worktree_dir; fi"))))
-
-(rule
-  (targets .gitHEAD)
-  (deps .git_main_dir .git_worktree_dir check_dot_git_is_dir.sh)
-  (action
-    (progn (run "sh" "check_dot_git_is_dir.sh")
-           (run "sh" "-c" "ln -s \"$(cat .git_worktree_dir)/HEAD\" .gitHEAD"))))
-
-(rule
-  (targets Version.gitHEAD)
-  (deps .gitHEAD check_dot_git_is_dir.sh)
-  (action
-    (progn (run "sh" "check_dot_git_is_dir.sh")
-           (run "sh" "-c" "if git symbolic-ref HEAD >/dev/null 2>&1; then ln -s \"$(cat .git_main_dir)/$(git symbolic-ref HEAD)\" Version.gitHEAD; else ln -s \"$(cat .git_worktree_dir)/HEAD\" Version.gitHEAD; fi"))))
-
-(rule
   (targets Version.ml)
-  (deps Version.gitHEAD check_dot_git_is_dir.sh)
   (action
-    (progn (run "sh" "check_dot_git_is_dir.sh")
-           (run "sh" "-c" "printf 'let version = \"%s\"'\\\\n \"$(git describe --always --dirty --abbrev=0)\" > Version.ml")))
+    (progn (run "sh" "-c" "printf 'let version = \"%s\"'\\\\n \"$(echo UNKNOWN)\" > Version.ml")))
   (mode promote-until-clean))
