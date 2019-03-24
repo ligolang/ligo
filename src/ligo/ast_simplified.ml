@@ -477,3 +477,14 @@ module Simplify = struct
   let simpl_program (t:Raw.ast) : program result =
     bind_list @@ List.map simpl_declaration @@ nseq_to_list t.decl
 end
+
+module Combinators = struct
+  let annotated_expression ?type_annotation expression = {expression ; type_annotation}
+
+  let number n : expression = Literal (Number n)
+
+  let record (lst : (string * ae) list) : expression =
+    let aux prev (k, v) = SMap.add k v prev in
+    let map = List.fold_left aux SMap.empty lst in
+    Record map
+end

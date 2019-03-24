@@ -2,6 +2,7 @@ open Ligo_helpers.Trace
 
 module I = Ast_simplified
 module O = Ast_typed
+open O.Combinators
 
 module SMap = O.SMap
 
@@ -102,7 +103,7 @@ and type_instruction (e:environment) : I.instruction -> (environment * O.instruc
   | Loop (cond, body) ->
       let%bind cond = type_annotated_expression e cond in
       let%bind _ =
-        O.assert_type_value_eq (cond.type_annotation, O.make_t_bool) in
+        O.assert_type_value_eq (cond.type_annotation, make_t_bool) in
       let%bind body = type_block e body in
       ok (e, O.Loop (cond, body))
   | Assignment {name;annotated_expression} -> (
@@ -135,14 +136,14 @@ and type_match (e:environment) (t:O.type_value) : I.matching -> O.matching resul
   | Match_bool {match_true ; match_false} ->
       let%bind _ =
         trace_strong (simple_error "Matching bool on not-a-bool")
-        @@ O.get_t_bool t in
+        @@ get_t_bool t in
       let%bind match_true = type_block e match_true in
       let%bind match_false = type_block e match_false in
       ok (O.Match_bool {match_true ; match_false})
   | Match_option {match_none ; match_some} ->
       let%bind t_opt =
         trace_strong (simple_error "Matching option on not-an-option")
-        @@ O.get_t_option t in
+        @@ get_t_option t in
       let%bind match_none = type_block e match_none in
       let (n, b) = match_some in
       let e' = Environment.add e n t_opt in
@@ -151,7 +152,7 @@ and type_match (e:environment) (t:O.type_value) : I.matching -> O.matching resul
   | Match_list {match_nil ; match_cons} ->
       let%bind t_list =
         trace_strong (simple_error "Matching list on not-an-list")
-        @@ O.get_t_list t in
+        @@ get_t_list t in
       let%bind match_nil = type_block e match_nil in
       let (hd, tl, b) = match_cons in
       let e' = Environment.add e hd t_list in
@@ -161,7 +162,7 @@ and type_match (e:environment) (t:O.type_value) : I.matching -> O.matching resul
   | Match_tuple (lst, b) ->
       let%bind t_tuple =
         trace_strong (simple_error "Matching tuple on not-a-tuple")
-        @@ O.get_t_tuple t in
+        @@ get_t_tuple t in
       let%bind _ =
         trace_strong (simple_error "Matching tuple of different size")
         @@ Assert.assert_list_same_size t_tuple lst in
@@ -220,29 +221,29 @@ and type_annotated_expression (e:environment) (ae:I.annotated_expression) : O.an
       let%bind type_annotation = check tv' in
       ok O.{expression = Variable name ; type_annotation}
   | Literal (Bool b) ->
-      let%bind type_annotation = check O.make_t_bool in
+      let%bind type_annotation = check make_t_bool in
       ok O.{expression = Literal (Bool b) ; type_annotation }
   | Literal Unit ->
-      let%bind type_annotation = check O.make_t_unit in
+      let%bind type_annotation = check make_t_unit in
       ok O.{expression = Literal (Unit) ; type_annotation }
   | Literal (String s) ->
-      let%bind type_annotation = check O.make_t_string in
+      let%bind type_annotation = check make_t_string in
       ok O.{expression = Literal (String s) ; type_annotation }
   | Literal (Bytes s) ->
-      let%bind type_annotation = check O.make_t_bytes in
+      let%bind type_annotation = check make_t_bytes in
       ok O.{expression = Literal (Bytes s) ; type_annotation }
   | Literal (Number n) ->
-      let%bind type_annotation = check O.make_t_int in
+      let%bind type_annotation = check make_t_int in
       ok O.{expression = Literal (Int n) ; type_annotation }
   (* Tuple *)
   | Tuple lst ->
       let%bind lst' = bind_list @@ List.map (type_annotated_expression e) lst in
-      let tv_lst = List.map O.get_annotation lst' in
-      let%bind type_annotation = check (O.make_t_tuple tv_lst) in
+      let tv_lst = List.map get_annotation lst' in
+      let%bind type_annotation = check (make_t_tuple tv_lst) in
       ok O.{expression = Tuple lst' ; type_annotation }
   | Tuple_accessor (tpl, ind) ->
       let%bind tpl' = type_annotated_expression e tpl in
-      let%bind tpl_tv = O.get_t_tuple tpl'.type_annotation in
+      let%bind tpl_tv = get_t_tuple tpl'.type_annotation in
       let%bind tv =
         generic_try (simple_error "bad tuple index")
         @@ (fun () -> List.nth tpl_tv ind) in
@@ -265,11 +266,11 @@ and type_annotated_expression (e:environment) (ae:I.annotated_expression) : O.an
         ok (SMap.add k expr' prev')
       in
       let%bind m' = SMap.fold aux m (ok SMap.empty) in
-      let%bind type_annotation = check @@ O.make_t_record (SMap.map O.get_annotation m') in
+      let%bind type_annotation = check @@ make_t_record (SMap.map get_annotation m') in
       ok O.{expression = O.Record m' ; type_annotation }
   | Record_accessor (r, ind) ->
       let%bind r' = type_annotated_expression e r in
-      let%bind r_tv = O.get_t_record r'.type_annotation in
+      let%bind r_tv = get_t_record r'.type_annotation in
       let%bind tv =
         generic_try (simple_error "bad record index")
         @@ (fun () -> SMap.find ind r_tv) in
@@ -287,11 +288,11 @@ and type_annotated_expression (e:environment) (ae:I.annotated_expression) : O.an
       let e' = Environment.add e binder input_type in
       let%bind result = type_annotated_expression e' result in
       let%bind body = type_block e' body in
-      let%bind type_annotation = check @@ O.make_t_function (input_type, output_type) in
+      let%bind type_annotation = check @@ make_t_function (input_type, output_type) in
       ok O.{expression = Lambda {binder;input_type;output_type;result;body} ; type_annotation}
   | Constant (name, lst) ->
       let%bind lst' = bind_list @@ List.map (type_annotated_expression e) lst in
-      let tv_lst = List.map O.get_annotation lst' in
+      let tv_lst = List.map get_annotation lst' in
       let%bind (name', tv) = type_constant name tv_lst in
       let%bind type_annotation = check tv in
       ok O.{expression = O.Constant (name', lst') ; type_annotation}

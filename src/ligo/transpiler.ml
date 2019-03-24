@@ -1,7 +1,9 @@
 open! Ligo_helpers.Trace
 open Mini_c
+open Combinators
 
 module AST = Ast_typed
+open AST.Combinators
 
 let list_of_map m = List.rev @@ Ligo_helpers.X_map.String.fold (fun _ v prev -> v :: prev) m []
 let kv_list_of_map m = List.rev @@ Ligo_helpers.X_map.String.fold (fun k v prev -> (k, v) :: prev) m []
@@ -46,27 +48,37 @@ let rec translate_type (t:AST.type_value) : type_value result =
 
 let rec translate_block env (b:AST.block) : block result =
   let env' = Environment.extend env in
-  let%bind instructionss = bind_list @@ List.map (translate_instruction env) b in
-  let instructions = List.concat instructionss in
-  ok (instructions, env')
+  let%bind (instructions, env') =
+    let rec aux e acc lst = match lst with
+      | [] -> ok (acc, e)
+      | hd :: tl ->
+          match%bind translate_instruction e hd with
+          | Some ((_, e') as i) -> aux e'.post_environment (i :: acc) tl
+          | None -> aux e acc tl
+    in
+    let%bind (lst, e) = aux env' [] b in
+    ok (List.rev lst, e)
+  in
+  ok (instructions, environment_wrap env env')
 
-and translate_instruction (env:Environment.t) (i:AST.instruction) : statement list result =
-  let return x = ok [x] in
+and translate_instruction (env:Environment.t) (i:AST.instruction) : statement option result =
+  let return ?(env' = env) x : statement option result = ok (Some (x, environment_wrap env env')) in
   match i with
   | Assignment {name;annotated_expression} ->
-      let%bind expression = translate_annotated_expression env annotated_expression in
-      return (Assignment (name, expression), env)
+      let%bind (_, t, _) as expression = translate_annotated_expression env annotated_expression in
+      let env' = Environment.add (name, t) env in
+      return ~env' (Assignment (name, expression))
   | Matching (expr, Match_bool {match_true ; match_false}) ->
       let%bind expr' = translate_annotated_expression env expr in
       let%bind true_branch = translate_block env match_true in
       let%bind false_branch = translate_block env match_false in
-      return (Cond (expr', true_branch, false_branch), env)
+      return (Cond (expr', true_branch, false_branch))
   | Matching _ -> simple_fail "todo : match"
   | Loop (expr, body) ->
       let%bind expr' = translate_annotated_expression env expr in
       let%bind body' = translate_block env body in
-      return (While (expr', body'), env)
-  | Skip -> ok []
+      return (While (expr', body'))
+  | Skip -> ok None
   | Fail _ -> simple_fail "todo : fail"
 
 and translate_annotated_expression (env:Environment.t) (ae:AST.annotated_expression) : expression result =
@@ -85,7 +97,7 @@ and translate_annotated_expression (env:Environment.t) (ae:AST.annotated_express
       ok (Apply (a, b), tv, env)
   | Constructor (m, param) ->
       let%bind (param'_expr, param'_tv, _) = translate_annotated_expression env ae in
-      let%bind map_tv = AST.get_t_sum ae.type_annotation in
+      let%bind map_tv = get_t_sum ae.type_annotation in
       let node_tv = Append_tree.of_list @@ kv_list_of_map map_tv in
       let%bind ae' =
         let leaf (k, tv) : (expression' option * type_value) result =
@@ -123,7 +135,7 @@ and translate_annotated_expression (env:Environment.t) (ae:AST.annotated_express
       Append_tree.fold_ne (translate_annotated_expression env) aux node
   | Tuple_accessor (tpl, ind) ->
       let%bind (tpl'_expr, _, _) = translate_annotated_expression env tpl in
-      let%bind tpl_tv = AST.get_t_tuple ae.type_annotation in
+      let%bind tpl_tv = get_t_tuple ae.type_annotation in
       let node_tv = Append_tree.of_list @@ List.mapi (fun i a -> (a, i)) tpl_tv in
       let%bind ae' =
         let leaf (tv, i) : (expression' option * type_value) result =
@@ -157,7 +169,7 @@ and translate_annotated_expression (env:Environment.t) (ae:AST.annotated_express
       Append_tree.fold_ne (translate_annotated_expression env) aux node
   | Record_accessor (r, key) ->
       let%bind (r'_expr, _, _) = translate_annotated_expression env r in
-      let%bind r_tv = AST.get_t_record ae.type_annotation in
+      let%bind r_tv = get_t_record ae.type_annotation in
       let node_tv = Append_tree.of_list @@ kv_list_of_map r_tv in
       let%bind ae' =
         let leaf (key', tv) : (expression' option * type_value) result =
@@ -204,8 +216,8 @@ and translate_lambda env l tv =
       let%bind input = translate_type input_type in
       let sub_env = Environment.extend env in
       let full_env = Environment.add (binder, input) sub_env in
-      let%bind (_, post_env) as body = translate_block full_env body in
-      let%bind result = translate_annotated_expression post_env result in
+      let%bind (_, e) as body = translate_block full_env body in
+      let%bind result = translate_annotated_expression e.post_environment result in
       let capture_type = Shallow_capture sub_env in
       let input = Environment.to_mini_c_type full_env in
       let%bind output = translate_type output_type in
@@ -217,13 +229,13 @@ let translate_declaration env (d:AST.declaration) : toplevel_statement result =
   | Constant_declaration {name;annotated_expression} ->
       let%bind ((_, tv, _) as expression) = translate_annotated_expression env annotated_expression in
       let env' = Environment.add (name, tv) env in
-      ok @@ ((name, expression), env')
+      ok @@ ((name, expression), environment_wrap env env')
 
 let translate_program (lst:AST.program) : program result =
   let aux (prev:(toplevel_statement list * Environment.t) result) cur =
     let%bind (tl, env) = prev in
     let%bind ((_, env') as cur') = translate_declaration env cur in
-    ok (cur' :: tl, env')
+    ok (cur' :: tl, env'.post_environment)
   in
   let%bind (statements, _) = List.fold_left aux (ok ([], Environment.empty)) lst in
   ok statements

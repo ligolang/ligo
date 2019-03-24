@@ -6,6 +6,8 @@ module AST_Raw = AST
 module AST_Simplified = Ast_simplified
 module AST_Typed = Ast_typed
 module Mini_c = Mini_c
+module Typer = Typer
+module Transpiler = Transpiler
 
 open Ligo_helpers.Trace
 let parse_file (source:string) : AST_Raw.t result =

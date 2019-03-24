@@ -35,6 +35,11 @@ and environment_small = environment_element Append_tree.t
 
 and environment = environment_small list
 
+type environment_wrap = {
+  pre_environment : environment ;
+  post_environment : environment ;
+}
+
 type var_name = string
 type fun_name = string
 
@@ -68,9 +73,9 @@ and statement' =
   | Cond of expression * block * block
   | While of expression * block
 
-and statement = statement' * environment (* Environment after the statement *)
+and statement = statement' * environment_wrap
 
-and toplevel_statement = assignment * environment (* Same *)
+and toplevel_statement = assignment * environment_wrap
 
 and anon_function_content = {
   binder : string ;
@@ -95,7 +100,7 @@ and capture =
 
 and block' = statement list
 
-and block = block' * environment (* Environment at the beginning of the block *)
+and block = block' * environment_wrap
 
 and program = toplevel_statement list
 
@@ -787,16 +792,16 @@ module Translate_program = struct
     in
     ok code
 
-  and translate_statement ((s', env) as s:statement) : michelson result =
+  and translate_statement ((s', w_env) as s:statement) : michelson result =
     let error_message = Format.asprintf "%a" PP.statement s in
     let%bind (code : michelson) =
       trace (error "translating statement" error_message) @@ match s' with
     | Assignment (s, ((_, tv, _) as expr)) ->
       let%bind expr = translate_expression expr in
       let%bind add =
-        if Environment.has s env
-        then Environment.to_michelson_set s env
-        else Environment.to_michelson_add (s, tv) env
+        if Environment.has s w_env.pre_environment
+        then Environment.to_michelson_set s w_env.pre_environment
+        else Environment.to_michelson_add (s, tv) w_env.pre_environment
       in
       ok (seq [
           i_comment "assignment" ;
@@ -838,7 +843,7 @@ module Translate_program = struct
       ok (instruction :: lst)
     in
     let%bind error_message =
-      let%bind schema_michelson = Environment.to_michelson_type env in
+      let%bind schema_michelson = Environment.to_michelson_type env.pre_environment in
       ok @@ Format.asprintf "\nblock : %a\nschema : %a\n"
         PP.block (b, env)
         Tezos_utils.Micheline.Michelson.pp schema_michelson
@@ -1024,5 +1029,61 @@ module Combinators = struct
     | `Left b -> ok (false, b)
     | `Right b -> ok (true, b)
     | _ -> simple_fail "not a left/right"
+
+  let get_last_statement ((b', _):block) : statement result =
+    let aux lst = match lst with
+      | [] -> simple_fail "get_last: empty list"
+      | lst -> ok List.(nth lst (length lst - 1)) in
+    aux b'
+
+  let t_int : type_value = `Base Int
+
+  let quote binder input output body result : anon_function =
+    let content : anon_function_content = {
+      binder ; input ; output ;
+      body ; result ; capture_type = No_capture ;
+    } in
+    { content ; capture = None }
+
+  let basic_quote i o b : anon_function result =
+    let%bind (_, e) = get_last_statement b in
+    let r : expression = (Var "output", o, e.post_environment) in
+    ok @@ quote "input" i o b r
+
+  let basic_int_quote b : anon_function result =
+    basic_quote t_int t_int b
+
+  let basic_int_quote_env : environment =
+    let e = Environment.empty in
+    Environment.add ("input", t_int) e
+
+  let expr_int expr env : expression = (expr, t_int, env)
+  let var_int name env : expression = expr_int (Var name) env
+
+  let environment_wrap pre_environment post_environment = { pre_environment ; post_environment }
+  let id_environment_wrap e = environment_wrap e e
+
+  let statement s' e : statement =
+    match s' with
+    | Cond _ -> s', id_environment_wrap e
+    | While _ -> s', id_environment_wrap e
+    | Assignment (name, (_, t, _)) -> s', environment_wrap e (Environment.add (name, t) e)
+
+  let block (statements:statement list) : block result =
+    match statements with
+    | [] -> simple_fail "no statements in block"
+    | lst ->
+        let first = List.hd lst in
+        let last = List.(nth lst (length lst - 1)) in
+        ok (lst, environment_wrap (snd first).pre_environment (snd last).post_environment)
+
+  let statements (lst:(environment -> statement) list) e : statement list =
+    let rec aux lst e = match lst with
+      | [] -> []
+      | hd :: tl ->
+          let s = hd e in
+          s :: aux tl (snd s).post_environment
+    in
+    aux lst e
 
 end

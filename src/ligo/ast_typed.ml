@@ -283,62 +283,76 @@ let merge_annotation (a:type_value option) (b:type_value option) : type_value re
       | None, Some _ -> ok b
       | _ -> simple_fail "both have simplified ASTs"
 
-let t_bool s : type_value = type_value (Type_constant ("bool", [])) s
-let simplify_t_bool s = t_bool (Some s)
-let make_t_bool = t_bool None
+module Combinators = struct
 
-let t_string s : type_value = type_value (Type_constant ("string", [])) s
-let simplify_t_string s = t_string (Some s)
-let make_t_string = t_string None
+  let t_bool s : type_value = type_value (Type_constant ("bool", [])) s
+  let simplify_t_bool s = t_bool (Some s)
+  let make_t_bool = t_bool None
 
-let t_bytes s : type_value = type_value (Type_constant ("bytes", [])) s
-let simplify_t_bytes s = t_bytes (Some s)
-let make_t_bytes = t_bytes None
+  let t_string s : type_value = type_value (Type_constant ("string", [])) s
+  let simplify_t_string s = t_string (Some s)
+  let make_t_string = t_string None
 
-let t_int s : type_value = type_value (Type_constant ("int", [])) s
-let simplify_t_int s = t_int (Some s)
-let make_t_int = t_int None
+  let t_bytes s : type_value = type_value (Type_constant ("bytes", [])) s
+  let simplify_t_bytes s = t_bytes (Some s)
+  let make_t_bytes = t_bytes None
 
-let t_unit s : type_value = type_value (Type_constant ("unit", [])) s
-let simplify_t_unit s = t_unit (Some s)
-let make_t_unit = t_unit None
+  let t_int s : type_value = type_value (Type_constant ("int", [])) s
+  let simplify_t_int s = t_int (Some s)
+  let make_t_int = t_int None
 
-let t_tuple lst s : type_value = type_value (Type_tuple lst) s
-let simplify_t_tuple lst s = t_tuple lst (Some s)
-let make_t_tuple lst = t_tuple lst None
+  let t_unit s : type_value = type_value (Type_constant ("unit", [])) s
+  let simplify_t_unit s = t_unit (Some s)
+  let make_t_unit = t_unit None
 
-let t_record m s : type_value = type_value (Type_record m) s
-let make_t_record m = t_record m None
+  let t_tuple lst s : type_value = type_value (Type_tuple lst) s
+  let simplify_t_tuple lst s = t_tuple lst (Some s)
+  let make_t_tuple lst = t_tuple lst None
 
-let t_sum m s : type_value = type_value (Type_sum m) s
-let make_t_sum m = t_sum m None
+  let t_record m s : type_value = type_value (Type_record m) s
+  let make_t_ez_record (lst:(string * type_value) list) : type_value =
+    let aux prev (k, v) = SMap.add k v prev in
+    let map = List.fold_left aux SMap.empty lst in
+    type_value (Type_record map) None
 
-let t_function (param, result) s : type_value = type_value (Type_function (param, result)) s
-let make_t_function f = t_function f None
+  let make_t_record m = t_record m None
 
-let get_annotation (x:annotated_expression) = x.type_annotation
+  let t_sum m s : type_value = type_value (Type_sum m) s
+  let make_t_sum m = t_sum m None
 
-let get_t_bool (t:type_value) : unit result = match t.type_value with
-  | Type_constant ("bool", []) -> ok ()
-  | _ -> simple_fail "not a bool"
+  let t_function (param, result) s : type_value = type_value (Type_function (param, result)) s
+  let make_t_function f = t_function f None
 
-let get_t_option (t:type_value) : type_value result = match t.type_value with
-  | Type_constant ("option", [o]) -> ok o
-  | _ -> simple_fail "not a option"
+  let get_annotation (x:annotated_expression) = x.type_annotation
 
-let get_t_list (t:type_value) : type_value result = match t.type_value with
-  | Type_constant ("list", [o]) -> ok o
-  | _ -> simple_fail "not a list"
+  let get_t_bool (t:type_value) : unit result = match t.type_value with
+    | Type_constant ("bool", []) -> ok ()
+    | _ -> simple_fail "not a bool"
 
-let get_t_tuple (t:type_value) : type_value list result = match t.type_value with
-  | Type_tuple lst -> ok lst
-  | _ -> simple_fail "not a tuple"
+  let get_t_option (t:type_value) : type_value result = match t.type_value with
+    | Type_constant ("option", [o]) -> ok o
+    | _ -> simple_fail "not a option"
 
-let get_t_sum (t:type_value) : type_value SMap.t result = match t.type_value with
-  | Type_sum m -> ok m
-  | _ -> simple_fail "not a sum"
+  let get_t_list (t:type_value) : type_value result = match t.type_value with
+    | Type_constant ("list", [o]) -> ok o
+    | _ -> simple_fail "not a list"
 
-let get_t_record (t:type_value) : type_value SMap.t result = match t.type_value with
-  | Type_record m -> ok m
-  | _ -> simple_fail "not a record"
+  let get_t_tuple (t:type_value) : type_value list result = match t.type_value with
+    | Type_tuple lst -> ok lst
+    | _ -> simple_fail "not a tuple"
 
+  let get_t_sum (t:type_value) : type_value SMap.t result = match t.type_value with
+    | Type_sum m -> ok m
+    | _ -> simple_fail "not a sum"
+
+  let get_t_record (t:type_value) : type_value SMap.t result = match t.type_value with
+    | Type_record m -> ok m
+    | _ -> simple_fail "not a record"
+
+  let record (lst : (string * ae) list) : expression =
+    let aux prev (k, v) = SMap.add k v prev in
+    let map = List.fold_left aux SMap.empty lst in
+    Record map
+
+  let int n : expression = Literal (Int n)
+end
