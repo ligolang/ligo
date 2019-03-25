@@ -21,32 +21,32 @@ open AST
 
 (* RULES *)
 
-(* The rule [series(Item)] parses a list of [Item] separated by
-   semi-colons and optionally terminated by a semi-colon, then the
-   keyword [End]. *)
+(* The rule [series(Item,TERM)] parses a list of [Item] separated by
+   semicolons and optionally terminated by a semicolon, then the
+   terminal TERM. *)
 
-series(Item):
-  Item after_item(Item) { $1,$2 }
+series(Item,TERM):
+  Item after_item(Item,TERM) { $1,$2 }
 
-after_item(Item):
-  SEMI item_or_end(Item) {
+after_item(Item,TERM):
+  SEMI item_or_closing(Item,TERM) {
     match $2 with
-      `Some (item, items, term, close) ->
-        ($1, item)::items, term, close
-    | `End close ->
-        [], Some $1, close
+      `Some (item, items, term, closing) ->
+        ($1, item)::items, term, closing
+    | `Closing closing ->
+        [], Some $1, closing
   }
-| End {
+| TERM {
    [], None, $1
   }
 
-item_or_end(Item):
-  End {
-   `End $1
+item_or_closing(Item,TERM):
+  TERM {
+   `Closing $1
   }
-| series(Item) {
-    let item, (items, term, close) = $1
-    in `Some (item, items, term, close)
+| series(Item,TERM) {
+    let item, (items, term, closing) = $1
+    in `Some (item, items, term, closing)
   }
 
 (* Compound constructs *)
@@ -198,14 +198,14 @@ variant:
   }
 
 record_type:
-  Record series(field_decl) {
-   let first, (others, terminator, close) = $2 in
-   let region = cover $1 close
+  Record series(field_decl,End) {
+   let first, (others, terminator, closing) = $2 in
+   let region = cover $1 closing
    and value  = {
      opening = $1;
      field_decls = first, others;
      terminator;
-     close}
+     closing}
    in {region; value}
   }
 
@@ -356,14 +356,24 @@ core_param_type:
   }
 
 block:
-  Begin series(instruction) {
-   let first, (others, terminator, close) = $2 in
-   let region = cover $1 close
+  Begin series(instruction,End) {
+   let first, (others, terminator, closing) = $2 in
+   let region = cover $1 closing
    and value = {
-     opening = $1;
+     opening = Begin $1;
      instr   = first, others;
      terminator;
-     close}
+     closing = End closing}
+   in {region; value}
+  }
+| Block LBRACE series(instruction,RBRACE) {
+   let first, (others, terminator, closing) = $3 in
+   let region = cover $1 closing
+   and value = {
+     opening = Block ($1,$2);
+     instr   = first, others;
+     terminator;
+     closing = Block closing}
    in {region; value}
   }
 
@@ -449,10 +459,9 @@ extended_expr:
 | map_injection     { {region = $1.region; value = `EMap $1} }
 | set_injection     { {region = $1.region; value = `ESet $1} }
 
-
 instruction:
   single_instr { Single $1 }
-| block        { Block  $1 }
+| block        { Block  $1 : instruction }
 
 single_instr:
   conditional  {        Cond $1 }
@@ -515,26 +524,26 @@ map_patch:
   }
 
 set_injection:
-  Set series(expr) {
-    let first, (others, terminator, close) = $2 in
-    let region = cover $1 close
+  Set series(expr,End) {
+    let first, (others, terminator, closing) = $2 in
+    let region = cover $1 closing
     and value = {
       opening  = $1;
       elements = first, others;
       terminator;
-      close}
+      closing}
     in {region; value}
   }
 
 map_injection:
-  Map series(binding) {
-    let first, (others, terminator, close) = $2 in
-    let region = cover $1 close
+  Map series(binding,End) {
+    let first, (others, terminator, closing) = $2 in
+    let region = cover $1 closing
     and value = {
       opening  = $1;
       bindings = first, others;
       terminator;
-      close}
+      closing}
     in {region; value}
   }
 
@@ -885,14 +894,14 @@ record_expr:
 | record_projection { RecordProj $1 }
 
 record_injection:
-  Record series(field_assignment) {
-    let first, (others, terminator, close) = $2 in
-    let region = cover $1 close
+  Record series(field_assignment,End) {
+    let first, (others, terminator, closing) = $2 in
+    let region = cover $1 closing
     and value = {
       opening = $1;
       fields  = first, others;
       terminator;
-      close}
+      closing}
     in {region; value}
   }
 

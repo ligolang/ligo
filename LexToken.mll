@@ -66,6 +66,7 @@ type t =
 
 | And        of Region.t  (* "and"        *)
 | Begin      of Region.t  (* "begin"      *)
+| Block      of Region.t  (* "block"      *)
 | Case       of Region.t  (* "case"       *)
 | Const      of Region.t  (* "const"      *)
 | Contains   of Region.t  (* "contains"   *)
@@ -190,6 +191,7 @@ let proj_token = function
 
 | And        region -> region, "And"
 | Begin      region -> region, "Begin"
+| Block      region -> region, "Block"
 | Case       region -> region, "Case"
 | Const      region -> region, "Const"
 | Contains   region -> region, "Contains"
@@ -279,6 +281,7 @@ let to_lexeme = function
 
 | And        _ -> "and"
 | Begin      _ -> "begin"
+| Block      _ -> "block"
 | Case       _ -> "case"
 | Const      _ -> "const"
 | Contains   _ -> "contains"
@@ -338,6 +341,7 @@ let to_region token = proj_token token |> fst
 let keywords = [
   (fun reg -> And        reg);
   (fun reg -> Begin      reg);
+  (fun reg -> Block      reg);
   (fun reg -> Case       reg);
   (fun reg -> Const      reg);
   (fun reg -> Contains   reg);
@@ -565,6 +569,7 @@ let is_ident = function
 let is_kwd = function
   And        _
 | Begin      _
+| Block      _
 | Case       _
 | Const      _
 | Contains   _

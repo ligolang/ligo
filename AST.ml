@@ -41,6 +41,7 @@ let sepseq_to_region to_region = function
 
 type kwd_and        = Region.t
 type kwd_begin      = Region.t
+type kwd_block      = Region.t
 type kwd_case       = Region.t
 type kwd_const      = Region.t
 type kwd_contains   = Region.t
@@ -204,7 +205,7 @@ and record_type = {
   opening     : kwd_record;
   field_decls : field_decls;
   terminator  : semi option;
-  close       : kwd_end
+  closing     : kwd_end
 }
 
 and field_decls = (field_decl reg, semi) nsepseq
@@ -297,11 +298,19 @@ and param_var = {
 }
 
 and block = {
-  opening    : kwd_begin;
+  opening    : block_opening;
   instr      : instructions;
   terminator : semi option;
-  close      : kwd_end
+  closing    : block_closing
 }
+
+and block_opening =
+  Block of kwd_block * lbrace
+| Begin of kwd_begin
+
+and block_closing =
+  Block of rbrace
+| End   of kwd_end
 
 and local_decl =
   LocalLam   of lambda_decl
@@ -372,7 +381,7 @@ and map_injection = {
   opening    : kwd_map;
   bindings   : (binding reg, semi) nsepseq;
   terminator : semi option;
-  close      : kwd_end
+  closing    : kwd_end
 }
 
 and binding = {
@@ -508,7 +517,7 @@ and set_injection = {
   opening    : kwd_set;
   elements   : (expr, semi) nsepseq;
   terminator : semi option;
-  close      : kwd_end
+  closing    : kwd_end
 }
 
 and map_expr =
@@ -585,7 +594,7 @@ and record_injection = {
   opening    : kwd_record;
   fields     : (field_assign reg, semi) nsepseq;
   terminator : semi option;
-  close      : kwd_end
+  closing    : kwd_end
 }
 
 and field_assign = {
@@ -875,11 +884,11 @@ and print_sum_type {value; _} =
   print_nsepseq "|" print_variant value
 
 and print_record_type {value; _} =
-  let {opening; field_decls; terminator; close} = value in
+  let {opening; field_decls; terminator; closing} = value in
   print_token       opening "record";
   print_field_decls field_decls;
   print_terminator  terminator;
-  print_token       close "end"
+  print_token       closing "end"
 
 and print_type_app {value; _} =
   let type_name, type_tuple = value in
@@ -998,11 +1007,20 @@ and print_param_var {value; _} =
   print_type_expr param_type
 
 and print_block {value; _} =
-  let {opening; instr; terminator; close} = value in
-  print_token        opening "begin";
-  print_instructions instr;
-  print_terminator   terminator;
-  print_token        close "end"
+  let {opening; instr; terminator; closing} = value in
+  print_block_opening opening;
+  print_instructions  instr;
+  print_terminator    terminator;
+  print_block_closing closing
+
+and print_block_opening = function
+  Block (kwd_block, lbrace) -> print_token kwd_block "block";
+                              print_token lbrace    "{"
+| Begin kwd_begin           -> print_token kwd_begin "begin"
+
+and print_block_closing = function
+  Block rbrace -> print_token rbrace "}"
+| End kwd_end  -> print_token kwd_end "end"
 
 and print_local_decls sequence =
   List.iter print_local_decl sequence
@@ -1260,11 +1278,11 @@ and print_record_expr = function
 | RecordProj e -> print_record_projection e
 
 and print_record_injection {value; _} =
-  let {opening; fields; terminator; close} = value in
+  let {opening; fields; terminator; closing} = value in
   print_token opening "record";
   print_nsepseq ";" print_field_assign fields;
   print_terminator terminator;
-  print_token close "end"
+  print_token closing "end"
 
 and print_field_assign {value; _} =
   let {field_name; equal; field_expr} = value in
@@ -1319,18 +1337,18 @@ and print_set_remove node =
   print_path  set
 
 and print_map_injection {value; _} =
-  let {opening; bindings; terminator; close} = value in
+  let {opening; bindings; terminator; closing} = value in
   print_token opening "map";
   print_nsepseq ";" print_binding bindings;
   print_terminator terminator;
-  print_token close "end"
+  print_token closing "end"
 
 and print_set_injection {value; _} =
-  let {opening; elements; terminator; close} = value in
+  let {opening; elements; terminator; closing} = value in
   print_token opening "set";
   print_nsepseq ";" print_expr elements;
   print_terminator terminator;
-  print_token close "end"
+  print_token closing "end"
 
 and print_binding {value; _} =
   let {source; arrow; image} = value in

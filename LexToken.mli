@@ -67,6 +67,7 @@ type t =
 
 | And        of Region.t  (* "and"        *)
 | Begin      of Region.t  (* "begin"      *)
+| Block      of Region.t  (* "block"      *)
 | Case       of Region.t  (* "case"       *)
 | Const      of Region.t  (* "const"      *)
 | Contains   of Region.t  (* "contains"   *)

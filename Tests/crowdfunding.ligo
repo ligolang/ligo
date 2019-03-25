@@ -11,7 +11,7 @@ entrypoint contribute (storage store : store;
                        const amount  : mutez)
   : store * list (operation) is
   var operations : list (operation) := []
-  begin
+  block {
     if now > store.deadline then
       fail "Deadline passed";
     else
@@ -20,14 +20,14 @@ entrypoint contribute (storage store : store;
 //        None -> patch store.backers with map sender -> amount end
       |    _ -> skip
       end
-  end with (store, operations)
+  } with (store, operations)
 
 entrypoint withdraw (storage store : store; const sender : address)
   : store * list (operation) is
   var operations : list (operation) := []
   begin
     if sender = owner then
-      if now >= store.deadline then
+      if now (Unit) >= store.deadline then
         if balance >= store.goal then
           begin
              store.funded := True;

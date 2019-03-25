@@ -25,6 +25,7 @@ val sepseq_to_region  : ('a -> Region.t) -> ('a,'sep) sepseq -> Region.t
 
 type kwd_and        = Region.t
 type kwd_begin      = Region.t
+type kwd_block      = Region.t
 type kwd_case       = Region.t
 type kwd_const      = Region.t
 type kwd_contains   = Region.t
@@ -188,7 +189,7 @@ and record_type = {
   opening     : kwd_record;
   field_decls : field_decls;
   terminator  : semi option;
-  close       : kwd_end
+  closing     : kwd_end
 }
 
 and field_decls = (field_decl reg, semi) nsepseq
@@ -281,11 +282,19 @@ and param_var = {
 }
 
 and block = {
-  opening    : kwd_begin;
+  opening    : block_opening;
   instr      : instructions;
   terminator : semi option;
-  close      : kwd_end
+  closing    : block_closing
 }
+
+and block_opening =
+  Block of kwd_block * lbrace
+| Begin of kwd_begin
+
+and block_closing =
+  Block of rbrace
+| End   of kwd_end
 
 and local_decl =
   LocalLam   of lambda_decl
@@ -356,7 +365,7 @@ and map_injection = {
   opening    : kwd_map;
   bindings   : (binding reg, semi) nsepseq;
   terminator : semi option;
-  close      : kwd_end
+  closing    : kwd_end
 }
 
 and binding = {
@@ -492,7 +501,7 @@ and set_injection = {
   opening    : kwd_set;
   elements   : (expr, semi) nsepseq;
   terminator : semi option;
-  close      : kwd_end
+  closing    : kwd_end
 }
 
 and map_expr =
@@ -569,7 +578,7 @@ and record_injection = {
   opening    : kwd_record;
   fields     : (field_assign reg, semi) nsepseq;
   terminator : semi option;
-  close      : kwd_end
+  closing    : kwd_end
 }
 
 and field_assign = {
