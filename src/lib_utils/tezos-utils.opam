@@ -5,8 +5,8 @@ synopsis: "Tezos Utilities defined in the Tezos repository, to be used by other 
 maintainer: "Galfour <gabriel.alfour@gmail.com>"
 authors: "Galfour <gabriel.alfour@gmail.com>"
 license: "MIT"
-homepage: "https://gitlab.com/gabriel.alfour/tezos-utils"
-bug-reports: "https://gitlab.com/gabriel.alfour/tezos-utils/issues"
+homepage: "https://gitlab.com/gabriel.alfour/tezos"
+bug-reports: "https://gitlab.com/gabriel.alfour/tezos/issues"
 depends: [
   "dune"
   "base"
@@ -44,7 +44,7 @@ depends: [
 build: [
   ["dune" "build" "-p" name]
 ]
-dev-repo: "git+https://gitlab.com/gabriel.alfour/tezos-utils"
+dev-repo: "git+https://gitlab.com/gabriel.alfour/tezos"
 url {
-  src: "https://gitlab.com/gabriel.alfour/tezos-utils/-/archive/master/tezos-utils-master.tar.gz"
+  src: "https://gitlab.com/gabriel.alfour/tezos/-/archive/master/tezos.master.tar.gz"
 }
