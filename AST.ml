@@ -406,15 +406,15 @@ and conditional = {
   kwd_if     : kwd_if;
   test       : test_expr;
   kwd_then   : kwd_then;
-  ifso       : ifso;
+  ifso       : if_clause;
   terminator : semi option;
   kwd_else   : kwd_else;
-  ifnot      : instruction
+  ifnot      : if_clause
 }
 
-and ifso =
-  ThenInstr of instruction
-| ThenBlock of (instructions * semi option) braces reg
+and if_clause =
+  ClauseInstr of instruction
+| ClauseBlock of (instructions * semi option) braces reg
 
 and test_expr =
   GenExpr of expr
@@ -759,6 +759,10 @@ let instr_to_region = function
 | Single SetRemove           {region; _}
 | Block                      {region; _} -> region
 
+let if_clause_to_region = function
+  ClauseInstr instr       -> instr_to_region instr
+| ClauseBlock {region; _} -> region
+
 let pattern_to_region = function
   PCons       {region; _}
 | PVar        {region; _}
@@ -1073,17 +1077,17 @@ and print_fail {kwd_fail; fail_expr} =
 and print_conditional node =
   let {kwd_if; test; kwd_then; ifso; terminator;
        kwd_else; ifnot} = node in
-  print_token       kwd_if "if";
-  print_test_expr   test;
-  print_token       kwd_then "then";
-  print_ifso        ifso;
-  print_terminator  terminator;
-  print_token       kwd_else "else";
-  print_instruction ifnot
+  print_token      kwd_if "if";
+  print_test_expr  test;
+  print_token      kwd_then "then";
+  print_if_clause  ifso;
+  print_terminator terminator;
+  print_token      kwd_else "else";
+  print_if_clause  ifnot
 
-and print_ifso = function
-  ThenInstr instr -> print_instruction instr
-| ThenBlock {value; _} ->
+and print_if_clause = function
+  ClauseInstr instr -> print_instruction instr
+| ClauseBlock {value; _} ->
     let {lbrace; inside; rbrace} = value in
     let instr, terminator = inside in
     print_token lbrace "{";

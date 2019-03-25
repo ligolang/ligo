@@ -34,7 +34,7 @@ entrypoint withdraw (storage store : store; const sender : address)
              operations := [Transfer (owner, balance)];
         };
         else fail "Below target"
-      else fail "Too soon"
+      else { fail "Too soon"; }
     else skip
   end with (store, operations)
 

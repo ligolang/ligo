@@ -390,15 +390,15 @@ and conditional = {
   kwd_if     : kwd_if;
   test       : test_expr;
   kwd_then   : kwd_then;
-  ifso       : ifso;
+  ifso       : if_clause;
   terminator : semi option;
   kwd_else   : kwd_else;
-  ifnot      : instruction
+  ifnot      : if_clause
 }
 
-and ifso =
-  ThenInstr of instruction
-| ThenBlock of (instructions * semi option) braces reg
+and if_clause =
+  ClauseInstr of instruction
+| ClauseBlock of (instructions * semi option) braces reg
 
 and test_expr =
   GenExpr of expr
@@ -651,6 +651,7 @@ val local_decl_to_region : local_decl -> Region.t
 val path_to_region       : path -> Region.t
 val lhs_to_region        : lhs -> Region.t
 val rhs_to_region        : rhs -> Region.t
+val if_clause_to_region  : if_clause -> Region.t
 
 (* Printing *)
 
