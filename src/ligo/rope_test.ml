@@ -1,5 +1,4 @@
 module A = struct
-  open Rope_top_level_open
   open Rope
 
   let _ = d

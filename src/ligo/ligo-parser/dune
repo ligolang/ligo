@@ -6,10 +6,9 @@
  (modules ParToken Parser)
  (flags -la 1 --explain --external-tokens LexToken))
 
-(executables
- (names LexerMain ParserMain)
- (public_names ligo-lexer ligo-parser)
- (package ligo-parser)
+(library
+ (name ligo_parser)
+ (public_name ligo-parser)
  (modules_without_implementation Error)
  (libraries getopt hex str uutf zarith))
 

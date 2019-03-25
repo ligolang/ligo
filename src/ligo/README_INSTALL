@@ -2,9 +2,16 @@ sudo apt install libev-dev libhidapi-dev
 opam init
 opam switch create toto ocaml-base-compiler.4.06.1
 opam repository add new-tezos https://gitlab.com/gabriel.alfour/new-tezos-opam-repository.git
+
 # si une build a déjà été tentée, il vaut mieux git add tout ce qui est utile et git clean -dfx pour supprimer tout le reste (dune 1.7 crée des fichiers non compatibles avec dune 1.6)
-cd src/lib_utils && opam install .
+opam install ocplib-endian
+
+rm src/ligo/ligo-parser/AST2.ml src/ligo/ligo-parser/Typecheck2.ml src/ligo/ligo-parser/Typecheck2.mli
+git checkout ligo-parser/ligo_parser.ml
+sed -i -e '4,5d; s/ |>.*//' ligo-parser/ligo_parser.ml
+
 cd src/ligo/ligo-parser && opam install .
+cd src/ligo/ligo-helpers && opam install .
 cd src/ligo && opam install .
 opam install merlin
 opam user-setup install
