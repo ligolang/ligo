@@ -406,11 +406,15 @@ and conditional = {
   kwd_if     : kwd_if;
   test       : test_expr;
   kwd_then   : kwd_then;
-  ifso       : instruction;
+  ifso       : ifso;
   terminator : semi option;
   kwd_else   : kwd_else;
   ifnot      : instruction
 }
+
+and ifso =
+  ThenInstr of instruction
+| ThenBlock of (instructions * semi option) braces reg
 
 and test_expr =
   GenExpr of expr
@@ -1072,10 +1076,20 @@ and print_conditional node =
   print_token       kwd_if "if";
   print_test_expr   test;
   print_token       kwd_then "then";
-  print_instruction ifso;
+  print_ifso        ifso;
   print_terminator  terminator;
   print_token       kwd_else "else";
   print_instruction ifnot
+
+and print_ifso = function
+  ThenInstr instr -> print_instruction instr
+| ThenBlock {value; _} ->
+    let {lbrace; inside; rbrace} = value in
+    let instr, terminator = inside in
+    print_token lbrace "{";
+    print_instructions instr;
+    print_terminator   terminator;
+    print_token rbrace "}"
 
 and print_test_expr = function
   GenExpr e -> print_expr e

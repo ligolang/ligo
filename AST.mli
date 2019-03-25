@@ -390,11 +390,15 @@ and conditional = {
   kwd_if     : kwd_if;
   test       : test_expr;
   kwd_then   : kwd_then;
-  ifso       : instruction;
+  ifso       : ifso;
   terminator : semi option;
   kwd_else   : kwd_else;
   ifnot      : instruction
 }
+
+and ifso =
+  ThenInstr of instruction
+| ThenBlock of (instructions * semi option) braces reg
 
 and test_expr =
   GenExpr of expr

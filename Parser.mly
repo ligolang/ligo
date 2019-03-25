@@ -580,7 +580,7 @@ proc_call:
   fun_call { $1 }
 
 conditional:
-  If test_expr Then instruction option(SEMI) Else instruction {
+  If test_expr Then ifso option(SEMI) Else instruction {
     let region = cover $1 (instr_to_region $7) in
     let value = {
       kwd_if     = $1;
@@ -591,6 +591,20 @@ conditional:
       kwd_else   = $6;
       ifnot      = $7}
     in {region; value}
+  }
+
+ifso:
+  instruction {
+    ThenInstr $1
+  }
+| LBRACE series(instruction,RBRACE) {
+   let first, (others, terminator, closing) = $2 in
+   let region = cover $1 closing in
+   let value = {
+     lbrace = $1;
+     inside = (first, others), terminator;
+     rbrace = closing} in
+   ThenBlock {value; region}
   }
 
 test_expr:
