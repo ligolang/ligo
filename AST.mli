@@ -354,7 +354,7 @@ and set_patch  = {
   kwd_patch : kwd_patch;
   path      : path;
   kwd_with  : kwd_with;
-  set_inj   : set_injection reg
+  set_inj   : injection reg
 }
 
 and map_patch  = {
@@ -499,10 +499,10 @@ and expr =
 | EPar    of expr par reg
 
 and set_expr =
-  SetInj of set_injection reg
+  SetInj of injection reg
 | SetMem of set_membership reg
 
-and set_injection = {
+and injection = {
   opening    : opening;
   elements   : (expr, semi) sepseq;
   terminator : semi option;
@@ -575,15 +575,8 @@ and string_expr =
 
 and list_expr =
   Cons of cons bin_op reg
-| List of list_injection reg
+| List of injection reg
 | Nil  of nil par reg
-
-and list_injection = {
-  opening    : opening;
-  elements   : (expr, semi) sepseq;
-  terminator : semi option;
-  closing    : closing
-}
 
 and nil = {
   nil       : kwd_nil;

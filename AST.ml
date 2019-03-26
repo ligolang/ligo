@@ -370,7 +370,7 @@ and set_patch  = {
   kwd_patch : kwd_patch;
   path      : path;
   kwd_with  : kwd_with;
-  set_inj   : set_injection reg
+  set_inj   : injection reg
 }
 
 and map_patch  = {
@@ -515,10 +515,10 @@ and expr =
 | EPar    of expr par reg
 
 and set_expr =
-  SetInj of set_injection reg
+  SetInj of injection reg
 | SetMem of set_membership reg
 
-and set_injection = {
+and injection = {
   opening    : opening;
   elements   : (expr, semi) sepseq;
   terminator : semi option;
@@ -591,15 +591,8 @@ and string_expr =
 
 and list_expr =
   Cons of cons bin_op reg
-| List of list_injection reg
+| List of injection reg
 | Nil  of nil par reg
-
-and list_injection = {
-  opening    : opening;
-  elements   : (expr, semi) sepseq;
-  terminator : semi option;
-  closing    : closing
-}
 
 and nil = {
   nil       : kwd_nil;
@@ -1237,7 +1230,7 @@ and print_map_expr = function
 | MapInj inj           -> print_map_injection inj
 
 and print_set_expr = function
-  SetInj inj -> print_set_injection inj
+  SetInj inj -> print_injection "set" inj
 | SetMem mem -> print_set_membership mem
 
 and print_set_membership {value; _} =
@@ -1308,7 +1301,7 @@ and print_string_expr = function
 and print_list_expr = function
   Cons {value = {arg1; op; arg2}; _} ->
     print_expr arg1; print_token op "#"; print_expr arg2
-| List e -> print_list_injection e
+| List e -> print_injection "list" e
 | Nil  e -> print_nil e
 
 and print_constr_expr = function
@@ -1357,7 +1350,7 @@ and print_set_patch node =
   print_token kwd_patch "patch";
   print_path path;
   print_token kwd_with "with";
-  print_set_injection set_inj
+  print_injection "set" set_inj
 
 and print_map_patch node =
   let {kwd_patch; path; kwd_with; map_inj} = node in
@@ -1389,9 +1382,9 @@ and print_map_injection {value; _} =
   print_terminator terminator;
   print_closing closing
 
-and print_set_injection {value; _} =
-  let {opening; elements; terminator; closing} : set_injection = value in
-  print_opening "set" opening;
+and print_injection kwd {value; _} =
+  let {opening; elements; terminator; closing} : injection = value in
+  print_opening kwd opening;
   print_sepseq ";" print_expr elements;
   print_terminator terminator;
   print_closing closing
@@ -1420,13 +1413,6 @@ and print_tuple_inj {value; _} =
   print_token lpar "(";
   print_nsepseq "," print_expr inside;
   print_token rpar ")"
-
-and print_list_injection {value; _} =
-  let {opening; elements; terminator; closing} : list_injection = value in
-  print_opening "list" opening;
-  print_sepseq ";" print_expr elements;
-  print_terminator terminator;
-  print_closing closing
 
 and print_nil {value; _} =
   let {lpar; inside; rpar} = value in
