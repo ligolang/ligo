@@ -513,7 +513,13 @@ end
 module Combinators = struct
   let annotated_expression ?type_annotation expression = {expression ; type_annotation}
 
+  let unit  () : expression = Literal (Unit)
   let number n : expression = Literal (Number n)
+  let bool   b : expression = Literal (Bool b)
+  let string s : expression = Literal (String s)
+  let bytes  b : expression = Literal (Bytes (Bytes.of_string b))
+
+  let tuple (lst : ae list) : expression = Tuple lst
 
   let record (lst : (string * ae) list) : expression =
     let aux prev (k, v) = SMap.add k v prev in
