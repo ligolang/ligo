@@ -641,7 +641,7 @@ proc_call:
   fun_call { $1 }
 
 conditional:
-  If test_expr Then if_clause option(SEMI) Else if_clause {
+  If expr Then if_clause option(SEMI) Else if_clause {
     let region = cover $1 (if_clause_to_region $7) in
     let value = {
       kwd_if     = $1;
@@ -666,22 +666,6 @@ if_clause:
      inside = (first, others), terminator;
      rbrace = closing} in
    ClauseBlock {value; region}
-  }
-
-test_expr:
-  expr           { GenExpr $1 }
-| set_membership {  SetMem $1 }
-
-set_membership:
-  expr Contains expr {
-    let start  = expr_to_region $1
-    and stop   = expr_to_region $3 in
-    let region = cover start stop in
-    let value  = {
-      set          = $1;
-      kwd_contains = $2;
-      element      = $3}
-    in {region; value}
   }
 
 case_instr:
@@ -794,12 +778,25 @@ expr:
 | conj_expr { $1 }
 
 conj_expr:
-  conj_expr And comp_expr {
+  conj_expr And set_membership {
     let start  = expr_to_region $1
     and stop   = expr_to_region $3 in
     let region = cover start stop
     and value  = {arg1 = $1; op = $2; arg2 = $3}
     in ELogic (BoolExpr (And {region; value}))
+  }
+| set_membership { $1 }
+
+set_membership:
+  core_expr Contains set_membership {
+    let start  = expr_to_region $1
+    and stop   = expr_to_region $3 in
+    let region = cover start stop in
+    let value  = {
+      set          = $1;
+      kwd_contains = $2;
+      element      = $3}
+    in ESet (SetMem {region; value})
   }
 | comp_expr { $1 }
 
@@ -926,7 +923,7 @@ unary_expr:
 
 core_expr:
   Int              { EArith (Int $1) }
-| var              { EVar $1 }
+| var              { EVar $1 }               (* TODO: Path *)
 | String           { EString (String $1) }
 | Bytes            { EBytes $1 }
 | C_False          { ELogic (BoolExpr (False $1)) }

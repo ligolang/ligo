@@ -391,7 +391,7 @@ and fail_instr = {
 
 and conditional = {
   kwd_if     : kwd_if;
-  test       : test_expr;
+  test       : expr;
   kwd_then   : kwd_then;
   ifso       : if_clause;
   terminator : semi option;
@@ -402,10 +402,6 @@ and conditional = {
 and if_clause =
   ClauseInstr of instruction
 | ClauseBlock of (instructions * semi option) braces reg
-
-and test_expr =
-  GenExpr of expr
-| SetMem  of set_membership reg
 
 and set_membership = {
   set          : expr;
@@ -503,6 +499,7 @@ and expr =
 
 and set_expr =
   SetInj of set_injection reg
+| SetMem of set_membership reg
 
 and set_injection = {
   opening    : opening;

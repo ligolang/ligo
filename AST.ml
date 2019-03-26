@@ -407,7 +407,7 @@ and fail_instr = {
 
 and conditional = {
   kwd_if     : kwd_if;
-  test       : test_expr;
+  test       : expr;
   kwd_then   : kwd_then;
   ifso       : if_clause;
   terminator : semi option;
@@ -418,10 +418,6 @@ and conditional = {
 and if_clause =
   ClauseInstr of instruction
 | ClauseBlock of (instructions * semi option) braces reg
-
-and test_expr =
-  GenExpr of expr
-| SetMem  of set_membership reg
 
 and set_membership = {
   set          : expr;
@@ -519,6 +515,7 @@ and expr =
 
 and set_expr =
   SetInj of set_injection reg
+| SetMem of set_membership reg
 
 and set_injection = {
   opening    : opening;
@@ -705,7 +702,8 @@ and map_expr_to_region = function
 | MapInj    {region; _} -> region
 
 and set_expr_to_region = function
-  SetInj {region; _} -> region
+  SetInj {region; _}
+| SetMem {region; _} -> region
 
 and logic_expr_to_region = function
   BoolExpr e -> bool_expr_to_region e
@@ -1093,7 +1091,7 @@ and print_conditional node =
   let {kwd_if; test; kwd_then; ifso; terminator;
        kwd_else; ifnot} = node in
   print_token      kwd_if "if";
-  print_test_expr  test;
+  print_expr       test;
   print_token      kwd_then "then";
   print_if_clause  ifso;
   print_terminator terminator;
@@ -1109,16 +1107,6 @@ and print_if_clause = function
     print_instructions instr;
     print_terminator   terminator;
     print_token rbrace "}"
-
-and print_test_expr = function
-  GenExpr e -> print_expr e
-| SetMem  m -> print_set_membership m
-
-and print_set_membership {value; _} =
-  let {set; kwd_contains; element} = value in
-  print_expr set;
-  print_token kwd_contains "contains";
-  print_expr element
 
 and print_case_instr (node : case_instr) =
   let {kwd_case; expr; kwd_of;
@@ -1235,6 +1223,13 @@ and print_map_expr = function
 
 and print_set_expr = function
   SetInj inj -> print_set_injection inj
+| SetMem mem -> print_set_membership mem
+
+and print_set_membership {value; _} =
+  let {set; kwd_contains; element} = value in
+  print_expr set;
+  print_token kwd_contains "contains";
+  print_expr element
 
 and print_map_lookup {path; index} =
   let {lbracket; inside; rbracket} = index.value in
