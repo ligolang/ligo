@@ -166,6 +166,15 @@ module PP = struct
         fprintf ppf "%s := %a" name annotated_expression ae
     | Matching (ae, m) ->
         fprintf ppf "match %a with %a" annotated_expression ae matching m
+
+  let declaration ppf (d:declaration) = match d with
+    | Type_declaration {type_name ; type_expression = te} ->
+        fprintf ppf "type %s = %a" type_name type_expression te
+    | Constant_declaration {name ; annotated_expression = ae} ->
+        fprintf ppf "const %s = %a" name annotated_expression ae
+
+  let program ppf (p:program) =
+    fprintf ppf "%a" (list_sep declaration) p
 end
 
 module Simplify = struct

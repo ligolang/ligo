@@ -60,12 +60,22 @@ module Errors = struct
     let full = Format.asprintf "%s in %a" n Environment.PP.type_ e in
     error title full
 
+  let unbound_variable (e:environment) (n:string) =
+    let title = "unbound variable" in
+    let full = Format.asprintf "%s in %a" n Environment.PP.value e in
+    error title full
+
   let unrecognized_constant (n:string) =
     let title = "unrecognized constant" in
     let full = n in
     error title full
+
+  let constant_declaration_error (name:string) =
+    error "typing constant declaration" name
+
 end
 open Errors
+
 
 let rec type_program (p:I.program) : O.program result =
   let aux (e, acc:(environment * O.declaration list)) (d:I.declaration) =
@@ -74,7 +84,9 @@ let rec type_program (p:I.program) : O.program result =
     | None -> ok (e', acc)
     | Some d' -> ok (e', d' :: acc)
   in
-  let%bind (_, lst) = bind_fold_list aux (Environment.empty, []) p in
+  let%bind (_, lst) =
+    trace (simple_error "typing program") @@
+    bind_fold_list aux (Environment.empty, []) p in
   ok @@ List.rev lst
 
 and type_declaration env : I.declaration -> (environment * O.declaration option) result = function
@@ -83,17 +95,23 @@ and type_declaration env : I.declaration -> (environment * O.declaration option)
       let env' = Environment.add_type env type_name tv in
       ok (env', None)
   | Constant_declaration {name;annotated_expression} ->
-      let%bind ae' = type_annotated_expression env annotated_expression in
+      let%bind ae' =
+        trace (constant_declaration_error name) @@
+        type_annotated_expression env annotated_expression in
       let env' = Environment.add env name ae'.type_annotation in
       ok (env', Some (O.Constant_declaration {name;annotated_expression=ae'}))
 
-and type_block (e:environment) (b:I.block) : O.block result =
+and type_block_full (e:environment) (b:I.block) : (O.block * environment) result =
   let aux (e, acc:(environment * O.instruction list)) (i:I.instruction) =
     let%bind (e', i') = type_instruction e i in
     ok (e', i' :: acc)
   in
-  let%bind (_, lst) = bind_fold_list aux (e, []) b in
-  ok @@ List.rev lst
+  let%bind (e', lst) = bind_fold_list aux (e, []) b in
+  ok @@ (List.rev lst, e')
+
+and type_block (e:environment) (b:I.block) : O.block result =
+  let%bind (block, _) = type_block_full e b in
+  ok block
 
 and type_instruction (e:environment) : I.instruction -> (environment * O.instruction) result = function
   | Skip -> ok (e, O.Skip)
@@ -216,7 +234,7 @@ and type_annotated_expression (e:environment) (ae:I.annotated_expression) : O.an
   (* Basic *)
   | Variable name ->
       let%bind tv' =
-        trace_option (simple_error "var not in env")
+        trace_option (unbound_variable e name)
         @@ Environment.get e name in
       let%bind type_annotation = check tv' in
       ok O.{expression = Variable name ; type_annotation}
@@ -286,8 +304,8 @@ and type_annotated_expression (e:environment) (ae:I.annotated_expression) : O.an
       let%bind input_type = evaluate_type e input_type in
       let%bind output_type = evaluate_type e output_type in
       let e' = Environment.add e binder input_type in
-      let%bind result = type_annotated_expression e' result in
-      let%bind body = type_block e' body in
+      let%bind (body, e'') = type_block_full e' body in
+      let%bind result = type_annotated_expression e'' result in
       let%bind type_annotation = check @@ make_t_function (input_type, output_type) in
       ok O.{expression = Lambda {binder;input_type;output_type;result;body} ; type_annotation}
   | Constant (name, lst) ->

@@ -11,7 +11,9 @@ module Transpiler = Transpiler
 
 open Ligo_helpers.Trace
 let parse_file (source:string) : AST_Raw.t result =
-  let channel = open_in source in
+  let%bind channel =
+    generic_try (simple_error "error opening file") @@
+    (fun () -> open_in source) in
   let lexbuf = Lexing.from_channel channel in
   let Lexer.{read ; _} =
     Lexer.open_token_stream None in
@@ -91,9 +93,14 @@ let transpile_value ?(env:Mini_c.Environment.t = Mini_c.Environment.empty)
 let untranspile_value (v : Mini_c.value) (e:AST_Typed.type_value) : AST_Typed.annotated_expression result =
   Transpiler.untranspile v e
 
-let type_file (path:string) : AST_Typed.program result =
+let type_file ?(debug_simplify = false) (path:string) : AST_Typed.program result =
   let%bind raw = parse_file path in
-  let%bind simpl = simplify raw in
+  let%bind simpl =
+    trace (simple_error "simplifying") @@
+    simplify raw in
+  (if debug_simplify then
+     Format.printf "Simplified : %a\n%!" AST_Simplified.PP.program simpl
+  ) ;
   let%bind typed =
     trace (simple_error "typing") @@
     type_ simpl in
