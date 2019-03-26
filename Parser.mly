@@ -528,6 +528,8 @@ map_patch:
     in {region; value}
   }
 
+(* Note: [list_injection] and [set_injection] could be merged. *)
+
 set_injection:
   Set series(expr,End) {
     let first, (others, terminator, closing) = $2 in
@@ -930,8 +932,7 @@ core_expr:
 | C_True           { ELogic (BoolExpr (True $1)) }
 | C_Unit           { EUnit $1 }
 | tuple_expr       { ETuple $1 }
-| list_expr        { EList (List $1) }
-| nil              { EList (Nil $1) }
+| list_expr        { EList $1 }
 | none_expr        { EConstr (NoneExpr $1) }
 | fun_call         { ECall $1 }
 | map_expr         { EMap $1 }
@@ -1015,6 +1016,12 @@ arguments:
   tuple_inj { $1 }
 
 list_expr:
+  list_injection { List $1 }
+| nil            {  Nil $1 }
+
+(* Note: [list_injection] and [set_injection] could be merged. *)
+
+list_injection:
   List series(expr,End) {
     let first, (others, terminator, closing) = $2 in
     let region = cover $1 closing
@@ -1095,8 +1102,8 @@ core_pattern:
     in PSome {region; value = $1,$2}}
 
 list_patt:
-  brackets(sepseq(core_pattern,COMMA)) { Sugar $1 }
-| par(cons_pattern)                    {   Raw $1 }
+  brackets(sepseq(core_pattern,SEMI)) { Sugar $1 }
+| par(cons_pattern)                   {   Raw $1 }
 
 cons_pattern:
   core_pattern CONS pattern { $1,$2,$3 }

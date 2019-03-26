@@ -623,7 +623,7 @@ and selection =
 | Component of (Lexer.lexeme * Z.t) reg
 
 and tuple_expr =
-  TupleInj  of tuple_injection
+  TupleInj of tuple_injection
 
 and tuple_injection = (expr, comma) nsepseq par reg
 
@@ -657,7 +657,7 @@ and pattern =
 | PTuple  of (pattern, comma) nsepseq par reg
 
 and list_pattern =
-  Sugar of (pattern, comma) sepseq brackets reg
+  Sugar of (pattern, semi) sepseq brackets reg
 | Raw   of (pattern * cons * pattern) par reg
 
 (* Projecting regions *)
