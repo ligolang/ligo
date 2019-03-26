@@ -81,8 +81,10 @@ type t =
 | If         of Region.t  (* "if"         *)
 | In         of Region.t  (* "in"         *)
 | Is         of Region.t  (* "is"         *)
+| List       of Region.t  (* "list"       *)
 | Map        of Region.t  (* "map"        *)
 | Mod        of Region.t  (* "mod"        *)
+| Nil        of Region.t  (* "nil"        *)
 | Not        of Region.t  (* "not"        *)
 | Of         of Region.t  (* "of"         *)
 | Or         of Region.t  (* "or"         *)
@@ -206,8 +208,10 @@ let proj_token = function
 | If         region -> region, "If"
 | In         region -> region, "In"
 | Is         region -> region, "Is"
+| List       region -> region, "List"
 | Map        region -> region, "Map"
 | Mod        region -> region, "Mod"
+| Nil        region -> region, "Nil"
 | Not        region -> region, "Not"
 | Of         region -> region, "Of"
 | Or         region -> region, "Or"
@@ -286,22 +290,23 @@ let to_lexeme = function
 | Const      _ -> "const"
 | Contains   _ -> "contains"
 | Down       _ -> "down"
-| Fail       _ -> "fail"
-| If         _ -> "if"
-| In         _ -> "in"
-| Is         _ -> "is"
+| Else       _ -> "else"
+| End        _ -> "end"
 | Entrypoint _ -> "entrypoint"
+| Fail       _ -> "fail"
 | For        _ -> "for"
 | From       _ -> "from"
 | Function   _ -> "function"
-| Type       _ -> "type"
+| If         _ -> "if"
+| In         _ -> "in"
+| Is         _ -> "is"
+| List       _ -> "list"
+| Map        _ -> "map"
+| Mod        _ -> "mod"
+| Nil        _ -> "nil"
+| Not        _ -> "not"
 | Of         _ -> "of"
 | Or         _ -> "or"
-| Var        _ -> "var"
-| End        _ -> "end"
-| Then       _ -> "then"
-| Else       _ -> "else"
-| Map        _ -> "map"
 | Patch      _ -> "patch"
 | Procedure  _ -> "procedure"
 | Record     _ -> "record"
@@ -310,9 +315,10 @@ let to_lexeme = function
 | Skip       _ -> "skip"
 | Step       _ -> "step"
 | Storage    _ -> "storage"
+| Then       _ -> "then"
 | To         _ -> "to"
-| Mod        _ -> "mod"
-| Not        _ -> "not"
+| Type       _ -> "type"
+| Var        _ -> "var"
 | While      _ -> "while"
 | With       _ -> "with"
 
@@ -346,22 +352,23 @@ let keywords = [
   (fun reg -> Const      reg);
   (fun reg -> Contains   reg);
   (fun reg -> Down       reg);
-  (fun reg -> Fail       reg);
-  (fun reg -> If         reg);
-  (fun reg -> In         reg);
-  (fun reg -> Is         reg);
+  (fun reg -> Else       reg);
+  (fun reg -> End        reg);
   (fun reg -> Entrypoint reg);
   (fun reg -> For        reg);
   (fun reg -> From       reg);
   (fun reg -> Function   reg);
-  (fun reg -> Type       reg);
+  (fun reg -> Fail       reg);
+  (fun reg -> If         reg);
+  (fun reg -> In         reg);
+  (fun reg -> Is         reg);
+  (fun reg -> List       reg);
+  (fun reg -> Map        reg);
+  (fun reg -> Mod        reg);
+  (fun reg -> Nil        reg);
+  (fun reg -> Not        reg);
   (fun reg -> Of         reg);
   (fun reg -> Or         reg);
-  (fun reg -> Var        reg);
-  (fun reg -> End        reg);
-  (fun reg -> Then       reg);
-  (fun reg -> Else       reg);
-  (fun reg -> Map        reg);
   (fun reg -> Patch      reg);
   (fun reg -> Procedure  reg);
   (fun reg -> Record     reg);
@@ -370,9 +377,10 @@ let keywords = [
   (fun reg -> Skip       reg);
   (fun reg -> Step       reg);
   (fun reg -> Storage    reg);
+  (fun reg -> Then       reg);
   (fun reg -> To         reg);
-  (fun reg -> Mod        reg);
-  (fun reg -> Not        reg);
+  (fun reg -> Type       reg);
+  (fun reg -> Var        reg);
   (fun reg -> While      reg);
   (fun reg -> With       reg)
 ]
@@ -574,22 +582,23 @@ let is_kwd = function
 | Const      _
 | Contains   _
 | Down       _
-| Fail       _
-| If         _
-| In         _
-| Is         _
+| Else       _
+| End        _
 | Entrypoint _
+| Fail       _
 | For        _
 | From       _
 | Function   _
-| Type       _
+| If         _
+| In         _
+| Is         _
+| List       _
+| Map        _
+| Mod        _
+| Nil        _
+| Not        _
 | Of         _
 | Or         _
-| Var        _
-| End        _
-| Then       _
-| Else       _
-| Map        _
 | Patch      _
 | Procedure  _
 | Record     _
@@ -598,9 +607,10 @@ let is_kwd = function
 | Skip       _
 | Step       _
 | Storage    _
+| Then       _
 | To         _
-| Mod        _
-| Not        _
+| Type       _
+| Var        _
 | While      _
 | With       _ -> true
 |            _ -> false

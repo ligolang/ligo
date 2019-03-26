@@ -177,6 +177,13 @@ core_type:
     let tuple = {region; value={lpar; inside=inside,[]; rpar}}
     in TApp {region=total; value = type_constr, tuple}
   }
+| List par(type_expr) {
+    let total = cover $1 $2.region in
+    let type_constr = {value="list"; region=$1} in
+    let {region; value = {lpar; inside; rpar}} = $2 in
+    let tuple = {region; value={lpar; inside=inside,[]; rpar}}
+    in TApp {region=total; value = type_constr, tuple}
+  }
 | par(type_expr) {
     TPar $1
   }
@@ -390,18 +397,17 @@ unqualified_decl(OP):
     let init =
       match $5.value with
         `Expr e -> e
-      | `EList (lbracket, rbracket) ->
+      | `EList kwd_nil ->
            let region = $5.region
            and value = {
-             lbracket;
-             rbracket;
+             nil = kwd_nil;
              colon = Region.ghost;
              list_type = $3} in
            let value = {
              lpar   = Region.ghost;
              inside = value;
              rpar   = Region.ghost} in
-           EList (EmptyList {region; value})
+           EList (Nil {region; value})
       | `ENone region ->
            let value = {
              lpar = Region.ghost;
@@ -451,13 +457,12 @@ var_decl:
   }
 
 extended_expr:
-  expr              { {region = expr_to_region $1;
-                       value  = `Expr $1} }
-| LBRACKET RBRACKET { {region = cover $1 $2;
-                       value  = `EList ($1,$2)} }
-| C_None            { {region = $1; value = `ENone $1} }
-| map_injection     { {region = $1.region; value = `EMap $1} }
-| set_injection     { {region = $1.region; value = `ESet $1} }
+  expr          { {region = expr_to_region $1;
+                   value  = `Expr $1} }
+| Nil           { {region = $1; value = `EList $1} }
+| C_None        { {region = $1; value = `ENone $1} }
+| map_injection { {region = $1.region; value = `EMap $1} }
+| set_injection { {region = $1.region; value = `ESet $1} }
 
 instruction:
   single_instr { Single $1 }
@@ -527,11 +532,39 @@ set_injection:
   Set series(expr,End) {
     let first, (others, terminator, closing) = $2 in
     let region = cover $1 closing
-    and value = {
-      opening  = $1;
-      elements = first, others;
+    and value : set_injection = {
+      opening  = Kwd $1;
+      elements = Some (first, others);
       terminator;
-      closing}
+      closing = End closing}
+    in {region; value}
+  }
+| Set End {
+    let region = cover $1 $2
+    and value : set_injection = {
+      opening    = Kwd $1;
+      elements   = None;
+      terminator = None;
+      closing    = End $2}
+    in {region; value}
+  }
+| Set LBRACKET series(expr,RBRACKET) {
+    let first, (others, terminator, closing) = $3 in
+    let region = cover $1 closing
+    and value : set_injection = {
+      opening  = KwdBracket ($1,$2);
+      elements = Some (first, others);
+      terminator;
+      closing = RBracket closing}
+    in {region; value}
+  }
+| Set LBRACKET RBRACKET {
+    let region = cover $1 $3
+    and value : set_injection = {
+      opening    = KwdBracket ($1,$2);
+      elements   = None;
+      terminator = None;
+      closing    = RBracket $3}
     in {region; value}
   }
 
@@ -540,10 +573,38 @@ map_injection:
     let first, (others, terminator, closing) = $2 in
     let region = cover $1 closing
     and value = {
-      opening  = $1;
-      bindings = first, others;
+      opening  = Kwd $1;
+      bindings = Some (first, others);
       terminator;
-      closing}
+      closing = End closing}
+    in {region; value}
+  }
+| Map End {
+    let region = cover $1 $2
+    and value = {
+      opening    = Kwd $1;
+      bindings   = None;
+      terminator = None;
+      closing    = End $2}
+    in {region; value}
+  }
+| Map LBRACKET series(binding,RBRACKET) {
+    let first, (others, terminator, closing) = $3 in
+    let region = cover $1 closing
+    and value = {
+      opening  = KwdBracket ($1,$2);
+      bindings = Some (first, others);
+      terminator;
+      closing = RBracket closing}
+    in {region; value}
+  }
+| Map LBRACKET RBRACKET {
+    let region = cover $1 $3
+    and value  = {
+      opening    = KwdBracket ($1,$2);
+      bindings   = None;
+      terminator = None;
+      closing    = RBracket $3}
     in {region; value}
   }
 
@@ -873,7 +934,7 @@ core_expr:
 | C_Unit           { EUnit $1 }
 | tuple            { ETuple $1 }
 | list_expr        { EList (List $1) }
-| empty_list       { EList (EmptyList $1) }
+| nil              { EList (Nil $1) }
 | none_expr        { EConstr (NoneExpr $1) }
 | fun_call         { ECall $1 }
 | map_expr         { EMap $1 }
@@ -953,17 +1014,53 @@ arguments:
   tuple { $1 }
 
 list_expr:
-  brackets(nsepseq(expr,COMMA)) { $1 }
+  List series(expr,End) {
+    let first, (others, terminator, closing) = $2 in
+    let region = cover $1 closing
+    and value : list_injection = {
+      opening  = Kwd $1;
+      elements = Some (first, others);
+      terminator;
+      closing = End closing}
+    in {region; value}
+  }
+| List End {
+    let region = cover $1 $2
+    and value : list_injection = {
+      opening    = Kwd $1;
+      elements   = None;
+      terminator = None;
+      closing    = End $2}
+    in {region; value}
+  }
+| List LBRACKET series(expr,RBRACKET) {
+    let first, (others, terminator, closing) = $3 in
+    let region = cover $1 closing
+    and value : list_injection = {
+      opening  = KwdBracket ($1,$2);
+      elements = Some (first, others);
+      terminator;
+      closing = RBracket closing}
+    in {region; value}
+  }
+| List LBRACKET RBRACKET {
+    let region = cover $1 $3
+    and value : list_injection = {
+      opening    = KwdBracket ($1,$2);
+      elements   = None;
+      terminator = None;
+      closing    = RBracket $3}
+    in {region; value}
+  }
 
-empty_list:
+nil:
   par(typed_empty_list) { $1 }
 
 typed_empty_list:
-  LBRACKET RBRACKET COLON type_expr {
-    {lbracket  = $1;
-     rbracket  = $2;
-     colon     = $3;
-     list_type = $4}
+  Nil COLON type_expr {
+    {nil       = $1;
+     colon     = $2;
+     list_type = $3}
   }
 
 none_expr:

@@ -23,6 +23,7 @@ val sepseq_to_region  : ('a -> Region.t) -> ('a,'sep) sepseq -> Region.t
 
 (* Keywords of LIGO *)
 
+type keyword        = Region.t
 type kwd_and        = Region.t
 type kwd_begin      = Region.t
 type kwd_block      = Region.t
@@ -40,8 +41,10 @@ type kwd_function   = Region.t
 type kwd_if         = Region.t
 type kwd_in         = Region.t
 type kwd_is         = Region.t
+type kwd_list       = Region.t
 type kwd_map        = Region.t
 type kwd_mod        = Region.t
+type kwd_nil        = Region.t
 type kwd_not        = Region.t
 type kwd_of         = Region.t
 type kwd_or         = Region.t
@@ -362,10 +365,10 @@ and map_patch  = {
 }
 
 and map_injection = {
-  opening    : kwd_map;
-  bindings   : (binding reg, semi) nsepseq;
+  opening    : opening;
+  bindings   : (binding reg, semi) sepseq;
   terminator : semi option;
-  closing    : kwd_end
+  closing    : closing
 }
 
 and binding = {
@@ -502,11 +505,19 @@ and set_expr =
   SetInj of set_injection reg
 
 and set_injection = {
-  opening    : kwd_set;
-  elements   : (expr, semi) nsepseq;
+  opening    : opening;
+  elements   : (expr, semi) sepseq;
   terminator : semi option;
-  closing    : kwd_end
+  closing    : closing
 }
+
+and opening =
+  Kwd        of keyword
+| KwdBracket of keyword * lbracket
+
+and closing =
+  End       of kwd_end
+| RBracket  of rbracket
 
 and map_expr =
   MapLookUp of map_lookup reg
@@ -565,9 +576,22 @@ and string_expr =
 | String of Lexer.lexeme reg
 
 and list_expr =
-  Cons      of cons bin_op reg
-| List      of (expr, comma) nsepseq brackets reg
-| EmptyList of empty_list reg
+  Cons of cons bin_op reg
+| List of list_injection reg
+| Nil  of nil par reg
+
+and list_injection = {
+  opening    : opening;
+  elements   : (expr, semi) sepseq;
+  terminator : semi option;
+  closing    : closing
+}
+
+and nil = {
+  nil       : kwd_nil;
+  colon     : colon;
+  list_type : type_expr
+}
 
 and constr_expr =
   SomeApp   of (c_Some * arguments) reg
@@ -598,15 +622,6 @@ and record_projection = {
 }
 
 and tuple = (expr, comma) nsepseq par reg
-
-and empty_list = typed_empty_list par
-
-and typed_empty_list = {
-  lbracket  : lbracket;
-  rbracket  : rbracket;
-  colon     : colon;
-  list_type : type_expr
-}
 
 and none_expr = typed_none_expr par
 

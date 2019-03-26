@@ -39,6 +39,7 @@ let sepseq_to_region to_region = function
 
 (* Keywords of LIGO *)
 
+type keyword        = Region.t
 type kwd_and        = Region.t
 type kwd_begin      = Region.t
 type kwd_block      = Region.t
@@ -56,8 +57,10 @@ type kwd_function   = Region.t
 type kwd_if         = Region.t
 type kwd_in         = Region.t
 type kwd_is         = Region.t
+type kwd_list       = Region.t
 type kwd_map        = Region.t
 type kwd_mod        = Region.t
+type kwd_nil        = Region.t
 type kwd_not        = Region.t
 type kwd_of         = Region.t
 type kwd_or         = Region.t
@@ -378,10 +381,10 @@ and map_patch  = {
 }
 
 and map_injection = {
-  opening    : kwd_map;
-  bindings   : (binding reg, semi) nsepseq;
+  opening    : opening;
+  bindings   : (binding reg, semi) sepseq;
   terminator : semi option;
-  closing    : kwd_end
+  closing    : closing
 }
 
 and binding = {
@@ -518,11 +521,19 @@ and set_expr =
   SetInj of set_injection reg
 
 and set_injection = {
-  opening    : kwd_set;
-  elements   : (expr, semi) nsepseq;
+  opening    : opening;
+  elements   : (expr, semi) sepseq;
   terminator : semi option;
-  closing    : kwd_end
+  closing    : closing
 }
+
+and opening =
+  Kwd        of keyword
+| KwdBracket of keyword * lbracket
+
+and closing =
+  End       of kwd_end
+| RBracket  of rbracket
 
 and map_expr =
   MapLookUp of map_lookup reg
@@ -581,9 +592,22 @@ and string_expr =
 | String of Lexer.lexeme reg
 
 and list_expr =
-  Cons      of cons bin_op reg
-| List      of (expr, comma) nsepseq brackets reg
-| EmptyList of empty_list reg
+  Cons of cons bin_op reg
+| List of list_injection reg
+| Nil  of nil par reg
+
+and list_injection = {
+  opening    : opening;
+  elements   : (expr, semi) sepseq;
+  terminator : semi option;
+  closing    : closing
+}
+
+and nil = {
+  nil       : kwd_nil;
+  colon     : colon;
+  list_type : type_expr
+}
 
 and constr_expr =
   SomeApp   of (c_Some * arguments) reg
@@ -614,15 +638,6 @@ and record_projection = {
 }
 
 and tuple = (expr, comma) nsepseq par reg
-
-and empty_list = typed_empty_list par
-
-and typed_empty_list = {
-  lbracket  : lbracket;
-  rbracket  : rbracket;
-  colon     : colon;
-  list_type : type_expr
-}
 
 and none_expr = typed_none_expr par
 
@@ -725,9 +740,9 @@ and string_expr_to_region = function
 | String {region; _} -> region
 
 and list_expr_to_region = function
-  Cons      {region; _}
-| List      {region; _}
-| EmptyList {region; _} -> region
+  Cons {region; _}
+| List {region; _}
+| Nil  {region; _} -> region
 
 and constr_expr_to_region = function
   NoneExpr  {region; _}
@@ -1283,8 +1298,8 @@ and print_string_expr = function
 and print_list_expr = function
   Cons {value = {arg1; op; arg2}; _} ->
     print_expr arg1; print_token op "#"; print_expr arg2
-| List e       -> print_list e
-| EmptyList e  -> print_empty_list e
+| List e -> print_list_injection e
+| Nil  e -> print_nil e
 
 and print_constr_expr = function
   SomeApp e   -> print_some_app e
@@ -1356,17 +1371,27 @@ and print_set_remove node =
 
 and print_map_injection {value; _} =
   let {opening; bindings; terminator; closing} = value in
-  print_token opening "map";
-  print_nsepseq ";" print_binding bindings;
+  print_opening "map" opening;
+  print_sepseq ";" print_binding bindings;
   print_terminator terminator;
-  print_token closing "end"
+  print_closing closing
 
 and print_set_injection {value; _} =
-  let {opening; elements; terminator; closing} = value in
-  print_token opening "set";
-  print_nsepseq ";" print_expr elements;
+  let {opening; elements; terminator; closing} : set_injection = value in
+  print_opening "set" opening;
+  print_sepseq ";" print_expr elements;
   print_terminator terminator;
-  print_token closing "end"
+  print_closing closing
+
+and print_opening lexeme = function
+  Kwd kwd -> print_token kwd lexeme
+| KwdBracket (kwd, lbracket) ->
+    print_token kwd lexeme;
+    print_token lbracket "{"
+
+and print_closing = function
+  RBracket rbracket -> print_token rbracket "}"
+| End kwd_end       -> print_token kwd_end "end"
 
 and print_binding {value; _} =
   let {source; arrow; image} = value in
@@ -1380,18 +1405,18 @@ and print_tuple {value; _} =
   print_nsepseq "," print_expr inside;
   print_token rpar ")"
 
-and print_list {value; _} =
-  let {lbracket; inside; rbracket} = value in
-  print_token lbracket "[";
-  print_nsepseq "," print_expr inside;
-  print_token rbracket "]"
+and print_list_injection {value; _} =
+  let {opening; elements; terminator; closing} : list_injection = value in
+  print_opening "list" opening;
+  print_sepseq ";" print_expr elements;
+  print_terminator terminator;
+  print_closing closing
 
-and print_empty_list {value; _} =
+and print_nil {value; _} =
   let {lpar; inside; rpar} = value in
-  let {lbracket; rbracket; colon; list_type} = inside in
+  let {nil; colon; list_type} = inside in
   print_token     lpar "(";
-  print_token     lbracket "[";
-  print_token     rbracket "]";
+  print_token     nil "nil";
   print_token     colon ":";
   print_type_expr list_type;
   print_token     rpar ")"

@@ -10,7 +10,9 @@ entrypoint contribute (storage store : store;
                        const sender  : address;
                        const amount  : mutez)
   : store * list (operation) is
-  var operations : list (operation) := []
+  var operations : list (operation) := nil
+  const s : list (int) = list [1; 2; 3]
+  const t : set (int) = set []
   block {
     if now > store.deadline then
       fail "Deadline passed";
@@ -24,14 +26,14 @@ entrypoint contribute (storage store : store;
 
 entrypoint withdraw (storage store : store; const sender : address)
   : store * list (operation) is
-  var operations : list (operation) := []
+  var operations : list (operation) := list end
   begin
     if sender = owner then
       if now (Unit) >= store.deadline then
         if balance >= store.goal then {
              store.funded := True;
 //           patch store with record funded = True end;
-             operations := [Transfer (owner, balance)];
+             operations := list [Transfer (owner, balance)];
         };
         else fail "Below target"
       else { fail "Too soon"; }
@@ -40,7 +42,7 @@ entrypoint withdraw (storage store : store; const sender : address)
 
 entrypoint claim (storage store : store; const sender : address)
   : store * list (operation) is
-  var operations : list (operation) := []
+  var operations : list (operation) := list []
   var amount : mutez := 0
   begin
     if now <= store.deadline then
@@ -54,7 +56,7 @@ entrypoint claim (storage store : store; const sender : address)
             fail "Cannot refund"
           else
             begin
-              operations := [Transfer (sender, amount)];
+              operations := list [Transfer (sender, amount)];
               remove sender from map store.backers
             end
       end
