@@ -69,8 +69,9 @@ and translate_instruction (env:Environment.t) (i:AST.instruction) : statement op
       return ~env' (Assignment (name, expression))
   | Matching (expr, Match_bool {match_true ; match_false}) ->
       let%bind expr' = translate_annotated_expression env expr in
-      let%bind true_branch = translate_block env match_true in
-      let%bind false_branch = translate_block env match_false in
+      let env' = Environment.extend env in
+      let%bind true_branch = translate_block env' match_true in
+      let%bind false_branch = translate_block env' match_false in
       return (Cond (expr', true_branch, false_branch))
   | Matching _ -> simple_fail "todo : match"
   | Loop (expr, body) ->

@@ -72,6 +72,16 @@ module Append = struct
     in
     aux @@ List.rev lst
 
+  let rec to_list' t' =
+    match t' with
+    | Leaf x -> [x]
+    | Node {a;b} -> (to_list' a) @ (to_list' b)
+
+  let to_list t =
+    match t with
+    | Empty -> []
+    | Full x -> to_list' x
+
   let rec fold' leaf node = function
     | Leaf x -> leaf x
     | Node {a;b} -> node (fold' leaf node a) (fold' leaf node b)

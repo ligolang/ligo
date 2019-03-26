@@ -111,6 +111,7 @@ let expression_to_value ((e, _, _):expression) : value result =
 
 module PP = struct
   open Format
+  open Ligo_helpers.PP
 
   let space_sep ppf () = fprintf ppf " "
 
@@ -137,29 +138,16 @@ module PP = struct
   and environment_element ppf ((s, tv) : environment_element) =
     Format.fprintf ppf "%s : %a" s type_ tv
 
-  and environment_small' ppf = let open Append_tree in function
-    | Leaf x -> environment_element ppf x
-    | Node {a; b ; full ; size} ->
-      fprintf ppf "@[<v 2>N(f:%b,s:%d)[@;%a,@;%a@]@;]"
-        full size
-        environment_small' a environment_small' b
+  and environment_small' ppf e' = let open Append_tree in
+    let lst = to_list' e' in
+    fprintf ppf "S[%a]" (list_sep environment_element) lst
 
-  and environment_small ppf = function
-    | Empty -> fprintf ppf "[]"
-    | Full x -> environment_small' ppf x
+  and environment_small ppf e = let open Append_tree in
+    let lst = to_list e in
+    fprintf ppf "S[%a]" (list_sep environment_element) lst
 
-  and environment_small_hlist' ppf = let open Append_tree in function
-    | Leaf x -> environment_element ppf x
-    | Node {a;b} ->
-      fprintf ppf "%a, %a"
-        environment_small_hlist' a
-        environment_small_hlist' b
-
-  and environment_small_hlist ppf = let open Append_tree in function
-    | Empty -> fprintf ppf ""
-    | Full x -> environment_small_hlist' ppf x
-
-  let environment ppf (x:environment) = Format.pp_print_list environment_small ppf x
+  let environment ppf (x:environment) =
+    fprintf ppf "Env[%a]" (list_sep environment_small) x
 
   let rec value ppf : value -> _ = function
     | `Bool b -> fprintf ppf "%b" b
@@ -394,6 +382,17 @@ module Environment = struct
       in
       aux @@ List.rev lst
 
+
+    let rec to_list' (e:t') =
+      match e with
+      | Leaf x -> [x]
+      | Node {a;b} -> (to_list' a) @ (to_list' b)
+
+    let to_list (e:t) =
+      match e with
+      | Empty -> []
+      | Full x -> to_list' x
+
     type bound = string list
 
     open Michelson
@@ -461,9 +460,10 @@ module Environment = struct
   let restrict t : t = List.tl t
   let of_small small : t = [small]
 
-  let has x : t -> bool = function
+  let rec has x : t -> bool = function
     | [] -> raise (Failure "Schema.Big.has")
-    | hd :: _ -> Small.has x hd
+    | [hd] -> Small.has x hd
+    | hd :: tl -> Small.has x hd || has x tl
   let add x : t -> t = function
     | [] -> raise (Failure "Schema.Big.add")
     | hd :: tl -> Small.append x hd :: tl
@@ -573,7 +573,9 @@ module Environment = struct
       | a :: b -> (
           match Small.to_michelson_set str a with
           | Ok (code, tv) -> ok (seq [dip i_unpair ; code ; i_pair], tv)
-          | Errors _ -> aux b str
+          | Errors _ ->
+              let%bind (tmp, tv) = aux b str in
+              ok (seq [dip i_unpiar ; tmp ; i_piar], tv)
         )
     in
     let%bind (code, tv) = aux s str in
@@ -586,12 +588,13 @@ module Environment = struct
       let output_stack_ty = Stack.(schema_ty @: nil) in
       let%bind error_message =
         ok @@ Format.asprintf
-          "\ncode : %a\nschema type : %a"
+          "\ncode : %a\nschema : %a\nschema type : %a"
           Tezos_utils.Micheline.Michelson.pp code
+          PP.environment s
           Tezos_utils.Micheline.Michelson.pp schema_michelson
       in
       let%bind _ =
-        Trace.trace_tzresult_lwt (error "error parsing big.get code" error_message) @@
+        Trace.trace_tzresult_lwt (error "error parsing big.set code" error_message) @@
         Tezos_utils.Memory_proto_alpha.parse_michelson code
           input_stack_ty output_stack_ty
       in
@@ -622,6 +625,7 @@ module Translate_program = struct
     | "ADD_INT" -> ok @@ simple_binary @@ prim I_ADD
     | "NEG" -> ok @@ simple_unary @@ prim I_NEG
     | "PAIR" -> ok @@ simple_binary @@ prim I_PAIR
+    | "EQ" -> ok @@ simple_binary @@ seq [prim I_COMPARE ; prim I_EQ]
     | x -> simple_fail @@ "predicate \"" ^ x ^ "\" doesn't exist"
 
   and translate_value (v:value) : michelson result = match v with

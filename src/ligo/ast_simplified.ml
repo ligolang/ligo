@@ -280,8 +280,7 @@ module Simplify = struct
         ok @@ ae @@ Constructor (c.value, arg)
     | EConstr _ -> simple_fail "econstr: not supported yet"
     | EArith (Add c) ->
-        let%bind (a, b) = simpl_binop c.value in
-        ok @@ ae @@ Constant ("ADD", [a;b])
+        simpl_binop "ADD" c.value
     | EArith (Int n) ->
         let n = Z.to_int @@ snd @@ n.value in
         ok @@ ae @@ Literal (Number n)
@@ -289,20 +288,44 @@ module Simplify = struct
     | EString (String s) ->
         ok @@ ae @@ Literal (String s.value)
     | EString _ -> simple_fail "string: not supported yet"
-    | ELogic (BoolExpr (False _)) ->
-        ok @@ ae @@ Literal (Bool false)
-    | ELogic (BoolExpr (True _)) ->
-        ok @@ ae @@ Literal (Bool true)
-    | ELogic _ -> simple_fail "logic: not supported yet"
+    | ELogic l -> simpl_logic_expression l
     | EList _ -> simple_fail "list: not supported yet"
     | ESet _ -> simple_fail "set: not supported yet"
     | EMap _ -> simple_fail "map: not supported yet"
 
+  and simpl_logic_expression (t:Raw.logic_expr) : ae result =
+    match t with
+    | BoolExpr (False _) ->
+        ok @@ ae @@ Literal (Bool false)
+    | BoolExpr (True _) ->
+        ok @@ ae @@ Literal (Bool true)
+    | BoolExpr (Or b) ->
+        simpl_binop "OR" b.value
+    | BoolExpr (And b) ->
+        simpl_binop "AND" b.value
+    | BoolExpr (Not b) ->
+        simpl_unop "NOT" b.value
+    | CompExpr (Lt c) ->
+        simpl_binop "LT" c.value
+    | CompExpr (Gt c) ->
+        simpl_binop "GT" c.value
+    | CompExpr (Leq c) ->
+        simpl_binop "LE" c.value
+    | CompExpr (Geq c) ->
+        simpl_binop "GE" c.value
+    | CompExpr (Equal c) ->
+        simpl_binop "EQ" c.value
+    | CompExpr (Neq c) ->
+        simpl_binop "NEQ" c.value
 
-  and simpl_binop (t:_ Raw.bin_op) : (ae * ae) result =
+  and simpl_binop (name:string) (t:_ Raw.bin_op) : ae result =
     let%bind a = simpl_expression t.arg1 in
     let%bind b = simpl_expression t.arg2 in
-    ok (a, b)
+    ok @@ ae @@ Constant (name, [a;b])
+
+  and simpl_unop (name:string) (t:_ Raw.un_op) : ae result =
+    let%bind a = simpl_expression t.arg in
+    ok @@ ae @@ Constant (name, [a])
 
   and simpl_list_expression (lst:Raw.expr list) : ae result =
     match lst with

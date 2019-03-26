@@ -187,6 +187,14 @@ module PP = struct
     | Matching (ae, m) ->
         fprintf ppf "match %a with %a" annotated_expression ae matching m
 
+  let declaration ppf (d:declaration) =
+    match d with
+    | Constant_declaration {name ; annotated_expression = ae} ->
+        fprintf ppf "const %s = %a" name annotated_expression ae
+
+  let program ppf (p:program) =
+    fprintf ppf "%a" (list_sep declaration) p
+
 end
 
 

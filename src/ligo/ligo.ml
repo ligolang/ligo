@@ -93,24 +93,35 @@ let transpile_value ?(env:Mini_c.Environment.t = Mini_c.Environment.empty)
 let untranspile_value (v : Mini_c.value) (e:AST_Typed.type_value) : AST_Typed.annotated_expression result =
   Transpiler.untranspile v e
 
-let type_file ?(debug_simplify = false) (path:string) : AST_Typed.program result =
+let type_file ?(debug_simplify = false) ?(debug_typed = false)
+    (path:string) : AST_Typed.program result =
   let%bind raw = parse_file path in
   let%bind simpl =
     trace (simple_error "simplifying") @@
     simplify raw in
   (if debug_simplify then
-     Format.printf "Simplified : %a\n%!" AST_Simplified.PP.program simpl
+     Format.(printf "Simplified : %a\n%!" AST_Simplified.PP.program simpl)
   ) ;
   let%bind typed =
     trace (simple_error "typing") @@
     type_ simpl in
+  (if debug_typed then
+     Format.(printf "Typed : %a\n%!" AST_Typed.PP.program typed)
+  ) ;
   ok typed
 
-let easy_run_main_typed (program:AST_Typed.program) (input:AST_Typed.annotated_expression) : AST_Typed.annotated_expression result =
+let easy_run_main_typed
+    ?(debug_mini_c = false)
+    (program:AST_Typed.program) (input:AST_Typed.annotated_expression) : AST_Typed.annotated_expression result =
   let%bind mini_c_main =
     trace (simple_error "transpile mini_c main") @@
     transpile_entry program "main" in
+  (if debug_mini_c then
+     Format.(printf "Mini_c : %a\n%!" Mini_c.PP.function_ mini_c_main.content)
+  ) ;
+
   let%bind mini_c_value = transpile_value input in
+
 
   let%bind mini_c_result =
     trace (simple_error "run mini_c") @@
