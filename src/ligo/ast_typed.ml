@@ -355,4 +355,11 @@ module Combinators = struct
     Record map
 
   let int n : expression = Literal (Int n)
+
+  let a_int n = annotated_expression (int n) make_t_int
+
+  let get_a_int (t:annotated_expression) =
+    match t.expression with
+    | Literal (Int n) -> ok n
+    | _ -> simple_fail "not an int"
 end

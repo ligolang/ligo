@@ -91,29 +91,36 @@ let transpile_value ?(env:Mini_c.Environment.t = Mini_c.Environment.empty)
 let untranspile_value (v : Mini_c.value) (e:AST_Typed.type_value) : AST_Typed.annotated_expression result =
   Transpiler.untranspile v e
 
-let easy_run_main (path:string) (input:string) : AST_Typed.annotated_expression result =
+let type_file (path:string) : AST_Typed.program result =
   let%bind raw = parse_file path in
   let%bind simpl = simplify raw in
   let%bind typed =
     trace (simple_error "typing") @@
     type_ simpl in
+  ok typed
+
+let easy_run_main_typed (program:AST_Typed.program) (input:AST_Typed.annotated_expression) : AST_Typed.annotated_expression result =
   let%bind mini_c_main =
     trace (simple_error "transpile mini_c main") @@
-    transpile_entry typed "main" in
-
-  let%bind raw_expr = parse_expression input in
-  let%bind simpl_expr = simplify_expr raw_expr in
-  let%bind typed_expr = type_expression simpl_expr in
-  let%bind mini_c_value = transpile_value typed_expr in
+    transpile_entry program "main" in
+  let%bind mini_c_value = transpile_value input in
 
   let%bind mini_c_result =
     trace (simple_error "run mini_c") @@
     Mini_c.Run.run_entry mini_c_main mini_c_value in
   let%bind typed_result =
     let%bind main_result_type =
-    let%bind typed_main = Ast_typed.get_entry typed "main" in
+    let%bind typed_main = Ast_typed.get_entry program "main" in
     match (snd typed_main).type_value with
     | Type_function (_, result) -> ok result
     | _ -> simple_fail "main doesn't have fun type" in
     untranspile_value mini_c_result main_result_type in
   ok typed_result
+
+let easy_run_main (path:string) (input:string) : AST_Typed.annotated_expression result =
+  let%bind typed = type_file path in
+
+  let%bind raw_expr = parse_expression input in
+  let%bind simpl_expr = simplify_expr raw_expr in
+  let%bind typed_expr = type_expression simpl_expr in
+  easy_run_main_typed typed typed_expr

@@ -26,7 +26,21 @@ let function_ () : unit result =
   ok ()
 
 let declarations () : unit result =
-  let%bind _ = easy_run_main "./contracts/declarations.ligo" "2" in
+  let%bind program = type_file "./contracts/declarations.ligo" in
+  Format.printf "toto\n%!" ;
+  Printf.printf "toto\n%!" ;
+  let aux n =
+    let open AST_Typed.Combinators in
+    let input = a_int n in
+    let%bind result = easy_run_main_typed program input in
+    let%bind result' =
+      trace (simple_error "bad result") @@
+      get_a_int result in
+    Assert.assert_equal_int result' (42 + n)
+  in
+  let%bind _ = bind_list
+    @@ List.map aux
+    @@ [0 ; 2 ; 42 ; 163 ; -1] in
   ok ()
 
 let main = "Integration (End to End)", [
