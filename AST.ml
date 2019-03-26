@@ -510,7 +510,7 @@ and expr =
 | ECall   of fun_call
 | EBytes  of (Lexer.lexeme * Hex.t) reg
 | EUnit   of c_Unit
-| ETuple  of tuple
+| ETuple  of tuple_expr
 | EPar    of expr par reg
 
 and set_expr =
@@ -634,7 +634,10 @@ and record_projection = {
   field_path  : (field_name, dot) nsepseq
 }
 
-and tuple = (expr, comma) nsepseq par reg
+and tuple_expr =
+  TupleInj of tuple_injection
+
+and tuple_injection = (expr, comma) nsepseq par reg
 
 and none_expr = typed_none_expr par
 
@@ -646,7 +649,7 @@ and typed_none_expr = {
 
 and fun_call = (fun_name * arguments) reg
 
-and arguments = tuple
+and arguments = tuple_injection
 
 (* Patterns *)
 
@@ -690,12 +693,15 @@ let rec expr_to_region = function
 | EConstr e -> constr_expr_to_region e
 | ERecord e -> record_expr_to_region e
 | EMap    e -> map_expr_to_region e
+| ETuple  e -> tuple_expr_to_region e
 | EVar   {region; _}
 | ECall  {region; _}
 | EBytes {region; _}
 | EUnit   region
-| ETuple {region; _}
 | EPar   {region; _} -> region
+
+and tuple_expr_to_region = function
+  TupleInj {region; _} -> region
 
 and map_expr_to_region = function
   MapLookUp {region; _}
@@ -1214,7 +1220,7 @@ and print_expr = function
 | ECall   e -> print_fun_call e
 | EBytes  b -> print_bytes b
 | EUnit   r -> print_token r "Unit"
-| ETuple  e -> print_tuple e
+| ETuple  e -> print_tuple_expr e
 | EPar    e -> print_par_expr e
 
 and print_map_expr = function
@@ -1394,7 +1400,10 @@ and print_binding {value; _} =
   print_token arrow "->";
   print_expr image
 
-and print_tuple {value; _} =
+and print_tuple_expr = function
+  TupleInj inj -> print_tuple_inj inj
+
+and print_tuple_inj {value; _} =
   let {lpar; inside; rpar} = value in
   print_token lpar "(";
   print_nsepseq "," print_expr inside;
@@ -1427,18 +1436,18 @@ and print_none_expr {value; _} =
 
 and print_fun_call {value; _} =
   let fun_name, arguments = value in
-  print_var   fun_name;
-  print_tuple arguments
+  print_var       fun_name;
+  print_tuple_inj arguments
 
 and print_constr_app {value; _} =
   let constr, arguments = value in
-  print_constr constr;
-  print_tuple  arguments
+  print_constr    constr;
+  print_tuple_inj arguments
 
 and print_some_app {value; _} =
   let c_Some, arguments = value in
   print_token c_Some "Some";
-  print_tuple arguments
+  print_tuple_inj arguments
 
 and print_par_expr {value; _} =
   let {lpar; inside; rpar} = value in

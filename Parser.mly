@@ -64,7 +64,7 @@ par(X):
 brackets(X):
   LBRACKET X RBRACKET {
     let region = cover $1 $3
-    and value = {
+    and value  = {
       lbracket = $1;
       inside   = $2;
       rbracket = $3}
@@ -923,13 +923,13 @@ unary_expr:
 
 core_expr:
   Int              { EArith (Int $1) }
-| var              { EVar $1 }               (* TODO: Path *)
+| var              { EVar $1 }
 | String           { EString (String $1) }
 | Bytes            { EBytes $1 }
 | C_False          { ELogic (BoolExpr (False $1)) }
 | C_True           { ELogic (BoolExpr (True $1)) }
 | C_Unit           { EUnit $1 }
-| tuple            { ETuple $1 }
+| tuple_expr       { ETuple $1 }
 | list_expr        { EList (List $1) }
 | nil              { EList (Nil $1) }
 | none_expr        { EConstr (NoneExpr $1) }
@@ -955,9 +955,7 @@ path:
 map_lookup:
   path brackets(expr) {
     let region = cover (path_to_region $1) $2.region in
-    let value  = {
-      path  = $1;
-      index = $2}
+    let value  = {path=$1; index=$2}
     in {region; value}
   }
 
@@ -1004,11 +1002,16 @@ fun_call:
     in {region; value = $1,$2}
   }
 
-tuple:
+tuple_expr:
+  tuple_inj {
+    TupleInj $1
+  }
+
+tuple_inj:
   par(nsepseq(expr,COMMA)) { $1 }
 
 arguments:
-  tuple { $1 }
+  tuple_inj { $1 }
 
 list_expr:
   List series(expr,End) {

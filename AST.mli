@@ -494,7 +494,7 @@ and expr =
 | ECall   of fun_call
 | EBytes  of (Lexer.lexeme * Hex.t) reg
 | EUnit   of c_Unit
-| ETuple  of tuple
+| ETuple  of tuple_expr
 | EPar    of expr par reg
 
 and set_expr =
@@ -618,7 +618,10 @@ and record_projection = {
   field_path  : (field_name, dot) nsepseq
 }
 
-and tuple = (expr, comma) nsepseq par reg
+and tuple_expr =
+  TupleInj  of tuple_injection
+
+and tuple_injection = (expr, comma) nsepseq par reg
 
 and none_expr = typed_none_expr par
 
@@ -630,7 +633,7 @@ and typed_none_expr = {
 
 and fun_call = (fun_name * arguments) reg
 
-and arguments = tuple
+and arguments = tuple_injection
 
 (* Patterns *)
 
