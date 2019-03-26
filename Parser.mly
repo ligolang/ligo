@@ -936,6 +936,7 @@ core_expr:
 | fun_call         { ECall $1 }
 | map_expr         { EMap $1 }
 | record_expr      { ERecord $1 }
+| projection       { EProj $1 }
 | Constr arguments {
     let region = cover $1.region $2.region in
     EConstr (ConstrApp {region; value = $1,$2})
@@ -948,20 +949,32 @@ core_expr:
 map_expr:
   map_lookup { MapLookUp $1 }
 
-path:
-  var               {       Name $1 }
-| record_projection { RecordPath $1 }
-
 map_lookup:
   path brackets(expr) {
     let region = cover (path_to_region $1) $2.region in
     let value  = {path=$1; index=$2}
-    in {region; value}
-  }
+    in {region; value}}
+
+path:
+  var        { Name $1 }
+| projection { Path $1 }
 
 record_expr:
-  record_injection  { RecordInj  $1 }
-| record_projection { RecordProj $1 }
+  record_injection { RecordInj $1 }
+
+projection:
+  record_name DOT nsepseq(selection,DOT) {
+    let stop   = nsepseq_to_region selection_to_region $3 in
+    let region = cover $1.region stop
+    and value  = {
+      record_name = $1;
+      selector    = $2;
+      field_path  = $3}
+    in {region; value}}
+
+selection:
+  field_name { FieldName $1 }
+| Int        { Component $1 }
 
 record_injection:
   Record series(field_assignment,End) {
@@ -972,8 +985,7 @@ record_injection:
       fields  = first, others;
       terminator;
       closing}
-    in {region; value}
-  }
+    in {region; value}}
 
 field_assignment:
   field_name EQUAL expr {
@@ -982,17 +994,6 @@ field_assignment:
       field_name = $1;
       equal      = $2;
       field_expr = $3}
-    in {region; value}
-  }
-
-record_projection:
-  record_name DOT nsepseq(field_name,DOT) {
-    let stop   = nsepseq_to_region (fun x -> x.region) $3 in
-    let region = cover $1.region stop
-    and value  = {
-      record_name = $1;
-      selector    = $2;
-      field_path  = $3}
     in {region; value}
   }
 
@@ -1050,8 +1051,7 @@ list_expr:
       elements   = None;
       terminator = None;
       closing    = RBracket $3}
-    in {region; value}
-  }
+    in {region; value}}
 
 nil:
   par(typed_empty_list) { $1 }
@@ -1060,8 +1060,7 @@ typed_empty_list:
   Nil COLON type_expr {
     {nil       = $1;
      colon     = $2;
-     list_type = $3}
-  }
+     list_type = $3}}
 
 none_expr:
   par(typed_none_expr) { $1 }
@@ -1070,8 +1069,7 @@ typed_none_expr:
   C_None COLON type_expr {
     {c_None   = $1;
      colon    = $2;
-     opt_type = $3}
-  }
+     opt_type = $3}}
 
 (* Patterns *)
 
@@ -1094,8 +1092,7 @@ core_pattern:
 | tuple_patt {  PTuple $1 }
 | C_Some par(core_pattern) {
     let region = cover $1 $2.region
-    in PSome {region; value = $1,$2}
-  }
+    in PSome {region; value = $1,$2}}
 
 list_patt:
   brackets(sepseq(core_pattern,COMMA)) { Sugar $1 }

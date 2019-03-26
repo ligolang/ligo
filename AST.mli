@@ -489,6 +489,7 @@ and expr =
 | ESet    of set_expr
 | EConstr of constr_expr
 | ERecord of record_expr
+| EProj   of projection reg
 | EMap    of map_expr
 | EVar    of Lexer.lexeme reg
 | ECall   of fun_call
@@ -526,8 +527,8 @@ and map_lookup = {
 }
 
 and path =
-  Name       of variable
-| RecordPath of record_projection reg
+  Name of variable
+| Path of projection reg
 
 and logic_expr =
   BoolExpr of bool_expr
@@ -596,8 +597,7 @@ and constr_expr =
 | ConstrApp of (constr * arguments) reg
 
 and record_expr =
-  RecordInj  of record_injection reg
-| RecordProj of record_projection reg
+  RecordInj of record_injection reg
 
 and record_injection = {
   opening    : kwd_record;
@@ -612,11 +612,15 @@ and field_assign = {
   field_expr : expr
 }
 
-and record_projection = {
+and projection = {
   record_name : variable;
   selector    : dot;
-  field_path  : (field_name, dot) nsepseq
+  field_path  : (selection, dot) nsepseq
 }
+
+and selection =
+  FieldName of field_name
+| Component of (Lexer.lexeme * Z.t) reg
 
 and tuple_expr =
   TupleInj  of tuple_injection
@@ -667,6 +671,7 @@ val path_to_region       : path -> Region.t
 val lhs_to_region        : lhs -> Region.t
 val rhs_to_region        : rhs -> Region.t
 val if_clause_to_region  : if_clause -> Region.t
+val selection_to_region  : selection -> Region.t
 
 (* Printing *)
 

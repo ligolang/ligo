@@ -505,6 +505,7 @@ and expr =
 | ESet    of set_expr
 | EConstr of constr_expr
 | ERecord of record_expr
+| EProj   of projection reg
 | EMap    of map_expr
 | EVar    of Lexer.lexeme reg
 | ECall   of fun_call
@@ -542,8 +543,8 @@ and map_lookup = {
 }
 
 and path =
-  Name       of variable
-| RecordPath of record_projection reg
+  Name of variable
+| Path of projection reg
 
 and logic_expr =
   BoolExpr of bool_expr
@@ -612,8 +613,7 @@ and constr_expr =
 | ConstrApp of (constr * arguments) reg
 
 and record_expr =
-  RecordInj  of record_injection reg
-| RecordProj of record_projection reg
+  RecordInj of record_injection reg
 
 and record_injection = {
   opening    : kwd_record;
@@ -628,14 +628,18 @@ and field_assign = {
   field_expr : expr
 }
 
-and record_projection = {
+and projection = {
   record_name : variable;
   selector    : dot;
-  field_path  : (field_name, dot) nsepseq
+  field_path  : (selection, dot) nsepseq
 }
 
+and selection =
+  FieldName of field_name
+| Component of (Lexer.lexeme * Z.t) reg
+
 and tuple_expr =
-  TupleInj of tuple_injection
+  TupleInj  of tuple_injection
 
 and tuple_injection = (expr, comma) nsepseq par reg
 
@@ -694,6 +698,7 @@ let rec expr_to_region = function
 | ERecord e -> record_expr_to_region e
 | EMap    e -> map_expr_to_region e
 | ETuple  e -> tuple_expr_to_region e
+| EProj  {region; _}
 | EVar   {region; _}
 | ECall  {region; _}
 | EBytes {region; _}
@@ -754,12 +759,11 @@ and constr_expr_to_region = function
 | SomeApp   {region; _} -> region
 
 and record_expr_to_region = function
-  RecordInj  {region; _}
-| RecordProj {region; _} -> region
+  RecordInj  {region; _} -> region
 
 let path_to_region = function
   Name var -> var.region
-| RecordPath {region; _} -> region
+| Path {region; _} -> region
 
 let instr_to_region = function
   Single Cond                {region; _}
@@ -805,13 +809,17 @@ let local_decl_to_region = function
 | LocalConst         {region; _}
 | LocalVar           {region; _} -> region
 
-let lhs_to_region = function
+let lhs_to_region : lhs -> Region.t = function
   Path path -> path_to_region path
 | MapPath {region; _} -> region
 
 let rhs_to_region = function
       Expr e -> expr_to_region e
 | NoneExpr r -> r
+
+let selection_to_region = function
+  FieldName {region; _}
+| Component {region; _} -> region
 
 (* Printing the tokens with their source regions *)
 
@@ -1215,6 +1223,7 @@ and print_expr = function
 | ESet    e -> print_set_expr e
 | EConstr e -> print_constr_expr e
 | ERecord e -> print_record_expr e
+| EProj   e -> print_projection e
 | EMap    e -> print_map_expr e
 | EVar    v -> print_var v
 | ECall   e -> print_fun_call e
@@ -1245,8 +1254,8 @@ and print_map_lookup {path; index} =
   print_token rbracket "]"
 
 and print_path = function
-  Name var        -> print_var var
-| RecordPath path -> print_record_projection path
+  Name var  -> print_var var
+| Path path -> print_projection path
 
 and print_logic_expr = function
   BoolExpr e -> print_bool_expr e
@@ -1308,8 +1317,7 @@ and print_constr_expr = function
 | ConstrApp e -> print_constr_app e
 
 and print_record_expr = function
-  RecordInj  e -> print_record_injection e
-| RecordProj e -> print_record_projection e
+  RecordInj e -> print_record_injection e
 
 and print_record_injection {value; _} =
   let {opening; fields; terminator; closing} = value in
@@ -1324,14 +1332,18 @@ and print_field_assign {value; _} =
   print_token equal "=";
   print_expr field_expr
 
-and print_record_projection {value; _} =
+and print_projection {value; _} =
   let {record_name; selector; field_path} = value in
   print_var record_name;
   print_token selector ".";
   print_field_path field_path
 
 and print_field_path sequence =
-  print_nsepseq "." print_var sequence
+  print_nsepseq "." print_selection sequence
+
+and print_selection = function
+  FieldName name -> print_var name
+| Component int  -> print_int int
 
 and print_record_patch node =
   let {kwd_patch; path; kwd_with; record_inj} = node in
