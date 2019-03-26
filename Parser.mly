@@ -417,10 +417,6 @@ unqualified_decl(OP):
                opt_type = $3};
              rpar = Region.ghost}
            in EConstr (NoneExpr {region; value})
-      | `EMap inj ->
-          EMap (MapInj inj)
-      | `ESet inj ->
-          ESet (SetInj inj)
     in $1, $2, $3, $4, init, $6, stop
   }
 
@@ -457,12 +453,9 @@ var_decl:
   }
 
 extended_expr:
-  expr          { {region = expr_to_region $1;
-                   value  = `Expr $1} }
-| Nil           { {region = $1; value = `EList $1} }
-| C_None        { {region = $1; value = `ENone $1} }
-| map_injection { {region = $1.region; value = `EMap $1} }
-| set_injection { {region = $1.region; value = `ESet $1} }
+  expr   { {region = expr_to_region $1; value  = `Expr $1} }
+| Nil    { {region = $1; value = `EList $1} }
+| C_None { {region = $1; value = `ENone $1} }
 
 instruction:
   single_instr { Single $1 }
@@ -924,20 +917,21 @@ unary_expr:
 | core_expr { $1 }
 
 core_expr:
-  Int              { EArith (Int $1) }
-| var              { EVar $1 }
-| String           { EString (String $1) }
-| Bytes            { EBytes $1 }
+  Int              { EArith (Int $1)              }
+| var              { EVar $1                      }
+| String           { EString (String $1)          }
+| Bytes            { EBytes $1                    }
 | C_False          { ELogic (BoolExpr (False $1)) }
-| C_True           { ELogic (BoolExpr (True $1)) }
-| C_Unit           { EUnit $1 }
-| tuple_expr       { ETuple $1 }
-| list_expr        { EList $1 }
-| none_expr        { EConstr (NoneExpr $1) }
-| fun_call         { ECall $1 }
-| map_expr         { EMap $1 }
-| record_expr      { ERecord $1 }
-| projection       { EProj $1 }
+| C_True           { ELogic (BoolExpr (True $1))  }
+| C_Unit           { EUnit $1                     }
+| tuple_expr       { ETuple $1                    }
+| list_expr        { EList $1                     }
+| none_expr        { EConstr (NoneExpr $1)        }
+| fun_call         { ECall $1                     }
+| map_expr         { EMap $1                      }
+| set_expr         { ESet $1                      }
+| record_expr      { ERecord $1                   }
+| projection       { EProj $1                     }
 | Constr arguments {
     let region = cover $1.region $2.region in
     EConstr (ConstrApp {region; value = $1,$2})
@@ -947,8 +941,12 @@ core_expr:
     EConstr (SomeApp {region; value = $1,$2})
   }
 
+set_expr:
+  set_injection { SetInj $1 }
+
 map_expr:
-  map_lookup { MapLookUp $1 }
+  map_lookup    { MapLookUp $1 }
+| map_injection {    MapInj $1 }
 
 map_lookup:
   path brackets(expr) {

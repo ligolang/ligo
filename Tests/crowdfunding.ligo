@@ -28,6 +28,7 @@ entrypoint withdraw (storage store : store; const sender : address)
   : store * list (operation) is
   var operations : list (operation) := list end
   begin
+//    if set ["a"; "b"] contains x then skip else skip;
     if sender = owner then
       if now (Unit) >= store.deadline then
         if balance >= store.goal then {
