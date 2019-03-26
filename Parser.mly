@@ -545,7 +545,7 @@ map_injection:
     let region = cover $1 closing
     and value = {
       opening  = Kwd $1;
-      bindings = Some (first, others);
+      elements = Some (first, others);
       terminator;
       closing = End closing}
     in {region; value}
@@ -554,7 +554,7 @@ map_injection:
     let region = cover $1 $2
     and value = {
       opening    = Kwd $1;
-      bindings   = None;
+      elements   = None;
       terminator = None;
       closing    = End $2}
     in {region; value}
@@ -564,16 +564,16 @@ map_injection:
     let region = cover $1 closing
     and value = {
       opening  = KwdBracket ($1,$2);
-      bindings = Some (first, others);
+      elements = Some (first, others);
       terminator;
       closing = RBracket closing}
     in {region; value}
   }
 | Map LBRACKET RBRACKET {
     let region = cover $1 $3
-    and value  = {
+    and value = {
       opening    = KwdBracket ($1,$2);
-      bindings   = None;
+      elements   = None;
       terminator = None;
       closing    = RBracket $3}
     in {region; value}}

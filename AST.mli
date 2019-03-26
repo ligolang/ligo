@@ -354,21 +354,14 @@ and set_patch  = {
   kwd_patch : kwd_patch;
   path      : path;
   kwd_with  : kwd_with;
-  set_inj   : injection reg
+  set_inj   : expr injection reg
 }
 
 and map_patch  = {
   kwd_patch : kwd_patch;
   path      : path;
   kwd_with  : kwd_with;
-  map_inj   : map_injection reg
-}
-
-and map_injection = {
-  opening    : opening;
-  bindings   : (binding reg, semi) sepseq;
-  terminator : semi option;
-  closing    : closing
+  map_inj   : binding reg injection reg
 }
 
 and binding = {
@@ -499,12 +492,12 @@ and expr =
 | EPar    of expr par reg
 
 and set_expr =
-  SetInj of injection reg
+  SetInj of expr injection reg
 | SetMem of set_membership reg
 
-and injection = {
+and 'a injection = {
   opening    : opening;
-  elements   : (expr, semi) sepseq;
+  elements   : ('a, semi) sepseq;
   terminator : semi option;
   closing    : closing
 }
@@ -519,7 +512,7 @@ and closing =
 
 and map_expr =
   MapLookUp of map_lookup reg
-| MapInj    of map_injection reg
+| MapInj    of binding reg injection reg
 
 and map_lookup = {
   path  : path;
@@ -575,7 +568,7 @@ and string_expr =
 
 and list_expr =
   Cons of cons bin_op reg
-| List of injection reg
+| List of expr injection reg
 | Nil  of nil par reg
 
 and nil = {

@@ -370,21 +370,14 @@ and set_patch  = {
   kwd_patch : kwd_patch;
   path      : path;
   kwd_with  : kwd_with;
-  set_inj   : injection reg
+  set_inj   : expr injection reg
 }
 
 and map_patch  = {
   kwd_patch : kwd_patch;
   path      : path;
   kwd_with  : kwd_with;
-  map_inj   : map_injection reg
-}
-
-and map_injection = {
-  opening    : opening;
-  bindings   : (binding reg, semi) sepseq;
-  terminator : semi option;
-  closing    : closing
+  map_inj   : binding reg injection reg
 }
 
 and binding = {
@@ -515,12 +508,12 @@ and expr =
 | EPar    of expr par reg
 
 and set_expr =
-  SetInj of injection reg
+  SetInj of expr injection reg
 | SetMem of set_membership reg
 
-and injection = {
+and 'a injection = {
   opening    : opening;
-  elements   : (expr, semi) sepseq;
+  elements   : ('a, semi) sepseq;
   terminator : semi option;
   closing    : closing
 }
@@ -535,7 +528,7 @@ and closing =
 
 and map_expr =
   MapLookUp of map_lookup reg
-| MapInj    of map_injection reg
+| MapInj    of binding reg injection reg
 
 and map_lookup = {
   path  : path;
@@ -591,7 +584,7 @@ and string_expr =
 
 and list_expr =
   Cons of cons bin_op reg
-| List of injection reg
+| List of expr injection reg
 | Nil  of nil par reg
 
 and nil = {
@@ -1227,10 +1220,10 @@ and print_expr = function
 
 and print_map_expr = function
   MapLookUp {value; _} -> print_map_lookup value
-| MapInj inj           -> print_map_injection inj
+| MapInj inj           -> print_injection "map" print_binding inj
 
 and print_set_expr = function
-  SetInj inj -> print_injection "set" inj
+  SetInj inj -> print_injection "set" print_expr inj
 | SetMem mem -> print_set_membership mem
 
 and print_set_membership {value; _} =
@@ -1301,7 +1294,7 @@ and print_string_expr = function
 and print_list_expr = function
   Cons {value = {arg1; op; arg2}; _} ->
     print_expr arg1; print_token op "#"; print_expr arg2
-| List e -> print_injection "list" e
+| List e -> print_injection "list" print_expr e
 | Nil  e -> print_nil e
 
 and print_constr_expr = function
@@ -1350,14 +1343,14 @@ and print_set_patch node =
   print_token kwd_patch "patch";
   print_path path;
   print_token kwd_with "with";
-  print_injection "set" set_inj
+  print_injection "set" print_expr set_inj
 
 and print_map_patch node =
   let {kwd_patch; path; kwd_with; map_inj} = node in
   print_token kwd_patch "patch";
   print_path path;
   print_token kwd_with "with";
-  print_map_injection map_inj
+  print_injection "map" print_binding map_inj
 
 and print_map_remove node =
   let {kwd_remove; key; kwd_from; kwd_map; map} = node in
@@ -1375,19 +1368,14 @@ and print_set_remove node =
   print_token kwd_set "set";
   print_path  set
 
-and print_map_injection {value; _} =
-  let {opening; bindings; terminator; closing} = value in
-  print_opening "map" opening;
-  print_sepseq ";" print_binding bindings;
-  print_terminator terminator;
-  print_closing closing
-
-and print_injection kwd {value; _} =
-  let {opening; elements; terminator; closing} : injection = value in
-  print_opening kwd opening;
-  print_sepseq ";" print_expr elements;
-  print_terminator terminator;
-  print_closing closing
+and print_injection :
+  'a.string -> ('a -> unit) -> 'a injection reg -> unit =
+  fun kwd print {value; _} ->
+    let {opening; elements; terminator; closing} = value in
+    print_opening kwd opening;
+    print_sepseq ";" print elements;
+    print_terminator terminator;
+    print_closing closing
 
 and print_opening lexeme = function
   Kwd kwd -> print_token kwd lexeme
