@@ -5,3 +5,4 @@ _build/*
 */.merlin
 *.install
 /Version.ml
+/dune-project

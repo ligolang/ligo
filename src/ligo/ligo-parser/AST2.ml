@@ -1,3 +1,5 @@
+(*
+
 [@@@warning "-30"]
 
 module I = AST
@@ -793,3 +795,5 @@ let s_ast (ast : I.ast) : O.ast =
 (* and s_terminator = function *)
 (*   Some semi -> s_token semi ";" *)
 (* | None -> () *)
+
+ *)

@@ -1,3 +1,4 @@
+(*
 [@@@warning "-27"] (* TODO *)
 [@@@warning "-32"] (* TODO *)
 [@@@warning "-30"]
@@ -272,3 +273,4 @@ let a_ast I.{types; storage_decl; declarations; orig} =
   O.{types; storage_decl; declarations; orig}
 
 let annotate : I.ast -> O.ast = a_ast
+*)

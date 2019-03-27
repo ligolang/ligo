@@ -1,3 +1,4 @@
+(*
 [@@@warning "-30"]
 
 module SMap : Map.S with type key = string
@@ -106,3 +107,4 @@ module O : sig
 end
 
 val annotate : I.ast -> O.ast
+*)
