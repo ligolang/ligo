@@ -518,7 +518,7 @@ map_remove:
     in {region; value}}
 
 set_patch:
-  Patch path With injection(Set) {
+  Patch path With injection(Set,expr) {
     let region = cover $1 $4.region in
     let value  = {
       kwd_patch = $1;
@@ -537,8 +537,8 @@ map_patch:
       map_inj   = $4}
     in {region; value}}
 
-injection(Kind):
-  Kind series(expr,End) {
+injection(Kind,element):
+  Kind series(element,End) {
     let first, (others, terminator, closing) = $2 in
     let region = cover $1 closing
     and value = {
@@ -557,7 +557,7 @@ injection(Kind):
       closing    = End $2}
     in {region; value}
   }
-| Kind LBRACKET series(expr,RBRACKET) {
+| Kind LBRACKET series(element,RBRACKET) {
     let first, (others, terminator, closing) = $3 in
     let region = cover $1 closing
     and value = {
@@ -942,7 +942,7 @@ core_expr:
     EConstr (SomeApp {region; value = $1,$2})}
 
 set_expr:
-  injection(Set) { SetInj $1 }
+  injection(Set,expr) { SetInj $1 }
 
 map_expr:
   map_lookup    { MapLookUp $1 }
@@ -1010,8 +1010,8 @@ arguments:
   tuple_inj { $1 }
 
 list_expr:
-  injection(List) { List $1 }
-| nil             {  Nil $1 }
+  injection(List,expr) { List $1 }
+| nil                  {  Nil $1 }
 
 nil:
   par(typed_empty_list) { $1 }
@@ -1054,8 +1054,9 @@ core_pattern:
     in PSome {region; value = $1,$2}}
 
 list_patt:
-  brackets(sepseq(core_pattern,SEMI)) { Sugar $1 }
-| par(cons_pattern)                   {   Raw $1 }
+  injection(List,core_pattern) { Sugar $1 }
+| Nil                          {  PNil $1 }
+| par(cons_pattern)            {   Raw $1 }
 
 cons_pattern:
   core_pattern CONS pattern { $1,$2,$3 }

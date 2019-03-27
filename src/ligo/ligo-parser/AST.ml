@@ -666,7 +666,8 @@ and pattern =
 | PTuple  of (pattern, comma) nsepseq par reg
 
 and list_pattern =
-  Sugar of (pattern, semi) sepseq brackets reg
+  Sugar of pattern injection reg
+| PNil  of kwd_nil
 | Raw   of (pattern * cons * pattern) par reg
 
 (* Projecting regions *)
@@ -792,6 +793,7 @@ let pattern_to_region = function
 | PNone        region
 | PSome       {region; _}
 | PList Sugar {region; _}
+| PList PNil  region
 | PList Raw   {region; _}
 | PTuple      {region; _} -> region
 
@@ -1482,14 +1484,9 @@ and print_patterns {value; _} =
   print_token rpar ")"
 
 and print_list_pattern = function
-  Sugar sugar -> print_sugar sugar
-| Raw     raw -> print_raw raw
-
-and print_sugar {value; _} =
-  let {lbracket; inside; rbracket} = value in
-  print_token lbracket "[";
-  print_sepseq "," print_pattern inside;
-  print_token rbracket "]"
+  Sugar  sugar -> print_injection "list" print_pattern sugar
+| PNil kwd_nil -> print_token kwd_nil "nil"
+| Raw      raw -> print_raw raw
 
 and print_raw {value; _} =
   let {lpar; inside; rpar} = value in

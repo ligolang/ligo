@@ -650,7 +650,8 @@ and pattern =
 | PTuple  of (pattern, comma) nsepseq par reg
 
 and list_pattern =
-  Sugar of (pattern, semi) sepseq brackets reg
+  Sugar of pattern injection reg
+| PNil  of kwd_nil
 | Raw   of (pattern * cons * pattern) par reg
 
 (* Projecting regions *)
