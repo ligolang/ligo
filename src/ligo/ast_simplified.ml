@@ -190,6 +190,7 @@ module Simplify = struct
   let type_constants = [
     ("nat", 0) ;
     ("int", 0) ;
+    ("bool", 0) ;
   ]
 
   let rec simpl_type_expression (t:Raw.type_expr) : type_expression result =

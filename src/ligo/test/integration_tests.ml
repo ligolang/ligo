@@ -26,7 +26,7 @@ let function_ () : unit result =
   ok ()
 
 let complex_function () : unit result =
-  let%bind program = type_file ~debug_simplify:true "./contracts/function-complex.ligo" in
+  let%bind program = type_file "./contracts/function-complex.ligo" in
   let aux n =
     let open AST_Typed.Combinators in
     let input = a_int n in
@@ -39,6 +39,48 @@ let complex_function () : unit result =
   let%bind _ = bind_list
     @@ List.map aux
     @@ [0 ; 2 ; 42 ; 163 ; -1] in
+  ok ()
+
+let multiple_parameters () : unit result  =
+  let%bind program = type_file "./contracts/multiple-parameters.ligo" in
+  let aux n =
+    let open AST_Typed.Combinators in
+    let input = a_int n in
+    let%bind result = easy_run_main_typed program input in
+    let%bind result' =
+      trace (simple_error "bad result") @@
+      get_a_int result in
+    Assert.assert_equal_int (3 * n + 2) result'
+  in
+  let%bind _ = bind_list
+    @@ List.map aux
+    @@ [0 ; 2 ; 42 ; 163 ; -1] in
+  ok ()
+
+let bool_expression () : unit result =
+  let%bind program = type_file "./contracts/boolean_operators.ligo" in
+  let aux (name, f) =
+    let aux b =
+      let open AST_Typed.Combinators in
+      let input = a_bool b in
+      let%bind result = easy_run_typed name program input in
+      let%bind result' =
+        trace (simple_error "bad result") @@
+        get_a_bool result in
+      Assert.assert_equal_bool (f b) result'
+    in
+    let%bind _ = bind_list
+      @@ List.map aux [true;false] in
+    ok ()
+  in
+  let%bind _ = bind_list
+    @@ List.map aux
+    @@ [
+      ("or_true", fun b -> b || true) ;
+      ("or_false", fun b -> b || false) ;
+      ("and_true", fun b -> b && true) ;
+      ("and_false", fun b -> b && false) ;
+    ] in
   ok ()
 
 let condition () : unit result =
@@ -56,7 +98,6 @@ let condition () : unit result =
     @@ List.map aux
     @@ [0 ; 2 ; 42 ; 163 ; -1] in
   ok ()
-
 
 let declarations () : unit result =
   let%bind program = type_file "./contracts/declarations.ligo" in
@@ -109,8 +150,10 @@ let quote_declarations () : unit result =
 
 let main = "Integration (End to End)", [
     test "basic" basic ;
+    test "bool" bool_expression ;
     test "function" function_ ;
     test "complex function" complex_function ;
+    test "multiple parameters" multiple_parameters ;
     test "condition" condition ;
     test "declarations" declarations ;
     test "quote declaration" quote_declaration ;

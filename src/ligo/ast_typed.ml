@@ -316,6 +316,7 @@ module Combinators = struct
   let t_tuple lst s : type_value = type_value (Type_tuple lst) s
   let simplify_t_tuple lst s = t_tuple lst (Some s)
   let make_t_tuple lst = t_tuple lst None
+  let make_t_pair a b = make_t_tuple [a ; b]
 
   let t_record m s : type_value = type_value (Type_record m) s
   let make_t_ez_record (lst:(string * type_value) list) : type_value =
@@ -363,11 +364,20 @@ module Combinators = struct
     Record map
 
   let int n : expression = Literal (Int n)
+  let bool b : expression = Literal (Bool b)
+  let pair a b : expression = Constant ("PAIR", [a; b])
 
   let a_int n = annotated_expression (int n) make_t_int
+  let a_bool b = annotated_expression (bool b) make_t_bool
+  let a_pair a b = annotated_expression (pair a b) (make_t_pair a.type_annotation b.type_annotation)
 
   let get_a_int (t:annotated_expression) =
     match t.expression with
     | Literal (Int n) -> ok n
     | _ -> simple_fail "not an int"
+
+  let get_a_bool (t:annotated_expression) =
+    match t.expression with
+    | Literal (Bool b) -> ok b
+    | _ -> simple_fail "not a bool"
 end

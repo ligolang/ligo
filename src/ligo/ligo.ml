@@ -110,30 +110,34 @@ let type_file ?(debug_simplify = false) ?(debug_typed = false)
   ) ;
   ok typed
 
-let easy_run_main_typed
-    ?(debug_mini_c = false)
+let easy_run_typed
+    ?(debug_mini_c = false) (entry:string)
     (program:AST_Typed.program) (input:AST_Typed.annotated_expression) : AST_Typed.annotated_expression result =
   let%bind mini_c_main =
     trace (simple_error "transpile mini_c main") @@
-    transpile_entry program "main" in
+    transpile_entry program entry in
   (if debug_mini_c then
      Format.(printf "Mini_c : %a\n%!" Mini_c.PP.function_ mini_c_main.content)
   ) ;
 
   let%bind mini_c_value = transpile_value input in
 
-
   let%bind mini_c_result =
     trace (simple_error "run mini_c") @@
     Mini_c.Run.run_entry mini_c_main mini_c_value in
   let%bind typed_result =
     let%bind main_result_type =
-    let%bind typed_main = Ast_typed.get_entry program "main" in
+    let%bind typed_main = Ast_typed.get_entry program entry in
     match (snd typed_main).type_value with
     | Type_function (_, result) -> ok result
     | _ -> simple_fail "main doesn't have fun type" in
     untranspile_value mini_c_result main_result_type in
   ok typed_result
+
+let easy_run_main_typed
+    ?(debug_mini_c = false)
+    (program:AST_Typed.program) (input:AST_Typed.annotated_expression) : AST_Typed.annotated_expression result =
+  easy_run_typed ~debug_mini_c "main" program input
 
 let easy_run_main (path:string) (input:string) : AST_Typed.annotated_expression result =
   let%bind typed = type_file path in

@@ -167,10 +167,18 @@ module Assert = struct
     | true -> ok ()
     | false -> simple_fail msg
 
+  let assert_equal ?msg expected actual =
+    assert_true ?msg (expected = actual)
+
   let assert_equal_int ?msg expected actual =
     let default = Format.asprintf "Not equal int : expected %d, got %d" expected actual in
     let msg = Option.unopt ~default msg in
-    assert_true ~msg (expected = actual)
+    assert_equal ~msg expected actual
+
+  let assert_equal_bool ?msg expected actual =
+    let default = Format.asprintf "Not equal bool : expected %b, got %b" expected actual in
+    let msg = Option.unopt ~default msg in
+    assert_equal ~msg expected actual
 
   let assert_list_size ?(msg="lst doesn't have the right size") lst n =
     assert_true ~msg List.(length lst = n)

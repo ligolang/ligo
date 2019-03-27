@@ -335,6 +335,10 @@ and type_constant (name:string) (lst:O.type_value list) : (string * O.type_value
   | "ADD", _ -> simple_fail "bad number of params to add"
   | "EQ", [a ; b] when type_value_eq (a, make_t_int) && type_value_eq (b, make_t_int) -> ok ("EQ", make_t_bool)
   | "EQ", _ -> simple_fail "EQ only defined over int"
+  | "OR", [a ; b] when type_value_eq (a, make_t_bool) && type_value_eq (b, make_t_bool) -> ok ("OR", make_t_bool)
+  | "OR", _ -> simple_fail "OR only defined over bool"
+  | "AND", [a ; b] when type_value_eq (a, make_t_bool) && type_value_eq (b, make_t_bool) -> ok ("AND", make_t_bool)
+  | "AND", _ -> simple_fail "AND only defined over bool"
   | name, _ -> fail @@ unrecognized_constant name
 
 let untype_type_value (t:O.type_value) : (I.type_expression) result =

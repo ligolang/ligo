@@ -624,6 +624,8 @@ module Translate_program = struct
   let rec get_predicate : string -> predicate result = function
     | "ADD_INT" -> ok @@ simple_binary @@ prim I_ADD
     | "NEG" -> ok @@ simple_unary @@ prim I_NEG
+    | "OR" -> ok @@ simple_binary @@ prim I_OR
+    | "AND" -> ok @@ simple_binary @@ prim I_AND
     | "PAIR" -> ok @@ simple_binary @@ prim I_PAIR
     | "EQ" -> ok @@ simple_binary @@ seq [prim I_COMPARE ; prim I_EQ]
     | x -> simple_fail @@ "predicate \"" ^ x ^ "\" doesn't exist"
@@ -942,6 +944,8 @@ module Translate_ir = struct
           trace_option (simple_error "too big to fit an int") @@
           Alpha_context.Script_int.to_int n in
         ok @@ `Nat n
+    | (Bool_t _), b ->
+        ok @@ `Bool b
     | _ -> simple_fail "this value can't be transpiled back yet"
 end
 
