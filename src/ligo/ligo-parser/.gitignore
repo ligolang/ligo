@@ -1,0 +1,7 @@
+_build/*
+*/_build
+*~
+.merlin
+*/.merlin
+*.install
+/Version.ml
