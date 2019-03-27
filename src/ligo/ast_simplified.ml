@@ -58,12 +58,17 @@ and expression =
   | Application of ae * ae
   (* Tuple *)
   | Tuple of ae list
-  | Tuple_accessor of ae * int (* Access n'th tuple's element *)
   (* Sum *)
   | Constructor of name * ae (* For user defined constructors *)
   (* Record *)
   | Record of ae_map
-  | Record_accessor of ae * string
+  | Accessor of ae * access_path
+
+and access =
+  | Tuple_access of int
+  | Record_access of string
+
+and access_path = access list
 
 and literal =
   | Unit
@@ -81,7 +86,7 @@ and instruction =
   | Loop of ae * b
   | Skip
   | Fail of ae
-  | Record_patch of ae * (string * ae) list
+  | Record_patch of name * access_path * (string * ae) list
 
 and matching =
   | Match_bool of {
@@ -130,13 +135,20 @@ module PP = struct
     | Constructor (name, ae) -> fprintf ppf "%s(%a)" name annotated_expression ae
     | Constant (name, lst) -> fprintf ppf "%s(%a)" name (list_sep annotated_expression) lst
     | Tuple lst -> fprintf ppf "tuple[%a]" (list_sep annotated_expression) lst
-    | Tuple_accessor (ae, i) -> fprintf ppf "%a.%d" annotated_expression ae i
+    | Accessor (ae, p) -> fprintf ppf "%a.%a" annotated_expression ae access_path p
     | Record m -> fprintf ppf "record[%a]" (smap_sep annotated_expression) m
-    | Record_accessor (ae, s) -> fprintf ppf "%a.%s" annotated_expression ae s
     | Lambda {binder;input_type;output_type;result;body} ->
         fprintf ppf "lambda (%s:%a) : %a {%a} return %a"
           binder type_expression input_type type_expression output_type
           block body annotated_expression result
+
+  and access ppf (a:access) =
+    match a with
+    | Tuple_access n -> fprintf ppf "%d" n
+    | Record_access s -> fprintf ppf "%s" s
+
+  and access_path ppf (p:access_path) =
+    fprintf ppf "%a" (list_sep ~pp_sep:(const ".") access) p
 
   and annotated_expression ppf (ae:annotated_expression) = match ae.type_annotation with
     | None -> fprintf ppf "%a" expression ae.expression
@@ -144,8 +156,8 @@ module PP = struct
 
   and block ppf (b:block) = (list_sep instruction) ppf b
 
-  and single_record_patch ppf ((s, ae) : string * ae) =
-    fprintf ppf "%s <- %a" s annotated_expression ae
+  and single_record_patch ppf ((p, ae) : string * ae) =
+    fprintf ppf "%s <- %a" p annotated_expression ae
 
   and matching ppf (m:matching) = match m with
     | Match_tuple (lst, b) ->
@@ -160,7 +172,7 @@ module PP = struct
   and instruction ppf (i:instruction) = match i with
     | Skip -> fprintf ppf "skip"
     | Fail ae -> fprintf ppf "fail with (%a)" annotated_expression ae
-    | Record_patch (ae, lst) -> fprintf ppf "%a.[%a]" annotated_expression ae (list_sep single_record_patch) lst
+    | Record_patch (name, path, lst) -> fprintf ppf "%s.%a[%a]" name access_path path (list_sep single_record_patch) lst
     | Loop (cond, b) -> fprintf ppf "while (%a) { %a }" annotated_expression cond block b
     | Assignment {name;annotated_expression = ae} ->
         fprintf ppf "%s := %a" name annotated_expression ae
@@ -177,6 +189,116 @@ module PP = struct
     fprintf ppf "%a" (list_sep declaration) p
 end
 
+module Rename = struct
+  module Type = struct
+    (* Type renaming, not needed. Yet. *)
+  end
+
+  module Value = struct
+    type renaming = string * (string * access_path) (* src -> dst *)
+    type renamings = renaming list
+    let filter (r:renamings) (s:string) : renamings =
+      List.filter (fun (x, _) -> not (x = s)) r
+    let filters (r:renamings) (ss:string list) : renamings =
+      List.filter (fun (x, _) -> not (List.mem x ss)) r
+
+    let rec rename_instruction (r:renamings) (i:instruction) : instruction result =
+      match i with
+      | Assignment ({name;annotated_expression = e} as a) ->
+          let%bind annotated_expression = rename_annotated_expression (filter r name) e in
+          ok (Assignment {a with annotated_expression})
+      | Skip -> ok Skip
+      | Fail e ->
+          let%bind e' = rename_annotated_expression r e in
+          ok (Fail e')
+      | Loop (cond, body) ->
+          let%bind cond' = rename_annotated_expression r cond in
+          let%bind body' = rename_block r body in
+          ok (Loop (cond', body'))
+      | Matching (ae, m) ->
+          let%bind ae' = rename_annotated_expression r ae in
+          let%bind m' = rename_matching r m in
+          ok (Matching (ae', m'))
+      | Record_patch (v, path, lst) ->
+          let aux (x, y) =
+            let%bind y' = rename_annotated_expression (filter r v) y in
+            ok (x, y') in
+          let%bind lst' = bind_map_list aux lst in
+          match List.assoc_opt v r with
+          | None -> (
+              ok (Record_patch (v, path, lst'))
+            )
+          | Some (v, path') -> (
+              ok (Record_patch (v, path' @ path, lst'))
+            )
+    and rename_block (r:renamings) (bl:block) : block result =
+      bind_map_list (rename_instruction r) bl
+
+    and rename_matching (r:renamings) (m:matching) : matching result =
+      match m with
+      | Match_bool { match_true = mt ; match_false = mf } ->
+          let%bind match_true = rename_block r mt in
+          let%bind match_false = rename_block r mf in
+          ok (Match_bool {match_true ; match_false})
+      | Match_option { match_none = mn ; match_some = (some, ms) } ->
+          let%bind match_none = rename_block r mn in
+          let%bind ms' = rename_block (filter r some) ms in
+          ok (Match_option {match_none ; match_some = (some, ms')})
+      | Match_list { match_nil = mn ; match_cons = (hd, tl, mc) } ->
+          let%bind match_nil = rename_block r mn in
+          let%bind mc' = rename_block (filters r [hd;tl]) mc in
+          ok (Match_list {match_nil ; match_cons = (hd, tl, mc')})
+      | Match_tuple (lst, body) ->
+          let%bind body' = rename_block (filters r lst) body in
+          ok (Match_tuple (lst, body'))
+
+    and rename_annotated_expression (r:renamings) (ae:annotated_expression) : annotated_expression result =
+      let%bind expression = rename_expression r ae.expression in
+      ok {ae with expression}
+
+    and rename_expression (r:renamings) (e:expression) : expression result =
+      match e with
+      | Literal _ as l -> ok l
+      | Constant (name, lst) ->
+          let%bind lst' = bind_map_list (rename_annotated_expression r) lst in
+          ok (Constant (name, lst'))
+      | Constructor (name, ae) ->
+          let%bind ae' = rename_annotated_expression r ae in
+          ok (Constructor (name, ae'))
+      | Variable v -> (
+          match List.assoc_opt v r with
+          | None -> ok (Variable v)
+          | Some (name, path) -> ok (Accessor (ae (Variable (name)), path))
+        )
+      | Lambda ({binder;body;result} as l) ->
+          let r' = filter r binder in
+          let%bind body = rename_block r' body in
+          let%bind result = rename_annotated_expression r' result in
+          ok (Lambda {l with body ; result})
+      | Application (f, arg) ->
+          let%bind f' = rename_annotated_expression r f in
+          let%bind arg' = rename_annotated_expression r arg in
+          ok (Application (f', arg'))
+      | Tuple lst ->
+          let%bind lst' = bind_map_list (rename_annotated_expression r) lst in
+          ok (Tuple lst')
+      | Accessor (ae, p) ->
+          let%bind ae' = rename_annotated_expression r ae in
+          ok (Accessor (ae', p))
+          (* let aux prev hd =
+           *   match hd with
+           *   | Tuple_access n -> Tuple_accessor (prev, n)
+           *   | Record_access s -> Record_accessor (prev, s)
+           * in
+           * let lst = List.fold_left aux ae p in
+           * ok lst *)
+      | Record sm ->
+          let%bind sm' = bind_smap
+            @@ SMap.map (rename_annotated_expression r) sm in
+          ok (Record sm')
+  end
+end
+
 module Simplify = struct
   module Raw = Ligo_parser.AST
 
@@ -191,6 +313,9 @@ module Simplify = struct
     ("nat", 0) ;
     ("int", 0) ;
     ("bool", 0) ;
+    ("list", 1) ;
+    ("set", 1) ;
+    ("map", 2) ;
   ]
 
   let rec simpl_type_expression (t:Raw.type_expr) : type_expression result =
@@ -269,7 +394,7 @@ module Simplify = struct
         let record = p.value.record_name.value in
         let lst = List.map (fun (x:_ Raw.reg) -> x.value) @@ npseq_to_list p.value.field_path in
         let aux prev cur =
-          ae @@ Record_accessor (prev, cur)
+          ae @@ Accessor (prev, [Record_access cur])
         in
         let init = ae @@ Variable record in
         ok @@ List.fold_left aux init lst
@@ -382,23 +507,65 @@ module Simplify = struct
         ok @@ Constant_declaration {name=name.value;annotated_expression={expression with type_annotation}}
     | LambdaDecl (FunDecl x) ->
         let {name;param;ret_type;local_decls;block;return} : fun_decl = x.value in
-        let%bind param = match npseq_to_list param.value.inside with
-          | [a] -> ok a
-          | _ -> simple_fail "only one param allowed" in
-        let%bind input = simpl_param param in
-        let name = name.value in
-        let binder = input.type_name in
-        let input_type = input.type_expression in
-        let%bind local_declarations = bind_list @@ List.map simpl_local_declaration local_decls in
-        let%bind instructions = bind_list
-          @@ List.map simpl_instruction
-          @@ npseq_to_list block.value.instr in
-        let%bind result = simpl_expression return in
-        let%bind output_type = simpl_type_expression ret_type in
-        let body = local_declarations @ instructions in
-        let expression = Lambda {binder ; input_type ; output_type ; result ; body } in
-        let type_annotation = Some (Type_function (input_type, output_type)) in
-        ok @@ Constant_declaration {name;annotated_expression = {expression;type_annotation}}
+        (match npseq_to_list param.value.inside with
+          | [] -> simple_fail "function without parameters are not allowed"
+          | [a] -> (
+              let%bind input = simpl_param a in
+              let name = name.value in
+              let binder = input.type_name in
+              let input_type = input.type_expression in
+              let%bind local_declarations = bind_list @@ List.map simpl_local_declaration local_decls in
+              let%bind instructions = bind_list
+                @@ List.map simpl_instruction
+                @@ npseq_to_list block.value.instr in
+              let%bind result = simpl_expression return in
+              let%bind output_type = simpl_type_expression ret_type in
+              let body = local_declarations @ instructions in
+              let decl =
+                let expression = Lambda {binder ; input_type ; output_type ; result ; body } in
+                let type_annotation = Some (Type_function (input_type, output_type)) in
+                Constant_declaration {name;annotated_expression = {expression;type_annotation}}
+              in
+              ok decl
+            )
+          | lst -> (
+              let%bind params = bind_map_list simpl_param lst in
+              let input =
+                let type_expression = Type_record (
+                    SMap.of_list
+                    @@ List.map (fun (x:named_type_expression) -> x.type_name, x.type_expression)
+                      params
+                  ) in
+                { type_name = "arguments" ; type_expression  } in
+              let binder = input.type_name in
+              let input_type = input.type_expression in
+              let%bind local_declarations =
+                bind_list @@ List.map simpl_local_declaration local_decls in
+              let%bind output_type = simpl_type_expression ret_type in
+              let%bind instructions = bind_list
+                @@ List.map simpl_instruction
+                @@ npseq_to_list block.value.instr in
+              let%bind (body, result) =
+                let renamings =
+                  let aux ({type_name}:named_type_expression) : Rename.Value.renaming =
+                    type_name, ("arguments", [Record_access type_name])
+                  in
+                  List.map aux params
+                in
+                let%bind r = simpl_expression return in
+                let%bind b =
+                  let tmp = local_declarations @ instructions in
+                  Rename.Value.rename_block renamings tmp
+                in
+                ok (b, r) in
+              let decl =
+                let expression = Lambda {binder ; input_type ; output_type ; result ; body } in
+                let type_annotation = Some (Type_function (input_type, output_type)) in
+                Constant_declaration {name="arguments";annotated_expression = {expression;type_annotation}}
+              in
+              ok decl
+            )
+        )
     | LambdaDecl (ProcDecl _) -> simple_fail "no proc declaration yet"
     | LambdaDecl (EntryDecl _)-> simple_fail "no entry point yet"
 
@@ -453,7 +620,7 @@ module Simplify = struct
           @@ List.map (fun (x:Raw.field_assign) -> let%bind e = simpl_expression x.field_expr in ok (x.field_name.value, e))
           @@ List.map (fun (x:_ Raw.reg) -> x.value)
           @@ npseq_to_list r.record_inj.value.fields in
-        ok @@ Record_patch ({expression=Variable record;type_annotation=None}, inj)
+        ok @@ Record_patch (record, [], inj)
     | MapPatch _ -> simple_fail "no map patch yet"
 
   and simpl_cases (t:(Raw.pattern * block) list) : matching result =

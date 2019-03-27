@@ -32,7 +32,7 @@ module TestExpressions = struct
 
   let unit   () : unit result = test_expression (unit ())    (make_t_unit)
   let int    () : unit result = test_expression (number 32)  (make_t_int)
-  let bool   () : unit result = test_expression (bool true)  (make_t_bool)
+  let bool   () : unit result = test_expression (Simplified.Combinators.bool true)  (make_t_bool)
   let string () : unit result = test_expression (string "s") (make_t_string)
   let bytes  () : unit result = test_expression (bytes "b")  (make_t_bytes)
 

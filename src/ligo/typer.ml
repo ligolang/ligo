@@ -259,14 +259,29 @@ and type_annotated_expression (e:environment) (ae:I.annotated_expression) : O.an
       let tv_lst = List.map get_annotation lst' in
       let%bind type_annotation = check (make_t_tuple tv_lst) in
       ok O.{expression = Tuple lst' ; type_annotation }
-  | Tuple_accessor (tpl, ind) ->
-      let%bind tpl' = type_annotated_expression e tpl in
-      let%bind tpl_tv = get_t_tuple tpl'.type_annotation in
-      let%bind tv =
-        generic_try (simple_error "bad tuple index")
-        @@ (fun () -> List.nth tpl_tv ind) in
-      let%bind type_annotation = check tv in
-      ok O.{expression = O.Tuple_accessor (tpl', ind) ; type_annotation}
+  | Accessor (ae, path) ->
+      let%bind e' = type_annotated_expression e ae in
+      let aux (prev:O.annotated_expression) (a:I.access) : O.annotated_expression result =
+        match a with
+        | Tuple_access index -> (
+            let%bind tpl_tv = get_t_tuple prev.type_annotation in
+            let%bind tv =
+              generic_try (simple_error "bad tuple index")
+              @@ (fun () -> List.nth tpl_tv index) in
+            let%bind type_annotation = check tv in
+            ok O.{expression = O.Tuple_accessor (prev, index) ; type_annotation}
+          )
+        | Record_access property -> (
+            let%bind r_tv = get_t_record prev.type_annotation in
+            let%bind tv =
+              generic_try (simple_error "bad record index")
+              @@ (fun () -> SMap.find property r_tv) in
+            let%bind type_annotation = check tv in
+            ok O.{expression = O.Record_accessor (prev, property) ; type_annotation }
+          )
+      in
+      bind_fold_list aux e' path
+
   (* Sum *)
   | Constructor (c, expr) ->
       let%bind (c_tv, sum_tv) =
@@ -286,14 +301,6 @@ and type_annotated_expression (e:environment) (ae:I.annotated_expression) : O.an
       let%bind m' = SMap.fold aux m (ok SMap.empty) in
       let%bind type_annotation = check @@ make_t_record (SMap.map get_annotation m') in
       ok O.{expression = O.Record m' ; type_annotation }
-  | Record_accessor (r, ind) ->
-      let%bind r' = type_annotated_expression e r in
-      let%bind r_tv = get_t_record r'.type_annotation in
-      let%bind tv =
-        generic_try (simple_error "bad record index")
-        @@ (fun () -> SMap.find ind r_tv) in
-      let%bind type_annotation = check tv in
-      ok O.{expression = O.Record_accessor (r', ind) ; type_annotation }
   | Lambda {
       binder ;
       input_type ;
@@ -386,7 +393,7 @@ let rec untype_annotated_expression (e:O.annotated_expression) : (I.annotated_ex
       return (Tuple lst')
   | Tuple_accessor (tpl, ind)  ->
       let%bind tpl' = untype_annotated_expression tpl in
-      return (Tuple_accessor (tpl', ind))
+      return (Accessor (tpl', [Tuple_access ind]))
   | Constructor (n, p) ->
       let%bind p' = untype_annotated_expression p in
       return (Constructor (n, p'))
@@ -396,7 +403,7 @@ let rec untype_annotated_expression (e:O.annotated_expression) : (I.annotated_ex
       return (Record r')
   | Record_accessor (r, s) ->
       let%bind r' = untype_annotated_expression r in
-      return (Record_accessor (r', s))
+      return (Accessor (r', [Record_access s]))
 
 and untype_block (b:O.block) : (I.block) result =
   bind_list @@ List.map untype_instruction b
