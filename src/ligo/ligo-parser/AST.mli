@@ -286,7 +286,7 @@ and param_var = {
 
 and block = {
   opening    : block_opening;
-  instr      : instructions;
+  statements : statements;
   terminator : semi option;
   closing    : block_closing
 }
@@ -299,9 +299,18 @@ and block_closing =
   Block of rbrace
 | End   of kwd_end
 
+and statements = (statement, semi) nsepseq
+
+and statement =
+  Instr of instruction
+| Data  of data_decl
+
 and local_decl =
   LocalLam   of lambda_decl
-| LocalConst of const_decl reg
+| LocalData  of data_decl
+
+and data_decl =
+  LocalConst of const_decl reg
 | LocalVar   of var_decl reg
 
 and var_decl = {
@@ -313,8 +322,6 @@ and var_decl = {
   init       : expr;
   terminator : semi option
 }
-
-and instructions = (instruction, semi) nsepseq
 
 and instruction =
   Single of single_instr
@@ -394,7 +401,7 @@ and conditional = {
 
 and if_clause =
   ClauseInstr of instruction
-| ClauseBlock of (instructions * semi option) braces reg
+| ClauseBlock of (statements * semi option) braces reg
 
 and set_membership = {
   set          : expr;

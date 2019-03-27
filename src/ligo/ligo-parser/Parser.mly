@@ -350,34 +350,72 @@ core_param_type:
     in TApp {region; value = $1,$2}}
 
 block:
-  Begin series(instruction,End) {
+  Begin series(statement,End) {
    let first, (others, terminator, closing) = $2 in
    let region = cover $1 closing
    and value = {
-     opening = Begin $1;
-     instr   = first, others;
+     opening    = Begin $1;
+     statements = first, others;
      terminator;
-     closing = End closing}
+     closing    = End closing}
    in {region; value}
   }
-| Block LBRACE series(instruction,RBRACE) {
+| Block LBRACE series(statement,RBRACE) {
    let first, (others, terminator, closing) = $3 in
    let region = cover $1 closing
    and value = {
-     opening = Block ($1,$2);
-     instr   = first, others;
+     opening    = Block ($1,$2);
+     statements = first, others;
      terminator;
-     closing = Block closing}
-   in {region; value}
-  }
+     closing    = Block closing}
+   in {region; value}}
+
+statement:
+  instruction     { Instr $1 }
+| open_data_decl  { Data  $1 }
+
+open_data_decl:
+  open_const_decl { LocalConst $1 }
+| open_var_decl   { LocalVar   $1 }
+
+open_const_decl:
+  Const unqualified_decl(EQUAL) {
+    let name, colon, const_type, equal, init, stop = $2 in
+    let region = cover $1 stop
+    and value = {
+      kwd_const = $1;
+      name;
+      colon;
+      const_type;
+      equal;
+      init;
+      terminator = None}
+    in {region; value}}
+
+open_var_decl:
+  Var unqualified_decl(ASS) {
+    let name, colon, var_type, assign, init, stop = $2 in
+    let region = cover $1 stop
+    and value = {
+      kwd_var = $1;
+      name;
+      colon;
+      var_type;
+      assign;
+      init;
+      terminator = None}
+    in {region; value}}
 
 local_decl:
-  lambda_decl { LocalLam   $1 }
-| const_decl  { LocalConst $1 }
-| var_decl    { LocalVar   $1 }
+  lambda_decl { LocalLam  $1 }
+| data_decl   { LocalData $1 }
+
+data_decl:
+  const_decl { LocalConst $1 }
+| var_decl   { LocalVar   $1 }
 
 unqualified_decl(OP):
-  var COLON type_expr OP extended_expr option(SEMI) {
+  var COLON type_expr OP extended_expr {
     let init, region =
       match $5 with
         `Expr e -> e, expr_to_region e
@@ -399,17 +437,13 @@ unqualified_decl(OP):
                colon    = Region.ghost;
                opt_type = $3};
              rpar = Region.ghost}
-           in EConstr (NoneExpr {region; value}), region in
-    let stop = match $6 with
-                 Some region -> region
-               |        None -> region
-    in $1, $2, $3, $4, init, $6, stop}
+           in EConstr (NoneExpr {region; value}), region
+    in $1, $2, $3, $4, init, region}
 
 const_decl:
-  Const unqualified_decl(EQUAL) {
-    let name, colon, const_type, equal,
-        init, terminator, stop = $2 in
-    let region = cover $1 stop
+  Const unqualified_decl(EQUAL) SEMI {
+    let name, colon, const_type, equal, init, _ = $2 in
+    let region = cover $1 $3
     and value = {
       kwd_const = $1;
       name;
@@ -417,14 +451,15 @@ const_decl:
       const_type;
       equal;
       init;
-      terminator}
-    in {region; value}}
+      terminator = Some $3}
+    in {region; value}
+  }
+| open_const_decl { $1 }
 
 var_decl:
-  Var unqualified_decl(ASS) {
-    let name, colon, var_type, assign,
-        init, terminator, stop = $2 in
-    let region = cover $1 stop
+  Var unqualified_decl(ASS) SEMI {
+    let name, colon, var_type, assign, init, _ = $2 in
+    let region = cover $1 $3
     and value = {
       kwd_var = $1;
       name;
@@ -432,8 +467,10 @@ var_decl:
       var_type;
       assign;
       init;
-      terminator}
-    in {region; value}}
+      terminator = Some $3}
+    in {region; value}
+  }
+| open_var_decl { $1 }
 
 extended_expr:
   expr   { `Expr  $1 }
@@ -625,7 +662,7 @@ if_clause:
   instruction {
     ClauseInstr $1
   }
-| LBRACE series(instruction,RBRACE) {
+| LBRACE series(statement,RBRACE) {
    let first, (others, terminator, closing) = $2 in
    let region = cover $1 closing in
    let value = {

@@ -302,7 +302,7 @@ and param_var = {
 
 and block = {
   opening    : block_opening;
-  instr      : instructions;
+  statements : statements;
   terminator : semi option;
   closing    : block_closing
 }
@@ -315,9 +315,18 @@ and block_closing =
   Block of rbrace
 | End   of kwd_end
 
+and statements = (statement, semi) nsepseq
+
+and statement =
+  Instr of instruction
+| Data  of data_decl
+
 and local_decl =
   LocalLam   of lambda_decl
-| LocalConst of const_decl reg
+| LocalData  of data_decl
+
+and data_decl =
+  LocalConst of const_decl reg
 | LocalVar   of var_decl reg
 
 and var_decl = {
@@ -329,8 +338,6 @@ and var_decl = {
   init       : expr;
   terminator : semi option
 }
-
-and instructions = (instruction, semi) nsepseq
 
 and instruction =
   Single of single_instr
@@ -410,7 +417,7 @@ and conditional = {
 
 and if_clause =
   ClauseInstr of instruction
-| ClauseBlock of (instructions * semi option) braces reg
+| ClauseBlock of (statements * semi option) braces reg
 
 and set_membership = {
   set          : expr;
@@ -789,11 +796,11 @@ let pattern_to_region = function
 | PTuple      {region; _} -> region
 
 let local_decl_to_region = function
-  LocalLam FunDecl   {region; _}
-| LocalLam ProcDecl  {region; _}
-| LocalLam EntryDecl {region; _}
-| LocalConst         {region; _}
-| LocalVar           {region; _} -> region
+  LocalLam FunDecl     {region; _}
+| LocalLam ProcDecl    {region; _}
+| LocalLam EntryDecl   {region; _}
+| LocalData LocalConst {region; _}
+| LocalData LocalVar   {region; _} -> region
 
 let lhs_to_region : lhs -> Region.t = function
   Path path -> path_to_region path
@@ -1028,9 +1035,9 @@ and print_param_var {value; _} =
   print_type_expr param_type
 
 and print_block {value; _} =
-  let {opening; instr; terminator; closing} = value in
+  let {opening; statements; terminator; closing} = value in
   print_block_opening opening;
-  print_instructions  instr;
+  print_statements    statements;
   print_terminator    terminator;
   print_block_closing closing
 
@@ -1047,9 +1054,12 @@ and print_local_decls sequence =
   List.iter print_local_decl sequence
 
 and print_local_decl = function
-  LocalLam   decl -> print_lambda_decl decl
-| LocalConst decl -> print_const_decl  decl
-| LocalVar   decl -> print_var_decl    decl
+  LocalLam  decl -> print_lambda_decl decl
+| LocalData decl -> print_data_decl decl
+
+and print_data_decl = function
+  LocalConst decl -> print_const_decl decl
+| LocalVar   decl -> print_var_decl   decl
 
 and print_var_decl {value; _} =
   let {kwd_var; name; colon; var_type;
@@ -1062,12 +1072,16 @@ and print_var_decl {value; _} =
   print_expr       init;
   print_terminator terminator
 
-and print_instructions sequence =
-  print_nsepseq ";" print_instruction sequence
+and print_statements sequence =
+  print_nsepseq ";" print_statement sequence
+
+and print_statement = function
+  Instr instr -> print_instruction instr
+| Data data -> print_data_decl data
 
 and print_instruction = function
   Single instr -> print_single_instr instr
-|  Block block -> print_block block
+| Block block -> print_block block
 
 and print_single_instr = function
   Cond        {value; _} -> print_conditional value
@@ -1102,10 +1116,10 @@ and print_if_clause = function
   ClauseInstr instr -> print_instruction instr
 | ClauseBlock {value; _} ->
     let {lbrace; inside; rbrace} = value in
-    let instr, terminator = inside in
+    let statements, terminator = inside in
     print_token lbrace "{";
-    print_instructions instr;
-    print_terminator   terminator;
+    print_statements statements;
+    print_terminator terminator;
     print_token rbrace "}"
 
 and print_case_instr (node : case_instr) =
