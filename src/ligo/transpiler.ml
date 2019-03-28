@@ -16,7 +16,8 @@ let rec translate_type (t:AST.type_value) : type_value result =
   | Type_constant ("bool", []) -> ok (`Base Bool)
   | Type_constant ("int", []) -> ok (`Base Int)
   | Type_constant ("string", []) -> ok (`Base String)
-  | Type_constant _ -> simple_fail "unrecognized constant"
+  | Type_constant ("unit", []) -> ok (`Base Unit)
+  | Type_constant (name, _) -> fail (error "unrecognized constant" name)
   | Type_sum m ->
       let node = Append_tree.of_list @@ list_of_map m in
       let aux a b : type_value result =
@@ -255,6 +256,18 @@ let translate_main (l:AST.lambda) (t:AST.type_value) : anon_function result =
   | Literal (`Function f) -> ok f
   | _ -> simple_fail "main is not a function"
 
+(* From a non-functional expression [expr], build the functional expression [fun () -> expr] *)
+let functionalize (e:AST.annotated_expression) : AST.lambda * AST.type_value =
+  let t = e.type_annotation in
+  let open! AST in
+  {
+    binder = "_" ;
+    input_type = Combinators.make_t_unit ;
+    output_type = t ;
+    result = e ;
+    body = [Skip]
+  }, Combinators.(make_t_function (make_t_unit, t))
+
 let translate_entry (lst:AST.program) (name:string) : anon_function result =
   let rec aux acc (lst:AST.program) =
     match lst with
@@ -265,7 +278,9 @@ let translate_entry (lst:AST.program) (name:string) : anon_function result =
         then (
           match an.annotated_expression.expression with
           | Lambda l -> Some (acc, l, an.annotated_expression.type_annotation)
-          | _ -> None
+          | _ ->
+              let (a, b) = functionalize an.annotated_expression in
+              Some (acc, a, b)
         ) else (
           aux ((AST.Assignment an) :: acc) tl
         )

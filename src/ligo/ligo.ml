@@ -85,10 +85,18 @@ let transpile (p:AST_Typed.program) : Mini_c.program result = Transpiler.transla
 let transpile_entry (p:AST_Typed.program) (name:string) : Mini_c.anon_function result = Transpiler.translate_entry p name
 let transpile_expression ?(env:Mini_c.Environment.t = Mini_c.Environment.empty)
     (e:AST_Typed.annotated_expression) : Mini_c.expression result = Transpiler.translate_annotated_expression env e
-let transpile_value ?(env:Mini_c.Environment.t = Mini_c.Environment.empty)
+let transpile_value
     (e:AST_Typed.annotated_expression) : Mini_c.value result =
-  let%bind e = Transpiler.translate_annotated_expression env e in
-  Mini_c.expression_to_value e
+  let%bind f =
+    let open Transpiler in
+    let (f, t) = functionalize e in
+    let%bind main = translate_main f t in
+    ok main
+  in
+
+  let input = Mini_c.Combinators.d_unit in
+  let%bind r = Mini_c.Run.run_entry f input in
+  ok r
 
 let untranspile_value (v : Mini_c.value) (e:AST_Typed.type_value) : AST_Typed.annotated_expression result =
   Transpiler.untranspile v e
@@ -110,11 +118,12 @@ let type_file ?(debug_simplify = false) ?(debug_typed = false)
     )) ;
   ok typed
 
+
 let easy_run_typed
     ?(debug_mini_c = false) (entry:string)
     (program:AST_Typed.program) (input:AST_Typed.annotated_expression) : AST_Typed.annotated_expression result =
   let%bind mini_c_main =
-    trace (simple_error "transpile mini_c main") @@
+    trace (simple_error "transpile mini_c entry") @@
     transpile_entry program entry in
   (if debug_mini_c then
      Format.(printf "Mini_c : %a\n%!" Mini_c.PP.function_ mini_c_main.content)

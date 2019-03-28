@@ -187,13 +187,6 @@ module PP = struct
     fprintf ppf "Program:\n---\n%a" (pp_print_list ~pp_sep:pp_print_newline tl_statement) p
 end
 
-let expression_to_value ((e', _, _) as e:expression) : value result =
-  match e' with
-  | Literal v -> ok v
-  | _ -> fail
-      @@ error "not a value"
-      @@ Format.asprintf "%a" PP.expression e
-
 module Free_variables = struct
   type free_variable = string
   type free_variables = free_variable list
@@ -1001,6 +994,14 @@ module Run = struct
     let%bind (result : value) = Translate_ir.translate_value ex_ty_value in
     ok result
 
+
+  let expression_to_value ((e', _, _) as e:expression) : value result =
+    match e' with
+    | Literal v -> ok v
+    | _ -> fail
+        @@ error "not a value"
+        @@ Format.asprintf "%a" PP.expression e
+
 end
 
 
@@ -1076,6 +1077,8 @@ module Combinators = struct
 
   let expr_int expr env : expression = (expr, t_int, env)
   let var_int name env : expression = expr_int (Var name) env
+
+  let d_unit : value = `Unit
 
   let environment_wrap pre_environment post_environment = { pre_environment ; post_environment }
   let id_environment_wrap e = environment_wrap e e
