@@ -23,26 +23,36 @@ val sepseq_to_region  : ('a -> Region.t) -> ('a,'sep) sepseq -> Region.t
 
 (* Keywords of LIGO *)
 
+type keyword        = Region.t
+type kwd_and        = Region.t
 type kwd_begin      = Region.t
-type kwd_case      = Region.t
+type kwd_block      = Region.t
+type kwd_case       = Region.t
 type kwd_const      = Region.t
+type kwd_contains   = Region.t
 type kwd_down       = Region.t
 type kwd_else       = Region.t
 type kwd_end        = Region.t
 type kwd_entrypoint = Region.t
 type kwd_fail       = Region.t
 type kwd_for        = Region.t
+type kwd_from       = Region.t
 type kwd_function   = Region.t
 type kwd_if         = Region.t
 type kwd_in         = Region.t
 type kwd_is         = Region.t
+type kwd_list       = Region.t
 type kwd_map        = Region.t
 type kwd_mod        = Region.t
+type kwd_nil        = Region.t
 type kwd_not        = Region.t
 type kwd_of         = Region.t
+type kwd_or         = Region.t
 type kwd_patch      = Region.t
 type kwd_procedure  = Region.t
 type kwd_record     = Region.t
+type kwd_remove     = Region.t
+type kwd_set        = Region.t
 type kwd_skip       = Region.t
 type kwd_step       = Region.t
 type kwd_storage    = Region.t
@@ -77,8 +87,6 @@ type arrow    = Region.t  (* "->"  *)
 type assign   = Region.t  (* ":="  *)
 type equal    = Region.t  (* "="   *)
 type colon    = Region.t  (* ":"   *)
-type bool_or  = Region.t  (* "||"  *)
-type bool_and = Region.t  (* "&&"  *)
 type lt       = Region.t  (* "<"   *)
 type leq      = Region.t  (* "<="  *)
 type gt       = Region.t  (* ">"   *)
@@ -103,6 +111,7 @@ type fun_name   = string reg
 type type_name  = string reg
 type field_name = string reg
 type map_name   = string reg
+type set_name   = string reg
 type constr     = string reg
 
 (* Parentheses *)
@@ -180,9 +189,10 @@ and variant = {
 }
 
 and record_type = {
-  kwd_record : kwd_record;
-  fields     : field_decls;
-  kwd_end    : kwd_end
+  opening     : kwd_record;
+  field_decls : field_decls;
+  terminator  : semi option;
+  closing     : kwd_end
 }
 
 and field_decls = (field_decl reg, semi) nsepseq
@@ -275,15 +285,32 @@ and param_var = {
 }
 
 and block = {
-  opening    : kwd_begin;
-  instr      : instructions;
+  opening    : block_opening;
+  statements : statements;
   terminator : semi option;
-  close      : kwd_end
+  closing    : block_closing
 }
+
+and block_opening =
+  Block of kwd_block * lbrace
+| Begin of kwd_begin
+
+and block_closing =
+  Block of rbrace
+| End   of kwd_end
+
+and statements = (statement, semi) nsepseq
+
+and statement =
+  Instr of instruction
+| Data  of data_decl
 
 and local_decl =
   LocalLam   of lambda_decl
-| LocalConst of const_decl reg
+| LocalData  of data_decl
+
+and data_decl =
+  LocalConst of const_decl reg
 | LocalVar   of var_decl reg
 
 and var_decl = {
@@ -295,8 +322,6 @@ and var_decl = {
   init       : expr;
   terminator : semi option
 }
-
-and instructions = (instruction, semi) nsepseq
 
 and instruction =
   Single of single_instr
@@ -312,19 +337,38 @@ and single_instr =
 | Skip        of kwd_skip
 | RecordPatch of record_patch reg
 | MapPatch    of map_patch reg
+| SetPatch    of set_patch reg
+| MapRemove   of map_remove reg
+| SetRemove   of set_remove reg
+
+and set_remove = {
+  kwd_remove : kwd_remove;
+  element    : expr;
+  kwd_from   : kwd_from;
+  kwd_set    : kwd_set;
+  set        : path
+}
+
+and map_remove = {
+  kwd_remove : kwd_remove;
+  key        : expr;
+  kwd_from   : kwd_from;
+  kwd_map    : kwd_map;
+  map        : path
+}
+
+and set_patch  = {
+  kwd_patch : kwd_patch;
+  path      : path;
+  kwd_with  : kwd_with;
+  set_inj   : expr injection reg
+}
 
 and map_patch  = {
   kwd_patch : kwd_patch;
   path      : path;
   kwd_with  : kwd_with;
-  map_inj   : map_injection reg
-}
-
-and map_injection = {
-  opening    : kwd_map;
-  bindings   : (binding reg, semi) nsepseq;
-  terminator : semi option;
-  close      : kwd_end
+  map_inj   : binding reg injection reg
 }
 
 and binding = {
@@ -346,12 +390,23 @@ and fail_instr = {
 }
 
 and conditional = {
-  kwd_if   : kwd_if;
-  test     : expr;
-  kwd_then : kwd_then;
-  ifso     : instruction;
-  kwd_else : kwd_else;
-  ifnot    : instruction
+  kwd_if     : kwd_if;
+  test       : expr;
+  kwd_then   : kwd_then;
+  ifso       : if_clause;
+  terminator : semi option;
+  kwd_else   : kwd_else;
+  ifnot      : if_clause
+}
+
+and if_clause =
+  ClauseInstr of instruction
+| ClauseBlock of (statements * semi option) braces reg
+
+and set_membership = {
+  set          : expr;
+  kwd_contains : kwd_contains;
+  element      : expr
 }
 
 and case_instr = {
@@ -434,17 +489,37 @@ and expr =
 | ESet    of set_expr
 | EConstr of constr_expr
 | ERecord of record_expr
+| EProj   of projection reg
 | EMap    of map_expr
 | EVar    of Lexer.lexeme reg
 | ECall   of fun_call
 | EBytes  of (Lexer.lexeme * Hex.t) reg
 | EUnit   of c_Unit
-| ETuple  of tuple
+| ETuple  of tuple_expr
 | EPar    of expr par reg
+
+and set_expr =
+  SetInj of expr injection reg
+| SetMem of set_membership reg
+
+and 'a injection = {
+  opening    : opening;
+  elements   : ('a, semi) sepseq;
+  terminator : semi option;
+  closing    : closing
+}
+
+and opening =
+  Kwd        of keyword
+| KwdBracket of keyword * lbracket
+
+and closing =
+  End       of kwd_end
+| RBracket  of rbracket
 
 and map_expr =
   MapLookUp of map_lookup reg
-| MapInj    of map_injection reg
+| MapInj    of binding reg injection reg
 
 and map_lookup = {
   path  : path;
@@ -452,17 +527,17 @@ and map_lookup = {
 }
 
 and path =
-  Name       of variable
-| RecordPath of record_projection reg
+  Name of variable
+| Path of projection reg
 
 and logic_expr =
   BoolExpr of bool_expr
 | CompExpr of comp_expr
 
 and bool_expr =
-  Or    of bool_or  bin_op reg
-| And   of bool_and bin_op reg
-| Not   of kwd_not   un_op reg
+  Or    of kwd_or  bin_op reg
+| And   of kwd_and bin_op reg
+| Not   of kwd_not  un_op reg
 | False of c_False
 | True  of c_True
 
@@ -499,13 +574,15 @@ and string_expr =
 | String of Lexer.lexeme reg
 
 and list_expr =
-  Cons      of cons bin_op reg
-| List      of (expr, comma) nsepseq brackets reg
-| EmptyList of empty_list reg
+  Cons of cons bin_op reg
+| List of expr injection reg
+| Nil  of nil par reg
 
-and set_expr =
-  Set       of (expr, comma) nsepseq braces reg
-| EmptySet  of empty_set reg
+and nil = {
+  nil       : kwd_nil;
+  colon     : colon;
+  list_type : type_expr
+}
 
 and constr_expr =
   SomeApp   of (c_Some * arguments) reg
@@ -513,14 +590,13 @@ and constr_expr =
 | ConstrApp of (constr * arguments) reg
 
 and record_expr =
-  RecordInj  of record_injection reg
-| RecordProj of record_projection reg
+  RecordInj of record_injection reg
 
 and record_injection = {
   opening    : kwd_record;
   fields     : (field_assign reg, semi) nsepseq;
   terminator : semi option;
-  close      : kwd_end
+  closing    : kwd_end
 }
 
 and field_assign = {
@@ -529,31 +605,20 @@ and field_assign = {
   field_expr : expr
 }
 
-and record_projection = {
+and projection = {
   record_name : variable;
   selector    : dot;
-  field_path  : (field_name, dot) nsepseq
+  field_path  : (selection, dot) nsepseq
 }
 
-and tuple = (expr, comma) nsepseq par reg
+and selection =
+  FieldName of field_name
+| Component of (Lexer.lexeme * Z.t) reg
 
-and empty_list = typed_empty_list par
+and tuple_expr =
+  TupleInj of tuple_injection
 
-and typed_empty_list = {
-  lbracket  : lbracket;
-  rbracket  : rbracket;
-  colon     : colon;
-  list_type : type_expr
-}
-
-and empty_set = typed_empty_set par
-
-and typed_empty_set = {
-  lbrace   : lbrace;
-  rbrace   : rbrace;
-  colon    : colon;
-  set_type : type_expr
-}
+and tuple_injection = (expr, comma) nsepseq par reg
 
 and none_expr = typed_none_expr par
 
@@ -565,7 +630,7 @@ and typed_none_expr = {
 
 and fun_call = (fun_name * arguments) reg
 
-and arguments = tuple
+and arguments = tuple_injection
 
 (* Patterns *)
 
@@ -585,7 +650,8 @@ and pattern =
 | PTuple  of (pattern, comma) nsepseq par reg
 
 and list_pattern =
-  Sugar of (pattern, comma) sepseq brackets reg
+  Sugar of pattern injection reg
+| PNil  of kwd_nil
 | Raw   of (pattern * cons * pattern) par reg
 
 (* Projecting regions *)
@@ -598,6 +664,8 @@ val local_decl_to_region : local_decl -> Region.t
 val path_to_region       : path -> Region.t
 val lhs_to_region        : lhs -> Region.t
 val rhs_to_region        : rhs -> Region.t
+val if_clause_to_region  : if_clause -> Region.t
+val selection_to_region  : selection -> Region.t
 
 (* Printing *)
 

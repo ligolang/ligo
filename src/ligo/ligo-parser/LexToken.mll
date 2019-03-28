@@ -66,26 +66,33 @@ type t =
 
 | And        of Region.t  (* "and"        *)
 | Begin      of Region.t  (* "begin"      *)
+| Block      of Region.t  (* "block"      *)
 | Case       of Region.t  (* "case"       *)
 | Const      of Region.t  (* "const"      *)
+| Contains   of Region.t  (* "contains"   *)
 | Down       of Region.t  (* "down"       *)
 | Else       of Region.t  (* "else"       *)
 | End        of Region.t  (* "end"        *)
 | Entrypoint of Region.t  (* "entrypoint" *)
 | Fail       of Region.t  (* "fail"       *)
 | For        of Region.t  (* "for"        *)
+| From       of Region.t  (* "from"       *)
 | Function   of Region.t  (* "function"   *)
 | If         of Region.t  (* "if"         *)
 | In         of Region.t  (* "in"         *)
 | Is         of Region.t  (* "is"         *)
+| List       of Region.t  (* "list"       *)
 | Map        of Region.t  (* "map"        *)
 | Mod        of Region.t  (* "mod"        *)
+| Nil        of Region.t  (* "nil"        *)
 | Not        of Region.t  (* "not"        *)
 | Of         of Region.t  (* "of"         *)
 | Or         of Region.t  (* "or"         *)
 | Patch      of Region.t  (* "patch"      *)
 | Procedure  of Region.t  (* "procedure"  *)
 | Record     of Region.t  (* "record"     *)
+| Remove     of Region.t  (* "remove"     *)
+| Set        of Region.t  (* "set"        *)
 | Skip       of Region.t  (* "skip"       *)
 | Step       of Region.t  (* "step"       *)
 | Storage    of Region.t  (* "storage"    *)
@@ -186,26 +193,33 @@ let proj_token = function
 
 | And        region -> region, "And"
 | Begin      region -> region, "Begin"
+| Block      region -> region, "Block"
 | Case       region -> region, "Case"
 | Const      region -> region, "Const"
+| Contains   region -> region, "Contains"
 | Down       region -> region, "Down"
 | Else       region -> region, "Else"
 | End        region -> region, "End"
 | Entrypoint region -> region, "Entrypoint"
 | Fail       region -> region, "Fail"
 | For        region -> region, "For"
+| From       region -> region, "From"
 | Function   region -> region, "Function"
 | If         region -> region, "If"
 | In         region -> region, "In"
 | Is         region -> region, "Is"
+| List       region -> region, "List"
 | Map        region -> region, "Map"
 | Mod        region -> region, "Mod"
+| Nil        region -> region, "Nil"
 | Not        region -> region, "Not"
 | Of         region -> region, "Of"
 | Or         region -> region, "Or"
 | Patch      region -> region, "Patch"
 | Procedure  region -> region, "Procedure"
 | Record     region -> region, "Record"
+| Remove     region -> region, "Remove"
+| Set        region -> region, "Set"
 | Skip       region -> region, "Skip"
 | Step       region -> region, "Step"
 | Storage    region -> region, "Storage"
@@ -271,33 +285,40 @@ let to_lexeme = function
 
 | And        _ -> "and"
 | Begin      _ -> "begin"
+| Block      _ -> "block"
 | Case       _ -> "case"
 | Const      _ -> "const"
+| Contains   _ -> "contains"
 | Down       _ -> "down"
+| Else       _ -> "else"
+| End        _ -> "end"
+| Entrypoint _ -> "entrypoint"
 | Fail       _ -> "fail"
+| For        _ -> "for"
+| From       _ -> "from"
+| Function   _ -> "function"
 | If         _ -> "if"
 | In         _ -> "in"
 | Is         _ -> "is"
-| Entrypoint _ -> "entrypoint"
-| For        _ -> "for"
-| Function   _ -> "function"
-| Type       _ -> "type"
+| List       _ -> "list"
+| Map        _ -> "map"
+| Mod        _ -> "mod"
+| Nil        _ -> "nil"
+| Not        _ -> "not"
 | Of         _ -> "of"
 | Or         _ -> "or"
-| Var        _ -> "var"
-| End        _ -> "end"
-| Then       _ -> "then"
-| Else       _ -> "else"
-| Map        _ -> "map"
 | Patch      _ -> "patch"
 | Procedure  _ -> "procedure"
 | Record     _ -> "record"
+| Remove     _ -> "remove"
+| Set        _ -> "set"
 | Skip       _ -> "skip"
 | Step       _ -> "step"
 | Storage    _ -> "storage"
+| Then       _ -> "then"
 | To         _ -> "to"
-| Mod        _ -> "mod"
-| Not        _ -> "not"
+| Type       _ -> "type"
+| Var        _ -> "var"
 | While      _ -> "while"
 | With       _ -> "with"
 
@@ -326,78 +347,47 @@ let to_region token = proj_token token |> fst
 let keywords = [
   (fun reg -> And        reg);
   (fun reg -> Begin      reg);
+  (fun reg -> Block      reg);
   (fun reg -> Case       reg);
   (fun reg -> Const      reg);
+  (fun reg -> Contains   reg);
   (fun reg -> Down       reg);
+  (fun reg -> Else       reg);
+  (fun reg -> End        reg);
+  (fun reg -> Entrypoint reg);
+  (fun reg -> For        reg);
+  (fun reg -> From       reg);
+  (fun reg -> Function   reg);
   (fun reg -> Fail       reg);
   (fun reg -> If         reg);
   (fun reg -> In         reg);
   (fun reg -> Is         reg);
-  (fun reg -> Entrypoint reg);
-  (fun reg -> For        reg);
-  (fun reg -> Function   reg);
-  (fun reg -> Type       reg);
+  (fun reg -> List       reg);
+  (fun reg -> Map        reg);
+  (fun reg -> Mod        reg);
+  (fun reg -> Nil        reg);
+  (fun reg -> Not        reg);
   (fun reg -> Of         reg);
   (fun reg -> Or         reg);
-  (fun reg -> Var        reg);
-  (fun reg -> End        reg);
-  (fun reg -> Then       reg);
-  (fun reg -> Else       reg);
-  (fun reg -> Map        reg);
   (fun reg -> Patch      reg);
   (fun reg -> Procedure  reg);
   (fun reg -> Record     reg);
+  (fun reg -> Remove     reg);
+  (fun reg -> Set        reg);
   (fun reg -> Skip       reg);
   (fun reg -> Step       reg);
   (fun reg -> Storage    reg);
+  (fun reg -> Then       reg);
   (fun reg -> To         reg);
-  (fun reg -> Mod        reg);
-  (fun reg -> Not        reg);
+  (fun reg -> Type       reg);
+  (fun reg -> Var        reg);
   (fun reg -> While      reg);
   (fun reg -> With       reg)
 ]
 
 let reserved =
   let open SSet in
-  empty |> add "as"
-        |> add "asr"
-        |> add "assert"
-        |> add "class"
-        |> add "constraint"
-        |> add "do"
-        |> add "done"
-        |> add "downto"
-        |> add "exception"
-        |> add "external"
-        |> add "false"
-        |> add "fun"
-        |> add "functor"
-        |> add "include"
-        |> add "inherit"
-        |> add "initializer"
-        |> add "land"
-        |> add "lazy"
-        |> add "let"
-        |> add "lor"
-        |> add "lsl"
-        |> add "lsr"
-        |> add "lxor"
-        |> add "method"
-        |> add "module"
-        |> add "mutable"
-        |> add "new"
-        |> add "nonrec"
-        |> add "object"
-        |> add "open"
-        |> add "private"
-        |> add "rec"
-        |> add "sig"
-        |> add "struct"
-        |> add "true"
-        |> add "try"
-        |> add "val"
-        |> add "virtual"
-        |> add "when"
+  empty |> add "args"
 
 let constructors = [
   (fun reg -> C_False reg);
@@ -549,33 +539,40 @@ let is_ident = function
 let is_kwd = function
   And        _
 | Begin      _
+| Block      _
 | Case       _
 | Const      _
+| Contains   _
 | Down       _
+| Else       _
+| End        _
+| Entrypoint _
 | Fail       _
+| For        _
+| From       _
+| Function   _
 | If         _
 | In         _
 | Is         _
-| Entrypoint _
-| For        _
-| Function   _
-| Type       _
+| List       _
+| Map        _
+| Mod        _
+| Nil        _
+| Not        _
 | Of         _
 | Or         _
-| Var        _
-| End        _
-| Then       _
-| Else       _
-| Map        _
 | Patch      _
 | Procedure  _
 | Record     _
+| Remove     _
+| Set        _
 | Skip       _
 | Step       _
 | Storage    _
+| Then       _
 | To         _
-| Mod        _
-| Not        _
+| Type       _
+| Var        _
 | While      _
 | With       _ -> true
 |            _ -> false

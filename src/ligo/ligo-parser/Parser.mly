@@ -21,32 +21,32 @@ open AST
 
 (* RULES *)
 
-(* The rule [series(Item)] parses a list of [Item] separated by
-   semi-colons and optionally terminated by a semi-colon, then the
-   keyword [End]. *)
+(* The rule [series(Item,TERM)] parses a list of [Item] separated by
+   semicolons and optionally terminated by a semicolon, then the
+   terminal TERM. *)
 
-series(Item):
-  Item after_item(Item) { $1,$2 }
+series(Item,TERM):
+  Item after_item(Item,TERM) { $1,$2 }
 
-after_item(Item):
-  SEMI item_or_end(Item) {
+after_item(Item,TERM):
+  SEMI item_or_closing(Item,TERM) {
     match $2 with
-      `Some (item, items, term, close) ->
-        ($1, item)::items, term, close
-    | `End close ->
-        [], Some $1, close
+      `Some (item, items, term, closing) ->
+        ($1, item)::items, term, closing
+    | `Closing closing ->
+        [], Some $1, closing
   }
-| End {
+| TERM {
    [], None, $1
   }
 
-item_or_end(Item):
-  End {
-   `End $1
+item_or_closing(Item,TERM):
+  TERM {
+   `Closing $1
   }
-| series(Item) {
-    let item, (items, term, close) = $1
-    in `Some (item, items, term, close)
+| series(Item,TERM) {
+    let item, (items, term, closing) = $1
+    in `Some (item, items, term, closing)
   }
 
 (* Compound constructs *)
@@ -61,20 +61,10 @@ par(X):
     in {region; value}
   }
 
-braces(X):
-  LBRACE X RBRACE {
-    let region = cover $1 $3
-    and value = {
-      lbrace = $1;
-      inside = $2;
-      rbrace = $3}
-    in {region; value}
-  }
-
 brackets(X):
   LBRACKET X RBRACKET {
     let region = cover $1 $3
-    and value = {
+    and value  = {
       lbracket = $1;
       inside   = $2;
       rbracket = $3}
@@ -135,9 +125,9 @@ contract:
   }
 
 declaration:
-  type_decl       {    TypeDecl $1 }
-| const_decl      {   ConstDecl $1 }
-| lambda_decl     {  LambdaDecl $1 }
+  type_decl   {    TypeDecl $1 }
+| const_decl  {   ConstDecl $1 }
+| lambda_decl {  LambdaDecl $1 }
 
 (* Type declarations *)
 
@@ -164,8 +154,7 @@ type_expr:
 cartesian:
   nsepseq(core_type,TIMES) {
     let region = nsepseq_to_region type_expr_to_region $1
-    in {region; value=$1}
-  }
+    in {region; value=$1}}
 
 core_type:
   type_name {
@@ -177,12 +166,25 @@ core_type:
   }
 | Map type_tuple {
     let region = cover $1 $2.region in
-    let value = {value="map"; region=$1}
-    in TApp {region; value = value, $2}
+    let type_constr = {value="map"; region=$1}
+    in TApp {region; value = type_constr, $2}
+  }
+| Set par(type_expr) {
+    let total = cover $1 $2.region in
+    let type_constr = {value="set"; region=$1} in
+    let {region; value = {lpar; inside; rpar}} = $2 in
+    let tuple = {region; value={lpar; inside=inside,[]; rpar}}
+    in TApp {region=total; value = type_constr, tuple}
+  }
+| List par(type_expr) {
+    let total = cover $1 $2.region in
+    let type_constr = {value="list"; region=$1} in
+    let {region; value = {lpar; inside; rpar}} = $2 in
+    let tuple = {region; value={lpar; inside=inside,[]; rpar}}
+    in TApp {region=total; value = type_constr, tuple}
   }
 | par(type_expr) {
-    TPar $1
-  }
+    TPar $1}
 
 type_tuple:
   par(nsepseq(type_expr,COMMA)) { $1 }
@@ -190,39 +192,37 @@ type_tuple:
 sum_type:
   nsepseq(variant,VBAR) {
     let region = nsepseq_to_region (fun x -> x.region) $1
-    in {region; value = $1}
-  }
+    in {region; value = $1}}
 
 variant:
   Constr Of cartesian {
     let region = cover $1.region $3.region
     and value = {constr = $1; kwd_of = $2; product = $3}
-    in {region; value}
-  }
+    in {region; value}}
 
 record_type:
-  Record
-    nsepseq(field_decl,SEMI)
-  End
-  {
-   let region = cover $1 $3
-   and value  = {kwd_record = $1; fields = $2; kwd_end = $3}
-   in {region; value}
-  }
+  Record series(field_decl,End) {
+   let first, (others, terminator, closing) = $2 in
+   let region = cover $1 closing
+   and value  = {
+     opening = $1;
+     field_decls = first, others;
+     terminator;
+     closing}
+   in {region; value}}
 
 field_decl:
   field_name COLON type_expr {
     let stop   = type_expr_to_region $3 in
     let region = cover $1.region stop
     and value  = {field_name = $1; colon = $2; field_type = $3}
-    in {region; value}
-  }
+    in {region; value}}
 
 (* Function and procedure declarations *)
 
 lambda_decl:
-  fun_decl   { FunDecl   $1 }
-| proc_decl  { ProcDecl  $1 }
+  fun_decl   {   FunDecl $1 }
+| proc_decl  {  ProcDecl $1 }
 | entry_decl { EntryDecl $1 }
 
 fun_decl:
@@ -234,8 +234,8 @@ fun_decl:
       match $11 with
         Some region -> region
       |        None -> expr_to_region $10 in
-    let region = cover $1 stop in
-    let value = {
+    let region = cover $1 stop
+    and value = {
       kwd_function = $1;
       name         = $2;
       param        = $3;
@@ -247,8 +247,7 @@ fun_decl:
       kwd_with     = $9;
       return       = $10;
       terminator   = $11}
-    in {region; value}
-  }
+    in {region; value}}
 
 entry_decl:
   Entrypoint fun_name entry_params COLON type_expr Is
@@ -259,8 +258,8 @@ entry_decl:
       match $11 with
         Some region -> region
       |        None -> expr_to_region $10 in
-    let region = cover $1 stop in
-    let value = {
+    let region = cover $1 stop
+    and value = {
       kwd_entrypoint = $1;
       name           = $2;
       param          = $3;
@@ -272,8 +271,7 @@ entry_decl:
       kwd_with       = $9;
       return         = $10;
       terminator     = $11}
-    in {region; value}
-  }
+    in {region; value}}
 
 entry_params:
   par(nsepseq(entry_param_decl,SEMI)) { $1 }
@@ -287,8 +285,8 @@ proc_decl:
        match $7 with
          Some region -> region
        |        None -> $6.region in
-     let region = cover $1 stop in
-     let value = {
+     let region = cover $1 stop
+     and value = {
        kwd_procedure = $1;
        name          = $2;
        param         = $3;
@@ -296,14 +294,13 @@ proc_decl:
        local_decls   = $5;
        block         = $6;
        terminator    = $7}
-     in {region; value}
-  }
+     in {region; value}}
 
 parameters:
   par(nsepseq(param_decl,SEMI)) { $1 }
 
 param_decl:
-  Var var COLON type_expr {
+  Var var COLON param_type {
     let stop   = type_expr_to_region $4 in
     let region = cover $1 stop
     and value  = {
@@ -313,7 +310,7 @@ param_decl:
       param_type = $4}
     in ParamVar {region; value}
   }
-| Const var COLON type_expr {
+| Const var COLON param_type {
     let stop   = type_expr_to_region $4 in
     let region = cover $1 stop
     and value  = {
@@ -321,8 +318,7 @@ param_decl:
       var        = $2;
       colon      = $3;
       param_type = $4}
-    in ParamConst {region; value}
-  }
+    in ParamConst {region; value}}
 
 entry_param_decl:
   param_decl {
@@ -330,7 +326,7 @@ entry_param_decl:
       ParamConst const -> EntryConst const
     | ParamVar     var -> EntryVar   var
   }
-| Storage var COLON type_expr {
+| Storage var COLON param_type {
     let stop   = type_expr_to_region $4 in
     let region = cover $1 stop
     and value  = {
@@ -338,46 +334,101 @@ entry_param_decl:
       var          = $2;
       colon        = $3;
       storage_type = $4}
-    in EntryStore {region; value}
+    in EntryStore {region; value}}
+
+param_type:
+  nsepseq(core_param_type,TIMES) {
+    let region = nsepseq_to_region type_expr_to_region $1
+    in TProd {region; value=$1}}
+
+core_param_type:
+  type_name {
+    TAlias $1
   }
+| type_name type_tuple {
+    let region = cover $1.region $2.region
+    in TApp {region; value = $1,$2}}
 
 block:
-  Begin series(instruction) {
-   let first, (others, terminator, close) = $2 in
-   let region = cover $1 close
+  Begin series(statement,End) {
+   let first, (others, terminator, closing) = $2 in
+   let region = cover $1 closing
    and value = {
-     opening = $1;
-     instr   = first, others;
+     opening    = Begin $1;
+     statements = first, others;
      terminator;
-     close}
+     closing    = End closing}
    in {region; value}
   }
+| Block LBRACE series(statement,RBRACE) {
+   let first, (others, terminator, closing) = $3 in
+   let region = cover $1 closing
+   and value = {
+     opening    = Block ($1,$2);
+     statements = first, others;
+     terminator;
+     closing    = Block closing}
+   in {region; value}}
+
+statement:
+  instruction     { Instr $1 }
+| open_data_decl  { Data  $1 }
+
+open_data_decl:
+  open_const_decl { LocalConst $1 }
+| open_var_decl   { LocalVar   $1 }
+
+open_const_decl:
+  Const unqualified_decl(EQUAL) {
+    let name, colon, const_type, equal, init, stop = $2 in
+    let region = cover $1 stop
+    and value = {
+      kwd_const = $1;
+      name;
+      colon;
+      const_type;
+      equal;
+      init;
+      terminator = None}
+    in {region; value}}
+
+open_var_decl:
+  Var unqualified_decl(ASS) {
+    let name, colon, var_type, assign, init, stop = $2 in
+    let region = cover $1 stop
+    and value = {
+      kwd_var = $1;
+      name;
+      colon;
+      var_type;
+      assign;
+      init;
+      terminator = None}
+    in {region; value}}
 
 local_decl:
-  lambda_decl { LocalLam   $1 }
-| const_decl  { LocalConst $1 }
-| var_decl    { LocalVar   $1 }
+  lambda_decl { LocalLam  $1 }
+| data_decl   { LocalData $1 }
+
+data_decl:
+  const_decl { LocalConst $1 }
+| var_decl   { LocalVar   $1 }
 
 unqualified_decl(OP):
-  var COLON type_expr OP extended_expr option(SEMI) {
-    let stop = match $6 with
-                 Some region -> region
-               |        None -> $5.region in
-    let init =
-      match $5.value with
-        `Expr e -> e
-      | `EList (lbracket, rbracket) ->
-           let region = $5.region
-           and value = {
-             lbracket;
-             rbracket;
+  var COLON type_expr OP extended_expr {
+    let init, region =
+      match $5 with
+        `Expr e -> e, expr_to_region e
+      | `EList kwd_nil ->
+           let value = {
+             nil = kwd_nil;
              colon = Region.ghost;
              list_type = $3} in
            let value = {
              lpar   = Region.ghost;
              inside = value;
              rpar   = Region.ghost} in
-           EList (EmptyList {region; value})
+           EList (Nil {region=kwd_nil; value}), kwd_nil
       | `ENone region ->
            let value = {
              lpar = Region.ghost;
@@ -386,56 +437,49 @@ unqualified_decl(OP):
                colon    = Region.ghost;
                opt_type = $3};
              rpar = Region.ghost}
-           in EConstr (NoneExpr {region; value})
-      | `EMap inj ->
-           EMap (MapInj inj)
-    in $1, $2, $3, $4, init, $6, stop
-  }
+           in EConstr (NoneExpr {region; value}), region
+    in $1, $2, $3, $4, init, region}
 
 const_decl:
-  Const unqualified_decl(EQUAL) {
-    let name, colon, const_type, equal,
-        init, terminator, stop = $2 in
-    let region = cover $1 stop in
-    let value = {
+  Const unqualified_decl(EQUAL) SEMI {
+    let name, colon, const_type, equal, init, _ = $2 in
+    let region = cover $1 $3
+    and value = {
       kwd_const = $1;
       name;
       colon;
       const_type;
       equal;
       init;
-      terminator}
+      terminator = Some $3}
     in {region; value}
   }
+| open_const_decl { $1 }
 
 var_decl:
-  Var unqualified_decl(ASS) {
-    let name, colon, var_type, assign,
-        init, terminator, stop = $2 in
-    let region = cover $1 stop in
-    let value = {
+  Var unqualified_decl(ASS) SEMI {
+    let name, colon, var_type, assign, init, _ = $2 in
+    let region = cover $1 $3
+    and value = {
       kwd_var = $1;
       name;
       colon;
       var_type;
       assign;
       init;
-      terminator}
+      terminator = Some $3}
     in {region; value}
   }
+| open_var_decl { $1 }
 
 extended_expr:
-  expr              { {region = expr_to_region $1;
-                       value  = `Expr $1} }
-| LBRACKET RBRACKET { {region = cover $1 $2;
-                       value  = `EList ($1,$2)} }
-| C_None            { {region = $1; value = `ENone $1} }
-| map_injection     { {region = $1.region; value = `EMap $1} }
-
+  expr   { `Expr  $1 }
+| Nil    { `EList $1 }
+| C_None { `ENone $1 }
 
 instruction:
   single_instr { Single $1 }
-| block        { Block  $1 }
+| block        { Block  $1 : instruction }
 
 single_instr:
   conditional  {        Cond $1 }
@@ -447,6 +491,41 @@ single_instr:
 | Skip         {        Skip $1 }
 | record_patch { RecordPatch $1 }
 | map_patch    {    MapPatch $1 }
+| set_patch    {    SetPatch $1 }
+| map_remove   {   MapRemove $1 }
+| set_remove   {   SetRemove $1 }
+
+set_remove:
+  Remove expr From Set path {
+    let region = cover $1 (path_to_region $5) in
+    let value  = {
+      kwd_remove = $1;
+      element    = $2;
+      kwd_from   = $3;
+      kwd_set    = $4;
+      set        = $5}
+    in {region; value}}
+
+map_remove:
+  Remove expr From Map path {
+    let region = cover $1 (path_to_region $5) in
+    let value  = {
+      kwd_remove = $1;
+      key        = $2;
+      kwd_from   = $3;
+      kwd_map    = $4;
+      map        = $5}
+    in {region; value}}
+
+set_patch:
+  Patch path With injection(Set,expr) {
+    let region = cover $1 $4.region in
+    let value  = {
+      kwd_patch = $1;
+      path      = $2;
+      kwd_with  = $3;
+      set_inj   = $4}
+    in {region; value}}
 
 map_patch:
   Patch path With map_injection {
@@ -456,20 +535,85 @@ map_patch:
       path      = $2;
       kwd_with  = $3;
       map_inj   = $4}
+    in {region; value}}
+
+injection(Kind,element):
+  Kind series(element,End) {
+    let first, (others, terminator, closing) = $2 in
+    let region = cover $1 closing
+    and value = {
+      opening  = Kwd $1;
+      elements = Some (first, others);
+      terminator;
+      closing = End closing}
     in {region; value}
   }
+| Kind End {
+    let region = cover $1 $2
+    and value = {
+      opening    = Kwd $1;
+      elements   = None;
+      terminator = None;
+      closing    = End $2}
+    in {region; value}
+  }
+| Kind LBRACKET series(element,RBRACKET) {
+    let first, (others, terminator, closing) = $3 in
+    let region = cover $1 closing
+    and value = {
+      opening  = KwdBracket ($1,$2);
+      elements = Some (first, others);
+      terminator;
+      closing = RBracket closing}
+    in {region; value}
+  }
+| Kind LBRACKET RBRACKET {
+    let region = cover $1 $3
+    and value = {
+      opening    = KwdBracket ($1,$2);
+      elements   = None;
+      terminator = None;
+      closing    = RBracket $3}
+    in {region; value}}
 
 map_injection:
-  Map series(binding) {
-    let first, (others, terminator, close) = $2 in
-    let region = cover $1 close
+  Map series(binding,End) {
+    let first, (others, terminator, closing) = $2 in
+    let region = cover $1 closing
     and value = {
-      opening  = $1;
-      bindings = first, others;
+      opening  = Kwd $1;
+      elements = Some (first, others);
       terminator;
-      close}
+      closing = End closing}
     in {region; value}
   }
+| Map End {
+    let region = cover $1 $2
+    and value = {
+      opening    = Kwd $1;
+      elements   = None;
+      terminator = None;
+      closing    = End $2}
+    in {region; value}
+  }
+| Map LBRACKET series(binding,RBRACKET) {
+    let first, (others, terminator, closing) = $3 in
+    let region = cover $1 closing
+    and value = {
+      opening  = KwdBracket ($1,$2);
+      elements = Some (first, others);
+      terminator;
+      closing = RBracket closing}
+    in {region; value}
+  }
+| Map LBRACKET RBRACKET {
+    let region = cover $1 $3
+    and value = {
+      opening    = KwdBracket ($1,$2);
+      elements   = None;
+      terminator = None;
+      closing    = RBracket $3}
+    in {region; value}}
 
 binding:
   expr ARROW expr {
@@ -480,8 +624,7 @@ binding:
       source = $1;
       arrow  = $2;
       image  = $3}
-    in {region; value}
-  }
+    in {region; value}}
 
 record_patch:
   Patch path With record_injection {
@@ -491,8 +634,7 @@ record_patch:
       path       = $2;
       kwd_with   = $3;
       record_inj = $4}
-    in {region; value}
-  }
+    in {region; value}}
 
 fail_instr:
   Fail expr {
@@ -504,17 +646,30 @@ proc_call:
   fun_call { $1 }
 
 conditional:
-  If expr Then instruction Else instruction {
-    let region = cover $1 (instr_to_region $6) in
+  If expr Then if_clause option(SEMI) Else if_clause {
+    let region = cover $1 (if_clause_to_region $7) in
     let value = {
-      kwd_if   = $1;
-      test     = $2;
-      kwd_then = $3;
-      ifso     = $4;
-      kwd_else = $5;
-      ifnot    = $6}
-    in {region; value}
+      kwd_if     = $1;
+      test       = $2;
+      kwd_then   = $3;
+      ifso       = $4;
+      terminator = $5;
+      kwd_else   = $6;
+      ifnot      = $7}
+    in {region; value}}
+
+if_clause:
+  instruction {
+    ClauseInstr $1
   }
+| LBRACE series(statement,RBRACE) {
+   let first, (others, terminator, closing) = $2 in
+   let region = cover $1 closing in
+   let value = {
+     lbrace = $1;
+     inside = (first, others), terminator;
+     rbrace = closing} in
+   ClauseBlock {value; region}}
 
 case_instr:
   Case expr Of option(VBAR) cases End {
@@ -526,29 +681,25 @@ case_instr:
       lead_vbar = $4;
       cases     = $5;
       kwd_end   = $6}
-    in {region; value}
-  }
+    in {region; value}}
 
 cases:
   nsepseq(case,VBAR) {
     let region = nsepseq_to_region (fun x -> x.region) $1
-    in {region; value = $1}
-  }
+    in {region; value = $1}}
 
 case:
   pattern ARROW instruction {
     let region = cover (pattern_to_region $1) (instr_to_region $3)
     and value  = {pattern = $1; arrow = $2; instr = $3}
-    in {region; value}
-  }
+    in {region; value}}
 
 assignment:
   lhs ASS rhs {
     let stop   = rhs_to_region $3 in
     let region = cover (lhs_to_region $1) stop
     and value  = {lhs = $1; assign = $2; rhs = $3}
-    in {region; value}
-  }
+    in {region; value}}
 
 rhs:
   expr   {     Expr $1 }
@@ -569,20 +720,19 @@ while_loop:
       kwd_while = $1;
       cond      = $2;
       block     = $3}
-    in While {region; value}
-  }
+    in While {region; value}}
 
 for_loop:
   For var_assign Down? To expr option(step_clause) block {
     let region = cover $1 $7.region in
     let value = {
-      kwd_for  = $1;
-      assign   = $2;
-      down     = $3;
-      kwd_to   = $4;
-      bound    = $5;
-      step     = $6;
-      block    = $7}
+      kwd_for = $1;
+      assign  = $2;
+      down    = $3;
+      kwd_to  = $4;
+      bound   = $5;
+      step    = $6;
+      block   = $7}
     in For (ForInt {region; value})
   }
 | For var option(arrow_clause) In expr block {
@@ -594,15 +744,13 @@ for_loop:
       kwd_in  = $4;
       expr    = $5;
       block   = $6}
-    in For (ForCollect {region; value})
-  }
+    in For (ForCollect {region; value})}
 
 var_assign:
   var ASS expr {
     let region = cover $1.region (expr_to_region $3)
     and value  = {name = $1; assign = $2; expr = $3}
-    in {region; value}
-  }
+    in {region; value}}
 
 step_clause:
   Step expr { $1,$2 }
@@ -626,12 +774,25 @@ expr:
 | conj_expr { $1 }
 
 conj_expr:
-  conj_expr And comp_expr {
+  conj_expr And set_membership {
     let start  = expr_to_region $1
     and stop   = expr_to_region $3 in
     let region = cover start stop
     and value  = {arg1 = $1; op = $2; arg2 = $3}
     in ELogic (BoolExpr (And {region; value}))
+  }
+| set_membership { $1 }
+
+set_membership:
+  core_expr Contains set_membership {
+    let start  = expr_to_region $1
+    and stop   = expr_to_region $3 in
+    let region = cover start stop in
+    let value  = {
+      set          = $1;
+      kwd_contains = $2;
+      element      = $3}
+    in ESet (SetMem {region; value})
   }
 | comp_expr { $1 }
 
@@ -757,62 +918,73 @@ unary_expr:
 | core_expr { $1 }
 
 core_expr:
-  Int              { EArith (Int $1) }
-| var              { EVar $1 }
-| String           { EString (String $1) }
-| Bytes            { EBytes $1 }
+  Int              { EArith (Int $1)              }
+| var              { EVar $1                      }
+| String           { EString (String $1)          }
+| Bytes            { EBytes $1                    }
 | C_False          { ELogic (BoolExpr (False $1)) }
-| C_True           { ELogic (BoolExpr (True $1)) }
-| C_Unit           { EUnit $1 }
-| tuple            { ETuple $1 }
-| list_expr        { EList (List $1) }
-| empty_list       { EList (EmptyList $1) }
-| set_expr         { ESet (Set $1) }
-| empty_set        { ESet (EmptySet $1) }
-| none_expr        { EConstr (NoneExpr $1) }
-| fun_call         { ECall $1 }
-| map_expr         { EMap $1 }
-| record_expr      { ERecord $1 }
+| C_True           { ELogic (BoolExpr (True  $1)) }
+| C_Unit           { EUnit $1                     }
+| tuple_expr       { ETuple $1                    }
+| list_expr        { EList $1                     }
+| none_expr        { EConstr (NoneExpr $1)        }
+| fun_call         { ECall $1                     }
+| map_expr         { EMap $1                      }
+| set_expr         { ESet $1                      }
+| record_expr      { ERecord $1                   }
+| projection       { EProj $1                     }
 | Constr arguments {
     let region = cover $1.region $2.region in
     EConstr (ConstrApp {region; value = $1,$2})
   }
 | C_Some arguments {
     let region = cover $1 $2.region in
-    EConstr (SomeApp {region; value = $1,$2})
-  }
+    EConstr (SomeApp {region; value = $1,$2})}
+
+set_expr:
+  injection(Set,expr) { SetInj $1 }
 
 map_expr:
-  map_lookup { MapLookUp $1 }
-
-path:
-  var               {       Name $1 }
-| record_projection { RecordPath $1 }
+  map_lookup    { MapLookUp $1 }
+| map_injection {    MapInj $1 }
 
 map_lookup:
   path brackets(expr) {
     let region = cover (path_to_region $1) $2.region in
-    let value  = {
-      path  = $1;
-      index = $2}
-    in {region; value}
-  }
+    let value  = {path=$1; index=$2}
+    in {region; value}}
+
+path:
+  var        { Name $1 }
+| projection { Path $1 }
 
 record_expr:
-  record_injection  { RecordInj  $1 }
-| record_projection { RecordProj $1 }
+  record_injection { RecordInj $1 }
+
+projection:
+  record_name DOT nsepseq(selection,DOT) {
+    let stop   = nsepseq_to_region selection_to_region $3 in
+    let region = cover $1.region stop
+    and value  = {
+      record_name = $1;
+      selector    = $2;
+      field_path  = $3}
+    in {region; value}}
+
+selection:
+  field_name { FieldName $1 }
+| Int        { Component $1 }
 
 record_injection:
-  Record series(field_assignment) {
-    let first, (others, terminator, close) = $2 in
-    let region = cover $1 close
+  Record series(field_assignment,End) {
+    let first, (others, terminator, closing) = $2 in
+    let region = cover $1 closing
     and value = {
       opening = $1;
       fields  = first, others;
       terminator;
-      close}
-    in {region; value}
-  }
+      closing}
+    in {region; value}}
 
 field_assignment:
   field_name EQUAL expr {
@@ -821,59 +993,34 @@ field_assignment:
       field_name = $1;
       equal      = $2;
       field_expr = $3}
-    in {region; value}
-  }
-
-record_projection:
-  record_name DOT nsepseq(field_name,DOT) {
-    let stop   = nsepseq_to_region (fun x -> x.region) $3 in
-    let region = cover $1.region stop
-    and value  = {
-      record_name = $1;
-      selector    = $2;
-      field_path  = $3}
-    in {region; value}
-  }
+    in {region; value}}
 
 fun_call:
   fun_name arguments {
     let region = cover $1.region $2.region
-    in {region; value = $1,$2}
-  }
+    in {region; value = $1,$2}}
 
-tuple:
+tuple_expr:
+  tuple_inj { TupleInj $1 }
+
+tuple_inj:
   par(nsepseq(expr,COMMA)) { $1 }
 
 arguments:
-  tuple { $1 }
+  tuple_inj { $1 }
 
 list_expr:
-  brackets(nsepseq(expr,COMMA)) { $1 }
+  injection(List,expr) { List $1 }
+| nil                  {  Nil $1 }
 
-empty_list:
+nil:
   par(typed_empty_list) { $1 }
 
 typed_empty_list:
-  LBRACKET RBRACKET COLON type_expr {
-    {lbracket  = $1;
-     rbracket  = $2;
-     colon     = $3;
-     list_type = $4}
-  }
-
-set_expr:
-  braces(nsepseq(expr,COMMA)) { $1 }
-
-empty_set:
-  par(typed_empty_set) { $1 }
-
-typed_empty_set:
-  LBRACE RBRACE COLON type_expr {
-    {lbrace   = $1;
-     rbrace   = $2;
-     colon    = $3;
-     set_type = $4}
-  }
+  Nil COLON type_expr {
+    {nil       = $1;
+     colon     = $2;
+     list_type = $3}}
 
 none_expr:
   par(typed_none_expr) { $1 }
@@ -882,16 +1029,14 @@ typed_none_expr:
   C_None COLON type_expr {
     {c_None   = $1;
      colon    = $2;
-     opt_type = $3}
-  }
+     opt_type = $3}}
 
 (* Patterns *)
 
 pattern:
   nsepseq(core_pattern,CONS) {
     let region = nsepseq_to_region pattern_to_region $1
-    in PCons {region; value=$1}
-  }
+    in PCons {region; value=$1}}
 
 core_pattern:
   var        {    PVar $1 }
@@ -906,12 +1051,12 @@ core_pattern:
 | tuple_patt {  PTuple $1 }
 | C_Some par(core_pattern) {
     let region = cover $1 $2.region
-    in PSome {region; value = $1,$2}
-  }
+    in PSome {region; value = $1,$2}}
 
 list_patt:
-  brackets(sepseq(core_pattern,COMMA)) { Sugar $1 }
-| par(cons_pattern)                    {   Raw $1 }
+  injection(List,core_pattern) { Sugar $1 }
+| Nil                          {  PNil $1 }
+| par(cons_pattern)            {   Raw $1 }
 
 cons_pattern:
   core_pattern CONS pattern { $1,$2,$3 }

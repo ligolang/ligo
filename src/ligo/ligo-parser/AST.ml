@@ -39,26 +39,36 @@ let sepseq_to_region to_region = function
 
 (* Keywords of LIGO *)
 
+type keyword        = Region.t
+type kwd_and        = Region.t
 type kwd_begin      = Region.t
+type kwd_block      = Region.t
 type kwd_case       = Region.t
 type kwd_const      = Region.t
+type kwd_contains   = Region.t
 type kwd_down       = Region.t
 type kwd_else       = Region.t
 type kwd_end        = Region.t
 type kwd_entrypoint = Region.t
 type kwd_fail       = Region.t
 type kwd_for        = Region.t
+type kwd_from       = Region.t
 type kwd_function   = Region.t
 type kwd_if         = Region.t
 type kwd_in         = Region.t
 type kwd_is         = Region.t
+type kwd_list       = Region.t
 type kwd_map        = Region.t
 type kwd_mod        = Region.t
+type kwd_nil        = Region.t
 type kwd_not        = Region.t
 type kwd_of         = Region.t
+type kwd_or         = Region.t
 type kwd_patch      = Region.t
 type kwd_procedure  = Region.t
 type kwd_record     = Region.t
+type kwd_remove     = Region.t
+type kwd_set        = Region.t
 type kwd_skip       = Region.t
 type kwd_step       = Region.t
 type kwd_storage    = Region.t
@@ -93,8 +103,6 @@ type arrow    = Region.t
 type assign   = Region.t
 type equal    = Region.t
 type colon    = Region.t
-type bool_or  = Region.t
-type bool_and = Region.t
 type lt       = Region.t
 type leq      = Region.t
 type gt       = Region.t
@@ -119,6 +127,7 @@ type fun_name   = string reg
 type type_name  = string reg
 type field_name = string reg
 type map_name   = string reg
+type set_name   = string reg
 type constr     = string reg
 
 (* Parentheses *)
@@ -196,9 +205,10 @@ and variant = {
 }
 
 and record_type = {
-  kwd_record : kwd_record;
-  fields     : field_decls;
-  kwd_end    : kwd_end
+  opening     : kwd_record;
+  field_decls : field_decls;
+  terminator  : semi option;
+  closing     : kwd_end
 }
 
 and field_decls = (field_decl reg, semi) nsepseq
@@ -291,15 +301,32 @@ and param_var = {
 }
 
 and block = {
-  opening    : kwd_begin;
-  instr      : instructions;
+  opening    : block_opening;
+  statements : statements;
   terminator : semi option;
-  close      : kwd_end
+  closing    : block_closing
 }
+
+and block_opening =
+  Block of kwd_block * lbrace
+| Begin of kwd_begin
+
+and block_closing =
+  Block of rbrace
+| End   of kwd_end
+
+and statements = (statement, semi) nsepseq
+
+and statement =
+  Instr of instruction
+| Data  of data_decl
 
 and local_decl =
   LocalLam   of lambda_decl
-| LocalConst of const_decl reg
+| LocalData  of data_decl
+
+and data_decl =
+  LocalConst of const_decl reg
 | LocalVar   of var_decl reg
 
 and var_decl = {
@@ -311,8 +338,6 @@ and var_decl = {
   init       : expr;
   terminator : semi option
 }
-
-and instructions = (instruction, semi) nsepseq
 
 and instruction =
   Single of single_instr
@@ -328,19 +353,38 @@ and single_instr =
 | Skip        of kwd_skip
 | RecordPatch of record_patch reg
 | MapPatch    of map_patch reg
+| SetPatch    of set_patch reg
+| MapRemove   of map_remove reg
+| SetRemove   of set_remove reg
+
+and set_remove = {
+  kwd_remove : kwd_remove;
+  element    : expr;
+  kwd_from   : kwd_from;
+  kwd_set    : kwd_set;
+  set        : path
+}
+
+and map_remove = {
+  kwd_remove : kwd_remove;
+  key        : expr;
+  kwd_from   : kwd_from;
+  kwd_map    : kwd_map;
+  map        : path
+}
+
+and set_patch  = {
+  kwd_patch : kwd_patch;
+  path      : path;
+  kwd_with  : kwd_with;
+  set_inj   : expr injection reg
+}
 
 and map_patch  = {
   kwd_patch : kwd_patch;
   path      : path;
   kwd_with  : kwd_with;
-  map_inj   : map_injection reg
-}
-
-and map_injection = {
-  opening    : kwd_map;
-  bindings   : (binding reg, semi) nsepseq;
-  terminator : semi option;
-  close      : kwd_end
+  map_inj   : binding reg injection reg
 }
 
 and binding = {
@@ -362,12 +406,23 @@ and fail_instr = {
 }
 
 and conditional = {
-  kwd_if   : kwd_if;
-  test     : expr;
-  kwd_then : kwd_then;
-  ifso     : instruction;
-  kwd_else : kwd_else;
-  ifnot    : instruction
+  kwd_if     : kwd_if;
+  test       : expr;
+  kwd_then   : kwd_then;
+  ifso       : if_clause;
+  terminator : semi option;
+  kwd_else   : kwd_else;
+  ifnot      : if_clause
+}
+
+and if_clause =
+  ClauseInstr of instruction
+| ClauseBlock of (statements * semi option) braces reg
+
+and set_membership = {
+  set          : expr;
+  kwd_contains : kwd_contains;
+  element      : expr
 }
 
 and case_instr = {
@@ -450,17 +505,37 @@ and expr =
 | ESet    of set_expr
 | EConstr of constr_expr
 | ERecord of record_expr
+| EProj   of projection reg
 | EMap    of map_expr
 | EVar    of Lexer.lexeme reg
 | ECall   of fun_call
 | EBytes  of (Lexer.lexeme * Hex.t) reg
 | EUnit   of c_Unit
-| ETuple  of tuple
+| ETuple  of tuple_expr
 | EPar    of expr par reg
+
+and set_expr =
+  SetInj of expr injection reg
+| SetMem of set_membership reg
+
+and 'a injection = {
+  opening    : opening;
+  elements   : ('a, semi) sepseq;
+  terminator : semi option;
+  closing    : closing
+}
+
+and opening =
+  Kwd        of keyword
+| KwdBracket of keyword * lbracket
+
+and closing =
+  End       of kwd_end
+| RBracket  of rbracket
 
 and map_expr =
   MapLookUp of map_lookup reg
-| MapInj    of map_injection reg
+| MapInj    of binding reg injection reg
 
 and map_lookup = {
   path  : path;
@@ -468,17 +543,17 @@ and map_lookup = {
 }
 
 and path =
-  Name       of variable
-| RecordPath of record_projection reg
+  Name of variable
+| Path of projection reg
 
 and logic_expr =
   BoolExpr of bool_expr
 | CompExpr of comp_expr
 
 and bool_expr =
-  Or    of bool_or  bin_op reg
-| And   of bool_and bin_op reg
-| Not   of kwd_not   un_op reg
+  Or    of kwd_or  bin_op reg
+| And   of kwd_and bin_op reg
+| Not   of kwd_not un_op reg
 | False of c_False
 | True  of c_True
 
@@ -515,13 +590,15 @@ and string_expr =
 | String of Lexer.lexeme reg
 
 and list_expr =
-  Cons      of cons bin_op reg
-| List      of (expr, comma) nsepseq brackets reg
-| EmptyList of empty_list reg
+  Cons of cons bin_op reg
+| List of expr injection reg
+| Nil  of nil par reg
 
-and set_expr =
-  Set       of (expr, comma) nsepseq braces reg
-| EmptySet  of empty_set reg
+and nil = {
+  nil       : kwd_nil;
+  colon     : colon;
+  list_type : type_expr
+}
 
 and constr_expr =
   SomeApp   of (c_Some * arguments) reg
@@ -529,14 +606,13 @@ and constr_expr =
 | ConstrApp of (constr * arguments) reg
 
 and record_expr =
-  RecordInj  of record_injection reg
-| RecordProj of record_projection reg
+  RecordInj of record_injection reg
 
 and record_injection = {
   opening    : kwd_record;
   fields     : (field_assign reg, semi) nsepseq;
   terminator : semi option;
-  close      : kwd_end
+  closing    : kwd_end
 }
 
 and field_assign = {
@@ -545,31 +621,20 @@ and field_assign = {
   field_expr : expr
 }
 
-and record_projection = {
+and projection = {
   record_name : variable;
   selector    : dot;
-  field_path  : (field_name, dot) nsepseq
+  field_path  : (selection, dot) nsepseq
 }
 
-and tuple = (expr, comma) nsepseq par reg
+and selection =
+  FieldName of field_name
+| Component of (Lexer.lexeme * Z.t) reg
 
-and empty_list = typed_empty_list par
+and tuple_expr =
+  TupleInj of tuple_injection
 
-and typed_empty_list = {
-  lbracket  : lbracket;
-  rbracket  : rbracket;
-  colon     : colon;
-  list_type : type_expr
-}
-
-and empty_set = typed_empty_set par
-
-and typed_empty_set = {
-  lbrace   : lbrace;
-  rbrace   : rbrace;
-  colon    : colon;
-  set_type : type_expr
-}
+and tuple_injection = (expr, comma) nsepseq par reg
 
 and none_expr = typed_none_expr par
 
@@ -581,7 +646,7 @@ and typed_none_expr = {
 
 and fun_call = (fun_name * arguments) reg
 
-and arguments = tuple
+and arguments = tuple_injection
 
 (* Patterns *)
 
@@ -601,7 +666,8 @@ and pattern =
 | PTuple  of (pattern, comma) nsepseq par reg
 
 and list_pattern =
-  Sugar of (pattern, comma) sepseq brackets reg
+  Sugar of pattern injection reg
+| PNil  of kwd_nil
 | Raw   of (pattern * cons * pattern) par reg
 
 (* Projecting regions *)
@@ -625,16 +691,24 @@ let rec expr_to_region = function
 | EConstr e -> constr_expr_to_region e
 | ERecord e -> record_expr_to_region e
 | EMap    e -> map_expr_to_region e
+| ETuple  e -> tuple_expr_to_region e
+| EProj  {region; _}
 | EVar   {region; _}
 | ECall  {region; _}
 | EBytes {region; _}
 | EUnit   region
-| ETuple {region; _}
 | EPar   {region; _} -> region
+
+and tuple_expr_to_region = function
+  TupleInj {region; _} -> region
 
 and map_expr_to_region = function
   MapLookUp {region; _}
 | MapInj    {region; _} -> region
+
+and set_expr_to_region = function
+  SetInj {region; _}
+| SetMem {region; _} -> region
 
 and logic_expr_to_region = function
   BoolExpr e -> bool_expr_to_region e
@@ -669,13 +743,9 @@ and string_expr_to_region = function
 | String {region; _} -> region
 
 and list_expr_to_region = function
-  Cons      {region; _}
-| List      {region; _}
-| EmptyList {region; _} -> region
-
-and set_expr_to_region = function
-  Set      {region; _}
-| EmptySet {region; _} -> region
+  Cons {region; _}
+| List {region; _}
+| Nil  {region; _} -> region
 
 and constr_expr_to_region = function
   NoneExpr  {region; _}
@@ -683,12 +753,11 @@ and constr_expr_to_region = function
 | SomeApp   {region; _} -> region
 
 and record_expr_to_region = function
-  RecordInj  {region; _}
-| RecordProj {region; _} -> region
+  RecordInj  {region; _} -> region
 
 let path_to_region = function
   Name var -> var.region
-| RecordPath {region; _} -> region
+| Path {region; _} -> region
 
 let instr_to_region = function
   Single Cond                {region; _}
@@ -702,7 +771,14 @@ let instr_to_region = function
 | Single Fail                {region; _}
 | Single RecordPatch         {region; _}
 | Single MapPatch            {region; _}
+| Single SetPatch            {region; _}
+| Single MapRemove           {region; _}
+| Single SetRemove           {region; _}
 | Block                      {region; _} -> region
+
+let if_clause_to_region = function
+  ClauseInstr instr       -> instr_to_region instr
+| ClauseBlock {region; _} -> region
 
 let pattern_to_region = function
   PCons       {region; _}
@@ -717,23 +793,28 @@ let pattern_to_region = function
 | PNone        region
 | PSome       {region; _}
 | PList Sugar {region; _}
+| PList PNil  region
 | PList Raw   {region; _}
 | PTuple      {region; _} -> region
 
 let local_decl_to_region = function
-  LocalLam FunDecl   {region; _}
-| LocalLam ProcDecl  {region; _}
-| LocalLam EntryDecl {region; _}
-| LocalConst         {region; _}
-| LocalVar           {region; _} -> region
+  LocalLam FunDecl     {region; _}
+| LocalLam ProcDecl    {region; _}
+| LocalLam EntryDecl   {region; _}
+| LocalData LocalConst {region; _}
+| LocalData LocalVar   {region; _} -> region
 
-let lhs_to_region = function
+let lhs_to_region : lhs -> Region.t = function
   Path path -> path_to_region path
 | MapPath {region; _} -> region
 
 let rhs_to_region = function
       Expr e -> expr_to_region e
 | NoneExpr r -> r
+
+let selection_to_region = function
+  FieldName {region; _}
+| Component {region; _} -> region
 
 (* Printing the tokens with their source regions *)
 
@@ -833,10 +914,11 @@ and print_sum_type {value; _} =
   print_nsepseq "|" print_variant value
 
 and print_record_type {value; _} =
-  let {kwd_record; fields; kwd_end} = value in
-  print_token       kwd_record "record";
-  print_field_decls fields;
-  print_token       kwd_end "end"
+  let {opening; field_decls; terminator; closing} = value in
+  print_token       opening "record";
+  print_field_decls field_decls;
+  print_terminator  terminator;
+  print_token       closing "end"
 
 and print_type_app {value; _} =
   let type_name, type_tuple = value in
@@ -955,19 +1037,31 @@ and print_param_var {value; _} =
   print_type_expr param_type
 
 and print_block {value; _} =
-  let {opening; instr; terminator; close} = value in
-  print_token        opening "begin";
-  print_instructions instr;
-  print_terminator   terminator;
-  print_token        close "end"
+  let {opening; statements; terminator; closing} = value in
+  print_block_opening opening;
+  print_statements    statements;
+  print_terminator    terminator;
+  print_block_closing closing
+
+and print_block_opening = function
+  Block (kwd_block, lbrace) -> print_token kwd_block "block";
+                              print_token lbrace    "{"
+| Begin kwd_begin           -> print_token kwd_begin "begin"
+
+and print_block_closing = function
+  Block rbrace -> print_token rbrace "}"
+| End kwd_end  -> print_token kwd_end "end"
 
 and print_local_decls sequence =
   List.iter print_local_decl sequence
 
 and print_local_decl = function
-  LocalLam   decl -> print_lambda_decl decl
-| LocalConst decl -> print_const_decl  decl
-| LocalVar   decl -> print_var_decl    decl
+  LocalLam  decl -> print_lambda_decl decl
+| LocalData decl -> print_data_decl decl
+
+and print_data_decl = function
+  LocalConst decl -> print_const_decl decl
+| LocalVar   decl -> print_var_decl   decl
 
 and print_var_decl {value; _} =
   let {kwd_var; name; colon; var_type;
@@ -980,12 +1074,16 @@ and print_var_decl {value; _} =
   print_expr       init;
   print_terminator terminator
 
-and print_instructions sequence =
-  print_nsepseq ";" print_instruction sequence
+and print_statements sequence =
+  print_nsepseq ";" print_statement sequence
+
+and print_statement = function
+  Instr instr -> print_instruction instr
+| Data data -> print_data_decl data
 
 and print_instruction = function
   Single instr -> print_single_instr instr
-|  Block block -> print_block block
+| Block block -> print_block block
 
 and print_single_instr = function
   Cond        {value; _} -> print_conditional value
@@ -997,20 +1095,34 @@ and print_single_instr = function
 | Skip        kwd_skip   -> print_token kwd_skip "skip"
 | RecordPatch {value; _} -> print_record_patch value
 | MapPatch    {value; _} -> print_map_patch value
+| SetPatch    {value; _} -> print_set_patch value
+| MapRemove   {value; _} -> print_map_remove value
+| SetRemove   {value; _} -> print_set_remove value
 
 and print_fail {kwd_fail; fail_expr} =
   print_token kwd_fail "fail";
   print_expr fail_expr
 
 and print_conditional node =
-  let {kwd_if; test; kwd_then; ifso;
+  let {kwd_if; test; kwd_then; ifso; terminator;
        kwd_else; ifnot} = node in
-  print_token       kwd_if "if";
-  print_expr        test;
-  print_token       kwd_then "then";
-  print_instruction ifso;
-  print_token       kwd_else "else";
-  print_instruction ifnot
+  print_token      kwd_if "if";
+  print_expr       test;
+  print_token      kwd_then "then";
+  print_if_clause  ifso;
+  print_terminator terminator;
+  print_token      kwd_else "else";
+  print_if_clause  ifnot
+
+and print_if_clause = function
+  ClauseInstr instr -> print_instruction instr
+| ClauseBlock {value; _} ->
+    let {lbrace; inside; rbrace} = value in
+    let statements, terminator = inside in
+    print_token lbrace "{";
+    print_statements statements;
+    print_terminator terminator;
+    print_token rbrace "}"
 
 and print_case_instr (node : case_instr) =
   let {kwd_case; expr; kwd_of;
@@ -1113,18 +1225,28 @@ and print_expr = function
 | ESet    e -> print_set_expr e
 | EConstr e -> print_constr_expr e
 | ERecord e -> print_record_expr e
+| EProj   e -> print_projection e
 | EMap    e -> print_map_expr e
 | EVar    v -> print_var v
 | ECall   e -> print_fun_call e
 | EBytes  b -> print_bytes b
 | EUnit   r -> print_token r "Unit"
-| ETuple  e -> print_tuple e
+| ETuple  e -> print_tuple_expr e
 | EPar    e -> print_par_expr e
 
 and print_map_expr = function
   MapLookUp {value; _} -> print_map_lookup value
-| MapInj inj ->
-    print_map_injection inj
+| MapInj inj           -> print_injection "map" print_binding inj
+
+and print_set_expr = function
+  SetInj inj -> print_injection "set" print_expr inj
+| SetMem mem -> print_set_membership mem
+
+and print_set_membership {value; _} =
+  let {set; kwd_contains; element} = value in
+  print_expr set;
+  print_token kwd_contains "contains";
+  print_expr element
 
 and print_map_lookup {path; index} =
   let {lbracket; inside; rbracket} = index.value in
@@ -1134,8 +1256,8 @@ and print_map_lookup {path; index} =
   print_token rbracket "]"
 
 and print_path = function
-  Name var        -> print_var var
-| RecordPath path -> print_record_projection path
+  Name var  -> print_var var
+| Path path -> print_projection path
 
 and print_logic_expr = function
   BoolExpr e -> print_bool_expr e
@@ -1188,12 +1310,8 @@ and print_string_expr = function
 and print_list_expr = function
   Cons {value = {arg1; op; arg2}; _} ->
     print_expr arg1; print_token op "#"; print_expr arg2
-| List e       -> print_list e
-| EmptyList e  -> print_empty_list e
-
-and print_set_expr = function
-  Set e      -> print_set e
-| EmptySet e -> print_empty_set e
+| List e -> print_injection "list" print_expr e
+| Nil  e -> print_nil e
 
 and print_constr_expr = function
   SomeApp e   -> print_some_app e
@@ -1201,15 +1319,14 @@ and print_constr_expr = function
 | ConstrApp e -> print_constr_app e
 
 and print_record_expr = function
-  RecordInj  e -> print_record_injection e
-| RecordProj e -> print_record_projection e
+  RecordInj e -> print_record_injection e
 
 and print_record_injection {value; _} =
-  let {opening; fields; terminator; close} = value in
+  let {opening; fields; terminator; closing} = value in
   print_token opening "record";
   print_nsepseq ";" print_field_assign fields;
   print_terminator terminator;
-  print_token close "end"
+  print_token closing "end"
 
 and print_field_assign {value; _} =
   let {field_name; equal; field_expr} = value in
@@ -1217,14 +1334,18 @@ and print_field_assign {value; _} =
   print_token equal "=";
   print_expr field_expr
 
-and print_record_projection {value; _} =
+and print_projection {value; _} =
   let {record_name; selector; field_path} = value in
   print_var record_name;
   print_token selector ".";
   print_field_path field_path
 
 and print_field_path sequence =
-  print_nsepseq "." print_var sequence
+  print_nsepseq "." print_selection sequence
+
+and print_selection = function
+  FieldName name -> print_var name
+| Component int  -> print_int int
 
 and print_record_patch node =
   let {kwd_patch; path; kwd_with; record_inj} = node in
@@ -1233,19 +1354,54 @@ and print_record_patch node =
   print_token kwd_with "with";
   print_record_injection record_inj
 
+and print_set_patch node =
+  let {kwd_patch; path; kwd_with; set_inj} = node in
+  print_token kwd_patch "patch";
+  print_path path;
+  print_token kwd_with "with";
+  print_injection "set" print_expr set_inj
+
 and print_map_patch node =
   let {kwd_patch; path; kwd_with; map_inj} = node in
   print_token kwd_patch "patch";
   print_path path;
   print_token kwd_with "with";
-  print_map_injection map_inj
+  print_injection "map" print_binding map_inj
 
-and print_map_injection {value; _} =
-  let {opening; bindings; terminator; close} = value in
-  print_token opening "record";
-  print_nsepseq ";" print_binding bindings;
-  print_terminator terminator;
-  print_token close "end"
+and print_map_remove node =
+  let {kwd_remove; key; kwd_from; kwd_map; map} = node in
+  print_token kwd_remove "remove";
+  print_expr  key;
+  print_token kwd_from "from";
+  print_token kwd_map "map";
+  print_path  map
+
+and print_set_remove node =
+  let {kwd_remove; element; kwd_from; kwd_set; set} = node in
+  print_token kwd_remove "remove";
+  print_expr  element;
+  print_token kwd_from "from";
+  print_token kwd_set "set";
+  print_path  set
+
+and print_injection :
+  'a.string -> ('a -> unit) -> 'a injection reg -> unit =
+  fun kwd print {value; _} ->
+    let {opening; elements; terminator; closing} = value in
+    print_opening kwd opening;
+    print_sepseq ";" print elements;
+    print_terminator terminator;
+    print_closing closing
+
+and print_opening lexeme = function
+  Kwd kwd -> print_token kwd lexeme
+| KwdBracket (kwd, lbracket) ->
+    print_token kwd lexeme;
+    print_token lbracket "{"
+
+and print_closing = function
+  RBracket rbracket -> print_token rbracket "}"
+| End kwd_end       -> print_token kwd_end "end"
 
 and print_binding {value; _} =
   let {source; arrow; image} = value in
@@ -1253,42 +1409,22 @@ and print_binding {value; _} =
   print_token arrow "->";
   print_expr image
 
-and print_tuple {value; _} =
+and print_tuple_expr = function
+  TupleInj inj -> print_tuple_inj inj
+
+and print_tuple_inj {value; _} =
   let {lpar; inside; rpar} = value in
   print_token lpar "(";
   print_nsepseq "," print_expr inside;
   print_token rpar ")"
 
-and print_list {value; _} =
-  let {lbracket; inside; rbracket} = value in
-  print_token lbracket "[";
-  print_nsepseq "," print_expr inside;
-  print_token rbracket "]"
-
-and print_empty_list {value; _} =
+and print_nil {value; _} =
   let {lpar; inside; rpar} = value in
-  let {lbracket; rbracket; colon; list_type} = inside in
+  let {nil; colon; list_type} = inside in
   print_token     lpar "(";
-  print_token     lbracket "[";
-  print_token     rbracket "]";
+  print_token     nil "nil";
   print_token     colon ":";
   print_type_expr list_type;
-  print_token     rpar ")"
-
-and print_set {value; _} =
-  let {lbrace; inside; rbrace} = value in
-  print_token lbrace "{";
-  print_nsepseq "," print_expr inside;
-  print_token rbrace "}"
-
-and print_empty_set {value; _} =
-  let {lpar; inside; rpar} = value in
-  let {lbrace; rbrace; colon; set_type} = inside in
-  print_token     lpar "(";
-  print_token     lbrace "{";
-  print_token     rbrace "}";
-  print_token     colon ":";
-  print_type_expr set_type;
   print_token     rpar ")"
 
 and print_none_expr {value; _} =
@@ -1302,18 +1438,18 @@ and print_none_expr {value; _} =
 
 and print_fun_call {value; _} =
   let fun_name, arguments = value in
-  print_var   fun_name;
-  print_tuple arguments
+  print_var       fun_name;
+  print_tuple_inj arguments
 
 and print_constr_app {value; _} =
   let constr, arguments = value in
-  print_constr constr;
-  print_tuple  arguments
+  print_constr    constr;
+  print_tuple_inj arguments
 
 and print_some_app {value; _} =
   let c_Some, arguments = value in
   print_token c_Some "Some";
-  print_tuple arguments
+  print_tuple_inj arguments
 
 and print_par_expr {value; _} =
   let {lpar; inside; rpar} = value in
@@ -1348,14 +1484,9 @@ and print_patterns {value; _} =
   print_token rpar ")"
 
 and print_list_pattern = function
-  Sugar sugar -> print_sugar sugar
-| Raw     raw -> print_raw raw
-
-and print_sugar {value; _} =
-  let {lbracket; inside; rbracket} = value in
-  print_token lbracket "[";
-  print_sepseq "," print_pattern inside;
-  print_token rbracket "]"
+  Sugar  sugar -> print_injection "list" print_pattern sugar
+| PNil kwd_nil -> print_token kwd_nil "nil"
+| Raw      raw -> print_raw raw
 
 and print_raw {value; _} =
   let {lpar; inside; rpar} = value in
