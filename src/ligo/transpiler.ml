@@ -266,7 +266,7 @@ let functionalize (e:AST.annotated_expression) : AST.lambda * AST.type_value =
     output_type = t ;
     result = e ;
     body = [Skip]
-  }, Combinators.(make_t_function (make_t_unit, t))
+  }, Combinators.(make_t_function make_t_unit t)
 
 let translate_entry (lst:AST.program) (name:string) : anon_function result =
   let rec aux acc (lst:AST.program) =

@@ -329,7 +329,7 @@ and type_annotated_expression (e:environment) (ae:I.annotated_expression) : O.an
       let e' = Environment.add e binder input_type in
       let%bind (body, e'') = type_block_full e' body in
       let%bind result = type_annotated_expression e'' result in
-      let%bind type_annotation = check @@ make_t_function (input_type, output_type) in
+      let%bind type_annotation = check @@ make_t_function input_type output_type in
       ok O.{expression = Lambda {binder;input_type;output_type;result;body} ; type_annotation}
   | Constant (name, lst) ->
       let%bind lst' = bind_list @@ List.map (type_annotated_expression e) lst in

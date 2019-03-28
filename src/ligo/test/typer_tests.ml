@@ -38,16 +38,23 @@ module TestExpressions = struct
   let string () : unit result = test_expression I.(string "s") O.make_t_string
   let bytes  () : unit result = test_expression I.(bytes "b")  O.make_t_bytes
 
+  let lambda () : unit result =
+    test_expression
+      I.(lambda "x" t_int t_int (var "x") [])
+      O.(make_t_function make_t_int make_t_int)
+
   let tuple () : unit result =
     test_expression
       I.(ez_tuple [number 32; string "foo"])
       O.(make_t_tuple [make_t_int; make_t_string])
 
   let constructor () : unit result =
-    test_expression
-      ~env:(E.env_sum_type O.[("foo", make_t_int); ("bar", make_t_string)])
+    let variant_foo_bar =
+      O.[("foo", make_t_int); ("bar", make_t_string)]
+    in test_expression
+      ~env:(E.env_sum_type variant_foo_bar)
       I.(constructor "foo" (ae @@ number 32))
-      O.(make_t_ez_sum [("foo", make_t_int); ("bar", make_t_string)])
+      O.(make_t_ez_sum variant_foo_bar)
 
   let record () : unit result =
     test_expression
@@ -68,4 +75,5 @@ let main = "Typer (from simplified AST)", [
     test "tuple"       TestExpressions.tuple ;
     test "constructor" TestExpressions.constructor ;
     test "record"      TestExpressions.record ;
+    test "lambda"      TestExpressions.lambda ;
   ]

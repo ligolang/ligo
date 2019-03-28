@@ -715,15 +715,56 @@ module Simplify = struct
 end
 
 module Combinators = struct
+  let t_bool      : type_expression = Type_constant ("bool", [])
+  let t_string    : type_expression = Type_constant ("string", [])
+  let t_bytes     : type_expression = Type_constant ("bytes", [])
+  let t_int       : type_expression = Type_constant ("int", [])
+  let t_unit      : type_expression = Type_constant ("unit", [])
+  let t_tuple lst : type_expression = Type_tuple lst
+  let t_pair a b = t_tuple [a ; b]
+  let t_record m  : type_expression = (Type_record m)
+  let t_ez_record (lst:(string * type_expression) list) : type_expression =
+    let aux prev (k, v) = SMap.add k v prev in
+    let map = List.fold_left aux SMap.empty lst in
+    Type_record map
+
+  let t_record_ez lst =
+    let m = SMap.of_list lst in
+    t_record m
+
+  let t_sum m : type_expression = Type_sum m
+  let make_t_ez_sum (lst:(string * type_expression) list) : type_expression =
+    let aux prev (k, v) = SMap.add k v prev in
+    let map = List.fold_left aux SMap.empty lst in
+    Type_sum map
+
+  let t_function param result : type_expression = Type_function (param, result)
+
   let annotated_expression ?type_annotation expression = {expression ; type_annotation}
 
   let name (s : string) : name = s
+
+  let var (s : string) : expression = Variable s
 
   let unit  () : expression = Literal (Unit)
   let number n : expression = Literal (Number n)
   let bool   b : expression = Literal (Bool b)
   let string s : expression = Literal (String s)
   let bytes  b : expression = Literal (Bytes (Bytes.of_string b))
+
+  let lambda (binder : string)
+             (input_type : type_expression)
+             (output_type : type_expression)
+             (result : expression)
+             (body : block)
+      : expression =
+    Lambda {
+        binder = (name binder) ;
+        input_type = input_type ;
+        output_type = output_type ;
+        result = (ae result) ;
+        body ;
+      }
 
   let tuple (lst : ae list) : expression = Tuple lst
   let ez_tuple (lst : expression list) : expression =

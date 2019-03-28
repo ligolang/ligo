@@ -346,8 +346,8 @@ module Combinators = struct
     let map = List.fold_left aux SMap.empty lst in
     type_value (Type_sum map) None
 
-  let t_function (param, result) s : type_value = type_value (Type_function (param, result)) s
-  let make_t_function f = t_function f None
+  let t_function param result s : type_value = type_value (Type_function (param, result)) s
+  let make_t_function param result = t_function param result None
 
   let get_annotation (x:annotated_expression) = x.type_annotation
 
