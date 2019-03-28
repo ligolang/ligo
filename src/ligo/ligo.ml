@@ -105,9 +105,9 @@ let type_file ?(debug_simplify = false) ?(debug_typed = false)
   let%bind typed =
     trace (simple_error "typing") @@
     type_ simpl in
-  (if debug_typed then
-     Format.(printf "Typed : %a\n%!" AST_Typed.PP.program typed)
-  ) ;
+  (if debug_typed then (
+      Format.(printf "Typed : %a\n%!" AST_Typed.PP.program typed)
+    )) ;
   ok typed
 
 let easy_run_typed

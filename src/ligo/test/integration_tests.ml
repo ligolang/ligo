@@ -42,15 +42,18 @@ let complex_function () : unit result =
   ok ()
 
 let multiple_parameters () : unit result  =
-  let%bind program = type_file "./contracts/multiple-parameters.ligo" in
+  let%bind program = type_file ~debug_typed:true "./contracts/multiple-parameters.ligo" in
   let aux n =
     let open AST_Typed.Combinators in
-    let input = a_int n in
+    let input = a_record_ez [
+        ("a", a_int n) ;
+        ("b", a_int n) ;
+      ] in
     let%bind result = easy_run_main_typed program input in
     let%bind result' =
       trace (simple_error "bad result") @@
       get_a_int result in
-    Assert.assert_equal_int (3 * n + 2) result'
+    Assert.assert_equal_int (2 * n) result'
   in
   let%bind _ = bind_list
     @@ List.map aux

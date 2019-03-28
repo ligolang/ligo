@@ -167,32 +167,32 @@ and translate_annotated_expression (env:Environment.t) (ae:AST.annotated_express
         ok (Predicate ("PAIR", [a; b]), `Pair(a_ty, b_ty), env)
       in
       Append_tree.fold_ne (translate_annotated_expression env) aux node
-  | Record_accessor (r, key) ->
-      let%bind (r'_expr, _, _) = translate_annotated_expression env r in
-      let%bind r_tv = get_t_record ae.type_annotation in
-      let node_tv = Append_tree.of_list @@ kv_list_of_map r_tv in
-      let%bind ae' =
-        let leaf (key', tv) : (expression' option * type_value) result =
-          let%bind tv = translate_type tv in
-          if key = key' then (
-            ok (Some (r'_expr), tv)
-          ) else (
-            ok (None, tv)
+  | Record_accessor (record, property) ->
+      let%bind translation = translate_annotated_expression env record in
+      let%bind record_type_map =
+        trace (simple_error (Format.asprintf "Accessing field of %a, that has type %a, which isn't a record" AST.PP.annotated_expression record AST.PP.type_value record.type_annotation)) @@
+        get_t_record record.type_annotation in
+      let node_tv = Append_tree.of_list @@ kv_list_of_map record_type_map in
+      let leaf (key, _) : expression result =
+        if property = key then (
+          ok translation
+        ) else (
+          simple_fail "bad leaf"
+        ) in
+      let node (a:expression result) b : expression result =
+        match%bind bind_lr (a, b) with
+        | `Left ((_, t, env) as ex) -> (
+            let%bind (a, _) = get_t_pair t in
+            ok (Predicate ("CAR", [ex]), a, env)
+          )
+        | `Right ((_, t, env) as ex) -> (
+            let%bind (_, b) = get_t_pair t in
+            ok (Predicate ("CDR", [ex]), b, env)
           ) in
-        let node a b : (expression' option * type_value) result =
-          let%bind a = a in
-          let%bind b = b in
-          match (a, b) with
-          | (None, a), (None, b) -> ok (None, `Pair (a, b))
-          | (Some _, _), (Some _, _) -> simple_fail "several identical keys in the same record (shouldn't happen here)"
-          | (Some v, a), (None, b) -> ok (Some (Predicate ("CAR", [v, a, env])), `Pair (a, b))
-          | (None, a), (Some v, b) -> ok (Some (Predicate ("CDR", [v, b, env])), `Pair (a, b))
-        in
-        let%bind (ae_opt, tv) = Append_tree.fold_ne leaf node node_tv in
-        let%bind ae = trace_option (simple_error "bad key in record (shouldn't happen here)")
-            ae_opt in
-        ok (ae, tv, env) in
-      ok ae'
+      let%bind expr =
+        trace_strong (simple_error "bad key in record (shouldn't happen here)") @@
+        Append_tree.fold_ne leaf node node_tv in
+      ok expr
   | Constant (name, lst) ->
       let%bind lst' = bind_list @@ List.map (translate_annotated_expression env) lst in
       ok (Predicate (name, lst'), tv, env)

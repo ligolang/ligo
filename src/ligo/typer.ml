@@ -70,8 +70,18 @@ module Errors = struct
     let full = n in
     error title full
 
-  let constant_declaration_error (name:string) =
-    error "typing constant declaration" name
+  let program_error (p:I.program) =
+    let title = "typing program" in
+    let full = Format.asprintf "%a" I.PP.program p in
+    error title full
+
+  let constant_declaration_error (name:string) (ae:I.ae) =
+    let title = "typing constant declaration" in
+    let full =
+      Format.asprintf "%s = %a" name
+        I.PP.annotated_expression ae
+    in
+    error title full
 
 end
 open Errors
@@ -85,7 +95,7 @@ let rec type_program (p:I.program) : O.program result =
     | Some d' -> ok (e', d' :: acc)
   in
   let%bind (_, lst) =
-    trace (simple_error "typing program") @@
+    trace (program_error p) @@
     bind_fold_list aux (Environment.empty, []) p in
   ok @@ List.rev lst
 
@@ -96,7 +106,7 @@ and type_declaration env : I.declaration -> (environment * O.declaration option)
       ok (env', None)
   | Constant_declaration {name;annotated_expression} ->
       let%bind ae' =
-        trace (constant_declaration_error name) @@
+        trace (constant_declaration_error name annotated_expression) @@
         type_annotated_expression env annotated_expression in
       let env' = Environment.add env name ae'.type_annotation in
       ok (env', Some (O.Constant_declaration {name;annotated_expression=ae'}))
@@ -181,10 +191,9 @@ and type_match (e:environment) (t:O.type_value) : I.matching -> O.matching resul
       let%bind t_tuple =
         trace_strong (simple_error "Matching tuple on not-a-tuple")
         @@ get_t_tuple t in
-      let%bind _ =
-        trace_strong (simple_error "Matching tuple of different size")
-        @@ Assert.assert_list_same_size t_tuple lst in
-      let lst' = List.combine lst t_tuple in
+      let%bind lst' =
+        generic_try (simple_error "Matching tuple of different size")
+        @@ (fun () -> List.combine lst t_tuple) in
       let aux prev (name, tv) = Environment.add prev name tv in
       let e' = List.fold_left aux e lst' in
       let%bind b' = type_block e' b in
@@ -293,12 +302,11 @@ and type_annotated_expression (e:environment) (ae:I.annotated_expression) : O.an
       ok O.{expression = O.Constructor(c, expr') ; type_annotation }
   (* Record *)
   | Record m ->
-      let aux k expr prev =
-        let%bind prev' = prev in
+      let aux prev k expr =
         let%bind expr' = type_annotated_expression e expr in
-        ok (SMap.add k expr' prev')
+        ok (SMap.add k expr' prev)
       in
-      let%bind m' = SMap.fold aux m (ok SMap.empty) in
+      let%bind m' = bind_fold_smap aux (ok SMap.empty) m in
       let%bind type_annotation = check @@ make_t_record (SMap.map get_annotation m') in
       ok O.{expression = O.Record m' ; type_annotation }
   | Lambda {

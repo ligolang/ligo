@@ -209,15 +209,19 @@ module Errors = struct
     let full = Format.asprintf "%s VS %s" a b in
     error title full
 
-  let different_size_constants a b =
-    let title = "constants have different sizes" in
+  let different_size_type name a b =
+    let title = name ^ " have different sizes" in
     let full = Format.asprintf "%a VS %a" PP.type_value a PP.type_value b in
     error title full
 
-  let different_size_tuples a b =
-    let title = "tuple have different sizes" in
-    let full = Format.asprintf "%a VS %a" PP.type_value a PP.type_value b in
-    error title full
+  let different_size_constants = different_size_type "constants"
+
+  let different_size_tuples = different_size_type "tuples"
+
+  let different_size_sums = different_size_type "sums"
+
+  let different_size_records = different_size_type "records"
+
 end
 open Errors
 
@@ -240,31 +244,37 @@ let rec assert_type_value_eq (a, b: (type_value * type_value)) : unit result = m
       @@ bind_list_iter assert_type_value_eq (List.combine lsta lstb)
     )
   | Type_constant _, _ -> fail @@ different_kinds a b
-  | Type_sum a, Type_sum b -> (
-      let a' = list_of_smap a in
-      let b' = list_of_smap b in
+  | Type_sum sa, Type_sum sb -> (
+      let sa' = list_of_smap sa in
+      let sb' = list_of_smap sb in
       let aux ((ka, va), (kb, vb)) =
         let%bind _ =
           Assert.assert_true ~msg:"different keys in sum types"
           @@ (ka = kb) in
         assert_type_value_eq (va, vb)
       in
-      trace (simple_error "sum type")
-      @@ bind_list_iter aux (List.combine a' b')
+      let%bind _ =
+        trace_strong (different_size_sums a b)
+        @@ Assert.assert_list_same_size sa' sb' in
+      trace (simple_error "sum type") @@
+      bind_list_iter aux (List.combine sa' sb')
 
     )
   | Type_sum _, _ -> fail @@ different_kinds a b
-  | Type_record a, Type_record b -> (
-      let a' = list_of_smap a in
-      let b' = list_of_smap b in
+  | Type_record ra, Type_record rb -> (
+      let ra' = list_of_smap ra in
+      let rb' = list_of_smap rb in
       let aux ((ka, va), (kb, vb)) =
         let%bind _ =
           Assert.assert_true ~msg:"different keys in record types"
           @@ (ka = kb) in
         assert_type_value_eq (va, vb)
       in
+      let%bind _ =
+        trace_strong (different_size_records a b)
+        @@ Assert.assert_list_same_size ra' rb' in
       trace (simple_error "record type")
-      @@ bind_list_iter aux (List.combine a' b')
+      @@ bind_list_iter aux (List.combine ra' rb')
 
     )
   | Type_record _, _ -> fail @@ different_kinds a b
@@ -325,6 +335,9 @@ module Combinators = struct
     type_value (Type_record map) None
 
   let make_t_record m = t_record m None
+  let make_t_record_ez lst =
+    let m = SMap.of_list lst in
+    make_t_record m
 
   let t_sum m s : type_value = type_value (Type_sum m) s
   let make_t_sum m = t_sum m None
@@ -358,10 +371,12 @@ module Combinators = struct
     | Type_record m -> ok m
     | _ -> simple_fail "not a record"
 
-  let record (lst : (string * ae) list) : expression =
+  let record map : expression = Record map
+
+  let record_ez (lst : (string * ae) list) : expression =
     let aux prev (k, v) = SMap.add k v prev in
     let map = List.fold_left aux SMap.empty lst in
-    Record map
+    record map
 
   let int n : expression = Literal (Int n)
   let bool b : expression = Literal (Bool b)
@@ -370,6 +385,8 @@ module Combinators = struct
   let a_int n = annotated_expression (int n) make_t_int
   let a_bool b = annotated_expression (bool b) make_t_bool
   let a_pair a b = annotated_expression (pair a b) (make_t_pair a.type_annotation b.type_annotation)
+  let a_record r = annotated_expression (record r) (make_t_record (SMap.map (fun x -> x.type_annotation) r))
+  let a_record_ez r = annotated_expression (record_ez r) (make_t_record_ez (List.map (fun (x, y) -> x, y.type_annotation) r))
 
   let get_a_int (t:annotated_expression) =
     match t.expression with

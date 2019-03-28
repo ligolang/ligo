@@ -66,6 +66,13 @@ let bind_smap (s:_ X_map.String.t) =
     ok @@ add k v' prev' in
   fold aux s (ok empty)
 
+let bind_fold_smap f init (smap : _ X_map.String.t) =
+  let aux k v prev =
+    prev >>? fun prev' ->
+    f prev' k v
+  in
+  X_map.String.fold aux smap init
+
 let bind_map_list f lst = bind_list (List.map f lst)
 
 let bind_fold_list f init lst =

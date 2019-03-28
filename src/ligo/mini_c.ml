@@ -104,11 +104,6 @@ and block = block' * environment_wrap
 
 and program = toplevel_statement list
 
-let expression_to_value ((e, _, _):expression) : value result =
-  match e with
-  | Literal v -> ok v
-  | _ -> simple_fail "not a value"
-
 module PP = struct
   open Format
   open Ligo_helpers.PP
@@ -191,6 +186,13 @@ module PP = struct
   let program ppf (p:program) =
     fprintf ppf "Program:\n---\n%a" (pp_print_list ~pp_sep:pp_print_newline tl_statement) p
 end
+
+let expression_to_value ((e', _, _) as e:expression) : value result =
+  match e' with
+  | Literal v -> ok v
+  | _ -> fail
+      @@ error "not a value"
+      @@ Format.asprintf "%a" PP.expression e
 
 module Free_variables = struct
   type free_variable = string
@@ -627,6 +629,8 @@ module Translate_program = struct
     | "OR" -> ok @@ simple_binary @@ prim I_OR
     | "AND" -> ok @@ simple_binary @@ prim I_AND
     | "PAIR" -> ok @@ simple_binary @@ prim I_PAIR
+    | "CAR" -> ok @@ simple_unary @@ prim I_CAR
+    | "CDR" -> ok @@ simple_unary @@ prim I_CDR
     | "EQ" -> ok @@ simple_binary @@ seq [prim I_COMPARE ; prim I_EQ]
     | x -> simple_fail @@ "predicate \"" ^ x ^ "\" doesn't exist"
 
@@ -774,20 +778,21 @@ module Translate_program = struct
 
     let%bind () =
       let%bind (Ex_ty schema_ty) = Environment.to_ty env in
-      let%bind output_ty = Translate_type.type_ ty in
+      let%bind output_type = Translate_type.type_ ty in
       let%bind (Ex_ty output_ty) =
-        let error_message = Format.asprintf "%a" Michelson.pp output_ty in
+        let error_message = Format.asprintf "%a" Michelson.pp output_type in
         Trace.trace_tzresult_lwt (error "error parsing output ty" error_message) @@
-        Tezos_utils.Memory_proto_alpha.parse_michelson_ty output_ty in
+        Tezos_utils.Memory_proto_alpha.parse_michelson_ty output_type in
       let input_stack_ty = Stack.(Types.unit @: schema_ty @: nil) in
       let output_stack_ty = Stack.(Types.(pair output_ty unit) @: schema_ty @: nil) in
       let%bind error_message =
         let%bind schema_michelson = Environment.to_michelson_type env in
         ok @@ Format.asprintf
-          "expression : %a\ncode : %a\nschema type : %a"
+          "expression : %a\ncode : %a\nschema type : %a\noutput type : %a"
           PP.expression (expr', ty, env)
-          Tezos_utils.Micheline.Michelson.pp code
-          Tezos_utils.Micheline.Michelson.pp schema_michelson
+          Michelson.pp code
+          Michelson.pp schema_michelson
+          Michelson.pp output_type
       in
       let%bind _ =
         Trace.trace_tzresult_lwt (error "error parsing expression code" error_message) @@
@@ -1024,6 +1029,10 @@ module Combinators = struct
   let get_pair (v:value) = match v with
     | `Pair (a, b) -> ok (a, b)
     | _ -> simple_fail "not a pair"
+
+  let get_t_pair (t:type_value) = match t with
+    | `Pair (a, b) -> ok (a, b)
+    | _ -> simple_fail "not a type pair"
 
   let get_left (v:value) = match v with
     | `Left b -> ok b

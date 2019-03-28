@@ -150,6 +150,10 @@ module PP = struct
   and access_path ppf (p:access_path) =
     fprintf ppf "%a" (list_sep ~pp_sep:(const ".") access) p
 
+  and type_annotation ppf (ta:type_expression option) = match ta with
+    | None -> fprintf ppf ""
+    | Some t -> type_expression ppf t
+
   and annotated_expression ppf (ae:annotated_expression) = match ae.type_annotation with
     | None -> fprintf ppf "%a" expression ae.expression
     | Some t -> fprintf ppf "(%a) : %a" expression ae.expression type_expression t
@@ -461,7 +465,8 @@ module Simplify = struct
         let%bind lst = bind_list @@ List.map simpl_expression lst in
         ok @@ ae @@ Tuple lst
 
-  and simpl_local_declaration (t:Raw.local_decl) : instruction result =
+  and simpl_local_declaration (t:Raw.local_decl) : (instruction * named_expression) result =
+    let return x = ok (Assignment x, x) in
     match t with
     | LocalVar x ->
         let x = x.value in
@@ -469,14 +474,14 @@ module Simplify = struct
         let%bind t = simpl_type_expression x.var_type in
         let type_annotation = Some t in
         let%bind expression = simpl_expression x.init in
-        ok @@ Assignment {name;annotated_expression={expression with type_annotation}}
+        return {name;annotated_expression={expression with type_annotation}}
     | LocalConst x ->
         let x = x.value in
         let name = x.name.value in
         let%bind t = simpl_type_expression x.const_type in
         let type_annotation = Some t in
         let%bind expression = simpl_expression x.init in
-        ok @@ Assignment {name;annotated_expression={expression with type_annotation}}
+        return {name;annotated_expression={expression with type_annotation}}
     | _ -> simple_fail "todo"
 
   and simpl_param (t:Raw.param_decl) : named_type_expression result =
@@ -514,7 +519,10 @@ module Simplify = struct
               let name = name.value in
               let binder = input.type_name in
               let input_type = input.type_expression in
-              let%bind local_declarations = bind_list @@ List.map simpl_local_declaration local_decls in
+              let%bind local_declarations =
+                let%bind tmp = bind_list
+                  @@ List.map simpl_local_declaration local_decls in
+                ok (List.map fst tmp) in
               let%bind instructions = bind_list
                 @@ List.map simpl_instruction
                 @@ npseq_to_list block.value.instr in
@@ -536,11 +544,13 @@ module Simplify = struct
                     @@ List.map (fun (x:named_type_expression) -> x.type_name, x.type_expression)
                       params
                   ) in
-                { type_name = "arguments" ; type_expression  } in
+                { type_name = "arguments" ; type_expression } in
               let binder = input.type_name in
               let input_type = input.type_expression in
               let%bind local_declarations =
-                bind_list @@ List.map simpl_local_declaration local_decls in
+                let%bind typed = bind_map_list simpl_local_declaration local_decls in
+                ok (List.map fst typed)
+              in
               let%bind output_type = simpl_type_expression ret_type in
               let%bind instructions = bind_list
                 @@ List.map simpl_instruction
@@ -552,7 +562,10 @@ module Simplify = struct
                   in
                   List.map aux params
                 in
-                let%bind r = simpl_expression return in
+                let%bind r =
+                  let%bind tmp = simpl_expression return in
+                  Rename.Value.rename_annotated_expression renamings tmp
+                in
                 let%bind b =
                   let tmp = local_declarations @ instructions in
                   Rename.Value.rename_block renamings tmp
@@ -561,7 +574,7 @@ module Simplify = struct
               let decl =
                 let expression = Lambda {binder ; input_type ; output_type ; result ; body } in
                 let type_annotation = Some (Type_function (input_type, output_type)) in
-                Constant_declaration {name="arguments";annotated_expression = {expression;type_annotation}}
+                Constant_declaration {name = name.value;annotated_expression = {expression;type_annotation}}
               in
               ok decl
             )
