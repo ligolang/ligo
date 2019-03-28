@@ -14,6 +14,7 @@ module Environment = struct
     type_environment: (string * ele) list ;
   }
   let empty : t = {
+    (*  TODO: use maps *)
     environment = [] ;
     type_environment = [] ;
   }
@@ -49,6 +50,13 @@ module Environment = struct
 
     let full ppf e =
       fprintf ppf "%a\n%a" value e type_ e
+  end
+
+  module Combinators = struct
+    let env_sum_type ?(env = empty)
+                     ?(name = "a_sum_type")
+                     (lst : (string * ele) list) =
+      add env name (make_t_ez_sum lst)
   end
 end
 

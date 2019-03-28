@@ -341,6 +341,10 @@ module Combinators = struct
 
   let t_sum m s : type_value = type_value (Type_sum m) s
   let make_t_sum m = t_sum m None
+  let make_t_ez_sum (lst:(string * type_value) list) : type_value =
+    let aux prev (k, v) = SMap.add k v prev in
+    let map = List.fold_left aux SMap.empty lst in
+    type_value (Type_sum map) None
 
   let t_function (param, result) s : type_value = type_value (Type_function (param, result)) s
   let make_t_function f = t_function f None

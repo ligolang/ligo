@@ -717,6 +717,8 @@ end
 module Combinators = struct
   let annotated_expression ?type_annotation expression = {expression ; type_annotation}
 
+  let name (s : string) : name = s
+
   let unit  () : expression = Literal (Unit)
   let number n : expression = Literal (Number n)
   let bool   b : expression = Literal (Bool b)
@@ -724,9 +726,18 @@ module Combinators = struct
   let bytes  b : expression = Literal (Bytes (Bytes.of_string b))
 
   let tuple (lst : ae list) : expression = Tuple lst
+  let ez_tuple (lst : expression list) : expression =
+    tuple (List.map (fun e -> ae e) lst)
+
+  let constructor (s : string) (e : ae) : expression = Constructor (name s, e)
 
   let record (lst : (string * ae) list) : expression =
     let aux prev (k, v) = SMap.add k v prev in
     let map = List.fold_left aux SMap.empty lst in
     Record map
+
+  let ez_record  (lst : (string * expression) list) : expression =
+    (* TODO: define a correct implementation of List.map
+     * (an implementation that does not fail with stack overflow) *)
+    record (List.map (fun (s,e) -> (s, ae e)) lst)
 end
