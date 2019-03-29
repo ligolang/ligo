@@ -114,6 +114,10 @@ let bind_and (a, b) =
   b >>? fun b ->
   ok (a, b)
 
+let bind_pair = bind_and
+let bind_map_pair f (a, b) =
+  bind_pair (f a, f b)
+
 module AE = Tezos_utils.Memory_proto_alpha.Alpha_environment
 module TP = Tezos_base__TzPervasives
 

@@ -7,5 +7,6 @@ let () =
     Compiler_tests.main ;
     Transpiler_tests.main ;
     Typer_tests.main ;
+    Heap_tests.main ;
   ] ;
   ()

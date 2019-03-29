@@ -84,6 +84,7 @@ and translate_instruction (env:Environment.t) (i:AST.instruction) : statement op
 
 and translate_annotated_expression (env:Environment.t) (ae:AST.annotated_expression) : expression result =
   let%bind tv = translate_type ae.type_annotation in
+  let return (expr, tv) = ok (expr, tv, env) in
   match ae.expression with
   | Literal (Bool b) -> ok (Literal (`Bool b), tv, env)
   | Literal (Int n) -> ok (Literal (`Int n), tv, env)
@@ -198,6 +199,15 @@ and translate_annotated_expression (env:Environment.t) (ae:AST.annotated_express
       let%bind lst' = bind_list @@ List.map (translate_annotated_expression env) lst in
       ok (Predicate (name, lst'), tv, env)
   | Lambda l -> translate_lambda env l tv
+  | Map m ->
+      let aux : expression result -> (AST.ae * AST.ae) -> expression result = fun prev kv ->
+        let%bind prev' = prev in
+        let%bind (k', v') = bind_map_pair (translate_annotated_expression env) kv in
+        return (Predicate ("UPDATE", [k' ; v' ; prev']), tv)
+      in
+      let init = return (Predicate ("EMPTY", []), tv) in
+      List.fold_left aux init m
+
 
 and translate_lambda_shallow env l tv =
   let { binder ; input_type ; output_type ; body ; result } : AST.lambda = l in

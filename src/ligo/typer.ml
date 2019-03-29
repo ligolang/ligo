@@ -317,6 +317,33 @@ and type_annotated_expression (e:environment) (ae:I.annotated_expression) : O.an
       let%bind m' = bind_fold_smap aux (ok SMap.empty) m in
       let%bind type_annotation = check @@ make_t_record (SMap.map get_annotation m') in
       ok O.{expression = O.Record m' ; type_annotation }
+  (* Data-structure *)
+  | Map lst ->
+      let%bind lst' = bind_map_list (bind_map_pair (type_annotated_expression e)) lst in
+      let%bind type_annotation =
+        let aux opt c =
+          match opt with
+          | None -> ok (Some c)
+          | Some c' ->
+              let%bind _eq = Ast_typed.assert_type_value_eq (c, c') in
+              ok (Some c') in
+        let%bind key_type =
+          let%bind opt =
+            bind_fold_list aux None
+            @@ List.map Ast_typed.get_type_annotation
+            @@ List.map fst lst' in
+          trace_option (simple_error "empty map expression") opt
+        in
+        let%bind value_type =
+          let%bind opt =
+            bind_fold_list aux None
+            @@ List.map Ast_typed.get_type_annotation
+            @@ List.map snd lst' in
+          trace_option (simple_error "empty map expression") opt
+        in
+        check (make_t_map key_type value_type)
+      in
+      ok O.{expression = O.Map lst' ; type_annotation}
   | Lambda {
       binder ;
       input_type ;
@@ -420,6 +447,9 @@ let rec untype_annotated_expression (e:O.annotated_expression) : (I.annotated_ex
   | Record_accessor (r, s) ->
       let%bind r' = untype_annotated_expression r in
       return (Accessor (r', [Record_access s]))
+  | Map m ->
+      let%bind m' = bind_map_list (bind_map_pair untype_annotated_expression) m in
+      return (Map m')
 
 and untype_block (b:O.block) : (I.block) result =
   bind_list @@ List.map untype_instruction b

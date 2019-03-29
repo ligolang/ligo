@@ -15,7 +15,7 @@ type type_name = string
 type type_base =
   | Unit
   | Bool
-  | Int | Nat | Float
+  | Int | Nat
   | String | Bytes
 
 type type_value = [
@@ -25,6 +25,7 @@ type type_value = [
   | `Deep_closure of environment_small * type_value * type_value
   | `Shallow_closure of environment * type_value * type_value
   | `Base of type_base
+  | `Map of type_value * type_value
 ]
 
 and environment_element = string * type_value
@@ -114,7 +115,6 @@ module PP = struct
     | Unit -> fprintf ppf "unit"
     | Bool -> fprintf ppf "bool"
     | Int -> fprintf ppf "int"
-    | Float -> fprintf ppf "float"
     | Nat -> fprintf ppf "nat"
     | String -> fprintf ppf "string"
     | Bytes -> fprintf ppf "bytes"
@@ -124,6 +124,7 @@ module PP = struct
     | `Pair(a, b) -> fprintf ppf "(%a) & (%a)" type_ a type_ b
     | `Base b -> type_base ppf b
     | `Function(a, b) -> fprintf ppf "(%a) -> (%a)" type_ a type_ b
+    | `Map(k, v) -> fprintf ppf "map(%a -> %a)" type_ k type_ v
     | `Shallow_closure(_, a, b) -> fprintf ppf "[big_closure](%a) -> (%a)" type_ a type_ b
     | `Deep_closure(c, arg, ret) ->
       fprintf ppf "[%a](%a)->(%a)"
@@ -232,12 +233,40 @@ module Translate_type = struct
 
   module Ty = struct
 
-    let base_type : type_base -> ex_ty result =
-      function
-      | Unit -> ok @@ Ex_ty Types.unit
-      | Bool -> ok @@ Ex_ty Types.bool
-      | Int -> ok @@ Ex_ty Types.int
-      | _ -> simple_fail "all based types not supported yet"
+    let not_comparable name = error "not a comparable type" name
+
+    let comparable_type_base : type_base -> ex_comparable_ty result = fun tb ->
+      let open Types in
+      let return x = ok @@ Ex_comparable_ty x in
+      match tb with
+      | Unit -> fail (not_comparable "unit")
+      | Bool -> fail (not_comparable "bool")
+      | Nat -> return nat_k
+      | Int -> return int_k
+      | String -> return string_k
+      | Bytes -> return bytes_k
+
+    let comparable_type : type_value -> ex_comparable_ty result = fun tv ->
+      match tv with
+      | `Base b -> comparable_type_base b
+      | `Deep_closure _ -> fail (not_comparable "deep closure")
+      | `Shallow_closure _ -> fail (not_comparable "shallow closure")
+      | `Function _ -> fail (not_comparable "function closure")
+      | `Or _ -> fail (not_comparable "or closure")
+      | `Pair _ -> fail (not_comparable "pair closure")
+      | `Map _ -> fail (not_comparable "map closure")
+
+    let base_type : type_base -> ex_ty result = fun b ->
+      let open Types in
+      let return x = ok @@ Ex_ty x in
+      match b with
+      | Unit -> return unit
+      | Bool -> return bool
+      | Int -> return int
+      | Nat -> return nat
+      | String -> return string
+      | Bytes -> return bytes
+
 
     let rec type_ : type_value -> ex_ty result =
       function
@@ -266,6 +295,10 @@ module Translate_type = struct
           let%bind (Ex_ty arg) = type_ arg in
           let%bind (Ex_ty ret) = type_ ret in
           ok @@ Ex_ty Types.(pair capture @@ lambda (pair capture arg) ret)
+      | `Map (k, v) ->
+          let%bind (Ex_comparable_ty k') = comparable_type k in
+          let%bind (Ex_ty v') = type_ v in
+          ok @@ Ex_ty Types.(map k' v')
 
 
     and environment_small' = let open Append_tree in function
@@ -294,7 +327,9 @@ module Translate_type = struct
     | Unit -> ok @@ prim T_unit
     | Bool -> ok @@ prim T_bool
     | Int -> ok @@ prim T_int
-    | _ -> simple_fail "all based types not supported yet"
+    | Nat -> ok @@ prim T_nat
+    | String -> ok @@ prim T_string
+    | Bytes -> ok @@ prim T_bytes
 
   let rec type_ : type_value -> michelson result =
     function
@@ -309,6 +344,9 @@ module Translate_type = struct
         type_ t' >>? fun t' ->
         ok @@ prim ~children:[t;t'] T_or
       )
+    | `Map kv ->
+        let%bind (k', v') = bind_map_pair type_ kv in
+        ok @@ prim ~children:[k';v'] T_map
     | `Function (arg, ret) ->
       let%bind arg = type_ arg in
       let%bind ret = type_ ret in
@@ -1036,6 +1074,10 @@ module Combinators = struct
   let get_t_pair (t:type_value) = match t with
     | `Pair (a, b) -> ok (a, b)
     | _ -> simple_fail "not a type pair"
+
+  let get_t_map (t:type_value) = match t with
+    | `Map kv -> ok kv
+    | _ -> simple_fail "not a type map"
 
   let get_left (v:value) = match v with
     | `Left b -> ok b

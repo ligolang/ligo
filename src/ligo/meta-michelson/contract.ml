@@ -247,6 +247,7 @@ module Types = struct
   let nat = Nat_t None
   let int = Int_t None
   let nat_k = Nat_key None
+  let int_k = Int_key None
 
   let big_map k v = Big_map_t (k, v, None)
 

@@ -64,8 +64,10 @@ and expression =
   (* Record *)
   | Record of ae_map
   | Record_accessor of ae * string
+  (* Data Structures *)
+  | Map of (ae * ae) list
 
-and value = annotated_expression (* BAD *)
+and value = annotated_expression (* todo (for refactoring) *)
 
 and literal =
   | Unit
@@ -105,6 +107,7 @@ open! Ligo_helpers.Trace
 
 let type_value type_value simplified = { type_value ; simplified }
 let annotated_expression expression type_annotation = { expression ; type_annotation }
+let get_type_annotation x = x.type_annotation
 
 let get_entry (p:program) (entry : string) : annotated_expression result =
   let aux (d:declaration) =
@@ -159,6 +162,10 @@ module PP = struct
     | Tuple_accessor (ae, i) -> fprintf ppf "%a.%d" annotated_expression ae i
     | Record_accessor (ae, s) -> fprintf ppf "%a.%s" annotated_expression ae s
     | Record m -> fprintf ppf "record[%a]" (smap_sep annotated_expression) m
+    | Map m -> fprintf ppf "map[%a]" (list_sep assoc_annotated_expression) m
+
+  and assoc_annotated_expression ppf : (ae * ae) -> unit = fun (a, b) ->
+    fprintf ppf "%a -> %a" annotated_expression a annotated_expression b
 
   and literal ppf (l:literal) : unit =
     match l with
@@ -415,6 +422,9 @@ module Combinators = struct
     let m = SMap.of_list lst in
     make_t_record m
 
+  let t_map key value s = type_value (Type_constant ("map", [key ; value])) s
+  let make_t_map key value = t_map key value None
+
   let t_sum m s : type_value = type_value (Type_sum m) s
   let make_t_sum m = t_sum m None
   let make_t_ez_sum (lst:(string * type_value) list) : type_value =
@@ -452,11 +462,12 @@ module Combinators = struct
     | _ -> simple_fail "not a record"
 
   let record map : expression = Record map
-
   let record_ez (lst : (string * ae) list) : expression =
     let aux prev (k, v) = SMap.add k v prev in
     let map = List.fold_left aux SMap.empty lst in
     record map
+
+  let map lst : expression = Map lst
 
   let unit : expression = Literal (Unit)
   let int n : expression = Literal (Int n)
@@ -469,6 +480,7 @@ module Combinators = struct
   let a_pair a b = annotated_expression (pair a b) (make_t_pair a.type_annotation b.type_annotation)
   let a_record r = annotated_expression (record r) (make_t_record (SMap.map (fun x -> x.type_annotation) r))
   let a_record_ez r = annotated_expression (record_ez r) (make_t_record_ez (List.map (fun (x, y) -> x, y.type_annotation) r))
+  let a_map lst k v = annotated_expression (map lst) (make_t_map k v)
 
   let get_a_int (t:annotated_expression) =
     match t.expression with

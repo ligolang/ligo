@@ -63,6 +63,8 @@ and expression =
   (* Record *)
   | Record of ae_map
   | Accessor of ae * access_path
+  (* Data Structures *)
+  | Map of (ae * ae) list
 
 and access =
   | Tuple_access of int
@@ -137,10 +139,14 @@ module PP = struct
     | Tuple lst -> fprintf ppf "tuple[%a]" (list_sep annotated_expression) lst
     | Accessor (ae, p) -> fprintf ppf "%a.%a" annotated_expression ae access_path p
     | Record m -> fprintf ppf "record[%a]" (smap_sep annotated_expression) m
+    | Map m -> fprintf ppf "map[%a]" (list_sep assoc_annotated_expression) m
     | Lambda {binder;input_type;output_type;result;body} ->
         fprintf ppf "lambda (%s:%a) : %a {%a} return %a"
           binder type_expression input_type type_expression output_type
           block body annotated_expression result
+
+  and assoc_annotated_expression ppf : (ae * ae) -> unit = fun (a, b) ->
+    fprintf ppf "%a -> %a" annotated_expression a annotated_expression b
 
   and access ppf (a:access) =
     match a with
@@ -300,6 +306,10 @@ module Rename = struct
           let%bind sm' = bind_smap
             @@ SMap.map (rename_annotated_expression r) sm in
           ok (Record sm')
+      | Map m ->
+          let%bind m' = bind_map_list
+            (fun (x, y) -> bind_map_pair (rename_annotated_expression r) (x, y)) m in
+          ok (Map m')
   end
 end
 

@@ -2,31 +2,36 @@ open Ligo_helpers.Trace
 open Ligo
 open Test_helpers
 
-let pass (source:string) : unit result =
-  let%bind raw =
-    trace (simple_error "parsing") @@
-    parse_file source in
-  let%bind simplified =
-    trace (simple_error "simplifying") @@
-    simplify raw in
-  let%bind typed =
-    trace (simple_error "typing") @@
-    type_ simplified in
-  let%bind _mini_c =
-    trace (simple_error "transpiling") @@
-    transpile typed in
-  ok ()
+let get_program =
+  let s = ref None in
+  fun () -> match !s with
+    | Some s -> ok s
+    | None -> (
+        let%bind program = type_file "./contracts/heap.ligo" in
+        s := Some program ;
+        ok program
+      )
 
-let basic () : unit result =
-  pass "./contracts/toto.ligo"
+let a_heap content size =
+  let open AST_Typed.Combinators in
+  a_record_ez [
+    ("content", content) ;
+    ("size", size) ;
+  ]
 
-let function_ () : unit result =
-  let%bind _ = pass "./contracts/function.ligo" in
-  let%bind _ = easy_run_main "./contracts/function.ligo" "2" in
-  ok ()
+let a_heap_ez ?value_type (content:(int * AST_Typed.ae) list) =
+  let open AST_Typed.Combinators in
+  let content =
+    let aux = fun (x, y) -> a_int x, y in
+    List.map aux content in
+  let value_type = match value_type, content with
+    | None, hd :: _ -> (snd hd).type_annotation
+    | Some s, _ -> s
+    | _ -> raise (Failure "no value type and heap empty when building heap") in
+  a_map content make_t_int value_type
 
-let complex_function () : unit result =
-  let%bind program = type_file "./contracts/function-complex.ligo" in
+let is_empty () : unit result =
+  let%bind program = get_program () in
   let aux n =
     let open AST_Typed.Combinators in
     let input = a_int n in
@@ -189,16 +194,6 @@ let quote_declarations () : unit result =
     @@ [0 ; 2 ; 42 ; 163 ; -1] in
   ok ()
 
-let main = "Integration (End to End)", [
-    test "basic" basic ;
-    test "function" function_ ;
-    test "complex function" complex_function ;
-    test "bool" bool_expression ;
-    test "unit" unit_expression ;
-    test "record" record ;
-    test "multiple parameters" multiple_parameters ;
-    test "condition" condition ;
-    test "declarations" declarations ;
-    test "quote declaration" quote_declaration ;
-    test "quote declarations" quote_declarations ;
+let main = "Heap (End to End)", [
+    test "is_empty" is_empty ;
   ]
