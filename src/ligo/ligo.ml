@@ -15,7 +15,8 @@ let parse_file (source:string) : AST_Raw.t result =
     generic_try (simple_error "error opening file") @@
     (fun () -> open_in source) in
   let lexbuf = Lexing.from_channel channel in
-  let Lexer.{read ; _} =
+  let module Lexer = Lexer.Make(LexToken) in
+  let Lexer.{read ; close} =
     Lexer.open_token_stream None in
   specific_try (function
       | Parser.Error -> (
@@ -29,12 +30,17 @@ let parse_file (source:string) : AST_Raw.t result =
           simple_error str
         )
       | _ -> simple_error "unrecognized parse_ error"
-    ) @@ (fun () -> Parser.contract read lexbuf) >>? fun program_cst ->
-  ok program_cst
+    ) @@ (fun () ->
+      let raw = Parser.contract read lexbuf in
+      close () ;
+      raw
+    ) >>? fun raw ->
+  ok raw
 
 let parse (s:string) : AST_Raw.t result =
   let lexbuf = Lexing.from_string s in
-  let Lexer.{read ; _} =
+  let module Lexer = Lexer.Make(LexToken) in
+  let Lexer.{read ; close} =
     Lexer.open_token_stream None in
   specific_try (function
       | Parser.Error -> (
@@ -48,12 +54,17 @@ let parse (s:string) : AST_Raw.t result =
           simple_error str
         )
       | _ -> simple_error "unrecognized parse_ error"
-    ) @@ (fun () -> Parser.contract read lexbuf) >>? fun program_cst ->
-  ok program_cst
+    ) @@ (fun () ->
+      let raw = Parser.contract read lexbuf in
+      close () ;
+      raw
+    ) >>? fun raw ->
+  ok raw
 
 let parse_expression (s:string) : AST_Raw.expr result =
   let lexbuf = Lexing.from_string s in
-  let Lexer.{read ; _} =
+  let module Lexer = Lexer.Make(LexToken) in
+  let Lexer.{read ; close} =
     Lexer.open_token_stream None in
   specific_try (function
       | Parser.Error -> (
@@ -67,8 +78,12 @@ let parse_expression (s:string) : AST_Raw.expr result =
           simple_error str
         )
       | _ -> simple_error "unrecognized parse_ error"
-    ) @@ (fun () -> Parser.interactive_expr read lexbuf) >>? fun expr ->
-  ok expr
+    ) @@ (fun () ->
+      let raw = Parser.interactive_expr read lexbuf in
+      close () ;
+      raw
+    ) >>? fun raw ->
+  ok raw
 
 let simplify (p:AST_Raw.t) : Ast_simplified.program result = AST_Simplified.Simplify.simpl_program p
 let simplify_expr (e:AST_Raw.expr) : Ast_simplified.annotated_expression result = AST_Simplified.Simplify.simpl_expression e

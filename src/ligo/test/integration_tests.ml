@@ -125,6 +125,35 @@ let record () : unit result  =
   in
   ok ()
 
+let tuple () : unit result  =
+  let%bind program = type_file "./contracts/tuple.ligo" in
+  let ez n =
+    let open AST_Typed.Combinators in
+    a_tuple (List.map a_int n) in
+  let%bind _foobar =
+    trace (simple_error "foobar") (
+      let%bind result = easy_evaluate_typed "fb" program in
+      let expect = ez [0 ; 0] in
+      AST_Typed.assert_value_eq (expect, result)
+    )
+  in
+  let%bind _projection = trace (simple_error "projection") (
+      let aux n =
+        let input = ez [n ; n] in
+        let%bind result = easy_run_typed "projection" program input in
+        let expect = AST_Typed.Combinators.a_int (2 * n) in
+        AST_Typed.assert_value_eq (expect, result)
+      in
+      bind_list @@ List.map aux [0 ; -42 ; 144]
+    )
+  in
+  let%bind _big =
+    let%bind result = easy_evaluate_typed "br" program in
+    let expect = ez [23 ; 23 ; 23 ; 23 ; 23] in
+    AST_Typed.assert_value_eq (expect, result)
+  in
+  ok ()
+
 let condition () : unit result =
   let%bind program = type_file "./contracts/condition.ligo" in
   let aux n =
@@ -196,6 +225,7 @@ let main = "Integration (End to End)", [
     test "bool" bool_expression ;
     test "unit" unit_expression ;
     test "record" record ;
+    test "tuple" tuple ;
     test "multiple parameters" multiple_parameters ;
     test "condition" condition ;
     test "declarations" declarations ;

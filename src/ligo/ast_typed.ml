@@ -416,7 +416,6 @@ module Combinators = struct
     let aux prev (k, v) = SMap.add k v prev in
     let map = List.fold_left aux SMap.empty lst in
     type_value (Type_record map) None
-
   let make_t_record m = t_record m None
   let make_t_record_ez lst =
     let m = SMap.of_list lst in
@@ -478,7 +477,8 @@ module Combinators = struct
   let a_int n = annotated_expression (int n) make_t_int
   let a_bool b = annotated_expression (bool b) make_t_bool
   let a_pair a b = annotated_expression (pair a b) (make_t_pair a.type_annotation b.type_annotation)
-  let a_record r = annotated_expression (record r) (make_t_record (SMap.map (fun x -> x.type_annotation) r))
+  let a_tuple lst = annotated_expression (Tuple lst) (make_t_tuple (List.map get_type_annotation lst))
+  let a_record r = annotated_expression (record r) (make_t_record (SMap.map get_type_annotation r))
   let a_record_ez r = annotated_expression (record_ez r) (make_t_record_ez (List.map (fun (x, y) -> x, y.type_annotation) r))
   let a_map lst k v = annotated_expression (map lst) (make_t_map k v)
 

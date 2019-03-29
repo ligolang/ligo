@@ -136,31 +136,29 @@ and translate_annotated_expression (env:Environment.t) (ae:AST.annotated_express
       in
       Append_tree.fold_ne (translate_annotated_expression env) aux node
   | Tuple_accessor (tpl, ind) ->
-      let%bind (tpl'_expr, _, _) = translate_annotated_expression env tpl in
-      let%bind tpl_tv = get_t_tuple ae.type_annotation in
-      let node_tv = Append_tree.of_list @@ List.mapi (fun i a -> (a, i)) tpl_tv in
-      let%bind ae' =
-        let leaf (tv, i) : (expression' option * type_value) result =
-          let%bind tv = translate_type tv in
-          if i = ind then (
-            ok (Some (tpl'_expr), tv)
-          ) else (
-            ok (None, tv)
+      let%bind tpl' = translate_annotated_expression env tpl in
+      let%bind tpl_tv = get_t_tuple tpl.type_annotation in
+      let node_tv = Append_tree.of_list @@ List.mapi (fun i a -> (i, a)) tpl_tv in
+      let leaf (i, _) : expression result =
+        if i = ind then (
+          ok tpl'
+        ) else (
+          simple_fail "bad leaf"
+        ) in
+      let node a b : expression result =
+        match%bind bind_lr (a, b) with
+        | `Left ((_, t, env) as ex) -> (
+            let%bind (a, _) = get_t_pair t in
+            ok (Predicate ("CAR", [ex]), a, env)
+          )
+        | `Right ((_, t, env) as ex) -> (
+            let%bind (_, b) = get_t_pair t in
+            ok (Predicate ("CDR", [ex]), b, env)
           ) in
-        let node a b : (expression' option * type_value) result =
-          let%bind a = a in
-          let%bind b = b in
-          match (a, b) with
-          | (None, a), (None, b) -> ok (None, `Pair (a, b))
-          | (Some _, _), (Some _, _) -> simple_fail "several identical indexes in the same tuple (shouldn't happen here)"
-          | (Some v, a), (None, b) -> ok (Some (Predicate ("CAR", [v, a, env])), `Pair (a, b))
-          | (None, a), (Some v, b) -> ok (Some (Predicate ("CDR", [v, b, env])), `Pair (a, b))
-        in
-        let%bind (ae_opt, tv) = Append_tree.fold_ne leaf node node_tv in
-        let%bind ae = trace_option (simple_error "bad index in tuple (shouldn't happen here)")
-            ae_opt in
-        ok (ae, tv, env) in
-      ok ae'
+      let%bind expr =
+        trace_strong (simple_error "bad index in tuple (shouldn't happen here)") @@
+        Append_tree.fold_ne leaf node node_tv in
+      ok expr
   | Record m ->
       let node = Append_tree.of_list @@ list_of_map m in
       let aux a b : expression result =

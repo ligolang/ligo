@@ -297,6 +297,7 @@ and type_annotated_expression (e:environment) (ae:I.annotated_expression) : O.an
             ok O.{expression = O.Record_accessor (prev, property) ; type_annotation }
           )
       in
+      trace (simple_error "accessing") @@
       bind_fold_list aux e' path
 
   (* Sum *)
