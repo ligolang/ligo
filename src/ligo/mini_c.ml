@@ -613,7 +613,7 @@ module Translate_program = struct
     ])
 
   let simple_binary c = Binary ( seq [
-      i_unpair ; dip i_unpair ; c ; i_pair ;
+      i_unpair ; dip i_unpair ; i_swap ; c ; i_pair ;
     ])
 
   let rec get_predicate : string -> predicate result = function
@@ -944,6 +944,8 @@ module Translate_ir = struct
         ok @@ `Nat n
     | (Bool_t _), b ->
         ok @@ `Bool b
+    | (Unit_t _), () ->
+        ok @@ `Unit
     | _ -> simple_fail "this value can't be transpiled back yet"
 end
 

@@ -42,6 +42,18 @@ let trace err = function
   | Ok _ as o -> o
   | Errors errs -> Errors (err :: errs)
 
+let trace_f f error x =
+  trace error @@ f x
+
+let trace_f_2 f error x y =
+  trace error @@ f x y
+
+let trace_f_ez f name =
+  trace_f f (error "in function" name)
+
+let trace_f_2_ez f name =
+  trace_f_2 f (error "in function" name)
+
 let to_option = function
   | Ok o -> Some o
   | Errors _ -> None

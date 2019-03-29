@@ -119,6 +119,18 @@ let type_file ?(debug_simplify = false) ?(debug_typed = false)
   ok typed
 
 
+let easy_evaluate_typed (entry:string) (program:AST_Typed.program) : AST_Typed.annotated_expression result =
+  let%bind result =
+    let%bind mini_c_main =
+      transpile_entry program entry in
+    Mini_c.Run.run_entry mini_c_main (Mini_c.Combinators.d_unit) in
+  let%bind typed_result =
+    let%bind typed_main = Ast_typed.get_entry program entry in
+    untranspile_value result typed_main.type_annotation in
+  ok typed_result
+
+let easy_evaluate_typed = trace_f_2_ez easy_evaluate_typed "easy evaluate typed"
+
 let easy_run_typed
     ?(debug_mini_c = false) (entry:string)
     (program:AST_Typed.program) (input:AST_Typed.annotated_expression) : AST_Typed.annotated_expression result =
@@ -136,10 +148,10 @@ let easy_run_typed
     Mini_c.Run.run_entry mini_c_main mini_c_value in
   let%bind typed_result =
     let%bind main_result_type =
-    let%bind typed_main = Ast_typed.get_entry program entry in
-    match (snd typed_main).type_value with
-    | Type_function (_, result) -> ok result
-    | _ -> simple_fail "main doesn't have fun type" in
+      let%bind typed_main = Ast_typed.get_functional_entry program entry in
+      match (snd typed_main).type_value with
+      | Type_function (_, result) -> ok result
+      | _ -> simple_fail "main doesn't have fun type" in
     untranspile_value mini_c_result main_result_type in
   ok typed_result
 

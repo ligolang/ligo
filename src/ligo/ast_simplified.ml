@@ -314,6 +314,7 @@ module Simplify = struct
     | Some lst -> npseq_to_list lst
 
   let type_constants = [
+    ("unit", 0) ;
     ("nat", 0) ;
     ("int", 0) ;
     ("bool", 0) ;
@@ -327,9 +328,12 @@ module Simplify = struct
     | TPar x -> simpl_type_expression x.value.inside
     | TAlias v -> (
         match List.assoc_opt v.value type_constants with
-        | Some 0 -> ok @@ Type_constant (v.value, [])
-        | Some _ -> simple_fail "type constructor with wrong number of args"
-        | None -> ok @@ Type_variable v.value
+        | Some 0 ->
+            ok @@ Type_constant (v.value, [])
+        | Some _ ->
+            simple_fail "type constructor with wrong number of args"
+        | None ->
+            ok @@ Type_variable v.value
       )
     | TApp x ->
         let (name, tuple) = x.value in
@@ -374,7 +378,10 @@ module Simplify = struct
 
   let rec simpl_expression (t:Raw.expr) : ae result =
     match t with
-    | EVar c -> ok @@ ae @@ Variable c.value
+    | EVar c ->
+        if c.value = "unit"
+        then ok @@ ae @@ Literal Unit
+        else ok @@ ae @@ Variable c.value
     | ECall x ->
         let (name, args) = x.value in
         let f = name.value in

@@ -288,7 +288,7 @@ let translate_entry (lst:AST.program) (name:string) : anon_function result =
   in
   let%bind (lst', l, tv) =
     let%bind (lst', l, tv) =
-      trace_option (simple_error "no functional entry-point with given name")
+      trace_option (simple_error "no entry-point with given name")
       @@ aux [] lst in
     ok (List.rev lst', l, tv) in
   let l' = {l with body = lst' @ l.body} in
@@ -350,6 +350,9 @@ let rec untranspile (v : value) (t : AST.type_value) : AST.annotated_expression 
   let open! AST in
   let return e = ok AST.(annotated_expression e t) in
   match t.type_value with
+  | Type_constant ("unit", []) ->
+      let%bind () = get_unit v in
+      return (Literal Unit)
   | Type_constant ("bool", []) ->
       let%bind b = get_bool v in
       return (Literal (Bool b))
