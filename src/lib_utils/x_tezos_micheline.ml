@@ -43,7 +43,7 @@ module Michelson = struct
   let i_if a b = prim ~children:[a;b] I_IF
   let i_if_none a b = prim ~children:[a;b] I_IF_NONE
   let i_failwith = prim I_FAILWITH
-  let i_assert_some = i_if_none (seq []) (seq [i_push_unit ; i_failwith])
+  let i_assert_some = i_if_none (seq [i_failwith]) (seq [])
 
   let dip code : michelson = prim ~children:[seq [code]] I_DIP
   let i_unpair = seq [i_dup ; i_car ; dip i_cdr]

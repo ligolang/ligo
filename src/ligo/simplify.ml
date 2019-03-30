@@ -74,6 +74,10 @@ and simpl_list_type_expression (lst:Raw.type_expr list) : type_expression result
       let%bind lst = bind_list @@ List.map simpl_type_expression lst in
       ok @@ Type_tuple lst
 
+let constants = [
+  ("get_force", 2) ;
+]
+
 let rec simpl_expression (t:Raw.expr) : ae result =
   let return x = ok @@ ae x in
   let simpl_projection = fun (p:Raw.projection) ->
@@ -95,12 +99,21 @@ let rec simpl_expression (t:Raw.expr) : ae result =
       if c.value = "unit"
       then ok @@ ae @@ Literal Unit
       else ok @@ ae @@ Variable c.value
-  | ECall x ->
+  | ECall x -> (
       let (name, args) = x.value in
       let f = name.value in
-      let%bind arg = simpl_list_expression
-        @@ npseq_to_list args.value.inside in
-      ok @@ ae @@ Application (ae @@ Variable f, arg)
+      let args' = npseq_to_list args.value.inside in
+      match List.assoc_opt f constants with
+      | None ->
+          let%bind arg = simpl_list_expression args' in
+          ok @@ ae @@ Application (ae @@ Variable f, arg)
+      | Some arity ->
+          let%bind _arity =
+            trace (simple_error "wrong arity for constants") @@
+            Assert.assert_equal_int arity (List.length args') in
+          let%bind lst = bind_map_list simpl_expression args' in
+          ok @@ ae @@ Constant (f, lst)
+    )
   | EPar x -> simpl_expression x.value.inside
   | EUnit _ -> ok @@ ae @@ Literal Unit
   | EBytes x -> ok @@ ae @@ Literal (Bytes (Bytes.of_string @@ fst x.value))

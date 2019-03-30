@@ -406,7 +406,12 @@ and type_constant (name:string) (lst:O.type_value list) (tv_opt:O.type_value opt
     )
   | "NONE", _ -> simple_fail "bad number of params to NONE"
   | "SOME", [s] -> ok ("SOME", make_t_option s)
-  | "SOME", _ -> simple_fail "bad number of params to NONE"
+  | "SOME", _ -> simple_fail "bad number of params to SOME"
+  | "get_force", [i_ty;m_ty] ->
+      let%bind (src, dst) = get_t_map m_ty in
+      let%bind _ = O.assert_type_value_eq (src, i_ty) in
+      ok ("GET_FORCE", dst)
+  | "get_force", _ -> simple_fail "bad number of params to get_force"
   | name, _ -> fail @@ unrecognized_constant name
 
 let untype_type_value (t:O.type_value) : (I.type_expression) result =

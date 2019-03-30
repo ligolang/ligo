@@ -1,5 +1,7 @@
 type foobar is map(int, int)
 
+function gf (const m : foobar) : int is begin skip end with get_force(23, m)
+
 const fb : foobar = map
   23 -> 0 ;
   42 -> 0 ;

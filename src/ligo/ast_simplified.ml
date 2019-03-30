@@ -134,7 +134,7 @@ module PP = struct
   let rec expression ppf (e:expression) = match e with
     | Literal l -> literal ppf l
     | Variable name -> fprintf ppf "%s" name
-    | Application (f, arg) -> fprintf ppf "(%a) (%a)" annotated_expression f annotated_expression arg
+    | Application (f, arg) -> fprintf ppf "(%a)@(%a)" annotated_expression f annotated_expression arg
     | Constructor (name, ae) -> fprintf ppf "%s(%a)" name annotated_expression ae
     | Constant (name, lst) -> fprintf ppf "%s(%a)" name (list_sep annotated_expression) lst
     | Tuple lst -> fprintf ppf "tuple[%a]" (list_sep annotated_expression) lst

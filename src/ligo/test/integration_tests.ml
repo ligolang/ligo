@@ -176,6 +176,15 @@ let map () : unit result =
     let lst' = List.map (fun (x, y) -> a_int x, a_int y) lst in
     a_map lst' make_t_int make_t_int
   in
+  let%bind _get_force = trace (simple_error "get_force") @@
+    let aux n =
+      let input = ez [(23, n) ; (42, 4)] in
+      let%bind result = easy_run_typed "gf" program input in
+      let expect = AST_Typed.Combinators.(a_int n) in
+      AST_Typed.assert_value_eq (expect, result)
+    in
+    bind_map_list aux [0 ; 42 ; 51 ; 421 ; -3]
+  in
   let%bind _foobar = trace (simple_error "foobar") @@
     let%bind result = easy_evaluate_typed "fb" program in
     let expect = ez [(23, 0) ; (42, 0)] in
