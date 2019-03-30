@@ -182,9 +182,10 @@ and type_match (e:environment) (t:O.type_value) : I.matching -> O.matching resul
         @@ get_t_option t in
       let%bind match_none = type_block e match_none in
       let (n, b) = match_some in
+      let n' = n, t_opt in
       let e' = Environment.add e n t_opt in
       let%bind b' = type_block e' b in
-      ok (O.Match_option {match_none ; match_some = (n, b')})
+      ok (O.Match_option {match_none ; match_some = (n', b')})
   | Match_list {match_nil ; match_cons} ->
       let%bind t_list =
         trace_strong (simple_error "Matching list on not-an-list")
@@ -362,7 +363,7 @@ and type_annotated_expression (e:environment) (ae:I.annotated_expression) : O.an
   | Constant (name, lst) ->
       let%bind lst' = bind_list @@ List.map (type_annotated_expression e) lst in
       let tv_lst = List.map get_annotation lst' in
-      let%bind (name', tv) = type_constant name tv_lst in
+      let%bind (name', tv) = type_constant name tv_lst tv_opt in
       let%bind type_annotation = check tv in
       ok O.{expression = O.Constant (name', lst') ; type_annotation}
   | Application (f, arg) ->
@@ -375,8 +376,15 @@ and type_annotated_expression (e:environment) (ae:I.annotated_expression) : O.an
         | _ -> simple_fail "applying to not-a-function"
       in
       ok O.{expression = Application (f, arg) ; type_annotation}
+  | LookUp dsi ->
+      let%bind (ds, ind) = bind_map_pair (type_annotated_expression e) dsi in
+      let%bind (src, dst) = get_t_map ds.type_annotation in
+      let%bind _ = O.assert_type_value_eq (ind.type_annotation, src) in
+      let%bind type_annotation = check dst in
+      ok O.{expression = LookUp (ds, ind) ; type_annotation}
 
-and type_constant (name:string) (lst:O.type_value list) : (string * O.type_value) result =
+
+and type_constant (name:string) (lst:O.type_value list) (tv_opt:O.type_value option) : (string * O.type_value) result =
   (* Constant poorman's polymorphism *)
   let open O in
   match (name, lst) with
@@ -390,6 +398,14 @@ and type_constant (name:string) (lst:O.type_value list) : (string * O.type_value
   | "OR", _ -> simple_fail "OR only defined over bool"
   | "AND", [a ; b] when type_value_eq (a, make_t_bool) && type_value_eq (b, make_t_bool) -> ok ("AND", make_t_bool)
   | "AND", _ -> simple_fail "AND only defined over bool"
+  | "NONE", [] -> (
+      match tv_opt with
+      | Some t -> ok ("NONE", t)
+      | None -> simple_fail "untyped NONE"
+    )
+  | "NONE", _ -> simple_fail "bad number of params to NONE"
+  | "SOME", [s] -> ok ("SOME", make_t_option s)
+  | "SOME", _ -> simple_fail "bad number of params to NONE"
   | name, _ -> fail @@ unrecognized_constant name
 
 let untype_type_value (t:O.type_value) : (I.type_expression) result =
@@ -451,6 +467,9 @@ let rec untype_annotated_expression (e:O.annotated_expression) : (I.annotated_ex
   | Map m ->
       let%bind m' = bind_map_list (bind_map_pair untype_annotated_expression) m in
       return (Map m')
+  | LookUp dsi ->
+      let%bind dsi' = bind_map_pair untype_annotated_expression dsi in
+      return (LookUp dsi')
 
 and untype_block (b:O.block) : (I.block) result =
   bind_list @@ List.map untype_instruction b
@@ -487,7 +506,7 @@ and untype_matching (m:O.matching) : (I.matching) result =
   | Match_option {match_none ; match_some = (v, some)} ->
       let%bind match_none = untype_block match_none in
       let%bind some = untype_block some in
-      let match_some = v, some in
+      let match_some = fst v, some in
       ok @@ Match_option {match_none ; match_some}
   | Match_list {match_nil ; match_cons = (hd, tl, cons)} ->
       let%bind match_nil = untype_block match_nil in

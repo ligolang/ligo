@@ -66,6 +66,7 @@ and expression =
   | Record_accessor of ae * string
   (* Data Structures *)
   | Map of (ae * ae) list
+  | LookUp of (ae * ae)
 
 and value = annotated_expression (* todo (for refactoring) *)
 
@@ -98,7 +99,7 @@ and matching =
     }
   | Match_option of {
       match_none : b ;
-      match_some : name * b ;
+      match_some : (name * type_value) * b ;
     }
   | Match_tuple of name list * b
 
@@ -163,6 +164,7 @@ module PP = struct
     | Record_accessor (ae, s) -> fprintf ppf "%a.%s" annotated_expression ae s
     | Record m -> fprintf ppf "record[%a]" (smap_sep annotated_expression) m
     | Map m -> fprintf ppf "map[%a]" (list_sep assoc_annotated_expression) m
+    | LookUp (ds, i) -> fprintf ppf "(%a)[%a]" annotated_expression ds annotated_expression i
 
   and assoc_annotated_expression ppf : (ae * ae) -> unit = fun (a, b) ->
     fprintf ppf "%a -> %a" annotated_expression a annotated_expression b
@@ -189,7 +191,7 @@ module PP = struct
     | Match_list {match_nil ; match_cons = (hd, tl, match_cons)} ->
         fprintf ppf "| Nil -> %a @.| %s :: %s -> %a" block match_nil hd tl block match_cons
     | Match_option {match_none ; match_some = (some, match_some)} ->
-        fprintf ppf "| None -> %a @.| Some %s -> %a" block match_none some block match_some
+        fprintf ppf "| None -> %a @.| Some %s -> %a" block match_none (fst some) block match_some
 
   and instruction ppf (i:instruction) = match i with
     | Skip -> fprintf ppf "skip"
@@ -381,8 +383,7 @@ let merge_annotation (a:type_value option) (b:type_value option) : type_value re
       let%bind _ = assert_type_value_eq (a, b) in
       match a.simplified, b.simplified with
       | _, None -> ok a
-      | None, Some _ -> ok b
-      | _ -> simple_fail "both have simplified ASTs"
+      | _, Some _ -> ok b
 
 module Combinators = struct
 
@@ -405,6 +406,9 @@ module Combinators = struct
   let t_unit s : type_value = type_value (Type_constant ("unit", [])) s
   let simplify_t_unit s = t_unit (Some s)
   let make_t_unit = t_unit None
+
+  let t_option o s : type_value = type_value (Type_constant ("option", [o])) s
+  let make_t_option o = t_option o None
 
   let t_tuple lst s : type_value = type_value (Type_tuple lst) s
   let simplify_t_tuple lst s = t_tuple lst (Some s)
@@ -460,11 +464,18 @@ module Combinators = struct
     | Type_record m -> ok m
     | _ -> simple_fail "not a record"
 
+  let get_t_map (t:type_value) : (type_value * type_value) result =
+    match t.type_value with
+    | Type_constant ("map", [k;v]) -> ok (k, v)
+    | _ -> simple_fail "not a map"
+
   let record map : expression = Record map
   let record_ez (lst : (string * ae) list) : expression =
     let aux prev (k, v) = SMap.add k v prev in
     let map = List.fold_left aux SMap.empty lst in
     record map
+  let some s : expression = Constant ("SOME", [s])
+  let none : expression = Constant ("NONE", [])
 
   let map lst : expression = Map lst
 
@@ -477,6 +488,8 @@ module Combinators = struct
   let a_int n = annotated_expression (int n) make_t_int
   let a_bool b = annotated_expression (bool b) make_t_bool
   let a_pair a b = annotated_expression (pair a b) (make_t_pair a.type_annotation b.type_annotation)
+  let a_some s = annotated_expression (some s) (make_t_option s.type_annotation)
+  let a_none t = annotated_expression none (make_t_option t)
   let a_tuple lst = annotated_expression (Tuple lst) (make_t_tuple (List.map get_type_annotation lst))
   let a_record r = annotated_expression (record r) (make_t_record (SMap.map get_type_annotation r))
   let a_record_ez r = annotated_expression (record_ez r) (make_t_record_ez (List.map (fun (x, y) -> x, y.type_annotation) r))

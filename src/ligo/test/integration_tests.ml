@@ -154,6 +154,35 @@ let tuple () : unit result  =
   in
   ok ()
 
+let option () : unit result =
+  let%bind program = type_file "./contracts/option.ligo" in
+  let open AST_Typed.Combinators in
+  let%bind _some = trace (simple_error "some") @@
+    let%bind result = easy_evaluate_typed "s" program in
+    let expect = a_some (a_int 42) in
+    AST_Typed.assert_value_eq (expect, result)
+  in
+  let%bind _none = trace (simple_error "none") @@
+    let%bind result = easy_evaluate_typed "n" program in
+    let expect = a_none make_t_int in
+    AST_Typed.assert_value_eq (expect, result)
+  in
+  ok ()
+
+let map () : unit result =
+  let%bind program = type_file "./contracts/map.ligo" in
+  let ez lst =
+    let open AST_Typed.Combinators in
+    let lst' = List.map (fun (x, y) -> a_int x, a_int y) lst in
+    a_map lst' make_t_int make_t_int
+  in
+  let%bind _foobar = trace (simple_error "foobar") @@
+    let%bind result = easy_evaluate_typed "fb" program in
+    let expect = ez [(23, 0) ; (42, 0)] in
+    AST_Typed.assert_value_eq (expect, result)
+  in
+  ok ()
+
 let condition () : unit result =
   let%bind program = type_file "./contracts/condition.ligo" in
   let aux n =
@@ -168,6 +197,42 @@ let condition () : unit result =
   let%bind _ = bind_list
     @@ List.map aux
     @@ [0 ; 2 ; 42 ; 163 ; -1] in
+  ok ()
+
+let matching () : unit result =
+  let%bind program = type_file "./contracts/match.ligo" in
+  let%bind _bool =
+    let aux n =
+      let open AST_Typed.Combinators in
+      let input = a_int n in
+      let%bind result = easy_run_typed "match_bool" program input in
+      let%bind result' =
+        trace (simple_error "bad result") @@
+        get_a_int result in
+      Assert.assert_equal_int (if n = 2 then 42 else 0) result'
+    in
+    let%bind _ = bind_list
+      @@ List.map aux
+      @@ [0 ; 2 ; 42 ; 163 ; -1] in
+    ok ()
+  in
+  let%bind _option =
+    let aux n =
+      let open AST_Typed.Combinators in
+      let input = match n with
+        | Some s -> a_some (a_int s)
+        | None -> a_none (make_t_int)  in
+      let%bind result = easy_run_typed "match_option" program input in
+      let%bind result' =
+        trace (simple_error "bad result") @@
+        get_a_int result in
+      Assert.assert_equal_int (match n with None -> 23 | Some s -> s) result'
+    in
+    let%bind _ = bind_list
+      @@ List.map aux
+      @@ [Some 0 ; Some 2 ; Some 42 ; Some 163 ; Some (-1) ; None] in
+    ok ()
+  in
   ok ()
 
 let declarations () : unit result =
@@ -226,8 +291,11 @@ let main = "Integration (End to End)", [
     test "unit" unit_expression ;
     test "record" record ;
     test "tuple" tuple ;
+    test "option" option ;
+    (* test "map" map ; *)
     test "multiple parameters" multiple_parameters ;
     test "condition" condition ;
+    test "matching" matching ;
     test "declarations" declarations ;
     test "quote declaration" quote_declaration ;
     test "quote declarations" quote_declarations ;

@@ -85,8 +85,8 @@ let parse_expression (s:string) : AST_Raw.expr result =
     ) >>? fun raw ->
   ok raw
 
-let simplify (p:AST_Raw.t) : Ast_simplified.program result = AST_Simplified.Simplify.simpl_program p
-let simplify_expr (e:AST_Raw.expr) : Ast_simplified.annotated_expression result = AST_Simplified.Simplify.simpl_expression e
+let simplify (p:AST_Raw.t) : Ast_simplified.program result = Simplify.simpl_program p
+let simplify_expr (e:AST_Raw.expr) : Ast_simplified.annotated_expression result = Simplify.simpl_expression e
 let unparse_simplified_expr (e:AST_Simplified.annotated_expression) : string result =
   ok @@ Format.asprintf "%a" AST_Simplified.PP.annotated_expression e
 

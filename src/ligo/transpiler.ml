@@ -17,6 +17,12 @@ let rec translate_type (t:AST.type_value) : type_value result =
   | Type_constant ("int", []) -> ok (`Base Int)
   | Type_constant ("string", []) -> ok (`Base String)
   | Type_constant ("unit", []) -> ok (`Base Unit)
+  | Type_constant ("map", [key;value]) ->
+      let%bind kv' = bind_map_pair translate_type (key, value) in
+      ok (`Map kv')
+  | Type_constant ("option", [o]) ->
+      let%bind o' = translate_type o in
+      ok (`Option o')
   | Type_constant (name, _) -> fail (error "unrecognized constant" name)
   | Type_sum m ->
       let node = Append_tree.of_list @@ list_of_map m in
@@ -68,13 +74,25 @@ and translate_instruction (env:Environment.t) (i:AST.instruction) : statement op
       let%bind (_, t, _) as expression = translate_annotated_expression env annotated_expression in
       let env' = Environment.add (name, t) env in
       return ~env' (Assignment (name, expression))
-  | Matching (expr, Match_bool {match_true ; match_false}) ->
+  | Matching (expr, m) -> (
       let%bind expr' = translate_annotated_expression env expr in
       let env' = Environment.extend env in
-      let%bind true_branch = translate_block env' match_true in
-      let%bind false_branch = translate_block env' match_false in
-      return (Cond (expr', true_branch, false_branch))
-  | Matching _ -> simple_fail "todo : match"
+      match m with
+      | Match_bool {match_true ; match_false} -> (
+          let%bind true_branch = translate_block env' match_true in
+          let%bind false_branch = translate_block env' match_false in
+          return (Cond (expr', true_branch, false_branch))
+        )
+      | Match_option {match_none ; match_some = ((name, t), sm)} -> (
+          let%bind none_branch = translate_block env' match_none in
+          let%bind some_branch =
+            let%bind t' = translate_type t in
+            let env' = Environment.add (name, t') env' in
+            translate_block env' sm in
+          return (If_None (expr', none_branch, (name, some_branch)))
+        )
+      | _ -> simple_fail "todo : match"
+    )
   | Loop (expr, body) ->
       let%bind expr' = translate_annotated_expression env expr in
       let%bind body' = translate_block env body in
@@ -85,6 +103,7 @@ and translate_instruction (env:Environment.t) (i:AST.instruction) : statement op
 and translate_annotated_expression (env:Environment.t) (ae:AST.annotated_expression) : expression result =
   let%bind tv = translate_type ae.type_annotation in
   let return (expr, tv) = ok (expr, tv, env) in
+  let f = translate_annotated_expression env in
   match ae.expression with
   | Literal (Bool b) -> ok (Literal (`Bool b), tv, env)
   | Literal (Int n) -> ok (Literal (`Int n), tv, env)
@@ -194,17 +213,26 @@ and translate_annotated_expression (env:Environment.t) (ae:AST.annotated_express
         Append_tree.fold_ne leaf node node_tv in
       ok expr
   | Constant (name, lst) ->
-      let%bind lst' = bind_list @@ List.map (translate_annotated_expression env) lst in
-      ok (Predicate (name, lst'), tv, env)
+      let%bind lst' = bind_list @@ List.map (translate_annotated_expression env) lst in (
+        match name, lst with
+        | "NONE", [] ->
+            let%bind o = Mini_c.Combinators.get_t_option tv in
+            ok (Make_None o, tv, env)
+        | _ -> ok (Predicate (name, lst'), tv, env)
+      )
   | Lambda l -> translate_lambda env l tv
   | Map m ->
+      let%bind (src, dst) = Mini_c.Combinators.get_t_map tv in
       let aux : expression result -> (AST.ae * AST.ae) -> expression result = fun prev kv ->
         let%bind prev' = prev in
         let%bind (k', v') = bind_map_pair (translate_annotated_expression env) kv in
         return (Predicate ("UPDATE", [k' ; v' ; prev']), tv)
       in
-      let init = return (Predicate ("EMPTY", []), tv) in
+      let init = return (Empty_map (src, dst), tv) in
       List.fold_left aux init m
+  | LookUp dsi ->
+      let%bind (ds', i') = bind_map_pair f dsi in
+      return (Predicate ("GET", [ds' ; i']), tv)
 
 
 and translate_lambda_shallow env l tv =
@@ -370,6 +398,13 @@ let rec untranspile (v : value) (t : AST.type_value) : AST.annotated_expression 
   | Type_constant ("string", []) ->
       let%bind n = get_string v in
       return (Literal (String n))
+  | Type_constant ("option", [o]) -> (
+      match%bind get_option v with
+      | None -> ok (a_none o)
+      | Some s ->
+          let%bind s' = untranspile s o in
+          ok (a_some s')
+    )
   | Type_constant _ ->
       simple_fail "unknown type_constant"
   | Type_sum m ->
