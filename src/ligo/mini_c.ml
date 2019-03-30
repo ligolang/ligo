@@ -57,6 +57,7 @@ type value = [
   | `Right of value
   | `Some of value
   | `None
+  | `Map of (value * value) list
   (* | `Macro of anon_macro ... The future. *)
   | `Function of anon_function
 ]
@@ -152,7 +153,7 @@ module PP = struct
   let environment ppf (x:environment) =
     fprintf ppf "Env[%a]" (list_sep environment_small) x
 
-  let rec value ppf : value -> _ = function
+  let rec value ppf : value -> unit = function
     | `Bool b -> fprintf ppf "%b" b
     | `Int n -> fprintf ppf "%d" n
     | `Nat n -> fprintf ppf "%d" n
@@ -165,6 +166,10 @@ module PP = struct
     | `Function x -> function_ ppf x.content
     | `None -> fprintf ppf "None"
     | `Some s -> fprintf ppf "Some (%a)" value s
+    | `Map m -> fprintf ppf "Map[%a]" (list_sep value_assoc) m
+
+  and value_assoc ppf : (value * value) -> unit = fun (a, b) ->
+    fprintf ppf "%a -> %a" value a value b
 
   and expression ppf ((e, _, _):expression) = match e with
     | Var v -> fprintf ppf "%s" v
@@ -652,6 +657,8 @@ module Translate_program = struct
     | "EQ" -> ok @@ simple_binary @@ seq [prim I_COMPARE ; prim I_EQ]
     | "UPDATE" -> ok @@ simple_ternary @@ prim I_UPDATE
     | "SOME" -> ok @@ simple_unary @@ prim I_SOME
+    | "GET_FORCE" -> ok @@ simple_binary @@ seq [prim I_GET ; i_assert_some]
+    | "GET" -> ok @@ simple_binary @@ prim I_GET
     | x -> simple_fail @@ "predicate \"" ^ x ^ "\" doesn't exist"
 
   and translate_value (v:value) : michelson result = match v with
@@ -673,6 +680,10 @@ module Translate_program = struct
     | `Some s ->
         let%bind s' = translate_value s in
         ok @@ prim ~children:[s'] D_Some
+    | `Map lst ->
+        let%bind lst' = bind_map_list (bind_map_pair translate_value) lst in
+        let aux (a, b) = prim ~children:[a;b] D_Elt in
+        ok @@ seq @@ List.map aux lst'
 
   and translate_function ({capture;content}:anon_function) : michelson result =
     let {capture_type } = content in
@@ -827,7 +838,7 @@ module Translate_program = struct
         let%bind schema_michelson = Environment.to_michelson_type env in
         ok @@ Format.asprintf
           "expression : %a\ncode : %a\nschema type : %a\noutput type : %a"
-          PP.expression (expr', ty, env)
+          PP.expression expr
           Michelson.pp code
           Michelson.pp schema_michelson
           Michelson.pp output_type
@@ -1011,6 +1022,21 @@ module Translate_ir = struct
     | (Option_t ((o_ty, _), _, _)), Some s ->
         let%bind s' = translate_value @@ Ex_typed_value (o_ty, s) in
         ok @@ `Some s'
+    | (Map_t (k_cty, v_ty, _)), m ->
+        let k_ty = Script_ir_translator.ty_of_comparable_ty k_cty in
+        let lst =
+          let aux k v acc = (k, v) :: acc in
+          let lst = Script_ir_translator.map_fold aux m [] in
+          List.rev lst in
+        let%bind lst' =
+          let aux (k, v) =
+            let%bind k' = translate_value (Ex_typed_value (k_ty, k)) in
+            let%bind v' = translate_value (Ex_typed_value (v_ty, v)) in
+            ok (k', v')
+          in
+          bind_map_list aux lst
+        in
+        ok @@ `Map lst'
     | _ -> simple_fail "this value can't be transpiled back yet"
 end
 
@@ -1098,6 +1124,10 @@ module Combinators = struct
     | `None -> ok None
     | `Some s -> ok (Some s)
     | _ -> simple_fail "not an option"
+
+  let get_map (v:value) = match v with
+    | `Map lst -> ok lst
+    | _ -> simple_fail "not a map"
 
   let get_t_option (v:type_value) = match v with
     | `Option t -> ok t

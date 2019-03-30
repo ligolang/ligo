@@ -181,6 +181,20 @@ let map () : unit result =
     let expect = ez [(23, 0) ; (42, 0)] in
     AST_Typed.assert_value_eq (expect, result)
   in
+  let%bind _get = trace (simple_error "get") @@
+    let aux n =
+      let input = ez [(23, n) ; (42, 4)] in
+      let%bind result = easy_run_typed "get" program input in
+      let expect = AST_Typed.Combinators.(a_some @@ a_int 4) in
+      AST_Typed.assert_value_eq (expect, result)
+    in
+    bind_map_list aux [0 ; 42 ; 51 ; 421 ; -3]
+  in
+  let%bind _bigmap = trace (simple_error "bigmap") @@
+    let%bind result = easy_evaluate_typed "bm" program in
+    let expect = ez @@ List.map (fun x -> (x, 23)) [144 ; 51 ; 42 ; 120 ; 421] in
+    AST_Typed.assert_value_eq (expect, result)
+  in
   ok ()
 
 let condition () : unit result =
@@ -292,7 +306,7 @@ let main = "Integration (End to End)", [
     test "record" record ;
     test "tuple" tuple ;
     test "option" option ;
-    (* test "map" map ; *)
+    test "map" map ;
     test "multiple parameters" multiple_parameters ;
     test "condition" condition ;
     test "matching" matching ;

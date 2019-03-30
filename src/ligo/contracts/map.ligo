@@ -5,10 +5,10 @@ const fb : foobar = map
   42 -> 0 ;
 end
 
-function get (const m : foobar) : int is
+function get (const m : foobar) : option(int) is
   begin
     skip
-  end with m[42] + m[23]
+  end with m[42]
 
 const bm : foobar = map
   144 -> 23 ;

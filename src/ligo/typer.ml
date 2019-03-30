@@ -380,7 +380,8 @@ and type_annotated_expression (e:environment) (ae:I.annotated_expression) : O.an
       let%bind (ds, ind) = bind_map_pair (type_annotated_expression e) dsi in
       let%bind (src, dst) = get_t_map ds.type_annotation in
       let%bind _ = O.assert_type_value_eq (ind.type_annotation, src) in
-      let%bind type_annotation = check dst in
+      let dst_opt = make_t_option dst in
+      let%bind type_annotation = check dst_opt in
       ok O.{expression = LookUp (ds, ind) ; type_annotation}
 
 

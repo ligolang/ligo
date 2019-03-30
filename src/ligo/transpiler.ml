@@ -223,17 +223,18 @@ and translate_annotated_expression (env:Environment.t) (ae:AST.annotated_express
   | Lambda l -> translate_lambda env l tv
   | Map m ->
       let%bind (src, dst) = Mini_c.Combinators.get_t_map tv in
-      let aux : expression result -> (AST.ae * AST.ae) -> expression result = fun prev kv ->
+      let aux : expression result -> (AST.ae * AST.ae) -> expression result = fun prev (k, v) ->
         let%bind prev' = prev in
-        let%bind (k', v') = bind_map_pair (translate_annotated_expression env) kv in
+        let%bind (k', v') =
+          let v' = a_some v in
+          bind_map_pair (translate_annotated_expression env) (k, v') in
         return (Predicate ("UPDATE", [k' ; v' ; prev']), tv)
       in
       let init = return (Empty_map (src, dst), tv) in
       List.fold_left aux init m
   | LookUp dsi ->
       let%bind (ds', i') = bind_map_pair f dsi in
-      return (Predicate ("GET", [ds' ; i']), tv)
-
+      return (Predicate ("GET", [i' ; ds']), tv)
 
 and translate_lambda_shallow env l tv =
   let { binder ; input_type ; output_type ; body ; result } : AST.lambda = l in
@@ -404,6 +405,16 @@ let rec untranspile (v : value) (t : AST.type_value) : AST.annotated_expression 
       | Some s ->
           let%bind s' = untranspile s o in
           ok (a_some s')
+    )
+  | Type_constant ("map", [k_ty;v_ty]) -> (
+      let%bind lst = get_map v in
+      let%bind lst' =
+        let aux = fun (k, v) ->
+          let%bind k' = untranspile k k_ty in
+          let%bind v' = untranspile v v_ty in
+          ok (k', v') in
+        bind_map_list aux lst in
+      return (Map lst')
     )
   | Type_constant _ ->
       simple_fail "unknown type_constant"

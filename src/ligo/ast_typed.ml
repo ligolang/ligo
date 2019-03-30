@@ -372,7 +372,23 @@ let rec assert_value_eq (a, b: (value*value)) : unit result = match (a.expressio
   | Record _, _ ->
       simple_fail "comparing record with other stuff"
 
-  | _, _ -> simple_fail "not a value"
+  | Map lsta, Map lstb -> (
+      let%bind lst = generic_try (simple_error "maps of different lengths")
+          (fun () ->
+             let lsta' = List.sort compare lsta in
+             let lstb' = List.sort compare lstb in
+             List.combine lsta' lstb') in
+      let aux = fun ((ka, va), (kb, vb)) ->
+        let%bind _ = assert_value_eq (ka, kb) in
+        let%bind _ = assert_value_eq (va, vb) in
+        ok () in
+      let%bind _all = bind_map_list aux lst in
+      ok ()
+    )
+  | Map _, _ ->
+      simple_fail "comparing map with other stuff"
+
+  | _, _ -> simple_fail "comparing not a value"
 
 let merge_annotation (a:type_value option) (b:type_value option) : type_value result =
   match a, b with
