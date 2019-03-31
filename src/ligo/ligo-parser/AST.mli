@@ -329,7 +329,7 @@ and instruction =
 
 and single_instr =
   Cond        of conditional reg
-| Case        of case_instr reg
+| Case_instr  of case_instr reg
 | Assign      of assignment reg
 | Loop        of loop
 | ProcCall    of fun_call
@@ -414,16 +414,33 @@ and case_instr = {
   expr      : expr;
   kwd_of    : kwd_of;
   lead_vbar : vbar option;
-  cases     : cases;
+  cases_instr     : cases_instr;
   kwd_end   : kwd_end
 }
 
-and cases = (case reg, vbar) nsepseq reg
+and cases_instr = (case_clause_instr reg, vbar) nsepseq reg
 
-and case = {
+and case_clause_instr = {
   pattern : pattern;
   arrow   : arrow;
   instr   : instruction
+}
+
+and case_expr = {
+  kwd_case  : kwd_case;
+  expr      : expr;
+  kwd_of    : kwd_of;
+  lead_vbar : vbar option;
+  cases_expr: cases_expr;
+  kwd_end   : kwd_end
+}
+
+and cases_expr = (case_clause_expr reg, vbar) nsepseq reg
+
+and case_clause_expr = {
+  pattern : pattern;
+  arrow   : arrow;
+  expr    : expr;
 }
 
 and assignment = {
@@ -482,7 +499,8 @@ and for_collect = {
 (* Expressions *)
 
 and expr =
-  ELogic  of logic_expr
+  ECase   of case_expr reg
+| ELogic  of logic_expr
 | EArith  of arith_expr
 | EString of string_expr
 | EList   of list_expr

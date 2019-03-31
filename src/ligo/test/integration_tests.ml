@@ -239,6 +239,21 @@ let matching () : unit result =
       @@ [0 ; 2 ; 42 ; 163 ; -1] in
     ok ()
   in
+  let%bind _expr_bool =
+    let aux n =
+      let open AST_Typed.Combinators in
+      let input = a_int n in
+      let%bind result = easy_run_typed "match_expr_bool" program input in
+      let%bind result' =
+        trace (simple_error "bad result") @@
+        get_a_int result in
+      Assert.assert_equal_int (if n = 2 then 42 else 0) result'
+    in
+    let%bind _ = bind_list
+      @@ List.map aux
+      @@ [0 ; 2 ; 42 ; 163 ; -1] in
+    ok ()
+  in
   let%bind _option =
     let aux n =
       let open AST_Typed.Combinators in

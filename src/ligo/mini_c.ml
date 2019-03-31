@@ -70,6 +70,7 @@ and expression' =
   | Var of var_name
   | Empty_map of (type_value * type_value)
   | Make_None of type_value
+  | E_Cond of expression * expression * expression
 
 and expression = expression' * type_value * environment (* Environment in which the expressions are evaluated *)
 
@@ -77,7 +78,7 @@ and assignment = var_name * expression
 
 and statement' =
   | Assignment of assignment
-  | Cond of expression * block * block
+  | I_Cond of expression * block * block
   | If_None of expression * block * (var_name * block)
   | While of expression * block
 
@@ -179,6 +180,7 @@ module PP = struct
     | Function_expression c -> function_ ppf c
     | Empty_map _ -> fprintf ppf "map[]"
     | Make_None _ -> fprintf ppf "none"
+    | E_Cond (c, a, b) -> fprintf ppf "%a ? %a : %a" expression c expression a expression b
 
   and function_ ppf ({binder ; input ; output ; body ; result}:anon_function_content) =
         fprintf ppf "fun (%s:%a) : %a %a return %a"
@@ -192,7 +194,7 @@ module PP = struct
 
   and statement ppf ((s, _) : statement) = match s with
     | Assignment ass -> assignment ppf ass
-    | Cond (expr, i, e) -> fprintf ppf "if (%a) %a %a" expression expr block i block e
+    | I_Cond (expr, i, e) -> fprintf ppf "if (%a) %a %a" expression expr block i block e
     | If_None (expr, none, (name, some)) -> fprintf ppf "if (%a) %a %s.%a" expression expr block none name block some
     | While (e, b) -> fprintf ppf "while (%a) %a" expression e block b
 
@@ -823,7 +825,18 @@ module Translate_program = struct
                 ] in
               ok code
           | _ -> simple_fail "expected function code"
-        ) in
+        )
+      | E_Cond (c, a, b) -> (
+          let%bind c' = translate_expression c in
+          let%bind a' = translate_expression a in
+          let%bind b' = translate_expression b in
+          let%bind code = ok (seq [
+              c' ; i_unpair ;
+              i_if a' b' ;
+            ]) in
+          ok code
+        )
+    in
 
     let%bind () =
       let%bind (Ex_ty schema_ty) = Environment.to_ty env in
@@ -874,7 +887,7 @@ module Translate_program = struct
             add ;
           ];
         ])
-    | Cond (expr, a, b) ->
+    | I_Cond (expr, a, b) ->
       let%bind expr = translate_expression expr in
       let%bind a = translate_regular_block a in
       let%bind b = translate_regular_block b in
@@ -1195,7 +1208,7 @@ module Combinators = struct
 
   let statement s' e : statement =
     match s' with
-    | Cond _ -> s', id_environment_wrap e
+    | I_Cond _ -> s', id_environment_wrap e
     | If_None _ -> s', id_environment_wrap e
     | While _ -> s', id_environment_wrap e
     | Assignment (name, (_, t, _)) -> s', environment_wrap e (Environment.add (name, t) e)

@@ -162,39 +162,40 @@ and type_instruction (e:environment) : I.instruction -> (environment * O.instruc
           let e' = Environment.add e name annotated_expression.type_annotation in
           ok (e', O.Assignment {name;annotated_expression})
     )
-  | Matching (ex, m) ->
+  | Matching_instr (ex, m) ->
       let%bind ex' = type_annotated_expression e ex in
-      let%bind m' = type_match e ex'.type_annotation m in
-      ok (e, O.Matching (ex', m'))
+      let%bind m' = type_match type_block e ex'.type_annotation m in
+      ok (e, O.Matching_instr (ex', m'))
   | Record_patch _ -> simple_fail "no record_patch yet"
 
-and type_match (e:environment) (t:O.type_value) : I.matching -> O.matching result = function
+and type_match : type i o . (environment -> i -> o result) -> environment -> O.type_value -> i I.matching -> o O.matching result =
+  fun f e t i -> match i with
   | Match_bool {match_true ; match_false} ->
       let%bind _ =
         trace_strong (simple_error "Matching bool on not-a-bool")
         @@ get_t_bool t in
-      let%bind match_true = type_block e match_true in
-      let%bind match_false = type_block e match_false in
+      let%bind match_true = f e match_true in
+      let%bind match_false = f e match_false in
       ok (O.Match_bool {match_true ; match_false})
   | Match_option {match_none ; match_some} ->
       let%bind t_opt =
         trace_strong (simple_error "Matching option on not-an-option")
         @@ get_t_option t in
-      let%bind match_none = type_block e match_none in
+      let%bind match_none = f e match_none in
       let (n, b) = match_some in
       let n' = n, t_opt in
       let e' = Environment.add e n t_opt in
-      let%bind b' = type_block e' b in
+      let%bind b' = f e' b in
       ok (O.Match_option {match_none ; match_some = (n', b')})
   | Match_list {match_nil ; match_cons} ->
       let%bind t_list =
         trace_strong (simple_error "Matching list on not-an-list")
         @@ get_t_list t in
-      let%bind match_nil = type_block e match_nil in
+      let%bind match_nil = f e match_nil in
       let (hd, tl, b) = match_cons in
       let e' = Environment.add e hd t_list in
       let e' = Environment.add e' tl t in
-      let%bind b' = type_block e' b in
+      let%bind b' = f e' b in
       ok (O.Match_list {match_nil ; match_cons = (hd, tl, b')})
   | Match_tuple (lst, b) ->
       let%bind t_tuple =
@@ -205,7 +206,7 @@ and type_match (e:environment) (t:O.type_value) : I.matching -> O.matching resul
         @@ (fun () -> List.combine lst t_tuple) in
       let aux prev (name, tv) = Environment.add prev name tv in
       let e' = List.fold_left aux e lst' in
-      let%bind b' = type_block e' b in
+      let%bind b' = f e' b in
       ok (O.Match_tuple (lst, b'))
 
 and evaluate_type (e:environment) (t:I.type_expression) : O.type_value result =
@@ -383,7 +384,17 @@ and type_annotated_expression (e:environment) (ae:I.annotated_expression) : O.an
       let dst_opt = make_t_option dst in
       let%bind type_annotation = check dst_opt in
       ok O.{expression = LookUp (ds, ind) ; type_annotation}
-
+  (* Advanced *)
+  | Matching_expr (ex, m) -> (
+      let%bind ex' = type_annotated_expression e ex in
+      let%bind m' = type_match type_annotated_expression e ex'.type_annotation m in
+      let%bind type_annotation = match m' with
+        | Match_bool {match_true ; match_false} ->
+            let%bind _ = O.assert_type_value_eq (match_true.type_annotation, match_false.type_annotation) in
+            ok match_true.type_annotation
+        | _ -> simple_fail "can only type match_bool expressions yet" in
+      ok O.{expression = Matching_expr (ex', m') ; type_annotation}
+    )
 
 and type_constant (name:string) (lst:O.type_value list) (tv_opt:O.type_value option) : (string * O.type_value) result =
   (* Constant poorman's polymorphism *)
@@ -476,6 +487,10 @@ let rec untype_annotated_expression (e:O.annotated_expression) : (I.annotated_ex
   | LookUp dsi ->
       let%bind dsi' = bind_map_pair untype_annotated_expression dsi in
       return (LookUp dsi')
+  | Matching_expr (ae, m) ->
+      let%bind ae' = untype_annotated_expression ae in
+      let%bind m' = untype_matching untype_annotated_expression m in
+      return (Matching_expr (ae', m'))
 
 and untype_block (b:O.block) : (I.block) result =
   bind_list @@ List.map untype_instruction b
@@ -494,28 +509,28 @@ and untype_instruction (i:O.instruction) : (I.instruction) result =
   | Assignment a ->
       let%bind annotated_expression = untype_annotated_expression a.annotated_expression in
       ok @@ Assignment {name = a.name ; annotated_expression}
-  | Matching (e, m) ->
+  | Matching_instr (e, m) ->
       let%bind e' = untype_annotated_expression e in
-      let%bind m' = untype_matching m in
-      ok @@ Matching (e', m')
+      let%bind m' = untype_matching untype_block m in
+      ok @@ Matching_instr (e', m')
 
-and untype_matching (m:O.matching) : (I.matching) result =
+and untype_matching : type o i . (o -> i result) -> o O.matching -> (i I.matching) result = fun f m ->
   let open I in
   match m with
   | Match_bool {match_true ; match_false} ->
-      let%bind match_true = untype_block match_true in
-      let%bind match_false = untype_block match_false in
+      let%bind match_true = f match_true in
+      let%bind match_false = f match_false in
       ok @@ Match_bool {match_true ; match_false}
   | Match_tuple (lst, b) ->
-      let%bind b = untype_block b in
+      let%bind b = f b in
       ok @@ Match_tuple (lst, b)
   | Match_option {match_none ; match_some = (v, some)} ->
-      let%bind match_none = untype_block match_none in
-      let%bind some = untype_block some in
+      let%bind match_none = f match_none in
+      let%bind some = f some in
       let match_some = fst v, some in
       ok @@ Match_option {match_none ; match_some}
   | Match_list {match_nil ; match_cons = (hd, tl, cons)} ->
-      let%bind match_nil = untype_block match_nil in
-      let%bind cons = untype_block cons in
+      let%bind match_nil = f match_nil in
+      let%bind cons = f cons in
       let match_cons = hd, tl, cons in
       ok @@ Match_list {match_nil ; match_cons}

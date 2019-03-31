@@ -160,6 +160,18 @@ let rec simpl_expression (t:Raw.expr) : ae result =
   | ELogic l -> simpl_logic_expression l
   | EList _ -> simple_fail "list: not supported yet"
   | ESet _ -> simple_fail "set: not supported yet"
+  | ECase c ->
+      let%bind e = simpl_expression c.value.expr in
+      let%bind lst =
+        let aux (x:Raw.case_clause_expr) =
+          let%bind expr = simpl_expression x.expr in
+          ok (x.pattern, expr) in
+        bind_list
+        @@ List.map aux
+        @@ List.map get_value
+        @@ npseq_to_list c.value.cases_expr.value in
+      let%bind cases = simpl_cases lst in
+      ok @@ ae @@ Matching_expr (e, cases)
   | EMap (MapInj mi) ->
       let%bind lst =
         let lst = List.map get_value @@ pseq_to_list mi.value.elements in
@@ -369,7 +381,7 @@ and simpl_single_instruction : Raw.single_instr -> instruction result = fun t ->
       let%bind match_false = match c.ifnot with
         | ClauseInstr i -> let%bind i = simpl_instruction i in ok [i]
         | ClauseBlock b -> simpl_statements @@ fst b.value.inside in
-      ok @@ Matching (expr, (Match_bool {match_true; match_false}))
+      ok @@ Matching_instr (expr, (Match_bool {match_true; match_false}))
   | Assign a ->
       let a = a.value in
       let%bind name = match a.lhs with
@@ -381,18 +393,18 @@ and simpl_single_instruction : Raw.single_instr -> instruction result = fun t ->
         | _ -> simple_fail "no weird assignments yet"
       in
       ok @@ Assignment {name ; annotated_expression}
-  | Case c ->
+  | Case_instr c ->
       let c = c.value in
       let%bind expr = simpl_expression c.expr in
       let%bind cases =
-        let aux (x : Raw.case Raw.reg) =
+        let aux (x : Raw.case_clause_instr Raw.reg) =
           let%bind i = simpl_instruction_block x.value.instr in
           ok (x.value.pattern, i) in
         bind_list
         @@ List.map aux
-        @@ npseq_to_list c.cases.value in
+        @@ npseq_to_list c.cases_instr.value in
       let%bind m = simpl_cases cases in
-      ok @@ Matching (expr, m)
+      ok @@ Matching_instr (expr, m)
   | RecordPatch r ->
       let r = r.value in
       let%bind record = match r.path with
@@ -409,7 +421,7 @@ and simpl_single_instruction : Raw.single_instr -> instruction result = fun t ->
   | MapRemove _ -> simple_fail "no map remove yet"
   | SetRemove _ -> simple_fail "no set remove yet"
 
-and simpl_cases : (Raw.pattern * block) list -> matching result = fun t ->
+and simpl_cases : type a . (Raw.pattern * a) list -> a matching result = fun t ->
   let open Raw in
   let get_var (t:Raw.pattern) = match t with
     | PVar v -> ok v.value

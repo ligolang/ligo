@@ -66,6 +66,8 @@ and expression =
   (* Data Structures *)
   | Map of (ae * ae) list
   | LookUp of (ae * ae)
+  (* Matching *)
+  | Matching_expr of (ae * matching_expr)
 
 and access =
   | Tuple_access of int
@@ -85,26 +87,30 @@ and b = block
 
 and instruction =
   | Assignment of named_expression
-  | Matching of ae * matching
+  | Matching_instr of ae * matching_instr
   | Loop of ae * b
   | Skip
   | Fail of ae
   | Record_patch of name * access_path * (string * ae) list
 
-and matching =
+and 'a matching =
   | Match_bool of {
-      match_true : b ;
-      match_false : b ;
+      match_true : 'a ;
+      match_false : 'a ;
     }
   | Match_list of {
-      match_nil : b ;
-      match_cons : name * name * b ;
+      match_nil : 'a ;
+      match_cons : name * name * 'a ;
     }
   | Match_option of {
-      match_none : b ;
-      match_some : name * b ;
+      match_none : 'a ;
+      match_some : name * 'a ;
     }
-  | Match_tuple of name list * b
+  | Match_tuple of name list * 'a
+
+and matching_instr = b matching
+
+and matching_expr = annotated_expression matching
 
 let ae expression = {expression ; type_annotation = None}
 
@@ -146,6 +152,8 @@ module PP = struct
         fprintf ppf "lambda (%s:%a) : %a {%a} return %a"
           binder type_expression input_type type_expression output_type
           block body annotated_expression result
+    | Matching_expr (ae, m) ->
+        fprintf ppf "match %a with %a" annotated_expression ae (matching annotated_expression) m
 
   and assoc_annotated_expression ppf : (ae * ae) -> unit = fun (a, b) ->
     fprintf ppf "%a -> %a" annotated_expression a annotated_expression b
@@ -171,15 +179,16 @@ module PP = struct
   and single_record_patch ppf ((p, ae) : string * ae) =
     fprintf ppf "%s <- %a" p annotated_expression ae
 
-  and matching ppf (m:matching) = match m with
+  and matching : type a . (formatter -> a -> unit) -> formatter -> a matching -> unit =
+    fun f ppf m -> match m with
     | Match_tuple (lst, b) ->
-        fprintf ppf "let (%a) = %a" (list_sep (fun ppf -> fprintf ppf "%s")) lst block b
+        fprintf ppf "let (%a) = %a" (list_sep (fun ppf -> fprintf ppf "%s")) lst f b
     | Match_bool {match_true ; match_false} ->
-        fprintf ppf "| True -> %a @.| False -> %a" block match_true block match_false
+        fprintf ppf "| True -> %a @.| False -> %a" f match_true f match_false
     | Match_list {match_nil ; match_cons = (hd, tl, match_cons)} ->
-        fprintf ppf "| Nil -> %a @.| %s :: %s -> %a" block match_nil hd tl block match_cons
+        fprintf ppf "| Nil -> %a @.| %s :: %s -> %a" f match_nil hd tl f match_cons
     | Match_option {match_none ; match_some = (some, match_some)} ->
-        fprintf ppf "| None -> %a @.| Some %s -> %a" block match_none some block match_some
+        fprintf ppf "| None -> %a @.| Some %s -> %a" f match_none some f match_some
 
   and instruction ppf (i:instruction) = match i with
     | Skip -> fprintf ppf "skip"
@@ -188,8 +197,8 @@ module PP = struct
     | Loop (cond, b) -> fprintf ppf "while (%a) { %a }" annotated_expression cond block b
     | Assignment {name;annotated_expression = ae} ->
         fprintf ppf "%s := %a" name annotated_expression ae
-    | Matching (ae, m) ->
-        fprintf ppf "match %a with %a" annotated_expression ae matching m
+    | Matching_instr (ae, m) ->
+        fprintf ppf "match %a with %a" annotated_expression ae (matching block) m
 
   let declaration ppf (d:declaration) = match d with
     | Type_declaration {type_name ; type_expression = te} ->
@@ -227,10 +236,10 @@ module Rename = struct
           let%bind cond' = rename_annotated_expression r cond in
           let%bind body' = rename_block r body in
           ok (Loop (cond', body'))
-      | Matching (ae, m) ->
+      | Matching_instr (ae, m) ->
           let%bind ae' = rename_annotated_expression r ae in
-          let%bind m' = rename_matching r m in
-          ok (Matching (ae', m'))
+          let%bind m' = rename_matching rename_block r m in
+          ok (Matching_instr (ae', m'))
       | Record_patch (v, path, lst) ->
           let aux (x, y) =
             let%bind y' = rename_annotated_expression (filter r v) y in
@@ -246,29 +255,34 @@ module Rename = struct
     and rename_block (r:renamings) (bl:block) : block result =
       bind_map_list (rename_instruction r) bl
 
-    and rename_matching (r:renamings) (m:matching) : matching result =
+    and rename_matching : type a . (renamings -> a -> a result) -> renamings -> a matching -> a matching result =
+      fun f r m ->
       match m with
       | Match_bool { match_true = mt ; match_false = mf } ->
-          let%bind match_true = rename_block r mt in
-          let%bind match_false = rename_block r mf in
+          let%bind match_true = f r mt in
+          let%bind match_false = f r mf in
           ok (Match_bool {match_true ; match_false})
       | Match_option { match_none = mn ; match_some = (some, ms) } ->
-          let%bind match_none = rename_block r mn in
-          let%bind ms' = rename_block (filter r some) ms in
+          let%bind match_none = f r mn in
+          let%bind ms' = f (filter r some) ms in
           ok (Match_option {match_none ; match_some = (some, ms')})
       | Match_list { match_nil = mn ; match_cons = (hd, tl, mc) } ->
-          let%bind match_nil = rename_block r mn in
-          let%bind mc' = rename_block (filters r [hd;tl]) mc in
+          let%bind match_nil = f r mn in
+          let%bind mc' = f (filters r [hd;tl]) mc in
           ok (Match_list {match_nil ; match_cons = (hd, tl, mc')})
       | Match_tuple (lst, body) ->
-          let%bind body' = rename_block (filters r lst) body in
+          let%bind body' = f (filters r lst) body in
           ok (Match_tuple (lst, body'))
+
+    and rename_matching_instruction = fun x -> rename_matching rename_block x
+
+    and rename_matching_expr = fun x -> rename_matching rename_expression x
 
     and rename_annotated_expression (r:renamings) (ae:annotated_expression) : annotated_expression result =
       let%bind expression = rename_expression r ae.expression in
       ok {ae with expression}
 
-    and rename_expression (r:renamings) (e:expression) : expression result =
+    and rename_expression : renamings -> expression -> expression result = fun r e ->
       match e with
       | Literal _ as l -> ok l
       | Constant (name, lst) ->
@@ -315,6 +329,10 @@ module Rename = struct
       | LookUp m ->
           let%bind m' = bind_map_pair (rename_annotated_expression r) m in
           ok (LookUp m')
+      | Matching_expr (ae, m) ->
+          let%bind ae' = rename_annotated_expression r ae in
+          let%bind m' = rename_matching rename_annotated_expression r m in
+          ok (Matching_expr (ae', m'))
   end
 end
 

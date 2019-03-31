@@ -74,14 +74,14 @@ and translate_instruction (env:Environment.t) (i:AST.instruction) : statement op
       let%bind (_, t, _) as expression = translate_annotated_expression env annotated_expression in
       let env' = Environment.add (name, t) env in
       return ~env' (Assignment (name, expression))
-  | Matching (expr, m) -> (
+  | Matching_instr (expr, m) -> (
       let%bind expr' = translate_annotated_expression env expr in
       let env' = Environment.extend env in
       match m with
       | Match_bool {match_true ; match_false} -> (
           let%bind true_branch = translate_block env' match_true in
           let%bind false_branch = translate_block env' match_false in
-          return (Cond (expr', true_branch, false_branch))
+          return (I_Cond (expr', true_branch, false_branch))
         )
       | Match_option {match_none ; match_some = ((name, t), sm)} -> (
           let%bind none_branch = translate_block env' match_none in
@@ -235,6 +235,15 @@ and translate_annotated_expression (env:Environment.t) (ae:AST.annotated_express
   | LookUp dsi ->
       let%bind (ds', i') = bind_map_pair f dsi in
       return (Predicate ("GET", [i' ; ds']), tv)
+  | Matching_expr (expr, m) -> (
+      let%bind expr' = translate_annotated_expression env expr in
+      match m with
+      | AST.Match_bool {match_true ; match_false} ->
+          let%bind (t, f) = bind_map_pair (translate_annotated_expression env) (match_true, match_false) in
+          return (E_Cond (expr', t, f), tv)
+      | AST.Match_list _ | AST.Match_option _ | AST.Match_tuple (_, _) ->
+          simple_fail "only match bool exprs are translated yet"
+    )
 
 and translate_lambda_shallow env l tv =
   let { binder ; input_type ; output_type ; body ; result } : AST.lambda = l in

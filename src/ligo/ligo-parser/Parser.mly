@@ -483,7 +483,7 @@ instruction:
 
 single_instr:
   conditional  {        Cond $1 }
-| case_instr   {        Case $1 }
+| case_instr   {        Case_instr $1 }
 | assignment   {      Assign $1 }
 | loop         {        Loop $1 }
 | proc_call    {    ProcCall $1 }
@@ -672,23 +672,23 @@ if_clause:
    ClauseBlock {value; region}}
 
 case_instr:
-  Case expr Of option(VBAR) cases End {
+  Case expr Of option(VBAR) cases_instr End {
     let region = cover $1 $6 in
     let value = {
       kwd_case  = $1;
       expr      = $2;
       kwd_of    = $3;
       lead_vbar = $4;
-      cases     = $5;
+      cases_instr = $5;
       kwd_end   = $6}
     in {region; value}}
 
-cases:
-  nsepseq(case,VBAR) {
+cases_instr:
+  nsepseq(case_clause_instr,VBAR) {
     let region = nsepseq_to_region (fun x -> x.region) $1
     in {region; value = $1}}
 
-case:
+case_clause_instr:
   pattern ARROW instruction {
     let region = cover (pattern_to_region $1) (instr_to_region $3)
     and value  = {pattern = $1; arrow = $2; instr = $3}
@@ -764,7 +764,34 @@ interactive_expr:
   expr EOF { $1 }
 
 expr:
-  expr Or conj_expr {
+  case_expr { $1 }
+| disj_expr { $1 }
+
+case_expr:
+  Case expr Of option(VBAR) cases_expr End {
+    let region = cover $1 $6 in
+    let value = {
+      kwd_case  = $1;
+      expr      = $2;
+      kwd_of    = $3;
+      lead_vbar = $4;
+      cases_expr = $5;
+      kwd_end   = $6}
+    in ECase {region; value}}
+
+cases_expr:
+  nsepseq(case_clause_expr,VBAR) {
+    let region = nsepseq_to_region (fun x -> x.region) $1
+    in {region; value = $1}}
+
+case_clause_expr:
+  pattern ARROW expr {
+    let region = cover (pattern_to_region $1) (expr_to_region $3)
+    and value  = {pattern = $1; arrow = $2; expr = $3}
+    in {region; value}}
+
+disj_expr:
+  disj_expr Or conj_expr {
     let start  = expr_to_region $1
     and stop   = expr_to_region $3 in
     let region = cover start stop

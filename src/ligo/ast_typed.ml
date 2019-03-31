@@ -67,6 +67,8 @@ and expression =
   (* Data Structures *)
   | Map of (ae * ae) list
   | LookUp of (ae * ae)
+  (* Advanced *)
+  | Matching_expr of (ae * matching_expr)
 
 and value = annotated_expression (* todo (for refactoring) *)
 
@@ -83,25 +85,29 @@ and b = block
 
 and instruction =
   | Assignment of named_expression
-  | Matching of ae * matching
+  | Matching_instr of ae * matching_instr
   | Loop of ae * b
   | Skip
   | Fail of ae
 
-and matching =
+and 'a matching =
   | Match_bool of {
-      match_true : b ;
-      match_false : b ;
+      match_true : 'a ;
+      match_false : 'a ;
     }
   | Match_list of {
-      match_nil : b ;
-      match_cons : name * name * b ;
+      match_nil : 'a ;
+      match_cons : name * name * 'a ;
     }
   | Match_option of {
-      match_none : b ;
-      match_some : (name * type_value) * b ;
+      match_none : 'a ;
+      match_some : (name * type_value) * 'a ;
     }
-  | Match_tuple of name list * b
+  | Match_tuple of name list * 'a
+
+and matching_instr = b matching
+
+and matching_expr = ae matching
 
 open! Ligo_helpers.Trace
 
@@ -165,6 +171,8 @@ module PP = struct
     | Record m -> fprintf ppf "record[%a]" (smap_sep annotated_expression) m
     | Map m -> fprintf ppf "map[%a]" (list_sep assoc_annotated_expression) m
     | LookUp (ds, i) -> fprintf ppf "(%a)[%a]" annotated_expression ds annotated_expression i
+    | Matching_expr (ae, m) ->
+        fprintf ppf "match %a with %a" annotated_expression ae (matching annotated_expression) m
 
   and assoc_annotated_expression ppf : (ae * ae) -> unit = fun (a, b) ->
     fprintf ppf "%a -> %a" annotated_expression a annotated_expression b
@@ -183,15 +191,15 @@ module PP = struct
   and single_record_patch ppf ((s, ae) : string * ae) =
     fprintf ppf "%s <- %a" s annotated_expression ae
 
-  and matching ppf (m:matching) = match m with
+  and matching : type a . (formatter -> a -> unit) -> _ -> a matching -> unit = fun f ppf m -> match m with
     | Match_tuple (lst, b) ->
-        fprintf ppf "let (%a) = %a" (list_sep (fun ppf -> fprintf ppf "%s")) lst block b
+        fprintf ppf "let (%a) = %a" (list_sep (fun ppf -> fprintf ppf "%s")) lst f b
     | Match_bool {match_true ; match_false} ->
-        fprintf ppf "| True -> %a @.| False -> %a" block match_true block match_false
+        fprintf ppf "| True -> %a @.| False -> %a" f match_true f match_false
     | Match_list {match_nil ; match_cons = (hd, tl, match_cons)} ->
-        fprintf ppf "| Nil -> %a @.| %s :: %s -> %a" block match_nil hd tl block match_cons
+        fprintf ppf "| Nil -> %a @.| %s :: %s -> %a" f match_nil hd tl f match_cons
     | Match_option {match_none ; match_some = (some, match_some)} ->
-        fprintf ppf "| None -> %a @.| Some %s -> %a" block match_none (fst some) block match_some
+        fprintf ppf "| None -> %a @.| Some %s -> %a" f match_none (fst some) f match_some
 
   and instruction ppf (i:instruction) = match i with
     | Skip -> fprintf ppf "skip"
@@ -199,8 +207,8 @@ module PP = struct
     | Loop (cond, b) -> fprintf ppf "while (%a) { %a }" annotated_expression cond block b
     | Assignment {name;annotated_expression = ae} ->
         fprintf ppf "%s := %a" name annotated_expression ae
-    | Matching (ae, m) ->
-        fprintf ppf "match %a with %a" annotated_expression ae matching m
+    | Matching_instr (ae, m) ->
+        fprintf ppf "match %a with %a" annotated_expression ae (matching block) m
 
   let declaration ppf (d:declaration) =
     match d with
