@@ -51,7 +51,7 @@ let rec simpl_type_expression (t:Raw.type_expr) : type_expression result =
       let%bind lst = bind_list
         @@ List.map aux
         @@ List.map (fun (x:Raw.field_decl Raw.reg) -> (x.value.field_name.value, x.value.field_type))
-        @@ npseq_to_list r.value.field_decls in
+        @@ pseq_to_list r.value.elements in
       let m = List.fold_left (fun m (x, y) -> SMap.add x y m) SMap.empty lst in
       ok @@ T_record m
   | TSum s ->
