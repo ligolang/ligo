@@ -205,10 +205,19 @@ record_type:
    let first, (others, terminator, closing) = $2 in
    let region = cover $1 closing
    and value  = {
-     opening = $1;
-     field_decls = first, others;
+     opening = Kwd $1;
+     elements = Some (first, others);
      terminator;
-     closing}
+     closing = End closing}
+   in {region; value}}
+| Record LBRACKET series(field_decl,RBRACKET) {
+   let first, (others, terminator, closing) = $3 in
+   let region = cover $1 closing
+   and value  = {
+     opening = KwdBracket ($1,$2);
+     elements = Some (first, others);
+     terminator;
+     closing = RBracket closing}
    in {region; value}}
 
 field_decl:

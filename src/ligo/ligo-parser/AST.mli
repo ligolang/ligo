@@ -175,7 +175,7 @@ and type_decl = {
 and type_expr =
   TProd   of cartesian
 | TSum    of (variant reg, vbar) nsepseq reg
-| TRecord of record_type reg
+| TRecord of record_type
 | TApp    of (type_name * type_tuple) reg
 | TPar    of type_expr par reg
 | TAlias  of variable
@@ -188,14 +188,7 @@ and variant = {
   product : cartesian
 }
 
-and record_type = {
-  opening     : kwd_record;
-  field_decls : field_decls;
-  terminator  : semi option;
-  closing     : kwd_end
-}
-
-and field_decls = (field_decl reg, semi) nsepseq
+and record_type = field_decl reg injection reg
 
 and field_decl = {
   field_name : field_name;

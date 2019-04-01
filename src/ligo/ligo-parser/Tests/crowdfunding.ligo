@@ -1,10 +1,10 @@
 type store is
-  record
+  record [
     goal     : nat;
     deadline : timestamp;
     backers  : map (address, nat);
     funded   : bool;
-  end
+  ]
 
 entrypoint contribute (storage store : store;
                        const sender  : address;

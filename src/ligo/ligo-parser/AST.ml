@@ -191,7 +191,7 @@ and type_decl = {
 and type_expr =
   TProd   of cartesian
 | TSum    of (variant reg, vbar) nsepseq reg
-| TRecord of record_type reg
+| TRecord of record_type
 | TApp    of (type_name * type_tuple) reg
 | TPar    of type_expr par reg
 | TAlias  of variable
@@ -204,14 +204,7 @@ and variant = {
   product : cartesian
 }
 
-and record_type = {
-  opening     : kwd_record;
-  field_decls : field_decls;
-  terminator  : semi option;
-  closing     : kwd_end
-}
-
-and field_decls = (field_decl reg, semi) nsepseq
+and record_type = field_decl reg injection reg
 
 and field_decl = {
   field_name : field_name;
@@ -932,12 +925,8 @@ and print_variant {value; _} =
 and print_sum_type {value; _} =
   print_nsepseq "|" print_variant value
 
-and print_record_type {value; _} =
-  let {opening; field_decls; terminator; closing} = value in
-  print_token       opening "record";
-  print_field_decls field_decls;
-  print_terminator  terminator;
-  print_token       closing "end"
+and print_record_type record_type =
+  print_injection "record" print_field_decl record_type
 
 and print_type_app {value; _} =
   let type_name, type_tuple = value in
@@ -949,9 +938,6 @@ and print_par_type {value; _} =
   print_token     lpar "(";
   print_type_expr inside;
   print_token     rpar ")"
-
-and print_field_decls sequence =
-  print_nsepseq ";" print_field_decl sequence
 
 and print_field_decl {value; _} =
   let {field_name; colon; field_type} = value in
