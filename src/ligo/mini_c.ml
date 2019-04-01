@@ -207,7 +207,7 @@ module PP = struct
 end
 
 module Translate_type = struct
-  open Tezos_utils.Micheline.Michelson
+  module O = Tezos_utils.Micheline.Michelson
 
   module Ty = struct
 
@@ -304,62 +304,62 @@ module Translate_type = struct
   end
 
 
-  let base_type : type_base -> michelson result =
+  let base_type : type_base -> O.michelson result =
     function
-    | Base_unit -> ok @@ prim T_unit
-    | Base_bool -> ok @@ prim T_bool
-    | Base_int -> ok @@ prim T_int
-    | Base_nat -> ok @@ prim T_nat
-    | Base_string -> ok @@ prim T_string
-    | Base_bytes -> ok @@ prim T_bytes
+    | Base_unit -> ok @@ O.prim T_unit
+    | Base_bool -> ok @@ O.prim T_bool
+    | Base_int -> ok @@ O.prim T_int
+    | Base_nat -> ok @@ O.prim T_nat
+    | Base_string -> ok @@ O.prim T_string
+    | Base_bytes -> ok @@ O.prim T_bytes
 
-  let rec type_ : type_value -> michelson result =
+  let rec type_ : type_value -> O.michelson result =
     function
     | T_base b -> base_type b
     | T_pair (t, t') -> (
         type_ t >>? fun t ->
         type_ t' >>? fun t' ->
-        ok @@ prim ~children:[t;t'] T_pair
+        ok @@ O.prim ~children:[t;t'] O.T_pair
       )
     | T_or (t, t') -> (
         type_ t >>? fun t ->
         type_ t' >>? fun t' ->
-        ok @@ prim ~children:[t;t'] T_or
+        ok @@ O.prim ~children:[t;t'] O.T_or
       )
     | T_map kv ->
         let%bind (k', v') = bind_map_pair type_ kv in
-        ok @@ prim ~children:[k';v'] T_map
+        ok @@ O.prim ~children:[k';v'] O.T_map
     | T_option o ->
         let%bind o' = type_ o in
-        ok @@ prim ~children:[o'] T_option
+        ok @@ O.prim ~children:[o'] O.T_option
     | T_function (arg, ret) ->
       let%bind arg = type_ arg in
       let%bind ret = type_ ret in
-      ok @@ prim ~children:[arg;ret] T_lambda
+      ok @@ O.prim ~children:[arg;ret] T_lambda
     | T_deep_closure (c, arg, ret) ->
       let%bind capture = environment_small c in
       let%bind arg = type_ arg in
       let%bind ret = type_ ret in
-      ok @@ t_pair capture (t_lambda (t_pair capture arg) ret)
+      ok @@ O.t_pair capture (O.t_lambda (O.t_pair capture arg) ret)
     | T_shallow_closure (c, arg, ret) ->
       let%bind capture = environment c in
       let%bind arg = type_ arg in
       let%bind ret = type_ ret in
-      ok @@ t_pair capture (t_lambda (t_pair capture arg) ret)
+      ok @@ O.t_pair capture (O.t_lambda (O.t_pair capture arg) ret)
 
   and environment_element (name, tyv) =
     let%bind michelson_type = type_ tyv in
-    ok @@ annotate ("@" ^ name) michelson_type
+    ok @@ O.annotate ("@" ^ name) michelson_type
 
   and environment_small' = let open Append_tree in function
     | Leaf x -> environment_element x
     | Node {a;b} ->
       let%bind a = environment_small' a in
       let%bind b = environment_small' b in
-      ok @@ t_pair a b
+      ok @@ O.t_pair a b
 
   and environment_small = function
-    | Empty -> ok @@ prim T_unit
+    | Empty -> ok @@ O.prim O.T_unit
     | Full x -> environment_small' x
 
   and environment =
@@ -369,7 +369,7 @@ module Translate_type = struct
     | a :: b ->
       let%bind a = environment_small a in
       let%bind b = environment b in
-      ok @@ t_pair a b
+      ok @@ O.t_pair a b
 
 end
 
@@ -456,13 +456,13 @@ module Environment = struct
       | Node {a;b} ->
         let%bind ((_, ty_a, _) as a) = to_mini_c_capture' env a in
         let%bind ((_, ty_b, _) as b) = to_mini_c_capture' env b in
-        ok (E_constant ("PAIR", [a;b]), T_pair(ty_a, ty_b), env)
+        ok (E_constant ("PAIR", [a;b]), (T_pair(ty_a, ty_b) : type_value), env)
 
     let to_mini_c_capture env = function
       | Empty -> simple_fail "to_mini_c_capture"
       | Full x -> to_mini_c_capture' env x
 
-    let rec to_mini_c_type' = function
+    let rec to_mini_c_type' : _ -> type_value = function
       | Leaf (_, t) -> t
       | Node {a;b} -> T_pair(to_mini_c_type' a, to_mini_c_type' b)
 
