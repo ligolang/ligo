@@ -13,21 +13,21 @@ module Append_tree = Tree.Append
 type type_name = string
 
 type type_base =
-  | Unit
-  | Bool
-  | Int | Nat
-  | String | Bytes
+  | Base_unit
+  | Base_bool
+  | Base_int | Base_nat
+  | Base_string | Base_bytes
 
-type type_value = [
-  | `Pair of type_value * type_value
-  | `Or of type_value * type_value
-  | `Function of type_value * type_value
-  | `Deep_closure of environment_small * type_value * type_value
-  | `Shallow_closure of environment * type_value * type_value
-  | `Base of type_base
-  | `Map of type_value * type_value
-  | `Option of type_value
-]
+type type_value =
+  | T_pair of (type_value * type_value)
+  | T_or of type_value * type_value
+  | T_function of type_value * type_value
+  | T_deep_closure of environment_small * type_value * type_value
+  | T_shallow_closure of environment * type_value * type_value
+  | T_base of type_base
+  | T_map of (type_value * type_value)
+  | T_option of type_value
+
 
 and environment_element = string * type_value
 
@@ -45,31 +45,30 @@ type environment_wrap = {
 type var_name = string
 type fun_name = string
 
-type value = [
-  | `Unit
-  | `Bool of bool
-  | `Nat of int
-  | `Int of int
-  | `String of string
-  | `Bytes of bytes
-  | `Pair of value * value
-  | `Left of value
-  | `Right of value
-  | `Some of value
-  | `None
-  | `Map of (value * value) list
+type value =
+  | D_unit
+  | D_bool of bool
+  | D_nat of int
+  | D_int of int
+  | D_string of string
+  | D_bytes of bytes
+  | D_pair of value * value
+  | D_left of value
+  | D_right of value
+  | D_some of value
+  | D_none
+  | D_map of (value * value) list
   (* | `Macro of anon_macro ... The future. *)
-  | `Function of anon_function
-]
+  | D_function of anon_function
 
 and expression' =
-  | Literal of value
-  | Function_expression of anon_function_expression
-  | Predicate of string * expression list
-  | Apply of expression * expression
-  | Var of var_name
-  | Empty_map of (type_value * type_value)
-  | Make_None of type_value
+  | E_literal of value
+  | E_function of anon_function_expression
+  | E_constant of string * expression list
+  | E_application of expression * expression
+  | E_variable of var_name
+  | E_empty_map of (type_value * type_value)
+  | E_make_none of type_value
   | E_Cond of expression * expression * expression
 
 and expression = expression' * type_value * environment (* Environment in which the expressions are evaluated *)
@@ -120,22 +119,22 @@ module PP = struct
   let space_sep ppf () = fprintf ppf " "
 
   let type_base ppf : type_base -> _ = function
-    | Unit -> fprintf ppf "unit"
-    | Bool -> fprintf ppf "bool"
-    | Int -> fprintf ppf "int"
-    | Nat -> fprintf ppf "nat"
-    | String -> fprintf ppf "string"
-    | Bytes -> fprintf ppf "bytes"
+    | Base_unit -> fprintf ppf "unit"
+    | Base_bool -> fprintf ppf "bool"
+    | Base_int -> fprintf ppf "int"
+    | Base_nat -> fprintf ppf "nat"
+    | Base_string -> fprintf ppf "string"
+    | Base_bytes -> fprintf ppf "bytes"
 
   let rec type_ ppf : type_value -> _ = function
-    | `Or(a, b) -> fprintf ppf "(%a) | (%a)" type_ a type_ b
-    | `Pair(a, b) -> fprintf ppf "(%a) & (%a)" type_ a type_ b
-    | `Base b -> type_base ppf b
-    | `Function(a, b) -> fprintf ppf "(%a) -> (%a)" type_ a type_ b
-    | `Map(k, v) -> fprintf ppf "map(%a -> %a)" type_ k type_ v
-    | `Option(o) -> fprintf ppf "option(%a)" type_ o
-    | `Shallow_closure(_, a, b) -> fprintf ppf "[big_closure](%a) -> (%a)" type_ a type_ b
-    | `Deep_closure(c, arg, ret) ->
+    | T_or(a, b) -> fprintf ppf "(%a) | (%a)" type_ a type_ b
+    | T_pair(a, b) -> fprintf ppf "(%a) & (%a)" type_ a type_ b
+    | T_base b -> type_base ppf b
+    | T_function(a, b) -> fprintf ppf "(%a) -> (%a)" type_ a type_ b
+    | T_map(k, v) -> fprintf ppf "map(%a -> %a)" type_ k type_ v
+    | T_option(o) -> fprintf ppf "option(%a)" type_ o
+    | T_shallow_closure(_, a, b) -> fprintf ppf "[big_closure](%a) -> (%a)" type_ a type_ b
+    | T_deep_closure(c, arg, ret) ->
       fprintf ppf "[%a](%a)->(%a)"
         environment_small c
         type_ arg type_ ret
@@ -155,31 +154,31 @@ module PP = struct
     fprintf ppf "Env[%a]" (list_sep environment_small) x
 
   let rec value ppf : value -> unit = function
-    | `Bool b -> fprintf ppf "%b" b
-    | `Int n -> fprintf ppf "%d" n
-    | `Nat n -> fprintf ppf "%d" n
-    | `Unit -> fprintf ppf " "
-    | `String s -> fprintf ppf "\"%s\"" s
-    | `Bytes _ -> fprintf ppf "[bytes]"
-    | `Pair (a, b) -> fprintf ppf "(%a), (%a)" value a value b
-    | `Left a -> fprintf ppf "L(%a)" value a
-    | `Right b -> fprintf ppf "R(%a)" value b
-    | `Function x -> function_ ppf x.content
-    | `None -> fprintf ppf "None"
-    | `Some s -> fprintf ppf "Some (%a)" value s
-    | `Map m -> fprintf ppf "Map[%a]" (list_sep value_assoc) m
+    | D_bool b -> fprintf ppf "%b" b
+    | D_int n -> fprintf ppf "%d" n
+    | D_nat n -> fprintf ppf "%d" n
+    | D_unit -> fprintf ppf " "
+    | D_string s -> fprintf ppf "\"%s\"" s
+    | D_bytes _ -> fprintf ppf "[bytes]"
+    | D_pair (a, b) -> fprintf ppf "(%a), (%a)" value a value b
+    | D_left a -> fprintf ppf "L(%a)" value a
+    | D_right b -> fprintf ppf "R(%a)" value b
+    | D_function x -> function_ ppf x.content
+    | D_none -> fprintf ppf "None"
+    | D_some s -> fprintf ppf "Some (%a)" value s
+    | D_map m -> fprintf ppf "Map[%a]" (list_sep value_assoc) m
 
   and value_assoc ppf : (value * value) -> unit = fun (a, b) ->
     fprintf ppf "%a -> %a" value a value b
 
   and expression ppf ((e, _, _):expression) = match e with
-    | Var v -> fprintf ppf "%s" v
-    | Apply(a, b) -> fprintf ppf "(%a)@(%a)" expression a expression b
-    | Predicate(p, lst) -> fprintf ppf "%s %a" p (pp_print_list ~pp_sep:space_sep expression) lst
-    | Literal v -> fprintf ppf "%a" value v
-    | Function_expression c -> function_ ppf c
-    | Empty_map _ -> fprintf ppf "map[]"
-    | Make_None _ -> fprintf ppf "none"
+    | E_variable v -> fprintf ppf "%s" v
+    | E_application(a, b) -> fprintf ppf "(%a)@(%a)" expression a expression b
+    | E_constant(p, lst) -> fprintf ppf "%s %a" p (pp_print_list ~pp_sep:space_sep expression) lst
+    | E_literal v -> fprintf ppf "%a" value v
+    | E_function c -> function_ ppf c
+    | E_empty_map _ -> fprintf ppf "map[]"
+    | E_make_none _ -> fprintf ppf "none"
     | E_Cond (c, a, b) -> fprintf ppf "%a ? %a : %a" expression c expression a expression b
 
   and function_ ppf ({binder ; input ; output ; body ; result}:anon_function_content) =
@@ -218,68 +217,68 @@ module Translate_type = struct
       let open Types in
       let return x = ok @@ Ex_comparable_ty x in
       match tb with
-      | Unit -> fail (not_comparable "unit")
-      | Bool -> fail (not_comparable "bool")
-      | Nat -> return nat_k
-      | Int -> return int_k
-      | String -> return string_k
-      | Bytes -> return bytes_k
+      | Base_unit -> fail (not_comparable "unit")
+      | Base_bool -> fail (not_comparable "bool")
+      | Base_nat -> return nat_k
+      | Base_int -> return int_k
+      | Base_string -> return string_k
+      | Base_bytes -> return bytes_k
 
     let comparable_type : type_value -> ex_comparable_ty result = fun tv ->
       match tv with
-      | `Base b -> comparable_type_base b
-      | `Deep_closure _ -> fail (not_comparable "deep closure")
-      | `Shallow_closure _ -> fail (not_comparable "shallow closure")
-      | `Function _ -> fail (not_comparable "function")
-      | `Or _ -> fail (not_comparable "or")
-      | `Pair _ -> fail (not_comparable "pair")
-      | `Map _ -> fail (not_comparable "map")
-      | `Option _ -> fail (not_comparable "option")
+      | T_base b -> comparable_type_base b
+      | T_deep_closure _ -> fail (not_comparable "deep closure")
+      | T_shallow_closure _ -> fail (not_comparable "shallow closure")
+      | T_function _ -> fail (not_comparable "function")
+      | T_or _ -> fail (not_comparable "or")
+      | T_pair _ -> fail (not_comparable "pair")
+      | T_map _ -> fail (not_comparable "map")
+      | T_option _ -> fail (not_comparable "option")
 
     let base_type : type_base -> ex_ty result = fun b ->
       let open Types in
       let return x = ok @@ Ex_ty x in
       match b with
-      | Unit -> return unit
-      | Bool -> return bool
-      | Int -> return int
-      | Nat -> return nat
-      | String -> return string
-      | Bytes -> return bytes
+      | Base_unit -> return unit
+      | Base_bool -> return bool
+      | Base_int -> return int
+      | Base_nat -> return nat
+      | Base_string -> return string
+      | Base_bytes -> return bytes
 
 
     let rec type_ : type_value -> ex_ty result =
       function
-      | `Base b -> base_type b
-      | `Pair (t, t') -> (
+      | T_base b -> base_type b
+      | T_pair (t, t') -> (
           type_ t >>? fun (Ex_ty t) ->
           type_ t' >>? fun (Ex_ty t') ->
           ok @@ Ex_ty (Types.pair t t')
         )
-      | `Or (t, t') -> (
+      | T_or (t, t') -> (
           type_ t >>? fun (Ex_ty t) ->
           type_ t' >>? fun (Ex_ty t') ->
           ok @@ Ex_ty (Types.union t t')
         )
-      | `Function (arg, ret) ->
+      | T_function (arg, ret) ->
           let%bind (Ex_ty arg) = type_ arg in
           let%bind (Ex_ty ret) = type_ ret in
           ok @@ Ex_ty (Types.lambda arg ret)
-      | `Deep_closure (c, arg, ret) ->
+      | T_deep_closure (c, arg, ret) ->
           let%bind (Ex_ty capture) = environment_small c in
           let%bind (Ex_ty arg) = type_ arg in
           let%bind (Ex_ty ret) = type_ ret in
           ok @@ Ex_ty Types.(pair capture @@ lambda (pair capture arg) ret)
-      | `Shallow_closure (c, arg, ret) ->
+      | T_shallow_closure (c, arg, ret) ->
           let%bind (Ex_ty capture) = environment c in
           let%bind (Ex_ty arg) = type_ arg in
           let%bind (Ex_ty ret) = type_ ret in
           ok @@ Ex_ty Types.(pair capture @@ lambda (pair capture arg) ret)
-      | `Map (k, v) ->
+      | T_map (k, v) ->
           let%bind (Ex_comparable_ty k') = comparable_type k in
           let%bind (Ex_ty v') = type_ v in
           ok @@ Ex_ty Types.(map k' v')
-      | `Option t ->
+      | T_option t ->
           let%bind (Ex_ty t') = type_ t in
           ok @@ Ex_ty Types.(option t')
 
@@ -307,42 +306,42 @@ module Translate_type = struct
 
   let base_type : type_base -> michelson result =
     function
-    | Unit -> ok @@ prim T_unit
-    | Bool -> ok @@ prim T_bool
-    | Int -> ok @@ prim T_int
-    | Nat -> ok @@ prim T_nat
-    | String -> ok @@ prim T_string
-    | Bytes -> ok @@ prim T_bytes
+    | Base_unit -> ok @@ prim T_unit
+    | Base_bool -> ok @@ prim T_bool
+    | Base_int -> ok @@ prim T_int
+    | Base_nat -> ok @@ prim T_nat
+    | Base_string -> ok @@ prim T_string
+    | Base_bytes -> ok @@ prim T_bytes
 
   let rec type_ : type_value -> michelson result =
     function
-    | `Base b -> base_type b
-    | `Pair (t, t') -> (
+    | T_base b -> base_type b
+    | T_pair (t, t') -> (
         type_ t >>? fun t ->
         type_ t' >>? fun t' ->
         ok @@ prim ~children:[t;t'] T_pair
       )
-    | `Or (t, t') -> (
+    | T_or (t, t') -> (
         type_ t >>? fun t ->
         type_ t' >>? fun t' ->
         ok @@ prim ~children:[t;t'] T_or
       )
-    | `Map kv ->
+    | T_map kv ->
         let%bind (k', v') = bind_map_pair type_ kv in
         ok @@ prim ~children:[k';v'] T_map
-    | `Option o ->
+    | T_option o ->
         let%bind o' = type_ o in
         ok @@ prim ~children:[o'] T_option
-    | `Function (arg, ret) ->
+    | T_function (arg, ret) ->
       let%bind arg = type_ arg in
       let%bind ret = type_ ret in
       ok @@ prim ~children:[arg;ret] T_lambda
-    | `Deep_closure (c, arg, ret) ->
+    | T_deep_closure (c, arg, ret) ->
       let%bind capture = environment_small c in
       let%bind arg = type_ arg in
       let%bind ret = type_ ret in
       ok @@ t_pair capture (t_lambda (t_pair capture arg) ret)
-    | `Shallow_closure (c, arg, ret) ->
+    | T_shallow_closure (c, arg, ret) ->
       let%bind capture = environment c in
       let%bind arg = type_ arg in
       let%bind ret = type_ ret in
@@ -453,11 +452,11 @@ module Environment = struct
       | Full x -> to_michelson_append' x
 
     let rec to_mini_c_capture' env : _ -> expression result = function
-      | Leaf (n, tv) -> ok (Var n, tv, env)
+      | Leaf (n, tv) -> ok (E_variable n, tv, env)
       | Node {a;b} ->
         let%bind ((_, ty_a, _) as a) = to_mini_c_capture' env a in
         let%bind ((_, ty_b, _) as b) = to_mini_c_capture' env b in
-        ok (Predicate ("PAIR", [a;b]), `Pair(ty_a, ty_b), env)
+        ok (E_constant ("PAIR", [a;b]), T_pair(ty_a, ty_b), env)
 
     let to_mini_c_capture env = function
       | Empty -> simple_fail "to_mini_c_capture"
@@ -465,10 +464,10 @@ module Environment = struct
 
     let rec to_mini_c_type' = function
       | Leaf (_, t) -> t
-      | Node {a;b} -> `Pair(to_mini_c_type' a, to_mini_c_type' b)
+      | Node {a;b} -> T_pair(to_mini_c_type' a, to_mini_c_type' b)
 
-    let to_mini_c_type = function
-      | Empty -> `Base Unit
+    let to_mini_c_type : _ -> type_value = function
+      | Empty -> T_base Base_unit
       | Full x -> to_mini_c_type' x
   end
 
@@ -499,7 +498,7 @@ module Environment = struct
   let rec to_mini_c_type = function
     | [] -> raise (Failure "Schema.Big.to_mini_c_type")
     | [hd] -> Small.to_mini_c_type hd
-    | hd :: tl -> `Pair(Small.to_mini_c_type hd, to_mini_c_type tl)
+    | hd :: tl -> T_pair(Small.to_mini_c_type hd, to_mini_c_type tl)
   let to_mini_c_capture = function
     | [a] -> Small.to_mini_c_capture a
     | _ -> raise (Failure "Schema.Big.to_mini_c_capture")
@@ -664,25 +663,25 @@ module Translate_program = struct
     | x -> simple_fail @@ "predicate \"" ^ x ^ "\" doesn't exist"
 
   and translate_value (v:value) : michelson result = match v with
-    | `Bool b -> ok @@ prim (if b then D_True else D_False)
-    | `Int n -> ok @@ int (Z.of_int n)
-    | `Nat n -> ok @@ int (Z.of_int n)
-    | `String s -> ok @@ string s
-    | `Bytes s -> ok @@ bytes (Tezos_stdlib.MBytes.of_bytes s)
-    | `Unit -> ok @@ prim D_Unit
-    | `Pair (a, b) -> (
+    | D_bool b -> ok @@ prim (if b then D_True else D_False)
+    | D_int n -> ok @@ int (Z.of_int n)
+    | D_nat n -> ok @@ int (Z.of_int n)
+    | D_string s -> ok @@ string s
+    | D_bytes s -> ok @@ bytes (Tezos_stdlib.MBytes.of_bytes s)
+    | D_unit -> ok @@ prim D_Unit
+    | D_pair (a, b) -> (
         let%bind a = translate_value a in
         let%bind b = translate_value b in
         ok @@ prim ~children:[a;b] D_Pair
       )
-    | `Left a -> translate_value a >>? fun a -> ok @@ prim ~children:[a] D_Left
-    | `Right b -> translate_value b >>? fun b -> ok @@ prim ~children:[b] D_Right
-    | `Function anon -> translate_function anon
-    | `None -> ok @@ prim D_None
-    | `Some s ->
+    | D_left a -> translate_value a >>? fun a -> ok @@ prim ~children:[a] D_Left
+    | D_right b -> translate_value b >>? fun b -> ok @@ prim ~children:[b] D_Right
+    | D_function anon -> translate_function anon
+    | D_none -> ok @@ prim D_None
+    | D_some s ->
         let%bind s' = translate_value s in
         ok @@ prim ~children:[s'] D_Some
-    | `Map lst ->
+    | D_map lst ->
         let%bind lst' = bind_map_list (bind_map_pair translate_value) lst in
         let aux (a, b) = prim ~children:[a;b] D_Elt in
         ok @@ seq @@ List.map aux lst'
@@ -707,16 +706,16 @@ module Translate_program = struct
   and translate_expression ((expr', ty, env) as expr:expression) : michelson result =
     let error_message = Format.asprintf  "%a" PP.expression expr in
     let%bind (code : michelson) = trace (error "translating expression" error_message) @@ match expr' with
-      | Literal v ->
+      | E_literal v ->
         let%bind v = translate_value v in
         let%bind t = Translate_type.type_ ty in
         ok @@ seq [
           prim ~children:[t;v] I_PUSH ;
           prim I_PAIR ;
         ]
-      | Apply((_, f_ty, _) as f, arg) -> (
+      | E_application((_, f_ty, _) as f, arg) -> (
           match f_ty with
-          | `Function _ -> (
+          | T_function _ -> (
               let%bind f = translate_expression f in
               let%bind arg = translate_expression arg in
               ok @@ seq [
@@ -728,7 +727,7 @@ module Translate_program = struct
                 i_pair ;
               ]
             )
-          | `Deep_closure (small_env, _, _) -> (
+          | T_deep_closure (small_env, _, _) -> (
               let env' = Environment.of_small small_env in
               let%bind add = Environment.to_michelson_anonymous_add env' in
               let%bind f = translate_expression f in
@@ -741,7 +740,7 @@ module Translate_program = struct
                 i_pair ; (* expr :: env *)
               ]
             )
-          | `Shallow_closure (env', _, _) -> (
+          | T_shallow_closure (env', _, _) -> (
               let%bind add = Environment.to_michelson_anonymous_add env' in
               let%bind f = translate_expression f in
               let%bind arg = translate_expression arg in
@@ -753,15 +752,15 @@ module Translate_program = struct
                 i_pair ; (* expr :: env *)
               ]
             )
-          | _ -> simple_fail "Applying something not appliable"
+          | _ -> simple_fail "E_applicationing something not appliable"
         )
-      | Var x ->
+      | E_variable x ->
         let%bind (get, _) = Environment.to_michelson_get env x in
         ok @@ seq [
           dip (seq [prim I_DUP ; get]) ;
           i_piar ;
         ]
-      | Predicate(str, lst) ->
+      | E_constant(str, lst) ->
         let%bind lst = bind_list @@ List.map translate_expression lst in
         let%bind predicate = get_predicate str in
         let%bind code = match (predicate, List.length lst) with
@@ -772,23 +771,23 @@ module Translate_program = struct
           | _ -> simple_fail "bad arity"
         in
         ok code
-      | Empty_map sd ->
+      | E_empty_map sd ->
           let%bind (src, dst) = bind_map_pair Translate_type.type_ sd in
           let code = seq [
               prim ~children:[src;dst] I_EMPTY_MAP ;
               i_pair ;
             ] in
           ok code
-      | Make_None o ->
+      | E_make_none o ->
           let%bind o' = Translate_type.type_ o in
           let code = seq [
               prim ~children:[o'] I_NONE ;
               i_pair ;
             ] in
           ok code
-      | Function_expression anon -> (
+      | E_function anon -> (
           match ty with
-          | `Function (_, _) ->
+          | T_function (_, _) ->
               let%bind body = translate_function_body anon in
               let%bind input_type = Translate_type.type_ anon.input in
               let%bind output_type = Translate_type.type_ anon.output in
@@ -797,7 +796,7 @@ module Translate_program = struct
                   i_pair ;
                 ] in
               ok code
-          | `Deep_closure (small_env, _, _) ->
+          | T_deep_closure (small_env, _, _) ->
               (* Capture the variable bounds, assemble them. On call, append the input. *)
               let%bind body = translate_function_body anon in
               let%bind capture = Environment.Small.to_mini_c_capture env small_env in
@@ -812,7 +811,7 @@ module Translate_program = struct
                   i_pair ;
                 ] in
               ok code
-          | `Shallow_closure (_, _, _) ->
+          | T_shallow_closure (_, _, _) ->
               (* Capture the whole environment. *)
               let%bind body = translate_function_body anon in
               let%bind input_type = Translate_type.type_ anon.input in
@@ -979,7 +978,7 @@ module Translate_program = struct
 
   let translate_program (p:program) (entry:string) : compiled_program result =
     let is_main ((s, _):toplevel_statement) = match s with
-      | name , (Function_expression f, `Function (_, _), _) when f.capture_type = No_capture && name = entry -> Some f
+      | name , (E_function f, T_function (_, _), _) when f.capture_type = No_capture && name = entry -> Some f
       | _ -> None in
     let%bind main =
       trace_option (simple_error "no functional entry") @@
@@ -1006,35 +1005,35 @@ module Translate_ir = struct
     | Pair_t ((a_ty, _, _), (b_ty, _, _), _), (a, b) -> (
         let%bind a = translate_value @@ Ex_typed_value(a_ty, a) in
         let%bind b = translate_value @@ Ex_typed_value(b_ty, b) in
-        ok @@ `Pair(a, b)
+        ok @@ D_pair(a, b)
       )
     | Union_t ((a_ty, _), _, _), L a -> (
         let%bind a = translate_value @@ Ex_typed_value(a_ty, a) in
-        ok @@ `Left a
+        ok @@ D_left a
       )
     | Union_t (_, (b_ty, _), _), R b -> (
         let%bind b = translate_value @@ Ex_typed_value(b_ty, b) in
-        ok @@ `Right b
+        ok @@ D_right b
       )
     | (Int_t _), n ->
         let%bind n =
           trace_option (simple_error "too big to fit an int") @@
           Alpha_context.Script_int.to_int n in
-        ok @@ `Int n
+        ok @@ D_int n
     | (Nat_t _), n ->
         let%bind n =
           trace_option (simple_error "too big to fit an int") @@
           Alpha_context.Script_int.to_int n in
-        ok @@ `Nat n
+        ok @@ D_nat n
     | (Bool_t _), b ->
-        ok @@ `Bool b
+        ok @@ D_bool b
     | (Unit_t _), () ->
-        ok @@ `Unit
+        ok @@ D_unit
     | (Option_t _), None ->
-        ok @@ `None
+        ok @@ D_none
     | (Option_t ((o_ty, _), _, _)), Some s ->
         let%bind s' = translate_value @@ Ex_typed_value (o_ty, s) in
-        ok @@ `Some s'
+        ok @@ D_some s'
     | (Map_t (k_cty, v_ty, _)), m ->
         let k_ty = Script_ir_translator.ty_of_comparable_ty k_cty in
         let lst =
@@ -1049,7 +1048,7 @@ module Translate_ir = struct
           in
           bind_map_list aux lst
         in
-        ok @@ `Map lst'
+        ok @@ D_map lst'
     | _ -> simple_fail "this value can't be transpiled back yet"
 end
 
@@ -1103,7 +1102,7 @@ module Run = struct
 
   let expression_to_value ((e', _, _) as e:expression) : value result =
     match e' with
-    | Literal v -> ok v
+    | E_literal v -> ok v
     | _ -> fail
         @@ error "not a value"
         @@ Format.asprintf "%a" PP.expression e
@@ -1114,61 +1113,61 @@ end
 module Combinators = struct
 
   let get_bool (v:value) = match v with
-    | `Bool b -> ok b
+    | D_bool b -> ok b
     | _ -> simple_fail "not a bool"
 
   let get_int (v:value) = match v with
-    | `Int n -> ok n
+    | D_int n -> ok n
     | _ -> simple_fail "not an int"
 
   let get_string (v:value) = match v with
-    | `String s -> ok s
+    | D_string s -> ok s
     | _ -> simple_fail "not a string"
 
   let get_bytes (v:value) = match v with
-    | `Bytes b -> ok b
+    | D_bytes b -> ok b
     | _ -> simple_fail "not a bytes"
 
   let get_unit (v:value) = match v with
-    | `Unit -> ok ()
+    | D_unit -> ok ()
     | _ -> simple_fail "not a unit"
 
   let get_option (v:value) = match v with
-    | `None -> ok None
-    | `Some s -> ok (Some s)
+    | D_none -> ok None
+    | D_some s -> ok (Some s)
     | _ -> simple_fail "not an option"
 
   let get_map (v:value) = match v with
-    | `Map lst -> ok lst
+    | D_map lst -> ok lst
     | _ -> simple_fail "not a map"
 
   let get_t_option (v:type_value) = match v with
-    | `Option t -> ok t
+    | T_option t -> ok t
     | _ -> simple_fail "not an option"
 
   let get_pair (v:value) = match v with
-    | `Pair (a, b) -> ok (a, b)
+    | D_pair (a, b) -> ok (a, b)
     | _ -> simple_fail "not a pair"
 
   let get_t_pair (t:type_value) = match t with
-    | `Pair (a, b) -> ok (a, b)
+    | T_pair (a, b) -> ok (a, b)
     | _ -> simple_fail "not a type pair"
 
   let get_t_map (t:type_value) = match t with
-    | `Map kv -> ok kv
+    | T_map kv -> ok kv
     | _ -> simple_fail "not a type map"
 
   let get_left (v:value) = match v with
-    | `Left b -> ok b
+    | D_left b -> ok b
     | _ -> simple_fail "not a left"
 
   let get_right (v:value) = match v with
-    | `Right b -> ok b
+    | D_right b -> ok b
     | _ -> simple_fail "not a right"
 
   let get_or (v:value) = match v with
-    | `Left b -> ok (false, b)
-    | `Right b -> ok (true, b)
+    | D_left b -> ok (false, b)
+    | D_right b -> ok (true, b)
     | _ -> simple_fail "not a left/right"
 
   let get_last_statement ((b', _):block) : statement result =
@@ -1177,7 +1176,7 @@ module Combinators = struct
       | lst -> ok List.(nth lst (length lst - 1)) in
     aux b'
 
-  let t_int : type_value = `Base Int
+  let t_int : type_value = T_base Base_int
 
   let quote binder input output body result : anon_function =
     let content : anon_function_content = {
@@ -1188,7 +1187,7 @@ module Combinators = struct
 
   let basic_quote i o b : anon_function result =
     let%bind (_, e) = get_last_statement b in
-    let r : expression = (Var "output", o, e.post_environment) in
+    let r : expression = (E_variable "output", o, e.post_environment) in
     ok @@ quote "input" i o b r
 
   let basic_int_quote b : anon_function result =
@@ -1199,9 +1198,9 @@ module Combinators = struct
     Environment.add ("input", t_int) e
 
   let expr_int expr env : expression = (expr, t_int, env)
-  let var_int name env : expression = expr_int (Var name) env
+  let var_int name env : expression = expr_int (E_variable name) env
 
-  let d_unit : value = `Unit
+  let d_unit : value = D_unit
 
   let environment_wrap pre_environment post_environment = { pre_environment ; post_environment }
   let id_environment_wrap e = environment_wrap e e

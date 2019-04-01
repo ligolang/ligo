@@ -4,10 +4,10 @@ open Combinators
 open Test_helpers
 
 let run_entry_int (e:anon_function) (n:int) : int result =
-  let param : value = `Int n in
+  let param : value = D_int n in
   let%bind result = Run.run_entry e param in
   match result with
-  | `Int n -> ok n
+  | D_int n -> ok n
   | _ -> simple_fail "result is not an int"
 
 let identity () : unit result =
