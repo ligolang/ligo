@@ -13,18 +13,18 @@ let map_of_kv_list lst =
 
 let rec translate_type (t:AST.type_value) : type_value result =
   match t.type_value with
-  | Type_constant ("bool", []) -> ok (`Base Bool)
-  | Type_constant ("int", []) -> ok (`Base Int)
-  | Type_constant ("string", []) -> ok (`Base String)
-  | Type_constant ("unit", []) -> ok (`Base Unit)
-  | Type_constant ("map", [key;value]) ->
+  | T_constant ("bool", []) -> ok (`Base Bool)
+  | T_constant ("int", []) -> ok (`Base Int)
+  | T_constant ("string", []) -> ok (`Base String)
+  | T_constant ("unit", []) -> ok (`Base Unit)
+  | T_constant ("map", [key;value]) ->
       let%bind kv' = bind_map_pair translate_type (key, value) in
       ok (`Map kv')
-  | Type_constant ("option", [o]) ->
+  | T_constant ("option", [o]) ->
       let%bind o' = translate_type o in
       ok (`Option o')
-  | Type_constant (name, _) -> fail (error "unrecognized constant" name)
-  | Type_sum m ->
+  | T_constant (name, _) -> fail (error "unrecognized constant" name)
+  | T_sum m ->
       let node = Append_tree.of_list @@ list_of_map m in
       let aux a b : type_value result =
         let%bind a = a in
@@ -32,7 +32,7 @@ let rec translate_type (t:AST.type_value) : type_value result =
         ok (`Or (a, b))
       in
       Append_tree.fold_ne translate_type aux node
-  | Type_record m ->
+  | T_record m ->
       let node = Append_tree.of_list @@ list_of_map m in
       let aux a b : type_value result =
         let%bind a = a in
@@ -40,7 +40,7 @@ let rec translate_type (t:AST.type_value) : type_value result =
         ok (`Pair (a, b))
       in
       Append_tree.fold_ne translate_type aux node
-  | Type_tuple lst ->
+  | T_tuple lst ->
       let node = Append_tree.of_list lst in
       let aux a b : type_value result =
         let%bind a = a in
@@ -48,7 +48,7 @@ let rec translate_type (t:AST.type_value) : type_value result =
         ok (`Pair (a, b))
       in
       Append_tree.fold_ne translate_type aux node
-  | Type_function (param, result) ->
+  | T_function (param, result) ->
       let%bind param' = translate_type param in
       let%bind result' = translate_type result in
       ok (`Function (param', result'))
@@ -70,11 +70,11 @@ let rec translate_block env (b:AST.block) : block result =
 and translate_instruction (env:Environment.t) (i:AST.instruction) : statement option result =
   let return ?(env' = env) x : statement option result = ok (Some (x, environment_wrap env env')) in
   match i with
-  | Assignment {name;annotated_expression} ->
+  | I_assignment {name;annotated_expression} ->
       let%bind (_, t, _) as expression = translate_annotated_expression env annotated_expression in
       let env' = Environment.add (name, t) env in
       return ~env' (Assignment (name, expression))
-  | Matching_instr (expr, m) -> (
+  | I_matching (expr, m) -> (
       let%bind expr' = translate_annotated_expression env expr in
       let env' = Environment.extend env in
       match m with
@@ -93,30 +93,30 @@ and translate_instruction (env:Environment.t) (i:AST.instruction) : statement op
         )
       | _ -> simple_fail "todo : match"
     )
-  | Loop (expr, body) ->
+  | I_loop (expr, body) ->
       let%bind expr' = translate_annotated_expression env expr in
       let%bind body' = translate_block env body in
       return (While (expr', body'))
-  | Skip -> ok None
-  | Fail _ -> simple_fail "todo : fail"
+  | I_skip -> ok None
+  | I_fail _ -> simple_fail "todo : fail"
 
 and translate_annotated_expression (env:Environment.t) (ae:AST.annotated_expression) : expression result =
   let%bind tv = translate_type ae.type_annotation in
   let return (expr, tv) = ok (expr, tv, env) in
   let f = translate_annotated_expression env in
   match ae.expression with
-  | Literal (Bool b) -> ok (Literal (`Bool b), tv, env)
-  | Literal (Int n) -> ok (Literal (`Int n), tv, env)
-  | Literal (Nat n) -> ok (Literal (`Nat n), tv, env)
-  | Literal (Bytes s) -> ok (Literal (`Bytes s), tv, env)
-  | Literal (String s) -> ok (Literal (`String s), tv, env)
-  | Literal Unit -> ok (Literal `Unit, tv, env)
-  | Variable name -> ok (Var name, tv, env)
-  | Application (a, b) ->
+  | E_literal (Literal_bool b) -> ok (Literal (`Bool b), tv, env)
+  | E_literal (Literal_int n) -> ok (Literal (`Int n), tv, env)
+  | E_literal (Literal_nat n) -> ok (Literal (`Nat n), tv, env)
+  | E_literal (Literal_bytes s) -> ok (Literal (`Bytes s), tv, env)
+  | E_literal (Literal_string s) -> ok (Literal (`String s), tv, env)
+  | E_literal Literal_unit -> ok (Literal `Unit, tv, env)
+  | E_variable name -> ok (Var name, tv, env)
+  | E_application (a, b) ->
       let%bind a = translate_annotated_expression env a in
       let%bind b = translate_annotated_expression env b in
       ok (Apply (a, b), tv, env)
-  | Constructor (m, param) ->
+  | E_constructor (m, param) ->
       let%bind (param'_expr, param'_tv, _) = translate_annotated_expression env ae in
       let%bind map_tv = get_t_sum ae.type_annotation in
       let node_tv = Append_tree.of_list @@ kv_list_of_map map_tv in
@@ -146,7 +146,7 @@ and translate_annotated_expression (env:Environment.t) (ae:AST.annotated_express
             ae_opt in
         ok (ae, tv, env) in
       ok ae'
-  | Tuple lst ->
+  | E_tuple lst ->
       let node = Append_tree.of_list lst in
       let aux (a:expression result) (b:expression result) : expression result =
         let%bind (_, a_ty, _) as a = a in
@@ -154,7 +154,7 @@ and translate_annotated_expression (env:Environment.t) (ae:AST.annotated_express
         ok (Predicate ("PAIR", [a; b]), `Pair(a_ty, b_ty), env)
       in
       Append_tree.fold_ne (translate_annotated_expression env) aux node
-  | Tuple_accessor (tpl, ind) ->
+  | E_tuple_accessor (tpl, ind) ->
       let%bind tpl' = translate_annotated_expression env tpl in
       let%bind tpl_tv = get_t_tuple tpl.type_annotation in
       let node_tv = Append_tree.of_list @@ List.mapi (fun i a -> (i, a)) tpl_tv in
@@ -178,7 +178,7 @@ and translate_annotated_expression (env:Environment.t) (ae:AST.annotated_express
         trace_strong (simple_error "bad index in tuple (shouldn't happen here)") @@
         Append_tree.fold_ne leaf node node_tv in
       ok expr
-  | Record m ->
+  | E_record m ->
       let node = Append_tree.of_list @@ list_of_map m in
       let aux a b : expression result =
         let%bind (_, a_ty, _) as a = a in
@@ -186,7 +186,7 @@ and translate_annotated_expression (env:Environment.t) (ae:AST.annotated_express
         ok (Predicate ("PAIR", [a; b]), `Pair(a_ty, b_ty), env)
       in
       Append_tree.fold_ne (translate_annotated_expression env) aux node
-  | Record_accessor (record, property) ->
+  | E_record_accessor (record, property) ->
       let%bind translation = translate_annotated_expression env record in
       let%bind record_type_map =
         trace (simple_error (Format.asprintf "Accessing field of %a, that has type %a, which isn't a record" AST.PP.annotated_expression record AST.PP.type_value record.type_annotation)) @@
@@ -212,7 +212,7 @@ and translate_annotated_expression (env:Environment.t) (ae:AST.annotated_express
         trace_strong (simple_error "bad key in record (shouldn't happen here)") @@
         Append_tree.fold_ne leaf node node_tv in
       ok expr
-  | Constant (name, lst) ->
+  | E_constant (name, lst) ->
       let%bind lst' = bind_list @@ List.map (translate_annotated_expression env) lst in (
         match name, lst with
         | "NONE", [] ->
@@ -220,8 +220,8 @@ and translate_annotated_expression (env:Environment.t) (ae:AST.annotated_express
             ok (Make_None o, tv, env)
         | _ -> ok (Predicate (name, lst'), tv, env)
       )
-  | Lambda l -> translate_lambda env l tv
-  | Map m ->
+  | E_lambda l -> translate_lambda env l tv
+  | E_map m ->
       let%bind (src, dst) = Mini_c.Combinators.get_t_map tv in
       let aux : expression result -> (AST.ae * AST.ae) -> expression result = fun prev (k, v) ->
         let%bind prev' = prev in
@@ -232,10 +232,10 @@ and translate_annotated_expression (env:Environment.t) (ae:AST.annotated_express
       in
       let init = return (Empty_map (src, dst), tv) in
       List.fold_left aux init m
-  | LookUp dsi ->
+  | E_look_up dsi ->
       let%bind (ds', i') = bind_map_pair f dsi in
       return (Predicate ("GET", [i' ; ds']), tv)
-  | Matching_expr (expr, m) -> (
+  | E_matching (expr, m) -> (
       let%bind expr' = translate_annotated_expression env expr in
       match m with
       | AST.Match_bool {match_true ; match_false} ->
@@ -281,7 +281,7 @@ and translate_lambda env l tv =
 
 let translate_declaration env (d:AST.declaration) : toplevel_statement result =
   match d with
-  | Constant_declaration {name;annotated_expression} ->
+  | Declaration_constant {name;annotated_expression} ->
       let%bind ((_, tv, _) as expression) = translate_annotated_expression env annotated_expression in
       let env' = Environment.add (name, tv) env in
       ok @@ ((name, expression), environment_wrap env env')
@@ -311,7 +311,7 @@ let functionalize (e:AST.annotated_expression) : AST.lambda * AST.type_value =
     input_type = Combinators.make_t_unit ;
     output_type = t ;
     result = e ;
-    body = [Skip]
+    body = [I_skip]
   }, Combinators.(make_t_function make_t_unit t)
 
 let translate_entry (lst:AST.program) (name:string) : anon_function result =
@@ -319,16 +319,16 @@ let translate_entry (lst:AST.program) (name:string) : anon_function result =
     match lst with
     | [] -> None
     | hd :: tl -> (
-        let AST.Constant_declaration an = hd in
+        let AST.Declaration_constant an = hd in
         if an.name = name
         then (
           match an.annotated_expression.expression with
-          | Lambda l -> Some (acc, l, an.annotated_expression.type_annotation)
+          | E_lambda l -> Some (acc, l, an.annotated_expression.type_annotation)
           | _ ->
               let (a, b) = functionalize an.annotated_expression in
               Some (acc, a, b)
         ) else (
-          aux ((AST.Assignment an) :: acc) tl
+          aux ((AST.I_assignment an) :: acc) tl
         )
       )
   in
@@ -396,26 +396,26 @@ let rec untranspile (v : value) (t : AST.type_value) : AST.annotated_expression 
   let open! AST in
   let return e = ok AST.(annotated_expression e t) in
   match t.type_value with
-  | Type_constant ("unit", []) ->
+  | T_constant ("unit", []) ->
       let%bind () = get_unit v in
-      return (Literal Unit)
-  | Type_constant ("bool", []) ->
+      return (E_literal Literal_unit)
+  | T_constant ("bool", []) ->
       let%bind b = get_bool v in
-      return (Literal (Bool b))
-  | Type_constant ("int", []) ->
+      return (E_literal (Literal_bool b))
+  | T_constant ("int", []) ->
       let%bind n = get_int v in
-      return (Literal (Int n))
-  | Type_constant ("string", []) ->
+      return (E_literal (Literal_int n))
+  | T_constant ("string", []) ->
       let%bind n = get_string v in
-      return (Literal (String n))
-  | Type_constant ("option", [o]) -> (
+      return (E_literal (Literal_string n))
+  | T_constant ("option", [o]) -> (
       match%bind get_option v with
       | None -> ok (a_none o)
       | Some s ->
           let%bind s' = untranspile s o in
           ok (a_some s')
     )
-  | Type_constant ("map", [k_ty;v_ty]) -> (
+  | T_constant ("map", [k_ty;v_ty]) -> (
       let%bind lst = get_map v in
       let%bind lst' =
         let aux = fun (k, v) ->
@@ -423,11 +423,11 @@ let rec untranspile (v : value) (t : AST.type_value) : AST.annotated_expression 
           let%bind v' = untranspile v v_ty in
           ok (k', v') in
         bind_map_list aux lst in
-      return (Map lst')
+      return (E_map lst')
     )
-  | Type_constant _ ->
+  | T_constant _ ->
       simple_fail "unknown type_constant"
-  | Type_sum m ->
+  | T_sum m ->
       let lst = kv_list_of_map m in
       let%bind node = match Append_tree.of_list lst with
         | Empty -> simple_fail "empty sum type"
@@ -435,16 +435,16 @@ let rec untranspile (v : value) (t : AST.type_value) : AST.annotated_expression 
       in
       let%bind (name, v, tv) = extract_constructor v node in
       let%bind sub = untranspile v tv in
-      return (Constructor (name, sub))
-  | Type_tuple lst ->
+      return (E_constructor (name, sub))
+  | T_tuple lst ->
       let%bind node = match Append_tree.of_list lst with
         | Empty -> simple_fail "empty tuple"
         | Full t -> ok t in
       let%bind tpl = extract_tuple v node in
       let%bind tpl' = bind_list
         @@ List.map (fun (x, y) -> untranspile x y) tpl in
-      return (Tuple tpl')
-  | Type_record m ->
+      return (E_tuple tpl')
+  | T_record m ->
       let lst = kv_list_of_map m in
       let%bind node = match Append_tree.of_list lst with
         | Empty -> simple_fail "empty record"
@@ -453,5 +453,5 @@ let rec untranspile (v : value) (t : AST.type_value) : AST.annotated_expression 
       let%bind lst = bind_list
         @@ List.map (fun (x, (y, z)) -> let%bind yz = untranspile y z in ok (x, yz)) lst in
       let m' = map_of_kv_list lst in
-      return (Record m')
-  | Type_function _ -> simple_fail "no untranspilation for functions yet"
+      return (E_record m')
+  | T_function _ -> simple_fail "no untranspilation for functions yet"
