@@ -339,7 +339,7 @@ let rec assert_value_eq (a, b: (value*value)) : unit result = match (a.expressio
 
   | E_constant (ca, lsta), E_constant (cb, lstb) when ca = cb -> (
       let%bind lst =
-        generic_try (simple_error "constants with different numbers of elements")
+        generic_try (simple_error "constants with different number of elements")
           (fun () -> List.combine lsta lstb) in
       let%bind _all = bind_list @@ List.map assert_value_eq lst in
       ok ()
@@ -360,7 +360,7 @@ let rec assert_value_eq (a, b: (value*value)) : unit result = match (a.expressio
 
   | E_tuple lsta, E_tuple lstb -> (
       let%bind lst =
-        generic_try (simple_error "tuples with different numbers of elements")
+        generic_try (simple_error "tuples with different number of elements")
           (fun () -> List.combine lsta lstb) in
       let%bind _all = bind_list @@ List.map assert_value_eq lst in
       ok ()
