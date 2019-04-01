@@ -338,7 +338,7 @@ and instruction =
 
 and single_instr =
   Cond        of conditional reg
-| Case_instr  of case_instr reg
+| CaseInstr   of instruction case reg
 | Assign      of assignment reg
 | Loop        of loop
 | ProcCall    of fun_call
@@ -418,38 +418,19 @@ and set_membership = {
   element      : expr
 }
 
-and case_instr = {
-  kwd_case  : kwd_case;
-  expr      : expr;
-  kwd_of    : kwd_of;
-  lead_vbar : vbar option;
-  cases_instr : cases_instr;
-  kwd_end   : kwd_end
+and 'a case = {
+  kwd_case   : kwd_case;
+  expr       : expr;
+  kwd_of     : kwd_of;
+  lead_vbar  : vbar option;
+  cases      : ('a case_clause reg, vbar) nsepseq reg;
+  kwd_end    : kwd_end
 }
 
-and cases_instr = (case_clause_instr reg, vbar) nsepseq reg
-
-and case_clause_instr = {
+and 'a case_clause = {
   pattern : pattern;
   arrow   : arrow;
-  instr   : instruction
-}
-
-and case_expr = {
-  kwd_case  : kwd_case;
-  expr      : expr;
-  kwd_of    : kwd_of;
-  lead_vbar : vbar option;
-  cases_expr: cases_expr;
-  kwd_end   : kwd_end
-}
-
-and cases_expr = (case_clause_expr reg, vbar) nsepseq reg
-
-and case_clause_expr = {
-  pattern : pattern;
-  arrow   : arrow;
-  expr    : expr;
+  rhs     : 'a
 }
 
 and assignment = {
@@ -508,7 +489,7 @@ and for_collect = {
 (* Expressions *)
 
 and expr =
-| ECase   of case_expr reg
+| ECase   of expr case reg
 | ELogic  of logic_expr
 | EArith  of arith_expr
 | EString of string_expr
@@ -773,7 +754,7 @@ let path_to_region = function
 
 let instr_to_region = function
   Single Cond                {region; _}
-| Single Case_instr          {region; _}
+| Single CaseInstr           {region; _}
 | Single Assign              {region; _}
 | Single Loop While          {region; _}
 | Single Loop For ForInt     {region; _}
@@ -1092,7 +1073,7 @@ and print_instruction = function
 
 and print_single_instr = function
   Cond        {value; _} -> print_conditional value
-| Case_instr  {value; _} -> print_case_instr value
+| CaseInstr   {value; _} -> print_case_instr value
 | Assign      assign     -> print_assignment assign
 | Loop        loop       -> print_loop loop
 | ProcCall    fun_call   -> print_fun_call fun_call
@@ -1129,14 +1110,14 @@ and print_if_clause = function
     print_terminator terminator;
     print_token rbrace "}"
 
-and print_case_instr (node : case_instr) =
+and print_case_instr (node : instruction case) =
   let {kwd_case; expr; kwd_of;
-       lead_vbar; cases_instr; kwd_end} = node in
+       lead_vbar; cases; kwd_end} = node in
   print_token kwd_case "case";
   print_expr  expr;
   print_token kwd_of "of";
   print_token_opt lead_vbar "|";
-  print_cases_instr cases_instr;
+  print_cases_instr cases;
   print_token kwd_end "end"
 
 and print_token_opt = function
@@ -1147,10 +1128,10 @@ and print_cases_instr {value; _} =
   print_nsepseq "|" print_case_clause_instr value
 
 and print_case_clause_instr {value; _} =
-  let {pattern; arrow; instr} = value in
+  let {pattern; arrow; rhs} = value in
   print_pattern pattern;
   print_token arrow "->";
-  print_instruction instr
+  print_instruction rhs
 
 and print_assignment {value; _} =
   let {lhs; assign; rhs} = value in
@@ -1240,24 +1221,24 @@ and print_expr = function
 | ETuple  e -> print_tuple_expr e
 | EPar    e -> print_par_expr e
 
-and print_case_expr (node : case_expr) =
+and print_case_expr (node : expr case) =
   let {kwd_case; expr; kwd_of;
-       lead_vbar; cases_expr; kwd_end} = node in
+       lead_vbar; cases; kwd_end} = node in
   print_token kwd_case "case";
   print_expr  expr;
   print_token kwd_of "of";
   print_token_opt lead_vbar "|";
-  print_cases_expr cases_expr;
+  print_cases_expr cases;
   print_token kwd_end "end"
 
 and print_cases_expr {value; _} =
   print_nsepseq "|" print_case_clause_expr value
 
 and print_case_clause_expr {value; _} =
-  let {pattern; arrow; expr} = value in
+  let {pattern; arrow; rhs} = value in
   print_pattern pattern;
   print_token arrow "->";
-  print_expr expr
+  print_expr rhs
 
 and print_map_expr = function
   MapLookUp {value; _} -> print_map_lookup value

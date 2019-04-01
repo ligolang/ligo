@@ -21,9 +21,9 @@ open AST
 
 (* RULES *)
 
-(* The rule [series(Item,TERM)] parses a list of [Item] separated by
-   semicolons and optionally terminated by a semicolon, then the
-   terminal TERM. *)
+(* The rule [series(Item,TERM)] parses a non-empty list of [Item]
+   separated by semicolons and optionally terminated by a semicolon,
+   then the terminal TERM. *)
 
 series(Item,TERM):
   Item after_item(Item,TERM) { $1,$2 }
@@ -492,7 +492,7 @@ instruction:
 
 single_instr:
   conditional  {        Cond $1 }
-| case_instr   {        Case_instr $1 }
+| case_instr   {   CaseInstr $1 }
 | assignment   {      Assign $1 }
 | loop         {        Loop $1 }
 | proc_call    {    ProcCall $1 }
@@ -683,14 +683,21 @@ if_clause:
 case_instr:
   Case expr Of option(VBAR) cases_instr End {
     let region = cover $1 $6 in
-    let value = {
+    let value  = {
       kwd_case  = $1;
       expr      = $2;
       kwd_of    = $3;
       lead_vbar = $4;
-      cases_instr = $5;
+      cases     = $5;
       kwd_end   = $6}
     in {region; value}}
+(*| Case expr LBRACKET option(VBAR) case_instr RBRACKET {
+    let region = cover $1 $6 in
+    let value  = {
+      k
+      }
+  }
+ *)
 
 cases_instr:
   nsepseq(case_clause_instr,VBAR) {
@@ -699,8 +706,9 @@ cases_instr:
 
 case_clause_instr:
   pattern ARROW instruction {
-    let region = cover (pattern_to_region $1) (instr_to_region $3)
-    and value  = {pattern = $1; arrow = $2; instr = $3}
+    let start  = pattern_to_region $1 in
+    let region = cover start (instr_to_region $3)
+    and value  = {pattern=$1; arrow=$2; rhs=$3}
     in {region; value}}
 
 assignment:
@@ -779,12 +787,12 @@ expr:
 case_expr:
   Case expr Of option(VBAR) cases_expr End {
     let region = cover $1 $6 in
-    let value = {
+    let value : expr case = {
       kwd_case  = $1;
       expr      = $2;
       kwd_of    = $3;
       lead_vbar = $4;
-      cases_expr = $5;
+      cases     = $5;
       kwd_end   = $6}
     in ECase {region; value}}
 
@@ -795,8 +803,9 @@ cases_expr:
 
 case_clause_expr:
   pattern ARROW expr {
-    let region = cover (pattern_to_region $1) (expr_to_region $3)
-    and value  = {pattern = $1; arrow = $2; expr = $3}
+    let start  = pattern_to_region $1 in
+    let region = cover start (expr_to_region $3)
+    and value  = {pattern=$1; arrow=$2; rhs=$3}
     in {region; value}}
 
 disj_expr:

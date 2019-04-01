@@ -163,13 +163,13 @@ let rec simpl_expression (t:Raw.expr) : ae result =
   | ECase c ->
       let%bind e = simpl_expression c.value.expr in
       let%bind lst =
-        let aux (x:Raw.case_clause_expr) =
-          let%bind expr = simpl_expression x.expr in
+        let aux (x : Raw.expr Raw.case_clause) =
+          let%bind expr = simpl_expression x.rhs in
           ok (x.pattern, expr) in
         bind_list
         @@ List.map aux
         @@ List.map get_value
-        @@ npseq_to_list c.value.cases_expr.value in
+        @@ npseq_to_list c.value.cases.value in
       let%bind cases = simpl_cases lst in
       ok @@ ae @@ E_matching (e, cases)
   | EMap (MapInj mi) ->
@@ -393,16 +393,16 @@ and simpl_single_instruction : Raw.single_instr -> instruction result = fun t ->
         | _ -> simple_fail "no weird assignments yet"
       in
       ok @@ I_assignment {name ; annotated_expression}
-  | Case_instr c ->
+  | CaseInstr c ->
       let c = c.value in
       let%bind expr = simpl_expression c.expr in
       let%bind cases =
-        let aux (x : Raw.case_clause_instr Raw.reg) =
-          let%bind i = simpl_instruction_block x.value.instr in
+        let aux (x : Raw.instruction Raw.case_clause Raw.reg) =
+          let%bind i = simpl_instruction_block x.value.rhs in
           ok (x.value.pattern, i) in
         bind_list
         @@ List.map aux
-        @@ npseq_to_list c.cases_instr.value in
+        @@ npseq_to_list c.cases.value in
       let%bind m = simpl_cases cases in
       ok @@ I_matching (expr, m)
   | RecordPatch r ->

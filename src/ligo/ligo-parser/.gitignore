@@ -6,3 +6,7 @@ _build/*
 *.install
 /Version.ml
 /dune-project
+/Parser.mli
+/Parser.ml
+/Lexer.ml
+/LexToken.ml
