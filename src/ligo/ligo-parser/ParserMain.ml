@@ -40,7 +40,7 @@ let prefix =
     None | Some "-" -> "temp"
   | Some file ->  Filename.(file |> basename |> remove_extension)
 
-let suffix = ".pp.li"
+let suffix = ".pp.ligo"
 
 let pp_input =
   if Utils.String.Set.mem "cpp" EvalOpt.verbose
