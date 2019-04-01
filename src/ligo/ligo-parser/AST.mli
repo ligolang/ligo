@@ -405,10 +405,10 @@ and set_membership = {
 and 'a case = {
   kwd_case  : kwd_case;
   expr      : expr;
-  kwd_of    : kwd_of;
+  opening   : opening;
   lead_vbar : vbar option;
   cases     : ('a case_clause reg, vbar) nsepseq reg;
-  kwd_end   : kwd_end
+  closing   : closing
 }
 
 and 'a case_clause = {

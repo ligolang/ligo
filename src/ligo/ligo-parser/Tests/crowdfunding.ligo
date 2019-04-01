@@ -17,11 +17,11 @@ entrypoint contribute (storage store : store;
     if now > store.deadline then
       fail "Deadline passed";
     else
-      case store.backers[sender] of
+      case store.backers[sender] of [
         None -> store.backers[sender] := Some (amount)
 //        None -> patch store.backers with map sender -> amount end
       |    _ -> skip
-      end
+      ]
   } with (store, operations)
 
 entrypoint withdraw (storage store : store; const sender : address)

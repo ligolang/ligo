@@ -419,12 +419,12 @@ and set_membership = {
 }
 
 and 'a case = {
-  kwd_case   : kwd_case;
-  expr       : expr;
-  kwd_of     : kwd_of;
-  lead_vbar  : vbar option;
-  cases      : ('a case_clause reg, vbar) nsepseq reg;
-  kwd_end    : kwd_end
+  kwd_case  : kwd_case;
+  expr      : expr;
+  opening   : opening;
+  lead_vbar : vbar option;
+  cases     : ('a case_clause reg, vbar) nsepseq reg;
+  closing   : closing
 }
 
 and 'a case_clause = {
@@ -1111,14 +1111,14 @@ and print_if_clause = function
     print_token rbrace "}"
 
 and print_case_instr (node : instruction case) =
-  let {kwd_case; expr; kwd_of;
-       lead_vbar; cases; kwd_end} = node in
+  let {kwd_case; expr; opening;
+       lead_vbar; cases; closing} = node in
   print_token kwd_case "case";
   print_expr  expr;
-  print_token kwd_of "of";
+  print_opening "of" opening;
   print_token_opt lead_vbar "|";
   print_cases_instr cases;
-  print_token kwd_end "end"
+  print_closing closing
 
 and print_token_opt = function
          None -> fun _ -> ()
@@ -1222,14 +1222,14 @@ and print_expr = function
 | EPar    e -> print_par_expr e
 
 and print_case_expr (node : expr case) =
-  let {kwd_case; expr; kwd_of;
-       lead_vbar; cases; kwd_end} = node in
+  let {kwd_case; expr; opening;
+       lead_vbar; cases; closing} = node in
   print_token kwd_case "case";
   print_expr  expr;
-  print_token kwd_of "of";
+  print_opening "of" opening;
   print_token_opt lead_vbar "|";
   print_cases_expr cases;
-  print_token kwd_end "end"
+  print_closing closing
 
 and print_cases_expr {value; _} =
   print_nsepseq "|" print_case_clause_expr value

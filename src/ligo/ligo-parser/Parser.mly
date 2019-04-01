@@ -686,18 +686,22 @@ case_instr:
     let value  = {
       kwd_case  = $1;
       expr      = $2;
-      kwd_of    = $3;
+      opening   = Kwd $3;
       lead_vbar = $4;
       cases     = $5;
-      kwd_end   = $6}
-    in {region; value}}
-(*| Case expr LBRACKET option(VBAR) case_instr RBRACKET {
-    let region = cover $1 $6 in
-    let value  = {
-      k
-      }
+      closing   = End $6}
+    in {region; value}
   }
- *)
+| Case expr Of LBRACKET option(VBAR) cases_instr RBRACKET {
+    let region = cover $1 $7 in
+    let value  = {
+      kwd_case  = $1;
+      expr      = $2;
+      opening   = KwdBracket ($3,$4);
+      lead_vbar = $5;
+      cases     = $6;
+      closing   = RBracket $7}
+    in {region; value}}
 
 cases_instr:
   nsepseq(case_clause_instr,VBAR) {
@@ -790,10 +794,20 @@ case_expr:
     let value : expr case = {
       kwd_case  = $1;
       expr      = $2;
-      kwd_of    = $3;
+      opening   = Kwd $3;
       lead_vbar = $4;
       cases     = $5;
-      kwd_end   = $6}
+      closing   = End $6}
+    in ECase {region; value}}
+| Case expr Of LBRACKET option(VBAR) cases_expr RBRACKET {
+    let region = cover $1 $7 in
+    let value  = {
+      kwd_case  = $1;
+      expr      = $2;
+      opening   = KwdBracket ($3,$4);
+      lead_vbar = $5;
+      cases     = $6;
+      closing   = RBracket $7}
     in ECase {region; value}}
 
 cases_expr:
