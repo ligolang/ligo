@@ -1197,8 +1197,8 @@ module Combinators = struct
     let e = Environment.empty in
     Environment.add ("input", t_int) e
 
-  let expr_int expr env : expression = (expr, t_int, env)
-  let var_int name env : expression = expr_int (E_variable name) env
+  let e_int expr env : expression = (expr, t_int, env)
+  let e_var_int name env : expression = e_int (E_variable name) env
 
   let d_unit : value = D_unit
 

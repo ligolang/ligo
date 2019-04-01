@@ -12,7 +12,7 @@ let run_entry_int (e:anon_function) (n:int) : int result =
 
 let identity () : unit result =
   let e = basic_int_quote_env in
-  let s = statement (Assignment ("output", var_int "input" e)) e in
+  let s = statement (Assignment ("output", e_var_int "input" e)) e in
   let%bind b = block [s] in
   let%bind f = basic_int_quote b in
   let%bind result = run_entry_int f 42 in
@@ -27,10 +27,10 @@ let multiple_vars () : unit result =
      Yes. One could do a monad. Feel free when we have the time.
    *)
   let ss = statements [
-      (fun e -> statement (Assignment ("a", var_int "input" e)) e) ;
-      (fun e -> statement (Assignment ("b", var_int "input" e)) e) ;
-      (fun e -> statement (Assignment ("c", var_int "a" e)) e) ;
-      (fun e -> statement (Assignment ("output", var_int "c" e)) e) ;
+      (fun e -> statement (Assignment ("a", e_var_int "input" e)) e) ;
+      (fun e -> statement (Assignment ("b", e_var_int "input" e)) e) ;
+      (fun e -> statement (Assignment ("c", e_var_int "a" e)) e) ;
+      (fun e -> statement (Assignment ("output", e_var_int "c" e)) e) ;
     ] e in
   let%bind b = block ss in
   let%bind f = basic_int_quote b in

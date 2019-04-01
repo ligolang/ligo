@@ -410,32 +410,25 @@ let merge_annotation (a:type_value option) (b:type_value option) : type_value re
       | _, Some _ -> ok b
 
 module Combinators = struct
-
   let t_bool s : type_value = type_value (T_constant ("bool", [])) s
-  let simplify_t_bool s = t_bool (Some s)
   let make_t_bool = t_bool None
 
   let t_string s : type_value = type_value (T_constant ("string", [])) s
-  let simplify_t_string s = t_string (Some s)
   let make_t_string = t_string None
 
   let t_bytes s : type_value = type_value (T_constant ("bytes", [])) s
-  let simplify_t_bytes s = t_bytes (Some s)
   let make_t_bytes = t_bytes None
 
   let t_int s : type_value = type_value (T_constant ("int", [])) s
-  let simplify_t_int s = t_int (Some s)
   let make_t_int = t_int None
 
   let t_unit s : type_value = type_value (T_constant ("unit", [])) s
-  let simplify_t_unit s = t_unit (Some s)
   let make_t_unit = t_unit None
 
   let t_option o s : type_value = type_value (T_constant ("option", [o])) s
   let make_t_option o = t_option o None
 
   let t_tuple lst s : type_value = type_value (T_tuple lst) s
-  let simplify_t_tuple lst s = t_tuple lst (Some s)
   let make_t_tuple lst = t_tuple lst None
   let make_t_pair a b = make_t_tuple [a ; b]
 
@@ -493,31 +486,31 @@ module Combinators = struct
     | T_constant ("map", [k;v]) -> ok (k, v)
     | _ -> simple_fail "not a map"
 
-  let record map : expression = E_record map
-  let record_ez (lst : (string * ae) list) : expression =
+  let e_record map : expression = E_record map
+  let ez_e_record (lst : (string * ae) list) : expression =
     let aux prev (k, v) = SMap.add k v prev in
     let map = List.fold_left aux SMap.empty lst in
-    record map
-  let some s : expression = E_constant ("SOME", [s])
-  let none : expression = E_constant ("NONE", [])
+    e_record map
+  let e_some s : expression = E_constant ("SOME", [s])
+  let e_none : expression = E_constant ("NONE", [])
 
-  let map lst : expression = E_map lst
+  let e_map lst : expression = E_map lst
 
-  let unit : expression = E_literal (Literal_unit)
-  let int n : expression = E_literal (Literal_int n)
-  let bool b : expression = E_literal (Literal_bool b)
-  let pair a b : expression = E_constant ("PAIR", [a; b])
+  let e_unit : expression = E_literal (Literal_unit)
+  let e_int n : expression = E_literal (Literal_int n)
+  let e_bool b : expression = E_literal (Literal_bool b)
+  let e_pair a b : expression = E_constant ("PAIR", [a; b])
 
-  let a_unit = annotated_expression unit make_t_unit
-  let a_int n = annotated_expression (int n) make_t_int
-  let a_bool b = annotated_expression (bool b) make_t_bool
-  let a_pair a b = annotated_expression (pair a b) (make_t_pair a.type_annotation b.type_annotation)
-  let a_some s = annotated_expression (some s) (make_t_option s.type_annotation)
-  let a_none t = annotated_expression none (make_t_option t)
-  let a_tuple lst = annotated_expression (E_tuple lst) (make_t_tuple (List.map get_type_annotation lst))
-  let a_record r = annotated_expression (record r) (make_t_record (SMap.map get_type_annotation r))
-  let a_record_ez r = annotated_expression (record_ez r) (make_t_record_ez (List.map (fun (x, y) -> x, y.type_annotation) r))
-  let a_map lst k v = annotated_expression (map lst) (make_t_map k v)
+  let e_a_unit = annotated_expression e_unit make_t_unit
+  let e_a_int n = annotated_expression (e_int n) make_t_int
+  let e_a_bool b = annotated_expression (e_bool b) make_t_bool
+  let e_a_pair a b = annotated_expression (e_pair a b) (make_t_pair a.type_annotation b.type_annotation)
+  let e_a_some s = annotated_expression (e_some s) (make_t_option s.type_annotation)
+  let e_a_none t = annotated_expression e_none (make_t_option t)
+  let e_a_tuple lst = annotated_expression (E_tuple lst) (make_t_tuple (List.map get_type_annotation lst))
+  let e_a_record r = annotated_expression (e_record r) (make_t_record (SMap.map get_type_annotation r))
+  let ez_e_a_record r = annotated_expression (ez_e_record r) (make_t_record_ez (List.map (fun (x, y) -> x, y.type_annotation) r))
+  let e_a_map lst k v = annotated_expression (e_map lst) (make_t_map k v)
 
   let get_a_int (t:annotated_expression) =
     match t.expression with

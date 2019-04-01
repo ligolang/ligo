@@ -8,7 +8,7 @@ module Simplified = Ligo.AST_Simplified
 
 let int () : unit result =
   let open Combinators in
-  let pre = ae @@ number 32 in
+  let pre = ae @@ e_number 32 in
   let open Typer in
   let e = Environment.empty in
   let%bind post = type_annotated_expression e pre in
@@ -32,20 +32,20 @@ module TestExpressions = struct
   module O = Typed.Combinators
   module E = Typer.Environment.Combinators
 
-  let unit   () : unit result = test_expression I.(unit ())    O.make_t_unit
-  let int    () : unit result = test_expression I.(number 32)  O.make_t_int
-  let bool   () : unit result = test_expression I.(bool true)  O.make_t_bool
-  let string () : unit result = test_expression I.(string "s") O.make_t_string
-  let bytes  () : unit result = test_expression I.(bytes "b")  O.make_t_bytes
+  let unit   () : unit result = test_expression I.(e_unit ())    O.make_t_unit
+  let int    () : unit result = test_expression I.(e_number 32)  O.make_t_int
+  let bool   () : unit result = test_expression I.(e_bool true)  O.make_t_bool
+  let string () : unit result = test_expression I.(e_string "s") O.make_t_string
+  let bytes  () : unit result = test_expression I.(e_bytes "b")  O.make_t_bytes
 
   let lambda () : unit result =
     test_expression
-      I.(lambda "x" t_int t_int (var "x") [])
+      I.(e_lambda "x" t_int t_int (e_var "x") [])
       O.(make_t_function make_t_int make_t_int)
 
   let tuple () : unit result =
     test_expression
-      I.(ez_tuple [number 32; string "foo"])
+      I.(ez_e_tuple [e_number 32; e_string "foo"])
       O.(make_t_tuple [make_t_int; make_t_string])
 
   let constructor () : unit result =
@@ -53,12 +53,12 @@ module TestExpressions = struct
       O.[("foo", make_t_int); ("bar", make_t_string)]
     in test_expression
       ~env:(E.env_sum_type variant_foo_bar)
-      I.(constructor "foo" (ae @@ number 32))
+      I.(e_constructor "foo" (ae @@ e_number 32))
       O.(make_t_ez_sum variant_foo_bar)
 
   let record () : unit result =
     test_expression
-      I.(ez_record        [("foo", number 32);  ("bar", string "foo")])
+      I.(ez_e_record        [("foo", e_number 32);  ("bar", e_string "foo")])
       O.(make_t_ez_record [("foo", make_t_int); ("bar", make_t_string)])
 
 end

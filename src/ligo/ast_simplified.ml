@@ -349,26 +349,26 @@ module Combinators = struct
     t_record m
 
   let t_sum m : type_expression = T_sum m
-  let make_t_ez_sum (lst:(string * type_expression) list) : type_expression =
+  let ez_t_sum (lst:(string * type_expression) list) : type_expression =
     let aux prev (k, v) = SMap.add k v prev in
     let map = List.fold_left aux SMap.empty lst in
     T_sum map
 
   let t_function param result : type_expression = T_function (param, result)
 
-  let annotated_expression ?type_annotation expression = {expression ; type_annotation}
+  let e_annotated_expression ?type_annotation expression = {expression ; type_annotation}
 
   let name (s : string) : name = s
 
-  let var (s : string) : expression = E_variable s
+  let e_var (s : string) : expression = E_variable s
 
-  let unit  () : expression = E_literal (Literal_unit)
-  let number n : expression = E_literal (Literal_number n)
-  let bool   b : expression = E_literal (Literal_bool b)
-  let string s : expression = E_literal (Literal_string s)
-  let bytes  b : expression = E_literal (Literal_bytes (Bytes.of_string b))
+  let e_unit  () : expression = E_literal (Literal_unit)
+  let e_number n : expression = E_literal (Literal_number n)
+  let e_bool   b : expression = E_literal (Literal_bool b)
+  let e_string s : expression = E_literal (Literal_string s)
+  let e_bytes  b : expression = E_literal (Literal_bytes (Bytes.of_string b))
 
-  let lambda (binder : string)
+  let e_lambda (binder : string)
              (input_type : type_expression)
              (output_type : type_expression)
              (result : expression)
@@ -382,19 +382,19 @@ module Combinators = struct
         body ;
       }
 
-  let tuple (lst : ae list) : expression = E_tuple lst
-  let ez_tuple (lst : expression list) : expression =
-    tuple (List.map (fun e -> ae e) lst)
+  let e_tuple (lst : ae list) : expression = E_tuple lst
+  let ez_e_tuple (lst : expression list) : expression =
+    e_tuple (List.map (fun e -> ae e) lst)
 
-  let constructor (s : string) (e : ae) : expression = E_constructor (name s, e)
+  let e_constructor (s : string) (e : ae) : expression = E_constructor (name s, e)
 
-  let record (lst : (string * ae) list) : expression =
+  let e_record (lst : (string * ae) list) : expression =
     let aux prev (k, v) = SMap.add k v prev in
     let map = List.fold_left aux SMap.empty lst in
     E_record map
 
-  let ez_record  (lst : (string * expression) list) : expression =
+  let ez_e_record  (lst : (string * expression) list) : expression =
     (* TODO: define a correct implementation of List.map
      * (an implementation that does not fail with stack overflow) *)
-    record (List.map (fun (s,e) -> (s, ae e)) lst)
+    e_record (List.map (fun (s,e) -> (s, ae e)) lst)
 end

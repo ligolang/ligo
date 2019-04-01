@@ -29,7 +29,7 @@ let complex_function () : unit result =
   let%bind program = type_file "./contracts/function-complex.ligo" in
   let aux n =
     let open AST_Typed.Combinators in
-    let input = a_int n in
+    let input = e_a_int n in
     let%bind result = easy_run_main_typed program input in
     let%bind result' =
       trace (simple_error "bad result") @@
@@ -46,7 +46,7 @@ let bool_expression () : unit result =
   let aux (name, f) =
     let aux b =
       let open AST_Typed.Combinators in
-      let input = a_bool b in
+      let input = e_a_bool b in
       let%bind result = easy_run_typed name program input in
       let%bind result' =
         trace (simple_error "bad result") @@
@@ -78,7 +78,7 @@ let unit_expression () : unit result =
 
 let record_ez_int names n =
   let open AST_Typed.Combinators in
-  a_record_ez @@ List.map (fun x -> x, a_int n) names
+  ez_e_a_record @@ List.map (fun x -> x, e_a_int n) names
 
 let multiple_parameters () : unit result  =
   let%bind program = type_file "./contracts/multiple-parameters.ligo" in
@@ -113,7 +113,7 @@ let record () : unit result  =
     let aux n =
       let input = record_ez_int ["foo";"bar"] n in
       let%bind result = easy_run_typed "projection" program input in
-      let expect = AST_Typed.Combinators.a_int (2 * n) in
+      let expect = AST_Typed.Combinators.e_a_int (2 * n) in
       AST_Typed.assert_value_eq (expect, result)
     in
     bind_list @@ List.map aux [0 ; -42 ; 144]
@@ -129,7 +129,7 @@ let tuple () : unit result  =
   let%bind program = type_file "./contracts/tuple.ligo" in
   let ez n =
     let open AST_Typed.Combinators in
-    a_tuple (List.map a_int n) in
+    e_a_tuple (List.map e_a_int n) in
   let%bind _foobar =
     trace (simple_error "foobar") (
       let%bind result = easy_evaluate_typed "fb" program in
@@ -141,7 +141,7 @@ let tuple () : unit result  =
       let aux n =
         let input = ez [n ; n] in
         let%bind result = easy_run_typed "projection" program input in
-        let expect = AST_Typed.Combinators.a_int (2 * n) in
+        let expect = AST_Typed.Combinators.e_a_int (2 * n) in
         AST_Typed.assert_value_eq (expect, result)
       in
       bind_list @@ List.map aux [0 ; -42 ; 144]
@@ -159,12 +159,12 @@ let option () : unit result =
   let open AST_Typed.Combinators in
   let%bind _some = trace (simple_error "some") @@
     let%bind result = easy_evaluate_typed "s" program in
-    let expect = a_some (a_int 42) in
+    let expect = e_a_some (e_a_int 42) in
     AST_Typed.assert_value_eq (expect, result)
   in
   let%bind _none = trace (simple_error "none") @@
     let%bind result = easy_evaluate_typed "n" program in
-    let expect = a_none make_t_int in
+    let expect = e_a_none make_t_int in
     AST_Typed.assert_value_eq (expect, result)
   in
   ok ()
@@ -173,14 +173,14 @@ let map () : unit result =
   let%bind program = type_file "./contracts/map.ligo" in
   let ez lst =
     let open AST_Typed.Combinators in
-    let lst' = List.map (fun (x, y) -> a_int x, a_int y) lst in
-    a_map lst' make_t_int make_t_int
+    let lst' = List.map (fun (x, y) -> e_a_int x, e_a_int y) lst in
+    e_a_map lst' make_t_int make_t_int
   in
   let%bind _get_force = trace (simple_error "get_force") @@
     let aux n =
       let input = ez [(23, n) ; (42, 4)] in
       let%bind result = easy_run_typed "gf" program input in
-      let expect = AST_Typed.Combinators.(a_int n) in
+      let expect = AST_Typed.Combinators.(e_a_int n) in
       AST_Typed.assert_value_eq (expect, result)
     in
     bind_map_list aux [0 ; 42 ; 51 ; 421 ; -3]
@@ -194,7 +194,7 @@ let map () : unit result =
     let aux n =
       let input = ez [(23, n) ; (42, 4)] in
       let%bind result = easy_run_typed "get" program input in
-      let expect = AST_Typed.Combinators.(a_some @@ a_int 4) in
+      let expect = AST_Typed.Combinators.(e_a_some @@ e_a_int 4) in
       AST_Typed.assert_value_eq (expect, result)
     in
     bind_map_list aux [0 ; 42 ; 51 ; 421 ; -3]
@@ -210,7 +210,7 @@ let condition () : unit result =
   let%bind program = type_file "./contracts/condition.ligo" in
   let aux n =
     let open AST_Typed.Combinators in
-    let input = a_int n in
+    let input = e_a_int n in
     let%bind result = easy_run_main_typed program input in
     let%bind result' =
       trace (simple_error "bad result") @@
@@ -227,7 +227,7 @@ let matching () : unit result =
   let%bind _bool =
     let aux n =
       let open AST_Typed.Combinators in
-      let input = a_int n in
+      let input = e_a_int n in
       let%bind result = easy_run_typed "match_bool" program input in
       let%bind result' =
         trace (simple_error "bad result") @@
@@ -242,7 +242,7 @@ let matching () : unit result =
   let%bind _expr_bool =
     let aux n =
       let open AST_Typed.Combinators in
-      let input = a_int n in
+      let input = e_a_int n in
       let%bind result = easy_run_typed "match_expr_bool" program input in
       let%bind result' =
         trace (simple_error "bad result") @@
@@ -258,8 +258,8 @@ let matching () : unit result =
     let aux n =
       let open AST_Typed.Combinators in
       let input = match n with
-        | Some s -> a_some (a_int s)
-        | None -> a_none (make_t_int)  in
+        | Some s -> e_a_some (e_a_int s)
+        | None -> e_a_none (make_t_int)  in
       let%bind result = easy_run_typed "match_option" program input in
       let%bind result' =
         trace (simple_error "bad result") @@
@@ -277,7 +277,7 @@ let declarations () : unit result =
   let%bind program = type_file "./contracts/declarations.ligo" in
   let aux n =
     let open AST_Typed.Combinators in
-    let input = a_int n in
+    let input = e_a_int n in
     let%bind result = easy_run_main_typed program input in
     let%bind result' =
       trace (simple_error "bad result") @@
@@ -293,7 +293,7 @@ let quote_declaration () : unit result =
   let%bind program = type_file "./contracts/quote-declaration.ligo" in
   let aux n =
     let open AST_Typed.Combinators in
-    let input = a_int n in
+    let input = e_a_int n in
     let%bind result = easy_run_main_typed program input in
     let%bind result' =
       trace (simple_error "bad result") @@
@@ -309,7 +309,7 @@ let quote_declarations () : unit result =
   let%bind program = type_file "./contracts/quote-declarations.ligo" in
   let aux n =
     let open AST_Typed.Combinators in
-    let input = a_int n in
+    let input = e_a_int n in
     let%bind result = easy_run_main_typed program input in
     let%bind result' =
       trace (simple_error "bad result") @@
