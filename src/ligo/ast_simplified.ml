@@ -9,8 +9,8 @@ type 'a type_name_map = 'a SMap.t
 type program = declaration list
 
 and declaration =
-  | Type_declaration of named_type_expression
-  | Constant_declaration of named_expression
+  | Declaration_type of named_type_expression
+  | Declaration_constant of named_expression
   (* | Macro_declaration of macro_declaration *)
 
 and annotated_expression = {
@@ -34,12 +34,12 @@ and te_map = type_expression type_name_map
 and ae_map = annotated_expression name_map
 
 and type_expression =
-  | Type_tuple of te list
-  | Type_sum of te_map
-  | Type_record of te_map
-  | Type_function of te * te
-  | Type_variable of type_name
-  | Type_constant of type_name * te list
+  | T_tuple of te list
+  | T_sum of te_map
+  | T_record of te_map
+  | T_function of te * te
+  | T_variable of type_name
+  | T_constant of type_name * te list
 
 and lambda = {
   binder: name ;
@@ -51,47 +51,47 @@ and lambda = {
 
 and expression =
   (* Base *)
-  | Literal of literal
-  | Constant of name * ae list (* For language constants, like (Cons hd tl) or (plus i j) *)
-  | Variable of name
-  | Lambda of lambda
-  | Application of ae * ae
-  (* Tuple *)
-  | Tuple of ae list
+  | E_literal of literal
+  | E_constant of name * ae list (* For language constants, like (Cons hd tl) or (plus i j) *)
+  | E_variable of name
+  | E_lambda of lambda
+  | E_application of ae * ae
+  (* E_Tuple *)
+  | E_tuple of ae list
   (* Sum *)
-  | Constructor of name * ae (* For user defined constructors *)
-  (* Record *)
-  | Record of ae_map
-  | Accessor of ae * access_path
+  | E_constructor of name * ae (* For user defined constructors *)
+  (* E_record *)
+  | E_record of ae_map
+  | E_accessor of ae * access_path
   (* Data Structures *)
-  | Map of (ae * ae) list
-  | LookUp of (ae * ae)
+  | E_map of (ae * ae) list
+  | E_look_up of (ae * ae)
   (* Matching *)
-  | Matching_expr of (ae * matching_expr)
+  | E_matching of (ae * matching_expr)
 
 and access =
-  | Tuple_access of int
-  | Record_access of string
+  | Access_tuple of int
+  | Access_record of string
 
 and access_path = access list
 
 and literal =
-  | Unit
-  | Bool of bool
-  | Number of int
-  | String of string
-  | Bytes of bytes
+  | Literal_unit
+  | Literal_bool of bool
+  | Literal_number of int
+  | Literal_string of string
+  | Literal_bytes of bytes
 
 and block = instruction list
 and b = block
 
 and instruction =
-  | Assignment of named_expression
-  | Matching_instr of ae * matching_instr
-  | Loop of ae * b
-  | Skip
-  | Fail of ae
-  | Record_patch of name * access_path * (string * ae) list
+  | I_assignment of named_expression
+  | I_matching of ae * matching_instr
+  | I_loop of ae * b
+  | I_skip
+  | I_fail of ae
+  | I_record_patch of name * access_path * (string * ae) list
 
 and 'a matching =
   | Match_bool of {
@@ -123,36 +123,36 @@ module PP = struct
   open Format
 
   let rec type_expression ppf (te:type_expression) = match te with
-    | Type_tuple lst -> fprintf ppf "tuple[%a]" (list_sep type_expression) lst
-    | Type_sum m -> fprintf ppf "sum[%a]" (smap_sep type_expression) m
-    | Type_record m -> fprintf ppf "record[%a]" (smap_sep type_expression) m
-    | Type_function (p, r) -> fprintf ppf "%a -> %a" type_expression p type_expression r
-    | Type_variable name -> fprintf ppf "%s" name
-    | Type_constant (name, lst) -> fprintf ppf "%s(%a)" name (list_sep type_expression) lst
+    | T_tuple lst -> fprintf ppf "tuple[%a]" (list_sep type_expression) lst
+    | T_sum m -> fprintf ppf "sum[%a]" (smap_sep type_expression) m
+    | T_record m -> fprintf ppf "record[%a]" (smap_sep type_expression) m
+    | T_function (p, r) -> fprintf ppf "%a -> %a" type_expression p type_expression r
+    | T_variable name -> fprintf ppf "%s" name
+    | T_constant (name, lst) -> fprintf ppf "%s(%a)" name (list_sep type_expression) lst
 
   let literal ppf (l:literal) = match l with
-    | Unit -> fprintf ppf "Unit"
-    | Bool b -> fprintf ppf "%b" b
-    | Number n -> fprintf ppf "%d" n
-    | String s -> fprintf ppf "%S" s
-    | Bytes b -> fprintf ppf "0x%s" @@ Bytes.to_string @@ Bytes.escaped b
+    | Literal_unit -> fprintf ppf "Unit"
+    | Literal_bool b -> fprintf ppf "%b" b
+    | Literal_number n -> fprintf ppf "%d" n
+    | Literal_string s -> fprintf ppf "%S" s
+    | Literal_bytes b -> fprintf ppf "0x%s" @@ Bytes.to_string @@ Bytes.escaped b
 
   let rec expression ppf (e:expression) = match e with
-    | Literal l -> literal ppf l
-    | Variable name -> fprintf ppf "%s" name
-    | Application (f, arg) -> fprintf ppf "(%a)@(%a)" annotated_expression f annotated_expression arg
-    | Constructor (name, ae) -> fprintf ppf "%s(%a)" name annotated_expression ae
-    | Constant (name, lst) -> fprintf ppf "%s(%a)" name (list_sep annotated_expression) lst
-    | Tuple lst -> fprintf ppf "tuple[%a]" (list_sep annotated_expression) lst
-    | Accessor (ae, p) -> fprintf ppf "%a.%a" annotated_expression ae access_path p
-    | Record m -> fprintf ppf "record[%a]" (smap_sep annotated_expression) m
-    | Map m -> fprintf ppf "map[%a]" (list_sep assoc_annotated_expression) m
-    | LookUp (ds, ind) -> fprintf ppf "(%a)[%a]" annotated_expression ds annotated_expression ind
-    | Lambda {binder;input_type;output_type;result;body} ->
+    | E_literal l -> literal ppf l
+    | E_variable name -> fprintf ppf "%s" name
+    | E_application (f, arg) -> fprintf ppf "(%a)@(%a)" annotated_expression f annotated_expression arg
+    | E_constructor (name, ae) -> fprintf ppf "%s(%a)" name annotated_expression ae
+    | E_constant (name, lst) -> fprintf ppf "%s(%a)" name (list_sep annotated_expression) lst
+    | E_tuple lst -> fprintf ppf "tuple[%a]" (list_sep annotated_expression) lst
+    | E_accessor (ae, p) -> fprintf ppf "%a.%a" annotated_expression ae access_path p
+    | E_record m -> fprintf ppf "record[%a]" (smap_sep annotated_expression) m
+    | E_map m -> fprintf ppf "map[%a]" (list_sep assoc_annotated_expression) m
+    | E_look_up (ds, ind) -> fprintf ppf "(%a)[%a]" annotated_expression ds annotated_expression ind
+    | E_lambda {binder;input_type;output_type;result;body} ->
         fprintf ppf "lambda (%s:%a) : %a {%a} return %a"
           binder type_expression input_type type_expression output_type
           block body annotated_expression result
-    | Matching_expr (ae, m) ->
+    | E_matching (ae, m) ->
         fprintf ppf "match %a with %a" annotated_expression ae (matching annotated_expression) m
 
   and assoc_annotated_expression ppf : (ae * ae) -> unit = fun (a, b) ->
@@ -160,8 +160,8 @@ module PP = struct
 
   and access ppf (a:access) =
     match a with
-    | Tuple_access n -> fprintf ppf "%d" n
-    | Record_access s -> fprintf ppf "%s" s
+    | Access_tuple n -> fprintf ppf "%d" n
+    | Access_record s -> fprintf ppf "%s" s
 
   and access_path ppf (p:access_path) =
     fprintf ppf "%a" (list_sep ~pp_sep:(const ".") access) p
@@ -191,19 +191,19 @@ module PP = struct
         fprintf ppf "| None -> %a @.| Some %s -> %a" f match_none some f match_some
 
   and instruction ppf (i:instruction) = match i with
-    | Skip -> fprintf ppf "skip"
-    | Fail ae -> fprintf ppf "fail with (%a)" annotated_expression ae
-    | Record_patch (name, path, lst) -> fprintf ppf "%s.%a[%a]" name access_path path (list_sep single_record_patch) lst
-    | Loop (cond, b) -> fprintf ppf "while (%a) { %a }" annotated_expression cond block b
-    | Assignment {name;annotated_expression = ae} ->
+    | I_skip -> fprintf ppf "skip"
+    | I_fail ae -> fprintf ppf "fail with (%a)" annotated_expression ae
+    | I_record_patch (name, path, lst) -> fprintf ppf "%s.%a[%a]" name access_path path (list_sep single_record_patch) lst
+    | I_loop (cond, b) -> fprintf ppf "while (%a) { %a }" annotated_expression cond block b
+    | I_assignment {name;annotated_expression = ae} ->
         fprintf ppf "%s := %a" name annotated_expression ae
-    | Matching_instr (ae, m) ->
+    | I_matching (ae, m) ->
         fprintf ppf "match %a with %a" annotated_expression ae (matching block) m
 
   let declaration ppf (d:declaration) = match d with
-    | Type_declaration {type_name ; type_expression = te} ->
+    | Declaration_type {type_name ; type_expression = te} ->
         fprintf ppf "type %s = %a" type_name type_expression te
-    | Constant_declaration {name ; annotated_expression = ae} ->
+    | Declaration_constant {name ; annotated_expression = ae} ->
         fprintf ppf "const %s = %a" name annotated_expression ae
 
   let program ppf (p:program) =
@@ -225,32 +225,32 @@ module Rename = struct
 
     let rec rename_instruction (r:renamings) (i:instruction) : instruction result =
       match i with
-      | Assignment ({name;annotated_expression = e} as a) ->
+      | I_assignment ({name;annotated_expression = e} as a) ->
           let%bind annotated_expression = rename_annotated_expression (filter r name) e in
-          ok (Assignment {a with annotated_expression})
-      | Skip -> ok Skip
-      | Fail e ->
+          ok (I_assignment {a with annotated_expression})
+      | I_skip -> ok I_skip
+      | I_fail e ->
           let%bind e' = rename_annotated_expression r e in
-          ok (Fail e')
-      | Loop (cond, body) ->
+          ok (I_fail e')
+      | I_loop (cond, body) ->
           let%bind cond' = rename_annotated_expression r cond in
           let%bind body' = rename_block r body in
-          ok (Loop (cond', body'))
-      | Matching_instr (ae, m) ->
+          ok (I_loop (cond', body'))
+      | I_matching (ae, m) ->
           let%bind ae' = rename_annotated_expression r ae in
           let%bind m' = rename_matching rename_block r m in
-          ok (Matching_instr (ae', m'))
-      | Record_patch (v, path, lst) ->
+          ok (I_matching (ae', m'))
+      | I_record_patch (v, path, lst) ->
           let aux (x, y) =
             let%bind y' = rename_annotated_expression (filter r v) y in
             ok (x, y') in
           let%bind lst' = bind_map_list aux lst in
           match List.assoc_opt v r with
           | None -> (
-              ok (Record_patch (v, path, lst'))
+              ok (I_record_patch (v, path, lst'))
             )
           | Some (v, path') -> (
-              ok (Record_patch (v, path' @ path, lst'))
+              ok (I_record_patch (v, path' @ path, lst'))
             )
     and rename_block (r:renamings) (bl:block) : block result =
       bind_map_list (rename_instruction r) bl
@@ -284,96 +284,89 @@ module Rename = struct
 
     and rename_expression : renamings -> expression -> expression result = fun r e ->
       match e with
-      | Literal _ as l -> ok l
-      | Constant (name, lst) ->
+      | E_literal _ as l -> ok l
+      | E_constant (name, lst) ->
           let%bind lst' = bind_map_list (rename_annotated_expression r) lst in
-          ok (Constant (name, lst'))
-      | Constructor (name, ae) ->
+          ok (E_constant (name, lst'))
+      | E_constructor (name, ae) ->
           let%bind ae' = rename_annotated_expression r ae in
-          ok (Constructor (name, ae'))
-      | Variable v -> (
+          ok (E_constructor (name, ae'))
+      | E_variable v -> (
           match List.assoc_opt v r with
-          | None -> ok (Variable v)
-          | Some (name, path) -> ok (Accessor (ae (Variable (name)), path))
+          | None -> ok (E_variable v)
+          | Some (name, path) -> ok (E_accessor (ae (E_variable (name)), path))
         )
-      | Lambda ({binder;body;result} as l) ->
+      | E_lambda ({binder;body;result} as l) ->
           let r' = filter r binder in
           let%bind body = rename_block r' body in
           let%bind result = rename_annotated_expression r' result in
-          ok (Lambda {l with body ; result})
-      | Application (f, arg) ->
+          ok (E_lambda {l with body ; result})
+      | E_application (f, arg) ->
           let%bind f' = rename_annotated_expression r f in
           let%bind arg' = rename_annotated_expression r arg in
-          ok (Application (f', arg'))
-      | Tuple lst ->
+          ok (E_application (f', arg'))
+      | E_tuple lst ->
           let%bind lst' = bind_map_list (rename_annotated_expression r) lst in
-          ok (Tuple lst')
-      | Accessor (ae, p) ->
+          ok (E_tuple lst')
+      | E_accessor (ae, p) ->
           let%bind ae' = rename_annotated_expression r ae in
-          ok (Accessor (ae', p))
-          (* let aux prev hd =
-           *   match hd with
-           *   | Tuple_access n -> Tuple_accessor (prev, n)
-           *   | Record_access s -> Record_accessor (prev, s)
-           * in
-           * let lst = List.fold_left aux ae p in
-           * ok lst *)
-      | Record sm ->
+          ok (E_accessor (ae', p))
+      | E_record sm ->
           let%bind sm' = bind_smap
             @@ SMap.map (rename_annotated_expression r) sm in
-          ok (Record sm')
-      | Map m ->
+          ok (E_record sm')
+      | E_map m ->
           let%bind m' = bind_map_list
             (fun (x, y) -> bind_map_pair (rename_annotated_expression r) (x, y)) m in
-          ok (Map m')
-      | LookUp m ->
+          ok (E_map m')
+      | E_look_up m ->
           let%bind m' = bind_map_pair (rename_annotated_expression r) m in
-          ok (LookUp m')
-      | Matching_expr (ae, m) ->
+          ok (E_look_up m')
+      | E_matching (ae, m) ->
           let%bind ae' = rename_annotated_expression r ae in
           let%bind m' = rename_matching rename_annotated_expression r m in
-          ok (Matching_expr (ae', m'))
+          ok (E_matching (ae', m'))
   end
 end
 
 module Combinators = struct
-  let t_bool      : type_expression = Type_constant ("bool", [])
-  let t_string    : type_expression = Type_constant ("string", [])
-  let t_bytes     : type_expression = Type_constant ("bytes", [])
-  let t_int       : type_expression = Type_constant ("int", [])
-  let t_unit      : type_expression = Type_constant ("unit", [])
-  let t_option  o : type_expression = Type_constant ("option", [o])
-  let t_tuple lst : type_expression = Type_tuple lst
+  let t_bool      : type_expression = T_constant ("bool", [])
+  let t_string    : type_expression = T_constant ("string", [])
+  let t_bytes     : type_expression = T_constant ("bytes", [])
+  let t_int       : type_expression = T_constant ("int", [])
+  let t_unit      : type_expression = T_constant ("unit", [])
+  let t_option  o : type_expression = T_constant ("option", [o])
+  let t_tuple lst : type_expression = T_tuple lst
   let t_pair a b = t_tuple [a ; b]
-  let t_record m  : type_expression = (Type_record m)
+  let t_record m  : type_expression = (T_record m)
   let t_ez_record (lst:(string * type_expression) list) : type_expression =
     let aux prev (k, v) = SMap.add k v prev in
     let map = List.fold_left aux SMap.empty lst in
-    Type_record map
+    T_record map
 
   let t_record_ez lst =
     let m = SMap.of_list lst in
     t_record m
 
-  let t_sum m : type_expression = Type_sum m
+  let t_sum m : type_expression = T_sum m
   let make_t_ez_sum (lst:(string * type_expression) list) : type_expression =
     let aux prev (k, v) = SMap.add k v prev in
     let map = List.fold_left aux SMap.empty lst in
-    Type_sum map
+    T_sum map
 
-  let t_function param result : type_expression = Type_function (param, result)
+  let t_function param result : type_expression = T_function (param, result)
 
   let annotated_expression ?type_annotation expression = {expression ; type_annotation}
 
   let name (s : string) : name = s
 
-  let var (s : string) : expression = Variable s
+  let var (s : string) : expression = E_variable s
 
-  let unit  () : expression = Literal (Unit)
-  let number n : expression = Literal (Number n)
-  let bool   b : expression = Literal (Bool b)
-  let string s : expression = Literal (String s)
-  let bytes  b : expression = Literal (Bytes (Bytes.of_string b))
+  let unit  () : expression = E_literal (Literal_unit)
+  let number n : expression = E_literal (Literal_number n)
+  let bool   b : expression = E_literal (Literal_bool b)
+  let string s : expression = E_literal (Literal_string s)
+  let bytes  b : expression = E_literal (Literal_bytes (Bytes.of_string b))
 
   let lambda (binder : string)
              (input_type : type_expression)
@@ -381,7 +374,7 @@ module Combinators = struct
              (result : expression)
              (body : block)
       : expression =
-    Lambda {
+    E_lambda {
         binder = (name binder) ;
         input_type = input_type ;
         output_type = output_type ;
@@ -389,16 +382,16 @@ module Combinators = struct
         body ;
       }
 
-  let tuple (lst : ae list) : expression = Tuple lst
+  let tuple (lst : ae list) : expression = E_tuple lst
   let ez_tuple (lst : expression list) : expression =
     tuple (List.map (fun e -> ae e) lst)
 
-  let constructor (s : string) (e : ae) : expression = Constructor (name s, e)
+  let constructor (s : string) (e : ae) : expression = E_constructor (name s, e)
 
   let record (lst : (string * ae) list) : expression =
     let aux prev (k, v) = SMap.add k v prev in
     let map = List.fold_left aux SMap.empty lst in
-    Record map
+    E_record map
 
   let ez_record  (lst : (string * expression) list) : expression =
     (* TODO: define a correct implementation of List.map

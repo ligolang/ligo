@@ -27,11 +27,11 @@ let rec simpl_type_expression (t:Raw.type_expr) : type_expression result =
   | TAlias v -> (
       match List.assoc_opt v.value type_constants with
       | Some 0 ->
-          ok @@ Type_constant (v.value, [])
+          ok @@ T_constant (v.value, [])
       | Some _ ->
           simple_fail "type constructor with wrong number of args"
       | None ->
-          ok @@ Type_variable v.value
+          ok @@ T_variable v.value
     )
   | TApp x ->
       let (name, tuple) = x.value in
@@ -41,7 +41,7 @@ let rec simpl_type_expression (t:Raw.type_expr) : type_expression result =
         | Some _ -> simple_fail "type constructor with wrong number of args"
         | None -> simple_fail "unrecognized type constants" in
       let%bind lst' = bind_list @@ List.map simpl_type_expression lst in
-      ok @@ Type_constant (name.value, lst')
+      ok @@ T_constant (name.value, lst')
   | TProd p ->
       let%bind tpl = simpl_list_type_expression
         @@ npseq_to_list p.value in
@@ -53,7 +53,7 @@ let rec simpl_type_expression (t:Raw.type_expr) : type_expression result =
         @@ List.map (fun (x:Raw.field_decl Raw.reg) -> (x.value.field_name.value, x.value.field_type))
         @@ npseq_to_list r.value.field_decls in
       let m = List.fold_left (fun m (x, y) -> SMap.add x y m) SMap.empty lst in
-      ok @@ Type_record m
+      ok @@ T_record m
   | TSum s ->
       let aux (v:Raw.variant Raw.reg) =
         let%bind te = simpl_list_type_expression
@@ -64,7 +64,7 @@ let rec simpl_type_expression (t:Raw.type_expr) : type_expression result =
         @@ List.map aux
         @@ npseq_to_list s.value in
       let m = List.fold_left (fun m (x, y) -> SMap.add x y m) SMap.empty lst in
-      ok @@ Type_sum m
+      ok @@ T_sum m
 
 and simpl_list_type_expression (lst:Raw.type_expr list) : type_expression result =
   match lst with
@@ -72,7 +72,7 @@ and simpl_list_type_expression (lst:Raw.type_expr list) : type_expression result
   | [hd] -> simpl_type_expression hd
   | lst ->
       let%bind lst = bind_list @@ List.map simpl_type_expression lst in
-      ok @@ Type_tuple lst
+      ok @@ T_tuple lst
 
 let constants = [
   ("get_force", 2) ;
@@ -83,22 +83,22 @@ let rec simpl_expression (t:Raw.expr) : ae result =
   let simpl_projection = fun (p:Raw.projection) ->
     let var =
       let name = p.record_name.value in
-      ae @@ Variable name in
+      ae @@ E_variable name in
     let path = p.field_path in
     let path' =
       let aux (s:Raw.selection) =
         match s with
-        | FieldName property -> Record_access property.value
-        | Component index -> Tuple_access (Z.to_int (snd index.value))
+        | FieldName property -> Access_record property.value
+        | Component index -> Access_tuple (Z.to_int (snd index.value))
       in
       List.map aux @@ npseq_to_list path in
-    ok @@ ae @@ Accessor (var, path')
+    ok @@ ae @@ E_accessor (var, path')
   in
   match t with
   | EVar c ->
       if c.value = "unit"
-      then ok @@ ae @@ Literal Unit
-      else ok @@ ae @@ Variable c.value
+      then ok @@ ae @@ E_literal Literal_unit
+      else ok @@ ae @@ E_variable c.value
   | ECall x -> (
       let (name, args) = x.value in
       let f = name.value in
@@ -106,17 +106,17 @@ let rec simpl_expression (t:Raw.expr) : ae result =
       match List.assoc_opt f constants with
       | None ->
           let%bind arg = simpl_list_expression args' in
-          ok @@ ae @@ Application (ae @@ Variable f, arg)
+          ok @@ ae @@ E_application (ae @@ E_variable f, arg)
       | Some arity ->
           let%bind _arity =
             trace (simple_error "wrong arity for constants") @@
             Assert.assert_equal_int arity (List.length args') in
           let%bind lst = bind_map_list simpl_expression args' in
-          ok @@ ae @@ Constant (f, lst)
+          ok @@ ae @@ E_constant (f, lst)
     )
   | EPar x -> simpl_expression x.value.inside
-  | EUnit _ -> ok @@ ae @@ Literal Unit
-  | EBytes x -> ok @@ ae @@ Literal (Bytes (Bytes.of_string @@ fst x.value))
+  | EUnit _ -> ok @@ ae @@ E_literal Literal_unit
+  | EBytes x -> ok @@ ae @@ E_literal (Literal_bytes (Bytes.of_string @@ fst x.value))
   | ETuple tpl ->
       let (Raw.TupleInj tpl') = tpl in
       simpl_list_expression
@@ -127,7 +127,7 @@ let rec simpl_expression (t:Raw.expr) : ae result =
         @@ List.map (fun (x:Raw.field_assign Raw.reg) -> (x.value.field_name, x.value.field_expr))
         @@ npseq_to_list r.value.fields in
       let aux prev (k, v) = SMap.add k v prev in
-      ok @@ ae @@ Record (List.fold_left aux SMap.empty fields)
+      ok @@ ae @@ E_record (List.fold_left aux SMap.empty fields)
   | EProj p' -> (
       let p = p'.value in
       simpl_projection p
@@ -137,25 +137,25 @@ let rec simpl_expression (t:Raw.expr) : ae result =
       let%bind arg =
         simpl_list_expression
         @@ npseq_to_list args.value.inside in
-      ok @@ ae @@ Constructor (c.value, arg)
+      ok @@ ae @@ E_constructor (c.value, arg)
   | EConstr (SomeApp a) ->
       let (_, args) = a.value in
       let%bind arg =
         simpl_list_expression
         @@ npseq_to_list args.value.inside in
-      ok @@ ae @@ Constant ("SOME", [arg])
+      ok @@ ae @@ E_constant ("SOME", [arg])
   | EConstr (NoneExpr n) ->
       let type_expr = n.value.inside.opt_type in
       let%bind type_expr' = simpl_type_expression type_expr in
-      ok @@ annotated_expression (Constant ("NONE", [])) (Some (Combinators.t_option type_expr'))
+      ok @@ annotated_expression (E_constant ("NONE", [])) (Some (Combinators.t_option type_expr'))
   | EArith (Add c) ->
       simpl_binop "ADD" c.value
   | EArith (Int n) ->
       let n = Z.to_int @@ snd @@ n.value in
-      ok @@ ae @@ Literal (Number n)
+      ok @@ ae @@ E_literal (Literal_number n)
   | EArith _ -> simple_fail "arith: not supported yet"
   | EString (String s) ->
-      ok @@ ae @@ Literal (String s.value)
+      ok @@ ae @@ E_literal (Literal_string s.value)
   | EString _ -> simple_fail "string: not supported yet"
   | ELogic l -> simpl_logic_expression l
   | EList _ -> simple_fail "list: not supported yet"
@@ -171,7 +171,7 @@ let rec simpl_expression (t:Raw.expr) : ae result =
         @@ List.map get_value
         @@ npseq_to_list c.value.cases_expr.value in
       let%bind cases = simpl_cases lst in
-      ok @@ ae @@ Matching_expr (e, cases)
+      ok @@ ae @@ E_matching (e, cases)
   | EMap (MapInj mi) ->
       let%bind lst =
         let lst = List.map get_value @@ pseq_to_list mi.value.elements in
@@ -180,21 +180,21 @@ let rec simpl_expression (t:Raw.expr) : ae result =
           let%bind dst = simpl_expression b.image in
           ok (src, dst) in
         bind_map_list aux lst in
-      return (Map lst)
+      return (E_map lst)
   | EMap (MapLookUp lu) ->
       let%bind path = match lu.value.path with
-        | Name v -> return (Variable v.value)
+        | Name v -> return (E_variable v.value)
         | Path p -> simpl_projection p.value
       in
       let%bind index = simpl_expression lu.value.index.value.inside in
-      return (LookUp (path, index))
+      return (E_look_up (path, index))
 
 and simpl_logic_expression (t:Raw.logic_expr) : ae result =
   match t with
   | BoolExpr (False _) ->
-      ok @@ ae @@ Literal (Bool false)
+      ok @@ ae @@ E_literal (Literal_bool false)
   | BoolExpr (True _) ->
-      ok @@ ae @@ Literal (Bool true)
+      ok @@ ae @@ E_literal (Literal_bool true)
   | BoolExpr (Or b) ->
       simpl_binop "OR" b.value
   | BoolExpr (And b) ->
@@ -217,19 +217,19 @@ and simpl_logic_expression (t:Raw.logic_expr) : ae result =
 and simpl_binop (name:string) (t:_ Raw.bin_op) : ae result =
   let%bind a = simpl_expression t.arg1 in
   let%bind b = simpl_expression t.arg2 in
-  ok @@ ae @@ Constant (name, [a;b])
+  ok @@ ae @@ E_constant (name, [a;b])
 
 and simpl_unop (name:string) (t:_ Raw.un_op) : ae result =
   let%bind a = simpl_expression t.arg in
-  ok @@ ae @@ Constant (name, [a])
+  ok @@ ae @@ E_constant (name, [a])
 
 and simpl_list_expression (lst:Raw.expr list) : ae result =
   match lst with
-  | [] -> ok @@ ae @@ Literal Unit
+  | [] -> ok @@ ae @@ E_literal Literal_unit
   | [hd] -> simpl_expression hd
   | lst ->
       let%bind lst = bind_list @@ List.map simpl_expression lst in
-      ok @@ ae @@ Tuple lst
+      ok @@ ae @@ E_tuple lst
 
 and simpl_local_declaration (t:Raw.local_decl) : (instruction * named_expression) result =
   match t with
@@ -237,7 +237,7 @@ and simpl_local_declaration (t:Raw.local_decl) : (instruction * named_expression
   | LocalLam _ -> simple_fail "no local lambdas yet"
 
 and simpl_data_declaration (t:Raw.data_decl) : (instruction * named_expression) result =
-  let return x = ok (Assignment x, x) in
+  let return x = ok (I_assignment x, x) in
   match t with
   | LocalVar x ->
       let x = x.value in
@@ -274,13 +274,13 @@ and simpl_declaration : Raw.declaration -> declaration result = fun t ->
   | TypeDecl x ->
       let {name;type_expr} : Raw.type_decl = x.value in
       let%bind type_expression = simpl_type_expression type_expr in
-      ok @@ Type_declaration {type_name=name.value;type_expression}
+      ok @@ Declaration_type {type_name=name.value;type_expression}
   | ConstDecl x ->
       let {name;const_type;init} = x.value in
       let%bind expression = simpl_expression init in
       let%bind t = simpl_type_expression const_type in
       let type_annotation = Some t in
-      ok @@ Constant_declaration {name=name.value;annotated_expression={expression with type_annotation}}
+      ok @@ Declaration_constant {name=name.value;annotated_expression={expression with type_annotation}}
   | LambdaDecl (FunDecl x) ->
       let {name;param;ret_type;local_decls;block;return} : fun_decl = x.value in
       (match npseq_to_list param.value.inside with
@@ -301,16 +301,16 @@ and simpl_declaration : Raw.declaration -> declaration result = fun t ->
            let%bind output_type = simpl_type_expression ret_type in
            let body = local_declarations @ instructions in
            let decl =
-             let expression = Lambda {binder ; input_type ; output_type ; result ; body } in
-             let type_annotation = Some (Type_function (input_type, output_type)) in
-             Constant_declaration {name;annotated_expression = {expression;type_annotation}}
+             let expression = E_lambda {binder ; input_type ; output_type ; result ; body } in
+             let type_annotation = Some (T_function (input_type, output_type)) in
+             Declaration_constant {name;annotated_expression = {expression;type_annotation}}
            in
            ok decl
          )
        | lst -> (
            let%bind params = bind_map_list simpl_param lst in
            let input =
-             let type_expression = Type_record (
+             let type_expression = T_record (
                  SMap.of_list
                  @@ List.map (fun (x:named_type_expression) -> x.type_name, x.type_expression)
                    params
@@ -329,7 +329,7 @@ and simpl_declaration : Raw.declaration -> declaration result = fun t ->
            let%bind (body, result) =
              let renamings =
                let aux ({type_name}:named_type_expression) : Rename.Value.renaming =
-                 type_name, ("arguments", [Record_access type_name])
+                 type_name, ("arguments", [Access_record type_name])
                in
                List.map aux params
              in
@@ -343,9 +343,9 @@ and simpl_declaration : Raw.declaration -> declaration result = fun t ->
              in
              ok (b, r) in
            let decl =
-             let expression = Lambda {binder ; input_type ; output_type ; result ; body } in
-             let type_annotation = Some (Type_function (input_type, output_type)) in
-             Constant_declaration {name = name.value;annotated_expression = {expression;type_annotation}}
+             let expression = E_lambda {binder ; input_type ; output_type ; result ; body } in
+             let type_annotation = Some (T_function (input_type, output_type)) in
+             Declaration_constant {name = name.value;annotated_expression = {expression;type_annotation}}
            in
            ok decl
          )
@@ -363,13 +363,13 @@ and simpl_single_instruction : Raw.single_instr -> instruction result = fun t ->
   | ProcCall _ -> simple_fail "no proc call"
   | Fail e ->
       let%bind expr = simpl_expression e.value.fail_expr in
-      ok @@ Fail expr
-  | Skip _ -> ok @@ Skip
+      ok @@ I_fail expr
+  | Skip _ -> ok @@ I_skip
   | Loop (While l) ->
       let l = l.value in
       let%bind cond = simpl_expression l.cond in
       let%bind body = simpl_block l.block.value in
-      ok @@ Loop (cond, body)
+      ok @@ I_loop (cond, body)
   | Loop (For _) ->
       simple_fail "no for yet"
   | Cond c ->
@@ -381,7 +381,7 @@ and simpl_single_instruction : Raw.single_instr -> instruction result = fun t ->
       let%bind match_false = match c.ifnot with
         | ClauseInstr i -> let%bind i = simpl_instruction i in ok [i]
         | ClauseBlock b -> simpl_statements @@ fst b.value.inside in
-      ok @@ Matching_instr (expr, (Match_bool {match_true; match_false}))
+      ok @@ I_matching (expr, (Match_bool {match_true; match_false}))
   | Assign a ->
       let a = a.value in
       let%bind name = match a.lhs with
@@ -392,7 +392,7 @@ and simpl_single_instruction : Raw.single_instr -> instruction result = fun t ->
         | Expr e -> simpl_expression e
         | _ -> simple_fail "no weird assignments yet"
       in
-      ok @@ Assignment {name ; annotated_expression}
+      ok @@ I_assignment {name ; annotated_expression}
   | Case_instr c ->
       let c = c.value in
       let%bind expr = simpl_expression c.expr in
@@ -404,7 +404,7 @@ and simpl_single_instruction : Raw.single_instr -> instruction result = fun t ->
         @@ List.map aux
         @@ npseq_to_list c.cases_instr.value in
       let%bind m = simpl_cases cases in
-      ok @@ Matching_instr (expr, m)
+      ok @@ I_matching (expr, m)
   | RecordPatch r ->
       let r = r.value in
       let%bind record = match r.path with
@@ -415,7 +415,7 @@ and simpl_single_instruction : Raw.single_instr -> instruction result = fun t ->
         @@ List.map (fun (x:Raw.field_assign) -> let%bind e = simpl_expression x.field_expr in ok (x.field_name.value, e))
         @@ List.map (fun (x:_ Raw.reg) -> x.value)
         @@ npseq_to_list r.record_inj.value.fields in
-      ok @@ Record_patch (record, [], inj)
+      ok @@ I_record_patch (record, [], inj)
   | MapPatch _ -> simple_fail "no map patch yet"
   | SetPatch _ -> simple_fail "no set patch yet"
   | MapRemove _ -> simple_fail "no map remove yet"
