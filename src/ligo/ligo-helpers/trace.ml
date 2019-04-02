@@ -153,6 +153,18 @@ let specific_try handler f =
     ok @@ f ()
   ) with exn -> fail (handler exn)
 
+let sys_try f =
+  let handler = function
+    | Sys_error str -> error "Sys_error" str
+    | exn -> raise exn
+  in
+  specific_try handler f
+
+let sys_command command =
+  sys_try (fun () -> Sys.command command) >>? function
+  | 0 -> ok ()
+  | n -> fail (error "Nonzero return code" (string_of_int n))
+
 let sequence f lst =
   let rec aux acc = function
     | hd :: tl -> (

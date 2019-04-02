@@ -76,6 +76,14 @@ let unit_expression () : unit result =
     get_a_unit result in
   ok ()
 
+let include_ () : unit result =
+  let%bind program = type_file "./contracts/includer.ligo" in
+  let%bind result = easy_evaluate_typed "bar" program in
+  let%bind n =
+    trace (simple_error "Include failed") @@
+    AST_Typed.Combinators.get_a_int result in
+  Assert.assert_equal_int 144 n
+
 let record_ez_int names n =
   let open AST_Typed.Combinators in
   ez_e_a_record @@ List.map (fun x -> x, e_a_int n) names
@@ -337,4 +345,5 @@ let main = "Integration (End to End)", [
     test "declarations" declarations ;
     test "quote declaration" quote_declaration ;
     test "quote declarations" quote_declarations ;
+    test "#include directives" include_ ;
   ]

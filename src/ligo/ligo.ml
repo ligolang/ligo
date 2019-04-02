@@ -10,10 +10,20 @@ module Typer = Typer
 module Transpiler = Transpiler
 
 open Ligo_helpers.Trace
-let parse_file (source:string) : AST_Raw.t result =
+
+let parse_file (source: string) : AST_Raw.t result =
+  let pp_input =
+    let prefix = Filename.(source |> basename |> remove_extension)
+    and suffix = ".pp.ligo"
+    in prefix ^ suffix in
+
+  let cpp_cmd = Printf.sprintf "cpp -traditional-cpp %s -o %s"
+                               source pp_input in
+  let%bind () = sys_command cpp_cmd in
+
   let%bind channel =
     generic_try (simple_error "error opening file") @@
-    (fun () -> open_in source) in
+    (fun () -> open_in pp_input) in
   let lexbuf = Lexing.from_channel channel in
   let module Lexer = Lexer.Make(LexToken) in
   let Lexer.{read ; close} =
