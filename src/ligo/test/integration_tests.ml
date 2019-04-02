@@ -172,7 +172,7 @@ let option () : unit result =
   in
   let%bind _none = trace (simple_error "none") @@
     let%bind result = easy_evaluate_typed "n" program in
-    let expect = e_a_none make_t_int in
+    let expect = e_a_none (t_int ()) in
     AST_Typed.assert_value_eq (expect, result)
   in
   ok ()
@@ -182,7 +182,7 @@ let map () : unit result =
   let ez lst =
     let open AST_Typed.Combinators in
     let lst' = List.map (fun (x, y) -> e_a_int x, e_a_int y) lst in
-    e_a_map lst' make_t_int make_t_int
+    e_a_map lst' (t_int ()) (t_int ())
   in
   let%bind _get_force = trace (simple_error "get_force") @@
     let aux n =
@@ -267,7 +267,7 @@ let matching () : unit result =
       let open AST_Typed.Combinators in
       let input = match n with
         | Some s -> e_a_some (e_a_int s)
-        | None -> e_a_none (make_t_int)  in
+        | None -> e_a_none (t_int ()) in
       let%bind result = easy_run_typed "match_option" program input in
       let%bind result' =
         trace (simple_error "bad result") @@

@@ -139,7 +139,7 @@ and type_instruction (e:environment) : I.instruction -> (environment * O.instruc
   | I_loop (cond, body) ->
       let%bind cond = type_annotated_expression e cond in
       let%bind _ =
-        O.assert_type_value_eq (cond.type_annotation, make_t_bool) in
+        O.assert_type_value_eq (cond.type_annotation, t_bool ()) in
       let%bind body = type_block e body in
       ok (e, O.I_loop (cond, body))
   | I_assignment {name;annotated_expression} -> (
@@ -258,25 +258,25 @@ and type_annotated_expression (e:environment) (ae:I.annotated_expression) : O.an
       let%bind type_annotation = check tv' in
       ok O.{expression = E_variable name ; type_annotation}
   | E_literal (Literal_bool b) ->
-      let%bind type_annotation = check make_t_bool in
+      let%bind type_annotation = check (t_bool ()) in
       ok O.{expression = E_literal (Literal_bool b) ; type_annotation }
   | E_literal Literal_unit ->
-      let%bind type_annotation = check make_t_unit in
+      let%bind type_annotation = check (t_unit ()) in
       ok O.{expression = E_literal (Literal_unit) ; type_annotation }
   | E_literal (Literal_string s) ->
-      let%bind type_annotation = check make_t_string in
+      let%bind type_annotation = check (t_string ()) in
       ok O.{expression = E_literal (Literal_string s) ; type_annotation }
   | E_literal (Literal_bytes s) ->
-      let%bind type_annotation = check make_t_bytes in
+      let%bind type_annotation = check (t_bytes ()) in
       ok O.{expression = E_literal (Literal_bytes s) ; type_annotation }
   | E_literal (Literal_number n) ->
-      let%bind type_annotation = check make_t_int in
+      let%bind type_annotation = check (t_int ()) in
       ok O.{expression = E_literal (Literal_int n) ; type_annotation }
   (* Tuple *)
   | E_tuple lst ->
       let%bind lst' = bind_list @@ List.map (type_annotated_expression e) lst in
       let tv_lst = List.map get_annotation lst' in
-      let%bind type_annotation = check (make_t_tuple tv_lst) in
+      let%bind type_annotation = check (t_tuple tv_lst ()) in
       ok O.{expression = E_tuple lst' ; type_annotation }
   | E_accessor (ae, path) ->
       let%bind e' = type_annotated_expression e ae in
@@ -318,7 +318,7 @@ and type_annotated_expression (e:environment) (ae:I.annotated_expression) : O.an
         ok (SMap.add k expr' prev)
       in
       let%bind m' = bind_fold_smap aux (ok SMap.empty) m in
-      let%bind type_annotation = check @@ make_t_record (SMap.map get_annotation m') in
+      let%bind type_annotation = check @@ t_record (SMap.map get_annotation m') () in
       ok O.{expression = O.E_record m' ; type_annotation }
   (* Data-structure *)
   | E_map lst ->
@@ -344,7 +344,7 @@ and type_annotated_expression (e:environment) (ae:I.annotated_expression) : O.an
             @@ List.map snd lst' in
           trace_option (simple_error "empty map expression") opt
         in
-        check (make_t_map key_type value_type)
+        check (t_map key_type value_type ())
       in
       ok O.{expression = O.E_map lst' ; type_annotation}
   | E_lambda {
@@ -359,7 +359,7 @@ and type_annotated_expression (e:environment) (ae:I.annotated_expression) : O.an
       let e' = Environment.add e binder input_type in
       let%bind (body, e'') = type_block_full e' body in
       let%bind result = type_annotated_expression e'' result in
-      let%bind type_annotation = check @@ make_t_function input_type output_type in
+      let%bind type_annotation = check @@ (t_function input_type output_type ()) in
       ok O.{expression = E_lambda {binder;input_type;output_type;result;body} ; type_annotation}
   | E_constant (name, lst) ->
       let%bind lst' = bind_list @@ List.map (type_annotated_expression e) lst in
@@ -381,7 +381,7 @@ and type_annotated_expression (e:environment) (ae:I.annotated_expression) : O.an
       let%bind (ds, ind) = bind_map_pair (type_annotated_expression e) dsi in
       let%bind (src, dst) = get_t_map ds.type_annotation in
       let%bind _ = O.assert_type_value_eq (ind.type_annotation, src) in
-      let dst_opt = make_t_option dst in
+      let dst_opt = (t_option dst ()) in
       let%bind type_annotation = check dst_opt in
       ok O.{expression = E_look_up (ds, ind) ; type_annotation}
   (* Advanced *)
@@ -400,15 +400,15 @@ and type_constant (name:string) (lst:O.type_value list) (tv_opt:O.type_value opt
   (* Constant poorman's polymorphism *)
   let open O in
   match (name, lst) with
-  | "ADD", [a ; b] when type_value_eq (a, make_t_int) && type_value_eq (b, make_t_int) -> ok ("ADD_INT", make_t_int)
-  | "ADD", [a ; b] when type_value_eq (a, make_t_string) && type_value_eq (b, make_t_string) -> ok ("CONCAT", make_t_string)
+  | "ADD", [a ; b] when type_value_eq (a, t_int ()) && type_value_eq (b, t_int ()) -> ok ("ADD_INT", t_int ())
+  | "ADD", [a ; b] when type_value_eq (a, t_string ()) && type_value_eq (b, t_string ()) -> ok ("CONCAT", t_string ())
   | "ADD", [_ ; _] -> simple_fail "bad types to add"
   | "ADD", _ -> simple_fail "bad number of params to add"
-  | "EQ", [a ; b] when type_value_eq (a, make_t_int) && type_value_eq (b, make_t_int) -> ok ("EQ", make_t_bool)
+  | "EQ", [a ; b] when type_value_eq (a, t_int ()) && type_value_eq (b, t_int ()) -> ok ("EQ", t_bool ())
   | "EQ", _ -> simple_fail "EQ only defined over int"
-  | "OR", [a ; b] when type_value_eq (a, make_t_bool) && type_value_eq (b, make_t_bool) -> ok ("OR", make_t_bool)
+  | "OR", [a ; b] when type_value_eq (a, t_bool ()) && type_value_eq (b, t_bool ()) -> ok ("OR", t_bool ())
   | "OR", _ -> simple_fail "OR only defined over bool"
-  | "AND", [a ; b] when type_value_eq (a, make_t_bool) && type_value_eq (b, make_t_bool) -> ok ("AND", make_t_bool)
+  | "AND", [a ; b] when type_value_eq (a, t_bool ()) && type_value_eq (b, t_bool ()) -> ok ("AND", t_bool ())
   | "AND", _ -> simple_fail "AND only defined over bool"
   | "NONE", [] -> (
       match tv_opt with
@@ -416,7 +416,7 @@ and type_constant (name:string) (lst:O.type_value list) (tv_opt:O.type_value opt
       | None -> simple_fail "untyped NONE"
     )
   | "NONE", _ -> simple_fail "bad number of params to NONE"
-  | "SOME", [s] -> ok ("SOME", make_t_option s)
+  | "SOME", [s] -> ok ("SOME", t_option s ())
   | "SOME", _ -> simple_fail "bad number of params to SOME"
   | "get_force", [i_ty;m_ty] ->
       let%bind (src, dst) = get_t_map m_ty in

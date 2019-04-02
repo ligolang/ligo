@@ -14,7 +14,7 @@ let int () : unit result =
   let%bind post = type_annotated_expression e pre in
   let open Typed in
   let open Combinators in
-  let%bind () = assert_type_value_eq (post.type_annotation, make_t_int) in
+  let%bind () = assert_type_value_eq (post.type_annotation, t_int ()) in
   ok ()
 
 module TestExpressions = struct
@@ -32,25 +32,25 @@ module TestExpressions = struct
   module O = Typed.Combinators
   module E = Typer.Environment.Combinators
 
-  let unit   () : unit result = test_expression I.(e_unit ())    O.make_t_unit
-  let int    () : unit result = test_expression I.(e_number 32)  O.make_t_int
-  let bool   () : unit result = test_expression I.(e_bool true)  O.make_t_bool
-  let string () : unit result = test_expression I.(e_string "s") O.make_t_string
-  let bytes  () : unit result = test_expression I.(e_bytes "b")  O.make_t_bytes
+  let unit   () : unit result = test_expression I.(e_unit ())    O.(t_unit ())
+  let int    () : unit result = test_expression I.(e_number 32)  O.(t_int ())
+  let bool   () : unit result = test_expression I.(e_bool true)  O.(t_bool ())
+  let string () : unit result = test_expression I.(e_string "s") O.(t_string ())
+  let bytes  () : unit result = test_expression I.(e_bytes "b")  O.(t_bytes ())
 
   let lambda () : unit result =
     test_expression
       I.(e_lambda "x" t_int t_int (e_var "x") [])
-      O.(make_t_function make_t_int make_t_int)
+      O.(t_function (t_int ()) (t_int ()) ())
 
   let tuple () : unit result =
     test_expression
       I.(ez_e_tuple [e_number 32; e_string "foo"])
-      O.(make_t_tuple [make_t_int; make_t_string])
+      O.(t_tuple [t_int (); t_string ()] ())
 
   let constructor () : unit result =
     let variant_foo_bar =
-      O.[("foo", make_t_int); ("bar", make_t_string)]
+      O.[("foo", t_int ()); ("bar", t_string ())]
     in test_expression
       ~env:(E.env_sum_type variant_foo_bar)
       I.(e_constructor "foo" (ae @@ e_number 32))
@@ -59,7 +59,7 @@ module TestExpressions = struct
   let record () : unit result =
     test_expression
       I.(ez_e_record        [("foo", e_number 32);  ("bar", e_string "foo")])
-      O.(make_t_ez_record [("foo", make_t_int); ("bar", make_t_string)])
+      O.(make_t_ez_record [("foo", t_int ()); ("bar", t_string ())])
 
 end
 (* TODO: deep types (e.g. record of record)

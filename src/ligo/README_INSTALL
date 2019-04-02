@@ -8,7 +8,7 @@ eval $(opam env --switch=$switch --set-switch)
 opam repository add new-tezos https://gitlab.com/gabriel.alfour/new-tezos-opam-repository.git
 
 # si une build a déjà été tentée, il vaut mieux git add tout ce qui est utile et git clean -dfx pour supprimer tout le reste (dune 1.7 crée des fichiers non compatibles avec dune 1.6)
-opam install -y ocplib-endian
+opam install -y ocplib-endian alcotest
 
 (cd ligo-parser && opam install -y .)
 eval $(opam env)
@@ -16,5 +16,5 @@ eval $(opam env)
 eval $(opam env)
 (opam install -y .)
 eval $(opam env)
-opam install merlin ocp-indent
+opam install merlin ocp-indent ledit
 opam user-setup install
