@@ -681,39 +681,48 @@ if_clause:
    ClauseBlock {value; region}}
 
 case_instr:
-  Case expr Of option(VBAR) cases_instr End {
-    let region = cover $1 $6 in
-    let value  = {
-      kwd_case  = $1;
-      expr      = $2;
-      opening   = Kwd $3;
-      lead_vbar = $4;
-      cases     = $5;
-      closing   = End $6}
-    in {region; value}
+  case(instruction) { $1 instr_to_region }
+
+case(rhs):
+  Case expr Of option(VBAR) cases(rhs) End {
+    fun rhs_to_region ->
+      let region = cover $1 $6 in
+      let value  = {
+        kwd_case  = $1;
+        expr      = $2;
+        opening   = Kwd $3;
+        lead_vbar = $4;
+        cases     = $5 rhs_to_region;
+        closing   = End $6}
+      in {region; value}
   }
-| Case expr Of LBRACKET option(VBAR) cases_instr RBRACKET {
-    let region = cover $1 $7 in
-    let value  = {
-      kwd_case  = $1;
-      expr      = $2;
-      opening   = KwdBracket ($3,$4);
-      lead_vbar = $5;
-      cases     = $6;
-      closing   = RBracket $7}
-    in {region; value}}
+| Case expr Of LBRACKET option(VBAR) cases(rhs) RBRACKET {
+    fun rhs_to_region ->
+      let region = cover $1 $7 in
+      let value  = {
+        kwd_case  = $1;
+        expr      = $2;
+        opening   = KwdBracket ($3,$4);
+        lead_vbar = $5;
+        cases     = $6 rhs_to_region;
+        closing   = RBracket $7}
+      in {region; value}}
 
-cases_instr:
-  nsepseq(case_clause_instr,VBAR) {
-    let region = nsepseq_to_region (fun x -> x.region) $1
-    in {region; value = $1}}
+cases(rhs):
+  nsepseq(case_clause(rhs),VBAR) {
+    fun rhs_to_region ->
+      let mk_clause pre_clause = pre_clause rhs_to_region in
+      let value  = Utils.nsepseq_map mk_clause $1 in
+      let region = nsepseq_to_region (fun x -> x.region) value
+      in {region; value}}
 
-case_clause_instr:
-  pattern ARROW instruction {
-    let start  = pattern_to_region $1 in
-    let region = cover start (instr_to_region $3)
-    and value  = {pattern=$1; arrow=$2; rhs=$3}
-    in {region; value}}
+case_clause(rhs):
+  pattern ARROW rhs {
+    fun rhs_to_region ->
+      let start  = pattern_to_region $1 in
+      let region = cover start (rhs_to_region $3)
+      and value  = {pattern=$1; arrow=$2; rhs=$3}
+      in {region; value}}
 
 assignment:
   lhs ASS rhs {
@@ -785,42 +794,9 @@ interactive_expr:
   expr EOF { $1 }
 
 expr:
-  case_expr { $1 }
-| disj_expr { $1 }
+  case(expr) { ECase ($1 expr_to_region) }
+| disj_expr  { $1                        }
 
-case_expr:
-  Case expr Of option(VBAR) cases_expr End {
-    let region = cover $1 $6 in
-    let value : expr case = {
-      kwd_case  = $1;
-      expr      = $2;
-      opening   = Kwd $3;
-      lead_vbar = $4;
-      cases     = $5;
-      closing   = End $6}
-    in ECase {region; value}}
-| Case expr Of LBRACKET option(VBAR) cases_expr RBRACKET {
-    let region = cover $1 $7 in
-    let value  = {
-      kwd_case  = $1;
-      expr      = $2;
-      opening   = KwdBracket ($3,$4);
-      lead_vbar = $5;
-      cases     = $6;
-      closing   = RBracket $7}
-    in ECase {region; value}}
-
-cases_expr:
-  nsepseq(case_clause_expr,VBAR) {
-    let region = nsepseq_to_region (fun x -> x.region) $1
-    in {region; value = $1}}
-
-case_clause_expr:
-  pattern ARROW expr {
-    let start  = pattern_to_region $1 in
-    let region = cover start (expr_to_region $3)
-    and value  = {pattern=$1; arrow=$2; rhs=$3}
-    in {region; value}}
 
 disj_expr:
   disj_expr Or conj_expr {

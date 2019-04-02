@@ -79,6 +79,17 @@ let sepseq_foldr f = function
     None -> fun a -> a
 | Some s -> nsepseq_foldr f s
 
+(* Maps *)
+
+let nseq_map f (hd,tl) = f hd, List.map f tl
+
+let nsepseq_map f (hd,tl) =
+  f hd, List.map (fun (sep,item) -> (sep, f item)) tl
+
+let sepseq_map f = function
+      None -> None
+| Some seq -> Some (nsepseq_map f seq)
+
 (* Conversions to lists *)
 
 let nseq_to_list (x,y) = x::y

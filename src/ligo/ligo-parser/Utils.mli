@@ -51,6 +51,12 @@ val nseq_foldr    : ('a -> 'b -> 'b) ->        'a nseq -> 'b -> 'b
 val nsepseq_foldr : ('a -> 'b -> 'b) -> ('a,'c) nsepseq -> 'b -> 'b
 val sepseq_foldr  : ('a -> 'b -> 'b) -> ('a,'c)  sepseq -> 'b -> 'b
 
+(* Maps *)
+
+val nseq_map    : ('a -> 'b) -> 'a nseq -> 'b nseq
+val nsepseq_map : ('a -> 'b) -> ('a,'c) nsepseq -> ('b,'c) nsepseq
+val sepseq_map  : ('a -> 'b) -> ('a,'c) sepseq -> ('b,'c) sepseq
+
 (* Conversions to lists *)
 
 val nseq_to_list    :        'a nseq -> 'a list
