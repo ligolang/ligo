@@ -7,6 +7,35 @@
   (modules token token_type lexer)
 )
 
+(executable
+  (name generator)
+  (libraries
+    tezos-utils
+  )
+  (modules generator)
+)
+
+(rule
+  (targets token.mly)
+  (deps generator.exe)
+  (action (system "./generator.exe mly > token.mly"))
+  (mode promote-until-clean)
+)
+
+(rule
+  (targets token.ml)
+  (deps generator.exe)
+  (action (system "./generator.exe ml > token.ml"))
+  (mode promote-until-clean)
+)
+
+(rule
+  (targets lexer.mll)
+  (deps generator.exe)
+  (action (system "./generator.exe mll > lexer.mll"))
+  (mode promote-until-clean)
+)
+
 (rule
   (targets token_type.ml token_type.mli)
   (deps token.mly)
