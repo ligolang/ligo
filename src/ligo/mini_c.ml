@@ -1,4 +1,3 @@
-open Ligo_helpers
 open! Trace
 open Tezos_utils.Memory_proto_alpha
 
@@ -114,7 +113,9 @@ and program = toplevel_statement list
 
 module PP = struct
   open Format
-  open Ligo_helpers.PP
+  open PP
+
+  let list_sep_d x = list_sep x (const " , ")
 
   let space_sep ppf () = fprintf ppf " "
 
@@ -144,14 +145,14 @@ module PP = struct
 
   and environment_small' ppf e' = let open Append_tree in
     let lst = to_list' e' in
-    fprintf ppf "S[%a]" (list_sep environment_element) lst
+    fprintf ppf "S[%a]" (list_sep_d environment_element) lst
 
   and environment_small ppf e = let open Append_tree in
     let lst = to_list e in
-    fprintf ppf "S[%a]" (list_sep environment_element) lst
+    fprintf ppf "S[%a]" (list_sep_d environment_element) lst
 
   let environment ppf (x:environment) =
-    fprintf ppf "Env[%a]" (list_sep environment_small) x
+    fprintf ppf "Env[%a]" (list_sep_d environment_small) x
 
   let rec value ppf : value -> unit = function
     | D_bool b -> fprintf ppf "%b" b
@@ -166,7 +167,7 @@ module PP = struct
     | D_function x -> function_ ppf x.content
     | D_none -> fprintf ppf "None"
     | D_some s -> fprintf ppf "Some (%a)" value s
-    | D_map m -> fprintf ppf "Map[%a]" (list_sep value_assoc) m
+    | D_map m -> fprintf ppf "Map[%a]" (list_sep_d value_assoc) m
 
   and value_assoc ppf : (value * value) -> unit = fun (a, b) ->
     fprintf ppf "%a -> %a" value a value b

@@ -1,12 +1,12 @@
-open! Ligo_helpers.Trace
+open! Trace
 open Mini_c
 open Combinators
 
 module AST = Ast_typed
 open AST.Combinators
 
-let list_of_map m = List.rev @@ Ligo_helpers.X_map.String.fold (fun _ v prev -> v :: prev) m []
-let kv_list_of_map m = List.rev @@ Ligo_helpers.X_map.String.fold (fun k v prev -> (k, v) :: prev) m []
+let list_of_map m = List.rev @@ Map.String.fold (fun _ v prev -> v :: prev) m []
+let kv_list_of_map m = List.rev @@ Map.String.fold (fun k v prev -> (k, v) :: prev) m []
 let map_of_kv_list lst =
   let open AST.SMap in
   List.fold_left (fun prev (k, v) -> add k v prev) empty lst

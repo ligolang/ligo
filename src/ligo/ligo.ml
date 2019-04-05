@@ -9,7 +9,7 @@ module Mini_c = Mini_c
 module Typer = Typer
 module Transpiler = Transpiler
 
-open Ligo_helpers.Trace
+open Trace
 
 let parse_file (source: string) : AST_Raw.t result =
   let pp_input =

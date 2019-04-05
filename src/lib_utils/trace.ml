@@ -118,11 +118,11 @@ let bind_pair = bind_and
 let bind_map_pair f (a, b) =
   bind_pair (f a, f b)
 
-module AE = Tezos_utils.Memory_proto_alpha.Alpha_environment
+module AE = Memory_proto_alpha.Alpha_environment
 module TP = Tezos_base__TzPervasives
 
-let of_tz_error (err:Tezos_utils.Error_monad.error) : error =
-  let str = Tezos_utils.Error_monad.(to_string err) in
+let of_tz_error (err:X_error_monad.error) : error =
+  let str = X_error_monad.(to_string err) in
   error "alpha error" str
 
 let of_alpha_tz_error err = of_tz_error (AE.Ecoproto_error err)

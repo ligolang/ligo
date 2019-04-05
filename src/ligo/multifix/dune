@@ -43,6 +43,7 @@
   (name generator)
   (libraries
     ocamlgraph
+    tezos-utils
     lex
   )
   (modules generator)

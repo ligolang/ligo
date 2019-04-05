@@ -1,61 +1,12 @@
-module N = struct
-  type 'a t = {
-    content : 'a ;
-    name : string ;
-  }
+type 'a name = {
+  content : 'a ;
+  name : string ;
+}
 
-  let name name content = { name ; content }
-  let destruct {name ; content} = (name, content)
-  let get_name x = x.name
-  let get_content x = x.content
-end
-
-let list_filter_map f =
-  let rec aux acc lst = match lst with
-    | [] -> List.rev acc
-    | hd :: tl -> aux (
-        match f hd with
-        | Some x -> x :: acc
-        | None -> acc
-      ) tl
-  in
-  aux []
-
-module Ne_list = struct
-  type 'a t = 'a * 'a list
-
-  let of_list lst = List.(hd lst, tl lst)
-  let iter f (hd, tl : _ t) = f hd ; List.iter f tl
-  let map f (hd, tl : _ t) = f hd, List.map f tl
-  let mapi f (hd, tl : _ t) =
-    let lst = List.mapi f (hd::tl) in
-    of_list lst
-  let concat (hd, tl : _ t) = hd @ List.concat tl
-  let rev (hd, tl : _ t) =
-    match tl with
-    | [] -> (hd, [])
-    | lst ->
-      let r = List.rev lst in
-      (List.hd r, List.tl r @ [hd])
-end
-
-module PP = struct
-  open Format
-  let string : formatter -> string -> unit = fun ppf s -> fprintf ppf "%s" s
-  let tag tag : formatter -> unit -> unit = fun ppf () -> fprintf ppf tag
-  let new_line : formatter -> unit -> unit = tag "@;"
-  let rec new_lines n ppf () =
-    match n with
-    | 0 -> new_line ppf ()
-    | n -> new_line ppf () ; new_lines (n-1) ppf ()
-  let const const : formatter -> unit -> unit = fun ppf () -> fprintf ppf "%s" const
-  let comment : formatter -> string -> unit = fun ppf s -> fprintf ppf "(* %s *)" s
-  let list_sep value separator = pp_print_list ~pp_sep:separator value
-  let ne_list_sep value separator ppf (hd, tl) =
-    value ppf hd ;
-    separator ppf () ;
-    pp_print_list ~pp_sep:separator value ppf tl
-end
+let make_name name content = { name ; content }
+let destruct {name ; content} = (name, content)
+let get_name x = x.name
+let get_content x = x.content
 
 module Token = Lex.Token
 type token = Token.token
@@ -70,13 +21,13 @@ module O = struct
     | Lower (* Lower precedence *)
 
   type operator = element list
-  type n_operator = operator N.t
+  type n_operator = operator name
 
   type n_operators = n_operator list
-  type level = n_operators N.t
+  type level = n_operators name
 
-  type hierarchy = level Ne_list.t
-  type n_hierarchy = hierarchy N.t
+  type hierarchy = level List.Ne.t
+  type n_hierarchy = hierarchy name
 
   type singleton = {
     type_name : string ;
@@ -91,17 +42,17 @@ module O = struct
     hierarchies : n_hierarchy list ;
   }
 
-  let get_op : n_operator -> operator = N.get_content
+  let get_op : n_operator -> operator = get_content
 
   let singleton type_name type_expression menhir_rule menhir_code =
     {type_name ; type_expression ; menhir_rule ; menhir_code}
   let language entry_point singletons hierarchies = {entry_point ; singletons ; hierarchies}
 
   let name_hierarchy name : n_operators list -> n_hierarchy = fun nopss ->
-    let nopss' = Ne_list.of_list nopss in
-    let name_i = fun i x -> N.name (name ^ "_" ^ (string_of_int i)) x in
-    let levels : hierarchy = Ne_list.mapi name_i nopss' in
-    N.name name levels
+    let nopss' = List.Ne.of_list nopss in
+    let name_i = fun i x -> make_name (name ^ "_" ^ (string_of_int i)) x in
+    let levels : hierarchy = List.Ne.mapi name_i nopss' in
+    make_name name levels
 
 end
 
@@ -120,15 +71,15 @@ module Check = struct
       in
       (if (List.length es < 2) then raise (Failure "operator is too short")) ;
       aux es in
-    let op : n_operator -> unit = fun x -> elements @@ N.get_content x in
-    let level : level -> unit = fun l -> List.iter op @@ N.get_content l in
-    let hierarchy : n_hierarchy -> unit = fun h -> Ne_list.iter level @@ N.get_content h in
+    let op : n_operator -> unit = fun x -> elements @@ get_content x in
+    let level : level -> unit = fun l -> List.iter op @@ get_content l in
+    let hierarchy : n_hierarchy -> unit = fun h -> List.Ne.iter level @@ get_content h in
     List.iter hierarchy l.hierarchies
 
   let associativity : language -> unit = fun l ->
     let level : level -> unit = fun l ->
       let aux : ([`Left | `Right | `None] as 'a) -> n_operator -> 'a = fun ass nop ->
-        let op = N.get_content nop in
+        let op = get_content nop in
         match ass, List.hd op, List.nth op (List.length op - 1) with
         | _, Lower, Lower -> raise (Failure "double assoc")
         | `None, Lower, _ -> `Left
@@ -137,11 +88,11 @@ module Check = struct
         | `Right, Lower, _ -> raise (Failure "different assocs")
         | m, _, _ -> m
       in
-      let _assert = List.fold_left aux `None (N.get_content l) in
+      let _assert = List.fold_left aux `None (get_content l) in
       ()
     in
     let hierarchy : n_hierarchy -> unit = fun h ->
-      Ne_list.iter level (N.get_content h) in
+      List.Ne.iter level (get_content h) in
     List.iter hierarchy l.hierarchies
 
 end
@@ -161,16 +112,16 @@ module Print_AST = struct
         | List _ -> Some ("(" ^ level_name ^ " Location.wrap list)")
         | Token _ -> None
         | Current | Lower -> Some (level_name ^ " Location.wrap") in
-      list_filter_map aux (N.get_content nop) in
+      List.filter_map aux (get_content nop) in
     let type_element = fun ppf te -> fprintf ppf "%s" te in
     fprintf ppf "| %s of (%a)"
-      (N.get_name nop)
+      (get_name nop)
       PP.(list_sep type_element (const " * ")) type_elements
 
   let n_hierarchy : _ -> O.n_hierarchy -> _ = fun ppf nh ->
-    let levels = Ne_list.map N.get_content (N.get_content nh) in
-    let nops = Ne_list.concat levels in
-    let name = N.get_name nh in
+    let levels = List.Ne.map get_content (get_content nh) in
+    let nops = List.Ne.concat levels in
+    let name = get_name nh in
     fprintf ppf "type %s =@.@[%a@]"
       name
       PP.(list_sep (n_operator name) new_line) nops
@@ -214,10 +165,10 @@ module Print_Grammar = struct
       ) ;
       i := !i + 1
     in
-    PP.(list_sep element (const " ")) ppf (N.get_content nop)
+    PP.(list_sep element (const " ")) ppf (get_content nop)
 
   let n_operator_code : _ -> O.n_operator -> _ = fun ppf nop ->
-    let (name, elements) = N.destruct nop in
+    let (name, elements) = destruct nop in
     let elements' =
       let i = ref 0 in
       let aux : O.element -> _ = fun e ->
@@ -227,39 +178,39 @@ module Print_Grammar = struct
           | List _ | Named _ | Current | Lower -> Some letters.(!i)
         in i := !i + 1 ; r
       in
-      list_filter_map aux elements in
+      List.filter_map aux elements in
     fprintf ppf "%s (%a)" name PP.(list_sep string (const " , ")) elements'
 
   let n_operator prev_lvl_name cur_lvl_name : _ -> O.n_operator -> _ = fun ppf nop ->
-    let name = N.get_name nop in
+    let name = get_name nop in
     fprintf ppf "%a@;| %a@;  @[<v>{@;  @[let loc = Location.make $startpos $endpos in@;Location.wrap ~loc %@%@ %a@]@;}@]" PP.comment name
       (n_operator_rule prev_lvl_name cur_lvl_name) nop
       n_operator_code nop
 
   let level prev_lvl_name : _ -> O.level -> _ = fun ppf l ->
-    let name = N.get_name l in
+    let name = get_name l in
     match prev_lvl_name with
     | "" -> (
         fprintf ppf "%s :@.  @[<v>%a@]" name
-          PP.(list_sep (n_operator prev_lvl_name name) new_line) (N.get_content l) ;
+          PP.(list_sep (n_operator prev_lvl_name name) new_line) (get_content l) ;
       )
     | _ -> (
         fprintf ppf "%s :@.  @[<v>%a@;| %s { $1 }@]" name
-          PP.(list_sep (n_operator prev_lvl_name name) new_line) (N.get_content l)
+          PP.(list_sep (n_operator prev_lvl_name name) new_line) (get_content l)
           prev_lvl_name
       )
 
   let n_hierarchy : _ -> O.n_hierarchy -> _ = fun ppf nh ->
-    let name = N.get_name nh in
+    let name = get_name nh in
     fprintf ppf "%a@.%%inline %s : %s_0 { $1 }@.@;" PP.comment ("Top-level for " ^ name) name name;
-    let (hd, tl) = Ne_list.rev @@ N.get_content nh in
+    let (hd, tl) = List.Ne.rev @@ get_content nh in
     fprintf ppf "%a" (level "") hd ;
     let aux prev_name lvl =
       PP.new_lines 2 ppf () ;
       fprintf ppf "%a" (level prev_name) lvl ;
-      N.get_name lvl
+      get_name lvl
     in
-    let _last_name = List.fold_left aux (N.get_name hd) tl in
+    let _last_name = List.fold_left aux (get_name hd) tl in
     ()
 
   let language : _ -> O.language -> _ = fun ppf l ->
@@ -277,14 +228,14 @@ let variable = O.singleton "variable" "string" "NAME" "$1"
 let infix : string -> [`Left | `Right] -> token -> O.n_operator = fun name assoc t ->
   let open O in
   match assoc with
-  | `Left -> N.name name [Current ; Token t ; Lower]
-  | `Right -> N.name name [Current ; Token t ; Lower]
+  | `Left -> make_name name [Current ; Token t ; Lower]
+  | `Right -> make_name name [Current ; Token t ; Lower]
 
-let list = N.name "List" [
+let list = make_name "List" [
     O.Token Token.LIST ; List (`Lead, Token.LSQUARE, Token.SEMICOLON, Token.RSQUARE) ;
 ]
 
-let let_in : O.n_operator = N.name "Let_in" [
+let let_in : O.n_operator = make_name "Let_in" [
     O.Token Token.LET ; Named "variable" ;
     O.Token Token.EQUAL ; Current ;
     O.Token Token.IN ; Current ;
@@ -296,7 +247,7 @@ let substraction = infix "Substraction" `Left Token.MINUS
 let multiplication = infix "Multiplication" `Left Token.TIMES
 let division = infix "Division" `Left Token.DIV
 
-let arith_variable : O.n_operator = N.name "Arith_variable" [ O.Named "variable" ]
+let arith_variable : O.n_operator = make_name "Arith_variable" [ O.Named "variable" ]
 
 let arith = O.name_hierarchy "arith" [
     [let_in] ;

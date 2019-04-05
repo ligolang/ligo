@@ -1,4 +1,14 @@
-module Make(Ord : Map.OrderedType) = struct
+module type OrderedType = Map.OrderedType
+
+module type S = sig
+  include Map.S
+
+  val of_list : (key * 'a) list -> 'a t
+  val to_list : 'a t -> 'a list
+  val to_kv_list : 'a t -> (key * 'a) list
+end
+
+module Make(Ord : Map.OrderedType) : S with type key = Ord.t = struct
   include Map.Make(Ord)
 
   let of_list (lst: (key * 'a) list) : 'a t =

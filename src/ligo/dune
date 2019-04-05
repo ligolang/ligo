@@ -1,18 +1,25 @@
+(env
+  (dev
+    (flags (:standard -w +1..62-4-9-44-40-42-48@39@33 -open Tezos_utils ))
+  )
+  (release
+    (flags (:standard -w +1..62-4-9-44-40-42-48@39@33 -open Tezos_utils ))
+  )
+)
+
 (library
   (name ligo)
   (public_name ligo)
   (libraries
     tezos-utils
     tezos-micheline
-    meta-michelson
-    ligo_helpers
+    meta_michelson
     ligo_parser
     multifix
   )
   (preprocess
     (pps ppx_let)
   )
-  (flags (:standard -w +1..62-4-9-44-40-42-48@39@33 ))
 )
 
 (alias

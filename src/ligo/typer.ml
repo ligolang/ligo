@@ -1,4 +1,4 @@
-open Ligo_helpers.Trace
+open Trace
 
 module I = Ast_simplified
 module O = Ast_typed
@@ -38,15 +38,17 @@ module Environment = struct
 
   module PP = struct
     open Format
-    open Ligo_helpers.PP
+    open PP
+
+    let list_sep_d x = list_sep x (const " , ")
 
     let value ppf (e:t) =
       let pp ppf (s, e) = fprintf ppf "%s -> %a" s O.PP.type_value e in
-      fprintf ppf "ValueEnv[%a]" (list_sep pp) e.environment
+      fprintf ppf "ValueEnv[%a]" (list_sep_d pp) e.environment
 
     let type_ ppf e =
       let pp ppf (s, e) = fprintf ppf "%s -> %a" s O.PP.type_value e in
-      fprintf ppf "TypeEnv[%a]" (list_sep pp) e.type_environment
+      fprintf ppf "TypeEnv[%a]" (list_sep_d pp) e.type_environment
 
     let full ppf e =
       fprintf ppf "%a\n%a" value e type_ e

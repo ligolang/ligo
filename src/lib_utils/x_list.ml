@@ -1,5 +1,16 @@
 include Tezos_base.TzPervasives.List
 
+let filter_map f =
+  let rec aux acc lst = match lst with
+    | [] -> List.rev acc
+    | hd :: tl -> aux (
+        match f hd with
+        | Some x -> x :: acc
+        | None -> acc
+      ) tl
+  in
+  aux []
+
 let range n =
   let rec aux acc n =
     if n = 0
@@ -53,3 +64,24 @@ let until n lst =
     else aux ((hd lst) :: acc) (n - 1) (tl lst)
   in
   rev (aux [] n lst)
+
+module Ne = struct
+
+  type 'a t = 'a * 'a list
+
+  let of_list lst = List.(hd lst, tl lst)
+  let to_list (hd, tl : _ t) = hd :: tl
+  let iter f (hd, tl : _ t) = f hd ; List.iter f tl
+  let map f (hd, tl : _ t) = f hd, List.map f tl
+  let mapi f (hd, tl : _ t) =
+    let lst = List.mapi f (hd::tl) in
+    of_list lst
+  let concat (hd, tl : _ t) = hd @ List.concat tl
+  let rev (hd, tl : _ t) =
+    match tl with
+    | [] -> (hd, [])
+    | lst ->
+        let r = List.rev lst in
+        (List.hd r, List.tl r @ [hd])
+
+end

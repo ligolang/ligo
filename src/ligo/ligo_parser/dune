@@ -10,7 +10,15 @@
  (name ligo_parser)
  (public_name ligo.parser)
  (modules_without_implementation Error)
- (libraries getopt hex str uutf zarith))
+ (libraries
+   getopt
+   hex
+   str
+   uutf
+   zarith
+   tezos-utils
+ )
+)
 
 ;; Les deux directives (rule) qui suivent sont pour le dev local.
 ;; Il suffit de faire "dune build Parser.exe" pour avoir un Parser.exe dans le dossier.

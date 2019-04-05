@@ -1,4 +1,4 @@
-open Ligo_helpers.Trace
+open Trace
 open Ast_simplified
 module Raw = Ligo_parser.AST
 

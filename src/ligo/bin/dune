@@ -1,6 +1,9 @@
 (executable
   (name cli)
   (public_name ligo)
+  (libraries
+    tezos-utils
+  )
   (package ligo)
   (preprocess
     (pps ppx_let)

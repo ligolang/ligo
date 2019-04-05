@@ -1,4 +1,4 @@
-module SMap = Ligo_helpers.X_map.String
+module SMap = Map.String
 
 type name = string
 type type_name = string
@@ -116,19 +116,22 @@ let ae expression = {expression ; type_annotation = None}
 
 let annotated_expression expression type_annotation = {expression ; type_annotation}
 
-open Ligo_helpers.Trace
+open Trace
 
 module PP = struct
-  open Ligo_helpers.PP
+  open PP
   open Format
 
+  let list_sep_d x = list_sep x (const " , ")
+  let smap_sep_d x = smap_sep x (const " , ")
+
   let rec type_expression ppf (te:type_expression) = match te with
-    | T_tuple lst -> fprintf ppf "tuple[%a]" (list_sep type_expression) lst
-    | T_sum m -> fprintf ppf "sum[%a]" (smap_sep type_expression) m
-    | T_record m -> fprintf ppf "record[%a]" (smap_sep type_expression) m
+    | T_tuple lst -> fprintf ppf "tuple[%a]" (list_sep_d type_expression) lst
+    | T_sum m -> fprintf ppf "sum[%a]" (smap_sep_d type_expression) m
+    | T_record m -> fprintf ppf "record[%a]" (smap_sep_d type_expression) m
     | T_function (p, r) -> fprintf ppf "%a -> %a" type_expression p type_expression r
     | T_variable name -> fprintf ppf "%s" name
-    | T_constant (name, lst) -> fprintf ppf "%s(%a)" name (list_sep type_expression) lst
+    | T_constant (name, lst) -> fprintf ppf "%s(%a)" name (list_sep_d type_expression) lst
 
   let literal ppf (l:literal) = match l with
     | Literal_unit -> fprintf ppf "Unit"
@@ -142,11 +145,11 @@ module PP = struct
     | E_variable name -> fprintf ppf "%s" name
     | E_application (f, arg) -> fprintf ppf "(%a)@(%a)" annotated_expression f annotated_expression arg
     | E_constructor (name, ae) -> fprintf ppf "%s(%a)" name annotated_expression ae
-    | E_constant (name, lst) -> fprintf ppf "%s(%a)" name (list_sep annotated_expression) lst
-    | E_tuple lst -> fprintf ppf "tuple[%a]" (list_sep annotated_expression) lst
+    | E_constant (name, lst) -> fprintf ppf "%s(%a)" name (list_sep_d annotated_expression) lst
+    | E_tuple lst -> fprintf ppf "tuple[%a]" (list_sep_d annotated_expression) lst
     | E_accessor (ae, p) -> fprintf ppf "%a.%a" annotated_expression ae access_path p
-    | E_record m -> fprintf ppf "record[%a]" (smap_sep annotated_expression) m
-    | E_map m -> fprintf ppf "map[%a]" (list_sep assoc_annotated_expression) m
+    | E_record m -> fprintf ppf "record[%a]" (smap_sep_d annotated_expression) m
+    | E_map m -> fprintf ppf "map[%a]" (list_sep_d assoc_annotated_expression) m
     | E_look_up (ds, ind) -> fprintf ppf "(%a)[%a]" annotated_expression ds annotated_expression ind
     | E_lambda {binder;input_type;output_type;result;body} ->
         fprintf ppf "lambda (%s:%a) : %a {%a} return %a"
@@ -164,7 +167,7 @@ module PP = struct
     | Access_record s -> fprintf ppf "%s" s
 
   and access_path ppf (p:access_path) =
-    fprintf ppf "%a" (list_sep ~pp_sep:(const ".") access) p
+    fprintf ppf "%a" (list_sep access (const ".")) p
 
   and type_annotation ppf (ta:type_expression option) = match ta with
     | None -> fprintf ppf ""
@@ -174,7 +177,7 @@ module PP = struct
     | None -> fprintf ppf "%a" expression ae.expression
     | Some t -> fprintf ppf "(%a) : %a" expression ae.expression type_expression t
 
-  and block ppf (b:block) = (list_sep instruction) ppf b
+  and block ppf (b:block) = (list_sep_d instruction) ppf b
 
   and single_record_patch ppf ((p, ae) : string * ae) =
     fprintf ppf "%s <- %a" p annotated_expression ae
@@ -182,7 +185,7 @@ module PP = struct
   and matching : type a . (formatter -> a -> unit) -> formatter -> a matching -> unit =
     fun f ppf m -> match m with
     | Match_tuple (lst, b) ->
-        fprintf ppf "let (%a) = %a" (list_sep (fun ppf -> fprintf ppf "%s")) lst f b
+        fprintf ppf "let (%a) = %a" (list_sep_d string) lst f b
     | Match_bool {match_true ; match_false} ->
         fprintf ppf "| True -> %a @.| False -> %a" f match_true f match_false
     | Match_list {match_nil ; match_cons = (hd, tl, match_cons)} ->
@@ -193,7 +196,7 @@ module PP = struct
   and instruction ppf (i:instruction) = match i with
     | I_skip -> fprintf ppf "skip"
     | I_fail ae -> fprintf ppf "fail with (%a)" annotated_expression ae
-    | I_record_patch (name, path, lst) -> fprintf ppf "%s.%a[%a]" name access_path path (list_sep single_record_patch) lst
+    | I_record_patch (name, path, lst) -> fprintf ppf "%s.%a[%a]" name access_path path (list_sep_d single_record_patch) lst
     | I_loop (cond, b) -> fprintf ppf "while (%a) { %a }" annotated_expression cond block b
     | I_assignment {name;annotated_expression = ae} ->
         fprintf ppf "%s := %a" name annotated_expression ae
@@ -207,7 +210,7 @@ module PP = struct
         fprintf ppf "const %s = %a" name annotated_expression ae
 
   let program ppf (p:program) =
-    fprintf ppf "%a" (list_sep declaration) p
+    fprintf ppf "%a" (list_sep_d declaration) p
 end
 
 module Rename = struct

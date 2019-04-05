@@ -1,6 +1,9 @@
 (library
   (name lex)
   (public_name ligo.multifix.lex)
+  (libraries
+    tezos-utils
+  )
   (modules token token_type lexer)
 )
 
