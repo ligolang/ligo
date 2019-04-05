@@ -1,0 +1,24 @@
+(library
+  (name lex)
+  (public_name ligo.multifix.lex)
+  (modules token token_type lexer)
+)
+
+(rule
+  (targets token_type.ml token_type.mli)
+  (deps token.mly)
+  (action (system "menhir --only-tokens token.mly --base token_type"))
+  (mode promote-until-clean)
+)
+
+(alias
+  (name lexer.mll)
+  (deps token.ml)
+)
+
+(rule
+  (targets lexer.ml)
+  (deps    token.ml lexer.mll)
+  (action  (system "ocamllex lexer.mll"))
+  (mode promote-until-clean)
+)

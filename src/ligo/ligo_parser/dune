@@ -8,7 +8,7 @@
 
 (library
  (name ligo_parser)
- (public_name ligo-parser)
+ (public_name ligo.parser)
  (modules_without_implementation Error)
  (libraries getopt hex str uutf zarith))
 

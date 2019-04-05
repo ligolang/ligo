@@ -13,8 +13,6 @@ depends: [
   "ppx_let"
   "tezos-utils"
   "meta-michelson"
-  "ligo-helpers"
-  "ligo-parser"
 ]
 build: [
   [ "dune" "build" "-p" name "-j" jobs ]

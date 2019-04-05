@@ -5,8 +5,9 @@
     tezos-utils
     tezos-micheline
     meta-michelson
-    ligo-helpers
-    ligo-parser
+    ligo_helpers
+    ligo_parser
+    multifix
   )
   (preprocess
     (pps ppx_let)
@@ -18,5 +19,4 @@
   (name runtest)
   (action (run test/test.exe))
   (deps (glob_files contracts/*))
-
 )

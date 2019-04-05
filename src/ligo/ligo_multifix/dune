@@ -1,0 +1,63 @@
+(library
+  (name multifix)
+  (public_name ligo.multifix)
+  (libraries lex)
+  (modules ast parser location user)
+)
+
+;; Generating parser
+
+(rule
+  (targets parser.ml parser.mli)
+  (deps parser.mly ast.ml)
+  (action (system "menhir --external-tokens Lex.Token lex/token.mly parser.mly --base parser"))
+  (mode promote-until-clean)
+)
+
+(rule
+ (targets parser.mly)
+ (deps partial_parser.mly pre_parser.mly)
+ (action (system "cat pre_parser.mly partial_parser.mly > parser.mly"))
+ (mode promote-until-clean)
+)
+
+(rule
+ (targets partial_parser.mly)
+ (deps generator.exe)
+ (action (system "./generator.exe parser > partial_parser.mly"))
+ (mode promote-until-clean)
+)
+
+;; Generating AST
+
+(rule
+ (targets ast.ml)
+ (deps generator.exe)
+ (action (system "./generator.exe ast > ast.ml"))
+ (mode promote-until-clean)
+)
+
+;; Generating Generator
+
+(executable
+  (name generator)
+  (libraries
+    ocamlgraph
+    lex
+  )
+  (modules generator)
+)
+
+;; Tests
+
+(alias
+  (name test-user)
+  (deps user.exe foo.test)
+  (action (system "./user.exe foo.test"))
+)
+
+(alias
+ (name runtest)
+ (deps generator.exe)
+ (action (system "./generator.exe parser ; ./generator.exe ast"))
+)
