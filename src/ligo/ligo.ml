@@ -8,6 +8,7 @@ module AST_Typed = Ast_typed
 module Mini_c = Mini_c
 module Typer = Typer
 module Transpiler = Transpiler
+module Parser_multifix = Multifix
 
 open Trace
 

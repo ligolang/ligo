@@ -22,3 +22,10 @@ let make (start_pos:Lexing.position) (end_pos:Lexing.position) : t =
 
 let virtual_location s = Virtual s
 let dummy = virtual_location "dummy"
+
+type 'a wrap = {
+  wrap_content : 'a ;
+  location : t ;
+}
+
+let wrap ~loc wrap_content = { wrap_content ; location = loc }

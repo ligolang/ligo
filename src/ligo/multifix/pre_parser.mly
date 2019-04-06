@@ -2,7 +2,7 @@
     open Ast
 %}
 
-%start <Ast.entry_point Location.wrap> entry_point
+%start <Ast.entry_point> entry_point
 
 %%
 
@@ -27,3 +27,6 @@ lead_list_content(separator, X):
 
 lead_list_first (separator, X):
   | option(separator) x = X { [ x ] }
+
+%inline wrap(X):
+  | x = X { let loc = Location.make $startpos $endpos in Location.wrap ~loc x }

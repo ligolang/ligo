@@ -91,6 +91,7 @@ let tokens = [
   keyword "list" ;
   keyword "block" ;
   keyword "for" ;
+  keyword "const" ;
   symbol "+" "PLUS" ;
   symbol "-" "MINUS" ;
   symbol "*" "TIMES" ;

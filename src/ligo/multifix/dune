@@ -1,8 +1,15 @@
 (library
   (name multifix)
   (public_name ligo.multifix)
-  (libraries lex)
-  (modules ast parser location user)
+  (libraries
+    tezos-utils
+    lex
+  )
+  (modules ast parser user)
+  (flags (:standard -w +1..62-4-9-44-40-42-48@39@33 -open Tezos_utils ))
+  (preprocess
+    (pps ppx_let)
+  )
 )
 
 ;; Generating parser
@@ -50,12 +57,6 @@
 )
 
 ;; Tests
-
-(alias
-  (name test-user)
-  (deps user.exe foo.test)
-  (action (system "./user.exe foo.test"))
-)
 
 (alias
  (name runtest)
