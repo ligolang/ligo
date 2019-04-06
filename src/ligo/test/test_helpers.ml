@@ -1,4 +1,4 @@
-open Ligo_helpers.Trace
+open! Trace
 
 let test name f =
   Alcotest.test_case name `Quick @@ fun () ->

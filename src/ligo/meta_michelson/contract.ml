@@ -163,7 +163,7 @@ module Step (Env: ENVIRONMENT) = struct
 end
 
 let run_lwt_full ?source ?payer ?self toplevel storage param {identities ; tezos_context = context} =
-  let { code ; _ } = toplevel in
+  let { code ; _ } : (_, _) toplevel = toplevel in
 
   let source = Option.unopt
       ~default:(List.nth identities 0).implicit_contract source in

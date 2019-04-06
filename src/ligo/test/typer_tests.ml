@@ -1,4 +1,4 @@
-open Ligo_helpers.Trace
+open Trace
 open Ligo.AST_Simplified
 open Test_helpers
 
@@ -12,7 +12,7 @@ let int () : unit result =
   let open Typer in
   let e = Environment.empty in
   let%bind post = type_annotated_expression e pre in
-  let open Typed in
+  let open! Typed in
   let open Combinators in
   let%bind () = assert_type_value_eq (post.type_annotation, t_int ()) in
   ok ()
@@ -22,7 +22,7 @@ module TestExpressions = struct
                       (expr : expression)
                       (test_expected_ty : Typed.tv) =
     let open Typer in
-    let open Typed in
+    let open! Typed in
     let pre = ae @@ expr in
     let%bind post = type_annotated_expression env pre in
     let%bind () = assert_type_value_eq (post.type_annotation, test_expected_ty) in

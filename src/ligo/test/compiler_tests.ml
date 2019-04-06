@@ -1,4 +1,4 @@
-open Ligo_helpers.Trace
+open Trace
 open Ligo.Mini_c
 open Combinators
 open Test_helpers

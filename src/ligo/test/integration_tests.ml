@@ -1,4 +1,4 @@
-open Ligo_helpers.Trace
+open Trace
 open Ligo
 open Test_helpers
 

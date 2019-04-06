@@ -224,7 +224,8 @@ module Context_init = struct
 
   let begin_construction ?(priority=0) ~timestamp ~(header:Alpha_context.Block_header.shell_header) ~hash ctxt =
     let contents = contents ~priority () in
-    let protocol_data = Alpha_context.Block_header.{
+    let protocol_data =
+      let open! Alpha_context.Block_header in {
         contents ;
         signature = Signature.zero ;
       } in
