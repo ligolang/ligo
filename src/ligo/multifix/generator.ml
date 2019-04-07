@@ -77,6 +77,7 @@ module O = struct
   let get_op : n_operator -> operator = get_content
 
   let manual_singleton name menhir_codes ast_code : singleton = Manual (make_name name {menhir_codes ; ast_code})
+  let rule_singleton rule : singleton = Generated rule
   let language entry_point singletons hierarchies = {entry_point ; singletons ; hierarchies}
 
 
@@ -134,7 +135,7 @@ module Print_AST = struct
   open Format
 
   let manual_rule : _ -> O.manual_rule -> _ = fun ppf mr ->
-    fprintf ppf "type %s = %s" mr.name mr.content.ast_code
+    fprintf ppf "%s = %s" mr.name mr.content.ast_code
 
   let generated_rule : _ -> O.rule -> _ = fun ppf gr ->
     let aux : _ -> O.rhs -> _ = fun ppf rhs ->
@@ -148,10 +149,10 @@ module Print_AST = struct
         List.filter_map aux rhs in
       let type_element = fun ppf te -> fprintf ppf "%s" te in
       fprintf ppf "| %s of (%a)"
-        gr.name
+        (String.capitalize_ascii gr.name)
         PP.(list_sep type_element (const " * ")) type_elements
     in
-    fprintf ppf "type %s=@.  @[<v>%a@]" gr.name
+    fprintf ppf "%s = @.  @[<v>%a@]" gr.name
       PP.(list_sep aux new_line) gr.content
 
   let singleton : _ -> O.singleton -> _ = fun ppf s ->
@@ -159,6 +160,12 @@ module Print_AST = struct
     | Manual s -> manual_rule ppf s
     | Generated s -> generated_rule ppf s
 
+  let singletons : _ -> O.singleton list -> _ = fun ppf ss ->
+    match ss with
+    | [] -> ()
+    | hd :: tl ->
+        fprintf ppf "%a\n" (PP.prepend "type " singleton) hd ;
+        fprintf ppf "%a" PP.(list_sep (prepend "and " singleton) (const "\n")) tl
 
   let n_operator level_name : _ -> O.n_operator -> _ = fun ppf nop ->
     let type_elements =
@@ -174,18 +181,26 @@ module Print_AST = struct
       (get_name nop)
       PP.(list_sep type_element (const " * ")) type_elements
 
-  let n_hierarchy : _ -> O.n_hierarchy -> _ = fun ppf nh ->
+  let n_hierarchy t : _ -> O.n_hierarchy -> _ = fun ppf nh ->
     let levels = List.Ne.map get_content ((get_content nh).levels) in
     let nops = List.Ne.concat levels in
     let name = get_name nh in
-    fprintf ppf "type %s =@.@[%a@]"
+    fprintf ppf "%s %s =@.@[%a@]" t
       name
       PP.(list_sep (n_operator name) new_line) nops
 
+  let n_hierarchies (first:bool) : _ -> O.n_hierarchy list -> _ = fun ppf ss ->
+    match ss with
+    | [] -> ()
+    | hd :: tl ->
+        fprintf ppf "%a\n" (n_hierarchy (if first then "type" else "and")) hd ;
+        fprintf ppf "%a" PP.(list_sep (prepend "and " (n_hierarchy "and")) (const "\n")) tl
+
   let language : _ -> O.language -> _ = fun ppf l ->
     fprintf ppf "%a@.@." PP.comment "Language" ;
-    fprintf ppf "  %a@.%a@.@." PP.comment "Singletons" PP.(list_sep singleton new_line) l.singletons ;
-    fprintf ppf "  %a@.%a@." PP.comment "Hierarchies" PP.(list_sep n_hierarchy (new_lines 2)) l.hierarchies ;
+    let first = List.length l.singletons = 0 in
+    fprintf ppf "  %a@.%a@.@." PP.comment "Singletons" singletons l.singletons ;
+    fprintf ppf "  %a@.%a@." PP.comment "Hierarchies" (n_hierarchies first) l.hierarchies ;
     fprintf ppf "  %a@.type entry_point = %s Location.wrap@.@." PP.comment "Entry point" l.entry_point ;
     ()
 end
@@ -205,9 +220,9 @@ module Print_Grammar = struct
       let i = ref 0 in
       let aux : _ -> O.rhs_element -> _ = fun ppf e ->
           (match e with
-          | `Named s -> fprintf ppf "%s = %s" letters.(!i) s
+          | `Named s -> fprintf ppf "%s = wrap(%s)" letters.(!i) s
           | `List (mode, sep, s) ->
-              fprintf ppf "%s = %s(%s, %s)"
+              fprintf ppf "%s = %s(%s, wrap(%s))"
                 letters.(!i)
                 (match mode with | `Lead -> "lead_list" | `Trail -> "trail_list" | `Separator -> "separated_list")
                 (Token.to_string sep)
@@ -225,7 +240,7 @@ module Print_Grammar = struct
           i := !i + 1 ; s
       in
       let content = List.filter_map aux rhs in
-      fprintf ppf "%a" PP.(list_sep string (const " , ")) content
+      fprintf ppf "%s (%a)" (String.capitalize_ascii gr.name) PP.(list_sep string (const " , ")) content
     in
     let aux : _ -> O.rhs -> _ = fun ppf rhs ->
       fprintf ppf "| %a { %a }"
@@ -353,7 +368,7 @@ module Expression = struct
 
   let arith_variable : O.n_operator = make_name "Arith_variable" [ `Named "variable" ]
 
-  let arith = O.name_hierarchy "arith" [
+  let arith = O.name_hierarchy "expression" [
       [let_in] ;
       [addition ; substraction] ;
       [multiplication ; division] ;
@@ -377,9 +392,11 @@ module Program = struct
       [`Token CONST ; `Named variable_name ; `Token EQUAL ; `Named expression_name]
     ]
 
+  let singletons = List.map O.rule_singleton [program ; statement]
+
 end
 
-let language = O.language "arith" [variable] [Expression.arith]
+let language = O.language program_name (variable :: Program.singletons) [Expression.arith]
 
 let () =
   let argn = Array.length Sys.argv in

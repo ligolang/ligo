@@ -19,28 +19,24 @@
   (targets token.mly)
   (deps generator.exe)
   (action (system "./generator.exe mly > token.mly"))
-  (mode promote-until-clean)
 )
 
 (rule
   (targets token.ml)
   (deps generator.exe)
   (action (system "./generator.exe ml > token.ml"))
-  (mode promote-until-clean)
 )
 
 (rule
   (targets lexer.mll)
   (deps generator.exe)
   (action (system "./generator.exe mll > lexer.mll"))
-  (mode promote-until-clean)
 )
 
 (rule
   (targets token_type.ml token_type.mli)
   (deps token.mly)
   (action (system "menhir --only-tokens token.mly --base token_type"))
-  (mode promote-until-clean)
 )
 
 (alias
@@ -52,5 +48,4 @@
   (targets lexer.ml)
   (deps    token.ml lexer.mll)
   (action  (system "ocamllex lexer.mll"))
-  (mode promote-until-clean)
 )
