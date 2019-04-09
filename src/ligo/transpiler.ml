@@ -73,7 +73,10 @@ and translate_instruction (env:Environment.t) (i:AST.instruction) : statement op
   match i with
   | I_assignment {name;annotated_expression} ->
       let%bind (_, t, _) as expression = translate_annotated_expression env annotated_expression in
-      let env' = Environment.add (name, t) env in
+      let env' =
+        match Environment.has name env with
+        | true -> env
+        | false -> Environment.add (name, t) env in
       return ~env' (Assignment (name, expression))
   | I_matching (expr, m) -> (
       let%bind expr' = translate_annotated_expression env expr in
@@ -96,7 +99,8 @@ and translate_instruction (env:Environment.t) (i:AST.instruction) : statement op
     )
   | I_loop (expr, body) ->
       let%bind expr' = translate_annotated_expression env expr in
-      let%bind body' = translate_block env body in
+      let env' = Environment.extend env in
+      let%bind body' = translate_block env' body in
       return (While (expr', body'))
   | I_skip -> ok None
   | I_fail _ -> simple_fail "todo : fail"

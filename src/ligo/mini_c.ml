@@ -199,7 +199,7 @@ module PP = struct
     | While (e, b) -> fprintf ppf "while (%a) %a" expression e block b
 
   and block ppf ((b, _):block) =
-    fprintf ppf "@[<v 2>{@,%a@]@,}" (pp_print_list ~pp_sep:pp_print_newline statement) b
+    fprintf ppf "{  @;@[<v 2>%a@]@;}" (pp_print_list ~pp_sep:(PP.tag "@;") statement) b
 
   let tl_statement ppf (ass, _) = assignment ppf ass
 
@@ -556,7 +556,7 @@ module Environment = struct
           | Ok (code, tv) -> ok (seq [i_car ; code], tv)
           | Errors _ ->
             let%bind (code, tv) = aux b str in
-            ok (seq [i_car ; code], tv)
+            ok (seq [i_cdr ; code], tv)
         )
     in
     let%bind (code, tv) = aux s str in
@@ -620,7 +620,7 @@ module Environment = struct
       ok ()
     in
 
-    ok code
+    ok @@ seq [ i_comment "set" ; code ]
 end
 
 module Translate_program = struct
@@ -650,6 +650,7 @@ module Translate_program = struct
 
   let rec get_predicate : string -> predicate result = function
     | "ADD_INT" -> ok @@ simple_binary @@ prim I_ADD
+    | "ADD_NAT" -> ok @@ simple_binary @@ prim I_ADD
     | "NEG" -> ok @@ simple_unary @@ prim I_NEG
     | "OR" -> ok @@ simple_binary @@ prim I_OR
     | "AND" -> ok @@ simple_binary @@ prim I_AND
@@ -657,6 +658,7 @@ module Translate_program = struct
     | "CAR" -> ok @@ simple_unary @@ prim I_CAR
     | "CDR" -> ok @@ simple_unary @@ prim I_CDR
     | "EQ" -> ok @@ simple_binary @@ seq [prim I_COMPARE ; prim I_EQ]
+    | "LT" -> ok @@ simple_binary @@ seq [prim I_COMPARE ; prim I_LT]
     | "UPDATE" -> ok @@ simple_ternary @@ prim I_UPDATE
     | "SOME" -> ok @@ simple_unary @@ prim I_SOME
     | "GET_FORCE" -> ok @@ simple_binary @@ seq [prim I_GET ; i_assert_some]
@@ -864,6 +866,7 @@ module Translate_program = struct
       in
       ok ()
     in
+
     ok code
 
   and translate_statement ((s', w_env) as s:statement) : michelson result =
@@ -919,10 +922,38 @@ module Translate_program = struct
       let%bind block = translate_regular_block block in
       ok @@ (seq [
         i_push_unit ; expr ; i_car ;
-        dip Environment.to_michelson_extend ;
-        prim ~children:[block ; Environment.to_michelson_restrict ; i_push_unit ; expr ; i_car] I_LOOP ;
+        prim ~children:[seq [
+            Environment.to_michelson_extend ;
+            block ;
+            Environment.to_michelson_restrict ;
+            i_push_unit ; expr ; i_car]] I_LOOP ;
       ])
     in
+
+    let%bind () =
+      let%bind (Ex_ty pre_ty) = Environment.to_ty w_env.pre_environment in
+      let input_stack_ty = Stack.(pre_ty @: nil) in
+      let%bind (Ex_ty post_ty) = Environment.to_ty w_env.post_environment in
+      let output_stack_ty = Stack.(post_ty @: nil) in
+      let%bind error_message =
+        let%bind pre_env_michelson = Environment.to_michelson_type w_env.pre_environment in
+        let%bind post_env_michelson = Environment.to_michelson_type w_env.post_environment in
+        ok @@ Format.asprintf
+          "statement : %a\ncode : %a\npre type : %a\npost type : %a"
+          PP.statement s
+          Michelson.pp code
+          Michelson.pp pre_env_michelson
+          Michelson.pp post_env_michelson
+      in
+      let%bind _ =
+        Trace.trace_tzresult_lwt (error "error parsing statement code" error_message) @@
+        Tezos_utils.Memory_proto_alpha.parse_michelson code
+          input_stack_ty output_stack_ty
+      in
+      ok ()
+    in
+
+
     ok code
 
   and translate_regular_block ((b, env):block) : michelson result =

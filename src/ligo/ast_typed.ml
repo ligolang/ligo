@@ -351,7 +351,12 @@ let rec assert_value_eq (a, b: (value*value)) : unit result = match (a.expressio
   | E_constant _, E_constant _ ->
       simple_fail "different constants"
   | E_constant _, _ ->
-      simple_fail "comparing constant with other stuff"
+      let error_content =
+        Format.asprintf "%a vs %a"
+          PP.annotated_expression a
+          PP.annotated_expression b
+      in
+      fail @@ error "comparing constant with other stuff" error_content
 
   | E_constructor (ca, a), E_constructor (cb, b) when ca = cb -> (
       let%bind _eq = assert_value_eq (a, b) in
@@ -493,7 +498,7 @@ module Combinators = struct
   let e_nat n : expression = E_literal (Literal_nat n)
   let e_bool b : expression = E_literal (Literal_bool b)
   let e_string s : expression = E_literal (Literal_string s)
-  let e_pair a b : expression = E_constant ("PAIR", [a; b])
+  let e_pair a b : expression = E_tuple [a; b]
 
   let e_a_unit = annotated_expression e_unit (t_unit ())
   let e_a_int n = annotated_expression (e_int n) (t_int ())

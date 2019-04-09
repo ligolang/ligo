@@ -239,6 +239,50 @@ let condition () : unit result =
     @@ [0 ; 2 ; 42 ; 163 ; -1] in
   ok ()
 
+let loop () : unit result =
+  let%bind program = type_file "./contracts/loop.ligo" in
+  let%bind _dummy = trace (simple_error "dummy") @@
+    let aux n =
+      let open AST_Typed.Combinators in
+      let input = e_a_nat n in
+      let%bind result = easy_run_typed "dummy" program input in
+      let expected = e_a_nat n in
+      AST_Typed.assert_value_eq (expected, result)
+    in
+    let%bind _ = bind_list
+      @@ List.map aux
+      @@ [0 ; 2 ; 42 ; 163] in
+    ok ()
+  in
+  let%bind _counter = trace (simple_error "counter") @@
+    let aux n =
+      let open AST_Typed.Combinators in
+      let input = e_a_nat n in
+      let%bind result = easy_run_typed "counter" program input in
+      let expected = e_a_nat n in
+      AST_Typed.assert_value_eq (expected, result)
+    in
+    let%bind _ = bind_list
+      @@ List.map aux
+      @@ [0 ; 2 ; 42 ; 12] in
+    ok ()
+  in
+  let%bind _sum = trace (simple_error "sum") @@
+    let aux n =
+      let open AST_Typed.Combinators in
+      let input = e_a_nat n in
+      let%bind result = easy_run_typed "sum" program input in
+      let expected = e_a_nat (n * (n + 1) / 2) in
+      AST_Typed.assert_value_eq (expected, result)
+    in
+    let%bind _ = bind_list
+      @@ List.map aux
+      @@ [0 ; 2 ; 42 ; 12] in
+    ok ()
+  in
+  ok()
+
+
 let matching () : unit result =
   let%bind program = type_file "./contracts/match.ligo" in
   let%bind _bool =
@@ -350,6 +394,7 @@ let main = "Integration (End to End)", [
     test "map" map ;
     test "multiple parameters" multiple_parameters ;
     test "condition" condition ;
+    test "loop" loop ;
     test "matching" matching ;
     test "declarations" declarations ;
     test "quote declaration" quote_declaration ;

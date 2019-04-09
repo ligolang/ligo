@@ -406,12 +406,16 @@ and type_constant (name:string) (lst:O.type_value list) (tv_opt:O.type_value opt
   let open O in
   match (name, lst) with
   | "ADD", [a ; b] when type_value_eq (a, t_int ()) && type_value_eq (b, t_int ()) -> ok ("ADD_INT", t_int ())
+  | "ADD", [a ; b] when type_value_eq (a, t_nat ()) && type_value_eq (b, t_nat ()) -> ok ("ADD_NAT", t_nat ())
   | "ADD", [a ; b] when type_value_eq (a, t_string ()) && type_value_eq (b, t_string ()) -> ok ("CONCAT", t_string ())
   | "ADD", [_ ; _] -> simple_fail "bad types to add"
   | "ADD", _ -> simple_fail "bad number of params to add"
   | "EQ", [a ; b] when type_value_eq (a, t_int ()) && type_value_eq (b, t_int ()) -> ok ("EQ", t_bool ())
   | "EQ", [a ; b] when type_value_eq (a, t_nat ()) && type_value_eq (b, t_nat ()) -> ok ("EQ", t_bool ())
   | "EQ", _ -> simple_fail "EQ only defined over int and nat"
+  | "LT", [a ; b] when type_value_eq (a, t_int ()) && type_value_eq (b, t_int ()) -> ok ("LT", t_bool ())
+  | "LT", [a ; b] when type_value_eq (a, t_nat ()) && type_value_eq (b, t_nat ()) -> ok ("LT", t_bool ())
+  | "LT", _ -> simple_fail "LT only defined over int and nat"
   | "OR", [a ; b] when type_value_eq (a, t_bool ()) && type_value_eq (b, t_bool ()) -> ok ("OR", t_bool ())
   | "OR", _ -> simple_fail "OR only defined over bool"
   | "AND", [a ; b] when type_value_eq (a, t_bool ()) && type_value_eq (b, t_bool ()) -> ok ("AND", t_bool ())
