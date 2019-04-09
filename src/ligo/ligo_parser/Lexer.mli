@@ -64,6 +64,7 @@ module type TOKEN =
     val mk_string : lexeme -> Region.t -> token
     val mk_bytes  : lexeme -> Region.t -> token
     val mk_int    : lexeme -> Region.t -> (token,   int_err) result
+    val mk_nat    : lexeme -> Region.t -> (token,   int_err) result
     val mk_ident  : lexeme -> Region.t -> (token, ident_err) result
     val mk_constr : lexeme -> Region.t -> token
     val mk_sym    : lexeme -> Region.t -> token

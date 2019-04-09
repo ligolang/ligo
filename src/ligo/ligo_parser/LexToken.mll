@@ -30,6 +30,7 @@ type t =
   String of lexeme Region.reg
 | Bytes  of (lexeme * Hex.t) Region.reg
 | Int    of (lexeme * Z.t) Region.reg
+| Nat    of (lexeme * Z.t) Region.reg
 | Ident  of lexeme Region.reg
 | Constr of lexeme Region.reg
 
@@ -154,6 +155,9 @@ let proj_token = function
 | Int Region.{region; value = s,n} ->
     region, sprintf "Int (\"%s\", %s)" s (Z.to_string n)
 
+| Nat Region.{region; value = s,n} ->
+    region, sprintf "Nat (\"%s\", %s)" s (Z.to_string n)
+
 | Ident Region.{region; value} ->
     region, sprintf "Ident \"%s\"" value
 
@@ -249,6 +253,7 @@ let to_lexeme = function
   String s  -> s.Region.value
 | Bytes b   -> fst b.Region.value
 | Int i     -> fst i.Region.value
+| Nat i     -> fst i.Region.value
 | Ident id
 | Constr id -> id.Region.value
 
@@ -471,6 +476,15 @@ let mk_int lexeme region =
   if   Z.equal z Z.zero && lexeme <> "0"
   then Error Non_canonical_zero
   else Ok (Int Region.{region; value = lexeme, z})
+
+let mk_nat lexeme region =
+  let z =
+    Str.(global_replace (regexp "_") "" lexeme) |>
+    Str.(global_replace (regexp "n") "") |>
+    Z.of_string in
+  if Z.equal z Z.zero && lexeme <> "0n"
+  then Error Non_canonical_zero
+  else Ok (Nat Region.{region; value = lexeme, z})
 
 let eof region = EOF region
 

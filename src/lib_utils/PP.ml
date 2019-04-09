@@ -14,6 +14,9 @@ let ne_list_sep value separator ppf (hd, tl) =
   separator ppf () ;
   pp_print_list ~pp_sep:separator value ppf tl
 
+let prepend s f ppf a =
+  fprintf ppf "%s%a" s f a
+
 let pair_sep value sep ppf (a, b) = fprintf ppf "%a %s %a" value a sep value b
 let smap_sep value sep ppf m =
   let module SMap = X_map.String in

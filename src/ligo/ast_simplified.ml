@@ -78,7 +78,8 @@ and access_path = access list
 and literal =
   | Literal_unit
   | Literal_bool of bool
-  | Literal_number of int
+  | Literal_int of int
+  | Literal_nat of int
   | Literal_string of string
   | Literal_bytes of bytes
 
@@ -136,7 +137,8 @@ module PP = struct
   let literal ppf (l:literal) = match l with
     | Literal_unit -> fprintf ppf "Unit"
     | Literal_bool b -> fprintf ppf "%b" b
-    | Literal_number n -> fprintf ppf "%d" n
+    | Literal_int n -> fprintf ppf "%d" n
+    | Literal_nat n -> fprintf ppf "%d" n
     | Literal_string s -> fprintf ppf "%S" s
     | Literal_bytes b -> fprintf ppf "0x%s" @@ Bytes.to_string @@ Bytes.escaped b
 
@@ -366,7 +368,8 @@ module Combinators = struct
   let e_var (s : string) : expression = E_variable s
 
   let e_unit  () : expression = E_literal (Literal_unit)
-  let e_number n : expression = E_literal (Literal_number n)
+  let e_int n : expression = E_literal (Literal_int n)
+  let e_nat n : expression = E_literal (Literal_nat n)
   let e_bool   b : expression = E_literal (Literal_bool b)
   let e_string s : expression = E_literal (Literal_string s)
   let e_bytes  b : expression = E_literal (Literal_bytes (Bytes.of_string b))

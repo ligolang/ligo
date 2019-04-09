@@ -418,6 +418,7 @@ module Combinators = struct
   let t_string ?s () : type_value = type_value (T_constant ("string", [])) s
   let t_bytes ?s () : type_value = type_value (T_constant ("bytes", [])) s
   let t_int ?s () : type_value = type_value (T_constant ("int", [])) s
+  let t_nat ?s () : type_value = type_value (T_constant ("nat", [])) s
   let t_unit ?s () : type_value = type_value (T_constant ("unit", [])) s
   let t_option o ?s () : type_value = type_value (T_constant ("option", [o])) s
   let t_tuple lst ?s () : type_value = type_value (T_tuple lst) s
@@ -472,6 +473,10 @@ module Combinators = struct
     match t.type_value with
     | T_constant ("map", [k;v]) -> ok (k, v)
     | _ -> simple_fail "not a map"
+  let assert_t_map (t:type_value) : unit result =
+    match t.type_value with
+    | T_constant ("map", [_ ; _]) -> ok ()
+    | _ -> simple_fail "not a map"
 
   let e_record map : expression = E_record map
   let ez_e_record (lst : (string * ae) list) : expression =
@@ -485,12 +490,16 @@ module Combinators = struct
 
   let e_unit : expression = E_literal (Literal_unit)
   let e_int n : expression = E_literal (Literal_int n)
+  let e_nat n : expression = E_literal (Literal_nat n)
   let e_bool b : expression = E_literal (Literal_bool b)
+  let e_string s : expression = E_literal (Literal_string s)
   let e_pair a b : expression = E_constant ("PAIR", [a; b])
 
   let e_a_unit = annotated_expression e_unit (t_unit ())
   let e_a_int n = annotated_expression (e_int n) (t_int ())
+  let e_a_nat n = annotated_expression (e_nat n) (t_nat ())
   let e_a_bool b = annotated_expression (e_bool b) (t_bool ())
+  let e_a_string s = annotated_expression (e_string s) (t_string ())
   let e_a_pair a b = annotated_expression (e_pair a b) (t_pair a.type_annotation b.type_annotation ())
   let e_a_some s = annotated_expression (e_some s) (t_option s.type_annotation ())
   let e_a_none t = annotated_expression e_none (t_option t ())

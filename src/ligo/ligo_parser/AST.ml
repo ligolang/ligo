@@ -576,6 +576,7 @@ and arith_expr =
 | Mod  of kwd_mod bin_op reg
 | Neg  of minus    un_op reg
 | Int  of (Lexer.lexeme * Z.t) reg
+| Nat  of (Lexer.lexeme * Z.t) reg
 
 and string_expr =
   Cat    of cat bin_op reg
@@ -729,7 +730,8 @@ and arith_expr_to_region = function
 | Div  {region; _}
 | Mod  {region; _}
 | Neg  {region; _}
-| Int  {region; _} -> region
+| Int  {region; _}
+| Nat  {region; _} -> region
 
 and string_expr_to_region = function
   Cat    {region; _}
@@ -1307,6 +1309,7 @@ and print_arith_expr = function
 | Neg {value = {op; arg}; _} ->
     print_token op "-"; print_expr arg
 | Int i -> print_int i
+| Nat i -> print_int i
 
 and print_string_expr = function
   Cat {value = {arg1; op; arg2}; _} ->

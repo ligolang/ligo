@@ -661,6 +661,7 @@ module Translate_program = struct
     | "SOME" -> ok @@ simple_unary @@ prim I_SOME
     | "GET_FORCE" -> ok @@ simple_binary @@ seq [prim I_GET ; i_assert_some]
     | "GET" -> ok @@ simple_binary @@ prim I_GET
+    | "SIZE" -> ok @@ simple_unary @@ prim I_SIZE
     | x -> simple_fail @@ "predicate \"" ^ x ^ "\" doesn't exist"
 
   and translate_value (v:value) : michelson result = match v with
@@ -1028,6 +1029,8 @@ module Translate_ir = struct
         ok @@ D_nat n
     | (Bool_t _), b ->
         ok @@ D_bool b
+    | (String_t _), s ->
+        ok @@ D_string s
     | (Unit_t _), () ->
         ok @@ D_unit
     | (Option_t _), None ->
@@ -1050,7 +1053,21 @@ module Translate_ir = struct
           bind_map_list aux lst
         in
         ok @@ D_map lst'
-    | _ -> simple_fail "this value can't be transpiled back yet"
+    | ty, v ->
+        let%bind error =
+          let%bind m_data =
+            trace_tzresult_lwt (simple_error "unparsing unrecognized data") @@
+            Tezos_utils.Memory_proto_alpha.unparse_michelson_data ty v in
+          let%bind m_ty =
+            trace_tzresult_lwt (simple_error "unparsing unrecognized data") @@
+            Tezos_utils.Memory_proto_alpha.unparse_michelson_ty ty in
+          let error_content  =
+            Format.asprintf "%a : %a"
+              Michelson.pp m_data
+              Michelson.pp m_ty in
+          ok @@ error "this value can't be transpiled back yet" error_content
+        in
+        fail error
 end
 
 
@@ -1121,6 +1138,10 @@ module Combinators = struct
     | D_int n -> ok n
     | _ -> simple_fail "not an int"
 
+  let get_nat (v:value) = match v with
+    | D_nat n -> ok n
+    | _ -> simple_fail "not a nat"
+
   let get_string (v:value) = match v with
     | D_string s -> ok s
     | _ -> simple_fail "not a string"
@@ -1178,6 +1199,7 @@ module Combinators = struct
     aux b'
 
   let t_int : type_value = T_base Base_int
+  let t_nat : type_value = T_base Base_nat
 
   let quote binder input output body result : anon_function =
     let content : anon_function_content = {

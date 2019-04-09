@@ -15,6 +15,7 @@ let rec translate_type (t:AST.type_value) : type_value result =
   match t.type_value with
   | T_constant ("bool", []) -> ok (T_base Base_bool)
   | T_constant ("int", []) -> ok (T_base Base_int)
+  | T_constant ("nat", []) -> ok (T_base Base_nat)
   | T_constant ("string", []) -> ok (T_base Base_string)
   | T_constant ("unit", []) -> ok (T_base Base_unit)
   | T_constant ("map", [key;value]) ->
@@ -405,6 +406,9 @@ let rec untranspile (v : value) (t : AST.type_value) : AST.annotated_expression 
   | T_constant ("int", []) ->
       let%bind n = get_int v in
       return (E_literal (Literal_int n))
+  | T_constant ("nat", []) ->
+      let%bind n = get_nat v in
+      return (E_literal (Literal_nat n))
   | T_constant ("string", []) ->
       let%bind n = get_string v in
       return (E_literal (Literal_string n))

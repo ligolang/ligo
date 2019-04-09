@@ -106,6 +106,7 @@ module type TOKEN =
     val mk_string : lexeme -> Region.t -> token
     val mk_bytes  : lexeme -> Region.t -> token
     val mk_int    : lexeme -> Region.t -> (token,   int_err) result
+    val mk_nat    : lexeme -> Region.t -> (token,   int_err) result
     val mk_ident  : lexeme -> Region.t -> (token, ident_err) result
     val mk_constr : lexeme -> Region.t -> token
     val mk_sym    : lexeme -> Region.t -> token
@@ -417,6 +418,13 @@ module Make (Token: TOKEN) : (S with module Token = Token) =
       | Error Token.Non_canonical_zero ->
           fail region Non_canonical_zero
 
+    let mk_nat state buffer =
+      let region, lexeme, state = sync state buffer in
+      match Token.mk_nat lexeme region with
+        Ok token -> token, state
+      | Error Token.Non_canonical_zero ->
+          fail region Non_canonical_zero
+
     let mk_ident state buffer =
       let region, lexeme, state = sync state buffer in
       match Token.mk_ident lexeme region with
@@ -487,6 +495,7 @@ and scan state = parse
 | ident   { mk_ident       state lexbuf |> enqueue }
 | constr  { mk_constr      state lexbuf |> enqueue }
 | bytes   { (mk_bytes seq) state lexbuf |> enqueue }
+| integer 'n' { mk_nat         state lexbuf |> enqueue }
 | integer { mk_int         state lexbuf |> enqueue }
 | symbol  { mk_sym         state lexbuf |> enqueue }
 | eof     { mk_eof         state lexbuf |> enqueue }

@@ -193,6 +193,15 @@ let map () : unit result =
     in
     bind_map_list aux [0 ; 42 ; 51 ; 421 ; -3]
   in
+  let%bind _size = trace (simple_error "size") @@
+    let aux n =
+      let input = ez List.(map (fun x -> (x, x)) @@ range n) in
+      let%bind result = easy_run_typed "size_" program input in
+      let expect = AST_Typed.Combinators.(e_a_nat n) in
+      AST_Typed.assert_value_eq (expect, result)
+    in
+    bind_map_list aux [1 ; 10 ; 3]
+  in
   let%bind _foobar = trace (simple_error "foobar") @@
     let%bind result = easy_evaluate_typed "fb" program in
     let expect = ez [(23, 0) ; (42, 0)] in

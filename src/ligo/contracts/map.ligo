@@ -1,5 +1,8 @@
 type foobar is map(int, int)
 
+function size_ (const m : foobar) : nat is
+  block {skip} with (size(m))
+
 function gf (const m : foobar) : int is begin skip end with get_force(23, m)
 
 const fb : foobar = map
@@ -19,3 +22,4 @@ const bm : foobar = map
   120 -> 23 ;
   421 -> 23 ;
 end
+

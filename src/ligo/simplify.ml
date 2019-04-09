@@ -12,6 +12,7 @@ let get_value : 'a Raw.reg -> 'a = fun x -> x.value
 
 let type_constants = [
   ("unit", 0) ;
+  ("string", 0) ;
   ("nat", 0) ;
   ("int", 0) ;
   ("bool", 0) ;
@@ -76,6 +77,7 @@ and simpl_list_type_expression (lst:Raw.type_expr list) : type_expression result
 
 let constants = [
   ("get_force", 2) ;
+  ("size", 1) ;
 ]
 
 let rec simpl_expression (t:Raw.expr) : ae result =
@@ -152,7 +154,10 @@ let rec simpl_expression (t:Raw.expr) : ae result =
       simpl_binop "ADD" c.value
   | EArith (Int n) ->
       let n = Z.to_int @@ snd @@ n.value in
-      ok @@ ae @@ E_literal (Literal_number n)
+      ok @@ ae @@ E_literal (Literal_int n)
+  | EArith (Nat n) ->
+      let n = Z.to_int @@ snd @@ n.value in
+      ok @@ ae @@ E_literal (Literal_nat n)
   | EArith _ -> simple_fail "arith: not supported yet"
   | EString (String s) ->
       ok @@ ae @@ E_literal (Literal_string s.value)

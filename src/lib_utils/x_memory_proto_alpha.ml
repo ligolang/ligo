@@ -66,6 +66,12 @@ let unparse_michelson_data
     Readable ty value >>=?? fun (michelson, _) ->
   return michelson
 
+let unparse_michelson_ty
+    ?(tezos_context = dummy_environment.tezos_context)
+    ty : Michelson.t tzresult Lwt.t =
+  Script_ir_translator.unparse_ty tezos_context ty >>=?? fun (michelson, _) ->
+  return michelson
+
 let interpret
     ?(tezos_context = dummy_environment.tezos_context)
     ?(source = (List.nth dummy_environment.identities 0).implicit_contract)

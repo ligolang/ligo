@@ -51,11 +51,3 @@
   )
   (modules generator)
 )
-
-;; Tests
-
-(alias
- (name runtest)
- (deps generator.exe)
- (action (system "./generator.exe parser ; ./generator.exe ast"))
-)

@@ -11,6 +11,11 @@ let filter_map f =
   in
   aux []
 
+let cons_iter = fun fhd ftl lst ->
+  match lst with
+  | [] -> ()
+  | hd :: tl -> fhd hd ; List.iter ftl tl
+
 let range n =
   let rec aux acc n =
     if n = 0

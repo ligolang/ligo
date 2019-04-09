@@ -23,7 +23,12 @@
 )
 
 (alias
-  (name runtest)
+  (name ligo-test)
   (action (run test/test.exe))
   (deps (glob_files contracts/*))
+)
+
+(alias
+  (name runtest)
+  (deps ligo-test)
 )

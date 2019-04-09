@@ -1,9 +1,6 @@
-type heap_element is int * string
+type heap_element is int * string ;
 
-type heap is record
-  heap_content : map(int, heap_element) ;
-  heap_size : nat ;
-end
+type heap is map(int, heap_element) ;
 
 function is_empty (const h : heap) : bool is
-  block {skip} with h.heap_size = 0
+  block {skip} with size(h) = 0n

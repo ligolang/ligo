@@ -271,9 +271,12 @@ and type_annotated_expression (e:environment) (ae:I.annotated_expression) : O.an
   | E_literal (Literal_bytes s) ->
       let%bind type_annotation = check (t_bytes ()) in
       ok O.{expression = E_literal (Literal_bytes s) ; type_annotation }
-  | E_literal (Literal_number n) ->
+  | E_literal (Literal_int n) ->
       let%bind type_annotation = check (t_int ()) in
       ok O.{expression = E_literal (Literal_int n) ; type_annotation }
+  | E_literal (Literal_nat n) ->
+      let%bind type_annotation = check (t_nat ()) in
+      ok O.{expression = E_literal (Literal_nat n) ; type_annotation }
   (* Tuple *)
   | E_tuple lst ->
       let%bind lst' = bind_list @@ List.map (type_annotated_expression e) lst in
@@ -407,7 +410,8 @@ and type_constant (name:string) (lst:O.type_value list) (tv_opt:O.type_value opt
   | "ADD", [_ ; _] -> simple_fail "bad types to add"
   | "ADD", _ -> simple_fail "bad number of params to add"
   | "EQ", [a ; b] when type_value_eq (a, t_int ()) && type_value_eq (b, t_int ()) -> ok ("EQ", t_bool ())
-  | "EQ", _ -> simple_fail "EQ only defined over int"
+  | "EQ", [a ; b] when type_value_eq (a, t_nat ()) && type_value_eq (b, t_nat ()) -> ok ("EQ", t_bool ())
+  | "EQ", _ -> simple_fail "EQ only defined over int and nat"
   | "OR", [a ; b] when type_value_eq (a, t_bool ()) && type_value_eq (b, t_bool ()) -> ok ("OR", t_bool ())
   | "OR", _ -> simple_fail "OR only defined over bool"
   | "AND", [a ; b] when type_value_eq (a, t_bool ()) && type_value_eq (b, t_bool ()) -> ok ("AND", t_bool ())
@@ -425,6 +429,10 @@ and type_constant (name:string) (lst:O.type_value list) (tv_opt:O.type_value opt
       let%bind _ = O.assert_type_value_eq (src, i_ty) in
       ok ("GET_FORCE", dst)
   | "get_force", _ -> simple_fail "bad number of params to get_force"
+  | "size", [t] ->
+      let%bind () = assert_t_map t in
+      ok ("SIZE", t_nat ())
+  | "size", _ -> simple_fail "bad number of params to size"
   | name, _ -> fail @@ unrecognized_constant name
 
 let untype_type_value (t:O.type_value) : (I.type_expression) result =
@@ -437,8 +445,8 @@ let untype_literal (l:O.literal) : I.literal result =
   match l with
   | Literal_unit -> ok Literal_unit
   | Literal_bool b -> ok (Literal_bool b)
-  | Literal_nat n -> ok (Literal_number n)
-  | Literal_int n -> ok (Literal_number n)
+  | Literal_nat n -> ok (Literal_nat n)
+  | Literal_int n -> ok (Literal_int n)
   | Literal_string s -> ok (Literal_string s)
   | Literal_bytes b -> ok (Literal_bytes b)
 
