@@ -37,8 +37,13 @@ and type_value' =
   | T_function of tv * tv
 
 and type_value = {
-  type_value : type_value' ;
+  type_value' : type_value' ;
   simplified : S.type_expression option ;
+}
+
+and named_type_value = {
+  type_name: name ;
+  type_value : type_value ;
 }
 
 and lambda = {
@@ -89,6 +94,11 @@ and instruction =
   | I_loop of ae * b
   | I_skip
   | I_fail of ae
+  | I_patch of named_type_value * access_path * ae
+
+and access = Ast_simplified.access
+
+and access_path = Ast_simplified.access_path
 
 and 'a matching =
   | Match_bool of {
@@ -112,7 +122,7 @@ and matching_expr = ae matching
 open! Trace
 
 
-let type_value type_value simplified = { type_value ; simplified }
+let type_value type_value' simplified = { type_value' ; simplified }
 let annotated_expression expression type_annotation = { expression ; type_annotation }
 let get_type_annotation x = x.type_annotation
 
@@ -151,7 +161,7 @@ module PP = struct
     | T_constant (c, n) -> fprintf ppf "%s(%a)" c (list_sep_d type_value) n
 
   and type_value ppf (tv:type_value) : unit =
-    type_value' ppf tv.type_value
+    type_value' ppf tv.type_value'
 
   let rec annotated_expression ppf (ae:annotated_expression) : unit =
     match ae.type_annotation.simplified with
@@ -205,6 +215,10 @@ module PP = struct
     | Match_option {match_none ; match_some = (some, match_some)} ->
         fprintf ppf "| None -> %a @.| Some %s -> %a" f match_none (fst some) f match_some
 
+  and pre_access ppf (a:access) = match a with
+    | Access_record n -> fprintf ppf ".%s" n
+    | Access_tuple i -> fprintf ppf ".%d" i
+
   and instruction ppf (i:instruction) = match i with
     | I_skip -> fprintf ppf "skip"
     | I_fail ae -> fprintf ppf "fail with (%a)" annotated_expression ae
@@ -213,6 +227,10 @@ module PP = struct
         fprintf ppf "%s := %a" name annotated_expression ae
     | I_matching (ae, m) ->
         fprintf ppf "match %a with %a" annotated_expression ae (matching block) m
+    | I_patch (s, p, e) ->
+        fprintf ppf "%s%a := %a"
+          s.type_name (fun ppf -> List.iter (pre_access ppf)) p
+          annotated_expression e
 
   let declaration ppf (d:declaration) =
     match d with
@@ -252,7 +270,7 @@ module Errors = struct
 end
 open Errors
 
-let rec assert_type_value_eq (a, b: (type_value * type_value)) : unit result = match (a.type_value, b.type_value) with
+let rec assert_type_value_eq (a, b: (type_value * type_value)) : unit result = match (a.type_value', b.type_value') with
   | T_tuple ta, T_tuple tb -> (
       let%bind _ =
         trace_strong (different_size_tuples a b)
@@ -450,36 +468,36 @@ module Combinators = struct
 
   let get_annotation (x:annotated_expression) = x.type_annotation
 
-  let get_t_bool (t:type_value) : unit result = match t.type_value with
+  let get_t_bool (t:type_value) : unit result = match t.type_value' with
     | T_constant ("bool", []) -> ok ()
     | _ -> simple_fail "not a bool"
 
-  let get_t_option (t:type_value) : type_value result = match t.type_value with
+  let get_t_option (t:type_value) : type_value result = match t.type_value' with
     | T_constant ("option", [o]) -> ok o
     | _ -> simple_fail "not a option"
 
-  let get_t_list (t:type_value) : type_value result = match t.type_value with
+  let get_t_list (t:type_value) : type_value result = match t.type_value' with
     | T_constant ("list", [o]) -> ok o
     | _ -> simple_fail "not a list"
 
-  let get_t_tuple (t:type_value) : type_value list result = match t.type_value with
+  let get_t_tuple (t:type_value) : type_value list result = match t.type_value' with
     | T_tuple lst -> ok lst
     | _ -> simple_fail "not a tuple"
 
-  let get_t_sum (t:type_value) : type_value SMap.t result = match t.type_value with
+  let get_t_sum (t:type_value) : type_value SMap.t result = match t.type_value' with
     | T_sum m -> ok m
     | _ -> simple_fail "not a sum"
 
-  let get_t_record (t:type_value) : type_value SMap.t result = match t.type_value with
+  let get_t_record (t:type_value) : type_value SMap.t result = match t.type_value' with
     | T_record m -> ok m
     | _ -> simple_fail "not a record"
 
   let get_t_map (t:type_value) : (type_value * type_value) result =
-    match t.type_value with
+    match t.type_value' with
     | T_constant ("map", [k;v]) -> ok (k, v)
     | _ -> simple_fail "not a map"
   let assert_t_map (t:type_value) : unit result =
-    match t.type_value with
+    match t.type_value' with
     | T_constant ("map", [_ ; _]) -> ok ()
     | _ -> simple_fail "not a map"
 

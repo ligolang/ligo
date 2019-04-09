@@ -77,6 +77,7 @@ and assignment = var_name * expression
 and statement' =
   | Assignment of assignment
   | I_Cond of expression * block * block
+  | I_patch of string * [`Left | `Right] list * expression
   | If_None of expression * block * (var_name * block)
   | While of expression * block
 
@@ -195,6 +196,9 @@ module PP = struct
   and statement ppf ((s, _) : statement) = match s with
     | Assignment ass -> assignment ppf ass
     | I_Cond (expr, i, e) -> fprintf ppf "if (%a) %a %a" expression expr block i block e
+    | I_patch (r, path, e) ->
+        let aux = fun ppf -> function `Left -> fprintf ppf ".L" | `Right -> fprintf ppf ".R" in
+        fprintf ppf "%s%a := %a" r (list aux) path expression e
     | If_None (expr, none, (name, some)) -> fprintf ppf "if (%a) %a %s.%a" expression expr block none name block some
     | While (e, b) -> fprintf ppf "while (%a) %a" expression e block b
 
@@ -206,6 +210,7 @@ module PP = struct
   let program ppf (p:program) =
     fprintf ppf "Program:\n---\n%a" (pp_print_list ~pp_sep:pp_print_newline tl_statement) p
 end
+
 
 module Translate_type = struct
   module O = Tezos_utils.Micheline.Michelson
@@ -623,6 +628,134 @@ module Environment = struct
     ok @@ seq [ i_comment "set" ; code ]
 end
 
+module Combinators = struct
+
+  let get_bool (v:value) = match v with
+    | D_bool b -> ok b
+    | _ -> simple_fail "not a bool"
+
+  let get_int (v:value) = match v with
+    | D_int n -> ok n
+    | _ -> simple_fail "not an int"
+
+  let get_nat (v:value) = match v with
+    | D_nat n -> ok n
+    | _ -> simple_fail "not a nat"
+
+  let get_string (v:value) = match v with
+    | D_string s -> ok s
+    | _ -> simple_fail "not a string"
+
+  let get_bytes (v:value) = match v with
+    | D_bytes b -> ok b
+    | _ -> simple_fail "not a bytes"
+
+  let get_unit (v:value) = match v with
+    | D_unit -> ok ()
+    | _ -> simple_fail "not a unit"
+
+  let get_option (v:value) = match v with
+    | D_none -> ok None
+    | D_some s -> ok (Some s)
+    | _ -> simple_fail "not an option"
+
+  let get_map (v:value) = match v with
+    | D_map lst -> ok lst
+    | _ -> simple_fail "not a map"
+
+  let get_t_option (v:type_value) = match v with
+    | T_option t -> ok t
+    | _ -> simple_fail "not an option"
+
+  let get_pair (v:value) = match v with
+    | D_pair (a, b) -> ok (a, b)
+    | _ -> simple_fail "not a pair"
+
+  let get_t_pair (t:type_value) = match t with
+    | T_pair (a, b) -> ok (a, b)
+    | _ -> simple_fail "not a type pair"
+
+  let get_t_map (t:type_value) = match t with
+    | T_map kv -> ok kv
+    | _ -> simple_fail "not a type map"
+
+  let get_left (v:value) = match v with
+    | D_left b -> ok b
+    | _ -> simple_fail "not a left"
+
+  let get_right (v:value) = match v with
+    | D_right b -> ok b
+    | _ -> simple_fail "not a right"
+
+  let get_or (v:value) = match v with
+    | D_left b -> ok (false, b)
+    | D_right b -> ok (true, b)
+    | _ -> simple_fail "not a left/right"
+
+  let get_last_statement ((b', _):block) : statement result =
+    let aux lst = match lst with
+      | [] -> simple_fail "get_last: empty list"
+      | lst -> ok List.(nth lst (length lst - 1)) in
+    aux b'
+
+  let t_int : type_value = T_base Base_int
+  let t_nat : type_value = T_base Base_nat
+
+  let quote binder input output body result : anon_function =
+    let content : anon_function_content = {
+      binder ; input ; output ;
+      body ; result ; capture_type = No_capture ;
+    } in
+    { content ; capture = None }
+
+  let basic_quote i o b : anon_function result =
+    let%bind (_, e) = get_last_statement b in
+    let r : expression = (E_variable "output", o, e.post_environment) in
+    ok @@ quote "input" i o b r
+
+  let basic_int_quote b : anon_function result =
+    basic_quote t_int t_int b
+
+  let basic_int_quote_env : environment =
+    let e = Environment.empty in
+    Environment.add ("input", t_int) e
+
+  let e_int expr env : expression = (expr, t_int, env)
+  let e_var_int name env : expression = e_int (E_variable name) env
+
+  let d_unit : value = D_unit
+
+  let environment_wrap pre_environment post_environment = { pre_environment ; post_environment }
+  let id_environment_wrap e = environment_wrap e e
+
+  let statement s' e : statement =
+    match s' with
+    | I_Cond _ -> s', id_environment_wrap e
+    | If_None _ -> s', id_environment_wrap e
+    | While _ -> s', id_environment_wrap e
+    | I_patch _ -> s', id_environment_wrap e
+    | Assignment (name, (_, t, _)) -> s', environment_wrap e (Environment.add (name, t) e)
+
+  let block (statements:statement list) : block result =
+    match statements with
+    | [] -> simple_fail "no statements in block"
+    | lst ->
+        let first = List.hd lst in
+        let last = List.(nth lst (length lst - 1)) in
+        ok (lst, environment_wrap (snd first).pre_environment (snd last).post_environment)
+
+  let statements (lst:(environment -> statement) list) e : statement list =
+    let rec aux lst e = match lst with
+      | [] -> []
+      | hd :: tl ->
+          let s = hd e in
+          s :: aux tl (snd s).post_environment
+    in
+    aux lst e
+
+end
+
+
 module Translate_program = struct
   open Tezos_utils.Micheline.Michelson
 
@@ -648,7 +781,8 @@ module Translate_program = struct
       i_unpair ; dip i_unpair ; dip (dip i_unpair) ; i_swap ; dip i_swap ; i_swap ; c ; i_pair ;
     ])
 
-  let rec get_predicate : string -> predicate result = function
+  let rec get_predicate : string -> expression list -> predicate result = fun s lst ->
+    match s with
     | "ADD_INT" -> ok @@ simple_binary @@ prim I_ADD
     | "ADD_NAT" -> ok @@ simple_binary @@ prim I_ADD
     | "NEG" -> ok @@ simple_unary @@ prim I_NEG
@@ -664,6 +798,16 @@ module Translate_program = struct
     | "GET_FORCE" -> ok @@ simple_binary @@ seq [prim I_GET ; i_assert_some]
     | "GET" -> ok @@ simple_binary @@ prim I_GET
     | "SIZE" -> ok @@ simple_unary @@ prim I_SIZE
+    | "MAP_REMOVE" ->
+        let%bind v = match lst with
+          | [ _ ; (_, m, _) ] ->
+              let%bind (_, v) = Combinators.get_t_map m in
+              ok v
+          | _ -> simple_fail "mini_c . MAP_REMOVE" in
+        let%bind v_ty = Translate_type.type_ v in
+        ok @@ simple_binary @@ seq [dip (i_none v_ty) ; prim I_UPDATE ]
+    | "MAP_UPDATE" ->
+        ok @@ simple_ternary @@ seq [dip (i_some) ; prim I_UPDATE ]
     | x -> simple_fail @@ "predicate \"" ^ x ^ "\" doesn't exist"
 
   and translate_value (v:value) : michelson result = match v with
@@ -765,13 +909,13 @@ module Translate_program = struct
           i_piar ;
         ]
       | E_constant(str, lst) ->
-        let%bind lst = bind_list @@ List.map translate_expression lst in
-        let%bind predicate = get_predicate str in
+        let%bind lst' = bind_list @@ List.map translate_expression lst in
+        let%bind predicate = get_predicate str lst in
         let%bind code = match (predicate, List.length lst) with
-          | Constant c, 0 -> ok (seq @@ lst @ [c])
-          | Unary f, 1 -> ok (seq @@ lst @ [f])
-          | Binary f, 2 -> ok (seq @@ lst @ [f])
-          | Ternary f, 3 -> ok (seq @@ lst @ [f])
+          | Constant c, 0 -> ok (seq @@ lst' @ [c])
+          | Unary f, 1 -> ok (seq @@ lst' @ [f])
+          | Binary f, 2 -> ok (seq @@ lst' @ [f])
+          | Ternary f, 3 -> ok (seq @@ lst' @ [f])
           | _ -> simple_fail "bad arity"
         in
         ok code
@@ -928,6 +1072,7 @@ module Translate_program = struct
             Environment.to_michelson_restrict ;
             i_push_unit ; expr ; i_car]] I_LOOP ;
       ])
+    | I_patch _ -> ()
     in
 
     let%bind () =
@@ -1155,132 +1300,5 @@ module Run = struct
     | _ -> fail
         @@ error "not a value"
         @@ Format.asprintf "%a" PP.expression e
-
-end
-
-
-module Combinators = struct
-
-  let get_bool (v:value) = match v with
-    | D_bool b -> ok b
-    | _ -> simple_fail "not a bool"
-
-  let get_int (v:value) = match v with
-    | D_int n -> ok n
-    | _ -> simple_fail "not an int"
-
-  let get_nat (v:value) = match v with
-    | D_nat n -> ok n
-    | _ -> simple_fail "not a nat"
-
-  let get_string (v:value) = match v with
-    | D_string s -> ok s
-    | _ -> simple_fail "not a string"
-
-  let get_bytes (v:value) = match v with
-    | D_bytes b -> ok b
-    | _ -> simple_fail "not a bytes"
-
-  let get_unit (v:value) = match v with
-    | D_unit -> ok ()
-    | _ -> simple_fail "not a unit"
-
-  let get_option (v:value) = match v with
-    | D_none -> ok None
-    | D_some s -> ok (Some s)
-    | _ -> simple_fail "not an option"
-
-  let get_map (v:value) = match v with
-    | D_map lst -> ok lst
-    | _ -> simple_fail "not a map"
-
-  let get_t_option (v:type_value) = match v with
-    | T_option t -> ok t
-    | _ -> simple_fail "not an option"
-
-  let get_pair (v:value) = match v with
-    | D_pair (a, b) -> ok (a, b)
-    | _ -> simple_fail "not a pair"
-
-  let get_t_pair (t:type_value) = match t with
-    | T_pair (a, b) -> ok (a, b)
-    | _ -> simple_fail "not a type pair"
-
-  let get_t_map (t:type_value) = match t with
-    | T_map kv -> ok kv
-    | _ -> simple_fail "not a type map"
-
-  let get_left (v:value) = match v with
-    | D_left b -> ok b
-    | _ -> simple_fail "not a left"
-
-  let get_right (v:value) = match v with
-    | D_right b -> ok b
-    | _ -> simple_fail "not a right"
-
-  let get_or (v:value) = match v with
-    | D_left b -> ok (false, b)
-    | D_right b -> ok (true, b)
-    | _ -> simple_fail "not a left/right"
-
-  let get_last_statement ((b', _):block) : statement result =
-    let aux lst = match lst with
-      | [] -> simple_fail "get_last: empty list"
-      | lst -> ok List.(nth lst (length lst - 1)) in
-    aux b'
-
-  let t_int : type_value = T_base Base_int
-  let t_nat : type_value = T_base Base_nat
-
-  let quote binder input output body result : anon_function =
-    let content : anon_function_content = {
-      binder ; input ; output ;
-      body ; result ; capture_type = No_capture ;
-    } in
-    { content ; capture = None }
-
-  let basic_quote i o b : anon_function result =
-    let%bind (_, e) = get_last_statement b in
-    let r : expression = (E_variable "output", o, e.post_environment) in
-    ok @@ quote "input" i o b r
-
-  let basic_int_quote b : anon_function result =
-    basic_quote t_int t_int b
-
-  let basic_int_quote_env : environment =
-    let e = Environment.empty in
-    Environment.add ("input", t_int) e
-
-  let e_int expr env : expression = (expr, t_int, env)
-  let e_var_int name env : expression = e_int (E_variable name) env
-
-  let d_unit : value = D_unit
-
-  let environment_wrap pre_environment post_environment = { pre_environment ; post_environment }
-  let id_environment_wrap e = environment_wrap e e
-
-  let statement s' e : statement =
-    match s' with
-    | I_Cond _ -> s', id_environment_wrap e
-    | If_None _ -> s', id_environment_wrap e
-    | While _ -> s', id_environment_wrap e
-    | Assignment (name, (_, t, _)) -> s', environment_wrap e (Environment.add (name, t) e)
-
-  let block (statements:statement list) : block result =
-    match statements with
-    | [] -> simple_fail "no statements in block"
-    | lst ->
-        let first = List.hd lst in
-        let last = List.(nth lst (length lst - 1)) in
-        ok (lst, environment_wrap (snd first).pre_environment (snd last).post_environment)
-
-  let statements (lst:(environment -> statement) list) e : statement list =
-    let rec aux lst e = match lst with
-      | [] -> []
-      | hd :: tl ->
-          let s = hd e in
-          s :: aux tl (snd s).post_environment
-    in
-    aux lst e
 
 end

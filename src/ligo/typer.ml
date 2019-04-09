@@ -24,7 +24,7 @@ module Environment = struct
   let get_constructor (e:t) (s:string) : (ele * ele) option =
     let rec aux = function
       | [] -> None
-      | (_, (O.{type_value=(O.T_sum m)} as tv)) :: _ when SMap.mem s m -> Some (SMap.find s m, tv)
+      | (_, (O.{type_value'=(O.T_sum m)} as tv)) :: _ when SMap.mem s m -> Some (SMap.find s m, tv)
       | _ :: tl -> aux tl
     in
     aux e.environment
@@ -124,7 +124,7 @@ and type_declaration env : I.declaration -> (environment * O.declaration option)
 and type_block_full (e:environment) (b:I.block) : (O.block * environment) result =
   let aux (e, acc:(environment * O.instruction list)) (i:I.instruction) =
     let%bind (e', i') = type_instruction e i in
-    ok (e', i' :: acc)
+    ok (e', i' @ acc)
   in
   let%bind (e', lst) = bind_fold_list aux (e, []) b in
   ok @@ (List.rev lst, e')
@@ -133,42 +133,67 @@ and type_block (e:environment) (b:I.block) : O.block result =
   let%bind (block, _) = type_block_full e b in
   ok block
 
-and type_instruction (e:environment) : I.instruction -> (environment * O.instruction) result = function
-  | I_skip -> ok (e, O.I_skip)
+and type_instruction (e:environment) : I.instruction -> (environment * O.instruction list) result = fun i ->
+  let return x = ok (e, [x]) in
+  match i with
+  | I_skip -> return O.I_skip
   | I_fail x ->
       let%bind expression = type_annotated_expression e x in
-      ok (e, O.I_fail expression)
+      return @@ O.I_fail expression
   | I_loop (cond, body) ->
       let%bind cond = type_annotated_expression e cond in
       let%bind _ =
         O.assert_type_value_eq (cond.type_annotation, t_bool ()) in
       let%bind body = type_block e body in
-      ok (e, O.I_loop (cond, body))
+      return @@ O.I_loop (cond, body)
   | I_assignment {name;annotated_expression} -> (
       match annotated_expression.type_annotation, Environment.get e name with
       | None, None -> simple_fail "Initial assignments need type"
       | Some _, None ->
           let%bind annotated_expression = type_annotated_expression e annotated_expression in
           let e' = Environment.add e name annotated_expression.type_annotation in
-          ok (e', O.I_assignment {name;annotated_expression})
+          ok (e', [O.I_assignment {name;annotated_expression}])
       | None, Some prev ->
           let%bind annotated_expression = type_annotated_expression e annotated_expression in
           let e' = Environment.add e name annotated_expression.type_annotation in
           let%bind _ =
             O.assert_type_value_eq (annotated_expression.type_annotation, prev) in
-          ok (e', O.I_assignment {name;annotated_expression})
+          ok (e', [O.I_assignment {name;annotated_expression}])
       | Some _, Some prev ->
           let%bind annotated_expression = type_annotated_expression e annotated_expression in
           let%bind _assert = trace (simple_error "Annotation doesn't match environment")
             @@ O.assert_type_value_eq (annotated_expression.type_annotation, prev) in
           let e' = Environment.add e name annotated_expression.type_annotation in
-          ok (e', O.I_assignment {name;annotated_expression})
+          ok (e', [O.I_assignment {name;annotated_expression}])
     )
   | I_matching (ex, m) ->
       let%bind ex' = type_annotated_expression e ex in
       let%bind m' = type_match type_block e ex'.type_annotation m in
-      ok (e, O.I_matching (ex', m'))
-  | I_record_patch _ -> simple_fail "no record_patch yet"
+      return @@ O.I_matching (ex', m')
+  | I_record_patch (r, path, lst) ->
+      let aux (s, ae) =
+        let%bind ae' = type_annotated_expression e ae in
+        let%bind ty =
+          trace_option (simple_error "unbound variable in record_patch") @@
+          Environment.get e r in
+        let tv = O.{type_name = r ; type_value = ty} in
+        let aux ty access =
+          match access with
+          | I.Access_record s ->
+              let%bind m = O.Combinators.get_t_record ty in
+              trace_option (simple_error "unbound record access in record_patch") @@
+              Map.String.find_opt s m
+          | Access_tuple i ->
+              let%bind t = O.Combinators.get_t_tuple ty in
+              generic_try (simple_error "unbound tuple access in record_patch") @@
+              (fun () -> List.nth t i)
+        in
+        let%bind _assert = bind_fold_list aux ty (path @ [Access_record s]) in
+        ok @@ O.I_patch (tv, path @ [Access_record s], ae')
+      in
+      let%bind lst' = bind_map_list aux lst in
+      ok (e, lst')
+
 
 and type_match : type i o . (environment -> i -> o result) -> environment -> O.type_value -> i I.matching -> o O.matching result =
   fun f e t i -> match i with
@@ -375,7 +400,7 @@ and type_annotated_expression (e:environment) (ae:I.annotated_expression) : O.an
   | E_application (f, arg) ->
       let%bind f = type_annotated_expression e f in
       let%bind arg = type_annotated_expression e arg in
-      let%bind type_annotation = match f.type_annotation.type_value with
+      let%bind type_annotation = match f.type_annotation.type_value' with
         | T_function (param, result) ->
             let%bind _ = O.assert_type_value_eq (param, arg.type_annotation) in
             ok result
@@ -428,6 +453,17 @@ and type_constant (name:string) (lst:O.type_value list) (tv_opt:O.type_value opt
   | "NONE", _ -> simple_fail "bad number of params to NONE"
   | "SOME", [s] -> ok ("SOME", t_option s ())
   | "SOME", _ -> simple_fail "bad number of params to SOME"
+  | "MAP_REMOVE", [k ; m] ->
+      let%bind (src, _) = get_t_map m in
+      let%bind () = O.assert_type_value_eq (src, k) in
+      ok ("MAP_REMOVE", m)
+  | "MAP_REMOVE", _ -> simple_fail "bad number of params to MAP_REMOVE"
+  | "MAP_UPDATE", [k ; v ; m] ->
+      let%bind (src, dst) = get_t_map m in
+      let%bind () = O.assert_type_value_eq (src, k) in
+      let%bind () = O.assert_type_value_eq (dst, v) in
+      ok ("MAP_UPDATE", m)
+  | "MAP_UPDATE", _ -> simple_fail "bad number of params to MAP_UPDATE"
   | "get_force", [i_ty;m_ty] ->
       let%bind (src, dst) = get_t_map m_ty in
       let%bind _ = O.assert_type_value_eq (src, i_ty) in
@@ -527,6 +563,15 @@ and untype_instruction (i:O.instruction) : (I.instruction) result =
       let%bind e' = untype_annotated_expression e in
       let%bind m' = untype_matching untype_block m in
       ok @@ I_matching (e', m')
+  | I_patch (s, p, e) ->
+      let%bind e' = untype_annotated_expression e in
+      let%bind (hds, tl) =
+        trace_option (simple_error "patch without path") @@
+        List.rev_uncons_opt p in
+      let%bind tl_name = match tl with
+        | Access_record n -> ok n
+        | Access_tuple _ -> simple_fail "last element of patch is tuple" in
+      ok @@ I_record_patch (s.type_name, hds, [tl_name, e'])
 
 and untype_matching : type o i . (o -> i result) -> o O.matching -> (i I.matching) result = fun f m ->
   let open I in

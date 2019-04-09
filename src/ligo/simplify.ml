@@ -387,17 +387,31 @@ and simpl_single_instruction : Raw.single_instr -> instruction result = fun t ->
         | ClauseInstr i -> let%bind i = simpl_instruction i in ok [i]
         | ClauseBlock b -> simpl_statements @@ fst b.value.inside in
       ok @@ I_matching (expr, (Match_bool {match_true; match_false}))
-  | Assign a ->
+  | Assign a -> (
       let a = a.value in
-      let%bind name = match a.lhs with
-        | Path (Name v) -> ok v.value
-        | _ -> simple_fail "no complex assignments yet"
-      in
-      let%bind annotated_expression = match a.rhs with
+      let%bind value_expr = match a.rhs with
         | Expr e -> simpl_expression e
         | _ -> simple_fail "no weird assignments yet"
       in
-      ok @@ I_assignment {name ; annotated_expression}
+      match a.lhs with
+        | Path (Name name) -> (
+            ok @@ I_assignment {name = name.value ; annotated_expression = value_expr}
+          )
+        | Path path -> (
+            let err_content = Format.asprintf "%a" (Tezos_utils.PP.printer Raw.print_path) path in
+            fail @@ error "no path assignments" err_content
+          )
+        | MapPath v -> (
+            let v' = v.value in
+            let%bind name = match v'.path with
+              | Name name -> ok name
+              | _ -> simple_fail "no complex map assignments yet" in
+            let%bind key_expr = simpl_expression v'.index.value.inside in
+            let old_expr = ae @@ E_variable name.value in
+            let expr' = ae @@ E_constant ("MAP_UPDATE", [key_expr ; value_expr ; old_expr]) in
+            ok @@ I_assignment {name = name.value ; annotated_expression = expr'}
+          )
+    )
   | CaseInstr c ->
       let c = c.value in
       let%bind expr = simpl_expression c.expr in
@@ -410,20 +424,32 @@ and simpl_single_instruction : Raw.single_instr -> instruction result = fun t ->
         @@ npseq_to_list c.cases.value in
       let%bind m = simpl_cases cases in
       ok @@ I_matching (expr, m)
-  | RecordPatch r ->
+  | RecordPatch r -> (
       let r = r.value in
       let%bind record = match r.path with
         | Name v -> ok v.value
-        | _ -> simple_fail "no complex assignments yet"
+        | path -> (
+            let err_content = Format.asprintf "%a" (Tezos_utils.PP.printer Raw.print_path) path in
+            fail @@ error "no complex record patch yet" err_content
+          )
       in
       let%bind inj = bind_list
         @@ List.map (fun (x:Raw.field_assign) -> let%bind e = simpl_expression x.field_expr in ok (x.field_name.value, e))
         @@ List.map (fun (x:_ Raw.reg) -> x.value)
         @@ npseq_to_list r.record_inj.value.fields in
       ok @@ I_record_patch (record, [], inj)
+    )
   | MapPatch _ -> simple_fail "no map patch yet"
   | SetPatch _ -> simple_fail "no set patch yet"
-  | MapRemove _ -> simple_fail "no map remove yet"
+  | MapRemove r ->
+      let v = r.value in
+      let key = v.key in
+      let%bind map = match v.map with
+        | Name v -> ok v.value
+        | _ -> simple_fail "no complex map remove yet" in
+      let%bind key' = simpl_expression key in
+      let expr = E_constant ("MAP_REMOVE", [key' ; ae (E_variable map)]) in
+      ok @@ I_assignment {name = map ; annotated_expression = ae expr}
   | SetRemove _ -> simple_fail "no set remove yet"
 
 and simpl_cases : type a . (Raw.pattern * a) list -> a matching result = fun t ->

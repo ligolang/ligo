@@ -207,6 +207,15 @@ let map () : unit result =
     let expect = ez [(23, 0) ; (42, 0)] in
     AST_Typed.assert_value_eq (expect, result)
   in
+  let%bind _set = trace (simple_error "set") @@
+    let aux n =
+      let input = ez List.(map (fun x -> (x, x)) @@ range n) in
+      let%bind result = easy_run_typed "set_" program input in
+      let expect = ez [(23, n) ; (42, 0)] in
+      AST_Typed.assert_value_eq (expect, result)
+    in
+    bind_map_list aux [1 ; 10 ; 3]
+  in
   let%bind _get = trace (simple_error "get") @@
     let aux n =
       let input = ez [(23, n) ; (42, 4)] in
@@ -219,6 +228,12 @@ let map () : unit result =
   let%bind _bigmap = trace (simple_error "bigmap") @@
     let%bind result = easy_evaluate_typed "bm" program in
     let expect = ez @@ List.map (fun x -> (x, 23)) [144 ; 51 ; 42 ; 120 ; 421] in
+    AST_Typed.assert_value_eq (expect, result)
+  in
+  let%bind _remove = trace (simple_error "rm") @@
+    let input = ez [(23, 23) ; (42, 42)] in
+    let%bind result = easy_run_typed "rm" program input in
+    let expect = ez [23, 23] in
     AST_Typed.assert_value_eq (expect, result)
   in
   ok ()

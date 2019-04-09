@@ -78,6 +78,13 @@ and translate_instruction (env:Environment.t) (i:AST.instruction) : statement op
         | true -> env
         | false -> Environment.add (name, t) env in
       return ~env' (Assignment (name, expression))
+  | I_patch (r, s, v) ->
+      let ty = Environment.get r in
+      let aux (prev, acc) cur = ()
+      in
+      let s' = List.fold_left aux (ty, []) s in
+      let v' = translate_annotated_expression env v in
+      return (I_patch (r, s', v'))
   | I_matching (expr, m) -> (
       let%bind expr' = translate_annotated_expression env expr in
       let env' = Environment.extend env in

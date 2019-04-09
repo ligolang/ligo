@@ -70,6 +70,18 @@ let until n lst =
   in
   rev (aux [] n lst)
 
+let uncons_opt = function
+  | [] -> None
+  | hd :: tl -> Some (hd, tl)
+
+let rev_uncons_opt = function
+  | [] -> None
+  | lst ->
+      let r = rev lst in
+      let last = hd r in
+      let hds = rev @@ tl r in
+      Some (hds, last)
+
 module Ne = struct
 
   type 'a t = 'a * 'a list

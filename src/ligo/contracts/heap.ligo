@@ -5,3 +5,10 @@ function is_empty (const h : heap) : bool is
 
 function get_top (const h : heap) : heap_element is
   block {skip} with get_force(0, h)
+
+function pop (const h : heap) : heap_element is
+  block {
+   const result : heap_element := get_top (h) ;
+   const s : nat = size(h) ;
+   
+  } with result ;

@@ -230,9 +230,27 @@ module Rename = struct
 
     let rec rename_instruction (r:renamings) (i:instruction) : instruction result =
       match i with
-      | I_assignment ({name;annotated_expression = e} as a) ->
-          let%bind annotated_expression = rename_annotated_expression (filter r name) e in
-          ok (I_assignment {a with annotated_expression})
+      | I_assignment ({name;annotated_expression = e} as a) -> (
+          match List.assoc_opt name r with
+          | None ->
+              let%bind annotated_expression = rename_annotated_expression (filter r name) e in
+              ok (I_assignment {a with annotated_expression})
+          | Some (name', lst) -> (
+              let%bind annotated_expression = rename_annotated_expression r e in
+              match lst with
+              | [] -> ok (I_assignment {name = name' ; annotated_expression})
+              | lst ->
+                  let (hds, tl) =
+                    let open List in
+                    let r = rev lst in
+                    rev @@ tl r, hd r
+                  in
+                  let%bind tl' = match tl with
+                    | Access_record n -> ok n
+                    | Access_tuple _ -> simple_fail "no support for renaming into tuples yet" in
+                  ok (I_record_patch (name', hds, [tl', annotated_expression]))
+            )
+        )
       | I_skip -> ok I_skip
       | I_fail e ->
           let%bind e' = rename_annotated_expression r e in
@@ -254,8 +272,8 @@ module Rename = struct
           | None -> (
               ok (I_record_patch (v, path, lst'))
             )
-          | Some (v, path') -> (
-              ok (I_record_patch (v, path' @ path, lst'))
+          | Some (v', path') -> (
+              ok (I_record_patch (v', path' @ path, lst'))
             )
     and rename_block (r:renamings) (bl:block) : block result =
       bind_map_list (rename_instruction r) bl

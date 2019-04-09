@@ -663,3 +663,4 @@ val selection_to_region  : selection -> Region.t
 (* Printing *)
 
 val print_tokens : t -> unit
+val print_path : path -> unit

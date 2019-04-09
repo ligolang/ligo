@@ -9,6 +9,7 @@ let rec new_lines n ppf () =
 let const const : formatter -> unit -> unit = fun ppf () -> fprintf ppf "%s" const
 let comment : formatter -> string -> unit = fun ppf s -> fprintf ppf "(* %s *)" s
 let list_sep value separator = pp_print_list ~pp_sep:separator value
+let list value = pp_print_list ~pp_sep:(tag "") value
 let ne_list_sep value separator ppf (hd, tl) =
   value ppf hd ;
   separator ppf () ;
@@ -24,3 +25,19 @@ let smap_sep value sep ppf m =
   let new_pp ppf (k, v) = fprintf ppf "%s -> %a" k value v in
   let lst = List.rev @@ SMap.fold aux m [] in
   fprintf ppf "%a" (list_sep new_pp sep) lst
+
+(* TODO: remove all uses. this is bad. *)
+let printer : ('a -> unit) -> _ -> 'a -> unit = fun f ppf x ->
+  let oldstdout = Unix.dup Unix.stdout in
+  let name = "/tmp/wtf-" ^ (string_of_int @@ Random.bits ()) in
+  let newstdout = open_out name in
+  Unix.dup2 (Unix.descr_of_out_channel newstdout) Unix.stdout;
+  f x;
+  flush stdout;
+  Unix.dup2 oldstdout Unix.stdout;
+  let ic = open_in name in
+  let n = in_channel_length ic in
+  let s = Bytes.create n in
+  really_input ic s 0 n;
+  close_in ic;
+  fprintf ppf "%s" (Bytes.to_string s)
