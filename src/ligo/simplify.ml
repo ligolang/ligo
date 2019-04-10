@@ -78,6 +78,7 @@ and simpl_list_type_expression (lst:Raw.type_expr list) : type_expression result
 let constants = [
   ("get_force", 2) ;
   ("size", 1) ;
+  ("int", 1) ;
 ]
 
 let rec simpl_expression (t:Raw.expr) : ae result =
@@ -152,6 +153,8 @@ let rec simpl_expression (t:Raw.expr) : ae result =
       ok @@ annotated_expression (E_constant ("NONE", [])) (Some (Combinators.t_option type_expr'))
   | EArith (Add c) ->
       simpl_binop "ADD" c.value
+  | EArith (Mult c) ->
+      simpl_binop "TIMES" c.value
   | EArith (Int n) ->
       let n = Z.to_int @@ snd @@ n.value in
       ok @@ ae @@ E_literal (Literal_int n)

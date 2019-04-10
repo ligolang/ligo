@@ -29,7 +29,7 @@ let range n =
     then acc
     else aux ((n-1) :: acc) (n-1)
   in
-  List.rev (aux [] n)
+  aux [] n
 
 let find_map f lst =
   let rec aux = function

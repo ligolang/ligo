@@ -154,7 +154,7 @@ module PP = struct
     | E_map m -> fprintf ppf "map[%a]" (list_sep_d assoc_annotated_expression) m
     | E_look_up (ds, ind) -> fprintf ppf "(%a)[%a]" annotated_expression ds annotated_expression ind
     | E_lambda {binder;input_type;output_type;result;body} ->
-        fprintf ppf "lambda (%s:%a) : %a {%a} return %a"
+        fprintf ppf "lambda (%s:%a) : %a {@;  @[<v>%a@]@;} return %a"
           binder type_expression input_type type_expression output_type
           block body annotated_expression result
     | E_matching (ae, m) ->
@@ -179,7 +179,7 @@ module PP = struct
     | None -> fprintf ppf "%a" expression ae.expression
     | Some t -> fprintf ppf "(%a) : %a" expression ae.expression type_expression t
 
-  and block ppf (b:block) = (list_sep_d instruction) ppf b
+  and block ppf (b:block) = (list_sep instruction (tag "@;")) ppf b
 
   and single_record_patch ppf ((p, ae) : string * ae) =
     fprintf ppf "%s <- %a" p annotated_expression ae
@@ -212,7 +212,7 @@ module PP = struct
         fprintf ppf "const %s = %a" name annotated_expression ae
 
   let program ppf (p:program) =
-    fprintf ppf "%a" (list_sep_d declaration) p
+    fprintf ppf "@[<v>%a@]" (list_sep declaration (tag "@;")) p
 end
 
 module Rename = struct

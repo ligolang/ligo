@@ -435,6 +435,10 @@ and type_constant (name:string) (lst:O.type_value list) (tv_opt:O.type_value opt
   | "ADD", [a ; b] when type_value_eq (a, t_string ()) && type_value_eq (b, t_string ()) -> ok ("CONCAT", t_string ())
   | "ADD", [_ ; _] -> simple_fail "bad types to add"
   | "ADD", _ -> simple_fail "bad number of params to add"
+  | "TIMES", [a ; b] when type_value_eq (a, t_int ()) && type_value_eq (b, t_int ()) -> ok ("TIMES_INT", t_int ())
+  | "TIMES", [a ; b] when type_value_eq (a, t_nat ()) && type_value_eq (b, t_nat ()) -> ok ("TIMES_NAT", t_nat ())
+  | "TIMES", [_ ; _] -> simple_fail "bad types to TIMES"
+  | "TIMES", _ -> simple_fail "bad number of params to TIMES"
   | "EQ", [a ; b] when type_value_eq (a, t_int ()) && type_value_eq (b, t_int ()) -> ok ("EQ", t_bool ())
   | "EQ", [a ; b] when type_value_eq (a, t_nat ()) && type_value_eq (b, t_nat ()) -> ok ("EQ", t_bool ())
   | "EQ", _ -> simple_fail "EQ only defined over int and nat"
@@ -473,6 +477,10 @@ and type_constant (name:string) (lst:O.type_value list) (tv_opt:O.type_value opt
       let%bind () = assert_t_map t in
       ok ("SIZE", t_nat ())
   | "size", _ -> simple_fail "bad number of params to size"
+  | "int", [t] ->
+      let%bind () = assert_t_nat t in
+      ok ("INT", t_int ())
+  | "int", _ -> simple_fail "bad number of params to int"
   | name, _ -> fail @@ unrecognized_constant name
 
 let untype_type_value (t:O.type_value) : (I.type_expression) result =

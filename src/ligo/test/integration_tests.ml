@@ -67,6 +67,30 @@ let bool_expression () : unit result =
     ] in
   ok ()
 
+let arithmetic () : unit result =
+  let%bind program = type_file "./contracts/arithmetic.ligo" in
+  let aux (name, f) =
+    let aux n =
+      let open AST_Typed.Combinators in
+      let input = if name = "int_op" then e_a_nat n else e_a_int n in
+      let%bind result = easy_run_typed name program input in
+      AST_Typed.assert_value_eq (f n, result)
+    in
+    let%bind _ = bind_list
+      @@ List.map aux [0 ; 42 ; 128] in
+    ok ()
+  in
+  let%bind _ =
+    let open AST_Typed.Combinators in
+    bind_list
+    @@ List.map aux
+    @@ [
+      ("plus_op", fun n -> e_a_int (n + 42)) ;
+      ("times_op", fun n -> e_a_int (n * 42)) ;
+      (* ("int_op", fun n -> e_a_int n) ; *)
+    ] in
+  ok ()
+
 let unit_expression () : unit result =
   let%bind program = type_file "./contracts/unit.ligo" in
   let open AST_Typed.Combinators in
@@ -405,6 +429,7 @@ let main = "Integration (End to End)", [
     test "function" function_ ;
     test "complex function" complex_function ;
     test "bool" bool_expression ;
+    test "arithmetic" arithmetic ;
     test "unit" unit_expression ;
     test "record" record ;
     test "tuple" tuple ;

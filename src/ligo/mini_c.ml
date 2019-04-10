@@ -836,6 +836,8 @@ module Translate_program = struct
     match s with
     | "ADD_INT" -> ok @@ simple_binary @@ prim I_ADD
     | "ADD_NAT" -> ok @@ simple_binary @@ prim I_ADD
+    | "TIMES_INT" -> ok @@ simple_binary @@ prim I_MUL
+    | "TIMES_NAT" -> ok @@ simple_binary @@ prim I_MUL
     | "NEG" -> ok @@ simple_unary @@ prim I_NEG
     | "OR" -> ok @@ simple_binary @@ prim I_OR
     | "AND" -> ok @@ simple_binary @@ prim I_AND
@@ -849,6 +851,7 @@ module Translate_program = struct
     | "GET_FORCE" -> ok @@ simple_binary @@ seq [prim I_GET ; i_assert_some]
     | "GET" -> ok @@ simple_binary @@ prim I_GET
     | "SIZE" -> ok @@ simple_unary @@ prim I_SIZE
+    | "INT" -> ok @@ simple_unary @@ prim I_INT
     | "MAP_REMOVE" ->
         let%bind v = match lst with
           | [ _ ; (_, m, _) ] ->

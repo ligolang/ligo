@@ -165,8 +165,8 @@ module PP = struct
 
   let rec annotated_expression ppf (ae:annotated_expression) : unit =
     match ae.type_annotation.simplified with
-    | Some _ -> fprintf ppf "%a:%a" expression ae.expression type_value ae.type_annotation
-    | _ -> expression ppf ae.expression
+    | Some _ -> fprintf ppf "@[<v>%a:%a@]" expression ae.expression type_value ae.type_annotation
+    | _ -> fprintf ppf "@[<v>%a@]" expression ae.expression
 
   and expression ppf (e:expression) : unit =
     match e with
@@ -175,15 +175,15 @@ module PP = struct
     | E_constructor (c, lst) -> fprintf ppf "%s(%a)" c annotated_expression lst
     | E_variable a -> fprintf ppf "%s" a
     | E_application (f, arg) -> fprintf ppf "(%a) (%a)" annotated_expression f annotated_expression arg
-    | E_tuple lst -> fprintf ppf "tuple[%a]" (list_sep_d annotated_expression) lst
     | E_lambda {binder;input_type;output_type;result;body} ->
         fprintf ppf "lambda (%s:%a) : %a {%a} return %a"
           binder type_value input_type type_value output_type
           block body annotated_expression result
     | E_tuple_accessor (ae, i) -> fprintf ppf "%a.%d" annotated_expression ae i
     | E_record_accessor (ae, s) -> fprintf ppf "%a.%s" annotated_expression ae s
+    | E_tuple lst -> fprintf ppf "tuple[@;  @[<v>%a@]@;]" (list_sep annotated_expression (tag ",@;")) lst
     | E_record m -> fprintf ppf "record[%a]" (smap_sep_d annotated_expression) m
-    | E_map m -> fprintf ppf "map[%a]" (list_sep_d assoc_annotated_expression) m
+    | E_map m -> fprintf ppf "map[@;  @[<v>%a@]@;]" (list_sep assoc_annotated_expression (tag ",@;")) m
     | E_look_up (ds, i) -> fprintf ppf "(%a)[%a]" annotated_expression ds annotated_expression i
     | E_matching (ae, m) ->
         fprintf ppf "match %a with %a" annotated_expression ae (matching annotated_expression) m
@@ -202,7 +202,7 @@ module PP = struct
     | Literal_string s -> fprintf ppf "%s" s
     | Literal_bytes b -> fprintf ppf "0x%s" @@ Bytes.to_string @@ Bytes.escaped b
 
-  and block ppf (b:block) = (list_sep_d instruction) ppf b
+  and block ppf (b:block) = (list_sep instruction (tag "@;")) ppf b
 
   and single_record_patch ppf ((s, ae) : string * ae) =
     fprintf ppf "%s <- %a" s annotated_expression ae
@@ -224,7 +224,7 @@ module PP = struct
   and instruction ppf (i:instruction) = match i with
     | I_skip -> fprintf ppf "skip"
     | I_fail ae -> fprintf ppf "fail with (%a)" annotated_expression ae
-    | I_loop (cond, b) -> fprintf ppf "while (%a) { %a }" annotated_expression cond block b
+    | I_loop (cond, b) -> fprintf ppf "while (%a) {@;  @[<v>%a@]@;}" annotated_expression cond block b
     | I_assignment {name;annotated_expression = ae} ->
         fprintf ppf "%s := %a" name annotated_expression ae
     | I_matching (ae, m) ->
@@ -240,7 +240,7 @@ module PP = struct
         fprintf ppf "const %s = %a" name annotated_expression ae
 
   let program ppf (p:program) =
-    fprintf ppf "%a" (list_sep_d declaration) p
+    fprintf ppf "@[<v>%a@]" (list_sep declaration (tag "@;")) p
 
 end
 
@@ -506,6 +506,14 @@ module Combinators = struct
     match t.type_value' with
     | T_constant ("map", [_ ; _]) -> ok ()
     | _ -> simple_fail "not a map"
+
+  let assert_t_int : type_value -> unit result = fun t -> match t.type_value' with
+    | T_constant ("int", []) -> ok ()
+    | _ -> simple_fail "not an int"
+
+  let assert_t_nat : type_value -> unit result = fun t -> match t.type_value' with
+    | T_constant ("nat", []) -> ok ()
+    | _ -> simple_fail "not an nat"
 
   let e_record map : expression = E_record map
   let ez_e_record (lst : (string * ae) list) : expression =

@@ -39,8 +39,9 @@ let ez lst =
 
 let dummy n =
   ez List.(
-    map (fun n -> (n, (n, string_of_int n))) @@
-    range n
+    map (fun n -> (n, (n, string_of_int n)))
+    @@ tl
+    @@ range (n + 1)
   )
 
 let is_empty () : unit result =
@@ -67,7 +68,7 @@ let get_top () : unit result =
     | 0, _ -> ok ()
     | _, result ->
         let%bind result' = result in
-        let expected = e_a_pair (e_a_int 0) (e_a_string "0") in
+        let expected = e_a_pair (e_a_int 1) (e_a_string "1") in
         AST_Typed.assert_value_eq (expected, result')
   in
   let%bind _ = bind_list
@@ -75,7 +76,51 @@ let get_top () : unit result =
     @@ [0 ; 2 ; 7 ; 12] in
   ok ()
 
+let pop_switch () : unit result =
+  let%bind program = get_program () in
+  let aux n =
+    let input = dummy n in
+    match n, easy_run_typed "pop_switch" program input with
+    | 0, Trace.Ok _ -> simple_fail "unexpected success"
+    | 0, _ -> ok ()
+    | _, result ->
+        let%bind result' = result in
+        let expected = ez List.(
+            map (fun i -> if i = 1 then (1, (n, string_of_int n)) else (i, (i, string_of_int i)))
+            @@ tl
+            @@ range (n + 1)
+          ) in
+        AST_Typed.assert_value_eq (expected, result')
+  in
+  let%bind _ = bind_list
+    @@ List.map aux
+    @@ [0 ; 2 ; 7 ; 12] in
+  ok ()
+
+(* let pop () : unit result =
+ *   let%bind program = get_program () in
+ *   let aux n =
+ *     let input = dummy n in
+ *     match n, easy_run_typed "pop" program input with
+ *     | 0, Trace.Ok _ -> simple_fail "unexpected success"
+ *     | 0, _ -> ok ()
+ *     | _, result ->
+ *         let%bind result' = result in
+ *         let expected = ez List.(
+ *             map (fun i -> if i = 1 then (1, (n, string_of_int n)) else (i, (i, string_of_int i)))
+ *             @@ tl
+ *             @@ range (n + 1)
+ *           ) in
+ *         AST_Typed.assert_value_eq (expected, result')
+ *   in
+ *   let%bind _ = bind_list
+ *     @@ List.map aux
+ *     @@ [0 ; 2 ; 7 ; 12] in
+ *   ok () *)
+
 let main = "Heap (End to End)", [
     test "is_empty" is_empty ;
     test "get_top" get_top ;
+    test "pop_switch" pop_switch ;
+    (* test "pop" pop ; *)
   ]
