@@ -8,7 +8,7 @@ module Micheline = X_tezos_micheline
 
 module Error_monad = X_error_monad
 module Trace = Trace
-module PP = PP
+module PP_helpers = PP
 module Location = Location
 
 module List = X_list

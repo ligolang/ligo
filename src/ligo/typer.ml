@@ -38,7 +38,7 @@ module Environment = struct
 
   module PP = struct
     open Format
-    open PP
+    open PP_helpers
 
     let list_sep_d x = list_sep x (const " , ")
 

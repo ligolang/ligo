@@ -15,6 +15,7 @@
     tezos-micheline
     meta_michelson
     ligo_parser
+    mini_c
     multifix
   )
   (preprocess

@@ -145,7 +145,7 @@ let get_functional_entry (p:program) (entry : string) : (lambda * type_value) re
 
 module PP = struct
   open Format
-  open PP
+  open PP_helpers
 
   let list_sep_d x = list_sep x (const " , ")
   let smap_sep_d x = smap_sep x (const " , ")

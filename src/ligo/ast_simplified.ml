@@ -120,7 +120,7 @@ let annotated_expression expression type_annotation = {expression ; type_annotat
 open Trace
 
 module PP = struct
-  open PP
+  open PP_helpers
   open Format
 
   let list_sep_d x = list_sep x (const " , ")

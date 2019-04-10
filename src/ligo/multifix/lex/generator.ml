@@ -19,7 +19,7 @@ module Print_mly = struct
     fprintf ppf "%%token <int> INT\n" ;
     fprintf ppf "%%token <string> STRING\n" ;
     fprintf ppf "%%token <string> NAME\n" ;
-    fprintf ppf "\n%a\n\n" (PP.list_sep token (PP.const "\n")) tokens ;
+    fprintf ppf "\n%a\n\n" (PP_helpers.list_sep token (PP_helpers.const "\n")) tokens ;
     fprintf ppf "%%%%\n"
 end
 
@@ -62,7 +62,7 @@ rule token = parse
     { raise (Unexpected_character (Printf.sprintf "At offset %d: unexpected character.\n" (Lexing.lexeme_start lexbuf))) }
 |post}
   let tokens = fun ppf tokens ->
-    fprintf ppf "%s%a\n%s" pre (PP.list_sep token (PP.const "\n")) tokens post
+    fprintf ppf "%s%a\n%s" pre (PP_helpers.list_sep token (PP_helpers.const "\n")) tokens post
 end
 
 module Print_ml = struct
@@ -82,7 +82,7 @@ let to_string : token -> string = function
 |pre}
 
   let tokens = fun ppf tokens ->
-    fprintf ppf "%s%a" pre (PP.list_sep token (PP.const "\n")) tokens
+    fprintf ppf "%s%a" pre (PP_helpers.list_sep token (PP_helpers.const "\n")) tokens
 end
 
 let tokens = [
@@ -108,13 +108,13 @@ let () =
   let arg = Sys.argv.(1) in
   match arg with
   | "mll" -> (
-    Format.printf "%a@.%a\n" PP.comment "Generated .mll" Print_mll.tokens tokens
+    Format.printf "%a@.%a\n" PP_helpers.comment "Generated .mll" Print_mll.tokens tokens
   )
   | "mly" -> (
-    Format.printf "%a@.%a\n" PP.comment "Generated .mly" Print_mly.tokens tokens
+    Format.printf "%a@.%a\n" PP_helpers.comment "Generated .mly" Print_mly.tokens tokens
   )
   | "ml" -> (
-    Format.printf "%a@.%a\n" PP.comment "Generated .ml" Print_ml.tokens tokens
+    Format.printf "%a@.%a\n" PP_helpers.comment "Generated .ml" Print_ml.tokens tokens
   )
   | _ -> exit 1
 
