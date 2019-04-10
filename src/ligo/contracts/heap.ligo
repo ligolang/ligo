@@ -8,7 +8,6 @@ function get_top (const h : heap) : heap_element is
 
 function pop (const h : heap) : heap_element is
   block {
-   const result : heap_element := get_top (h) ;
+   const result : heap_element = get_top (h) ;
    const s : nat = size(h) ;
-   
   } with result ;

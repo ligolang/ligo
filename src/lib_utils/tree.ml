@@ -93,4 +93,19 @@ module Append = struct
   let fold empty leaf node = function
     | Empty -> empty
     | Full x -> fold' leaf node x
+
+  let rec assoc_opt' : ('a * 'b) t' -> 'a -> 'b option = fun t k ->
+    match t with
+    | Leaf (k', v) when k = k' -> Some v
+    | Leaf _ -> None
+    | Node {a;b} -> (
+        match assoc_opt' a k with
+        | None -> assoc_opt' b k
+        | Some v -> Some v
+      )
+
+  let assoc_opt : ('a * 'b) t -> 'a -> 'b option = fun t k ->
+    match t with
+    | Empty -> None
+    | Full t' -> assoc_opt' t' k
 end

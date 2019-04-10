@@ -209,7 +209,10 @@ let map () : unit result =
   in
   let%bind _set = trace (simple_error "set") @@
     let aux n =
-      let input = ez List.(map (fun x -> (x, x)) @@ range n) in
+      let input =
+        let m = ez [(23, 0) ; (42, 0)] in
+        AST_Typed.Combinators.(ez_e_a_record [("n", e_a_int n) ; ("m", m)])
+      in
       let%bind result = easy_run_typed "set_" program input in
       let expect = ez [(23, n) ; (42, 0)] in
       AST_Typed.assert_value_eq (expect, result)

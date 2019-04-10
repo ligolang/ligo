@@ -6,7 +6,7 @@ const fb : foobar = map
 end
 
 function set_ (var n : int ; var m : foobar) : foobar is block {
-  m[n] := n ;
+  m[23] := n ;
 } with m
 
 

@@ -391,7 +391,7 @@ and simpl_single_instruction : Raw.single_instr -> instruction result = fun t ->
       let a = a.value in
       let%bind value_expr = match a.rhs with
         | Expr e -> simpl_expression e
-        | _ -> simple_fail "no weird assignments yet"
+        | NoneExpr _ -> simple_fail "no none assignments yet"
       in
       match a.lhs with
         | Path (Name name) -> (

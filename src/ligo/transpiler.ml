@@ -12,7 +12,7 @@ let map_of_kv_list lst =
   List.fold_left (fun prev (k, v) -> add k v prev) empty lst
 
 let rec translate_type (t:AST.type_value) : type_value result =
-  match t.type_value with
+  match t.type_value' with
   | T_constant ("bool", []) -> ok (T_base Base_bool)
   | T_constant ("int", []) -> ok (T_base Base_int)
   | T_constant ("nat", []) -> ok (T_base Base_nat)
@@ -54,6 +54,51 @@ let rec translate_type (t:AST.type_value) : type_value result =
       let%bind result' = translate_type result in
       ok (T_function (param', result'))
 
+let tuple_access_to_lr : type_value -> type_value list -> int -> (type_value * (type_value * [`Left | `Right]) list) result = fun ty tys ind ->
+  let node_tv = Append_tree.of_list @@ List.mapi (fun i a -> (i, a)) tys in
+  let leaf (i, _) : (type_value * (type_value * [`Left | `Right]) list) result =
+    if i = ind then (
+      ok (ty, [])
+    ) else (
+      simple_fail "bad leaf"
+    ) in
+  let node a b : (type_value * (type_value * [`Left | `Right]) list) result =
+    match%bind bind_lr (a, b) with
+    | `Left (t, acc) ->
+        let%bind (a, _) = get_t_pair t in
+        ok @@ (t, (a, `Left) :: acc)
+    | `Right (t, acc) -> (
+        let%bind (_, b) = get_t_pair t in
+        ok @@ (t, (b, `Right) :: acc)
+      ) in
+  let error_content = Format.asprintf "(%a).%d" (PP.list_sep_d PP.type_) tys ind in
+  trace_strong (error "bad index in tuple (shouldn't happen here)" error_content) @@
+  Append_tree.fold_ne leaf node node_tv
+
+let record_access_to_lr : type_value -> type_value AST.type_name_map -> string -> (type_value * (type_value * [`Left | `Right]) list) result = fun ty tym ind ->
+  let tys = kv_list_of_map tym in
+  let node_tv = Append_tree.of_list tys in
+  let leaf (i, _) : (type_value * (type_value * [`Left | `Right]) list) result =
+    if i = ind then (
+      ok (ty, [])
+    ) else (
+      simple_fail "bad leaf"
+    ) in
+  let node a b : (type_value * (type_value * [`Left | `Right]) list) result =
+    match%bind bind_lr (a, b) with
+    | `Left (t, acc) ->
+        let%bind (a, _) = get_t_pair t in
+        ok @@ (t, (a, `Left) :: acc)
+    | `Right (t, acc) -> (
+        let%bind (_, b) = get_t_pair t in
+        ok @@ (t, (b, `Right) :: acc)
+      ) in
+  let error_content =
+    let aux ppf (name, ty) = Format.fprintf ppf "%s -> %a" name PP.type_ ty in
+    Format.asprintf "(%a).%s" (PP.list_sep_d aux) tys ind in
+  trace_strong (error "bad index in record (shouldn't happen here)" error_content) @@
+  Append_tree.fold_ne leaf node node_tv
+
 let rec translate_block env (b:AST.block) : block result =
   let%bind (instructions, env') =
     let rec aux e acc lst = match lst with
@@ -78,13 +123,29 @@ and translate_instruction (env:Environment.t) (i:AST.instruction) : statement op
         | true -> env
         | false -> Environment.add (name, t) env in
       return ~env' (Assignment (name, expression))
-  | I_patch (r, s, v) ->
-      let ty = Environment.get r in
-      let aux (prev, acc) cur = ()
+  | I_patch (r, s, v) -> (
+      let ty = r.type_value in
+      let aux : ((AST.type_value * [`Left | `Right] list) as 'a) -> AST.access -> 'a result =
+        fun (prev, acc) cur ->
+          let%bind ty' = translate_type prev in
+        match cur with
+        | Access_tuple ind ->
+            let%bind ty_lst = AST.Combinators.get_t_tuple prev in
+            let%bind ty'_lst = bind_map_list translate_type ty_lst in
+            let%bind (_, path) = tuple_access_to_lr ty' ty'_lst ind in
+            let path' = List.map snd path in
+            ok (List.nth ty_lst ind, path' @ acc)
+        | Access_record prop ->
+            let%bind ty_map = AST.Combinators.get_t_record prev in
+            let%bind ty'_map = bind_map_smap translate_type ty_map in
+            let%bind (_, path) = record_access_to_lr ty' ty'_map prop in
+            let path' = List.map snd path in
+            ok (Map.String.find prop ty_map, path' @ acc)
       in
-      let s' = List.fold_left aux (ty, []) s in
-      let v' = translate_annotated_expression env v in
-      return (I_patch (r, s', v'))
+      let%bind (_, path) = bind_fold_list aux (ty, []) s in
+      let%bind v' = translate_annotated_expression env v in
+      return (I_patch (r.type_name, path, v'))
+    )
   | I_matching (expr, m) -> (
       let%bind expr' = translate_annotated_expression env expr in
       let env' = Environment.extend env in
@@ -167,29 +228,41 @@ and translate_annotated_expression (env:Environment.t) (ae:AST.annotated_express
       in
       Append_tree.fold_ne (translate_annotated_expression env) aux node
   | E_tuple_accessor (tpl, ind) ->
+      let%bind ty_lst = get_t_tuple tpl.type_annotation in
+      let%bind ty'_lst = bind_map_list translate_type ty_lst in
+      let%bind ty' = translate_type tpl.type_annotation in
+      let%bind (_, path) = tuple_access_to_lr ty' ty'_lst ind in
+      let aux = fun pred (ty, lr) ->
+        let c = match lr with
+          | `Left -> "CAR"
+          | `Right -> "CDR" in
+        E_constant (c, [pred]), ty, env in
       let%bind tpl' = translate_annotated_expression env tpl in
-      let%bind tpl_tv = get_t_tuple tpl.type_annotation in
-      let node_tv = Append_tree.of_list @@ List.mapi (fun i a -> (i, a)) tpl_tv in
-      let leaf (i, _) : expression result =
-        if i = ind then (
-          ok tpl'
-        ) else (
-          simple_fail "bad leaf"
-        ) in
-      let node a b : expression result =
-        match%bind bind_lr (a, b) with
-        | `Left ((_, t, env) as ex) -> (
-            let%bind (a, _) = get_t_pair t in
-            ok (E_constant ("CAR", [ex]), a, env)
-          )
-        | `Right ((_, t, env) as ex) -> (
-            let%bind (_, b) = get_t_pair t in
-            ok (E_constant ("CDR", [ex]), b, env)
-          ) in
-      let%bind expr =
-        trace_strong (simple_error "bad index in tuple (shouldn't happen here)") @@
-        Append_tree.fold_ne leaf node node_tv in
+      let expr = List.fold_left aux tpl' path in
       ok expr
+      (* let%bind tpl' = translate_annotated_expression env tpl in
+       * let%bind tpl_tv = get_t_tuple tpl.type_annotation in
+       * let node_tv = Append_tree.of_list @@ List.mapi (fun i a -> (i, a)) tpl_tv in
+       * let leaf (i, _) : expression result =
+       *   if i = ind then (
+       *     ok tpl'
+       *   ) else (
+       *     simple_fail "bad leaf"
+       *   ) in
+       * let node a b : expression result =
+       *   match%bind bind_lr (a, b) with
+       *   | `Left ((_, t, env) as ex) -> (
+       *       let%bind (a, _) = get_t_pair t in
+       *       ok (E_constant ("CAR", [ex]), a, env)
+       *     )
+       *   | `Right ((_, t, env) as ex) -> (
+       *       let%bind (_, b) = get_t_pair t in
+       *       ok (E_constant ("CDR", [ex]), b, env)
+       *     ) in
+       * let%bind expr =
+       *   trace_strong (simple_error "bad index in tuple (shouldn't happen here)") @@
+       *   Append_tree.fold_ne leaf node node_tv in
+       * ok expr *)
   | E_record m ->
       let node = Append_tree.of_list @@ list_of_map m in
       let aux a b : expression result =
@@ -407,7 +480,7 @@ let extract_record (v : value) (tree : _ Append_tree.t') : (_ list) result =
 let rec untranspile (v : value) (t : AST.type_value) : AST.annotated_expression result =
   let open! AST in
   let return e = ok AST.(annotated_expression e t) in
-  match t.type_value with
+  match t.type_value' with
   | T_constant ("unit", []) ->
       let%bind () = get_unit v in
       return (E_literal Literal_unit)

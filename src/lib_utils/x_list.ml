@@ -1,5 +1,12 @@
 include Tezos_base.TzPervasives.List
 
+let map ?(acc = []) f lst =
+  let rec aux acc f = function
+    | [] -> acc
+    | hd :: tl -> aux (f hd :: acc) f tl
+  in
+  aux acc f (List.rev lst)
+
 let filter_map f =
   let rec aux acc lst = match lst with
     | [] -> List.rev acc

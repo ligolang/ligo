@@ -397,6 +397,8 @@ module Environment = struct
 
     let empty : t = empty
 
+    let get_opt = assoc_opt
+
     let append s (e:t) = if has (fst s) e then e else append s e
 
     let of_list lst =
@@ -420,6 +422,20 @@ module Environment = struct
     type bound = string list
 
     open Michelson
+
+    let rec get_path' = fun s env' ->
+      match env' with
+      | Leaf (n, v) when n = s -> ok ([], v)
+      | Leaf _ -> simple_fail "Not in env"
+      | Node {a;b} ->
+          match%bind bind_lr @@ Tezos_utils.Tuple.map2 (get_path' s) (a,b) with
+          | `Left (lst, v) -> ok ((`Left :: lst), v)
+          | `Right (lst, v) -> ok ((`Right :: lst), v)
+
+    let get_path = fun s env ->
+      match env with
+      | Empty -> simple_fail "Set : No env"
+      | Full x -> get_path' s x
 
     let rec to_michelson_get' s = function
       | Leaf (n, tv) when n = s -> ok @@ (seq [], tv)
@@ -484,6 +500,15 @@ module Environment = struct
   let restrict t : t = List.tl t
   let of_small small : t = [small]
 
+  let rec get_opt : t -> string -> type_value option = fun t k ->
+    match t with
+    | [] -> None
+    | hd :: tl -> (
+        match Small.get_opt hd k with
+        | None -> get_opt tl k
+        | Some v -> Some v
+      )
+
   let rec has x : t -> bool = function
     | [] -> raise (Failure "Schema.Big.has")
     | [hd] -> Small.has x hd
@@ -508,6 +533,32 @@ module Environment = struct
   let to_mini_c_capture = function
     | [a] -> Small.to_mini_c_capture a
     | _ -> raise (Failure "Schema.Big.to_mini_c_capture")
+
+  let rec get_path : string -> environment -> ([`Left | `Right] list * type_value) result = fun s t ->
+    match t with
+    | [] -> simple_fail "Get path : empty big schema"
+    | [ x ] -> Small.get_path s x
+    | hd :: tl -> (
+        match%bind bind_lr_lazy (Small.get_path s hd, (fun () -> get_path s tl)) with
+        | `Left (lst, v) -> ok (`Left :: lst, v)
+        | `Right (lst, v) -> ok (`Right :: lst, v)
+      )
+
+  let path_to_michelson_get = fun path ->
+    let open Michelson in
+    let aux step = match step with
+      | `Left -> i_car
+      | `Right -> i_cdr in
+    seq (List.map aux path)
+
+  let path_to_michelson_set = fun path ->
+    let open Michelson in
+    let aux acc step = match step with
+      | `Left -> seq [dip i_unpair ; acc ; i_pair]
+      | `Right -> seq [dip i_unpiar ; acc ; i_piar]
+    in
+    let init = dip i_drop in
+    List.fold_left aux init path
 
   let to_michelson_anonymous_add (t:t) =
     let%bind code = match t with
@@ -1072,7 +1123,15 @@ module Translate_program = struct
             Environment.to_michelson_restrict ;
             i_push_unit ; expr ; i_car]] I_LOOP ;
       ])
-    | I_patch _ -> ()
+    | I_patch (name, lrs, expr) ->
+        let%bind expr' = translate_expression expr in
+        let%bind (name_path, _) = Environment.get_path name w_env.pre_environment in
+        let path = name_path @ lrs in
+        let set_code = Environment.path_to_michelson_set path in
+        ok @@ seq [
+          i_push_unit ; expr' ; i_car ;
+          set_code ;
+        ]
     in
 
     let%bind () =

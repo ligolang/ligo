@@ -175,7 +175,7 @@ let easy_run_typed
   let%bind typed_result =
     let%bind main_result_type =
       let%bind typed_main = Ast_typed.get_functional_entry program entry in
-      match (snd typed_main).type_value with
+      match (snd typed_main).type_value' with
       | T_function (_, result) -> ok result
       | _ -> simple_fail "main doesn't have fun type" in
     untranspile_value mini_c_result main_result_type in

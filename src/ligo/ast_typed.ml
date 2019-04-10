@@ -188,6 +188,8 @@ module PP = struct
     | E_matching (ae, m) ->
         fprintf ppf "match %a with %a" annotated_expression ae (matching annotated_expression) m
 
+  and value ppf v = annotated_expression ppf v
+
   and assoc_annotated_expression ppf : (ae * ae) -> unit = fun (a, b) ->
     fprintf ppf "%a -> %a" annotated_expression a annotated_expression b
 
@@ -355,10 +357,14 @@ let assert_literal_eq (a, b : literal * literal) : unit result =
   | Literal_unit, _ -> simple_fail "unit vs non-unit"
 
 
-let rec assert_value_eq (a, b: (value*value)) : unit result = match (a.expression, b.expression) with
+let rec assert_value_eq (a, b: (value*value)) : unit result =
+  let error_content =
+    Format.asprintf "%a vs %a" PP.value a PP.value b
+  in
+  trace (error "not equal" error_content) @@
+  match (a.expression, b.expression) with
   | E_literal a, E_literal b ->
       assert_literal_eq (a, b)
-
   | E_constant (ca, lsta), E_constant (cb, lstb) when ca = cb -> (
       let%bind lst =
         generic_try (simple_error "constants with different number of elements")

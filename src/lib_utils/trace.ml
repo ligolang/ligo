@@ -85,6 +85,8 @@ let bind_fold_smap f init (smap : _ X_map.String.t) =
   in
   X_map.String.fold aux smap init
 
+let bind_map_smap f smap = bind_smap (X_map.String.map f smap)
+
 let bind_map_list f lst = bind_list (List.map f lst)
 
 let bind_fold_list f init lst =
@@ -108,6 +110,15 @@ let bind_lr (type a b) ((a : a result), (b:b result)) : [`Left of a | `Right of 
   | Ok x, _ -> ok @@ `Left x
   | _, Ok x -> ok @@ `Right x
   | _, Errors b -> Errors b
+
+let bind_lr_lazy (type a b) ((a : a result), (b:unit -> b result)) : [`Left of a | `Right of b] result =
+  match a with
+  | Ok x -> ok @@ `Left x
+  | _ -> (
+      match b() with
+      | Ok x -> ok @@ `Right x
+      | Errors b -> Errors b
+    )
 
 let bind_and (a, b) =
   a >>? fun a ->
