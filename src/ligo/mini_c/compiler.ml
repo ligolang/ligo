@@ -56,12 +56,12 @@ let rec get_predicate : string -> expression list -> predicate result = fun s ls
         | [ _ ; (_, m, _) ] ->
             let%bind (_, v) = Combinators.get_t_map m in
             ok v
-        | _ -> simple_fail "mini_c . MAP_REMOVE" in
+        | _ -> simple_fail (thunk "mini_c . MAP_REMOVE") in
       let%bind v_ty = Compiler_type.type_ v in
       ok @@ simple_binary @@ seq [dip (i_none v_ty) ; prim I_UPDATE ]
   | "MAP_UPDATE" ->
       ok @@ simple_ternary @@ seq [dip (i_some) ; prim I_UPDATE ]
-  | x -> simple_fail @@ "predicate \"" ^ x ^ "\" doesn't exist"
+  | x -> simple_fail @@ (fun () -> "predicate \"" ^ x ^ "\" doesn't exist")
 
 and translate_value (v:value) : michelson result = match v with
   | D_bool b -> ok @@ prim (if b then D_True else D_False)
@@ -102,11 +102,13 @@ and translate_function ({capture;content}:anon_function) : michelson result =
       let%bind body = translate_function_body content in
       let%bind capture_m = translate_value value in
       ok @@ d_pair capture_m body
-  | _ -> simple_fail "translating closure without capture"
+  | _ -> simple_fail (thunk "translating closure without capture")
 
 and translate_expression ((expr', ty, env) as expr:expression) : michelson result =
-  let error_message = Format.asprintf  "%a" PP.expression expr in
-  let%bind (code : michelson) = trace (error "translating expression" error_message) @@ match expr' with
+  let error_message () = Format.asprintf  "%a" PP.expression expr in
+  let%bind (code : michelson) =
+    trace (fun () -> error (thunk "translating expression") error_message ()) @@
+    match expr' with
     | E_literal v ->
         let%bind v = translate_value v in
         let%bind t = Compiler_type.type_ ty in
@@ -153,7 +155,7 @@ and translate_expression ((expr', ty, env) as expr:expression) : michelson resul
               i_pair ; (* expr :: env *)
             ]
           )
-        | _ -> simple_fail "E_applicationing something not appliable"
+        | _ -> simple_fail (thunk "E_applicationing something not appliable")
       )
     | E_variable x ->
         let%bind (get, _) = Environment.to_michelson_get env x in
@@ -169,7 +171,7 @@ and translate_expression ((expr', ty, env) as expr:expression) : michelson resul
           | Unary f, 1 -> ok (seq @@ lst' @ [f])
           | Binary f, 2 -> ok (seq @@ lst' @ [f])
           | Ternary f, 3 -> ok (seq @@ lst' @ [f])
-          | _ -> simple_fail "bad arity"
+          | _ -> simple_fail (thunk "bad arity")
         in
         ok code
     | E_empty_map sd ->
@@ -224,7 +226,7 @@ and translate_expression ((expr', ty, env) as expr:expression) : michelson resul
                 i_pair ;
               ] in
             ok code
-        | _ -> simple_fail "expected function code"
+        | _ -> simple_fail (thunk "expected function code")
       )
     | E_Cond (c, a, b) -> (
         let%bind c' = translate_expression c in
@@ -242,12 +244,12 @@ and translate_expression ((expr', ty, env) as expr:expression) : michelson resul
     let%bind (Ex_ty schema_ty) = Environment.to_ty env in
     let%bind output_type = Compiler_type.type_ ty in
     let%bind (Ex_ty output_ty) =
-      let error_message = Format.asprintf "%a" Michelson.pp output_type in
-      Trace.trace_tzresult_lwt (error "error parsing output ty" error_message) @@
+      let error_message () = Format.asprintf "%a" Michelson.pp output_type in
+      Trace.trace_tzresult_lwt (fun () -> error (thunk "error parsing output ty") error_message ()) @@
       Tezos_utils.Memory_proto_alpha.parse_michelson_ty output_type in
     let input_stack_ty = Stack.(Contract_types.unit @: schema_ty @: nil) in
     let output_stack_ty = Stack.(Contract_types.(pair output_ty unit) @: schema_ty @: nil) in
-    let%bind error_message =
+    let error_message () =
       let%bind schema_michelson = Environment.to_michelson_type env in
       ok @@ Format.asprintf
         "expression : %a\ncode : %a\nschema type : %a\noutput type : %a"
@@ -257,7 +259,12 @@ and translate_expression ((expr', ty, env) as expr:expression) : michelson resul
         Michelson.pp output_type
     in
     let%bind _ =
-      Trace.trace_tzresult_lwt (error "error parsing expression code" error_message) @@
+      Trace.trace_tzresult_lwt_r
+        (fun () ->
+           let%bind error_message = error_message () in
+           ok @@ (fun () -> error (thunk "error parsing expression code")
+                                  (fun () -> error_message)
+                                  ())) @@
       Tezos_utils.Memory_proto_alpha.parse_michelson code
         input_stack_ty output_stack_ty
     in
@@ -267,9 +274,9 @@ and translate_expression ((expr', ty, env) as expr:expression) : michelson resul
   ok code
 
 and translate_statement ((s', w_env) as s:statement) : michelson result =
-  let error_message = Format.asprintf "%a" PP.statement s in
+  let error_message () = Format.asprintf "%a" PP.statement s in
   let%bind (code : michelson) =
-    trace (error "translating statement" error_message) @@ match s' with
+    trace (fun () -> error (thunk "translating statement") error_message ()) @@ match s' with
     | Assignment (s, ((_, tv, _) as expr)) ->
         let%bind expr = translate_expression expr in
         let%bind add =
@@ -341,7 +348,7 @@ and translate_statement ((s', w_env) as s:statement) : michelson result =
     let input_stack_ty = Stack.(pre_ty @: nil) in
     let%bind (Ex_ty post_ty) = Environment.to_ty w_env.post_environment in
     let output_stack_ty = Stack.(post_ty @: nil) in
-    let%bind error_message =
+    let error_message () =
       let%bind pre_env_michelson = Environment.to_michelson_type w_env.pre_environment in
       let%bind post_env_michelson = Environment.to_michelson_type w_env.post_environment in
       ok @@ Format.asprintf
@@ -352,7 +359,10 @@ and translate_statement ((s', w_env) as s:statement) : michelson result =
         Michelson.pp post_env_michelson
     in
     let%bind _ =
-      Trace.trace_tzresult_lwt (error "error parsing statement code" error_message) @@
+      Trace.trace_tzresult_lwt_r (fun () -> let%bind error_message = error_message () in
+                                   ok (fun () -> error (thunk "error parsing statement code")
+                                                 (fun () -> error_message)
+                                                 ())) @@
       Tezos_utils.Memory_proto_alpha.parse_michelson code
         input_stack_ty output_stack_ty
     in
@@ -368,14 +378,18 @@ and translate_regular_block ((b, env):block) : michelson result =
     let%bind instruction = translate_statement statement in
     ok (instruction :: lst)
   in
-  let%bind error_message =
+  let error_message () =
     let%bind schema_michelson = Environment.to_michelson_type env.pre_environment in
     ok @@ Format.asprintf "\nblock : %a\nschema : %a\n"
       PP.block (b, env)
       Tezos_utils.Micheline.Michelson.pp schema_michelson
   in
   let%bind codes =
-    trace (error "error translating block" error_message) @@
+    trace_r (fun () ->
+        let%bind error_message = error_message () in
+        ok (fun () -> error (thunk "error translating block")
+                      (fun () -> error_message)
+                      ())) @@
     List.fold_left aux (ok []) b in
   let code = seq (List.rev codes) in
   ok code
@@ -394,13 +408,15 @@ and translate_function_body ({body;result} as f:anon_function_content) : michels
     let%bind (Ex_ty output_ty) = Compiler_type.Ty.type_ f.output in
     let input_stack_ty = Stack.(input_ty @: nil) in
     let output_stack_ty = Stack.(output_ty @: nil) in
-    let%bind error_message =
-      ok @@ Format.asprintf
+    let error_message () =
+      Format.asprintf
         "\ncode : %a\n"
         Tezos_utils.Micheline.Michelson.pp code
     in
     let%bind _ =
-      Trace.trace_tzresult_lwt (error "error parsing function code" error_message) @@
+      Trace.trace_tzresult_lwt (fun () -> error (thunk "error parsing function code")
+                                                error_message
+                                                ()) @@
       Tezos_utils.Memory_proto_alpha.parse_michelson code
         input_stack_ty output_stack_ty
     in
@@ -420,7 +436,7 @@ let translate_program (p:program) (entry:string) : compiled_program result =
     | name , (E_function f, T_function (_, _), _) when f.capture_type = No_capture && name = entry -> Some f
     | _ -> None in
   let%bind main =
-    trace_option (simple_error "no functional entry") @@
+    trace_option (fun () -> simple_error (thunk "no functional entry") ()) @@
     Tezos_utils.List.find_map is_main p in
   let {input;output} : anon_function_content = main in
   let%bind body = translate_function_body main in

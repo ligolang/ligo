@@ -21,12 +21,12 @@ let rec translate_value (Ex_typed_value (ty, value)) : value result =
     )
   | (Int_t _), n ->
       let%bind n =
-        trace_option (simple_error "too big to fit an int") @@
+        trace_option (fun () -> simple_error (thunk "too big to fit an int") ()) @@
         Alpha_context.Script_int.to_int n in
       ok @@ D_int n
   | (Nat_t _), n ->
       let%bind n =
-        trace_option (simple_error "too big to fit an int") @@
+        trace_option (fun () -> simple_error (thunk "too big to fit an int") ()) @@
         Alpha_context.Script_int.to_int n in
       ok @@ D_nat n
   | (Bool_t _), b ->
@@ -58,15 +58,15 @@ let rec translate_value (Ex_typed_value (ty, value)) : value result =
   | ty, v ->
       let%bind error =
         let%bind m_data =
-          trace_tzresult_lwt (simple_error "unparsing unrecognized data") @@
+          trace_tzresult_lwt (fun () -> simple_error (thunk "unparsing unrecognized data") ()) @@
           Tezos_utils.Memory_proto_alpha.unparse_michelson_data ty v in
         let%bind m_ty =
-          trace_tzresult_lwt (simple_error "unparsing unrecognized data") @@
+          trace_tzresult_lwt (fun () -> simple_error (thunk "unparsing unrecognized data") ()) @@
           Tezos_utils.Memory_proto_alpha.unparse_michelson_ty ty in
-        let error_content  =
+        let error_content () =
           Format.asprintf "%a : %a"
             Michelson.pp m_data
             Michelson.pp m_ty in
-        ok @@ error "this value can't be transpiled back yet" error_content
+        ok @@ (fun () -> error (thunk "this value can't be transpiled back yet") error_content ())
       in
       fail error

@@ -133,7 +133,7 @@ let get_entry (p:program) (entry : string) : annotated_expression result =
     | Declaration_constant _ -> None
   in
   let%bind result =
-    trace_option (simple_error "no entry point with given name") @@
+    trace_option (fun () -> simple_error (thunk "no entry point with given name") ()) @@
     Tezos_utils.List.find_map aux p in
   ok result
 
@@ -141,7 +141,7 @@ let get_functional_entry (p:program) (entry : string) : (lambda * type_value) re
   let%bind entry = get_entry p entry in
   match entry.expression with
   | E_lambda l -> ok (l, entry.type_annotation)
-  | _ -> simple_fail "given entry point is not functional"
+  | _ -> simple_fail (thunk "given entry point is not functional")
 
 module PP = struct
   open Format
@@ -246,20 +246,20 @@ end
 
 
 module Errors = struct
-  let different_kinds a b =
-    let title = "different kinds" in
-    let full = Format.asprintf "(%a) VS (%a)" PP.type_value a PP.type_value b in
-    error title full
+  let different_kinds a b () =
+    let title = (thunk "different kinds") in
+    let full () = Format.asprintf "(%a) VS (%a)" PP.type_value a PP.type_value b in
+    error title full ()
 
-  let different_constants a b =
-    let title = "different constants" in
-    let full = Format.asprintf "%s VS %s" a b in
-    error title full
+  let different_constants a b () =
+    let title = (thunk "different constants") in
+    let full () = Format.asprintf "%s VS %s" a b in
+    error title full ()
 
-  let different_size_type name a b =
-    let title = name ^ " have different sizes" in
-    let full = Format.asprintf "%a VS %a" PP.type_value a PP.type_value b in
-    error title full
+  let different_size_type name a b () =
+    let title () = name ^ " have different sizes" in
+    let full () = Format.asprintf "%a VS %a" PP.type_value a PP.type_value b in
+    error title full ()
 
   let different_size_constants = different_size_type "constants"
 
@@ -275,7 +275,7 @@ open Errors
 let rec assert_type_value_eq (a, b: (type_value * type_value)) : unit result = match (a.type_value', b.type_value') with
   | T_tuple ta, T_tuple tb -> (
       let%bind _ =
-        trace_strong (different_size_tuples a b)
+        trace_strong (fun () -> (different_size_tuples a b ()))
         @@ Assert.assert_true List.(length ta = length tb) in
       bind_list_iter assert_type_value_eq (List.combine ta tb)
     )
@@ -287,7 +287,7 @@ let rec assert_type_value_eq (a, b: (type_value * type_value)) : unit result = m
       let%bind _ =
         trace_strong (different_constants ca cb)
         @@ Assert.assert_true (ca = cb) in
-      trace (simple_error "constant sub-expression")
+      trace (fun () -> simple_error (thunk "constant sub-expression") ())
       @@ bind_list_iter assert_type_value_eq (List.combine lsta lstb)
     )
   | T_constant _, _ -> fail @@ different_kinds a b
@@ -296,14 +296,14 @@ let rec assert_type_value_eq (a, b: (type_value * type_value)) : unit result = m
       let sb' = SMap.to_kv_list sb in
       let aux ((ka, va), (kb, vb)) =
         let%bind _ =
-          Assert.assert_true ~msg:"different keys in sum types"
+          Assert.assert_true ~msg:(thunk "different keys in sum types")
           @@ (ka = kb) in
         assert_type_value_eq (va, vb)
       in
       let%bind _ =
         trace_strong (different_size_sums a b)
         @@ Assert.assert_list_same_size sa' sb' in
-      trace (simple_error "sum type") @@
+      trace (simple_error (thunk "sum type")) @@
       bind_list_iter aux (List.combine sa' sb')
 
     )
@@ -313,14 +313,14 @@ let rec assert_type_value_eq (a, b: (type_value * type_value)) : unit result = m
       let rb' = SMap.to_kv_list rb in
       let aux ((ka, va), (kb, vb)) =
         let%bind _ =
-          Assert.assert_true ~msg:"different keys in record types"
+          Assert.assert_true ~msg:(thunk "different keys in record types")
           @@ (ka = kb) in
         assert_type_value_eq (va, vb)
       in
       let%bind _ =
         trace_strong (different_size_records a b)
         @@ Assert.assert_list_same_size ra' rb' in
-      trace (simple_error "record type")
+      trace (simple_error (thunk "record type"))
       @@ bind_list_iter aux (List.combine ra' rb')
 
     )
@@ -339,82 +339,82 @@ let type_value_eq ab = match assert_type_value_eq ab with
 let assert_literal_eq (a, b : literal * literal) : unit result =
   match (a, b) with
   | Literal_bool a, Literal_bool b when a = b -> ok ()
-  | Literal_bool _, Literal_bool _ -> simple_fail "different bools"
-  | Literal_bool _, _ -> simple_fail "bool vs non-bool"
+  | Literal_bool _, Literal_bool _ -> simple_fail (thunk "different bools")
+  | Literal_bool _, _ -> simple_fail (thunk "bool vs non-bool")
   | Literal_int a, Literal_int b when a = b -> ok ()
-  | Literal_int _, Literal_int _ -> simple_fail "different ints"
-  | Literal_int _, _ -> simple_fail "int vs non-int"
+  | Literal_int _, Literal_int _ -> simple_fail (thunk "different ints")
+  | Literal_int _, _ -> simple_fail (thunk "int vs non-int")
   | Literal_nat a, Literal_nat b when a = b -> ok ()
-  | Literal_nat _, Literal_nat _ -> simple_fail "different nats"
-  | Literal_nat _, _ -> simple_fail "nat vs non-nat"
+  | Literal_nat _, Literal_nat _ -> simple_fail (thunk "different nats")
+  | Literal_nat _, _ -> simple_fail (thunk "nat vs non-nat")
   | Literal_string a, Literal_string b when a = b -> ok ()
-  | Literal_string _, Literal_string _ -> simple_fail "different strings"
-  | Literal_string _, _ -> simple_fail "string vs non-string"
+  | Literal_string _, Literal_string _ -> simple_fail (thunk "different strings")
+  | Literal_string _, _ -> simple_fail (thunk "string vs non-string")
   | Literal_bytes a, Literal_bytes b when a = b -> ok ()
-  | Literal_bytes _, Literal_bytes _ -> simple_fail "different bytess"
-  | Literal_bytes _, _ -> simple_fail "bytes vs non-bytes"
+  | Literal_bytes _, Literal_bytes _ -> simple_fail (thunk "different bytess")
+  | Literal_bytes _, _ -> simple_fail (thunk "bytes vs non-bytes")
   | Literal_unit, Literal_unit -> ok ()
-  | Literal_unit, _ -> simple_fail "unit vs non-unit"
+  | Literal_unit, _ -> simple_fail (thunk "unit vs non-unit")
 
 
 let rec assert_value_eq (a, b: (value*value)) : unit result =
-  let error_content =
+  let error_content () =
     Format.asprintf "%a vs %a" PP.value a PP.value b
   in
-  trace (error "not equal" error_content) @@
+  trace (fun () -> error (thunk "not equal") error_content ()) @@
   match (a.expression, b.expression) with
   | E_literal a, E_literal b ->
       assert_literal_eq (a, b)
   | E_constant (ca, lsta), E_constant (cb, lstb) when ca = cb -> (
       let%bind lst =
-        generic_try (simple_error "constants with different number of elements")
+        generic_try (fun () -> simple_error (thunk "constants with different number of elements") ())
           (fun () -> List.combine lsta lstb) in
       let%bind _all = bind_list @@ List.map assert_value_eq lst in
       ok ()
     )
   | E_constant _, E_constant _ ->
-      simple_fail "different constants"
+      simple_fail (thunk "different constants")
   | E_constant _, _ ->
-      let error_content =
+      let error_content () =
         Format.asprintf "%a vs %a"
           PP.annotated_expression a
           PP.annotated_expression b
       in
-      fail @@ error "comparing constant with other stuff" error_content
+      fail @@ (fun () -> error (thunk "comparing constant with other stuff") error_content ())
 
   | E_constructor (ca, a), E_constructor (cb, b) when ca = cb -> (
       let%bind _eq = assert_value_eq (a, b) in
       ok ()
     )
   | E_constructor _, E_constructor _ ->
-      simple_fail "different constructors"
+      simple_fail (thunk "different constructors")
   | E_constructor _, _ ->
-      simple_fail "comparing constructor with other stuff"
+      simple_fail (thunk "comparing constructor with other stuff")
 
   | E_tuple lsta, E_tuple lstb -> (
       let%bind lst =
-        generic_try (simple_error "tuples with different number of elements")
+        generic_try (fun () -> simple_error (thunk "tuples with different number of elements") ())
           (fun () -> List.combine lsta lstb) in
       let%bind _all = bind_list @@ List.map assert_value_eq lst in
       ok ()
     )
   | E_tuple _, _ ->
-      simple_fail "comparing tuple with other stuff"
+      simple_fail (thunk "comparing tuple with other stuff")
 
   | E_record sma, E_record smb -> (
       let aux _ a b =
         match a, b with
         | Some a, Some b -> Some (assert_value_eq (a, b))
-        | _ -> Some (simple_fail "different record keys")
+        | _ -> Some (simple_fail (thunk "different record keys"))
       in
       let%bind _all = bind_smap @@ SMap.merge aux sma smb in
       ok ()
     )
   | E_record _, _ ->
-      simple_fail "comparing record with other stuff"
+      simple_fail (thunk "comparing record with other stuff")
 
   | E_map lsta, E_map lstb -> (
-      let%bind lst = generic_try (simple_error "maps of different lengths")
+      let%bind lst = generic_try (fun () -> simple_error (thunk "maps of different lengths") ())
           (fun () ->
              let lsta' = List.sort compare lsta in
              let lstb' = List.sort compare lstb in
@@ -427,13 +427,13 @@ let rec assert_value_eq (a, b: (value*value)) : unit result =
       ok ()
     )
   | E_map _, _ ->
-      simple_fail "comparing map with other stuff"
+      simple_fail (thunk "comparing map with other stuff")
 
-  | _, _ -> simple_fail "comparing not a value"
+  | _, _ -> simple_fail (thunk "comparing not a value")
 
 let merge_annotation (a:type_value option) (b:type_value option) : type_value result =
   match a, b with
-  | None, None -> simple_fail "no annotation"
+  | None, None -> simple_fail (thunk "no annotation")
   | Some a, None -> ok a
   | None, Some b -> ok b
   | Some a, Some b ->
@@ -476,44 +476,44 @@ module Combinators = struct
 
   let get_t_bool (t:type_value) : unit result = match t.type_value' with
     | T_constant ("bool", []) -> ok ()
-    | _ -> simple_fail "not a bool"
+    | _ -> simple_fail (thunk "not a bool")
 
   let get_t_option (t:type_value) : type_value result = match t.type_value' with
     | T_constant ("option", [o]) -> ok o
-    | _ -> simple_fail "not a option"
+    | _ -> simple_fail (thunk "not a option")
 
   let get_t_list (t:type_value) : type_value result = match t.type_value' with
     | T_constant ("list", [o]) -> ok o
-    | _ -> simple_fail "not a list"
+    | _ -> simple_fail (thunk "not a list")
 
   let get_t_tuple (t:type_value) : type_value list result = match t.type_value' with
     | T_tuple lst -> ok lst
-    | _ -> simple_fail "not a tuple"
+    | _ -> simple_fail (thunk "not a tuple")
 
   let get_t_sum (t:type_value) : type_value SMap.t result = match t.type_value' with
     | T_sum m -> ok m
-    | _ -> simple_fail "not a sum"
+    | _ -> simple_fail (thunk "not a sum")
 
   let get_t_record (t:type_value) : type_value SMap.t result = match t.type_value' with
     | T_record m -> ok m
-    | _ -> simple_fail "not a record"
+    | _ -> simple_fail (thunk "not a record")
 
   let get_t_map (t:type_value) : (type_value * type_value) result =
     match t.type_value' with
     | T_constant ("map", [k;v]) -> ok (k, v)
-    | _ -> simple_fail "not a map"
+    | _ -> simple_fail (thunk "not a map")
   let assert_t_map (t:type_value) : unit result =
     match t.type_value' with
     | T_constant ("map", [_ ; _]) -> ok ()
-    | _ -> simple_fail "not a map"
+    | _ -> simple_fail (thunk "not a map")
 
   let assert_t_int : type_value -> unit result = fun t -> match t.type_value' with
     | T_constant ("int", []) -> ok ()
-    | _ -> simple_fail "not an int"
+    | _ -> simple_fail (thunk "not an int")
 
   let assert_t_nat : type_value -> unit result = fun t -> match t.type_value' with
     | T_constant ("nat", []) -> ok ()
-    | _ -> simple_fail "not an nat"
+    | _ -> simple_fail (thunk "not an nat")
 
   let e_record map : expression = E_record map
   let ez_e_record (lst : (string * ae) list) : expression =
@@ -548,15 +548,15 @@ module Combinators = struct
   let get_a_int (t:annotated_expression) =
     match t.expression with
     | E_literal (Literal_int n) -> ok n
-    | _ -> simple_fail "not an int"
+    | _ -> simple_fail (thunk "not an int")
 
   let get_a_unit (t:annotated_expression) =
     match t.expression with
     | E_literal (Literal_unit) -> ok ()
-    | _ -> simple_fail "not a unit"
+    | _ -> simple_fail (thunk "not a unit")
 
   let get_a_bool (t:annotated_expression) =
     match t.expression with
     | E_literal (Literal_bool b) -> ok b
-    | _ -> simple_fail "not a bool"
+    | _ -> simple_fail (thunk "not a bool")
 end

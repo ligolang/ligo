@@ -8,7 +8,7 @@ let run_entry_int (e:anon_function) (n:int) : int result =
   let%bind result = Run.run_entry e param in
   match result with
   | D_int n -> ok n
-  | _ -> simple_fail "result is not an int"
+  | _ -> simple_fail (thunk "result is not an int")
 
 let identity () : unit result =
   let e = basic_int_quote_env in
