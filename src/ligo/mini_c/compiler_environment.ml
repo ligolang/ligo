@@ -3,7 +3,7 @@ open Types
 open Micheline
 open Memory_proto_alpha.Script_ir_translator
 
-module Stack = Meta_michelson.Wrap.Stack
+module Stack = Meta_michelson.Stack
 
 type element = environment_element
 

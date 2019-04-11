@@ -5,7 +5,7 @@ open Tezos_utils.Memory_proto_alpha
 open Script_ir_translator
 
 module O = Tezos_utils.Micheline.Michelson
-module Contract_types = Meta_michelson.Contract.Types
+module Contract_types = Meta_michelson.Types
 
 module Ty = struct
 

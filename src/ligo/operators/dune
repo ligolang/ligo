@@ -1,0 +1,4 @@
+(library
+  (name operators)
+  (public_name ligo.operators)
+)

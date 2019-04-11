@@ -17,7 +17,7 @@
 (rule
   (targets parser.ml parser.mli)
   (deps parser.mly ast.ml)
-  (action (system "menhir --external-tokens Lex.Token lex/token.mly parser.mly --base parser"))
+  (action (system "menhir --explain --external-tokens Lex.Token lex/token.mly parser.mly --base parser"))
 )
 
 (rule

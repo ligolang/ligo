@@ -24,12 +24,12 @@
 )
 
 (alias
-  (name ligo-test)
+( name ligo-test)
   (action (run test/test.exe))
   (deps (glob_files contracts/*))
 )
 
 (alias
   (name runtest)
-  (deps ligo-test)
+  (deps (alias ligo-test))
 )

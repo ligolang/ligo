@@ -495,7 +495,7 @@ module Misc = struct
   open Stack_ops
   open Stack_shortcuts
   open Comparison_ops
-  let min_nat : (nat * (nat * 'r), nat * 'r) code = fun s -> 
+  let min_nat : (nat * (nat * 'r), nat * 'r) code = fun s ->
     s <.
     keep_2 cmp_ge_nat <: bubble_2 <:
     Boolean.cond drop (dip drop)

@@ -4,7 +4,6 @@ open Compiler
 open Memory_proto_alpha.Script_ir_translator
 
 let run_aux (program:compiled_program) (input_michelson:Michelson.t) : ex_typed_value result =
-  let open Meta_michelson.Wrap in
   let Compiler.{input;output;body} : compiled_program = program in
   let (Ex_ty input_ty) = input in
   let (Ex_ty output_ty) = output in

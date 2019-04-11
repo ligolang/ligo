@@ -31,8 +31,8 @@ let parse_file (source: string) : Ast.entry_point result =
       match e with
       | Parser.Error -> error "Parse"
       | Lexer.Error s -> error ("Lexer " ^ s)
-      | Lexer.Unexpected_character _ -> error "Unexpected char"
-      | _ -> simple_error "unrecognized parse_ error"
+      | Lexer.Unexpected_character s -> error ("Unexpected char" ^ s)
+      | _ -> error "unrecognized parse_ error"
     ) @@ (fun () ->
       let raw = Parser.entry_point Lexer.token lexbuf in
       raw

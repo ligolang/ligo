@@ -13,19 +13,27 @@ type token = Token.token
 
 module O = struct
 
-  type 'a list_element = [`Trail | `Lead | `Separator] * token * 'a
 
-  type basic_rhs_element = [
-    | `Named of string
-    | `Token of token
-  ]
+  type list_mode =
+    | Trail of token
+    | Trail_option of token
+    | Trail_force of token
+    | Trail_force_ne of token
+    | Lead of token
+    | Lead_ne of token
+    | Separator of token
+    | Naked
+    | Naked_ne
+
+  type 'a list_element = list_mode * 'a
 
   type rhs_element = [
-    | basic_rhs_element
+    | `Named of string
+    | `Token of token
     | `List of string list_element
   ]
 
-  type rhs = rhs_element list
+  type rhs = rhs_element list name
   type rule = rhs list name
 
   type manual_rule_content = {
@@ -144,16 +152,16 @@ module Print_AST = struct
         let aux : O.rhs_element -> string option = fun e ->
           match e with
           | `Named s -> Some (s ^ " Location.wrap")
-          | `List (_, _, s) -> Some ("(" ^ s ^ " Location.wrap list)")
+          | `List ( _, s) -> Some ("(" ^ s ^ " Location.wrap list)")
           | `Token _ -> None
         in
-        List.filter_map aux rhs in
+        List.filter_map aux rhs.content in
       let type_element = fun ppf te -> fprintf ppf "%s" te in
-      fprintf ppf "| %s of (%a)"
-        (String.capitalize_ascii gr.name)
+      fprintf ppf "| `%s_%s of (%a)"
+        (String.capitalize_ascii gr.name) rhs.name
         (list_sep type_element (const " * ")) type_elements
     in
-    fprintf ppf "%s = @.  @[<v>%a@]" gr.name
+    fprintf ppf "%s = [@.  @[<v>%a@]]" gr.name
       (list_sep aux new_line) gr.content
 
   let singleton : _ -> O.singleton -> _ = fun ppf s ->
@@ -173,12 +181,14 @@ module Print_AST = struct
       let aux : O.element -> string option = fun e ->
         match e with
         | `Named s -> Some (s ^ " Location.wrap")
-        | `List _ -> Some ("(" ^ level_name ^ " Location.wrap list)")
+        | `List ( _, s) -> Some ("(" ^ (match s with
+           | `Lower | `Current -> level_name |`Named s -> s
+          ) ^ " Location.wrap list)")
         | `Token _ -> None
         | `Current | `Lower -> Some (level_name ^ " Location.wrap") in
       List.filter_map aux (get_content nop) in
     let type_element = fun ppf te -> fprintf ppf "%s" te in
-    fprintf ppf "| %s of (%a)"
+    fprintf ppf "| `%s of (%a)"
       (get_name nop)
       (list_sep type_element (const " * ")) type_elements
 
@@ -186,7 +196,7 @@ module Print_AST = struct
     let levels = List.Ne.map get_content ((get_content nh).levels) in
     let nops = List.Ne.concat levels in
     let name = get_name nh in
-    fprintf ppf "%s %s =@.@[%a@]" t
+    fprintf ppf "%s %s = [@.@[%a@]]" t
       name
       (list_sep (n_operator name) new_line) nops
 
@@ -195,7 +205,7 @@ module Print_AST = struct
     | [] -> ()
     | hd :: tl ->
         fprintf ppf "%a\n" (n_hierarchy (if first then "type" else "and")) hd ;
-        fprintf ppf "%a" (list_sep (prepend "and " (n_hierarchy "and")) (const "\n")) tl
+        fprintf ppf "%a" (list_sep (n_hierarchy "and") (const "\n")) tl
 
   let language : _ -> O.language -> _ = fun ppf l ->
     fprintf ppf "%a@.@." comment "Language" ;
@@ -223,16 +233,24 @@ module Print_Grammar = struct
       let aux : _ -> O.rhs_element -> _ = fun ppf e ->
           (match e with
           | `Named s -> fprintf ppf "%s = wrap(%s)" letters.(!i) s
-          | `List (mode, sep, s) ->
-              fprintf ppf "%s = %s(%s, wrap(%s))"
+          | `List (mode, s) ->
+              fprintf ppf "%s = %swrap(%s))"
                 letters.(!i)
-                (match mode with | `Lead -> "lead_list" | `Trail -> "trail_list" | `Separator -> "separated_list")
-                (Token.to_string sep)
+                (match mode with
+                 | Naked -> "naked_list("
+                 | Naked_ne -> "naked_list_ne("
+                 | Lead s -> "lead_list(" ^ (Token.to_string s) ^ ","
+                 | Lead_ne s -> "lead_list_ne(" ^ (Token.to_string s) ^ ","
+                 | Trail s -> "trail_list(" ^ (Token.to_string s) ^ ","
+                 | Trail_option s -> "trail_option_list(" ^ (Token.to_string s) ^ ","
+                 | Trail_force s -> "trail_force_list(" ^ (Token.to_string s) ^ ","
+                 | Trail_force_ne s -> "trail_force_list_ne(" ^ (Token.to_string s) ^ ","
+                 | Separator s -> "separated_list(" ^ (Token.to_string s) ^ ",")
                 s
           | `Token t -> i := !i - 1 ; string ppf @@ Token.to_string t) ;
           i := !i + 1
         in
-        fprintf ppf "%a" (list_sep aux (const " ")) rhs in
+        fprintf ppf "%a" (list_sep aux (const " ")) rhs.content in
     let aux_code : _ -> O.rhs -> _ = fun ppf rhs ->
       let i = ref 0 in
       let aux : O.rhs_element -> _ = fun e ->
@@ -241,8 +259,8 @@ module Print_Grammar = struct
           | `Token _ -> i := !i - 1 ; None) in
           i := !i + 1 ; s
       in
-      let content = List.filter_map aux rhs in
-      fprintf ppf "%s (%a)" (String.capitalize_ascii gr.name) (list_sep string (const " , ")) content
+      let content = List.filter_map aux rhs.content in
+      fprintf ppf "`%s_%s (%a)" (String.capitalize_ascii gr.name) rhs.name (list_sep string (const " , ")) content
     in
     let aux : _ -> O.rhs -> _ = fun ppf rhs ->
       fprintf ppf "| %a { %a }"
@@ -261,11 +279,19 @@ module Print_Grammar = struct
     let element : _ -> O.element -> _ = fun ppf element ->
       (match element with
        | `Token t -> i := !i - 1 ; string ppf @@ Token.to_string t
-       | `List (mode, sep, content) ->
-         fprintf ppf "%s = %s(%s, wrap(%s))"
+       | `List (mode, content) ->
+         fprintf ppf "%s = %swrap(%s))"
            letters.(!i)
-           (match mode with | `Lead -> "lead_list" | `Trail -> "trail_list" | `Separator -> "separated_list")
-           (Token.to_string sep)
+           (match mode with
+            | Naked -> "naked_list("
+            | Naked_ne -> "naked_list_ne("
+            | Lead s -> "lead_list(" ^ (Token.to_string s) ^ ","
+            | Lead_ne s -> "lead_list_ne(" ^ (Token.to_string s) ^ ","
+            | Trail s -> "trail_list(" ^ (Token.to_string s) ^ ","
+            | Trail_option s -> "trail_option_list(" ^ (Token.to_string s) ^ ","
+            | Trail_force s -> "trail_force_list(" ^ (Token.to_string s) ^ ","
+            | Trail_force_ne s -> "trail_force_list_ne(" ^ (Token.to_string s) ^ ","
+            | Separator s -> "separated_list(" ^ (Token.to_string s) ^ ",")
            (match content with | `Lower -> prev_lvl_name | `Named s -> s | `Current -> cur_lvl_name)
        | `Named n ->
            fprintf ppf "%s = wrap(%s)" letters.(!i) n
@@ -290,7 +316,7 @@ module Print_Grammar = struct
         in i := !i + 1 ; r
       in
       List.filter_map aux elements in
-    fprintf ppf "%s (%a)" name (list_sep string (const " , ")) elements'
+    fprintf ppf "`%s (%a)" name (list_sep string (const " , ")) elements'
 
   let n_operator prev_lvl_name cur_lvl_name : _ -> O.n_operator -> _ = fun ppf nop ->
     let name = get_name nop in
@@ -340,65 +366,316 @@ let infix : string -> [`Left | `Right] -> token -> O.n_operator = fun name assoc
   | `Left -> make_name name [`Current ; `Token t ; `Lower]
   | `Right -> make_name name [`Current ; `Token t ; `Lower]
 
+(* Ocaml is bad *)
+let empty_infix : string -> [`Left | `Right] -> O.n_operator = fun name assoc ->
+  match assoc with
+  | `Left -> make_name name [`Current ; `Lower]
+  | `Right -> make_name name [`Current ; `Lower]
+
+
+let paren : string -> string -> O.n_operator = fun constructor_name name ->
+  make_name constructor_name [`Token Token.LPAREN ; `Named name ; `Token Token.RPAREN]
+
 let expression_name = "expression"
 let type_expression_name = "type_expression"
 let program_name = "program"
 let variable_name = "variable"
+let pattern_name = "pattern"
+let constructor_name = "constructor"
+let int_name = "int_"
+let tz_name = "tz_"
+let unit_name = "unit_"
+let string_name = "string_"
 
 let variable = O.manual_singleton variable_name ["| NAME { $1 }"] "string"
+let int = O.manual_singleton int_name ["| INT { $1 }"] "int"
+let tz = O.manual_singleton tz_name ["| TZ { $1 }"] "int"
+let unit = O.manual_singleton unit_name ["| UNIT { () }"] "unit"
+let string = O.manual_singleton string_name ["| STRING { $1 }"] "string"
+let constructor = O.manual_singleton constructor_name ["| CONSTRUCTOR_NAME { $1 }"] "string"
 
+module Pattern = struct
+
+  open Token
+  open O
+
+  let application = empty_infix "P_application" `Left
+
+  let list : O.n_operator = make_name "P_list" [
+      `Token LIST ; `Token LSQUARE ; `List (Lead SEMICOLON, `Current) ; `Token RSQUARE ;
+    ]
+
+  let record_element : O.rule = make_name "p_record_element" [
+      make_name "" [`Named variable_name ; `Token EQUAL ; `Named pattern_name]
+    ]
+
+  let record : O.n_operator = make_name "P_record" [
+      `Token LBRACKET ;
+      `List (Trail SEMICOLON, `Named record_element.name) ;
+      `Token RBRACKET ;
+    ]
+
+  let pair = infix "P_pair" `Left COMMA
+
+  let variable : O.n_operator = make_name "P_variable" [ `Named variable_name ]
+  let constructor : O.n_operator = make_name "P_constructor" [ `Named constructor_name ]
+
+  let module_ident : O.n_operator = make_name "P_module_ident" [
+      `List (Trail_force_ne DOT, `Named constructor_name) ; `Named variable_name ;
+    ]
+
+  let unit : O.n_operator = make_name "P_unit" [ `Named unit_name ]
+
+  let restricted_pattern_name = "resitrcted_pattern"
+
+  let restricted_pattern = O.name_hierarchy restricted_pattern_name [
+      [variable ; unit] ;
+      [paren "P_restrict" pattern_name]
+    ] []
+
+  let main = O.name_hierarchy pattern_name [
+      [record] ;
+      [application] ;
+      [pair] ;
+      [list] ;
+      [variable ; constructor ; module_ident ; unit] ;
+      [paren "P_paren" pattern_name]
+    ] []
+
+  let singletons = [O.rule_singleton record_element]
+end
 
 module Expression = struct
 
   open Token
+  open O
 
-  let list : O.n_operator = make_name "List" [
-      `Token LIST ; `Token LSQUARE ; `List (`Lead, SEMICOLON, `Current) ; `Token RSQUARE ;
+  let application = empty_infix "E_application" `Right
+
+  let list : O.n_operator = make_name "E_list" [
+      `Token LSQUARE ; `List (Trail SEMICOLON, `Current) ; `Token RSQUARE ;
     ]
 
-  let let_in : O.n_operator = make_name "Let_in" [
-      `Token Token.LET ; `Named "variable" ;
-      `Token Token.EQUAL ; `Current ;
-      `Token Token.IN ; `Current ;
+  let fun_ : O.n_operator = make_name "E_fun" [
+      `Token FUN ; `Named pattern_name ;
+      `Token ARROW ; `Current ;
     ]
 
-  let addition = infix "Addition" `Left Token.PLUS
-  let substraction = infix "Substraction" `Left Token.MINUS
+  let let_in : O.n_operator = make_name "E_let_in" [
+      `Token LET ; `Named pattern_name ;
+      `Token EQUAL ; `Current ;
+      `Token IN ; `Current ;
+    ]
 
-  let multiplication = infix "Multiplication" `Left Token.TIMES
-  let division = infix "Division" `Left Token.DIV
+  let no_seq_name = "expression_no_seq"
+  let no_match_name = "expression_no_match"
 
-  let arith_variable : O.n_operator = make_name "Arith_variable" [ `Named "variable" ]
+  let record_element : O.rule = make_name "e_record_element" [
+      make_name "record_explicit" [`Named variable_name ; `Token EQUAL ; `Named no_seq_name] ;
+      make_name "record_implicit" [`Named variable_name ] ;
+    ]
 
-  let arith = O.name_hierarchy "expression" [
-      [let_in] ;
+  let record : O.n_operator = make_name "E_record" [
+      `Token LBRACKET ;
+      `List (Trail SEMICOLON, `Named record_element.name) ;
+      `Token RBRACKET ;
+    ]
+
+  let ite : O.n_operator = make_name "E_ifthenelse" [
+      `Token IF ;
+      `Current ;
+      `Token THEN ;
+      `Lower ;
+      `Token ELSE ;
+      `Current ;
+    ]
+
+  let it : O.n_operator = make_name "E_ifthen" [
+      `Token IF ;
+      `Current ;
+      `Token THEN ;
+      `Lower ;
+    ]
+
+  let sequence = infix "E_sequence" `Left SEMICOLON
+
+  let match_clause = make_name "e_match_clause" [
+      make_name "" [`Named pattern_name ; `Token ARROW ; `Named no_match_name]
+    ]
+  let match_with = make_name "E_match" [
+      `Token MATCH ; `Current ; `Token WITH ;
+      `List (Lead_ne VBAR, `Named match_clause.name) ;
+    ]
+  let lt = infix "E_lt" `Left LT
+  let le = infix "E_le" `Left LE
+  let gt = infix "E_gt" `Left GT
+  let eq = infix "E_eq" `Left EQUAL
+
+  let cons = infix "E_cons" `Left DOUBLE_COLON
+
+  let addition = infix "E_addition" `Left PLUS
+  let substraction = infix "E_substraction" `Left MINUS
+
+  let multiplication = infix "E_multiplication" `Left TIMES
+  let division = infix "E_division" `Left DIV
+
+  let arith_variable : O.n_operator = make_name "E_variable" [ `Named variable_name ]
+  let int : O.n_operator = make_name "E_int" [ `Named int_name ]
+  let tz : O.n_operator = make_name "E_tz" [ `Named tz_name ]
+  let unit : O.n_operator = make_name "E_unit" [ `Named unit_name ]
+  let string : O.n_operator = make_name "E_string" [ `Named string_name ]
+  let constructor : O.n_operator = make_name "E_constructor" [ `Named constructor_name ]
+
+  let module_ident : O.n_operator = make_name "E_module_ident" [
+      `List (Trail_force_ne DOT, `Named constructor_name) ; `Named variable_name ;
+    ]
+  let access : O.n_operator = infix "E_access" `Right DOT
+  let accessor : O.n_operator = make_name "E_accessor" [
+      `Named variable_name ; `List (Lead_ne DOT, `Named variable_name) ;
+    ]
+
+  let assignment : O.n_operator = infix "E_assign" `Left LEFT_ARROW
+
+  let pair = infix "E_pair" `Left COMMA
+
+  let name = make_name "E_name" [`Token TILDE ; `Current]
+
+  let no_sequence_expression = O.name_hierarchy no_seq_name [
+      [let_in ; fun_ ; record ; ite ; it ; match_with] ;
+      [pair] ;
+      [application] ;
+      [lt ; le ; gt ; eq] ;
+      [assignment] ;
+      [cons] ;
       [addition ; substraction] ;
       [multiplication ; division] ;
       [list] ;
-      [arith_variable] ;
+      [name] ;
+      [arith_variable ; constructor ; module_ident ; accessor ; int ; unit ; string ; tz] ;
+      [paren "E_no_seq_bottom" expression_name]
     ] []
+
+  let no_match_expression = O.name_hierarchy no_match_name [
+      [let_in ; fun_ ; record ; ite ; it ] ;
+      [pair] ;
+      [application] ;
+      [lt ; le ; gt ; eq] ;
+      [assignment] ;
+      [cons] ;
+      [addition ; substraction] ;
+      [multiplication ; division] ;
+      [list] ;
+      [name] ;
+      [arith_variable ; constructor ; module_ident ; accessor ; int ; unit ; string ; tz] ;
+      [paren "E_no_match_bottom" expression_name]
+    ] []
+
+  let expression = O.name_hierarchy expression_name [
+      [sequence] ;
+      [let_in ; fun_ ; record ; ite ; it ; match_with] ;
+      [pair] ;
+      [application] ;
+      [lt ; le ; gt ; eq] ;
+      [assignment] ;
+      [cons] ;
+      [addition ; substraction] ;
+      [multiplication ; division] ;
+      [list] ;
+      [name] ;
+      [arith_variable ; constructor ; module_ident ; accessor ; int ; unit ; string ; tz] ;
+      [paren "E_paren" expression_name]
+    ] []
+
+  let singletons = List.map O.rule_singleton [record_element ; match_clause]
+end
+
+module Type_expression = struct
+
+  open Token
+  open O
+
+  let list : O.n_operator = make_name "T_list" [
+      `Token LIST ; `Token LSQUARE ; `List (Lead SEMICOLON, `Current) ; `Token RSQUARE ;
+    ]
+
+  let let_in : O.n_operator = make_name "T_let_in" [
+      `Token LET ; `Named variable_name ;
+      `Token EQUAL ; `Current ;
+      `Token IN ; `Current ;
+    ]
+
+  let record_element : O.rule = make_name "t_record_element" [
+      make_name "" [`Named variable_name ; `Token COLON ; `Named type_expression_name]
+    ]
+
+  let record : O.n_operator = make_name "T_record" [
+      `Token LBRACKET ;
+      `List (Trail SEMICOLON, `Named record_element.name) ;
+      `Token RBRACKET ;
+    ]
+
+  let application = empty_infix "T_application" `Left
+
+  let pair = infix "T_pair" `Left COMMA
+
+  let arith_variable : O.n_operator = make_name "T_variable" [ `Named variable_name ]
+
+  let arith = O.name_hierarchy type_expression_name [
+      [let_in ; record ] ;
+      [pair] ;
+      [application] ;
+      [list] ;
+      [arith_variable] ;
+      [paren "T_paren" type_expression_name]
+    ] []
+
+  let singletons = [O.rule_singleton record_element]
 
 end
 
 module Program = struct
 
   open Token
+  open O
 
   let statement_name = "statement"
 
-  let program : O.rule = make_name program_name [[
-      `List (`Trail, SEMICOLON, statement_name)
+  let program : O.rule = make_name program_name [make_name "" [
+      `List (Trail_option DOUBLE_SEMICOLON, statement_name)
     ]]
 
-  let statement : O.rule = make_name statement_name [
-      [`Token CONST ; `Named variable_name ; `Token EQUAL ; `Named expression_name]
+  let param_name = "param"
+
+  let param : O.rule = make_name param_name [
+      make_name "restricted_pattern" [ `Named Pattern.restricted_pattern_name ] ;
+      make_name "implicit_named_param" [ `Token TILDE ; `Named variable_name ] ;
     ]
 
-  let singletons = List.map O.rule_singleton [program ; statement]
+  let statement : O.rule = make_name statement_name [
+      make_name "variable_declaration" [`Token LET ; `Named variable_name ; `List (Naked, variable_name) ; `Token EQUAL ; `Named expression_name] ;
+      make_name "init_declaration" [`Token LET_INIT ; `Named variable_name ; `List (Naked, variable_name) ; `Token EQUAL ; `Named expression_name] ;
+      make_name "entry_declaration" [`Token LET_ENTRY ; `Named variable_name ; `List (Naked, param_name) ; `Token EQUAL ; `Named expression_name] ;
+      make_name "type_declaration" [`Token TYPE ; `Named variable_name ; `Token EQUAL ; `Named type_expression_name] ;
+    ]
+
+  let singletons = List.map O.rule_singleton [program ; statement ; param]
 
 end
 
-let language = O.language program_name (variable :: Program.singletons) [Expression.arith]
+let language = O.language program_name (
+    variable :: constructor :: int :: unit :: string :: tz ::
+    Program.singletons @
+    Pattern.singletons @
+    Expression.singletons @
+    Type_expression.singletons
+  ) [
+    Pattern.main ;
+    Pattern.restricted_pattern ;
+    Expression.no_sequence_expression ;
+    Expression.no_match_expression ;
+    Expression.expression ;
+    Type_expression.arith ;
+  ]
 
 let () =
   let argn = Array.length Sys.argv in

@@ -4,8 +4,8 @@ open Types
 module Michelson = Micheline.Michelson
 open Michelson
 module Environment = Compiler_environment
-module Stack = Meta_michelson.Wrap.Stack
-module Contract_types = Meta_michelson.Contract.Types
+module Stack = Meta_michelson.Stack
+module Contract_types = Meta_michelson.Types
 
 open Memory_proto_alpha.Script_ir_translator
 
