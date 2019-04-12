@@ -247,7 +247,7 @@ module Rename = struct
                   in
                   let%bind tl' = match tl with
                     | Access_record n -> ok n
-                    | Access_tuple _ -> simple_fail (thunk "no support for renaming into tuples yet") in
+                    | Access_tuple _ -> simple_fail "no support for renaming into tuples yet" in
                   ok (I_record_patch (name', hds, [tl', annotated_expression]))
             )
         )

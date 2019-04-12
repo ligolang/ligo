@@ -30,7 +30,7 @@ let rec simpl_type_expression (t:Raw.type_expr) : type_expression result =
       | Some 0 ->
           ok @@ T_constant (v.value, [])
       | Some _ ->
-          simple_fail (thunk "type constructor with wrong number of args")
+          simple_fail "type constructor with wrong number of args"
       | None ->
           ok @@ T_variable v.value
     )
@@ -39,8 +39,8 @@ let rec simpl_type_expression (t:Raw.type_expr) : type_expression result =
       let lst = npseq_to_list tuple.value.inside in
       let%bind _ = match List.assoc_opt name.value type_constants with
         | Some n when n = List.length lst -> ok ()
-        | Some _ -> simple_fail (thunk "type constructor with wrong number of args")
-        | None -> simple_fail (thunk "unrecognized type constants") in
+        | Some _ -> simple_fail "type constructor with wrong number of args"
+        | None -> simple_fail "unrecognized type constants" in
       let%bind lst' = bind_list @@ List.map simpl_type_expression lst in
       ok @@ T_constant (name.value, lst')
   | TProd p ->
@@ -112,7 +112,7 @@ let rec simpl_expression (t:Raw.expr) : ae result =
           ok @@ ae @@ E_application (ae @@ E_variable f, arg)
       | Some arity ->
           let%bind _arity =
-            trace (fun () -> simple_error (thunk "wrong arity for constants") ()) @@
+            trace (simple_error "wrong arity for constants") @@
             Assert.assert_equal_int arity (List.length args') in
           let%bind lst = bind_map_list simpl_expression args' in
           ok @@ ae @@ E_constant (f, lst)
@@ -161,13 +161,13 @@ let rec simpl_expression (t:Raw.expr) : ae result =
   | EArith (Nat n) ->
       let n = Z.to_int @@ snd @@ n.value in
       ok @@ ae @@ E_literal (Literal_nat n)
-  | EArith _ -> simple_fail (thunk "arith: not supported yet")
+  | EArith _ -> simple_fail "arith: not supported yet"
   | EString (String s) ->
       ok @@ ae @@ E_literal (Literal_string s.value)
-  | EString _ -> simple_fail (thunk "string: not supported yet")
+  | EString _ -> simple_fail "string: not supported yet"
   | ELogic l -> simpl_logic_expression l
-  | EList _ -> simple_fail (thunk "list: not supported yet")
-  | ESet _ -> simple_fail (thunk "set: not supported yet")
+  | EList _ -> simple_fail "list: not supported yet"
+  | ESet _ -> simple_fail "set: not supported yet"
   | ECase c ->
       let%bind e = simpl_expression c.value.expr in
       let%bind lst =
@@ -242,7 +242,7 @@ and simpl_list_expression (lst:Raw.expr list) : ae result =
 and simpl_local_declaration (t:Raw.local_decl) : (instruction * named_expression) result =
   match t with
   | LocalData d -> simpl_data_declaration d
-  | LocalLam _ -> simple_fail (thunk "no local lambdas yet")
+  | LocalLam _ -> simple_fail "no local lambdas yet"
 
 and simpl_data_declaration (t:Raw.data_decl) : (instruction * named_expression) result =
   let return x = ok (I_assignment x, x) in
@@ -292,7 +292,7 @@ and simpl_declaration : Raw.declaration -> declaration result = fun t ->
   | LambdaDecl (FunDecl x) ->
       let {name;param;ret_type;local_decls;block;return} : fun_decl = x.value in
       (match npseq_to_list param.value.inside with
-       | [] -> simple_fail (thunk "function without parameters are not allowed")
+       | [] -> simple_fail "function without parameters are not allowed"
        | [a] -> (
            let%bind input = simpl_param a in
            let name = name.value in
@@ -358,8 +358,8 @@ and simpl_declaration : Raw.declaration -> declaration result = fun t ->
            ok decl
          )
       )
-  | LambdaDecl (ProcDecl _) -> simple_fail (thunk "no proc declaration yet")
-  | LambdaDecl (EntryDecl _)-> simple_fail (thunk "no entry point yet")
+  | LambdaDecl (ProcDecl _) -> simple_fail "no proc declaration yet"
+  | LambdaDecl (EntryDecl _)-> simple_fail "no entry point yet"
 
 and simpl_statement : Raw.statement -> instruction result = fun s ->
   match s with
@@ -368,7 +368,7 @@ and simpl_statement : Raw.statement -> instruction result = fun s ->
 
 and simpl_single_instruction : Raw.single_instr -> instruction result = fun t ->
   match t with
-  | ProcCall _ -> simple_fail (thunk "no proc call")
+  | ProcCall _ -> simple_fail "no proc call"
   | Fail e ->
       let%bind expr = simpl_expression e.value.fail_expr in
       ok @@ I_fail expr
@@ -379,7 +379,7 @@ and simpl_single_instruction : Raw.single_instr -> instruction result = fun t ->
       let%bind body = simpl_block l.block.value in
       ok @@ I_loop (cond, body)
   | Loop (For _) ->
-      simple_fail (thunk "no for yet")
+      simple_fail "no for yet"
   | Cond c ->
       let c = c.value in
       let%bind expr = simpl_expression c.test in
@@ -394,7 +394,7 @@ and simpl_single_instruction : Raw.single_instr -> instruction result = fun t ->
       let a = a.value in
       let%bind value_expr = match a.rhs with
         | Expr e -> simpl_expression e
-        | NoneExpr _ -> simple_fail (thunk "no none assignments yet")
+        | NoneExpr _ -> simple_fail "no none assignments yet"
       in
       match a.lhs with
         | Path (Name name) -> (
@@ -408,7 +408,7 @@ and simpl_single_instruction : Raw.single_instr -> instruction result = fun t ->
             let v' = v.value in
             let%bind name = match v'.path with
               | Name name -> ok name
-              | _ -> simple_fail (thunk "no complex map assignments yet") in
+              | _ -> simple_fail "no complex map assignments yet" in
             let%bind key_expr = simpl_expression v'.index.value.inside in
             let old_expr = ae @@ E_variable name.value in
             let expr' = ae @@ E_constant ("MAP_UPDATE", [key_expr ; value_expr ; old_expr]) in
@@ -442,32 +442,32 @@ and simpl_single_instruction : Raw.single_instr -> instruction result = fun t ->
         @@ npseq_to_list r.record_inj.value.fields in
       ok @@ I_record_patch (record, [], inj)
     )
-  | MapPatch _ -> simple_fail (thunk "no map patch yet")
-  | SetPatch _ -> simple_fail (thunk "no set patch yet")
+  | MapPatch _ -> simple_fail "no map patch yet"
+  | SetPatch _ -> simple_fail "no set patch yet"
   | MapRemove r ->
       let v = r.value in
       let key = v.key in
       let%bind map = match v.map with
         | Name v -> ok v.value
-        | _ -> simple_fail (thunk "no complex map remove yet") in
+        | _ -> simple_fail "no complex map remove yet" in
       let%bind key' = simpl_expression key in
       let expr = E_constant ("MAP_REMOVE", [key' ; ae (E_variable map)]) in
       ok @@ I_assignment {name = map ; annotated_expression = ae expr}
-  | SetRemove _ -> simple_fail (thunk "no set remove yet")
+  | SetRemove _ -> simple_fail "no set remove yet"
 
 and simpl_cases : type a . (Raw.pattern * a) list -> a matching result = fun t ->
   let open Raw in
   let get_var (t:Raw.pattern) = match t with
     | PVar v -> ok v.value
-    | _ -> simple_fail (thunk "not a var")
+    | _ -> simple_fail "not a var"
   in
   let%bind _assert =
-    trace_strong (fun () -> simple_error (thunk "only pattern with two cases supported now") ()) @@
+    trace_strong (simple_error "only pattern with two cases supported now") @@
     Assert.assert_equal_int 2 (List.length t) in
   let ((pa, ba), (pb, bb)) = List.(hd t, hd @@ tl t) in
   let uncons p = match p with
     | PCons {value = (hd, _)} -> ok hd
-    | _ -> simple_fail (thunk "uncons fail") in
+    | _ -> simple_fail "uncons fail" in
   let%bind (pa, pb) = bind_map_pair uncons (pa, pb) in
   match (pa, ba), (pb, bb) with
   | (PFalse _, f), (PTrue _, t)
@@ -477,7 +477,7 @@ and simpl_cases : type a . (Raw.pattern * a) list -> a matching result = fun t -
       let (_, v) = v.value in
       let%bind v = match v.value.inside with
         | PVar v -> ok v.value
-        | _ -> simple_fail (thunk "complex none patterns not supported yet") in
+        | _ -> simple_fail "complex none patterns not supported yet" in
       ok @@ Match_option {match_none = none ; match_some = (v, some) }
     )
   | (PCons c, cons), (PList (PNil _), nil)
@@ -488,11 +488,11 @@ and simpl_cases : type a . (Raw.pattern * a) list -> a matching result = fun t -
             let%bind a = get_var a in
             let%bind b = get_var b in
             ok (a, b)
-        | _ -> simple_fail (thunk "complex list patterns not supported yet")
+        | _ -> simple_fail "complex list patterns not supported yet"
       in
       ok @@ Match_list {match_cons = (a, b, cons) ; match_nil = nil}
   | _ ->
-      let error () = simple_error (thunk "multi-level patterns not supported yet") () in
+      let error () = simple_error "multi-level patterns not supported yet" () in
       fail error
 
 and simpl_instruction_block : Raw.instruction -> block result = fun t ->
@@ -503,7 +503,7 @@ and simpl_instruction_block : Raw.instruction -> block result = fun t ->
 and simpl_instruction : Raw.instruction -> instruction result = fun t ->
   match t with
   | Single s -> simpl_single_instruction s
-  | Block _ -> simple_fail (thunk "no block instruction yet")
+  | Block _ -> simple_fail "no block instruction yet"
 
 and simpl_statements : Raw.statements -> block result = fun ss ->
   let lst = npseq_to_list ss in

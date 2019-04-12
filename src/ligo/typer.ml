@@ -148,7 +148,7 @@ and type_instruction (e:environment) : I.instruction -> (environment * O.instruc
       return @@ O.I_loop (cond, body)
   | I_assignment {name;annotated_expression} -> (
       match annotated_expression.type_annotation, Environment.get e name with
-      | None, None -> simple_fail (thunk "Initial assignments need type")
+      | None, None -> simple_fail "Initial assignments need type"
       | Some _, None ->
           let%bind annotated_expression = type_annotated_expression e annotated_expression in
           let e' = Environment.add e name annotated_expression.type_annotation in
@@ -161,7 +161,7 @@ and type_instruction (e:environment) : I.instruction -> (environment * O.instruc
           ok (e', [O.I_assignment {name;annotated_expression}])
       | Some _, Some prev ->
           let%bind annotated_expression = type_annotated_expression e annotated_expression in
-          let%bind _assert = trace (fun () -> simple_error (thunk "Annotation doesn't match environment") ())
+          let%bind _assert = trace (simple_error "Annotation doesn't match environment")
             @@ O.assert_type_value_eq (annotated_expression.type_annotation, prev) in
           let e' = Environment.add e name annotated_expression.type_annotation in
           ok (e', [O.I_assignment {name;annotated_expression}])
@@ -174,18 +174,18 @@ and type_instruction (e:environment) : I.instruction -> (environment * O.instruc
       let aux (s, ae) =
         let%bind ae' = type_annotated_expression e ae in
         let%bind ty =
-          trace_option (fun () -> simple_error (thunk "unbound variable in record_patch") ()) @@
+          trace_option (simple_error "unbound variable in record_patch") @@
           Environment.get e r in
         let tv = O.{type_name = r ; type_value = ty} in
         let aux ty access =
           match access with
           | I.Access_record s ->
               let%bind m = O.Combinators.get_t_record ty in
-              trace_option (fun () -> simple_error (thunk "unbound record access in record_patch") ()) @@
+              trace_option (simple_error "unbound record access in record_patch") @@
               Map.String.find_opt s m
           | Access_tuple i ->
               let%bind t = O.Combinators.get_t_tuple ty in
-              generic_try (fun () -> simple_error (thunk "unbound tuple access in record_patch") ()) @@
+              generic_try (simple_error "unbound tuple access in record_patch") @@
               (fun () -> List.nth t i)
         in
         let%bind _assert = bind_fold_list aux ty (path @ [Access_record s]) in
@@ -199,14 +199,14 @@ and type_match : type i o . (environment -> i -> o result) -> environment -> O.t
   fun f e t i -> match i with
   | Match_bool {match_true ; match_false} ->
       let%bind _ =
-        trace_strong (fun () -> simple_error (thunk "Matching bool on not-a-bool") ())
+        trace_strong (simple_error "Matching bool on not-a-bool")
         @@ get_t_bool t in
       let%bind match_true = f e match_true in
       let%bind match_false = f e match_false in
       ok (O.Match_bool {match_true ; match_false})
   | Match_option {match_none ; match_some} ->
       let%bind t_opt =
-        trace_strong (fun () -> simple_error (thunk "Matching option on not-an-option") ())
+        trace_strong (simple_error "Matching option on not-an-option")
         @@ get_t_option t in
       let%bind match_none = f e match_none in
       let (n, b) = match_some in
@@ -216,7 +216,7 @@ and type_match : type i o . (environment -> i -> o result) -> environment -> O.t
       ok (O.Match_option {match_none ; match_some = (n', b')})
   | Match_list {match_nil ; match_cons} ->
       let%bind t_list =
-        trace_strong (fun () -> simple_error (thunk "Matching list on not-an-list") ())
+        trace_strong (simple_error "Matching list on not-an-list")
         @@ get_t_list t in
       let%bind match_nil = f e match_nil in
       let (hd, tl, b) = match_cons in
@@ -226,10 +226,10 @@ and type_match : type i o . (environment -> i -> o result) -> environment -> O.t
       ok (O.Match_list {match_nil ; match_cons = (hd, tl, b')})
   | Match_tuple (lst, b) ->
       let%bind t_tuple =
-        trace_strong (fun () -> simple_error (thunk "Matching tuple on not-a-tuple") ())
+        trace_strong (simple_error "Matching tuple on not-a-tuple")
         @@ get_t_tuple t in
       let%bind lst' =
-        generic_try (fun () -> simple_error (thunk "Matching tuple of different size") ())
+        generic_try (simple_error "Matching tuple of different size")
         @@ (fun () -> List.combine lst t_tuple) in
       let aux prev (name, tv) = Environment.add prev name tv in
       let e' = List.fold_left aux e lst' in
@@ -315,7 +315,7 @@ and type_annotated_expression (e:environment) (ae:I.annotated_expression) : O.an
         | Access_tuple index -> (
             let%bind tpl_tv = get_t_tuple prev.type_annotation in
             let%bind tv =
-              generic_try (fun () -> simple_error (thunk "bad tuple index") ())
+              generic_try (simple_error "bad tuple index")
               @@ (fun () -> List.nth tpl_tv index) in
             let%bind type_annotation = check tv in
             ok O.{expression = O.E_tuple_accessor (prev, index) ; type_annotation}
@@ -323,19 +323,19 @@ and type_annotated_expression (e:environment) (ae:I.annotated_expression) : O.an
         | Access_record property -> (
             let%bind r_tv = get_t_record prev.type_annotation in
             let%bind tv =
-              generic_try (fun () -> simple_error (thunk "bad record index") ())
+              generic_try (simple_error "bad record index")
               @@ (fun () -> SMap.find property r_tv) in
             let%bind type_annotation = check tv in
             ok O.{expression = O.E_record_accessor (prev, property) ; type_annotation }
           )
       in
-      trace (fun () -> simple_error (thunk "accessing") ()) @@
+      trace (simple_error "accessing") @@
       bind_fold_list aux e' path
 
   (* Sum *)
   | E_constructor (c, expr) ->
       let%bind (c_tv, sum_tv) =
-        trace_option (fun () -> simple_error (thunk "no such constructor") ())
+        trace_option (simple_error "no such constructor")
         @@ Environment.get_constructor e c in
       let%bind expr' = type_annotated_expression e expr in
       let%bind _assert = O.assert_type_value_eq (expr'.type_annotation, c_tv) in
@@ -365,14 +365,14 @@ and type_annotated_expression (e:environment) (ae:I.annotated_expression) : O.an
             bind_fold_list aux None
             @@ List.map Ast_typed.get_type_annotation
             @@ List.map fst lst' in
-          trace_option (fun () -> simple_error (thunk "empty map expression") ()) opt
+          trace_option (simple_error "empty map expression") opt
         in
         let%bind value_type =
           let%bind opt =
             bind_fold_list aux None
             @@ List.map Ast_typed.get_type_annotation
             @@ List.map snd lst' in
-          trace_option (fun () -> simple_error (thunk "empty map expression") ()) opt
+          trace_option (simple_error "empty map expression") opt
         in
         check (t_map key_type value_type ())
       in
@@ -404,7 +404,7 @@ and type_annotated_expression (e:environment) (ae:I.annotated_expression) : O.an
         | T_function (param, result) ->
             let%bind _ = O.assert_type_value_eq (param, arg.type_annotation) in
             ok result
-        | _ -> simple_fail (thunk "applying to not-a-function")
+        | _ -> simple_fail "applying to not-a-function"
       in
       ok O.{expression = E_application (f, arg) ; type_annotation}
   | E_look_up dsi ->
@@ -422,7 +422,7 @@ and type_annotated_expression (e:environment) (ae:I.annotated_expression) : O.an
         | Match_bool {match_true ; match_false} ->
             let%bind _ = O.assert_type_value_eq (match_true.type_annotation, match_false.type_annotation) in
             ok match_true.type_annotation
-        | _ -> simple_fail (thunk "can only type match_bool expressions yet") in
+        | _ -> simple_fail "can only type match_bool expressions yet" in
       ok O.{expression = E_matching (ex', m') ; type_annotation}
     )
 
@@ -433,60 +433,60 @@ and type_constant (name:string) (lst:O.type_value list) (tv_opt:O.type_value opt
   | "ADD", [a ; b] when type_value_eq (a, t_int ()) && type_value_eq (b, t_int ()) -> ok ("ADD_INT", t_int ())
   | "ADD", [a ; b] when type_value_eq (a, t_nat ()) && type_value_eq (b, t_nat ()) -> ok ("ADD_NAT", t_nat ())
   | "ADD", [a ; b] when type_value_eq (a, t_string ()) && type_value_eq (b, t_string ()) -> ok ("CONCAT", t_string ())
-  | "ADD", [_ ; _] -> simple_fail (thunk "bad types to add")
-  | "ADD", _ -> simple_fail (thunk "bad number of params to add")
+  | "ADD", [_ ; _] -> simple_fail "bad types to add"
+  | "ADD", _ -> simple_fail "bad number of params to add"
   | "TIMES", [a ; b] when type_value_eq (a, t_int ()) && type_value_eq (b, t_int ()) -> ok ("TIMES_INT", t_int ())
   | "TIMES", [a ; b] when type_value_eq (a, t_nat ()) && type_value_eq (b, t_nat ()) -> ok ("TIMES_NAT", t_nat ())
-  | "TIMES", [_ ; _] -> simple_fail (thunk "bad types to TIMES")
-  | "TIMES", _ -> simple_fail (thunk "bad number of params to TIMES")
+  | "TIMES", [_ ; _] -> simple_fail "bad types to TIMES"
+  | "TIMES", _ -> simple_fail "bad number of params to TIMES"
   | "EQ", [a ; b] when type_value_eq (a, t_int ()) && type_value_eq (b, t_int ()) -> ok ("EQ", t_bool ())
   | "EQ", [a ; b] when type_value_eq (a, t_nat ()) && type_value_eq (b, t_nat ()) -> ok ("EQ", t_bool ())
-  | "EQ", _ -> simple_fail (thunk "EQ only defined over int and nat")
+  | "EQ", _ -> simple_fail "EQ only defined over int and nat"
   | "LT", [a ; b] when type_value_eq (a, t_int ()) && type_value_eq (b, t_int ()) -> ok ("LT", t_bool ())
   | "LT", [a ; b] when type_value_eq (a, t_nat ()) && type_value_eq (b, t_nat ()) -> ok ("LT", t_bool ())
-  | "LT", _ -> simple_fail (thunk "LT only defined over int and nat")
+  | "LT", _ -> simple_fail "LT only defined over int and nat"
   | "OR", [a ; b] when type_value_eq (a, t_bool ()) && type_value_eq (b, t_bool ()) -> ok ("OR", t_bool ())
-  | "OR", _ -> simple_fail (thunk "OR only defined over bool")
+  | "OR", _ -> simple_fail "OR only defined over bool"
   | "AND", [a ; b] when type_value_eq (a, t_bool ()) && type_value_eq (b, t_bool ()) -> ok ("AND", t_bool ())
-  | "AND", _ -> simple_fail (thunk "AND only defined over bool")
+  | "AND", _ -> simple_fail "AND only defined over bool"
   | "NONE", [] -> (
       match tv_opt with
       | Some t -> ok ("NONE", t)
-      | None -> simple_fail (thunk "untyped NONE")
+      | None -> simple_fail "untyped NONE"
     )
-  | "NONE", _ -> simple_fail (thunk "bad number of params to NONE")
+  | "NONE", _ -> simple_fail "bad number of params to NONE"
   | "SOME", [s] -> ok ("SOME", t_option s ())
-  | "SOME", _ -> simple_fail (thunk "bad number of params to SOME")
+  | "SOME", _ -> simple_fail "bad number of params to SOME"
   | "MAP_REMOVE", [k ; m] ->
       let%bind (src, _) = get_t_map m in
       let%bind () = O.assert_type_value_eq (src, k) in
       ok ("MAP_REMOVE", m)
-  | "MAP_REMOVE", _ -> simple_fail (thunk "bad number of params to MAP_REMOVE")
+  | "MAP_REMOVE", _ -> simple_fail "bad number of params to MAP_REMOVE"
   | "MAP_UPDATE", [k ; v ; m] ->
       let%bind (src, dst) = get_t_map m in
       let%bind () = O.assert_type_value_eq (src, k) in
       let%bind () = O.assert_type_value_eq (dst, v) in
       ok ("MAP_UPDATE", m)
-  | "MAP_UPDATE", _ -> simple_fail (thunk "bad number of params to MAP_UPDATE")
+  | "MAP_UPDATE", _ -> simple_fail "bad number of params to MAP_UPDATE"
   | "get_force", [i_ty;m_ty] ->
       let%bind (src, dst) = get_t_map m_ty in
       let%bind _ = O.assert_type_value_eq (src, i_ty) in
       ok ("GET_FORCE", dst)
-  | "get_force", _ -> simple_fail (thunk "bad number of params to get_force")
+  | "get_force", _ -> simple_fail "bad number of params to get_force"
   | "size", [t] ->
       let%bind () = assert_t_map t in
       ok ("SIZE", t_nat ())
-  | "size", _ -> simple_fail (thunk "bad number of params to size")
+  | "size", _ -> simple_fail "bad number of params to size"
   | "int", [t] ->
       let%bind () = assert_t_nat t in
       ok ("INT", t_int ())
-  | "int", _ -> simple_fail (thunk "bad number of params to int")
+  | "int", _ -> simple_fail "bad number of params to int"
   | name, _ -> fail @@ unrecognized_constant name
 
 let untype_type_value (t:O.type_value) : (I.type_expression) result =
   match t.simplified with
   | Some s -> ok s
-  | _ -> simple_fail (thunk "trying to untype generated type")
+  | _ -> simple_fail "trying to untype generated type"
 
 let untype_literal (l:O.literal) : I.literal result =
   let open I in
@@ -574,11 +574,11 @@ and untype_instruction (i:O.instruction) : (I.instruction) result =
   | I_patch (s, p, e) ->
       let%bind e' = untype_annotated_expression e in
       let%bind (hds, tl) =
-        trace_option (fun () -> simple_error (thunk "patch without path") ()) @@
+        trace_option (simple_error "patch without path") @@
         List.rev_uncons_opt p in
       let%bind tl_name = match tl with
         | Access_record n -> ok n
-        | Access_tuple _ -> simple_fail (thunk "last element of patch is tuple") in
+        | Access_tuple _ -> simple_fail "last element of patch is tuple" in
       ok @@ I_record_patch (s.type_name, hds, [tl_name, e'])
 
 and untype_matching : type o i . (o -> i result) -> o O.matching -> (i I.matching) result = fun f m ->

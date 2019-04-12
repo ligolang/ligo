@@ -14,7 +14,7 @@ let parse_file (source: string) : Ast.entry_point result =
    *   generic_try (simple_error "error opening file") @@
    *   (fun () -> open_in pp_input) in *)
   let%bind channel =
-    generic_try (fun () -> simple_error (thunk "error opening file") ()) @@
+    generic_try (simple_error "error opening file") @@
     (fun () -> open_in source) in
   let lexbuf = Lexing.from_channel channel in
   let module Lexer = Lex.Lexer in
@@ -31,8 +31,8 @@ let parse_file (source: string) : Ast.entry_point result =
       match e with
       | Parser.Error -> (fun () -> error (thunk "Parse") ())
       | Lexer.Error s -> (fun () -> error (fun () -> "Lexer " ^ s) ())
-      | Lexer.Unexpected_character s -> error (fun () -> "Unexpected char" ^ s)
-      | _ -> simple_error (thunk "unrecognized parse_ error")
+      | Lexer.Unexpected_character s -> error (fun () -> "Unexpected char " ^ s) (* TODO: this allows injection of ANSI escape codes in error messages, fix this. *)
+      | _ -> simple_error "unrecognized parse_ error"
      )) @@ (fun () ->
       let raw = Parser.entry_point Lexer.token lexbuf in
       raw
