@@ -52,17 +52,17 @@ and lambda = {
 and expression =
   (* Base *)
   | E_literal of literal
-  | E_constant of name * ae list (* For language constants, like (Cons hd tl) or (plus i j) *)
+  | E_constant of (name * ae list) (* For language constants, like (Cons hd tl) or (plus i j) *)
   | E_variable of name
   | E_lambda of lambda
-  | E_application of ae * ae
+  | E_application of (ae * ae)
   (* E_Tuple *)
   | E_tuple of ae list
   (* Sum *)
-  | E_constructor of name * ae (* For user defined constructors *)
+  | E_constructor of (name * ae) (* For user defined constructors *)
   (* E_record *)
   | E_record of ae_map
-  | E_accessor of ae * access_path
+  | E_accessor of (ae * access_path)
   (* Data Structures *)
   | E_map of (ae * ae) list
   | E_look_up of (ae * ae)

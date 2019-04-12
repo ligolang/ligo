@@ -59,5 +59,14 @@ lead_list_content(separator, X):
 lead_list_first (separator, X):
   | option(separator) x = X { [ x ] }
 
+separated_list_ne(separator, X):
+  | x = X { [x] }
+  | x = X separator xs = separated_list_ne(separator, X) { x :: xs }
+
+separated_list_nene(separator, X):
+  | x = X separator y = X { [x ; y] }
+  | x = X separator xs = separated_list_nene(separator, X) { x :: xs }
+
+
 %inline wrap(X):
   | x = X { let loc = Location.make $startpos $endpos in Location.wrap ~loc x }
