@@ -9,6 +9,7 @@ module Mini_c = Mini_c
 module Typer = Typer
 module Transpiler = Transpiler
 module Parser_multifix = Multifix
+module Simplify_multifix = Simplify_multifix
 
 open Trace
 

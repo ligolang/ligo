@@ -1,5 +1,5 @@
 %{
-
+    open Ast
 %}
 
 %start <Ast.entry_point> entry_point

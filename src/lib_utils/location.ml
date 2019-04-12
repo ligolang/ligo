@@ -29,3 +29,5 @@ type 'a wrap = {
 }
 
 let wrap ~loc wrap_content = { wrap_content ; location = loc }
+let unwrap { wrap_content ; _ } = wrap_content
+let map f x = { x with wrap_content = f x.wrap_content }

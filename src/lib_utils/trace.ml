@@ -110,6 +110,12 @@ let bind_map_smap f smap = bind_smap (X_map.String.map f smap)
 
 let bind_map_list f lst = bind_list (List.map f lst)
 
+let bind_location (x:_ Location.wrap) =
+  x.wrap_content >>? fun wrap_content ->
+  ok { x with wrap_content }
+
+let bind_map_location f x = bind_location (Location.map f x)
+
 let bind_fold_list f init lst =
   let aux x y =
     x >>? fun x ->

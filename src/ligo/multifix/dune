@@ -38,6 +38,7 @@
  (targets ast.ml)
  (deps generator.exe)
  (action (system "./generator.exe ast > ast.ml"))
+ (mode promote-until-clean)
 )
 
 ;; Generating Generator

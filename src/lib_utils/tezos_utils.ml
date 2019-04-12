@@ -6,6 +6,8 @@ module Time = Tezos_base.TzPervasives.Time
 module Memory_proto_alpha = X_memory_proto_alpha
 module Micheline = X_tezos_micheline
 
+
+module Function = Function
 module Error_monad = X_error_monad
 module Trace = Trace
 module PP_helpers = PP
