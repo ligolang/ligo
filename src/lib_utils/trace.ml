@@ -22,7 +22,7 @@ let thunk x () = x
 
 let simple_error str () = {
   message = "" ;
-  title = str () ;
+  title = str;
 }
 
 let error title message () = { title = title () ; message = message () }
@@ -210,7 +210,7 @@ let specific_try handler f =
 
 let sys_try f =
   let handler () = function
-    | Sys_error str -> error (thunk "Sys_error") (thunk str)
+    | Sys_error str -> error (thunk "Sys_error") (fun () -> str)
     | exn -> raise exn
   in
   specific_try handler f
@@ -255,7 +255,7 @@ let pp_to_string pp () x =
 let errors_to_string = pp_to_string errors_pp
 
 module Assert = struct
-  let assert_true ?(msg=(thunk "not true")) = function
+  let assert_true ?(msg="not true") = function
     | true -> ok ()
     | false -> simple_fail msg
 
@@ -263,21 +263,21 @@ module Assert = struct
     assert_true ?msg (expected = actual)
 
   let assert_equal_int ?msg expected actual =
-    let msg () =
+    let msg =
       let default = Format.asprintf "Not equal int : expected %d, got %d" expected actual in
       Option.unopt ~default msg in
     assert_equal ~msg expected actual
 
   let assert_equal_bool ?msg expected actual =
-    let msg () =
+    let msg =
       let default = Format.asprintf "Not equal bool : expected %b, got %b" expected actual in
       Option.unopt ~default msg in
     assert_equal ~msg expected actual
 
-  let assert_list_size ?(msg=(thunk "lst doesn't have the right size")) lst n =
+  let assert_list_size ?(msg="lst doesn't have the right size") lst n =
     assert_true ~msg List.(length lst = n)
 
-  let assert_list_same_size ?(msg=(thunk "lists don't have same size")) a b =
+  let assert_list_same_size ?(msg="lists don't have same size") a b =
     assert_true ~msg List.(length a = length b)
 
   let assert_list_size_2 ~msg = function

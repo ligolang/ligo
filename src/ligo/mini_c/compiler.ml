@@ -56,12 +56,12 @@ let rec get_predicate : string -> expression list -> predicate result = fun s ls
         | [ _ ; (_, m, _) ] ->
             let%bind (_, v) = Combinators.get_t_map m in
             ok v
-        | _ -> simple_fail (thunk "mini_c . MAP_REMOVE") in
+        | _ -> simple_fail "mini_c . MAP_REMOVE" in
       let%bind v_ty = Compiler_type.type_ v in
       ok @@ simple_binary @@ seq [dip (i_none v_ty) ; prim I_UPDATE ]
   | "MAP_UPDATE" ->
       ok @@ simple_ternary @@ seq [dip (i_some) ; prim I_UPDATE ]
-  | x -> simple_fail @@ (fun () -> "predicate \"" ^ x ^ "\" doesn't exist")
+  | x -> simple_fail ("predicate \"" ^ x ^ "\" doesn't exist")
 
 and translate_value (v:value) : michelson result = match v with
   | D_bool b -> ok @@ prim (if b then D_True else D_False)
@@ -102,7 +102,7 @@ and translate_function ({capture;content}:anon_function) : michelson result =
       let%bind body = translate_function_body content in
       let%bind capture_m = translate_value value in
       ok @@ d_pair capture_m body
-  | _ -> simple_fail (thunk "translating closure without capture")
+  | _ -> simple_fail "translating closure without capture"
 
 and translate_expression ((expr', ty, env) as expr:expression) : michelson result =
   let error_message () = Format.asprintf  "%a" PP.expression expr in
@@ -155,7 +155,7 @@ and translate_expression ((expr', ty, env) as expr:expression) : michelson resul
               i_pair ; (* expr :: env *)
             ]
           )
-        | _ -> simple_fail (thunk "E_applicationing something not appliable")
+        | _ -> simple_fail "E_applicationing something not appliable"
       )
     | E_variable x ->
         let%bind (get, _) = Environment.to_michelson_get env x in
@@ -171,7 +171,7 @@ and translate_expression ((expr', ty, env) as expr:expression) : michelson resul
           | Unary f, 1 -> ok (seq @@ lst' @ [f])
           | Binary f, 2 -> ok (seq @@ lst' @ [f])
           | Ternary f, 3 -> ok (seq @@ lst' @ [f])
-          | _ -> simple_fail (thunk "bad arity")
+          | _ -> simple_fail "bad arity"
         in
         ok code
     | E_empty_map sd ->
@@ -226,7 +226,7 @@ and translate_expression ((expr', ty, env) as expr:expression) : michelson resul
                 i_pair ;
               ] in
             ok code
-        | _ -> simple_fail (thunk "expected function code")
+        | _ -> simple_fail "expected function code"
       )
     | E_Cond (c, a, b) -> (
         let%bind c' = translate_expression c in
@@ -436,7 +436,7 @@ let translate_program (p:program) (entry:string) : compiled_program result =
     | name , (E_function f, T_function (_, _), _) when f.capture_type = No_capture && name = entry -> Some f
     | _ -> None in
   let%bind main =
-    trace_option (fun () -> simple_error (thunk "no functional entry") ()) @@
+    trace_option (simple_error "no functional entry") @@
     Tezos_utils.List.find_map is_main p in
   let {input;output} : anon_function_content = main in
   let%bind body = translate_function_body main in

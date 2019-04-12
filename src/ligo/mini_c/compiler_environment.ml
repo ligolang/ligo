@@ -49,7 +49,7 @@ module Small = struct
   let rec get_path' = fun s env' ->
     match env' with
     | Leaf (n, v) when n = s -> ok ([], v)
-    | Leaf _ -> simple_fail (thunk "Not in env")
+    | Leaf _ -> simple_fail "Not in env"
     | Node {a;b} ->
         match%bind bind_lr @@ Tezos_utils.Tuple.map2 (get_path' s) (a,b) with
         | `Left (lst, v) -> ok ((`Left :: lst), v)
@@ -57,31 +57,31 @@ module Small = struct
 
   let get_path = fun s env ->
     match env with
-    | Empty -> simple_fail (thunk "Set : No env")
+    | Empty -> simple_fail "Set : No env"
     | Full x -> get_path' s x
 
   let rec to_michelson_get' s = function
     | Leaf (n, tv) when n = s -> ok @@ (seq [], tv)
-    | Leaf _ -> simple_fail (thunk "Schema.Small.get : not in env")
+    | Leaf _ -> simple_fail "Schema.Small.get : not in env"
     | Node {a;b} -> (
         match%bind bind_lr @@ Tezos_utils.Tuple.map2 (to_michelson_get' s) (a, b) with
         | `Left (x, tv) -> ok @@ (seq [i_car ; x], tv)
         | `Right (x, tv) -> ok @@ (seq [i_cdr ; x], tv)
       )
   let to_michelson_get s = function
-    | Empty -> simple_fail (thunk "Schema.Small.get : not in env")
+    | Empty -> simple_fail "Schema.Small.get : not in env"
     | Full x -> to_michelson_get' s x
 
   let rec to_michelson_set' s = function
     | Leaf (n, tv) when n = s -> ok (dip i_drop, tv)
-    | Leaf _ -> simple_fail (thunk "Schema.Small.set : not in env")
+    | Leaf _ -> simple_fail "Schema.Small.set : not in env"
     | Node {a;b} -> (
         match%bind bind_lr @@ Tezos_utils.Tuple.map2 (to_michelson_set' s) (a, b) with
         | `Left (x, tv) -> ok (seq [dip i_unpair ; x ; i_pair], tv)
         | `Right (x, tv) -> ok (seq [dip i_unpiar ; x ; i_piar], tv)
       )
   let to_michelson_set s = function
-    | Empty -> simple_fail (thunk "Schema.Small.set : not in env")
+    | Empty -> simple_fail "Schema.Small.set : not in env"
     | Full x -> to_michelson_set' s x
 
   let rec to_michelson_append' = function
@@ -104,7 +104,7 @@ module Small = struct
         ok (E_constant ("PAIR", [a;b]), (T_pair(ty_a, ty_b) : type_value), env)
 
   let to_mini_c_capture env = function
-    | Empty -> simple_fail (thunk "to_mini_c_capture")
+    | Empty -> simple_fail "to_mini_c_capture"
     | Full x -> to_mini_c_capture' env x
 
   let rec to_mini_c_type' : _ -> type_value = function
@@ -159,7 +159,7 @@ let to_mini_c_capture = function
 
 let rec get_path : string -> environment -> ([`Left | `Right] list * type_value) result = fun s t ->
   match t with
-  | [] -> simple_fail (thunk "Get path : empty big schema")
+  | [] -> simple_fail "Get path : empty big schema"
   | [ x ] -> Small.get_path s x
   | hd :: tl -> (
       match%bind bind_lr_lazy (Small.get_path s hd, (fun () -> get_path s tl)) with
@@ -185,7 +185,7 @@ let path_to_michelson_set = fun path ->
 
 let to_michelson_anonymous_add (t:t) =
   let%bind code = match t with
-    | [] -> simple_fail (thunk "Schema.Big.Add.to_michelson_add")
+    | [] -> simple_fail "Schema.Big.Add.to_michelson_add"
     | [hd] -> Small.to_michelson_append hd
     | hd :: _ -> (
         let%bind code = Small.to_michelson_append hd in
@@ -196,7 +196,7 @@ let to_michelson_anonymous_add (t:t) =
 
 let to_michelson_add x (t:t) =
   let%bind code = match t with
-    | [] -> simple_fail (thunk "Schema.Big.Add.to_michelson_add")
+    | [] -> simple_fail "Schema.Big.Add.to_michelson_add"
     | [hd] -> Small.to_michelson_append hd
     | hd :: _ -> (
         let%bind code = Small.to_michelson_append hd in
@@ -228,7 +228,7 @@ let to_michelson_add x (t:t) =
 let to_michelson_get (s:t) str : (Michelson.t * type_value) result =
   let open Michelson in
   let rec aux s str : (Michelson.t * type_value) result  = match s with
-    | [] -> simple_fail (thunk "Schema.Big.get")
+    | [] -> simple_fail "Schema.Big.get"
     | [a] -> Small.to_michelson_get str a
     | a :: b -> (
         match Small.to_michelson_get str a with
@@ -266,7 +266,7 @@ let to_michelson_set str (s:t) : Michelson.t result =
   let open Michelson in
   let rec aux s str : (Michelson.t * type_value) result =
     match s with
-    | [] -> simple_fail (thunk "Schema.Big.get")
+    | [] -> simple_fail "Schema.Big.get"
     | [a] -> Small.to_michelson_set str a
     | a :: b -> (
         match Small.to_michelson_set str a with

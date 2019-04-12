@@ -93,7 +93,7 @@ module Ty = struct
     | Full x -> environment_small' x
 
   and environment = function
-    | [] -> simple_fail (thunk "Schema.Big.to_ty")
+    | [] -> simple_fail "Schema.Big.to_ty"
     | [a] -> environment_small a
     | a::b ->
         let%bind (Ex_ty a) = environment_small a in
@@ -162,7 +162,7 @@ and environment_small = function
 
 and environment =
   function
-  | [] -> simple_fail (thunk "Schema.Big.to_michelson_type")
+  | [] -> simple_fail "Schema.Big.to_michelson_type"
   | [a] -> environment_small a
   | a :: b ->
       let%bind a = environment_small a in

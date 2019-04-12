@@ -24,7 +24,7 @@ let parse_file (source: string) : AST_Raw.t result =
   let%bind () = sys_command cpp_cmd in
 
   let%bind channel =
-    generic_try (fun () -> simple_error (thunk "error opening file") ()) @@
+    generic_try (simple_error "error opening file") @@
     (fun () -> open_in pp_input) in
   let lexbuf = Lexing.from_channel channel in
   let module Lexer = Lexer.Make(LexToken) in
@@ -34,14 +34,14 @@ let parse_file (source: string) : AST_Raw.t result =
       | Parser.Error -> (
           let start = Lexing.lexeme_start_p lexbuf in
           let end_ = Lexing.lexeme_end_p lexbuf in
-          let str () = Format.sprintf
+          let str = Format.sprintf
               "Parse error at \"%s\" from (%d, %d) to (%d, %d)\n"
               (Lexing.lexeme lexbuf)
               start.pos_lnum (start.pos_cnum - start.pos_bol)
               end_.pos_lnum (end_.pos_cnum - end_.pos_bol) in
           simple_error str
         )
-      | _ -> simple_error (thunk "unrecognized parse_ error")
+      | _ -> simple_error "unrecognized parse_ error"
     ) @@ (fun () ->
       let raw = Parser.contract read lexbuf in
       close () ;
@@ -58,14 +58,14 @@ let parse (s:string) : AST_Raw.t result =
       | Parser.Error -> (
           let start = Lexing.lexeme_start_p lexbuf in
           let end_ = Lexing.lexeme_end_p lexbuf in
-          let str () = Format.sprintf
+          let str = Format.sprintf
               "Parse error at \"%s\" from (%d, %d) to (%d, %d)\n"
               (Lexing.lexeme lexbuf)
               start.pos_lnum (start.pos_cnum - start.pos_bol)
               end_.pos_lnum (end_.pos_cnum - end_.pos_bol) in
           simple_error str
         )
-      | _ -> simple_error (thunk "unrecognized parse_ error")
+      | _ -> simple_error "unrecognized parse_ error"
     ) @@ (fun () ->
       let raw = Parser.contract read lexbuf in
       close () ;
@@ -82,14 +82,14 @@ let parse_expression (s:string) : AST_Raw.expr result =
       | Parser.Error -> (
           let start = Lexing.lexeme_start_p lexbuf in
           let end_ = Lexing.lexeme_end_p lexbuf in
-          let str () = Format.sprintf
+          let str = Format.sprintf
               "Parse error at \"%s\" from (%d, %d) to (%d, %d)\n"
               (Lexing.lexeme lexbuf)
               start.pos_lnum (start.pos_cnum - start.pos_bol)
               end_.pos_lnum (end_.pos_cnum - end_.pos_bol) in
           simple_error str
         )
-      | _ -> simple_error (thunk "unrecognized parse_ error")
+      | _ -> simple_error "unrecognized parse_ error"
     ) @@ (fun () ->
       let raw = Parser.interactive_expr read lexbuf in
       close () ;
@@ -132,13 +132,13 @@ let type_file ?(debug_simplify = false) ?(debug_typed = false)
     (path:string) : AST_Typed.program result =
   let%bind raw = parse_file path in
   let%bind simpl =
-    trace (fun () -> simple_error (thunk "simplifying") ()) @@
+    trace (simple_error "simplifying") @@
     simplify raw in
   (if debug_simplify then
      Format.(printf "Simplified : %a\n%!" AST_Simplified.PP.program simpl)
   ) ;
   let%bind typed =
-    trace (fun () -> simple_error (thunk "typing") ()) @@
+    trace (simple_error "typing") @@
     type_ simpl in
   (if debug_typed then (
       Format.(printf "Typed : %a\n%!" AST_Typed.PP.program typed)
@@ -162,7 +162,7 @@ let easy_run_typed
     ?(debug_mini_c = false) (entry:string)
     (program:AST_Typed.program) (input:AST_Typed.annotated_expression) : AST_Typed.annotated_expression result =
   let%bind mini_c_main =
-    trace (fun () -> simple_error (thunk "transpile mini_c entry") ()) @@
+    trace (simple_error "transpile mini_c entry") @@
     transpile_entry program entry in
   (if debug_mini_c then
      Format.(printf "Mini_c : %a\n%!" Mini_c.PP.function_ mini_c_main.content)
@@ -171,14 +171,14 @@ let easy_run_typed
   let%bind mini_c_value = transpile_value input in
 
   let%bind mini_c_result =
-    trace (fun () -> simple_error (thunk "run mini_c") ()) @@
+    trace (simple_error "run mini_c") @@
     Mini_c.Run.run_entry mini_c_main mini_c_value in
   let%bind typed_result =
     let%bind main_result_type =
       let%bind typed_main = Ast_typed.get_functional_entry program entry in
       match (snd typed_main).type_value' with
       | T_function (_, result) -> ok result
-      | _ -> simple_fail (thunk "main doesn't have fun type") in
+      | _ -> simple_fail "main doesn't have fun type" in
     untranspile_value mini_c_result main_result_type in
   ok typed_result
 
