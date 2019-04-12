@@ -14,26 +14,26 @@ let parse_file (source: string) : Ast.entry_point result =
    *   generic_try (simple_error "error opening file") @@
    *   (fun () -> open_in pp_input) in *)
   let%bind channel =
-    generic_try (simple_error "error opening file") @@
+    generic_try (fun () -> simple_error (thunk "error opening file") ()) @@
     (fun () -> open_in source) in
   let lexbuf = Lexing.from_channel channel in
   let module Lexer = Lex.Lexer in
-  specific_try (fun e ->
-      let error = fun s ->
+  (specific_try (fun () -> fun e ->
+      let error s () =
         let start = Lexing.lexeme_start_p lexbuf in
         let end_ = Lexing.lexeme_end_p lexbuf in
-        let str = Format.sprintf
+        let str () = Format.sprintf
           "at \"%s\" from (%d, %d) to (%d, %d)\n"
           (Lexing.lexeme lexbuf)
           start.pos_lnum (start.pos_cnum - start.pos_bol)
           end_.pos_lnum (end_.pos_cnum - end_.pos_bol) in
-        error s str in
+        error s str () in
       match e with
-      | Parser.Error -> error "Parse"
-      | Lexer.Error s -> error ("Lexer " ^ s)
-      | Lexer.Unexpected_character s -> error ("Unexpected char" ^ s)
-      | _ -> error "unrecognized parse_ error"
-    ) @@ (fun () ->
+      | Parser.Error -> (fun () -> error (thunk "Parse") ())
+      | Lexer.Error s -> (fun () -> error (fun () -> "Lexer " ^ s) ())
+      | Lexer.Unexpected_character s -> error (fun () -> "Unexpected char" ^ s)
+      | _ -> simple_error (thunk "unrecognized parse_ error")
+     )) @@ (fun () ->
       let raw = Parser.entry_point Lexer.token lexbuf in
       raw
     ) >>? fun raw ->

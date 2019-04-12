@@ -9,7 +9,7 @@ module Contract_types = Meta_michelson.Types
 
 module Ty = struct
 
-  let not_comparable name = error "not a comparable type" name
+  let not_comparable name () = error (thunk "not a comparable type") (fun () -> name) ()
 
   let comparable_type_base : type_base -> ex_comparable_ty result = fun tb ->
     let open Contract_types in
@@ -93,7 +93,7 @@ module Ty = struct
     | Full x -> environment_small' x
 
   and environment = function
-    | [] -> simple_fail "Schema.Big.to_ty"
+    | [] -> simple_fail (thunk "Schema.Big.to_ty")
     | [a] -> environment_small a
     | a::b ->
         let%bind (Ex_ty a) = environment_small a in
@@ -162,7 +162,7 @@ and environment_small = function
 
 and environment =
   function
-  | [] -> simple_fail "Schema.Big.to_michelson_type"
+  | [] -> simple_fail (thunk "Schema.Big.to_michelson_type")
   | [a] -> environment_small a
   | a :: b ->
       let%bind a = environment_small a in

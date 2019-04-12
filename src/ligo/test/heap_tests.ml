@@ -64,7 +64,7 @@ let get_top () : unit result =
     let open AST_Typed.Combinators in
     let input = dummy n in
     match n, easy_run_typed "get_top" program input with
-    | 0, Trace.Ok _ -> simple_fail "unexpected success"
+    | 0, Trace.Ok _ -> simple_fail (thunk "unexpected success")
     | 0, _ -> ok ()
     | _, result ->
         let%bind result' = result in
@@ -81,7 +81,7 @@ let pop_switch () : unit result =
   let aux n =
     let input = dummy n in
     match n, easy_run_typed "pop_switch" program input with
-    | 0, Trace.Ok _ -> simple_fail "unexpected success"
+    | 0, Trace.Ok _ -> simple_fail (thunk "unexpected success")
     | 0, _ -> ok ()
     | _, result ->
         let%bind result' = result in

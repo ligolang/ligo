@@ -3,69 +3,69 @@ open Types
 
 let get_bool (v:value) = match v with
   | D_bool b -> ok b
-  | _ -> simple_fail "not a bool"
+  | _ -> simple_fail (thunk "not a bool")
 
 let get_int (v:value) = match v with
   | D_int n -> ok n
-  | _ -> simple_fail "not an int"
+  | _ -> simple_fail (thunk "not an int")
 
 let get_nat (v:value) = match v with
   | D_nat n -> ok n
-  | _ -> simple_fail "not a nat"
+  | _ -> simple_fail (thunk "not a nat")
 
 let get_string (v:value) = match v with
   | D_string s -> ok s
-  | _ -> simple_fail "not a string"
+  | _ -> simple_fail (thunk "not a string")
 
 let get_bytes (v:value) = match v with
   | D_bytes b -> ok b
-  | _ -> simple_fail "not a bytes"
+  | _ -> simple_fail (thunk "not a bytes")
 
 let get_unit (v:value) = match v with
   | D_unit -> ok ()
-  | _ -> simple_fail "not a unit"
+  | _ -> simple_fail (thunk "not a unit")
 
 let get_option (v:value) = match v with
   | D_none -> ok None
   | D_some s -> ok (Some s)
-  | _ -> simple_fail "not an option"
+  | _ -> simple_fail (thunk "not an option")
 
 let get_map (v:value) = match v with
   | D_map lst -> ok lst
-  | _ -> simple_fail "not a map"
+  | _ -> simple_fail (thunk "not a map")
 
 let get_t_option (v:type_value) = match v with
   | T_option t -> ok t
-  | _ -> simple_fail "not an option"
+  | _ -> simple_fail (thunk "not an option")
 
 let get_pair (v:value) = match v with
   | D_pair (a, b) -> ok (a, b)
-  | _ -> simple_fail "not a pair"
+  | _ -> simple_fail (thunk "not a pair")
 
 let get_t_pair (t:type_value) = match t with
   | T_pair (a, b) -> ok (a, b)
-  | _ -> simple_fail "not a type pair"
+  | _ -> simple_fail (thunk "not a type pair")
 
 let get_t_map (t:type_value) = match t with
   | T_map kv -> ok kv
-  | _ -> simple_fail "not a type map"
+  | _ -> simple_fail (thunk "not a type map")
 
 let get_left (v:value) = match v with
   | D_left b -> ok b
-  | _ -> simple_fail "not a left"
+  | _ -> simple_fail (thunk "not a left")
 
 let get_right (v:value) = match v with
   | D_right b -> ok b
-  | _ -> simple_fail "not a right"
+  | _ -> simple_fail (thunk "not a right")
 
 let get_or (v:value) = match v with
   | D_left b -> ok (false, b)
   | D_right b -> ok (true, b)
-  | _ -> simple_fail "not a left/right"
+  | _ -> simple_fail (thunk "not a left/right")
 
 let get_last_statement ((b', _):block) : statement result =
   let aux lst = match lst with
-    | [] -> simple_fail "get_last: empty list"
+    | [] -> simple_fail (thunk "get_last: empty list")
     | lst -> ok List.(nth lst (length lst - 1)) in
   aux b'
 
@@ -109,7 +109,7 @@ let statement s' e : statement =
 
 let block (statements:statement list) : block result =
   match statements with
-  | [] -> simple_fail "no statements in block"
+  | [] -> simple_fail (thunk "no statements in block")
   | lst ->
       let first = List.hd lst in
       let last = List.(nth lst (length lst - 1)) in

@@ -1,21 +1,31 @@
-type error = {
+type expanded_error = {
   message : string ;
   title : string ;
 }
+type error_thunk = unit -> expanded_error
+type error = error_thunk
 
 type 'a result =
     Ok of 'a
-  | Errors of error list
+  | Errors of error_thunk list
 
 let ok x = Ok x
 let fail err = Errors [err]
 
-let simple_error str = {
+(* When passing a constant string where a thunk is expected, we wrap it with thunk, as follows:
+   (thunk "some string")
+   We always put the parentheses around the call, to increase grep and sed efficiency.
+
+   When a trace function is called, it is passed a `(fun () -> …)`.
+   If the `…` is e.g. error then we write `(fun () -> error title msg ()` *)
+let thunk x () = x
+
+let simple_error str () = {
   message = "" ;
-  title = str ;
+  title = str () ;
 }
 
-let error title message = { title ; message }
+let error title message () = { title = title () ; message = message () }
 
 let simple_fail str = fail @@ simple_error str
 
@@ -42,6 +52,17 @@ let trace err = function
   | Ok _ as o -> o
   | Errors errs -> Errors (err :: errs)
 
+let trace_r err_thunk_may_fail = function
+  | Ok _ as o -> o
+  | Errors errs ->
+      match err_thunk_may_fail () with
+      | Ok err -> Errors (err :: errs)
+      | Errors errors_while_generating_error ->
+          (* TODO: the complexity could be O(n*n) in the worst case,
+             this should use some catenable lists. *)
+          Errors (errors_while_generating_error
+                  @ errs)
+
 let trace_f f error x =
   trace error @@ f x
 
@@ -49,10 +70,10 @@ let trace_f_2 f error x y =
   trace error @@ f x y
 
 let trace_f_ez f name =
-  trace_f f (error "in function" name)
+  trace_f f (error (thunk "in function") name)
 
 let trace_f_2_ez f name =
-  trace_f_2 f (error "in function" name)
+  trace_f_2 f (error (thunk "in function") name)
 
 let to_option = function
   | Ok o -> Some o
@@ -133,8 +154,8 @@ module AE = Memory_proto_alpha.Alpha_environment
 module TP = Tezos_base__TzPervasives
 
 let of_tz_error (err:X_error_monad.error) : error =
-  let str = X_error_monad.(to_string err) in
-  error "alpha error" str
+  let str () = X_error_monad.(to_string err) in
+  error (thunk "alpha error") str
 
 let of_alpha_tz_error err = of_tz_error (AE.Ecoproto_error err)
 
@@ -151,8 +172,25 @@ let trace_tzresult err =
   | Result.Ok x -> ok x
   | Error errs -> Errors (err :: List.map of_tz_error errs)
 
+(* TODO: should be a combination of trace_tzresult and trace_r *)
+let trace_tzresult_r err_thunk_may_fail =
+  function
+  | Result.Ok x -> ok x
+  | Error errs ->
+      let tz_errs = List.map of_tz_error errs in
+      match err_thunk_may_fail () with
+      | Ok err -> Errors (err :: tz_errs)
+      | Errors errors_while_generating_error ->
+          (* TODO: the complexity could be O(n*n) in the worst case,
+             this should use some catenable lists. *)
+          Errors (errors_while_generating_error
+                  @ tz_errs)
+
 let trace_tzresult_lwt err (x:_ TP.Error_monad.tzresult Lwt.t) : _ result =
   trace_tzresult err @@ Lwt_main.run x
+
+let trace_tzresult_lwt_r err (x:_ TP.Error_monad.tzresult Lwt.t) : _ result =
+  trace_tzresult_r err @@ Lwt_main.run x
 
 let generic_try err f =
   try (
@@ -162,11 +200,11 @@ let generic_try err f =
 let specific_try handler f =
   try (
     ok @@ f ()
-  ) with exn -> fail (handler exn)
+  ) with exn -> fail ((handler ()) exn)
 
 let sys_try f =
-  let handler = function
-    | Sys_error str -> error "Sys_error" str
+  let handler () = function
+    | Sys_error str -> error (thunk "Sys_error") (thunk str)
     | exn -> raise exn
   in
   specific_try handler f
@@ -174,7 +212,7 @@ let sys_try f =
 let sys_command command =
   sys_try (fun () -> Sys.command command) >>? function
   | 0 -> ok ()
-  | n -> fail (error "Nonzero return code" (string_of_int n))
+  | n -> fail (fun () -> error (thunk "Nonzero return code") (fun () -> (string_of_int n)) ())
 
 let sequence f lst =
   let rec aux acc = function
@@ -211,7 +249,7 @@ let pp_to_string pp () x =
 let errors_to_string = pp_to_string errors_pp
 
 module Assert = struct
-  let assert_true ?(msg="not true") = function
+  let assert_true ?(msg=(thunk "not true")) = function
     | true -> ok ()
     | false -> simple_fail msg
 
@@ -219,19 +257,21 @@ module Assert = struct
     assert_true ?msg (expected = actual)
 
   let assert_equal_int ?msg expected actual =
-    let default = Format.asprintf "Not equal int : expected %d, got %d" expected actual in
-    let msg = Option.unopt ~default msg in
+    let msg () =
+      let default = Format.asprintf "Not equal int : expected %d, got %d" expected actual in
+      Option.unopt ~default msg in
     assert_equal ~msg expected actual
 
   let assert_equal_bool ?msg expected actual =
-    let default = Format.asprintf "Not equal bool : expected %b, got %b" expected actual in
-    let msg = Option.unopt ~default msg in
+    let msg () =
+      let default = Format.asprintf "Not equal bool : expected %b, got %b" expected actual in
+      Option.unopt ~default msg in
     assert_equal ~msg expected actual
 
-  let assert_list_size ?(msg="lst doesn't have the right size") lst n =
+  let assert_list_size ?(msg=(thunk "lst doesn't have the right size")) lst n =
     assert_true ~msg List.(length lst = n)
 
-  let assert_list_same_size ?(msg="lists don't have same size") a b =
+  let assert_list_same_size ?(msg=(thunk "lists don't have same size")) a b =
     assert_true ~msg List.(length a = length b)
 
   let assert_list_size_2 ~msg = function

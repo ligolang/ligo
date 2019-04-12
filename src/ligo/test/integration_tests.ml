@@ -4,16 +4,16 @@ open Test_helpers
 
 let pass (source:string) : unit result =
   let%bind raw =
-    trace (simple_error "parsing") @@
+    trace (fun () -> simple_error (thunk "parsing") ()) @@
     parse_file source in
   let%bind simplified =
-    trace (simple_error "simplifying") @@
+    trace (fun () -> simple_error (thunk "simplifying") ()) @@
     simplify raw in
   let%bind typed =
-    trace (simple_error "typing") @@
+    trace (fun () -> simple_error (thunk "typing") ()) @@
     type_ simplified in
   let%bind _mini_c =
-    trace (simple_error "transpiling") @@
+    trace (fun () -> simple_error (thunk "transpiling") ()) @@
     transpile typed in
   ok ()
 
@@ -32,7 +32,7 @@ let complex_function () : unit result =
     let input = e_a_int n in
     let%bind result = easy_run_main_typed program input in
     let%bind result' =
-      trace (simple_error "bad result") @@
+      trace (fun () -> simple_error (thunk "bad result") ()) @@
       get_a_int result in
     Assert.assert_equal_int (3 * n + 2) result'
   in
@@ -49,7 +49,7 @@ let bool_expression () : unit result =
       let input = e_a_bool b in
       let%bind result = easy_run_typed name program input in
       let%bind result' =
-        trace (simple_error "bad result") @@
+        trace (fun () -> simple_error (thunk "bad result") ()) @@
         get_a_bool result in
       Assert.assert_equal_bool (f b) result'
     in
@@ -96,7 +96,7 @@ let unit_expression () : unit result =
   let open AST_Typed.Combinators in
   let%bind result = easy_evaluate_typed "u" program in
   let%bind () =
-    trace (simple_error "result isn't unit") @@
+    trace (fun () -> simple_error (thunk "result isn't unit") ()) @@
     get_a_unit result in
   ok ()
 
@@ -104,7 +104,7 @@ let include_ () : unit result =
   let%bind program = type_file "./contracts/includer.ligo" in
   let%bind result = easy_evaluate_typed "bar" program in
   let%bind n =
-    trace (simple_error "Include failed") @@
+    trace (fun () -> simple_error (thunk "Include failed") ()) @@
     AST_Typed.Combinators.get_a_int result in
   Assert.assert_equal_int 144 n
 
@@ -163,13 +163,13 @@ let tuple () : unit result  =
     let open AST_Typed.Combinators in
     e_a_tuple (List.map e_a_int n) in
   let%bind _foobar =
-    trace (simple_error "foobar") (
+    trace (fun () -> simple_error (thunk "foobar") ()) (
       let%bind result = easy_evaluate_typed "fb" program in
       let expect = ez [0 ; 0] in
       AST_Typed.assert_value_eq (expect, result)
     )
   in
-  let%bind _projection = trace (simple_error "projection") (
+  let%bind _projection = trace (fun () -> simple_error (thunk "projection") ()) (
       let aux n =
         let input = ez [n ; n] in
         let%bind result = easy_run_typed "projection" program input in
@@ -189,12 +189,12 @@ let tuple () : unit result  =
 let option () : unit result =
   let%bind program = type_file "./contracts/option.ligo" in
   let open AST_Typed.Combinators in
-  let%bind _some = trace (simple_error "some") @@
+  let%bind _some = trace (fun () -> simple_error (thunk "some") ()) @@
     let%bind result = easy_evaluate_typed "s" program in
     let expect = e_a_some (e_a_int 42) in
     AST_Typed.assert_value_eq (expect, result)
   in
-  let%bind _none = trace (simple_error "none") @@
+  let%bind _none = trace (fun () -> simple_error (thunk "none") ()) @@
     let%bind result = easy_evaluate_typed "n" program in
     let expect = e_a_none (t_int ()) in
     AST_Typed.assert_value_eq (expect, result)
@@ -208,7 +208,7 @@ let map () : unit result =
     let lst' = List.map (fun (x, y) -> e_a_int x, e_a_int y) lst in
     e_a_map lst' (t_int ()) (t_int ())
   in
-  let%bind _get_force = trace (simple_error "get_force") @@
+  let%bind _get_force = trace (fun () -> simple_error (thunk "get_force") ()) @@
     let aux n =
       let input = ez [(23, n) ; (42, 4)] in
       let%bind result = easy_run_typed "gf" program input in
@@ -217,7 +217,7 @@ let map () : unit result =
     in
     bind_map_list aux [0 ; 42 ; 51 ; 421 ; -3]
   in
-  let%bind _size = trace (simple_error "size") @@
+  let%bind _size = trace (fun () -> simple_error (thunk "size") ()) @@
     let aux n =
       let input = ez List.(map (fun x -> (x, x)) @@ range n) in
       let%bind result = easy_run_typed "size_" program input in
@@ -226,12 +226,12 @@ let map () : unit result =
     in
     bind_map_list aux [1 ; 10 ; 3]
   in
-  let%bind _foobar = trace (simple_error "foobar") @@
+  let%bind _foobar = trace (fun () -> simple_error (thunk "foobar") ()) @@
     let%bind result = easy_evaluate_typed "fb" program in
     let expect = ez [(23, 0) ; (42, 0)] in
     AST_Typed.assert_value_eq (expect, result)
   in
-  let%bind _set = trace (simple_error "set") @@
+  let%bind _set = trace (fun () -> simple_error (thunk "set") ()) @@
     let aux n =
       let input =
         let m = ez [(23, 0) ; (42, 0)] in
@@ -243,7 +243,7 @@ let map () : unit result =
     in
     bind_map_list aux [1 ; 10 ; 3]
   in
-  let%bind _get = trace (simple_error "get") @@
+  let%bind _get = trace (fun () -> simple_error (thunk "get") ()) @@
     let aux n =
       let input = ez [(23, n) ; (42, 4)] in
       let%bind result = easy_run_typed "get" program input in
@@ -252,12 +252,12 @@ let map () : unit result =
     in
     bind_map_list aux [0 ; 42 ; 51 ; 421 ; -3]
   in
-  let%bind _bigmap = trace (simple_error "bigmap") @@
+  let%bind _bigmap = trace (fun () -> simple_error (thunk "bigmap") ()) @@
     let%bind result = easy_evaluate_typed "bm" program in
     let expect = ez @@ List.map (fun x -> (x, 23)) [144 ; 51 ; 42 ; 120 ; 421] in
     AST_Typed.assert_value_eq (expect, result)
   in
-  let%bind _remove = trace (simple_error "rm") @@
+  let%bind _remove = trace (fun () -> simple_error (thunk "rm") ()) @@
     let input = ez [(23, 23) ; (42, 42)] in
     let%bind result = easy_run_typed "rm" program input in
     let expect = ez [23, 23] in
@@ -272,7 +272,7 @@ let condition () : unit result =
     let input = e_a_int n in
     let%bind result = easy_run_main_typed program input in
     let%bind result' =
-      trace (simple_error "bad result") @@
+      trace (fun () -> simple_error (thunk "bad result") ()) @@
       get_a_int result in
     Assert.assert_equal_int (if n = 2 then 42 else 0) result'
   in
@@ -283,7 +283,7 @@ let condition () : unit result =
 
 let loop () : unit result =
   let%bind program = type_file "./contracts/loop.ligo" in
-  let%bind _dummy = trace (simple_error "dummy") @@
+  let%bind _dummy = trace (fun () -> simple_error (thunk "dummy") ()) @@
     let aux n =
       let open AST_Typed.Combinators in
       let input = e_a_nat n in
@@ -296,7 +296,7 @@ let loop () : unit result =
       @@ [0 ; 2 ; 42 ; 163] in
     ok ()
   in
-  let%bind _counter = trace (simple_error "counter") @@
+  let%bind _counter = trace (fun () -> simple_error (thunk "counter") ()) @@
     let aux n =
       let open AST_Typed.Combinators in
       let input = e_a_nat n in
@@ -309,7 +309,7 @@ let loop () : unit result =
       @@ [0 ; 2 ; 42 ; 12] in
     ok ()
   in
-  let%bind _sum = trace (simple_error "sum") @@
+  let%bind _sum = trace (fun () -> simple_error (thunk "sum") ()) @@
     let aux n =
       let open AST_Typed.Combinators in
       let input = e_a_nat n in
@@ -333,7 +333,7 @@ let matching () : unit result =
       let input = e_a_int n in
       let%bind result = easy_run_typed "match_bool" program input in
       let%bind result' =
-        trace (simple_error "bad result") @@
+        trace (fun () -> simple_error (thunk "bad result") ()) @@
         get_a_int result in
       Assert.assert_equal_int (if n = 2 then 42 else 0) result'
     in
@@ -348,7 +348,7 @@ let matching () : unit result =
       let input = e_a_int n in
       let%bind result = easy_run_typed "match_expr_bool" program input in
       let%bind result' =
-        trace (simple_error "bad result") @@
+        trace (fun () -> simple_error (thunk "bad result") ()) @@
         get_a_int result in
       Assert.assert_equal_int (if n = 2 then 42 else 0) result'
     in
@@ -365,7 +365,7 @@ let matching () : unit result =
         | None -> e_a_none (t_int ()) in
       let%bind result = easy_run_typed "match_option" program input in
       let%bind result' =
-        trace (simple_error "bad result") @@
+        trace (fun () -> simple_error (thunk "bad result") ()) @@
         get_a_int result in
       Assert.assert_equal_int (match n with None -> 23 | Some s -> s) result'
     in
@@ -383,7 +383,7 @@ let declarations () : unit result =
     let input = e_a_int n in
     let%bind result = easy_run_main_typed program input in
     let%bind result' =
-      trace (simple_error "bad result") @@
+      trace (fun () -> simple_error (thunk "bad result") ()) @@
       get_a_int result in
     Assert.assert_equal_int (42 + n) result'
   in
@@ -399,7 +399,7 @@ let quote_declaration () : unit result =
     let input = e_a_int n in
     let%bind result = easy_run_main_typed program input in
     let%bind result' =
-      trace (simple_error "bad result") @@
+      trace (fun () -> simple_error (thunk "bad result") ()) @@
       get_a_int result in
     Assert.assert_equal_int result' (42 + 2 * n)
   in
@@ -415,7 +415,7 @@ let quote_declarations () : unit result =
     let input = e_a_int n in
     let%bind result = easy_run_main_typed program input in
     let%bind result' =
-      trace (simple_error "bad result") @@
+      trace (fun () -> simple_error (thunk "bad result") ()) @@
       get_a_int result in
     Assert.assert_equal_int result' (74 + 2 * n)
   in

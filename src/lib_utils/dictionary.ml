@@ -23,7 +23,7 @@ module Assoc : DICTIONARY = struct
 
   let get_exn x y = List.assoc y x
 
-  let get x y = generic_try (simple_error "Dictionry.get") @@ fun () -> get_exn x y
+  let get x y = generic_try (fun () -> simple_error (thunk "Dictionry.get") ()) @@ fun () -> get_exn x y
 
   let set ?equal lst a b =
     let equal : 'a -> 'a -> bool =
