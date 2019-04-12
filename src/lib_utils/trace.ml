@@ -1,9 +1,43 @@
-type expanded_error = {
-  message : string ;
-  title : string ;
-}
-type error_thunk = unit -> expanded_error
-type error = error_thunk
+module J = Yojson.Basic
+
+type error = [`Assoc of (string * J.t) list]
+
+module JSON_string_utils = struct
+  let member = J.Util.member
+  let string = J.Util.to_string_option
+  let int = J.Util.to_int_option
+
+  let swap f l r = f r l
+
+  let unit x = Some x
+  let bind f = function None -> None | Some x -> Some (f x)
+  let bind2 f = fun l r -> match l, r with
+      None,   None   -> None
+    | None,   Some _ -> None
+    | Some _, None   -> None
+    | Some l, Some r -> Some (f l r)
+
+  let default d = function
+      Some x -> x
+    | None -> d
+
+  let string_of_int = bind string_of_int
+
+  let (||) l r = l |> default r
+  let (|^) = bind2 (^)
+end
+
+let mk_error ?(error_code : int option) ~(title : string) ?(message : string option) () =
+  let collapse l =
+    List.fold_left (fun acc -> function None -> acc | Some e -> e::acc) [] (List.rev l) in
+  `Assoc
+    (collapse
+       [(match error_code with Some c -> Some ("error_code", `Int c) | None -> None);
+        Some ("title", `String title);
+        (match message with Some m -> Some ("message", `String m) | None -> None)])
+
+
+type error_thunk = unit -> error
 
 type 'a result =
     Ok of 'a
@@ -20,12 +54,9 @@ let fail err = Errors [err]
    If the `…` is e.g. error then we write `(fun () -> error title msg ()` *)
 let thunk x () = x
 
-let simple_error str () = {
-  message = "" ;
-  title = str;
-}
+let error title message () = mk_error ~title:(title ()) ~message:(message ()) ()
 
-let error title message () = { title = title () ; message = message () }
+let simple_error str () = mk_error ~title:str ()
 
 let simple_fail str = fail @@ simple_error str
 
@@ -159,7 +190,7 @@ let bind_map_pair f (a, b) =
 module AE = Memory_proto_alpha.Alpha_environment
 module TP = Tezos_base__TzPervasives
 
-let of_tz_error (err:X_error_monad.error) : error =
+let of_tz_error (err:X_error_monad.error) : error_thunk =
   let str () = X_error_monad.(to_string err) in
   error (thunk "alpha error") str
 
@@ -230,13 +261,21 @@ let sequence f lst =
     | [] -> ok @@ List.rev acc in
   aux [] lst
 
-let error_pp fmt error =
-  if error.message = ""
-  then Format.fprintf fmt "%s" error.title
-  else Format.fprintf fmt "%s : %s" error.title error.message
+let json_of_error = J.to_string
+let error_pp out (e : error) =
+  let open JSON_string_utils in
+  let e : J.t = (match e with `Assoc _ as e -> e) in
+  let message    = e |> member "message"    |> string in
+  let title      = e |> member "title"      |> string || "(no title)" in
+  let error_code = unit " " |^ (e |> member "error_code" |> int |> string_of_int) || "" in
+  Format.fprintf out "%s" (error_code ^ ": " ^ title ^ (unit ":" |^ message  || ""))
 
-let error_pp_short fmt error =
-  Format.fprintf fmt "%s" error.title
+let error_pp_short out (e : error) =
+  let open JSON_string_utils in
+  let e : J.t = (match e with `Assoc _ as e -> e) in
+  let title      = e |> member "title"      |> string || "(no title)" in
+  let error_code = unit " " |^ (e |> member "error_code" |> int |> string_of_int) || "" in
+  Format.fprintf out "%s" (error_code ^ ": " ^ title)
 
 let errors_pp =
   Format.pp_print_list
