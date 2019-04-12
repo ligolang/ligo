@@ -9,5 +9,6 @@
     tezos-protocol-alpha
     tezos-micheline
     michelson-parser
+    yojson
   )
 )
