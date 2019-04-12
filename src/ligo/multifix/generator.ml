@@ -13,7 +13,6 @@ type token = Token.token
 
 module O = struct
 
-
   type list_mode =
     | Trail of token
     | Trail_option of token
@@ -89,10 +88,12 @@ module O = struct
   let rule_singleton rule : singleton = Generated rule
   let language entry_point singletons hierarchies = {entry_point ; singletons ; hierarchies}
 
-
   let name_hierarchy name prefix : n_operators list -> rule list -> n_hierarchy = fun nopss rules ->
     let nopss' = List.Ne.of_list nopss in
-    let name_i = fun i x -> make_name (name ^ "_" ^ (string_of_int i)) x in
+    let name_i : int -> n_operators -> level = fun i x ->
+      let first = get_name (List.hd x) in
+      let name' = Format.asprintf "%s_%d_%s" name i first in
+      make_name name' x in
     let levels : levels = List.Ne.mapi name_i nopss' in
     make_name name @@ make_hierarchy prefix levels rules
 
@@ -349,7 +350,8 @@ module Print_Grammar = struct
 
   let n_hierarchy : _ -> O.n_hierarchy -> _ = fun ppf nh ->
     let name = get_name nh in
-    fprintf ppf "%a@.%%inline %s : %s_0 { $1 }@.@;" comment ("Top-level for " ^ name) name name;
+    let top_level = get_name @@ List.Ne.hd nh.content.levels in
+    fprintf ppf "%a@.%%inline %s : %s { $1 }@.@;" comment ("Top-level for " ^ name) name top_level;
     let (hd, tl) = List.Ne.rev (get_content nh).levels in
     fprintf ppf "%a" (level nh.content.prefix "") hd ;
     let aux prev_name lvl =
@@ -388,6 +390,7 @@ let paren : string -> string -> O.n_operator = fun constructor_name name ->
 
 let expression_name = "expression"
 let type_expression_name = "type_expression"
+let restricted_type_expression_name = "restricted_type_expression"
 let program_name = "program"
 let variable_name = "variable"
 let pattern_name = "pattern"
@@ -426,6 +429,9 @@ module Pattern = struct
     ]
 
   let pair = infix "pair" `Left COMMA
+  let type_annotation = make_name "type_annotation" [
+      `Current ; `Token COLON ; `Named restricted_type_expression_name
+    ]
 
   let variable : O.n_operator = make_name "variable" [ `Named variable_name ]
   let constructor : O.n_operator = make_name "constructor" [ `Named constructor_name ]
@@ -444,8 +450,8 @@ module Pattern = struct
     ] []
 
   let main = O.name_hierarchy pattern_name "P" [
-      [record] ;
-      [application] ;
+      [application ; record] ;
+      [type_annotation] ;
       [pair] ;
       [list] ;
       [variable ; constructor ; module_ident ; unit] ;
@@ -461,6 +467,10 @@ module Expression = struct
   open O
 
   let application = empty_infix "application" `Right
+
+  let type_annotation = make_name "type_annotation" [
+      `Current ; `Token COLON ; `Named type_expression_name
+    ]
 
   let list : O.n_operator = make_name "list" [
       `Token LSQUARE ; `List (Trail SEMICOLON, `Current) ; `Token RSQUARE ;
@@ -550,10 +560,10 @@ module Expression = struct
 
   let name = make_name "name" [`Token TILDE ; `Current]
 
-  let no_sequence_expression = O.name_hierarchy no_seq_name "Es" [
-      [let_in ; fun_ ; record ; ite ; it ; match_with] ;
+  let main_hierarchy = [
       [pair] ;
       [application] ;
+      [type_annotation] ;
       [lt ; le ; gt ; eq] ;
       [assignment] ;
       [cons] ;
@@ -562,39 +572,24 @@ module Expression = struct
       [list] ;
       [name] ;
       [arith_variable ; constructor ; module_ident ; accessor ; int ; unit ; string ; tz] ;
-      [paren "no_seq_bottom" expression_name]
-    ] []
+      [paren "bottom" expression_name] ;
+  ]
 
-  let no_match_expression = O.name_hierarchy no_match_name "Em" [
-      [let_in ; fun_ ; record ; ite ; it ] ;
-      [pair] ;
-      [application] ;
-      [lt ; le ; gt ; eq] ;
-      [assignment] ;
-      [cons] ;
-      [addition ; substraction] ;
-      [multiplication ; division] ;
-      [list] ;
-      [name] ;
-      [arith_variable ; constructor ; module_ident ; accessor ; int ; unit ; string ; tz] ;
-      [paren "no_match_bottom" expression_name]
-    ] []
+  let no_sequence_expression = O.name_hierarchy no_seq_name "Es" (
+      [let_in ; fun_ ; record ; ite ; it ; match_with] ::
+      main_hierarchy
+    ) []
 
-  let expression = O.name_hierarchy expression_name "E" [
-      [sequence] ;
-      [let_in ; fun_ ; record ; ite ; it ; match_with] ;
-      [pair] ;
-      [application] ;
-      [lt ; le ; gt ; eq] ;
-      [assignment] ;
-      [cons] ;
-      [addition ; substraction] ;
-      [multiplication ; division] ;
-      [list] ;
-      [name] ;
-      [arith_variable ; constructor ; module_ident ; accessor ; int ; unit ; string ; tz] ;
-      [paren "paren" expression_name]
-    ] []
+  let no_match_expression = O.name_hierarchy no_match_name "Em" (
+      [let_in ; fun_ ; record ; ite ; it ] ::
+      main_hierarchy
+    ) []
+
+  let expression = O.name_hierarchy expression_name "E" (
+      [sequence] ::
+      [let_in ; fun_ ; record ; ite ; it ; match_with] ::
+      main_hierarchy
+    ) []
 
   let singletons = List.map O.rule_singleton [record_element ; match_clause]
 end
@@ -628,14 +623,19 @@ module Type_expression = struct
 
   let pair = infix "pair" `Left COMMA
 
-  let arith_variable : O.n_operator = make_name "variable" [ `Named variable_name ]
+  let type_variable : O.n_operator = make_name "variable" [ `Named variable_name ]
 
-  let arith = O.name_hierarchy type_expression_name "T" [
+  let restricted_type_expression = O.name_hierarchy restricted_type_expression_name "Tr" [
+      [type_variable] ;
+      [paren "paren" type_expression_name] ;
+    ] []
+
+  let type_expression = O.name_hierarchy type_expression_name "T" [
       [let_in ; record ] ;
       [pair] ;
       [application] ;
       [list] ;
-      [arith_variable] ;
+      [type_variable] ;
       [paren "paren" type_expression_name]
     ] []
 
@@ -662,9 +662,9 @@ module Program = struct
     ]
 
   let statement : O.rule = make_name statement_name [
-      make_name "variable_declaration" [`Token LET ; `Named variable_name ; `List (Naked, variable_name) ; `Token EQUAL ; `Named expression_name] ;
-      make_name "init_declaration" [`Token LET_INIT ; `Named variable_name ; `List (Naked, variable_name) ; `Token EQUAL ; `Named expression_name] ;
-      make_name "entry_declaration" [`Token LET_ENTRY ; `Named variable_name ; `List (Naked, param_name) ; `Token EQUAL ; `Named expression_name] ;
+      make_name "variable_declaration" [`Token LET ; `List (Naked_ne, param_name) ; `Token EQUAL ; `Named expression_name] ;
+      make_name "init_declaration" [`Token LET_INIT ; `List (Naked_ne, param_name) ; `Token EQUAL ; `Named expression_name] ;
+      make_name "entry_declaration" [`Token LET_ENTRY ; `List (Naked_ne, param_name) ; `Token EQUAL ; `Named expression_name] ;
       make_name "type_declaration" [`Token TYPE ; `Named variable_name ; `Token EQUAL ; `Named type_expression_name] ;
     ]
 
@@ -684,7 +684,8 @@ let language = O.language program_name (
     Expression.no_sequence_expression ;
     Expression.no_match_expression ;
     Expression.expression ;
-    Type_expression.arith ;
+    Type_expression.restricted_type_expression ;
+    Type_expression.type_expression ;
   ]
 
 let () =

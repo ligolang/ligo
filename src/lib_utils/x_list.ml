@@ -95,6 +95,7 @@ module Ne = struct
 
   let of_list lst = List.(hd lst, tl lst)
   let to_list (hd, tl : _ t) = hd :: tl
+  let hd : 'a t -> 'a = fst
   let iter f (hd, tl : _ t) = f hd ; List.iter f tl
   let map f (hd, tl : _ t) = f hd, List.map f tl
   let mapi f (hd, tl : _ t) =
