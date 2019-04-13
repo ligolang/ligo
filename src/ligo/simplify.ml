@@ -85,7 +85,7 @@ let rec simpl_expression (t:Raw.expr) : ae result =
   let return x = ok @@ ae x in
   let simpl_projection = fun (p:Raw.projection) ->
     let var =
-      let name = p.record_name.value in
+      let name = p.struct_name.value in
       ae @@ E_variable name in
     let path = p.field_path in
     let path' =

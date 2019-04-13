@@ -615,7 +615,7 @@ and field_assign = {
 }
 
 and projection = {
-  record_name : variable;
+  struct_name : variable;
   selector    : dot;
   field_path  : (selection, dot) nsepseq
 }
@@ -1344,8 +1344,8 @@ and print_field_assign {value; _} =
   print_expr field_expr
 
 and print_projection {value; _} =
-  let {record_name; selector; field_path} = value in
-  print_var record_name;
+  let {struct_name; selector; field_path} = value in
+  print_var struct_name;
   print_token selector ".";
   print_field_path field_path
 

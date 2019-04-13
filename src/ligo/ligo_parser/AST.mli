@@ -599,7 +599,7 @@ and field_assign = {
 }
 
 and projection = {
-  record_name : variable;
+  struct_name : variable;
   selector    : dot;
   field_path  : (selection, dot) nsepseq
 }
