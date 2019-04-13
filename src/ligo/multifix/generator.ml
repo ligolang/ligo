@@ -32,6 +32,7 @@ module O = struct
     | `Named of string
     | `Token of token
     | `List of string list_element
+    | `Option of string
   ]
 
   type rhs = rhs_element list name
@@ -60,7 +61,6 @@ module O = struct
     | `Current
     | `Lower
   ]
-
 
   type operator = element list
   type n_operator = operator name
@@ -166,6 +166,7 @@ module Print_AST = struct
           match e with
           | `Named s -> Some (s ^ " Location.wrap")
           | `List ( _, s) -> Some ("(" ^ s ^ " Location.wrap list)")
+          | `Option s -> Some ("(" ^ s ^ " Location.wrap option)")
           | `Token _ -> None
         in
         List.filter_map aux rhs.content in
@@ -246,6 +247,7 @@ module Print_Grammar = struct
       let aux : _ -> O.rhs_element -> _ = fun ppf e ->
           (match e with
           | `Named s -> fprintf ppf "%s = wrap(%s)" letters.(!i) s
+          | `Option s -> fprintf ppf "%s = option(wrap(%s))" letters.(!i) s
           | `List (mode, s) ->
               fprintf ppf "%s = %swrap(%s))"
                 letters.(!i)
@@ -271,7 +273,7 @@ module Print_Grammar = struct
       let i = ref 0 in
       let aux : O.rhs_element -> _ = fun e ->
           let s = (match e with
-          | `Named _ | `List _ -> Some (letters.(!i))
+          | `Named _ | `List _ | `Option _ -> Some (letters.(!i))
           | `Token _ -> i := !i - 1 ; None) in
           i := !i + 1 ; s
       in
@@ -626,13 +628,9 @@ module Type_expression = struct
 
   let application = empty_infix "application" `Left
 
-  (* let pair = infix "pair" `Left COMMA *)
   let tuple = make_name "tuple" [
       `List (Separated_nene COMMA, `Lower)
     ]
-  (* let pair = make_name "tuple" [
-   *     `List (Separated COMMA, `Lower)
-   *   ] *)
 
   let type_variable : O.n_operator = make_name "variable" [ `Named variable_name ]
 
@@ -671,14 +669,44 @@ module Program = struct
       make_name "implicit_named_param" [ `Token TILDE ; `Named variable_name ] ;
     ]
 
+  let type_annotation_name = "type_annotation_"
+
+  let type_annotation : O.rule = make_name type_annotation_name [
+      make_name "" [ `Token COLON ; `Named type_expression_name ] ;
+    ]
+
+  let let_content_name = "let_content"
+  let let_content : O.rule = make_name let_content_name [
+      make_name "" [
+        `Named variable_name ;
+        `List (Naked, param_name) ;
+        `Option type_annotation_name ;
+        `Token EQUAL ;
+        `Named expression_name ;
+      ] ;
+    ]
+
+  (* let statement : O.rule = make_name statement_name [
+   *     make_name "variable_declaration" [`Token LET ; `List (Naked_ne, param_name) ; `Token EQUAL ; `Named expression_name] ;
+   *     make_name "init_declaration" [`Token LET_INIT ; `List (Naked_ne, param_name) ; `Token EQUAL ; `Named expression_name] ;
+   *     make_name "entry_declaration" [`Token LET_ENTRY ; `List (Naked_ne, param_name) ; `Token EQUAL ; `Named expression_name] ;
+   *     make_name "type_declaration" [`Token TYPE ; `Named variable_name ; `Token EQUAL ; `Named type_expression_name] ;
+   *   ] *)
+
   let statement : O.rule = make_name statement_name [
-      make_name "variable_declaration" [`Token LET ; `List (Naked_ne, param_name) ; `Token EQUAL ; `Named expression_name] ;
-      make_name "init_declaration" [`Token LET_INIT ; `List (Naked_ne, param_name) ; `Token EQUAL ; `Named expression_name] ;
-      make_name "entry_declaration" [`Token LET_ENTRY ; `List (Naked_ne, param_name) ; `Token EQUAL ; `Named expression_name] ;
+      make_name "variable_declaration" [`Token LET ; `Named let_content_name] ;
+      make_name "init_declaration" [`Token LET_INIT ; `Named let_content_name] ;
+      make_name "entry_declaration" [`Token LET_ENTRY ; `Named let_content_name] ;
       make_name "type_declaration" [`Token TYPE ; `Named variable_name ; `Token EQUAL ; `Named type_expression_name] ;
     ]
 
-  let singletons = List.map O.rule_singleton [program ; statement ; param]
+  let singletons = List.map O.rule_singleton [
+      let_content ;
+      type_annotation ;
+      program ;
+      statement ;
+      param ;
+    ]
 
 end
 

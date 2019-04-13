@@ -5,8 +5,23 @@ module O = Ast_simplified
 
 let unwrap : type a . a Location.wrap -> a = Location.unwrap
 
+let type_constants = [
+  ("unit", 0) ;
+  ("string", 0) ;
+  ("nat", 0) ;
+  ("int", 0) ;
+  ("bool", 0) ;
+  ("list", 1) ;
+  ("option", 1) ;
+  ("set", 1) ;
+  ("map", 2) ;
+]
+
 let type_variable : string -> O.type_expression result = fun str ->
-  ok @@ O.T_variable str
+  match List.assoc_opt str type_constants with
+  | Some 0 -> ok @@ O.T_constant (str, [])
+  | Some _ -> simple_fail "non-nullary type constructor"
+  | None -> ok @@ O.T_variable str
 
 let rec type_expression : I.type_expression -> O.type_expression result = fun te ->
   match te with
@@ -60,21 +75,23 @@ let rec expression : I.expression -> O.annotated_expression result = fun e ->
   | E_main m ->
       let%bind m' = bind_map_location expression_main m in
       ok @@ unwrap m'
-  | E_record r ->
-      let aux : I.e_record_element -> _ = fun re ->
-        match re with
-        | E_record_element_record_implicit _ -> simple_fail "no implicit record element yet"
-        | E_record_element_record_explicit (s, e) ->
-            let%bind e' = bind_map_location expression_no_seq e in
-            ok (s, e')
-      in
-      let%bind r' = bind_map_list (bind_map_location aux) r in
-      let e_map =
-        let lst = List.map ((fun (x, y) -> unwrap x, unwrap y) >| unwrap) r' in
-        let open Map.String in
-        List.fold_left (fun prec (k , v) -> add k v prec) empty lst
-      in
-      ok @@ O.(ae @@ E_record e_map)
+  | E_record r -> expression_record r
+
+and expression_record : _ -> O.annotated_expression result = fun r ->
+  let aux : I.e_record_element -> _ = fun re ->
+    match re with
+    | E_record_element_record_implicit _ -> simple_fail "no implicit record element yet"
+    | E_record_element_record_explicit (s, e) ->
+        let%bind e' = bind_map_location expression_no_seq e in
+        ok (s, e')
+  in
+  let%bind r' = bind_map_list (bind_map_location aux) r in
+  let e_map =
+    let lst = List.map ((fun (x, y) -> unwrap x, unwrap y) >| unwrap) r' in
+    let open Map.String in
+    List.fold_left (fun prec (k , v) -> add k v prec) empty lst
+  in
+  ok @@ O.(ae @@ E_record e_map)
 
 and expression_main : I.expression_main -> O.annotated_expression result = fun em ->
   let return x = ok O.(ae x) in
@@ -141,42 +158,39 @@ and expression_main : I.expression_main -> O.annotated_expression result = fun e
 
 and expression_no_seq : I.expression_no_seq -> O.annotated_expression result = fun mns ->
   match mns with
-  | _ -> simple_fail "todo"
+  | Es_record r -> expression_record r
+  | Es_let_in _
+  | Es_ifthen _
+  | Es_ifthenelse _
+    -> simple_fail "not block expressions in local expressions yet"
+  | Es_fun _ -> simple_fail "no local functions yet"
+  | Es_match _ -> simple_fail "no match in expressions yet"
+  | Es_main e ->
+      expression_main (unwrap e)
+
+let let_content : I.let_content -> _ result = fun (Let_content (n, args, ty_opt, e)) ->
+  let%bind () =
+    trace_strong (simple_error "no sugar-candy for args yet") @@
+    Assert.assert_list_empty args in
+  let%bind ty =
+    trace_option (simple_error "top-level declarations need a type") @@
+    ty_opt in
+  let%bind e' = bind_map_location expression e in
+  let%bind () =
+    trace_strong (simple_error "no annotation for a top-level expression") @@
+    Assert.assert_none (unwrap e').type_annotation in
+  let e'' = (unwrap e').expression in
+  let%bind ty' =
+    let (I.Type_annotation_ ty') = unwrap ty in
+    bind_map_location type_expression ty' in
+  let ae = O.annotated_expression e'' (Some (unwrap ty')) in
+  ok @@ O.Declaration_constant {name = (unwrap n) ; annotated_expression = ae}
 
 let statement : I.statement -> O.declaration result = fun s ->
   match s with
-  | Statement_variable_declaration ([n], e) ->
-      let%bind (name, ty) =
-        let%bind pattern =
-          match unwrap n with
-          | Param_restricted_pattern c -> ok c
-          | Param_implicit_named_param _ -> simple_fail "" in
-        match unwrap pattern with
-        | Pr_restrict c -> (
-            match unwrap c with
-            | P_type_annotation (l, te) -> (
-                let%bind v = match unwrap l with
-                  | P_variable v -> ok v
-                  | _ -> simple_fail "no sugar-candy for regular declarations yet"
-                in
-                ok (v, te)
-              )
-            | _ -> simple_fail "no sugar-candy for regular declarations yet"
-          )
-        | Pr_variable _ -> simple_fail "provide type for top-level declarations!"
-        | Pr_unit _ -> simple_fail "define unit is meaningless"
-      in
-      let name' = unwrap name in
-      let%bind e' = bind_map_location expression e in
-      let%bind ty' = bind_map_location restricted_type_expression ty in
-      let%bind e'' = match (unwrap e').type_annotation with
-        | None -> ok (unwrap e').expression
-        | Some _ -> simple_fail "can't add an annotation at the expression of a declaration" in
-      let ae = O.annotated_expression e'' (Some (unwrap ty')) in
-      ok @@ O.Declaration_constant {name = name' ; annotated_expression = ae}
-  | Statement_variable_declaration _ -> simple_fail "no sugar-candy for fun declarations yet"
-  | Statement_init_declaration _ -> simple_fail "no init declaration yet"
-  | Statement_entry_declaration _ -> simple_fail "no entry declaration yet"
+  | Statement_variable_declaration x -> let_content (unwrap x)
+  | Statement_init_declaration x -> let_content (unwrap x)
+  | Statement_entry_declaration x -> let_content (unwrap x)
   | Statement_type_declaration (n, te) ->
       let%bind te' = bind_map_location type_expression te in
       ok @@ O.Declaration_type {type_name = unwrap n ; type_expression = unwrap te'}

@@ -313,8 +313,15 @@ module Assert = struct
       Option.unopt ~default msg in
     assert_equal ~msg expected actual
 
+  let assert_none ?(msg="not a none") opt = match opt with
+    | None -> ok ()
+    | _ -> simple_fail msg
+
   let assert_list_size ?(msg="lst doesn't have the right size") lst n =
     assert_true ~msg List.(length lst = n)
+
+  let assert_list_empty ?(msg="lst isn't empty") lst =
+    assert_true ~msg List.(length lst = 0)
 
   let assert_list_same_size ?(msg="lists don't have same size") a b =
     assert_true ~msg List.(length a = length b)
