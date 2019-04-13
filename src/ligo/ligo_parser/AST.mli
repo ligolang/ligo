@@ -659,8 +659,3 @@ val lhs_to_region        : lhs -> Region.t
 val rhs_to_region        : rhs -> Region.t
 val if_clause_to_region  : if_clause -> Region.t
 val selection_to_region  : selection -> Region.t
-
-(* Printing *)
-
-val print_tokens : t -> unit
-val print_path : path -> unit

@@ -91,7 +91,7 @@ let () =
   try
     let ast = Parser.contract tokeniser buffer in
     if Utils.String.Set.mem "ast" EvalOpt.verbose
-    then AST.print_tokens ast
+    then ParserLog.print_tokens ast
   with
     Lexer.Error err ->
       close_all ();
