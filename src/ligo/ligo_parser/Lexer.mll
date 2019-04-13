@@ -139,10 +139,6 @@ module type S = sig
   type file_path = string
   type logger = Markup.t list -> token -> unit
 
-  val output_token :
-    ?offsets:bool -> [`Byte | `Point] ->
-    EvalOpt.command -> out_channel -> logger
-
   type instance = {
     read     : ?log:logger -> Lexing.lexbuf -> token;
     buffer   : Lexing.lexbuf;
@@ -157,14 +153,8 @@ module type S = sig
 
   exception Error of Error.t Region.reg
 
-  val print_error :
-    ?offsets:bool -> [`Byte | `Point] -> Error.t Region.reg -> unit
-
-  (* Standalone tracer *)
-
-  val trace :
-    ?offsets:bool -> [`Byte | `Point] ->
-    file_path option -> EvalOpt.command -> unit
+  val print_error : ?offsets:bool -> [`Byte | `Point] ->
+    Error.t Region.reg -> unit
 end
 
 (* The functorised interface
@@ -391,6 +381,14 @@ module Make (Token: TOKEN) : (S with module Token = Token) =
     | _ -> assert false
 
     exception Error of Error.t Region.reg
+
+    let print_error ?(offsets=true) mode Region.{region; value} =
+      let  msg = error_to_string value in
+      let file = match EvalOpt.input with
+          None | Some "-" -> false
+        |         Some _  -> true in
+      let  reg = region#to_string ~file ~offsets mode in
+      Utils.highlight (sprintf "Lexical error %s:\n%s%!" reg msg)
 
     let fail region value = raise (Error Region.{region; value})
 
@@ -828,53 +826,6 @@ let open_token_stream file_path_opt =
                  | Some file_path  -> reset ~file:file_path buffer
   and close () = close_in cin in
   {read = read_token; buffer; get_pos; get_last; close}
-
-(* Standalone lexer for debugging purposes *)
-
-(* Pretty-printing in a string the lexemes making up the markup
-   between two tokens, concatenated with the last lexeme itself. *)
-
-let output_token ?(offsets=true) mode command
-                 channel left_mark token : unit =
-  let output    str = Printf.fprintf channel "%s%!" str in
-  let output_nl str = output (str ^ "\n") in
-  match command with
-    EvalOpt.Quiet -> ()
-  | EvalOpt.Tokens -> Token.to_string token ~offsets mode |> output_nl
-  | EvalOpt.Copy ->
-      let lexeme = Token.to_lexeme token
-      and apply acc markup = Markup.to_lexeme markup :: acc
-      in List.fold_left apply [lexeme] left_mark
-         |> String.concat "" |> output
-  | EvalOpt.Units ->
-      let abs_token = Token.to_string token ~offsets mode
-      and apply acc markup =
-        Markup.to_string markup ~offsets mode :: acc
-      in List.fold_left apply [abs_token] left_mark
-         |> String.concat "\n" |> output_nl
-
-let print_error ?(offsets=true) mode Region.{region; value} =
-  let  msg = error_to_string value in
-  let file = match EvalOpt.input with
-               None | Some "-" -> false
-             |         Some _  -> true in
-  let  reg = region#to_string ~file ~offsets mode in
-  Utils.highlight (sprintf "Lexical error %s:\n%s%!" reg msg)
-
-let trace ?(offsets=true) mode file_path_opt command : unit =
-  try
-    let {read; buffer; close; _} = open_token_stream file_path_opt
-    and cout = stdout in
-    let log = output_token ~offsets mode command cout
-    and close_all () = close (); close_out cout in
-    let rec iter () =
-      match read ~log buffer with
-        token ->
-          if Token.is_eof token then close_all ()
-          else iter ()
-      | exception Error e -> print_error ~offsets mode e; close_all ()
-    in iter ()
-  with Sys_error msg -> Utils.highlight (sprintf "%s\n" msg)
 
 end (* of functor [Make] in HEADER *)
 (* END TRAILER *)

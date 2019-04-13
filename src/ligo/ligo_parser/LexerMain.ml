@@ -51,5 +51,7 @@ let () =
 
 module Lexer = Lexer.Make (LexToken)
 
-let () = Lexer.trace ~offsets:EvalOpt.offsets
-                     EvalOpt.mode (Some pp_input) EvalOpt.cmd
+module Log = LexerLog.Make (Lexer)
+
+let () = Log.trace ~offsets:EvalOpt.offsets
+           EvalOpt.mode (Some pp_input) EvalOpt.cmd

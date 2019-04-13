@@ -117,10 +117,6 @@ module type S =
     type file_path = string
     type logger = Markup.t list -> token -> unit
 
-    val output_token :
-      ?offsets:bool -> [`Byte | `Point] ->
-      EvalOpt.command -> out_channel -> logger
-
     type instance = {
       read     : ?log:logger -> Lexing.lexbuf -> token;
       buffer   : Lexing.lexbuf;
@@ -136,13 +132,8 @@ module type S =
     exception Error of Error.t Region.reg
 
     val print_error : ?offsets:bool -> [`Byte | `Point] ->
-                      Error.t Region.reg -> unit
+      Error.t Region.reg -> unit
 
-    (* Standalone tracer *)
-
-    val trace :
-      ?offsets:bool -> [`Byte | `Point] ->
-      file_path option -> EvalOpt.command -> unit
   end
 
 (* The functorised interface

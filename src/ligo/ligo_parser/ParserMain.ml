@@ -67,13 +67,15 @@ let () =
 
 module Lexer = Lexer.Make (LexToken)
 
+module Log = LexerLog.Make (Lexer)
+
 let Lexer.{read; buffer; get_pos; get_last; close} =
   Lexer.open_token_stream (Some pp_input)
 
 and cout = stdout
 
-let log = Lexer.output_token ~offsets:EvalOpt.offsets
-                             EvalOpt.mode EvalOpt.cmd cout
+let log = Log.output_token ~offsets:EvalOpt.offsets
+                           EvalOpt.mode EvalOpt.cmd cout
 
 and close_all () = close (); close_out cout
 
