@@ -733,87 +733,86 @@ type instance = {
   close    : unit -> unit
 }
 
-let  file_path = match EvalOpt.input with
-                   None | Some "-" -> ""
-                 | Some file_path  -> file_path
-let        pos = Pos.min#set_file file_path
-let    buf_reg = ref (pos#byte, pos#byte)
-and first_call = ref true
-and    decoder = Uutf.decoder ~encoding:`UTF_8 `Manual
-let     supply = Uutf.Manual.src decoder
-let      state = ref {units = FQueue.empty;
-                      last = Region.ghost;
-                      pos;
-                      markup = [];
-                      decoder;
-                      supply}
-
-let get_pos () = !state.pos
-
-let get_last () = !state.last
-
-let patch_buffer (start, stop) buffer =
-  let open Lexing in
-  let file_path = buffer.lex_curr_p.pos_fname in
-  buffer.lex_start_p <- {start with pos_fname = file_path};
-  buffer.lex_curr_p  <- {stop  with pos_fname = file_path}
-
-and save_region buffer =
-  buf_reg := Lexing.(buffer.lex_start_p, buffer.lex_curr_p)
-
-let scan buffer =
-  patch_buffer !buf_reg buffer;
-  (if   !first_call
-   then (state := init !state buffer; first_call := false)
-   else state := scan !state buffer);
-  save_region buffer
-
-let next_token buffer =
-  scan buffer;
-  match FQueue.peek !state.units with
-                       None -> assert false
-  | Some (units, ext_token) ->
-      state := {!state with units}; Some ext_token
-
-let check_right_context token buffer =
-  let open Token in
-  if is_int token || is_bytes token then
-    match next_token buffer with
-      Some ([], next) ->
-        let pos    = (Token.to_region token)#stop in
-        let region = Region.make ~start:pos ~stop:pos in
-        if is_bytes token && is_int next then
-          fail region Odd_lengthed_bytes
-        else
-        if is_ident next || is_string next
-           || is_bytes next || is_int next then
-          fail region Missing_break
-    | _ -> ()
-  else
-  if Token.is_ident token || Token.is_string token then
-    match next_token buffer with
-      Some ([], next) ->
-        if Token.is_ident next || Token.is_string next
-        || Token.is_bytes next || Token.is_int next
-        then
-          let pos    = (Token.to_region token)#stop in
-          let region = Region.make ~start:pos ~stop:pos
-          in fail region Missing_break
-    | _ -> ()
-
-let rec read_token ?(log=fun _ _ -> ()) buffer =
-  match FQueue.deq !state.units with
-    None ->
-      scan buffer;
-      read_token ~log buffer
-  | Some (units, (left_mark, token)) ->
-      log left_mark token;
-      state := {!state with units; last = Token.to_region token};
-      check_right_context token buffer;
-      patch_buffer (Token.to_region token)#byte_pos buffer;
-      token
-
 let open_token_stream file_path_opt =
+  let  file_path = match file_path_opt with
+                     None | Some "-" -> ""
+                   | Some file_path  -> file_path in
+  let        pos = Pos.min#set_file file_path in
+  let    buf_reg = ref (pos#byte, pos#byte)
+  and first_call = ref true
+  and    decoder = Uutf.decoder ~encoding:`UTF_8 `Manual in
+  let     supply = Uutf.Manual.src decoder in
+  let      state = ref {units = FQueue.empty;
+                        last = Region.ghost;
+                        pos;
+                        markup = [];
+                        decoder;
+                        supply} in
+
+  let get_pos  () = !state.pos
+  and get_last () = !state.last in
+
+  let patch_buffer (start, stop) buffer =
+    let open Lexing in
+    let file_path = buffer.lex_curr_p.pos_fname in
+    buffer.lex_start_p <- {start with pos_fname = file_path};
+    buffer.lex_curr_p  <- {stop  with pos_fname = file_path}
+
+  and save_region buffer =
+    buf_reg := Lexing.(buffer.lex_start_p, buffer.lex_curr_p) in
+
+  let scan buffer =
+    patch_buffer !buf_reg buffer;
+    (if   !first_call
+     then (state := init !state buffer; first_call := false)
+     else state := scan !state buffer);
+    save_region buffer in
+
+  let next_token buffer =
+    scan buffer;
+    match FQueue.peek !state.units with
+                         None -> assert false
+    | Some (units, ext_token) ->
+        state := {!state with units}; Some ext_token in
+
+  let check_right_context token buffer =
+    let open Token in
+    if is_int token || is_bytes token then
+      match next_token buffer with
+        Some ([], next) ->
+          let pos    = (Token.to_region token)#stop in
+          let region = Region.make ~start:pos ~stop:pos in
+          if is_bytes token && is_int next then
+            fail region Odd_lengthed_bytes
+          else
+          if is_ident next || is_string next
+             || is_bytes next || is_int next then
+            fail region Missing_break
+      | _ -> ()
+    else
+    if Token.is_ident token || Token.is_string token then
+      match next_token buffer with
+        Some ([], next) ->
+          if Token.is_ident next || Token.is_string next
+             || Token.is_bytes next || Token.is_int next
+          then
+            let pos    = (Token.to_region token)#stop in
+            let region = Region.make ~start:pos ~stop:pos
+            in fail region Missing_break
+      | _ -> () in
+
+  let rec read_token ?(log=fun _ _ -> ()) buffer =
+    match FQueue.deq !state.units with
+      None ->
+        scan buffer;
+        read_token ~log buffer
+    | Some (units, (left_mark, token)) ->
+        log left_mark token;
+        state := {!state with units; last = Token.to_region token};
+        check_right_context token buffer;
+        patch_buffer (Token.to_region token)#byte_pos buffer;
+        token in
+
   let      cin = match file_path_opt with
                    None | Some "-" -> stdin
                  | Some file_path  -> open_in file_path in
