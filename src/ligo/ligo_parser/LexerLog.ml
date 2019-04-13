@@ -2,6 +2,11 @@
 
 let sprintf = Printf.sprintf
 
+let file =
+  match EvalOpt.input with
+    None | Some "-" -> false
+  |         Some _  -> true
+
 module type S =
   sig
     module Lexer : Lexer.S
@@ -62,7 +67,8 @@ module Make (Lexer: Lexer.S) : (S with module Lexer = Lexer) =
               if Token.is_eof token then close_all ()
               else iter ()
           | exception Lexer.Error e ->
-              Lexer.print_error ~offsets mode e; close_all ()
+              Lexer.print_error ~offsets mode e ~file;
+              close_all ()
         in iter ()
       with Sys_error msg -> Utils.highlight (sprintf "%s\n" msg)
 

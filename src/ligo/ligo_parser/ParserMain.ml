@@ -4,6 +4,11 @@ open! EvalOpt (* Reads the command-line options: Effectful! *)
 
 let sprintf = Printf.sprintf
 
+let file =
+  match EvalOpt.input with
+    None | Some "-" -> false
+  |         Some _  -> true
+
 (* Error printing and exception tracing *)
 
 let () = Printexc.record_backtrace true
@@ -17,11 +22,8 @@ let error_to_string = function
   ParseError -> "Syntax error.\n"
 | _ -> assert false
 
-let print_error ?(offsets=true) mode Region.{region; value} =
+let print_error ?(offsets=true) mode Region.{region; value} ~file =
   let  msg = error_to_string value in
-  let file = match EvalOpt.input with
-               None | Some "-" -> false
-             |         Some _  -> true in
   let  reg = region#to_string ~file ~offsets mode in
   Utils.highlight (sprintf "Parse error %s:\n%s%!" reg msg)
 
@@ -93,10 +95,10 @@ let () =
   with
     Lexer.Error err ->
       close_all ();
-      Lexer.print_error ~offsets EvalOpt.mode err
+      Lexer.print_error ~offsets EvalOpt.mode err ~file
   | Parser.Error ->
       let region = get_last () in
       let error = Region.{region; value=ParseError} in
       let () = close_all () in
-      print_error ~offsets EvalOpt.mode error
+      print_error ~offsets EvalOpt.mode error ~file
   | Sys_error msg -> Utils.highlight msg

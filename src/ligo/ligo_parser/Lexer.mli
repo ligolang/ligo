@@ -132,7 +132,7 @@ module type S =
     exception Error of Error.t Region.reg
 
     val print_error : ?offsets:bool -> [`Byte | `Point] ->
-      Error.t Region.reg -> unit
+      Error.t Region.reg -> file:bool -> unit
 
   end
 

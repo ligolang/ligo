@@ -115,7 +115,7 @@ sepseq(X,Sep):
 %inline type_name   : Ident { $1 }
 %inline fun_name    : Ident { $1 }
 %inline field_name  : Ident { $1 }
-%inline record_name : Ident { $1 }
+%inline struct_name : Ident { $1 }
 
 (* Main *)
 
@@ -998,11 +998,11 @@ record_expr:
   record_injection { RecordInj $1 }
 
 projection:
-  record_name DOT nsepseq(selection,DOT) {
+  struct_name DOT nsepseq(selection,DOT) {
     let stop   = nsepseq_to_region selection_to_region $3 in
     let region = cover $1.region stop
     and value  = {
-      record_name = $1;
+      struct_name = $1;
       selector    = $2;
       field_path  = $3}
     in {region; value}}

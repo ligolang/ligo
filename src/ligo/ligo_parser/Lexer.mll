@@ -154,7 +154,7 @@ module type S = sig
   exception Error of Error.t Region.reg
 
   val print_error : ?offsets:bool -> [`Byte | `Point] ->
-    Error.t Region.reg -> unit
+    Error.t Region.reg -> file:bool -> unit
 end
 
 (* The functorised interface
@@ -382,11 +382,8 @@ module Make (Token: TOKEN) : (S with module Token = Token) =
 
     exception Error of Error.t Region.reg
 
-    let print_error ?(offsets=true) mode Region.{region; value} =
+    let print_error ?(offsets=true) mode Region.{region; value} ~file =
       let  msg = error_to_string value in
-      let file = match EvalOpt.input with
-          None | Some "-" -> false
-        |         Some _  -> true in
       let  reg = region#to_string ~file ~offsets mode in
       Utils.highlight (sprintf "Lexical error %s:\n%s%!" reg msg)
 
