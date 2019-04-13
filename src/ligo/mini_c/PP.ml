@@ -59,7 +59,7 @@ let rec value ppf : value -> unit = function
 and value_assoc ppf : (value * value) -> unit = fun (a, b) ->
   fprintf ppf "%a -> %a" value a value b
 
-and expression ppf ((e, _, _):expression) = match e with
+and expression' ppf (e:expression') = match e with
   | E_variable v -> fprintf ppf "%s" v
   | E_application(a, b) -> fprintf ppf "(%a)@(%a)" expression a expression b
   | E_constant(p, lst) -> fprintf ppf "%s %a" p (pp_print_list ~pp_sep:space_sep expression) lst
@@ -69,8 +69,14 @@ and expression ppf ((e, _, _):expression) = match e with
   | E_make_none _ -> fprintf ppf "none"
   | E_Cond (c, a, b) -> fprintf ppf "%a ? %a : %a" expression c expression a expression b
 
-and function_ ppf ({binder ; input ; output ; body ; result}:anon_function_content) =
-  fprintf ppf "fun (%s:%a) : %a %a return %a"
+and expression ppf (e', _, _) = expression' ppf e'
+
+and function_ ppf ({binder ; input ; output ; body ; result ; capture_type}:anon_function_content) =
+  fprintf ppf "fun[%s] (%s:%a) : %a %a return %a"
+    (match capture_type with
+     | No_capture -> "quote"
+     | Shallow_capture _ -> "shallow"
+     | Deep_capture _ -> "deep")
     binder
     type_ input
     type_ output

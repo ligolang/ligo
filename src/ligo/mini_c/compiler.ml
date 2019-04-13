@@ -432,12 +432,20 @@ type compiled_program = {
 }
 
 let translate_program (p:program) (entry:string) : compiled_program result =
-  let is_main ((s, _):toplevel_statement) = match s with
-    | name , (E_function f, T_function (_, _), _) when f.capture_type = No_capture && name = entry -> Some f
-    | _ -> None in
+  let is_main ((s, _):toplevel_statement) =
+    match s with
+    | name , (E_function f, T_function (_, _), _)
+      when f.capture_type = No_capture && name = entry ->
+        Some f
+    | name , (E_literal (D_function {content ; capture = None}), T_function (_, _), _)
+      when name = entry ->
+        Some content
+    | _ ->  None
+  in
   let%bind main =
     trace_option (simple_error "no functional entry") @@
-    Tezos_utils.List.find_map is_main p in
+    Tezos_utils.List.find_map is_main p
+  in
   let {input;output} : anon_function_content = main in
   let%bind body = translate_function_body main in
   let%bind input = Compiler_type.Ty.type_ input in
