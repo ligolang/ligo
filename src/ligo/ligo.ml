@@ -128,6 +128,8 @@ let transpile_value
 let untranspile_value (v : Mini_c.value) (e:AST_Typed.type_value) : AST_Typed.annotated_expression result =
   Transpiler.untranspile v e
 
+let compile : Mini_c.program -> string -> Mini_c.Compiler.compiled_program result = Mini_c.Compiler.translate_program
+
 let type_file ?(debug_simplify = false) ?(debug_typed = false)
     (path:string) : AST_Typed.program result =
   let%bind raw = parse_file path in
@@ -194,3 +196,21 @@ let easy_run_main (path:string) (input:string) : AST_Typed.annotated_expression 
   let%bind simpl_expr = simplify_expr raw_expr in
   let%bind typed_expr = type_expression simpl_expr in
   easy_run_main_typed typed typed_expr
+
+let compile_file (source: string) (entry_point:string) : Micheline.Michelson.t result =
+  let%bind raw =
+    trace (simple_error "parsing") @@
+    parse_file source in
+  let%bind simplified =
+    trace (simple_error "simplifying") @@
+    simplify raw in
+  let%bind typed =
+    trace (simple_error "typing") @@
+    type_ simplified in
+  let%bind mini_c =
+    trace (simple_error "transpiling") @@
+    transpile typed in
+  let%bind {body = michelson} =
+    trace (simple_error "compiling") @@
+    compile mini_c entry_point in
+  ok michelson

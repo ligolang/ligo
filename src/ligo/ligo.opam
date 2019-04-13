@@ -12,7 +12,6 @@ depends: [
   "menhir"
   "ppx_let"
   "tezos-utils"
-  "meta-michelson"
 ]
 build: [
   [ "dune" "build" "-p" name "-j" jobs ]

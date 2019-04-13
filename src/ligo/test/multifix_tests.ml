@@ -20,6 +20,6 @@ let integration () : unit result =
 
 let main = "Multifix", [
     test "basic" basic ;
-    test "simplfiy" simplify ;
+    test "simplify" simplify ;
     test "integration" integration ;
 ]
