@@ -6,8 +6,12 @@ open! Region
 
 let printf = Printf.printf
 
+let offsets = ref true
+
+let mode = ref `Point
+
 let compact (region: Region.t) =
-  region#compact ~offsets:EvalOpt.offsets EvalOpt.mode
+  region#compact ~offsets:!offsets !mode
 
 let print_nsepseq :
   string -> ('a -> unit) -> ('a, Region.t) nsepseq -> unit =
