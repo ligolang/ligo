@@ -34,6 +34,10 @@ let get_map (v:value) = match v with
   | D_map lst -> ok lst
   | _ -> simple_fail "not a map"
 
+let get_list (v:value) = match v with
+  | D_list lst -> ok lst
+  | _ -> simple_fail "not a list"
+
 let get_t_option (v:type_value) = match v with
   | T_option t -> ok t
   | _ -> simple_fail "not an option"
@@ -49,6 +53,10 @@ let get_t_pair (t:type_value) = match t with
 let get_t_map (t:type_value) = match t with
   | T_map kv -> ok kv
   | _ -> simple_fail "not a type map"
+
+let get_t_list (t:type_value) = match t with
+  | T_list t -> ok t
+  | _ -> simple_fail "not a type list"
 
 let get_left (v:value) = match v with
   | D_left b -> ok b

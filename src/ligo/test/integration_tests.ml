@@ -265,6 +265,43 @@ let map () : unit result =
   in
   ok ()
 
+let list () : unit result =
+  let%bind program = type_file "./contracts/list.ligo" in
+  let ez lst =
+    let open AST_Typed.Combinators in
+    let lst' = List.map e_a_int lst in
+    e_a_list lst' (t_int ())
+  in
+  (* let%bind _get_force = trace (simple_error "hd_force") @@
+   *   let aux n =
+   *     let input = ez [n ; 12] in
+   *     let%bind result = easy_run_typed "hdf" program input in
+   *     let expect = AST_Typed.Combinators.(e_a_int n) in
+   *     AST_Typed.assert_value_eq (expect, result)
+   *   in
+   *   bind_map_list aux [0 ; 42 ; 51 ; 421 ; -3]
+   * in *)
+  let%bind _size = trace (simple_error "size") @@
+    let aux n =
+      let input = ez (List.range n) in
+      let%bind result = easy_run_typed "size_" program input in
+      let expect = AST_Typed.Combinators.(e_a_nat n) in
+      AST_Typed.assert_value_eq (expect, result)
+    in
+    bind_map_list aux [1 ; 10 ; 3]
+  in
+  let%bind _foobar = trace (simple_error "foobar") @@
+    let%bind result = easy_evaluate_typed "fb" program in
+    let expect = ez [23 ; 42] in
+    AST_Typed.assert_value_eq (expect, result)
+  in
+  let%bind _biglist = trace (simple_error "biglist") @@
+    let%bind result = easy_evaluate_typed "bl" program in
+    let expect = ez [144 ; 51 ; 42 ; 120 ; 421] in
+    AST_Typed.assert_value_eq (expect, result)
+  in
+  ok ()
+
 let condition () : unit result =
   let%bind program = type_file "./contracts/condition.ligo" in
   let aux n =
@@ -424,6 +461,20 @@ let quote_declarations () : unit result =
     @@ [0 ; 2 ; 42 ; 163 ; -1] in
   ok ()
 
+(* let counter_contract () : unit result =
+ *   let%bind program = type_file "./contracts/counter.ligo" in
+ *   let aux n =
+ *     let open AST_Typed.Combinators in
+ *     let input = e_a_pair (e_a_int n) (e_a_int 42) in
+ *     let%bind result = easy_run_main_typed program input in
+ *     let expected = e_a_pair (e_a_list []) (e_a_int (42 + n)) in
+ *     AST_Typed.assert_value_eq (result, expected)
+ *   in
+ *   let%bind _ = bind_list
+ *     @@ List.map aux
+ *     @@ [0 ; 2 ; 42 ; 163 ; -1] in
+ *   ok () *)
+
 let main = "Integration (End to End)", [
     test "basic" basic ;
     test "function" function_ ;
@@ -435,6 +486,7 @@ let main = "Integration (End to End)", [
     test "tuple" tuple ;
     test "option" option ;
     test "map" map ;
+    test "list" list ;
     test "multiple parameters" multiple_parameters ;
     test "condition" condition ;
     test "loop" loop ;
@@ -443,4 +495,5 @@ let main = "Integration (End to End)", [
     test "quote declaration" quote_declaration ;
     test "quote declarations" quote_declarations ;
     test "#include directives" include_ ;
+    (* test "counter contract" counter_contract ; *)
   ]

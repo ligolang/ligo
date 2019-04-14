@@ -51,6 +51,7 @@ let rec get_predicate : string -> expression list -> predicate result = fun s ls
   | "GET" -> ok @@ simple_binary @@ prim I_GET
   | "SIZE" -> ok @@ simple_unary @@ prim I_SIZE
   | "INT" -> ok @@ simple_unary @@ prim I_INT
+  | "CONS" -> ok @@ simple_binary @@ seq [prim I_SWAP ; prim I_CONS]
   | "MAP_REMOVE" ->
       let%bind v = match lst with
         | [ _ ; (_, m, _) ] ->
@@ -85,6 +86,10 @@ and translate_value (v:value) : michelson result = match v with
   | D_map lst ->
       let%bind lst' = bind_map_list (bind_map_pair translate_value) lst in
       let aux (a, b) = prim ~children:[a;b] D_Elt in
+      ok @@ seq @@ List.map aux lst'
+  | D_list lst ->
+      let%bind lst' = bind_map_list translate_value lst in
+      let aux = fun a -> prim ~children:[a] D_Elt in
       ok @@ seq @@ List.map aux lst'
 
 and translate_function ({capture;content}:anon_function) : michelson result =
@@ -178,6 +183,13 @@ and translate_expression ((expr', ty, env) as expr:expression) : michelson resul
         let%bind (src, dst) = bind_map_pair Compiler_type.type_ sd in
         let code = seq [
             prim ~children:[src;dst] I_EMPTY_MAP ;
+            i_pair ;
+          ] in
+        ok code
+    | E_empty_list t ->
+        let%bind t' = Compiler_type.type_ t in
+        let code = seq [
+            prim ~children:[t'] I_NIL ;
             i_pair ;
           ] in
         ok code

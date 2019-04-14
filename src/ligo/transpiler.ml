@@ -21,6 +21,9 @@ let rec translate_type (t:AST.type_value) : type_value result =
   | T_constant ("map", [key;value]) ->
       let%bind kv' = bind_map_pair translate_type (key, value) in
       ok (T_map kv')
+  | T_constant ("list", [t]) ->
+      let%bind t' = translate_type t in
+      ok (T_list t')
   | T_constant ("option", [o]) ->
       let%bind o' = translate_type o in
       ok (T_option o')
@@ -306,6 +309,13 @@ and translate_annotated_expression (env:Environment.t) (ae:AST.annotated_express
         | _ -> ok (E_constant (name, lst'), tv, env)
       )
   | E_lambda l -> translate_lambda env l tv
+  | E_list lst ->
+      let%bind t = Mini_c.Combinators.get_t_list tv in
+      let%bind lst' = bind_map_list (translate_annotated_expression env) lst in
+      let aux : expression -> expression -> expression result = fun prev cur ->
+        return (E_constant ("CONS", [cur ; prev]), tv) in
+      let%bind (init : expression) = return (E_empty_list t, tv) in
+      bind_fold_list aux init lst'
   | E_map m ->
       let%bind (src, dst) = Mini_c.Combinators.get_t_map tv in
       let aux : expression result -> (AST.ae * AST.ae) -> expression result = fun prev (k, v) ->
@@ -512,6 +522,13 @@ let rec untranspile (v : value) (t : AST.type_value) : AST.annotated_expression 
           ok (k', v') in
         bind_map_list aux lst in
       return (E_map lst')
+    )
+  | T_constant ("list", [ty]) -> (
+      let%bind lst = get_list v in
+      let%bind lst' =
+        let aux = fun e -> untranspile e ty in
+        bind_map_list aux lst in
+      return (E_list lst')
     )
   | T_constant _ ->
       simple_fail "unknown type_constant"

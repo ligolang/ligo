@@ -65,6 +65,7 @@ and expression =
   | E_accessor of (ae * access_path)
   (* Data Structures *)
   | E_map of (ae * ae) list
+  | E_list of ae list
   | E_look_up of (ae * ae)
   (* Matching *)
   | E_matching of (ae * matching_expr)
@@ -152,6 +153,7 @@ module PP = struct
     | E_accessor (ae, p) -> fprintf ppf "%a.%a" annotated_expression ae access_path p
     | E_record m -> fprintf ppf "record[%a]" (smap_sep_d annotated_expression) m
     | E_map m -> fprintf ppf "map[%a]" (list_sep_d assoc_annotated_expression) m
+    | E_list lst -> fprintf ppf "list[%a]" (list_sep_d annotated_expression) lst
     | E_look_up (ds, ind) -> fprintf ppf "(%a)[%a]" annotated_expression ds annotated_expression ind
     | E_lambda {binder;input_type;output_type;result;body} ->
         fprintf ppf "lambda (%s:%a) : %a {@;  @[<v>%a@]@;} return %a"
@@ -342,6 +344,9 @@ module Rename = struct
           let%bind m' = bind_map_list
             (fun (x, y) -> bind_map_pair (rename_annotated_expression r) (x, y)) m in
           ok (E_map m')
+      | E_list lst ->
+          let%bind lst' = bind_map_list (rename_annotated_expression r) lst in
+          ok (E_list lst')
       | E_look_up m ->
           let%bind m' = bind_map_pair (rename_annotated_expression r) m in
           ok (E_look_up m')

@@ -16,6 +16,7 @@ type type_value =
   | T_shallow_closure of environment * type_value * type_value
   | T_base of type_base
   | T_map of (type_value * type_value)
+  | T_list of type_value
   | T_option of type_value
 
 
@@ -48,6 +49,7 @@ type value =
   | D_some of value
   | D_none
   | D_map of (value * value) list
+  | D_list of value list
   (* | `Macro of anon_macro ... The future. *)
   | D_function of anon_function
 
@@ -58,6 +60,7 @@ and expression' =
   | E_application of expression * expression
   | E_variable of var_name
   | E_empty_map of (type_value * type_value)
+  | E_empty_list of type_value
   | E_make_none of type_value
   | E_Cond of expression * expression * expression
 

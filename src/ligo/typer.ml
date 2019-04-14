@@ -351,6 +351,22 @@ and type_annotated_expression (e:environment) (ae:I.annotated_expression) : O.an
       let%bind type_annotation = check @@ t_record (SMap.map get_annotation m') () in
       ok O.{expression = O.E_record m' ; type_annotation }
   (* Data-structure *)
+  | E_list lst ->
+      let%bind lst' = bind_map_list (type_annotated_expression e) lst in
+      let%bind type_annotation =
+        let aux opt c =
+          match opt with
+          | None -> ok (Some c)
+          | Some c' ->
+              let%bind _eq = Ast_typed.assert_type_value_eq (c, c') in
+              ok (Some c') in
+        let%bind ty =
+          let%bind opt = bind_fold_list aux None
+          @@ List.map Ast_typed.get_type_annotation lst' in
+          trace_option (simple_error "empty list expression") opt in
+        check (t_list ty ())
+      in
+      ok O.{expression = O.E_list lst' ; type_annotation}
   | E_map lst ->
       let%bind lst' = bind_map_list (bind_map_pair (type_annotated_expression e)) lst in
       let%bind type_annotation =
@@ -474,7 +490,7 @@ and type_constant (name:string) (lst:O.type_value list) (tv_opt:O.type_value opt
       ok ("GET_FORCE", dst)
   | "get_force", _ -> simple_fail "bad number of params to get_force"
   | "size", [t] ->
-      let%bind () = assert_t_map t in
+      let%bind () = bind_or (assert_t_map t, assert_t_list t) in
       ok ("SIZE", t_nat ())
   | "size", _ -> simple_fail "bad number of params to size"
   | "int", [t] ->
@@ -542,6 +558,9 @@ let rec untype_annotated_expression (e:O.annotated_expression) : (I.annotated_ex
   | E_map m ->
       let%bind m' = bind_map_list (bind_map_pair untype_annotated_expression) m in
       return (E_map m')
+  | E_list lst ->
+      let%bind lst' = bind_map_list untype_annotated_expression lst in
+      return (E_list lst')
   | E_look_up dsi ->
       let%bind dsi' = bind_map_pair untype_annotated_expression dsi in
       return (E_look_up dsi')

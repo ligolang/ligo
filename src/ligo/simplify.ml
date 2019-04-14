@@ -16,6 +16,7 @@ let type_constants = [
   ("nat", 0) ;
   ("int", 0) ;
   ("bool", 0) ;
+  ("operation", 0) ;
   ("list", 1) ;
   ("option", 1) ;
   ("set", 1) ;
@@ -108,7 +109,7 @@ let rec simpl_expression (t:Raw.expr) : ae result =
       let args' = npseq_to_list args.value.inside in
       match List.assoc_opt f constants with
       | None ->
-          let%bind arg = simpl_list_expression args' in
+          let%bind arg = simpl_tuple_expression args' in
           ok @@ ae @@ E_application (ae @@ E_variable f, arg)
       | Some arity ->
           let%bind _arity =
@@ -122,7 +123,7 @@ let rec simpl_expression (t:Raw.expr) : ae result =
   | EBytes x -> ok @@ ae @@ E_literal (Literal_bytes (Bytes.of_string @@ fst x.value))
   | ETuple tpl ->
       let (Raw.TupleInj tpl') = tpl in
-      simpl_list_expression
+      simpl_tuple_expression
       @@ npseq_to_list tpl'.value.inside
   | ERecord (RecordInj r) ->
       let%bind fields = bind_list
@@ -138,13 +139,13 @@ let rec simpl_expression (t:Raw.expr) : ae result =
   | EConstr (ConstrApp c) ->
       let (c, args) = c.value in
       let%bind arg =
-        simpl_list_expression
+        simpl_tuple_expression
         @@ npseq_to_list args.value.inside in
       ok @@ ae @@ E_constructor (c.value, arg)
   | EConstr (SomeApp a) ->
       let (_, args) = a.value in
       let%bind arg =
-        simpl_list_expression
+        simpl_tuple_expression
         @@ npseq_to_list args.value.inside in
       ok @@ ae @@ E_constant ("SOME", [arg])
   | EConstr (NoneExpr n) ->
@@ -166,7 +167,7 @@ let rec simpl_expression (t:Raw.expr) : ae result =
       ok @@ ae @@ E_literal (Literal_string s.value)
   | EString _ -> simple_fail "string: not supported yet"
   | ELogic l -> simpl_logic_expression l
-  | EList _ -> simple_fail "list: not supported yet"
+  | EList l -> simpl_list_expression l
   | ESet _ -> simple_fail "set: not supported yet"
   | ECase c ->
       let%bind e = simpl_expression c.value.expr in
@@ -222,6 +223,21 @@ and simpl_logic_expression (t:Raw.logic_expr) : ae result =
   | CompExpr (Neq c) ->
       simpl_binop "NEQ" c.value
 
+and simpl_list_expression (t:Raw.list_expr) : ae result =
+  match t with
+  | Cons c ->
+      simpl_binop "CONS" c.value
+  | List lst ->
+      let%bind lst' =
+        bind_map_list simpl_expression @@
+        pseq_to_list lst.value.elements in
+      ok (ae (E_list lst'))
+  | Nil n ->
+      let n' = n.value.inside in
+      let%bind t' = simpl_type_expression n'.list_type in
+      let e' = E_list [] in
+      ok (annotated_expression e' (Some t'))
+
 and simpl_binop (name:string) (t:_ Raw.bin_op) : ae result =
   let%bind a = simpl_expression t.arg1 in
   let%bind b = simpl_expression t.arg2 in
@@ -231,7 +247,7 @@ and simpl_unop (name:string) (t:_ Raw.un_op) : ae result =
   let%bind a = simpl_expression t.arg in
   ok @@ ae @@ E_constant (name, [a])
 
-and simpl_list_expression (lst:Raw.expr list) : ae result =
+and simpl_tuple_expression (lst:Raw.expr list) : ae result =
   match lst with
   | [] -> ok @@ ae @@ E_literal Literal_unit
   | [hd] -> simpl_expression hd

@@ -71,6 +71,7 @@ and expression =
   | E_record_accessor of (ae * string)
   (* Data Structures *)
   | E_map of (ae * ae) list
+  | E_list of ae list
   | E_look_up of (ae * ae)
   (* Advanced *)
   | E_matching of (ae * matching_expr)
@@ -184,6 +185,7 @@ module PP = struct
     | E_tuple lst -> fprintf ppf "tuple[@;  @[<v>%a@]@;]" (list_sep annotated_expression (tag ",@;")) lst
     | E_record m -> fprintf ppf "record[%a]" (smap_sep_d annotated_expression) m
     | E_map m -> fprintf ppf "map[@;  @[<v>%a@]@;]" (list_sep assoc_annotated_expression (tag ",@;")) m
+    | E_list m -> fprintf ppf "list[@;  @[<v>%a@]@;]" (list_sep annotated_expression (tag ",@;")) m
     | E_look_up (ds, i) -> fprintf ppf "(%a)[%a]" annotated_expression ds annotated_expression i
     | E_matching (ae, m) ->
         fprintf ppf "match %a with %a" annotated_expression ae (matching annotated_expression) m
@@ -451,6 +453,7 @@ module Combinators = struct
   let t_unit ?s () : type_value = type_value (T_constant ("unit", [])) s
   let t_option o ?s () : type_value = type_value (T_constant ("option", [o])) s
   let t_tuple lst ?s () : type_value = type_value (T_tuple lst) s
+  let t_list t ?s () : type_value = type_value (T_constant ("list", [t])) s
   let t_pair a b ?s () = t_tuple [a ; b] ?s ()
 
   let t_record m ?s () : type_value = type_value (T_record m) s
@@ -501,11 +504,16 @@ module Combinators = struct
   let get_t_map (t:type_value) : (type_value * type_value) result =
     match t.type_value' with
     | T_constant ("map", [k;v]) -> ok (k, v)
-    | _ -> simple_fail "not a map"
+    | _ -> simple_fail "get: not a map"
   let assert_t_map (t:type_value) : unit result =
     match t.type_value' with
     | T_constant ("map", [_ ; _]) -> ok ()
     | _ -> simple_fail "not a map"
+
+  let assert_t_list (t:type_value) : unit result =
+    match t.type_value' with
+    | T_constant ("list", [_]) -> ok ()
+    | _ -> simple_fail "assert: not a list"
 
   let assert_t_int : type_value -> unit result = fun t -> match t.type_value' with
     | T_constant ("int", []) -> ok ()
@@ -531,6 +539,7 @@ module Combinators = struct
   let e_bool b : expression = E_literal (Literal_bool b)
   let e_string s : expression = E_literal (Literal_string s)
   let e_pair a b : expression = E_tuple [a; b]
+  let e_list lst : expression = E_list lst
 
   let e_a_unit = annotated_expression e_unit (t_unit ())
   let e_a_int n = annotated_expression (e_int n) (t_int ())
@@ -544,6 +553,7 @@ module Combinators = struct
   let e_a_record r = annotated_expression (e_record r) (t_record (SMap.map get_type_annotation r) ())
   let ez_e_a_record r = annotated_expression (ez_e_record r) (ez_t_record (List.map (fun (x, y) -> x, y.type_annotation) r) ())
   let e_a_map lst k v = annotated_expression (e_map lst) (t_map k v ())
+  let e_a_list lst t = annotated_expression (e_list lst) (t_list t ())
 
   let get_a_int (t:annotated_expression) =
     match t.expression with

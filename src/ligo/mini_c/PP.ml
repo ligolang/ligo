@@ -20,6 +20,7 @@ let rec type_ ppf : type_value -> _ = function
   | T_base b -> type_base ppf b
   | T_function(a, b) -> fprintf ppf "(%a) -> (%a)" type_ a type_ b
   | T_map(k, v) -> fprintf ppf "map(%a -> %a)" type_ k type_ v
+  | T_list(t) -> fprintf ppf "list(%a)" type_ t
   | T_option(o) -> fprintf ppf "option(%a)" type_ o
   | T_shallow_closure(_, a, b) -> fprintf ppf "[big_closure](%a) -> (%a)" type_ a type_ b
   | T_deep_closure(c, arg, ret) ->
@@ -55,6 +56,7 @@ let rec value ppf : value -> unit = function
   | D_none -> fprintf ppf "None"
   | D_some s -> fprintf ppf "Some (%a)" value s
   | D_map m -> fprintf ppf "Map[%a]" (list_sep_d value_assoc) m
+  | D_list lst -> fprintf ppf "List[%a]" (list_sep_d value) lst
 
 and value_assoc ppf : (value * value) -> unit = fun (a, b) ->
   fprintf ppf "%a -> %a" value a value b
@@ -66,6 +68,7 @@ and expression' ppf (e:expression') = match e with
   | E_literal v -> fprintf ppf "%a" value v
   | E_function c -> function_ ppf c
   | E_empty_map _ -> fprintf ppf "map[]"
+  | E_empty_list _ -> fprintf ppf "list[]"
   | E_make_none _ -> fprintf ppf "none"
   | E_Cond (c, a, b) -> fprintf ppf "%a ? %a : %a" expression c expression a expression b
 
