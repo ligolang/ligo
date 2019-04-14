@@ -431,6 +431,16 @@ let rec assert_value_eq (a, b: (value*value)) : unit result =
   | E_map _, _ ->
       simple_fail "comparing map with other stuff"
 
+  | E_list lsta, E_list lstb -> (
+      let%bind lst =
+        generic_try (simple_error "list of different lengths")
+          (fun () -> List.combine lsta lstb) in
+      let%bind _all = bind_map_list assert_value_eq lst in
+      ok ()
+    )
+  | E_list _, _ ->
+      simple_fail "comparing list with other stuff"
+
   | _, _ -> simple_fail "comparing not a value"
 
 let merge_annotation (a:type_value option) (b:type_value option) : type_value result =

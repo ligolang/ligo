@@ -360,10 +360,15 @@ and type_annotated_expression (e:environment) (ae:I.annotated_expression) : O.an
           | Some c' ->
               let%bind _eq = Ast_typed.assert_type_value_eq (c, c') in
               ok (Some c') in
+        let%bind init = match tv_opt with
+          | None -> ok None
+          | Some ty ->
+              let%bind ty' = Ast_typed.Combinators.get_t_list ty in
+              ok (Some ty') in
         let%bind ty =
-          let%bind opt = bind_fold_list aux None
+          let%bind opt = bind_fold_list aux init
           @@ List.map Ast_typed.get_type_annotation lst' in
-          trace_option (simple_error "empty list expression") opt in
+          trace_option (simple_error "empty list expression without annotation") opt in
         check (t_list ty ())
       in
       ok O.{expression = O.E_list lst' ; type_annotation}

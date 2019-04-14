@@ -364,6 +364,7 @@ module Combinators = struct
   let t_int       : type_expression = T_constant ("int", [])
   let t_unit      : type_expression = T_constant ("unit", [])
   let t_option  o : type_expression = T_constant ("option", [o])
+  let t_list  t : type_expression = T_constant ("list", [t])
   let t_tuple lst : type_expression = T_tuple lst
   let t_pair a b = t_tuple [a ; b]
   let t_record m  : type_expression = (T_record m)

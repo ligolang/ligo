@@ -236,7 +236,7 @@ and simpl_list_expression (t:Raw.list_expr) : ae result =
       let n' = n.value.inside in
       let%bind t' = simpl_type_expression n'.list_type in
       let e' = E_list [] in
-      ok (annotated_expression e' (Some t'))
+      ok (annotated_expression e' (Some (Combinators.t_list t')))
 
 and simpl_binop (name:string) (t:_ Raw.bin_op) : ae result =
   let%bind a = simpl_expression t.arg1 in

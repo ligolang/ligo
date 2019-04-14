@@ -21,6 +21,7 @@ module Ty = struct
     | Base_int -> return int_k
     | Base_string -> return string_k
     | Base_bytes -> return bytes_k
+    | Base_operation -> fail (not_comparable "operation")
 
   let comparable_type : type_value -> ex_comparable_ty result = fun tv ->
     match tv with
@@ -44,7 +45,7 @@ module Ty = struct
     | Base_nat -> return nat
     | Base_string -> return string
     | Base_bytes -> return bytes
-
+    | Base_operation -> return operation
 
   let rec type_ : type_value -> ex_ty result =
     function
@@ -114,6 +115,7 @@ let base_type : type_base -> O.michelson result =
   | Base_nat -> ok @@ O.prim T_nat
   | Base_string -> ok @@ O.prim T_string
   | Base_bytes -> ok @@ O.prim T_bytes
+  | Base_operation -> ok @@ O.prim T_operation
 
 let rec type_ : type_value -> O.michelson result =
   function

@@ -13,6 +13,7 @@ let type_base ppf : type_base -> _ = function
   | Base_nat -> fprintf ppf "nat"
   | Base_string -> fprintf ppf "string"
   | Base_bytes -> fprintf ppf "bytes"
+  | Base_operation -> fprintf ppf "operation"
 
 let rec type_ ppf : type_value -> _ = function
   | T_or(a, b) -> fprintf ppf "(%a) | (%a)" type_ a type_ b

@@ -252,6 +252,7 @@ module Types = struct
   let big_map k v = Big_map_t (k, v, None)
 
   let signature = Signature_t None
+  let operation = Operation_t None
 
   let bool = Bool_t None
 

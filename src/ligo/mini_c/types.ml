@@ -7,6 +7,7 @@ type type_base =
   | Base_bool
   | Base_int | Base_nat
   | Base_string | Base_bytes
+  | Base_operation
 
 type type_value =
   | T_pair of (type_value * type_value)

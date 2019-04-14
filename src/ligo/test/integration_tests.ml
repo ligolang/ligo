@@ -461,19 +461,19 @@ let quote_declarations () : unit result =
     @@ [0 ; 2 ; 42 ; 163 ; -1] in
   ok ()
 
-(* let counter_contract () : unit result =
- *   let%bind program = type_file "./contracts/counter.ligo" in
- *   let aux n =
- *     let open AST_Typed.Combinators in
- *     let input = e_a_pair (e_a_int n) (e_a_int 42) in
- *     let%bind result = easy_run_main_typed program input in
- *     let expected = e_a_pair (e_a_list []) (e_a_int (42 + n)) in
- *     AST_Typed.assert_value_eq (result, expected)
- *   in
- *   let%bind _ = bind_list
- *     @@ List.map aux
- *     @@ [0 ; 2 ; 42 ; 163 ; -1] in
- *   ok () *)
+let counter_contract () : unit result =
+  let%bind program = type_file "./contracts/counter.ligo" in
+  let aux n =
+    let open AST_Typed.Combinators in
+    let input = e_a_pair (e_a_int n) (e_a_int 42) in
+    let%bind result = easy_run_main_typed program input in
+    let expected = e_a_pair (e_a_list [] (t_int ())) (e_a_int (42 + n)) in
+    AST_Typed.assert_value_eq (result, expected)
+  in
+  let%bind _ = bind_list
+    @@ List.map aux
+    @@ [0 ; 2 ; 42 ; 163 ; -1] in
+  ok ()
 
 let main = "Integration (End to End)", [
     test "basic" basic ;
@@ -495,5 +495,5 @@ let main = "Integration (End to End)", [
     test "quote declaration" quote_declaration ;
     test "quote declarations" quote_declarations ;
     test "#include directives" include_ ;
-    (* test "counter contract" counter_contract ; *)
+    test "counter contract" counter_contract ;
   ]

@@ -18,6 +18,7 @@ let rec translate_type (t:AST.type_value) : type_value result =
   | T_constant ("nat", []) -> ok (T_base Base_nat)
   | T_constant ("string", []) -> ok (T_base Base_string)
   | T_constant ("unit", []) -> ok (T_base Base_unit)
+  | T_constant ("operation", []) -> ok (T_base Base_operation)
   | T_constant ("map", [key;value]) ->
       let%bind kv' = bind_map_pair translate_type (key, value) in
       ok (T_map kv')
