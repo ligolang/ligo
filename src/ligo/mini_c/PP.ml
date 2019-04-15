@@ -87,9 +87,12 @@ and function_ ppf ({binder ; input ; output ; body ; result ; capture_type}:anon
     block body
     expression result
 
-and assignment ppf ((n, e):assignment) = fprintf ppf "let %s = %a;" n expression e
+and assignment ppf ((n, e):assignment) = fprintf ppf "%s = %a;" n expression e
+
+and declaration ppf ((n, e):assignment) = fprintf ppf "let %s = %a;" n expression e
 
 and statement ppf ((s, _) : statement) = match s with
+  | S_declaration ass -> declaration ppf ass
   | S_assignment ass -> assignment ppf ass
   | S_cond (expr, i, e) -> fprintf ppf "if (%a) %a %a" expression expr block i block e
   | S_patch (r, path, e) ->

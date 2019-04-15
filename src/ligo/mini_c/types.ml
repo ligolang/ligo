@@ -70,6 +70,7 @@ and expression = expression' * type_value * environment (* Environment in which 
 and assignment = var_name * expression
 
 and statement' =
+  | S_declaration of assignment (* First assignment *)
   | S_assignment of assignment
   | S_cond of expression * block * block
   | S_patch of string * [`Left | `Right] list * expression

@@ -113,6 +113,7 @@ let statement s' e : statement =
   | S_if_none _ -> s', id_environment_wrap e
   | S_while _ -> s', id_environment_wrap e
   | S_patch _ -> s', id_environment_wrap e
+  | S_declaration (name, (_, t, _)) -> s', environment_wrap e (Compiler_environment.add (name, t) e)
   | S_assignment (name, (_, t, _)) -> s', environment_wrap e (Compiler_environment.add (name, t) e)
 
 let block (statements:statement list) : block result =

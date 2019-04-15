@@ -291,13 +291,23 @@ and translate_statement ((s', w_env) as s:statement) : michelson result =
   let error_message () = Format.asprintf "%a" PP.statement s in
   let%bind (code : michelson) =
     trace (fun () -> error (thunk "translating statement") error_message ()) @@ match s' with
-    | S_assignment (s, ((_, tv, _) as expr)) ->
+    | S_declaration (s, ((_, tv, _) as expr)) ->
         let%bind expr = translate_expression expr in
-        let%bind add =
-          if Environment.has s w_env.pre_environment
-          then Environment.to_michelson_set s w_env.pre_environment
-          else Environment.to_michelson_add (s, tv) w_env.pre_environment
-        in
+        let%bind add = Environment.to_michelson_add (s, tv) w_env.pre_environment in
+        ok (seq [
+            i_comment "declaration" ;
+            seq [
+              i_comment "expr" ;
+              i_push_unit ; expr ; i_car ;
+            ] ;
+            seq [
+              i_comment "env <- env . expr" ;
+              add ;
+            ];
+          ])
+    | S_assignment (s, expr) ->
+        let%bind expr = translate_expression expr in
+        let%bind set = Environment.to_michelson_set s w_env.pre_environment in
         ok (seq [
             i_comment "assignment" ;
             seq [
@@ -306,7 +316,7 @@ and translate_statement ((s', w_env) as s:statement) : michelson result =
             ] ;
             seq [
               i_comment "env <- env . expr" ;
-              add ;
+              set ;
             ];
           ])
     | S_cond (expr, a, b) ->

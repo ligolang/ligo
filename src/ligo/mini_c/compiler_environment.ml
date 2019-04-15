@@ -13,6 +13,25 @@ module Small = struct
   type t' = environment_small'
   type t = environment_small
 
+  let not_in_env' ?source s t' =
+    let title () = match source with
+      | None -> "Not in environment"
+      | Some source -> Format.asprintf "Not in environment' (%s)" source in
+    let content () =
+      Format.asprintf "Variable : %s, Environment' : %a"
+        s PP.environment_small' t' in
+    error title content
+
+  let not_in_env ?source s t =
+    let title () = match source with
+      | None -> "Not in environment"
+      | Some source -> Format.asprintf "Not in environment (%s)" source in
+    let content () =
+      Format.asprintf "Variable : %s, Environment : %a"
+        s PP.environment_small t in
+    error title content
+
+
   let has' s = exists' (fun ((x, _):element) -> x = s)
   let has s = function
     | Empty -> false
@@ -49,7 +68,7 @@ module Small = struct
   let rec get_path' = fun s env' ->
     match env' with
     | Leaf (n, v) when n = s -> ok ([], v)
-    | Leaf _ -> simple_fail "Not in env"
+    | Leaf _ -> fail @@ not_in_env' ~source:"get_path'" s env'
     | Node {a;b} ->
         match%bind bind_lr @@ Tezos_utils.Tuple.map2 (get_path' s) (a,b) with
         | `Left (lst, v) -> ok ((`Left :: lst), v)
@@ -57,12 +76,13 @@ module Small = struct
 
   let get_path = fun s env ->
     match env with
-    | Empty -> simple_fail "Set : No env"
+    | Empty -> fail @@ not_in_env ~source:"get_path" s env
     | Full x -> get_path' s x
 
-  let rec to_michelson_get' s = function
+  let rec to_michelson_get' = fun s env' ->
+    match env' with
     | Leaf (n, tv) when n = s -> ok @@ (seq [], tv)
-    | Leaf _ -> simple_fail "Schema.Small.get : not in env"
+    | Leaf _ -> fail @@ not_in_env' ~source:"to_michelson_get'" s env'
     | Node {a;b} -> (
         match%bind bind_lr @@ Tezos_utils.Tuple.map2 (to_michelson_get' s) (a, b) with
         | `Left (x, tv) -> ok @@ (seq [i_car ; x], tv)
@@ -72,9 +92,10 @@ module Small = struct
     | Empty -> simple_fail "Schema.Small.get : not in env"
     | Full x -> to_michelson_get' s x
 
-  let rec to_michelson_set' s = function
+  let rec to_michelson_set' = fun s env' ->
+    match env' with
     | Leaf (n, tv) when n = s -> ok (dip i_drop, tv)
-    | Leaf _ -> simple_fail "Schema.Small.set : not in env"
+    | Leaf _ -> fail @@ not_in_env' ~source:"Small.to_michelson_set'" s env'
     | Node {a;b} -> (
         match%bind bind_lr @@ Tezos_utils.Tuple.map2 (to_michelson_set' s) (a, b) with
         | `Left (x, tv) -> ok (seq [dip i_unpair ; x ; i_pair], tv)

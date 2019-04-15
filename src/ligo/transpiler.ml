@@ -120,13 +120,13 @@ let rec translate_block env (b:AST.block) : block result =
 and translate_instruction (env:Environment.t) (i:AST.instruction) : statement option result =
   let return ?(env' = env) x : statement option result = ok (Some (x, environment_wrap env env')) in
   match i with
-  | I_assignment {name;annotated_expression} ->
+  | I_declaration {name;annotated_expression} ->
       let%bind (_, t, _) as expression = translate_annotated_expression env annotated_expression in
-      let env' =
-        match Environment.has name env with
-        | true -> env
-        | false -> Environment.add (name, t) env in
-      return ~env' (S_assignment (name, expression))
+      let env' = Environment.add (name, t) env in
+      return ~env' (S_declaration (name, expression))
+  | I_assignment {name;annotated_expression} ->
+      let%bind expression = translate_annotated_expression env annotated_expression in
+      return (S_assignment (name, expression))
   | I_patch (r, s, v) -> (
       let ty = r.type_value in
       let aux : ((AST.type_value * [`Left | `Right] list) as 'a) -> AST.access -> 'a result =
@@ -424,7 +424,7 @@ let translate_entry (lst:AST.program) (name:string) : anon_function result =
               let (a, b) = functionalize an.annotated_expression in
               Some (acc, a, b)
         ) else (
-          aux ((AST.I_assignment an) :: acc) tl
+          aux ((AST.I_declaration an) :: acc) tl
         )
       )
   in

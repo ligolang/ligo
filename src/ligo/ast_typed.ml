@@ -90,6 +90,7 @@ and block = instruction list
 and b = block
 
 and instruction =
+  | I_declaration of named_expression
   | I_assignment of named_expression
   | I_matching of ae * matching_instr
   | I_loop of ae * b
@@ -227,6 +228,8 @@ module PP = struct
     | I_skip -> fprintf ppf "skip"
     | I_fail ae -> fprintf ppf "fail with (%a)" annotated_expression ae
     | I_loop (cond, b) -> fprintf ppf "while (%a) {@;  @[<v>%a@]@;}" annotated_expression cond block b
+    | I_declaration {name;annotated_expression = ae} ->
+        fprintf ppf "let %s = %a" name annotated_expression ae
     | I_assignment {name;annotated_expression = ae} ->
         fprintf ppf "%s := %a" name annotated_expression ae
     | I_matching (ae, m) ->

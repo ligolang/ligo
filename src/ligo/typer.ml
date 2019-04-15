@@ -148,17 +148,16 @@ and type_instruction (e:environment) : I.instruction -> (environment * O.instruc
       return @@ O.I_loop (cond, body)
   | I_assignment {name;annotated_expression} -> (
       match annotated_expression.type_annotation, Environment.get e name with
-      | None, None -> simple_fail "Initial assignments need type"
+      | None, None -> simple_fail "Initial assignments need type annotation"
       | Some _, None ->
           let%bind annotated_expression = type_annotated_expression e annotated_expression in
           let e' = Environment.add e name annotated_expression.type_annotation in
-          ok (e', [O.I_assignment {name;annotated_expression}])
+          ok (e', [O.I_declaration {name;annotated_expression}])
       | None, Some prev ->
           let%bind annotated_expression = type_annotated_expression e annotated_expression in
-          let e' = Environment.add e name annotated_expression.type_annotation in
           let%bind _ =
             O.assert_type_value_eq (annotated_expression.type_annotation, prev) in
-          ok (e', [O.I_assignment {name;annotated_expression}])
+          ok (e, [O.I_assignment {name;annotated_expression}])
       | Some _, Some prev ->
           let%bind annotated_expression = type_annotated_expression e annotated_expression in
           let%bind _assert = trace (simple_error "Annotation doesn't match environment")
@@ -588,6 +587,9 @@ and untype_instruction (i:O.instruction) : (I.instruction) result =
       let%bind e' = untype_annotated_expression e in
       let%bind b' = untype_block b in
       ok @@ I_loop (e', b')
+  | I_declaration a ->
+      let%bind annotated_expression = untype_annotated_expression a.annotated_expression in
+      ok @@ I_assignment {name = a.name ; annotated_expression}
   | I_assignment a ->
       let%bind annotated_expression = untype_annotated_expression a.annotated_expression in
       ok @@ I_assignment {name = a.name ; annotated_expression}
