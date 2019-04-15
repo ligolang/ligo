@@ -104,21 +104,15 @@ let record_access_to_lr : type_value -> type_value AST.type_name_map -> string -
   Append_tree.fold_ne leaf node node_tv
 
 let rec translate_block env (b:AST.block) : block result =
-  let%bind (instructions, env') =
-    let rec aux e acc lst = match lst with
-      | [] -> ok (acc, e)
-      | hd :: tl ->
-          match%bind translate_instruction e hd with
-          | Some ((_, e') as i) -> aux e'.post_environment (i :: acc) tl
-          | None -> aux e acc tl
-    in
-    let%bind (lst, e) = aux env [] b in
-    ok (List.rev lst, e)
-  in
+  let aux = fun (precs, env) instruction ->
+    let%bind lst = translate_instruction env instruction in
+    let env' = List.fold_left (fun _ i -> (snd i).post_environment) env lst in
+    ok (precs @ lst, env') in
+  let%bind (instructions, env') = bind_fold_list aux ([], env) b in
   ok (instructions, environment_wrap env env')
 
-and translate_instruction (env:Environment.t) (i:AST.instruction) : statement option result =
-  let return ?(env' = env) x : statement option result = ok (Some (x, environment_wrap env env')) in
+and translate_instruction (env:Environment.t) (i:AST.instruction) : statement list result =
+  let return ?(env' = env) x : statement list result = ok ([x, environment_wrap env env']) in
   match i with
   | I_declaration {name;annotated_expression} ->
       let%bind (_, t, _) as expression = translate_annotated_expression env annotated_expression in
@@ -174,7 +168,7 @@ and translate_instruction (env:Environment.t) (i:AST.instruction) : statement op
       let env' = Environment.extend env in
       let%bind body' = translate_block env' body in
       return (S_while (expr', body'))
-  | I_skip -> ok None
+  | I_skip -> ok []
   | I_fail _ -> simple_fail "todo : fail"
 
 and translate_annotated_expression (env:Environment.t) (ae:AST.annotated_expression) : expression result =
