@@ -404,7 +404,8 @@ let matching () : unit result =
       let%bind result' =
         trace (simple_error "bad result") @@
         get_a_int result in
-      Assert.assert_equal_int (match n with None -> 23 | Some s -> s) result'
+      Assert.assert_equal_int 23 result'
+      (* Assert.assert_equal_int (match n with None -> 23 | Some s -> s) result' *)
     in
     let%bind _ = bind_list
       @@ List.map aux

@@ -72,11 +72,12 @@ and assignment = var_name * expression
 and statement' =
   | S_environment_extend
   | S_environment_restrict
+  | S_environment_add of (var_name * type_value)
   | S_declaration of assignment (* First assignment *)
   | S_assignment of assignment
   | S_cond of expression * block * block
   | S_patch of string * [`Left | `Right] list * expression
-  | S_if_none of expression * block * (var_name * block)
+  | S_if_none of expression * block * ((var_name * type_value) * block)
   | S_while of expression * block
 
 and statement = statement' * environment_wrap

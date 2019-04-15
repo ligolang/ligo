@@ -147,27 +147,24 @@ and translate_instruction (env:Environment.t) (i:AST.instruction) : statement li
   | I_matching (expr, m) -> (
       let%bind expr' = translate_annotated_expression env expr in
       let env' = Environment.extend env in
-      let aux : block -> block = fun (lst, wrap) -> (* Takes a block and add a "restrict" statement at its end *)
-        let b_wrap = { wrap with post_environment = env } in
-        let s_wrap = {
-          pre_environment = wrap.post_environment ;
-          post_environment = env ;
-        } in
-        (lst @ [S_environment_restrict, s_wrap], b_wrap)
-      in
+      let extend s =
+        let pre = Combinators.statement S_environment_extend env in
+        ok [ pre ; (s, environment_wrap env env) ] in
+      let restrict : block -> block = fun b -> Combinators.append_statement' b S_environment_restrict in
       match m with
       | Match_bool {match_true ; match_false} -> (
           let%bind true_branch = translate_block env' match_true in
           let%bind false_branch = translate_block env' match_false in
-          return (S_cond (expr', aux true_branch, aux false_branch))
+          extend @@ S_cond (expr', restrict true_branch, restrict false_branch)
         )
       | Match_option {match_none ; match_some = ((name, t), sm)} -> (
           let%bind none_branch = translate_block env' match_none in
+          let%bind t' = translate_type t in
           let%bind some_branch =
-            let%bind t' = translate_type t in
-            let env' = Environment.add (name, t') env' in
-            translate_block env' sm in
-          return (S_if_none (expr', aux none_branch, (name, aux some_branch)))
+            let env'' = Environment.add (name, t') env' in
+            translate_block env'' sm
+          in
+          extend (S_if_none (expr', restrict none_branch, ((name, t'), restrict some_branch)))
         )
       | _ -> simple_fail "todo : match"
     )

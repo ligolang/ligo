@@ -173,7 +173,7 @@ let to_michelson_restrict : t -> Michelson.t result = fun e ->
   match e with
   | [] -> simple_fail "Restrict empty env"
   | Empty :: _ -> ok @@ Michelson.i_comment "restrict empty"
-  | _ -> ok @@ Michelson.i_cdr
+  | _ -> ok @@ Michelson.(seq [i_comment "restrict" ; i_cdr])
   (* Michelson.i_cdr *)
 
 let to_ty = Compiler_type.Ty.environment
@@ -225,25 +225,19 @@ let path_to_michelson_set = fun path ->
 let to_michelson_anonymous_add (t:t) =
   let%bind code = match t with
     | [] -> simple_fail "Schema.Big.Add.to_michelson_add"
-    | [hd] -> Small.to_michelson_append hd
-    | Empty :: _ -> ok @@ Michelson.i_pair
+    | [hd] ->
+        let%bind small = Small.to_michelson_append hd in
+        ok Michelson.(seq [i_comment "big.small add" ; small])
+    | Empty :: _ -> ok @@ Michelson.(seq [i_comment "empty_add" ; i_pair])
     | hd :: _ -> (
         let%bind code = Small.to_michelson_append hd in
-        ok @@ Michelson.(seq [dip i_unpair ; code ; i_pair])
+        ok @@ Michelson.(seq [i_comment "big add" ; dip i_unpair ; code ; i_pair])
       )
   in
   ok code
 
 let to_michelson_add x (t:t) =
-  let%bind code = match t with
-    | [] -> simple_fail "Schema.Big.Add.to_michelson_add"
-    | [hd] -> Small.to_michelson_append hd
-    | Empty :: _ -> ok @@ Michelson.i_pair
-    | hd :: _ -> (
-        let%bind code = Small.to_michelson_append hd in
-        ok @@ Michelson.(seq [dip i_unpair ; code ; i_pair])
-      )
-  in
+  let%bind code = to_michelson_anonymous_add t in
 
   let%bind _assert_type =
     let new_schema = add x t in
@@ -267,20 +261,6 @@ let to_michelson_add x (t:t) =
   ok code
 
 let to_michelson_get (s:t) str : (Michelson.t * type_value) result =
-  (* let open Michelson in
-   * let rec aux s str : (Michelson.t * type_value) result  = match s with
-   *   | [] -> simple_fail "Schema.Big.get"
-   *   | [a] -> Small.to_michelson_get str a
-   *   | a :: b -> (
-   *       match Small.to_michelson_get str a with
-   *       | Trace.Ok (code, tv) -> ok (seq [i_car ; code], tv)
-   *       | Errors _ ->
-   *           let%bind (code, tv) = aux b str in
-   *           ok (seq [i_cdr ; code], tv)
-   *     )
-   * in
-   * let%bind (code, tv) = aux s str in *)
-
   let%bind (path, tv) = get_path str s in
   let code = path_to_michelson_get path in
 
@@ -307,21 +287,6 @@ let to_michelson_get (s:t) str : (Michelson.t * type_value) result =
   ok (code, tv)
 
 let to_michelson_set str (s:t) : Michelson.t result =
-  (* let open Michelson in
-   * let rec aux s str : (Michelson.t * type_value) result =
-   *   match s with
-   *   | [] -> simple_fail "Schema.Big.get"
-   *   | [a] -> Small.to_michelson_set str a
-   *   | a :: b -> (
-   *       match Small.to_michelson_set str a with
-   *       | Trace.Ok (code, tv) -> ok (seq [dip i_unpair ; code ; i_pair], tv)
-   *       | Errors _ ->
-   *           let%bind (tmp, tv) = aux b str in
-   *           ok (seq [dip i_unpiar ; tmp ; i_piar], tv)
-   *     )
-   * in
-   * let%bind (code, tv) = aux s str in *)
-
   let%bind (path, tv) = get_path str s in
   let code = path_to_michelson_set path in
 

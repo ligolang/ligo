@@ -94,13 +94,14 @@ and declaration ppf ((n, e):assignment) = fprintf ppf "let %s = %a;" n expressio
 and statement ppf ((s, _) : statement) = match s with
   | S_environment_extend -> fprintf ppf "extend"
   | S_environment_restrict -> fprintf ppf "restrict"
+  | S_environment_add (name, tv) -> fprintf ppf "add %s %a" name type_ tv
   | S_declaration ass -> declaration ppf ass
   | S_assignment ass -> assignment ppf ass
   | S_cond (expr, i, e) -> fprintf ppf "if (%a) %a %a" expression expr block i block e
   | S_patch (r, path, e) ->
       let aux = fun ppf -> function `Left -> fprintf ppf ".L" | `Right -> fprintf ppf ".R" in
       fprintf ppf "%s%a := %a" r (list aux) path expression e
-  | S_if_none (expr, none, (name, some)) -> fprintf ppf "if_none (%a) %a %s.%a" expression expr block none name block some
+  | S_if_none (expr, none, ((name, _), some)) -> fprintf ppf "if_none (%a) %a %s->%a" expression expr block none name block some
   | S_while (e, b) -> fprintf ppf "while (%a) %a" expression e block b
 
 and block ppf ((b, _):block) =

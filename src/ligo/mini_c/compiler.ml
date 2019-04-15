@@ -295,6 +295,10 @@ and translate_statement ((s', w_env) as s:statement) : michelson result =
         ok @@ Environment.to_michelson_extend w_env.pre_environment
     | S_environment_restrict ->
         Environment.to_michelson_restrict w_env.pre_environment
+    | S_environment_add _ ->
+        simple_fail "not ready yet"
+    (* | S_environment_add (name, tv) ->
+     *     Environment.to_michelson_add (name, tv) w_env.pre_environment *)
     | S_declaration (s, ((_, tv, _) as expr)) ->
         let%bind expr = translate_expression expr in
         let%bind add = Environment.to_michelson_add (s, tv) w_env.pre_environment in
@@ -331,19 +335,17 @@ and translate_statement ((s', w_env) as s:statement) : michelson result =
             i_push_unit ;
             expr ;
             prim I_CAR ;
-            dip @@ Environment.to_michelson_extend w_env.pre_environment ;
             prim ~children:[seq [a'];seq [b']] I_IF ;
           ])
-    | S_if_none (expr, none, (_, some)) ->
+    | S_if_none (expr, none, ((name, tv), some)) ->
         let%bind expr = translate_expression expr in
         let%bind none' = translate_regular_block none in
         let%bind some' = translate_regular_block some in
         let%bind add =
-          let env = Environment.extend w_env.pre_environment in
-          Environment.to_michelson_anonymous_add env in
+          let env' = Environment.extend w_env.pre_environment in
+          Environment.to_michelson_add (name, tv) env' in
         ok @@ (seq [
             i_push_unit ; expr ; i_car ;
-            dip @@ Environment.to_michelson_extend w_env.pre_environment ;
             prim ~children:[
               seq [none'] ;
               seq [add ; some'] ;
@@ -383,7 +385,7 @@ and translate_statement ((s', w_env) as s:statement) : michelson result =
       let%bind pre_env_michelson = Environment.to_michelson_type w_env.pre_environment in
       let%bind post_env_michelson = Environment.to_michelson_type w_env.post_environment in
       ok @@ Format.asprintf
-        "statement : %a\ncode : %a\npre type : %a\npost type : %a"
+        "statement : %a\ncode : %a\npre type : %a\npost type : %a\n"
         PP.statement s
         Michelson.pp code
         Michelson.pp pre_env_michelson

@@ -12,7 +12,7 @@ function match_option (const o : option(int)) : int is
   begin
   case o of
   | None -> skip
-  | Some(s) -> result := s
+  | Some(s) -> skip // result := s
   end
   end with result
 

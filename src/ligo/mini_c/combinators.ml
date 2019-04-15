@@ -111,6 +111,7 @@ let statement s' e : statement =
   match s' with
   | S_environment_extend -> s', environment_wrap e (Compiler_environment.extend e)
   | S_environment_restrict -> s', environment_wrap e (Compiler_environment.restrict e)
+  | S_environment_add (name, tv) -> s', environment_wrap e (Compiler_environment.add (name, tv) e)
   | S_cond _ -> s', id_environment_wrap e
   | S_if_none _ -> s', id_environment_wrap e
   | S_while _ -> s', id_environment_wrap e
@@ -125,6 +126,21 @@ let block (statements:statement list) : block result =
       let first = List.hd lst in
       let last = List.(nth lst (length lst - 1)) in
       ok (lst, environment_wrap (snd first).pre_environment (snd last).post_environment)
+
+let append_statement' : block -> statement' -> block = fun b s' ->
+  let b_wrap = snd b in
+  let s = statement s' b_wrap.post_environment in
+  let s_wrap = snd s in
+  let b_wrap' = { b_wrap with post_environment = s_wrap.post_environment } in
+  let b_content = fst b in
+  (b_content @ [s], b_wrap')
+
+let prepend_statement : statement -> block -> block = fun s b ->
+  let s_wrap = snd s in
+  let b_wrap = snd b in
+  let b_wrap' = { b_wrap with pre_environment = s_wrap.pre_environment } in
+  let b_content = fst b in
+  (s :: b_content, b_wrap')
 
 let statements (lst:(environment -> statement) list) e : statement list =
   let rec aux lst e = match lst with
