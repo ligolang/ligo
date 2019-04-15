@@ -109,6 +109,8 @@ let id_environment_wrap e = environment_wrap e e
 
 let statement s' e : statement =
   match s' with
+  | S_environment_extend -> s', environment_wrap e (Compiler_environment.extend e)
+  | S_environment_restrict -> s', environment_wrap e (Compiler_environment.restrict e)
   | S_cond _ -> s', id_environment_wrap e
   | S_if_none _ -> s', id_environment_wrap e
   | S_while _ -> s', id_environment_wrap e

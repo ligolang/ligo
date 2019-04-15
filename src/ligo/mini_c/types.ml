@@ -70,6 +70,8 @@ and expression = expression' * type_value * environment (* Environment in which 
 and assignment = var_name * expression
 
 and statement' =
+  | S_environment_extend
+  | S_environment_restrict
   | S_declaration of assignment (* First assignment *)
   | S_assignment of assignment
   | S_cond of expression * block * block
