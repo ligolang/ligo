@@ -9,8 +9,10 @@ type lexeme = string
 
 let sprintf = Printf.sprintf
 
-module SMap = Utils.String.Map
-module SSet = Utils.String.Set
+module Region = Tezos_utils.Region
+module Pos    = Tezos_utils.Pos
+module SMap   = Utils.String.Map
+module SSet   = Utils.String.Set
 
 (* Hack to roll back one lexeme in the current semantic action *)
 (*

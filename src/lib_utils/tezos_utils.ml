@@ -21,3 +21,5 @@ module Map = X_map
 module Dictionary = Dictionary
 module Environment = Environment
 module Tree = Tree
+module Region = Region
+module Pos = Pos

@@ -1,6 +1,8 @@
 (* This module defines the sorts of markup recognised by the LIGO
    lexer *)
 
+module Region = Tezos_utils.Region
+
 (* A lexeme is piece of concrete syntax belonging to a token. In
    algebraic terms, a token is also a piece of abstract lexical
    syntax. Lexical units emcompass both markup and lexemes. *)

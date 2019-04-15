@@ -21,6 +21,9 @@
    aliased to [token].
 *)
 
+module Region = Tezos_utils.Region
+module Pos    = Tezos_utils.Pos
+
 type lexeme = string
 
 (* TOKENS *)

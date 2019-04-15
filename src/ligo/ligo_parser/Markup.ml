@@ -1,3 +1,5 @@
+module Region = Tezos_utils.Region
+
 type lexeme = string
 
 type t =
