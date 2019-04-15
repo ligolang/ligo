@@ -126,7 +126,7 @@ and translate_instruction (env:Environment.t) (i:AST.instruction) : statement op
         match Environment.has name env with
         | true -> env
         | false -> Environment.add (name, t) env in
-      return ~env' (Assignment (name, expression))
+      return ~env' (S_assignment (name, expression))
   | I_patch (r, s, v) -> (
       let ty = r.type_value in
       let aux : ((AST.type_value * [`Left | `Right] list) as 'a) -> AST.access -> 'a result =
@@ -148,7 +148,7 @@ and translate_instruction (env:Environment.t) (i:AST.instruction) : statement op
       in
       let%bind (_, path) = bind_fold_list aux (ty, []) s in
       let%bind v' = translate_annotated_expression env v in
-      return (I_patch (r.type_name, path, v'))
+      return (S_patch (r.type_name, path, v'))
     )
   | I_matching (expr, m) -> (
       let%bind expr' = translate_annotated_expression env expr in
@@ -157,7 +157,7 @@ and translate_instruction (env:Environment.t) (i:AST.instruction) : statement op
       | Match_bool {match_true ; match_false} -> (
           let%bind true_branch = translate_block env' match_true in
           let%bind false_branch = translate_block env' match_false in
-          return (I_Cond (expr', true_branch, false_branch))
+          return (S_cond (expr', true_branch, false_branch))
         )
       | Match_option {match_none ; match_some = ((name, t), sm)} -> (
           let%bind none_branch = translate_block env' match_none in
@@ -165,7 +165,7 @@ and translate_instruction (env:Environment.t) (i:AST.instruction) : statement op
             let%bind t' = translate_type t in
             let env' = Environment.add (name, t') env' in
             translate_block env' sm in
-          return (If_None (expr', none_branch, (name, some_branch)))
+          return (S_if_none (expr', none_branch, (name, some_branch)))
         )
       | _ -> simple_fail "todo : match"
     )
@@ -173,7 +173,7 @@ and translate_instruction (env:Environment.t) (i:AST.instruction) : statement op
       let%bind expr' = translate_annotated_expression env expr in
       let env' = Environment.extend env in
       let%bind body' = translate_block env' body in
-      return (While (expr', body'))
+      return (S_while (expr', body'))
   | I_skip -> ok None
   | I_fail _ -> simple_fail "todo : fail"
 

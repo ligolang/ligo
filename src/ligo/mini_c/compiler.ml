@@ -291,7 +291,7 @@ and translate_statement ((s', w_env) as s:statement) : michelson result =
   let error_message () = Format.asprintf "%a" PP.statement s in
   let%bind (code : michelson) =
     trace (fun () -> error (thunk "translating statement") error_message ()) @@ match s' with
-    | Assignment (s, ((_, tv, _) as expr)) ->
+    | S_assignment (s, ((_, tv, _) as expr)) ->
         let%bind expr = translate_expression expr in
         let%bind add =
           if Environment.has s w_env.pre_environment
@@ -309,7 +309,7 @@ and translate_statement ((s', w_env) as s:statement) : michelson result =
               add ;
             ];
           ])
-    | I_Cond (expr, a, b) ->
+    | S_cond (expr, a, b) ->
         let%bind expr = translate_expression expr in
         let%bind a = translate_regular_block a in
         let%bind b = translate_regular_block b in
@@ -320,7 +320,7 @@ and translate_statement ((s', w_env) as s:statement) : michelson result =
             dip Environment.to_michelson_extend ;
             prim ~children:[seq [a ; Environment.to_michelson_restrict];seq [b ; Environment.to_michelson_restrict]] I_IF ;
           ])
-    | If_None (expr, none, (_, some)) ->
+    | S_if_none (expr, none, (_, some)) ->
         let%bind expr = translate_expression expr in
         let%bind none' = translate_regular_block none in
         let%bind some' = translate_regular_block some in
@@ -335,7 +335,7 @@ and translate_statement ((s', w_env) as s:statement) : michelson result =
               seq [add ; some' ; Environment.to_michelson_restrict] ;
             ] I_IF_NONE
           ])
-    | While ((_, _, _) as expr, block) ->
+    | S_while ((_, _, _) as expr, block) ->
         let%bind expr = translate_expression expr in
         let%bind block = translate_regular_block block in
         ok @@ (seq [
@@ -346,7 +346,7 @@ and translate_statement ((s', w_env) as s:statement) : michelson result =
                 Environment.to_michelson_restrict ;
                 i_push_unit ; expr ; i_car]] I_LOOP ;
           ])
-    | I_patch (name, lrs, expr) ->
+    | S_patch (name, lrs, expr) ->
         let%bind expr' = translate_expression expr in
         let%bind (name_path, _) = Environment.get_path name w_env.pre_environment in
         let path = name_path @ lrs in

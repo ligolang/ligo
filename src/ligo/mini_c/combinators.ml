@@ -109,11 +109,11 @@ let id_environment_wrap e = environment_wrap e e
 
 let statement s' e : statement =
   match s' with
-  | I_Cond _ -> s', id_environment_wrap e
-  | If_None _ -> s', id_environment_wrap e
-  | While _ -> s', id_environment_wrap e
-  | I_patch _ -> s', id_environment_wrap e
-  | Assignment (name, (_, t, _)) -> s', environment_wrap e (Compiler_environment.add (name, t) e)
+  | S_cond _ -> s', id_environment_wrap e
+  | S_if_none _ -> s', id_environment_wrap e
+  | S_while _ -> s', id_environment_wrap e
+  | S_patch _ -> s', id_environment_wrap e
+  | S_assignment (name, (_, t, _)) -> s', environment_wrap e (Compiler_environment.add (name, t) e)
 
 let block (statements:statement list) : block result =
   match statements with

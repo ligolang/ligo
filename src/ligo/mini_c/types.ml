@@ -70,11 +70,11 @@ and expression = expression' * type_value * environment (* Environment in which 
 and assignment = var_name * expression
 
 and statement' =
-  | Assignment of assignment
-  | I_Cond of expression * block * block
-  | I_patch of string * [`Left | `Right] list * expression
-  | If_None of expression * block * (var_name * block)
-  | While of expression * block
+  | S_assignment of assignment
+  | S_cond of expression * block * block
+  | S_patch of string * [`Left | `Right] list * expression
+  | S_if_none of expression * block * (var_name * block)
+  | S_while of expression * block
 
 and statement = statement' * environment_wrap
 

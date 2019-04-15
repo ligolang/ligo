@@ -90,13 +90,13 @@ and function_ ppf ({binder ; input ; output ; body ; result ; capture_type}:anon
 and assignment ppf ((n, e):assignment) = fprintf ppf "let %s = %a;" n expression e
 
 and statement ppf ((s, _) : statement) = match s with
-  | Assignment ass -> assignment ppf ass
-  | I_Cond (expr, i, e) -> fprintf ppf "if (%a) %a %a" expression expr block i block e
-  | I_patch (r, path, e) ->
+  | S_assignment ass -> assignment ppf ass
+  | S_cond (expr, i, e) -> fprintf ppf "if (%a) %a %a" expression expr block i block e
+  | S_patch (r, path, e) ->
       let aux = fun ppf -> function `Left -> fprintf ppf ".L" | `Right -> fprintf ppf ".R" in
       fprintf ppf "%s%a := %a" r (list aux) path expression e
-  | If_None (expr, none, (name, some)) -> fprintf ppf "if (%a) %a %s.%a" expression expr block none name block some
-  | While (e, b) -> fprintf ppf "while (%a) %a" expression e block b
+  | S_if_none (expr, none, (name, some)) -> fprintf ppf "if (%a) %a %s.%a" expression expr block none name block some
+  | S_while (e, b) -> fprintf ppf "while (%a) %a" expression e block b
 
 and block ppf ((b, _):block) =
   fprintf ppf "{  @;@[<v 2>%a@]@;}" (pp_print_list ~pp_sep:(tag "@;") statement) b
