@@ -196,7 +196,7 @@ let statement : I.statement -> O.declaration result = fun s ->
       ok @@ O.Declaration_type {type_name = unwrap n ; type_expression = unwrap te'}
 
 let program : I.program -> O.program result = fun (Program lst) ->
-  bind_map_list (apply Location.unwrap >| bind_map_location statement) lst
+  bind_map_list (bind_map_location statement) lst
 
 let main : I.entry_point -> O.program Location.wrap result =
   bind_map_location program

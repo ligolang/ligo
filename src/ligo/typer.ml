@@ -96,13 +96,14 @@ module Errors = struct
 end
 open Errors
 
-
 let rec type_program (p:I.program) : O.program result =
-  let aux (e, acc:(environment * O.declaration list)) (d:I.declaration) =
-    let%bind (e', d') = type_declaration e d in
+  let aux (e, acc:(environment * O.declaration Location.wrap list)) (d:I.declaration Location.wrap) =
+    let%bind ed' = (bind_map_location (type_declaration e)) d in
+    let loc : 'a . 'a Location.wrap -> _ -> _ = fun x v -> Location.wrap ~loc:x.location v in
+    let (e', d') = Location.unwrap ed' in
     match d' with
     | None -> ok (e', acc)
-    | Some d' -> ok (e', d' :: acc)
+    | Some d' -> ok (e', loc ed' d' :: acc)
   in
   let%bind (_, lst) =
     trace (fun () -> program_error p ()) @@

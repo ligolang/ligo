@@ -8,7 +8,7 @@ type type_name = string
 type 'a name_map = 'a SMap.t
 type 'a type_name_map = 'a SMap.t
 
-type program = declaration list
+type program = declaration Location.wrap list
 
 and declaration =
   | Declaration_constant of named_expression
@@ -136,7 +136,7 @@ let get_entry (p:program) (entry : string) : annotated_expression result =
   in
   let%bind result =
     trace_option (simple_error "no entry point with given name") @@
-    Tezos_utils.List.find_map aux p in
+    Tezos_utils.List.find_map aux (List.map Location.unwrap p) in
   ok result
 
 let get_functional_entry (p:program) (entry : string) : (lambda * type_value) result =
@@ -245,7 +245,7 @@ module PP = struct
         fprintf ppf "const %s = %a" name annotated_expression ae
 
   let program ppf (p:program) =
-    fprintf ppf "@[<v>%a@]" (list_sep declaration (tag "@;")) p
+    fprintf ppf "@[<v>%a@]" (list_sep declaration (tag "@;")) (List.map Location.unwrap p)
 
 end
 
