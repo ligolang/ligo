@@ -6,7 +6,7 @@ type type_name = string
 type 'a name_map = 'a SMap.t
 type 'a type_name_map = 'a SMap.t
 
-type program = declaration list
+type program = declaration Location.wrap list
 
 and declaration =
   | Declaration_type of named_type_expression
@@ -214,7 +214,7 @@ module PP = struct
         fprintf ppf "const %s = %a" name annotated_expression ae
 
   let program ppf (p:program) =
-    fprintf ppf "@[<v>%a@]" (list_sep declaration (tag "@;")) p
+    fprintf ppf "@[<v>%a@]" (list_sep declaration (tag "@;")) (List.map Location.unwrap p)
 end
 
 module Rename = struct

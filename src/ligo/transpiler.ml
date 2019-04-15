@@ -5,6 +5,9 @@ open Combinators
 module AST = Ast_typed
 open AST.Combinators
 
+let temp_unwrap_loc = Location.unwrap
+let temp_unwrap_loc_list = List.map Location.unwrap
+
 let list_of_map m = List.rev @@ Map.String.fold (fun _ v prev -> v :: prev) m []
 let kv_list_of_map m = List.rev @@ Map.String.fold (fun k v prev -> (k, v) :: prev) m []
 let map_of_kv_list lst =
@@ -367,7 +370,7 @@ let translate_program (lst:AST.program) : program result =
     let%bind ((_, env') as cur') = translate_declaration env cur in
     ok (cur' :: tl, env'.post_environment)
   in
-  let%bind (statements, _) = List.fold_left aux (ok ([], Environment.empty)) lst in
+  let%bind (statements, _) = List.fold_left aux (ok ([], Environment.empty)) (temp_unwrap_loc_list lst) in
   ok statements
 
 let translate_main (l:AST.lambda) (t:AST.type_value) : anon_function result =
@@ -394,7 +397,7 @@ let translate_entry (lst:AST.program) (name:string) : anon_function result =
     match lst with
     | [] -> None
     | hd :: tl -> (
-        let AST.Declaration_constant an = hd in
+        let AST.Declaration_constant an = temp_unwrap_loc hd in
         if an.name = name
         then (
           match an.annotated_expression.expression with

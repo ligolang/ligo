@@ -292,19 +292,20 @@ and simpl_param : Raw.param_decl -> named_type_expression result = fun t ->
       let%bind type_expression = simpl_type_expression c.param_type in
       ok { type_name ; type_expression }
 
-and simpl_declaration : Raw.declaration -> declaration result = fun t ->
+and simpl_declaration : Raw.declaration -> declaration Location.wrap result = fun t ->
   let open! Raw in
+  let loc : 'a . 'a Raw.reg -> _ -> _ = fun x v -> Location.wrap ~loc:(File x.region) v in
   match t with
   | TypeDecl x ->
       let {name;type_expr} : Raw.type_decl = x.value in
       let%bind type_expression = simpl_type_expression type_expr in
-      ok @@ Declaration_type {type_name=name.value;type_expression}
+      ok @@ loc x @@ Declaration_type {type_name=name.value;type_expression}
   | ConstDecl x ->
       let {name;const_type;init} = x.value in
       let%bind expression = simpl_expression init in
       let%bind t = simpl_type_expression const_type in
       let type_annotation = Some t in
-      ok @@ Declaration_constant {name=name.value;annotated_expression={expression with type_annotation}}
+      ok @@ loc x @@ Declaration_constant {name=name.value;annotated_expression={expression with type_annotation}}
   | LambdaDecl (FunDecl x) ->
       let {name;param;ret_type;local_decls;block;return} : fun_decl = x.value in
       (match npseq_to_list param.value.inside with
@@ -329,7 +330,7 @@ and simpl_declaration : Raw.declaration -> declaration result = fun t ->
              let type_annotation = Some (T_function (input_type, output_type)) in
              Declaration_constant {name;annotated_expression = {expression;type_annotation}}
            in
-           ok decl
+           ok @@ loc x @@ decl
          )
        | lst -> (
            let%bind params = bind_map_list simpl_param lst in
@@ -371,7 +372,7 @@ and simpl_declaration : Raw.declaration -> declaration result = fun t ->
              let type_annotation = Some (T_function (input_type, output_type)) in
              Declaration_constant {name = name.value;annotated_expression = {expression;type_annotation}}
            in
-           ok decl
+           ok @@ loc x @@ decl
          )
       )
   | LambdaDecl (ProcDecl _) -> simple_fail "no proc declaration yet"
