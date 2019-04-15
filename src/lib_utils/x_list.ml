@@ -7,6 +7,8 @@ let map ?(acc = []) f lst =
   in
   aux acc f (List.rev lst)
 
+let fold_right' f init lst = List.fold_left f init (List.rev lst)
+
 let filter_map f =
   let rec aux acc lst = match lst with
     | [] -> List.rev acc

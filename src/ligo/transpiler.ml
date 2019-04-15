@@ -147,11 +147,19 @@ and translate_instruction (env:Environment.t) (i:AST.instruction) : statement li
   | I_matching (expr, m) -> (
       let%bind expr' = translate_annotated_expression env expr in
       let env' = Environment.extend env in
+      let aux : block -> block = fun (lst, wrap) -> (* Takes a block and add a "restrict" statement at its end *)
+        let b_wrap = { wrap with post_environment = env } in
+        let s_wrap = {
+          pre_environment = wrap.post_environment ;
+          post_environment = env ;
+        } in
+        (lst @ [S_environment_restrict, s_wrap], b_wrap)
+      in
       match m with
       | Match_bool {match_true ; match_false} -> (
           let%bind true_branch = translate_block env' match_true in
           let%bind false_branch = translate_block env' match_false in
-          return (S_cond (expr', true_branch, false_branch))
+          return (S_cond (expr', aux true_branch, aux false_branch))
         )
       | Match_option {match_none ; match_some = ((name, t), sm)} -> (
           let%bind none_branch = translate_block env' match_none in
@@ -159,7 +167,7 @@ and translate_instruction (env:Environment.t) (i:AST.instruction) : statement li
             let%bind t' = translate_type t in
             let env' = Environment.add (name, t') env' in
             translate_block env' sm in
-          return (S_if_none (expr', none_branch, (name, some_branch)))
+          return (S_if_none (expr', aux none_branch, (name, aux some_branch)))
         )
       | _ -> simple_fail "todo : match"
     )
@@ -238,29 +246,6 @@ and translate_annotated_expression (env:Environment.t) (ae:AST.annotated_express
       let%bind tpl' = translate_annotated_expression env tpl in
       let expr = List.fold_left aux tpl' path in
       ok expr
-      (* let%bind tpl' = translate_annotated_expression env tpl in
-       * let%bind tpl_tv = get_t_tuple tpl.type_annotation in
-       * let node_tv = Append_tree.of_list @@ List.mapi (fun i a -> (i, a)) tpl_tv in
-       * let leaf (i, _) : expression result =
-       *   if i = ind then (
-       *     ok tpl'
-       *   ) else (
-       *     simple_fail "bad leaf"
-       *   ) in
-       * let node a b : expression result =
-       *   match%bind bind_lr (a, b) with
-       *   | `Left ((_, t, env) as ex) -> (
-       *       let%bind (a, _) = get_t_pair t in
-       *       ok (E_constant ("CAR", [ex]), a, env)
-       *     )
-       *   | `Right ((_, t, env) as ex) -> (
-       *       let%bind (_, b) = get_t_pair t in
-       *       ok (E_constant ("CDR", [ex]), b, env)
-       *     ) in
-       * let%bind expr =
-       *   trace_strong (simple_error "bad index in tuple (shouldn't happen here)") @@
-       *   Append_tree.fold_ne leaf node node_tv in
-       * ok expr *)
   | E_record m ->
       let node = Append_tree.of_list @@ list_of_map m in
       let aux a b : expression result =

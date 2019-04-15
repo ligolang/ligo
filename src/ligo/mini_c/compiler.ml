@@ -327,29 +327,17 @@ and translate_statement ((s', w_env) as s:statement) : michelson result =
         let%bind expr = translate_expression expr in
         let%bind a' = translate_regular_block a in
         let%bind b' = translate_regular_block b in
-        let%bind restrict_a =
-          let env_a = (snd a).pre_environment in
-          Environment.to_michelson_restrict env_a in
-        let%bind restrict_b =
-          let env_b = (snd b).pre_environment in
-          Environment.to_michelson_restrict env_b in
         ok @@ (seq [
             i_push_unit ;
             expr ;
             prim I_CAR ;
             dip @@ Environment.to_michelson_extend w_env.pre_environment ;
-            prim ~children:[seq [a' ; restrict_a];seq [b' ; restrict_b]] I_IF ;
+            prim ~children:[seq [a'];seq [b']] I_IF ;
           ])
     | S_if_none (expr, none, (_, some)) ->
         let%bind expr = translate_expression expr in
         let%bind none' = translate_regular_block none in
         let%bind some' = translate_regular_block some in
-        let%bind restrict_none =
-          let env_none = (snd none).pre_environment in
-          Environment.to_michelson_restrict env_none in
-        let%bind restrict_some =
-          let env_some = (snd some).pre_environment in
-          Environment.to_michelson_restrict env_some in
         let%bind add =
           let env = Environment.extend w_env.pre_environment in
           Environment.to_michelson_anonymous_add env in
@@ -357,8 +345,8 @@ and translate_statement ((s', w_env) as s:statement) : michelson result =
             i_push_unit ; expr ; i_car ;
             dip @@ Environment.to_michelson_extend w_env.pre_environment ;
             prim ~children:[
-              seq [none' ; restrict_none] ;
-              seq [add ; some' ; restrict_some] ;
+              seq [none'] ;
+              seq [add ; some'] ;
             ] I_IF_NONE
           ])
     | S_while ((_, _, _) as expr, block) ->
