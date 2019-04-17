@@ -5,17 +5,7 @@ module O = Ast_simplified
 
 let unwrap : type a . a Location.wrap -> a = Location.unwrap
 
-let type_constants = [
-  ("unit", 0) ;
-  ("string", 0) ;
-  ("nat", 0) ;
-  ("int", 0) ;
-  ("bool", 0) ;
-  ("list", 1) ;
-  ("option", 1) ;
-  ("set", 1) ;
-  ("map", 2) ;
-]
+let type_constants = Operators.Simplify.type_constants
 
 let type_variable : string -> O.type_expression result = fun str ->
   match List.assoc_opt str type_constants with

@@ -80,6 +80,14 @@ module Errors = struct
     let full () = n in
     error title full ()
 
+  let wrong_arity (n:string) (expected:int) (actual:int) () =
+    let title () = "wrong arity" in
+    let full () =
+      Format.asprintf "Wrong number of args passed to [%s]. Expected was %d, received was %d."
+        n expected actual
+    in
+    error title full ()
+
   let program_error (p:I.program) () =
     let title = (thunk "typing program") in
     let full () = Format.asprintf "%a" I.PP.program p in
@@ -449,60 +457,21 @@ and type_annotated_expression (e:environment) (ae:I.annotated_expression) : O.an
 
 and type_constant (name:string) (lst:O.type_value list) (tv_opt:O.type_value option) : (string * O.type_value) result =
   (* Constant poorman's polymorphism *)
-  let open O in
-  match (name, lst) with
-  | "ADD", [a ; b] when type_value_eq (a, t_int ()) && type_value_eq (b, t_int ()) -> ok ("ADD_INT", t_int ())
-  | "ADD", [a ; b] when type_value_eq (a, t_nat ()) && type_value_eq (b, t_nat ()) -> ok ("ADD_NAT", t_nat ())
-  | "ADD", [a ; b] when type_value_eq (a, t_string ()) && type_value_eq (b, t_string ()) -> ok ("CONCAT", t_string ())
-  | "ADD", [_ ; _] -> simple_fail "bad types to add"
-  | "ADD", _ -> simple_fail "bad number of params to add"
-  | "TIMES", [a ; b] when type_value_eq (a, t_int ()) && type_value_eq (b, t_int ()) -> ok ("TIMES_INT", t_int ())
-  | "TIMES", [a ; b] when type_value_eq (a, t_nat ()) && type_value_eq (b, t_nat ()) -> ok ("TIMES_NAT", t_nat ())
-  | "TIMES", [_ ; _] -> simple_fail "bad types to TIMES"
-  | "TIMES", _ -> simple_fail "bad number of params to TIMES"
-  | "EQ", [a ; b] when type_value_eq (a, t_int ()) && type_value_eq (b, t_int ()) -> ok ("EQ", t_bool ())
-  | "EQ", [a ; b] when type_value_eq (a, t_nat ()) && type_value_eq (b, t_nat ()) -> ok ("EQ", t_bool ())
-  | "EQ", _ -> simple_fail "EQ only defined over int and nat"
-  | "LT", [a ; b] when type_value_eq (a, t_int ()) && type_value_eq (b, t_int ()) -> ok ("LT", t_bool ())
-  | "LT", [a ; b] when type_value_eq (a, t_nat ()) && type_value_eq (b, t_nat ()) -> ok ("LT", t_bool ())
-  | "LT", _ -> simple_fail "LT only defined over int and nat"
-  | "OR", [a ; b] when type_value_eq (a, t_bool ()) && type_value_eq (b, t_bool ()) -> ok ("OR", t_bool ())
-  | "OR", _ -> simple_fail "OR only defined over bool"
-  | "AND", [a ; b] when type_value_eq (a, t_bool ()) && type_value_eq (b, t_bool ()) -> ok ("AND", t_bool ())
-  | "AND", _ -> simple_fail "AND only defined over bool"
-  | "NONE", [] -> (
-      match tv_opt with
-      | Some t -> ok ("NONE", t)
-      | None -> simple_fail "untyped NONE"
-    )
-  | "NONE", _ -> simple_fail "bad number of params to NONE"
-  | "SOME", [s] -> ok ("SOME", t_option s ())
-  | "SOME", _ -> simple_fail "bad number of params to SOME"
-  | "MAP_REMOVE", [k ; m] ->
-      let%bind (src, _) = get_t_map m in
-      let%bind () = O.assert_type_value_eq (src, k) in
-      ok ("MAP_REMOVE", m)
-  | "MAP_REMOVE", _ -> simple_fail "bad number of params to MAP_REMOVE"
-  | "MAP_UPDATE", [k ; v ; m] ->
-      let%bind (src, dst) = get_t_map m in
-      let%bind () = O.assert_type_value_eq (src, k) in
-      let%bind () = O.assert_type_value_eq (dst, v) in
-      ok ("MAP_UPDATE", m)
-  | "MAP_UPDATE", _ -> simple_fail "bad number of params to MAP_UPDATE"
-  | "get_force", [i_ty;m_ty] ->
-      let%bind (src, dst) = get_t_map m_ty in
-      let%bind _ = O.assert_type_value_eq (src, i_ty) in
-      ok ("GET_FORCE", dst)
-  | "get_force", _ -> simple_fail "bad number of params to get_force"
-  | "size", [t] ->
-      let%bind () = bind_or (assert_t_map t, assert_t_list t) in
-      ok ("SIZE", t_nat ())
-  | "size", _ -> simple_fail "bad number of params to size"
-  | "int", [t] ->
-      let%bind () = assert_t_nat t in
-      ok ("INT", t_int ())
-  | "int", _ -> simple_fail "bad number of params to int"
-  | name, _ -> fail @@ unrecognized_constant name
+  let ct = Operators.Typer.constant_typers in
+  let%bind v =
+    trace_option (unrecognized_constant name) @@
+    Map.String.find_opt name ct in
+  let (arity, typer) = v in
+  let%bind () =
+    let l = List.length lst in
+    trace_strong (wrong_arity name arity l) @@
+    Assert.assert_true (arity = l) in
+  let aux = fun (predicate, typer') ->
+    match predicate lst with
+    | true -> typer' lst tv_opt
+    | false -> dummy_fail
+  in
+  bind_find_map_list (simple_error "typing: unrecognized constant") aux typer
 
 let untype_type_value (t:O.type_value) : (I.type_expression) result =
   match t.simplified with

@@ -60,6 +60,9 @@ let simple_error str () = mk_error ~title:str ()
 
 let simple_fail str = fail @@ simple_error str
 
+(* To be used when wrapped by a "trace_strong" for instance *)
+let dummy_fail = simple_fail "dummy"
+
 let map f = function
   | Ok x -> f x
   | Errors _ as e -> e
@@ -153,6 +156,18 @@ let bind_fold_list f init lst =
     f x y
   in
   List.fold_left aux (ok init) lst
+
+let bind_find_map_list error f lst =
+  let rec aux lst =
+    match lst with
+    | [] -> fail error
+    | hd :: tl -> (
+        match f hd with
+        | Ok x -> ok x
+        | Errors _ -> aux tl
+      )
+  in
+  aux lst
 
 let bind_list_iter f lst =
   let aux () y = f y in

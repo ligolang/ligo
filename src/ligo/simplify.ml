@@ -10,18 +10,8 @@ let pseq_to_list = function
   | Some lst -> npseq_to_list lst
 let get_value : 'a Raw.reg -> 'a = fun x -> x.value
 
-let type_constants = [
-  ("unit", 0) ;
-  ("string", 0) ;
-  ("nat", 0) ;
-  ("int", 0) ;
-  ("bool", 0) ;
-  ("operation", 0) ;
-  ("list", 1) ;
-  ("option", 1) ;
-  ("set", 1) ;
-  ("map", 2) ;
-]
+let type_constants = Operators.Simplify.type_constants
+let constants = Operators.Simplify.constants
 
 let rec simpl_type_expression (t:Raw.type_expr) : type_expression result =
   match t with
@@ -75,12 +65,6 @@ and simpl_list_type_expression (lst:Raw.type_expr list) : type_expression result
   | lst ->
       let%bind lst = bind_list @@ List.map simpl_type_expression lst in
       ok @@ T_tuple lst
-
-let constants = [
-  ("get_force", 2) ;
-  ("size", 1) ;
-  ("int", 1) ;
-]
 
 let rec simpl_expression (t:Raw.expr) : ae result =
   let return x = ok @@ ae x in
