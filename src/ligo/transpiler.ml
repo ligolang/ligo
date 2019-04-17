@@ -343,9 +343,10 @@ and translate_lambda env l tv =
   let%bind empty_env =
     let%bind input = translate_type input_type in
     ok Environment.(add (binder, input) empty) in
-  let (body_fvs, result_fvs) = AST.Free_variables.(
+  let ((_body_bounds , body_fvs) , result_fvs) = AST.Free_variables.(
       let bindings = singleton binder in
-      block bindings body , annotated_expression bindings result
+      let ((body_bounds , _) as b) = block' bindings body in
+      b , annotated_expression body_bounds result
     ) in
   match (body_fvs, result_fvs) with
   | [] , [] -> (

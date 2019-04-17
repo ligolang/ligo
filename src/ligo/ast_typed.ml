@@ -267,10 +267,15 @@ module Free_variables = struct
     match e with
     | E_lambda l ->
         let b' = union (singleton l.binder) b in
-        union (annotated_expression b' l.result) (block b' l.body)
+        let (b'', frees) = block' b' l.body in
+        union (annotated_expression b'' l.result) frees
     | E_literal _ -> empty
     | E_constant (_ , lst) -> unions @@ List.map self lst
-    | E_variable name -> if mem name b then empty else singleton name
+    | E_variable name -> (
+        match mem name b with
+        | true -> empty
+        | false -> singleton name
+      )
     | E_application (a, b) -> unions @@ List.map self [ a ; b ]
     | E_tuple lst -> unions @@ List.map self lst
     | E_constructor (_ , a) -> self a
@@ -278,7 +283,7 @@ module Free_variables = struct
     | E_record_accessor (a, _) -> self a
     | E_tuple_accessor (a, _) -> self a
     | E_list lst -> unions @@ List.map self lst
-    | E_map m -> unions @@ List.map self @@ List.concat  @@ List.map (fun (a, b) -> [ a ; b ]) m
+    | E_map m -> unions @@ List.map self @@ List.concat @@ List.map (fun (a, b) -> [ a ; b ]) m
     | E_look_up (a , b) -> unions @@ List.map self [ a ; b ]
     | E_matching (a , cs) -> union (self a) (matching_expression b cs)
 
@@ -295,11 +300,14 @@ module Free_variables = struct
     | I_patch (_ , _ , a) -> b , annotated_expression b a
     | I_matching (a , cs) -> b , union (annotated_expression b a) (matching_block b cs)
 
-  and block : bindings -> block -> bindings = fun b bl ->
+  and block' : bindings -> block -> (bindings * bindings) = fun b bl ->
     let aux = fun (binds, frees) cur ->
       let (binds', frees') = instruction' binds cur in
       (binds', union frees frees') in
-    let (_, frees) = List.fold_left aux (b , []) bl in
+    List.fold_left aux (b , []) bl
+
+  and block : bindings -> block -> bindings = fun b bl ->
+    let (_ , frees) = block' b bl in
     frees
 
   and matching : type a . (bindings -> a -> bindings) -> bindings -> a matching -> bindings = fun f b m ->
