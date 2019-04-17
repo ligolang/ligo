@@ -336,23 +336,32 @@ and translate_lambda_shallow env l tv =
 
 and translate_lambda env l tv =
   let { binder ; input_type ; output_type ; body ; result } : AST.lambda = l in
-  (* Try to type it in an empty env, if it succeeds, transpiles it as a quote value, else, as a closure expression. *)
+  (* Try to translate it in an empty env, if it succeeds, transpiles it as a quote value, else, as a closure expression. *)
   let%bind init_env =
     let%bind input = translate_type input_type in
+    ok Environment.(add (binder, input) env) in
+  let%bind empty_env =
+    let%bind input = translate_type input_type in
     ok Environment.(add (binder, input) empty) in
-  match to_option (translate_block init_env body)  with
-  | Some ((_, e) as body) -> (
-      match to_option (translate_annotated_expression e.post_environment result) with
-      | Some result -> (
-          let capture_type = No_capture in
-          let%bind input = translate_type input_type in
-          let%bind output = translate_type output_type in
-          let content = {binder;input;output;body;result;capture_type} in
-          ok (E_literal (D_function {capture=None;content}), tv, env)
-        )
-      | _ -> translate_lambda_shallow init_env l tv
+  let (body_fvs, result_fvs) = AST.Free_variables.(
+      let bindings = singleton binder in
+      block bindings body , annotated_expression bindings result
+    ) in
+  match (body_fvs, result_fvs) with
+  | [] , [] -> (
+      let%bind ((_, e) as body') = translate_block empty_env body in
+      let%bind result' = translate_annotated_expression e.post_environment result in
+      trace (simple_error "translate quote") @@
+      let capture_type = No_capture in
+      let%bind input = translate_type input_type in
+      let%bind output = translate_type output_type in
+      let content = {binder;input;output;body=body';result=result';capture_type} in
+      ok (E_literal (D_function {capture=None;content}), tv, env)
     )
-  | _ -> translate_lambda_shallow init_env l tv
+  | _ -> (
+      trace (simple_error "translate lambda shallow") @@
+      translate_lambda_shallow init_env l tv
+    )
 
 let translate_declaration env (d:AST.declaration) : toplevel_statement result =
   match d with
@@ -390,30 +399,29 @@ let functionalize (e:AST.annotated_expression) : AST.lambda * AST.type_value =
   }, Combinators.(t_function (t_unit ()) t ())
 
 let translate_entry (lst:AST.program) (name:string) : anon_function result =
-  let rec aux acc (lst:AST.program) =
-    match lst with
-    | [] -> None
-    | hd :: tl -> (
-        let AST.Declaration_constant an = temp_unwrap_loc hd in
-        if an.name = name
-        then (
-          match an.annotated_expression.expression with
-          | E_lambda l -> Some (acc, l, an.annotated_expression.type_annotation)
-          | _ ->
-              let (a, b) = functionalize an.annotated_expression in
-              Some (acc, a, b)
-        ) else (
-          aux ((AST.I_declaration an) :: acc) tl
-        )
-      )
-  in
   let%bind (lst', l, tv) =
+    let rec aux acc (lst:AST.program) =
+      match lst with
+      | [] -> None
+      | hd :: tl -> (
+          let (AST.Declaration_constant an) = temp_unwrap_loc hd in
+          match an.name = name with
+          | true -> (
+              match an.annotated_expression.expression with
+              | E_lambda l -> Some (acc, l, an.annotated_expression.type_annotation)
+              | _ ->
+                  let (a, b) = functionalize an.annotated_expression in
+                  Some (acc, a, b)
+            )
+          | false -> aux (acc @ [AST.I_declaration an]) tl
+        )
+    in
     let%bind (lst', l, tv) =
       trace_option (simple_error "no entry-point with given name")
       @@ aux [] lst in
-    ok (List.rev lst', l, tv) in
+    ok (lst', l, tv) in
   let l' = {l with body = lst' @ l.body} in
-  trace (simple_error "translate entry")
+  trace (simple_error "translating entry")
   @@ translate_main l' tv
 
 open Combinators

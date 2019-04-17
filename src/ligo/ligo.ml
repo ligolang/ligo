@@ -173,7 +173,13 @@ let easy_run_typed
   let%bind mini_c_value = transpile_value input in
 
   let%bind mini_c_result =
-    trace (simple_error "run mini_c") @@
+    let error =
+      let title () = "run Mini_c" in
+      let content () =
+        Format.asprintf "\n%a" Mini_c.PP.function_ mini_c_main.content
+      in
+      error title content in
+    trace error @@
     Mini_c.Run.run_entry mini_c_main mini_c_value in
   let%bind typed_result =
     let%bind main_result_type =

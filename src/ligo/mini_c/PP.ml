@@ -105,7 +105,9 @@ and statement ppf ((s, _) : statement) = match s with
   | S_while (e, b) -> fprintf ppf "while (%a) %a" expression e block b
 
 and block ppf ((b, _):block) =
-  fprintf ppf "{  @;@[<v 2>%a@]@;}" (pp_print_list ~pp_sep:(tag "@;") statement) b
+  match b with
+  | [] -> fprintf ppf "{}"
+  | b -> fprintf ppf "{@;  @[<v>%a@]@;}" (pp_print_list ~pp_sep:(tag "@;") statement) b
 
 let tl_statement ppf (ass, _) = assignment ppf ass
 

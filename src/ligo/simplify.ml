@@ -242,7 +242,16 @@ and simpl_tuple_expression (lst:Raw.expr list) : ae result =
 and simpl_local_declaration (t:Raw.local_decl) : (instruction * named_expression) result =
   match t with
   | LocalData d -> simpl_data_declaration d
-  | LocalLam _ -> simple_fail "no local lambdas yet"
+  | LocalLam l -> simpl_lambda_declaration l
+
+and simpl_lambda_declaration : Raw.lambda_decl -> (instruction * named_expression) result =
+  fun l ->
+  match l with
+  | FunDecl f ->
+      let%bind e = simpl_fun_declaration (f.value) in
+      ok (I_assignment e, e)
+  | ProcDecl _ -> simple_fail "no local procedure yet"
+  | EntryDecl _ -> simple_fail "no local entry-point yet"
 
 and simpl_data_declaration (t:Raw.data_decl) : (instruction * named_expression) result =
   let return x = ok (I_assignment x, x) in
@@ -276,6 +285,70 @@ and simpl_param : Raw.param_decl -> named_type_expression result = fun t ->
       let%bind type_expression = simpl_type_expression c.param_type in
       ok { type_name ; type_expression }
 
+and simpl_fun_declaration : Raw.fun_decl -> named_expression result = fun x ->
+  let open! Raw in
+  let {name;param;ret_type;local_decls;block;return} : fun_decl = x in
+  (match npseq_to_list param.value.inside with
+   | [] -> simple_fail "function without parameters are not allowed"
+   | [a] -> (
+       let%bind input = simpl_param a in
+       let name = name.value in
+       let binder = input.type_name in
+       let input_type = input.type_expression in
+       let%bind local_declarations =
+         let%bind tmp = bind_list
+           @@ List.map simpl_local_declaration local_decls in
+         ok (List.map fst tmp) in
+       let%bind instructions = bind_list
+         @@ List.map simpl_statement
+         @@ npseq_to_list block.value.statements in
+       let%bind result = simpl_expression return in
+       let%bind output_type = simpl_type_expression ret_type in
+       let body = local_declarations @ instructions in
+       let expression = E_lambda {binder ; input_type ; output_type ; result ; body } in
+       let type_annotation = Some (T_function (input_type, output_type)) in
+       ok {name;annotated_expression = {expression;type_annotation}}
+     )
+   | lst -> (
+       let%bind params = bind_map_list simpl_param lst in
+       let input =
+         let type_expression = T_record (
+             SMap.of_list
+             @@ List.map (fun (x:named_type_expression) -> x.type_name, x.type_expression)
+               params
+           ) in
+         { type_name = "arguments" ; type_expression } in
+       let binder = input.type_name in
+       let input_type = input.type_expression in
+       let%bind local_declarations =
+         let%bind typed = bind_map_list simpl_local_declaration local_decls in
+         ok (List.map fst typed)
+       in
+       let%bind output_type = simpl_type_expression ret_type in
+       let%bind instructions = bind_list
+         @@ List.map simpl_statement
+         @@ npseq_to_list block.value.statements in
+       let%bind (body, result) =
+         let renamings =
+           let aux ({type_name}:named_type_expression) : Rename.Value.renaming =
+             type_name, ("arguments", [Access_record type_name])
+           in
+           List.map aux params
+         in
+         let%bind r =
+           let%bind tmp = simpl_expression return in
+           Rename.Value.rename_annotated_expression renamings tmp
+         in
+         let%bind b =
+           let tmp = local_declarations @ instructions in
+           Rename.Value.rename_block renamings tmp
+         in
+         ok (b, r) in
+       let expression = E_lambda {binder ; input_type ; output_type ; result ; body } in
+       let type_annotation = Some (T_function (input_type, output_type)) in
+       ok {name = name.value;annotated_expression = {expression;type_annotation}}
+     )
+  )
 and simpl_declaration : Raw.declaration -> declaration Location.wrap result = fun t ->
   let open! Raw in
   let loc : 'a . 'a Raw.reg -> _ -> _ = fun x v -> Location.wrap ~loc:(File x.region) v in
@@ -285,80 +358,18 @@ and simpl_declaration : Raw.declaration -> declaration Location.wrap result = fu
       let%bind type_expression = simpl_type_expression type_expr in
       ok @@ loc x @@ Declaration_type {type_name=name.value;type_expression}
   | ConstDecl x ->
-      let {name;const_type;init} = x.value in
-      let%bind expression = simpl_expression init in
-      let%bind t = simpl_type_expression const_type in
-      let type_annotation = Some t in
-      ok @@ loc x @@ Declaration_constant {name=name.value;annotated_expression={expression with type_annotation}}
+      let simpl_const_decl = fun {name;const_type;init} ->
+        let%bind expression = simpl_expression init in
+        let%bind t = simpl_type_expression const_type in
+        let type_annotation = Some t in
+        ok @@ Declaration_constant {name=name.value;annotated_expression={expression with type_annotation}}
+      in
+      bind_map_location simpl_const_decl (Location.lift_region x)
   | LambdaDecl (FunDecl x) ->
-      let {name;param;ret_type;local_decls;block;return} : fun_decl = x.value in
-      (match npseq_to_list param.value.inside with
-       | [] -> simple_fail "function without parameters are not allowed"
-       | [a] -> (
-           let%bind input = simpl_param a in
-           let name = name.value in
-           let binder = input.type_name in
-           let input_type = input.type_expression in
-           let%bind local_declarations =
-             let%bind tmp = bind_list
-               @@ List.map simpl_local_declaration local_decls in
-             ok (List.map fst tmp) in
-           let%bind instructions = bind_list
-             @@ List.map simpl_statement
-             @@ npseq_to_list block.value.statements in
-           let%bind result = simpl_expression return in
-           let%bind output_type = simpl_type_expression ret_type in
-           let body = local_declarations @ instructions in
-           let decl =
-             let expression = E_lambda {binder ; input_type ; output_type ; result ; body } in
-             let type_annotation = Some (T_function (input_type, output_type)) in
-             Declaration_constant {name;annotated_expression = {expression;type_annotation}}
-           in
-           ok @@ loc x @@ decl
-         )
-       | lst -> (
-           let%bind params = bind_map_list simpl_param lst in
-           let input =
-             let type_expression = T_record (
-                 SMap.of_list
-                 @@ List.map (fun (x:named_type_expression) -> x.type_name, x.type_expression)
-                   params
-               ) in
-             { type_name = "arguments" ; type_expression } in
-           let binder = input.type_name in
-           let input_type = input.type_expression in
-           let%bind local_declarations =
-             let%bind typed = bind_map_list simpl_local_declaration local_decls in
-             ok (List.map fst typed)
-           in
-           let%bind output_type = simpl_type_expression ret_type in
-           let%bind instructions = bind_list
-             @@ List.map simpl_statement
-             @@ npseq_to_list block.value.statements in
-           let%bind (body, result) =
-             let renamings =
-               let aux ({type_name}:named_type_expression) : Rename.Value.renaming =
-                 type_name, ("arguments", [Access_record type_name])
-               in
-               List.map aux params
-             in
-             let%bind r =
-               let%bind tmp = simpl_expression return in
-               Rename.Value.rename_annotated_expression renamings tmp
-             in
-             let%bind b =
-               let tmp = local_declarations @ instructions in
-               Rename.Value.rename_block renamings tmp
-             in
-             ok (b, r) in
-           let decl =
-             let expression = E_lambda {binder ; input_type ; output_type ; result ; body } in
-             let type_annotation = Some (T_function (input_type, output_type)) in
-             Declaration_constant {name = name.value;annotated_expression = {expression;type_annotation}}
-           in
-           ok @@ loc x @@ decl
-         )
-      )
+      let aux f x =
+        let%bind x' = f x in
+        ok @@ Declaration_constant x' in
+      bind_map_location (aux simpl_fun_declaration) (Location.lift_region x)
   | LambdaDecl (ProcDecl _) -> simple_fail "no proc declaration yet"
   | LambdaDecl (EntryDecl _)-> simple_fail "no entry point yet"
 

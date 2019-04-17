@@ -41,6 +41,58 @@ let complex_function () : unit result =
     @@ [0 ; 2 ; 42 ; 163 ; -1] in
   ok ()
 
+let closure () : unit result =
+  let%bind program = type_file "./contracts/closure.ligo" in
+  let%bind _foo = trace (simple_error "test foo") @@
+    let aux n =
+      let open AST_Typed.Combinators in
+      let input = e_a_int n in
+      let%bind result = easy_run_typed "foo" program input in
+      let expected = e_a_int ( n + 1 ) in
+      AST_Typed.assert_value_eq (expected, result)
+    in
+    bind_list
+    @@ List.map aux
+    @@ [0 ; 2 ; 42 ; 163 ; -1] in
+  ok ()
+
+let shared_function () : unit result =
+  let%bind program = type_file "./contracts/function-shared.ligo" in
+  let%bind _inc = trace (simple_error "test inc") @@
+    let aux n =
+      let open AST_Typed.Combinators in
+      let input = e_a_int n in
+      let%bind result = easy_run_typed "inc" program input in
+      let expected = e_a_int ( n + 1 ) in
+      AST_Typed.assert_value_eq (expected, result)
+    in
+    bind_list
+    @@ List.map aux
+    @@ [0 ; 2 ; 42 ; 163 ; -1] in
+  let%bind _double_inc = trace (simple_error "test double_inc") @@
+    let aux n =
+      let open AST_Typed.Combinators in
+      let input = e_a_int n in
+      let%bind result = easy_run_typed "double_inc" program input in
+      let expected = e_a_int ( n + 2 ) in
+      AST_Typed.assert_value_eq (expected, result)
+    in
+    bind_list
+    @@ List.map aux
+    @@ [0 ; 2 ; 42 ; 163 ; -1] in
+  let%bind _foo = trace (simple_error "test foo") @@
+    let aux n =
+      let open AST_Typed.Combinators in
+      let input = e_a_int n in
+      let%bind result = easy_run_typed "foo" program input in
+      let expected = e_a_int ( 2 * n + 3 ) in
+      AST_Typed.assert_value_eq (expected, result)
+    in
+    bind_list
+    @@ List.map aux
+    @@ [0 ; 2 ; 42 ; 163 ; -1] in
+  ok ()
+
 let bool_expression () : unit result =
   let%bind program = type_file "./contracts/boolean_operators.ligo" in
   let aux (name, f) =
@@ -272,15 +324,6 @@ let list () : unit result =
     let lst' = List.map e_a_int lst in
     e_a_list lst' (t_int ())
   in
-  (* let%bind _get_force = trace (simple_error "hd_force") @@
-   *   let aux n =
-   *     let input = ez [n ; 12] in
-   *     let%bind result = easy_run_typed "hdf" program input in
-   *     let expect = AST_Typed.Combinators.(e_a_int n) in
-   *     AST_Typed.assert_value_eq (expect, result)
-   *   in
-   *   bind_map_list aux [0 ; 42 ; 51 ; 421 ; -3]
-   * in *)
   let%bind _size = trace (simple_error "size") @@
     let aux n =
       let input = ez (List.range n) in
@@ -480,6 +523,8 @@ let main = "Integration (End to End)", [
     test "basic" basic ;
     test "function" function_ ;
     test "complex function" complex_function ;
+    test "closure" closure ;
+    test "shared function" shared_function ;
     test "bool" bool_expression ;
     test "arithmetic" arithmetic ;
     test "unit" unit_expression ;

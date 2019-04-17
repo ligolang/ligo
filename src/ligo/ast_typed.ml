@@ -170,6 +170,12 @@ module PP = struct
     | Some _ -> fprintf ppf "@[<v>%a:%a@]" expression ae.expression type_value ae.type_annotation
     | _ -> fprintf ppf "@[<v>%a@]" expression ae.expression
 
+  and lambda ppf l =
+    let {binder;input_type;output_type;result;body} = l in
+    fprintf ppf "lambda (%s:%a) : %a {@;  @[<v>%a@]@;} return %a"
+      binder type_value input_type type_value output_type
+      block body annotated_expression result
+
   and expression ppf (e:expression) : unit =
     match e with
     | E_literal l -> literal ppf l
@@ -177,10 +183,7 @@ module PP = struct
     | E_constructor (c, lst) -> fprintf ppf "%s(%a)" c annotated_expression lst
     | E_variable a -> fprintf ppf "%s" a
     | E_application (f, arg) -> fprintf ppf "(%a) (%a)" annotated_expression f annotated_expression arg
-    | E_lambda {binder;input_type;output_type;result;body} ->
-        fprintf ppf "lambda (%s:%a) : %a {%a} return %a"
-          binder type_value input_type type_value output_type
-          block body annotated_expression result
+    | E_lambda l -> fprintf ppf "%a" lambda l
     | E_tuple_accessor (ae, i) -> fprintf ppf "%a.%d" annotated_expression ae i
     | E_record_accessor (ae, s) -> fprintf ppf "%a.%s" annotated_expression ae s
     | E_tuple lst -> fprintf ppf "tuple[@;  @[<v>%a@]@;]" (list_sep annotated_expression (tag ",@;")) lst
@@ -249,6 +252,68 @@ module PP = struct
 
 end
 
+module Free_variables = struct
+
+  type bindings = string list
+  let mem : string -> bindings -> bool = List.mem
+  let singleton : string -> bindings = fun s -> [ s ]
+  let union : bindings -> bindings -> bindings = (@)
+  let unions : bindings list -> bindings = List.concat
+  let empty : bindings = []
+  let of_list : string list -> bindings = fun x -> x
+
+  let rec expression : bindings -> expression -> bindings = fun b e ->
+    let self = annotated_expression b in
+    match e with
+    | E_lambda l ->
+        let b' = union (singleton l.binder) b in
+        union (annotated_expression b' l.result) (block b' l.body)
+    | E_literal _ -> empty
+    | E_constant (_ , lst) -> unions @@ List.map self lst
+    | E_variable name -> if mem name b then empty else singleton name
+    | E_application (a, b) -> unions @@ List.map self [ a ; b ]
+    | E_tuple lst -> unions @@ List.map self lst
+    | E_constructor (_ , a) -> self a
+    | E_record m -> unions @@ List.map self @@ Map.String.to_list m
+    | E_record_accessor (a, _) -> self a
+    | E_tuple_accessor (a, _) -> self a
+    | E_list lst -> unions @@ List.map self lst
+    | E_map m -> unions @@ List.map self @@ List.concat  @@ List.map (fun (a, b) -> [ a ; b ]) m
+    | E_look_up (a , b) -> unions @@ List.map self [ a ; b ]
+    | E_matching (a , cs) -> union (self a) (matching_expression b cs)
+
+  and annotated_expression : bindings -> annotated_expression -> bindings = fun b ae ->
+    expression b ae.expression
+
+  and instruction' : bindings -> instruction -> bindings * bindings = fun b i ->
+    match i with
+    | I_declaration n -> union (singleton n.name) b , (annotated_expression b n.annotated_expression)
+    | I_assignment n -> b , (annotated_expression b n.annotated_expression)
+    | I_skip -> b , empty
+    | I_fail e -> b , annotated_expression b e
+    | I_loop (a , bl) -> b , union (annotated_expression b a) (block b bl)
+    | I_patch (_ , _ , a) -> b , annotated_expression b a
+    | I_matching (a , cs) -> b , union (annotated_expression b a) (matching_block b cs)
+
+  and block : bindings -> block -> bindings = fun b bl ->
+    let aux = fun (binds, frees) cur ->
+      let (binds', frees') = instruction' binds cur in
+      (binds', union frees frees') in
+    let (_, frees) = List.fold_left aux (b , []) bl in
+    frees
+
+  and matching : type a . (bindings -> a -> bindings) -> bindings -> a matching -> bindings = fun f b m ->
+    match m with
+    | Match_bool { match_true = t ; match_false = fa } -> union (f b t) (f b fa)
+    | Match_list { match_nil = n ; match_cons = (hd, tl, c) } -> union (f b n) (f (union (of_list [hd ; tl]) b) c)
+    | Match_option { match_none = n ; match_some = ((opt, _), s) } -> union (f b n) (f (union (singleton opt) b) s)
+    | Match_tuple (lst, a) -> f (union (of_list lst) b) a
+
+  and matching_expression = fun x -> matching annotated_expression x
+
+  and matching_block = fun x -> matching block x
+
+end
 
 module Errors = struct
   let different_kinds a b () =

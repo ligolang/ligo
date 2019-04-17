@@ -30,7 +30,15 @@ let run_node (program:program) (input:Michelson.t) : Michelson.t result =
   ok output
 
 let run_entry (entry:anon_function) (input:value) : value result =
-  let%bind compiled = translate_entry entry in
+  let%bind compiled =
+    let error =
+      let title () = "compile entry" in
+      let content () =
+        Format.asprintf "%a" PP.function_ entry.content
+      in
+      error title content in
+    trace error @@
+    translate_entry entry in
   let%bind input_michelson = translate_value input in
   let%bind ex_ty_value = run_aux compiled input_michelson in
   let%bind (result : value) = Uncompiler.translate_value ex_ty_value in

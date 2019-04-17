@@ -114,7 +114,7 @@ and translate_function ({capture;content}:anon_function) : michelson result =
 and translate_expression ((expr', ty, env) as expr:expression) : michelson result =
   let error_message () = Format.asprintf  "%a" PP.expression expr in
   let%bind (code : michelson) =
-    trace (fun () -> error (thunk "translating expression") error_message ()) @@
+    trace (error (thunk "translating expression") error_message) @@
     match expr' with
     | E_literal v ->
         let%bind v = translate_value v in
@@ -411,16 +411,16 @@ and translate_regular_block ((b, env):block) : michelson result =
     let%bind instruction = translate_statement statement in
     ok (instruction :: lst)
   in
-  let error_message () =
-    let%bind schema_michelson = Environment.to_michelson_type env.pre_environment in
-    ok @@ Format.asprintf "\nblock : %a\nschema : %a\n"
-      PP.block (b, env)
-      Tezos_utils.Micheline.Michelson.pp schema_michelson
-  in
   let%bind codes =
+    let error_message () =
+      let%bind schema_michelson = Environment.to_michelson_type env.pre_environment in
+      ok @@ Format.asprintf "\nblock : %a\nschema : %a\n"
+        PP.block (b, env)
+        Tezos_utils.Micheline.Michelson.pp schema_michelson
+    in
     trace_r (fun () ->
         let%bind error_message = error_message () in
-        ok (fun () -> error (thunk "error translating block")
+        ok (fun () -> error (thunk "translating regular block")
                       (fun () -> error_message)
                       ())) @@
     List.fold_left aux (ok []) b in
@@ -447,9 +447,9 @@ and translate_function_body ({body;result} as f:anon_function_content) : michels
         Tezos_utils.Micheline.Michelson.pp code
     in
     let%bind _ =
-      Trace.trace_tzresult_lwt (fun () -> error (thunk "error parsing function code")
-                                                error_message
-                                                ()) @@
+      Trace.trace_tzresult_lwt (
+        error (thunk "error parsing function code") error_message
+      ) @@
       Tezos_utils.Memory_proto_alpha.parse_michelson code
         input_stack_ty output_stack_ty
     in
@@ -487,7 +487,9 @@ let translate_program (p:program) (entry:string) : compiled_program result =
 
 let translate_entry (p:anon_function) : compiled_program result =
   let {input;output} : anon_function_content = p.content in
-  let%bind body = translate_function_body p.content in
+  let%bind body =
+    trace (simple_error "compile entry body") @@
+    translate_function_body p.content in
   let%bind input = Compiler_type.Ty.type_ input in
   let%bind output = Compiler_type.Ty.type_ output in
   ok ({input;output;body}:compiled_program)
