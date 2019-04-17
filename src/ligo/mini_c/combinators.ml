@@ -80,6 +80,9 @@ let get_last_statement ((b', _):block) : statement result =
 let t_int : type_value = T_base Base_int
 let t_nat : type_value = T_base Base_nat
 
+let t_function x y : type_value = T_function ( x , y )
+let t_pair x y : type_value = T_pair ( x , y )
+
 let quote binder input output body result : anon_function =
   let content : anon_function_content = {
     binder ; input ; output ;

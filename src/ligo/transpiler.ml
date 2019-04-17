@@ -288,7 +288,7 @@ and translate_annotated_expression (env:Environment.t) (ae:AST.annotated_express
             ok (E_make_none o, tv, env)
         | _ -> ok (E_constant (name, lst'), tv, env)
       )
-  | E_lambda l -> translate_lambda env l tv
+  | E_lambda l -> translate_lambda env l
   | E_list lst ->
       let%bind t = Mini_c.Combinators.get_t_list tv in
       let%bind lst' = bind_map_list (translate_annotated_expression env) lst in
@@ -320,7 +320,7 @@ and translate_annotated_expression (env:Environment.t) (ae:AST.annotated_express
           simple_fail "only match bool exprs are translated yet"
     )
 
-and translate_lambda_shallow env l tv =
+and translate_lambda_shallow env l =
   let { binder ; input_type ; output_type ; body ; result } : AST.lambda = l in
   (* Shallow capture. Capture the whole environment. Extend it with a new scope. Append it the input. *)
   let%bind input = translate_type input_type in
@@ -329,20 +329,20 @@ and translate_lambda_shallow env l tv =
   let%bind (_, e) as body = translate_block full_env body in
   let%bind result = translate_annotated_expression e.post_environment result in
   let capture_type = Shallow_capture sub_env in
-  let input = Environment.to_mini_c_type full_env in
+  let input' = Environment.to_mini_c_type full_env in
   let%bind output = translate_type output_type in
-  let content = {binder;input;output;body;result;capture_type} in
+  let tv =
+    let open Combinators in
+    let f = t_function input' output in
+    let env_type = Environment.to_mini_c_type env in
+    t_pair env_type f
+  in
+  let content = {binder;input=input';output;body;result;capture_type} in
   ok (E_function content, tv, env)
 
-and translate_lambda env l tv =
+and translate_lambda env l =
   let { binder ; input_type ; output_type ; body ; result } : AST.lambda = l in
   (* Try to translate it in an empty env, if it succeeds, transpiles it as a quote value, else, as a closure expression. *)
-  let%bind init_env =
-    let%bind input = translate_type input_type in
-    ok Environment.(add (binder, input) env) in
-  let%bind empty_env =
-    let%bind input = translate_type input_type in
-    ok Environment.(add (binder, input) empty) in
   let ((_body_bounds , body_fvs) , result_fvs) = AST.Free_variables.(
       let bindings = singleton binder in
       let ((body_bounds , _) as b) = block' bindings body in
@@ -350,18 +350,22 @@ and translate_lambda env l tv =
     ) in
   match (body_fvs, result_fvs) with
   | [] , [] -> (
+      let%bind empty_env =
+        let%bind input = translate_type input_type in
+        ok Environment.(add (binder, input) empty) in
       let%bind ((_, e) as body') = translate_block empty_env body in
       let%bind result' = translate_annotated_expression e.post_environment result in
       trace (simple_error "translate quote") @@
       let capture_type = No_capture in
       let%bind input = translate_type input_type in
       let%bind output = translate_type output_type in
+      let tv = Combinators.t_function input output in
       let content = {binder;input;output;body=body';result=result';capture_type} in
       ok (E_literal (D_function {capture=None;content}), tv, env)
     )
   | _ -> (
       trace (simple_error "translate lambda shallow") @@
-      translate_lambda_shallow init_env l tv
+      translate_lambda_shallow env l
     )
 
 let translate_declaration env (d:AST.declaration) : toplevel_statement result =
@@ -380,9 +384,8 @@ let translate_program (lst:AST.program) : program result =
   let%bind (statements, _) = List.fold_left aux (ok ([], Environment.empty)) (temp_unwrap_loc_list lst) in
   ok statements
 
-let translate_main (l:AST.lambda) (t:AST.type_value) : anon_function result =
-  let%bind t' = translate_type t in
-  let%bind (expr, _, _) = translate_lambda Environment.empty l t' in
+let translate_main (l:AST.lambda) (_t:AST.type_value) : anon_function result =
+  let%bind (expr, _, _) = translate_lambda Environment.empty l in
   match expr with
   | E_literal (D_function f) -> ok f
   | _ -> simple_fail "main is not a function"

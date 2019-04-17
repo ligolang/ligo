@@ -560,6 +560,7 @@ module Combinators = struct
     type_value (T_sum map) None
 
   let t_function param result ?s () : type_value = type_value (T_function (param, result)) s
+  let t_shallow_closure param result ?s () : type_value = type_value (T_function (param, result)) s
 
   let get_annotation (x:annotated_expression) = x.type_annotation
 

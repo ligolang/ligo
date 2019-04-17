@@ -203,8 +203,8 @@ and translate_expression ((expr', ty, env) as expr:expression) : michelson resul
           ] in
         ok code
     | E_function anon -> (
-        match ty with
-        | T_function (_, _) ->
+        match anon.capture_type with
+        | No_capture ->
             let%bind body = translate_function_body anon in
             let%bind input_type = Compiler_type.type_ anon.input in
             let%bind output_type = Compiler_type.type_ anon.output in
@@ -213,7 +213,7 @@ and translate_expression ((expr', ty, env) as expr:expression) : michelson resul
                 i_pair ;
               ] in
             ok code
-        | T_deep_closure (small_env, _, _) ->
+        | Deep_capture small_env ->
             (* Capture the variable bounds, assemble them. On call, append the input. *)
             let%bind body = translate_function_body anon in
             let%bind capture = Environment.Small.to_mini_c_capture env small_env in
@@ -228,19 +228,18 @@ and translate_expression ((expr', ty, env) as expr:expression) : michelson resul
                 i_pair ;
               ] in
             ok code
-        | T_shallow_closure (_, _, _) ->
+        | Shallow_capture _ ->
             (* Capture the whole environment. *)
             let%bind body = translate_function_body anon in
             let%bind input_type = Compiler_type.type_ anon.input in
             let%bind output_type = Compiler_type.type_ anon.output in
-            let code = seq [
-                dip i_dup ; i_swap ;
-                i_lambda input_type output_type body ;
-                i_piar ;
-                i_pair ;
+            let code = seq [ (* stack :: env *)
+                dip i_dup ; i_swap ; (* env :: stack :: env *)
+                i_lambda input_type output_type body ; (* lambda :: env :: stack :: env *)
+                i_piar ; (* (env * lambda) :: stack :: env *)
+                i_pair ; (* new_stack :: env *)
               ] in
             ok code
-        | _ -> simple_fail "expected function code"
       )
     | E_Cond (c, a, b) -> (
         let%bind c' = translate_expression c in
@@ -431,7 +430,9 @@ and translate_function_body ({body;result} as f:anon_function_content) : michels
   let%bind body = translate_regular_block body in
   let%bind expr = translate_expression result in
   let code = seq [
+      i_comment "function body" ;
       body ;
+      i_comment "function result" ;
       i_push_unit ; expr ; i_car ;
       dip i_drop ;
     ] in
@@ -443,8 +444,10 @@ and translate_function_body ({body;result} as f:anon_function_content) : michels
     let output_stack_ty = Stack.(output_ty @: nil) in
     let error_message () =
       Format.asprintf
-        "\ncode : %a\n"
+        "\ncode : %a\ninput : %a\noutput : %a\n"
         Tezos_utils.Micheline.Michelson.pp code
+        PP.type_ f.input
+        PP.type_ f.output
     in
     let%bind _ =
       Trace.trace_tzresult_lwt (
