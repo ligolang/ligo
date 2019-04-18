@@ -68,12 +68,12 @@ module Ty = struct
         let%bind (Ex_ty capture) = environment_small c in
         let%bind (Ex_ty arg) = type_ arg in
         let%bind (Ex_ty ret) = type_ ret in
-        ok @@ Ex_ty Contract_types.(pair capture @@ lambda (pair capture arg) ret)
+        ok @@ Ex_ty Contract_types.(pair capture @@ lambda (pair arg capture) ret)
     | T_shallow_closure (c, arg, ret) ->
         let%bind (Ex_ty capture) = environment c in
         let%bind (Ex_ty arg) = type_ arg in
         let%bind (Ex_ty ret) = type_ ret in
-        ok @@ Ex_ty Contract_types.(pair capture @@ lambda (pair capture arg) ret)
+        ok @@ Ex_ty Contract_types.(pair capture @@ lambda (pair arg capture) ret)
     | T_map (k, v) ->
         let%bind (Ex_comparable_ty k') = comparable_type k in
         let%bind (Ex_ty v') = type_ v in
@@ -148,12 +148,12 @@ let rec type_ : type_value -> O.michelson result =
       let%bind capture = environment_small c in
       let%bind arg = type_ arg in
       let%bind ret = type_ ret in
-      ok @@ O.t_pair capture (O.t_lambda (O.t_pair capture arg) ret)
+      ok @@ O.t_pair capture (O.t_lambda (O.t_pair arg capture) ret)
   | T_shallow_closure (c, arg, ret) ->
       let%bind capture = environment c in
       let%bind arg = type_ arg in
       let%bind ret = type_ ret in
-      ok @@ O.t_pair capture (O.t_lambda (O.t_pair capture arg) ret)
+      ok @@ O.t_pair capture (O.t_lambda (O.t_pair arg capture) ret)
 
 and environment_element (name, tyv) =
   let%bind michelson_type = type_ tyv in
