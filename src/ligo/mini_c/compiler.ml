@@ -98,23 +98,25 @@ and translate_function ({capture;content}:anon_function) : michelson result =
   let {capture_type } = content in
   match capture, capture_type with
   | _, No_capture ->
-      let%bind body = translate_function_body content in
+      let%bind body = translate_quote_body content in
       ok @@ seq [ body ]
-  | Some value, Deep_capture _ -> (
-      let%bind body = translate_function_body content in
+  | Some value, Deep_capture senv -> (
+      let senv_type = Compiler_environment.Small.to_mini_c_type senv in
+      let%bind body = translate_closure_body content senv_type in
       let%bind capture_m = translate_value value in
       ok @@ d_pair capture_m body
     )
-  | Some value, Shallow_capture _ ->
-      let%bind body = translate_function_body content in
+  | Some value, Shallow_capture env ->
+      let env_type = Compiler_environment.to_mini_c_type env in
+      let%bind body = translate_closure_body content env_type in
       let%bind capture_m = translate_value value in
       ok @@ d_pair capture_m body
-  | _ -> simple_fail "translating closure without capture"
+  | _ -> simple_fail "compiling closure without capture"
 
 and translate_expression ((expr', ty, env) as expr:expression) : michelson result =
   let error_message () = Format.asprintf  "%a" PP.expression expr in
   let%bind (code : michelson) =
-    trace (error (thunk "translating expression") error_message) @@
+    trace (error (thunk "compiling expression") error_message) @@
     match expr' with
     | E_literal v ->
         let%bind v = translate_value v in
@@ -126,6 +128,7 @@ and translate_expression ((expr', ty, env) as expr:expression) : michelson resul
     | E_application((_, f_ty, _) as f, arg) -> (
         match f_ty with
         | T_function _ -> (
+            trace (simple_error "Compiling quote application") @@
             let%bind f = translate_expression f in
             let%bind arg = translate_expression arg in
             ok @@ seq [
@@ -150,16 +153,24 @@ and translate_expression ((expr', ty, env) as expr:expression) : michelson resul
               i_pair ; (* expr :: env *)
             ]
           )
-        | T_shallow_closure (env', _, _) -> (
-            let%bind add = Environment.to_michelson_anonymous_add env' in
+        | T_shallow_closure (_, _, _) -> (
+            trace (simple_error "Compiling shallow closure application") @@
             let%bind f = translate_expression f in
             let%bind arg = translate_expression arg in
             ok @@ seq [
-              f ; i_unpair ; (* closure :: expr :: env *)
-              dip arg ; dip i_unpair ; (* closure :: arg :: expr :: env *)
-              i_unpair ; dip add ; (* fun :: full_arg :: expr :: env *)
-              i_swap ; prim I_EXEC ;
-              i_pair ; (* expr :: env *)
+              i_comment "(* unit :: env *)" ;
+              i_comment "compute closure" ;
+              f ;
+              i_comment "(* (closure * unit) :: env *)" ;
+              i_comment "compute arg" ;
+              arg ;
+              i_comment "(* (arg * closure * unit) :: env *)" ;
+              i_comment "separate stuff" ;
+              i_unpair ; dip i_unpair ; dip i_unpair ;
+              i_comment "(* arg :: capture :: f :: unit :: env *)" ;
+              i_piar ;
+              i_exec ; (* output :: stack :: env *)
+              i_pair ; (* stack :: env *)
             ]
           )
         | _ -> simple_fail "E_applicationing something not appliable"
@@ -205,7 +216,7 @@ and translate_expression ((expr', ty, env) as expr:expression) : michelson resul
     | E_function anon -> (
         match anon.capture_type with
         | No_capture ->
-            let%bind body = translate_function_body anon in
+            let%bind body = translate_quote_body anon in
             let%bind input_type = Compiler_type.type_ anon.input in
             let%bind output_type = Compiler_type.type_ anon.output in
             let code = seq [
@@ -215,7 +226,8 @@ and translate_expression ((expr', ty, env) as expr:expression) : michelson resul
             ok code
         | Deep_capture small_env ->
             (* Capture the variable bounds, assemble them. On call, append the input. *)
-            let%bind body = translate_function_body anon in
+            let senv_type = Compiler_environment.Small.to_mini_c_type small_env in
+            let%bind body = translate_closure_body anon senv_type in
             let%bind capture = Environment.Small.to_mini_c_capture env small_env in
             let%bind capture = translate_expression capture in
             let%bind input_type = Compiler_type.type_ anon.input in
@@ -228,15 +240,22 @@ and translate_expression ((expr', ty, env) as expr:expression) : michelson resul
                 i_pair ;
               ] in
             ok code
-        | Shallow_capture _ ->
+        | Shallow_capture env ->
             (* Capture the whole environment. *)
-            let%bind body = translate_function_body anon in
-            let%bind input_type = Compiler_type.type_ anon.input in
+            let env_type = Compiler_environment.to_mini_c_type env in
+            let%bind body = translate_closure_body anon env_type in
+            let%bind input_type =
+              let input_type = Combinators.t_pair anon.input env_type in
+              Compiler_type.type_ input_type in
             let%bind output_type = Compiler_type.type_ anon.output in
             let code = seq [ (* stack :: env *)
+                i_comment "env on top" ;
                 dip i_dup ; i_swap ; (* env :: stack :: env *)
+                i_comment "lambda" ;
                 i_lambda input_type output_type body ; (* lambda :: env :: stack :: env *)
+                i_comment "pair env + lambda" ;
                 i_piar ; (* (env * lambda) :: stack :: env *)
+                i_comment "new stack" ;
                 i_pair ; (* new_stack :: env *)
               ] in
             ok code
@@ -289,7 +308,7 @@ and translate_expression ((expr', ty, env) as expr:expression) : michelson resul
 and translate_statement ((s', w_env) as s:statement) : michelson result =
   let error_message () = Format.asprintf "%a" PP.statement s in
   let%bind (code : michelson) =
-    trace (fun () -> error (thunk "translating statement") error_message ()) @@ match s' with
+    trace (fun () -> error (thunk "compiling statement") error_message ()) @@ match s' with
     | S_environment_extend ->
         ok @@ Environment.to_michelson_extend w_env.pre_environment
     | S_environment_restrict ->
@@ -419,14 +438,14 @@ and translate_regular_block ((b, env):block) : michelson result =
     in
     trace_r (fun () ->
         let%bind error_message = error_message () in
-        ok (fun () -> error (thunk "translating regular block")
+        ok (fun () -> error (thunk "compiling regular block")
                       (fun () -> error_message)
                       ())) @@
     List.fold_left aux (ok []) b in
   let code = seq (List.rev codes) in
   ok code
 
-and translate_function_body ({body;result} as f:anon_function_content) : michelson result =
+and translate_quote_body ({body;result} as f:anon_function_content) : michelson result =
   let%bind body = translate_regular_block body in
   let%bind expr = translate_expression result in
   let code = seq [
@@ -451,7 +470,44 @@ and translate_function_body ({body;result} as f:anon_function_content) : michels
     in
     let%bind _ =
       Trace.trace_tzresult_lwt (
-        error (thunk "error parsing function code") error_message
+        error (thunk "error parsing quote code") error_message
+      ) @@
+      Tezos_utils.Memory_proto_alpha.parse_michelson code
+        input_stack_ty output_stack_ty
+    in
+    ok ()
+  in
+
+  ok code
+
+and translate_closure_body ({body;result} as f:anon_function_content) (env_type:type_value) : michelson result =
+  let%bind body = translate_regular_block body in
+  let%bind expr = translate_expression result in
+  let code = seq [
+      i_comment "function body" ;
+      body ;
+      i_comment "function result" ;
+      i_push_unit ; expr ; i_car ;
+      dip i_drop ;
+    ] in
+
+  let%bind _assert_type =
+    let input = Combinators.t_pair env_type f.input in
+    let output = f.output in
+    let%bind (Ex_ty input_ty) = Compiler_type.Ty.type_ input in
+    let%bind (Ex_ty output_ty) = Compiler_type.Ty.type_ output in
+    let input_stack_ty = Stack.(input_ty @: nil) in
+    let output_stack_ty = Stack.(output_ty @: nil) in
+    let error_message () =
+      Format.asprintf
+        "\ncode : %a\ninput : %a\noutput : %a\n"
+        Tezos_utils.Micheline.Michelson.pp code
+        PP.type_ input
+        PP.type_ output
+    in
+    let%bind _ =
+      Trace.trace_tzresult_lwt (
+        error (thunk "error parsing closure code") error_message
       ) @@
       Tezos_utils.Memory_proto_alpha.parse_michelson code
         input_stack_ty output_stack_ty
@@ -483,7 +539,7 @@ let translate_program (p:program) (entry:string) : compiled_program result =
     Tezos_utils.List.find_map is_main p
   in
   let {input;output} : anon_function_content = main in
-  let%bind body = translate_function_body main in
+  let%bind body = translate_quote_body main in
   let%bind input = Compiler_type.Ty.type_ input in
   let%bind output = Compiler_type.Ty.type_ output in
   ok ({input;output;body}:compiled_program)
@@ -492,7 +548,7 @@ let translate_entry (p:anon_function) : compiled_program result =
   let {input;output} : anon_function_content = p.content in
   let%bind body =
     trace (simple_error "compile entry body") @@
-    translate_function_body p.content in
+    translate_quote_body p.content in
   let%bind input = Compiler_type.Ty.type_ input in
   let%bind output = Compiler_type.Ty.type_ output in
   ok ({input;output;body}:compiled_program)

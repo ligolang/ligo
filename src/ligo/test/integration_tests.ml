@@ -48,7 +48,7 @@ let closure () : unit result =
       let open AST_Typed.Combinators in
       let input = e_a_int n in
       let%bind result = easy_run_typed "foo" program input in
-      let expected = e_a_int ( n + 1 ) in
+      let expected = e_a_int ( 2 * n ) in
       AST_Typed.assert_value_eq (expected, result)
     in
     bind_list

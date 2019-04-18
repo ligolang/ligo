@@ -109,7 +109,7 @@ let record_access_to_lr : type_value -> type_value AST.type_name_map -> string -
 let rec translate_block env (b:AST.block) : block result =
   let aux = fun (precs, env) instruction ->
     let%bind lst = translate_instruction env instruction in
-    let env' = List.fold_left (fun _ i -> (snd i).post_environment) env lst in
+    let env' = List.fold_left (fun _ i -> (snd i).post_environment) env lst in (* Get last environment *)
     ok (precs @ lst, env') in
   let%bind (instructions, env') = bind_fold_list aux ([], env) b in
   ok (instructions, environment_wrap env env')
@@ -190,7 +190,11 @@ and translate_annotated_expression (env:Environment.t) (ae:AST.annotated_express
   | E_literal (Literal_bytes s) -> ok (E_literal (D_bytes s), tv, env)
   | E_literal (Literal_string s) -> ok (E_literal (D_string s), tv, env)
   | E_literal Literal_unit -> ok (E_literal D_unit, tv, env)
-  | E_variable name -> ok (E_variable name, tv, env)
+  | E_variable name ->
+      let%bind tv =
+        trace_option (simple_error "transpiler: variable not in env") @@
+        Environment.get_opt env name in
+      ok (E_variable name, tv, env)
   | E_application (a, b) ->
       let%bind a = translate_annotated_expression env a in
       let%bind b = translate_annotated_expression env b in
@@ -320,24 +324,18 @@ and translate_annotated_expression (env:Environment.t) (ae:AST.annotated_express
           simple_fail "only match bool exprs are translated yet"
     )
 
-and translate_lambda_shallow env l =
+and translate_lambda_shallow : Mini_c.Environment.t -> AST.lambda -> Mini_c.expression result = fun env l ->
   let { binder ; input_type ; output_type ; body ; result } : AST.lambda = l in
   (* Shallow capture. Capture the whole environment. Extend it with a new scope. Append it the input. *)
-  let%bind input = translate_type input_type in
-  let sub_env = Environment.extend env in
-  let full_env = Environment.add (binder, input) sub_env in
-  let%bind (_, e) as body = translate_block full_env body in
+  let env' = Environment.extend env in
+  let%bind input_type' = translate_type input_type in
+  let new_env = Environment.add (binder, input_type') env' in
+  let%bind (_, e) as body = translate_block new_env body in
   let%bind result = translate_annotated_expression e.post_environment result in
-  let capture_type = Shallow_capture sub_env in
-  let input' = Environment.to_mini_c_type full_env in
-  let%bind output = translate_type output_type in
-  let tv =
-    let open Combinators in
-    let f = t_function input' output in
-    let env_type = Environment.to_mini_c_type env in
-    t_pair env_type f
-  in
-  let content = {binder;input=input';output;body;result;capture_type} in
+  let capture_type = Shallow_capture env' in
+  let%bind output_type' = translate_type output_type in
+  let tv = Combinators.t_shallow_closure env input_type' output_type' in
+  let content = {binder;input=input_type';output=output_type';body;result;capture_type} in
   ok (E_function content, tv, env)
 
 and translate_lambda env l =

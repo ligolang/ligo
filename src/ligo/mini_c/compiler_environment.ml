@@ -181,6 +181,7 @@ let to_michelson_type = Compiler_type.environment
 let rec to_mini_c_type = function
   | [] -> raise (Failure "Schema.Big.to_mini_c_type")
   | [hd] -> Small.to_mini_c_type hd
+  | Append_tree.Empty :: tl -> to_mini_c_type tl
   | hd :: tl -> T_pair(Small.to_mini_c_type hd, to_mini_c_type tl)
 let to_mini_c_capture = function
   | [a] -> Small.to_mini_c_capture a
