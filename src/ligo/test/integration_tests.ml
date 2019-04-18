@@ -54,6 +54,32 @@ let closure () : unit result =
     bind_list
     @@ List.map aux
     @@ [0 ; 2 ; 42 ; 163 ; -1] in
+  let%bind _toto = trace (simple_error "toto") @@
+    let aux n =
+      let open AST_Typed.Combinators in
+      let input = e_a_int n in
+      let%bind result = easy_run_typed "toto" program input in
+      let expected = e_a_int ( 4 * n ) in
+      AST_Typed.assert_value_eq (expected, result)
+    in
+    bind_list
+    @@ List.map aux
+    @@ [0 ; 2 ; 42 ; 163 ; -1] in
+  ok ()
+
+let higher_order () : unit result =
+  let%bind program = type_file "./contracts/high-order.ligo" in
+  let%bind _foo = trace (simple_error "test foo") @@
+    let aux n =
+      let open AST_Typed.Combinators in
+      let input = e_a_int n in
+      let%bind result = easy_run_typed "foobar" program input in
+      let expected = e_a_int ( n ) in
+      AST_Typed.assert_value_eq (expected, result)
+    in
+    bind_list
+    @@ List.map aux
+    @@ [0 ; 2 ; 42 ; 163 ; -1] in
   ok ()
 
 let shared_function () : unit result =
@@ -542,4 +568,5 @@ let main = "Integration (End to End)", [
     test "quote declarations" quote_declarations ;
     test "#include directives" include_ ;
     test "counter contract" counter_contract ;
+    test "higher order" higher_order ;
   ]

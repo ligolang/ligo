@@ -152,9 +152,16 @@ type_expr:
 | record_type { TRecord $1 }
 
 cartesian:
-  nsepseq(core_type,TIMES) {
+  nsepseq(function_type,TIMES) {
     let region = nsepseq_to_region type_expr_to_region $1
     in {region; value=$1}}
+
+function_type:
+  core_type { $1 }
+| core_type ARROW function_type {
+    let region = cover (type_expr_to_region $1) (type_expr_to_region $3)
+    in TFun {region; value = ($1, $2, $3)}
+}
 
 core_type:
   type_name {
@@ -346,17 +353,17 @@ entry_param_decl:
     in EntryStore {region; value}}
 
 param_type:
-  nsepseq(core_param_type,TIMES) {
+  nsepseq(function_type,TIMES) {
     let region = nsepseq_to_region type_expr_to_region $1
     in TProd {region; value=$1}}
 
-core_param_type:
-  type_name {
-    TAlias $1
-  }
-| type_name type_tuple {
-    let region = cover $1.region $2.region
-    in TApp {region; value = $1,$2}}
+/* core_param_type: */
+/* type_name { */
+/*     TAlias $1 */
+/*   } */
+/* | type_name type_tuple { */
+/*     let region = cover $1.region $2.region */
+/*     in TApp {region; value = $1,$2}} */
 
 block:
   Begin series(statement,End) {

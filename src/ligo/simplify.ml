@@ -25,6 +25,12 @@ let rec simpl_type_expression (t:Raw.type_expr) : type_expression result =
       | None ->
           ok @@ T_variable v.value
     )
+  | TFun x -> (
+      let%bind (a , b) =
+        let (a , _ , b) = x.value in
+        bind_map_pair simpl_type_expression (a , b) in
+      ok @@ T_function (a , b)
+    )
   | TApp x ->
       let (name, tuple) = x.value in
       let lst = npseq_to_list tuple.value.inside in

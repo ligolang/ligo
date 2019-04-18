@@ -193,6 +193,7 @@ and type_expr =
 | TSum    of (variant reg, vbar) nsepseq reg
 | TRecord of record_type
 | TApp    of (type_name * type_tuple) reg
+| TFun    of (type_expr * arrow  * type_expr) reg
 | TPar    of type_expr par reg
 | TAlias  of variable
 
@@ -672,6 +673,7 @@ let type_expr_to_region = function
 | TSum    {region; _}
 | TRecord {region; _}
 | TApp    {region; _}
+| TFun    {region; _}
 | TPar    {region; _}
 | TAlias  {region; _} -> region
 

@@ -88,6 +88,7 @@ and print_type_expr = function
 | TSum    sum_type    -> print_sum_type    sum_type
 | TRecord record_type -> print_record_type record_type
 | TApp    type_app    -> print_type_app    type_app
+| TFun    type_fun    -> print_type_fun    type_fun
 | TPar    par_type    -> print_par_type    par_type
 | TAlias  type_alias  -> print_var         type_alias
 
@@ -110,6 +111,12 @@ and print_type_app {value; _} =
   let type_name, type_tuple = value in
   print_var        type_name;
   print_type_tuple type_tuple
+
+and print_type_fun {value; _} =
+  let type_expr_a, arrow, type_expr_b = value in
+  print_type_expr  type_expr_a;
+  print_token      arrow "->";
+  print_type_expr  type_expr_b
 
 and print_par_type {value; _} =
   let {lpar; inside; rpar} = value in
