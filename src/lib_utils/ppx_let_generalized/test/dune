@@ -1,1 +1,1 @@
-(executables (names test) (preprocess (pps ppx_let)))
+(executables (names test) (preprocess (pps ppx_let_generalized)))
