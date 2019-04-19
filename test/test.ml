@@ -1,4 +1,21 @@
 module Monad_example = struct
+  module Let_syntax = struct
+    let bind x ~f = f x
+    module Open_on_rhs_bind = struct
+      let return _ = "foo"
+    end
+  end
+
+  let _mf a =
+    let%bind xyz = return a in
+    (int_of_string xyz + 1)
+  ;;
+end
+
+(* TODO: re-enable some tests *)
+
+(*
+module Monad_example = struct
   module X : sig
     type 'a t
 
@@ -169,3 +186,4 @@ module Example_without_open = struct
     x + 1
   ;;
 end
+*)

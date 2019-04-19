@@ -12,34 +12,14 @@ module List = struct
   ;;
 end
 
-module Extension_name = struct
-  type t =
-    | Bind
-    | Bind_open
-    | Map
-    | Map_open
-
-  let operator_name = function
-    | Bind | Bind_open -> "bind"
-    | Map | Map_open -> "map"
-  ;;
-
-  let to_string = function
-    | Bind -> "bind"
-    | Bind_open -> "bind_open"
-    | Map -> "map"
-    | Map_open -> "map_open"
-  ;;
-end
-
 let let_syntax ~modul : Longident.t =
   match modul with
   | None -> Lident "Let_syntax"
   | Some id -> Ldot (id.txt, "Let_syntax")
 ;;
 
-let open_on_rhs ~loc ~modul =
-  Located.mk ~loc (Longident.Ldot (let_syntax ~modul, "Open_on_rhs"))
+let open_on_rhs ~loc ~modul ~extension_name_s =
+  Located.mk ~loc (Longident.Ldot (let_syntax ~modul, "Open_on_rhs_" ^ extension_name_s))
 ;;
 
 let eoperator ~loc ~modul func =
@@ -65,21 +45,20 @@ let expand_with_tmp_vars ~loc bindings expr ~f =
     pexp_let ~loc Nonrecursive s_lhs_tmp_var (f ~loc s_rhs_tmp_var expr)
 ;;
 
-let bind_apply ~loc ~modul extension_name ~arg ~fn =
+let bind_apply ~loc ~modul extension_name_s ~arg ~fn =
   pexp_apply
     ~loc
-    (eoperator ~loc ~modul (Extension_name.operator_name extension_name))
+    (eoperator ~loc ~modul extension_name_s)
     [ Nolabel, arg; Labelled "f", fn ]
 ;;
 
-let maybe_open extension_name ~to_open:module_to_open expr =
+(* Change by Georges: Always open for all extension names. *)
+let maybe_open ~to_open:module_to_open expr =
   let loc = expr.pexp_loc in
-  match (extension_name : Extension_name.t) with
-  | Bind | Map -> expr
-  | Bind_open | Map_open -> pexp_open ~loc Override (module_to_open ~loc) expr
+  pexp_open ~loc Override (module_to_open ~loc) expr
 ;;
 
-let expand_let extension_name ~loc ~modul bindings body =
+let expand_let extension_name_s ~loc ~modul bindings body =
   if List.is_empty bindings
   then invalid_arg "expand_let: list of bindings must be non-empty";
   (* Build expression [both E1 (both E2 (both ...))] *)
@@ -99,17 +78,17 @@ let expand_let extension_name ~loc ~modul bindings body =
   bind_apply
     ~loc
     ~modul
-    extension_name
+    extension_name_s
     ~arg:nested_boths
     ~fn:(pexp_fun ~loc Nolabel None nested_patterns body)
 ;;
 
-let expand_match extension_name ~loc ~modul expr cases =
+let expand_match extension_name_s ~loc ~modul expr cases =
   bind_apply
     ~loc
     ~modul
-    extension_name
-    ~arg:(maybe_open extension_name ~to_open:(open_on_rhs ~modul) expr)
+    extension_name_s
+    ~arg:(maybe_open ~to_open:(open_on_rhs ~modul ~extension_name_s) expr)
     ~fn:(pexp_function ~loc cases)
 ;;
 
@@ -123,7 +102,7 @@ let expand_if extension_name ~loc expr then_ else_ =
     ]
 ;;
 
-let expand ~modul extension_name expr =
+let expand ~modul extension_name_s expr =
   let loc = expr.pexp_loc in
   let expansion =
     match expr.pexp_desc with
@@ -145,16 +124,16 @@ let expand ~modul extension_name expr =
           { vb with
             pvb_pat
           ; pvb_expr =
-              maybe_open extension_name ~to_open:(open_on_rhs ~modul) vb.pvb_expr
+              maybe_open ~to_open:(open_on_rhs ~modul ~extension_name_s) vb.pvb_expr
           })
       in
-      expand_with_tmp_vars ~loc bindings expr ~f:(expand_let extension_name ~modul)
+      expand_with_tmp_vars ~loc bindings expr ~f:(expand_let extension_name_s ~modul)
     | Pexp_let (Recursive, _, _) ->
       Location.raise_errorf
         ~loc
         "'let%%%s' may not be recursive"
-        (Extension_name.to_string extension_name)
-    | Pexp_match (expr, cases) -> expand_match extension_name ~loc ~modul expr cases
+        extension_name_s
+    | Pexp_match (expr, cases) -> expand_match extension_name_s ~loc ~modul expr cases
     | Pexp_ifthenelse (expr, then_, else_) ->
       let else_ =
         match else_ with
@@ -163,14 +142,14 @@ let expand ~modul extension_name expr =
           Location.raise_errorf
             ~loc
             "'if%%%s' must include an else branch"
-            (Extension_name.to_string extension_name)
+            extension_name_s
       in
-      expand_if extension_name ~loc ~modul expr then_ else_
+      expand_if extension_name_s ~loc ~modul expr then_ else_
     | _ ->
       Location.raise_errorf
         ~loc
         "'%%%s' can only be used with 'let', 'match', and 'if'"
-        (Extension_name.to_string extension_name)
+        extension_name_s
   in
   { expansion with pexp_attributes = expr.pexp_attributes @ expansion.pexp_attributes }
 ;;

@@ -1,16 +1,19 @@
 open Ppxlib
 
-let ext extension_name =
+let ext extension_name_s =
   Extension.declare_with_path_arg
-    (Ppx_let_expander.Extension_name.to_string extension_name)
+    extension_name_s
     Extension.Context.expression
     Ast_pattern.(single_expr_payload __)
     (fun ~loc:_ ~path:_ ~arg expr ->
-       Ppx_let_expander.expand extension_name ~modul:arg expr)
+       Ppx_let_expander.expand extension_name_s ~modul:arg expr)
 ;;
 
 let () =
   Driver.register_transformation
     "let"
-    ~extensions:[ ext Bind; ext Bind_open; ext Map; ext Map_open ]
+    ~extensions:(List.map ext [
+      "bind";
+      "xxx";
+    ])
 ;;
