@@ -7,6 +7,7 @@ before_script:
   - export PATH="/usr/local/bin${PATH:+:}${PATH:-}"
   - echo "$PATH"
   - printf '' | opam init
+  - printf '' | opam switch create $switch ocaml-base-compiler.4.06.1
   - eval $(opam config env)
   - opam repository add tezos-opam-repository https://gitlab.com/gabriel.alfour/tezos-opam-repository.git
   - eval $(opam config env)
@@ -15,12 +16,13 @@ before_script:
 
 default-job:
   script:
-    - opam install -y --working-dir .
-    - dune build && dune build -p ligo && dune build @ligo-test
+    - opam install -y --working-dir src/lib_utils
+    - opam install -y --working-dir src/ligo
+    - (cd src/ligo && dune build && dune build -p ligo && dune build @ligo-test)
   artifacts:
     paths:
       - src/ligo/bin/cli.ml
 
 install-from-repo-job:
   script:
-    - opam install ligo
+    - opam install -y ligo
