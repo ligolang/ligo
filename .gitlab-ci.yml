@@ -1,12 +1,13 @@
 before_script:
   - apt-get update -qq
-  - apt-get -y -qq install libhidapi-dev libcap-dev bubblewrap
+  - apt-get -y -qq install libhidapi-dev libcap-dev libev-dev bubblewrap
   - wget https://github.com/ocaml/opam/releases/download/2.0.1/opam-2.0.1-x86_64-linux -O opam-2.0.1-x86_64-linux
   - cp opam-2.0.1-x86_64-linux /usr/local/bin/opam
   - chmod +x /usr/local/bin/opam
   - export PATH="/usr/local/bin${PATH:+:}${PATH:-}"
   - echo "$PATH"
   - printf '' | opam init
+  - eval $(opam config env)
   - printf '' | opam switch create $switch ocaml-base-compiler.4.06.1
   - eval $(opam config env)
   - opam repository add tezos-opam-repository https://gitlab.com/gabriel.alfour/tezos-opam-repository.git
@@ -16,9 +17,9 @@ before_script:
 
 default-job:
   script:
-    - opam install -y --working-dir src/lib_utils
-    - opam install -y --working-dir src/ligo
-    - (cd src/ligo && dune build && dune build -p ligo && dune build @ligo-test)
+    - (cd src/lib_utils && opam install -y --working-dir .)
+    - (cd src/ligo      && opam install -y --working-dir .)
+    - (cd src/ligo      && dune build && dune build -p ligo && dune build @ligo-test)
   artifacts:
     paths:
       - src/ligo/bin/cli.ml
