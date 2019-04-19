@@ -201,21 +201,13 @@ module Compiler = struct
     | Binary of michelson
     | Ternary of michelson
 
-  let simple_constant c = Constant ( seq [
-      c ; i_pair ;
-    ])
+  let simple_constant c = Constant c
 
-  let simple_unary c = Unary ( seq [
-      i_unpair ; c ; i_pair ;
-    ])
+  let simple_unary c = Unary c
 
-  let simple_binary c = Binary ( seq [
-      i_unpair ; dip i_unpair ; i_swap ; c ; i_pair ;
-    ])
+  let simple_binary c = Binary c
 
-  let simple_ternary c = Ternary ( seq [
-      i_unpair ; dip i_unpair ; dip (dip i_unpair) ; i_swap ; dip i_swap ; i_swap ; c ; i_pair ;
-    ])
+  let simple_ternary c = Ternary c
 
   let predicates = Map.String.of_list [
     ("ADD_INT" , simple_binary @@ prim I_ADD) ;

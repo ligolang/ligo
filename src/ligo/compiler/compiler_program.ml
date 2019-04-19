@@ -182,10 +182,31 @@ and translate_expression (expr:expression) : michelson result =
         let%bind lst' = bind_list @@ List.map translate_expression lst in
         let%bind predicate = get_predicate str lst in
         let%bind code = match (predicate, List.length lst) with
-          | Constant c, 0 -> ok (seq @@ lst' @ [c])
-          | Unary f, 1 -> ok (seq @@ lst' @ [f])
-          | Binary f, 2 -> ok (seq @@ lst' @ [f])
-          | Ternary f, 3 -> ok (seq @@ lst' @ [f])
+          | Constant c, 0 -> ok (seq @@ lst' @ [
+              c ; i_pair ;
+            ])
+          | Unary f, 1 -> ok (seq @@ lst' @ [
+              i_unpair ;
+              f ;
+              i_pair ;
+            ])
+          | Binary f, 2 -> ok (seq @@ lst' @ [
+              i_unpair ;
+              dip i_unpair ;
+              i_swap ;
+              f ;
+              i_pair ;
+            ])
+          | Ternary f, 3 -> ok (seq @@ lst' @ [
+              i_unpair ;
+              dip i_unpair ;
+              dip (dip i_unpair) ;
+              i_swap ;
+              dip i_swap ;
+              i_swap ;
+              f ;
+              i_pair ;
+            ])
           | _ -> simple_fail "bad arity"
         in
         return code
