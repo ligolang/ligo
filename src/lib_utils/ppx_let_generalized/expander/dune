@@ -1,2 +1,2 @@
-(library (name ppx_let_expander) (public_name ppx_let.expander)
+(library (name ppx_let_expander) (public_name tezos-utils.ppx_let_generalized.expander)
  (libraries base ppxlib) (preprocess no_preprocessing))

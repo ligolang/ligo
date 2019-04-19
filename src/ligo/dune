@@ -24,7 +24,7 @@
     run
   )
   (preprocess
-    (pps ppx_let)
+    (pps tezos-utils.ppx_let_generalized)
   )
 )
 
