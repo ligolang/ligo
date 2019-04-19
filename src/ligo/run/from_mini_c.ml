@@ -1,10 +1,10 @@
 open Trace
-open Types
-open Compiler
+open Mini_c
+open Compiler.Program
 open Memory_proto_alpha.Script_ir_translator
 
 let run_aux (program:compiled_program) (input_michelson:Michelson.t) : ex_typed_value result =
-  let Compiler.{input;output;body} : compiled_program = program in
+  let Compiler.Program.{input;output;body} : compiled_program = program in
   let (Ex_ty input_ty) = input in
   let (Ex_ty output_ty) = output in
   let%bind input =
@@ -41,14 +41,14 @@ let run_entry (entry:anon_function) (input:value) : value result =
     translate_entry entry in
   let%bind input_michelson = translate_value input in
   let%bind ex_ty_value = run_aux compiled input_michelson in
-  let%bind (result : value) = Uncompiler.translate_value ex_ty_value in
+  let%bind (result : value) = Compiler.Uncompiler.translate_value ex_ty_value in
   ok result
 
 let run (program:program) (input:value) : value result =
   let%bind input_michelson = translate_value input in
   let%bind compiled = translate_program program "main" in
   let%bind ex_ty_value = run_aux compiled input_michelson in
-  let%bind (result : value) = Uncompiler.translate_value ex_ty_value in
+  let%bind (result : value) = Compiler.Uncompiler.translate_value ex_ty_value in
   ok result
 
 let expression_to_value (e:expression) : value result =

@@ -1,71 +1,32 @@
 open Trace
-open Types
+open Mini_c
 
 module Michelson = Micheline.Michelson
 open Michelson
-module Environment = Compiler_environment
 module Stack = Meta_michelson.Stack
 module Contract_types = Meta_michelson.Types
 
 open Memory_proto_alpha.Script_ir_translator
 
-type predicate =
-  | Constant of michelson
-  | Unary of michelson
-  | Binary of michelson
-  | Ternary of michelson
+open Operators.Compiler
 
-let simple_constant c = Constant ( seq [
-    c ; i_pair ;
-  ])
+let get_predicate : string -> expression list -> predicate result = fun s lst ->
+  match Map.String.find_opt s Operators.Compiler.predicates with
+  | Some x -> ok x
+  | None -> (
+      match s with
+      | "MAP_REMOVE" ->
+          let%bind v = match lst with
+            | [ _ ; expr ] ->
+                let%bind (_, v) = Mini_c.Combinators.(get_t_map (Expression.get_type expr)) in
+                ok v
+            | _ -> simple_fail "mini_c . MAP_REMOVE" in
+          let%bind v_ty = Compiler_type.type_ v in
+          ok @@ simple_binary @@ seq [dip (i_none v_ty) ; prim I_UPDATE ]
+      | x -> simple_fail ("predicate \"" ^ x ^ "\" doesn't exist")
+    )
 
-let simple_unary c = Unary ( seq [
-    i_unpair ; c ; i_pair ;
-  ])
-
-let simple_binary c = Binary ( seq [
-    i_unpair ; dip i_unpair ; i_swap ; c ; i_pair ;
-  ])
-
-let simple_ternary c = Ternary ( seq [
-    i_unpair ; dip i_unpair ; dip (dip i_unpair) ; i_swap ; dip i_swap ; i_swap ; c ; i_pair ;
-  ])
-
-let rec get_predicate : string -> expression list -> predicate result = fun s lst ->
-  match s with
-  | "ADD_INT" -> ok @@ simple_binary @@ prim I_ADD
-  | "ADD_NAT" -> ok @@ simple_binary @@ prim I_ADD
-  | "TIMES_INT" -> ok @@ simple_binary @@ prim I_MUL
-  | "TIMES_NAT" -> ok @@ simple_binary @@ prim I_MUL
-  | "NEG" -> ok @@ simple_unary @@ prim I_NEG
-  | "OR" -> ok @@ simple_binary @@ prim I_OR
-  | "AND" -> ok @@ simple_binary @@ prim I_AND
-  | "PAIR" -> ok @@ simple_binary @@ prim I_PAIR
-  | "CAR" -> ok @@ simple_unary @@ prim I_CAR
-  | "CDR" -> ok @@ simple_unary @@ prim I_CDR
-  | "EQ" -> ok @@ simple_binary @@ seq [prim I_COMPARE ; prim I_EQ]
-  | "LT" -> ok @@ simple_binary @@ seq [prim I_COMPARE ; prim I_LT]
-  | "UPDATE" -> ok @@ simple_ternary @@ prim I_UPDATE
-  | "SOME" -> ok @@ simple_unary @@ prim I_SOME
-  | "GET_FORCE" -> ok @@ simple_binary @@ seq [prim I_GET ; i_assert_some]
-  | "GET" -> ok @@ simple_binary @@ prim I_GET
-  | "SIZE" -> ok @@ simple_unary @@ prim I_SIZE
-  | "INT" -> ok @@ simple_unary @@ prim I_INT
-  | "CONS" -> ok @@ simple_binary @@ prim I_CONS
-  (* | "CONS" -> ok @@ simple_binary @@ seq [prim I_SWAP ; prim I_CONS] *)
-  | "MAP_REMOVE" ->
-      let%bind v = match lst with
-        | [ _ ; expr ] ->
-            let%bind (_, v) = Combinators.(get_t_map (Expression.get_type expr)) in
-            ok v
-        | _ -> simple_fail "mini_c . MAP_REMOVE" in
-      let%bind v_ty = Compiler_type.type_ v in
-      ok @@ simple_binary @@ seq [dip (i_none v_ty) ; prim I_UPDATE ]
-  | "MAP_UPDATE" ->
-      ok @@ simple_ternary @@ seq [dip (i_some) ; prim I_UPDATE ]
-  | x -> simple_fail ("predicate \"" ^ x ^ "\" doesn't exist")
-
-and translate_value (v:value) : michelson result = match v with
+let rec translate_value (v:value) : michelson result = match v with
   | D_bool b -> ok @@ prim (if b then D_True else D_False)
   | D_int n -> ok @@ int (Z.of_int n)
   | D_nat n -> ok @@ int (Z.of_int n)
@@ -118,7 +79,7 @@ and translate_expression (expr:expression) : michelson result =
   let error_message () = Format.asprintf  "%a" PP.expression expr in
 
   let return code =
-    let%bind (Ex_ty schema_ty) = Environment.to_ty env in
+    let%bind (Ex_ty schema_ty) = Compiler_environment.to_ty env in
     let%bind output_type = Compiler_type.type_ ty in
     let%bind (Ex_ty output_ty) =
       let error_message () = Format.asprintf "%a" Michelson.pp output_type in
@@ -127,7 +88,7 @@ and translate_expression (expr:expression) : michelson result =
     let input_stack_ty = Stack.(Contract_types.unit @: schema_ty @: nil) in
     let output_stack_ty = Stack.(Contract_types.(pair output_ty unit) @: schema_ty @: nil) in
     let error_message () =
-      let%bind schema_michelson = Environment.to_michelson_type env in
+      let%bind schema_michelson = Compiler_environment.to_michelson_type env in
       ok @@ Format.asprintf
         "expression : %a\ncode : %a\nschema type : %a\noutput type : %a"
         PP.expression expr
@@ -212,7 +173,7 @@ and translate_expression (expr:expression) : michelson result =
         | _ -> simple_fail "E_applicationing something not appliable"
       )
     | E_variable x ->
-        let%bind (get, _) = Environment.to_michelson_get env x in
+        let%bind (get, _) = Compiler_environment.to_michelson_get env x in
         return @@ seq [
           dip (seq [prim I_DUP ; get]) ;
           i_piar ;
@@ -324,9 +285,9 @@ and translate_statement ((s', w_env) as s:statement) : michelson result =
   let%bind (code : michelson) =
     trace (fun () -> error (thunk "compiling statement") error_message ()) @@ match s' with
     | S_environment_extend ->
-        ok @@ Environment.to_michelson_extend w_env.pre_environment
+        ok @@ Compiler_environment.to_michelson_extend w_env.pre_environment
     | S_environment_restrict ->
-        Environment.to_michelson_restrict w_env.pre_environment
+        Compiler_environment.to_michelson_restrict w_env.pre_environment
     | S_environment_add _ ->
         simple_fail "not ready yet"
     (* | S_environment_add (name, tv) ->
@@ -334,7 +295,7 @@ and translate_statement ((s', w_env) as s:statement) : michelson result =
     | S_declaration (s, expr) ->
         let tv = Combinators.Expression.get_type expr in
         let%bind expr = translate_expression expr in
-        let%bind add = Environment.to_michelson_add (s, tv) w_env.pre_environment in
+        let%bind add = Compiler_environment.to_michelson_add (s, tv) w_env.pre_environment in
         ok (seq [
             i_comment "declaration" ;
             seq [
@@ -348,7 +309,7 @@ and translate_statement ((s', w_env) as s:statement) : michelson result =
           ])
     | S_assignment (s, expr) ->
         let%bind expr = translate_expression expr in
-        let%bind set = Environment.to_michelson_set s w_env.pre_environment in
+        let%bind set = Compiler_environment.to_michelson_set s w_env.pre_environment in
         ok (seq [
             i_comment "assignment" ;
             seq [
@@ -376,7 +337,7 @@ and translate_statement ((s', w_env) as s:statement) : michelson result =
         let%bind some' = translate_regular_block some in
         let%bind add =
           let env' = Environment.extend w_env.pre_environment in
-          Environment.to_michelson_add (name, tv) env' in
+          Compiler_environment.to_michelson_add (name, tv) env' in
         ok @@ (seq [
             i_push_unit ; expr ; i_car ;
             prim ~children:[
@@ -389,11 +350,11 @@ and translate_statement ((s', w_env) as s:statement) : michelson result =
         let%bind block' = translate_regular_block block in
         let%bind restrict_block =
           let env_while = (snd block).pre_environment in
-          Environment.to_michelson_restrict env_while in
+          Compiler_environment.to_michelson_restrict env_while in
         ok @@ (seq [
             i_push_unit ; expr ; i_car ;
             prim ~children:[seq [
-                Environment.to_michelson_extend w_env.pre_environment;
+                Compiler_environment.to_michelson_extend w_env.pre_environment;
                 block' ;
                 restrict_block ;
                 i_push_unit ; expr ; i_car]] I_LOOP ;
@@ -402,7 +363,7 @@ and translate_statement ((s', w_env) as s:statement) : michelson result =
         let%bind expr' = translate_expression expr in
         let%bind (name_path, _) = Environment.get_path name w_env.pre_environment in
         let path = name_path @ lrs in
-        let set_code = Environment.path_to_michelson_set path in
+        let set_code = Compiler_environment.path_to_michelson_set path in
         ok @@ seq [
           i_push_unit ; expr' ; i_car ;
           set_code ;
@@ -410,13 +371,13 @@ and translate_statement ((s', w_env) as s:statement) : michelson result =
   in
 
   let%bind () =
-    let%bind (Ex_ty pre_ty) = Environment.to_ty w_env.pre_environment in
+    let%bind (Ex_ty pre_ty) = Compiler_environment.to_ty w_env.pre_environment in
     let input_stack_ty = Stack.(pre_ty @: nil) in
-    let%bind (Ex_ty post_ty) = Environment.to_ty w_env.post_environment in
+    let%bind (Ex_ty post_ty) = Compiler_environment.to_ty w_env.post_environment in
     let output_stack_ty = Stack.(post_ty @: nil) in
     let error_message () =
-      let%bind pre_env_michelson = Environment.to_michelson_type w_env.pre_environment in
-      let%bind post_env_michelson = Environment.to_michelson_type w_env.post_environment in
+      let%bind pre_env_michelson = Compiler_environment.to_michelson_type w_env.pre_environment in
+      let%bind post_env_michelson = Compiler_environment.to_michelson_type w_env.post_environment in
       ok @@ Format.asprintf
         "statement : %a\ncode : %a\npre type : %a\npost type : %a\n"
         PP.statement s
@@ -446,7 +407,7 @@ and translate_regular_block ((b, env):block) : michelson result =
   in
   let%bind codes =
     let error_message () =
-      let%bind schema_michelson = Environment.to_michelson_type env.pre_environment in
+      let%bind schema_michelson = Compiler_environment.to_michelson_type env.pre_environment in
       ok @@ Format.asprintf "\nblock : %a\nschema : %a\n"
         PP.block (b, env)
         Tezos_utils.Micheline.Michelson.pp schema_michelson

@@ -1,10 +1,8 @@
 (library
-  (name operators)
-  (public_name ligo.operators)
+  (name ast_simplified)
+  (public_name ligo.ast_simplified)
   (libraries
     tezos-utils
-    ast_typed
-    mini_c
   )
   (preprocess
     (pps ppx_let)

@@ -1,5 +1,5 @@
 open Trace
-open Types
+open Mini_c.Types
 open Memory_proto_alpha
 open Script_typed_ir
 open Script_ir_translator

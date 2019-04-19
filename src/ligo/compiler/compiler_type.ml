@@ -1,5 +1,5 @@
 open Trace
-open Types
+open Mini_c.Types
 
 open Tezos_utils.Memory_proto_alpha
 open Script_ir_translator

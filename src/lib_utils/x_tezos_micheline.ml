@@ -41,6 +41,7 @@ module Michelson = struct
   let i_some = prim I_SOME
   let i_lambda arg ret body = prim ~children:[arg;ret;body] I_LAMBDA
   let i_drop = prim I_DROP
+  let i_exec = prim I_EXEC
 
   let i_if a b = prim ~children:[a;b] I_IF
   let i_if_none a b = prim ~children:[a;b] I_IF_NONE

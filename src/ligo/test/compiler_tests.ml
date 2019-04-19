@@ -5,7 +5,7 @@ open Test_helpers
 
 let run_entry_int (e:anon_function) (n:int) : int result =
   let param : value = D_int n in
-  let%bind result = Run.run_entry e param in
+  let%bind result = Run.Mini_c.run_entry e param in
   match result with
   | D_int n -> ok n
   | _ -> simple_fail "result is not an int"

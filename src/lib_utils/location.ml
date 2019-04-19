@@ -31,3 +31,6 @@ type 'a wrap = {
 let wrap ~loc wrap_content = { wrap_content ; location = loc }
 let unwrap { wrap_content ; _ } = wrap_content
 let map f x = { x with wrap_content = f x.wrap_content }
+
+let lift_region : 'a Region.reg -> 'a wrap = fun x ->
+  wrap ~loc:(File x.region) x.value

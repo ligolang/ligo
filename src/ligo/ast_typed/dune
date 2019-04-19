@@ -1,0 +1,11 @@
+(library
+  (name ast_typed)
+  (public_name ligo.ast_typed)
+  (libraries
+    tezos-utils
+    ast_simplified ; Is that a good idea?
+  )
+  (preprocess
+    (pps ppx_let)
+  )
+)

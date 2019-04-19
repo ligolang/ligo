@@ -114,6 +114,11 @@ module Typer = struct
           | Some t -> ok ("NONE", t))
     ]
 
+  let sub = "SUB" , 2 , [
+      eq_2 (t_int ()) , constant_2 "SUB_INT" (t_int ()) ;
+      eq_2 (t_nat ()) , constant_2 "SUB_NAT" (t_int ()) ;
+    ]
+
   let some = "SOME" , 1 , [
       true_1 , typer'_1 (fun s -> ok ("SOME", t_option s ())) ;
     ]
@@ -166,6 +171,7 @@ module Typer = struct
       ("TIMES_INT" , t_int ()) ;
       ("TIMES_NAT" , t_nat ()) ;
     ] ;
+    sub ;
     none ;
     some ;
     comparator "EQ" ;
@@ -184,3 +190,56 @@ module Typer = struct
 
 end
 
+module Compiler = struct
+
+  module Michelson = Micheline.Michelson
+  open Michelson
+
+  type predicate =
+    | Constant of michelson
+    | Unary of michelson
+    | Binary of michelson
+    | Ternary of michelson
+
+  let simple_constant c = Constant ( seq [
+      c ; i_pair ;
+    ])
+
+  let simple_unary c = Unary ( seq [
+      i_unpair ; c ; i_pair ;
+    ])
+
+  let simple_binary c = Binary ( seq [
+      i_unpair ; dip i_unpair ; i_swap ; c ; i_pair ;
+    ])
+
+  let simple_ternary c = Ternary ( seq [
+      i_unpair ; dip i_unpair ; dip (dip i_unpair) ; i_swap ; dip i_swap ; i_swap ; c ; i_pair ;
+    ])
+
+  let predicates = Map.String.of_list [
+    ("ADD_INT" , simple_binary @@ prim I_ADD) ;
+    ("ADD_NAT" , simple_binary @@ prim I_ADD) ;
+    ("SUB_INT" , simple_binary @@ prim I_SUB) ;
+    ("SUB_NAT" , simple_binary @@ prim I_SUB) ;
+    ("TIMES_INT" , simple_binary @@ prim I_MUL) ;
+    ("TIMES_NAT" , simple_binary @@ prim I_MUL) ;
+    ("NEG" , simple_unary @@ prim I_NEG) ;
+    ("OR" , simple_binary @@ prim I_OR) ;
+    ("AND" , simple_binary @@ prim I_AND) ;
+    ("PAIR" , simple_binary @@ prim I_PAIR) ;
+    ("CAR" , simple_unary @@ prim I_CAR) ;
+    ("CDR" , simple_unary @@ prim I_CDR) ;
+    ("EQ" , simple_binary @@ seq [prim I_COMPARE ; prim I_EQ]) ;
+    ("LT" , simple_binary @@ seq [prim I_COMPARE ; prim I_LT]) ;
+    ("UPDATE" , simple_ternary @@ prim I_UPDATE) ;
+    ("SOME" , simple_unary @@ prim I_SOME) ;
+    ("GET_FORCE" , simple_binary @@ seq [prim I_GET ; i_assert_some]) ;
+    ("GET" , simple_binary @@ prim I_GET) ;
+    ("SIZE" , simple_unary @@ prim I_SIZE) ;
+    ("INT" , simple_unary @@ prim I_INT) ;
+    ("CONS" , simple_binary @@ prim I_CONS) ;
+    ( "MAP_UPDATE" , simple_ternary @@ seq [dip (i_some) ; prim I_UPDATE ]) ;
+  ]
+
+end

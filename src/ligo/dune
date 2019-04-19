@@ -15,8 +15,13 @@
     tezos-micheline
     meta_michelson
     ligo_parser
-    mini_c
     multifix
+    ast_typed
+    ast_simplified
+    mini_c
+    operators
+    compiler
+    run
   )
   (preprocess
     (pps ppx_let)

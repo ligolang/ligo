@@ -122,13 +122,13 @@ let transpile_value
   in
 
   let input = Mini_c.Combinators.d_unit in
-  let%bind r = Mini_c.Run.run_entry f input in
+  let%bind r = Run.Mini_c.run_entry f input in
   ok r
 
 let untranspile_value (v : Mini_c.value) (e:AST_Typed.type_value) : AST_Typed.annotated_expression result =
   Transpiler.untranspile v e
 
-let compile : Mini_c.program -> string -> Mini_c.Compiler.compiled_program result = Mini_c.Compiler.translate_program
+let compile : Mini_c.program -> string -> Compiler.Program.compiled_program result = Compiler.Program.translate_program
 
 let type_file ?(debug_simplify = false) ?(debug_typed = false)
     (path:string) : AST_Typed.program result =
@@ -152,7 +152,7 @@ let easy_evaluate_typed (entry:string) (program:AST_Typed.program) : AST_Typed.a
   let%bind result =
     let%bind mini_c_main =
       transpile_entry program entry in
-    Mini_c.Run.run_entry mini_c_main (Mini_c.Combinators.d_unit) in
+    Run.Mini_c.run_entry mini_c_main (Mini_c.Combinators.d_unit) in
   let%bind typed_result =
     let%bind typed_main = Ast_typed.get_entry program entry in
     untranspile_value result typed_main.type_annotation in
@@ -180,7 +180,7 @@ let easy_run_typed
       in
       error title content in
     trace error @@
-    Mini_c.Run.run_entry mini_c_main mini_c_value in
+    Run.Mini_c.run_entry mini_c_main mini_c_value in
   let%bind typed_result =
     let%bind main_result_type =
       let%bind typed_main = Ast_typed.get_functional_entry program entry in

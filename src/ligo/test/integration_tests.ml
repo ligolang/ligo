@@ -164,8 +164,9 @@ let arithmetic () : unit result =
     @@ List.map aux
     @@ [
       ("plus_op", fun n -> e_a_int (n + 42)) ;
+      ("minus_op", fun n -> e_a_int (n - 42)) ;
       ("times_op", fun n -> e_a_int (n * 42)) ;
-      (* ("int_op", fun n -> e_a_int n) ; *)
+      ("int_op", fun n -> e_a_int n) ;
     ] in
   ok ()
 

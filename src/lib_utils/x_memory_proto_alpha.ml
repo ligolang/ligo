@@ -25,11 +25,13 @@ let ty_eq (type a b)
 let parse_michelson (type aft)
     ?(tezos_context = dummy_environment.tezos_context)
     ?(top_level = Lambda) (michelson:Michelson.t)
+    ?type_logger
     (bef:'a Script_typed_ir.stack_ty) (aft:aft Script_typed_ir.stack_ty)
   =
   let michelson = Michelson.strip_annots michelson in
   let michelson = Michelson.strip_nops michelson in
   parse_instr
+    ?type_logger
     top_level tezos_context
     michelson bef >>=?? fun (j, _) ->
   match j with

@@ -3,20 +3,20 @@ open Types
 open Combinators
 
 let basic_int_quote_env : environment =
-  let e = Compiler_environment.empty in
-  Compiler_environment.add ("input", t_int) e
+  let e = Environment.empty in
+  Environment.add ("input", t_int) e
 
 let statement s' env : statement =
   match s' with
-  | S_environment_extend -> s', environment_wrap env (Compiler_environment.extend env)
-  | S_environment_restrict -> s', environment_wrap env (Compiler_environment.restrict env)
-  | S_environment_add (name, tv) -> s' , environment_wrap env (Compiler_environment.add (name , tv) env)
+  | S_environment_extend -> s', environment_wrap env (Environment.extend env)
+  | S_environment_restrict -> s', environment_wrap env (Environment.restrict env)
+  | S_environment_add (name, tv) -> s' , environment_wrap env (Environment.add (name , tv) env)
   | S_cond _ -> s' , id_environment_wrap env
   | S_if_none _ -> s' , id_environment_wrap env
   | S_while _ -> s' , id_environment_wrap env
   | S_patch _ -> s' , id_environment_wrap env
-  | S_declaration (name , e) -> s', environment_wrap env (Compiler_environment.add (name , (Expression.get_type e)) env)
-  | S_assignment (name , e) -> s', environment_wrap env (Compiler_environment.add (name , (Expression.get_type e)) env)
+  | S_declaration (name , e) -> s', environment_wrap env (Environment.add (name , (Expression.get_type e)) env)
+  | S_assignment (name , e) -> s', environment_wrap env (Environment.add (name , (Expression.get_type e)) env)
 
 let block (statements:statement list) : block result =
   match statements with

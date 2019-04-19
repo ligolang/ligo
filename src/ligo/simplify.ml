@@ -144,6 +144,8 @@ let rec simpl_expression (t:Raw.expr) : ae result =
       ok @@ annotated_expression (E_constant ("NONE", [])) (Some (Combinators.t_option type_expr'))
   | EArith (Add c) ->
       simpl_binop "ADD" c.value
+  | EArith (Sub c) ->
+      simpl_binop "SUB" c.value
   | EArith (Mult c) ->
       simpl_binop "TIMES" c.value
   | EArith (Int n) ->

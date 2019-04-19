@@ -1,5 +1,6 @@
 open Trace
-open Types
+open Mini_c
+open Environment
 open Micheline
 open Memory_proto_alpha.Script_ir_translator
 
@@ -8,60 +9,8 @@ module Stack = Meta_michelson.Stack
 type element = environment_element
 
 module Small = struct
+  open Small
   open Append_tree
-
-  type t' = environment_small'
-  type t = environment_small
-
-  let not_in_env' ?source s t' =
-    let title () = match source with
-      | None -> "Not in environment"
-      | Some source -> Format.asprintf "Not in environment' (%s)" source in
-    let content () =
-      Format.asprintf "Variable : %s, Environment' : %a"
-        s PP.environment_small' t' in
-    error title content
-
-  let not_in_env ?source s t =
-    let title () = match source with
-      | None -> "Not in environment"
-      | Some source -> Format.asprintf "Not in environment (%s)" source in
-    let content () =
-      Format.asprintf "Variable : %s, Environment : %a"
-        s PP.environment_small t in
-    error title content
-
-
-  let has' s = exists' (fun ((x, _):element) -> x = s)
-  let has s = function
-    | Empty -> false
-    | Full x -> has' s x
-
-  let empty : t = empty
-
-  let get_opt = assoc_opt
-
-  let append s (e:t) = if has (fst s) e then e else append s e
-
-  let of_list lst =
-    let rec aux = function
-      | [] -> Empty
-      | hd :: tl -> append hd (aux tl)
-    in
-    aux @@ List.rev lst
-
-
-  let rec to_list' (e:t') =
-    match e with
-    | Leaf x -> [x]
-    | Node {a;b} -> (to_list' a) @ (to_list' b)
-
-  let to_list (e:t) =
-    match e with
-    | Empty -> []
-    | Full x -> to_list' x
-
-  type bound = string list
 
   open Michelson
 
@@ -117,17 +66,6 @@ module Small = struct
     | Empty -> ok (dip i_drop)
     | Full x -> to_michelson_append' x
 
-  (* let rec to_mini_c_capture' env : _ -> expression result = function
-   *   | Leaf (n, tv) -> ok (E_variable n, tv, env)
-   *   | Node {a;b} ->
-   *       let%bind ((_, ty_a, _) as a) = to_mini_c_capture' env a in
-   *       let%bind ((_, ty_b, _) as b) = to_mini_c_capture' env b in
-   *       ok (E_constant ("PAIR", [a;b]), (T_pair(ty_a, ty_b) : type_value), env)
-   *
-   * let to_mini_c_capture env = function
-   *   | Empty -> simple_fail "to_mini_c_capture"
-   *   | Full x -> to_mini_c_capture' env x *)
-
   let rec to_mini_c_type' : _ -> type_value = function
     | Leaf (_, t) -> t
     | Node {a;b} -> T_pair(to_mini_c_type' a, to_mini_c_type' b)
@@ -137,44 +75,14 @@ module Small = struct
     | Full x -> to_mini_c_type' x
 end
 
-type t = environment
-
-let empty : t = [Small.empty]
-let extend t : t = Small.empty :: t
-let restrict t : t = List.tl t
-let of_small small : t = [small]
-
-let rec get_opt : t -> string -> type_value option = fun t k ->
-  match t with
-  | [] -> None
-  | hd :: tl -> (
-      match Small.get_opt hd k with
-      | None -> get_opt tl k
-      | Some v -> Some v
-    )
-
-let rec has x : t -> bool = function
-  | [] -> raise (Failure "Schema.Big.has")
-  | [hd] -> Small.has x hd
-  | hd :: tl -> Small.has x hd || has x tl
-let add x : t -> t = function
-  | [] -> raise (Failure "Schema.Big.add")
-  | hd :: tl -> Small.append x hd :: tl
-
-(* let init_function (f:type_value) (binder:string) : t = [Small.init_function binder f] *)
-
 let to_michelson_extend : t -> Michelson.t = fun _e ->
   Michelson.i_comment "empty_extend"
-  (* Michelson.(
-   *   seq [i_push_unit ; i_pair]
-   * ) *)
 
 let to_michelson_restrict : t -> Michelson.t result = fun e ->
   match e with
   | [] -> simple_fail "Restrict empty env"
   | Empty :: _ -> ok @@ Michelson.i_comment "restrict empty"
   | _ -> ok @@ Michelson.(seq [i_comment "restrict" ; i_cdr])
-  (* Michelson.i_cdr *)
 
 let to_ty = Compiler_type.Ty.environment
 let to_michelson_type = Compiler_type.environment
@@ -183,9 +91,6 @@ let rec to_mini_c_type = function
   | [hd] -> Small.to_mini_c_type hd
   | Append_tree.Empty :: tl -> to_mini_c_type tl
   | hd :: tl -> T_pair(Small.to_mini_c_type hd, to_mini_c_type tl)
-(* let to_mini_c_capture = function
- *   | [a] -> Small.to_mini_c_capture a
- *   | _ -> raise (Failure "Schema.Big.to_mini_c_capture") *)
 
 type path = [`Left | `Right] list
 let pp_path : _ -> path -> unit =
