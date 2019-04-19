@@ -1,6 +1,30 @@
 open Trace
 open Types
 
+module Expression = struct
+  type t' = expression'
+  type t = expression
+
+  let get_content : t -> t' = fun e -> e.content
+  let get_type : t -> type_value = fun e -> e.type_value
+  let get_environment : t -> environment = fun e -> e.environment
+  let is_toplevel : t -> bool = fun e -> e.is_toplevel
+
+  let make = fun ?(itl = false) e' t env -> {
+    content = e' ;
+    type_value = t ;
+    environment = env ;
+    is_toplevel = itl ;
+  }
+
+  let make_tpl = fun ?(itl = false) (e' , t , env) -> {
+    content = e' ;
+    type_value = t ;
+    environment = env ;
+    is_toplevel = itl ;
+  }
+end
+
 let get_bool (v:value) = match v with
   | D_bool b -> ok b
   | _ -> simple_fail "not a bool"
@@ -93,64 +117,16 @@ let quote binder input output body result : anon_function =
 
 let basic_quote i o b : anon_function result =
   let%bind (_, e) = get_last_statement b in
-  let r : expression = (E_variable "output", o, e.post_environment) in
+  let r : expression = Expression.make_tpl (E_variable "output", o, e.post_environment) in
   ok @@ quote "input" i o b r
 
 let basic_int_quote b : anon_function result =
   basic_quote t_int t_int b
 
-let basic_int_quote_env : environment =
-  let e = Compiler_environment.empty in
-  Compiler_environment.add ("input", t_int) e
-
-let e_int expr env : expression = (expr, t_int, env)
+let e_int expr env : expression = Expression.make_tpl (expr, t_int, env)
 let e_var_int name env : expression = e_int (E_variable name) env
 
 let d_unit : value = D_unit
 
 let environment_wrap pre_environment post_environment = { pre_environment ; post_environment }
 let id_environment_wrap e = environment_wrap e e
-
-let statement s' e : statement =
-  match s' with
-  | S_environment_extend -> s', environment_wrap e (Compiler_environment.extend e)
-  | S_environment_restrict -> s', environment_wrap e (Compiler_environment.restrict e)
-  | S_environment_add (name, tv) -> s', environment_wrap e (Compiler_environment.add (name, tv) e)
-  | S_cond _ -> s', id_environment_wrap e
-  | S_if_none _ -> s', id_environment_wrap e
-  | S_while _ -> s', id_environment_wrap e
-  | S_patch _ -> s', id_environment_wrap e
-  | S_declaration (name, (_, t, _)) -> s', environment_wrap e (Compiler_environment.add (name, t) e)
-  | S_assignment (name, (_, t, _)) -> s', environment_wrap e (Compiler_environment.add (name, t) e)
-
-let block (statements:statement list) : block result =
-  match statements with
-  | [] -> simple_fail "no statements in block"
-  | lst ->
-      let first = List.hd lst in
-      let last = List.(nth lst (length lst - 1)) in
-      ok (lst, environment_wrap (snd first).pre_environment (snd last).post_environment)
-
-let append_statement' : block -> statement' -> block = fun b s' ->
-  let b_wrap = snd b in
-  let s = statement s' b_wrap.post_environment in
-  let s_wrap = snd s in
-  let b_wrap' = { b_wrap with post_environment = s_wrap.post_environment } in
-  let b_content = fst b in
-  (b_content @ [s], b_wrap')
-
-let prepend_statement : statement -> block -> block = fun s b ->
-  let s_wrap = snd s in
-  let b_wrap = snd b in
-  let b_wrap' = { b_wrap with pre_environment = s_wrap.pre_environment } in
-  let b_content = fst b in
-  (s :: b_content, b_wrap')
-
-let statements (lst:(environment -> statement) list) e : statement list =
-  let rec aux lst e = match lst with
-    | [] -> []
-    | hd :: tl ->
-        let s = hd e in
-        s :: aux tl (snd s).post_environment
-  in
-  aux lst e

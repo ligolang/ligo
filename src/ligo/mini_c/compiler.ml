@@ -55,8 +55,8 @@ let rec get_predicate : string -> expression list -> predicate result = fun s ls
   (* | "CONS" -> ok @@ simple_binary @@ seq [prim I_SWAP ; prim I_CONS] *)
   | "MAP_REMOVE" ->
       let%bind v = match lst with
-        | [ _ ; (_, m, _) ] ->
-            let%bind (_, v) = Combinators.get_t_map m in
+        | [ _ ; expr ] ->
+            let%bind (_, v) = Combinators.(get_t_map (Expression.get_type expr)) in
             ok v
         | _ -> simple_fail "mini_c . MAP_REMOVE" in
       let%bind v_ty = Compiler_type.type_ v in
@@ -113,7 +113,8 @@ and translate_function ({capture;content}:anon_function) : michelson result =
       ok @@ d_pair capture_m body
   | _ -> simple_fail "compiling closure without capture"
 
-and translate_expression ((expr', ty, env) as expr:expression) : michelson result =
+and translate_expression (expr:expression) : michelson result =
+  let (expr' , ty , env) = Combinators.Expression.(get_content expr , get_type expr , get_environment expr) in
   let error_message () = Format.asprintf  "%a" PP.expression expr in
 
   let return code =
@@ -157,8 +158,8 @@ and translate_expression ((expr', ty, env) as expr:expression) : michelson resul
           prim ~children:[t;v] I_PUSH ;
           prim I_PAIR ;
         ]
-    | E_application((_, f_ty, _) as f, arg) -> (
-        match f_ty with
+    | E_application(f, arg) -> (
+        match Combinators.Expression.get_type f with
         | T_function _ -> (
             trace (simple_error "Compiling quote application") @@
             let%bind f = translate_expression f in
@@ -259,22 +260,22 @@ and translate_expression ((expr', ty, env) as expr:expression) : michelson resul
                 i_pair ;
               ] in
             return code
-        | Deep_capture small_env ->
-            (* Capture the variable bounds, assemble them. On call, append the input. *)
-            let senv_type = Compiler_environment.Small.to_mini_c_type small_env in
-            let%bind body = translate_closure_body anon senv_type in
-            let%bind capture = Environment.Small.to_mini_c_capture env small_env in
-            let%bind capture = translate_expression capture in
-            let%bind input_type = Compiler_type.type_ anon.input in
-            let%bind output_type = Compiler_type.type_ anon.output in
-            let code = seq [
-                capture ;
-                i_unpair ;
-                i_lambda input_type output_type body ;
-                i_piar ;
-                i_pair ;
-              ] in
-            return code
+        | Deep_capture _small_env -> simple_fail "no deep capture expression yet"
+            (* (\* Capture the variable bounds, assemble them. On call, append the input. *\)
+             * let senv_type = Compiler_environment.Small.to_mini_c_type small_env in
+             * let%bind body = translate_closure_body anon senv_type in
+             * let%bind capture = Environment.Small.to_mini_c_capture env small_env in
+             * let%bind capture = translate_expression capture in
+             * let%bind input_type = Compiler_type.type_ anon.input in
+             * let%bind output_type = Compiler_type.type_ anon.output in
+             * let code = seq [
+             *     capture ;
+             *     i_unpair ;
+             *     i_lambda input_type output_type body ;
+             *     i_piar ;
+             *     i_pair ;
+             *   ] in
+             * return code *)
         | Shallow_capture env ->
             (* Capture the whole environment. *)
             let env_type = Compiler_environment.to_mini_c_type env in
@@ -330,7 +331,8 @@ and translate_statement ((s', w_env) as s:statement) : michelson result =
         simple_fail "not ready yet"
     (* | S_environment_add (name, tv) ->
      *     Environment.to_michelson_add (name, tv) w_env.pre_environment *)
-    | S_declaration (s, ((_, tv, _) as expr)) ->
+    | S_declaration (s, expr) ->
+        let tv = Combinators.Expression.get_type expr in
         let%bind expr = translate_expression expr in
         let%bind add = Environment.to_michelson_add (s, tv) w_env.pre_environment in
         ok (seq [
@@ -382,7 +384,7 @@ and translate_statement ((s', w_env) as s:statement) : michelson result =
               seq [add ; some'] ;
             ] I_IF_NONE
           ])
-    | S_while ((_, _, _) as expr, block) ->
+    | S_while (expr, block) ->
         let%bind expr = translate_expression expr in
         let%bind block' = translate_regular_block block in
         let%bind restrict_block =
@@ -540,12 +542,12 @@ type compiled_program = {
 }
 
 let translate_program (p:program) (entry:string) : compiled_program result =
-  let is_main ((s, _):toplevel_statement) =
-    match s with
-    | name , (E_function f, T_function (_, _), _)
+  let is_main (((name , expr), _):toplevel_statement) =
+    match Combinators.Expression.(get_content expr , get_type expr)with
+    | (E_function f , T_function _)
       when f.capture_type = No_capture && name = entry ->
         Some f
-    | name , (E_literal (D_function {content ; capture = None}), T_function (_, _), _)
+    | (E_literal (D_function {content ; capture = None}) , T_function _)
       when name = entry ->
         Some content
     | _ ->  None

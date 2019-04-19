@@ -117,16 +117,16 @@ module Small = struct
     | Empty -> ok (dip i_drop)
     | Full x -> to_michelson_append' x
 
-  let rec to_mini_c_capture' env : _ -> expression result = function
-    | Leaf (n, tv) -> ok (E_variable n, tv, env)
-    | Node {a;b} ->
-        let%bind ((_, ty_a, _) as a) = to_mini_c_capture' env a in
-        let%bind ((_, ty_b, _) as b) = to_mini_c_capture' env b in
-        ok (E_constant ("PAIR", [a;b]), (T_pair(ty_a, ty_b) : type_value), env)
-
-  let to_mini_c_capture env = function
-    | Empty -> simple_fail "to_mini_c_capture"
-    | Full x -> to_mini_c_capture' env x
+  (* let rec to_mini_c_capture' env : _ -> expression result = function
+   *   | Leaf (n, tv) -> ok (E_variable n, tv, env)
+   *   | Node {a;b} ->
+   *       let%bind ((_, ty_a, _) as a) = to_mini_c_capture' env a in
+   *       let%bind ((_, ty_b, _) as b) = to_mini_c_capture' env b in
+   *       ok (E_constant ("PAIR", [a;b]), (T_pair(ty_a, ty_b) : type_value), env)
+   *
+   * let to_mini_c_capture env = function
+   *   | Empty -> simple_fail "to_mini_c_capture"
+   *   | Full x -> to_mini_c_capture' env x *)
 
   let rec to_mini_c_type' : _ -> type_value = function
     | Leaf (_, t) -> t
@@ -183,9 +183,9 @@ let rec to_mini_c_type = function
   | [hd] -> Small.to_mini_c_type hd
   | Append_tree.Empty :: tl -> to_mini_c_type tl
   | hd :: tl -> T_pair(Small.to_mini_c_type hd, to_mini_c_type tl)
-let to_mini_c_capture = function
-  | [a] -> Small.to_mini_c_capture a
-  | _ -> raise (Failure "Schema.Big.to_mini_c_capture")
+(* let to_mini_c_capture = function
+ *   | [a] -> Small.to_mini_c_capture a
+ *   | _ -> raise (Failure "Schema.Big.to_mini_c_capture") *)
 
 type path = [`Left | `Right] list
 let pp_path : _ -> path -> unit =

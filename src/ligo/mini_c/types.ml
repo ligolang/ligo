@@ -65,7 +65,12 @@ and expression' =
   | E_make_none of type_value
   | E_Cond of expression * expression * expression
 
-and expression = expression' * type_value * environment (* Environment in which the expressions are evaluated *)
+and expression = {
+  content : expression' ;
+  type_value : type_value ;
+  environment : environment ;  (* Environment in which the expressions are evaluated *)
+  is_toplevel : bool ;
+}
 
 and assignment = var_name * expression
 

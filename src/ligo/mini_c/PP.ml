@@ -73,11 +73,13 @@ and expression' ppf (e:expression') = match e with
   | E_make_none _ -> fprintf ppf "none"
   | E_Cond (c, a, b) -> fprintf ppf "%a ? %a : %a" expression c expression a expression b
 
-and expression ppf (e' , _ , _) = expression' ppf e'
+and expression : _ -> expression -> _ = fun ppf e ->
+  expression' ppf (Combinators.Expression.get_content e)
 
-and expression_with_type = fun ppf (e' , t , _) ->
-  fprintf ppf "%a : %a" expression' e' type_ t
-
+and expression_with_type : _ -> expression -> _  = fun ppf e ->
+  fprintf ppf "%a : %a"
+    expression' (Combinators.Expression.get_content e)
+    type_ (Combinators.Expression.get_type e)
 
 and function_ ppf ({binder ; input ; output ; body ; result ; capture_type}:anon_function_content) =
   fprintf ppf "fun[%s] (%s:%a) : %a %a return %a"

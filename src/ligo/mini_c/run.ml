@@ -51,8 +51,8 @@ let run (program:program) (input:value) : value result =
   let%bind (result : value) = Uncompiler.translate_value ex_ty_value in
   ok result
 
-let expression_to_value ((e', _, _) as e:expression) : value result =
-  match e' with
+let expression_to_value (e:expression) : value result =
+  match (Combinators.Expression.get_content e) with
   | E_literal v -> ok v
   | _ -> fail
       @@ error (thunk "not a value")
