@@ -6,6 +6,6 @@
     ast_simplified ; Is that a good idea?
   )
   (preprocess
-    (pps ppx_let)
+    (pps tezos-utils.ppx_let_generalized)
   )
 )
