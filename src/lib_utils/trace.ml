@@ -76,6 +76,7 @@ let (>>|?) = apply
 
 module Let_syntax = struct
   let bind m ~f = m >>? f
+  module Open_on_rhs_bind = struct end
 end
 
 let trace_strong err = function
