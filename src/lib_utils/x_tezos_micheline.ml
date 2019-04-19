@@ -38,8 +38,10 @@ module Michelson = struct
   let i_push ty code = prim ~children:[ty;code] I_PUSH
   let i_push_unit = i_push t_unit d_unit
   let i_none ty = prim ~children:[ty] I_NONE
+  let i_nil ty = prim ~children:[ty] I_NIL
   let i_some = prim I_SOME
   let i_lambda arg ret body = prim ~children:[arg;ret;body] I_LAMBDA
+  let i_empty_map src dst = prim ~children:[src;dst] I_EMPTY_MAP
   let i_drop = prim I_DROP
   let i_exec = prim I_EXEC
 

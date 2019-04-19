@@ -12,17 +12,16 @@ let get_program =
         ok program
       )
 
-
 let a_heap_ez ?value_type (content:(int * AST_Typed.ae) list) =
   let open AST_Typed.Combinators in
   let content =
-    let aux = fun (x, y) -> e_a_int x, y in
+    let aux = fun (x, y) -> e_a_nat x, y in
     List.map aux content in
   let value_type = match value_type, content with
     | None, hd :: _ -> (snd hd).type_annotation
     | Some s, _ -> s
     | _ -> raise (Failure "no value type and heap empty when building heap") in
-  e_a_map content (t_int ()) value_type
+  e_a_map content (t_nat ()) value_type
 
 let ez lst =
   let open AST_Typed.Combinators in

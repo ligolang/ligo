@@ -466,12 +466,21 @@ and type_constant (name:string) (lst:O.type_value list) (tv_opt:O.type_value opt
     let l = List.length lst in
     trace_strong (wrong_arity name arity l) @@
     Assert.assert_true (arity = l) in
-  let aux = fun (predicate, typer') ->
-    match predicate lst with
-    | true -> typer' lst tv_opt
-    | false -> dummy_fail
+
+  let error =
+    let title () = "typing: unrecognized constant" in
+    let content () = name in
+    error title content in
+  let rec aux = fun ts ->
+    match ts with
+    | [] -> fail error
+    | (predicate, typer') :: tl -> (
+        match predicate lst with
+        | false -> aux tl
+        | true -> typer' lst tv_opt
+      )
   in
-  bind_find_map_list (simple_error "typing: unrecognized constant") aux typer
+  aux typer
 
 let untype_type_value (t:O.type_value) : (I.type_expression) result =
   match t.simplified with

@@ -26,6 +26,11 @@ let get_predicate : string -> expression list -> predicate result = fun s lst ->
       | x -> simple_fail ("predicate \"" ^ x ^ "\" doesn't exist")
     )
 
+let virtual_push = fun first m ->
+  match first with
+  | true -> m
+  | false -> seq [m ; i_pair]
+
 let rec translate_value (v:value) : michelson result = match v with
   | D_bool b -> ok @@ prim (if b then D_True else D_False)
   | D_int n -> ok @@ int (Z.of_int n)
@@ -51,9 +56,7 @@ let rec translate_value (v:value) : michelson result = match v with
       ok @@ seq @@ List.map aux lst'
   | D_list lst ->
       let%bind lst' = bind_map_list translate_value lst in
-      let aux = fun a -> a in
-      (* let aux = fun a -> prim ~children:[a] D_Elt in *)
-      ok @@ seq @@ List.map aux lst'
+      ok @@ seq lst'
 
 and translate_function ({capture;content}:anon_function) : michelson result =
   let {capture_type } = content in
@@ -74,9 +77,11 @@ and translate_function ({capture;content}:anon_function) : michelson result =
       ok @@ d_pair capture_m body
   | _ -> simple_fail "compiling closure without capture"
 
-and translate_expression (expr:expression) : michelson result =
+and translate_expression ?(first=false) (expr:expression) : michelson result =
   let (expr' , ty , env) = Combinators.Expression.(get_content expr , get_type expr , get_environment expr) in
   let error_message () = Format.asprintf  "%a" PP.expression expr in
+  let virtual_push_first = virtual_push first in
+  let virtual_push = virtual_push false in
 
   let return code =
     let%bind (Ex_ty schema_ty) = Compiler_environment.to_ty env in
@@ -115,17 +120,14 @@ and translate_expression (expr:expression) : michelson result =
     | E_literal v ->
         let%bind v = translate_value v in
         let%bind t = Compiler_type.type_ ty in
-        return @@ seq [
-          prim ~children:[t;v] I_PUSH ;
-          prim I_PAIR ;
-        ]
+        return @@ virtual_push_first @@ i_push t v
     | E_application(f, arg) -> (
         match Combinators.Expression.get_type f with
         | T_function _ -> (
             trace (simple_error "Compiling quote application") @@
-            let%bind f = translate_expression f in
+            let%bind f = translate_expression ~first f in
             let%bind arg = translate_expression arg in
-            return @@ seq [
+            return @@ virtual_push @@ seq [
               i_comment "quote application" ;
               i_comment "get f" ;
               f ;
@@ -133,7 +135,6 @@ and translate_expression (expr:expression) : michelson result =
               arg ;
               i_unpair ; dip i_unpair ;
               prim I_EXEC ;
-              i_pair ;
             ]
           )
         | T_deep_closure (_small_env, _, _) -> (
@@ -141,7 +142,7 @@ and translate_expression (expr:expression) : michelson result =
           )
         | T_shallow_closure (_, _, _) -> (
             trace (simple_error "Compiling shallow closure application") @@
-            let%bind f' = translate_expression f in
+            let%bind f' = translate_expression ~first f in
             let%bind arg' = translate_expression arg in
             let error =
               let error_title () = "michelson type-checking closure application" in
@@ -154,50 +155,62 @@ and translate_expression (expr:expression) : michelson result =
               error error_title error_content
             in
             trace error @@
-            return @@ seq [
+            return @@ virtual_push @@ seq [
               i_comment "(* unit :: env *)" ;
-              i_comment "compute closure" ;
-              f' ;
-              i_comment "(* (closure * unit) :: env *)" ;
               i_comment "compute arg" ;
-              arg' ;
-              i_comment "(* (arg * closure * unit) :: env *)" ;
-              i_comment "separate stuff" ;
-              i_unpair ; dip i_unpair ; dip i_unpair ;
+              arg' ; i_unpair ;
+              i_comment "(* (arg * unit) :: env *)" ;
+              i_comment "compute closure" ;
+              dip @@ seq [f' ; i_unpair ; i_unpair] ;
               i_comment "(* arg :: capture :: f :: unit :: env *)" ;
               i_pair ;
               i_exec ; (* output :: stack :: env *)
-              i_pair ; (* stack :: env *)
             ]
+            (* return @@ virtual_push @@ seq [
+             *   i_comment "(\* unit :: env *\)" ;
+             *   i_comment "compute closure" ;
+             *   f' ;
+             *   i_comment "(\* (closure * unit) :: env *\)" ;
+             *   i_comment "compute arg" ;
+             *   arg' ;
+             *   i_comment "(\* (arg * closure * unit) :: env *\)" ;
+             *   i_comment "separate stuff" ;
+             *   i_unpair ; dip i_unpair ; dip i_unpair ;
+             *   i_comment "(\* arg :: capture :: f :: unit :: env *\)" ;
+             *   i_pair ;
+             *   i_exec ; (\* output :: stack :: env *\)
+             * ] *)
           )
         | _ -> simple_fail "E_applicationing something not appliable"
       )
     | E_variable x ->
         let%bind (get, _) = Compiler_environment.to_michelson_get env x in
-        return @@ seq [
-          dip (seq [prim I_DUP ; get]) ;
-          i_piar ;
+        return @@ virtual_push_first @@ seq [
+          dip (seq [i_dup ; get]) ;
+          i_swap ;
         ]
     | E_constant(str, lst) ->
-        let%bind lst' = bind_list @@ List.map translate_expression lst in
+        let%bind lst' =
+          let aux i e =
+            let first = first && i = 0 in
+            translate_expression ~first e in
+          bind_list @@ List.mapi aux lst in
         let%bind predicate = get_predicate str lst in
         let%bind code = match (predicate, List.length lst) with
-          | Constant c, 0 -> ok (seq @@ lst' @ [
-              c ; i_pair ;
-            ])
-          | Unary f, 1 -> ok (seq @@ lst' @ [
+          | Constant c, 0 -> ok @@ virtual_push_first @@ seq @@ lst' @ [
+              c ;
+            ]
+          | Unary f, 1 -> ok @@ virtual_push @@ seq @@ lst' @ [
               i_unpair ;
               f ;
-              i_pair ;
-            ])
-          | Binary f, 2 -> ok (seq @@ lst' @ [
+            ]
+          | Binary f, 2 -> ok @@ virtual_push @@ seq @@ lst' @ [
               i_unpair ;
               dip i_unpair ;
               i_swap ;
               f ;
-              i_pair ;
-            ])
-          | Ternary f, 3 -> ok (seq @@ lst' @ [
+            ]
+          | Ternary f, 3 -> ok @@ virtual_push @@ seq @@ lst' @ [
               i_unpair ;
               dip i_unpair ;
               dip (dip i_unpair) ;
@@ -205,59 +218,28 @@ and translate_expression (expr:expression) : michelson result =
               dip i_swap ;
               i_swap ;
               f ;
-              i_pair ;
-            ])
+            ]
           | _ -> simple_fail "bad arity"
         in
         return code
     | E_empty_map sd ->
         let%bind (src, dst) = bind_map_pair Compiler_type.type_ sd in
-        let code = seq [
-            prim ~children:[src;dst] I_EMPTY_MAP ;
-            i_pair ;
-          ] in
-        return code
+        return @@ virtual_push_first @@ i_empty_map src dst
     | E_empty_list t ->
         let%bind t' = Compiler_type.type_ t in
-        let code = seq [
-            prim ~children:[t'] I_NIL ;
-            i_pair ;
-          ] in
-        return code
+        return @@ virtual_push_first @@ i_nil t'
     | E_make_none o ->
         let%bind o' = Compiler_type.type_ o in
-        let code = seq [
-            prim ~children:[o'] I_NONE ;
-            i_pair ;
-          ] in
-        return code
+        return @@ virtual_push_first @@ i_none o'
     | E_function anon -> (
         match anon.capture_type with
         | No_capture ->
             let%bind body = translate_quote_body anon in
             let%bind input_type = Compiler_type.type_ anon.input in
             let%bind output_type = Compiler_type.type_ anon.output in
-            let code = seq [
-                i_lambda input_type output_type body ;
-                i_pair ;
-              ] in
+            let code = virtual_push_first @@ i_lambda input_type output_type body in
             return code
         | Deep_capture _small_env -> simple_fail "no deep capture expression yet"
-            (* (\* Capture the variable bounds, assemble them. On call, append the input. *\)
-             * let senv_type = Compiler_environment.Small.to_mini_c_type small_env in
-             * let%bind body = translate_closure_body anon senv_type in
-             * let%bind capture = Environment.Small.to_mini_c_capture env small_env in
-             * let%bind capture = translate_expression capture in
-             * let%bind input_type = Compiler_type.type_ anon.input in
-             * let%bind output_type = Compiler_type.type_ anon.output in
-             * let code = seq [
-             *     capture ;
-             *     i_unpair ;
-             *     i_lambda input_type output_type body ;
-             *     i_piar ;
-             *     i_pair ;
-             *   ] in
-             * return code *)
         | Shallow_capture env ->
             (* Capture the whole environment. *)
             let env_type = Compiler_environment.to_mini_c_type env in
@@ -266,7 +248,7 @@ and translate_expression (expr:expression) : michelson result =
               let input_type = Combinators.t_pair anon.input env_type in
               Compiler_type.type_ input_type in
             let%bind output_type = Compiler_type.type_ anon.output in
-            let code = seq [ (* stack :: env *)
+            let code = virtual_push_first @@ seq [ (* stack :: env *)
                 i_comment "env on top" ;
                 dip i_dup ; i_swap ; (* env :: stack :: env *)
                 i_comment "lambda" ;
@@ -274,7 +256,6 @@ and translate_expression (expr:expression) : michelson result =
                 i_comment "pair env + lambda" ;
                 i_piar ; (* (env * lambda) :: stack :: env *)
                 i_comment "new stack" ;
-                i_pair ; (* new_stack :: env *)
               ] in
             let error =
               let error_title () = "michelson type-checking trace" in
