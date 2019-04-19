@@ -6,7 +6,7 @@ let test name f =
     trace (fun () -> error (thunk "running test") (fun () -> name) ()) @@
     f () in
   match result with
-  | Ok () -> ()
+  | Ok ((), annotations) -> ignore annotations; ()
   | Errors errs ->
       Format.printf "Errors : {\n%a}\n%!" errors_pp (List.rev (List.rev_map (fun f -> f ()) errs)) ;
       raise Alcotest.Test_error

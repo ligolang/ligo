@@ -2,7 +2,7 @@ open Trace
 
 let toplevel x =
   match x with
-  | Trace.Ok () -> ()
+  | Trace.Ok ((), annotations) -> ignore annotations; ()
   | Errors ss ->
       Format.printf "Errors: %a\n%!" errors_pp @@ List.map (fun f -> f()) ss
 

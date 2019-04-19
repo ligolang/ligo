@@ -39,11 +39,14 @@ let mk_error ?(error_code : int option) ~(title : string) ?(message : string opt
 
 type error_thunk = unit -> error
 
+type annotation = J.t (* feel free to add different annotations here. *)
+type annotation_thunk = unit -> annotation
+
 type 'a result =
-    Ok of 'a
+    Ok of 'a * annotation_thunk list
   | Errors of error_thunk list
 
-let ok x = Ok x
+let ok x = Ok (x, [])
 let fail err = Errors [err]
 
 (* When passing a constant string where a thunk is expected, we wrap it with thunk, as follows:
@@ -64,11 +67,14 @@ let simple_fail str = fail @@ simple_error str
 let dummy_fail = simple_fail "dummy"
 
 let map f = function
-  | Ok x -> f x
+  | Ok (x, annotations) ->
+      (match f x with
+         Ok (x', annotations') -> Ok (x', annotations' @ annotations)
+       | Errors _ as e' -> ignore annotations; e')
   | Errors _ as e -> e
 
 let apply f = function
-  | Ok x -> Ok (f x)
+  | Ok (x, annotations) -> Ok (f x, annotations)
   | Errors _ as e -> e
 
 let (>>?) x f = map f x
@@ -91,7 +97,7 @@ let trace_r err_thunk_may_fail = function
   | Ok _ as o -> o
   | Errors errs ->
       match err_thunk_may_fail () with
-      | Ok err -> Errors (err :: errs)
+      | Ok (err, annotations) -> ignore annotations; Errors (err :: errs)
       | Errors errors_while_generating_error ->
           (* TODO: the complexity could be O(n*n) in the worst case,
              this should use some catenable lists. *)
@@ -111,7 +117,7 @@ let trace_f_2_ez f name =
   trace_f_2 f (error (thunk "in function") name)
 
 let to_option = function
-  | Ok o -> Some o
+  | Ok (o, annotations) -> ignore annotations; Some o
   | Errors _ -> None
 
 let trace_option error = function
@@ -164,8 +170,8 @@ let bind_find_map_list error f lst =
     | [] -> fail error
     | hd :: tl -> (
         match f hd with
-        | Ok x -> ok x
         | Errors _ -> aux tl
+        | o -> o
       )
   in
   aux lst
@@ -176,21 +182,21 @@ let bind_list_iter f lst =
 
 let bind_or (a, b) =
   match a with
-  | Ok x -> ok x
+  | Ok _ as o -> o
   | _ -> b
 
 let bind_lr (type a b) ((a : a result), (b:b result)) : [`Left of a | `Right of b] result =
   match (a, b) with
-  | Ok x, _ -> ok @@ `Left x
-  | _, Ok x -> ok @@ `Right x
+  | (Ok _ as o), _ -> apply (fun x -> `Left x) o
+  | _, (Ok _ as o) -> apply (fun x -> `Right x) o
   | _, Errors b -> Errors b
 
 let bind_lr_lazy (type a b) ((a : a result), (b:unit -> b result)) : [`Left of a | `Right of b] result =
   match a with
-  | Ok x -> ok @@ `Left x
+  | Ok _ as o -> apply (fun x -> `Left x) o
   | _ -> (
       match b() with
-      | Ok x -> ok @@ `Right x
+      | Ok _ as o -> apply (fun x -> `Right x) o
       | Errors b -> Errors b
     )
 
@@ -232,7 +238,7 @@ let trace_tzresult_r err_thunk_may_fail =
   | Error errs ->
       let tz_errs = List.map of_tz_error errs in
       match err_thunk_may_fail () with
-      | Ok err -> Errors (err :: tz_errs)
+      | Ok (err, annotations) -> ignore annotations; Errors (err :: tz_errs)
       | Errors errors_while_generating_error ->
           (* TODO: the complexity could be O(n*n) in the worst case,
              this should use some catenable lists. *)
@@ -268,13 +274,21 @@ let sys_command command =
   | n -> fail (fun () -> error (thunk "Nonzero return code") (fun () -> (string_of_int n)) ())
 
 let sequence f lst =
-  let rec aux acc = function
+  let lazy_map_force : 'a . (unit -> 'a) list -> (unit -> 'a list) = fun l ->
+    fun () ->
+    List.rev @@ List.rev_map (fun a -> a ()) l in
+  let rec aux acc_x acc_annotations = function
     | hd :: tl -> (
         match f hd with
-        | Ok x -> aux (x :: acc) tl
+        (* TODO: what should we do with the annotations? *)
+        | Ok (x, annotations) -> aux (x :: acc_x) (lazy_map_force annotations :: acc_annotations) tl
         | Errors _ as errs -> errs
       )
-    | [] -> ok @@ List.rev acc in
+    | [] ->
+        let old_annotations () = List.map (fun a -> `List (a ())) @@ List.rev acc_annotations in
+        (* Builds a JSON annotation { "type": "list"; "content": [[…], …] } *)
+        let annotation = fun () -> `Assoc [("type", `String "list"); ("content", `List (old_annotations ()))]
+        in Ok (List.rev acc_x, [annotation]) in
   aux [] lst
 
 let json_of_error = J.to_string
