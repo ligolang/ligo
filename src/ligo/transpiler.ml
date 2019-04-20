@@ -314,7 +314,7 @@ and translate_annotated_expression (env:Environment.t) (ae:AST.annotated_express
       let aux : expression result -> (AST.ae * AST.ae) -> expression result = fun prev (k, v) ->
         let%bind prev' = prev in
         let%bind (k', v') =
-          let v' = e_a_some v in
+          let v' = e_a_some v ae.environment in
           bind_map_pair (translate_annotated_expression env) (k, v') in
         return @@ E_constant ("UPDATE", [k' ; v' ; prev'])
       in
@@ -489,7 +489,7 @@ let extract_record (v : value) (tree : _ Append_tree.t') : (_ list) result =
 
 let rec untranspile (v : value) (t : AST.type_value) : AST.annotated_expression result =
   let open! AST in
-  let return e = ok (make_a_e e t) in
+  let return e = ok (make_a_e e t Environment.empty) in
   match t.type_value' with
   | T_constant ("unit", []) ->
       let%bind () = get_unit v in
@@ -508,10 +508,10 @@ let rec untranspile (v : value) (t : AST.type_value) : AST.annotated_expression 
       return (E_literal (Literal_string n))
   | T_constant ("option", [o]) -> (
       match%bind get_option v with
-      | None -> ok (e_a_none o)
+      | None -> ok (e_a_none o Environment.empty)
       | Some s ->
           let%bind s' = untranspile s o in
-          ok (e_a_some s')
+          ok (e_a_some s' Environment.empty)
     )
   | T_constant ("map", [k_ty;v_ty]) -> (
       let%bind lst = get_map v in

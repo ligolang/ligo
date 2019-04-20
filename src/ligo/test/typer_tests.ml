@@ -10,7 +10,7 @@ let int () : unit result =
   let open Combinators in
   let pre = ae @@ e_int 32 in
   let open Typer in
-  let e = Environment.empty in
+  let e = Environment.full_empty in
   let%bind post = type_annotated_expression e pre in
   let open! Typed in
   let open Combinators in
@@ -18,7 +18,7 @@ let int () : unit result =
   ok ()
 
 module TestExpressions = struct
-  let test_expression ?(env = Typer.Environment.empty)
+  let test_expression ?(env = Typer.Environment.full_empty)
                       (expr : expression)
                       (test_expected_ty : Typed.tv) =
     let open Typer in

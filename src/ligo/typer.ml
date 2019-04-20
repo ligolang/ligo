@@ -61,7 +61,7 @@ let rec type_program (p:I.program) : O.program result =
   in
   let%bind (_, lst) =
     trace (fun () -> program_error p ()) @@
-    bind_fold_list aux (Environment.empty, []) p in
+    bind_fold_list aux (Environment.full_empty, []) p in
   ok @@ List.rev lst
 
 and type_declaration env : I.declaration -> (environment * O.declaration option) result = function
@@ -225,14 +225,14 @@ and evaluate_type (e:environment) (t:I.type_expression) : O.type_value result =
       let%bind lst' = bind_list @@ List.map (evaluate_type e) lst in
       return (T_constant(cst, lst'))
 
-and type_annotated_expression (e:environment) (ae:I.annotated_expression) : O.annotated_expression result =
+and type_annotated_expression : environment -> I.annotated_expression -> O.annotated_expression result = fun e ae ->
   let%bind tv_opt = match ae.type_annotation with
     | None -> ok None
     | Some s -> let%bind r = evaluate_type e s in ok (Some r) in
   let check tv = O.(merge_annotation tv_opt (Some tv)) in
-  let return e tv =
+  let return expr tv =
     let%bind type_annotation = check tv in
-    ok @@ make_a_e e type_annotation in
+    ok @@ make_a_e expr type_annotation e.environment in
   match ae.expression with
   (* Basic *)
   | E_variable name ->

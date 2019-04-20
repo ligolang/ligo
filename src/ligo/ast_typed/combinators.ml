@@ -2,7 +2,7 @@ open Trace
 open Types
 
 let make_t type_value' simplified = { type_value' ; simplified }
-let make_a_e expression type_annotation = { expression ; type_annotation ; dummy_field = () ; environment = Environment.dummy }
+let make_a_e expression type_annotation environment = { expression ; type_annotation ; dummy_field = () ; environment }
 let make_n_e name a_e = { name ; annotated_expression = a_e }
 
 let t_bool ?s () : type_value = make_t (T_constant ("bool", [])) s
@@ -116,6 +116,20 @@ let ez_e_a_record r = make_a_e (ez_e_record r) (ez_t_record (List.map (fun (x, y
 let e_a_map lst k v = make_a_e (e_map lst) (t_map k v ())
 let e_a_list lst t = make_a_e (e_list lst) (t_list t ())
 
+let e_a_empty_unit = e_a_unit Environment.empty
+let e_a_empty_int n = e_a_int n Environment.empty
+let e_a_empty_nat n = e_a_nat n Environment.empty
+let e_a_empty_bool b = e_a_bool b Environment.empty
+let e_a_empty_string s = e_a_string s Environment.empty
+let e_a_empty_pair a b = e_a_pair a b Environment.empty
+let e_a_empty_some s = e_a_some s Environment.empty
+let e_a_empty_none t = e_a_none t Environment.empty
+let e_a_empty_tuple lst = e_a_tuple lst Environment.empty
+let e_a_empty_record r = e_a_record r Environment.empty
+let e_a_empty_map lst k v = e_a_map lst k v Environment.empty
+let e_a_empty_list lst t = e_a_list lst t Environment.empty
+let ez_e_a_empty_record r = ez_e_a_record r Environment.empty
+
 let get_a_int (t:annotated_expression) =
   match t.expression with
   | E_literal (Literal_int n) -> ok n
@@ -132,7 +146,7 @@ let get_a_bool (t:annotated_expression) =
   | _ -> simple_fail "not a bool"
 
 open Environment
-let env_sum_type ?(env = empty)
+let env_sum_type ?(env = full_empty)
     ?(name = "a_sum_type")
     (lst : (string * ele) list) =
   add env name (make_t_ez_sum lst)

@@ -3,7 +3,8 @@ open Types
 type ele = type_value
 type t = full_environment
 
-let empty : t = {
+let empty = []
+let full_empty : t = {
   (*  TODO: use maps *)
   environment = [] ;
   type_environment = [] ;

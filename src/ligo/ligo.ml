@@ -115,7 +115,7 @@ let unparse_simplified_expr (e:AST_Simplified.annotated_expression) : string res
   ok @@ Format.asprintf "%a" AST_Simplified.PP.annotated_expression e
 
 let type_ (p:AST_Simplified.program) : AST_Typed.program result = Typer.type_program p
-let type_expression ?(env:Typer.Environment.t = Typer.Environment.empty)
+let type_expression ?(env:Typer.Environment.t = Typer.Environment.full_empty)
     (e:AST_Simplified.annotated_expression) : AST_Typed.annotated_expression result =
   Typer.type_annotated_expression env e
 let untype_expression (e:AST_Typed.annotated_expression) : AST_Simplified.annotated_expression result = Typer.untype_annotated_expression e
