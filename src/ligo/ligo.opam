@@ -4,6 +4,7 @@ maintainer: "gabriel.alfour@gmail.com"
 authors: [ "Galfour" ]
 homepage: "https://gitlab.com/gabriel.alfour/tezos"
 bug-reports: "https://gitlab.com/gabriel.alfour/tezos/issues"
+synopsis: "A higher-level language which compiles to Michelson"
 dev-repo: "git+https://gitlab.com/gabriel.alfour/tezos.git"
 license: "MIT"
 depends: [
