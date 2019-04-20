@@ -35,13 +35,25 @@ let parse_file (source: string) : AST_Raw.t result =
           let start = Lexing.lexeme_start_p lexbuf in
           let end_ = Lexing.lexeme_end_p lexbuf in
           let str = Format.sprintf
-              "Parse error at \"%s\" from (%d, %d) to (%d, %d)\n"
+              "Parse error at \"%s\" from (%d, %d) to (%d, %d). In file \"%s|%s\"\n"
               (Lexing.lexeme lexbuf)
               start.pos_lnum (start.pos_cnum - start.pos_bol)
-              end_.pos_lnum (end_.pos_cnum - end_.pos_bol) in
+              end_.pos_lnum (end_.pos_cnum - end_.pos_bol)
+              start.pos_fname source
+          in
           simple_error str
         )
-      | _ -> simple_error "unrecognized parse_ error"
+      | _ ->
+          let start = Lexing.lexeme_start_p lexbuf in
+          let end_ = Lexing.lexeme_end_p lexbuf in
+          let str = Format.sprintf
+              "Unrecognized error at \"%s\" from (%d, %d) to (%d, %d). In file \"%s|%s\"\n"
+              (Lexing.lexeme lexbuf)
+              start.pos_lnum (start.pos_cnum - start.pos_bol)
+              end_.pos_lnum (end_.pos_cnum - end_.pos_bol)
+              start.pos_fname source
+          in
+          simple_error str
     ) @@ (fun () ->
       let raw = Parser.contract read lexbuf in
       close () ;

@@ -162,31 +162,31 @@ module Typer = struct
     let typer_to_kv : typer -> (string * _) = fun (a, b, c) -> (a, (b, c)) in
     Map.String.of_list
     @@ List.map typer_to_kv [
-    same_2 "ADD" [
-      ("ADD_INT" , t_int ()) ;
-      ("ADD_NAT" , t_nat ()) ;
-      ("CONCAT" , t_string ()) ;
-    ] ;
-    same_2 "TIMES" [
-      ("TIMES_INT" , t_int ()) ;
-      ("TIMES_NAT" , t_nat ()) ;
-    ] ;
-    sub ;
-    none ;
-    some ;
-    comparator "EQ" ;
-    comparator "LT" ;
-    comparator "GT" ;
-    comparator "LE" ;
-    comparator "GE" ;
-    boolean_operator_2 "OR" ;
-    boolean_operator_2 "AND" ;
-    map_remove ;
-    map_update ;
-    int ;
-    size ;
-    get_force ;
-  ]
+      same_2 "ADD" [
+        ("ADD_INT" , t_int ()) ;
+        ("ADD_NAT" , t_nat ()) ;
+        ("CONCAT" , t_string ()) ;
+      ] ;
+      same_2 "TIMES" [
+        ("TIMES_INT" , t_int ()) ;
+        ("TIMES_NAT" , t_nat ()) ;
+      ] ;
+      sub ;
+      none ;
+      some ;
+      comparator "EQ" ;
+      comparator "LT" ;
+      comparator "GT" ;
+      comparator "LE" ;
+      comparator "GE" ;
+      boolean_operator_2 "OR" ;
+      boolean_operator_2 "AND" ;
+      map_remove ;
+      map_update ;
+      int ;
+      size ;
+      get_force ;
+    ]
 
 end
 

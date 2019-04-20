@@ -326,7 +326,8 @@ and type_annotated_expression (e:environment) (ae:I.annotated_expression) : O.an
               generic_try (simple_error "bad tuple index")
               @@ (fun () -> List.nth tpl_tv index) in
             let%bind type_annotation = check tv in
-            ok O.{expression = O.E_tuple_accessor (prev, index) ; type_annotation}
+            let annotated_expression = O.{expression = E_tuple_accessor (prev, index) ; type_annotation} in
+            ok annotated_expression
           )
         | Access_record property -> (
             let%bind r_tv = get_t_record prev.type_annotation in
@@ -468,8 +469,13 @@ and type_constant (name:string) (lst:O.type_value list) (tv_opt:O.type_value opt
     Assert.assert_true (arity = l) in
 
   let error =
-    let title () = "typing: unrecognized constant" in
-    let content () = name in
+    let title () = "typing: constant predicates all failed" in
+    let content () =
+      Format.asprintf "%s in %a"
+      name
+      PP_helpers.(list_sep Ast_typed.PP.type_value (const " , "))
+      lst
+    in
     error title content in
   let rec aux = fun ts ->
     match ts with

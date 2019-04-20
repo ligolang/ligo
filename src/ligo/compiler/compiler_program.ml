@@ -166,20 +166,6 @@ and translate_expression ?(first=false) (expr:expression) : michelson result =
               i_pair ;
               i_exec ; (* output :: stack :: env *)
             ]
-            (* return @@ virtual_push @@ seq [
-             *   i_comment "(\* unit :: env *\)" ;
-             *   i_comment "compute closure" ;
-             *   f' ;
-             *   i_comment "(\* (closure * unit) :: env *\)" ;
-             *   i_comment "compute arg" ;
-             *   arg' ;
-             *   i_comment "(\* (arg * closure * unit) :: env *\)" ;
-             *   i_comment "separate stuff" ;
-             *   i_unpair ; dip i_unpair ; dip i_unpair ;
-             *   i_comment "(\* arg :: capture :: f :: unit :: env *\)" ;
-             *   i_pair ;
-             *   i_exec ; (\* output :: stack :: env *\)
-             * ] *)
           )
         | _ -> simple_fail "E_applicationing something not appliable"
       )

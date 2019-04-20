@@ -13,14 +13,22 @@ function pop_switch (const h : heap) : heap is
    const last : heap_element = get_force(s, h) ;
    remove 1n from map h ;
    h[1n] := last ;
-  } with h ;
+  } with h
 
-
-// function pop (const h : heap) : heap is
+// function largest_child (const h : heap) : nat is
 //   block {
 //    const result : heap_element = get_top (h) ;
 //    const s : nat = size(h) ;
-//    const last : heap_element = get_force(int(s), h) ;
-//    remove 1 from map h ;
-//    h[1] := last ;
-//   } with h ;
+//    var current : heap_element := get_force(s, h) ;
+//    const i : nat = 1n ;
+//    const left : nat = 2n * i ;
+//    const right : nat = left + 1n ;
+//    remove 1n from map h ;
+//    h[1n] := current ;
+//    var largest : nat := i ;
+//    if (left <= s and heap_element_lt(get_force(s , h) , get_force(left , h))) then
+//      largest := left
+//    else if (right <= s and heap_element_lt(get_force(s , h) , get_force(right , h))) then
+//      largest := right
+//    else skip
+//   } with largest

@@ -318,16 +318,29 @@ and simpl_fun_declaration : Raw.fun_decl -> named_expression result = fun x ->
        ok {name;annotated_expression = {expression;type_annotation}}
      )
    | lst -> (
+       let arguments_name = "arguments" in
        let%bind params = bind_map_list simpl_param lst in
        let input =
-         let type_expression = T_record (
-             SMap.of_list
-             @@ List.map (fun (x:named_type_expression) -> x.type_name, x.type_expression)
-               params
-           ) in
-         { type_name = "arguments" ; type_expression } in
+         let aux = fun x -> x.type_expression in
+         let type_expression = T_tuple (List.map aux params) in
+         { type_name = arguments_name ; type_expression } in
        let binder = input.type_name in
        let input_type = input.type_expression in
+       let tpl_declarations =
+         let aux = fun i (x:named_type_expression) ->
+           let ass = I_assignment {
+             name = x.type_name ;
+             annotated_expression = {
+               expression = E_accessor ({
+                   expression = E_variable arguments_name ;
+                   type_annotation = Some input.type_expression ;
+                 } , [ Access_tuple i ] ) ;
+               type_annotation = Some (x.type_expression) ;
+             }
+           } in
+           ass
+         in
+         List.mapi aux params in
        let%bind local_declarations =
          let%bind typed = bind_map_list simpl_local_declaration local_decls in
          ok (List.map fst typed)
@@ -336,22 +349,9 @@ and simpl_fun_declaration : Raw.fun_decl -> named_expression result = fun x ->
        let%bind instructions = bind_list
          @@ List.map simpl_statement
          @@ npseq_to_list block.value.statements in
-       let%bind (body, result) =
-         let renamings =
-           let aux ({type_name}:named_type_expression) : Rename.Value.renaming =
-             type_name, ("arguments", [Access_record type_name])
-           in
-           List.map aux params
-         in
-         let%bind r =
-           let%bind tmp = simpl_expression return in
-           Rename.Value.rename_annotated_expression renamings tmp
-         in
-         let%bind b =
-           let tmp = local_declarations @ instructions in
-           Rename.Value.rename_block renamings tmp
-         in
-         ok (b, r) in
+
+       let body = tpl_declarations @ local_declarations @ instructions in
+       let%bind result = simpl_expression return in
        let expression = E_lambda {binder ; input_type ; output_type ; result ; body } in
        let type_annotation = Some (T_function (input_type, output_type)) in
        ok {name = name.value;annotated_expression = {expression;type_annotation}}

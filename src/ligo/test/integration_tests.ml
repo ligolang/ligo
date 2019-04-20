@@ -67,6 +67,21 @@ let closure () : unit result =
     @@ [0 ; 2 ; 42 ; 163 ; -1] in
   ok ()
 
+let shadow () : unit result =
+  let%bind program = type_file "./contracts/shadow.ligo" in
+  let%bind _foo = trace (simple_error "test foo") @@
+    let aux n =
+      let open AST_Typed.Combinators in
+      let input = e_a_int n in
+      let%bind result = easy_run_typed "foo" program input in
+      let expected = e_a_int 0 in
+      AST_Typed.assert_value_eq (expected, result)
+    in
+    bind_list
+    @@ List.map aux
+    @@ [3 ; 2 ; 0 ; 42 ; 163 ; -1] in
+  ok ()
+
 let higher_order () : unit result =
   let%bind program = type_file "./contracts/high-order.ligo" in
   let%bind _foo = trace (simple_error "test foo") @@
@@ -314,7 +329,7 @@ let map () : unit result =
     let aux n =
       let input =
         let m = ez [(23, 0) ; (42, 0)] in
-        AST_Typed.Combinators.(ez_e_a_record [("n", e_a_int n) ; ("m", m)])
+        AST_Typed.Combinators.(e_a_tuple [ e_a_int n ; m ])
       in
       let%bind result = easy_run_typed "set_" program input in
       let expect = ez [(23, n) ; (42, 0)] in
@@ -552,6 +567,8 @@ let main = "Integration (End to End)", [
     test "complex function" complex_function ;
     test "closure" closure ;
     test "shared function" shared_function ;
+    test "shadow" shadow ;
+    test "multiple parameters" multiple_parameters ;
     test "bool" bool_expression ;
     test "arithmetic" arithmetic ;
     test "unit" unit_expression ;
@@ -560,7 +577,6 @@ let main = "Integration (End to End)", [
     test "option" option ;
     test "map" map ;
     test "list" list ;
-    test "multiple parameters" multiple_parameters ;
     test "condition" condition ;
     test "loop" loop ;
     test "matching" matching ;
