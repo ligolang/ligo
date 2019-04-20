@@ -10,6 +10,7 @@ depends: [
   "ocamlfind" { build }
   "dune" { build & >= "1.0.1" }
   "menhir"
+  "ppx_let"
   "tezos-utils"
 ]
 build: [
