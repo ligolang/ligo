@@ -489,7 +489,7 @@ let extract_record (v : value) (tree : _ Append_tree.t') : (_ list) result =
 
 let rec untranspile (v : value) (t : AST.type_value) : AST.annotated_expression result =
   let open! AST in
-  let return e = ok AST.(annotated_expression e t) in
+  let return e = ok (make_a_e e t) in
   match t.type_value' with
   | T_constant ("unit", []) ->
       let%bind () = get_unit v in

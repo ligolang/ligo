@@ -116,6 +116,10 @@ let trace_f_ez f name =
 let trace_f_2_ez f name =
   trace_f_2 f (error (thunk "in function") name)
 
+let to_bool = function
+  | Ok _ -> true
+  | Errors _ -> false
+
 let to_option = function
   | Ok (o, annotations) -> ignore annotations; Some o
   | Errors _ -> None

@@ -6,63 +6,10 @@ open O.Combinators
 
 module SMap = O.SMap
 
-module Environment = struct
-  type ele = O.type_value
-
-  type t = {
-    environment: (string * ele) list ;
-    type_environment: (string * ele) list ;
-  }
-  let empty : t = {
-    (*  TODO: use maps *)
-    environment = [] ;
-    type_environment = [] ;
-  }
-
-  let get (e:t) (s:string) : ele option =
-    List.assoc_opt s e.environment
-  let get_constructor (e:t) (s:string) : (ele * ele) option =
-    let rec aux = function
-      | [] -> None
-      | (_, (O.{type_value'=(O.T_sum m)} as tv)) :: _ when SMap.mem s m -> Some (SMap.find s m, tv)
-      | _ :: tl -> aux tl
-    in
-    aux e.environment
-
-  let add (e:t) (s:string) (tv:ele) : t =
-    {e with environment = (s, tv) :: e.environment}
-  let get_type (e:t) (s:string) : ele option =
-    List.assoc_opt s e.type_environment
-  let add_type (e:t) (s:string) (tv:ele) : t =
-    {e with type_environment = (s, tv) :: e.type_environment}
-
-  module PP = struct
-    open Format
-    open PP_helpers
-
-    let list_sep_d x = list_sep x (const " , ")
-
-    let value ppf (e:t) =
-      let pp ppf (s, e) = fprintf ppf "%s -> %a" s O.PP.type_value e in
-      fprintf ppf "ValueEnv[%a]" (list_sep_d pp) e.environment
-
-    let type_ ppf e =
-      let pp ppf (s, e) = fprintf ppf "%s -> %a" s O.PP.type_value e in
-      fprintf ppf "TypeEnv[%a]" (list_sep_d pp) e.type_environment
-
-    let full ppf e =
-      fprintf ppf "%a\n%a" value e type_ e
-  end
-
-  module Combinators = struct
-    let env_sum_type ?(env = empty)
-                     ?(name = "a_sum_type")
-                     (lst : (string * ele) list) =
-      add env name (make_t_ez_sum lst)
-  end
-end
+module Environment = O.Environment
 
 type environment = Environment.t
+
 
 module Errors = struct
   let unbound_type_variable (e:environment) (n:string) () =
@@ -245,7 +192,7 @@ and type_match : type i o . (environment -> i -> o result) -> environment -> O.t
       ok (O.Match_tuple (lst, b'))
 
 and evaluate_type (e:environment) (t:I.type_expression) : O.type_value result =
-  let return tv' = ok O.(type_value tv' (Some t)) in
+  let return tv' = ok (make_t tv' (Some t)) in
   match t with
   | T_function (a, b) ->
       let%bind a' = evaluate_type e a in
@@ -313,7 +260,7 @@ and type_annotated_expression (e:environment) (ae:I.annotated_expression) : O.an
   (* Tuple *)
   | E_tuple lst ->
       let%bind lst' = bind_list @@ List.map (type_annotated_expression e) lst in
-      let tv_lst = List.map get_annotation lst' in
+      let tv_lst = List.map get_type_annotation lst' in
       let%bind type_annotation = check (t_tuple tv_lst ()) in
       ok O.{expression = E_tuple lst' ; type_annotation }
   | E_accessor (ae, path) ->
@@ -357,7 +304,7 @@ and type_annotated_expression (e:environment) (ae:I.annotated_expression) : O.an
         ok (SMap.add k expr' prev)
       in
       let%bind m' = bind_fold_smap aux (ok SMap.empty) m in
-      let%bind type_annotation = check @@ t_record (SMap.map get_annotation m') () in
+      let%bind type_annotation = check @@ t_record (SMap.map get_type_annotation m') () in
       ok O.{expression = O.E_record m' ; type_annotation }
   (* Data-structure *)
   | E_list lst ->
@@ -372,11 +319,11 @@ and type_annotated_expression (e:environment) (ae:I.annotated_expression) : O.an
         let%bind init = match tv_opt with
           | None -> ok None
           | Some ty ->
-              let%bind ty' = Ast_typed.Combinators.get_t_list ty in
+              let%bind ty' = get_t_list ty in
               ok (Some ty') in
         let%bind ty =
           let%bind opt = bind_fold_list aux init
-          @@ List.map Ast_typed.get_type_annotation lst' in
+          @@ List.map get_type_annotation lst' in
           trace_option (simple_error "empty list expression without annotation") opt in
         check (t_list ty ())
       in
@@ -393,14 +340,14 @@ and type_annotated_expression (e:environment) (ae:I.annotated_expression) : O.an
         let%bind key_type =
           let%bind opt =
             bind_fold_list aux None
-            @@ List.map Ast_typed.get_type_annotation
+            @@ List.map get_type_annotation
             @@ List.map fst lst' in
           trace_option (simple_error "empty map expression") opt
         in
         let%bind value_type =
           let%bind opt =
             bind_fold_list aux None
-            @@ List.map Ast_typed.get_type_annotation
+            @@ List.map get_type_annotation
             @@ List.map snd lst' in
           trace_option (simple_error "empty map expression") opt
         in
@@ -423,7 +370,7 @@ and type_annotated_expression (e:environment) (ae:I.annotated_expression) : O.an
       ok O.{expression = E_lambda {binder;input_type;output_type;result;body} ; type_annotation}
   | E_constant (name, lst) ->
       let%bind lst' = bind_list @@ List.map (type_annotated_expression e) lst in
-      let tv_lst = List.map get_annotation lst' in
+      let tv_lst = List.map get_type_annotation lst' in
       let%bind (name', tv) = type_constant name tv_lst tv_opt in
       let%bind type_annotation = check tv in
       ok O.{expression = O.E_constant (name', lst') ; type_annotation}
