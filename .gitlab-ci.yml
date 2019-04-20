@@ -24,6 +24,7 @@ default-job:
     paths:
       - src/ligo/bin/cli.ml
 
+
 install-from-repo-job:
   script:
     - opam install -y ligo
