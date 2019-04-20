@@ -1,16 +1,15 @@
 open Types
 
 type ele = type_value
+type t = full_environment
 
-type t = {
-  environment: (string * ele) list ;
-  type_environment: (string * ele) list ;
-}
 let empty : t = {
   (*  TODO: use maps *)
   environment = [] ;
   type_environment = [] ;
 }
+
+let dummy : environment = []
 
 let get (e:t) (s:string) : ele option =
   List.assoc_opt s e.environment
@@ -45,12 +44,5 @@ module PP = struct
 
   let full ppf e =
     fprintf ppf "%a\n%a" value e type_ e
-end
-
-module Combinators = struct
-  let env_sum_type ?(env = empty)
-      ?(name = "a_sum_type")
-      (lst : (string * ele) list) =
-    add env name (Combinators.make_t_ez_sum lst)
 end
 

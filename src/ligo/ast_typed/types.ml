@@ -1,3 +1,5 @@
+[@@@warning "-30"]
+
 module S = Ast_simplified
 
 module SMap = Map.String
@@ -14,9 +16,18 @@ and declaration =
   | Declaration_constant of named_expression
   (* | Macro_declaration of macro_declaration *)
 
+and environment = (string * type_value) list
+and type_environment = (string * type_value) list
+and full_environment = {
+  environment : environment ;
+  type_environment : type_environment ;
+}
+
 and annotated_expression = {
   expression: expression ;
   type_annotation: tv ;
+  environment: environment ;
+  dummy_field: unit ;
 }
 
 and named_expression = {

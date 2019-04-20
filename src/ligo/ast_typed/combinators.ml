@@ -2,7 +2,8 @@ open Trace
 open Types
 
 let make_t type_value' simplified = { type_value' ; simplified }
-let make_a_e expression type_annotation = { expression ; type_annotation }
+let make_a_e expression type_annotation = { expression ; type_annotation ; dummy_field = () ; environment = Environment.dummy }
+let make_n_e name a_e = { name ; annotated_expression = a_e }
 
 let t_bool ?s () : type_value = make_t (T_constant ("bool", [])) s
 let t_string ?s () : type_value = make_t (T_constant ("string", [])) s
@@ -129,3 +130,10 @@ let get_a_bool (t:annotated_expression) =
   match t.expression with
   | E_literal (Literal_bool b) -> ok b
   | _ -> simple_fail "not a bool"
+
+open Environment
+let env_sum_type ?(env = empty)
+    ?(name = "a_sum_type")
+    (lst : (string * ele) list) =
+  add env name (make_t_ez_sum lst)
+

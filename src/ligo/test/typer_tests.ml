@@ -30,7 +30,7 @@ module TestExpressions = struct
 
   module I = Simplified.Combinators
   module O = Typed.Combinators
-  module E = Typer.Environment.Combinators
+  module E = O
 
   let unit   () : unit result = test_expression I.(e_unit ())    O.(t_unit ())
   let int    () : unit result = test_expression I.(e_int 32)  O.(t_int ())

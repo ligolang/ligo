@@ -10,7 +10,6 @@ module Environment = O.Environment
 
 type environment = Environment.t
 
-
 module Errors = struct
   let unbound_type_variable (e:environment) (n:string) () =
     let title = (thunk "unbound type variable") in
@@ -75,7 +74,7 @@ and type_declaration env : I.declaration -> (environment * O.declaration option)
         trace (constant_declaration_error name annotated_expression) @@
         type_annotated_expression env annotated_expression in
       let env' = Environment.add env name ae'.type_annotation in
-      ok (env', Some (O.Declaration_constant {name;annotated_expression=ae'}))
+      ok (env', Some (O.Declaration_constant (make_n_e name ae')))
 
 and type_block_full (e:environment) (b:I.block) : (O.block * environment) result =
   let aux (e, acc:(environment * O.instruction list)) (i:I.instruction) =
@@ -108,18 +107,18 @@ and type_instruction (e:environment) : I.instruction -> (environment * O.instruc
       | Some _, None ->
           let%bind annotated_expression = type_annotated_expression e annotated_expression in
           let e' = Environment.add e name annotated_expression.type_annotation in
-          ok (e', [O.I_declaration {name;annotated_expression}])
+          ok (e', [O.I_declaration (make_n_e name annotated_expression)])
       | None, Some prev ->
           let%bind annotated_expression = type_annotated_expression e annotated_expression in
           let%bind _ =
             O.assert_type_value_eq (annotated_expression.type_annotation, prev) in
-          ok (e, [O.I_assignment {name;annotated_expression}])
+          ok (e, [O.I_assignment (make_n_e name annotated_expression)])
       | Some _, Some prev ->
           let%bind annotated_expression = type_annotated_expression e annotated_expression in
           let%bind _assert = trace (simple_error "Annotation doesn't match environment")
             @@ O.assert_type_value_eq (annotated_expression.type_annotation, prev) in
           let e' = Environment.add e name annotated_expression.type_annotation in
-          ok (e', [O.I_assignment {name;annotated_expression}])
+          ok (e', [O.I_assignment (make_n_e name annotated_expression)])
     )
   | I_matching (ex, m) ->
       let%bind ex' = type_annotated_expression e ex in
@@ -231,38 +230,33 @@ and type_annotated_expression (e:environment) (ae:I.annotated_expression) : O.an
     | None -> ok None
     | Some s -> let%bind r = evaluate_type e s in ok (Some r) in
   let check tv = O.(merge_annotation tv_opt (Some tv)) in
+  let return e tv =
+    let%bind type_annotation = check tv in
+    ok @@ make_a_e e type_annotation in
   match ae.expression with
   (* Basic *)
   | E_variable name ->
       let%bind tv' =
         trace_option (unbound_variable e name)
         @@ Environment.get e name in
-      let%bind type_annotation = check tv' in
-      ok O.{expression = E_variable name ; type_annotation}
+      return (E_variable name) tv'
   | E_literal (Literal_bool b) ->
-      let%bind type_annotation = check (t_bool ()) in
-      ok O.{expression = E_literal (Literal_bool b) ; type_annotation }
+      return (E_literal (Literal_bool b)) (t_bool ())
   | E_literal Literal_unit ->
-      let%bind type_annotation = check (t_unit ()) in
-      ok O.{expression = E_literal (Literal_unit) ; type_annotation }
+      return (E_literal (Literal_unit)) (t_unit ())
   | E_literal (Literal_string s) ->
-      let%bind type_annotation = check (t_string ()) in
-      ok O.{expression = E_literal (Literal_string s) ; type_annotation }
+      return (E_literal (Literal_string s)) (t_string ())
   | E_literal (Literal_bytes s) ->
-      let%bind type_annotation = check (t_bytes ()) in
-      ok O.{expression = E_literal (Literal_bytes s) ; type_annotation }
+      return (E_literal (Literal_bytes s)) (t_bytes ())
   | E_literal (Literal_int n) ->
-      let%bind type_annotation = check (t_int ()) in
-      ok O.{expression = E_literal (Literal_int n) ; type_annotation }
+      return (E_literal (Literal_int n)) (t_int ())
   | E_literal (Literal_nat n) ->
-      let%bind type_annotation = check (t_nat ()) in
-      ok O.{expression = E_literal (Literal_nat n) ; type_annotation }
+      return (E_literal (Literal_nat n)) (t_nat ())
   (* Tuple *)
   | E_tuple lst ->
       let%bind lst' = bind_list @@ List.map (type_annotated_expression e) lst in
       let tv_lst = List.map get_type_annotation lst' in
-      let%bind type_annotation = check (t_tuple tv_lst ()) in
-      ok O.{expression = E_tuple lst' ; type_annotation }
+      return (E_tuple lst') (t_tuple tv_lst ())
   | E_accessor (ae, path) ->
       let%bind e' = type_annotated_expression e ae in
       let aux (prev:O.annotated_expression) (a:I.access) : O.annotated_expression result =
@@ -272,17 +266,14 @@ and type_annotated_expression (e:environment) (ae:I.annotated_expression) : O.an
             let%bind tv =
               generic_try (simple_error "bad tuple index")
               @@ (fun () -> List.nth tpl_tv index) in
-            let%bind type_annotation = check tv in
-            let annotated_expression = O.{expression = E_tuple_accessor (prev, index) ; type_annotation} in
-            ok annotated_expression
+            return (E_tuple_accessor (prev , index)) tv
           )
         | Access_record property -> (
             let%bind r_tv = get_t_record prev.type_annotation in
             let%bind tv =
               generic_try (simple_error "bad record index")
               @@ (fun () -> SMap.find property r_tv) in
-            let%bind type_annotation = check tv in
-            ok O.{expression = O.E_record_accessor (prev, property) ; type_annotation }
+            return (E_record_accessor (prev , property)) tv
           )
       in
       trace (simple_error "accessing") @@
@@ -295,8 +286,7 @@ and type_annotated_expression (e:environment) (ae:I.annotated_expression) : O.an
         @@ Environment.get_constructor e c in
       let%bind expr' = type_annotated_expression e expr in
       let%bind _assert = O.assert_type_value_eq (expr'.type_annotation, c_tv) in
-      let%bind type_annotation = check sum_tv in
-      ok O.{expression = O.E_constructor(c, expr') ; type_annotation }
+      return (E_constructor (c , expr')) sum_tv
   (* Record *)
   | E_record m ->
       let aux prev k expr =
@@ -304,12 +294,11 @@ and type_annotated_expression (e:environment) (ae:I.annotated_expression) : O.an
         ok (SMap.add k expr' prev)
       in
       let%bind m' = bind_fold_smap aux (ok SMap.empty) m in
-      let%bind type_annotation = check @@ t_record (SMap.map get_type_annotation m') () in
-      ok O.{expression = O.E_record m' ; type_annotation }
+      return (E_record m') (t_record (SMap.map get_type_annotation m') ())
   (* Data-structure *)
   | E_list lst ->
       let%bind lst' = bind_map_list (type_annotated_expression e) lst in
-      let%bind type_annotation =
+      let%bind tv =
         let aux opt c =
           match opt with
           | None -> ok (Some c)
@@ -325,12 +314,12 @@ and type_annotated_expression (e:environment) (ae:I.annotated_expression) : O.an
           let%bind opt = bind_fold_list aux init
           @@ List.map get_type_annotation lst' in
           trace_option (simple_error "empty list expression without annotation") opt in
-        check (t_list ty ())
+        ok (t_list ty ())
       in
-      ok O.{expression = O.E_list lst' ; type_annotation}
+      return (E_list lst') tv
   | E_map lst ->
       let%bind lst' = bind_map_list (bind_map_pair (type_annotated_expression e)) lst in
-      let%bind type_annotation =
+      let%bind tv =
         let aux opt c =
           match opt with
           | None -> ok (Some c)
@@ -351,9 +340,9 @@ and type_annotated_expression (e:environment) (ae:I.annotated_expression) : O.an
             @@ List.map snd lst' in
           trace_option (simple_error "empty map expression") opt
         in
-        check (t_map key_type value_type ())
+        ok (t_map key_type value_type ())
       in
-      ok O.{expression = O.E_map lst' ; type_annotation}
+      return (E_map lst') tv
   | E_lambda {
       binder ;
       input_type ;
@@ -366,41 +355,37 @@ and type_annotated_expression (e:environment) (ae:I.annotated_expression) : O.an
       let e' = Environment.add e binder input_type in
       let%bind (body, e'') = type_block_full e' body in
       let%bind result = type_annotated_expression e'' result in
-      let%bind type_annotation = check @@ (t_function input_type output_type ()) in
-      ok O.{expression = E_lambda {binder;input_type;output_type;result;body} ; type_annotation}
+      return (E_lambda {binder;input_type;output_type;result;body}) (t_function input_type output_type ())
   | E_constant (name, lst) ->
       let%bind lst' = bind_list @@ List.map (type_annotated_expression e) lst in
       let tv_lst = List.map get_type_annotation lst' in
       let%bind (name', tv) = type_constant name tv_lst tv_opt in
-      let%bind type_annotation = check tv in
-      ok O.{expression = O.E_constant (name', lst') ; type_annotation}
+      return (E_constant (name' , lst')) tv
   | E_application (f, arg) ->
       let%bind f = type_annotated_expression e f in
       let%bind arg = type_annotated_expression e arg in
-      let%bind type_annotation = match f.type_annotation.type_value' with
+      let%bind tv = match f.type_annotation.type_value' with
         | T_function (param, result) ->
             let%bind _ = O.assert_type_value_eq (param, arg.type_annotation) in
             ok result
         | _ -> simple_fail "applying to not-a-function"
       in
-      ok O.{expression = E_application (f, arg) ; type_annotation}
+      return (E_application (f , arg)) tv
   | E_look_up dsi ->
       let%bind (ds, ind) = bind_map_pair (type_annotated_expression e) dsi in
       let%bind (src, dst) = get_t_map ds.type_annotation in
       let%bind _ = O.assert_type_value_eq (ind.type_annotation, src) in
-      let dst_opt = (t_option dst ()) in
-      let%bind type_annotation = check dst_opt in
-      ok O.{expression = E_look_up (ds, ind) ; type_annotation}
+      return (E_look_up (ds , ind)) (t_option dst ())
   (* Advanced *)
   | E_matching (ex, m) -> (
       let%bind ex' = type_annotated_expression e ex in
       let%bind m' = type_match type_annotated_expression e ex'.type_annotation m in
-      let%bind type_annotation = match m' with
+      let%bind tv = match m' with
         | Match_bool {match_true ; match_false} ->
             let%bind _ = O.assert_type_value_eq (match_true.type_annotation, match_false.type_annotation) in
             ok match_true.type_annotation
         | _ -> simple_fail "can only type match_bool expressions yet" in
-      ok O.{expression = E_matching (ex', m') ; type_annotation}
+      return (E_matching (ex' , m')) tv
     )
 
 and type_constant (name:string) (lst:O.type_value list) (tv_opt:O.type_value option) : (string * O.type_value) result =
