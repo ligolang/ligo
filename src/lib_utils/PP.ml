@@ -18,6 +18,14 @@ let ne_list_sep value separator ppf (hd, tl) =
 let prepend s f ppf a =
   fprintf ppf "%s%a" s f a
 
+let option = fun f ppf opt ->
+  match opt with
+  | Some x -> fprintf ppf "Some(%a)" f x
+  | None -> fprintf ppf "None"
+
+let map = fun f pp ppf x ->
+  pp ppf (f x)
+
 let pair_sep value sep ppf (a, b) = fprintf ppf "%a %s %a" value a sep value b
 let smap_sep value sep ppf m =
   let module SMap = X_map.String in

@@ -14,7 +14,7 @@ module PP_helpers = PP
 module Location = Location
 
 module List = X_list
-module Option = Tezos_base.TzPervasives.Option
+module Option = X_option
 module Cast = Cast
 module Tuple = Tuple
 module Map = X_map

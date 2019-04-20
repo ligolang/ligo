@@ -108,4 +108,14 @@ module Append = struct
     match t with
     | Empty -> None
     | Full t' -> assoc_opt' t' k
+
+  let rec pp' : _ -> _ -> 'a t' -> unit = fun f ppf t' ->
+    match t' with
+    | Leaf x -> Format.fprintf ppf "%a" f x
+    | Node {a;b} -> Format.fprintf ppf "N(%a , %a)" (pp' f) a (pp' f) b
+
+  let pp : _ -> _ -> 'a t -> unit = fun f ppf t ->
+    match t with
+    | Empty -> Format.fprintf ppf "[]"
+    | Full x -> Format.fprintf ppf "[%a]" (pp' f) x
 end

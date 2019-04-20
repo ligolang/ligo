@@ -27,7 +27,7 @@ module Assoc : DICTIONARY = struct
 
   let set ?equal lst a b =
     let equal : 'a -> 'a -> bool =
-      Option.unopt
+      X_option.unopt
         ~default:(=) equal
     in
     let rec aux acc = function
@@ -39,7 +39,7 @@ module Assoc : DICTIONARY = struct
 
   let del ?equal lst a =
     let equal : 'a -> 'a -> bool =
-      Option.unopt
+      X_option.unopt
         ~default:(=) equal
     in
     let rec aux acc = function
