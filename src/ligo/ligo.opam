@@ -12,6 +12,8 @@ depends: [
   "menhir"
   "ppx_let"
   "tezos-utils"
+  "getopt"
+  "yojson"
 ]
 build: [
   [ "dune" "build" "-p" name "-j" jobs ]
