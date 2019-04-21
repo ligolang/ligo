@@ -97,9 +97,12 @@ module Ne = struct
 
   let of_list lst = List.(hd lst, tl lst)
   let to_list (hd, tl : _ t) = hd :: tl
+  let singleton hd : 'a t = hd , []
   let hd : 'a t -> 'a = fst
+  let cons : 'a -> 'a t -> 'a t = fun hd' (hd , tl) -> hd' , hd :: tl
   let iter f (hd, tl : _ t) = f hd ; List.iter f tl
   let map f (hd, tl : _ t) = f hd, List.map f tl
+  let hd_map : _ -> 'a t -> 'a t = fun f (hd , tl) -> (f hd , tl)
   let mapi f (hd, tl : _ t) =
     let lst = List.mapi f (hd::tl) in
     of_list lst
@@ -110,5 +113,9 @@ module Ne = struct
     | lst ->
         let r = List.rev lst in
         (List.hd r, List.tl r @ [hd])
+  let find_map = fun f (hd , tl : _ t) ->
+    match f hd with
+    | Some x -> Some x
+    | None -> find_map f tl
 
 end

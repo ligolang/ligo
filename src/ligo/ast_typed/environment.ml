@@ -1,49 +1,64 @@
 open Types
 
-type ele = type_value
+type element = type_value
+
+module Small = struct
+  type t = small_environment
+
+  let empty : t = ([] , [])
+
+  let get_environment : t -> environment = fst
+  let get_type_environment : t -> type_environment = snd
+  let map_environment : _ -> t -> t = fun f (a , b) -> (f a , b)
+  let map_type_environment : _ -> t -> t = fun f (a , b) -> (a , f b)
+
+  let add : string -> element -> t -> t = fun k v -> map_environment (fun x -> (k , v) :: x)
+  let add_type : string -> element -> t -> t = fun k v -> map_type_environment (fun x -> (k , v) :: x)
+  let get_opt : string -> t -> element option = fun k x -> List.assoc_opt k (get_environment x)
+  let get_type_opt : string -> t -> element option = fun k x -> List.assoc_opt k (get_type_environment x)
+end
+
 type t = full_environment
+let empty : environment = Small.(get_environment empty)
+let full_empty : t = List.Ne.singleton Small.empty
+let add : string -> element -> t -> t = fun k v -> List.Ne.hd_map (Small.add k v)
+let add_type : string -> element -> t -> t = fun k v -> List.Ne.hd_map (Small.add_type k v)
+let get_opt : string -> t -> element option = fun k x -> List.Ne.find_map (Small.get_opt k) x
+let get_type_opt : string -> t -> element option = fun k x -> List.Ne.find_map (Small.get_type_opt k) x
 
-let empty = []
-let full_empty : t = {
-  (*  TODO: use maps *)
-  environment = [] ;
-  type_environment = [] ;
-}
+let get_constructor : string -> t -> (element * element) option = fun k x -> (* Left is the constructor, right is the sum type *)
+  let aux = fun x ->
+    let aux = fun (_type_name , x) ->
+      match x.type_value' with
+      | T_sum m when Map.String.mem k m -> Some (Map.String.find k m , x)
+      | _ -> None
+    in
+    List.find_map aux (Small.get_type_environment x) in
+  List.Ne.find_map aux x
 
-let dummy : environment = []
-
-let get (e:t) (s:string) : ele option =
-  List.assoc_opt s e.environment
-let get_constructor (e:t) (s:string) : (ele * ele) option =
-  let rec aux = function
-    | [] -> None
-    | (_, ({type_value'=(T_sum m)} as tv)) :: _ when SMap.mem s m -> Some (SMap.find s m, tv)
-    | _ :: tl -> aux tl
-  in
-  aux e.environment
-
-let add (e:t) (s:string) (tv:ele) : t =
-  {e with environment = (s, tv) :: e.environment}
-let get_type (e:t) (s:string) : ele option =
-  List.assoc_opt s e.type_environment
-let add_type (e:t) (s:string) (tv:ele) : t =
-  {e with type_environment = (s, tv) :: e.type_environment}
 
 module PP = struct
   open Format
   open PP_helpers
 
-  let list_sep_d x = list_sep x (const " , ")
+  let list_sep_scope x = list_sep x (const " | ")
 
-  let value ppf (e:t) =
-    let pp ppf (s, e) = fprintf ppf "%s -> %a" s PP.type_value e in
-    fprintf ppf "ValueEnv[%a]" (list_sep_d pp) e.environment
+  let assoc = fun ppf (k , tv) ->
+    fprintf ppf "%s -> %a" k PP.type_value tv
 
-  let type_ ppf e =
-    let pp ppf (s, e) = fprintf ppf "%s -> %a" s PP.type_value e in
-    fprintf ppf "TypeEnv[%a]" (list_sep_d pp) e.type_environment
+  let environment : _ -> environment -> unit = fun ppf lst ->
+    fprintf ppf "E[%a]" (list_sep assoc (const " , ")) lst
 
-  let full ppf e =
-    fprintf ppf "%a\n%a" value e type_ e
+  let type_environment = fun ppf lst ->
+    fprintf ppf "T[%a]" (list_sep assoc (const " , ")) lst
+
+  let small_environment : _ -> small_environment -> unit = fun ppf e ->
+    fprintf ppf "- %a\t%a"
+      environment (Small.get_environment e)
+      type_environment (Small.get_type_environment e)
+
+  let full_environment : _ -> full_environment -> unit = fun ppf e ->
+    fprintf ppf "@[%a]"
+      (ne_list_sep small_environment (tag "@;")) e
 end
 

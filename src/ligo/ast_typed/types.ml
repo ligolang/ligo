@@ -18,15 +18,13 @@ and declaration =
 
 and environment = (string * type_value) list
 and type_environment = (string * type_value) list
-and full_environment = {
-  environment : environment ;
-  type_environment : type_environment ;
-}
+and small_environment = (environment * type_environment)
+and full_environment = small_environment List.Ne.t
 
 and annotated_expression = {
   expression: expression ;
   type_annotation: tv ;
-  environment: environment ;
+  environment: full_environment ;
   dummy_field: unit ;
 }
 
