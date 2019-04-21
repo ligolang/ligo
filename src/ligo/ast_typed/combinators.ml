@@ -149,6 +149,6 @@ let get_a_bool (t:annotated_expression) =
 open Environment
 let env_sum_type ?(env = full_empty)
     ?(name = "a_sum_type")
-    (lst : (string * element) list) =
+    (lst : (string * type_value) list) =
   add_type name (make_t_ez_sum lst) env
 

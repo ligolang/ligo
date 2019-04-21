@@ -16,7 +16,11 @@ and declaration =
   | Declaration_constant of named_expression
   (* | Macro_declaration of macro_declaration *)
 
-and environment = (string * type_value) list
+and environment_element = {
+  type_value : type_value ;
+  source_environment : full_environment ;
+}
+and environment = (string * environment_element) list
 and type_environment = (string * type_value) list
 and small_environment = (environment * type_environment)
 and full_environment = small_environment List.Ne.t

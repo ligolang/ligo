@@ -182,9 +182,24 @@ and translate_literal : AST.literal -> value = fun l -> match l with
   | Literal_string s -> D_string s
   | Literal_unit -> D_unit
 
+and transpile_small_environment : AST.small_environment -> Environment.Small.t result = fun x ->
+  let x' = AST.Environment.Small.get_environment x in
+  let aux prec (name , (ele : AST.environment_element)) =
+    let%bind tv' = translate_type ele.type_value in
+    ok @@ Environment.Small.append (name , tv') prec
+  in
+  trace (simple_error "transpiling small environment") @@
+  bind_fold_right_list aux Append_tree.Empty x'
+
+and transpile_environment : AST.full_environment -> Environment.t result = fun x ->
+  let%bind nlst = bind_map_ne_list transpile_small_environment x in
+  ok @@ List.Ne.to_list nlst
+
 and translate_annotated_expression (env:Environment.t) (ae:AST.annotated_expression) : expression result =
   let%bind tv = translate_type ae.type_annotation in
-  let return ?(tv = tv) expr = ok @@ Combinators.Expression.make_tpl (expr, tv, env) in
+  let return ?(tv = tv) expr =
+    (* let%bind env' = transpile_environment ae.environment in *)
+    ok @@ Combinators.Expression.make_tpl (expr, tv, env) in
   let f = translate_annotated_expression env in
   match ae.expression with
   | E_literal l -> return @@ E_literal (translate_literal l)
@@ -485,7 +500,6 @@ let extract_record (v : value) (tree : _ Append_tree.t') : (_ list) result =
     | _ -> simple_fail "bad record path"
   in
   aux (tree, v)
-
 
 let rec untranspile (v : value) (t : AST.type_value) : AST.annotated_expression result =
   let open! AST in
