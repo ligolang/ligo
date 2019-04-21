@@ -8,7 +8,7 @@ module Simplified = Ligo.AST_Simplified
 
 let int () : unit result =
   let open Combinators in
-  let pre = ae @@ e_int 32 in
+  let pre = make_e_a @@ e_int 32 in
   let open Typer in
   let e = Environment.full_empty in
   let%bind post = type_annotated_expression e pre in
@@ -21,9 +21,9 @@ module TestExpressions = struct
   let test_expression ?(env = Typer.Environment.full_empty)
                       (expr : expression)
                       (test_expected_ty : Typed.tv) =
+    let pre = Combinators.make_e_a @@ expr in
     let open Typer in
     let open! Typed in
-    let pre = ae @@ expr in
     let%bind post = type_annotated_expression env pre in
     let%bind () = assert_type_value_eq (post.type_annotation, test_expected_ty) in
     ok ()
@@ -53,7 +53,7 @@ module TestExpressions = struct
       O.[("foo", t_int ()); ("bar", t_string ())]
     in test_expression
       ~env:(E.env_sum_type variant_foo_bar)
-      I.(e_constructor "foo" (ae @@ e_int 32))
+      I.(e_constructor "foo" (make_e_a @@ e_int 32))
       O.(make_t_ez_sum variant_foo_bar)
 
   let record () : unit result =

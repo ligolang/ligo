@@ -444,8 +444,8 @@ let untype_literal (l:O.literal) : I.literal result =
 
 let rec untype_annotated_expression (e:O.annotated_expression) : (I.annotated_expression) result =
   let open I in
-  let annotation = e.type_annotation.simplified in
-  let return e = ok @@ annotated_expression e annotation in
+  let type_annotation = e.type_annotation.simplified in
+  let return e = ok @@ I.Combinators.make_e_a ?type_annotation e in
   match e.expression with
   | E_literal l ->
       let%bind l = untype_literal l in
