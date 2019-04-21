@@ -2,6 +2,7 @@ open Types
 
 module SMap = Map.String
 
+
 let t_bool      : type_expression = T_constant ("bool", [])
 let t_string    : type_expression = T_constant ("string", [])
 let t_bytes     : type_expression = T_constant ("bytes", [])
@@ -42,6 +43,8 @@ let e_nat n : expression = E_literal (Literal_nat n)
 let e_bool   b : expression = E_literal (Literal_bool b)
 let e_string s : expression = E_literal (Literal_string s)
 let e_bytes  b : expression = E_literal (Literal_bytes (Bytes.of_string b))
+
+let e_a_int n : annotated_expression = make_e_a_full (e_int n) t_int
 
 let e_lambda (binder : string)
     (input_type : type_expression)

@@ -1,8 +1,6 @@
-open Ligo_parser
-
+open Trace
 module Parser = Parser
-module Lexer = Lexer
-module AST_Raw = AST
+module AST_Raw = Ligo_parser.AST
 module AST_Simplified = Ast_simplified
 module AST_Typed = Ast_typed
 module Mini_c = Mini_c
@@ -11,103 +9,6 @@ module Transpiler = Transpiler
 module Parser_multifix = Multifix
 module Simplify_multifix = Simplify_multifix
 
-open Trace
-
-let parse_file (source: string) : AST_Raw.t result =
-  let pp_input =
-    let prefix = Filename.(source |> basename |> remove_extension)
-    and suffix = ".pp.ligo"
-    in prefix ^ suffix in
-
-  let cpp_cmd = Printf.sprintf "cpp -traditional-cpp %s -o %s"
-                               source pp_input in
-  let%bind () = sys_command cpp_cmd in
-
-  let%bind channel =
-    generic_try (simple_error "error opening file") @@
-    (fun () -> open_in pp_input) in
-  let lexbuf = Lexing.from_channel channel in
-  let module Lexer = Lexer.Make(LexToken) in
-  let Lexer.{read ; close} =
-    Lexer.open_token_stream None in
-  specific_try (fun () -> function
-      | Parser.Error -> (
-          let start = Lexing.lexeme_start_p lexbuf in
-          let end_ = Lexing.lexeme_end_p lexbuf in
-          let str = Format.sprintf
-              "Parse error at \"%s\" from (%d, %d) to (%d, %d). In file \"%s|%s\"\n"
-              (Lexing.lexeme lexbuf)
-              start.pos_lnum (start.pos_cnum - start.pos_bol)
-              end_.pos_lnum (end_.pos_cnum - end_.pos_bol)
-              start.pos_fname source
-          in
-          simple_error str
-        )
-      | _ ->
-          let start = Lexing.lexeme_start_p lexbuf in
-          let end_ = Lexing.lexeme_end_p lexbuf in
-          let str = Format.sprintf
-              "Unrecognized error at \"%s\" from (%d, %d) to (%d, %d). In file \"%s|%s\"\n"
-              (Lexing.lexeme lexbuf)
-              start.pos_lnum (start.pos_cnum - start.pos_bol)
-              end_.pos_lnum (end_.pos_cnum - end_.pos_bol)
-              start.pos_fname source
-          in
-          simple_error str
-    ) @@ (fun () ->
-      let raw = Parser.contract read lexbuf in
-      close () ;
-      raw
-    ) >>? fun raw ->
-  ok raw
-
-let parse (s:string) : AST_Raw.t result =
-  let lexbuf = Lexing.from_string s in
-  let module Lexer = Lexer.Make(LexToken) in
-  let Lexer.{read ; close} =
-    Lexer.open_token_stream None in
-  specific_try (fun () -> function
-      | Parser.Error -> (
-          let start = Lexing.lexeme_start_p lexbuf in
-          let end_ = Lexing.lexeme_end_p lexbuf in
-          let str = Format.sprintf
-              "Parse error at \"%s\" from (%d, %d) to (%d, %d)\n"
-              (Lexing.lexeme lexbuf)
-              start.pos_lnum (start.pos_cnum - start.pos_bol)
-              end_.pos_lnum (end_.pos_cnum - end_.pos_bol) in
-          simple_error str
-        )
-      | _ -> simple_error "unrecognized parse_ error"
-    ) @@ (fun () ->
-      let raw = Parser.contract read lexbuf in
-      close () ;
-      raw
-    ) >>? fun raw ->
-  ok raw
-
-let parse_expression (s:string) : AST_Raw.expr result =
-  let lexbuf = Lexing.from_string s in
-  let module Lexer = Lexer.Make(LexToken) in
-  let Lexer.{read ; close} =
-    Lexer.open_token_stream None in
-  specific_try (fun () -> function
-      | Parser.Error -> (
-          let start = Lexing.lexeme_start_p lexbuf in
-          let end_ = Lexing.lexeme_end_p lexbuf in
-          let str = Format.sprintf
-              "Parse error at \"%s\" from (%d, %d) to (%d, %d)\n"
-              (Lexing.lexeme lexbuf)
-              start.pos_lnum (start.pos_cnum - start.pos_bol)
-              end_.pos_lnum (end_.pos_cnum - end_.pos_bol) in
-          simple_error str
-        )
-      | _ -> simple_error "unrecognized parse_ error"
-    ) @@ (fun () ->
-      let raw = Parser.interactive_expr read lexbuf in
-      close () ;
-      raw
-    ) >>? fun raw ->
-  ok raw
 
 let simplify (p:AST_Raw.t) : Ast_simplified.program result = Simplify.simpl_program p
 let simplify_expr (e:AST_Raw.expr) : Ast_simplified.annotated_expression result = Simplify.simpl_expression e
@@ -144,7 +45,7 @@ let compile : Mini_c.program -> string -> Compiler.Program.compiled_program resu
 
 let type_file ?(debug_simplify = false) ?(debug_typed = false)
     (path:string) : AST_Typed.program result =
-  let%bind raw = parse_file path in
+  let%bind raw = Parser.parse_file path in
   let%bind simpl =
     trace (simple_error "simplifying") @@
     simplify raw in
@@ -202,6 +103,37 @@ let easy_run_typed
     untranspile_value mini_c_result main_result_type in
   ok typed_result
 
+let easy_run_typed_simplified
+    ?(debug_mini_c = false) (entry:string)
+    (program:AST_Typed.program) (input:Ast_simplified.annotated_expression) : AST_Typed.annotated_expression result =
+  let%bind mini_c_main =
+    trace (simple_error "transpile mini_c entry") @@
+    transpile_entry program entry in
+  (if debug_mini_c then
+     Format.(printf "Mini_c : %a\n%!" Mini_c.PP.function_ mini_c_main.content)
+  ) ;
+
+  let%bind typed_value = type_expression input in
+  let%bind mini_c_value = transpile_value typed_value in
+
+  let%bind mini_c_result =
+    let error =
+      let title () = "run Mini_c" in
+      let content () =
+        Format.asprintf "\n%a" Mini_c.PP.function_ mini_c_main.content
+      in
+      error title content in
+    trace error @@
+    Run.Mini_c.run_entry mini_c_main mini_c_value in
+  let%bind typed_result =
+    let%bind main_result_type =
+      let%bind typed_main = Ast_typed.get_functional_entry program entry in
+      match (snd typed_main).type_value' with
+      | T_function (_, result) -> ok result
+      | _ -> simple_fail "main doesn't have fun type" in
+    untranspile_value mini_c_result main_result_type in
+  ok typed_result
+
 let easy_run_main_typed
     ?(debug_mini_c = false)
     (program:AST_Typed.program) (input:AST_Typed.annotated_expression) : AST_Typed.annotated_expression result =
@@ -210,7 +142,7 @@ let easy_run_main_typed
 let easy_run_main (path:string) (input:string) : AST_Typed.annotated_expression result =
   let%bind typed = type_file path in
 
-  let%bind raw_expr = parse_expression input in
+  let%bind raw_expr = Parser.parse_expression input in
   let%bind simpl_expr = simplify_expr raw_expr in
   let%bind typed_expr = type_expression simpl_expr in
   easy_run_main_typed typed typed_expr
@@ -218,7 +150,7 @@ let easy_run_main (path:string) (input:string) : AST_Typed.annotated_expression 
 let compile_file (source: string) (entry_point:string) : Micheline.Michelson.t result =
   let%bind raw =
     trace (simple_error "parsing") @@
-    parse_file source in
+    Parser.parse_file source in
   let%bind simplified =
     trace (simple_error "simplifying") @@
     simplify raw in

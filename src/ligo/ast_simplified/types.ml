@@ -11,6 +11,8 @@ and declaration =
   | Declaration_constant of named_expression
   (* | Macro_declaration of macro_declaration *)
 
+and value = annotated_expression
+
 and annotated_expression = {
   expression: expression ;
   type_annotation: te option ;

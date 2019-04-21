@@ -59,6 +59,8 @@ and annotated_expression ppf (ae:annotated_expression) = match ae.type_annotatio
   | None -> fprintf ppf "%a" expression ae.expression
   | Some t -> fprintf ppf "(%a) : %a" expression ae.expression type_expression t
 
+and value : _ -> value -> unit = fun x -> annotated_expression x
+
 and block ppf (b:block) = (list_sep instruction (tag "@;")) ppf b
 
 and single_record_patch ppf ((p, ae) : string * ae) =

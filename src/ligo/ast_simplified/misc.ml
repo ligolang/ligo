@@ -1,3 +1,111 @@
+open Trace
+open Types
+
+let assert_literal_eq (a, b : literal * literal) : unit result =
+  match (a, b) with
+  | Literal_bool a, Literal_bool b when a = b -> ok ()
+  | Literal_bool _, Literal_bool _ -> simple_fail "different bools"
+  | Literal_bool _, _ -> simple_fail "bool vs non-bool"
+  | Literal_int a, Literal_int b when a = b -> ok ()
+  | Literal_int _, Literal_int _ -> simple_fail "different ints"
+  | Literal_int _, _ -> simple_fail "int vs non-int"
+  | Literal_nat a, Literal_nat b when a = b -> ok ()
+  | Literal_nat _, Literal_nat _ -> simple_fail "different nats"
+  | Literal_nat _, _ -> simple_fail "nat vs non-nat"
+  | Literal_string a, Literal_string b when a = b -> ok ()
+  | Literal_string _, Literal_string _ -> simple_fail "different strings"
+  | Literal_string _, _ -> simple_fail "string vs non-string"
+  | Literal_bytes a, Literal_bytes b when a = b -> ok ()
+  | Literal_bytes _, Literal_bytes _ -> simple_fail "different bytess"
+  | Literal_bytes _, _ -> simple_fail "bytes vs non-bytes"
+  | Literal_unit, Literal_unit -> ok ()
+  | Literal_unit, _ -> simple_fail "unit vs non-unit"
+
+let rec assert_value_eq (a, b: (value*value)) : unit result =
+  let error_content () =
+    Format.asprintf "%a vs %a" PP.value a PP.value b
+  in
+  trace (fun () -> error (thunk "not equal") error_content ()) @@
+  match (a.expression, b.expression) with
+  | E_literal a, E_literal b ->
+      assert_literal_eq (a, b)
+  | E_constant (ca, lsta), E_constant (cb, lstb) when ca = cb -> (
+      let%bind lst =
+        generic_try (simple_error "constants with different number of elements")
+          (fun () -> List.combine lsta lstb) in
+      let%bind _all = bind_list @@ List.map assert_value_eq lst in
+      ok ()
+    )
+  | E_constant _, E_constant _ ->
+      simple_fail "different constants"
+  | E_constant _, _ ->
+      let error_content () =
+        Format.asprintf "%a vs %a"
+          PP.annotated_expression a
+          PP.annotated_expression b
+      in
+      fail @@ (fun () -> error (thunk "comparing constant with other stuff") error_content ())
+
+  | E_constructor (ca, a), E_constructor (cb, b) when ca = cb -> (
+      let%bind _eq = assert_value_eq (a, b) in
+      ok ()
+    )
+  | E_constructor _, E_constructor _ ->
+      simple_fail "different constructors"
+  | E_constructor _, _ ->
+      simple_fail "comparing constructor with other stuff"
+
+  | E_tuple lsta, E_tuple lstb -> (
+      let%bind lst =
+        generic_try (simple_error "tuples with different number of elements")
+          (fun () -> List.combine lsta lstb) in
+      let%bind _all = bind_list @@ List.map assert_value_eq lst in
+      ok ()
+    )
+  | E_tuple _, _ ->
+      simple_fail "comparing tuple with other stuff"
+
+  | E_record sma, E_record smb -> (
+      let aux _ a b =
+        match a, b with
+        | Some a, Some b -> Some (assert_value_eq (a, b))
+        | _ -> Some (simple_fail "different record keys")
+      in
+      let%bind _all = bind_smap @@ Map.String.merge aux sma smb in
+      ok ()
+    )
+  | E_record _, _ ->
+      simple_fail "comparing record with other stuff"
+
+  | E_map lsta, E_map lstb -> (
+      let%bind lst = generic_try (simple_error "maps of different lengths")
+          (fun () ->
+             let lsta' = List.sort compare lsta in
+             let lstb' = List.sort compare lstb in
+             List.combine lsta' lstb') in
+      let aux = fun ((ka, va), (kb, vb)) ->
+        let%bind _ = assert_value_eq (ka, kb) in
+        let%bind _ = assert_value_eq (va, vb) in
+        ok () in
+      let%bind _all = bind_map_list aux lst in
+      ok ()
+    )
+  | E_map _, _ ->
+      simple_fail "comparing map with other stuff"
+
+  | E_list lsta, E_list lstb -> (
+      let%bind lst =
+        generic_try (simple_error "list of different lengths")
+          (fun () -> List.combine lsta lstb) in
+      let%bind _all = bind_map_list assert_value_eq lst in
+      ok ()
+    )
+  | E_list _, _ ->
+      simple_fail "comparing list with other stuff"
+
+  | _, _ -> simple_fail "comparing not a value"
+
+
 (* module Rename = struct
  *   open Trace
  *
