@@ -300,15 +300,15 @@ and translate_expression ?(first=false) (expr:expression) : michelson result =
         let%bind restrict_r = Compiler_environment.to_michelson_restrict r.environment in
         let%bind code = ok (seq [
             c' ; i_unpair ;
-            i_if_none (seq [
-                i_pair ;
+            i_if_left (seq [
+                i_swap ; dip i_pair ;
                 l' ;
-                i_unpair ;
+                i_comment "restrict left" ;
                 dip restrict_l ;
               ]) (seq [
-                i_pair ;
+                i_swap ; dip i_pair ;
                 r' ;
-                i_unpair ;
+                i_comment "restrict right" ;
                 dip restrict_r ;
               ])
             ;
@@ -324,7 +324,8 @@ and translate_expression ?(first=false) (expr:expression) : michelson result =
             i_unpair ;
             i_swap ; dip i_pair ;
             body' ;
-            restrict ;
+            i_comment "restrict let" ;
+            dip restrict ;
           ]) in
         return code
       )

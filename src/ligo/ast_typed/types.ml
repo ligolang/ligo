@@ -14,7 +14,7 @@ type 'a type_name_map = 'a SMap.t
 type program = declaration Location.wrap list
 
 and declaration =
-  | Declaration_constant of named_expression
+  | Declaration_constant of (named_expression * full_environment)
   (* | Macro_declaration of macro_declaration *)
 
 and environment_element = {
@@ -141,7 +141,7 @@ open Trace
 let get_entry (p:program) (entry : string) : annotated_expression result =
   let aux (d:declaration) =
     match d with
-    | Declaration_constant {name ; annotated_expression} when entry = name -> Some annotated_expression
+    | Declaration_constant ({name ; annotated_expression} , _) when entry = name -> Some annotated_expression
     | Declaration_constant _ -> None
   in
   let%bind result =

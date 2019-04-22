@@ -171,7 +171,7 @@ let get_a_bool (t:annotated_expression) =
 let get_declaration_by_name : program -> string -> declaration result = fun p name ->
   let aux : declaration -> bool = fun declaration ->
     match declaration with
-    | Declaration_constant d -> d.name = name
+    | Declaration_constant (d , _) -> d.name = name
   in
   trace_option (simple_error "no declaration with given name") @@
   List.find_opt aux @@ List.map Location.unwrap p

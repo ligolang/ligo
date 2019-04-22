@@ -103,7 +103,7 @@ and instruction ppf (i:instruction) = match i with
 
 let declaration ppf (d:declaration) =
   match d with
-  | Declaration_constant {name ; annotated_expression = ae} ->
+  | Declaration_constant ({name ; annotated_expression = ae} , _) ->
       fprintf ppf "const %s = %a" name annotated_expression ae
 
 let program ppf (p:program) =

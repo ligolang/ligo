@@ -22,10 +22,15 @@ let variant () : unit result =
   let%bind () =
     let expected = e_a_constructor "Bar" (e_a_bool true) in
     expect_evaluate program "bar" expected in
-  (* let%bind () =
-   *   let make_expect = fun n -> (3 * n + 2) in
-   *   expect_n_int program "fb" make_expect
-   * in *)
+  ok ()
+
+let variant_matching () : unit result =
+  let%bind program = type_file "./contracts/variant-matching.ligo" in
+  let%bind () =
+    let make_input = fun n -> e_a_constructor "Foo" (e_a_int n) in
+    let make_expected = e_a_int in
+    expect_n program "fb" make_input make_expected
+  in
   ok ()
 
 let closure () : unit result =
@@ -324,6 +329,7 @@ let main = "Integration (End to End)", [
     test "function" function_ ;
     test "complex function" complex_function ;
     test "variant" variant ;
+    test "variant matching" variant_matching ;
     test "closure" closure ;
     test "shared function" shared_function ;
     test "shadow" shadow ;

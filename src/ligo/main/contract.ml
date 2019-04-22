@@ -40,7 +40,7 @@ include struct
   let assert_valid_entry_point : program -> string -> unit result = fun p e ->
     let%bind declaration = get_declaration_by_name p e in
     match declaration with
-    | Declaration_constant d -> assert_entry_point_type d.annotated_expression.type_annotation
+    | Declaration_constant (d , _) -> assert_entry_point_type d.annotated_expression.type_annotation
 end
 
 let transpile_value
@@ -97,7 +97,7 @@ let compile_contract_parameter : string -> string -> string -> string result = f
       assert_valid_entry_point typed entry_point in
     let%bind declaration = Ast_typed.Combinators.get_declaration_by_name typed entry_point in
     match declaration with
-    | Declaration_constant d -> ok d.annotated_expression.type_annotation
+    | Declaration_constant (d , _) -> ok d.annotated_expression.type_annotation
   in
   let%bind expr =
     let%bind raw =

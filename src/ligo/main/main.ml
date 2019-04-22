@@ -126,7 +126,13 @@ let easy_run_typed_simplified
      Format.(printf "Mini_c : %a\n%!" Mini_c.PP.function_ mini_c_main.content)
   ) ;
 
-  let%bind typed_value = type_expression input in
+  let%bind typed_value =
+    let env =
+      let last_declaration = Location.unwrap List.(hd @@ rev program) in
+      match last_declaration with
+      | Declaration_constant (_ , env) -> env
+    in
+    type_expression ~env input in
   let%bind mini_c_value = transpile_value typed_value in
 
   let%bind mini_c_result =

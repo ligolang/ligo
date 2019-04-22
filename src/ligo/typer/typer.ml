@@ -74,7 +74,7 @@ and type_declaration env : I.declaration -> (environment * O.declaration option)
         trace (constant_declaration_error name annotated_expression) @@
         type_annotated_expression env annotated_expression in
       let env' = Environment.add_ez name ae'.type_annotation env in
-      ok (env', Some (O.Declaration_constant (make_n_e name ae')))
+      ok (env', Some (O.Declaration_constant ((make_n_e name ae') , env')))
 
 and type_block_full (e:environment) (b:I.block) : (O.block * environment) result =
   let aux (e, acc:(environment * O.instruction list)) (i:I.instruction) =
