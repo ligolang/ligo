@@ -7,8 +7,8 @@
  (flags -la 1 --explain --external-tokens LexToken))
 
 (library
- (name ligo_parser)
- (public_name ligo.parser)
+ (name parser_pascaligo)
+ (public_name ligo.parser.pascaligo)
  (modules_without_implementation Error)
  (libraries
    getopt

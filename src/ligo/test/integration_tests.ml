@@ -286,7 +286,7 @@ let quote_declarations () : unit result =
 let counter_contract () : unit result =
   let%bind program = type_file "./contracts/counter.ligo" in
   let make_input = fun n-> e_a_pair (e_a_int n) (e_a_int 42) in
-  let make_expected = fun n -> e_a_pair (e_a_list [] (t_int)) (e_a_int (42 + n)) in
+  let make_expected = fun n -> e_a_pair (e_a_list [] t_operation) (e_a_int (42 + n)) in
   expect_n program "main" make_input make_expected
 
 let main = "Integration (End to End)", [

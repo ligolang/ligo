@@ -2,12 +2,15 @@ open Types
 
 module SMap = Map.String
 
+let get_name : named_expression -> string = fun x -> x.name
+let get_type_name : named_type_expression -> string = fun x -> x.type_name
 let get_type_annotation (x:annotated_expression) = x.type_annotation
 
 let t_bool      : type_expression = T_constant ("bool", [])
 let t_string    : type_expression = T_constant ("string", [])
 let t_bytes     : type_expression = T_constant ("bytes", [])
 let t_int       : type_expression = T_constant ("int", [])
+let t_operation : type_expression = T_constant ("operation", [])
 let t_nat       : type_expression = T_constant ("nat", [])
 let t_unit      : type_expression = T_constant ("unit", [])
 let t_option  o : type_expression = T_constant ("option", [o])

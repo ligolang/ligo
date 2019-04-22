@@ -1,7 +1,7 @@
 open Trace
 open Ast_simplified
 
-module Raw = Ligo_parser.AST
+module Raw = Parser.Pascaligo.AST
 module SMap = Map.String
 
 open Combinators
@@ -425,7 +425,7 @@ and simpl_single_instruction : Raw.single_instr -> instruction result = fun t ->
             ok @@ I_assignment {name = name.value ; annotated_expression = value_expr}
           )
         | Path path -> (
-            let err_content () = Format.asprintf "%a" (PP_helpers.printer Ligo_parser.ParserLog.print_path) path in
+            let err_content () = Format.asprintf "%a" (PP_helpers.printer Parser.Pascaligo.ParserLog.print_path) path in
             fail @@ (fun () -> error (thunk "no path assignments") err_content ())
           )
         | MapPath v -> (
@@ -456,7 +456,7 @@ and simpl_single_instruction : Raw.single_instr -> instruction result = fun t ->
       let%bind record = match r.path with
         | Name v -> ok v.value
         | path -> (
-            let err_content () = Format.asprintf "%a" (PP_helpers.printer Ligo_parser.ParserLog.print_path) path in
+            let err_content () = Format.asprintf "%a" (PP_helpers.printer Parser.Pascaligo.ParserLog.print_path) path in
             fail @@ (fun () -> error (thunk "no complex record patch yet") err_content ())
           )
       in

@@ -1,6 +1,6 @@
 open Trace
 open Function
-module I = Multifix.Ast
+module I = Parser.Camligo.Ast
 module O = Ast_simplified
 open O.Combinators
 

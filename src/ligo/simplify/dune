@@ -1,11 +1,11 @@
 (library
-  (name run)
-  (public_name ligo.run)
+  (name simplify)
+  (public_name ligo.simplify)
   (libraries
     tezos-utils
-    meta_michelson
-    mini_c
-    compiler
+    parser
+    ast_simplified
+    operators
   )
   (preprocess
     (pps tezos-utils.ppx_let_generalized)

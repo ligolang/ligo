@@ -14,14 +14,7 @@
     tezos-utils
     tezos-micheline
     meta_michelson
-    ligo_parser
-    multifix
-    ast_typed
-    ast_simplified
-    mini_c
-    operators
-    compiler
-    run
+    main
   )
   (preprocess
     (pps tezos-utils.ppx_let_generalized)

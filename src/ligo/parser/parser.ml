@@ -1,6 +1,11 @@
 open Trace
-open Ligo_parser
-module AST_Raw = Ligo_parser.AST
+
+module Pascaligo = Parser_pascaligo
+module Camligo = Parser_camligo
+
+open Parser_pascaligo
+module AST_Raw = Parser_pascaligo.AST
+
 
 let parse_file (source: string) : AST_Raw.t result =
   let pp_input =
