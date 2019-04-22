@@ -6,4 +6,5 @@ module Combinators = struct
   include Combinators
   include Combinators_smart
 end
+include Combinators
 module Environment = Environment

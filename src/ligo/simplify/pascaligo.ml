@@ -483,29 +483,52 @@ and simpl_cases : type a . (Raw.pattern * a) list -> a matching result = fun t -
   let open Raw in
   let get_var (t:Raw.pattern) = match t with
     | PVar v -> ok v.value
-    | _ -> simple_fail "not a var"
+    | _ ->
+        let error =
+          let title () = "not a var" in
+          let content () = Format.asprintf "%a" (PP_helpers.printer Parser.Pascaligo.ParserLog.print_pattern) t in
+          error title content
+        in
+        fail error
   in
-  let%bind _assert =
-    trace_strong (simple_error "only pattern with two cases supported now") @@
-    Assert.assert_equal_int 2 (List.length t) in
-  let ((pa, ba), (pb, bb)) = List.(hd t, hd @@ tl t) in
-  let uncons p = match p with
-    | PCons {value = (hd, _)} -> ok hd
-    | _ -> simple_fail "uncons fail" in
-  let%bind (pa, pb) = bind_map_pair uncons (pa, pb) in
-  match (pa, ba), (pb, bb) with
-  | (PFalse _, f), (PTrue _, t)
-  | (PTrue _, t), (PFalse _, f) -> ok @@ Match_bool {match_true = t ; match_false = f}
-  | (PSome v, some), (PNone _, none)
-  | (PNone _, none), (PSome v, some) -> (
+  let get_tuple (t:Raw.pattern) = match t with
+    | PCons v -> npseq_to_list v.value
+    | PTuple v -> npseq_to_list v.value.inside
+    | x -> [ x ]
+  in
+  let get_single (t:Raw.pattern) =
+    let t' = get_tuple t in
+    let%bind () =
+      trace_strong (simple_error "not single") @@
+      Assert.assert_list_size t' 1 in
+    ok (List.hd t') in
+  let get_constr (t:Raw.pattern) = match t with
+    | PConstr v ->
+        let%bind var = get_single (snd v.value).value >>? get_var in
+        ok ((fst v.value).value , var)
+    | _ -> simple_fail "not a constr"
+  in
+  let%bind patterns =
+    let aux (x , y) =
+      let xs = get_tuple x in
+      trace_strong (simple_error "no tuple in patterns yet") @@
+      Assert.assert_list_size xs 1 >>? fun () ->
+      ok (List.hd xs , y)
+    in
+    bind_map_list aux t in
+  match patterns with
+  | [(PFalse _ , f) ; (PTrue _ , t)]
+  | [(PTrue _ , t) ; (PFalse _ , f)] -> ok @@ Match_bool {match_true = t ; match_false = f}
+  | [(PSome v , some) ; (PNone _ , none)]
+  | [(PNone _ , none) ; (PSome v , some)] -> (
       let (_, v) = v.value in
       let%bind v = match v.value.inside with
         | PVar v -> ok v.value
         | _ -> simple_fail "complex none patterns not supported yet" in
       ok @@ Match_option {match_none = none ; match_some = (v, some) }
     )
-  | (PCons c, cons), (PList (PNil _), nil)
-  | (PList (PNil _), nil), (PCons c, cons) ->
+  | [(PCons c , cons) ; (PList (PNil _) , nil)]
+  | [(PList (PNil _) , nil) ; (PCons c,  cons)] ->
       let%bind (a, b) =
         match c.value with
         | a, [(_, b)] ->
@@ -515,9 +538,21 @@ and simpl_cases : type a . (Raw.pattern * a) list -> a matching result = fun t -
         | _ -> simple_fail "complex list patterns not supported yet"
       in
       ok @@ Match_list {match_cons = (a, b, cons) ; match_nil = nil}
-  | _ ->
-      let error () = simple_error "multi-level patterns not supported yet" () in
-      fail error
+  | lst ->
+      trace (simple_error "weird patterns not supported yet") @@
+      let%bind constrs =
+        let aux (x , y) =
+          let error =
+            let title () = "Pattern" in
+            let content () =
+              Format.asprintf "Pattern : %a" (PP_helpers.printer Parser.Pascaligo.ParserLog.print_pattern) x in
+            error title content in
+          let%bind x' =
+            trace error @@
+            get_constr x in
+          ok (x' , y) in
+        bind_map_list aux lst in
+      ok @@ Match_variant constrs
 
 and simpl_instruction_block : Raw.instruction -> block result = fun t ->
   match t with

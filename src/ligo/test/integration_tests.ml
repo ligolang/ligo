@@ -14,6 +14,20 @@ let complex_function () : unit result =
   let make_expect = fun n -> (3 * n + 2) in
   expect_n_int program "main" make_expect
 
+let variant () : unit result =
+  let%bind program = type_file "./contracts/variant.ligo" in
+  let%bind () =
+    let expected = e_a_constructor "Foo" (e_a_int 42) in
+    expect_evaluate program "foo" expected in
+  let%bind () =
+    let expected = e_a_constructor "Bar" (e_a_bool true) in
+    expect_evaluate program "bar" expected in
+  (* let%bind () =
+   *   let make_expect = fun n -> (3 * n + 2) in
+   *   expect_n_int program "fb" make_expect
+   * in *)
+  ok ()
+
 let closure () : unit result =
   let%bind program = type_file "./contracts/closure.ligo" in
   let%bind () =
@@ -257,8 +271,25 @@ let matching () : unit result =
       let input = match n with
         | Some s -> e_a_some (e_a_int s)
         | None -> e_a_none t_int in
-      let expected = e_a_int 23 in
+      let expected = e_a_int (match n with
+          | Some s -> s
+          | None -> 23) in
+      trace (simple_error (Format.asprintf "on input %a" PP_helpers.(option int) n)) @@
       expect program "match_option" input expected
+    in
+    bind_iter_list aux
+      [Some 0 ; Some 2 ; Some 42 ; Some 163 ; Some (-1) ; None]
+  in
+  let%bind () =
+    let aux n =
+      let input = match n with
+        | Some s -> e_a_some (e_a_int s)
+        | None -> e_a_none t_int in
+      let expected = e_a_int (match n with
+          | Some s -> s
+          | None -> 42) in
+      trace (simple_error (Format.asprintf "on input %a" PP_helpers.(option int) n)) @@
+      expect program "match_expr_option" input expected
     in
     bind_iter_list aux
       [Some 0 ; Some 2 ; Some 42 ; Some 163 ; Some (-1) ; None]
@@ -292,6 +323,7 @@ let counter_contract () : unit result =
 let main = "Integration (End to End)", [
     test "function" function_ ;
     test "complex function" complex_function ;
+    test "variant" variant ;
     test "closure" closure ;
     test "shared function" shared_function ;
     test "shadow" shadow ;

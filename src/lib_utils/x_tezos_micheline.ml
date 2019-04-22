@@ -18,6 +18,13 @@ module Michelson = struct
 
   let i_comment s : michelson = prim ~annot:["\"" ^ s ^ "\""] I_NOP
 
+  let contract parameter storage code =
+    seq [
+      prim ~children:[parameter] K_parameter ;
+      prim ~children:[storage] K_storage ;
+      prim ~children:[code] K_code ;
+    ]
+
   let int n : michelson = Int (0, n)
   let string s : michelson = String (0, s)
   let bytes s : michelson = Bytes (0, s)

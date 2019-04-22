@@ -6,6 +6,7 @@ module SMap = Map.String
 
 type name = string
 type type_name = string
+type constructor_name = string
 
 type 'a name_map = 'a SMap.t
 type 'a type_name_map = 'a SMap.t
@@ -47,7 +48,7 @@ and type_value' =
   | T_sum of tv_map
   | T_record of tv_map
   | T_constant of type_name * tv list
-  | T_function of tv * tv
+  | T_function of (tv * tv)
 
 and type_value = {
   type_value' : type_value' ;
@@ -128,7 +129,8 @@ and 'a matching =
       match_none : 'a ;
       match_some : (name * type_value) * 'a ;
     }
-  | Match_tuple of name list * 'a
+  | Match_tuple of (name list * 'a)
+  | Match_variant of (((constructor_name * name) * 'a) list * type_value)
 
 and matching_instr = b matching
 

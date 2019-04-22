@@ -72,14 +72,19 @@ and expression' ppf (e:expression') = match e with
   | E_empty_list _ -> fprintf ppf "list[]"
   | E_make_none _ -> fprintf ppf "none"
   | E_Cond (c, a, b) -> fprintf ppf "%a ? %a : %a" expression c expression a expression b
+  | E_if_none (c, n, ((name, _) , s)) -> fprintf ppf "%a ?? %a : %s -> %a" expression c expression n name expression s
+  | E_if_left (c, ((name_l, _) , l), ((name_r, _) , r)) ->
+      fprintf ppf "%a ?? %s -> %a : %s -> %a" expression c name_l expression l name_r expression r
+  | E_let_in ((name , _) , expr , body) ->
+      fprintf ppf "let %s = %a in %a" name expression expr expression body
 
 and expression : _ -> expression -> _ = fun ppf e ->
-  expression' ppf (Combinators.Expression.get_content e)
+  expression' ppf e.content
 
 and expression_with_type : _ -> expression -> _  = fun ppf e ->
   fprintf ppf "%a : %a"
-    expression' (Combinators.Expression.get_content e)
-    type_ (Combinators.Expression.get_type e)
+    expression' e.content
+    type_ e.type_value
 
 and function_ ppf ({binder ; input ; output ; body ; result ; capture_type}:anon_function_content) =
   fprintf ppf "fun[%s] (%s:%a) : %a %a return %a"

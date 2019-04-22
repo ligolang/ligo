@@ -64,6 +64,9 @@ and expression' =
   | E_empty_list of type_value
   | E_make_none of type_value
   | E_Cond of expression * expression * expression
+  | E_if_none of expression * expression * ((var_name * type_value) * expression)
+  | E_if_left of expression * ((var_name * type_value) * expression) * ((var_name * type_value) * expression)
+  | E_let_in of ((var_name * type_value) * expression * expression)
 
 and expression = {
   content : expression' ;

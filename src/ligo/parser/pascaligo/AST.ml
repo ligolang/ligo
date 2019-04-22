@@ -646,6 +646,7 @@ and arguments = tuple_injection
 
 and pattern =
   PCons   of (pattern, cons) nsepseq reg
+| PConstr of (constr * pattern reg) reg
 | PVar    of Lexer.lexeme reg
 | PWild   of wild
 | PInt    of (Lexer.lexeme * Z.t) reg
@@ -792,6 +793,7 @@ let pattern_to_region = function
 | PList Sugar {region; _}
 | PList PNil  region
 | PList Raw   {region; _}
+| PConstr     {region; _}
 | PTuple      {region; _} -> region
 
 let local_decl_to_region = function

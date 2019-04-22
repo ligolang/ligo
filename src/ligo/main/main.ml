@@ -178,3 +178,5 @@ let compile_file (source: string) (entry_point:string) : Micheline.Michelson.t r
     trace (simple_error "compiling") @@
     compile mini_c entry_point in
   ok michelson
+
+module Contract = Contract

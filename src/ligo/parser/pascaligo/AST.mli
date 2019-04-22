@@ -630,6 +630,7 @@ and arguments = tuple_injection
 
 and pattern =
   PCons   of (pattern, cons) nsepseq reg
+| PConstr of (constr * pattern reg) reg
 | PVar    of Lexer.lexeme reg
 | PWild   of wild
 | PInt    of (Lexer.lexeme * Z.t) reg

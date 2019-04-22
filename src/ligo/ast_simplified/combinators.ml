@@ -56,11 +56,13 @@ let e_none : expression = E_constant ("NONE", [])
 let e_map lst : expression = E_map lst
 let e_list lst : expression = E_list lst
 let e_pair a b : expression = E_tuple [a; b]
+let e_constructor s a : expression = E_constructor (s , a)
 
 let e_a_int n : annotated_expression = make_e_a_full (e_int n) t_int
 let e_a_nat n : annotated_expression = make_e_a_full (e_nat n) t_nat
 let e_a_bool b : annotated_expression = make_e_a_full (e_bool b) t_bool
 let e_a_unit : annotated_expression = make_e_a_full (e_unit ()) t_unit
+let e_a_constructor s a : annotated_expression = make_e_a (e_constructor s a)
 
 let e_a_record r =
   let type_annotation = Option.(

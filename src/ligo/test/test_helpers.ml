@@ -32,10 +32,12 @@ let expect_evaluate program entry_point expected =
   Ast_simplified.assert_value_eq (expected , result)
 
 let expect_n_aux lst program entry_point make_input make_expected =
+  Format.printf "expect_n aux\n%!" ;
   let aux n =
     let input = make_input n in
     let expected = make_expected n in
-    expect program entry_point input expected
+    let result = expect program entry_point input expected in
+    result
   in
   let%bind _ = bind_map_list aux lst in
   ok ()

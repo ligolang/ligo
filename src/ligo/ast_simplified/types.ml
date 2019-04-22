@@ -1,5 +1,6 @@
 type name = string
 type type_name = string
+type constructor_name = string
 
 type 'a name_map = 'a Map.String.t
 type 'a type_name_map = 'a Map.String.t
@@ -109,6 +110,7 @@ and 'a matching =
       match_some : name * 'a ;
     }
   | Match_tuple of name list * 'a
+  | Match_variant of ((constructor_name * name) * 'a) list
 
 and matching_instr = b matching
 

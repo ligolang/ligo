@@ -95,6 +95,19 @@ let get_or (v:value) = match v with
   | D_right b -> ok (true, b)
   | _ -> simple_fail "not a left/right"
 
+let wrong_type name t =
+  let title () = "not a " ^ name in
+  let content () = Format.asprintf "%a" PP.type_ t in
+  error title content
+
+let get_t_left t = match t with
+  | T_or (a , _) -> ok a
+  | _ -> fail @@ wrong_type "union" t
+
+let get_t_right t = match t with
+  | T_or (_ , b) -> ok b
+  | _ -> fail @@ wrong_type "union" t
+
 let get_last_statement ((b', _):block) : statement result =
   let aux lst = match lst with
     | [] -> simple_fail "get_last: empty list"
@@ -107,6 +120,7 @@ let t_nat : type_value = T_base Base_nat
 let t_function x y : type_value = T_function ( x , y )
 let t_shallow_closure x y z : type_value = T_shallow_closure ( x , y , z )
 let t_pair x y : type_value = T_pair ( x , y )
+let t_union x y : type_value = T_or ( x , y )
 
 let quote binder input output body result : anon_function =
   let content : anon_function_content = {

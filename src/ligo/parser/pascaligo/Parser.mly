@@ -197,9 +197,9 @@ type_tuple:
   par(nsepseq(type_expr,COMMA)) { $1 }
 
 sum_type:
-  nsepseq(variant,VBAR) {
-    let region = nsepseq_to_region (fun x -> x.region) $1
-    in {region; value = $1}}
+  option(VBAR) nsepseq(variant,VBAR) {
+    let region = nsepseq_to_region (fun x -> x.region) $2
+    in {region; value = $2}}
 
 variant:
   Constr Of cartesian {
@@ -1092,6 +1092,7 @@ core_pattern:
 | C_None     {   PNone $1 }
 | list_patt  {   PList $1 }
 | tuple_patt {  PTuple $1 }
+| constr_patt { PConstr $1 }
 | C_Some par(core_pattern) {
     let region = cover $1 $2.region
     in PSome {region; value = $1,$2}}
@@ -1106,3 +1107,13 @@ cons_pattern:
 
 tuple_patt:
   par(nsepseq(core_pattern,COMMA)) { $1 }
+
+constr_patt:
+  Constr core_pattern {
+    let second =
+      let region = pattern_to_region $2 in
+      {region; value=$2}
+    in
+    let region = cover $1.region second.region in
+    let value = ($1 , second) in
+    {region; value}}

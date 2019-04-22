@@ -189,6 +189,50 @@ and type_match : type i o . (environment -> i -> o result) -> environment -> O.t
       let e' = List.fold_left aux e lst' in
       let%bind b' = f e' b in
       ok (O.Match_tuple (lst, b'))
+  | Match_variant lst ->
+      let%bind variant_opt =
+        let aux acc ((constructor_name , _) , _) =
+          let%bind (_ , variant) =
+            trace_option (simple_error "bad constructor") @@
+            Environment.get_constructor constructor_name e in
+          let%bind acc = match acc with
+            | None -> ok (Some variant)
+            | Some variant' -> (
+                Ast_typed.assert_type_value_eq (variant , variant') >>? fun () ->
+                ok (Some variant)
+              ) in
+          ok acc in
+        trace (simple_error "in match variant") @@
+        bind_fold_list aux None lst in
+      let%bind variant =
+        trace_option (simple_error "empty variant") @@
+        variant_opt in
+      let%bind  () =
+        let%bind variant_cases' = Ast_typed.Combinators.get_t_sum variant in
+        let variant_cases = List.map fst @@ Map.String.to_kv_list variant_cases' in
+        let match_cases = List.map (Function.compose fst fst) lst in
+        let test_case = fun c ->
+          Assert.assert_true (List.mem c match_cases)
+        in
+        let%bind () =
+          trace (simple_error "missing case match") @@
+          bind_iter_list test_case variant_cases in
+        let%bind () =
+          trace_strong (simple_error "redundant case match") @@
+          Assert.assert_true List.(length variant_cases = length match_cases) in
+        ok ()
+      in
+      let%bind lst' =
+        let aux ((constructor_name , name) , b) =
+          let%bind (constructor , _) =
+            trace_option (simple_error "bad constructor??") @@
+            Environment.get_constructor constructor_name e in
+          let e' = Environment.add_ez name constructor e in
+          let%bind b' = f e' b in
+          ok ((constructor_name , name) , b')
+        in
+        bind_map_list aux lst in
+      ok (O.Match_variant (lst' , variant))
 
 and evaluate_type (e:environment) (t:I.type_expression) : O.type_value result =
   let return tv' = ok (make_t tv' (Some t)) in
@@ -387,12 +431,26 @@ and type_annotated_expression : environment -> I.annotated_expression -> O.annot
   | E_matching (ex, m) -> (
       let%bind ex' = type_annotated_expression e ex in
       let%bind m' = type_match type_annotated_expression e ex'.type_annotation m in
-      let%bind tv = match m' with
-        | Match_bool {match_true ; match_false} ->
-            let%bind _ = O.assert_type_value_eq (match_true.type_annotation, match_false.type_annotation) in
-            ok match_true.type_annotation
-        | _ -> simple_fail "can only type match_bool expressions yet" in
-      return (E_matching (ex' , m')) tv
+      let tvs =
+        let aux (cur:O.value O.matching) =
+          match cur with
+          | Match_bool { match_true ; match_false } -> [ match_true ; match_false ]
+          | Match_list { match_nil ; match_cons = (_ , _ , match_cons) } -> [ match_nil ; match_cons ]
+          | Match_option { match_none ; match_some = (_ , match_some) } -> [ match_none ; match_some ]
+          | Match_tuple (_ , match_tuple) -> [ match_tuple ]
+          | Match_variant (lst , _) -> List.map snd lst in
+        List.map get_type_annotation @@ aux m' in
+      let aux prec cur =
+        let%bind () =
+          match prec with
+          | None -> ok ()
+          | Some cur' -> Ast_typed.assert_type_value_eq (cur , cur') in
+        ok (Some cur) in
+      let%bind tv_opt = bind_fold_list aux None tvs in
+      let%bind tv =
+        trace_option (simple_error "empty matching") @@
+        tv_opt in
+      return (O.E_matching (ex', m')) tv
     )
 
 and type_constant (name:string) (lst:O.type_value list) (tv_opt:O.type_value option) : (string * O.type_value) result =
@@ -551,3 +609,9 @@ and untype_matching : type o i . (o -> i result) -> o O.matching -> (i I.matchin
       let%bind cons = f cons in
       let match_cons = hd, tl, cons in
       ok @@ Match_list {match_nil ; match_cons}
+  | Match_variant (lst , _) ->
+      let aux ((a,b),c) =
+        let%bind c' = f c in
+        ok ((a,b),c') in
+      let%bind lst' = bind_map_list aux lst in
+      ok @@ Match_variant lst'
