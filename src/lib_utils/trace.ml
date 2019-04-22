@@ -159,6 +159,8 @@ let bind_map_smap f smap = bind_smap (X_map.String.map f smap)
 
 let bind_map_list f lst = bind_list (List.map f lst)
 let bind_map_ne_list : _ -> 'a X_list.Ne.t -> 'b X_list.Ne.t result = fun f lst -> bind_ne_list (X_list.Ne.map f lst)
+let bind_iter_list : (_ -> unit result) -> _ list -> unit result = fun f lst ->
+  bind_map_list f lst >>? fun _ -> ok ()
 
 let bind_location (x:_ Location.wrap) =
   x.wrap_content >>? fun wrap_content ->

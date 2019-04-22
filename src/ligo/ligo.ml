@@ -71,6 +71,17 @@ let easy_evaluate_typed (entry:string) (program:AST_Typed.program) : AST_Typed.a
     untranspile_value result typed_main.type_annotation in
   ok typed_result
 
+let easy_evaluate_typed_simplified (entry:string) (program:AST_Typed.program) : Ast_simplified.annotated_expression result =
+  let%bind result =
+    let%bind mini_c_main =
+      transpile_entry program entry in
+    Run.Mini_c.run_entry mini_c_main (Mini_c.Combinators.d_unit) in
+  let%bind typed_result =
+    let%bind typed_main = Ast_typed.get_entry program entry in
+    untranspile_value result typed_main.type_annotation in
+  let%bind annotated_result = untype_expression typed_result in
+  ok annotated_result
+
 let easy_evaluate_typed = trace_f_2_ez easy_evaluate_typed (thunk "easy evaluate typed")
 
 let easy_run_typed
@@ -105,7 +116,7 @@ let easy_run_typed
 
 let easy_run_typed_simplified
     ?(debug_mini_c = false) (entry:string)
-    (program:AST_Typed.program) (input:Ast_simplified.annotated_expression) : AST_Typed.annotated_expression result =
+    (program:AST_Typed.program) (input:Ast_simplified.annotated_expression) : Ast_simplified.annotated_expression result =
   let%bind mini_c_main =
     trace (simple_error "transpile mini_c entry") @@
     transpile_entry program entry in
@@ -132,7 +143,8 @@ let easy_run_typed_simplified
       | T_function (_, result) -> ok result
       | _ -> simple_fail "main doesn't have fun type" in
     untranspile_value mini_c_result main_result_type in
-  ok typed_result
+  let%bind annotated_result = untype_expression typed_result in
+  ok annotated_result
 
 let easy_run_main_typed
     ?(debug_mini_c = false)

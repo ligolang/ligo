@@ -2,148 +2,61 @@ open Trace
 open Ligo
 open Test_helpers
 
+open Ast_simplified.Combinators
+
 let function_ () : unit result =
   let%bind program = type_file "./contracts/function.ligo" in
-  let aux n =
-    let open Ast_simplified.Combinators in
-    let input = e_a_int n in
-    let%bind result = easy_run_typed_simplified "main" program input in
-    let expected = Ast_typed.Combinators.e_a_empty_int n in
-    Ast_typed.assert_value_eq (expected , result)
-  in
-  let%bind _ = bind_list
-    @@ List.map aux
-    @@ [0 ; 2 ; 42 ; 163 ; -1] in
-  ok ()
+  let make_expect = fun n -> n in
+  expect_n_int program "main" make_expect
 
 let complex_function () : unit result =
   let%bind program = type_file "./contracts/function-complex.ligo" in
-  let aux n =
-    let open AST_Typed.Combinators in
-    let input = e_a_empty_int n in
-    let%bind result = easy_run_main_typed program input in
-    let%bind result' =
-      trace (simple_error "bad result") @@
-      get_a_int result in
-    Assert.assert_equal_int (3 * n + 2) result'
-  in
-  let%bind _ = bind_list
-    @@ List.map aux
-    @@ [0 ; 2 ; 42 ; 163 ; -1] in
-  ok ()
+  let make_expect = fun n -> (3 * n + 2) in
+  expect_n_int program "main" make_expect
 
 let closure () : unit result =
   let%bind program = type_file "./contracts/closure.ligo" in
-  let%bind _foo = trace (simple_error "test foo") @@
-    let aux n =
-      let open AST_Typed.Combinators in
-      let input = e_a_empty_int n in
-      let%bind result = easy_run_typed "foo" program input in
-      let expected = e_a_empty_int ( 2 * n ) in
-      AST_Typed.assert_value_eq (expected, result)
-    in
-    bind_list
-    @@ List.map aux
-    @@ [0 ; 2 ; 42 ; 163 ; -1] in
-  let%bind _toto = trace (simple_error "toto") @@
-    let aux n =
-      let open AST_Typed.Combinators in
-      let input = e_a_empty_int n in
-      let%bind result = easy_run_typed "toto" program input in
-      let expected = e_a_empty_int ( 4 * n ) in
-      AST_Typed.assert_value_eq (expected, result)
-    in
-    bind_list
-    @@ List.map aux
-    @@ [0 ; 2 ; 42 ; 163 ; -1] in
+  let%bind () =
+    let make_expect = fun n -> (2 * n) in
+    expect_n_int program "foo" make_expect
+  in
+  let%bind _ =
+    let make_expect = fun n -> (4 * n) in
+    expect_n_int program "toto" make_expect
+  in
   ok ()
 
 let shadow () : unit result =
   let%bind program = type_file "./contracts/shadow.ligo" in
-  let%bind _foo = trace (simple_error "test foo") @@
-    let aux n =
-      let open AST_Typed.Combinators in
-      let input = e_a_empty_int n in
-      let%bind result = easy_run_typed "foo" program input in
-      let expected = e_a_empty_int 0 in
-      AST_Typed.assert_value_eq (expected, result)
-    in
-    bind_list
-    @@ List.map aux
-    @@ [3 ; 2 ; 0 ; 42 ; 163 ; -1] in
-  ok ()
+  let make_expect = fun _ -> 0 in
+  expect_n_int program "foo" make_expect
 
 let higher_order () : unit result =
   let%bind program = type_file "./contracts/high-order.ligo" in
-  let%bind _foo = trace (simple_error "test foo") @@
-    let aux n =
-      let open AST_Typed.Combinators in
-      let input = e_a_empty_int n in
-      let%bind result = easy_run_typed "foobar" program input in
-      let expected = e_a_empty_int ( n ) in
-      AST_Typed.assert_value_eq (expected, result)
-    in
-    bind_list
-    @@ List.map aux
-    @@ [0 ; 2 ; 42 ; 163 ; -1] in
-  ok ()
+  let make_expect = fun n -> n in
+  expect_n_int program "foobar" make_expect
 
 let shared_function () : unit result =
   let%bind program = type_file "./contracts/function-shared.ligo" in
-  let%bind _inc = trace (simple_error "test inc") @@
-    let aux n =
-      let open AST_Typed.Combinators in
-      let input = e_a_empty_int n in
-      let%bind result = easy_run_typed "inc" program input in
-      let expected = e_a_empty_int ( n + 1 ) in
-      AST_Typed.assert_value_eq (expected, result)
-    in
-    bind_list
-    @@ List.map aux
-    @@ [0 ; 2 ; 42 ; 163 ; -1] in
-  let%bind _double_inc = trace (simple_error "test double_inc") @@
-    let aux n =
-      let open AST_Typed.Combinators in
-      let input = e_a_empty_int n in
-      let%bind result = easy_run_typed "double_inc" program input in
-      let expected = e_a_empty_int ( n + 2 ) in
-      AST_Typed.assert_value_eq (expected, result)
-    in
-    bind_list
-    @@ List.map aux
-    @@ [0 ; 2 ; 42 ; 163 ; -1] in
-  let%bind _foo = trace (simple_error "test foo") @@
-    let aux n =
-      let open AST_Typed.Combinators in
-      let input = e_a_empty_int n in
-      let%bind result = easy_run_typed "foo" program input in
-      let expected = e_a_empty_int ( 2 * n + 3 ) in
-      AST_Typed.assert_value_eq (expected, result)
-    in
-    bind_list
-    @@ List.map aux
-    @@ [0 ; 2 ; 42 ; 163 ; -1] in
+  let%bind () =
+    let make_expect = fun n -> (n + 1) in
+    expect_n_int program "inc" make_expect
+  in
+  let%bind () =
+    let make_expect = fun n -> (n + 2) in
+    expect_n_int program "double_inc" make_expect
+  in
+  let%bind () =
+    let make_expect = fun n -> (2 * n + 3) in
+    expect_n_int program "foo" make_expect
+  in
   ok ()
 
 let bool_expression () : unit result =
   let%bind program = type_file "./contracts/boolean_operators.ligo" in
-  let aux (name, f) =
-    let aux b =
-      let open AST_Typed.Combinators in
-      let input = e_a_empty_bool b in
-      let%bind result = easy_run_typed name program input in
-      let%bind result' =
-        trace (simple_error "bad result") @@
-        get_a_bool result in
-      Assert.assert_equal_bool (f b) result'
-    in
-    let%bind _ = bind_list
-      @@ List.map aux [true;false] in
-    ok ()
-  in
-  let%bind _ = bind_list
-    @@ List.map aux
-    @@ [
+  let%bind _ =
+    let aux (name , f) = expect_b_bool program name f in
+    bind_map_list aux [
       ("or_true", fun b -> b || true) ;
       ("or_false", fun b -> b || false) ;
       ("and_true", fun b -> b && true) ;
@@ -153,64 +66,32 @@ let bool_expression () : unit result =
 
 let arithmetic () : unit result =
   let%bind program = type_file "./contracts/arithmetic.ligo" in
-  let aux (name, f) =
-    let aux n =
-      let open AST_Typed.Combinators in
-      let input = if name = "int_op" then e_a_empty_nat n else e_a_empty_int n in
-      let%bind result = easy_run_typed name program input in
-      AST_Typed.assert_value_eq (f n, result)
-    in
-    let%bind _ = bind_list
-      @@ List.map aux [0 ; 42 ; 128] in
-    ok ()
-  in
   let%bind _ =
-    let open AST_Typed.Combinators in
-    bind_list
-    @@ List.map aux
-    @@ [
-      ("plus_op", fun n -> e_a_empty_int (n + 42)) ;
-      ("minus_op", fun n -> e_a_empty_int (n - 42)) ;
-      ("times_op", fun n -> e_a_empty_int (n * 42)) ;
-      ("int_op", fun n -> e_a_empty_int n) ;
+    let aux (name , f) = expect_n_int program name f in
+    bind_map_list aux [
+      ("plus_op", fun n -> (n + 42)) ;
+      ("minus_op", fun n -> (n - 42)) ;
+      ("times_op", fun n -> (n * 42)) ;
     ] in
+  let%bind () = expect_n_pos program "int_op" e_a_nat e_a_int in
   ok ()
 
 let unit_expression () : unit result =
   let%bind program = type_file "./contracts/unit.ligo" in
-  let open AST_Typed.Combinators in
-  let%bind result = easy_evaluate_typed "u" program in
-  let%bind () =
-    trace (simple_error "result isn't unit") @@
-    get_a_unit result in
-  ok ()
+  expect_evaluate program "u" e_a_unit
 
 let include_ () : unit result =
   let%bind program = type_file "./contracts/includer.ligo" in
-  let%bind result = easy_evaluate_typed "bar" program in
-  let%bind n =
-    trace (simple_error "Include failed") @@
-    AST_Typed.Combinators.get_a_int result in
-  Assert.assert_equal_int 144 n
+  expect_evaluate program "bar" (e_a_int 144)
 
 let record_ez_int names n =
-  let open AST_Typed.Combinators in
-  ez_e_a_empty_record @@ List.map (fun x -> x, e_a_empty_int n) names
+  ez_e_a_record @@ List.map (fun x -> x, e_a_int n) names
 
 let multiple_parameters () : unit result  =
   let%bind program = type_file "./contracts/multiple-parameters.ligo" in
-  let inputs = [0 ; 2 ; 42 ; 163 ; -1] in
-  let aux (name, input_f, output_f) =
-    let aux n =
-      let input = input_f n in
-      let%bind result = easy_run_typed name program input in
-      let%bind result' = AST_Typed.Combinators.get_a_int result in
-      let expected = output_f n in
-      let%bind _ = Assert.assert_equal_int expected result' in
-      ok ()
-    in
-    let%bind _ = bind_list @@ List.map aux inputs in
-    ok ()
+  let aux ((name : string) , make_input , make_output) =
+    let make_output' = fun n -> e_a_int @@ make_output n in
+    expect_n program name make_input make_output'
   in
   let%bind _ = bind_list @@ List.map aux [
       ("ab", record_ez_int ["a";"b"], fun n -> 2 * n) ;
@@ -221,336 +102,192 @@ let multiple_parameters () : unit result  =
 
 let record () : unit result  =
   let%bind program = type_file "./contracts/record.ligo" in
-  let%bind _foobar =
-    let%bind result = easy_evaluate_typed "fb" program in
-    let expect = record_ez_int ["foo";"bar"] 0 in
-    AST_Typed.assert_value_eq (expect, result)
+  let%bind () =
+    let expected = record_ez_int ["foo" ; "bar"] 0 in
+    expect_evaluate program "fb" expected
   in
-  let%bind _projection =
-    let aux n =
-      let input = record_ez_int ["foo";"bar"] n in
-      let%bind result = easy_run_typed "projection" program input in
-      let expect = AST_Typed.Combinators.e_a_empty_int (2 * n) in
-      AST_Typed.assert_value_eq (expect, result)
-    in
-    bind_list @@ List.map aux [0 ; -42 ; 144]
+  let%bind () =
+    let make_input = record_ez_int ["foo" ; "bar"] in
+    let make_expected = fun n -> e_a_int (2 * n) in
+    expect_n program "projection" make_input make_expected
   in
-  let%bind _big =
-    let%bind result = easy_evaluate_typed "br" program in
-    let expect = record_ez_int ["a";"b";"c";"d";"e"] 23 in
-    AST_Typed.assert_value_eq (expect, result)
+  let%bind () =
+    let expected = record_ez_int ["a";"b";"c";"d";"e"] 23 in
+    expect_evaluate program "br" expected
   in
   ok ()
 
 let tuple () : unit result  =
   let%bind program = type_file "./contracts/tuple.ligo" in
   let ez n =
-    let open AST_Typed.Combinators in
-    e_a_empty_tuple (List.map e_a_empty_int n) in
-  let%bind _foobar =
-    trace (simple_error "foobar") (
-      let%bind result = easy_evaluate_typed "fb" program in
-      let expect = ez [0 ; 0] in
-      AST_Typed.assert_value_eq (expect, result)
-    )
+    e_a_tuple (List.map e_a_int n) in
+  let%bind () =
+    let expected = ez [0 ; 0] in
+    expect_evaluate program "fb" expected
   in
-  let%bind _projection = trace (simple_error "projection") (
-      let aux n =
-        let input = ez [n ; n] in
-        let%bind result = easy_run_typed "projection" program input in
-        let expect = AST_Typed.Combinators.e_a_empty_int (2 * n) in
-        AST_Typed.assert_value_eq (expect, result)
-      in
-      bind_list @@ List.map aux [0 ; -42 ; 144]
-    )
+  let%bind () =
+    let make_input = fun n -> ez [n ; n] in
+    let make_expected = fun n -> e_a_int (2 * n) in
+    expect_n program "projection" make_input make_expected
   in
-  let%bind _big =
-    let%bind result = easy_evaluate_typed "br" program in
-    let expect = ez [23 ; 23 ; 23 ; 23 ; 23] in
-    AST_Typed.assert_value_eq (expect, result)
+  let%bind () =
+    let expected = ez [23 ; 23 ; 23 ; 23 ; 23] in
+    expect_evaluate program "br" expected
   in
   ok ()
 
 let option () : unit result =
   let%bind program = type_file "./contracts/option.ligo" in
-  let open AST_Typed.Combinators in
-  let%bind _some = trace (simple_error "some") @@
-    let%bind result = easy_evaluate_typed "s" program in
-    let expect = e_a_empty_some (e_a_empty_int 42) in
-    AST_Typed.assert_value_eq (expect, result)
+  let%bind () =
+    let expected = e_a_some (e_a_int 42) in
+    expect_evaluate program "s" expected
   in
-  let%bind _none = trace (simple_error "none") @@
-    let%bind result = easy_evaluate_typed "n" program in
-    let expect = e_a_empty_none (t_int ()) in
-    AST_Typed.assert_value_eq (expect, result)
+  let%bind () =
+    let expected = e_a_none t_int in
+    expect_evaluate program "n" expected
   in
   ok ()
 
 let map () : unit result =
   let%bind program = type_file "./contracts/map.ligo" in
   let ez lst =
-    let open AST_Typed.Combinators in
-    let lst' = List.map (fun (x, y) -> e_a_empty_int x, e_a_empty_int y) lst in
-    e_a_empty_map lst' (t_int ()) (t_int ())
+    let open Ast_simplified.Combinators in
+    let lst' = List.map (fun (x, y) -> e_a_int x, e_a_int y) lst in
+    e_a_map lst' t_int t_int
   in
-  let%bind _get_force = trace (simple_error "get_force") @@
-    let aux n =
-      let input = ez [(23, n) ; (42, 4)] in
-      let%bind result = easy_run_typed "gf" program input in
-      let expect = AST_Typed.Combinators.(e_a_empty_int n) in
-      AST_Typed.assert_value_eq (expect, result)
+  let%bind () =
+    let make_input = fun n -> ez [(23, n) ; (42, 4)] in
+    let make_expected = e_a_int in
+    expect_n program "gf" make_input make_expected
+  in
+  let%bind () =
+    let make_input = fun n -> ez List.(map (fun x -> (x, x)) @@ range n) in
+    let make_expected = e_a_nat in
+    expect_n_strict_pos_small program "size_" make_input make_expected
+  in
+  let%bind () =
+    let expected = ez [(23, 0) ; (42, 0)] in
+    expect_evaluate program "fb" expected
+  in
+  let%bind () =
+    let make_input = fun n ->
+      let m = ez [(23 , 0) ; (42 , 0)] in
+      e_a_tuple [(e_a_int n) ; m]
     in
-    bind_map_list aux [0 ; 42 ; 51 ; 421 ; -3]
+    let make_expected = fun n -> ez [(23 , n) ; (42 , 0)] in
+    expect_n_pos_small program "set_" make_input make_expected
   in
-  let%bind _size = trace (simple_error "size") @@
-    let aux n =
-      let input = ez List.(map (fun x -> (x, x)) @@ range n) in
-      let%bind result = easy_run_typed "size_" program input in
-      let expect = AST_Typed.Combinators.(e_a_empty_nat n) in
-      AST_Typed.assert_value_eq (expect, result)
-    in
-    bind_map_list aux [1 ; 10 ; 3]
+  let%bind () =
+    let make_input = fun n -> ez [(23, n) ; (42, 4)] in
+    let make_expected = fun _ -> e_a_some @@ e_a_int 4 in
+    expect_n program "get" make_input make_expected
   in
-  let%bind _foobar = trace (simple_error "foobar") @@
-    let%bind result = easy_evaluate_typed "fb" program in
-    let expect = ez [(23, 0) ; (42, 0)] in
-    AST_Typed.assert_value_eq (expect, result)
+  let%bind () =
+    let expected = ez @@ List.map (fun x -> (x, 23)) [144 ; 51 ; 42 ; 120 ; 421] in
+    expect_evaluate program "bm" expected
   in
-  let%bind _set = trace (simple_error "set") @@
-    let aux n =
-      let input =
-        let m = ez [(23, 0) ; (42, 0)] in
-        AST_Typed.Combinators.(e_a_empty_tuple [ e_a_empty_int n ; m ])
-      in
-      let%bind result = easy_run_typed "set_" program input in
-      let expect = ez [(23, n) ; (42, 0)] in
-      AST_Typed.assert_value_eq (expect, result)
-    in
-    bind_map_list aux [1 ; 10 ; 3]
-  in
-  let%bind _get = trace (simple_error "get") @@
-    let aux n =
-      let input = ez [(23, n) ; (42, 4)] in
-      let%bind result = easy_run_typed "get" program input in
-      let expect = AST_Typed.Combinators.(e_a_empty_some @@ e_a_empty_int 4) in
-      AST_Typed.assert_value_eq (expect, result)
-    in
-    bind_map_list aux [0 ; 42 ; 51 ; 421 ; -3]
-  in
-  let%bind _bigmap = trace (simple_error "bigmap") @@
-    let%bind result = easy_evaluate_typed "bm" program in
-    let expect = ez @@ List.map (fun x -> (x, 23)) [144 ; 51 ; 42 ; 120 ; 421] in
-    AST_Typed.assert_value_eq (expect, result)
-  in
-  let%bind _remove = trace (simple_error "rm") @@
+  let%bind () =
     let input = ez [(23, 23) ; (42, 42)] in
-    let%bind result = easy_run_typed "rm" program input in
-    let expect = ez [23, 23] in
-    AST_Typed.assert_value_eq (expect, result)
+    let expected = ez [23, 23] in
+    expect program "rm" input expected
   in
   ok ()
 
 let list () : unit result =
   let%bind program = type_file "./contracts/list.ligo" in
   let ez lst =
-    let open AST_Typed.Combinators in
-    let lst' = List.map e_a_empty_int lst in
-    e_a_empty_list lst' (t_int ())
+    let lst' = List.map e_a_int lst in
+    e_a_list lst' t_int
   in
-  let%bind _size = trace (simple_error "size") @@
-    let aux n =
-      let input = ez (List.range n) in
-      let%bind result = easy_run_typed "size_" program input in
-      let expect = AST_Typed.Combinators.(e_a_empty_nat n) in
-      AST_Typed.assert_value_eq (expect, result)
-    in
-    bind_map_list aux [1 ; 10 ; 3]
+  let%bind () =
+    let make_input = fun n -> (ez @@ List.range n) in
+    let make_expected = e_a_nat in
+    expect_n_strict_pos_small program "size_" make_input make_expected
   in
-  let%bind _foobar = trace (simple_error "foobar") @@
-    let%bind result = easy_evaluate_typed "fb" program in
-    let expect = ez [23 ; 42] in
-    AST_Typed.assert_value_eq (expect, result)
+  let%bind () =
+    let expected = ez [23 ; 42] in
+    expect_evaluate program "fb" expected
   in
-  let%bind _biglist = trace (simple_error "biglist") @@
-    let%bind result = easy_evaluate_typed "bl" program in
-    let expect = ez [144 ; 51 ; 42 ; 120 ; 421] in
-    AST_Typed.assert_value_eq (expect, result)
+  let%bind () =
+    let expected = ez [144 ; 51 ; 42 ; 120 ; 421] in
+    expect_evaluate program "bl" expected
   in
   ok ()
 
 let condition () : unit result =
   let%bind program = type_file "./contracts/condition.ligo" in
-  let aux n =
-    let open AST_Typed.Combinators in
-    let input = e_a_empty_int n in
-    let%bind result = easy_run_main_typed program input in
-    let%bind result' =
-      trace (simple_error "bad result") @@
-      get_a_int result in
-    Assert.assert_equal_int (if n = 2 then 42 else 0) result'
-  in
-  let%bind _ = bind_list
-    @@ List.map aux
-    @@ [0 ; 2 ; 42 ; 163 ; -1] in
-  ok ()
+  let make_input = e_a_int in
+  let make_expected = fun n -> e_a_int (if n = 2 then 42 else 0) in
+  expect_n program "main" make_input make_expected
 
 let loop () : unit result =
   let%bind program = type_file "./contracts/loop.ligo" in
-  let%bind _dummy = trace (simple_error "dummy") @@
-    let aux n =
-      let open AST_Typed.Combinators in
-      let input = e_a_empty_nat n in
-      let%bind result = easy_run_typed "dummy" program input in
-      let expected = e_a_empty_nat n in
-      AST_Typed.assert_value_eq (expected, result)
-    in
-    let%bind _ = bind_list
-      @@ List.map aux
-      @@ [0 ; 2 ; 42 ; 163] in
-    ok ()
+  let%bind () =
+    let make_input = e_a_nat in
+    let make_expected = e_a_nat in
+    expect_n_pos program "dummy" make_input make_expected
   in
-  let%bind _counter = trace (simple_error "counter") @@
-    let aux n =
-      let open AST_Typed.Combinators in
-      let input = e_a_empty_nat n in
-      let%bind result = easy_run_typed "counter" program input in
-      let expected = e_a_empty_nat n in
-      AST_Typed.assert_value_eq (expected, result)
-    in
-    let%bind _ = bind_list
-      @@ List.map aux
-      @@ [0 ; 2 ; 42 ; 12] in
-    ok ()
+  let%bind () =
+    let make_input = e_a_nat in
+    let make_expected = e_a_nat in
+    expect_n_pos_mid program "counter" make_input make_expected
   in
-  let%bind _sum = trace (simple_error "sum") @@
-    let aux n =
-      let open AST_Typed.Combinators in
-      let input = e_a_empty_nat n in
-      let%bind result = easy_run_typed "sum" program input in
-      let expected = e_a_empty_nat (n * (n + 1) / 2) in
-      AST_Typed.assert_value_eq (expected, result)
-    in
-    let%bind _ = bind_list
-      @@ List.map aux
-      @@ [0 ; 2 ; 42 ; 12] in
-    ok ()
+  let%bind () =
+    let make_input = e_a_nat in
+    let make_expected = fun n -> e_a_nat (n * (n + 1) / 2) in
+    expect_n_pos_mid program "sum" make_input make_expected
   in
   ok()
 
 
 let matching () : unit result =
   let%bind program = type_file "./contracts/match.ligo" in
-  let%bind _bool =
-    let aux n =
-      let open AST_Typed.Combinators in
-      let input = e_a_empty_int n in
-      let%bind result = easy_run_typed "match_bool" program input in
-      let%bind result' =
-        trace (simple_error "bad result") @@
-        get_a_int result in
-      Assert.assert_equal_int (if n = 2 then 42 else 0) result'
-    in
-    let%bind _ = bind_list
-      @@ List.map aux
-      @@ [0 ; 2 ; 42 ; 163 ; -1] in
-    ok ()
+  let%bind () =
+    let make_input = e_a_int in
+    let make_expected = fun n -> e_a_int (if n = 2 then 42 else 0) in
+    expect_n program "match_bool" make_input make_expected
   in
-  let%bind _expr_bool =
-    let aux n =
-      let open AST_Typed.Combinators in
-      let input = e_a_empty_int n in
-      let%bind result = easy_run_typed "match_expr_bool" program input in
-      let%bind result' =
-        trace (simple_error "bad result") @@
-        get_a_int result in
-      Assert.assert_equal_int (if n = 2 then 42 else 0) result'
-    in
-    let%bind _ = bind_list
-      @@ List.map aux
-      @@ [0 ; 2 ; 42 ; 163 ; -1] in
-    ok ()
+  let%bind () =
+    let make_input = e_a_int in
+    let make_expected = fun n-> e_a_int (if n = 2 then 42 else 0) in
+    expect_n program "match_expr_bool" make_input make_expected
   in
-  let%bind _option =
+  let%bind () =
     let aux n =
-      let open AST_Typed.Combinators in
       let input = match n with
-        | Some s -> e_a_empty_some (e_a_empty_int s)
-        | None -> e_a_empty_none (t_int ()) in
-      let%bind result = easy_run_typed "match_option" program input in
-      let%bind result' =
-        trace (simple_error "bad result") @@
-        get_a_int result in
-      Assert.assert_equal_int 23 result'
-      (* Assert.assert_equal_int (match n with None -> 23 | Some s -> s) result' *)
+        | Some s -> e_a_some (e_a_int s)
+        | None -> e_a_none t_int in
+      let expected = e_a_int 23 in
+      expect program "match_option" input expected
     in
-    let%bind _ = bind_list
-      @@ List.map aux
-      @@ [Some 0 ; Some 2 ; Some 42 ; Some 163 ; Some (-1) ; None] in
-    ok ()
+    bind_iter_list aux
+      [Some 0 ; Some 2 ; Some 42 ; Some 163 ; Some (-1) ; None]
   in
   ok ()
 
 let declarations () : unit result =
   let%bind program = type_file "./contracts/declarations.ligo" in
-  let aux n =
-    let open AST_Typed.Combinators in
-    let input = e_a_empty_int n in
-    let%bind result = easy_run_main_typed program input in
-    let%bind result' =
-      trace (simple_error "bad result") @@
-      get_a_int result in
-    Assert.assert_equal_int (42 + n) result'
-  in
-  let%bind _ = bind_list
-    @@ List.map aux
-    @@ [0 ; 2 ; 42 ; 163 ; -1] in
-  ok ()
+  let make_input = e_a_int in
+  let make_expected = fun n -> e_a_int (42 + n) in
+  expect_n program "main" make_input make_expected
 
 let quote_declaration () : unit result =
   let%bind program = type_file "./contracts/quote-declaration.ligo" in
-  let aux n =
-    let open AST_Typed.Combinators in
-    let input = e_a_empty_int n in
-    let%bind result = easy_run_main_typed program input in
-    let%bind result' =
-      trace (simple_error "bad result") @@
-      get_a_int result in
-    Assert.assert_equal_int result' (42 + 2 * n)
-  in
-  let%bind _ = bind_list
-    @@ List.map aux
-    @@ [0 ; 2 ; 42 ; 163 ; -1] in
-  ok ()
+  let make_input = e_a_int in
+  let make_expected = fun n -> e_a_int (42 + 2 * n) in
+  expect_n program "main" make_input make_expected
 
 let quote_declarations () : unit result =
   let%bind program = type_file "./contracts/quote-declarations.ligo" in
-  let aux n =
-    let open AST_Typed.Combinators in
-    let input = e_a_empty_int n in
-    let%bind result = easy_run_main_typed program input in
-    let%bind result' =
-      trace (simple_error "bad result") @@
-      get_a_int result in
-    Assert.assert_equal_int result' (74 + 2 * n)
-  in
-  let%bind _ = bind_list
-    @@ List.map aux
-    @@ [0 ; 2 ; 42 ; 163 ; -1] in
-  ok ()
+  let make_input = e_a_int in
+  let make_expected = fun n -> e_a_int (74 + 2 * n) in
+  expect_n program "main" make_input make_expected
 
 let counter_contract () : unit result =
   let%bind program = type_file "./contracts/counter.ligo" in
-  let aux n =
-    let open AST_Typed.Combinators in
-    let input = e_a_empty_pair (e_a_empty_int n) (e_a_empty_int 42) in
-    let%bind result = easy_run_main_typed program input in
-    let expected = e_a_empty_pair (e_a_empty_list [] (t_int ())) (e_a_empty_int (42 + n)) in
-    AST_Typed.assert_value_eq (result, expected)
-  in
-  let%bind _ = bind_list
-    @@ List.map aux
-    @@ [0 ; 2 ; 42 ; 163 ; -1] in
-  ok ()
+  let make_input = fun n-> e_a_pair (e_a_int n) (e_a_int 42) in
+  let make_expected = fun n -> e_a_pair (e_a_list [] (t_int)) (e_a_int (42 + n)) in
+  expect_n program "main" make_input make_expected
 
 let main = "Integration (End to End)", [
     test "function" function_ ;
