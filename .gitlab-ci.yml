@@ -20,8 +20,8 @@ before_script:
 
 default-job:
   script:
-    - (cd src/lib_utils && ls -a && opam install -y --working-dir .)
-    - (cd src/ligo      && ls -a && opam install -y --working-dir .)
+    - (cd src/lib_utils && ls -a && opam install -y --build-test --working-dir .)
+    - (cd src/ligo      && ls -a && opam install -y --build-test --working-dir .)
     - (cd src/ligo      && ls -a && dune build && dune build -p ligo && dune build @ligo-test)
   artifacts:
     paths:
