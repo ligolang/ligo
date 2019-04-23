@@ -54,6 +54,7 @@ module Michelson = struct
 
   let i_if a b = prim ~children:[a;b] I_IF
   let i_if_none a b = prim ~children:[a;b] I_IF_NONE
+  let i_if_left a b = prim ~children:[a;b] I_IF_LEFT
   let i_failwith = prim I_FAILWITH
   let i_assert_some = i_if_none (seq [i_failwith]) (seq [])
 
@@ -75,6 +76,13 @@ module Michelson = struct
   let pp ppf (michelson:michelson) =
     let open Micheline_printer in
     let canonical = strip_locations michelson in
+    let node = printable string_of_prim canonical in
+    print_expr ppf node
+
+  let pp_stripped ppf (michelson:michelson) =
+    let open Micheline_printer in
+    let michelson' = strip_nops @@ strip_annots michelson in
+    let canonical = strip_locations michelson' in
     let node = printable string_of_prim canonical in
     print_expr ppf node
 
