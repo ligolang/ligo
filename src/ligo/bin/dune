@@ -3,6 +3,7 @@
   (public_name ligo)
   (libraries
     tezos-utils
+    cmdliner
     ligo
   )
   (package ligo)
