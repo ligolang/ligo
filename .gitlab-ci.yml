@@ -1,6 +1,7 @@
 before_script:
   - apt-get update -qq
-  - apt-get -y -qq install libhidapi-dev libcap-dev libev-dev bubblewrap
+  # rsync is needed by opam to sync a package installed from a local directory with the copy in ~/.opam
+  - apt-get -y -qq install rsync libhidapi-dev libcap-dev libev-dev bubblewrap
   - wget https://github.com/ocaml/opam/releases/download/2.0.1/opam-2.0.1-x86_64-linux -O opam-2.0.1-x86_64-linux
   - cp opam-2.0.1-x86_64-linux /usr/local/bin/opam
   - chmod +x /usr/local/bin/opam
