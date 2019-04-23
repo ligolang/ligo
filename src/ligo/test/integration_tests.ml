@@ -325,6 +325,16 @@ let counter_contract () : unit result =
   let make_expected = fun n -> e_a_pair (e_a_list [] t_operation) (e_a_int (42 + n)) in
   expect_n program "main" make_input make_expected
 
+let super_counter_contract () : unit result =
+  let%bind program = type_file "./contracts/super-counter.ligo" in
+  let make_input = fun n ->
+    let action = if n mod 2 = 0 then "Increment" else "Decrement" in
+    e_a_pair (e_a_constructor action (e_a_int n)) (e_a_int 42) in
+  let make_expected = fun n ->
+    let op = if n mod 2 = 0 then (+) else (-) in
+    e_a_pair (e_a_list [] t_operation) (e_a_int (op 42 n)) in
+  expect_n program "main" make_input make_expected
+
 let main = "Integration (End to End)", [
     test "function" function_ ;
     test "complex function" complex_function ;
@@ -350,5 +360,6 @@ let main = "Integration (End to End)", [
     test "quote declarations" quote_declarations ;
     test "#include directives" include_ ;
     test "counter contract" counter_contract ;
+    test "super counter contract" super_counter_contract ;
     test "higher order" higher_order ;
   ]

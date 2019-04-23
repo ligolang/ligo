@@ -386,7 +386,7 @@ and translate_annotated_expression (env:Environment.t) (ae:AST.annotated_express
                   List.find_opt (fun ((constructor_name' , _) , _) -> constructor_name' = constructor_name) lst in
                 let env' = Environment.(add (name , tv) @@ extend env) in
                 let%bind body' = translate_annotated_expression env' body in
-                return ~env:env' @@ E_let_in ((name , tv) , top , body')
+                return ~env @@ E_let_in ((name , tv) , top , body')
               )
             | ((`Node (a , b)) , tv) ->
                 let%bind a' =
