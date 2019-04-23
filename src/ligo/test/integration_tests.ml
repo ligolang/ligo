@@ -22,6 +22,9 @@ let variant () : unit result =
   let%bind () =
     let expected = e_a_constructor "Bar" (e_a_bool true) in
     expect_evaluate program "bar" expected in
+  let%bind () =
+    let expected = e_a_constructor "Kee" (e_a_nat 23) in
+    expect_evaluate program "kee" expected in
   ok ()
 
 let variant_matching () : unit result =
@@ -29,7 +32,10 @@ let variant_matching () : unit result =
   let%bind () =
     let make_input = fun n -> e_a_constructor "Foo" (e_a_int n) in
     let make_expected = e_a_int in
-    expect_n program "fb" make_input make_expected
+    expect_n program "fb" make_input make_expected >>? fun () ->
+    expect program "fb" (e_a_constructor "Kee" (e_a_nat 50)) (e_a_int 23) >>? fun () ->
+    expect program "fb" (e_a_constructor "Bar" (e_a_bool true)) (e_a_int 42) >>? fun () ->
+    ok ()
   in
   ok ()
 
