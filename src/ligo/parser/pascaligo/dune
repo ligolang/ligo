@@ -9,9 +9,9 @@
 (library
  (name parser_pascaligo)
  (public_name ligo.parser.pascaligo)
+ (modules AST FQueue Markup pascaligo Utils Version Lexer Error Parser ParserLog LexToken)
  (modules_without_implementation Error)
  (libraries
-   getopt
    hex
    str
    uutf
@@ -23,17 +23,17 @@
 ;; Les deux directives (rule) qui suivent sont pour le dev local.
 ;; Il suffit de faire "dune build Parser.exe" pour avoir un Parser.exe dans le dossier.
 ;; Pour le purger, il faut faire "dune clean".
-(rule
-  (targets Parser.exe)
-  (deps ParserMain.exe)
-  (action (copy ParserMain.exe Parser.exe))
-  (mode promote-until-clean))
+;(rule
+;  (targets Parser.exe)
+;  (deps ParserMain.exe)
+;  (action (copy ParserMain.exe Parser.exe))
+;  (mode promote-until-clean))
 
-(rule
-  (targets Lexer.exe)
-  (deps LexerMain.exe)
-  (action (copy LexerMain.exe Lexer.exe))
-  (mode promote-until-clean))
+;(rule
+;  (targets Lexer.exe)
+;  (deps LexerMain.exe)
+;  (action (copy LexerMain.exe Lexer.exe))
+;  (mode promote-until-clean))
 
 (rule
   (targets Version.ml)
