@@ -20,9 +20,9 @@ before_script:
 
 default-job:
   script:
-    - (cd src/lib_utils && ls -a && opam install -y --build-test --working-dir .)
-    - (cd src/ligo      && ls -a && opam install -y --build-test --working-dir .)
-    - (cd src/ligo      && ls -a && dune build && dune build -p ligo && dune build @ligo-test)
+    - (cd src/lib_utils && opam install -y --build-test --working-dir .)
+    - (cd src/ligo      && opam install -y --build-test --working-dir .)
+    - (cd src/ligo      && dune build && dune build -p ligo && dune build @ligo-test)
   artifacts:
     paths:
       - src/ligo/bin/cli.ml
@@ -31,3 +31,8 @@ default-job:
 install-from-repo-job:
   script:
     - opam install -y ligo
+    # Used in the IDE
+    #- opam install -y user-setup
+    #- opam install -y merlin
+    #- opam install -y ocp-indent
+    #- opam user-setup install

@@ -15,7 +15,7 @@ depends: [
   "ppx_let"
   "tezos-utils"
   "yojson"
-  "alcotest" { test }
+  "alcotest" { with-test }
 ]
 build: [
   [ "dune" "build" "-p" name "-j" jobs ]
