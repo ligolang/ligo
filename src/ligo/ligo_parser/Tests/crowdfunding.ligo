@@ -11,18 +11,18 @@ entrypoint contribute (storage store : store;
                        const amount  : mutez)
   : store * list (operation) is
   var operations : list (operation) := nil
-  const s : list (int) = list [1; 2; 3]
-  const t : set (int) = set []
-  block {
+     //  const s : list (int) = list [1; 2; 3]
+//const t : set (int) = set []
+  begin
     if now > store.deadline then
       fail "Deadline passed";
     else
       case store.backers[sender] of [
-        None -> store.backers[sender] := Some (amount)
+        None -> store.backers[sender] := Some (amount);
 //        None -> patch store.backers with map sender -> amount end
       |    _ -> skip
       ]
-  } with (store, operations)
+  end with (store, operations)
 
 entrypoint withdraw (storage store : store; const sender : address)
   : store * list (operation) is
@@ -37,7 +37,7 @@ entrypoint withdraw (storage store : store; const sender : address)
              operations := list [Transfer (owner, balance)];
         };
         else fail "Below target"
-      else { fail "Too soon"; }
+      else block { fail "Too soon"; }
     else skip
   end with (store, operations)
 

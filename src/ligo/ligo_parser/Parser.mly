@@ -109,6 +109,13 @@ sepseq(X,Sep):
   (**)           {    None }
 | nsepseq(X,Sep) { Some $1 }
 
+(* TODO *)
+(*
+sequence(Item,TERM):
+  nsepseq(Item,TERM)      {}
+| nseq(Item TERM {$1,$2}) {}
+ *)
+
 (* Inlines *)
 
 %inline var         : Ident { $1 }
@@ -157,11 +164,13 @@ cartesian:
     in {region; value=$1}}
 
 function_type:
-  core_type { $1 }
+  core_type {
+    $1
+  }
 | core_type ARROW function_type {
-    let region = cover (type_expr_to_region $1) (type_expr_to_region $3)
-    in TFun {region; value = ($1, $2, $3)}
-}
+    let region = cover (type_expr_to_region $1)
+                       (type_expr_to_region $3)
+    in TFun {region; value = ($1, $2, $3)} }
 
 core_type:
   type_name {
@@ -199,13 +208,13 @@ type_tuple:
 sum_type:
   nsepseq(variant,VBAR) {
     let region = nsepseq_to_region (fun x -> x.region) $1
-    in {region; value = $1}}
+    in {region; value = $1} }
 
 variant:
   Constr Of cartesian {
     let region = cover $1.region $3.region
     and value = {constr = $1; kwd_of = $2; product = $3}
-    in {region; value}}
+    in {region; value} }
 
 record_type:
   Record series(field_decl,End) {
@@ -216,7 +225,8 @@ record_type:
      elements = Some (first, others);
      terminator;
      closing = End closing}
-   in {region; value}}
+   in {region; value}
+  }
 | Record LBRACKET series(field_decl,RBRACKET) {
    let first, (others, terminator, closing) = $3 in
    let region = cover $1 closing
@@ -225,14 +235,14 @@ record_type:
      elements = Some (first, others);
      terminator;
      closing = RBracket closing}
-   in {region; value}}
+   in {region; value} }
 
 field_decl:
   field_name COLON type_expr {
     let stop   = type_expr_to_region $3 in
     let region = cover $1.region stop
     and value  = {field_name = $1; colon = $2; field_type = $3}
-    in {region; value}}
+    in {region; value} }
 
 (* Function and procedure declarations *)
 
@@ -353,19 +363,10 @@ entry_param_decl:
     in EntryStore {region; value}}
 
 param_type:
-  nsepseq(function_type,TIMES) {
-    let region = nsepseq_to_region type_expr_to_region $1
-    in TProd {region; value=$1}}
-
-/* core_param_type: */
-/* type_name { */
-/*     TAlias $1 */
-/*   } */
-/* | type_name type_tuple { */
-/*     let region = cover $1.region $2.region */
-/*     in TApp {region; value = $1,$2}} */
+  cartesian { TProd $1 }
 
 block:
+(*  Begin sequence(statement,SEMI) End { failwith "TODO" } *)
   Begin series(statement,End) {
    let first, (others, terminator, closing) = $2 in
    let region = cover $1 closing
@@ -457,34 +458,16 @@ unqualified_decl(OP):
     in $1, $2, $3, $4, init, region}
 
 const_decl:
-  Const unqualified_decl(EQUAL) SEMI {
-    let name, colon, const_type, equal, init, _ = $2 in
-    let region = cover $1 $3
-    and value = {
-      kwd_const = $1;
-      name;
-      colon;
-      const_type;
-      equal;
-      init;
-      terminator = Some $3}
-    in {region; value}
+  open_const_decl SEMI {
+    let const_decl : AST.const_decl = $1.value in
+    {$1 with value = {const_decl with terminator = Some $2}}
   }
 | open_const_decl { $1 }
 
 var_decl:
-  Var unqualified_decl(ASS) SEMI {
-    let name, colon, var_type, assign, init, _ = $2 in
-    let region = cover $1 $3
-    and value = {
-      kwd_var = $1;
-      name;
-      colon;
-      var_type;
-      assign;
-      init;
-      terminator = Some $3}
-    in {region; value}
+  open_var_decl SEMI {
+    let var_decl : AST.var_decl = $1.value in
+    {$1 with value = {var_decl with terminator = Some $2}}
   }
 | open_var_decl { $1 }
 
