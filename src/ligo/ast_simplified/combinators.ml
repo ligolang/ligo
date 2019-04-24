@@ -1,10 +1,21 @@
 open Types
+open Trace
 
 module SMap = Map.String
 
 let get_name : named_expression -> string = fun x -> x.name
 let get_type_name : named_type_expression -> string = fun x -> x.type_name
 let get_type_annotation (x:annotated_expression) = x.type_annotation
+
+let i_assignment : _ -> instruction = fun x -> I_assignment x
+let named_expression name annotated_expression = { name ; annotated_expression }
+let named_typed_expression name expression ty = { name ; annotated_expression = { expression ; type_annotation = Some ty } }
+
+let get_untyped_expression : annotated_expression -> expression result = fun ae ->
+  let%bind () =
+    trace_strong (simple_error "expression is typed") @@
+    Assert.assert_none ae.type_annotation in
+  ok ae.expression
 
 let t_bool      : type_expression = T_constant ("bool", [])
 let t_string    : type_expression = T_constant ("string", [])

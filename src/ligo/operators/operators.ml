@@ -13,6 +13,7 @@ module Simplify = struct
     ("option" , 1) ;
     ("set" , 1) ;
     ("map" , 2) ;
+    ("big_map" , 2) ;
   ]
 
   let constants = [
