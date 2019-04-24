@@ -1,1 +1,2 @@
-ast.ml
+ast_generated.ml
+parser_generated.mly
