@@ -135,6 +135,10 @@ let rec bind_list = function
       bind_list tl >>? fun tl ->
       ok @@ hd :: tl
     )
+let bind_ne_list = fun (hd , tl) ->
+  hd >>? fun hd ->
+  bind_list tl >>? fun tl ->
+  ok @@ (hd , tl)
 
 let bind_smap (s:_ X_map.String.t) =
   let open X_map.String in
@@ -154,6 +158,9 @@ let bind_fold_smap f init (smap : _ X_map.String.t) =
 let bind_map_smap f smap = bind_smap (X_map.String.map f smap)
 
 let bind_map_list f lst = bind_list (List.map f lst)
+let bind_map_ne_list : _ -> 'a X_list.Ne.t -> 'b X_list.Ne.t result = fun f lst -> bind_ne_list (X_list.Ne.map f lst)
+let bind_iter_list : (_ -> unit result) -> _ list -> unit result = fun f lst ->
+  bind_map_list f lst >>? fun _ -> ok ()
 
 let bind_location (x:_ Location.wrap) =
   x.wrap_content >>? fun wrap_content ->
@@ -167,6 +174,13 @@ let bind_fold_list f init lst =
     f x y
   in
   List.fold_left aux (ok init) lst
+
+let bind_fold_right_list f init lst =
+  let aux x y =
+    x >>? fun x ->
+    f x y
+  in
+  X_list.fold_right' aux (ok init) lst
 
 let bind_find_map_list error f lst =
   let rec aux lst =

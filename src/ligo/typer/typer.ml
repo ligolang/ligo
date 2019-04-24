@@ -73,8 +73,8 @@ and type_declaration env : I.declaration -> (environment * O.declaration option)
       let%bind ae' =
         trace (constant_declaration_error name annotated_expression) @@
         type_annotated_expression env annotated_expression in
-      let env' = Environment.add name ae'.type_annotation env in
-      ok (env', Some (O.Declaration_constant (make_n_e name ae')))
+      let env' = Environment.add_ez name ae'.type_annotation env in
+      ok (env', Some (O.Declaration_constant ((make_n_e name ae') , env')))
 
 and type_block_full (e:environment) (b:I.block) : (O.block * environment) result =
   let aux (e, acc:(environment * O.instruction list)) (i:I.instruction) =
@@ -106,18 +106,18 @@ and type_instruction (e:environment) : I.instruction -> (environment * O.instruc
       | None, None -> simple_fail "Initial assignments need type annotation"
       | Some _, None ->
           let%bind annotated_expression = type_annotated_expression e annotated_expression in
-          let e' = Environment.add name annotated_expression.type_annotation e in
+          let e' = Environment.add_ez name annotated_expression.type_annotation e in
           ok (e', [O.I_declaration (make_n_e name annotated_expression)])
       | None, Some prev ->
           let%bind annotated_expression = type_annotated_expression e annotated_expression in
           let%bind _ =
-            O.assert_type_value_eq (annotated_expression.type_annotation, prev) in
+            O.assert_type_value_eq (annotated_expression.type_annotation, prev.type_value) in
           ok (e, [O.I_assignment (make_n_e name annotated_expression)])
       | Some _, Some prev ->
           let%bind annotated_expression = type_annotated_expression e annotated_expression in
           let%bind _assert = trace (simple_error "Annotation doesn't match environment")
-            @@ O.assert_type_value_eq (annotated_expression.type_annotation, prev) in
-          let e' = Environment.add name annotated_expression.type_annotation e in
+            @@ O.assert_type_value_eq (annotated_expression.type_annotation, prev.type_value) in
+          let e' = Environment.add_ez name annotated_expression.type_annotation e in
           ok (e', [O.I_assignment (make_n_e name annotated_expression)])
     )
   | I_matching (ex, m) ->
@@ -130,7 +130,7 @@ and type_instruction (e:environment) : I.instruction -> (environment * O.instruc
         let%bind ty =
           trace_option (simple_error "unbound variable in record_patch") @@
           Environment.get_opt r e in
-        let tv = O.{type_name = r ; type_value = ty} in
+        let tv = O.{type_name = r ; type_value = ty.type_value} in
         let aux ty access =
           match access with
           | I.Access_record s ->
@@ -142,7 +142,7 @@ and type_instruction (e:environment) : I.instruction -> (environment * O.instruc
               generic_try (simple_error "unbound tuple access in record_patch") @@
               (fun () -> List.nth t i)
         in
-        let%bind _assert = bind_fold_list aux ty (path @ [Access_record s]) in
+        let%bind _assert = bind_fold_list aux ty.type_value (path @ [Access_record s]) in
         ok @@ O.I_patch (tv, path @ [Access_record s], ae')
       in
       let%bind lst' = bind_map_list aux lst in
@@ -165,7 +165,7 @@ and type_match : type i o . (environment -> i -> o result) -> environment -> O.t
       let%bind match_none = f e match_none in
       let (n, b) = match_some in
       let n' = n, t_opt in
-      let e' = Environment.add n t_opt e in
+      let e' = Environment.add_ez n t_opt e in
       let%bind b' = f e' b in
       ok (O.Match_option {match_none ; match_some = (n', b')})
   | Match_list {match_nil ; match_cons} ->
@@ -174,8 +174,8 @@ and type_match : type i o . (environment -> i -> o result) -> environment -> O.t
         @@ get_t_list t in
       let%bind match_nil = f e match_nil in
       let (hd, tl, b) = match_cons in
-      let e' = Environment.add hd t_list e in
-      let e' = Environment.add tl t e' in
+      let e' = Environment.add_ez hd t_list e in
+      let e' = Environment.add_ez tl t e' in
       let%bind b' = f e' b in
       ok (O.Match_list {match_nil ; match_cons = (hd, tl, b')})
   | Match_tuple (lst, b) ->
@@ -185,10 +185,54 @@ and type_match : type i o . (environment -> i -> o result) -> environment -> O.t
       let%bind lst' =
         generic_try (simple_error "Matching tuple of different size")
         @@ (fun () -> List.combine lst t_tuple) in
-      let aux prev (name, tv) = Environment.add name tv prev in
+      let aux prev (name, tv) = Environment.add_ez name tv prev in
       let e' = List.fold_left aux e lst' in
       let%bind b' = f e' b in
       ok (O.Match_tuple (lst, b'))
+  | Match_variant lst ->
+      let%bind variant_opt =
+        let aux acc ((constructor_name , _) , _) =
+          let%bind (_ , variant) =
+            trace_option (simple_error "bad constructor") @@
+            Environment.get_constructor constructor_name e in
+          let%bind acc = match acc with
+            | None -> ok (Some variant)
+            | Some variant' -> (
+                Ast_typed.assert_type_value_eq (variant , variant') >>? fun () ->
+                ok (Some variant)
+              ) in
+          ok acc in
+        trace (simple_error "in match variant") @@
+        bind_fold_list aux None lst in
+      let%bind variant =
+        trace_option (simple_error "empty variant") @@
+        variant_opt in
+      let%bind  () =
+        let%bind variant_cases' = Ast_typed.Combinators.get_t_sum variant in
+        let variant_cases = List.map fst @@ Map.String.to_kv_list variant_cases' in
+        let match_cases = List.map (Function.compose fst fst) lst in
+        let test_case = fun c ->
+          Assert.assert_true (List.mem c match_cases)
+        in
+        let%bind () =
+          trace (simple_error "missing case match") @@
+          bind_iter_list test_case variant_cases in
+        let%bind () =
+          trace_strong (simple_error "redundant case match") @@
+          Assert.assert_true List.(length variant_cases = length match_cases) in
+        ok ()
+      in
+      let%bind lst' =
+        let aux ((constructor_name , name) , b) =
+          let%bind (constructor , _) =
+            trace_option (simple_error "bad constructor??") @@
+            Environment.get_constructor constructor_name e in
+          let e' = Environment.add_ez name constructor e in
+          let%bind b' = f e' b in
+          ok ((constructor_name , name) , b')
+        in
+        bind_map_list aux lst in
+      ok (O.Match_variant (lst' , variant))
 
 and evaluate_type (e:environment) (t:I.type_expression) : O.type_value result =
   let return tv' = ok (make_t tv' (Some t)) in
@@ -239,7 +283,7 @@ and type_annotated_expression : environment -> I.annotated_expression -> O.annot
       let%bind tv' =
         trace_option (unbound_variable e name)
         @@ Environment.get_opt name e in
-      return (E_variable name) tv'
+      return (E_variable name) tv'.type_value
   | E_literal (Literal_bool b) ->
       return (E_literal (Literal_bool b)) (t_bool ())
   | E_literal Literal_unit ->
@@ -359,7 +403,7 @@ and type_annotated_expression : environment -> I.annotated_expression -> O.annot
     } ->
       let%bind input_type = evaluate_type e input_type in
       let%bind output_type = evaluate_type e output_type in
-      let e' = Environment.add binder input_type e in
+      let e' = Environment.add_ez binder input_type e in
       let%bind (body, e'') = type_block_full e' body in
       let%bind result = type_annotated_expression e'' result in
       return (E_lambda {binder;input_type;output_type;result;body}) (t_function input_type output_type ())
@@ -387,12 +431,26 @@ and type_annotated_expression : environment -> I.annotated_expression -> O.annot
   | E_matching (ex, m) -> (
       let%bind ex' = type_annotated_expression e ex in
       let%bind m' = type_match type_annotated_expression e ex'.type_annotation m in
-      let%bind tv = match m' with
-        | Match_bool {match_true ; match_false} ->
-            let%bind _ = O.assert_type_value_eq (match_true.type_annotation, match_false.type_annotation) in
-            ok match_true.type_annotation
-        | _ -> simple_fail "can only type match_bool expressions yet" in
-      return (E_matching (ex' , m')) tv
+      let tvs =
+        let aux (cur:O.value O.matching) =
+          match cur with
+          | Match_bool { match_true ; match_false } -> [ match_true ; match_false ]
+          | Match_list { match_nil ; match_cons = (_ , _ , match_cons) } -> [ match_nil ; match_cons ]
+          | Match_option { match_none ; match_some = (_ , match_some) } -> [ match_none ; match_some ]
+          | Match_tuple (_ , match_tuple) -> [ match_tuple ]
+          | Match_variant (lst , _) -> List.map snd lst in
+        List.map get_type_annotation @@ aux m' in
+      let aux prec cur =
+        let%bind () =
+          match prec with
+          | None -> ok ()
+          | Some cur' -> Ast_typed.assert_type_value_eq (cur , cur') in
+        ok (Some cur) in
+      let%bind tv_opt = bind_fold_list aux None tvs in
+      let%bind tv =
+        trace_option (simple_error "empty matching") @@
+        tv_opt in
+      return (O.E_matching (ex', m')) tv
     )
 
 and type_constant (name:string) (lst:O.type_value list) (tv_opt:O.type_value option) : (string * O.type_value) result =
@@ -444,8 +502,8 @@ let untype_literal (l:O.literal) : I.literal result =
 
 let rec untype_annotated_expression (e:O.annotated_expression) : (I.annotated_expression) result =
   let open I in
-  let annotation = e.type_annotation.simplified in
-  let return e = ok @@ annotated_expression e annotation in
+  let type_annotation = e.type_annotation.simplified in
+  let return e = ok @@ I.Combinators.make_e_a ?type_annotation e in
   match e.expression with
   | E_literal l ->
       let%bind l = untype_literal l in
@@ -551,3 +609,9 @@ and untype_matching : type o i . (o -> i result) -> o O.matching -> (i I.matchin
       let%bind cons = f cons in
       let match_cons = hd, tl, cons in
       ok @@ Match_list {match_nil ; match_cons}
+  | Match_variant (lst , _) ->
+      let aux ((a,b),c) =
+        let%bind c' = f c in
+        ok ((a,b),c') in
+      let%bind lst' = bind_map_list aux lst in
+      ok @@ Match_variant lst'

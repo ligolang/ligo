@@ -18,6 +18,13 @@ module Michelson = struct
 
   let i_comment s : michelson = prim ~annot:["\"" ^ s ^ "\""] I_NOP
 
+  let contract parameter storage code =
+    seq [
+      prim ~children:[parameter] K_parameter ;
+      prim ~children:[storage] K_storage ;
+      prim ~children:[code] K_code ;
+    ]
+
   let int n : michelson = Int (0, n)
   let string s : michelson = String (0, s)
   let bytes s : michelson = Bytes (0, s)
@@ -47,6 +54,7 @@ module Michelson = struct
 
   let i_if a b = prim ~children:[a;b] I_IF
   let i_if_none a b = prim ~children:[a;b] I_IF_NONE
+  let i_if_left a b = prim ~children:[a;b] I_IF_LEFT
   let i_failwith = prim I_FAILWITH
   let i_assert_some = i_if_none (seq [i_failwith]) (seq [])
 
@@ -68,6 +76,13 @@ module Michelson = struct
   let pp ppf (michelson:michelson) =
     let open Micheline_printer in
     let canonical = strip_locations michelson in
+    let node = printable string_of_prim canonical in
+    print_expr ppf node
+
+  let pp_stripped ppf (michelson:michelson) =
+    let open Micheline_printer in
+    let michelson' = strip_nops @@ strip_annots michelson in
+    let canonical = strip_locations michelson' in
     let node = printable string_of_prim canonical in
     print_expr ppf node
 

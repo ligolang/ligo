@@ -85,7 +85,6 @@ module Ty = struct
         let%bind (Ex_ty t') = type_ t in
         ok @@ Ex_ty Contract_types.(option t')
 
-
   and environment_small' = let open Append_tree in function
       | Leaf (_, x) -> type_ x
       | Node {a;b} ->
@@ -98,7 +97,7 @@ module Ty = struct
     | Full x -> environment_small' x
 
   and environment = function
-    | [] | [Empty] -> simple_fail "Schema.Big.to_ty"
+    | [] | [Empty] -> ok @@ Ex_ty Contract_types.unit
     | [a] -> environment_small a
     | Empty :: b -> environment b
     | a::b ->

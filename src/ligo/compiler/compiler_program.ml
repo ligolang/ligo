@@ -10,7 +10,7 @@ open Memory_proto_alpha.Script_ir_translator
 
 open Operators.Compiler
 
-let get_predicate : string -> expression list -> predicate result = fun s lst ->
+let get_predicate : string -> type_value -> expression list -> predicate result = fun s ty lst ->
   match Map.String.find_opt s Operators.Compiler.predicates with
   | Some x -> ok x
   | None -> (
@@ -23,6 +23,18 @@ let get_predicate : string -> expression list -> predicate result = fun s lst ->
             | _ -> simple_fail "mini_c . MAP_REMOVE" in
           let%bind v_ty = Compiler_type.type_ v in
           ok @@ simple_binary @@ seq [dip (i_none v_ty) ; prim I_UPDATE ]
+      | "LEFT" ->
+          let%bind r = match lst with
+            | [ _ ] -> get_t_right ty
+            | _ -> simple_fail "mini_c . LEFT" in
+          let%bind r_ty = Compiler_type.type_ r in
+          ok @@ simple_unary @@ prim ~children:[r_ty] I_LEFT
+      | "RIGHT" ->
+          let%bind l = match lst with
+            | [ _ ] -> get_t_left ty
+            | _ -> simple_fail "mini_c . RIGHT" in
+          let%bind l_ty = Compiler_type.type_ l in
+          ok @@ simple_unary @@ prim ~children:[l_ty] I_RIGHT
       | x -> simple_fail ("predicate \"" ^ x ^ "\" doesn't exist")
     )
 
@@ -181,7 +193,7 @@ and translate_expression ?(first=false) (expr:expression) : michelson result =
             let first = first && i = 0 in
             translate_expression ~first e in
           bind_list @@ List.mapi aux lst in
-        let%bind predicate = get_predicate str lst in
+        let%bind predicate = get_predicate str ty lst in
         let%bind code = match (predicate, List.length lst) with
           | Constant c, 0 -> ok @@ virtual_push_first @@ seq @@ lst' @ [
               c ;
@@ -264,6 +276,59 @@ and translate_expression ?(first=false) (expr:expression) : michelson result =
           ]) in
         return code
       )
+    | E_if_none (c, n, (_ , s)) -> (
+        let%bind c' = translate_expression c in
+        let%bind n' = translate_expression n in
+        let%bind s' = translate_expression s in
+        let%bind restrict = Compiler_environment.to_michelson_restrict s.environment in
+        let%bind code = ok (seq [
+            c' ; i_unpair ;
+            i_if_none n' (seq [
+                i_pair ;
+                s' ;
+                restrict ;
+              ])
+            ;
+          ]) in
+        return code
+      )
+    | E_if_left (c, (_ , l), (_ , r)) -> (
+        let%bind c' = translate_expression c in
+        let%bind l' = translate_expression l in
+        let%bind r' = translate_expression r in
+        let%bind restrict_l = Compiler_environment.to_michelson_restrict l.environment in
+        let%bind restrict_r = Compiler_environment.to_michelson_restrict r.environment in
+        let%bind code = ok (seq [
+            c' ; i_unpair ;
+            i_if_left (seq [
+                i_swap ; dip i_pair ;
+                l' ;
+                i_comment "restrict left" ;
+                dip restrict_l ;
+              ]) (seq [
+                i_swap ; dip i_pair ;
+                r' ;
+                i_comment "restrict right" ;
+                dip restrict_r ;
+              ])
+            ;
+          ]) in
+        return code
+      )
+    | E_let_in (_, expr , body) -> (
+        let%bind expr' = translate_expression expr in
+        let%bind body' = translate_expression body in
+        let%bind restrict = Compiler_environment.to_michelson_restrict body.environment in
+        let%bind code = ok (seq [
+            expr' ;
+            i_unpair ;
+            i_swap ; dip i_pair ;
+            body' ;
+            i_comment "restrict let" ;
+            dip restrict ;
+          ]) in
+        return code
+      )
   in
 
   ok code
@@ -277,7 +342,7 @@ and translate_statement ((s', w_env) as s:statement) : michelson result =
     | S_environment_restrict ->
         Compiler_environment.to_michelson_restrict w_env.pre_environment
     | S_environment_add _ ->
-        simple_fail "not ready yet"
+        simple_fail "add not ready yet"
     (* | S_environment_add (name, tv) ->
      *     Environment.to_michelson_add (name, tv) w_env.pre_environment *)
     | S_declaration (s, expr) ->
@@ -490,7 +555,7 @@ type compiled_program = {
   body : michelson ;
 }
 
-let translate_program (p:program) (entry:string) : compiled_program result =
+let get_main : program -> string -> anon_function_content result = fun p entry ->
   let is_main (((name , expr), _):toplevel_statement) =
     match Combinators.Expression.(get_content expr , get_type expr)with
     | (E_function f , T_function _)
@@ -505,11 +570,24 @@ let translate_program (p:program) (entry:string) : compiled_program result =
     trace_option (simple_error "no functional entry") @@
     Tezos_utils.List.find_map is_main p
   in
+  ok main
+
+let translate_program (p:program) (entry:string) : compiled_program result =
+  let%bind main = get_main p entry in
   let {input;output} : anon_function_content = main in
   let%bind body = translate_quote_body main in
   let%bind input = Compiler_type.Ty.type_ input in
   let%bind output = Compiler_type.Ty.type_ output in
   ok ({input;output;body}:compiled_program)
+
+let translate_contract : program -> string -> michelson result = fun p e ->
+  let%bind main = get_main p e in
+  let%bind (param_ty , storage_ty) = Combinators.get_t_pair main.input in
+  let%bind param_michelson = Compiler_type.type_ param_ty in
+  let%bind storage_michelson = Compiler_type.type_ storage_ty in
+  let%bind { body = code } = translate_program p e in
+  let contract = Michelson.contract param_michelson storage_michelson code in
+  ok contract
 
 let translate_entry (p:anon_function) : compiled_program result =
   let {input;output} : anon_function_content = p.content in

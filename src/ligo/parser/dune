@@ -1,12 +1,11 @@
-(executable
-  (name cli)
-  (public_name ligo)
+(library
+  (name parser)
+  (public_name ligo.parser)
   (libraries
     tezos-utils
-    cmdliner
-    ligo
+    parser_pascaligo
+    parser_camligo
   )
-  (package ligo)
   (preprocess
     (pps tezos-utils.ppx_let_generalized)
   )

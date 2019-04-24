@@ -682,6 +682,12 @@ and print_pattern = function
 | PSome psome      -> print_psome psome
 | PList pattern    -> print_list_pattern pattern
 | PTuple ptuple    -> print_ptuple ptuple
+| PConstr pattern  -> print_constr_pattern pattern
+
+and print_constr_pattern {value; _} =
+  let (constr, args) = value in
+  print_constr constr ;
+  print_pattern args.value ;
 
 and print_psome {value; _} =
   let c_Some, patterns = value in

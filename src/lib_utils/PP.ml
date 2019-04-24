@@ -23,6 +23,8 @@ let option = fun f ppf opt ->
   | Some x -> fprintf ppf "Some(%a)" f x
   | None -> fprintf ppf "None"
 
+let int = fun ppf n -> fprintf ppf "%d" n
+
 let map = fun f pp ppf x ->
   pp ppf (f x)
 

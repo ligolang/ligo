@@ -55,6 +55,18 @@ let get_t_tuple (t:type_value) : type_value list result = match t.type_value' wi
   | T_tuple lst -> ok lst
   | _ -> simple_fail "not a tuple"
 
+let get_t_pair (t:type_value) : (type_value * type_value) result = match t.type_value' with
+  | T_tuple lst ->
+      let%bind () =
+        trace_strong (simple_error "not a pair") @@
+        Assert.assert_list_size lst 2 in
+      ok List.(nth lst 0 , nth lst 1)
+  | _ -> simple_fail "not a tuple"
+
+let get_t_function (t:type_value) : (type_value * type_value) result = match t.type_value' with
+  | T_function ar -> ok ar
+  | _ -> simple_fail "not a tuple"
+
 let get_t_sum (t:type_value) : type_value SMap.t result = match t.type_value' with
   | T_sum m -> ok m
   | _ -> simple_fail "not a sum"
@@ -67,6 +79,7 @@ let get_t_map (t:type_value) : (type_value * type_value) result =
   match t.type_value' with
   | T_constant ("map", [k;v]) -> ok (k, v)
   | _ -> simple_fail "get: not a map"
+
 let assert_t_map (t:type_value) : unit result =
   match t.type_value' with
   | T_constant ("map", [_ ; _]) -> ok ()
@@ -76,6 +89,15 @@ let assert_t_list (t:type_value) : unit result =
   match t.type_value' with
   | T_constant ("list", [_]) -> ok ()
   | _ -> simple_fail "assert: not a list"
+
+let assert_t_operation (t:type_value) : unit result =
+  match t.type_value' with
+  | T_constant ("operation" , []) -> ok ()
+  | _ -> simple_fail "assert: not an operation"
+
+let assert_t_list_operation (t : type_value) : unit result =
+  let%bind t' = get_t_list t in
+  assert_t_operation t'
 
 let assert_t_int : type_value -> unit result = fun t -> match t.type_value' with
   | T_constant ("int", []) -> ok ()
@@ -146,9 +168,17 @@ let get_a_bool (t:annotated_expression) =
   | E_literal (Literal_bool b) -> ok b
   | _ -> simple_fail "not a bool"
 
+let get_declaration_by_name : program -> string -> declaration result = fun p name ->
+  let aux : declaration -> bool = fun declaration ->
+    match declaration with
+    | Declaration_constant (d , _) -> d.name = name
+  in
+  trace_option (simple_error "no declaration with given name") @@
+  List.find_opt aux @@ List.map Location.unwrap p
+
 open Environment
 let env_sum_type ?(env = full_empty)
     ?(name = "a_sum_type")
-    (lst : (string * element) list) =
+    (lst : (string * type_value) list) =
   add_type name (make_t_ez_sum lst) env
 

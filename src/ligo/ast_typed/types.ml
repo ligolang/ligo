@@ -6,6 +6,7 @@ module SMap = Map.String
 
 type name = string
 type type_name = string
+type constructor_name = string
 
 type 'a name_map = 'a SMap.t
 type 'a type_name_map = 'a SMap.t
@@ -13,10 +14,14 @@ type 'a type_name_map = 'a SMap.t
 type program = declaration Location.wrap list
 
 and declaration =
-  | Declaration_constant of named_expression
+  | Declaration_constant of (named_expression * full_environment)
   (* | Macro_declaration of macro_declaration *)
 
-and environment = (string * type_value) list
+and environment_element = {
+  type_value : type_value ;
+  source_environment : full_environment ;
+}
+and environment = (string * environment_element) list
 and type_environment = (string * type_value) list
 and small_environment = (environment * type_environment)
 and full_environment = small_environment List.Ne.t
@@ -43,7 +48,7 @@ and type_value' =
   | T_sum of tv_map
   | T_record of tv_map
   | T_constant of type_name * tv list
-  | T_function of tv * tv
+  | T_function of (tv * tv)
 
 and type_value = {
   type_value' : type_value' ;
@@ -124,7 +129,8 @@ and 'a matching =
       match_none : 'a ;
       match_some : (name * type_value) * 'a ;
     }
-  | Match_tuple of name list * 'a
+  | Match_tuple of (name list * 'a)
+  | Match_variant of (((constructor_name * name) * 'a) list * type_value)
 
 and matching_instr = b matching
 
@@ -135,7 +141,7 @@ open Trace
 let get_entry (p:program) (entry : string) : annotated_expression result =
   let aux (d:declaration) =
     match d with
-    | Declaration_constant {name ; annotated_expression} when entry = name -> Some annotated_expression
+    | Declaration_constant ({name ; annotated_expression} , _) when entry = name -> Some annotated_expression
     | Declaration_constant _ -> None
   in
   let%bind result =

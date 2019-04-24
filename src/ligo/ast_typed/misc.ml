@@ -85,12 +85,16 @@ module Free_variables = struct
     let (_ , frees) = block' b bl in
     frees
 
+  and matching_variant_case : type a . (bindings -> a -> bindings) -> bindings -> ((constructor_name * name) * a) -> bindings  = fun f b ((_,n),c) ->
+    f (union (singleton n) b) c
+
   and matching : type a . (bindings -> a -> bindings) -> bindings -> a matching -> bindings = fun f b m ->
     match m with
     | Match_bool { match_true = t ; match_false = fa } -> union (f b t) (f b fa)
     | Match_list { match_nil = n ; match_cons = (hd, tl, c) } -> union (f b n) (f (union (of_list [hd ; tl]) b) c)
     | Match_option { match_none = n ; match_some = ((opt, _), s) } -> union (f b n) (f (union (singleton opt) b) s)
-    | Match_tuple (lst, a) -> f (union (of_list lst) b) a
+    | Match_tuple (lst , a) -> f (union (of_list lst) b) a
+    | Match_variant (lst , _) -> unions @@ List.map (matching_variant_case f b) lst
 
   and matching_expression = fun x -> matching annotated_expression x
 

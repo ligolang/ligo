@@ -66,9 +66,15 @@ and block ppf (b:block) = (list_sep instruction (tag "@;")) ppf b
 and single_record_patch ppf ((s, ae) : string * ae) =
   fprintf ppf "%s <- %a" s annotated_expression ae
 
+and matching_variant_case : type a . (_ -> a -> unit) -> _ -> (constructor_name * name) * a -> unit =
+  fun f ppf ((c,n),a) ->
+  fprintf ppf "| %s %s -> %a" c n f a
+
 and matching : type a . (formatter -> a -> unit) -> _ -> a matching -> unit = fun f ppf m -> match m with
   | Match_tuple (lst, b) ->
       fprintf ppf "let (%a) = %a" (list_sep_d (fun ppf -> fprintf ppf "%s")) lst f b
+  | Match_variant (lst , _) ->
+      fprintf ppf "%a" (list_sep (matching_variant_case f) (tag "@.")) lst
   | Match_bool {match_true ; match_false} ->
       fprintf ppf "| True -> %a @.| False -> %a" f match_true f match_false
   | Match_list {match_nil ; match_cons = (hd, tl, match_cons)} ->
@@ -97,7 +103,7 @@ and instruction ppf (i:instruction) = match i with
 
 let declaration ppf (d:declaration) =
   match d with
-  | Declaration_constant {name ; annotated_expression = ae} ->
+  | Declaration_constant ({name ; annotated_expression = ae} , _) ->
       fprintf ppf "const %s = %a" name annotated_expression ae
 
 let program ppf (p:program) =

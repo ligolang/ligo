@@ -1,7 +1,8 @@
 open Trace
 open Function
-module I = Multifix.Ast
+module I = Parser.Camligo.Ast
 module O = Ast_simplified
+open O.Combinators
 
 let unwrap : type a . a Location.wrap -> a = Location.unwrap
 
@@ -81,10 +82,10 @@ and expression_record : _ -> O.annotated_expression result = fun r ->
     let open Map.String in
     List.fold_left (fun prec (k , v) -> add k v prec) empty lst
   in
-  ok @@ O.(ae @@ E_record e_map)
+  ok @@ O.(make_e_a @@ E_record e_map)
 
 and expression_main : I.expression_main -> O.annotated_expression result = fun em ->
-  let return x = ok O.(ae x) in
+  let return x = ok @@ make_e_a x in
   let simple_binop name ab =
     let%bind (a' , b') = bind_map_pair (bind_map_location expression_main) ab in
     return @@ E_constant (name, [unwrap a' ; unwrap b']) in
@@ -102,7 +103,7 @@ and expression_main : I.expression_main -> O.annotated_expression result = fun e
         | None -> ok (unwrap e').expression
         | Some _ -> simple_fail "can't double annotate" in
       let%bind te' = bind_map_location restricted_type_expression te in
-      ok @@ O.annotated_expression e'' (Some (unwrap te'))
+      ok @@ make_e_a_full e'' (unwrap te')
   | Eh_lt ab ->
       simple_binop "LT" ab
   | Eh_gt ab ->
@@ -173,7 +174,7 @@ let let_content : I.let_content -> _ result = fun (Let_content (n, args, ty_opt,
   let%bind ty' =
     let (I.Type_annotation_ ty') = unwrap ty in
     bind_map_location type_expression ty' in
-  let ae = O.annotated_expression e'' (Some (unwrap ty')) in
+  let ae = make_e_a_full e'' (unwrap ty') in
   ok @@ O.Declaration_constant {name = (unwrap n) ; annotated_expression = ae}
 
 let statement : I.statement -> O.declaration result = fun s ->

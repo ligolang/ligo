@@ -1,6 +1,6 @@
 (library
-  (name multifix)
-  (public_name ligo.multifix)
+  (name parser_camligo)
+  (public_name ligo.parser.camligo)
   (libraries
     tezos-utils
     lex

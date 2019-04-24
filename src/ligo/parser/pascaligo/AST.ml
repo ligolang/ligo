@@ -1,6 +1,10 @@
 (* Abstract Syntax Tree (AST) for LIGO *)
 
-[@@@warning "-30"]
+(* To disable warning about multiply-defined record labels. *)
+
+[@@@warning "-30-42"]
+
+(* Utilities *)
 
 open Utils
 
@@ -17,9 +21,21 @@ open Utils
 
 type 'a reg = 'a Region.reg
 
-val nseq_to_region    : ('a -> Region.t) -> 'a nseq -> Region.t
-val nsepseq_to_region : ('a -> Region.t) -> ('a,'sep) nsepseq -> Region.t
-val sepseq_to_region  : ('a -> Region.t) -> ('a,'sep) sepseq -> Region.t
+let rec last to_region = function
+    [] -> Region.ghost
+|  [x] -> to_region x
+| _::t -> last to_region t
+
+let nseq_to_region to_region (hd,tl) =
+  Region.cover (to_region hd) (last to_region tl)
+
+let nsepseq_to_region to_region (hd,tl) =
+  let reg (_, item) = to_region item in
+  Region.cover (to_region hd) (last reg tl)
+
+let sepseq_to_region to_region = function
+      None -> Region.ghost
+| Some seq -> nsepseq_to_region to_region seq
 
 (* Keywords of LIGO *)
 
@@ -73,32 +89,32 @@ type c_Unit  = Region.t
 
 (* Symbols *)
 
-type semi     = Region.t  (* ";"   *)
-type comma    = Region.t  (* ","   *)
-type lpar     = Region.t  (* "("   *)
-type rpar     = Region.t  (* ")"   *)
-type lbrace   = Region.t  (* "{"   *)
-type rbrace   = Region.t  (* "}"   *)
-type lbracket = Region.t  (* "["   *)
-type rbracket = Region.t  (* "]"   *)
-type cons     = Region.t  (* "#"   *)
-type vbar     = Region.t  (* "|"   *)
-type arrow    = Region.t  (* "->"  *)
-type assign   = Region.t  (* ":="  *)
-type equal    = Region.t  (* "="   *)
-type colon    = Region.t  (* ":"   *)
-type lt       = Region.t  (* "<"   *)
-type leq      = Region.t  (* "<="  *)
-type gt       = Region.t  (* ">"   *)
-type geq      = Region.t  (* ">="  *)
-type neq      = Region.t  (* "=/=" *)
-type plus     = Region.t  (* "+"   *)
-type minus    = Region.t  (* "-"   *)
-type slash    = Region.t  (* "/"   *)
-type times    = Region.t  (* "*"   *)
-type dot      = Region.t  (* "."   *)
-type wild     = Region.t  (* "_"   *)
-type cat      = Region.t  (* "^"   *)
+type semi     = Region.t
+type comma    = Region.t
+type lpar     = Region.t
+type rpar     = Region.t
+type lbrace   = Region.t
+type rbrace   = Region.t
+type lbracket = Region.t
+type rbracket = Region.t
+type cons     = Region.t
+type vbar     = Region.t
+type arrow    = Region.t
+type assign   = Region.t
+type equal    = Region.t
+type colon    = Region.t
+type lt       = Region.t
+type leq      = Region.t
+type gt       = Region.t
+type geq      = Region.t
+type neq      = Region.t
+type plus     = Region.t
+type minus    = Region.t
+type slash    = Region.t
+type times    = Region.t
+type dot      = Region.t
+type wild     = Region.t
+type cat      = Region.t
 
 (* Virtual tokens *)
 
@@ -177,7 +193,7 @@ and type_expr =
 | TSum    of (variant reg, vbar) nsepseq reg
 | TRecord of record_type
 | TApp    of (type_name * type_tuple) reg
-| TFun    of (type_expr * arrow * type_expr) reg
+| TFun    of (type_expr * arrow  * type_expr) reg
 | TPar    of type_expr par reg
 | TAlias  of variable
 
@@ -421,7 +437,7 @@ and 'a case_clause = {
 and assignment = {
   lhs    : lhs;
   assign : assign;
-  rhs    : rhs;
+  rhs    : rhs
 }
 
 and lhs =
@@ -474,7 +490,7 @@ and for_collect = {
 (* Expressions *)
 
 and expr =
-  ECase   of expr case reg
+| ECase   of expr case reg
 | ELogic  of logic_expr
 | EArith  of arith_expr
 | EString of string_expr
@@ -530,7 +546,7 @@ and logic_expr =
 and bool_expr =
   Or    of kwd_or  bin_op reg
 | And   of kwd_and bin_op reg
-| Not   of kwd_not  un_op reg
+| Not   of kwd_not un_op reg
 | False of c_False
 | True  of c_True
 
@@ -630,6 +646,7 @@ and arguments = tuple_injection
 
 and pattern =
   PCons   of (pattern, cons) nsepseq reg
+| PConstr of (constr * pattern reg) reg
 | PVar    of Lexer.lexeme reg
 | PWild   of wild
 | PInt    of (Lexer.lexeme * Z.t) reg
@@ -650,13 +667,150 @@ and list_pattern =
 
 (* Projecting regions *)
 
-val type_expr_to_region  : type_expr -> Region.t
-val expr_to_region       : expr -> Region.t
-val instr_to_region      : instruction -> Region.t
-val pattern_to_region    : pattern -> Region.t
-val local_decl_to_region : local_decl -> Region.t
-val path_to_region       : path -> Region.t
-val lhs_to_region        : lhs -> Region.t
-val rhs_to_region        : rhs -> Region.t
-val if_clause_to_region  : if_clause -> Region.t
-val selection_to_region  : selection -> Region.t
+open! Region
+
+let type_expr_to_region = function
+  TProd   {region; _}
+| TSum    {region; _}
+| TRecord {region; _}
+| TApp    {region; _}
+| TFun    {region; _}
+| TPar    {region; _}
+| TAlias  {region; _} -> region
+
+let rec expr_to_region = function
+| ELogic  e -> logic_expr_to_region e
+| EArith  e -> arith_expr_to_region e
+| EString e -> string_expr_to_region e
+| EList   e -> list_expr_to_region e
+| ESet    e -> set_expr_to_region e
+| EConstr e -> constr_expr_to_region e
+| ERecord e -> record_expr_to_region e
+| EMap    e -> map_expr_to_region e
+| ETuple  e -> tuple_expr_to_region e
+| EProj  {region; _}
+| EVar   {region; _}
+| ECall  {region; _}
+| EBytes {region; _}
+| EUnit   region
+| ECase  {region;_}
+| EPar   {region; _} -> region
+
+and tuple_expr_to_region = function
+  TupleInj {region; _} -> region
+
+and map_expr_to_region = function
+  MapLookUp {region; _}
+| MapInj    {region; _} -> region
+
+and set_expr_to_region = function
+  SetInj {region; _}
+| SetMem {region; _} -> region
+
+and logic_expr_to_region = function
+  BoolExpr e -> bool_expr_to_region e
+| CompExpr e -> comp_expr_to_region e
+
+and bool_expr_to_region = function
+  Or    {region; _}
+| And   {region; _}
+| Not   {region; _}
+| False region
+| True  region -> region
+
+and comp_expr_to_region = function
+  Lt    {region; _}
+| Leq   {region; _}
+| Gt    {region; _}
+| Geq   {region; _}
+| Equal {region; _}
+| Neq   {region; _} -> region
+
+and arith_expr_to_region = function
+| Add  {region; _}
+| Sub  {region; _}
+| Mult {region; _}
+| Div  {region; _}
+| Mod  {region; _}
+| Neg  {region; _}
+| Int  {region; _}
+| Nat  {region; _} -> region
+
+and string_expr_to_region = function
+  Cat    {region; _}
+| String {region; _} -> region
+
+and list_expr_to_region = function
+  Cons {region; _}
+| List {region; _}
+| Nil  {region; _} -> region
+
+and constr_expr_to_region = function
+  NoneExpr  {region; _}
+| ConstrApp {region; _}
+| SomeApp   {region; _} -> region
+
+and record_expr_to_region = function
+  RecordInj  {region; _} -> region
+
+let path_to_region = function
+  Name var -> var.region
+| Path {region; _} -> region
+
+let instr_to_region = function
+  Single Cond                {region; _}
+| Single CaseInstr           {region; _}
+| Single Assign              {region; _}
+| Single Loop While          {region; _}
+| Single Loop For ForInt     {region; _}
+| Single Loop For ForCollect {region; _}
+| Single ProcCall            {region; _}
+| Single Skip                region
+| Single Fail                {region; _}
+| Single RecordPatch         {region; _}
+| Single MapPatch            {region; _}
+| Single SetPatch            {region; _}
+| Single MapRemove           {region; _}
+| Single SetRemove           {region; _}
+| Block                      {region; _} -> region
+
+let if_clause_to_region = function
+  ClauseInstr instr       -> instr_to_region instr
+| ClauseBlock {region; _} -> region
+
+let pattern_to_region = function
+  PCons       {region; _}
+| PVar        {region; _}
+| PWild        region
+| PInt        {region; _}
+| PBytes      {region; _}
+| PString     {region; _}
+| PUnit        region
+| PFalse       region
+| PTrue        region
+| PNone        region
+| PSome       {region; _}
+| PList Sugar {region; _}
+| PList PNil  region
+| PList Raw   {region; _}
+| PConstr     {region; _}
+| PTuple      {region; _} -> region
+
+let local_decl_to_region = function
+  LocalLam FunDecl     {region; _}
+| LocalLam ProcDecl    {region; _}
+| LocalLam EntryDecl   {region; _}
+| LocalData LocalConst {region; _}
+| LocalData LocalVar   {region; _} -> region
+
+let lhs_to_region : lhs -> Region.t = function
+  Path path -> path_to_region path
+| MapPath {region; _} -> region
+
+let rhs_to_region = function
+      Expr e -> expr_to_region e
+| NoneExpr r -> r
+
+let selection_to_region = function
+  FieldName {region; _}
+| Component {region; _} -> region
