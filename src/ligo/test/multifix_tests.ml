@@ -7,7 +7,7 @@ let basic () : unit result =
   ok ()
 
 let simplify () : unit result =
-  let%bind raw = User.parse_file "./contracts/basic.mligo" in
+  let%bind raw = User.parse_file "./contracts/new-syntax.mligo" in
   let%bind _simpl = Simplify.Camligo.main raw in
   ok ()
 

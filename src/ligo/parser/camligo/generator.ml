@@ -210,7 +210,7 @@ module Print_AST = struct
     let levels = List.Ne.map get_content ((get_content nh).levels) in
     let nops = List.Ne.concat levels in
     let name = get_name nh in
-    fprintf ppf "%s %s = @.@[%a@]" t
+    fprintf ppf "%s %s =@.@[%a@]" t
       name
       (list_sep (n_operator nh.content.prefix name) new_line) nops
 
