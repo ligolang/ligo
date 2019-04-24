@@ -53,10 +53,9 @@ let reset_line ~line buffer =
 
 let reset_offset ~offset buffer =
   assert (offset >= 0);
-  Printf.printf "[reset] offset=%i\n" offset;
   let open Lexing in
   let bol = buffer.lex_curr_p.pos_bol in
-  buffer.lex_curr_p <- {buffer.lex_curr_p with pos_cnum = bol (*+ offset*)}
+  buffer.lex_curr_p <- {buffer.lex_curr_p with pos_cnum = bol + offset }
 
 let reset ?file ?line ?offset buffer =
   let () =
@@ -483,17 +482,17 @@ rule init state = parse
 | _        { rollback lexbuf; scan state lexbuf  }
 
 and scan state = parse
-  nl      { scan (push_newline state lexbuf) lexbuf }
-| ' '+    { scan (push_space   state lexbuf) lexbuf }
-| '\t'+   { scan (push_tabs    state lexbuf) lexbuf }
+  nl          { scan (push_newline state lexbuf) lexbuf }
+| ' '+        { scan (push_space   state lexbuf) lexbuf }
+| '\t'+       { scan (push_tabs    state lexbuf) lexbuf }
 
-| ident   { mk_ident       state lexbuf |> enqueue }
-| constr  { mk_constr      state lexbuf |> enqueue }
-| bytes   { (mk_bytes seq) state lexbuf |> enqueue }
-| integer 'n' { mk_nat         state lexbuf |> enqueue }
-| integer { mk_int         state lexbuf |> enqueue }
-| symbol  { mk_sym         state lexbuf |> enqueue }
-| eof     { mk_eof         state lexbuf |> enqueue }
+| ident       { mk_ident       state lexbuf |> enqueue   }
+| constr      { mk_constr      state lexbuf |> enqueue   }
+| bytes       { (mk_bytes seq) state lexbuf |> enqueue   }
+| natural 'n' { mk_nat         state lexbuf |> enqueue   }
+| integer     { mk_int         state lexbuf |> enqueue   }
+| symbol      { mk_sym         state lexbuf |> enqueue   }
+| eof         { mk_eof         state lexbuf |> enqueue   }
 
 | '"'  { let opening, _, state = sync state lexbuf in
          let thread = {opening; len=1; acc=['"']} in
@@ -631,7 +630,7 @@ and scan_block thread state = parse
                and thread = push_string nl thread
                in scan_block thread state lexbuf }
 | eof        { fail thread.opening Unterminated_comment }
-| _          { let     () = rollback lexbuf in
+| _          { let ()     = rollback lexbuf in
                let len    = thread.len in
                let thread,
                    status = scan_utf8 thread state lexbuf in

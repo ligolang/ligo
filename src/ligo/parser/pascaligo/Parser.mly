@@ -655,7 +655,7 @@ conditional:
       terminator = $5;
       kwd_else   = $6;
       ifnot      = $7}
-    in {region; value}}
+    in {region; value} }
 
 if_clause:
   instruction {
@@ -668,7 +668,7 @@ if_clause:
      lbrace = $1;
      inside = (first, others), terminator;
      rbrace = closing} in
-   ClauseBlock {value; region}}
+   ClauseBlock {value; region} }
 
 case_instr:
   case(instruction) { $1 instr_to_region }
