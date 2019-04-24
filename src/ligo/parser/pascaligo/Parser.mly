@@ -206,9 +206,9 @@ type_tuple:
   par(nsepseq(type_expr,COMMA)) { $1 }
 
 sum_type:
-  nsepseq(variant,VBAR) {
-    let region = nsepseq_to_region (fun x -> x.region) $1
-    in {region; value = $1} }
+  option(VBAR) nsepseq(variant,VBAR) {
+    let region = nsepseq_to_region (fun x -> x.region) $2
+    in {region; value = $2} }
 
 variant:
   Constr Of cartesian {
