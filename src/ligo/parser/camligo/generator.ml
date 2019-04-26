@@ -582,9 +582,9 @@ module Expression = struct
       [tuple] ;
       [type_annotation] ;
       [lt ; le ; gt ; eq ; neq] ;
-      [application] ;
       [assignment] ;
       [cons] ;
+      [application] ;
       [addition ; substraction] ;
       [multiplication ; division] ;
       [list] ;

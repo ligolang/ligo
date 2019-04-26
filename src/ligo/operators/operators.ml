@@ -25,6 +25,8 @@ module Simplify = struct
   module Camligo = struct
     let constants = [
       ("Bytes.pack" , 1) ;
+      ("Crypto.hash" , 1) ;
+      ("Operation.transfer" , 2) ;
     ]
   end
 

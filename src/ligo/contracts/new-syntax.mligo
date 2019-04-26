@@ -18,6 +18,6 @@ type param = {
 
 let%entry attempt (p:param) storage =
   if Crypto.hash (Bytes.pack p.attempt) <> Bytes.pack storage.challenge then failwith "Failed challenge" ;
-  let transfer = Operation.transfer sender 10tz in
-  let storage = storage.challenge <- p.new_challenge in
+  let transfer : operation = Operation.transfer (sender , 10tz) in
+  let storage : storage = storage.challenge <- p.new_challenge in
   ([] , storage)

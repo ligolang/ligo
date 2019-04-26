@@ -47,7 +47,9 @@ let get_p_variable : I.pattern -> string Location.wrap result = fun p ->
   | _ -> simple_fail "not a pattern variable"
 
 let get_p_typed_variable : I.pattern -> (string Location.wrap * I.restricted_type_expression Location.wrap) result = fun p ->
-  let%bind (p' , rte) = get_p_type_annotation p in
+  let%bind (p' , rte) =
+    trace (simple_error "get_p_typed_variable") @@
+    get_p_type_annotation p in
   let%bind var = get_p_variable (unwrap p') in
   ok (var , rte)
 
