@@ -138,6 +138,7 @@ let tokens = [
   symbol "->" "ARROW" ;
   symbol "<-" "LEFT_ARROW" ;
   symbol "<=" "LE" ;
+  symbol "<>" "UNEQUAL" ;
   symbol "<" "LT" ;
   symbol ">" "GT" ;
   symbol "-" "MINUS" ;

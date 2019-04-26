@@ -395,7 +395,7 @@ and simpl_single_instruction : Raw.single_instr -> instruction result = fun t ->
   | ProcCall _ -> simple_fail "no proc call"
   | Fail e ->
       let%bind expr = simpl_expression e.value.fail_expr in
-      ok @@ I_fail expr
+      ok @@ I_do (untyped_expression @@ E_failwith expr)
   | Skip _ -> ok @@ I_skip
   | Loop (While l) ->
       let l = l.value in

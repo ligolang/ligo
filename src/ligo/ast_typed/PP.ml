@@ -46,6 +46,7 @@ and expression ppf (e:expression) : unit =
   | E_look_up (ds, i) -> fprintf ppf "(%a)[%a]" annotated_expression ds annotated_expression i
   | E_matching (ae, m) ->
       fprintf ppf "match %a with %a" annotated_expression ae (matching annotated_expression) m
+  | E_failwith ae -> fprintf ppf "failwith %a" annotated_expression ae
 
 and value ppf v = annotated_expression ppf v
 
@@ -88,7 +89,7 @@ and pre_access ppf (a:access) = match a with
 
 and instruction ppf (i:instruction) = match i with
   | I_skip -> fprintf ppf "skip"
-  | I_fail ae -> fprintf ppf "fail with (%a)" annotated_expression ae
+  | I_do ae -> fprintf ppf "do %a" annotated_expression ae
   | I_loop (cond, b) -> fprintf ppf "while (%a) {@;  @[<v>%a@]@;}" annotated_expression cond block b
   | I_declaration {name;annotated_expression = ae} ->
       fprintf ppf "let %s = %a" name annotated_expression ae

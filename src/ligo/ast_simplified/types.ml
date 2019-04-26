@@ -70,6 +70,7 @@ and expression =
   | E_look_up of (ae * ae)
   (* Matching *)
   | E_matching of (ae * matching_expr)
+  | E_failwith of ae
 
 and access =
   | Access_tuple of int
@@ -93,7 +94,7 @@ and instruction =
   | I_matching of ae * matching_instr
   | I_loop of ae * b
   | I_skip
-  | I_fail of ae
+  | I_do of ae
   | I_record_patch of name * access_path * (string * ae) list
 
 and 'a matching =

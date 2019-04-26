@@ -6,10 +6,13 @@ module SMap = Map.String
 let get_name : named_expression -> string = fun x -> x.name
 let get_type_name : named_type_expression -> string = fun x -> x.type_name
 let get_type_annotation (x:annotated_expression) = x.type_annotation
+let get_expression (x:annotated_expression) = x.expression
 
 let i_assignment : _ -> instruction = fun x -> I_assignment x
 let named_expression name annotated_expression = { name ; annotated_expression }
 let named_typed_expression name expression ty = { name ; annotated_expression = { expression ; type_annotation = Some ty } }
+let typed_expression expression ty = { expression ; type_annotation = Some ty }
+let untyped_expression expression = { expression ; type_annotation = None }
 
 let get_untyped_expression : annotated_expression -> expression result = fun ae ->
   let%bind () =
@@ -26,6 +29,7 @@ let t_nat       : type_expression = T_constant ("nat", [])
 let t_unit      : type_expression = T_constant ("unit", [])
 let t_option  o : type_expression = T_constant ("option", [o])
 let t_list  t : type_expression = T_constant ("list", [t])
+let t_variable n : type_expression = T_variable n
 let t_tuple lst : type_expression = T_tuple lst
 let t_pair (a , b) = t_tuple [a ; b]
 let t_record m  : type_expression = (T_record m)
@@ -68,11 +72,16 @@ let e_map lst : expression = E_map lst
 let e_list lst : expression = E_list lst
 let e_pair a b : expression = E_tuple [a; b]
 let e_constructor s a : expression = E_constructor (s , a)
+let e_match a b : expression = E_matching (a , b)
+let e_match_bool a b c : expression = e_match a (Match_bool {match_true = b ; match_false = c})
+let e_accessor a b = E_accessor (a , b)
+let e_accessor_props a b = e_accessor a (List.map (fun x -> Access_record x) b)
+let e_variable v = E_variable v
 
+let e_a_unit : annotated_expression = make_e_a_full (e_unit ()) t_unit
 let e_a_int n : annotated_expression = make_e_a_full (e_int n) t_int
 let e_a_nat n : annotated_expression = make_e_a_full (e_nat n) t_nat
 let e_a_bool b : annotated_expression = make_e_a_full (e_bool b) t_bool
-let e_a_unit : annotated_expression = make_e_a_full (e_unit ()) t_unit
 let e_a_constructor s a : annotated_expression = make_e_a (e_constructor s a)
 
 let e_a_record r =

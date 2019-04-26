@@ -89,6 +89,7 @@ and expression =
   | E_look_up of (ae * ae)
   (* Advanced *)
   | E_matching of (ae * matching_expr)
+  | E_failwith of ae
 
 and value = annotated_expression (* todo (for refactoring) *)
 
@@ -108,8 +109,8 @@ and instruction =
   | I_assignment of named_expression
   | I_matching of ae * matching_instr
   | I_loop of ae * b
+  | I_do of ae
   | I_skip
-  | I_fail of ae
   | I_patch of named_type_value * access_path * ae
 
 and access = Ast_simplified.access

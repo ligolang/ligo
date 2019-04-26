@@ -291,7 +291,7 @@ let sys_command command =
   | 0 -> ok ()
   | n -> fail (fun () -> error (thunk "Nonzero return code") (fun () -> (string_of_int n)) ())
 
-let sequence f lst =
+let trace_sequence f lst =
   let lazy_map_force : 'a . (unit -> 'a) list -> (unit -> 'a list) = fun l ->
     fun () ->
     List.rev @@ List.rev_map (fun a -> a ()) l in

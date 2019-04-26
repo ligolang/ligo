@@ -61,6 +61,7 @@ module Free_variables = struct
     | E_map m -> unions @@ List.map self @@ List.concat @@ List.map (fun (a, b) -> [ a ; b ]) m
     | E_look_up (a , b) -> unions @@ List.map self [ a ; b ]
     | E_matching (a , cs) -> union (self a) (matching_expression b cs)
+    | E_failwith a -> self a
 
   and annotated_expression : bindings -> annotated_expression -> bindings = fun b ae ->
     expression b ae.expression
@@ -70,7 +71,7 @@ module Free_variables = struct
     | I_declaration n -> union (singleton n.name) b , (annotated_expression b n.annotated_expression)
     | I_assignment n -> b , (annotated_expression b n.annotated_expression)
     | I_skip -> b , empty
-    | I_fail e -> b , annotated_expression b e
+    | I_do e -> b , annotated_expression b e
     | I_loop (a , bl) -> b , union (annotated_expression b a) (block b bl)
     | I_patch (_ , _ , a) -> b , annotated_expression b a
     | I_matching (a , cs) -> b , union (annotated_expression b a) (matching_block b cs)

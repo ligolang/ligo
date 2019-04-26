@@ -92,9 +92,9 @@ and type_instruction (e:environment) : I.instruction -> (environment * O.instruc
   let return x = ok (e, [x]) in
   match i with
   | I_skip -> return O.I_skip
-  | I_fail x ->
+  | I_do x ->
       let%bind expression = type_annotated_expression e x in
-      return @@ O.I_fail expression
+      return @@ O.I_do expression
   | I_loop (cond, body) ->
       let%bind cond = type_annotated_expression e cond in
       let%bind _ =
@@ -279,6 +279,7 @@ and type_annotated_expression : environment -> I.annotated_expression -> O.annot
     ok @@ make_a_e expr type_annotation e in
   match ae.expression with
   (* Basic *)
+  | E_failwith _ -> simple_fail "can't type failwith in isolation"
   | E_variable name ->
       let%bind tv' =
         trace_option (unbound_variable e name)
@@ -554,6 +555,9 @@ let rec untype_annotated_expression (e:O.annotated_expression) : (I.annotated_ex
       let%bind ae' = untype_annotated_expression ae in
       let%bind m' = untype_matching untype_annotated_expression m in
       return (E_matching (ae', m'))
+  | E_failwith ae ->
+      let%bind ae' = untype_annotated_expression ae in
+      return (E_failwith ae')
 
 and untype_block (b:O.block) : (I.block) result =
   bind_list @@ List.map untype_instruction b
@@ -562,9 +566,9 @@ and untype_instruction (i:O.instruction) : (I.instruction) result =
   let open I in
   match i with
   | I_skip -> ok I_skip
-  | I_fail e ->
+  | I_do e ->
       let%bind e' = untype_annotated_expression e in
-      ok (I_fail e')
+      ok (I_do e')
   | I_loop (e, b) ->
       let%bind e' = untype_annotated_expression e in
       let%bind b' = untype_block b in

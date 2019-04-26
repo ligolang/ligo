@@ -8,7 +8,9 @@
     operators
   )
   (preprocess
-    (pps tezos-utils.ppx_let_generalized)
+    (pps
+      tezos-utils.ppx_let_generalized
+    )
   )
   (flags (:standard -w +1..62-4-9-44-40-42-48-30@39@33 -open Tezos_utils ))
 )

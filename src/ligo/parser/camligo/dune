@@ -8,7 +8,10 @@
   (modules ast ast_generated parser user)
   (flags (:standard -w +1..62-4-9-44-40-42-48@39@33 -open Tezos_utils ))
   (preprocess
-    (pps tezos-utils.ppx_let_generalized)
+    (pps
+      tezos-utils.ppx_let_generalized
+      ppx_deriving.std
+    )
   )
 )
 

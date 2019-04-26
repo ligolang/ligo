@@ -91,6 +91,14 @@ let rev_uncons_opt = function
       let hds = rev @@ tl r in
       Some (hds, last)
 
+let to_pair = function
+  | [a ; b] -> Some (a , b)
+  | _ -> None
+
+let to_singleton = function
+  | [a] -> Some a
+  | _ -> None
+
 module Ne = struct
 
   type 'a t = 'a * 'a list

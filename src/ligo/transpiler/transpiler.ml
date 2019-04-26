@@ -172,7 +172,7 @@ and translate_instruction (env:Environment.t) (i:AST.instruction) : statement li
       let%bind body' = translate_block env' body in
       return (S_while (expr', body'))
   | I_skip -> ok []
-  | I_fail _ -> simple_fail "todo : fail"
+  | I_do _ae -> simple_fail "todo : do"
 
 and translate_literal : AST.literal -> value = fun l -> match l with
   | Literal_bool b -> D_bool b
@@ -206,6 +206,7 @@ and translate_annotated_expression (env:Environment.t) (ae:AST.annotated_express
     ok @@ Combinators.Expression.make_tpl (expr, tv, env) in
   let f = translate_annotated_expression env in
   match ae.expression with
+  | E_failwith _ae -> simple_fail "todo : failwith"
   | E_literal l -> return @@ E_literal (translate_literal l)
   | E_variable name ->
       let%bind tv =

@@ -210,7 +210,7 @@ module Print_AST = struct
     let levels = List.Ne.map get_content ((get_content nh).levels) in
     let nops = List.Ne.concat levels in
     let name = get_name nh in
-    fprintf ppf "%s %s =@.@[%a@]" t
+    fprintf ppf "%s %s =@.@[%a@] [@@@@deriving show]" t
       name
       (list_sep (n_operator nh.content.prefix name) new_line) nops
 
@@ -543,6 +543,7 @@ module Expression = struct
   let le = infix "le" `Left LE
   let gt = infix "gt" `Left GT
   let eq = infix "eq" `Left EQUAL
+  let neq = infix "neq" `Left UNEQUAL
 
   let cons = infix "cons" `Left DOUBLE_COLON
 
@@ -580,8 +581,8 @@ module Expression = struct
   let main_hierarchy = O.name_hierarchy main_hierarchy_name "Eh" [
       [tuple] ;
       [type_annotation] ;
+      [lt ; le ; gt ; eq ; neq] ;
       [application] ;
-      [lt ; le ; gt ; eq] ;
       [assignment] ;
       [cons] ;
       [addition ; substraction] ;

@@ -22,6 +22,12 @@ module Simplify = struct
     ("int" , 1) ;
   ]
 
+  module Camligo = struct
+    let constants = [
+      ("Bytes.pack" , 1) ;
+    ]
+  end
+
 end
 
 module Typer = struct

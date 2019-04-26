@@ -39,6 +39,8 @@ let rec expression ppf (e:expression) = match e with
         block body annotated_expression result
   | E_matching (ae, m) ->
       fprintf ppf "match %a with %a" annotated_expression ae (matching annotated_expression) m
+  | E_failwith ae ->
+      fprintf ppf "failwith %a" annotated_expression ae
 
 and assoc_annotated_expression ppf : (ae * ae) -> unit = fun (a, b) ->
   fprintf ppf "%a -> %a" annotated_expression a annotated_expression b
@@ -85,7 +87,7 @@ and matching : type a . (formatter -> a -> unit) -> formatter -> a matching -> u
 
 and instruction ppf (i:instruction) = match i with
   | I_skip -> fprintf ppf "skip"
-  | I_fail ae -> fprintf ppf "fail with (%a)" annotated_expression ae
+  | I_do ae -> fprintf ppf "do %a" annotated_expression ae
   | I_record_patch (name, path, lst) -> fprintf ppf "%s.%a[%a]" name access_path path (list_sep_d single_record_patch) lst
   | I_loop (cond, b) -> fprintf ppf "while (%a) { %a }" annotated_expression cond block b
   | I_assignment {name;annotated_expression = ae} ->
