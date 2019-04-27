@@ -125,7 +125,6 @@ let tokens = [
   keyword "if" ;
   keyword "then" ;
   keyword "else" ;
-  keyword "list" ;
   (* keyword "block" ;
    * keyword "for" ;
    * keyword "const" ; *)

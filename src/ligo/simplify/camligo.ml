@@ -53,6 +53,11 @@ let get_p_typed_variable : I.pattern -> (string Location.wrap * I.restricted_typ
   let%bind var = get_p_variable (unwrap p') in
   ok (var , rte)
 
+let get_eh_accessor : _ -> _ result = fun x ->
+  match x with
+  | I.Eh_accessor x -> ok x
+  | _ -> simple_fail "not a simple eh_accessor"
+
 let get_typed_variable_param : I.param -> _ result = fun arg ->
   let%bind up =
     let%bind rp = get_param_restricted_pattern arg in
@@ -133,14 +138,18 @@ let rec type_expression : I.type_expression -> O.type_expression result = fun te
         | I.T_variable v -> (
             match List.assoc_opt v.wrap_content type_constants with
             | Some n -> (
+                let error expected got =
+                  let title () = "bad arity" in
+                  let content () = Format.asprintf "Expected: %d. Got: %d." expected got in
+                  error title content in
                 match arg'.wrap_content with
                 | T_tuple lst -> (
                     let%bind () =
-                      trace (simple_error "bad arity") @@
+                      trace (error n (List.length lst)) @@
                       Assert.assert_list_size lst n in
                     ok @@ O.T_constant (v.wrap_content , lst)
                   )
-                | _ -> simple_fail "bad arity"
+                | e -> ok @@ O.T_constant ((unwrap v) , [ e ])
               )
             | None -> (
                 let error =
@@ -153,12 +162,15 @@ let rec type_expression : I.type_expression -> O.type_expression result = fun te
           )
         | _ -> simple_fail "type applying to non-var"
 
-let restricted_type_expression : I.restricted_type_expression -> O.type_expression result = fun rte ->
+let rec of_restricted_type_expression : I.restricted_type_expression -> I.type_expression = fun rte ->
+  let self = of_restricted_type_expression in
   match rte with
-  | Tr_variable tv ->
-      let%bind tv' = bind_map_location type_variable tv in
-      ok @@ unwrap tv'
-  | Tr_paren te -> type_expression (unwrap te)
+  | Tr_variable tv -> T_variable tv
+  | Tr_application (a , b) -> T_application (Location.map self a , Location.map self b)
+  | Tr_paren te -> unwrap te
+
+let restricted_type_expression : I.restricted_type_expression -> O.type_expression result =
+  Function.compose type_expression of_restricted_type_expression
 
 type last_instruction_result = (O.block * O.annotated_expression)
 type lir = last_instruction_result
@@ -197,7 +209,7 @@ and let_in_last_instruction :
   = fun l ->
   let (pat , expr , body) = l in
   let%bind (var , ty) = get_p_typed_variable (unwrap pat) in
-  let%bind ty' = restricted_type_expression (unwrap ty) in
+  let%bind ty' = type_expression @@ of_restricted_type_expression (unwrap ty) in
   let%bind expr' = expression (unwrap expr) in
   let%bind uexpr' = get_untyped_expression expr' in
   let%bind (body' , last') = expression_last_instruction (unwrap body) in
@@ -328,12 +340,24 @@ and expression_main : I.expression_main Location.wrap -> O.annotated_expression 
       return @@ E_variable (unwrap v)
   | Eh_constructor _ ->
       simple_fail "constructor without parameter"
-  | Eh_list _ ->
-      simple_fail "list not supported yet"
+  | Eh_data_structure (kind , content) -> (
+      match unwrap kind with
+      | "list" -> (
+          let%bind lst = bind_map_list expression_main content in
+          ok @@ untyped_expression @@ E_list lst
+        )
+      | kind' -> (
+          let error =
+            let title () = "data-structures not supported yet" in
+            let content () = Format.asprintf "%s" kind' in
+            error title content in
+          fail error
+        )
+    )
   | Eh_name _ ->
       simple_fail "named parameter not supported yet"
-  | Eh_assign _ ->
-      simple_fail "assign not supported yet"
+  | Eh_assign x ->
+      simple_binop "ASSIGN" x
   | Eh_accessor (src , path) ->
       ok @@ O.(untyped_expression @@ e_accessor_props (untyped_expression @@ e_variable (unwrap src)) (List.map unwrap path))
   | Eh_bottom e ->

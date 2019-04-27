@@ -424,8 +424,8 @@ module Pattern = struct
 
   let application = empty_infix "application" `Left
 
-  let list : O.n_operator = make_name "list" [
-      `Token LIST ; `Token LSQUARE ; `List (Lead SEMICOLON, `Current) ; `Token RSQUARE ;
+  let data_structure : O.n_operator = make_name "data_structure" [
+      `Named variable_name ; `Token LSQUARE ; `List (Lead SEMICOLON, `Current) ; `Token RSQUARE ;
     ]
 
   let record_element : O.rule = make_name "p_record_element" [
@@ -460,10 +460,11 @@ module Pattern = struct
     ] []
 
   let main = O.name_hierarchy pattern_name "P" [
-      [application ; record] ;
+      [record] ;
       [type_annotation] ;
       [pair] ;
-      [list] ;
+      [data_structure] ;
+      [application] ;
       [variable ; constructor ; module_ident ; unit] ;
       [paren "paren" pattern_name]
     ] []
@@ -482,8 +483,8 @@ module Expression = struct
       `Current ; `Token COLON ; `Named restricted_type_expression_name
     ]
 
-  let list : O.n_operator = make_name "list" [
-      `Token LSQUARE ; `List (Trail SEMICOLON, `Current) ; `Token RSQUARE ;
+  let data_structure : O.n_operator = make_name "data_structure" [
+      `Named variable_name ; `Token LSQUARE ; `List (Trail SEMICOLON, `Current) ; `Token RSQUARE ;
     ]
 
   let fun_ : O.n_operator = make_name "fun" [
@@ -584,10 +585,10 @@ module Expression = struct
       [lt ; le ; gt ; eq ; neq] ;
       [assignment] ;
       [cons] ;
-      [application] ;
       [addition ; substraction] ;
       [multiplication ; division] ;
-      [list] ;
+      [application] ;
+      [data_structure] ;
       [name] ;
       [arith_variable ; constructor ; module_ident ; accessor ; int ; unit ; string ; tz] ;
       [paren "bottom" expression_name] ;
@@ -627,7 +628,7 @@ module Type_expression = struct
       `Token RBRACKET ;
     ]
 
-  let application = empty_infix "application" `Left
+  let application = empty_infix "application" `Right
 
   let tuple = make_name "tuple" [
       `List (Separated_nene COMMA, `Lower)
@@ -636,6 +637,7 @@ module Type_expression = struct
   let type_variable : O.n_operator = make_name "variable" [ `Named variable_name ]
 
   let restricted_type_expression = O.name_hierarchy restricted_type_expression_name "Tr" [
+      [application] ;
       [type_variable] ;
       [paren "paren" type_expression_name] ;
     ] []
@@ -671,7 +673,6 @@ module Program = struct
     ]
 
   let type_annotation_name = "type_annotation_"
-
   let type_annotation : O.rule = make_name type_annotation_name [
       make_name "" [ `Token COLON ; `Named type_expression_name ] ;
     ]
@@ -686,13 +687,6 @@ module Program = struct
         `Named expression_name ;
       ] ;
     ]
-
-  (* let statement : O.rule = make_name statement_name [
-   *     make_name "variable_declaration" [`Token LET ; `List (Naked_ne, param_name) ; `Token EQUAL ; `Named expression_name] ;
-   *     make_name "init_declaration" [`Token LET_INIT ; `List (Naked_ne, param_name) ; `Token EQUAL ; `Named expression_name] ;
-   *     make_name "entry_declaration" [`Token LET_ENTRY ; `List (Naked_ne, param_name) ; `Token EQUAL ; `Named expression_name] ;
-   *     make_name "type_declaration" [`Token TYPE ; `Named variable_name ; `Token EQUAL ; `Named type_expression_name] ;
-   *   ] *)
 
   let statement : O.rule = make_name statement_name [
       make_name "variable_declaration" [`Token LET ; `Named let_content_name] ;
