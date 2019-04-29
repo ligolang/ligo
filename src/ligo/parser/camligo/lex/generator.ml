@@ -23,6 +23,7 @@ module Print_mly = struct
   let tokens = fun ppf tokens ->
     fprintf ppf "%%token EOF\n" ;
     fprintf ppf "%%token <int> INT\n" ;
+    fprintf ppf "%%token <int> NAT\n" ;
     fprintf ppf "%%token <int> TZ\n" ;
     fprintf ppf "%%token <string> STRING\n" ;
     fprintf ppf "%%token <string> NAME\n" ;
@@ -58,8 +59,10 @@ rule token = parse
 | '"' { string "" lexbuf }
 | [' ' '\t']
     { token lexbuf }
+| (['0'-'9']+ as i) 'p'
+    { NAT (int_of_string i) }
 | (['0'-'9']+ as n) '.' (['0'-'9']['0'-'9'] as d) "tz" { TZ ((int_of_string n) * 100 + (int_of_string d)) }
-| (['0'-'9']+ as i) 'p'?
+| (['0'-'9']+ as i)
     { INT (int_of_string i) }
 |pre}
   let post =
@@ -108,6 +111,7 @@ let to_string : token -> string = function
   | NAME _ -> "NAME s"
   | CONSTRUCTOR_NAME _ -> "CONSTRUCTOR_NAME s"
   | INT _ -> "INT n"
+  | NAT _ -> "NAT n"
   | TZ _ -> "TZ n"
   | EOF -> "EOF"
 |pre}

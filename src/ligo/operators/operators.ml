@@ -5,10 +5,14 @@ module Simplify = struct
   let type_constants = [
     ("unit" , 0) ;
     ("string" , 0) ;
+    ("bytes" , 0) ;
     ("nat" , 0) ;
     ("int" , 0) ;
+    ("tez" , 0) ;
     ("bool" , 0) ;
     ("operation" , 0) ;
+    ("address" , 0) ;
+    ("contract" , 1) ;
     ("list" , 1) ;
     ("option" , 1) ;
     ("set" , 1) ;
@@ -26,7 +30,11 @@ module Simplify = struct
     let constants = [
       ("Bytes.pack" , 1) ;
       ("Crypto.hash" , 1) ;
-      ("Operation.transfer" , 2) ;
+      ("Operation.transaction" , 3) ;
+      ("Operation.get_contract" , 1) ;
+      ("sender" , 0) ;
+      ("unit" , 0) ;
+      ("source" , 0) ;
     ]
   end
 
@@ -71,6 +79,10 @@ module Typer = struct
   let true_2 = predicate_2 (fun _ _ -> true)
   let true_3 = predicate_3 (fun _ _ _ -> true)
 
+  let eq_1 : type_value -> typer_predicate = fun v ->
+    let aux = fun a -> type_value_eq (a, v) in
+    predicate_1 aux
+
   let eq_2 : type_value -> typer_predicate = fun v ->
     let aux = fun a b -> type_value_eq (a, v) && type_value_eq (b, v) in
     predicate_2 aux
@@ -85,6 +97,11 @@ module Typer = struct
     | [ a ] -> f a
     | _ -> simple_fail "!!!"
 
+  let typer'_1_opt : (type_value -> type_value option -> type_result result) -> typer' = fun f lst tv_opt ->
+    match lst with
+    | [ a ] -> f a tv_opt
+    | _ -> simple_fail "!!!"
+
   let typer'_2 : (type_value -> type_value -> type_result result) -> typer' = fun f lst _ ->
     match lst with
     | [ a ; b ] -> f a b
@@ -94,6 +111,8 @@ module Typer = struct
     match lst with
     | [ a ; b ; c ] -> f a b c
     | _ -> simple_fail "!!!"
+
+  let typer_constant cst : typer' = fun _ _ -> ok cst
 
   let constant_2 : string -> type_value -> typer' = fun s tv ->
     let aux = fun _ _ -> ok (s, tv) in
@@ -113,6 +132,7 @@ module Typer = struct
   let comparator : string -> typer = fun s -> s , 2 , [
       (eq_2 (t_int ()), constant_2 s (t_bool ())) ;
       (eq_2 (t_nat ()), constant_2 s (t_bool ())) ;
+      (eq_2 (t_bytes ()), constant_2 s (t_bool ())) ;
     ]
 
   let boolean_operator_2 : string -> typer = fun s -> very_same_2 s (t_bool ())
@@ -162,10 +182,65 @@ module Typer = struct
     ]
 
   let int : typer = "int" , 1 , [
-      (true_1, typer'_1 (fun t ->
-           let%bind () = assert_t_nat t in
-           ok ("INT", t_int ())))
+      (eq_1 (t_nat ()), typer_constant ("INT" , t_int ()))
     ]
+
+  let bytes_pack : typer = "Bytes.pack" , 1 , [
+      (true_1 , typer'_1 (fun _ -> ok ("PACK" , t_bytes ())))
+    ]
+
+  let bytes_unpack = "Bytes.unpack" , 1 , [
+      eq_1 (t_bytes ()) , typer'_1_opt (fun _ tv_opt -> match tv_opt with
+          | None -> simple_fail "untyped UNPACK"
+          | Some t -> ok ("UNPACK", t))
+    ]
+
+  let crypto_hash = "Crypto.hash" , 1 , [
+      eq_1 (t_bytes ()) , typer_constant ("HASH" , t_bytes ()) ;
+    ]
+
+  let sender = "sender" , 0 , [
+      predicate_0 , typer_constant ("SENDER", t_address ())
+    ]
+
+  let source = "source" , 0 , [
+      predicate_0 , typer_constant ("SOURCE", t_address ())
+    ]
+
+  let unit = "unit" , 0 , [
+      predicate_0 , typer_constant ("UNIT", t_unit ())
+    ]
+
+  let transaction = "Operation.transaction" , 3 , [
+      true_3 , typer'_3 (
+        fun param contract amount ->
+          let%bind () =
+            assert_t_tez amount in
+          let%bind contract_param =
+            get_t_contract contract in
+          let%bind () =
+            assert_type_value_eq (param , contract_param) in
+          ok ("TRANSFER_TOKENS" , t_operation ())
+      )
+    ]
+
+  let get_contract = "Operation.get_contract" , 1 , [
+      eq_1 (t_address ()) , typer'_1_opt (
+        fun _ tv_opt ->
+          let%bind tv =
+            trace_option (simple_error "get_contract needs a type annotation") tv_opt in
+          let%bind tv' =
+            trace_strong (simple_error "get_contract has a not-contract annotation") @@
+            get_t_contract tv in
+          ok ("CONTRACT" , t_contract tv' ())
+      )
+    ]
+
+  (* let record_assign = "RECORD_ASSIGN" , 2 , [
+   *     true_2 , typer'_2 (fun path new_value ->
+   *         let%bind (a , b) = get_a_record_accessor path in
+   *       )
+   *   ] *)
 
   let constant_typers =
     let typer_to_kv : typer -> (string * _) = fun (a, b, c) -> (a, (b, c)) in
@@ -184,6 +259,7 @@ module Typer = struct
       none ;
       some ;
       comparator "EQ" ;
+      comparator "NEQ" ;
       comparator "LT" ;
       comparator "GT" ;
       comparator "LE" ;
@@ -195,6 +271,14 @@ module Typer = struct
       int ;
       size ;
       get_force ;
+      bytes_pack ;
+      bytes_unpack ;
+      crypto_hash ;
+      sender ;
+      source ;
+      unit ;
+      transaction ;
+      get_contract ;
     ]
 
 end

@@ -4,6 +4,12 @@ open Test_helpers
 
 open Ast_simplified.Combinators
 
+let mtype_file path : Ast_typed.program result =
+  let%bind raw = Parser.Camligo.User.parse_file path in
+  let%bind simpl = Simplify.Camligo.main raw in
+  let%bind typed = Ligo.Typer.type_program (Location.unwrap simpl) in
+  ok typed
+
 let function_ () : unit result =
   let%bind program = type_file "./contracts/function.ligo" in
   let make_expect = fun n -> n in
@@ -341,6 +347,23 @@ let super_counter_contract () : unit result =
     e_a_pair (e_a_list [] t_operation) (e_a_int (op 42 n)) in
   expect_n program "main" make_input make_expected
 
+let basic_mligo () : unit result =
+  let%bind typed = mtype_file "./contracts/basic.mligo" in
+  let%bind result = Ligo.easy_evaluate_typed "foo" typed in
+  Ligo.AST_Typed.assert_value_eq (Ligo.AST_Typed.Combinators.e_a_empty_int (42 + 127), result)
+
+let counter_mligo () : unit result =
+  let%bind program = mtype_file "./contracts/counter.mligo" in
+  let make_input = fun n-> e_a_pair (e_a_int n) (e_a_int 42) in
+  let make_expected = fun n -> e_a_pair (e_a_list [] t_operation) (e_a_int (42 + n)) in
+  expect_n program "main" make_input make_expected
+
+let guess_the_hash_mligo () : unit result =
+  let%bind program = mtype_file "./contracts/new-syntax.mligo" in
+  let make_input = fun n-> e_a_pair (e_a_int n) (e_a_int 42) in
+  let make_expected = fun n -> e_a_pair (e_a_list [] t_operation) (e_a_int (42 + n)) in
+  expect_n program "main" make_input make_expected
+
 let main = "Integration (End to End)", [
     test "function" function_ ;
     test "complex function" complex_function ;
@@ -368,4 +391,7 @@ let main = "Integration (End to End)", [
     test "counter contract" counter_contract ;
     test "super counter contract" super_counter_contract ;
     test "higher order" higher_order ;
+    test "basic mligo" basic_mligo ;
+    test "counter contract mligo" counter_mligo ;
+    test "guess the hash mligo" guess_the_hash_mligo ;
   ]

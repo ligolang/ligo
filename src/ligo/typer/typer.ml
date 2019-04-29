@@ -94,6 +94,9 @@ and type_instruction (e:environment) : I.instruction -> (environment * O.instruc
   | I_skip -> return O.I_skip
   | I_do x ->
       let%bind expression = type_annotated_expression e x in
+      let%bind () =
+        trace_strong (simple_error "do without unit") @@
+        Ast_typed.assert_type_value_eq (get_type_annotation expression , t_unit ()) in
       return @@ O.I_do expression
   | I_loop (cond, body) ->
       let%bind cond = type_annotated_expression e cond in
@@ -277,6 +280,11 @@ and type_annotated_expression : environment -> I.annotated_expression -> O.annot
   let return expr tv =
     let%bind type_annotation = check tv in
     ok @@ make_a_e expr type_annotation e in
+  let main_error =
+    let title () = "typing annotated_expression" in
+    let content () = Format.asprintf "%a" I.PP.annotated_expression ae in
+    error title content in
+  trace main_error @@
   match ae.expression with
   (* Basic *)
   | E_failwith _ -> simple_fail "can't type failwith in isolation"
@@ -297,6 +305,8 @@ and type_annotated_expression : environment -> I.annotated_expression -> O.annot
       return (E_literal (Literal_int n)) (t_int ())
   | E_literal (Literal_nat n) ->
       return (E_literal (Literal_nat n)) (t_nat ())
+  | E_literal (Literal_tez n) ->
+      return (E_literal (Literal_tez n)) (t_tez ())
   (* Tuple *)
   | E_tuple lst ->
       let%bind lst' = bind_list @@ List.map (type_annotated_expression e) lst in
@@ -431,27 +441,48 @@ and type_annotated_expression : environment -> I.annotated_expression -> O.annot
   (* Advanced *)
   | E_matching (ex, m) -> (
       let%bind ex' = type_annotated_expression e ex in
-      let%bind m' = type_match type_annotated_expression e ex'.type_annotation m in
-      let tvs =
-        let aux (cur:O.value O.matching) =
-          match cur with
-          | Match_bool { match_true ; match_false } -> [ match_true ; match_false ]
-          | Match_list { match_nil ; match_cons = (_ , _ , match_cons) } -> [ match_nil ; match_cons ]
-          | Match_option { match_none ; match_some = (_ , match_some) } -> [ match_none ; match_some ]
-          | Match_tuple (_ , match_tuple) -> [ match_tuple ]
-          | Match_variant (lst , _) -> List.map snd lst in
-        List.map get_type_annotation @@ aux m' in
-      let aux prec cur =
-        let%bind () =
-          match prec with
-          | None -> ok ()
-          | Some cur' -> Ast_typed.assert_type_value_eq (cur , cur') in
-        ok (Some cur) in
-      let%bind tv_opt = bind_fold_list aux None tvs in
-      let%bind tv =
-        trace_option (simple_error "empty matching") @@
-        tv_opt in
-      return (O.E_matching (ex', m')) tv
+      match m with
+      (* Special case for assert-like failwiths. TODO: CLEAN THIS. *)
+      | I.Match_bool { match_false ; match_true = { expression = E_failwith fw } } -> (
+          let%bind fw' = type_annotated_expression e fw in
+          let%bind mf' = type_annotated_expression e match_false in
+          let%bind () =
+            trace_strong (simple_error "Matching bool on not-a-bool")
+            @@ assert_t_bool (get_type_annotation ex') in
+          let%bind () =
+            trace_strong (simple_error "Matching not-unit on an assert")
+            @@ assert_t_unit (get_type_annotation mf') in
+          let mt' = make_a_e
+              (E_failwith fw')
+              (t_unit ())
+              e
+          in
+          let m' = O.Match_bool { match_true = mt' ; match_false = mf' } in
+          return (O.E_matching (ex' , m')) (t_unit ())
+        )
+      | _ -> (
+          let%bind m' = type_match type_annotated_expression e ex'.type_annotation m in
+          let tvs =
+            let aux (cur:O.value O.matching) =
+              match cur with
+              | Match_bool { match_true ; match_false } -> [ match_true ; match_false ]
+              | Match_list { match_nil ; match_cons = (_ , _ , match_cons) } -> [ match_nil ; match_cons ]
+              | Match_option { match_none ; match_some = (_ , match_some) } -> [ match_none ; match_some ]
+              | Match_tuple (_ , match_tuple) -> [ match_tuple ]
+              | Match_variant (lst , _) -> List.map snd lst in
+            List.map get_type_annotation @@ aux m' in
+          let aux prec cur =
+            let%bind () =
+              match prec with
+              | None -> ok ()
+              | Some cur' -> Ast_typed.assert_type_value_eq (cur , cur') in
+            ok (Some cur) in
+          let%bind tv_opt = bind_fold_list aux None tvs in
+          let%bind tv =
+            trace_option (simple_error "empty matching") @@
+            tv_opt in
+          return (O.E_matching (ex', m')) tv
+        )
     )
 
 and type_constant (name:string) (lst:O.type_value list) (tv_opt:O.type_value option) : (string * O.type_value) result =
@@ -497,6 +528,7 @@ let untype_literal (l:O.literal) : I.literal result =
   | Literal_unit -> ok Literal_unit
   | Literal_bool b -> ok (Literal_bool b)
   | Literal_nat n -> ok (Literal_nat n)
+  | Literal_tez n -> ok (Literal_tez n)
   | Literal_int n -> ok (Literal_int n)
   | Literal_string s -> ok (Literal_string s)
   | Literal_bytes b -> ok (Literal_bytes b)

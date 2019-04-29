@@ -178,6 +178,9 @@ let assert_literal_eq (a, b : literal * literal) : unit result =
   | Literal_nat a, Literal_nat b when a = b -> ok ()
   | Literal_nat _, Literal_nat _ -> simple_fail "different nats"
   | Literal_nat _, _ -> simple_fail "nat vs non-nat"
+  | Literal_tez a, Literal_tez b when a = b -> ok ()
+  | Literal_tez _, Literal_tez _ -> simple_fail "different tezs"
+  | Literal_tez _, _ -> simple_fail "tez vs non-tez"
   | Literal_string a, Literal_string b when a = b -> ok ()
   | Literal_string _, Literal_string _ -> simple_fail "different strings"
   | Literal_string _, _ -> simple_fail "string vs non-string"

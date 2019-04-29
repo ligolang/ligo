@@ -35,7 +35,6 @@ let get_unrestricted_pattern : I.restricted_pattern -> I.pattern Location.wrap r
         error title content in
       fail error
 
-
 let get_p_type_annotation : I.pattern -> (I.pattern Location.wrap * I.restricted_type_expression Location.wrap) result = fun p ->
   match p with
   | I.P_type_annotation pta -> ok pta
@@ -195,14 +194,17 @@ and expression_last_instruction : I.expression -> lir result = fun e ->
   | I.E_let_in l -> let_in_last_instruction l
   | I.E_sequence s -> sequence_last_instruction s
   | I.E_fun _|I.E_record _|I.E_ifthenelse _
-  |I.E_ifthen _|I.E_match _|I.E_main _ -> (
+  | I.E_ifthen _|I.E_match _|I.E_main _ -> (
       let%bind result' = expression e in
       ok ([] , result')
     )
 
 and expression_sequence : I.expression -> O.instruction result = fun e ->
-  let%bind e' = expression e in
-  ok @@ O.I_do e'
+  match e with
+  | _ -> (
+      let%bind e' = expression e in
+      ok @@ O.I_do e'
+    )
 
 and let_in_last_instruction :
   I.pattern Location.wrap * I.expression Location.wrap * I.expression Location.wrap -> lir result
@@ -211,7 +213,9 @@ and let_in_last_instruction :
   let%bind (var , ty) = get_p_typed_variable (unwrap pat) in
   let%bind ty' = type_expression @@ of_restricted_type_expression (unwrap ty) in
   let%bind expr' = expression (unwrap expr) in
-  let%bind uexpr' = get_untyped_expression expr' in
+  let%bind uexpr' =
+    trace_strong (simple_error "no annotation on let bodies") @@
+    get_untyped_expression expr' in
   let%bind (body' , last') = expression_last_instruction (unwrap body) in
   let assignment = O.(i_assignment @@ named_typed_expression (unwrap var) uexpr' ty') in
   ok (assignment :: body' , last')
@@ -277,20 +281,23 @@ and expression_main : I.expression_main Location.wrap -> O.annotated_expression 
   let simple_binop name ab =
     let%bind (a' , b') = bind_map_pair expression_main ab in
     return @@ E_constant (name, [a' ; b']) in
-  trace (
+  let error_main =
     let title () = "simplifying main_expression" in
     let content () = Format.asprintf "%a" I.pp_expression_main (unwrap em) in
     error title content
-  ) @@
+  in
+  trace error_main @@
   match (unwrap em) with
   | Eh_tuple lst ->
       let%bind lst' = bind_map_list expression_main lst in
       return @@ E_tuple lst'
+  | Eh_module_ident (lst , v) -> identifier_application (lst , v) None
+  | Eh_variable v -> identifier_application ([] , v) None
   | Eh_application (f , arg) -> (
       let%bind arg' = expression_main arg in
       match unwrap f with
-      | Eh_variable v -> identifier ([] , v) arg'
-      | Eh_module_ident (lst , v) -> identifier (lst , v) arg'
+      | Eh_variable v -> identifier_application ([] , v) (Some arg')
+      | Eh_module_ident (lst , v) -> identifier_application (lst , v) (Some arg')
       | _ -> (
           let%bind f' = expression_main f in
           return @@ E_application (f' , arg')
@@ -328,16 +335,8 @@ and expression_main : I.expression_main Location.wrap -> O.annotated_expression 
       return @@ E_literal (Literal_string (unwrap s))
   | Eh_unit _ ->
       return @@ E_literal Literal_unit
-  | Eh_tz _ ->
-      simple_fail "tz literals not supported yet"
-  | Eh_module_ident _ ->
-      let error =
-        let title () = "modules not supported yet" in
-        let content () = Format.asprintf "%a" I.pp_expression_main (unwrap em) in
-        error title content in
-      fail error
-  | Eh_variable v ->
-      return @@ E_variable (unwrap v)
+  | Eh_tz n ->
+      return @@ E_literal (Literal_tez (unwrap n))
   | Eh_constructor _ ->
       simple_fail "constructor without parameter"
   | Eh_data_structure (kind , content) -> (
@@ -363,10 +362,18 @@ and expression_main : I.expression_main Location.wrap -> O.annotated_expression 
   | Eh_bottom e ->
       expression (unwrap e)
 
-and identifier : (string Location.wrap) list * string Location.wrap -> _ -> _ result = fun (lst , v) param ->
+and identifier_application : (string Location.wrap) list * string Location.wrap -> O.value option -> _ result = fun (lst , v) param_opt ->
   let constant_name = String.concat "." ((List.map unwrap lst) @ [unwrap v]) in
-  match List.assoc_opt constant_name constants with
-  | Some n -> (
+  match List.assoc_opt constant_name constants , param_opt with
+  | Some 0 , None ->
+      ok O.(untyped_expression @@ E_constant (constant_name , []))
+  | Some _ , None ->
+      simple_fail "n-ary constant without parameter"
+  | Some 0 , Some _ -> simple_fail "applying to nullary constant"
+  | Some 1 , Some param -> (
+      ok O.(untyped_expression @@ E_constant (constant_name , [param]))
+    )
+  | Some n , Some param -> (
       let params =
         match get_expression param with
         | E_tuple lst -> lst
@@ -376,7 +383,7 @@ and identifier : (string Location.wrap) list * string Location.wrap -> _ -> _ re
         Assert.assert_list_size params n in
       ok O.(untyped_expression @@ E_constant (constant_name , params))
     )
-  | None ->
+  | None , param_opt -> (
       let%bind () =
         let error =
           let title () = "no module identifiers yet" in
@@ -384,8 +391,11 @@ and identifier : (string Location.wrap) list * string Location.wrap -> _ -> _ re
           error title content in
         trace_strong error @@
         Assert.assert_list_empty lst in
-      ok O.(untyped_expression @@ E_application (untyped_expression @@ E_variable (unwrap v) , param))
-
+      match constant_name , param_opt with
+      | "failwith" , Some param -> ok O.(untyped_expression @@ e_failwith param)
+      | _ , Some param -> ok O.(untyped_expression @@ E_application (untyped_expression @@ E_variable (unwrap v) , param))
+      | _ , None -> ok O.(untyped_expression @@ e_variable (unwrap v))
+    )
 
 let let_content : I.let_content -> _ result = fun l ->
   match l with

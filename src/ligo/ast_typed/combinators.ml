@@ -10,12 +10,17 @@ let t_bool ?s () : type_value = make_t (T_constant ("bool", [])) s
 let t_string ?s () : type_value = make_t (T_constant ("string", [])) s
 let t_bytes ?s () : type_value = make_t (T_constant ("bytes", [])) s
 let t_int ?s () : type_value = make_t (T_constant ("int", [])) s
+let t_address ?s () : type_value = make_t (T_constant ("address", [])) s
+let t_operation ?s () : type_value = make_t (T_constant ("operation", [])) s
 let t_nat ?s () : type_value = make_t (T_constant ("nat", [])) s
+let t_tez ?s () : type_value = make_t (T_constant ("tez", [])) s
 let t_unit ?s () : type_value = make_t (T_constant ("unit", [])) s
 let t_option o ?s () : type_value = make_t (T_constant ("option", [o])) s
 let t_tuple lst ?s () : type_value = make_t (T_tuple lst) s
 let t_list t ?s () : type_value = make_t (T_constant ("list", [t])) s
+let t_contract t ?s () : type_value = make_t (T_constant ("contract", [t])) s
 let t_pair a b ?s () = t_tuple [a ; b] ?s ()
+
 
 let t_record m ?s () : type_value = make_t (T_record m) s
 let make_t_ez_record (lst:(string * type_value) list) : type_value =
@@ -42,6 +47,18 @@ let get_type_annotation (x:annotated_expression) = x.type_annotation
 let get_t_bool (t:type_value) : unit result = match t.type_value' with
   | T_constant ("bool", []) -> ok ()
   | _ -> simple_fail "not a bool"
+
+let get_t_unit (t:type_value) : unit result = match t.type_value' with
+  | T_constant ("unit", []) -> ok ()
+  | _ -> simple_fail "not a unit"
+
+let get_t_tez (t:type_value) : unit result = match t.type_value' with
+  | T_constant ("tez", []) -> ok ()
+  | _ -> simple_fail "not a tez"
+
+let get_t_contract (t:type_value) : type_value result = match t.type_value' with
+  | T_constant ("contract", [x]) -> ok x
+  | _ -> simple_fail "not a contract"
 
 let get_t_option (t:type_value) : type_value result = match t.type_value' with
   | T_constant ("option", [o]) -> ok o
@@ -80,6 +97,8 @@ let get_t_map (t:type_value) : (type_value * type_value) result =
   | T_constant ("map", [k;v]) -> ok (k, v)
   | _ -> simple_fail "get: not a map"
 
+let assert_t_tez :type_value -> unit result = get_t_tez
+
 let assert_t_map (t:type_value) : unit result =
   match t.type_value' with
   | T_constant ("map", [_ ; _]) -> ok ()
@@ -106,6 +125,9 @@ let assert_t_int : type_value -> unit result = fun t -> match t.type_value' with
 let assert_t_nat : type_value -> unit result = fun t -> match t.type_value' with
   | T_constant ("nat", []) -> ok ()
   | _ -> simple_fail "not an nat"
+
+let assert_t_bool : type_value -> unit result = fun v -> get_t_bool v
+let assert_t_unit : type_value -> unit result = fun v -> get_t_unit v
 
 let e_record map : expression = E_record map
 let ez_e_record (lst : (string * ae) list) : expression =
@@ -167,6 +189,12 @@ let get_a_bool (t:annotated_expression) =
   match t.expression with
   | E_literal (Literal_bool b) -> ok b
   | _ -> simple_fail "not a bool"
+
+
+let get_a_record_accessor = fun t ->
+  match t.expression with
+  | E_record_accessor (a , b) -> ok (a , b)
+  | _ -> simple_fail "not an accessor"
 
 let get_declaration_by_name : program -> string -> declaration result = fun p name ->
   let aux : declaration -> bool = fun declaration ->

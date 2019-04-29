@@ -77,6 +77,7 @@ let e_match_bool a b c : expression = e_match a (Match_bool {match_true = b ; ma
 let e_accessor a b = E_accessor (a , b)
 let e_accessor_props a b = e_accessor a (List.map (fun x -> Access_record x) b)
 let e_variable v = E_variable v
+let e_failwith v = E_failwith v
 
 let e_a_unit : annotated_expression = make_e_a_full (e_unit ()) t_unit
 let e_a_int n : annotated_expression = make_e_a_full (e_int n) t_int
@@ -152,3 +153,13 @@ let ez_e_record  (lst : (string * expression) list) : expression =
   (* TODO: define a correct implementation of List.map
    * (an implementation that does not fail with stack overflow) *)
   e_record (List.map (fun (s,e) -> (s, make_e_a e)) lst)
+
+
+let get_a_accessor = fun t ->
+  match t.expression with
+  | E_accessor (a , b) -> ok (a , b)
+  | _ -> simple_fail "not an accessor"
+
+let assert_a_accessor = fun t ->
+  let%bind _ = get_a_accessor t in
+  ok ()

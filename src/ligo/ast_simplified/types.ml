@@ -83,6 +83,7 @@ and literal =
   | Literal_bool of bool
   | Literal_int of int
   | Literal_nat of int
+  | Literal_tez of int
   | Literal_string of string
   | Literal_bytes of bytes
 

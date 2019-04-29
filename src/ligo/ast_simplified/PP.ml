@@ -17,7 +17,8 @@ let literal ppf (l:literal) = match l with
   | Literal_unit -> fprintf ppf "Unit"
   | Literal_bool b -> fprintf ppf "%b" b
   | Literal_int n -> fprintf ppf "%d" n
-  | Literal_nat n -> fprintf ppf "%d" n
+  | Literal_nat n -> fprintf ppf "+%d" n
+  | Literal_tez n -> fprintf ppf "%dtz" n
   | Literal_string s -> fprintf ppf "%S" s
   | Literal_bytes b -> fprintf ppf "0x%s" @@ Bytes.to_string @@ Bytes.escaped b
 
