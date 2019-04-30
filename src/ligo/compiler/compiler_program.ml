@@ -151,7 +151,31 @@ and translate_expression ?(first=false) (expr:expression) : michelson result =
             ]
           )
         | T_deep_closure (_small_env, _, _) -> (
-            simple_fail "no compilation for deep closures app yet" ;
+            trace (simple_error "Compiling deep closure application") @@
+            let%bind f' = translate_expression ~first f in
+            let%bind arg' = translate_expression arg in
+            let error =
+              let error_title () = "michelson type-checking closure application" in
+              let error_content () =
+                Format.asprintf "Env : %a\nclosure : %a\narg : %a\n"
+                  PP.environment env
+                  PP.expression_with_type f
+                  PP.expression_with_type arg
+              in
+              error error_title error_content
+            in
+            trace error @@
+            return @@ virtual_push @@ seq [
+              i_comment "(* unit :: env *)" ;
+              i_comment "compute arg" ;
+              arg' ; i_unpair ;
+              i_comment "(* (arg * unit) :: env *)" ;
+              i_comment "compute closure" ;
+              dip @@ seq [f' ; i_unpair ; i_unpair] ;
+              i_comment "(* arg :: capture :: f :: unit :: env *)" ;
+              i_pair ;
+              i_exec ; (* output :: stack :: env *)
+            ]
           )
         | T_shallow_closure (_, _, _) -> (
             trace (simple_error "Compiling shallow closure application") @@
@@ -238,7 +262,49 @@ and translate_expression ?(first=false) (expr:expression) : michelson result =
             let%bind output_type = Compiler_type.type_ anon.output in
             let code = virtual_push_first @@ i_lambda input_type output_type body in
             return code
-        | Deep_capture _small_env -> simple_fail "no deep capture expression yet"
+        | Deep_capture small_env ->
+            (* Capture the sub environment. *)
+            let env_type = Compiler_environment.Small.to_mini_c_type small_env in
+            let%bind body = translate_closure_body anon env_type in
+            let%bind (_env , build_capture_code) =
+              let aux_leaf = fun prec (var_name , tv) ->
+                let%bind (small_env , code) = prec in
+                let small_env' = Environment.add (var_name , tv) small_env in
+                let%bind append_code = Compiler_environment.to_michelson_add (var_name , tv) small_env in
+                let%bind (get_code , _) = Compiler_environment.to_michelson_get env var_name in
+                let code' = seq [
+                    code ;
+                    i_comment ("deep closure get " ^ var_name) ;
+                    dip (seq [ i_dup ; get_code ] ) ; i_swap ;
+                    append_code ;
+                  ] in
+                ok (small_env' , code')
+              in
+              Append_tree.fold_s_ne (ok (Environment.empty , i_push_unit)) aux_leaf small_env
+            in
+            let%bind input_type =
+              let input_type = Combinators.t_pair anon.input env_type in
+              Compiler_type.type_ input_type in
+            let%bind output_type = Compiler_type.type_ anon.output in
+            let code = virtual_push_first @@ seq [ (* stack :: env *)
+                i_comment "env on top" ;
+                dip build_capture_code ; i_swap ; (* small_env :: stack :: env *)
+                i_comment "lambda" ;
+                i_lambda input_type output_type body ; (* lambda :: small_env :: stack :: env *)
+                i_comment "pair env + lambda" ;
+                i_piar ; (* (small_env * lambda) :: stack :: env *)
+                i_comment "new stack" ;
+              ] in
+            let error =
+              let error_title () = "michelson type-checking trace" in
+              let error_content () =
+                Format.asprintf "Env : %a\n"
+                  PP.environment_small small_env
+              in
+              error error_title error_content
+            in
+            trace error @@
+            return code
         | Shallow_capture env ->
             (* Capture the whole environment. *)
             let env_type = Compiler_environment.to_mini_c_type env in

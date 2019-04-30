@@ -27,7 +27,6 @@ module Small = struct
         s PP.environment_small t in
     error title content
 
-
   let has' s = exists' (fun ((x, _):element) -> x = s)
   let has s = function
     | Empty -> false

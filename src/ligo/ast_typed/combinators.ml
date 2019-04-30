@@ -3,7 +3,6 @@ open Types
 
 let make_t type_value' simplified = { type_value' ; simplified }
 let make_a_e expression type_annotation environment = { expression ; type_annotation ; dummy_field = () ; environment }
-let make_a_e_empty expression type_annotation = make_a_e expression type_annotation Environment.full_empty
 let make_n_e name a_e = { name ; annotated_expression = a_e }
 
 let t_bool ?s () : type_value = make_t (T_constant ("bool", [])) s
@@ -43,6 +42,8 @@ let t_function param result ?s () : type_value = make_t (T_function (param, resu
 let t_shallow_closure param result ?s () : type_value = make_t (T_function (param, result)) s
 
 let get_type_annotation (x:annotated_expression) = x.type_annotation
+let get_environment (x:annotated_expression) = x.environment
+let get_expression (x:annotated_expression) = x.expression
 
 let get_t_bool (t:type_value) : unit result = match t.type_value' with
   | T_constant ("bool", []) -> ok ()
@@ -161,20 +162,6 @@ let ez_e_a_record r = make_a_e (ez_e_record r) (ez_t_record (List.map (fun (x, y
 let e_a_map lst k v = make_a_e (e_map lst) (t_map k v ())
 let e_a_list lst t = make_a_e (e_list lst) (t_list t ())
 
-let e_a_empty_unit = e_a_unit Environment.full_empty
-let e_a_empty_int n = e_a_int n Environment.full_empty
-let e_a_empty_nat n = e_a_nat n Environment.full_empty
-let e_a_empty_bool b = e_a_bool b Environment.full_empty
-let e_a_empty_string s = e_a_string s Environment.full_empty
-let e_a_empty_pair a b = e_a_pair a b Environment.full_empty
-let e_a_empty_some s = e_a_some s Environment.full_empty
-let e_a_empty_none t = e_a_none t Environment.full_empty
-let e_a_empty_tuple lst = e_a_tuple lst Environment.full_empty
-let e_a_empty_record r = e_a_record r Environment.full_empty
-let e_a_empty_map lst k v = e_a_map lst k v Environment.full_empty
-let e_a_empty_list lst t = e_a_list lst t Environment.full_empty
-let ez_e_a_empty_record r = ez_e_a_record r Environment.full_empty
-
 let get_a_int (t:annotated_expression) =
   match t.expression with
   | E_literal (Literal_int n) -> ok n
@@ -203,10 +190,4 @@ let get_declaration_by_name : program -> string -> declaration result = fun p na
   in
   trace_option (simple_error "no declaration with given name") @@
   List.find_opt aux @@ List.map Location.unwrap p
-
-open Environment
-let env_sum_type ?(env = full_empty)
-    ?(name = "a_sum_type")
-    (lst : (string * type_value) list) =
-  add_type name (make_t_ez_sum lst) env
 

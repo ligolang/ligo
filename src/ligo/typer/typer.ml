@@ -73,7 +73,7 @@ and type_declaration env : I.declaration -> (environment * O.declaration option)
       let%bind ae' =
         trace (constant_declaration_error name annotated_expression) @@
         type_annotated_expression env annotated_expression in
-      let env' = Environment.add_ez name ae'.type_annotation env in
+      let env' = Environment.add_ez_declaration name (O.get_type_annotation ae') (O.get_expression ae') env in
       ok (env', Some (O.Declaration_constant ((make_n_e name ae') , env')))
 
 and type_block_full (e:environment) (b:I.block) : (O.block * environment) result =
@@ -109,7 +109,7 @@ and type_instruction (e:environment) : I.instruction -> (environment * O.instruc
       | None, None -> simple_fail "Initial assignments need type annotation"
       | Some _, None ->
           let%bind annotated_expression = type_annotated_expression e annotated_expression in
-          let e' = Environment.add_ez name annotated_expression.type_annotation e in
+          let e' = Environment.add_ez_ae name annotated_expression e in
           ok (e', [O.I_declaration (make_n_e name annotated_expression)])
       | None, Some prev ->
           let%bind annotated_expression = type_annotated_expression e annotated_expression in
@@ -120,7 +120,7 @@ and type_instruction (e:environment) : I.instruction -> (environment * O.instruc
           let%bind annotated_expression = type_annotated_expression e annotated_expression in
           let%bind _assert = trace (simple_error "Annotation doesn't match environment")
             @@ O.assert_type_value_eq (annotated_expression.type_annotation, prev.type_value) in
-          let e' = Environment.add_ez name annotated_expression.type_annotation e in
+          let e' = Environment.add_ez_ae name annotated_expression e in
           ok (e', [O.I_assignment (make_n_e name annotated_expression)])
     )
   | I_matching (ex, m) ->
@@ -168,7 +168,7 @@ and type_match : type i o . (environment -> i -> o result) -> environment -> O.t
       let%bind match_none = f e match_none in
       let (n, b) = match_some in
       let n' = n, t_opt in
-      let e' = Environment.add_ez n t_opt e in
+      let e' = Environment.add_ez_binder n t_opt e in
       let%bind b' = f e' b in
       ok (O.Match_option {match_none ; match_some = (n', b')})
   | Match_list {match_nil ; match_cons} ->
@@ -177,8 +177,8 @@ and type_match : type i o . (environment -> i -> o result) -> environment -> O.t
         @@ get_t_list t in
       let%bind match_nil = f e match_nil in
       let (hd, tl, b) = match_cons in
-      let e' = Environment.add_ez hd t_list e in
-      let e' = Environment.add_ez tl t e' in
+      let e' = Environment.add_ez_binder hd t_list e in
+      let e' = Environment.add_ez_binder tl t e' in
       let%bind b' = f e' b in
       ok (O.Match_list {match_nil ; match_cons = (hd, tl, b')})
   | Match_tuple (lst, b) ->
@@ -188,7 +188,7 @@ and type_match : type i o . (environment -> i -> o result) -> environment -> O.t
       let%bind lst' =
         generic_try (simple_error "Matching tuple of different size")
         @@ (fun () -> List.combine lst t_tuple) in
-      let aux prev (name, tv) = Environment.add_ez name tv prev in
+      let aux prev (name, tv) = Environment.add_ez_binder name tv prev in
       let e' = List.fold_left aux e lst' in
       let%bind b' = f e' b in
       ok (O.Match_tuple (lst, b'))
@@ -230,7 +230,7 @@ and type_match : type i o . (environment -> i -> o result) -> environment -> O.t
           let%bind (constructor , _) =
             trace_option (simple_error "bad constructor??") @@
             Environment.get_constructor constructor_name e in
-          let e' = Environment.add_ez name constructor e in
+          let e' = Environment.add_ez_binder name constructor e in
           let%bind b' = f e' b in
           ok ((constructor_name , name) , b')
         in
@@ -414,7 +414,7 @@ and type_annotated_expression : environment -> I.annotated_expression -> O.annot
     } ->
       let%bind input_type = evaluate_type e input_type in
       let%bind output_type = evaluate_type e output_type in
-      let e' = Environment.add_ez binder input_type e in
+      let e' = Environment.add_ez_binder binder input_type e in
       let%bind (body, e'') = type_block_full e' body in
       let%bind result = type_annotated_expression e'' result in
       return (E_lambda {binder;input_type;output_type;result;body}) (t_function input_type output_type ())

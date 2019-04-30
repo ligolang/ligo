@@ -1,14 +1,17 @@
 open Types
+open Combinators
 
 type element = environment_element
-let make_element : type_value -> full_environment -> element =
-  fun type_value source_environment -> {type_value ; source_environment}
+let make_element : type_value -> full_environment -> environment_element_definition -> element =
+  fun type_value source_environment definition -> {type_value ; source_environment ; definition}
+
+let make_element_binder = fun t s -> make_element t s ED_binder
+let make_element_declaration = fun t s d -> make_element t s (ED_declaration d)
 
 module Small = struct
   type t = small_environment
 
   let empty : t = ([] , [])
-
 
   let get_environment : t -> environment = fst
   let get_type_environment : t -> type_environment = snd
@@ -25,7 +28,12 @@ type t = full_environment
 let empty : environment = Small.(get_environment empty)
 let full_empty : t = List.Ne.singleton Small.empty
 let add : string -> element -> t -> t = fun k v -> List.Ne.hd_map (Small.add k v)
-let add_ez : string -> type_value -> t -> t = fun k v e -> List.Ne.hd_map (Small.add k (make_element v e)) e
+let add_ez_binder : string -> type_value -> t -> t = fun k v e ->
+  List.Ne.hd_map (Small.add k (make_element_binder v e)) e
+let add_ez_declaration : string -> type_value -> expression -> t -> t = fun k v expr e ->
+  List.Ne.hd_map (Small.add k (make_element_declaration v e expr)) e
+let add_ez_ae : string -> annotated_expression -> t -> t = fun k ae e ->
+  add_ez_declaration k (get_type_annotation ae) (get_expression ae) e
 let add_type : string -> type_value -> t -> t = fun k v -> List.Ne.hd_map (Small.add_type k v)
 let get_opt : string -> t -> element option = fun k x -> List.Ne.find_map (Small.get_opt k) x
 let get_type_opt : string -> t -> type_value option = fun k x -> List.Ne.find_map (Small.get_type_opt k) x

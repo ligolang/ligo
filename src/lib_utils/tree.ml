@@ -86,9 +86,17 @@ module Append = struct
     | Leaf x -> leaf x
     | Node {a;b} -> node (fold' leaf node a) (fold' leaf node b)
 
+  let rec fold_s' : type a b . a -> (a -> b -> a) -> b t' -> a  = fun init leaf -> function
+    | Leaf x -> leaf init x
+    | Node {a;b} -> fold_s' (fold_s' init leaf a) leaf b
+
   let fold_ne leaf node = function
     | Empty -> raise (Failure "Tree.Append.fold_ne")
     | Full x -> fold' leaf node x
+
+  let fold_s_ne : type a b . a -> (a -> b -> a) -> b t -> a = fun init leaf -> function
+    | Empty -> raise (Failure "Tree.Append.fold_s_ne")
+    | Full x -> fold_s' init leaf x
 
   let fold empty leaf node = function
     | Empty -> empty

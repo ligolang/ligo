@@ -422,9 +422,39 @@ and translate_lambda_shallow : Mini_c.Environment.t -> AST.lambda -> Mini_c.expr
   let new_env = Environment.add (binder, input_type') env' in
   let%bind (_, e) as body = translate_block new_env body in
   let%bind result = translate_annotated_expression e.post_environment result in
-  let capture_type = Shallow_capture env' in
   let%bind output_type' = translate_type output_type in
   let tv = Combinators.t_shallow_closure env input_type' output_type' in
+  let capture_type = Shallow_capture env' in
+  let content = {binder;input=input_type';output=output_type';body;result;capture_type} in
+  ok @@ Combinators.Expression.make_tpl (E_function content, tv, env)
+
+and translate_lambda_deep : Mini_c.Environment.t -> AST.lambda -> Mini_c.expression result = fun env l ->
+  let { binder ; input_type ; output_type ; body ; result } : AST.lambda = l in
+  (* Deep capture. Capture the relevant part of the environment. Extend it with a new scope. Append it the input. *)
+  let%bind input_type' = translate_type input_type in
+  let%bind small_env =
+    let env' = Environment.extend env in
+    let new_env = Environment.add (binder, input_type') env' in
+    let free_variables = Ast_typed.Misc.Free_variables.lambda [] l in
+    let%bind elements =
+      let aux x =
+        let not_found_error =
+          let title () = "translate deep shallow (type checker didn't do its job)" in
+          let content () = Format.asprintf "%s in %a" x Mini_c.PP.environment new_env  in
+          error title content in
+        trace_option not_found_error @@
+        Environment.get_opt new_env x in
+      bind_map_list aux free_variables in
+    let kvs = List.combine free_variables elements in
+    let small_env = Environment.Small.of_list kvs in
+    ok small_env
+  in
+  let new_env = Environment.(add (binder , input_type') @@ extend @@ of_small small_env) in
+  let%bind (_, e) as body = translate_block new_env body in
+  let%bind result = translate_annotated_expression e.post_environment result in
+  let%bind output_type' = translate_type output_type in
+  let tv = Combinators.t_deep_closure small_env input_type' output_type' in
+  let capture_type = Deep_capture small_env in
   let content = {binder;input=input_type';output=output_type';body;result;capture_type} in
   ok @@ Combinators.Expression.make_tpl (E_function content, tv, env)
 
@@ -452,8 +482,8 @@ and translate_lambda env l =
       ok @@ Combinators.Expression.make_tpl (E_literal (D_function {capture=None;content}), tv, env)
     )
   | _ -> (
-      trace (simple_error "translate lambda shallow") @@
-      translate_lambda_shallow env l
+      trace (simple_error "translate lambda deep") @@
+      translate_lambda_deep env l
     )
 
 let translate_declaration env (d:AST.declaration) : toplevel_statement result =
