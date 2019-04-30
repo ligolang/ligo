@@ -103,6 +103,7 @@ let arithmetic () : unit result =
       ("plus_op", fun n -> (n + 42)) ;
       ("minus_op", fun n -> (n - 42)) ;
       ("times_op", fun n -> (n * 42)) ;
+      ("div_op", fun n -> (n / 2)) ;
     ] in
   let%bind () = expect_n_pos program "int_op" e_a_nat e_a_int in
   ok ()
@@ -393,5 +394,5 @@ let main = "Integration (End to End)", [
     test "higher order" higher_order ;
     test "basic mligo" basic_mligo ;
     test "counter contract mligo" counter_mligo ;
-    test "guess the hash mligo" guess_the_hash_mligo ;
+    (* test "guess the hash mligo" guess_the_hash_mligo ; *)
   ]

@@ -316,10 +316,14 @@ module Compiler = struct
     ("CAR" , simple_unary @@ prim I_CAR) ;
     ("CDR" , simple_unary @@ prim I_CDR) ;
     ("EQ" , simple_binary @@ seq [prim I_COMPARE ; prim I_EQ]) ;
+    ("NEQ" , simple_binary @@ seq [prim I_COMPARE ; prim I_NEQ]) ;
     ("LT" , simple_binary @@ seq [prim I_COMPARE ; prim I_LT]) ;
+    ("LE" , simple_binary @@ seq [prim I_COMPARE ; prim I_LE]) ;
+    ("GT" , simple_binary @@ seq [prim I_COMPARE ; prim I_GT]) ;
+    ("GE" , simple_binary @@ seq [prim I_COMPARE ; prim I_GE]) ;
     ("UPDATE" , simple_ternary @@ prim I_UPDATE) ;
     ("SOME" , simple_unary @@ prim I_SOME) ;
-    ("GET_FORCE" , simple_binary @@ seq [prim I_GET ; i_assert_some]) ;
+    ("GET_FORCE" , simple_binary @@ seq [prim I_GET ; i_assert_some_msg (i_push_string "GET_FORCE")]) ;
     ("GET" , simple_binary @@ prim I_GET) ;
     ("SIZE" , simple_unary @@ prim I_SIZE) ;
     ("INT" , simple_unary @@ prim I_INT) ;

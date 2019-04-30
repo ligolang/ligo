@@ -408,10 +408,10 @@ and simpl_single_instruction : Raw.single_instr -> instruction result = fun t ->
       let c = c.value in
       let%bind expr = simpl_expression c.test in
       let%bind match_true = match c.ifso with
-        | ClauseInstr i -> let%bind i = simpl_instruction i in ok [i]
+        | ClauseInstr i -> simpl_instruction_block i
         | ClauseBlock b -> simpl_statements @@ fst b.value.inside in
       let%bind match_false = match c.ifnot with
-        | ClauseInstr i -> let%bind i = simpl_instruction i in ok [i]
+        | ClauseInstr i -> simpl_instruction_block i
         | ClauseBlock b -> simpl_statements @@ fst b.value.inside in
       ok @@ I_matching (expr, (Match_bool {match_true; match_false}))
   | Assign a -> (
@@ -560,6 +560,11 @@ and simpl_instruction_block : Raw.instruction -> block result = fun t ->
   | Block b -> simpl_block b.value
 
 and simpl_instruction : Raw.instruction -> instruction result = fun t ->
+  let main_error =
+    let title () = "simplifiying instruction" in
+    let content () = Format.asprintf "%a" PP_helpers.(printer Parser.Pascaligo.ParserLog.print_instruction) t in
+    error title content in
+  trace main_error @@
   match t with
   | Single s -> simpl_single_instruction s
   | Block _ -> simple_fail "no block instruction yet"

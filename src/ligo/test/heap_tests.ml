@@ -96,30 +96,29 @@ let pop_switch () : unit result =
     @@ [0 ; 2 ; 7 ; 12] in
   ok ()
 
-(* let pop () : unit result =
- *   let%bind program = get_program () in
- *   let aux n =
- *     let input = dummy n in
- *     match n, easy_run_typed "pop" program input with
- *     | 0, Trace.Ok _ -> simple_fail "unexpected success"
- *     | 0, _ -> ok ()
- *     | _, result ->
- *         let%bind result' = result in
- *         let expected = ez List.(
- *             map (fun i -> if i = 1 then (1, (n, string_of_int n)) else (i, (i, string_of_int i)))
- *             @@ tl
- *             @@ range (n + 1)
- *           ) in
- *         AST_Typed.assert_value_eq (expected, result')
- *   in
- *   let%bind _ = bind_list
- *     @@ List.map aux
- *     @@ [0 ; 2 ; 7 ; 12] in
- *   ok () *)
+let pop () : unit result =
+  let%bind program = get_program () in
+  let aux n =
+    let input = dummy n in
+    (match easy_run_typed "pop" program input with
+    | Trace.Ok (output , _) -> (
+        Format.printf "\nPop output on %d : %a\n" n AST_Typed.PP.annotated_expression output ;
+      )
+    | Errors errs -> (
+        Format.printf "\nPop output on %d : error\n" n) ;
+        Format.printf "Errors : {\n%a}\n%!" errors_pp (List.rev (List.rev_map (fun f -> f ()) errs)) ;
+    ) ;
+    ok ()
+  in
+  let%bind _ = bind_list
+    @@ List.map aux
+    @@ [2 ; 7 ; 12] in
+  (* simple_fail "display" *)
+  ok ()
 
 let main = "Heap (End to End)", [
     test "is_empty" is_empty ;
     test "get_top" get_top ;
     test "pop_switch" pop_switch ;
-    (* test "pop" pop ; *)
+    test "pop" pop ;
   ]

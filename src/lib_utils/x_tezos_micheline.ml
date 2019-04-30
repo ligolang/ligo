@@ -30,6 +30,7 @@ module Michelson = struct
   let bytes s : michelson = Bytes (0, s)
 
   let t_unit = prim T_unit
+  let t_string = prim T_string
   let t_pair a b = prim ~children:[a;b] T_pair
   let t_lambda a b = prim ~children:[a;b] T_lambda
 
@@ -44,6 +45,7 @@ module Michelson = struct
   let i_piar = seq [ i_swap ; i_pair ]
   let i_push ty code = prim ~children:[ty;code] I_PUSH
   let i_push_unit = i_push t_unit d_unit
+  let i_push_string str = i_push t_string (string str)
   let i_none ty = prim ~children:[ty] I_NONE
   let i_nil ty = prim ~children:[ty] I_NIL
   let i_some = prim I_SOME
@@ -56,7 +58,8 @@ module Michelson = struct
   let i_if_none a b = prim ~children:[a;b] I_IF_NONE
   let i_if_left a b = prim ~children:[a;b] I_IF_LEFT
   let i_failwith = prim I_FAILWITH
-  let i_assert_some = i_if_none (seq [i_failwith]) (seq [])
+  let i_assert_some = i_if_none (seq [i_push_string "ASSERT_SOME" ; i_failwith]) (seq [])
+  let i_assert_some_msg msg = i_if_none (seq [msg ; i_failwith]) (seq [])
 
   let dip code : michelson = prim ~children:[seq [code]] I_DIP
   let i_unpair = seq [i_dup ; i_car ; dip i_cdr]
