@@ -113,12 +113,12 @@ let pop () : unit result =
   let%bind _ = bind_list
     @@ List.map aux
     @@ [2 ; 7 ; 12] in
-  (* simple_fail "display" *)
-  ok ()
+  simple_fail "display"
+  (* ok () *)
 
 let main = "Heap (End to End)", [
     test "is_empty" is_empty ;
     test "get_top" get_top ;
     test "pop_switch" pop_switch ;
-    test "pop" pop ;
+    (* test "pop" pop ; *)
   ]

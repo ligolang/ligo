@@ -38,9 +38,10 @@ function insert (const h : heap ; const e : heap_element) : heap is
     var i : nat := size(h) + 1n ;
     h[i] := e ;
     var largest : nat := i ;
+    var parent : nat := 0n ;
     while (largest =/= i) block {
+      parent := i / 2n ;
       largest := i ;
-      const parent : nat = i / 2n ;
       if (parent >= 1n) then block {
         if (heap_element_lt(get_force(parent , h) , get_force(i , h))) then block {
           largest := parent ;

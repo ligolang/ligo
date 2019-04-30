@@ -37,11 +37,12 @@ let parse_file (source: string) : AST_Raw.t result =
           in
           simple_error str
         )
-      | _ ->
+      | exn ->
           let start = Lexing.lexeme_start_p lexbuf in
           let end_ = Lexing.lexeme_end_p lexbuf in
           let str = Format.sprintf
-              "Unrecognized error at \"%s\" from (%d, %d) to (%d, %d). In file \"%s|%s\"\n"
+              "Unrecognized error (%s) at \"%s\" from (%d, %d) to (%d, %d). In file \"%s|%s\"\n"
+              (Printexc.to_string exn)
               (Lexing.lexeme lexbuf)
               start.pos_lnum (start.pos_cnum - start.pos_bol)
               end_.pos_lnum (end_.pos_cnum - end_.pos_bol)

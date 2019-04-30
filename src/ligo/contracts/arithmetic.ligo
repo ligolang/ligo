@@ -1,3 +1,6 @@
+function mod_op (const n : int) : nat is
+  begin skip end with n mod 42
+
 function plus_op (const n : int) : int is
   begin skip end with n + 42
 

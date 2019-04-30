@@ -242,6 +242,16 @@ module Typer = struct
    *       )
    *   ] *)
 
+  let num_2 : typer_predicate =
+    let aux = fun a b ->
+      (type_value_eq (a , t_int ()) || type_value_eq (a , t_nat ())) &&
+      (type_value_eq (b , t_int ()) || type_value_eq (b , t_nat ())) in
+    predicate_2 aux
+
+  let mod_ = "MOD" , 2 , [
+      num_2 , constant_2 "MOD" (t_nat ()) ;
+    ]
+
   let constant_typers =
     let typer_to_kv : typer -> (string * _) = fun (a, b, c) -> (a, (b, c)) in
     Map.String.of_list
@@ -255,6 +265,11 @@ module Typer = struct
         ("TIMES_INT" , t_int ()) ;
         ("TIMES_NAT" , t_nat ()) ;
       ] ;
+      same_2 "DIV" [
+        ("DIV_INT" , t_int ()) ;
+        ("DIV_NAT" , t_nat ()) ;
+      ] ;
+      mod_ ;
       sub ;
       none ;
       some ;
@@ -309,6 +324,9 @@ module Compiler = struct
     ("SUB_NAT" , simple_binary @@ prim I_SUB) ;
     ("TIMES_INT" , simple_binary @@ prim I_MUL) ;
     ("TIMES_NAT" , simple_binary @@ prim I_MUL) ;
+    ("DIV_INT" , simple_binary @@ seq [prim I_EDIV ; i_assert_some_msg (i_push_string "DIV by 0") ; i_car]) ;
+    ("DIV_NAT" , simple_binary @@ seq [prim I_EDIV ; i_assert_some_msg (i_push_string "DIV by 0") ; i_car]) ;
+    ("MOD" , simple_binary @@ seq [prim I_EDIV ; i_assert_some_msg (i_push_string "MOD by 0") ; i_cdr]) ;
     ("NEG" , simple_unary @@ prim I_NEG) ;
     ("OR" , simple_binary @@ prim I_OR) ;
     ("AND" , simple_binary @@ prim I_AND) ;

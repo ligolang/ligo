@@ -14,12 +14,20 @@ let test name f =
 open Ast_simplified.Combinators
 
 let expect program entry_point input expected =
-  let error =
-    let title () = "expect run" in
-    let content () = Format.asprintf "Entry_point: %s" entry_point in
+  let%bind result =
+    let run_error =
+      let title () = "expect run" in
+      let content () = Format.asprintf "Entry_point: %s" entry_point in
+      error title content in
+    trace run_error @@
+    Ligo.easy_run_typed_simplified entry_point program input in
+  let expect_error =
+    let title () = "expect result" in
+    let content () = Format.asprintf "Expected %a, got %a"
+        Ast_simplified.PP.value expected
+        Ast_simplified.PP.value result in
     error title content in
-  trace error @@
-  let%bind result = Ligo.easy_run_typed_simplified entry_point program input in
+  trace_strong expect_error @@
   Ast_simplified.assert_value_eq (expected , result)
 
 let expect_evaluate program entry_point expected =
@@ -32,10 +40,10 @@ let expect_evaluate program entry_point expected =
   Ast_simplified.assert_value_eq (expected , result)
 
 let expect_n_aux lst program entry_point make_input make_expected =
-  Format.printf "expect_n aux\n%!" ;
   let aux n =
     let input = make_input n in
     let expected = make_expected n in
+    trace (simple_error ("expect_n " ^ (string_of_int n))) @@
     let result = expect program entry_point input expected in
     result
   in

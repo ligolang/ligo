@@ -152,6 +152,10 @@ let rec simpl_expression (t:Raw.expr) : ae result =
       simpl_binop "SUB" c.value
   | EArith (Mult c) ->
       simpl_binop "TIMES" c.value
+  | EArith (Div c) ->
+      simpl_binop "DIV" c.value
+  | EArith (Mod c) ->
+      simpl_binop "MOD" c.value
   | EArith (Int n) ->
       let n = Z.to_int @@ snd @@ n.value in
       ok @@ make_e_a @@ E_literal (Literal_int n)
