@@ -35,10 +35,10 @@ let pp_input =
 let cpp_cmd =
   match EvalOpt.input with
     None | Some "-" ->
-      Printf.sprintf "cpp -traditional-cpp%s - -o %s"
+      Printf.sprintf "cpp -traditional-cpp%s - > %s"
                      lib_path pp_input
   | Some file ->
-      Printf.sprintf "cpp -traditional-cpp%s %s -o %s"
+      Printf.sprintf "cpp -traditional-cpp%s %s > %s"
                      lib_path file pp_input
 
 let () =

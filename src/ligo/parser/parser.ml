@@ -13,7 +13,7 @@ let parse_file (source: string) : AST_Raw.t result =
     and suffix = ".pp.ligo"
     in prefix ^ suffix in
 
-  let cpp_cmd = Printf.sprintf "cpp -traditional-cpp %s -o %s"
+  let cpp_cmd = Printf.sprintf "cpp -traditional-cpp %s > %s"
                                source pp_input in
   let%bind () = sys_command cpp_cmd in
 
