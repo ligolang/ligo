@@ -75,6 +75,7 @@ and expression =
 and access =
   | Access_tuple of int
   | Access_record of string
+  | Access_map of ae
 
 and access_path = access list
 

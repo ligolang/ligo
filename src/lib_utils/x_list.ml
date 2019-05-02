@@ -7,6 +7,16 @@ let map ?(acc = []) f lst =
   in
   aux acc f (List.rev lst)
 
+let fold_map : type acc ele ret . (acc -> ele -> (acc * ret)) -> acc -> ele list -> ret list =
+  fun f acc lst ->
+  let rec aux (acc , prev) f = function
+    | [] -> (acc , prev)
+    | hd :: tl ->
+        let (acc' , hd') = f acc hd in
+        aux (acc' , hd' :: prev) f tl
+  in
+  snd @@ aux (acc , []) f (List.rev lst)
+
 let fold_right' f init lst = List.fold_left f init (List.rev lst)
 
 let filter_map f =

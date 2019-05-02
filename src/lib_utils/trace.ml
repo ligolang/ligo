@@ -175,6 +175,16 @@ let bind_fold_list f init lst =
   in
   List.fold_left aux (ok init) lst
 
+let bind_fold_map_list = fun f acc lst ->
+  let rec aux (acc , prev) f = function
+    | [] -> ok (acc , prev)
+    | hd :: tl ->
+        f acc hd >>? fun (acc' , hd') ->
+        aux (acc' , hd' :: prev) f tl
+  in
+  aux (acc , []) f (List.rev lst) >>? fun (_acc' , lst') ->
+  ok lst'
+
 let bind_fold_right_list f init lst =
   let aux x y =
     x >>? fun x ->

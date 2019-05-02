@@ -159,15 +159,24 @@ and type_instruction (e:environment) : I.instruction -> (environment * O.instruc
           match access with
           | I.Access_record s ->
               let%bind m = O.Combinators.get_t_record ty in
-              trace_option (simple_error "unbound record access in record_patch") @@
-              Map.String.find_opt s m
-          | Access_tuple i ->
+              let%bind ty =
+                trace_option (simple_error "unbound record access in record_patch") @@
+                Map.String.find_opt s m in
+              ok (ty , O.Access_record s)
+          | I.Access_tuple i ->
               let%bind t = O.Combinators.get_t_tuple ty in
-              generic_try (simple_error "unbound tuple access in record_patch") @@
-              (fun () -> List.nth t i)
+              let%bind ty =
+                generic_try (simple_error "unbound tuple access in record_patch") @@
+                (fun () -> List.nth t i) in
+              ok (ty , O.Access_tuple i)
+          | I.Access_map ind ->
+              let%bind (k , v) = O.Combinators.get_t_map ty in
+              let%bind ind' = type_annotated_expression e ind in
+              let%bind () = Ast_typed.assert_type_value_eq (get_type_annotation ind' ,  k) in
+              ok (v , O.Access_map ind')
         in
-        let%bind _assert = bind_fold_list aux ty.type_value (path @ [Access_record s]) in
-        ok @@ O.I_patch (tv, path @ [Access_record s], ae')
+        let%bind path' = bind_fold_map_list aux ty.type_value (path @ [Access_record s]) in
+        ok @@ O.I_patch (tv, path' @ [Access_record s], ae')
       in
       let%bind lst' = bind_map_list aux lst in
       ok (e, lst')
@@ -350,6 +359,13 @@ and type_annotated_expression : environment -> I.annotated_expression -> O.annot
               generic_try (simple_error "bad record index")
               @@ (fun () -> SMap.find property r_tv) in
             return (E_record_accessor (prev , property)) tv
+          )
+        | Access_map ae -> (
+            let%bind ae' = type_annotated_expression e ae in
+            let%bind (k , v) = get_t_map prev.type_annotation in
+            let%bind () =
+              Ast_typed.assert_type_value_eq (k , get_type_annotation ae') in
+            return (E_look_up (prev , ae')) v
           )
       in
       trace (simple_error "accessing") @@
@@ -643,8 +659,19 @@ and untype_instruction (i:O.instruction) : (I.instruction) result =
         List.rev_uncons_opt p in
       let%bind tl_name = match tl with
         | Access_record n -> ok n
-        | Access_tuple _ -> simple_fail "last element of patch is tuple" in
-      ok @@ I_record_patch (s.type_name, hds, [tl_name, e'])
+        | Access_tuple _ -> simple_fail "last element of patch is tuple"
+        | Access_map _ -> simple_fail "last element of patch is map"
+      in
+      let%bind hds' = bind_map_list untype_access hds in
+      ok @@ I_record_patch (s.type_name, hds', [tl_name, e'])
+
+and untype_access (a:O.access) : I.access result =
+  match a with
+  | Access_record n -> ok @@ I.Access_record n
+  | Access_tuple n -> ok @@ I.Access_tuple n
+  | Access_map n ->
+      let%bind n' = untype_annotated_expression n in
+      ok @@ I.Access_map n'
 
 and untype_matching : type o i . (o -> i result) -> o O.matching -> (i I.matching) result = fun f m ->
   let open I in

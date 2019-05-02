@@ -50,6 +50,7 @@ and access ppf (a:access) =
   match a with
   | Access_tuple n -> fprintf ppf "%d" n
   | Access_record s -> fprintf ppf "%s" s
+  | Access_map s -> fprintf ppf "(%a)" annotated_expression s
 
 and access_path ppf (p:access_path) =
   fprintf ppf "%a" (list_sep access (const ".")) p

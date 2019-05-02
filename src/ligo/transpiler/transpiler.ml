@@ -137,6 +137,7 @@ and translate_instruction (env:Environment.t) (i:AST.instruction) : statement li
             let%bind (_, path) = record_access_to_lr ty' ty'_map prop in
             let path' = List.map snd path in
             ok (Map.String.find prop ty_map, path' @ acc)
+        | Access_map _k -> simple_fail "no patch for map yet"
       in
       let%bind (_, path) = bind_fold_list aux (ty, []) s in
       let%bind v' = translate_annotated_expression env v in
