@@ -90,6 +90,7 @@ let rec simpl_expression (t:Raw.expr) : ae result =
         | Component index -> Access_tuple (Z.to_int (snd index.value))
       in
       List.map aux @@ npseq_to_list path in
+    
     ok @@ make_e_a @@ E_accessor (var, path')
   in
   match t with
@@ -457,18 +458,12 @@ and simpl_single_instruction : Raw.single_instr -> instruction result = fun t ->
       ok @@ I_matching (expr, m)
   | RecordPatch r -> (
       let r = r.value in
-      let%bind record = match r.path with
-        | Name v -> ok v.value
-        | path -> (
-            let err_content () = Format.asprintf "%a" (PP_helpers.printer Parser.Pascaligo.ParserLog.print_path) path in
-            fail @@ (fun () -> error (thunk "no complex record patch yet") err_content ())
-          )
-      in
+      let (name , access_path) = simpl_path r.path in
       let%bind inj = bind_list
         @@ List.map (fun (x:Raw.field_assign) -> let%bind e = simpl_expression x.field_expr in ok (x.field_name.value, e))
         @@ List.map (fun (x:_ Raw.reg) -> x.value)
         @@ npseq_to_list r.record_inj.value.fields in
-      ok @@ I_record_patch (record, [], inj)
+      ok @@ I_record_patch (name, access_path, inj)
     )
   | MapPatch _ -> simple_fail "no map patch yet"
   | SetPatch _ -> simple_fail "no set patch yet"
@@ -482,6 +477,23 @@ and simpl_single_instruction : Raw.single_instr -> instruction result = fun t ->
       let expr = E_constant ("MAP_REMOVE", [key' ; make_e_a (E_variable map)]) in
       ok @@ I_assignment {name = map ; annotated_expression = make_e_a expr}
   | SetRemove _ -> simple_fail "no set remove yet"
+
+and simpl_path : Raw.path -> string * Ast_simplified.access_path = fun p ->
+  match p with
+  | Raw.Name v -> (v.value , [])
+  | Raw.Path p -> (
+      let p' = p.value in
+      let var = p'.struct_name.value in
+      let path = p'.field_path in
+      let path' =
+        let aux (s:Raw.selection) =
+          match s with
+          | FieldName property -> Access_record property.value
+          | Component index -> Access_tuple (Z.to_int (snd index.value))
+        in
+        List.map aux @@ npseq_to_list path in
+      (var , path')
+    )
 
 and simpl_cases : type a . (Raw.pattern * a) list -> a matching result = fun t ->
   let open Raw in

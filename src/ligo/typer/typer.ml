@@ -123,10 +123,31 @@ and type_instruction (e:environment) : I.instruction -> (environment * O.instruc
           let e' = Environment.add_ez_ae name annotated_expression e in
           ok (e', [O.I_assignment (make_n_e name annotated_expression)])
     )
-  | I_matching (ex, m) ->
+  | I_matching (ex, m) -> (
       let%bind ex' = type_annotated_expression e ex in
-      let%bind m' = type_match type_block e ex'.type_annotation m in
-      return @@ O.I_matching (ex', m')
+      match m with
+      (* Special case for assert-like failwiths. TODO: CLEAN THIS. *)
+      | I.Match_bool { match_false ; match_true = [ I_do { expression = E_failwith fw } ] } -> (
+          let%bind fw' = type_annotated_expression e fw in
+          let%bind mf' = type_block e match_false in
+          let%bind () =
+            trace_strong (simple_error "Matching bool on not-a-bool")
+            @@ assert_t_bool (get_type_annotation ex') in
+          let mt' = [ O.I_do (
+              make_a_e
+                (E_failwith fw')
+                (t_unit ())
+                e
+            ) ]
+          in
+          let m' = O.Match_bool { match_true = mt' ; match_false = mf' } in
+          return (O.I_matching (ex' , m'))
+        )
+      | _ -> (
+          let%bind m' = type_match type_block e ex'.type_annotation m in
+          return @@ O.I_matching (ex', m')
+        )
+    )
   | I_record_patch (r, path, lst) ->
       let aux (s, ae) =
         let%bind ae' = type_annotated_expression e ae in

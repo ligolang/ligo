@@ -9,5 +9,6 @@ let () =
     Transpiler_tests.main ;
     Typer_tests.main ;
     Heap_tests.main ;
+    (* Coase_tests.main ; *)
   ] ;
   ()
