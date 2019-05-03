@@ -5,8 +5,8 @@ type type_name = string
 type type_base =
   | Base_unit
   | Base_bool
-  | Base_int | Base_nat
-  | Base_string | Base_bytes
+  | Base_int | Base_nat | Base_tez
+  | Base_string | Base_bytes | Base_address
   | Base_operation
 
 type type_value =
@@ -84,6 +84,7 @@ and statement' =
   | S_environment_add of (var_name * type_value)
   | S_declaration of assignment (* First assignment *)
   | S_assignment of assignment
+  | S_do of expression
   | S_cond of expression * block * block
   | S_patch of string * [`Left | `Right] list * expression
   | S_if_none of expression * block * ((var_name * type_value) * block)

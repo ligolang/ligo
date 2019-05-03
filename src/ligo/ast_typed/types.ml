@@ -106,6 +106,7 @@ and literal =
   | Literal_tez of int
   | Literal_string of string
   | Literal_bytes of bytes
+  | Literal_address of string
 
 and block = instruction list
 and b = block

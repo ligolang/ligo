@@ -146,6 +146,11 @@ let record () : unit result  =
     expect_n program "projection" make_input make_expected
   in
   let%bind () =
+    let make_input = record_ez_int ["foo" ; "bar"] in
+    let make_expected = fun n -> ez_e_a_record [("foo" , e_a_int 256) ; ("bar" , e_a_int n) ] in
+    expect_n program "modify" make_input make_expected
+  in
+  let%bind () =
     let expected = record_ez_int ["a";"b";"c";"d";"e"] 23 in
     expect_evaluate program "br" expected
   in

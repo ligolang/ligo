@@ -163,3 +163,9 @@ let get_a_accessor = fun t ->
 let assert_a_accessor = fun t ->
   let%bind _ = get_a_accessor t in
   ok ()
+
+let get_access_record : access -> string result = fun a ->
+  match a with
+  | Access_tuple _
+  | Access_map _ -> simple_fail "not an access record"
+  | Access_record s -> ok s

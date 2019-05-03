@@ -24,6 +24,8 @@ module Simplify = struct
     ("get_force" , 2) ;
     ("size" , 1) ;
     ("int" , 1) ;
+    ("amount" , 0) ;
+    ("unit" , 0) ;
   ]
 
   module Camligo = struct
@@ -132,7 +134,10 @@ module Typer = struct
   let comparator : string -> typer = fun s -> s , 2 , [
       (eq_2 (t_int ()), constant_2 s (t_bool ())) ;
       (eq_2 (t_nat ()), constant_2 s (t_bool ())) ;
+      (eq_2 (t_tez ()), constant_2 s (t_bool ())) ;
       (eq_2 (t_bytes ()), constant_2 s (t_bool ())) ;
+      (eq_2 (t_string ()), constant_2 s (t_bool ())) ;
+      (eq_2 (t_address ()), constant_2 s (t_bool ())) ;
     ]
 
   let boolean_operator_2 : string -> typer = fun s -> very_same_2 s (t_bool ())
@@ -211,6 +216,10 @@ module Typer = struct
       predicate_0 , typer_constant ("UNIT", t_unit ())
     ]
 
+  let amount = "amount" , 0 , [
+      predicate_0 , typer_constant ("AMOUNT", t_tez ())
+    ]
+
   let transaction = "Operation.transaction" , 3 , [
       true_3 , typer'_3 (
         fun param contract amount ->
@@ -236,12 +245,6 @@ module Typer = struct
       )
     ]
 
-  (* let record_assign = "RECORD_ASSIGN" , 2 , [
-   *     true_2 , typer'_2 (fun path new_value ->
-   *         let%bind (a , b) = get_a_record_accessor path in
-   *       )
-   *   ] *)
-
   let num_2 : typer_predicate =
     let aux = fun a b ->
       (type_value_eq (a , t_int ()) || type_value_eq (a , t_nat ())) &&
@@ -250,6 +253,17 @@ module Typer = struct
 
   let mod_ = "MOD" , 2 , [
       num_2 , constant_2 "MOD" (t_nat ()) ;
+    ]
+
+  let times = "TIMES" , 2 , [
+      (eq_2 (t_nat ()) , constant_2 "TIMES_NAT" (t_nat ())) ;
+      (num_2 , constant_2 "TIMES_INT" (t_int ())) ;
+      (
+        let aux a b =
+          (type_value_eq (a , t_nat ()) && type_value_eq (b , t_tez ())) ||
+          (type_value_eq (b , t_nat ()) && type_value_eq (a , t_tez ())) in
+       predicate_2 aux , constant_2 "TIMES_TEZ" (t_tez ())
+     ) ;
     ]
 
   let constant_typers =
@@ -261,10 +275,7 @@ module Typer = struct
         ("ADD_NAT" , t_nat ()) ;
         ("CONCAT" , t_string ()) ;
       ] ;
-      same_2 "TIMES" [
-        ("TIMES_INT" , t_int ()) ;
-        ("TIMES_NAT" , t_nat ()) ;
-      ] ;
+      times ;
       same_2 "DIV" [
         ("DIV_INT" , t_int ()) ;
         ("DIV_NAT" , t_nat ()) ;
@@ -292,6 +303,7 @@ module Typer = struct
       sender ;
       source ;
       unit ;
+      amount ;
       transaction ;
       get_contract ;
     ]
@@ -324,6 +336,7 @@ module Compiler = struct
     ("SUB_NAT" , simple_binary @@ prim I_SUB) ;
     ("TIMES_INT" , simple_binary @@ prim I_MUL) ;
     ("TIMES_NAT" , simple_binary @@ prim I_MUL) ;
+    ("TIMES_TEZ" , simple_binary @@ prim I_MUL) ;
     ("DIV_INT" , simple_binary @@ seq [prim I_EDIV ; i_assert_some_msg (i_push_string "DIV by 0") ; i_car]) ;
     ("DIV_NAT" , simple_binary @@ seq [prim I_EDIV ; i_assert_some_msg (i_push_string "DIV by 0") ; i_car]) ;
     ("MOD" , simple_binary @@ seq [prim I_EDIV ; i_assert_some_msg (i_push_string "MOD by 0") ; i_cdr]) ;
@@ -344,8 +357,12 @@ module Compiler = struct
     ("GET_FORCE" , simple_binary @@ seq [prim I_GET ; i_assert_some_msg (i_push_string "GET_FORCE")]) ;
     ("GET" , simple_binary @@ prim I_GET) ;
     ("SIZE" , simple_unary @@ prim I_SIZE) ;
+    ("FAILWITH" , simple_unary @@ prim I_FAILWITH) ;
+    ("ASSERT" , simple_binary @@ i_if (seq [i_failwith]) (seq [i_drop ; i_push_unit])) ;
     ("INT" , simple_unary @@ prim I_INT) ;
     ("CONS" , simple_binary @@ prim I_CONS) ;
+    ("UNIT" , simple_constant @@ prim I_UNIT) ;
+    ("AMOUNT" , simple_constant @@ prim I_AMOUNT) ;
     ( "MAP_UPDATE" , simple_ternary @@ seq [dip (i_some) ; prim I_UPDATE ]) ;
   ]
 

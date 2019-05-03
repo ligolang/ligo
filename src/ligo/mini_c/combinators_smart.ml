@@ -12,6 +12,7 @@ let statement s' env : statement =
   | S_environment_restrict -> s', environment_wrap env (Environment.restrict env)
   | S_environment_add (name, tv) -> s' , environment_wrap env (Environment.add (name , tv) env)
   | S_cond _ -> s' , id_environment_wrap env
+  | S_do _ -> s' , id_environment_wrap env
   | S_if_none _ -> s' , id_environment_wrap env
   | S_while _ -> s' , id_environment_wrap env
   | S_patch _ -> s' , id_environment_wrap env

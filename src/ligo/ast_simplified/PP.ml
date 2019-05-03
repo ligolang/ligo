@@ -21,6 +21,7 @@ let literal ppf (l:literal) = match l with
   | Literal_tez n -> fprintf ppf "%dtz" n
   | Literal_string s -> fprintf ppf "%S" s
   | Literal_bytes b -> fprintf ppf "0x%s" @@ Bytes.to_string @@ Bytes.escaped b
+  | Literal_address s -> fprintf ppf "@%S" s
 
 let rec expression ppf (e:expression) = match e with
   | E_literal l -> literal ppf l

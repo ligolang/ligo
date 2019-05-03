@@ -38,13 +38,13 @@ type action is
 
 function buy_single(const action : action_buy_single ; const s : storage_type) : (list(operation) * storage_type) is
   begin
-    const pattern : card_pattern = get_force(action.card_to_buy , s.card_patterns) ;
+    const card_pattern : card_pattern = get_force(action.card_to_buy , s.card_patterns) ;
     const price : tez = card_pattern.coefficient * (card_pattern.quantity + 1n) ;
     if (price > amount) then fail "Not enough money" else skip ;
     const operations : list(operation) = nil ;
-    pattern.quantity := pattern.quantity + 1n ;
+    card_pattern.quantity := card_pattern.quantity + 1n ;
     const card_patterns : card_patterns = s.card_patterns ;
-    card_patterns[action.card_to_buy] := pattern ;
+    card_patterns[action.card_to_buy] := card_pattern ;
     s.card_patterns := card_patterns ;
   end with (operations , s)
 

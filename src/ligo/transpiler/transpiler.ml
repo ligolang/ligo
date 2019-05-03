@@ -19,7 +19,9 @@ let rec translate_type (t:AST.type_value) : type_value result =
   | T_constant ("bool", []) -> ok (T_base Base_bool)
   | T_constant ("int", []) -> ok (T_base Base_int)
   | T_constant ("nat", []) -> ok (T_base Base_nat)
+  | T_constant ("tez", []) -> ok (T_base Base_tez)
   | T_constant ("string", []) -> ok (T_base Base_string)
+  | T_constant ("address", []) -> ok (T_base Base_address)
   | T_constant ("unit", []) -> ok (T_base Base_unit)
   | T_constant ("operation", []) -> ok (T_base Base_operation)
   | T_constant ("map", [key;value]) ->
@@ -31,7 +33,7 @@ let rec translate_type (t:AST.type_value) : type_value result =
   | T_constant ("option", [o]) ->
       let%bind o' = translate_type o in
       ok (T_option o')
-  | T_constant (name, _) -> fail (fun () -> error (thunk "unrecognized constant") (fun () -> name) ())
+  | T_constant (name, _) -> fail (fun () -> error (thunk "unrecognized type constant") (fun () -> name) ())
   | T_sum m ->
       let node = Append_tree.of_list @@ list_of_map m in
       let aux a b : type_value result =
@@ -124,20 +126,28 @@ and translate_instruction (env:Environment.t) (i:AST.instruction) : statement li
       let aux : ((AST.type_value * [`Left | `Right] list) as 'a) -> AST.access -> 'a result =
         fun (prev, acc) cur ->
           let%bind ty' = translate_type prev in
-        match cur with
-        | Access_tuple ind ->
-            let%bind ty_lst = AST.Combinators.get_t_tuple prev in
-            let%bind ty'_lst = bind_map_list translate_type ty_lst in
-            let%bind path = tuple_access_to_lr ty' ty'_lst ind in
-            let path' = List.map snd path in
-            ok (List.nth ty_lst ind, path' @ acc)
-        | Access_record prop ->
-            let%bind ty_map = AST.Combinators.get_t_record prev in
-            let%bind ty'_map = bind_map_smap translate_type ty_map in
-            let%bind (_, path) = record_access_to_lr ty' ty'_map prop in
-            let path' = List.map snd path in
-            ok (Map.String.find prop ty_map, path' @ acc)
-        | Access_map _k -> simple_fail "no patch for map yet"
+          match cur with
+          | Access_tuple ind ->
+              let%bind ty_lst = AST.Combinators.get_t_tuple prev in
+              let%bind ty'_lst = bind_map_list translate_type ty_lst in
+              let%bind path = tuple_access_to_lr ty' ty'_lst ind in
+              let path' = List.map snd path in
+              ok (List.nth ty_lst ind, path' @ acc)
+          | Access_record prop ->
+              let%bind ty_map =
+                let error =
+                  let title () = "accessing property on not a record" in
+                let content () = Format.asprintf "%s on %a in %a"
+                    prop Ast_typed.PP.type_value prev Ast_typed.PP.instruction i in
+                  error title content
+                in
+                trace error @@
+                AST.Combinators.get_t_record prev in
+              let%bind ty'_map = bind_map_smap translate_type ty_map in
+              let%bind (_, path) = record_access_to_lr ty' ty'_map prop in
+              let path' = List.map snd path in
+              ok (Map.String.find prop ty_map, path' @ acc)
+          | Access_map _k -> simple_fail "no patch for map yet"
       in
       let%bind (_, path) = bind_fold_list aux (ty, []) s in
       let%bind v' = translate_annotated_expression env v in
@@ -173,7 +183,10 @@ and translate_instruction (env:Environment.t) (i:AST.instruction) : statement li
       let%bind body' = translate_block env' body in
       return (S_while (expr', body'))
   | I_skip -> ok []
-  | I_do _ae -> simple_fail "todo : do"
+  | I_do ae -> (
+      let%bind ae' = translate_annotated_expression env ae in
+      return @@ S_do ae'
+    )
 
 and translate_literal : AST.literal -> value = fun l -> match l with
   | Literal_bool b -> D_bool b
@@ -182,6 +195,7 @@ and translate_literal : AST.literal -> value = fun l -> match l with
   | Literal_tez n -> D_tez n
   | Literal_bytes s -> D_bytes s
   | Literal_string s -> D_string s
+  | Literal_address s -> D_string s
   | Literal_unit -> D_unit
 
 and transpile_small_environment : AST.small_environment -> Environment.Small.t result = fun x ->
@@ -208,7 +222,10 @@ and translate_annotated_expression (env:Environment.t) (ae:AST.annotated_express
     ok @@ Combinators.Expression.make_tpl (expr, tv, env) in
   let f = translate_annotated_expression env in
   match ae.expression with
-  | E_failwith _ae -> simple_fail "todo : failwith"
+  | E_failwith ae -> (
+      let%bind ae' = translate_annotated_expression env ae in
+      return @@ E_constant ("FAILWITH" , [ae'])
+    )
   | E_literal l -> return @@ E_literal (translate_literal l)
   | E_variable name ->
       let%bind tv =
@@ -616,9 +633,15 @@ let rec untranspile (v : value) (t : AST.type_value) : AST.annotated_expression 
   | T_constant ("nat", []) ->
       let%bind n = get_nat v in
       return (E_literal (Literal_nat n))
+  | T_constant ("tez", []) ->
+      let%bind n = get_nat v in
+      return (E_literal (Literal_tez n))
   | T_constant ("string", []) ->
       let%bind n = get_string v in
       return (E_literal (Literal_string n))
+  | T_constant ("address", []) ->
+      let%bind n = get_string v in
+      return (E_literal (Literal_address n))
   | T_constant ("option", [o]) -> (
       match%bind get_option v with
       | None -> ok (e_a_empty_none o)

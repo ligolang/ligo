@@ -87,8 +87,17 @@ let easy_evaluate_typed_simplified (entry:string) (program:AST_Typed.program) : 
 let easy_evaluate_typed = trace_f_2_ez easy_evaluate_typed (thunk "easy evaluate typed")
 
 let easy_run_typed
-    ?(debug_mini_c = false) (entry:string)
+    ?(debug_mini_c = false) ?amount (entry:string)
     (program:AST_Typed.program) (input:AST_Typed.annotated_expression) : AST_Typed.annotated_expression result =
+  let%bind () =
+    let open Ast_typed in
+    let%bind (Declaration_constant (d , _)) = get_declaration_by_name program entry in
+    let%bind (arg_ty , _) =
+      trace_strong (simple_error "entry-point doesn't have a function type") @@
+      get_t_function @@ get_type_annotation d.annotated_expression in
+    Ast_typed.assert_type_value_eq (arg_ty , (Ast_typed.get_type_annotation input))
+  in
+
   let%bind mini_c_main =
     trace (simple_error "transpile mini_c entry") @@
     transpile_entry program entry in
@@ -106,7 +115,7 @@ let easy_run_typed
       in
       error title content in
     trace error @@
-    Run_mini_c.run_entry mini_c_main mini_c_value in
+    Run_mini_c.run_entry ?amount mini_c_main mini_c_value in
   let%bind typed_result =
     let%bind main_result_type =
       let%bind typed_main = Ast_typed.get_functional_entry program entry in
@@ -117,7 +126,7 @@ let easy_run_typed
   ok typed_result
 
 let easy_run_typed_simplified
-    ?(debug_mini_c = false) (entry:string)
+    ?(debug_mini_c = false) ?amount (entry:string)
     (program:AST_Typed.program) (input:Ast_simplified.annotated_expression) : Ast_simplified.annotated_expression result =
   let%bind mini_c_main =
     trace (simple_error "transpile mini_c entry") @@
@@ -143,7 +152,7 @@ let easy_run_typed_simplified
       in
       error title content in
     trace error @@
-    Run_mini_c.run_entry mini_c_main mini_c_value in
+    Run_mini_c.run_entry ?amount mini_c_main mini_c_value in
   let%bind typed_result =
     let%bind main_result_type =
       let%bind typed_main = Ast_typed.get_functional_entry program entry in

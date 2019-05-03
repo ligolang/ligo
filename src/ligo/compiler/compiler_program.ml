@@ -451,6 +451,26 @@ and translate_statement ((s', w_env) as s:statement) : michelson result =
             prim I_CAR ;
             prim ~children:[seq [a'];seq [b']] I_IF ;
           ])
+    | S_do expr -> (
+        match Combinators.Expression.get_content expr with
+        | E_constant ("FAILWITH" , [ fw ] ) -> (
+            let%bind fw' = translate_expression fw in
+            ok @@ seq [
+              i_push_unit ;
+              fw' ;
+              i_car ;
+              i_failwith ;
+            ]
+          )
+        | _ -> (
+            let%bind expr' = translate_expression expr in
+            ok @@ seq [
+              i_push_unit ;
+              expr' ;
+              i_drop ;
+            ]
+          )
+      )
     | S_if_none (expr, none, ((name, tv), some)) ->
         let%bind expr = translate_expression expr in
         let%bind none' = translate_regular_block none in
@@ -510,7 +530,7 @@ and translate_statement ((s', w_env) as s:statement) : michelson result =
                                    ok (fun () -> error (thunk "error parsing statement code")
                                                  (fun () -> error_message)
                                                  ())) @@
-      Tezos_utils.Memory_proto_alpha.parse_michelson code
+      Tezos_utils.Memory_proto_alpha.parse_michelson_fail code
         input_stack_ty output_stack_ty
     in
     ok ()

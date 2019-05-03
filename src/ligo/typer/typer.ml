@@ -127,21 +127,18 @@ and type_instruction (e:environment) : I.instruction -> (environment * O.instruc
       let%bind ex' = type_annotated_expression e ex in
       match m with
       (* Special case for assert-like failwiths. TODO: CLEAN THIS. *)
-      | I.Match_bool { match_false ; match_true = [ I_do { expression = E_failwith fw } ] } -> (
+      | I.Match_bool { match_false = [] ; match_true = [ I_do { expression = E_failwith fw } ] }
+      | I.Match_bool { match_false = [ I_skip ] ; match_true = [ I_do { expression = E_failwith fw } ] } -> (
           let%bind fw' = type_annotated_expression e fw in
-          let%bind mf' = type_block e match_false in
           let%bind () =
             trace_strong (simple_error "Matching bool on not-a-bool")
             @@ assert_t_bool (get_type_annotation ex') in
-          let mt' = [ O.I_do (
-              make_a_e
-                (E_failwith fw')
-                (t_unit ())
-                e
-            ) ]
+          let assert_ = make_a_e
+              (E_constant ("ASSERT" , [ex' ; fw']))
+              (t_unit ())
+              e
           in
-          let m' = O.Match_bool { match_true = mt' ; match_false = mf' } in
-          return (O.I_matching (ex' , m'))
+          return (O.I_do assert_)
         )
       | _ -> (
           let%bind m' = type_match type_block e ex'.type_annotation m in
@@ -176,7 +173,7 @@ and type_instruction (e:environment) : I.instruction -> (environment * O.instruc
               ok (v , O.Access_map ind')
         in
         let%bind path' = bind_fold_map_list aux ty.type_value (path @ [Access_record s]) in
-        ok @@ O.I_patch (tv, path' @ [Access_record s], ae')
+        ok @@ O.I_patch (tv, path', ae')
       in
       let%bind lst' = bind_map_list aux lst in
       ok (e, lst')
@@ -337,6 +334,8 @@ and type_annotated_expression : environment -> I.annotated_expression -> O.annot
       return (E_literal (Literal_nat n)) (t_nat ())
   | E_literal (Literal_tez n) ->
       return (E_literal (Literal_tez n)) (t_tez ())
+  | E_literal (Literal_address s) ->
+      return (e_address s) (t_address ())
   (* Tuple *)
   | E_tuple lst ->
       let%bind lst' = bind_list @@ List.map (type_annotated_expression e) lst in
@@ -569,6 +568,7 @@ let untype_literal (l:O.literal) : I.literal result =
   | Literal_int n -> ok (Literal_int n)
   | Literal_string s -> ok (Literal_string s)
   | Literal_bytes b -> ok (Literal_bytes b)
+  | Literal_address s -> ok (Literal_address s)
 
 let rec untype_annotated_expression (e:O.annotated_expression) : (I.annotated_expression) result =
   let open I in

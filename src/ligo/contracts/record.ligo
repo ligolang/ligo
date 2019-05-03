@@ -13,6 +13,11 @@ function projection (const r : foobar) : int is
     skip
   end with r.foo + r.bar
 
+function modify (const r : foobar) : foobar is
+  block {
+    r.foo := 256 ;
+  } with r
+
 type big_record is record
      a : int ;
      b : int ;

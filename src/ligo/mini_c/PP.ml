@@ -11,7 +11,9 @@ let type_base ppf : type_base -> _ = function
   | Base_bool -> fprintf ppf "bool"
   | Base_int -> fprintf ppf "int"
   | Base_nat -> fprintf ppf "nat"
+  | Base_tez -> fprintf ppf "tez"
   | Base_string -> fprintf ppf "string"
+  | Base_address -> fprintf ppf "address"
   | Base_bytes -> fprintf ppf "bytes"
   | Base_operation -> fprintf ppf "operation"
 
@@ -109,6 +111,7 @@ and statement ppf ((s, _) : statement) = match s with
   | S_environment_add (name, tv) -> fprintf ppf "add %s %a" name type_ tv
   | S_declaration ass -> declaration ppf ass
   | S_assignment ass -> assignment ppf ass
+  | S_do e -> fprintf ppf "do %a" expression e
   | S_cond (expr, i, e) -> fprintf ppf "if (%a) %a %a" expression expr block i block e
   | S_patch (r, path, e) ->
       let aux = fun ppf -> function `Left -> fprintf ppf ".L" | `Right -> fprintf ppf ".R" in

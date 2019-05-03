@@ -91,7 +91,7 @@ let get_t_sum (t:type_value) : type_value SMap.t result = match t.type_value' wi
 
 let get_t_record (t:type_value) : type_value SMap.t result = match t.type_value' with
   | T_record m -> ok m
-  | _ -> simple_fail "not a record"
+  | _ -> simple_fail "not a record type"
 
 let get_t_map (t:type_value) : (type_value * type_value) result =
   match t.type_value' with
@@ -143,16 +143,20 @@ let e_map lst : expression = E_map lst
 let e_unit : expression = E_literal (Literal_unit)
 let e_int n : expression = E_literal (Literal_int n)
 let e_nat n : expression = E_literal (Literal_nat n)
+let e_tez n : expression = E_literal (Literal_tez n)
 let e_bool b : expression = E_literal (Literal_bool b)
 let e_string s : expression = E_literal (Literal_string s)
+let e_address s : expression = E_literal (Literal_address s)
 let e_pair a b : expression = E_tuple [a; b]
 let e_list lst : expression = E_list lst
 
 let e_a_unit = make_a_e e_unit (t_unit ())
 let e_a_int n = make_a_e (e_int n) (t_int ())
 let e_a_nat n = make_a_e (e_nat n) (t_nat ())
+let e_a_tez n = make_a_e (e_tez n) (t_tez ())
 let e_a_bool b = make_a_e (e_bool b) (t_bool ())
 let e_a_string s = make_a_e (e_string s) (t_string ())
+let e_a_address s = make_a_e (e_address s) (t_address ())
 let e_a_pair a b = make_a_e (e_pair a b) (t_pair a.type_annotation b.type_annotation ())
 let e_a_some s = make_a_e (e_some s) (t_option s.type_annotation ())
 let e_a_none t = make_a_e e_none (t_option t ())
