@@ -13,14 +13,22 @@ let test name f =
 
 open Ast_simplified.Combinators
 
-let expect program entry_point input expected =
+type options = {
+  amount : Memory_proto_alpha.Alpha_context.Tez.t option ;
+}
+
+let make_options ?amount () = {
+  amount ;
+}
+
+let expect ?(options = make_options ()) program entry_point input expected =
   let%bind result =
     let run_error =
       let title () = "expect run" in
       let content () = Format.asprintf "Entry_point: %s" entry_point in
       error title content in
     trace run_error @@
-    Ligo.easy_run_typed_simplified entry_point program input in
+    Ligo.easy_run_typed_simplified ?amount:options.amount entry_point program input in
   let expect_error =
     let title () = "expect result" in
     let content () = Format.asprintf "Expected %a, got %a"
@@ -39,22 +47,22 @@ let expect_evaluate program entry_point expected =
   let%bind result = Ligo.easy_evaluate_typed_simplified entry_point program in
   Ast_simplified.assert_value_eq (expected , result)
 
-let expect_n_aux lst program entry_point make_input make_expected =
+let expect_n_aux ?options lst program entry_point make_input make_expected =
   let aux n =
     let input = make_input n in
     let expected = make_expected n in
     trace (simple_error ("expect_n " ^ (string_of_int n))) @@
-    let result = expect program entry_point input expected in
+    let result = expect ?options program entry_point input expected in
     result
   in
   let%bind _ = bind_map_list aux lst in
   ok ()
 
-let expect_n = expect_n_aux [0 ; 2 ; 42 ; 163 ; -1]
-let expect_n_pos = expect_n_aux [0 ; 2 ; 42 ; 163]
-let expect_n_strict_pos = expect_n_aux [2 ; 42 ; 163]
-let expect_n_pos_small = expect_n_aux [0 ; 2 ; 10]
-let expect_n_strict_pos_small = expect_n_aux [2 ; 10]
+let expect_n ?options = expect_n_aux ?options [0 ; 2 ; 42 ; 163 ; -1]
+let expect_n_pos ?options = expect_n_aux ?options [0 ; 2 ; 42 ; 163]
+let expect_n_strict_pos ?options = expect_n_aux ?options [2 ; 42 ; 163]
+let expect_n_pos_small ?options = expect_n_aux ?options [0 ; 2 ; 10]
+let expect_n_strict_pos_small ?options = expect_n_aux ?options [2 ; 10]
 let expect_n_pos_mid = expect_n_aux [0 ; 2 ; 10 ; 33]
 
 let expect_b program entry_point make_expected =

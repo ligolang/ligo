@@ -98,6 +98,14 @@ let get_t_map (t:type_value) : (type_value * type_value) result =
   | T_constant ("map", [k;v]) -> ok (k, v)
   | _ -> simple_fail "get: not a map"
 
+let get_t_map_key : type_value -> type_value result = fun t ->
+  let%bind (key , _) = get_t_map t in
+  ok key
+
+let get_t_map_value : type_value -> type_value result = fun t ->
+  let%bind (_ , value) = get_t_map t in
+  ok value
+
 let assert_t_tez :type_value -> unit result = get_t_tez
 
 let assert_t_map (t:type_value) : unit result =

@@ -457,18 +457,22 @@ and type_annotated_expression : environment -> I.annotated_expression -> O.annot
               let%bind _eq = Ast_typed.assert_type_value_eq (c, c') in
               ok (Some c') in
         let%bind key_type =
-          let%bind opt =
+          let%bind sub =
             bind_fold_list aux None
             @@ List.map get_type_annotation
             @@ List.map fst lst' in
-          trace_option (simple_error "empty map expression") opt
+          let%bind annot = bind_map_option get_t_map_key tv_opt in
+          trace (simple_error "untyped empty map expression") @@
+          O.merge_annotation annot sub
         in
         let%bind value_type =
-          let%bind opt =
+          let%bind sub =
             bind_fold_list aux None
             @@ List.map get_type_annotation
             @@ List.map snd lst' in
-          trace_option (simple_error "empty map expression") opt
+          let%bind annot = bind_map_option get_t_map_value tv_opt in
+          trace (simple_error "untyped empty map expression") @@
+          O.merge_annotation annot sub
         in
         ok (t_map key_type value_type ())
       in

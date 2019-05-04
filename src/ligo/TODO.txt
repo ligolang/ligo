@@ -1,2 +1,19 @@
-- Unify gets in Ast_simplified
-- Unify assignments in Ast_simplified
+# Main
+
+## Back-end
+
+- Replace Mini_c environments with stacks
+- Think about Coq
+
+## Amendments
+
+- Bubble_n
+- Partial application
+- Type size limit (1.000 -> 10.000)
+
+# PPX
+
+## Deriving
+
+- Generate ADT helpers (this removes 90% of Combinators and a lot of maintenance when modifying ASTs)
+- Generate option helpers (this makes writing main much easier, much like one would in an untyped language)
