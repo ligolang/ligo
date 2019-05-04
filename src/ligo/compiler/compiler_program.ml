@@ -38,11 +38,6 @@ let get_predicate : string -> type_value -> expression list -> predicate result 
       | x -> simple_fail ("predicate \"" ^ x ^ "\" doesn't exist")
     )
 
-let virtual_push = fun first m ->
-  match first with
-  | true -> m
-  | false -> seq [m ; i_pair]
-
 let rec translate_value (v:value) : michelson result = match v with
   | D_bool b -> ok @@ prim (if b then D_True else D_False)
   | D_int n -> ok @@ int (Z.of_int n)
@@ -78,8 +73,6 @@ and translate_function (content:anon_function) : michelson result =
 and translate_expression ?(first=false) (expr:expression) (env:environment) : (michelson * environment) result =
   let (expr' , ty , _) = Combinators.Expression.(get_content expr , get_type expr , get_environment expr) in
   let error_message () = Format.asprintf  "%a" PP.expression expr in
-  let virtual_push_first = virtual_push first in
-  let virtual_push = virtual_push false in
 
   let return code =
     let%bind (Stack.Ex_stack_ty input_stack_ty) = Compiler_type.Ty.environment env in
@@ -118,20 +111,19 @@ and translate_expression ?(first=false) (expr:expression) (env:environment) : (m
   | E_literal v ->
       let%bind v = translate_value v in
       let%bind t = Compiler_type.type_ ty in
-      return @@ virtual_push_first @@ i_push t v
+      return @@ i_push t v
   | E_application(f, arg) -> (
       match Combinators.Expression.get_type f with
       | T_function _ -> (
           trace (simple_error "Compiling quote application") @@
           let%bind (f , env') = translate_expression ~first f env in
           let%bind (arg , _) = translate_expression arg env' in
-          return @@ virtual_push @@ seq [
+          return @@ seq [
             i_comment "quote application" ;
             i_comment "get f" ;
             f ;
             i_comment "get arg" ;
             arg ;
-            i_unpair ; dip i_unpair ;
             prim I_EXEC ;
           ]
         )
@@ -150,15 +142,14 @@ and translate_expression ?(first=false) (expr:expression) (env:environment) : (m
             error error_title error_content
           in
           trace error @@
-          return @@ virtual_push @@ seq [
+          return @@ seq [
             i_comment "(* unit :: env *)" ;
             i_comment "compute arg" ;
-            arg' ; i_unpair ;
+            arg' ;
             i_comment "(* (arg * unit) :: env *)" ;
             i_comment "compute closure" ;
-            dip @@ seq [f' ; i_unpair ; i_unpair] ;
+            dip @@ seq [f' ; i_unpair] ;
             i_comment "(* arg :: capture :: f :: unit :: env *)" ;
-            i_pair ;
             i_exec ; (* output :: stack :: env *)
           ]
         )
@@ -166,14 +157,16 @@ and translate_expression ?(first=false) (expr:expression) (env:environment) : (m
     )
   | E_variable x ->
       let%bind code = Compiler_environment.get env x in
-      return @@ seq [
-        dip (seq [i_dup ; code]) ;
-        i_swap ;
-      ]
+      return code
   | E_constant(str, lst) ->
+      let module L = Logger.Stateful() in
       let%bind lst' =
         let aux env expr =
-          let%bind (code , env') = translate_expression ~first expr env in
+          let%bind (code , env') = translate_expression expr env in
+          L.log @@ Format.asprintf "\n%a -> %a in %a\n"
+            PP.expression expr
+            Michelson.pp code
+            PP.environment env ;
           ok (env' , code)
         in
         bind_fold_map_list aux env lst in
@@ -183,26 +176,22 @@ and translate_expression ?(first=false) (expr:expression) (env:environment) : (m
             c ;
           ]
         | Unary f, 1 -> ok @@ seq @@ lst' @ [
-            i_unpair ;
             f ;
           ]
         | Binary f, 2 -> ok @@ seq @@ lst' @ [
-            i_unpair ;
-            dip i_unpair ;
-            i_swap ;
             f ;
           ]
         | Ternary f, 3 -> ok @@ seq @@ lst' @ [
-            i_unpair ;
-            dip i_unpair ;
-            dip (dip i_unpair) ;
-            i_swap ;
-            dip i_swap ;
-            i_swap ;
             f ;
           ]
         | _ -> simple_fail "bad arity"
       in
+      let error =
+        let title () = "error compiling constant" in
+        let content () = L.get ()
+        in
+        error title content in
+      trace error @@
       return code
   | E_empty_map sd ->
       let%bind (src, dst) = bind_map_pair Compiler_type.type_ sd in
@@ -238,11 +227,11 @@ and translate_expression ?(first=false) (expr:expression) (env:environment) : (m
       return code
     )
   | E_if_left (c, (_ , l), (_ , r)) -> (
-      let%bind (c' , env') = translate_expression c env in
-      let%bind (l' , _) = translate_expression l env' in
-      let%bind (r' , _) = translate_expression r env' in
-      let%bind restrict_l = Compiler_environment.select_env env l.environment in
-      let%bind restrict_r = Compiler_environment.select_env env r.environment in
+      let%bind (c' , _env') = translate_expression c env in
+      let%bind (l' , _) = translate_expression l l.environment in
+      let%bind (r' , _) = translate_expression r l.environment in
+      let%bind restrict_l = Compiler_environment.select_env l.environment env in
+      let%bind restrict_r = Compiler_environment.select_env r.environment env in
       let%bind code = ok (seq [
           c' ; i_unpair ;
           i_if_left (seq [
@@ -260,14 +249,13 @@ and translate_expression ?(first=false) (expr:expression) (env:environment) : (m
         ]) in
       return code
     )
-  | E_let_in (_, expr , body) -> (
+  | E_let_in (v, expr , body) -> (
       let%bind (expr' , _) = translate_expression expr env in
-      let%bind (body' , _) = translate_expression body env in
-      let%bind restrict = Compiler_environment.select_env env body.environment in
+      let env' = Environment.add v env in
+      let%bind (body' , _) = translate_expression body env' in
+      let%bind restrict = Compiler_environment.select_env env' env in
       let%bind code = ok (seq [
           expr' ;
-          i_unpair ;
-          i_swap ; dip i_pair ;
           body' ;
           i_comment "restrict let" ;
           dip restrict ;
@@ -318,7 +306,7 @@ and translate_statement ((s', w_env) as s:statement) : michelson result =
         i_comment "declaration" ;
         seq [
           i_comment "expr" ;
-          i_push_unit ; expr ; i_car ;
+          expr ;
         ] ;
         seq [
           i_comment "env <- env . expr" ;
@@ -332,7 +320,7 @@ and translate_statement ((s', w_env) as s:statement) : michelson result =
         i_comment "assignment" ;
         seq [
           i_comment "expr" ;
-          i_push_unit ; expr ; i_car ;
+          expr ;
         ] ;
         seq [
           i_comment "env <- env . expr" ;
@@ -354,16 +342,13 @@ and translate_statement ((s', w_env) as s:statement) : michelson result =
       | E_constant ("FAILWITH" , [ fw ] ) -> (
           let%bind (fw' , _) = translate_expression fw w_env.pre_environment in
           return @@ seq [
-            i_push_unit ;
             fw' ;
-            i_car ;
             i_failwith ;
           ]
         )
       | _ -> (
           let%bind (expr' , _) = translate_expression expr w_env.pre_environment in
           return @@ seq [
-            i_push_unit ;
             expr' ;
             i_drop ;
           ]
@@ -449,14 +434,15 @@ and translate_regular_block ((b, env):block) : michelson result =
   ok code
 
 and translate_quote_body ({body;result} as f:anon_function) : michelson result =
-  let%bind body = translate_regular_block body in
-  let%bind (expr , _) = translate_expression result Environment.empty in
+  let%bind body' = translate_regular_block body in
+  let%bind (expr , _) = translate_expression result (snd body).post_environment in
+  let%bind restrict = Compiler_environment.clear (snd body).post_environment in
   let code = seq [
       i_comment "function body" ;
-      body ;
+      body' ;
       i_comment "function result" ;
       expr ;
-      dip i_drop ;
+      dip restrict ;
     ] in
 
   let%bind _assert_type =
@@ -466,10 +452,11 @@ and translate_quote_body ({body;result} as f:anon_function) : michelson result =
     let output_stack_ty = Stack.(output_ty @: nil) in
     let error_message () =
       Format.asprintf
-        "\ncode : %a\ninput : %a\noutput : %a\n"
+        "\ncode : %a\ninput : %a\noutput : %a\nenv : %a\n"
         Tezos_utils.Micheline.Michelson.pp code
         PP.type_ f.input
         PP.type_ f.output
+        PP.environment (snd body).post_environment
     in
     let%bind _ =
       Trace.trace_tzresult_lwt (

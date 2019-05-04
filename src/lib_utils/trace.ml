@@ -186,8 +186,8 @@ let bind_fold_map_list = fun f acc lst ->
         f acc hd >>? fun (acc' , hd') ->
         aux (acc' , hd' :: prev) f tl
   in
-  aux (acc , []) f (List.rev lst) >>? fun (_acc' , lst') ->
-  ok lst'
+  aux (acc , []) f lst >>? fun (_acc' , lst') ->
+  ok @@ List.rev lst'
 
 let bind_fold_right_list f init lst =
   let aux x y =

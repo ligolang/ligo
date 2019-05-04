@@ -126,7 +126,7 @@ let easy_run_typed
   ok typed_result
 
 let easy_run_typed_simplified
-    ?(debug_mini_c = false) ?amount (entry:string)
+    ?(debug_mini_c = false) ?(debug_michelson = false) ?amount (entry:string)
     (program:AST_Typed.program) (input:Ast_simplified.annotated_expression) : Ast_simplified.annotated_expression result =
   let%bind mini_c_main =
     trace (simple_error "transpile mini_c entry") @@
@@ -152,7 +152,7 @@ let easy_run_typed_simplified
       in
       error title content in
     trace error @@
-    Run_mini_c.run_entry ?amount mini_c_main mini_c_value in
+    Run_mini_c.run_entry ~debug_michelson ?amount mini_c_main mini_c_value in
   let%bind typed_result =
     let%bind main_result_type =
       let%bind typed_main = Ast_typed.get_functional_entry program entry in

@@ -1,6 +1,6 @@
 open Trace
 open Mini_c
-open Compiler.Program
+open! Compiler.Program
 open Memory_proto_alpha.Script_ir_translator
 
 let run_aux ?amount (program:compiled_program) (input_michelson:Michelson.t) : ex_typed_value result =
@@ -29,7 +29,7 @@ let run_node (program:program) (input:Michelson.t) : Michelson.t result =
     Tezos_utils.Memory_proto_alpha.unparse_michelson_data output_ty output in
   ok output
 
-let run_entry ?amount (entry:anon_function) (input:value) : value result =
+let run_entry ?(debug_michelson = false) ?amount (entry:anon_function) (input:value) : value result =
   let%bind compiled =
     let error =
       let title () = "compile entry" in
@@ -39,6 +39,7 @@ let run_entry ?amount (entry:anon_function) (input:value) : value result =
       error title content in
     trace error @@
     translate_entry entry in
+  if debug_michelson then Format.printf "Program: %a\n" Michelson.pp compiled.body ;
   let%bind input_michelson = translate_value input in
   let%bind ex_ty_value = run_aux ?amount compiled input_michelson in
   let%bind (result : value) = Compiler.Uncompiler.translate_value ex_ty_value in

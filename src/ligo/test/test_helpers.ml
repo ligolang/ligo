@@ -28,7 +28,7 @@ let expect ?(options = make_options ()) program entry_point input expected =
       let content () = Format.asprintf "Entry_point: %s" entry_point in
       error title content in
     trace run_error @@
-    Ligo.easy_run_typed_simplified ?amount:options.amount entry_point program input in
+    Ligo.easy_run_typed_simplified ~debug_michelson:true ?amount:options.amount entry_point program input in
   let expect_error =
     let title () = "expect result" in
     let content () = Format.asprintf "Expected %a, got %a"
