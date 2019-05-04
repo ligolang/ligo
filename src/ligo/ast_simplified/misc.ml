@@ -23,6 +23,9 @@ let assert_literal_eq (a, b : literal * literal) : unit result =
   | Literal_bytes _, _ -> simple_fail "bytes vs non-bytes"
   | Literal_unit, Literal_unit -> ok ()
   | Literal_unit, _ -> simple_fail "unit vs non-unit"
+  | Literal_address a, Literal_address b when a = b -> ok ()
+  | Literal_address _, Literal_address _ -> simple_fail "different addresss"
+  | Literal_address _, _ -> simple_fail "address vs non-address"
 
 let rec assert_value_eq (a, b: (value*value)) : unit result =
   let error_content () =

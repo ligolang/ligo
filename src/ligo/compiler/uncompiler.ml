@@ -29,10 +29,17 @@ let rec translate_value (Ex_typed_value (ty, value)) : value result =
         trace_option (simple_error "too big to fit an int") @@
         Alpha_context.Script_int.to_int n in
       ok @@ D_nat n
+  | (Mutez_t _), n ->
+      let%bind n =
+        generic_try (simple_error "too big to fit an int") @@
+        (fun () -> Int64.to_int @@ Alpha_context.Tez.to_mutez n) in
+      ok @@ D_nat n
   | (Bool_t _), b ->
       ok @@ D_bool b
   | (String_t _), s ->
       ok @@ D_string s
+  | (Address_t _), s ->
+      ok @@ D_string (Alpha_context.Contract.to_b58check s)
   | (Unit_t _), () ->
       ok @@ D_unit
   | (Option_t _), None ->

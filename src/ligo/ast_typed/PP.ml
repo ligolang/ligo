@@ -62,6 +62,7 @@ and literal ppf (l:literal) : unit =
   | Literal_tez n -> fprintf ppf "%dtz" n
   | Literal_string s -> fprintf ppf "%s" s
   | Literal_bytes b -> fprintf ppf "0x%s" @@ Bytes.to_string @@ Bytes.escaped b
+  | Literal_address s -> fprintf ppf "@%s" s
 
 and block ppf (b:block) = (list_sep instruction (tag "@;")) ppf b
 
@@ -87,6 +88,7 @@ and matching : type a . (formatter -> a -> unit) -> _ -> a matching -> unit = fu
 and pre_access ppf (a:access) = match a with
   | Access_record n -> fprintf ppf ".%s" n
   | Access_tuple i -> fprintf ppf ".%d" i
+  | Access_map n -> fprintf ppf ".%a" annotated_expression n
 
 and instruction ppf (i:instruction) = match i with
   | I_skip -> fprintf ppf "skip"

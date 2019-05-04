@@ -3,7 +3,7 @@ open Mini_c
 open Compiler.Program
 open Memory_proto_alpha.Script_ir_translator
 
-let run_aux (program:compiled_program) (input_michelson:Michelson.t) : ex_typed_value result =
+let run_aux ?amount (program:compiled_program) (input_michelson:Michelson.t) : ex_typed_value result =
   let Compiler.Program.{input;output;body} : compiled_program = program in
   let (Ex_ty input_ty) = input in
   let (Ex_ty output_ty) = output in
@@ -18,7 +18,7 @@ let run_aux (program:compiled_program) (input_michelson:Michelson.t) : ex_typed_
   let open! Memory_proto_alpha.Script_interpreter in
   let%bind (Item(output, Empty)) =
     Trace.trace_tzresult_lwt (simple_error "error of execution") @@
-    Tezos_utils.Memory_proto_alpha.interpret descr (Item(input, Empty)) in
+    Tezos_utils.Memory_proto_alpha.interpret ?amount descr (Item(input, Empty)) in
   ok (Ex_typed_value (output_ty, output))
 
 let run_node (program:program) (input:Michelson.t) : Michelson.t result =
@@ -29,7 +29,7 @@ let run_node (program:program) (input:Michelson.t) : Michelson.t result =
     Tezos_utils.Memory_proto_alpha.unparse_michelson_data output_ty output in
   ok output
 
-let run_entry (entry:anon_function) (input:value) : value result =
+let run_entry ?amount (entry:anon_function) (input:value) : value result =
   let%bind compiled =
     let error =
       let title () = "compile entry" in
@@ -40,7 +40,7 @@ let run_entry (entry:anon_function) (input:value) : value result =
     trace error @@
     translate_entry entry in
   let%bind input_michelson = translate_value input in
-  let%bind ex_ty_value = run_aux compiled input_michelson in
+  let%bind ex_ty_value = run_aux ?amount compiled input_michelson in
   let%bind (result : value) = Compiler.Uncompiler.translate_value ex_ty_value in
   ok result
 

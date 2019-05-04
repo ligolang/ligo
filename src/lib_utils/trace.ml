@@ -128,6 +128,10 @@ let trace_option error = function
   | None -> fail error
   | Some s -> ok s
 
+let bind_map_option f = function
+  | None -> ok None
+  | Some s -> f s >>? fun x -> ok (Some x)
+
 let rec bind_list = function
   | [] -> ok []
   | hd :: tl -> (
@@ -174,6 +178,16 @@ let bind_fold_list f init lst =
     f x y
   in
   List.fold_left aux (ok init) lst
+
+let bind_fold_map_list = fun f acc lst ->
+  let rec aux (acc , prev) f = function
+    | [] -> ok (acc , prev)
+    | hd :: tl ->
+        f acc hd >>? fun (acc' , hd') ->
+        aux (acc' , hd' :: prev) f tl
+  in
+  aux (acc , []) f (List.rev lst) >>? fun (_acc' , lst') ->
+  ok lst'
 
 let bind_fold_right_list f init lst =
   let aux x y =
@@ -342,6 +356,10 @@ let pp_to_string pp () x =
 let errors_to_string = pp_to_string errors_pp
 
 module Assert = struct
+  let assert_fail ?(msg="didn't fail") = function
+    | Ok _ -> simple_fail msg
+    | _ -> ok ()
+
   let assert_true ?(msg="not true") = function
     | true -> ok ()
     | false -> simple_fail msg

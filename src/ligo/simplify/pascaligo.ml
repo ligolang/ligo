@@ -90,14 +90,16 @@ let rec simpl_expression (t:Raw.expr) : ae result =
         | Component index -> Access_tuple (Z.to_int (snd index.value))
       in
       List.map aux @@ npseq_to_list path in
-
     ok @@ make_e_a @@ E_accessor (var, path')
   in
   match t with
-  | EVar c ->
-      if c.value = "unit"
-      then ok @@ make_e_a @@ E_literal Literal_unit
-      else ok @@ make_e_a @@ E_variable c.value
+  | EVar c -> (
+      let c' = c.value in
+      match List.assoc_opt c' constants with
+      | None -> return @@ E_variable c.value
+      | Some 0 -> return @@ E_constant (c' , [])
+      | Some _ -> simple_fail "non nullary constant without parameters"
+    )
   | ECall x -> (
       let (name, args) = x.value in
       let f = name.value in
@@ -426,12 +428,18 @@ and simpl_single_instruction : Raw.single_instr -> instruction result = fun t ->
         | NoneExpr _ -> simple_fail "no none assignments yet"
       in
       match a.lhs with
-        | Path (Name name) -> (
-            ok @@ I_assignment {name = name.value ; annotated_expression = value_expr}
-          )
         | Path path -> (
-            let err_content () = Format.asprintf "%a" (PP_helpers.printer Parser.Pascaligo.ParserLog.print_path) path in
-            fail @@ (fun () -> error (thunk "no path assignments") err_content ())
+            let (name , path') = simpl_path path in
+            match List.rev_uncons_opt path' with
+            | None -> (
+                ok @@ I_assignment {name ; annotated_expression = value_expr}
+              )
+            | Some (hds , last) -> (
+                match last with
+                | Access_record property -> ok @@ I_record_patch (name , hds , [(property , value_expr)])
+                | Access_tuple index -> ok @@ I_tuple_patch (name , hds , [(index , value_expr)])
+                | _ -> simple_fail "no map assignment in this weird case yet"
+              )
           )
         | MapPath v -> (
             let v' = v.value in

@@ -10,6 +10,7 @@ module Micheline = X_tezos_micheline
 module Function = Function
 module Error_monad = X_error_monad
 module Trace = Trace
+module Logger = Logger
 module PP_helpers = PP
 module Location = Location
 

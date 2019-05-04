@@ -226,8 +226,12 @@ let rec assert_type_value_eq (a, b: (type_value * type_value)) : unit result = m
       let rb' = SMap.to_kv_list rb in
       let aux ((ka, va), (kb, vb)) =
         let%bind _ =
-          Assert.assert_true ~msg:"different keys in record types"
-          @@ (ka = kb) in
+          let error =
+            let title () = "different props in record" in
+            let content () = Format.asprintf "%s vs %s" ka kb in
+            error title content in
+          trace_strong error @@
+          Assert.assert_true (ka = kb) in
         assert_type_value_eq (va, vb)
       in
       let%bind _ =
@@ -269,6 +273,9 @@ let assert_literal_eq (a, b : literal * literal) : unit result =
   | Literal_bytes _, _ -> simple_fail "bytes vs non-bytes"
   | Literal_unit, Literal_unit -> ok ()
   | Literal_unit, _ -> simple_fail "unit vs non-unit"
+  | Literal_address a, Literal_address b when a = b -> ok ()
+  | Literal_address _, Literal_address _ -> simple_fail "different addresss"
+  | Literal_address _, _ -> simple_fail "address vs non-address"
 
 
 let rec assert_value_eq (a, b: (value*value)) : unit result =

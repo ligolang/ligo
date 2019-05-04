@@ -26,17 +26,15 @@ let t_bytes     : type_expression = T_constant ("bytes", [])
 let t_int       : type_expression = T_constant ("int", [])
 let t_operation : type_expression = T_constant ("operation", [])
 let t_nat       : type_expression = T_constant ("nat", [])
+let t_tez       : type_expression = T_constant ("tez", [])
 let t_unit      : type_expression = T_constant ("unit", [])
+let t_address      : type_expression = T_constant ("address", [])
 let t_option  o : type_expression = T_constant ("option", [o])
 let t_list  t : type_expression = T_constant ("list", [t])
 let t_variable n : type_expression = T_variable n
 let t_tuple lst : type_expression = T_tuple lst
 let t_pair (a , b) = t_tuple [a ; b]
 let t_record m  : type_expression = (T_record m)
-let t_ez_record (lst:(string * type_expression) list) : type_expression =
-  let aux prev (k, v) = SMap.add k v prev in
-  let map = List.fold_left aux SMap.empty lst in
-  T_record map
 
 let t_record_ez lst =
   let m = SMap.of_list lst in
@@ -63,6 +61,8 @@ let e_int n : expression = E_literal (Literal_int n)
 let e_nat n : expression = E_literal (Literal_nat n)
 let e_bool   b : expression = E_literal (Literal_bool b)
 let e_string s : expression = E_literal (Literal_string s)
+let e_address s : expression = E_literal (Literal_address s)
+let e_tez s : expression = E_literal (Literal_tez s)
 let e_bytes  b : expression = E_literal (Literal_bytes (Bytes.of_string b))
 let e_record map : expression = E_record map
 let e_tuple lst : expression = E_tuple lst
@@ -84,6 +84,8 @@ let e_a_int n : annotated_expression = make_e_a_full (e_int n) t_int
 let e_a_nat n : annotated_expression = make_e_a_full (e_nat n) t_nat
 let e_a_bool b : annotated_expression = make_e_a_full (e_bool b) t_bool
 let e_a_constructor s a : annotated_expression = make_e_a (e_constructor s a)
+let e_a_address x = make_e_a_full (e_address x) t_address
+let e_a_tez x = make_e_a_full (e_tez x) t_tez
 
 let e_a_record r =
   let type_annotation = Option.(
@@ -163,3 +165,9 @@ let get_a_accessor = fun t ->
 let assert_a_accessor = fun t ->
   let%bind _ = get_a_accessor t in
   ok ()
+
+let get_access_record : access -> string result = fun a ->
+  match a with
+  | Access_tuple _
+  | Access_map _ -> simple_fail "not an access record"
+  | Access_record s -> ok s

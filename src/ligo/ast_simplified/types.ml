@@ -75,6 +75,7 @@ and expression =
 and access =
   | Access_tuple of int
   | Access_record of string
+  | Access_map of ae
 
 and access_path = access list
 
@@ -86,6 +87,7 @@ and literal =
   | Literal_tez of int
   | Literal_string of string
   | Literal_bytes of bytes
+  | Literal_address of string
 
 and block = instruction list
 and b = block
@@ -96,7 +98,8 @@ and instruction =
   | I_loop of ae * b
   | I_skip
   | I_do of ae
-  | I_record_patch of name * access_path * (string * ae) list
+  | I_record_patch of (name * access_path * (string * ae) list)
+  | I_tuple_patch of (name * access_path * (int * ae) list)
 
 and 'a matching =
   | Match_bool of {

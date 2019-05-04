@@ -21,6 +21,7 @@ let literal ppf (l:literal) = match l with
   | Literal_tez n -> fprintf ppf "%dtz" n
   | Literal_string s -> fprintf ppf "%S" s
   | Literal_bytes b -> fprintf ppf "0x%s" @@ Bytes.to_string @@ Bytes.escaped b
+  | Literal_address s -> fprintf ppf "@%S" s
 
 let rec expression ppf (e:expression) = match e with
   | E_literal l -> literal ppf l
@@ -50,6 +51,7 @@ and access ppf (a:access) =
   match a with
   | Access_tuple n -> fprintf ppf "%d" n
   | Access_record s -> fprintf ppf "%s" s
+  | Access_map s -> fprintf ppf "(%a)" annotated_expression s
 
 and access_path ppf (p:access_path) =
   fprintf ppf "%a" (list_sep access (const ".")) p
@@ -68,6 +70,9 @@ and block ppf (b:block) = (list_sep instruction (tag "@;")) ppf b
 
 and single_record_patch ppf ((p, ae) : string * ae) =
   fprintf ppf "%s <- %a" p annotated_expression ae
+
+and single_tuple_patch ppf ((p, ae) : int * ae) =
+  fprintf ppf "%d <- %a" p annotated_expression ae
 
 and matching_variant_case : type a . (_ -> a -> unit) -> _ -> (constructor_name * name) * a -> unit =
   fun f ppf ((c,n),a) ->
@@ -90,6 +95,7 @@ and instruction ppf (i:instruction) = match i with
   | I_skip -> fprintf ppf "skip"
   | I_do ae -> fprintf ppf "do %a" annotated_expression ae
   | I_record_patch (name, path, lst) -> fprintf ppf "%s.%a[%a]" name access_path path (list_sep_d single_record_patch) lst
+  | I_tuple_patch (name, path, lst) -> fprintf ppf "%s.%a[%a]" name access_path path (list_sep_d single_tuple_patch) lst
   | I_loop (cond, b) -> fprintf ppf "while (%a) { %a }" annotated_expression cond block b
   | I_assignment {name;annotated_expression = ae} ->
       fprintf ppf "%s := %a" name annotated_expression ae

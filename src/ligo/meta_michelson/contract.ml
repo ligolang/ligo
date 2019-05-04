@@ -245,8 +245,10 @@ module Types = struct
   let bytes_k = Bytes_key None
 
   let nat = Nat_t None
+  let tez = Mutez_t None
   let int = Int_t None
   let nat_k = Nat_key None
+  let tez_k = Mutez_key None
   let int_k = Int_key None
 
   let big_map k v = Big_map_t (k, v, None)
@@ -260,6 +262,7 @@ module Types = struct
 
   let string = String_t None
   let string_k = String_key None
+  let address_k = Address_key None
 
   let key = Key_t None
 

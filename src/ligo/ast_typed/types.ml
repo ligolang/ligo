@@ -106,6 +106,7 @@ and literal =
   | Literal_tez of int
   | Literal_string of string
   | Literal_bytes of bytes
+  | Literal_address of string
 
 and block = instruction list
 and b = block
@@ -119,9 +120,12 @@ and instruction =
   | I_skip
   | I_patch of named_type_value * access_path * ae
 
-and access = Ast_simplified.access
+and access =
+  | Access_tuple of int
+  | Access_record of string
+  | Access_map of ae
 
-and access_path = Ast_simplified.access_path
+and access_path = access list
 
 and 'a matching =
   | Match_bool of {

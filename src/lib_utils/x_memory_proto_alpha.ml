@@ -44,6 +44,29 @@ let parse_michelson (type aft)
     )
   | _ -> Lwt.return @@ error_exn (Failure "Typing instr failed")
 
+let parse_michelson_fail (type aft)
+    ?(tezos_context = dummy_environment.tezos_context)
+    ?(top_level = Lambda) (michelson:Michelson.t)
+    ?type_logger
+    (bef:'a Script_typed_ir.stack_ty) (aft:aft Script_typed_ir.stack_ty)
+  =
+  let michelson = Michelson.strip_annots michelson in
+  let michelson = Michelson.strip_nops michelson in
+  parse_instr
+    ?type_logger
+    top_level tezos_context
+    michelson bef >>=?? fun (j, _) ->
+  match j with
+  | Typed descr -> (
+      Lwt.return (
+        alpha_wrap (Script_ir_translator.stack_ty_eq tezos_context 0 descr.aft aft) >>? fun (Eq, _) ->
+        let descr : (_, aft) Script_typed_ir.descr = {descr with aft} in
+        Ok descr
+      )
+    )
+  | Failed { descr } ->
+      Lwt.return (Ok (descr aft))
+
 let parse_michelson_data
     ?(tezos_context = dummy_environment.tezos_context)
     michelson ty =
@@ -79,7 +102,8 @@ let interpret
     ?(source = (List.nth dummy_environment.identities 0).implicit_contract)
     ?(self = (List.nth dummy_environment.identities 0).implicit_contract)
     ?(payer = (List.nth dummy_environment.identities 1).implicit_contract)
+    ?(amount = Alpha_context.Tez.one)
     ?visitor
     (instr:('a, 'b) descr) (bef:'a stack) : 'b stack tzresult Lwt.t  =
-  Script_interpreter.step tezos_context ~source ~self ~payer ?visitor Alpha_context.Tez.one instr bef >>=??
+  Script_interpreter.step tezos_context ~source ~self ~payer ?visitor amount instr bef >>=??
   fun (stack, _) -> return stack
