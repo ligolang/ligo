@@ -71,6 +71,9 @@ and block ppf (b:block) = (list_sep instruction (tag "@;")) ppf b
 and single_record_patch ppf ((p, ae) : string * ae) =
   fprintf ppf "%s <- %a" p annotated_expression ae
 
+and single_tuple_patch ppf ((p, ae) : int * ae) =
+  fprintf ppf "%d <- %a" p annotated_expression ae
+
 and matching_variant_case : type a . (_ -> a -> unit) -> _ -> (constructor_name * name) * a -> unit =
   fun f ppf ((c,n),a) ->
   fprintf ppf "| %s %s -> %a" c n f a
@@ -92,6 +95,7 @@ and instruction ppf (i:instruction) = match i with
   | I_skip -> fprintf ppf "skip"
   | I_do ae -> fprintf ppf "do %a" annotated_expression ae
   | I_record_patch (name, path, lst) -> fprintf ppf "%s.%a[%a]" name access_path path (list_sep_d single_record_patch) lst
+  | I_tuple_patch (name, path, lst) -> fprintf ppf "%s.%a[%a]" name access_path path (list_sep_d single_tuple_patch) lst
   | I_loop (cond, b) -> fprintf ppf "while (%a) { %a }" annotated_expression cond block b
   | I_assignment {name;annotated_expression = ae} ->
       fprintf ppf "%s := %a" name annotated_expression ae

@@ -435,8 +435,10 @@ and simpl_single_instruction : Raw.single_instr -> instruction result = fun t ->
                 ok @@ I_assignment {name ; annotated_expression = value_expr}
               )
             | Some (hds , last) -> (
-                let%bind property = get_access_record last in
-                ok @@ I_record_patch (name , hds , [(property , value_expr)])
+                match last with
+                | Access_record property -> ok @@ I_record_patch (name , hds , [(property , value_expr)])
+                | Access_tuple index -> ok @@ I_tuple_patch (name , hds , [(index , value_expr)])
+                | _ -> simple_fail "no map assignment in this weird case yet"
               )
           )
         | MapPath v -> (

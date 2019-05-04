@@ -1,6 +1,7 @@
 open Format
 let string : formatter -> string -> unit = fun ppf s -> fprintf ppf "%s" s
 let tag tag : formatter -> unit -> unit = fun ppf () -> fprintf ppf tag
+let bool ppf b = fprintf ppf "%b" b
 let new_line : formatter -> unit -> unit = tag "@;"
 let rec new_lines n ppf () =
   match n with
@@ -22,6 +23,11 @@ let option = fun f ppf opt ->
   match opt with
   | Some x -> fprintf ppf "Some(%a)" f x
   | None -> fprintf ppf "None"
+
+let lr = fun ppf lr ->
+  match lr with
+  | `Left -> fprintf ppf "left"
+  | `Right -> fprintf ppf "right"
 
 let int = fun ppf n -> fprintf ppf "%d" n
 

@@ -177,6 +177,38 @@ and type_instruction (e:environment) : I.instruction -> (environment * O.instruc
       in
       let%bind lst' = bind_map_list aux lst in
       ok (e, lst')
+  | I_tuple_patch (r, path, lst) ->
+      let aux (s, ae) =
+        let%bind ae' = type_annotated_expression e ae in
+        let%bind ty =
+          trace_option (simple_error "unbound variable in tuple_patch") @@
+          Environment.get_opt r e in
+        let tv = O.{type_name = r ; type_value = ty.type_value} in
+        let aux ty access =
+          match access with
+          | I.Access_record s ->
+              let%bind m = O.Combinators.get_t_record ty in
+              let%bind ty =
+                trace_option (simple_error "unbound record access in tuple_patch") @@
+                Map.String.find_opt s m in
+              ok (ty , O.Access_record s)
+          | I.Access_tuple i ->
+              let%bind t = O.Combinators.get_t_tuple ty in
+              let%bind ty =
+                generic_try (simple_error "unbound tuple access in tuple_patch") @@
+                (fun () -> List.nth t i) in
+              ok (ty , O.Access_tuple i)
+          | I.Access_map ind ->
+              let%bind (k , v) = O.Combinators.get_t_map ty in
+              let%bind ind' = type_annotated_expression e ind in
+              let%bind () = Ast_typed.assert_type_value_eq (get_type_annotation ind' ,  k) in
+              ok (v , O.Access_map ind')
+        in
+        let%bind path' = bind_fold_map_list aux ty.type_value (path @ [Access_tuple s]) in
+        ok @@ O.I_patch (tv, path', ae')
+      in
+      let%bind lst' = bind_map_list aux lst in
+      ok (e, lst')
 
 
 and type_match : type i o . (environment -> i -> o result) -> environment -> O.type_value -> i I.matching -> o O.matching result =

@@ -157,6 +157,15 @@ let record () : unit result  =
     expect_n program "modify" make_input make_expected
   in
   let%bind () =
+    let make_input = record_ez_int ["a" ; "b" ; "c"] in
+    let make_expected = fun n -> ez_e_a_record [
+        ("a" , e_a_int n) ;
+        ("b" , e_a_int 2048) ;
+        ("c" , e_a_int n)
+      ] in
+    expect_n program "modify_abc" make_input make_expected
+  in
+  let%bind () =
     let expected = record_ez_int ["a";"b";"c";"d";"e"] 23 in
     expect_evaluate program "br" expected
   in
@@ -174,6 +183,21 @@ let tuple () : unit result  =
     let make_input = fun n -> ez [n ; n] in
     let make_expected = fun n -> e_a_int (2 * n) in
     expect_n program "projection" make_input make_expected
+  in
+  let%bind () =
+    let make_input = fun n -> ez [n ; 2 * n ; n] in
+    let make_expected = fun n -> e_a_int (2 * n) in
+    expect_n program "projection_abc" make_input make_expected
+  in
+  let%bind () =
+    let make_input = fun n -> ez [n ; n ; n] in
+    let make_expected = fun n -> ez [n ; 2048 ; n] in
+    expect program "modify_abc" (make_input 12) (make_expected 12)
+  in
+  let%bind () =
+    let make_input = fun n -> ez [n ; n ; n] in
+    let make_expected = fun n -> ez [n ; 2048 ; n] in
+    expect_n program "modify_abc" make_input make_expected
   in
   let%bind () =
     let expected = ez [23 ; 23 ; 23 ; 23 ; 23] in
@@ -383,6 +407,8 @@ let main = "Integration (End to End)", [
     test "complex function" complex_function ;
     test "variant" variant ;
     test "variant matching" variant_matching ;
+    test "tuple" tuple ;
+    test "record" record ;
     test "closure" closure ;
     test "shared function" shared_function ;
     test "shadow" shadow ;
@@ -390,8 +416,6 @@ let main = "Integration (End to End)", [
     test "bool" bool_expression ;
     test "arithmetic" arithmetic ;
     test "unit" unit_expression ;
-    test "record" record ;
-    test "tuple" tuple ;
     test "option" option ;
     test "map" map ;
     test "list" list ;

@@ -34,6 +34,11 @@ function modify (const r : foobar) : foobar is
     r.foo := 256 ;
   } with r
 
+function modify_abc (const r : abc) : abc is
+  block {
+    r.b := 2048 ;
+  } with r
+
 type big_record is record
      a : int ;
      b : int ;
