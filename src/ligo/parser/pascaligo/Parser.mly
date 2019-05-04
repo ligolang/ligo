@@ -626,7 +626,7 @@ binding:
     in {region; value}}
 
 record_patch:
-  Patch path With record_injection {
+  Patch path With record_expr {
     let region = cover $1 $4.region in
     let value  = {
       kwd_patch  = $1;
@@ -984,9 +984,6 @@ path:
   var        { Name $1 }
 | projection { Path $1 }
 
-record_expr:
-  record_injection { RecordInj $1 }
-
 projection:
   struct_name DOT nsepseq(selection,DOT) {
     let stop   = nsepseq_to_region selection_to_region $3 in
@@ -1001,16 +998,26 @@ selection:
   field_name { FieldName $1 }
 | Int        { Component $1 }
 
-record_injection:
+record_expr:
   Record series(field_assignment,End) {
     let first, (others, terminator, closing) = $2 in
     let region = cover $1 closing
     and value = {
-      opening = $1;
-      fields  = first, others;
+      opening = Kwd $1;
+      elements = Some (first, others);
       terminator;
-      closing}
-    in {region; value}}
+      closing = End closing}
+    in {region; value}
+  }
+| Record LBRACKET series(field_assignment,RBRACKET) {
+   let first, (others, terminator, closing) = $3 in
+   let region = cover $1 closing
+   and value  = {
+     opening = KwdBracket ($1,$2);
+     elements = Some (first, others);
+     terminator;
+     closing = RBracket closing}
+   in {region; value} }
 
 field_assignment:
   field_name EQUAL expr {

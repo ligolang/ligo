@@ -1,3 +1,5 @@
+[@@@warning "-42"]
+
 open Utils
 open AST
 open! Region
@@ -529,15 +531,8 @@ and print_constr_expr = function
 | NoneExpr e  -> print_none_expr e
 | ConstrApp e -> print_constr_app e
 
-and print_record_expr = function
-  RecordInj e -> print_record_injection e
-
-and print_record_injection {value; _} =
-  let {opening; fields; terminator; closing} = value in
-  print_token opening "record";
-  print_nsepseq ";" print_field_assign fields;
-  print_terminator terminator;
-  print_token closing "end"
+and print_record_expr e =
+  print_injection "record" print_field_assign e
 
 and print_field_assign {value; _} =
   let {field_name; equal; field_expr} = value in
@@ -563,7 +558,7 @@ and print_record_patch node =
   print_token kwd_patch "patch";
   print_path  path;
   print_token kwd_with "with";
-  print_record_injection record_inj
+  print_record_expr record_inj
 
 and print_set_patch node =
   let {kwd_patch; path; kwd_with; set_inj} = node in

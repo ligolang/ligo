@@ -90,7 +90,7 @@ let rec simpl_expression (t:Raw.expr) : ae result =
         | Component index -> Access_tuple (Z.to_int (snd index.value))
       in
       List.map aux @@ npseq_to_list path in
-    
+
     ok @@ make_e_a @@ E_accessor (var, path')
   in
   match t with
@@ -120,11 +120,11 @@ let rec simpl_expression (t:Raw.expr) : ae result =
       let (Raw.TupleInj tpl') = tpl in
       simpl_tuple_expression
       @@ npseq_to_list tpl'.value.inside
-  | ERecord (RecordInj r) ->
+  | ERecord r ->
       let%bind fields = bind_list
         @@ List.map (fun ((k : _ Raw.reg), v) -> let%bind v = simpl_expression v in ok (k.value, v))
         @@ List.map (fun (x:Raw.field_assign Raw.reg) -> (x.value.field_name, x.value.field_expr))
-        @@ npseq_to_list r.value.fields in
+        @@ pseq_to_list r.value.elements in
       let aux prev (k, v) = SMap.add k v prev in
       ok @@ make_e_a @@ E_record (List.fold_left aux SMap.empty fields)
   | EProj p' -> (
@@ -462,7 +462,7 @@ and simpl_single_instruction : Raw.single_instr -> instruction result = fun t ->
       let%bind inj = bind_list
         @@ List.map (fun (x:Raw.field_assign) -> let%bind e = simpl_expression x.field_expr in ok (x.field_name.value, e))
         @@ List.map (fun (x:_ Raw.reg) -> x.value)
-        @@ npseq_to_list r.record_inj.value.fields in
+        @@ pseq_to_list r.record_inj.value.elements in
       ok @@ I_record_patch (name, access_path, inj)
     )
   | MapPatch _ -> simple_fail "no map patch yet"
