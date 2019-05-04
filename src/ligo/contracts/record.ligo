@@ -8,6 +8,22 @@ const fb : foobar = record
   bar = 0 ;
 end
 
+type abc is record
+  a : int ;
+  b : int ;
+  c : int ;
+end
+
+const abc : abc = record
+  a = 42 ;
+  b = 142 ;
+  c = 242 ;
+end
+
+const a : int = abc.a ;
+const b : int = abc.b ;
+const c : int = abc.c ;
+
 function projection (const r : foobar) : int is
   begin
     skip

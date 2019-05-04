@@ -79,29 +79,22 @@ let tuple_access_to_lr : type_value -> type_value list -> int -> (type_value * [
     bind_fold_list aux (ty , []) lr_path in
   ok lst
 
-let record_access_to_lr : type_value -> type_value AST.type_name_map -> string -> (type_value * (type_value * [`Left | `Right]) list) result = fun ty tym ind ->
+let record_access_to_lr : type_value -> type_value AST.type_name_map -> string -> (type_value * [`Left | `Right]) list result = fun ty tym ind ->
   let tys = kv_list_of_map tym in
   let node_tv = Append_tree.of_list tys in
-  let leaf (i, _) : (type_value * (type_value * [`Left | `Right]) list) result =
-    if i = ind then (
-      ok (ty, [])
-    ) else (
-      simple_fail "bad leaf"
-    ) in
-  let node a b : (type_value * (type_value * [`Left | `Right]) list) result =
-    match%bind bind_lr (a, b) with
-    | `Left (t, acc) ->
-        let%bind (a, _) = Mini_c.get_t_pair t in
-        ok @@ (t, (a, `Left) :: acc)
-    | `Right (t, acc) -> (
-        let%bind (_, b) = Mini_c.get_t_pair t in
-        ok @@ (t, (b, `Right) :: acc)
-      ) in
-  let error_content () =
-    let aux ppf (name, ty) = Format.fprintf ppf "%s -> %a" name PP.type_ ty in
-    Format.asprintf "(%a).%s" (PP.list_sep_d aux) tys ind in
-  trace_strong (fun () -> error (thunk "bad index in record (shouldn't happen here)") error_content ()) @@
-  Append_tree.fold_ne leaf node node_tv
+  let%bind path =
+    let aux (i , _) = i = ind in
+    trace_option (simple_error "no leaf with given index") @@
+    Append_tree.exists_path aux node_tv in
+  let lr_path = List.map (fun b -> if b then `Right else `Left) path in
+  let%bind (_ , lst) =
+    let aux = fun (ty , acc) cur ->
+      let%bind (a , b) = Mini_c.get_t_pair ty in
+      match cur with
+      | `Left -> ok (a , (a , `Left) :: acc)
+      | `Right -> ok (b , (b , `Right) :: acc) in
+    bind_fold_list aux (ty , []) lr_path in
+  ok lst
 
 let rec translate_block env (b:AST.block) : block result =
   let aux = fun (precs, env) instruction ->
@@ -144,7 +137,7 @@ and translate_instruction (env:Environment.t) (i:AST.instruction) : statement li
                 trace error @@
                 AST.Combinators.get_t_record prev in
               let%bind ty'_map = bind_map_smap translate_type ty_map in
-              let%bind (_, path) = record_access_to_lr ty' ty'_map prop in
+              let%bind path = record_access_to_lr ty' ty'_map prop in
               let path' = List.map snd path in
               ok (Map.String.find prop ty_map, path' @ acc)
           | Access_map _k -> simple_fail "no patch for map yet"
@@ -300,36 +293,17 @@ and translate_annotated_expression (env:Environment.t) (ae:AST.annotated_express
       in
       Append_tree.fold_ne (translate_annotated_expression env) aux node
   | E_record_accessor (record, property) ->
-      let%bind translation = translate_annotated_expression env record in
-      let%bind record_type_map =
-        let error =
-          let title () =
-            Format.asprintf "Accessing field of %a, that has type %a, which isn't a record"
-              AST.PP.annotated_expression record AST.PP.type_value record.type_annotation in
-          let content () = "" in
-          error title content in
-        trace error @@
-        get_t_record record.type_annotation in
-      let node_tv = Append_tree.of_list @@ kv_list_of_map record_type_map in
-      let leaf (key, _) : expression result =
-        if property = key then (
-          ok translation
-        ) else (
-          simple_fail "bad leaf"
-        ) in
-      let node (a:expression result) b : expression result =
-        match%bind bind_lr (a, b) with
-        | `Left expr -> (
-            let%bind (tv, _) = Mini_c.get_t_pair @@ Expression.get_type expr in
-            return ~tv @@ E_constant ("CAR", [expr])
-          )
-        | `Right expr -> (
-            let%bind (_, tv) = Mini_c.get_t_pair @@ Expression.get_type expr in
-            return ~tv @@ E_constant ("CDR", [expr])
-          ) in
-      let%bind expr =
-        trace_strong (simple_error "bad key in record (shouldn't happen here)") @@
-        Append_tree.fold_ne leaf node node_tv in
+      let%bind ty' = translate_type (get_type_annotation record) in
+      let%bind ty_smap = get_t_record (get_type_annotation record) in
+      let%bind ty'_smap = bind_map_smap translate_type ty_smap in
+      let%bind path = record_access_to_lr ty' ty'_smap property in
+      let aux = fun pred (ty, lr) ->
+        let c = match lr with
+          | `Left -> "CAR"
+          | `Right -> "CDR" in
+        Combinators.Expression.make_tpl (E_constant (c, [pred]) , ty , env) in
+      let%bind record' = translate_annotated_expression env record in
+      let expr = List.fold_right' aux record' path in
       ok expr
   | E_constant (name, lst) ->
       let%bind lst' = bind_list @@ List.map (translate_annotated_expression env) lst in (

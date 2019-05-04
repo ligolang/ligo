@@ -141,6 +141,12 @@ let record () : unit result  =
     expect_evaluate program "fb" expected
   in
   let%bind () =
+    let%bind () = expect_evaluate program "a" (e_a_int 42) in
+    let%bind () = expect_evaluate program "b" (e_a_int 142) in
+    let%bind () = expect_evaluate program "c" (e_a_int 242) in
+    ok ()
+  in
+  let%bind () =
     let make_input = record_ez_int ["foo" ; "bar"] in
     let make_expected = fun n -> e_a_int (2 * n) in
     expect_n program "projection" make_input make_expected

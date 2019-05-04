@@ -26,6 +26,7 @@ module Simplify = struct
     ("int" , 1) ;
     ("amount" , 0) ;
     ("unit" , 0) ;
+    ("source" , 0) ;
   ]
 
   module Camligo = struct
@@ -363,6 +364,8 @@ module Compiler = struct
     ("CONS" , simple_binary @@ prim I_CONS) ;
     ("UNIT" , simple_constant @@ prim I_UNIT) ;
     ("AMOUNT" , simple_constant @@ prim I_AMOUNT) ;
+    ("SOURCE" , simple_constant @@ prim I_SOURCE) ;
+    ("SENDER" , simple_constant @@ prim I_SENDER) ;
     ( "MAP_UPDATE" , simple_ternary @@ seq [dip (i_some) ; prim I_UPDATE ]) ;
   ]
 
