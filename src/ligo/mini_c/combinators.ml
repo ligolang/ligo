@@ -123,11 +123,10 @@ let t_pair x y : type_value = T_pair ( x , y )
 let t_union x y : type_value = T_or ( x , y )
 
 let quote binder input output body result : anon_function =
-  let content : anon_function_content = {
+  {
     binder ; input ; output ;
-    body ; result ; capture_type = No_capture ;
-  } in
-  { content ; capture = None }
+    body ; result ;
+  }
 
 let basic_quote i o b : anon_function result =
   let%bind (_, e) = get_last_statement b in

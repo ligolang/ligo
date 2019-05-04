@@ -29,7 +29,6 @@ module Ty = struct
     match tv with
     | T_base b -> comparable_type_base b
     | T_deep_closure _ -> fail (not_comparable "deep closure")
-    | T_shallow_closure _ -> fail (not_comparable "shallow closure")
     | T_function _ -> fail (not_comparable "function")
     | T_or _ -> fail (not_comparable "or")
     | T_pair _ -> fail (not_comparable "pair")
@@ -69,12 +68,7 @@ module Ty = struct
         let%bind (Ex_ty ret) = type_ ret in
         ok @@ Ex_ty (Contract_types.lambda arg ret)
     | T_deep_closure (c, arg, ret) ->
-        let%bind (Ex_ty capture) = environment_small c in
-        let%bind (Ex_ty arg) = type_ arg in
-        let%bind (Ex_ty ret) = type_ ret in
-        ok @@ Ex_ty Contract_types.(pair capture @@ lambda (pair arg capture) ret)
-    | T_shallow_closure (c, arg, ret) ->
-        let%bind (Ex_ty capture) = environment c in
+        let%bind (Ex_ty capture) = environment_representation c in
         let%bind (Ex_ty arg) = type_ arg in
         let%bind (Ex_ty ret) = type_ ret in
         ok @@ Ex_ty Contract_types.(pair capture @@ lambda (pair arg capture) ret)
@@ -89,25 +83,24 @@ module Ty = struct
         let%bind (Ex_ty t') = type_ t in
         ok @@ Ex_ty Contract_types.(option t')
 
-  and environment_small' = let open Append_tree in function
-      | Leaf (_, x) -> type_ x
-      | Node {a;b} ->
-          let%bind (Ex_ty a) = environment_small' a in
-          let%bind (Ex_ty b) = environment_small' b in
-          ok @@ Ex_ty (Contract_types.pair a b)
-
-  and environment_small = function
-    | Empty -> ok @@ Ex_ty Contract_types.unit
-    | Full x -> environment_small' x
-
-  and environment = function
-    | [] | [Empty] -> ok @@ Ex_ty Contract_types.unit
-    | [a] -> environment_small a
-    | Empty :: b -> environment b
+  and environment_representation = function
+    | [] -> ok @@ Ex_ty Contract_types.unit
+    | [a] -> type_ @@ snd a
     | a::b ->
-        let%bind (Ex_ty a) = environment_small a in
-        let%bind (Ex_ty b) = environment b in
+        let%bind (Ex_ty a) = type_ @@ snd a in
+        let%bind (Ex_ty b) = environment_representation b in
         ok @@ Ex_ty (Contract_types.pair a b)
+
+  and environment : environment -> Meta_michelson.Stack.ex_stack_ty result = fun env ->
+    let open Meta_michelson in
+    let%bind lst =
+      bind_map_list type_
+      @@ List.map snd env in
+    let aux (Stack.Ex_stack_ty st) (Ex_ty cur) =
+      Stack.Ex_stack_ty (Stack.stack cur st)
+    in
+    ok @@ List.fold_right' aux (Ex_stack_ty Stack.nil) lst
+
 end
 
 
@@ -150,12 +143,7 @@ let rec type_ : type_value -> O.michelson result =
       let%bind ret = type_ ret in
       ok @@ O.prim ~children:[arg;ret] T_lambda
   | T_deep_closure (c, arg, ret) ->
-      let%bind capture = environment_small c in
-      let%bind arg = type_ arg in
-      let%bind ret = type_ ret in
-      ok @@ O.t_pair capture (O.t_lambda (O.t_pair arg capture) ret)
-  | T_shallow_closure (c, arg, ret) ->
-      let%bind capture = environment c in
+      let%bind capture = environment_closure c in
       let%bind arg = type_ arg in
       let%bind ret = type_ ret in
       ok @@ O.t_pair capture (O.t_lambda (O.t_pair arg capture) ret)
@@ -164,23 +152,15 @@ and environment_element (name, tyv) =
   let%bind michelson_type = type_ tyv in
   ok @@ O.annotate ("@" ^ name) michelson_type
 
-and environment_small' = let open Append_tree in function
-    | Leaf x -> environment_element x
-    | Node {a;b} ->
-        let%bind a = environment_small' a in
-        let%bind b = environment_small' b in
-        ok @@ O.t_pair a b
+and environment = fun env ->
+  bind_map_list type_
+  @@ List.map snd env
 
-and environment_small = function
-  | Empty -> ok @@ O.prim O.T_unit
-  | Full x -> environment_small' x
-
-and environment =
+and environment_closure =
   function
-  | [] | [Empty] -> simple_fail "Type of empty env"
-  | [a] -> environment_small a
-  | Empty :: b -> environment b
+  | [] -> simple_fail "Type of empty env"
+  | [a] -> type_ @@ snd a
   | a :: b ->
-      let%bind a = environment_small a in
-      let%bind b = environment b in
+      let%bind a = type_ @@ snd a in
+      let%bind b = environment_closure b in
       ok @@ O.t_pair a b

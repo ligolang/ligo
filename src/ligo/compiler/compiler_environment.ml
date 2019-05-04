@@ -1,221 +1,112 @@
 open Trace
 open Mini_c
 open Environment
-open Micheline
+open Micheline.Michelson
 open Memory_proto_alpha.Script_ir_translator
 
 module Stack = Meta_michelson.Stack
 
-type element = environment_element
-
-module Small = struct
-  open Small
-  open Append_tree
-
-  open Michelson
-
-  let rec get_path' = fun s env' ->
-    match env' with
-    | Leaf (n, v) when n = s -> ok ([], v)
-    | Leaf _ -> fail @@ not_in_env' ~source:"get_path'" s env'
-    | Node {a;b} ->
-        match%bind bind_lr @@ Tezos_utils.Tuple.map2 (get_path' s) (a,b) with
-        | `Left (lst, v) -> ok ((`Left :: lst), v)
-        | `Right (lst, v) -> ok ((`Right :: lst), v)
-
-  let get_path = fun s env ->
-    match env with
-    | Empty -> fail @@ not_in_env ~source:"get_path" s env
-    | Full x -> get_path' s x
-
-  let rec to_michelson_get' = fun s env' ->
-    match env' with
-    | Leaf (n, tv) when n = s -> ok @@ (seq [], tv)
-    | Leaf _ -> fail @@ not_in_env' ~source:"to_michelson_get'" s env'
-    | Node {a;b} -> (
-        match%bind bind_lr @@ Tezos_utils.Tuple.map2 (to_michelson_get' s) (a, b) with
-        | `Left (x, tv) -> ok @@ (seq [i_car ; x], tv)
-        | `Right (x, tv) -> ok @@ (seq [i_cdr ; x], tv)
-      )
-  let to_michelson_get s = function
-    | Empty -> simple_fail "Schema.Small.get : not in env"
-    | Full x -> to_michelson_get' s x
-
-  let rec to_michelson_set' = fun s env' ->
-    match env' with
-    | Leaf (n, tv) when n = s -> ok (dip i_drop, tv)
-    | Leaf _ -> fail @@ not_in_env' ~source:"Small.to_michelson_set'" s env'
-    | Node {a;b} -> (
-        match%bind bind_lr @@ Tezos_utils.Tuple.map2 (to_michelson_set' s) (a, b) with
-        | `Left (x, tv) -> ok (seq [dip i_unpair ; x ; i_pair], tv)
-        | `Right (x, tv) -> ok (seq [dip i_unpiar ; x ; i_piar], tv)
-      )
-  let to_michelson_set s = function
-    | Empty -> simple_fail "Schema.Small.set : not in env"
-    | Full x -> to_michelson_set' s x
-
-  let rec to_michelson_append' = function
-    | Leaf _ -> ok i_piar
-    | Node{full=true} -> ok i_piar
-    | Node{a=Node _;b;full=false} ->
-        let%bind b = to_michelson_append' b in
-        ok @@ seq [dip i_unpiar ; b ; i_piar]
-    | Node{a=Leaf _;full=false} -> assert false
-
-  let to_michelson_append = function
-    | Empty -> ok (dip i_drop)
-    | Full x -> to_michelson_append' x
-
-  let rec to_mini_c_type' : _ -> type_value = function
-    | Leaf (_, t) -> t
-    | Node {a;b} -> T_pair(to_mini_c_type' a, to_mini_c_type' b)
-
-  let to_mini_c_type : _ -> type_value = function
-    | Empty -> T_base Base_unit
-    | Full x -> to_mini_c_type' x
-end
-
-let to_michelson_extend : t -> Michelson.t = fun _e ->
-  Michelson.i_comment "empty_extend"
-
-let to_michelson_restrict : t -> Michelson.t result = fun e ->
-  match e with
-  | [] -> simple_fail "Restrict empty env"
-  | Empty :: _ -> ok @@ Michelson.i_comment "restrict empty"
-  | _ -> ok @@ Michelson.(seq [i_comment "restrict" ; i_cdr])
-
-let to_ty = Compiler_type.Ty.environment
-let to_michelson_type = Compiler_type.environment
-let rec to_mini_c_type = function
-  | [] -> raise (Failure "Schema.Big.to_mini_c_type")
-  | [hd] -> Small.to_mini_c_type hd
-  | Append_tree.Empty :: tl -> to_mini_c_type tl
-  | hd :: tl -> T_pair(Small.to_mini_c_type hd, to_mini_c_type tl)
-
-type path = [`Left | `Right] list
-let pp_path : _ -> path -> unit =
-  let open Format in
-  let aux ppf lr = match lr with
-    | `Left -> fprintf ppf "L"
-    | `Right -> fprintf ppf "R"
+let get : environment -> string -> michelson result = fun e s ->
+  let%bind (type_value , position) =
+    generic_try (simple_error "Environment.get") @@
+    (fun () -> Environment.get_i s e) in
+  let rec aux = fun n ->
+    match n with
+    | 0 -> i_dup
+    | n -> dip @@ seq [
+        aux (n - 1) ;
+        i_swap ;
+      ]
   in
-  PP_helpers.(list_sep aux (const " "))
+  let code = aux position in
 
-let rec get_path : string -> environment -> ([`Left | `Right] list * type_value) result = fun s t ->
-  match t with
-  | [] -> simple_fail "Get path : empty big schema"
-  | [ x ] -> Small.get_path s x
-  | Empty :: tl -> get_path s tl
-  | hd :: tl -> (
-      match%bind bind_lr_lazy (Small.get_path s hd, (fun () -> get_path s tl)) with
-      | `Left (lst, v) -> ok (`Left :: lst, v)
-      | `Right (lst, v) -> ok (`Right :: lst, v)
-    )
-
-let path_to_michelson_get = fun path ->
-  let open Michelson in
-  let aux step = match step with
-    | `Left -> i_car
-    | `Right -> i_cdr in
-  seq (List.map aux path)
-
-let path_to_michelson_set = fun path ->
-  let open Michelson in
-  let aux acc step = match step with
-    | `Left -> seq [dip i_unpair ; acc ; i_pair]
-    | `Right -> seq [dip i_unpiar ; acc ; i_piar]
-  in
-  let init = dip i_drop in
-  List.fold_right' aux init path
-
-let to_michelson_anonymous_add (t:t) =
-  let%bind code = match t with
-    | [] -> simple_fail "Schema.Big.Add.to_michelson_add"
-    | [hd] ->
-        let%bind small = Small.to_michelson_append hd in
-        ok Michelson.(seq [i_comment "big.small add" ; small])
-    | Empty :: _ -> ok @@ Michelson.(seq [i_comment "empty_add" ; i_pair])
-    | hd :: _ -> (
-        let%bind code = Small.to_michelson_append hd in
-        ok @@ Michelson.(seq [i_comment "big add" ; dip i_unpair ; code ; i_pair])
-      )
-  in
-  ok code
-
-let to_michelson_add x (t:t) =
-  let%bind code = to_michelson_anonymous_add t in
-
-  let%bind _assert_type =
-    let new_schema = add x t in
-    let%bind (Ex_ty schema_ty) = to_ty t in
-    let%bind (Ex_ty new_schema_ty) = to_ty new_schema in
-    let%bind (Ex_ty input_ty) = Compiler_type.Ty.type_ (snd x) in
-    let input_stack_ty = Stack.(input_ty @: schema_ty @: nil) in
-    let output_stack_ty = Stack.(new_schema_ty @: nil) in
-    let error_message () = Format.asprintf
-        "\nold : %a\nnew : %a\ncode : %a\n"
-        PP.environment t
-        PP.environment new_schema
-        Tezos_utils.Micheline.Michelson.pp code in
+  let%bind () =
+    let error () = ok @@ simple_error "error producing Env.get" in
+    let%bind (Stack.Ex_stack_ty input_stack_ty) = Compiler_type.Ty.environment e in
+    let%bind (Ex_ty ty) = Compiler_type.Ty.type_ type_value in
+    let output_stack_ty = Stack.(ty @: input_stack_ty) in
     let%bind _ =
-      trace_tzresult_lwt (fun () -> error (thunk "error parsing Schema.Big.to_michelson_add code") error_message ()) @@
-      Tezos_utils.Memory_proto_alpha.parse_michelson code
+      Trace.trace_tzresult_lwt_r error @@
+      Memory_proto_alpha.parse_michelson code
         input_stack_ty output_stack_ty in
     ok ()
   in
 
   ok code
 
-let to_michelson_get (s:t) str : (Michelson.t * type_value) result =
-  let%bind (path, tv) = get_path str s in
-  let code = path_to_michelson_get path in
+let set : environment -> string -> michelson result = fun e s ->
+  let%bind (type_value , position) =
+    generic_try (simple_error "Environment.get") @@
+    (fun () -> Environment.get_i s e) in
+  let rec aux = fun n ->
+    match n with
+    | 0 -> dip i_drop
+    | n -> seq [
+        i_swap ;
+        dip (aux (n - 1)) ;
+      ]
+  in
+  let code = aux position in
 
-  let%bind _assert_type =
-    let%bind (Ex_ty schema_ty) = to_ty s in
-    let%bind schema_michelson = to_michelson_type s in
-    let%bind (Ex_ty ty) = Compiler_type.Ty.type_ tv in
-    let input_stack_ty = Stack.(schema_ty @: nil) in
-    let output_stack_ty = Stack.(ty @: nil) in
-    let error_message () =
-      Format.asprintf
-        "\ncode : %a\nschema type : %a"
-        Tezos_utils.Micheline.Michelson.pp code
-        Tezos_utils.Micheline.Michelson.pp schema_michelson
-    in
+  let%bind () =
+    let error () = ok @@ simple_error "error producing Env.get" in
+    let%bind (Stack.Ex_stack_ty env_stack_ty) = Compiler_type.Ty.environment e in
+    let%bind (Ex_ty ty) = Compiler_type.Ty.type_ type_value in
+    let input_stack_ty = Stack.(ty @: env_stack_ty) in
+    let output_stack_ty = env_stack_ty in
     let%bind _ =
-      trace_tzresult_lwt (fun () -> error (thunk "error parsing big.get code") error_message ()) @@
-      Tezos_utils.Memory_proto_alpha.parse_michelson code
-        input_stack_ty output_stack_ty
-    in
+      Trace.trace_tzresult_lwt_r error @@
+      Memory_proto_alpha.parse_michelson code
+        input_stack_ty output_stack_ty in
     ok ()
   in
 
-  ok (code, tv)
+  ok code
 
-let to_michelson_set str (s:t) : Michelson.t result =
-  let%bind (path, tv) = get_path str s in
-  let code = path_to_michelson_set path in
+let add : environment -> (string * type_value) -> michelson result = fun e (_s , type_value) ->
+  let code = seq [] in
 
-  let%bind _assert_type =
-    let%bind (Ex_ty schema_ty) = to_ty s in
-    let%bind schema_michelson = to_michelson_type s in
-    let%bind (Ex_ty ty) = Compiler_type.Ty.type_ tv in
-    let input_stack_ty = Stack.(ty @: schema_ty @: nil) in
-    let output_stack_ty = Stack.(schema_ty @: nil) in
-    let error_message () =
-      Format.asprintf
-        "\ncode : %a\nschema : %a\nschema type : %a\npath : %a"
-        Tezos_utils.Micheline.Michelson.pp code
-        PP.environment s
-        Tezos_utils.Micheline.Michelson.pp schema_michelson
-        pp_path path
-    in
+  let%bind () =
+    let error () = ok @@ simple_error "error producing Env.get" in
+    let%bind (Stack.Ex_stack_ty env_stack_ty) = Compiler_type.Ty.environment e in
+    let%bind (Ex_ty ty) = Compiler_type.Ty.type_ type_value in
+    let input_stack_ty = Stack.(ty @: env_stack_ty) in
+    let output_stack_ty = Stack.(ty @: env_stack_ty) in
     let%bind _ =
-      Trace.trace_tzresult_lwt (fun () -> error (thunk "error parsing big.set code") error_message ()) @@
-      Tezos_utils.Memory_proto_alpha.parse_michelson code
-        input_stack_ty output_stack_ty
-    in
+      Trace.trace_tzresult_lwt_r error @@
+      Memory_proto_alpha.parse_michelson code
+        input_stack_ty output_stack_ty in
     ok ()
   in
 
-  ok @@ Michelson.(seq [ i_comment "set" ; code ])
+  ok code
+
+let select : environment -> string list -> michelson result = fun e lst ->
+  let code =
+    let aux = fun acc (s , _) ->
+      seq [
+        if List.mem s lst
+        then seq []
+        else i_drop ;
+        dip acc ;
+      ]
+    in
+    Environment.fold aux (seq []) e in
+
+  let%bind () =
+    let error () = ok @@ simple_error "error producing Env.get" in
+    let%bind (Stack.Ex_stack_ty input_stack_ty) = Compiler_type.Ty.environment e in
+    let e' = Environment.filter (fun (s , _) -> List.mem s lst) e in
+    let%bind (Stack.Ex_stack_ty output_stack_ty) = Compiler_type.Ty.environment e' in
+    let%bind _ =
+      Trace.trace_tzresult_lwt_r error @@
+      Memory_proto_alpha.parse_michelson code
+        input_stack_ty output_stack_ty in
+    ok ()
+  in
+
+  ok code
+
+let select_env : environment -> environment -> michelson result = fun e e' ->
+  let lst = Environment.get_names e' in
+  select e lst

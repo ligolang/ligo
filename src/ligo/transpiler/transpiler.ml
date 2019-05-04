@@ -3,6 +3,7 @@ open Mini_c
 open Combinators
 
 module AST = Ast_typed
+module Append_tree = Tree.Append
 open AST.Combinators
 
 let temp_unwrap_loc = Location.unwrap
@@ -161,16 +162,15 @@ and translate_instruction (env:Environment.t) (i:AST.instruction) : statement li
     )
   | I_matching (expr, m) -> (
       let%bind expr' = translate_annotated_expression env expr in
-      let env' = Environment.extend env in
-      let extend s =
-        let pre = Combinators.statement S_environment_extend env in
-        ok [ pre ; (s, environment_wrap env env) ] in
-      let restrict : block -> block = fun b -> Combinators.append_statement' b S_environment_restrict in
+      let env' = env in
+      let return s =
+        ok [ (s, environment_wrap env env) ] in
+      let restrict : block -> block = fun b -> Combinators.append_statement' b (S_environment_select env) in
       match m with
       | Match_bool {match_true ; match_false} -> (
           let%bind true_branch = translate_block env' match_true in
           let%bind false_branch = translate_block env' match_false in
-          extend @@ S_cond (expr', restrict true_branch, restrict false_branch)
+          return @@ S_cond (expr', restrict true_branch, restrict false_branch)
         )
       | Match_option {match_none ; match_some = ((name, t), sm)} -> (
           let%bind none_branch = translate_block env' match_none in
@@ -179,14 +179,13 @@ and translate_instruction (env:Environment.t) (i:AST.instruction) : statement li
             let env'' = Environment.add (name, t') env' in
             translate_block env'' sm
           in
-          extend (S_if_none (expr', restrict none_branch, ((name, t'), restrict some_branch)))
+          return @@ S_if_none (expr', restrict none_branch, ((name, t'), restrict some_branch))
         )
       | _ -> simple_fail "todo : match"
     )
   | I_loop (expr, body) ->
       let%bind expr' = translate_annotated_expression env expr in
-      let env' = Environment.extend env in
-      let%bind body' = translate_block env' body in
+      let%bind body' = translate_block env body in
       return (S_while (expr', body'))
   | I_skip -> ok []
   | I_do ae -> (
@@ -204,18 +203,18 @@ and translate_literal : AST.literal -> value = fun l -> match l with
   | Literal_address s -> D_string s
   | Literal_unit -> D_unit
 
-and transpile_small_environment : AST.small_environment -> Environment.Small.t result = fun x ->
+and transpile_small_environment : AST.small_environment -> Environment.t result = fun x ->
   let x' = AST.Environment.Small.get_environment x in
   let aux prec (name , (ele : AST.environment_element)) =
     let%bind tv' = translate_type ele.type_value in
-    ok @@ Environment.Small.append (name , tv') prec
+    ok @@ Environment.add (name , tv') prec
   in
   trace (simple_error "transpiling small environment") @@
-  bind_fold_right_list aux Append_tree.Empty x'
+  bind_fold_right_list aux Environment.empty x'
 
 and transpile_environment : AST.full_environment -> Environment.t result = fun x ->
   let%bind nlst = bind_map_ne_list transpile_small_environment x in
-  ok @@ List.Ne.to_list nlst
+  ok @@ Environment.concat @@ List.Ne.to_list nlst
 
 and tree_of_sum : AST.type_value -> (type_name * AST.type_value) Append_tree.t result = fun t ->
   let%bind map_tv = get_t_sum t in
@@ -236,7 +235,7 @@ and translate_annotated_expression (env:Environment.t) (ae:AST.annotated_express
   | E_variable name ->
       let%bind tv =
         trace_option (simple_error "transpiler: variable not in env") @@
-        Environment.get_opt env name in
+        Environment.get_opt name env in
       return ~tv @@ E_variable name
   | E_application (a, b) ->
       let%bind a = translate_annotated_expression env a in
@@ -391,7 +390,7 @@ and translate_annotated_expression (env:Environment.t) (ae:AST.annotated_express
                 let%bind ((_ , name) , body) =
                   trace_option (simple_error "not supposed to happen here: missing match clause") @@
                   List.find_opt (fun ((constructor_name' , _) , _) -> constructor_name' = constructor_name) lst in
-                let env' = Environment.(add (name , tv) @@ extend env) in
+                let env' = Environment.(add (name , tv) env) in
                 let%bind body' = translate_annotated_expression env' body in
                 return ~env @@ E_let_in ((name , tv) , top , body')
               )
@@ -399,14 +398,14 @@ and translate_annotated_expression (env:Environment.t) (ae:AST.annotated_express
                 let%bind a' =
                   let%bind a_ty = get_t_left tv in
                   let a_var = "left" , a_ty in
-                  let env' = Environment.(add a_var @@ extend env) in
+                  let env' = Environment.(add a_var env) in
                   let%bind e = aux ((Some (Expression.make (E_variable "left") a_ty env')) , env') a in
                   ok (a_var , e)
                 in
                 let%bind b' =
                   let%bind b_ty = get_t_right tv in
                   let b_var = "right" , b_ty in
-                  let env' = Environment.(add b_var @@ extend env) in
+                  let env' = Environment.(add b_var env) in
                   let%bind e = aux ((Some (Expression.make (E_variable "right") b_ty env')) , env') b in
                   ok (b_var , e)
                 in
@@ -418,27 +417,12 @@ and translate_annotated_expression (env:Environment.t) (ae:AST.annotated_express
           simple_fail "only match bool and option exprs are translated yet"
     )
 
-
-and translate_lambda_shallow : Mini_c.Environment.t -> AST.lambda -> Mini_c.expression result = fun env l ->
-  let { binder ; input_type ; output_type ; body ; result } : AST.lambda = l in
-  (* Shallow capture. Capture the whole environment. Extend it with a new scope. Append it the input. *)
-  let env' = Environment.extend env in
-  let%bind input_type' = translate_type input_type in
-  let new_env = Environment.add (binder, input_type') env' in
-  let%bind (_, e) as body = translate_block new_env body in
-  let%bind result = translate_annotated_expression e.post_environment result in
-  let%bind output_type' = translate_type output_type in
-  let tv = Combinators.t_shallow_closure env input_type' output_type' in
-  let capture_type = Shallow_capture env' in
-  let content = {binder;input=input_type';output=output_type';body;result;capture_type} in
-  ok @@ Combinators.Expression.make_tpl (E_function content, tv, env)
-
 and translate_lambda_deep : Mini_c.Environment.t -> AST.lambda -> Mini_c.expression result = fun env l ->
   let { binder ; input_type ; output_type ; body ; result } : AST.lambda = l in
   (* Deep capture. Capture the relevant part of the environment. Extend it with a new scope. Append it the input. *)
   let%bind input_type' = translate_type input_type in
   let%bind small_env =
-    let env' = Environment.extend env in
+    let env' = env in
     let new_env = Environment.add (binder, input_type') env' in
     let free_variables = Ast_typed.Misc.Free_variables.lambda [] l in
     let%bind elements =
@@ -448,20 +432,19 @@ and translate_lambda_deep : Mini_c.Environment.t -> AST.lambda -> Mini_c.express
           let content () = Format.asprintf "%s in %a" x Mini_c.PP.environment new_env  in
           error title content in
         trace_option not_found_error @@
-        Environment.get_opt new_env x in
+        Environment.get_opt x new_env in
       bind_map_list aux free_variables in
     let kvs = List.combine free_variables elements in
-    let small_env = Environment.Small.of_list kvs in
+    let small_env = Environment.of_list kvs in
     ok small_env
   in
-  let new_env = Environment.(add (binder , input_type') @@ extend @@ of_small small_env) in
+  let new_env = Environment.(add (binder , input_type') small_env) in
   let%bind (_, e) as body = translate_block new_env body in
   let%bind result = translate_annotated_expression e.post_environment result in
   let%bind output_type' = translate_type output_type in
   let tv = Combinators.t_deep_closure small_env input_type' output_type' in
-  let capture_type = Deep_capture small_env in
-  let content = {binder;input=input_type';output=output_type';body;result;capture_type} in
-  ok @@ Combinators.Expression.make_tpl (E_function content, tv, env)
+  let content = D_function {binder;input=input_type';output=output_type';body;result} in
+  ok @@ Combinators.Expression.make_tpl (E_literal content, tv, env)
 
 and translate_lambda env l =
   let { binder ; input_type ; output_type ; body ; result } : AST.lambda = l in
@@ -479,12 +462,11 @@ and translate_lambda env l =
       let%bind ((_, e) as body') = translate_block empty_env body in
       let%bind result' = translate_annotated_expression e.post_environment result in
       trace (simple_error "translate quote") @@
-      let capture_type = No_capture in
       let%bind input = translate_type input_type in
       let%bind output = translate_type output_type in
       let tv = Combinators.t_function input output in
-      let content = {binder;input;output;body=body';result=result';capture_type} in
-      ok @@ Combinators.Expression.make_tpl (E_literal (D_function {capture=None;content}), tv, env)
+      let content = D_function {binder;input;output;body=body';result=result'} in
+      ok @@ Combinators.Expression.make_tpl (E_literal content, tv, env)
     )
   | _ -> (
       trace (simple_error "translate lambda deep") @@

@@ -47,9 +47,11 @@ type value =
   (* | `Macro of anon_macro ... The future. *)
   | D_function of anon_function
 
+and selector = var_name list
+
 and expression' =
   | E_literal of value
-  | E_function of anon_function_expression
+  | E_capture_environment of selector
   | E_constant of string * expression list
   | E_application of expression * expression
   | E_variable of var_name
@@ -71,7 +73,8 @@ and expression = {
 and assignment = var_name * expression
 
 and statement' =
-  | S_environment_load of environment
+  | S_environment_select of environment
+  | S_environment_load of (expression * environment)
   | S_environment_add of (var_name * type_value)
   | S_declaration of assignment (* First assignment *)
   | S_assignment of assignment
@@ -85,21 +88,13 @@ and statement = statement' * environment_wrap
 
 and toplevel_statement = assignment * environment_wrap
 
-and anon_function_content = {
+and anon_function = {
   binder : string ;
   input : type_value ;
   output : type_value ;
   body : block ;
   result : expression ;
-  capture_type : capture ;
 }
-
-and anon_function = {
-  content : anon_function_content ;
-  capture : value option ;
-}
-
-and anon_function_expression = anon_function_content
 
 and capture =
   | No_capture (* For functions that don't capture their environments. Quotes. *)

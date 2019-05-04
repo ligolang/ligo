@@ -50,7 +50,7 @@ let rec value ppf : value -> unit = function
   | D_pair (a, b) -> fprintf ppf "(%a), (%a)" value a value b
   | D_left a -> fprintf ppf "L(%a)" value a
   | D_right b -> fprintf ppf "R(%a)" value b
-  | D_function x -> function_ ppf x.content
+  | D_function x -> function_ ppf x
   | D_none -> fprintf ppf "None"
   | D_some s -> fprintf ppf "Some (%a)" value s
   | D_map m -> fprintf ppf "Map[%a]" (list_sep_d value_assoc) m
@@ -60,11 +60,11 @@ and value_assoc ppf : (value * value) -> unit = fun (a, b) ->
   fprintf ppf "%a -> %a" value a value b
 
 and expression' ppf (e:expression') = match e with
+  | E_capture_environment s -> fprintf ppf "capture(%a)" PP_helpers.(list_sep string (const " ; ")) s
   | E_variable v -> fprintf ppf "%s" v
   | E_application(a, b) -> fprintf ppf "(%a)@(%a)" expression a expression b
   | E_constant(p, lst) -> fprintf ppf "%s %a" p (pp_print_list ~pp_sep:space_sep expression) lst
   | E_literal v -> fprintf ppf "%a" value v
-  | E_function c -> function_ ppf c
   | E_empty_map _ -> fprintf ppf "map[]"
   | E_empty_list _ -> fprintf ppf "list[]"
   | E_make_none _ -> fprintf ppf "none"
@@ -83,11 +83,8 @@ and expression_with_type : _ -> expression -> _  = fun ppf e ->
     expression' e.content
     type_ e.type_value
 
-and function_ ppf ({binder ; input ; output ; body ; result ; capture_type}:anon_function_content) =
-  fprintf ppf "fun[%s] (%s:%a) : %a %a return %a"
-    (match capture_type with
-     | No_capture -> "quote"
-     | Deep_capture _ -> "deep")
+and function_ ppf ({binder ; input ; output ; body ; result}:anon_function) =
+  fprintf ppf "fun (%s:%a) : %a %a return %a"
     binder
     type_ input
     type_ output
@@ -100,6 +97,7 @@ and declaration ppf ((n, e):assignment) = fprintf ppf "let %s = %a;" n expressio
 
 and statement ppf ((s, _) : statement) = match s with
   | S_environment_load _ -> fprintf ppf "load env"
+  | S_environment_select _ -> fprintf ppf "select env"
   | S_environment_add (name, tv) -> fprintf ppf "add %s %a" name type_ tv
   | S_declaration ass -> declaration ppf ass
   | S_assignment ass -> assignment ppf ass

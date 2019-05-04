@@ -34,7 +34,7 @@ let run_entry ?amount (entry:anon_function) (input:value) : value result =
     let error =
       let title () = "compile entry" in
       let content () =
-        Format.asprintf "%a" PP.function_ entry.content
+        Format.asprintf "%a" PP.function_ entry
       in
       error title content in
     trace error @@

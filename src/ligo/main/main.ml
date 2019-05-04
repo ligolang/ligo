@@ -102,7 +102,7 @@ let easy_run_typed
     trace (simple_error "transpile mini_c entry") @@
     transpile_entry program entry in
   (if debug_mini_c then
-     Format.(printf "Mini_c : %a\n%!" Mini_c.PP.function_ mini_c_main.content)
+     Format.(printf "Mini_c : %a\n%!" Mini_c.PP.function_ mini_c_main)
   ) ;
 
   let%bind mini_c_value = transpile_value input in
@@ -111,7 +111,7 @@ let easy_run_typed
     let error =
       let title () = "run Mini_c" in
       let content () =
-        Format.asprintf "\n%a" Mini_c.PP.function_ mini_c_main.content
+        Format.asprintf "\n%a" Mini_c.PP.function_ mini_c_main
       in
       error title content in
     trace error @@
@@ -132,7 +132,7 @@ let easy_run_typed_simplified
     trace (simple_error "transpile mini_c entry") @@
     transpile_entry program entry in
   (if debug_mini_c then
-     Format.(printf "Mini_c : %a\n%!" Mini_c.PP.function_ mini_c_main.content)
+     Format.(printf "Mini_c : %a\n%!" Mini_c.PP.function_ mini_c_main)
   ) ;
 
   let%bind typed_value =
@@ -148,7 +148,7 @@ let easy_run_typed_simplified
     let error =
       let title () = "run Mini_c" in
       let content () =
-        Format.asprintf "\n%a" Mini_c.PP.function_ mini_c_main.content
+        Format.asprintf "\n%a" Mini_c.PP.function_ mini_c_main
       in
       error title content in
     trace error @@
