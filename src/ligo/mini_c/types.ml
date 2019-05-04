@@ -1,5 +1,3 @@
-module Append_tree = Tree.Append
-
 type type_name = string
 
 type type_base =
@@ -13,21 +11,15 @@ type type_value =
   | T_pair of (type_value * type_value)
   | T_or of type_value * type_value
   | T_function of type_value * type_value
-  | T_deep_closure of environment_small * type_value * type_value
-  | T_shallow_closure of environment * type_value * type_value
+  | T_deep_closure of environment * type_value * type_value
   | T_base of type_base
   | T_map of (type_value * type_value)
   | T_list of type_value
   | T_option of type_value
 
-
 and environment_element = string * type_value
 
-and environment_small' = environment_element Append_tree.t'
-
-and environment_small = environment_element Append_tree.t
-
-and environment = environment_small list
+and environment = environment_element list
 
 type environment_wrap = {
   pre_environment : environment ;
@@ -79,8 +71,7 @@ and expression = {
 and assignment = var_name * expression
 
 and statement' =
-  | S_environment_extend
-  | S_environment_restrict
+  | S_environment_load of environment
   | S_environment_add of (var_name * type_value)
   | S_declaration of assignment (* First assignment *)
   | S_assignment of assignment
@@ -112,8 +103,7 @@ and anon_function_expression = anon_function_content
 
 and capture =
   | No_capture (* For functions that don't capture their environments. Quotes. *)
-  | Shallow_capture of environment (* Duplicates the whole environment. A single DUP. Heavier GETs and SETs at use. *)
-  | Deep_capture of environment_small (* Retrieves only the values it needs. Multiple SETs on init. Lighter GETs and SETs at use. *)
+  | Deep_capture of environment (* Retrieves only the values it needs. Multiple SETs on init. Lighter GETs and SETs at use. *)
 
 and block' = statement list
 

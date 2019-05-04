@@ -118,7 +118,6 @@ let t_int : type_value = T_base Base_int
 let t_nat : type_value = T_base Base_nat
 
 let t_function x y : type_value = T_function ( x , y )
-let t_shallow_closure x y z : type_value = T_shallow_closure ( x , y , z )
 let t_deep_closure x y z : type_value = T_deep_closure ( x , y , z )
 let t_pair x y : type_value = T_pair ( x , y )
 let t_union x y : type_value = T_or ( x , y )

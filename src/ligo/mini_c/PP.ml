@@ -28,25 +28,16 @@ let rec type_ ppf : type_value -> _ = function
   | T_map(k, v) -> fprintf ppf "map(%a -> %a)" type_ k type_ v
   | T_list(t) -> fprintf ppf "list(%a)" type_ t
   | T_option(o) -> fprintf ppf "option(%a)" type_ o
-  | T_shallow_closure(_, a, b) -> fprintf ppf "[big_closure](%a) -> (%a)" type_ a type_ b
   | T_deep_closure(c, arg, ret) ->
       fprintf ppf "[%a](%a)->(%a)"
-        environment_small c
+        environment c
         type_ arg type_ ret
 
 and environment_element ppf ((s, tv) : environment_element) =
   Format.fprintf ppf "%s : %a" s type_ tv
 
-and environment_small' ppf e' = let open Append_tree in
-  let lst = to_list' e' in
-  fprintf ppf "S[%a]" (list_sep_d environment_element) lst
-
-and environment_small ppf e = let open Append_tree in
-  let lst = to_list e in
-  fprintf ppf "S[%a]" (list_sep_d environment_element) lst
-
-let environment ppf (x:environment) =
-  fprintf ppf "Env[%a]" (list_sep_d environment_small) x
+and environment ppf (x:environment) =
+  fprintf ppf "Env[%a]" (list_sep_d environment_element) x
 
 let rec value ppf : value -> unit = function
   | D_bool b -> fprintf ppf "%b" b
@@ -96,7 +87,6 @@ and function_ ppf ({binder ; input ; output ; body ; result ; capture_type}:anon
   fprintf ppf "fun[%s] (%s:%a) : %a %a return %a"
     (match capture_type with
      | No_capture -> "quote"
-     | Shallow_capture _ -> "shallow"
      | Deep_capture _ -> "deep")
     binder
     type_ input
@@ -109,8 +99,7 @@ and assignment ppf ((n, e):assignment) = fprintf ppf "%s = %a;" n expression e
 and declaration ppf ((n, e):assignment) = fprintf ppf "let %s = %a;" n expression e
 
 and statement ppf ((s, _) : statement) = match s with
-  | S_environment_extend -> fprintf ppf "extend"
-  | S_environment_restrict -> fprintf ppf "restrict"
+  | S_environment_load _ -> fprintf ppf "load env"
   | S_environment_add (name, tv) -> fprintf ppf "add %s %a" name type_ tv
   | S_declaration ass -> declaration ppf ass
   | S_assignment ass -> assignment ppf ass

@@ -8,8 +8,7 @@ let basic_int_quote_env : environment =
 
 let statement s' env : statement =
   match s' with
-  | S_environment_extend -> s', environment_wrap env (Environment.extend env)
-  | S_environment_restrict -> s', environment_wrap env (Environment.restrict env)
+  | S_environment_load env' -> s', environment_wrap env env'
   | S_environment_add (name, tv) -> s' , environment_wrap env (Environment.add (name , tv) env)
   | S_cond _ -> s' , id_environment_wrap env
   | S_do _ -> s' , id_environment_wrap env

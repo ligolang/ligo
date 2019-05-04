@@ -358,7 +358,7 @@ and translate_annotated_expression (env:Environment.t) (ae:AST.annotated_express
           let%bind n = translate_annotated_expression env match_none in
           let%bind (tv' , s') =
             let%bind tv' = translate_type tv in
-            let env' = Environment.(add (name , tv') @@ extend env) in
+            let env' = Environment.(add (name , tv') @@ env) in
             let%bind s' = translate_annotated_expression env' s in
             ok (tv' , s') in
           return @@ E_if_none (expr' , n , ((name , tv') , s'))
