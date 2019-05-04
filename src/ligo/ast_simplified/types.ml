@@ -99,6 +99,7 @@ and instruction =
   | I_skip
   | I_do of ae
   | I_record_patch of (name * access_path * (string * ae) list)
+  | I_tuple_patch of (name * access_path * (int * ae) list)
 
 and 'a matching =
   | Match_bool of {

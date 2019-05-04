@@ -71,11 +71,24 @@ let tuple_access_to_lr : type_value -> type_value list -> int -> (type_value * [
     Append_tree.exists_path aux node_tv in
   let lr_path = List.map (fun b -> if b then `Right else `Left) path in
   let%bind (_ , lst) =
-    let aux = fun (ty , acc) cur ->
-      let%bind (a , b) = Mini_c.get_t_pair ty in
+    let aux = fun (ty' , acc) cur ->
+      let%bind (a , b) =
+        let error =
+          let title () = "expected a pair" in
+          let content () = Format.asprintf "Big: %a.\tGot: %a\tFull path: %a\tSmall path: %a"
+              Mini_c.PP.type_ ty
+              Mini_c.PP.type_ ty'
+              PP_helpers.(list_sep bool (const ".")) path
+              PP_helpers.(list_sep lr (const ".")) (List.map snd acc)
+          in
+          error title content
+        in
+        trace_strong error @@
+        Mini_c.get_t_pair ty' in
       match cur with
-      | `Left -> ok (a , (a , `Left) :: acc)
-      | `Right -> ok (b , (b , `Right) :: acc) in
+      | `Left -> ok (a , acc @ [(a , `Left)])
+      | `Right -> ok (b , acc @ [(b , `Right)])
+    in
     bind_fold_list aux (ty , []) lr_path in
   ok lst
 
@@ -91,8 +104,8 @@ let record_access_to_lr : type_value -> type_value AST.type_name_map -> string -
     let aux = fun (ty , acc) cur ->
       let%bind (a , b) = Mini_c.get_t_pair ty in
       match cur with
-      | `Left -> ok (a , (a , `Left) :: acc)
-      | `Right -> ok (b , (b , `Right) :: acc) in
+      | `Left -> ok (a , acc @ [(a , `Left)])
+      | `Right -> ok (b , acc @ [(b , `Right)] ) in
     bind_fold_list aux (ty , []) lr_path in
   ok lst
 
@@ -125,12 +138,12 @@ and translate_instruction (env:Environment.t) (i:AST.instruction) : statement li
               let%bind ty'_lst = bind_map_list translate_type ty_lst in
               let%bind path = tuple_access_to_lr ty' ty'_lst ind in
               let path' = List.map snd path in
-              ok (List.nth ty_lst ind, path' @ acc)
+              ok (List.nth ty_lst ind, acc @ path')
           | Access_record prop ->
               let%bind ty_map =
                 let error =
                   let title () = "accessing property on not a record" in
-                let content () = Format.asprintf "%s on %a in %a"
+                  let content () = Format.asprintf "%s on %a in %a"
                     prop Ast_typed.PP.type_value prev Ast_typed.PP.instruction i in
                   error title content
                 in
@@ -139,10 +152,10 @@ and translate_instruction (env:Environment.t) (i:AST.instruction) : statement li
               let%bind ty'_map = bind_map_smap translate_type ty_map in
               let%bind path = record_access_to_lr ty' ty'_map prop in
               let path' = List.map snd path in
-              ok (Map.String.find prop ty_map, path' @ acc)
+              ok (Map.String.find prop ty_map, acc @ path')
           | Access_map _k -> simple_fail "no patch for map yet"
       in
-      let%bind (_, path) = bind_fold_list aux (ty, []) s in
+      let%bind (_, path) = bind_fold_right_list aux (ty, []) s in
       let%bind v' = translate_annotated_expression env v in
       return (S_patch (r.type_name, path, v'))
     )
@@ -279,7 +292,7 @@ and translate_annotated_expression (env:Environment.t) (ae:AST.annotated_express
           | `Right -> "CDR" in
         Combinators.Expression.make_tpl (E_constant (c, [pred]) , ty , env) in
       let%bind tpl' = translate_annotated_expression env tpl in
-      let expr = List.fold_right' aux tpl' path in
+      let expr = List.fold_left aux tpl' path in
       ok expr
   | E_record m ->
       let node = Append_tree.of_list @@ list_of_map m in
@@ -303,7 +316,7 @@ and translate_annotated_expression (env:Environment.t) (ae:AST.annotated_express
           | `Right -> "CDR" in
         Combinators.Expression.make_tpl (E_constant (c, [pred]) , ty , env) in
       let%bind record' = translate_annotated_expression env record in
-      let expr = List.fold_right' aux record' path in
+      let expr = List.fold_left aux record' path in
       ok expr
   | E_constant (name, lst) ->
       let%bind lst' = bind_list @@ List.map (translate_annotated_expression env) lst in (

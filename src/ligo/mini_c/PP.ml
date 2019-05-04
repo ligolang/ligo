@@ -6,6 +6,9 @@ let list_sep_d x = list_sep x (const " , ")
 
 let space_sep ppf () = fprintf ppf " "
 
+let lr = fun ppf -> function `Left -> fprintf ppf "L" | `Right -> fprintf ppf "R"
+
+
 let type_base ppf : type_base -> _ = function
   | Base_unit -> fprintf ppf "unit"
   | Base_bool -> fprintf ppf "bool"
@@ -114,8 +117,7 @@ and statement ppf ((s, _) : statement) = match s with
   | S_do e -> fprintf ppf "do %a" expression e
   | S_cond (expr, i, e) -> fprintf ppf "if (%a) %a %a" expression expr block i block e
   | S_patch (r, path, e) ->
-      let aux = fun ppf -> function `Left -> fprintf ppf ".L" | `Right -> fprintf ppf ".R" in
-      fprintf ppf "%s%a := %a" r (list aux) path expression e
+      fprintf ppf "%s.%a := %a" r (list_sep lr (const ".")) path expression e
   | S_if_none (expr, none, ((name, _), some)) -> fprintf ppf "if_none (%a) %a %s->%a" expression expr block none name block some
   | S_while (e, b) -> fprintf ppf "while (%a) %a" expression e block b
 

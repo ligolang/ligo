@@ -402,115 +402,7 @@ and translate_expression ?(first=false) (expr:expression) : michelson result =
 
 and translate_statement ((s', w_env) as s:statement) : michelson result =
   let error_message () = Format.asprintf "%a" PP.statement s in
-  let%bind (code : michelson) =
-    trace (fun () -> error (thunk "compiling statement") error_message ()) @@ match s' with
-    | S_environment_extend ->
-        ok @@ Compiler_environment.to_michelson_extend w_env.pre_environment
-    | S_environment_restrict ->
-        Compiler_environment.to_michelson_restrict w_env.pre_environment
-    | S_environment_add _ ->
-        simple_fail "add not ready yet"
-    (* | S_environment_add (name, tv) ->
-     *     Environment.to_michelson_add (name, tv) w_env.pre_environment *)
-    | S_declaration (s, expr) ->
-        let tv = Combinators.Expression.get_type expr in
-        let%bind expr = translate_expression expr in
-        let%bind add = Compiler_environment.to_michelson_add (s, tv) w_env.pre_environment in
-        ok (seq [
-            i_comment "declaration" ;
-            seq [
-              i_comment "expr" ;
-              i_push_unit ; expr ; i_car ;
-            ] ;
-            seq [
-              i_comment "env <- env . expr" ;
-              add ;
-            ];
-          ])
-    | S_assignment (s, expr) ->
-        let%bind expr = translate_expression expr in
-        let%bind set = Compiler_environment.to_michelson_set s w_env.pre_environment in
-        ok (seq [
-            i_comment "assignment" ;
-            seq [
-              i_comment "expr" ;
-              i_push_unit ; expr ; i_car ;
-            ] ;
-            seq [
-              i_comment "env <- env . expr" ;
-              set ;
-            ];
-          ])
-    | S_cond (expr, a, b) ->
-        let%bind expr = translate_expression expr in
-        let%bind a' = translate_regular_block a in
-        let%bind b' = translate_regular_block b in
-        ok @@ (seq [
-            i_push_unit ;
-            expr ;
-            prim I_CAR ;
-            prim ~children:[seq [a'];seq [b']] I_IF ;
-          ])
-    | S_do expr -> (
-        match Combinators.Expression.get_content expr with
-        | E_constant ("FAILWITH" , [ fw ] ) -> (
-            let%bind fw' = translate_expression fw in
-            ok @@ seq [
-              i_push_unit ;
-              fw' ;
-              i_car ;
-              i_failwith ;
-            ]
-          )
-        | _ -> (
-            let%bind expr' = translate_expression expr in
-            ok @@ seq [
-              i_push_unit ;
-              expr' ;
-              i_drop ;
-            ]
-          )
-      )
-    | S_if_none (expr, none, ((name, tv), some)) ->
-        let%bind expr = translate_expression expr in
-        let%bind none' = translate_regular_block none in
-        let%bind some' = translate_regular_block some in
-        let%bind add =
-          let env' = Environment.extend w_env.pre_environment in
-          Compiler_environment.to_michelson_add (name, tv) env' in
-        ok @@ (seq [
-            i_push_unit ; expr ; i_car ;
-            prim ~children:[
-              seq [none'] ;
-              seq [add ; some'] ;
-            ] I_IF_NONE
-          ])
-    | S_while (expr, block) ->
-        let%bind expr = translate_expression expr in
-        let%bind block' = translate_regular_block block in
-        let%bind restrict_block =
-          let env_while = (snd block).pre_environment in
-          Compiler_environment.to_michelson_restrict env_while in
-        ok @@ (seq [
-            i_push_unit ; expr ; i_car ;
-            prim ~children:[seq [
-                Compiler_environment.to_michelson_extend w_env.pre_environment;
-                block' ;
-                restrict_block ;
-                i_push_unit ; expr ; i_car]] I_LOOP ;
-          ])
-    | S_patch (name, lrs, expr) ->
-        let%bind expr' = translate_expression expr in
-        let%bind (name_path, _) = Environment.get_path name w_env.pre_environment in
-        let path = name_path @ lrs in
-        let set_code = Compiler_environment.path_to_michelson_set path in
-        ok @@ seq [
-          i_push_unit ; expr' ; i_car ;
-          set_code ;
-        ]
-  in
-
-  let%bind () =
+  let return code =
     let%bind (Ex_ty pre_ty) = Compiler_environment.to_ty w_env.pre_environment in
     let input_stack_ty = Stack.(pre_ty @: nil) in
     let%bind (Ex_ty post_ty) = Compiler_environment.to_ty w_env.post_environment in
@@ -533,11 +425,127 @@ and translate_statement ((s', w_env) as s:statement) : michelson result =
       Tezos_utils.Memory_proto_alpha.parse_michelson_fail code
         input_stack_ty output_stack_ty
     in
-    ok ()
+    ok code
   in
 
-
-  ok code
+  trace (fun () -> error (thunk "compiling statement") error_message ()) @@ match s' with
+  | S_environment_extend ->
+      return @@ Compiler_environment.to_michelson_extend w_env.pre_environment
+  | S_environment_restrict ->
+      let%bind code = Compiler_environment.to_michelson_restrict w_env.pre_environment in
+      return code
+  | S_environment_add _ ->
+      simple_fail "add not ready yet"
+  (* | S_environment_add (name, tv) ->
+   *     Environment.to_michelson_add (name, tv) w_env.pre_environment *)
+  | S_declaration (s, expr) ->
+      let tv = Combinators.Expression.get_type expr in
+      let%bind expr = translate_expression expr in
+      let%bind add = Compiler_environment.to_michelson_add (s, tv) w_env.pre_environment in
+      return @@ seq [
+        i_comment "declaration" ;
+        seq [
+          i_comment "expr" ;
+          i_push_unit ; expr ; i_car ;
+        ] ;
+        seq [
+          i_comment "env <- env . expr" ;
+          add ;
+        ];
+      ]
+  | S_assignment (s, expr) ->
+      let%bind expr = translate_expression expr in
+      let%bind set = Compiler_environment.to_michelson_set s w_env.pre_environment in
+      return @@ seq [
+        i_comment "assignment" ;
+        seq [
+          i_comment "expr" ;
+          i_push_unit ; expr ; i_car ;
+        ] ;
+        seq [
+          i_comment "env <- env . expr" ;
+          set ;
+        ];
+      ]
+  | S_cond (expr, a, b) ->
+      let%bind expr = translate_expression expr in
+      let%bind a' = translate_regular_block a in
+      let%bind b' = translate_regular_block b in
+      return @@ seq [
+        i_push_unit ;
+        expr ;
+        prim I_CAR ;
+        prim ~children:[seq [a'];seq [b']] I_IF ;
+      ]
+  | S_do expr -> (
+      match Combinators.Expression.get_content expr with
+      | E_constant ("FAILWITH" , [ fw ] ) -> (
+          let%bind fw' = translate_expression fw in
+          return @@ seq [
+            i_push_unit ;
+            fw' ;
+            i_car ;
+            i_failwith ;
+          ]
+        )
+      | _ -> (
+          let%bind expr' = translate_expression expr in
+          return @@ seq [
+            i_push_unit ;
+            expr' ;
+            i_drop ;
+          ]
+        )
+    )
+  | S_if_none (expr, none, ((name, tv), some)) ->
+      let%bind expr = translate_expression expr in
+      let%bind none' = translate_regular_block none in
+      let%bind some' = translate_regular_block some in
+      let%bind add =
+        let env' = Environment.extend w_env.pre_environment in
+        Compiler_environment.to_michelson_add (name, tv) env' in
+      return @@ seq [
+        i_push_unit ; expr ; i_car ;
+        prim ~children:[
+          seq [none'] ;
+          seq [add ; some'] ;
+        ] I_IF_NONE
+      ]
+  | S_while (expr, block) ->
+      let%bind expr = translate_expression expr in
+      let%bind block' = translate_regular_block block in
+      let%bind restrict_block =
+        let env_while = (snd block).pre_environment in
+        Compiler_environment.to_michelson_restrict env_while in
+      return @@ seq [
+        i_push_unit ; expr ; i_car ;
+        prim ~children:[seq [
+            Compiler_environment.to_michelson_extend w_env.pre_environment;
+            block' ;
+            restrict_block ;
+            i_push_unit ; expr ; i_car]] I_LOOP ;
+      ]
+  | S_patch (name, lrs, expr) ->
+      let%bind expr' = translate_expression expr in
+      let%bind (name_path, _) = Environment.get_path name w_env.pre_environment in
+      let path = name_path @ lrs in
+      let set_code = Compiler_environment.path_to_michelson_set path in
+      let error =
+        let title () = "michelson type-checking patch" in
+        let content () =
+          let aux ppf = function
+            | `Left -> Format.fprintf ppf "left"
+            | `Right -> Format.fprintf ppf "right" in
+          Format.asprintf "Name path: %a\nSub path: %a\n"
+            PP_helpers.(list_sep aux (const " , ")) name_path
+            PP_helpers.(list_sep aux (const " , ")) lrs
+        in
+        error title content in
+      trace error @@
+      return @@ seq [
+        i_push_unit ; expr' ; i_car ;
+        set_code ;
+      ]
 
 and translate_regular_block ((b, env):block) : michelson result =
   let aux prev statement =
