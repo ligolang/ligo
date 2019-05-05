@@ -130,23 +130,31 @@ and translate_expression ?(first=false) (expr:expression) (env:environment) : (m
       | T_deep_closure (small_env, input_ty , _) -> (
           trace (simple_error "Compiling deep closure application") @@
           let%bind (arg' , env') = translate_expression arg env in
-          let%bind (f' , _) = translate_expression f env' in
+          let%bind (f' , env'') = translate_expression f env' in
+          let%bind f_ty = Compiler_type.type_ f.type_value in
           let%bind append_closure = Compiler_environment.add_packed_anon small_env input_ty in
           let error =
             let error_title () = "michelson type-checking closure application" in
             let error_content () =
-              Format.asprintf "Env : %a\nclosure : %a\narg : %a\n"
+              Format.asprintf "\nEnv. %a\nEnv'. %a\nEnv''. %a\nclosure. %a ; %a ; %a\narg. %a\n"
                 PP.environment env
-                PP.expression_with_type f
+                PP.environment env'
+                PP.environment env''
+                PP.expression_with_type f Michelson.pp f_ty Michelson.pp f'
                 PP.expression_with_type arg
             in
             error error_title error_content
           in
           trace error @@
           return @@ seq [
+            i_comment "closure application" ;
+            i_comment "arg" ;
             arg' ;
+            i_comment "f'" ;
             f' ; i_unpair ;
-            dip @@ append_closure ;
+            i_comment "append" ;
+            dip @@ seq [i_swap ; append_closure] ;
+            i_comment "exec" ;
             i_swap ; i_exec ;
           ]
         )
@@ -190,8 +198,7 @@ and translate_expression ?(first=false) (expr:expression) (env:environment) : (m
       in
       let error =
         let title () = "error compiling constant" in
-        let content () = L.get ()
-        in
+        let content () = L.get () in
         error title content in
       trace error @@
       return code

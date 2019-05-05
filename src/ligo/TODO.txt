@@ -3,6 +3,8 @@
 ## Back-end
 
 - Replace Mini_c environments with stacks
+  + Compiler_environment : bad pack make first element deepest
+  + Add types to pack and unpack
 - Think about Coq
 
 ## Amendments

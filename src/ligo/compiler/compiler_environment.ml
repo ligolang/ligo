@@ -144,13 +144,64 @@ let pack : environment -> michelson result = fun e ->
   let%bind () =
     trace_strong (simple_error "pack empty env") @@
     Assert.assert_true (List.length e <> 0) in
-  ok @@ seq @@ List.map (Function.constant i_pair) @@ List.tl e
+  let code = seq @@ List.map (Function.constant i_pair) @@ List.tl e in
+
+  let%bind () =
+    let%bind (Stack.Ex_stack_ty input_stack_ty) = Compiler_type.Ty.environment e in
+    let repr = Environment.closure_representation e in
+    let%bind (Ex_ty output_ty) = Compiler_type.Ty.type_ repr in
+    let output_stack_ty = Stack.(output_ty @: nil) in
+    let error () =
+      let title () = "error producing Env.pack" in
+      let content () = Format.asprintf ""
+      in
+      ok @@ (error title content) in
+    let%bind _ =
+      Trace.trace_tzresult_lwt_r error @@
+      Memory_proto_alpha.parse_michelson code
+        input_stack_ty output_stack_ty in
+    ok ()
+  in
+
+  ok code
 
 let unpack : environment -> michelson result = fun e ->
   let%bind () =
     trace_strong (simple_error "unpack empty env") @@
     Assert.assert_true (List.length e <> 0) in
-  ok @@ seq @@ List.map (Function.constant i_unpair) @@ List.tl e
+
+  let l = List.length e - 1 in
+  let rec aux n =
+    match n with
+    | 0 -> seq []
+    | n -> seq [
+        i_unpair ;
+        dip (aux (n - 1)) ;
+      ] in
+  let code = aux l in
+
+  let%bind () =
+    let%bind (Stack.Ex_stack_ty output_stack_ty) = Compiler_type.Ty.environment e in
+    let repr = Environment.closure_representation e in
+    let%bind (Ex_ty input_ty) = Compiler_type.Ty.type_ repr in
+    let input_stack_ty = Stack.(input_ty @: nil) in
+    let error () =
+      let title () = "error producing Env.unpack" in
+      let content () = Format.asprintf "\nEnvironment:%a\nType Representation:%a\nCode:%a\n"
+          PP.environment e
+          PP.type_ repr
+          Micheline.Michelson.pp code
+      in
+      ok @@ (error title content) in
+    let%bind _ =
+      Trace.trace_tzresult_lwt_r error @@
+      Memory_proto_alpha.parse_michelson code
+        input_stack_ty output_stack_ty in
+    ok ()
+  in
+
+  ok code
+
 
 let pack_select : environment -> string list -> michelson result = fun e lst ->
   let module L = Logger.Stateful() in
@@ -206,10 +257,10 @@ let pack_select : environment -> string list -> michelson result = fun e lst ->
   ok code
 
 let add_packed_anon : environment -> type_value -> michelson result = fun e type_value ->
-  let code = i_pair in
+  let code = seq [i_pair] in
 
   let%bind () =
-    let error () = ok @@ simple_error "error producing Env.get" in
+    let error () = ok @@ simple_error "error producing add packed" in
     let%bind (Ex_ty input_ty) = Compiler_type.Ty.environment_representation e in
     let e' = Environment.add ("_add_packed_anon" , type_value) e in
     let%bind (Ex_ty output_ty) = Compiler_type.Ty.environment_representation e' in
