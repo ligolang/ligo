@@ -19,10 +19,12 @@ open Ast_simplified
 let card owner =
   ez_e_a_record [
     ("card_owner" , owner) ;
+    ("card_pattern" , e_a_nat 0) ;
   ]
 
 let card_ty = t_record_ez [
     ("card_owner" , t_address) ;
+    ("card_pattern" , t_nat) ;
   ]
 
 let card_ez owner = card (e_a_address owner)
