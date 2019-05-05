@@ -30,6 +30,22 @@ module Environment (* : ENVIRONMENT *) = struct
   let of_list : element list -> t = fun x -> x
   let to_list : t -> element list = fun x -> x
   let get_names : t -> string list = List.map fst
+  let remove : int -> t -> t = List.remove
+
+  let select : string list -> t -> t = fun lst env ->
+    let e_lst =
+      let e_lst = to_list env in
+      let aux selector (s , _) =
+        match List.mem s selector with
+        | true -> List.remove_element s selector , true
+        | false -> selector , false in
+      let e_lst' = List.fold_map_right aux lst e_lst in
+      let e_lst'' = List.combine e_lst e_lst' in
+      e_lst'' in
+    of_list
+    @@ List.map fst
+    @@ List.filter snd
+    @@ e_lst
 
 
   let fold : _ -> 'a -> t -> 'a = List.fold_left

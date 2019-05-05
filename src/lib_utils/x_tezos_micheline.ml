@@ -54,9 +54,9 @@ module Michelson = struct
   let i_drop = prim I_DROP
   let i_exec = prim I_EXEC
 
-  let i_if a b = prim ~children:[a;b] I_IF
-  let i_if_none a b = prim ~children:[a;b] I_IF_NONE
-  let i_if_left a b = prim ~children:[a;b] I_IF_LEFT
+  let i_if a b = prim ~children:[seq [a] ; seq[b]] I_IF
+  let i_if_none a b = prim ~children:[seq [a] ; seq[b]] I_IF_NONE
+  let i_if_left a b = prim ~children:[seq [a] ; seq[b]] I_IF_LEFT
   let i_failwith = prim I_FAILWITH
   let i_assert_some = i_if_none (seq [i_push_string "ASSERT_SOME" ; i_failwith]) (seq [])
   let i_assert_some_msg msg = i_if_none (seq [msg ; i_failwith]) (seq [])

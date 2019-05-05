@@ -7,7 +7,7 @@ let map ?(acc = []) f lst =
   in
   aux acc f (List.rev lst)
 
-let fold_map : type acc ele ret . (acc -> ele -> (acc * ret)) -> acc -> ele list -> ret list =
+let fold_map_right : type acc ele ret . (acc -> ele -> (acc * ret)) -> acc -> ele list -> ret list =
   fun f acc lst ->
   let rec aux (acc , prev) f = function
     | [] -> (acc , prev)
@@ -17,7 +17,23 @@ let fold_map : type acc ele ret . (acc -> ele -> (acc * ret)) -> acc -> ele list
   in
   snd @@ aux (acc , []) f (List.rev lst)
 
+let fold_map : type acc ele ret . (acc -> ele -> (acc * ret)) -> acc -> ele list -> ret list =
+  fun f acc lst ->
+  let rec aux (acc , prev) f = function
+    | [] -> (acc , prev)
+    | hd :: tl ->
+        let (acc' , hd') = f acc hd in
+        aux (acc' , hd' :: prev) f tl
+  in
+  List.rev @@ snd @@ aux (acc , []) f lst
+
 let fold_right' f init lst = List.fold_left f init (List.rev lst)
+
+let rec remove_element x lst =
+  match lst with
+  | [] -> raise (Failure "X_list.remove_element")
+  | hd :: tl when x = hd -> tl
+  | hd :: tl -> hd :: remove_element x tl
 
 let filter_map f =
   let rec aux acc lst = match lst with

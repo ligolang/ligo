@@ -38,6 +38,7 @@ let variant_matching () : unit result =
   let%bind () =
     let make_input = fun n -> e_a_constructor "Foo" (e_a_int n) in
     let make_expected = e_a_int in
+    expect program "fb" (make_input 0) (make_expected 0) >>? fun () ->
     expect_n program "fb" make_input make_expected >>? fun () ->
     expect program "fb" (e_a_constructor "Kee" (e_a_nat 50)) (e_a_int 23) >>? fun () ->
     expect program "fb" (e_a_constructor "Bar" (e_a_bool true)) (e_a_int 42) >>? fun () ->
@@ -69,13 +70,17 @@ let higher_order () : unit result =
 
 let shared_function () : unit result =
   let%bind program = type_file "./contracts/function-shared.ligo" in
+  (* let%bind () =
+   *   let make_expect = fun n -> (n + 1) in
+   *   expect_n_int program "inc" make_expect
+   * in
+   * let%bind () =
+   *   let make_expect = fun n -> (n + 2) in
+   *   expect_n_int program "double_inc" make_expect
+   * in *)
   let%bind () =
-    let make_expect = fun n -> (n + 1) in
-    expect_n_int program "inc" make_expect
-  in
-  let%bind () =
-    let make_expect = fun n -> (n + 2) in
-    expect_n_int program "double_inc" make_expect
+    let make_expect = fun n -> (2 * n + 3) in
+    expect program "foo" (e_a_int 0) (e_a_int @@ make_expect 0)
   in
   let%bind () =
     let make_expect = fun n -> (2 * n + 3) in
@@ -409,8 +414,7 @@ let main = "Integration (End to End)", [
     test "variant matching" variant_matching ;
     test "tuple" tuple ;
     test "record" record ;
-    test "closure" closure ;
-    test "shared function" shared_function ;
+    test "condition" condition ;
     test "shadow" shadow ;
     test "multiple parameters" multiple_parameters ;
     test "bool" bool_expression ;
@@ -419,7 +423,6 @@ let main = "Integration (End to End)", [
     test "option" option ;
     test "map" map ;
     test "list" list ;
-    test "condition" condition ;
     test "loop" loop ;
     test "matching" matching ;
     test "declarations" declarations ;
@@ -428,6 +431,8 @@ let main = "Integration (End to End)", [
     test "#include directives" include_ ;
     test "counter contract" counter_contract ;
     test "super counter contract" super_counter_contract ;
+    test "closure" closure ;
+    test "shared function" shared_function ;
     test "higher order" higher_order ;
     test "basic mligo" basic_mligo ;
     test "counter contract mligo" counter_mligo ;

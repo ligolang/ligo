@@ -71,17 +71,16 @@ and translate_function (content:anon_function) : michelson result =
   ok @@ seq [ body ]
 
 and translate_expression ?(first=false) (expr:expression) (env:environment) : (michelson * environment) result =
-  let (expr' , ty , _) = Combinators.Expression.(get_content expr , get_type expr , get_environment expr) in
+  let (expr' , ty) = Combinators.Expression.(get_content expr , get_type expr) in
   let error_message () = Format.asprintf  "%a" PP.expression expr in
 
-  let return code =
+  let return ?env' code =
+    let env' =
+      let default = env in
+      Environment.add ("_tmp_expression" , ty) @@ Option.unopt ~default env' in
     let%bind (Stack.Ex_stack_ty input_stack_ty) = Compiler_type.Ty.environment env in
     let%bind output_type = Compiler_type.type_ ty in
-    let%bind (Ex_ty output_ty) =
-      let error_message () = Format.asprintf "%a" Michelson.pp output_type in
-      Trace.trace_tzresult_lwt (fun () -> error (thunk "error parsing output ty") error_message ()) @@
-      Tezos_utils.Memory_proto_alpha.parse_michelson_ty output_type in
-    let output_stack_ty = Stack.(output_ty @: input_stack_ty) in
+    let%bind (Stack.Ex_stack_ty output_stack_ty) = Compiler_type.Ty.environment env' in
     let error_message () =
       let%bind schema_michelsons = Compiler_type.environment env in
       ok @@ Format.asprintf
@@ -101,13 +100,14 @@ and translate_expression ?(first=false) (expr:expression) (env:environment) : (m
       Tezos_utils.Memory_proto_alpha.parse_michelson code
         input_stack_ty output_stack_ty
     in
-    let env' = Environment.add ("_tmp_expression" , ty) env in
     ok (code , env')
   in
 
   trace (error (thunk "compiling expression") error_message) @@
   match expr' with
-  | E_capture_environment _c -> simple_fail "capture"
+  | E_capture_environment c ->
+      let%bind code = Compiler_environment.pack_select env c in
+      return @@ code
   | E_literal v ->
       let%bind v = translate_value v in
       let%bind t = Compiler_type.type_ ty in
@@ -127,10 +127,11 @@ and translate_expression ?(first=false) (expr:expression) (env:environment) : (m
             prim I_EXEC ;
           ]
         )
-      | T_deep_closure (_small_env, _, _) -> (
+      | T_deep_closure (small_env, input_ty , _) -> (
           trace (simple_error "Compiling deep closure application") @@
-          let%bind (f' , env') = translate_expression ~first f env in
-          let%bind (arg' , _) = translate_expression arg env' in
+          let%bind (arg' , env') = translate_expression arg env in
+          let%bind (f' , _) = translate_expression f env' in
+          let%bind append_closure = Compiler_environment.add_packed_anon small_env input_ty in
           let error =
             let error_title () = "michelson type-checking closure application" in
             let error_content () =
@@ -143,14 +144,10 @@ and translate_expression ?(first=false) (expr:expression) (env:environment) : (m
           in
           trace error @@
           return @@ seq [
-            i_comment "(* unit :: env *)" ;
-            i_comment "compute arg" ;
             arg' ;
-            i_comment "(* (arg * unit) :: env *)" ;
-            i_comment "compute closure" ;
-            dip @@ seq [f' ; i_unpair] ;
-            i_comment "(* arg :: capture :: f :: unit :: env *)" ;
-            i_exec ; (* output :: stack :: env *)
+            f' ; i_unpair ;
+            dip @@ append_closure ;
+            i_swap ; i_exec ;
           ]
         )
       | _ -> simple_fail "E_applicationing something not appliable"
@@ -169,19 +166,24 @@ and translate_expression ?(first=false) (expr:expression) (env:environment) : (m
             PP.environment env ;
           ok (env' , code)
         in
-        bind_fold_map_list aux env lst in
+        bind_fold_map_right_list aux env lst in
       let%bind predicate = get_predicate str ty lst in
+      let pre_code = seq @@ List.rev lst' in
       let%bind code = match (predicate, List.length lst) with
-        | Constant c, 0 -> ok @@ seq @@ lst' @ [
+        | Constant c, 0 -> ok @@ seq [
+            pre_code ;
             c ;
           ]
-        | Unary f, 1 -> ok @@ seq @@ lst' @ [
+        | Unary f, 1 -> ok @@ seq [
+            pre_code ;
             f ;
           ]
-        | Binary f, 2 -> ok @@ seq @@ lst' @ [
+        | Binary f, 2 -> ok @@ seq [
+            pre_code ;
             f ;
           ]
-        | Ternary f, 3 -> ok @@ seq @@ lst' @ [
+        | Ternary f, 3 -> ok @@ seq [
+            pre_code ;
             f ;
           ]
         | _ -> simple_fail "bad arity"
@@ -207,20 +209,21 @@ and translate_expression ?(first=false) (expr:expression) (env:environment) : (m
       let%bind (a' , _) = translate_expression a env' in
       let%bind (b' , _) = translate_expression b env' in
       let%bind code = ok (seq [
-          c' ; i_unpair ;
+          c' ;
           i_if a' b' ;
         ]) in
       return code
     )
   | E_if_none (c, n, (_ , s)) -> (
-      let%bind (c' , env') = translate_expression c env in
-      let%bind (n' , _) = translate_expression n env' in
-      let%bind (s' , _) = translate_expression s env' in
+      let%bind (c' , _env') = translate_expression c env in
+      let%bind (n' , _) = translate_expression n n.environment in
+      let%bind (s' , _) = translate_expression s s.environment in
+      let%bind restrict_s = Compiler_environment.select_env s.environment env in
       let%bind code = ok (seq [
-          c' ; i_unpair ;
+          c' ;
           i_if_none n' (seq [
-              i_pair ;
               s' ;
+              restrict_s ;
             ])
           ;
         ]) in
@@ -229,18 +232,16 @@ and translate_expression ?(first=false) (expr:expression) (env:environment) : (m
   | E_if_left (c, (_ , l), (_ , r)) -> (
       let%bind (c' , _env') = translate_expression c env in
       let%bind (l' , _) = translate_expression l l.environment in
-      let%bind (r' , _) = translate_expression r l.environment in
+      let%bind (r' , _) = translate_expression r r.environment in
       let%bind restrict_l = Compiler_environment.select_env l.environment env in
       let%bind restrict_r = Compiler_environment.select_env r.environment env in
       let%bind code = ok (seq [
-          c' ; i_unpair ;
+          c' ;
           i_if_left (seq [
-              i_swap ; dip i_pair ;
               l' ;
               i_comment "restrict left" ;
               dip restrict_l ;
             ]) (seq [
-              i_swap ; dip i_pair ;
               r' ;
               i_comment "restrict right" ;
               dip restrict_r ;
@@ -292,12 +293,18 @@ and translate_statement ((s', w_env) as s:statement) : michelson result =
   trace (fun () -> error (thunk "compiling statement") error_message ()) @@ match s' with
   | S_environment_add _ ->
       simple_fail "add not ready yet"
-  | S_environment_select _ ->
-      simple_fail "select not ready yet"
-  | S_environment_load _ ->
-      simple_fail "load not ready yet"
-  (* | S_environment_add (name, tv) ->
-   *     Environment.to_michelson_add (name, tv) w_env.pre_environment *)
+  | S_environment_select sub_env ->
+      let%bind code = Compiler_environment.select_env w_env.pre_environment sub_env in
+      return code
+  | S_environment_load (expr , env) ->
+      let%bind (expr' , _) = translate_expression expr w_env.pre_environment in
+      let%bind clear = Compiler_environment.select w_env.pre_environment [] in
+      let%bind unpack = Compiler_environment.unpack env in
+      return @@ seq [
+        expr' ;
+        dip clear ;
+        unpack ;
+      ]
   | S_declaration (s, expr) ->
       let tv = Combinators.Expression.get_type expr in
       let%bind (expr , _) = translate_expression expr w_env.pre_environment in
@@ -332,9 +339,7 @@ and translate_statement ((s', w_env) as s:statement) : michelson result =
       let%bind a' = translate_regular_block a in
       let%bind b' = translate_regular_block b in
       return @@ seq [
-        i_push_unit ;
         expr ;
-        prim I_CAR ;
         prim ~children:[seq [a'];seq [b']] I_IF ;
       ]
   | S_do expr -> (
@@ -361,11 +366,12 @@ and translate_statement ((s', w_env) as s:statement) : michelson result =
       let%bind add =
         let env' = w_env.pre_environment in
         Compiler_environment.add env' (name, tv) in
+      let%bind restrict_s = Compiler_environment.select_env (snd some).post_environment w_env.pre_environment in
       return @@ seq [
-        i_push_unit ; expr ; i_car ;
+        expr ;
         prim ~children:[
           seq [none'] ;
-          seq [add ; some'] ;
+          seq [add ; some' ; restrict_s] ;
         ] I_IF_NONE
       ]
   | S_while (expr, block) ->
@@ -375,15 +381,15 @@ and translate_statement ((s', w_env) as s:statement) : michelson result =
         let env_while = (snd block).pre_environment in
         Compiler_environment.select_env (snd block).post_environment env_while in
       return @@ seq [
-        i_push_unit ; expr ; i_car ;
+        expr ;
         prim ~children:[seq [
             block' ;
             restrict_block ;
-            i_push_unit ; expr ; i_car]] I_LOOP ;
+            expr]] I_LOOP ;
       ]
   | S_patch (name, lrs, expr) ->
-      let%bind (expr' , _) = translate_expression expr w_env.pre_environment in
-      let%bind get_code = Compiler_environment.get w_env.pre_environment name in
+      let%bind (expr' , env') = translate_expression expr w_env.pre_environment in
+      let%bind get_code = Compiler_environment.get env' name in
       let modify_code =
         let aux acc step = match step with
           | `Left -> seq [dip i_unpair ; acc ; i_pair]
@@ -407,7 +413,7 @@ and translate_statement ((s', w_env) as s:statement) : michelson result =
       return @@ seq [
         expr' ;
         get_code ;
-        modify_code ;
+        i_swap ; modify_code ;
         set_code ;
       ]
 

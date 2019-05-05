@@ -2,6 +2,7 @@ open Format
 let string : formatter -> string -> unit = fun ppf s -> fprintf ppf "%s" s
 let tag tag : formatter -> unit -> unit = fun ppf () -> fprintf ppf tag
 let bool ppf b = fprintf ppf "%b" b
+let pair f g ppf (a , b) = fprintf ppf "%a , %a" f a g b
 let new_line : formatter -> unit -> unit = tag "@;"
 let rec new_lines n ppf () =
   match n with

@@ -23,6 +23,9 @@ module Expression = struct
     environment = env ;
     is_toplevel = itl ;
   }
+
+  let pair : t -> t -> t' = fun a b -> E_constant ("PAIR" , [ a ; b ])
+
 end
 
 let get_bool (v:value) = match v with
