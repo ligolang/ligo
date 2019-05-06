@@ -391,7 +391,7 @@ and record_patch = {
   kwd_patch  : kwd_patch;
   path       : path;
   kwd_with   : kwd_with;
-  record_inj : record_injection reg
+  record_inj : record_expr
 }
 
 and fail_instr = {
@@ -599,15 +599,7 @@ and constr_expr =
 | NoneExpr  of none_expr reg
 | ConstrApp of (constr * arguments) reg
 
-and record_expr =
-  RecordInj of record_injection reg
-
-and record_injection = {
-  opening    : kwd_record;
-  fields     : (field_assign reg, semi) nsepseq;
-  terminator : semi option;
-  closing    : kwd_end
-}
+and record_expr = field_assign reg injection reg
 
 and field_assign = {
   field_name : field_name;
@@ -750,8 +742,7 @@ and constr_expr_to_region = function
 | ConstrApp {region; _}
 | SomeApp   {region; _} -> region
 
-and record_expr_to_region = function
-  RecordInj  {region; _} -> region
+and record_expr_to_region {region; _} = region
 
 let path_to_region = function
   Name var -> var.region
