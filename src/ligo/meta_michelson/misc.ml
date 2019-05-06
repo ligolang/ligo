@@ -65,7 +65,8 @@ module Context_init = struct
     let open Tezos_base.TzPervasives.Error_monad in
     let bootstrap_accounts =
       List.map (fun ({ pk ; pkh ; _ }, amount) ->
-          Parameters_repr.{ public_key_hash = pkh ; public_key = Some pk ; amount }
+          let open! Parameters_repr in
+          { public_key_hash = pkh ; public_key = Some pk ; amount }
         ) initial_accounts
     in
     let json =

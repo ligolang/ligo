@@ -69,11 +69,11 @@ let cards_ez owner n =
   @@ List.map (Function.constant owner)
   @@ List.range n
 
-let first_owner =
+let (first_owner , first_contract) =
   let open Tezos_utils.Memory_proto_alpha in
   let id = List.nth dummy_environment.identities 0 in
   let kt = id.implicit_contract in
-  Alpha_context.Contract.to_b58check kt
+  Alpha_context.Contract.to_b58check kt , kt
 
 let second_owner =
   let open Tezos_utils.Memory_proto_alpha in
@@ -111,17 +111,48 @@ let buy () =
     let%bind () =
       let%bind amount =
         trace_option (simple_error "getting amount for run") @@
-        Tezos_utils.Memory_proto_alpha.Alpha_context.Tez.of_mutez @@ Int64.of_int 10000000000 in
-      let options = make_options ~amount () in
+        Memory_proto_alpha.Alpha_context.Tez.of_mutez @@ Int64.of_int 10000000000 in
+      let options = Memory_proto_alpha.make_options ~amount () in
       expect_eq_n_pos_small ~options program "buy_single" make_input make_expected in
     let%bind () =
       let%bind amount =
         trace_option (simple_error "getting amount for run") @@
-        Tezos_utils.Memory_proto_alpha.Alpha_context.Tez.of_mutez @@ Int64.of_int 0 in
-      let options = make_options ~amount () in
+        Memory_proto_alpha.Alpha_context.Tez.of_mutez @@ Int64.of_int 0 in
+      let options = Memory_proto_alpha.make_options ~amount () in
       trace_strong (simple_error "could buy without money") @@
       Assert.assert_fail
       @@ expect_eq_n_pos_small ~options program "buy_single" make_input make_expected in
+    ok ()
+  in
+  ok ()
+
+let transfer () =
+  let%bind program = get_program () in
+  let%bind () =
+    let make_input = fun n ->
+      let transfer_action = ez_e_a_record [
+          ("card_to_transfer" , e_a_nat 0) ;
+          ("destination" , e_a_address second_owner) ;
+        ] in
+      let storage = basic 100 1000 (cards_ez first_owner n) (2 * n) in
+      e_a_pair transfer_action storage
+    in
+    let make_expected = fun n ->
+      let ops = e_a_list [] t_operation in
+      let storage =
+        let cards =
+          let new_card = card_ez second_owner in
+          let old_cards = cards_ez first_owner n in
+          (e_a_nat 0 , new_card) :: (List.tl old_cards)
+        in
+        basic 100 1000 cards (2 * n) in
+      e_a_pair ops storage
+    in
+    let%bind () =
+      let amount = Memory_proto_alpha.Alpha_context.Tez.zero in
+      let payer = first_contract in
+      let options = Memory_proto_alpha.make_options ~amount ~payer () in
+      expect_eq_n_strict_pos_small ~options program "transfer_single" make_input make_expected in
     ok ()
   in
   ok ()
@@ -148,7 +179,7 @@ let sell () =
     in
     let%bind () =
       let amount = Memory_proto_alpha.Alpha_context.Tez.zero in
-      let options = make_options ~amount () in
+      let options = Memory_proto_alpha.make_options ~amount () in
       expect_eq_n_pos_small ~options program "sell_single" make_input make_expected in
     ok ()
   in
@@ -157,5 +188,6 @@ let sell () =
 
 let main = "Coase (End to End)", [
     test "buy" buy ;
+    test "transfer" transfer ;
     (* test "sell" sell ; *)
   ]

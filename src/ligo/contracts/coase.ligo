@@ -27,7 +27,7 @@ type action_buy_single is record [
 type action_sell_single is record [
   card_to_sell : card_id ;
 ]
-type action_transfer is record [
+type action_transfer_single is record [
   card_to_transfer : card_id ;
   destination : address ;
 ]
@@ -35,7 +35,18 @@ type action_transfer is record [
 type action is
 | Buy_single of action_buy_single
 | Sell_single of action_sell_single
-// | Transfer of action_transfer
+| Transfer_single of action_transfer_single
+
+function transfer_single(const action : action_transfer_single ; const s : storage_type) : (list(operation) * storage_type) is
+  begin
+    const cards : cards = s.cards ;
+    const card : card = get_force(action.card_to_transfer , cards) ;
+    if (card.card_owner =/= source) then fail "This card doesn't belong to you" else skip ;
+    card.card_owner := action.destination ;
+    cards[action.card_to_transfer] := card ;
+    s.cards := cards ;
+    const operations : list(operation) = nil ;
+  end with (operations , s) ;
 
 function sell_single(const action : action_sell_single ; const s : storage_type) : (list(operation) * storage_type) is
   begin
@@ -83,5 +94,5 @@ function main(const action : action ; const s : storage_type) : (list(operation)
   case action of
   | Buy_single bs -> buy_single (bs , s)
   | Sell_single as -> sell_single (as , s)
-  // | Transfer at -> transfer (at , s)
+  | Transfer_single at -> transfer_single (at , s)
   end

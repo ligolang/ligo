@@ -13,22 +13,14 @@ let test name f =
 
 open Ast_simplified.Combinators
 
-type options = {
-  amount : Memory_proto_alpha.Alpha_context.Tez.t option ;
-}
-
-let make_options ?amount () = {
-  amount ;
-}
-
-let expect ?(options = make_options ()) program entry_point input expecter =
+let expect ?options program entry_point input expecter =
   let%bind result =
     let run_error =
       let title () = "expect run" in
       let content () = Format.asprintf "Entry_point: %s" entry_point in
       error title content in
     trace run_error @@
-    Ligo.easy_run_typed_simplified ~debug_michelson:false ?amount:options.amount entry_point program input in
+    Ligo.easy_run_typed_simplified ~debug_michelson:false ?options entry_point program input in
   expecter result
 
 let expect_eq ?options program entry_point input expected =
@@ -39,7 +31,7 @@ let expect_eq ?options program entry_point input expected =
           Ast_simplified.PP.value expected
           Ast_simplified.PP.value result in
       error title content in
-    trace_strong expect_error @@
+    trace expect_error @@
     Ast_simplified.assert_value_eq (expected , result) in
   expect ?options program entry_point input expecter
 

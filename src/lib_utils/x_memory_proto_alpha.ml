@@ -97,13 +97,37 @@ let unparse_michelson_ty
   Script_ir_translator.unparse_ty tezos_context ty >>=?? fun (michelson, _) ->
   return michelson
 
-let interpret
+type options = {
+  tezos_context: Alpha_context.t ;
+  source: Alpha_context.Contract.t ;
+  payer: Alpha_context.Contract.t ;
+  self: Alpha_context.Contract.t ;
+  amount: Alpha_context.Tez.t ;
+}
+
+let make_options
     ?(tezos_context = dummy_environment.tezos_context)
     ?(source = (List.nth dummy_environment.identities 0).implicit_contract)
     ?(self = (List.nth dummy_environment.identities 0).implicit_contract)
     ?(payer = (List.nth dummy_environment.identities 1).implicit_contract)
-    ?(amount = Alpha_context.Tez.one)
-    ?visitor
-    (instr:('a, 'b) descr) (bef:'a stack) : 'b stack tzresult Lwt.t  =
+    ?(amount = Alpha_context.Tez.one) ()
+  = {
+    tezos_context ;
+    source ;
+    self ;
+    payer ;
+    amount ;
+  }
+
+let default_options = make_options ()
+
+let interpret ?(options = default_options) ?visitor (instr:('a, 'b) descr) (bef:'a stack) : 'b stack tzresult Lwt.t  =
+  let {
+    tezos_context ;
+    source ;
+    self ;
+    payer ;
+    amount ;
+  } = options in
   Script_interpreter.step tezos_context ~source ~self ~payer ?visitor amount instr bef >>=??
   fun (stack, _) -> return stack
