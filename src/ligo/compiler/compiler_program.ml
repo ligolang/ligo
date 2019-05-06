@@ -522,15 +522,6 @@ let translate_program (p:program) (entry:string) : compiled_program result =
   let%bind output = Compiler_type.Ty.type_ output in
   ok ({input;output;body}:compiled_program)
 
-let translate_contract : program -> string -> michelson result = fun p e ->
-  let%bind main = get_main p e in
-  let%bind (param_ty , storage_ty) = Combinators.get_t_pair main.input in
-  let%bind param_michelson = Compiler_type.type_ param_ty in
-  let%bind storage_michelson = Compiler_type.type_ storage_ty in
-  let%bind { body = code } = translate_program p e in
-  let contract = Michelson.contract param_michelson storage_michelson code in
-  ok contract
-
 let translate_entry (p:anon_function) : compiled_program result =
   let {input;output} : anon_function = p in
   let%bind body =
@@ -539,3 +530,11 @@ let translate_entry (p:anon_function) : compiled_program result =
   let%bind input = Compiler_type.Ty.type_ input in
   let%bind output = Compiler_type.Ty.type_ output in
   ok ({input;output;body}:compiled_program)
+
+let translate_contract : anon_function -> michelson result = fun f ->
+  let%bind compiled_program = translate_entry f in
+  let%bind (param_ty , storage_ty) = Combinators.get_t_pair f.input in
+  let%bind param_michelson = Compiler_type.type_ param_ty in
+  let%bind storage_michelson = Compiler_type.type_ storage_ty in
+  let contract = Michelson.contract param_michelson storage_michelson compiled_program.body in
+  ok contract

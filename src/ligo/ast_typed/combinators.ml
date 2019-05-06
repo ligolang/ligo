@@ -42,6 +42,7 @@ let t_function param result ?s () : type_value = make_t (T_function (param, resu
 let t_shallow_closure param result ?s () : type_value = make_t (T_function (param, result)) s
 
 let get_type_annotation (x:annotated_expression) = x.type_annotation
+let get_type' (x:type_value) = x.type_value'
 let get_environment (x:annotated_expression) = x.environment
 let get_expression (x:annotated_expression) = x.expression
 
@@ -156,7 +157,10 @@ let e_bool b : expression = E_literal (Literal_bool b)
 let e_string s : expression = E_literal (Literal_string s)
 let e_address s : expression = E_literal (Literal_address s)
 let e_operation s : expression = E_literal (Literal_operation s)
+let e_lambda l : expression = E_lambda l
 let e_pair a b : expression = E_tuple [a; b]
+let e_application a b : expression = E_application (a , b)
+let e_variable v : expression = E_variable v
 let e_list lst : expression = E_list lst
 
 let e_a_unit = make_a_e e_unit (t_unit ())
@@ -168,9 +172,12 @@ let e_a_string s = make_a_e (e_string s) (t_string ())
 let e_a_address s = make_a_e (e_address s) (t_address ())
 let e_a_pair a b = make_a_e (e_pair a b) (t_pair a.type_annotation b.type_annotation ())
 let e_a_some s = make_a_e (e_some s) (t_option s.type_annotation ())
+let e_a_lambda l = make_a_e (e_lambda l) (t_function l.input_type l.output_type ())
 let e_a_none t = make_a_e e_none (t_option t ())
 let e_a_tuple lst = make_a_e (E_tuple lst) (t_tuple (List.map get_type_annotation lst) ())
 let e_a_record r = make_a_e (e_record r) (t_record (SMap.map get_type_annotation r) ())
+let e_a_application a b = make_a_e (e_application a b) (get_type_annotation b)
+let e_a_variable v ty = make_a_e (e_variable v) ty
 let ez_e_a_record r = make_a_e (ez_e_record r) (ez_t_record (List.map (fun (x, y) -> x, y.type_annotation) r) ())
 let e_a_map lst k v = make_a_e (e_map lst) (t_map k v ())
 let e_a_list lst t = make_a_e (e_list lst) (t_list t ())

@@ -375,3 +375,43 @@ let merge_annotation (a:type_value option) (b:type_value option) : type_value re
       | _, None -> ok a
       | _, Some _ -> ok b
 
+open Combinators
+
+let program_to_main : program -> string -> lambda result = fun p s ->
+  let%bind (main , input_type , output_type) =
+    let pred = fun d ->
+      match d with
+      | Declaration_constant (d , _) when d.name = s -> Some d.annotated_expression
+      | Declaration_constant _ -> None
+    in
+    let%bind main =
+      trace_option (simple_error "no main with given name") @@
+      List.find_map (Function.compose pred Location.unwrap) p in
+    let%bind (input_ty , output_ty) =
+      match (get_type' @@ get_type_annotation main) with
+      | T_function (i , o) -> ok (i , o)
+      | _ -> simple_fail "program main isn't a function" in
+    ok (main , input_ty , output_ty)
+  in
+  let body =
+    let aux : declaration -> instruction = fun d ->
+      match d with
+      | Declaration_constant (d , _) -> I_declaration d in
+    List.map (Function.compose aux Location.unwrap) p in
+  let env =
+    let aux = fun _ d ->
+      match d with
+      | Declaration_constant (_ , env) -> env in
+    List.fold_left aux Environment.full_empty (List.map Location.unwrap p) in
+  let binder = "@contract_input" in
+  let result =
+    let input_expr = e_a_variable binder input_type env in
+    let main_expr = e_a_variable s (get_type_annotation main) env in
+    e_a_application main_expr input_expr env in
+  ok {
+    binder ;
+    input_type ;
+    output_type ;
+    body ;
+    result ;
+  }

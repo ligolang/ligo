@@ -497,7 +497,7 @@ let translate_program (lst:AST.program) : program result =
   let%bind (statements, _) = List.fold_left aux (ok ([], Environment.empty)) (temp_unwrap_loc_list lst) in
   ok statements
 
-let translate_main (l:AST.lambda) (_t:AST.type_value) : anon_function result =
+let translate_main (l:AST.lambda) : anon_function result =
   let%bind expr = translate_lambda Environment.empty l in
   match Combinators.Expression.get_content expr with
   | E_literal (D_function f) -> ok f
@@ -516,7 +516,7 @@ let functionalize (e:AST.annotated_expression) : AST.lambda * AST.type_value =
   }, Combinators.(t_function (t_unit ()) t ())
 
 let translate_entry (lst:AST.program) (name:string) : anon_function result =
-  let%bind (lst', l, tv) =
+  let%bind (lst', l, _) =
     let rec aux acc (lst:AST.program) =
       match lst with
       | [] -> None
@@ -540,7 +540,7 @@ let translate_entry (lst:AST.program) (name:string) : anon_function result =
   let l' = {l with body = lst' @ l.body} in
   let r =
     trace (simple_error "translating entry") @@
-    translate_main l' tv in
+    translate_main l' in
   r
 
 open Combinators

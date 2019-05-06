@@ -390,6 +390,16 @@ let super_counter_contract () : unit result =
     e_a_pair (e_a_list [] t_operation) (e_a_int (op 42 n)) in
   expect_eq_n program "main" make_input make_expected
 
+let dispatch_counter_contract () : unit result =
+  let%bind program = type_file "./contracts/dispatch-counter.ligo" in
+  let make_input = fun n ->
+    let action = if n mod 2 = 0 then "Increment" else "Decrement" in
+    e_a_pair (e_a_constructor action (e_a_int n)) (e_a_int 42) in
+  let make_expected = fun n ->
+    let op = if n mod 2 = 0 then (+) else (-) in
+    e_a_pair (e_a_list [] t_operation) (e_a_int (op 42 n)) in
+  expect_eq_n program "main" make_input make_expected
+
 let basic_mligo () : unit result =
   let%bind typed = mtype_file "./contracts/basic.mligo" in
   let%bind result = Ligo.easy_evaluate_typed "foo" typed in
@@ -431,6 +441,7 @@ let main = "Integration (End to End)", [
     test "#include directives" include_ ;
     test "counter contract" counter_contract ;
     test "super counter contract" super_counter_contract ;
+    test "dispatch counter contract" dispatch_counter_contract ;
     test "closure" closure ;
     test "shared function" shared_function ;
     test "higher order" higher_order ;

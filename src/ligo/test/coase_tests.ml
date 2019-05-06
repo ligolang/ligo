@@ -126,6 +126,45 @@ let buy () =
   in
   ok ()
 
+let dispatch_buy () =
+  let%bind program = get_program () in
+  let%bind () =
+    let make_input = fun n ->
+      let buy_action = ez_e_a_record [
+          ("card_to_buy" , e_a_nat 0) ;
+        ] in
+      let action = e_a_constructor "Buy_single" buy_action in
+      let storage = basic 100 1000 (cards_ez first_owner n) (2 * n) in
+      e_a_pair action storage
+    in
+    let make_expected = fun n ->
+      let ops = e_a_list [] t_operation in
+      let storage =
+        let cards =
+          cards_ez first_owner n @
+          [(e_a_nat (2 * n) , card (e_a_address second_owner))]
+        in
+        basic 101 1000 cards ((2 * n) + 1) in
+      e_a_pair ops storage
+    in
+    let%bind () =
+      let%bind amount =
+        trace_option (simple_error "getting amount for run") @@
+        Memory_proto_alpha.Alpha_context.Tez.of_mutez @@ Int64.of_int 10000000000 in
+      let options = Memory_proto_alpha.make_options ~amount () in
+      expect_eq_n_pos_small ~options program "main" make_input make_expected in
+    let%bind () =
+      let%bind amount =
+        trace_option (simple_error "getting amount for run") @@
+        Memory_proto_alpha.Alpha_context.Tez.of_mutez @@ Int64.of_int 0 in
+      let options = Memory_proto_alpha.make_options ~amount () in
+      trace_strong (simple_error "could buy without money") @@
+      Assert.assert_fail
+      @@ expect_eq_n_pos_small ~options program "buy_single" make_input make_expected in
+    ok ()
+  in
+  ok ()
+
 let transfer () =
   let%bind program = get_program () in
   let%bind () =
@@ -190,6 +229,7 @@ let sell () =
 
 let main = "Coase (End to End)", [
     test "buy" buy ;
+    test "dispatch buy" dispatch_buy ;
     test "transfer" transfer ;
     test "sell" sell ;
   ]

@@ -51,8 +51,8 @@ let transpile_value
     (e:Ast_typed.annotated_expression) : Mini_c.value result =
   let%bind f =
     let open Transpiler in
-    let (f, t) = functionalize e in
-    let%bind main = translate_main f t in
+    let (f , _) = functionalize e in
+    let%bind main = translate_main f in
     ok main
   in
 
@@ -72,14 +72,15 @@ let compile_contract_file : string -> string -> string result = fun source entry
   let%bind typed =
     trace (simple_error "typing") @@
     Typer.type_program simplified in
-  let%bind () =
-    assert_valid_entry_point typed entry_point in
+  let%bind main_typed =
+    trace (simple_error "getting typed main") @@
+    Ast_typed.program_to_main typed entry_point in
   let%bind mini_c =
     trace (simple_error "transpiling") @@
-    Transpiler.translate_program typed in
+    Transpiler.translate_main main_typed in
   let%bind michelson =
     trace (simple_error "compiling") @@
-    Compiler.translate_contract mini_c entry_point in
+    Compiler.translate_contract mini_c in
   let str =
     Format.asprintf "%a" Micheline.Michelson.pp_stripped michelson in
   ok str

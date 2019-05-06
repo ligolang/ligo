@@ -31,8 +31,8 @@ let transpile_value
     (e:AST_Typed.annotated_expression) : Mini_c.value result =
   let%bind f =
     let open Transpiler in
-    let (f, t) = functionalize e in
-    let%bind main = translate_main f t in
+    let (f , _) = functionalize e in
+    let%bind main = translate_main f in
     ok main
   in
 
