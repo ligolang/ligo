@@ -272,6 +272,7 @@ module Types = struct
     | _ -> assert false
 
   let option a = Option_t ((a, None), None, None)
+  let contract a = Contract_t (a, None)
   let assert_option = function
     | Option_t ((a, _), _, _) -> a
     | _ -> assert false

@@ -35,6 +35,7 @@ module Ty = struct
     | T_map _ -> fail (not_comparable "map")
     | T_list _ -> fail (not_comparable "list")
     | T_option _ -> fail (not_comparable "option")
+    | T_contract _ -> fail (not_comparable "contract")
 
   let base_type : type_base -> ex_ty result = fun b ->
     let open Contract_types in
@@ -82,6 +83,9 @@ module Ty = struct
     | T_option t ->
         let%bind (Ex_ty t') = type_ t in
         ok @@ Ex_ty Contract_types.(option t')
+    | T_contract t ->
+        let%bind (Ex_ty t') = type_ t in
+        ok @@ Ex_ty Contract_types.(contract t')
 
   and environment_representation = function
     | [] -> ok @@ Ex_ty Contract_types.unit
@@ -138,6 +142,9 @@ let rec type_ : type_value -> O.michelson result =
   | T_option o ->
       let%bind o' = type_ o in
       ok @@ O.prim ~children:[o'] O.T_option
+  | T_contract o ->
+      let%bind o' = type_ o in
+      ok @@ O.prim ~children:[o'] O.T_contract
   | T_function (arg, ret) ->
       let%bind arg = type_ arg in
       let%bind ret = type_ ret in

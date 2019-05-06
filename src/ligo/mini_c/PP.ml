@@ -28,6 +28,7 @@ let rec type_ ppf : type_value -> _ = function
   | T_map(k, v) -> fprintf ppf "map(%a -> %a)" type_ k type_ v
   | T_list(t) -> fprintf ppf "list(%a)" type_ t
   | T_option(o) -> fprintf ppf "option(%a)" type_ o
+  | T_contract(t) -> fprintf ppf "contract(%a)" type_ t
   | T_deep_closure(c, arg, ret) ->
       fprintf ppf "[%a](%a)->(%a)"
         environment c

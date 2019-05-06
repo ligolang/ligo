@@ -111,6 +111,10 @@ let get_t_right t = match t with
   | T_or (_ , b) -> ok b
   | _ -> fail @@ wrong_type "union" t
 
+let get_t_contract t = match t with
+  | T_contract x -> ok x
+  | _ -> fail @@ wrong_type "contract" t
+
 let get_last_statement ((b', _):block) : statement result =
   let aux lst = match lst with
     | [] -> simple_fail "get_last: empty list"

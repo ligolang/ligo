@@ -113,7 +113,7 @@ let buy () =
         trace_option (simple_error "getting amount for run") @@
         Tezos_utils.Memory_proto_alpha.Alpha_context.Tez.of_mutez @@ Int64.of_int 10000000000 in
       let options = make_options ~amount () in
-      expect_n_pos_small ~options program "buy_single" make_input make_expected in
+      expect_eq_n_pos_small ~options program "buy_single" make_input make_expected in
     let%bind () =
       let%bind amount =
         trace_option (simple_error "getting amount for run") @@
@@ -121,11 +121,41 @@ let buy () =
       let options = make_options ~amount () in
       trace_strong (simple_error "could buy without money") @@
       Assert.assert_fail
-      @@ expect_n_pos_small ~options program "buy_single" make_input make_expected in
+      @@ expect_eq_n_pos_small ~options program "buy_single" make_input make_expected in
     ok ()
   in
   ok ()
 
+let sell () =
+  let%bind program = get_program () in
+  let%bind () =
+    let make_input = fun n ->
+      let sell_action = ez_e_a_record [
+          ("card_to_sell" , e_a_nat (n - 1)) ;
+        ] in
+      let storage = basic 100 1000 (cards_ez first_owner n) (2 * n) in
+      e_a_pair sell_action storage
+    in
+    let make_expected = fun n ->
+      let ops = e_a_list [] t_operation in
+      let storage =
+        let cards =
+          cards_ez first_owner n @
+          [(e_a_nat (2 * n) , card (e_a_address second_owner))]
+        in
+        basic 101 1000 cards ((2 * n) + 1) in
+      e_a_pair ops storage
+    in
+    let%bind () =
+      let amount = Memory_proto_alpha.Alpha_context.Tez.zero in
+      let options = make_options ~amount () in
+      expect_eq_n_pos_small ~options program "sell_single" make_input make_expected in
+    ok ()
+  in
+  ok ()
+
+
 let main = "Coase (End to End)", [
     test "buy" buy ;
+    (* test "sell" sell ; *)
   ]

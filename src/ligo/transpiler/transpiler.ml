@@ -25,6 +25,9 @@ let rec translate_type (t:AST.type_value) : type_value result =
   | T_constant ("address", []) -> ok (T_base Base_address)
   | T_constant ("unit", []) -> ok (T_base Base_unit)
   | T_constant ("operation", []) -> ok (T_base Base_operation)
+  | T_constant ("contract", [x]) ->
+      let%bind x' = translate_type x in
+      ok (T_contract x')
   | T_constant ("map", [key;value]) ->
       let%bind kv' = bind_map_pair translate_type (key, value) in
       ok (T_map kv')

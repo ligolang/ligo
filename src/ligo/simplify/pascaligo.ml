@@ -98,7 +98,13 @@ let rec simpl_expression (t:Raw.expr) : ae result =
       match List.assoc_opt c' constants with
       | None -> return @@ E_variable c.value
       | Some 0 -> return @@ E_constant (c' , [])
-      | Some _ -> simple_fail "non nullary constant without parameters"
+      | Some n -> (
+          let error =
+            let title () = "non nullary constant without parameters" in
+            let content () = Format.asprintf "%s (%d)" c' n in
+            error title content in
+          fail error
+        )
     )
   | ECall x -> (
       let (name, args) = x.value in

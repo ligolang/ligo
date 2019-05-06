@@ -35,6 +35,15 @@ let get_predicate : string -> type_value -> expression list -> predicate result 
             | _ -> simple_fail "mini_c . RIGHT" in
           let%bind l_ty = Compiler_type.type_ l in
           ok @@ simple_unary @@ prim ~children:[l_ty] I_RIGHT
+      | "CONTRACT" ->
+          let%bind r = match lst with
+            | [ _ ] -> get_t_contract ty
+            | _ -> simple_fail "mini_c . CONTRACT" in
+          let%bind r_ty = Compiler_type.type_ r in
+          ok @@ simple_unary @@ seq [
+            prim ~children:[r_ty] I_CONTRACT ;
+            i_assert_some_msg (i_push_string "bad address for get_contract") ;
+          ]
       | x -> simple_fail ("predicate \"" ^ x ^ "\" doesn't exist")
     )
 

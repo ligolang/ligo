@@ -22,8 +22,11 @@ module Simplify = struct
 
   let constants = [
     ("get_force" , 2) ;
+    ("transaction" , 3) ;
+    ("get_contract" , 1) ;
     ("size" , 1) ;
     ("int" , 1) ;
+    ("abs" , 1) ;
     ("amount" , 0) ;
     ("unit" , 0) ;
     ("source" , 0) ;
@@ -223,7 +226,19 @@ module Typer = struct
 
   let transaction = "Operation.transaction" , 3 , [
       true_3 , typer'_3 (
-        fun param contract amount ->
+        fun param amount contract ->
+          let%bind () =
+            assert_t_tez amount in
+          let%bind contract_param =
+            get_t_contract contract in
+          let%bind () =
+            assert_type_value_eq (param , contract_param) in
+          ok ("TRANSFER_TOKENS" , t_operation ())
+      )
+    ]
+  let transaction' = "transaction" , 3 , [
+      true_3 , typer'_3 (
+        fun param amount contract ->
           let%bind () =
             assert_t_tez amount in
           let%bind contract_param =
@@ -245,6 +260,17 @@ module Typer = struct
           ok ("CONTRACT" , t_contract tv' ())
       )
     ]
+  let get_contract' = "get_contract" , 1 , [
+      eq_1 (t_address ()) , typer'_1_opt (
+        fun _ tv_opt ->
+          let%bind tv =
+            trace_option (simple_error "get_contract needs a type annotation") tv_opt in
+          let%bind tv' =
+            trace_strong (simple_error "get_contract has a not-contract annotation") @@
+            get_t_contract tv in
+          ok ("CONTRACT" , t_contract tv' ())
+      )
+    ]
 
   let num_2 : typer_predicate =
     let aux = fun a b ->
@@ -254,6 +280,10 @@ module Typer = struct
 
   let mod_ = "MOD" , 2 , [
       num_2 , constant_2 "MOD" (t_nat ()) ;
+    ]
+
+  let abs = "abs" , 1 , [
+      eq_1 (t_int ()) , typer_constant ("ABS" , (t_nat ())) ;
     ]
 
   let times = "TIMES" , 2 , [
@@ -306,7 +336,10 @@ module Typer = struct
       unit ;
       amount ;
       transaction ;
+      transaction' ;
       get_contract ;
+      get_contract' ;
+      abs ;
     ]
 
 end
@@ -361,9 +394,11 @@ module Compiler = struct
     ("FAILWITH" , simple_unary @@ prim I_FAILWITH) ;
     ("ASSERT" , simple_binary @@ i_if (seq [i_failwith]) (seq [i_drop ; i_push_unit])) ;
     ("INT" , simple_unary @@ prim I_INT) ;
+    ("ABS" , simple_unary @@ prim I_ABS) ;
     ("CONS" , simple_binary @@ prim I_CONS) ;
     ("UNIT" , simple_constant @@ prim I_UNIT) ;
     ("AMOUNT" , simple_constant @@ prim I_AMOUNT) ;
+    ("TRANSFER_TOKENS" , simple_ternary @@ prim I_TRANSFER_TOKENS) ;
     ("SOURCE" , simple_constant @@ prim I_SOURCE) ;
     ("SENDER" , simple_constant @@ prim I_SENDER) ;
     ( "MAP_UPDATE" , simple_ternary @@ seq [dip (i_some) ; prim I_UPDATE ]) ;
