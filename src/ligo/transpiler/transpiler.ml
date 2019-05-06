@@ -37,7 +37,12 @@ let rec translate_type (t:AST.type_value) : type_value result =
   | T_constant ("option", [o]) ->
       let%bind o' = translate_type o in
       ok (T_option o')
-  | T_constant (name, _) -> fail (fun () -> error (thunk "unrecognized type constant") (fun () -> name) ())
+  | T_constant (name , lst) ->
+      let error =
+        let title () = "unrecognized type constant" in
+        let content () = Format.asprintf "%s (%d)" name (List.length lst) in
+        error title content in
+      fail error
   | T_sum m ->
       let node = Append_tree.of_list @@ list_of_map m in
       let aux a b : type_value result =
@@ -203,6 +208,7 @@ and translate_literal : AST.literal -> value = fun l -> match l with
   | Literal_bytes s -> D_bytes s
   | Literal_string s -> D_string s
   | Literal_address s -> D_string s
+  | Literal_operation op -> D_operation op
   | Literal_unit -> D_unit
 
 and transpile_small_environment : AST.small_environment -> Environment.t result = fun x ->
@@ -636,8 +642,17 @@ let rec untranspile (v : value) (t : AST.type_value) : AST.annotated_expression 
         bind_map_list aux lst in
       return (E_list lst')
     )
-  | T_constant _ ->
-      simple_fail "unknown type_constant"
+  | T_constant ("contract" , [_ty]) ->
+      simple_fail "can't untranspile contract"
+  | T_constant ("operation" , []) ->
+      let%bind op = get_operation v in
+      return (E_literal (Literal_operation op))
+  | T_constant (name , lst) ->
+      let error =
+        let title () = "unknown type_constant" in
+        let content () = Format.asprintf "%s (%d)" name (List.length lst) in
+        error title content in
+      fail error
   | T_sum m ->
       let lst = kv_list_of_map m in
       let%bind node = match Append_tree.of_list lst with

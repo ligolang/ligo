@@ -2,8 +2,14 @@ open Types
 open PP_helpers
 open Format
 
-let list_sep_d x = list_sep x (const " , ")
-let smap_sep_d x = smap_sep x (const " , ")
+let list_sep_d x ppf lst = match lst with
+  | [] -> ()
+  | _ -> fprintf ppf "@;  @[<v>%a@]@;" (list_sep x (tag "@;")) lst
+
+let smap_sep_d x ppf m =
+  if Map.String.is_empty m
+  then ()
+  else fprintf ppf "@;  @[<v>%a@]@;" (smap_sep x (tag "@;")) m
 
 let rec type_expression ppf (te:type_expression) = match te with
   | T_tuple lst -> fprintf ppf "tuple[%a]" (list_sep_d type_expression) lst
@@ -22,6 +28,7 @@ let literal ppf (l:literal) = match l with
   | Literal_string s -> fprintf ppf "%S" s
   | Literal_bytes b -> fprintf ppf "0x%s" @@ Bytes.to_string @@ Bytes.escaped b
   | Literal_address s -> fprintf ppf "@%S" s
+  | Literal_operation _ -> fprintf ppf "Operation(...bytes)"
 
 let rec expression ppf (e:expression) = match e with
   | E_literal l -> literal ppf l

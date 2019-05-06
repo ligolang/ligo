@@ -115,7 +115,11 @@ let rev_uncons_opt = function
       let r = rev lst in
       let last = hd r in
       let hds = rev @@ tl r in
-      Some (hds, last)
+      Some (hds , last)
+
+let hds lst = match rev_uncons_opt lst with
+  | None -> failwith "toto"
+  | Some (hds , _) -> hds
 
 let to_pair = function
   | [a ; b] -> Some (a , b)

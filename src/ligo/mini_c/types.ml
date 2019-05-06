@@ -47,6 +47,7 @@ type value =
   | D_list of value list
   (* | `Macro of anon_macro ... The future. *)
   | D_function of anon_function
+  | D_operation of Memory_proto_alpha.Alpha_context.packed_internal_operation
 
 and selector = var_name list
 

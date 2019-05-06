@@ -115,6 +115,15 @@ let get_t_contract t = match t with
   | T_contract x -> ok x
   | _ -> fail @@ wrong_type "contract" t
 
+let get_t_operation t = match t with
+  | T_base Base_operation -> ok ()
+  | _ -> fail @@ wrong_type "operation" t
+
+let get_operation (v:value) = match v with
+  | D_operation x -> ok x
+  | _ -> simple_fail "not an operation"
+
+
 let get_last_statement ((b', _):block) : statement result =
   let aux lst = match lst with
     | [] -> simple_fail "get_last: empty list"

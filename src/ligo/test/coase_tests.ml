@@ -164,23 +164,25 @@ let sell () =
       let sell_action = ez_e_a_record [
           ("card_to_sell" , e_a_nat (n - 1)) ;
         ] in
-      let storage = basic 100 1000 (cards_ez first_owner n) (2 * n) in
+      let cards = cards_ez first_owner n in
+      let storage = basic 100 1000 cards (2 * n) in
       e_a_pair sell_action storage
     in
-    let make_expected = fun n ->
-      let ops = e_a_list [] t_operation in
-      let storage =
-        let cards =
-          cards_ez first_owner n @
-          [(e_a_nat (2 * n) , card (e_a_address second_owner))]
-        in
-        basic 101 1000 cards ((2 * n) + 1) in
-      e_a_pair ops storage
+    let make_expecter : int -> annotated_expression -> unit result = fun n result ->
+      let%bind (ops , storage) = get_a_pair result in
+      let%bind () =
+        let%bind lst = get_a_list ops in
+        Assert.assert_list_size lst 1 in
+      let expected_storage =
+        let cards = List.hds @@ cards_ez first_owner n in
+        basic 99 1000 cards (2 * n) in
+      Ast_simplified.assert_value_eq (expected_storage , storage)
     in
     let%bind () =
       let amount = Memory_proto_alpha.Alpha_context.Tez.zero in
-      let options = Memory_proto_alpha.make_options ~amount () in
-      expect_eq_n_pos_small ~options program "sell_single" make_input make_expected in
+      let payer = first_contract in
+      let options = Memory_proto_alpha.make_options ~amount ~payer () in
+      expect_n_strict_pos_small ~options program "sell_single" make_input make_expecter in
     ok ()
   in
   ok ()
@@ -189,5 +191,5 @@ let sell () =
 let main = "Coase (End to End)", [
     test "buy" buy ;
     test "transfer" transfer ;
-    (* test "sell" sell ; *)
+    test "sell" sell ;
   ]

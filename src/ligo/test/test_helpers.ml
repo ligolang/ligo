@@ -78,6 +78,9 @@ let expect_eq_n_pos_small ?options = expect_eq_n_aux ?options [0 ; 2 ; 10]
 let expect_eq_n_strict_pos_small ?options = expect_eq_n_aux ?options [2 ; 10]
 let expect_eq_n_pos_mid = expect_eq_n_aux [0 ; 2 ; 10 ; 33]
 
+let expect_n_pos_small ?options = expect_n_aux ?options [0 ; 2 ; 10]
+let expect_n_strict_pos_small ?options = expect_n_aux ?options [2 ; 10]
+
 let expect_eq_b program entry_point make_expected =
   let aux b =
     let input = e_a_bool b in

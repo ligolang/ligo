@@ -8,7 +8,6 @@ let space_sep ppf () = fprintf ppf " "
 
 let lr = fun ppf -> function `Left -> fprintf ppf "L" | `Right -> fprintf ppf "R"
 
-
 let type_base ppf : type_base -> _ = function
   | Base_unit -> fprintf ppf "unit"
   | Base_bool -> fprintf ppf "bool"
@@ -42,6 +41,7 @@ and environment ppf (x:environment) =
 
 let rec value ppf : value -> unit = function
   | D_bool b -> fprintf ppf "%b" b
+  | D_operation _ -> fprintf ppf "operation[...bytes]"
   | D_int n -> fprintf ppf "%d" n
   | D_nat n -> fprintf ppf "+%d" n
   | D_tez n -> fprintf ppf "%dtz" n

@@ -155,6 +155,7 @@ let e_tez n : expression = E_literal (Literal_tez n)
 let e_bool b : expression = E_literal (Literal_bool b)
 let e_string s : expression = E_literal (Literal_string s)
 let e_address s : expression = E_literal (Literal_address s)
+let e_operation s : expression = E_literal (Literal_operation s)
 let e_pair a b : expression = E_tuple [a; b]
 let e_list lst : expression = E_list lst
 

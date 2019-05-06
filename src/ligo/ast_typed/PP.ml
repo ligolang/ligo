@@ -63,6 +63,7 @@ and literal ppf (l:literal) : unit =
   | Literal_string s -> fprintf ppf "%s" s
   | Literal_bytes b -> fprintf ppf "0x%s" @@ Bytes.to_string @@ Bytes.escaped b
   | Literal_address s -> fprintf ppf "@%s" s
+  | Literal_operation _ -> fprintf ppf "Operation(...bytes)"
 
 and block ppf (b:block) = (list_sep instruction (tag "@;")) ppf b
 

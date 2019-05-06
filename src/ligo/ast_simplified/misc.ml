@@ -26,10 +26,13 @@ let assert_literal_eq (a, b : literal * literal) : unit result =
   | Literal_address a, Literal_address b when a = b -> ok ()
   | Literal_address _, Literal_address _ -> simple_fail "different addresss"
   | Literal_address _, _ -> simple_fail "address vs non-address"
+  | Literal_operation _, Literal_operation _ -> simple_fail "can't compare operations"
+  | Literal_operation _, _ -> simple_fail "operation vs non-operation"
+
 
 let rec assert_value_eq (a, b: (value*value)) : unit result =
   let error_content () =
-    Format.asprintf "%a vs %a" PP.value a PP.value b
+    Format.asprintf "\n@[<v>- %a@;- %a]" PP.value a PP.value b
   in
   trace (fun () -> error (thunk "not equal") error_content ()) @@
   match (a.expression, b.expression) with

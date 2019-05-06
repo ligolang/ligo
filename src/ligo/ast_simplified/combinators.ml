@@ -171,3 +171,13 @@ let get_access_record : access -> string result = fun a ->
   | Access_tuple _
   | Access_map _ -> simple_fail "not an access record"
   | Access_record s -> ok s
+
+let get_a_pair = fun t ->
+  match t.expression with
+  | E_tuple [a ; b] -> ok (a , b)
+  | _ -> simple_fail "not a pair"
+
+let get_a_list = fun t ->
+  match t.expression with
+  | E_list lst -> ok lst
+  | _ -> simple_fail "not a pair"

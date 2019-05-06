@@ -72,6 +72,8 @@ let rec translate_value (Ex_typed_value (ty, value)) : value result =
         bind_map_list aux lst'
       in
       ok @@ D_list lst''
+  | (Operation_t _) , op ->
+      ok @@ D_operation op
   | ty, v ->
       let%bind error =
         let%bind m_data =

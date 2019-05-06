@@ -368,6 +368,8 @@ and type_annotated_expression : environment -> I.annotated_expression -> O.annot
       return (E_literal (Literal_tez n)) (t_tez ())
   | E_literal (Literal_address s) ->
       return (e_address s) (t_address ())
+  | E_literal (Literal_operation op) ->
+      return (e_operation op) (t_operation ())
   (* Tuple *)
   | E_tuple lst ->
       let%bind lst' = bind_list @@ List.map (type_annotated_expression e) lst in
@@ -605,6 +607,7 @@ let untype_literal (l:O.literal) : I.literal result =
   | Literal_string s -> ok (Literal_string s)
   | Literal_bytes b -> ok (Literal_bytes b)
   | Literal_address s -> ok (Literal_address s)
+  | Literal_operation s -> ok (Literal_operation s)
 
 let rec untype_annotated_expression (e:O.annotated_expression) : (I.annotated_expression) result =
   let open I in

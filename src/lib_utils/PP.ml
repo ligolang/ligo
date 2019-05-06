@@ -38,9 +38,8 @@ let map = fun f pp ppf x ->
 let pair_sep value sep ppf (a, b) = fprintf ppf "%a %s %a" value a sep value b
 let smap_sep value sep ppf m =
   let module SMap = X_map.String in
-  let aux k v prev = (k, v) :: prev in
+  let lst = SMap.to_kv_list m in
   let new_pp ppf (k, v) = fprintf ppf "%s -> %a" k value v in
-  let lst = List.rev @@ SMap.fold aux m [] in
   fprintf ppf "%a" (list_sep new_pp sep) lst
 
 (* TODO: remove all uses. this is bad. *)

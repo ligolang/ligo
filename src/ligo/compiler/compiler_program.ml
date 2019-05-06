@@ -74,6 +74,8 @@ let rec translate_value (v:value) : michelson result = match v with
   | D_list lst ->
       let%bind lst' = bind_map_list translate_value lst in
       ok @@ seq lst'
+  | D_operation _ ->
+      simple_fail "can't compile an operation"
 
 and translate_function (content:anon_function) : michelson result =
   let%bind body = translate_quote_body content in
