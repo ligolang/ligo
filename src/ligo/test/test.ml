@@ -10,5 +10,6 @@ let () =
     Typer_tests.main ;
     Heap_tests.main ;
     Coase_tests.main ;
+    Bin_tests.main ;
   ] ;
   ()

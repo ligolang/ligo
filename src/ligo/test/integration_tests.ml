@@ -70,14 +70,14 @@ let higher_order () : unit result =
 
 let shared_function () : unit result =
   let%bind program = type_file "./contracts/function-shared.ligo" in
-  (* let%bind () =
-   *   let make_expect = fun n -> (n + 1) in
-   *   expect_eq_n_int program "inc" make_expect
-   * in
-   * let%bind () =
-   *   let make_expect = fun n -> (n + 2) in
-   *   expect_eq_n_int program "double_inc" make_expect
-   * in *)
+  let%bind () =
+    let make_expect = fun n -> (n + 1) in
+    expect_eq_n_int program "inc" make_expect
+  in
+  let%bind () =
+    let make_expect = fun n -> (n + 2) in
+    expect_eq_n_int program "double_inc" make_expect
+  in
   let%bind () =
     let make_expect = fun n -> (2 * n + 3) in
     expect_eq program "foo" (e_a_int 0) (e_a_int @@ make_expect 0)

@@ -72,12 +72,9 @@ let compile_contract_file : string -> string -> string result = fun source entry
   let%bind typed =
     trace (simple_error "typing") @@
     Typer.type_program simplified in
-  let%bind main_typed =
-    trace (simple_error "getting typed main") @@
-    Ast_typed.program_to_main typed entry_point in
   let%bind mini_c =
     trace (simple_error "transpiling") @@
-    Transpiler.translate_main main_typed in
+    Transpiler.translate_entry typed entry_point in
   let%bind michelson =
     trace (simple_error "compiling") @@
     Compiler.translate_contract mini_c in
