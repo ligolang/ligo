@@ -356,8 +356,11 @@ and type_annotated_expression : environment -> I.annotated_expression -> O.annot
       return (E_literal (Literal_bool b)) (t_bool ())
   | E_literal Literal_unit ->
       return (E_literal (Literal_unit)) (t_unit ())
-  | E_literal (Literal_string s) ->
-      return (E_literal (Literal_string s)) (t_string ())
+  | E_literal (Literal_string s) -> (
+      match Option.map ~f:Ast_typed.get_type' tv_opt with
+      | Some (T_constant ("address" , [])) -> return (E_literal (Literal_address s)) (t_string ())
+      | _ -> return (E_literal (Literal_string s)) (t_string ())
+    )
   | E_literal (Literal_bytes s) ->
       return (E_literal (Literal_bytes s)) (t_bytes ())
   | E_literal (Literal_int n) ->
