@@ -96,7 +96,18 @@ let parse_expression (s:string) : AST_Raw.expr result =
               end_.pos_lnum (end_.pos_cnum - end_.pos_bol) in
           simple_error str
         )
-      | _ -> simple_error "unrecognized parse_ error"
+      | exn ->
+          let start = Lexing.lexeme_start_p lexbuf in
+          let end_ = Lexing.lexeme_end_p lexbuf in
+          let str = Format.sprintf
+              "Unrecognized error (%s) at \"%s\" from (%d, %d) to (%d, %d). In expression \"%s|%s\"\n"
+              (Printexc.to_string exn)
+              (Lexing.lexeme lexbuf)
+              start.pos_lnum (start.pos_cnum - start.pos_bol)
+              end_.pos_lnum (end_.pos_cnum - end_.pos_bol)
+              start.pos_fname s
+          in
+          simple_error str
     ) @@ (fun () ->
       let raw = Parser.interactive_expr read lexbuf in
       close () ;
