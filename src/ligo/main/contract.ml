@@ -128,3 +128,51 @@ let compile_contract_parameter : string -> string -> string -> string result = f
     ok str
   in
   ok expr
+
+
+let compile_contract_storage : string -> string -> string -> string result = fun source entry_point expression ->
+  let%bind (program , storage_tv) =
+    let%bind raw =
+      trace (simple_error "parsing file") @@
+      Parser.parse_file source in
+    let%bind simplified =
+      trace (simple_error "simplifying file") @@
+      Simplify.Pascaligo.simpl_program raw in
+    let%bind () =
+      assert_entry_point_defined simplified entry_point in
+    let%bind typed =
+      trace (simple_error "typing file") @@
+      Typer.type_program simplified in
+    let%bind (_ , storage_ty) =
+      get_entry_point typed entry_point in
+    ok (typed , storage_ty)
+  in
+  let%bind expr =
+    let%bind raw =
+      trace (simple_error "parsing expression") @@
+      Parser.parse_expression expression in
+    let%bind simplified =
+      trace (simple_error "simplifying expression") @@
+      Simplify.Pascaligo.simpl_expression raw in
+    let%bind typed =
+      let env =
+        let last_declaration = Location.unwrap List.(hd @@ rev program) in
+        match last_declaration with
+        | Declaration_constant (_ , env) -> env
+      in
+      trace (simple_error "typing expression") @@
+      Typer.type_annotated_expression env simplified in
+    let%bind () =
+      trace (simple_error "expression type doesn't match type storage") @@
+      Ast_typed.assert_type_value_eq (storage_tv , typed.type_annotation) in
+    let%bind mini_c =
+      trace (simple_error "transpiling expression") @@
+      transpile_value typed in
+    let%bind michelson =
+      trace (simple_error "compiling expression") @@
+      Compiler.translate_value mini_c in
+    let str =
+      Format.asprintf "%a" Micheline.Michelson.pp_stripped michelson in
+    ok str
+  in
+  ok expr
