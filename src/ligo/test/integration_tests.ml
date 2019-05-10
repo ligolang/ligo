@@ -15,6 +15,19 @@ let function_ () : unit result =
   let make_expect = fun n -> n in
   expect_eq_n_int program "main" make_expect
 
+let annotation () : unit result =
+  let%bind program = type_file "./contracts/annotation.ligo" in
+  let%bind () =
+    expect_eq_evaluate program "lst" (e_a_list [])
+  in
+  let%bind () =
+    expect_eq_evaluate program "address" (e_a_address "tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx")
+  in
+  let%bind () =
+    expect_eq_evaluate program "address_2" (e_a_address "tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx")
+  in
+  ok ()
+
 let complex_function () : unit result =
   let%bind program = type_file "./contracts/function-complex.ligo" in
   let make_expect = fun n -> (3 * n + 2) in
@@ -119,6 +132,10 @@ let unit_expression () : unit result =
   let%bind program = type_file "./contracts/unit.ligo" in
   expect_eq_evaluate program "u" e_a_unit
 
+let string_expression () : unit result =
+  let%bind program = type_file "./contracts/string.ligo" in
+  expect_eq_evaluate program "s" (e_a_string "toto")
+
 let include_ () : unit result =
   let%bind program = type_file "./contracts/includer.ligo" in
   expect_eq_evaluate program "bar" (e_a_int 144)
@@ -217,7 +234,7 @@ let option () : unit result =
     expect_eq_evaluate program "s" expected
   in
   let%bind () =
-    let expected = e_a_none t_int in
+    let expected = e_a_typed_none t_int in
     expect_eq_evaluate program "n" expected
   in
   ok ()
@@ -271,7 +288,7 @@ let list () : unit result =
   let%bind program = type_file "./contracts/list.ligo" in
   let ez lst =
     let lst' = List.map e_a_int lst in
-    e_a_list lst' t_int
+    e_a_typed_list lst' t_int
   in
   let%bind () =
     let make_input = fun n -> (ez @@ List.range n) in
@@ -330,7 +347,7 @@ let matching () : unit result =
     let aux n =
       let input = match n with
         | Some s -> e_a_some (e_a_int s)
-        | None -> e_a_none t_int in
+        | None -> e_a_typed_none t_int in
       let expected = e_a_int (match n with
           | Some s -> s
           | None -> 23) in
@@ -344,7 +361,7 @@ let matching () : unit result =
     let aux n =
       let input = match n with
         | Some s -> e_a_some (e_a_int s)
-        | None -> e_a_none t_int in
+        | None -> e_a_typed_none t_int in
       let expected = e_a_int (match n with
           | Some s -> s
           | None -> 42) in
@@ -377,7 +394,7 @@ let quote_declarations () : unit result =
 let counter_contract () : unit result =
   let%bind program = type_file "./contracts/counter.ligo" in
   let make_input = fun n-> e_a_pair (e_a_int n) (e_a_int 42) in
-  let make_expected = fun n -> e_a_pair (e_a_list [] t_operation) (e_a_int (42 + n)) in
+  let make_expected = fun n -> e_a_pair (e_a_typed_list [] t_operation) (e_a_int (42 + n)) in
   expect_eq_n program "main" make_input make_expected
 
 let super_counter_contract () : unit result =
@@ -387,7 +404,7 @@ let super_counter_contract () : unit result =
     e_a_pair (e_a_constructor action (e_a_int n)) (e_a_int 42) in
   let make_expected = fun n ->
     let op = if n mod 2 = 0 then (+) else (-) in
-    e_a_pair (e_a_list [] t_operation) (e_a_int (op 42 n)) in
+    e_a_pair (e_a_typed_list [] t_operation) (e_a_int (op 42 n)) in
   expect_eq_n program "main" make_input make_expected
 
 let dispatch_counter_contract () : unit result =
@@ -397,7 +414,7 @@ let dispatch_counter_contract () : unit result =
     e_a_pair (e_a_constructor action (e_a_int n)) (e_a_int 42) in
   let make_expected = fun n ->
     let op = if n mod 2 = 0 then (+) else (-) in
-    e_a_pair (e_a_list [] t_operation) (e_a_int (op 42 n)) in
+    e_a_pair (e_a_typed_list [] t_operation) (e_a_int (op 42 n)) in
   expect_eq_n program "main" make_input make_expected
 
 let basic_mligo () : unit result =
@@ -408,13 +425,13 @@ let basic_mligo () : unit result =
 let counter_mligo () : unit result =
   let%bind program = mtype_file "./contracts/counter.mligo" in
   let make_input = fun n-> e_a_pair (e_a_int n) (e_a_int 42) in
-  let make_expected = fun n -> e_a_pair (e_a_list [] t_operation) (e_a_int (42 + n)) in
+  let make_expected = fun n -> e_a_pair (e_a_typed_list [] t_operation) (e_a_int (42 + n)) in
   expect_eq_n program "main" make_input make_expected
 
 let guess_the_hash_mligo () : unit result =
   let%bind program = mtype_file "./contracts/new-syntax.mligo" in
   let make_input = fun n-> e_a_pair (e_a_int n) (e_a_int 42) in
-  let make_expected = fun n -> e_a_pair (e_a_list [] t_operation) (e_a_int (42 + n)) in
+  let make_expected = fun n -> e_a_pair (e_a_typed_list [] t_operation) (e_a_int (42 + n)) in
   expect_eq_n program "main" make_input make_expected
 
 let main = "Integration (End to End)", [
@@ -426,10 +443,12 @@ let main = "Integration (End to End)", [
     test "record" record ;
     test "condition" condition ;
     test "shadow" shadow ;
+    test "annotation" annotation ;
     test "multiple parameters" multiple_parameters ;
     test "bool" bool_expression ;
     test "arithmetic" arithmetic ;
     test "unit" unit_expression ;
+    test "string" string_expression ;
     test "option" option ;
     test "map" map ;
     test "list" list ;

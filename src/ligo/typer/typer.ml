@@ -332,6 +332,7 @@ and evaluate_type (e:environment) (t:I.type_expression) : O.type_value result =
       return (T_constant(cst, lst'))
 
 and type_annotated_expression : environment -> I.annotated_expression -> O.annotated_expression result = fun e ae ->
+  let module L = Logger.Stateful() in
   let%bind tv_opt = match ae.type_annotation with
     | None -> ok None
     | Some s -> let%bind r = evaluate_type e s in ok (Some r) in
@@ -341,7 +342,7 @@ and type_annotated_expression : environment -> I.annotated_expression -> O.annot
     ok @@ make_a_e expr type_annotation e in
   let main_error =
     let title () = "typing annotated_expression" in
-    let content () = Format.asprintf "%a" I.PP.annotated_expression ae in
+    let content () = Format.asprintf "Expression: %a\nLog: %s\n" I.PP.annotated_expression ae (L.get()) in
     error title content in
   trace main_error @@
   match ae.expression with
@@ -357,8 +358,9 @@ and type_annotated_expression : environment -> I.annotated_expression -> O.annot
   | E_literal Literal_unit ->
       return (E_literal (Literal_unit)) (t_unit ())
   | E_literal (Literal_string s) -> (
+      L.log (Format.asprintf "literal_string option type: %a" PP_helpers.(option O.PP.type_value) tv_opt) ;
       match Option.map ~f:Ast_typed.get_type' tv_opt with
-      | Some (T_constant ("address" , [])) -> return (E_literal (Literal_address s)) (t_string ())
+      | Some (T_constant ("address" , [])) -> return (E_literal (Literal_address s)) (t_address ())
       | _ -> return (E_literal (Literal_string s)) (t_string ())
     )
   | E_literal (Literal_bytes s) ->

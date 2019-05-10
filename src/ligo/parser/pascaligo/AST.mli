@@ -474,7 +474,8 @@ and for_collect = {
 (* Expressions *)
 
 and expr =
-  ECase   of expr case reg
+| ECase   of expr case reg
+| EAnnot  of annot_expr reg
 | ELogic  of logic_expr
 | EArith  of arith_expr
 | EString of string_expr
@@ -490,6 +491,8 @@ and expr =
 | EUnit   of c_Unit
 | ETuple  of tuple_expr
 | EPar    of expr par reg
+
+and annot_expr = (expr * type_expr)
 
 and set_expr =
   SetInj of expr injection reg
@@ -571,17 +574,13 @@ and string_expr =
 and list_expr =
   Cons of cons bin_op reg
 | List of expr injection reg
-| Nil  of nil par reg
+| Nil  of nil
 
-and nil = {
-  nil       : kwd_nil;
-  colon     : colon;
-  list_type : type_expr
-}
+and nil = kwd_nil
 
 and constr_expr =
   SomeApp   of (c_Some * arguments) reg
-| NoneExpr  of none_expr reg
+| NoneExpr  of none_expr
 | ConstrApp of (constr * arguments) reg
 
 and record_expr = field_assign reg injection reg
@@ -607,13 +606,7 @@ and tuple_expr =
 
 and tuple_injection = (expr, comma) nsepseq par reg
 
-and none_expr = typed_none_expr par
-
-and typed_none_expr = {
-  c_None   : c_None;
-  colon    : colon;
-  opt_type : type_expr
-}
+and none_expr = c_None
 
 and fun_call = (fun_name * arguments) reg
 

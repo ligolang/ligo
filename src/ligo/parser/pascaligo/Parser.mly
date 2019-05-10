@@ -438,24 +438,9 @@ unqualified_decl(OP):
       match $5 with
         `Expr e -> e, expr_to_region e
       | `EList kwd_nil ->
-           let value = {
-             nil = kwd_nil;
-             colon = Region.ghost;
-             list_type = $3} in
-           let value = {
-             lpar   = Region.ghost;
-             inside = value;
-             rpar   = Region.ghost} in
-           EList (Nil {region=kwd_nil; value}), kwd_nil
+           EList (Nil kwd_nil), kwd_nil
       | `ENone region ->
-           let value = {
-             lpar = Region.ghost;
-             inside = {
-               c_None   = region;
-               colon    = Region.ghost;
-               opt_type = $3};
-             rpar = Region.ghost}
-           in EConstr (NoneExpr {region; value}), region
+           EConstr (NoneExpr region), region
     in $1, $2, $3, $4, init, region}
 
 const_decl:
@@ -474,8 +459,6 @@ var_decl:
 
 extended_expr:
   expr   { `Expr  $1 }
-| Nil    { `EList $1 }
-| C_None { `ENone $1 }
 
 instruction:
   single_instr { Single $1 }
@@ -724,7 +707,6 @@ assignment:
 
 rhs:
   expr   {     Expr $1 }
-| C_None { NoneExpr $1 : rhs }
 
 lhs:
   path       {    Path $1 }
@@ -786,8 +768,17 @@ interactive_expr:
 
 expr:
   case(expr) { ECase ($1 expr_to_region) }
-| disj_expr  { $1                        }
+| annot_expr  { $1                        }
 
+annot_expr:
+  LPAR disj_expr COLON type_expr RPAR {
+    let start  = expr_to_region $2
+    and stop   = type_expr_to_region $4 in
+    let region = cover start stop
+    and value  = ($2 , $4) in
+    (EAnnot {region; value})
+  }
+| disj_expr { $1 }
 
 disj_expr:
   disj_expr Or conj_expr {
@@ -955,7 +946,7 @@ core_expr:
 | C_Unit           { EUnit $1                     }
 | tuple_expr       { ETuple $1                    }
 | list_expr        { EList $1                     }
-| none_expr        { EConstr (NoneExpr $1)        }
+| C_None           { EConstr (NoneExpr $1)        }
 | fun_call         { ECall $1                     }
 | map_expr         { EMap $1                      }
 | set_expr         { ESet $1                      }
@@ -1046,25 +1037,7 @@ arguments:
 
 list_expr:
   injection(List,expr) { List $1 }
-| nil                  {  Nil $1 }
-
-nil:
-  par(typed_empty_list) { $1 }
-
-typed_empty_list:
-  Nil COLON type_expr {
-    {nil       = $1;
-     colon     = $2;
-     list_type = $3}}
-
-none_expr:
-  par(typed_none_expr) { $1 }
-
-typed_none_expr:
-  C_None COLON type_expr {
-    {c_None   = $1;
-     colon    = $2;
-     opt_type = $3}}
+| Nil                  {  Nil $1 }
 
 (* Patterns *)
 

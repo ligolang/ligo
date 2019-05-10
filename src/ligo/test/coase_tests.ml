@@ -99,7 +99,7 @@ let buy () =
       e_a_pair buy_action storage
     in
     let make_expected = fun n ->
-      let ops = e_a_list [] t_operation in
+      let ops = e_a_typed_list [] t_operation in
       let storage =
         let cards =
           cards_ez first_owner n @
@@ -138,7 +138,7 @@ let dispatch_buy () =
       e_a_pair action storage
     in
     let make_expected = fun n ->
-      let ops = e_a_list [] t_operation in
+      let ops = e_a_typed_list [] t_operation in
       let storage =
         let cards =
           cards_ez first_owner n @
@@ -177,7 +177,7 @@ let transfer () =
       e_a_pair transfer_action storage
     in
     let make_expected = fun n ->
-      let ops = e_a_list [] t_operation in
+      let ops = e_a_typed_list [] t_operation in
       let storage =
         let cards =
           let new_card = card_ez second_owner in

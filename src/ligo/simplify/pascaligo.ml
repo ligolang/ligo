@@ -76,8 +76,8 @@ and simpl_list_type_expression (lst:Raw.type_expr list) : type_expression result
       let%bind lst = bind_list @@ List.map simpl_type_expression lst in
       ok @@ T_tuple lst
 
-let rec simpl_expression (t:Raw.expr) : ae result =
-  let return x = ok @@ make_e_a x in
+let rec simpl_expression ?te_annot (t:Raw.expr) : ae result =
+  let return x = ok @@ make_e_a ?type_annotation:te_annot x in
   let simpl_projection = fun (p:Raw.projection) ->
     let var =
       let name = p.struct_name.value in
@@ -90,9 +90,19 @@ let rec simpl_expression (t:Raw.expr) : ae result =
         | Component index -> Access_tuple (Z.to_int (snd index.value))
       in
       List.map aux @@ npseq_to_list path in
-    ok @@ make_e_a @@ E_accessor (var, path')
+    return @@ E_accessor (var, path')
   in
   match t with
+  | EAnnot a -> (
+      let (expr , type_expr) = a.value in
+      match te_annot with
+      | None -> (
+          let%bind te_annot = simpl_type_expression type_expr in
+          let%bind expr' = simpl_expression ~te_annot expr in
+          ok expr'
+        )
+      | Some _ -> simple_fail "no double annotation"
+    )
   | EVar c -> (
       let c' = c.value in
       match List.assoc_opt c' constants with
@@ -113,20 +123,20 @@ let rec simpl_expression (t:Raw.expr) : ae result =
       match List.assoc_opt f constants with
       | None ->
           let%bind arg = simpl_tuple_expression args' in
-          ok @@ make_e_a @@ E_application (make_e_a @@ E_variable f, arg)
+          return @@ E_application (make_e_a @@ E_variable f, arg)
       | Some arity ->
           let%bind _arity =
             trace (simple_error "wrong arity for constants") @@
             Assert.assert_equal_int arity (List.length args') in
           let%bind lst = bind_map_list simpl_expression args' in
-          ok @@ make_e_a @@ E_constant (f, lst)
+          return @@ E_constant (f, lst)
     )
-  | EPar x -> simpl_expression x.value.inside
-  | EUnit _ -> ok @@ make_e_a @@ E_literal Literal_unit
-  | EBytes x -> ok @@ make_e_a @@ E_literal (Literal_bytes (Bytes.of_string @@ fst x.value))
+  | EPar x -> simpl_expression ?te_annot x.value.inside
+  | EUnit _ -> return @@ E_literal Literal_unit
+  | EBytes x -> return @@ E_literal (Literal_bytes (Bytes.of_string @@ fst x.value))
   | ETuple tpl ->
       let (Raw.TupleInj tpl') = tpl in
-      simpl_tuple_expression
+      simpl_tuple_expression ?te_annot
       @@ npseq_to_list tpl'.value.inside
   | ERecord r ->
       let%bind fields = bind_list
@@ -134,7 +144,7 @@ let rec simpl_expression (t:Raw.expr) : ae result =
         @@ List.map (fun (x:Raw.field_assign Raw.reg) -> (x.value.field_name, x.value.field_expr))
         @@ pseq_to_list r.value.elements in
       let aux prev (k, v) = SMap.add k v prev in
-      ok @@ make_e_a @@ E_record (List.fold_left aux SMap.empty fields)
+      return @@ E_record (List.fold_left aux SMap.empty fields)
   | EProj p' -> (
       let p = p'.value in
       simpl_projection p
@@ -144,42 +154,44 @@ let rec simpl_expression (t:Raw.expr) : ae result =
       let%bind arg =
         simpl_tuple_expression
         @@ npseq_to_list args.value.inside in
-      ok @@ make_e_a @@ E_constructor (c.value, arg)
+      return @@ E_constructor (c.value, arg)
   | EConstr (SomeApp a) ->
       let (_, args) = a.value in
       let%bind arg =
         simpl_tuple_expression
         @@ npseq_to_list args.value.inside in
-      ok @@ make_e_a @@ E_constant ("SOME", [arg])
-  | EConstr (NoneExpr n) ->
-      let type_expr = n.value.inside.opt_type in
-      let%bind type_expr' = simpl_type_expression type_expr in
-      ok @@ make_e_a_full (E_constant ("NONE", [])) (Combinators.t_option type_expr')
+      return @@ E_constant ("SOME", [arg])
+  | EConstr (NoneExpr _) ->
+      return @@ E_constant ("NONE" , [])
   | EArith (Add c) ->
-      simpl_binop "ADD" c.value
+      simpl_binop ?te_annot "ADD" c.value
   | EArith (Sub c) ->
-      simpl_binop "SUB" c.value
+      simpl_binop ?te_annot "SUB" c.value
   | EArith (Mult c) ->
-      simpl_binop "TIMES" c.value
+      simpl_binop ?te_annot "TIMES" c.value
   | EArith (Div c) ->
-      simpl_binop "DIV" c.value
+      simpl_binop ?te_annot "DIV" c.value
   | EArith (Mod c) ->
-      simpl_binop "MOD" c.value
+      simpl_binop ?te_annot "MOD" c.value
   | EArith (Int n) ->
       let n = Z.to_int @@ snd @@ n.value in
-      ok @@ make_e_a @@ E_literal (Literal_int n)
+      return @@ E_literal (Literal_int n)
   | EArith (Nat n) ->
       let n = Z.to_int @@ snd @@ n.value in
-      ok @@ make_e_a @@ E_literal (Literal_nat n)
+      return @@ E_literal (Literal_nat n)
   | EArith (Mtz n) ->
       let n = Z.to_int @@ snd @@ n.value in
-      ok @@ make_e_a @@ E_literal (Literal_tez n)
+      return @@ E_literal (Literal_tez n)
   | EArith _ -> simple_fail "arith: not supported yet"
   | EString (String s) ->
-      ok @@ make_e_a @@ E_literal (Literal_string s.value)
+      let s' =
+        let s = s.value in
+        String.(sub s 1 ((length s) - 2))
+      in
+      return @@ E_literal (Literal_string s')
   | EString _ -> simple_fail "string: not supported yet"
-  | ELogic l -> simpl_logic_expression l
-  | EList l -> simpl_list_expression l
+  | ELogic l -> simpl_logic_expression ?te_annot l
+  | EList l -> simpl_list_expression ?te_annot l
   | ESet _ -> simple_fail "set: not supported yet"
   | ECase c ->
       let%bind e = simpl_expression c.value.expr in
@@ -192,7 +204,7 @@ let rec simpl_expression (t:Raw.expr) : ae result =
         @@ List.map get_value
         @@ npseq_to_list c.value.cases.value in
       let%bind cases = simpl_cases lst in
-      ok @@ make_e_a @@ E_matching (e, cases)
+      return @@ E_matching (e, cases)
   | EMap (MapInj mi) ->
       let%bind lst =
         let lst = List.map get_value @@ pseq_to_list mi.value.elements in
@@ -210,62 +222,64 @@ let rec simpl_expression (t:Raw.expr) : ae result =
       let%bind index = simpl_expression lu.value.index.value.inside in
       return (E_look_up (path, index))
 
-and simpl_logic_expression (t:Raw.logic_expr) : annotated_expression result =
+and simpl_logic_expression ?te_annot (t:Raw.logic_expr) : annotated_expression result =
+  let return x = ok @@ make_e_a ?type_annotation:te_annot x in
   match t with
   | BoolExpr (False _) ->
-      ok @@ make_e_a @@ E_literal (Literal_bool false)
+      return @@ E_literal (Literal_bool false)
   | BoolExpr (True _) ->
-      ok @@ make_e_a @@ E_literal (Literal_bool true)
+      return @@ E_literal (Literal_bool true)
   | BoolExpr (Or b) ->
-      simpl_binop "OR" b.value
+      simpl_binop ?te_annot "OR" b.value
   | BoolExpr (And b) ->
-      simpl_binop "AND" b.value
+      simpl_binop ?te_annot "AND" b.value
   | BoolExpr (Not b) ->
-      simpl_unop "NOT" b.value
+      simpl_unop ?te_annot "NOT" b.value
   | CompExpr (Lt c) ->
-      simpl_binop "LT" c.value
+      simpl_binop ?te_annot "LT" c.value
   | CompExpr (Gt c) ->
-      simpl_binop "GT" c.value
+      simpl_binop ?te_annot "GT" c.value
   | CompExpr (Leq c) ->
-      simpl_binop "LE" c.value
+      simpl_binop ?te_annot "LE" c.value
   | CompExpr (Geq c) ->
-      simpl_binop "GE" c.value
+      simpl_binop ?te_annot "GE" c.value
   | CompExpr (Equal c) ->
-      simpl_binop "EQ" c.value
+      simpl_binop ?te_annot "EQ" c.value
   | CompExpr (Neq c) ->
-      simpl_binop "NEQ" c.value
+      simpl_binop ?te_annot "NEQ" c.value
 
-and simpl_list_expression (t:Raw.list_expr) : annotated_expression result =
+and simpl_list_expression ?te_annot (t:Raw.list_expr) : annotated_expression result =
+  let return x = ok @@ make_e_a ?type_annotation:te_annot x in
   match t with
   | Cons c ->
-      simpl_binop "CONS" c.value
+      simpl_binop ?te_annot "CONS" c.value
   | List lst ->
       let%bind lst' =
         bind_map_list simpl_expression @@
         pseq_to_list lst.value.elements in
-      ok (make_e_a (E_list lst'))
-  | Nil n ->
-      let n' = n.value.inside in
-      let%bind t' = simpl_type_expression n'.list_type in
-      let e' = E_list [] in
-      ok (make_e_a_full e' (t_list t'))
+      return @@ E_list lst'
+  | Nil _ ->
+      return @@ E_list []
 
-and simpl_binop (name:string) (t:_ Raw.bin_op) : annotated_expression result =
+and simpl_binop ?te_annot (name:string) (t:_ Raw.bin_op) : annotated_expression result =
+  let return x = ok @@ make_e_a ?type_annotation:te_annot x in
   let%bind a = simpl_expression t.arg1 in
   let%bind b = simpl_expression t.arg2 in
-  ok @@ make_e_a @@ E_constant (name, [a;b])
+  return @@ E_constant (name, [a;b])
 
-and simpl_unop (name:string) (t:_ Raw.un_op) : annotated_expression result =
+and simpl_unop ?te_annot (name:string) (t:_ Raw.un_op) : annotated_expression result =
+  let return x = ok @@ make_e_a ?type_annotation:te_annot x in
   let%bind a = simpl_expression t.arg in
-  ok @@ make_e_a @@ E_constant (name, [a])
+  return @@ E_constant (name, [a])
 
-and simpl_tuple_expression (lst:Raw.expr list) : annotated_expression result =
+and simpl_tuple_expression ?te_annot (lst:Raw.expr list) : annotated_expression result =
+  let return x = ok @@ make_e_a ?type_annotation:te_annot x in
   match lst with
-  | [] -> ok @@ make_e_a @@ E_literal Literal_unit
-  | [hd] -> simpl_expression hd
+  | [] -> return @@ E_literal Literal_unit
+  | [hd] -> simpl_expression ?te_annot hd
   | lst ->
       let%bind lst = bind_list @@ List.map simpl_expression lst in
-      ok @@ make_e_a @@ E_tuple lst
+      return @@ E_tuple lst
 
 and simpl_local_declaration (t:Raw.local_decl) : (instruction * named_expression) result =
   match t with
@@ -288,16 +302,14 @@ and simpl_data_declaration (t:Raw.data_decl) : (instruction * named_expression) 
       let x = x.value in
       let name = x.name.value in
       let%bind t = simpl_type_expression x.var_type in
-      let type_annotation = Some t in
-      let%bind expression = simpl_expression x.init in
-      return {name;annotated_expression={expression with type_annotation}}
+      let%bind annotated_expression = simpl_expression ~te_annot:t x.init in
+      return {name;annotated_expression}
   | LocalConst x ->
       let x = x.value in
       let name = x.name.value in
       let%bind t = simpl_type_expression x.const_type in
-      let type_annotation = Some t in
-      let%bind expression = simpl_expression x.init in
-      return {name;annotated_expression={expression with type_annotation}}
+      let%bind annotated_expression = simpl_expression ~te_annot:t x.init in
+      return {name;annotated_expression}
 
 
 and simpl_param : Raw.param_decl -> named_type_expression result = fun t ->

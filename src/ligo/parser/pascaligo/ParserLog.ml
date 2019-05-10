@@ -411,6 +411,7 @@ and print_bind_to = function
 
 and print_expr = function
   ECase   {value;_} -> print_case_expr value
+| EAnnot  {value;_} -> print_annot_expr value
 | ELogic  e -> print_logic_expr e
 | EArith  e -> print_arith_expr e
 | EString e -> print_string_expr e
@@ -426,6 +427,10 @@ and print_expr = function
 | EUnit   r -> print_token r "Unit"
 | ETuple  e -> print_tuple_expr e
 | EPar    e -> print_par_expr e
+
+and print_annot_expr (expr , type_expr) =
+  print_expr expr ;
+  print_type_expr type_expr
 
 and print_case_expr (node : expr case) =
   let {kwd_case; expr; opening;
@@ -625,23 +630,11 @@ and print_tuple_inj {value; _} =
   print_nsepseq "," print_expr inside;
   print_token rpar ")"
 
-and print_nil {value; _} =
-  let {lpar; inside; rpar} = value in
-  let {nil; colon; list_type} = inside in
-  print_token     lpar "(";
-  print_token     nil "nil";
-  print_token     colon ":";
-  print_type_expr list_type;
-  print_token     rpar ")"
+and print_nil value =
+  print_token     value "nil";
 
-and print_none_expr {value; _} =
-  let {lpar; inside; rpar} = value in
-  let {c_None; colon; opt_type} = inside in
-  print_token     lpar "(";
-  print_token     c_None "None";
-  print_token     colon ":";
-  print_type_expr opt_type;
-  print_token     rpar ")"
+and print_none_expr value =
+  print_token     value "None";
 
 and print_fun_call {value; _} =
   let fun_name, arguments = value in

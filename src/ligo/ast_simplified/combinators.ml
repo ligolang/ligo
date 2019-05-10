@@ -80,9 +80,11 @@ let e_variable v = E_variable v
 let e_failwith v = E_failwith v
 
 let e_a_unit : annotated_expression = make_e_a_full (e_unit ()) t_unit
+let e_a_string s : annotated_expression = make_e_a_full (e_string s) t_string
 let e_a_int n : annotated_expression = make_e_a_full (e_int n) t_int
 let e_a_nat n : annotated_expression = make_e_a_full (e_nat n) t_nat
 let e_a_bool b : annotated_expression = make_e_a_full (e_bool b) t_bool
+let e_a_list lst : annotated_expression = make_e_a (e_list lst)
 let e_a_constructor s a : annotated_expression = make_e_a (e_constructor s a)
 let e_a_address x = make_e_a_full (e_address x) t_address
 let e_a_tez x = make_e_a_full (e_tez x) t_tez
@@ -117,11 +119,11 @@ let e_a_some opt =
     ) in
   make_e_a ?type_annotation (e_some opt)
 
-let e_a_none t_opt =
+let e_a_typed_none t_opt =
   let type_annotation = t_option t_opt in
   make_e_a ~type_annotation e_none
 
-let e_a_list lst t =
+let e_a_typed_list lst t =
   make_e_a ~type_annotation:(t_list t) (e_list lst)
 
 let e_a_map lst k v = make_e_a ~type_annotation:(t_map k v) (e_map lst)
