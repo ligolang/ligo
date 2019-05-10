@@ -171,6 +171,9 @@ let rec simpl_expression (t:Raw.expr) : ae result =
   | EArith (Nat n) ->
       let n = Z.to_int @@ snd @@ n.value in
       ok @@ make_e_a @@ E_literal (Literal_nat n)
+  | EArith (Mtz n) ->
+      let n = Z.to_int @@ snd @@ n.value in
+      ok @@ make_e_a @@ E_literal (Literal_tez n)
   | EArith _ -> simple_fail "arith: not supported yet"
   | EString (String s) ->
       ok @@ make_e_a @@ E_literal (Literal_string s.value)

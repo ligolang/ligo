@@ -562,6 +562,7 @@ and arith_expr =
 | Neg  of minus    un_op reg
 | Int  of (Lexer.lexeme * Z.t) reg
 | Nat  of (Lexer.lexeme * Z.t) reg
+| Mtz  of (Lexer.lexeme * Z.t) reg
 
 and string_expr =
   Cat    of cat bin_op reg

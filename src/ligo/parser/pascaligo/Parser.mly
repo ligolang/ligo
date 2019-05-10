@@ -215,6 +215,7 @@ variant:
     let region = cover $1.region $3.region
     and value = {constr = $1; kwd_of = $2; product = $3}
     in {region; value} }
+  (* TODO: Unary constructors *)
 
 record_type:
   Record series(field_decl,End) {
@@ -945,6 +946,7 @@ unary_expr:
 core_expr:
   Int              { EArith (Int $1)              }
 | Nat              { EArith (Nat $1)              }
+| Mtz              { EArith (Mtz $1)              }
 | var              { EVar $1                      }
 | String           { EString (String $1)          }
 | Bytes            { EBytes $1                    }

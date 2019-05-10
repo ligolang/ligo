@@ -9,6 +9,7 @@
 %token <(LexToken.lexeme * Hex.t) Region.reg> Bytes
 %token   <(LexToken.lexeme * Z.t) Region.reg> Int
 %token   <(LexToken.lexeme * Z.t) Region.reg> Nat
+%token   <(LexToken.lexeme * Z.t) Region.reg> Mtz
 %token           <LexToken.lexeme Region.reg> Ident
 %token           <LexToken.lexeme Region.reg> Constr
 

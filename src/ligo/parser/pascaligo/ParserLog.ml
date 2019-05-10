@@ -512,8 +512,9 @@ and print_arith_expr = function
     print_expr arg1; print_token op "mod"; print_expr arg2
 | Neg {value = {op; arg}; _} ->
     print_token op "-"; print_expr arg
-| Int i -> print_int i
-| Nat i -> print_int i
+| Int i
+| Nat i
+| Mtz i -> print_int i
 
 and print_string_expr = function
   Cat {value = {arg1; op; arg2}; _} ->

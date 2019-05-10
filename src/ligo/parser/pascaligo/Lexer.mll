@@ -106,6 +106,7 @@ module type TOKEN =
     val mk_bytes  : lexeme -> Region.t -> token
     val mk_int    : lexeme -> Region.t -> (token,   int_err) result
     val mk_nat    : lexeme -> Region.t -> (token,   int_err) result
+    val mk_mtz    : lexeme -> Region.t -> (token,   int_err) result
     val mk_ident  : lexeme -> Region.t -> (token, ident_err) result
     val mk_constr : lexeme -> Region.t -> token
     val mk_sym    : lexeme -> Region.t -> token
@@ -419,6 +420,13 @@ module Make (Token: TOKEN) : (S with module Token = Token) =
       | Error Token.Non_canonical_zero ->
           fail region Non_canonical_zero
 
+    let mk_mtz state buffer =
+      let region, lexeme, state = sync state buffer in
+      match Token.mk_mtz lexeme region with
+        Ok token -> token, state
+      | Error Token.Non_canonical_zero ->
+          fail region Non_canonical_zero
+
     let mk_ident state buffer =
       let region, lexeme, state = sync state buffer in
       match Token.mk_ident lexeme region with
@@ -482,17 +490,18 @@ rule init state = parse
 | _        { rollback lexbuf; scan state lexbuf  }
 
 and scan state = parse
-  nl          { scan (push_newline state lexbuf) lexbuf }
-| ' '+        { scan (push_space   state lexbuf) lexbuf }
-| '\t'+       { scan (push_tabs    state lexbuf) lexbuf }
+  nl            { scan (push_newline state lexbuf) lexbuf }
+| ' '+          { scan (push_space   state lexbuf) lexbuf }
+| '\t'+         { scan (push_tabs    state lexbuf) lexbuf }
 
-| ident       { mk_ident       state lexbuf |> enqueue   }
-| constr      { mk_constr      state lexbuf |> enqueue   }
-| bytes       { (mk_bytes seq) state lexbuf |> enqueue   }
-| natural 'n' { mk_nat         state lexbuf |> enqueue   }
-| integer     { mk_int         state lexbuf |> enqueue   }
-| symbol      { mk_sym         state lexbuf |> enqueue   }
-| eof         { mk_eof         state lexbuf |> enqueue   }
+| ident         { mk_ident       state lexbuf |> enqueue   }
+| constr        { mk_constr      state lexbuf |> enqueue   }
+| bytes         { (mk_bytes seq) state lexbuf |> enqueue   }
+| natural 'n'   { mk_nat         state lexbuf |> enqueue   }
+| natural "mtz" { mk_mtz       state lexbuf |> enqueue   }
+| integer       { mk_int         state lexbuf |> enqueue   }
+| symbol        { mk_sym         state lexbuf |> enqueue   }
+| eof           { mk_eof         state lexbuf |> enqueue   }
 
 | '"'  { let opening, _, state = sync state lexbuf in
          let thread = {opening; len=1; acc=['"']} in
