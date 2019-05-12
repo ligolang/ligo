@@ -1,0 +1,31 @@
+version: "1.0"
+name: "tezos-protocol-compiler"
+opam-version: "2.0"
+maintainer: "contact@tezos.com"
+authors: [ "Tezos devteam" ]
+homepage: "https://www.tezos.com/"
+bug-reports: "https://gitlab.com/tezos/tezos/issues"
+dev-repo: "git+https://gitlab.com/tezos/tezos.git"
+license: "MIT"
+depends: [
+  ## ocaml should be in sync with `script/version.sh`
+  "ocaml" { = "4.06.1" }
+  "ocamlfind" { build }
+  "dune" { build & >= "1.0.1" }
+  "base-unix"
+  "tezos-base"
+  "tezos-protocol-environment-sigs"
+  "tezos-stdlib-unix"
+  "ocplib-endian"
+  "ocp-ocamlres" { >= "0.4" }
+]
+build: [
+  [ "dune" "build" "-p" name "-j" jobs ]
+  [ "mv" "src/lib_protocol_compiler/tezos-protocol-compiler.install" "." ]
+]
+run-test: [
+  [ "dune" "runtest" "-p" name "-j" jobs ]
+]
+url {
+  src: "https://gitlab.com/gabriel.alfour/tezos/-/archive/master/tezos.tar.gz"
+}
