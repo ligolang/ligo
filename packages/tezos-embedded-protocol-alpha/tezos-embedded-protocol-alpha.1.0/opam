@@ -15,9 +15,9 @@ depends: [
   "tezos-protocol-updater"
 ]
 build: [
-#  [ "%{tezos-protocol-compiler:lib}%/replace"
-#      "%{tezos-protocol-compiler:lib}%/dune_protocol.template"
-#      "dune" "alpha" ]
+  [ "%{tezos-protocol-compiler:lib}%/replace"
+      "%{tezos-protocol-compiler:lib}%/dune_protocol.template"
+      "dune" "alpha" ]
   [ "dune" "build" "-p" name "-j" jobs ]
   [ "mv" "src/proto_alpha/lib_protocol/tezos-embedded-protocol-alpha.install" "." ]
 ]
@@ -25,5 +25,5 @@ run-test: [
   [ "dune" "runtest" "-p" name "-j" jobs ]
 ]
 url {
-  src: "https://gitlab.com/gabriel.alfour/tezos/-/archive/master/tezos.tar.gz"
+  src: "https://gitlab.com/gabriel.alfour/tezos-modded/-/archive/master/tezos-modded.tar.gz"
 }

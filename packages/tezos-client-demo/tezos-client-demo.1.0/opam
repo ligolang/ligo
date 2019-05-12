@@ -1,4 +1,3 @@
-version: "1.0"
 name: "tezos-client-demo"
 opam-version: "1.2"
 version: "dev"
@@ -26,5 +25,5 @@ build-test: [
   [ "dune" "runtest" "-p" name "-j" jobs ]
 ]
 url {
-  src: "https://gitlab.com/gabriel.alfour/tezos/-/archive/master/tezos.tar.gz"
+  src: "https://gitlab.com/gabriel.alfour/tezos-modded/-/archive/master/tezos-modded.tar.gz"
 }

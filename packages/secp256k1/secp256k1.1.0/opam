@@ -18,5 +18,5 @@ depends: [
   "bigstring" {>= "0.1.1"}
 ]
 url {
-  src: "https://gitlab.com/gabriel.alfour/tezos/-/archive/master/tezos.tar.gz"
+  src: "https://gitlab.com/gabriel.alfour/tezos-modded/-/archive/master/tezos-modded.tar.gz"
 }

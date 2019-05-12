@@ -25,5 +25,5 @@ build: [
   [ "mv" "src/proto_alpha/lib_delegate/tezos-baker-alpha-commands.install" "." ]
 ]
 url {
-  src: "https://gitlab.com/gabriel.alfour/tezos/-/archive/master/tezos.tar.gz"
+  src: "https://gitlab.com/gabriel.alfour/tezos-modded/-/archive/master/tezos-modded.tar.gz"
 }
