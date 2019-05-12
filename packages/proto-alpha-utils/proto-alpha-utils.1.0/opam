@@ -1,7 +1,7 @@
 opam-version: "2.0"
-name: "tezos-utils"
+name: "proto-alpha-utils"
 version: "dev"
-synopsis: "LIGO Teozs-specificUtilities, to be used by other libraries"
+synopsis: "LIGO Proto Alpha-specific Utilities, to be used by other libraries"
 maintainer: "Galfour <gabriel.alfour@gmail.com>"
 authors: "Galfour <gabriel.alfour@gmail.com>"
 license: "MIT"
@@ -50,7 +50,6 @@ build: [
   ["dune" "build" "-p" name]
   [ "mv" "proto-alpha-utils/proto-alpha-utils.install" "." ]
 ]
-dev-repo: "git+https://gitlab.com/gabriel.alfour/tezos"
 url {
-  src: "https://gitlab.com/gabriel.alfour/tezos/-/archive/master/tezos.master.tar.gz"
+  src: "https://gitlab.com/gabriel.alfour/ligo-utils/-/archive/master/ligo-utils.tar.gz"
 }

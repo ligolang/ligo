@@ -1,0 +1,28 @@
+name: "ligo"
+opam-version: "2.0"
+version: "1.0"
+maintainer: "gabriel.alfour@gmail.com"
+authors: [ "Galfour" ]
+homepage: "https://gitlab.com/gabriel.alfour/tezos"
+bug-reports: "https://gitlab.com/gabriel.alfour/tezos/issues"
+synopsis: "A higher-level language which compiles to Michelson"
+dev-repo: "git+https://gitlab.com/gabriel.alfour/tezos.git"
+license: "MIT"
+depends: [
+  "ocamlfind" { build }
+  "dune" { build & >= "1.0.1" }
+  "menhir"
+  "ppx_let"
+  "ppx_deriving"
+  "tezos-utils"
+  "yojson"
+  "alcotest" { with-test }
+]
+build: [
+  [ "dune" "build" "-p" name "-j" jobs ]
+  # needed in the repository, but must not be present in the local ligo.opam [ "mv" "src/ligo/ligo.install" "." ]
+]
+
+url {
+  src: "https://gitlab.com/gabriel.alfour/tezos/-/archive/master/tezos.tar.gz"
+}
