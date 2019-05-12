@@ -1,0 +1,39 @@
+(ocamllex Lexer)
+
+(menhir
+ (merge_into Parser)
+ (modules ParToken Parser)
+ (flags -la 1 --explain --external-tokens Token))
+
+(library
+ (name parser_ligodity)
+ (public_name ligo.parser.ligodity)
+ (modules AST ligodity Utils Version Lexer Parser Token)
+;; (modules_without_implementation Error)
+ (libraries
+   str
+   zarith
+   tezos-utils
+ )
+)
+
+;; Les deux directives (rule) qui suivent sont pour le dev local.
+;; Il suffit de faire "dune build Parser.exe" pour avoir un Parser.exe dans le dossier.
+;; Pour le purger, il faut faire "dune clean".
+;(rule
+;  (targets Parser.exe)
+;  (deps ParserMain.exe)
+;  (action (copy ParserMain.exe Parser.exe))
+;  (mode promote-until-clean))
+
+;(rule
+;  (targets Lexer.exe)
+;  (deps LexerMain.exe)
+;  (action (copy LexerMain.exe Lexer.exe))
+;  (mode promote-until-clean))
+
+(rule
+  (targets Version.ml)
+  (action
+    (progn (run "sh" "-c" "printf 'let version = \"%s\"'\\\\n \"$(echo UNKNOWN)\" > Version.ml")))
+  (mode promote-until-clean))
