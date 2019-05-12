@@ -27,7 +27,7 @@ type error += Unknown_primitive_name of string (* `Permanent *)
 type error += Invalid_case of string (* `Permanent *)
 type error += Invalid_primitive_name of string Micheline.canonical * Micheline.canonical_location (* `Permanent *)
 
-type prim =
+type prim = Micheline.Michelson_primitives.prim =
   | K_parameter
   | K_storage
   | K_code

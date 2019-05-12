@@ -185,7 +185,7 @@ end
 
 module Script : sig
 
-  type prim = Michelson_v1_primitives.prim =
+  type prim = Micheline.Michelson_primitives.prim =
     | K_parameter
     | K_storage
     | K_code
@@ -299,6 +299,7 @@ module Script : sig
     | T_unit
     | T_operation
     | T_address
+
 
   type location = Micheline.canonical_location
 

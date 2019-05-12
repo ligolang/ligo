@@ -176,6 +176,7 @@ module Make (Context : CONTEXT) = struct
        and type Signature.t = Signature.t
        and type Signature.watermark = Signature.watermark
        and type 'a Micheline.canonical = 'a Micheline.canonical
+       and type Micheline.Michelson_primitives.prim = Micheline.Michelson_primitives.prim
        and type ('a, 'b) RPC_path.t = ('a, 'b) RPC_path.t
        and type Z.t = Z.t
        and type ('a, 'b) Micheline.node = ('a, 'b) Micheline.node

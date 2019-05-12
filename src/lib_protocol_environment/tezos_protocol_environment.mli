@@ -155,6 +155,7 @@ module Make (Context : CONTEXT) : sig
        and type 'a Micheline.canonical = 'a Micheline.canonical
        and type Z.t = Z.t
        and type ('a, 'b) Micheline.node = ('a, 'b) Micheline.node
+       and type Micheline.Michelson_primitives.prim = Micheline.Michelson_primitives.prim
        and type Data_encoding.json_schema = Data_encoding.json_schema
        and type ('a, 'b) RPC_path.t = ('a, 'b) RPC_path.t
        and type RPC_service.meth = RPC_service.meth
