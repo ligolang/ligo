@@ -1,0 +1,12 @@
+(library
+  (name proto_alpha_utils)
+  (public_name proto-alpha-utils)
+  (libraries
+    tezos-error-monad
+    tezos-stdlib-unix
+    tezos-memory-proto-alpha
+    simple-utils
+    tezos-utils
+  )
+ (flags (:standard -open Simple_utils ))
+)

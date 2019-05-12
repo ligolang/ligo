@@ -1,0 +1,9 @@
+(library
+  (name simple_utils)
+  (public_name simple-utils)
+  (libraries
+    yojson
+    unix
+    str
+  )
+)

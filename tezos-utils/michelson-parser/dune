@@ -1,0 +1,11 @@
+(library
+ (name michelson_parser)
+ (public_name michelson-parser)
+ (libraries
+  tezos-base
+  tezos-memory-proto-alpha
+  michelson
+ )
+ (flags (:standard -w -9-32 -safe-string
+          -open Tezos_base__TzPervasives
+)))
