@@ -1,5 +1,5 @@
 opam-version: "2.0"
-name: "ligo-utils"
+name: "simple-utils"
 version: "dev"
 synopsis: "LIGO Utilities, to be used by other libraries"
 maintainer: "Galfour <gabriel.alfour@gmail.com>"
@@ -48,7 +48,3 @@ depends: [
 build: [
   ["dune" "build" "-p" name]
 ]
-dev-repo: "git+https://gitlab.com/gabriel.alfour/tezos"
-url {
-  src: "https://gitlab.com/gabriel.alfour/tezos/-/archive/master/tezos.master.tar.gz"
-}
