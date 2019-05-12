@@ -1,0 +1,13 @@
+(library
+  (name ast_typed)
+  (public_name ligo.ast_typed)
+  (libraries
+    simple-utils
+    tezos-utils
+    ast_simplified ; Is that a good idea?
+  )
+  (preprocess
+    (pps simple-utils.ppx_let_generalized)
+  )
+  (flags (:standard -open Simple_utils))
+)

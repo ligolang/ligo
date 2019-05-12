@@ -1,0 +1,25 @@
+(library
+  (name ligo)
+  (public_name ligo)
+  (libraries
+    simple-utils
+    tezos-utils
+    tezos-micheline
+    meta_michelson
+    main
+  )
+  (preprocess
+    (pps simple-utils.ppx_let_generalized)
+  )
+)
+
+(alias
+( name ligo-test)
+  (action (run test/test.exe))
+  (deps (glob_files contracts/*))
+)
+
+(alias
+  (name runtest)
+  (deps (alias ligo-test))
+)

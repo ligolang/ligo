@@ -1,0 +1,14 @@
+(library
+  (name parser)
+  (public_name ligo.parser)
+  (libraries
+    simple-utils
+    tezos-utils
+    parser_pascaligo
+    parser_camligo
+  )
+  (preprocess
+    (pps simple-utils.ppx_let_generalized)
+  )
+  (flags (:standard -open Simple_utils ))
+)

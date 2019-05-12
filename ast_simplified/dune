@@ -1,0 +1,12 @@
+(library
+  (name ast_simplified)
+  (public_name ligo.ast_simplified)
+  (libraries
+    simple-utils
+    tezos-utils
+  )
+  (preprocess
+    (pps simple-utils.ppx_let_generalized)
+  )
+  (flags (:standard -open Simple_utils ))
+)

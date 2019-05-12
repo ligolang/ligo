@@ -1,0 +1,54 @@
+(library
+  (name lex)
+  (public_name ligo.multifix.lex)
+  (libraries
+    simple-utils
+    tezos-utils
+  )
+  (modules token token_type lexer)
+)
+
+(executable
+  (name generator)
+  (libraries
+    str
+    simple-utils
+  )
+  (modules generator)
+  (flags (:standard -w +1..62-4-9-44-40-42-48@39@33 ))
+)
+
+(rule
+  (targets token.mly)
+  (deps generator.exe)
+  (action (system "./generator.exe mly > token.mly"))
+)
+
+(rule
+  (targets token.ml)
+  (deps generator.exe)
+  (action (system "./generator.exe ml > token.ml"))
+)
+
+(rule
+  (targets lexer.mll)
+  (deps generator.exe)
+  (action (system "./generator.exe mll > lexer.mll"))
+)
+
+(rule
+  (targets token_type.ml token_type.mli)
+  (deps token.mly)
+  (action (system "menhir --only-tokens token.mly --base token_type"))
+)
+
+(alias
+  (name lexer.mll)
+  (deps token.ml)
+)
+
+(rule
+  (targets lexer.ml)
+  (deps    token.ml lexer.mll)
+  (action  (system "ocamllex lexer.mll"))
+)
