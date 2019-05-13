@@ -185,16 +185,18 @@ and 'a injection = {
 }
 
 and opening =
-  Begin  of kwd_begin
-| LBrace of lbrace
+  Begin    of kwd_begin
+| LBrace   of lbrace
+| LBracket of lbracket
 
 and closing =
-  End    of kwd_end
-| RBrace of rbrace
+  End      of kwd_end
+| RBrace   of rbrace
+| RBracket of rbracket
 
 and pattern =
   PTuple  of (pattern, comma) Utils.nsepseq reg             (* p1, p2, ...   *)
-| PList   of (pattern, semi) Utils.sepseq brackets reg      (* [p1; p2; ...] *)
+| PList   of list_pattern
 | PVar    of variable                                       (*             x *)
 | PUnit   of the_unit reg                                   (*            () *)
 | PInt    of (string * Z.t) reg                             (*             7 *)
@@ -202,11 +204,14 @@ and pattern =
 | PFalse  of kwd_false                                      (*         false *)
 | PString of string reg                                     (*         "foo" *)
 | PWild   of wild                                           (*             _ *)
-| PCons   of (pattern * cons * pattern) reg                 (*      p1 :: p2 *)
 | PPar    of pattern par reg                                (*           (p) *)
 | PConstr of (constr * pattern option) reg                  (*    A B(3,"")  *)
 | PRecord of record_pattern                                 (*  {a=...; ...} *)
 | PTyped  of typed_pattern reg                              (*     (x : int) *)
+
+and list_pattern =
+  Sugar of pattern injection reg                            (* [p1; p2; ...] *)
+| PCons of (pattern * cons * pattern) reg                   (* p1 :: p2      *)
 
 and typed_pattern = {
   pattern   : pattern;
@@ -223,34 +228,33 @@ and field_pattern = {
 }
 
 and expr =
-  LetIn    of let_in reg       (* let p1 = e1 and p2 = e2 and ... in e       *)
-| Fun      of fun_expr         (* fun x -> e                                 *)
-| If       of conditional      (* if e1 then e2 else e3                      *)
-| ETuple   of (expr, comma) Utils.nsepseq reg   (* e1, e2, ...                                *)
-| Match    of match_expr reg   (* p1 -> e1 | p2 -> e2 | ...                  *)
-| Seq      of sequence         (* begin e1; e2; ... ; en end                 *)
+  ELetIn   of let_in reg       (* let p1 = e1 and p2 = e2 and ... in e       *)
+| EFun     of fun_expr         (* fun x -> e                                 *)
+| ECond    of conditional      (* if e1 then e2 else e3                      *)
+| ETuple   of (expr, comma) Utils.nsepseq reg  (* e1, e2, ...                *)
+| EMatch   of match_expr reg   (* p1 -> e1 | p2 -> e2 | ...                  *)
+| ESeq     of sequence         (* begin e1; e2; ... ; en end                 *)
 | ERecord  of record_expr      (* {f1=e1; ... }                              *)
-
-| Append   of (expr * append * expr) reg                         (* e1  @ e2 *)
-| Cons     of (expr * cons * expr) reg                           (* e1 :: e2 *)
 
 | ELogic   of logic_expr
 | EArith   of arith_expr
 | EString  of string_expr
-
-| Call    of (expr * expr) reg                                        (* f e *)
+| ECall    of (expr * expr) reg                                       (* f e *)
 
 | Path    of path reg                                       (* x x.y.z       *)
-| Unit    of the_unit reg                                   (* ()            *)
-| Par     of expr par reg                                   (* (e)           *)
-| EList    of (expr, semi) Utils.sepseq brackets reg        (* [e1; e2; ...] *)
+| EUnit   of the_unit reg                                   (* ()            *)
+| EPar     of expr par reg                                  (* (e)           *)
+| EList   of list_expr
 | EConstr of constr
-  (*| Extern  of extern*)
+
+and list_expr =
+  Cons   of cat bin_op reg                                   (* e1 :: e3      *)
+| List   of expr injection reg                               (* [e1; e2; ...] *)
+| Append of (expr * append * expr) reg                         (* e1  @ e2      *)
 
 and string_expr =
-  Cat    of cat bin_op reg                            (* e1  ^ e2 *)
+  Cat    of cat bin_op reg                                 (* e1  ^ e2      *)
 | String of string reg                                     (* "foo"         *)
-
 
 and arith_expr =
   Add  of plus bin_op reg                                      (* e1  + e2   *)
@@ -332,27 +336,6 @@ and fun_expr = (kwd_fun * variable * arrow * expr) reg
 and conditional =
   IfThen     of (kwd_if * expr * kwd_then * expr) reg
 | IfThenElse of (kwd_if * expr * kwd_then * expr * kwd_else * expr) reg
-
-(*
-and extern =
-  Cast   of cast_expr
-| Print  of print_expr
-| Scanf  of scanf_expr
-| PolyEq of (variable * variable)                    (* polymorphic equality *)
-
-and cast_expr =
-  StringOfInt  of variable                               (* string_of_int  x *)
-| StringOfBool of variable                               (* string_of_bool x *)
-
-and print_expr =
-  PrintString of variable                                  (* print_string x *)
-| PrintInt    of variable                                  (* print_int    x *)
-
-and scanf_expr =
-  ScanfString of variable                                  (* scanf_string x *)
-| ScanfInt    of variable                                  (* scanf_int    x *)
-| ScanfBool   of variable                                  (* scanf_bool   x *)
-*)
 
 (* Normalising nodes of the AST so the interpreter is more uniform and
    no source regions are lost in order to enable all manner of
@@ -490,36 +473,3 @@ val print_tokens : ?undo:bool -> ast -> unit
 
 val region_of_pattern : pattern -> Region.t
 val region_of_expr    : expr -> Region.t
-
-(* Removing all outermost parentheses from a given expression *)
-
-val rm_par  : expr -> expr
-
-(* Predicates on expressions *)
-
-val is_var  : expr -> bool
-val is_call : expr -> bool
-val is_fun  : expr -> bool
-
-(* Variables *)
-(*
-module Vars     : Set.S with type elt = string
-module FreeVars : Set.S with type elt = variable
-
-(* The value of the call [vars t] is a pair of sets: the first is the
-   set of variables whose definitions are in the scope at the end of
-   the program corresponding to the AST [t], the second is the set of
-   free variables in that same AST.
-
-     Computing free variables is useful because we do not want to
-   escape a variable that is a predefined variable in OCaml, when we
-   translate the program to OCaml: this way, we make sure that an
-   unbound variable is caught before the translation (where it would
-   be wrongly captured by the OCaml compiler).
-
-    Dually, computing bound variables is useful when compiling to
-   OCaml.
-*)
-
-val vars : t -> Vars.t * FreeVars.t
-*)

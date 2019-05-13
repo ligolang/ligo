@@ -239,8 +239,8 @@ rule scan = parse
 
 | "("    { Token.LPAR     }
 | ")"    { Token.RPAR     }
-| "["    { Token.LBRACK   }
-| "]"    { Token.RBRACK   }
+| "["    { Token.LBRACKET }
+| "]"    { Token.RBRACKET }
 | "{"    { Token.LBRACE   }
 | "}"    { Token.RBRACE   }
 

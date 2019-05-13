@@ -68,7 +68,7 @@ sep_or_term_list(item,sep):
 
 par(X): sym(LPAR) X sym(RPAR) { {lpar=$1; inside=$2; rpar=$3} }
 
-brackets(X): sym(LBRACK) X sym(RBRACK) {
+brackets(X): sym(LBRACKET) X sym(RBRACKET) {
   {lbracket=$1; inside=$2; rbracket=$3} }
 
 (* Sequences
@@ -125,12 +125,16 @@ tuple(item):
 (* Possibly empty semicolon-separated values between brackets *)
 
 list_of(item):
-  reg(brackets(sepseq(item,sym(SEMI)))) { $1 }
+  sym(LBRACKET) sepseq(item,sym(SEMI)) sym(RBRACKET) {
+   {opening    = LBracket $1;
+    elements   = $2;
+    terminator = None;
+    closing    = RBracket $3} }
 
 (* Main *)
 
 program:
-  nseq(declaration) eof                                          { {decl=$1; eof=$2} }
+  nseq(declaration) eof                           { {decl=$1; eof=$2} }
 
 declaration:
   reg(kwd(Let)          let_bindings     {$1,$2})       {      Let $1 }
@@ -226,7 +230,7 @@ let_bindings:
 
 let_binding:
   ident nseq(sub_irrefutable) option(type_annotation) sym(EQ) expr {
-    let let_rhs = Fun (norm $2 $4 $5) in
+    let let_rhs = EFun (norm $2 $4 $5) in
     {pattern = PVar $1; lhs_type=$3; eq = Region.ghost; let_rhs}
   }
 | irrefutable option(type_annotation) sym(EQ) expr {
@@ -258,7 +262,7 @@ typed_pattern:
     {pattern=$1; colon=$2; type_expr=$3} }
 
 pattern:
-  reg(sub_pattern sym(CONS) tail {$1,$2,$3})             {   PCons $1 }
+  reg(sub_pattern sym(CONS) tail {$1,$2,$3})       {   PList (PCons $1) }
 | reg(tuple(sub_pattern))                                {  PTuple $1 }
 | core_pattern                                           {         $1 }
 
@@ -275,7 +279,7 @@ core_pattern:
 | kwd(False)                                             {  PFalse $1 }
 | string                                                 { PString $1 }
 | reg(par(ptuple))                                       {    PPar $1 }
-| list_of(tail)                                          {   PList $1 }
+| reg(list_of(tail))                               { PList (Sugar $1) }
 | reg(constr_pattern)                                    { PConstr $1 }
 | reg(record_pattern)                                    { PRecord $1 }
 
@@ -304,14 +308,14 @@ unit:
   reg(sym(LPAR) sym(RPAR) {$1,$2})                       {         $1 }
 
 tail:
-  reg(sub_pattern sym(CONS) tail {$1,$2,$3})             {   PCons $1 }
-| sub_pattern                                            {         $1 }
+  reg(sub_pattern sym(CONS) tail {$1,$2,$3})         { PList (PCons $1) }
+| sub_pattern                                        {             $1 }
 
 (* Expressions *)
 
 expr:
-  base_cond__open(expr)                                    {       $1 }
-| match_expr(base_cond)                                    { Match $1 }
+  base_cond__open(expr)                                   {        $1 }
+| match_expr(base_cond)                                   { EMatch $1 }
 
 base_cond__open(x):
   base_expr(x)
@@ -328,7 +332,7 @@ base_expr(right_expr):
 
 conditional(right_expr):
   if_then_else(right_expr)
-| if_then(right_expr)                                    {      If $1 }
+| if_then(right_expr)                                    {   ECond $1 }
 
 if_then(right_expr):
   reg(kwd(If) expr kwd(Then) right_expr {$1,$2,$3,$4})   {  IfThen $1 }
@@ -339,14 +343,14 @@ if_then_else(right_expr):
 
 base_if_then_else__open(x):
   base_expr(x)                                             {       $1 }
-| if_then_else(x)                                          {    If $1 }
+| if_then_else(x)                                          { ECond $1 }
 
 base_if_then_else:
   base_if_then_else__open(base_if_then_else)               {       $1 }
 
 closed_if:
   base_if_then_else__open(closed_if)                       {       $1 }
-| match_expr(base_if_then_else)                            { Match $1 }
+| match_expr(base_if_then_else)                            { EMatch $1 }
 
 match_expr(right_expr):
   reg(kwd(Match) expr kwd(With)
@@ -361,7 +365,7 @@ match_nat(right_expr):
     let cast_name = Name {region=ghost; value="assert_pos"} in
     let cast_path = {module_proj=None; value_proj=cast_name,[]} in
     let cast_fun  = Path {region=ghost; value=cast_path} in
-    let cast      = Call {region=ghost; value=cast_fun,$2}
+    let cast      = ECall {region=ghost; value=cast_fun,$2}
     in $1, cast, $3, ($4, Utils.nsepseq_rev $5) }
 
 cases(right_expr):
@@ -374,13 +378,12 @@ case(right_expr):
 
 let_expr(right_expr):
   reg(kwd(Let) let_bindings kwd(In) right_expr {$1,$2,$3,$4}) {
-    LetIn $1
-  }
+    ELetIn $1 }
 
 fun_expr(right_expr):
   reg(kwd(Fun) nseq(irrefutable) sym(ARROW) right_expr {$1,$2,$3,$4}) {
     let Region.{region; value = kwd_fun, patterns, arrow, expr} = $1
-    in Fun (norm ~reg:(region, kwd_fun) patterns arrow expr) }
+    in EFun (norm ~reg:(region, kwd_fun) patterns arrow expr) }
 
 disj_expr_level:
   reg(disj_expr)                          { ELogic (BoolExpr (Or $1)) }
@@ -431,9 +434,9 @@ ne_expr:
   bin_op(comp_expr_level, sym(NE), cat_expr_level) { $1 }
 
 cat_expr_level:
-  reg(cat_expr)                                    { EString (Cat $1) }
-| reg(append_expr)                                 {        Append $1 }
-| cons_expr_level                                  {               $1 }
+  reg(cat_expr)                                   {  EString (Cat $1) }
+| reg(append_expr)                                { EList (Append $1) }
+| cons_expr_level                                 {                $1 }
 
 cat_expr:
   bin_op(cons_expr_level, sym(CAT), cat_expr_level)              { $1 }
@@ -442,11 +445,11 @@ append_expr:
   cons_expr_level sym(APPEND) cat_expr_level               { $1,$2,$3 }
 
 cons_expr_level:
-  reg(cons_expr)                                           {  Cons $1 }
-| add_expr_level                                           {       $1 }
+  reg(cons_expr)                                    { EList (Cons $1) }
+| add_expr_level                                    {              $1 }
 
 cons_expr:
-  add_expr_level sym(CONS) cons_expr_level                 { $1,$2,$3 }
+  bin_op(add_expr_level, sym(CONS), cons_expr_level)             { $1 }
 
 add_expr_level:
   reg(plus_expr)                                    { EArith (Add $1) }
@@ -486,7 +489,7 @@ not_expr:
   un_op(kwd(Not), core_expr)                                     { $1 }
 
 call_expr_level:
-  reg(call_expr)                                           {  Call $1 }
+  reg(call_expr)                                           {  ECall $1 }
 | core_expr                                                {       $1 }
 
 call_expr:
@@ -498,13 +501,13 @@ core_expr:
 | reg(Nat)                                          { EArith (Nat $1) }
 | reg(path)                                               {   Path $1 }
 | string                                        { EString (String $1) }
-| unit                                                    {   Unit $1 }
+| unit                                                    {  EUnit $1 }
 | kwd(False)                          {  ELogic (BoolExpr (False $1)) }
 | kwd(True)                           {  ELogic (BoolExpr ( True $1)) }
-| list_of(expr)                                           {  EList $1 }
-| reg(par(expr))                                          {    Par $1 }
+| reg(list_of(expr))                                { EList (List $1) }
+| reg(par(expr))                                         {    EPar $1 }
 | constr                                                 { EConstr $1 }
-| reg(sequence)                                           {    Seq $1 }
+| reg(sequence)                                          {    ESeq $1 }
 | reg(record_expr)                                       { ERecord $1 }
 
 path:

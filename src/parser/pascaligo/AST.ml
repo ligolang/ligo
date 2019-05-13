@@ -199,7 +199,7 @@ and type_expr =
 
 and cartesian = (type_expr, times) nsepseq reg
 
-and variant = {
+and variant = {  (* TODO: Constant constructors *)
   constr  : constr;
   kwd_of  : kwd_of;
   product : cartesian

@@ -19,8 +19,8 @@ type t =
 
 | LPAR     (* "(" *)
 | RPAR     (* ")" *)
-| LBRACK   (* "[" *)
-| RBRACK   (* "]" *)
+| LBRACKET (* "[" *)
+| RBRACKET (* "]" *)
 | LBRACE   (* "{" *)
 | RBRACE   (* "}" *)
 

@@ -13,8 +13,8 @@ type t =
 | TIMES
 | LPAR
 | RPAR
-| LBRACK
-| RBRACK
+| LBRACKET
+| RBRACKET
 | LBRACE
 | RBRACE
 | COMMA
@@ -91,8 +91,8 @@ let to_string = function
 | TIMES    -> "*"
 | LPAR     -> "("
 | RPAR     -> ")"
-| LBRACK   -> "["
-| RBRACK   -> "]"
+| LBRACKET -> "["
+| RBRACKET -> "]"
 | LBRACE   -> "{"
 | RBRACE   -> "}"
 | COMMA    -> ","

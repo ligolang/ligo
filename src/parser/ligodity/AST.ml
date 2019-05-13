@@ -76,6 +76,10 @@ type colon = Region.t  (* ":" *)
 
 type wild = Region.t  (* "_" *)
 
+(* Virtual tokens *)
+
+type eof = Region.t
+
 (* Literals *)
 
 type variable    = string reg
@@ -98,9 +102,9 @@ type the_unit = lpar * rpar
 (* Brackets compounds *)
 
 type 'a brackets = {
-  lbracket   : lbracket;
-  inside : 'a;
-  rbracket   : rbracket
+  lbracket : lbracket;
+  inside   : 'a;
+  rbracket : rbracket
 }
 
 (* The Abstract Syntax Tree *)
@@ -111,8 +115,6 @@ type t = {
 }
 
 and ast = t
-
-and eof = Region.t
 
 and declaration =
   Let      of (kwd_let * let_bindings) reg
@@ -130,7 +132,7 @@ and let_binding = {
   let_rhs  : expr
 }
 
-(* Recursive types *)
+(* Type declarations *)
 
 and type_decl = {
   kwd_type   : kwd_type;
@@ -165,24 +167,9 @@ and field_decl = {
 
 and type_tuple = (type_expr, comma) Utils.nsepseq par
 
-and 'a injection = {
-  opening    : opening;
-  elements   : ('a, semi) Utils.sepseq;
-  terminator : semi option;
-  closing    : closing
-}
-
-and opening =
-  Begin  of kwd_begin
-| LBrace of lbrace
-
-and closing =
-  End    of kwd_end
-| RBrace of rbrace
-
 and pattern =
   PTuple  of (pattern, comma) Utils.nsepseq reg
-| PList   of (pattern, semi) Utils.sepseq brackets reg
+| PList   of list_pattern
 | PVar    of variable
 | PUnit   of the_unit reg
 | PInt    of (string * Z.t) reg
@@ -190,11 +177,14 @@ and pattern =
 | PFalse  of kwd_false
 | PString of string reg
 | PWild   of wild
-| PCons   of (pattern * cons * pattern) reg
 | PPar    of pattern par reg
 | PConstr of (constr * pattern option) reg
 | PRecord of record_pattern
 | PTyped  of typed_pattern reg
+
+and list_pattern =
+  Sugar of pattern injection reg
+| PCons of (pattern * cons * pattern) reg
 
 and typed_pattern = {
   pattern   : pattern;
@@ -211,27 +201,44 @@ and field_pattern = {
 }
 
 and expr =
-  LetIn    of let_in reg
-| Fun      of fun_expr
-| If       of conditional
+  ELetIn   of let_in reg
+| EFun     of fun_expr
+| ECond    of conditional
 | ETuple   of (expr, comma) Utils.nsepseq reg
-| Match    of match_expr reg
-| Seq      of sequence
+| EMatch   of match_expr reg
+| ESeq     of sequence
 | ERecord  of record_expr
-| Append   of (expr * append * expr) reg
-| Cons     of (expr * cons * expr) reg
-
 | ELogic   of logic_expr
 | EArith   of arith_expr
 | EString  of string_expr
-
-| Call     of (expr * expr) reg
-
+| ECall    of (expr * expr) reg
 | Path     of path reg
-| Unit     of the_unit reg
-| Par      of expr par reg
-| EList     of (expr, semi) Utils.sepseq brackets reg
+| EUnit    of the_unit reg
+| EPar     of expr par reg
+| EList    of list_expr
 | EConstr  of constr
+
+and 'a injection = {
+  opening    : opening;
+  elements   : ('a, semi) Utils.sepseq;
+  terminator : semi option;
+  closing    : closing
+}
+
+and opening =
+  Begin    of kwd_begin
+| LBrace   of lbrace
+| LBracket of lbracket
+
+and closing =
+  End      of kwd_end
+| RBrace   of rbrace
+| RBracket of rbracket
+
+and list_expr =
+  Cons   of cons bin_op reg
+| List   of expr injection reg
+| Append of (expr * append * expr) reg
 
 and string_expr =
   Cat    of cat bin_op reg
@@ -314,10 +321,14 @@ and conditional =
 
 let sprintf = Printf.sprintf
 
+let region_of_list_pattern = function
+  Sugar {region; _} | PCons {region; _} -> region
+
 let region_of_pattern = function
-  PList {region;_} | PTuple {region;_} | PVar {region;_}
+  PList p -> region_of_list_pattern p
+| PTuple {region;_} | PVar {region;_}
 | PUnit {region;_} | PInt {region;_} | PTrue region | PFalse region
-| PString {region;_} | PWild region | PCons {region;_}
+| PString {region;_} | PWild region
 | PConstr {region; _} | PPar {region;_} | PRecord {region; _}
 | PTyped {region; _} -> region
 
@@ -344,39 +355,21 @@ let region_of_arith_expr = function
 let region_of_string_expr = function
   String {region;_} | Cat {region;_} -> region
 
+let region_of_list_expr = function
+  Cons {region; _} | List {region; _} | Append {region; _} -> region
+
 let region_of_expr = function
   ELogic e -> region_of_logic_expr e
 | EArith e -> region_of_arith_expr e
 | EString e -> region_of_string_expr e
-| LetIn {region;_} | Fun {region;_}
-| If IfThen {region;_} | If IfThenElse {region; _}
-| ETuple {region;_} | Match {region;_} | Cons {region;_}
-| Call {region;_} | Path {region;_}
-| Unit {region;_} | Par {region;_} | EList {region;_}
-| Seq {region; _} | ERecord {region; _}
-| Append {region; _} | EConstr {region; _} -> region
-
-
-(* Predicates *)
-
-let rec is_var = function
-  Par {value={inside=e;_};_} -> is_var e
-|           Path _ -> true
-|                   _ -> false
-
-let rec is_call = function
-  Par {value={inside=e;_};_} -> is_call e
-|              Call _ -> true
-|                   _ -> false
-
-let rec is_fun = function
-  Par {value={inside=e;_};_} -> is_fun e
-|               Fun _ -> true
-|                   _ -> false
-
-let rec rm_par = function
-  Par {value={inside=e;_};_} -> rm_par e
-|                   e -> e
+| EList e -> region_of_list_expr e
+| ELetIn {region;_} | EFun {region;_}
+| ECond IfThen {region;_} | ECond IfThenElse {region; _}
+| ETuple {region;_} | EMatch {region;_}
+| ECall {region;_} | Path {region;_}
+| EUnit {region;_} | EPar {region;_}
+| ESeq {region; _} | ERecord {region; _}
+| EConstr {region; _} -> region
 
 (* Rewriting let-expressions and fun-expressions, with some optimisations *)
 
@@ -397,7 +390,7 @@ let norm_fun region kwd_fun pattern eq expr =
                 let bindings = {pattern; eq;
                                 lhs_type=None; let_rhs = Path path}, [] in
                 let let_in   = ghost_let, bindings, ghost_in, expr in
-                let expr     = LetIn {value=let_in; region=Region.ghost}
+                let expr     = ELetIn {value=let_in; region=Region.ghost}
     in kwd_fun, fresh, ghost_arrow, expr
   in Region.{region; value}
 
@@ -407,7 +400,7 @@ let norm ?reg (pattern, patterns) sep expr =
         None -> Region.ghost, ghost_fun
     | Some p -> p in
   let apply pattern (sep, expr) =
-    ghost_eq, Fun (norm_fun Region.ghost ghost_fun pattern sep expr) in
+    ghost_eq, EFun (norm_fun Region.ghost ghost_fun pattern sep expr) in
   let sep, expr = List.fold_right apply patterns (sep, expr)
   in norm_fun reg fun_reg pattern sep expr
 
@@ -425,10 +418,10 @@ type unparsed = [
    sign or "->". *)
 
 let rec unparse' = function
-  Fun {value=_,var,arrow,expr; _} ->
+  EFun {value=_,var,arrow,expr; _} ->
     if var.region#is_ghost then
       match expr with
-        LetIn {value = _,({pattern;eq;_},[]),_,expr; _} ->
+        ELetIn {value = _,({pattern;eq;_},[]),_,expr; _} ->
           if eq#is_ghost then
             let patterns, sep, e = unparse' expr
             in Utils.nseq_cons pattern patterns, sep, e
@@ -441,7 +434,7 @@ let rec unparse' = function
 | _ -> assert false
 
 let unparse = function
-  Fun {value=kwd_fun,_,_,_; _} as e ->
+  EFun {value=kwd_fun,_,_,_; _} as e ->
     let binding = unparse' e in
     if kwd_fun#is_ghost then `Let binding else `Fun (kwd_fun, binding)
 | e -> `Idem e
@@ -460,7 +453,6 @@ let print_sepseq sep print = function
 
 let print_csv print = print_nsepseq "," print
 let print_bsv print = print_nsepseq "|" print
-let print_ssv print = print_sepseq  ";" print
 
 let print_token (reg: Region.t) conc =
   Printf.printf "%s: %s\n" (reg#compact `Byte) conc
@@ -570,12 +562,14 @@ and print_injection :
     print_closing closing
 
 and print_opening = function
-  Begin region  -> print_token region "begin"
-| LBrace region -> print_token region "{"
+  Begin    region -> print_token region "begin"
+| LBrace   region -> print_token region "{"
+| LBracket region -> print_token region "["
 
 and print_closing = function
-  End region    -> print_token region "end"
-| RBrace region -> print_token region "}"
+  End      region -> print_token region "end"
+| RBrace   region -> print_token region "}"
+| RBracket region -> print_token region "]"
 
 and print_terminator = function
   Some semi -> print_token semi ";"
@@ -608,10 +602,7 @@ and print_let_binding undo {pattern; lhs_type; eq; let_rhs} =
 
 and print_pattern = function
   PTuple {value=patterns;_} -> print_csv print_pattern patterns
-| PList {value={lbracket; inside=patterns; rbracket}; _} ->
-    print_token lbracket "[";
-    print_ssv print_pattern patterns;
-    print_token rbracket "]"
+| PList p -> print_list_pattern p
 | PVar {region; value} ->
     Printf.printf "%s: PVar %s\n" (region#compact `Byte) value
 | PUnit {value=lpar,rpar; _} ->
@@ -622,13 +613,18 @@ and print_pattern = function
 | PFalse kwd_false -> print_token kwd_false "false"
 | PString s -> print_str s
 | PWild wild -> print_token wild "_"
-| PCons {value=p1,c,p2; _} ->
-    print_pattern p1; print_token c "::"; print_pattern p2
 | PPar {value={lpar;inside=p;rpar}; _} ->
     print_token lpar "("; print_pattern p; print_token rpar ")"
 | PConstr p -> print_constr_pattern p
 | PRecord r -> print_record_pattern r
 | PTyped t -> print_typed_pattern t
+
+and print_list_pattern = function
+  Sugar p -> print_injection print_pattern p
+| PCons p -> print_raw p
+
+and print_raw {value=p1,c,p2; _} =
+  print_pattern p1; print_token c "::"; print_pattern p2
 
 and print_typed_pattern {value; _} =
   let {pattern; colon; type_expr} = value in
@@ -652,11 +648,11 @@ and print_constr_pattern {value=constr, p_opt; _} =
   | Some pattern -> print_pattern pattern
 
 and print_expr undo = function
-  LetIn {value;_} -> print_let_in undo value
-|           If cond -> print_conditional undo cond
-|  ETuple {value;_} -> print_csv (print_expr undo) value
-|   Match {value;_} -> print_match_expr undo value
-| Fun {value=(kwd_fun,_,_,_) as f; _} as e ->
+  ELetIn {value;_} -> print_let_in undo value
+|       ECond cond -> print_conditional undo cond
+| ETuple {value;_} -> print_csv (print_expr undo) value
+| EMatch {value;_} -> print_match_expr undo value
+| EFun {value=(kwd_fun,_,_,_) as f; _} as e ->
     if undo then
       let patterns, arrow, expr = unparse' e in
       print_token kwd_fun "fun";
@@ -665,25 +661,31 @@ and print_expr undo = function
       print_expr undo expr
     else print_fun_expr undo f
 
-| Cons {value=e1,cons,e2; _} ->
-    print_expr undo e1; print_token cons "::"; print_expr undo e2
 | ELogic e -> print_logic_expr undo e
 | EArith e -> print_arith_expr undo e
 | EString e -> print_string_expr undo e
 
-| Call {value=e1,e2; _} -> print_expr undo e1; print_expr undo e2
+| ECall {value=e1,e2; _} -> print_expr undo e1; print_expr undo e2
 | Path p -> print_path p
-| Unit {value=lpar,rpar; _} ->
+| EUnit {value=lpar,rpar; _} ->
     print_token lpar "("; print_token rpar ")"
-| Par {value={lpar;inside=e;rpar}; _} ->
+| EPar {value={lpar;inside=e;rpar}; _} ->
     print_token lpar "("; print_expr undo e; print_token rpar ")"
-| EList {value={lbracket; inside=ssv; rbracket}; _} ->
-    print_token lbracket "["; print_ssv (print_expr undo) ssv; print_token rbracket "]"
-| Seq seq -> print_sequence undo seq
+| EList e -> print_list_expr undo e
+| ESeq seq -> print_sequence undo seq
 | ERecord e -> print_record_expr undo e
-| Append {value=e1,append,e2; _} ->
-    print_expr undo e1; print_token append "@"; print_expr undo e2
 | EConstr constr -> print_uident constr
+
+and print_list_expr undo = function
+  Cons {value={arg1;op;arg2}; _} ->
+    print_expr undo arg1;
+    print_token op "::";
+    print_expr undo arg2
+| List e -> print_injection (print_expr undo) e
+| Append {value=e1,append,e2; _} ->
+    print_expr undo e1;
+    print_token append "@";
+    print_expr undo e2
 
 and print_arith_expr undo = function
   Add {value={arg1;op;arg2}; _} ->

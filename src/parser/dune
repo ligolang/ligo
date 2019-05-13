@@ -6,6 +6,7 @@
     tezos-utils
     parser_pascaligo
     parser_camligo
+    parser_ligodity
   )
   (preprocess
     (pps simple-utils.ppx_let_generalized)

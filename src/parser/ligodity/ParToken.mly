@@ -10,8 +10,8 @@
 
 %token LPAR
 %token RPAR
-%token LBRACK
-%token RBRACK
+%token LBRACKET
+%token RBRACKET
 %token LBRACE
 %token RBRACE
 
