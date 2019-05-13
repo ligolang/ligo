@@ -399,11 +399,11 @@ let prim_of_string : string -> (prim , failure) result = function
       else
         Error (Invalid_case n)
 
-let (>>?) x f : (_ , failure) result = match x with
-  | Ok x -> f x
-  | Error _ as err -> err
 
 let prims_of_strings : string canonical -> (prim Micheline_main.canonical , failure) result = fun expr ->
+  let (>>?) x f : (_ , failure) result = match x with
+    | Ok x -> f x
+    | Error _ as err -> err in
   let rec convert : (canonical_location , string) node -> ((canonical_location , prim) node , failure) result  = function
     | Int _ | String _ | Bytes _ as expr -> Ok expr
     | Seq (_, args) -> (
