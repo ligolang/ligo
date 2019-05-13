@@ -1,9 +1,0 @@
-(library
- (name meta_michelson)
- (public_name ligo.meta_michelson)
- (libraries
-   tezos-utils
-   michelson-parser
-   tezos-micheline
- )
-)

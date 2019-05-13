@@ -1,7 +1,0 @@
-$HOME/git/OCaml-build/Makefile
-$HOME/git/OCaml-build/Makefile.cfg
-$HOME/git/tezos/src/lib_utils/pos.mli
-$HOME/git/tezos/src/lib_utils/pos.ml
-$HOME/git/tezos/src/lib_utils/region.mli
-$HOME/git/tezos/src/lib_utils/region.ml
-Stubs/Tezos_utils.ml
