@@ -41,6 +41,7 @@ depends: [
   "tezos-protocol-alpha"
   "michelson-parser"
   "simple-utils"
+  "tezos-utils"
   # from ppx_let:
   "ocaml" {>= "4.04.2" & < "4.08.0"}
   "dune"   {build & >= "1.5.1"}
