@@ -1,0 +1,22 @@
+opam-version: "2.0"
+name: "memory-proto-alpha"
+version: "1.0"
+synopsis: "Tezos Protocol Alpha in memory"
+maintainer: "Galfour <gabriel.alfour@gmail.com>"
+authors: "Galfour <gabriel.alfour@gmail.com>"
+license: "MIT"
+homepage: "https://gitlab.com/gabriel.alfour/tezos"
+bug-reports: "https://gitlab.com/gabriel.alfour/tezos/issues"
+depends: [
+  "dune"
+  "tezos-protocol-environment"
+  "tezos-protocol-alpha"
+]
+build: [
+  ["dune" "build" "-p" name]
+  [ "mv" "src/lib_memory_protocol_alpha/tezos-memory-proto-alpha.install" "." ]
+]
+dev-repo: "git+https://gitlab.com/gabriel.alfour/tezos"
+url {
+  src: "https://gitlab.com/gabriel.alfour/tezos-modded/-/archive/master/tezos-modded.tar.gz"
+}
