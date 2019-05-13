@@ -177,23 +177,6 @@ and field_decl = {
 
 and type_tuple = (type_expr, comma) Utils.nsepseq par
 
-and 'a injection = {
-  opening    : opening;
-  elements   : ('a, semi) Utils.sepseq;
-  terminator : semi option;
-  closing    : closing
-}
-
-and opening =
-  Begin    of kwd_begin
-| LBrace   of lbrace
-| LBracket of lbracket
-
-and closing =
-  End      of kwd_end
-| RBrace   of rbrace
-| RBracket of rbracket
-
 and pattern =
   PTuple  of (pattern, comma) Utils.nsepseq reg             (* p1, p2, ...   *)
 | PList   of list_pattern
@@ -228,24 +211,42 @@ and field_pattern = {
 }
 
 and expr =
-  ELetIn   of let_in reg       (* let p1 = e1 and p2 = e2 and ... in e       *)
-| EFun     of fun_expr         (* fun x -> e                                 *)
-| ECond    of conditional      (* if e1 then e2 else e3                      *)
-| ETuple   of (expr, comma) Utils.nsepseq reg  (* e1, e2, ...                *)
-| EMatch   of match_expr reg   (* p1 -> e1 | p2 -> e2 | ...                  *)
-| ESeq     of sequence         (* begin e1; e2; ... ; en end                 *)
-| ERecord  of record_expr      (* {f1=e1; ... }                              *)
-
-| ELogic   of logic_expr
-| EArith   of arith_expr
-| EString  of string_expr
-| ECall    of (expr * expr) reg                                       (* f e *)
-
-| Path    of path reg                                       (* x x.y.z       *)
-| EUnit   of the_unit reg                                   (* ()            *)
-| EPar     of expr par reg                                  (* (e)           *)
+  ECase   of expr case reg                     (* p1 -> e1 | p2 -> e2 | ... *)
+| ELogic  of logic_expr
+| EArith  of arith_expr
+| EString of string_expr
 | EList   of list_expr
 | EConstr of constr
+| ERecord of record_expr                                   (* {f1=e1; ... } *)
+| EProj   of projection reg                                 (* x.y.z  M.x.y *)
+| EVar    of variable                                                  (* x *)
+| ECall   of (expr * expr) reg                                       (* f e *)
+| EUnit   of the_unit reg                                             (* () *)
+| ETuple  of (expr, comma) Utils.nsepseq reg                 (* e1, e2, ... *)
+| EPar    of expr par reg                                            (* (e) *)
+
+| ELetIn  of let_in reg       (* let p1 = e1 and p2 = e2 and ... in e       *)
+| EFun    of fun_expr         (* fun x -> e                                 *)
+| ECond   of conditional reg  (* if e1 then e2 else e3                      *)
+| ESeq    of sequence         (* begin e1; e2; ... ; en end                 *)
+
+and 'a injection = {
+  opening    : opening;
+  elements   : ('a, semi) Utils.sepseq;
+  terminator : semi option;
+  closing    : closing
+}
+
+and opening =
+  Begin    of kwd_begin
+| With     of kwd_with
+| LBrace   of lbrace
+| LBracket of lbracket
+
+and closing =
+  End      of kwd_end
+| RBrace   of rbrace
+| RBracket of rbracket
 
 and list_expr =
   Cons   of cat bin_op reg                                   (* e1 :: e3      *)
@@ -296,22 +297,15 @@ and comp_expr =
 | Geq   of geq   bin_op reg
 | Equal of equal bin_op reg
 | Neq   of neq   bin_op reg
-(*
-| Lt       of (expr * lt * expr) reg
-| LEq      of (expr * le * expr) reg
-| Gt       of (expr * gt * expr) reg
-| GEq      of (expr * ge * expr) reg
-| NEq      of (expr * ne * expr) reg
-| Eq       of (expr * eq * expr) reg
-*)
 
-and path = {
-  module_proj : (constr * dot) option;
-  value_proj  : (selection, dot) Utils.nsepseq
+and projection = {
+  struct_name : variable;
+  selector    : dot;
+  field_path  : (selection, dot) Utils.nsepseq
 }
 
 and selection =
-  Name      of variable
+  FieldName of variable
 | Component of (string * Z.t) reg par reg
 
 and record_expr = field_assignment reg injection reg
@@ -324,18 +318,33 @@ and field_assignment = {
 
 and sequence = expr injection reg
 
-and match_expr = kwd_match * expr * kwd_with * cases
+and 'a case = {
+  kwd_match : kwd_match;
+  expr      : expr;
+  opening   : opening;
+  lead_vbar : vbar option;
+  cases     : ('a case_clause reg, vbar) Utils.nsepseq reg;
+  closing   : closing
+}
 
-and cases =
-  vbar option * (pattern * arrow * expr, vbar) Utils.nsepseq
+and 'a case_clause = {
+  pattern : pattern;
+  arrow   : arrow;
+  rhs     : 'a
+}
 
 and let_in = kwd_let * let_bindings * kwd_in * expr
 
 and fun_expr = (kwd_fun * variable * arrow * expr) reg
 
-and conditional =
-  IfThen     of (kwd_if * expr * kwd_then * expr) reg
-| IfThenElse of (kwd_if * expr * kwd_then * expr * kwd_else * expr) reg
+and conditional = {
+  kwd_if     : kwd_if;
+  test       : expr;
+  kwd_then   : kwd_then;
+  ifso       : expr;
+  kwd_else   : kwd_else;
+  ifnot      : expr
+}
 
 (* Normalising nodes of the AST so the interpreter is more uniform and
    no source regions are lost in order to enable all manner of

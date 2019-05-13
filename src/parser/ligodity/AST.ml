@@ -201,22 +201,24 @@ and field_pattern = {
 }
 
 and expr =
-  ELetIn   of let_in reg
-| EFun     of fun_expr
-| ECond    of conditional
-| ETuple   of (expr, comma) Utils.nsepseq reg
-| EMatch   of match_expr reg
-| ESeq     of sequence
-| ERecord  of record_expr
-| ELogic   of logic_expr
-| EArith   of arith_expr
-| EString  of string_expr
-| ECall    of (expr * expr) reg
-| Path     of path reg
-| EUnit    of the_unit reg
-| EPar     of expr par reg
-| EList    of list_expr
-| EConstr  of constr
+  ECase   of expr case reg
+| ELogic  of logic_expr
+| EArith  of arith_expr
+| EString of string_expr
+| EList   of list_expr
+| EConstr of constr
+| ERecord of record_expr
+| EProj   of projection reg
+| EVar    of variable
+| ECall   of (expr * expr) reg
+| EUnit   of the_unit reg
+| ETuple  of (expr, comma) Utils.nsepseq reg
+| EPar    of expr par reg
+
+| ELetIn  of let_in reg
+| EFun    of fun_expr
+| ECond   of conditional reg
+| ESeq    of sequence
 
 and 'a injection = {
   opening    : opening;
@@ -227,6 +229,7 @@ and 'a injection = {
 
 and opening =
   Begin    of kwd_begin
+| With     of kwd_with
 | LBrace   of lbrace
 | LBracket of lbracket
 
@@ -285,13 +288,14 @@ and comp_expr =
 | Equal of equal bin_op reg
 | Neq   of neq   bin_op reg
 
-and path = {
-  module_proj : (constr * dot) option;
-  value_proj  : (selection, dot) Utils.nsepseq
+and projection = {
+  struct_name : variable;
+  selector    : dot;
+  field_path  : (selection, dot) Utils.nsepseq
 }
 
 and selection =
-  Name      of variable
+  FieldName of variable
 | Component of (string * Z.t) reg par reg
 
 and record_expr = field_assignment reg injection reg
@@ -304,18 +308,33 @@ and field_assignment = {
 
 and sequence = expr injection reg
 
-and match_expr = kwd_match * expr * kwd_with * cases
+and 'a case = {
+  kwd_match : kwd_match;
+  expr      : expr;
+  opening   : opening;
+  lead_vbar : vbar option;
+  cases     : ('a case_clause reg, vbar) Utils.nsepseq reg;
+  closing   : closing
+}
 
-and cases =
-  vbar option * (pattern * arrow * expr, vbar) Utils.nsepseq
+and 'a case_clause = {
+  pattern : pattern;
+  arrow   : arrow;
+  rhs     : 'a
+}
 
 and let_in = kwd_let * let_bindings * kwd_in * expr
 
 and fun_expr = (kwd_fun * variable * arrow * expr) reg
 
-and conditional =
-  IfThen     of (kwd_if * expr * kwd_then * expr) reg
-| IfThenElse of (kwd_if * expr * kwd_then * expr * kwd_else * expr) reg
+and conditional = {
+  kwd_if     : kwd_if;
+  test       : expr;
+  kwd_then   : kwd_then;
+  ifso       : expr;
+  kwd_else   : kwd_else;
+  ifnot      : expr
+}
 
 (* Projecting regions of the input source code *)
 
@@ -364,9 +383,8 @@ let region_of_expr = function
 | EString e -> region_of_string_expr e
 | EList e -> region_of_list_expr e
 | ELetIn {region;_} | EFun {region;_}
-| ECond IfThen {region;_} | ECond IfThenElse {region; _}
-| ETuple {region;_} | EMatch {region;_}
-| ECall {region;_} | Path {region;_}
+| ECond {region;_} | ETuple {region;_} | ECase {region;_}
+| ECall {region;_} | EVar {region; _} | EProj {region; _}
 | EUnit {region;_} | EPar {region;_}
 | ESeq {region; _} | ERecord {region; _}
 | EConstr {region; _} -> region
@@ -384,11 +402,8 @@ let norm_fun region kwd_fun pattern eq expr =
       PVar v -> kwd_fun, v, eq, expr
     |      _ -> let value     = Utils.gen_sym () in
                 let fresh    = Region.{region=Region.ghost; value} in
-                let proj     = Name fresh, [] in
-                let path     = {module_proj=None; value_proj=proj} in
-                let path     = Region.{region=Region.ghost; value=path} in
                 let bindings = {pattern; eq;
-                                lhs_type=None; let_rhs = Path path}, [] in
+                                lhs_type=None; let_rhs = EVar fresh}, [] in
                 let let_in   = ghost_let, bindings, ghost_in, expr in
                 let expr     = ELetIn {value=let_in; region=Region.ghost}
     in kwd_fun, fresh, ghost_arrow, expr
@@ -452,7 +467,6 @@ let print_sepseq sep print = function
 | Some seq -> print_nsepseq sep print seq
 
 let print_csv print = print_nsepseq "," print
-let print_bsv print = print_nsepseq "|" print
 
 let print_token (reg: Region.t) conc =
   Printf.printf "%s: %s\n" (reg#compact `Byte) conc
@@ -512,18 +526,14 @@ and print_type_par {value={lpar;inside=t;rpar}; _} =
   print_type_expr t;
   print_token rpar ")"
 
-and print_path Region.{value; _} =
-  let {module_proj; value_proj} = value in
-  let () =
-    match module_proj with
-      None -> ()
-    | Some (name, dot) ->
-        print_uident name;
-        print_token dot "."
-  in print_nsepseq "." print_selection value_proj
+and print_projection Region.{value; _} =
+  let {struct_name; selector; field_path} = value in
+  print_uident struct_name;
+  print_token selector ".";
+  print_nsepseq "." print_selection field_path
 
 and print_selection = function
-  Name id -> print_var id
+  FieldName id -> print_var id
 | Component {value; _} ->
     let {lpar; inside; rpar} = value in
     let Region.{value=lexeme,z; region} = inside in
@@ -563,6 +573,7 @@ and print_injection :
 
 and print_opening = function
   Begin    region -> print_token region "begin"
+| With     region -> print_token region "with"
 | LBrace   region -> print_token region "{"
 | LBracket region -> print_token region "["
 
@@ -651,7 +662,7 @@ and print_expr undo = function
   ELetIn {value;_} -> print_let_in undo value
 |       ECond cond -> print_conditional undo cond
 | ETuple {value;_} -> print_csv (print_expr undo) value
-| EMatch {value;_} -> print_match_expr undo value
+| ECase {value;_} -> print_match_expr undo value
 | EFun {value=(kwd_fun,_,_,_) as f; _} as e ->
     if undo then
       let patterns, arrow, expr = unparse' e in
@@ -666,7 +677,8 @@ and print_expr undo = function
 | EString e -> print_string_expr undo e
 
 | ECall {value=e1,e2; _} -> print_expr undo e1; print_expr undo e2
-| Path p -> print_path p
+| EVar v -> print_var v
+| EProj p -> print_projection p
 | EUnit {value=lpar,rpar; _} ->
     print_token lpar "("; print_token rpar ")"
 | EPar {value={lpar;inside=e;rpar}; _} ->
@@ -749,17 +761,28 @@ and print_field_assignment undo {value; _} =
 
 and print_sequence undo seq = print_injection (print_expr undo) seq
 
-and print_match_expr undo (kwd_match, expr, kwd_with, (_,cases)) =
+and print_match_expr undo expr =
+  let {kwd_match; expr; opening;
+       lead_vbar; cases; closing} = expr in
   print_token kwd_match "match";
   print_expr undo expr;
-  print_token kwd_with "with";
-  print_bsv (print_case undo) cases;
-  print_token Region.ghost "end"
+  print_opening opening;
+  print_token_opt lead_vbar "|";
+  print_cases undo cases;
+  print_closing closing
 
-and print_case undo (pattern, arrow, expr) =
+and print_token_opt = function
+         None -> fun _ -> ()
+| Some region -> print_token region
+
+and print_cases undo {value; _} =
+  print_nsepseq "|" (print_case_clause undo) value
+
+and print_case_clause undo {value; _} =
+  let {pattern; arrow; rhs} = value in
   print_pattern pattern;
   print_token arrow "->";
-  print_expr undo expr
+  print_expr undo rhs
 
 and print_let_in undo (kwd_let, let_bindings, kwd_in, expr) =
   print_token kwd_let "let";
@@ -773,20 +796,14 @@ and print_fun_expr undo (kwd_fun, rvar, arrow, expr) =
   print_token arrow "->";
   print_expr undo expr
 
-and print_conditional undo = function
-  IfThenElse Region.{value=kwd_if, e1, kwd_then, e2, kwd_else, e3; _} ->
-    print_token Region.ghost "(";
-    print_token kwd_if "if";
-    print_expr undo e1;
-    print_token kwd_then "then";
-    print_expr undo e2;
-    print_token kwd_else "else";
-    print_expr undo e3;
-    print_token Region.ghost ")"
-| IfThen Region.{value=kwd_if, e1, kwd_then, e2; _} ->
-    print_token Region.ghost "(";
-    print_token kwd_if "if";
-    print_expr undo e1;
-    print_token kwd_then "then";
-    print_expr undo e2;
-    print_token Region.ghost ")"
+and print_conditional undo {value; _} =
+   let open Region in
+   let {kwd_if; test; kwd_then; ifso; kwd_else; ifnot} = value
+   in print_token ghost "(";
+   print_token kwd_if "if";
+   print_expr undo test;
+   print_token kwd_then "then";
+   print_expr undo ifso;
+   print_token kwd_else "else";
+   print_expr undo ifnot;
+   print_token ghost ")"
