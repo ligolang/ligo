@@ -1,0 +1,21 @@
+name: "michelson-parser"
+opam-version: "2.0"
+version: "1.0"
+maintainer: "gabriel.alfour@gmail.com"
+authors: [ "Galfour" ]
+homepage: "https://gitlab.com/gabriel.alfour/tezos"
+bug-reports: "https://gitlab.com/gabriel.alfour/tezos/issues"
+dev-repo: "git+https://gitlab.com/gabriel.alfour/tezos.git"
+license: "MIT"
+depends: [
+  "ocamlfind" { build }
+  "dune"
+  "tezos-memory-proto-alpha"
+]
+build: [
+  [ "dune" "build" "-p" name "-j" jobs ]
+  [ "mv" "src/lib_utils/michelson-parser/michelson-parser.install" "." ]
+]
+url {
+  src: "https://gitlab.com/gabriel.alfour/tezos/-/archive/master/tezos.tar.gz"
+}
