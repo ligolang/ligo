@@ -1,6 +1,6 @@
 name: "michelson-parser"
 opam-version: "2.0"
-version: "1.0"
+version: "dev"
 maintainer: "gabriel.alfour@gmail.com"
 authors: [ "Galfour" ]
 homepage: "https://gitlab.com/gabriel.alfour/tezos"
