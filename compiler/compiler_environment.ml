@@ -1,7 +1,8 @@
+open Proto_alpha_utils
 open Trace
 open Mini_c
 open Environment
-open Micheline.Michelson
+open Michelson
 open Memory_proto_alpha.Script_ir_translator
 
 module Stack = Meta_michelson.Stack
@@ -121,7 +122,7 @@ let select : environment -> string list -> michelson result = fun e lst ->
           PP.environment e
           PP.environment e'
           PP_helpers.(list_sep (pair PP.environment_element bool) (const " || ")) e_lst
-          Micheline.Michelson.pp code
+          Michelson.pp code
           (L.get ())
       in
       ok @@ (error title content) in
@@ -190,7 +191,7 @@ let unpack : environment -> michelson result = fun e ->
       let content () = Format.asprintf "\nEnvironment:%a\nType Representation:%a\nCode:%a\n"
           PP.environment e
           PP.type_ repr
-          Micheline.Michelson.pp code
+          Michelson.pp code
       in
       ok @@ (error title content) in
     let%bind _ =
@@ -243,7 +244,7 @@ let pack_select : environment -> string list -> michelson result = fun e lst ->
           PP.environment e
           PP.environment e'
           PP_helpers.(list_sep (pair PP.environment_element bool) (const " || ")) e_lst
-          Micheline.Michelson.pp code
+          Michelson.pp code
           (L.get ())
       in
       ok @@ (error title content) in

@@ -1,6 +1,6 @@
 open Misc
 
-open Tezos_utils.Error_monad
+open Proto_alpha_utils.Error_monad
 open Memory_proto_alpha
 open Alpha_context
 
@@ -8,7 +8,7 @@ open Script_ir_translator
 open Script_typed_ir
 
 module Option = Simple_utils.Option
-module Cast = Tezos_utils.Cast
+module Cast = Proto_alpha_utils.Cast
 
 type ('param, 'storage) toplevel = {
   param_type : 'param ty ;

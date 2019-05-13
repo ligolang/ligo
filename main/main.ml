@@ -176,7 +176,7 @@ let easy_run_main (path:string) (input:string) : AST_Typed.annotated_expression 
   let%bind typed_expr = type_expression simpl_expr in
   easy_run_main_typed typed typed_expr
 
-let compile_file (source: string) (entry_point:string) : Micheline.Michelson.t result =
+let compile_file (source: string) (entry_point:string) : Michelson.t result =
   let%bind raw =
     trace (simple_error "parsing") @@
     Parser.parse_file source in

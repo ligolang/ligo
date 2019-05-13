@@ -4,6 +4,7 @@
  (libraries
    simple-utils
    tezos-utils
+   proto-alpha-utils
    michelson-parser
    tezos-micheline
  )

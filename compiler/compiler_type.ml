@@ -1,10 +1,10 @@
 open Trace
 open Mini_c.Types
 
-open Tezos_utils.Memory_proto_alpha
+open Proto_alpha_utils.Memory_proto_alpha
 open Script_ir_translator
 
-module O = Tezos_utils.Micheline.Michelson
+module O = Tezos_utils.Michelson
 module Contract_types = Meta_michelson.Types
 
 module Ty = struct

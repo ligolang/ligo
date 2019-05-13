@@ -15,6 +15,7 @@ depends: [
   "ppx_let"
   "ppx_deriving"
   "tezos-utils"
+  "proto-alpha-utils"
   "yojson"
   "alcotest" { with-test }
 ]

@@ -346,7 +346,7 @@ end
 
 module Compiler = struct
 
-  module Michelson = Tezos_utils.Micheline.Michelson
+  module Michelson = Tezos_utils.Michelson
   open Michelson
 
   type predicate =

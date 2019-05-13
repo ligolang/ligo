@@ -79,7 +79,7 @@ let compile_contract_file : string -> string -> string result = fun source entry
     trace (simple_error "compiling") @@
     Compiler.translate_contract mini_c in
   let str =
-    Format.asprintf "%a" Micheline.Michelson.pp_stripped michelson in
+    Format.asprintf "%a" Michelson.pp_stripped michelson in
   ok str
 
 let compile_contract_parameter : string -> string -> string -> string result = fun source entry_point expression ->
@@ -124,7 +124,7 @@ let compile_contract_parameter : string -> string -> string -> string result = f
       trace (simple_error "compiling expression") @@
       Compiler.translate_value mini_c in
     let str =
-      Format.asprintf "%a" Micheline.Michelson.pp_stripped michelson in
+      Format.asprintf "%a" Michelson.pp_stripped michelson in
     ok str
   in
   ok expr
@@ -172,7 +172,7 @@ let compile_contract_storage : string -> string -> string -> string result = fun
       trace (simple_error "compiling expression") @@
       Compiler.translate_value mini_c in
     let str =
-      Format.asprintf "%a" Micheline.Michelson.pp_stripped michelson in
+      Format.asprintf "%a" Michelson.pp_stripped michelson in
     ok str
   in
   ok expr

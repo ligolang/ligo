@@ -1,7 +1,6 @@
 open Trace
 open Mini_c
 
-module Michelson = Micheline.Michelson
 open Michelson
 module Stack = Meta_michelson.Stack
 module Contract_types = Meta_michelson.Types
@@ -9,6 +8,8 @@ module Contract_types = Meta_michelson.Types
 open Memory_proto_alpha.Script_ir_translator
 
 open Operators.Compiler
+
+open Proto_alpha_utils
 
 let get_predicate : string -> type_value -> expression list -> predicate result = fun s ty lst ->
   match Map.String.find_opt s Operators.Compiler.predicates with
@@ -108,7 +109,7 @@ and translate_expression ?(first=false) (expr:expression) (env:environment) : (m
            ok @@ (fun () -> error (thunk "error parsing expression code")
                                   (fun () -> error_message)
                                   ())) @@
-      Tezos_utils.Memory_proto_alpha.parse_michelson code
+      Memory_proto_alpha.parse_michelson code
         input_stack_ty output_stack_ty
     in
     ok (code , env')
@@ -302,7 +303,7 @@ and translate_statement ((s', w_env) as s:statement) : michelson result =
                                    ok (fun () -> error (thunk "error parsing statement code")
                                                  (fun () -> error_message)
                                                  ())) @@
-      Tezos_utils.Memory_proto_alpha.parse_michelson_fail code
+      Proto_alpha_utils.Memory_proto_alpha.parse_michelson_fail code
         input_stack_ty output_stack_ty
     in
     ok code
@@ -477,7 +478,7 @@ and translate_quote_body ({body;result} as f:anon_function) : michelson result =
     let error_message () =
       Format.asprintf
         "\ncode : %a\ninput : %a\noutput : %a\nenv : %a\n"
-        Tezos_utils.Micheline.Michelson.pp code
+        Michelson.pp code
         PP.type_ f.input
         PP.type_ f.output
         PP.environment (snd body).post_environment
@@ -486,7 +487,7 @@ and translate_quote_body ({body;result} as f:anon_function) : michelson result =
       Trace.trace_tzresult_lwt (
         error (thunk "error parsing quote code") error_message
       ) @@
-      Tezos_utils.Memory_proto_alpha.parse_michelson code
+      Proto_alpha_utils.Memory_proto_alpha.parse_michelson code
         input_stack_ty output_stack_ty
     in
     ok ()

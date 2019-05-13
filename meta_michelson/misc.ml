@@ -1,8 +1,8 @@
 module Signature = Tezos_base.TzPervasives.Signature
-open Tezos_utils.Memory_proto_alpha
+open Proto_alpha_utils.Memory_proto_alpha
 module Data_encoding = Alpha_environment.Data_encoding
 module MBytes = Alpha_environment.MBytes
-module Error_monad = Tezos_utils.Error_monad
+module Error_monad = Proto_alpha_utils.Error_monad
 open Error_monad
 
 module Context_init = struct

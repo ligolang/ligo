@@ -1,6 +1,6 @@
-open Trace
 open Mini_c.Types
 open Memory_proto_alpha
+open Proto_alpha_utils.Trace
 open Script_typed_ir
 open Script_ir_translator
 
@@ -78,10 +78,10 @@ let rec translate_value (Ex_typed_value (ty, value)) : value result =
       let%bind error =
         let%bind m_data =
           trace_tzresult_lwt (simple_error "unparsing unrecognized data") @@
-          Tezos_utils.Memory_proto_alpha.unparse_michelson_data ty v in
+          Proto_alpha_utils.Memory_proto_alpha.unparse_michelson_data ty v in
         let%bind m_ty =
           trace_tzresult_lwt (simple_error "unparsing unrecognized data") @@
-          Tezos_utils.Memory_proto_alpha.unparse_michelson_ty ty in
+          Proto_alpha_utils.Memory_proto_alpha.unparse_michelson_ty ty in
         let error_content () =
           Format.asprintf "%a : %a"
             Michelson.pp m_data

@@ -1,4 +1,4 @@
-open Tezos_utils.Memory_proto_alpha
+open Proto_alpha_utils.Memory_proto_alpha
 module AC = Alpha_context
 
 module Types = Contract.Types

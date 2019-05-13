@@ -1,10 +1,10 @@
-open Tezos_utils.Error_monad
+open Proto_alpha_utils.Error_monad
 
 let dummy_environment = force_lwt ~msg:"getting dummy env" @@ Misc.init_environment ()
 
 let tc = dummy_environment.tezos_context
 
-module Proto_alpha = Tezos_utils.Memory_proto_alpha
+module Proto_alpha = Proto_alpha_utils.Memory_proto_alpha
 open Proto_alpha
 open Alpha_context
 open Alpha_environment
