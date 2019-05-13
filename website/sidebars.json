@@ -1,0 +1,7 @@
+{
+  "docs": {
+    "Setup": ["setup-installation"],
+    "Language Basics": ["language-basics-variables", "language-basics-functions", "language-basics-entrypoints", "language-basics-operators"],
+    "API": ["api-cli-commands"]
+  }
+}
