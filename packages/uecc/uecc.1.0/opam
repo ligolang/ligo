@@ -1,6 +1,6 @@
 opam-version: "2.0"
 name: "uecc"
-version: "dev"
+version: "1.0"
 authors: "Vincent Bernardoff <vb@luminar.eu.org>"
 maintainer: "Vincent Bernardoff <vb@luminar.eu.org>"
 license: "ISC"

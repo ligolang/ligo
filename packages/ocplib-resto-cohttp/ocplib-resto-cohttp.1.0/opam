@@ -1,5 +1,5 @@
 name: "ocplib-resto-cohttp"
-version: "dev"
+version: "1.0"
 opam-version: "2.0"
 maintainer: "Grégoire Henry <gregoire.henry@tezos.com>"
 authors: "Grégoire Henry <gregoire.henry@tezos.com>"

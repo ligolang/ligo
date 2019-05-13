@@ -1,6 +1,6 @@
 opam-version: "2.0"
 name: "simple-utils"
-version: "dev"
+version: "1.0"
 synopsis: "LIGO Utilities, to be used by other libraries"
 maintainer: "Galfour <gabriel.alfour@gmail.com>"
 authors: "Galfour <gabriel.alfour@gmail.com>"

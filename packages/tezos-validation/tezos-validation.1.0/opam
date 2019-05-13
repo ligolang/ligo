@@ -1,4 +1,4 @@
-version: "dev"
+version: "1.0"
 name: "tezos-validation"
 opam-version: "2.0"
 maintainer: "contact@tezos.com"

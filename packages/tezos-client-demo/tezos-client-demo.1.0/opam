@@ -1,6 +1,6 @@
 name: "tezos-client-demo"
 opam-version: "1.2"
-version: "dev"
+version: "1.0"
 maintainer: "contact@tezos.com"
 authors: [ "Tezos devteam" ]
 homepage: "https://www.tezos.com/"

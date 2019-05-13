@@ -1,6 +1,6 @@
 name: "ligo"
 opam-version: "2.0"
-version: "dev"
+version: "1.0"
 maintainer: "gabriel.alfour@gmail.com"
 authors: [ "Galfour" ]
 homepage: "https://gitlab.com/gabriel.alfour/tezos"
