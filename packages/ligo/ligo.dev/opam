@@ -21,7 +21,6 @@ depends: [
 ]
 build: [
   [ "dune" "build" "-p" name "-j" jobs ]
-  [ "mv" "ligo.install" "." ]
 ]
 url {
   src: "https://gitlab.com/gabriel.alfour/ligo/-/archive/master/ligo.tar.gz"
