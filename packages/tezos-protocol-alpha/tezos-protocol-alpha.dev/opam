@@ -21,7 +21,7 @@ depends: [
 build: [
   [ "%{tezos-protocol-compiler:lib}%/replace"
       "%{tezos-protocol-compiler:lib}%/dune_protocol.template"
-      "dune" "alpha" ]
+      "src/proto_alpha/lib_protocol/dune" "alpha" ]
   [ "dune" "build" "-p" name "-j" jobs ]
   [ "mv" "src/proto_alpha/lib_protocol/tezos-protocol-alpha.install" "." ]
 ]
