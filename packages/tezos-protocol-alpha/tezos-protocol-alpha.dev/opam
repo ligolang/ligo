@@ -19,7 +19,6 @@ depends: [
   "bip39" { with-test }
 ]
 build: [
-  [ "cd" "src/proto_alpha/lib_protocol/tezos-protocol-alpha" ]
   [ "%{tezos-protocol-compiler:lib}%/replace"
       "%{tezos-protocol-compiler:lib}%/dune_protocol.template"
       "dune" "alpha" ]
