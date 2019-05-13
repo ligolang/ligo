@@ -1,6 +1,6 @@
+version: "dev"
 name: "ligo"
 opam-version: "2.0"
-version: "dev"
 maintainer: "gabriel.alfour@gmail.com"
 authors: [ "Galfour" ]
 homepage: "https://gitlab.com/gabriel.alfour/tezos"
@@ -15,14 +15,14 @@ depends: [
   "ppx_let"
   "ppx_deriving"
   "tezos-utils"
+  "proto-alpha-utils"
   "yojson"
   "alcotest" { with-test }
 ]
 build: [
   [ "dune" "build" "-p" name "-j" jobs ]
-  # needed in the repository, but must not be present in the local ligo.opam [ "mv" "src/ligo/ligo.install" "." ]
+  [ "mv" "ligo.install" "." ]
 ]
-
 url {
-  src: "https://gitlab.com/gabriel.alfour/tezos/-/archive/master/tezos.tar.gz"
+  src: "https://gitlab.com/gabriel.alfour/ligo/-/archive/master/ligo.tar.gz"
 }
