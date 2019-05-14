@@ -1,3 +1,6 @@
+variables:
+  GIT_SUBMODULE_STRATEGY=recursive
+
 before_script:
 
   # Install dependencies
@@ -37,7 +40,7 @@ local-repo-job:
     - opam repository add localrepo "file://$PWD/vendors/ligo-opam-repository/"
     - opam install -y --build-test ligo
 
-install-from-repo-job:
+remote-repo-job:
   script:
     # Add repository
     - opam repository add ligo-repository https://gitlab.com/gabriel.alfour/ligo-opam-repository.git
