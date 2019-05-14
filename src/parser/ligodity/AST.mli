@@ -213,7 +213,7 @@ and expr =
 | ERecord of record_expr                                   (* {f1=e1; ... } *)
 | EProj   of projection reg                                 (* x.y.z  M.x.y *)
 | EVar    of variable                                                  (* x *)
-| ECall   of (expr * expr list) reg                          (* e e1 ... en *)
+| ECall   of (expr * expr Utils.nseq) reg                    (* e e1 ... en *)
 | EBytes  of (string * Hex.t) reg                                 (* 0xAEFF *)
 | EUnit   of the_unit reg                                             (* () *)
 | ETuple  of (expr, comma) Utils.nsepseq reg                 (* e1, e2, ... *)

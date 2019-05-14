@@ -375,7 +375,7 @@ match_expr(right_expr):
     let open Region in
     let cases = Utils.nsepseq_rev $5.value in
     let cast = EVar {region=ghost; value="assert_pos"} in
-    let cast = ECall {region=ghost; value=cast,[$2]} in
+    let cast = ECall {region=ghost; value=cast,($2,[])} in
     {kwd_match = $1; expr = cast; opening = With $3;
      lead_vbar = $4; cases = {$5 with value=cases};
      closing = End Region.ghost} }
@@ -509,7 +509,7 @@ constr_expr:
   constr core_expr?                                           { $1,$2 }
 
 call_expr:
-  core_expr core_expr+ { $1,$2 }
+  core_expr nseq(core_expr) { $1,$2 }
 
 core_expr:
   reg(Int)                                          { EArith (Int $1) }

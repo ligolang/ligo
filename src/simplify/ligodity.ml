@@ -129,7 +129,7 @@ let rec simpl_expression :
       let (f, args) = x.value in
       let%bind f' = simpl_expression f in
       let%bind args' = bind_map_list simpl_expression args in
-      match List.assoc_opt f constants with
+      match List.assoc_opt f' constants with
       | None ->
           let%bind arg = simpl_tuple_expression args' in
           return @@ E_application (make_e_a @@ E_variable f, arg)

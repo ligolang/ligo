@@ -203,7 +203,7 @@ and expr =
 | ERecord of record_expr
 | EProj   of projection reg
 | EVar    of variable
-| ECall   of (expr * expr list) reg
+| ECall   of (expr * expr Utils.nseq) reg
 | EBytes  of (string * Hex.t) reg
 | EUnit   of the_unit reg
 | ETuple  of (expr, comma) Utils.nsepseq reg
@@ -680,7 +680,7 @@ and print_expr undo = function
 | EString e -> print_string_expr undo e
 
 | ECall {value=f,l; _} ->
-    print_expr undo f; List.iter (print_expr undo) l
+    print_expr undo f; Utils.nseq_iter (print_expr undo) l
 | EVar v -> print_var v
 | EProj p -> print_projection p
 | EUnit {value=lpar,rpar; _} ->
