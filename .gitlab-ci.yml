@@ -38,7 +38,8 @@ local-repo-job:
   script:
     - vendors/ligo-opam-repository/rewrite-local-opam-repository.sh
     - opam repository add localrepo "file://$PWD/vendors/ligo-opam-repository/"
-    - opam install -y --build-test ligo
+    #--build-test
+    - opam install -y -v ligo
 
 remote-repo-job:
   script:
