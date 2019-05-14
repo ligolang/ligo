@@ -14,8 +14,8 @@ depends: [
 ]
 build: [
   [ "dune" "build" "-p" name "-j" jobs ]
-  [ "mv" "src/lib_utils/michelson-parser/michelson-parser.install" "." ]
+  [ "mv" "ligo-utils/tezos-utils/michelson-parser/michelson-parser.install" "." ]
 ]
 url {
-  src: "https://gitlab.com/gabriel.alfour/tezos/-/archive/master/tezos.tar.gz"
+  src: "https://gitlab.com/gabriel.alfour/tezos-modded/-/archive/master/tezos-modded.tar.gz"
 }
