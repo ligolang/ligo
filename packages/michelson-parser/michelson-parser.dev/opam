@@ -17,5 +17,5 @@ build: [
   [ "mv" "ligo-utils/tezos-utils/michelson-parser/michelson-parser.install" "." ]
 ]
 url {
-  src: "https://gitlab.com/gabriel.alfour/tezos-modded/-/archive/master/tezos-modded.tar.gz"
+  src: "https://gitlab.com/gabriel.alfour/ligo-utils/-/archive/master/ligo-utils.tar.gz"
 }
