@@ -14,7 +14,7 @@ before_script:
 
   # Show environment
   - echo "$PATH"
-  - printf '' | opam init
+  - printf '' | opam init --bare
   - eval $(opam config env)
 
   # Create switch
