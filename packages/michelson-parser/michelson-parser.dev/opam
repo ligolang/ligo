@@ -14,7 +14,7 @@ depends: [
 ]
 build: [
   [ "dune" "build" "-p" name "-j" jobs ]
-  [ "mv" "ligo-utils/tezos-utils/michelson-parser/michelson-parser.install" "." ]
+  [ "mv" "tezos-utils/michelson-parser/michelson-parser.install" "." ]
 ]
 url {
   src: "https://gitlab.com/gabriel.alfour/ligo-utils/-/archive/master/ligo-utils.tar.gz"
