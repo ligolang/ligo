@@ -1,3 +1,4 @@
+(dirs (:standard \ toto))
 (library
   (name ligo)
   (public_name ligo)

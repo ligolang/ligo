@@ -1,0 +1,50 @@
+before_script:
+
+  # Install dependencies
+  # rsync is needed by opam to sync a package installed from a local directory with the copy in ~/.opam
+  - apt-get update -qq
+  - apt-get -y -qq install rsync libhidapi-dev libcap-dev libev-dev bubblewrap
+  - wget https://github.com/ocaml/opam/releases/download/2.0.1/opam-2.0.1-x86_64-linux -O opam-2.0.1-x86_64-linux
+  - cp opam-2.0.1-x86_64-linux /usr/local/bin/opam
+  - chmod +x /usr/local/bin/opam
+  - export PATH="/usr/local/bin${PATH:+:}${PATH:-}"
+
+  # Show environment
+  - echo "$PATH"
+  - printf '' | opam init
+  - eval $(opam config env)
+
+  # Create switch
+  - printf '' | opam switch create toto ocaml-base-compiler.4.06.1
+  - eval $(opam config env)
+  # Show versions and current switch
+  - opam --version
+  - printf '' | ocaml
+  - opam switch
+
+# default-job:
+#   script:
+#     - (cd src/lib_utils && opam install -y --build-test --working-dir .)
+#     - (cd src/ligo      && opam install -y --build-test --working-dir .)
+#     - (cd src/ligo      && dune build && dune build -p ligo && dune build @ligo-test)
+#   artifacts:
+#     paths:
+#       - src/ligo/bin/cli.ml
+
+local-repo-job:
+  script:
+    - root_dir="$(pwd | sed -e 's/\\/\\\\/' | sed -e 's/&/\\\&/' | sed -e 's/~/\\~/')"; ( cd vendors/ligo-opam-repository; git grep -z -l src: | xargs -0 sed -i -e 's~src: "https://gitlab.com/gabriel.alfour/ligo/-/archive/master/ligo.tar.gz"~src: "git+file://'"$root_dir"'"~' -e 's~src: "https://gitlab.com/gabriel.alfour/ligo-utils/-/archive/master/ligo-utils.tar.gz"~src: "git+file://'"$root_dir"'/vendors/ligo-utils"~' -e 's~src: "https://gitlab.com/gabriel.alfour/tezos-modded/-/archive/master/tezos-modded.tar.gz"~src: "git+file://'"$root_dir"'/vendors/tezos-modded"~' )
+    - opam repository add localrepo "file://$PWD/vendors/ligo-opam-repository/"
+    - opam install -y --build-test ligo
+
+install-from-repo-job:
+  script:
+    # Add repository
+    - opam repository add ligo-repository https://gitlab.com/gabriel.alfour/ligo-opam-repository.git
+    - eval $(opam config env)
+    - opam install -y ligo
+    # Used in the IDE
+    #- opam install -y user-setup
+    #- opam install -y merlin
+    #- opam install -y ocp-indent
+    #- opam user-setup install

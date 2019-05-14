@@ -1,0 +1,9 @@
+[submodule "vendors/ligo-opam-repository"]
+	path = vendors/ligo-opam-repository
+	url = https://gitlab.com/gabriel.alfour/ligo-opam-repository.git
+[submodule "vendors/ligo-utils"]
+	path = vendors/ligo-utils
+	url = https://gitlab.com/gabriel.alfour/ligo-utils.git
+[submodule "vendors/tezos-modded"]
+	path = vendors/tezos-modded
+	url = https://gitlab.com/gabriel.alfour/tezos-modded.git
