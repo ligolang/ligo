@@ -202,6 +202,8 @@ let tparam   = "'" ident (* Type parameters. Unused yet *)
 
 let hexa     = digit | ['A'-'F']
 let byte     = hexa hexa
+let byte_seq = byte | byte (byte | '_')* byte
+let bytes    = "0x" (byte_seq? as seq)
 
 let esc      = "\\n" | "\\\\" | "\\b" | "\\r" | "\\t"
 let schar    = [^'"' '\\'] # nl (* TODO: Test *)
@@ -259,9 +261,13 @@ rule scan = parse
 | decimal as tz "tz" {
     match format_tz tz with
       Some z -> Token.Mtz (tz ^ "tz", z)
-    | None   -> sprintf "Invalid tez amount." |> error lexbuf   }
-
-| uident  as id { Token.Constr id              }
+    | None   -> sprintf "Invalid tez amount." |> error lexbuf
+  }
+| uident as id { Token.Constr id }
+| bytes {
+    let norm = Str.(global_replace (regexp "_") "" seq)
+    in Token.Bytes (seq, Hex.of_string norm)
+  }
 | "let%init"    { Token.Let                    }
 | "let%entry"   { Token.LetEntry               }
 | "match%nat"   { Token.MatchNat               }

@@ -81,10 +81,7 @@ sep_or_term_list(item,sep):
 
 (* Compound constructs *)
 
-par(X): lpar X rpar { {lpar=$1; inside=$2; rpar=$3} }
-
-brackets(X): lbracket X rbracket {
-  {lbracket=$1; inside=$2; rbracket=$3} }
+par(X): reg(lpar X rpar { {lpar=$1; inside=$2; rpar=$3} }) { $1 }
 
 (* Sequences
 
@@ -181,17 +178,19 @@ core_type:
   type_projection {
     TAlias $1
   }
-| reg(core_type type_constr {$1,$2}) {
+| reg(reg(core_type) type_constr {$1,$2}) {
     let arg, constr = $1.value in
+    let Region.{value=arg_val; _} = arg in
     let lpar, rpar = Region.ghost, Region.ghost in
-    let arg = {lpar; inside=arg,[]; rpar} in
+    let arg_val = {lpar; inside=arg_val,[]; rpar} in
+    let arg = {arg with value=arg_val} in
     TApp Region.{$1 with value = constr, arg}
   }
 | reg(type_tuple type_constr {$1,$2}) {
     let arg, constr = $1.value in
     TApp Region.{$1 with value = constr, arg}
   }
-| reg(par(cartesian)) {
+| par(cartesian) {
     let Region.{region; value={lpar; inside=prod; rpar}} = $1 in
     TPar Region.{region; value={lpar; inside = TProd prod; rpar}} }
 
@@ -259,7 +258,7 @@ sub_irrefutable:
   ident                                                  {    PVar $1 }
 | wild                                                   {   PWild $1 }
 | unit                                                   {   PUnit $1 }
-| reg(par(closed_irrefutable))                           {    PPar $1 }
+| par(closed_irrefutable)                           {    PPar $1 }
 
 closed_irrefutable:
   reg(tuple(sub_irrefutable))                           {   PTuple $1 }
@@ -276,7 +275,7 @@ pattern:
 | core_pattern                                     {               $1 }
 
 sub_pattern:
-  reg(par(tail))                                         {    PPar $1 }
+  par(tail)                                         {    PPar $1 }
 | core_pattern                                           {         $1 }
 
 core_pattern:
@@ -287,7 +286,7 @@ core_pattern:
 | kwd(True)                                              {   PTrue $1 }
 | kwd(False)                                             {  PFalse $1 }
 | string                                                 { PString $1 }
-| reg(par(ptuple))                                       {    PPar $1 }
+| par(ptuple)                                       {    PPar $1 }
 | reg(list_of(tail))                               { PList (Sugar $1) }
 | reg(constr_pattern)                                    { PConstr $1 }
 | reg(record_pattern)                                    { PRecord $1 }
@@ -376,7 +375,7 @@ match_expr(right_expr):
     let open Region in
     let cases = Utils.nsepseq_rev $5.value in
     let cast = EVar {region=ghost; value="assert_pos"} in
-    let cast = ECall {region=ghost; value=cast,$2} in
+    let cast = ECall {region=ghost; value=cast,[$2]} in
     {kwd_match = $1; expr = cast; opening = With $3;
      lead_vbar = $4; cases = {$5 with value=cases};
      closing = End Region.ghost} }
@@ -496,17 +495,21 @@ unary_expr_level:
 | call_expr_level                        {                         $1 }
 
 uminus_expr:
-  un_op(sym(MINUS), core_expr)                                   { $1 }
+  un_op(sym(MINUS), call_expr_level)                             { $1 }
 
 not_expr:
-  un_op(kwd(Not), core_expr)                                     { $1 }
+  un_op(kwd(Not), call_expr_level)                               { $1 }
 
 call_expr_level:
-  reg(call_expr)                                           { ECall $1 }
-| core_expr                                                {       $1 }
+  reg(call_expr)                                         {   ECall $1 }
+| reg(constr_expr)                                       { EConstr $1 }
+| core_expr                                                      { $1 }
+
+constr_expr:
+  constr core_expr?                                           { $1,$2 }
 
 call_expr:
-  call_expr_level core_expr                                   { $1,$2 }
+  core_expr core_expr+ { $1,$2 }
 
 core_expr:
   reg(Int)                                          { EArith (Int $1) }
@@ -519,10 +522,11 @@ core_expr:
 | kwd(False)                          {  ELogic (BoolExpr (False $1)) }
 | kwd(True)                           {  ELogic (BoolExpr (True $1))  }
 | reg(list_of(expr))                                { EList (List $1) }
-| reg(par(expr))                                         {    EPar $1 }
-| constr                                                 { EConstr $1 }
+| par(expr)                                              {    EPar $1 }
 | reg(sequence)                                          {    ESeq $1 }
 | reg(record_expr)                                       { ERecord $1 }
+| par(expr colon type_expr {$1,$3}) {
+    EAnnot {$1 with value=$1.value.inside} }
 
 module_field:
   module_name dot field_name              { $1.value ^ "." ^ $3.value }
@@ -540,8 +544,8 @@ projection:
     {struct_name; selector = $2; field_path = $3} }
 
 selection:
-  field_name         { FieldName $1 }
-| reg(par(reg(Int))) { Component $1 }
+  field_name    { FieldName $1 }
+| par(reg(Int)) { Component $1 }
 
 record_expr:
   lbrace sep_or_term_list(reg(field_assignment),semi) rbrace {

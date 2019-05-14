@@ -56,6 +56,7 @@ type t =
 | Nat    of (string * Z.t)
 | Mtz    of (string * Z.t)
 | Str    of string
+| Bytes  of (string * Hex.t)
 
   (* Keywords *)
 

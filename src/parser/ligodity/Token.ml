@@ -40,6 +40,7 @@ type t =
 | Nat    of (string * Z.t)
 | Mtz    of (string * Z.t)
 | Str    of string
+| Bytes  of (string * Hex.t)
 
 (* Keywords *)
 
@@ -80,6 +81,8 @@ type t =
 
 type token = t
 
+let sprintf = Printf.sprintf
+
 let to_string = function
   ARROW    -> "->"
 | CONS     -> "::"
@@ -109,12 +112,13 @@ let to_string = function
 | GE       -> ">="
 | BOOL_OR  -> "||"
 | BOOL_AND -> "&&"
-| Ident id -> Printf.sprintf "Ident %s"   id
-| Constr id -> Printf.sprintf "Constr %s" id
-| Int (lex,z) -> Printf.sprintf "Int %s (%s)" lex (Z.to_string z)
-| Nat (lex,z) -> Printf.sprintf "Nat %s (%s)" lex (Z.to_string z)
-| Mtz (lex,z) -> Printf.sprintf "Mtz %s (%s)" lex (Z.to_string z)
-| Str n    -> Printf.sprintf "Str \"%s\"" n
+| Ident id -> sprintf "Ident %s"   id
+| Constr id -> sprintf "Constr %s" id
+| Int (lex,z) -> sprintf "Int %s (%s)" lex (Z.to_string z)
+| Nat (lex,z) -> sprintf "Nat %s (%s)" lex (Z.to_string z)
+| Mtz (lex,z) -> sprintf "Mtz %s (%s)" lex (Z.to_string z)
+| Str n    -> sprintf "Str \"%s\"" n
+| Bytes (lex,h) -> sprintf "Bytes %s (0x%s)" lex (Hex.to_string h)
 | And      -> "and"
 | Begin    -> "begin"
 | Else     -> "else"

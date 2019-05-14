@@ -99,14 +99,6 @@ type 'a par = {
 
 type the_unit = lpar * rpar
 
-(* Brackets compounds *)
-
-type 'a brackets = {
-  lbracket : lbracket;
-  inside   : 'a;
-  rbracket : rbracket
-}
-
 (* The Abstract Syntax Tree *)
 
 type t = {
@@ -165,7 +157,7 @@ and field_decl = {
   field_type : type_expr
 }
 
-and type_tuple = (type_expr, comma) Utils.nsepseq par
+and type_tuple = (type_expr, comma) Utils.nsepseq par reg
 
 and pattern =
   PTuple  of (pattern, comma) Utils.nsepseq reg
@@ -202,23 +194,28 @@ and field_pattern = {
 
 and expr =
   ECase   of expr case reg
+| EAnnot  of annot_expr reg
 | ELogic  of logic_expr
 | EArith  of arith_expr
 | EString of string_expr
 | EList   of list_expr
-| EConstr of constr
+| EConstr of constr_expr reg
 | ERecord of record_expr
 | EProj   of projection reg
 | EVar    of variable
-| ECall   of (expr * expr) reg
+| ECall   of (expr * expr list) reg
+| EBytes  of (string * Hex.t) reg
 | EUnit   of the_unit reg
 | ETuple  of (expr, comma) Utils.nsepseq reg
 | EPar    of expr par reg
-
 | ELetIn  of let_in reg
 | EFun    of fun_expr
 | ECond   of conditional reg
 | ESeq    of sequence
+
+and constr_expr = constr * expr option
+
+and annot_expr = expr * type_expr
 
 and 'a injection = {
   opening    : opening;
@@ -382,10 +379,10 @@ let region_of_expr = function
 | EArith e -> region_of_arith_expr e
 | EString e -> region_of_string_expr e
 | EList e -> region_of_list_expr e
-| ELetIn {region;_} | EFun {region;_}
+| EAnnot {region;_ } | ELetIn {region;_} | EFun {region;_}
 | ECond {region;_} | ETuple {region;_} | ECase {region;_}
 | ECall {region;_} | EVar {region; _} | EProj {region; _}
-| EUnit {region;_} | EPar {region;_}
+| EUnit {region;_} | EPar {region;_} | EBytes {region; _}
 | ESeq {region; _} | ERecord {region; _}
 | EConstr {region; _} -> region
 
@@ -480,6 +477,10 @@ let print_uident Region.{region; value} =
 let print_str Region.{region; value} =
   Printf.printf "%s: Str \"%s\"\n" (region#compact `Byte) value
 
+let print_bytes Region.{region; value=lexeme, abstract} =
+  Printf.printf "%s: Bytes (\"%s\", \"0x%s\")\n"
+    (region#compact `Byte) lexeme (Hex.to_string abstract)
+
 let rec print_tokens ?(undo=false) {decl;eof} =
   Utils.nseq_iter (print_statement undo) decl; print_token eof "EOF"
 
@@ -516,7 +517,8 @@ and print_type_app {value; _} =
   print_type_tuple type_tuple;
   print_var type_constr
 
-and print_type_tuple {lpar; inside; rpar} =
+and print_type_tuple {value; _} =
+  let {lpar; inside; rpar} = value in
   print_token lpar "(";
   print_nsepseq "," print_type_expr inside;
   print_token rpar ")"
@@ -672,21 +674,31 @@ and print_expr undo = function
       print_expr undo expr
     else print_fun_expr undo f
 
+| EAnnot e -> print_annot_expr undo e
 | ELogic e -> print_logic_expr undo e
 | EArith e -> print_arith_expr undo e
 | EString e -> print_string_expr undo e
 
-| ECall {value=e1,e2; _} -> print_expr undo e1; print_expr undo e2
+| ECall {value=f,l; _} ->
+    print_expr undo f; List.iter (print_expr undo) l
 | EVar v -> print_var v
 | EProj p -> print_projection p
 | EUnit {value=lpar,rpar; _} ->
     print_token lpar "("; print_token rpar ")"
+| EBytes b -> print_bytes b
 | EPar {value={lpar;inside=e;rpar}; _} ->
     print_token lpar "("; print_expr undo e; print_token rpar ")"
 | EList e -> print_list_expr undo e
 | ESeq seq -> print_sequence undo seq
 | ERecord e -> print_record_expr undo e
-| EConstr constr -> print_uident constr
+| EConstr {value=constr,None; _} -> print_uident constr
+| EConstr {value=(constr, Some arg); _} ->
+    print_uident constr; print_expr undo arg
+
+and print_annot_expr undo {value=e,t; _} =
+  print_expr undo e;
+  print_token Region.ghost ":";
+  print_type_expr t
 
 and print_list_expr undo = function
   Cons {value={arg1;op;arg2}; _} ->

@@ -106,14 +106,6 @@ type 'a par = {
 
 type the_unit = lpar * rpar
 
-(* Brackets compounds *)
-
-type 'a brackets = {
-  lbracket   : lbracket;
-  inside : 'a;
-  rbracket   : rbracket
-}
-
 (* The Abstract Syntax Tree (finally) *)
 
 type t = {
@@ -175,7 +167,7 @@ and field_decl = {
   field_type : type_expr
 }
 
-and type_tuple = (type_expr, comma) Utils.nsepseq par
+and type_tuple = (type_expr, comma) Utils.nsepseq par reg
 
 and pattern =
   PTuple  of (pattern, comma) Utils.nsepseq reg             (* p1, p2, ...   *)
@@ -212,23 +204,28 @@ and field_pattern = {
 
 and expr =
   ECase   of expr case reg                     (* p1 -> e1 | p2 -> e2 | ... *)
+| EAnnot  of annot_expr reg                                        (* e : t *)
 | ELogic  of logic_expr
 | EArith  of arith_expr
 | EString of string_expr
 | EList   of list_expr
-| EConstr of constr
+| EConstr of constr_expr reg
 | ERecord of record_expr                                   (* {f1=e1; ... } *)
 | EProj   of projection reg                                 (* x.y.z  M.x.y *)
 | EVar    of variable                                                  (* x *)
-| ECall   of (expr * expr) reg                                       (* f e *)
+| ECall   of (expr * expr list) reg                          (* e e1 ... en *)
+| EBytes  of (string * Hex.t) reg                                 (* 0xAEFF *)
 | EUnit   of the_unit reg                                             (* () *)
 | ETuple  of (expr, comma) Utils.nsepseq reg                 (* e1, e2, ... *)
 | EPar    of expr par reg                                            (* (e) *)
+| ELetIn  of let_in reg             (* let p1 = e1 and p2 = e2 and ... in e *)
+| EFun    of fun_expr               (* fun x -> e                           *)
+| ECond   of conditional reg        (* if e1 then e2 else e3                *)
+| ESeq    of sequence               (* begin e1; e2; ... ; en end           *)
 
-| ELetIn  of let_in reg       (* let p1 = e1 and p2 = e2 and ... in e       *)
-| EFun    of fun_expr         (* fun x -> e                                 *)
-| ECond   of conditional reg  (* if e1 then e2 else e3                      *)
-| ESeq    of sequence         (* begin e1; e2; ... ; en end                 *)
+and constr_expr = constr * expr option
+
+and annot_expr = expr * type_expr
 
 and 'a injection = {
   opening    : opening;
