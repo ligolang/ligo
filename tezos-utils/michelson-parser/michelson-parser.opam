@@ -1,6 +1,5 @@
 name: "michelson-parser"
 opam-version: "2.0"
-version: "1.0"
 maintainer: "gabriel.alfour@gmail.com"
 authors: [ "Galfour" ]
 homepage: "https://gitlab.com/gabriel.alfour/tezos"
@@ -14,8 +13,4 @@ depends: [
 ]
 build: [
   [ "dune" "build" "-p" name "-j" jobs ]
-  [ "mv" "src/lib_utils/michelson-parser/michelson-parser.install" "." ]
 ]
-url {
-  src: "https://gitlab.com/gabriel.alfour/tezos/-/archive/master/tezos.tar.gz"
-}
