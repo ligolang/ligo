@@ -70,13 +70,13 @@ let cards_ez owner n =
   @@ List.range n
 
 let (first_owner , first_contract) =
-  let open Tezos_utils.Memory_proto_alpha in
+  let open Proto_alpha_utils.Memory_proto_alpha in
   let id = List.nth dummy_environment.identities 0 in
   let kt = id.implicit_contract in
   Alpha_context.Contract.to_b58check kt , kt
 
 let second_owner =
-  let open Tezos_utils.Memory_proto_alpha in
+  let open Proto_alpha_utils.Memory_proto_alpha in
   let id = List.nth dummy_environment.identities 1 in
   let kt = id.implicit_contract in
   Alpha_context.Contract.to_b58check kt
@@ -112,13 +112,13 @@ let buy () =
       let%bind amount =
         trace_option (simple_error "getting amount for run") @@
         Memory_proto_alpha.Alpha_context.Tez.of_mutez @@ Int64.of_int 10000000000 in
-      let options = Memory_proto_alpha.make_options ~amount () in
+      let options = Proto_alpha_utils.Memory_proto_alpha.make_options ~amount () in
       expect_eq_n_pos_small ~options program "buy_single" make_input make_expected in
     let%bind () =
       let%bind amount =
         trace_option (simple_error "getting amount for run") @@
         Memory_proto_alpha.Alpha_context.Tez.of_mutez @@ Int64.of_int 0 in
-      let options = Memory_proto_alpha.make_options ~amount () in
+      let options = Proto_alpha_utils.Memory_proto_alpha.make_options ~amount () in
       trace_strong (simple_error "could buy without money") @@
       Assert.assert_fail
       @@ expect_eq_n_pos_small ~options program "buy_single" make_input make_expected in
@@ -151,13 +151,13 @@ let dispatch_buy () =
       let%bind amount =
         trace_option (simple_error "getting amount for run") @@
         Memory_proto_alpha.Alpha_context.Tez.of_mutez @@ Int64.of_int 10000000000 in
-      let options = Memory_proto_alpha.make_options ~amount () in
+      let options = Proto_alpha_utils.Memory_proto_alpha.make_options ~amount () in
       expect_eq_n_pos_small ~options program "main" make_input make_expected in
     let%bind () =
       let%bind amount =
         trace_option (simple_error "getting amount for run") @@
         Memory_proto_alpha.Alpha_context.Tez.of_mutez @@ Int64.of_int 0 in
-      let options = Memory_proto_alpha.make_options ~amount () in
+      let options = Proto_alpha_utils.Memory_proto_alpha.make_options ~amount () in
       trace_strong (simple_error "could buy without money") @@
       Assert.assert_fail
       @@ expect_eq_n_pos_small ~options program "buy_single" make_input make_expected in
@@ -190,7 +190,7 @@ let transfer () =
     let%bind () =
       let amount = Memory_proto_alpha.Alpha_context.Tez.zero in
       let payer = first_contract in
-      let options = Memory_proto_alpha.make_options ~amount ~payer () in
+      let options = Proto_alpha_utils.Memory_proto_alpha.make_options ~amount ~payer () in
       expect_eq_n_strict_pos_small ~options program "transfer_single" make_input make_expected in
     ok ()
   in
@@ -220,7 +220,7 @@ let sell () =
     let%bind () =
       let amount = Memory_proto_alpha.Alpha_context.Tez.zero in
       let payer = first_contract in
-      let options = Memory_proto_alpha.make_options ~amount ~payer () in
+      let options = Proto_alpha_utils.Memory_proto_alpha.make_options ~amount ~payer () in
       expect_n_strict_pos_small ~options program "sell_single" make_input make_expecter in
     ok ()
   in
