@@ -117,7 +117,7 @@ and translate_expression ?(first=false) (expr:expression) (env:environment) : (m
 
   trace (error (thunk "compiling expression") error_message) @@
   match expr' with
-  | E_capture_environment c ->
+  | E_environment_capture c ->
       let%bind code = Compiler_environment.pack_select env c in
       return @@ code
   | E_literal v ->
@@ -173,8 +173,15 @@ and translate_expression ?(first=false) (expr:expression) (env:environment) : (m
       | _ -> simple_fail "E_applicationing something not appliable"
     )
   | E_variable x ->
-      let%bind code = Compiler_environment.get env x in
-      return code
+    let%bind code = Compiler_environment.get env x in
+    return code
+  | E_sequence (a , b) ->
+    let%bind (a' , env_a) = translate_expression a env in
+    let%bind (b' , env_b) = translate_expression b env_a in
+    return ~env':env_b @@ seq [
+      a' ;
+      b' ;
+    ]
   | E_constant(str, lst) ->
       let module L = Logger.Stateful() in
       let%bind lst' =

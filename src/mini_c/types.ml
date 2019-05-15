@@ -53,7 +53,7 @@ and selector = var_name list
 
 and expression' =
   | E_literal of value
-  | E_capture_environment of selector
+  | E_environment_capture of selector
   | E_constant of string * expression list
   | E_application of expression * expression
   | E_variable of var_name
@@ -64,6 +64,7 @@ and expression' =
   | E_if_none of expression * expression * ((var_name * type_value) * expression)
   | E_if_left of expression * ((var_name * type_value) * expression) * ((var_name * type_value) * expression)
   | E_let_in of ((var_name * type_value) * expression * expression)
+  | E_sequence of (expression * expression)
 
 and expression = {
   content : expression' ;
