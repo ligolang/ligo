@@ -339,7 +339,7 @@ and translate_annotated_expression (env:Environment.t) (ae:AST.annotated_express
       let%bind lst' = bind_map_list (translate_annotated_expression env) lst in
       let aux : expression -> expression -> expression result = fun prev cur ->
         return @@ E_constant ("CONS", [cur ; prev]) in
-      let%bind (init : expression) = return @@ E_empty_list t in
+      let%bind (init : expression) = return @@ E_make_empty_list t in
       bind_fold_list aux init lst'
   | E_map m ->
       let%bind (src, dst) = Mini_c.Combinators.get_t_map tv in
@@ -350,7 +350,7 @@ and translate_annotated_expression (env:Environment.t) (ae:AST.annotated_express
           bind_map_pair (translate_annotated_expression env) (k, v') in
         return @@ E_constant ("UPDATE", [k' ; v' ; prev'])
       in
-      let init = return @@ E_empty_map (src, dst) in
+      let init = return @@ E_make_empty_map (src, dst) in
       List.fold_left aux init m
   | E_look_up dsi ->
       let%bind (ds', i') = bind_map_pair f dsi in
@@ -360,7 +360,7 @@ and translate_annotated_expression (env:Environment.t) (ae:AST.annotated_express
       match m with
       | Match_bool {match_true ; match_false} ->
           let%bind (t , f) = bind_map_pair (translate_annotated_expression env) (match_true, match_false) in
-          return @@ E_Cond (expr', t, f)
+          return @@ E_if_bool (expr', t, f)
       | Match_option { match_none; match_some = ((name, tv), s) } ->
           let%bind n = translate_annotated_expression env match_none in
           let%bind (tv' , s') =

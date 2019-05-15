@@ -57,10 +57,10 @@ and expression' =
   | E_constant of string * expression list
   | E_application of expression * expression
   | E_variable of var_name
-  | E_empty_map of (type_value * type_value)
-  | E_empty_list of type_value
+  | E_make_empty_map of (type_value * type_value)
+  | E_make_empty_list of type_value
   | E_make_none of type_value
-  | E_Cond of expression * expression * expression
+  | E_if_bool of expression * expression * expression
   | E_if_none of expression * expression * ((var_name * type_value) * expression)
   | E_if_left of expression * ((var_name * type_value) * expression) * ((var_name * type_value) * expression)
   | E_let_in of ((var_name * type_value) * expression * expression)

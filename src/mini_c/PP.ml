@@ -66,10 +66,10 @@ and expression' ppf (e:expression') = match e with
   | E_application(a, b) -> fprintf ppf "(%a)@(%a)" expression a expression b
   | E_constant(p, lst) -> fprintf ppf "%s %a" p (pp_print_list ~pp_sep:space_sep expression) lst
   | E_literal v -> fprintf ppf "%a" value v
-  | E_empty_map _ -> fprintf ppf "map[]"
-  | E_empty_list _ -> fprintf ppf "list[]"
+  | E_make_empty_map _ -> fprintf ppf "map[]"
+  | E_make_empty_list _ -> fprintf ppf "list[]"
   | E_make_none _ -> fprintf ppf "none"
-  | E_Cond (c, a, b) -> fprintf ppf "%a ? %a : %a" expression c expression a expression b
+  | E_if_bool (c, a, b) -> fprintf ppf "%a ? %a : %a" expression c expression a expression b
   | E_if_none (c, n, ((name, _) , s)) -> fprintf ppf "%a ?? %a : %s -> %a" expression c expression n name expression s
   | E_if_left (c, ((name_l, _) , l), ((name_r, _) , r)) ->
       fprintf ppf "%a ?? %s -> %a : %s -> %a" expression c name_l expression l name_r expression r

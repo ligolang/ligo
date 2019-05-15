@@ -214,16 +214,16 @@ and translate_expression ?(first=false) (expr:expression) (env:environment) : (m
         error title content in
       trace error @@
       return code
-  | E_empty_map sd ->
+  | E_make_empty_map sd ->
       let%bind (src, dst) = bind_map_pair Compiler_type.type_ sd in
       return @@ i_empty_map src dst
-  | E_empty_list t ->
+  | E_make_empty_list t ->
       let%bind t' = Compiler_type.type_ t in
       return @@ i_nil t'
   | E_make_none o ->
       let%bind o' = Compiler_type.type_ o in
       return @@ i_none o'
-  | E_Cond (c, a, b) -> (
+  | E_if_bool (c, a, b) -> (
       let%bind (c' , env') = translate_expression c env in
       let%bind (a' , _) = translate_expression a env' in
       let%bind (b' , _) = translate_expression b env' in
