@@ -2,7 +2,7 @@ include List
 
 let rec remove n = function
   | [] -> raise (Failure "List.remove")
-  | hd :: tl when n = 0 -> tl
+  | _  :: tl when n = 0 -> tl
   | hd :: tl -> hd :: remove (n - 1) tl
 
 
