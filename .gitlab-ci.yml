@@ -34,12 +34,22 @@ before_script:
 #     paths:
 #       - src/ligo/bin/cli.ml
 
+local-dune-job:
+  script:
+    - vendors/ligo-opam-repository/rewrite-local-opam-repository.sh
+    - opam repository add localrepo "file://$PWD/vendors/ligo-opam-repository/"
+    - opam install -y --build-test --deps-only ./src/
+    - (dune build -p ligo)
+    # TODO: also try instead from time to time:
+    #- (cd ./src/; dune build -p ligo)
+    dune build -p ligo
+
 local-repo-job:
   script:
     - vendors/ligo-opam-repository/rewrite-local-opam-repository.sh
     - opam repository add localrepo "file://$PWD/vendors/ligo-opam-repository/"
     #--build-test
-    - opam install -y -v ligo
+    - opam install -y ligo
 
 remote-repo-job:
   script:

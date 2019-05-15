@@ -22,7 +22,7 @@ let parse_file (source: string) : AST_Raw.t result =
     (fun () -> open_in pp_input) in
   let lexbuf = Lexing.from_channel channel in
   let module Lexer = Lexer.Make(LexToken) in
-  let Lexer.{read ; close} =
+  let Lexer.{read ; close ; _} =
     Lexer.open_token_stream None in
   specific_try (fun () -> function
       | Parser.Error -> (
@@ -59,7 +59,7 @@ let parse_file (source: string) : AST_Raw.t result =
 let parse_string (s:string) : AST_Raw.t result =
   let lexbuf = Lexing.from_string s in
   let module Lexer = Lexer.Make(LexToken) in
-  let Lexer.{read ; close} =
+  let Lexer.{read ; close ; _} =
     Lexer.open_token_stream None in
   specific_try (fun () -> function
       | Parser.Error -> (
@@ -83,7 +83,7 @@ let parse_string (s:string) : AST_Raw.t result =
 let parse_expression (s:string) : AST_Raw.expr result =
   let lexbuf = Lexing.from_string s in
   let module Lexer = Lexer.Make(LexToken) in
-  let Lexer.{read ; close} =
+  let Lexer.{read ; close; _} =
     Lexer.open_token_stream None in
   specific_try (fun () -> function
       | Parser.Error -> (
