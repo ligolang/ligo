@@ -149,8 +149,8 @@ program:
   nseq(declaration) eof                           { {decl=$1; eof=$2} }
 
 declaration:
-  reg(kwd(Let)          let_bindings     {$1,$2})       {      Let $1 }
-| reg(kwd(LetEntry)     let_binding      {$1,$2})       { LetEntry $1 }
+  reg(kwd(Let)      let_binding  {$1,$2})               {      Let $1 }
+| reg(kwd(LetEntry) let_binding  {$1,$2})               { LetEntry $1 }
 | reg(type_decl)                                        { TypeDecl $1 }
 
 (* Type declarations *)
@@ -233,9 +233,6 @@ field_decl:
     {field_name=$1; colon=$2; field_type=$3} }
 
 (* Non-recursive definitions *)
-
-let_bindings:
-  nsepseq(let_binding, kwd(And)) { $1 }
 
 let_binding:
   ident nseq(sub_irrefutable) type_annotation? eq expr {
@@ -389,7 +386,7 @@ case_clause(right_expr):
   pattern arrow right_expr           { {pattern=$1; arrow=$2; rhs=$3} }
 
 let_expr(right_expr):
-  reg(kwd(Let) let_bindings kwd(In) right_expr {$1,$2,$3,$4}) {
+  reg(kwd(Let) let_binding kwd(In) right_expr {$1,$2,$3,$4}) {
     ELetIn $1 }
 
 fun_expr(right_expr):
@@ -447,14 +444,16 @@ ne_expr:
 
 cat_expr_level:
   reg(cat_expr)                                   {  EString (Cat $1) }
-| reg(append_expr)                                { EList (Append $1) }
+(*| reg(append_expr)                                { EList (Append $1) } *)
 | cons_expr_level                                 {                $1 }
 
 cat_expr:
   bin_op(cons_expr_level, sym(CAT), cat_expr_level)              { $1 }
 
+(*
 append_expr:
   cons_expr_level sym(APPEND) cat_expr_level               { $1,$2,$3 }
+ *)
 
 cons_expr_level:
   reg(cons_expr)                                    { EList (Cons $1) }

@@ -6,7 +6,7 @@ type t =
   ARROW
 | CONS
 | CAT
-| APPEND
+  (*| APPEND*)
 | MINUS
 | PLUS
 | SLASH
@@ -44,7 +44,7 @@ type t =
 
 (* Keywords *)
 
-| And
+(*| And*)
 | Begin
 | Else
 | End
@@ -87,7 +87,7 @@ let to_string = function
   ARROW    -> "->"
 | CONS     -> "::"
 | CAT      -> "^"
-| APPEND   -> "@"
+(*| APPEND   -> "@"*)
 | MINUS    -> "-"
 | PLUS     -> "+"
 | SLASH    -> "/"
@@ -119,7 +119,7 @@ let to_string = function
 | Mtz (lex,z) -> sprintf "Mtz %s (%s)" lex (Z.to_string z)
 | Str n    -> sprintf "Str \"%s\"" n
 | Bytes (lex,h) -> sprintf "Bytes %s (0x%s)" lex (Hex.to_string h)
-| And      -> "and"
+(*| And      -> "and"*)
 | Begin    -> "begin"
 | Else     -> "else"
 | End      -> "end"

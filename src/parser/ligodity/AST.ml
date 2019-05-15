@@ -109,13 +109,11 @@ type t = {
 and ast = t
 
 and declaration =
-  Let      of (kwd_let * let_bindings) reg
+  Let      of (kwd_let * let_binding) reg
 | LetEntry of (kwd_let_entry * let_binding) reg
 | TypeDecl of type_decl reg
 
 (* Non-recursive values *)
-
-and let_bindings = (let_binding, kwd_and) Utils.nsepseq
 
 and let_binding = {
   pattern  : pattern;
@@ -238,7 +236,7 @@ and closing =
 and list_expr =
   Cons   of cons bin_op reg
 | List   of expr injection reg
-| Append of (expr * append * expr) reg
+  (*| Append of (expr * append * expr) reg*)
 
 and string_expr =
   Cat    of cat bin_op reg
@@ -295,9 +293,9 @@ and selection =
   FieldName of variable
 | Component of (string * Z.t) reg par reg
 
-and record_expr = field_assignment reg injection reg
+and record_expr = field_assign reg injection reg
 
-and field_assignment = {
+and field_assign = {
   field_name : field_name;
   assignment : equal;
   field_expr : expr
@@ -320,7 +318,7 @@ and 'a case_clause = {
   rhs     : 'a
 }
 
-and let_in = kwd_let * let_bindings * kwd_in * expr
+and let_in = kwd_let * let_binding * kwd_in * expr
 
 and fun_expr = (kwd_fun * variable * arrow * expr) reg
 
@@ -372,7 +370,8 @@ let region_of_string_expr = function
   String {region;_} | Cat {region;_} -> region
 
 let region_of_list_expr = function
-  Cons {region; _} | List {region; _} | Append {region; _} -> region
+  Cons {region; _} | List {region; _}
+(* | Append {region; _}*) -> region
 
 let region_of_expr = function
   ELogic e -> region_of_logic_expr e
@@ -397,12 +396,12 @@ let norm_fun region kwd_fun pattern eq expr =
   let value =
     match pattern with
       PVar v -> kwd_fun, v, eq, expr
-    |      _ -> let value     = Utils.gen_sym () in
-                let fresh    = Region.{region=Region.ghost; value} in
-                let bindings = {pattern; eq;
-                                lhs_type=None; let_rhs = EVar fresh}, [] in
-                let let_in   = ghost_let, bindings, ghost_in, expr in
-                let expr     = ELetIn {value=let_in; region=Region.ghost}
+    |      _ -> let value    = Utils.gen_sym () in
+                let fresh   = Region.{region=Region.ghost; value} in
+                let binding = {pattern; eq;
+                               lhs_type=None; let_rhs = EVar fresh} in
+                let let_in  = ghost_let, binding, ghost_in, expr in
+                let expr    = ELetIn {value=let_in; region=Region.ghost}
     in kwd_fun, fresh, ghost_arrow, expr
   in Region.{region; value}
 
@@ -433,7 +432,7 @@ let rec unparse' = function
   EFun {value=_,var,arrow,expr; _} ->
     if var.region#is_ghost then
       match expr with
-        ELetIn {value = _,({pattern;eq;_},[]),_,expr; _} ->
+        ELetIn {value = _,{pattern;eq;_},_,expr; _} ->
           if eq#is_ghost then
             let patterns, sep, e = unparse' expr
             in Utils.nseq_cons pattern patterns, sep, e
@@ -485,9 +484,9 @@ let rec print_tokens ?(undo=false) {decl;eof} =
   Utils.nseq_iter (print_statement undo) decl; print_token eof "EOF"
 
 and print_statement undo = function
-  Let {value=kwd_let, let_bindings; _} ->
+  Let {value=kwd_let, let_binding; _} ->
     print_token kwd_let "let";
-    print_let_bindings undo let_bindings
+    print_let_binding undo let_binding
 | LetEntry {value=kwd_let_entry, let_binding; _} ->
     print_token kwd_let_entry "let%entry";
     print_let_binding undo let_binding
@@ -587,8 +586,6 @@ and print_closing = function
 and print_terminator = function
   Some semi -> print_token semi ";"
 | None -> ()
-
-and print_let_bindings undo = print_nsepseq "and" (print_let_binding undo)
 
 and print_let_binding undo {pattern; lhs_type; eq; let_rhs} =
   print_pattern pattern;
@@ -706,10 +703,10 @@ and print_list_expr undo = function
     print_token op "::";
     print_expr undo arg2
 | List e -> print_injection (print_expr undo) e
-| Append {value=e1,append,e2; _} ->
+(*| Append {value=e1,append,e2; _} ->
     print_expr undo e1;
     print_token append "@";
-    print_expr undo e2
+    print_expr undo e2 *)
 
 and print_arith_expr undo = function
   Add {value={arg1;op;arg2}; _} ->
@@ -763,9 +760,9 @@ and print_comp_expr undo = function
     print_expr undo arg1; print_token op "="; print_expr undo arg2
 
 and print_record_expr undo e =
-  print_injection (print_field_assignment undo) e
+  print_injection (print_field_assign undo) e
 
-and print_field_assignment undo {value; _} =
+and print_field_assign undo {value; _} =
   let {field_name; assignment; field_expr} = value in
   print_var field_name;
   print_token assignment "=";
@@ -796,9 +793,9 @@ and print_case_clause undo {value; _} =
   print_token arrow "->";
   print_expr undo rhs
 
-and print_let_in undo (kwd_let, let_bindings, kwd_in, expr) =
+and print_let_in undo (kwd_let, let_binding, kwd_in, expr) =
   print_token kwd_let "let";
-  print_let_bindings undo let_bindings;
+  print_let_binding undo let_binding;
   print_token kwd_in "in";
   print_expr undo expr
 
@@ -819,3 +816,7 @@ and print_conditional undo {value; _} =
    print_token kwd_else "else";
    print_expr undo ifnot;
    print_token ghost ")"
+
+let rec unpar = function
+  EPar {value={inside=expr;_}; _} -> unpar expr
+| e -> e

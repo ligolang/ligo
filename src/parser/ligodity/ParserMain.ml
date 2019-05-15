@@ -4,10 +4,16 @@
 
 Printexc.record_backtrace true;;
 
+(* Reading the command-line options *)
+
+let options = EvalOpt.read ()
+
+open EvalOpt
+
 (* Path to the Mini-ML standard library *)
 
 let lib_path =
-  match EvalOpt.libs with
+  match options.libs with
       [] -> ""
   | libs -> let mk_I dir path = Printf.sprintf " -I %s%s" dir path
             in List.fold_right mk_I libs ""
@@ -15,9 +21,9 @@ let lib_path =
 (* Opening the input channel and setting the lexing engine *)
 
 let cin, reset =
-  match EvalOpt.input with
-    None | Some "-" -> stdin, fun ?(line=1) _buffer -> ignore line
-  |       Some file -> open_in file, Lexer.reset ~file
+  match options.input with
+    None | Some "-" -> stdin, ignore
+  |       Some file -> open_in file, Lexer.reset_file ~file
 
 let buffer = Lexing.from_channel cin
 let     () = reset buffer
@@ -25,14 +31,14 @@ let     () = reset buffer
 (* Tokeniser *)
 
 let tokeniser =
-  if Utils.String.Set.mem "lexer" EvalOpt.verbose then
+  if Utils.String.Set.mem "lexer" options.verbose then
     Lexer.get_token ~log:(stdout, Lexer.output_token buffer)
   else Lexer.get_token ?log:None
 
 let () =
   try
     let ast = Parser.program tokeniser buffer in
-    if Utils.String.Set.mem "unparsing" EvalOpt.verbose then
+    if Utils.String.Set.mem "unparsing" options.verbose then
       AST.print_tokens ~undo:true ast
     else () (* AST.print_tokens ast *)
   with

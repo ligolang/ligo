@@ -18,7 +18,7 @@
 %token ARROW
 %token CONS
 %token CAT
-%token APPEND
+(*%token APPEND*)
 %token DOT
 
 %token COMMA
@@ -46,7 +46,7 @@
 %token <string * Z.t> Mtz
 %token <string * Z.t> Nat
 
-%token And
+(*%token And*)
 %token Begin
 %token Else
 %token End

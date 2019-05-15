@@ -118,16 +118,13 @@ and ast = t
 and eof = Region.t
 
 and declaration =
-  Let      of (kwd_let * let_bindings) reg       (* let p = e and ...       *)
-| LetEntry of (kwd_let_entry * let_binding) reg  (* let%entry p = e and ... *)
-| TypeDecl of type_decl reg                      (* type ...                *)
+  Let      of (kwd_let * let_binding) reg        (* let p = e       *)
+| LetEntry of (kwd_let_entry * let_binding) reg  (* let%entry p = e *)
+| TypeDecl of type_decl reg                      (* type ...        *)
 
 (* Non-recursive values *)
 
-and let_bindings =
-  (let_binding, kwd_and) Utils.nsepseq            (* p1 = e1 and p2 = e2 ... *)
-
-and let_binding = {                                    (* p = e   p : t = e *)
+and let_binding = {                                  (* p = e   p : t = e *)
   pattern  : pattern;
   lhs_type : (colon * type_expr) option;
   eq       : equal;
@@ -248,7 +245,7 @@ and closing =
 and list_expr =
   Cons   of cat bin_op reg                                   (* e1 :: e3      *)
 | List   of expr injection reg                               (* [e1; e2; ...] *)
-| Append of (expr * append * expr) reg                         (* e1  @ e2      *)
+(*| Append of (expr * append * expr) reg *)               (* e1  @ e2      *)
 
 and string_expr =
   Cat    of cat bin_op reg                                 (* e1  ^ e2      *)
@@ -305,9 +302,9 @@ and selection =
   FieldName of variable
 | Component of (string * Z.t) reg par reg
 
-and record_expr = field_assignment reg injection reg
+and record_expr = field_assign reg injection reg
 
-and field_assignment = {
+and field_assign = {
   field_name : field_name;
   assignment : equal;
   field_expr : expr
@@ -330,7 +327,7 @@ and 'a case_clause = {
   rhs     : 'a
 }
 
-and let_in = kwd_let * let_bindings * kwd_in * expr
+and let_in = kwd_let * let_binding * kwd_in * expr
 
 and fun_expr = (kwd_fun * variable * arrow * expr) reg
 
@@ -479,3 +476,11 @@ val print_tokens : ?undo:bool -> ast -> unit
 
 val region_of_pattern : pattern -> Region.t
 val region_of_expr    : expr -> Region.t
+
+(* Simplifications *)
+
+(* The call [unpar e] is the expression [e] if [e] is not
+   parenthesised, otherwise it is the non-parenthesised expressions it
+   contains. *)
+
+val unpar : expr -> expr

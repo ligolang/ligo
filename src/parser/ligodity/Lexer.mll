@@ -78,7 +78,6 @@ let fail region value = raise (Error Region.{region; value})
 (* KEYWORDS *)
 
 let keywords = Token.[
-  "and",    Some And;
   "begin",  Some Begin;
   "else",   Some Else;
   "false",  Some False;
@@ -99,6 +98,7 @@ let keywords = Token.[
 
   (* Reserved *)
 
+  "and",         None;
   "as",          None;
   "asr",         None;
   "assert",      None;
@@ -152,12 +152,28 @@ let reset_file ~file buffer =
   let open Lexing in
   buffer.lex_curr_p <- {buffer.lex_curr_p with pos_fname = file}
 
-let reset_line lnum buffer =
+let reset_line ~line buffer =
   let open Lexing in
-  buffer.lex_curr_p <- {buffer.lex_curr_p with pos_lnum = lnum}
+  buffer.lex_curr_p <- {buffer.lex_curr_p with pos_lnum = line}
 
-let reset ~file ?(line=1) buffer =
-  reset_file ~file buffer; reset_line line buffer
+let reset_offset ~offset buffer =
+  assert (offset >= 0);
+  let open Lexing in
+  let bol = buffer.lex_curr_p.pos_bol in
+  buffer.lex_curr_p <- {buffer.lex_curr_p with pos_cnum = bol + offset }
+
+let reset ?file ?line ?offset buffer =
+  let () =
+    match file with
+      Some file -> reset_file ~file buffer
+    |      None -> () in
+  let () =
+    match line with
+      Some line -> reset_line ~line buffer
+    |      None -> () in
+  match offset with
+    Some offset -> reset_offset ~offset buffer
+  |        None -> ()
 
 (* Hack to roll back one lexeme in the current semantic action *)
 (*
@@ -222,7 +238,7 @@ rule scan = parse
 | "->"   { Token.ARROW    }
 | "::"   { Token.CONS     }
 | "^"    { Token.CAT      }
-| "@"    { Token.APPEND   }
+  (*| "@"    { Token.APPEND   }*)
 
 | "="    { Token.EQ       }
 | "<>"   { Token.NE       }
@@ -294,9 +310,53 @@ rule scan = parse
          let ()      = ignore thread
          in scan lexbuf }
 
+  (* Management of #include CPP directives
+
+    An input LIGO program may contain GNU CPP (C preprocessor)
+    directives, and the entry modules (named *Main.ml) run CPP on them
+    in traditional mode:
+
+    https://gcc.gnu.org/onlinedocs/cpp/Traditional-Mode.html
+
+      The main interest in using CPP is that it can stand for a poor
+    man's (flat) module system for LIGO thanks to #include
+    directives, and the traditional mode leaves the markup mostly
+    undisturbed.
+
+      Some of the #line resulting from processing #include directives
+    deal with system file headers and thus have to be ignored for our
+    purpose. Moreover, these #line directives may also carry some
+    additional flags:
+
+    https://gcc.gnu.org/onlinedocs/cpp/Preprocessor-Output.html
+
+    of which 1 and 2 indicate, respectively, the start of a new file
+    and the return from a file (after its inclusion has been
+    processed).
+  *)
+
+| '#' blank* ("line" blank+)? (integer as line) blank+
+    '"' (string as file) '"' {
+    let flags = scan_flags [] lexbuf in
+    let    () = ignore flags in
+    let line  = int_of_string line
+    and file  = Filename.basename file in
+    let    () = reset ~file ~line ~offset:0 lexbuf
+    in scan lexbuf
+  }
+
 | _ as c { let msg = sprintf "Invalid character '%s'."
                        (Char.escaped c)
            in error lexbuf msg }
+
+(* Scanning CPP #include flags *)
+
+and scan_flags acc = parse
+  blank+          { scan_flags acc lexbuf                  }
+| integer as code { let acc = int_of_string code :: acc
+                    in scan_flags acc lexbuf               }
+| nl              { Lexing.new_line lexbuf; List.rev acc   }
+| eof             { List.rev acc                           }
 
 (* Finishing a string *)
 
@@ -326,11 +386,11 @@ and scan_block thread = parse
                           else scan_block in
            let thread   = next thread lexbuf in
            let thread   = {thread with opening}
-           in scan_block thread lexbuf }
-| "*)"   { push_string (Lexing.lexeme lexbuf) thread }
+           in scan_block thread lexbuf                      }
+| "*)"   { push_string (Lexing.lexeme lexbuf) thread        }
 | nl     { Lexing.new_line lexbuf; scan_block thread lexbuf }
-| eof    { fail thread.opening "Open comment." }
-| _ as c { scan_block (push_char c thread) lexbuf }
+| eof    { fail thread.opening "Open comment."              }
+| _ as c { scan_block (push_char c thread) lexbuf           }
 
 (* END LEXER DEFINITION *)
 
@@ -371,8 +431,8 @@ let iter action file_opt =
   try
     let cin, reset =
       match file_opt with
-        None | Some "-" -> stdin, fun ?(line=1) _ -> ignore line
-      |       Some file -> open_in file, reset ~file in
+        None | Some "-" -> stdin, ignore
+      |       Some file -> open_in file, reset_file ~file in
     let buffer = Lexing.from_channel cin in
     let rec iter () =
       try

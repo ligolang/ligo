@@ -6,7 +6,7 @@ type t =
   ARROW    (* "->" *)
 | CONS     (* "::" *)
 | CAT      (* "^"  *)
-| APPEND   (* "@"  *)
+  (*| APPEND   (* "@"  *)*)
 
   (* Arithmetics *)
 
@@ -60,7 +60,7 @@ type t =
 
   (* Keywords *)
 
-| And
+(*| And*)
 | Begin
 | Else
 | End

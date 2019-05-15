@@ -17,20 +17,22 @@ exception Error of message Region.reg
    tokens to the given channel. If no logger is given to [get_token],
    no printing takes place while the lexer runs.
 
-     The call [reset ~file ~line buffer] modifies in-place the lexing
-   buffer [buffer] so the lexing engine records that the file
-   associated with [buffer] is named [file], and the current line is
-   [line]. This function is useful when lexing a file that has been
-   previously preprocessed by the C preprocessor, in which case the
-   argument [file] is the name of the file that was preprocessed,
-   _not_ the preprocessed file (of which the user is not normally
-   aware). By default, the [line] argument is [1].
+     The call [reset ~file ~line ~offset buffer] modifies in-place the
+   lexing buffer [buffer] so the lexing engine records that the file
+   associated with [buffer] is named [file], the current line is
+   [line] and the offset on that line is [offset]. This function is
+   useful when lexing a file that has been previously preprocessed by
+   the C preprocessor, in which case the argument [file] is the name
+   of the file that was preprocessed, _not_ the preprocessed file (of
+   which the user is not normally aware). By default, the [line]
+   argument is [1].
 *)
 
 type logger = out_channel * (out_channel -> Token.t -> unit)
 
-val get_token : ?log:logger -> Lexing.lexbuf -> Token.t
-val reset     : file:string -> ?line:int -> Lexing.lexbuf -> unit
+val get_token  : ?log:logger -> Lexing.lexbuf -> Token.t
+val reset      : ?file:string -> ?line:int -> ?offset:int -> Lexing.lexbuf -> unit
+val reset_file : file:string ->  Lexing.lexbuf -> unit
 
 (* Debugging *)
 
