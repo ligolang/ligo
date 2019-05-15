@@ -15,6 +15,7 @@
    zarith
    tezos-utils
  )
+ (flags (:standard -open Simple_utils ))
 )
 
 ;; Les deux directives (rule) qui suivent sont pour le dev local.
