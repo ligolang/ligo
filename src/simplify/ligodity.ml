@@ -125,28 +125,28 @@ let rec simpl_expression :
           fail error
         )
     )
-  | ECall (x : (Raw.expr * Raw.expr list) Region.reg) -> (
-      let (f, args) = x.value in
-      let%bind f' = simpl_expression f in
-      let%bind args' = bind_map_list simpl_expression args in
-      match List.assoc_opt f' constants with
-      | None ->
-          let%bind arg = simpl_tuple_expression args' in
-          return @@ E_application (make_e_a @@ E_variable f, arg)
-      | Some arity ->
-          let%bind _arity =
-            trace (simple_error "wrong arity for constants") @@
-            Assert.assert_equal_int arity (List.length args') in
-          let%bind lst = bind_map_list simpl_expression args' in
-          return @@ E_constant (f, lst)
+  | ECall x -> (
+      let (e1, e2) = x.value in
+      let%bind args = bind_map_list simpl_expression (nseq_to_list e2) in
+      match e1 with
+        EVar f ->
+          (match List.assoc_opt f.value constants with
+          | None ->
+              let%bind arg = simpl_tuple_expression (nseq_to_list e2) in
+              return @@ E_application (make_e_a @@ E_variable f.value, arg)
+          | Some arity ->
+              let%bind _arity =
+                trace (simple_error "wrong arity for constants") @@
+                Assert.assert_equal_int arity (List.length args) in
+              return @@ E_constant (f.value, args))
+      | e1 -> let%bind e1' = simpl_expression e1 in
+             let%bind arg = simpl_tuple_expression (nseq_to_list e2) in
+             return @@ E_application (e1', arg)
     )
   | EPar x -> simpl_expression ?te_annot x.value.inside
   | EUnit _ -> return @@ E_literal Literal_unit
   | EBytes x -> return @@ E_literal (Literal_bytes (Bytes.of_string @@ fst x.value))
-  | ETuple tpl ->
-      let (Raw.TupleInj tpl') = tpl in
-      simpl_tuple_expression ?te_annot
-      @@ npseq_to_list tpl'.value.inside
+  | ETuple tpl -> simpl_tuple_expression ?te_annot @@ (npseq_to_list tpl.value)
   | ERecord r ->
       let%bind fields = bind_list
         @@ List.map (fun ((k : _ Raw.reg), v) -> let%bind v = simpl_expression v in ok (k.value, v))
@@ -164,8 +164,7 @@ let rec simpl_expression :
         match args with
           None -> []
         | Some arg -> [arg] in
-      let%bind arg =
-        simpl_tuple_expression @@ args in
+      let%bind arg = simpl_tuple_expression @@ args in
       return @@ E_constructor (c.value, arg)
   | EArith (Add c) ->
       simpl_binop ?te_annot "ADD" c.value
@@ -246,8 +245,6 @@ and simpl_list_expression ?te_annot (t:Raw.list_expr) : annotated_expression res
         bind_map_list simpl_expression @@
         pseq_to_list lst.value.elements in
       return @@ E_list lst'
-  | Nil _ ->
-      return @@ E_list []
 
 and simpl_binop ?te_annot (name:string) (t:_ Raw.bin_op) : annotated_expression result =
   let return x = ok @@ make_e_a ?type_annotation:te_annot x in
@@ -385,6 +382,10 @@ and simpl_declaration : Raw.declaration -> declaration Location.wrap result = fu
       let {name;type_expr} : Raw.type_decl = x.value in
       let%bind type_expression = simpl_type_expression type_expr in
       ok @@ loc x @@ Declaration_type {type_name=name.value;type_expression}
+  | LetEntry _ -> simple_fail "no entry point yet"
+(*  | Let x ->
+      let _, binding = x.value in*)
+
   | ConstDecl x ->
       let simpl_const_decl = fun {name;const_type;init} ->
         let%bind expression = simpl_expression init in
@@ -399,7 +400,7 @@ and simpl_declaration : Raw.declaration -> declaration Location.wrap result = fu
         ok @@ Declaration_constant x' in
       bind_map_location (aux simpl_fun_declaration) (Location.lift_region x)
   | LambdaDecl (ProcDecl _) -> simple_fail "no proc declaration yet"
-  | LambdaDecl (EntryDecl _)-> simple_fail "no entry point yet"
+
 
 and simpl_statement : Raw.statement -> instruction result = fun s ->
   match s with
