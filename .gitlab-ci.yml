@@ -37,7 +37,7 @@ before_script:
 local-dune-job:
   script:
     - vendors/ligo-opam-repository/rewrite-local-opam-repository.sh
-    - opam repository add localrepo "file://$PWD/vendors/ligo-opam-repository/"
+    - opam repository add localrepo "file://$PWD/vendors/ligo-opam-repository-local/"
     - opam install -y --build-test --deps-only ./src/
     - (dune build -p ligo)
     # TODO: also try instead from time to time:
@@ -47,7 +47,7 @@ local-dune-job:
 local-repo-job:
   script:
     - vendors/ligo-opam-repository/rewrite-local-opam-repository.sh
-    - opam repository add localrepo "file://$PWD/vendors/ligo-opam-repository/"
+    - opam repository add localrepo "file://$PWD/vendors/ligo-opam-repository-local/"
     #--build-test
     - opam install -y ligo
 
