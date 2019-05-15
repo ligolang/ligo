@@ -42,7 +42,7 @@ local-dune-job:
     - (dune build -p ligo)
     # TODO: also try instead from time to time:
     #- (cd ./src/; dune build -p ligo)
-    dune build -p ligo
+    - dune build @ligo-test
 
 local-repo-job:
   script:
