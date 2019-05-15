@@ -68,7 +68,6 @@ and expression' =
 and expression = {
   content : expression' ;
   type_value : type_value ;
-  environment : environment ;  (* Environment in which the expressions are evaluated *)
   is_toplevel : bool ;
 }
 

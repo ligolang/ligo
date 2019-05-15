@@ -230,9 +230,9 @@ and tree_of_sum : AST.type_value -> (type_name * AST.type_value) Append_tree.t r
 
 and translate_annotated_expression (env:Environment.t) (ae:AST.annotated_expression) : expression result =
   let%bind tv = translate_type ae.type_annotation in
-  let return ?(tv = tv) ?(env = env) expr =
+  let return ?(tv = tv) expr =
     (* let%bind env' = transpile_environment ae.environment in *)
-    ok @@ Combinators.Expression.make_tpl (expr, tv, env) in
+    ok @@ Combinators.Expression.make_tpl (expr, tv) in
   let f = translate_annotated_expression env in
   match ae.expression with
   | E_failwith ae -> (
@@ -269,8 +269,8 @@ and translate_annotated_expression (env:Environment.t) (ae:AST.annotated_express
         match (a, b) with
         | (None, a), (None, b) -> ok (None, T_or (a, b))
         | (Some _, _), (Some _, _) -> simple_fail "several identical constructors in the same variant (shouldn't happen here)"
-        | (Some v, a), (None, b) -> ok (Some (E_constant ("LEFT", [Combinators.Expression.make_tpl (v, a, env)])), T_or (a, b))
-        | (None, a), (Some v, b) -> ok (Some (E_constant ("RIGHT", [Combinators.Expression.make_tpl (v, b, env)])), T_or (a, b))
+        | (Some v, a), (None, b) -> ok (Some (E_constant ("LEFT", [Combinators.Expression.make_tpl (v, a)])), T_or (a, b))
+        | (None, a), (Some v, b) -> ok (Some (E_constant ("RIGHT", [Combinators.Expression.make_tpl (v, b)])), T_or (a, b))
       in
       let%bind (ae_opt, tv) = Append_tree.fold_ne leaf node node_tv in
       let%bind ae =
@@ -297,7 +297,7 @@ and translate_annotated_expression (env:Environment.t) (ae:AST.annotated_express
         let c = match lr with
           | `Left -> "CAR"
           | `Right -> "CDR" in
-        Combinators.Expression.make_tpl (E_constant (c, [pred]) , ty , env) in
+        Combinators.Expression.make_tpl (E_constant (c, [pred]) , ty) in
       let%bind tpl' = translate_annotated_expression env tpl in
       let expr = List.fold_left aux tpl' path in
       ok expr
@@ -321,7 +321,7 @@ and translate_annotated_expression (env:Environment.t) (ae:AST.annotated_express
         let c = match lr with
           | `Left -> "CAR"
           | `Right -> "CDR" in
-        Combinators.Expression.make_tpl (E_constant (c, [pred]) , ty , env) in
+        Combinators.Expression.make_tpl (E_constant (c, [pred]) , ty) in
       let%bind record' = translate_annotated_expression env record in
       let expr = List.fold_left aux record' path in
       ok expr
@@ -396,24 +396,24 @@ and translate_annotated_expression (env:Environment.t) (ae:AST.annotated_express
                   List.find_opt (fun ((constructor_name' , _) , _) -> constructor_name' = constructor_name) lst in
                 let env' = Environment.(add (name , tv) env) in
                 let%bind body' = translate_annotated_expression env' body in
-                return ~env @@ E_let_in ((name , tv) , top , body')
+                return @@ E_let_in ((name , tv) , top , body')
               )
             | ((`Node (a , b)) , tv) ->
                 let%bind a' =
                   let%bind a_ty = get_t_left tv in
                   let a_var = "left" , a_ty in
                   let env' = Environment.(add a_var env) in
-                  let%bind e = aux (((Expression.make (E_variable "left") a_ty env')) , env') a in
+                  let%bind e = aux (((Expression.make (E_variable "left") a_ty)) , env') a in
                   ok (a_var , e)
                 in
                 let%bind b' =
                   let%bind b_ty = get_t_right tv in
                   let b_var = "right" , b_ty in
                   let env' = Environment.(add b_var env) in
-                  let%bind e = aux (((Expression.make (E_variable "right") b_ty env')) , env') b in
+                  let%bind e = aux (((Expression.make (E_variable "right") b_ty)) , env') b in
                   ok (b_var , e)
                 in
-                return ~env @@ E_if_left (top , a' , b')
+                return @@ E_if_left (top , a' , b')
           in
           aux (expr' , env) tree''
         )
@@ -437,7 +437,7 @@ and translate_lambda_deep : Mini_c.Environment.t -> AST.lambda -> Mini_c.express
     let%bind (statements , body_env) = translate_block init_env body in
     let body =
       let load_env = Environment.(add ("closure_arg" , input) empty) in
-      let load_expr = Expression.make_tpl (E_variable "closure_arg" , input , load_env) in
+      let load_expr = Expression.make_tpl (E_variable "closure_arg" , input) in
       let load_st = Mini_c.statement (S_environment_load (load_expr , init_env)) load_env in
       let statements' = load_st :: statements in
       (statements' , body_env)
@@ -445,13 +445,13 @@ and translate_lambda_deep : Mini_c.Environment.t -> AST.lambda -> Mini_c.express
     let%bind result = translate_annotated_expression body_env.post_environment result in
     let tv = Mini_c.t_function input output in
     let f_literal = D_function { binder ; input ; output ; body ; result } in
-    let expr = Expression.make_tpl (E_literal f_literal , tv , env) in
+    let expr = Expression.make_tpl (E_literal f_literal , tv) in
     ok (expr , raw_input , output) in
   let%bind c_expr =
-    ok @@ Expression.make_tpl (E_capture_environment fv , c_tv , env) in
+    ok @@ Expression.make_tpl (E_capture_environment fv , c_tv) in
   let expr = Expression.pair f_expr c_expr in
   let tv = Mini_c.t_deep_closure c_env input_tv output_tv in
-  ok @@ Expression.make_tpl (expr , tv , env)
+  ok @@ Expression.make_tpl (expr , tv)
 
 and translate_lambda env l =
   let { binder ; input_type ; output_type ; body ; result } : AST.lambda = l in
@@ -473,7 +473,7 @@ and translate_lambda env l =
       let%bind output = translate_type output_type in
       let tv = Combinators.t_function input output in
       let content = D_function {binder;input;output;body=body';result=result'} in
-      ok @@ Combinators.Expression.make_tpl (E_literal content, tv, env)
+      ok @@ Combinators.Expression.make_tpl (E_literal content, tv)
     )
   | _ -> (
       trace (simple_error "translate lambda deep") @@

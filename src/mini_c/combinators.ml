@@ -7,20 +7,17 @@ module Expression = struct
 
   let get_content : t -> t' = fun e -> e.content
   let get_type : t -> type_value = fun e -> e.type_value
-  let get_environment : t -> environment = fun e -> e.environment
   let is_toplevel : t -> bool = fun e -> e.is_toplevel
 
-  let make = fun ?(itl = false) e' t env -> {
+  let make = fun ?(itl = false) e' t -> {
     content = e' ;
     type_value = t ;
-    environment = env ;
     is_toplevel = itl ;
   }
 
-  let make_tpl = fun ?(itl = false) (e' , t , env) -> {
+  let make_tpl = fun ?(itl = false) (e' , t) -> {
     content = e' ;
     type_value = t ;
-    environment = env ;
     is_toplevel = itl ;
   }
 
@@ -145,15 +142,15 @@ let quote binder input output body result : anon_function =
   }
 
 let basic_quote i o b : anon_function result =
-  let%bind (_, e) = get_last_statement b in
-  let r : expression = Expression.make_tpl (E_variable "output", o, e.post_environment) in
+  let%bind (_, _e) = get_last_statement b in
+  let r : expression = Expression.make_tpl (E_variable "output", o) in
   ok @@ quote "input" i o b r
 
 let basic_int_quote b : anon_function result =
   basic_quote t_int t_int b
 
-let e_int expr env : expression = Expression.make_tpl (expr, t_int, env)
-let e_var_int name env : expression = e_int (E_variable name) env
+let e_int expr : expression = Expression.make_tpl (expr, t_int)
+let e_var_int name : expression = e_int (E_variable name)
 
 let d_unit : value = D_unit
 

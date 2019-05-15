@@ -233,11 +233,12 @@ and translate_expression ?(first=false) (expr:expression) (env:environment) : (m
         ]) in
       return code
     )
-  | E_if_none (c, n, (_ , s)) -> (
+  | E_if_none (c, n, (ntv , s)) -> (
       let%bind (c' , _env') = translate_expression c env in
-      let%bind (n' , _) = translate_expression n n.environment in
-      let%bind (s' , _) = translate_expression s s.environment in
-      let%bind restrict_s = Compiler_environment.select_env s.environment env in
+      let%bind (n' , _) = translate_expression n env in
+      let s_env = Environment.add ntv env in
+      let%bind (s' , _) = translate_expression s s_env in
+      let%bind restrict_s = Compiler_environment.select_env s_env env in
       let%bind code = ok (seq [
           c' ;
           i_if_none n' (seq [
@@ -248,12 +249,14 @@ and translate_expression ?(first=false) (expr:expression) (env:environment) : (m
         ]) in
       return code
     )
-  | E_if_left (c, (_ , l), (_ , r)) -> (
+  | E_if_left (c, (l_ntv , l), (r_ntv , r)) -> (
       let%bind (c' , _env') = translate_expression c env in
-      let%bind (l' , _) = translate_expression l l.environment in
-      let%bind (r' , _) = translate_expression r r.environment in
-      let%bind restrict_l = Compiler_environment.select_env l.environment env in
-      let%bind restrict_r = Compiler_environment.select_env r.environment env in
+      let l_env = Environment.add l_ntv env in
+      let%bind (l' , _) = translate_expression l l_env in
+      let r_env = Environment.add r_ntv env in
+      let%bind (r' , _) = translate_expression r r_env in
+      let%bind restrict_l = Compiler_environment.select_env l_env env in
+      let%bind restrict_r = Compiler_environment.select_env r_env env in
       let%bind code = ok (seq [
           c' ;
           i_if_left (seq [
