@@ -119,6 +119,11 @@ let make ~byte ~point_num ~point_bol =
              (if offsets then self#offset mode else self#column mode)
 end
 
+let from_byte byte =
+  let point_num = byte.Lexing.pos_cnum
+  and point_bol = byte.Lexing.pos_bol
+  in make ~byte ~point_num ~point_bol
+
 let ghost = make ~byte:Lexing.dummy_pos ~point_num:(-1) ~point_bol:(-1)
 
 let min =

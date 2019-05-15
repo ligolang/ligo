@@ -94,7 +94,8 @@ type pos = t
 
 (* Constructors *)
 
-val make : byte:Lexing.position -> point_num:int -> point_bol:int -> t
+val make      : byte:Lexing.position -> point_num:int -> point_bol:int -> t
+val from_byte : Lexing.position -> t
 
 (* Special positions *)
 
