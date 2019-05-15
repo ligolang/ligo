@@ -6,8 +6,8 @@
     tezos-utils
     parser
     ast_simplified
-    operators
-  )
+    operators)
+  (modules pascaligo camligo simplify)
   (preprocess
     (pps
       simple-utils.ppx_let_generalized
