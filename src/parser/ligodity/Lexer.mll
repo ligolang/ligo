@@ -6,7 +6,11 @@
 (* UTILITIES *)
 
 let sprintf = Printf.sprintf
-module SMap = Utils.String.Map
+
+module Region = Simple_utils.Region
+module Pos    = Simple_utils.Pos
+module SMap   = Utils.String.Map
+module SSet   = Utils.String.Set
 
 (* Making a natural from its decimal notation (for Tez) *)
 

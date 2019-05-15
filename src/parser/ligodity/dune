@@ -13,6 +13,7 @@
  (libraries
    str
    zarith
+   simple-utils
    tezos-utils
  )
  (flags (:standard -open Simple_utils ))
