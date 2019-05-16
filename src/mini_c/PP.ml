@@ -61,7 +61,9 @@ and value_assoc ppf : (value * value) -> unit = fun (a, b) ->
   fprintf ppf "%a -> %a" value a value b
 
 and expression' ppf (e:expression') = match e with
-  | E_capture_environment s -> fprintf ppf "capture(%a)" (list_sep string (const " ; ")) s
+  | E_environment_capture s -> fprintf ppf "capture(%a)" (list_sep string (const " ; ")) s
+  | E_environment_load (expr , env) -> fprintf ppf "load %a in %a" expression expr environment env
+  | E_environment_select env -> fprintf ppf "select %a" environment env
   | E_variable v -> fprintf ppf "%s" v
   | E_application(a, b) -> fprintf ppf "(%a)@(%a)" expression a expression b
   | E_constant(p, lst) -> fprintf ppf "%s %a" p (pp_print_list ~pp_sep:space_sep expression) lst
@@ -73,8 +75,13 @@ and expression' ppf (e:expression') = match e with
   | E_if_none (c, n, ((name, _) , s)) -> fprintf ppf "%a ?? %a : %s -> %a" expression c expression n name expression s
   | E_if_left (c, ((name_l, _) , l), ((name_r, _) , r)) ->
       fprintf ppf "%a ?? %s -> %a : %s -> %a" expression c name_l expression l name_r expression r
+  | E_sequence (a , b) -> fprintf ppf "%a ; %a" expression a expression b
   | E_let_in ((name , _) , expr , body) ->
       fprintf ppf "let %s = %a in %a" name expression expr expression body
+  | E_assignment (r , path , e) ->
+      fprintf ppf "%s.%a := %a" r (list_sep lr (const ".")) path expression e
+  | E_while (e , b) ->
+      fprintf ppf "while (%a) %a" expression e expression b
 
 and expression : _ -> expression -> _ = fun ppf e ->
   expression' ppf e.content

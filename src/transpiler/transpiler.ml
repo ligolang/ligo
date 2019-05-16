@@ -448,7 +448,7 @@ and translate_lambda_deep : Mini_c.Environment.t -> AST.lambda -> Mini_c.express
     let expr = Expression.make_tpl (E_literal f_literal , tv) in
     ok (expr , raw_input , output) in
   let%bind c_expr =
-    ok @@ Expression.make_tpl (E_capture_environment fv , c_tv) in
+    ok @@ Expression.make_tpl (E_environment_capture fv , c_tv) in
   let expr = Expression.pair f_expr c_expr in
   let tv = Mini_c.t_deep_closure c_env input_tv output_tv in
   ok @@ Expression.make_tpl (expr , tv)
