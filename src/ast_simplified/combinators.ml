@@ -137,8 +137,8 @@ let e_lambda (binder : string)
   : expression =
   E_lambda {
     binder = (make_name binder) ;
-    input_type = input_type ;
-    output_type = output_type ;
+    input_type = Some input_type ;
+    output_type = Some output_type ;
     result = (make_e_a result) ;
     body ;
   }

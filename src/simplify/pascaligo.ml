@@ -345,7 +345,8 @@ and simpl_fun_declaration : Raw.fun_decl -> named_expression result = fun x ->
        let%bind result = simpl_expression return in
        let%bind output_type = simpl_type_expression ret_type in
        let body = local_declarations @ instructions in
-       let expression = E_lambda {binder ; input_type ; output_type ; result ; body } in
+       let expression = E_lambda {binder ; input_type = Some input_type;
+                                  output_type = Some output_type; result ; body } in
        let type_annotation = Some (T_function (input_type, output_type)) in
        ok {name;annotated_expression = {expression;type_annotation}}
      )
@@ -384,7 +385,8 @@ and simpl_fun_declaration : Raw.fun_decl -> named_expression result = fun x ->
 
        let body = tpl_declarations @ local_declarations @ instructions in
        let%bind result = simpl_expression return in
-       let expression = E_lambda {binder ; input_type ; output_type ; result ; body } in
+       let expression = E_lambda {binder ; input_type = Some input_type;
+                                  output_type = Some output_type; result ; body } in
        let type_annotation = Some (T_function (input_type, output_type)) in
        ok {name = name.value;annotated_expression = {expression;type_annotation}}
      )

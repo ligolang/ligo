@@ -47,8 +47,8 @@ and type_expression =
 
 and lambda = {
   binder: name ;
-  input_type: type_expression ;
-  output_type: type_expression ;
+  input_type: type_expression option;
+  output_type: type_expression option;
   result: ae ;
   body: block ;
 }

@@ -235,6 +235,14 @@ and translate_annotated_expression (env:Environment.t) (ae:AST.annotated_express
     ok @@ Combinators.Expression.make_tpl (expr, tv) in
   let f = translate_annotated_expression env in
   match ae.expression with
+    (* Optimise immediate application as a let-in *)
+  | E_application ({expression = E_lambda {binder; input_type; output_type=_; body=[]; result}; _},
+                   rhs) ->
+    let%bind ty' = translate_type input_type in
+    let%bind rhs' = translate_annotated_expression env rhs in
+    let result_env = Environment.(add (binder, ty') env) in
+    let%bind result' = translate_annotated_expression result_env result in
+    return (E_let_in ((binder, ty'), rhs', result'))
   | E_failwith ae -> (
       let%bind ae' = translate_annotated_expression env ae in
       return @@ E_constant ("FAILWITH" , [ae'])

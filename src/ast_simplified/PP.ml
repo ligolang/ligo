@@ -44,7 +44,7 @@ let rec expression ppf (e:expression) = match e with
   | E_look_up (ds, ind) -> fprintf ppf "(%a)[%a]" annotated_expression ds annotated_expression ind
   | E_lambda {binder;input_type;output_type;result;body} ->
       fprintf ppf "lambda (%s:%a) : %a {@;  @[<v>%a@]@;} return %a"
-        binder type_expression input_type type_expression output_type
+        binder type_annotation input_type type_annotation output_type
         block body annotated_expression result
   | E_matching (ae, m) ->
       fprintf ppf "match %a with %a" annotated_expression ae (matching annotated_expression) m
