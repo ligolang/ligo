@@ -1,0 +1,144 @@
+INTERNAL DOCUMENTATION OF THE PARSER OF PASCALIGO (Pascal-like LIGO)
+
+This document describes the source code in the directory
+ligo/src/parser/pascaligo and some maintenance workflows.
+
+The directory contains the following:
+
+  Doc
+    The directory containing this documentation.
+
+  Tests
+    The directory containing tests.
+
+  Version.ml
+    A source containing a commit hash. It should be deleted, as Dune
+    knows how to generate and updated version.
+
+  dune
+    The Dune file for building the Pascaligo parser.
+
+  pascaligo.ml
+    A source needed for building the parser with Dune.
+
+  check_dot_git_is_dir.sh
+     A shell initially made to distinguish a git worktree from the
+     working directory (currently broken).
+
+  Stubs
+    A directory containing Tezos_utils.ml, which is ignored by Dune,
+    but linked from the parent directory ligo/src/parser/pascaligo
+    when building with the Christian's Makefile for OCaml
+    projects. (See http://github.com/rinderknecht/OCaml-build) Ignore
+    them.
+
+  .LexerMain.tag
+  .Lexer.ml.tag
+  .ParserMain.tag
+  .Parser.mly.tag
+  .links
+     As ligo/src/parser/pascaligo/Stubs/Tezos_utils.ml, these files
+     are only used by Christian's build system. Ignore them.
+
+  LexerMain.ml
+  ParserMain.ml
+    Source for two entry points enabling Christian's build system to
+    build only a standalone lexer or a standalone parser. Do not
+    change, unless you change EvalOpt and use Christian's build system.
+
+  LexerLog.ml
+  LexerLog.mli
+    Source for instantiating a standalone lexer for LexerMain.ml and
+    ParserMain.ml. Ignore them.
+
+  ParserLog.mli
+  ParserLog.ml
+    Source for printing the AST. Used by ParserMain.ml, pascaligo.ml
+    and the translator from this AST to the one needed by the
+    type-checker (see directory ligo/src/simplify).
+
+  Utils.mli
+  Utils.ml
+    Some utility types and functions.
+
+  AST.mli
+  AST.ml
+    The abstract syntax tree of Pascaligo.
+
+  EvalOpt.mli
+  EvalOpt.ml
+    The module EvalOpt parses the command-line for options to the
+    parser. That action is performed as a side-effect when the module
+    is initialised at run-time: this is ugly and easy to fix. See
+    ligo/src/parser/ligodity/EvalOpt.ml{i} for the right way to do
+    it. Ignore them: the file actually calling directly the parser is
+    ligo/src/parser/parser.ml. Note that, as a consequence, no option
+    is currently passed to the parser when building Pascaligo with
+    Dune. This should be made available.
+
+  Markup.mli
+  Markup.ml
+    The definition of markup in Pascaligo source files, and some some
+    functions to print or convert it to strings. You are unlikely
+    going to modify those files, as markup is pretty much the same for
+    all LIGO flavours.
+
+  FQueue.mli
+  FQueue.ml
+    A naive implementation of purely functional queues. Replace by an
+    imperative implementation if worst-case performance of single
+    operations (queue/enqueue) is an issue.
+
+  Error.mli
+    The definition of the open type for errors: the lexer will add its
+    own errors, the downside being that matching on errors requires a
+    catch-all clause "| _ -> assert false" at the end. Note: the rest
+    of the compiler uses an error monad.
+
+  Lexer.mli
+  Lexer.mll
+    The Pascaligo lexer is generated from two ocamllex
+    specifications. Lexer.mll is the first-level lexer. It exports a
+    functor [Make] parameterised over a module [Token] defining the
+    tokens, and returning a module whose signature is [Lexer.S]. (See
+    Lexer.mli for a rationale.) If you write a new flavour of LIGO,
+    this lexer is likely to be reused as is. Note that a great deal of
+    the complexity of this lexer stems from its purpose to report
+    stylistic errors (hence keeping temporarily scanned markup) and
+    handling UTF-8 encoded comments. The first goal implies sometimes
+    reading more than one token, and an extra-buffer has to be managed
+    above the ocamllex one, so the parser is not confused about the
+    location (region) of the token it has just read.
+
+  LexToken.mli
+  LexToken.mll
+    The second-level lexer of Pascaligo, scanning the (lexical)
+    tokens, and used to instantiate the first-level lexer
+    (Lexer.mll). If you write a new flavour of LIGO, this lexer is
+    likely to be modified, also if you plan to add new lexemes (beware
+    that if you add a new token constructor to the type [LexToken.t],
+    you may have to change the signature [Lexer.S] so you an instantiate
+    the first-level lexer.
+
+  Parser.mly
+    The Menhir specification of the grammar of Pascaligo and the
+    semantic actions building the AST. The syntax is actually a mix of
+    two sub-flavours: one in which compound structures, like blocks,
+    records, lists etc., are opened by a keyword denoting the kind of
+    structure, like "block", "record", "list" etc., and are closed by
+    the key word "end", and one in which those structures are opened
+    by a keyword followed by a symbol, like "{", "[" etc. and closed
+    by a symbol, lik "}", "]" etc. For instance,
+       "record x : t; y : u end" versus "record {x : t; y : u}".
+    In the future, these two styles should be separated and, in the
+    meantime, it is advise to keep to one style per LIGO contract, for
+    readability's sake. A first maintenance task would be to separate
+    this file in two, so each parses only one style, and share the
+    common parts of the grammar.
+      However you change this file, the grammar must remain without LR
+    conflicts, without resorting %prec or %assoc annotations.
+      Another example of maintenance task is to enable unary
+    constructors. An oversight made the definition of enumerated types
+    impossible, like t = A | B | C. You can first change the AST, then
+    the parser, or vice-versa, and then ligo/src/simplify/pascaligo.ml
+    if necessary.
