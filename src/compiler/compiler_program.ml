@@ -338,6 +338,18 @@ and translate_expression ?(first=false) (expr:expression) (env:environment) : (m
         set_code ;
       ]
     )
+  | E_while (expr, block) -> (
+      let%bind (expr' , env') = translate_expression expr env in
+      let%bind (block' , env'') = translate_expression block env' in
+      let%bind restrict_block = Compiler_environment.select_env env'' env' in
+      return @@ seq [
+        expr' ;
+        prim ~children:[seq [
+            block' ;
+            restrict_block ;
+            expr']] I_LOOP ;
+      ]
+    )
 
 and translate_statement ((s', w_env) as s:statement) : michelson result =
   let error_message () = Format.asprintf "%a" PP.statement s in

@@ -68,6 +68,7 @@ and expression' =
   | E_let_in of ((var_name * type_value) * expression * expression)
   | E_sequence of (expression * expression)
   | E_assignment of (string * [`Left | `Right] list * expression)
+  | E_while of expression * expression
 
 and expression = {
   content : expression' ;

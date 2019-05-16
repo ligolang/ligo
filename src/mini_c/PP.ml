@@ -80,6 +80,8 @@ and expression' ppf (e:expression') = match e with
       fprintf ppf "let %s = %a in %a" name expression expr expression body
   | E_assignment (r , path , e) ->
       fprintf ppf "%s.%a := %a" r (list_sep lr (const ".")) path expression e
+  | E_while (e , b) ->
+      fprintf ppf "while (%a) %a" expression e expression b
 
 and expression : _ -> expression -> _ = fun ppf e ->
   expression' ppf e.content
