@@ -50,6 +50,19 @@ let rec expression ppf (e:expression) = match e with
       fprintf ppf "match %a with %a" annotated_expression ae (matching annotated_expression) m
   | E_failwith ae ->
       fprintf ppf "failwith %a" annotated_expression ae
+  | E_sequence (a , b) ->
+    fprintf ppf "%a ; %a"
+      annotated_expression a
+      annotated_expression b
+  | E_loop (expr , body) ->
+    fprintf ppf "%a ; %a"
+      annotated_expression expr
+      annotated_expression body
+  | E_assign (name , path , expr) ->
+    fprintf ppf "%s.%a := %a"
+      name
+      PP_helpers.(list_sep access (const ".")) path
+      annotated_expression expr
 
 and assoc_annotated_expression ppf : (ae * ae) -> unit = fun (a, b) ->
   fprintf ppf "%a -> %a" annotated_expression a annotated_expression b

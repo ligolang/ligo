@@ -97,6 +97,10 @@ and expression =
   (* Advanced *)
   | E_matching of (ae * matching_expr)
   | E_failwith of ae
+  (* Replace Statements *)
+  | E_sequence of (ae * ae)
+  | E_loop of (ae * ae)
+  | E_assign of (named_type_value * access_path * ae)
 
 and value = annotated_expression (* todo (for refactoring) *)
 

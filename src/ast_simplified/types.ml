@@ -74,6 +74,10 @@ and expression =
   (* Matching *)
   | E_matching of (ae * matching_expr)
   | E_failwith of ae
+  (* Replace Statements *)
+  | E_sequence of (ae * ae)
+  | E_loop of (ae * ae)
+  | E_assign of (name * access_path * ae)
 
 and access =
   | Access_tuple of int

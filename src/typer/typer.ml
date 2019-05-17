@@ -571,6 +571,55 @@ and type_annotated_expression : environment -> I.annotated_expression -> O.annot
           return (O.E_matching (ex', m')) tv
         )
     )
+  | E_sequence (a , b) ->
+    let%bind a' = type_annotated_expression e a in
+    let%bind b' = type_annotated_expression e b in
+    let%bind () =
+      trace_strong (simple_error "first part of the sequence isn't of unit type") @@
+      Ast_typed.assert_type_value_eq (t_unit () , get_type_annotation a') in
+    return (O.E_sequence (a' , b')) (get_type_annotation b')
+  | E_loop (expr , body) ->
+    let%bind expr' = type_annotated_expression e expr in
+    let%bind body' = type_annotated_expression e body in
+    let%bind () =
+      trace_strong (simple_error "while condition isn't of type bool") @@
+      Ast_typed.assert_type_value_eq (t_bool () , get_type_annotation expr') in
+    let%bind () =
+      trace_strong (simple_error "while body isn't of unit type") @@
+      Ast_typed.assert_type_value_eq (t_unit () , get_type_annotation body') in
+    return (O.E_loop (expr' , body')) (t_unit ())
+  | E_assign (name , path , expr) ->
+    let%bind typed_name =
+      let%bind ele =
+        trace_option (simple_error "missing var in env") @@
+        Environment.get_opt name e in
+      ok @@ make_n_t name ele.type_value in
+    let%bind (assign_tv , path') =
+      let aux : ((_ * O.access_path) as 'a) -> I.access -> 'a result = fun (prec_tv , prec_path) cur_path ->
+        match cur_path with
+        | Access_tuple index -> (
+            let%bind tpl = get_t_tuple prec_tv in
+            let%bind tv' =
+              trace_option (simple_error "tuple too small") @@
+              List.nth_opt tpl index in
+            ok (tv' , prec_path @ [O.Access_tuple index])
+          )
+        | Access_record property -> (
+            let%bind m = get_t_record prec_tv in
+            let%bind tv' =
+              trace_option (simple_error "tuple too small") @@
+              Map.String.find_opt property m in
+            ok (tv' , prec_path @ [O.Access_record property])
+          )
+        | Access_map _ -> simple_fail "no assign expressions with maps yet"
+      in
+      bind_fold_list aux (typed_name.type_value , []) path in
+    let%bind expr' = type_annotated_expression e expr in
+    let%bind () =
+      trace_strong (simple_error "assign type doesn't match left-hand-side") @@
+      Ast_typed.assert_type_value_eq (assign_tv , get_type_annotation expr') in
+    return (O.E_assign (typed_name , path' , expr')) (t_unit ())
+
 
 and type_constant (name:string) (lst:O.type_value list) (tv_opt:O.type_value option) : (string * O.type_value) result =
   (* Constant poorman's polymorphism *)
@@ -679,6 +728,9 @@ let rec untype_annotated_expression (e:O.annotated_expression) : (I.annotated_ex
   | E_failwith ae ->
       let%bind ae' = untype_annotated_expression ae in
       return (E_failwith ae')
+  | E_sequence _
+  | E_loop _
+  | E_assign _ -> simple_fail "not possible to untranspile statements yet"
 
 and untype_block (b:O.block) : (I.block) result =
   bind_list @@ List.map untype_instruction b

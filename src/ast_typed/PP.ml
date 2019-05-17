@@ -47,6 +47,13 @@ and expression ppf (e:expression) : unit =
   | E_matching (ae, m) ->
       fprintf ppf "match %a with %a" annotated_expression ae (matching annotated_expression) m
   | E_failwith ae -> fprintf ppf "failwith %a" annotated_expression ae
+  | E_sequence (a , b) -> fprintf ppf "%a ; %a" annotated_expression a annotated_expression b
+  | E_loop (expr , body) -> fprintf ppf "while %a { %a }" annotated_expression expr annotated_expression body
+  | E_assign (name , path , expr) ->
+    fprintf ppf "%s.%a := %a"
+      name.type_name
+      PP_helpers.(list_sep pre_access (const ".")) path
+      annotated_expression expr
 
 and value ppf v = annotated_expression ppf v
 

@@ -377,6 +377,48 @@ and translate_annotated_expression (ae:AST.annotated_expression) : expression re
   | E_look_up dsi ->
       let%bind (ds', i') = bind_map_pair f dsi in
       return @@ E_constant ("GET", [i' ; ds'])
+  | E_sequence (a , b) -> (
+      let%bind a' = translate_annotated_expression a in
+      let%bind b' = translate_annotated_expression b in
+      return @@ E_sequence (a' , b')
+    )
+  | E_loop (expr , body) -> (
+      let%bind expr' = translate_annotated_expression expr in
+      let%bind body' = translate_annotated_expression body in
+      return @@ E_while (expr' , body')
+    )
+  | E_assign (typed_name , path , expr) -> (
+      let ty = typed_name.type_value in
+      let aux : ((AST.type_value * [`Left | `Right] list) as 'a) -> AST.access -> 'a result =
+        fun (prev, acc) cur ->
+          let%bind ty' = translate_type prev in
+          match cur with
+          | Access_tuple ind ->
+              let%bind ty_lst = AST.Combinators.get_t_tuple prev in
+              let%bind ty'_lst = bind_map_list translate_type ty_lst in
+              let%bind path = tuple_access_to_lr ty' ty'_lst ind in
+              let path' = List.map snd path in
+              ok (List.nth ty_lst ind, acc @ path')
+          | Access_record prop ->
+              let%bind ty_map =
+                let error =
+                  let title () = "accessing property on not a record" in
+                  let content () = Format.asprintf "%s on %a in %a"
+                    prop Ast_typed.PP.type_value prev Ast_typed.PP.annotated_expression expr in
+                  error title content
+                in
+                trace error @@
+                AST.Combinators.get_t_record prev in
+              let%bind ty'_map = bind_map_smap translate_type ty_map in
+              let%bind path = record_access_to_lr ty' ty'_map prop in
+              let path' = List.map snd path in
+              ok (Map.String.find prop ty_map, acc @ path')
+          | Access_map _k -> simple_fail "no patch for map yet"
+      in
+      let%bind (_, path) = bind_fold_right_list aux (ty, []) path in
+      let%bind expr' = translate_annotated_expression expr in
+      return (E_assignment (typed_name.type_name, path, expr'))
+    )
   | E_matching (expr, m) -> (
       let%bind expr' = translate_annotated_expression expr in
       match m with
