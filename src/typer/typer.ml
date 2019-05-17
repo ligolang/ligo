@@ -489,13 +489,22 @@ and type_annotated_expression : environment -> I.annotated_expression -> O.annot
       output_type ;
       result ;
       body ;
-    } ->
-      let%bind input_type = evaluate_type e input_type in
-      let%bind output_type = evaluate_type e output_type in
+    } -> (
+      let%bind input_type =
+        let%bind input_type =
+          trace_option (simple_error "missing annotation on input type")
+            input_type in
+        evaluate_type e input_type in
+      let%bind output_type =
+        let%bind output_type =
+          trace_option (simple_error "missing annotation of output type")
+            output_type in
+        evaluate_type e output_type in
       let e' = Environment.add_ez_binder binder input_type e in
       let%bind (body, e'') = type_block_full e' body in
       let%bind result = type_annotated_expression e'' result in
       return (E_lambda {binder;input_type;output_type;result;body}) (t_function input_type output_type ())
+    )
   | E_constant (name, lst) ->
       let%bind lst' = bind_list @@ List.map (type_annotated_expression e) lst in
       let tv_lst = List.map get_type_annotation lst' in
@@ -636,7 +645,7 @@ let rec untype_annotated_expression (e:O.annotated_expression) : (I.annotated_ex
       let%bind output_type = untype_type_value output_type in
       let%bind result = untype_annotated_expression result in
       let%bind body = untype_block body in
-      return (E_lambda {binder;input_type;output_type;body;result})
+      return (E_lambda {binder;input_type = Some input_type;output_type = Some output_type;body;result})
   | E_tuple lst ->
       let%bind lst' = bind_list
         @@ List.map untype_annotated_expression lst in

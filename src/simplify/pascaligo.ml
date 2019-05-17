@@ -62,7 +62,7 @@ let rec simpl_type_expression (t:Raw.type_expr) : type_expression result =
           match v.value.args with
             None -> []
           | Some (_, product) ->
-              npsseq_to_list product.value in
+              npseq_to_list product.value in
         let%bind te = simpl_list_type_expression
           @@ args in
         ok (v.value.constr.value, te)
