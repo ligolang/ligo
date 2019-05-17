@@ -12,37 +12,32 @@ before_script:
   - chmod +x /usr/local/bin/opam
   - export PATH="/usr/local/bin${PATH:+:}${PATH:-}"
 
-  # Show environment
-  - echo "$PATH"
+  # Initialise opam
   - printf '' | opam init --bare
   - eval $(opam config env)
 
   # Create switch
   - printf '' | opam switch create toto ocaml-base-compiler.4.06.1
   - eval $(opam config env)
+
   # Show versions and current switch
+  - echo "$PATH"
   - opam --version
   - printf '' | ocaml
   - opam switch
-
-# default-job:
-#   script:
-#     - (cd src/lib_utils && opam install -y --build-test --working-dir .)
-#     - (cd src/ligo      && opam install -y --build-test --working-dir .)
-#     - (cd src/ligo      && dune build && dune build -p ligo && dune build @ligo-test)
-#   artifacts:
-#     paths:
-#       - src/ligo/bin/cli.ml
 
 local-dune-job:
   script:
     - vendors/ligo-opam-repository/rewrite-local-opam-repository.sh
     - opam repository add localrepo "file://$PWD/vendors/ligo-opam-repository-local/"
     - opam install -y --build-test --deps-only ./src/
-    - (dune build -p ligo)
+    - dune build -p ligo
     # TODO: also try instead from time to time:
     #- (cd ./src/; dune build -p ligo)
     - dune build @ligo-test
+#   artifacts:
+#     paths:
+#       - src/ligo/bin/cli.ml
 
 local-repo-job:
   script:

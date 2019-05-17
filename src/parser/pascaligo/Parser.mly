@@ -213,9 +213,11 @@ sum_type:
 variant:
   Constr Of cartesian {
     let region = cover $1.region $3.region
-    and value = {constr = $1; kwd_of = $2; product = $3}
-    in {region; value} }
-  (* TODO: Unary constructors *)
+    and value = {constr = $1; args = Some ($2, $3)}
+    in {region; value}
+  }
+| Constr {
+    {region=$1.region; value= {constr=$1; args=None}} }
 
 record_type:
   Record series(field_decl,End) {
@@ -367,7 +369,6 @@ param_type:
   cartesian { TProd $1 }
 
 block:
-(*  Begin sequence(statement,SEMI) End { failwith "TODO" } *)
   Begin series(statement,End) {
    let first, (others, terminator, closing) = $2 in
    let region = cover $1 closing
@@ -706,7 +707,7 @@ assignment:
     in {region; value}}
 
 rhs:
-  expr   {     Expr $1 }
+  expr  { Expr $1 }
 
 lhs:
   path       {    Path $1 }
@@ -768,7 +769,7 @@ interactive_expr:
 
 expr:
   case(expr) { ECase ($1 expr_to_region) }
-| annot_expr  { $1                        }
+| annot_expr { $1                        }
 
 annot_expr:
   LPAR disj_expr COLON type_expr RPAR {

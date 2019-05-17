@@ -58,8 +58,13 @@ let rec simpl_type_expression (t:Raw.type_expr) : type_expression result =
       ok @@ T_record m
   | TSum s ->
       let aux (v:Raw.variant Raw.reg) =
+        let args =
+          match v.value.args with
+            None -> []
+          | Some (_, product) ->
+              npsseq_to_list product.value in
         let%bind te = simpl_list_type_expression
-          @@ npseq_to_list v.value.product.value in
+          @@ args in
         ok (v.value.constr.value, te)
       in
       let%bind lst = bind_list
@@ -345,7 +350,8 @@ and simpl_fun_declaration : Raw.fun_decl -> named_expression result = fun x ->
        let%bind result = simpl_expression return in
        let%bind output_type = simpl_type_expression ret_type in
        let body = local_declarations @ instructions in
-       let expression = E_lambda {binder ; input_type ; output_type ; result ; body } in
+       let expression = E_lambda {binder ; input_type = Some input_type;
+                                  output_type = Some output_type; result ; body } in
        let type_annotation = Some (T_function (input_type, output_type)) in
        ok {name;annotated_expression = {expression;type_annotation}}
      )
@@ -384,7 +390,8 @@ and simpl_fun_declaration : Raw.fun_decl -> named_expression result = fun x ->
 
        let body = tpl_declarations @ local_declarations @ instructions in
        let%bind result = simpl_expression return in
-       let expression = E_lambda {binder ; input_type ; output_type ; result ; body } in
+       let expression = E_lambda {binder ; input_type = Some input_type;
+                                  output_type = Some output_type; result ; body } in
        let type_annotation = Some (T_function (input_type, output_type)) in
        ok {name = name.value;annotated_expression = {expression;type_annotation}}
      )

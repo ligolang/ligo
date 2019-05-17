@@ -456,16 +456,17 @@ let let_entry : _ -> _ result = fun l ->
     List.mapi aux [ (param_name , param_ty) ; ((unwrap storage_name) , storage_ty)]
   in
   let%bind (body' , result) = expression_last_instruction (unwrap e) in
+  let input_type' = input_nty.type_expression in
+  let output_type' = O.(t_pair (t_list t_operation , storage_ty)) in
   let lambda =
-    let output_type = O.(t_pair (t_list t_operation , storage_ty)) in
     O.{
       binder = input_nty.type_name ;
-      input_type = input_nty.type_expression ;
-      output_type ;
+      input_type = Some input_type';
+      output_type = Some output_type';
       result ;
       body = tpl_declarations @ body' ;
     } in
-  let type_annotation = Some (O.T_function (lambda.input_type , lambda.output_type)) in
+  let type_annotation = Some (O.T_function (input_type', output_type')) in
   ok @@ O.Declaration_constant {name = (unwrap n) ; annotated_expression = {expression = O.E_lambda lambda ; type_annotation}}
 
 let let_init_storage : _ -> _ result = fun l ->
