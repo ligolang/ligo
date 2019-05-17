@@ -14,7 +14,7 @@ entrypoint contribute (storage store : store;
      //  const s : list (int) = list [1; 2; 3]
 //const t : set (int) = set []
   begin
-    if now > store.deadline then
+    if now (Unit) > store.deadline then
       fail "Deadline passed";
     else
       case store.backers[sender] of [

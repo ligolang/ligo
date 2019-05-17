@@ -199,10 +199,9 @@ and type_expr =
 
 and cartesian = (type_expr, times) nsepseq reg
 
-and variant = {  (* TODO: Constant constructors *)
-  constr  : constr;
-  kwd_of  : kwd_of;
-  product : cartesian
+and variant = {
+  constr : constr;
+  args   : (kwd_of * cartesian) option
 }
 
 and record_type = field_decl reg injection reg

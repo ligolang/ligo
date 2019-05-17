@@ -58,8 +58,13 @@ let rec simpl_type_expression (t:Raw.type_expr) : type_expression result =
       ok @@ T_record m
   | TSum s ->
       let aux (v:Raw.variant Raw.reg) =
+        let args =
+          match v.value.args with
+            None -> []
+          | Some (_, product) ->
+              npsseq_to_list product.value in
         let%bind te = simpl_list_type_expression
-          @@ npseq_to_list v.value.product.value in
+          @@ args in
         ok (v.value.constr.value, te)
       in
       let%bind lst = bind_list

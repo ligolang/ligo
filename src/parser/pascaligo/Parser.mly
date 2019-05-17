@@ -213,9 +213,11 @@ sum_type:
 variant:
   Constr Of cartesian {
     let region = cover $1.region $3.region
-    and value = {constr = $1; kwd_of = $2; product = $3}
-    in {region; value} }
-  (* TODO: Unary constructors *)
+    and value = {constr = $1; args = Some ($2, $3)}
+    in {region; value}
+  }
+| Constr {
+    {region=$1.region; value= {constr=$1; args=None}} }
 
 record_type:
   Record series(field_decl,End) {

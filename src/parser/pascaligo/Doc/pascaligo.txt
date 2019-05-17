@@ -137,8 +137,257 @@ The directory contains the following:
     common parts of the grammar.
       However you change this file, the grammar must remain without LR
     conflicts, without resorting %prec or %assoc annotations.
-      Another example of maintenance task is to enable unary
-    constructors. An oversight made the definition of enumerated types
-    impossible, like t = A | B | C. You can first change the AST, then
-    the parser, or vice-versa, and then ligo/src/simplify/pascaligo.ml
-    if necessary.
+
+
+PASCALIGO
+
+Generalities
+
+Pascaligo is an imperative language for writing smart contracts on the
+Tezos blockchain. As such, it is compiled to Michelson, the native
+language of the Tezos blockchain. Its design is inspired by Pascal,
+OCaml and Michelson.
+
+  An imperative language is a language in which the value bound to a
+variable can change over time, as opposed to a constant. That change,
+called _side-effect_, is often leveraged through loops, enabling data
+to be modified and accumulated repeatedly. For example, here is how
+the integer value associated to the variable "x" is incremented by an
+instruction, called _assignment_:
+
+x := x + 1;
+
+A loop computing the sum of all integers from 1 to 10 would be written
+as follows:
+
+y := 0;
+for x := 1 to 10
+  begin
+    y := y + x
+  end
+
+(Note that this is useless in practice, as a closed-form formula
+exists for that computation.)
+
+  In Pascaligo, expressions and instructions are
+distinguished. Expressions are evaluated and yield values, whilst
+instructions are evaluated but do not yield values. Instructions are
+meant to perform side-effects, like changing the value of a variable,
+whereas expressions are purely computational, like calculating a an
+arithmetic means. Instructions and expressions can be compounded, and
+instructions can evaluate expressions as a means to perform
+side-effects.
+
+  Pascaligo is strongly and statically typed, which means that the
+composition of data and functions is contrained so the compiler can
+check that no such composition can fail at run-time, e.g., because of
+a meaningless expression. Pascaligo requires that variables are
+declared together with their type and an initial value.
+
+Declarations of values come in two kinds: either constants or
+variables. The former are assigned only once at their declaration, and
+the latter can be reassigned. The syntax is slightly different for
+both. For example, the variables "x" and "y" above could have been
+declared as follows:
+
+var x : nat := 0;
+var y : nat := 0;
+
+It is possible to specify that the value of a variable will not change
+(the name "variable" is misleading in that context), that is, they
+remain constant:
+
+const ten : nat = 10;
+const eleven : nat = ten + 1;
+
+Similarly, function declarations have their parameters and return
+value annotated with their types. For instance,
+
+function sum (const n : nat; const m : nat) : nat is
+  begin
+  end with n + m;
+
+declarares the function "sum" that takes as argument two constant
+natural numbers and return their sum. The expression whose value is
+the result of calling the function is given after the keyword "with".
+
+A another example would be
+
+function factorial (const n : nat) : nat is
+  var m : nat := 0;
+  var f : nat := 1;
+  begin
+    if n <= 0 then f := 1
+    else
+      for m := 1 to n
+        begin
+          f := f * m
+        end
+   end with f
+
+Like Pascal, Pascaligo offers procedures, as well as functions. The
+difference follows the divide between expressions and instructions:
+function calls are expressions, procedure calls are instructions.
+
+A special case of functions are entry points, which are functions that
+can be called when interacting with the contract after it has been
+originated on the chain. The only difference with function is that
+they are introduced by a keyword "entrypoint", instead of "function",
+and they (currently) must have a special parameter for the storage,
+and the return type must be a pair made of a new storage and a list of
+operations. For example,
+
+entrypoint contribute (storage store : store; ...)
+  : store * list (operation) is
+  var operations : list (operation) := nil
+  begin
+  ...
+  end with (store, operations)
+
+where "storage" is a keyword.
+
+  Pascaligo features predefined types, like integers, natural numbers,
+mutez, strings, maps, lists etc. and constructs to combine those into
+structured types. Amongst those constructs are the records, which
+group and map names (_fields_) to values of potentially different
+types. For instance,
+
+type point is
+  record
+    x : int;
+    y : int
+  end
+
+defines a record type "store" with three fields, each made of a name
+and a type. Values of record types are made by assigning a value to
+each field (in any order). Like so:
+
+const origin : point =
+  record
+    x = 0;
+    y = 0
+  end
+
+At this point it is perhaps useful to remark that there are actually
+two flavours of Pascaligo recognised by the same parser: they should
+be separated in the future, and, for now, it is best to not mix both
+styles. Those style differ in the manner compound constructs are
+delimited
+
+For example, the type "point" above could have been alternatively
+defined as follows:
+
+type point is
+  record [
+    x : int;
+    y : int
+  ]
+
+and the value as
+
+const origin : point = record [x = 0; y = 0];
+
+When updating the contents of a record, Pascaligo offers some
+syntactic support. Instead of writing all the assignments, most of
+which are left unchanged, there is the record patch, which corresponds
+to a functional update in OCaml. For example,
+
+var p : point := origin;
+
+patch p with record y = 10 end;
+
+will update only the field "y" of "p". Of course, this example is not
+impressive, but imagine that one has to update a small number of
+fields in a large record. An alternative syntax is
+
+patch p with record [y = 10];
+
+  Another way to combine types are disjunctive types, which are a
+generalisation of enumerated types found in OCaml. They can be
+interpreted as being a disjoint partition of value sets, each being
+disinguished by a unique tag, or _data constructor_. For example,
+
+type u = unit
+type t = A | B of u | C of int * string
+
+See OCaml.
+
+As in OCaml, their values can be matched against patterns:
+
+match v with
+  A -> "A"
+| B Unit -> "B"
+| C (_, s) -> s
+
+Of course, we also find type aliases, which simply rename a type. More
+importantly, Pascaligo has predefined types that cannot be defined by
+the contract programmer. Indeed, user-defined types are monomorphic
+and non-recursive, in other words, they are not parameterised and
+cannot be defined in terms of themselves. This limitation precludes
+defining lists of values, as a list is an inductive data type: a list
+is either empty or a pair made of an item (the first item) and another
+list (the remaining items). That is why Pascaligo features a native
+polymorphic list type, with the condition that all list values must
+instantiate the type of the items it contains. Another useful data
+abstraction, native to Pascaligo, is the map, which relates values of
+a given type to values of another given type. The last type predefined
+by Pascaligo is the set.
+
+Pascaligo is inspired by Pascal and OCaml. Semi-colons are separators,
+but they can be used as terminators as well.
+
+For example
+
+type store is
+  record
+    goal     : nat;
+    deadline : timestamp;
+    backers  : map (address, nat);
+    funded   : bool;
+  end
+
+can alternatively be written
+
+type store is
+  record
+    goal     : nat;
+    deadline : timestamp;
+    backers  : map (address, nat);
+    funded   : bool
+  end
+
+Only non-recursive types are user-definable in LIGO.
+
+A predefined recursive and polymorphic type is the list (or
+stack). The syntax is the same as in OCaml, with some extra syntax for
+convenience. For example, the empty list can be written in three
+different ways (only one is recommended by contract):
+
+list end
+list []
+nil
+
+A non-empty list starts with the keyword "list" and comes in two
+flavours (only one is recommended by contract):
+
+list 1; 2; 3 end
+list [1; 2; 3]
+
+To push (cons) and element in a list, the infix operator is "::", as
+in OCaml:
+
+1::2::l
+
+All user-definable values in Pascaligo are monomorphic and must be
+annotated with a their types, except in arithmetic or boolean
+expressions, or at their declaration (since their type is given in the
+left-hand side). In particular, empty lists need to be annotated, like
+so
+
+1 :: (nil : list (int))
+
+But
+
+var l : list (int) := list [];
+
+works, as the type is available.

@@ -98,10 +98,13 @@ and print_cartesian {value; _} =
   print_nsepseq "*" print_type_expr value
 
 and print_variant {value; _} =
-  let {constr; kwd_of; product} = value in
+  let {constr; args} = value in
   print_constr    constr;
-  print_token     kwd_of "of";
-  print_cartesian product
+  match args with
+    None -> ()
+  | Some (kwd_of, product) ->
+      print_token     kwd_of "of";
+      print_cartesian product
 
 and print_sum_type {value; _} =
   print_nsepseq "|" print_variant value
