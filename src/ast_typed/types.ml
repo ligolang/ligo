@@ -75,6 +75,12 @@ and lambda = {
   body: block ;
 }
 
+and let_in = {
+  binder: name;
+  rhs: ae;
+  result: ae;
+}
+
 and expression =
   (* Base *)
   | E_literal of literal
@@ -82,6 +88,7 @@ and expression =
   | E_variable of name
   | E_application of (ae * ae)
   | E_lambda of lambda
+  | E_let_in of let_in
   (* Tuple *)
   | E_tuple of ae list
   | E_tuple_accessor of (ae * int) (* Access n'th tuple's element *)

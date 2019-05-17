@@ -54,6 +54,8 @@ and expression ppf (e:expression) : unit =
       name.type_name
       PP_helpers.(list_sep pre_access (const ".")) path
       annotated_expression expr
+  | E_let_in { binder; rhs; result } ->
+      fprintf ppf "let %s = %a in %a" binder annotated_expression rhs annotated_expression result
 
 and value ppf v = annotated_expression ppf v
 

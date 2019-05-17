@@ -94,14 +94,14 @@ module Captured_variables = struct
       let%bind cs' = matching_expression b cs in
       ok @@ union a' cs'
     | E_failwith a -> self a
-    | E_sequence (a , b) ->
-      let%bind lst' = bind_map_list self [ a ; b ] in
-      ok @@ unions lst'
+    | E_sequence (_ , b) -> self b
     | E_loop (expr , body) ->
       let%bind lst' = bind_map_list self [ expr ; body ] in
       ok @@ unions lst'
     | E_assign (_ , _ , expr) -> self expr
-
+    | E_let_in li ->
+      let b' = union (singleton li.binder) b in
+      annotated_expression b' li.result
 
   and instruction' : bindings -> instruction -> (bindings * bindings) result = fun b i ->
     match i with

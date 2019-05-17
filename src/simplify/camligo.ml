@@ -461,8 +461,8 @@ let let_entry : _ -> _ result = fun l ->
   let lambda =
     O.{
       binder = input_nty.type_name ;
-      input_type = Some input_type';
-      output_type = Some output_type';
+      input_type = input_type';
+      output_type = output_type';
       result ;
       body = tpl_declarations @ body' ;
     } in

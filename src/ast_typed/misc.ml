@@ -62,6 +62,11 @@ module Free_variables = struct
     | E_sequence (a , b) -> unions @@ List.map self [ a ; b ]
     | E_loop (expr , body) -> unions @@ List.map self [ expr ; body ]
     | E_assign (_ , _ , expr) -> self expr
+    | E_let_in { binder; rhs; result } ->
+      let b' = union (singleton binder) b in
+      union
+        (annotated_expression b' result)
+        (annotated_expression b rhs)
 
   and lambda : bindings -> lambda -> bindings = fun b l ->
     let b' = union (singleton l.binder) b in
