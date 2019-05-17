@@ -1,3 +1,4 @@
+[@@@warning "-30"]
 module Map = Simple_utils.Map
 module Location = Simple_utils.Location
 
@@ -47,10 +48,16 @@ and type_expression =
 
 and lambda = {
   binder: name ;
-  input_type: type_expression option;
-  output_type: type_expression option;
+  input_type: type_expression;
+  output_type: type_expression;
   result: ae ;
   body: block ;
+}
+
+and let_in = {
+  binder : name;
+  rhs    : ae;
+  result : ae;
 }
 
 and expression =
@@ -60,6 +67,7 @@ and expression =
   | E_variable of name
   | E_lambda of lambda
   | E_application of (ae * ae)
+  | E_let_in of let_in
   (* E_Tuple *)
   | E_tuple of ae list
   (* Sum *)

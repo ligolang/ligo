@@ -59,6 +59,12 @@ module Free_variables = struct
     | E_look_up (a , b) -> unions @@ List.map self [ a ; b ]
     | E_matching (a , cs) -> union (self a) (matching_expression b cs)
     | E_failwith a -> self a
+    | E_let_in { binder; rhs; result } ->
+      let b' = union (singleton binder) b in
+      union
+        (annotated_expression b' result)
+        (annotated_expression b' rhs) (* TODO: what about frees ??? *)
+
 
   and lambda : bindings -> lambda -> bindings = fun b l ->
     let b' = union (singleton l.binder) b in

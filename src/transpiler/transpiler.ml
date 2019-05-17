@@ -247,12 +247,10 @@ and translate_annotated_expression (ae:AST.annotated_expression) : expression re
   let f = translate_annotated_expression in
   match ae.expression with
     (* Optimise immediate application as a let-in *)
-  | E_application ({expression = E_lambda {binder; input_type; output_type=_; body=[]; result}; _},
-                   rhs) ->
-    let%bind ty' = translate_type input_type in
+  | E_let_in {binder; rhs; result} ->
     let%bind rhs' = translate_annotated_expression rhs in
     let%bind result' = translate_annotated_expression result in
-    return (E_let_in ((binder, ty'), rhs', result'))
+    return (E_let_in ((binder, rhs'.type_value), rhs', result'))
   | E_failwith ae -> (
       let%bind ae' = translate_annotated_expression ae in
       return @@ E_constant ("FAILWITH" , [ae'])

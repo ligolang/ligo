@@ -47,6 +47,8 @@ and expression ppf (e:expression) : unit =
   | E_matching (ae, m) ->
       fprintf ppf "match %a with %a" annotated_expression ae (matching annotated_expression) m
   | E_failwith ae -> fprintf ppf "failwith %a" annotated_expression ae
+  | E_let_in { binder; rhs; result } ->
+      fprintf ppf "let %s = %a in %a" binder annotated_expression rhs annotated_expression result
 
 and value ppf v = annotated_expression ppf v
 

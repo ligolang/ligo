@@ -94,6 +94,7 @@ module Captured_variables = struct
       let%bind cs' = matching_expression b cs in
       ok @@ union a' cs'
     | E_failwith a -> self a
+    | E_let_in { binder; rhs; result } -> ignore (binder, rhs, result); (failwith "TODO")
 
   and instruction' : bindings -> instruction -> (bindings * bindings) result = fun b i ->
     match i with

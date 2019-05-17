@@ -490,16 +490,8 @@ and type_annotated_expression : environment -> I.annotated_expression -> O.annot
       result ;
       body ;
     } -> (
-      let%bind input_type =
-        let%bind input_type =
-          trace_option (simple_error "missing annotation on input type")
-            input_type in
-        evaluate_type e input_type in
-      let%bind output_type =
-        let%bind output_type =
-          trace_option (simple_error "missing annotation of output type")
-            output_type in
-        evaluate_type e output_type in
+      let%bind input_type = evaluate_type e input_type in
+      let%bind output_type = evaluate_type e output_type in
       let e' = Environment.add_ez_binder binder input_type e in
       let%bind (body, e'') = type_block_full e' body in
       let%bind result = type_annotated_expression e'' result in
@@ -571,6 +563,11 @@ and type_annotated_expression : environment -> I.annotated_expression -> O.annot
           return (O.E_matching (ex', m')) tv
         )
     )
+  | E_let_in {binder; rhs; result} ->
+    let%bind rhs = type_annotated_expression e rhs in
+    let e' = Environment.add_ez_binder binder rhs.type_annotation e in
+    let%bind result = type_annotated_expression e' result in
+    return (E_let_in {binder; rhs; result}) result.type_annotation
 
 and type_constant (name:string) (lst:O.type_value list) (tv_opt:O.type_value option) : (string * O.type_value) result =
   (* Constant poorman's polymorphism *)
@@ -645,7 +642,7 @@ let rec untype_annotated_expression (e:O.annotated_expression) : (I.annotated_ex
       let%bind output_type = untype_type_value output_type in
       let%bind result = untype_annotated_expression result in
       let%bind body = untype_block body in
-      return (E_lambda {binder;input_type = Some input_type;output_type = Some output_type;body;result})
+      return (E_lambda {binder;input_type = input_type;output_type = output_type;body;result})
   | E_tuple lst ->
       let%bind lst' = bind_list
         @@ List.map untype_annotated_expression lst in
@@ -679,6 +676,10 @@ let rec untype_annotated_expression (e:O.annotated_expression) : (I.annotated_ex
   | E_failwith ae ->
       let%bind ae' = untype_annotated_expression ae in
       return (E_failwith ae')
+  | E_let_in {binder;rhs;result} ->
+      let%bind rhs = untype_annotated_expression rhs in
+      let%bind result = untype_annotated_expression result in
+      return (E_let_in {binder;rhs;result})
 
 and untype_block (b:O.block) : (I.block) result =
   bind_list @@ List.map untype_instruction b
