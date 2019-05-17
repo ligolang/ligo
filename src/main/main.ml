@@ -25,8 +25,7 @@ let untype_expression (e:AST_Typed.annotated_expression) : AST_Simplified.annota
 
 let transpile (p:AST_Typed.program) : Mini_c.program result = Transpiler.translate_program p
 let transpile_entry (p:AST_Typed.program) (name:string) : Mini_c.anon_function result = Transpiler.translate_entry p name
-let transpile_expression ?(env:Mini_c.Environment.t = Mini_c.Environment.empty)
-    (e:AST_Typed.annotated_expression) : Mini_c.expression result = Transpiler.translate_annotated_expression env e
+let transpile_expression (e:AST_Typed.annotated_expression) : Mini_c.expression result = Transpiler.translate_annotated_expression e
 let transpile_value
     (e:AST_Typed.annotated_expression) : Mini_c.value result =
   let%bind f =

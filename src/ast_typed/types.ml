@@ -19,7 +19,9 @@ and declaration =
 
 and environment_element_definition =
   | ED_binder
-  | ED_declaration of expression
+  | ED_declaration of (annotated_expression * free_variables)
+
+and free_variables = name list
 
 and environment_element = {
   type_value : type_value ;

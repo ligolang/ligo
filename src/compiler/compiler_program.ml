@@ -84,7 +84,9 @@ and translate_function (content:anon_function) : michelson result =
 
 and translate_expression ?(first=false) (expr:expression) (env:environment) : (michelson * environment) result =
   let (expr' , ty) = Combinators.Expression.(get_content expr , get_type expr) in
-  let error_message () = Format.asprintf  "%a" PP.expression expr in
+  let error_message () =
+    Format.asprintf  "\n- expr: %a\n- type: %a\n" PP.expression expr PP.type_ ty
+  in
 
   let return ?prepend_env ?end_env code =
     let%bind env' =

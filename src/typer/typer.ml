@@ -46,7 +46,6 @@ module Errors = struct
         I.PP.annotated_expression ae
     in
     error title full ()
-
 end
 open Errors
 
@@ -73,7 +72,7 @@ and type_declaration env : I.declaration -> (environment * O.declaration option)
       let%bind ae' =
         trace (constant_declaration_error name annotated_expression) @@
         type_annotated_expression env annotated_expression in
-      let env' = Environment.add_ez_declaration name (O.get_type_annotation ae') (O.get_expression ae') env in
+      let env' = Environment.add_ez_ae name ae' env in
       ok (env', Some (O.Declaration_constant ((make_n_e name ae') , env')))
 
 and type_block_full (e:environment) (b:I.block) : (O.block * environment) result =

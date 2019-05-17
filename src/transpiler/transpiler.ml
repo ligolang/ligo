@@ -67,10 +67,11 @@ let rec translate_type (t:AST.type_value) : type_value result =
         ok (T_pair (a, b))
       in
       Append_tree.fold_ne translate_type aux node
-  | T_function (param, result) ->
+  | T_function (param, result) -> (
       let%bind param' = translate_type param in
       let%bind result' = translate_type result in
       ok (T_function (param', result'))
+    )
 
 let tuple_access_to_lr : type_value -> type_value list -> int -> (type_value * [`Left | `Right]) list result = fun ty tys ind ->
   let node_tv = Append_tree.of_list @@ List.mapi (fun i a -> (i, a)) tys in
@@ -130,11 +131,11 @@ and translate_instruction (env:Environment.t) (i:AST.instruction) : statement li
   let return ?(env' = env) x : statement list result = ok ([x, environment_wrap env env']) in
   match i with
   | I_declaration {name;annotated_expression} ->
-      let%bind expression = translate_annotated_expression env annotated_expression in
+      let%bind expression = translate_annotated_expression annotated_expression in
       let env' = Environment.add (name, (Combinators.Expression.get_type expression)) env in
       return ~env' (S_declaration (name, expression))
   | I_assignment {name;annotated_expression} ->
-      let%bind expression = translate_annotated_expression env annotated_expression in
+      let%bind expression = translate_annotated_expression annotated_expression in
       return (S_assignment (name, expression))
   | I_patch (r, s, v) -> (
       let ty = r.type_value in
@@ -165,11 +166,11 @@ and translate_instruction (env:Environment.t) (i:AST.instruction) : statement li
           | Access_map _k -> simple_fail "no patch for map yet"
       in
       let%bind (_, path) = bind_fold_right_list aux (ty, []) s in
-      let%bind v' = translate_annotated_expression env v in
+      let%bind v' = translate_annotated_expression v in
       return (S_patch (r.type_name, path, v'))
     )
   | I_matching (expr, m) -> (
-      let%bind expr' = translate_annotated_expression env expr in
+      let%bind expr' = translate_annotated_expression expr in
       let env' = env in
       let return s =
         ok [ (s, environment_wrap env env) ] in
@@ -191,12 +192,12 @@ and translate_instruction (env:Environment.t) (i:AST.instruction) : statement li
       | _ -> simple_fail "todo : match"
     )
   | I_loop (expr, body) ->
-      let%bind expr' = translate_annotated_expression env expr in
+      let%bind expr' = translate_annotated_expression expr in
       let%bind body' = translate_block env body in
       return (S_while (expr', body'))
   | I_skip -> ok []
   | I_do ae -> (
-      let%bind ae' = translate_annotated_expression env ae in
+      let%bind ae' = translate_annotated_expression ae in
       return @@ S_do ae'
     )
 
@@ -211,14 +212,26 @@ and translate_literal : AST.literal -> value = fun l -> match l with
   | Literal_operation op -> D_operation op
   | Literal_unit -> D_unit
 
+and transpile_environment_element_type : AST.environment_element -> type_value result = fun ele ->
+  match (AST.get_type' ele.type_value , ele.definition) with
+  | (AST.T_function (f , arg) , ED_declaration (ae , ((_ :: _) as captured_variables)) ) ->
+    let%bind f' = translate_type f in
+    let%bind arg' = translate_type arg in
+    let%bind env' = transpile_environment ae.environment in
+    let sub_env = Mini_c.Environment.select captured_variables env' in
+    ok @@ Combinators.t_deep_closure sub_env f' arg'
+  | _ -> translate_type ele.type_value
+
 and transpile_small_environment : AST.small_environment -> Environment.t result = fun x ->
   let x' = AST.Environment.Small.get_environment x in
   let aux prec (name , (ele : AST.environment_element)) =
-    let%bind tv' = translate_type ele.type_value in
+    let%bind tv' = transpile_environment_element_type ele in
     ok @@ Environment.add (name , tv') prec
   in
-  trace (simple_error "transpiling small environment") @@
-  bind_fold_right_list aux Environment.empty x'
+  let%bind result =
+    trace (simple_error "transpiling small environment") @@
+    bind_fold_right_list aux Environment.empty x' in
+  ok result
 
 and transpile_environment : AST.full_environment -> Environment.t result = fun x ->
   let%bind nlst = bind_map_ne_list transpile_small_environment x in
@@ -228,29 +241,29 @@ and tree_of_sum : AST.type_value -> (type_name * AST.type_value) Append_tree.t r
   let%bind map_tv = get_t_sum t in
   ok @@ Append_tree.of_list @@ kv_list_of_map map_tv
 
-and translate_annotated_expression (env:Environment.t) (ae:AST.annotated_expression) : expression result =
+and translate_annotated_expression (ae:AST.annotated_expression) : expression result =
   let%bind tv = translate_type ae.type_annotation in
-  let return ?(tv = tv) expr =
-    (* let%bind env' = transpile_environment ae.environment in *)
-    ok @@ Combinators.Expression.make_tpl (expr, tv) in
-  let f = translate_annotated_expression env in
+  let return ?(tv = tv) expr = ok @@ Combinators.Expression.make_tpl (expr, tv) in
+  let f = translate_annotated_expression in
   match ae.expression with
   | E_failwith ae -> (
-      let%bind ae' = translate_annotated_expression env ae in
+      let%bind ae' = translate_annotated_expression ae in
       return @@ E_constant ("FAILWITH" , [ae'])
     )
   | E_literal l -> return @@ E_literal (translate_literal l)
-  | E_variable name ->
-      let%bind tv =
-        trace_option (simple_error "transpiler: variable not in env") @@
-        Environment.get_opt name env in
+  | E_variable name -> (
+      let%bind ele =
+        trace_option (simple_error "name not in environment") @@
+        AST.Environment.get_opt name ae.environment in
+      let%bind tv = transpile_environment_element_type ele in
       return ~tv @@ E_variable name
+    )
   | E_application (a, b) ->
-      let%bind a = translate_annotated_expression env a in
-      let%bind b = translate_annotated_expression env b in
+      let%bind a = translate_annotated_expression a in
+      let%bind b = translate_annotated_expression b in
       return @@ E_application (a, b)
   | E_constructor (m, param) ->
-      let%bind param' = translate_annotated_expression env param in
+      let%bind param' = translate_annotated_expression param in
       let (param'_expr , param'_tv) = Combinators.Expression.(get_content param' , get_type param') in
       let%bind node_tv = tree_of_sum ae.type_annotation in
       let leaf (k, tv) : (expression' option * type_value) result =
@@ -287,7 +300,7 @@ and translate_annotated_expression (env:Environment.t) (ae:AST.annotated_express
         let tv = T_pair (a_ty , b_ty) in
         return ~tv @@ E_constant ("PAIR", [a; b])
       in
-      Append_tree.fold_ne (translate_annotated_expression env) aux node
+      Append_tree.fold_ne (translate_annotated_expression) aux node
   | E_tuple_accessor (tpl, ind) ->
       let%bind ty' = translate_type tpl.type_annotation in
       let%bind ty_lst = get_t_tuple tpl.type_annotation in
@@ -298,7 +311,7 @@ and translate_annotated_expression (env:Environment.t) (ae:AST.annotated_express
           | `Left -> "CAR"
           | `Right -> "CDR" in
         Combinators.Expression.make_tpl (E_constant (c, [pred]) , ty) in
-      let%bind tpl' = translate_annotated_expression env tpl in
+      let%bind tpl' = translate_annotated_expression tpl in
       let expr = List.fold_left aux tpl' path in
       ok expr
   | E_record m ->
@@ -311,7 +324,7 @@ and translate_annotated_expression (env:Environment.t) (ae:AST.annotated_express
         let tv = T_pair (a_ty , b_ty) in
         return ~tv @@ E_constant ("PAIR", [a; b])
       in
-      Append_tree.fold_ne (translate_annotated_expression env) aux node
+      Append_tree.fold_ne (translate_annotated_expression) aux node
   | E_record_accessor (record, property) ->
       let%bind ty' = translate_type (get_type_annotation record) in
       let%bind ty_smap = get_t_record (get_type_annotation record) in
@@ -322,21 +335,23 @@ and translate_annotated_expression (env:Environment.t) (ae:AST.annotated_express
           | `Left -> "CAR"
           | `Right -> "CDR" in
         Combinators.Expression.make_tpl (E_constant (c, [pred]) , ty) in
-      let%bind record' = translate_annotated_expression env record in
+      let%bind record' = translate_annotated_expression record in
       let expr = List.fold_left aux record' path in
       ok expr
   | E_constant (name, lst) ->
-      let%bind lst' = bind_list @@ List.map (translate_annotated_expression env) lst in (
+      let%bind lst' = bind_list @@ List.map (translate_annotated_expression) lst in (
         match name, lst with
         | "NONE", [] ->
             let%bind o = Mini_c.Combinators.get_t_option tv in
             return @@ E_make_none o
         | _ -> return @@ E_constant (name, lst')
       )
-  | E_lambda l -> translate_lambda env l
+  | E_lambda l ->
+    let%bind env = transpile_environment ae.environment in
+    translate_lambda env l
   | E_list lst ->
       let%bind t = Mini_c.Combinators.get_t_list tv in
-      let%bind lst' = bind_map_list (translate_annotated_expression env) lst in
+      let%bind lst' = bind_map_list (translate_annotated_expression) lst in
       let aux : expression -> expression -> expression result = fun prev cur ->
         return @@ E_constant ("CONS", [cur ; prev]) in
       let%bind (init : expression) = return @@ E_make_empty_list t in
@@ -347,7 +362,7 @@ and translate_annotated_expression (env:Environment.t) (ae:AST.annotated_express
         let%bind prev' = prev in
         let%bind (k', v') =
           let v' = e_a_some v ae.environment in
-          bind_map_pair (translate_annotated_expression env) (k, v') in
+          bind_map_pair (translate_annotated_expression) (k, v') in
         return @@ E_constant ("UPDATE", [k' ; v' ; prev'])
       in
       let init = return @@ E_make_empty_map (src, dst) in
@@ -356,17 +371,16 @@ and translate_annotated_expression (env:Environment.t) (ae:AST.annotated_express
       let%bind (ds', i') = bind_map_pair f dsi in
       return @@ E_constant ("GET", [i' ; ds'])
   | E_matching (expr, m) -> (
-      let%bind expr' = translate_annotated_expression env expr in
+      let%bind expr' = translate_annotated_expression expr in
       match m with
       | Match_bool {match_true ; match_false} ->
-          let%bind (t , f) = bind_map_pair (translate_annotated_expression env) (match_true, match_false) in
+          let%bind (t , f) = bind_map_pair (translate_annotated_expression) (match_true, match_false) in
           return @@ E_if_bool (expr', t, f)
       | Match_option { match_none; match_some = ((name, tv), s) } ->
-          let%bind n = translate_annotated_expression env match_none in
+          let%bind n = translate_annotated_expression match_none in
           let%bind (tv' , s') =
             let%bind tv' = translate_type tv in
-            let env' = Environment.(add (name , tv') @@ env) in
-            let%bind s' = translate_annotated_expression env' s in
+            let%bind s' = translate_annotated_expression s in
             ok (tv' , s') in
           return @@ E_if_none (expr' , n , ((name , tv') , s'))
       | Match_variant (lst , variant) -> (
@@ -388,34 +402,31 @@ and translate_annotated_expression (env:Environment.t) (ae:AST.annotated_express
             in aux tree'
           in
 
-          let rec aux (top , env) t =
+          let rec aux top t =
             match t with
             | ((`Leaf constructor_name) , tv) -> (
                 let%bind ((_ , name) , body) =
                   trace_option (simple_error "not supposed to happen here: missing match clause") @@
                   List.find_opt (fun ((constructor_name' , _) , _) -> constructor_name' = constructor_name) lst in
-                let env' = Environment.(add (name , tv) env) in
-                let%bind body' = translate_annotated_expression env' body in
+                let%bind body' = translate_annotated_expression body in
                 return @@ E_let_in ((name , tv) , top , body')
               )
             | ((`Node (a , b)) , tv) ->
                 let%bind a' =
                   let%bind a_ty = get_t_left tv in
                   let a_var = "left" , a_ty in
-                  let env' = Environment.(add a_var env) in
-                  let%bind e = aux (((Expression.make (E_variable "left") a_ty)) , env') a in
+                  let%bind e = aux (((Expression.make (E_variable "left") a_ty))) a in
                   ok (a_var , e)
                 in
                 let%bind b' =
                   let%bind b_ty = get_t_right tv in
                   let b_var = "right" , b_ty in
-                  let env' = Environment.(add b_var env) in
-                  let%bind e = aux (((Expression.make (E_variable "right") b_ty)) , env') b in
+                  let%bind e = aux (((Expression.make (E_variable "right") b_ty))) b in
                   ok (b_var , e)
                 in
                 return @@ E_if_left (top , a' , b')
           in
-          aux (expr' , env) tree''
+          aux expr' tree''
         )
       | AST.Match_list _ | AST.Match_tuple (_, _) ->
           simple_fail "only match bool and option exprs are translated yet"
@@ -442,7 +453,7 @@ and translate_lambda_deep : Mini_c.Environment.t -> AST.lambda -> Mini_c.express
       let statements' = load_st :: statements in
       (statements' , body_env)
     in
-    let%bind result = translate_annotated_expression body_env.post_environment result in
+    let%bind result = translate_annotated_expression result in
     let tv = Mini_c.t_function input output in
     let f_literal = D_function { binder ; input ; output ; body ; result } in
     let expr = Expression.make_tpl (E_literal f_literal , tv) in
@@ -461,29 +472,31 @@ and translate_lambda env l =
       let ((body_bounds , _) as b) = block' bindings body in
       b , annotated_expression body_bounds result
     ) in
-  match (body_fvs, result_fvs) with
-  | [] , [] -> (
-      let%bind empty_env =
+  let%bind result =
+    match (body_fvs, result_fvs) with
+    | [] , [] -> (
+        let%bind empty_env =
+          let%bind input = translate_type input_type in
+          ok Environment.(add (binder, input) empty) in
+        let%bind body' = translate_block empty_env body in
+        let%bind result' = translate_annotated_expression result in
+        trace (simple_error "translate quote") @@
         let%bind input = translate_type input_type in
-        ok Environment.(add (binder, input) empty) in
-      let%bind ((_, e) as body') = translate_block empty_env body in
-      let%bind result' = translate_annotated_expression e.post_environment result in
-      trace (simple_error "translate quote") @@
-      let%bind input = translate_type input_type in
-      let%bind output = translate_type output_type in
-      let tv = Combinators.t_function input output in
-      let content = D_function {binder;input;output;body=body';result=result'} in
-      ok @@ Combinators.Expression.make_tpl (E_literal content, tv)
-    )
-  | _ -> (
-      trace (simple_error "translate lambda deep") @@
-      translate_lambda_deep env l
-    )
+        let%bind output = translate_type output_type in
+        let tv = Combinators.t_function input output in
+        let content = D_function {binder;input;output;body=body';result=result'} in
+        ok @@ Combinators.Expression.make_tpl (E_literal content, tv)
+      )
+    | _ -> (
+        trace (simple_error "translate lambda deep") @@
+        translate_lambda_deep env l
+      ) in
+  ok result
 
 let translate_declaration env (d:AST.declaration) : toplevel_statement result =
   match d with
   | Declaration_constant ({name;annotated_expression} , _) ->
-      let%bind expression = translate_annotated_expression env annotated_expression in
+      let%bind expression = translate_annotated_expression annotated_expression in
       let tv = Combinators.Expression.get_type expression in
       let env' = Environment.add (name, tv) env in
       ok @@ ((name, expression), environment_wrap env env')
