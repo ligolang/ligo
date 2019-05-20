@@ -135,11 +135,18 @@ let select : environment -> string list -> michelson result = fun e lst ->
 
   ok code
 
-let clear : environment -> michelson result = fun e -> select e []
+let select_env : environment -> environment -> michelson result = fun source filter ->
+  let lst = Environment.get_names filter in
+  select source lst
 
-let select_env : environment -> environment -> michelson result = fun e e' ->
-  let lst = Environment.get_names e' in
-  select e lst
+let clear : environment -> (michelson * environment) result = fun e ->
+  let lst = Environment.get_names e in
+  let%bind first_name =
+    trace_option (simple_error "try to clear empty env") @@
+    List.nth_opt lst 0 in
+  let%bind code = select e [ first_name ] in
+  let e' = Environment.select [ first_name ] e in
+  ok (code , e')
 
 let pack : environment -> michelson result = fun e ->
   let%bind () =
@@ -276,3 +283,8 @@ let add_packed_anon : environment -> type_value -> michelson result = fun e type
   in
 
   ok code
+
+let pop : environment -> environment result = fun e ->
+  match e with
+  | [] -> simple_fail "pop empty env"
+  | _ :: tl -> ok tl

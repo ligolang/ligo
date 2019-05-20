@@ -64,6 +64,8 @@ and expression' ppf (e:expression') = match e with
   | E_environment_capture s -> fprintf ppf "capture(%a)" (list_sep string (const " ; ")) s
   | E_environment_load (expr , env) -> fprintf ppf "load %a in %a" expression expr environment env
   | E_environment_select env -> fprintf ppf "select %a" environment env
+  | E_environment_return expr -> fprintf ppf "return %a" expression expr
+  | E_skip -> fprintf ppf "skip"
   | E_variable v -> fprintf ppf "%s" v
   | E_application(a, b) -> fprintf ppf "(%a)@(%a)" expression a expression b
   | E_constant(p, lst) -> fprintf ppf "%s %a" p (pp_print_list ~pp_sep:space_sep expression) lst
@@ -76,6 +78,7 @@ and expression' ppf (e:expression') = match e with
   | E_if_left (c, ((name_l, _) , l), ((name_r, _) , r)) ->
       fprintf ppf "%a ?? %s -> %a : %s -> %a" expression c name_l expression l name_r expression r
   | E_sequence (a , b) -> fprintf ppf "%a ; %a" expression a expression b
+  (* | E_sequence_drop (a , b) -> fprintf ppf "%a ;- %a" expression a expression b *)
   | E_let_in ((name , _) , expr , body) ->
       fprintf ppf "let %s = %a in %a" name expression expr expression body
   | E_assignment (r , path , e) ->
@@ -91,12 +94,11 @@ and expression_with_type : _ -> expression -> _  = fun ppf e ->
     expression' e.content
     type_ e.type_value
 
-and function_ ppf ({binder ; input ; output ; body ; result}:anon_function) =
-  fprintf ppf "fun (%s:%a) : %a %a return %a"
+and function_ ppf ({binder ; input ; output ; result}:anon_function) =
+  fprintf ppf "fun (%s:%a) : %a return %a"
     binder
     type_ input
     type_ output
-    block body
     expression result
 
 and assignment ppf ((n, e):assignment) = fprintf ppf "%s = %a;" n expression e

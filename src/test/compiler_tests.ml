@@ -11,29 +11,19 @@ let run_entry_int (e:anon_function) (n:int) : int result =
   | _ -> simple_fail "result is not an int"
 
 let identity () : unit result =
-  let e = basic_int_quote_env in
-  let s = statement (S_declaration ("output", e_var_int "input")) e in
-  let%bind b = block [s] in
-  let%bind f = basic_int_quote b in
+  let%bind f = basic_int_quote (e_var_int "input") in
   let%bind result = run_entry_int f 42 in
   let%bind _ = Assert.assert_equal_int ~msg:__LOC__ 42 result in
   ok ()
 
 let multiple_vars () : unit result =
-  let e = basic_int_quote_env in
-  (*
-     Statements can change the environment, and you don't want to pass the new environment manually.
-     [statements] deals with this and this is why those statements are parametrized over an environment.
-     Yes. One could do a monad. Feel free when we have the time.
-   *)
-  let ss = statements [
-      (fun e -> statement (S_declaration ("a", e_var_int "input")) e) ;
-      (fun e -> statement (S_declaration ("b", e_var_int "input")) e) ;
-      (fun e -> statement (S_declaration ("c", e_var_int "a")) e) ;
-      (fun e -> statement (S_declaration ("output", e_var_int "c")) e) ;
-    ] e in
-  let%bind b = block ss in
-  let%bind f = basic_int_quote b in
+  let expr =
+    e_let_int "a" t_int (e_var_int "input") @@
+    e_let_int "b" t_int (e_var_int "input") @@
+    e_let_int "c" t_int (e_var_int "a") @@
+    e_let_int "output" t_int (e_var_int "c") @@
+    e_var_int "output" in
+  let%bind f = basic_int_quote expr in
   let%bind result = run_entry_int f 42 in
   let%bind _ = Assert.assert_equal_int ~msg:__LOC__ 42 result in
   ok ()

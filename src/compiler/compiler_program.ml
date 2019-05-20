@@ -87,6 +87,7 @@ and translate_expression ?(first=false) (expr:expression) (env:environment) : (m
   let error_message () =
     Format.asprintf  "\n- expr: %a\n- type: %a\n" PP.expression expr PP.type_ ty
   in
+  let i_skip = i_push_unit in
 
   let return ?prepend_env ?end_env code =
     let%bind env' =
@@ -123,6 +124,7 @@ and translate_expression ?(first=false) (expr:expression) (env:environment) : (m
 
   trace (error (thunk "compiling expression") error_message) @@
   match expr' with
+  | E_skip -> return @@ i_skip
   | E_environment_capture c ->
       let%bind code = Compiler_environment.pack_select env c in
       return @@ code
@@ -130,14 +132,26 @@ and translate_expression ?(first=false) (expr:expression) (env:environment) : (m
       let%bind (expr' , _) = translate_expression expr env in
       let%bind clear = Compiler_environment.select env [] in
       let%bind unpack = Compiler_environment.unpack load_env in
-      return ~end_env:load_env @@ seq [
+      return ~prepend_env:load_env @@ seq [
         expr' ;
         dip clear ;
         unpack ;
+        i_skip ;
       ]
   | E_environment_select sub_env ->
       let%bind code = Compiler_environment.select_env env sub_env in
-      return ~end_env:sub_env code
+      return ~prepend_env:sub_env @@ seq [
+        code ;
+        i_skip ;
+      ]
+  | E_environment_return expr -> (
+      let%bind (expr' , env) = translate_expression expr env in
+      let%bind (code , cleared_env) = Compiler_environment.clear env in
+      return ~end_env:cleared_env @@ seq [
+        expr' ;
+        code ;
+      ]
+    )
   | E_literal v ->
       let%bind v = translate_value v in
       let%bind t = Compiler_type.type_ ty in
@@ -195,11 +209,21 @@ and translate_expression ?(first=false) (expr:expression) (env:environment) : (m
     return code
   | E_sequence (a , b) ->
     let%bind (a' , env_a) = translate_expression a env in
-    let%bind (b' , env_b) = translate_expression b env_a in
-    return ~prepend_env:env_b @@ seq [
+    let%bind env_a' = Compiler_environment.pop env_a in
+    let%bind (b' , env_b) = translate_expression b env_a' in
+    return ~end_env:env_b @@ seq [
       a' ;
+      i_drop ;
       b' ;
     ]
+  (* | E_sequence_drop (a , b) ->
+   *   let%bind (a' , env_a) = translate_expression a env in
+   *   let%bind (b' , env_b) = translate_expression b env_a in
+   *   return ~end_env:env_b @@ seq [
+   *     a' ;
+   *     i_drop ;
+   *     b' ;
+   *   ] *)
   | E_constant(str, lst) ->
       let module L = Logger.Stateful() in
       let%bind lst' =
@@ -250,8 +274,9 @@ and translate_expression ?(first=false) (expr:expression) (env:environment) : (m
       return @@ i_none o'
   | E_if_bool (c, a, b) -> (
       let%bind (c' , env') = translate_expression c env in
-      let%bind (a' , _) = translate_expression a env' in
-      let%bind (b' , _) = translate_expression b env' in
+      let%bind popped = Compiler_environment.pop env' in
+      let%bind (a' , _) = translate_expression a popped in
+      let%bind (b' , _) = translate_expression b popped in
       let%bind code = ok (seq [
           c' ;
           i_if a' b' ;
@@ -259,16 +284,18 @@ and translate_expression ?(first=false) (expr:expression) (env:environment) : (m
       return code
     )
   | E_if_none (c, n, (ntv , s)) -> (
-      let%bind (c' , _env') = translate_expression c env in
-      let%bind (n' , _) = translate_expression n env in
-      let s_env = Environment.add ntv env in
-      let%bind (s' , _) = translate_expression s s_env in
-      let%bind restrict_s = Compiler_environment.select_env s_env env in
+      let%bind (c' , env') = translate_expression c env in
+      let%bind popped = Compiler_environment.pop env' in
+      let%bind (n' , _) = translate_expression n popped in
+      let s_env = Environment.add ntv popped in
+      let%bind (s' , s_env') = translate_expression s s_env in
+      let%bind popped' = Compiler_environment.pop s_env' in
+      let%bind restrict_s = Compiler_environment.select_env popped' popped in
       let%bind code = ok (seq [
           c' ;
           i_if_none n' (seq [
               s' ;
-              restrict_s ;
+              dip restrict_s ;
             ])
           ;
         ]) in
@@ -298,10 +325,14 @@ and translate_expression ?(first=false) (expr:expression) (env:environment) : (m
       return code
     )
   | E_let_in (v, expr , body) -> (
-      let%bind (expr' , _) = translate_expression expr env in
-      let env' = Environment.add v env in
-      let%bind (body' , _) = translate_expression body env' in
-      let%bind restrict = Compiler_environment.select_env env' env in
+      let%bind (expr' , expr_env) = translate_expression expr env in
+      let%bind env' =
+        let%bind popped = Compiler_environment.pop expr_env in
+        ok @@ Environment.add v popped in
+      let%bind (body' , body_env) = translate_expression body env' in
+      let%bind restrict =
+        let%bind popped = Compiler_environment.pop body_env in
+        Compiler_environment.select_env popped env in
       let%bind code = ok (seq [
           expr' ;
           body' ;
@@ -312,6 +343,7 @@ and translate_expression ?(first=false) (expr:expression) (env:environment) : (m
     )
   | E_assignment (name , lrs , expr) -> (
       let%bind (expr' , env') = translate_expression expr env in
+      (* Format.printf "\nass env':%a\n" PP.environment env' ; *)
       let%bind get_code = Compiler_environment.get env' name in
       let modify_code =
         let aux acc step = match step with
@@ -333,23 +365,33 @@ and translate_expression ?(first=false) (expr:expression) (env:environment) : (m
         in
         error title content in
       trace error @@
-      return ~end_env:env @@ seq [
+      return ~prepend_env:env @@ seq [
+        i_comment "assign: start # env" ;
         expr' ;
+        i_comment "assign: compute rhs # rhs : env" ;
         get_code ;
-        i_swap ; modify_code ;
+        i_comment "assign: get name # name : rhs : env" ;
+        i_swap ;
+        i_comment "assign: swap # rhs : name : env" ;
+        modify_code ;
+        i_comment "assign: modify code # name+rhs : env" ;
         set_code ;
+        i_comment "assign: set new # new_env" ;
+        i_skip ;
       ]
     )
   | E_while (expr, block) -> (
       let%bind (expr' , env') = translate_expression expr env in
-      let%bind (block' , env'') = translate_expression block env' in
-      let%bind restrict_block = Compiler_environment.select_env env'' env' in
+      let%bind popped = Compiler_environment.pop env' in
+      let%bind (block' , env'') = translate_expression block popped in
+      let%bind restrict_block = Compiler_environment.select_env env'' popped in
       return @@ seq [
         expr' ;
         prim ~children:[seq [
             block' ;
             restrict_block ;
             expr']] I_LOOP ;
+        i_skip ;
       ]
     )
 
@@ -528,16 +570,12 @@ and translate_regular_block ((b, env):block) : michelson result =
   let code = seq (List.rev codes) in
   ok code
 
-and translate_quote_body ({body;result} as f:anon_function) : michelson result =
-  let%bind body' = translate_regular_block body in
-  let%bind (expr , _) = translate_expression result (snd body).post_environment in
-  let%bind restrict = Compiler_environment.clear (snd body).post_environment in
+and translate_quote_body ({result ; binder ; input} as f:anon_function) : michelson result =
+  let env = Environment.(add (binder , input) empty) in
+  let%bind (expr , _) = translate_expression result env in
   let code = seq [
-      i_comment "function body" ;
-      body' ;
       i_comment "function result" ;
       expr ;
-      dip restrict ;
     ] in
 
   let%bind _assert_type =
@@ -547,11 +585,10 @@ and translate_quote_body ({body;result} as f:anon_function) : michelson result =
     let output_stack_ty = Stack.(output_ty @: nil) in
     let error_message () =
       Format.asprintf
-        "\ncode : %a\ninput : %a\noutput : %a\nenv : %a\n"
+        "\ncode : %a\ninput : %a\noutput : %a\n"
         Michelson.pp code
         PP.type_ f.input
         PP.type_ f.output
-        PP.environment (snd body).post_environment
     in
     let%bind _ =
       Trace.trace_tzresult_lwt (

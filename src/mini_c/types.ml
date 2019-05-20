@@ -56,6 +56,8 @@ and expression' =
   | E_environment_capture of selector
   | E_environment_select of environment
   | E_environment_load of (expression * environment)
+  | E_environment_return of expression
+  | E_skip
   | E_constant of string * expression list
   | E_application of expression * expression
   | E_variable of var_name
@@ -67,6 +69,7 @@ and expression' =
   | E_if_left of expression * ((var_name * type_value) * expression) * ((var_name * type_value) * expression)
   | E_let_in of ((var_name * type_value) * expression * expression)
   | E_sequence of (expression * expression)
+  (* | E_sequence_drop of (expression * expression) *)
   | E_assignment of (string * [`Left | `Right] list * expression)
   | E_while of expression * expression
 
@@ -98,7 +101,6 @@ and anon_function = {
   binder : string ;
   input : type_value ;
   output : type_value ;
-  body : block ;
   result : expression ;
 }
 
