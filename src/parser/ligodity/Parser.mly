@@ -3,6 +3,51 @@
 
 open AST
 
+(* We rewrite "fun p -> e" into "fun x -> match x with p -> e" *)
+
+let norm_fun_expr patterns expr =
+  let ghost_of value = Region.{region=ghost; value} in
+  let ghost = Region.ghost in
+  let apply pattern expr =
+    match pattern with
+      PVar var ->
+        let fun_expr = {
+          kwd_fun = ghost;
+          param   = var;
+          arrow   = ghost;
+          body    = expr} in
+        EFun (ghost_of fun_expr)
+    | _ -> let fresh = Utils.gen_sym () |> ghost_of in
+          let clause = {pattern; arrow=ghost; rhs=expr} in
+          let clause = ghost_of clause in
+          let cases = ghost_of (clause, []) in
+          let case = {
+            kwd_match = ghost;
+            expr = EVar fresh;
+            opening = With ghost;
+            lead_vbar = None;
+            cases;
+            closing = End ghost} in
+          let case = ECase (ghost_of case) in
+          let fun_expr = {
+            kwd_fun = ghost;
+            param   = fresh;
+            arrow   = ghost;
+            body    = case}
+          in EFun (ghost_of fun_expr)
+  in Utils.nseq_foldr apply patterns expr
+
+(*
+let norm_fun_expr patterns expr =
+  let apply pattern expr =
+    let fun_expr = {
+      kwd_fun = Region.ghost;
+      param   = pattern;
+      arrow   = Region.ghost;
+      body    = expr} in
+    EFun {region=Region.ghost; value=fun_expr}
+  in Utils.nseq_foldr apply patterns expr
+ *)
 (* END HEADER *)
 %}
 
@@ -236,7 +281,7 @@ field_decl:
 
 let_binding:
   ident nseq(sub_irrefutable) type_annotation? eq expr {
-    let let_rhs = EFun (norm $2 $4 $5) in
+    let let_rhs = norm_fun_expr $2 $5 in
     {pattern = PVar $1; lhs_type=$3; eq = Region.ghost; let_rhs}
   }
 | irrefutable type_annotation? eq expr {
@@ -255,13 +300,13 @@ sub_irrefutable:
   ident                                                  {    PVar $1 }
 | wild                                                   {   PWild $1 }
 | unit                                                   {   PUnit $1 }
-| par(closed_irrefutable)                           {    PPar $1 }
+| par(closed_irrefutable)                                {    PPar $1 }
 
 closed_irrefutable:
-  reg(tuple(sub_irrefutable))                           {   PTuple $1 }
-| sub_irrefutable                                       {          $1 }
-| reg(constr_pattern)                                   {  PConstr $1 }
-| reg(typed_pattern)                                    {   PTyped $1 }
+  reg(tuple(sub_irrefutable))                            {  PTuple $1 }
+| sub_irrefutable                                        {         $1 }
+| reg(constr_pattern)                                    { PConstr $1 }
+| reg(typed_pattern)                                     {  PTyped $1 }
 
 typed_pattern:
   irrefutable colon type_expr  { {pattern=$1; colon=$2; type_expr=$3} }
@@ -387,12 +432,12 @@ case_clause(right_expr):
 
 let_expr(right_expr):
   reg(kwd(Let) let_binding kwd(In) right_expr {$1,$2,$3,$4}) {
-    ELetIn $1 }
+    let Region.{region; value = kwd_let, binding, kwd_in, body} = $1 in
+    let let_in = {kwd_let; binding; kwd_in; body}
+    in ELetIn {region; value=let_in} }
 
 fun_expr(right_expr):
-  reg(kwd(Fun) nseq(irrefutable) arrow right_expr {$1,$2,$3,$4}) {
-    let Region.{region; value = kwd_fun, patterns, arrow, expr} = $1
-    in EFun (norm ~reg:(region, kwd_fun) patterns arrow expr) }
+  kwd(Fun) nseq(irrefutable) arrow right_expr   { norm_fun_expr $2 $4 }
 
 disj_expr_level:
   reg(disj_expr)                          { ELogic (BoolExpr (Or $1)) }

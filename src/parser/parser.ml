@@ -2,7 +2,7 @@ open Trace
 
 module Pascaligo = Parser_pascaligo
 module Camligo = Parser_camligo
-(*module Ligodity = Parser_ligodity*)
+module Ligodity = Parser_ligodity
 
 open Parser_pascaligo
 module AST_Raw = Parser_pascaligo.AST
