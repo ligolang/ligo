@@ -121,12 +121,6 @@ let get_operation (v:value) = match v with
   | _ -> simple_fail "not an operation"
 
 
-let get_last_statement ((b', _):block) : statement result =
-  let aux lst = match lst with
-    | [] -> simple_fail "get_last: empty list"
-    | lst -> ok List.(nth lst (length lst - 1)) in
-  aux b'
-
 let t_int : type_value = T_base Base_int
 let t_unit : type_value = T_base Base_unit
 let t_nat : type_value = T_base Base_nat

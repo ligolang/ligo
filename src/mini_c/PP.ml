@@ -105,24 +105,6 @@ and assignment ppf ((n, e):assignment) = fprintf ppf "%s = %a;" n expression e
 
 and declaration ppf ((n, e):assignment) = fprintf ppf "let %s = %a;" n expression e
 
-and statement ppf ((s, _) : statement) = match s with
-  | S_environment_load _ -> fprintf ppf "load env"
-  | S_environment_select _ -> fprintf ppf "select env"
-  | S_environment_add (name, tv) -> fprintf ppf "add %s %a" name type_ tv
-  | S_declaration ass -> declaration ppf ass
-  | S_assignment ass -> assignment ppf ass
-  | S_do e -> fprintf ppf "do %a" expression e
-  | S_cond (expr, i, e) -> fprintf ppf "if (%a) %a %a" expression expr block i block e
-  | S_patch (r, path, e) ->
-      fprintf ppf "%s.%a := %a" r (list_sep lr (const ".")) path expression e
-  | S_if_none (expr, none, ((name, _), some)) -> fprintf ppf "if_none (%a) %a %s->%a" expression expr block none name block some
-  | S_while (e, b) -> fprintf ppf "while (%a) %a" expression e block b
-
-and block ppf ((b, _):block) =
-  match b with
-  | [] -> fprintf ppf "{}"
-  | b -> fprintf ppf "{@;  @[<v>%a@]@;}" (pp_print_list ~pp_sep:(tag "@;") statement) b
-
 let tl_statement ppf (ass, _) = assignment ppf ass
 
 let program ppf (p:program) =
