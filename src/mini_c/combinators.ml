@@ -128,6 +128,7 @@ let get_last_statement ((b', _):block) : statement result =
   aux b'
 
 let t_int : type_value = T_base Base_int
+let t_unit : type_value = T_base Base_unit
 let t_nat : type_value = T_base Base_nat
 
 let t_function x y : type_value = T_function ( x , y )
@@ -150,6 +151,7 @@ let basic_int_quote b : anon_function result =
   basic_quote t_int t_int b
 
 let e_int expr : expression = Expression.make_tpl (expr, t_int)
+let e_unit : expression = Expression.make_tpl (E_literal D_unit, t_unit)
 let e_var_int name : expression = e_int (E_variable name)
 
 let d_unit : value = D_unit

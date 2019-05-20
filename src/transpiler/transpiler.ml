@@ -1,10 +1,10 @@
 open! Trace
-open Mini_c
-open Combinators
 
 module AST = Ast_typed
 module Append_tree = Tree.Append
 open AST.Combinators
+open Mini_c
+open Combinators
 
 let temp_unwrap_loc = Location.unwrap
 let temp_unwrap_loc_list = List.map Location.unwrap
@@ -119,6 +119,88 @@ let record_access_to_lr : type_value -> type_value AST.type_name_map -> string -
     bind_fold_list aux (ty , []) lr_path in
   ok lst
 
+(* let rec translate_block env (b:AST.block) : block result =
+ *   let aux = fun (precs, env) instruction ->
+ *     let%bind lst = translate_instruction env instruction in
+ *     let env' = List.fold_left (fun _ i -> (snd i).post_environment) env lst in (\* Get last environment *\)
+ *     ok (precs @ lst, env') in
+ *   let%bind (instructions, env') = bind_fold_list aux ([], env) b in
+ *   ok (instructions, environment_wrap env env')
+ * 
+ * and translate_instruction (env:Environment.t) (i:AST.instruction) : statement list result =
+ *   let return ?(env' = env) x : statement list result = ok ([x, environment_wrap env env']) in
+ *   match i with
+ *   | I_declaration {name;annotated_expression} ->
+ *       let%bind expression = translate_annotated_expression annotated_expression in
+ *       let env' = Environment.add (name, (Combinators.Expression.get_type expression)) env in
+ *       return ~env' (S_declaration (name, expression))
+ *   | I_assignment {name;annotated_expression} ->
+ *       let%bind expression = translate_annotated_expression annotated_expression in
+ *       return (S_assignment (name, expression))
+ *   | I_patch (r, s, v) -> (
+ *       let ty = r.type_value in
+ *       let aux : ((AST.type_value * [`Left | `Right] list) as 'a) -> AST.access -> 'a result =
+ *         fun (prev, acc) cur ->
+ *           let%bind ty' = translate_type prev in
+ *           match cur with
+ *           | Access_tuple ind ->
+ *               let%bind ty_lst = AST.Combinators.get_t_tuple prev in
+ *               let%bind ty'_lst = bind_map_list translate_type ty_lst in
+ *               let%bind path = tuple_access_to_lr ty' ty'_lst ind in
+ *               let path' = List.map snd path in
+ *               ok (List.nth ty_lst ind, acc @ path')
+ *           | Access_record prop ->
+ *               let%bind ty_map =
+ *                 let error =
+ *                   let title () = "accessing property on not a record" in
+ *                   let content () = Format.asprintf "%s on %a in %a"
+ *                     prop Ast_typed.PP.type_value prev Ast_typed.PP.instruction i in
+ *                   error title content
+ *                 in
+ *                 trace error @@
+ *                 AST.Combinators.get_t_record prev in
+ *               let%bind ty'_map = bind_map_smap translate_type ty_map in
+ *               let%bind path = record_access_to_lr ty' ty'_map prop in
+ *               let path' = List.map snd path in
+ *               ok (Map.String.find prop ty_map, acc @ path')
+ *           | Access_map _k -> simple_fail "no patch for map yet"
+ *       in
+ *       let%bind (_, path) = bind_fold_right_list aux (ty, []) s in
+ *       let%bind v' = translate_annotated_expression v in
+ *       return (S_patch (r.type_name, path, v'))
+ *     )
+ *   | I_matching (expr, m) -> (
+ *       let%bind expr' = translate_annotated_expression expr in
+ *       let env' = env in
+ *       let return s =
+ *         ok [ (s, environment_wrap env env) ] in
+ *       match m with
+ *       | Match_bool {match_true ; match_false} -> (
+ *           let%bind true_branch = translate_block env' match_true in
+ *           let%bind false_branch = translate_block env' match_false in
+ *           return @@ S_cond (expr', true_branch, false_branch)
+ *         )
+ *       | Match_option {match_none ; match_some = ((name, t), sm)} -> (
+ *           let%bind none_branch = translate_block env' match_none in
+ *           let%bind t' = translate_type t in
+ *           let%bind some_branch =
+ *             let env'' = Environment.add (name, t') env' in
+ *             translate_block env'' sm
+ *           in
+ *           return @@ S_if_none (expr', none_branch, ((name, t'), some_branch))
+ *         )
+ *       | _ -> simple_fail "todo : match"
+ *     )
+ *   | I_loop (expr, body) ->
+ *       let%bind expr' = translate_annotated_expression expr in
+ *       let%bind body' = translate_block env body in
+ *       return (S_while (expr', body'))
+ *   | I_skip -> ok []
+ *   | I_do ae -> (
+ *       let%bind ae' = translate_annotated_expression ae in
+ *       return @@ S_do ae'
+ *     ) *)
+
 let rec translate_block env (b:AST.block) : block result =
   let aux = fun (precs, env) instruction ->
     let%bind lst = translate_instruction env instruction in
@@ -126,6 +208,133 @@ let rec translate_block env (b:AST.block) : block result =
     ok (precs @ lst, env') in
   let%bind (instructions, env') = bind_fold_list aux ([], env) b in
   ok (instructions, environment_wrap env env')
+
+and translate_block' : expression option -> AST.block -> expression result  = fun expr_opt block ->
+  let aux = fun expr_opt i ->
+    let%bind expr = translate_instruction' i expr_opt in
+    ok (Some expr) in
+  let%bind expr_opt = bind_fold_right_list aux expr_opt block in
+  let default = e_unit in
+  ok (Option.unopt ~default expr_opt)
+
+and translate_instruction' : AST.instruction -> expression option -> expression result = fun i expr_opt ->
+  let expr =
+    let default = e_unit in
+    Option.unopt ~default expr_opt in
+  let return ?(tv = expr.type_value) expr' = ok @@ Combinators.Expression.make_tpl (expr' , tv) in
+  let skip = ok expr in
+  let return_seq ?(tv = expr.type_value) expr' =
+    let lhs = Expression.make_tpl (expr' , t_unit) in
+    let rhs = expr in
+    ok @@ Combinators.Expression.make_tpl (E_sequence ( lhs , rhs ) , tv) in
+  match i with
+  | I_declaration { name ; annotated_expression } ->
+    let%bind rhs = translate_annotated_expression annotated_expression in
+    return @@ E_let_in ((name , rhs.type_value) , rhs , expr)
+  | I_assignment { name ; annotated_expression } ->
+    let%bind rhs = translate_annotated_expression annotated_expression in
+    return_seq @@ E_assignment (name , [] , rhs)
+  | I_matching (matched , clauses) -> (
+      let%bind expr' = translate_annotated_expression matched in
+      match clauses with
+      | Match_bool {match_true ; match_false} ->
+          let%bind (t , f) = bind_map_pair (translate_block' None) (match_true, match_false) in
+          return_seq @@ E_if_bool (expr', t, f)
+      | Match_option { match_none; match_some = ((name, tv), s) } ->
+          let%bind n = translate_block' None match_none in
+          let%bind (tv' , s') =
+            let%bind tv' = translate_type tv in
+            let%bind s' = translate_block' None s in
+            ok (tv' , s') in
+          return_seq @@ E_if_none (expr' , n , ((name , tv') , s'))
+      | Match_variant (lst , variant) -> (
+          let%bind tree = tree_of_sum variant in
+          let%bind tree' = match tree with
+            | Empty -> simple_fail "match empty variant"
+            | Full x -> ok x in
+          let%bind tree'' =
+            let rec aux t =
+              match (t : _ Append_tree.t') with
+              | Leaf (name , tv) ->
+                  let%bind tv' = translate_type tv in
+                  ok (`Leaf name , tv')
+              | Node {a ; b} ->
+                  let%bind a' = aux a in
+                  let%bind b' = aux b in
+                  let tv' = Mini_c.t_union (snd a') (snd b') in
+                  ok (`Node (a' , b') , tv')
+            in aux tree'
+          in
+
+          let rec aux top t =
+            match t with
+            | ((`Leaf constructor_name) , tv) -> (
+                let%bind ((_ , name) , body) =
+                  trace_option (simple_error "not supposed to happen here: missing match clause") @@
+                  List.find_opt (fun ((constructor_name' , _) , _) -> constructor_name' = constructor_name) lst in
+                let%bind body' = translate_block' None body in
+                return @@ E_let_in ((name , tv) , top , body')
+              )
+            | ((`Node (a , b)) , tv) ->
+                let%bind a' =
+                  let%bind a_ty = get_t_left tv in
+                  let a_var = "left" , a_ty in
+                  let%bind e = aux (((Expression.make (E_variable "left") a_ty))) a in
+                  ok (a_var , e)
+                in
+                let%bind b' =
+                  let%bind b_ty = get_t_right tv in
+                  let b_var = "right" , b_ty in
+                  let%bind e = aux (((Expression.make (E_variable "right") b_ty))) b in
+                  ok (b_var , e)
+                in
+                return @@ E_if_left (top , a' , b')
+          in
+          aux expr' tree''
+        )
+      | AST.Match_list _ | AST.Match_tuple (_, _) ->
+          simple_fail "only match bool, option and variants are translated yet"
+    )
+  | I_loop (condition , body) ->
+    let%bind condition' = translate_annotated_expression condition in
+    let%bind body' = translate_block' None body in
+    return_seq @@ E_while (condition' , body')
+  | I_do action ->
+    let%bind action' = translate_annotated_expression action in
+    return_seq action'.content
+  | I_skip -> skip
+  | I_patch (typed_name , path , rhs) -> (
+      let ty = typed_name.type_value in
+      let aux : ((AST.type_value * [`Left | `Right] list) as 'a) -> AST.access -> 'a result =
+        fun (prev, acc) cur ->
+          let%bind ty' = translate_type prev in
+          match cur with
+          | Access_tuple ind ->
+              let%bind ty_lst = AST.Combinators.get_t_tuple prev in
+              let%bind ty'_lst = bind_map_list translate_type ty_lst in
+              let%bind path = tuple_access_to_lr ty' ty'_lst ind in
+              let path' = List.map snd path in
+              ok (List.nth ty_lst ind, acc @ path')
+          | Access_record prop ->
+              let%bind ty_map =
+                let error =
+                  let title () = "accessing property on not a record" in
+                  let content () = Format.asprintf "%s on %a in %a"
+                    prop Ast_typed.PP.type_value prev Ast_typed.PP.annotated_expression rhs in
+                  error title content
+                in
+                trace error @@
+                AST.Combinators.get_t_record prev in
+              let%bind ty'_map = bind_map_smap translate_type ty_map in
+              let%bind path = record_access_to_lr ty' ty'_map prop in
+              let path' = List.map snd path in
+              ok (Map.String.find prop ty_map, acc @ path')
+          | Access_map _k -> simple_fail "no patch for map yet"
+      in
+      let%bind (_, path) = bind_fold_right_list aux (ty, []) path in
+      let%bind expr' = translate_annotated_expression rhs in
+      return_seq (E_assignment (typed_name.type_name, path, expr'))
+    )
 
 and translate_instruction (env:Environment.t) (i:AST.instruction) : statement list result =
   let return ?(env' = env) x : statement list result = ok ([x, environment_wrap env env']) in
@@ -476,7 +685,7 @@ and translate_annotated_expression (ae:AST.annotated_expression) : expression re
           aux expr' tree''
         )
       | AST.Match_list _ | AST.Match_tuple (_, _) ->
-          simple_fail "only match bool and option exprs are translated yet"
+          simple_fail "only match bool, option and variants are translated yet"
     )
 
 and translate_lambda_deep : Mini_c.Environment.t -> AST.lambda -> Mini_c.expression result = fun env l ->
