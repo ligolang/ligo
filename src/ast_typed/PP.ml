@@ -24,10 +24,10 @@ let rec annotated_expression ppf (ae:annotated_expression) : unit =
   | _ -> fprintf ppf "@[<v>%a@]" expression ae.expression
 
 and lambda ppf l =
-  let {binder;input_type;output_type;result;body} = l in
-  fprintf ppf "lambda (%s:%a) : %a {@;  @[<v>%a@]@;} return %a"
+  let {binder;input_type;output_type;result} = l in
+  fprintf ppf "lambda (%s:%a) : %a return %a"
     binder type_value input_type type_value output_type
-    block body annotated_expression result
+    annotated_expression result
 
 and expression ppf (e:expression) : unit =
   match e with
@@ -74,8 +74,6 @@ and literal ppf (l:literal) : unit =
   | Literal_address s -> fprintf ppf "@%s" s
   | Literal_operation _ -> fprintf ppf "Operation(...bytes)"
 
-and block ppf (b:block) = (list_sep instruction (tag "@;")) ppf b
-
 and single_record_patch ppf ((s, ae) : string * ae) =
   fprintf ppf "%s <- %a" s annotated_expression ae
 
@@ -99,21 +97,6 @@ and pre_access ppf (a:access) = match a with
   | Access_record n -> fprintf ppf ".%s" n
   | Access_tuple i -> fprintf ppf ".%d" i
   | Access_map n -> fprintf ppf ".%a" annotated_expression n
-
-and instruction ppf (i:instruction) = match i with
-  | I_skip -> fprintf ppf "skip"
-  | I_do ae -> fprintf ppf "do %a" annotated_expression ae
-  | I_loop (cond, b) -> fprintf ppf "while (%a) {@;  @[<v>%a@]@;}" annotated_expression cond block b
-  | I_declaration {name;annotated_expression = ae} ->
-      fprintf ppf "let %s = %a" name annotated_expression ae
-  | I_assignment {name;annotated_expression = ae} ->
-      fprintf ppf "%s := %a" name annotated_expression ae
-  | I_matching (ae, m) ->
-      fprintf ppf "match %a with %a" annotated_expression ae (matching block) m
-  | I_patch (s, p, e) ->
-      fprintf ppf "%s%a := %a"
-        s.type_name (fun ppf -> List.iter (pre_access ppf)) p
-        annotated_expression e
 
 let declaration ppf (d:declaration) =
   match d with

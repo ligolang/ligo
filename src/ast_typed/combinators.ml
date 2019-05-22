@@ -6,7 +6,6 @@ let make_a_e expression type_annotation environment = { expression ; type_annota
 let make_n_e name a_e = { name ; annotated_expression = a_e }
 let make_n_t type_name type_value = { type_name ; type_value }
 
-
 let t_bool ?s () : type_value = make_t (T_constant ("bool", [])) s
 let t_string ?s () : type_value = make_t (T_constant ("string", [])) s
 let t_bytes ?s () : type_value = make_t (T_constant ("bytes", [])) s
@@ -21,7 +20,6 @@ let t_tuple lst ?s () : type_value = make_t (T_tuple lst) s
 let t_list t ?s () : type_value = make_t (T_constant ("list", [t])) s
 let t_contract t ?s () : type_value = make_t (T_constant ("contract", [t])) s
 let t_pair a b ?s () = t_tuple [a ; b] ?s ()
-
 
 let t_record m ?s () : type_value = make_t (T_record m) s
 let make_t_ez_record (lst:(string * type_value) list) : type_value =
@@ -164,6 +162,7 @@ let e_pair a b : expression = E_tuple [a; b]
 let e_application a b : expression = E_application (a , b)
 let e_variable v : expression = E_variable v
 let e_list lst : expression = E_list lst
+let e_let_in binder rhs result = E_let_in { binder ; rhs ; result }
 
 let e_a_unit = make_a_e e_unit (t_unit ())
 let e_a_int n = make_a_e (e_int n) (t_int ())
@@ -183,6 +182,7 @@ let e_a_variable v ty = make_a_e (e_variable v) ty
 let ez_e_a_record r = make_a_e (ez_e_record r) (ez_t_record (List.map (fun (x, y) -> x, y.type_annotation) r) ())
 let e_a_map lst k v = make_a_e (e_map lst) (t_map k v ())
 let e_a_list lst t = make_a_e (e_list lst) (t_list t ())
+let e_a_let_in binder expr body = make_a_e (e_let_in binder expr body) (get_type_annotation body)
 
 let get_a_int (t:annotated_expression) =
   match t.expression with

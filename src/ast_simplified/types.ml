@@ -47,11 +47,10 @@ and type_expression =
   | T_constant of type_name * te list
 
 and lambda = {
-  binder: name ;
-  input_type: type_expression;
-  output_type: type_expression;
-  result: ae ;
-  body: block ;
+  binder : name ;
+  input_type : type_expression option ;
+  output_type : type_expression option ;
+  result : ae ;
 }
 
 and let_in = {
@@ -86,6 +85,7 @@ and expression =
   | E_sequence of (ae * ae)
   | E_loop of (ae * ae)
   | E_assign of (name * access_path * ae)
+  | E_skip
 
 and access =
   | Access_tuple of int
@@ -105,18 +105,6 @@ and literal =
   | Literal_address of string
   | Literal_operation of Memory_proto_alpha.Alpha_context.packed_internal_operation
 
-and block = instruction list
-and b = block
-
-and instruction =
-  | I_assignment of named_expression
-  | I_matching of ae * matching_instr
-  | I_loop of ae * b
-  | I_skip
-  | I_do of ae
-  | I_record_patch of (name * access_path * (string * ae) list)
-  | I_tuple_patch of (name * access_path * (int * ae) list)
-
 and 'a matching =
   | Match_bool of {
       match_true : 'a ;
@@ -132,7 +120,5 @@ and 'a matching =
     }
   | Match_tuple of name list * 'a
   | Match_variant of ((constructor_name * name) * 'a) list
-
-and matching_instr = b matching
 
 and matching_expr = annotated_expression matching

@@ -78,3 +78,11 @@ module PP = struct
       (ne_list_sep small_environment (tag "@;")) e
 end
 
+open Trace
+
+let get_trace : string -> t -> element result = fun s env ->
+  let error =
+    let title () = "missing var not in env" in
+    let content () = Format.asprintf "\nvar: %s\nenv: %a\n" s PP.full_environment env in
+    error title content in
+  trace_option error @@ get_opt s env

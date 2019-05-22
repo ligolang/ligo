@@ -42,10 +42,10 @@ let rec expression ppf (e:expression) = match e with
   | E_map m -> fprintf ppf "map[%a]" (list_sep_d assoc_annotated_expression) m
   | E_list lst -> fprintf ppf "list[%a]" (list_sep_d annotated_expression) lst
   | E_look_up (ds, ind) -> fprintf ppf "(%a)[%a]" annotated_expression ds annotated_expression ind
-  | E_lambda {binder;input_type;output_type;result;body} ->
-      fprintf ppf "lambda (%s:%a) : %a {@;  @[<v>%a@]@;} return %a"
-        binder type_expression input_type type_expression output_type
-        block body annotated_expression result
+  | E_lambda {binder;input_type;output_type;result} ->
+      fprintf ppf "lambda (%s:%a) : %a return %a"
+        binder (PP_helpers.option type_expression) input_type (PP_helpers.option type_expression) output_type
+        annotated_expression result
   | E_matching (ae, m) ->
       fprintf ppf "match %a with %a" annotated_expression ae (matching annotated_expression) m
   | E_failwith ae ->
@@ -65,6 +65,7 @@ let rec expression ppf (e:expression) = match e with
       annotated_expression expr
   | E_let_in { binder; rhs; result } ->
       fprintf ppf "let %s = %a in %a" binder annotated_expression rhs annotated_expression result
+  | E_skip -> fprintf ppf "skip"
 
 and assoc_annotated_expression ppf : (ae * ae) -> unit = fun (a, b) ->
   fprintf ppf "%a -> %a" annotated_expression a annotated_expression b
@@ -88,8 +89,6 @@ and annotated_expression ppf (ae:annotated_expression) = match ae.type_annotatio
 
 and value : _ -> value -> unit = fun x -> annotated_expression x
 
-and block ppf (b:block) = (list_sep instruction (tag "@;")) ppf b
-
 and single_record_patch ppf ((p, ae) : string * ae) =
   fprintf ppf "%s <- %a" p annotated_expression ae
 
@@ -112,17 +111,6 @@ and matching : type a . (formatter -> a -> unit) -> formatter -> a matching -> u
         fprintf ppf "| Nil -> %a @.| %s :: %s -> %a" f match_nil hd tl f match_cons
     | Match_option {match_none ; match_some = (some, match_some)} ->
         fprintf ppf "| None -> %a @.| Some %s -> %a" f match_none some f match_some
-
-and instruction ppf (i:instruction) = match i with
-  | I_skip -> fprintf ppf "skip"
-  | I_do ae -> fprintf ppf "do %a" annotated_expression ae
-  | I_record_patch (name, path, lst) -> fprintf ppf "%s.%a[%a]" name access_path path (list_sep_d single_record_patch) lst
-  | I_tuple_patch (name, path, lst) -> fprintf ppf "%s.%a[%a]" name access_path path (list_sep_d single_tuple_patch) lst
-  | I_loop (cond, b) -> fprintf ppf "while (%a) { %a }" annotated_expression cond block b
-  | I_assignment {name;annotated_expression = ae} ->
-      fprintf ppf "%s := %a" name annotated_expression ae
-  | I_matching (ae, m) ->
-      fprintf ppf "match %a with %a" annotated_expression ae (matching block) m
 
 let declaration ppf (d:declaration) = match d with
   | Declaration_type {type_name ; type_expression = te} ->

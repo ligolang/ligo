@@ -80,7 +80,7 @@ and expression' ppf (e:expression') = match e with
   | E_sequence (a , b) -> fprintf ppf "%a ; %a" expression a expression b
   (* | E_sequence_drop (a , b) -> fprintf ppf "%a ;- %a" expression a expression b *)
   | E_let_in ((name , _) , expr , body) ->
-      fprintf ppf "let %s = %a in %a" name expression expr expression body
+      fprintf ppf "let %s = %a in ( %a )" name expression expr expression body
   | E_assignment (r , path , e) ->
       fprintf ppf "%s.%a := %a" r (list_sep lr (const ".")) path expression e
   | E_while (e , b) ->
@@ -95,7 +95,7 @@ and expression_with_type : _ -> expression -> _  = fun ppf e ->
     type_ e.type_value
 
 and function_ ppf ({binder ; input ; output ; result}:anon_function) =
-  fprintf ppf "fun (%s:%a) : %a return %a"
+  fprintf ppf "fun (%s:%a) : %a (%a)"
     binder
     type_ input
     type_ output

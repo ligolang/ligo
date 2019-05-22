@@ -19,15 +19,10 @@ let program_to_main : program -> string -> lambda result = fun p s ->
       | _ -> simple_fail "program main isn't a function" in
     ok (main , input_ty , output_ty)
   in
-  let body =
-    let aux : declaration -> instruction = fun d ->
-      match d with
-      | Declaration_constant (d , _) -> I_declaration d in
-    List.map (Function.compose aux Location.unwrap) p in
   let env =
     let aux = fun _ d ->
       match d with
-      | Declaration_constant (_ , env) -> env in
+      | Declaration_constant (_ , (_ , post_env)) -> post_env in
     List.fold_left aux Environment.full_empty (List.map Location.unwrap p) in
   let binder = "@contract_input" in
   let result =
@@ -38,7 +33,6 @@ let program_to_main : program -> string -> lambda result = fun p s ->
     binder ;
     input_type ;
     output_type ;
-    body ;
     result ;
   }
 
@@ -103,41 +97,6 @@ module Captured_variables = struct
       let b' = union (singleton li.binder) b in
       annotated_expression b' li.result
 
-  and instruction' : bindings -> instruction -> (bindings * bindings) result = fun b i ->
-    match i with
-    | I_declaration n ->
-      let bounds = union (singleton n.name) b in
-      let%bind frees = annotated_expression b n.annotated_expression in
-      ok (bounds , frees)
-    | I_assignment n ->
-      let%bind frees = annotated_expression b n.annotated_expression in
-      ok (b , frees)
-    | I_skip -> ok (b , empty)
-    | I_do e ->
-      let%bind frees = annotated_expression b e in
-      ok (b , frees)
-    | I_loop (a , bl) ->
-      let%bind ae_frees = annotated_expression b a in
-      let%bind bl_frees = block b bl in
-      ok (b , union ae_frees bl_frees)
-    | I_patch (_ , _ , a) ->
-      let%bind a' = annotated_expression b a in
-      ok (b , a')
-    | I_matching (a , cs) ->
-      let%bind ae' = annotated_expression b a in
-      let%bind bl' = matching_block b cs in
-      ok (b , union ae' bl')
-
-  and block' : bindings -> block -> (bindings * bindings) result = fun b bl ->
-    let aux = fun (binds, frees) cur ->
-      let%bind (binds', frees') = instruction' binds cur in
-      ok (binds', union frees frees') in
-    bind_fold_list aux (b , []) bl
-
-  and block : bindings -> block -> bindings result = fun b bl ->
-    let%bind (_ , frees) = block' b bl in
-    ok frees
-
   and matching_variant_case : type a . (bindings -> a -> bindings result) -> bindings -> ((constructor_name * name) * a) -> bindings result  = fun f b ((_,n),c) ->
     f (union (singleton n) b) c
 
@@ -162,7 +121,5 @@ module Captured_variables = struct
       ok @@ unions lst'
 
   and matching_expression = fun x -> matching annotated_expression x
-
-  and matching_block = fun x -> matching block x
 
 end

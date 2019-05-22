@@ -17,6 +17,17 @@ let get_value : 'a Raw.reg -> 'a = fun x -> x.value
 let type_constants = Operators.Simplify.type_constants
 let constants = Operators.Simplify.constants
 
+let return expr = ok @@ fun expr'_opt ->
+  let expr = untyped_expression expr in
+  match expr'_opt with
+  | None -> ok @@ expr
+  | Some expr' -> ok @@ e_a_sequence expr expr'
+
+let return_let_in binder rhs = ok @@ fun expr'_opt ->
+  match expr'_opt with
+  | None -> simple_fail "missing return" (* Hard to explain. Shouldn't happen in prod. *)
+  | Some expr' -> ok @@ untyped_expression @@ e_let_in binder rhs expr'
+
 let rec simpl_type_expression (t:Raw.type_expr) : type_expression result =
   match t with
   | TPar x -> simpl_type_expression x.value.inside
@@ -286,36 +297,33 @@ and simpl_tuple_expression ?te_annot (lst:Raw.expr list) : annotated_expression 
       let%bind lst = bind_list @@ List.map simpl_expression lst in
       return @@ E_tuple lst
 
-and simpl_local_declaration (t:Raw.local_decl) : (instruction * named_expression) result =
+and simpl_local_declaration : Raw.local_decl -> _ result = fun t ->
   match t with
   | LocalData d -> simpl_data_declaration d
   | LocalLam l -> simpl_lambda_declaration l
 
-and simpl_lambda_declaration : Raw.lambda_decl -> (instruction * named_expression) result =
-  fun l ->
+and simpl_lambda_declaration : Raw.lambda_decl -> _ result = fun l ->
   match l with
   | FunDecl f ->
       let%bind e = simpl_fun_declaration (f.value) in
-      ok (I_assignment e, e)
+      return_let_in e.name e.annotated_expression
   | ProcDecl _ -> simple_fail "no local procedure yet"
   | EntryDecl _ -> simple_fail "no local entry-point yet"
 
-and simpl_data_declaration (t:Raw.data_decl) : (instruction * named_expression) result =
-  let return x = ok (I_assignment x, x) in
+and simpl_data_declaration : Raw.data_decl -> _ result = fun t ->
   match t with
   | LocalVar x ->
       let x = x.value in
       let name = x.name.value in
       let%bind t = simpl_type_expression x.var_type in
       let%bind annotated_expression = simpl_expression ~te_annot:t x.init in
-      return {name;annotated_expression}
+      return_let_in name annotated_expression
   | LocalConst x ->
       let x = x.value in
       let name = x.name.value in
       let%bind t = simpl_type_expression x.const_type in
       let%bind annotated_expression = simpl_expression ~te_annot:t x.init in
-      return {name;annotated_expression}
-
+      return_let_in name annotated_expression
 
 and simpl_param : Raw.param_decl -> named_type_expression result = fun t ->
   match t with
@@ -341,17 +349,22 @@ and simpl_fun_declaration : Raw.fun_decl -> named_expression result = fun x ->
        let binder = input.type_name in
        let input_type = input.type_expression in
        let%bind local_declarations =
-         let%bind tmp = bind_list
-           @@ List.map simpl_local_declaration local_decls in
-         ok (List.map fst tmp) in
+         bind_map_list simpl_local_declaration local_decls in
        let%bind instructions = bind_list
          @@ List.map simpl_statement
          @@ npseq_to_list block.value.statements in
        let%bind result = simpl_expression return in
        let%bind output_type = simpl_type_expression ret_type in
        let body = local_declarations @ instructions in
-       let expression = E_lambda {binder ; input_type = input_type;
-                                  output_type = output_type; result ; body } in
+       let%bind result =
+         let aux prec cur = cur (Some prec) in
+         bind_fold_right_list aux result body in
+       let expression = E_lambda {
+           binder ;
+           input_type = Some input_type ;
+           output_type = Some output_type ;
+           result
+         } in
        let type_annotation = Some (T_function (input_type, output_type)) in
        ok {name;annotated_expression = {expression;type_annotation}}
      )
@@ -364,34 +377,34 @@ and simpl_fun_declaration : Raw.fun_decl -> named_expression result = fun x ->
          { type_name = arguments_name ; type_expression } in
        let binder = input.type_name in
        let input_type = input.type_expression in
-       let tpl_declarations =
+       let%bind tpl_declarations =
          let aux = fun i (x:named_type_expression) ->
-           let ass = I_assignment {
-             name = x.type_name ;
-             annotated_expression = {
-               expression = E_accessor ({
+           let expr = E_accessor ({
                    expression = E_variable arguments_name ;
                    type_annotation = Some input.type_expression ;
-                 } , [ Access_tuple i ] ) ;
-               type_annotation = Some (x.type_expression) ;
-             }
-           } in
+                 } , [ Access_tuple i ]) in
+           let type_ = x.type_expression in
+           let ass = return_let_in x.type_name (make_e_a_full expr type_) in
            ass
          in
-         List.mapi aux params in
+         bind_list @@ List.mapi aux params in
        let%bind local_declarations =
-         let%bind typed = bind_map_list simpl_local_declaration local_decls in
-         ok (List.map fst typed)
-       in
-       let%bind output_type = simpl_type_expression ret_type in
+         bind_map_list simpl_local_declaration local_decls in
        let%bind instructions = bind_list
          @@ List.map simpl_statement
          @@ npseq_to_list block.value.statements in
-
-       let body = tpl_declarations @ local_declarations @ instructions in
        let%bind result = simpl_expression return in
-       let expression = E_lambda {binder ; input_type = input_type;
-                                  output_type = output_type; result ; body } in
+       let%bind output_type = simpl_type_expression ret_type in
+       let body = tpl_declarations @ local_declarations @ instructions in
+       let%bind result =
+         let aux prec cur = cur (Some prec) in
+         bind_fold_right_list aux result body in
+       let expression = E_lambda {
+           binder ;
+           input_type = Some input_type ;
+           output_type = Some output_type ;
+           result
+         } in
        let type_annotation = Some (T_function (input_type, output_type)) in
        ok {name = name.value;annotated_expression = {expression;type_annotation}}
      )
@@ -420,23 +433,25 @@ and simpl_declaration : Raw.declaration -> declaration Location.wrap result = fu
   | LambdaDecl (ProcDecl _) -> simple_fail "no proc declaration yet"
   | LambdaDecl (EntryDecl _)-> simple_fail "no entry point yet"
 
-and simpl_statement : Raw.statement -> instruction result = fun s ->
+and simpl_statement : Raw.statement -> (_ -> annotated_expression result) result = fun s ->
   match s with
   | Instr i -> simpl_instruction i
-  | Data d -> let%bind (i, _) = simpl_data_declaration d in ok i
+  | Data d -> simpl_data_declaration d
 
-and simpl_single_instruction : Raw.single_instr -> instruction result = fun t ->
+and simpl_single_instruction : Raw.single_instr -> (_ -> annotated_expression result) result = fun t ->
   match t with
   | ProcCall _ -> simple_fail "no proc call"
-  | Fail e ->
+  | Fail e -> (
       let%bind expr = simpl_expression e.value.fail_expr in
-      ok @@ I_do (untyped_expression @@ E_failwith expr)
-  | Skip _ -> ok @@ I_skip
+      return @@ e_failwith expr
+    )
+  | Skip _ -> return @@ e_skip
   | Loop (While l) ->
       let l = l.value in
       let%bind cond = simpl_expression l.cond in
       let%bind body = simpl_block l.block.value in
-      ok @@ I_loop (cond, body)
+      let%bind body = body None in
+      return @@ e_loop cond body
   | Loop (For _) ->
       simple_fail "no for yet"
   | Cond c ->
@@ -448,7 +463,9 @@ and simpl_single_instruction : Raw.single_instr -> instruction result = fun t ->
       let%bind match_false = match c.ifnot with
         | ClauseInstr i -> simpl_instruction_block i
         | ClauseBlock b -> simpl_statements @@ fst b.value.inside in
-      ok @@ I_matching (expr, (Match_bool {match_true; match_false}))
+      let%bind match_true = match_true None in
+      let%bind match_false = match_false None in
+      return @@ E_matching (expr, (Match_bool {match_true; match_false}))
   | Assign a -> (
       let a = a.value in
       let%bind value_expr = match a.rhs with
@@ -458,16 +475,7 @@ and simpl_single_instruction : Raw.single_instr -> instruction result = fun t ->
       match a.lhs with
         | Path path -> (
             let (name , path') = simpl_path path in
-            match List.rev_uncons_opt path' with
-            | None -> (
-                ok @@ I_assignment {name ; annotated_expression = value_expr}
-              )
-            | Some (hds , last) -> (
-                match last with
-                | Access_record property -> ok @@ I_record_patch (name , hds , [(property , value_expr)])
-                | Access_tuple index -> ok @@ I_tuple_patch (name , hds , [(index , value_expr)])
-                | _ -> simple_fail "no map assignment in this weird case yet"
-              )
+            return @@ E_assign (name , path' , value_expr)
           )
         | MapPath v -> (
             let v' = v.value in
@@ -477,21 +485,23 @@ and simpl_single_instruction : Raw.single_instr -> instruction result = fun t ->
             let%bind key_expr = simpl_expression v'.index.value.inside in
             let old_expr = make_e_a @@ E_variable name.value in
             let expr' = make_e_a @@ E_constant ("MAP_UPDATE", [key_expr ; value_expr ; old_expr]) in
-            ok @@ I_assignment {name = name.value ; annotated_expression = expr'}
+            return @@ E_assign (name.value , [] , expr')
           )
     )
-  | CaseInstr c ->
+  | CaseInstr c -> (
       let c = c.value in
       let%bind expr = simpl_expression c.expr in
       let%bind cases =
         let aux (x : Raw.instruction Raw.case_clause Raw.reg) =
           let%bind i = simpl_instruction_block x.value.rhs in
+          let%bind i = i None in
           ok (x.value.pattern, i) in
         bind_list
         @@ List.map aux
         @@ npseq_to_list c.cases.value in
       let%bind m = simpl_cases cases in
-      ok @@ I_matching (expr, m)
+      return @@ E_matching (expr, m)
+    )
   | RecordPatch r -> (
       let r = r.value in
       let (name , access_path) = simpl_path r.path in
@@ -499,7 +509,20 @@ and simpl_single_instruction : Raw.single_instr -> instruction result = fun t ->
         @@ List.map (fun (x:Raw.field_assign) -> let%bind e = simpl_expression x.field_expr in ok (x.field_name.value, e))
         @@ List.map (fun (x:_ Raw.reg) -> x.value)
         @@ pseq_to_list r.record_inj.value.elements in
-      ok @@ I_record_patch (name, access_path, inj)
+      let%bind expr =
+        let aux = fun (access , v) ->
+          E_assign (name , access_path @ [ Access_record access ] , v) in
+        let assigns = List.map aux inj in
+        match assigns with
+        | [] -> simple_fail "empty record patch"
+        | hd :: tl -> (
+            let aux acc cur =
+              e_sequence (untyped_expression acc) (untyped_expression cur)
+            in
+            ok @@ List.fold_left aux hd tl
+          )
+      in
+      return @@ expr
     )
   | MapPatch _ -> simple_fail "no map patch yet"
   | SetPatch _ -> simple_fail "no set patch yet"
@@ -511,7 +534,7 @@ and simpl_single_instruction : Raw.single_instr -> instruction result = fun t ->
         | _ -> simple_fail "no complex map remove yet" in
       let%bind key' = simpl_expression key in
       let expr = E_constant ("MAP_REMOVE", [key' ; make_e_a (E_variable map)]) in
-      ok @@ I_assignment {name = map ; annotated_expression = make_e_a expr}
+      return @@ E_assign (map , [] , make_e_a expr)
   | SetRemove _ -> simple_fail "no set remove yet"
 
 and simpl_path : Raw.path -> string * Ast_simplified.access_path = fun p ->
@@ -606,12 +629,12 @@ and simpl_cases : type a . (Raw.pattern * a) list -> a matching result = fun t -
         bind_map_list aux lst in
       ok @@ Match_variant constrs
 
-and simpl_instruction_block : Raw.instruction -> block result = fun t ->
+and simpl_instruction_block : Raw.instruction -> (_ -> annotated_expression result) result = fun t ->
   match t with
-  | Single s -> let%bind i = simpl_single_instruction s in ok [ i ]
+  | Single s -> simpl_single_instruction s
   | Block b -> simpl_block b.value
 
-and simpl_instruction : Raw.instruction -> instruction result = fun t ->
+and simpl_instruction : Raw.instruction -> (_ -> annotated_expression result) result = fun t ->
   let main_error =
     let title () = "simplifiying instruction" in
     let content () = Format.asprintf "%a" PP_helpers.(printer Parser.Pascaligo.ParserLog.print_instruction) t in
@@ -621,11 +644,17 @@ and simpl_instruction : Raw.instruction -> instruction result = fun t ->
   | Single s -> simpl_single_instruction s
   | Block _ -> simple_fail "no block instruction yet"
 
-and simpl_statements : Raw.statements -> block result = fun ss ->
+and simpl_statements : Raw.statements -> (_ -> annotated_expression result) result = fun ss ->
   let lst = npseq_to_list ss in
-  bind_map_list simpl_statement lst
+  let%bind fs = bind_map_list simpl_statement lst in
+  let aux : _ -> (annotated_expression option -> annotated_expression result) -> _ = fun prec cur ->
+    let%bind res = cur prec in
+    ok @@ Some res in
+  ok @@ fun (expr' : _ option) ->
+  let%bind ret = bind_fold_right_list aux expr' fs in
+  ok @@ Option.unopt_exn ret
 
-and simpl_block : Raw.block -> block result = fun t ->
+and simpl_block : Raw.block -> (_ -> annotated_expression result) result = fun t ->
   simpl_statements t.statements
 
 let simpl_program : Raw.ast -> program result = fun t ->

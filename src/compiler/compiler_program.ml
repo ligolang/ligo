@@ -324,7 +324,7 @@ and translate_expression ?(first=false) (expr:expression) (env:environment) : (m
         ]) in
       return code
     )
-  | E_let_in (v, expr , body) -> (
+  | E_let_in (v , expr , body) -> (
       let%bind (expr' , expr_env) = translate_expression expr env in
       let%bind env' =
         let%bind popped = Compiler_environment.pop expr_env in

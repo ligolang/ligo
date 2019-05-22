@@ -138,7 +138,7 @@ let easy_run_typed_simplified
     let env =
       let last_declaration = Location.unwrap List.(hd @@ rev program) in
       match last_declaration with
-      | Declaration_constant (_ , env) -> env
+      | Declaration_constant (_ , (_ , post_env)) -> post_env
     in
     type_expression ~env input in
   let%bind mini_c_value = transpile_value typed_value in

@@ -9,11 +9,18 @@ let get_type_name : named_type_expression -> string = fun x -> x.type_name
 let get_type_annotation (x:annotated_expression) = x.type_annotation
 let get_expression (x:annotated_expression) = x.expression
 
-let i_assignment : _ -> instruction = fun x -> I_assignment x
 let named_expression name annotated_expression = { name ; annotated_expression }
 let named_typed_expression name expression ty = { name ; annotated_expression = { expression ; type_annotation = Some ty } }
 let typed_expression expression ty = { expression ; type_annotation = Some ty }
 let untyped_expression expression = { expression ; type_annotation = None }
+let merge_type_expression ae type_annotation = match ae.type_annotation with
+  | None -> ok { ae with type_annotation = Some type_annotation }
+  | Some _ -> simple_fail "merging already typed expression"
+
+let merge_option_type_expression ae ta_opt = match (ae.type_annotation , ta_opt) with
+  | _ , None -> ok ae
+  | None , Some type_annotation -> ok { ae with type_annotation = Some type_annotation }
+  | _ -> simple_fail "merging already typed expression"
 
 let get_untyped_expression : annotated_expression -> expression result = fun ae ->
   let%bind () =
@@ -79,6 +86,10 @@ let e_accessor a b = E_accessor (a , b)
 let e_accessor_props a b = e_accessor a (List.map (fun x -> Access_record x) b)
 let e_variable v = E_variable v
 let e_failwith v = E_failwith v
+let e_skip = E_skip
+let e_loop cond body = E_loop (cond , body)
+let e_sequence a b = E_sequence (a , b)
+let e_let_in binder rhs result = E_let_in { binder ; rhs ; result }
 
 let e_a_unit : annotated_expression = make_e_a_full (e_unit ()) t_unit
 let e_a_string s : annotated_expression = make_e_a_full (e_string s) t_string
@@ -89,6 +100,7 @@ let e_a_list lst : annotated_expression = make_e_a (e_list lst)
 let e_a_constructor s a : annotated_expression = make_e_a (e_constructor s a)
 let e_a_address x = make_e_a_full (e_address x) t_address
 let e_a_tez x = make_e_a_full (e_tez x) t_tez
+let e_a_sequence a b : annotated_expression = make_e_a (e_sequence a b)
 
 let e_a_record r =
   let type_annotation = Option.(
@@ -130,17 +142,15 @@ let e_a_typed_list lst t =
 let e_a_map lst k v = make_e_a ~type_annotation:(t_map k v) (e_map lst)
 
 let e_lambda (binder : string)
-    (input_type : type_expression)
-    (output_type : type_expression)
+    (input_type : type_expression option)
+    (output_type : type_expression option)
     (result : expression)
-    (body : block)
   : expression =
   E_lambda {
     binder = (make_name binder) ;
     input_type = input_type ;
     output_type = output_type ;
     result = (make_e_a result) ;
-    body ;
   }
 
 let e_tuple (lst : ae list) : expression = E_tuple lst

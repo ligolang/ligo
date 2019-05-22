@@ -388,6 +388,7 @@ let declarations () : unit result =
   let%bind program = type_file "./contracts/declarations.ligo" in
   let make_input = e_a_int in
   let make_expected = fun n -> e_a_int (42 + n) in
+  expect_eq program "main" (make_input 0) (make_expected 0) >>? fun () ->
   expect_eq_n program "main" make_input make_expected
 
 let declaration_local () : unit result =
