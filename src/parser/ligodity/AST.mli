@@ -118,14 +118,14 @@ and ast = t
 and eof = Region.t
 
 and declaration =
-  Let      of (kwd_let * let_binding) reg        (* let p = e       *)
-| LetEntry of (kwd_let_entry * let_binding) reg  (* let%entry p = e *)
+  Let      of (kwd_let * let_binding) reg        (* let x = e       *)
+| LetEntry of (kwd_let_entry * let_binding) reg  (* let%entry x = e *)
 | TypeDecl of type_decl reg                      (* type ...        *)
 
 (* Non-recursive values *)
 
 and let_binding = {                                  (* p = e   p : t = e *)
-  pattern  : pattern;
+  variable : variable;
   lhs_type : (colon * type_expr) option;
   eq       : equal;
   let_rhs  : expr
@@ -329,9 +329,16 @@ and 'a case_clause = {
 
 and let_in = {
   kwd_let : kwd_let;
-  binding : let_binding;
+  binding : let_in_binding;
   kwd_in  : kwd_in;
   body    : expr
+}
+
+and let_in_binding = {
+  pattern  : pattern;
+  lhs_type : (colon * type_expr) option;
+  eq       : equal;
+  let_rhs  : expr
 }
 
 and fun_expr = {
@@ -469,8 +476,9 @@ val print_tokens : (*?undo:bool ->*) ast -> unit
 (* Projecting regions from sundry nodes of the AST. See the first
    comment at the beginning of this file. *)
 
-val region_of_pattern : pattern -> Region.t
-val region_of_expr    : expr -> Region.t
+val region_of_pattern   : pattern -> Region.t
+val region_of_expr      : expr -> Region.t
+val region_of_type_expr : type_expr -> Region.t
 
 (* Simplifications *)
 
@@ -479,3 +487,7 @@ val region_of_expr    : expr -> Region.t
    contains. *)
 
 val unpar : expr -> expr
+
+(* TODO *)
+
+val print_projection : projection -> unit

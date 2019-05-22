@@ -414,7 +414,7 @@ let get_token ?log =
 (* TODO: Move out (functor). See LIGO. *)
 
 let format_error ~(kind: string) Region.{region; value=msg} =
-  sprintf "%s error in %s:\n%s%!"
+  sprintf "%s error %s:\n%s%!"
     kind (region#to_string `Byte) msg
 
 let prerr ~(kind: string) msg =

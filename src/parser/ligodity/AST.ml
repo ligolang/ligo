@@ -116,7 +116,7 @@ and declaration =
 (* Non-recursive values *)
 
 and let_binding = {
-  pattern  : pattern;
+  variable : variable;
   lhs_type : (colon * type_expr) option;
   eq       : equal;
   let_rhs  : expr
@@ -320,9 +320,16 @@ and 'a case_clause = {
 
 and let_in = {
   kwd_let : kwd_let;
-  binding : let_binding;
+  binding : let_in_binding;
   kwd_in  : kwd_in;
   body    : expr
+}
+
+and let_in_binding = {
+  pattern  : pattern;
+  lhs_type : (colon * type_expr) option;
+  eq       : equal;
+  let_rhs  : expr
 }
 
 and fun_expr = {
@@ -345,16 +352,27 @@ and conditional = {
 
 let sprintf = Printf.sprintf
 
+let region_of_type_expr = function
+  TProd {region; _}
+| TSum {region; _}
+| TRecord {region; _}
+| TApp {region; _}
+| TFun {region; _}
+| TPar {region; _}
+| TAlias {region; _} -> region
+
+
 let region_of_list_pattern = function
   Sugar {region; _} | PCons {region; _} -> region
 
 let region_of_pattern = function
   PList p -> region_of_list_pattern p
 | PTuple {region;_} | PVar {region;_}
-| PUnit {region;_} | PInt {region;_} | PTrue region | PFalse region
+| PUnit {region;_} | PInt {region;_}
+| PTrue region | PFalse region
 | PString {region;_} | PWild region
-| PConstr {region; _} | PPar {region;_} | PRecord {region; _}
-| PTyped {region; _} -> region
+| PConstr {region; _} | PPar {region;_}
+| PRecord {region; _} | PTyped {region; _} -> region
 
 let region_of_bool_expr = function
   Or {region;_} | And {region;_}
@@ -472,9 +490,9 @@ and print_type_par {value={lpar;inside=t;rpar}; _} =
   print_type_expr t;
   print_token rpar ")"
 
-and print_projection Region.{value; _} =
-  let {struct_name; selector; field_path} = value in
-  print_uident struct_name;
+and print_projection node =
+  let {struct_name; selector; field_path} = node in
+  print_var struct_name;
   print_token selector ".";
   print_nsepseq "." print_selection field_path
 
@@ -532,7 +550,17 @@ and print_terminator = function
   Some semi -> print_token semi ";"
 | None -> ()
 
-and print_let_binding {pattern; lhs_type; eq; let_rhs} =
+and print_let_binding {variable; lhs_type; eq; let_rhs} =
+  print_var variable;
+  (match lhs_type with
+     None -> ()
+   | Some (colon, type_expr) ->
+       print_token colon ":";
+       print_type_expr type_expr);
+  (print_token eq "="; print_expr let_rhs)
+
+and print_let_in_binding (bind: let_in_binding) =
+  let {pattern; lhs_type; eq; let_rhs} : let_in_binding = bind in
   print_pattern pattern;
   (match lhs_type with
      None -> ()
@@ -603,7 +631,7 @@ and print_expr = function
 | ECall {value=f,l; _} ->
     print_expr f; Utils.nseq_iter print_expr l
 | EVar v -> print_var v
-| EProj p -> print_projection p
+| EProj p -> print_projection p.value
 | EUnit {value=lpar,rpar; _} ->
     print_token lpar "("; print_token rpar ")"
 | EBytes b -> print_bytes b
@@ -717,9 +745,10 @@ and print_case_clause {value; _} =
   print_token arrow "->";
   print_expr rhs
 
-and print_let_in {kwd_let; binding; kwd_in; body} =
+and print_let_in (bind: let_in) =
+  let {kwd_let; binding; kwd_in; body} = bind in
   print_token kwd_let "let";
-  print_let_binding binding;
+  print_let_in_binding binding;
   print_token kwd_in "in";
   print_expr body
 

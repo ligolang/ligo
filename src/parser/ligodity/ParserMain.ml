@@ -38,7 +38,8 @@ let tokeniser =
 let () =
   try
     let ast = Parser.program tokeniser buffer in
-    AST.print_tokens ast
+    if Utils.String.Set.mem "parser" options.verbose
+    then AST.print_tokens ast
   with
     Lexer.Error diag ->
       close_in cin; Lexer.prerr ~kind:"Lexical" diag
