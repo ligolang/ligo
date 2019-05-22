@@ -110,7 +110,7 @@ let compile_contract_parameter : string -> string -> string -> string result = f
       let env =
         let last_declaration = Location.unwrap List.(hd @@ rev program) in
         match last_declaration with
-        | Declaration_constant (_ , env) -> env
+        | Declaration_constant (_ , (_ , post_env)) -> post_env
       in
       trace (simple_error "typing expression") @@
       Typer.type_annotated_expression env simplified in
@@ -158,7 +158,7 @@ let compile_contract_storage : string -> string -> string -> string result = fun
       let env =
         let last_declaration = Location.unwrap List.(hd @@ rev program) in
         match last_declaration with
-        | Declaration_constant (_ , env) -> env
+        | Declaration_constant (_ , (_ , post_env)) -> post_env
       in
       trace (simple_error "typing expression") @@
       Typer.type_annotated_expression env simplified in

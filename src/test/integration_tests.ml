@@ -15,6 +15,11 @@ let function_ () : unit result =
   let make_expect = fun n -> n in
   expect_eq_n_int program "main" make_expect
 
+let assign () : unit result =
+  let%bind program = type_file "./contracts/assign.ligo" in
+  let make_expect = fun n -> n + 1 in
+  expect_eq_n_int program "main" make_expect
+
 let annotation () : unit result =
   let%bind program = type_file "./contracts/annotation.ligo" in
   let%bind () =
@@ -311,6 +316,12 @@ let condition () : unit result =
   let make_expected = fun n -> e_a_int (if n = 2 then 42 else 0) in
   expect_eq_n program "main" make_input make_expected
 
+let condition_simple () : unit result =
+  let%bind program = type_file "./contracts/condition-simple.ligo" in
+  let make_input = e_a_int in
+  let make_expected = fun _ -> e_a_int 42 in
+  expect_eq_n program "main" make_input make_expected
+
 let loop () : unit result =
   let%bind program = type_file "./contracts/loop.ligo" in
   let%bind () =
@@ -377,6 +388,13 @@ let declarations () : unit result =
   let%bind program = type_file "./contracts/declarations.ligo" in
   let make_input = e_a_int in
   let make_expected = fun n -> e_a_int (42 + n) in
+  expect_eq program "main" (make_input 0) (make_expected 0) >>? fun () ->
+  expect_eq_n program "main" make_input make_expected
+
+let declaration_local () : unit result =
+  let%bind program = type_file "./contracts/declaration-local.ligo" in
+  let make_input = e_a_int in
+  let make_expected = fun _ -> e_a_int 42 in
   expect_eq_n program "main" make_input make_expected
 
 let quote_declaration () : unit result =
@@ -436,11 +454,14 @@ let guess_the_hash_mligo () : unit result =
 
 let main = "Integration (End to End)", [
     test "function" function_ ;
+    test "assign" assign ;
+    test "declaration local" declaration_local ;
     test "complex function" complex_function ;
     test "variant" variant ;
     test "variant matching" variant_matching ;
     test "tuple" tuple ;
     test "record" record ;
+    test "condition simple" condition_simple ;
     test "condition" condition ;
     test "shadow" shadow ;
     test "annotation" annotation ;

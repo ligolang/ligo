@@ -14,7 +14,7 @@ type 'a type_name_map = 'a SMap.t
 type program = declaration Location.wrap list
 
 and declaration =
-  | Declaration_constant of (named_expression * full_environment)
+  | Declaration_constant of (named_expression * (full_environment * full_environment))
   (* | Macro_declaration of macro_declaration *)
 
 and environment_element_definition =
@@ -72,7 +72,6 @@ and lambda = {
   input_type: tv ;
   output_type: tv ;
   result: ae ;
-  body: block ;
 }
 
 and let_in = {
@@ -122,18 +121,6 @@ and literal =
   | Literal_address of string
   | Literal_operation of Memory_proto_alpha.Alpha_context.packed_internal_operation
 
-and block = instruction list
-and b = block
-
-and instruction =
-  | I_declaration of named_expression
-  | I_assignment of named_expression
-  | I_matching of ae * matching_instr
-  | I_loop of ae * b
-  | I_do of ae
-  | I_skip
-  | I_patch of named_type_value * access_path * ae
-
 and access =
   | Access_tuple of int
   | Access_record of string
@@ -156,8 +143,6 @@ and 'a matching =
     }
   | Match_tuple of (name list * 'a)
   | Match_variant of (((constructor_name * name) * 'a) list * type_value)
-
-and matching_instr = b matching
 
 and matching_expr = ae matching
 

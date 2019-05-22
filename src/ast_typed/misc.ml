@@ -70,31 +70,10 @@ module Free_variables = struct
 
   and lambda : bindings -> lambda -> bindings = fun b l ->
     let b' = union (singleton l.binder) b in
-    let (b'', frees) = block' b' l.body in
-    union (annotated_expression b'' l.result) frees
+    annotated_expression b' l.result
 
   and annotated_expression : bindings -> annotated_expression -> bindings = fun b ae ->
     expression b ae.expression
-
-  and instruction' : bindings -> instruction -> bindings * bindings = fun b i ->
-    match i with
-    | I_declaration n -> union (singleton n.name) b , (annotated_expression b n.annotated_expression)
-    | I_assignment n -> b , (annotated_expression b n.annotated_expression)
-    | I_skip -> b , empty
-    | I_do e -> b , annotated_expression b e
-    | I_loop (a , bl) -> b , union (annotated_expression b a) (block b bl)
-    | I_patch (_ , _ , a) -> b , annotated_expression b a
-    | I_matching (a , cs) -> b , union (annotated_expression b a) (matching_block b cs)
-
-  and block' : bindings -> block -> (bindings * bindings) = fun b bl ->
-    let aux = fun (binds, frees) cur ->
-      let (binds', frees') = instruction' binds cur in
-      (binds', union frees frees') in
-    List.fold_left aux (b , []) bl
-
-  and block : bindings -> block -> bindings = fun b bl ->
-    let (_ , frees) = block' b bl in
-    frees
 
   and matching_variant_case : type a . (bindings -> a -> bindings) -> bindings -> ((constructor_name * name) * a) -> bindings  = fun f b ((_,n),c) ->
     f (union (singleton n) b) c
@@ -108,8 +87,6 @@ module Free_variables = struct
     | Match_variant (lst , _) -> unions @@ List.map (matching_variant_case f b) lst
 
   and matching_expression = fun x -> matching annotated_expression x
-
-  and matching_block = fun x -> matching block x
 
 end
 

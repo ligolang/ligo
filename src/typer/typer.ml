@@ -73,146 +73,11 @@ and type_declaration env : I.declaration -> (environment * O.declaration option)
         trace (constant_declaration_error name annotated_expression) @@
         type_annotated_expression env annotated_expression in
       let env' = Environment.add_ez_ae name ae' env in
-      ok (env', Some (O.Declaration_constant ((make_n_e name ae') , env')))
-
-and type_block_full (e:environment) (b:I.block) : (O.block * environment) result =
-  let aux (e, acc:(environment * O.instruction list)) (i:I.instruction) =
-    let%bind (e', i') = type_instruction e i in
-    ok (e', i' @ acc)
-  in
-  let%bind (e', lst) = bind_fold_list aux (e, []) b in
-  ok @@ (List.rev lst, e')
-
-and type_block (e:environment) (b:I.block) : O.block result =
-  let%bind (block, _) = type_block_full e b in
-  ok block
-
-and type_instruction (e:environment) : I.instruction -> (environment * O.instruction list) result = fun i ->
-  let return x = ok (e, [x]) in
-  match i with
-  | I_skip -> return O.I_skip
-  | I_do x ->
-      let%bind expression = type_annotated_expression e x in
-      let%bind () =
-        trace_strong (simple_error "do without unit") @@
-        Ast_typed.assert_type_value_eq (get_type_annotation expression , t_unit ()) in
-      return @@ O.I_do expression
-  | I_loop (cond, body) ->
-      let%bind cond = type_annotated_expression e cond in
-      let%bind _ =
-        O.assert_type_value_eq (cond.type_annotation, t_bool ()) in
-      let%bind body = type_block e body in
-      return @@ O.I_loop (cond, body)
-  | I_assignment {name;annotated_expression} -> (
-      match annotated_expression.type_annotation, Environment.get_opt name e with
-      | None, None -> simple_fail "Initial assignments need type annotation"
-      | Some _, None ->
-          let%bind annotated_expression = type_annotated_expression e annotated_expression in
-          let e' = Environment.add_ez_ae name annotated_expression e in
-          ok (e', [O.I_declaration (make_n_e name annotated_expression)])
-      | None, Some prev ->
-          let%bind annotated_expression = type_annotated_expression e annotated_expression in
-          let%bind _ =
-            O.assert_type_value_eq (annotated_expression.type_annotation, prev.type_value) in
-          ok (e, [O.I_assignment (make_n_e name annotated_expression)])
-      | Some _, Some prev ->
-          let%bind annotated_expression = type_annotated_expression e annotated_expression in
-          let%bind _assert = trace (simple_error "Annotation doesn't match environment")
-            @@ O.assert_type_value_eq (annotated_expression.type_annotation, prev.type_value) in
-          let e' = Environment.add_ez_ae name annotated_expression e in
-          ok (e', [O.I_assignment (make_n_e name annotated_expression)])
-    )
-  | I_matching (ex, m) -> (
-      let%bind ex' = type_annotated_expression e ex in
-      match m with
-      (* Special case for assert-like failwiths. TODO: CLEAN THIS. *)
-      | I.Match_bool { match_false = [] ; match_true = [ I_do { expression = E_failwith fw } ] }
-      | I.Match_bool { match_false = [ I_skip ] ; match_true = [ I_do { expression = E_failwith fw } ] } -> (
-          let%bind fw' = type_annotated_expression e fw in
-          let%bind () =
-            trace_strong (simple_error "Matching bool on not-a-bool")
-            @@ assert_t_bool (get_type_annotation ex') in
-          let assert_ = make_a_e
-              (E_constant ("ASSERT" , [ex' ; fw']))
-              (t_unit ())
-              e
-          in
-          return (O.I_do assert_)
-        )
-      | _ -> (
-          let%bind m' = type_match type_block e ex'.type_annotation m in
-          return @@ O.I_matching (ex', m')
-        )
-    )
-  | I_record_patch (r, path, lst) ->
-      let aux (s, ae) =
-        let%bind ae' = type_annotated_expression e ae in
-        let%bind ty =
-          trace_option (simple_error "unbound variable in record_patch") @@
-          Environment.get_opt r e in
-        let tv = O.{type_name = r ; type_value = ty.type_value} in
-        let aux ty access =
-          match access with
-          | I.Access_record s ->
-              let%bind m = O.Combinators.get_t_record ty in
-              let%bind ty =
-                trace_option (simple_error "unbound record access in record_patch") @@
-                Map.String.find_opt s m in
-              ok (ty , O.Access_record s)
-          | I.Access_tuple i ->
-              let%bind t = O.Combinators.get_t_tuple ty in
-              let%bind ty =
-                generic_try (simple_error "unbound tuple access in record_patch") @@
-                (fun () -> List.nth t i) in
-              ok (ty , O.Access_tuple i)
-          | I.Access_map ind ->
-              let%bind (k , v) = O.Combinators.get_t_map ty in
-              let%bind ind' = type_annotated_expression e ind in
-              let%bind () = Ast_typed.assert_type_value_eq (get_type_annotation ind' ,  k) in
-              ok (v , O.Access_map ind')
-        in
-        let%bind path' = bind_fold_map_list aux ty.type_value (path @ [Access_record s]) in
-        ok @@ O.I_patch (tv, path', ae')
-      in
-      let%bind lst' = bind_map_list aux lst in
-      ok (e, lst')
-  | I_tuple_patch (r, path, lst) ->
-      let aux (s, ae) =
-        let%bind ae' = type_annotated_expression e ae in
-        let%bind ty =
-          trace_option (simple_error "unbound variable in tuple_patch") @@
-          Environment.get_opt r e in
-        let tv = O.{type_name = r ; type_value = ty.type_value} in
-        let aux ty access =
-          match access with
-          | I.Access_record s ->
-              let%bind m = O.Combinators.get_t_record ty in
-              let%bind ty =
-                trace_option (simple_error "unbound record access in tuple_patch") @@
-                Map.String.find_opt s m in
-              ok (ty , O.Access_record s)
-          | I.Access_tuple i ->
-              let%bind t = O.Combinators.get_t_tuple ty in
-              let%bind ty =
-                generic_try (simple_error "unbound tuple access in tuple_patch") @@
-                (fun () -> List.nth t i) in
-              ok (ty , O.Access_tuple i)
-          | I.Access_map ind ->
-              let%bind (k , v) = O.Combinators.get_t_map ty in
-              let%bind ind' = type_annotated_expression e ind in
-              let%bind () = Ast_typed.assert_type_value_eq (get_type_annotation ind' ,  k) in
-              ok (v , O.Access_map ind')
-        in
-        let%bind path' = bind_fold_map_list aux ty.type_value (path @ [Access_tuple s]) in
-        ok @@ O.I_patch (tv, path', ae')
-      in
-      let%bind lst' = bind_map_list aux lst in
-      ok (e, lst')
-
+      ok (env', Some (O.Declaration_constant ((make_n_e name ae') , (env , env'))))
 
 and type_match : type i o . (environment -> i -> o result) -> environment -> O.type_value -> i I.matching -> o O.matching result =
   fun f e t i -> match i with
-  | Match_bool {match_true ; match_false} ->
+    | Match_bool {match_true ; match_false} ->
       let%bind _ =
         trace_strong (simple_error "Matching bool on not-a-bool")
         @@ get_t_bool t in
@@ -354,7 +219,7 @@ and type_annotated_expression : environment -> I.annotated_expression -> O.annot
       return (E_variable name) tv'.type_value
   | E_literal (Literal_bool b) ->
       return (E_literal (Literal_bool b)) (t_bool ())
-  | E_literal Literal_unit ->
+  | E_literal Literal_unit | E_skip ->
       return (E_literal (Literal_unit)) (t_unit ())
   | E_literal (Literal_string s) -> (
       L.log (Format.asprintf "literal_string option type: %a" PP_helpers.(option O.PP.type_value) tv_opt) ;
@@ -488,14 +353,20 @@ and type_annotated_expression : environment -> I.annotated_expression -> O.annot
       input_type ;
       output_type ;
       result ;
-      body ;
     } -> (
-      let%bind input_type = evaluate_type e input_type in
-      let%bind output_type = evaluate_type e output_type in
+      let%bind input_type =
+        let%bind input_type =
+          trace_option (simple_error "no input type provided") @@
+          input_type in
+        evaluate_type e input_type in
+      let%bind output_type =
+        let%bind output_type =
+          trace_option (simple_error "no output type provided") @@
+          output_type in
+        evaluate_type e output_type in
       let e' = Environment.add_ez_binder binder input_type e in
-      let%bind (body, e'') = type_block_full e' body in
-      let%bind result = type_annotated_expression e'' result in
-      return (E_lambda {binder;input_type;output_type;result;body}) (t_function input_type output_type ())
+      let%bind result = type_annotated_expression e' result in
+      return (E_lambda {binder;input_type;output_type;result}) (t_function input_type output_type ())
     )
   | E_constant (name, lst) ->
       let%bind lst' = bind_list @@ List.map (type_annotated_expression e) lst in
@@ -532,7 +403,7 @@ and type_annotated_expression : environment -> I.annotated_expression -> O.annot
             trace_strong (simple_error "Matching not-unit on an assert")
             @@ assert_t_unit (get_type_annotation mf') in
           let mt' = make_a_e
-              (E_failwith fw')
+              (E_constant ("ASSERT" , [ex' ; fw']))
               (t_unit ())
               e
           in
@@ -582,9 +453,7 @@ and type_annotated_expression : environment -> I.annotated_expression -> O.annot
     return (O.E_loop (expr' , body')) (t_unit ())
   | E_assign (name , path , expr) ->
     let%bind typed_name =
-      let%bind ele =
-        trace_option (simple_error "missing var in env") @@
-        Environment.get_opt name e in
+      let%bind ele = Environment.get_trace name e in
       ok @@ make_n_t name ele.type_value in
     let%bind (assign_tv , path') =
       let aux : ((_ * O.access_path) as 'a) -> I.access -> 'a result = fun (prec_tv , prec_path) cur_path ->
@@ -613,7 +482,7 @@ and type_annotated_expression : environment -> I.annotated_expression -> O.annot
     return (O.E_assign (typed_name , path' , expr')) (t_unit ())
   | E_let_in {binder ; rhs ; result} ->
     let%bind rhs = type_annotated_expression e rhs in
-    let e' = Environment.add_ez_binder binder rhs.type_annotation e in
+    let e' = Environment.add_ez_declaration binder rhs e in
     let%bind result = type_annotated_expression e' result in
     return (E_let_in {binder; rhs; result}) result.type_annotation
 
@@ -685,12 +554,11 @@ let rec untype_annotated_expression (e:O.annotated_expression) : (I.annotated_ex
       let%bind f' = untype_annotated_expression f in
       let%bind arg' = untype_annotated_expression arg in
       return (E_application (f', arg'))
-  | E_lambda {binder;input_type;output_type;body;result} ->
+  | E_lambda {binder;input_type;output_type;result} ->
       let%bind input_type = untype_type_value input_type in
       let%bind output_type = untype_type_value output_type in
       let%bind result = untype_annotated_expression result in
-      let%bind body = untype_block body in
-      return (E_lambda {binder;input_type = input_type;output_type = output_type;body;result})
+      return (E_lambda {binder;input_type = Some input_type;output_type = Some output_type;result})
   | E_tuple lst ->
       let%bind lst' = bind_list
         @@ List.map untype_annotated_expression lst in
@@ -731,51 +599,6 @@ let rec untype_annotated_expression (e:O.annotated_expression) : (I.annotated_ex
       let%bind rhs = untype_annotated_expression rhs in
       let%bind result = untype_annotated_expression result in
       return (E_let_in {binder;rhs;result})
-
-and untype_block (b:O.block) : (I.block) result =
-  bind_list @@ List.map untype_instruction b
-
-and untype_instruction (i:O.instruction) : (I.instruction) result =
-  let open I in
-  match i with
-  | I_skip -> ok I_skip
-  | I_do e ->
-      let%bind e' = untype_annotated_expression e in
-      ok (I_do e')
-  | I_loop (e, b) ->
-      let%bind e' = untype_annotated_expression e in
-      let%bind b' = untype_block b in
-      ok @@ I_loop (e', b')
-  | I_declaration a ->
-      let%bind annotated_expression = untype_annotated_expression a.annotated_expression in
-      ok @@ I_assignment {name = a.name ; annotated_expression}
-  | I_assignment a ->
-      let%bind annotated_expression = untype_annotated_expression a.annotated_expression in
-      ok @@ I_assignment {name = a.name ; annotated_expression}
-  | I_matching (e, m) ->
-      let%bind e' = untype_annotated_expression e in
-      let%bind m' = untype_matching untype_block m in
-      ok @@ I_matching (e', m')
-  | I_patch (s, p, e) ->
-      let%bind e' = untype_annotated_expression e in
-      let%bind (hds, tl) =
-        trace_option (simple_error "patch without path") @@
-        List.rev_uncons_opt p in
-      let%bind tl_name = match tl with
-        | Access_record n -> ok n
-        | Access_tuple _ -> simple_fail "last element of patch is tuple"
-        | Access_map _ -> simple_fail "last element of patch is map"
-      in
-      let%bind hds' = bind_map_list untype_access hds in
-      ok @@ I_record_patch (s.type_name, hds', [tl_name, e'])
-
-and untype_access (a:O.access) : I.access result =
-  match a with
-  | Access_record n -> ok @@ I.Access_record n
-  | Access_tuple n -> ok @@ I.Access_tuple n
-  | Access_map n ->
-      let%bind n' = untype_annotated_expression n in
-      ok @@ I.Access_map n'
 
 and untype_matching : type o i . (o -> i result) -> o O.matching -> (i I.matching) result = fun f m ->
   let open I in

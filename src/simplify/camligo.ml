@@ -45,6 +45,15 @@ let get_p_variable : I.pattern -> string Location.wrap result = fun p ->
   | I.P_variable v -> ok v
   | _ -> simple_fail "not a pattern variable"
 
+let get_p_option_typed_variable : I.pattern -> (string Location.wrap * I.restricted_type_expression Location.wrap option) result = fun p ->
+  match p with
+  | I.P_variable v -> ok (v , None)
+  | I.P_type_annotation (pat , rte) -> (
+      let%bind v = get_p_variable @@ unwrap pat in
+      ok (v , Some rte)
+    )
+  | _ -> simple_fail "not an optionally typed pattern variable"
+
 let get_p_typed_variable : I.pattern -> (string Location.wrap * I.restricted_type_expression Location.wrap) result = fun p ->
   let%bind (p' , rte) =
     trace (simple_error "get_p_typed_variable") @@
@@ -171,63 +180,39 @@ let rec of_restricted_type_expression : I.restricted_type_expression -> I.type_e
 let restricted_type_expression : I.restricted_type_expression -> O.type_expression result =
   Function.compose type_expression of_restricted_type_expression
 
-type last_instruction_result = (O.block * O.annotated_expression)
-type lir = last_instruction_result
-
 let rec expression : I.expression -> O.annotated_expression result = fun e ->
-  let simple_error str =
-    let title () = Format.asprintf "No %s in inside expressions" str in
-    let content () = Format.asprintf "%a" I.pp_expression e in
-    error title content in
   match e with
-  | I.E_sequence _ -> fail @@ simple_error "sequence"
-  | I.E_let_in _ -> fail @@ simple_error "letin"
+  | I.E_sequence lst -> (
+      let%bind lst' = bind_map_list expression @@ List.map unwrap lst in
+      match lst' with
+      | [] -> simple_fail "empty sequence"
+      | hd :: tl -> ok @@ List.fold_right' (fun prec cur -> untyped_expression @@ e_sequence prec cur) hd tl
+    )
+  | I.E_let_in (pattern , expr , body) -> (
+      let%bind (name , rte) = get_p_option_typed_variable @@ unwrap pattern in
+      let%bind type_expression' = bind_map_option (fun x -> restricted_type_expression @@ unwrap x) rte in
+      let%bind expr' = expression @@ unwrap expr in
+      let%bind expr'' = merge_option_type_expression expr' type_expression' in
+      let%bind body' = expression @@ unwrap body in
+      ok @@ untyped_expression @@ e_let_in (unwrap name) expr'' body'
+    )
   | I.E_ifthenelse ite -> ifthenelse ite
   | I.E_ifthen it -> ifthen it
   | I.E_match m -> match_ m
   | I.E_record r -> record r
-  | I.E_fun _ -> fail @@ simple_error "fun"
+  | I.E_fun (pattern , expr) -> (
+      let%bind (name , rte) = get_p_typed_variable @@ unwrap pattern in
+      let name' = unwrap name in
+      let%bind type_expression' = restricted_type_expression (unwrap rte) in
+      let%bind expr' = expression (unwrap expr) in
+      ok @@ untyped_expression @@ E_lambda {
+        binder = name' ;
+        input_type = Some type_expression' ;
+        output_type = None ;
+        result = expr' ;
+      }
+    )
   | I.E_main m -> expression_main m
-
-and expression_last_instruction : I.expression -> lir result = fun e ->
-  match e with
-  | I.E_let_in l -> let_in_last_instruction l
-  | I.E_sequence s -> sequence_last_instruction s
-  | I.E_fun _|I.E_record _|I.E_ifthenelse _
-  | I.E_ifthen _|I.E_match _|I.E_main _ -> (
-      let%bind result' = expression e in
-      ok ([] , result')
-    )
-
-and expression_sequence : I.expression -> O.instruction result = fun e ->
-  match e with
-  | _ -> (
-      let%bind e' = expression e in
-      ok @@ O.I_do e'
-    )
-
-and let_in_last_instruction :
-  I.pattern Location.wrap * I.expression Location.wrap * I.expression Location.wrap -> lir result
-  = fun l ->
-  let (pat , expr , body) = l in
-  let%bind (var , ty) = get_p_typed_variable (unwrap pat) in
-  let%bind ty' = type_expression @@ of_restricted_type_expression (unwrap ty) in
-  let%bind expr' = expression (unwrap expr) in
-  let%bind uexpr' =
-    trace_strong (simple_error "no annotation on let bodies") @@
-    get_untyped_expression expr' in
-  let%bind (body' , last') = expression_last_instruction (unwrap body) in
-  let assignment = O.(i_assignment @@ named_typed_expression (unwrap var) uexpr' ty') in
-  ok (assignment :: body' , last')
-
-and sequence_last_instruction = fun s ->
-  let exprs = List.map unwrap s in
-  let%bind (hds , tl) =
-    trace_option (simple_error "at least 2 expressions in sequence") @@
-    List.rev_uncons_opt exprs in
-  let%bind instrs' = bind_map_list expression_sequence hds in
-  let%bind (body' , last') = expression_last_instruction tl in
-  ok (instrs' @ body' , last')
 
 and ifthenelse
   : (I.expression Location.wrap * I.expression Location.wrap * I.expression Location.wrap) -> O.annotated_expression result
@@ -444,27 +429,26 @@ let let_entry : _ -> _ result = fun l ->
     nty in
   let input = O.Combinators.typed_expression (E_variable input_nty.type_name) input_nty.type_expression in
   let tpl_declarations =
-    let aux = fun i (name , type_expression) ->
-      O.I_assignment {
-        name ;
-        annotated_expression = {
-          expression = O.E_accessor (input , [ Access_tuple i ]) ;
-          type_annotation = Some type_expression ;
-        }
-      }
+    let aux = fun i (name , type_expression) expr ->
+      untyped_expression @@ e_let_in name (
+        make_e_a_full
+          (O.E_accessor (input , [ Access_tuple i ]))
+          type_expression
+      ) expr
     in
-    List.mapi aux [ (param_name , param_ty) ; ((unwrap storage_name) , storage_ty)]
+    let lst = List.mapi aux [ (param_name , param_ty) ; ((unwrap storage_name) , storage_ty)] in
+    fun expr -> List.fold_right' (fun prec cur -> cur prec) expr lst
   in
-  let%bind (body' , result) = expression_last_instruction (unwrap e) in
+  let%bind result = expression (unwrap e) in
+  let result = tpl_declarations result in
   let input_type' = input_nty.type_expression in
   let output_type' = O.(t_pair (t_list t_operation , storage_ty)) in
   let lambda =
     O.{
       binder = input_nty.type_name ;
-      input_type = input_type';
-      output_type = output_type';
+      input_type = Some input_type';
+      output_type = Some output_type';
       result ;
-      body = tpl_declarations @ body' ;
     } in
   let type_annotation = Some (O.T_function (input_type', output_type')) in
   ok @@ O.Declaration_constant {name = (unwrap n) ; annotated_expression = {expression = O.E_lambda lambda ; type_annotation}}

@@ -121,12 +121,6 @@ let get_operation (v:value) = match v with
   | _ -> simple_fail "not an operation"
 
 
-let get_last_statement ((b', _):block) : statement result =
-  let aux lst = match lst with
-    | [] -> simple_fail "get_last: empty list"
-    | lst -> ok List.(nth lst (length lst - 1)) in
-  aux b'
-
 let t_int : type_value = T_base Base_int
 let t_unit : type_value = T_base Base_unit
 let t_nat : type_value = T_base Base_nat
@@ -136,25 +130,34 @@ let t_deep_closure x y z : type_value = T_deep_closure ( x , y , z )
 let t_pair x y : type_value = T_pair ( x , y )
 let t_union x y : type_value = T_or ( x , y )
 
-let quote binder input output body result : anon_function =
+let quote binder input output result : anon_function =
   {
     binder ; input ; output ;
-    body ; result ;
+    result ;
   }
 
-let basic_quote i o b : anon_function result =
-  let%bind (_, _e) = get_last_statement b in
-  let r : expression = Expression.make_tpl (E_variable "output", o) in
-  ok @@ quote "input" i o b r
-
-let basic_int_quote b : anon_function result =
-  basic_quote t_int t_int b
 
 let e_int expr : expression = Expression.make_tpl (expr, t_int)
 let e_unit : expression = Expression.make_tpl (E_literal D_unit, t_unit)
+let e_skip : expression = Expression.make_tpl (E_skip, t_unit)
 let e_var_int name : expression = e_int (E_variable name)
+let e_let_int v tv expr body : expression = Expression.(make_tpl (
+    E_let_in ((v , tv) , expr , body) ,
+    get_type body
+  ))
+
+let ez_e_sequence a b : expression = Expression.(make_tpl (E_sequence (make_tpl (a , t_unit) , b) , get_type b))
+
+let ez_e_return e : expression = Expression.(make_tpl ((E_environment_return e) , get_type e))
 
 let d_unit : value = D_unit
+
+let basic_quote i o expr : anon_function result =
+  ok @@ quote "input" i o (ez_e_return expr)
+
+let basic_int_quote expr : anon_function result =
+  basic_quote t_int t_int expr
+
 
 let environment_wrap pre_environment post_environment = { pre_environment ; post_environment }
 let id_environment_wrap e = environment_wrap e e
