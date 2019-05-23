@@ -1,3 +1,9 @@
+image: docker:latest
+
+services:
+  - docker:dind
+
+
 variables:
   GIT_SUBMODULE_STRATEGY: recursive
 
