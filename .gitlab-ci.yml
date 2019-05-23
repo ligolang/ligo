@@ -9,7 +9,7 @@ pages:
     - npm run build
     - cd ..
     - mkdir public
-    - mv website/build/* public
+    - mv website/build/ligo/* public
   artifacts:
     paths:
       - public
