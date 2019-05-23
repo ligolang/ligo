@@ -18,15 +18,15 @@ let type_constants = Operators.Simplify.type_constants
 let constants = Operators.Simplify.constants
 
 let return expr = ok @@ fun expr'_opt ->
-  let expr = untyped_expression expr in
+  let expr = expr in
   match expr'_opt with
   | None -> ok @@ expr
-  | Some expr' -> ok @@ e_a_sequence expr expr'
+  | Some expr' -> ok @@ e_sequence expr expr'
 
 let return_let_in binder rhs = ok @@ fun expr'_opt ->
   match expr'_opt with
   | None -> simple_fail "missing return" (* Hard to explain. Shouldn't happen in prod. *)
-  | Some expr' -> ok @@ untyped_expression @@ e_let_in binder rhs expr'
+  | Some expr' -> ok @@ e_let_in binder rhs expr'
 
 let rec simpl_type_expression (t:Raw.type_expr) : type_expression result =
   match t with
@@ -92,12 +92,12 @@ and simpl_list_type_expression (lst:Raw.type_expr list) : type_expression result
       let%bind lst = bind_list @@ List.map simpl_type_expression lst in
       ok @@ T_tuple lst
 
-let rec simpl_expression ?te_annot (t:Raw.expr) : ae result =
-  let return x = ok @@ make_e_a ?type_annotation:te_annot x in
+let rec simpl_expression (t:Raw.expr) : expr result =
+  let return x = ok x in
   let simpl_projection = fun (p:Raw.projection) ->
     let var =
       let name = p.struct_name.value in
-      make_e_a @@ E_variable name in
+      e_variable name in
     let path = p.field_path in
     let path' =
       let aux (s:Raw.selection) =
@@ -111,13 +111,9 @@ let rec simpl_expression ?te_annot (t:Raw.expr) : ae result =
   match t with
   | EAnnot a -> (
       let (expr , type_expr) = a.value in
-      match te_annot with
-      | None -> (
-          let%bind te_annot = simpl_type_expression type_expr in
-          let%bind expr' = simpl_expression ~te_annot expr in
-          ok expr'
-        )
-      | Some _ -> simple_fail "no double annotation"
+      let%bind expr' = simpl_expression expr in
+      let%bind type_expr' = simpl_type_expression type_expr in
+      return @@ e_annotation expr' type_expr'
     )
   | EVar c -> (
       let c' = c.value in
@@ -139,7 +135,7 @@ let rec simpl_expression ?te_annot (t:Raw.expr) : ae result =
       match List.assoc_opt f constants with
       | None ->
           let%bind arg = simpl_tuple_expression args' in
-          return @@ E_application (make_e_a @@ E_variable f, arg)
+          return @@ E_application (e_variable f, arg)
       | Some arity ->
           let%bind _arity =
             trace (simple_error "wrong arity for constants") @@
@@ -147,12 +143,12 @@ let rec simpl_expression ?te_annot (t:Raw.expr) : ae result =
           let%bind lst = bind_map_list simpl_expression args' in
           return @@ E_constant (f, lst)
     )
-  | EPar x -> simpl_expression ?te_annot x.value.inside
+  | EPar x -> simpl_expression x.value.inside
   | EUnit _ -> return @@ E_literal Literal_unit
   | EBytes x -> return @@ E_literal (Literal_bytes (Bytes.of_string @@ fst x.value))
   | ETuple tpl ->
       let (Raw.TupleInj tpl') = tpl in
-      simpl_tuple_expression ?te_annot
+      simpl_tuple_expression
       @@ npseq_to_list tpl'.value.inside
   | ERecord r ->
       let%bind fields = bind_list
@@ -180,15 +176,15 @@ let rec simpl_expression ?te_annot (t:Raw.expr) : ae result =
   | EConstr (NoneExpr _) ->
       return @@ E_constant ("NONE" , [])
   | EArith (Add c) ->
-      simpl_binop ?te_annot "ADD" c.value
+      simpl_binop "ADD" c.value
   | EArith (Sub c) ->
-      simpl_binop ?te_annot "SUB" c.value
+      simpl_binop "SUB" c.value
   | EArith (Mult c) ->
-      simpl_binop ?te_annot "TIMES" c.value
+      simpl_binop "TIMES" c.value
   | EArith (Div c) ->
-      simpl_binop ?te_annot "DIV" c.value
+      simpl_binop "DIV" c.value
   | EArith (Mod c) ->
-      simpl_binop ?te_annot "MOD" c.value
+      simpl_binop "MOD" c.value
   | EArith (Int n) ->
       let n = Z.to_int @@ snd @@ n.value in
       return @@ E_literal (Literal_int n)
@@ -206,8 +202,8 @@ let rec simpl_expression ?te_annot (t:Raw.expr) : ae result =
       in
       return @@ E_literal (Literal_string s')
   | EString _ -> simple_fail "string: not supported yet"
-  | ELogic l -> simpl_logic_expression ?te_annot l
-  | EList l -> simpl_list_expression ?te_annot l
+  | ELogic l -> simpl_logic_expression l
+  | EList l -> simpl_list_expression l
   | ESet _ -> simple_fail "set: not supported yet"
   | ECase c ->
       let%bind e = simpl_expression c.value.expr in
@@ -224,7 +220,7 @@ let rec simpl_expression ?te_annot (t:Raw.expr) : ae result =
   | EMap (MapInj mi) ->
       let%bind lst =
         let lst = List.map get_value @@ pseq_to_list mi.value.elements in
-        let aux : Raw.binding -> (annotated_expression * annotated_expression) result = fun b ->
+        let aux : Raw.binding -> (expression * expression) result = fun b ->
           let%bind src = simpl_expression b.source in
           let%bind dst = simpl_expression b.image in
           ok (src, dst) in
@@ -238,37 +234,37 @@ let rec simpl_expression ?te_annot (t:Raw.expr) : ae result =
       let%bind index = simpl_expression lu.value.index.value.inside in
       return (E_look_up (path, index))
 
-and simpl_logic_expression ?te_annot (t:Raw.logic_expr) : annotated_expression result =
-  let return x = ok @@ make_e_a ?type_annotation:te_annot x in
+and simpl_logic_expression (t:Raw.logic_expr) : expression result =
+  let return x = ok x in
   match t with
   | BoolExpr (False _) ->
       return @@ E_literal (Literal_bool false)
   | BoolExpr (True _) ->
       return @@ E_literal (Literal_bool true)
   | BoolExpr (Or b) ->
-      simpl_binop ?te_annot "OR" b.value
+      simpl_binop "OR" b.value
   | BoolExpr (And b) ->
-      simpl_binop ?te_annot "AND" b.value
+      simpl_binop "AND" b.value
   | BoolExpr (Not b) ->
-      simpl_unop ?te_annot "NOT" b.value
+      simpl_unop "NOT" b.value
   | CompExpr (Lt c) ->
-      simpl_binop ?te_annot "LT" c.value
+      simpl_binop "LT" c.value
   | CompExpr (Gt c) ->
-      simpl_binop ?te_annot "GT" c.value
+      simpl_binop "GT" c.value
   | CompExpr (Leq c) ->
-      simpl_binop ?te_annot "LE" c.value
+      simpl_binop "LE" c.value
   | CompExpr (Geq c) ->
-      simpl_binop ?te_annot "GE" c.value
+      simpl_binop "GE" c.value
   | CompExpr (Equal c) ->
-      simpl_binop ?te_annot "EQ" c.value
+      simpl_binop "EQ" c.value
   | CompExpr (Neq c) ->
-      simpl_binop ?te_annot "NEQ" c.value
+      simpl_binop "NEQ" c.value
 
-and simpl_list_expression ?te_annot (t:Raw.list_expr) : annotated_expression result =
-  let return x = ok @@ make_e_a ?type_annotation:te_annot x in
+and simpl_list_expression (t:Raw.list_expr) : expression result =
+  let return x = ok x in
   match t with
   | Cons c ->
-      simpl_binop ?te_annot "CONS" c.value
+      simpl_binop "CONS" c.value
   | List lst ->
       let%bind lst' =
         bind_map_list simpl_expression @@
@@ -277,22 +273,22 @@ and simpl_list_expression ?te_annot (t:Raw.list_expr) : annotated_expression res
   | Nil _ ->
       return @@ E_list []
 
-and simpl_binop ?te_annot (name:string) (t:_ Raw.bin_op) : annotated_expression result =
-  let return x = ok @@ make_e_a ?type_annotation:te_annot x in
+and simpl_binop (name:string) (t:_ Raw.bin_op) : expression result =
+  let return x = ok x in
   let%bind a = simpl_expression t.arg1 in
   let%bind b = simpl_expression t.arg2 in
   return @@ E_constant (name, [a;b])
 
-and simpl_unop ?te_annot (name:string) (t:_ Raw.un_op) : annotated_expression result =
-  let return x = ok @@ make_e_a ?type_annotation:te_annot x in
+and simpl_unop (name:string) (t:_ Raw.un_op) : expression result =
+  let return x = ok x in
   let%bind a = simpl_expression t.arg in
   return @@ E_constant (name, [a])
 
-and simpl_tuple_expression ?te_annot (lst:Raw.expr list) : annotated_expression result =
-  let return x = ok @@ make_e_a ?type_annotation:te_annot x in
+and simpl_tuple_expression (lst:Raw.expr list) : expression result =
+  let return x = ok x in
   match lst with
   | [] -> return @@ E_literal Literal_unit
-  | [hd] -> simpl_expression ?te_annot hd
+  | [hd] -> simpl_expression hd
   | lst ->
       let%bind lst = bind_list @@ List.map simpl_expression lst in
       return @@ E_tuple lst
@@ -305,8 +301,8 @@ and simpl_local_declaration : Raw.local_decl -> _ result = fun t ->
 and simpl_lambda_declaration : Raw.lambda_decl -> _ result = fun l ->
   match l with
   | FunDecl f ->
-      let%bind e = simpl_fun_declaration (f.value) in
-      return_let_in e.name e.annotated_expression
+      let%bind (name , e) = simpl_fun_declaration (f.value) in
+      return_let_in name e
   | ProcDecl _ -> simple_fail "no local procedure yet"
   | EntryDecl _ -> simple_fail "no local entry-point yet"
 
@@ -316,29 +312,29 @@ and simpl_data_declaration : Raw.data_decl -> _ result = fun t ->
       let x = x.value in
       let name = x.name.value in
       let%bind t = simpl_type_expression x.var_type in
-      let%bind annotated_expression = simpl_expression ~te_annot:t x.init in
-      return_let_in name annotated_expression
+      let%bind expression = simpl_expression x.init in
+      return_let_in (name , Some t) expression
   | LocalConst x ->
       let x = x.value in
       let name = x.name.value in
       let%bind t = simpl_type_expression x.const_type in
-      let%bind annotated_expression = simpl_expression ~te_annot:t x.init in
-      return_let_in name annotated_expression
+      let%bind expression = simpl_expression x.init in
+      return_let_in (name , Some t) expression
 
-and simpl_param : Raw.param_decl -> named_type_expression result = fun t ->
+and simpl_param : Raw.param_decl -> (type_name * type_expression) result = fun t ->
   match t with
   | ParamConst c ->
       let c = c.value in
       let type_name = c.var.value in
       let%bind type_expression = simpl_type_expression c.param_type in
-      ok { type_name ; type_expression }
+      ok (type_name , type_expression)
   | ParamVar v ->
       let c = v.value in
       let type_name = c.var.value in
       let%bind type_expression = simpl_type_expression c.param_type in
-      ok { type_name ; type_expression }
+      ok (type_name , type_expression)
 
-and simpl_fun_declaration : Raw.fun_decl -> named_expression result = fun x ->
+and simpl_fun_declaration : Raw.fun_decl -> ((name * type_expression option) * expression) result = fun x ->
   let open! Raw in
   let {name;param;ret_type;local_decls;block;return} : fun_decl = x in
   (match npseq_to_list param.value.inside with
@@ -346,8 +342,7 @@ and simpl_fun_declaration : Raw.fun_decl -> named_expression result = fun x ->
    | [a] -> (
        let%bind input = simpl_param a in
        let name = name.value in
-       let binder = input.type_name in
-       let input_type = input.type_expression in
+       let (binder , input_type) = input in
        let%bind local_declarations =
          bind_map_list simpl_local_declaration local_decls in
        let%bind instructions = bind_list
@@ -360,31 +355,25 @@ and simpl_fun_declaration : Raw.fun_decl -> named_expression result = fun x ->
          let aux prec cur = cur (Some prec) in
          bind_fold_right_list aux result body in
        let expression = E_lambda {
-           binder ;
+           binder = (binder , Some input_type) ;
            input_type = Some input_type ;
            output_type = Some output_type ;
            result
          } in
        let type_annotation = Some (T_function (input_type, output_type)) in
-       ok {name;annotated_expression = {expression;type_annotation}}
+       ok ((name , type_annotation) , expression)
      )
    | lst -> (
        let arguments_name = "arguments" in
        let%bind params = bind_map_list simpl_param lst in
-       let input =
-         let aux = fun x -> x.type_expression in
-         let type_expression = T_tuple (List.map aux params) in
-         { type_name = arguments_name ; type_expression } in
-       let binder = input.type_name in
-       let input_type = input.type_expression in
+       let (binder , input_type) =
+         let type_expression = T_tuple (List.map snd params) in
+         (arguments_name , type_expression) in
        let%bind tpl_declarations =
-         let aux = fun i (x:named_type_expression) ->
-           let expr = E_accessor ({
-                   expression = E_variable arguments_name ;
-                   type_annotation = Some input.type_expression ;
-                 } , [ Access_tuple i ]) in
-           let type_ = x.type_expression in
-           let ass = return_let_in x.type_name (make_e_a_full expr type_) in
+         let aux = fun i x ->
+           let expr = E_accessor (E_variable arguments_name , [ Access_tuple i ]) in
+           let type_ = Some (snd x) in
+           let ass = return_let_in (fst x , type_) expr in
            ass
          in
          bind_list @@ List.mapi aux params in
@@ -400,13 +389,13 @@ and simpl_fun_declaration : Raw.fun_decl -> named_expression result = fun x ->
          let aux prec cur = cur (Some prec) in
          bind_fold_right_list aux result body in
        let expression = E_lambda {
-           binder ;
+           binder = (binder , Some input_type) ;
            input_type = Some input_type ;
            output_type = Some output_type ;
            result
          } in
        let type_annotation = Some (T_function (input_type, output_type)) in
-       ok {name = name.value;annotated_expression = {expression;type_annotation}}
+       ok ((name.value , type_annotation) , expression)
      )
   )
 and simpl_declaration : Raw.declaration -> declaration Location.wrap result = fun t ->
@@ -416,29 +405,29 @@ and simpl_declaration : Raw.declaration -> declaration Location.wrap result = fu
   | TypeDecl x ->
       let {name;type_expr} : Raw.type_decl = x.value in
       let%bind type_expression = simpl_type_expression type_expr in
-      ok @@ loc x @@ Declaration_type {type_name=name.value;type_expression}
+      ok @@ loc x @@ Declaration_type (name.value , type_expression)
   | ConstDecl x ->
       let simpl_const_decl = fun {name;const_type;init} ->
         let%bind expression = simpl_expression init in
         let%bind t = simpl_type_expression const_type in
         let type_annotation = Some t in
-        ok @@ Declaration_constant {name=name.value;annotated_expression={expression with type_annotation}}
+        ok @@ Declaration_constant (name.value , type_annotation , expression)
       in
       bind_map_location simpl_const_decl (Location.lift_region x)
   | LambdaDecl (FunDecl x) ->
       let aux f x =
-        let%bind x' = f x in
-        ok @@ Declaration_constant x' in
+        let%bind ((name , ty_opt) , expr) = f x in
+        ok @@ Declaration_constant (name , ty_opt , expr) in
       bind_map_location (aux simpl_fun_declaration) (Location.lift_region x)
   | LambdaDecl (ProcDecl _) -> simple_fail "no proc declaration yet"
   | LambdaDecl (EntryDecl _)-> simple_fail "no entry point yet"
 
-and simpl_statement : Raw.statement -> (_ -> annotated_expression result) result = fun s ->
+and simpl_statement : Raw.statement -> (_ -> expression result) result = fun s ->
   match s with
   | Instr i -> simpl_instruction i
   | Data d -> simpl_data_declaration d
 
-and simpl_single_instruction : Raw.single_instr -> (_ -> annotated_expression result) result = fun t ->
+and simpl_single_instruction : Raw.single_instr -> (_ -> expression result) result = fun t ->
   match t with
   | ProcCall _ -> simple_fail "no proc call"
   | Fail e -> (
@@ -483,8 +472,8 @@ and simpl_single_instruction : Raw.single_instr -> (_ -> annotated_expression re
               | Name name -> ok name
               | _ -> simple_fail "no complex map assignments yet" in
             let%bind key_expr = simpl_expression v'.index.value.inside in
-            let old_expr = make_e_a @@ E_variable name.value in
-            let expr' = make_e_a @@ E_constant ("MAP_UPDATE", [key_expr ; value_expr ; old_expr]) in
+            let old_expr = e_variable name.value in
+            let expr' = e_map_update key_expr value_expr old_expr in
             return @@ E_assign (name.value , [] , expr')
           )
     )
@@ -517,7 +506,7 @@ and simpl_single_instruction : Raw.single_instr -> (_ -> annotated_expression re
         | [] -> simple_fail "empty record patch"
         | hd :: tl -> (
             let aux acc cur =
-              e_sequence (untyped_expression acc) (untyped_expression cur)
+              e_sequence (acc) (cur)
             in
             ok @@ List.fold_left aux hd tl
           )
@@ -533,8 +522,8 @@ and simpl_single_instruction : Raw.single_instr -> (_ -> annotated_expression re
         | Name v -> ok v.value
         | _ -> simple_fail "no complex map remove yet" in
       let%bind key' = simpl_expression key in
-      let expr = E_constant ("MAP_REMOVE", [key' ; make_e_a (E_variable map)]) in
-      return @@ E_assign (map , [] , make_e_a expr)
+      let expr = E_constant ("MAP_REMOVE", [key' ; e_variable map]) in
+      return @@ E_assign (map , [] , expr)
   | SetRemove _ -> simple_fail "no set remove yet"
 
 and simpl_path : Raw.path -> string * Ast_simplified.access_path = fun p ->
@@ -629,12 +618,12 @@ and simpl_cases : type a . (Raw.pattern * a) list -> a matching result = fun t -
         bind_map_list aux lst in
       ok @@ Match_variant constrs
 
-and simpl_instruction_block : Raw.instruction -> (_ -> annotated_expression result) result = fun t ->
+and simpl_instruction_block : Raw.instruction -> (_ -> expression result) result = fun t ->
   match t with
   | Single s -> simpl_single_instruction s
   | Block b -> simpl_block b.value
 
-and simpl_instruction : Raw.instruction -> (_ -> annotated_expression result) result = fun t ->
+and simpl_instruction : Raw.instruction -> (_ -> expression result) result = fun t ->
   let main_error =
     let title () = "simplifiying instruction" in
     let content () = Format.asprintf "%a" PP_helpers.(printer Parser.Pascaligo.ParserLog.print_instruction) t in
@@ -644,17 +633,17 @@ and simpl_instruction : Raw.instruction -> (_ -> annotated_expression result) re
   | Single s -> simpl_single_instruction s
   | Block _ -> simple_fail "no block instruction yet"
 
-and simpl_statements : Raw.statements -> (_ -> annotated_expression result) result = fun ss ->
+and simpl_statements : Raw.statements -> (_ -> expression result) result = fun ss ->
   let lst = npseq_to_list ss in
   let%bind fs = bind_map_list simpl_statement lst in
-  let aux : _ -> (annotated_expression option -> annotated_expression result) -> _ = fun prec cur ->
+  let aux : _ -> (expression option -> expression result) -> _ = fun prec cur ->
     let%bind res = cur prec in
     ok @@ Some res in
   ok @@ fun (expr' : _ option) ->
   let%bind ret = bind_fold_right_list aux expr' fs in
   ok @@ Option.unopt_exn ret
 
-and simpl_block : Raw.block -> (_ -> annotated_expression result) result = fun t ->
+and simpl_block : Raw.block -> (_ -> expression result) result = fun t ->
   simpl_statements t.statements
 
 let simpl_program : Raw.ast -> program result = fun t ->

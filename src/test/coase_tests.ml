@@ -17,9 +17,9 @@ let get_program =
 open Ast_simplified
 
 let card owner =
-  ez_e_a_record [
+  ez_e_record [
     ("card_owner" , owner) ;
-    ("card_pattern" , e_a_nat 0) ;
+    ("card_pattern" , e_nat 0) ;
   ]
 
 let card_ty = t_record_ez [
@@ -27,14 +27,14 @@ let card_ty = t_record_ez [
     ("card_pattern" , t_nat) ;
   ]
 
-let card_ez owner = card (e_a_address owner)
+let card_ez owner = card (e_address owner)
 
 let make_cards assoc_lst =
   let card_id_ty = t_nat in
-  e_a_map assoc_lst card_id_ty card_ty
+  e_map assoc_lst card_id_ty card_ty
 
 let card_pattern (coeff , qtt) =
-  ez_e_a_record [
+  ez_e_record [
     ("coefficient" , coeff) ;
     ("quantity" , qtt) ;
   ]
@@ -46,25 +46,25 @@ let card_pattern_ty =
   ]
 
 let card_pattern_ez (coeff , qtt) =
-  card_pattern (e_a_tez coeff , e_a_nat qtt)
+  card_pattern (e_tez coeff , e_nat qtt)
 
 let make_card_patterns lst =
   let card_pattern_id_ty = t_nat  in
-  let assoc_lst = List.mapi (fun i x -> (e_a_nat i , x)) lst in
-  e_a_map assoc_lst card_pattern_id_ty card_pattern_ty
+  let assoc_lst = List.mapi (fun i x -> (e_nat i , x)) lst in
+  e_map assoc_lst card_pattern_id_ty card_pattern_ty
 
 let storage cards_patterns cards next_id =
-  ez_e_a_record [
+  ez_e_record [
     ("cards" , cards) ;
     ("card_patterns" , cards_patterns) ;
     ("next_id" , next_id) ;
   ]
 
 let storage_ez cps cs next_id =
-  storage (make_card_patterns cps) (make_cards cs) (e_a_nat next_id)
+  storage (make_card_patterns cps) (make_cards cs) (e_nat next_id)
 
 let cards_ez owner n =
-  List.mapi (fun i x -> (e_a_nat i , x))
+  List.mapi (fun i x -> (e_nat i , x))
   @@ List.map card_ez
   @@ List.map (Function.constant owner)
   @@ List.range n
@@ -92,21 +92,21 @@ let buy () =
   let%bind program = get_program () in
   let%bind () =
     let make_input = fun n ->
-      let buy_action = ez_e_a_record [
-          ("card_to_buy" , e_a_nat 0) ;
+      let buy_action = ez_e_record [
+          ("card_to_buy" , e_nat 0) ;
         ] in
       let storage = basic 100 1000 (cards_ez first_owner n) (2 * n) in
-      e_a_pair buy_action storage
+      e_pair buy_action storage
     in
     let make_expected = fun n ->
-      let ops = e_a_typed_list [] t_operation in
+      let ops = e_typed_list [] t_operation in
       let storage =
         let cards =
           cards_ez first_owner n @
-          [(e_a_nat (2 * n) , card (e_a_address second_owner))]
+          [(e_nat (2 * n) , card (e_address second_owner))]
         in
         basic 101 1000 cards ((2 * n) + 1) in
-      e_a_pair ops storage
+      e_pair ops storage
     in
     let%bind () =
       let%bind amount =
@@ -130,22 +130,22 @@ let dispatch_buy () =
   let%bind program = get_program () in
   let%bind () =
     let make_input = fun n ->
-      let buy_action = ez_e_a_record [
-          ("card_to_buy" , e_a_nat 0) ;
+      let buy_action = ez_e_record [
+          ("card_to_buy" , e_nat 0) ;
         ] in
-      let action = e_a_constructor "Buy_single" buy_action in
+      let action = e_constructor "Buy_single" buy_action in
       let storage = basic 100 1000 (cards_ez first_owner n) (2 * n) in
-      e_a_pair action storage
+      e_pair action storage
     in
     let make_expected = fun n ->
-      let ops = e_a_typed_list [] t_operation in
+      let ops = e_typed_list [] t_operation in
       let storage =
         let cards =
           cards_ez first_owner n @
-          [(e_a_nat (2 * n) , card (e_a_address second_owner))]
+          [(e_nat (2 * n) , card (e_address second_owner))]
         in
         basic 101 1000 cards ((2 * n) + 1) in
-      e_a_pair ops storage
+      e_pair ops storage
     in
     let%bind () =
       let%bind amount =
@@ -169,23 +169,23 @@ let transfer () =
   let%bind program = get_program () in
   let%bind () =
     let make_input = fun n ->
-      let transfer_action = ez_e_a_record [
-          ("card_to_transfer" , e_a_nat 0) ;
-          ("destination" , e_a_address second_owner) ;
+      let transfer_action = ez_e_record [
+          ("card_to_transfer" , e_nat 0) ;
+          ("destination" , e_address second_owner) ;
         ] in
       let storage = basic 100 1000 (cards_ez first_owner n) (2 * n) in
-      e_a_pair transfer_action storage
+      e_pair transfer_action storage
     in
     let make_expected = fun n ->
-      let ops = e_a_typed_list [] t_operation in
+      let ops = e_typed_list [] t_operation in
       let storage =
         let cards =
           let new_card = card_ez second_owner in
           let old_cards = cards_ez first_owner n in
-          (e_a_nat 0 , new_card) :: (List.tl old_cards)
+          (e_nat 0 , new_card) :: (List.tl old_cards)
         in
         basic 100 1000 cards (2 * n) in
-      e_a_pair ops storage
+      e_pair ops storage
     in
     let%bind () =
       let amount = Memory_proto_alpha.Alpha_context.Tez.zero in
@@ -200,17 +200,17 @@ let sell () =
   let%bind program = get_program () in
   let%bind () =
     let make_input = fun n ->
-      let sell_action = ez_e_a_record [
-          ("card_to_sell" , e_a_nat (n - 1)) ;
+      let sell_action = ez_e_record [
+          ("card_to_sell" , e_nat (n - 1)) ;
         ] in
       let cards = cards_ez first_owner n in
       let storage = basic 100 1000 cards (2 * n) in
-      e_a_pair sell_action storage
+      e_pair sell_action storage
     in
-    let make_expecter : int -> annotated_expression -> unit result = fun n result ->
-      let%bind (ops , storage) = get_a_pair result in
+    let make_expecter : int -> expression -> unit result = fun n result ->
+      let%bind (ops , storage) = get_e_pair result in
       let%bind () =
-        let%bind lst = get_a_list ops in
+        let%bind lst = get_e_list ops in
         Assert.assert_list_size lst 1 in
       let expected_storage =
         let cards = List.hds @@ cards_ez first_owner n in

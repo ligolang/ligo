@@ -2,14 +2,13 @@ open Trace
 
 include struct
   open Ast_simplified
-  open Combinators
 
   let assert_entry_point_defined : program -> string -> unit result =
     fun program entry_point ->
       let aux : declaration -> bool = fun declaration ->
         match declaration with
         | Declaration_type _ -> false
-        | Declaration_constant ne -> get_name ne = entry_point
+        | Declaration_constant (name , _ , _) -> name = entry_point
       in
       trace_strong (simple_error "no entry-point with given name") @@
       Assert.assert_true @@ List.exists aux @@ List.map Location.unwrap program
@@ -113,7 +112,7 @@ let compile_contract_parameter : string -> string -> string -> string result = f
         | Declaration_constant (_ , (_ , post_env)) -> post_env
       in
       trace (simple_error "typing expression") @@
-      Typer.type_annotated_expression env simplified in
+      Typer.type_expression env simplified in
     let%bind () =
       trace (simple_error "expression type doesn't match type parameter") @@
       Ast_typed.assert_type_value_eq (parameter_tv , typed.type_annotation) in
@@ -161,7 +160,7 @@ let compile_contract_storage : string -> string -> string -> string result = fun
         | Declaration_constant (_ , (_ , post_env)) -> post_env
       in
       trace (simple_error "typing expression") @@
-      Typer.type_annotated_expression env simplified in
+      Typer.type_expression env simplified in
     let%bind () =
       trace (simple_error "expression type doesn't match type storage") @@
       Ast_typed.assert_type_value_eq (storage_tv , typed.type_annotation) in

@@ -4,30 +4,6 @@ module Option = Simple_utils.Option
 
 module SMap = Map.String
 
-let get_name : named_expression -> string = fun x -> x.name
-let get_type_name : named_type_expression -> string = fun x -> x.type_name
-let get_type_annotation (x:annotated_expression) = x.type_annotation
-let get_expression (x:annotated_expression) = x.expression
-
-let named_expression name annotated_expression = { name ; annotated_expression }
-let named_typed_expression name expression ty = { name ; annotated_expression = { expression ; type_annotation = Some ty } }
-let typed_expression expression ty = { expression ; type_annotation = Some ty }
-let untyped_expression expression = { expression ; type_annotation = None }
-let merge_type_expression ae type_annotation = match ae.type_annotation with
-  | None -> ok { ae with type_annotation = Some type_annotation }
-  | Some _ -> simple_fail "merging already typed expression"
-
-let merge_option_type_expression ae ta_opt = match (ae.type_annotation , ta_opt) with
-  | _ , None -> ok ae
-  | None , Some type_annotation -> ok { ae with type_annotation = Some type_annotation }
-  | _ -> simple_fail "merging already typed expression"
-
-let get_untyped_expression : annotated_expression -> expression result = fun ae ->
-  let%bind () =
-    trace_strong (simple_error "expression is typed") @@
-    Assert.assert_none ae.type_annotation in
-  ok ae.expression
-
 let t_bool      : type_expression = T_constant ("bool", [])
 let t_string    : type_expression = T_constant ("string", [])
 let t_bytes     : type_expression = T_constant ("bytes", [])
@@ -57,9 +33,6 @@ let ez_t_sum (lst:(string * type_expression) list) : type_expression =
 let t_function param result : type_expression = T_function (param, result)
 let t_map key value = (T_constant ("map", [key ; value]))
 
-let make_e_a ?type_annotation expression = {expression ; type_annotation}
-let make_e_a_full expression type_annotation = make_e_a ~type_annotation expression
-
 let make_name (s : string) : name = s
 
 let e_var (s : string) : expression = E_variable s
@@ -76,6 +49,7 @@ let e_record map : expression = E_record map
 let e_tuple lst : expression = E_tuple lst
 let e_some s : expression = E_constant ("SOME", [s])
 let e_none : expression = E_constant ("NONE", [])
+let e_map_update k v old : expression = E_constant ("MAP_UPDATE" , [k ; v ; old])
 let e_map lst : expression = E_map lst
 let e_list lst : expression = E_list lst
 let e_pair a b : expression = E_tuple [a; b]
@@ -90,56 +64,24 @@ let e_skip = E_skip
 let e_loop cond body = E_loop (cond , body)
 let e_sequence a b = E_sequence (a , b)
 let e_let_in binder rhs result = E_let_in { binder ; rhs ; result }
+let e_annotation expr ty = E_annotation (expr , ty)
+let e_application a b = E_application (a , b)
 
-let e_a_unit : annotated_expression = make_e_a_full (e_unit ()) t_unit
-let e_a_string s : annotated_expression = make_e_a_full (e_string s) t_string
-let e_a_int n : annotated_expression = make_e_a_full (e_int n) t_int
-let e_a_nat n : annotated_expression = make_e_a_full (e_nat n) t_nat
-let e_a_bool b : annotated_expression = make_e_a_full (e_bool b) t_bool
-let e_a_list lst : annotated_expression = make_e_a (e_list lst)
-let e_a_constructor s a : annotated_expression = make_e_a (e_constructor s a)
-let e_a_address x = make_e_a_full (e_address x) t_address
-let e_a_tez x = make_e_a_full (e_tez x) t_tez
-let e_a_sequence a b : annotated_expression = make_e_a (e_sequence a b)
+let e_binop name a b = E_constant (name , [a ; b])
 
-let e_a_record r =
-  let type_annotation = Option.(
-      map ~f:t_record (bind_map_smap get_type_annotation r)
-    ) in
-  make_e_a ?type_annotation (e_record r)
-
-let ez_e_a_record lst =
+let ez_e_record lst =
   let aux prev (k, v) = SMap.add k v prev in
   let map = List.fold_left aux SMap.empty lst in
-  e_a_record map
+  e_record map
 
-let e_a_tuple lst =
-  let type_annotation = Option.(
-      map ~f:t_tuple (bind_map_list get_type_annotation lst)
-    ) in
-  make_e_a ?type_annotation (e_tuple lst)
-
-let e_a_pair a b =
-  let type_annotation = Option.(
-      map ~f:t_pair
-      @@ bind_map_pair get_type_annotation (a , b)
-    ) in
-  make_e_a ?type_annotation (e_pair a b)
-
-let e_a_some opt =
-  let type_annotation = Option.(
-      map ~f:t_option (get_type_annotation opt)
-    ) in
-  make_e_a ?type_annotation (e_some opt)
-
-let e_a_typed_none t_opt =
+let e_typed_none t_opt =
   let type_annotation = t_option t_opt in
-  make_e_a ~type_annotation e_none
+  e_annotation e_none type_annotation
 
-let e_a_typed_list lst t =
-  make_e_a ~type_annotation:(t_list t) (e_list lst)
+let e_typed_list lst t =
+  e_annotation (e_list lst) (t_list t)
 
-let e_a_map lst k v = make_e_a ~type_annotation:(t_map k v) (e_map lst)
+let e_map lst k v = e_annotation (e_map lst) (t_map k v)
 
 let e_lambda (binder : string)
     (input_type : type_expression option)
@@ -147,36 +89,24 @@ let e_lambda (binder : string)
     (result : expression)
   : expression =
   E_lambda {
-    binder = (make_name binder) ;
+    binder = (make_name binder , input_type) ;
     input_type = input_type ;
     output_type = output_type ;
-    result = (make_e_a result) ;
+    result ;
   }
 
-let e_tuple (lst : ae list) : expression = E_tuple lst
-let ez_e_tuple (lst : expression list) : expression =
-  e_tuple (List.map make_e_a lst)
-
-let e_constructor (s : string) (e : ae) : expression = E_constructor (make_name s, e)
-
-let e_record (lst : (string * ae) list) : expression =
+let e_record (lst : (string * expr) list) : expression =
   let aux prev (k, v) = SMap.add k v prev in
   let map = List.fold_left aux SMap.empty lst in
   E_record map
 
-let ez_e_record  (lst : (string * expression) list) : expression =
-  (* TODO: define a correct implementation of List.map
-   * (an implementation that does not fail with stack overflow) *)
-  e_record (List.map (fun (s,e) -> (s, make_e_a e)) lst)
-
-
-let get_a_accessor = fun t ->
-  match t.expression with
+let get_e_accessor = fun t ->
+  match t with
   | E_accessor (a , b) -> ok (a , b)
   | _ -> simple_fail "not an accessor"
 
-let assert_a_accessor = fun t ->
-  let%bind _ = get_a_accessor t in
+let assert_e_accessor = fun t ->
+  let%bind _ = get_e_accessor t in
   ok ()
 
 let get_access_record : access -> string result = fun a ->
@@ -185,12 +115,12 @@ let get_access_record : access -> string result = fun a ->
   | Access_map _ -> simple_fail "not an access record"
   | Access_record s -> ok s
 
-let get_a_pair = fun t ->
-  match t.expression with
+let get_e_pair = fun t ->
+  match t with
   | E_tuple [a ; b] -> ok (a , b)
   | _ -> simple_fail "not a pair"
 
-let get_a_list = fun t ->
-  match t.expression with
+let get_e_list = fun t ->
+  match t with
   | E_list lst -> ok lst
   | _ -> simple_fail "not a pair"

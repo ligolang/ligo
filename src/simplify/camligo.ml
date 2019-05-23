@@ -180,21 +180,20 @@ let rec of_restricted_type_expression : I.restricted_type_expression -> I.type_e
 let restricted_type_expression : I.restricted_type_expression -> O.type_expression result =
   Function.compose type_expression of_restricted_type_expression
 
-let rec expression : I.expression -> O.annotated_expression result = fun e ->
+let rec expression : I.expression -> O.expression result = fun e ->
   match e with
   | I.E_sequence lst -> (
       let%bind lst' = bind_map_list expression @@ List.map unwrap lst in
       match lst' with
       | [] -> simple_fail "empty sequence"
-      | hd :: tl -> ok @@ List.fold_right' (fun prec cur -> untyped_expression @@ e_sequence prec cur) hd tl
+      | hd :: tl -> ok @@ List.fold_right' (fun prec cur -> e_sequence prec cur) hd tl
     )
   | I.E_let_in (pattern , expr , body) -> (
       let%bind (name , rte) = get_p_option_typed_variable @@ unwrap pattern in
       let%bind type_expression' = bind_map_option (fun x -> restricted_type_expression @@ unwrap x) rte in
       let%bind expr' = expression @@ unwrap expr in
-      let%bind expr'' = merge_option_type_expression expr' type_expression' in
       let%bind body' = expression @@ unwrap body in
-      ok @@ untyped_expression @@ e_let_in (unwrap name) expr'' body'
+      ok @@ e_let_in (unwrap name , type_expression') expr' body'
     )
   | I.E_ifthenelse ite -> ifthenelse ite
   | I.E_ifthen it -> ifthen it
@@ -205,34 +204,31 @@ let rec expression : I.expression -> O.annotated_expression result = fun e ->
       let name' = unwrap name in
       let%bind type_expression' = restricted_type_expression (unwrap rte) in
       let%bind expr' = expression (unwrap expr) in
-      ok @@ untyped_expression @@ E_lambda {
-        binder = name' ;
-        input_type = Some type_expression' ;
-        output_type = None ;
-        result = expr' ;
-      }
+      ok @@ e_lambda name'
+        (Some type_expression') None
+        expr'
     )
   | I.E_main m -> expression_main m
 
 and ifthenelse
-  : (I.expression Location.wrap * I.expression Location.wrap * I.expression Location.wrap) -> O.annotated_expression result
+  : (I.expression Location.wrap * I.expression Location.wrap * I.expression Location.wrap) -> O.expression result
   = fun ite ->
   let (cond , branch_true , branch_false) = ite in
   let%bind cond' = bind_map_location expression cond in
   let%bind branch_true' = bind_map_location expression branch_true in
   let%bind branch_false' = bind_map_location expression branch_false in
-  ok @@ O.(untyped_expression @@ e_match_bool (unwrap cond') (unwrap branch_true') (unwrap branch_false'))
+  ok @@ O.(e_match_bool (unwrap cond') (unwrap branch_true') (unwrap branch_false'))
 
 and ifthen
-  : (I.expression Location.wrap * I.expression Location.wrap) -> O.annotated_expression result
+  : (I.expression Location.wrap * I.expression Location.wrap) -> O.expression result
   = fun it ->
   let (cond , branch_true) = it in
   let%bind cond' = bind_map_location expression cond in
   let%bind branch_true' = bind_map_location expression branch_true in
-  ok @@ O.(untyped_expression @@ e_match_bool (unwrap cond') (unwrap branch_true') e_a_unit)
+  ok @@ O.(e_match_bool (unwrap cond') (unwrap branch_true') (e_unit ()))
 
 and match_
-  : I.expression Location.wrap * I.e_match_clause Location.wrap list -> O.annotated_expression result
+  : I.expression Location.wrap * I.e_match_clause Location.wrap list -> O.expression result
   = fun m ->
     let (expr , clauses) = m in
     let%bind expr' = expression (unwrap expr) in
@@ -246,7 +242,7 @@ and match_
         ok (x' , y') in
       bind_map_list aux clauses in
     let%bind matching = match_clauses clauses' in
-    ok O.(untyped_expression @@ e_match expr' matching)
+    ok O.(e_match expr' matching)
 
 and record
   = fun r ->
@@ -259,13 +255,13 @@ and record
   in
   let%bind r' = bind_map_list (bind_map_location aux) r in
   let lst = List.map ((fun (x, y) -> unwrap x, unwrap y) >| unwrap) r' in
-  ok @@ O.(untyped_expression @@ e_record lst)
+  ok @@ O.(e_record lst)
 
-and expression_main : I.expression_main Location.wrap -> O.annotated_expression result = fun em ->
-  let return x = ok @@ untyped_expression x in
+and expression_main : I.expression_main Location.wrap -> O.expression result = fun em ->
+  let return x = ok @@ x in
   let simple_binop name ab =
     let%bind (a' , b') = bind_map_pair expression_main ab in
-    return @@ E_constant (name, [a' ; b']) in
+    return @@ e_binop name a' b' in
   let error_main =
     let title () = "simplifying main_expression" in
     let content () = Format.asprintf "%a" I.pp_expression_main (unwrap em) in
@@ -275,7 +271,7 @@ and expression_main : I.expression_main Location.wrap -> O.annotated_expression 
   match (unwrap em) with
   | Eh_tuple lst ->
       let%bind lst' = bind_map_list expression_main lst in
-      return @@ E_tuple lst'
+      return @@ e_tuple lst'
   | Eh_module_ident (lst , v) -> identifier_application (lst , v) None
   | Eh_variable v -> identifier_application ([] , v) None
   | Eh_application (f , arg) -> (
@@ -285,15 +281,14 @@ and expression_main : I.expression_main Location.wrap -> O.annotated_expression 
       | Eh_module_ident (lst , v) -> identifier_application (lst , v) (Some arg')
       | _ -> (
           let%bind f' = expression_main f in
-          return @@ E_application (f' , arg')
+          return @@ e_application f' arg'
         )
     )
-  | Eh_type_annotation (e, te) ->
-      let%bind e' =
-        let%bind e' = expression_main e in
-        get_untyped_expression e' in
+  | Eh_type_annotation (e, te) -> (
+      let%bind e' = expression_main e in
       let%bind te' = bind_map_location restricted_type_expression te in
-      ok @@ typed_expression e' (unwrap te')
+      ok @@ e_annotation e' (unwrap te')
+    )
   | Eh_lt ab ->
       simple_binop "LT" ab
   | Eh_gt ab ->
@@ -315,20 +310,20 @@ and expression_main : I.expression_main Location.wrap -> O.annotated_expression 
   | Eh_division ab ->
       simple_binop "DIV" ab
   | Eh_int n ->
-      return @@ E_literal (Literal_int (unwrap n))
+      return @@ e_int (unwrap n)
   | Eh_string s ->
-      return @@ E_literal (Literal_string (unwrap s))
+      return @@ e_string (unwrap s)
   | Eh_unit _ ->
-      return @@ E_literal Literal_unit
+      return @@ e_unit ()
   | Eh_tz n ->
-      return @@ E_literal (Literal_tez (unwrap n))
+      return @@ e_tez (unwrap n)
   | Eh_constructor _ ->
       simple_fail "constructor without parameter"
   | Eh_data_structure (kind , content) -> (
       match unwrap kind with
       | "list" -> (
           let%bind lst = bind_map_list expression_main content in
-          ok @@ untyped_expression @@ E_list lst
+          ok @@ e_list lst
         )
       | kind' -> (
           let error =
@@ -343,30 +338,30 @@ and expression_main : I.expression_main Location.wrap -> O.annotated_expression 
   | Eh_assign x ->
       simple_binop "ASSIGN" x
   | Eh_accessor (src , path) ->
-      ok @@ O.(untyped_expression @@ e_accessor_props (untyped_expression @@ e_variable (unwrap src)) (List.map unwrap path))
+      ok @@ O.(e_accessor_props (e_variable (unwrap src)) (List.map unwrap path))
   | Eh_bottom e ->
       expression (unwrap e)
 
-and identifier_application : (string Location.wrap) list * string Location.wrap -> O.value option -> _ result = fun (lst , v) param_opt ->
+and identifier_application : (string Location.wrap) list * string Location.wrap -> O.expression option -> _ result = fun (lst , v) param_opt ->
   let constant_name = String.concat "." ((List.map unwrap lst) @ [unwrap v]) in
   match List.assoc_opt constant_name constants , param_opt with
   | Some 0 , None ->
-      ok O.(untyped_expression @@ E_constant (constant_name , []))
+      ok O.(E_constant (constant_name , []))
   | Some _ , None ->
       simple_fail "n-ary constant without parameter"
   | Some 0 , Some _ -> simple_fail "applying to nullary constant"
   | Some 1 , Some param -> (
-      ok O.(untyped_expression @@ E_constant (constant_name , [param]))
+      ok O.(E_constant (constant_name , [param]))
     )
   | Some n , Some param -> (
       let params =
-        match get_expression param with
+        match param with
         | E_tuple lst -> lst
         | _ -> [ param ] in
       let%bind () =
         trace_strong (simple_error "bad constant arity") @@
         Assert.assert_list_size params n in
-      ok O.(untyped_expression @@ E_constant (constant_name , params))
+      ok O.(E_constant (constant_name , params))
     )
   | None , param_opt -> (
       let%bind () =
@@ -376,10 +371,10 @@ and identifier_application : (string Location.wrap) list * string Location.wrap 
           error title content in
         trace_strong error @@
         Assert.assert_list_empty lst in
-      match constant_name , param_opt with
-      | "failwith" , Some param -> ok O.(untyped_expression @@ e_failwith param)
-      | _ , Some param -> ok O.(untyped_expression @@ E_application (untyped_expression @@ E_variable (unwrap v) , param))
-      | _ , None -> ok O.(untyped_expression @@ e_variable (unwrap v))
+      match (constant_name , param_opt) with
+      | "failwith" , Some param -> ok O.(e_failwith param)
+      | _ , Some param -> ok @@ e_application (e_variable (unwrap v)) param
+      | _ , None -> ok @@ e_variable (unwrap v)
     )
 
 let let_content : I.let_content -> _ result = fun l ->
@@ -394,11 +389,8 @@ let let_content : I.let_content -> _ result = fun l ->
         bind_map_location type_expression ty in
       match args' with
       | [] -> ( (* No arguments. Simplify as regular value. *)
-          let%bind e' =
-            let%bind e' = bind_map_location expression e in
-            bind_map_location O.Combinators.get_untyped_expression e' in
-          let ae = make_e_a_full (unwrap e') (unwrap ty') in
-          ok @@ O.Declaration_constant {name = (unwrap n) ; annotated_expression = ae}
+          let%bind e' = bind_map_location expression e in
+          ok @@ O.Declaration_constant (unwrap n , Some (unwrap ty') , unwrap e')
         )
       | [_param] ->
           simple_fail "no syntactic sugar for functions yet param"
@@ -423,35 +415,30 @@ let let_entry : _ -> _ result = fun l ->
     ok (param_name' , param_ty') in
   let%bind storage_name = get_untyped_variable_param (unwrap storage) in
   let storage_ty = O.T_variable "storage" in
-  let input_nty =
-    let ty = O.T_tuple [param_ty ; storage_ty] in
-    let nty = O.{type_name = "arguments" ; type_expression = ty} in
+  let (arguments_name , input_ty) =
+    let ty = t_tuple [param_ty ; storage_ty] in
+    let nty = ("arguments" , ty) in
     nty in
-  let input = O.Combinators.typed_expression (E_variable input_nty.type_name) input_nty.type_expression in
   let tpl_declarations =
     let aux = fun i (name , type_expression) expr ->
-      untyped_expression @@ e_let_in name (
-        make_e_a_full
-          (O.E_accessor (input , [ Access_tuple i ]))
-          type_expression
-      ) expr
+      e_let_in
+        (name , Some type_expression)
+        (e_accessor (e_variable arguments_name) [ Access_tuple i ])
+        expr
     in
     let lst = List.mapi aux [ (param_name , param_ty) ; ((unwrap storage_name) , storage_ty)] in
     fun expr -> List.fold_right' (fun prec cur -> cur prec) expr lst
   in
   let%bind result = expression (unwrap e) in
   let result = tpl_declarations result in
-  let input_type' = input_nty.type_expression in
+  let input_type' = input_ty in
   let output_type' = O.(t_pair (t_list t_operation , storage_ty)) in
-  let lambda =
-    O.{
-      binder = input_nty.type_name ;
-      input_type = Some input_type';
-      output_type = Some output_type';
-      result ;
-    } in
+  let lambda = e_lambda
+    arguments_name
+    (Some input_ty) (Some output_type')
+    result in
   let type_annotation = Some (O.T_function (input_type', output_type')) in
-  ok @@ O.Declaration_constant {name = (unwrap n) ; annotated_expression = {expression = O.E_lambda lambda ; type_annotation}}
+  ok @@ O.Declaration_constant (unwrap n , type_annotation , lambda)
 
 let let_init_storage : _ -> _ result = fun l ->
   let (args , ty_opt , e) = l in
@@ -462,11 +449,11 @@ let let_init_storage : _ -> _ result = fun l ->
     trace (simple_error "storage init should have no parameter (address)") @@
     Assert.assert_list_size args 0 in
   let%bind content =
-    let%bind ae = bind_map_location expression e in
-    bind_map_location get_untyped_expression ae
+    let%bind expr = bind_map_location expression e in
+    ok expr
   in
   let type_annotation = O.t_variable "storage" in
-  ok @@ O.(Declaration_constant (named_typed_expression "storage" (unwrap content) type_annotation))
+  ok @@ O.(Declaration_constant ("storage" , Some type_annotation , (unwrap content)))
 
 
 let let_init_content : I.let_content -> _ result = fun l ->
@@ -482,7 +469,7 @@ let statement : I.statement -> O.declaration result = fun s ->
   | Statement_entry_declaration x -> let_entry (unwrap x)
   | Statement_type_declaration (n, te) ->
       let%bind te' = bind_map_location type_expression te in
-      ok @@ O.Declaration_type {type_name = unwrap n ; type_expression = unwrap te'}
+      ok @@ O.Declaration_type (unwrap n , unwrap te')
 
 let program : I.program -> O.program result = fun (Program lst) ->
   bind_map_list (bind_map_location statement) lst

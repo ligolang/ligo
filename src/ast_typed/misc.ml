@@ -347,8 +347,12 @@ let rec assert_value_eq (a, b: (value*value)) : unit result =
     )
   | E_list _, _ ->
       simple_fail "comparing list with other stuff"
-
-  | _, _ -> simple_fail "comparing not a value"
+  | (E_literal _, _) | (E_variable _, _) | (E_application _, _)
+  | (E_lambda _, _) | (E_let_in _, _) | (E_tuple_accessor _, _)
+  | (E_record_accessor _, _)
+  | (E_look_up _, _) | (E_matching _, _) | (E_failwith _, _)
+  | (E_assign _ , _)
+  | (E_sequence _, _) | (E_loop _, _)-> simple_fail "comparing not a value"
 
 let merge_annotation (a:type_value option) (b:type_value option) : type_value result =
   match a, b with

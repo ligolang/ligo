@@ -30,28 +30,30 @@ let assert_literal_eq (a, b : literal * literal) : unit result =
   | Literal_operation _, _ -> simple_fail "operation vs non-operation"
 
 
-let rec assert_value_eq (a, b: (value*value)) : unit result =
+let rec assert_value_eq (a, b: (expression * expression )) : unit result =
   let error_content () =
-    Format.asprintf "\n@[<v>- %a@;- %a]" PP.value a PP.value b
+    Format.asprintf "\n@[<v>- %a@;- %a]" PP.expression a PP.expression b
   in
   trace (fun () -> error (thunk "not equal") error_content ()) @@
-  match (a.expression, b.expression) with
-  | E_literal a, E_literal b ->
+  match (a , b) with
+  | E_literal a , E_literal b ->
       assert_literal_eq (a, b)
-  | E_constant (ca, lsta), E_constant (cb, lstb) when ca = cb -> (
+  | E_literal _ , _ ->
+    simple_fail "comparing a literal with not a literal"
+  | E_constant (ca, lsta) , E_constant (cb, lstb) when ca = cb -> (
       let%bind lst =
         generic_try (simple_error "constants with different number of elements")
           (fun () -> List.combine lsta lstb) in
       let%bind _all = bind_list @@ List.map assert_value_eq lst in
       ok ()
     )
-  | E_constant _, E_constant _ ->
+  | E_constant _ , E_constant _ ->
       simple_fail "different constants"
-  | E_constant _, _ ->
+  | E_constant _ , _ ->
       let error_content () =
         Format.asprintf "%a vs %a"
-          PP.annotated_expression a
-          PP.annotated_expression b
+          PP.expression a
+          PP.expression b
       in
       fail @@ (fun () -> error (thunk "comparing constant with other stuff") error_content ())
 
@@ -111,8 +113,13 @@ let rec assert_value_eq (a, b: (value*value)) : unit result =
     )
   | E_list _, _ ->
       simple_fail "comparing list with other stuff"
-
-  | _, _ -> simple_fail "comparing not a value"
+  | (E_annotation (a , _) ,  b) -> assert_value_eq (a , b)
+  | (a , E_annotation (b , _)) -> assert_value_eq (a , b)
+  | (E_variable _, _) | (E_lambda _, _)
+  | (E_application _, _) | (E_let_in _, _)
+  | (E_accessor _, _)
+  | (E_look_up _, _) | (E_matching _, _) | (E_failwith _, _) | (E_sequence _, _)
+  | (E_loop _, _) | (E_assign _, _) | (E_skip, _) -> simple_fail "comparing not a value"
 
 
 (* module Rename = struct

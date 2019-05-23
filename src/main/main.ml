@@ -13,15 +13,15 @@ module Transpiler = Transpiler
 
 
 let simplify (p:AST_Raw.t) : Ast_simplified.program result = Simplify.Pascaligo.simpl_program p
-let simplify_expr (e:AST_Raw.expr) : Ast_simplified.annotated_expression result = Simplify.Pascaligo.simpl_expression e
-let unparse_simplified_expr (e:AST_Simplified.annotated_expression) : string result =
-  ok @@ Format.asprintf "%a" AST_Simplified.PP.annotated_expression e
+let simplify_expr (e:AST_Raw.expr) : Ast_simplified.expression result = Simplify.Pascaligo.simpl_expression e
+let unparse_simplified_expr (e:AST_Simplified.expression) : string result =
+  ok @@ Format.asprintf "%a" AST_Simplified.PP.expression e
 
 let type_ (p:AST_Simplified.program) : AST_Typed.program result = Typer.type_program p
 let type_expression ?(env:Typer.Environment.t = Typer.Environment.full_empty)
-    (e:AST_Simplified.annotated_expression) : AST_Typed.annotated_expression result =
-  Typer.type_annotated_expression env e
-let untype_expression (e:AST_Typed.annotated_expression) : AST_Simplified.annotated_expression result = Typer.untype_annotated_expression e
+    (e:AST_Simplified.expression) : AST_Typed.annotated_expression result =
+  Typer.type_expression env e
+let untype_expression (e:AST_Typed.annotated_expression) : AST_Simplified.expression result = Typer.untype_expression e
 
 let transpile (p:AST_Typed.program) : Mini_c.program result = Transpiler.translate_program p
 let transpile_entry (p:AST_Typed.program) (name:string) : Mini_c.anon_function result = Transpiler.translate_entry p name
@@ -72,7 +72,7 @@ let easy_evaluate_typed (entry:string) (program:AST_Typed.program) : AST_Typed.a
     untranspile_value result typed_main.type_annotation in
   ok typed_result
 
-let easy_evaluate_typed_simplified (entry:string) (program:AST_Typed.program) : Ast_simplified.annotated_expression result =
+let easy_evaluate_typed_simplified (entry:string) (program:AST_Typed.program) : Ast_simplified.expression result =
   let%bind result =
     let%bind mini_c_main =
       transpile_entry program entry in
@@ -126,7 +126,7 @@ let easy_run_typed
 
 let easy_run_typed_simplified
     ?(debug_mini_c = false) ?(debug_michelson = false) ?options (entry:string)
-    (program:AST_Typed.program) (input:Ast_simplified.annotated_expression) : Ast_simplified.annotated_expression result =
+    (program:AST_Typed.program) (input:Ast_simplified.expression) : Ast_simplified.expression result =
   let%bind mini_c_main =
     trace (simple_error "transpile mini_c entry") @@
     transpile_entry program entry in

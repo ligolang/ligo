@@ -28,8 +28,8 @@ let expect_eq ?options program entry_point input expected =
     let expect_error =
       let title () = "expect result" in
       let content () = Format.asprintf "Expected %a, got %a"
-          Ast_simplified.PP.value expected
-          Ast_simplified.PP.value result in
+          Ast_simplified.PP.expression expected
+          Ast_simplified.PP.expression result in
       error title content in
     trace expect_error @@
     Ast_simplified.assert_value_eq (expected , result) in
@@ -83,7 +83,7 @@ let expect_n_strict_pos_small ?options = expect_n_aux ?options [2 ; 10]
 
 let expect_eq_b program entry_point make_expected =
   let aux b =
-    let input = e_a_bool b in
+    let input = e_bool b in
     let expected = make_expected b in
     expect_eq program entry_point input expected
   in
@@ -91,8 +91,8 @@ let expect_eq_b program entry_point make_expected =
   ok ()
 
 let expect_eq_n_int a b c =
-  expect_eq_n a b e_a_int (fun n -> e_a_int (c n))
+  expect_eq_n a b e_int (fun n -> e_int (c n))
 
 let expect_eq_b_bool a b c =
   let open Ast_simplified.Combinators in
-  expect_eq_b a b (fun bool -> e_a_bool (c bool))
+  expect_eq_b a b (fun bool -> e_bool (c bool))
