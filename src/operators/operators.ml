@@ -1,6 +1,36 @@
 open Trace
 
+(*
+  This file is used throughout the pipeline. Its idea is to add a unique place
+  that you have to modify when you add a new operator/constant to the language.
+
+  This file mirrors the LIGO pipeline, starting with Simplify, then Typer and
+  ending with Compiler. Usually, when adding a new operator, you'll have to add
+  a new constructor at all those places.
+*)
+
 module Simplify = struct
+
+  (*
+    Each front-end has its owns constants.
+
+    Constants are special names that have their own case in the AST. E_constant
+    for regular constants, and T_constant for type constants. Both types are
+    defined in `Ast_simplified/types.ml`.
+    For instance, "2 + 2" in Pascaligo is translated to `E_constant ("ADD" , [
+      E_literal (Literal_int 2) ;
+      E_literal (Literal_int 2) ;
+    ])`.
+
+    They are used to represent what can't expressed in the languages:
+    - Primitives. Like "int", "string", "unit" for types. Or "+" for values.
+    - Tezos specific stuff. Like "operation" for types. Or "source" for values.
+    - What can't be represented in the language yet. Like "list" or "List.fold".
+
+    Each constant is expressed as a pair:
+    - The left-hand-side is the reserved name in the given front-end.
+    - The right-hand-side is the name that will be used in the AST.
+  *)
 
   let type_constants = [
     ("unit" , "unit") ;
@@ -58,98 +88,32 @@ module Simplify = struct
 end
 
 module Typer = struct
+  (*
+    Each constant has its own type.
 
+    LIGO's type-system is currently too
+    weak to express the constant's type. For instance:
+    - "ADD" has a special kind of type of polymorphism. If "ADD" gets two `int`s,
+      it will return an `int`. If it gets two `nat`s, it will return a `nat`.
+      Regular polymorphism wouldn't work because "ADD" only accepts `int`s or
+      `nat`s.
+    - "NONE" (from Some/None) requires an annotation.
+
+    Instead of a LIGO type, constant types are representend as functions. These
+    functions take as parameters:
+    - The list of types of the arguments of the constants. When typing `2 + 2`,
+      the types might be `[ int ; int ]`.
+    - The expected type of the whole expression. It is optional. When typing
+      `[] : list(operation)`, it will be `Some ( list (operation) )`. When
+      typing `2 + 2` (with no additional context), it will be `None`.
+    The output is the type of the whole expression. An error is returned through
+    the Trace monad if it doesn't type-check (`"toto" + 42`).
+
+    Various helpers are defined and explaines in `Helpers.Typer`.
+  *)
+
+  open Helpers.Typer
   open Ast_typed
-
-  module Errors = struct
-    let wrong_param_number = fun name expected got ->
-      let title () = "wrong number of params" in
-      let full () = Format.asprintf "constant name: %s\nexpected: %d\ngot: %d\n"
-          name expected (List.length got) in
-      error title full
-  end
-
-
-  type type_result = string * type_value
-  type typer' = type_value list -> type_value option -> type_result result
-  type typer = string * typer'
-
-  let typer'_0 : name -> (type_value option -> type_value result) -> typer' = fun s f lst tv_opt ->
-    match lst with
-    | [] -> (
-      let%bind tv' = f tv_opt in
-      ok (s , tv')
-    )
-    | _ -> fail @@ Errors.wrong_param_number s 0 lst
-  let typer_0 name f : typer = (name , typer'_0 name f)
-
-  let typer'_1 : name -> (type_value -> type_value result) -> typer' = fun s f lst _ ->
-    match lst with
-    | [ a ] -> (
-        let%bind tv' = f a in
-        ok (s , tv')
-      )
-    | _ -> fail @@ Errors.wrong_param_number s 1 lst
-  let typer_1 name f : typer = (name , typer'_1 name f)
-
-  let typer'_1_opt : name -> (type_value -> type_value option -> type_value result) -> typer' = fun s f lst tv_opt ->
-    match lst with
-    | [ a ] -> (
-        let%bind tv' = f a tv_opt in
-        ok (s , tv')
-      )
-    | _ -> fail @@ Errors.wrong_param_number s 1 lst
-  let typer_1_opt name f : typer = (name , typer'_1_opt name f)
-
-  let typer'_2 : name -> (type_value -> type_value -> type_value result) -> typer' = fun s f lst _ ->
-    match lst with
-    | [ a ; b ] -> (
-        let%bind tv' = f a b in
-        ok (s , tv')
-      )
-    | _ -> fail @@ Errors.wrong_param_number s 2 lst
-  let typer_2 name f : typer = (name , typer'_2 name f)
-
-  let typer'_3 : name -> (type_value -> type_value -> type_value -> type_value result) -> typer' = fun s f lst _ ->
-    match lst with
-    | [ a ; b ; c ] -> (
-        let%bind tv' = f a b c in
-        ok (s , tv')
-      )
-    | _ -> fail @@ Errors.wrong_param_number s 3 lst
-  let typer_3 name f : typer = (name , typer'_3 name f)
-
-  let constant name cst = typer_0 name (fun _ -> ok cst)
-
-  open Combinators
-
-  let eq_1 a cst = type_value_eq (a , cst)
-  let eq_2 (a , b) cst = type_value_eq (a , cst) && type_value_eq (b , cst)
-
-  let comparator : string -> typer = fun s -> typer_2 s @@ fun a b ->
-    let%bind () =
-      trace_strong (simple_error "Types a and b aren't comparable") @@
-      Assert.assert_true @@
-      List.exists (eq_2 (a , b)) [
-        t_int () ;
-        t_nat () ;
-        t_tez () ;
-        t_string () ;
-        t_bytes () ;
-        t_address () ;
-      ] in
-    ok @@ t_bool ()
-
-  let boolean_operator_2 : string -> typer = fun s -> typer_2 s @@ fun a b ->
-    let%bind () =
-      trace_strong (simple_error "A isn't of type bool") @@
-      Assert.assert_true @@
-      type_value_eq (t_bool () , a) in
-    let%bind () =
-      trace_strong (simple_error "B isn't of type bool") @@
-      Assert.assert_true @@
-      type_value_eq (t_bool () , b) in
-    ok @@ t_bool ()
 
   let none = typer_0 "NONE" @@ fun tv_opt ->
     match tv_opt with
@@ -262,12 +226,7 @@ module Typer = struct
     then ok @@ t_int () else
       simple_fail "Adding with wrong types"
 
-
-
-  let constant_typers =
-    let typer_to_kv : typer -> (string * _) = fun x -> x in
-    Map.String.of_list
-    @@ List.map typer_to_kv [
+  let constant_typers = Map.String.of_list [
       add ;
       times ;
       div ;
@@ -303,23 +262,22 @@ module Typer = struct
 end
 
 module Compiler = struct
+  (*
+    Most constants pass through the Transpiler unchanged. So they need to be
+    compiled down to Michelson. This is the last step.
 
-  module Michelson = Tezos_utils.Michelson
-  open Michelson
+    When compiling the constant, we need to provide its arity (through the type
+    predicate, defined in `Helpers.Compiler`, and its michelson code.
+    In the case of an n-ary constant, we assume that the stack has the form:
+    `x1 :: x2 :: x3 ... :: xn :: _`.
 
-  type predicate =
-    | Constant of michelson
-    | Unary of michelson
-    | Binary of michelson
-    | Ternary of michelson
+    This step requires knowledge of Michelson. Knowledge of
+    `Tezos_utils.Michelson` will help too, so that no Michelson has to actually
+    be written by hand.
+  *)
 
-  let simple_constant c = Constant c
-
-  let simple_unary c = Unary c
-
-  let simple_binary c = Binary c
-
-  let simple_ternary c = Ternary c
+  include Helpers.Compiler
+  open Tezos_utils.Michelson
 
   let predicates = Map.String.of_list [
     ("ADD" , simple_binary @@ prim I_ADD) ;
