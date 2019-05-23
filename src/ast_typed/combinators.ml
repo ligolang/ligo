@@ -50,6 +50,14 @@ let get_t_bool (t:type_value) : unit result = match t.type_value' with
   | T_constant ("bool", []) -> ok ()
   | _ -> simple_fail "not a bool"
 
+let get_t_int (t:type_value) : unit result = match t.type_value' with
+  | T_constant ("int", []) -> ok ()
+  | _ -> simple_fail "not a int"
+
+let get_t_nat (t:type_value) : unit result = match t.type_value' with
+  | T_constant ("nat", []) -> ok ()
+  | _ -> simple_fail "not a nat"
+
 let get_t_unit (t:type_value) : unit result = match t.type_value' with
   | T_constant ("unit", []) -> ok ()
   | _ -> simple_fail "not a unit"
@@ -57,6 +65,10 @@ let get_t_unit (t:type_value) : unit result = match t.type_value' with
 let get_t_tez (t:type_value) : unit result = match t.type_value' with
   | T_constant ("tez", []) -> ok ()
   | _ -> simple_fail "not a tez"
+
+let get_t_bytes (t:type_value) : unit result = match t.type_value' with
+  | T_constant ("bytes", []) -> ok ()
+  | _ -> simple_fail "not a bytes"
 
 let get_t_contract (t:type_value) : type_value result = match t.type_value' with
   | T_constant ("contract", [x]) -> ok x
@@ -107,17 +119,25 @@ let get_t_map_value : type_value -> type_value result = fun t ->
   let%bind (_ , value) = get_t_map t in
   ok value
 
+let assert_t_map = fun t ->
+  let%bind _ = get_t_map t in
+  ok ()
+
+let is_t_map = Function.compose to_bool get_t_map
+
 let assert_t_tez :type_value -> unit result = get_t_tez
 
-let assert_t_map (t:type_value) : unit result =
-  match t.type_value' with
-  | T_constant ("map", [_ ; _]) -> ok ()
-  | _ -> simple_fail "not a map"
+let assert_t_list t =
+  let%bind _ = get_t_list t in
+  ok ()
 
-let assert_t_list (t:type_value) : unit result =
-  match t.type_value' with
-  | T_constant ("list", [_]) -> ok ()
-  | _ -> simple_fail "assert: not a list"
+let is_t_list = Function.compose to_bool get_t_list
+let is_t_nat = Function.compose to_bool get_t_nat
+let is_t_int = Function.compose to_bool get_t_int
+
+let assert_t_bytes = fun t ->
+  let%bind _ = get_t_bytes t in
+  ok ()
 
 let assert_t_operation (t:type_value) : unit result =
   match t.type_value' with

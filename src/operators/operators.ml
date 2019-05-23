@@ -3,314 +3,274 @@ open Trace
 module Simplify = struct
 
   let type_constants = [
-    ("unit" , 0) ;
-    ("string" , 0) ;
-    ("bytes" , 0) ;
-    ("nat" , 0) ;
-    ("int" , 0) ;
-    ("tez" , 0) ;
-    ("bool" , 0) ;
-    ("operation" , 0) ;
-    ("address" , 0) ;
-    ("contract" , 1) ;
-    ("list" , 1) ;
-    ("option" , 1) ;
-    ("set" , 1) ;
-    ("map" , 2) ;
-    ("big_map" , 2) ;
+    ("unit" , "unit") ;
+    ("string" , "string") ;
+    ("bytes" , "bytes") ;
+    ("nat" , "nat") ;
+    ("int" , "int") ;
+    ("tez" , "tez") ;
+    ("bool" , "bool") ;
+    ("operation" , "operation") ;
+    ("address" , "address") ;
+    ("contract" , "contract") ;
+    ("list" , "list") ;
+    ("option" , "option") ;
+    ("set" , "set") ;
+    ("map" , "map") ;
+    ("big_map" , "big_map") ;
   ]
 
-  let constants = [
-    ("get_force" , 2) ;
-    ("transaction" , 3) ;
-    ("get_contract" , 1) ;
-    ("size" , 1) ;
-    ("int" , 1) ;
-    ("abs" , 1) ;
-    ("amount" , 0) ;
-    ("unit" , 0) ;
-    ("source" , 0) ;
-  ]
+  module Pascaligo = struct
+
+    let constants = [
+      ("get_force" , "MAP_GET_FORCE") ;
+      ("transaction" , "CALL") ;
+      ("get_contract" , "CONTRACT") ;
+      ("size" , "SIZE") ;
+      ("int" , "INT") ;
+      ("abs" , "ABS") ;
+      ("amount" , "AMOUNT") ;
+      ("unit" , "UNIT") ;
+      ("source" , "SOURCE") ;
+    ]
+
+    let type_constants = type_constants
+  end
 
   module Camligo = struct
     let constants = [
-      ("Bytes.pack" , 1) ;
-      ("Crypto.hash" , 1) ;
-      ("Operation.transaction" , 3) ;
-      ("Operation.get_contract" , 1) ;
-      ("sender" , 0) ;
-      ("unit" , 0) ;
-      ("source" , 0) ;
+      ("Bytes.pack" , "PACK") ;
+      ("Crypto.hash" , "HASH") ;
+      ("Operation.transaction" , "CALL") ;
+      ("Operation.get_contract" , "GET_CONTRACT") ;
+      ("sender" , "SENDER") ;
+      ("unit" , "UNIT") ;
+      ("source" , "SOURCE") ;
     ]
+
+    let type_constants = type_constants
+  end
+
+  module Ligodity = struct
+    include Pascaligo
   end
 
 end
 
 module Typer = struct
-  module Errors = struct
-    let wrong_param_number = fun name ->
-      let title () = "wrong number of params" in
-      let full () = name in
-      error title full
-  end
 
   open Ast_typed
 
-  type typer_predicate = type_value list -> bool
+  module Errors = struct
+    let wrong_param_number = fun name expected got ->
+      let title () = "wrong number of params" in
+      let full () = Format.asprintf "constant name: %s\nexpected: %d\ngot: %d\n"
+          name expected (List.length got) in
+      error title full
+  end
+
+
   type type_result = string * type_value
   type typer' = type_value list -> type_value option -> type_result result
-  type typer = string * int * (typer_predicate * typer') list
+  type typer = string * typer'
 
-  let predicate_0 : typer_predicate = fun lst ->
+  let typer'_0 : name -> (type_value option -> type_value result) -> typer' = fun s f lst tv_opt ->
     match lst with
-    | [] -> true
-    | _ -> false
+    | [] -> (
+      let%bind tv' = f tv_opt in
+      ok (s , tv')
+    )
+    | _ -> fail @@ Errors.wrong_param_number s 0 lst
+  let typer_0 name f : typer = (name , typer'_0 name f)
 
-  let predicate_1 : (type_value -> bool) -> typer_predicate = fun f lst ->
+  let typer'_1 : name -> (type_value -> type_value result) -> typer' = fun s f lst _ ->
     match lst with
-    | [ a ] -> f a
-    | _ -> false
+    | [ a ] -> (
+        let%bind tv' = f a in
+        ok (s , tv')
+      )
+    | _ -> fail @@ Errors.wrong_param_number s 1 lst
+  let typer_1 name f : typer = (name , typer'_1 name f)
 
-  let predicate_2 : (type_value -> type_value -> bool) -> typer_predicate = fun f lst ->
+  let typer'_1_opt : name -> (type_value -> type_value option -> type_value result) -> typer' = fun s f lst tv_opt ->
     match lst with
-    | [ a ; b ] -> f a b
-    | _ -> false
+    | [ a ] -> (
+        let%bind tv' = f a tv_opt in
+        ok (s , tv')
+      )
+    | _ -> fail @@ Errors.wrong_param_number s 1 lst
+  let typer_1_opt name f : typer = (name , typer'_1_opt name f)
 
-  let predicate_3 : (type_value -> type_value -> type_value -> bool) -> typer_predicate = fun f lst ->
+  let typer'_2 : name -> (type_value -> type_value -> type_value result) -> typer' = fun s f lst _ ->
     match lst with
-    | [ a ; b ; c ] -> f a b c
-    | _ -> false
+    | [ a ; b ] -> (
+        let%bind tv' = f a b in
+        ok (s , tv')
+      )
+    | _ -> fail @@ Errors.wrong_param_number s 2 lst
+  let typer_2 name f : typer = (name , typer'_2 name f)
 
-  let true_1 = predicate_1 (fun _ -> true)
-  let true_2 = predicate_2 (fun _ _ -> true)
-  let true_3 = predicate_3 (fun _ _ _ -> true)
-
-  let eq_1 : type_value -> typer_predicate = fun v ->
-    let aux = fun a -> type_value_eq (a, v) in
-    predicate_1 aux
-
-  let eq_2 : type_value -> typer_predicate = fun v ->
-    let aux = fun a b -> type_value_eq (a, v) && type_value_eq (b, v) in
-    predicate_2 aux
-
-  let typer'_0 : (type_value option -> type_result result) -> typer' = fun f lst tv ->
+  let typer'_3 : name -> (type_value -> type_value -> type_value -> type_value result) -> typer' = fun s f lst _ ->
     match lst with
-    | [] -> f tv
-    | _ -> simple_fail "!!!"
+    | [ a ; b ; c ] -> (
+        let%bind tv' = f a b c in
+        ok (s , tv')
+      )
+    | _ -> fail @@ Errors.wrong_param_number s 3 lst
+  let typer_3 name f : typer = (name , typer'_3 name f)
 
-  let typer'_1 : (type_value -> type_result result) -> typer' = fun f lst _ ->
-    match lst with
-    | [ a ] -> f a
-    | _ -> simple_fail "!!!"
-
-  let typer'_1_opt : (type_value -> type_value option -> type_result result) -> typer' = fun f lst tv_opt ->
-    match lst with
-    | [ a ] -> f a tv_opt
-    | _ -> simple_fail "!!!"
-
-  let typer'_2 : (type_value -> type_value -> type_result result) -> typer' = fun f lst _ ->
-    match lst with
-    | [ a ; b ] -> f a b
-    | _ -> simple_fail "!!!"
-
-  let typer'_3 : (type_value -> type_value -> type_value -> type_result result) -> typer' = fun f lst _ ->
-    match lst with
-    | [ a ; b ; c ] -> f a b c
-    | _ -> simple_fail "!!!"
-
-  let typer_constant cst : typer' = fun _ _ -> ok cst
-
-  let constant_2 : string -> type_value -> typer' = fun s tv ->
-    let aux = fun _ _ -> ok (s, tv) in
-    typer'_2 aux
-
-  let make_2 : string -> _ list -> typer = fun name pfs ->
-    (name , 2 , List.map (Tuple.map_h_2 predicate_2 typer'_2) pfs)
-
-  let same_2 : string -> (string * type_value) list -> typer = fun s lst ->
-    let aux (s, tv) = eq_2 tv, constant_2 s tv in
-    (s , 2 , List.map aux lst)
-
-  let very_same_2 : string -> type_value -> typer = fun s tv -> same_2 s [s , tv]
+  let constant name cst = typer_0 name (fun _ -> ok cst)
 
   open Combinators
 
-  let comparator : string -> typer = fun s -> s , 2 , [
-      (eq_2 (t_int ()), constant_2 s (t_bool ())) ;
-      (eq_2 (t_nat ()), constant_2 s (t_bool ())) ;
-      (eq_2 (t_tez ()), constant_2 s (t_bool ())) ;
-      (eq_2 (t_bytes ()), constant_2 s (t_bool ())) ;
-      (eq_2 (t_string ()), constant_2 s (t_bool ())) ;
-      (eq_2 (t_address ()), constant_2 s (t_bool ())) ;
-    ]
+  let eq_1 a cst = type_value_eq (a , cst)
+  let eq_2 (a , b) cst = type_value_eq (a , cst) && type_value_eq (b , cst)
 
-  let boolean_operator_2 : string -> typer = fun s -> very_same_2 s (t_bool ())
+  let comparator : string -> typer = fun s -> typer_2 s @@ fun a b ->
+    let%bind () =
+      trace_strong (simple_error "Types a and b aren't comparable") @@
+      Assert.assert_true @@
+      List.exists (eq_2 (a , b)) [
+        t_int () ;
+        t_nat () ;
+        t_tez () ;
+        t_string () ;
+        t_bytes () ;
+        t_address () ;
+      ] in
+    ok @@ t_bool ()
 
-  let none = "NONE" , 0 , [
-      predicate_0 , typer'_0 (fun tv_opt -> match tv_opt with
-          | None -> simple_fail "untyped NONE"
-          | Some t -> ok ("NONE", t))
-    ]
+  let boolean_operator_2 : string -> typer = fun s -> typer_2 s @@ fun a b ->
+    let%bind () =
+      trace_strong (simple_error "A isn't of type bool") @@
+      Assert.assert_true @@
+      type_value_eq (t_bool () , a) in
+    let%bind () =
+      trace_strong (simple_error "B isn't of type bool") @@
+      Assert.assert_true @@
+      type_value_eq (t_bool () , b) in
+    ok @@ t_bool ()
 
-  let sub = "SUB" , 2 , [
-      eq_2 (t_int ()) , constant_2 "SUB_INT" (t_int ()) ;
-      eq_2 (t_nat ()) , constant_2 "SUB_NAT" (t_int ()) ;
-    ]
+  let none = typer_0 "NONE" @@ fun tv_opt ->
+    match tv_opt with
+    | None -> simple_fail "untyped NONE"
+    | Some t -> ok t
 
-  let some = "SOME" , 1 , [
-      true_1 , typer'_1 (fun s -> ok ("SOME", t_option s ())) ;
-    ]
+  let sub = typer_2 "SUB" @@ fun a b ->
+    let%bind () =
+      trace_strong (simple_error "Types a and b aren't numbers") @@
+      Assert.assert_true @@
+      List.exists (eq_2 (a , b)) [
+        t_int () ;
+        t_nat () ;
+      ] in
+    ok @@ t_int ()
 
-  let map_remove : typer = "MAP_REMOVE" , 2 , [
-      (true_2 , typer'_2 (fun k m ->
-          let%bind (src, _) = get_t_map m in
-          let%bind () = assert_type_value_eq (src, k) in
-          ok ("MAP_REMOVE", m)
-        ))
-    ]
+  let some = typer_1 "SOME" @@ fun a -> ok @@ t_option a ()
 
-  let map_update : typer = "MAP_UPDATE" , 3 , [
-      (true_3 , typer'_3 (fun k v m ->
-           let%bind (src, dst) = get_t_map m in
-           let%bind () = assert_type_value_eq (src, k) in
-           let%bind () = assert_type_value_eq (dst, v) in
-           ok ("MAP_UPDATE", m)))
-    ]
+  let map_remove : typer = typer_2 "MAP_REMOVE" @@ fun k m ->
+    let%bind (src , _) = get_t_map m in
+    let%bind () = assert_type_value_eq (src , k) in
+    ok m
 
-  let size : typer = "size" , 1 , [
-      (true_1, typer'_1 (fun t ->
-           let%bind () = bind_or (assert_t_map t, assert_t_list t) in
-           ok ("SIZE", t_nat ())))
-    ]
+  let map_update : typer = typer_3 "MAP_UPDATE" @@ fun k v m ->
+    let%bind (src, dst) = get_t_map m in
+    let%bind () = assert_type_value_eq (src, k) in
+    let%bind () = assert_type_value_eq (dst, v) in
+    ok m
 
-  let get_force : typer = "get_force" , 2 , [
-      (true_2, typer'_2 (fun i_ty m_ty ->
-           let%bind (src, dst) = get_t_map m_ty in
-           let%bind _ = assert_type_value_eq (src, i_ty) in
-           ok ("GET_FORCE", dst)))
-    ]
+  let size = typer_1 "SIZE" @@ fun t ->
+    let%bind () =
+      Assert.assert_true @@
+      (is_t_map t || is_t_list t) in
+    ok @@ t_nat ()
 
-  let int : typer = "int" , 1 , [
-      (eq_1 (t_nat ()), typer_constant ("INT" , t_int ()))
-    ]
+  let get_force = typer_2 "MAP_GET_FORCE" @@ fun i m ->
+    let%bind (src, dst) = get_t_map m in
+    let%bind _ = assert_type_value_eq (src, i) in
+    ok dst
 
-  let bytes_pack : typer = "Bytes.pack" , 1 , [
-      (true_1 , typer'_1 (fun _ -> ok ("PACK" , t_bytes ())))
-    ]
+  let int : typer = typer_1 "INT" @@ fun t ->
+    let%bind () = assert_t_nat t in
+    ok @@ t_int ()
 
-  let bytes_unpack = "Bytes.unpack" , 1 , [
-      eq_1 (t_bytes ()) , typer'_1_opt (fun _ tv_opt -> match tv_opt with
-          | None -> simple_fail "untyped UNPACK"
-          | Some t -> ok ("UNPACK", t))
-    ]
+  let bytes_pack : typer = typer_1 "PACK" @@ fun _t ->
+    ok @@ t_bytes ()
 
-  let crypto_hash = "Crypto.hash" , 1 , [
-      eq_1 (t_bytes ()) , typer_constant ("HASH" , t_bytes ()) ;
-    ]
+  let bytes_unpack = typer_1_opt "UNPACK" @@ fun input output_opt ->
+    let%bind () = assert_t_bytes input in
+    trace_option (simple_error "untyped UNPACK") @@
+    output_opt
 
-  let sender = "sender" , 0 , [
-      predicate_0 , typer_constant ("SENDER", t_address ())
-    ]
+  let crypto_hash = typer_1 "HASH" @@ fun t ->
+    let%bind () = assert_t_bytes t in
+    ok @@ t_bytes ()
 
-  let source = "source" , 0 , [
-      predicate_0 , typer_constant ("SOURCE", t_address ())
-    ]
+  let sender = constant "SENDER" @@ t_address ()
 
-  let unit = "unit" , 0 , [
-      predicate_0 , typer_constant ("UNIT", t_unit ())
-    ]
+  let source = constant "SOURCE" @@ t_address ()
 
-  let amount = "amount" , 0 , [
-      predicate_0 , typer_constant ("AMOUNT", t_tez ())
-    ]
+  let unit = constant "UNIT" @@ t_unit ()
 
-  let transaction = "Operation.transaction" , 3 , [
-      true_3 , typer'_3 (
-        fun param amount contract ->
-          let%bind () =
-            assert_t_tez amount in
-          let%bind contract_param =
-            get_t_contract contract in
-          let%bind () =
-            assert_type_value_eq (param , contract_param) in
-          ok ("TRANSFER_TOKENS" , t_operation ())
-      )
-    ]
-  let transaction' = "transaction" , 3 , [
-      true_3 , typer'_3 (
-        fun param amount contract ->
-          let%bind () =
-            assert_t_tez amount in
-          let%bind contract_param =
-            get_t_contract contract in
-          let%bind () =
-            assert_type_value_eq (param , contract_param) in
-          ok ("TRANSFER_TOKENS" , t_operation ())
-      )
-    ]
+  let amount = constant "AMOUNT" @@ t_tez ()
 
-  let get_contract = "Operation.get_contract" , 1 , [
-      eq_1 (t_address ()) , typer'_1_opt (
-        fun _ tv_opt ->
-          let%bind tv =
-            trace_option (simple_error "get_contract needs a type annotation") tv_opt in
-          let%bind tv' =
-            trace_strong (simple_error "get_contract has a not-contract annotation") @@
-            get_t_contract tv in
-          ok ("CONTRACT" , t_contract tv' ())
-      )
-    ]
-  let get_contract' = "get_contract" , 1 , [
-      eq_1 (t_address ()) , typer'_1_opt (
-        fun _ tv_opt ->
-          let%bind tv =
-            trace_option (simple_error "get_contract needs a type annotation") tv_opt in
-          let%bind tv' =
-            trace_strong (simple_error "get_contract has a not-contract annotation") @@
-            get_t_contract tv in
-          ok ("CONTRACT" , t_contract tv' ())
-      )
-    ]
+  let transaction = typer_3 "CALL" @@ fun param amount contract ->
+    let%bind () = assert_t_tez amount in
+    let%bind contract_param = get_t_contract contract in
+    let%bind () = assert_type_value_eq (param , contract_param) in
+    ok @@ t_operation ()
 
-  let num_2 : typer_predicate =
-    let aux = fun a b ->
-      (type_value_eq (a , t_int ()) || type_value_eq (a , t_nat ())) &&
-      (type_value_eq (b , t_int ()) || type_value_eq (b , t_nat ())) in
-    predicate_2 aux
+  let get_contract = typer_1_opt "CONTRACT" @@ fun _ tv_opt ->
+    let%bind tv =
+      trace_option (simple_error "get_contract needs a type annotation") tv_opt in
+    let%bind tv' =
+      trace_strong (simple_error "get_contract has a not-contract annotation") @@
+      get_t_contract tv in
+    ok @@ t_contract tv' ()
 
-  let mod_ = "MOD" , 2 , [
-      num_2 , constant_2 "MOD" (t_nat ()) ;
-    ]
+  let abs = typer_1 "ABS" @@ fun t ->
+    let%bind () = assert_t_int t in
+    ok @@ t_nat ()
 
-  let abs = "abs" , 1 , [
-      eq_1 (t_int ()) , typer_constant ("ABS" , (t_nat ())) ;
-    ]
+  let times = typer_2 "TIMES" @@ fun a b ->
+    if eq_2 (a , b) (t_nat ())
+    then ok @@ t_nat () else
+    if eq_2 (a , b) (t_int ())
+    then ok @@ t_int () else
+    if (eq_1 a (t_nat ()) && eq_1 b (t_tez ())) || (eq_1 b (t_nat ()) && eq_1 a (t_tez ()))
+    then ok @@ t_tez () else
+      simple_fail "Multiplying with wrong types"
 
-  let times = "TIMES" , 2 , [
-      (eq_2 (t_nat ()) , constant_2 "TIMES_NAT" (t_nat ())) ;
-      (num_2 , constant_2 "TIMES_INT" (t_int ())) ;
-      (
-        let aux a b =
-          (type_value_eq (a , t_nat ()) && type_value_eq (b , t_tez ())) ||
-          (type_value_eq (b , t_nat ()) && type_value_eq (a , t_tez ())) in
-       predicate_2 aux , constant_2 "TIMES_TEZ" (t_tez ())
-     ) ;
-    ]
+  let div = typer_2 "DIV" @@ fun a b ->
+    if eq_2 (a , b) (t_nat ())
+    then ok @@ t_nat () else
+    if eq_2 (a , b) (t_int ())
+    then ok @@ t_int () else
+      simple_fail "Dividing with wrong types"
+
+  let mod_ = typer_2 "MOD" @@ fun a b ->
+    if (eq_1 a (t_nat ()) || eq_1 a (t_int ())) && (eq_1 b (t_nat ()) || eq_1 b (t_int ()))
+    then ok @@ t_nat () else
+      simple_fail "Computing modulo with wrong types"
+
+  let add = typer_2 "ADD" @@ fun a b ->
+    if eq_2 (a , b) (t_nat ())
+    then ok @@ t_nat () else
+    if eq_2 (a , b) (t_int ())
+    then ok @@ t_int () else
+    if (eq_1 a (t_nat ()) && eq_1 b (t_int ())) || (eq_1 b (t_nat ()) && eq_1 a (t_int ()))
+    then ok @@ t_int () else
+      simple_fail "Adding with wrong types"
+
+
 
   let constant_typers =
-    let typer_to_kv : typer -> (string * _) = fun (a, b, c) -> (a, (b, c)) in
+    let typer_to_kv : typer -> (string * _) = fun x -> x in
     Map.String.of_list
     @@ List.map typer_to_kv [
-      same_2 "ADD" [
-        ("ADD_INT" , t_int ()) ;
-        ("ADD_NAT" , t_nat ()) ;
-        ("CONCAT" , t_string ()) ;
-      ] ;
+      add ;
       times ;
-      same_2 "DIV" [
-        ("DIV_INT" , t_int ()) ;
-        ("DIV_NAT" , t_nat ()) ;
-      ] ;
+      div ;
       mod_ ;
       sub ;
       none ;
@@ -336,9 +296,7 @@ module Typer = struct
       unit ;
       amount ;
       transaction ;
-      transaction' ;
       get_contract ;
-      get_contract' ;
       abs ;
     ]
 
@@ -364,15 +322,10 @@ module Compiler = struct
   let simple_ternary c = Ternary c
 
   let predicates = Map.String.of_list [
-    ("ADD_INT" , simple_binary @@ prim I_ADD) ;
-    ("ADD_NAT" , simple_binary @@ prim I_ADD) ;
-    ("SUB_INT" , simple_binary @@ prim I_SUB) ;
-    ("SUB_NAT" , simple_binary @@ prim I_SUB) ;
-    ("TIMES_INT" , simple_binary @@ prim I_MUL) ;
-    ("TIMES_NAT" , simple_binary @@ prim I_MUL) ;
-    ("TIMES_TEZ" , simple_binary @@ prim I_MUL) ;
-    ("DIV_INT" , simple_binary @@ seq [prim I_EDIV ; i_assert_some_msg (i_push_string "DIV by 0") ; i_car]) ;
-    ("DIV_NAT" , simple_binary @@ seq [prim I_EDIV ; i_assert_some_msg (i_push_string "DIV by 0") ; i_car]) ;
+    ("ADD" , simple_binary @@ prim I_ADD) ;
+    ("SUB" , simple_binary @@ prim I_SUB) ;
+    ("TIMES" , simple_binary @@ prim I_MUL) ;
+    ("DIV" , simple_binary @@ seq [prim I_EDIV ; i_assert_some_msg (i_push_string "DIV by 0") ; i_car]) ;
     ("MOD" , simple_binary @@ seq [prim I_EDIV ; i_assert_some_msg (i_push_string "MOD by 0") ; i_cdr]) ;
     ("NEG" , simple_unary @@ prim I_NEG) ;
     ("OR" , simple_binary @@ prim I_OR) ;
@@ -388,8 +341,8 @@ module Compiler = struct
     ("GE" , simple_binary @@ seq [prim I_COMPARE ; prim I_GE]) ;
     ("UPDATE" , simple_ternary @@ prim I_UPDATE) ;
     ("SOME" , simple_unary @@ prim I_SOME) ;
-    ("GET_FORCE" , simple_binary @@ seq [prim I_GET ; i_assert_some_msg (i_push_string "GET_FORCE")]) ;
-    ("GET" , simple_binary @@ prim I_GET) ;
+    ("MAP_GET_FORCE" , simple_binary @@ seq [prim I_GET ; i_assert_some_msg (i_push_string "GET_FORCE")]) ;
+    ("MAP_GET" , simple_binary @@ prim I_GET) ;
     ("SIZE" , simple_unary @@ prim I_SIZE) ;
     ("FAILWITH" , simple_unary @@ prim I_FAILWITH) ;
     ("ASSERT" , simple_binary @@ i_if (seq [i_failwith]) (seq [i_drop ; i_push_unit])) ;
@@ -398,7 +351,7 @@ module Compiler = struct
     ("CONS" , simple_binary @@ prim I_CONS) ;
     ("UNIT" , simple_constant @@ prim I_UNIT) ;
     ("AMOUNT" , simple_constant @@ prim I_AMOUNT) ;
-    ("TRANSFER_TOKENS" , simple_ternary @@ prim I_TRANSFER_TOKENS) ;
+    ("CALL" , simple_ternary @@ prim I_TRANSFER_TOKENS) ;
     ("SOURCE" , simple_constant @@ prim I_SOURCE) ;
     ("SENDER" , simple_constant @@ prim I_SENDER) ;
     ( "MAP_UPDATE" , simple_ternary @@ seq [dip (i_some) ; prim I_UPDATE ]) ;

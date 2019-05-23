@@ -292,7 +292,7 @@ and translate_annotated_expression (ae:AST.annotated_expression) : expression re
       List.fold_left aux init m
   | E_look_up dsi ->
       let%bind (ds', i') = bind_map_pair f dsi in
-      return @@ E_constant ("GET", [i' ; ds'])
+      return @@ E_constant ("MAP_GET", [i' ; ds'])
   | E_sequence (a , b) -> (
       let%bind a' = translate_annotated_expression a in
       let%bind b' = translate_annotated_expression b in

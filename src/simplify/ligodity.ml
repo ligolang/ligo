@@ -17,20 +17,15 @@ let pseq_to_list = function
   | Some lst -> npseq_to_list lst
 let get_value : 'a Raw.reg -> 'a = fun x -> x.value
 
-let type_constants = Operators.Simplify.type_constants
-let constants = Operators.Simplify.constants
+open Operators.Simplify.Ligodity
 
 let rec simpl_type_expression : Raw.type_expr -> type_expression result =
   function
   | TPar x -> simpl_type_expression x.value.inside
   | TAlias v -> (
       match List.assoc_opt v.value type_constants with
-      | Some 0 ->
-          ok @@ T_constant (v.value, [])
-      | Some _ ->
-          simple_fail "type constructor with wrong number of args"
-      | None ->
-          ok @@ T_variable v.value
+      | Some s -> ok @@ T_constant (s , [])
+      | None -> ok @@ T_variable v.value
     )
   | TFun x -> (
       let%bind (a , b) =
@@ -41,12 +36,11 @@ let rec simpl_type_expression : Raw.type_expr -> type_expression result =
   | TApp x ->
       let (name, tuple) = x.value in
       let lst = npseq_to_list tuple.value.inside in
-      let%bind _ = match List.assoc_opt name.value type_constants with
-        | Some n when n = List.length lst -> ok ()
-        | Some _ -> simple_fail "type constructor with wrong number of args"
-        | None -> simple_fail "unrecognized type constants" in
+      let%bind cst =
+        trace_option (simple_error "unrecognized type constants") @@
+        List.assoc_opt name.value type_constants in
       let%bind lst' = bind_list @@ List.map simpl_type_expression lst in
-      ok @@ T_constant (name.value, lst')
+      ok @@ T_constant (cst , lst')
   | TProd p ->
       let%bind tpl = simpl_list_type_expression
         @@ npseq_to_list p.value in
@@ -134,32 +128,22 @@ let rec simpl_expression :
       let c' = c.value in
       match List.assoc_opt c' constants with
       | None -> return @@ E_variable c.value
-      | Some 0 -> return @@ E_constant (c' , [])
-      | Some n -> (
-          let error =
-            let title () = "non nullary constant without parameters" in
-            let content () = Format.asprintf "%s (%d)" c' n in
-            error title content in
-          fail error
-        )
+      | Some s -> return @@ E_constant (s , [])
     )
   | ECall x -> (
       let (e1, e2) = x.value in
       let%bind args = bind_map_list simpl_expression (nseq_to_list e2) in
       match e1 with
-        EVar f ->
+      | EVar f ->
           (match List.assoc_opt f.value constants with
           | None ->
               let%bind arg = simpl_tuple_expression (nseq_to_list e2) in
               return @@ E_application (e_variable f.value, arg)
-          | Some arity ->
-              let%bind _arity =
-                trace (simple_error "wrong arity for constants") @@
-                Assert.assert_equal_int arity (List.length args) in
-              return @@ E_constant (f.value, args))
-      | e1 -> let%bind e1' = simpl_expression e1 in
-             let%bind arg = simpl_tuple_expression (nseq_to_list e2) in
-             return @@ E_application (e1', arg)
+          | Some s -> return @@ E_constant (s , args))
+      | e1 ->
+        let%bind e1' = simpl_expression e1 in
+        let%bind arg = simpl_tuple_expression (nseq_to_list e2) in
+        return @@ E_application (e1' , arg)
     )
   | EPar x -> simpl_expression ?te_annot x.value.inside
   | EUnit _ -> return @@ E_literal Literal_unit

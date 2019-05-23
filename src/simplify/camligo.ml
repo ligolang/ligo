@@ -6,13 +6,11 @@ open O.Combinators
 
 let unwrap : type a . a Location.wrap -> a = Location.unwrap
 
-let type_constants = Operators.Simplify.type_constants
-let constants = Operators.Simplify.Camligo.constants
+open Operators.Simplify.Camligo
 
 let type_variable : string -> O.type_expression result = fun str ->
   match List.assoc_opt str type_constants with
-  | Some 0 -> ok @@ O.T_constant (str, [])
-  | Some _ -> simple_fail "non-nullary type constructor"
+  | Some s -> ok @@ O.T_constant (s , [])
   | None -> ok @@ O.T_variable str
 
 let get_param_restricted_pattern : I.param -> I.restricted_pattern Location.wrap result = fun p ->
@@ -145,19 +143,10 @@ let rec type_expression : I.type_expression -> O.type_expression result = fun te
       match unwrap f with
         | I.T_variable v -> (
             match List.assoc_opt v.wrap_content type_constants with
-            | Some n -> (
-                let error expected got =
-                  let title () = "bad arity" in
-                  let content () = Format.asprintf "Expected: %d. Got: %d." expected got in
-                  error title content in
+            | Some s -> (
                 match arg'.wrap_content with
-                | T_tuple lst -> (
-                    let%bind () =
-                      trace (error n (List.length lst)) @@
-                      Assert.assert_list_size lst n in
-                    ok @@ O.T_constant (v.wrap_content , lst)
-                  )
-                | e -> ok @@ O.T_constant ((unwrap v) , [ e ])
+                | T_tuple lst -> ok @@ O.T_constant (s , lst)
+                | e -> ok @@ O.T_constant (s , [ e ])
               )
             | None -> (
                 let error =
@@ -345,23 +334,13 @@ and expression_main : I.expression_main Location.wrap -> O.expression result = f
 and identifier_application : (string Location.wrap) list * string Location.wrap -> O.expression option -> _ result = fun (lst , v) param_opt ->
   let constant_name = String.concat "." ((List.map unwrap lst) @ [unwrap v]) in
   match List.assoc_opt constant_name constants , param_opt with
-  | Some 0 , None ->
-      ok O.(E_constant (constant_name , []))
-  | Some _ , None ->
-      simple_fail "n-ary constant without parameter"
-  | Some 0 , Some _ -> simple_fail "applying to nullary constant"
-  | Some 1 , Some param -> (
-      ok O.(E_constant (constant_name , [param]))
-    )
-  | Some n , Some param -> (
+  | Some s , None -> ok O.(E_constant (s , []))
+  | Some s , Some param -> (
       let params =
         match param with
         | E_tuple lst -> lst
         | _ -> [ param ] in
-      let%bind () =
-        trace_strong (simple_error "bad constant arity") @@
-        Assert.assert_list_size params n in
-      ok O.(E_constant (constant_name , params))
+      ok O.(E_constant (s , params))
     )
   | None , param_opt -> (
       let%bind () =

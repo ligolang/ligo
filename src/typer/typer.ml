@@ -497,34 +497,10 @@ and type_expression : environment -> ?tv_opt:O.type_value -> I.expression -> O.a
 and type_constant (name:string) (lst:O.type_value list) (tv_opt:O.type_value option) : (string * O.type_value) result =
   (* Constant poorman's polymorphism *)
   let ct = Operators.Typer.constant_typers in
-  let%bind v =
+  let%bind typer =
     trace_option (unrecognized_constant name) @@
     Map.String.find_opt name ct in
-  let (arity, typer) = v in
-  let%bind () =
-    let l = List.length lst in
-    trace_strong (wrong_arity name arity l) @@
-    Assert.assert_true (arity = l) in
-
-  let error =
-    let title () = "typing: constant predicates all failed" in
-    let content () =
-      Format.asprintf "%s in %a"
-      name
-      PP_helpers.(list_sep Ast_typed.PP.type_value (const " , "))
-      lst
-    in
-    error title content in
-  let rec aux = fun ts ->
-    match ts with
-    | [] -> fail error
-    | (predicate, typer') :: tl -> (
-        match predicate lst with
-        | false -> aux tl
-        | true -> typer' lst tv_opt
-      )
-  in
-  aux typer
+  typer lst tv_opt
 
 let untype_type_value (t:O.type_value) : (I.type_expression) result =
   match t.simplified with
