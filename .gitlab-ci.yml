@@ -57,3 +57,7 @@ remote-repo-job:
     #- opam install -y merlin
     #- opam install -y ocp-indent
     #- opam user-setup install
+
+build-docker-image:
+  script:
+    - docker build -t marigold/ligo ./docker
