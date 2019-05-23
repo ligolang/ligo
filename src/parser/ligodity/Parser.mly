@@ -390,7 +390,7 @@ let_binding:
     ({variable=$1; lhs_type=$3; eq=$4; let_rhs}: let_binding), map
   }
 | irrefutable type_annotation? eq expr {
-    let variable, type_opt, map = split_pattern $1 in
+    let variable, _type_opt, map = split_pattern $1 in
     ({variable; lhs_type=$2; eq=$3; let_rhs=$4}: let_binding), map }
 
 (* TODO *)
@@ -401,7 +401,7 @@ let_in_binding:
     {pattern = PVar $1; lhs_type=$3; eq=$4; let_rhs}: let_in_binding
   }
 | irrefutable type_annotation? eq expr {
-    let variable, type_opt, map = split_pattern $1 in
+    let variable, _type_opt, _map = split_pattern $1 in
     {pattern = PVar variable; lhs_type=$2; eq=$3; let_rhs=$4}
     : let_in_binding }
 

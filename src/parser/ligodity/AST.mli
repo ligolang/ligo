@@ -491,3 +491,4 @@ val unpar : expr -> expr
 (* TODO *)
 
 val print_projection : projection -> unit
+val print_pattern : pattern -> unit

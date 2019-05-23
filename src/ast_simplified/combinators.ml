@@ -69,6 +69,12 @@ let e_application a b = E_application (a , b)
 
 let e_binop name a b = E_constant (name , [a ; b])
 
+let make_option_typed e t_opt =
+  match t_opt with
+  | None -> e
+  | Some t -> e_annotation e t
+
+
 let ez_e_record lst =
   let aux prev (k, v) = SMap.add k v prev in
   let map = List.fold_left aux SMap.empty lst in
