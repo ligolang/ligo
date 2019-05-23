@@ -7,7 +7,7 @@
     parser
     ast_simplified
     operators)
-  (modules pascaligo camligo simplify)
+  (modules ligodity pascaligo camligo simplify)
   (preprocess
     (pps
       simple-utils.ppx_let_generalized

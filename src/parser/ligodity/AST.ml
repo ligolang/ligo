@@ -116,7 +116,7 @@ and declaration =
 (* Non-recursive values *)
 
 and let_binding = {
-  pattern  : pattern;
+  variable : variable;
   lhs_type : (colon * type_expr) option;
   eq       : equal;
   let_rhs  : expr
@@ -207,7 +207,7 @@ and expr =
 | ETuple  of (expr, comma) Utils.nsepseq reg
 | EPar    of expr par reg
 | ELetIn  of let_in reg
-| EFun    of fun_expr
+| EFun    of fun_expr reg
 | ECond   of conditional reg
 | ESeq    of sequence
 
@@ -318,22 +318,49 @@ and 'a case_clause = {
   rhs     : 'a
 }
 
-and let_in = kwd_let * let_binding * kwd_in * expr
+and let_in = {
+  kwd_let : kwd_let;
+  binding : let_in_binding;
+  kwd_in  : kwd_in;
+  body    : expr
+}
 
-and fun_expr = (kwd_fun * variable * arrow * expr) reg
+and let_in_binding = {
+  pattern  : pattern;
+  lhs_type : (colon * type_expr) option;
+  eq       : equal;
+  let_rhs  : expr
+}
+
+and fun_expr = {
+  kwd_fun : kwd_fun;
+  param   : variable;
+  arrow   : arrow;
+  body    : expr
+}
 
 and conditional = {
-  kwd_if     : kwd_if;
-  test       : expr;
-  kwd_then   : kwd_then;
-  ifso       : expr;
-  kwd_else   : kwd_else;
-  ifnot      : expr
+  kwd_if   : kwd_if;
+  test     : expr;
+  kwd_then : kwd_then;
+  ifso     : expr;
+  kwd_else : kwd_else;
+  ifnot    : expr
 }
 
 (* Projecting regions of the input source code *)
 
 let sprintf = Printf.sprintf
+
+let region_of_type_expr = function
+  TProd {region; _}
+| TSum {region; _}
+| TRecord {region; _}
+| TApp {region; _}
+| TFun {region; _}
+| TPar {region; _}
+| TAlias {region; _} -> region
+
 
 let region_of_list_pattern = function
   Sugar {region; _} | PCons {region; _} -> region
@@ -341,10 +368,11 @@ let region_of_list_pattern = function
 let region_of_pattern = function
   PList p -> region_of_list_pattern p
 | PTuple {region;_} | PVar {region;_}
-| PUnit {region;_} | PInt {region;_} | PTrue region | PFalse region
+| PUnit {region;_} | PInt {region;_}
+| PTrue region | PFalse region
 | PString {region;_} | PWild region
-| PConstr {region; _} | PPar {region;_} | PRecord {region; _}
-| PTyped {region; _} -> region
+| PConstr {region; _} | PPar {region;_}
+| PRecord {region; _} | PTyped {region; _} -> region
 
 let region_of_bool_expr = function
   Or {region;_} | And {region;_}
@@ -385,71 +413,6 @@ let region_of_expr = function
 | ESeq {region; _} | ERecord {region; _}
 | EConstr {region; _} -> region
 
-(* Rewriting let-expressions and fun-expressions, with some optimisations *)
-
-type sep = Region.t
-
-let ghost_fun, ghost_arrow, ghost_let, ghost_eq, ghost_in =
-  let ghost = Region.ghost in ghost, ghost, ghost, ghost, ghost
-
-let norm_fun region kwd_fun pattern eq expr =
-  let value =
-    match pattern with
-      PVar v -> kwd_fun, v, eq, expr
-    |      _ -> let value    = Utils.gen_sym () in
-                let fresh   = Region.{region=Region.ghost; value} in
-                let binding = {pattern; eq;
-                               lhs_type=None; let_rhs = EVar fresh} in
-                let let_in  = ghost_let, binding, ghost_in, expr in
-                let expr    = ELetIn {value=let_in; region=Region.ghost}
-    in kwd_fun, fresh, ghost_arrow, expr
-  in Region.{region; value}
-
-let norm ?reg (pattern, patterns) sep expr =
-  let reg, fun_reg =
-    match reg with
-        None -> Region.ghost, ghost_fun
-    | Some p -> p in
-  let apply pattern (sep, expr) =
-    ghost_eq, EFun (norm_fun Region.ghost ghost_fun pattern sep expr) in
-  let sep, expr = List.fold_right apply patterns (sep, expr)
-  in norm_fun reg fun_reg pattern sep expr
-
-(* Unparsing expressions *)
-
-type unparsed = [
-  `Fun  of (kwd_fun * (pattern Utils.nseq * arrow * expr))
-| `Let  of (pattern Utils.nseq * equal * expr)
-| `Idem of expr
-]
-
-(* The function [unparse'] returns a triple [patterns,
-   separator_region, expression], and the context (handled by
-   [unparse]) decides if [separator_region] is the region of a "="
-   sign or "->". *)
-
-let rec unparse' = function
-  EFun {value=_,var,arrow,expr; _} ->
-    if var.region#is_ghost then
-      match expr with
-        ELetIn {value = _,{pattern;eq;_},_,expr; _} ->
-          if eq#is_ghost then
-            let patterns, sep, e = unparse' expr
-            in Utils.nseq_cons pattern patterns, sep, e
-          else (pattern,[]), eq, expr
-      | _ -> assert false
-    else if arrow#is_ghost then
-           let patterns, sep, e = unparse' expr
-           in Utils.nseq_cons (PVar var) patterns, sep, e
-         else (PVar var, []), arrow, expr
-| _ -> assert false
-
-let unparse = function
-  EFun {value=kwd_fun,_,_,_; _} as e ->
-    let binding = unparse' e in
-    if kwd_fun#is_ghost then `Let binding else `Fun (kwd_fun, binding)
-| e -> `Idem e
-
 (* Printing the tokens with their source locations *)
 
 let print_nsepseq sep print (head,tail) =
@@ -480,16 +443,16 @@ let print_bytes Region.{region; value=lexeme, abstract} =
   Printf.printf "%s: Bytes (\"%s\", \"0x%s\")\n"
     (region#compact `Byte) lexeme (Hex.to_string abstract)
 
-let rec print_tokens ?(undo=false) {decl;eof} =
-  Utils.nseq_iter (print_statement undo) decl; print_token eof "EOF"
+let rec print_tokens {decl;eof} =
+  Utils.nseq_iter print_statement decl; print_token eof "EOF"
 
-and print_statement undo = function
+and print_statement = function
   Let {value=kwd_let, let_binding; _} ->
     print_token kwd_let "let";
-    print_let_binding undo let_binding
+    print_let_binding let_binding
 | LetEntry {value=kwd_let_entry, let_binding; _} ->
     print_token kwd_let_entry "let%entry";
-    print_let_binding undo let_binding
+    print_let_binding let_binding
 | TypeDecl {value={kwd_type; name; eq; type_expr}; _} ->
     print_token kwd_type "type";
     print_var name;
@@ -527,9 +490,9 @@ and print_type_par {value={lpar;inside=t;rpar}; _} =
   print_type_expr t;
   print_token rpar ")"
 
-and print_projection Region.{value; _} =
-  let {struct_name; selector; field_path} = value in
-  print_uident struct_name;
+and print_projection node =
+  let {struct_name; selector; field_path} = node in
+  print_var struct_name;
   print_token selector ".";
   print_nsepseq "." print_selection field_path
 
@@ -587,28 +550,24 @@ and print_terminator = function
   Some semi -> print_token semi ";"
 | None -> ()
 
-and print_let_binding undo {pattern; lhs_type; eq; let_rhs} =
+and print_let_binding {variable; lhs_type; eq; let_rhs} =
+  print_var variable;
+  (match lhs_type with
+     None -> ()
+   | Some (colon, type_expr) ->
+       print_token colon ":";
+       print_type_expr type_expr);
+  (print_token eq "="; print_expr let_rhs)
+
+and print_let_in_binding (bind: let_in_binding) =
+  let {pattern; lhs_type; eq; let_rhs} : let_in_binding = bind in
   print_pattern pattern;
   (match lhs_type with
      None -> ()
    | Some (colon, type_expr) ->
        print_token colon ":";
        print_type_expr type_expr);
-  if undo then
-    match unparse let_rhs with
-      `Let (patterns, eq, e) ->
-         Utils.nseq_iter print_pattern patterns;
-         print_token eq "=";
-         print_expr undo e
-    | `Fun (kwd_fun, (patterns, arrow, e)) ->
-         print_token eq "=";
-         print_token kwd_fun "fun";
-         Utils.nseq_iter print_pattern patterns;
-         print_token arrow "->";
-         print_expr undo e
-    | `Idem _ ->
-         print_token eq "="; print_expr undo let_rhs
-  else (print_token eq "="; print_expr undo let_rhs)
+  (print_token eq "="; print_expr let_rhs)
 
 and print_pattern = function
   PTuple {value=patterns;_} -> print_csv print_pattern patterns
@@ -657,69 +616,62 @@ and print_constr_pattern {value=constr, p_opt; _} =
     None -> ()
   | Some pattern -> print_pattern pattern
 
-and print_expr undo = function
-  ELetIn {value;_} -> print_let_in undo value
-|       ECond cond -> print_conditional undo cond
-| ETuple {value;_} -> print_csv (print_expr undo) value
-| ECase {value;_} -> print_match_expr undo value
-| EFun {value=(kwd_fun,_,_,_) as f; _} as e ->
-    if undo then
-      let patterns, arrow, expr = unparse' e in
-      print_token kwd_fun "fun";
-      Utils.nseq_iter print_pattern patterns;
-      print_token arrow "->";
-      print_expr undo expr
-    else print_fun_expr undo f
+and print_expr = function
+  ELetIn {value;_} -> print_let_in value
+|       ECond cond -> print_conditional cond
+| ETuple {value;_} -> print_csv print_expr value
+| ECase {value;_}  -> print_match_expr value
+| EFun e           -> print_fun_expr e
 
-| EAnnot e -> print_annot_expr undo e
-| ELogic e -> print_logic_expr undo e
-| EArith e -> print_arith_expr undo e
-| EString e -> print_string_expr undo e
+| EAnnot e -> print_annot_expr e
+| ELogic e -> print_logic_expr e
+| EArith e -> print_arith_expr e
+| EString e -> print_string_expr e
 
 | ECall {value=f,l; _} ->
-    print_expr undo f; Utils.nseq_iter (print_expr undo) l
+    print_expr f; Utils.nseq_iter print_expr l
 | EVar v -> print_var v
-| EProj p -> print_projection p
+| EProj p -> print_projection p.value
 | EUnit {value=lpar,rpar; _} ->
     print_token lpar "("; print_token rpar ")"
 | EBytes b -> print_bytes b
 | EPar {value={lpar;inside=e;rpar}; _} ->
-    print_token lpar "("; print_expr undo e; print_token rpar ")"
-| EList e -> print_list_expr undo e
-| ESeq seq -> print_sequence undo seq
-| ERecord e -> print_record_expr undo e
+    print_token lpar "("; print_expr e; print_token rpar ")"
+| EList e -> print_list_expr e
+| ESeq seq -> print_sequence seq
+| ERecord e -> print_record_expr e
 | EConstr {value=constr,None; _} -> print_uident constr
 | EConstr {value=(constr, Some arg); _} ->
-    print_uident constr; print_expr undo arg
+    print_uident constr; print_expr arg
 
-and print_annot_expr undo {value=e,t; _} =
-  print_expr undo e;
+and print_annot_expr {value=e,t; _} =
+  print_expr e;
   print_token Region.ghost ":";
   print_type_expr t
 
-and print_list_expr undo = function
+and print_list_expr = function
   Cons {value={arg1;op;arg2}; _} ->
-    print_expr undo arg1;
+    print_expr arg1;
     print_token op "::";
-    print_expr undo arg2
-| List e -> print_injection (print_expr undo) e
+    print_expr arg2
+| List e -> print_injection print_expr e
 (*| Append {value=e1,append,e2; _} ->
-    print_expr undo e1;
+    print_expr e1;
     print_token append "@";
-    print_expr undo e2 *)
+    print_expr e2 *)
 
-and print_arith_expr undo = function
+and print_arith_expr = function
   Add {value={arg1;op;arg2}; _} ->
-    print_expr undo arg1; print_token op "+"; print_expr undo arg2
+    print_expr arg1; print_token op "+"; print_expr arg2
 | Sub {value={arg1;op;arg2}; _} ->
-    print_expr undo arg1; print_token op "-"; print_expr undo arg2
+    print_expr arg1; print_token op "-"; print_expr arg2
 | Mult {value={arg1;op;arg2}; _} ->
-    print_expr undo arg1; print_token op "*"; print_expr undo arg2
+    print_expr arg1; print_token op "*"; print_expr arg2
 | Div {value={arg1;op;arg2}; _} ->
-    print_expr undo arg1; print_token op "/"; print_expr undo arg2
+    print_expr arg1; print_token op "/"; print_expr arg2
 | Mod {value={arg1;op;arg2}; _} ->
-    print_expr undo arg1; print_token op "mod"; print_expr undo arg2
-| Neg {value={op;arg}; _} -> print_token op "-"; print_expr undo arg
+    print_expr arg1; print_token op "mod"; print_expr arg2
+| Neg {value={op;arg}; _} -> print_token op "-"; print_expr arg
 | Int {region; value=lex,z} ->
     print_token region (sprintf "Int %s (%s)" lex (Z.to_string z))
 | Mtz {region; value=lex,z} ->
@@ -727,94 +679,96 @@ and print_arith_expr undo = function
 | Nat {region; value=lex,z} ->
     print_token region (sprintf "Nat %s (%s)" lex (Z.to_string z))
 
-and print_string_expr undo = function
+and print_string_expr = function
   Cat {value={arg1;op;arg2}; _} ->
-    print_expr undo arg1; print_token op "^"; print_expr undo arg2
+    print_expr arg1; print_token op "^"; print_expr arg2
 | String s -> print_str s
 
-and print_logic_expr undo = function
-  BoolExpr e -> print_bool_expr undo e
-| CompExpr e -> print_comp_expr undo e
+and print_logic_expr = function
+  BoolExpr e -> print_bool_expr e
+| CompExpr e -> print_comp_expr e
 
-and print_bool_expr undo = function
+and print_bool_expr = function
   Or {value={arg1;op;arg2}; _} ->
-    print_expr undo arg1; print_token op "||"; print_expr undo arg2
+    print_expr arg1; print_token op "||"; print_expr arg2
 | And {value={arg1;op;arg2}; _} ->
-    print_expr undo arg1; print_token op "&&"; print_expr undo arg2
-| Not {value={op;arg}; _} -> print_token op "not"; print_expr undo arg
+    print_expr arg1; print_token op "&&"; print_expr arg2
+| Not {value={op;arg}; _} -> print_token op "not"; print_expr arg
 | True kwd_true -> print_token kwd_true "true"
 | False kwd_false -> print_token kwd_false "false"
 
-and print_comp_expr undo = function
+and print_comp_expr = function
   Lt {value={arg1;op;arg2}; _} ->
-    print_expr undo arg1; print_token op "<"; print_expr undo arg2
+    print_expr arg1; print_token op "<"; print_expr arg2
 | Leq {value={arg1;op;arg2}; _} ->
-    print_expr undo arg1; print_token op "<="; print_expr undo arg2
+    print_expr arg1; print_token op "<="; print_expr arg2
 | Gt {value={arg1;op;arg2}; _} ->
-    print_expr undo arg1; print_token op ">"; print_expr undo arg2
+    print_expr arg1; print_token op ">"; print_expr arg2
 | Geq {value={arg1;op;arg2}; _} ->
-    print_expr undo arg1; print_token op ">="; print_expr undo arg2
+    print_expr arg1; print_token op ">="; print_expr arg2
 | Neq {value={arg1;op;arg2}; _} ->
-    print_expr undo arg1; print_token op "<>"; print_expr undo arg2
+    print_expr arg1; print_token op "<>"; print_expr arg2
 | Equal {value={arg1;op;arg2}; _} ->
-    print_expr undo arg1; print_token op "="; print_expr undo arg2
+    print_expr arg1; print_token op "="; print_expr arg2
 
-and print_record_expr undo e =
-  print_injection (print_field_assign undo) e
+and print_record_expr e =
+  print_injection print_field_assign e
 
-and print_field_assign undo {value; _} =
+and print_field_assign {value; _} =
   let {field_name; assignment; field_expr} = value in
   print_var field_name;
   print_token assignment "=";
-  print_expr undo field_expr
+  print_expr field_expr
 
-and print_sequence undo seq = print_injection (print_expr undo) seq
+and print_sequence seq = print_injection print_expr seq
 
-and print_match_expr undo expr =
+and print_match_expr expr =
   let {kwd_match; expr; opening;
        lead_vbar; cases; closing} = expr in
   print_token kwd_match "match";
-  print_expr undo expr;
+  print_expr expr;
   print_opening opening;
   print_token_opt lead_vbar "|";
-  print_cases undo cases;
+  print_cases cases;
   print_closing closing
 
 and print_token_opt = function
          None -> fun _ -> ()
 | Some region -> print_token region
 
-and print_cases undo {value; _} =
-  print_nsepseq "|" (print_case_clause undo) value
+and print_cases {value; _} =
+  print_nsepseq "|" print_case_clause value
 
-and print_case_clause undo {value; _} =
+and print_case_clause {value; _} =
   let {pattern; arrow; rhs} = value in
   print_pattern pattern;
   print_token arrow "->";
-  print_expr undo rhs
+  print_expr rhs
 
-and print_let_in undo (kwd_let, let_binding, kwd_in, expr) =
+and print_let_in (bind: let_in) =
+  let {kwd_let; binding; kwd_in; body} = bind in
   print_token kwd_let "let";
-  print_let_binding undo let_binding;
+  print_let_in_binding binding;
   print_token kwd_in "in";
-  print_expr undo expr
+  print_expr body
 
-and print_fun_expr undo (kwd_fun, rvar, arrow, expr) =
+and print_fun_expr {value; _} =
+  let {kwd_fun; param; arrow; body} = value in
   print_token kwd_fun "fun";
-  print_var rvar;
+  print_var param;
   print_token arrow "->";
-  print_expr undo expr
+  print_expr body
 
-and print_conditional undo {value; _} =
+and print_conditional {value; _} =
    let open Region in
    let {kwd_if; test; kwd_then; ifso; kwd_else; ifnot} = value
    in print_token ghost "(";
    print_token kwd_if "if";
-   print_expr undo test;
+   print_expr test;
    print_token kwd_then "then";
-   print_expr undo ifso;
+   print_expr ifso;
    print_token kwd_else "else";
-   print_expr undo ifnot;
+   print_expr ifnot;
    print_token ghost ")"
 
 let rec unpar = function

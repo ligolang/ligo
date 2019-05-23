@@ -27,8 +27,7 @@ let help () =
   print_endline "                         (default: <input>.ml)";
   print_endline "  -e, --eval             Interpret <input>.mml or stdin";
   print_endline "      --raw-edits        Do not optimise translation edits";
-  print_endline "      --verbose=<phases> Colon-separated phases: cmdline, lexer,";
-  print_endline "                         parser, unparsing, norm, eval";
+  print_endline "      --verbose=<phases> Colon-separated phases: cmdline, lexer, parser";
   print_endline "      --version          Short commit hash on stdout";
   print_endline "  -h, --help             This help";
   exit 0

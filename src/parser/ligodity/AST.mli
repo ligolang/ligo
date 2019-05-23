@@ -118,14 +118,14 @@ and ast = t
 and eof = Region.t
 
 and declaration =
-  Let      of (kwd_let * let_binding) reg        (* let p = e       *)
-| LetEntry of (kwd_let_entry * let_binding) reg  (* let%entry p = e *)
+  Let      of (kwd_let * let_binding) reg        (* let x = e       *)
+| LetEntry of (kwd_let_entry * let_binding) reg  (* let%entry x = e *)
 | TypeDecl of type_decl reg                      (* type ...        *)
 
 (* Non-recursive values *)
 
 and let_binding = {                                  (* p = e   p : t = e *)
-  pattern  : pattern;
+  variable : variable;
   lhs_type : (colon * type_expr) option;
   eq       : equal;
   let_rhs  : expr
@@ -216,7 +216,7 @@ and expr =
 | ETuple  of (expr, comma) Utils.nsepseq reg                 (* e1, e2, ... *)
 | EPar    of expr par reg                                            (* (e) *)
 | ELetIn  of let_in reg             (* let p1 = e1 and p2 = e2 and ... in e *)
-| EFun    of fun_expr               (* fun x -> e                           *)
+| EFun    of fun_expr reg           (* fun x -> e                           *)
 | ECond   of conditional reg        (* if e1 then e2 else e3                *)
 | ESeq    of sequence               (* begin e1; e2; ... ; en end           *)
 
@@ -327,9 +327,26 @@ and 'a case_clause = {
   rhs     : 'a
 }
 
-and let_in = kwd_let * let_binding * kwd_in * expr
+and let_in = {
+  kwd_let : kwd_let;
+  binding : let_in_binding;
+  kwd_in  : kwd_in;
+  body    : expr
+}
 
-and fun_expr = (kwd_fun * variable * arrow * expr) reg
+and let_in_binding = {
+  pattern  : pattern;
+  lhs_type : (colon * type_expr) option;
+  eq       : equal;
+  let_rhs  : expr
+}
+
+and fun_expr = {
+  kwd_fun : kwd_fun;
+  param   : variable;
+  arrow   : arrow;
+  body    : expr
+}
 
 and conditional = {
   kwd_if     : kwd_if;
@@ -389,11 +406,11 @@ and conditional = {
    keep the region of the original), and the region of the original
    "fun" keyword.
 *)
-
+(*
 type sep = Region.t
 
 val norm : ?reg:(Region.t * kwd_fun) -> pattern Utils.nseq -> sep -> expr -> fun_expr
-
+*)
 (* Undoing the above rewritings (for debugging by comparison with the
    lexer, and to feed the source-to-source transformations with only
    tokens that originated from the original input.
@@ -446,21 +463,6 @@ val norm : ?reg:(Region.t * kwd_fun) -> pattern Utils.nseq -> sep -> expr -> fun
    let f l = let n = l in n
 *)
 
-type unparsed = [
-  `Fun  of (kwd_fun * (pattern Utils.nseq * arrow * expr))
-| `Let  of (pattern Utils.nseq * equal * expr)
-| `Idem of expr
-]
-
-val unparse : expr -> unparsed
-
-(* Conversions to type [string] *)
-
-(*
-val to_string         :       t -> string
-val pattern_to_string : pattern -> string
-*)
-
 (* Printing the tokens reconstructed from the AST. This is very useful
    for debugging, as the output of [print_token ast] can be textually
    compared to that of [Lexer.trace] (see module [LexerMain]). The
@@ -468,14 +470,15 @@ val pattern_to_string : pattern -> string
    the AST to be unparsed before printing (those nodes that have been
    normalised with function [norm_let] and [norm_fun]). *)
 
-val print_tokens : ?undo:bool -> ast -> unit
+val print_tokens : (*?undo:bool ->*) ast -> unit
 
 
 (* Projecting regions from sundry nodes of the AST. See the first
    comment at the beginning of this file. *)
 
-val region_of_pattern : pattern -> Region.t
-val region_of_expr    : expr -> Region.t
+val region_of_pattern   : pattern -> Region.t
+val region_of_expr      : expr -> Region.t
+val region_of_type_expr : type_expr -> Region.t
 
 (* Simplifications *)
 
@@ -484,3 +487,7 @@ val region_of_expr    : expr -> Region.t
    contains. *)
 
 val unpar : expr -> expr
+
+(* TODO *)
+
+val print_projection : projection -> unit

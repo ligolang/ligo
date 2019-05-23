@@ -1,8 +1,11 @@
+[@@@warning "-45"]
+
 open Trace
 open Ast_simplified
 
 module Raw = Parser.Ligodity.AST
 module SMap = Map.String
+module Option = Simple_utils.Option
 
 open Combinators
 
@@ -17,8 +20,8 @@ let get_value : 'a Raw.reg -> 'a = fun x -> x.value
 let type_constants = Operators.Simplify.type_constants
 let constants = Operators.Simplify.constants
 
-let rec simpl_type_expression (t:Raw.type_expr) : type_expression result =
-  match t with
+let rec simpl_type_expression : Raw.type_expr -> type_expression result =
+  function
   | TPar x -> simpl_type_expression x.value.inside
   | TAlias v -> (
       match List.assoc_opt v.value type_constants with
@@ -82,7 +85,7 @@ and simpl_list_type_expression (lst:Raw.type_expr list) : type_expression result
       ok @@ T_tuple lst
 
 let rec simpl_expression :
-  ?te_annot:_ -> Raw.expr -> ae result = fun ?te_annot t ->
+  ?te_annot:type_expression -> Raw.expr -> ae result = fun ?te_annot t ->
   let return x = ok @@ make_e_a ?type_annotation:te_annot x in
   let simpl_projection = fun (p:Raw.projection) ->
     let var =
@@ -100,8 +103,23 @@ let rec simpl_expression :
       List.map aux @@ npseq_to_list path in
     return @@ E_accessor (var, path')
   in
-  let open Raw in
+  let mk_let_in binder rhs result =
+    E_let_in {binder; rhs; result} in
+
   match t with
+  | Raw.ELetIn e -> (
+      let Raw.{binding; body; _} = e.value in
+      let Raw.{pattern; lhs_type; let_rhs; _} = binding in
+      let%bind type_annotation = bind_map_option
+          (fun (_,type_expr) -> simpl_type_expression type_expr)
+          lhs_type in
+      let%bind rhs = simpl_expression ?te_annot:type_annotation let_rhs in
+      let%bind body = simpl_expression body in
+      match pattern with
+        Raw.PVar v -> return (mk_let_in v.value rhs body)
+      | _ -> let%bind case = simpl_cases [(pattern, body)]
+            in return (E_matching (rhs, case))
+    )
   | Raw.EAnnot a -> (
       let (expr , type_expr) = a.value in
       match te_annot with
@@ -207,7 +225,7 @@ let rec simpl_expression :
         @@ npseq_to_list c.value.cases.value in
       let%bind cases = simpl_cases lst in
       return @@ E_matching (e, cases)
-  | _ -> failwith "TOTO"
+  | _ -> failwith "XXX" (* TODO *)
 
 and simpl_logic_expression ?te_annot (t:Raw.logic_expr) : annotated_expression result =
   let return x = ok @@ make_e_a ?type_annotation:te_annot x in
@@ -330,7 +348,8 @@ and simpl_fun_declaration : Raw.fun_decl -> named_expression result = fun x ->
        let%bind result = simpl_expression return in
        let%bind output_type = simpl_type_expression ret_type in
        let body = local_declarations @ instructions in
-       let expression = E_lambda {binder ; input_type ; output_type ; result ; body } in
+       let expression = E_lambda {binder ; input_type = Some input_type;
+                                  output_type = Some input_type; result ; body } in
        let type_annotation = Some (T_function (input_type, output_type)) in
        ok {name;annotated_expression = {expression;type_annotation}}
      )
@@ -369,7 +388,8 @@ and simpl_fun_declaration : Raw.fun_decl -> named_expression result = fun x ->
 
        let body = tpl_declarations @ local_declarations @ instructions in
        let%bind result = simpl_expression return in
-       let expression = E_lambda {binder ; input_type ; output_type ; result ; body } in
+       let expression = E_lambda {binder ; input_type = Some input_type;
+                                  output_type = Some output_type; result ; body } in
        let type_annotation = Some (T_function (input_type, output_type)) in
        ok {name = name.value;annotated_expression = {expression;type_annotation}}
      )
@@ -383,9 +403,22 @@ and simpl_declaration : Raw.declaration -> declaration Location.wrap result = fu
       let%bind type_expression = simpl_type_expression type_expr in
       ok @@ loc x @@ Declaration_type {type_name=name.value;type_expression}
   | LetEntry _ -> simple_fail "no entry point yet"
-(*  | Let x ->
-      let _, binding = x.value in*)
+  | Let x ->
+      let _, binding = x.value in
+      let {pattern; lhs_type; let_rhs} = binding in
+      let%bind type_annotation = bind_map_option
+        (fun (_,type_expr) -> simpl_type_expression type_expr)
+        lhs_type in
+      let%bind rhs = simpl_expression ?te_annot:type_annotation let_rhs in
+      match pattern with
+        Raw.PVar v ->
+          let name = v.value in
+          let named_expr = {name; annotated_expression=rhs}
+          in return (Declaration_constant named_expr)
+      | _ -> let%bind case = simpl_cases [(pattern, rhs)]
+            in return (Declaration_constant (E_matching (rhs, case)))
 
+(*
   | ConstDecl x ->
       let simpl_const_decl = fun {name;const_type;init} ->
         let%bind expression = simpl_expression init in
@@ -400,7 +433,7 @@ and simpl_declaration : Raw.declaration -> declaration Location.wrap result = fu
         ok @@ Declaration_constant x' in
       bind_map_location (aux simpl_fun_declaration) (Location.lift_region x)
   | LambdaDecl (ProcDecl _) -> simple_fail "no proc declaration yet"
-
+*)
 
 and simpl_statement : Raw.statement -> instruction result = fun s ->
   match s with

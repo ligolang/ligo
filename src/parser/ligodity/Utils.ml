@@ -141,7 +141,7 @@ end
 
 let gen_sym =
   let counter = ref 0 in
-  fun () -> incr counter; "v" ^ string_of_int !counter
+  fun () -> incr counter; "#" ^ string_of_int !counter
 
 (* General tracing function *)
 
