@@ -49,7 +49,7 @@ local-repo-job:
 remote-repo-job:
   script:
     # Add repository
-    - opam repository add ligo-repository https://gitlab.com/gabriel.alfour/ligo-opam-repository.git
+    - opam repository add ligo-repository https://gitlab.com/ligolang/ligo-opam-repository.git
     - eval $(opam config env)
     - opam install -y ligo
     # Used in the IDE

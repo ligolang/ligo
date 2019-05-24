@@ -5,7 +5,7 @@ opam init
 eval $(opam env)
 opam switch create $switch ocaml-base-compiler.4.06.1
 eval $(opam env --switch=$switch --set-switch)
-opam repository add new-tezos https://gitlab.com/gabriel.alfour/new-tezos-opam-repository.git
+opam repository add new-tezos https://gitlab.com/ligolang/new-tezos-opam-repository.git
 
 # si une build a déjà été tentée, il vaut mieux git add tout ce qui est utile et git clean -dfx pour supprimer tout le reste (dune 1.7 crée des fichiers non compatibles avec dune 1.6)
 opam install -y ocplib-endian alcotest

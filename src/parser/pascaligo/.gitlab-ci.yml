@@ -8,7 +8,7 @@ before_script:
   - echo "$PATH"
   - printf '' | opam init
   - eval $(opam config env)
-  - opam repository add tezos-opam-repository https://gitlab.com/gabriel.alfour/tezos-opam-repository.git
+  - opam repository add tezos-opam-repository https://gitlab.com/ligolang/tezos-opam-repository.git
   - eval $(opam config env)
   - opam --version
   - printf '' | ocaml

@@ -1,12 +1,12 @@
 [submodule "vendors/ligo-opam-repository"]
 	path = vendors/ligo-opam-repository
-	url = https://gitlab.com/gabriel.alfour/ligo-opam-repository.git
-  pushurl = git@gitlab.com:gabriel.alfour/ligo-opam-repository.git
+	url = https://gitlab.com/ligolang/ligo-opam-repository.git
+  pushurl = git@gitlab.com:ligolang/ligo-opam-repository.git
 [submodule "vendors/ligo-utils"]
 	path = vendors/ligo-utils
-	url = https://gitlab.com/gabriel.alfour/ligo-utils.git
-  pushurl = git@gitlab.com:gabriel.alfour/ligo-utils.git
+	url = https://gitlab.com/ligolang/ligo-utils.git
+  pushurl = git@gitlab.com:ligolang/ligo-utils.git
 [submodule "vendors/tezos-modded"]
 	path = vendors/tezos-modded
-	url = https://gitlab.com/gabriel.alfour/tezos-modded.git
-  pushurl = git@gitlab.com:gabriel.alfour/tezos-modded.git
+	url = https://gitlab.com/ligolang/tezos-modded.git
+  pushurl = git@gitlab.com:ligolang/tezos-modded.git
