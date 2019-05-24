@@ -60,13 +60,12 @@ class HomeSplash extends React.Component {
 
     return (
       <SplashContainer>
-        <Logo img_src={`${baseUrl}img/undraw_monitor.svg`} />
+        {/* <Logo img_src={`${baseUrl}img/undraw_monitor.svg`} /> */}
         <div className="inner">
           <ProjectTitle siteConfig={siteConfig} />
           <PromoSection>
-            <Button href="#try">Try It Out</Button>
-            <Button href={docUrl('doc1.html')}>Example Link</Button>
-            <Button href={docUrl('doc2.html')}>Example Link 2</Button>
+            <Button href={docUrl('setup-installation.html')}>Getting started</Button>
+            <Button href={docUrl('language-basics-variables.html')}>Language reference</Button>
           </PromoSection>
         </div>
       </SplashContainer>
@@ -149,19 +148,58 @@ class Index extends React.Component {
       <Block layout="fourColumn">
         {[
           {
-            content: 'This is the content of my feature',
-            image: `${baseUrl}img/undraw_react.svg`,
+            content: 'Write in PascaLIGO (pascal-like syntax) or CameLIGO (caml-like syntax). If you know OCaml, you can also add your own syntax.',
+            image: ``,
             imageAlign: 'top',
-            title: 'Feature One',
+            title: 'Syntax Agnostic',
           },
           {
-            content: 'The content of my second feature',
-            image: `${baseUrl}img/undraw_operating_system.svg`,
+            content: 'Write types, then code, and benefit from the safety coming from type systems.',
+            image: ``,
             imageAlign: 'top',
-            title: 'Feature Two',
+            title: 'Strong Type System',
           },
+          {
+            content: 'With Granary, you can use LIGO as a lib from NodeJS.',
+            image: ``,
+            imageAlign: 'top',
+            title: 'Easy Integration',
+          }
         ]}
       </Block>
+    );
+
+    const Roadmap = () => (
+      <div className="roadmap">
+        <Block background="light" >
+          {[
+            {
+              content: 
+                "<h4>June 2019</h4>" +
+                "<em><ul>" + 
+                "<li>First public release</li>" +
+                "<li>PascaLIGO and CameLIGO syntaxes</li>" +
+                "<li>Docs and Tutorials</li>" +
+                "<li>Integration testing in ReasonML/JS with Granary</li>" +
+                "</ul></em>" +
+                "<h4>July 2019</h4>" +
+                "<em><ul>" + 
+                "<li>Try LIGO online editor</li>" +
+                "<li>Unit testing toolkit</li>" +
+                "<li>ReasonLIGO syntax support</li>" +
+                "<li>Repository with best practices & patterns for LIGO</li>" +
+                "</ul></em>" +
+                "<h4>August 2019</h4>" +
+                "<em>" +
+                "Long term plans will be announced soon" +
+                "</em>",
+              image: ``,
+              imageAlign: 'right',
+              title: 'Roadmap',
+            },
+          ]}
+        </Block>
+      </div>
     );
 
     const Showcase = () => {
@@ -184,11 +222,11 @@ class Index extends React.Component {
           <h2>Who is Using This?</h2>
           <p>This project is used by all these people</p>
           <div className="logos">{showcase}</div>
-          <div className="more-users">
+          {/* <div className="more-users">
             <a className="button" href={pageUrl('users.html')}>
               More {siteConfig.title} Users
             </a>
-          </div>
+          </div> */}
         </div>
       );
     };
@@ -198,11 +236,12 @@ class Index extends React.Component {
         <HomeSplash siteConfig={siteConfig} language={language} />
         <div className="mainContainer">
           <Features />
-          <FeatureCallout />
-          <LearnHow />
-          <TryOut />
-          <Description />
-          <Showcase />
+          <Roadmap />
+          {/* <FeatureCallout /> */}
+          {/* {/* <LearnHow /> */}
+          {/* <TryOut /> */}
+          {/* <Description /> */}
+          {/* <Showcase /> */}
         </div>
       </div>
     );

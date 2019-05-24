@@ -14,3 +14,16 @@
 
 @media only screen and (min-width: 1500px) {
 }
+
+ul {
+    max-width: 350px;
+    margin: 0 auto;
+    text-align: left;
+}
+
+.projectTitle small {
+    max-width: 500px;
+    text-align: center;
+    margin: 0 auto;
+    margin-top: 0.7em;
+}

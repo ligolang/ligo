@@ -24,7 +24,7 @@ class Footer extends React.Component {
   render() {
     return (
       <footer className="nav-footer" id="footer">
-        <section className="sitemap">
+        {/* <section className="sitemap">
           <a href={this.props.config.baseUrl} className="nav-home">
             {this.props.config.footerIcon && (
               <img
@@ -81,7 +81,7 @@ class Footer extends React.Component {
               Star
             </a>
           </div>
-        </section>
+        </section> */}
 
         <a
           href="https://opensource.facebook.com/"
