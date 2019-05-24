@@ -24,7 +24,7 @@ const siteConfig = {
   title: 'Ligo', // Title for your website.
   tagline: 'Smart Contract Language',
   url: 'https://your-docusaurus-test-site.com', // Your website URL
-  baseUrl: '/ligo-documentation', // Base URL for your project */
+  baseUrl: '/ligo-documentation/', // Base URL for your project */
   // For github.io type URLs, you would set the url and baseUrl like:
   //   url: 'https://facebook.github.io',
   //   baseUrl: '/test-site/',
