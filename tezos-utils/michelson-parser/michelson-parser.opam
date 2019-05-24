@@ -1,10 +1,10 @@
 name: "michelson-parser"
 opam-version: "2.0"
-maintainer: "gabriel.alfour@gmail.com"
+maintainer: "ligolang@gmail.com"
 authors: [ "Galfour" ]
-homepage: "https://gitlab.com/gabriel.alfour/tezos"
-bug-reports: "https://gitlab.com/gabriel.alfour/tezos/issues"
-dev-repo: "git+https://gitlab.com/gabriel.alfour/tezos.git"
+homepage: "https://gitlab.com/ligolang/tezos"
+bug-reports: "https://gitlab.com/ligolang/tezos/issues"
+dev-repo: "git+https://gitlab.com/ligolang/tezos.git"
 license: "MIT"
 depends: [
   "ocamlfind" { build }
