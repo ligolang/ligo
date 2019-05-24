@@ -2,11 +2,11 @@ opam-version: "2.0"
 name: "tezos-utils"
 version: "dev"
 synopsis: "LIGO Tezos specific Utilities, to be used by other libraries"
-maintainer: "Galfour <gabriel.alfour@gmail.com>"
-authors: "Galfour <gabriel.alfour@gmail.com>"
+maintainer: "Galfour <ligolang@gmail.com>"
+authors: "Galfour <ligolang@gmail.com>"
 license: "MIT"
-homepage: "https://gitlab.com/gabriel.alfour/ligo-utils"
-bug-reports: "https://gitlab.com/gabriel.alfour/ligo-utils/issues"
+homepage: "https://gitlab.com/ligolang/ligo-utils"
+bug-reports: "https://gitlab.com/ligolang/ligo-utils/issues"
 depends: [
   "dune"
   "base"
@@ -51,5 +51,5 @@ build: [
   [ "mv" "tezos-utils/tezos-utils.install" "." ]
 ]
 url {
-  src: "https://gitlab.com/gabriel.alfour/ligo-utils/-/archive/master/ligo-utils.tar.gz"
+  src: "https://gitlab.com/ligolang/ligo-utils/-/archive/master/ligo-utils.tar.gz"
 }

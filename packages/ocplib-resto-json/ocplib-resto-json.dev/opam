@@ -24,5 +24,5 @@ depends: [
   "ocplib-json-typed-bson" { >= "0.6" }
 ]
 url {
-  src: "https://gitlab.com/gabriel.alfour/tezos-modded/-/archive/master/tezos-modded.tar.gz"
+  src: "https://gitlab.com/ligolang/tezos-modded/-/archive/master/tezos-modded.tar.gz"
 }
