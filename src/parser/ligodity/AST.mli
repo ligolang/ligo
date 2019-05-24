@@ -243,24 +243,24 @@ and closing =
 | RBracket of rbracket
 
 and list_expr =
-  Cons   of cat bin_op reg                                   (* e1 :: e3      *)
-| List   of expr injection reg                               (* [e1; e2; ...] *)
-(*| Append of (expr * append * expr) reg *)               (* e1  @ e2      *)
+  Cons   of cat bin_op reg                                 (* e1 :: e3      *)
+| List   of expr injection reg                             (* [e1; e2; ...] *)
+(*| Append of (expr * append * expr) reg *)                (* e1  @ e2      *)
 
 and string_expr =
   Cat    of cat bin_op reg                                 (* e1  ^ e2      *)
 | String of string reg                                     (* "foo"         *)
 
 and arith_expr =
-  Add  of plus bin_op reg                                      (* e1  + e2   *)
-| Sub  of minus bin_op reg                                     (* e1  - e2   *)
-| Mult of times bin_op reg                                     (* e1  *  e2  *)
-| Div  of slash bin_op reg                                     (* e1  /  e2  *)
-| Mod  of kwd_mod bin_op reg                                   (* e1 mod e2  *)
-| Neg  of minus un_op reg                                      (* -e         *)
-| Int  of (string * Z.t) reg                                   (* 12345      *)
-| Nat  of (string * Z.t) reg                                   (* 3p         *)
-| Mtz  of (string * Z.t) reg                                   (* 1.00tz 3tz *)
+  Add  of plus bin_op reg                                     (* e1  + e2   *)
+| Sub  of minus bin_op reg                                    (* e1  - e2   *)
+| Mult of times bin_op reg                                    (* e1  *  e2  *)
+| Div  of slash bin_op reg                                    (* e1  /  e2  *)
+| Mod  of kwd_mod bin_op reg                                  (* e1 mod e2  *)
+| Neg  of minus un_op reg                                     (* -e         *)
+| Int  of (string * Z.t) reg                                  (* 12345      *)
+| Nat  of (string * Z.t) reg                                  (* 3p         *)
+| Mtz  of (string * Z.t) reg                                  (* 1.00tz 3tz *)
 
 and logic_expr =
   BoolExpr of bool_expr
@@ -329,16 +329,9 @@ and 'a case_clause = {
 
 and let_in = {
   kwd_let : kwd_let;
-  binding : let_in_binding;
+  binding : let_binding;
   kwd_in  : kwd_in;
   body    : expr
-}
-
-and let_in_binding = {
-  pattern  : pattern;
-  lhs_type : (colon * type_expr) option;
-  eq       : equal;
-  let_rhs  : expr
 }
 
 and fun_expr = {

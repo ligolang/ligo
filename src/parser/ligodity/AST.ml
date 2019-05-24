@@ -320,16 +320,9 @@ and 'a case_clause = {
 
 and let_in = {
   kwd_let : kwd_let;
-  binding : let_in_binding;
+  binding : let_binding;
   kwd_in  : kwd_in;
   body    : expr
-}
-
-and let_in_binding = {
-  pattern  : pattern;
-  lhs_type : (colon * type_expr) option;
-  eq       : equal;
-  let_rhs  : expr
 }
 
 and fun_expr = {
@@ -559,16 +552,6 @@ and print_let_binding {variable; lhs_type; eq; let_rhs} =
        print_type_expr type_expr);
   (print_token eq "="; print_expr let_rhs)
 
-and print_let_in_binding (bind: let_in_binding) =
-  let {pattern; lhs_type; eq; let_rhs} : let_in_binding = bind in
-  print_pattern pattern;
-  (match lhs_type with
-     None -> ()
-   | Some (colon, type_expr) ->
-       print_token colon ":";
-       print_type_expr type_expr);
-  (print_token eq "="; print_expr let_rhs)
-
 and print_pattern = function
   PTuple {value=patterns;_} -> print_csv print_pattern patterns
 | PList p -> print_list_pattern p
@@ -748,7 +731,7 @@ and print_case_clause {value; _} =
 and print_let_in (bind: let_in) =
   let {kwd_let; binding; kwd_in; body} = bind in
   print_token kwd_let "let";
-  print_let_in_binding binding;
+  print_let_binding binding;
   print_token kwd_in "in";
   print_expr body
 

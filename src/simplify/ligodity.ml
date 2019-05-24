@@ -103,16 +103,13 @@ let rec simpl_expression :
   match t with
   | Raw.ELetIn e -> (
       let Raw.{binding; body; _} = e.value in
-      let Raw.{pattern; lhs_type; let_rhs; _} = binding in
+      let Raw.{variable; lhs_type; let_rhs; _} = binding in
       let%bind type_annotation = bind_map_option
           (fun (_,type_expr) -> simpl_type_expression type_expr)
           lhs_type in
       let%bind rhs = simpl_expression ?te_annot:type_annotation let_rhs in
       let%bind body = simpl_expression body in
-      match pattern with
-        Raw.PVar v -> return (mk_let_in (v.value , None) rhs body)
-      | _ -> let%bind case = simpl_cases [(pattern, body)]
-            in return (E_matching (rhs, case))
+      return (mk_let_in (variable.value , None) rhs body)
     )
   | Raw.EAnnot a -> (
       let (expr , type_expr) = a.value in
@@ -287,23 +284,6 @@ and simpl_declaration : Raw.declaration -> declaration Location.wrap result = fu
       let name = variable.value in
       ok @@ loc x @@ (Declaration_constant (name , type_annotation , rhs))
     )
-
-(*
-  | ConstDecl x ->
-      let simpl_const_decl = fun {name;const_type;init} ->
-        let%bind expression = simpl_expression init in
-        let%bind t = simpl_type_expression const_type in
-        let type_annotation = Some t in
-        ok @@ Declaration_constant {name=name.value;expression={expression with type_annotation}}
-      in
-      bind_map_location simpl_const_decl (Location.lift_region x)
-  | LambdaDecl (FunDecl x) ->
-      let aux f x =
-        let%bind x' = f x in
-        ok @@ Declaration_constant x' in
-      bind_map_location (aux simpl_fun_declaration) (Location.lift_region x)
-  | LambdaDecl (ProcDecl _) -> simple_fail "no proc declaration yet"
-*)
 
 and simpl_cases : type a . (Raw.pattern * a) list -> a matching result = fun t ->
   let open Raw in
