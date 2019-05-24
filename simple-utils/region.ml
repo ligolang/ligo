@@ -74,7 +74,7 @@ let make ~(start: Pos.t) ~(stop: Pos.t) =
       (* Conversions to strings *)
 
       method to_string ?(file=true) ?(offsets=true) mode =
-        let horizontal = if offsets then "character"  else "column"
+        let horizontal = if offsets then "character" else "column"
         and start_offset =
           if offsets then start#offset mode else start#column mode
         and stop_offset =
