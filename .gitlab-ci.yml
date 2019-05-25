@@ -8,8 +8,7 @@ pages:
   script:
     - npm run build
     - cd ..
-    - mkdir public
-    - mv website/build/ligo/* public
+    - cp -r website/build/ligo public
   artifacts:
     paths:
       - public
