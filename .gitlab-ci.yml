@@ -79,23 +79,22 @@ remote-repo-job:
     #- opam install -y ocp-indent
     #- opam user-setup install
 
-# Run a docker build on the ligo image, to see if the current
-# commit does not break it
-# build-current-docker-image:
-#   stage: build
-#   <<: *docker
-#   <<: *docker_build
-#   except:
-#     - master
+# Run a docker build without publishing to the registry
+build-current-docker-image:
+  stage: build
+  <<: *docker
+  <<: *docker_build
+  except:
+    - master
 
 # When a MR/PR is merged to master
 # take the previous build and publish it to Docker Hub
 build-and-publish-latest-docker-image:
   stage: deploy
   <<: *docker
-  <<: *docker_build
+  <<: *docker_build 
   after_script:
     - docker login -u $LIGO_REGISTRY_USER -p $LIGO_REGISTRY_PASSWORD
     - docker push $LIGO_REGISTRY_IMAGE:latest
-  # only:
-  #   - master
+  only:
+    - master
