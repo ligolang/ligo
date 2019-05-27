@@ -94,8 +94,6 @@ build-and-publish-latest-docker-image:
   stage: deploy
   <<: *docker
   <<: *docker_build
-  dependencies:
-    - build-current-docker-image
   after_script:
     - docker login -u $LIGO_REGISTRY_USER -p $LIGO_REGISTRY_PASSWORD
     - docker push $LIGO_REGISTRY_IMAGE:latest
