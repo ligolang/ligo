@@ -1,6 +1,16 @@
 variables:
   GIT_SUBMODULE_STRATEGY: recursive
 
+stages:
+  - test
+  - build
+  - deploy
+
+.docker: &docker
+  image: docker:1.11
+  services:
+    - docker:dind
+    
 .before_script: &before_script
   before_script:
     # Install dependencies
@@ -28,6 +38,7 @@ variables:
 
 local-dune-job:
   <<: *before_script
+  stage: test
   script:
     - vendors/opam-repository-tools/rewrite-local-opam-repository.sh
     - opam repository add localrepo "file://$PWD/vendors/ligo-opam-repository-local-generated/"
@@ -42,6 +53,7 @@ local-dune-job:
 
 local-repo-job:
   <<: *before_script
+  stage: test
   script:
     - vendors/opam-repository-tools/rewrite-local-opam-repository.sh
     - opam repository add localrepo "file://$PWD/vendors/ligo-opam-repository-local-generated/"
@@ -50,6 +62,7 @@ local-repo-job:
 
 remote-repo-job:
   <<: *before_script
+  stage: test
   script:
     # Add repository
     - opam repository add ligo-repository https://gitlab.com/ligolang/ligo.git
@@ -61,9 +74,24 @@ remote-repo-job:
     #- opam install -y ocp-indent
     #- opam user-setup install
 
-build-docker-image:
-  image: docker:1.11
-  services:
-    - docker:dind
+# Run a docker build on the ligo image, to see if the current
+# commit does not break it
+build-current-docker-image:
+  stage: build
+  <<: *docker
   script:
-    - docker build -t marigold/ligo ./docker
+    - docker build -t $CI_REGISTRY_IMAGE -f ./docker/Dockerfile .
+
+# When a MR/PR is merged to master
+# take the previous build and publish it to Docker Hub
+build-and-publish-latest-docker-image:
+  stage: deploy
+  <<: *docker
+  dependencies:
+    - build-current-docker-image
+  before_script:
+    - docker login -u $CI_REGISTRY_USER -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
+  script:
+    - docker push $CI_REGISTRY_IMAGE:latest
+  only:
+    - master
