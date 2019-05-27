@@ -1,9 +1,11 @@
+# TODO: remove this as submodules aren't used anymore.
 variables:
   GIT_SUBMODULE_STRATEGY: recursive
 
 stages:
-  - build
-  - build_and_deploy
+  - build_docker
+  - build_and_deploy_docker
+  - build_and_deploy_website
   - test
 
 
@@ -81,7 +83,7 @@ remote-repo-job:
 
 # Run a docker build without publishing to the registry
 build-current-docker-image:
-  stage: build
+  stage: build_docker
   <<: *docker
   <<: *docker_build
   except:
@@ -90,11 +92,27 @@ build-current-docker-image:
 # When a MR/PR is merged to master
 # take the previous build and publish it to Docker Hub
 build-and-publish-latest-docker-image:
-  stage: build_and_deploy
+  stage: build_and_deploy_docker
   <<: *docker
   <<: *docker_build 
   after_script:
     - docker login -u $LIGO_REGISTRY_USER -p $LIGO_REGISTRY_PASSWORD
     - docker push $LIGO_REGISTRY_IMAGE:latest
+
+pages:
+  stage: build_and_deploy_website
+  image: node:8
+  before_script:
+    - cd gitlab-pages/website
+    - npm install
+  script:
+    - npm run build
+    - pwd
+    - cd ../..
+    - pwd
+    - cp -r gitlab-pages/website/build/ligo public
+  artifacts:
+    paths:
+      - public
   only:
     - master
