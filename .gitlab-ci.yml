@@ -98,6 +98,9 @@ build-and-publish-latest-docker-image:
   after_script:
     - docker login -u $LIGO_REGISTRY_USER -p $LIGO_REGISTRY_PASSWORD
     - docker push $LIGO_REGISTRY_IMAGE:latest
+  only:
+    - master
+
 
 pages:
   stage: build_and_deploy_website
