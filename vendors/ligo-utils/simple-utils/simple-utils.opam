@@ -1,0 +1,50 @@
+opam-version: "2.0"
+name: "simple-utils"
+version: "dev"
+synopsis: "LIGO Utilities, to be used by other libraries"
+maintainer: "Galfour <ligolang@gmail.com>"
+authors: "Galfour <ligolang@gmail.com>"
+license: "MIT"
+homepage: "https://gitlab.com/ligolang/ligo-utils"
+bug-reports: "https://gitlab.com/ligolang/ligo-utils/issues"
+depends: [
+  "dune"
+  "base"
+  "base"
+  "bigstring"
+  "calendar"
+  "cohttp-lwt-unix"
+  "cstruct"
+  "ezjsonm"
+  "hex"
+  "hidapi"
+  "ipaddr"
+  "irmin"
+  "js_of_ocaml"
+  "lwt"
+  "lwt_log"
+  "mtime"
+  "ocplib-endian"
+  "ocp-ocamlres"
+  "re"
+  "rresult"
+  "stdio"
+  "uri"
+  "uutf"
+  "zarith"
+  "ocplib-json-typed"
+  "ocplib-json-typed-bson"
+  "tezos-crypto"
+  "tezos-stdlib-unix"
+  "tezos-data-encoding"
+  "tezos-protocol-environment"
+  "tezos-protocol-alpha"
+  "michelson-parser"
+  # from ppx_let:
+  "ocaml" {>= "4.04.2" & < "4.08.0"}
+  "dune"   {build & >= "1.5.1"}
+  "ppxlib" {>= "0.5.0"}
+]
+build: [
+  ["dune" "build" "-p" name]
+]
