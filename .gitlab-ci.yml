@@ -3,7 +3,7 @@ variables:
 
 stages:
   - build
-  - deploy
+  - build_and_deploy
   - test
 
 
@@ -90,7 +90,7 @@ build-current-docker-image:
 # When a MR/PR is merged to master
 # take the previous build and publish it to Docker Hub
 build-and-publish-latest-docker-image:
-  stage: deploy
+  stage: build_and_deploy
   <<: *docker
   <<: *docker_build 
   after_script:
