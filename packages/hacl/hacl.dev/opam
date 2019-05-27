@@ -20,9 +20,9 @@ depends: [
 ]
 build: [
   [ "dune" "build" "-j" jobs "-p" name "@install" ]
-  [ "mv" "vendors/ocaml-hacl/hacl.install" "." ]
+  [ "mv" "vendors/tezos-modded/vendors/ocaml-hacl/hacl.install" "." ]
 ]
 run-test: [ "dune" "runtest" "-p" name "-j" jobs ]
 url {
-  src: "https://gitlab.com/ligolang/tezos-modded/-/archive/master/tezos-modded.tar.gz"
+  src: "https:https://gitlab.com/ligolang/ligo/-/archive/master/ligo.tar.gz"
 }

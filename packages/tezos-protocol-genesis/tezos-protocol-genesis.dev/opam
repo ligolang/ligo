@@ -17,11 +17,11 @@ build: [
       "%{tezos-protocol-compiler:lib}%/dune_protocol.template"
       "dune" "genesis" ]
   [ "dune" "build" "-p" name "-j" jobs ]
-  [ "mv" "src/proto_genesis/lib_protocol/tezos-protocol-genesis.install" "." ]
+  [ "mv" "vendors/tezos-modded/src/proto_genesis/lib_protocol/tezos-protocol-genesis.install" "." ]
 ]
 run-test: [
   [ "dune" "runtest" "-p" name "-j" jobs ]
 ]
 url {
-  src: "https://gitlab.com/ligolang/tezos-modded/-/archive/master/tezos-modded.tar.gz"
+  src: "https:https://gitlab.com/ligolang/ligo/-/archive/master/ligo.tar.gz"
 }

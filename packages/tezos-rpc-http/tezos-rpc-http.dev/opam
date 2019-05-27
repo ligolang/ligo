@@ -16,11 +16,11 @@ depends: [
 ]
 build: [
   [ "dune" "build" "-p" name "-j" jobs ]
-  [ "mv" "src/lib_rpc_http/tezos-rpc-http.install" "." ]
+  [ "mv" "vendors/tezos-modded/src/lib_rpc_http/tezos-rpc-http.install" "." ]
 ]
 run-test: [
   [ "dune" "runtest" "-p" name "-j" jobs ]
 ]
 url {
-  src: "https://gitlab.com/ligolang/tezos-modded/-/archive/master/tezos-modded.tar.gz"
+  src: "https:https://gitlab.com/ligolang/ligo/-/archive/master/ligo.tar.gz"
 }

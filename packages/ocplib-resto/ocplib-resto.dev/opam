@@ -11,7 +11,7 @@ synopsis: "A minimal OCaml library for type-safe HTTP/JSON RPCs"
 
 build: [
   [ "dune" "build" "-p" name "-j" jobs ]
-  [ "mv" "vendors/ocplib-resto/lib_resto/ocplib-resto.install" "." ]
+  [ "mv" "vendors/tezos-modded/vendors/ocplib-resto/lib_resto/ocplib-resto.install" "." ]
 ]
 run-test: [
   [ "dune" "runtest" "-p" name "-j" jobs ]
@@ -23,5 +23,5 @@ depends: [
   "uri"
 ]
 url {
-  src: "https://gitlab.com/ligolang/tezos-modded/-/archive/master/tezos-modded.tar.gz"
+  src: "https:https://gitlab.com/ligolang/ligo/-/archive/master/ligo.tar.gz"
 }

@@ -15,11 +15,11 @@ depends: [
 ]
 build: [
   [ "dune" "build" "-p" name "-j" jobs ]
-  [ "mv" "src/lib_clic/tezos-clic.install" "." ]
+  [ "mv" "vendors/tezos-modded/src/lib_clic/tezos-clic.install" "." ]
 ]
 run-test: [
   [ "dune" "runtest" "-p" name "-j" jobs ]
 ]
 url {
-  src: "https://gitlab.com/ligolang/tezos-modded/-/archive/master/tezos-modded.tar.gz"
+  src: "https:https://gitlab.com/ligolang/ligo/-/archive/master/ligo.tar.gz"
 }

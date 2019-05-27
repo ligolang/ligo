@@ -19,11 +19,11 @@ depends: [
 ]
 build: [
   [ "dune" "build" "-p" name "-j" jobs ]
-  [ "mv" "src/proto_genesis/lib_client/tezos-client-genesis.install" "." ]
+  [ "mv" "vendors/tezos-modded/src/proto_genesis/lib_client/tezos-client-genesis.install" "." ]
 ]
 run-test: [
   [ "dune" "runtest" "-p" name "-j" jobs ]
 ]
 url {
-  src: "https://gitlab.com/ligolang/tezos-modded/-/archive/master/tezos-modded.tar.gz"
+  src: "https:https://gitlab.com/ligolang/ligo/-/archive/master/ligo.tar.gz"
 }

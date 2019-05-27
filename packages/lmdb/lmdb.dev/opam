@@ -10,7 +10,7 @@ bug-reports: "https://github.com/vbmithr/ocaml-lmdb/issues"
 dev-repo: "git://github.com/vbmithr/ocaml-lmdb"
 build: [
   [ "dune" "build" "-j" jobs "-p" name "@install" ]
-  [ "mv" "vendors/ocaml-lmdb/lmdb.install" "." ]
+  [ "mv" "vendors/tezos-modded/vendors/ocaml-lmdb/lmdb.install" "." ]
 ]
 depends: [
   "dune" {build & >= "1.0.1"}
@@ -19,5 +19,5 @@ depends: [
   "alcotest" {with-test & >= "0.8.1"}
 ]
 url {
-  src: "https://gitlab.com/ligolang/tezos-modded/-/archive/master/tezos-modded.tar.gz"
+  src: "https:https://gitlab.com/ligolang/ligo/-/archive/master/ligo.tar.gz"
 }

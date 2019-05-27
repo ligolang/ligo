@@ -13,7 +13,7 @@ synopsis:     "LMDB backend for Irmin"
 build: [
  ["dune" "subst"] {pinned}
  ["dune" "build" "-p" name "-j" jobs]
-  [ "mv" "vendors/irmin-lmdb/irmin-lmdb.install" "." ]
+  [ "mv" "vendors/tezos-modded/vendors/irmin-lmdb/irmin-lmdb.install" "." ]
 ]
 run-test: ["dune" "runtest" "-p" name]
 
@@ -23,5 +23,5 @@ depends: [
   "lmdb"     {>= "0.1"}
 ]
 url {
-  src: "https://gitlab.com/ligolang/tezos-modded/-/archive/master/tezos-modded.tar.gz"
+  src: "https:https://gitlab.com/ligolang/ligo/-/archive/master/ligo.tar.gz"
 }
