@@ -5,8 +5,8 @@ FROM ocaml/opam2:4.06
 USER root
 
 # Setup a custom opam repository where ligo is published
-RUN git clone https://gitlab.com/gabriel.alfour/ligo-opam-repository
-RUN opam repo add ligo-opam-repository ./ligo-opam-repository
+RUN git clone https://gitlab.com/ligolang/ligo.git
+RUN opam repo add ligo-opam-repository ./ligo/vendors/ligo-opam-repository-local-generated/
 RUN opam update ligo-opam-repository
 
 # Install required native dependencies
