@@ -1,32 +1,33 @@
 variables:
   GIT_SUBMODULE_STRATEGY: recursive
 
-before_script:
+.before_script: &before_script
+  before_script:
+    # Install dependencies
+    # rsync is needed by opam to sync a package installed from a local directory with the copy in ~/.opam
+    - apt-get update -qq
+    - apt-get -y -qq install rsync libhidapi-dev libcap-dev libev-dev bubblewrap
+    - wget https://github.com/ocaml/opam/releases/download/2.0.1/opam-2.0.1-x86_64-linux -O opam-2.0.1-x86_64-linux
+    - cp opam-2.0.1-x86_64-linux /usr/local/bin/opam
+    - chmod +x /usr/local/bin/opam
+    - export PATH="/usr/local/bin${PATH:+:}${PATH:-}"
 
-  # Install dependencies
-  # rsync is needed by opam to sync a package installed from a local directory with the copy in ~/.opam
-  - apt-get update -qq
-  - apt-get -y -qq install rsync libhidapi-dev libcap-dev libev-dev bubblewrap
-  - wget https://github.com/ocaml/opam/releases/download/2.0.1/opam-2.0.1-x86_64-linux -O opam-2.0.1-x86_64-linux
-  - cp opam-2.0.1-x86_64-linux /usr/local/bin/opam
-  - chmod +x /usr/local/bin/opam
-  - export PATH="/usr/local/bin${PATH:+:}${PATH:-}"
+    # Initialise opam
+    - printf '' | opam init --bare
+    - eval $(opam config env)
 
-  # Initialise opam
-  - printf '' | opam init --bare
-  - eval $(opam config env)
+    # Create switch
+    - printf '' | opam switch create toto ocaml-base-compiler.4.06.1
+    - eval $(opam config env)
 
-  # Create switch
-  - printf '' | opam switch create toto ocaml-base-compiler.4.06.1
-  - eval $(opam config env)
-
-  # Show versions and current switch
-  - echo "$PATH"
-  - opam --version
-  - printf '' | ocaml
-  - opam switch
+    # Show versions and current switch
+    - echo "$PATH"
+    - opam --version
+    - printf '' | ocaml
+    - opam switch
 
 local-dune-job:
+  <<: *before_script
   script:
     - vendors/ligo-opam-repository/rewrite-local-opam-repository.sh
     - opam repository add localrepo "file://$PWD/vendors/ligo-opam-repository-local/"
@@ -40,6 +41,7 @@ local-dune-job:
 #       - src/ligo/bin/cli.ml
 
 local-repo-job:
+  <<: *before_script
   script:
     - vendors/ligo-opam-repository/rewrite-local-opam-repository.sh
     - opam repository add localrepo "file://$PWD/vendors/ligo-opam-repository-local/"
@@ -47,6 +49,7 @@ local-repo-job:
     - opam install -y ligo
 
 remote-repo-job:
+  <<: *before_script
   script:
     # Add repository
     - opam repository add ligo-repository https://gitlab.com/ligolang/ligo-opam-repository.git
@@ -57,3 +60,10 @@ remote-repo-job:
     #- opam install -y merlin
     #- opam install -y ocp-indent
     #- opam user-setup install
+
+build-docker-image:
+  image: docker:1.11
+  services:
+    - docker:dind
+  script:
+    - docker build -t marigold/ligo ./docker
