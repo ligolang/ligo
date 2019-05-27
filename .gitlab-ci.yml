@@ -81,7 +81,7 @@ build-current-docker-image:
   stage: build
   <<: *docker
   script:
-    - docker build -t $CI_REGISTRY_IMAGE -f ./docker/Dockerfile .
+    - docker build -t $CI_REGISTRY_IMAGE:latest -f ./docker/Dockerfile .
 
 # When a MR/PR is merged to master
 # take the previous build and publish it to Docker Hub
