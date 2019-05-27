@@ -6,8 +6,7 @@ set -euET -o pipefail
 echo "Installing LIGO"
 
 # Install the ligo.sh from master
-# wget https://gitlab.com/ligolang/ligo/blob/master/scripts/ligo.sh
-wget localhost:8080/scripts/ligo.sh
+wget https://gitlab.com/ligolang/ligo/blob/master/scripts/ligo.sh
 
 # Copy the exucutable to the appropriate directory
 sudo cp ligo.sh /usr/local/bin/ligo
