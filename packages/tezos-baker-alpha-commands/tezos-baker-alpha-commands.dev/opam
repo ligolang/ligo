@@ -25,5 +25,5 @@ build: [
   [ "mv" "vendors/tezos-modded/src/proto_alpha/lib_delegate/tezos-baker-alpha-commands.install" "." ]
 ]
 url {
-  src: "https:https://gitlab.com/ligolang/ligo/-/archive/master/ligo.tar.gz"
+  src: "https://gitlab.com/ligolang/ligo/-/archive/master/ligo.tar.gz"
 }

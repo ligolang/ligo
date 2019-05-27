@@ -21,5 +21,5 @@ build: [
   [ "mv" "vendors/tezos-modded/src/proto_alpha/bin_endorser/tezos-endorser-alpha.install" "." ]
 ]
 url {
-  src: "https:https://gitlab.com/ligolang/ligo/-/archive/master/ligo.tar.gz"
+  src: "https://gitlab.com/ligolang/ligo/-/archive/master/ligo.tar.gz"
 }

@@ -30,5 +30,5 @@ run-test: [
   [ "dune" "runtest" "-p" name "-j" jobs ]
 ]
 url {
-  src: "https:https://gitlab.com/ligolang/ligo/-/archive/master/ligo.tar.gz"
+  src: "https://gitlab.com/ligolang/ligo/-/archive/master/ligo.tar.gz"
 }
