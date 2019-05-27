@@ -81,11 +81,11 @@ build-current-docker-image:
   stage: build
   <<: *docker
   script:
-    - docker build -t $CI_REGISTRY_IMAGE:latest -f ./docker/Dockerfile .
-    - docker save $CI_REGISTRY_IMAGE:latest > image
+    - docker build -t $LIGO_REGISTRY_IMAGE:latest -f ./docker/Dockerfile .
+    - docker save $LIGO_REGISTRY_IMAGE:latest > image
   artifacts:
     paths:
-      - $CI_REGISTRY_IMAGE:latest
+      - image
 
 # When a MR/PR is merged to master
 # take the previous build and publish it to Docker Hub
@@ -95,7 +95,7 @@ build-and-publish-latest-docker-image:
   dependencies:
     - build-current-docker-image
   before_script:
-    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD
+    - docker login -u $LIGO_REGISTRY_USER -p $LIGO_REGISTRY_PASSWORD
   script:
     - docker load -i image
     - docker push $CI_REGISTRY_IMAGE:latest
