@@ -11,6 +11,10 @@ stages:
   image: docker:1.11
   services:
     - docker:dind
+
+.docker_build: &docker_build
+  script:
+    - docker build -t $LIGO_REGISTRY_IMAGE:latest -f ./docker/Dockerfile .
     
 .before_script: &before_script
   before_script:
@@ -77,27 +81,23 @@ remote-repo-job:
 
 # Run a docker build on the ligo image, to see if the current
 # commit does not break it
-build-current-docker-image:
-  stage: build
-  <<: *docker
-  script:
-    - docker build -t $LIGO_REGISTRY_IMAGE:latest -f ./docker/Dockerfile .
-    - docker save $LIGO_REGISTRY_IMAGE:latest > image
-  artifacts:
-    paths:
-      - image
+# build-current-docker-image:
+#   stage: build
+#   <<: *docker
+#   <<: *docker_build
+#   except:
+#     - master
 
 # When a MR/PR is merged to master
 # take the previous build and publish it to Docker Hub
 build-and-publish-latest-docker-image:
   stage: deploy
   <<: *docker
+  <<: *docker_build
   dependencies:
     - build-current-docker-image
-  before_script:
+  post_script:
     - docker login -u $LIGO_REGISTRY_USER -p $LIGO_REGISTRY_PASSWORD
-  script:
-    - docker load -i image
-    - docker push $CI_REGISTRY_IMAGE:latest
-  only:
-    - master
+    - docker push $LIGO_REGISTRY_IMAGE:latest
+  # only:
+  #   - master
