@@ -1,0 +1,18 @@
+opam-version: "2.0"
+name: "memory-proto-alpha"
+version: "1.0"
+synopsis: "Tezos Protocol Alpha in memory"
+maintainer: "Galfour <ligolang@gmail.com>"
+authors: "Galfour <ligolang@gmail.com>"
+license: "MIT"
+homepage: "https://gitlab.com/ligolang/tezos"
+bug-reports: "https://gitlab.com/ligolang/tezos/issues"
+depends: [
+  "dune"
+  "tezos-protocol-environment"
+  "tezos-protocol-alpha"
+]
+build: [
+  ["dune" "build" "-p" name]
+]
+dev-repo: "git+https://gitlab.com/ligolang/tezos"
