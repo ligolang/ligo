@@ -20,7 +20,6 @@ RUN apt-get -y install \
     m4
 
 # Install ligo
-RUN git clone https://gitlab.com/gabriel.alfour/ligo
 RUN opam update
 
 RUN cd ligo/src && \
