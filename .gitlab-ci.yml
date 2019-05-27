@@ -82,7 +82,7 @@ build-current-docker-image:
   <<: *docker
   script:
     - docker build -t $CI_REGISTRY_IMAGE:latest -f ./docker/Dockerfile .
-    - docker save $CI_REGISTRY_IMAGE:latest > $CI_REGISTRY_IMAGE:latest
+    - docker save $CI_REGISTRY_IMAGE:latest > image
   artifacts:
     paths:
       - $CI_REGISTRY_IMAGE:latest
@@ -97,7 +97,7 @@ build-and-publish-latest-docker-image:
   before_script:
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD
   script:
-    - docker load -i $CI_REGISTRY_IMAGE:latest
+    - docker load -i image
     - docker push $CI_REGISTRY_IMAGE:latest
   only:
     - master
