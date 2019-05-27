@@ -2,6 +2,22 @@
 variables:
   GIT_SUBMODULE_STRATEGY: recursive
 
+stages:
+  - build_docker
+  - build_and_deploy_docker
+  - build_and_deploy_website
+  - test
+
+
+.docker: &docker
+  image: docker:1.11
+  services:
+    - docker:dind
+
+.docker_build: &docker_build
+  script:
+    - docker build -t $LIGO_REGISTRY_IMAGE:latest -f ./docker/Dockerfile .
+    
 .before_script: &before_script
   before_script:
     # Install dependencies
@@ -29,6 +45,7 @@ variables:
 
 local-dune-job:
   <<: *before_script
+  stage: test
   script:
     - vendors/opam-repository-tools/rewrite-local-opam-repository.sh
     - opam repository add localrepo "file://$PWD/vendors/ligo-opam-repository-local-generated/"
@@ -43,6 +60,7 @@ local-dune-job:
 
 local-repo-job:
   <<: *before_script
+  stage: test
   script:
     - vendors/opam-repository-tools/rewrite-local-opam-repository.sh
     - opam repository add localrepo "file://$PWD/vendors/ligo-opam-repository-local-generated/"
@@ -51,6 +69,7 @@ local-repo-job:
 
 remote-repo-job:
   <<: *before_script
+  stage: test
   script:
     # Add repository
     - opam repository add ligo-repository https://gitlab.com/ligolang/ligo.git
@@ -62,14 +81,29 @@ remote-repo-job:
     #- opam install -y ocp-indent
     #- opam user-setup install
 
-build-docker-image:
-  image: docker:1.11
-  services:
-    - docker:dind
-  script:
-    - docker build -t marigold/ligo ./docker
+# Run a docker build without publishing to the registry
+build-current-docker-image:
+  stage: build_docker
+  <<: *docker
+  <<: *docker_build
+  except:
+    - master
+
+# When a MR/PR is merged to master
+# take the previous build and publish it to Docker Hub
+build-and-publish-latest-docker-image:
+  stage: build_and_deploy_docker
+  <<: *docker
+  <<: *docker_build 
+  after_script:
+    - docker login -u $LIGO_REGISTRY_USER -p $LIGO_REGISTRY_PASSWORD
+    - docker push $LIGO_REGISTRY_IMAGE:latest
+  only:
+    - master
+
 
 pages:
+  stage: build_and_deploy_website
   image: node:8
   before_script:
     - cd gitlab-pages/website

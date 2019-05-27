@@ -1,0 +1,1 @@
+cd src && opam install . --yes
