@@ -1,0 +1,21 @@
+name: "michelson-parser"
+opam-version: "2.0"
+version: "dev"
+maintainer: "ligolang@gmail.com"
+authors: [ "Galfour" ]
+homepage: "https://gitlab.com/ligolang/tezos"
+bug-reports: "https://gitlab.com/ligolang/tezos/issues"
+dev-repo: "git+https://gitlab.com/ligolang/tezos.git"
+license: "MIT"
+depends: [
+  "ocamlfind" { build }
+  "dune"
+  "tezos-memory-proto-alpha"
+]
+build: [
+  [ "dune" "build" "-p" name "-j" jobs ]
+  [ "mv" "tezos-utils/michelson-parser/michelson-parser.install" "." ]
+]
+url {
+  src: "https://gitlab.com/ligolang/ligo-utils/-/archive/master/ligo-utils.tar.gz"
+}

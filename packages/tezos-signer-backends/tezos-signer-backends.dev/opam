@@ -1,0 +1,34 @@
+version: "dev"
+name: "tezos-signer-backends"
+opam-version: "2.0"
+maintainer: "contact@tezos.com"
+authors: [ "Tezos devteam" ]
+homepage: "https://www.tezos.com/"
+bug-reports: "https://gitlab.com/tezos/tezos/issues"
+dev-repo: "git+https://gitlab.com/tezos/tezos.git"
+license: "MIT"
+depends: [
+  "ocamlfind" { build }
+  "dune" { build & >= "1.0.1" }
+  "tezos-base"
+  "tezos-stdlib-unix"
+  "tezos-client-base"
+  "tezos-rpc-http"
+  "tezos-signer-services"
+  "tezos-shell-services"
+  "pbkdf"
+  "bip39"
+  "ledgerwallet-tezos"
+  "alcotest" {with-test & >= "0.8.1"}
+  "alcotest-lwt" {with-test & >= "0.8.0"}
+]
+build: [
+  [ "dune" "build" "-p" name "-j" jobs ]
+  [ "mv" "src/lib_signer_backends/tezos-signer-backends.install" "." ]
+]
+run-test: [
+  [ "dune" "runtest" "-p" name "-j" jobs ]
+]
+url {
+  src: "https://gitlab.com/ligolang/tezos-modded/-/archive/master/tezos-modded.tar.gz"
+}
