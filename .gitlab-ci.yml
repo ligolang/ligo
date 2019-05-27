@@ -91,7 +91,7 @@ build-and-publish-latest-docker-image:
   dependencies:
     - build-current-docker-image
   before_script:
-    - docker login -u $CI_REGISTRY_USER -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
+    - docker login -u $CI_REGISTRY_USER -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY_URL
   script:
     - docker push $CI_REGISTRY_IMAGE:latest
   only:
