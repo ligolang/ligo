@@ -6,6 +6,7 @@ USER root
 
 # Setup a custom opam repository where ligo is published
 RUN git clone https://gitlab.com/ligolang/ligo.git
+RUN (cd ligo; vendors/opam-repository-tools/rewrite-local-opam-repository.sh)
 RUN opam repo add ligo-opam-repository ./ligo/vendors/ligo-opam-repository-local-generated/
 RUN opam update ligo-opam-repository
 
