@@ -1,3 +1,4 @@
+# TODO: remove this as submodules aren't used anymore.
 variables:
   GIT_SUBMODULE_STRATEGY: recursive
 
@@ -67,3 +68,20 @@ build-docker-image:
     - docker:dind
   script:
     - docker build -t marigold/ligo ./docker
+
+pages:
+  image: node:8
+  before_script:
+    - cd gitlab-pages/website
+    - npm install
+  script:
+    - npm run build
+    - pwd
+    - cd ../..
+    - pwd
+    - cp -r gitlab-pages/website/build/ligo public
+  artifacts:
+    paths:
+      - public
+  only:
+    - master
