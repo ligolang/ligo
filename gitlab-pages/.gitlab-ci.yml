@@ -1,0 +1,16 @@
+image: node:8
+
+before_script:
+  - cd website
+  - npm install
+
+pages:
+  script:
+    - npm run build
+    - cd ..
+    - cp -r website/build/ligo public
+  artifacts:
+    paths:
+      - public
+  only:
+    - master
