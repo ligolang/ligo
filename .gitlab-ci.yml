@@ -29,7 +29,7 @@ variables:
 local-dune-job:
   <<: *before_script
   script:
-    - vendors/opam-repository-tools/ligo-opam-repository/rewrite-local-opam-repository.sh
+    - vendors/opam-repository-tools/rewrite-local-opam-repository.sh
     - opam repository add localrepo "file://$PWD/vendors/ligo-opam-repository-local-generated/"
     - opam install -y --build-test --deps-only ./src/
     - dune build -p ligo
