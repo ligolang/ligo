@@ -17,15 +17,15 @@ ADD . /ligo
 WORKDIR /ligo
 
 # Setup a custom opam repository where ligo is published
-RUN sh scripts/setup_ligo_opam_repository.sh
+RUN bash scripts/setup_ligo_opam_repository.sh
 
 # Install required native dependencies
-RUN sh scripts/install_native_dependencies.sh
+RUN bash scripts/install_native_dependencies.sh
 
 RUN opam update
 
 # Install ligo
-RUN sh scripts/install_ligo_with_dependencies.sh
+RUN bash scripts/install_ligo_with_dependencies.sh
 
 # Use the ligo binary as a default command
 ENTRYPOINT [ "/home/opam/.opam/4.06/bin/ligo" ]
