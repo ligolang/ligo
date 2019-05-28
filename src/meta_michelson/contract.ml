@@ -88,13 +88,13 @@ module Step (Env: ENVIRONMENT) = struct
 
   let make_config ?base_config ?source ?payer ?self ?visitor ?debug_visitor ?timestamp ?amount () =
     let base_config = Option.unopt ~default:no_config base_config in {
-      source = Option.first_some source base_config.source ;
-      payer = Option.first_some payer base_config.payer ;
-      self = Option.first_some self base_config.self ;
-      visitor = Option.first_some visitor base_config.visitor ;
-      debug_visitor = Option.first_some debug_visitor base_config.debug_visitor ;
-      timestamp = Option.first_some timestamp base_config.timestamp ;
-      amount = Option.first_some amount base_config.amount ;
+      source = Option.bind_eager_or source base_config.source ;
+      payer = Option.bind_eager_or payer base_config.payer ;
+      self = Option.bind_eager_or self base_config.self ;
+      visitor = Option.bind_eager_or visitor base_config.visitor ;
+      debug_visitor = Option.bind_eager_or debug_visitor base_config.debug_visitor ;
+      timestamp = Option.bind_eager_or timestamp base_config.timestamp ;
+      amount = Option.bind_eager_or amount base_config.amount ;
     }
 
   open Error_monad

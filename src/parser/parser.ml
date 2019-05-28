@@ -25,7 +25,7 @@ let parse_file (source: string) : AST_Raw.t result =
   let module Lexer = Lexer.Make(LexToken) in
   let Lexer.{read ; close ; _} =
     Lexer.open_token_stream None in
-  specific_try (fun () -> function
+  specific_try (function
       | Parser.Error -> (
           let start = Lexing.lexeme_start_p lexbuf in
           let end_ = Lexing.lexeme_end_p lexbuf in
@@ -62,7 +62,7 @@ let parse_string (s:string) : AST_Raw.t result =
   let module Lexer = Lexer.Make(LexToken) in
   let Lexer.{read ; close ; _} =
     Lexer.open_token_stream None in
-  specific_try (fun () -> function
+  specific_try (function
       | Parser.Error -> (
           let start = Lexing.lexeme_start_p lexbuf in
           let end_ = Lexing.lexeme_end_p lexbuf in
@@ -86,7 +86,7 @@ let parse_expression (s:string) : AST_Raw.expr result =
   let module Lexer = Lexer.Make(LexToken) in
   let Lexer.{read ; close; _} =
     Lexer.open_token_stream None in
-  specific_try (fun () -> function
+  specific_try (function
       | Parser.Error -> (
           let start = Lexing.lexeme_start_p lexbuf in
           let end_ = Lexing.lexeme_end_p lexbuf in

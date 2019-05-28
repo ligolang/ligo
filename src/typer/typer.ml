@@ -224,7 +224,7 @@ and type_expression : environment -> ?tv_opt:O.type_value -> I.expression -> O.a
       return (E_literal (Literal_unit)) (t_unit ())
   | E_literal (Literal_string s) -> (
       L.log (Format.asprintf "literal_string option type: %a" PP_helpers.(option O.PP.type_value) tv_opt) ;
-      match Option.map ~f:Ast_typed.get_type' tv_opt with
+      match Option.map Ast_typed.get_type' tv_opt with
       | Some (T_constant ("address" , [])) -> return (E_literal (Literal_address s)) (t_address ())
       | _ -> return (E_literal (Literal_string s)) (t_string ())
     )

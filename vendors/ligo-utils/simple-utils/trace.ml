@@ -1,7 +1,5 @@
 module J = Yojson.Basic
 
-type error = [`Assoc of (string * J.t) list]
-
 module JSON_string_utils = struct
   let member = J.Util.member
   let string = J.Util.to_string_option
@@ -27,75 +25,175 @@ module JSON_string_utils = struct
   let (|^) = bind2 (^)
 end
 
-let mk_error ?(error_code : int option) ~(title : string) ?(message : string option) () =
-  let collapse l =
-    List.fold_left (fun acc -> function None -> acc | Some e -> e::acc) [] (List.rev l) in
-  `Assoc
-    (collapse
-       [(match error_code with Some c -> Some ("error_code", `Int c) | None -> None);
-        Some ("title", `String title);
-        (match message with Some m -> Some ("message", `String m) | None -> None)])
+type 'a thunk = unit -> 'a
 
+(**
+   Errors are encoded in JSON. This is because different libraries will
+   implement their own helpers, and we don't want to hardcode in their type how
+   they are supposed to interact.
+*)
+type error = J.t
 
-type error_thunk = unit -> error
+(**
+   Thunks are used because computing some errors can be costly, and we don't
+   to spend most of our time building errors. Instead, their computation is
+   deferred.
+*)
+type error_thunk = error thunk
 
-type annotation = J.t (* feel free to add different annotations here. *)
-type annotation_thunk = unit -> annotation
+(**
+   Annotations should be used in debug mode to aggregate information about some
+   value history. Where it was produced, when it was modified, etc.
+   It's currently not being used.
+*)
+type annotation = J.t
 
+(**
+   Even in debug mode, building annotations can be quite resource-intensive.
+   Instead, a thunk is passed, that is computed only when debug information is
+   queried (typically before a print).
+*)
+type annotation_thunk = annotation thunk
+
+(**
+   Types of traced elements. It might be good to rename it `trace` at some
+   point.
+*)
 type 'a result =
     Ok of 'a * annotation_thunk list
   | Errors of error_thunk list
 
+
+(**
+   Constructors
+*)
 let ok x = Ok (x, [])
 let fail err = Errors [err]
 
-(* When passing a constant string where a thunk is expected, we wrap it with thunk, as follows:
-   (thunk "some string")
-   We always put the parentheses around the call, to increase grep and sed efficiency.
-
-   When a trace function is called, it is passed a `(fun () -> …)`.
-   If the `…` is e.g. error then we write `(fun () -> error title msg ()` *)
-let thunk x () = x
-
-let error title message () = mk_error ~title:(title ()) ~message:(message ()) ()
-
-let simple_error str () = mk_error ~title:str ()
-
-let simple_fail str = fail @@ simple_error str
-
-(* To be used when wrapped by a "trace_strong" for instance *)
-let dummy_fail = simple_fail "dummy"
-
-let map f = function
+(**
+   Monadic operators
+*)
+let bind f = function
   | Ok (x, annotations) ->
       (match f x with
          Ok (x', annotations') -> Ok (x', annotations' @ annotations)
        | Errors _ as e' -> ignore annotations; e')
   | Errors _ as e -> e
 
-let apply f = function
+let map f = function
   | Ok (x, annotations) -> Ok (f x, annotations)
   | Errors _ as e -> e
 
-let (>>?) x f = map f x
-let (>>|?) = apply
+(**
+   Usual bind-syntax is `>>=`, but this is taken from the Tezos code base. Where
+   the `result` bind is `>>?`, Lwt's (threading library) is `>>=`, and the
+   combination of both is `>>=?`.
+*)
+let (>>?) x f = bind f x
+let (>>|?) x f = map f x
 
+(**
+   Used by PPX_let, an OCaml preprocessor.
+   What it does is that, when you only care about the case where a result isn't
+   an error, instead of writing:
+   ```
+   (* Stuff that might return an error *) >>? fun ok_value ->
+   (* Stuff being done on the result *)
+   ```
+   You can write:
+   ```
+   let%bind ok_value = (* Stuff that might return an error *) in
+   (* Stuff being done on the result *)
+   ```
+   This is much more typical of OCaml. makes the code more readable, easy to
+   write and refactor. It is used pervasively in LIGO.
+*)
 module Let_syntax = struct
   let bind m ~f = m >>? f
   module Open_on_rhs_bind = struct end
 end
 
-let trace_strong err = function
-  | Ok _ as o -> o
-  | Errors _ -> Errors [err]
 
+(**
+   Build a thunk from a constant.
+*)
+let thunk x () = x
+
+(**
+   Build a standard error, with a title, a message, an error code and some data.
+*)
+let mk_error
+    ?(error_code : int thunk option) ?(message : string thunk option)
+    ?(data : (string * string thunk) list option)
+    ~(title : string thunk) () : error =
+  let error_code' = X_option.map (fun x -> ("error_code" , `Int (x ()))) error_code in
+  let title' = X_option.some ("title" , `String (title ())) in
+  let data' =
+    let aux (key , value) = (key , `String (value ())) in
+    X_option.map (fun x -> ("data" , `Assoc (List.map aux x))) data in
+  let message' = X_option.map (fun x -> ("message " , `String (x ()))) message in
+  `Assoc (X_option.collapse_list [ error_code' ; title' ; message' ; data' ])
+
+let error title message () = mk_error ~title:(title) ~message:(message) ()
+
+(**
+   Helpers that ideally shouldn't be used in production.
+*)
+let simple_error str () = mk_error ~title:(thunk str) ()
+let simple_fail str = fail @@ simple_error str
+
+(**
+   To be used when you only want to signal an error. It can be useful when
+   followed by `trace_strong`.
+*)
+let dummy_fail = simple_fail "dummy"
+
+(**
+   A major feature of Trace is that it enables having a stack of errors (that
+   should act as a simplified stack frame), rather than a unique error.
+   It is done by using the function `trace`.
+   For instance, let's say that you have a function that can trigger two errors,
+   and you want to pass their data along with an other error, what you would
+   usually do is:
+   ```
+   let foobarer ... =
+     ... in
+     let value =
+       try ( get key map )
+       with
+       | Bad_key _ -> raise (Foobar_error ("bad key" , key , map))
+       | Missing_value _ -> raise (Foobar_error ("missing index" , key , map))
+     in ...
+   ```
+   With Trace, you would instead:
+   ```
+   let foobarer ... =
+     ... in
+     let%bind value =
+       trace (simple_error "error getting key") @@
+       get key map
+     in ...
+   ```
+   And this will pass along the error triggered by "get key map".
+*)
 let trace err = function
   | Ok _ as o -> o
   | Errors errs -> Errors (err :: errs)
 
+(**
+   Erase the current error stack, and replace it by the given error. It's useful
+   when using `Asserts` and you want to discard its auto-generated message.
+*)
+let trace_strong err = function
+  | Ok _ as o -> o
+  | Errors _ -> Errors [err]
+
+(**
+   Trace, but with an error which generation may itself fail.
+*)
 let trace_r err_thunk_may_fail = function
   | Ok _ as o -> o
-  | Errors errs ->
+  | Errors errs -> (
       match err_thunk_may_fail () with
       | Ok (err, annotations) -> ignore annotations; Errors (err :: errs)
       | Errors errors_while_generating_error ->
@@ -103,19 +201,34 @@ let trace_r err_thunk_may_fail = function
              this should use some catenable lists. *)
           Errors (errors_while_generating_error
                   @ errs)
+    )
 
+(**
+   `trace_f f error` yields a function that acts the same as `f`, but with an
+   error frame that has one more error.
+*)
 let trace_f f error x =
   trace error @@ f x
 
+(**
+   Same, but for functions with 2 parameters.
+*)
 let trace_f_2 f error x y =
   trace error @@ f x y
 
+(**
+   Same, but with a prototypical error.
+*)
 let trace_f_ez f name =
   trace_f f (error (thunk "in function") name)
 
 let trace_f_2_ez f name =
   trace_f_2 f (error (thunk "in function") name)
 
+
+(**
+   Check if there is no error. Useful for tests.
+*)
 let to_bool = function
   | Ok _ -> true
   | Errors _ -> false
@@ -124,9 +237,25 @@ let to_option = function
   | Ok (o, annotations) -> ignore annotations; Some o
   | Errors _ -> None
 
+(**
+   Convert an option to a result, with a given error if the parameter is None.
+*)
 let trace_option error = function
   | None -> fail error
   | Some s -> ok s
+
+(**
+   Utilities to interact with other data-structure.
+   `bind_t` takes an `'a result t` and makes a `'a t result` out of it. It
+   "lifts" the error out of the type.
+   The most common context is when mapping a given type. For instance, if you
+   use a function that can fail in `List.map`, you need to manage a whole list
+   of results. Instead, you do `let%bind lst' = bind_list @@ List.map f lst`,
+   which will yield an `'a list`.
+   `bind_map_t` is roughly syntactic sugar for `bind_t @@ T.map`. So that you
+   can rewrite the previous example as `let%bind lst' = bind_map_list f lst`.
+   Same thing with folds.
+*)
 
 let bind_map_option f = function
   | None -> ok None
@@ -229,16 +358,16 @@ let bind_or (a, b) =
 
 let bind_lr (type a b) ((a : a result), (b:b result)) : [`Left of a | `Right of b] result =
   match (a, b) with
-  | (Ok _ as o), _ -> apply (fun x -> `Left x) o
-  | _, (Ok _ as o) -> apply (fun x -> `Right x) o
+  | (Ok _ as o), _ -> map (fun x -> `Left x) o
+  | _, (Ok _ as o) -> map (fun x -> `Right x) o
   | _, Errors b -> Errors b
 
 let bind_lr_lazy (type a b) ((a : a result), (b:unit -> b result)) : [`Left of a | `Right of b] result =
   match a with
-  | Ok _ as o -> apply (fun x -> `Left x) o
+  | Ok _ as o -> map (fun x -> `Left x) o
   | _ -> (
       match b() with
-      | Ok _ as o -> apply (fun x -> `Right x) o
+      | Ok _ as o -> map (fun x -> `Right x) o
       | Errors b -> Errors b
     )
 
@@ -251,78 +380,46 @@ let bind_pair = bind_and
 let bind_map_pair f (a, b) =
   bind_pair (f a, f b)
 
+
+(**
+   Wraps a call that might trigger an exception in a result.
+*)
 let generic_try err f =
   try (
     ok @@ f ()
   ) with _ -> fail err
 
+(**
+   Same, but with a handler that generates an error based on the exception,
+   rather than a fixed error.
+*)
 let specific_try handler f =
   try (
     ok @@ f ()
-  ) with exn -> fail ((handler ()) exn)
+  ) with exn -> fail (handler exn)
 
+(**
+   Same, but tailored to `Sys_error`s, found in `Sys` from `Pervasives`.
+*)
 let sys_try f =
-  let handler () = function
+  let handler = function
     | Sys_error str -> error (thunk "Sys_error") (fun () -> str)
     | exn -> raise exn
   in
   specific_try handler f
 
+(**
+   Same, but for a given command.
+*)
 let sys_command command =
   sys_try (fun () -> Sys.command command) >>? function
   | 0 -> ok ()
   | n -> fail (fun () -> error (thunk "Nonzero return code") (fun () -> (string_of_int n)) ())
 
-let trace_sequence f lst =
-  let lazy_map_force : 'a . (unit -> 'a) list -> (unit -> 'a list) = fun l ->
-    fun () ->
-    List.rev @@ List.rev_map (fun a -> a ()) l in
-  let rec aux acc_x acc_annotations = function
-    | hd :: tl -> (
-        match f hd with
-        (* TODO: what should we do with the annotations? *)
-        | Ok (x, annotations) -> aux (x :: acc_x) (lazy_map_force annotations :: acc_annotations) tl
-        | Errors _ as errs -> errs
-      )
-    | [] ->
-        let old_annotations () = List.map (fun a -> `List (a ())) @@ List.rev acc_annotations in
-        (* Builds a JSON annotation { "type": "list"; "content": [[…], …] } *)
-        let annotation = fun () -> `Assoc [("type", `String "list"); ("content", `List (old_annotations ()))]
-        in Ok (List.rev acc_x, [annotation]) in
-  aux [] lst
-
-let json_of_error = J.to_string
-let error_pp out (e : error) =
-  let open JSON_string_utils in
-  let e : J.t = (match e with `Assoc _ as e -> e) in
-  let message    = e |> member "message"    |> string in
-  let title      = e |> member "title"      |> string || "(no title)" in
-  let error_code = unit " " |^ (e |> member "error_code" |> int |> string_of_int) || "" in
-  Format.fprintf out "%s" (error_code ^ ": " ^ title ^ (unit ":" |^ message  || ""))
-
-let error_pp_short out (e : error) =
-  let open JSON_string_utils in
-  let e : J.t = (match e with `Assoc _ as e -> e) in
-  let title      = e |> member "title"      |> string || "(no title)" in
-  let error_code = unit " " |^ (e |> member "error_code" |> int |> string_of_int) || "" in
-  Format.fprintf out "%s" (error_code ^ ": " ^ title)
-
-let errors_pp =
-  Format.pp_print_list
-    ~pp_sep:Format.pp_print_newline
-    error_pp
-
-let errors_pp_short =
-  Format.pp_print_list
-    ~pp_sep:Format.pp_print_newline
-    error_pp_short
-
-let pp_to_string pp () x =
-  Format.fprintf Format.str_formatter "%a" pp x ;
-  Format.flush_str_formatter ()
-
-let errors_to_string = pp_to_string errors_pp
-
+(**
+   Assertion module.
+   Would make sense to move it outside Trace.
+*)
 module Assert = struct
   let assert_fail ?(msg="didn't fail") = function
     | Ok _ -> simple_fail msg
@@ -368,3 +465,28 @@ module Assert = struct
     | [a] -> ok a
     | _ -> simple_fail msg
 end
+
+let json_of_error = J.to_string
+let error_pp out (e : error) =
+  let open JSON_string_utils in
+  let message    = e |> member "message"    |> string || "(no message)" in
+  let title      = e |> member "title"      |> string || "(no title)" in
+  let error_code = e |> member "error_code" |> int |> string_of_int || "no error code" in
+  Format.fprintf out "%s (%s): %s" title error_code message
+
+let error_pp_short out (e : error) =
+  let open JSON_string_utils in
+  let title      = e |> member "title"      |> string || "(no title)" in
+  let error_code = e |> member "error_code" |> int |> string_of_int || "no error code" in
+  Format.fprintf out "%s (%s)" title error_code
+
+let errors_pp =
+  Format.pp_print_list
+    ~pp_sep:Format.pp_print_newline
+    error_pp
+
+let errors_pp_short =
+  Format.pp_print_list
+    ~pp_sep:Format.pp_print_newline
+    error_pp_short
+

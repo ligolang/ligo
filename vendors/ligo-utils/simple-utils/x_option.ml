@@ -1,31 +1,48 @@
-let (>>=) x f = match x with
-  | None -> None
-  | Some x -> f x
+(* Constructors *)
+let none = None
+let some x = Some x
+let return = some
 
-let first_some = fun a b -> match (a , b) with
-  | Some a , _ -> Some a
-  | _ , Some b -> Some b
-  | _ -> None
-
+(* Destructors *)
 let unopt ~default x = match x with
   | None -> default
   | Some x -> x
-
 let unopt_exn x = match x with
   | None -> raise Not_found
   | Some x -> x
 
-let map ~f x = match x with
-  | Some x -> Some (f x)
+(* Base Tranformers *)
+let bind f = function
   | None -> None
+  | Some x -> f x
+let map f x =
+  let f' y = return @@ f y in
+  bind f' x
 
-let lr (a , b) = match (a , b) with
+(* Syntax *)
+let (>>=) x f = bind f x
+
+(* Interaction with List *)
+let to_list = function
+  | None -> []
+  | Some x -> [ x ]
+let collapse_list = fun l ->
+  List.concat
+  @@ List.map to_list l
+
+(* Combinators *)
+let bind_eager_or = fun a b -> match (a , b) with
+  | Some a , _ -> Some a
+  | _ , Some b -> Some b
+  | _ -> None
+
+let bind_union (a , b) = match (a , b) with
   | Some x , _ -> Some (`Left x)
   | None , Some x -> Some (`Right x)
   | _ -> None
 
-(* TODO: recursive terminal *)
 let rec bind_list = fun lst ->
+  (* TODO: recursive terminal *)
   match lst with
   | [] -> Some []
   | hd :: tl -> (
@@ -37,7 +54,6 @@ let rec bind_list = fun lst ->
           | Some tl' -> Some (hd' :: tl')
         )
     )
-
 
 let bind_pair = fun (a , b) ->
   a >>= fun a' ->

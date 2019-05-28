@@ -18,7 +18,7 @@ let parse_file (source: string) : Ast.entry_point result =
     (fun () -> open_in source) in
   let lexbuf = Lexing.from_channel channel in
   let module Lexer = Lex.Lexer in
-  (specific_try (fun () -> fun e ->
+  (specific_try (fun e ->
       let error s () =
         let start = Lexing.lexeme_start_p lexbuf in
         let end_ = Lexing.lexeme_end_p lexbuf in
