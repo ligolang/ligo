@@ -204,7 +204,8 @@ and type_expression : environment -> ?tv_opt:O.type_value -> I.expression -> O.a
       match tv_opt with
       | None -> ok ()
       | Some tv' -> O.assert_type_value_eq (tv' , tv) in
-    ok @@ make_a_e expr tv e in
+    let location = Location.get_location ae in
+    ok @@ make_a_e ~location expr tv e in
   let main_error =
     let title () = "typing expression" in
     let content () = Format.asprintf "Expression: %a\nLog: %s\n" I.PP.expression ae (L.get()) in
