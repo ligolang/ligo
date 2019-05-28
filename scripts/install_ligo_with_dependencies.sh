@@ -1,4 +1,5 @@
-#!/bin/bash
-set -euET -o pipefail
+#!/bin/sh
+set -e
 
-cd src && opam install . --yes
+cd src
+opam install . --yes

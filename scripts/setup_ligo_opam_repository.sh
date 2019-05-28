@@ -1,5 +1,5 @@
-#!/bin/bash
-set -euET -o pipefail
+#!/bin/sh
+set -e
 
 vendors/opam-repository-tools/rewrite-local-opam-repository.sh
 opam repo add ligo-opam-repository ./vendors/ligo-opam-repository-local-generated

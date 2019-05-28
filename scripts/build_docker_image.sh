@@ -1,4 +1,4 @@
-#!/bin/bash
-set -euET -o pipefail
+#!/bin/sh
+set -e
 
 docker build -t ligolang/ligo -f docker/Dockerfile .

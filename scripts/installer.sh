@@ -1,5 +1,5 @@
-#!/bin/bash
-set -euET -o pipefail
+#!/bin/sh
+set -e
 
 # You can run this installer like this:
 # curl https://gitlab.com/ligolang/ligo/blob/master/scripts/installer.sh | bash
@@ -68,7 +68,7 @@ else
       && (umask 0600 > /dev/null 2>&1; UMASK=0600 touch /usr/local/bin/.temp.ligo.before-atomic-move) \
       && chmod 0600 /usr/local/bin/.temp.ligo.before-atomic-move \
       && cat > /usr/local/bin/.temp.ligo.before-atomic-move \
-    ) || rm /usr/local/bin/.temp.ligo.before-atomic-move'
+    ) || (rm /usr/local/bin/.temp.ligo.before-atomic-move; exit 1)'
 
   # sudo     become root (sudo) for the rest of the commands
   #   (      subshell (to clean up temporary file if anything goes wrong)
@@ -88,7 +88,7 @@ else
       && if test -d /usr/local/bin/ligo; then printf "/usr/local/bin/ligo already exists and is a directory, cancelling installation"'\\\\'n; rm /usr/local/bin/.temp.ligo.before-atomic-move; \
          elif test -L /usr/local/bin/ligo; then printf "/usr/local/bin/ligo already exists and is a symbolic link, cancelling installation"'\\\\'n; rm /usr/local/bin/.temp.ligo.before-atomic-move; \
          else mv -i /usr/local/bin/.temp.ligo.before-atomic-move /usr/local/bin/ligo; fi \
-    ) || rm /usr/local/bin/.temp.ligo.before-atomic-move'
+    ) || (rm /usr/local/bin/.temp.ligo.before-atomic-move; exit 1)'
 
   # Installation finished, try running 'ligo' from your CLI
   printf \\n'Installation successful, try to run '\''ligo --help'\'' now.'\\n
