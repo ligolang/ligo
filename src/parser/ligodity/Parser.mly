@@ -131,8 +131,31 @@ let norm_fun_expr patterns expr =
         let fun_expr = {
           kwd_fun = ghost;
           param   = var;
+          p_annot = None;
           arrow   = ghost;
           body    = expr}
+        in EFun (ghost_of fun_expr)
+    | PTyped p ->
+        let pattern = p.value.pattern
+        and type_expr = p.value.type_expr in
+        let fresh = Utils.gen_sym () |> ghost_of in
+        let clause = {pattern; arrow=ghost; rhs=expr} in
+        let clause = ghost_of clause in
+        let cases = ghost_of (clause, []) in
+        let case = {
+          kwd_match = ghost;
+          expr      = EVar fresh;
+          opening   = With ghost;
+          lead_vbar = None;
+          cases;
+          closing   = End ghost} in
+        let case = ECase (ghost_of case) in
+        let fun_expr = {
+          kwd_fun = ghost;
+          param   = fresh;
+          p_annot = Some (p.value.colon, type_expr);
+          arrow   = ghost;
+          body    = case}
         in EFun (ghost_of fun_expr)
     | _ -> let fresh = Utils.gen_sym () |> ghost_of in
           let clause = {pattern; arrow=ghost; rhs=expr} in
@@ -149,6 +172,7 @@ let norm_fun_expr patterns expr =
           let fun_expr = {
             kwd_fun = ghost;
             param   = fresh;
+            p_annot = None;
             arrow   = ghost;
             body    = case}
           in EFun (ghost_of fun_expr)

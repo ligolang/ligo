@@ -109,7 +109,7 @@ let rec simpl_expression :
           lhs_type in
       let%bind rhs = simpl_expression ?te_annot:type_annotation let_rhs in
       let%bind body = simpl_expression body in
-      return (mk_let_in (variable.value , None) rhs body)
+      return @@ mk_let_in (variable.value , None) rhs body
     )
   | Raw.EAnnot a -> (
       let (expr , type_expr) = a.value in
@@ -206,8 +206,37 @@ let rec simpl_expression :
         @@ npseq_to_list c.value.cases.value in
       let%bind cases = simpl_cases lst in
       return @@ E_matching (e, cases)
-  | _ -> failwith "XXX" (* TODO *)
-
+  | EFun lamb ->
+      let%bind input_type = bind_map_option
+        (fun (_,type_expr) -> simpl_type_expression type_expr)
+        lamb.value.p_annot in
+      let body, body_type =
+        match lamb.value.body with
+          EAnnot {value = expr, type_expr} -> expr, Some type_expr
+        | expr -> expr, None in
+      let%bind output_type =
+        bind_map_option simpl_type_expression body_type in
+      let%bind result = simpl_expression body in
+      let binder = lamb.value.param.value, input_type in
+      let lambda = {binder; input_type; output_type; result = result}
+      in return @@ E_lambda lambda
+  | ESeq s ->
+      let items : Raw.expr list = pseq_to_list s.value.elements in
+      (match items with
+         [] -> return @@ E_skip
+       | expr::more ->
+          let expr' = simpl_expression expr in
+          let apply (e1: Raw.expr) (e2: expression Trace.result) =
+            let%bind a = simpl_expression e1 in
+            let%bind e2' = e2 in
+            return @@ E_sequence (a, e2')
+          in List.fold_right apply more expr')
+  | ECond c ->
+      let c = c.value in
+      let%bind expr = simpl_expression c.test in
+      let%bind match_true = simpl_expression c.ifso in
+      let%bind match_false = simpl_expression c.ifnot in
+      return @@ E_matching (expr, (Match_bool {match_true; match_false}))
 and simpl_logic_expression ?te_annot (t:Raw.logic_expr) : expr result =
   let return x = ok @@ make_option_typed x te_annot in
   match t with
