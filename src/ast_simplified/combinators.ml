@@ -35,76 +35,79 @@ let t_map key value = (T_constant ("map", [key ; value]))
 
 let make_name (s : string) : name = s
 
-let e_var (s : string) : expression = E_variable s
+let e_var ?loc (s : string) : expression = Location.wrap ?loc @@ E_variable s
+let e_literal ?loc l : expression = Location.wrap ?loc @@ E_literal l
+let e_unit ?loc () : expression = Location.wrap ?loc @@ E_literal (Literal_unit)
+let e_int ?loc n : expression = Location.wrap ?loc @@ E_literal (Literal_int n)
+let e_nat ?loc n : expression = Location.wrap ?loc @@ E_literal (Literal_nat n)
+let e_bool ?loc   b : expression = Location.wrap ?loc @@ E_literal (Literal_bool b)
+let e_string ?loc s : expression = Location.wrap ?loc @@ E_literal (Literal_string s)
+let e_address ?loc s : expression = Location.wrap ?loc @@ E_literal (Literal_address s)
+let e_tez ?loc s : expression = Location.wrap ?loc @@ E_literal (Literal_tez s)
+let e_bytes ?loc  b : expression = Location.wrap ?loc @@ E_literal (Literal_bytes (Bytes.of_string b))
+let e_record ?loc map : expression = Location.wrap ?loc @@ E_record map
+let e_tuple ?loc lst : expression = Location.wrap ?loc @@ E_tuple lst
+let e_some ?loc s : expression = Location.wrap ?loc @@ E_constant ("SOME", [s])
+let e_none ?loc () : expression = Location.wrap ?loc @@ E_constant ("NONE", [])
+let e_map_update ?loc k v old : expression = Location.wrap ?loc @@ E_constant ("MAP_UPDATE" , [k ; v ; old])
+let e_map ?loc lst : expression = Location.wrap ?loc @@ E_map lst
+let e_list ?loc lst : expression = Location.wrap ?loc @@ E_list lst
+let e_pair ?loc a b : expression = Location.wrap ?loc @@ E_tuple [a; b]
+let e_constructor ?loc s a : expression = Location.wrap ?loc @@ E_constructor (s , a)
+let e_matching ?loc a b : expression = Location.wrap ?loc @@ E_matching (a , b)
+let e_matching_bool ?loc a b c : expression = e_matching ?loc a (Match_bool {match_true = b ; match_false = c})
+let e_accessor ?loc a b = Location.wrap ?loc @@ E_accessor (a , b)
+let e_accessor_props ?loc a b = e_accessor ?loc a (List.map (fun x -> Access_record x) b)
+let e_variable ?loc v = Location.wrap ?loc @@ E_variable v
+let e_failwith ?loc v = Location.wrap ?loc @@ E_failwith v
+let e_skip ?loc () = Location.wrap ?loc @@ E_skip
+let e_loop ?loc cond body = Location.wrap ?loc @@ E_loop (cond , body)
+let e_sequence ?loc a b = Location.wrap ?loc @@ E_sequence (a , b)
+let e_let_in ?loc binder rhs result = Location.wrap ?loc @@ E_let_in { binder ; rhs ; result }
+let e_annotation ?loc expr ty = Location.wrap ?loc @@ E_annotation (expr , ty)
+let e_application ?loc a b = Location.wrap ?loc @@ E_application (a , b)
+let e_binop ?loc name a b = Location.wrap ?loc @@ E_constant (name , [a ; b])
+let e_constant ?loc name lst = Location.wrap ?loc @@ E_constant (name , lst)
+let e_look_up ?loc x y = Location.wrap ?loc @@ E_look_up (x , y)
+let e_assign ?loc a b c = Location.wrap ?loc @@ E_assign (a , b , c)
 
-let e_unit () : expression = E_literal (Literal_unit)
-let e_int n : expression = E_literal (Literal_int n)
-let e_nat n : expression = E_literal (Literal_nat n)
-let e_bool   b : expression = E_literal (Literal_bool b)
-let e_string s : expression = E_literal (Literal_string s)
-let e_address s : expression = E_literal (Literal_address s)
-let e_tez s : expression = E_literal (Literal_tez s)
-let e_bytes  b : expression = E_literal (Literal_bytes (Bytes.of_string b))
-let e_record map : expression = E_record map
-let e_tuple lst : expression = E_tuple lst
-let e_some s : expression = E_constant ("SOME", [s])
-let e_none : expression = E_constant ("NONE", [])
-let e_map_update k v old : expression = E_constant ("MAP_UPDATE" , [k ; v ; old])
-let e_map lst : expression = E_map lst
-let e_list lst : expression = E_list lst
-let e_pair a b : expression = E_tuple [a; b]
-let e_constructor s a : expression = E_constructor (s , a)
-let e_match a b : expression = E_matching (a , b)
-let e_match_bool a b c : expression = e_match a (Match_bool {match_true = b ; match_false = c})
-let e_accessor a b = E_accessor (a , b)
-let e_accessor_props a b = e_accessor a (List.map (fun x -> Access_record x) b)
-let e_variable v = E_variable v
-let e_failwith v = E_failwith v
-let e_skip = E_skip
-let e_loop cond body = E_loop (cond , body)
-let e_sequence a b = E_sequence (a , b)
-let e_let_in binder rhs result = E_let_in { binder ; rhs ; result }
-let e_annotation expr ty = E_annotation (expr , ty)
-let e_application a b = E_application (a , b)
-
-let e_binop name a b = E_constant (name , [a ; b])
-
-let make_option_typed e t_opt =
+let make_option_typed ?loc e t_opt =
   match t_opt with
   | None -> e
-  | Some t -> e_annotation e t
+  | Some t -> e_annotation ?loc e t
 
 
-let ez_e_record lst =
+let ez_e_record ?loc lst =
   let aux prev (k, v) = SMap.add k v prev in
   let map = List.fold_left aux SMap.empty lst in
-  e_record map
+  e_record ?loc map
 
-let e_typed_none t_opt =
+let e_typed_none ?loc t_opt =
   let type_annotation = t_option t_opt in
-  e_annotation e_none type_annotation
+  e_annotation ?loc (e_none ?loc ()) type_annotation
 
-let e_typed_list lst t =
-  e_annotation (e_list lst) (t_list t)
+let e_typed_list ?loc lst t =
+  e_annotation ?loc (e_list lst) (t_list t)
 
-let e_map lst k v = e_annotation (e_map lst) (t_map k v)
+let e_typed_map ?loc lst k v = e_annotation ?loc (e_map lst) (t_map k v)
 
-let e_lambda (binder : string)
+let e_lambda ?loc (binder : string)
     (input_type : type_expression option)
     (output_type : type_expression option)
     (result : expression)
   : expression =
-  E_lambda {
+  Location.wrap ?loc @@ E_lambda {
     binder = (make_name binder , input_type) ;
     input_type = input_type ;
     output_type = output_type ;
     result ;
   }
 
-let e_record (lst : (string * expr) list) : expression =
-  let aux prev (k, v) = SMap.add k v prev in
-  let map = List.fold_left aux SMap.empty lst in
-  E_record map
+let e_record ?loc map = Location.wrap ?loc @@ E_record map
+
+let e_ez_record ?loc (lst : (string * expr) list) : expression =
+  let map = SMap.of_list lst in
+  e_record ?loc map
 
 let get_e_accessor = fun t ->
   match t with
@@ -130,3 +133,10 @@ let get_e_list = fun t ->
   match t with
   | E_list lst -> ok lst
   | _ -> simple_fail "not a pair"
+
+let get_e_failwith = fun e ->
+  match Location.unwrap e with
+  | E_failwith fw -> ok fw
+  | _ -> simple_fail "not a failwith"
+
+let is_e_failwith e = to_bool @@ get_e_failwith e

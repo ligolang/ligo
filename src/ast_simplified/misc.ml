@@ -35,7 +35,7 @@ let rec assert_value_eq (a, b: (expression * expression )) : unit result =
     Format.asprintf "\n@[<v>- %a@;- %a]" PP.expression a PP.expression b
   in
   trace (fun () -> error (thunk "not equal") error_content ()) @@
-  match (a , b) with
+  match (Location.unwrap a , Location.unwrap b) with
   | E_literal a , E_literal b ->
       assert_literal_eq (a, b)
   | E_literal _ , _ ->
@@ -113,8 +113,8 @@ let rec assert_value_eq (a, b: (expression * expression )) : unit result =
     )
   | E_list _, _ ->
       simple_fail "comparing list with other stuff"
-  | (E_annotation (a , _) ,  b) -> assert_value_eq (a , b)
-  | (a , E_annotation (b , _)) -> assert_value_eq (a , b)
+  | (E_annotation (a , _) ,  _b') -> assert_value_eq (a , b)
+  | (_a' , E_annotation (b , _)) -> assert_value_eq (a , b)
   | (E_variable _, _) | (E_lambda _, _)
   | (E_application _, _) | (E_let_in _, _)
   | (E_accessor _, _)
