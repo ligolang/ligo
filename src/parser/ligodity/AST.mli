@@ -337,6 +337,7 @@ and let_in = {
 and fun_expr = {
   kwd_fun : kwd_fun;
   param   : variable;
+  p_annot : (colon * type_expr) option;
   arrow   : arrow;
   body    : expr
 }

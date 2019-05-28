@@ -328,6 +328,7 @@ and let_in = {
 and fun_expr = {
   kwd_fun : kwd_fun;
   param   : variable;
+  p_annot : (colon * type_expr) option;
   arrow   : arrow;
   body    : expr
 }
@@ -736,9 +737,13 @@ and print_let_in (bind: let_in) =
   print_expr body
 
 and print_fun_expr {value; _} =
-  let {kwd_fun; param; arrow; body} = value in
+  let {kwd_fun; param; p_annot; arrow; body} = value in
   print_token kwd_fun "fun";
-  print_var param;
+  (match p_annot with
+     None -> print_var param
+   | Some (colon, type_expr) ->
+      print_token colon ":";
+      print_type_expr type_expr);
   print_token arrow "->";
   print_expr body
 
