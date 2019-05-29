@@ -46,7 +46,7 @@ let compile : Mini_c.program -> string -> Compiler.Program.compiled_program resu
 
 let type_file ?(debug_simplify = false) ?(debug_typed = false)
     (path:string) : AST_Typed.program result =
-  let%bind raw = Parser.parse_file path in
+  let%bind raw = Parser.Pascaligo.parse_file path in
   let%bind simpl =
     trace (simple_error "simplifying") @@
     simplify raw in
@@ -162,35 +162,5 @@ let easy_run_typed_simplified
   let%bind annotated_result = untype_expression typed_result in
   ok annotated_result
 
-let easy_run_main_typed
-    ?(debug_mini_c = false)
-    (program:AST_Typed.program) (input:AST_Typed.annotated_expression) : AST_Typed.annotated_expression result =
-  easy_run_typed ~debug_mini_c "main" program input
-
-let easy_run_main (path:string) (input:string) : AST_Typed.annotated_expression result =
-  let%bind typed = type_file path in
-
-  let%bind raw_expr = Parser.parse_expression input in
-  let%bind simpl_expr = simplify_expr raw_expr in
-  let%bind typed_expr = type_expression simpl_expr in
-  easy_run_main_typed typed typed_expr
-
-let compile_file (source: string) (entry_point:string) : Michelson.t result =
-  let%bind raw =
-    trace (simple_error "parsing") @@
-    Parser.parse_file source in
-  let%bind simplified =
-    trace (simple_error "simplifying") @@
-    simplify raw in
-  let%bind typed =
-    trace (simple_error "typing") @@
-    type_ simplified in
-  let%bind mini_c =
-    trace (simple_error "transpiling") @@
-    transpile typed in
-  let%bind {body = michelson} =
-    trace (simple_error "compiling") @@
-    compile mini_c entry_point in
-  ok michelson
 
 module Contract = Contract

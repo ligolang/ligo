@@ -4,7 +4,7 @@ open Test_helpers
 
 let compile_contract_basic () : unit result =
   let%bind _ =
-    Contract.compile_contract_file "./contracts/dispatch-counter.ligo" "main"
+    Contract.compile_contract_file "./contracts/dispatch-counter.ligo" "main" "pascaligo"
   in
   ok ()
 

@@ -59,13 +59,60 @@ let transpile_value
   let%bind r = Run_mini_c.run_entry f input in
   ok r
 
-let compile_contract_file : string -> string -> string result = fun source entry_point ->
+let parsify_pascaligo = fun source ->
   let%bind raw =
     trace (simple_error "parsing") @@
-    Parser.parse_file source in
+    Parser.Pascaligo.parse_file source in
   let%bind simplified =
     trace (simple_error "simplifying") @@
     Simplify.Pascaligo.simpl_program raw in
+  ok simplified
+
+let parsify_expression_pascaligo = fun source ->
+  let%bind raw =
+    trace (simple_error "parsing expression") @@
+    Parser.Pascaligo.parse_expression source in
+  let%bind simplified =
+    trace (simple_error "simplifying expression") @@
+    Simplify.Pascaligo.simpl_expression raw in
+  ok simplified
+
+let parsify_ligodity = fun source ->
+  let%bind raw =
+    trace (simple_error "parsing") @@
+    Parser.Ligodity.parse_file source in
+  let%bind simplified =
+    trace (simple_error "simplifying") @@
+    Simplify.Ligodity.simpl_program raw in
+  ok simplified
+
+let parsify_expression_ligodity = fun source ->
+  let%bind raw =
+    trace (simple_error "parsing expression") @@
+    Parser.Ligodity.parse_expression source in
+  let%bind simplified =
+    trace (simple_error "simplifying expression") @@
+    Simplify.Ligodity.simpl_expression raw in
+  ok simplified
+
+let parsify = fun syntax source ->
+  let%bind parsify = match syntax with
+    | "pascaligo" -> ok parsify_pascaligo
+    | "cameligo"
+    | _ -> simple_fail "unrecognized parser"
+  in
+  parsify source
+
+let parsify_expression = fun syntax source ->
+  let%bind parsify = match syntax with
+    | "pascaligo" -> ok parsify_expression_pascaligo
+    | "cameligo"
+    | _ -> simple_fail "unrecognized parser"
+  in
+  parsify source
+
+let compile_contract_file : string -> string -> string -> string result = fun source entry_point syntax ->
+  let%bind simplified = parsify syntax source in
   let%bind () =
     assert_entry_point_defined simplified entry_point in
   let%bind typed =
@@ -81,14 +128,9 @@ let compile_contract_file : string -> string -> string result = fun source entry
     Format.asprintf "%a" Michelson.pp_stripped michelson in
   ok str
 
-let compile_contract_parameter : string -> string -> string -> string result = fun source entry_point expression ->
+let compile_contract_parameter : string -> string -> string -> string -> string result = fun source entry_point expression syntax ->
   let%bind (program , parameter_tv) =
-    let%bind raw =
-      trace (simple_error "parsing file") @@
-      Parser.parse_file source in
-    let%bind simplified =
-      trace (simple_error "simplifying file") @@
-      Simplify.Pascaligo.simpl_program raw in
+    let%bind simplified = parsify syntax source in
     let%bind () =
       assert_entry_point_defined simplified entry_point in
     let%bind typed =
@@ -99,13 +141,8 @@ let compile_contract_parameter : string -> string -> string -> string result = f
     ok (typed , param_ty)
   in
   let%bind expr =
-    let%bind raw =
-      trace (simple_error "parsing expression") @@
-      Parser.parse_expression expression in
-    let%bind simplified =
-      trace (simple_error "simplifying expression") @@
-      Simplify.Pascaligo.simpl_expression raw in
     let%bind typed =
+      let%bind simplified = parsify_expression syntax expression in
       let env =
         let last_declaration = Location.unwrap List.(hd @@ rev program) in
         match last_declaration with
@@ -129,14 +166,9 @@ let compile_contract_parameter : string -> string -> string -> string result = f
   ok expr
 
 
-let compile_contract_storage : string -> string -> string -> string result = fun source entry_point expression ->
+let compile_contract_storage : string -> string -> string -> string -> string result = fun source entry_point expression syntax ->
   let%bind (program , storage_tv) =
-    let%bind raw =
-      trace (simple_error "parsing file") @@
-      Parser.parse_file source in
-    let%bind simplified =
-      trace (simple_error "simplifying file") @@
-      Simplify.Pascaligo.simpl_program raw in
+    let%bind simplified = parsify syntax source in
     let%bind () =
       assert_entry_point_defined simplified entry_point in
     let%bind typed =
@@ -147,12 +179,7 @@ let compile_contract_storage : string -> string -> string -> string result = fun
     ok (typed , storage_ty)
   in
   let%bind expr =
-    let%bind raw =
-      trace (simple_error "parsing expression") @@
-      Parser.parse_expression expression in
-    let%bind simplified =
-      trace (simple_error "simplifying expression") @@
-      Simplify.Pascaligo.simpl_expression raw in
+    let%bind simplified = parsify_expression syntax expression in
     let%bind typed =
       let env =
         let last_declaration = Location.unwrap List.(hd @@ rev program) in

@@ -184,8 +184,9 @@ let norm_fun_expr patterns expr =
 
 (* Entry points *)
 
-%start program
+%start program expr
 %type <AST.t> program
+%type <AST.expr> expr
 
 %%
 
