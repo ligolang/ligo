@@ -3,7 +3,7 @@ open! Trace
 let test name f =
   Alcotest.test_case name `Quick @@ fun () ->
   let result =
-    trace (fun () -> error (thunk "running test") (fun () -> name) ()) @@
+    trace (fun () -> error (thunk "running test") (thunk name) ()) @@
     f () in
   match result with
   | Ok ((), annotations) -> ignore annotations; ()
@@ -20,7 +20,7 @@ let expect ?options program entry_point input expecter =
       let content () = Format.asprintf "Entry_point: %s" entry_point in
       error title content in
     trace run_error @@
-    Ligo.easy_run_typed_simplified ~debug_michelson:true ?options entry_point program input in
+    Ligo.Run.run_simplityped ~debug_michelson:true ?options program entry_point input in
   expecter result
 
 let expect_eq ?options program entry_point input expected =
@@ -41,7 +41,7 @@ let expect_evaluate program entry_point expecter =
     let content () = Format.asprintf "Entry_point: %s" entry_point in
     error title content in
   trace error @@
-  let%bind result = Ligo.easy_evaluate_typed_simplified entry_point program in
+  let%bind result = Ligo.Run.evaluate_simplityped program entry_point in
   expecter result
 
 let expect_eq_evaluate program entry_point expected =

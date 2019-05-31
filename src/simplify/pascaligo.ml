@@ -351,6 +351,7 @@ and simpl_fun_declaration : Raw.fun_decl -> ((name * type_expression option) * e
        let arguments_name = "arguments" in
        let%bind params = bind_map_list simpl_param lst in
        let (binder , input_type) =
+         (* let type_expression = T_record (SMap.of_list params) in *)
          let type_expression = T_tuple (List.map snd params) in
          (arguments_name , type_expression) in
        let%bind tpl_declarations =

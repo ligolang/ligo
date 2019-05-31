@@ -202,3 +202,17 @@ let compile_contract_storage : string -> string -> string -> string -> string re
     ok str
   in
   ok expr
+
+let type_file ?(debug_simplify = false) ?(debug_typed = false)
+    syntax (path:string) : Ast_typed.program result =
+  let%bind simpl = parsify syntax path in
+  (if debug_simplify then
+     Format.(printf "Simplified : %a\n%!" Ast_simplified.PP.program simpl)
+  ) ;
+  let%bind typed =
+    trace (simple_error "typing") @@
+    Typer.type_program simpl in
+  (if debug_typed then (
+      Format.(printf "Typed : %a\n%!" Ast_typed.PP.program typed)
+    )) ;
+  ok typed

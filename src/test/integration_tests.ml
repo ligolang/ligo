@@ -1,14 +1,11 @@
 open Trace
-open Ligo
+open Ligo.Run
 open Test_helpers
 
 open Ast_simplified.Combinators
 
-let mtype_file path : Ast_typed.program result =
-  let%bind raw = Parser.Camligo.User.parse_file path in
-  let%bind simpl = Simplify.Camligo.main raw in
-  let%bind typed = Ligo.Typer.type_program (Location.unwrap simpl) in
-  ok typed
+let mtype_file = type_file "cameligo"
+let type_file = type_file "pascaligo"
 
 let function_ () : unit result =
   let%bind program = type_file "./contracts/function.ligo" in
@@ -148,6 +145,9 @@ let include_ () : unit result =
 let record_ez_int names n =
   ez_e_record @@ List.map (fun x -> x, e_int n) names
 
+let tuple_ez_int names n =
+  e_tuple @@ List.map (fun _ -> e_int n) names
+
 let multiple_parameters () : unit result  =
   let%bind program = type_file "./contracts/multiple-parameters.ligo" in
   let aux ((name : string) , make_input , make_output) =
@@ -155,9 +155,9 @@ let multiple_parameters () : unit result  =
     expect_eq_n program name make_input make_output'
   in
   let%bind _ = bind_list @@ List.map aux [
-      ("ab", record_ez_int ["a";"b"], fun n -> 2 * n) ;
-      ("abcd", record_ez_int ["a";"b";"c";"d"], fun n -> 4 * n + 2) ;
-      ("abcde", record_ez_int ["a";"b";"c";"d";"e"], fun n -> 2 * n + 3) ;
+      ("ab", tuple_ez_int ["a";"b"], fun n -> 2 * n) ;
+      ("abcd", tuple_ez_int ["a";"b";"c";"d"], fun n -> 4 * n + 2) ;
+      ("abcde", tuple_ez_int ["a";"b";"c";"d";"e"], fun n -> 2 * n + 3) ;
     ] in
   ok ()
 
@@ -437,7 +437,7 @@ let dispatch_counter_contract () : unit result =
 
 let basic_mligo () : unit result =
   let%bind typed = mtype_file "./contracts/basic.mligo" in
-  let%bind result = Ligo.easy_evaluate_typed "foo" typed in
+  let%bind result = evaluate_typed "foo" typed in
   Ligo.AST_Typed.assert_value_eq (Ligo.AST_Typed.Combinators.e_a_empty_int (42 + 127), result)
 
 let counter_mligo () : unit result =

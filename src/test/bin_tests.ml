@@ -1,10 +1,10 @@
 open Trace
-open Ligo
+open Ligo.Run
 open Test_helpers
 
 let compile_contract_basic () : unit result =
   let%bind _ =
-    Contract.compile_contract_file "./contracts/dispatch-counter.ligo" "main" "pascaligo"
+    compile_contract_file "./contracts/dispatch-counter.ligo" "main" "pascaligo"
   in
   ok ()
 

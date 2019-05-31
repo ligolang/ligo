@@ -27,8 +27,7 @@ let to_list = function
   | None -> []
   | Some x -> [ x ]
 let collapse_list = fun l ->
-  List.concat
-  @@ List.map to_list l
+  List.concat @@ List.map to_list l
 
 (* Combinators *)
 let bind_eager_or = fun a b -> match (a , b) with
