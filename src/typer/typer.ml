@@ -357,16 +357,31 @@ and type_expression : environment -> ?tv_opt:O.type_value -> I.expression -> O.a
     } -> (
       let%bind input_type =
         let%bind input_type =
-          trace_option (simple_error "no input type provided") @@
-          input_type in
+          (* Hack to take care of let_in introduced by `simplify/ligodity.ml` in ECase's hack *)
+          let default_action () = simple_fail "no input type provided" in
+          match input_type with
+          | Some ty -> ok ty
+          | None -> (
+              match result with
+              | I.E_let_in li -> (
+                  match li.rhs with
+                  | I.E_variable name when name = (fst binder) -> (
+                      match snd li.binder with
+                      | Some ty -> ok ty
+                      | None -> default_action ()
+                    )
+                  | _ -> default_action ()
+                )
+              | _ -> default_action ()
+            )
+        in
         evaluate_type e input_type in
       let%bind output_type =
-        let%bind output_type =
-          trace_option (simple_error "no output type provided") @@
-          output_type in
-        evaluate_type e output_type in
+        bind_map_option (evaluate_type e) output_type
+      in
       let e' = Environment.add_ez_binder (fst binder) input_type e in
-      let%bind result = type_expression ~tv_opt:output_type e' result in
+      let%bind result = type_expression ?tv_opt:output_type e' result in
+      let output_type = result.type_annotation in
       return (E_lambda {binder = fst binder;input_type;output_type;result}) (t_function input_type output_type ())
     )
   | E_constant (name, lst) ->

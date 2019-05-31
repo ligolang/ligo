@@ -486,3 +486,4 @@ val unpar : expr -> expr
 
 val print_projection : projection -> unit
 val print_pattern : pattern -> unit
+val print_expr : expr -> unit

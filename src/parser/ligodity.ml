@@ -4,15 +4,18 @@ module Parser = Parser_ligodity.Parser
 module AST = Parser_ligodity.AST
 
 let parse_file (source: string) : AST.t result =  
+  (* let pp_input =
+   *   let prefix = Filename.(source |> basename |> remove_extension)
+   *   and suffix = ".pp.ligo"
+   *   in prefix ^ suffix in *)
+
+  (* let cpp_cmd = Printf.sprintf "cpp -traditional-cpp %s > %s"
+   *                              source pp_input in
+   * let%bind () = sys_command cpp_cmd in *)
+
   let pp_input =
-    let prefix = Filename.(source |> basename |> remove_extension)
-    and suffix = ".pp.ligo"
-    in prefix ^ suffix in
-
-  let cpp_cmd = Printf.sprintf "cpp -traditional-cpp %s > %s"
-                               source pp_input in
-  let%bind () = sys_command cpp_cmd in
-
+    source
+  in
   let%bind channel =
     generic_try (simple_error "error opening file") @@
     (fun () -> open_in pp_input) in

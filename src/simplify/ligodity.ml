@@ -100,6 +100,14 @@ let rec simpl_expression :
   let mk_let_in binder rhs result =
     E_let_in {binder; rhs; result} in
 
+  trace (
+    let title () = "simplifying expression" in
+    let message () = "" in
+    let data = [
+      ("expression" , thunk @@ Format.asprintf "%a" (PP_helpers.printer Raw.print_expr) t)
+    ] in
+    error ~data title message
+  ) @@
   match t with
   | Raw.ELetIn e -> (
       let Raw.{binding; body; _} = e.value in
@@ -194,7 +202,7 @@ let rec simpl_expression :
   | EString _ -> simple_fail "string: not supported yet"
   | ELogic l -> simpl_logic_expression ?te_annot l
   | EList l -> simpl_list_expression ?te_annot l
-  | ECase c ->
+  | ECase c -> (
       let%bind e = simpl_expression c.value.expr in
       let%bind lst =
         let aux (x : Raw.expr Raw.case_clause) =
@@ -204,8 +212,31 @@ let rec simpl_expression :
         @@ List.map aux
         @@ List.map get_value
         @@ npseq_to_list c.value.cases.value in
-      let%bind cases = simpl_cases lst in
-      return @@ E_matching (e, cases)
+      let default_action () =
+        let%bind cases = simpl_cases lst in
+        return @@ E_matching (e , cases) in
+      (* Hack to take care of patterns introduced by `parser/ligodity/Parser.mly` in "norm_fun_expr" *)
+      match lst with
+      | [ (pattern , rhs) ] -> (
+          match pattern with
+          | Raw.PPar p -> (
+              let p' = p.value.inside in
+              match p' with
+              | Raw.PTyped x -> (
+                  let x' = x.value in
+                  match x'.pattern with
+                  | Raw.PVar y ->
+                    let var_name = y.value in
+                    let%bind type_expr = simpl_type_expression x'.type_expr in
+                    return @@ e_let_in (var_name , Some type_expr) e rhs
+                  | _ -> default_action ()
+                )
+              | _ -> default_action ()
+            )
+          | _ -> default_action ()
+        )
+      | _ -> default_action ()
+    )
   | EFun lamb ->
       let%bind input_type = bind_map_option
         (fun (_,type_expr) -> simpl_type_expression type_expr)
@@ -237,6 +268,8 @@ let rec simpl_expression :
       let%bind match_true = simpl_expression c.ifso in
       let%bind match_false = simpl_expression c.ifnot in
       return @@ E_matching (expr, (Match_bool {match_true; match_false}))
+
+
 and simpl_logic_expression ?te_annot (t:Raw.logic_expr) : expr result =
   let return x = ok @@ make_option_typed x te_annot in
   match t with
@@ -302,7 +335,7 @@ and simpl_declaration : Raw.declaration -> declaration Location.wrap result = fu
       let {name;type_expr} : Raw.type_decl = x.value in
       let%bind type_expression = simpl_type_expression type_expr in
       ok @@ loc x @@ Declaration_type (name.value , type_expression)
-  | LetEntry _ -> simple_fail "no entry point yet"
+  | LetEntry x (* -> simple_fail "no entry point yet" *)
   | Let x -> (
       let _, binding = x.value in
       let {variable ; lhs_type ; let_rhs} = binding in
@@ -392,4 +425,4 @@ and simpl_cases : type a . (Raw.pattern * a) list -> a matching result = fun t -
     )
 
 let simpl_program : Raw.ast -> program result = fun t ->
-  bind_list @@ List.map simpl_declaration @@ nseq_to_list t.decl
+  bind_list @@ List.map simpl_declaration @@ List.rev @@ nseq_to_list t.decl

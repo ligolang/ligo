@@ -4,8 +4,12 @@ open Test_helpers
 
 open Ast_simplified.Combinators
 
-let mtype_file = type_file "cameligo"
+let mtype_file ?debug_simplify ?debug_typed = type_file ?debug_simplify ?debug_typed "cameligo"
 let type_file = type_file "pascaligo"
+
+let type_alias () : unit result =
+  let%bind program = type_file "./contracts/type-alias.ligo" in
+  expect_eq_evaluate program "foo" (e_int 23)
 
 let function_ () : unit result =
   let%bind program = type_file "./contracts/function.ligo" in
@@ -436,7 +440,7 @@ let dispatch_counter_contract () : unit result =
   expect_eq_n program "main" make_input make_expected
 
 let basic_mligo () : unit result =
-  let%bind typed = mtype_file "./contracts/basic.mligo" in
+  let%bind typed = mtype_file ~debug_simplify:true "./contracts/basic.mligo" in
   let%bind result = evaluate_typed "foo" typed in
   Ligo.AST_Typed.assert_value_eq (Ligo.AST_Typed.Combinators.e_a_empty_int (42 + 127), result)
 
@@ -453,6 +457,7 @@ let guess_the_hash_mligo () : unit result =
   expect_eq_n program "main" make_input make_expected
 
 let main = "Integration (End to End)", [
+    test "type alias" type_alias ;
     test "function" function_ ;
     test "assign" assign ;
     test "declaration local" declaration_local ;
