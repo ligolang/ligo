@@ -125,7 +125,7 @@ and declaration =
 (* Non-recursive values *)
 
 and let_binding = {                                  (* p = e   p : t = e *)
-  variable : variable;
+  bindings : pattern list;
   lhs_type : (colon * type_expr) option;
   eq       : equal;
   let_rhs  : expr

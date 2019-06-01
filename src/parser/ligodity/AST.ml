@@ -116,7 +116,7 @@ and declaration =
 (* Non-recursive values *)
 
 and let_binding = {
-  variable : variable;
+  bindings : pattern list;
   lhs_type : (colon * type_expr) option;
   eq       : equal;
   let_rhs  : expr
@@ -544,8 +544,8 @@ and print_terminator = function
   Some semi -> print_token semi ";"
 | None -> ()
 
-and print_let_binding {variable; lhs_type; eq; let_rhs} =
-  print_var variable;
+and print_let_binding {bindings; lhs_type; eq; let_rhs} =
+  List.iter print_pattern bindings;
   (match lhs_type with
      None -> ()
    | Some (colon, type_expr) ->

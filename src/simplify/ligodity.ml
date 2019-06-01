@@ -237,20 +237,7 @@ let rec simpl_expression :
         )
       | _ -> default_action ()
     )
-  | EFun lamb ->
-      let%bind input_type = bind_map_option
-        (fun (_,type_expr) -> simpl_type_expression type_expr)
-        lamb.value.p_annot in
-      let body, body_type =
-        match lamb.value.body with
-          EAnnot {value = expr, type_expr} -> expr, Some type_expr
-        | expr -> expr, None in
-      let%bind output_type =
-        bind_map_option simpl_type_expression body_type in
-      let%bind result = simpl_expression body in
-      let binder = lamb.value.param.value, input_type in
-      let lambda = {binder; input_type; output_type; result = result}
-      in return @@ E_lambda lambda
+  | EFun lamb -> simpl_fun lamb
   | ESeq s ->
       let items : Raw.expr list = pseq_to_list s.value.elements in
       (match items with
@@ -268,6 +255,50 @@ let rec simpl_expression :
       let%bind match_true = simpl_expression c.ifso in
       let%bind match_false = simpl_expression c.ifnot in
       return @@ E_matching (expr, (Match_bool {match_true; match_false}))
+
+and simpl_fun lamb : expr result =
+  let return x = ok x in
+  let rec aux args body =
+    match body with
+    | Raw.EFun l -> (
+        let l' = l.value in
+        let annot = Option.map snd l'.p_annot in
+        aux (args @ [(l'.param.value , annot)])  l'.body
+      )
+    | _ -> (args , body) in
+  let (args , body) = aux [] (Raw.EFun lamb) in
+  let%bind args' =
+    let aux  = fun (name , ty_opt) ->
+      let%bind ty =
+        match ty_opt with
+        | Some ty -> simpl_type_expression ty
+        | None when name = "storage" -> ok (T_variable "storage")
+        | None -> simple_fail "missing type annotation on input"
+      in
+      ok (name , ty)
+    in
+    bind_map_list aux args
+  in
+  let arguments_name = "arguments" in
+  let (binder , input_type) =
+    let type_expression = T_tuple (List.map snd args') in
+    (arguments_name , type_expression) in
+  let body, body_type =
+    match body with
+    | EAnnot {value = expr, type_expr} -> expr, Some type_expr
+    | expr -> expr, None in
+  let%bind output_type =
+    bind_map_option simpl_type_expression body_type in
+  let%bind result = simpl_expression body in
+  let wrapped_result =
+    let aux = fun i (name , ty) wrapped ->
+      let accessor = E_accessor (E_variable arguments_name , [ Access_tuple i ]) in
+      e_let_in (name , Some ty) accessor wrapped
+    in
+    let wraps = List.mapi aux args' in
+    List.fold_right' (fun x f -> f x) result wraps in
+  let lambda = {binder = (binder , Some input_type); input_type = (Some input_type); output_type; result = wrapped_result}
+  in return @@ E_lambda lambda
 
 
 and simpl_logic_expression ?te_annot (t:Raw.logic_expr) : expr result =
