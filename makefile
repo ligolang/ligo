@@ -5,7 +5,7 @@ build-deps:
 	./build-deps.sh
 
 build: build-deps
-	source ./build.sh
+	./build.sh
 
 test: build
 	dune build @ligo-test
