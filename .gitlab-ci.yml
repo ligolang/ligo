@@ -17,7 +17,7 @@ stages:
 .docker_build: &docker_build
   script:
     - docker build -t $LIGO_REGISTRY_IMAGE:latest -f ./docker/Dockerfile .
-    
+
 .before_script: &before_script
   before_script:
     # Install dependencies
@@ -80,6 +80,8 @@ remote-repo-job:
     #- opam install -y merlin
     #- opam install -y ocp-indent
     #- opam user-setup install
+  only:
+    - master
 
 # Run a docker build without publishing to the registry
 build-current-docker-image:
@@ -94,7 +96,7 @@ build-current-docker-image:
 build-and-publish-latest-docker-image:
   stage: build_and_deploy_docker
   <<: *docker
-  <<: *docker_build 
+  <<: *docker_build
   after_script:
     - docker login -u $LIGO_REGISTRY_USER -p $LIGO_REGISTRY_PASSWORD
     - docker push $LIGO_REGISTRY_IMAGE:latest
