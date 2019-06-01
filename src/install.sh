@@ -1,6 +1,6 @@
-add-apt-repository ppa:avsm/ppa
-apt update
-apt-get install opam mercurial darcs make m4 gcc libev-dev libgmp-dev pkg-config libhidapi-dev
-opam init --bare
-y
-y
+#! /bin/sh
+sudo add-apt-repository -y ppa:avsm/ppa
+sudo apt-get update
+sudo apt-get install -y opam mercurial darcs make m4 gcc libev-dev libgmp-dev pkg-config libhidapi-dev
+opam init --bare -a
+
