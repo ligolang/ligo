@@ -26,7 +26,7 @@ if test -e index.tar.gz && test -e packages && test -e repo && test -e urls.txt;
       # Rewrite the URLs in the opam repository to point to the project root
       (
         cd vendors/ligo-opam-repository-local-generated
-        find . -type f -name opam -print0 | | xargs -0 sed -i -e 's~src:  *"https://gitlab.com/ligolang/ligo/-/archive/master/ligo\.tar\.gz"~src: "file://'"$escaped_project_root"'"~'
+        find . -type f -name opam -print0 | xargs -0 sed -i -e 's~src:  *"https://gitlab.com/ligolang/ligo/-/archive/master/ligo\.tar\.gz"~src: "file://'"$escaped_project_root"'"~'
       )
 
       # Regenerate the index.tar.gz etc. in the local repo
