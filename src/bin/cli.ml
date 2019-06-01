@@ -47,7 +47,7 @@ let compile_file =
     toplevel @@
     let%bind contract =
       trace (simple_error "compile michelson") @@
-      Ligo.Contract.compile_contract_file source entry_point syntax in
+      Ligo.Run.compile_contract_file source entry_point syntax in
     Format.printf "Contract:\n%s\n" contract ;
     ok ()
   in
@@ -61,7 +61,7 @@ let compile_parameter =
     toplevel @@
     let%bind value =
       trace (simple_error "compile-input") @@
-      Ligo.Contract.compile_contract_parameter source entry_point expression syntax in
+      Ligo.Run.compile_contract_parameter source entry_point expression syntax in
     Format.printf "Input:\n%s\n" value;
     ok ()
   in
@@ -75,7 +75,7 @@ let compile_storage =
     toplevel @@
     let%bind value =
       trace (simple_error "compile-storage") @@
-      Ligo.Contract.compile_contract_storage source entry_point expression syntax in
+      Ligo.Run.compile_contract_storage source entry_point expression syntax in
     Format.printf "Storage:\n%s\n" value;
     ok ()
   in
