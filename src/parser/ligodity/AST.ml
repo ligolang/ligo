@@ -327,7 +327,7 @@ and let_in = {
 
 and fun_expr = {
   kwd_fun : kwd_fun;
-  param   : variable;
+  params  : pattern list;
   p_annot : (colon * type_expr) option;
   arrow   : arrow;
   body    : expr
@@ -737,10 +737,10 @@ and print_let_in (bind: let_in) =
   print_expr body
 
 and print_fun_expr {value; _} =
-  let {kwd_fun; param; p_annot; arrow; body} = value in
+  let {kwd_fun; params; p_annot; arrow; body} = value in
   print_token kwd_fun "fun";
   (match p_annot with
-     None -> print_var param
+     None -> List.iter print_pattern params
    | Some (colon, type_expr) ->
       print_token colon ":";
       print_type_expr type_expr);

@@ -206,7 +206,7 @@ and ifthenelse
   let%bind cond' = bind_map_location expression cond in
   let%bind branch_true' = bind_map_location expression branch_true in
   let%bind branch_false' = bind_map_location expression branch_false in
-  ok @@ O.(e_match_bool (unwrap cond') (unwrap branch_true') (unwrap branch_false'))
+  ok @@ O.(e_matching_bool (unwrap cond') (unwrap branch_true') (unwrap branch_false'))
 
 and ifthen
   : (I.expression Location.wrap * I.expression Location.wrap) -> O.expression result
@@ -214,7 +214,7 @@ and ifthen
   let (cond , branch_true) = it in
   let%bind cond' = bind_map_location expression cond in
   let%bind branch_true' = bind_map_location expression branch_true in
-  ok @@ O.(e_match_bool (unwrap cond') (unwrap branch_true') (e_unit ()))
+  ok @@ O.(e_matching_bool (unwrap cond') (unwrap branch_true') (e_unit ()))
 
 and match_
   : I.expression Location.wrap * I.e_match_clause Location.wrap list -> O.expression result
@@ -231,7 +231,7 @@ and match_
         ok (x' , y') in
       bind_map_list aux clauses in
     let%bind matching = match_clauses clauses' in
-    ok O.(e_match expr' matching)
+    ok O.(e_matching expr' matching)
 
 and record
   = fun r ->
@@ -244,7 +244,7 @@ and record
   in
   let%bind r' = bind_map_list (bind_map_location aux) r in
   let lst = List.map ((fun (x, y) -> unwrap x, unwrap y) >| unwrap) r' in
-  ok @@ O.(e_record lst)
+  ok @@ O.(e_ez_record lst)
 
 and expression_main : I.expression_main Location.wrap -> O.expression result = fun em ->
   let return x = ok @@ x in
@@ -334,13 +334,13 @@ and expression_main : I.expression_main Location.wrap -> O.expression result = f
 and identifier_application : (string Location.wrap) list * string Location.wrap -> O.expression option -> _ result = fun (lst , v) param_opt ->
   let constant_name = String.concat "." ((List.map unwrap lst) @ [unwrap v]) in
   match List.assoc_opt constant_name constants , param_opt with
-  | Some s , None -> ok O.(E_constant (s , []))
+  | Some s , None -> ok O.(e_constant s [])
   | Some s , Some param -> (
       let params =
-        match param with
+        match Location.unwrap param with
         | E_tuple lst -> lst
         | _ -> [ param ] in
-      ok O.(E_constant (s , params))
+      ok O.(e_constant s params)
     )
   | None , param_opt -> (
       let%bind () =

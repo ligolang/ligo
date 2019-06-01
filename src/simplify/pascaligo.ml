@@ -16,16 +16,18 @@ let get_value : 'a Raw.reg -> 'a = fun x -> x.value
 
 open Operators.Simplify.Pascaligo
 
+let r_split = Location.r_split
+
 let return expr = ok @@ fun expr'_opt ->
   let expr = expr in
   match expr'_opt with
   | None -> ok @@ expr
   | Some expr' -> ok @@ e_sequence expr expr'
 
-let return_let_in binder rhs = ok @@ fun expr'_opt ->
+let return_let_in ?loc binder rhs = ok @@ fun expr'_opt ->
   match expr'_opt with
   | None -> simple_fail "missing return" (* Hard to explain. Shouldn't happen in prod. *)
-  | Some expr' -> ok @@ e_let_in binder rhs expr'
+  | Some expr' -> ok @@ e_let_in ?loc binder rhs expr'
 
 let rec simpl_type_expression (t:Raw.type_expr) : type_expression result =
   match t with
@@ -88,11 +90,12 @@ and simpl_list_type_expression (lst:Raw.type_expr list) : type_expression result
 
 let rec simpl_expression (t:Raw.expr) : expr result =
   let return x = ok x in
-  let simpl_projection = fun (p:Raw.projection) ->
+  let simpl_projection = fun (p : Raw.projection Region.reg) ->
+    let (p' , loc) = r_split p in
     let var =
-      let name = p.struct_name.value in
+      let name = p'.struct_name.value in
       e_variable name in
-    let path = p.field_path in
+    let path = p'.field_path in
     let path' =
       let aux (s:Raw.selection) =
         match s with
@@ -100,97 +103,112 @@ let rec simpl_expression (t:Raw.expr) : expr result =
         | Component index -> Access_tuple (Z.to_int (snd index.value))
       in
       List.map aux @@ npseq_to_list path in
-    return @@ E_accessor (var, path')
+    return @@ e_accessor ~loc var path'
   in
   match t with
   | EAnnot a -> (
-      let (expr , type_expr) = a.value in
+      let ((expr , type_expr) , loc) = r_split a in
       let%bind expr' = simpl_expression expr in
       let%bind type_expr' = simpl_type_expression type_expr in
-      return @@ e_annotation expr' type_expr'
+      return @@ e_annotation ~loc expr' type_expr'
     )
   | EVar c -> (
-      let c' = c.value in
+      let (c' , loc) = r_split c in
       match List.assoc_opt c' constants with
-      | None -> return @@ E_variable c.value
-      | Some s -> return @@ E_constant (s , [])
+      | None -> return @@ e_variable ~loc c.value
+      | Some s -> return @@ e_constant ~loc s []
     )
   | ECall x -> (
-      let (name, args) = x.value in
-      let f = name.value in
-      let args' = npseq_to_list args.value.inside in
+      let ((name, args) , loc) = r_split x in
+      let (f , f_loc) = r_split name in
+      let (args , args_loc) = r_split args in
+      let args' = npseq_to_list args.inside in
       match List.assoc_opt f constants with
       | None ->
-          let%bind arg = simpl_tuple_expression args' in
-          return @@ E_application (e_variable f, arg)
+          let%bind arg = simpl_tuple_expression ~loc:args_loc args' in
+          return @@ e_application ~loc (e_variable ~loc:f_loc f) arg
       | Some s ->
           let%bind lst = bind_map_list simpl_expression args' in
-          return @@ E_constant (s , lst)
+          return @@ e_constant ~loc s lst
     )
   | EPar x -> simpl_expression x.value.inside
-  | EUnit _ -> return @@ E_literal Literal_unit
-  | EBytes x -> return @@ E_literal (Literal_bytes (Bytes.of_string @@ fst x.value))
+  | EUnit reg ->
+    let loc = Location.lift reg in
+    return @@ e_literal ~loc Literal_unit
+  | EBytes x ->
+    let (x' , loc) = r_split x in
+    return @@ e_literal ~loc (Literal_bytes (Bytes.of_string @@ fst x'))
   | ETuple tpl ->
       let (Raw.TupleInj tpl') = tpl in
-      simpl_tuple_expression
-      @@ npseq_to_list tpl'.value.inside
+      let (tpl' , loc) = r_split tpl' in
+      simpl_tuple_expression ~loc @@ npseq_to_list tpl'.inside
   | ERecord r ->
       let%bind fields = bind_list
         @@ List.map (fun ((k : _ Raw.reg), v) -> let%bind v = simpl_expression v in ok (k.value, v))
         @@ List.map (fun (x:Raw.field_assign Raw.reg) -> (x.value.field_name, x.value.field_expr))
         @@ pseq_to_list r.value.elements in
       let aux prev (k, v) = SMap.add k v prev in
-      return @@ E_record (List.fold_left aux SMap.empty fields)
-  | EProj p' -> (
-      let p = p'.value in
-      simpl_projection p
+      return @@ e_record (List.fold_left aux SMap.empty fields)
+  | EProj p -> simpl_projection p
+  | EConstr (ConstrApp c) -> (
+      let ((c, args) , loc) = r_split c in
+      let (args , args_loc) = r_split args in
+      let%bind arg =
+        simpl_tuple_expression ~loc:args_loc
+        @@ npseq_to_list args.inside in
+      return @@ e_constructor ~loc c.value arg
     )
-  | EConstr (ConstrApp c) ->
-      let (c, args) = c.value in
-      let%bind arg =
-        simpl_tuple_expression
-        @@ npseq_to_list args.value.inside in
-      return @@ E_constructor (c.value, arg)
   | EConstr (SomeApp a) ->
-      let (_, args) = a.value in
+      let ((_, args) , loc) = r_split a in
+      let (args , args_loc) = r_split args in
       let%bind arg =
-        simpl_tuple_expression
-        @@ npseq_to_list args.value.inside in
-      return @@ E_constant ("SOME", [arg])
-  | EConstr (NoneExpr _) ->
-      return @@ E_constant ("NONE" , [])
+        simpl_tuple_expression ~loc:args_loc
+        @@ npseq_to_list args.inside in
+      return @@ e_constant ~loc "SOME" [arg]
+  | EConstr (NoneExpr reg) -> (
+      let loc = Location.lift reg in
+      return @@ e_none ~loc ()
+    )
   | EArith (Add c) ->
-      simpl_binop "ADD" c.value
+      simpl_binop "ADD" c
   | EArith (Sub c) ->
-      simpl_binop "SUB" c.value
+      simpl_binop "SUB" c
   | EArith (Mult c) ->
-      simpl_binop "TIMES" c.value
+      simpl_binop "TIMES" c
   | EArith (Div c) ->
-      simpl_binop "DIV" c.value
+      simpl_binop "DIV" c
   | EArith (Mod c) ->
-      simpl_binop "MOD" c.value
-  | EArith (Int n) ->
-      let n = Z.to_int @@ snd @@ n.value in
-      return @@ E_literal (Literal_int n)
-  | EArith (Nat n) ->
-      let n = Z.to_int @@ snd @@ n.value in
-      return @@ E_literal (Literal_nat n)
-  | EArith (Mtz n) ->
-      let n = Z.to_int @@ snd @@ n.value in
-      return @@ E_literal (Literal_tez n)
+      simpl_binop "MOD" c
+  | EArith (Int n) -> (
+      let (n , loc) = r_split n in
+      let n = Z.to_int @@ snd n in
+      return @@ e_literal ~loc (Literal_int n)
+    )
+  | EArith (Nat n) -> (
+      let (n , loc) = r_split n in
+      let n = Z.to_int @@ snd @@ n in
+      return @@ e_literal ~loc (Literal_nat n)
+    )
+  | EArith (Mtz n) -> (
+      let (n , loc) = r_split n in
+      let n = Z.to_int @@ snd @@ n in
+      return @@ e_literal ~loc (Literal_tez n)
+    )
   | EArith _ -> simple_fail "arith: not supported yet"
   | EString (String s) ->
+    let (s , loc) = r_split s in
       let s' =
-        let s = s.value in
+        (* S contains quotes *)
         String.(sub s 1 ((length s) - 2))
       in
-      return @@ E_literal (Literal_string s')
+      return @@ e_literal ~loc (Literal_string s')
   | EString _ -> simple_fail "string: not supported yet"
   | ELogic l -> simpl_logic_expression l
   | EList l -> simpl_list_expression l
   | ESet _ -> simple_fail "set: not supported yet"
-  | ECase c ->
-      let%bind e = simpl_expression c.value.expr in
+  | ECase c -> (
+      let (c , loc) = r_split c in
+      let%bind e = simpl_expression c.expr in
       let%bind lst =
         let aux (x : Raw.expr Raw.case_clause) =
           let%bind expr = simpl_expression x.rhs in
@@ -198,84 +216,103 @@ let rec simpl_expression (t:Raw.expr) : expr result =
         bind_list
         @@ List.map aux
         @@ List.map get_value
-        @@ npseq_to_list c.value.cases.value in
+        @@ npseq_to_list c.cases.value in
       let%bind cases = simpl_cases lst in
-      return @@ E_matching (e, cases)
-  | EMap (MapInj mi) ->
+      return @@ e_matching ~loc e cases
+    )
+  | EMap (MapInj mi) -> (
+      let (mi , loc) = r_split mi in
       let%bind lst =
-        let lst = List.map get_value @@ pseq_to_list mi.value.elements in
+        let lst = List.map get_value @@ pseq_to_list mi.elements in
         let aux : Raw.binding -> (expression * expression) result = fun b ->
           let%bind src = simpl_expression b.source in
           let%bind dst = simpl_expression b.image in
           ok (src, dst) in
         bind_map_list aux lst in
-      return (E_map lst)
-  | EMap (MapLookUp lu) ->
-      let%bind path = match lu.value.path with
-        | Name v -> return (E_variable v.value)
-        | Path p -> simpl_projection p.value
+      return @@ e_map ~loc lst
+    )
+  | EMap (MapLookUp lu) -> (
+      let (lu , loc) = r_split lu in
+      let%bind path = match lu.path with
+        | Name v -> (
+            let (v , loc) = r_split v in
+            return @@ e_variable ~loc v
+          )
+        | Path p -> simpl_projection p
       in
-      let%bind index = simpl_expression lu.value.index.value.inside in
-      return (E_look_up (path, index))
+      let%bind index = simpl_expression lu.index.value.inside in
+      return @@ e_look_up ~loc path index
+    )
 
 and simpl_logic_expression (t:Raw.logic_expr) : expression result =
   let return x = ok x in
   match t with
-  | BoolExpr (False _) ->
-      return @@ E_literal (Literal_bool false)
-  | BoolExpr (True _) ->
-      return @@ E_literal (Literal_bool true)
+  | BoolExpr (False reg) -> (
+      let loc = Location.lift reg in
+      return @@ e_literal ~loc (Literal_bool false)
+    )
+  | BoolExpr (True reg) -> (
+      let loc = Location.lift reg in
+      return @@ e_literal ~loc (Literal_bool true)
+    )
   | BoolExpr (Or b) ->
-      simpl_binop "OR" b.value
+      simpl_binop "OR" b
   | BoolExpr (And b) ->
-      simpl_binop "AND" b.value
+      simpl_binop "AND" b
   | BoolExpr (Not b) ->
-      simpl_unop "NOT" b.value
+      simpl_unop "NOT" b
   | CompExpr (Lt c) ->
-      simpl_binop "LT" c.value
+      simpl_binop "LT" c
   | CompExpr (Gt c) ->
-      simpl_binop "GT" c.value
+      simpl_binop "GT" c
   | CompExpr (Leq c) ->
-      simpl_binop "LE" c.value
+      simpl_binop "LE" c
   | CompExpr (Geq c) ->
-      simpl_binop "GE" c.value
+      simpl_binop "GE" c
   | CompExpr (Equal c) ->
-      simpl_binop "EQ" c.value
+      simpl_binop "EQ" c
   | CompExpr (Neq c) ->
-      simpl_binop "NEQ" c.value
+      simpl_binop "NEQ" c
 
 and simpl_list_expression (t:Raw.list_expr) : expression result =
   let return x = ok x in
   match t with
   | Cons c ->
-      simpl_binop "CONS" c.value
-  | List lst ->
+      simpl_binop "CONS" c
+  | List lst -> (
+      let (lst , loc) = r_split lst in
       let%bind lst' =
         bind_map_list simpl_expression @@
-        pseq_to_list lst.value.elements in
-      return @@ E_list lst'
-  | Nil _ ->
-      return @@ E_list []
+        pseq_to_list lst.elements in
+      return @@ e_list ~loc lst'
+    )
+  | Nil reg -> (
+      let loc = Location.lift reg in
+      return @@ e_list ~loc []
+    )
 
-and simpl_binop (name:string) (t:_ Raw.bin_op) : expression result =
+and simpl_binop (name:string) (t:_ Raw.bin_op Region.reg) : expression result =
   let return x = ok x in
+  let (t , loc) = r_split t in
   let%bind a = simpl_expression t.arg1 in
   let%bind b = simpl_expression t.arg2 in
-  return @@ E_constant (name, [a;b])
+  return @@ e_constant ~loc name [ a ; b ]
 
-and simpl_unop (name:string) (t:_ Raw.un_op) : expression result =
+and simpl_unop (name:string) (t:_ Raw.un_op Region.reg) : expression result =
   let return x = ok x in
+  let (t , loc) = r_split t in
   let%bind a = simpl_expression t.arg in
-  return @@ E_constant (name, [a])
+  return @@ e_constant ~loc name [ a ]
 
-and simpl_tuple_expression (lst:Raw.expr list) : expression result =
+and simpl_tuple_expression ?loc (lst:Raw.expr list) : expression result =
   let return x = ok x in
   match lst with
-  | [] -> return @@ E_literal Literal_unit
+  | [] -> return @@ e_literal Literal_unit
   | [hd] -> simpl_expression hd
-  | lst ->
+  | lst -> (
       let%bind lst = bind_list @@ List.map simpl_expression lst in
-      return @@ E_tuple lst
+      return @@ e_tuple ?loc lst
+    )
 
 and simpl_local_declaration : Raw.local_decl -> _ result = fun t ->
   match t with
@@ -284,26 +321,28 @@ and simpl_local_declaration : Raw.local_decl -> _ result = fun t ->
 
 and simpl_lambda_declaration : Raw.lambda_decl -> _ result = fun l ->
   match l with
-  | FunDecl f ->
-      let%bind (name , e) = simpl_fun_declaration (f.value) in
-      return_let_in name e
+  | FunDecl f -> (
+      let (f , loc) = r_split f in
+      let%bind (name , e) = simpl_fun_declaration ~loc f in
+      return_let_in ~loc name e
+    )
   | ProcDecl _ -> simple_fail "no local procedure yet"
   | EntryDecl _ -> simple_fail "no local entry-point yet"
 
 and simpl_data_declaration : Raw.data_decl -> _ result = fun t ->
   match t with
   | LocalVar x ->
-      let x = x.value in
+      let (x , loc) = r_split x in
       let name = x.name.value in
       let%bind t = simpl_type_expression x.var_type in
       let%bind expression = simpl_expression x.init in
-      return_let_in (name , Some t) expression
+      return_let_in ~loc (name , Some t) expression
   | LocalConst x ->
-      let x = x.value in
+      let (x , loc) = r_split x in
       let name = x.name.value in
       let%bind t = simpl_type_expression x.const_type in
       let%bind expression = simpl_expression x.init in
-      return_let_in (name , Some t) expression
+      return_let_in ~loc (name , Some t) expression
 
 and simpl_param : Raw.param_decl -> (type_name * type_expression) result = fun t ->
   match t with
@@ -318,7 +357,7 @@ and simpl_param : Raw.param_decl -> (type_name * type_expression) result = fun t
       let%bind type_expression = simpl_type_expression c.param_type in
       ok (type_name , type_expression)
 
-and simpl_fun_declaration : Raw.fun_decl -> ((name * type_expression option) * expression) result = fun x ->
+and simpl_fun_declaration : loc:_ -> Raw.fun_decl -> ((name * type_expression option) * expression) result = fun ~loc x ->
   let open! Raw in
   let {name;param;ret_type;local_decls;block;return} : fun_decl = x in
   (match npseq_to_list param.value.inside with
@@ -338,12 +377,8 @@ and simpl_fun_declaration : Raw.fun_decl -> ((name * type_expression option) * e
        let%bind result =
          let aux prec cur = cur (Some prec) in
          bind_fold_right_list aux result body in
-       let expression = E_lambda {
-           binder = (binder , Some input_type) ;
-           input_type = Some input_type ;
-           output_type = Some output_type ;
-           result
-         } in
+       let expression : expression = e_lambda ~loc binder (Some input_type)
+           (Some output_type) result in
        let type_annotation = Some (T_function (input_type, output_type)) in
        ok ((name , type_annotation) , expression)
      )
@@ -355,7 +390,7 @@ and simpl_fun_declaration : Raw.fun_decl -> ((name * type_expression option) * e
          (arguments_name , type_expression) in
        let%bind tpl_declarations =
          let aux = fun i x ->
-           let expr = E_accessor (E_variable arguments_name , [ Access_tuple i ]) in
+           let expr = e_accessor (e_variable arguments_name) [ Access_tuple i ] in
            let type_ = Some (snd x) in
            let ass = return_let_in (fst x , type_) expr in
            ass
@@ -372,24 +407,20 @@ and simpl_fun_declaration : Raw.fun_decl -> ((name * type_expression option) * e
        let%bind result =
          let aux prec cur = cur (Some prec) in
          bind_fold_right_list aux result body in
-       let expression = E_lambda {
-           binder = (binder , Some input_type) ;
-           input_type = Some input_type ;
-           output_type = Some output_type ;
-           result
-         } in
+       let expression = e_lambda ~loc binder (Some input_type) (Some output_type) result in
        let type_annotation = Some (T_function (input_type, output_type)) in
        ok ((name.value , type_annotation) , expression)
      )
   )
 and simpl_declaration : Raw.declaration -> declaration Location.wrap result = fun t ->
   let open! Raw in
-  let loc : 'a . 'a Raw.reg -> _ -> _ = fun x v -> Location.wrap ~loc:(File x.region) v in
   match t with
-  | TypeDecl x ->
-      let {name;type_expr} : Raw.type_decl = x.value in
+  | TypeDecl x -> (
+      let (x , loc) = r_split x in
+      let {name;type_expr} : Raw.type_decl = x in
       let%bind type_expression = simpl_type_expression type_expr in
-      ok @@ loc x @@ Declaration_type (name.value , type_expression)
+      ok @@ Location.wrap ~loc (Declaration_type (name.value , type_expression))
+    )
   | ConstDecl x ->
       let simpl_const_decl = fun {name;const_type;init} ->
         let%bind expression = simpl_expression init in
@@ -398,11 +429,11 @@ and simpl_declaration : Raw.declaration -> declaration Location.wrap result = fu
         ok @@ Declaration_constant (name.value , type_annotation , expression)
       in
       bind_map_location simpl_const_decl (Location.lift_region x)
-  | LambdaDecl (FunDecl x) ->
-      let aux f x =
-        let%bind ((name , ty_opt) , expr) = f x in
-        ok @@ Declaration_constant (name , ty_opt , expr) in
-      bind_map_location (aux simpl_fun_declaration) (Location.lift_region x)
+  | LambdaDecl (FunDecl x) -> (
+      let (x , loc) = r_split x in
+      let%bind ((name , ty_opt) , expr) = simpl_fun_declaration ~loc x in
+      ok @@ Location.wrap ~loc (Declaration_constant (name , ty_opt , expr))
+    )
   | LambdaDecl (ProcDecl _) -> simple_fail "no proc declaration yet"
   | LambdaDecl (EntryDecl _)-> simple_fail "no entry point yet"
 
@@ -418,7 +449,10 @@ and simpl_single_instruction : Raw.single_instr -> (_ -> expression result) resu
       let%bind expr = simpl_expression e.value.fail_expr in
       return @@ e_failwith expr
     )
-  | Skip _ -> return @@ e_skip
+  | Skip reg -> (
+      let loc = Location.lift reg in
+      return @@ e_skip ~loc ()
+    )
   | Loop (While l) ->
       let l = l.value in
       let%bind cond = simpl_expression l.cond in
@@ -427,8 +461,8 @@ and simpl_single_instruction : Raw.single_instr -> (_ -> expression result) resu
       return @@ e_loop cond body
   | Loop (For _) ->
       simple_fail "no for yet"
-  | Cond c ->
-      let c = c.value in
+  | Cond c -> (
+      let (c , loc) = r_split c in
       let%bind expr = simpl_expression c.test in
       let%bind match_true = match c.ifso with
         | ClauseInstr i -> simpl_instruction_block i
@@ -438,9 +472,10 @@ and simpl_single_instruction : Raw.single_instr -> (_ -> expression result) resu
         | ClauseBlock b -> simpl_statements @@ fst b.value.inside in
       let%bind match_true = match_true None in
       let%bind match_false = match_false None in
-      return @@ E_matching (expr, (Match_bool {match_true; match_false}))
+      return @@ e_matching expr ~loc (Match_bool {match_true; match_false})
+    )
   | Assign a -> (
-      let a = a.value in
+      let (a , loc) = r_split a in
       let%bind value_expr = match a.rhs with
         | Expr e -> simpl_expression e
         | NoneExpr _ -> simple_fail "no none assignments yet"
@@ -448,7 +483,7 @@ and simpl_single_instruction : Raw.single_instr -> (_ -> expression result) resu
       match a.lhs with
         | Path path -> (
             let (name , path') = simpl_path path in
-            return @@ E_assign (name , path' , value_expr)
+            return @@ e_assign ~loc name path' value_expr
           )
         | MapPath v -> (
             let v' = v.value in
@@ -458,11 +493,11 @@ and simpl_single_instruction : Raw.single_instr -> (_ -> expression result) resu
             let%bind key_expr = simpl_expression v'.index.value.inside in
             let old_expr = e_variable name.value in
             let expr' = e_map_update key_expr value_expr old_expr in
-            return @@ E_assign (name.value , [] , expr')
+            return @@ e_assign ~loc name.value [] expr'
           )
     )
   | CaseInstr c -> (
-      let c = c.value in
+      let (c , loc) = r_split c in
       let%bind expr = simpl_expression c.expr in
       let%bind cases =
         let aux (x : Raw.instruction Raw.case_clause Raw.reg) =
@@ -473,25 +508,25 @@ and simpl_single_instruction : Raw.single_instr -> (_ -> expression result) resu
         @@ List.map aux
         @@ npseq_to_list c.cases.value in
       let%bind m = simpl_cases cases in
-      return @@ E_matching (expr, m)
+      return @@ e_matching ~loc expr m
     )
   | RecordPatch r -> (
       let r = r.value in
       let (name , access_path) = simpl_path r.path in
       let%bind inj = bind_list
-        @@ List.map (fun (x:Raw.field_assign) -> let%bind e = simpl_expression x.field_expr in ok (x.field_name.value, e))
-        @@ List.map (fun (x:_ Raw.reg) -> x.value)
+        @@ List.map (fun (x:Raw.field_assign Region.reg) ->
+            let (x , loc) = r_split x in
+            let%bind e = simpl_expression x.field_expr in ok (x.field_name.value, e , loc)
+          )
         @@ pseq_to_list r.record_inj.value.elements in
       let%bind expr =
-        let aux = fun (access , v) ->
-          E_assign (name , access_path @ [ Access_record access ] , v) in
+        let aux = fun (access , v , loc) ->
+          e_assign ~loc name (access_path @ [ Access_record access ]) v in
         let assigns = List.map aux inj in
         match assigns with
         | [] -> simple_fail "empty record patch"
         | hd :: tl -> (
-            let aux acc cur =
-              e_sequence (acc) (cur)
-            in
+            let aux acc cur = e_sequence (acc) (cur) in
             ok @@ List.fold_left aux hd tl
           )
       in
@@ -499,15 +534,16 @@ and simpl_single_instruction : Raw.single_instr -> (_ -> expression result) resu
     )
   | MapPatch _ -> simple_fail "no map patch yet"
   | SetPatch _ -> simple_fail "no set patch yet"
-  | MapRemove r ->
-      let v = r.value in
+  | MapRemove r -> (
+      let (v , loc) = r_split r in
       let key = v.key in
       let%bind map = match v.map with
         | Name v -> ok v.value
         | _ -> simple_fail "no complex map remove yet" in
       let%bind key' = simpl_expression key in
-      let expr = E_constant ("MAP_REMOVE", [key' ; e_variable map]) in
-      return @@ E_assign (map , [] , expr)
+      let expr = e_constant ~loc "MAP_REMOVE" [key' ; e_variable map] in
+      return @@ e_assign ~loc map [] expr
+    )
   | SetRemove _ -> simple_fail "no set remove yet"
 
 and simpl_path : Raw.path -> string * Ast_simplified.access_path = fun p ->
