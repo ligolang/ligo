@@ -1,6 +1,8 @@
 open Trace
-open Ligo
+open Ligo.Run
 open Test_helpers
+
+let type_file = type_file "pascaligo"
 
 let get_program =
   let s = ref None in
@@ -12,8 +14,8 @@ let get_program =
         ok program
       )
 
-let a_heap_ez ?value_type (content:(int * AST_Typed.ae) list) =
-  let open AST_Typed.Combinators in
+let a_heap_ez ?value_type (content:(int * Ast_typed.ae) list) =
+  let open Ast_typed.Combinators in
   let content =
     let aux = fun (x, y) -> e_a_empty_nat x, y in
     List.map aux content in
@@ -24,7 +26,7 @@ let a_heap_ez ?value_type (content:(int * AST_Typed.ae) list) =
   e_a_empty_map content (t_nat ()) value_type
 
 let ez lst =
-  let open AST_Typed.Combinators in
+  let open Ast_typed.Combinators in
   let value_type = t_pair
       (t_int ())
       (t_string ())
@@ -46,11 +48,11 @@ let dummy n =
 let is_empty () : unit result =
   let%bind program = get_program () in
   let aux n =
-    let open AST_Typed.Combinators in
+    let open Ast_typed.Combinators in
     let input = dummy n in
-    let%bind result = easy_run_typed "is_empty" program input in
+    let%bind result = run_typed "is_empty" program input in
     let expected = e_a_empty_bool (n = 0) in
-    AST_Typed.assert_value_eq (expected, result)
+    Ast_typed.assert_value_eq (expected, result)
   in
   let%bind _ = bind_list
     @@ List.map aux
@@ -60,15 +62,15 @@ let is_empty () : unit result =
 let get_top () : unit result =
   let%bind program = get_program () in
   let aux n =
-    let open AST_Typed.Combinators in
+    let open Ast_typed.Combinators in
     let input = dummy n in
-    match n, easy_run_typed "get_top" program input with
+    match n, run_typed "get_top" program input with
     | 0, Trace.Ok _ -> simple_fail "unexpected success"
     | 0, _ -> ok ()
     | _, result ->
         let%bind result' = result in
         let expected = e_a_empty_pair (e_a_empty_int 1) (e_a_empty_string "1") in
-        AST_Typed.assert_value_eq (expected, result')
+        Ast_typed.assert_value_eq (expected, result')
   in
   let%bind _ = bind_list
     @@ List.map aux
@@ -79,7 +81,7 @@ let pop_switch () : unit result =
   let%bind program = get_program () in
   let aux n =
     let input = dummy n in
-    match n, easy_run_typed "pop_switch" program input with
+    match n, run_typed "pop_switch" program input with
     | 0, Trace.Ok _ -> simple_fail "unexpected success"
     | 0, _ -> ok ()
     | _, result ->
@@ -89,7 +91,7 @@ let pop_switch () : unit result =
             @@ tl
             @@ range (n + 1)
           ) in
-        AST_Typed.assert_value_eq (expected, result')
+        Ast_typed.assert_value_eq (expected, result')
   in
   let%bind _ = bind_list
     @@ List.map aux
@@ -100,9 +102,9 @@ let pop () : unit result =
   let%bind program = get_program () in
   let aux n =
     let input = dummy n in
-    (match easy_run_typed "pop" program input with
+    (match run_typed "pop" program input with
     | Trace.Ok (output , _) -> (
-        Format.printf "\nPop output on %d : %a\n" n AST_Typed.PP.annotated_expression output ;
+        Format.printf "\nPop output on %d : %a\n" n Ast_typed.PP.annotated_expression output ;
       )
     | Errors errs -> (
         Format.printf "\nPop output on %d : error\n" n) ;

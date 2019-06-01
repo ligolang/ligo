@@ -125,7 +125,7 @@ and declaration =
 (* Non-recursive values *)
 
 and let_binding = {                                  (* p = e   p : t = e *)
-  variable : variable;
+  bindings : pattern list;
   lhs_type : (colon * type_expr) option;
   eq       : equal;
   let_rhs  : expr
@@ -336,7 +336,7 @@ and let_in = {
 
 and fun_expr = {
   kwd_fun : kwd_fun;
-  param   : variable;
+  params  : pattern list;
   p_annot : (colon * type_expr) option;
   arrow   : arrow;
   body    : expr
@@ -486,3 +486,4 @@ val unpar : expr -> expr
 
 val print_projection : projection -> unit
 val print_pattern : pattern -> unit
+val print_expr : expr -> unit

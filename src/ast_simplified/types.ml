@@ -42,7 +42,7 @@ and let_in = {
   result : expr ;
 }
 
-and expression =
+and expression' =
   (* Base *)
   | E_literal of literal
   | E_constant of (name * expr list) (* For language constants, like (Cons hd tl) or (plus i j) *)
@@ -71,6 +71,8 @@ and expression =
   | E_skip
   (* Annotate *)
   | E_annotation of expr * type_expression
+
+and expression = expression' Location.wrap
 
 and access =
   | Access_tuple of int

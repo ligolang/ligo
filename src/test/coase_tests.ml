@@ -1,8 +1,10 @@
 (* Copyright Coase, Inc 2019 *)
 
 open Trace
-open Ligo
+open Ligo.Run
 open Test_helpers
+
+let type_file = type_file "pascaligo"
 
 let get_program =
   let s = ref None in
@@ -31,7 +33,7 @@ let card_ez owner = card (e_address owner)
 
 let make_cards assoc_lst =
   let card_id_ty = t_nat in
-  e_map assoc_lst card_id_ty card_ty
+  e_typed_map assoc_lst card_id_ty card_ty
 
 let card_pattern (coeff , qtt) =
   ez_e_record [
@@ -51,7 +53,7 @@ let card_pattern_ez (coeff , qtt) =
 let make_card_patterns lst =
   let card_pattern_id_ty = t_nat  in
   let assoc_lst = List.mapi (fun i x -> (e_nat i , x)) lst in
-  e_map assoc_lst card_pattern_id_ty card_pattern_ty
+  e_typed_map assoc_lst card_pattern_id_ty card_pattern_ty
 
 let storage cards_patterns cards next_id =
   ez_e_record [
@@ -208,9 +210,9 @@ let sell () =
       e_pair sell_action storage
     in
     let make_expecter : int -> expression -> unit result = fun n result ->
-      let%bind (ops , storage) = get_e_pair result in
+      let%bind (ops , storage) = get_e_pair @@ Location.unwrap result in
       let%bind () =
-        let%bind lst = get_e_list ops in
+        let%bind lst = get_e_list @@ Location.unwrap ops in
         Assert.assert_list_size lst 1 in
       let expected_storage =
         let cards = List.hds @@ cards_ez first_owner n in

@@ -30,7 +30,7 @@ let literal ppf (l:literal) = match l with
   | Literal_address s -> fprintf ppf "@%S" s
   | Literal_operation _ -> fprintf ppf "Operation(...bytes)"
 
-let rec expression ppf (e:expression) = match e with
+let rec expression ppf (e:expression) = match Location.unwrap e with
   | E_literal l -> literal ppf l
   | E_variable name -> fprintf ppf "%s" name
   | E_application (f, arg) -> fprintf ppf "(%a)@(%a)" expression f expression arg

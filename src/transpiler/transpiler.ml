@@ -469,7 +469,7 @@ let translate_main (l:AST.lambda) : anon_function result =
   | E_literal (D_function f) -> ok f
   | _ -> simple_fail "main is not a function"
 
-(* From a non-functional expression [expr], build the functional expression [fun () -> expr] *)
+(* From an expression [expr], build the expression [fun () -> expr] *)
 let functionalize (e:AST.annotated_expression) : AST.lambda * AST.type_value =
   let t = e.type_annotation in
   let open! AST in
@@ -510,16 +510,6 @@ let translate_entry (lst:AST.program) (name:string) : anon_function result =
   ok l
 
 open Combinators
-
-let rec exp x n =
-  if n = 0
-  then 1
-  else
-    let exp' = exp (x * x) (n / 2) in
-    let m = if n mod 2 = 0 then 1 else x in
-    m * exp'
-
-let exp2 = exp 2
 
 let extract_constructor (v : value) (tree : _ Append_tree.t') : (string * value * AST.type_value) result =
   let open Append_tree in

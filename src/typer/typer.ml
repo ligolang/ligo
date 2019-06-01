@@ -29,7 +29,7 @@ module Errors = struct
   let wrong_arity (n:string) (expected:int) (actual:int) () =
     let title () = "wrong arity" in
     let full () =
-      Format.asprintf "Wrong number of args passed to [%s]. Expected was %d, received was %d."
+      Format.asprintf "Wrong number of args passed to [%s]. Expected was %d, received was %d"
         n expected actual
     in
     error title full ()
@@ -204,13 +204,20 @@ and type_expression : environment -> ?tv_opt:O.type_value -> I.expression -> O.a
       match tv_opt with
       | None -> ok ()
       | Some tv' -> O.assert_type_value_eq (tv' , tv) in
-    ok @@ make_a_e expr tv e in
+    let location = Location.get_location ae in
+    ok @@ make_a_e ~location expr tv e in
   let main_error =
     let title () = "typing expression" in
-    let content () = Format.asprintf "Expression: %a\nLog: %s\n" I.PP.expression ae (L.get()) in
+    let content () =
+      match L.get () with
+      | "" ->
+        Format.asprintf "Expression: %a\n" I.PP.expression ae
+      | l ->
+        Format.asprintf "Expression: %a\nLog: %s\n" I.PP.expression ae l
+    in
     error title content in
   trace main_error @@
-  match ae with
+  match Location.unwrap ae with
   (* Basic *)
   | E_failwith _ -> simple_fail "can't type failwith in isolation"
   | E_variable name ->
@@ -357,16 +364,31 @@ and type_expression : environment -> ?tv_opt:O.type_value -> I.expression -> O.a
     } -> (
       let%bind input_type =
         let%bind input_type =
-          trace_option (simple_error "no input type provided") @@
-          input_type in
+          (* Hack to take care of let_in introduced by `simplify/ligodity.ml` in ECase's hack *)
+          let default_action () = simple_fail "no input type provided" in
+          match input_type with
+          | Some ty -> ok ty
+          | None -> (
+              match Location.unwrap result with
+              | I.E_let_in li -> (
+                  match Location.unwrap li.rhs with
+                  | I.E_variable name when name = (fst binder) -> (
+                      match snd li.binder with
+                      | Some ty -> ok ty
+                      | None -> default_action ()
+                    )
+                  | _ -> default_action ()
+                )
+              | _ -> default_action ()
+            )
+        in
         evaluate_type e input_type in
       let%bind output_type =
-        let%bind output_type =
-          trace_option (simple_error "no output type provided") @@
-          output_type in
-        evaluate_type e output_type in
+        bind_map_option (evaluate_type e) output_type
+      in
       let e' = Environment.add_ez_binder (fst binder) input_type e in
-      let%bind result = type_expression ~tv_opt:output_type e' result in
+      let%bind result = type_expression ?tv_opt:output_type e' result in
+      let output_type = result.type_annotation in
       return (E_lambda {binder = fst binder;input_type;output_type;result}) (t_function input_type output_type ())
     )
   | E_constant (name, lst) ->
@@ -394,7 +416,8 @@ and type_expression : environment -> ?tv_opt:O.type_value -> I.expression -> O.a
       let%bind ex' = type_expression e ex in
       match m with
       (* Special case for assert-like failwiths. TODO: CLEAN THIS. *)
-      | I.Match_bool { match_false ; match_true = E_failwith fw } -> (
+      | I.Match_bool { match_false ; match_true } when I.is_e_failwith match_true -> (
+          let%bind fw = I.get_e_failwith match_true in
           let%bind fw' = type_expression e fw in
           let%bind mf' = type_expression e match_false in
           let%bind () =
@@ -526,55 +549,54 @@ let rec untype_expression (e:O.annotated_expression) : (I.expression) result =
   match e.expression with
   | E_literal l ->
       let%bind l = untype_literal l in
-      return (E_literal l)
+      return (e_literal l)
   | E_constant (n, lst) ->
-      let%bind lst' = bind_list
-        @@ List.map untype_expression lst in
-      return (E_constant (n, lst'))
+      let%bind lst' = bind_map_list untype_expression lst in
+      return (e_constant n lst')
   | E_variable n ->
-      return (E_variable n)
+      return (e_variable n)
   | E_application (f, arg) ->
       let%bind f' = untype_expression f in
       let%bind arg' = untype_expression arg in
-      return (E_application (f', arg'))
+      return (e_application f' arg')
   | E_lambda {binder;input_type;output_type;result} ->
       let%bind input_type = untype_type_value input_type in
       let%bind output_type = untype_type_value output_type in
       let%bind result = untype_expression result in
-      return (E_lambda {binder = (binder , Some input_type);input_type = Some input_type;output_type = Some output_type;result})
+      return (e_lambda binder (Some input_type) (Some output_type) result)
   | E_tuple lst ->
       let%bind lst' = bind_list
         @@ List.map untype_expression lst in
-      return (E_tuple lst')
+      return (e_tuple lst')
   | E_tuple_accessor (tpl, ind)  ->
       let%bind tpl' = untype_expression tpl in
-      return (E_accessor (tpl', [Access_tuple ind]))
+      return (e_accessor tpl' [Access_tuple ind])
   | E_constructor (n, p) ->
       let%bind p' = untype_expression p in
-      return (E_constructor (n, p'))
+      return (e_constructor n p')
   | E_record r ->
       let%bind r' = bind_smap
         @@ SMap.map untype_expression r in
-      return (E_record r')
+      return (e_record r')
   | E_record_accessor (r, s) ->
       let%bind r' = untype_expression r in
-      return (E_accessor (r', [Access_record s]))
+      return (e_accessor r' [Access_record s])
   | E_map m ->
       let%bind m' = bind_map_list (bind_map_pair untype_expression) m in
-      return (E_map m')
+      return (e_map m')
   | E_list lst ->
       let%bind lst' = bind_map_list untype_expression lst in
-      return (E_list lst')
+      return (e_list lst')
   | E_look_up dsi ->
-      let%bind dsi' = bind_map_pair untype_expression dsi in
-      return (E_look_up dsi')
+      let%bind (a , b) = bind_map_pair untype_expression dsi in
+      return (e_look_up a b)
   | E_matching (ae, m) ->
       let%bind ae' = untype_expression ae in
       let%bind m' = untype_matching untype_expression m in
-      return (E_matching (ae', m'))
+      return (e_matching ae' m')
   | E_failwith ae ->
       let%bind ae' = untype_expression ae in
-      return (E_failwith ae')
+      return (e_failwith ae')
   | E_sequence _
   | E_loop _
   | E_assign _ -> simple_fail "not possible to untranspile statements yet"
@@ -582,7 +604,7 @@ let rec untype_expression (e:O.annotated_expression) : (I.expression) result =
       let%bind tv = untype_type_value rhs.type_annotation in
       let%bind rhs = untype_expression rhs in
       let%bind result = untype_expression result in
-      return (E_let_in {binder = (binder , Some tv);rhs;result})
+      return (e_let_in (binder , (Some tv)) rhs result)
 
 and untype_matching : type o i . (o -> i result) -> o O.matching -> (i I.matching) result = fun f m ->
   let open I in

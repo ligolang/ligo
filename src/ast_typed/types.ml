@@ -34,10 +34,11 @@ and small_environment = (environment * type_environment)
 and full_environment = small_environment List.Ne.t
 
 and annotated_expression = {
-  expression: expression ;
-  type_annotation: tv ;
-  environment: full_environment ;
-  dummy_field: unit ;
+  expression : expression ;
+  type_annotation : tv ;
+  environment : full_environment ;
+  location : Location.t ;
+  dummy_field : unit ;
 }
 
 and named_expression = {
@@ -162,6 +163,6 @@ let get_entry (p:program) (entry : string) : annotated_expression result =
 let get_functional_entry (p:program) (entry : string) : (lambda * type_value) result =
   let%bind entry = get_entry p entry in
   match entry.expression with
-  | E_lambda l -> ok (l, entry.type_annotation)
+  | E_lambda l -> ok (l , entry.type_annotation)
   | _ -> simple_fail "given entry point is not functional"
 

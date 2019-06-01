@@ -7,10 +7,10 @@ open AST
 
 module VMap = Utils.String.Map
 
-let ghost_of value = Region.{region=ghost; value}
+(*let ghost_of value = Region.{region=ghost; value}*)
 let ghost = Region.ghost
 
-let fail_syn_unif type1 type2 : 'a =
+(* let fail_syn_unif type1 type2 : 'a =
   let reg = AST.region_of_type_expr type1 in
   let reg = reg#compact ~file:false `Byte in
   let value =
@@ -25,158 +25,21 @@ let mk_component rank =
   let par = {lpar=ghost; inside = ghost_of num; rpar=ghost}
   in Component (ghost_of par)
 
+
 let rec mk_field_path (rank, tail) =
   let head = mk_component rank in
   match tail with
         [] -> head, []
   | hd::tl -> mk_field_path (hd,tl) |> Utils.nsepseq_cons head ghost
 
-let mk_projection fresh (path : int Utils.nseq) = {
+ let mk_projection fresh (path : int Utils.nseq) = {
   struct_name = fresh;
   selector    = ghost;
   field_path  = Utils.nsepseq_rev (mk_field_path path)
-}
+} *)
 
-let rec sub_rec fresh path (map, rank) pattern =
-  let path' = Utils.nseq_cons rank path in
-  let map'  = split fresh map path' pattern
-  in map', rank+1
-
-and split fresh map path = function
-  PTuple t -> let apply = sub_rec fresh path in
-             Utils.nsepseq_foldl apply (map,1) t.value |> fst
-| PPar p   -> split fresh map path p.value.inside
-| PVar v   -> if VMap.mem v.value map
-             then
-               let err =
-                 Region.{value="Non-linear pattern."; region=v.region}
-               in (Lexer.prerr ~kind:"Syntactical" err; exit 1)
-             else
-               let proj = mk_projection fresh path
-               in VMap.add v.value (None, proj) map
-| PWild _  -> map
-| PUnit _  -> let anon = Utils.gen_sym () in
-             let unit = ghost, TAlias (ghost_of "unit")
-             and proj = mk_projection fresh path
-             in VMap.add anon (Some unit, proj) map
-| PRecord {region; _}
-| PConstr {region; _}
-| PTyped {region; _} ->
-    let err = Region.{value="Not implemented yet."; region}
-    in (Lexer.prerr ~kind:"Syntactical" err; exit 1)
-| p -> let _, _, map = split_pattern p in map
-
-and split_pattern = function
-  PPar p  -> split_pattern p.value.inside
-| PVar v  -> v, None, VMap.empty
-| PWild _ -> Utils.gen_sym () |> ghost_of, None, VMap.empty
-| PUnit _ -> let fresh = Utils.gen_sym () |> ghost_of in
-            let unit = TAlias (ghost_of "unit")
-            in fresh, Some unit, VMap.empty
-| PTyped {value=p; _} ->
-    let var', type', map = split_pattern p.pattern in
-    (match type' with
-       None -> var', Some p.type_expr, map
-     | Some t when t = p.type_expr -> var', Some t, map (* hack *)
-     | Some t -> fail_syn_unif t p.type_expr)
-| PTuple t ->
-    let fresh = Utils.gen_sym () |> ghost_of
-    and init = VMap.empty, 1 in
-    let apply (map, rank) pattern =
-      split fresh map (rank,[]) pattern, rank+1 in
-    let map = Utils.nsepseq_foldl apply init t.value |> fst
-    in fresh, None, map
-| PRecord {region; _}
-| PConstr {region; _} ->
-    let err = Region.{value="Not implemented yet."; region}
-    in (Lexer.prerr ~kind:"Syntactical" err; exit 1)
-| PInt {region; _} | PTrue region
-| PFalse region | PString {region; _}
-| PList Sugar {region; _} | PList PCons {region; _} ->
-    let err = Region.{value="Incomplete pattern."; region}
-    in (Lexer.prerr ~kind:"Syntactical" err; exit 1)
-
-let mk_let_bindings =
-  let apply var (lhs_type, proj) =
-    let new_bind = {
-      variable = ghost_of var;
-      lhs_type;
-      eq = ghost;
-      let_rhs = EProj (ghost_of proj)} in
-    let new_let = Let (ghost_of (ghost, new_bind))
-    in Utils.nseq_cons new_let
-  in VMap.fold apply
-
-let mk_let_in_bindings =
-  let apply var (lhs_type, proj) acc =
-    let binding = {
-      variable = ghost_of var;
-      lhs_type;
-      eq = ghost;
-      let_rhs = EProj (ghost_of proj)} in
-    let let_in = {
-      kwd_let = ghost;
-      binding;
-      kwd_in = ghost;
-      body = acc}
-    in ELetIn (ghost_of let_in)
-  in VMap.fold apply
 
 (* We rewrite "fun p -> e" into "fun x -> match x with p -> e" *)
-
-let norm_fun_expr patterns expr =
-  let apply pattern expr =
-    match pattern with
-      PVar var ->
-        let fun_expr = {
-          kwd_fun = ghost;
-          param   = var;
-          p_annot = None;
-          arrow   = ghost;
-          body    = expr}
-        in EFun (ghost_of fun_expr)
-    | PTyped p ->
-        let pattern = p.value.pattern
-        and type_expr = p.value.type_expr in
-        let fresh = Utils.gen_sym () |> ghost_of in
-        let clause = {pattern; arrow=ghost; rhs=expr} in
-        let clause = ghost_of clause in
-        let cases = ghost_of (clause, []) in
-        let case = {
-          kwd_match = ghost;
-          expr      = EVar fresh;
-          opening   = With ghost;
-          lead_vbar = None;
-          cases;
-          closing   = End ghost} in
-        let case = ECase (ghost_of case) in
-        let fun_expr = {
-          kwd_fun = ghost;
-          param   = fresh;
-          p_annot = Some (p.value.colon, type_expr);
-          arrow   = ghost;
-          body    = case}
-        in EFun (ghost_of fun_expr)
-    | _ -> let fresh = Utils.gen_sym () |> ghost_of in
-          let clause = {pattern; arrow=ghost; rhs=expr} in
-          let clause = ghost_of clause in
-          let cases = ghost_of (clause, []) in
-          let case = {
-            kwd_match = ghost;
-            expr      = EVar fresh;
-            opening   = With ghost;
-            lead_vbar = None;
-            cases;
-            closing   = End ghost} in
-          let case = ECase (ghost_of case) in
-          let fun_expr = {
-            kwd_fun = ghost;
-            param   = fresh;
-            p_annot = None;
-            arrow   = ghost;
-            body    = case}
-          in EFun (ghost_of fun_expr)
-  in Utils.nseq_foldr apply patterns expr
 
 (* END HEADER *)
 %}
@@ -184,8 +47,9 @@ let norm_fun_expr patterns expr =
 
 (* Entry points *)
 
-%start program
+%start program expr
 %type <AST.t> program
+%type <AST.expr> expr
 
 %%
 
@@ -330,7 +194,7 @@ declarations:
 declaration:
   reg(kwd(LetEntry) entry_binding {$1,$2})          { LetEntry $1, [] }
 | reg(type_decl)                                    { TypeDecl $1, [] }
-| let_declaration                                   {              $1 }
+| let_declaration                                   {          $1, [] }
 
 (* Type declarations *)
 
@@ -415,36 +279,33 @@ field_decl:
 
 entry_binding:
   ident nseq(sub_irrefutable) type_annotation? eq expr {
-    let let_rhs = norm_fun_expr $2 $5 in
-    {variable = $1; lhs_type=$3; eq=$4; let_rhs}
+    let let_rhs = $5 in
+    let pattern = PVar $1 in
+    let (hd , tl) = $2 in
+    {bindings = pattern :: hd :: tl; lhs_type=$3; eq=$4; let_rhs}
   }
-| ident type_annotation? eq fun_expr(expr) {
-    {variable = $1; lhs_type=$2; eq=$3; let_rhs=$4} }
+  | ident type_annotation? eq fun_expr(expr) {
+    let pattern = PVar $1 in	    
+    {bindings = [pattern]; lhs_type=$2; eq=$3; let_rhs=$4} }
 
 (* Top-level non-recursive definitions *)
 
 let_declaration:
   reg(kwd(Let) let_binding {$1,$2}) {
-    let kwd_let, (binding, map) = $1.value in
-    let let0 = Let {$1 with value = kwd_let, binding}
-    in mk_let_bindings map (let0,[])
+    let kwd_let, binding = $1.value in
+    Let {$1 with value = kwd_let, binding}
   }
 
 let_binding:
   ident nseq(sub_irrefutable) type_annotation? eq expr {
-    let let_rhs = norm_fun_expr $2 $5 in
-    let map = VMap.empty in
-    {variable=$1; lhs_type=$3; eq=$4; let_rhs}, map
+    let let_rhs = $5 in
+    let ident_pattern = PVar $1 in
+    let (hd , tl) = $2 in
+    {bindings= (ident_pattern :: hd :: tl); lhs_type=$3; eq=$4; let_rhs}
   }
 | irrefutable type_annotation? eq expr {
-    let variable, type_opt, map = split_pattern $1 in
-    match type_opt, $2 with
-      Some type1, Some (_,type2) when type1 <> type2 ->
-        fail_syn_unif type1 type2
-    | Some type1, None ->
-         let lhs_type = Some (ghost, type1) in
-         {variable; lhs_type; eq=$3; let_rhs=$4}, map
-    | _ -> {variable; lhs_type=$2; eq=$3; let_rhs=$4}, map
+    let pattern = $1 in
+    {bindings = [pattern]; lhs_type=$2; eq=$3; let_rhs=$4}
   }
 
 type_annotation:
@@ -590,14 +451,24 @@ case_clause(right_expr):
 
 let_expr(right_expr):
   reg(kwd(Let) let_binding kwd(In) right_expr {$1,$2,$3,$4}) {
-    let kwd_let, (binding, map), kwd_in, body = $1.value in
-    let body = mk_let_in_bindings map body in
+    let kwd_let, binding , kwd_in, body = $1.value in
     let let_in = {kwd_let; binding; kwd_in; body}
     in ELetIn {region=$1.region; value=let_in} }
 
 fun_expr(right_expr):
-  kwd(Fun) nseq(irrefutable) arrow right_expr   { norm_fun_expr $2 $4 }
-
+  reg(kwd(Fun) nseq(irrefutable) arrow right_expr {$1,$2,$3,$4}) {
+    let kwd_fun, bindings, arrow, body = $1.value in
+    let (hd , tl) = bindings in
+    let f = {
+      kwd_fun ;
+      params = hd :: tl ;
+      p_annot = None ;
+      arrow ;
+      body ;
+    } in
+    EFun { region=$1.region; value=f }
+  }
+	 
 disj_expr_level:
   reg(disj_expr)                          { ELogic (BoolExpr (Or $1)) }
 | conj_expr_level                                                { $1 }

@@ -131,10 +131,10 @@ let mk_error
   let data' =
     let aux (key , value) = (key , `String (value ())) in
     X_option.map (fun x -> ("data" , `Assoc (List.map aux x))) data in
-  let message' = X_option.map (fun x -> ("message " , `String (x ()))) message in
+  let message' = X_option.map (fun x -> ("message" , `String (x ()))) message in
   `Assoc (X_option.collapse_list [ error_code' ; title' ; message' ; data' ])
 
-let error title message () = mk_error ~title:(title) ~message:(message) ()
+let error ?data ?error_code title message () = mk_error ?data ?error_code ~title:(title) ~message:(message) ()
 
 (**
    Helpers that ideally shouldn't be used in production.
@@ -467,12 +467,27 @@ module Assert = struct
 end
 
 let json_of_error = J.to_string
+
 let error_pp out (e : error) =
   let open JSON_string_utils in
-  let message    = e |> member "message"    |> string || "(no message)" in
-  let title      = e |> member "title"      |> string || "(no title)" in
-  let error_code = e |> member "error_code" |> int |> string_of_int || "no error code" in
-  Format.fprintf out "%s (%s): %s" title error_code message
+  let message =
+    let opt = e |> member "message" |> string in
+    X_option.unopt ~default:"" opt in
+  let error_code =
+    let error_code = e |> member "error_code" in
+    match error_code with
+    | `Null -> ""
+    | _ -> " (" ^ (J.to_string error_code) ^ ")" in
+  let title =
+    let opt = e |> member "title" |> string in
+    X_option.unopt ~default:"" opt in
+  let data =
+    let data = e |> member "data" in
+    match data with
+    | `Null -> ""
+    | _ -> J.to_string data in
+  Format.fprintf out "%s (%s): %s. %s" title error_code message data
+
 
 let error_pp_short out (e : error) =
   let open JSON_string_utils in

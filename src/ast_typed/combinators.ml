@@ -2,7 +2,13 @@ open Trace
 open Types
 
 let make_t type_value' simplified = { type_value' ; simplified }
-let make_a_e expression type_annotation environment = { expression ; type_annotation ; dummy_field = () ; environment }
+let make_a_e ?(location = Location.generated) expression type_annotation environment = {
+  expression ;
+  type_annotation ;
+  dummy_field = () ;
+  environment ;
+  location ;
+}
 let make_n_e name a_e = { name ; annotated_expression = a_e }
 let make_n_t type_name type_value = { type_name ; type_value }
 
