@@ -8,4 +8,5 @@ build: build-deps
 	./build.sh
 
 test: build
+	eval $(opam env)
 	dune build @ligo-test
