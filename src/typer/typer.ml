@@ -13,47 +13,75 @@ type environment = Environment.t
 module Errors = struct
   let unbound_type_variable (e:environment) (n:string) () =
     let title = (thunk "unbound type variable") in
-    let full () = Format.asprintf "%s in %a" n Environment.PP.full_environment e in
-    error title full ()
+    let message () = "" in
+    let data = [
+      ("variable" , fun () -> Format.asprintf "%s" n) ;
+      ("in" , fun () -> Format.asprintf "%a" Environment.PP.full_environment e)
+    ] in
+    error ~data title message ()
 
   let unbound_variable (e:environment) (n:string) () =
     let title = (thunk "unbound variable") in
-    let full () = Format.asprintf "%s in %a" n Environment.PP.full_environment e in
-    error title full ()
+    let message () = "" in
+    let data = [
+      ("variable" , fun () -> Format.asprintf "%s" n) ;
+      ("in" , fun () -> Format.asprintf "%a" Environment.PP.full_environment e)
+    ] in
+    error ~data title message ()
 
   let unrecognized_constant (n:string) () =
     let title = (thunk "unrecognized constant") in
-    let full () = n in
-    error title full ()
+    let message () = "" in
+    let data = [
+      ("constant" , fun () -> Format.asprintf "%s" n) ;
+    ] in
+    error ~data title message ()
 
   let wrong_arity (n:string) (expected:int) (actual:int) () =
     let title () = "wrong arity" in
-    let full () =
-      Format.asprintf "Wrong number of args passed to [%s]. Expected was %d, received was %d"
-        n expected actual
-    in
-    error title full ()
+    let message () = "" in
+    let data = [
+      ("function" , fun () -> Format.asprintf "%s" n) ;
+      ("expected" , fun () -> Format.asprintf "%d" expected) ;
+      ("actual" , fun () -> Format.asprintf "%d" actual)
+    ] in
+    error ~data title message ()
+
+  let match_tuple_wrong_arity (expected:'a list) (actual:'b list) () =
+    let title () = "matching tuple of different size" in
+    let message () = "" in
+    let data = [
+      ("expected" , fun () -> Format.asprintf "%d" (List.length expected)) ;
+      ("actual" , fun () -> Format.asprintf "%d" (List.length actual))
+    ] in
+    error ~data title message ()
 
   let program_error (p:I.program) () =
+    let message () = "" in
     let title = (thunk "typing program") in
-    let full () = Format.asprintf "%a" I.PP.program p in
-    error title full ()
+    let data = [
+      "program" , fun () -> Format.asprintf "%a" I.PP.program p
+    ] in
+    error ~data title message ()
 
   let constant_declaration_error (name:string) (ae:I.expr) () =
     let title = (thunk "typing constant declaration") in
-    let full () =
-      Format.asprintf "%s = %a" name
-        I.PP.expression ae
-    in
-    error title full ()
+    let message () = "" in
+    let data = [
+      ("constant" , fun () -> Format.asprintf "%s" name) ;
+      ("expression" , fun () -> Format.asprintf "%a" I.PP.expression ae)
+    ] in
+    error ~data title message ()
 
   let match_error : type a . expected: a I.Types.matching -> actual: O.Types.type_value -> unit -> _ =
     fun ~expected ~actual () ->
     let title = (thunk "typing match") in
-    let full () = Format.asprintf "expected %a but got %a"
-      I.PP.matching_type expected
-      O.PP.type_value actual in
-    error title full ()
+    let message () = "" in
+    let data = [
+      ("expected" , fun () -> Format.asprintf "%a" I.PP.matching_type expected);
+      ("actual" , fun () -> Format.asprintf "%a" O.PP.type_value actual)
+    ] in
+    error ~data title message ()
 end
 open Errors
 
@@ -106,7 +134,7 @@ and type_match : type i o . (environment -> i -> o result) -> environment -> O.t
       ok (O.Match_option {match_none ; match_some = (n', b')})
   | Match_list {match_nil ; match_cons} ->
       let%bind t_list =
-        trace_strong (simple_error "Matching list on not-an-list")
+        trace_strong (match_error ~expected:i ~actual:t)
         @@ get_t_list t in
       let%bind match_nil = f e match_nil in
       let (hd, tl, b) = match_cons in
@@ -116,7 +144,7 @@ and type_match : type i o . (environment -> i -> o result) -> environment -> O.t
       ok (O.Match_list {match_nil ; match_cons = (hd, tl, b')})
   | Match_tuple (lst, b) ->
       let%bind t_tuple =
-        trace_strong (simple_error "Matching tuple on not-a-tuple")
+        trace_strong (match_error ~expected:i ~actual:t)
         @@ get_t_tuple t in
       let%bind lst' =
         generic_try (simple_error "Matching tuple of different size")
@@ -144,7 +172,9 @@ and type_match : type i o . (environment -> i -> o result) -> environment -> O.t
         trace_option (simple_error "empty variant") @@
         variant_opt in
       let%bind  () =
-        let%bind variant_cases' = Ast_typed.Combinators.get_t_sum variant in
+        let%bind variant_cases' =
+          trace (match_error ~expected:i ~actual:t)
+          @@ Ast_typed.Combinators.get_t_sum variant in
         let variant_cases = List.map fst @@ Map.String.to_kv_list variant_cases' in
         let match_cases = List.map (Function.compose fst fst) lst in
         let test_case = fun c ->
