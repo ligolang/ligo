@@ -109,10 +109,10 @@ module Errors = struct
     ] in
     error ~data title message ()
 
-  let match_error : type a . expected: a I.matching -> actual: O.type_value -> unit -> _ =
-    fun ~expected ~actual () ->
+  let match_error : type a . ?msg:string -> expected: a I.matching -> actual: O.type_value -> unit -> _ =
+    fun ?(msg = "") ~expected ~actual () ->
     let title = (thunk "typing match") in
-    let message () = "" in
+    let message () = msg in
     let data = [
       ("expected" , fun () -> Format.asprintf "%a" I.PP.matching_type expected);
       ("actual" , fun () -> Format.asprintf "%a" O.PP.type_value actual)
@@ -128,7 +128,7 @@ module Errors = struct
     error ~data title message ()
 
   let type_error ~(expected: string) ~(actual: O.type_value) ~(expression : O.value) () =
-    let title = (thunk "this expression must be annotated with its type") in
+    let title = (thunk "type error") in
     let message () = "" in
     let data = [
       ("expected"   , fun () -> Format.asprintf "%s" expected);
@@ -137,21 +137,23 @@ module Errors = struct
     ] in
     error ~data title message ()
 
-  let bad_tuple_index (index : int) (ae : I.expression) () =
+  let bad_tuple_index (index : int) (ae : I.expression) (t : O.type_value) () =
     let title = (thunk "invalid tuple index") in
     let message () = "" in
     let data = [
       ("index" , fun () -> Format.asprintf "%d" index) ;
-      ("tuple_value" , fun () -> Format.asprintf "%a" I.PP.expression ae)
+      ("tuple_value" , fun () -> Format.asprintf "%a" I.PP.expression ae) ;
+      ("tuple_type" , fun () -> Format.asprintf "%a" O.PP.type_value t)
     ] in
     error ~data title message ()
 
-  let bad_record_access (field : string) (ae : I.expression) () =
+  let bad_record_access (field : string) (ae : I.expression) (t : O.type_value) () =
     let title = (thunk "invalid record field") in
     let message () = "" in
     let data = [
       ("field" , fun () -> Format.asprintf "%s" field) ;
-      ("record_value" , fun () -> Format.asprintf "%a" I.PP.expression ae)
+      ("record_value" , fun () -> Format.asprintf "%a" I.PP.expression ae) ;
+      ("tuple_type" , fun () -> Format.asprintf "%a" O.PP.type_value t)
     ] in
     error ~data title message ()
 end
@@ -369,14 +371,14 @@ and type_expression : environment -> ?tv_opt:O.type_value -> I.expression -> O.a
         | Access_tuple index -> (
             let%bind tpl_tv = get_t_tuple prev.type_annotation in
             let%bind tv =
-              generic_try (bad_tuple_index index ae)
+              generic_try (bad_tuple_index index ae prev.type_annotation)
               @@ (fun () -> List.nth tpl_tv index) in
             return (E_tuple_accessor (prev , index)) tv
           )
         | Access_record property -> (
             let%bind r_tv = get_t_record prev.type_annotation in
             let%bind tv =
-              generic_try (bad_record_access property ae)
+              generic_try (bad_record_access property ae prev.type_annotation)
               @@ (fun () -> SMap.find property r_tv) in
             return (E_record_accessor (prev , property)) tv
           )
@@ -534,11 +536,12 @@ and type_expression : environment -> ?tv_opt:O.type_value -> I.expression -> O.a
           let%bind fw = I.get_e_failwith match_true in
           let%bind fw' = type_expression e fw in
           let%bind mf' = type_expression e match_false in
+          let t = get_type_annotation ex' in
           let%bind () =
-            trace_strong (simple_error "Matching bool on not-a-bool")
-            @@ assert_t_bool (get_type_annotation ex') in
+            trace_strong (match_error ~expected:m ~actual:t)
+            @@ assert_t_bool t in
           let%bind () =
-            trace_strong (simple_error "Matching not-unit on an assert")
+            trace_strong (match_error ~msg:"matching not-unit on an assert" ~expected:m ~actual:t)
             @@ assert_t_unit (get_type_annotation mf') in
           let mt' = make_a_e
               (E_constant ("ASSERT" , [ex' ; fw']))
@@ -567,7 +570,7 @@ and type_expression : environment -> ?tv_opt:O.type_value -> I.expression -> O.a
             ok (Some cur) in
           let%bind tv_opt = bind_fold_list aux None tvs in
           let%bind tv =
-            trace_option (simple_error "empty matching") @@
+            trace_option (match_empty_variant m) @@
             tv_opt in
           return (O.E_matching (ex', m')) tv
         )
@@ -575,19 +578,31 @@ and type_expression : environment -> ?tv_opt:O.type_value -> I.expression -> O.a
   | E_sequence (a , b) ->
     let%bind a' = type_expression e a in
     let%bind b' = type_expression e b in
+    let a'_type_annot = get_type_annotation a' in
     let%bind () =
-      trace_strong (simple_error "first part of the sequence isn't of unit type") @@
-      Ast_typed.assert_type_value_eq (t_unit () , get_type_annotation a') in
+      trace_strong (type_error
+                      ~expected:"first part of the sequence should be of unit type"
+                      ~actual:a'_type_annot
+                      ~expression:a') @@
+      Ast_typed.assert_type_value_eq (t_unit () , a'_type_annot) in
     return (O.E_sequence (a' , b')) (get_type_annotation b')
   | E_loop (expr , body) ->
     let%bind expr' = type_expression e expr in
     let%bind body' = type_expression e body in
+    let t_expr' = get_type_annotation expr' in
     let%bind () =
-      trace_strong (simple_error "while condition isn't of type bool") @@
-      Ast_typed.assert_type_value_eq (t_bool () , get_type_annotation expr') in
+      trace_strong (type_error
+                      ~expected:"while condition isn't of type bool"
+                      ~actual:t_expr'
+                      ~expression:expr') @@
+      Ast_typed.assert_type_value_eq (t_bool () , t_expr') in
+    let t_body' = get_type_annotation body' in
     let%bind () =
-      trace_strong (simple_error "while body isn't of unit type") @@
-      Ast_typed.assert_type_value_eq (t_unit () , get_type_annotation body') in
+      trace_strong (type_error
+                     ~expected:"while body isn't of unit type"
+                     ~actual:t_body'
+                     ~expression:body') @@
+      Ast_typed.assert_type_value_eq (t_unit () , t_body') in
     return (O.E_loop (expr' , body')) (t_unit ())
   | E_assign (name , path , expr) ->
     let%bind typed_name =
@@ -599,14 +614,14 @@ and type_expression : environment -> ?tv_opt:O.type_value -> I.expression -> O.a
         | Access_tuple index -> (
             let%bind tpl = get_t_tuple prec_tv in
             let%bind tv' =
-              trace_option (simple_error "tuple too small") @@
+              trace_option (bad_tuple_index index ae prec_tv) @@
               List.nth_opt tpl index in
             ok (tv' , prec_path @ [O.Access_tuple index])
           )
         | Access_record property -> (
             let%bind m = get_t_record prec_tv in
             let%bind tv' =
-              trace_option (simple_error "tuple too small") @@
+              trace_option (bad_record_access property ae prec_tv) @@
               Map.String.find_opt property m in
             ok (tv' , prec_path @ [O.Access_record property])
           )
