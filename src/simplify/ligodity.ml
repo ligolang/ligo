@@ -60,6 +60,50 @@ module Errors = struct
     ] in
     error ~data title message
 
+  let unsupported_string_catenation expr =
+    let title () = "string expressions" in
+    let message () =
+      Format.asprintf "string concatenation is not supported yet" in
+    let expr_loc = Raw.region_of_expr expr in
+    let data = [
+      ("expr_loc",
+       fun () -> Format.asprintf "%a" Location.pp_lift @@ expr_loc)
+    ] in
+    error ~data title message
+
+  let untyped_fun_param var =
+    let title () = "function parameter" in
+    let message () =
+      Format.asprintf "untyped function parameters are not supported yet" in
+    let param_loc = var.Region.region in
+    let data = [
+      ("param_loc",
+       fun () -> Format.asprintf "%a" Location.pp_lift @@ param_loc)
+    ] in
+    error ~data title message
+
+  let unsupported_tuple_pattern p =
+    let title () = "tuple pattern" in
+    let message () =
+      Format.asprintf "tuple patterns are not supported yet" in
+    let pattern_loc = Raw.region_of_pattern p in
+    let data = [
+      ("pattern_loc",
+       fun () -> Format.asprintf "%a" Location.pp_lift @@ pattern_loc)
+    ] in
+    error ~data title message
+
+  let unsupported_cst_constr p =
+    let title () = "constant constructor" in
+    let message () =
+      Format.asprintf "constant constructors are not supported yet" in
+    let pattern_loc = Raw.region_of_pattern p in
+    let data = [
+      ("pattern_loc",
+       fun () -> Format.asprintf "%a" Location.pp_lift @@ pattern_loc)
+    ] in
+    error ~data title message
+
 end
 
 open Errors
@@ -295,7 +339,7 @@ let rec simpl_expression :
       return @@ e_literal ~loc (Literal_tez n)
     )
   | EArith _ as e ->
-       fail @@ (unsupported_arith_op e)
+       fail @@ unsupported_arith_op e
   | EString (String s) -> (
       let (s , loc) = r_split s in
       let s' =
@@ -304,8 +348,8 @@ let rec simpl_expression :
       in
       return @@ e_literal ~loc (Literal_string s')
     )
-  | EString (Cat _) ->
-      simple_fail "string: not supported yet"
+  | EString (Cat _) as e ->
+      fail @@ unsupported_string_catenation e
   | ELogic l -> simpl_logic_expression l
   | EList l -> simpl_list_expression l
   | ECase c -> (
@@ -377,7 +421,7 @@ and simpl_fun lamb' : expr result =
       | "storage" , None ->
         ok (var , T_variable "storage")
       | _ , None ->
-        simple_fail "untyped function parameter"
+          fail @@ untyped_fun_param var
       | _ , Some ty -> (
         let%bind ty' = simpl_type_expression ty in
         ok (var , ty')
@@ -467,9 +511,11 @@ and simpl_tuple_expression ?loc (lst:Raw.expr list) : expression result =
       let%bind lst = bind_list @@ List.map simpl_expression lst in
       return @@ e_tuple ?loc lst
 
-and simpl_declaration : Raw.declaration -> declaration Location.wrap result = fun t ->
+and simpl_declaration : Raw.declaration -> declaration Location.wrap result =
+  fun t ->
   let open! Raw in
-  let loc : 'a . 'a Raw.reg -> _ -> _ = fun x v -> Location.wrap ~loc:(File x.region) v in
+  let loc : 'a . 'a Raw.reg -> _ -> _ =
+    fun x v -> Location.wrap ~loc:(File x.region) v in
   match t with
   | TypeDecl x ->
       let {name;type_expr} : Raw.type_decl = x.value in
@@ -480,8 +526,9 @@ and simpl_declaration : Raw.declaration -> declaration Location.wrap result = fu
       let _ , binding = x.value in
       let {bindings ; lhs_type ; let_rhs} = binding in
       let%bind (var , args) =
-        let%bind (hd , tl) = match bindings with
-          | [] -> simple_fail "let without bindgings"
+        let%bind (hd , tl) =
+          match bindings with
+          | [] -> simple_fail "let without bindings"
           | hd :: tl -> ok (hd , tl)
         in
         let%bind var = pattern_to_var hd in
@@ -520,21 +567,22 @@ and simpl_cases : type a . (Raw.pattern * a) list -> a matching result = fun t -
         in
         fail error
   in
-  let get_tuple (t:Raw.pattern) = match t with
+  let rec get_tuple (t:Raw.pattern) = match t with
     | PTuple v -> npseq_to_list v.value
+    | PPar p -> get_tuple p.value.inside
     | x -> [ x ]
   in
   let get_single (t:Raw.pattern) =
     let t' = get_tuple t in
     let%bind () =
-      trace_strong (simple_error "not single") @@
+      trace_strong (unsupported_tuple_pattern t) @@
       Assert.assert_list_size t' 1 in
     ok (List.hd t') in
   let get_constr (t:Raw.pattern) = match t with
     | PConstr v -> (
         let (const , pat_opt) = v.value in
         let%bind pat =
-          trace_option (simple_error "No constructor without variable yet") @@
+          trace_option (unsupported_cst_constr t) @@
           pat_opt in
         let%bind single_pat = get_single pat in
         let%bind var = get_var single_pat in
