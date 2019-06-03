@@ -46,6 +46,14 @@ module Errors = struct
         I.PP.expression ae
     in
     error title full ()
+
+  let match_error : type a . expected: a I.Types.matching -> actual: O.Types.type_value -> unit -> _ =
+    fun ~expected ~actual () ->
+    let title = (thunk "typing match") in
+    let full () = Format.asprintf "expected %a but got %a"
+      I.PP.matching_type expected
+      O.PP.type_value actual in
+    error title full ()
 end
 open Errors
 
@@ -81,14 +89,14 @@ and type_match : type i o . (environment -> i -> o result) -> environment -> O.t
   fun f e t i -> match i with
     | Match_bool {match_true ; match_false} ->
       let%bind _ =
-        trace_strong (simple_error "Matching bool on not-a-bool")
+        trace_strong (match_error ~expected:i ~actual:t)
         @@ get_t_bool t in
       let%bind match_true = f e match_true in
       let%bind match_false = f e match_false in
       ok (O.Match_bool {match_true ; match_false})
   | Match_option {match_none ; match_some} ->
       let%bind t_opt =
-        trace_strong (simple_error "Matching option on not-an-option")
+        trace_strong (match_error ~expected:i ~actual:t)
         @@ get_t_option t in
       let%bind match_none = f e match_none in
       let (n, b) = match_some in

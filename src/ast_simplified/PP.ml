@@ -113,6 +113,22 @@ and matching : type a . (formatter -> a -> unit) -> formatter -> a matching -> u
     | Match_option {match_none ; match_some = (some, match_some)} ->
         fprintf ppf "| None -> %a @.| Some %s -> %a" f match_none some f match_some
 
+(* Shows the type expected for the matched value *)
+and matching_type ppf m = match m with
+  | Match_tuple _ ->
+      fprintf ppf "tuple"
+  | Match_variant lst ->
+      fprintf ppf "variant %a" (list_sep matching_variant_case_type (tag "@.")) lst
+  | Match_bool _ ->
+      fprintf ppf "boolean"
+  | Match_list _ ->
+      fprintf ppf "list"
+  | Match_option _ ->
+      fprintf ppf "option"
+
+and matching_variant_case_type ppf ((c,n),_a) =
+  fprintf ppf "| %s %s" c n
+
 let declaration ppf (d:declaration) = match d with
   | Declaration_type (type_name , te) ->
       fprintf ppf "type %s = %a" type_name type_expression te
