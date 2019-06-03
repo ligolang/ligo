@@ -24,7 +24,35 @@ class HomeSplash extends React.Component {
     const SplashContainer = props => (
       <div className="homeContainer">
         <div className="homeSplashFade">
-          <div className="wrapper homeWrapper">{props.children}</div>
+          <div className="wrapper homeWrapper">
+            
+          <div class="tabs">
+            <div class="nav-tabs">
+              <div id="tab-group-3-tab-4" class="nav-link active" data-group="group_3"
+                data-tab="tab-group-3-content-4">Pascaligo</div>
+              {/* <div id="tab-group-3-tab-5" class="nav-link" data-group="group_3"
+                data-tab="tab-group-3-content-5">Camligo</div> */}
+            </div>
+            <div class="tab-content">
+              <div id="tab-group-3-content-4" class="tab-pane active" data-group="group_3" tabIndex="-1">
+                <div>
+                  <span>
+                    <pre><code class="hljs css language-Pascal">// variant defining pseudo multi-entrypoint actions<br />type action is<br />| Increment of int<br />| Decrement of int<br /><br />function add (const a : int ; const b : int) : int is<br />    block {'{ skip }'} with a + b<br /><br />function subtract (const a : int ; const b : int) : int is<br />    block {'{ skip }'} with a - b<br /><br />// real entrypoint that re-routes the flow based on the action provided<br />function main (const p : action ; const s : int) : (list(operation) * int) is<br />  block {'{ skip }'} with ((nil : list(operation)),<br />    case p of<br />    | Increment n -&gt; add(s, n)<br />    | Decrement n -&gt; subtract(s, n)<br />    end)<br /></code></pre>
+                  </span>
+                </div>
+              </div>
+              <div id="tab-group-3-content-5" class="tab-pane" data-group="group_3" tabIndex="-1">
+                <div>
+                  <span>
+                    SOON
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+            {props.children}
+          </div>
         </div>
       </div>
     );
@@ -37,7 +65,6 @@ class HomeSplash extends React.Component {
 
     const ProjectTitle = () => (
       <h2 className="projectTitle">
-        {siteConfig.title}
         <small>{siteConfig.tagline}</small>
       </h2>
     );
@@ -60,12 +87,12 @@ class HomeSplash extends React.Component {
 
     return (
       <SplashContainer>
-        {/* <Logo img_src={`${baseUrl}img/undraw_monitor.svg`} /> */}
         <div className="inner">
           <ProjectTitle siteConfig={siteConfig} />
           <PromoSection>
             <Button href={docUrl('setup-installation.html')}>Getting started</Button>
-            <Button href={docUrl('language-basics-variables.html')}>Language reference</Button>
+            <Button href={docUrl('contributors/origin.html')}>Contributing</Button>
+
           </PromoSection>
         </div>
       </SplashContainer>
@@ -145,28 +172,31 @@ class Index extends React.Component {
     );
 
     const Features = () => (
-      <Block layout="fourColumn">
-        {[
-          {
-            content: 'Write in PascaLIGO (pascal-like syntax) or CameLIGO (caml-like syntax). If you know OCaml, you can also add your own syntax.',
-            image: ``,
-            imageAlign: 'top',
-            title: 'Syntax Agnostic',
-          },
-          {
-            content: 'Write types, then code, and benefit from the safety coming from type systems.',
-            image: ``,
-            imageAlign: 'top',
-            title: 'Strong Type System',
-          },
-          {
-            content: 'With Granary, you can use LIGO as a lib from NodeJS.',
-            image: ``,
-            imageAlign: 'top',
-            title: 'Easy Integration',
-          }
-        ]}
-      </Block>
+      <div className="features">
+        <h1 className="sectionTitle blockTitle">Features</h1>
+        <Block layout="fourColumn">
+          {[
+            {
+              content: 'Write in PascaLIGO (pascal-like syntax) or CameLIGO (caml-like syntax). If you know OCaml, you can also add your own syntax.',
+              image: `${baseUrl}img/edit.svg`,
+              imageAlign: 'top',
+              title: 'Syntax Agnostic',
+            },
+            {
+              content: 'Write types, then code, and benefit from the safety coming from type systems.',
+              image: `${baseUrl}img/lightning.svg`,
+              imageAlign: 'top',
+              title: 'Strong Type System',
+            },
+            {
+              content: 'With Granary, you can use LIGO as a lib from NodeJS.',
+              image: `${baseUrl}img/puzzle.svg`,
+              imageAlign: 'top',
+              title: 'Easy Integration',
+            }
+          ]}
+        </Block>
+      </div>
     );
 
     const Roadmap = () => (
@@ -202,12 +232,12 @@ class Index extends React.Component {
       </div>
     );
 
-    const Showcase = () => {
-      if ((siteConfig.users || []).length === 0) {
+    const Partners = () => {
+      if ((siteConfig.partners || []).length === 0) {
         return null;
       }
 
-      const showcase = siteConfig.users
+      const showcase = siteConfig.partners
         .filter(user => user.pinned)
         .map(user => (
           <a href={user.infoLink} key={user.infoLink}>
@@ -219,8 +249,36 @@ class Index extends React.Component {
 
       return (
         <div className="productShowcaseSection paddingBottom">
-          <h2>Who is Using This?</h2>
-          <p>This project is used by all these people</p>
+          <h1 className="sectionTitle">Partners</h1>
+          <div className="logos">{showcase}</div>
+          {/* <div className="more-users">
+            <a className="button" href={pageUrl('users.html')}>
+              More {siteConfig.title} Users
+            </a>
+          </div> */}
+        </div>
+      );
+    };
+
+    const Team = () => {
+      if ((siteConfig.team || []).length === 0) {
+        return null;
+      }
+
+      const showcase = siteConfig.team
+        .filter(user => user.pinned)
+        .map(user => (
+          <a href={user.infoLink} key={user.infoLink}>
+            <img src={user.image} alt={user.caption} title={user.caption} />
+            <p>{user.caption}</p>
+          </a>
+        ));
+
+      const pageUrl = page => baseUrl + (language ? `${language}/` : '') + page;
+
+      return (
+        <div className="productShowcaseSection paddingBottom team">
+          <h1 className="sectionTitle">Team</h1>
           <div className="logos">{showcase}</div>
           {/* <div className="more-users">
             <a className="button" href={pageUrl('users.html')}>
@@ -235,13 +293,15 @@ class Index extends React.Component {
       <div>
         <HomeSplash siteConfig={siteConfig} language={language} />
         <div className="mainContainer">
+          
           <Features />
-          <Roadmap />
+          {/* <Roadmap /> */}
           {/* <FeatureCallout /> */}
           {/* {/* <LearnHow /> */}
           {/* <TryOut /> */}
           {/* <Description /> */}
-          {/* <Showcase /> */}
+          <Team />
+          <Partners />
         </div>
       </div>
     );
