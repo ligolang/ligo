@@ -237,11 +237,11 @@ let dummy_fail = simple_fail "dummy"
 *)
 let trace info = function
   | Ok _ as o -> o
-  | Error err -> Error (thunk @@ prepend_info (info ()) (err ()))
+  | Error err -> Error (fun () -> prepend_info (info ()) (err ()))
 
 (**
    Erase the current error stack, and replace it by the given error. It's useful
-   when using `Asserts` and you want to discard its auto-generated message.
+   when using `Assert` and you want to discard its auto-generated message.
 *)
 let trace_strong err = function
   | Ok _ as o -> o

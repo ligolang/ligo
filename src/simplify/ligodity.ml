@@ -27,8 +27,8 @@ module Errors = struct
     error ~data title message
 
 end
-
 open Errors
+
 open Operators.Simplify.Ligodity
 
 let r_split = Location.r_split
@@ -48,7 +48,7 @@ let rec pattern_to_typed_var : Raw.pattern -> _ = fun p ->
       ok (v , Some tp.type_expr)
     )
   | Raw.PVar v -> ok (v , None)
-  | _ -> fail @@ wrong_pattern "var" p
+  | _ -> fail @@ wrong_pattern "var/typed" p
 
 let rec expr_to_typed_expr : Raw.expr -> _ = fun e ->
   match e with
@@ -57,11 +57,13 @@ let rec expr_to_typed_expr : Raw.expr -> _ = fun e ->
   | _ -> ok (e , None)
 
 let patterns_to_var : Raw.pattern list -> _ = fun ps ->
-  let%bind () = Assert.assert_list_size ps 1 in
-  pattern_to_var @@ List.hd ps
+  match ps with
+  | [ pattern ] -> pattern_to_var pattern
+  | _ -> fail (simple_error "multiple patterns not supported on lets yet")
 
-let rec simpl_type_expression : Raw.type_expr -> type_expression result =
-  function
+let rec simpl_type_expression : Raw.type_expr -> type_expression result = fun te ->
+  trace (simple_info "simplifying this type expression...") @@
+  match te with
   | TPar x -> simpl_type_expression x.value.inside
   | TAlias v -> (
       match List.assoc_opt v.value type_constants with
@@ -71,7 +73,10 @@ let rec simpl_type_expression : Raw.type_expr -> type_expression result =
   | TFun x -> (
       let%bind (a , b) =
         let (a , _ , b) = x.value in
-        bind_map_pair simpl_type_expression (a , b) in
+        let%bind a = simpl_type_expression a in
+        let%bind b = simpl_type_expression b in
+        ok (a , b)
+      in
       ok @@ T_function (a , b)
     )
   | TApp x ->
@@ -79,8 +84,9 @@ let rec simpl_type_expression : Raw.type_expr -> type_expression result =
       let lst = npseq_to_list tuple.value.inside in
       let%bind cst =
         trace_option (simple_error "unrecognized type constants") @@
-        List.assoc_opt name.value type_constants in
-      let%bind lst' = bind_list @@ List.map simpl_type_expression lst in
+        List.assoc_opt name.value type_constants
+      in
+      let%bind lst' = bind_map_list simpl_type_expression lst in
       ok @@ T_constant (cst , lst')
   | TProd p ->
       let%bind tpl = simpl_list_type_expression
@@ -88,7 +94,8 @@ let rec simpl_type_expression : Raw.type_expr -> type_expression result =
       ok tpl
   | TRecord r ->
       let aux = fun (x, y) -> let%bind y = simpl_type_expression y in ok (x, y) in
-      let%bind lst = bind_list
+      let%bind lst =
+        bind_list
         @@ List.map aux
         @@ List.map (fun (x:Raw.field_decl Raw.reg) -> (x.value.field_name.value, x.value.field_type))
         @@ pseq_to_list r.value.elements in
@@ -116,7 +123,7 @@ and simpl_list_type_expression (lst:Raw.type_expr list) : type_expression result
   | [] -> assert false
   | [hd] -> simpl_type_expression hd
   | lst ->
-      let%bind lst = bind_list @@ List.map simpl_type_expression lst in
+      let%bind lst = bind_map_list simpl_type_expression lst in
       ok @@ T_tuple lst
 
 let rec simpl_expression :
@@ -525,7 +532,7 @@ and simpl_cases : type a . (Raw.pattern * a) list -> a matching result = fun t -
       ok @@ Match_list {match_cons = (a, b, cons) ; match_nil = nil}
     )
   | lst -> (
-      trace (simple_error "weird patterns not supported yet") @@
+      trace (simple_info "weird patterns not supported yet") @@
       let%bind constrs =
         let aux (x , y) =
           let error =
