@@ -47,9 +47,9 @@ let rec mk_field_path (rank, tail) =
 
 (* Entry points *)
 
-%start program expr
+%start program interactive_expr
 %type <AST.t> program
-%type <AST.expr> expr
+%type <AST.expr> interactive_expr
 
 %%
 
@@ -285,7 +285,7 @@ entry_binding:
     {bindings = pattern :: hd :: tl; lhs_type=$3; eq=$4; let_rhs}
   }
   | ident type_annotation? eq fun_expr(expr) {
-    let pattern = PVar $1 in	    
+    let pattern = PVar $1 in
     {bindings = [pattern]; lhs_type=$2; eq=$3; let_rhs=$4} }
 
 (* Top-level non-recursive definitions *)
@@ -382,6 +382,9 @@ tail:
 
 (* Expressions *)
 
+interactive_expr:
+  expr EOF                                                       { $1 }
+
 expr:
   base_cond__open(expr)                                    {       $1 }
 | reg(match_expr(base_cond))                               { ECase $1 }
@@ -468,7 +471,7 @@ fun_expr(right_expr):
     } in
     EFun { region=$1.region; value=f }
   }
-	 
+
 disj_expr_level:
   reg(disj_expr)                          { ELogic (BoolExpr (Or $1)) }
 | conj_expr_level                                                { $1 }

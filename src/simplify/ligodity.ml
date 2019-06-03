@@ -20,13 +20,48 @@ let get_value : 'a Raw.reg -> 'a = fun x -> x.value
 module Errors = struct
   let wrong_pattern expected_name actual =
     let title () = "wrong pattern" in
-    let message () = Format.asprintf "expected a %s, got something else" expected_name in
+    let message () = "" in
     let data = [
+      ("expected", fun () -> expected_name);
       ("actual_loc" , fun () -> Format.asprintf "%a" Location.pp_lift @@ Raw.region_of_pattern actual)
     ] in
     error ~data title message
 
+  let multiple_patterns construct (patterns: Raw.pattern list) =
+    let title () = "multiple patterns" in
+    let message () =
+      Format.asprintf "multiple patterns in \"%s\" are not supported yet" construct in
+    let patterns_loc =
+      List.fold_left (fun a p -> Region.cover a (Raw.region_of_pattern p))
+        Region.min patterns in
+    let data = [
+      ("patterns_loc", fun () -> Format.asprintf "%a" Location.pp_lift @@ patterns_loc)
+    ] in
+    error ~data title message
+
+  let unknown_predefined_type name =
+    let title () = "type constants" in
+    let message () =
+      Format.asprintf "unknown predefined type \"%s\"" name.Region.value in
+    let data = [
+      ("typename_loc",
+       fun () -> Format.asprintf "%a" Location.pp_lift @@ name.Region.region)
+    ] in
+    error ~data title message
+
+  let unsupported_arith_op expr =
+    let title () = "arithmetic expressions" in
+    let message () =
+      Format.asprintf "this arithmetic operator is not supported yet" in
+    let expr_loc = Raw.region_of_expr expr in
+    let data = [
+      ("expr_loc",
+       fun () -> Format.asprintf "%a" Location.pp_lift @@ expr_loc)
+    ] in
+    error ~data title message
+
 end
+
 open Errors
 
 open Operators.Simplify.Ligodity
@@ -48,7 +83,7 @@ let rec pattern_to_typed_var : Raw.pattern -> _ = fun p ->
       ok (v , Some tp.type_expr)
     )
   | Raw.PVar v -> ok (v , None)
-  | _ -> fail @@ wrong_pattern "var/typed" p
+  | _ -> fail @@ wrong_pattern "typed variable" p
 
 let rec expr_to_typed_expr : Raw.expr -> _ = fun e ->
   match e with
@@ -59,7 +94,7 @@ let rec expr_to_typed_expr : Raw.expr -> _ = fun e ->
 let patterns_to_var : Raw.pattern list -> _ = fun ps ->
   match ps with
   | [ pattern ] -> pattern_to_var pattern
-  | _ -> fail (simple_error "multiple patterns not supported on lets yet")
+  | _ -> fail @@ multiple_patterns "let" ps
 
 let rec simpl_type_expression : Raw.type_expr -> type_expression result = fun te ->
   trace (simple_info "simplifying this type expression...") @@
@@ -83,7 +118,7 @@ let rec simpl_type_expression : Raw.type_expr -> type_expression result = fun te
       let (name, tuple) = x.value in
       let lst = npseq_to_list tuple.value.inside in
       let%bind cst =
-        trace_option (simple_error "unrecognized type constants") @@
+        trace_option (unknown_predefined_type name) @@
         List.assoc_opt name.value type_constants
       in
       let%bind lst' = bind_map_list simpl_type_expression lst in
@@ -259,7 +294,8 @@ let rec simpl_expression :
       let n = Z.to_int @@ snd @@ n in
       return @@ e_literal ~loc (Literal_tez n)
     )
-  | EArith _ -> simple_fail "arith: not supported yet"
+  | EArith _ as e ->
+       fail @@ (unsupported_arith_op e)
   | EString (String s) -> (
       let (s , loc) = r_split s in
       let s' =
@@ -268,7 +304,8 @@ let rec simpl_expression :
       in
       return @@ e_literal ~loc (Literal_string s')
     )
-  | EString _ -> simple_fail "string: not supported yet"
+  | EString (Cat _) ->
+      simple_fail "string: not supported yet"
   | ELogic l -> simpl_logic_expression l
   | EList l -> simpl_list_expression l
   | ECase c -> (
