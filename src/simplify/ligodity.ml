@@ -17,6 +17,18 @@ let pseq_to_list = function
   | Some lst -> npseq_to_list lst
 let get_value : 'a Raw.reg -> 'a = fun x -> x.value
 
+module Errors = struct
+  let wrong_pattern expected_name actual =
+    let title () = "wrong pattern" in
+    let message () = Format.asprintf "expected a %s, got something else" expected_name in
+    let data = [
+      ("actual_loc" , fun () -> Format.asprintf "%a" Location.pp_lift @@ Raw.region_of_pattern actual)
+    ] in
+    error ~data title message
+
+end
+
+open Errors
 open Operators.Simplify.Ligodity
 
 let r_split = Location.r_split
@@ -25,7 +37,7 @@ let rec pattern_to_var : Raw.pattern -> _ = fun p ->
   match p with
   | Raw.PPar p -> pattern_to_var p.value.inside
   | Raw.PVar v -> ok v
-  | _ -> simple_fail "not a var"
+  | _ -> fail @@ wrong_pattern "var" p
 
 let rec pattern_to_typed_var : Raw.pattern -> _ = fun p ->
   match p with
@@ -36,7 +48,7 @@ let rec pattern_to_typed_var : Raw.pattern -> _ = fun p ->
       ok (v , Some tp.type_expr)
     )
   | Raw.PVar v -> ok (v , None)
-  | _ -> simple_fail "not a var"
+  | _ -> fail @@ wrong_pattern "var" p
 
 let rec expr_to_typed_expr : Raw.expr -> _ = fun e ->
   match e with

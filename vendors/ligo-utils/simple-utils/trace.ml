@@ -3,8 +3,23 @@ module J = Yojson.Basic
 module JSON_string_utils = struct
   let member = J.Util.member
   let string = J.Util.to_string_option
+  let to_list_option = fun x ->
+    try ( Some (J.Util.to_list x))
+    with _ -> None
+  let to_assoc_option = fun x ->
+    try ( Some (J.Util.to_assoc x))
+    with _ -> None
+  let list = to_list_option
+  let assoc = to_assoc_option
   let int = J.Util.to_int_option
 
+  let patch j k v =
+    match assoc j with
+    | None -> j
+    | Some assoc -> `Assoc (
+        List.map (fun (k' , v') -> (k' , if k = k' then v else v')) assoc
+      )
+  
   let swap f l r = f r l
 
   let unit x = Some x
@@ -60,15 +75,15 @@ type annotation_thunk = annotation thunk
    point.
 *)
 type 'a result =
-    Ok of 'a * annotation_thunk list
-  | Errors of error_thunk list
+  | Ok of 'a * annotation_thunk list
+  | Error of error_thunk
 
 
 (**
    Constructors
 *)
 let ok x = Ok (x, [])
-let fail err = Errors [err]
+let fail err = Error err
 
 (**
    Monadic operators
@@ -77,12 +92,12 @@ let bind f = function
   | Ok (x, annotations) ->
       (match f x with
          Ok (x', annotations') -> Ok (x', annotations' @ annotations)
-       | Errors _ as e' -> ignore annotations; e')
-  | Errors _ as e -> e
+       | Error _ as e' -> ignore annotations; e')
+  | Error _ as e -> e
 
 let map f = function
   | Ok (x, annotations) -> Ok (f x, annotations)
-  | Errors _ as e -> e
+  | Error _ as e -> e
 
 (**
    Usual bind-syntax is `>>=`, but this is taken from the Tezos code base. Where
@@ -125,6 +140,7 @@ let thunk x () = x
 let mk_error
     ?(error_code : int thunk option) ?(message : string thunk option)
     ?(data : (string * string thunk) list option)
+    ?(children = []) ?(infos = [])
     ~(title : string thunk) () : error =
   let error_code' = X_option.map (fun x -> ("error_code" , `Int (x ()))) error_code in
   let title' = X_option.some ("title" , `String (title ())) in
@@ -132,14 +148,57 @@ let mk_error
     let aux (key , value) = (key , `String (value ())) in
     X_option.map (fun x -> ("data" , `Assoc (List.map aux x))) data in
   let message' = X_option.map (fun x -> ("message" , `String (x ()))) message in
-  `Assoc (X_option.collapse_list [ error_code' ; title' ; message' ; data' ])
+  let type' = Some ("type" , `String "error") in
+  let children' = Some ("children" , `List children) in
+  let infos' = Some ("infos" , `List infos) in
+  `Assoc (X_option.collapse_list [ error_code' ; title' ; message' ; data' ; type' ; children' ; infos' ])
 
-let error ?data ?error_code title message () = mk_error ?data ?error_code ~title:(title) ~message:(message) ()
+let error ?data ?error_code ?children ?infos title message () = mk_error ?data ?error_code ?children ?infos ~title:(title) ~message:(message) ()
+
+let prepend_child = fun child err ->
+  let open JSON_string_utils in
+  let children_opt = err |> member "children" |> list in
+  let children = match children_opt with
+    | Some children -> (child ()) :: children
+    | None -> [ child () ] in
+  patch err "children" (`List children)
+
+let patch_children = fun children err ->
+  let open JSON_string_utils in
+  patch err "children" (`List (List.map (fun f -> f ()) children))
+
+(**
+   Build a standard info, with a title, a message, an info code and some data.
+*)
+let mk_info
+    ?(info_code : int thunk option) ?(message : string thunk option)
+    ?(data : (string * string thunk) list option)
+    ~(title : string thunk) () : error =
+  let error_code' = X_option.map (fun x -> ("error_code" , `Int (x ()))) info_code in
+  let title' = X_option.some ("title" , `String (title ())) in
+  let data' =
+    let aux (key , value) = (key , `String (value ())) in
+    X_option.map (fun x -> ("data" , `Assoc (List.map aux x))) data in
+  let message' = X_option.map (fun x -> ("message" , `String (x ()))) message in
+  let type' = Some ("type" , `String "info") in
+  `Assoc (X_option.collapse_list [ error_code' ; title' ; message' ; data' ; type' ])
+
+let info ?data ?info_code title message () = mk_info ?data ?info_code ~title:(title) ~message:(message) ()
+
+let prepend_info = fun info err ->
+  let open JSON_string_utils in
+  let infos_opt = err |> member "infos" |> list in
+  let infos = match infos_opt with
+    | Some infos -> info :: infos
+    | None -> [ info ] in
+  patch err "infos" (`List infos)
+
 
 (**
    Helpers that ideally shouldn't be used in production.
 *)
 let simple_error str () = mk_error ~title:(thunk str) ()
+let simple_info str () = mk_info ~title:(thunk str) ()
 let simple_fail str = fail @@ simple_error str
 
 (**
@@ -176,9 +235,9 @@ let dummy_fail = simple_fail "dummy"
    ```
    And this will pass along the error triggered by "get key map".
 *)
-let trace err = function
+let trace info = function
   | Ok _ as o -> o
-  | Errors errs -> Errors (err :: errs)
+  | Error err -> Error (thunk @@ prepend_info (info ()) (err ()))
 
 (**
    Erase the current error stack, and replace it by the given error. It's useful
@@ -186,21 +245,52 @@ let trace err = function
 *)
 let trace_strong err = function
   | Ok _ as o -> o
-  | Errors _ -> Errors [err]
+  | Error _ -> Error err
+
+(**
+   Sometimes, when you have a list of potentially erroneous elements, you need
+   to retrieve all the errors, instead of just the first one. In that case, do:
+   ```
+   let type_list lst =
+     let%bind lst' =
+       trace_list (simple_error "Error while typing a list") @@
+       List.map type_element lst in
+     ...
+   ```
+   Where before you would have written:
+   ```
+   let type_list lst =
+     let%bind lst' = bind_map_list type_element lst in
+     ...
+   ```
+*)
+let trace_list err lst =
+  let oks =
+    let aux = function
+      | Ok (x , _) -> Some x
+      | _ -> None in
+    X_list.filter_map aux lst in
+  let errs =
+    let aux = function
+      | Error x -> Some x
+      | _ -> None in
+    X_list.filter_map aux lst in
+  match errs with
+  | [] -> ok oks
+  | errs -> fail (fun () -> patch_children errs err)
 
 (**
    Trace, but with an error which generation may itself fail.
 *)
 let trace_r err_thunk_may_fail = function
   | Ok _ as o -> o
-  | Errors errs -> (
+  | Error _ -> (
       match err_thunk_may_fail () with
-      | Ok (err, annotations) -> ignore annotations; Errors (err :: errs)
-      | Errors errors_while_generating_error ->
+      | Ok (err, annotations) -> ignore annotations; Error (err)
+      | Error errors_while_generating_error ->
           (* TODO: the complexity could be O(n*n) in the worst case,
              this should use some catenable lists. *)
-          Errors (errors_while_generating_error
-                  @ errs)
+          Error (errors_while_generating_error)
     )
 
 (**
@@ -231,11 +321,11 @@ let trace_f_2_ez f name =
 *)
 let to_bool = function
   | Ok _ -> true
-  | Errors _ -> false
+  | Error _ -> false
 
 let to_option = function
   | Ok (o, annotations) -> ignore annotations; Some o
-  | Errors _ -> None
+  | Error _ -> None
 
 (**
    Convert an option to a result, with a given error if the parameter is None.
@@ -267,7 +357,8 @@ let rec bind_list = function
       hd >>? fun hd ->
       bind_list tl >>? fun tl ->
       ok @@ hd :: tl
-    )
+    )  
+
 let bind_ne_list = fun (hd , tl) ->
   hd >>? fun hd ->
   bind_list tl >>? fun tl ->
@@ -341,7 +432,7 @@ let bind_find_map_list error f lst =
     | [] -> fail error
     | hd :: tl -> (
         match f hd with
-        | Errors _ -> aux tl
+        | Error _ -> aux tl
         | o -> o
       )
   in
@@ -360,7 +451,7 @@ let bind_lr (type a b) ((a : a result), (b:b result)) : [`Left of a | `Right of 
   match (a, b) with
   | (Ok _ as o), _ -> map (fun x -> `Left x) o
   | _, (Ok _ as o) -> map (fun x -> `Right x) o
-  | _, Errors b -> Errors b
+  | _, Error b -> Error b
 
 let bind_lr_lazy (type a b) ((a : a result), (b:unit -> b result)) : [`Left of a | `Right of b] result =
   match a with
@@ -368,7 +459,7 @@ let bind_lr_lazy (type a b) ((a : a result), (b:unit -> b result)) : [`Left of a
   | _ -> (
       match b() with
       | Ok _ as o -> map (fun x -> `Right x) o
-      | Errors b -> Errors b
+      | Error b -> Error b
     )
 
 let bind_and (a, b) =

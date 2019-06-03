@@ -106,9 +106,9 @@ let pop () : unit result =
     | Trace.Ok (output , _) -> (
         Format.printf "\nPop output on %d : %a\n" n Ast_typed.PP.annotated_expression output ;
       )
-    | Errors errs -> (
+    | Trace.Error err -> (
         Format.printf "\nPop output on %d : error\n" n) ;
-        Format.printf "Errors : {\n%a}\n%!" errors_pp (List.rev (List.rev_map (fun f -> f ()) errs)) ;
+        Format.printf "Errors : {\n%a}\n%!" error_pp (err ()) ;
     ) ;
     ok ()
   in

@@ -7,8 +7,8 @@ let test name f =
     f () in
   match result with
   | Ok ((), annotations) -> ignore annotations; ()
-  | Errors errs ->
-      Format.printf "Errors : {\n%a}\n%!" errors_pp (List.rev (List.rev_map (fun f -> f ()) errs)) ;
+  | Error err ->
+      Format.printf "Errors : {\n%a}\n%!" error_pp (err ()) ;
       raise Alcotest.Test_error
 
 open Ast_simplified.Combinators

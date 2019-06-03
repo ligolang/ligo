@@ -12,6 +12,12 @@ type t =
   | File of Region.t (* file_location *)
   | Virtual of virtual_location
 
+let pp = fun ppf t ->
+  match t with
+  | Virtual s -> Format.fprintf ppf "%s" s
+  | File f -> Format.fprintf ppf "%s" (f#to_string `Point)
+
+
 let make (start_pos:Lexing.position) (end_pos:Lexing.position) : t =
   (* TODO: give correct unicode offsets (the random number is here so
      that searching for wrong souce locations appearing in messages
@@ -38,6 +44,7 @@ let pp_wrap f ppf { wrap_content ; _ } = Format.fprintf ppf "%a" f wrap_content
 let lift_region : 'a Region.reg -> 'a wrap = fun x ->
   wrap ~loc:(File x.region) x.value
 let lift : Region.region -> t = fun x -> File x
+let pp_lift = fun ppf r -> pp ppf @@ lift r
 
 let r_extract : 'a Region.reg -> t = fun x -> File x.region
 let r_split : 'a Region.reg -> ('a * t) = fun x -> x.value , File x.region
