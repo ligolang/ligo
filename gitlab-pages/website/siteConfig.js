@@ -9,20 +9,79 @@
 // site configuration options.
 
 // List of projects/orgs using your project for the users page.
-const users = [
+const partners = [
   {
-    caption: 'User1',
+    caption: 'Nomadic Labs',
     // You will need to prepend the image path with your baseUrl
     // if it is not '/', like: '/test-site/img/image.jpg'.
-    image: '/img/undraw_open_source.svg',
-    infoLink: 'https://www.facebook.com',
+    image: 'https://media.licdn.com/dms/image/C560BAQGE4y1pddQlrw/company-logo_200_200/0?e=2159024400&v=beta&t=aszI_Js3VuY7P20n1pYVAJmeRhM1kC_ftMrowcQa2ZQ',
+    infoLink: 'https://www.nomadic-labs.com/',
+    pinned: true,
+  },
+  {
+    caption: 'Tocqueville Group',
+    // You will need to prepend the image path with your baseUrl
+    // if it is not '/', like: '/test-site/img/image.jpg'.
+    image: 'https://tqgroup.io/static/images/logo.svg',
+    infoLink: 'https://tqgroup.io/',
+    pinned: true,
+  },
+  {
+    caption: 'Stove Labs',
+    // You will need to prepend the image path with your baseUrl
+    // if it is not '/', like: '/test-site/img/image.jpg'.
+    image: 'https://stove-labs.com/logo_transparent.png',
+    infoLink: 'https://stove-labs.com',
+    pinned: true,
+  },
+];
+
+const team = [
+  {
+    caption: 'Gabriel Alfour',
+    // You will need to prepend the image path with your baseUrl
+    // if it is not '/', like: '/test-site/img/image.jpg'.
+    image: 'https://thepowerofthedream.org/wp-content/uploads/2015/09/generic-profile-picture-600x600.jpg',
+    infoLink: '#',
+    pinned: true,
+  },
+  {
+    caption: 'Georges Duperon',
+    // You will need to prepend the image path with your baseUrl
+    // if it is not '/', like: '/test-site/img/image.jpg'.
+    image: 'https://thepowerofthedream.org/wp-content/uploads/2015/09/generic-profile-picture-600x600.jpg',
+    infoLink: '#',
+    pinned: true,
+  },
+  {
+    caption: 'Christian Rinderknecht',
+    // You will need to prepend the image path with your baseUrl
+    // if it is not '/', like: '/test-site/img/image.jpg'.
+    image: 'https://thepowerofthedream.org/wp-content/uploads/2015/09/generic-profile-picture-600x600.jpg',
+    infoLink: '#',
+    pinned: true,
+  },
+  {
+    caption: 'Brice Aldrich',
+    // You will need to prepend the image path with your baseUrl
+    // if it is not '/', like: '/test-site/img/image.jpg'.
+    image: 'https://thepowerofthedream.org/wp-content/uploads/2015/09/generic-profile-picture-600x600.jpg',
+    infoLink: '#',
+    pinned: true,
+  },
+  {
+    caption: 'Matej Sima',
+    // You will need to prepend the image path with your baseUrl
+    // if it is not '/', like: '/test-site/img/image.jpg'.
+    image: 'https://scontent-frt3-2.xx.fbcdn.net/v/t1.0-9/56644817_2276459725943174_4007605942056124416_n.jpg?_nc_cat=107&_nc_ht=scontent-frt3-2.xx&oh=e8a86a2cfe76798cbdc28a0769ebccb1&oe=5D5423F0',
+    infoLink: 'https://sk.linkedin.com/in/matejsima',
     pinned: true,
   },
 ];
 
 const siteConfig = {
   title: 'LIGO', // Title for your website.
-  tagline: 'LIGO is a statically typed high-level smart-contract language that compiles down to Tezos. It seeks be easy to use, extensible and safe.',
+  tagline: 'LIGO is a statically typed high-level smart-contract language that compiles down to Michelson. It seeks to be easy to use, extensible and safe.',
   url: 'https://your-docusaurus-test-site.com', // Your website URL
   baseUrl: '/', // Base URL for your project */
   // For github.io type URLs, you would set the url and baseUrl like:
@@ -40,21 +99,25 @@ const siteConfig = {
   headerLinks: [
     {doc: 'setup-installation', label: 'Docs'},
     {doc: 'api-cli-commands', label: 'CLI'},
-    {doc: 'contributors/introduction', label: 'Contributors'}
+    {doc: 'contributors/introduction', label: 'Contributors'},
+    { search: true },
+    // Determines language drop down position among links
+    { languages: true }
   ],
 
   // If you have users set above, you add it here:
-  users,
+  partners,
+  team,
 
   /* path to images for header/footer */
-  headerIcon: 'img/favicon.ico',
+  headerIcon: 'img/logo.svg',
   footerIcon: 'img/favicon.ico',
   favicon: 'img/favicon.ico',
 
   /* Colors for website */
   colors: {
-    primaryColor: '#479e10',
-    secondaryColor: '#316e0b',
+    primaryColor: '#1A1A1A',
+    secondaryColor: '#1A1A1A',
   },
 
   /* Custom fonts for website */

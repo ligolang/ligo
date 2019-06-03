@@ -1,9 +1,166 @@
-/* your custom css */
+ul {
+    max-width: 350px;
+    margin: 0 auto;
+    text-align: left;
+}
+
+.projectTitle small {
+    max-width: 700px;
+    text-align: center;
+    margin: 0 auto;
+    margin-top: 0.7em;
+}
+
+.fixedHeaderContainer header .headerTitleWithLogo {
+    display: none;
+}
+
+.fixedHeaderContainer header img {}
+
+.nav-footer {
+    background: #1A1A1A;
+}
+
+.navigationSlider .slidingNav {
+    background: #1A1A1A;
+}
+
+.homeContainer {
+    box-shadow: inset 0 -10px 10px -6px rgba(177, 176, 176, 0.2);
+    background: #f6f4f4;
+}
+
+.homeContainer .hljs {
+    text-align: left;
+    background: transparent;
+}
+
+.homeContainer .tabs {
+    width: 800px;
+    margin: 0 auto;
+    border-top: none;
+    border-bottom: 4px solid #e0e0e0;
+}
+
+.homeContainer .tab-content {
+    border-top: 4px solid #e0e0e0;
+}
+
+.homeContainer .nav-tabs {
+    border: none;
+    position: relative;
+    top: 4px;
+}
+
+
+.button {
+    border: 1px solid #B2210C;
+    color: #B2210C;
+}
+/* 
+dark red: B2210C
+*/
+.button:hover, .promoSection .buttonWrapper:first-of-type > a.button {
+    background: #B2210C;
+    color: white;
+}
+
+blockquote {
+    background-color: rgba(178, 33, 12, 0.7);
+    border-left: 8px solid #B2210C;
+    color: white;
+}
+
+a {
+    color: rgba(26, 26, 26, 0.7);
+}
+
+a:hover {
+    color: rgba(26, 26, 26, 1);
+}
+
+.homeContainer .homeWrapper .projectLogo {
+    display: block;
+    position: relative;
+    padding: 0;
+}
+
+.projectTitle {
+    margin-top: 30px;
+    margin-bottom: 0;
+}
+
+.projectTitle small {
+    margin: 0 auto;
+}
+
+.promoSection .promoRow {
+    padding-top: 0;
+    margin-top: 30px;
+}
+
+.promoSection .promoRow .pluginRowBlock .pluginWrapper {
+    padding: 0 4px;
+}
+
+.blockElement {
+    color: #1A1A1A;
+}
+
+.blockImage {
+    margin-bottom: 0px;
+}
+
+.blockContent {
+    margin-top: -25px;
+}
+
+.features {
+    background: white;
+    margin-top: -40px;
+    position: relative;
+    text-align: center;
+    /* box-shadow: 0 10px 10px -6px rgba(177, 176, 176, 0.3); */
+}
+
+.sectionTitle {
+    border-bottom: 4px solid #e0e0e0;
+    max-width: 200px;
+    margin: 0 auto;
+    margin-top: 35px;
+    padding-bottom: 15px;
+}
+
+.sectionTitle.blockTitle {
+    margin-bottom: -20px;
+}
+
+.lightBackground, body, html {
+    background: white;
+}
+
+.copyright a {
+    color: #B2210C;
+}
+
+.productShowcaseSection.team .logos img {
+    border-radius: 50%;
+    height: 150px;
+    margin-bottom: 0px;
+    padding-left: 40px;
+    padding-right: 40px;
+}
+
+
+
+.productShowcaseSection.team .logos p {
+    padding-top: 0px;
+}
 
 @media only screen and (min-device-width: 360px) and (max-device-width: 736px) {
 }
 
-@media only screen and (min-width: 1024px) {
+@media only screen and (min-width: 1200px) {
 }
 
 @media only screen and (max-width: 1023px) {
@@ -13,17 +170,4 @@
 }
 
 @media only screen and (min-width: 1500px) {
-}
-
-ul {
-    max-width: 350px;
-    margin: 0 auto;
-    text-align: left;
-}
-
-.projectTitle small {
-    max-width: 500px;
-    text-align: center;
-    margin: 0 auto;
-    margin-top: 0.7em;
 }
