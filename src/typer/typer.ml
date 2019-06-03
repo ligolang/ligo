@@ -25,7 +25,43 @@ module Errors = struct
     let message () = "" in
     let data = [
       ("variable" , fun () -> Format.asprintf "%s" n) ;
-      ("in" , fun () -> Format.asprintf "%a" Environment.PP.full_environment e)
+      ("environment" , fun () -> Format.asprintf "%a" Environment.PP.full_environment e)
+    ] in
+    error ~data title message ()
+
+  let match_empty_variant : type a . a I.matching -> unit -> _ =
+    fun matching () ->
+    let title = (thunk "match with no cases") in
+    let message () = "" in
+    let data = [
+      ("variant" , fun () -> Format.asprintf "%a" I.PP.matching_type matching)
+    ] in
+    error ~data title message ()
+
+  let match_missing_case : type a . a I.matching -> unit -> _ =
+    fun matching () ->
+    let title = (thunk "missing case in match") in
+    let message () = "" in
+    let data = [
+      ("variant" , fun () -> Format.asprintf "%a" I.PP.matching_type matching)
+    ] in
+    error ~data title message ()
+
+  let match_redundant_case : type a . a I.matching -> unit -> _ =
+    fun matching () ->
+    let title = (thunk "missing case in match") in
+    let message () = "" in
+    let data = [
+      ("variant" , fun () -> Format.asprintf "%a" I.PP.matching_type matching)
+    ] in
+    error ~data title message ()
+
+  let unbound_constructor (e:environment) (n:string) () =
+    let title = (thunk "unbound constructor") in
+    let message () = "" in
+    let data = [
+      ("constructor" , fun () -> Format.asprintf "%s" n) ;
+      ("environment" , fun () -> Format.asprintf "%a" Environment.PP.full_environment e)
     ] in
     error ~data title message ()
 
@@ -73,13 +109,49 @@ module Errors = struct
     ] in
     error ~data title message ()
 
-  let match_error : type a . expected: a I.Types.matching -> actual: O.Types.type_value -> unit -> _ =
+  let match_error : type a . expected: a I.matching -> actual: O.type_value -> unit -> _ =
     fun ~expected ~actual () ->
     let title = (thunk "typing match") in
     let message () = "" in
     let data = [
       ("expected" , fun () -> Format.asprintf "%a" I.PP.matching_type expected);
       ("actual" , fun () -> Format.asprintf "%a" O.PP.type_value actual)
+    ] in
+    error ~data title message ()
+
+  let needs_annotation (e : I.expression) (case : string) () =
+    let title = (thunk "this expression must be annotated with its type") in
+    let message () = Format.asprintf "%s needs an annotation" case in
+    let data = [
+      ("expression" , fun () -> Format.asprintf "%a" I.PP.expression e)
+    ] in
+    error ~data title message ()
+
+  let type_error ~(expected: string) ~(actual: O.type_value) ~(expression : O.value) () =
+    let title = (thunk "this expression must be annotated with its type") in
+    let message () = "" in
+    let data = [
+      ("expected"   , fun () -> Format.asprintf "%s" expected);
+      ("actual"     , fun () -> Format.asprintf "%a" O.PP.type_value actual);
+      ("expression" , fun () -> Format.asprintf "%a" O.PP.value expression)
+    ] in
+    error ~data title message ()
+
+  let bad_tuple_index (index : int) (ae : I.expression) () =
+    let title = (thunk "invalid tuple index") in
+    let message () = "" in
+    let data = [
+      ("index" , fun () -> Format.asprintf "%d" index) ;
+      ("tuple_value" , fun () -> Format.asprintf "%a" I.PP.expression ae)
+    ] in
+    error ~data title message ()
+
+  let bad_record_access (field : string) (ae : I.expression) () =
+    let title = (thunk "invalid record field") in
+    let message () = "" in
+    let data = [
+      ("field" , fun () -> Format.asprintf "%s" field) ;
+      ("record_value" , fun () -> Format.asprintf "%a" I.PP.expression ae)
     ] in
     error ~data title message ()
 end
@@ -147,7 +219,7 @@ and type_match : type i o . (environment -> i -> o result) -> environment -> O.t
         trace_strong (match_error ~expected:i ~actual:t)
         @@ get_t_tuple t in
       let%bind lst' =
-        generic_try (simple_error "Matching tuple of different size")
+        generic_try (match_tuple_wrong_arity t_tuple lst)
         @@ (fun () -> List.combine lst t_tuple) in
       let aux prev (name, tv) = Environment.add_ez_binder name tv prev in
       let e' = List.fold_left aux e lst' in
@@ -157,7 +229,7 @@ and type_match : type i o . (environment -> i -> o result) -> environment -> O.t
       let%bind variant_opt =
         let aux acc ((constructor_name , _) , _) =
           let%bind (_ , variant) =
-            trace_option (simple_error "bad constructor") @@
+            trace_option (unbound_constructor e constructor_name) @@
             Environment.get_constructor constructor_name e in
           let%bind acc = match acc with
             | None -> ok (Some variant)
@@ -166,12 +238,12 @@ and type_match : type i o . (environment -> i -> o result) -> environment -> O.t
                 ok (Some variant)
               ) in
           ok acc in
-        trace (simple_error "in match variant") @@
+        trace (simple_info "in match variant") @@
         bind_fold_list aux None lst in
       let%bind variant =
-        trace_option (simple_error "empty variant") @@
+        trace_option (match_empty_variant i) @@
         variant_opt in
-      let%bind  () =
+      let%bind () =
         let%bind variant_cases' =
           trace (match_error ~expected:i ~actual:t)
           @@ Ast_typed.Combinators.get_t_sum variant in
@@ -181,17 +253,17 @@ and type_match : type i o . (environment -> i -> o result) -> environment -> O.t
           Assert.assert_true (List.mem c match_cases)
         in
         let%bind () =
-          trace (simple_error "missing case match") @@
+          trace_strong (match_missing_case i) @@
           bind_iter_list test_case variant_cases in
         let%bind () =
-          trace_strong (simple_error "redundant case match") @@
+          trace_strong (match_redundant_case i) @@
           Assert.assert_true List.(length variant_cases = length match_cases) in
         ok ()
       in
       let%bind lst' =
         let aux ((constructor_name , name) , b) =
           let%bind (constructor , _) =
-            trace_option (simple_error "bad constructor??") @@
+            trace_option (unbound_constructor e constructor_name) @@
             Environment.get_constructor constructor_name e in
           let e' = Environment.add_ez_binder name constructor e in
           let%bind b' = f e' b in
@@ -257,7 +329,7 @@ and type_expression : environment -> ?tv_opt:O.type_value -> I.expression -> O.a
   trace main_error @@
   match Location.unwrap ae with
   (* Basic *)
-  | E_failwith _ -> simple_fail "can't type failwith in isolation"
+  | E_failwith _ -> fail @@ needs_annotation ae "the failwith keyword"
   | E_variable name ->
       let%bind tv' =
         trace_option (unbound_variable e name)
@@ -297,14 +369,14 @@ and type_expression : environment -> ?tv_opt:O.type_value -> I.expression -> O.a
         | Access_tuple index -> (
             let%bind tpl_tv = get_t_tuple prev.type_annotation in
             let%bind tv =
-              generic_try (simple_error "bad tuple index")
+              generic_try (bad_tuple_index index ae)
               @@ (fun () -> List.nth tpl_tv index) in
             return (E_tuple_accessor (prev , index)) tv
           )
         | Access_record property -> (
             let%bind r_tv = get_t_record prev.type_annotation in
             let%bind tv =
-              generic_try (simple_error "bad record index")
+              generic_try (bad_record_access property ae)
               @@ (fun () -> SMap.find property r_tv) in
             return (E_record_accessor (prev , property)) tv
           )
@@ -316,7 +388,7 @@ and type_expression : environment -> ?tv_opt:O.type_value -> I.expression -> O.a
             return (E_look_up (prev , ae')) v
           )
       in
-      trace (simple_error "accessing") @@
+      trace (simple_info "accessing") @@
       bind_fold_list aux e' path
 
   (* Sum *)
@@ -360,7 +432,7 @@ and type_expression : environment -> ?tv_opt:O.type_value -> I.expression -> O.a
         let%bind ty =
           let%bind opt = bind_fold_list aux init
           @@ List.map get_type_annotation lst' in
-          trace_option (simple_error "empty list expression without annotation") opt in
+          trace_option (needs_annotation ae "empty list") opt in
         ok (t_list ty ())
       in
       return (E_list lst') tv
@@ -379,7 +451,7 @@ and type_expression : environment -> ?tv_opt:O.type_value -> I.expression -> O.a
             @@ List.map get_type_annotation
             @@ List.map fst lst' in
           let%bind annot = bind_map_option get_t_map_key tv_opt in
-          trace (simple_error "untyped empty map expression") @@
+          trace (simple_info "empty map expression without a type annotation") @@
           O.merge_annotation annot sub
         in
         let%bind value_type =
@@ -388,7 +460,7 @@ and type_expression : environment -> ?tv_opt:O.type_value -> I.expression -> O.a
             @@ List.map get_type_annotation
             @@ List.map snd lst' in
           let%bind annot = bind_map_option get_t_map_value tv_opt in
-          trace (simple_error "untyped empty map expression") @@
+          trace (simple_info "empty map expression without a type annotation") @@
           O.merge_annotation annot sub
         in
         ok (t_map key_type value_type ())
@@ -403,7 +475,7 @@ and type_expression : environment -> ?tv_opt:O.type_value -> I.expression -> O.a
       let%bind input_type =
         let%bind input_type =
           (* Hack to take care of let_in introduced by `simplify/ligodity.ml` in ECase's hack *)
-          let default_action () = simple_fail "no input type provided" in
+          let default_action e () = fail @@ (needs_annotation e "the returned value") in
           match input_type with
           | Some ty -> ok ty
           | None -> (
@@ -413,11 +485,11 @@ and type_expression : environment -> ?tv_opt:O.type_value -> I.expression -> O.a
                   | I.E_variable name when name = (fst binder) -> (
                       match snd li.binder with
                       | Some ty -> ok ty
-                      | None -> default_action ()
+                      | None -> default_action li.rhs ()
                     )
-                  | _ -> default_action ()
+                  | _ -> default_action li.rhs ()
                 )
-              | _ -> default_action ()
+              | _ -> default_action result ()
             )
         in
         evaluate_type e input_type in
@@ -441,7 +513,11 @@ and type_expression : environment -> ?tv_opt:O.type_value -> I.expression -> O.a
         | T_function (param, result) ->
             let%bind _ = O.assert_type_value_eq (param, arg.type_annotation) in
             ok result
-        | _ -> simple_fail "applying to not-a-function"
+        | _ ->
+          fail @@ type_error
+            ~expected:"should be a function type"
+            ~expression:f
+            ~actual:f.type_annotation
       in
       return (E_application (f , arg)) tv
   | E_look_up dsi ->
