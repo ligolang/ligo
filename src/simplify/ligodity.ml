@@ -23,7 +23,7 @@ module Errors = struct
     let message () = "" in
     let data = [
       ("expected", fun () -> expected_name);
-      ("actual_loc" , fun () -> Format.asprintf "%a" Location.pp_lift @@ Raw.region_of_pattern actual)
+      ("actual_loc" , fun () -> Format.asprintf "%a" Location.pp_lift @@ Raw.pattern_to_region actual)
     ] in
     error ~data title message
 
@@ -32,7 +32,7 @@ module Errors = struct
     let message () =
       Format.asprintf "multiple patterns in \"%s\" are not supported yet" construct in
     let patterns_loc =
-      List.fold_left (fun a p -> Region.cover a (Raw.region_of_pattern p))
+      List.fold_left (fun a p -> Region.cover a (Raw.pattern_to_region p))
         Region.min patterns in
     let data = [
       ("patterns_loc", fun () -> Format.asprintf "%a" Location.pp_lift @@ patterns_loc)
@@ -53,7 +53,7 @@ module Errors = struct
     let title () = "arithmetic expressions" in
     let message () =
       Format.asprintf "this arithmetic operator is not supported yet" in
-    let expr_loc = Raw.region_of_expr expr in
+    let expr_loc = Raw.expr_to_region expr in
     let data = [
       ("expr_loc",
        fun () -> Format.asprintf "%a" Location.pp_lift @@ expr_loc)
@@ -64,7 +64,7 @@ module Errors = struct
     let title () = "string expressions" in
     let message () =
       Format.asprintf "string concatenation is not supported yet" in
-    let expr_loc = Raw.region_of_expr expr in
+    let expr_loc = Raw.expr_to_region expr in
     let data = [
       ("expr_loc",
        fun () -> Format.asprintf "%a" Location.pp_lift @@ expr_loc)
@@ -86,7 +86,7 @@ module Errors = struct
     let title () = "tuple pattern" in
     let message () =
       Format.asprintf "tuple patterns are not supported yet" in
-    let pattern_loc = Raw.region_of_pattern p in
+    let pattern_loc = Raw.pattern_to_region p in
     let data = [
       ("pattern_loc",
        fun () -> Format.asprintf "%a" Location.pp_lift @@ pattern_loc)
@@ -97,7 +97,7 @@ module Errors = struct
     let title () = "constant constructor" in
     let message () =
       Format.asprintf "constant constructors are not supported yet" in
-    let pattern_loc = Raw.region_of_pattern p in
+    let pattern_loc = Raw.pattern_to_region p in
     let data = [
       ("pattern_loc",
        fun () -> Format.asprintf "%a" Location.pp_lift @@ pattern_loc)
@@ -109,7 +109,7 @@ module Errors = struct
     let message () =
       Format.asprintf "non-variable patterns in constructors \
                        are not supported yet" in
-    let pattern_loc = Raw.region_of_pattern p in
+    let pattern_loc = Raw.pattern_to_region p in
     let data = [
       ("pattern_loc",
        fun () -> Format.asprintf "%a" Location.pp_lift @@ pattern_loc)
@@ -129,7 +129,7 @@ module Errors = struct
     let title () = "constructors in patterns" in
     let message () =
       Format.asprintf "currently, only constructors are supported in patterns" in
-    let pattern_loc = Raw.region_of_pattern p in
+    let pattern_loc = Raw.pattern_to_region p in
     let data = [
       ("pattern_loc",
        fun () -> Format.asprintf "%a" Location.pp_lift @@ pattern_loc)
@@ -146,6 +146,18 @@ module Errors = struct
        fun () -> Format.asprintf "%a" Location.pp_lift @@ region)
     ] in
     error ~data title message
+
+  let corner_case ~loc message =
+    let title () = "corner case" in
+    let content () = "We don't have a good error message for this case. \
+                      We are striving find ways to better report them and \
+                      find the use-cases that generate them. \
+                      Please report this to the developers." in
+    let data = [
+      ("location" , fun () -> loc) ;
+      ("message" , fun () -> message) ;
+    ] in
+    error ~data title content
 end
 
 open Errors
@@ -559,14 +571,14 @@ and simpl_declaration : Raw.declaration -> declaration Location.wrap result =
       let {name;type_expr} : Raw.type_decl = x.value in
       let%bind type_expression = simpl_type_expression type_expr in
       ok @@ loc x @@ Declaration_type (name.value , type_expression)
-  | LetEntry x (* -> simple_fail "no entry point yet" *)
+  | LetEntry x
   | Let x -> (
       let _ , binding = x.value in
       let {bindings ; lhs_type ; let_rhs} = binding in
       let%bind (var , args) =
         let%bind (hd , tl) =
           match bindings with
-          | [] -> simple_fail "let without bindings"
+          | [] -> fail @@ corner_case ~loc:__LOC__ "let without bindings"
           | hd :: tl -> ok (hd , tl)
         in
         let%bind var = pattern_to_var hd in
