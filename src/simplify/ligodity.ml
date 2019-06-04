@@ -79,7 +79,7 @@ let rec simpl_type_expression : Raw.type_expr -> type_expression result = fun te
       in
       ok @@ T_function (a , b)
     )
-  | TApp x ->
+  | TApp x -> (
       let (name, tuple) = x.value in
       let lst = npseq_to_list tuple.value.inside in
       let%bind cst =
@@ -88,10 +88,11 @@ let rec simpl_type_expression : Raw.type_expr -> type_expression result = fun te
       in
       let%bind lst' = bind_map_list simpl_type_expression lst in
       ok @@ T_constant (cst , lst')
-  | TProd p ->
-      let%bind tpl = simpl_list_type_expression
-        @@ npseq_to_list p.value in
+    )
+  | TProd p -> (
+      let%bind tpl = simpl_list_type_expression  @@ npseq_to_list p.value in
       ok tpl
+    )
   | TRecord r ->
       let aux = fun (x, y) -> let%bind y = simpl_type_expression y in ok (x, y) in
       let%bind lst =
