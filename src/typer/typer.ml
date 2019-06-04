@@ -504,7 +504,7 @@ and type_expression : environment -> ?tv_opt:O.type_value -> I.expression -> O.a
             @@ List.map fst lst' in
           let%bind annot = bind_map_option get_t_map_key tv_opt in
           trace (simple_info "empty map expression without a type annotation") @@
-          O.merge_annotation annot sub
+          O.merge_annotation annot sub (needs_annotation ae "this map literal")
         in
         let%bind value_type =
           let%bind sub =
@@ -513,7 +513,7 @@ and type_expression : environment -> ?tv_opt:O.type_value -> I.expression -> O.a
             @@ List.map snd lst' in
           let%bind annot = bind_map_option get_t_map_value tv_opt in
           trace (simple_info "empty map expression without a type annotation") @@
-          O.merge_annotation annot sub
+          O.merge_annotation annot sub (needs_annotation ae "this map literal")
         in
         ok (t_map key_type value_type ())
       in
@@ -710,7 +710,11 @@ and type_expression : environment -> ?tv_opt:O.type_value -> I.expression -> O.a
   | E_annotation (expr , te) ->
     let%bind tv = evaluate_type e te in
     let%bind expr' = type_expression ~tv_opt:tv e expr in
-    let%bind type_annotation = O.merge_annotation (Some tv) (Some expr'.type_annotation) in
+    let%bind type_annotation =
+      O.merge_annotation
+        (Some tv)
+        (Some expr'.type_annotation)
+        (simple_error "assertion failed") in
     ok {expr' with type_annotation}
 
 
