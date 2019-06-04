@@ -5,7 +5,7 @@ let transpile_value
   let%bind f =
     let open Transpiler in
     let (f , _) = functionalize e in
-    let%bind main = translate_main f in
+    let%bind main = translate_main f e.location in
     ok main
   in
 
