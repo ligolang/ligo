@@ -127,11 +127,21 @@ module Errors = struct
     ] in
     error ~data title message ()
 
-  let type_error ~(expected: string) ~(actual: O.type_value) ~(expression : O.value) () =
+  let type_error_approximate ?(msg="") ~(expected: string) ~(actual: O.type_value) ~(expression : O.value) () =
     let title = (thunk "type error") in
-    let message () = "" in
+    let message () = msg in
     let data = [
       ("expected"   , fun () -> Format.asprintf "%s" expected);
+      ("actual"     , fun () -> Format.asprintf "%a" O.PP.type_value actual);
+      ("expression" , fun () -> Format.asprintf "%a" O.PP.value expression)
+    ] in
+    error ~data title message ()
+
+  let type_error ?(msg="") ~(expected: O.type_value) ~(actual: O.type_value) ~(expression : O.value) () =
+    let title = (thunk "type error") in
+    let message () = msg in
+    let data = [
+      ("expected"   , fun () -> Format.asprintf "%a" O.PP.type_value expected);
       ("actual"     , fun () -> Format.asprintf "%a" O.PP.type_value actual);
       ("expression" , fun () -> Format.asprintf "%a" O.PP.value expression)
     ] in
@@ -156,6 +166,23 @@ module Errors = struct
       ("tuple_type" , fun () -> Format.asprintf "%a" O.PP.type_value t)
     ] in
     error ~data title message ()
+
+  let not_supported_yet (message : string) (ae : I.expression) () =
+    let title = (thunk "not suported yet") in
+    let message () = message in
+    let data = [
+      ("expression" , fun () -> Format.asprintf "%a"  I.PP.expression ae)
+    ] in
+    error ~data title message ()
+
+  let not_supported_yet_untranspile (message : string) (ae : O.expression) () =
+    let title = (thunk "not suported yet") in
+    let message () = message in
+    let data = [
+      ("expression" , fun () -> Format.asprintf "%a"  O.PP.expression ae)
+    ] in
+    error ~data title message ()
+
 end
 open Errors
 
@@ -516,7 +543,7 @@ and type_expression : environment -> ?tv_opt:O.type_value -> I.expression -> O.a
             let%bind _ = O.assert_type_value_eq (param, arg.type_annotation) in
             ok result
         | _ ->
-          fail @@ type_error
+          fail @@ type_error_approximate
             ~expected:"should be a function type"
             ~expression:f
             ~actual:f.type_annotation
@@ -581,7 +608,8 @@ and type_expression : environment -> ?tv_opt:O.type_value -> I.expression -> O.a
     let a'_type_annot = get_type_annotation a' in
     let%bind () =
       trace_strong (type_error
-                      ~expected:"first part of the sequence should be of unit type"
+                      ~msg:"first part of the sequence should be of unit type"
+                      ~expected:(O.t_unit ())
                       ~actual:a'_type_annot
                       ~expression:a') @@
       Ast_typed.assert_type_value_eq (t_unit () , a'_type_annot) in
@@ -592,14 +620,16 @@ and type_expression : environment -> ?tv_opt:O.type_value -> I.expression -> O.a
     let t_expr' = get_type_annotation expr' in
     let%bind () =
       trace_strong (type_error
-                      ~expected:"while condition isn't of type bool"
+                      ~msg:"while condition isn't of type bool"
+                      ~expected:(O.t_bool ())
                       ~actual:t_expr'
                       ~expression:expr') @@
       Ast_typed.assert_type_value_eq (t_bool () , t_expr') in
     let t_body' = get_type_annotation body' in
     let%bind () =
       trace_strong (type_error
-                     ~expected:"while body isn't of unit type"
+                     ~msg:"while body isn't of unit type"
+                     ~expected:(O.t_unit ())
                      ~actual:t_body'
                      ~expression:body') @@
       Ast_typed.assert_type_value_eq (t_unit () , t_body') in
@@ -625,13 +655,19 @@ and type_expression : environment -> ?tv_opt:O.type_value -> I.expression -> O.a
               Map.String.find_opt property m in
             ok (tv' , prec_path @ [O.Access_record property])
           )
-        | Access_map _ -> simple_fail "no assign expressions with maps yet"
+        | Access_map _ ->
+          fail @@ not_supported_yet "assign expressions with maps are not supported yet" ae
       in
       bind_fold_list aux (typed_name.type_value , []) path in
     let%bind expr' = type_expression e expr in
+    let t_expr' = get_type_annotation expr' in
     let%bind () =
-      trace_strong (simple_error "assign type doesn't match left-hand-side") @@
-      Ast_typed.assert_type_value_eq (assign_tv , get_type_annotation expr') in
+      trace_strong (type_error
+                     ~msg:"type of the expression to assign doesn't match left-hand-side"
+                     ~expected:assign_tv
+                     ~actual:t_expr'
+                     ~expression:expr') @@
+      Ast_typed.assert_type_value_eq (assign_tv , t_expr') in
     return (O.E_assign (typed_name , path' , expr')) (t_unit ())
   | E_let_in {binder ; rhs ; result} ->
     let%bind rhs_tv_opt = bind_map_option (evaluate_type e) (snd binder) in
@@ -728,7 +764,7 @@ let rec untype_expression (e:O.annotated_expression) : (I.expression) result =
       return (e_failwith ae')
   | E_sequence _
   | E_loop _
-  | E_assign _ -> simple_fail "not possible to untranspile statements yet"
+  | E_assign _ -> fail @@ not_supported_yet_untranspile "not possible to untranspile statements yet" e.expression
   | E_let_in {binder;rhs;result} ->
       let%bind tv = untype_type_value rhs.type_annotation in
       let%bind rhs = untype_expression rhs in
