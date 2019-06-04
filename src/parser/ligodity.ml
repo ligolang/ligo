@@ -3,7 +3,7 @@ open Parser_ligodity
 module Parser = Parser_ligodity.Parser
 module AST = Parser_ligodity.AST
 
-let parse_file (source: string) : AST.t result =  
+let parse_file (source: string) : AST.t result =
   (* let pp_input =
    *   let prefix = Filename.(source |> basename |> remove_extension)
    *   and suffix = ".pp.ligo"
@@ -50,7 +50,7 @@ let parse_file (source: string) : AST.t result =
   ok raw
 
 let parse_string (s:string) : AST.t result =
-  
+
   let lexbuf = Lexing.from_string s in
   let read = Lexer.get_token in
   specific_try (function
@@ -94,5 +94,5 @@ let parse_expression (s:string) : AST.expr result =
               start.pos_fname s
           in
           simple_error str
-    ) @@ (fun () -> Parser.expr read lexbuf) >>? fun raw ->
+    ) @@ (fun () -> Parser.interactive_expr read lexbuf) >>? fun raw ->
   ok raw
