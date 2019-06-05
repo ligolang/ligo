@@ -450,6 +450,12 @@ let counter_mligo () : unit result =
   let make_expected = fun n -> e_pair (e_typed_list [] t_operation) (e_int (42 + n)) in
   expect_eq_n program "main" make_input make_expected
 
+let failwith_mligo () : unit result =
+  let%bind program = mtype_file "./contracts/failwith.mligo" in
+  let make_input = e_pair (e_unit ()) (e_unit ()) in
+  let make_expected = e_pair (e_typed_list [] t_operation) (e_unit ()) in
+  expect_eq program "main" make_input make_expected
+
 let guess_the_hash_mligo () : unit result =
   let%bind program = mtype_file "./contracts/new-syntax.mligo" in
   let make_input = fun n-> e_pair (e_int n) (e_int 42) in
@@ -493,4 +499,5 @@ let main = test_suite "Integration (End to End)" [
     test "basic mligo" basic_mligo ;
     test "counter contract mligo" counter_mligo ;
     (* test "guess the hash mligo" guess_the_hash_mligo ; *)
+    (* test "failwith mligo" failwith_mligo ; *)
   ]

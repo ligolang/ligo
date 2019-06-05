@@ -62,6 +62,7 @@ module Simplify = struct
       ("amount" , "AMOUNT") ;
       ("unit" , "UNIT") ;
       ("source" , "SOURCE") ;
+      ("failwith" , "FAILWITH") ;
     ]
 
     let type_constants = type_constants
@@ -148,6 +149,12 @@ module Typer = struct
       Assert.assert_true @@
       (is_t_map t || is_t_list t) in
     ok @@ t_nat ()
+
+  let failwith_ = typer_1 "FAILWITH" @@ fun t ->
+    let%bind () =
+      Assert.assert_true @@
+      (is_t_string t) in
+    ok @@ t_unit ()
 
   let get_force = typer_2 "MAP_GET_FORCE" @@ fun i m ->
     let%bind (src, dst) = get_t_map m in
@@ -246,6 +253,7 @@ module Typer = struct
       map_update ;
       int ;
       size ;
+      failwith_ ;
       get_force ;
       bytes_pack ;
       bytes_unpack ;
