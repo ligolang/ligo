@@ -15,10 +15,21 @@ let pseq_to_list = function
 let get_value : 'a Raw.reg -> 'a = fun x -> x.value
 
 module Errors = struct
+  let unsupported_ass_None region =
+    let title () = "assignment of None" in
+    let message () =
+      Format.asprintf "assignments of None are not supported yet" in
+    let data = [
+      ("none_expr",
+       fun () -> Format.asprintf "%a" Location.pp_lift @@ region)
+    ] in
+    error ~data title message
+
   let unsupported_entry_decl decl =
     let title () = "entry point declarations" in
     let message () =
-      Format.asprintf "entry points within the contract are not supported yet" in
+      Format.asprintf "entry points within the contract \
+                       are not supported yet" in
     let data = [
       ("declaration",
        fun () -> Format.asprintf "%a" Location.pp_lift @@ decl.Region.region)
@@ -92,11 +103,174 @@ module Errors = struct
   let unsupported_set_expr expr =
     let title () = "set expressions" in
     let message () =
-      Format.asprintf "set type is not supported yet" in
+      Format.asprintf "the set type is not supported yet" in
      let expr_loc = Raw.expr_to_region expr in
     let data = [
       ("expr_loc",
        fun () -> Format.asprintf "%a" Location.pp_lift @@ expr_loc)
+    ] in
+    error ~data title message
+
+  let unsupported_proc_calls call =
+    let title () = "procedure calls" in
+    let message () =
+      Format.asprintf "procedure calls are not supported yet" in
+    let data = [
+      ("call_loc",
+       fun () -> Format.asprintf "%a" Location.pp_lift @@ call.Region.region)
+    ] in
+    error ~data title message
+
+  let unsupported_for_loops region =
+    let title () = "bounded iterators" in
+    let message () =
+      Format.asprintf "for loops are not supported yet" in
+    let data = [
+      ("loop_loc",
+       fun () -> Format.asprintf "%a" Location.pp_lift @@ region)
+    ] in
+    error ~data title message
+
+  let unsupported_deep_map_assign v =
+    let title () = "map assignments" in
+    let message () =
+      Format.asprintf "assignments to embedded maps are not \
+                       supported yet" in
+    let data = [
+      ("lhs_loc",
+       fun () -> Format.asprintf "%a" Location.pp_lift @@ v.Region.region)
+    ] in
+    error ~data title message
+
+  let unsupported_empty_record_patch record_expr =
+    let title () = "empty record patch" in
+    let message () =
+      Format.asprintf "empty record patches are not supported yet" in
+    let data = [
+      ("record_loc",
+       fun () -> Format.asprintf "%a" Location.pp_lift @@ record_expr.Region.region)
+    ] in
+    error ~data title message
+
+  let unsupported_map_patches patch =
+    let title () = "map patches" in
+    let message () =
+      Format.asprintf "map patches (a.k.a. functional updates) are \
+                       not supported yet" in
+    let data = [
+      ("patch_loc",
+       fun () -> Format.asprintf "%a" Location.pp_lift @@ patch.Region.region)
+    ] in
+    error ~data title message
+
+  let unsupported_set_patches patch =
+    let title () = "set patches" in
+    let message () =
+      Format.asprintf "set patches (a.k.a. functional updates) are \
+                       not supported yet" in
+    let data = [
+      ("patch_loc",
+       fun () -> Format.asprintf "%a" Location.pp_lift @@ patch.Region.region)
+    ] in
+    error ~data title message
+
+  let unsupported_deep_map_rm path =
+    let title () = "binding removals" in
+    let message () =
+      Format.asprintf "removal of bindings from embedded maps \
+                       are not supported yet" in
+    let data = [
+      ("path_loc",
+       fun () -> Format.asprintf "%a" Location.pp_lift @@ path.Region.region)
+    ] in
+    error ~data title message
+
+  let unsupported_set_removal remove =
+    let title () = "set removals" in
+    let message () =
+      Format.asprintf "removal of elements in a set is not \
+                       supported yet" in
+    let data = [
+      ("removal_loc",
+       fun () -> Format.asprintf "%a" Location.pp_lift @@ remove.Region.region)
+    ] in
+    error ~data title message
+
+  let unsupported_non_var_pattern p =
+    let title () = "pattern is not a variable" in
+    let message () =
+      Format.asprintf "non-variable patterns in constructors \
+                       are not supported yet" in
+    let pattern_loc = Raw.pattern_to_region p in
+    let data = [
+      ("pattern_loc",
+       fun () -> Format.asprintf "%a" Location.pp_lift @@ pattern_loc)
+    ] in
+    error ~data title message
+
+  let only_constructors p =
+    let title () = "constructors in patterns" in
+    let message () =
+      Format.asprintf "currently, only constructors are supported in patterns" in
+    let pattern_loc = Raw.pattern_to_region p in
+    let data = [
+      ("pattern_loc",
+       fun () -> Format.asprintf "%a" Location.pp_lift @@ pattern_loc)
+    ] in
+    error ~data title message
+
+  let unsupported_tuple_pattern p =
+    let title () = "tuple pattern" in
+    let message () =
+      Format.asprintf "tuple patterns are not supported yet" in
+    let pattern_loc = Raw.pattern_to_region p in
+    let data = [
+      ("pattern_loc",
+       fun () -> Format.asprintf "%a" Location.pp_lift @@ pattern_loc)
+    ] in
+    error ~data title message
+
+  let unsupported_deep_Some_patterns pattern =
+    let title () = "option patterns" in
+    let message () =
+      Format.asprintf "currently, only variables in Some constructors \
+                       in patterns are supported" in
+    let pattern_loc = Raw.pattern_to_region pattern in
+    let data = [
+      ("pattern_loc",
+       fun () -> Format.asprintf "%a" Location.pp_lift @@ pattern_loc)
+    ] in
+    error ~data title message
+
+  let unsupported_deep_list_patterns cons =
+    let title () = "lists in patterns" in
+    let message () =
+      Format.asprintf "currently, only empty lists and x::y \
+                       are supported in patterns" in
+    let data = [
+      ("pattern_loc",
+       fun () -> Format.asprintf "%a" Location.pp_lift @@ cons.Region.region)
+    ] in
+    error ~data title message
+
+  let unsupported_sub_blocks b =
+    let title () = "block instructions" in
+    let message () =
+      Format.asprintf "Sub-blocks are not supported yet" in
+    let data = [
+      ("block_loc",
+       fun () -> Format.asprintf "%a" Location.pp_lift @@ b.Region.region)
+    ] in
+    error ~data title message
+
+  (* Logging *)
+
+  let simplifying_instruction t =
+    let title () = "simplifiying instruction" in
+    let message () = "" in
+    let data = [
+      ("instruction",
+       fun () -> Format.asprintf "%a" PP_helpers.(printer Parser.Pascaligo.ParserLog.print_instruction) t)
     ] in
     error ~data title message
 end
@@ -542,7 +716,8 @@ and simpl_statement : Raw.statement -> (_ -> expression result) result =
 and simpl_single_instruction : Raw.single_instr -> (_ -> expression result) result =
   fun t ->
   match t with
-  | ProcCall _ -> simple_fail "no proc call"
+  | ProcCall call ->
+      fail @@ unsupported_proc_calls call
   | Fail e -> (
       let%bind expr = simpl_expression e.value.fail_expr in
       return @@ e_failwith expr
@@ -557,8 +732,8 @@ and simpl_single_instruction : Raw.single_instr -> (_ -> expression result) resu
       let%bind body = simpl_block l.block.value in
       let%bind body = body None in
       return @@ e_loop cond body
-  | Loop (For _) ->
-      simple_fail "no for yet"
+  | Loop (For (ForInt {region; _} | ForCollect {region; _})) ->
+      fail @@ unsupported_for_loops region
   | Cond c -> (
       let (c , loc) = r_split c in
       let%bind expr = simpl_expression c.test in
@@ -576,7 +751,7 @@ and simpl_single_instruction : Raw.single_instr -> (_ -> expression result) resu
       let (a , loc) = r_split a in
       let%bind value_expr = match a.rhs with
         | Expr e -> simpl_expression e
-        | NoneExpr _ -> simple_fail "no none assignments yet"
+        | NoneExpr reg -> fail @@ unsupported_ass_None reg
       in
       match a.lhs with
         | Path path -> (
@@ -587,7 +762,7 @@ and simpl_single_instruction : Raw.single_instr -> (_ -> expression result) resu
             let v' = v.value in
             let%bind name = match v'.path with
               | Name name -> ok name
-              | _ -> simple_fail "no complex map assignments yet" in
+              | _ -> fail @@ unsupported_deep_map_assign v in
             let%bind key_expr = simpl_expression v'.index.value.inside in
             let old_expr = e_variable name.value in
             let expr' = e_map_update key_expr value_expr old_expr in
@@ -614,7 +789,8 @@ and simpl_single_instruction : Raw.single_instr -> (_ -> expression result) resu
       let%bind inj = bind_list
         @@ List.map (fun (x:Raw.field_assign Region.reg) ->
             let (x , loc) = r_split x in
-            let%bind e = simpl_expression x.field_expr in ok (x.field_name.value, e , loc)
+            let%bind e = simpl_expression x.field_expr
+            in ok (x.field_name.value, e , loc)
           )
         @@ pseq_to_list r.record_inj.value.elements in
       let%bind expr =
@@ -622,27 +798,30 @@ and simpl_single_instruction : Raw.single_instr -> (_ -> expression result) resu
           e_assign ~loc name (access_path @ [ Access_record access ]) v in
         let assigns = List.map aux inj in
         match assigns with
-        | [] -> simple_fail "empty record patch"
+               (* E_sequence (E_skip, E_skip) ? *)
+        | [] -> fail @@ unsupported_empty_record_patch r.record_inj
         | hd :: tl -> (
-            let aux acc cur = e_sequence (acc) (cur) in
+            let aux acc cur = e_sequence acc cur in
             ok @@ List.fold_left aux hd tl
           )
       in
       return @@ expr
     )
-  | MapPatch _ -> simple_fail "no map patch yet"
-  | SetPatch _ -> simple_fail "no set patch yet"
+  | MapPatch patch ->
+      fail @@ unsupported_map_patches patch
+  | SetPatch patch ->
+      fail @@ unsupported_set_patches patch
   | MapRemove r -> (
       let (v , loc) = r_split r in
       let key = v.key in
       let%bind map = match v.map with
         | Name v -> ok v.value
-        | _ -> simple_fail "no complex map remove yet" in
+        | Path path -> fail @@ unsupported_deep_map_rm path in
       let%bind key' = simpl_expression key in
       let expr = e_constant ~loc "MAP_REMOVE" [key' ; e_variable map] in
       return @@ e_assign ~loc map [] expr
     )
-  | SetRemove _ -> simple_fail "no set remove yet"
+  | SetRemove r -> fail @@ unsupported_set_removal r
 
 and simpl_path : Raw.path -> string * Ast_simplified.access_path = fun p ->
   match p with
@@ -663,15 +842,10 @@ and simpl_path : Raw.path -> string * Ast_simplified.access_path = fun p ->
 
 and simpl_cases : type a . (Raw.pattern * a) list -> a matching result = fun t ->
   let open Raw in
-  let get_var (t:Raw.pattern) = match t with
+  let get_var (t:Raw.pattern) =
+    match t with
     | PVar v -> ok v.value
-    | _ ->
-        let error =
-          let title () = "not a var" in
-          let content () = Format.asprintf "%a" (PP_helpers.printer Parser.Pascaligo.ParserLog.print_pattern) t in
-          error title content
-        in
-        fail error
+    | p -> fail @@ unsupported_non_var_pattern p
   in
   let get_tuple (t:Raw.pattern) = match t with
     | PCons v -> npseq_to_list v.value
@@ -681,32 +855,33 @@ and simpl_cases : type a . (Raw.pattern * a) list -> a matching result = fun t -
   let get_single (t:Raw.pattern) =
     let t' = get_tuple t in
     let%bind () =
-      trace_strong (simple_error "not single") @@
+      trace_strong (unsupported_tuple_pattern t) @@
       Assert.assert_list_size t' 1 in
     ok (List.hd t') in
   let get_constr (t:Raw.pattern) = match t with
     | PConstr v ->
         let%bind var = get_single (snd v.value).value >>? get_var in
         ok ((fst v.value).value , var)
-    | _ -> simple_fail "not a constr"
+    | _ -> fail @@ only_constructors t
   in
   let%bind patterns =
     let aux (x , y) =
       let xs = get_tuple x in
-      trace_strong (simple_error "no tuple in patterns yet") @@
+      trace_strong (unsupported_tuple_pattern x) @@
       Assert.assert_list_size xs 1 >>? fun () ->
       ok (List.hd xs , y)
     in
     bind_map_list aux t in
   match patterns with
   | [(PFalse _ , f) ; (PTrue _ , t)]
-  | [(PTrue _ , t) ; (PFalse _ , f)] -> ok @@ Match_bool {match_true = t ; match_false = f}
+  | [(PTrue _ , t) ; (PFalse _ , f)] ->
+      ok @@ Match_bool {match_true = t ; match_false = f}
   | [(PSome v , some) ; (PNone _ , none)]
   | [(PNone _ , none) ; (PSome v , some)] -> (
       let (_, v) = v.value in
       let%bind v = match v.value.inside with
         | PVar v -> ok v.value
-        | _ -> simple_fail "complex none patterns not supported yet" in
+        | p -> fail @@ unsupported_deep_Some_patterns p in
       ok @@ Match_option {match_none = none ; match_some = (v, some) }
     )
   | [(PCons c , cons) ; (PList (PNil _) , nil)]
@@ -717,11 +892,12 @@ and simpl_cases : type a . (Raw.pattern * a) list -> a matching result = fun t -
             let%bind a = get_var a in
             let%bind b = get_var b in
             ok (a, b)
-        | _ -> simple_fail "complex list patterns not supported yet"
+        | _ -> fail @@ unsupported_deep_list_patterns c
       in
       ok @@ Match_list {match_cons = (a, b, cons) ; match_nil = nil}
   | lst ->
-      trace (simple_error "weird patterns not supported yet") @@
+      trace (simple_info "currently, only booleans, options, lists and \
+                         user-defined constructors are supported in patterns") @@
       let%bind constrs =
         let aux (x , y) =
           let error =
@@ -736,27 +912,27 @@ and simpl_cases : type a . (Raw.pattern * a) list -> a matching result = fun t -
         bind_map_list aux lst in
       ok @@ Match_variant constrs
 
-and simpl_instruction_block : Raw.instruction -> (_ -> expression result) result = fun t ->
+and simpl_instruction_block : Raw.instruction -> (_ -> expression result) result =
+  fun t ->
   match t with
   | Single s -> simpl_single_instruction s
   | Block b -> simpl_block b.value
 
-and simpl_instruction : Raw.instruction -> (_ -> expression result) result = fun t ->
-  let main_error =
-    let title () = "simplifiying instruction" in
-    let content () = Format.asprintf "%a" PP_helpers.(printer Parser.Pascaligo.ParserLog.print_instruction) t in
-    error title content in
-  trace main_error @@
+and simpl_instruction : Raw.instruction -> (_ -> expression result) result =
+  fun t ->
+  trace (simplifying_instruction t) @@
   match t with
   | Single s -> simpl_single_instruction s
-  | Block _ -> simple_fail "no block instruction yet"
+  | Block b -> fail @@ unsupported_sub_blocks b
 
-and simpl_statements : Raw.statements -> (_ -> expression result) result = fun ss ->
+and simpl_statements : Raw.statements -> (_ -> expression result) result =
+  fun ss ->
   let lst = npseq_to_list ss in
   let%bind fs = bind_map_list simpl_statement lst in
-  let aux : _ -> (expression option -> expression result) -> _ = fun prec cur ->
-    let%bind res = cur prec in
-    ok @@ Some res in
+  let aux : _ -> (expression option -> expression result) -> _ =
+    fun prec cur ->
+      let%bind res = cur prec in
+      ok @@ Some res in
   ok @@ fun (expr' : _ option) ->
   let%bind ret = bind_fold_right_list aux expr' fs in
   ok @@ Option.unopt_exn ret
