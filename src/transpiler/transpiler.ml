@@ -603,7 +603,7 @@ let extract_constructor (v : value) (tree : _ Append_tree.t') : (string * value 
     | Leaf (k, t), v -> ok (k, v, t)
     | Node {a}, D_left v -> aux (a, v)
     | Node {b}, D_right v -> aux (b, v)
-    | _ -> simple_fail "bad constructor path"
+    | _ -> internal_assertion_fail "bad constructor path"
   in
   let%bind (s, v, t) = aux (tree, v) in
   ok (s, v, t)
@@ -617,7 +617,7 @@ let extract_tuple (v : value) (tree : AST.type_value Append_tree.t') : ((value *
         let%bind a' = aux (a, va) in
         let%bind b' = aux (b, vb) in
         ok (a' @ b')
-    | _ -> simple_fail "bad tuple path"
+    | _ -> internal_assertion_fail "bad tuple path"
   in
   aux (tree, v)
 
@@ -630,7 +630,7 @@ let extract_record (v : value) (tree : _ Append_tree.t') : (_ list) result =
         let%bind a' = aux (a, va) in
         let%bind b' = aux (b, vb) in
         ok (a' @ b')
-    | _ -> simple_fail "bad record path"
+    | _ -> internal_assertion_fail "bad record path"
   in
   aux (tree, v)
 
