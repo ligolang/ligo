@@ -80,12 +80,12 @@ let expect_eq_n_aux ?options lst program entry_point make_input make_expected =
   let%bind _ = bind_map_list aux lst in
   ok ()
 
-let expect_eq_n ?options = expect_eq_n_aux ?options [0 ; 2 ; 42 ; 163 ; -1]
-let expect_eq_n_pos ?options = expect_eq_n_aux ?options [0 ; 2 ; 42 ; 163]
+let expect_eq_n ?options = expect_eq_n_aux ?options [0 ; 1 ; 2 ; 42 ; 163 ; -1]
+let expect_eq_n_pos ?options = expect_eq_n_aux ?options [0 ; 1 ; 2 ; 42 ; 163]
 let expect_eq_n_strict_pos ?options = expect_eq_n_aux ?options [2 ; 42 ; 163]
-let expect_eq_n_pos_small ?options = expect_eq_n_aux ?options [0 ; 2 ; 10]
-let expect_eq_n_strict_pos_small ?options = expect_eq_n_aux ?options [2 ; 10]
-let expect_eq_n_pos_mid = expect_eq_n_aux [0 ; 2 ; 10 ; 33]
+let expect_eq_n_pos_small ?options = expect_eq_n_aux ?options [0 ; 1 ; 2 ; 10]
+let expect_eq_n_strict_pos_small ?options = expect_eq_n_aux ?options [1 ; 2 ; 10]
+let expect_eq_n_pos_mid = expect_eq_n_aux [0 ; 1 ; 2 ; 10 ; 33]
 
 let expect_n_pos_small ?options = expect_n_aux ?options [0 ; 2 ; 10]
 let expect_n_strict_pos_small ?options = expect_n_aux ?options [2 ; 10]
