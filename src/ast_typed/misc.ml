@@ -4,23 +4,39 @@ open Types
 module Errors = struct
   let different_kinds a b () =
     let title = (thunk "different kinds") in
-    let full () = Format.asprintf "(%a) VS (%a)" PP.type_value a PP.type_value b in
-    error title full ()
+    let message () = "" in
+    let data = [
+      ("a" , fun () -> Format.asprintf "(%a)" PP.type_value a) ;
+      ("b" , fun () -> Format.asprintf "(%a)" PP.type_value b )
+    ] in
+    error ~data title message ()
 
   let different_constants a b () =
     let title = (thunk "different constants") in
-    let full () = Format.asprintf "%s VS %s" a b in
-    error title full ()
+    let message () = "" in
+    let data = [
+      ("a" , fun () -> Format.asprintf "(%s)" a) ;
+      ("b" , fun () -> Format.asprintf "(%s)" b )
+    ] in
+    error ~data title message ()
 
   let different_size_type name a b () =
     let title () = name ^ " have different sizes" in
-    let full () = Format.asprintf "%a VS %a" PP.type_value a PP.type_value b in
-    error title full ()
+    let message () = "" in
+    let data = [
+      ("a" , fun () -> Format.asprintf "(%a)" PP.type_value a) ;
+      ("b" , fun () -> Format.asprintf "(%a)" PP.type_value b )
+    ] in
+    error ~data title message ()
 
   let different_props_in_record ka kb () =
     let title () = "different keys in record" in
-    let content () = Format.asprintf "%s vs %s" ka kb in
-    error title content ()
+    let message () = "" in
+    let data = [
+      ("key_a" , fun () -> Format.asprintf "(%s)" ka) ;
+      ("key_b" , fun () -> Format.asprintf "(%s)" kb )
+    ] in
+    error ~data title message ()
 
   let different_size_constants = different_size_type "constants"
 
@@ -32,48 +48,83 @@ module Errors = struct
 
   let different_types name a b () =
     let title () = name ^ " are different" in
-    let full () = Format.asprintf "%a VS %a" PP.type_value a PP.type_value b in
-    info title full ()
+    let message () = "" in
+    let data = [
+      ("a" , fun () -> Format.asprintf "(%a)" PP.type_value a) ;
+      ("b" , fun () -> Format.asprintf "(%a)" PP.type_value b )
+    ] in
+    error ~data title message ()
 
   let different_literals name a b () =
     let title () = name ^ " are different" in
-    let full () = Format.asprintf "%a VS %a" PP.literal a PP.literal b in
-    info title full ()
+    let message () = "" in
+    let data = [
+      ("a" , fun () -> Format.asprintf "(%a)" PP.literal a) ;
+      ("b" , fun () -> Format.asprintf "(%a)" PP.literal b )
+    ] in
+    error ~data title message ()
 
   let different_values name a b () =
     let title () = name ^ " are different" in
-    let full () = Format.asprintf "%a VS %a" PP.value a PP.value b in
-    info title full ()
+    let message () = "" in
+    let data = [
+      ("a" , fun () -> Format.asprintf "(%a)" PP.value a) ;
+      ("b" , fun () -> Format.asprintf "(%a)" PP.value b )
+    ] in
+    error ~data title message ()
 
   let different_literals_because_different_types name a b () =
     let title () = "literals have different types: " ^ name in
-    let full () = Format.asprintf "%a VS %a" PP.literal a PP.literal b in
-    info title full ()
+    let message () = "" in
+    let data = [
+      ("a" , fun () -> Format.asprintf "(%a)" PP.literal a) ;
+      ("b" , fun () -> Format.asprintf "(%a)" PP.literal b )
+    ] in
+    error ~data title message ()
 
   let different_values_because_different_types name a b () =
     let title () = "values have different types: " ^ name in
-    let full () = Format.asprintf "%a VS %a" PP.value a PP.value b in
-    info title full ()
+    let message () = "" in
+    let data = [
+      ("a" , fun () -> Format.asprintf "(%a)" PP.value a) ;
+      ("b" , fun () -> Format.asprintf "(%a)" PP.value b )
+    ] in
+    error ~data title message ()
 
   let error_uncomparable_literals name a b () =
     let title () = name ^ " are different" in
-    let full () = Format.asprintf "%a VS %a" PP.literal a PP.literal b in
-    info title full ()
+    let message () = "" in
+    let data = [
+      ("a" , fun () -> Format.asprintf "(%a)" PP.literal a) ;
+      ("b" , fun () -> Format.asprintf "(%a)" PP.literal b )
+    ] in
+    error ~data title message ()
 
   let error_uncomparable_values name a b () =
     let title () = name ^ " are different" in
-    let full () = Format.asprintf "%a VS %a" PP.value a PP.value b in
-    info title full ()
+    let message () = "" in
+    let data = [
+      ("a" , fun () -> Format.asprintf "(%a)" PP.value a) ;
+      ("b" , fun () -> Format.asprintf "(%a)" PP.value b )
+    ] in
+    error ~data title message ()
 
   let different_size_values name a b () =
     let title () = name in
-    let full () = Format.asprintf "%a VS %a" PP.value a PP.value b in
-    error title full ()
+    let message () = "" in
+    let data = [
+      ("a" , fun () -> Format.asprintf "(%a)" PP.value a) ;
+      ("b" , fun () -> Format.asprintf "(%a)" PP.value b )
+    ] in
+    error ~data title message ()
 
   let missing_key_in_record_value k () =
     let title () = "missing keys in one of the records" in
-    let content () = Format.asprintf "%s" k in
-    error title content ()
+    let message () = "" in
+    let data = [
+      ("missing_key" , fun () -> Format.asprintf "%s" k)
+    ] in
+    error ~data title message ()
 end
 
 module Free_variables = struct
