@@ -8,6 +8,23 @@ stages:
   - build_and_deploy_website
   - test
 
+.website_build: &website_build
+  stage: build_and_deploy_website
+  image: node:8
+  before_script:
+    - cd gitlab-pages/website
+    - npm install
+  script:
+    - rm -rf versioned_docs/version-next
+    - rm versioned_sidebars/version-next-sidebars.json
+    - node removeNext.js
+    - npm run version next
+    - npm run build
+    - cd ../..
+    - cp -r gitlab-pages/website/build/ligo public
+  artifacts:
+    paths:
+      - public
 
 .docker: &docker
   image: docker:1.11
@@ -43,7 +60,7 @@ stages:
     - printf '' | ocaml
     - opam switch
 
-local-dune-job:
+.local-dune-job:
   <<: *before_script
   stage: test
   script:
@@ -58,7 +75,7 @@ local-dune-job:
 #     paths:
 #       - src/ligo/bin/cli.ml
 
-local-repo-job:
+.local-repo-job:
   <<: *before_script
   stage: test
   script:
@@ -67,7 +84,7 @@ local-repo-job:
     #--build-test
     - opam install -y ligo
 
-remote-repo-job:
+.remote-repo-job:
   <<: *before_script
   stage: test
   script:
@@ -84,7 +101,7 @@ remote-repo-job:
     - master
 
 # Run a docker build without publishing to the registry
-build-current-docker-image:
+.build-current-docker-image:
   stage: build_docker
   <<: *docker
   <<: *docker_build
@@ -93,7 +110,7 @@ build-current-docker-image:
 
 # When a MR/PR is merged to master
 # take the previous build and publish it to Docker Hub
-build-and-publish-latest-docker-image:
+.build-and-publish-latest-docker-image:
   stage: build_and_deploy_docker
   <<: *docker
   <<: *docker_build
@@ -105,19 +122,8 @@ build-and-publish-latest-docker-image:
 
 
 pages:
-  stage: build_and_deploy_website
-  image: node:8
-  before_script:
-    - cd gitlab-pages/website
-    - npm install
-  script:
-    - npm run build
-    - pwd
-    - cd ../..
-    - pwd
-    - cp -r gitlab-pages/website/build/ligo public
-  artifacts:
-    paths:
-      - public
-  only:
-    - master
+  <<: *website_build
+  # only:
+  #   - master
+  #   - dev
+
