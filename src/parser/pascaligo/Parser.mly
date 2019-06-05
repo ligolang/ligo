@@ -426,8 +426,9 @@ open_var_decl:
     in {region; value}}
 
 local_decl:
-  lambda_decl { LocalLam  $1 }
-| data_decl   { LocalData $1 }
+  fun_decl  { LocalFun  $1 }
+| proc_decl { LocalProc $1 }
+| data_decl { LocalData $1 }
 
 data_decl:
   const_decl { LocalConst $1 }

@@ -470,9 +470,9 @@ val print_tokens : (*?undo:bool ->*) ast -> unit
 (* Projecting regions from sundry nodes of the AST. See the first
    comment at the beginning of this file. *)
 
-val region_of_pattern   : pattern -> Region.t
-val region_of_expr      : expr -> Region.t
-val region_of_type_expr : type_expr -> Region.t
+val pattern_to_region   : pattern -> Region.t
+val expr_to_region      : expr -> Region.t
+val type_expr_to_region : type_expr -> Region.t
 
 (* Simplifications *)
 

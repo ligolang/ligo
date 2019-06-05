@@ -14,6 +14,94 @@ let pseq_to_list = function
   | Some lst -> npseq_to_list lst
 let get_value : 'a Raw.reg -> 'a = fun x -> x.value
 
+module Errors = struct
+  let unsupported_entry_decl decl =
+    let title () = "entry point declarations" in
+    let message () =
+      Format.asprintf "entry points within the contract are not supported yet" in
+    let data = [
+      ("declaration",
+       fun () -> Format.asprintf "%a" Location.pp_lift @@ decl.Region.region)
+    ] in
+    error ~data title message
+
+  let unsupported_proc_decl decl =
+    let title () = "procedure declarations" in
+    let message () =
+      Format.asprintf "procedures are not supported yet" in
+    let data = [
+      ("declaration",
+       fun () -> Format.asprintf "%a" Location.pp_lift @@ decl.Region.region)
+    ] in
+    error ~data title message
+
+  let unsupported_local_proc region =
+    let title () = "local procedure declarations" in
+    let message () =
+      Format.asprintf "local procedures are not supported yet" in
+    let data = [
+      ("declaration",
+       fun () -> Format.asprintf "%a" Location.pp_lift @@ region)
+    ] in
+    error ~data title message
+
+  let corner_case ~loc message =
+    let title () = "corner case" in
+    let content () = "We don't have a good error message for this case. \
+                      We are striving find ways to better report them and \
+                      find the use-cases that generate them. \
+                      Please report this to the developers." in
+    let data = [
+      ("location" , fun () -> loc) ;
+      ("message" , fun () -> message) ;
+    ] in
+    error ~data title content
+
+  let unknown_predefined_type name =
+    let title () = "type constants" in
+    let message () =
+      Format.asprintf "unknown predefined type \"%s\"" name.Region.value in
+    let data = [
+      ("typename_loc",
+       fun () -> Format.asprintf "%a" Location.pp_lift @@ name.Region.region)
+    ] in
+    error ~data title message
+
+  let unsupported_arith_op expr =
+    let title () = "arithmetic expressions" in
+    let message () =
+      Format.asprintf "this arithmetic operator is not supported yet" in
+    let expr_loc = Raw.expr_to_region expr in
+    let data = [
+      ("expr_loc",
+       fun () -> Format.asprintf "%a" Location.pp_lift @@ expr_loc)
+    ] in
+    error ~data title message
+
+  let unsupported_string_catenation expr =
+    let title () = "string expressions" in
+    let message () =
+      Format.asprintf "string concatenation is not supported yet" in
+    let expr_loc = Raw.expr_to_region expr in
+    let data = [
+      ("expr_loc",
+       fun () -> Format.asprintf "%a" Location.pp_lift @@ expr_loc)
+    ] in
+    error ~data title message
+
+  let unsupported_set_expr expr =
+    let title () = "set expressions" in
+    let message () =
+      Format.asprintf "set type is not supported yet" in
+     let expr_loc = Raw.expr_to_region expr in
+    let data = [
+      ("expr_loc",
+       fun () -> Format.asprintf "%a" Location.pp_lift @@ expr_loc)
+    ] in
+    error ~data title message
+end
+
+open Errors
 open Operators.Simplify.Pascaligo
 
 let r_split = Location.r_split
@@ -26,7 +114,7 @@ let return expr = ok @@ fun expr'_opt ->
 
 let return_let_in ?loc binder rhs = ok @@ fun expr'_opt ->
   match expr'_opt with
-  | None -> simple_fail "missing return" (* Hard to explain. Shouldn't happen in prod. *)
+  | None -> fail @@ corner_case ~loc:__LOC__ "missing return"
   | Some expr' -> ok @@ e_let_in ?loc binder rhs expr'
 
 let rec simpl_type_expression (t:Raw.type_expr) : type_expression result =
@@ -48,7 +136,7 @@ let rec simpl_type_expression (t:Raw.type_expr) : type_expression result =
       let lst = npseq_to_list tuple.value.inside in
       let%bind lst' = bind_list @@ List.map simpl_type_expression lst in
       let%bind cst =
-        trace_option (simple_error "unrecognized type constants") @@
+        trace_option (unknown_predefined_type name) @@
         List.assoc_opt name.value type_constants in
       ok @@ T_constant (cst , lst')
   | TProd p ->
@@ -57,9 +145,11 @@ let rec simpl_type_expression (t:Raw.type_expr) : type_expression result =
       ok tpl
   | TRecord r ->
       let aux = fun (x, y) -> let%bind y = simpl_type_expression y in ok (x, y) in
+      let apply =
+        fun (x:Raw.field_decl Raw.reg) -> (x.value.field_name.value, x.value.field_type) in
       let%bind lst = bind_list
         @@ List.map aux
-        @@ List.map (fun (x:Raw.field_decl Raw.reg) -> (x.value.field_name.value, x.value.field_type))
+        @@ List.map apply
         @@ pseq_to_list r.value.elements in
       let m = List.fold_left (fun m (x, y) -> SMap.add x y m) SMap.empty lst in
       ok @@ T_record m
@@ -194,18 +284,20 @@ let rec simpl_expression (t:Raw.expr) : expr result =
       let n = Z.to_int @@ snd @@ n in
       return @@ e_literal ~loc (Literal_tez n)
     )
-  | EArith _ -> simple_fail "arith: not supported yet"
+  | EArith _ as e ->
+       fail @@ unsupported_arith_op e
   | EString (String s) ->
     let (s , loc) = r_split s in
       let s' =
         (* S contains quotes *)
-        String.(sub s 1 ((length s) - 2))
+        String.(sub s 1 (length s - 2))
       in
       return @@ e_literal ~loc (Literal_string s')
-  | EString _ -> simple_fail "string: not supported yet"
+  | EString (Cat _) as e ->
+      fail @@ unsupported_string_catenation e
   | ELogic l -> simpl_logic_expression l
   | EList l -> simpl_list_expression l
-  | ESet _ -> simple_fail "set: not supported yet"
+  | ESet _ -> fail @@ unsupported_set_expr t
   | ECase c -> (
       let (c , loc) = r_split c in
       let%bind e = simpl_expression c.expr in
@@ -224,10 +316,11 @@ let rec simpl_expression (t:Raw.expr) : expr result =
       let (mi , loc) = r_split mi in
       let%bind lst =
         let lst = List.map get_value @@ pseq_to_list mi.elements in
-        let aux : Raw.binding -> (expression * expression) result = fun b ->
-          let%bind src = simpl_expression b.source in
-          let%bind dst = simpl_expression b.image in
-          ok (src, dst) in
+        let aux : Raw.binding -> (expression * expression) result =
+          fun b ->
+            let%bind src = simpl_expression b.source in
+            let%bind dst = simpl_expression b.image in
+            ok (src, dst) in
         bind_map_list aux lst in
       return @@ e_map ~loc lst
     )
@@ -309,26 +402,20 @@ and simpl_tuple_expression ?loc (lst:Raw.expr list) : expression result =
   match lst with
   | [] -> return @@ e_literal Literal_unit
   | [hd] -> simpl_expression hd
-  | lst -> (
+  | lst ->
       let%bind lst = bind_list @@ List.map simpl_expression lst in
       return @@ e_tuple ?loc lst
-    )
 
 and simpl_local_declaration : Raw.local_decl -> _ result = fun t ->
   match t with
-  | LocalData d -> simpl_data_declaration d
-  | LocalLam l -> simpl_lambda_declaration l
-
-and simpl_lambda_declaration : Raw.lambda_decl -> _ result = fun l ->
-  match l with
-  | FunDecl f -> (
+  | LocalData d ->
+      simpl_data_declaration d
+  | LocalFun f  ->
       let (f , loc) = r_split f in
       let%bind (name , e) = simpl_fun_declaration ~loc f in
       return_let_in ~loc name e
-    )
-  | ProcDecl _ -> simple_fail "no local procedure yet"
-  | EntryDecl _ -> simple_fail "no local entry-point yet"
-
+  | LocalProc d ->
+      fail @@ unsupported_local_proc d.Region.region
 and simpl_data_declaration : Raw.data_decl -> _ result = fun t ->
   match t with
   | LocalVar x ->
@@ -344,7 +431,8 @@ and simpl_data_declaration : Raw.data_decl -> _ result = fun t ->
       let%bind expression = simpl_expression x.init in
       return_let_in ~loc (name , Some t) expression
 
-and simpl_param : Raw.param_decl -> (type_name * type_expression) result = fun t ->
+and simpl_param : Raw.param_decl -> (type_name * type_expression) result =
+  fun t ->
   match t with
   | ParamConst c ->
       let c = c.value in
@@ -357,11 +445,15 @@ and simpl_param : Raw.param_decl -> (type_name * type_expression) result = fun t
       let%bind type_expression = simpl_type_expression c.param_type in
       ok (type_name , type_expression)
 
-and simpl_fun_declaration : loc:_ -> Raw.fun_decl -> ((name * type_expression option) * expression) result = fun ~loc x ->
+and simpl_fun_declaration :
+  loc:_ -> Raw.fun_decl -> ((name * type_expression option) * expression) result =
+  fun ~loc x ->
   let open! Raw in
   let {name;param;ret_type;local_decls;block;return} : fun_decl = x in
   (match npseq_to_list param.value.inside with
-   | [] -> simple_fail "function without parameters are not allowed"
+   | [] ->
+       fail @@
+       corner_case ~loc:__LOC__ "parameter-less function should not exist"
    | [a] -> (
        let%bind input = simpl_param a in
        let name = name.value in
@@ -390,7 +482,7 @@ and simpl_fun_declaration : loc:_ -> Raw.fun_decl -> ((name * type_expression op
          (arguments_name , type_expression) in
        let%bind tpl_declarations =
          let aux = fun i x ->
-           let expr = e_accessor (e_variable arguments_name) [ Access_tuple i ] in
+           let expr = e_accessor (e_variable arguments_name) [Access_tuple i] in
            let type_ = Some (snd x) in
            let ass = return_let_in (fst x , type_) expr in
            ass
@@ -407,12 +499,14 @@ and simpl_fun_declaration : loc:_ -> Raw.fun_decl -> ((name * type_expression op
        let%bind result =
          let aux prec cur = cur (Some prec) in
          bind_fold_right_list aux result body in
-       let expression = e_lambda ~loc binder (Some input_type) (Some output_type) result in
+       let expression =
+         e_lambda ~loc binder (Some input_type) (Some output_type) result in
        let type_annotation = Some (T_function (input_type, output_type)) in
        ok ((name.value , type_annotation) , expression)
      )
   )
-and simpl_declaration : Raw.declaration -> declaration Location.wrap result = fun t ->
+and simpl_declaration : Raw.declaration -> declaration Location.wrap result =
+  fun t ->
   let open! Raw in
   match t with
   | TypeDecl x -> (
@@ -434,15 +528,19 @@ and simpl_declaration : Raw.declaration -> declaration Location.wrap result = fu
       let%bind ((name , ty_opt) , expr) = simpl_fun_declaration ~loc x in
       ok @@ Location.wrap ~loc (Declaration_constant (name , ty_opt , expr))
     )
-  | LambdaDecl (ProcDecl _) -> simple_fail "no proc declaration yet"
-  | LambdaDecl (EntryDecl _)-> simple_fail "no entry point yet"
+  | LambdaDecl (ProcDecl decl) ->
+      fail @@ unsupported_proc_decl decl
+  | LambdaDecl (EntryDecl decl) ->
+      fail @@ unsupported_entry_decl decl
 
-and simpl_statement : Raw.statement -> (_ -> expression result) result = fun s ->
+and simpl_statement : Raw.statement -> (_ -> expression result) result =
+  fun s ->
   match s with
   | Instr i -> simpl_instruction i
   | Data d -> simpl_data_declaration d
 
-and simpl_single_instruction : Raw.single_instr -> (_ -> expression result) result = fun t ->
+and simpl_single_instruction : Raw.single_instr -> (_ -> expression result) result =
+  fun t ->
   match t with
   | ProcCall _ -> simple_fail "no proc call"
   | Fail e -> (
