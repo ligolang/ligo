@@ -714,7 +714,7 @@ and type_expression : environment -> ?tv_opt:O.type_value -> I.expression -> O.a
       O.merge_annotation
         (Some tv)
         (Some expr'.type_annotation)
-        (internal_assertion_fail "merge_annotations (Some ...) (Some ...) failed") in
+        (internal_assertion_failure "merge_annotations (Some ...) (Some ...) failed") in
     ok {expr' with type_annotation}
 
 
@@ -729,7 +729,7 @@ and type_constant (name:string) (lst:O.type_value list) (tv_opt:O.type_value opt
 let untype_type_value (t:O.type_value) : (I.type_expression) result =
   match t.simplified with
   | Some s -> ok s
-  | _ -> internal_assertion_fail "trying to untype generated type"
+  | _ -> fail @@ internal_assertion_failure "trying to untype generated type"
 
 let untype_literal (l:O.literal) : I.literal result =
   let open I in
