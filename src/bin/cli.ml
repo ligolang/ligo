@@ -46,7 +46,7 @@ let compile_file =
   let f source entry_point syntax =
     toplevel @@
     let%bind contract =
-      trace (simple_error "compile michelson") @@
+      trace (simple_info "compiling contract to michelson") @@
       Ligo.Run.compile_contract_file source entry_point syntax in
     Format.printf "Contract:\n%s\n" contract ;
     ok ()

@@ -6,8 +6,8 @@ module Errors = struct
     let title = (thunk "different kinds") in
     let message () = "" in
     let data = [
-      ("a" , fun () -> Format.asprintf "(%a)" PP.type_value a) ;
-      ("b" , fun () -> Format.asprintf "(%a)" PP.type_value b )
+      ("a" , fun () -> Format.asprintf "%a" PP.type_value a) ;
+      ("b" , fun () -> Format.asprintf "%a" PP.type_value b )
     ] in
     error ~data title message ()
 
@@ -15,8 +15,8 @@ module Errors = struct
     let title = (thunk "different constants") in
     let message () = "" in
     let data = [
-      ("a" , fun () -> Format.asprintf "(%s)" a) ;
-      ("b" , fun () -> Format.asprintf "(%s)" b )
+      ("a" , fun () -> Format.asprintf "%s" a) ;
+      ("b" , fun () -> Format.asprintf "%s" b )
     ] in
     error ~data title message ()
 
@@ -24,8 +24,8 @@ module Errors = struct
     let title () = name ^ " have different sizes" in
     let message () = "" in
     let data = [
-      ("a" , fun () -> Format.asprintf "(%a)" PP.type_value a) ;
-      ("b" , fun () -> Format.asprintf "(%a)" PP.type_value b )
+      ("a" , fun () -> Format.asprintf "%a" PP.type_value a) ;
+      ("b" , fun () -> Format.asprintf "%a" PP.type_value b )
     ] in
     error ~data title message ()
 
@@ -33,8 +33,8 @@ module Errors = struct
     let title () = "different keys in record" in
     let message () = "" in
     let data = [
-      ("key_a" , fun () -> Format.asprintf "(%s)" ka) ;
-      ("key_b" , fun () -> Format.asprintf "(%s)" kb )
+      ("key_a" , fun () -> Format.asprintf "%s" ka) ;
+      ("key_b" , fun () -> Format.asprintf "%s" kb )
     ] in
     error ~data title message ()
 
@@ -50,8 +50,8 @@ module Errors = struct
     let title () = name ^ " are different" in
     let message () = "" in
     let data = [
-      ("a" , fun () -> Format.asprintf "(%a)" PP.type_value a) ;
-      ("b" , fun () -> Format.asprintf "(%a)" PP.type_value b )
+      ("a" , fun () -> Format.asprintf "%a" PP.type_value a) ;
+      ("b" , fun () -> Format.asprintf "%a" PP.type_value b )
     ] in
     error ~data title message ()
 
@@ -59,8 +59,8 @@ module Errors = struct
     let title () = name ^ " are different" in
     let message () = "" in
     let data = [
-      ("a" , fun () -> Format.asprintf "(%a)" PP.literal a) ;
-      ("b" , fun () -> Format.asprintf "(%a)" PP.literal b )
+      ("a" , fun () -> Format.asprintf "%a" PP.literal a) ;
+      ("b" , fun () -> Format.asprintf "%a" PP.literal b )
     ] in
     error ~data title message ()
 
@@ -68,8 +68,8 @@ module Errors = struct
     let title () = name ^ " are different" in
     let message () = "" in
     let data = [
-      ("a" , fun () -> Format.asprintf "(%a)" PP.value a) ;
-      ("b" , fun () -> Format.asprintf "(%a)" PP.value b )
+      ("a" , fun () -> Format.asprintf "%a" PP.value a) ;
+      ("b" , fun () -> Format.asprintf "%a" PP.value b )
     ] in
     error ~data title message ()
 
@@ -77,8 +77,8 @@ module Errors = struct
     let title () = "literals have different types: " ^ name in
     let message () = "" in
     let data = [
-      ("a" , fun () -> Format.asprintf "(%a)" PP.literal a) ;
-      ("b" , fun () -> Format.asprintf "(%a)" PP.literal b )
+      ("a" , fun () -> Format.asprintf "%a" PP.literal a) ;
+      ("b" , fun () -> Format.asprintf "%a" PP.literal b )
     ] in
     error ~data title message ()
 
@@ -86,26 +86,26 @@ module Errors = struct
     let title () = "values have different types: " ^ name in
     let message () = "" in
     let data = [
-      ("a" , fun () -> Format.asprintf "(%a)" PP.value a) ;
-      ("b" , fun () -> Format.asprintf "(%a)" PP.value b )
+      ("a" , fun () -> Format.asprintf "%a" PP.value a) ;
+      ("b" , fun () -> Format.asprintf "%a" PP.value b )
     ] in
     error ~data title message ()
 
   let error_uncomparable_literals name a b () =
-    let title () = name ^ " are different" in
+    let title () = name ^ " are not comparable" in
     let message () = "" in
     let data = [
-      ("a" , fun () -> Format.asprintf "(%a)" PP.literal a) ;
-      ("b" , fun () -> Format.asprintf "(%a)" PP.literal b )
+      ("a" , fun () -> Format.asprintf "%a" PP.literal a) ;
+      ("b" , fun () -> Format.asprintf "%a" PP.literal b )
     ] in
     error ~data title message ()
 
   let error_uncomparable_values name a b () =
-    let title () = name ^ " are different" in
+    let title () = name ^ " are not comparable" in
     let message () = "" in
     let data = [
-      ("a" , fun () -> Format.asprintf "(%a)" PP.value a) ;
-      ("b" , fun () -> Format.asprintf "(%a)" PP.value b )
+      ("a" , fun () -> Format.asprintf "%a" PP.value a) ;
+      ("b" , fun () -> Format.asprintf "%a" PP.value b )
     ] in
     error ~data title message ()
 
@@ -113,8 +113,8 @@ module Errors = struct
     let title () = name in
     let message () = "" in
     let data = [
-      ("a" , fun () -> Format.asprintf "(%a)" PP.value a) ;
-      ("b" , fun () -> Format.asprintf "(%a)" PP.value b )
+      ("a" , fun () -> Format.asprintf "%a" PP.value a) ;
+      ("b" , fun () -> Format.asprintf "%a" PP.value b )
     ] in
     error ~data title message ()
 
