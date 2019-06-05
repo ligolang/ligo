@@ -204,7 +204,6 @@ let rec assert_type_value_eq (a, b: (type_value * type_value)) : unit result = m
         @@ Assert.assert_list_same_size sa' sb' in
       trace (simple_error "sum type") @@
       bind_list_iter aux (List.combine sa' sb')
-
     )
   | T_sum _, _ -> fail @@ different_kinds a b
   | T_record ra, T_record rb -> (

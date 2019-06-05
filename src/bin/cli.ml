@@ -4,8 +4,8 @@ open Trace
 let toplevel x =
   match x with
   | Trace.Ok ((), annotations) -> ignore annotations; ()
-  | Errors ss ->
-      Format.printf "Errors: %a\n%!" errors_pp @@ List.map (fun f -> f()) ss
+  | Error ss ->
+      Format.printf "%a%!" error_pp (ss ())
 
 let main =
   let term = Term.(const print_endline $ const "Ligo needs a command. Do ligo --help") in

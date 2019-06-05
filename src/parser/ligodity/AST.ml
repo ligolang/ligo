@@ -346,7 +346,7 @@ and conditional = {
 
 let sprintf = Printf.sprintf
 
-let region_of_type_expr = function
+let type_expr_to_region = function
   TProd {region; _}
 | TSum {region; _}
 | TRecord {region; _}
@@ -355,12 +355,11 @@ let region_of_type_expr = function
 | TPar {region; _}
 | TAlias {region; _} -> region
 
-
-let region_of_list_pattern = function
+let list_pattern_to_region = function
   Sugar {region; _} | PCons {region; _} -> region
 
-let region_of_pattern = function
-  PList p -> region_of_list_pattern p
+let pattern_to_region = function
+  PList p -> list_pattern_to_region p
 | PTuple {region;_} | PVar {region;_}
 | PUnit {region;_} | PInt {region;_}
 | PTrue region | PFalse region
@@ -368,38 +367,38 @@ let region_of_pattern = function
 | PConstr {region; _} | PPar {region;_}
 | PRecord {region; _} | PTyped {region; _} -> region
 
-let region_of_bool_expr = function
+let bool_expr_to_region = function
   Or {region;_} | And {region;_}
 | True region | False region
 | Not {region;_} -> region
 
-let region_of_comp_expr = function
+let comp_expr_to_region = function
   Lt {region;_} | Leq {region;_}
 | Gt {region;_} | Geq {region;_}
 | Neq {region;_} | Equal {region;_} -> region
 
-let region_of_logic_expr = function
-  BoolExpr e -> region_of_bool_expr e
-| CompExpr e -> region_of_comp_expr e
+let logic_expr_to_region = function
+  BoolExpr e -> bool_expr_to_region e
+| CompExpr e -> comp_expr_to_region e
 
-let region_of_arith_expr = function
+let arith_expr_to_region = function
   Add {region;_} | Sub {region;_} | Mult {region;_}
 | Div {region;_} | Mod {region;_} | Neg {region;_}
 | Int {region;_} | Mtz {region; _}
 | Nat {region; _} -> region
 
-let region_of_string_expr = function
+let string_expr_to_region = function
   String {region;_} | Cat {region;_} -> region
 
-let region_of_list_expr = function
+let list_expr_to_region = function
   Cons {region; _} | List {region; _}
 (* | Append {region; _}*) -> region
 
-let region_of_expr = function
-  ELogic e -> region_of_logic_expr e
-| EArith e -> region_of_arith_expr e
-| EString e -> region_of_string_expr e
-| EList e -> region_of_list_expr e
+let expr_to_region = function
+  ELogic e -> logic_expr_to_region e
+| EArith e -> arith_expr_to_region e
+| EString e -> string_expr_to_region e
+| EList e -> list_expr_to_region e
 | EAnnot {region;_ } | ELetIn {region;_} | EFun {region;_}
 | ECond {region;_} | ETuple {region;_} | ECase {region;_}
 | ECall {region;_} | EVar {region; _} | EProj {region; _}

@@ -229,7 +229,7 @@ let sell () =
   ok ()
 
 
-let main = "Coase (End to End)", [
+let main = test_suite "Coase (End to End)" [
     test "buy" buy ;
     test "dispatch buy" dispatch_buy ;
     test "transfer" transfer ;

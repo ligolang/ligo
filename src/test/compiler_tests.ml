@@ -28,7 +28,7 @@ let multiple_vars () : unit result =
   let%bind _ = Assert.assert_equal_int ~msg:__LOC__ 42 result in
   ok ()
 
-let main = "Compiler (from Mini_C)", [
+let main = test_suite "Compiler (from Mini_C)" [
     test "identity" identity ;
     test "multiple_vars" multiple_vars ;
   ]

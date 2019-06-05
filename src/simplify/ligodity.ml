@@ -17,6 +17,151 @@ let pseq_to_list = function
   | Some lst -> npseq_to_list lst
 let get_value : 'a Raw.reg -> 'a = fun x -> x.value
 
+module Errors = struct
+  let wrong_pattern expected_name actual =
+    let title () = "wrong pattern" in
+    let message () = "" in
+    let data = [
+      ("expected", fun () -> expected_name);
+      ("actual_loc" , fun () -> Format.asprintf "%a" Location.pp_lift @@ Raw.pattern_to_region actual)
+    ] in
+    error ~data title message
+
+  let multiple_patterns construct (patterns: Raw.pattern list) =
+    let title () = "multiple patterns" in
+    let message () =
+      Format.asprintf "multiple patterns in \"%s\" are not supported yet" construct in
+    let patterns_loc =
+      List.fold_left (fun a p -> Region.cover a (Raw.pattern_to_region p))
+        Region.min patterns in
+    let data = [
+      ("patterns_loc", fun () -> Format.asprintf "%a" Location.pp_lift @@ patterns_loc)
+    ] in
+    error ~data title message
+
+  let unknown_predefined_type name =
+    let title () = "type constants" in
+    let message () =
+      Format.asprintf "unknown predefined type \"%s\"" name.Region.value in
+    let data = [
+      ("typename_loc",
+       fun () -> Format.asprintf "%a" Location.pp_lift @@ name.Region.region)
+    ] in
+    error ~data title message
+
+  let unsupported_arith_op expr =
+    let title () = "arithmetic expressions" in
+    let message () =
+      Format.asprintf "this arithmetic operator is not supported yet" in
+    let expr_loc = Raw.expr_to_region expr in
+    let data = [
+      ("expr_loc",
+       fun () -> Format.asprintf "%a" Location.pp_lift @@ expr_loc)
+    ] in
+    error ~data title message
+
+  let unsupported_string_catenation expr =
+    let title () = "string expressions" in
+    let message () =
+      Format.asprintf "string concatenation is not supported yet" in
+    let expr_loc = Raw.expr_to_region expr in
+    let data = [
+      ("expr_loc",
+       fun () -> Format.asprintf "%a" Location.pp_lift @@ expr_loc)
+    ] in
+    error ~data title message
+
+  let untyped_fun_param var =
+    let title () = "function parameter" in
+    let message () =
+      Format.asprintf "untyped function parameters are not supported yet" in
+    let param_loc = var.Region.region in
+    let data = [
+      ("param_loc",
+       fun () -> Format.asprintf "%a" Location.pp_lift @@ param_loc)
+    ] in
+    error ~data title message
+
+  let unsupported_tuple_pattern p =
+    let title () = "tuple pattern" in
+    let message () =
+      Format.asprintf "tuple patterns are not supported yet" in
+    let pattern_loc = Raw.pattern_to_region p in
+    let data = [
+      ("pattern_loc",
+       fun () -> Format.asprintf "%a" Location.pp_lift @@ pattern_loc)
+    ] in
+    error ~data title message
+
+  let unsupported_cst_constr p =
+    let title () = "constant constructor" in
+    let message () =
+      Format.asprintf "constant constructors are not supported yet" in
+    let pattern_loc = Raw.pattern_to_region p in
+    let data = [
+      ("pattern_loc",
+       fun () -> Format.asprintf "%a" Location.pp_lift @@ pattern_loc)
+    ] in
+    error ~data title message
+
+  let unsupported_non_var_pattern p =
+    let title () = "pattern is not a variable" in
+    let message () =
+      Format.asprintf "non-variable patterns in constructors \
+                       are not supported yet" in
+    let pattern_loc = Raw.pattern_to_region p in
+    let data = [
+      ("pattern_loc",
+       fun () -> Format.asprintf "%a" Location.pp_lift @@ pattern_loc)
+    ] in
+    error ~data title message
+
+  let simplifying_expr t =
+    let title () = "simplifying expression" in
+    let message () = "" in
+    let data = [
+      ("expression" ,
+       thunk @@ Format.asprintf "%a" (PP_helpers.printer Raw.print_expr) t)
+    ] in
+    error ~data title message
+
+  let only_constructors p =
+    let title () = "constructors in patterns" in
+    let message () =
+      Format.asprintf "currently, only constructors are supported in patterns" in
+    let pattern_loc = Raw.pattern_to_region p in
+    let data = [
+      ("pattern_loc",
+       fun () -> Format.asprintf "%a" Location.pp_lift @@ pattern_loc)
+    ] in
+    error ~data title message
+
+  let unsupported_sugared_lists region =
+    let title () = "lists in patterns" in
+    let message () =
+      Format.asprintf "currently, only empty lists and constructors (::) \
+                       are supported in patterns" in
+    let data = [
+      ("pattern_loc",
+       fun () -> Format.asprintf "%a" Location.pp_lift @@ region)
+    ] in
+    error ~data title message
+
+  let corner_case ~loc message =
+    let title () = "corner case" in
+    let content () = "We don't have a good error message for this case. \
+                      We are striving find ways to better report them and \
+                      find the use-cases that generate them. \
+                      Please report this to the developers." in
+    let data = [
+      ("location" , fun () -> loc) ;
+      ("message" , fun () -> message) ;
+    ] in
+    error ~data title content
+end
+
+open Errors
+
 open Operators.Simplify.Ligodity
 
 let r_split = Location.r_split
@@ -25,7 +170,7 @@ let rec pattern_to_var : Raw.pattern -> _ = fun p ->
   match p with
   | Raw.PPar p -> pattern_to_var p.value.inside
   | Raw.PVar v -> ok v
-  | _ -> simple_fail "not a var"
+  | _ -> fail @@ wrong_pattern "var" p
 
 let rec pattern_to_typed_var : Raw.pattern -> _ = fun p ->
   match p with
@@ -36,7 +181,7 @@ let rec pattern_to_typed_var : Raw.pattern -> _ = fun p ->
       ok (v , Some tp.type_expr)
     )
   | Raw.PVar v -> ok (v , None)
-  | _ -> simple_fail "not a var"
+  | _ -> fail @@ wrong_pattern "typed variable" p
 
 let rec expr_to_typed_expr : Raw.expr -> _ = fun e ->
   match e with
@@ -45,11 +190,13 @@ let rec expr_to_typed_expr : Raw.expr -> _ = fun e ->
   | _ -> ok (e , None)
 
 let patterns_to_var : Raw.pattern list -> _ = fun ps ->
-  let%bind () = Assert.assert_list_size ps 1 in
-  pattern_to_var @@ List.hd ps
+  match ps with
+  | [ pattern ] -> pattern_to_var pattern
+  | _ -> fail @@ multiple_patterns "let" ps
 
-let rec simpl_type_expression : Raw.type_expr -> type_expression result =
-  function
+let rec simpl_type_expression : Raw.type_expr -> type_expression result = fun te ->
+  trace (simple_info "simplifying this type expression...") @@
+  match te with
   | TPar x -> simpl_type_expression x.value.inside
   | TAlias v -> (
       match List.assoc_opt v.value type_constants with
@@ -59,26 +206,34 @@ let rec simpl_type_expression : Raw.type_expr -> type_expression result =
   | TFun x -> (
       let%bind (a , b) =
         let (a , _ , b) = x.value in
-        bind_map_pair simpl_type_expression (a , b) in
+        let%bind a = simpl_type_expression a in
+        let%bind b = simpl_type_expression b in
+        ok (a , b)
+      in
       ok @@ T_function (a , b)
     )
-  | TApp x ->
+  | TApp x -> (
       let (name, tuple) = x.value in
       let lst = npseq_to_list tuple.value.inside in
       let%bind cst =
-        trace_option (simple_error "unrecognized type constants") @@
-        List.assoc_opt name.value type_constants in
-      let%bind lst' = bind_list @@ List.map simpl_type_expression lst in
+        trace_option (unknown_predefined_type name) @@
+        List.assoc_opt name.value type_constants
+      in
+      let%bind lst' = bind_map_list simpl_type_expression lst in
       ok @@ T_constant (cst , lst')
-  | TProd p ->
-      let%bind tpl = simpl_list_type_expression
-        @@ npseq_to_list p.value in
+    )
+  | TProd p -> (
+      let%bind tpl = simpl_list_type_expression  @@ npseq_to_list p.value in
       ok tpl
+    )
   | TRecord r ->
       let aux = fun (x, y) -> let%bind y = simpl_type_expression y in ok (x, y) in
-      let%bind lst = bind_list
+      let apply (x:Raw.field_decl Raw.reg) =
+        (x.value.field_name.value, x.value.field_type) in
+      let%bind lst =
+        bind_list
         @@ List.map aux
-        @@ List.map (fun (x:Raw.field_decl Raw.reg) -> (x.value.field_name.value, x.value.field_type))
+        @@ List.map apply
         @@ pseq_to_list r.value.elements in
       let m = List.fold_left (fun m (x, y) -> SMap.add x y m) SMap.empty lst in
       ok @@ T_record m
@@ -104,7 +259,7 @@ and simpl_list_type_expression (lst:Raw.type_expr list) : type_expression result
   | [] -> assert false
   | [hd] -> simpl_type_expression hd
   | lst ->
-      let%bind lst = bind_list @@ List.map simpl_type_expression lst in
+      let%bind lst = bind_map_list simpl_type_expression lst in
       ok @@ T_tuple lst
 
 let rec simpl_expression :
@@ -128,14 +283,7 @@ let rec simpl_expression :
     return @@ e_accessor ~loc var path'
   in
 
-  trace (
-    let title () = "simplifying expression" in
-    let message () = "" in
-    let data = [
-      ("expression" , thunk @@ Format.asprintf "%a" (PP_helpers.printer Raw.print_expr) t)
-    ] in
-    error ~data title message
-  ) @@
+  trace (simplifying_expr t) @@
   match t with
   | Raw.ELetIn e -> (
       let Raw.{binding ; body ; _} = e.value in
@@ -240,7 +388,8 @@ let rec simpl_expression :
       let n = Z.to_int @@ snd @@ n in
       return @@ e_literal ~loc (Literal_tez n)
     )
-  | EArith _ -> simple_fail "arith: not supported yet"
+  | EArith _ as e ->
+       fail @@ unsupported_arith_op e
   | EString (String s) -> (
       let (s , loc) = r_split s in
       let s' =
@@ -249,7 +398,8 @@ let rec simpl_expression :
       in
       return @@ e_literal ~loc (Literal_string s')
     )
-  | EString _ -> simple_fail "string: not supported yet"
+  | EString (Cat _) as e ->
+      fail @@ unsupported_string_catenation e
   | ELogic l -> simpl_logic_expression l
   | EList l -> simpl_list_expression l
   | ECase c -> (
@@ -321,7 +471,7 @@ and simpl_fun lamb' : expr result =
       | "storage" , None ->
         ok (var , T_variable "storage")
       | _ , None ->
-        simple_fail "untyped function parameter"
+          fail @@ untyped_fun_param var
       | _ , Some ty -> (
         let%bind ty' = simpl_type_expression ty in
         ok (var , ty')
@@ -411,21 +561,24 @@ and simpl_tuple_expression ?loc (lst:Raw.expr list) : expression result =
       let%bind lst = bind_list @@ List.map simpl_expression lst in
       return @@ e_tuple ?loc lst
 
-and simpl_declaration : Raw.declaration -> declaration Location.wrap result = fun t ->
+and simpl_declaration : Raw.declaration -> declaration Location.wrap result =
+  fun t ->
   let open! Raw in
-  let loc : 'a . 'a Raw.reg -> _ -> _ = fun x v -> Location.wrap ~loc:(File x.region) v in
+  let loc : 'a . 'a Raw.reg -> _ -> _ =
+    fun x v -> Location.wrap ~loc:(File x.region) v in
   match t with
   | TypeDecl x ->
       let {name;type_expr} : Raw.type_decl = x.value in
       let%bind type_expression = simpl_type_expression type_expr in
       ok @@ loc x @@ Declaration_type (name.value , type_expression)
-  | LetEntry x (* -> simple_fail "no entry point yet" *)
+  | LetEntry x
   | Let x -> (
       let _ , binding = x.value in
       let {bindings ; lhs_type ; let_rhs} = binding in
       let%bind (var , args) =
-        let%bind (hd , tl) = match bindings with
-          | [] -> simple_fail "let without bindgings"
+        let%bind (hd , tl) =
+          match bindings with
+          | [] -> fail @@ corner_case ~loc:__LOC__ "let without bindings"
           | hd :: tl -> ok (hd , tl)
         in
         let%bind var = pattern_to_var hd in
@@ -452,55 +605,58 @@ and simpl_declaration : Raw.declaration -> declaration Location.wrap result = fu
         )
     )
 
-and simpl_cases : type a . (Raw.pattern * a) list -> a matching result = fun t ->
+and simpl_cases : type a . (Raw.pattern * a) list -> a matching result =
+  fun t ->
   let open Raw in
-  let get_var (t:Raw.pattern) = match t with
+  let rec get_var (t:Raw.pattern) =
+    match t with
     | PVar v -> ok v.value
-    | _ ->
-        let error =
-          let title () = "not a var" in
-          let content () = Format.asprintf "%a" (PP_helpers.printer Raw.print_pattern) t in
-          error title content
-        in
-        fail error
+    | PPar p -> get_var p.value.inside
+    | _ -> fail @@ unsupported_non_var_pattern t
   in
-  let get_tuple (t:Raw.pattern) = match t with
+  let rec get_tuple (t:Raw.pattern) =
+    match t with
     | PTuple v -> npseq_to_list v.value
+    | PPar p -> get_tuple p.value.inside
     | x -> [ x ]
   in
   let get_single (t:Raw.pattern) =
     let t' = get_tuple t in
     let%bind () =
-      trace_strong (simple_error "not single") @@
+      trace_strong (unsupported_tuple_pattern t) @@
       Assert.assert_list_size t' 1 in
-    ok (List.hd t') in
-  let get_constr (t:Raw.pattern) = match t with
+    ok (List.hd t')
+  in
+  let rec get_constr (t:Raw.pattern) =
+    match t with
+    | PPar p -> get_constr p.value.inside
     | PConstr v -> (
         let (const , pat_opt) = v.value in
         let%bind pat =
-          trace_option (simple_error "No constructor without variable yet") @@
+          trace_option (unsupported_cst_constr t) @@
           pat_opt in
         let%bind single_pat = get_single pat in
         let%bind var = get_var single_pat in
         ok (const.value , var)
       )
-    | _ -> simple_fail "not a constr"
+    | _ -> fail @@ only_constructors t
   in
   let%bind patterns =
     let aux (x , y) =
       let xs = get_tuple x in
-      trace_strong (simple_error "no tuple in patterns yet") @@
+      trace_strong (unsupported_tuple_pattern x) @@
       Assert.assert_list_size xs 1 >>? fun () ->
       ok (List.hd xs , y)
     in
     bind_map_list aux t in
   match patterns with
   | [(PFalse _ , f) ; (PTrue _ , t)]
-  | [(PTrue _ , t) ; (PFalse _ , f)] -> ok @@ Match_bool {match_true = t ; match_false = f}
+  | [(PTrue _ , t) ; (PFalse _ , f)] ->
+      ok @@ Match_bool {match_true = t ; match_false = f}
   | [(PList (PCons c) , cons) ; (PList (Sugar sugar_nil) , nil)]
   | [(PList (Sugar sugar_nil) , nil) ; (PList (PCons c),  cons)] -> (
       let%bind () =
-        trace_strong (simple_error "Only empty list patterns and cons are allowed yet")
+        trace_strong (unsupported_sugared_lists sugar_nil.region)
         @@ Assert.assert_list_empty
         @@ pseq_to_list
         @@ sugar_nil.value.elements in
@@ -513,7 +669,8 @@ and simpl_cases : type a . (Raw.pattern * a) list -> a matching result = fun t -
       ok @@ Match_list {match_cons = (a, b, cons) ; match_nil = nil}
     )
   | lst -> (
-      trace (simple_error "weird patterns not supported yet") @@
+      trace (simple_info "currently, only booleans, lists and constructors \
+                          are supported in patterns") @@
       let%bind constrs =
         let aux (x , y) =
           let error =

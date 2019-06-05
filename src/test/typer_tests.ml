@@ -65,7 +65,7 @@ end
 (* TODO: deep types (e.g. record of record)
    TODO: negative tests (expected type error) *)
 
-let main = "Typer (from simplified AST)", [
+let main = test_suite "Typer (from simplified AST)" [
     test "int" int ;
     test "unit"        TestExpressions.unit ;
     test "int2"        TestExpressions.int ;

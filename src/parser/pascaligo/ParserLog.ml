@@ -251,7 +251,8 @@ and print_local_decls sequence =
   List.iter print_local_decl sequence
 
 and print_local_decl = function
-  LocalLam  decl -> print_lambda_decl decl
+  LocalFun  decl -> print_fun_decl  decl
+| LocalProc decl -> print_proc_decl decl
 | LocalData decl -> print_data_decl decl
 
 and print_data_decl = function

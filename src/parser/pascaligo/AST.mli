@@ -299,8 +299,9 @@ and statement =
 | Data  of data_decl
 
 and local_decl =
-  LocalLam   of lambda_decl
-| LocalData  of data_decl
+  LocalFun  of fun_decl reg
+| LocalProc of proc_decl reg
+| LocalData of data_decl
 
 and data_decl =
   LocalConst of const_decl reg

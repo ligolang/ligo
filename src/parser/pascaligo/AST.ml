@@ -315,8 +315,9 @@ and statement =
 | Data  of data_decl
 
 and local_decl =
-  LocalLam   of lambda_decl
-| LocalData  of data_decl
+  LocalFun  of fun_decl reg
+| LocalProc of proc_decl reg
+| LocalData of data_decl
 
 and data_decl =
   LocalConst of const_decl reg
@@ -785,9 +786,8 @@ let pattern_to_region = function
 | PTuple      {region; _} -> region
 
 let local_decl_to_region = function
-  LocalLam FunDecl     {region; _}
-| LocalLam ProcDecl    {region; _}
-| LocalLam EntryDecl   {region; _}
+  LocalFun             {region; _}
+| LocalProc            {region; _}
 | LocalData LocalConst {region; _}
 | LocalData LocalVar   {region; _} -> region
 

@@ -456,7 +456,7 @@ let guess_the_hash_mligo () : unit result =
   let make_expected = fun n -> e_pair (e_typed_list [] t_operation) (e_int (42 + n)) in
   expect_eq_n program "main" make_input make_expected
 
-let main = "Integration (End to End)", [
+let main = test_suite "Integration (End to End)" [
     test "type alias" type_alias ;
     test "function" function_ ;
     test "assign" assign ;
