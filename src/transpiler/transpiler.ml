@@ -86,7 +86,6 @@ end
 open Errors
 
 let rec translate_type (t:AST.type_value) : type_value result =
-  trace (simple_info "") @@
   match t.type_value' with
   | T_constant ("bool", []) -> ok (T_base Base_bool)
   | T_constant ("int", []) -> ok (T_base Base_int)
@@ -143,23 +142,13 @@ let tuple_access_to_lr : type_value -> type_value list -> int -> (type_value * [
   let node_tv = Append_tree.of_list @@ List.mapi (fun i a -> (i, a)) tys in
   let%bind path =
     let aux (i , _) = i = ind in
-    trace_option (simple_error "no leaf with given index") @@
+    trace_option (corner_case ~loc:__LOC__ "tuple access leaf") @@
     Append_tree.exists_path aux node_tv in
   let lr_path = List.map (fun b -> if b then `Right else `Left) path in
   let%bind (_ , lst) =
     let aux = fun (ty' , acc) cur ->
       let%bind (a , b) =
-        let error =
-          let title () = "expected a pair" in
-          let content () = Format.asprintf "Big: %a.\tGot: %a\tFull path: %a\tSmall path: %a"
-              Mini_c.PP.type_ ty
-              Mini_c.PP.type_ ty'
-              PP_helpers.(list_sep bool (const ".")) path
-              PP_helpers.(list_sep lr (const ".")) (List.map snd acc)
-          in
-          error title content
-        in
-        trace_strong error @@
+        trace_strong (corner_case ~loc:__LOC__ "tuple access pair") @@
         Mini_c.get_t_pair ty' in
       match cur with
       | `Left -> ok (a , acc @ [(a , `Left)])
@@ -173,12 +162,14 @@ let record_access_to_lr : type_value -> type_value AST.type_name_map -> string -
   let node_tv = Append_tree.of_list tys in
   let%bind path =
     let aux (i , _) = i = ind in
-    trace_option (simple_error "no leaf with given index") @@
+    trace_option (corner_case ~loc:__LOC__ "record access leaf") @@
     Append_tree.exists_path aux node_tv in
   let lr_path = List.map (fun b -> if b then `Right else `Left) path in
   let%bind (_ , lst) =
     let aux = fun (ty , acc) cur ->
-      let%bind (a , b) = Mini_c.get_t_pair ty in
+      let%bind (a , b) =
+        trace_strong (corner_case ~loc:__LOC__ "recard access pair") @@
+        Mini_c.get_t_pair ty in
       match cur with
       | `Left -> ok (a , acc @ [(a , `Left)])
       | `Right -> ok (b , acc @ [(b , `Right)] ) in
@@ -213,7 +204,6 @@ and transpile_small_environment : AST.small_environment -> Environment.t result 
     ok @@ Environment.add (name , tv') prec
   in
   let%bind result =
-    trace (simple_error "transpiling small environment") @@
     bind_fold_right_list aux Environment.empty x' in
   ok result
 
@@ -246,7 +236,7 @@ and translate_annotated_expression (ae:AST.annotated_expression) : expression re
   | E_literal l -> return @@ E_literal (translate_literal l)
   | E_variable name -> (
       let%bind ele =
-        trace_option (simple_error "name not in environment") @@
+        trace_option (corner_case ~loc:__LOC__ "name not in environment") @@
         AST.Environment.get_opt name ae.environment in
       let%bind tv = transpile_environment_element_type ele in
       return ~tv @@ E_variable name

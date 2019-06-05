@@ -1,16 +1,25 @@
 open! Trace
 
+type test_case = unit Alcotest.test_case
+type test =
+  | Test_suite of (string * test list)
+  | Test of test_case
+
 let test name f =
-  Alcotest.test_case name `Quick @@ fun () ->
-  let result =
-    trace (fun () -> error (thunk "running test") (thunk name) ()) @@
+  Test (
+    Alcotest.test_case name `Quick @@ fun () ->
+    let result =
+      trace (fun () -> error (thunk "running test") (thunk name) ()) @@
     f () in
-  match result with
-  | Ok ((), annotations) -> ignore annotations; ()
-  | Error err ->
+    match result with
+    | Ok ((), annotations) -> ignore annotations; ()
+    | Error err ->
       Format.printf "Errors : {\n%a}\n%!" error_pp (err ()) ;
       raise Alcotest.Test_error
+  )
 
+let test_suite name lst = Test_suite (name , lst)
+        
 open Ast_simplified.Combinators
 
 let expect ?options program entry_point input expecter =

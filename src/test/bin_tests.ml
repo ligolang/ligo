@@ -8,6 +8,6 @@ let compile_contract_basic () : unit result =
   in
   ok ()
 
-let main = "Bin", [
+let main = test_suite "Bin" [
     test "compile contract basic" compile_contract_basic ;
 ]
