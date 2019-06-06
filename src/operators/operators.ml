@@ -83,7 +83,54 @@ module Simplify = struct
   end
 
   module Ligodity = struct
-    include Pascaligo
+    let constants = [
+      ("Current.balance", "BALANCE") ;
+      ("balance", "BALANCE") ;
+      ("Current.time", "NOW") ;
+      ("time", "NOW") ;
+      ("Current.amount" , "AMOUNT") ;
+      ("amount", "AMOUNT") ;
+      ("Current.gas", "STEPS_TO_QUOTA") ;
+      ("gas", "STEPS_TO_QUOTA") ;
+      ("Current.sender" , "SENDER") ;
+      ("sender", "SENDER") ;
+      ("Current.failwith", "FAILWITH") ;
+      ("failwith" , "FAILWITH") ;
+
+      ("Crypto.hash" , "HASH") ;
+      ("Crypto.black2b", "BLAKE2B") ;
+      ("Crypto.sha256", "SHA256") ;
+      ("Crypto.sha512", "SHA512") ;
+      ("Crypto.hash_key", "HASH_KEY") ;
+      ("Crypto.check", "CHECK_SIGNATURE") ;
+
+      ("Bytes.pack" , "PACK") ;
+      ("Bytes.unpack", "UNPACK") ;
+      ("Bytes.length", "SIZE") ;
+      ("Bytes.size" , "SIZE") ;
+      ("Bytes.concat", "CONCAT") ;
+      ("Bytes.slice", "SLICE") ;
+      ("Bytes.sub", "SLICE") ;
+
+      ("String.length", "SIZE") ;
+      ("String.size", "SIZE") ;
+      ("String.slice", "SLICE") ;
+      ("String.sub", "SLICE") ;
+      ("String.concat", "CONCAT") ;
+
+      ("List.length", "SIZE") ;
+      ("List.size", "SIZE") ;
+      ("List.iter", "ITER") ;
+
+      ("Operation.transaction" , "CALL") ;
+      ("Operation.get_contract" , "GET_CONTRACT") ;
+      ("int" , "INT") ;
+      ("abs" , "ABS") ;
+      ("unit" , "UNIT") ;
+      ("source" , "SOURCE") ;
+    ]
+
+    let type_constants = type_constants
   end
 
 end
