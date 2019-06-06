@@ -31,5 +31,10 @@
       "version-next-contributors/road-map/short-term",
       "version-next-contributors/road-map/long-term"
     ]
+  },
+  "version-next-tutorials": {
+    "Get Started": [
+      "version-next-tutorials/first-smart-contract"
+    ]
   }
 }
