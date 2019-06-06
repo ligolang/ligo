@@ -494,6 +494,34 @@ let mligo_list () : unit result =
       (e_pair (e_int (n+3)) (e_list [e_int (2*n)]))
   in expect_eq_n program "main" make_input make_expected
 
+let lambda_mligo () : unit result =
+  let%bind program = mtype_file "./contracts/lambda.mligo" in
+  let make_input = e_pair (e_unit ()) (e_unit ()) in
+  let make_expected = (e_unit ()) in
+  expect_eq program "main" make_input make_expected
+
+let lambda2_mligo () : unit result =
+  let%bind program = mtype_file "./contracts/lambda2.mligo" in
+  let make_input = e_pair (e_unit ()) (e_unit ()) in
+  let make_expected = (e_unit ()) in
+  expect_eq program "main" make_input make_expected
+
+let website1_ligo () : unit result =
+  let%bind program = type_file "./contracts/website1.ligo" in
+  let make_input = fun n-> e_pair (e_int n) (e_int 42) in
+  let make_expected = fun _n -> e_pair (e_typed_list [] t_operation) (e_int (42 + 1)) in
+  expect_eq_n program "main" make_input make_expected
+
+let website2_ligo () : unit result =
+  let%bind program = type_file "./contracts/website2.ligo" in
+  let make_input = fun n ->
+    let action = if n mod 2 = 0 then "Increment" else "Decrement" in
+    e_pair (e_constructor action (e_int n)) (e_int 42) in
+  let make_expected = fun n ->
+    let op = if n mod 2 = 0 then (+) else (-) in
+    e_pair (e_typed_list [] t_operation) (e_int (op 42 n)) in
+  expect_eq_n program "main" make_input make_expected
+
 let main = test_suite "Integration (End to End)" [
     test "type alias" type_alias ;
     test "function" function_ ;
@@ -533,7 +561,11 @@ let main = test_suite "Integration (End to End)" [
     test "let-in (mligo)" let_in_mligo ;
     test "match variant (mligo)" match_variant ;
     (* test "list matching (mligo)" mligo_list ; *)
-    (* test "guess the hash mligo" guess_the_hash_mligo ; *)
+    (* test "guess the hash mligo" guess_the_hash_mligo ; WIP? *)
     (* test "failwith mligo" failwith_mligo ; *)
-    (* test "guess string mligo" guess_string_mligo ; *)
+    (* test "guess string mligo" guess_string_mligo ; WIP? *)
+    (* test "lambda mligo" lambda_mligo ; *)
+    (* test "lambda2 mligo" lambda2_mligo ; *)
+    test "website1 ligo" website1_ligo ;
+    test "website2 ligo" website2_ligo ;
   ]
