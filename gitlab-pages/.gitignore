@@ -10,7 +10,5 @@ website/build/
 website/yarn.lock
 website/node_modules
 website/i18n/*
-website/versioned_docs/version-mock
 website/versioned_docs/version-next
-website/versioned_sidebars/version-mock-sidebars.json
 website/versioned_sidebars/version-next-sidebars.json
