@@ -500,6 +500,12 @@ let lambda_mligo () : unit result =
   let make_expected = (e_unit ()) in
   expect_eq program "main" make_input make_expected
 
+let lambda_ligo () : unit result =
+  let%bind program = type_file "./contracts/lambda.ligo" in
+  let make_input = e_pair (e_unit ()) (e_unit ()) in
+  let make_expected = (e_unit ()) in
+  expect_eq program "main" make_input make_expected
+
 let lambda2_mligo () : unit result =
   let%bind program = mtype_file "./contracts/lambda2.mligo" in
   let make_input = e_pair (e_unit ()) (e_unit ()) in
@@ -565,6 +571,7 @@ let main = test_suite "Integration (End to End)" [
     (* test "failwith mligo" failwith_mligo ; *)
     (* test "guess string mligo" guess_string_mligo ; WIP? *)
     test "lambda mligo" lambda_mligo ;
+    test "lambda ligo" lambda_ligo ;
     (* test "lambda2 mligo" lambda2_mligo ; *)
     test "website1 ligo" website1_ligo ;
     test "website2 ligo" website2_ligo ;
