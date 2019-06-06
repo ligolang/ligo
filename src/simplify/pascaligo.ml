@@ -346,7 +346,7 @@ let rec simpl_type_expression (t:Raw.type_expr) : type_expression result =
 
 and simpl_list_type_expression (lst:Raw.type_expr list) : type_expression result =
   match lst with
-  | [] -> assert false
+  | [] -> ok @@ t_unit
   | [hd] -> simpl_type_expression hd
   | lst ->
       let%bind lst = bind_list @@ List.map simpl_type_expression lst in

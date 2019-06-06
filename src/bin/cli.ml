@@ -6,7 +6,9 @@ let error_pp out (e : error) =
   let message =
     let opt = e |> member "message" |> string in
     let msg = Option.unopt ~default:"" opt in
-    ": " ^ msg in
+    if msg = ""
+    then ""
+    else ": " ^ msg in
   let error_code =
     let error_code = e |> member "error_code" in
     match error_code with
@@ -20,7 +22,12 @@ let error_pp out (e : error) =
     match data with
     | `Null -> ""
     | _ -> " " ^ (J.to_string data) ^ "\n" in
-  Format.fprintf out "%s%s%s.\n%s" title error_code message data
+  let infos =
+    let infos = e |> member "infos" in
+    match infos with
+    | `Null -> ""
+    | _ -> " " ^ (J.to_string infos) ^ "\n" in
+  Format.fprintf out "%s%s%s.\n%s%s" title error_code message data infos
 
 
 let toplevel x =
@@ -71,7 +78,7 @@ let compile_file =
     let%bind contract =
       trace (simple_info "compiling contract to michelson") @@
       Ligo.Run.compile_contract_file source entry_point syntax in
-    Format.printf "Contract:\n%s\n" contract ;
+    Format.printf "%s\n" contract ;
     ok ()
   in
   let term =
@@ -86,7 +93,7 @@ let compile_parameter =
     let%bind value =
       trace (simple_error "compile-input") @@
       Ligo.Run.compile_contract_parameter source entry_point expression syntax in
-    Format.printf "Input:\n%s\n" value;
+    Format.printf "%s\n" value;
     ok ()
   in
   let term =
@@ -101,7 +108,7 @@ let compile_storage =
     let%bind value =
       trace (simple_error "compile-storage") @@
       Ligo.Run.compile_contract_storage source entry_point expression syntax in
-    Format.printf "Storage:\n%s\n" value;
+    Format.printf "%s\n" value;
     ok ()
   in
   let term =

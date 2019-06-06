@@ -206,6 +206,13 @@ module Errors = struct
     ] in
     error ~data title message ()
 
+  let constant_error loc =
+    let title () = "typing constant" in
+    let message () = "" in
+    let data = [
+      ("location" , fun () -> Format.asprintf "%a" Location.pp loc ) ;
+    ] in
+    error ~data title message
 end
 open Errors
 
@@ -377,14 +384,13 @@ and type_expression : environment -> ?tv_opt:O.type_value -> I.expression -> O.a
     ok @@ make_a_e ~location expr tv e in
   let main_error =
     let title () = "typing expression" in
-    let content () =
-      match L.get () with
-      | "" ->
-        Format.asprintf "Expression: %a\n" I.PP.expression ae
-      | l ->
-        Format.asprintf "Expression: %a\nLog: %s\n" I.PP.expression ae l
-    in
-    error title content in
+    let content () = "" in
+    let data = [
+      ("expression" , fun () -> Format.asprintf "%a" I.PP.expression ae) ;
+      ("location" , fun () -> Format.asprintf "%a" Location.pp @@ Location.get_location ae) ;
+      ("misc" , fun () -> L.get ()) ;
+    ] in
+    error ~data title content in
   trace main_error @@
   match Location.unwrap ae with
   (* Basic *)
@@ -563,7 +569,8 @@ and type_expression : environment -> ?tv_opt:O.type_value -> I.expression -> O.a
   | E_constant (name, lst) ->
       let%bind lst' = bind_list @@ List.map (type_expression e) lst in
       let tv_lst = List.map get_type_annotation lst' in
-      let%bind (name', tv) = type_constant name tv_lst tv_opt ae.location in
+      let%bind (name', tv) =
+        type_constant name tv_lst tv_opt ae.location in
       return (E_constant (name' , lst')) tv
   | E_application (f, arg) ->
       let%bind f' = type_expression e f in
@@ -731,6 +738,7 @@ and type_constant (name:string) (lst:O.type_value list) (tv_opt:O.type_value opt
   let%bind typer =
     trace_option (unrecognized_constant name loc) @@
     Map.String.find_opt name ct in
+  trace (constant_error loc) @@
   typer lst tv_opt
 
 let untype_type_value (t:O.type_value) : (I.type_expression) result =

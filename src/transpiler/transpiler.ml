@@ -93,6 +93,7 @@ let rec translate_type (t:AST.type_value) : type_value result =
   | T_constant ("tez", []) -> ok (T_base Base_tez)
   | T_constant ("string", []) -> ok (T_base Base_string)
   | T_constant ("address", []) -> ok (T_base Base_address)
+  | T_constant ("timestamp", []) -> ok (T_base Base_timestamp)
   | T_constant ("unit", []) -> ok (T_base Base_unit)
   | T_constant ("operation", []) -> ok (T_base Base_operation)
   | T_constant ("contract", [x]) ->

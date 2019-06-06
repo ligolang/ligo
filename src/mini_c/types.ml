@@ -4,6 +4,7 @@ type type_base =
   | Base_unit
   | Base_bool
   | Base_int | Base_nat | Base_tez
+  | Base_timestamp
   | Base_string | Base_bytes | Base_address
   | Base_operation
 

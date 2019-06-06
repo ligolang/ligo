@@ -42,6 +42,7 @@ module Simplify = struct
     ("bool" , "bool") ;
     ("operation" , "operation") ;
     ("address" , "address") ;
+    ("timestamp" , "timestamp") ;
     ("contract" , "contract") ;
     ("list" , "list") ;
     ("option" , "option") ;
@@ -60,8 +61,10 @@ module Simplify = struct
       ("int" , "INT") ;
       ("abs" , "ABS") ;
       ("amount" , "AMOUNT") ;
+      ("now" , "NOW") ;
       ("unit" , "UNIT") ;
       ("source" , "SOURCE") ;
+      ("sender" , "SENDER") ;
       ("failwith" , "FAILWITH") ;
     ]
 
@@ -169,14 +172,15 @@ module Typer = struct
     | Some t -> ok t
 
   let sub = typer_2 "SUB" @@ fun a b ->
-    let%bind () =
-      trace_strong (simple_error "Types a and b aren't numbers") @@
-      Assert.assert_true @@
-      List.exists (eq_2 (a , b)) [
-        t_int () ;
-        t_nat () ;
-      ] in
-    ok @@ t_int ()
+    if (eq_2 (a , b) (t_int ()))
+    then ok @@ t_int () else
+    if (eq_2 (a , b) (t_nat ()))
+    then ok @@ t_int () else
+    if (eq_2 (a , b) (t_timestamp ()))
+    then ok @@ t_int () else
+    if (eq_2 (a , b) (t_tez ()))
+    then ok @@ t_tez () else
+      fail (simple_error "Typing substraction, bad parameters.")
 
   let some = typer_1 "SOME" @@ fun a -> ok @@ t_option a ()
 
@@ -232,6 +236,8 @@ module Typer = struct
 
   let amount = constant "AMOUNT" @@ t_tez ()
 
+  let now = constant "NOW" @@ t_timestamp ()
+
   let transaction = typer_3 "CALL" @@ fun param amount contract ->
     let%bind () = assert_t_tez amount in
     let%bind contract_param = get_t_contract contract in
@@ -264,6 +270,8 @@ module Typer = struct
     then ok @@ t_nat () else
     if eq_2 (a , b) (t_int ())
     then ok @@ t_int () else
+    if eq_1 a (t_tez ()) && eq_1 b (t_nat ())
+    then ok @@ t_tez () else
       simple_fail "Dividing with wrong types"
 
   let mod_ = typer_2 "MOD" @@ fun a b ->
@@ -276,9 +284,11 @@ module Typer = struct
     then ok @@ t_nat () else
     if eq_2 (a , b) (t_int ())
     then ok @@ t_int () else
+    if eq_2 (a , b) (t_tez ())
+    then ok @@ t_tez () else
     if (eq_1 a (t_nat ()) && eq_1 b (t_int ())) || (eq_1 b (t_nat ()) && eq_1 a (t_int ()))
     then ok @@ t_int () else
-      simple_fail "Adding with wrong types"
+      simple_fail "Adding with wrong types. Expected nat, int or tez."
 
   let constant_typers = Map.String.of_list [
       add ;
@@ -312,6 +322,7 @@ module Typer = struct
       transaction ;
       get_contract ;
       abs ;
+      now ;
     ]
 
 end
@@ -364,6 +375,7 @@ module Compiler = struct
     ("CONS" , simple_binary @@ prim I_CONS) ;
     ("UNIT" , simple_constant @@ prim I_UNIT) ;
     ("AMOUNT" , simple_constant @@ prim I_AMOUNT) ;
+    ("NOW" , simple_constant @@ prim I_NOW) ;
     ("CALL" , simple_ternary @@ prim I_TRANSFER_TOKENS) ;
     ("SOURCE" , simple_constant @@ prim I_SOURCE) ;
     ("SENDER" , simple_constant @@ prim I_SENDER) ;

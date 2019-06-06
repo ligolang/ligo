@@ -20,6 +20,7 @@ let t_address ?s () : type_value = make_t (T_constant ("address", [])) s
 let t_operation ?s () : type_value = make_t (T_constant ("operation", [])) s
 let t_nat ?s () : type_value = make_t (T_constant ("nat", [])) s
 let t_tez ?s () : type_value = make_t (T_constant ("tez", [])) s
+let t_timestamp ?s () : type_value = make_t (T_constant ("timestamp", [])) s
 let t_unit ?s () : type_value = make_t (T_constant ("unit", [])) s
 let t_option o ?s () : type_value = make_t (T_constant ("option", [o])) s
 let t_tuple lst ?s () : type_value = make_t (T_tuple lst) s
