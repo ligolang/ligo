@@ -99,7 +99,7 @@ const siteConfig = {
   headerLinks: [
     {doc: 'setup-installation', label: 'Docs'},
     {doc: 'api-cli-commands', label: 'CLI'},
-    {doc: 'contributors/origin', label: 'Contributing'},
+    {doc: 'contributors/origin', label: 'Contribute'},
   ],
 
   // If you have users set above, you add it here:

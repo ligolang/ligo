@@ -57,7 +57,7 @@ stages:
     - printf '' | ocaml
     - opam switch
 
-.local-dune-job:
+local-dune-job:
   <<: *before_script
   stage: test
   script:
@@ -72,7 +72,7 @@ stages:
 #     paths:
 #       - src/ligo/bin/cli.ml
 
-.local-repo-job:
+local-repo-job:
   <<: *before_script
   stage: test
   script:
@@ -81,7 +81,7 @@ stages:
     #--build-test
     - opam install -y ligo
 
-.remote-repo-job:
+remote-repo-job:
   <<: *before_script
   stage: test
   script:
@@ -98,7 +98,7 @@ stages:
     - master
 
 # Run a docker build without publishing to the registry
-.build-current-docker-image:
+build-current-docker-image:
   stage: build_docker
   <<: *docker
   <<: *docker_build
@@ -108,7 +108,7 @@ stages:
 
 # When a MR/PR is merged to dev
 # take the previous build and publish it to Docker Hub
-.build-and-publish-latest-docker-image:
+build-and-publish-latest-docker-image:
   stage: build_and_deploy_docker
   <<: *docker
   <<: *docker_build
@@ -123,7 +123,7 @@ stages:
 # in case something gets merged into 'dev' while releasing.
 pages:
   <<: *website_build
-  # only:
-  #   - master
-  #   - dev
+  only:
+    - master
+    - dev
 
