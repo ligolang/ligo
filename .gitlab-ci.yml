@@ -18,7 +18,9 @@ stages:
     - npm run version next
     - npm run build
   after_script:
+    - pwd
     - cd ../..
+    - pwd 
     - cp -r gitlab-pages/website/build/ligo public 
   artifacts:
     paths:
