@@ -31,7 +31,7 @@ stages:
 
 .docker_build: &docker_build
   script:
-    - docker build -t $LIGO_REGISTRY_IMAGE:latest -f ./docker/Dockerfile .
+    - docker build -t $LIGO_REGISTRY_IMAGE:next -f ./docker/Dockerfile .
 
 .before_script: &before_script
   before_script:
@@ -105,8 +105,9 @@ stages:
   <<: *docker_build
   except:
     - master
+    - dev
 
-# When a MR/PR is merged to master
+# When a MR/PR is merged to dev
 # take the previous build and publish it to Docker Hub
 .build-and-publish-latest-docker-image:
   stage: build_and_deploy_docker
@@ -114,9 +115,9 @@ stages:
   <<: *docker_build
   after_script:
     - docker login -u $LIGO_REGISTRY_USER -p $LIGO_REGISTRY_PASSWORD
-    - docker push $LIGO_REGISTRY_IMAGE:latest
+    - docker push $LIGO_REGISTRY_IMAGE:next
   only:
-    - master
+    - dev
 
 
 # Pages are deployed from both master & dev, be careful not to override 'next'

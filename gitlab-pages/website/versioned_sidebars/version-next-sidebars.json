@@ -16,7 +16,9 @@
   "version-next-contributors-docs": {
     "Introduction": [
       "version-next-contributors/origin",
-      "version-next-contributors/philosophy"
+      "version-next-contributors/philosophy",
+      "version-next-contributors/getting-started",
+      "version-next-contributors/documentation-and-releases"
     ],
     "Big Picture": [
       "version-next-contributors/big-picture/overview",
@@ -28,9 +30,6 @@
     "Road Map": [
       "version-next-contributors/road-map/short-term",
       "version-next-contributors/road-map/long-term"
-    ],
-    "Contributing": [
-      "version-next-contributors/contributing/getting-started"
     ]
   }
 }
