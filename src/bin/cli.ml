@@ -48,7 +48,7 @@ let entry_point =
     let docv = "ENTRY_POINT" in
     let doc = "$(docv) is entry-point that will be compiled." in
     info ~docv ~doc [] in
-  value @@ pos 1 string "main" info
+  required @@ pos 1 (some string) (Some "main") info
 
 let expression =
   let open Arg in
@@ -62,7 +62,7 @@ let syntax =
   let info =
     let docv = "SYNTAX" in
     let doc = "$(docv) is the syntax that will be used. Currently supported syntaxes are \"pascaligo\" and \"cameligo\". \"pascaligo\" is the default." in
-    info ~docv ~doc [] in
+    info ~docv ~doc ["syntax" ; "s"] in
   value @@ opt string "pascaligo" info
 
 let compile_file =
