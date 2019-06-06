@@ -564,7 +564,7 @@ let main = test_suite "Integration (End to End)" [
     (* test "guess the hash mligo" guess_the_hash_mligo ; WIP? *)
     (* test "failwith mligo" failwith_mligo ; *)
     (* test "guess string mligo" guess_string_mligo ; WIP? *)
-    (* test "lambda mligo" lambda_mligo ; *)
+    test "lambda mligo" lambda_mligo ;
     (* test "lambda2 mligo" lambda2_mligo ; *)
     test "website1 ligo" website1_ligo ;
     test "website2 ligo" website2_ligo ;
