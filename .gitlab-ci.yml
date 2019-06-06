@@ -15,13 +15,11 @@ stages:
     - cd gitlab-pages/website
     - npm install
   script:
-    - rm -rf versioned_docs/version-next
-    - rm versioned_sidebars/version-next-sidebars.json
-    - node removeNext.js
     - npm run version next
     - npm run build
+  after_script:
     - cd ../..
-    - cp -r gitlab-pages/website/build/ligo public
+    - cp -r gitlab-pages/website/build/ligo public 
   artifacts:
     paths:
       - public
@@ -121,6 +119,8 @@ stages:
     - master
 
 
+# Pages are deployed from both master & dev, be careful not to override 'next'
+# in case something gets merged into 'dev' while releasing.
 pages:
   <<: *website_build
   # only:

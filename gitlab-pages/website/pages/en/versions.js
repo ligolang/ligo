@@ -28,7 +28,6 @@ function Versions(props) {
           <header className="postHeader">
             <h1>{siteConfig.title} Versions</h1>
           </header>
-          <p>New versions of this project are released every so often.</p>
           <h3 id="latest">Current version (Stable)</h3>
           <table className="versions">
             <tbody>
@@ -53,10 +52,6 @@ function Versions(props) {
               </tr>
             </tbody>
           </table>
-          <p>
-            This is the version that is configured automatically when you first
-            install this project.
-          </p>
           <h3 id="rc">Pre-release versions</h3>
           <table className="versions">
             <tbody>
@@ -78,14 +73,13 @@ function Versions(props) {
               </tr>
             </tbody>
           </table>
-          <p>Other text describing this section.</p>
           <h3 id="archive">Past Versions</h3>
           <p>Here you can find previous versions of the documentation.</p>
           <table className="versions">
             <tbody>
               {versions.map(
                 version =>
-                  version !== latestVersion && (
+                  version !== latestVersion && version !== "next" && (
                     <tr>
                       <th>{version}</th>
                       <td>
