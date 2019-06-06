@@ -13,6 +13,9 @@ services:
       - ./website/i18n:/app/website/i18n
       - ./website/pages:/app/website/pages
       - ./website/static:/app/website/static
+      - ./website/versioned_sidebars:/app/website/versioned_sidebars
+      - ./website/versioned_docs:/app/website/versioned_docs
       - ./website/sidebars.json:/app/website/sidebars.json
       - ./website/siteConfig.js:/app/website/siteConfig.js
+      - ./website/versions.json:/app/website/versions.json
     working_dir: /app/website

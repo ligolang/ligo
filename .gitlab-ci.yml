@@ -8,6 +8,20 @@ stages:
   - build_and_deploy_website
   - test
 
+.website_build: &website_build
+  stage: build_and_deploy_website
+  image: node:8
+  before_script:
+    - cd gitlab-pages/website
+    - npm install
+  script:
+    - npm run version next
+    - npm run build
+  after_script:
+    - cp -r gitlab-pages/website/build/ligo public 
+  artifacts:
+    paths:
+      - public
 
 .docker: &docker
   image: docker:1.11
@@ -16,7 +30,7 @@ stages:
 
 .docker_build: &docker_build
   script:
-    - docker build -t $LIGO_REGISTRY_IMAGE:latest -f ./docker/Dockerfile .
+    - docker build -t $LIGO_REGISTRY_IMAGE:next -f ./docker/Dockerfile .
 
 .before_script: &before_script
   before_script:
@@ -90,8 +104,9 @@ build-current-docker-image:
   <<: *docker_build
   except:
     - master
+    - dev
 
-# When a MR/PR is merged to master
+# When a MR/PR is merged to dev
 # take the previous build and publish it to Docker Hub
 build-and-publish-latest-docker-image:
   stage: build_and_deploy_docker
@@ -99,25 +114,16 @@ build-and-publish-latest-docker-image:
   <<: *docker_build
   after_script:
     - docker login -u $LIGO_REGISTRY_USER -p $LIGO_REGISTRY_PASSWORD
-    - docker push $LIGO_REGISTRY_IMAGE:latest
+    - docker push $LIGO_REGISTRY_IMAGE:next
   only:
-    - master
+    - dev
 
 
+# Pages are deployed from both master & dev, be careful not to override 'next'
+# in case something gets merged into 'dev' while releasing.
 pages:
-  stage: build_and_deploy_website
-  image: node:8
-  before_script:
-    - cd gitlab-pages/website
-    - npm install
-  script:
-    - npm run build
-    - pwd
-    - cd ../..
-    - pwd
-    - cp -r gitlab-pages/website/build/ligo public
-  artifacts:
-    paths:
-      - public
+  <<: *website_build
   only:
     - master
+    - dev
+

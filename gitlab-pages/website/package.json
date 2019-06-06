@@ -6,6 +6,8 @@
     "publish-gh-pages": "docusaurus-publish",
     "write-translations": "docusaurus-write-translations",
     "version": "docusaurus-version",
+    "preversion": "node preversion.js",
+    "postversion": "node postversion.js",
     "rename-version": "docusaurus-rename-version"
   },
   "devDependencies": {
