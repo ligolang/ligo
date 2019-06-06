@@ -6,8 +6,14 @@ set -euET -o pipefail
 version=$1
 printf "\nInstalling LIGO ($version)\n\n"
 
-# Install the ligo.sh from master
-wget https://gitlab.com/ligolang/ligo/raw/master/scripts/ligo.sh
+if [ $version = "next" ]
+    then
+        # Install the ligo.sh from master
+        wget https://gitlab.com/ligolang/ligo/raw/dev/scripts/ligo.sh
+    else
+        # Install the ligo.sh from master
+        wget https://gitlab.com/ligolang/ligo/raw/master/scripts/ligo.sh
+fi
 
 
 # Overwrite LIGO version in the executable
