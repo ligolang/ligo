@@ -46,7 +46,7 @@ const team = [
     pinned: true,
   },
   {
-    caption: 'Georges Duperon',
+    caption: 'Georges Dupéron',
     // You will need to prepend the image path with your baseUrl
     // if it is not '/', like: '/test-site/img/image.jpg'.
     image: 'https://thepowerofthedream.org/wp-content/uploads/2015/09/generic-profile-picture-600x600.jpg',
