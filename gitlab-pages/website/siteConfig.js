@@ -101,7 +101,8 @@ const siteConfig = {
     {doc: 'api-cli-commands', label: 'CLI'},
     {doc: 'tutorials/first-smart-contract', label: 'Tutorials'},
     { blog: true, label: 'Blog' },
-    {doc: 'contributors/origin', label: 'Contribute'},
+    { href: "/odoc", label: "Api" },
+    {doc: 'contributors/origin', label: 'Contribute'}
   ],
 
   // If you have users set above, you add it here:
