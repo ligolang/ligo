@@ -765,7 +765,7 @@ and simpl_single_instruction : Raw.single_instr -> (_ -> expression result) resu
               | _ -> fail @@ unsupported_deep_map_assign v in
             let%bind key_expr = simpl_expression v'.index.value.inside in
             let old_expr = e_variable name.value in
-            let expr' = e_map_update key_expr value_expr old_expr in
+            let expr' = e_map_add key_expr value_expr old_expr in
             return @@ e_assign ~loc name.value [] expr'
           )
     )

@@ -189,11 +189,56 @@ module Typer = struct
     let%bind () = assert_type_value_eq (src , k) in
     ok m
 
-  let map_update : typer = typer_3 "MAP_UPDATE" @@ fun k v m ->
+  let map_add : typer = typer_3 "MAP_ADD" @@ fun k v m ->
     let%bind (src, dst) = get_t_map m in
     let%bind () = assert_type_value_eq (src, k) in
     let%bind () = assert_type_value_eq (dst, v) in
     ok m
+
+  let map_update : typer = typer_3 "MAP_UPDATE_TODO" @@ fun k v m ->
+    let%bind (src, dst) = get_t_map m in
+    let%bind () = assert_type_value_eq (src, k) in
+    let%bind v' = get_t_option v in
+    let%bind () = assert_type_value_eq (dst, v') in
+    ok m
+
+  let map_mem : typer = typer_2 "MAP_MEM_TODO" @@ fun k m ->
+    let%bind (src, _dst) = get_t_map m in
+    let%bind () = assert_type_value_eq (src, k) in
+    ok @@ t_bool ()
+
+  let map_find : typer = typer_2 "MAP_FIND_TODO" @@ fun k m ->
+    let%bind (src, dst) = get_t_map m in
+    let%bind () = assert_type_value_eq (src, k) in
+    ok @@ t_option dst ()
+
+  let map_fold : typer = typer_3 "MAP_FOLD_TODO" @@ fun f m acc ->
+    let%bind (src, dst) = get_t_map m in
+    let expected_f_type = t_function (t_tuple [(t_tuple [src ; dst] ()) ; acc] ()) acc () in
+    let%bind () = assert_type_value_eq (f, expected_f_type) in
+    ok @@ acc
+
+  let map_map : typer = typer_2 "MAP_MAP_TODO" @@ fun f m ->
+    let%bind (k, v) = get_t_map m in
+    let%bind (input_type, result_type) = get_t_function f in
+    let%bind () = assert_type_value_eq (input_type, t_tuple [k ; v] ()) in
+    ok @@ t_map k result_type ()
+
+  let map_map_fold : typer = typer_3 "MAP_MAP_TODO" @@ fun f m acc ->
+    let%bind (k, v) = get_t_map m in
+    let%bind (input_type, result_type) = get_t_function f in
+    let%bind () = assert_type_value_eq (input_type, t_tuple [t_tuple [k ; v] () ; acc] ()) in
+    let%bind ttuple = get_t_tuple result_type in
+    match ttuple with
+    | [result_acc ; result_dst ] ->
+      ok @@ t_tuple [ t_map k result_dst () ; result_acc ] ()
+    (* TODO: error message *)
+    | _ -> fail @@ simple_error "function passed to map should take (k * v) * acc as an argument"
+
+  let map_iter : typer = typer_2 "MAP_MAP_TODO" @@ fun f m ->
+    let%bind (k, v) = get_t_map m in
+    let%bind () = assert_type_value_eq (f, t_function (t_tuple [k ; v] ()) (t_unit ()) ()) in
+    ok @@ t_unit ()
 
   let size = typer_1 "SIZE" @@ fun t ->
     let%bind () =
@@ -307,7 +352,15 @@ module Typer = struct
       boolean_operator_2 "OR" ;
       boolean_operator_2 "AND" ;
       map_remove ;
+      map_add ;
       map_update ;
+      map_mem ;
+      map_find ;
+      map_map_fold ;
+      map_map ;
+      map_fold ;
+      map_iter ;
+      (* map_size ; (* use size *) *)
       int ;
       size ;
       failwith_ ;
@@ -379,7 +432,8 @@ module Compiler = struct
     ("CALL" , simple_ternary @@ prim I_TRANSFER_TOKENS) ;
     ("SOURCE" , simple_constant @@ prim I_SOURCE) ;
     ("SENDER" , simple_constant @@ prim I_SENDER) ;
-    ( "MAP_UPDATE" , simple_ternary @@ seq [dip (i_some) ; prim I_UPDATE ]) ;
+    ( "MAP_ADD" , simple_ternary @@ seq [dip (i_some) ; prim I_UPDATE ]) ;
+    ( "MAP_UPDATE" , simple_ternary @@ prim I_UPDATE) ;
   ]
 
 end
