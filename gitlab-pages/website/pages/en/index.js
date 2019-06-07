@@ -30,6 +30,8 @@ class HomeSplash extends React.Component {
             <div className="nav-tabs">
               <div id="tab-group-3-tab-4" className="nav-link active" data-group="group_3"
                 data-tab="tab-group-3-content-4">Pascaligo</div>
+              <div className="nav-link">Camligo (coming soon)</div>
+              <div className="nav-link">Reasonligo (coming soon) </div>
               {/* <div id="tab-group-3-tab-5" className="nav-link" data-group="group_3"
                 data-tab="tab-group-3-content-5">Camligo</div> */}
             </div>
@@ -91,8 +93,8 @@ class HomeSplash extends React.Component {
           <ProjectTitle siteConfig={siteConfig} />
           <PromoSection>
             <Button href={docUrl('setup-installation.html')}>Get Started</Button>
+            <Button href={docUrl('tutorials/first-smart-contract.html')}>Tutorials</Button>
             <Button href={docUrl('contributors/origin.html')}>Contribute</Button>
-
           </PromoSection>
         </div>
       </SplashContainer>
