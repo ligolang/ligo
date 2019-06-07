@@ -12,13 +12,48 @@ stages:
   stage: build_and_deploy_website
   image: node:8
   before_script:
+    - scripts/install_native_dependencies.sh
+    # TODO: these things are moved to scripts in other branches.
+    - wget https://github.com/ocaml/opam/releases/download/2.0.1/opam-2.0.1-x86_64-linux -O opam-2.0.1-x86_64-linux
+    - cp opam-2.0.1-x86_64-linux /usr/local/bin/opam
+    - chmod +x /usr/local/bin/opam
+    - export PATH="/usr/local/bin${PATH:+:}${PATH:-}"
+
+    # Initialise opam
+    - printf '' | opam init --bare
+    - eval $(opam config env)
+
+    # Create switch
+    - printf '' | opam switch create toto ocaml-base-compiler.4.06.1
+    - eval $(opam config env)
+
+    # Show versions and current switch
+    - echo "$PATH"
+    - opam --version
+    - printf '' | ocaml
+    - opam switch
+
+    # install deps for internal documentation
+    - opam install odoc
+    - vendors/opam-repository-tools/rewrite-local-opam-repository.sh
+    - opam repository add localrepo "file://$PWD/vendors/ligo-opam-repository-local-generated/"
+    - opam install -y --build-test --deps-only ./src/
+    - dune build -p ligo
+    # TODO: also try instead from time to time:
+    #- (cd ./src/; dune build -p ligo)
+
+    # build with odoc
+    - dune build @doc
+    - mv build/default/_doc/_html/ gitlab-pages/website/build/ligo/internal
+
+    # npm
     - cd gitlab-pages/website
     - npm install
   script:
     - npm run version next
     - npm run build
   after_script:
-    - cp -r gitlab-pages/website/build/ligo public 
+    - cp -r gitlab-pages/website/build/ligo public
   artifacts:
     paths:
       - public

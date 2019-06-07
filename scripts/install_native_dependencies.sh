@@ -1,3 +1,4 @@
+apt-get update -qq
 apt-get -y install \
     libev-dev \
     perl \
