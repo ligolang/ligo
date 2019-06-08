@@ -16,8 +16,7 @@ else
     # extinct at this point right?
     curl -L https://github.com/ocaml/opam/releases/download/2.0.4/opam-2.0.4-x86_64-linux \
 	 --output opam
-    if [ `openssl sha256 -r opam` = \
-	 "373e34f92f282273d482537f8103caad0d17b6f2699ff504bed77f474cb0c951 *opam" ]
+    if [ "`openssl sha256 -r opam`" = "373e34f92f282273d482537f8103caad0d17b6f2699ff504bed77f474cb0c951 *opam" ]
     then
 	   sudo mv opam /usr/local/bin/opam
 	   sudo chmod +x /usr/local/bin/opam
