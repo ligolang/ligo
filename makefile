@@ -1,5 +1,6 @@
 # Use install-deps instead of 'install' because usually 'make install' adds a
 # binary to the system path and we don't want to confuse users
+.ONESHELL:
 install-deps:
 #	Install ligo/tezos specific system-level dependencies
 	sudo scripts/install_native_dependencies.sh

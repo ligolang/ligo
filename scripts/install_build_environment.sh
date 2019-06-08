@@ -33,7 +33,7 @@ else
     # extinct at this point right?
     curl -L https://github.com/ocaml/opam/releases/download/2.0.4/opam-2.0.4-x86_64-linux \
 	 --output opam_temp_version_2_0_4.bin
-    if [ "`openssl sha256 -r opam`" = "373e34f92f282273d482537f8103caad0d17b6f2699ff504bed77f474cb0c951 *opam" ]
+    if [ "`openssl sha256 -r opam_temp_version_2_0_4.bin`" = "373e34f92f282273d482537f8103caad0d17b6f2699ff504bed77f474cb0c951 *opam_temp_version_2_0_4.bin" ]
     then
 	# Stay paranoid, in case other checks fail don't want to overrwrite
 	# user's opam on accident
