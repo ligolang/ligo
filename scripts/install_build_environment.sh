@@ -6,13 +6,13 @@ then
     then
 	echo "Opam 2.x seems to already exist, exiting..."
 	exit 1
+    else
+	read -p "This script will upgrade opam to the 2.x series, are you okay with that? (y/n)" choice1
+	case "$choice1" in
+	    y|Y ) : ;;
+	    n|N ) exit ;;
+	esac
     fi
-else
-    read -p "This script will upgrade opam to the 2.x series, are you okay with that? (y/n)" choice1
-    case "$choice1" in
-	y|Y ) : ;;
-	n|N ) exit ;;
-    esac
 fi
 
 sudo apt-get install -y make \
