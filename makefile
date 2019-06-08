@@ -1,8 +1,8 @@
-install:
-#	Install opam and dependencies	
-	scripts/install_build_environment.sh
+# Use install-deps instead of 'install' because usually 'make install' adds a
+# binary to the system path and we don't want to confuse users
+install-deps:
 #	Install ligo/tezos specific system-level dependencies
-	scripts/install_native_dependencies.sh
+	sudo scripts/install_native_dependencies.sh
 
 build-deps:
 #	Create opam dev switch locally for use with Ligo, add merlin/etc
