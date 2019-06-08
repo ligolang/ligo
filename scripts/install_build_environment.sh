@@ -1,6 +1,6 @@
 # This script installs opam for the user. It should NOT be included in any makefiles/etc.
 
-if [ -n "`which opam`"]
+if [ -n "`which opam`" ]
 then
     if [ -n "`opam --version | grep -P "2\..\.."`" ]
     then
@@ -52,6 +52,7 @@ else
 	else
 	    rm opam_temp_version_2_0_4.bin
 	    exit
+	fi
     else
 	echo "opam file hash doesn't match what was recorded at time of signature verification!"
 	echo "(If you actually get this message, you should probably file an issue)"
