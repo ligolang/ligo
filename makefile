@@ -1,6 +1,5 @@
 # Use install-deps instead of 'install' because usually 'make install' adds a
 # binary to the system path and we don't want to confuse users
-.ONESHELL:
 install-deps:
 #	Install ligo/tezos specific system-level dependencies
 	sudo scripts/install_native_dependencies.sh
@@ -17,6 +16,7 @@ build: build-deps
 #	Build Ligo for local dev use
 	scripts/build_ligo_local.sh
 
+.ONESHELL:
 test: build
 	eval $(opam env)
 	dune build @ligo-test
