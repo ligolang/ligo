@@ -1,33 +1,63 @@
 open Trace
 open Types
 
+module Errors = struct
+  let different_literals_because_different_types name a b () =
+    let title () = "literals have different types: " ^ name in
+    let message () = "" in
+    let data = [
+      ("a" , fun () -> Format.asprintf "%a" PP.literal a) ;
+      ("b" , fun () -> Format.asprintf "%a" PP.literal b )
+    ] in
+    error ~data title message ()
+
+  let different_literals name a b () =
+    let title () = name ^ " are different" in
+    let message () = "" in
+    let data = [
+      ("a" , fun () -> Format.asprintf "%a" PP.literal a) ;
+      ("b" , fun () -> Format.asprintf "%a" PP.literal b )
+    ] in
+    error ~data title message ()
+
+  let error_uncomparable_literals name a b () =
+    let title () = name ^ " are not comparable" in
+    let message () = "" in
+    let data = [
+      ("a" , fun () -> Format.asprintf "%a" PP.literal a) ;
+      ("b" , fun () -> Format.asprintf "%a" PP.literal b )
+    ] in
+    error ~data title message ()
+end
+open Errors
+
 let assert_literal_eq (a, b : literal * literal) : unit result =
   match (a, b) with
   | Literal_bool a, Literal_bool b when a = b -> ok ()
-  | Literal_bool _, Literal_bool _ -> simple_fail "different bools"
-  | Literal_bool _, _ -> simple_fail "bool vs non-bool"
+  | Literal_bool _, Literal_bool _ -> fail @@ different_literals "different bools" a b
+  | Literal_bool _, _ -> fail @@ different_literals_because_different_types "bool vs non-bool" a b
   | Literal_int a, Literal_int b when a = b -> ok ()
-  | Literal_int _, Literal_int _ -> simple_fail "different ints"
-  | Literal_int _, _ -> simple_fail "int vs non-int"
+  | Literal_int _, Literal_int _ -> fail @@ different_literals "different ints" a b
+  | Literal_int _, _ -> fail @@ different_literals_because_different_types "int vs non-int" a b
   | Literal_nat a, Literal_nat b when a = b -> ok ()
-  | Literal_nat _, Literal_nat _ -> simple_fail "different nats"
-  | Literal_nat _, _ -> simple_fail "nat vs non-nat"
+  | Literal_nat _, Literal_nat _ -> fail @@ different_literals "different nats" a b
+  | Literal_nat _, _ -> fail @@ different_literals_because_different_types "nat vs non-nat" a b
   | Literal_tez a, Literal_tez b when a = b -> ok ()
-  | Literal_tez _, Literal_tez _ -> simple_fail "different tezs"
-  | Literal_tez _, _ -> simple_fail "tez vs non-tez"
+  | Literal_tez _, Literal_tez _ -> fail @@ different_literals "different tezs" a b
+  | Literal_tez _, _ -> fail @@ different_literals_because_different_types "tez vs non-tez" a b
   | Literal_string a, Literal_string b when a = b -> ok ()
-  | Literal_string _, Literal_string _ -> simple_fail "different strings"
-  | Literal_string _, _ -> simple_fail "string vs non-string"
+  | Literal_string _, Literal_string _ -> fail @@ different_literals "different strings" a b
+  | Literal_string _, _ -> fail @@ different_literals_because_different_types "string vs non-string" a b
   | Literal_bytes a, Literal_bytes b when a = b -> ok ()
-  | Literal_bytes _, Literal_bytes _ -> simple_fail "different bytess"
-  | Literal_bytes _, _ -> simple_fail "bytes vs non-bytes"
+  | Literal_bytes _, Literal_bytes _ -> fail @@ different_literals "different bytess" a b
+  | Literal_bytes _, _ -> fail @@ different_literals_because_different_types "bytes vs non-bytes" a b
   | Literal_unit, Literal_unit -> ok ()
-  | Literal_unit, _ -> simple_fail "unit vs non-unit"
+  | Literal_unit, _ -> fail @@ different_literals_because_different_types "unit vs non-unit" a b
   | Literal_address a, Literal_address b when a = b -> ok ()
-  | Literal_address _, Literal_address _ -> simple_fail "different addresss"
-  | Literal_address _, _ -> simple_fail "address vs non-address"
-  | Literal_operation _, Literal_operation _ -> simple_fail "can't compare operations"
-  | Literal_operation _, _ -> simple_fail "operation vs non-operation"
+  | Literal_address _, Literal_address _ -> fail @@ different_literals "different addresss" a b
+  | Literal_address _, _ -> fail @@ different_literals_because_different_types "address vs non-address" a b
+  | Literal_operation _, Literal_operation _ -> fail @@ error_uncomparable_literals "can't compare operations" a b
+  | Literal_operation _, _ -> fail @@ different_literals_because_different_types "operation vs non-operation" a b
 
 
 let rec assert_value_eq (a, b: (expression * expression )) : unit result =

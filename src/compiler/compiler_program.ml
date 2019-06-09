@@ -464,8 +464,24 @@ let translate_entry (p:anon_function) : compiled_program result =
   let%bind output = Compiler_type.Ty.type_ output in
   ok ({input;output;body}:compiled_program)
 
+module Errors = struct
+  let corner_case ~loc message =
+    let title () = "corner case" in
+    let content () = "we don't have a good error message for this case. we are
+striving find ways to better report them and find the use-cases that generate
+them. please report this to the developers." in
+    let data = [
+      ("location" , fun () -> loc) ;
+      ("message" , fun () -> message) ;
+    ] in
+    error ~data title content
+end
+open Errors
+
 let translate_contract : anon_function -> michelson result = fun f ->
-  let%bind compiled_program = translate_entry f in
+  let%bind compiled_program =
+    trace_strong (corner_case ~loc:__LOC__ "compiling") @@
+    translate_entry f in
   let%bind (param_ty , storage_ty) = Combinators.get_t_pair f.input in
   let%bind param_michelson = Compiler_type.type_ param_ty in
   let%bind storage_michelson = Compiler_type.type_ storage_ty in

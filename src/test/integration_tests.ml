@@ -439,21 +439,101 @@ let dispatch_counter_contract () : unit result =
     e_pair (e_typed_list [] t_operation) (e_int (op 42 n)) in
   expect_eq_n program "main" make_input make_expected
 
-let basic_mligo () : unit result =
-  let%bind typed = mtype_file ~debug_simplify:true "./contracts/basic.mligo" in
-  let%bind result = evaluate_typed "foo" typed in
-  Ligo.AST_Typed.assert_value_eq (Ligo.AST_Typed.Combinators.e_a_empty_int (42 + 127), result)
-
-let counter_mligo () : unit result =
-  let%bind program = mtype_file "./contracts/counter.mligo" in
-  let make_input = fun n-> e_pair (e_int n) (e_int 42) in
-  let make_expected = fun n -> e_pair (e_typed_list [] t_operation) (e_int (42 + n)) in
-  expect_eq_n program "main" make_input make_expected
+let failwith_mligo () : unit result =
+  let%bind program = mtype_file "./contracts/failwith.mligo" in
+  let make_input = e_pair (e_unit ()) (e_unit ()) in
+  let make_expected = e_pair (e_typed_list [] t_operation) (e_unit ()) in
+  expect_eq program "main" make_input make_expected
 
 let guess_the_hash_mligo () : unit result =
   let%bind program = mtype_file "./contracts/new-syntax.mligo" in
   let make_input = fun n-> e_pair (e_int n) (e_int 42) in
   let make_expected = fun n -> e_pair (e_typed_list [] t_operation) (e_int (42 + n)) in
+  expect_eq_n program "main" make_input make_expected
+
+let guess_string_mligo () : unit result =
+  let%bind program = mtype_file "./contracts/guess_string.mligo" in
+  let make_input = fun n -> e_pair (e_int n) (e_int 42) in
+  let make_expected = fun n -> e_pair (e_typed_list [] t_operation) (e_int (42 + n))
+  in expect_eq_n program "main" make_input make_expected
+
+let basic_mligo () : unit result =
+  let%bind typed = mtype_file ~debug_simplify:true "./contracts/basic.mligo" in
+  let%bind result = evaluate_typed "foo" typed in
+  Ligo.AST_Typed.assert_value_eq
+    (Ligo.AST_Typed.Combinators.e_a_empty_int (42 + 127), result)
+
+let counter_mligo () : unit result =
+  let%bind program = mtype_file "./contracts/counter.mligo" in
+  let make_input n = e_pair (e_int n) (e_int 42) in
+  let make_expected n = e_pair (e_typed_list [] t_operation) (e_int (42 + n)) in
+  expect_eq_n program "main" make_input make_expected
+
+let let_in_mligo () : unit result =
+  let%bind program = mtype_file "./contracts/letin.mligo" in
+  let make_input n = e_pair (e_int n) (e_pair (e_int 3) (e_int 5)) in
+  let make_expected n =
+    e_pair (e_typed_list [] t_operation) (e_pair (e_int (7+n)) (e_int (3+5)))
+  in expect_eq_n program "main" make_input make_expected
+
+let match_variant () : unit result =
+  let%bind program = mtype_file "./contracts/match.mligo" in
+  let make_input n =
+    e_pair (e_constructor "Sub" (e_int n)) (e_int 3) in
+  let make_expected n =
+    e_pair (e_typed_list [] t_operation) (e_int (3-n))
+  in expect_eq_n program "main" make_input make_expected
+
+let match_matej () : unit result =
+  let%bind program = mtype_file "./contracts/match_bis.mligo" in
+  let make_input n =
+    e_pair (e_constructor "Decrement" (e_int n)) (e_int 3) in
+  let make_expected n =
+    e_pair (e_typed_list [] t_operation) (e_int (3-n))
+  in expect_eq_n program "main" make_input make_expected
+
+let mligo_list () : unit result =
+  let%bind program = mtype_file "./contracts/list.mligo" in
+  let make_input n =
+    e_pair (e_list [e_int n; e_int (2*n)])
+           (e_pair (e_int 3) (e_list [e_int 8])) in
+  let make_expected n =
+    e_pair (e_typed_list [] t_operation)
+      (e_pair (e_int (n+3)) (e_list [e_int (2*n)]))
+  in expect_eq_n program "main" make_input make_expected
+
+let lambda_mligo () : unit result =
+  let%bind program = mtype_file "./contracts/lambda.mligo" in
+  let make_input = e_pair (e_unit ()) (e_unit ()) in
+  let make_expected = (e_unit ()) in
+  expect_eq program "main" make_input make_expected
+
+let lambda_ligo () : unit result =
+  let%bind program = type_file "./contracts/lambda.ligo" in
+  let make_input = e_pair (e_unit ()) (e_unit ()) in
+  let make_expected = (e_unit ()) in
+  expect_eq program "main" make_input make_expected
+
+let lambda2_mligo () : unit result =
+  let%bind program = mtype_file "./contracts/lambda2.mligo" in
+  let make_input = e_pair (e_unit ()) (e_unit ()) in
+  let make_expected = (e_unit ()) in
+  expect_eq program "main" make_input make_expected
+
+let website1_ligo () : unit result =
+  let%bind program = type_file "./contracts/website1.ligo" in
+  let make_input = fun n-> e_pair (e_int n) (e_int 42) in
+  let make_expected = fun _n -> e_pair (e_typed_list [] t_operation) (e_int (42 + 1)) in
+  expect_eq_n program "main" make_input make_expected
+
+let website2_ligo () : unit result =
+  let%bind program = type_file "./contracts/website2.ligo" in
+  let make_input = fun n ->
+    let action = if n mod 2 = 0 then "Increment" else "Decrement" in
+    e_pair (e_constructor action (e_int n)) (e_int 42) in
+  let make_expected = fun n ->
+    let op = if n mod 2 = 0 then (+) else (-) in
+    e_pair (e_typed_list [] t_operation) (e_int (op 42 n)) in
   expect_eq_n program "main" make_input make_expected
 
 let main = test_suite "Integration (End to End)" [
@@ -490,7 +570,18 @@ let main = test_suite "Integration (End to End)" [
     test "closure" closure ;
     test "shared function" shared_function ;
     test "higher order" higher_order ;
-    test "basic mligo" basic_mligo ;
-    test "counter contract mligo" counter_mligo ;
-    (* test "guess the hash mligo" guess_the_hash_mligo ; *)
+    test "basic (mligo)" basic_mligo ;
+    test "counter contract (mligo)" counter_mligo ;
+    test "let-in (mligo)" let_in_mligo ;
+    test "match variant (mligo)" match_variant ;
+    test "match variant 2 (mligo)" match_matej ;
+    (* test "list matching (mligo)" mligo_list ; *)
+    (* test "guess the hash mligo" guess_the_hash_mligo ; WIP? *)
+    (* test "failwith mligo" failwith_mligo ; *)
+    (* test "guess string mligo" guess_string_mligo ; WIP? *)
+    test "lambda mligo" lambda_mligo ;
+    test "lambda ligo" lambda_ligo ;
+    (* test "lambda2 mligo" lambda2_mligo ; *)
+    test "website1 ligo" website1_ligo ;
+    test "website2 ligo" website2_ligo ;
   ]

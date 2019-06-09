@@ -16,6 +16,7 @@ let type_base ppf : type_base -> _ = function
   | Base_tez -> fprintf ppf "tez"
   | Base_string -> fprintf ppf "string"
   | Base_address -> fprintf ppf "address"
+  | Base_timestamp -> fprintf ppf "timestamp"
   | Base_bytes -> fprintf ppf "bytes"
   | Base_operation -> fprintf ppf "operation"
 
