@@ -23,6 +23,7 @@ build: build-deps
 .ONESHELL:
 test: build
 	eval $(opam env)
-	if [ ! dune build @ligo-test ]
-	then echo "If you get a error message that dune can't be found/isn't in your path, run 'eval $(opam env)' and this command will work.";
+	run_outcome=`dune build @ligo-test`
+	if [ ! -n $run_outcome ]
+	then echo "Run 'eval $(opam env)' and this command will work.";
 	fi
