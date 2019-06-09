@@ -22,8 +22,4 @@ build: build-deps
 
 .ONESHELL:
 test: build
-	eval $(opam env)
-	run_outcome=`dune build @ligo-test`
-	if [ ! -n $run_outcome ]
-	then echo "Run 'eval $(opam env)' and this command will work.";
-	fi
+	scripts/test_ligo.sh
