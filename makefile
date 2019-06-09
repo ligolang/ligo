@@ -10,7 +10,9 @@ build-deps:
 	then exit; else scripts/setup_dev_switch.sh;
 	fi
 #	Set up the local ligo opam repository so that it can be built
-	scripts/setup_ligo_opam_repository.sh
+	if [ -n "`opam repo list --safe | grep -P "ligo-opam-repository"`" ];
+	then exit; else scripts/setup_ligo_opam_repository.sh;
+	fi
 #	Install OCaml build dependencies for Ligo
 	scripts/install_ligo_with_dependencies.sh
 
