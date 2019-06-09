@@ -216,3 +216,13 @@ let type_file ?(debug_simplify = false) ?(debug_typed = false)
       Format.(printf "Typed : %a\n%!" Ast_typed.PP.program typed)
     )) ;
   ok typed
+
+
+let run_contract source entry_point storage input syntax =
+  let%bind typed =
+    type_file source entry_point in
+  let%bind storage_simpl =
+    parsify_expression storage syntax in
+  let%bind input_simpl =
+    parsify_expression input syntax in
+  Run_simplified.run_simplityped typed entry_point (Ast_simplified.e_pair storage_simpl input_simpl)
