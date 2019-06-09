@@ -6,7 +6,9 @@ install-deps:
 
 build-deps:
 #	Create opam dev switch locally for use with Ligo, add merlin/etc
-	scripts/setup_dev_switch.sh
+	if [ -n "`opam switch show | grep -P ".+/ligo"`" ];
+	then exit; else scripts/setup_dev_switch.sh;
+	fi
 #	Set up the local ligo opam repository so that it can be built
 	scripts/setup_ligo_opam_repository.sh
 #	Install OCaml build dependencies for Ligo
