@@ -179,11 +179,13 @@ tuple(item):
 (* Possibly empty semicolon-separated values between brackets *)
 
 list_of(item):
-  lbracket sepseq(item,semi) rbracket {
-   {opening    = LBracket $1;
-    elements   = $2;
-    terminator = None;
-    closing    = RBracket $3} }
+  lbracket sep_or_term_list(item,semi) rbracket {
+    let elements, terminator = $2 in {
+      opening    = LBracket $1;
+      elements   = Some elements;
+      terminator;
+      closing    = RBracket $3}
+  }
 
 (* Main *)
 
