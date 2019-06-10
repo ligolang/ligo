@@ -28,7 +28,7 @@ function Versions(props) {
           <header className="postHeader">
             <h1>{siteConfig.title} Versions</h1>
           </header>
-          <h3 id="latest">Current version (Stable)</h3>
+          <h3 id="latest">Current version</h3>
           <table className="versions">
             <tbody>
               <tr>

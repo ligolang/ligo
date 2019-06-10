@@ -36,22 +36,21 @@
     border-bottom: 4px solid #e0e0e0;
 }
 
-.homeContainer .tabs .nav-tabs > div.active {
+.homeContainer .tabs .nav-tabs > div {
+    cursor: pointer;
+    color: #24292e;
     border-bottom: none;
 }
 
-.homeContainer .tabs .nav-tabs > div {
+.homeContainer .tabs .nav-tabs > div.active {
+    border-bottom: 4px solid #1A1A1A;
+}
+
+
+.homeContainer .tabs .nav-tabs > div:last-of-type {
     cursor: default;
     color: #24292e64;
-}
-
-.homeContainer .tabs .nav-tabs > div:first-of-type {
-    cursor: pointer;
-    color: #24292e;
-}
-
-.homeContainer .tabs .nav-tabs > div.active:first-of-type {
-    border-bottom: 4px solid #1A1A1A;
+    border-bottom: none;
 }
 
 .homeContainer .tab-content {
@@ -178,10 +177,25 @@ a:hover {
     padding-right: 40px;
 }
 
-
-
 .productShowcaseSection.team .logos p {
     padding-top: 0px;
+}
+
+.toc .toggleNav {
+    margin-top: 12px;
+}
+
+.mainContainer {
+    padding-top: 60px;
+}
+
+.tocActive .onPageNav > .toc-headings {
+    padding-top: 24px;
+}
+
+.docsSliderActive #tocToggler {
+    opacity: 0;
+    visibility: hidden;
 }
 
 @media only screen and (min-device-width: 360px) and (max-device-width: 736px) {

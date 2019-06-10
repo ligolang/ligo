@@ -46,6 +46,12 @@ class Footer extends React.Component {
               rel="noreferrer noopener">
               Tezos Stack Exchange
             </a>
+            <a
+              href="https://discord.gg/9rhYaEt"
+              target="_blank"
+              rel="noreferrer noopener">
+              Discord
+            </a>
           </div>
           <div>
             <h5>More</h5>
