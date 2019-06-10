@@ -34,7 +34,7 @@ stages:
     - opam switch
 
     # install deps for internal documentation
-    - opam install odoc
+    - opam install -y odoc
     - vendors/opam-repository-tools/rewrite-local-opam-repository.sh
     - opam repository add localrepo "file://$PWD/vendors/ligo-opam-repository-local-generated/"
     - opam install -y --build-test --deps-only ./src/
@@ -44,7 +44,6 @@ stages:
 
     # build with odoc
     - dune build @doc
-    - mv build/default/_doc/_html/ gitlab-pages/website/build/ligo/internal
 
     # npm
     - cd gitlab-pages/website
@@ -52,6 +51,10 @@ stages:
   script:
     - npm run version next
     - npm run build
+    # move internal odoc documentation to the website folder
+    - mkdir -p gitlab-pages/website/build/ligo/
+    - mv _build/default/_doc/_html/ gitlab-pages/website/build/ligo/internal
+    - ls gitlab-pages/website/build/ligo/ # for debug
   after_script:
     - cp -r gitlab-pages/website/build/ligo public
   artifacts:
