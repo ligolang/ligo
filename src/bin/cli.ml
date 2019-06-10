@@ -41,28 +41,28 @@ let main =
   let term = Term.(const print_endline $ const "Ligo needs a command. Do ligo --help") in
   (term , Term.info "ligo")
 
-let source =
+let source n =
   let open Arg in
   let info =
     let docv = "SOURCE_FILE" in
     let doc = "$(docv) is the path to the .ligo file of the contract." in
     info ~docv ~doc [] in
-  required @@ pos 0 (some string) None info
+  required @@ pos n (some string) None info
 
-let entry_point =
+let entry_point n =
   let open Arg in
   let info =
     let docv = "ENTRY_POINT" in
     let doc = "$(docv) is entry-point that will be compiled." in
     info ~docv ~doc [] in
-  required @@ pos 1 (some string) (Some "main") info
+  required @@ pos n (some string) (Some "main") info
 
-let expression =
+let expression n =
   let open Arg in
   let docv = "EXPRESSION" in
   let doc = "$(docv) is the expression that will be compiled." in
   let info = info ~docv ~doc [] in
-  required @@ pos 2 (some string) None info
+  required @@ pos n (some string) None info
 
 let syntax =
   let open Arg in
@@ -82,7 +82,7 @@ let compile_file =
     ok ()
   in
   let term =
-    Term.(const f $ source $ entry_point $ syntax) in
+    Term.(const f $ source 0 $ entry_point 1 $ syntax) in
   let cmdname = "compile-contract" in
   let docs = "Subcommand: compile a contract. See `ligo " ^ cmdname ^ " --help' for a list of options specific to this subcommand." in
   (term , Term.info ~docs cmdname)
@@ -97,7 +97,7 @@ let compile_parameter =
     ok ()
   in
   let term =
-    Term.(const f $ source $ entry_point $ expression $ syntax) in
+    Term.(const f $ source 0 $ entry_point 1 $ expression 2 $ syntax) in
   let cmdname = "compile-parameter" in
   let docs = "Subcommand: compile parameters to a michelson expression. The resulting michelson expression can be passed as an argument in a transaction which calls a contract. See `ligo " ^ cmdname ^ " --help' for a list of options specific to this subcommand." in
   (term , Term.info ~docs cmdname)
@@ -112,10 +112,23 @@ let compile_storage =
     ok ()
   in
   let term =
-    Term.(const f $ source $ entry_point $ expression $ syntax) in
+    Term.(const f $ source 0 $ entry_point 1 $ expression 2 $ syntax) in
   let cmdname = "compile-storage" in
   let docs = "Subcommand: compile an initial storage in ligo syntax to a michelson expression. The resulting michelson expression can be passed as an argument in a transaction which originates a contract. See `ligo " ^ cmdname ^ " --help' for a list of options specific to this subcommand." in
   (term , Term.info ~docs cmdname)
 
+let dry_run =
+  let f source entry_point storage input syntax =
+    toplevel @@
+    let%bind output =
+      Ligo.Run.run_contract source entry_point storage input syntax in
+    Format.printf "%a\n" Ast_simplified.PP.expression output ;
+    ok ()
+  in
+  let term =
+    Term.(const f $ source 0 $ entry_point 1 $ expression 2 $ expression 3 $ syntax) in
+  let cmdname = "dry-run" in
+  let docs = "Subcommand: run a smart-contract with the given storage and input." in
+  (term , Term.info ~docs cmdname)
 
 let () = Term.exit @@ Term.eval_choice main [compile_file ; compile_parameter ; compile_storage]
