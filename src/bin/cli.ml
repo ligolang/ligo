@@ -68,9 +68,9 @@ let syntax =
   let open Arg in
   let info =
     let docv = "SYNTAX" in
-    let doc = "$(docv) is the syntax that will be used. Currently supported syntaxes are \"pascaligo\" and \"cameligo\". \"pascaligo\" is the default." in
+    let doc = "$(docv) is the syntax that will be used. Currently supported syntaxes are \"pascaligo\" and \"cameligo\". By default, the syntax is guessed from the extension (.ligo and .mligo, respectively)." in
     info ~docv ~doc ["syntax" ; "s"] in
-  value @@ opt string "pascaligo" info
+  value @@ opt string "auto" info
 
 let compile_file =
   let f source entry_point syntax =

@@ -95,7 +95,22 @@ let parsify_expression_ligodity = fun source ->
     Simplify.Ligodity.simpl_expression raw in
   ok simplified
 
+let detect_syntax = fun syntax source ->
+  if String.equal syntax "auto" then
+    begin
+      let subr s n =
+        String.sub s (String.length s - n) n in
+      if String.equal (subr source 5) ".ligo"
+      then ok "pascaligo"
+      else if String.equal (subr source 6) ".mligo"
+      then ok "cameligo"
+      else simple_fail "cannot auto-detect syntax, pleas use -s name_of_syntax"
+    end
+  else
+    ok syntax
+
 let parsify = fun syntax source ->
+  let%bind syntax = detect_syntax syntax source in
   let%bind parsify = match syntax with
     | "pascaligo" -> ok parsify_pascaligo
     | "cameligo" -> ok parsify_ligodity
@@ -104,6 +119,7 @@ let parsify = fun syntax source ->
   parsify source
 
 let parsify_expression = fun syntax source ->
+  let%bind syntax = detect_syntax syntax source in
   let%bind parsify = match syntax with
     | "pascaligo" -> ok parsify_expression_pascaligo
     | "cameligo" -> ok parsify_expression_ligodity
