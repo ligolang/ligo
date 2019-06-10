@@ -7,11 +7,12 @@ set -e
 
 if test $# -ne 1; then
   printf 'Usage: installer.sh VERSION'\\n
-  printf '  where VERSION can be "next" or a version number'\\n
+  printf \\n
+  printf '  where VERSION can be "next" or a version number like 1.0.0'\\n
   exit 1
 else
   version=$1
-  printf \\n'Installing LIGO ($version)'\\n\\n
+  printf \\n'Installing LIGO (%s)'\\n\\n "$version"
 
   if [ $version = "next" ]
   then
@@ -62,6 +63,7 @@ else
   #   ) ||   clean up temporary file if any command in the previous block failed
 
   wget "$url" -O - \
+  | sed -e "s/latest/$version/g" \
   | sudo sh -c ' \
     ( \
       rm -f /usr/local/bin/.temp.ligo.before-atomic-move \
@@ -82,8 +84,7 @@ else
 
   sudo sh -c ' \
     ( \
-      && grep "END OF DOWNLOADED FILE" /usr/local/bin/.temp.ligo.before-atomic-move \
-      && sed -i '' "s/latest/$version/g" ligo.sh \
+         grep "END OF DOWNLOADED FILE" /usr/local/bin/.temp.ligo.before-atomic-move \
       && chmod 0755 /usr/local/bin/.temp.ligo.before-atomic-move \
       && if test -d /usr/local/bin/ligo; then printf "/usr/local/bin/ligo already exists and is a directory, cancelling installation"'\\\\'n; rm /usr/local/bin/.temp.ligo.before-atomic-move; \
          elif test -L /usr/local/bin/ligo; then printf "/usr/local/bin/ligo already exists and is a symbolic link, cancelling installation"'\\\\'n; rm /usr/local/bin/.temp.ligo.before-atomic-move; \
