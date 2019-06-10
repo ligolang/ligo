@@ -42,6 +42,9 @@ module Simplify = struct
     ("bool" , "bool") ;
     ("operation" , "operation") ;
     ("address" , "address") ;
+    ("key" , "key") ;
+    ("key_hash" , "key_hash") ;
+    ("signature" , "signature") ;
     ("timestamp" , "timestamp") ;
     ("contract" , "contract") ;
     ("list" , "list") ;
@@ -76,7 +79,7 @@ module Simplify = struct
       ("Bytes.pack" , "PACK") ;
       ("Crypto.hash" , "HASH") ;
       ("Operation.transaction" , "CALL") ;
-      ("Operation.get_contract" , "GET_CONTRACT") ;
+      ("Operation.get_contract" , "CONTRACT") ;
       ("sender" , "SENDER") ;
       ("unit" , "UNIT") ;
       ("source" , "SOURCE") ;
@@ -126,7 +129,7 @@ module Simplify = struct
       ("List.iter", "ITER") ;
 
       ("Operation.transaction" , "CALL") ;
-      ("Operation.get_contract" , "GET_CONTRACT") ;
+      ("Operation.get_contract" , "CONTRACT") ;
       ("int" , "INT") ;
       ("abs" , "ABS") ;
       ("unit" , "UNIT") ;
@@ -243,9 +246,15 @@ module Typer = struct
   let size = typer_1 "SIZE" @@ fun t ->
     let%bind () =
       Assert.assert_true @@
-      (is_t_map t || is_t_list t) in
+      (is_t_map t || is_t_list t || is_t_string t) in
     ok @@ t_nat ()
 
+  let slice = typer_3 "SLICE" @@ fun i j s ->
+    let%bind () =
+      Assert.assert_true @@
+      (is_t_nat i && is_t_nat j && is_t_string s) in
+    ok @@ t_string ()
+  
   let failwith_ = typer_1 "FAILWITH" @@ fun t ->
     let%bind () =
       Assert.assert_true @@
@@ -269,10 +278,28 @@ module Typer = struct
     trace_option (simple_error "untyped UNPACK") @@
     output_opt
 
-  let crypto_hash = typer_1 "HASH" @@ fun t ->
+  let hash256 = typer_1 "SHA256" @@ fun t ->
     let%bind () = assert_t_bytes t in
     ok @@ t_bytes ()
 
+  let hash512 = typer_1 "SHA512" @@ fun t ->
+    let%bind () = assert_t_bytes t in
+    ok @@ t_bytes ()
+
+  let blake2b = typer_1 "BLAKE2b" @@ fun t ->
+    let%bind () = assert_t_bytes t in
+    ok @@ t_bytes ()
+
+  let hash_key = typer_1 "HASH_KEY" @@ fun t ->
+    let%bind () = assert_t_key t in
+    ok @@ t_key_hash ()
+
+  let check_signature = typer_3 "CHECK_SIGNATURE" @@ fun k s b ->
+    let%bind () = assert_t_key k in
+    let%bind () = assert_t_signature s in
+    let%bind () = assert_t_bytes b in
+    ok @@ t_bool ()
+  
   let sender = constant "SENDER" @@ t_address ()
 
   let source = constant "SOURCE" @@ t_address ()
@@ -280,6 +307,8 @@ module Typer = struct
   let unit = constant "UNIT" @@ t_unit ()
 
   let amount = constant "AMOUNT" @@ t_tez ()
+
+  let address = constant "ADDRESS" @@ t_address ()
 
   let now = constant "NOW" @@ t_timestamp ()
 
@@ -367,7 +396,11 @@ module Typer = struct
       get_force ;
       bytes_pack ;
       bytes_unpack ;
-      crypto_hash ;
+      hash256 ;
+      hash512 ;
+      blake2b ;
+      hash_key ;
+      check_signature ;
       sender ;
       source ;
       unit ;
@@ -376,6 +409,8 @@ module Typer = struct
       get_contract ;
       abs ;
       now ;
+      slice ;
+      address ;
     ]
 
 end
@@ -407,6 +442,8 @@ module Compiler = struct
     ("NEG" , simple_unary @@ prim I_NEG) ;
     ("OR" , simple_binary @@ prim I_OR) ;
     ("AND" , simple_binary @@ prim I_AND) ;
+    ("XOR" , simple_binary @@ prim I_XOR) ;
+    ("NOT" , simple_unary @@ prim I_NOT) ;
     ("PAIR" , simple_binary @@ prim I_PAIR) ;
     ("CAR" , simple_unary @@ prim I_CAR) ;
     ("CDR" , simple_unary @@ prim I_CDR) ;
@@ -428,12 +465,22 @@ module Compiler = struct
     ("CONS" , simple_binary @@ prim I_CONS) ;
     ("UNIT" , simple_constant @@ prim I_UNIT) ;
     ("AMOUNT" , simple_constant @@ prim I_AMOUNT) ;
+    ("ADDRESS" , simple_constant @@ prim I_ADDRESS) ;
     ("NOW" , simple_constant @@ prim I_NOW) ;
     ("CALL" , simple_ternary @@ prim I_TRANSFER_TOKENS) ;
     ("SOURCE" , simple_constant @@ prim I_SOURCE) ;
     ("SENDER" , simple_constant @@ prim I_SENDER) ;
-    ( "MAP_ADD" , simple_ternary @@ seq [dip (i_some) ; prim I_UPDATE ]) ;
-    ( "MAP_UPDATE" , simple_ternary @@ prim I_UPDATE) ;
+    ("MAP_ADD" , simple_ternary @@ seq [dip (i_some) ; prim I_UPDATE ]) ;
+    ("MAP_UPDATE" , simple_ternary @@ prim I_UPDATE) ;
+    ("SLICE" , simple_ternary @@ prim I_SLICE) ;
+    ("SHA256" , simple_unary @@ prim I_SHA256) ;
+    ("SHA512" , simple_unary @@ prim I_SHA512) ;
+    ("BLAKE2B" , simple_unary @@ prim I_BLAKE2B) ;
+    ("CHECK_SIGNATURE" , simple_ternary @@ prim I_CHECK_SIGNATURE) ;
+    ("HASH_KEY" , simple_unary @@ prim I_HASH_KEY) ;
+    ("PACK" , simple_unary @@ prim I_PACK) ;
   ]
 
+  (* Some complex predicates will need to be added in compiler/compiler_program *)
+  
 end

@@ -5,7 +5,7 @@ type test =
   | Test_suite of (string * test list)
   | Test of test_case
 
-let error_pp out (e : error) =
+let rec error_pp out (e : error) =
     let open JSON_string_utils in
   let message =
     let opt = e |> member "message" |> string in
@@ -30,6 +30,7 @@ let error_pp out (e : error) =
     let infos = e |> member "infos" in
     match infos with
     | `Null -> ""
+    | `List lst -> Format.asprintf "@[<v2>%a@]" PP_helpers.(list_sep error_pp (tag "@,")) lst
     | _ -> " " ^ (J.to_string infos) ^ "\n" in
   Format.fprintf out "%s%s%s.\n%s%s" title error_code message data infos
 

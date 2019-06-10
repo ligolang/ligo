@@ -15,6 +15,8 @@ let make_n_t type_name type_value = { type_name ; type_value }
 let t_bool ?s () : type_value = make_t (T_constant ("bool", [])) s
 let t_string ?s () : type_value = make_t (T_constant ("string", [])) s
 let t_bytes ?s () : type_value = make_t (T_constant ("bytes", [])) s
+let t_key ?s () : type_value = make_t (T_constant ("key", [])) s
+let t_key_hash ?s () : type_value = make_t (T_constant ("key_hash", [])) s
 let t_int ?s () : type_value = make_t (T_constant ("int", [])) s
 let t_address ?s () : type_value = make_t (T_constant ("address", [])) s
 let t_operation ?s () : type_value = make_t (T_constant ("operation", [])) s
@@ -93,6 +95,18 @@ let get_t_list (t:type_value) : type_value result = match t.type_value' with
   | T_constant ("list", [o]) -> ok o
   | _ -> simple_fail "not a list"
 
+let get_t_key (t:type_value) : unit result = match t.type_value' with
+  | T_constant ("key", []) -> ok ()
+  | _ -> simple_fail "not a key"
+
+let get_t_signature (t:type_value) : unit result = match t.type_value' with
+  | T_constant ("signature", []) -> ok ()
+  | _ -> simple_fail "not a signature"
+
+let get_t_key_hash (t:type_value) : unit result = match t.type_value' with
+  | T_constant ("key_hash", []) -> ok ()
+  | _ -> simple_fail "not a key_hash"
+
 let get_t_tuple (t:type_value) : type_value list result = match t.type_value' with
   | T_tuple lst -> ok lst
   | _ -> simple_fail "not a tuple"
@@ -136,7 +150,10 @@ let assert_t_map = fun t ->
 
 let is_t_map = Function.compose to_bool get_t_map
 
-let assert_t_tez :type_value -> unit result = get_t_tez
+let assert_t_tez : type_value -> unit result = get_t_tez
+let assert_t_key = get_t_key
+let assert_t_signature = get_t_signature
+let assert_t_key_hash = get_t_key_hash
 
 let assert_t_list t =
   let%bind _ = get_t_list t in

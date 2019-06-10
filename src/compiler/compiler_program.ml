@@ -16,6 +16,16 @@ let get_predicate : string -> type_value -> expression list -> predicate result 
   | Some x -> ok x
   | None -> (
       match s with
+      | "NONE" -> (
+          let%bind ty' = Mini_c.get_t_option ty in
+          let%bind m_ty = Compiler_type.type_ ty' in
+          ok @@ simple_unary @@ prim ~children:[m_ty] I_NONE
+        )
+      | "UNPACK" -> (
+          let%bind ty' = Mini_c.get_t_option ty in
+          let%bind m_ty = Compiler_type.type_ ty' in
+          ok @@ simple_unary @@ prim ~children:[m_ty] I_UNPACK
+        )
       | "MAP_REMOVE" ->
           let%bind v = match lst with
             | [ _ ; expr ] ->
