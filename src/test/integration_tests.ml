@@ -825,6 +825,16 @@ let tez_mligo () : unit result =
   let%bind _ = expect_eq_evaluate program "add_more_tez" (e_mutez 111111000) in
   ok ()
 
+let website2_mligo () : unit result =
+  let%bind program = mtype_file "./contracts/website2.mligo" in
+  let make_input = fun n ->
+    let action = if n mod 2 = 0 then "Increment" else "Decrement" in
+    e_pair (e_constructor action (e_int n)) (e_int 42) in
+  let make_expected = fun n ->
+    let op = if n mod 2 = 0 then (+) else (-) in
+    e_pair (e_typed_list [] t_operation) (e_int (op 42 n)) in
+  expect_eq_n program "main" make_input make_expected
+
 let main = test_suite "Integration (End to End)" [
     test "type alias" type_alias ;
     test "function" function_ ;
@@ -888,4 +898,5 @@ let main = test_suite "Integration (End to End)" [
     test "tez (mligo)" tez_mligo ;
     test "website1 ligo" website1_ligo ;
     test "website2 ligo" website2_ligo ;
+    test "website2 (mligo)" website2_mligo ;
   ]
