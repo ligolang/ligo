@@ -5,9 +5,12 @@ open AST
 
 (* Rewrite "let pattern = e" as "let x = e;; let x1 = ...;; let x2 = ...;;" *)
 
+(*
 module VMap = Utils.String.Map
 
-(*let ghost_of value = Region.{region=ghost; value}*)
+let ghost_of value = Region.{region=ghost; value}
+*)
+
 let ghost = Region.ghost
 
 (* let fail_syn_unif type1 type2 : 'a =

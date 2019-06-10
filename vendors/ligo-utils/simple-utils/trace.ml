@@ -200,6 +200,7 @@ let prepend_info = fun info err ->
 let simple_error str () = mk_error ~title:(thunk str) ()
 let simple_info str () = mk_info ~title:(thunk str) ()
 let simple_fail str = fail @@ simple_error str
+let internal_assertion_failure str = simple_error ("assertion failed: " ^ str)
 
 (**
    To be used when you only want to signal an error. It can be useful when

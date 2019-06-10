@@ -1,1 +1,5 @@
-cd src && opam install . --yes
+#!/bin/sh
+set -e
+
+cd src
+opam install . --yes

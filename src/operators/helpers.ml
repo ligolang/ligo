@@ -9,8 +9,17 @@ module Typer = struct
       let full () = Format.asprintf "constant name: %s\nexpected: %d\ngot: %d\n"
           name expected (List.length got) in
       error title full
-  end
 
+    let error_uncomparable_types a b () =
+      let title () = "these types are not comparable" in
+      let message () = "" in
+      let data = [
+        ("a" , fun () -> Format.asprintf "%a" PP.type_value a) ;
+        ("b" , fun () -> Format.asprintf "%a" PP.type_value b )
+      ] in
+      error ~data title message ()
+  end
+  open Errors
 
   type type_result = string * type_value
   type typer' = type_value list -> type_value option -> type_result result
@@ -22,7 +31,7 @@ module Typer = struct
       let%bind tv' = f tv_opt in
       ok (s , tv')
     )
-    | _ -> fail @@ Errors.wrong_param_number s 0 lst
+    | _ -> fail @@ wrong_param_number s 0 lst
   let typer_0 name f : typer = (name , typer'_0 name f)
 
   let typer'_1 : name -> (type_value -> type_value result) -> typer' = fun s f lst _ ->
@@ -31,7 +40,7 @@ module Typer = struct
         let%bind tv' = f a in
         ok (s , tv')
       )
-    | _ -> fail @@ Errors.wrong_param_number s 1 lst
+    | _ -> fail @@ wrong_param_number s 1 lst
   let typer_1 name f : typer = (name , typer'_1 name f)
 
   let typer'_1_opt : name -> (type_value -> type_value option -> type_value result) -> typer' = fun s f lst tv_opt ->
@@ -40,7 +49,7 @@ module Typer = struct
         let%bind tv' = f a tv_opt in
         ok (s , tv')
       )
-    | _ -> fail @@ Errors.wrong_param_number s 1 lst
+    | _ -> fail @@ wrong_param_number s 1 lst
   let typer_1_opt name f : typer = (name , typer'_1_opt name f)
 
   let typer'_2 : name -> (type_value -> type_value -> type_value result) -> typer' = fun s f lst _ ->
@@ -49,7 +58,7 @@ module Typer = struct
         let%bind tv' = f a b in
         ok (s , tv')
       )
-    | _ -> fail @@ Errors.wrong_param_number s 2 lst
+    | _ -> fail @@ wrong_param_number s 2 lst
   let typer_2 name f : typer = (name , typer'_2 name f)
 
   let typer'_3 : name -> (type_value -> type_value -> type_value -> type_value result) -> typer' = fun s f lst _ ->
@@ -58,7 +67,7 @@ module Typer = struct
         let%bind tv' = f a b c in
         ok (s , tv')
       )
-    | _ -> fail @@ Errors.wrong_param_number s 3 lst
+    | _ -> fail @@ wrong_param_number s 3 lst
   let typer_3 name f : typer = (name , typer'_3 name f)
 
   let constant name cst = typer_0 name (fun _ -> ok cst)
@@ -70,7 +79,7 @@ module Typer = struct
 
   let comparator : string -> typer = fun s -> typer_2 s @@ fun a b ->
     let%bind () =
-      trace_strong (simple_error "Types a and b aren't comparable") @@
+      trace_strong (error_uncomparable_types a b) @@
       Assert.assert_true @@
       List.exists (eq_2 (a , b)) [
         t_int () ;

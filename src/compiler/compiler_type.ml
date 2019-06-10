@@ -22,6 +22,7 @@ module Ty = struct
     | Base_int -> return int_k
     | Base_string -> return string_k
     | Base_address -> return address_k
+    | Base_timestamp -> return timestamp_k
     | Base_bytes -> return bytes_k
     | Base_operation -> fail (not_comparable "operation")
 
@@ -48,6 +49,7 @@ module Ty = struct
     | Base_tez -> return tez
     | Base_string -> return string
     | Base_address -> return address
+    | Base_timestamp -> return timestamp
     | Base_bytes -> return bytes
     | Base_operation -> return operation
 
@@ -117,6 +119,7 @@ let base_type : type_base -> O.michelson result =
   | Base_tez -> ok @@ O.prim T_mutez
   | Base_string -> ok @@ O.prim T_string
   | Base_address -> ok @@ O.prim T_address
+  | Base_timestamp -> ok @@ O.prim T_timestamp
   | Base_bytes -> ok @@ O.prim T_bytes
   | Base_operation -> ok @@ O.prim T_operation
 

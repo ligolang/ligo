@@ -1,11 +1,41 @@
 open Cmdliner
 open Trace
 
+let error_pp out (e : error) =
+    let open JSON_string_utils in
+  let message =
+    let opt = e |> member "message" |> string in
+    let msg = Option.unopt ~default:"" opt in
+    if msg = ""
+    then ""
+    else ": " ^ msg in
+  let error_code =
+    let error_code = e |> member "error_code" in
+    match error_code with
+    | `Null -> ""
+    | _ -> " (" ^ (J.to_string error_code) ^ ")" in
+  let title =
+    let opt = e |> member "title" |> string in
+    Option.unopt ~default:"" opt in
+  let data =
+    let data = e |> member "data" in
+    match data with
+    | `Null -> ""
+    | _ -> " " ^ (J.to_string data) ^ "\n" in
+  let infos =
+    let infos = e |> member "infos" in
+    match infos with
+    | `Null -> ""
+    | _ -> " " ^ (J.to_string infos) ^ "\n" in
+  Format.fprintf out "%s%s%s.\n%s%s" title error_code message data infos
+
+
 let toplevel x =
   match x with
   | Trace.Ok ((), annotations) -> ignore annotations; ()
-  | Error ss ->
+  | Error ss -> (
       Format.printf "%a%!" error_pp (ss ())
+    )
 
 let main =
   let term = Term.(const print_endline $ const "Ligo needs a command. Do ligo --help") in
@@ -46,15 +76,16 @@ let compile_file =
   let f source entry_point syntax =
     toplevel @@
     let%bind contract =
-      trace (simple_error "compile michelson") @@
+      trace (simple_info "compiling contract to michelson") @@
       Ligo.Run.compile_contract_file source entry_point syntax in
-    Format.printf "Contract:\n%s\n" contract ;
+    Format.printf "%s\n" contract ;
     ok ()
   in
   let term =
     Term.(const f $ source $ entry_point $ syntax) in
-  let docs = "Compile contracts." in
-  (term , Term.info ~docs "compile-contract")
+  let cmdname = "compile-contract" in
+  let docs = "Subcommand: compile a contract. See `ligo " ^ cmdname ^ " --help' for a list of options specific to this subcommand." in
+  (term , Term.info ~docs cmdname)
 
 let compile_parameter =
   let f source entry_point expression syntax =
@@ -62,13 +93,14 @@ let compile_parameter =
     let%bind value =
       trace (simple_error "compile-input") @@
       Ligo.Run.compile_contract_parameter source entry_point expression syntax in
-    Format.printf "Input:\n%s\n" value;
+    Format.printf "%s\n" value;
     ok ()
   in
   let term =
     Term.(const f $ source $ entry_point $ expression $ syntax) in
-  let docs = "Compile contracts parameters." in
-  (term , Term.info ~docs "compile-parameter")
+  let cmdname = "compile-parameter" in
+  let docs = "Subcommand: compile parameters to a michelson expression. The resulting michelson expression can be passed as an argument in a transaction which calls a contract. See `ligo " ^ cmdname ^ " --help' for a list of options specific to this subcommand." in
+  (term , Term.info ~docs cmdname)
 
 let compile_storage =
   let f source entry_point expression syntax =
@@ -76,13 +108,14 @@ let compile_storage =
     let%bind value =
       trace (simple_error "compile-storage") @@
       Ligo.Run.compile_contract_storage source entry_point expression syntax in
-    Format.printf "Storage:\n%s\n" value;
+    Format.printf "%s\n" value;
     ok ()
   in
   let term =
     Term.(const f $ source $ entry_point $ expression $ syntax) in
-  let docs = "Compile contracts storage." in
-  (term , Term.info ~docs "compile-storage")
+  let cmdname = "compile-storage" in
+  let docs = "Subcommand: compile an initial storage in ligo syntax to a michelson expression. The resulting michelson expression can be passed as an argument in a transaction which originates a contract. See `ligo " ^ cmdname ^ " --help' for a list of options specific to this subcommand." in
+  (term , Term.info ~docs cmdname)
 
 
 let () = Term.exit @@ Term.eval_choice main [compile_file ; compile_parameter ; compile_storage]

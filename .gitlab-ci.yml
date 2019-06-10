@@ -72,18 +72,13 @@ stages:
     # Install dependencies
     # rsync is needed by opam to sync a package installed from a local directory with the copy in ~/.opam
     - apt-get update -qq
-    - apt-get -y -qq install rsync libhidapi-dev libcap-dev libev-dev bubblewrap
-    - wget https://github.com/ocaml/opam/releases/download/2.0.1/opam-2.0.1-x86_64-linux -O opam-2.0.1-x86_64-linux
-    - cp opam-2.0.1-x86_64-linux /usr/local/bin/opam
-    - chmod +x /usr/local/bin/opam
+    - scripts/install_native_dependencies.sh
+    - scripts/install_opam.sh
     - export PATH="/usr/local/bin${PATH:+:}${PATH:-}"
 
-    # Initialise opam
+    # Initialise opam, create switch, load opam environment variables
     - printf '' | opam init --bare
-    - eval $(opam config env)
-
-    # Create switch
-    - printf '' | opam switch create toto ocaml-base-compiler.4.06.1
+    - printf '' | opam switch create ligo-switch ocaml-base-compiler.4.06.1
     - eval $(opam config env)
 
     # Show versions and current switch
@@ -96,8 +91,7 @@ local-dune-job:
   <<: *before_script
   stage: test
   script:
-    - vendors/opam-repository-tools/rewrite-local-opam-repository.sh
-    - opam repository add localrepo "file://$PWD/vendors/ligo-opam-repository-local-generated/"
+    - scripts/setup_ligo_opam_repository.sh
     - opam install -y --build-test --deps-only ./src/
     - dune build -p ligo
     # TODO: also try instead from time to time:

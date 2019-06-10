@@ -5,6 +5,35 @@ type test =
   | Test_suite of (string * test list)
   | Test of test_case
 
+let error_pp out (e : error) =
+    let open JSON_string_utils in
+  let message =
+    let opt = e |> member "message" |> string in
+    let msg = Option.unopt ~default:"" opt in
+    if msg = ""
+    then ""
+    else ": " ^ msg in
+  let error_code =
+    let error_code = e |> member "error_code" in
+    match error_code with
+    | `Null -> ""
+    | _ -> " (" ^ (J.to_string error_code) ^ ")" in
+  let title =
+    let opt = e |> member "title" |> string in
+    Option.unopt ~default:"" opt in
+  let data =
+    let data = e |> member "data" in
+    match data with
+    | `Null -> ""
+    | _ -> " " ^ (J.to_string data) ^ "\n" in
+  let infos =
+    let infos = e |> member "infos" in
+    match infos with
+    | `Null -> ""
+    | _ -> " " ^ (J.to_string infos) ^ "\n" in
+  Format.fprintf out "%s%s%s.\n%s%s" title error_code message data infos
+
+
 let test name f =
   Test (
     Alcotest.test_case name `Quick @@ fun () ->
@@ -80,12 +109,12 @@ let expect_eq_n_aux ?options lst program entry_point make_input make_expected =
   let%bind _ = bind_map_list aux lst in
   ok ()
 
-let expect_eq_n ?options = expect_eq_n_aux ?options [0 ; 2 ; 42 ; 163 ; -1]
-let expect_eq_n_pos ?options = expect_eq_n_aux ?options [0 ; 2 ; 42 ; 163]
+let expect_eq_n ?options = expect_eq_n_aux ?options [0 ; 1 ; 2 ; 42 ; 163 ; -1]
+let expect_eq_n_pos ?options = expect_eq_n_aux ?options [0 ; 1 ; 2 ; 42 ; 163]
 let expect_eq_n_strict_pos ?options = expect_eq_n_aux ?options [2 ; 42 ; 163]
-let expect_eq_n_pos_small ?options = expect_eq_n_aux ?options [0 ; 2 ; 10]
-let expect_eq_n_strict_pos_small ?options = expect_eq_n_aux ?options [2 ; 10]
-let expect_eq_n_pos_mid = expect_eq_n_aux [0 ; 2 ; 10 ; 33]
+let expect_eq_n_pos_small ?options = expect_eq_n_aux ?options [0 ; 1 ; 2 ; 10]
+let expect_eq_n_strict_pos_small ?options = expect_eq_n_aux ?options [1 ; 2 ; 10]
+let expect_eq_n_pos_mid = expect_eq_n_aux [0 ; 1 ; 2 ; 10 ; 33]
 
 let expect_n_pos_small ?options = expect_n_aux ?options [0 ; 2 ; 10]
 let expect_n_strict_pos_small ?options = expect_n_aux ?options [2 ; 10]

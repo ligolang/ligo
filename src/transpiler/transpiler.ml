@@ -93,6 +93,7 @@ let rec translate_type (t:AST.type_value) : type_value result =
   | T_constant ("tez", []) -> ok (T_base Base_tez)
   | T_constant ("string", []) -> ok (T_base Base_string)
   | T_constant ("address", []) -> ok (T_base Base_address)
+  | T_constant ("timestamp", []) -> ok (T_base Base_timestamp)
   | T_constant ("unit", []) -> ok (T_base Base_unit)
   | T_constant ("operation", []) -> ok (T_base Base_operation)
   | T_constant ("contract", [x]) ->
@@ -603,7 +604,7 @@ let extract_constructor (v : value) (tree : _ Append_tree.t') : (string * value 
     | Leaf (k, t), v -> ok (k, v, t)
     | Node {a}, D_left v -> aux (a, v)
     | Node {b}, D_right v -> aux (b, v)
-    | _ -> simple_fail "bad constructor path"
+    | _ -> fail @@ internal_assertion_failure "bad constructor path"
   in
   let%bind (s, v, t) = aux (tree, v) in
   ok (s, v, t)
@@ -617,7 +618,7 @@ let extract_tuple (v : value) (tree : AST.type_value Append_tree.t') : ((value *
         let%bind a' = aux (a, va) in
         let%bind b' = aux (b, vb) in
         ok (a' @ b')
-    | _ -> simple_fail "bad tuple path"
+    | _ -> fail @@ internal_assertion_failure "bad tuple path"
   in
   aux (tree, v)
 
@@ -630,7 +631,7 @@ let extract_record (v : value) (tree : _ Append_tree.t') : (_ list) result =
         let%bind a' = aux (a, va) in
         let%bind b' = aux (b, vb) in
         ok (a' @ b')
-    | _ -> simple_fail "bad record path"
+    | _ -> fail @@ internal_assertion_failure "bad record path"
   in
   aux (tree, v)
 

@@ -479,22 +479,35 @@ and simpl_fun lamb' : expr result =
     in
     bind_map_list aux p_args
   in
-  let arguments_name = "arguments" in
-  let (binder , input_type) =
-    let type_expression = T_tuple (List.map snd args') in
-    (arguments_name , type_expression) in
-  let%bind (body , body_type) = expr_to_typed_expr lamb.body in
-  let%bind output_type =
-    bind_map_option simpl_type_expression body_type in
-  let%bind result = simpl_expression body in
-  let wrapped_result =
-    let aux = fun i ((name : Raw.variable) , ty) wrapped ->
-      let accessor = e_accessor (e_variable arguments_name) [ Access_tuple i ] in
-      e_let_in (name.value , Some ty) accessor wrapped
-    in
-    let wraps = List.mapi aux args' in
-    List.fold_right' (fun x f -> f x) result wraps in
-  return @@ e_lambda ~loc binder (Some input_type) output_type wrapped_result
+  match args' with
+  | [ single ] -> (
+      let (binder , input_type) =
+        ((fst single).value , snd single) in
+      let%bind (body , body_type) = expr_to_typed_expr lamb.body in
+      let%bind output_type =
+        bind_map_option simpl_type_expression body_type in
+      let%bind result = simpl_expression body in
+      return @@ e_lambda ~loc binder (Some input_type) output_type result
+
+    )
+  | _ -> (
+      let arguments_name = "arguments" in
+      let (binder , input_type) =
+        let type_expression = T_tuple (List.map snd args') in
+        (arguments_name , type_expression) in
+      let%bind (body , body_type) = expr_to_typed_expr lamb.body in
+      let%bind output_type =
+        bind_map_option simpl_type_expression body_type in
+      let%bind result = simpl_expression body in
+      let wrapped_result =
+        let aux = fun i ((name : Raw.variable) , ty) wrapped ->
+          let accessor = e_accessor (e_variable arguments_name) [ Access_tuple i ] in
+          e_let_in (name.value , Some ty) accessor wrapped
+        in
+        let wraps = List.mapi aux args' in
+        List.fold_right' (fun x f -> f x) result wraps in
+      return @@ e_lambda ~loc binder (Some input_type) output_type wrapped_result
+    )
 
 
 and simpl_logic_expression ?te_annot (t:Raw.logic_expr) : expr result =

@@ -42,6 +42,7 @@ module Simplify = struct
     ("bool" , "bool") ;
     ("operation" , "operation") ;
     ("address" , "address") ;
+    ("timestamp" , "timestamp") ;
     ("contract" , "contract") ;
     ("list" , "list") ;
     ("option" , "option") ;
@@ -60,8 +61,11 @@ module Simplify = struct
       ("int" , "INT") ;
       ("abs" , "ABS") ;
       ("amount" , "AMOUNT") ;
+      ("now" , "NOW") ;
       ("unit" , "UNIT") ;
       ("source" , "SOURCE") ;
+      ("sender" , "SENDER") ;
+      ("failwith" , "FAILWITH") ;
     ]
 
     let type_constants = type_constants
@@ -82,7 +86,54 @@ module Simplify = struct
   end
 
   module Ligodity = struct
-    include Pascaligo
+    let constants = [
+      ("Current.balance", "BALANCE") ;
+      ("balance", "BALANCE") ;
+      ("Current.time", "NOW") ;
+      ("time", "NOW") ;
+      ("Current.amount" , "AMOUNT") ;
+      ("amount", "AMOUNT") ;
+      ("Current.gas", "STEPS_TO_QUOTA") ;
+      ("gas", "STEPS_TO_QUOTA") ;
+      ("Current.sender" , "SENDER") ;
+      ("sender", "SENDER") ;
+      ("Current.failwith", "FAILWITH") ;
+      ("failwith" , "FAILWITH") ;
+
+      ("Crypto.hash" , "HASH") ;
+      ("Crypto.black2b", "BLAKE2B") ;
+      ("Crypto.sha256", "SHA256") ;
+      ("Crypto.sha512", "SHA512") ;
+      ("Crypto.hash_key", "HASH_KEY") ;
+      ("Crypto.check", "CHECK_SIGNATURE") ;
+
+      ("Bytes.pack" , "PACK") ;
+      ("Bytes.unpack", "UNPACK") ;
+      ("Bytes.length", "SIZE") ;
+      ("Bytes.size" , "SIZE") ;
+      ("Bytes.concat", "CONCAT") ;
+      ("Bytes.slice", "SLICE") ;
+      ("Bytes.sub", "SLICE") ;
+
+      ("String.length", "SIZE") ;
+      ("String.size", "SIZE") ;
+      ("String.slice", "SLICE") ;
+      ("String.sub", "SLICE") ;
+      ("String.concat", "CONCAT") ;
+
+      ("List.length", "SIZE") ;
+      ("List.size", "SIZE") ;
+      ("List.iter", "ITER") ;
+
+      ("Operation.transaction" , "CALL") ;
+      ("Operation.get_contract" , "GET_CONTRACT") ;
+      ("int" , "INT") ;
+      ("abs" , "ABS") ;
+      ("unit" , "UNIT") ;
+      ("source" , "SOURCE") ;
+    ]
+
+    let type_constants = type_constants
   end
 
 end
@@ -121,14 +172,15 @@ module Typer = struct
     | Some t -> ok t
 
   let sub = typer_2 "SUB" @@ fun a b ->
-    let%bind () =
-      trace_strong (simple_error "Types a and b aren't numbers") @@
-      Assert.assert_true @@
-      List.exists (eq_2 (a , b)) [
-        t_int () ;
-        t_nat () ;
-      ] in
-    ok @@ t_int ()
+    if (eq_2 (a , b) (t_int ()))
+    then ok @@ t_int () else
+    if (eq_2 (a , b) (t_nat ()))
+    then ok @@ t_int () else
+    if (eq_2 (a , b) (t_timestamp ()))
+    then ok @@ t_int () else
+    if (eq_2 (a , b) (t_tez ()))
+    then ok @@ t_tez () else
+      fail (simple_error "Typing substraction, bad parameters.")
 
   let some = typer_1 "SOME" @@ fun a -> ok @@ t_option a ()
 
@@ -137,17 +189,68 @@ module Typer = struct
     let%bind () = assert_type_value_eq (src , k) in
     ok m
 
-  let map_update : typer = typer_3 "MAP_UPDATE" @@ fun k v m ->
+  let map_add : typer = typer_3 "MAP_ADD" @@ fun k v m ->
     let%bind (src, dst) = get_t_map m in
     let%bind () = assert_type_value_eq (src, k) in
     let%bind () = assert_type_value_eq (dst, v) in
     ok m
+
+  let map_update : typer = typer_3 "MAP_UPDATE_TODO" @@ fun k v m ->
+    let%bind (src, dst) = get_t_map m in
+    let%bind () = assert_type_value_eq (src, k) in
+    let%bind v' = get_t_option v in
+    let%bind () = assert_type_value_eq (dst, v') in
+    ok m
+
+  let map_mem : typer = typer_2 "MAP_MEM_TODO" @@ fun k m ->
+    let%bind (src, _dst) = get_t_map m in
+    let%bind () = assert_type_value_eq (src, k) in
+    ok @@ t_bool ()
+
+  let map_find : typer = typer_2 "MAP_FIND_TODO" @@ fun k m ->
+    let%bind (src, dst) = get_t_map m in
+    let%bind () = assert_type_value_eq (src, k) in
+    ok @@ t_option dst ()
+
+  let map_fold : typer = typer_3 "MAP_FOLD_TODO" @@ fun f m acc ->
+    let%bind (src, dst) = get_t_map m in
+    let expected_f_type = t_function (t_tuple [(t_tuple [src ; dst] ()) ; acc] ()) acc () in
+    let%bind () = assert_type_value_eq (f, expected_f_type) in
+    ok @@ acc
+
+  let map_map : typer = typer_2 "MAP_MAP_TODO" @@ fun f m ->
+    let%bind (k, v) = get_t_map m in
+    let%bind (input_type, result_type) = get_t_function f in
+    let%bind () = assert_type_value_eq (input_type, t_tuple [k ; v] ()) in
+    ok @@ t_map k result_type ()
+
+  let map_map_fold : typer = typer_3 "MAP_MAP_TODO" @@ fun f m acc ->
+    let%bind (k, v) = get_t_map m in
+    let%bind (input_type, result_type) = get_t_function f in
+    let%bind () = assert_type_value_eq (input_type, t_tuple [t_tuple [k ; v] () ; acc] ()) in
+    let%bind ttuple = get_t_tuple result_type in
+    match ttuple with
+    | [result_acc ; result_dst ] ->
+      ok @@ t_tuple [ t_map k result_dst () ; result_acc ] ()
+    (* TODO: error message *)
+    | _ -> fail @@ simple_error "function passed to map should take (k * v) * acc as an argument"
+
+  let map_iter : typer = typer_2 "MAP_MAP_TODO" @@ fun f m ->
+    let%bind (k, v) = get_t_map m in
+    let%bind () = assert_type_value_eq (f, t_function (t_tuple [k ; v] ()) (t_unit ()) ()) in
+    ok @@ t_unit ()
 
   let size = typer_1 "SIZE" @@ fun t ->
     let%bind () =
       Assert.assert_true @@
       (is_t_map t || is_t_list t) in
     ok @@ t_nat ()
+
+  let failwith_ = typer_1 "FAILWITH" @@ fun t ->
+    let%bind () =
+      Assert.assert_true @@
+      (is_t_string t) in
+    ok @@ t_unit ()
 
   let get_force = typer_2 "MAP_GET_FORCE" @@ fun i m ->
     let%bind (src, dst) = get_t_map m in
@@ -177,6 +280,8 @@ module Typer = struct
   let unit = constant "UNIT" @@ t_unit ()
 
   let amount = constant "AMOUNT" @@ t_tez ()
+
+  let now = constant "NOW" @@ t_timestamp ()
 
   let transaction = typer_3 "CALL" @@ fun param amount contract ->
     let%bind () = assert_t_tez amount in
@@ -210,6 +315,8 @@ module Typer = struct
     then ok @@ t_nat () else
     if eq_2 (a , b) (t_int ())
     then ok @@ t_int () else
+    if eq_1 a (t_tez ()) && eq_1 b (t_nat ())
+    then ok @@ t_tez () else
       simple_fail "Dividing with wrong types"
 
   let mod_ = typer_2 "MOD" @@ fun a b ->
@@ -222,9 +329,11 @@ module Typer = struct
     then ok @@ t_nat () else
     if eq_2 (a , b) (t_int ())
     then ok @@ t_int () else
+    if eq_2 (a , b) (t_tez ())
+    then ok @@ t_tez () else
     if (eq_1 a (t_nat ()) && eq_1 b (t_int ())) || (eq_1 b (t_nat ()) && eq_1 a (t_int ()))
     then ok @@ t_int () else
-      simple_fail "Adding with wrong types"
+      simple_fail "Adding with wrong types. Expected nat, int or tez."
 
   let constant_typers = Map.String.of_list [
       add ;
@@ -243,9 +352,18 @@ module Typer = struct
       boolean_operator_2 "OR" ;
       boolean_operator_2 "AND" ;
       map_remove ;
+      map_add ;
       map_update ;
+      map_mem ;
+      map_find ;
+      map_map_fold ;
+      map_map ;
+      map_fold ;
+      map_iter ;
+      (* map_size ; (* use size *) *)
       int ;
       size ;
+      failwith_ ;
       get_force ;
       bytes_pack ;
       bytes_unpack ;
@@ -257,6 +375,7 @@ module Typer = struct
       transaction ;
       get_contract ;
       abs ;
+      now ;
     ]
 
 end
@@ -309,10 +428,12 @@ module Compiler = struct
     ("CONS" , simple_binary @@ prim I_CONS) ;
     ("UNIT" , simple_constant @@ prim I_UNIT) ;
     ("AMOUNT" , simple_constant @@ prim I_AMOUNT) ;
+    ("NOW" , simple_constant @@ prim I_NOW) ;
     ("CALL" , simple_ternary @@ prim I_TRANSFER_TOKENS) ;
     ("SOURCE" , simple_constant @@ prim I_SOURCE) ;
     ("SENDER" , simple_constant @@ prim I_SENDER) ;
-    ( "MAP_UPDATE" , simple_ternary @@ seq [dip (i_some) ; prim I_UPDATE ]) ;
+    ( "MAP_ADD" , simple_ternary @@ seq [dip (i_some) ; prim I_UPDATE ]) ;
+    ( "MAP_UPDATE" , simple_ternary @@ prim I_UPDATE) ;
   ]
 
 end

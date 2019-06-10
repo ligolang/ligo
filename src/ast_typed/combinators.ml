@@ -20,6 +20,7 @@ let t_address ?s () : type_value = make_t (T_constant ("address", [])) s
 let t_operation ?s () : type_value = make_t (T_constant ("operation", [])) s
 let t_nat ?s () : type_value = make_t (T_constant ("nat", [])) s
 let t_tez ?s () : type_value = make_t (T_constant ("tez", [])) s
+let t_timestamp ?s () : type_value = make_t (T_constant ("timestamp", [])) s
 let t_unit ?s () : type_value = make_t (T_constant ("unit", [])) s
 let t_option o ?s () : type_value = make_t (T_constant ("option", [o])) s
 let t_tuple lst ?s () : type_value = make_t (T_tuple lst) s
@@ -75,6 +76,10 @@ let get_t_tez (t:type_value) : unit result = match t.type_value' with
 let get_t_bytes (t:type_value) : unit result = match t.type_value' with
   | T_constant ("bytes", []) -> ok ()
   | _ -> simple_fail "not a bytes"
+
+let get_t_string (t:type_value) : unit result = match t.type_value' with
+  | T_constant ("string", []) -> ok ()
+  | _ -> simple_fail "not a string"
 
 let get_t_contract (t:type_value) : type_value result = match t.type_value' with
   | T_constant ("contract", [x]) -> ok x
@@ -139,6 +144,7 @@ let assert_t_list t =
 
 let is_t_list = Function.compose to_bool get_t_list
 let is_t_nat = Function.compose to_bool get_t_nat
+let is_t_string = Function.compose to_bool get_t_string
 let is_t_int = Function.compose to_bool get_t_int
 
 let assert_t_bytes = fun t ->

@@ -145,24 +145,24 @@ module Errors = struct
     ] in
     error ~data title message ()
 
-  let type_error_approximate ?(msg="") ~(expected: string) ~(actual: O.type_value) ~(expression : O.value) (loc:Location.t) () =
+  let type_error_approximate ?(msg="") ~(expected: string) ~(actual: O.type_value) ~(expression : I.expression) (loc:Location.t) () =
     let title = (thunk "type error") in
     let message () = msg in
     let data = [
       ("expected"   , fun () -> Format.asprintf "%s" expected);
       ("actual"     , fun () -> Format.asprintf "%a" O.PP.type_value actual);
-      ("expression" , fun () -> Format.asprintf "%a" O.PP.value expression) ;
+      ("expression" , fun () -> Format.asprintf "%a" I.PP.expression expression) ;
       ("location" , fun () -> Format.asprintf "%a" Location.pp loc)
     ] in
     error ~data title message ()
 
-  let type_error ?(msg="") ~(expected: O.type_value) ~(actual: O.type_value) ~(expression : O.value) (loc:Location.t) () =
+  let type_error ?(msg="") ~(expected: O.type_value) ~(actual: O.type_value) ~(expression : I.expression) (loc:Location.t) () =
     let title = (thunk "type error") in
     let message () = msg in
     let data = [
       ("expected"   , fun () -> Format.asprintf "%a" O.PP.type_value expected);
       ("actual"     , fun () -> Format.asprintf "%a" O.PP.type_value actual);
-      ("expression" , fun () -> Format.asprintf "%a" O.PP.value expression) ;
+      ("expression" , fun () -> Format.asprintf "%a" I.PP.expression expression) ;
       ("location" , fun () -> Format.asprintf "%a" Location.pp loc)
     ] in
     error ~data title message ()
@@ -206,6 +206,13 @@ module Errors = struct
     ] in
     error ~data title message ()
 
+  let constant_error loc =
+    let title () = "typing constant" in
+    let message () = "" in
+    let data = [
+      ("location" , fun () -> Format.asprintf "%a" Location.pp loc ) ;
+    ] in
+    error ~data title message
 end
 open Errors
 
@@ -237,8 +244,8 @@ and type_declaration env : I.declaration -> (environment * O.declaration option)
       ok (env', Some (O.Declaration_constant ((make_n_e name ae') , (env , env'))))
     )
 
-and type_match : type i o . (environment -> i -> o result) -> environment -> O.type_value -> i I.matching -> Location.t -> o O.matching result =
-  fun f e t i loc -> match i with
+and type_match : type i o . (environment -> i -> o result) -> environment -> O.type_value -> i I.matching -> I.expression -> Location.t -> o O.matching result =
+  fun f e t i ae loc -> match i with
     | Match_bool {match_true ; match_false} ->
       let%bind _ =
         trace_strong (match_error ~expected:i ~actual:t loc)
@@ -286,6 +293,13 @@ and type_match : type i o . (environment -> i -> o result) -> environment -> O.t
           let%bind acc = match acc with
             | None -> ok (Some variant)
             | Some variant' -> (
+                trace (type_error
+                         ~msg:"in match variant"
+                         ~expected:variant
+                         ~actual:variant'
+                         ~expression:ae
+                         loc
+                      ) @@
                 Ast_typed.assert_type_value_eq (variant , variant') >>? fun () ->
                 ok (Some variant)
               ) in
@@ -370,14 +384,13 @@ and type_expression : environment -> ?tv_opt:O.type_value -> I.expression -> O.a
     ok @@ make_a_e ~location expr tv e in
   let main_error =
     let title () = "typing expression" in
-    let content () =
-      match L.get () with
-      | "" ->
-        Format.asprintf "Expression: %a\n" I.PP.expression ae
-      | l ->
-        Format.asprintf "Expression: %a\nLog: %s\n" I.PP.expression ae l
-    in
-    error title content in
+    let content () = "" in
+    let data = [
+      ("expression" , fun () -> Format.asprintf "%a" I.PP.expression ae) ;
+      ("location" , fun () -> Format.asprintf "%a" Location.pp @@ Location.get_location ae) ;
+      ("misc" , fun () -> L.get ()) ;
+    ] in
+    error ~data title content in
   trace main_error @@
   match Location.unwrap ae with
   (* Basic *)
@@ -504,7 +517,7 @@ and type_expression : environment -> ?tv_opt:O.type_value -> I.expression -> O.a
             @@ List.map fst lst' in
           let%bind annot = bind_map_option get_t_map_key tv_opt in
           trace (simple_info "empty map expression without a type annotation") @@
-          O.merge_annotation annot sub
+          O.merge_annotation annot sub (needs_annotation ae "this map literal")
         in
         let%bind value_type =
           let%bind sub =
@@ -513,7 +526,7 @@ and type_expression : environment -> ?tv_opt:O.type_value -> I.expression -> O.a
             @@ List.map snd lst' in
           let%bind annot = bind_map_option get_t_map_value tv_opt in
           trace (simple_info "empty map expression without a type annotation") @@
-          O.merge_annotation annot sub
+          O.merge_annotation annot sub (needs_annotation ae "this map literal")
         in
         ok (t_map key_type value_type ())
       in
@@ -556,12 +569,13 @@ and type_expression : environment -> ?tv_opt:O.type_value -> I.expression -> O.a
   | E_constant (name, lst) ->
       let%bind lst' = bind_list @@ List.map (type_expression e) lst in
       let tv_lst = List.map get_type_annotation lst' in
-      let%bind (name', tv) = type_constant name tv_lst tv_opt ae.location in
+      let%bind (name', tv) =
+        type_constant name tv_lst tv_opt ae.location in
       return (E_constant (name' , lst')) tv
   | E_application (f, arg) ->
-      let%bind f = type_expression e f in
+      let%bind f' = type_expression e f in
       let%bind arg = type_expression e arg in
-      let%bind tv = match f.type_annotation.type_value' with
+      let%bind tv = match f'.type_annotation.type_value' with
         | T_function (param, result) ->
             let%bind _ = O.assert_type_value_eq (param, arg.type_annotation) in
             ok result
@@ -569,10 +583,10 @@ and type_expression : environment -> ?tv_opt:O.type_value -> I.expression -> O.a
           fail @@ type_error_approximate
             ~expected:"should be a function type"
             ~expression:f
-            ~actual:f.type_annotation
-            f.location
+            ~actual:f'.type_annotation
+            f'.location
       in
-      return (E_application (f , arg)) tv
+      return (E_application (f' , arg)) tv
   | E_look_up dsi ->
       let%bind (ds, ind) = bind_map_pair (type_expression e) dsi in
       let%bind (src, dst) = get_t_map ds.type_annotation in
@@ -607,7 +621,7 @@ and type_expression : environment -> ?tv_opt:O.type_value -> I.expression -> O.a
           return (O.E_matching (ex' , m')) (t_unit ())
         )
       | _ -> (
-          let%bind m' = type_match (type_expression ?tv_opt:None) e ex'.type_annotation m ae.location in
+          let%bind m' = type_match (type_expression ?tv_opt:None) e ex'.type_annotation m ae ae.location in
           let tvs =
             let aux (cur:O.value O.matching) =
               match cur with
@@ -639,7 +653,7 @@ and type_expression : environment -> ?tv_opt:O.type_value -> I.expression -> O.a
                       ~msg:"first part of the sequence should be of unit type"
                       ~expected:(O.t_unit ())
                       ~actual:a'_type_annot
-                      ~expression:a'
+                      ~expression:a
                       a'.location) @@
       Ast_typed.assert_type_value_eq (t_unit () , a'_type_annot) in
     return (O.E_sequence (a' , b')) (get_type_annotation b')
@@ -652,7 +666,7 @@ and type_expression : environment -> ?tv_opt:O.type_value -> I.expression -> O.a
                       ~msg:"while condition isn't of type bool"
                       ~expected:(O.t_bool ())
                       ~actual:t_expr'
-                      ~expression:expr'
+                      ~expression:expr
                       expr'.location) @@
       Ast_typed.assert_type_value_eq (t_bool () , t_expr') in
     let t_body' = get_type_annotation body' in
@@ -661,7 +675,7 @@ and type_expression : environment -> ?tv_opt:O.type_value -> I.expression -> O.a
                      ~msg:"while body isn't of unit type"
                      ~expected:(O.t_unit ())
                      ~actual:t_body'
-                     ~expression:body'
+                     ~expression:body
                      body'.location) @@
       Ast_typed.assert_type_value_eq (t_unit () , t_body') in
     return (O.E_loop (expr' , body')) (t_unit ())
@@ -697,7 +711,7 @@ and type_expression : environment -> ?tv_opt:O.type_value -> I.expression -> O.a
                      ~msg:"type of the expression to assign doesn't match left-hand-side"
                      ~expected:assign_tv
                      ~actual:t_expr'
-                     ~expression:expr'
+                     ~expression:expr
                      expr'.location) @@
       Ast_typed.assert_type_value_eq (assign_tv , t_expr') in
     return (O.E_assign (typed_name , path' , expr')) (t_unit ())
@@ -710,7 +724,11 @@ and type_expression : environment -> ?tv_opt:O.type_value -> I.expression -> O.a
   | E_annotation (expr , te) ->
     let%bind tv = evaluate_type e te in
     let%bind expr' = type_expression ~tv_opt:tv e expr in
-    let%bind type_annotation = O.merge_annotation (Some tv) (Some expr'.type_annotation) in
+    let%bind type_annotation =
+      O.merge_annotation
+        (Some tv)
+        (Some expr'.type_annotation)
+        (internal_assertion_failure "merge_annotations (Some ...) (Some ...) failed") in
     ok {expr' with type_annotation}
 
 
@@ -720,12 +738,13 @@ and type_constant (name:string) (lst:O.type_value list) (tv_opt:O.type_value opt
   let%bind typer =
     trace_option (unrecognized_constant name loc) @@
     Map.String.find_opt name ct in
+  trace (constant_error loc) @@
   typer lst tv_opt
 
 let untype_type_value (t:O.type_value) : (I.type_expression) result =
   match t.simplified with
   | Some s -> ok s
-  | _ -> simple_fail "trying to untype generated type"
+  | _ -> fail @@ internal_assertion_failure "trying to untype generated type"
 
 let untype_literal (l:O.literal) : I.literal result =
   let open I in
