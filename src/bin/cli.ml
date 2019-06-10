@@ -131,4 +131,4 @@ let dry_run =
   let docs = "Subcommand: run a smart-contract with the given storage and input." in
   (term , Term.info ~docs cmdname)
 
-let () = Term.exit @@ Term.eval_choice main [compile_file ; compile_parameter ; compile_storage]
+let () = Term.exit @@ Term.eval_choice main [compile_file ; compile_parameter ; compile_storage ; dry_run ]
