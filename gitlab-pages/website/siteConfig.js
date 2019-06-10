@@ -41,40 +41,40 @@ const team = [
     caption: 'Gabriel Alfour',
     // You will need to prepend the image path with your baseUrl
     // if it is not '/', like: '/test-site/img/image.jpg'.
-    image: 'https://thepowerofthedream.org/wp-content/uploads/2015/09/generic-profile-picture-600x600.jpg',
-    infoLink: '#',
+    image: '/img/user.png',
+    infoLink: 'https://gitlab.com/gabriel.alfour',
     pinned: true,
   },
   {
     caption: 'Georges Dupéron',
     // You will need to prepend the image path with your baseUrl
     // if it is not '/', like: '/test-site/img/image.jpg'.
-    image: 'https://thepowerofthedream.org/wp-content/uploads/2015/09/generic-profile-picture-600x600.jpg',
-    infoLink: '#',
+    image: '/img/user.png',
+    infoLink: 'https://gitlab.com/georges.duperon',
     pinned: true,
   },
   {
     caption: 'Christian Rinderknecht',
     // You will need to prepend the image path with your baseUrl
     // if it is not '/', like: '/test-site/img/image.jpg'.
-    image: 'https://thepowerofthedream.org/wp-content/uploads/2015/09/generic-profile-picture-600x600.jpg',
-    infoLink: '#',
+    image: '/img/christian.jpeg',
+    infoLink: 'https://github.com/rinderknecht',
     pinned: true,
   },
   {
     caption: 'Brice Aldrich',
     // You will need to prepend the image path with your baseUrl
     // if it is not '/', like: '/test-site/img/image.jpg'.
-    image: 'https://thepowerofthedream.org/wp-content/uploads/2015/09/generic-profile-picture-600x600.jpg',
-    infoLink: '#',
+    image: '/img/brice.png',
+    infoLink: 'https://github.com/DefinitelyNotAGoat',
     pinned: true,
   },
   {
     caption: 'Matej Sima',
     // You will need to prepend the image path with your baseUrl
     // if it is not '/', like: '/test-site/img/image.jpg'.
-    image: 'https://scontent-frt3-2.xx.fbcdn.net/v/t1.0-9/56644817_2276459725943174_4007605942056124416_n.jpg?_nc_cat=107&_nc_ht=scontent-frt3-2.xx&oh=e8a86a2cfe76798cbdc28a0769ebccb1&oe=5D5423F0',
-    infoLink: 'https://sk.linkedin.com/in/matejsima',
+    image: '/img/matej.jpg',
+    infoLink: 'https://github.com/maht0rz',
     pinned: true,
   },
 ];
