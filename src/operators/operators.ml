@@ -118,6 +118,17 @@ module Simplify = struct
       ("Bytes.slice", "SLICE") ;
       ("Bytes.sub", "SLICE") ;
 
+      ("Set.mem" , "SET_MEM") ;
+      ("Set.empty" , "SET_EMPTY") ;
+      ("Set.add" , "SET_ADD") ;
+      ("Set.remove" , "SET_REMOVE") ;
+
+      ("Map.find_opt" , "MAP_FIND_OPT") ;
+      ("Map.find" , "MAP_FIND") ;
+      ("Map.update" , "MAP_UPDATE") ;
+      ("Map.add" , "MAP_ADD") ;
+      ("Map.remove" , "MAP_REMOVE") ;
+      
       ("String.length", "SIZE") ;
       ("String.size", "SIZE") ;
       ("String.slice", "SLICE") ;

@@ -181,6 +181,7 @@ let rec translate_literal : AST.literal -> value = fun l -> match l with
   | Literal_bool b -> D_bool b
   | Literal_int n -> D_int n
   | Literal_nat n -> D_nat n
+  | Literal_timestamp n -> D_timestamp n
   | Literal_tez n -> D_tez n
   | Literal_bytes s -> D_bytes s
   | Literal_string s -> D_string s
@@ -360,6 +361,16 @@ and translate_annotated_expression (ae:AST.annotated_expression) : expression re
       let aux : expression -> expression -> expression result = fun prev cur ->
         return @@ E_constant ("CONS", [cur ; prev]) in
       let%bind (init : expression) = return @@ E_make_empty_list t in
+      bind_fold_list aux init lst'
+    )
+  | E_set lst -> (
+      let%bind t =
+        trace_strong (corner_case ~loc:__LOC__ "not a set") @@
+        Mini_c.Combinators.get_t_set tv in
+      let%bind lst' = bind_map_list (translate_annotated_expression) lst in
+      let aux : expression -> expression -> expression result = fun prev cur ->
+        return @@ E_constant ("CONS", [cur ; prev]) in
+      let%bind (init : expression) = return @@ E_make_empty_set t in
       bind_fold_list aux init lst'
     )
   | E_map m -> (

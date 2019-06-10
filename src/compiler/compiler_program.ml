@@ -62,6 +62,7 @@ let rec translate_value (v:value) : michelson result = match v with
   | D_bool b -> ok @@ prim (if b then D_True else D_False)
   | D_int n -> ok @@ int (Z.of_int n)
   | D_nat n -> ok @@ int (Z.of_int n)
+  | D_timestamp n -> ok @@ int (Z.of_int n)
   | D_tez n -> ok @@ int (Z.of_int n)
   | D_string s -> ok @@ string s
   | D_bytes s -> ok @@ bytes (Tezos_stdlib.MBytes.of_bytes s)
@@ -226,14 +227,6 @@ and translate_expression ?(first=false) (expr:expression) (env:environment) : (m
       i_drop ;
       b' ;
     ]
-  (* | E_sequence_drop (a , b) ->
-   *   let%bind (a' , env_a) = translate_expression a env in
-   *   let%bind (b' , env_b) = translate_expression b env_a in
-   *   return ~end_env:env_b @@ seq [
-   *     a' ;
-   *     i_drop ;
-   *     b' ;
-   *   ] *)
   | E_constant(str, lst) ->
       let module L = Logger.Stateful() in
       let%bind lst' =
@@ -279,6 +272,9 @@ and translate_expression ?(first=false) (expr:expression) (env:environment) : (m
   | E_make_empty_list t ->
       let%bind t' = Compiler_type.type_ t in
       return @@ i_nil t'
+  | E_make_empty_set t ->
+      let%bind t' = Compiler_type.type_ t in
+      return @@ i_empty_set t'
   | E_make_none o ->
       let%bind o' = Compiler_type.type_ o in
       return @@ i_none o'

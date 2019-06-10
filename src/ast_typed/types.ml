@@ -100,6 +100,7 @@ and expression =
   (* Data Structures *)
   | E_map of (ae * ae) list
   | E_list of ae list
+  | E_set of ae list
   | E_look_up of (ae * ae)
   (* Advanced *)
   | E_matching of (ae * matching_expr)
@@ -116,6 +117,7 @@ and literal =
   | Literal_bool of bool
   | Literal_int of int
   | Literal_nat of int
+  | Literal_timestamp of int
   | Literal_tez of int
   | Literal_string of string
   | Literal_bytes of bytes

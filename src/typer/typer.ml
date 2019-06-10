@@ -416,6 +416,8 @@ and type_expression : environment -> ?tv_opt:O.type_value -> I.expression -> O.a
       return (E_literal (Literal_int n)) (t_int ())
   | E_literal (Literal_nat n) ->
       return (E_literal (Literal_nat n)) (t_nat ())
+  | E_literal (Literal_timestamp n) ->
+      return (E_literal (Literal_timestamp n)) (t_timestamp ())
   | E_literal (Literal_tez n) ->
       return (E_literal (Literal_tez n)) (t_tez ())
   | E_literal (Literal_address s) ->
@@ -501,6 +503,27 @@ and type_expression : environment -> ?tv_opt:O.type_value -> I.expression -> O.a
         ok (t_list ty ())
       in
       return (E_list lst') tv
+  | E_set lst ->
+      let%bind lst' = bind_map_list (type_expression e) lst in
+      let%bind tv =
+        let aux opt c =
+          match opt with
+          | None -> ok (Some c)
+          | Some c' ->
+              let%bind _eq = Ast_typed.assert_type_value_eq (c, c') in
+              ok (Some c') in
+        let%bind init = match tv_opt with
+          | None -> ok None
+          | Some ty ->
+              let%bind ty' = get_t_set ty in
+              ok (Some ty') in
+        let%bind ty =
+          let%bind opt = bind_fold_list aux init
+          @@ List.map get_type_annotation lst' in
+          trace_option (needs_annotation ae "empty set") opt in
+        ok (t_set ty ())
+      in
+      return (E_set lst') tv
   | E_map lst ->
       let%bind lst' = bind_map_list (bind_map_pair (type_expression e)) lst in
       let%bind tv =
@@ -752,6 +775,7 @@ let untype_literal (l:O.literal) : I.literal result =
   | Literal_unit -> ok Literal_unit
   | Literal_bool b -> ok (Literal_bool b)
   | Literal_nat n -> ok (Literal_nat n)
+  | Literal_timestamp n -> ok (Literal_timestamp n)
   | Literal_tez n -> ok (Literal_tez n)
   | Literal_int n -> ok (Literal_int n)
   | Literal_string s -> ok (Literal_string s)
@@ -803,6 +827,9 @@ let rec untype_expression (e:O.annotated_expression) : (I.expression) result =
   | E_list lst ->
       let%bind lst' = bind_map_list untype_expression lst in
       return (e_list lst')
+  | E_set lst ->
+      let%bind lst' = bind_map_list untype_expression lst in
+      return (e_set lst')
   | E_look_up dsi ->
       let%bind (a , b) = bind_map_pair untype_expression dsi in
       return (e_look_up a b)

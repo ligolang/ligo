@@ -34,6 +34,19 @@ let parse_file (source: string) : AST.t result =
           in
           simple_error str
         )
+      | Lexer.Error err -> (
+          let start = Lexing.lexeme_start_p lexbuf in
+          let end_ = Lexing.lexeme_end_p lexbuf in
+          let str = Format.sprintf
+              "Lexer error (%s) at \"%s\" from (%d, %d) to (%d, %d). In file \"%s|%s\"\n"
+              (err.value)
+              (Lexing.lexeme lexbuf)
+              start.pos_lnum (start.pos_cnum - start.pos_bol)
+              end_.pos_lnum (end_.pos_cnum - end_.pos_bol)
+              start.pos_fname source
+          in
+          simple_error str
+        )
       | exn ->
           let start = Lexing.lexeme_start_p lexbuf in
           let end_ = Lexing.lexeme_end_p lexbuf in

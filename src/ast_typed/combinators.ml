@@ -27,6 +27,7 @@ let t_unit ?s () : type_value = make_t (T_constant ("unit", [])) s
 let t_option o ?s () : type_value = make_t (T_constant ("option", [o])) s
 let t_tuple lst ?s () : type_value = make_t (T_tuple lst) s
 let t_list t ?s () : type_value = make_t (T_constant ("list", [t])) s
+let t_set t ?s () : type_value = make_t (T_constant ("set", [t])) s
 let t_contract t ?s () : type_value = make_t (T_constant ("contract", [t])) s
 let t_pair a b ?s () = t_tuple [a ; b] ?s ()
 
@@ -94,6 +95,10 @@ let get_t_option (t:type_value) : type_value result = match t.type_value' with
 let get_t_list (t:type_value) : type_value result = match t.type_value' with
   | T_constant ("list", [o]) -> ok o
   | _ -> simple_fail "not a list"
+
+let get_t_set (t:type_value) : type_value result = match t.type_value' with
+  | T_constant ("set", [o]) -> ok o
+  | _ -> simple_fail "not a set"
 
 let get_t_key (t:type_value) : unit result = match t.type_value' with
   | T_constant ("key", []) -> ok ()

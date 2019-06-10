@@ -29,6 +29,11 @@ let rec translate_value (Ex_typed_value (ty, value)) : value result =
         trace_option (simple_error "too big to fit an int") @@
         Alpha_context.Script_int.to_int n in
       ok @@ D_nat n
+  | (Timestamp_t _), n ->
+      let n =
+        Z.to_int @@
+        Alpha_context.Script_timestamp.to_zint n in
+      ok @@ D_timestamp n
   | (Mutez_t _), n ->
       let%bind n =
         generic_try (simple_error "too big to fit an int") @@

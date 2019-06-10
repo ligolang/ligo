@@ -82,6 +82,10 @@ let get_t_list (t:type_value) = match t with
   | T_list t -> ok t
   | _ -> simple_fail "not a type list"
 
+let get_t_set (t:type_value) = match t with
+  | T_set t -> ok t
+  | _ -> simple_fail "not a type set"
+
 let get_left (v:value) = match v with
   | D_left b -> ok b
   | _ -> simple_fail "not a left"
