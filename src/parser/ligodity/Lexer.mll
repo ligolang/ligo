@@ -104,7 +104,7 @@ let keywords = Token.[
   "and",         None;
   "as",          None;
   "asr",         None;
-  "assert",      None;
+  (*  "assert",      None;*)
   "class",       None;
   "constraint",  None;
   "do",          None;
