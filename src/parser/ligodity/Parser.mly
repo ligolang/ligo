@@ -186,6 +186,11 @@ list_of(item):
       terminator;
       closing    = RBracket $3}
   }
+| lbracket rbracket {
+     {opening    = LBracket $1;
+      elements   = None;
+      terminator = None;
+      closing    = RBracket $2} }
 
 (* Main *)
 
