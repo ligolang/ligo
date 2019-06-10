@@ -63,7 +63,7 @@ else
   #   ) ||   clean up temporary file if any command in the previous block failed
 
   wget "$url" -O - \
-  | sed -e "s/latest/$version/g" \
+  | sed -e "s/next/$version/g" \
   | sudo sh -c ' \
     ( \
       rm -f /usr/local/bin/.temp.ligo.before-atomic-move \
