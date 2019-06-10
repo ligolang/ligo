@@ -90,6 +90,8 @@ module Simplify = struct
 
   module Ligodity = struct
     let constants = [
+      ("assert" , "ASSERT") ;
+      
       ("Current.balance", "BALANCE") ;
       ("balance", "BALANCE") ;
       ("Current.time", "NOW") ;
@@ -100,6 +102,8 @@ module Simplify = struct
       ("gas", "STEPS_TO_QUOTA") ;
       ("Current.sender" , "SENDER") ;
       ("sender", "SENDER") ;
+      ("Current.source" , "SOURCE") ;
+      ("source", "SOURCE") ;
       ("Current.failwith", "FAILWITH") ;
       ("failwith" , "FAILWITH") ;
 
@@ -209,7 +213,7 @@ module Typer = struct
     let%bind () = assert_type_value_eq (dst, v) in
     ok m
 
-  let map_update : typer = typer_3 "MAP_UPDATE_TODO" @@ fun k v m ->
+  let map_update : typer = typer_3 "MAP_UPDATE" @@ fun k v m ->
     let%bind (src, dst) = get_t_map m in
     let%bind () = assert_type_value_eq (src, k) in
     let%bind v' = get_t_option v in
@@ -221,7 +225,12 @@ module Typer = struct
     let%bind () = assert_type_value_eq (src, k) in
     ok @@ t_bool ()
 
-  let map_find : typer = typer_2 "MAP_FIND_TODO" @@ fun k m ->
+  let map_find : typer = typer_2 "MAP_FIND" @@ fun k m ->
+    let%bind (src, dst) = get_t_map m in
+    let%bind () = assert_type_value_eq (src, k) in
+    ok @@ dst
+
+  let map_find_opt : typer = typer_2 "MAP_FIND_OPT" @@ fun k m ->
     let%bind (src, dst) = get_t_map m in
     let%bind () = assert_type_value_eq (src, k) in
     ok @@ t_option dst ()
@@ -341,6 +350,11 @@ module Typer = struct
     let%bind () = assert_t_int t in
     ok @@ t_nat ()
 
+  let assertion = typer_1 "ASSERT" @@ fun a ->
+    if eq_1 a (t_bool ())
+    then ok @@ t_unit ()
+    else simple_fail "Asserting a non-bool"
+  
   let times = typer_2 "TIMES" @@ fun a b ->
     if eq_2 (a , b) (t_nat ())
     then ok @@ t_nat () else
@@ -375,6 +389,29 @@ module Typer = struct
     then ok @@ t_int () else
       simple_fail "Adding with wrong types. Expected nat, int or tez."
 
+  let set_mem = typer_2 "SET_MEM" @@ fun elt set ->
+    let%bind key = get_t_set set in
+    if eq_1 elt key
+    then ok @@ t_bool ()
+    else simple_fail "Set_mem: elt and set don't match"
+
+  let set_add = typer_2 "SET_ADD" @@ fun elt set ->
+    let%bind key = get_t_set set in
+    if eq_1 elt key
+    then ok set
+    else simple_fail "Set_add: elt and set don't match"
+
+  let set_remove = typer_2 "SET_REMOVE" @@ fun elt set ->
+    let%bind key = get_t_set set in
+    if eq_1 elt key
+    then ok set
+    else simple_fail "Set_remove: elt and set don't match"
+
+  let not_ = typer_1 "NOT" @@ fun elt ->
+    if eq_1 elt (t_bool ())
+    then ok @@ t_bool ()
+    else simple_fail "bad parameter to not"
+  
   let constant_typers = Map.String.of_list [
       add ;
       times ;
@@ -391,6 +428,7 @@ module Typer = struct
       comparator "GE" ;
       boolean_operator_2 "OR" ;
       boolean_operator_2 "AND" ;
+      not_ ;
       map_remove ;
       map_add ;
       map_update ;
@@ -400,6 +438,9 @@ module Typer = struct
       map_map ;
       map_fold ;
       map_iter ;
+      set_mem ;
+      set_add ;
+      set_remove ;
       (* map_size ; (* use size *) *)
       int ;
       size ;
@@ -422,6 +463,7 @@ module Typer = struct
       now ;
       slice ;
       address ;
+      assertion ;
     ]
 
 end

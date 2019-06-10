@@ -4,6 +4,17 @@ module Option = Simple_utils.Option
 
 module SMap = Map.String
 
+module Errors = struct
+  let bad_kind expected location =
+    let title () = Format.asprintf "a %s was expected" expected in
+    let message () = "" in
+    let data = [
+      ("location" , fun () -> Format.asprintf "%a" Location.pp location) ;
+    ] in
+    error ~data title message
+end
+open Errors
+
 let t_bool      : type_expression = T_constant ("bool", [])
 let t_string    : type_expression = T_constant ("string", [])
 let t_bytes     : type_expression = T_constant ("bytes", [])
@@ -145,3 +156,13 @@ let get_e_failwith = fun e ->
   | _ -> simple_fail "not a failwith"
 
 let is_e_failwith e = to_bool @@ get_e_failwith e
+
+let extract_pair : expression -> (expression * expression) result = fun e ->
+  match Location.unwrap e with
+  | E_tuple [ a ; b ] -> ok (a , b)
+  | _ -> fail @@ bad_kind "pair" e.location
+
+let extract_list : expression -> (expression list) result = fun e ->
+  match Location.unwrap e with
+  | E_list lst -> ok lst
+  | _ -> fail @@ bad_kind "list" e.location

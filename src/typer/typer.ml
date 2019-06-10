@@ -206,11 +206,13 @@ module Errors = struct
     ] in
     error ~data title message ()
 
-  let constant_error loc =
+  let constant_error loc lst tv_opt =
     let title () = "typing constant" in
     let message () = "" in
     let data = [
       ("location" , fun () -> Format.asprintf "%a" Location.pp loc ) ;
+      ("argument_types" , fun () -> Format.asprintf "%a" PP_helpers.(list_sep Ast_typed.PP.type_value (const " , ")) lst) ;
+      ("type_opt" , fun () -> Format.asprintf "%a" PP_helpers.(option Ast_typed.PP.type_value) tv_opt) ;
     ] in
     error ~data title message
 end
@@ -761,7 +763,7 @@ and type_constant (name:string) (lst:O.type_value list) (tv_opt:O.type_value opt
   let%bind typer =
     trace_option (unrecognized_constant name loc) @@
     Map.String.find_opt name ct in
-  trace (constant_error loc) @@
+  trace (constant_error loc lst tv_opt) @@
   typer lst tv_opt
 
 let untype_type_value (t:O.type_value) : (I.type_expression) result =

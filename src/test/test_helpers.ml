@@ -71,7 +71,7 @@ let expect_eq ?options program entry_point input expected =
           Ast_simplified.PP.expression result in
       error title content in
     trace expect_error @@
-    Ast_simplified.assert_value_eq (expected , result) in
+    Ast_simplified.Misc.assert_value_eq (expected , result) in
   expect ?options program entry_point input expecter
 
 let expect_evaluate program entry_point expecter =
@@ -85,7 +85,7 @@ let expect_evaluate program entry_point expecter =
 
 let expect_eq_evaluate program entry_point expected =
   let expecter = fun result ->
-    Ast_simplified.assert_value_eq (expected , result) in
+    Ast_simplified.Misc.assert_value_eq (expected , result) in
   expect_evaluate program entry_point expecter
 
 let expect_n_aux ?options lst program entry_point make_input make_expecter =

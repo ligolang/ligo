@@ -6,14 +6,17 @@ type storage = {
   finish_time : timestamp ;
 }
 
-type init_action = (string * timestamp * timestamp)
+type init_action = {
+  title : string ;
+  beginning_time : timestamp ;
+  finish_time : timestamp ;
+}
 
 type action =
   | Vote of string
-  | Init of (string * timestamp * timestamp)
+  | Init of init_action
 
 let init (init_params : init_action) (_ : storage) =
-  let (title , s , t) = init_params in
   let candidates = Map [
       ("Yes" , 0) ;
       ("No" , 0)
@@ -21,21 +24,19 @@ let init (init_params : init_action) (_ : storage) =
   (
     ([] : operation list),
     {
-      title = title ;
+      title = init_params.title ;
       candidates = candidates ;
       voters = (Set [] : address set) ;
-      beginning_time = s ;
-      finish_time = t ;
+      beginning_time = init_params.beginning_time ;
+      finish_time = init_params.finish_time ;
     }
   )
 
 let vote (parameter : string) (storage : storage) =
-  let now = Current.time () in
-  assert (now >= storage.beginning_time && storage.finish_time < now) ;
-
-  let addr = Current.source () in
-  assert (not Set.mem addr storage.voters) ;
-
+  let now = Current.time in
+  let _ = assert (now >= storage.beginning_time && storage.finish_time < now) in
+  let addr = Current.source in
+  let _ = assert (not Set.mem addr storage.voters) in
   let x = Map.find parameter storage.candidates in
   (
     ([] : operation list),
@@ -47,7 +48,7 @@ let vote (parameter : string) (storage : storage) =
       finish_time = storage.finish_time ;
     }
   )
-						             )
+
 let main (action : action) (storage : storage) =
   match action with
   | Vote p -> vote p storage

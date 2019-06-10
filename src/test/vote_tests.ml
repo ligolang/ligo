@@ -27,5 +27,5 @@ let init_vote () =
   ok ()
 
 let main = test_suite "Vote" [
-    (* test "type" init_vote ; *)
+    test "type" init_vote ;
   ]
