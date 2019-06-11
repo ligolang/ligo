@@ -29,9 +29,9 @@ class HomeSplash extends React.Component {
           <div className="tabs">
             <div className="nav-tabs">
               <div id="tab-group-3-tab-4" className="nav-link active" data-group="group_3"
-                data-tab="tab-group-3-content-4">Pascaligo</div>
+                data-tab="tab-group-3-content-4">PascaLIGO</div>
               <div className="nav-link" data-group="group_3"
-                data-tab="tab-group-3-content-5">Cameligo</div>
+                data-tab="tab-group-3-content-5">CameLIGO</div>
               <div className="nav-link">Reasonligo (coming soon) </div>
               {/* <div id="tab-group-3-tab-5" className="nav-link" data-group="group_3"
                 data-tab="tab-group-3-content-5">Camligo</div> */}
