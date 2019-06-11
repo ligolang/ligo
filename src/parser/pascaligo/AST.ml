@@ -597,7 +597,7 @@ and nil = kwd_nil
 and constr_expr =
   SomeApp   of (c_Some * arguments) reg
 | NoneExpr  of none_expr
-| ConstrApp of (constr * arguments) reg
+| ConstrApp of (constr * arguments option) reg
 
 and record_expr = field_assign reg injection reg
 

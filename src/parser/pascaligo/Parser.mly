@@ -956,7 +956,10 @@ core_expr:
 | projection       { EProj $1                     }
 | Constr arguments {
     let region = cover $1.region $2.region in
-    EConstr (ConstrApp {region; value = $1,$2})
+    EConstr (ConstrApp {region; value = $1, Some $2})
+  }
+| Constr {
+    EConstr (ConstrApp {region=$1.region; value = $1,None})
   }
 | C_Some arguments {
     let region = cover $1 $2.region in
