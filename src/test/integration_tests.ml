@@ -918,6 +918,9 @@ let main = test_suite "Integration (End to End)" [
     test "tez (mligo)" tez_mligo ;
     test "lambda2 mligo" lambda2_mligo ;
     (* test "fibo (mligo)" fibo_mligo ; *)
+    (* test "fibo2 (mligo)" fibo2_mligo ; *)
+    (* test "fibo3 (mligo)" fibo3_mligo ; *)
+    (* test "fibo4 (mligo)" fibo4_mligo ; *)
     test "website1 ligo" website1_ligo ;
     test "website2 ligo" website2_ligo ;
     test "website2 (mligo)" website2_mligo ;
