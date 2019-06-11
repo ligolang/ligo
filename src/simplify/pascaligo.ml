@@ -416,11 +416,14 @@ let rec simpl_expression (t:Raw.expr) : expr result =
   | EProj p -> simpl_projection p
   | EConstr (ConstrApp c) -> (
       let ((c, args) , loc) = r_split c in
-      let (args , args_loc) = r_split args in
-      let%bind arg =
-        simpl_tuple_expression ~loc:args_loc
-        @@ npseq_to_list args.inside in
-      return @@ e_constructor ~loc c.value arg
+      match args with
+        None -> simpl_tuple_expression []
+      | Some args ->
+          let args, args_loc = r_split args in
+          let%bind arg =
+            simpl_tuple_expression ~loc:args_loc
+            @@ npseq_to_list args.inside in
+          return @@ e_constructor ~loc c.value arg
     )
   | EConstr (SomeApp a) ->
       let ((_, args) , loc) = r_split a in

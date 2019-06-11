@@ -648,7 +648,9 @@ and print_fun_call {value; _} =
 and print_constr_app {value; _} =
   let constr, arguments = value in
   print_constr    constr;
-  print_tuple_inj arguments
+  match arguments with
+    None -> ()
+  | Some args -> print_tuple_inj args
 
 and print_some_app {value; _} =
   let c_Some, arguments = value in
