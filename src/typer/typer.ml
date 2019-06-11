@@ -638,7 +638,7 @@ and type_expression : environment -> ?tv_opt:O.type_value -> I.expression -> O.a
                             ae.location)
             @@ assert_t_unit (get_type_annotation mf') in
           let mt' = make_a_e
-              (E_constant ("ASSERT" , [ex' ; fw']))
+              (E_constant ("ASSERT_INFERRED" , [ex' ; fw']))
               (t_unit ())
               e
           in

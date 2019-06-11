@@ -37,6 +37,10 @@ let get_nat (v:value) = match v with
   | D_nat n -> ok n
   | _ -> simple_fail "not a nat"
 
+let get_timestamp (v:value) = match v with
+  | D_timestamp n -> ok n
+  | _ -> simple_fail "not a timestamp"
+
 let get_string (v:value) = match v with
   | D_string s -> ok s
   | _ -> simple_fail "not a string"
@@ -61,6 +65,10 @@ let get_map (v:value) = match v with
 let get_list (v:value) = match v with
   | D_list lst -> ok lst
   | _ -> simple_fail "not a list"
+
+let get_set (v:value) = match v with
+  | D_set lst -> ok lst
+  | _ -> simple_fail "not a set"
 
 let get_t_option (v:type_value) = match v with
   | T_option t -> ok t

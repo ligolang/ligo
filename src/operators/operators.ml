@@ -509,10 +509,12 @@ module Compiler = struct
     ("UPDATE" , simple_ternary @@ prim I_UPDATE) ;
     ("SOME" , simple_unary @@ prim I_SOME) ;
     ("MAP_GET_FORCE" , simple_binary @@ seq [prim I_GET ; i_assert_some_msg (i_push_string "GET_FORCE")]) ;
+    ("MAP_FIND" , simple_binary @@ seq [prim I_GET ; i_assert_some_msg (i_push_string "MAP FIND")]) ;
     ("MAP_GET" , simple_binary @@ prim I_GET) ;
     ("SIZE" , simple_unary @@ prim I_SIZE) ;
     ("FAILWITH" , simple_unary @@ prim I_FAILWITH) ;
-    ("ASSERT" , simple_binary @@ i_if (seq [i_failwith]) (seq [i_drop ; i_push_unit])) ;
+    ("ASSERT_INFERRED" , simple_binary @@ i_if (seq [i_failwith]) (seq [i_drop ; i_push_unit])) ;
+    ("ASSERT" , simple_unary @@ i_if (seq [i_push_unit ; i_failwith]) (seq [i_push_unit])) ;
     ("INT" , simple_unary @@ prim I_INT) ;
     ("ABS" , simple_unary @@ prim I_ABS) ;
     ("CONS" , simple_binary @@ prim I_CONS) ;
@@ -525,6 +527,8 @@ module Compiler = struct
     ("SENDER" , simple_constant @@ prim I_SENDER) ;
     ("MAP_ADD" , simple_ternary @@ seq [dip (i_some) ; prim I_UPDATE ]) ;
     ("MAP_UPDATE" , simple_ternary @@ prim I_UPDATE) ;
+    ("SET_MEM" , simple_binary @@ prim I_MEM) ;
+    ("SET_ADD" , simple_binary @@ seq [dip (i_push (prim T_bool) (prim D_True)) ; prim I_UPDATE]) ;
     ("SLICE" , simple_ternary @@ prim I_SLICE) ;
     ("SHA256" , simple_unary @@ prim I_SHA256) ;
     ("SHA512" , simple_unary @@ prim I_SHA512) ;

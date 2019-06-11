@@ -105,6 +105,9 @@ let rec translate_type (t:AST.type_value) : type_value result =
   | T_constant ("list", [t]) ->
       let%bind t' = translate_type t in
       ok (T_list t')
+  | T_constant ("set", [t]) ->
+      let%bind t' = translate_type t in
+      ok (T_set t')
   | T_constant ("option", [o]) ->
       let%bind o' = translate_type o in
       ok (T_option o')
@@ -674,6 +677,12 @@ let rec untranspile (v : value) (t : AST.type_value) : AST.annotated_expression 
         get_nat v in      
       return (E_literal (Literal_nat n))
     )
+  | T_constant ("timestamp", []) -> (
+      let%bind n =
+        trace_strong (wrong_mini_c_value "timestamp" v) @@
+        get_timestamp v in      
+      return (E_literal (Literal_timestamp n))
+    )
   | T_constant ("tez", []) -> (
       let%bind n =
         trace_strong (wrong_mini_c_value "tez" v) @@
@@ -722,6 +731,15 @@ let rec untranspile (v : value) (t : AST.type_value) : AST.annotated_expression 
         let aux = fun e -> untranspile e ty in
         bind_map_list aux lst in
       return (E_list lst')
+    )
+  | T_constant ("set", [ty]) -> (
+      let%bind lst =
+        trace_strong (wrong_mini_c_value "set" v) @@
+        get_set v in
+      let%bind lst' =
+        let aux = fun e -> untranspile e ty in
+        bind_map_list aux lst in
+      return (E_set lst')
     )
   | T_constant ("contract" , [_ty]) ->
     fail @@ bad_untranspile "contract" v

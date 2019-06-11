@@ -34,9 +34,9 @@ let init (init_params : init_action) (_ : storage) =
 
 let vote (parameter : string) (storage : storage) =
   let now = Current.time in
-  let _ = assert (now >= storage.beginning_time && storage.finish_time < now) in
+  (* let _ = assert (now >= storage.beginning_time && storage.finish_time > now) in *)
   let addr = Current.source in
-  let _ = assert (not Set.mem addr storage.voters) in
+  (* let _ = assert (not Set.mem addr storage.voters) in *)
   let x = Map.find parameter storage.candidates in
   (
     ([] : operation list),

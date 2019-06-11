@@ -166,3 +166,13 @@ let extract_list : expression -> (expression list) result = fun e ->
   match Location.unwrap e with
   | E_list lst -> ok lst
   | _ -> fail @@ bad_kind "list" e.location
+
+let extract_record : expression -> (string * expression) list result = fun e ->
+  match Location.unwrap e with
+  | E_record lst -> ok @@ SMap.to_kv_list lst
+  | _ -> fail @@ bad_kind "record" e.location
+
+let extract_map : expression -> (expression * expression) list result = fun e ->
+  match Location.unwrap e with
+  | E_map lst -> ok lst
+  | _ -> fail @@ bad_kind "map" e.location
