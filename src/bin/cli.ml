@@ -131,4 +131,40 @@ let dry_run =
   let docs = "Subcommand: run a smart-contract with the given storage and input." in
   (term , Term.info ~docs cmdname)
 
-let () = Term.exit @@ Term.eval_choice main [compile_file ; compile_parameter ; compile_storage ; dry_run ]
+let run_function =
+  let f source entry_point parameter syntax =
+    toplevel @@
+    let%bind output =
+      Ligo.Run.run_function source entry_point parameter syntax in
+    Format.printf "%a\n" Ast_simplified.PP.expression output ;
+    ok ()
+  in
+  let term =
+    Term.(const f $ source 0 $ entry_point 1 $ expression 2 $ syntax) in
+  let cmdname = "run-function" in
+  let docs = "Subcommand: run a function with the given parameter." in
+  (term , Term.info ~docs cmdname)
+
+let evaluate_value =
+  let f source entry_point syntax =
+    toplevel @@
+    let%bind output =
+      Ligo.Run.evaluate_value source entry_point syntax in
+    Format.printf "%a\n" Ast_simplified.PP.expression output ;
+    ok ()
+  in
+  let term =
+    Term.(const f $ source 0 $ entry_point 1 $ syntax) in
+  let cmdname = "evaluate-value" in
+  let docs = "Subcommand: evaluate a given definition." in
+  (term , Term.info ~docs cmdname)
+
+
+let () = Term.exit @@ Term.eval_choice main [
+    compile_file ;
+    compile_parameter ;
+    compile_storage ;
+    dry_run ;
+    run_function ;
+    evaluate_value ;
+  ]
