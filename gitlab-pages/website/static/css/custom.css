@@ -1,9 +1,3 @@
-ul {
-    max-width: 350px;
-    margin: 0 auto;
-    text-align: left;
-}
-
 .projectTitle small {
     max-width: 700px;
     text-align: center;
@@ -36,10 +30,28 @@ ul {
 }
 
 .homeContainer .tabs {
-    width: 800px;
+    max-width: 800px;
     margin: 0 auto;
     border-top: none;
     border-bottom: 4px solid #e0e0e0;
+}
+
+.homeContainer .tabs .nav-tabs > div.active {
+    border-bottom: none;
+}
+
+.homeContainer .tabs .nav-tabs > div {
+    cursor: default;
+    color: #24292e64;
+}
+
+.homeContainer .tabs .nav-tabs > div:first-of-type {
+    cursor: pointer;
+    color: #24292e;
+}
+
+.homeContainer .tabs .nav-tabs > div.active:first-of-type {
+    border-bottom: 4px solid #1A1A1A;
 }
 
 .homeContainer .tab-content {
@@ -57,26 +69,41 @@ ul {
     border: 1px solid #B2210C;
     color: #B2210C;
 }
-/* 
-dark red: B2210C
-*/
+
 .button:hover, .promoSection .buttonWrapper:first-of-type > a.button {
     background: #B2210C;
     color: white;
 }
 
+
 blockquote {
-    background-color: rgba(178, 33, 12, 0.7);
-    border-left: 8px solid #B2210C;
-    color: white;
+    background-color: rgba(26, 26, 26, 0.6);
+    border-left: 8px solid rgba(26, 26, 26, 0.7);
+    color: rgba(255,255,255, 0.8);
 }
 
+blockquote a {
+    color: rgba(255,255,255, 0.8);
+    border-bottom: 1px solid rgba(255,255,255, 0.8);
+}
+
+blockquote a:hover {
+    color: rgba(255,255,255, 1);
+    border-bottom: 1px solid rgba(255,255,255, 1);
+}
+/* 
+blockquote {
+    background-color: rgba(252, 214, 0, 0.687);
+    border-left-color: rgba(240, 210, 37, 1);
+    color: rgba(0, 0, 0, 0.632);
+} */
+
 a {
-    color: rgba(26, 26, 26, 0.7);
+    color: rgba(12, 12, 12, 0.8);
 }
 
 a:hover {
-    color: rgba(26, 26, 26, 1);
+    color: rgb(12, 12, 12);
 }
 
 .homeContainer .homeWrapper .projectLogo {

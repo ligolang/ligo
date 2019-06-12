@@ -26,22 +26,24 @@ class HomeSplash extends React.Component {
         <div className="homeSplashFade">
           <div className="wrapper homeWrapper">
             
-          <div class="tabs">
-            <div class="nav-tabs">
-              <div id="tab-group-3-tab-4" class="nav-link active" data-group="group_3"
+          <div className="tabs">
+            <div className="nav-tabs">
+              <div id="tab-group-3-tab-4" className="nav-link active" data-group="group_3"
                 data-tab="tab-group-3-content-4">Pascaligo</div>
-              {/* <div id="tab-group-3-tab-5" class="nav-link" data-group="group_3"
+              <div className="nav-link">Camligo (coming soon)</div>
+              <div className="nav-link">Reasonligo (coming soon) </div>
+              {/* <div id="tab-group-3-tab-5" className="nav-link" data-group="group_3"
                 data-tab="tab-group-3-content-5">Camligo</div> */}
             </div>
-            <div class="tab-content">
-              <div id="tab-group-3-content-4" class="tab-pane active" data-group="group_3" tabIndex="-1">
+            <div className="tab-content">
+              <div id="tab-group-3-content-4" className="tab-pane active" data-group="group_3" tabIndex="-1">
                 <div>
                   <span>
-                    <pre><code class="hljs css language-Pascal">// variant defining pseudo multi-entrypoint actions<br />type action is<br />| Increment of int<br />| Decrement of int<br /><br />function add (const a : int ; const b : int) : int is<br />    block {'{ skip }'} with a + b<br /><br />function subtract (const a : int ; const b : int) : int is<br />    block {'{ skip }'} with a - b<br /><br />// real entrypoint that re-routes the flow based on the action provided<br />function main (const p : action ; const s : int) : (list(operation) * int) is<br />  block {'{ skip }'} with ((nil : list(operation)),<br />    case p of<br />    | Increment n -&gt; add(s, n)<br />    | Decrement n -&gt; subtract(s, n)<br />    end)<br /></code></pre>
+                    <pre><code className="hljs css language-Pascal">// variant defining pseudo multi-entrypoint actions<br />type action is<br />| Increment of int<br />| Decrement of int<br /><br />function add (const a : int ; const b : int) : int is<br />    block {'{ skip }'} with a + b<br /><br />function subtract (const a : int ; const b : int) : int is<br />    block {'{ skip }'} with a - b<br /><br />// real entrypoint that re-routes the flow based on the action provided<br />function main (const p : action ; const s : int) : (list(operation) * int) is<br />  block {'{ skip }'} with ((nil : list(operation)),<br />    case p of<br />    | Increment n -&gt; add(s, n)<br />    | Decrement n -&gt; subtract(s, n)<br />    end)<br /></code></pre>
                   </span>
                 </div>
               </div>
-              <div id="tab-group-3-content-5" class="tab-pane" data-group="group_3" tabIndex="-1">
+              <div id="tab-group-3-content-5" className="tab-pane" data-group="group_3" tabIndex="-1">
                 <div>
                   <span>
                     SOON
@@ -90,9 +92,9 @@ class HomeSplash extends React.Component {
         <div className="inner">
           <ProjectTitle siteConfig={siteConfig} />
           <PromoSection>
-            <Button href={docUrl('setup-installation.html')}>Getting started</Button>
-            <Button href={docUrl('contributors/origin.html')}>Contributing</Button>
-
+            <Button href={docUrl('setup-installation.html')}>Get Started</Button>
+            <Button href={docUrl('tutorials/first-smart-contract.html')}>Tutorials</Button>
+            <Button href={docUrl('contributors/origin.html')}>Contribute</Button>
           </PromoSection>
         </div>
       </SplashContainer>

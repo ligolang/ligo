@@ -14,7 +14,7 @@ const partners = [
     caption: 'Nomadic Labs',
     // You will need to prepend the image path with your baseUrl
     // if it is not '/', like: '/test-site/img/image.jpg'.
-    image: 'https://media.licdn.com/dms/image/C560BAQGE4y1pddQlrw/company-logo_200_200/0?e=2159024400&v=beta&t=aszI_Js3VuY7P20n1pYVAJmeRhM1kC_ftMrowcQa2ZQ',
+    image: '/img/nomadic-logo.jpg',
     infoLink: 'https://www.nomadic-labs.com/',
     pinned: true,
   },
@@ -22,7 +22,7 @@ const partners = [
     caption: 'Tocqueville Group',
     // You will need to prepend the image path with your baseUrl
     // if it is not '/', like: '/test-site/img/image.jpg'.
-    image: 'https://tqgroup.io/static/images/logo.svg',
+    image: '/img/tq-logo.svg',
     infoLink: 'https://tqgroup.io/',
     pinned: true,
   },
@@ -30,7 +30,7 @@ const partners = [
     caption: 'Stove Labs',
     // You will need to prepend the image path with your baseUrl
     // if it is not '/', like: '/test-site/img/image.jpg'.
-    image: 'https://stove-labs.com/logo_transparent.png',
+    image: '/img/stove-logo.png',
     infoLink: 'https://stove-labs.com',
     pinned: true,
   },
@@ -46,7 +46,7 @@ const team = [
     pinned: true,
   },
   {
-    caption: 'Georges Duperon',
+    caption: 'Georges Dupéron',
     // You will need to prepend the image path with your baseUrl
     // if it is not '/', like: '/test-site/img/image.jpg'.
     image: 'https://thepowerofthedream.org/wp-content/uploads/2015/09/generic-profile-picture-600x600.jpg',
@@ -99,7 +99,9 @@ const siteConfig = {
   headerLinks: [
     {doc: 'setup-installation', label: 'Docs'},
     {doc: 'api-cli-commands', label: 'CLI'},
-    {doc: 'contributors/origin', label: 'Contributing'},
+    {doc: 'tutorials/first-smart-contract', label: 'Tutorials'},
+    { blog: true, label: 'Blog' },
+    {doc: 'contributors/origin', label: 'Contribute'},
   ],
 
   // If you have users set above, you add it here:
@@ -108,8 +110,8 @@ const siteConfig = {
 
   /* path to images for header/footer */
   headerIcon: 'img/logo.svg',
-  footerIcon: 'img/favicon.ico',
-  favicon: 'img/favicon.ico',
+  footerIcon: 'img/logo.svg',
+  favicon: 'img/logo.svg',
 
   /* Colors for website */
   colors: {
@@ -159,7 +161,7 @@ const siteConfig = {
 
   // You may provide arbitrary config keys to be used as needed by your
   // template. For example, if you need your repo's URL...
-  //   repoUrl: 'https://github.com/facebook/test-site',
+    repoUrl: 'https://gitlab.com/ligolang/ligo',
 };
 
 module.exports = siteConfig;

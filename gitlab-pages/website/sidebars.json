@@ -5,7 +5,7 @@
     "API": ["api-cli-commands"]
   },
   "contributors-docs": {
-    "Introduction": ["contributors/origin", "contributors/philosophy"],
+    "Introduction": ["contributors/origin", "contributors/philosophy", "contributors/getting-started", "contributors/documentation-and-releases"],
     "Big Picture": [
       "contributors/big-picture/overview",
       "contributors/big-picture/front-end", 
@@ -13,7 +13,9 @@
       "contributors/big-picture/back-end",
       "contributors/big-picture/vendors"
     ],
-    "Road Map": ["contributors/road-map/short-term", "contributors/road-map/long-term"],
-    "Contributing": ["contributors/contributing/getting-started"]
+    "Road Map": ["contributors/road-map/short-term", "contributors/road-map/long-term"]
+  },
+  "tutorials": {
+    "Get Started": ["tutorials/first-smart-contract"]
   }
 }
