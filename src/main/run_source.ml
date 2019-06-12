@@ -233,23 +233,35 @@ let type_file ?(debug_simplify = false) ?(debug_typed = false)
     )) ;
   ok typed
 
-let run_contract source entry_point storage input syntax =
+let run_contract ?amount source entry_point storage input syntax =
   let%bind typed =
     type_file syntax source in
   let%bind storage_simpl =
     parsify_expression syntax storage in
   let%bind input_simpl =
     parsify_expression syntax input in
-  Run_simplified.run_simplityped typed entry_point (Ast_simplified.e_pair storage_simpl input_simpl)
+  let options =
+    let open Proto_alpha_utils.Memory_proto_alpha in
+    let amount = Option.bind (fun amount -> Alpha_context.Tez.of_string amount) amount in
+    (make_options ?amount ()) in
+  Run_simplified.run_simplityped ~options typed entry_point (Ast_simplified.e_pair storage_simpl input_simpl)
 
-let run_function source entry_point parameter syntax =
+let run_function ?amount source entry_point parameter syntax =
   let%bind typed =
     type_file syntax source in
   let%bind parameter' =
     parsify_expression syntax parameter in
-  Run_simplified.run_simplityped typed entry_point parameter'
+  let options =
+    let open Proto_alpha_utils.Memory_proto_alpha in
+    let amount = Option.bind (fun amount -> Alpha_context.Tez.of_string amount) amount in
+    (make_options ?amount ()) in
+  Run_simplified.run_simplityped ~options typed entry_point parameter'
 
-let evaluate_value source entry_point syntax =
+let evaluate_value ?amount source entry_point syntax =
   let%bind typed =
     type_file syntax source in
-  Run_simplified.evaluate_simplityped typed entry_point
+  let options =
+    let open Proto_alpha_utils.Memory_proto_alpha in
+    let amount = Option.bind (fun amount -> Alpha_context.Tez.of_string amount) amount in
+    (make_options ?amount ()) in
+  Run_simplified.evaluate_simplityped ~options typed entry_point
