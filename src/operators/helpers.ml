@@ -88,6 +88,7 @@ module Typer = struct
         t_string () ;
         t_bytes () ;
         t_address () ;
+        t_timestamp () ;
       ] in
     ok @@ t_bool ()
 

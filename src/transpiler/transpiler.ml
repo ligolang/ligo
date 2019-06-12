@@ -105,6 +105,9 @@ let rec translate_type (t:AST.type_value) : type_value result =
   | T_constant ("list", [t]) ->
       let%bind t' = translate_type t in
       ok (T_list t')
+  | T_constant ("set", [t]) ->
+      let%bind t' = translate_type t in
+      ok (T_set t')
   | T_constant ("option", [o]) ->
       let%bind o' = translate_type o in
       ok (T_option o')
@@ -181,6 +184,7 @@ let rec translate_literal : AST.literal -> value = fun l -> match l with
   | Literal_bool b -> D_bool b
   | Literal_int n -> D_int n
   | Literal_nat n -> D_nat n
+  | Literal_timestamp n -> D_timestamp n
   | Literal_tez n -> D_tez n
   | Literal_bytes s -> D_bytes s
   | Literal_string s -> D_string s
@@ -360,6 +364,16 @@ and translate_annotated_expression (ae:AST.annotated_expression) : expression re
       let aux : expression -> expression -> expression result = fun prev cur ->
         return @@ E_constant ("CONS", [cur ; prev]) in
       let%bind (init : expression) = return @@ E_make_empty_list t in
+      bind_fold_list aux init lst'
+    )
+  | E_set lst -> (
+      let%bind t =
+        trace_strong (corner_case ~loc:__LOC__ "not a set") @@
+        Mini_c.Combinators.get_t_set tv in
+      let%bind lst' = bind_map_list (translate_annotated_expression) lst in
+      let aux : expression -> expression -> expression result = fun prev cur ->
+        return @@ E_constant ("CONS", [cur ; prev]) in
+      let%bind (init : expression) = return @@ E_make_empty_set t in
       bind_fold_list aux init lst'
     )
   | E_map m -> (
@@ -663,6 +677,12 @@ let rec untranspile (v : value) (t : AST.type_value) : AST.annotated_expression 
         get_nat v in      
       return (E_literal (Literal_nat n))
     )
+  | T_constant ("timestamp", []) -> (
+      let%bind n =
+        trace_strong (wrong_mini_c_value "timestamp" v) @@
+        get_timestamp v in      
+      return (E_literal (Literal_timestamp n))
+    )
   | T_constant ("tez", []) -> (
       let%bind n =
         trace_strong (wrong_mini_c_value "tez" v) @@
@@ -711,6 +731,15 @@ let rec untranspile (v : value) (t : AST.type_value) : AST.annotated_expression 
         let aux = fun e -> untranspile e ty in
         bind_map_list aux lst in
       return (E_list lst')
+    )
+  | T_constant ("set", [ty]) -> (
+      let%bind lst =
+        trace_strong (wrong_mini_c_value "set" v) @@
+        get_set v in
+      let%bind lst' =
+        let aux = fun e -> untranspile e ty in
+        bind_map_list aux lst in
+      return (E_set lst')
     )
   | T_constant ("contract" , [_ty]) ->
     fail @@ bad_untranspile "contract" v

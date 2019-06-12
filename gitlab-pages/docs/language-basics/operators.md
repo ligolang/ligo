@@ -1,9 +1,11 @@
 ---
-id: language-basics-operators
+id: operators
 title: Operators
 ---
 
 ## Available operators
+
+> This list is non-exhaustive, more operators will be added in the upcoming LIGO releases.
 
 |Michelson   	|Pascaligo   	|Description |
 |---	|---	|---	|

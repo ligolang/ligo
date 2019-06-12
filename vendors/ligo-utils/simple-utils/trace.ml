@@ -1,3 +1,213 @@
+(** Trace tutorial
+
+    The module below guides the reader through the writing of a
+    simplified version of the trace monad (`result`), and the
+    definition of a few operations that make it easier to work with
+    `result`.
+*)
+
+module Trace_tutorial = struct
+(** The trace monad is fairly similar to the option type: *)
+
+type 'a option =
+    Some of 'a  (* Ok also stores a list of annotations *)
+  | None;;      (* Errors also stores a list of messages *)
+
+type annotation = string;;
+type      error = string;;
+type 'a result =
+    Ok of 'a * annotation list
+  | Errors of error list;;
+
+(** When applying a partial function on a result, it can return a valid result
+    (Some v), or indicate failure (None). *)
+
+let divide a b =
+  if b = 0
+  then None
+  else Some (a/b);;
+
+(** With the trace monad, the Errors case also indicates some information about
+    the failure, to ease debugging. *)
+
+let divide_trace a b =
+  if b = 0
+  then (Errors [Printf.sprintf "division by zero: %d / %d" a b])
+  else Ok ((a/b) , []);;
+
+(** when composing two functions, the error case is propagated. *)
+
+let divide_three a b c =
+  let maybe_a_div_b = divide_trace a b in
+  match maybe_a_div_b with
+     Ok (a_div_b , _) -> divide_trace a_div_b c
+   | (Errors _) as e -> e;;
+
+(** If both calls are successful, the lists of annotations are concatenated. *)
+
+let divide_three_annots a b c =
+  let maybe_a_div_b = divide_trace a b in
+  match maybe_a_div_b with
+     Ok (a_div_b , annots1) ->
+       let maybe_a_div_b_div_c = divide_trace a_div_b c in
+       begin
+         match maybe_a_div_b_div_c with
+           Ok (a_div_b_div_c , annots2)
+           -> Ok (a_div_b_div_c , annots2 @ annots1)
+         | (Errors _) as e2 -> e2
+       end
+   | (Errors _) as e1 -> e1;;
+
+(** This incurs quite a lot of noise, so we define a `bind` operator which
+    takes a function ('x -> ('y result)) and applies it to an existing
+    ('x result).
+
+   * If the existing result is Errors, `bind` returns that error without
+     calling the function
+   * Otherwise `bind` unwraps the Ok and calls the function
+     * That function may itself return an error
+     * Otherwise `bind` combines the annotations and returns the second
+       result. *)
+
+let bind f = function
+  | Ok (x, annotations) ->
+      (match f x with
+         Ok (x', annotations') -> Ok (x', annotations' @ annotations)
+       | Errors _ as e' -> ignore annotations; e')
+  | Errors _ as e -> e;;
+
+(** The following function divide_three_bind is equivalent to the verbose
+   divide_three. *)
+
+let divide_three_bind a b c =
+  let maybe_a_div_b = divide_trace a b in
+  let continuation a_div_b = divide_trace a_div_b c in
+  bind continuation maybe_a_div_b;;
+
+(** This made the code shorter, but the reading order is a bit awkward.
+    We define an operator symbol for `bind`: *)
+
+let (>>?) x f = bind f x;;
+
+let divide_three_bind_symbol a b c =
+  let maybe_a_div_b = divide_trace a b in
+  let continuation a_div_b = divide_trace a_div_b c in
+  maybe_a_div_b >>? continuation;;
+
+(** and we inline the two temporary let definitions: *)
+
+let divide_three_bind_symbol' a b c =
+  divide_trace a b >>? (fun a_div_b -> divide_trace a_div_b c);;
+
+(** This is now fairly legible, but chaining many such functions is
+    not the usual way of writing code. We use ppx_let to add some
+    syntactic sugar.
+
+    The ppx is enabled by adding the following lines inside the
+    section (library …) or (executable …) of the dune file for
+    the project that uses ppx_let.
+
+    (preprocess
+      (pps simple-utils.ppx_let_generalized))
+*)
+
+module Let_syntax = struct
+  let bind m ~f = m >>? f
+  module Open_on_rhs_bind = struct end
+end;;
+
+(** divide_three_bind_ppx_let is equivalent to divide_three_bind_symbol'.
+
+    Strictly speaking, the only difference is that the module
+    Open_on_rhs_bind is opened around the expression on the righ-hand side
+    of the `=` sign, namely `divide_trace a b` *)
+
+let divide_three_bind_ppx_let a b c =
+  let%bind a_div_b = divide_trace a b in
+  divide_trace a_div_b c;;
+
+(** This notation scales fairly well: *)
+
+let divide_many_bind_ppx_let a b c d e f  =
+  let      x = a                in
+  let%bind x = divide_trace x b in
+  let%bind x = divide_trace x c in
+  let%bind x = divide_trace x d in
+  let%bind x = divide_trace x e in
+  let%bind x = divide_trace x f in
+  Ok (x , []);;
+
+(** We define a couple of shorthands for common use cases.
+
+    `ok` lifts a ('foo) value to a ('foo result): *)
+
+let ok x = Ok (x, []);;
+
+(** `map` lifts a regular ('foo -> 'bar) function on values
+    to a function on results, with type ('foo result -> 'bar result): *)
+
+let map f = function
+  | Ok (x, annotations) -> Ok (f x, annotations)
+  | Errors _ as e -> e;;
+
+(** `bind_list` turns a (('foo result) list) into a (('foo list) result).
+
+    If the list only contains Ok values, it strips the Ok returns that list
+    wrapped with Ok.
+
+    Otherwise, when one or more of the elements of the original list is
+    Errors, `bind_list` returns the first error in the list. *)
+
+let rec bind_list = function
+  | [] -> ok []
+  | hd :: tl -> (
+      hd >>? fun hd ->
+      bind_list tl >>? fun tl ->
+      ok @@ hd :: tl
+    );;
+
+(**
+   A major feature of Trace is that it enables having a stack of errors (that
+   should act as a simplified stack frame), rather than a unique error.
+   It is done by using the function `trace`.
+   For instance, let's say that you have a function that can trigger two errors,
+   and you want to pass their data along with an other error, what you would
+   usually do is:
+   ```
+   let foobarer ... =
+     ... in
+     let value =
+       try ( get key map )
+       with
+       | Bad_key _ -> raise (Foobar_error ("bad key" , key , map))
+       | Missing_value _ -> raise (Foobar_error ("missing index" , key , map))
+     in ...
+   ```
+   With Trace, you would instead:
+   ```
+   let foobarer ... =
+     ... in
+     let%bind value =
+       trace (simple_error "error getting key") @@
+       get key map
+     in ...
+   ```
+   And this will pass along the error triggered by "get key map".
+*)
+
+let trace err = function
+  | Ok _ as o -> o
+  | Errors errs -> Errors (err :: errs);;
+
+(** The real trace monad is very similar to the one that we have
+    defined above. The main difference is that the errors and
+    annotations are structured data (instead of plain strings) and are
+    lazily-generated. *)
+
+let the_end = "End of the tutorial.";;
+
+end (* end Trace_tutorial. *)
+
 module J = Yojson.Basic
 
 module JSON_string_utils = struct
@@ -208,34 +418,6 @@ let internal_assertion_failure str = simple_error ("assertion failed: " ^ str)
 *)
 let dummy_fail = simple_fail "dummy"
 
-(**
-   A major feature of Trace is that it enables having a stack of errors (that
-   should act as a simplified stack frame), rather than a unique error.
-   It is done by using the function `trace`.
-   For instance, let's say that you have a function that can trigger two errors,
-   and you want to pass their data along with an other error, what you would
-   usually do is:
-   ```
-   let foobarer ... =
-     ... in
-     let value =
-       try ( get key map )
-       with
-       | Bad_key _ -> raise (Foobar_error ("bad key" , key , map))
-       | Missing_value _ -> raise (Foobar_error ("missing index" , key , map))
-     in ...
-   ```
-   With Trace, you would instead:
-   ```
-   let foobarer ... =
-     ... in
-     let%bind value =
-       trace (simple_error "error getting key") @@
-       get key map
-     in ...
-   ```
-   And this will pass along the error triggered by "get key map".
-*)
 let trace info = function
   | Ok _ as o -> o
   | Error err -> Error (fun () -> prepend_info (info ()) (err ()))

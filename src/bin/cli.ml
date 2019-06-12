@@ -57,9 +57,9 @@ let entry_point n =
     info ~docv ~doc [] in
   required @@ pos n (some string) (Some "main") info
 
-let expression n =
+let expression purpose n =
   let open Arg in
-  let docv = "EXPRESSION" in
+  let docv = purpose ^ "_EXPRESSION" in
   let doc = "$(docv) is the expression that will be compiled." in
   let info = info ~docv ~doc [] in
   required @@ pos n (some string) None info
@@ -68,9 +68,9 @@ let syntax =
   let open Arg in
   let info =
     let docv = "SYNTAX" in
-    let doc = "$(docv) is the syntax that will be used. Currently supported syntaxes are \"pascaligo\" and \"cameligo\". \"pascaligo\" is the default." in
+    let doc = "$(docv) is the syntax that will be used. Currently supported syntaxes are \"pascaligo\" and \"cameligo\". By default, the syntax is guessed from the extension (.ligo and .mligo, respectively)." in
     info ~docv ~doc ["syntax" ; "s"] in
-  value @@ opt string "pascaligo" info
+  value @@ opt string "auto" info
 
 let amount =
   let open Arg in
@@ -105,7 +105,7 @@ let compile_parameter =
     ok ()
   in
   let term =
-    Term.(const f $ source 0 $ entry_point 1 $ expression 2 $ syntax) in
+    Term.(const f $ source 0 $ entry_point 1 $ expression "PARAMETER" 2 $ syntax) in
   let cmdname = "compile-parameter" in
   let docs = "Subcommand: compile parameters to a michelson expression. The resulting michelson expression can be passed as an argument in a transaction which calls a contract. See `ligo " ^ cmdname ^ " --help' for a list of options specific to this subcommand." in
   (term , Term.info ~docs cmdname)
@@ -120,7 +120,7 @@ let compile_storage =
     ok ()
   in
   let term =
-    Term.(const f $ source 0 $ entry_point 1 $ expression 2 $ syntax) in
+    Term.(const f $ source 0 $ entry_point 1 $ expression "STORAGE" 2 $ syntax) in
   let cmdname = "compile-storage" in
   let docs = "Subcommand: compile an initial storage in ligo syntax to a michelson expression. The resulting michelson expression can be passed as an argument in a transaction which originates a contract. See `ligo " ^ cmdname ^ " --help' for a list of options specific to this subcommand." in
   (term , Term.info ~docs cmdname)
@@ -134,7 +134,7 @@ let dry_run =
     ok ()
   in
   let term =
-    Term.(const f $ source 0 $ entry_point 1 $ expression 2 $ expression 3 $ amount $ syntax) in
+    Term.(const f $ source 0 $ entry_point 1 $ expression "PARAMETER" 2 $ expression "STORAGE" 3 $ amount $ syntax) in
   let cmdname = "dry-run" in
   let docs = "Subcommand: run a smart-contract with the given storage and input." in
   (term , Term.info ~docs cmdname)
@@ -148,7 +148,7 @@ let run_function =
     ok ()
   in
   let term =
-    Term.(const f $ source 0 $ entry_point 1 $ expression 2 $ amount $ syntax) in
+    Term.(const f $ source 0 $ entry_point 1 $ expression "PARAMETER" 2 $ amount $ syntax) in
   let cmdname = "run-function" in
   let docs = "Subcommand: run a function with the given parameter." in
   (term , Term.info ~docs cmdname)

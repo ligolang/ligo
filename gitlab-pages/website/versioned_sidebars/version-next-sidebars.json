@@ -1,13 +1,16 @@
 {
   "version-next-docs": {
     "Setup": [
-      "version-next-setup-installation"
+      "version-next-setup/installation",
+      "version-next-setup/editor-support"
     ],
     "Language Basics": [
-      "version-next-language-basics-variables",
-      "version-next-language-basics-functions",
-      "version-next-language-basics-entrypoints",
-      "version-next-language-basics-operators"
+      "version-next-language-basics/cheat-sheet",
+      "version-next-language-basics/types",
+      "version-next-language-basics/variables",
+      "version-next-language-basics/functions",
+      "version-next-language-basics/entrypoints",
+      "version-next-language-basics/operators"
     ],
     "API": [
       "version-next-api-cli-commands"

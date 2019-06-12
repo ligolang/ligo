@@ -5,7 +5,7 @@ type test =
   | Test_suite of (string * test list)
   | Test of test_case
 
-let error_pp out (e : error) =
+let rec error_pp out (e : error) =
     let open JSON_string_utils in
   let message =
     let opt = e |> member "message" |> string in
@@ -30,6 +30,7 @@ let error_pp out (e : error) =
     let infos = e |> member "infos" in
     match infos with
     | `Null -> ""
+    | `List lst -> Format.asprintf "@[<v2>%a@]" PP_helpers.(list_sep error_pp (tag "@,")) lst
     | _ -> " " ^ (J.to_string infos) ^ "\n" in
   Format.fprintf out "%s%s%s.\n%s%s" title error_code message data infos
 
@@ -70,7 +71,7 @@ let expect_eq ?options program entry_point input expected =
           Ast_simplified.PP.expression result in
       error title content in
     trace expect_error @@
-    Ast_simplified.assert_value_eq (expected , result) in
+    Ast_simplified.Misc.assert_value_eq (expected , result) in
   expect ?options program entry_point input expecter
 
 let expect_evaluate program entry_point expecter =
@@ -84,7 +85,7 @@ let expect_evaluate program entry_point expecter =
 
 let expect_eq_evaluate program entry_point expected =
   let expecter = fun result ->
-    Ast_simplified.assert_value_eq (expected , result) in
+    Ast_simplified.Misc.assert_value_eq (expected , result) in
   expect_evaluate program entry_point expecter
 
 let expect_n_aux ?options lst program entry_point make_input make_expecter =

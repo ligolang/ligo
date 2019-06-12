@@ -1,6 +1,8 @@
 (library
   (name simple_utils)
   (public_name simple-utils)
+  (preprocess
+    (pps simple-utils.ppx_let_generalized))
   (libraries
     yojson
     unix

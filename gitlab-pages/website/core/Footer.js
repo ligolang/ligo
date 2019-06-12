@@ -46,6 +46,12 @@ class Footer extends React.Component {
               rel="noreferrer noopener">
               Tezos Stack Exchange
             </a>
+            <a
+              href="https://discord.gg/9rhYaEt"
+              target="_blank"
+              rel="noreferrer noopener">
+              Discord
+            </a>
           </div>
           <div>
             <h5>More</h5>
@@ -63,7 +69,7 @@ class Footer extends React.Component {
             rel="noreferrer noopener">
             Docusaurus
           </a> by Facebook.
-          <div>Icons made by <a href="https://www.flaticon.com/authors/lucy-g" title="Lucy G">Lucy G</a> from <a href="https://www.flaticon.com/" 			    title="Flaticon">www.flaticon.com</a> is licensed by <a href="http://creativecommons.org/licenses/by/3.0/" 			    title="Creative Commons BY 3.0" target="_blank">CC 3.0 BY</a></div>
+          <div>Icons made by <a href="https://www.freepik.com/" title="Freepik">Freepik</a> & <a href="https://www.flaticon.com/authors/lucy-g" title="Lucy G">Lucy G</a> from <a href="https://www.flaticon.com/" 			    title="Flaticon">www.flaticon.com</a> is licensed by <a href="http://creativecommons.org/licenses/by/3.0/" 			    title="Creative Commons BY 3.0" target="_blank">CC 3.0 BY</a></div>
           {this.props.config.copyright}
         </section>
       </footer>

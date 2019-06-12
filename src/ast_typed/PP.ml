@@ -43,6 +43,7 @@ and expression ppf (e:expression) : unit =
   | E_record m -> fprintf ppf "record[%a]" (smap_sep_d annotated_expression) m
   | E_map m -> fprintf ppf "map[@;  @[<v>%a@]@;]" (list_sep assoc_annotated_expression (tag ",@;")) m
   | E_list m -> fprintf ppf "list[@;  @[<v>%a@]@;]" (list_sep annotated_expression (tag ",@;")) m
+  | E_set m -> fprintf ppf "set[@;  @[<v>%a@]@;]" (list_sep annotated_expression (tag ",@;")) m
   | E_look_up (ds, i) -> fprintf ppf "(%a)[%a]" annotated_expression ds annotated_expression i
   | E_matching (ae, m) ->
       fprintf ppf "match %a with %a" annotated_expression ae (matching annotated_expression) m
@@ -68,6 +69,7 @@ and literal ppf (l:literal) : unit =
   | Literal_bool b -> fprintf ppf "%b" b
   | Literal_int n -> fprintf ppf "%d" n
   | Literal_nat n -> fprintf ppf "+%d" n
+  | Literal_timestamp n -> fprintf ppf "+%d" n
   | Literal_tez n -> fprintf ppf "%dtz" n
   | Literal_string s -> fprintf ppf "%s" s
   | Literal_bytes b -> fprintf ppf "0x%s" @@ Bytes.to_string @@ Bytes.escaped b
