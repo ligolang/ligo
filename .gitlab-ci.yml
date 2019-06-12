@@ -53,7 +53,7 @@ stages:
     - npm run build
     # move internal odoc documentation to the website folder
     - mkdir -p gitlab-pages/website/build/ligo/
-    - mv _build/default/_doc/_html/ gitlab-pages/website/build/ligo/odoc
+    - mv ../../_build/default/_doc/_html/ gitlab-pages/website/build/ligo/odoc
     - ls gitlab-pages/website/build/ligo/ # for debug
   after_script:
     - cp -r gitlab-pages/website/build/ligo public
