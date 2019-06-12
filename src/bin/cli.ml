@@ -72,6 +72,14 @@ let syntax =
     info ~docv ~doc ["syntax" ; "s"] in
   value @@ opt string "pascaligo" info
 
+let amount =
+  let open Arg in
+  let info =
+    let docv = "AMOUNT" in
+    let doc = "$(docv) is the amount the dry-run transaction will use." in
+    info ~docv ~doc ["amount"] in
+  value @@ opt string "0" info
+
 let compile_file =
   let f source entry_point syntax =
     toplevel @@
@@ -118,43 +126,43 @@ let compile_storage =
   (term , Term.info ~docs cmdname)
 
 let dry_run =
-  let f source entry_point storage input syntax =
+  let f source entry_point storage input amount syntax =
     toplevel @@
     let%bind output =
-      Ligo.Run.run_contract source entry_point storage input syntax in
+      Ligo.Run.run_contract ~amount source entry_point storage input syntax in
     Format.printf "%a\n" Ast_simplified.PP.expression output ;
     ok ()
   in
   let term =
-    Term.(const f $ source 0 $ entry_point 1 $ expression 2 $ expression 3 $ syntax) in
+    Term.(const f $ source 0 $ entry_point 1 $ expression 2 $ expression 3 $ amount $ syntax) in
   let cmdname = "dry-run" in
   let docs = "Subcommand: run a smart-contract with the given storage and input." in
   (term , Term.info ~docs cmdname)
 
 let run_function =
-  let f source entry_point parameter syntax =
+  let f source entry_point parameter amount syntax =
     toplevel @@
     let%bind output =
-      Ligo.Run.run_function source entry_point parameter syntax in
+      Ligo.Run.run_function ~amount source entry_point parameter syntax in
     Format.printf "%a\n" Ast_simplified.PP.expression output ;
     ok ()
   in
   let term =
-    Term.(const f $ source 0 $ entry_point 1 $ expression 2 $ syntax) in
+    Term.(const f $ source 0 $ entry_point 1 $ expression 2 $ amount $ syntax) in
   let cmdname = "run-function" in
   let docs = "Subcommand: run a function with the given parameter." in
   (term , Term.info ~docs cmdname)
 
 let evaluate_value =
-  let f source entry_point syntax =
+  let f source entry_point amount syntax =
     toplevel @@
     let%bind output =
-      Ligo.Run.evaluate_value source entry_point syntax in
+      Ligo.Run.evaluate_value ~amount source entry_point syntax in
     Format.printf "%a\n" Ast_simplified.PP.expression output ;
     ok ()
   in
   let term =
-    Term.(const f $ source 0 $ entry_point 1 $ syntax) in
+    Term.(const f $ source 0 $ entry_point 1 $ amount $ syntax) in
   let cmdname = "evaluate-value" in
   let docs = "Subcommand: evaluate a given definition." in
   (term , Term.info ~docs cmdname)
