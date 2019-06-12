@@ -155,6 +155,7 @@ module Free_variables = struct
     | E_record_accessor (a, _) -> self a
     | E_tuple_accessor (a, _) -> self a
     | E_list lst -> unions @@ List.map self lst
+    | E_set lst -> unions @@ List.map self lst
     | E_map m -> unions @@ List.map self @@ List.concat @@ List.map (fun (a, b) -> [ a ; b ]) m
     | E_look_up (a , b) -> unions @@ List.map self [ a ; b ]
     | E_matching (a , cs) -> union (self a) (matching_expression b cs)
@@ -344,6 +345,9 @@ let assert_literal_eq (a, b : literal * literal) : unit result =
   | Literal_nat a, Literal_nat b when a = b -> ok ()
   | Literal_nat _, Literal_nat _ -> fail @@ different_literals "different nats" a b
   | Literal_nat _, _ -> fail @@ different_literals_because_different_types "nat vs non-nat" a b
+  | Literal_timestamp a, Literal_timestamp b when a = b -> ok ()
+  | Literal_timestamp _, Literal_timestamp _ -> fail @@ different_literals "different timestamps" a b
+  | Literal_timestamp _, _ -> fail @@ different_literals_because_different_types "timestamp vs non-timestamp" a b
   | Literal_tez a, Literal_tez b when a = b -> ok ()
   | Literal_tez _, Literal_tez _ -> fail @@ different_literals "different tezs" a b
   | Literal_tez _, _ -> fail @@ different_literals_because_different_types "tez vs non-tez" a b
@@ -443,6 +447,15 @@ let rec assert_value_eq (a, b: (value*value)) : unit result =
     )
   | E_list _, _ ->
       fail @@ different_values_because_different_types "list vs. non-list" a b
+  | E_set lsta, E_set lstb -> (
+      let%bind lst =
+        generic_try (different_size_values "sets of different lengths" a b)
+          (fun () -> List.combine lsta lstb) in
+      let%bind _all = bind_map_list assert_value_eq lst in
+      ok ()
+    )
+  | E_set _, _ ->
+      fail @@ different_values_because_different_types "set vs. non-set" a b
   | (E_literal _, _) | (E_variable _, _) | (E_application _, _)
   | (E_lambda _, _) | (E_let_in _, _) | (E_tuple_accessor _, _)
   | (E_record_accessor _, _)

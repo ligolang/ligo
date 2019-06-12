@@ -217,7 +217,7 @@ let sell () =
       let expected_storage =
         let cards = List.hds @@ cards_ez first_owner n in
         basic 99 1000 cards (2 * n) in
-      Ast_simplified.assert_value_eq (expected_storage , storage)
+      Ast_simplified.Misc.assert_value_eq (expected_storage , storage)
     in
     let%bind () =
       let amount = Memory_proto_alpha.Alpha_context.Tez.zero in
