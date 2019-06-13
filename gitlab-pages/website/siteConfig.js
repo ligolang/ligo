@@ -101,7 +101,8 @@ const siteConfig = {
     {doc: 'tutorials/get-started/tezos-taco-shop-smart-contract', label: 'Tutorials'},
     { blog: true, label: 'Blog' },
     {doc: 'contributors/origin', label: 'Contribute'},
-    {href: 'https://discord.gg/9rhYaEt', label: ''}
+    {href: 'https://discord.gg/9rhYaEt', label: ''},
+    { search: true },
   ],
 
   // If you have users set above, you add it here:
@@ -162,6 +163,12 @@ const siteConfig = {
   // You may provide arbitrary config keys to be used as needed by your
   // template. For example, if you need your repo's URL...
     repoUrl: 'https://gitlab.com/ligolang/ligo',
+
+  algolia: {
+    apiKey: '12be98d9fd4242a5f16b70a5cc6b0158',
+    indexName: 'ligolang',
+    algoliaOptions: {} // Optional, if provided by Algolia
+  },
 };
 
 module.exports = siteConfig;
