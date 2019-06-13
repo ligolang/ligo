@@ -787,6 +787,21 @@ let website2_ligo () : unit result =
     e_pair (e_typed_list [] t_operation) (e_int (op 42 n)) in
   expect_eq_n program "main" make_input make_expected
 
+let tez_ligo () : unit result =
+  let%bind program = type_file "./contracts/tez.ligo" in
+  let%bind _ = expect_eq_evaluate program "add_tez" (e_mutez 42) in
+  let%bind _ = expect_eq_evaluate program "sub_tez" (e_mutez 1) in
+  let%bind _ = expect_eq_evaluate program "not_enough_tez" (e_mutez 4611686018427387903) in
+  ok ()
+
+let tez_mligo () : unit result =
+  let%bind program = mtype_file "./contracts/tez.mligo" in
+  let%bind _ = expect_eq_evaluate program "add_tez" (e_mutez 42) in
+  let%bind _ = expect_eq_evaluate program "sub_tez" (e_mutez 1) in
+  let%bind _ = expect_eq_evaluate program "not_enough_tez" (e_mutez 4611686018427387903) in
+  let%bind _ = expect_eq_evaluate program "add_more_tez" (e_mutez 111111000) in
+  ok ()
+
 let main = test_suite "Integration (End to End)" [
     test "type alias" type_alias ;
     test "function" function_ ;
@@ -844,6 +859,8 @@ let main = test_suite "Integration (End to End)" [
     test "lambda mligo" lambda_mligo ;
     test "lambda ligo" lambda_ligo ;
     (* test "lambda2 mligo" lambda2_mligo ; *)
+    test "tez (ligo)" tez_ligo ;
+    test "tez (mligo)" tez_mligo ;
     test "website1 ligo" website1_ligo ;
     test "website2 ligo" website2_ligo ;
   ]
