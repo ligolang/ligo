@@ -37,6 +37,9 @@ class Footer extends React.Component {
             <a href={this.docUrl('contributors/origin.html', this.props.language)}>
               Contribute
             </a>
+            <a href={this.docUrl('/odoc', this.props.language)}>
+              Api Documentation
+            </a>
           </div>
           <div>
             <h5>Community</h5>

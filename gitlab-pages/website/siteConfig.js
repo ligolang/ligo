@@ -101,7 +101,7 @@ const siteConfig = {
     {doc: 'api-cli-commands', label: 'CLI'},
     {doc: 'tutorials/first-smart-contract', label: 'Tutorials'},
     { blog: true, label: 'Blog' },
-    { href: "/odoc", label: "Api" },
+    // TODO: { href: "/odoc", label: "Api" },
     {doc: 'contributors/origin', label: 'Contribute'}
   ],
 
