@@ -15,6 +15,17 @@ let pseq_to_list = function
 let get_value : 'a Raw.reg -> 'a = fun x -> x.value
 
 module Errors = struct
+  let unsupported_cst_constr p =
+    let title () = "constant constructor" in
+    let message () =
+      Format.asprintf "constant constructors are not supported yet" in
+    let pattern_loc = Raw.pattern_to_region p in
+    let data = [
+      ("pattern_loc",
+       fun () -> Format.asprintf "%a" Location.pp_lift @@ pattern_loc)
+    ] in
+    error ~data title message
+
   let unsupported_ass_None region =
     let title () = "assignment of None" in
     let message () =
@@ -848,33 +859,37 @@ and simpl_cases : type a . (Raw.pattern * a) list -> a matching result = fun t -
   let get_var (t:Raw.pattern) =
     match t with
     | PVar v -> ok v.value
-    | p -> fail @@ unsupported_non_var_pattern p
-  in
-  let get_tuple (t:Raw.pattern) = match t with
+    | p -> fail @@ unsupported_non_var_pattern p in
+  let get_tuple (t: Raw.pattern) =
+    match t with
     | PCons v -> npseq_to_list v.value
     | PTuple v -> npseq_to_list v.value.inside
-    | x -> [ x ]
-  in
-  let get_single (t:Raw.pattern) =
+    | x -> [ x ] in
+  let get_single (t: Raw.pattern) =
     let t' = get_tuple t in
     let%bind () =
       trace_strong (unsupported_tuple_pattern t) @@
       Assert.assert_list_size t' 1 in
     ok (List.hd t') in
-  let get_constr (t:Raw.pattern) = match t with
-    | PConstr v ->
-        let%bind var = get_single (snd v.value).value >>? get_var in
-        ok ((fst v.value).value , var)
-    | _ -> fail @@ only_constructors t
-  in
+  let get_constr (t: Raw.pattern) =
+    match t with
+    | PConstr v -> (
+        let (const , pat_opt) = v.value in
+        let%bind pat =
+          trace_option (unsupported_cst_constr t) @@
+          pat_opt in
+        let%bind single_pat = get_single (PTuple pat) in
+        let%bind var = get_var single_pat in
+        ok (const.value , var)
+      )
+    | _ -> fail @@ only_constructors t in
   let%bind patterns =
     let aux (x , y) =
       let xs = get_tuple x in
       trace_strong (unsupported_tuple_pattern x) @@
       Assert.assert_list_size xs 1 >>? fun () ->
       ok (List.hd xs , y)
-    in
-    bind_map_list aux t in
+    in bind_map_list aux t in
   match patterns with
   | [(PFalse _ , f) ; (PTrue _ , t)]
   | [(PTrue _ , t) ; (PFalse _ , f)] ->

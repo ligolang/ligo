@@ -92,7 +92,7 @@ function buy_single(const action : action_buy_single ; const s : storage_type) :
 function main(const action : action ; const s : storage_type) : (list(operation) * storage_type) is
   block {skip} with
   case action of
-  | Buy_single bs -> buy_single (bs , s)
-  | Sell_single as -> sell_single (as , s)
-  | Transfer_single at -> transfer_single (at , s)
+  | Buy_single (bs) -> buy_single (bs , s)
+  | Sell_single (as) -> sell_single (as , s)
+  | Transfer_single (at) -> transfer_single (at , s)
   end

@@ -11,6 +11,6 @@ function decrement(const i : int ; const n : int) : int is
 function main (const p : action ; const s : int) : (list(operation) * int) is
   block {skip} with ((nil : list(operation)),
     case p of
-    | Increment n -> increment(s , n)
-    | Decrement n -> decrement(s , n)
+    | Increment (n) -> increment (s, n)
+    | Decrement (n) -> decrement (s, n)
     end)

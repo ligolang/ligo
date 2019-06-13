@@ -681,8 +681,10 @@ and print_pattern = function
 
 and print_constr_pattern {value; _} =
   let (constr, args) = value in
-  print_constr constr ;
-  print_pattern args.value ;
+  print_constr constr;
+  match args with
+    None -> ()
+  | Some tuple -> print_ptuple tuple
 
 and print_psome {value; _} =
   let c_Some, patterns = value in
