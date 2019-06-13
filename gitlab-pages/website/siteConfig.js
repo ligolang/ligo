@@ -98,10 +98,10 @@ const siteConfig = {
   // For no header links in the top nav bar -> headerLinks: [],
   headerLinks: [
     {doc: 'setup/installation', label: 'Docs'},
-    {doc: 'api-cli-commands', label: 'CLI'},
-    {doc: 'tutorials/first-smart-contract', label: 'Tutorials'},
+    {doc: 'tutorials/get-started/tezos-taco-shop-smart-contract', label: 'Tutorials'},
     { blog: true, label: 'Blog' },
     {doc: 'contributors/origin', label: 'Contribute'},
+    {href: 'https://discord.gg/9rhYaEt', label: ''}
   ],
 
   // If you have users set above, you add it here:
