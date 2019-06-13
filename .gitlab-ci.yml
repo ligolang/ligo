@@ -12,32 +12,8 @@ stages:
   stage: build_and_deploy_website
   image: node:8
   before_script:
-    - cd gitlab-pages/website
-    - npm install
-  script:
-    - npm run version next
-    - npm run build
-  after_script:
-    - cp -r gitlab-pages/website/build/ligo public 
-  artifacts:
-    paths:
-      - public
-
-.docker: &docker
-  image: docker:1.11
-  services:
-    - docker:dind
-
-.docker_build: &docker_build
-  script:
-    - docker build -t $LIGO_REGISTRY_IMAGE:next -f ./docker/Dockerfile .
-
-.before_script: &before_script
-  before_script:
-    # Install dependencies
-    # rsync is needed by opam to sync a package installed from a local directory with the copy in ~/.opam
-    - apt-get update -qq
-    - apt-get -y -qq install rsync libhidapi-dev libcap-dev libev-dev bubblewrap
+    - scripts/install_native_dependencies.sh
+    # TODO: these things are moved to scripts in other branches.
     - wget https://github.com/ocaml/opam/releases/download/2.0.1/opam-2.0.1-x86_64-linux -O opam-2.0.1-x86_64-linux
     - cp opam-2.0.1-x86_64-linux /usr/local/bin/opam
     - chmod +x /usr/local/bin/opam
@@ -57,12 +33,68 @@ stages:
     - printf '' | ocaml
     - opam switch
 
+    # install deps for internal documentation
+    - opam install -y odoc
+    - vendors/opam-repository-tools/rewrite-local-opam-repository.sh
+    - opam repository add localrepo "file://$PWD/vendors/ligo-opam-repository-local-generated/"
+    - opam install -y --build-test --deps-only ./src/
+    - dune build -p ligo
+    # TODO: also try instead from time to time:
+    #- (cd ./src/; dune build -p ligo)
+
+    # build with odoc
+    - dune build @doc
+
+    # npm
+    - cd gitlab-pages/website
+    - npm install
+  script:
+    - npm run version next
+    - npm run build
+    # move internal odoc documentation to the website folder
+    - mkdir -p gitlab-pages/website/build/ligo/
+    - mv ../../_build/default/_doc/_html/ gitlab-pages/website/build/ligo/odoc
+    - ls gitlab-pages/website/build/ligo/ # for debug
+  after_script:
+    - cp -r gitlab-pages/website/build/ligo public
+  artifacts:
+    paths:
+      - public
+
+.docker: &docker
+  image: docker:1.11
+  services:
+    - docker:dind
+
+.docker_build: &docker_build
+  script:
+    - docker build -t $LIGO_REGISTRY_IMAGE:next -f ./docker/Dockerfile .
+
+.before_script: &before_script
+  before_script:
+    # Install dependencies
+    # rsync is needed by opam to sync a package installed from a local directory with the copy in ~/.opam
+    - apt-get update -qq
+    - scripts/install_native_dependencies.sh
+    - scripts/install_opam.sh
+    - export PATH="/usr/local/bin${PATH:+:}${PATH:-}"
+
+    # Initialise opam, create switch, load opam environment variables
+    - printf '' | opam init --bare
+    - printf '' | opam switch create ligo-switch ocaml-base-compiler.4.06.1
+    - eval $(opam config env)
+
+    # Show versions and current switch
+    - echo "$PATH"
+    - opam --version
+    - printf '' | ocaml
+    - opam switch
+
 local-dune-job:
   <<: *before_script
   stage: test
   script:
-    - vendors/opam-repository-tools/rewrite-local-opam-repository.sh
-    - opam repository add localrepo "file://$PWD/vendors/ligo-opam-repository-local-generated/"
+    - scripts/setup_ligo_opam_repository.sh
     - opam install -y --build-test --deps-only ./src/
     - dune build -p ligo
     # TODO: also try instead from time to time:
@@ -126,4 +158,4 @@ pages:
   only:
     - master
     - dev
-
+    - feature/#3-add-odoc-to-website

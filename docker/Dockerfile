@@ -16,11 +16,11 @@ ADD . /ligo
 # the upcoming scripts
 WORKDIR /ligo
 
-# Setup a custom opam repository where ligo is published
-RUN sh scripts/setup_ligo_opam_repository.sh
-
 # Install required native dependencies
 RUN sh scripts/install_native_dependencies.sh
+
+# Setup a custom opam repository where ligo is published
+RUN sh scripts/setup_ligo_opam_repository.sh
 
 RUN opam update
 

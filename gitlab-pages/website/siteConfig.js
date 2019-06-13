@@ -100,6 +100,7 @@ const siteConfig = {
     {doc: 'setup/installation', label: 'Docs'},
     {doc: 'tutorials/get-started/tezos-taco-shop-smart-contract', label: 'Tutorials'},
     { blog: true, label: 'Blog' },
+    // TODO: { href: "/odoc", label: "Api" },
     {doc: 'contributors/origin', label: 'Contribute'},
     {href: 'https://discord.gg/9rhYaEt', label: ''},
     { search: true },
