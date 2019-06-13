@@ -1,6 +1,6 @@
 #!/bin/sh
 set -e
-if [ test "x$PWD" = "x" ]; then
+if test "x$PWD" = "x"; then
   echo "Cannot detect the current directory, the environment variable PWD is empty."
   exit 1
 else
