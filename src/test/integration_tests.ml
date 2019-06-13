@@ -4,8 +4,8 @@ open Test_helpers
 
 open Ast_simplified.Combinators
 
-let mtype_file ?debug_simplify ?debug_typed = type_file ?debug_simplify ?debug_typed "cameligo"
-let type_file = type_file "pascaligo"
+let mtype_file ?debug_simplify ?debug_typed = type_file ?debug_simplify ?debug_typed `cameligo
+let type_file = type_file `pascaligo
 
 let type_alias () : unit result =
   let%bind program = type_file "./contracts/type-alias.ligo" in

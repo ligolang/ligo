@@ -7,7 +7,7 @@ let get_program =
   fun () -> match !s with
     | Some s -> ok s
     | None -> (
-        let%bind program = type_file "cameligo" "./contracts/vote.mligo" in
+        let%bind program = type_file `cameligo "./contracts/vote.mligo" in
         s := Some program ;
         ok program
       )
