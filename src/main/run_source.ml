@@ -95,24 +95,54 @@ let parsify_expression_ligodity = fun source ->
     Simplify.Ligodity.simpl_expression raw in
   ok simplified
 
-let parsify = fun syntax source ->
-  let%bind parsify = match syntax with
-    | "pascaligo" -> ok parsify_pascaligo
-    | "cameligo" -> ok parsify_ligodity
-    | _ -> simple_fail "unrecognized parser"
+type s_syntax = Syntax_name of string
+type v_syntax =  [`pascaligo | `cameligo ]
+
+let syntax_to_variant : s_syntax -> string option -> v_syntax result =
+  fun syntax source_filename ->
+  let subr s n =
+    String.sub s (String.length s - n) n in
+  let endswith s suffix =
+    let suffixlen = String.length suffix in
+    (  String.length s >= suffixlen
+       && String.equal (subr s suffixlen) suffix)
   in
-  parsify source
+  match syntax with
+    Syntax_name syntax ->
+    begin
+      if String.equal syntax "auto" then
+        begin
+          match source_filename with
+          | Some source_filename
+            when endswith source_filename ".ligo"
+            -> ok `pascaligo
+          | Some source_filename
+            when endswith source_filename ".mligo"
+            -> ok `cameligo
+          | _ -> simple_fail "cannot auto-detect syntax, pleas use -s name_of_syntax"
+        end
+      else if String.equal syntax "pascaligo" then ok `pascaligo
+      else if String.equal syntax "cameligo" then ok `cameligo
+      else simple_fail "unrecognized parser"
+    end
+
+let parsify = fun (syntax : v_syntax) source_filename ->
+  let%bind parsify = match syntax with
+    | `pascaligo -> ok parsify_pascaligo
+    | `cameligo -> ok parsify_ligodity
+  in
+  parsify source_filename
 
 let parsify_expression = fun syntax source ->
   let%bind parsify = match syntax with
-    | "pascaligo" -> ok parsify_expression_pascaligo
-    | "cameligo" -> ok parsify_expression_ligodity
-    | _ -> simple_fail "unrecognized parser"
+    | `pascaligo -> ok parsify_expression_pascaligo
+    | `cameligo -> ok parsify_expression_ligodity
   in
   parsify source
 
-let compile_contract_file : string -> string -> string -> string result = fun source entry_point syntax ->
-  let%bind simplified = parsify syntax source in
+let compile_contract_file : string -> string -> s_syntax -> string result = fun source_filename entry_point syntax ->
+  let%bind syntax = syntax_to_variant syntax (Some source_filename) in
+  let%bind simplified = parsify syntax source_filename in
   let%bind () =
     assert_entry_point_defined simplified entry_point in
   let%bind typed =
@@ -128,9 +158,10 @@ let compile_contract_file : string -> string -> string -> string result = fun so
     Format.asprintf "%a" Michelson.pp_stripped michelson in
   ok str
 
-let compile_contract_parameter : string -> string -> string -> string -> string result = fun source entry_point expression syntax ->
+let compile_contract_parameter : string -> string -> string -> s_syntax -> string result = fun source_filename entry_point expression syntax ->
+  let%bind syntax = syntax_to_variant syntax (Some source_filename) in
   let%bind (program , parameter_tv) =
-    let%bind simplified = parsify syntax source in
+    let%bind simplified = parsify syntax source_filename in
     let%bind () =
       assert_entry_point_defined simplified entry_point in
     let%bind typed =
@@ -166,9 +197,10 @@ let compile_contract_parameter : string -> string -> string -> string -> string 
   ok expr
 
 
-let compile_contract_storage : string -> string -> string -> string -> string result = fun source entry_point expression syntax ->
+let compile_contract_storage : string -> string -> string -> s_syntax -> string result = fun source_filename entry_point expression syntax ->
+  let%bind syntax = syntax_to_variant syntax (Some source_filename) in
   let%bind (program , storage_tv) =
-    let%bind simplified = parsify syntax source in
+    let%bind simplified = parsify syntax source_filename in
     let%bind () =
       assert_entry_point_defined simplified entry_point in
     let%bind typed =
@@ -204,8 +236,8 @@ let compile_contract_storage : string -> string -> string -> string -> string re
   ok expr
 
 let type_file ?(debug_simplify = false) ?(debug_typed = false)
-    syntax (path:string) : Ast_typed.program result =
-  let%bind simpl = parsify syntax path in
+    syntax (source_filename:string) : Ast_typed.program result =
+  let%bind simpl = parsify syntax source_filename in
   (if debug_simplify then
      Format.(printf "Simplified : %a\n%!" Ast_simplified.PP.program simpl)
   ) ;
@@ -217,23 +249,38 @@ let type_file ?(debug_simplify = false) ?(debug_typed = false)
     )) ;
   ok typed
 
-let run_contract source entry_point storage input syntax =
+let run_contract ?amount source_filename entry_point storage input syntax =
+  let%bind syntax = syntax_to_variant syntax (Some source_filename) in
   let%bind typed =
-    type_file syntax source in
+    type_file syntax source_filename in
   let%bind storage_simpl =
     parsify_expression syntax storage in
   let%bind input_simpl =
     parsify_expression syntax input in
-  Run_simplified.run_simplityped typed entry_point (Ast_simplified.e_pair storage_simpl input_simpl)
+  let options =
+    let open Proto_alpha_utils.Memory_proto_alpha in
+    let amount = Option.bind (fun amount -> Alpha_context.Tez.of_string amount) amount in
+    (make_options ?amount ()) in
+  Run_simplified.run_simplityped ~options typed entry_point (Ast_simplified.e_pair storage_simpl input_simpl)
 
-let run_function source entry_point parameter syntax =
+let run_function ?amount source_filename entry_point parameter syntax =
+  let%bind syntax = syntax_to_variant syntax (Some source_filename) in
   let%bind typed =
-    type_file syntax source in
+    type_file syntax source_filename in
   let%bind parameter' =
     parsify_expression syntax parameter in
-  Run_simplified.run_simplityped typed entry_point parameter'
+  let options =
+    let open Proto_alpha_utils.Memory_proto_alpha in
+    let amount = Option.bind (fun amount -> Alpha_context.Tez.of_string amount) amount in
+    (make_options ?amount ()) in
+  Run_simplified.run_simplityped ~options typed entry_point parameter'
 
-let evaluate_value source entry_point syntax =
+let evaluate_value ?amount source_filename entry_point syntax =
+  let%bind syntax = syntax_to_variant syntax (Some source_filename) in
   let%bind typed =
-    type_file syntax source in
-  Run_simplified.evaluate_simplityped typed entry_point
+    type_file syntax source_filename in
+  let options =
+    let open Proto_alpha_utils.Memory_proto_alpha in
+    let amount = Option.bind (fun amount -> Alpha_context.Tez.of_string amount) amount in
+    (make_options ?amount ()) in
+  Run_simplified.evaluate_simplityped ~options typed entry_point

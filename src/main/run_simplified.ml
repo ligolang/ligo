@@ -17,8 +17,8 @@ let run_simplityped
   let%bind annotated_result = Typer.untype_expression typed_result in
   ok annotated_result
 
-let evaluate_simplityped (program : Ast_typed.program) (entry : string)
+let evaluate_simplityped ?options (program : Ast_typed.program) (entry : string)
   : Ast_simplified.expression result =
-  let%bind typed_result = Run_typed.evaluate_typed entry program in
+  let%bind typed_result = Run_typed.evaluate_typed ?options entry program in
   let%bind annotated_result = Typer.untype_expression typed_result in
   ok annotated_result

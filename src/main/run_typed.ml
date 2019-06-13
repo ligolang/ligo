@@ -13,12 +13,12 @@ let transpile_value
   let%bind r = Run_mini_c.run_entry f input in
   ok r
 
-let evaluate_typed (entry:string) (program:Ast_typed.program) : Ast_typed.annotated_expression result =
+let evaluate_typed ?options (entry:string) (program:Ast_typed.program) : Ast_typed.annotated_expression result =
   trace (simple_error "easy evaluate typed") @@
   let%bind result =
     let%bind mini_c_main =
       Transpiler.translate_entry program entry in
-    Run_mini_c.run_entry mini_c_main (Mini_c.Combinators.d_unit) in
+    Run_mini_c.run_entry ?options mini_c_main (Mini_c.Combinators.d_unit) in
   let%bind typed_result =
     let%bind typed_main = Ast_typed.get_entry program entry in
     Transpiler.untranspile result typed_main.type_annotation in

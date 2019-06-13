@@ -42,6 +42,9 @@ module Simplify = struct
     ("bool" , "bool") ;
     ("operation" , "operation") ;
     ("address" , "address") ;
+    ("key" , "key") ;
+    ("key_hash" , "key_hash") ;
+    ("signature" , "signature") ;
     ("timestamp" , "timestamp") ;
     ("contract" , "contract") ;
     ("list" , "list") ;
@@ -76,7 +79,7 @@ module Simplify = struct
       ("Bytes.pack" , "PACK") ;
       ("Crypto.hash" , "HASH") ;
       ("Operation.transaction" , "CALL") ;
-      ("Operation.get_contract" , "GET_CONTRACT") ;
+      ("Operation.get_contract" , "CONTRACT") ;
       ("sender" , "SENDER") ;
       ("unit" , "UNIT") ;
       ("source" , "SOURCE") ;
@@ -87,6 +90,8 @@ module Simplify = struct
 
   module Ligodity = struct
     let constants = [
+      ("assert" , "ASSERT") ;
+      
       ("Current.balance", "BALANCE") ;
       ("balance", "BALANCE") ;
       ("Current.time", "NOW") ;
@@ -97,6 +102,8 @@ module Simplify = struct
       ("gas", "STEPS_TO_QUOTA") ;
       ("Current.sender" , "SENDER") ;
       ("sender", "SENDER") ;
+      ("Current.source" , "SOURCE") ;
+      ("source", "SOURCE") ;
       ("Current.failwith", "FAILWITH") ;
       ("failwith" , "FAILWITH") ;
 
@@ -115,6 +122,17 @@ module Simplify = struct
       ("Bytes.slice", "SLICE") ;
       ("Bytes.sub", "SLICE") ;
 
+      ("Set.mem" , "SET_MEM") ;
+      ("Set.empty" , "SET_EMPTY") ;
+      ("Set.add" , "SET_ADD") ;
+      ("Set.remove" , "SET_REMOVE") ;
+
+      ("Map.find_opt" , "MAP_FIND_OPT") ;
+      ("Map.find" , "MAP_FIND") ;
+      ("Map.update" , "MAP_UPDATE") ;
+      ("Map.add" , "MAP_ADD") ;
+      ("Map.remove" , "MAP_REMOVE") ;
+      
       ("String.length", "SIZE") ;
       ("String.size", "SIZE") ;
       ("String.slice", "SLICE") ;
@@ -126,7 +144,7 @@ module Simplify = struct
       ("List.iter", "ITER") ;
 
       ("Operation.transaction" , "CALL") ;
-      ("Operation.get_contract" , "GET_CONTRACT") ;
+      ("Operation.get_contract" , "CONTRACT") ;
       ("int" , "INT") ;
       ("abs" , "ABS") ;
       ("unit" , "UNIT") ;
@@ -195,7 +213,7 @@ module Typer = struct
     let%bind () = assert_type_value_eq (dst, v) in
     ok m
 
-  let map_update : typer = typer_3 "MAP_UPDATE_TODO" @@ fun k v m ->
+  let map_update : typer = typer_3 "MAP_UPDATE" @@ fun k v m ->
     let%bind (src, dst) = get_t_map m in
     let%bind () = assert_type_value_eq (src, k) in
     let%bind v' = get_t_option v in
@@ -207,7 +225,12 @@ module Typer = struct
     let%bind () = assert_type_value_eq (src, k) in
     ok @@ t_bool ()
 
-  let map_find : typer = typer_2 "MAP_FIND_TODO" @@ fun k m ->
+  let map_find : typer = typer_2 "MAP_FIND" @@ fun k m ->
+    let%bind (src, dst) = get_t_map m in
+    let%bind () = assert_type_value_eq (src, k) in
+    ok @@ dst
+
+  let map_find_opt : typer = typer_2 "MAP_FIND_OPT" @@ fun k m ->
     let%bind (src, dst) = get_t_map m in
     let%bind () = assert_type_value_eq (src, k) in
     ok @@ t_option dst ()
@@ -243,9 +266,15 @@ module Typer = struct
   let size = typer_1 "SIZE" @@ fun t ->
     let%bind () =
       Assert.assert_true @@
-      (is_t_map t || is_t_list t) in
+      (is_t_map t || is_t_list t || is_t_string t) in
     ok @@ t_nat ()
 
+  let slice = typer_3 "SLICE" @@ fun i j s ->
+    let%bind () =
+      Assert.assert_true @@
+      (is_t_nat i && is_t_nat j && is_t_string s) in
+    ok @@ t_string ()
+  
   let failwith_ = typer_1 "FAILWITH" @@ fun t ->
     let%bind () =
       Assert.assert_true @@
@@ -269,10 +298,28 @@ module Typer = struct
     trace_option (simple_error "untyped UNPACK") @@
     output_opt
 
-  let crypto_hash = typer_1 "HASH" @@ fun t ->
+  let hash256 = typer_1 "SHA256" @@ fun t ->
     let%bind () = assert_t_bytes t in
     ok @@ t_bytes ()
 
+  let hash512 = typer_1 "SHA512" @@ fun t ->
+    let%bind () = assert_t_bytes t in
+    ok @@ t_bytes ()
+
+  let blake2b = typer_1 "BLAKE2b" @@ fun t ->
+    let%bind () = assert_t_bytes t in
+    ok @@ t_bytes ()
+
+  let hash_key = typer_1 "HASH_KEY" @@ fun t ->
+    let%bind () = assert_t_key t in
+    ok @@ t_key_hash ()
+
+  let check_signature = typer_3 "CHECK_SIGNATURE" @@ fun k s b ->
+    let%bind () = assert_t_key k in
+    let%bind () = assert_t_signature s in
+    let%bind () = assert_t_bytes b in
+    ok @@ t_bool ()
+  
   let sender = constant "SENDER" @@ t_address ()
 
   let source = constant "SOURCE" @@ t_address ()
@@ -280,6 +327,8 @@ module Typer = struct
   let unit = constant "UNIT" @@ t_unit ()
 
   let amount = constant "AMOUNT" @@ t_tez ()
+
+  let address = constant "ADDRESS" @@ t_address ()
 
   let now = constant "NOW" @@ t_timestamp ()
 
@@ -301,6 +350,11 @@ module Typer = struct
     let%bind () = assert_t_int t in
     ok @@ t_nat ()
 
+  let assertion = typer_1 "ASSERT" @@ fun a ->
+    if eq_1 a (t_bool ())
+    then ok @@ t_unit ()
+    else simple_fail "Asserting a non-bool"
+  
   let times = typer_2 "TIMES" @@ fun a b ->
     if eq_2 (a , b) (t_nat ())
     then ok @@ t_nat () else
@@ -335,6 +389,29 @@ module Typer = struct
     then ok @@ t_int () else
       simple_fail "Adding with wrong types. Expected nat, int or tez."
 
+  let set_mem = typer_2 "SET_MEM" @@ fun elt set ->
+    let%bind key = get_t_set set in
+    if eq_1 elt key
+    then ok @@ t_bool ()
+    else simple_fail "Set_mem: elt and set don't match"
+
+  let set_add = typer_2 "SET_ADD" @@ fun elt set ->
+    let%bind key = get_t_set set in
+    if eq_1 elt key
+    then ok set
+    else simple_fail "Set_add: elt and set don't match"
+
+  let set_remove = typer_2 "SET_REMOVE" @@ fun elt set ->
+    let%bind key = get_t_set set in
+    if eq_1 elt key
+    then ok set
+    else simple_fail "Set_remove: elt and set don't match"
+
+  let not_ = typer_1 "NOT" @@ fun elt ->
+    if eq_1 elt (t_bool ())
+    then ok @@ t_bool ()
+    else simple_fail "bad parameter to not"
+  
   let constant_typers = Map.String.of_list [
       add ;
       times ;
@@ -351,6 +428,7 @@ module Typer = struct
       comparator "GE" ;
       boolean_operator_2 "OR" ;
       boolean_operator_2 "AND" ;
+      not_ ;
       map_remove ;
       map_add ;
       map_update ;
@@ -360,6 +438,9 @@ module Typer = struct
       map_map ;
       map_fold ;
       map_iter ;
+      set_mem ;
+      set_add ;
+      set_remove ;
       (* map_size ; (* use size *) *)
       int ;
       size ;
@@ -367,7 +448,11 @@ module Typer = struct
       get_force ;
       bytes_pack ;
       bytes_unpack ;
-      crypto_hash ;
+      hash256 ;
+      hash512 ;
+      blake2b ;
+      hash_key ;
+      check_signature ;
       sender ;
       source ;
       unit ;
@@ -376,6 +461,9 @@ module Typer = struct
       get_contract ;
       abs ;
       now ;
+      slice ;
+      address ;
+      assertion ;
     ]
 
 end
@@ -407,6 +495,8 @@ module Compiler = struct
     ("NEG" , simple_unary @@ prim I_NEG) ;
     ("OR" , simple_binary @@ prim I_OR) ;
     ("AND" , simple_binary @@ prim I_AND) ;
+    ("XOR" , simple_binary @@ prim I_XOR) ;
+    ("NOT" , simple_unary @@ prim I_NOT) ;
     ("PAIR" , simple_binary @@ prim I_PAIR) ;
     ("CAR" , simple_unary @@ prim I_CAR) ;
     ("CDR" , simple_unary @@ prim I_CDR) ;
@@ -419,21 +509,35 @@ module Compiler = struct
     ("UPDATE" , simple_ternary @@ prim I_UPDATE) ;
     ("SOME" , simple_unary @@ prim I_SOME) ;
     ("MAP_GET_FORCE" , simple_binary @@ seq [prim I_GET ; i_assert_some_msg (i_push_string "GET_FORCE")]) ;
+    ("MAP_FIND" , simple_binary @@ seq [prim I_GET ; i_assert_some_msg (i_push_string "MAP FIND")]) ;
     ("MAP_GET" , simple_binary @@ prim I_GET) ;
     ("SIZE" , simple_unary @@ prim I_SIZE) ;
     ("FAILWITH" , simple_unary @@ prim I_FAILWITH) ;
-    ("ASSERT" , simple_binary @@ i_if (seq [i_failwith]) (seq [i_drop ; i_push_unit])) ;
+    ("ASSERT_INFERRED" , simple_binary @@ i_if (seq [i_failwith]) (seq [i_drop ; i_push_unit])) ;
+    ("ASSERT" , simple_unary @@ i_if (seq [i_push_unit ; i_failwith]) (seq [i_push_unit])) ;
     ("INT" , simple_unary @@ prim I_INT) ;
     ("ABS" , simple_unary @@ prim I_ABS) ;
     ("CONS" , simple_binary @@ prim I_CONS) ;
     ("UNIT" , simple_constant @@ prim I_UNIT) ;
     ("AMOUNT" , simple_constant @@ prim I_AMOUNT) ;
+    ("ADDRESS" , simple_constant @@ prim I_ADDRESS) ;
     ("NOW" , simple_constant @@ prim I_NOW) ;
     ("CALL" , simple_ternary @@ prim I_TRANSFER_TOKENS) ;
     ("SOURCE" , simple_constant @@ prim I_SOURCE) ;
     ("SENDER" , simple_constant @@ prim I_SENDER) ;
-    ( "MAP_ADD" , simple_ternary @@ seq [dip (i_some) ; prim I_UPDATE ]) ;
-    ( "MAP_UPDATE" , simple_ternary @@ prim I_UPDATE) ;
+    ("MAP_ADD" , simple_ternary @@ seq [dip (i_some) ; prim I_UPDATE ]) ;
+    ("MAP_UPDATE" , simple_ternary @@ prim I_UPDATE) ;
+    ("SET_MEM" , simple_binary @@ prim I_MEM) ;
+    ("SET_ADD" , simple_binary @@ seq [dip (i_push (prim T_bool) (prim D_True)) ; prim I_UPDATE]) ;
+    ("SLICE" , simple_ternary @@ prim I_SLICE) ;
+    ("SHA256" , simple_unary @@ prim I_SHA256) ;
+    ("SHA512" , simple_unary @@ prim I_SHA512) ;
+    ("BLAKE2B" , simple_unary @@ prim I_BLAKE2B) ;
+    ("CHECK_SIGNATURE" , simple_ternary @@ prim I_CHECK_SIGNATURE) ;
+    ("HASH_KEY" , simple_unary @@ prim I_HASH_KEY) ;
+    ("PACK" , simple_unary @@ prim I_PACK) ;
   ]
 
+  (* Some complex predicates will need to be added in compiler/compiler_program *)
+  
 end

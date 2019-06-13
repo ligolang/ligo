@@ -35,6 +35,7 @@ module Ty = struct
     | T_pair _ -> fail (not_comparable "pair")
     | T_map _ -> fail (not_comparable "map")
     | T_list _ -> fail (not_comparable "list")
+    | T_set _ -> fail (not_comparable "set")
     | T_option _ -> fail (not_comparable "option")
     | T_contract _ -> fail (not_comparable "contract")
 
@@ -82,6 +83,10 @@ module Ty = struct
     | T_list t ->
         let%bind (Ex_ty t') = type_ t in
         ok @@ Ex_ty Contract_types.(list t')
+    | T_set t -> (
+        let%bind (Ex_comparable_ty t') = comparable_type t in
+        ok @@ Ex_ty Contract_types.(set t')
+      )
     | T_option t ->
         let%bind (Ex_ty t') = type_ t in
         ok @@ Ex_ty Contract_types.(option t')
@@ -142,6 +147,9 @@ let rec type_ : type_value -> O.michelson result =
   | T_list t ->
       let%bind t' = type_ t in
       ok @@ O.prim ~children:[t'] O.T_list
+  | T_set t ->
+      let%bind t' = type_ t in
+      ok @@ O.prim ~children:[t'] O.T_set
   | T_option o ->
       let%bind o' = type_ o in
       ok @@ O.prim ~children:[o'] O.T_option
