@@ -100,4 +100,3 @@ Come visit [our website](ligolang.org)! You can also join our [Discord](https://
 
 
 \* Following software release cycle conventions, it should be called a pre-alpha. But most people don't know the difference.
-Get started page in docs, Matej's tutorials, contributor docs, etc.
