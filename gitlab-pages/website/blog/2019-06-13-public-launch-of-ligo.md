@@ -57,17 +57,17 @@ let main (p : action) (s : int) : (operation list * int) =
 
 ### Short-Term
 #### June 2019
-✓ First public release (hi)
-✓ PascaLIGO and CameLIGO
-✓ Docs
-✓ Tutorials
-\- Integration testing in JS/Reason with [Granary](https://stove-labs.github.io/granary/)
+<span style="display:block">✓ First public release (hi)</span>
+<span style="display:block">✓ PascaLIGO and CameLIGO</span>
+<span style="display:block">✓ Docs</span>
+<span style="display:block">✓ Tutorials</span>
+<span style="display:block">\- Integration testing in JS/Reason with [Granary](https://stove-labs.github.io/granary/)</span>
 
 #### July 2019
-\- Try ligo online
-\- Unit testing in LIGO
-\- ReasonLIGO (ReasonML syntax)
-\- Design Pattern repository
+<span style="display:block">\- Try ligo online</span>
+<span style="display:block">\- Unit testing in LIGO</span>
+<span style="display:block">\- ReasonLIGO (ReasonML syntax)</span>
+<span style="display:block">\- Design Pattern repository</span>
 
 ### Mid-Term
 We are currently planning 3 big projects on the core language (excluding tooling).

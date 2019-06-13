@@ -18,7 +18,7 @@ To help Pedro open his dream taco shop, we'll implement a smart-contract, that w
 
 ## Pricing
 
-Pedro's tacos are a rare delicatese, so their **price goes up**, as the **stock for the day begins to deplete**.
+Pedro's tacos are a rare delicacy, so their **price goes up**, as the **stock for the day begins to deplete**.
 
 Each taco kind, has it's own `max_price` that it sells for, and a finite supply for the current sales lifecycle.
 
@@ -74,7 +74,7 @@ function main (const parameter : int;  const contractStorage : int) : (list(oper
   block {skip} with ((nil : list(operation)), contractStorage + parameter)
 ```
 
-Let's brake down the contract above to make sure we understand each bit of the LIGO syntax:
+Let's break down the contract above to make sure we understand each bit of the LIGO syntax:
 
 - **`function main`** - definition of a function that serves as an entry point
 - **`(const parameter : int;  const contractStorage : int)`** - parameters passed to the function
