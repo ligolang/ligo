@@ -1,7 +1,6 @@
 ---
-id: version-next-setup-installation
+id: installation
 title: Installation
-original_id: setup-installation
 ---
 
 There are currently two ways to get started with Ligo, both of those will allow you to use the Ligo CLI with your contracts. You can choose to use either the Docker image, or to compile & build the Ligo CLI yourself.
@@ -19,10 +18,10 @@ You can either run the docker image yourself, or you can setup a global ligo exe
 
 ```zsh
 # next (pre-release)
-curl https://gitlab.com/ligolang/ligo/raw/dev/scripts/installer.sh | bash "next"
+curl https://gitlab.com/ligolang/ligo/raw/dev/scripts/installer.sh | bash -s "next"
 
 # e.g. 1.0.0 (stable)
-curl https://gitlab.com/ligolang/ligo/raw/master/scripts/installer.sh | bash "1.0.0"
+curl https://gitlab.com/ligolang/ligo/raw/master/scripts/installer.sh | bash -s "1.0.0"
 ```
 
 **Verify your ligo installation by running:**
@@ -34,6 +33,3 @@ ligo --help
 ## Manual installation (advanced)
 
 For now, please refer to the steps described in the [Dockerfile](https://gitlab.com/ligolang/ligo/blob/master/docker/Dockerfile).
-
-
-

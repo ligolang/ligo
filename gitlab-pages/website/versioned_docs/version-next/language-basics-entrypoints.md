@@ -9,7 +9,7 @@ original_id: language-basics-entrypoints
 <!--DOCUSAURUS_CODE_TABS-->
 <!--Pascaligo-->
 ```Pascal
-function main (const p : int ; const s : int) : (list(operation) * unit) is
+function main (const p : int ; const s : int) : (list(operation) * int) is
   block {skip} with ((nil : list(operation)), s + 1)
 ```
 <!--END_DOCUSAURUS_CODE_TABS-->

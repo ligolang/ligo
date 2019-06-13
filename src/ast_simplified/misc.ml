@@ -42,6 +42,9 @@ let assert_literal_eq (a, b : literal * literal) : unit result =
   | Literal_nat a, Literal_nat b when a = b -> ok ()
   | Literal_nat _, Literal_nat _ -> fail @@ different_literals "different nats" a b
   | Literal_nat _, _ -> fail @@ different_literals_because_different_types "nat vs non-nat" a b
+  | Literal_timestamp a, Literal_timestamp b when a = b -> ok ()
+  | Literal_timestamp _, Literal_timestamp _ -> fail @@ different_literals "different timestamps" a b
+  | Literal_timestamp _, _ -> fail @@ different_literals_because_different_types "timestamp vs non-timestamp" a b
   | Literal_tez a, Literal_tez b when a = b -> ok ()
   | Literal_tez _, Literal_tez _ -> fail @@ different_literals "different tezs" a b
   | Literal_tez _, _ -> fail @@ different_literals_because_different_types "tez vs non-tez" a b
@@ -58,7 +61,6 @@ let assert_literal_eq (a, b : literal * literal) : unit result =
   | Literal_address _, _ -> fail @@ different_literals_because_different_types "address vs non-address" a b
   | Literal_operation _, Literal_operation _ -> fail @@ error_uncomparable_literals "can't compare operations" a b
   | Literal_operation _, _ -> fail @@ different_literals_because_different_types "operation vs non-operation" a b
-
 
 let rec assert_value_eq (a, b: (expression * expression )) : unit result =
   let error_content () =
@@ -143,6 +145,19 @@ let rec assert_value_eq (a, b: (expression * expression )) : unit result =
     )
   | E_list _, _ ->
       simple_fail "comparing list with other stuff"
+
+  | E_set lsta, E_set lstb -> (
+      let lsta' = List.sort (compare) lsta in
+      let lstb' = List.sort (compare) lstb in
+      let%bind lst =
+        generic_try (simple_error "set of different lengths")
+          (fun () -> List.combine lsta' lstb') in
+      let%bind _all = bind_map_list assert_value_eq lst in
+      ok ()
+    )
+  | E_set _, _ ->
+      simple_fail "comparing set with other stuff"
+
   | (E_annotation (a , _) ,  _b') -> assert_value_eq (a , b)
   | (_a' , E_annotation (b , _)) -> assert_value_eq (a , b)
   | (E_variable _, _) | (E_lambda _, _)
@@ -151,6 +166,7 @@ let rec assert_value_eq (a, b: (expression * expression )) : unit result =
   | (E_look_up _, _) | (E_matching _, _) | (E_failwith _, _) | (E_sequence _, _)
   | (E_loop _, _) | (E_assign _, _) | (E_skip, _) -> simple_fail "comparing not a value"
 
+let is_value_eq (a , b) = to_bool @@ assert_value_eq (a , b)
 
 (* module Rename = struct
  *   open Trace

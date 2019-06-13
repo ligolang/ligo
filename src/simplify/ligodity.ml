@@ -147,6 +147,22 @@ module Errors = struct
     ] in
     error ~data title message
 
+  let bad_set_definition =
+    let title () = "bad set definition" in
+    let message () = "a set definition is a list" in
+    info title message
+
+  let bad_list_definition =
+    let title () = "bad list definition" in
+    let message () = "a list definition is a list" in
+    info title message
+
+  let bad_map_definition =
+    let title () = "bad map definition" in
+    let message () = "a map definition is a list of pairs" in
+    info title message
+
+  
   let corner_case ~loc message =
     let title () = "corner case" in
     let content () = "We don't have a good error message for this case. \
@@ -158,6 +174,7 @@ module Errors = struct
       ("message" , fun () -> message) ;
     ] in
     error ~data title content
+
 end
 
 open Errors
@@ -170,6 +187,7 @@ let rec pattern_to_var : Raw.pattern -> _ = fun p ->
   match p with
   | Raw.PPar p -> pattern_to_var p.value.inside
   | Raw.PVar v -> ok v
+  | Raw.PWild r -> ok @@ ({ region = r ; value = "_" } : Raw.variable)
   | _ -> fail @@ wrong_pattern "var" p
 
 let rec pattern_to_typed_var : Raw.pattern -> _ = fun p ->
@@ -181,6 +199,7 @@ let rec pattern_to_typed_var : Raw.pattern -> _ = fun p ->
       ok (v , Some tp.type_expr)
     )
   | Raw.PVar v -> ok (v , None)
+  | Raw.PWild r -> ok (({ region = r ; value = "_" } : Raw.variable) , None)
   | _ -> fail @@ wrong_pattern "typed variable" p
 
 let rec expr_to_typed_expr : Raw.expr -> _ = fun e ->
@@ -358,10 +377,37 @@ let rec simpl_expression :
       let (c_name , _c_loc) = r_split c_name in
       let args =
         match args with
-          None -> []
+        | None -> []
         | Some arg -> [arg] in
       let%bind arg = simpl_tuple_expression @@ args in
-      return @@ e_constructor ~loc c_name arg
+      match c_name with
+      | "Set" -> (
+          let%bind args' =
+            trace bad_set_definition @@
+            extract_list arg in
+          return @@ e_set ~loc args'
+        )
+      | "List" -> (
+          let%bind args' =
+            trace bad_list_definition @@
+            extract_list arg in
+          return @@ e_list ~loc args'
+        )
+      | "Map" -> (
+          let%bind args' =
+            trace bad_map_definition @@
+            extract_list arg in
+          let%bind pairs =
+            trace bad_map_definition @@
+            bind_map_list extract_pair args' in
+          return @@ e_map ~loc pairs
+        )
+      | "Some" -> (
+          return @@ e_some ~loc arg
+        )
+      | _ -> (
+          return @@ e_constructor ~loc c_name arg
+        )
     )
   | EArith (Add c) ->
       simpl_binop "ADD" c

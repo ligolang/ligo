@@ -60,6 +60,7 @@ and expression' =
   (* Data Structures *)
   | E_map of (expr * expr) list
   | E_list of expr list
+  | E_set of expr list
   | E_look_up of (expr * expr)
   (* Matching *)
   | E_matching of (expr * matching_expr)
@@ -90,6 +91,7 @@ and literal =
   | Literal_string of string
   | Literal_bytes of bytes
   | Literal_address of string
+  | Literal_timestamp of int
   | Literal_operation of Memory_proto_alpha.Alpha_context.packed_internal_operation
 
 and 'a matching =

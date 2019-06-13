@@ -41,40 +41,40 @@ const team = [
     caption: 'Gabriel Alfour',
     // You will need to prepend the image path with your baseUrl
     // if it is not '/', like: '/test-site/img/image.jpg'.
-    image: 'https://thepowerofthedream.org/wp-content/uploads/2015/09/generic-profile-picture-600x600.jpg',
-    infoLink: '#',
+    image: '/img/user.png',
+    infoLink: 'https://gitlab.com/gabriel.alfour',
     pinned: true,
   },
   {
     caption: 'Georges Dupéron',
     // You will need to prepend the image path with your baseUrl
     // if it is not '/', like: '/test-site/img/image.jpg'.
-    image: 'https://thepowerofthedream.org/wp-content/uploads/2015/09/generic-profile-picture-600x600.jpg',
-    infoLink: '#',
+    image: '/img/user.png',
+    infoLink: 'https://gitlab.com/georges.duperon',
     pinned: true,
   },
   {
     caption: 'Christian Rinderknecht',
     // You will need to prepend the image path with your baseUrl
     // if it is not '/', like: '/test-site/img/image.jpg'.
-    image: 'https://thepowerofthedream.org/wp-content/uploads/2015/09/generic-profile-picture-600x600.jpg',
-    infoLink: '#',
+    image: '/img/christian.jpeg',
+    infoLink: 'https://github.com/rinderknecht',
     pinned: true,
   },
   {
     caption: 'Brice Aldrich',
     // You will need to prepend the image path with your baseUrl
     // if it is not '/', like: '/test-site/img/image.jpg'.
-    image: 'https://thepowerofthedream.org/wp-content/uploads/2015/09/generic-profile-picture-600x600.jpg',
-    infoLink: '#',
+    image: '/img/brice.png',
+    infoLink: 'https://github.com/DefinitelyNotAGoat',
     pinned: true,
   },
   {
     caption: 'Matej Sima',
     // You will need to prepend the image path with your baseUrl
     // if it is not '/', like: '/test-site/img/image.jpg'.
-    image: 'https://scontent-frt3-2.xx.fbcdn.net/v/t1.0-9/56644817_2276459725943174_4007605942056124416_n.jpg?_nc_cat=107&_nc_ht=scontent-frt3-2.xx&oh=e8a86a2cfe76798cbdc28a0769ebccb1&oe=5D5423F0',
-    infoLink: 'https://sk.linkedin.com/in/matejsima',
+    image: '/img/matej.jpg',
+    infoLink: 'https://github.com/maht0rz',
     pinned: true,
   },
 ];
@@ -97,12 +97,13 @@ const siteConfig = {
 
   // For no header links in the top nav bar -> headerLinks: [],
   headerLinks: [
-    {doc: 'setup-installation', label: 'Docs'},
-    {doc: 'api-cli-commands', label: 'CLI'},
-    {doc: 'tutorials/first-smart-contract', label: 'Tutorials'},
+    {doc: 'setup/installation', label: 'Docs'},
+    {doc: 'tutorials/get-started/tezos-taco-shop-smart-contract', label: 'Tutorials'},
     { blog: true, label: 'Blog' },
     // TODO: { href: "/odoc", label: "Api" },
-    {doc: 'contributors/origin', label: 'Contribute'}
+    {doc: 'contributors/origin', label: 'Contribute'},
+    {href: 'https://discord.gg/9rhYaEt', label: ''},
+    { search: true },
   ],
 
   // If you have users set above, you add it here:
@@ -163,6 +164,12 @@ const siteConfig = {
   // You may provide arbitrary config keys to be used as needed by your
   // template. For example, if you need your repo's URL...
     repoUrl: 'https://gitlab.com/ligolang/ligo',
+
+  algolia: {
+    apiKey: '12be98d9fd4242a5f16b70a5cc6b0158',
+    indexName: 'ligolang',
+    algoliaOptions: {} // Optional, if provided by Algolia
+  },
 };
 
 module.exports = siteConfig;

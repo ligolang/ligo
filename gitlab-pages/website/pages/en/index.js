@@ -29,8 +29,9 @@ class HomeSplash extends React.Component {
           <div className="tabs">
             <div className="nav-tabs">
               <div id="tab-group-3-tab-4" className="nav-link active" data-group="group_3"
-                data-tab="tab-group-3-content-4">Pascaligo</div>
-              <div className="nav-link">Camligo (coming soon)</div>
+                data-tab="tab-group-3-content-4">PascaLIGO</div>
+              <div className="nav-link" data-group="group_3"
+                data-tab="tab-group-3-content-5">CameLIGO</div>
               <div className="nav-link">Reasonligo (coming soon) </div>
               {/* <div id="tab-group-3-tab-5" className="nav-link" data-group="group_3"
                 data-tab="tab-group-3-content-5">Camligo</div> */}
@@ -45,9 +46,11 @@ class HomeSplash extends React.Component {
               </div>
               <div id="tab-group-3-content-5" className="tab-pane" data-group="group_3" tabIndex="-1">
                 <div>
-                  <span>
-                    SOON
-                  </span>
+                  <pre>
+                    <code className="hljs css language-Pascal">
+                    type storage = int <br/><br/>(* variant defining pseudo multi-entrypoint actions *) <br/><br/>type action =<br/>| Increment of int<br/>| Decrement of int<br/><br/>let add (a: int) (b: int) : int = a + b<br/><br/>let subtract (a: int) (b: int) : int = a - b<br/><br/>(* real entrypoint that re-routes the flow based on the action provided *)<br/><br/>let%entry main (p : action) storage =<br/>  let storage =<br/>    match p with<br/>     | Increment n -> add storage n<br/>     | Decrement n -> subtract storage n<br/>  in (([] : operation list), storage)<br/>
+                    </code>
+                  </pre>
                 </div>
               </div>
             </div>

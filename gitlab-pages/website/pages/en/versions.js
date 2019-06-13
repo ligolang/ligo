@@ -28,7 +28,7 @@ function Versions(props) {
           <header className="postHeader">
             <h1>{siteConfig.title} Versions</h1>
           </header>
-          <h3 id="latest">Current version (Stable)</h3>
+          <h3 id="latest">Current version</h3>
           <table className="versions">
             <tbody>
               <tr>
@@ -39,7 +39,7 @@ function Versions(props) {
                   <a
                     href={`${siteConfig.baseUrl}${siteConfig.docsUrl}/${
                       props.language ? props.language + '/' : ''
-                    }setup-installation`}>
+                    }setup/installation`}>
                     Documentation
                   </a>
                 </td>
@@ -63,7 +63,7 @@ function Versions(props) {
                   <a
                     href={`${siteConfig.baseUrl}${siteConfig.docsUrl}/${
                       props.language ? props.language + '/' : ''
-                    }next/setup-installation`}>
+                    }next/setup/installation`}>
                     Documentation
                   </a>
                 </td>
@@ -88,7 +88,7 @@ function Versions(props) {
                         <a
                           href={`${siteConfig.baseUrl}${siteConfig.docsUrl}/${
                             props.language ? props.language + '/' : ''
-                          }${version}/setup-installation`}>
+                          }${version}/setup/installation`}>
                           Documentation
                         </a>
                       </td>
