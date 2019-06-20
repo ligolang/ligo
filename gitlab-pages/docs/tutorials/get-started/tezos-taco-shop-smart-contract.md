@@ -20,7 +20,7 @@ To help Pedro open his dream taco shop, we'll implement a smart-contract, that w
 
 Pedro's tacos are a rare delicacy, so their **price goes up**, as the **stock for the day begins to deplete**.
 
-Each taco kind, has it's own `max_price` that it sells for, and a finite supply for the current sales lifecycle.
+Each taco kind, has its own `max_price` that it sells for, and a finite supply for the current sales lifecycle.
 
 > For the sake of simplicity, we won't implement replenishing of the supply after it runs out.
 
@@ -136,7 +136,7 @@ end
 type taco_shop_storage is map(nat, taco_supply);
 ```
 
-Next step is to update the `main` entry point to include `taco_shop_storage` as it's storage - while doing that let's set the `parameter` to `unit` as well to clear things up.
+Next step is to update the `main` entry point to include `taco_shop_storage` as its storage - while doing that let's set the `parameter` to `unit` as well to clear things up.
 
 **`taco-shop.ligo`**
 ```Pascal
@@ -189,7 +189,7 @@ end"
 
 <br/>
 
-*If everything went as expected, the `dry-run` command will return the contract's current storage, which is the map of products we've defined based on the daily offer of Pedro's taco shop.*
+*If everything went as expected, the `dry-run` command will return an empty list of operations and the contract's current storage, which is the map of products we've defined based on the daily offer of Pedro's taco shop.*
 
 ---
 
@@ -293,7 +293,7 @@ function buy_taco (const taco_kind_index: nat ; var taco_shop_storage : taco_sho
 In order to test the `amount` sent, we'll use the `--amount` option of `dry-run`:
 
 ```zsh
-ligo dry-run taco-shop.ligo--syntax pascaligo --amount 1 buy_taco 1n "map
+ligo dry-run taco-shop.ligo --syntax pascaligo --amount 1 buy_taco 1n "map
     1n -> record
         current_stock = 50n;
         max_price = 50000000mtz;
