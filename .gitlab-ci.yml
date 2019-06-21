@@ -52,9 +52,10 @@ stages:
     - npm run version next
     - npm run build
     # move internal odoc documentation to the website folder
-    - mkdir -p gitlab-pages/website/build/ligo/
-    - mv ../../_build/default/_doc/_html/ gitlab-pages/website/build/ligo/odoc
-    - ls gitlab-pages/website/build/ligo/ # for debug
+    - mkdir -p build/ligo/
+    - mv ../../_build/default/_doc/_html/ build/ligo/odoc
+    - pwd            # for debug
+    - ls build/ligo/ # for debug
   after_script:
     - cp -r gitlab-pages/website/build/ligo public
   artifacts:
@@ -158,4 +159,4 @@ pages:
   only:
     - master
     - dev
-    - feature/#3-add-odoc-to-website
+    - feature/website-fixes
