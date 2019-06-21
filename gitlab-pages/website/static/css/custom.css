@@ -228,6 +228,10 @@ body > div.fixedHeaderContainer > div > header > div > nav > ul > li:nth-child(5
     background: transparent;
 }
 
+.cheatsheet tr > td:first-of-type {
+    min-width: 240px;
+}
+
 @media only screen and (min-device-width: 360px) and (max-device-width: 736px) {
 }
 
