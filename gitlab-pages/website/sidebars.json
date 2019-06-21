@@ -16,6 +16,6 @@
     "Road Map": ["contributors/road-map/short-term", "contributors/road-map/long-term"]
   },
   "tutorials": {
-    "Get Started": ["tutorials/get-started/tezos-taco-shop-smart-contract"]
+    "Get Started": ["tutorials/get-started/tezos-taco-shop-smart-contract", "tutorials/get-started/tezos-taco-shop-payout"]
   }
 }
