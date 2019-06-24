@@ -37,8 +37,8 @@ type action is
 function main (const action: action ; const counter: int) : (list(operation) * int) is
   block {skip} with ((nil : list(operation)),
     case action of
-    | Increment number -> counter + number
-    | Decrement number -> counter - number
+    | Increment(number) -> counter + number
+    | Decrement(number) -> counter - number
     end)
 ```
 
