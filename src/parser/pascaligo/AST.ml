@@ -632,7 +632,7 @@ and arguments = tuple_injection
 
 and pattern =
   PCons   of (pattern, cons) nsepseq reg
-| PConstr of (constr * pattern reg) reg
+| PConstr of (constr * tuple_pattern option) reg
 | PVar    of Lexer.lexeme reg
 | PWild   of wild
 | PInt    of (Lexer.lexeme * Z.t) reg
@@ -644,7 +644,9 @@ and pattern =
 | PNone   of c_None
 | PSome   of (c_Some * pattern par reg) reg
 | PList   of list_pattern
-| PTuple  of (pattern, comma) nsepseq par reg
+| PTuple  of tuple_pattern
+
+and tuple_pattern = (pattern, comma) nsepseq par reg
 
 and list_pattern =
   Sugar of pattern injection reg

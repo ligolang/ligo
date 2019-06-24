@@ -1052,22 +1052,22 @@ pattern:
     in PCons {region; value=$1}}
 
 core_pattern:
-  var        {    PVar $1 }
-| WILD       {   PWild $1 }
-| Int        {    PInt $1 }
-| String     { PString $1 }
-| C_Unit     {   PUnit $1 }
-| C_False    {  PFalse $1 }
-| C_True     {   PTrue $1 }
-| C_None     {   PNone $1 }
-| list_patt  {   PList $1 }
-| tuple_patt {  PTuple $1 }
-| constr_patt { PConstr $1 }
+  var                      {    PVar $1 }
+| WILD                     {   PWild $1 }
+| Int                      {    PInt $1 }
+| String                   { PString $1 }
+| C_Unit                   {   PUnit $1 }
+| C_False                  {  PFalse $1 }
+| C_True                   {   PTrue $1 }
+| C_None                   {   PNone $1 }
+| list_pattern             {   PList $1 }
+| tuple_pattern            {  PTuple $1 }
+| constr_pattern           { PConstr $1 }
 | C_Some par(core_pattern) {
     let region = cover $1 $2.region
     in PSome {region; value = $1,$2}}
 
-list_patt:
+list_pattern:
   injection(List,core_pattern) { Sugar $1 }
 | Nil                          {  PNil $1 }
 | par(cons_pattern)            {   Raw $1 }
@@ -1075,15 +1075,14 @@ list_patt:
 cons_pattern:
   core_pattern CONS pattern { $1,$2,$3 }
 
-tuple_patt:
+tuple_pattern:
   par(nsepseq(core_pattern,COMMA)) { $1 }
 
-constr_patt:
-  Constr core_pattern {
-    let second =
-      let region = pattern_to_region $2 in
-      {region; value=$2}
-    in
-    let region = cover $1.region second.region in
-    let value = ($1 , second) in
-    {region; value}}
+constr_pattern:
+  Constr tuple_pattern {
+    let region = cover $1.region $2.region
+    in {region; value = $1, Some $2}
+  }
+| Constr {
+    {region=$1.region; value = $1, None}
+  }
