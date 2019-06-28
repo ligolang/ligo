@@ -1,41 +1,6 @@
 open Cmdliner
 open Trace
-
-let error_pp out (e : error) =
-    let open JSON_string_utils in
-  let message =
-    let opt = e |> member "message" |> string in
-    let msg = Option.unopt ~default:"" opt in
-    if msg = ""
-    then ""
-    else ": " ^ msg in
-  let error_code =
-    let error_code = e |> member "error_code" in
-    match error_code with
-    | `Null -> ""
-    | _ -> " (" ^ (J.to_string error_code) ^ ")" in
-  let title =
-    let opt = e |> member "title" |> string in
-    Option.unopt ~default:"" opt in
-  let data =
-    let data = e |> member "data" in
-    match data with
-    | `Null -> ""
-    | _ -> " " ^ (J.to_string data) ^ "\n" in
-  let infos =
-    let infos = e |> member "infos" in
-    match infos with
-    | `Null -> ""
-    | _ -> " " ^ (J.to_string infos) ^ "\n" in
-  Format.fprintf out "%s%s%s.\n%s%s" title error_code message data infos
-
-
-let toplevel x =
-  match x with
-  | Trace.Ok ((), annotations) -> ignore annotations; ()
-  | Error ss -> (
-      Format.printf "%a%!" error_pp (ss ())
-    )
+open Cli_helpers
 
 let main =
   let term = Term.(const print_endline $ const "Ligo needs a command. Do ligo --help") in

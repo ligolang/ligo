@@ -1,0 +1,1 @@
+const foo : nat = 42 + "bar"
