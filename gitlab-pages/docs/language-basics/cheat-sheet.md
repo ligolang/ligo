@@ -16,6 +16,7 @@ title: Cheat Sheet
 |Natural numbers | `42n`, `7n`|
 |Unit| `unit`|
 |Boolean|<pre><code>const hasDriversLicense: bool = False;<br/>const adult: bool = True;</code></pre> |
+|Boolean Logic|<pre><code>(not True) == False == (False and True) == (False or False)</code></pre>|
 |Mutez (micro tez)| `42mtz`, `7mtz` |
 |Address | `"tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx"`, `"KT1JepfBfMSqkQyf9B1ndvURghGsSB8YCLMD"`|
 |Addition |`3 + 4`, `3n + 4n`|
@@ -26,6 +27,7 @@ title: Cheat Sheet
 |Includes|```#include "library.ligo"```|
 |Functions (short form)|<pre><code>function add (const a : int ; const b : int) : int is<br/>&nbsp;&nbsp;block { skip } with a + b</code></pre>|
 |Functions (long form)|<pre><code>function add (const a : int ; const b : int) : int is<br/>&nbsp;&nbsp;block { <br/>&nbsp;&nbsp;&nbsp;&nbsp;const result: int = a + b;<br/>&nbsp;&nbsp;} with result</code></pre>|
+| If Statement | <pre><code>if age < 16 <br/>then fail("Too young to drive."); <br/>else const new_id: int = prev_id + 1;</code></pre>|  
 |Options|<pre><code>type middleName is option(string);<br/>const middleName : middleName = Some("Foo");<br/>const middleName : middleName = None;</code></pre>|
 |Assignment| ```const age: int = 5;```|
 |Assignment on an existing variable <br/></br>*⚠️ This feature is not supported at the top-level scope, you can use it e.g. within functions. Works for Records and Maps as well.*| ```age := 18;```, ```p.age := 21``` |
@@ -36,6 +38,7 @@ title: Cheat Sheet
 |Maps|<pre><code>type prices is map(nat, tez);<br/><br/>const prices : prices = map<br/>&nbsp;&nbsp;10n -> 60mtz;<br/>&nbsp;&nbsp;50n -> 30mtz;<br/>&nbsp;&nbsp;100n -> 10mtz;<br/>end<br/><br/>const price: option(tez) = prices[50n];</code></pre>|
 |Contracts & Accounts|<pre><code>const destinationAddress : address = "tz1...";<br/>const contract : contract(unit) = get_contract(destinationAddress);</code></pre>|
 |Transactions|<pre><code>const payment : operation = transaction(unit, amount, receiver);</code></pre>|
+|Exception/Failure|`fail("Your descriptive error message for the user goes here.")`|
 
 <!--END_DOCUSAURUS_CODE_TABS-->
 
