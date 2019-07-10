@@ -35,7 +35,8 @@ title: Cheat Sheet
 |Variants|<pre><code>type action is<br/>&#124; Increment of int<br/>&#124; Decrement of int</code></pre>|
 |Variant *(pattern)* matching|<pre><code>const a: action = Increment(5);<br/>case a of<br/>&#124; Increment(n) -> n + 1<br/>&#124; Decrement(n) -> n - 1<br/>end</code></pre>|
 |Records|<pre><code>type person is record<br/>&nbsp;&nbsp;age: int ;<br/>&nbsp;&nbsp;name: string ;<br/>end<br/><br/>const john : person = record<br/>&nbsp;&nbsp;age = 18;<br/>&nbsp;&nbsp;name = "John Doe";<br/>end<br/><br/>const name: string = john.name;</code></pre>|
-|Maps|<pre><code>type prices is map(nat, tez);<br/><br/>const prices : prices = map<br/>&nbsp;&nbsp;10n -> 60mtz;<br/>&nbsp;&nbsp;50n -> 30mtz;<br/>&nbsp;&nbsp;100n -> 10mtz;<br/>end<br/><br/>const price: option(tez) = prices[50n];</code></pre>|
+<<<<<<< HEAD
+|Maps|<pre><code>type prices is map(nat, tez);<br/><br/>const prices : prices = map<br/>&nbsp;&nbsp;10n -> 60mtz;<br/>&nbsp;&nbsp;50n -> 30mtz;<br/>&nbsp;&nbsp;100n -> 10mtz;<br/>end<br/><br/>const price: option(tez) = prices[50n];<br/><br/>prices[200n] := 5mtz;</code></pre>|
 |Contracts & Accounts|<pre><code>const destinationAddress : address = "tz1...";<br/>const contract : contract(unit) = get_contract(destinationAddress);</code></pre>|
 |Transactions|<pre><code>const payment : operation = transaction(unit, amount, receiver);</code></pre>|
 |Exception/Failure|`fail("Your descriptive error message for the user goes here.")`|
