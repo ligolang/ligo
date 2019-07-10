@@ -3,7 +3,7 @@ id: installation
 title: Installation
 ---
 
-There are currently two ways to get started with Ligo, both of those will allow you to use the Ligo CLI with your contracts. You can choose to use either the Docker image, or to compile & build the Ligo CLI yourself.
+There are currently two ways to get started with Ligo, both of those will allow you to use the Ligo CLI with your contracts. You can choose to use either a Docker image, or to compile & build the Ligo CLI yourself.
 
 ## Dockerized installation (recommended)
 
