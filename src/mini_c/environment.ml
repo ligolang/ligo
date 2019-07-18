@@ -32,15 +32,15 @@ module Environment (* : ENVIRONMENT *) = struct
   let get_names : t -> string list = List.map fst
   let remove : int -> t -> t = List.remove
 
-  let select ?(rev = false) : string list -> t -> t = fun lst env ->
+  let select ?(rev = false) ?(keep = true) : string list -> t -> t = fun lst env ->
     let e_lst =
       let e_lst = to_list env in
       let aux selector (s , _) =
         match List.mem s selector with
-        | true -> List.remove_element s selector , true
-        | false -> selector , false in
+        | true -> List.remove_element s selector , keep
+        | false -> selector , not keep in
       let e_lst' =
-        if rev
+        if rev = keep
         then List.fold_map aux lst e_lst
         else List.fold_map_right aux lst e_lst
       in
