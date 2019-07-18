@@ -539,7 +539,7 @@ and translate_lambda env l =
         let%bind output = translate_type output_type in
         let tv = Combinators.t_function input output in
         let content = D_function {binder;input;output;result=result'} in
-        ok @@ Combinators.Expression.make_tpl (E_literal content, tv)
+        ok @@ Combinators.Expression.make_tpl (E_literal content , tv)
       )
     | _ -> (
         translate_lambda_deep env l

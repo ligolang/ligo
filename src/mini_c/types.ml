@@ -1,7 +1,7 @@
 type type_name = string
 
 type type_base =
-  | Base_unit
+  | Base_unit | Base_void
   | Base_bool
   | Base_int | Base_nat | Base_tez
   | Base_timestamp

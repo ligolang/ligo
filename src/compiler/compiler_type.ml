@@ -10,12 +10,14 @@ module Contract_types = Meta_michelson.Types
 module Ty = struct
 
   let not_comparable name () = error (thunk "not a comparable type") (fun () -> name) ()
+  let not_compilable_type name () = error (thunk "not a compilable type") (fun () -> name) ()
 
   let comparable_type_base : type_base -> ex_comparable_ty result = fun tb ->
     let open Contract_types in
     let return x = ok @@ Ex_comparable_ty x in
     match tb with
     | Base_unit -> fail (not_comparable "unit")
+    | Base_void -> fail (not_comparable "void")
     | Base_bool -> fail (not_comparable "bool")
     | Base_nat -> return nat_k
     | Base_tez -> return tez_k
@@ -44,6 +46,7 @@ module Ty = struct
     let return x = ok @@ Ex_ty x in
     match b with
     | Base_unit -> return unit
+    | Base_void -> fail (not_compilable_type "void")
     | Base_bool -> return bool
     | Base_int -> return int
     | Base_nat -> return nat
@@ -118,6 +121,7 @@ end
 let base_type : type_base -> O.michelson result =
   function
   | Base_unit -> ok @@ O.prim T_unit
+  | Base_void -> fail (Ty.not_compilable_type "void")
   | Base_bool -> ok @@ O.prim T_bool
   | Base_int -> ok @@ O.prim T_int
   | Base_nat -> ok @@ O.prim T_nat

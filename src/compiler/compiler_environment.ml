@@ -87,7 +87,7 @@ let add : environment -> (string * type_value) -> michelson result = fun e (_s ,
 
   ok code
 
-let select : environment -> string list -> michelson result = fun e lst ->
+let select ?(rev = false) : environment -> string list -> michelson result = fun e lst ->
   let module L = Logger.Stateful() in
   let e_lst =
     let e_lst = Environment.to_list e in
@@ -96,7 +96,11 @@ let select : environment -> string list -> michelson result = fun e lst ->
       match List.mem s selector with
       | true -> List.remove_element s selector , true
       | false -> selector , false in
-    let e_lst' = List.fold_map_right aux lst e_lst in
+    let e_lst' =
+      if rev
+      then List.fold_map aux lst e_lst
+      else List.fold_map_right aux lst e_lst
+    in
     let e_lst'' = List.combine e_lst e_lst' in
     e_lst'' in
   let code =
@@ -145,7 +149,7 @@ let clear : environment -> (michelson * environment) result = fun e ->
     trace_option (simple_error "try to clear empty env") @@
     List.nth_opt lst 0 in
   let%bind code = select e [ first_name ] in
-  let e' = Environment.select [ first_name ] e in
+  let e' = Environment.select ~rev:true [ first_name ] e in
   ok (code , e')
 
 let pack : environment -> michelson result = fun e ->
