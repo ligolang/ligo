@@ -185,8 +185,6 @@ and translate_expression ?push_var_name (expr:expression) (env:environment) : (m
   | E_environment_return expr -> (
       let%bind (expr' , env) = translate_expression ~push_var_name:"return_clause" expr env in
       let%bind (code , cleared_env) = Compiler_environment.clear env in
-      Format.printf "pre env %a\n" PP.environment env ;
-      Format.printf "post clean env %a\n" PP.environment cleared_env ;
       return ~end_env:cleared_env @@ seq [
         expr' ;
         code ;

@@ -127,10 +127,36 @@ let arithmetic () : unit result =
       ("plus_op", fun n -> (n + 42)) ;
       ("minus_op", fun n -> (n - 42)) ;
       ("times_op", fun n -> (n * 42)) ;
+      ("neg_op", fun n -> (-n)) ;
     ] in
   let%bind () = expect_eq_n_pos program "int_op" e_nat e_int in
   let%bind () = expect_eq_n_pos program "mod_op" e_int (fun n -> e_nat (n mod 42)) in
   let%bind () = expect_eq_n_pos program "div_op" e_int (fun n -> e_int (n / 2)) in
+  ok ()
+
+let bitwise_arithmetic () : unit result =
+  let%bind program = type_file "./contracts/bitwise_arithmetic.ligo" in
+  let%bind () = expect_eq program "or_op" (e_nat 7) (e_nat 7) in
+  let%bind () = expect_eq program "or_op" (e_nat 3) (e_nat 7) in
+  let%bind () = expect_eq program "or_op" (e_nat 2) (e_nat 6) in
+  let%bind () = expect_eq program "or_op" (e_nat 14) (e_nat 14) in
+  let%bind () = expect_eq program "or_op" (e_nat 10) (e_nat 14) in
+  let%bind () = expect_eq program "and_op" (e_nat 7) (e_nat 7) in
+  let%bind () = expect_eq program "and_op" (e_nat 3) (e_nat 3) in
+  let%bind () = expect_eq program "and_op" (e_nat 2) (e_nat 2) in
+  let%bind () = expect_eq program "and_op" (e_nat 14) (e_nat 6) in
+  let%bind () = expect_eq program "and_op" (e_nat 10) (e_nat 2) in
+  let%bind () = expect_eq program "xor_op" (e_nat 0) (e_nat 7) in
+  let%bind () = expect_eq program "xor_op" (e_nat 7) (e_nat 0) in
+  ok ()
+
+let string_arithmetic () : unit result =
+  let%bind program = type_file "./contracts/string_arithmetic.ligo" in
+  let%bind () = expect_eq program "concat_op" (e_string "foo") (e_string "foototo") in
+  let%bind () = expect_eq program "concat_op" (e_string "") (e_string "toto") in
+  let%bind () = expect_eq program "slice_op" (e_string "tata") (e_string "at") in
+  let%bind () = expect_eq program "slice_op" (e_string "foo") (e_string "oo") in
+  let%bind () = expect_fail program "slice_op" (e_string "ba") in
   ok ()
 
 let unit_expression () : unit result =
@@ -562,6 +588,8 @@ let main = test_suite "Integration (End to End)" [
     test "multiple parameters" multiple_parameters ;
     test "bool" bool_expression ;
     test "arithmetic" arithmetic ;
+    test "bitiwse_arithmetic" bitwise_arithmetic ;
+    test "string_arithmetic" string_arithmetic ;
     test "unit" unit_expression ;
     test "string" string_expression ;
     test "option" option ;

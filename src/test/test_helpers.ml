@@ -49,7 +49,7 @@ let test name f =
   )
 
 let test_suite name lst = Test_suite (name , lst)
-        
+
 open Ast_simplified.Combinators
 
 let expect ?options program entry_point input expecter =
@@ -61,6 +61,17 @@ let expect ?options program entry_point input expecter =
     trace run_error @@
     Ligo.Run.run_simplityped ~debug_michelson:true ?options program entry_point input in
   expecter result
+
+let expect_fail ?options program entry_point input =
+  let run_error =
+    let title () = "expect run" in
+    let content () = Format.asprintf "Entry_point: %s" entry_point in
+    error title content
+  in
+  trace run_error @@
+  Assert.assert_fail
+  @@ Ligo.Run.run_simplityped ~debug_michelson:true ?options program entry_point input
+
 
 let expect_eq ?options program entry_point input expected =
   let expecter = fun result ->

@@ -69,6 +69,11 @@ module Simplify = struct
       ("source" , "SOURCE") ;
       ("sender" , "SENDER") ;
       ("failwith" , "FAILWITH") ;
+      ("bitwise_or" , "OR") ;
+      ("bitwise_and" , "AND") ;
+      ("bitwise_xor" , "XOR") ;
+      ("string_concat" , "CONCAT") ;
+      ("string_slice" , "SLICE") ;
     ]
 
     let type_constants = type_constants
@@ -546,15 +551,17 @@ module Typer = struct
       sub ;
       none ;
       some ;
+      concat ;
+      slice ;
       comparator "EQ" ;
       comparator "NEQ" ;
       comparator "LT" ;
       comparator "GT" ;
       comparator "LE" ;
       comparator "GE" ;
-      boolean_operator_2 "OR" ;
-      boolean_operator_2 "AND" ;
-      boolean_operator_2 "XOR" ;
+      or_ ;
+      and_ ;
+      xor ;
       not_ ;
       map_remove ;
       map_add ;
@@ -655,13 +662,14 @@ module Compiler = struct
     ("MAP_UPDATE" , simple_ternary @@ prim I_UPDATE) ;
     ("SET_MEM" , simple_binary @@ prim I_MEM) ;
     ("SET_ADD" , simple_binary @@ seq [dip (i_push (prim T_bool) (prim D_True)) ; prim I_UPDATE]) ;
-    ("SLICE" , simple_ternary @@ prim I_SLICE) ;
+    ("SLICE" , simple_ternary @@ seq [prim I_SLICE ; i_assert_some_msg (i_push_string "SLICE")]) ;
     ("SHA256" , simple_unary @@ prim I_SHA256) ;
     ("SHA512" , simple_unary @@ prim I_SHA512) ;
     ("BLAKE2B" , simple_unary @@ prim I_BLAKE2B) ;
     ("CHECK_SIGNATURE" , simple_ternary @@ prim I_CHECK_SIGNATURE) ;
     ("HASH_KEY" , simple_unary @@ prim I_HASH_KEY) ;
     ("PACK" , simple_unary @@ prim I_PACK) ;
+    ("CONCAT" , simple_binary @@ prim I_CONCAT) ;
   ]
 
   (* Some complex predicates will need to be added in compiler/compiler_program *)
