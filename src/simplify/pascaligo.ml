@@ -468,12 +468,11 @@ let rec simpl_expression (t:Raw.expr) : expr result =
       return @@ e_literal ~loc (Literal_nat n)
     )
   | EArith (Mtz n) -> (
-      let (n , loc) = r_split n in
-      let n = Z.to_int @@ snd @@ n in
-      return @@ e_literal ~loc (Literal_tez n)
-    )
-  | EArith _ as e ->
-       fail @@ unsupported_arith_op e
+    let (n , loc) = r_split n in
+    let n = Z.to_int @@ snd @@ n in
+    return @@ e_literal ~loc (Literal_tez n)
+  )
+  | EArith (Neg e) -> simpl_unop "NEG" e
   | EString (String s) ->
     let (s , loc) = r_split s in
       let s' =

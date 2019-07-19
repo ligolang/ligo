@@ -21,6 +21,11 @@ let get_predicate : string -> type_value -> expression list -> predicate result 
           let%bind m_ty = Compiler_type.type_ ty' in
           ok @@ simple_unary @@ prim ~children:[m_ty] I_NONE
         )
+      | "NIL" -> (
+          let%bind ty' = Mini_c.get_t_list ty in
+          let%bind m_ty = Compiler_type.type_ ty' in
+          ok @@ simple_unary @@ prim ~children:[m_ty] I_NIL
+        )
       | "UNPACK" -> (
           let%bind ty' = Mini_c.get_t_option ty in
           let%bind m_ty = Compiler_type.type_ ty' in

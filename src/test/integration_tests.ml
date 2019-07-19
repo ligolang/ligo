@@ -127,7 +127,6 @@ let arithmetic () : unit result =
       ("plus_op", fun n -> (n + 42)) ;
       ("minus_op", fun n -> (n - 42)) ;
       ("times_op", fun n -> (n * 42)) ;
-      (* ("div_op", fun n -> (n / 2)) ; *)
     ] in
   let%bind () = expect_eq_n_pos program "int_op" e_nat e_int in
   let%bind () = expect_eq_n_pos program "mod_op" e_int (fun n -> e_nat (n mod 42)) in
