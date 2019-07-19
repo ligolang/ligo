@@ -484,7 +484,7 @@ let rec simpl_expression (t:Raw.expr) : expr result =
       fail @@ unsupported_string_catenation e
   | ELogic l -> simpl_logic_expression l
   | EList l -> simpl_list_expression l
-  | ESet _ -> fail @@ unsupported_set_expr t
+  | ESet s -> simpl_set_expression s
   | ECase c -> (
       let (c , loc) = r_split c in
       let%bind e = simpl_expression c.expr in
@@ -570,6 +570,21 @@ and simpl_list_expression (t:Raw.list_expr) : expression result =
       let loc = Location.lift reg in
       return @@ e_list ~loc []
     )
+
+and simpl_set_expression (t:Raw.set_expr) : expression result =
+  match t with
+  | SetMem x -> (
+    let (x' , loc) = r_split x in
+    let%bind set' = simpl_expression x'.set in
+    let%bind element' = simpl_expression x'.element in
+    ok @@ e_constant ~loc "SET_MEM" [ element' ; set' ]
+  )
+  | SetInj x -> (
+    let (x' , loc) = r_split x in
+    let elements = pseq_to_list x'.elements in
+    let%bind elements' = bind_map_list simpl_expression elements in
+    ok @@ e_set ~loc elements'
+  )
 
 and simpl_binop (name:string) (t:_ Raw.bin_op Region.reg) : expression result =
   let return x = ok x in

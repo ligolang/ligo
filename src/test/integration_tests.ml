@@ -159,6 +159,34 @@ let string_arithmetic () : unit result =
   let%bind () = expect_fail program "slice_op" (e_string "ba") in
   ok ()
 
+let set_arithmetic () : unit result =
+  let%bind program = type_file "./contracts/set_arithmetic.ligo" in
+  let%bind () =
+    expect_eq program "add_op"
+      (e_set [e_string "foo" ; e_string "bar"])
+      (e_set [e_string "foo" ; e_string "bar" ; e_string "foobar"]) in
+  let%bind () =
+    expect_eq program "add_op"
+      (e_set [e_string "foo" ; e_string "bar" ; e_string "foobar"])
+      (e_set [e_string "foo" ; e_string "bar" ; e_string "foobar"]) in
+  let%bind () =
+    expect_eq program "remove_op"
+      (e_set [e_string "foo" ; e_string "bar"])
+      (e_set [e_string "foo" ; e_string "bar"]) in
+  let%bind () =
+    expect_eq program "remove_op"
+      (e_set [e_string "foo" ; e_string "bar" ; e_string "foobar"])
+      (e_set [e_string "foo" ; e_string "bar"]) in
+  let%bind () =
+    expect_eq program "mem_op"
+      (e_set [e_string "foo" ; e_string "bar" ; e_string "foobar"])
+      (e_bool true) in
+  let%bind () =
+    expect_eq program "mem_op"
+      (e_set [e_string "foo" ; e_string "bar"])
+      (e_bool false) in
+  ok ()
+
 let unit_expression () : unit result =
   let%bind program = type_file "./contracts/unit.ligo" in
   expect_eq_evaluate program "u" (e_unit ())
@@ -368,8 +396,7 @@ let loop () : unit result =
     let make_expected = fun n -> e_nat (n * (n + 1) / 2) in
     expect_eq_n_pos_mid program "sum" make_input make_expected
   in
-  ok()
-
+  ok ()
 
 let matching () : unit result =
   let%bind program = type_file "./contracts/match.ligo" in
@@ -590,6 +617,7 @@ let main = test_suite "Integration (End to End)" [
     test "arithmetic" arithmetic ;
     test "bitiwse_arithmetic" bitwise_arithmetic ;
     test "string_arithmetic" string_arithmetic ;
+    test "set_arithmetic" set_arithmetic ;
     test "unit" unit_expression ;
     test "string" string_expression ;
     test "option" option ;

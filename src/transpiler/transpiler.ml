@@ -372,7 +372,7 @@ and translate_annotated_expression (ae:AST.annotated_expression) : expression re
         Mini_c.Combinators.get_t_set tv in
       let%bind lst' = bind_map_list (translate_annotated_expression) lst in
       let aux : expression -> expression -> expression result = fun prev cur ->
-        return @@ E_constant ("CONS", [cur ; prev]) in
+        return @@ E_constant ("SET_ADD", [cur ; prev]) in
       let%bind (init : expression) = return @@ E_make_empty_set t in
       bind_fold_list aux init lst'
     )
@@ -674,7 +674,7 @@ let rec untranspile (v : value) (t : AST.type_value) : AST.annotated_expression 
   | T_constant ("nat", []) -> (
       let%bind n =
         trace_strong (wrong_mini_c_value "nat" v) @@
-        get_nat v in      
+        get_nat v in
       return (E_literal (Literal_nat n))
     )
   | T_constant ("timestamp", []) -> (

@@ -32,7 +32,13 @@ let rec error_pp out (e : error) =
     | `Null -> ""
     | `List lst -> Format.asprintf "@[<v2>%a@]" PP_helpers.(list_sep error_pp (tag "@,")) lst
     | _ -> " " ^ (J.to_string infos) ^ "\n" in
-  Format.fprintf out "%s%s%s.\n%s%s" title error_code message data infos
+  let children =
+    let children = e |> member "children" in
+    match children with
+    | `Null -> ""
+    | `List lst -> Format.asprintf "@[<v2>%a@]" PP_helpers.(list_sep error_pp (tag "@,")) lst
+    | _ -> " " ^ (J.to_string children) ^ "\n" in
+  Format.fprintf out "%s%s%s.\n%s%s%s" title error_code message data infos children
 
 
 let test name f =

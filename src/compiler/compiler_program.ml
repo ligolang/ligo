@@ -26,6 +26,11 @@ let get_predicate : string -> type_value -> expression list -> predicate result 
           let%bind m_ty = Compiler_type.type_ ty' in
           ok @@ simple_unary @@ prim ~children:[m_ty] I_NIL
         )
+      | "SET_EMPTY" -> (
+          let%bind ty' = Mini_c.get_t_set ty in
+          let%bind m_ty = Compiler_type.type_ ty' in
+          ok @@ simple_constant @@ prim ~children:[m_ty] I_EMPTY_SET
+        )
       | "UNPACK" -> (
           let%bind ty' = Mini_c.get_t_option ty in
           let%bind m_ty = Compiler_type.type_ ty' in
@@ -86,14 +91,16 @@ let rec translate_value (v:value) : michelson result = match v with
       ok @@ prim ~children:[s'] D_Some
   | D_map lst ->
       let%bind lst' = bind_map_list (bind_map_pair translate_value) lst in
+      let sorted = List.sort (fun (x , _) (y , _) -> compare x y) lst' in
       let aux (a, b) = prim ~children:[a;b] D_Elt in
-      ok @@ seq @@ List.map aux lst'
+      ok @@ seq @@ List.map aux sorted
   | D_list lst ->
       let%bind lst' = bind_map_list translate_value lst in
       ok @@ seq lst'
   | D_set lst ->
       let%bind lst' = bind_map_list translate_value lst in
-      ok @@ seq lst'
+      let sorted = List.sort compare lst' in
+      ok @@ seq sorted
   | D_operation _ ->
       simple_fail "can't compile an operation"
 

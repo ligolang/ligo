@@ -74,6 +74,11 @@ module Simplify = struct
       ("bitwise_xor" , "XOR") ;
       ("string_concat" , "CONCAT") ;
       ("string_slice" , "SLICE") ;
+      ("set_empty" , "SET_EMPTY") ;
+      ("set_mem" , "SET_MEM") ;
+      ("set_add" , "SET_ADD") ;
+      ("set_remove" , "SET_REMOVE") ;
+      ("set_iter" , "SET_ITER") ;
     ]
 
     let type_constants = type_constants
@@ -192,6 +197,11 @@ module Typer = struct
   let none = typer_0 "NONE" @@ fun tv_opt ->
     match tv_opt with
     | None -> simple_fail "untyped NONE"
+    | Some t -> ok t
+
+  let set_empty = typer_0 "SET_EMPTY" @@ fun tv_opt ->
+    match tv_opt with
+    | None -> simple_fail "untyped SET_EMPTY"
     | Some t -> ok t
 
   let sub = typer_2 "SUB" @@ fun a b ->
@@ -571,6 +581,7 @@ module Typer = struct
       map_map ;
       map_fold ;
       map_iter ;
+      set_empty ;
       set_mem ;
       set_add ;
       set_remove ;
@@ -658,10 +669,11 @@ module Compiler = struct
     ("CALL" , simple_ternary @@ prim I_TRANSFER_TOKENS) ;
     ("SOURCE" , simple_constant @@ prim I_SOURCE) ;
     ("SENDER" , simple_constant @@ prim I_SENDER) ;
-    ("MAP_ADD" , simple_ternary @@ seq [dip (i_some) ; prim I_UPDATE ]) ;
+    ("MAP_ADD" , simple_ternary @@ seq [dip (i_some) ; prim I_UPDATE]) ;
     ("MAP_UPDATE" , simple_ternary @@ prim I_UPDATE) ;
     ("SET_MEM" , simple_binary @@ prim I_MEM) ;
     ("SET_ADD" , simple_binary @@ seq [dip (i_push (prim T_bool) (prim D_True)) ; prim I_UPDATE]) ;
+    ("SET_REMOVE" , simple_binary @@ seq [dip (i_push (prim T_bool) (prim D_False)) ; prim I_UPDATE]) ;
     ("SLICE" , simple_ternary @@ seq [prim I_SLICE ; i_assert_some_msg (i_push_string "SLICE")]) ;
     ("SHA256" , simple_unary @@ prim I_SHA256) ;
     ("SHA512" , simple_unary @@ prim I_SHA512) ;

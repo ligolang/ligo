@@ -32,8 +32,14 @@ let run_entry ?(debug_michelson = false) ?options (entry:anon_function) (input:v
       error title content in
     trace error @@
     translate_entry entry in
-  if debug_michelson then Format.printf "Program: %a\n" Michelson.pp compiled.body ;
   let%bind input_michelson = translate_value input in
+  if debug_michelson then (
+    Format.printf "Program: %a\n" Michelson.pp compiled.body ;
+    Format.printf "Expression: %a\n" PP.expression entry.result ;
+    Format.printf "Input: %a\n" PP.value input ;
+    Format.printf "Input Type: %a\n" PP.type_ entry.input ;
+    Format.printf "Compiled Input: %a\n" Michelson.pp input_michelson ;
+  ) ;
   let%bind ex_ty_value = run_aux ?options compiled input_michelson in
   let%bind (result : value) = Compiler.Uncompiler.translate_value ex_ty_value in
   ok result
