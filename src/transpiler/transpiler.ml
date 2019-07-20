@@ -32,12 +32,22 @@ them. please report this to the developers." in
     let content () = name in
     error title content
 
+  let row_loc l = ("location" , fun () -> Format.asprintf "%a" Location.pp l)
+
   let unsupported_pattern_matching kind location =
     let title () = "unsupported pattern-matching" in
     let content () = Format.asprintf "%s patterns aren't supported yet" kind in
     let data = [
-      ("location" , fun () -> Format.asprintf "%a" Location.pp location) ;
-    ] in
+        row_loc location ;
+      ] in
+    error ~data title content
+
+  let unsupported_iterator location =
+    let title () = "unsupported iterator" in
+    let content () = "only lambda are supported as iterators" in
+    let data = [
+        row_loc location ;
+      ] in
     error ~data title content
 
   let not_functional_main location =
@@ -341,15 +351,50 @@ and translate_annotated_expression (ae:AST.annotated_expression) : expression re
       let%bind record' = translate_annotated_expression record in
       let expr = List.fold_left aux record' path in
       ok expr
-  | E_constant (name, lst) -> (
-      let%bind lst' = bind_map_list (translate_annotated_expression) lst in
-      match name, lst with
-      | "NONE", [] ->
-        let%bind o =
-          trace_strong (corner_case ~loc:__LOC__ "not an option") @@
-          Mini_c.Combinators.get_t_option tv in
-        return @@ E_make_none o
-      | _ -> return @@ E_constant (name, lst')
+  | E_constant (name , lst) -> (
+      let (iter , map) =
+        let iterator name = fun (lst : AST.annotated_expression list) -> match lst with
+          | [i ; f] -> (
+              let%bind f' = match f.expression with
+                | E_lambda l -> (
+                    let%bind body' = translate_annotated_expression l.result in
+                    let%bind input' = translate_type l.input_type in
+                    ok ((l.binder , input') , body')
+                  )
+                | E_variable v -> (
+                    let%bind elt =
+                      trace_option (corner_case ~loc:__LOC__ "missing var") @@
+                      AST.Environment.get_opt v f.environment in
+                    match elt.definition with
+                    | ED_declaration (f , _) -> (
+                        match f.expression with
+                        | E_lambda l -> (
+                            let%bind body' = translate_annotated_expression l.result in
+                            let%bind input' = translate_type l.input_type in
+                            ok ((l.binder , input') , body')
+                          )
+                        | _ -> fail @@ unsupported_iterator f.location
+                      )
+                    | _ -> fail @@ unsupported_iterator f.location
+                  )
+                | _ -> fail @@ unsupported_iterator f.location
+              in
+              let%bind i' = translate_annotated_expression i in
+              return @@ E_iterator (name , f' , i')
+            )
+          | _ -> fail @@ corner_case ~loc:__LOC__ "bad iterator arity"
+        in
+        iterator "ITER" , iterator "MAP" in
+      match (name , lst) with
+      | ("SET_ITER" , lst) -> iter lst
+      | ("LIST_ITER" , lst) -> iter lst
+      | ("MAP_ITER" , lst) -> iter lst
+      | ("LIST_MAP" , lst) -> map lst
+      | ("MAP_MAP" , lst) -> map lst
+      | _ -> (
+          let%bind lst' = bind_map_list (translate_annotated_expression) lst in
+          return @@ E_constant (name , lst')
+        )
     )
   | E_lambda l ->
     let%bind env =

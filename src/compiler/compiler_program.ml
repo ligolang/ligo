@@ -19,7 +19,7 @@ let get_predicate : string -> type_value -> expression list -> predicate result 
       | "NONE" -> (
           let%bind ty' = Mini_c.get_t_option ty in
           let%bind m_ty = Compiler_type.type_ ty' in
-          ok @@ simple_unary @@ prim ~children:[m_ty] I_NONE
+          ok @@ simple_constant @@ prim ~children:[m_ty] I_NONE
         )
       | "NIL" -> (
           let%bind ty' = Mini_c.get_t_list ty in
@@ -379,6 +379,36 @@ and translate_expression ?push_var_name (expr:expression) (env:environment) : (m
           dip restrict ;
         ]) in
       return code
+    )
+  | E_iterator (name , (v , body) , expr) -> (
+      let%bind (expr' , expr_env) = translate_expression ~push_var_name:"iter_expr" expr env in
+      let%bind popped = Compiler_environment.pop expr_env in
+      let%bind env' = ok @@ Environment.add v popped in
+      let%bind (body' , body_env) = translate_expression ~push_var_name:"iter_body" body env' in
+      match name with
+      | "ITER" -> (
+          let%bind restrict =
+            Compiler_environment.select_env body_env popped in
+          let%bind code = ok (seq [
+              expr' ;
+              i_iter (seq [body' ; restrict]) ;
+            ]) in
+          return ~end_env:popped code
+        )
+      | "MAP" -> (
+          let%bind restrict =
+            let%bind popped = Compiler_environment.pop body_env in
+            Compiler_environment.select_env popped env in
+          let%bind code = ok (seq [
+              expr' ;
+              i_map (seq [body' ; restrict]) ;
+            ]) in
+          return code
+        )
+      | s -> (
+          let error = error (thunk "bad iterator") (thunk s) in
+          fail error
+        )
     )
   | E_assignment (name , lrs , expr) -> (
       let%bind (expr' , env') = translate_expression ~push_var_name:"assignment_expr" expr env in

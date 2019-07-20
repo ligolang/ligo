@@ -185,6 +185,10 @@ let set_arithmetic () : unit result =
     expect_eq program "mem_op"
       (e_set [e_string "foo" ; e_string "bar"])
       (e_bool false) in
+  let%bind () =
+    expect_eq program "iter_op"
+      (e_set [e_int 2 ; e_int 4 ; e_int 7])
+      (e_int 13) in
   ok ()
 
 let unit_expression () : unit result =
@@ -365,6 +369,10 @@ let list () : unit result =
     let expected = ez [144 ; 51 ; 42 ; 120 ; 421] in
     expect_eq_evaluate program "bl" expected
   in
+  let%bind () =
+    expect_eq program "iter_op"
+      (e_list [e_int 2 ; e_int 4 ; e_int 7])
+      (e_int 13) in
   ok ()
 
 let condition () : unit result =

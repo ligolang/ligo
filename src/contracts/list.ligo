@@ -17,3 +17,13 @@ const bl : foobar = list
   120 ;
   421 ;
 end
+
+function iter_op (const s : list(int)) : int is
+  var r : int := 0 ;
+  function aggregate (const i : int) : unit is
+  begin
+    r := r + i ;
+  end with unit
+  begin
+    list_iter(s , aggregate) ;
+  end with r

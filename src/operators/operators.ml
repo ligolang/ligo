@@ -79,6 +79,7 @@ module Simplify = struct
       ("set_add" , "SET_ADD") ;
       ("set_remove" , "SET_REMOVE") ;
       ("set_iter" , "SET_ITER") ;
+      ("list_iter" , "LIST_ITER") ;
     ]
 
     let type_constants = type_constants
@@ -585,6 +586,8 @@ module Typer = struct
       set_mem ;
       set_add ;
       set_remove ;
+      set_iter ;
+      list_iter ;
       int ;
       size ;
       failwith_ ;
