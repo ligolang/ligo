@@ -256,22 +256,18 @@ module Typer = struct
     let%bind () = assert_type_value_eq (src, k) in
     ok @@ t_option dst ()
 
-  let map_iter : typer = typer_2 "MAP_ITER" @@ fun f m ->
+  let map_iter : typer = typer_2 "MAP_ITER" @@ fun m f ->
     let%bind (k, v) = get_t_map m in
-    let%bind (arg_1 , res) = get_t_function f in
-    let%bind (arg_2 , res') = get_t_function res in
-    let%bind () = assert_eq_1 arg_1 k in
-    let%bind () = assert_eq_1 arg_2 v in
-    let%bind () = assert_eq_1 res' (t_unit ()) in
+    let%bind (arg , res) = get_t_function f in
+    let%bind () = assert_eq_1 arg (t_pair k v ()) in
+    let%bind () = assert_eq_1 res (t_unit ()) in
     ok @@ t_unit ()
 
-  let map_map : typer = typer_2 "MAP_MAP" @@ fun f m ->
+  let map_map : typer = typer_2 "MAP_MAP" @@ fun m f ->
     let%bind (k, v) = get_t_map m in
-    let%bind (arg_1 , res) = get_t_function f in
-    let%bind (arg_2 , res') = get_t_function res in
-    let%bind () = assert_eq_1 arg_1 k in
-    let%bind () = assert_eq_1 arg_2 v in
-    ok @@ res'
+    let%bind (arg , res) = get_t_function f in
+    let%bind () = assert_eq_1 arg (t_pair k v ()) in
+    ok @@ t_map k res ()
 
   let map_fold : typer = typer_2 "MAP_FOLD" @@ fun f m ->
     let%bind (k, v) = get_t_map m in

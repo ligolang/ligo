@@ -31,3 +31,14 @@ const bm : foobar = map
   120 -> 23 ;
   421 -> 23 ;
 end
+
+function iter_op (const m : foobar) : int is
+  var r : int := 0 ;
+  function aggregate (const i : int ; const j : int) : unit is block { r := r + i + j } with unit ;
+  block {
+    map_iter(m , aggregate) ;
+  } with r ;
+
+function map_op (const m : foobar) : foobar is
+  function increment (const i : int ; const j : int) : int is block { skip } with j + 1 ;
+  block { skip } with map_map(m , increment) ;

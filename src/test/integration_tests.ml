@@ -348,6 +348,16 @@ let map () : unit result =
     let expected = ez [23, 23] in
     expect_eq program "rm" input expected
   in
+  let%bind () =
+    let input = ez [(1 , 10) ; (2 , 20) ; (3 , 30) ] in
+    let expected = e_int 66 in
+    expect_eq program "iter_op" input expected
+  in
+  let%bind () =
+    let input = ez [(1 , 10) ; (2 , 20) ; (3 , 30) ] in
+    let expected = ez [(1 , 11) ; (2 , 21) ; (3 , 31) ] in
+    expect_eq program "map_op" input expected
+  in
   ok ()
 
 let list () : unit result =
