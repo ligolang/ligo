@@ -104,7 +104,7 @@ let e_typed_list ?loc lst t =
   e_annotation ?loc (e_list lst) (t_list t)
 
 let e_typed_map ?loc lst k v = e_annotation ?loc (e_map lst) (t_map k v)
-    
+
 let e_typed_set ?loc lst k = e_annotation ?loc (e_set lst) (t_set k)
 
 let e_lambda ?loc (binder : string)

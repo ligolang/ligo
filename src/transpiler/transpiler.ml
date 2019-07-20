@@ -409,7 +409,7 @@ and translate_annotated_expression (ae:AST.annotated_expression) : expression re
       let aux : expression -> expression -> expression result = fun prev cur ->
         return @@ E_constant ("CONS", [cur ; prev]) in
       let%bind (init : expression) = return @@ E_make_empty_list t in
-      bind_fold_list aux init lst'
+      bind_fold_right_list aux init lst'
     )
   | E_set lst -> (
       let%bind t =

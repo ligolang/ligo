@@ -80,6 +80,9 @@ module Simplify = struct
       ("set_remove" , "SET_REMOVE") ;
       ("set_iter" , "SET_ITER") ;
       ("list_iter" , "LIST_ITER") ;
+      ("list_map" , "LIST_MAP") ;
+      ("map_iter" , "MAP_ITER") ;
+      ("map_map" , "MAP_MAP") ;
     ]
 
     let type_constants = type_constants
@@ -501,7 +504,7 @@ module Typer = struct
     let%bind (arg , res) = get_t_function body in
     let%bind key = get_t_list lst in
     if eq_1 key arg
-    then ok res
+    then ok (t_list res ())
     else simple_fail "bad list iter"
 
   let not_ = typer_1 "NOT" @@ fun elt ->
@@ -582,12 +585,14 @@ module Typer = struct
       map_map ;
       map_fold ;
       map_iter ;
+      map_map ;
       set_empty ;
       set_mem ;
       set_add ;
       set_remove ;
       set_iter ;
       list_iter ;
+      list_map ;
       int ;
       size ;
       failwith_ ;

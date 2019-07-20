@@ -41,5 +41,14 @@ let run_entry ?(debug_michelson = false) ?options (entry:anon_function) (input:v
     Format.printf "Compiled Input: %a\n" Michelson.pp input_michelson ;
   ) ;
   let%bind ex_ty_value = run_aux ?options compiled input_michelson in
+  if debug_michelson then (
+    let (Ex_typed_value (ty , v)) = ex_ty_value in
+    ignore @@
+    let%bind michelson_value =
+      trace_tzresult_lwt (simple_error "debugging run_mini_c") @@
+      Proto_alpha_utils.Memory_proto_alpha.unparse_michelson_data ty v in
+    Format.printf "Compiled Output: %a\n" Michelson.pp michelson_value ;
+    ok ()
+  ) ;
   let%bind (result : value) = Compiler.Uncompiler.translate_value ex_ty_value in
   ok result

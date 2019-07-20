@@ -97,7 +97,7 @@ let expect_evaluate program entry_point expecter =
     let content () = Format.asprintf "Entry_point: %s" entry_point in
     error title content in
   trace error @@
-  let%bind result = Ligo.Run.evaluate_simplityped program entry_point in
+  let%bind result = Ligo.Run.evaluate_simplityped ~debug_mini_c:true ~debug_michelson:true program entry_point in
   expecter result
 
 let expect_eq_evaluate program entry_point expected =

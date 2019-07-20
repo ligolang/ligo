@@ -27,3 +27,7 @@ function iter_op (const s : list(int)) : int is
   begin
     list_iter(s , aggregate) ;
   end with r
+
+function map_op (const s : list(int)) : list(int) is
+  function increment (const i : int) : int is block { skip } with i + 1
+  block { skip } with list_map(s , increment)

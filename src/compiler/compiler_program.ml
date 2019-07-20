@@ -397,13 +397,13 @@ and translate_expression ?push_var_name (expr:expression) (env:environment) : (m
         )
       | "MAP" -> (
           let%bind restrict =
-            let%bind popped = Compiler_environment.pop body_env in
-            Compiler_environment.select_env popped env in
+            let%bind popped' = Compiler_environment.pop body_env in
+            Compiler_environment.select_env popped' popped in
           let%bind code = ok (seq [
               expr' ;
-              i_map (seq [body' ; restrict]) ;
+              i_map (seq [body' ; dip restrict]) ;
             ]) in
-          return code
+          return ~prepend_env:popped code
         )
       | s -> (
           let error = error (thunk "bad iterator") (thunk s) in

@@ -357,13 +357,13 @@ let list () : unit result =
     e_typed_list lst' t_int
   in
   let%bind () =
+    let expected = ez [23 ; 42] in
+    expect_eq_evaluate program "fb" expected
+  in
+  let%bind () =
     let make_input = fun n -> (ez @@ List.range n) in
     let make_expected = e_nat in
     expect_eq_n_strict_pos_small program "size_" make_input make_expected
-  in
-  let%bind () =
-    let expected = ez [23 ; 42] in
-    expect_eq_evaluate program "fb" expected
   in
   let%bind () =
     let expected = ez [144 ; 51 ; 42 ; 120 ; 421] in
@@ -372,7 +372,13 @@ let list () : unit result =
   let%bind () =
     expect_eq program "iter_op"
       (e_list [e_int 2 ; e_int 4 ; e_int 7])
-      (e_int 13) in
+      (e_int 13)
+  in
+  let%bind () =
+    expect_eq program "map_op"
+      (e_list [e_int 2 ; e_int 4 ; e_int 7])
+      (e_list [e_int 3 ; e_int 5 ; e_int 8])
+  in
   ok ()
 
 let condition () : unit result =
