@@ -1,5 +1,5 @@
-(executable
-  (name test)
+(executables
+  (names test manual_test)
   (libraries
     simple-utils
     ligo

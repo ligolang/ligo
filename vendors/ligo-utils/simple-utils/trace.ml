@@ -211,7 +211,10 @@ end (* end Trace_tutorial. *)
 module J = Yojson.Basic
 
 module JSON_string_utils = struct
-  let member = J.Util.member
+  let member = fun n x ->
+    match x with
+    | `Null -> `Null
+    | x -> J.Util.member n x
   let string = J.Util.to_string_option
   let to_list_option = fun x ->
     try ( Some (J.Util.to_list x))
