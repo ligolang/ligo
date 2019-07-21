@@ -15,3 +15,6 @@ function div_op (const n : int) : int is
 
 function int_op (const n : nat) : int is
   block { skip } with int(n)
+
+function neg_op (const n : int) : int is
+  begin skip end with -n

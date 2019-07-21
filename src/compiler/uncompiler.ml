@@ -68,15 +68,11 @@ let rec translate_value (Ex_typed_value (ty, value)) : value result =
       in
       ok @@ D_map lst'
   | (List_t (ty, _)), lst ->
-      let lst' =
-        let aux acc cur = cur :: acc in
-        let lst = List.fold_left aux lst [] in
-        List.rev lst in
-      let%bind lst'' =
+      let%bind lst' =
         let aux = fun t -> translate_value (Ex_typed_value (ty, t)) in
-        bind_map_list aux lst'
+        bind_map_list aux lst
       in
-      ok @@ D_list lst''
+      ok @@ D_list lst'
   | (Set_t (ty, _)), (module S) -> (
       let lst = S.OPS.elements S.boxed in
       let lst' =

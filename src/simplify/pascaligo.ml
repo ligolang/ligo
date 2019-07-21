@@ -135,7 +135,7 @@ module Errors = struct
   let unsupported_for_loops region =
     let title () = "bounded iterators" in
     let message () =
-      Format.asprintf "for loops are not supported yet" in
+      Format.asprintf "only simple for loops are supported yet" in
     let data = [
       ("loop_loc",
        fun () -> Format.asprintf "%a" Location.pp_lift @@ region)
@@ -468,12 +468,11 @@ let rec simpl_expression (t:Raw.expr) : expr result =
       return @@ e_literal ~loc (Literal_nat n)
     )
   | EArith (Mtz n) -> (
-      let (n , loc) = r_split n in
-      let n = Z.to_int @@ snd @@ n in
-      return @@ e_literal ~loc (Literal_tez n)
-    )
-  | EArith _ as e ->
-       fail @@ unsupported_arith_op e
+    let (n , loc) = r_split n in
+    let n = Z.to_int @@ snd @@ n in
+    return @@ e_literal ~loc (Literal_tez n)
+  )
+  | EArith (Neg e) -> simpl_unop "NEG" e
   | EString (String s) ->
     let (s , loc) = r_split s in
       let s' =
@@ -485,7 +484,7 @@ let rec simpl_expression (t:Raw.expr) : expr result =
       fail @@ unsupported_string_catenation e
   | ELogic l -> simpl_logic_expression l
   | EList l -> simpl_list_expression l
-  | ESet _ -> fail @@ unsupported_set_expr t
+  | ESet s -> simpl_set_expression s
   | ECase c -> (
       let (c , loc) = r_split c in
       let%bind e = simpl_expression c.expr in
@@ -571,6 +570,21 @@ and simpl_list_expression (t:Raw.list_expr) : expression result =
       let loc = Location.lift reg in
       return @@ e_list ~loc []
     )
+
+and simpl_set_expression (t:Raw.set_expr) : expression result =
+  match t with
+  | SetMem x -> (
+    let (x' , loc) = r_split x in
+    let%bind set' = simpl_expression x'.set in
+    let%bind element' = simpl_expression x'.element in
+    ok @@ e_constant ~loc "SET_MEM" [ element' ; set' ]
+  )
+  | SetInj x -> (
+    let (x' , loc) = r_split x in
+    let elements = pseq_to_list x'.elements in
+    let%bind elements' = bind_map_list simpl_expression elements in
+    ok @@ e_set ~loc elements'
+  )
 
 and simpl_binop (name:string) (t:_ Raw.bin_op Region.reg) : expression result =
   let return x = ok x in
@@ -730,8 +744,19 @@ and simpl_statement : Raw.statement -> (_ -> expression result) result =
 and simpl_single_instruction : Raw.single_instr -> (_ -> expression result) result =
   fun t ->
   match t with
-  | ProcCall call ->
-      fail @@ unsupported_proc_calls call
+  | ProcCall x -> (
+      let ((name, args) , loc) = r_split x in
+      let (f , f_loc) = r_split name in
+      let (args , args_loc) = r_split args in
+      let args' = npseq_to_list args.inside in
+      match List.assoc_opt f constants with
+      | None ->
+          let%bind arg = simpl_tuple_expression ~loc:args_loc args' in
+          return @@ e_application ~loc (e_variable ~loc:f_loc f) arg
+      | Some s ->
+          let%bind lst = bind_map_list simpl_expression args' in
+          return @@ e_constant ~loc s lst
+    )
   | Fail e -> (
       let%bind expr = simpl_expression e.value.fail_expr in
       return @@ e_failwith expr
@@ -746,7 +771,13 @@ and simpl_single_instruction : Raw.single_instr -> (_ -> expression result) resu
       let%bind body = simpl_block l.block.value in
       let%bind body = body None in
       return @@ e_loop cond body
-  | Loop (For (ForInt {region; _} | ForCollect {region; _})) ->
+  (* | Loop (For (ForCollect x)) -> (
+   *     let (x' , loc) = r_split x in
+   *     let%bind expr = simpl_expression x'.expr in
+   *     let%bind body = simpl_block x'.block.value in
+   *     ok _
+   *   ) *)
+  | Loop (For (ForInt {region; _} | ForCollect {region ; _})) ->
       fail @@ unsupported_for_loops region
   | Cond c -> (
       let (c , loc) = r_split c in

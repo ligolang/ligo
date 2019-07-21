@@ -32,7 +32,13 @@ let rec error_pp out (e : error) =
     | `Null -> ""
     | `List lst -> Format.asprintf "@[<v2>%a@]" PP_helpers.(list_sep error_pp (tag "@,")) lst
     | _ -> " " ^ (J.to_string infos) ^ "\n" in
-  Format.fprintf out "%s%s%s.\n%s%s" title error_code message data infos
+  let children =
+    let children = e |> member "children" in
+    match children with
+    | `Null -> ""
+    | `List lst -> Format.asprintf "@[<v2>%a@]" PP_helpers.(list_sep error_pp (tag "@,")) lst
+    | _ -> " " ^ (J.to_string children) ^ "\n" in
+  Format.fprintf out "%s%s%s.\n%s%s%s" title error_code message data infos children
 
 
 let test name f =
@@ -49,7 +55,7 @@ let test name f =
   )
 
 let test_suite name lst = Test_suite (name , lst)
-        
+
 open Ast_simplified.Combinators
 
 let expect ?options program entry_point input expecter =
@@ -61,6 +67,17 @@ let expect ?options program entry_point input expecter =
     trace run_error @@
     Ligo.Run.run_simplityped ~debug_michelson:true ?options program entry_point input in
   expecter result
+
+let expect_fail ?options program entry_point input =
+  let run_error =
+    let title () = "expect run" in
+    let content () = Format.asprintf "Entry_point: %s" entry_point in
+    error title content
+  in
+  trace run_error @@
+  Assert.assert_fail
+  @@ Ligo.Run.run_simplityped ~debug_michelson:true ?options program entry_point input
+
 
 let expect_eq ?options program entry_point input expected =
   let expecter = fun result ->
@@ -80,7 +97,7 @@ let expect_evaluate program entry_point expecter =
     let content () = Format.asprintf "Entry_point: %s" entry_point in
     error title content in
   trace error @@
-  let%bind result = Ligo.Run.evaluate_simplityped program entry_point in
+  let%bind result = Ligo.Run.evaluate_simplityped ~debug_mini_c:true ~debug_michelson:true program entry_point in
   expecter result
 
 let expect_eq_evaluate program entry_point expected =
