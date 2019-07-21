@@ -141,6 +141,11 @@ let get_t_map (t:type_value) : (type_value * type_value) result =
   | T_constant ("map", [k;v]) -> ok (k, v)
   | _ -> simple_fail "get: not a map"
 
+let get_t_big_map (t:type_value) : (type_value * type_value) result =
+  match t.type_value' with
+  | T_constant ("big_map", [k;v]) -> ok (k, v)
+  | _ -> simple_fail "get: not a big_map"
+
 let get_t_map_key : type_value -> type_value result = fun t ->
   let%bind (key , _) = get_t_map t in
   ok key
@@ -154,6 +159,7 @@ let assert_t_map = fun t ->
   ok ()
 
 let is_t_map = Function.compose to_bool get_t_map
+let is_t_big_map = Function.compose to_bool get_t_big_map
 
 let assert_t_tez : type_value -> unit result = get_t_tez
 let assert_t_key = get_t_key
@@ -165,8 +171,10 @@ let assert_t_list t =
   ok ()
 
 let is_t_list = Function.compose to_bool get_t_list
+let is_t_set = Function.compose to_bool get_t_set
 let is_t_nat = Function.compose to_bool get_t_nat
 let is_t_string = Function.compose to_bool get_t_string
+let is_t_bytes = Function.compose to_bool get_t_bytes
 let is_t_int = Function.compose to_bool get_t_int
 
 let assert_t_bytes = fun t ->

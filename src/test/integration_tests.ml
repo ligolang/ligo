@@ -127,11 +127,68 @@ let arithmetic () : unit result =
       ("plus_op", fun n -> (n + 42)) ;
       ("minus_op", fun n -> (n - 42)) ;
       ("times_op", fun n -> (n * 42)) ;
-      (* ("div_op", fun n -> (n / 2)) ; *)
+      ("neg_op", fun n -> (-n)) ;
     ] in
   let%bind () = expect_eq_n_pos program "int_op" e_nat e_int in
   let%bind () = expect_eq_n_pos program "mod_op" e_int (fun n -> e_nat (n mod 42)) in
   let%bind () = expect_eq_n_pos program "div_op" e_int (fun n -> e_int (n / 2)) in
+  ok ()
+
+let bitwise_arithmetic () : unit result =
+  let%bind program = type_file "./contracts/bitwise_arithmetic.ligo" in
+  let%bind () = expect_eq program "or_op" (e_nat 7) (e_nat 7) in
+  let%bind () = expect_eq program "or_op" (e_nat 3) (e_nat 7) in
+  let%bind () = expect_eq program "or_op" (e_nat 2) (e_nat 6) in
+  let%bind () = expect_eq program "or_op" (e_nat 14) (e_nat 14) in
+  let%bind () = expect_eq program "or_op" (e_nat 10) (e_nat 14) in
+  let%bind () = expect_eq program "and_op" (e_nat 7) (e_nat 7) in
+  let%bind () = expect_eq program "and_op" (e_nat 3) (e_nat 3) in
+  let%bind () = expect_eq program "and_op" (e_nat 2) (e_nat 2) in
+  let%bind () = expect_eq program "and_op" (e_nat 14) (e_nat 6) in
+  let%bind () = expect_eq program "and_op" (e_nat 10) (e_nat 2) in
+  let%bind () = expect_eq program "xor_op" (e_nat 0) (e_nat 7) in
+  let%bind () = expect_eq program "xor_op" (e_nat 7) (e_nat 0) in
+  ok ()
+
+let string_arithmetic () : unit result =
+  let%bind program = type_file "./contracts/string_arithmetic.ligo" in
+  let%bind () = expect_eq program "concat_op" (e_string "foo") (e_string "foototo") in
+  let%bind () = expect_eq program "concat_op" (e_string "") (e_string "toto") in
+  let%bind () = expect_eq program "slice_op" (e_string "tata") (e_string "at") in
+  let%bind () = expect_eq program "slice_op" (e_string "foo") (e_string "oo") in
+  let%bind () = expect_fail program "slice_op" (e_string "ba") in
+  ok ()
+
+let set_arithmetic () : unit result =
+  let%bind program = type_file "./contracts/set_arithmetic.ligo" in
+  let%bind () =
+    expect_eq program "add_op"
+      (e_set [e_string "foo" ; e_string "bar"])
+      (e_set [e_string "foo" ; e_string "bar" ; e_string "foobar"]) in
+  let%bind () =
+    expect_eq program "add_op"
+      (e_set [e_string "foo" ; e_string "bar" ; e_string "foobar"])
+      (e_set [e_string "foo" ; e_string "bar" ; e_string "foobar"]) in
+  let%bind () =
+    expect_eq program "remove_op"
+      (e_set [e_string "foo" ; e_string "bar"])
+      (e_set [e_string "foo" ; e_string "bar"]) in
+  let%bind () =
+    expect_eq program "remove_op"
+      (e_set [e_string "foo" ; e_string "bar" ; e_string "foobar"])
+      (e_set [e_string "foo" ; e_string "bar"]) in
+  let%bind () =
+    expect_eq program "mem_op"
+      (e_set [e_string "foo" ; e_string "bar" ; e_string "foobar"])
+      (e_bool true) in
+  let%bind () =
+    expect_eq program "mem_op"
+      (e_set [e_string "foo" ; e_string "bar"])
+      (e_bool false) in
+  let%bind () =
+    expect_eq program "iter_op"
+      (e_set [e_int 2 ; e_int 4 ; e_int 7])
+      (e_int 13) in
   ok ()
 
 let unit_expression () : unit result =
@@ -291,6 +348,16 @@ let map () : unit result =
     let expected = ez [23, 23] in
     expect_eq program "rm" input expected
   in
+  let%bind () =
+    let input = ez [(1 , 10) ; (2 , 20) ; (3 , 30) ] in
+    let expected = e_int 66 in
+    expect_eq program "iter_op" input expected
+  in
+  let%bind () =
+    let input = ez [(1 , 10) ; (2 , 20) ; (3 , 30) ] in
+    let expected = ez [(1 , 11) ; (2 , 21) ; (3 , 31) ] in
+    expect_eq program "map_op" input expected
+  in
   ok ()
 
 let list () : unit result =
@@ -300,17 +367,27 @@ let list () : unit result =
     e_typed_list lst' t_int
   in
   let%bind () =
+    let expected = ez [23 ; 42] in
+    expect_eq_evaluate program "fb" expected
+  in
+  let%bind () =
     let make_input = fun n -> (ez @@ List.range n) in
     let make_expected = e_nat in
     expect_eq_n_strict_pos_small program "size_" make_input make_expected
   in
   let%bind () =
-    let expected = ez [23 ; 42] in
-    expect_eq_evaluate program "fb" expected
-  in
-  let%bind () =
     let expected = ez [144 ; 51 ; 42 ; 120 ; 421] in
     expect_eq_evaluate program "bl" expected
+  in
+  let%bind () =
+    expect_eq program "iter_op"
+      (e_list [e_int 2 ; e_int 4 ; e_int 7])
+      (e_int 13)
+  in
+  let%bind () =
+    expect_eq program "map_op"
+      (e_list [e_int 2 ; e_int 4 ; e_int 7])
+      (e_list [e_int 3 ; e_int 5 ; e_int 8])
   in
   ok ()
 
@@ -343,8 +420,7 @@ let loop () : unit result =
     let make_expected = fun n -> e_nat (n * (n + 1) / 2) in
     expect_eq_n_pos_mid program "sum" make_input make_expected
   in
-  ok()
-
+  ok ()
 
 let matching () : unit result =
   let%bind program = type_file "./contracts/match.ligo" in
@@ -563,6 +639,9 @@ let main = test_suite "Integration (End to End)" [
     test "multiple parameters" multiple_parameters ;
     test "bool" bool_expression ;
     test "arithmetic" arithmetic ;
+    test "bitiwse_arithmetic" bitwise_arithmetic ;
+    test "string_arithmetic" string_arithmetic ;
+    test "set_arithmetic" set_arithmetic ;
     test "unit" unit_expression ;
     test "string" string_expression ;
     test "option" option ;
