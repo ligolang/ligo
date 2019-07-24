@@ -148,7 +148,7 @@ let get_e_pair = fun t ->
 let get_e_list = fun t ->
   match t with
   | E_list lst -> ok lst
-  | _ -> simple_fail "not a pair"
+  | _ -> simple_fail "not a list"
 
 let get_e_failwith = fun e ->
   match Location.unwrap e with
