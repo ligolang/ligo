@@ -1,11 +1,23 @@
-(* Driver for the parser of LIGO *)
+(* Driver for the parser of PascaLIGO *)
 
-open! EvalOpt (* Reads the command-line options: Effectful! *)
+(* Error printing and exception tracing *)
+
+let () = Printexc.record_backtrace true
+
+(* Reading the command-line options *)
+
+let options = EvalOpt.read ()
+
+open EvalOpt
+
+(* Auxiliary functions *)
 
 let sprintf = Printf.sprintf
 
+(* Extracting the input file *)
+
 let file =
-  match EvalOpt.input with
+  match options.input with
     None | Some "-" -> false
   |         Some _  -> true
 
@@ -30,7 +42,7 @@ let print_error ?(offsets=true) mode Region.{region; value} ~file =
 (* Path for CPP inclusions (#include) *)
 
 let lib_path =
-  match EvalOpt.libs with
+  match options.libs with
       [] -> ""
   | libs -> let mk_I dir path = Printf.sprintf " -I %s%s" dir path
             in List.fold_right mk_I libs ""
@@ -38,20 +50,20 @@ let lib_path =
 (* Preprocessing the input source and opening the input channels *)
 
 let prefix =
-  match EvalOpt.input with
+  match options.input with
     None | Some "-" -> "temp"
   | Some file ->  Filename.(file |> basename |> remove_extension)
 
 let suffix = ".pp.ligo"
 
 let pp_input =
-  if Utils.String.Set.mem "cpp" EvalOpt.verbose
+  if Utils.String.Set.mem "cpp" options.verbose
   then prefix ^ suffix
   else let pp_input, pp_out = Filename.open_temp_file prefix suffix
        in close_out pp_out; pp_input
 
 let cpp_cmd =
-  match EvalOpt.input with
+  match options.input with
     None | Some "-" ->
       Printf.sprintf "cpp -traditional-cpp%s - > %s"
                      lib_path pp_input
@@ -60,7 +72,7 @@ let cpp_cmd =
                      lib_path file pp_input
 
 let () =
-  if Utils.String.Set.mem "cpp" EvalOpt.verbose
+  if Utils.String.Set.mem "cpp" options.verbose
   then Printf.eprintf "%s\n%!" cpp_cmd;
   if Sys.command cpp_cmd <> 0 then
     external_ (Printf.sprintf "the command \"%s\" failed." cpp_cmd)
@@ -76,8 +88,8 @@ let Lexer.{read; buffer; get_pos; get_last; close} =
 
 and cout = stdout
 
-let log = Log.output_token ~offsets:EvalOpt.offsets
-                           EvalOpt.mode EvalOpt.cmd cout
+let log = Log.output_token ~offsets:options.offsets
+                           options.mode options.cmd cout
 
 and close_all () = close (); close_out cout
 
@@ -90,19 +102,21 @@ let tokeniser = read ~log
 let () =
   try
     let ast = Parser.contract tokeniser buffer in
-    if Utils.String.Set.mem "ast" EvalOpt.verbose
+    if Utils.String.Set.mem "ast" options.verbose
     then begin
-           ParserLog.offsets := EvalOpt.offsets;
-           ParserLog.mode    := EvalOpt.mode;
+           ParserLog.offsets := options.offsets;
+           ParserLog.mode    := options.mode;
            ParserLog.print_tokens ast
          end
   with
     Lexer.Error err ->
       close_all ();
-      Lexer.print_error ~offsets EvalOpt.mode err ~file
+      Lexer.print_error ~offsets:options.offsets
+                        options.mode err ~file
   | Parser.Error ->
       let region = get_last () in
       let error = Region.{region; value=ParseError} in
       let () = close_all () in
-      print_error ~offsets EvalOpt.mode error ~file
+      print_error ~offsets:options.offsets
+                  options.mode error ~file
   | Sys_error msg -> Utils.highlight msg
