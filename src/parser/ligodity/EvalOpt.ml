@@ -11,18 +11,19 @@ let abort msg =
 
 let printf  = Printf.printf
 let sprintf = Printf.sprintf
+let print   = print_endline
 
 (* Help *)
 
 let help () =
   let file = Filename.basename Sys.argv.(0) in
   printf "Usage: %s [<option> ...] [<input>.mligo | \"-\"]\n" file;
-  print_endline "where <input>.mligo is the CameLIGO source file (default: stdin),";
-  print_endline "and each <option> (if any) is one of the following:";
-  print_endline "  -I <paths>             Library paths (colon-separated)";
-  print_endline "      --verbose=<phases> Colon-separated phases: cmdline, lexer, parser";
-  print_endline "      --version          Send short commit hash to stdout";
-  print_endline "  -h, --help             This help";
+  print "where <input>.mligo is the CameLIGO source file (default: stdin),";
+  print "and each <option> (if any) is one of the following:";
+  print "  -I <paths>             Library paths (colon-separated)";
+  print "      --verbose=<phases> Colon-separated phases: cmdline, lexer, parser";
+  print "      --version          Send short commit hash to stdout";
+  print "  -h, --help             This help";
   exit 0
 
 (* Version *)
@@ -99,12 +100,12 @@ let check () =
   and libs    = !libs in
 
   let () =
-  if Utils.String.Set.mem "cmdline" verbose then
-    begin
-      printf "\nEXPORTED COMMAND LINE\n";
-      printf "input     = %s\n" (string_of quote input);
-      printf "verbose   = %s\n" !verb_str;
-      printf "I         = %s\n" (string_of_path libs)
+    if Utils.String.Set.mem "cmdline" verbose then
+      begin
+        printf "\nEXPORTED COMMAND LINE\n";
+        printf "input     = %s\n" (string_of quote input);
+        printf "verbose   = %s\n" !verb_str;
+        printf "libs      = %s\n" (string_of_path libs)
     end
 
   in {input; libs; verbose}

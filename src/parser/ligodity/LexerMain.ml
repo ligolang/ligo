@@ -1,12 +1,12 @@
-(* Driver for the lexer of Mini-ML *)
+(* Driver for the lexer of CameLIGO *)
 
 (* Error printing and exception tracing *)
 
-Printexc.record_backtrace true;;
+let () = Printexc.record_backtrace true
 
 (* Running the lexer on the source *)
 
-let options = EvalOpt.read ();;
+let options = EvalOpt.read ()
 
 open EvalOpt;;
 
