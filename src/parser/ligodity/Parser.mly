@@ -53,6 +53,7 @@ let rec mk_field_path (rank, tail) =
 %start program interactive_expr
 %type <AST.t> program
 %type <AST.expr> interactive_expr
+(*%type <('item,'sep) sep_or_term_list> sep_or_term_list*)
 
 %%
 
@@ -178,7 +179,7 @@ tuple(item):
 
 (* Possibly empty semicolon-separated values between brackets *)
 
-list_of(item):
+list(item):
   lbracket sep_or_term_list(item,semi) rbracket {
     let elements, terminator = $2 in {
       opening    = LBracket $1;
@@ -360,7 +361,7 @@ core_pattern:
 | kwd(False)                                             {  PFalse $1 }
 | string                                                 { PString $1 }
 | par(ptuple)                                            {    PPar $1 }
-| reg(list_of(tail))                               { PList (Sugar $1) }
+| reg(list(tail))                                  { PList (Sugar $1) }
 | reg(constr_pattern)                                    { PConstr $1 }
 | reg(record_pattern)                                    { PRecord $1 }
 
@@ -608,7 +609,7 @@ core_expr:
 | unit                                                     { EUnit $1 }
 | kwd(False)                          {  ELogic (BoolExpr (False $1)) }
 | kwd(True)                           {  ELogic (BoolExpr (True $1))  }
-| reg(list_of(expr))                                { EList (List $1) }
+| reg(list(expr))                                   { EList (List $1) }
 | par(expr)                                              {    EPar $1 }
 | reg(sequence)                                          {    ESeq $1 }
 | reg(record_expr)                                       { ERecord $1 }
