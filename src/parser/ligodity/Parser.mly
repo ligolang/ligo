@@ -3,46 +3,7 @@
 
 open AST
 
-(* Rewrite "let pattern = e" as "let x = e;; let x1 = ...;; let x2 = ...;;" *)
-
-(*
-module VMap = Utils.String.Map
-
-let ghost_of value = Region.{region=ghost; value}
-*)
-
 let ghost = Region.ghost
-
-(* let fail_syn_unif type1 type2 : 'a =
-  let reg = AST.region_of_type_expr type1 in
-  let reg = reg#compact ~file:false `Byte in
-  let value =
-    Printf.sprintf "Unification with %s is not\
-                    implemented." reg in
-  let region = AST.region_of_type_expr type2 in
-  let err = Region.{value; region} in
-  (Lexer.prerr ~kind:"Syntactical" err; exit 1)
-
-let mk_component rank =
-  let num = string_of_int rank, Z.of_int rank in
-  let par = {lpar=ghost; inside = ghost_of num; rpar=ghost}
-  in Component (ghost_of par)
-
-
-let rec mk_field_path (rank, tail) =
-  let head = mk_component rank in
-  match tail with
-        [] -> head, []
-  | hd::tl -> mk_field_path (hd,tl) |> Utils.nsepseq_cons head ghost
-
- let mk_projection fresh (path : int Utils.nseq) = {
-  struct_name = fresh;
-  selector    = ghost;
-  field_path  = Utils.nsepseq_rev (mk_field_path path)
-} *)
-
-
-(* We rewrite "fun p -> e" into "fun x -> match x with p -> e" *)
 
 (* END HEADER *)
 %}
@@ -53,7 +14,6 @@ let rec mk_field_path (rank, tail) =
 %start program interactive_expr
 %type <AST.t> program
 %type <AST.expr> interactive_expr
-(*%type <('item,'sep) sep_or_term_list> sep_or_term_list*)
 
 %%
 
