@@ -24,6 +24,7 @@ let literal ppf (l:literal) = match l with
   | Literal_bool b -> fprintf ppf "%b" b
   | Literal_int n -> fprintf ppf "%d" n
   | Literal_nat n -> fprintf ppf "+%d" n
+  | Literal_timestamp n -> fprintf ppf "+%d" n
   | Literal_tez n -> fprintf ppf "%dtz" n
   | Literal_string s -> fprintf ppf "%S" s
   | Literal_bytes b -> fprintf ppf "0x%s" @@ Bytes.to_string @@ Bytes.escaped b
@@ -41,6 +42,7 @@ let rec expression ppf (e:expression) = match Location.unwrap e with
   | E_record m -> fprintf ppf "record[%a]" (smap_sep_d expression) m
   | E_map m -> fprintf ppf "map[%a]" (list_sep_d assoc_expression) m
   | E_list lst -> fprintf ppf "list[%a]" (list_sep_d expression) lst
+  | E_set lst -> fprintf ppf "set[%a]" (list_sep_d expression) lst
   | E_look_up (ds, ind) -> fprintf ppf "(%a)[%a]" expression ds expression ind
   | E_lambda {binder;input_type;output_type;result} ->
       fprintf ppf "lambda (%a:%a) : %a return %a"

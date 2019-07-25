@@ -1,0 +1,1 @@
+let check = if Current.amount > 100tz then 42 else 0

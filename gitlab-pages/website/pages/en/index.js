@@ -32,7 +32,7 @@ class HomeSplash extends React.Component {
                 data-tab="tab-group-3-content-4">PascaLIGO</div>
               <div className="nav-link" data-group="group_3"
                 data-tab="tab-group-3-content-5">CameLIGO</div>
-              <div className="nav-link">Reasonligo (coming soon) </div>
+              <div className="nav-link">ReasonLIGO (coming soon) </div>
               {/* <div id="tab-group-3-tab-5" className="nav-link" data-group="group_3"
                 data-tab="tab-group-3-content-5">Camligo</div> */}
             </div>
@@ -40,7 +40,7 @@ class HomeSplash extends React.Component {
               <div id="tab-group-3-content-4" className="tab-pane active" data-group="group_3" tabIndex="-1">
                 <div>
                   <span>
-                    <pre><code className="hljs css language-Pascal">// variant defining pseudo multi-entrypoint actions<br />type action is<br />| Increment of int<br />| Decrement of int<br /><br />function add (const a : int ; const b : int) : int is<br />    block {'{ skip }'} with a + b<br /><br />function subtract (const a : int ; const b : int) : int is<br />    block {'{ skip }'} with a - b<br /><br />// real entrypoint that re-routes the flow based on the action provided<br />function main (const p : action ; const s : int) : (list(operation) * int) is<br />  block {'{ skip }'} with ((nil : list(operation)),<br />    case p of<br />    | Increment n -&gt; add(s, n)<br />    | Decrement n -&gt; subtract(s, n)<br />    end)<br /></code></pre>
+                    <pre><code className="hljs css language-Pascal">// variant defining pseudo multi-entrypoint actions<br />type action is<br />| Increment of int<br />| Decrement of int<br /><br />function add (const a : int ; const b : int) : int is<br />    block {'{ skip }'} with a + b<br /><br />function subtract (const a : int ; const b : int) : int is<br />    block {'{ skip }'} with a - b<br /><br />// real entrypoint that re-routes the flow based on the action provided<br />function main (const p : action ; const s : int) : (list(operation) * int) is<br />  block {'{ skip }'} with ((nil : list(operation)),<br />    case p of<br />    | Increment(n) -&gt; add(s, n)<br />    | Decrement(n) -&gt; subtract(s, n)<br />    end)<br /></code></pre>
                   </span>
                 </div>
               </div>
@@ -95,8 +95,8 @@ class HomeSplash extends React.Component {
         <div className="inner">
           <ProjectTitle siteConfig={siteConfig} />
           <PromoSection>
-            <Button href={docUrl('setup-installation.html')}>Get Started</Button>
-            <Button href={docUrl('tutorials/first-smart-contract.html')}>Tutorials</Button>
+            <Button href={docUrl('setup/installation.html')}>Get Started</Button>
+            <Button href={docUrl('tutorials/get-started/tezos-taco-shop-smart-contract.html')}>Tutorials</Button>
             <Button href={docUrl('contributors/origin.html')}>Contribute</Button>
           </PromoSection>
         </div>

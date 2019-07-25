@@ -37,6 +37,9 @@ class Footer extends React.Component {
             <a href={this.docUrl('contributors/origin.html', this.props.language)}>
               Contribute
             </a>
+            <a href="/odoc">
+              Api Documentation
+            </a>
           </div>
           <div>
             <h5>Community</h5>
@@ -56,7 +59,7 @@ class Footer extends React.Component {
           <div>
             <h5>More</h5>
             <a href={`${this.props.config.baseUrl}blog`}>Blog</a>
-            <a href={this.docUrl('tutorials/first-smart-contract.html', this.props.language)}>Tutorials</a>
+            <a href={this.docUrl('tutorials/get-started/tezos-taco-shop-smart-contract.html', this.props.language)}>Tutorials</a>
             <a href={`${this.props.config.repoUrl}`}>Gitlab</a>
           </div>
         </section>

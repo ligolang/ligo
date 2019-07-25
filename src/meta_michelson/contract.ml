@@ -267,6 +267,7 @@ module Types = struct
   let key = Key_t None
 
   let list a = List_t (a, None)
+  let set a = Set_t (a, None)
   let assert_list = function
     | List_t (a, _) -> a
     | _ -> assert false

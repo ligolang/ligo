@@ -1,7 +1,7 @@
 type type_name = string
 
 type type_base =
-  | Base_unit
+  | Base_unit | Base_void
   | Base_bool
   | Base_int | Base_nat | Base_tez
   | Base_timestamp
@@ -16,6 +16,7 @@ type type_value =
   | T_base of type_base
   | T_map of (type_value * type_value)
   | T_list of type_value
+  | T_set of type_value
   | T_contract of type_value
   | T_option of type_value
 
@@ -35,6 +36,7 @@ type value =
   | D_unit
   | D_bool of bool
   | D_nat of int
+  | D_timestamp of int
   | D_tez of int
   | D_int of int
   | D_string of string
@@ -46,6 +48,7 @@ type value =
   | D_none
   | D_map of (value * value) list
   | D_list of value list
+  | D_set of value list
   (* | `Macro of anon_macro ... The future. *)
   | D_function of anon_function
   | D_operation of Memory_proto_alpha.Alpha_context.packed_internal_operation
@@ -64,7 +67,9 @@ and expression' =
   | E_variable of var_name
   | E_make_empty_map of (type_value * type_value)
   | E_make_empty_list of type_value
+  | E_make_empty_set of type_value
   | E_make_none of type_value
+  | E_iterator of (string * ((var_name * type_value) * expression) * expression)
   | E_if_bool of expression * expression * expression
   | E_if_none of expression * expression * ((var_name * type_value) * expression)
   | E_if_left of expression * ((var_name * type_value) * expression) * ((var_name * type_value) * expression)

@@ -26,10 +26,12 @@ let trace_tzresult err =
 let trace_tzresult_r err_thunk_may_fail =
   function
   | Result.Ok x -> ok x
-  | Error _errs ->
-      (* let tz_errs = List.map of_tz_error errs in *)
+  | Error errs ->
+      let tz_errs = List.map of_tz_error errs in
       match err_thunk_may_fail () with
-      | Simple_utils.Trace.Ok (err, annotations) -> ignore annotations; Error (err)
+      | Simple_utils.Trace.Ok (err, annotations) ->
+         ignore annotations ;
+         Error (fun () -> patch_children tz_errs (err ()))
       | Error errors_while_generating_error ->
           (* TODO: the complexity could be O(n*n) in the worst case,
              this should use some catenable lists. *)

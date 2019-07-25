@@ -70,12 +70,41 @@ module Typer = struct
     | _ -> fail @@ wrong_param_number s 3 lst
   let typer_3 name f : typer = (name , typer'_3 name f)
 
+  let typer'_4 : name -> (type_value -> type_value -> type_value -> type_value -> type_value result) -> typer' = fun s f lst _ ->
+    match lst with
+    | [ a ; b ; c ; d ] -> (
+        let%bind tv' = f a b c d in
+        ok (s , tv')
+      )
+    | _ -> fail @@ wrong_param_number s 4 lst
+  let typer_4 name f : typer = (name , typer'_4 name f)
+
+  let typer'_5 : name -> (type_value -> type_value -> type_value -> type_value -> type_value -> type_value result) -> typer' = fun s f lst _ ->
+    match lst with
+    | [ a ; b ; c ; d ; e ] -> (
+        let%bind tv' = f a b c d e in
+        ok (s , tv')
+      )
+    | _ -> fail @@ wrong_param_number s 5 lst
+  let typer_5 name f : typer = (name , typer'_5 name f)
+
+  let typer'_6 : name -> (type_value -> type_value -> type_value -> type_value -> type_value -> type_value -> type_value result) -> typer' = fun s f lst _ ->
+    match lst with
+    | [ a ; b ; c ; d ; e ; f_ ] -> (
+        let%bind tv' = f a b c d e f_ in
+        ok (s , tv')
+      )
+    | _ -> fail @@ wrong_param_number s 6 lst
+  let typer_6 name f : typer = (name , typer'_6 name f)
+
   let constant name cst = typer_0 name (fun _ -> ok cst)
 
   open Combinators
 
   let eq_1 a cst = type_value_eq (a , cst)
   let eq_2 (a , b) cst = type_value_eq (a , cst) && type_value_eq (b , cst)
+
+  let assert_eq_1 a b = Assert.assert_true (eq_1 a b)
 
   let comparator : string -> typer = fun s -> typer_2 s @@ fun a b ->
     let%bind () =
@@ -88,6 +117,7 @@ module Typer = struct
         t_string () ;
         t_bytes () ;
         t_address () ;
+        t_timestamp () ;
       ] in
     ok @@ t_bool ()
 
@@ -113,8 +143,14 @@ module Compiler = struct
     | Unary of michelson
     | Binary of michelson
     | Ternary of michelson
+    | Tetrary of michelson
+    | Pentary of michelson
+    | Hexary of michelson
   let simple_constant c = Constant c
   let simple_unary c = Unary c
   let simple_binary c = Binary c
   let simple_ternary c = Ternary c
+  let simple_tetrary c = Tetrary c
+  let simple_pentary c = Pentary c
+  let simple_hexary c = Hexary c
 end
