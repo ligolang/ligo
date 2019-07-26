@@ -98,13 +98,6 @@ sepseq(X,Sep):
   (**)           {    None }
 | nsepseq(X,Sep) { Some $1 }
 
-(* TODO *)
-(*
-sequence(Item,TERM):
-  nsepseq(Item,TERM)      {}
-| nseq(Item TERM {$1,$2}) {}
- *)
-
 (* Inlines *)
 
 %inline var         : Ident { $1 }
@@ -502,7 +495,7 @@ set_patch:
     in {region; value}}
 
 map_patch:
-  Patch path With map_injection {
+  Patch path With injection(Map,binding) {
     let region = cover $1 $4.region in
     let value  = {
       kwd_patch = $1;
@@ -542,45 +535,6 @@ injection(Kind,element):
     in {region; value}
   }
 | Kind LBRACKET RBRACKET {
-    let region = cover $1 $3
-    and value = {
-      opening    = KwdBracket ($1,$2);
-      elements   = None;
-      terminator = None;
-      closing    = RBracket $3}
-    in {region; value}}
-
-map_injection:
-  Map sep_or_term_list(binding,SEMI) End {
-    let elements, terminator = $2 in
-    let region = cover $1 $3
-    and value = {
-      opening  = Kwd $1;
-      elements = Some elements;
-      terminator;
-      closing = End $3}
-    in {region; value}
-  }
-| Map End {
-    let region = cover $1 $2
-    and value = {
-      opening    = Kwd $1;
-      elements   = None;
-      terminator = None;
-      closing    = End $2}
-    in {region; value}
-  }
-| Map LBRACKET sep_or_term_list(binding,SEMI) RBRACKET {
-    let elements, terminator = $3 in
-    let region = cover $1 $4
-    and value = {
-      opening  = KwdBracket ($1,$2);
-      elements = Some elements;
-      terminator;
-      closing = RBracket $4}
-    in {region; value}
-  }
-| Map LBRACKET RBRACKET {
     let region = cover $1 $3
     and value = {
       opening    = KwdBracket ($1,$2);
@@ -957,8 +911,8 @@ set_expr:
   injection(Set,expr) { SetInj $1 }
 
 map_expr:
-  map_lookup    { MapLookUp $1 }
-| map_injection {    MapInj $1 }
+  map_lookup             { MapLookUp $1 }
+| injection(Map,binding) {    MapInj $1 }
 
 map_lookup:
   path brackets(expr) {
