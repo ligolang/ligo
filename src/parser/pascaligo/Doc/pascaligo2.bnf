@@ -173,7 +173,7 @@ data_decl ::=
 | var_decl
 
 unqualified_decl(OP) ::=
-  var COLON type_expr OP extended_expr
+  var COLON type_expr OP expr
 
 const_decl ::=
   open_const_decl SEMI
@@ -181,9 +181,6 @@ const_decl ::=
 
 var_decl ::=
   open_var_decl option(SEMI)
-
-extended_expr ::=
-  expr
 
 instruction ::=
   single_instr
