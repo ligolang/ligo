@@ -1,8 +1,8 @@
-(* Driver for the parser of Mini-ML *)
+(* Driver for the parser of CameLIGO *)
 
 (* Error printing and exception tracing *)
 
-Printexc.record_backtrace true;;
+let () = Printexc.record_backtrace true
 
 (* Reading the command-line options *)
 

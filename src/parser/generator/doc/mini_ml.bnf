@@ -1,0 +1,270 @@
+(* Extended Backus-Naur Form (EBNF) for Mini-ML *)
+
+(* LEXIS *)
+
+let nl       = ['\n' '\r']
+let blank    = [' ' '\t']
+
+let digit    = ['0'-'9']
+let natural  = digit | digit (digit | '_')* digit
+let integer  = '-'? natural
+
+let small    = ['a'-'z']
+let capital  = ['A'-'Z']
+let letter   = small | capital
+
+let ichar    = letter | digit | ['_' '\'']
+let ident    = small ichar* | '_' ichar+
+let uident   = capital ichar*
+
+let hexa     = digit | ['A'-'F']
+let byte     = hexa hexa
+
+let esc      = "\\n" | "\\\\" | "\\b" | "\\r" | "\\t"
+let string
+let char_set = [^'\'' '\\'] # nl
+               | "\\'" | esc | "\\x" byte | "\\0" digit digit
+let char     = "'" char_set "'"
+
+
+(* SYNTAX *)
+
+(* Helpers *)
+
+(* The following are meant to be part of a library *)
+
+sep_or_term_list<item,sep> ::=
+  item sep ...
+| (item sep)+
+
+seq<item> ::= nseq<item>?
+
+nseq<item> ::= item seq<item>
+
+nsepseq<item,sep> ::=
+  item
+| item sep nsepseq<item,sep>
+
+sepseq<item,sep> ::= nsepseq<item,sep>?
+
+(* The following are specific to the present grammar *)
+
+list_of<item> ::= "[" item ";" ... "]"
+
+csv<item> ::= item "," item "," ...
+
+(* Entry *)
+
+program ::= statement* EOF
+
+statement ::=
+  let_declarations
+| type_declaration
+
+(* Type declarations *)
+
+type_declaration ::= "type" type_name "=" type_expr
+
+type_name == ident
+
+type_expr ::=
+  cartesian
+| sum_type
+| record_type
+
+cartesian ::= fun_type "*" ...
+
+fun_type ::=
+  core_type "->" fun_type
+| core_type
+
+core_type ::=
+  type_name
+| type_param type_constr
+| "(" cartesian ")"
+
+type_param ==
+  core_type  type_constr
+| type_tuple type_constr
+
+type_constr == type_name
+
+type_tuple ::= "(" type_expr "," ... ")"
+
+sum_type ::= variant "|" ...
+
+variant ::= constr "of" cartesian
+
+constr == uident
+
+record_type ::=
+  "{" sep_or_term_list<field_decl, ";"> "}"
+
+field_decl ::= field_name ":" type_expr
+
+field_name == ident
+
+(* Non-recursive value declarations *)
+
+let_declarations ::= "let" let_bindings
+
+let_bindings := let_binding "and" ...
+
+let_binding ::=
+  value_name pattern+ "=" expr
+| let_lhs             "=" expr
+
+value_name == ident
+
+(* Patterns *)
+
+let_lhs ::=
+  pattern "::" cons_pat
+| pattern "," pattern "," ...
+| core_pattern
+
+core_pattern ::=
+  variable
+| "_"
+| "(" ")"
+| number
+| "true"
+| "false"
+| string
+| list_of<cons_pat>
+| "(" ptuple ")"
+| constr core_pattern
+
+variable == ident
+number == int
+
+ptuple ::= csv<cons_pat>
+
+unit ::= "(" ")"
+
+cons_pat ::=
+  pattern "::" cons_pat
+| pattern
+
+pattern ::=
+  "(" cons_pat ")"
+| core_pattern
+
+(* Expressions *)
+
+expr ::=
+  base_cond__open<expr>
+| match_expr<base_cond>
+
+base_cond__open<x> ::=
+  base_expr<x>
+| conditional<x>
+
+base_cond ::= base_cond__open<base_cond>
+
+base_expr<right_expr> ::=
+  let_expr<right_expr>
+| fun_expr<right_expr>
+| csv<op_expr>
+| op_expr
+
+conditional<right_expr> ::=
+  if_then_else<right_expr>
+| if_then<right_expr>
+
+if_then<right_expr> ::= "if" expr "then" right_expr
+
+if_then_else<right_expr> ::=
+  "if" expr "then" closed_if "else" right_expr
+
+base_if_then_else__open<x> ::=
+  base_expr<x>
+| if_then_else<x>
+
+base_if_then_else ::=
+  base_if_then_else__open<base_if_then_else>
+
+closed_if ::=
+  base_if_then_else__open<closed_if>
+| match_expr<base_if_then_else>
+
+match_expr<right_expr> ::=
+  "match" expr "with" cases<right_expr>
+
+cases<right_expr> ::=
+  case<right_expr>
+| cases<base_cond> "|" case<right_expr>
+
+case<right_expr> ::= let_lhs "->" right_expr
+
+let_in<right_expr> ::= "let" par_let "in" right_expr
+
+fun_expr<right_expr> ::= "fun" pattern+ "->" right_expr
+
+op_expr ::=
+  op_expr "||" conj_expr
+| conj_expr
+
+conj_expr ::=
+  conj_expr "&&" comp_expr
+| comp_expr
+
+comp_expr ::=
+  comp_expr "<"  cat_expr
+| comp_expr "<=" cat_expr
+| comp_expr ">"  cat_expr
+| comp_expr ">=" cat_expr
+| comp_expr "="  cat_expr
+| comp_expr "<>" cat_expr
+| cat_expr
+
+cat_expr ::=
+  cons_expr "^" cat_expr
+| cons_expr
+
+cons_expr ::=
+  add_expr "::" cons_expr
+| add_expr
+
+add_expr ::=
+  add_expr "+" mult_expr
+| add_expr "-" mult_expr
+| mult_expr
+
+mult_expr ::=
+  mult_expr "*"   unary_expr
+| mult_expr "div" unary_expr
+| mult_expr "mod" unary_expr
+| unary_expr
+
+unary_expr ::=
+  "-" core_expr
+| "not" core_expr
+| call_expr
+
+call_expr ::=
+  call_expr core_expr
+| core_expr
+
+core_expr ::=
+  number
+| module_name "." variable
+| string
+| char
+| "()"
+| "false"
+| "true"
+| list_of<expr>
+| "(" expr ")"
+| constr
+| sequence
+| record_expr
+
+module_name == uident
+
+record_expr ::=
+  "{" sep_or_term_list(field_assignment,";") "}"
+
+field_assignment ::= field_name "=" expr
+
+sequence ::= "begin" (expr ";" ...)? "end"

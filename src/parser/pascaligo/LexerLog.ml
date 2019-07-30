@@ -1,11 +1,6 @@
-(* Standalone lexer for debugging purposes *)
+(* Embedding the lexer of PascaLIGO in a debug module *)
 
 let sprintf = Printf.sprintf
-
-let file =
-  match EvalOpt.input with
-    None | Some "-" -> false
-  |         Some _  -> true
 
 module type S =
   sig
@@ -39,7 +34,8 @@ module Make (Lexer: Lexer.S) : (S with module Lexer = Lexer) =
       let output_nl str = output (str ^ "\n") in
       match command with
         EvalOpt.Quiet -> ()
-      | EvalOpt.Tokens -> Token.to_string token ~offsets mode |> output_nl
+      | EvalOpt.Tokens ->
+          Token.to_string token ~offsets mode |> output_nl
       | EvalOpt.Copy ->
           let lexeme = Token.to_lexeme token
           and apply acc markup = Markup.to_lexeme markup :: acc
@@ -67,6 +63,10 @@ module Make (Lexer: Lexer.S) : (S with module Lexer = Lexer) =
               if Token.is_eof token then close_all ()
               else iter ()
           | exception Lexer.Error e ->
+              let file =
+                match file_path_opt with
+                  None | Some "-" -> false
+                |         Some _  -> true in
               Lexer.print_error ~offsets mode e ~file;
               close_all ()
         in iter ()

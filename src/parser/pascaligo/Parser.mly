@@ -21,33 +21,22 @@ open AST
 
 (* RULES *)
 
-(* The rule [series(Item,TERM)] parses a non-empty list of [Item]
-   separated by semicolons and optionally terminated by a semicolon,
-   then the terminal TERM. *)
+(* The rule [sep_or_term(item,sep)] ("separated or terminated list")
+   parses a non-empty list of items separated by [sep], and optionally
+   terminated by [sep]. *)
 
-series(Item,TERM):
-  Item after_item(Item,TERM) { $1,$2 }
-
-after_item(Item,TERM):
-  SEMI item_or_closing(Item,TERM) {
-    match $2 with
-      `Some (item, items, term, closing) ->
-        ($1, item)::items, term, closing
-    | `Closing closing ->
-        [], Some $1, closing
+sep_or_term_list(item,sep):
+  nsepseq(item,sep) {
+    $1, None
   }
-| TERM {
-   [], None, $1
-  }
-
-item_or_closing(Item,TERM):
-  TERM {
-   `Closing $1
-  }
-| series(Item,TERM) {
-    let item, (items, term, closing) = $1
-    in `Some (item, items, term, closing)
-  }
+| nseq(item sep {$1,$2}) {
+    let (first,sep), tail = $1 in
+    let rec trans (seq, prev_sep as acc) = function
+      [] -> acc
+    | (item,next_sep)::others ->
+        trans ((prev_sep,item)::seq, next_sep) others in
+    let list, term = trans ([],sep) tail
+    in (first, List.rev list), Some term }
 
 (* Compound constructs *)
 
@@ -108,13 +97,6 @@ nsepseq(X,Sep):
 sepseq(X,Sep):
   (**)           {    None }
 | nsepseq(X,Sep) { Some $1 }
-
-(* TODO *)
-(*
-sequence(Item,TERM):
-  nsepseq(Item,TERM)      {}
-| nseq(Item TERM {$1,$2}) {}
- *)
 
 (* Inlines *)
 
@@ -220,24 +202,24 @@ variant:
     {region=$1.region; value= {constr=$1; args=None}} }
 
 record_type:
-  Record series(field_decl,End) {
-   let first, (others, terminator, closing) = $2 in
-   let region = cover $1 closing
-   and value  = {
+  Record sep_or_term_list(field_decl,SEMI) End {
+    let elements, terminator = $2 in
+    let region = cover $1 $3
+    and value  = {
      opening = Kwd $1;
-     elements = Some (first, others);
+     elements = Some elements;
      terminator;
-     closing = End closing}
+     closing = End $3}
    in {region; value}
   }
-| Record LBRACKET series(field_decl,RBRACKET) {
-   let first, (others, terminator, closing) = $3 in
-   let region = cover $1 closing
+| Record LBRACKET sep_or_term_list(field_decl,SEMI) RBRACKET {
+   let elements, terminator = $3 in
+   let region = cover $1 $4
    and value  = {
      opening = KwdBracket ($1,$2);
-     elements = Some (first, others);
+     elements = Some elements;
      terminator;
-     closing = RBracket closing}
+     closing = RBracket $4}
    in {region; value} }
 
 field_decl:
@@ -369,24 +351,24 @@ param_type:
   cartesian { TProd $1 }
 
 block:
-  Begin series(statement,End) {
-   let first, (others, terminator, closing) = $2 in
-   let region = cover $1 closing
+  Begin sep_or_term_list(statement,SEMI) End {
+   let statements, terminator = $2 in
+   let region = cover $1 $3
    and value = {
      opening    = Begin $1;
-     statements = first, others;
+     statements;
      terminator;
-     closing    = End closing}
+     closing    = End $3}
    in {region; value}
   }
-| Block LBRACE series(statement,RBRACE) {
-   let first, (others, terminator, closing) = $3 in
-   let region = cover $1 closing
+| Block LBRACE sep_or_term_list(statement,SEMI) RBRACE {
+   let statements, terminator = $3 in
+   let region = cover $1 $4
    and value = {
      opening    = Block ($1,$2);
-     statements = first, others;
+     statements;
      terminator;
-     closing    = Block closing}
+     closing    = Block $4}
    in {region; value}}
 
 statement:
@@ -435,15 +417,9 @@ data_decl:
 | var_decl   { LocalVar   $1 }
 
 unqualified_decl(OP):
-  var COLON type_expr OP extended_expr {
-    let init, region =
-      match $5 with
-        `Expr e -> e, expr_to_region e
-      | `EList kwd_nil ->
-           EList (Nil kwd_nil), kwd_nil
-      | `ENone region ->
-           EConstr (NoneExpr region), region
-    in $1, $2, $3, $4, init, region}
+  var COLON type_expr OP expr {
+    let region = expr_to_region $5
+    in $1, $2, $3, $4, $5, region}
 
 const_decl:
   open_const_decl SEMI {
@@ -459,12 +435,9 @@ var_decl:
   }
 | open_var_decl { $1 }
 
-extended_expr:
-  expr   { `Expr  $1 }
-
 instruction:
-  single_instr { Single $1 }
-| block        { Block  $1 : instruction }
+  single_instr {      Single $1 }
+| block        {      Block  $1 }
 
 single_instr:
   conditional  {        Cond $1 }
@@ -513,7 +486,7 @@ set_patch:
     in {region; value}}
 
 map_patch:
-  Patch path With map_injection {
+  Patch path With injection(Map,binding) {
     let region = cover $1 $4.region in
     let value  = {
       kwd_patch = $1;
@@ -523,14 +496,14 @@ map_patch:
     in {region; value}}
 
 injection(Kind,element):
-  Kind series(element,End) {
-    let first, (others, terminator, closing) = $2 in
-    let region = cover $1 closing
+  Kind sep_or_term_list(element,SEMI) End {
+    let elements, terminator = $2 in
+    let region = cover $1 $3
     and value = {
       opening  = Kwd $1;
-      elements = Some (first, others);
+      elements = Some elements;
       terminator;
-      closing = End closing}
+      closing = End $3}
     in {region; value}
   }
 | Kind End {
@@ -542,56 +515,17 @@ injection(Kind,element):
       closing    = End $2}
     in {region; value}
   }
-| Kind LBRACKET series(element,RBRACKET) {
-    let first, (others, terminator, closing) = $3 in
-    let region = cover $1 closing
+| Kind LBRACKET sep_or_term_list(element,SEMI) RBRACKET {
+    let elements, terminator = $3 in
+    let region = cover $1 $4
     and value = {
       opening  = KwdBracket ($1,$2);
-      elements = Some (first, others);
+      elements = Some elements;
       terminator;
-      closing = RBracket closing}
+      closing = RBracket $4}
     in {region; value}
   }
 | Kind LBRACKET RBRACKET {
-    let region = cover $1 $3
-    and value = {
-      opening    = KwdBracket ($1,$2);
-      elements   = None;
-      terminator = None;
-      closing    = RBracket $3}
-    in {region; value}}
-
-map_injection:
-  Map series(binding,End) {
-    let first, (others, terminator, closing) = $2 in
-    let region = cover $1 closing
-    and value = {
-      opening  = Kwd $1;
-      elements = Some (first, others);
-      terminator;
-      closing = End closing}
-    in {region; value}
-  }
-| Map End {
-    let region = cover $1 $2
-    and value = {
-      opening    = Kwd $1;
-      elements   = None;
-      terminator = None;
-      closing    = End $2}
-    in {region; value}
-  }
-| Map LBRACKET series(binding,RBRACKET) {
-    let first, (others, terminator, closing) = $3 in
-    let region = cover $1 closing
-    and value = {
-      opening  = KwdBracket ($1,$2);
-      elements = Some (first, others);
-      terminator;
-      closing = RBracket closing}
-    in {region; value}
-  }
-| Map LBRACKET RBRACKET {
     let region = cover $1 $3
     and value = {
       opening    = KwdBracket ($1,$2);
@@ -647,13 +581,12 @@ if_clause:
   instruction {
     ClauseInstr $1
   }
-| LBRACE series(statement,RBRACE) {
-   let first, (others, terminator, closing) = $2 in
-   let region = cover $1 closing in
+| LBRACE sep_or_term_list(statement,SEMI) RBRACE {
+   let region = cover $1 $3 in
    let value = {
      lbrace = $1;
-     inside = (first, others), terminator;
-     rbrace = closing} in
+     inside = $2;
+     rbrace = $3} in
    ClauseBlock {value; region} }
 
 case_instr:
@@ -770,16 +703,7 @@ interactive_expr:
 
 expr:
   case(expr) { ECase ($1 expr_to_region) }
-| annot_expr { $1                        }
-
-annot_expr:
-  LPAR disj_expr COLON type_expr RPAR {
-    let start  = expr_to_region $2
-    and stop   = type_expr_to_region $4 in
-    let region = cover start stop
-    and value  = ($2 , $4) in
-    (EAnnot {region; value})
-  }
+  (*| annot_expr { $1                        }*)
 | disj_expr { $1 }
 
 disj_expr:
@@ -946,6 +870,7 @@ core_expr:
 | C_False          { ELogic (BoolExpr (False $1)) }
 | C_True           { ELogic (BoolExpr (True  $1)) }
 | C_Unit           { EUnit $1                     }
+| annot_expr       { EAnnot $1                    }
 | tuple_expr       { ETuple $1                    }
 | list_expr        { EList $1                     }
 | C_None           { EConstr (NoneExpr $1)        }
@@ -965,12 +890,21 @@ core_expr:
     let region = cover $1 $2.region in
     EConstr (SomeApp {region; value = $1,$2})}
 
+annot_expr:
+  LPAR disj_expr COLON type_expr RPAR {
+    let start  = expr_to_region $2
+    and stop   = type_expr_to_region $4 in
+    let region = cover start stop
+    and value  = ($2 , $4)
+    in {region; value}
+  }
+
 set_expr:
   injection(Set,expr) { SetInj $1 }
 
 map_expr:
-  map_lookup    { MapLookUp $1 }
-| map_injection {    MapInj $1 }
+  map_lookup             { MapLookUp $1 }
+| injection(Map,binding) {    MapInj $1 }
 
 map_lookup:
   path brackets(expr) {
@@ -997,24 +931,24 @@ selection:
 | Int        { Component $1 }
 
 record_expr:
-  Record series(field_assignment,End) {
-    let first, (others, terminator, closing) = $2 in
-    let region = cover $1 closing
+  Record sep_or_term_list(field_assignment,SEMI) End {
+    let elements, terminator = $2 in
+    let region = cover $1 $3
     and value = {
       opening = Kwd $1;
-      elements = Some (first, others);
+      elements = Some elements;
       terminator;
-      closing = End closing}
+      closing = End $3}
     in {region; value}
   }
-| Record LBRACKET series(field_assignment,RBRACKET) {
-   let first, (others, terminator, closing) = $3 in
-   let region = cover $1 closing
+| Record LBRACKET sep_or_term_list(field_assignment,SEMI) RBRACKET {
+   let elements, terminator = $3 in
+   let region = cover $1 $4
    and value  = {
      opening = KwdBracket ($1,$2);
-     elements = Some (first, others);
+     elements = Some elements;
      terminator;
-     closing = RBracket closing}
+     closing = RBracket $4}
    in {region; value} }
 
 field_assignment:

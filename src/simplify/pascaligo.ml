@@ -913,6 +913,12 @@ and simpl_cases : type a . (Raw.pattern * a) list -> a matching result = fun t -
         let%bind var = get_var single_pat in
         ok (const.value , var)
       )
+(*
+    | PConstr {value = constr, Some tuple; _} ->
+        let%bind var = get_single (PTuple tuple) >>? get_var in
+        ok (constr.value, var)
+    | PConstr {value = constr, None; _} ->
+              *)
     | _ -> fail @@ only_constructors t in
   let%bind patterns =
     let aux (x , y) =
