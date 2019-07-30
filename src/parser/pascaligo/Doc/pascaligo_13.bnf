@@ -186,6 +186,10 @@ single_instr ::=
 | Remove expr From Map path
 | Remove expr From Set path
 
+path ::=
+  Ident (* var *)
+| Ident (* struct_name *) DOT nsepseq(selection,DOT)
+
 injection(Kind,element) ::=
   Kind series(element,SEMI,End)
 | Kind End
@@ -282,34 +286,26 @@ core_expr ::=
 | Mtz
 | Ident (* var *)
 | Ident (* var *) brackets(expr) (* lookup *)
-| Ident (* struct_name *) DOT nsepseq(selection,DOT) brackets(expr) (* lookup *)
-| Ident (* struct_name *) DOT nsepseq(selection,DOT)
+| Ident (* struct_name *) DOT nsepseq(selection,DOT) option(brackets(expr))
+| Ident (* fun_name *) arguments
 | String
 | Bytes
 | C_False
 | C_True
 | C_Unit
-| annot_expr
-| tuple_expr
-| list_expr
 | C_None
-| fun_call
-| structure
-| Constr arguments
-| Constr
 | C_Some arguments
-
-annot_expr ::=
-  LPAR disj_expr COLON type_expr RPAR
+| Constr option(arguments)
+| LPAR disj_expr COLON type_expr RPAR
+| LPAR nsepseq(expr,COMMA) RPAR
+| injection(List,expr)
+| Nil
+| structure
 
 structure ::=
   injection(Map,binding)
 | injection(Set,expr)
 | record_expr
-
-path ::=
-  Ident (* var *)
-| Ident (* struct_name *) DOT nsepseq(selection,DOT)
 
 selection ::=
   Ident (* field_name *)
@@ -322,21 +318,8 @@ record_expr ::=
 field_assignment ::=
   Ident (* field_name *) EQUAL expr
 
-fun_call ::=
-  Ident (* fun_name *) arguments
-
-tuple_expr ::=
-  tuple_inj
-
-tuple_inj ::=
-  par(nsepseq(expr,COMMA))
-
 arguments ::=
-  tuple_inj
-
-list_expr ::=
-  injection(List,expr)
-| Nil
+  par(nsepseq(expr,COMMA))
 
 (* Patterns *)
 
@@ -352,22 +335,13 @@ core_pattern ::=
 | C_False
 | C_True
 | C_None
-| list_pattern
-| tuple_pattern
-| constr_pattern
 | C_Some par(core_pattern)
-
-list_pattern ::=
-  injection(List,core_pattern)
+| Constr option(tuple_pattern)
+| injection(List,core_pattern)
 | Nil
 | par(cons_pattern)
+| par(nsepseq(core_pattern,COMMA))
+| constr_pattern
 
 cons_pattern ::=
   core_pattern CONS pattern
-
-tuple_pattern ::=
-  par(nsepseq(core_pattern,COMMA))
-
-constr_pattern ::=
-  Constr tuple_pattern
-| Constr

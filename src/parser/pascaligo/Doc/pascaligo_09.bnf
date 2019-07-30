@@ -236,10 +236,6 @@ interactive_expr ::=
 
 expr ::=
   case(expr)
-| annot_expr
-
-annot_expr ::=
-  LPAR disj_expr COLON type_expr RPAR
 | disj_expr
 
 disj_expr ::=
@@ -297,6 +293,7 @@ core_expr ::=
 | C_False
 | C_True
 | C_Unit
+| annot_expr
 | tuple_expr
 | list_expr
 | C_None
@@ -308,6 +305,9 @@ core_expr ::=
 | Constr arguments
 | Constr
 | C_Some arguments
+
+annot_expr ::=
+  LPAR disj_expr COLON type_expr RPAR
 
 set_expr ::=
   injection(Set,expr)

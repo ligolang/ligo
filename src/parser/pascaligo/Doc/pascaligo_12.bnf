@@ -186,6 +186,10 @@ single_instr ::=
 | Remove expr From Map path
 | Remove expr From Set path
 
+path ::=
+  Ident (* var *)
+| Ident (* struct_name *) DOT nsepseq(selection,DOT)
+
 injection(Kind,element) ::=
   Kind series(element,SEMI,End)
 | Kind End
@@ -235,10 +239,6 @@ interactive_expr ::=
 
 expr ::=
   case(expr)
-| annot_expr
-
-annot_expr ::=
-  LPAR disj_expr COLON type_expr RPAR
 | disj_expr
 
 disj_expr ::=
@@ -296,18 +296,16 @@ core_expr ::=
 | C_None
 | C_Some arguments
 | Constr option(arguments)
-| tuple_expr
-| list_expr
+| LPAR disj_expr COLON type_expr RPAR
+| par(nsepseq(expr,COMMA))
+| injection(List,expr)
+| Nil
 | structure
 
 structure ::=
   injection(Map,binding)
 | injection(Set,expr)
 | record_expr
-
-path ::=
-  Ident (* var *)
-| Ident (* struct_name *) DOT nsepseq(selection,DOT)
 
 selection ::=
   Ident (* field_name *)
@@ -320,18 +318,8 @@ record_expr ::=
 field_assignment ::=
   Ident (* field_name *) EQUAL expr
 
-tuple_expr ::=
-  tuple_inj
-
-tuple_inj ::=
-  par(nsepseq(expr,COMMA))
-
 arguments ::=
-  tuple_inj
-
-list_expr ::=
-  injection(List,expr)
-| Nil
+  par(nsepseq(expr,COMMA))
 
 (* Patterns *)
 
