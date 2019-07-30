@@ -417,15 +417,9 @@ data_decl:
 | var_decl   { LocalVar   $1 }
 
 unqualified_decl(OP):
-  var COLON type_expr OP extended_expr {
-    let init, region =
-      match $5 with
-        `Expr e -> e, expr_to_region e
-      | `EList kwd_nil ->
-           EList (Nil kwd_nil), kwd_nil
-      | `ENone region ->
-           EConstr (NoneExpr region), region
-    in $1, $2, $3, $4, init, region}
+  var COLON type_expr OP expr {
+    let region = expr_to_region $5
+    in $1, $2, $3, $4, $5, region}
 
 const_decl:
   open_const_decl SEMI {
@@ -441,12 +435,9 @@ var_decl:
   }
 | open_var_decl { $1 }
 
-extended_expr:
-  expr   { `Expr  $1 }
-
 instruction:
-  single_instr { Single $1 }
-| block        { Block  $1 : instruction }
+  single_instr {      Single $1 }
+| block        {      Block  $1 }
 
 single_instr:
   conditional  {        Cond $1 }
@@ -590,7 +581,7 @@ if_clause:
   instruction {
     ClauseInstr $1
   }
-| LBRACE sep_or_term_list(statement,COMMA) RBRACE {
+| LBRACE sep_or_term_list(statement,SEMI) RBRACE {
    let region = cover $1 $3 in
    let value = {
      lbrace = $1;
@@ -712,16 +703,7 @@ interactive_expr:
 
 expr:
   case(expr) { ECase ($1 expr_to_region) }
-| annot_expr { $1                        }
-
-annot_expr:
-  LPAR disj_expr COLON type_expr RPAR {
-    let start  = expr_to_region $2
-    and stop   = type_expr_to_region $4 in
-    let region = cover start stop
-    and value  = ($2 , $4) in
-    (EAnnot {region; value})
-  }
+  (*| annot_expr { $1                        }*)
 | disj_expr { $1 }
 
 disj_expr:
@@ -888,6 +870,7 @@ core_expr:
 | C_False          { ELogic (BoolExpr (False $1)) }
 | C_True           { ELogic (BoolExpr (True  $1)) }
 | C_Unit           { EUnit $1                     }
+| annot_expr       { EAnnot $1                    }
 | tuple_expr       { ETuple $1                    }
 | list_expr        { EList $1                     }
 | C_None           { EConstr (NoneExpr $1)        }
@@ -906,6 +889,15 @@ core_expr:
 | C_Some arguments {
     let region = cover $1 $2.region in
     EConstr (SomeApp {region; value = $1,$2})}
+
+annot_expr:
+  LPAR disj_expr COLON type_expr RPAR {
+    let start  = expr_to_region $2
+    and stop   = type_expr_to_region $4 in
+    let region = cover start stop
+    and value  = ($2 , $4)
+    in {region; value}
+  }
 
 set_expr:
   injection(Set,expr) { SetInj $1 }
