@@ -298,7 +298,8 @@ core_expr ::=
 | C_Some arguments
 | Constr option(arguments)
 | LPAR disj_expr COLON type_expr RPAR
-| par(nsepseq(expr,COMMA))
+| LPAR expr RPAR
+| LPAR expr COMMA nsepseq(expr,COMMA) RPAR
 | injection(List,expr)
 | Nil
 | structure
@@ -336,22 +337,12 @@ core_pattern ::=
 | C_False
 | C_True
 | C_None
-| list_pattern
-| tuple_pattern
-| constr_pattern
 | C_Some par(core_pattern)
-
-list_pattern ::=
-  injection(List,core_pattern)
+| Constr option(tuple_pattern)
+| injection(List,core_pattern)
 | Nil
 | par(cons_pattern)
+| par(nsepseq(core_pattern,COMMA))
 
 cons_pattern ::=
   core_pattern CONS pattern
-
-tuple_pattern ::=
-  par(nsepseq(core_pattern,COMMA))
-
-constr_pattern ::=
-  Constr tuple_pattern
-| Constr

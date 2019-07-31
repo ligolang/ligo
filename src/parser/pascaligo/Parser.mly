@@ -703,8 +703,7 @@ interactive_expr:
 
 expr:
   case(expr) { ECase ($1 expr_to_region) }
-  (*| annot_expr { $1                        }*)
-| disj_expr { $1 }
+| disj_expr  { $1                        }
 
 disj_expr:
   disj_expr Or conj_expr {

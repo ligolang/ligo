@@ -1,8 +1,9 @@
-left_assoc(item,op)
-
 right_assoc(item,op) ::=
   item
 | item op right_assoc(item,op)
+
+left_assoc(item,op) ::=
+  right_assoc(item,op)
 
 option(X) :=
   (**)

@@ -1,3 +1,13 @@
+const cmp_check : bool = 0 < 1
+
+(*
+const cmp_check : bool = ("1970-01-01T00:00:00Z" : timestamp) < ("1970-01-01T00:01:00Z" : timestamp))
+*)
+
+const x : int = (3 : int)
+
+
+
 type store is
   record [
     goal     : nat;
@@ -11,14 +21,14 @@ entrypoint contribute (storage store : store;
                        const amount  : mutez)
   : store * list (operation) is
   var operations : list (operation) := nil
-     //  const s : list (int) = list [1; 2; 3]
-//const t : set (int) = set []
+  // const s : list (int) = list [1; 2; 3]
+  // const t : set (int)  = set []
   begin
     if now (Unit) > store.deadline then
       fail "Deadline passed";
     else
       case store.backers[sender] of [
-        None -> store.backers[sender] := Some (amount);
+        None -> store.backers[sender] := Some (amount)
 //        None -> patch store.backers with map sender -> amount end
       |    _ -> skip
       ]

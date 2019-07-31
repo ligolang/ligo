@@ -1,8 +1,9 @@
-left_assoc(item,op)
-
 right_assoc(item,op) ::=
   item
 | item op right_assoc(item,op)
+
+left_assoc(item,op) ::=
+  right_assoc(item,op)
 
 option(X) :=
   (**)
@@ -341,7 +342,6 @@ core_pattern ::=
 | Nil
 | par(cons_pattern)
 | par(nsepseq(core_pattern,COMMA))
-| constr_pattern
 
 cons_pattern ::=
   core_pattern CONS pattern
