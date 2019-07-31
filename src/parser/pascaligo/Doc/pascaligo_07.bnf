@@ -36,7 +36,7 @@ nsepseq(X,Sep) ::=
   X
 | X Sep nsepseq(X,Sep)
 
-(* Possibly empy separated sequence of items *)
+(* Possibly empty separated sequence of items *)
 
 sepseq(X,Sep) ::=
   option(nsepseq(X,Sep))
