@@ -15,34 +15,34 @@ item_or_closing(item,sep,term) ::=
 
 (* Compound constructs *)
 
-par(X) ::= LPAR X RPAR
+par(item) ::=
+  LPAR item RPAR
 
-brackets(X) ::= LBRACKET X RBRACKET
+brackets(item) ::=
+  LBRACKET item RBRACKET
 
 (* Sequences *)
 
 (* Possibly empty sequence of items *)
 
-seq(X) ::=
-  (**)
-| X seq(X)
+seq(item) ::=
+  option(nseq(item))
 
 (* Non-empty sequence of items *)
 
-nseq(X) ::= X seq(X)
+nseq(item) ::=
+  item seq(item)
 
 (* Non-empty separated sequence of items *)
 
-nsepseq(X,Sep) ::=
-  X
-| X Sep nsepseq(X,Sep)
+nsepseq(item,Sep) ::=
+  item
+| item Sep nsepseq(item,Sep)
 
 (* Possibly empy separated sequence of items *)
 
-sepseq(X,Sep) ::=
-  (**)
-| nsepseq(X,Sep)
-
+sepseq(item,Sep) ::=
+  option(nsepseq(item,Sep))
 
 (* Inlines *)
 

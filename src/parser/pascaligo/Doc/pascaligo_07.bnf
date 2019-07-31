@@ -24,8 +24,7 @@ brackets(X) ::= LBRACKET X RBRACKET
 (* Possibly empty sequence of items *)
 
 seq(X) ::=
-  (**)
-| X seq(X)
+  option(nseq(X))
 
 (* Non-empty sequence of items *)
 
@@ -40,8 +39,7 @@ nsepseq(X,Sep) ::=
 (* Possibly empy separated sequence of items *)
 
 sepseq(X,Sep) ::=
-  (**)
-| nsepseq(X,Sep)
+  option(nsepseq(X,Sep))
 
 (* Main *)
 
