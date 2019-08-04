@@ -5,9 +5,9 @@ right_assoc(item,op) ::=
 left_assoc(item,op) ::=
   right_assoc(item,op)
 
-option(X) :=
+option(item) :=
   (**)
-| X
+| item
 
 series(item,sep,term) ::=
   item after_item(item,sep,term)
@@ -186,9 +186,9 @@ path ::=
 injection(Kind,element) ::=
   Kind series(element,SEMI,End)
 | Kind End
-| Kind LBRACKET bracketed
+| Kind LBRACKET bracketed(element)
 
-bracketed ::=
+bracketed(element) ::=
   series(element,SEMI,RBRACKET)
 | RBRACKET
 
@@ -283,7 +283,7 @@ core_expr ::=
 | C_None
 | C_Some arguments
 | Constr option(arguments)
-| LPAR paren_expr RPAR
+| par(paren_expr)
 | injection(List,expr)
 | Nil
 | structure
@@ -332,9 +332,12 @@ core_pattern ::=
 | Constr option(tuple_pattern)
 | injection(List,core_pattern)
 | Nil
-| LPAR paren_pattern RPAR
+| par(paren_pattern)
 
 paren_pattern ::=
   core_pattern CONS pattern
 | core_pattern
 | core_pattern COMMA nsepseq(core_pattern,COMMA)
+
+tuple_pattern ::=
+  par(nsepseq(core_pattern,COMMA))

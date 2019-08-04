@@ -1,6 +1,6 @@
-option(X) :=
+option(item) :=
   (**)
-| X
+| item
 
 series(item,sep,term) ::=
   item after_item(item,sep,term)
