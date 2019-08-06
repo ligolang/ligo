@@ -95,13 +95,10 @@ class HomeSplash extends React.Component {
         <div className="inner">
           <ProjectTitle siteConfig={siteConfig} />
           <PromoSection>
-<<<<<<< HEAD
             <Button href={docUrl('setup/installation.html')}>Get Started</Button>
             <Button href={docUrl('tutorials/get-started/tezos-taco-shop-smart-contract.html')}>Tutorials</Button>
-=======
             <Button href={docUrl('setup-installation.html')}>Get Started</Button>
             <Button href={docUrl('tutorials/get-started/tezos-taco-shop-smart-contract')}>Tutorials</Button>
->>>>>>> Fix broken link to tutorials on front page of ligolang site
             <Button href={docUrl('contributors/origin.html')}>Contribute</Button>
           </PromoSection>
         </div>
