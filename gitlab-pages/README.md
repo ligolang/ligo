@@ -4,6 +4,11 @@
 
 The website will be available at [http://localhost:3000](http://localhost:3000)
 
-```zsh
+To get the website running you want to do the commands:
+
+```
+cd website
+npm run version next
+cd ..
 docker-compose up
 ```
