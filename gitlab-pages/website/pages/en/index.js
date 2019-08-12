@@ -96,8 +96,7 @@ class HomeSplash extends React.Component {
           <ProjectTitle siteConfig={siteConfig} />
           <PromoSection>
             <Button href={docUrl('setup/installation.html')}>Get Started</Button>
-            <Button href={docUrl('tutorials/get-started/tezos-taco-shop-smart-contract.html')}>Tutorials</Button>
-            <Button href={docUrl('setup-installation.html')}>Get Started</Button>
+            <Button href={docUrl('tutorials/get-started/tezos-taco-shop-smart-contract')}>Tutorials</Button>
             <Button href={docUrl('contributors/origin.html')}>Contribute</Button>
           </PromoSection>
         </div>
