@@ -47,8 +47,8 @@ include struct
 end
 
 let transpile_value
-    (e:Ast_typed.annotated_expression) : Mini_c.value result =
-  let%bind f =
+    (e:Ast_typed.annotated_expression) : (Mini_c.value * _) result =
+  let%bind (f , ty) =
     let open Transpiler in
     let (f , _) = functionalize e in
     let%bind main = translate_main f e.location in
@@ -56,8 +56,8 @@ let transpile_value
   in
 
   let input = Mini_c.Combinators.d_unit in
-  let%bind r = Run_mini_c.run_entry f input in
-  ok r
+  let%bind r = Run_mini_c.run_entry f ty input in
+  ok (r , snd ty)
 
 let parsify_pascaligo = fun source ->
   let%bind raw =
@@ -148,12 +148,12 @@ let compile_contract_file : string -> string -> s_syntax -> string result = fun 
   let%bind typed =
     trace (simple_error "typing") @@
     Typer.type_program simplified in
-  let%bind mini_c =
+  let%bind (mini_c , mini_c_ty) =
     trace (simple_error "transpiling") @@
     Transpiler.translate_entry typed entry_point in
   let%bind michelson =
     trace (simple_error "compiling") @@
-    Compiler.translate_contract mini_c in
+    Compiler.translate_contract mini_c mini_c_ty in
   let str =
     Format.asprintf "%a" Michelson.pp_stripped michelson in
   ok str
@@ -184,12 +184,12 @@ let compile_contract_parameter : string -> string -> string -> s_syntax -> strin
     let%bind () =
       trace (simple_error "expression type doesn't match type parameter") @@
       Ast_typed.assert_type_value_eq (parameter_tv , typed.type_annotation) in
-    let%bind mini_c =
+    let%bind (mini_c , mini_c_ty) =
       trace (simple_error "transpiling expression") @@
       transpile_value typed in
     let%bind michelson =
       trace (simple_error "compiling expression") @@
-      Compiler.translate_value mini_c in
+      Compiler.translate_value mini_c mini_c_ty in
     let str =
       Format.asprintf "%a" Michelson.pp_stripped michelson in
     ok str
@@ -223,12 +223,12 @@ let compile_contract_storage : string -> string -> string -> s_syntax -> string 
     let%bind () =
       trace (simple_error "expression type doesn't match type storage") @@
       Ast_typed.assert_type_value_eq (storage_tv , typed.type_annotation) in
-    let%bind mini_c =
+    let%bind (mini_c , mini_c_ty) =
       trace (simple_error "transpiling expression") @@
       transpile_value typed in
     let%bind michelson =
       trace (simple_error "compiling expression") @@
-      Compiler.translate_value mini_c in
+      Compiler.translate_value mini_c mini_c_ty in
     let str =
       Format.asprintf "%a" Michelson.pp_stripped michelson in
     ok str

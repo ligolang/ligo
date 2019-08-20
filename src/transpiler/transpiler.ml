@@ -547,29 +547,19 @@ and translate_annotated_expression (ae:AST.annotated_expression) : expression re
 and translate_lambda_deep : Mini_c.Environment.t -> AST.lambda -> Mini_c.expression result = fun env l ->
   let { binder ; input_type ; output_type ; result } : AST.lambda = l in
   (* Deep capture. Capture the relevant part of the environment. *)
-  let%bind (fv , c_env , c_tv) =
+  let%bind c_env =
     let free_variables = Ast_typed.Free_variables.lambda [] l in
     let sub_env = Mini_c.Environment.select free_variables env in
-    let tv = Environment.closure_representation sub_env in
-    ok (free_variables , sub_env , tv) in
+    ok sub_env in
   let%bind (f_expr , input_tv , output_tv) =
     let%bind raw_input = translate_type input_type in
-    let init_env = Environment.(add (binder , raw_input) c_env) in
-    let input = Environment.closure_representation init_env in
     let%bind output = translate_type output_type in
     let%bind result = translate_annotated_expression result in
-    let result =
-      let load_expr = Expression.make_tpl (E_variable binder , input) in
-      ez_e_return @@ ez_e_sequence (E_environment_load (load_expr , init_env)) result in
-    let tv = Mini_c.t_function input output in
-    let f_literal = D_function { binder ; input ; output ; result } in
-    let expr = Expression.make_tpl (E_literal f_literal , tv) in
-    ok (expr , raw_input , output) in
-  let%bind c_expr =
-    ok @@ Expression.make_tpl (E_environment_capture fv , c_tv) in
-  let expr = Expression.pair f_expr c_expr in
+    let f_literal = D_function { binder ; result } in
+    let expr' = E_literal f_literal in
+    ok (expr' , raw_input , output) in
   let tv = Mini_c.t_deep_closure c_env input_tv output_tv in
-  ok @@ Expression.make_tpl (expr , tv)
+  ok @@ Expression.make_tpl (f_expr , tv)
 
 and translate_lambda env l =
   let { binder ; input_type ; output_type ; result } : AST.lambda = l in
@@ -583,7 +573,7 @@ and translate_lambda env l =
         let%bind input = translate_type input_type in
         let%bind output = translate_type output_type in
         let tv = Combinators.t_function input output in
-        let content = D_function {binder;input;output;result=result'} in
+        let content = D_function {binder;result=result'} in
         ok @@ Combinators.Expression.make_tpl (E_literal content , tv)
       )
     | _ -> (
@@ -608,10 +598,10 @@ let translate_program (lst:AST.program) : program result =
   let%bind (statements, _) = List.fold_left aux (ok ([], Environment.empty)) (temp_unwrap_loc_list lst) in
   ok statements
 
-let translate_main (l:AST.lambda) loc : anon_function result =
+let translate_main (l:AST.lambda) loc : (anon_function * _) result =
   let%bind expr = translate_lambda Environment.empty l in
-  match Combinators.Expression.get_content expr with
-  | E_literal (D_function f) -> ok f
+  match expr.content , expr.type_value with
+  | E_literal (D_function f) , T_function ty -> ok (f , ty)
   | _ -> fail @@ not_functional_main loc
 
 (* From an expression [expr], build the expression [fun () -> expr] *)
@@ -625,7 +615,7 @@ let functionalize (e:AST.annotated_expression) : AST.lambda * AST.type_value =
     result = e ;
   }, Combinators.(t_function (t_unit ()) t ())
 
-let translate_entry (lst:AST.program) (name:string) : anon_function result =
+let translate_entry (lst:AST.program) (name:string) : (anon_function * _) result =
   let rec aux acc (lst:AST.program) =
     let%bind acc = acc in
     match lst with
