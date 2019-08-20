@@ -54,12 +54,6 @@ module Environment (* : ENVIRONMENT *) = struct
 
   let fold : _ -> 'a -> t -> 'a = List.fold_left
   let filter : _ -> t -> t = List.filter
-
-  let closure_representation : t -> type_value = fun t ->
-    match t with
-    | [] -> T_base Base_unit
-    | [ a ] -> snd a
-    | hd :: tl -> List.fold_left (fun acc cur -> T_pair (acc , snd cur)) (snd hd) tl
 end
 
 include Environment
