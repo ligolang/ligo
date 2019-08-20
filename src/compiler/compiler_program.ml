@@ -91,13 +91,9 @@ let rec translate_value (v:value) ty : michelson result = match v with
       let%bind b' = translate_value b b_ty in
       ok @@ prim ~children:[b'] D_Right
     )
-  | D_function { binder ; result } -> (
+  | D_function func -> (
       match ty with
-      | T_function (in_ty , _) -> (
-          let env = Mini_c.Environment.of_list [ (binder , in_ty) ] in
-          let%bind body = translate_expression result env in
-          ok body
-        )
+      | T_function (in_ty , _) -> translate_quote_body func in_ty
       | T_deep_closure _ -> simple_fail "no support for closures yet"
       | _ -> simple_fail "expected function type"
     )
@@ -153,27 +149,13 @@ and translate_expression (expr:expression) (env:environment) : michelson result 
             i_comment "get f" ;
             f ;
             i_comment "get arg" ;
-            arg ;
+            dip arg ;
+            i_swap ;
             prim I_EXEC ;
           ]
         )
-      | T_deep_closure (small_env, input_ty , _) -> (
-          trace (simple_error "Compiling deep closure application") @@
-          let%bind arg' = translate_expression arg env in
-          let%bind f' = translate_expression f env in
-          let%bind append_closure = Compiler_environment.add_packed_anon small_env input_ty in
-          return @@ seq [
-            i_comment "closure application" ;
-            i_comment "arg" ;
-            arg' ;
-            i_comment "f'" ;
-            f' ; i_unpair ;
-            i_comment "append" ;
-            dip @@ seq [i_swap ; append_closure] ;
-            i_comment "exec" ;
-            i_swap ; i_exec ;
-          ]
-        )
+      (* TODO *)
+      (* | T_deep_closure (small_env, input_ty , _) -> () *)
       | _ -> simple_fail "E_applicationing something not appliable"
     )
   | E_variable x ->
@@ -184,23 +166,22 @@ and translate_expression (expr:expression) (env:environment) : michelson result 
     let%bind b' = translate_expression b env in
     return @@ seq [
       a' ;
+      i_drop ;
       b' ;
     ]
   )
   | E_constant(str, lst) ->
       let module L = Logger.Stateful() in
-      let%bind lst' =
-        let aux env expr =
-          let%bind code = translate_expression expr env in
+      let%bind pre_code =
+        let aux code expr =
+          let%bind expr_code = translate_expression expr env in
           L.log @@ Format.asprintf "\n%a -> %a in %a\n"
             PP.expression expr
-            Michelson.pp code
+            Michelson.pp expr_code
             PP.environment env ;
-          ok (env , code)
-        in
-        bind_fold_map_right_list aux env lst in
+          ok (seq [ expr_code ; dip code ]) in
+        bind_fold_right_list aux (seq []) lst in
       let%bind predicate = get_predicate str ty lst in
-      let pre_code = seq @@ List.rev lst' in
       let%bind code = match (predicate, List.length lst) with
         | Constant c, 0 -> ok @@ seq [
             pre_code ;
@@ -253,13 +234,11 @@ and translate_expression (expr:expression) (env:environment) : michelson result 
       let%bind n' = translate_expression n env in
       let s_env = Environment.add ntv env in
       let%bind s' = translate_expression s s_env in
-      let%bind popped' = Compiler_environment.pop s_env in
-      let%bind restrict_s = Compiler_environment.select_env popped' env in
       let%bind code = ok (seq [
           c' ;
           i_if_none n' (seq [
               s' ;
-              dip restrict_s ;
+              dip i_drop ;
             ])
           ;
         ]) in
@@ -271,18 +250,16 @@ and translate_expression (expr:expression) (env:environment) : michelson result 
       let%bind l' = translate_expression l l_env in
       let r_env = Environment.add r_ntv env in
       let%bind r' = translate_expression r r_env in
-      let%bind restrict_l = Compiler_environment.select_env l_env env in
-      let%bind restrict_r = Compiler_environment.select_env r_env env in
       let%bind code = ok (seq [
           c' ;
           i_if_left (seq [
               l' ;
               i_comment "restrict left" ;
-              dip restrict_l ;
+              dip i_drop ;
             ]) (seq [
               r' ;
               i_comment "restrict right" ;
-              dip restrict_r ;
+              dip i_drop ;
             ])
           ;
         ]) in
@@ -290,43 +267,31 @@ and translate_expression (expr:expression) (env:environment) : michelson result 
     )
   | E_let_in (v , expr , body) -> (
       let%bind expr' = translate_expression expr env in
-      let%bind env' =
-        let%bind popped = Compiler_environment.pop env in
-        ok @@ Environment.add v popped in
-      let%bind body' = translate_expression body env' in
-      let%bind restrict =
-        let%bind popped = Compiler_environment.pop env in
-        Compiler_environment.select_env popped env in
+      let%bind body' = translate_expression body (Environment.add v env) in
       let%bind code = ok (seq [
           expr' ;
           body' ;
           i_comment "restrict let" ;
-          dip restrict ;
+          dip i_drop ;
         ]) in
       return code
     )
   | E_iterator (name , (v , body) , expr) -> (
       let%bind expr' = translate_expression expr env in
-      let%bind popped = Compiler_environment.pop env in
-      let%bind env' = ok @@ Environment.add v popped in
-      let%bind body' = translate_expression body env' in
+      let%bind body' = translate_expression body (Environment.add v env) in
       match name with
       | "ITER" -> (
-          let%bind restrict =
-            Compiler_environment.select_env env popped in
           let%bind code = ok (seq [
               expr' ;
-              i_iter (seq [body' ; restrict]) ;
+              i_iter (seq [body' ; dip i_drop]) ;
+              i_push_unit ;
             ]) in
           return code
         )
       | "MAP" -> (
-          let%bind restrict =
-            let%bind popped' = Compiler_environment.pop env in
-            Compiler_environment.select_env popped' popped in
           let%bind code = ok (seq [
               expr' ;
-              i_map (seq [body' ; dip restrict]) ;
+              i_map (seq [body' ; dip i_drop]) ;
             ]) in
           return code
         )
@@ -362,27 +327,25 @@ and translate_expression (expr:expression) (env:environment) : michelson result 
         i_comment "assign: start # env" ;
         expr' ;
         i_comment "assign: compute rhs # rhs : env" ;
-        get_code ;
-        i_comment "assign: get name # name : rhs : env" ;
-        i_swap ;
-        i_comment "assign: swap # rhs : name : env" ;
+        dip get_code ;
+        i_comment "assign: get name # rhs : name : env" ;
         modify_code ;
         i_comment "assign: modify code # name+rhs : env" ;
         set_code ;
         i_comment "assign: set new # new_env" ;
+        i_push_unit ;
       ]
     )
   | E_while (expr , block) -> (
       let%bind expr' = translate_expression expr env in
-      let%bind popped = Compiler_environment.pop env in
-      let%bind block' = translate_expression block popped in
-      let%bind restrict_block = Compiler_environment.select_env env popped in
+      let%bind block' = translate_expression block env in
       return @@ seq [
         expr' ;
         prim ~children:[seq [
             block' ;
-            restrict_block ;
+            i_drop ;
             expr']] I_LOOP ;
+        i_push_unit ;
       ]
     )
 
@@ -392,6 +355,7 @@ and translate_quote_body ({result ; binder} : anon_function) input : michelson r
   let code = seq [
       i_comment "function result" ;
       expr ;
+      dip i_drop ;
     ] in
 
   ok code
