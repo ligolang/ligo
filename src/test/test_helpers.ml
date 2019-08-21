@@ -132,7 +132,7 @@ let expect_eq_n_aux ?options lst program entry_point make_input make_expected =
     let result = expect_eq ?options program entry_point input expected in
     result
   in
-  let%bind _ = bind_map_list aux lst in
+  let%bind _ = bind_map_list_seq aux lst in
   ok ()
 
 let expect_eq_n ?options = expect_eq_n_aux ?options [0 ; 1 ; 2 ; 42 ; 163 ; -1]
@@ -151,7 +151,7 @@ let expect_eq_b program entry_point make_expected =
     let expected = make_expected b in
     expect_eq program entry_point input expected
   in
-  let%bind _ = bind_map_list aux [false ; true] in
+  let%bind _ = bind_map_list_seq aux [false ; true] in
   ok ()
 
 let expect_eq_n_int a b c =

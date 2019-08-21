@@ -57,6 +57,7 @@ and selector = var_name list
 
 and expression' =
   | E_literal of value
+  | E_closure of anon_function
   | E_skip
   | E_constant of string * expression list
   | E_application of expression * expression

@@ -97,13 +97,17 @@ module Ty = struct
         let%bind (Ex_ty t') = type_ t in
         ok @@ Ex_ty Contract_types.(contract t')
 
-  and environment_representation = function
-    | [] -> ok @@ Ex_ty Contract_types.unit
-    | [a] -> type_ @@ snd a
-    | a::b ->
-        let%bind (Ex_ty a) = type_ @@ snd a in
-        let%bind (Ex_ty b) = environment_representation b in
-        ok @@ Ex_ty (Contract_types.pair a b)
+  and environment_representation = fun e ->
+    match List.rev_uncons_opt e with
+    | None -> ok @@ Ex_ty Contract_types.unit
+    | Some (hds , tl) -> (
+        let%bind tl_ty = type_ @@ snd tl in
+        let aux (Ex_ty prec_ty) cur =
+          let%bind (Ex_ty cur_ty) = type_ @@ snd cur in
+          ok @@ Ex_ty Contract_types.(pair prec_ty cur_ty)
+        in
+        bind_fold_right_list aux tl_ty hds
+      )
 
   and environment : environment -> Meta_michelson.Stack.ex_stack_ty result = fun env ->
     let open Meta_michelson in
@@ -164,11 +168,10 @@ let rec type_ : type_value -> O.michelson result =
       let%bind arg = type_ arg in
       let%bind ret = type_ ret in
       ok @@ O.prim ~children:[arg;ret] T_lambda
-  | T_deep_closure (c, arg, ret) ->
+  | T_deep_closure (c , arg , ret) ->
       let%bind capture = environment_closure c in
-      let%bind arg = type_ arg in
-      let%bind ret = type_ ret in
-      ok @@ O.t_pair (O.t_lambda (O.t_pair arg capture) ret) capture
+      let%bind lambda = lambda_closure (c , arg , ret) in
+      ok @@ O.t_pair lambda capture
 
 and environment_element (name, tyv) =
   let%bind michelson_type = type_ tyv in
@@ -177,6 +180,12 @@ and environment_element (name, tyv) =
 and environment = fun env ->
   bind_map_list type_
   @@ List.map snd env
+
+and lambda_closure = fun (c , arg , ret) ->
+  let%bind capture = environment_closure c in
+  let%bind arg = type_ arg in
+  let%bind ret = type_ ret in
+  ok @@ O.t_lambda (O.t_pair arg capture) ret
 
 and environment_closure =
   function

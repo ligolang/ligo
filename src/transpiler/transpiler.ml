@@ -551,15 +551,14 @@ and translate_lambda_deep : Mini_c.Environment.t -> AST.lambda -> Mini_c.express
     let free_variables = Ast_typed.Free_variables.lambda [] l in
     let sub_env = Mini_c.Environment.select free_variables env in
     ok sub_env in
-  let%bind (f_expr , input_tv , output_tv) =
+  let%bind (f_expr' , input_tv , output_tv) =
     let%bind raw_input = translate_type input_type in
     let%bind output = translate_type output_type in
     let%bind result = translate_annotated_expression result in
-    let f_literal = D_function { binder ; result } in
-    let expr' = E_literal f_literal in
+    let expr' = E_closure { binder ; result } in
     ok (expr' , raw_input , output) in
   let tv = Mini_c.t_deep_closure c_env input_tv output_tv in
-  ok @@ Expression.make_tpl (f_expr , tv)
+  ok @@ Expression.make_tpl (f_expr' , tv)
 
 and translate_lambda env l =
   let { binder ; input_type ; output_type ; result } : AST.lambda = l in

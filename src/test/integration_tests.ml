@@ -67,9 +67,15 @@ let variant_matching () : unit result =
 
 let closure () : unit result =
   let%bind program = type_file "./contracts/closure.ligo" in
+  let%bind program_1 = type_file "./contracts/closure-1.ligo" in
+  let%bind program_2 = type_file "./contracts/closure-2.ligo" in
+  let%bind _ =
+    let make_expect = fun n -> (45 + n) in
+    expect_eq_n_int program_2 "foobar" make_expect
+  in
   let%bind () =
     let make_expect = fun n -> (2 * n) in
-    expect_eq_n_int program "foo" make_expect
+    expect_eq_n_int program_1 "foo" make_expect
   in
   let%bind _ =
     let make_expect = fun n -> (4 * n) in
@@ -628,6 +634,9 @@ let main = test_suite "Integration (End to End)" [
     test "assign" assign ;
     test "declaration local" declaration_local ;
     test "complex function" complex_function ;
+    test "closure" closure ;
+    test "shared function" shared_function ;
+    test "higher order" higher_order ;
     test "variant" variant ;
     test "variant matching" variant_matching ;
     test "tuple" tuple ;
@@ -641,12 +650,12 @@ let main = test_suite "Integration (End to End)" [
     test "arithmetic" arithmetic ;
     test "bitiwse_arithmetic" bitwise_arithmetic ;
     test "string_arithmetic" string_arithmetic ;
-    (* test "set_arithmetic" set_arithmetic ; *)
+    test "set_arithmetic" set_arithmetic ;
     test "unit" unit_expression ;
     test "string" string_expression ;
     test "option" option ;
-    (* test "map" map ; *)
-    (* test "list" list ; *)
+    test "map" map ;
+    test "list" list ;
     test "loop" loop ;
     test "matching" matching ;
     test "declarations" declarations ;
@@ -657,9 +666,6 @@ let main = test_suite "Integration (End to End)" [
     test "super counter contract" super_counter_contract ;
     test "super counter contract" super_counter_contract_mligo ;
     test "dispatch counter contract" dispatch_counter_contract ;
-    (* test "closure" closure ; *)
-    (* test "shared function" shared_function ; *)
-    (* test "higher order" higher_order ; *)
     test "basic (mligo)" basic_mligo ;
     test "counter contract (mligo)" counter_mligo ;
     test "let-in (mligo)" let_in_mligo ;

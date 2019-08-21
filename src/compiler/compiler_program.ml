@@ -93,8 +93,7 @@ let rec translate_value (v:value) ty : michelson result = match v with
     )
   | D_function func -> (
       match ty with
-      | T_function (in_ty , _) -> translate_quote_body func in_ty
-      | T_deep_closure _ -> simple_fail "no support for closures yet"
+      | T_function (in_ty , _) -> translate_function_body func [] in_ty
       | _ -> simple_fail "expected function type"
     )
   | D_none -> ok @@ prim D_None
@@ -138,24 +137,42 @@ and translate_expression (expr:expression) (env:environment) : michelson result 
       let%bind v = translate_value v ty in
       let%bind t = Compiler_type.type_ ty in
       return @@ i_push t v
-  | E_application(f, arg) -> (
+  | E_closure anon -> (
+      match ty with
+      | T_deep_closure (small_env , input_ty , output_ty) -> (
+          let selector = List.map fst small_env in
+          let%bind closure_pack_code = Compiler_environment.pack_closure env selector in
+          let%bind lambda_ty = Compiler_type.lambda_closure (small_env , input_ty , output_ty) in
+          let%bind lambda_body_code = translate_function_body anon small_env input_ty in
+          return @@ seq [
+            closure_pack_code ;
+            i_push lambda_ty lambda_body_code ;
+            i_pair ;
+          ]
+        )
+      | _ -> simple_fail "expected closure type"
+    )
+  | E_application (f , arg) -> (
       match Combinators.Expression.get_type f with
       | T_function _ -> (
           trace (simple_error "Compiling quote application") @@
           let%bind f = translate_expression f env in
           let%bind arg = translate_expression arg env in
           return @@ seq [
-            i_comment "quote application" ;
-            i_comment "get f" ;
-            f ;
-            i_comment "get arg" ;
-            dip arg ;
-            i_swap ;
+            arg ;
+            dip f ;
             prim I_EXEC ;
           ]
         )
-      (* TODO *)
-      (* | T_deep_closure (small_env, input_ty , _) -> () *)
+      | T_deep_closure (_ , _ , _) -> (
+          let%bind f_code = translate_expression f env in
+          let%bind arg_code = translate_expression arg env in
+          return @@ seq [
+            arg_code ;
+            dip (seq [ f_code ; i_unpair ; i_swap ]) ; i_pair ;
+            prim I_EXEC ;
+          ]
+        )
       | _ -> simple_fail "E_applicationing something not appliable"
     )
   | E_variable x ->
@@ -349,13 +366,19 @@ and translate_expression (expr:expression) (env:environment) : michelson result 
       ]
     )
 
-and translate_quote_body ({result ; binder} : anon_function) input : michelson result =
-  let env = Environment.(add (binder , input) empty) in
-  let%bind expr = translate_expression result env in
+and translate_function_body ({result ; binder} : anon_function) lst input : michelson result =
+  let pre_env = Environment.of_list lst in
+  let env = Environment.(add (binder , input) pre_env) in
+  let%bind expr_code = translate_expression result env in
+  let%bind unpack_closure_code = Compiler_environment.unpack_closure pre_env in
   let code = seq [
+      i_comment "unpack closure env" ;
+      unpack_closure_code ;
       i_comment "function result" ;
-      expr ;
+      expr_code ;
+      i_comment "remove env" ;
       dip i_drop ;
+      seq (List.map (Function.constant (dip i_drop)) lst) ;
     ] in
 
   ok code
@@ -382,7 +405,7 @@ let get_main : program -> string -> (anon_function * _) result = fun p entry ->
 
 let translate_program (p:program) (entry:string) : compiled_program result =
   let%bind (main , (input , output)) = get_main p entry in
-  let%bind body = translate_quote_body main input in
+  let%bind body = translate_function_body main [] input in
   let%bind input = Compiler_type.Ty.type_ input in
   let%bind output = Compiler_type.Ty.type_ output in
   ok ({input;output;body}:compiled_program)
@@ -391,7 +414,7 @@ let translate_entry (p:anon_function) ty : compiled_program result =
   let (input , output) = ty in
   let%bind body =
     trace (simple_error "compile entry body") @@
-    translate_quote_body p input in
+    translate_function_body p [] input in
   let%bind input = Compiler_type.Ty.type_ input in
   let%bind output = Compiler_type.Ty.type_ output in
   ok ({input;output;body}:compiled_program)
