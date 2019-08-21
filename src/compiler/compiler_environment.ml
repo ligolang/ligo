@@ -73,15 +73,5 @@ let pack_closure : environment -> selector -> michelson result = fun e lst ->
   ok code
 
 let unpack_closure : environment -> michelson result = fun e ->
-  let lst =
-    match e with
-    | [] -> []
-    | _ :: tl  -> [
-        i_unpair ;
-        dip @@ seq @@ List.map (Function.constant i_unpair) tl ;
-      ]
-  in
-
-  let code = seq lst in
-
-  ok code
+  let aux = fun code _ -> seq [ i_unpair ; dip code ] in
+  ok (List.fold_right' aux (seq []) e)
