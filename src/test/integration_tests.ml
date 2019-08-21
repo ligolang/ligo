@@ -69,6 +69,11 @@ let closure () : unit result =
   let%bind program = type_file "./contracts/closure.ligo" in
   let%bind program_1 = type_file "./contracts/closure-1.ligo" in
   let%bind program_2 = type_file "./contracts/closure-2.ligo" in
+  let%bind program_3 = type_file "./contracts/closure-3.ligo" in
+  let%bind _ =
+    let make_expect = fun n -> (49 + n) in
+    expect_eq_n_int program_3 "foobar" make_expect
+  in
   let%bind _ =
     let make_expect = fun n -> (45 + n) in
     expect_eq_n_int program_2 "foobar" make_expect
