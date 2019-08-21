@@ -300,7 +300,7 @@ and translate_expression (expr:expression) (env:environment) : michelson result 
       | "ITER" -> (
           let%bind code = ok (seq [
               expr' ;
-              i_iter (seq [body' ; dip i_drop]) ;
+              i_iter (seq [body' ; i_drop ; i_drop]) ;
               i_push_unit ;
             ]) in
           return code

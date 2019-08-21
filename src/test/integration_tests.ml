@@ -167,6 +167,11 @@ let string_arithmetic () : unit result =
 
 let set_arithmetic () : unit result =
   let%bind program = type_file "./contracts/set_arithmetic.ligo" in
+  let%bind program_1 = type_file "./contracts/set_arithmetic-1.ligo" in
+  let%bind () =
+    expect_eq program_1 "iter_op"
+      (e_set [e_int 2 ; e_int 4 ; e_int 7])
+      (e_int 13) in
   let%bind () =
     expect_eq program "add_op"
       (e_set [e_string "foo" ; e_string "bar"])
@@ -191,10 +196,6 @@ let set_arithmetic () : unit result =
     expect_eq program "mem_op"
       (e_set [e_string "foo" ; e_string "bar"])
       (e_bool false) in
-  let%bind () =
-    expect_eq program "iter_op"
-      (e_set [e_int 2 ; e_int 4 ; e_int 7])
-      (e_int 13) in
   ok ()
 
 let unit_expression () : unit result =
