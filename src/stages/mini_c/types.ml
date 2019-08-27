@@ -8,9 +8,11 @@ type type_base =
   | Base_string | Base_bytes | Base_address
   | Base_operation
 
+type 'a annotated = string option * 'a
+
 type type_value =
-  | T_pair of (type_value * type_value)
-  | T_or of type_value * type_value
+  | T_pair of (type_value annotated * type_value annotated)
+  | T_or of (type_value annotated * type_value annotated)
   | T_function of (type_value * type_value)
   | T_deep_closure of (environment * type_value * type_value)
   | T_base of type_base

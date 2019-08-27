@@ -43,6 +43,13 @@ module Ty = struct
   let pair a b = Pair_t ((a, None, None), (b, None, None), None)
   let union a b = Union_t ((a, None), (b, None), None)
 
+  let field_annot = Option.map (fun ann -> `Field_annot ann)
+
+  let union_ann (anna, a) (annb, b) =
+    Union_t ((a, field_annot anna), (b, field_annot annb), None)
+
+  let pair_ann (anna, a) (annb, b) =
+    Pair_t ((a, field_annot anna, None), (b, field_annot annb, None), None)
 
   let not_comparable name () = error (thunk "not a comparable type") (fun () -> name) ()
   let not_compilable_type name () = error (thunk "not a compilable type") (fun () -> name) ()
@@ -95,14 +102,14 @@ module Ty = struct
     function
     | T_base b -> base_type b
     | T_pair (t, t') -> (
-        type_ t >>? fun (Ex_ty t) ->
-        type_ t' >>? fun (Ex_ty t') ->
-        ok @@ Ex_ty (pair t t')
+        annotated t >>? fun (ann, Ex_ty t) ->
+        annotated t' >>? fun (ann', Ex_ty t') ->
+        ok @@ Ex_ty (pair_ann (ann, t) (ann', t'))
       )
     | T_or (t, t') -> (
-        type_ t >>? fun (Ex_ty t) ->
-        type_ t' >>? fun (Ex_ty t') ->
-        ok @@ Ex_ty (union t t')
+        annotated t >>? fun (ann, Ex_ty t) ->
+        annotated t' >>? fun (ann', Ex_ty t') ->
+        ok @@ Ex_ty (union_ann (ann, t) (ann', t'))
       )
     | T_function (arg, ret) ->
         let%bind (Ex_ty arg) = type_ arg in
@@ -134,6 +141,10 @@ module Ty = struct
     | T_contract t ->
         let%bind (Ex_ty t') = type_ t in
         ok @@ Ex_ty (contract t')
+
+  and annotated : type_value annotated -> ex_ty annotated result =
+    fun (ann, a) -> let%bind a = type_ a in
+                    ok @@ (ann, a)
 
   and environment_representation = fun e ->
     match List.rev_uncons_opt e with
@@ -177,13 +188,13 @@ let rec type_ : type_value -> O.michelson result =
   function
   | T_base b -> base_type b
   | T_pair (t, t') -> (
-      type_ t >>? fun t ->
-      type_ t' >>? fun t' ->
+      annotated t >>? fun t ->
+      annotated t' >>? fun t' ->
       ok @@ O.prim ~children:[t;t'] O.T_pair
     )
   | T_or (t, t') -> (
-      type_ t >>? fun t ->
-      type_ t' >>? fun t' ->
+      annotated t >>? fun t ->
+      annotated t' >>? fun t' ->
       ok @@ O.prim ~children:[t;t'] O.T_or
     )
   | T_map kv ->
@@ -212,6 +223,13 @@ let rec type_ : type_value -> O.michelson result =
       let%bind capture = environment_closure c in
       let%bind lambda = lambda_closure (c , arg , ret) in
       ok @@ O.t_pair lambda capture
+
+and annotated : type_value annotated -> O.michelson result =
+  function
+  | (Some ann, o) ->
+     let%bind o' = type_ o in
+     ok (O.annotate ("%" ^ ann) o')
+  | (None, o) -> type_ o
 
 and environment_element (name, tyv) =
   let%bind michelson_type = type_ tyv in
