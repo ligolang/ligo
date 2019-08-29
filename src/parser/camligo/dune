@@ -21,7 +21,7 @@
 (rule
   (targets parser.ml parser.mli)
   (deps parser_generated.mly ast.ml)
-  (action (system "menhir --explain --external-tokens Lex.Token lex/token.mly parser_generated.mly --base parser"))
+  (action (system "menhir --explain --unused-tokens --external-tokens Lex.Token lex/token.mly parser_generated.mly --base parser"))
 )
 
 (rule
