@@ -1,0 +1,28 @@
+(ocamllex Lexer)
+
+(library
+  (name parser_shared)
+  (public_name ligo.parser.shared)
+  (libraries
+    simple-utils
+    uutf
+    getopt
+  )
+  (modules
+    Error
+    Lexer
+    LexerLog
+    Utils
+    Markup
+    FQueue
+    EvalOpt
+    Version
+  )
+  (modules_without_implementation Error)
+)
+
+(rule
+  (targets Version.ml)
+  (action
+    (progn (run "sh" "-c" "printf 'let version = \"%s\"'\\\\n \"$(echo UNKNOWN)\" > Version.ml")))
+  (mode promote-until-clean))

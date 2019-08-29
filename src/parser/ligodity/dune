@@ -15,6 +15,7 @@
    zarith
    simple-utils
    tezos-utils
+   getopt
  )
  (flags (:standard -open Simple_utils ))
 )

@@ -95,7 +95,7 @@ We are looking to develop a Super Type System that has the following features:
 The current version explicitly excludes non-essential features which can produce unexpected explosions in gas costs. To alleviate this constraint, we plan to integrate gas benchmarks on all top-level declarations with some fuzzing. This will allow developers and users to estimate the cost of their contracts in real time.
 
 ## Getting Started and Contact
-Come visit [our website](ligolang.org)! You can also join our [Discord](https://discord.gg/CmTwFM), Riot (*#ligo-public:matrix.org*) or Telegram Chat (Ligo Public channel).
+Come visit [our website](https://ligolang.org)! You can also join our [Discord](https://discord.gg/9rhYaEt), Riot (*#ligo-public:matrix.org*) or Telegram Chat (Ligo Public channel).
 
 
 

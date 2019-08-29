@@ -4,6 +4,7 @@
   (libraries
     simple-utils
     tezos-utils
+    parser_shared
     parser_pascaligo
     parser_camligo
     parser_ligodity
@@ -11,5 +12,5 @@
   (preprocess
     (pps simple-utils.ppx_let_generalized)
   )
-  (flags (:standard -w +1..62-4-9-44-40-42-48-30@39@33 -open Simple_utils ))
+  (flags (:standard -w +1..62-4-9-44-40-42-48-30@39@33 -open Simple_utils -open Parser_shared ))
 )
