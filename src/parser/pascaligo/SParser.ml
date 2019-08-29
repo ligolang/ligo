@@ -82,8 +82,9 @@ and nsepseq item sep = parser
 | [< i=item; s=sep; h,t = nsepseq item sep ?! >] -> i, (s,h)::t
 
 (* Possibly empty separated sequence of items *)
-
+(*
 and sepseq item sep = opt (nsepseq item sep)
+*)
 
 (* Main *)
 
@@ -102,12 +103,17 @@ and type_expr = parser
   [< _=cartesian >] -> ()
 | [< _=nsepseq variant vbar >] -> ()
 | [< 'VBAR _; _ = nsepseq variant vbar >] -> ()
-| [< 'Record _; _ = series field_decl semi end_ >] -> ()
-| [< 'Record _; 'LBRACKET _; _ = series field_decl semi rbracket >] -> ()
+| [< 'Record _; _=record_type_expr >] -> ()
+
+and record_type_expr = parser
+  [< _ = series field_decl semi end_ >] -> ()
+| [< 'LBRACKET _; _ = series field_decl semi rbracket >] -> ()
 
 and variant = parser
-  [< 'Constr _; 'Of _; _=cartesian >] -> ()
-| [< 'Constr _ >] -> ()
+  [< 'Constr _; _ = opt of_cartesian >] -> ()
+
+and of_cartesian = parser
+  [< 'Of _; _=cartesian >] -> ()
 
 and cartesian = parser
   [< _ = nsepseq function_type times >] -> ()
@@ -115,8 +121,7 @@ and cartesian = parser
 and function_type strm = right_assoc core_type arrow strm
 
 and core_type = parser
-  [< 'Ident _ >] -> ()
-| [< 'Ident _; _=type_tuple >] -> ()
+  [< 'Ident _; _ = opt type_tuple >] -> ()
 | [< 'Map _; _=type_tuple >] -> ()
 | [< 'Set _; _ = par type_expr >] -> ()
 | [< 'List _; _ = par type_expr >] -> ()
@@ -196,25 +201,37 @@ and instruction = parser
 | [< 'If _; _=expr; 'Then _; _=if_clause; _ = opt semi;
      'Else _; _=if_clause >] -> ()
 | [< _ = case instruction >] -> ()
-| [< 'Ident _; _=arguments >] -> ()
-| [< 'Ident _; 'ASS _; _=expr >] -> ()
-| [< 'Ident _; _ = brackets expr; 'ASS _; _=expr >] -> ()
-| [< 'Ident _; 'DOT _; _ = nsepseq selection dot;
-     _ = opt (brackets expr); 'ASS _; _=expr >] -> ()
+| [< 'Ident _; _=instruction_1 >] -> ()
 | [< _=loop >] -> ()
 | [< 'Fail _; _=expr >] -> ()
 | [< 'Skip _ >] -> ()
-| [< 'Patch _; _=expr; 'From _; 'Map _; _=path >] -> ()
-| [< 'Patch _; _=expr; 'From _; 'Set _; _=path >] -> ()
+| [< 'Patch _; _=path; 'With _; _=structure >] -> ()
+| [< 'Remove _; _=expr; 'From _; _=remove_suffix >] -> ()
+
+and remove_suffix = parser
+  [< 'Map _; _=path >] -> ()
+| [< 'Set _; _=path >] -> ()
+
+and instruction_1 = parser
+  [< _=arguments >] -> ()
+| [< 'ASS _; _=expr >] -> ()
+| [< _ = brackets expr; 'ASS _; _=expr >] -> ()
+| [< _=selections;
+     _ = opt (brackets expr); 'ASS _; _=expr >] -> ()
 
 and path = parser
-  [< 'Ident _ >] -> ()
-| [< 'Ident _; 'DOT _; _ = nsepseq selection dot >] -> ()
+  [< 'Ident _; _ = opt selections >] -> ()
+
+and selections = parser
+  [< 'DOT _; _ = nsepseq selection dot >] -> ()
 
 and injection kind element = parser
-  [< _=kind; _ = series element semi end_ >] -> ()
-| [< _=kind; 'End _ >] -> ()
-| [< _=kind; 'LBRACKET _; _ = bracketed element >] -> ()
+  [< _=kind; _ = inj_suffix element >] -> ()
+
+and inj_suffix element = parser
+  [< _ = series element semi end_ >] -> ()
+| [< 'End _ >] -> ()
+| [< 'LBRACKET _; _ = bracketed element >] -> ()
 
 and bracketed element = parser
   [< _ = series element semi rbracket >] -> ()
@@ -228,9 +245,11 @@ and if_clause = parser
 | [< 'LBRACE _; _ = series statement comma rbrace >] -> ()
 
 and case rhs = parser
-  [< 'Case _; _=expr; 'Of _; _ = cases rhs; 'End _ >] -> ()
-| [< 'Case _; _=expr; 'Of _; 'LBRACKET _; _ = cases rhs;
-     'RBRACKET _ >] -> ()
+  [< 'Case _; _=expr; 'Of _; _ = case_suffix rhs >] -> ()
+
+and case_suffix rhs = parser
+  [< _ = cases rhs; 'End _ >] -> ()
+| [< 'LBRACKET _; _ = cases rhs; 'RBRACKET _ >] -> ()
 
 and cases rhs = parser
   [< _ = nsepseq (case_clause rhs) vbar >] -> ()
@@ -241,11 +260,13 @@ and case_clause rhs = parser
 
 and loop = parser
   [< 'While _; _=expr; _=block >] -> ()
-| [< 'For _; 'Ident _; 'ASS _; _=expr; _ = opt down;
-     'To _; _=expr; _ = opt step_clause >] -> ()
-| [< 'For _; 'Ident _; 'In _; _=expr; _=block >] -> ()
-| [< 'For _; 'Ident _; 'ARROW _; 'Ident _; 'In _;
-     _=expr; _=block >] -> ()
+| [< 'For _; 'Ident _; _=for_suffix >] -> ()
+
+and for_suffix = parser
+  [< 'ASS _; _=expr; _ = opt down;
+     'To _; _=expr; _ = opt step_clause; _=block >] -> ()
+| [< 'In _; _=expr; _=block >] -> ()
+| [< 'ARROW _; 'Ident _; 'In _; _=expr; _=block >] -> ()
 
 and step_clause = parser
   [< 'Step _; _=expr >] -> ()
@@ -264,8 +285,10 @@ and disj_expr strm = left_assoc conj_expr or_ strm
 and conj_expr strm = left_assoc set_membership and_ strm
 
 and set_membership = parser
-  [< _ = core_expr; 'Contains _; _=set_membership >] -> ()
-| [< _ = comp_expr >] -> ()
+  [< _ = comp_expr; _ = opt contains_clause >] -> ()
+
+and contains_clause = parser
+  [< 'Contains _; _=set_membership >] -> ()
 
 and comp_expr strm = left_assoc cat_expr op_comp strm
 
@@ -303,11 +326,7 @@ and core_expr = parser
   [< 'Int _ >] -> ()
 | [< 'Nat _ >] -> ()
 | [< 'Mtz _ >] -> ()
-| [< 'Ident _ >] -> ()
-| [< 'Ident _; _ = brackets expr >] -> ()
-| [< 'Ident _; 'DOT _; _ = nsepseq selection dot;
-     _ = opt (brackets expr) >] -> ()
-| [< 'Ident _; _=arguments >] -> ()
+| [< 'Ident _; _ = opt core_suffix >] -> ()
 | [< 'String _ >] -> ()
 | [< 'Bytes _ >] -> ()
 | [< 'C_False _ >] -> ()
@@ -321,12 +340,22 @@ and core_expr = parser
 | [< 'Nil _ >] -> ()
 | [< _=structure >] -> ()
 
+and core_suffix = parser
+  [< _ = brackets expr >] -> ()
+| [< 'DOT _; _ = nsepseq selection dot;
+     _ = opt (brackets expr) >] -> ()
+| [< _=arguments >] -> ()
+
 and paren_expr = parser
-  [< _=disj_expr; 'COLON _; _=type_expr >] -> ()
-| [< _=disj_expr >] -> ()
-| [< _=disj_expr; 'COMMA _; _ = nsepseq expr comma >] -> ()
-| [< _ = case expr >] -> ()
-| [< _ = case expr; 'COMMA _; _ = nsepseq expr comma >] -> ()
+  [< _=disj_expr; _ = opt paren_expr_1 >] -> ()
+| [< _ = case expr; _ = opt paren_expr_2 >] -> ()
+
+and paren_expr_1 = parser
+  [< 'COLON _; _=type_expr >] -> ()
+| [< 'COMMA _; _ = nsepseq expr comma >] -> ()
+
+and paren_expr_2 = parser
+  [< 'COMMA _; _ = nsepseq expr comma >] -> ()
 
 and structure = parser
   [< _ = injection map binding >] -> ()
@@ -338,8 +367,11 @@ and selection = parser
 | [< 'Int _ >] -> ()
 
 and record_expr = parser
-  [< 'Record _; _ = series field_assignment semi end_ >] -> ()
-| [< 'Record _; 'LBRACKET _;
+  [< 'Record _; _=record_expr_suffix >] -> ()
+
+and record_expr_suffix = parser
+  [< _ = series field_assignment semi end_ >] -> ()
+| [< 'LBRACKET _;
      _ = series field_assignment semi rbracket >] -> ()
 
 and field_assignment = parser
@@ -366,12 +398,11 @@ and core_pattern = parser
 | [< 'Constr _; _ = opt tuple_pattern >] -> ()
 | [< _ = injection list core_pattern >] -> ()
 | [< 'Nil _ >] -> ()
-| [< _ = par paren_pattern >] -> ()
+| [< _ = par (opt paren_pattern) >] -> ()
 
 and paren_pattern = parser
-  [< _=core_pattern; 'CONS _; _=pattern >] -> ()
-| [< _=core_pattern >] -> ()
-| [< _=core_pattern; 'COMMA _; _ = nsepseq core_pattern comma >] -> ()
+  [< 'CONS _; _=pattern >] -> ()
+| [< 'COMMA _; _ = nsepseq core_pattern comma >] -> ()
 
 and tuple_pattern = parser
   [< _ = par (nsepseq core_pattern comma) >] -> ()
