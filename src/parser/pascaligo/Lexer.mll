@@ -502,7 +502,7 @@ and scan state = parse
 | constr        { mk_constr      state lexbuf |> enqueue   }
 | bytes         { (mk_bytes seq) state lexbuf |> enqueue   }
 | natural 'n'   { mk_nat         state lexbuf |> enqueue   }
-| natural "mtz" { mk_mtz       state lexbuf |> enqueue   }
+| natural "mtz" { mk_mtz         state lexbuf |> enqueue   }
 | integer       { mk_int         state lexbuf |> enqueue   }
 | symbol        { mk_sym         state lexbuf |> enqueue   }
 | eof           { mk_eof         state lexbuf |> enqueue   }
