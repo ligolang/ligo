@@ -70,6 +70,7 @@ module Ty = struct
     | T_or _ -> fail (not_comparable "or")
     | T_pair _ -> fail (not_comparable "pair")
     | T_map _ -> fail (not_comparable "map")
+    | T_big_map _ -> fail (not_comparable "big_map")
     | T_list _ -> fail (not_comparable "list")
     | T_set _ -> fail (not_comparable "set")
     | T_option _ -> fail (not_comparable "option")
@@ -116,6 +117,10 @@ module Ty = struct
         let%bind (Ex_comparable_ty k') = comparable_type k in
         let%bind (Ex_ty v') = type_ v in
         ok @@ Ex_ty (map k' v')
+    | T_big_map (k, v) ->
+        let%bind (Ex_comparable_ty k') = comparable_type k in
+        let%bind (Ex_ty v') = type_ v in
+        ok @@ Ex_ty (big_map k' v')
     | T_list t ->
         let%bind (Ex_ty t') = type_ t in
         ok @@ Ex_ty (list t')
@@ -184,6 +189,9 @@ let rec type_ : type_value -> O.michelson result =
   | T_map kv ->
       let%bind (k', v') = bind_map_pair type_ kv in
       ok @@ O.prim ~children:[k';v'] O.T_map
+  | T_big_map kv ->
+      let%bind (k', v') = bind_map_pair type_ kv in
+      ok @@ O.prim ~children:[k';v'] O.T_big_map
   | T_list t ->
       let%bind t' = type_ t in
       ok @@ O.prim ~children:[t'] O.T_list

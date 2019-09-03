@@ -15,6 +15,7 @@ type type_value =
   | T_deep_closure of environment * type_value * type_value
   | T_base of type_base
   | T_map of (type_value * type_value)
+  | T_big_map of (type_value * type_value)
   | T_list of type_value
   | T_set of type_value
   | T_contract of type_value

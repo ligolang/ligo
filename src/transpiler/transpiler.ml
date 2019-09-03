@@ -115,7 +115,7 @@ let rec translate_type (t:AST.type_value) : type_value result =
       ok (T_map kv')
   | T_constant ("big_map", [key;value] ) ->
       let%bind kv' = bind_map_pair translate_type (key, value) in
-      ok (T_map kv')
+      ok (T_big_map kv')
   | T_constant ("list", [t]) ->
       let%bind t' = translate_type t in
       ok (T_list t')
