@@ -58,6 +58,15 @@ them. please report this to the developers." in
     ] in
     error ~data title content
 
+  let bad_big_map location =
+    let title () = "bad arguments for main" in
+    let content () = "only one big_map per program which must appear 
+      on the left hand side of a pair in the contract's storage" in
+    let data = [
+      ("location" , fun () -> Format.asprintf "%a" Location.pp location) ;
+    ] in
+    error ~data title content
+
   let missing_entry_point name =
     let title () = "missing entry point" in
     let content () = "no entry point with the given name" in
@@ -601,10 +610,36 @@ let translate_program (lst:AST.program) : program result =
   let%bind (statements, _) = List.fold_left aux (ok ([], Environment.empty)) (temp_unwrap_loc_list lst) in
   ok statements
 
+(* check whether the storage contains a big_map, if yes, check that
+  it appears on the left hand side of a pair *)
+let check_storage f ty loc : (anon_function * _) result =
+  let rec aux (t:type_value) on_big_map =
+    match t with
+      | T_big_map _ -> on_big_map
+      | T_pair (a , b) -> (aux a true) && (aux b false)
+      | T_or (a,b) -> (aux a false) && (aux b false)
+      | T_function (a,b) -> (aux a false) && (aux b false)
+      | T_deep_closure (_,a,b) -> (aux a false) && (aux b false)
+      | T_map (a,b) -> (aux a false) && (aux b false)
+      | T_list a -> (aux a false)
+      | T_set a -> (aux a false)
+      | T_contract a -> (aux a false)
+      | T_option a -> (aux a false)
+      | _ -> true
+  in
+  match f.result.type_value with
+    | T_pair (_, storage) ->
+      if aux storage false then ok (f, ty) else fail @@ bad_big_map loc
+    | _ -> ok (f, ty)
+
+(* let translate_main (l:AST.lambda) loc : anon_function result =
+  let%bind expr = translate_lambda Environment.empty l in
+  match Combinators.Expression.get_content expr with
+  | E_literal (D_function f) -> check_storage f loc *)
 let translate_main (l:AST.lambda) loc : (anon_function * _) result =
   let%bind expr = translate_lambda Environment.empty l in
   match expr.content , expr.type_value with
-  | E_literal (D_function f) , T_function ty -> ok (f , ty)
+  | E_literal (D_function f) , T_function ty -> check_storage f ty loc
   | _ -> fail @@ not_functional_main loc
 
 (* From an expression [expr], build the expression [fun () -> expr] *)

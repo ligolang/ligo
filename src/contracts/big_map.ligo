@@ -1,18 +1,11 @@
-// type storage_ is big_map(int, int) * unit
-type storage_ is big_map(int, int)
-
-// function main(const p : unit; const s : storage_) : list(operation) * storage_ is
-//   block { skip }
-//   with ((nil : list(operation)), s)
+// type storage_ is big_map(int, int)
+type storage_ is big_map(int, int) * unit
 
 function main(const p : unit; const s : storage_) : list(operation) * storage_ is
-  // var r : big_map(int, int) := s.0 ;
-  var r : big_map(int,int) := s ;
+  var r : big_map(int, int) := s.0 ;
   var toto : option (int) := Some(0);
   block {
-    // r[23] := 2;
     toto := r[23];
-    s := r;
-    // skip
+    s.0 := r;
   }
   with ((nil: list(operation)), s)

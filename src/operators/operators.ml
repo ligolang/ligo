@@ -592,7 +592,11 @@ module Typer = struct
       map_map ;
       map_fold ;
       map_iter ;
-      map_map ;
+      big_map_remove ;
+      big_map_add ;
+      big_map_update ;
+      big_map_mem ;
+      big_map_find ;
       set_empty ;
       set_mem ;
       set_add ;
