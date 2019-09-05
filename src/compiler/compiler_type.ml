@@ -2,18 +2,52 @@ open Trace
 open Mini_c.Types
 
 open Proto_alpha_utils.Memory_proto_alpha
+open Protocol
 open Script_ir_translator
 
 module O = Tezos_utils.Michelson
-module Contract_types = Meta_michelson.Types
 
 module Ty = struct
 
   let not_comparable name () = error (thunk "not a comparable type") (fun () -> name) ()
   let not_compilable_type name () = error (thunk "not a compilable type") (fun () -> name) ()
 
+  open Script_typed_ir
+
+
+  let nat_k = Nat_key None
+  let tez_k = Mutez_key None
+  let int_k = Int_key None
+  let string_k = String_key None
+  let address_k = Address_key None
+  let timestamp_k = Timestamp_key None
+  let bytes_k = Bytes_key None
+  (* let timestamp_k = Timestamp_key None *)
+
+  let unit = Unit_t None
+  let bytes = Bytes_t None
+  let nat = Nat_t None
+  let tez = Mutez_t None
+  let int = Int_t None
+  let big_map k v = Big_map_t (k, v, None)
+  let signature = Signature_t None
+  let operation = Operation_t None
+  let bool = Bool_t None
+  let mutez = Mutez_t None
+  let string = String_t None
+  let key = Key_t None
+  let list a = List_t (a, None)
+  let set a = Set_t (a, None)
+  let address = Address_t None
+  let option a = Option_t ((a, None), None, None)
+  let contract a = Contract_t (a, None)
+  let lambda a b = Lambda_t (a, b, None)
+  let timestamp = Timestamp_t None
+  let map a b = Map_t (a, b, None)
+  let pair a b = Pair_t ((a, None, None), (b, None, None), None)
+  let union a b = Union_t ((a, None), (b, None), None)
+
   let comparable_type_base : type_base -> ex_comparable_ty result = fun tb ->
-    let open Contract_types in
     let return x = ok @@ Ex_comparable_ty x in
     match tb with
     | Base_unit -> fail (not_comparable "unit")
@@ -42,7 +76,6 @@ module Ty = struct
     | T_contract _ -> fail (not_comparable "contract")
 
   let base_type : type_base -> ex_ty result = fun b ->
-    let open Contract_types in
     let return x = ok @@ Ex_ty x in
     match b with
     | Base_unit -> return unit
@@ -63,57 +96,56 @@ module Ty = struct
     | T_pair (t, t') -> (
         type_ t >>? fun (Ex_ty t) ->
         type_ t' >>? fun (Ex_ty t') ->
-        ok @@ Ex_ty (Contract_types.pair t t')
+        ok @@ Ex_ty (pair t t')
       )
     | T_or (t, t') -> (
         type_ t >>? fun (Ex_ty t) ->
         type_ t' >>? fun (Ex_ty t') ->
-        ok @@ Ex_ty (Contract_types.union t t')
+        ok @@ Ex_ty (union t t')
       )
     | T_function (arg, ret) ->
         let%bind (Ex_ty arg) = type_ arg in
         let%bind (Ex_ty ret) = type_ ret in
-        ok @@ Ex_ty (Contract_types.lambda arg ret)
+        ok @@ Ex_ty (lambda arg ret)
     | T_deep_closure (c, arg, ret) ->
         let%bind (Ex_ty capture) = environment_representation c in
         let%bind (Ex_ty arg) = type_ arg in
         let%bind (Ex_ty ret) = type_ ret in
-        ok @@ Ex_ty Contract_types.(pair (lambda (pair arg capture) ret) capture)
+        ok @@ Ex_ty (pair (lambda (pair arg capture) ret) capture)
     | T_map (k, v) ->
         let%bind (Ex_comparable_ty k') = comparable_type k in
         let%bind (Ex_ty v') = type_ v in
-        ok @@ Ex_ty Contract_types.(map k' v')
+        ok @@ Ex_ty (map k' v')
     | T_list t ->
         let%bind (Ex_ty t') = type_ t in
-        ok @@ Ex_ty Contract_types.(list t')
+        ok @@ Ex_ty (list t')
     | T_set t -> (
         let%bind (Ex_comparable_ty t') = comparable_type t in
-        ok @@ Ex_ty Contract_types.(set t')
+        ok @@ Ex_ty (set t')
       )
     | T_option t ->
         let%bind (Ex_ty t') = type_ t in
-        ok @@ Ex_ty Contract_types.(option t')
+        ok @@ Ex_ty (option t')
     | T_contract t ->
         let%bind (Ex_ty t') = type_ t in
-        ok @@ Ex_ty Contract_types.(contract t')
+        ok @@ Ex_ty (contract t')
 
   and environment_representation = function
-    | [] -> ok @@ Ex_ty Contract_types.unit
+    | [] -> ok @@ Ex_ty unit
     | [a] -> type_ @@ snd a
     | a::b ->
         let%bind (Ex_ty a) = type_ @@ snd a in
         let%bind (Ex_ty b) = environment_representation b in
-        ok @@ Ex_ty (Contract_types.pair a b)
+        ok @@ Ex_ty (pair a b)
 
-  and environment : environment -> Meta_michelson.Stack.ex_stack_ty result = fun env ->
-    let open Meta_michelson in
+  and environment : environment -> ex_stack_ty result = fun env ->
     let%bind lst =
       bind_map_list type_
       @@ List.map snd env in
-    let aux (Stack.Ex_stack_ty st) (Ex_ty cur) =
-      Stack.Ex_stack_ty (Stack.stack cur st)
+    let aux (Ex_stack_ty st) (Ex_ty cur) =
+      Ex_stack_ty (Item_t (cur,  st, None))
     in
-    ok @@ List.fold_right' aux (Ex_stack_ty Stack.nil) lst
+    ok @@ List.fold_right' aux (Ex_stack_ty Empty_t) lst
 
 end
 

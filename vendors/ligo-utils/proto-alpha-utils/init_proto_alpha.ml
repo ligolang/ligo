@@ -4,7 +4,7 @@ module Data_encoding = Alpha_environment.Data_encoding
 module MBytes = Alpha_environment.MBytes
 module Error_monad = X_error_monad
 open Error_monad
-
+open Protocol
 
 
 module Context_init = struct
@@ -85,10 +85,10 @@ module Context_init = struct
     let proto_params =
       Data_encoding.Binary.to_bytes_exn Data_encoding.json json
     in
-    Tezos_protocol_environment_memory.Context.(
-      set empty ["version"] (MBytes.of_string "genesis")
+    Tezos_protocol_environment.Context.(
+      set Memory_context.empty ["version"] (MBytes.of_string "genesis")
     ) >>= fun ctxt ->
-    Tezos_protocol_environment_memory.Context.(
+    Tezos_protocol_environment.Context.(
       set ctxt protocol_param_key proto_params
     ) >>= fun ctxt ->
     Main.init ctxt header
@@ -141,7 +141,7 @@ module Context_init = struct
       with Exit -> return ()
     end >>=? fun () ->
 
-    let constants : Constants_repr.parametric = {
+    let constants : Constants_repr.parametric = Tezos_protocol_alpha_parameters.Default_parameters.({
         preserved_cycles ;
         blocks_per_cycle ;
         blocks_per_commitment ;
@@ -162,7 +162,8 @@ module Context_init = struct
         endorsement_reward ;
         cost_per_byte ;
         hard_storage_limit_per_operation ;
-      } in
+        test_chain_duration = constants_mainnet.test_chain_duration ;
+      }) in
     check_constants_consistency constants >>=? fun () ->
 
     let hash =
@@ -171,7 +172,7 @@ module Context_init = struct
     let shell = make_shell
                   ~level:0l
                   ~predecessor:hash
-                  ~timestamp:Tezos_base.TzPervasives.Time.epoch
+                  ~timestamp:Tezos_base.TzPervasives.Time.Protocol.epoch
                   ~fitness: (Fitness_repr.from_int64 0L)
                   ~operations_hash: Alpha_environment.Operation_list_list_hash.zero in
     initial_context
@@ -246,7 +247,7 @@ module Context_init = struct
 
   let main n =
     init n >>=? fun ((ctxt, header, hash), accounts, contracts) ->
-    let timestamp = Tezos_base.Time.now () in
+    let timestamp = Environment.Time.of_seconds @@ Int64.of_float @@ Unix.time () in
     begin_construction ~timestamp ~header ~hash ctxt >>=? fun ctxt ->
     return (ctxt, accounts, contracts)
 

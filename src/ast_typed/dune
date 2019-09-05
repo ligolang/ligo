@@ -7,7 +7,7 @@
     ast_simplified ; Is that a good idea?
   )
   (preprocess
-    (pps simple-utils.ppx_let_generalized)
+    (pps ppx_let)
   )
   (flags (:standard -open Simple_utils))
 )
