@@ -614,7 +614,7 @@ and type_expression : environment -> ?tv_opt:O.type_value -> I.expression -> O.a
       return (E_application (f' , arg)) tv
   | E_look_up dsi ->
       let%bind (ds, ind) = bind_map_pair (type_expression e) dsi in
-      let%bind (src, dst) = bind_map_or (get_t_map , get_t_big_map) ds.type_annotation in
+      let%bind (src, dst) = get_t_map ds.type_annotation in
       let%bind _ = O.assert_type_value_eq (ind.type_annotation, src) in
       return (E_look_up (ds , ind)) (t_option dst ())
   (* Advanced *)

@@ -268,20 +268,20 @@ module Typer = struct
     ok @@ t_option dst ()
 
   let map_iter : typer = typer_2 "MAP_ITER" @@ fun m f ->
-    let%bind (k, v) = get_t_map m in
+    let%bind (k, v) = get_t_map_not_big_map m in
     let%bind (arg , res) = get_t_function f in
     let%bind () = assert_eq_1 arg (t_pair k v ()) in
     let%bind () = assert_eq_1 res (t_unit ()) in
     ok @@ t_unit ()
 
   let map_map : typer = typer_2 "MAP_MAP" @@ fun m f ->
-    let%bind (k, v) = get_t_map m in
+    let%bind (k, v) = get_t_map_not_big_map m in
     let%bind (arg , res) = get_t_function f in
     let%bind () = assert_eq_1 arg (t_pair k v ()) in
     ok @@ t_map k res ()
 
   let map_fold : typer = typer_2 "MAP_FOLD" @@ fun f m ->
-    let%bind (k, v) = get_t_map m in
+    let%bind (k, v) = get_t_map_not_big_map m in
     let%bind (arg_1 , res) = get_t_function f in
     let%bind (arg_2 , res') = get_t_function res in
     let%bind (arg_3 , res'') = get_t_function res' in
@@ -290,39 +290,10 @@ module Typer = struct
     let%bind () = assert_eq_1 arg_3 res'' in
     ok @@ res'
 
-  let big_map_remove : typer = typer_2 "BIG_MAP_REMOVE" @@ fun k m ->
-    let%bind (src , _) = get_t_big_map m in
-    let%bind () = assert_type_value_eq (src , k) in
-    ok m
-
-  let big_map_add : typer = typer_3 "BIG_MAP_ADD" @@ fun k v m ->
-    let%bind (src, dst) = get_t_big_map m in
-    let%bind () = assert_type_value_eq (src, k) in
-    let%bind () = assert_type_value_eq (dst, v) in
-    ok m
-
-  let big_map_update : typer = typer_3 "BIG_MAP_UPDATE" @@ fun k v m ->
-    let%bind (src, dst) = get_t_big_map m in
-    let%bind () = assert_type_value_eq (src, k) in
-    let%bind v' = get_t_option v in
-    let%bind () = assert_type_value_eq (dst, v') in
-    ok m
-
-  let big_map_mem : typer = typer_2 "BIG_MAP_MEM" @@ fun k m ->
-    let%bind (src, _dst) = get_t_big_map m in
-    let%bind () = assert_type_value_eq (src, k) in
-    ok @@ t_bool ()
-
-  let big_map_find : typer = typer_2 "BIG_MAP_FIND" @@ fun k m ->
-    let%bind (src, dst) = get_t_big_map m in
-    let%bind () = assert_type_value_eq (src, k) in
-    ok @@ dst
-
-
   let size = typer_1 "SIZE" @@ fun t ->
     let%bind () =
       Assert.assert_true @@
-      (is_t_map t || is_t_list t || is_t_string t || is_t_bytes t || is_t_set t || is_t_big_map t) in
+      (is_t_map_not_big_map t || is_t_list t || is_t_string t || is_t_bytes t || is_t_set t) in
     ok @@ t_nat ()
 
   let slice = typer_3 "SLICE" @@ fun i j s ->
@@ -592,11 +563,6 @@ module Typer = struct
       map_map ;
       map_fold ;
       map_iter ;
-      big_map_remove ;
-      big_map_add ;
-      big_map_update ;
-      big_map_mem ;
-      big_map_find ;
       set_empty ;
       set_mem ;
       set_add ;

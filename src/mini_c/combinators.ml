@@ -88,6 +88,7 @@ let get_t_or (t:type_value) = match t with
 
 let get_t_map (t:type_value) = match t with
   | T_map kv -> ok kv
+  | T_big_map kv -> ok kv
   | _ -> simple_fail "not a type map"
 
 let get_t_list (t:type_value) = match t with
