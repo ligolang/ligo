@@ -156,7 +156,7 @@ module Free_variables = struct
     | E_tuple_accessor (a, _) -> self a
     | E_list lst -> unions @@ List.map self lst
     | E_set lst -> unions @@ List.map self lst
-    | E_map m -> unions @@ List.map self @@ List.concat @@ List.map (fun (a, b) -> [ a ; b ]) m
+    | (E_map m | E_big_map m) -> unions @@ List.map self @@ List.concat @@ List.map (fun (a, b) -> [ a ; b ]) m
     | E_look_up (a , b) -> unions @@ List.map self [ a ; b ]
     | E_matching (a , cs) -> union (self a) (matching_expression b cs)
     | E_failwith a -> self a
@@ -422,7 +422,7 @@ let rec assert_value_eq (a, b: (value*value)) : unit result =
   | E_record _, _ ->
       fail @@ (different_values_because_different_types "record vs. non-record" a b)
 
-  | E_map lsta, E_map lstb -> (
+  | (E_map lsta, E_map lstb | E_big_map lsta, E_big_map lstb) -> (
       let%bind lst = generic_try (different_size_values "maps of different lengths" a b)
           (fun () ->
              let lsta' = List.sort compare lsta in
@@ -435,7 +435,7 @@ let rec assert_value_eq (a, b: (value*value)) : unit result =
       let%bind _all = bind_map_list aux lst in
       ok ()
     )
-  | E_map _, _ ->
+  | (E_map _ | E_big_map _), _ ->
       fail @@ different_values_because_different_types "map vs. non-map" a b
 
   | E_list lsta, E_list lstb -> (

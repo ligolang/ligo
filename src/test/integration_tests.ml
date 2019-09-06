@@ -397,7 +397,7 @@ let big_map () : unit result =
   let ez lst =
     let open Ast_simplified.Combinators in
     let lst' = List.map (fun (x, y) -> e_int x, e_int y) lst in
-    e_pair (e_typed_map lst' t_int t_int) (e_unit ())
+    e_pair (e_typed_big_map lst' t_int t_int) (e_unit ())
   in
   let%bind () =
     let make_input = fun n -> ez [(23, n) ; (42, 4)] in

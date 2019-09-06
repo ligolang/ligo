@@ -59,6 +59,7 @@ and expression' =
   | E_accessor of (expr * access_path)
   (* Data Structures *)
   | E_map of (expr * expr) list
+  | E_big_map of (expr * expr) list
   | E_list of expr list
   | E_set of expr list
   | E_look_up of (expr * expr)

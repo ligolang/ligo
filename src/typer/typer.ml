@@ -556,6 +556,36 @@ and type_expression : environment -> ?tv_opt:O.type_value -> I.expression -> O.a
         ok (t_map key_type value_type ())
       in
       return (E_map lst') tv
+  | E_big_map lst ->
+      let%bind lst' = bind_map_list (bind_map_pair (type_expression e)) lst in
+      let%bind tv =
+        let aux opt c =
+          match opt with
+          | None -> ok (Some c)
+          | Some c' ->
+              let%bind _eq = Ast_typed.assert_type_value_eq (c, c') in
+              ok (Some c') in
+        let%bind key_type =
+          let%bind sub =
+            bind_fold_list aux None
+            @@ List.map get_type_annotation
+            @@ List.map fst lst' in
+          let%bind annot = bind_map_option get_t_map_key tv_opt in
+          trace (simple_info "empty map expression without a type annotation") @@
+          O.merge_annotation annot sub (needs_annotation ae "this map literal")
+        in
+        let%bind value_type =
+          let%bind sub =
+            bind_fold_list aux None
+            @@ List.map get_type_annotation
+            @@ List.map snd lst' in
+          let%bind annot = bind_map_option get_t_map_value tv_opt in
+          trace (simple_info "empty map expression without a type annotation") @@
+          O.merge_annotation annot sub (needs_annotation ae "this map literal")
+        in
+        ok (t_big_map key_type value_type ())
+      in
+      return (E_big_map lst') tv
   | E_lambda {
       binder ;
       input_type ;
@@ -826,6 +856,9 @@ let rec untype_expression (e:O.annotated_expression) : (I.expression) result =
   | E_map m ->
       let%bind m' = bind_map_list (bind_map_pair untype_expression) m in
       return (e_map m')
+  | E_big_map m ->
+      let%bind m' = bind_map_list (bind_map_pair untype_expression) m in
+      return (e_big_map m')
   | E_list lst ->
       let%bind lst' = bind_map_list untype_expression lst in
       return (e_list lst')

@@ -99,6 +99,7 @@ and expression =
   | E_record_accessor of (ae * string)
   (* Data Structures *)
   | E_map of (ae * ae) list
+  | E_big_map of (ae * ae) list
   | E_list of ae list
   | E_set of ae list
   | E_look_up of (ae * ae)
