@@ -102,6 +102,7 @@ let rec translate_type (t:AST.type_value) : type_value result =
   | T_constant ("nat", []) -> ok (T_base Base_nat)
   | T_constant ("tez", []) -> ok (T_base Base_tez)
   | T_constant ("string", []) -> ok (T_base Base_string)
+  | T_constant ("bytes", []) -> ok (T_base Base_bytes)
   | T_constant ("address", []) -> ok (T_base Base_address)
   | T_constant ("timestamp", []) -> ok (T_base Base_timestamp)
   | T_constant ("unit", []) -> ok (T_base Base_unit)
@@ -725,7 +726,7 @@ let rec untranspile (v : value) (t : AST.type_value) : AST.annotated_expression 
   | T_constant ("timestamp", []) -> (
       let%bind n =
         trace_strong (wrong_mini_c_value "timestamp" v) @@
-        get_timestamp v in      
+        get_timestamp v in
       return (E_literal (Literal_timestamp n))
     )
   | T_constant ("tez", []) -> (
@@ -739,6 +740,12 @@ let rec untranspile (v : value) (t : AST.type_value) : AST.annotated_expression 
         trace_strong (wrong_mini_c_value "string" v) @@
         get_string v in
       return (E_literal (Literal_string n))
+    )
+  | T_constant ("bytes", []) -> (
+      let%bind n =
+        trace_strong (wrong_mini_c_value "bytes" v) @@
+        get_bytes v in
+      return (E_literal (Literal_bytes n))
     )
   | T_constant ("address", []) -> (
       let%bind n =
