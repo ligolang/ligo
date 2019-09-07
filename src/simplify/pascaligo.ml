@@ -36,6 +36,16 @@ module Errors = struct
     ] in
     error ~data title message
 
+  let bad_bytes loc str =
+    let title () = "bad bytes string" in
+    let message () =
+      Format.asprintf "bytes string contained non-hexadecimal chars" in
+    let data = [
+      ("location", fun () -> Format.asprintf "%a" Location.pp loc) ;
+      ("bytes", fun () -> str) ;
+    ] in
+    error ~data title message
+
   let unsupported_entry_decl decl =
     let title () = "entry point declarations" in
     let message () =
@@ -385,7 +395,12 @@ let rec simpl_expression (t:Raw.expr) : expr result =
       let ((expr , type_expr) , loc) = r_split a in
       let%bind expr' = simpl_expression expr in
       let%bind type_expr' = simpl_type_expression type_expr in
-      return @@ e_annotation ~loc expr' type_expr'
+      match (Location.unwrap expr', type_expr') with
+      | (E_literal (Literal_string str) , T_constant ("bytes" , [])) ->
+         trace_strong (bad_bytes loc str) @@
+           e_bytes ~loc str
+      | _ ->
+         return @@ e_annotation ~loc expr' type_expr'
     )
   | EVar c -> (
       let (c' , loc) = r_split c in
