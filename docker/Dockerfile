@@ -34,7 +34,7 @@ RUN sh -c pwd
 RUN sh scripts/build_ligo_local.sh
 RUN sh -c pwd
 RUN ls -l
-RUN ls -l *
+RUN sh -c 'ls -l /ligo/_build/default/src/bins/ligo || true'
 
 # Use the ligo binary as a default command
 ENTRYPOINT [ "/ligo/_build/default/src/bins/ligo" ]

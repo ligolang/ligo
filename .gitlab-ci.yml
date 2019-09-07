@@ -140,4 +140,4 @@ pages:
   only:
     - master
     - dev
-    - feature/website-fixes
+    - refactor/new-tezos-deps-ci
