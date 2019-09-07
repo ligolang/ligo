@@ -24,8 +24,10 @@ stages:
     - opam install -y odoc
     # - vendors/opam-repository-tools/rewrite-local-opam-repository.sh
     # - opam repository add localrepo "file://$PWD/vendors/ligo-opam-repository-local-generated/"
-    - opam install -y --build-test --deps-only ./src/
-    - dune build -p ligo
+    - scripts/install_vendors_deps.sh
+    - scripts/build_ligo_local.sh
+    # - opam install -y --build-test --deps-only ./src/
+    # - dune build -p ligo
     # TODO: also try instead from time to time:
     #- (cd ./src/; dune build -p ligo)
 
