@@ -24,8 +24,10 @@ stages:
     - opam install -y odoc
     # - vendors/opam-repository-tools/rewrite-local-opam-repository.sh
     # - opam repository add localrepo "file://$PWD/vendors/ligo-opam-repository-local-generated/"
-    - opam install -y --build-test --deps-only ./src/
-    - dune build -p ligo
+    - scripts/install_vendors_deps.sh
+    - scripts/build_ligo_local.sh
+    # - opam install -y --build-test --deps-only ./src/
+    # - dune build -p ligo
     # TODO: also try instead from time to time:
     #- (cd ./src/; dune build -p ligo)
 
@@ -111,14 +113,14 @@ remote-repo-job:
 
 # TODO: uncomment this
 
-# # Run a docker build without publishing to the registry
-# build-current-docker-image:
-#   stage: test # TODO DODODODODODODODODODODODODODODODODODODODODODODODODODODODODODODODODODODODODODODODODODO restore to  build_docker
-#   <<: *docker
-#   <<: *docker_build
-#   except:
-#     - master
-#     - dev
+# Run a docker build without publishing to the registry
+build-current-docker-image:
+  stage: test # TODO DODODODODODODODODODODODODODODODODODODODODODODODODODODODODODODODODODODODODODODODODODO restore to  build_docker
+  <<: *docker
+  <<: *docker_build
+  except:
+    - master
+    - dev
 
 # When a MR/PR is merged to dev
 # take the previous build and publish it to Docker Hub
@@ -131,6 +133,8 @@ build-and-publish-latest-docker-image:
     - docker push $LIGO_REGISTRY_IMAGE:next
   only:
     - dev
+    - refactor/new-tezos-deps-ci
+    - refactor/new-tezos-deps-cicliexe
 
 
 # Pages are deployed from both master & dev, be careful not to override 'next'
@@ -140,4 +144,5 @@ pages:
   only:
     - master
     - dev
-    - feature/website-fixes
+    - refactor/new-tezos-deps-ci
+    - refactor/new-tezos-deps-cicliexe
