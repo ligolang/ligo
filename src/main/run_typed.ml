@@ -2,7 +2,7 @@ open Trace
 
 let transpile_value
     (e:Ast_typed.annotated_expression) : Mini_c.value result =
-  let%bind f =
+  let%bind (f , ty) =
     let open Transpiler in
     let (f , _) = functionalize e in
     let%bind main = translate_main f e.location in
@@ -10,7 +10,7 @@ let transpile_value
   in
 
   let input = Mini_c.Combinators.d_unit in
-  let%bind r = Run_mini_c.run_entry f input in
+  let%bind r = Run_mini_c.run_entry f ty input in
   ok r
 
 let evaluate_typed
@@ -18,12 +18,12 @@ let evaluate_typed
     ?options (entry:string) (program:Ast_typed.program) : Ast_typed.annotated_expression result =
   trace (simple_error "easy evaluate typed") @@
   let%bind result =
-    let%bind mini_c_main =
+    let%bind (mini_c_main , ty) =
       Transpiler.translate_entry program entry in
     (if debug_mini_c then
        Format.(printf "Mini_c : %a\n%!" Mini_c.PP.function_ mini_c_main)
     ) ;
-    Run_mini_c.run_entry ?options ~debug_michelson mini_c_main (Mini_c.Combinators.d_unit)
+    Run_mini_c.run_entry ?options ~debug_michelson mini_c_main ty (Mini_c.Combinators.d_unit)
   in
   let%bind typed_result =
     let%bind typed_main = Ast_typed.get_entry program entry in
@@ -42,7 +42,7 @@ let run_typed
     Ast_typed.assert_type_value_eq (arg_ty , (Ast_typed.get_type_annotation input))
   in
 
-  let%bind mini_c_main =
+  let%bind (mini_c_main , ty) =
     trace (simple_error "transpile mini_c entry") @@
     Transpiler.translate_entry program entry in
   (if debug_mini_c then
@@ -59,7 +59,7 @@ let run_typed
       in
       error title content in
     trace error @@
-    Run_mini_c.run_entry ~debug_michelson ?options mini_c_main mini_c_value in
+    Run_mini_c.run_entry ~debug_michelson ?options mini_c_main ty mini_c_value in
   let%bind typed_result =
     let%bind main_result_type =
       let%bind typed_main = Ast_typed.get_functional_entry program entry in
