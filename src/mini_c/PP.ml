@@ -51,7 +51,9 @@ let rec value ppf : value -> unit = function
   | D_tez n -> fprintf ppf "%dtz" n
   | D_unit -> fprintf ppf "unit"
   | D_string s -> fprintf ppf "\"%s\"" s
-  | D_bytes _ -> fprintf ppf "[bytes]"
+  | D_bytes x ->
+     let (`Hex hex) = Hex.of_bytes x in
+     fprintf ppf "0x%s" hex
   | D_pair (a, b) -> fprintf ppf "(%a), (%a)" value a value b
   | D_left a -> fprintf ppf "L(%a)" value a
   | D_right b -> fprintf ppf "R(%a)" value b

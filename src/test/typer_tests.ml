@@ -36,7 +36,9 @@ module TestExpressions = struct
   let int    () : unit result = test_expression I.(e_int 32)  O.(t_int ())
   let bool   () : unit result = test_expression I.(e_bool true)  O.(t_bool ())
   let string () : unit result = test_expression I.(e_string "s") O.(t_string ())
-  let bytes  () : unit result = test_expression I.(e_bytes "b")  O.(t_bytes ())
+  let bytes  () : unit result =
+    let%bind b = I.e_bytes "0b" in
+    test_expression b  O.(t_bytes ())
 
   let lambda () : unit result =
     test_expression

@@ -74,6 +74,8 @@ module Simplify = struct
       ("bitwise_xor" , "XOR") ;
       ("string_concat" , "CONCAT") ;
       ("string_slice" , "SLICE") ;
+      ("bytes_concat" , "CONCAT") ;
+      ("bytes_slice" , "SLICE") ;
       ("set_empty" , "SET_EMPTY") ;
       ("set_mem" , "SET_MEM") ;
       ("set_add" , "SET_ADD") ;
@@ -83,6 +85,9 @@ module Simplify = struct
       ("list_map" , "LIST_MAP") ;
       ("map_iter" , "MAP_ITER") ;
       ("map_map" , "MAP_MAP") ;
+      ("sha_256" , "SHA256") ;
+      ("sha_512" , "SHA512") ;
+      ("blake2b" , "BLAKE2b") ;
     ]
 
     let type_constants = type_constants

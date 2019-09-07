@@ -21,41 +21,6 @@ let wrap_test_raw f =
   | Error err ->
     Format.printf "%a\n%!" Ligo.Display.error_pp (err ())
 
-(* let rec error_pp out (e : error) =
- *     let open JSON_string_utils in
- *   let message =
- *     let opt = e |> member "message" |> string in
- *     let msg = Option.unopt ~default:"" opt in
- *     if msg = ""
- *     then ""
- *     else ": " ^ msg in
- *   let error_code =
- *     let error_code = e |> member "error_code" in
- *     match error_code with
- *     | `Null -> ""
- *     | _ -> " (" ^ (J.to_string error_code) ^ ")" in
- *   let title =
- *     let opt = e |> member "title" |> string in
- *     Option.unopt ~default:"" opt in
- *   let data =
- *     let data = e |> member "data" in
- *     match data with
- *     | `Null -> ""
- *     | _ -> " " ^ (J.to_string data) ^ "\n" in
- *   let infos =
- *     let infos = e |> member "infos" in
- *     match infos with
- *     | `Null -> ""
- *     | `List lst -> Format.asprintf "@[<v2>%a@]" PP_helpers.(list_sep error_pp (tag "@,")) lst
- *     | _ -> " " ^ (J.to_string infos) ^ "\n" in
- *   let children =
- *     let children = e |> member "children" in
- *     match children with
- *     | `Null -> ""
- *     | `List lst -> Format.asprintf "@[<v2>%a@]" PP_helpers.(list_sep error_pp (tag "@,")) lst
- *     | _ -> " " ^ (J.to_string children) ^ "\n" in
- *   Format.fprintf out "%s%s%s.\n%s%s%s" title error_code message data infos children *)
-
 let test name f =
   Test (
     Alcotest.test_case name `Quick @@ fun () ->

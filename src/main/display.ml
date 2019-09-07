@@ -1,6 +1,8 @@
 open Trace
 
-let error_pp out (e : error) =
+let dev = false
+
+let rec error_pp out (e : error) =
   let open JSON_string_utils in
   let message =
     let opt = e |> member "message" |> string in
@@ -26,6 +28,12 @@ let error_pp out (e : error) =
     | `List lst -> lst
     | `Null -> []
     | x -> [ x ] in
+  let children =
+    let infos = e |> member "children" in
+    match infos with
+    | `List lst -> lst
+    | `Null -> []
+    | x -> [ x ] in
   let location =
     let opt = e |> member "data" |> member "location" |> string in
     let aux prec cur =
@@ -38,5 +46,11 @@ let error_pp out (e : error) =
     | Some s -> s ^ ". "
   in
   let print x = Format.fprintf out x in
-  print "%s%s%s%s%s" location title error_code message data
-  (* Format.fprintf out "%s%s%s.\n%s%s" title error_code message data infos *)
+  if not dev then (
+    print "%s%s%s%s%s" location title error_code message data
+  ) else (
+    print "%s%s%s.\n%s%s\n%a\n%a\n" title error_code message data location
+      (Format.pp_print_list error_pp) infos
+      (Format.pp_print_list error_pp) children
+  )
+

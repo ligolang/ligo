@@ -57,7 +57,9 @@ let e_bool ?loc   b : expression = Location.wrap ?loc @@ E_literal (Literal_bool
 let e_string ?loc s : expression = Location.wrap ?loc @@ E_literal (Literal_string s)
 let e_address ?loc s : expression = Location.wrap ?loc @@ E_literal (Literal_address s)
 let e_tez ?loc s : expression = Location.wrap ?loc @@ E_literal (Literal_tez s)
-let e_bytes ?loc  b : expression = Location.wrap ?loc @@ E_literal (Literal_bytes (Bytes.of_string b))
+let e_bytes ?loc b : expression result =
+  let%bind bytes = generic_try (simple_error "bad hex to bytes") (fun () -> Hex.to_bytes (`Hex b)) in
+  ok @@ Location.wrap ?loc @@ E_literal (Literal_bytes bytes)
 let e_record ?loc map : expression = Location.wrap ?loc @@ E_record map
 let e_tuple ?loc lst : expression = Location.wrap ?loc @@ E_tuple lst
 let e_some ?loc s : expression = Location.wrap ?loc @@ E_constant ("SOME", [s])
