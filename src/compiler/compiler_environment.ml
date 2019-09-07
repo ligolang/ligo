@@ -3,8 +3,6 @@ open Mini_c
 open Environment
 open Michelson
 
-module Stack = Meta_michelson.Stack
-
 let get : environment -> string -> michelson result = fun e s ->
   let%bind (_ , position) =
     let error =

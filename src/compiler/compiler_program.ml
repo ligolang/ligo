@@ -2,10 +2,8 @@ open Trace
 open Mini_c
 
 open Michelson
-module Stack = Meta_michelson.Stack
-module Contract_types = Meta_michelson.Types
 
-open Memory_proto_alpha.Script_ir_translator
+open Memory_proto_alpha.Protocol.Script_ir_translator
 
 open Operators.Compiler
 

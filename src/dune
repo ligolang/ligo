@@ -6,11 +6,10 @@
     simple-utils
     tezos-utils
     tezos-micheline
-    meta_michelson
     main
   )
   (preprocess
-    (pps simple-utils.ppx_let_generalized)
+    (pps ppx_let)
   )
 )
 

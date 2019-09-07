@@ -9,34 +9,21 @@ stages:
   - test
 
 .website_build: &website_build
-  stage: build_and_deploy_website
+  stage: test # TODO DODODODODODODODODODODODODODODODODODODODODODODODODODODODODODODODODODODODODODODODODODO restore to  build_and_deploy_website
   image: node:8
   before_script:
     - scripts/install_native_dependencies.sh
-    # TODO: these things are moved to scripts in other branches.
-    - wget https://github.com/ocaml/opam/releases/download/2.0.1/opam-2.0.1-x86_64-linux -O opam-2.0.1-x86_64-linux
-    - cp opam-2.0.1-x86_64-linux /usr/local/bin/opam
-    - chmod +x /usr/local/bin/opam
+    - scripts/install_opam.sh # TODO: or scripts/install_build_environment.sh ?
     - export PATH="/usr/local/bin${PATH:+:}${PATH:-}"
-
-    # Initialise opam
-    - printf '' | opam init --bare
     - eval $(opam config env)
-
-    # Create switch
-    - printf '' | opam switch create toto ocaml-base-compiler.4.06.1
+    - scripts/setup_switch.sh
     - eval $(opam config env)
-
-    # Show versions and current switch
-    - echo "$PATH"
-    - opam --version
-    - printf '' | ocaml
-    - opam switch
+    - scripts/debug_show_versions.sh || true
 
     # install deps for internal documentation
     - opam install -y odoc
-    - vendors/opam-repository-tools/rewrite-local-opam-repository.sh
-    - opam repository add localrepo "file://$PWD/vendors/ligo-opam-repository-local-generated/"
+    # - vendors/opam-repository-tools/rewrite-local-opam-repository.sh
+    # - opam repository add localrepo "file://$PWD/vendors/ligo-opam-repository-local-generated/"
     - opam install -y --build-test --deps-only ./src/
     - dune build -p ligo
     # TODO: also try instead from time to time:
@@ -75,44 +62,36 @@ stages:
   before_script:
     # Install dependencies
     # rsync is needed by opam to sync a package installed from a local directory with the copy in ~/.opam
-    - apt-get update -qq
     - scripts/install_native_dependencies.sh
-    - scripts/install_opam.sh
+    - scripts/install_opam.sh # TODO: or scripts/install_build_environment.sh ?
     - export PATH="/usr/local/bin${PATH:+:}${PATH:-}"
-
-    # Initialise opam, create switch, load opam environment variables
-    - printf '' | opam init --bare
-    - printf '' | opam switch create ligo-switch ocaml-base-compiler.4.06.1
+    - echo "$PATH"; which ocaml || true
     - eval $(opam config env)
-
-    # Show versions and current switch
-    - echo "$PATH"
-    - opam --version
-    - printf '' | ocaml
-    - opam switch
+    - echo "$PATH"; which ocaml || true
+    - scripts/setup_switch.sh
+    - echo "$PATH"; which ocaml || true
+    - eval $(opam config env)
+    - echo "$PATH"; which ocaml || true
+    - scripts/debug_show_versions.sh || true
 
 local-dune-job:
   <<: *before_script
   stage: test
   script:
-    - scripts/setup_ligo_opam_repository.sh
-    - opam install -y --build-test --deps-only ./src/
-    - dune build -p ligo
-    # TODO: also try instead from time to time:
-    #- (cd ./src/; dune build -p ligo)
+    - scripts/install_vendors_deps.sh
+    - scripts/build_ligo_local.sh
     - dune build @ligo-test
-#   artifacts:
-#     paths:
-#       - src/ligo/bin/cli.ml
 
-local-repo-job:
-  <<: *before_script
-  stage: test
-  script:
-    - vendors/opam-repository-tools/rewrite-local-opam-repository.sh
-    - opam repository add localrepo "file://$PWD/vendors/ligo-opam-repository-local-generated/"
-    #--build-test
-    - opam install -y ligo
+# TODO: uncomment this
+
+# TODO
+# local-repo-job:
+#   <<: *before_script
+#   stage: test
+#   script:
+#     - scripts/install_vendors_deps.sh
+#     # TODO: also try from time to time with --build-test
+#     - opam install -y ligo
 
 remote-repo-job:
   <<: *before_script
@@ -130,19 +109,21 @@ remote-repo-job:
   only:
     - master
 
-# Run a docker build without publishing to the registry
-build-current-docker-image:
-  stage: build_docker
-  <<: *docker
-  <<: *docker_build
-  except:
-    - master
-    - dev
+# TODO: uncomment this
+
+# # Run a docker build without publishing to the registry
+# build-current-docker-image:
+#   stage: test # TODO DODODODODODODODODODODODODODODODODODODODODODODODODODODODODODODODODODODODODODODODODODO restore to  build_docker
+#   <<: *docker
+#   <<: *docker_build
+#   except:
+#     - master
+#     - dev
 
 # When a MR/PR is merged to dev
 # take the previous build and publish it to Docker Hub
 build-and-publish-latest-docker-image:
-  stage: build_and_deploy_docker
+  stage: test # TODO DODODODODODODODODODODODODODODODODODODODODODODODODODODODODODODODODODODODODODODODODODO restore to  build_and_deploy_docker
   <<: *docker
   <<: *docker_build
   after_script:

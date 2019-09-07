@@ -24,7 +24,7 @@
 (*****************************************************************************)
 
 open Memory_proto_alpha
-open Alpha_context
+open Protocol.Alpha_context
 
 open Tezos_micheline
 

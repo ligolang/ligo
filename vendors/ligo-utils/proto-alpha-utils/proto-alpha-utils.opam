@@ -39,6 +39,7 @@ depends: [
   "tezos-data-encoding"
   "tezos-protocol-environment"
   "tezos-protocol-alpha"
+  "tezos-protocol-alpha-parameters"
   "michelson-parser"
   "simple-utils"
   "tezos-utils"

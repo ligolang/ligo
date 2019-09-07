@@ -17,6 +17,7 @@ depends: [
   "proto-alpha-utils"
   "yojson"
   "alcotest" { with-test }
+  "getopt"
 ]
 build: [
   [ "dune" "build" "-p" name "-j" jobs ]

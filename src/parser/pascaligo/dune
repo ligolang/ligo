@@ -1,5 +1,4 @@
 (ocamllex LexToken)
-(ocamllex Lexer)
 
 (menhir
  (merge_into Parser)
@@ -9,17 +8,27 @@
 (library
  (name parser_pascaligo)
  (public_name ligo.parser.pascaligo)
- (modules AST FQueue Markup pascaligo Utils Version Lexer Error Parser ParserLog LexToken)
- (modules_without_implementation Error)
+ (modules AST pascaligo Parser ParserLog LexToken)
  (libraries
-   hex
-   str
-   uutf
-   zarith
+   parser_shared
+   hex   
    simple-utils
    tezos-utils
  )
- (flags (:standard -open Simple_utils ))
+ (flags (:standard  -open Parser_shared -open Simple_utils))
+)
+
+(executable
+  (name LexerMain)
+  (libraries 
+   hex
+   simple-utils
+   tezos-utils 
+   parser_pascaligo)
+  (modules 
+    LexerMain
+  )
+  (flags (:standard -open Parser_shared -open Parser_pascaligo))
 )
 
 ;; Les deux directives (rule) qui suivent sont pour le dev local.
@@ -36,9 +45,3 @@
 ;  (deps LexerMain.exe)
 ;  (action (copy LexerMain.exe Lexer.exe))
 ;  (mode promote-until-clean))
-
-(rule
-  (targets Version.ml)
-  (action
-    (progn (run "sh" "-c" "printf 'let version = \"%s\"'\\\\n \"$(echo UNKNOWN)\" > Version.ml")))
-  (mode promote-until-clean))

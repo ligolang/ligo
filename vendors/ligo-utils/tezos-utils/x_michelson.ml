@@ -1,7 +1,7 @@
 open Tezos_micheline
 open Micheline
 
-include Michelson_primitives
+include Memory_proto_alpha.Protocol.Michelson_v1_primitives
 
 type michelson = (int, prim) node
 type t = michelson
@@ -15,7 +15,7 @@ let annotate annot = function
 
 let seq s : michelson = Seq (0, s)
 
-let i_comment s : michelson = prim ~annot:["\"" ^ s ^ "\""] I_NOP
+let i_comment s : michelson = seq [ prim ~annot:["\"" ^ s ^ "\""] I_UNIT ; prim I_DROP ]
 
 let contract parameter storage code =
   seq [
@@ -73,8 +73,8 @@ let rec strip_annots : michelson -> michelson = function
   | x -> x
 
 let rec strip_nops : michelson -> michelson = function
+  | Seq(l, [Prim (_, I_UNIT, _, _) ; Prim(_, I_DROP, _, _)]) -> Seq (l, [])
   | Seq(l, s) -> Seq(l, List.map strip_nops s)
-  | Prim (l, I_NOP, _, _) -> Seq (l, [])
   | Prim (l, p, lst, a) -> Prim (l, p, List.map strip_nops lst, a)
   | x -> x
 

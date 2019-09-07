@@ -1,7 +1,0 @@
-(executable
- (name test)
- (libraries cstruct rresult lmdb alcotest))
-
-(alias
- (name    runtest-lmdb)
- (action  (run %{exe:test.exe})))

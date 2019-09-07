@@ -259,7 +259,7 @@ let run_contract ?amount source_filename entry_point storage input syntax =
     parsify_expression syntax input in
   let options =
     let open Proto_alpha_utils.Memory_proto_alpha in
-    let amount = Option.bind (fun amount -> Alpha_context.Tez.of_string amount) amount in
+    let amount = Option.bind (fun amount -> Protocol.Alpha_context.Tez.of_string amount) amount in
     (make_options ?amount ()) in
   Run_simplified.run_simplityped ~options typed entry_point (Ast_simplified.e_pair storage_simpl input_simpl)
 
@@ -271,7 +271,7 @@ let run_function ?amount source_filename entry_point parameter syntax =
     parsify_expression syntax parameter in
   let options =
     let open Proto_alpha_utils.Memory_proto_alpha in
-    let amount = Option.bind (fun amount -> Alpha_context.Tez.of_string amount) amount in
+    let amount = Option.bind (fun amount -> Protocol.Alpha_context.Tez.of_string amount) amount in
     (make_options ?amount ()) in
   Run_simplified.run_simplityped ~options typed entry_point parameter'
 
@@ -281,6 +281,6 @@ let evaluate_value ?amount source_filename entry_point syntax =
     type_file syntax source_filename in
   let options =
     let open Proto_alpha_utils.Memory_proto_alpha in
-    let amount = Option.bind (fun amount -> Alpha_context.Tez.of_string amount) amount in
+    let amount = Option.bind (fun amount -> Protocol.Alpha_context.Tez.of_string amount) amount in
     (make_options ?amount ()) in
   Run_simplified.evaluate_simplityped ~options typed entry_point
