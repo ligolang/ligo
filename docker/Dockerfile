@@ -1,6 +1,5 @@
-# We could use one of the nomadiclab's docker images as a base instead
-# We're using 4.06 instead of 4.06.1, if this causes problems build a custom 4.06.1 image instead
-FROM ocaml/opam2:4.06
+# At the moment, this really means 4.07.1
+FROM ocaml/opam2:4.07
 
 USER root
 
@@ -23,18 +22,14 @@ RUN sh scripts/install_native_dependencies.sh
 # TODO: or scripts/install_build_environment.sh ?
 RUN sh scripts/install_opam.sh
 
-# Creat opam switch
-RUN sh scripts/setup_switch.sh
+# Add tezos repository
+RUN sh scripts/setup_repos.sh
 
 RUN opam update
 
 # Install ligo
 RUN sh scripts/install_vendors_deps.sh
-RUN sh -c pwd
-RUN sh scripts/build_ligo_local.sh
-RUN sh -c pwd
-RUN ls -l
-RUN sh -c 'ls -l /ligo/_build/default/src/bin/cli.exe || true'
+RUN opam install -y ./src
 
 # Use the ligo binary as a default command
-ENTRYPOINT [ "/ligo/_build/default/src/bin/cli.exe" ]
+ENTRYPOINT [ "/home/opam/.opam/4.07/bin/ligo" ]

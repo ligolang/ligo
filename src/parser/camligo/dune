@@ -28,7 +28,7 @@
  (targets parser_generated.mly)
  (deps partial_parser.mly pre_parser.mly)
  (action (system "cat pre_parser.mly partial_parser.mly > parser_generated.mly"))
- (mode promote-until-clean)
+ (mode (promote (until-clean) (only *)))
 )
 
 (rule
@@ -43,7 +43,7 @@
  (targets ast_generated.ml)
  (deps generator.exe)
  (action (system "./generator.exe ast > ast_generated.ml"))
- (mode promote-until-clean)
+ (mode (promote (until-clean) (only *)))
 )
 
 ;; Generating Generator
@@ -57,4 +57,10 @@
     lex
   )
   (modules generator)
+  (preprocess
+    (pps
+      ppx_let
+      ppx_deriving.std
+    )
+  )
 )
