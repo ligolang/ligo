@@ -134,6 +134,7 @@ build-and-publish-latest-docker-image:
   only:
     - dev
     - refactor/new-tezos-deps-ci
+    - refactor/new-tezos-deps-cicliexe
 
 
 # Pages are deployed from both master & dev, be careful not to override 'next'
@@ -144,3 +145,4 @@ pages:
     - master
     - dev
     - refactor/new-tezos-deps-ci
+    - refactor/new-tezos-deps-cicliexe
