@@ -67,9 +67,20 @@ let variant_matching () : unit result =
 
 let closure () : unit result =
   let%bind program = type_file "./contracts/closure.ligo" in
+  let%bind program_1 = type_file "./contracts/closure-1.ligo" in
+  let%bind program_2 = type_file "./contracts/closure-2.ligo" in
+  let%bind program_3 = type_file "./contracts/closure-3.ligo" in
+  let%bind _ =
+    let make_expect = fun n -> (49 + n) in
+    expect_eq_n_int program_3 "foobar" make_expect
+  in
+  let%bind _ =
+    let make_expect = fun n -> (45 + n) in
+    expect_eq_n_int program_2 "foobar" make_expect
+  in
   let%bind () =
     let make_expect = fun n -> (2 * n) in
-    expect_eq_n_int program "foo" make_expect
+    expect_eq_n_int program_1 "foo" make_expect
   in
   let%bind _ =
     let make_expect = fun n -> (4 * n) in
@@ -161,6 +172,11 @@ let string_arithmetic () : unit result =
 
 let set_arithmetic () : unit result =
   let%bind program = type_file "./contracts/set_arithmetic.ligo" in
+  let%bind program_1 = type_file "./contracts/set_arithmetic-1.ligo" in
+  let%bind () =
+    expect_eq program_1 "iter_op"
+      (e_set [e_int 2 ; e_int 4 ; e_int 7])
+      (e_int 13) in
   let%bind () =
     expect_eq program "add_op"
       (e_set [e_string "foo" ; e_string "bar"])
@@ -185,10 +201,6 @@ let set_arithmetic () : unit result =
     expect_eq program "mem_op"
       (e_set [e_string "foo" ; e_string "bar"])
       (e_bool false) in
-  let%bind () =
-    expect_eq program "iter_op"
-      (e_set [e_int 2 ; e_int 4 ; e_int 7])
-      (e_int 13) in
   ok ()
 
 let unit_expression () : unit result =
@@ -628,6 +640,9 @@ let main = test_suite "Integration (End to End)" [
     test "assign" assign ;
     test "declaration local" declaration_local ;
     test "complex function" complex_function ;
+    test "closure" closure ;
+    test "shared function" shared_function ;
+    test "higher order" higher_order ;
     test "variant" variant ;
     test "variant matching" variant_matching ;
     test "tuple" tuple ;
@@ -657,9 +672,6 @@ let main = test_suite "Integration (End to End)" [
     test "super counter contract" super_counter_contract ;
     test "super counter contract" super_counter_contract_mligo ;
     test "dispatch counter contract" dispatch_counter_contract ;
-    test "closure" closure ;
-    test "shared function" shared_function ;
-    test "higher order" higher_order ;
     test "basic (mligo)" basic_mligo ;
     test "counter contract (mligo)" counter_mligo ;
     test "let-in (mligo)" let_in_mligo ;

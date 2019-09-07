@@ -66,11 +66,8 @@ and value_assoc ppf : (value * value) -> unit = fun (a, b) ->
   fprintf ppf "%a -> %a" value a value b
 
 and expression' ppf (e:expression') = match e with
-  | E_environment_capture s -> fprintf ppf "capture(%a)" (list_sep string (const " ; ")) s
-  | E_environment_load (expr , env) -> fprintf ppf "load %a in %a" expression expr environment env
-  | E_environment_select env -> fprintf ppf "select %a" environment env
-  | E_environment_return expr -> fprintf ppf "return (%a)" expression expr
   | E_skip -> fprintf ppf "skip"
+  | E_closure x -> function_ ppf x
   | E_variable v -> fprintf ppf "V(%s)" v
   | E_application(a, b) -> fprintf ppf "(%a)@(%a)" expression a expression b
   | E_constant(p, lst) -> fprintf ppf "%s %a" p (pp_print_list ~pp_sep:space_sep expression) lst
@@ -101,11 +98,9 @@ and expression_with_type : _ -> expression -> _  = fun ppf e ->
     expression' e.content
     type_ e.type_value
 
-and function_ ppf ({binder ; input ; output ; result}:anon_function) =
-  fprintf ppf "fun (%s:%a) : %a (%a)"
+and function_ ppf ({binder ; result}:anon_function) =
+  fprintf ppf "fun %s -> (%a)"
     binder
-    type_ input
-    type_ output
     expression result
 
 and assignment ppf ((n, e):assignment) = fprintf ppf "%s = %a;" n expression e

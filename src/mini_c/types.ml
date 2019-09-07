@@ -11,7 +11,7 @@ type type_base =
 type type_value =
   | T_pair of (type_value * type_value)
   | T_or of type_value * type_value
-  | T_function of type_value * type_value
+  | T_function of (type_value * type_value)
   | T_deep_closure of environment * type_value * type_value
   | T_base of type_base
   | T_map of (type_value * type_value)
@@ -57,10 +57,7 @@ and selector = var_name list
 
 and expression' =
   | E_literal of value
-  | E_environment_capture of selector
-  | E_environment_select of environment
-  | E_environment_load of (expression * environment)
-  | E_environment_return of expression
+  | E_closure of anon_function
   | E_skip
   | E_constant of string * expression list
   | E_application of expression * expression
@@ -75,7 +72,6 @@ and expression' =
   | E_if_left of expression * ((var_name * type_value) * expression) * ((var_name * type_value) * expression)
   | E_let_in of ((var_name * type_value) * expression * expression)
   | E_sequence of (expression * expression)
-  (* | E_sequence_drop of (expression * expression) *)
   | E_assignment of (string * [`Left | `Right] list * expression)
   | E_while of expression * expression
 
@@ -91,8 +87,6 @@ and toplevel_statement = assignment * environment_wrap
 
 and anon_function = {
   binder : string ;
-  input : type_value ;
-  output : type_value ;
   result : expression ;
 }
 

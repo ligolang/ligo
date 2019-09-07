@@ -82,6 +82,10 @@ let get_t_pair (t:type_value) = match t with
   | T_pair (a, b) -> ok (a, b)
   | _ -> simple_fail "not a type pair"
 
+let get_t_or (t:type_value) = match t with
+  | T_or (a, b) -> ok (a, b)
+  | _ -> simple_fail "not a type or"
+
 let get_t_map (t:type_value) = match t with
   | T_map kv -> ok kv
   | _ -> simple_fail "not a type map"
@@ -142,9 +146,9 @@ let t_deep_closure x y z : type_value = T_deep_closure ( x , y , z )
 let t_pair x y : type_value = T_pair ( x , y )
 let t_union x y : type_value = T_or ( x , y )
 
-let quote binder input output result : anon_function =
+let quote binder result : anon_function =
   {
-    binder ; input ; output ;
+    binder ;
     result ;
   }
 
@@ -160,15 +164,15 @@ let e_let_int v tv expr body : expression = Expression.(make_tpl (
 
 let ez_e_sequence a b : expression = Expression.(make_tpl (E_sequence (make_tpl (a , t_unit) , b) , get_type b))
 
-let ez_e_return e : expression = Expression.(make_tpl ((E_environment_return e) , get_type e))
+let ez_e_return e : expression = e
 
 let d_unit : value = D_unit
 
-let basic_quote i o expr : anon_function result =
-  ok @@ quote "input" i o (ez_e_return expr)
+let basic_quote expr : anon_function result =
+  ok @@ quote "input" (ez_e_return expr)
 
 let basic_int_quote expr : anon_function result =
-  basic_quote t_int t_int expr
+  basic_quote expr
 
 
 let environment_wrap pre_environment post_environment = { pre_environment ; post_environment }

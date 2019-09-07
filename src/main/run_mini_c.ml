@@ -23,7 +23,7 @@ let run_aux ?options (program:compiled_program) (input_michelson:Michelson.t) : 
     Memory_proto_alpha.interpret ?options descr (Item(input, Empty)) in
   ok (Ex_typed_value (output_ty, output))
 
-let run_entry ?(debug_michelson = false) ?options (entry:anon_function) (input:value) : value result =
+let run_entry ?(debug_michelson = false) ?options (entry:anon_function) ty (input:value) : value result =
   let%bind compiled =
     let error =
       let title () = "compile entry" in
@@ -32,13 +32,13 @@ let run_entry ?(debug_michelson = false) ?options (entry:anon_function) (input:v
       in
       error title content in
     trace error @@
-    translate_entry entry in
-  let%bind input_michelson = translate_value input in
+    translate_entry entry ty in
+  let%bind input_michelson = translate_value input (fst ty) in
   if debug_michelson then (
     Format.printf "Program: %a\n" Michelson.pp compiled.body ;
     Format.printf "Expression: %a\n" PP.expression entry.result ;
     Format.printf "Input: %a\n" PP.value input ;
-    Format.printf "Input Type: %a\n" PP.type_ entry.input ;
+    Format.printf "Input Type: %a\n" PP.type_ (fst ty) ;
     Format.printf "Compiled Input: %a\n" Michelson.pp input_michelson ;
   ) ;
   let%bind ex_ty_value = run_aux ?options compiled input_michelson in
