@@ -131,6 +131,7 @@ build-and-publish-latest-docker-image:
     - docker push $LIGO_REGISTRY_IMAGE:next
   only:
     - dev
+    - refactor/new-tezos-deps-ci
 
 
 # Pages are deployed from both master & dev, be careful not to override 'next'
