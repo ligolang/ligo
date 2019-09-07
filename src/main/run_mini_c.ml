@@ -2,7 +2,8 @@ open Proto_alpha_utils
 open Trace
 open Mini_c
 open! Compiler.Program
-open Memory_proto_alpha.Script_ir_translator
+open Memory_proto_alpha.Protocol.Script_ir_translator
+open Memory_proto_alpha.X
 
 let run_aux ?options (program:compiled_program) (input_michelson:Michelson.t) : ex_typed_value result =
   let Compiler.Program.{input;output;body} : compiled_program = program in
@@ -15,8 +16,8 @@ let run_aux ?options (program:compiled_program) (input_michelson:Michelson.t) : 
   let%bind descr =
     Trace.trace_tzresult_lwt (simple_error "error parsing program code") @@
     Memory_proto_alpha.parse_michelson body
-      (Stack.(input_ty @: nil)) (Stack.(output_ty @: nil)) in
-  let open! Memory_proto_alpha.Script_interpreter in
+      (Item_t (input_ty, Empty_t, None)) (Item_t (output_ty, Empty_t, None)) in
+  let open! Memory_proto_alpha.Protocol.Script_interpreter in
   let%bind (Item(output, Empty)) =
     Trace.trace_tzresult_lwt (simple_error "error of execution") @@
     Memory_proto_alpha.interpret ?options descr (Item(input, Empty)) in

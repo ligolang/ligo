@@ -2,10 +2,8 @@ open Trace
 open Mini_c
 
 open Michelson
-module Stack = Meta_michelson.Stack
-module Contract_types = Meta_michelson.Types
 
-open Memory_proto_alpha.Script_ir_translator
+open Memory_proto_alpha.Protocol.Script_ir_translator
 
 open Operators.Compiler
 
@@ -141,9 +139,9 @@ and translate_expression ?push_var_name (expr:expression) (env:environment) : (m
          else ok end_env
       )
     in
-    let%bind (Stack.Ex_stack_ty input_stack_ty) = Compiler_type.Ty.environment env in
+    let%bind (Ex_stack_ty input_stack_ty) = Compiler_type.Ty.environment env in
     let%bind output_type = Compiler_type.type_ ty in
-    let%bind (Stack.Ex_stack_ty output_stack_ty) = Compiler_type.Ty.environment env' in
+    let%bind (Ex_stack_ty output_stack_ty) = Compiler_type.Ty.environment env' in
     let error_message () =
       let%bind schema_michelsons = Compiler_type.environment env in
       ok @@ Format.asprintf
@@ -470,10 +468,11 @@ and translate_quote_body ({result ; binder ; input} as f:anon_function) : michel
     ] in
 
   let%bind _assert_type =
+    let open Memory_proto_alpha.Protocol.Script_typed_ir in
     let%bind (Ex_ty input_ty) = Compiler_type.Ty.type_ f.input in
     let%bind (Ex_ty output_ty) = Compiler_type.Ty.type_ f.output in
-    let input_stack_ty = Stack.(input_ty @: nil) in
-    let output_stack_ty = Stack.(output_ty @: nil) in
+    let input_stack_ty = Item_t (input_ty, Empty_t, None) in
+    let output_stack_ty = Item_t (output_ty, Empty_t, None) in
     let error_message () =
       Format.asprintf
         "\nCode : %a\nMichelson code : %a\ninput : %a\noutput : %a\nstart env : %a\nend env : %a\n"

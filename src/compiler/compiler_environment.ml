@@ -3,12 +3,9 @@ open Trace
 open Mini_c
 open Environment
 open Michelson
-open Memory_proto_alpha.Script_ir_translator
-
-module Stack = Meta_michelson.Stack
 
 let get : environment -> string -> michelson result = fun e s ->
-  let%bind (type_value , position) =
+  let%bind (_type_value , position) =
     let error =
       let title () = "Environment.get" in
       let content () = Format.asprintf "%s in %a"
@@ -26,22 +23,10 @@ let get : environment -> string -> michelson result = fun e s ->
   in
   let code = aux position in
 
-  let%bind () =
-    let error () = ok @@ simple_error "error producing Env.get" in
-    let%bind (Stack.Ex_stack_ty input_stack_ty) = Compiler_type.Ty.environment e in
-    let%bind (Ex_ty ty) = Compiler_type.Ty.type_ type_value in
-    let output_stack_ty = Stack.(ty @: input_stack_ty) in
-    let%bind _ =
-      Trace.trace_tzresult_lwt_r error @@
-      Memory_proto_alpha.parse_michelson code
-        input_stack_ty output_stack_ty in
-    ok ()
-  in
-
   ok code
 
 let set : environment -> string -> michelson result = fun e s ->
-  let%bind (type_value , position) =
+  let%bind (_type_value , position) =
     generic_try (simple_error "Environment.get") @@
     (fun () -> Environment.get_i s e) in
   let rec aux = fun n ->
@@ -54,36 +39,10 @@ let set : environment -> string -> michelson result = fun e s ->
   in
   let code = aux position in
 
-  let%bind () =
-    let error () = ok @@ simple_error "error producing Env.set" in
-    let%bind (Stack.Ex_stack_ty env_stack_ty) = Compiler_type.Ty.environment e in
-    let%bind (Ex_ty ty) = Compiler_type.Ty.type_ type_value in
-    let input_stack_ty = Stack.(ty @: env_stack_ty) in
-    let output_stack_ty = env_stack_ty in
-    let%bind _ =
-      Trace.trace_tzresult_lwt_r error @@
-      Memory_proto_alpha.parse_michelson code
-        input_stack_ty output_stack_ty in
-    ok ()
-  in
-
   ok code
 
-let add : environment -> (string * type_value) -> michelson result = fun e (_s , type_value) ->
+let add : environment -> (string * type_value) -> michelson result = fun _e (_s , _type_value) ->
   let code = seq [] in
-
-  let%bind () =
-    let error () = ok @@ simple_error "error producing Env.get" in
-    let%bind (Stack.Ex_stack_ty env_stack_ty) = Compiler_type.Ty.environment e in
-    let%bind (Ex_ty ty) = Compiler_type.Ty.type_ type_value in
-    let input_stack_ty = Stack.(ty @: env_stack_ty) in
-    let output_stack_ty = Stack.(ty @: env_stack_ty) in
-    let%bind _ =
-      Trace.trace_tzresult_lwt_r error @@
-      Memory_proto_alpha.parse_michelson code
-        input_stack_ty output_stack_ty in
-    ok ()
-  in
 
   ok code
 
@@ -111,32 +70,6 @@ let select ?(rev = false) ?(keep = true) : environment -> string list -> michels
     in
     List.fold_right' aux (seq []) e_lst in
 
-  let%bind () =
-    let%bind (Stack.Ex_stack_ty input_stack_ty) = Compiler_type.Ty.environment e in
-    let e' =
-      Environment.of_list
-      @@ List.map fst
-      @@ List.filter snd
-      @@ e_lst
-    in
-    let%bind (Stack.Ex_stack_ty output_stack_ty) = Compiler_type.Ty.environment e' in
-    let error () =
-      let title () = "error producing Env.select" in
-      let content () = Format.asprintf "\nInput : %a\nOutput : %a\nList : {%a}\nCode : %a\nLog : %s\n"
-          PP.environment e
-          PP.environment e'
-          PP_helpers.(list_sep (pair PP.environment_element bool) (const " || ")) e_lst
-          Michelson.pp code
-          (L.get ())
-      in
-      ok @@ (error title content) in
-    let%bind _ =
-      Trace.trace_tzresult_lwt_r error @@
-      Memory_proto_alpha.parse_michelson code
-        input_stack_ty output_stack_ty in
-    ok ()
-  in
-
   ok code
 
 let select_env : environment -> environment -> michelson result = fun source filter ->
@@ -158,23 +91,6 @@ let pack : environment -> michelson result = fun e ->
     Assert.assert_true (List.length e <> 0) in
   let code = seq @@ List.map (Function.constant i_pair) @@ List.tl e in
 
-  let%bind () =
-    let%bind (Stack.Ex_stack_ty input_stack_ty) = Compiler_type.Ty.environment e in
-    let repr = Environment.closure_representation e in
-    let%bind (Ex_ty output_ty) = Compiler_type.Ty.type_ repr in
-    let output_stack_ty = Stack.(output_ty @: nil) in
-    let error () =
-      let title () = "error producing Env.pack" in
-      let content () = Format.asprintf ""
-      in
-      ok @@ (error title content) in
-    let%bind _ =
-      Trace.trace_tzresult_lwt_r error @@
-      Memory_proto_alpha.parse_michelson code
-        input_stack_ty output_stack_ty in
-    ok ()
-  in
-
   ok code
 
 let unpack : environment -> michelson result = fun e ->
@@ -191,26 +107,6 @@ let unpack : environment -> michelson result = fun e ->
         dip (aux (n - 1)) ;
       ] in
   let code = aux l in
-
-  let%bind () =
-    let%bind (Stack.Ex_stack_ty output_stack_ty) = Compiler_type.Ty.environment e in
-    let repr = Environment.closure_representation e in
-    let%bind (Ex_ty input_ty) = Compiler_type.Ty.type_ repr in
-    let input_stack_ty = Stack.(input_ty @: nil) in
-    let error () =
-      let title () = "error producing Env.unpack" in
-      let content () = Format.asprintf "\nEnvironment:%a\nType Representation:%a\nCode:%a\n"
-          PP.environment e
-          PP.type_ repr
-          Michelson.pp code
-      in
-      ok @@ (error title content) in
-    let%bind _ =
-      Trace.trace_tzresult_lwt_r error @@
-      Memory_proto_alpha.parse_michelson code
-        input_stack_ty output_stack_ty in
-    ok ()
-  in
 
   ok code
 
@@ -239,52 +135,10 @@ let pack_select : environment -> string list -> michelson result = fun e lst ->
     in
     List.fold_right' aux (true , seq []) e_lst in
 
-  let%bind () =
-    let%bind (Stack.Ex_stack_ty input_stack_ty) = Compiler_type.Ty.environment e in
-    let e' =
-      Environment.of_list
-      @@ List.map fst
-      @@ List.filter snd
-      @@ e_lst
-    in
-    let%bind (Ex_ty output_ty) = Compiler_type.Ty.environment_representation e' in
-    let output_stack_ty = Stack.(output_ty @: input_stack_ty) in
-    let error () =
-      let title () = "error producing Env.pack_select" in
-      let content () = Format.asprintf "\nInput : %a\nOutput : %a\nList : {%a}\nCode : %a\nLog : %s\n"
-          PP.environment e
-          PP.environment e'
-          PP_helpers.(list_sep (pair PP.environment_element bool) (const " || ")) e_lst
-          Michelson.pp code
-          (L.get ())
-      in
-      ok @@ (error title content) in
-    let%bind _ =
-      Trace.trace_tzresult_lwt_r error @@
-      Memory_proto_alpha.parse_michelson code
-        input_stack_ty output_stack_ty in
-    ok ()
-  in
-
   ok code
 
-let add_packed_anon : environment -> type_value -> michelson result = fun e type_value ->
+let add_packed_anon : environment -> type_value -> michelson result = fun _e _type_value ->
   let code = seq [i_pair] in
-
-  let%bind () =
-    let error () = ok @@ simple_error "error producing add packed" in
-    let%bind (Ex_ty input_ty) = Compiler_type.Ty.environment_representation e in
-    let e' = Environment.add ("_add_packed_anon" , type_value) e in
-    let%bind (Ex_ty output_ty) = Compiler_type.Ty.environment_representation e' in
-    let%bind (Ex_ty ty) = Compiler_type.Ty.type_ type_value in
-    let input_stack_ty = Stack.(ty @: input_ty @: nil) in
-    let output_stack_ty = Stack.(output_ty @: nil) in
-    let%bind _ =
-      Trace.trace_tzresult_lwt_r error @@
-      Memory_proto_alpha.parse_michelson code
-        input_stack_ty output_stack_ty in
-    ok ()
-  in
 
   ok code
 

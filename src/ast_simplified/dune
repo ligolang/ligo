@@ -6,7 +6,7 @@
     tezos-utils
   )
   (preprocess
-    (pps simple-utils.ppx_let_generalized)
+    (pps ppx_let)
   )
   (flags (:standard -open Simple_utils ))
 )

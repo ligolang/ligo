@@ -1,6 +1,8 @@
 open Mini_c.Types
-open Memory_proto_alpha
+open Proto_alpha_utils.Memory_proto_alpha
+open X
 open Proto_alpha_utils.Trace
+open Protocol
 open Script_typed_ir
 open Script_ir_translator
 

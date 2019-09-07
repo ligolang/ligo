@@ -19,12 +19,17 @@ WORKDIR /ligo
 # Install required native dependencies
 RUN sh scripts/install_native_dependencies.sh
 
-# Setup a custom opam repository where ligo is published
-RUN sh scripts/setup_ligo_opam_repository.sh
+# Install OPAM
+# TODO: or scripts/install_build_environment.sh ?
+RUN sh scripts/install_opam.sh
+
+# Creat opam switch
+RUN sh scripts/setup_switch.sh
 
 RUN opam update
 
 # Install ligo
+RUN sh scripts/install_vendors_deps.sh
 RUN sh scripts/install_ligo_with_dependencies.sh
 
 # Use the ligo binary as a default command
