@@ -30,7 +30,11 @@ RUN opam update
 
 # Install ligo
 RUN sh scripts/install_vendors_deps.sh
-RUN sh scripts/install_ligo_with_dependencies.sh
+RUN sh -c pwd
+RUN sh scripts/build_ligo_local.sh
+RUN sh -c pwd
+RUN ls -l
+RUN ls -l *
 
 # Use the ligo binary as a default command
-ENTRYPOINT [ "/home/opam/.opam/4.06/bin/ligo" ]
+ENTRYPOINT [ "/ligo/_build/default/src/bins/ligo" ]
