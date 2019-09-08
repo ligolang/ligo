@@ -5,6 +5,10 @@ const fb : foobar = list
   42 ;
 end
 
+const fb2 : foobar = 144 # fb
+
+const fb3 : foobar = cons(688 , fb2)
+
 function size_ (const m : foobar) : nat is
   block {skip} with (size(m))
 
