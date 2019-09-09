@@ -632,10 +632,6 @@ let check_storage f ty loc : (anon_function * _) result =
       if aux storage false then ok (f, ty) else fail @@ bad_big_map loc
     | _ -> ok (f, ty)
 
-(* let translate_main (l:AST.lambda) loc : anon_function result =
-  let%bind expr = translate_lambda Environment.empty l in
-  match Combinators.Expression.get_content expr with
-  | E_literal (D_function f) -> check_storage f loc *)
 let translate_main (l:AST.lambda) loc : (anon_function * _) result =
   let%bind expr = translate_lambda Environment.empty l in
   match expr.content , expr.type_value with
