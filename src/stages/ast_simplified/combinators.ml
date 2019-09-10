@@ -47,45 +47,52 @@ let t_set key = (T_constant ("set", [key]))
 
 let make_name (s : string) : name = s
 
-let e_var ?loc (s : string) : expression = Location.wrap ?loc @@ E_variable s
-let e_literal ?loc l : expression = Location.wrap ?loc @@ E_literal l
-let e_unit ?loc () : expression = Location.wrap ?loc @@ E_literal (Literal_unit)
-let e_int ?loc n : expression = Location.wrap ?loc @@ E_literal (Literal_int n)
-let e_nat ?loc n : expression = Location.wrap ?loc @@ E_literal (Literal_nat n)
-let e_timestamp ?loc n : expression = Location.wrap ?loc @@ E_literal (Literal_timestamp n)
-let e_bool ?loc   b : expression = Location.wrap ?loc @@ E_literal (Literal_bool b)
-let e_string ?loc s : expression = Location.wrap ?loc @@ E_literal (Literal_string s)
-let e_address ?loc s : expression = Location.wrap ?loc @@ E_literal (Literal_address s)
-let e_tez ?loc s : expression = Location.wrap ?loc @@ E_literal (Literal_tez s)
-let e_bytes ?loc b : expression result =
+let location_wrap ?(loc = Location.generated) expression =
+  let location = loc in
+  { location ; expression }
+
+let e_var ?loc (s : string) : expression = location_wrap ?loc @@ E_variable s
+let e_literal ?loc l : expression = location_wrap ?loc @@ E_literal l
+let e_unit ?loc () : expression = location_wrap ?loc @@ E_literal (Literal_unit)
+let e_int ?loc n : expression = location_wrap ?loc @@ E_literal (Literal_int n)
+let e_nat ?loc n : expression = location_wrap ?loc @@ E_literal (Literal_nat n)
+let e_timestamp ?loc n : expression = location_wrap ?loc @@ E_literal (Literal_timestamp n)
+let e_bool ?loc   b : expression = location_wrap ?loc @@ E_literal (Literal_bool b)
+let e_string ?loc s : expression = location_wrap ?loc @@ E_literal (Literal_string s)
+let e_address ?loc s : expression = location_wrap ?loc @@ E_literal (Literal_address s)
+let e_tez ?loc s : expression = location_wrap ?loc @@ E_literal (Literal_tez s)
+let e'_bytes b : expression' result =
   let%bind bytes = generic_try (simple_error "bad hex to bytes") (fun () -> Hex.to_bytes (`Hex b)) in
-  ok @@ Location.wrap ?loc @@ E_literal (Literal_bytes bytes)
-let e_record ?loc map : expression = Location.wrap ?loc @@ E_record map
-let e_tuple ?loc lst : expression = Location.wrap ?loc @@ E_tuple lst
-let e_some ?loc s : expression = Location.wrap ?loc @@ E_constant ("SOME", [s])
-let e_none ?loc () : expression = Location.wrap ?loc @@ E_constant ("NONE", [])
-let e_map_add ?loc k v old : expression = Location.wrap ?loc @@ E_constant ("MAP_ADD" , [k ; v ; old])
-let e_map ?loc lst : expression = Location.wrap ?loc @@ E_map lst
-let e_set ?loc lst : expression = Location.wrap ?loc @@ E_set lst
-let e_list ?loc lst : expression = Location.wrap ?loc @@ E_list lst
-let e_pair ?loc a b : expression = Location.wrap ?loc @@ E_tuple [a; b]
-let e_constructor ?loc s a : expression = Location.wrap ?loc @@ E_constructor (s , a)
-let e_matching ?loc a b : expression = Location.wrap ?loc @@ E_matching (a , b)
+  ok @@ E_literal (Literal_bytes bytes)
+let e_bytes ?loc b : expression result =
+  let%bind e' = e'_bytes b in
+  ok @@ location_wrap ?loc e'
+let e_record ?loc map : expression = location_wrap ?loc @@ E_record map
+let e_tuple ?loc lst : expression = location_wrap ?loc @@ E_tuple lst
+let e_some ?loc s : expression = location_wrap ?loc @@ E_constant ("SOME", [s])
+let e_none ?loc () : expression = location_wrap ?loc @@ E_constant ("NONE", [])
+let e_map_add ?loc k v old : expression = location_wrap ?loc @@ E_constant ("MAP_ADD" , [k ; v ; old])
+let e_map ?loc lst : expression = location_wrap ?loc @@ E_map lst
+let e_set ?loc lst : expression = location_wrap ?loc @@ E_set lst
+let e_list ?loc lst : expression = location_wrap ?loc @@ E_list lst
+let e_pair ?loc a b : expression = location_wrap ?loc @@ E_tuple [a; b]
+let e_constructor ?loc s a : expression = location_wrap ?loc @@ E_constructor (s , a)
+let e_matching ?loc a b : expression = location_wrap ?loc @@ E_matching (a , b)
 let e_matching_bool ?loc a b c : expression = e_matching ?loc a (Match_bool {match_true = b ; match_false = c})
-let e_accessor ?loc a b = Location.wrap ?loc @@ E_accessor (a , b)
+let e_accessor ?loc a b = location_wrap ?loc @@ E_accessor (a , b)
 let e_accessor_props ?loc a b = e_accessor ?loc a (List.map (fun x -> Access_record x) b)
-let e_variable ?loc v = Location.wrap ?loc @@ E_variable v
-let e_failwith ?loc v = Location.wrap ?loc @@ E_failwith v
-let e_skip ?loc () = Location.wrap ?loc @@ E_skip
-let e_loop ?loc cond body = Location.wrap ?loc @@ E_loop (cond , body)
-let e_sequence ?loc a b = Location.wrap ?loc @@ E_sequence (a , b)
-let e_let_in ?loc binder rhs result = Location.wrap ?loc @@ E_let_in { binder ; rhs ; result }
-let e_annotation ?loc expr ty = Location.wrap ?loc @@ E_annotation (expr , ty)
-let e_application ?loc a b = Location.wrap ?loc @@ E_application (a , b)
-let e_binop ?loc name a b = Location.wrap ?loc @@ E_constant (name , [a ; b])
-let e_constant ?loc name lst = Location.wrap ?loc @@ E_constant (name , lst)
-let e_look_up ?loc x y = Location.wrap ?loc @@ E_look_up (x , y)
-let e_assign ?loc a b c = Location.wrap ?loc @@ E_assign (a , b , c)
+let e_variable ?loc v = location_wrap ?loc @@ E_variable v
+let e_failwith ?loc v = location_wrap ?loc @@ E_failwith v
+let e_skip ?loc () = location_wrap ?loc @@ E_skip
+let e_loop ?loc cond body = location_wrap ?loc @@ E_loop (cond , body)
+let e_sequence ?loc a b = location_wrap ?loc @@ E_sequence (a , b)
+let e_let_in ?loc binder rhs result = location_wrap ?loc @@ E_let_in { binder ; rhs ; result }
+let e_annotation ?loc expr ty = location_wrap ?loc @@ E_annotation (expr , ty)
+let e_application ?loc a b = location_wrap ?loc @@ E_application (a , b)
+let e_binop ?loc name a b = location_wrap ?loc @@ E_constant (name , [a ; b])
+let e_constant ?loc name lst = location_wrap ?loc @@ E_constant (name , lst)
+let e_look_up ?loc x y = location_wrap ?loc @@ E_look_up (x , y)
+let e_assign ?loc a b c = location_wrap ?loc @@ E_assign (a , b , c)
 
 let make_option_typed ?loc e t_opt =
   match t_opt with
@@ -114,14 +121,14 @@ let e_lambda ?loc (binder : string)
     (output_type : type_expression option)
     (result : expression)
   : expression =
-  Location.wrap ?loc @@ E_lambda {
+  location_wrap ?loc @@ E_lambda {
     binder = (make_name binder , input_type) ;
     input_type = input_type ;
     output_type = output_type ;
     result ;
   }
 
-let e_record ?loc map = Location.wrap ?loc @@ E_record map
+let e_record ?loc map = location_wrap ?loc @@ E_record map
 
 let e_ez_record ?loc (lst : (string * expr) list) : expression =
   let map = SMap.of_list lst in
@@ -153,28 +160,28 @@ let get_e_list = fun t ->
   | _ -> simple_fail "not a list"
 
 let get_e_failwith = fun e ->
-  match Location.unwrap e with
+  match e.expression with
   | E_failwith fw -> ok fw
   | _ -> simple_fail "not a failwith"
 
 let is_e_failwith e = to_bool @@ get_e_failwith e
 
 let extract_pair : expression -> (expression * expression) result = fun e ->
-  match Location.unwrap e with
+  match e.expression with
   | E_tuple [ a ; b ] -> ok (a , b)
   | _ -> fail @@ bad_kind "pair" e.location
 
 let extract_list : expression -> (expression list) result = fun e ->
-  match Location.unwrap e with
+  match e.expression with
   | E_list lst -> ok lst
   | _ -> fail @@ bad_kind "list" e.location
 
 let extract_record : expression -> (string * expression) list result = fun e ->
-  match Location.unwrap e with
+  match e.expression with
   | E_record lst -> ok @@ SMap.to_kv_list lst
   | _ -> fail @@ bad_kind "record" e.location
 
 let extract_map : expression -> (expression * expression) list result = fun e ->
-  match Location.unwrap e with
+  match e.expression with
   | E_map lst -> ok lst
   | _ -> fail @@ bad_kind "map" e.location

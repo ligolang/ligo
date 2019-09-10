@@ -210,9 +210,9 @@ let sell () =
       e_pair sell_action storage
     in
     let make_expecter : int -> expression -> unit result = fun n result ->
-      let%bind (ops , storage) = get_e_pair @@ Location.unwrap result in
+      let%bind (ops , storage) = get_e_pair result.expression in
       let%bind () =
-        let%bind lst = get_e_list @@ Location.unwrap ops in
+        let%bind lst = get_e_list ops.expression in
         Assert.assert_list_size lst 1 in
       let expected_storage =
         let cards = List.hds @@ cards_ez first_owner n in

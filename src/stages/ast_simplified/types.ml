@@ -73,7 +73,10 @@ and expression' =
   (* Annotate *)
   | E_annotation of expr * type_expression
 
-and expression = expression' Location.wrap
+and expression = {
+  expression : expression' ;
+  location : Location.t ;
+}
 
 and access =
   | Access_tuple of int

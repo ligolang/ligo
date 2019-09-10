@@ -382,19 +382,19 @@ and type_expression : environment -> ?tv_opt:O.type_value -> I.expression -> O.a
       match tv_opt with
       | None -> ok ()
       | Some tv' -> O.assert_type_value_eq (tv' , tv) in
-    let location = Location.get_location ae in
+    let location = ae.location in
     ok @@ make_a_e ~location expr tv e in
   let main_error =
     let title () = "typing expression" in
     let content () = "" in
     let data = [
       ("expression" , fun () -> Format.asprintf "%a" I.PP.expression ae) ;
-      ("location" , fun () -> Format.asprintf "%a" Location.pp @@ Location.get_location ae) ;
+      ("location" , fun () -> Format.asprintf "%a" Location.pp ae.location) ;
       ("misc" , fun () -> L.get ()) ;
     ] in
     error ~data title content in
   trace main_error @@
-  match Location.unwrap ae with
+  match ae.expression with
   (* Basic *)
   | E_failwith _ -> fail @@ needs_annotation ae "the failwith keyword"
   | E_variable name ->
@@ -406,12 +406,8 @@ and type_expression : environment -> ?tv_opt:O.type_value -> I.expression -> O.a
       return (E_literal (Literal_bool b)) (t_bool ())
   | E_literal Literal_unit | E_skip ->
       return (E_literal (Literal_unit)) (t_unit ())
-  | E_literal (Literal_string s) -> (
-      L.log (Format.asprintf "literal_string option type: %a" PP_helpers.(option O.PP.type_value) tv_opt) ;
-      match Option.map Ast_typed.get_type' tv_opt with
-      | Some (T_constant ("address" , [])) -> return (E_literal (Literal_address s)) (t_address ())
-      | _ -> return (E_literal (Literal_string s)) (t_string ())
-    )
+  | E_literal (Literal_string s) ->
+      return (E_literal (Literal_string s)) (t_string ())
   | E_literal (Literal_bytes s) ->
       return (E_literal (Literal_bytes s)) (t_bytes ())
   | E_literal (Literal_int n) ->
@@ -459,7 +455,6 @@ and type_expression : environment -> ?tv_opt:O.type_value -> I.expression -> O.a
       in
       trace (simple_info "accessing") @@
       bind_fold_list aux e' path
-
   (* Sum *)
   | E_constructor (c, expr) ->
       let%bind (c_tv, sum_tv) =
@@ -569,9 +564,9 @@ and type_expression : environment -> ?tv_opt:O.type_value -> I.expression -> O.a
           match input_type with
           | Some ty -> ok ty
           | None -> (
-              match Location.unwrap result with
+              match result.expression with
               | I.E_let_in li -> (
-                  match Location.unwrap li.rhs with
+                  match li.rhs.expression with
                   | I.E_variable name when name = (fst binder) -> (
                       match snd li.binder with
                       | Some ty -> ok ty

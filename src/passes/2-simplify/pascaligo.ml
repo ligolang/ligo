@@ -301,16 +301,30 @@ open Operators.Simplify.Pascaligo
 
 let r_split = Location.r_split
 
-let return expr = ok @@ fun expr'_opt ->
-  let expr = expr in
-  match expr'_opt with
-  | None -> ok @@ expr
-  | Some expr' -> ok @@ e_sequence expr expr'
+(*
+  Statements can't be simplified in isolation. `a ; b ; c` can get simplified either
+  as `let x = expr in (b ; c)` if `a` is a ` const x = expr` declaration or as
+  `sequence(a , sequence(b , c))` for everything else.
+  Because of this, simplifying sequences depend on their contents. To avoid peeking in
+  their contents, we instead simplify sequences elements as functions from their next
+  elements to the actual result.
 
+  For `return_let_in`, if there is no follow-up element, an error is triggered, as
+  you can't have `let x = expr in ...` with no `...`. A cleaner option might be to add
+  a `unit` instead of erroring.
+
+  `return_statement` is used for non-let_in statements.
+*)
 let return_let_in ?loc binder rhs = ok @@ fun expr'_opt ->
   match expr'_opt with
   | None -> fail @@ corner_case ~loc:__LOC__ "missing return"
   | Some expr' -> ok @@ e_let_in ?loc binder rhs expr'
+
+let return_statement expr = ok @@ fun expr'_opt ->
+  let expr = expr in
+  match expr'_opt with
+  | None -> ok @@ expr
+  | Some expr' -> ok @@ e_sequence expr expr'
 
 let rec simpl_type_expression (t:Raw.type_expr) : type_expression result =
   match t with
@@ -336,10 +350,13 @@ let rec simpl_type_expression (t:Raw.type_expr) : type_expression result =
       ok @@ T_constant (cst , lst')
   | TProd p ->
       let%bind tpl = simpl_list_type_expression
-        @@ npseq_to_list p.value in
+    @@ npseq_to_list p.value in
       ok tpl
   | TRecord r ->
-      let aux = fun (x, y) -> let%bind y = simpl_type_expression y in ok (x, y) in
+      let aux = fun (x, y) ->
+        let%bind y = simpl_type_expression y in
+        ok (x, y)
+      in
       let apply =
         fun (x:Raw.field_decl Raw.reg) -> (x.value.field_name.value, x.value.field_type) in
       let%bind lst = bind_list
@@ -373,34 +390,30 @@ and simpl_list_type_expression (lst:Raw.type_expr list) : type_expression result
       let%bind lst = bind_list @@ List.map simpl_type_expression lst in
       ok @@ T_tuple lst
 
+let simpl_projection : Raw.projection Region.reg -> _ = fun p ->
+  let (p' , loc) = r_split p in
+  let var =
+    let name = p'.struct_name.value in
+    e_variable name in
+  let path = p'.field_path in
+  let path' =
+    let aux (s:Raw.selection) =
+      match s with
+      | FieldName property -> Access_record property.value
+      | Component index -> Access_tuple (Z.to_int (snd index.value))
+    in
+    List.map aux @@ npseq_to_list path in
+  ok @@ e_accessor ~loc var path'
+
+
 let rec simpl_expression (t:Raw.expr) : expr result =
   let return x = ok x in
-  let simpl_projection = fun (p : Raw.projection Region.reg) ->
-    let (p' , loc) = r_split p in
-    let var =
-      let name = p'.struct_name.value in
-      e_variable name in
-    let path = p'.field_path in
-    let path' =
-      let aux (s:Raw.selection) =
-        match s with
-        | FieldName property -> Access_record property.value
-        | Component index -> Access_tuple (Z.to_int (snd index.value))
-      in
-      List.map aux @@ npseq_to_list path in
-    return @@ e_accessor ~loc var path'
-  in
   match t with
   | EAnnot a -> (
       let ((expr , type_expr) , loc) = r_split a in
       let%bind expr' = simpl_expression expr in
       let%bind type_expr' = simpl_type_expression type_expr in
-      match (Location.unwrap expr', type_expr') with
-      | (E_literal (Literal_string str) , T_constant ("bytes" , [])) ->
-         trace_strong (bad_bytes loc str) @@
-           e_bytes ~loc str
-      | _ ->
-         return @@ e_annotation ~loc expr' type_expr'
+      return @@ e_annotation ~loc expr' type_expr'
     )
   | EVar c -> (
       let (c' , loc) = r_split c in
@@ -767,31 +780,25 @@ and simpl_single_instruction : Raw.single_instr -> (_ -> expression result) resu
       match List.assoc_opt f constants with
       | None ->
           let%bind arg = simpl_tuple_expression ~loc:args_loc args' in
-          return @@ e_application ~loc (e_variable ~loc:f_loc f) arg
+          return_statement @@ e_application ~loc (e_variable ~loc:f_loc f) arg
       | Some s ->
           let%bind lst = bind_map_list simpl_expression args' in
-          return @@ e_constant ~loc s lst
+          return_statement @@ e_constant ~loc s lst
     )
   | Fail e -> (
       let%bind expr = simpl_expression e.value.fail_expr in
-      return @@ e_failwith expr
+      return_statement @@ e_failwith expr
     )
   | Skip reg -> (
       let loc = Location.lift reg in
-      return @@ e_skip ~loc ()
+      return_statement @@ e_skip ~loc ()
     )
   | Loop (While l) ->
       let l = l.value in
       let%bind cond = simpl_expression l.cond in
       let%bind body = simpl_block l.block.value in
       let%bind body = body None in
-      return @@ e_loop cond body
-  (* | Loop (For (ForCollect x)) -> (
-   *     let (x' , loc) = r_split x in
-   *     let%bind expr = simpl_expression x'.expr in
-   *     let%bind body = simpl_block x'.block.value in
-   *     ok _
-   *   ) *)
+      return_statement @@ e_loop cond body
   | Loop (For (ForInt {region; _} | ForCollect {region ; _})) ->
       fail @@ unsupported_for_loops region
   | Cond c -> (
@@ -805,7 +812,7 @@ and simpl_single_instruction : Raw.single_instr -> (_ -> expression result) resu
         | ClauseBlock b -> simpl_statements @@ fst b.value.inside in
       let%bind match_true = match_true None in
       let%bind match_false = match_false None in
-      return @@ e_matching expr ~loc (Match_bool {match_true; match_false})
+      return_statement @@ e_matching expr ~loc (Match_bool {match_true; match_false})
     )
   | Assign a -> (
       let (a , loc) = r_split a in
@@ -816,7 +823,7 @@ and simpl_single_instruction : Raw.single_instr -> (_ -> expression result) resu
       match a.lhs with
         | Path path -> (
             let (name , path') = simpl_path path in
-            return @@ e_assign ~loc name path' value_expr
+            return_statement @@ e_assign ~loc name path' value_expr
           )
         | MapPath v -> (
             let v' = v.value in
@@ -826,7 +833,7 @@ and simpl_single_instruction : Raw.single_instr -> (_ -> expression result) resu
             let%bind key_expr = simpl_expression v'.index.value.inside in
             let old_expr = e_variable name.value in
             let expr' = e_map_add key_expr value_expr old_expr in
-            return @@ e_assign ~loc name.value [] expr'
+            return_statement @@ e_assign ~loc name.value [] expr'
           )
     )
   | CaseInstr c -> (
@@ -841,7 +848,7 @@ and simpl_single_instruction : Raw.single_instr -> (_ -> expression result) resu
         @@ List.map aux
         @@ npseq_to_list c.cases.value in
       let%bind m = simpl_cases cases in
-      return @@ e_matching ~loc expr m
+      return_statement @@ e_matching ~loc expr m
     )
   | RecordPatch r -> (
       let r = r.value in
@@ -858,14 +865,13 @@ and simpl_single_instruction : Raw.single_instr -> (_ -> expression result) resu
           e_assign ~loc name (access_path @ [ Access_record access ]) v in
         let assigns = List.map aux inj in
         match assigns with
-               (* E_sequence (E_skip, E_skip) ? *)
         | [] -> fail @@ unsupported_empty_record_patch r.record_inj
         | hd :: tl -> (
             let aux acc cur = e_sequence acc cur in
             ok @@ List.fold_left aux hd tl
           )
       in
-      return @@ expr
+      return_statement @@ expr
     )
   | MapPatch patch ->
       fail @@ unsupported_map_patches patch
@@ -879,7 +885,7 @@ and simpl_single_instruction : Raw.single_instr -> (_ -> expression result) resu
         | Path path -> fail @@ unsupported_deep_map_rm path in
       let%bind key' = simpl_expression key in
       let expr = e_constant ~loc "MAP_REMOVE" [key' ; e_variable map] in
-      return @@ e_assign ~loc map [] expr
+      return_statement @@ e_assign ~loc map [] expr
     )
   | SetRemove r -> fail @@ unsupported_set_removal r
 

@@ -162,7 +162,6 @@ module Errors = struct
     let message () = "a map definition is a list of pairs" in
     info title message
 
-  
   let corner_case ~loc message =
     let title () = "corner case" in
     let content () = "We don't have a good error message for this case. \

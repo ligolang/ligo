@@ -67,7 +67,7 @@ let rec assert_value_eq (a, b: (expression * expression )) : unit result =
     Format.asprintf "\n@[<v>- %a@;- %a]" PP.expression a PP.expression b
   in
   trace (fun () -> error (thunk "not equal") error_content ()) @@
-  match (Location.unwrap a , Location.unwrap b) with
+  match (a.expression , b.expression) with
   | E_literal a , E_literal b ->
       assert_literal_eq (a, b)
   | E_literal _ , _ ->
