@@ -1,0 +1,21 @@
+(library
+  (name compile)
+  (public_name ligo.compile)
+  (libraries
+    simple-utils
+    tezos-utils
+    parser
+    simplify
+    ast_simplified
+    typer
+    ast_typed
+    transpiler
+    mini_c
+    operators
+    compiler
+  )
+  (preprocess
+    (pps ppx_let)
+  )
+  (flags (:standard -w +1..62-4-9-44-40-42-48-30@39@33 -open Simple_utils -open Tezos_utils ))
+)

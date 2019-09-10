@@ -32,7 +32,7 @@ include struct
       trace_strong (simple_error "entry-point doesn't have a list of operation as first result") @@
       assert_t_list_operation ops in
     let%bind () =
-      trace_strong (simple_error "entry-point doesn't identitcal type (storage) for second parameter and second result") @@
+      trace_strong (simple_error "entry-point doesn't identical type (storage) for second parameter and second result") @@
       assert_type_value_eq (storage_param , storage_result) in
     ok (arg' , storage_param)
 
@@ -59,86 +59,7 @@ let transpile_value
   let%bind r = Run_mini_c.run_entry f ty input in
   ok (r , snd ty)
 
-let parsify_pascaligo = fun source ->
-  let%bind raw =
-    trace (simple_error "parsing") @@
-    Parser.Pascaligo.parse_file source in
-  let%bind simplified =
-    trace (simple_error "simplifying") @@
-    Simplify.Pascaligo.simpl_program raw in
-  ok simplified
-
-let parsify_expression_pascaligo = fun source ->
-  let%bind raw =
-    trace (simple_error "parsing expression") @@
-    Parser.Pascaligo.parse_expression source in
-  let%bind simplified =
-    trace (simple_error "simplifying expression") @@
-    Simplify.Pascaligo.simpl_expression raw in
-  ok simplified
-
-let parsify_ligodity = fun source ->
-  let%bind raw =
-    trace (simple_error "parsing") @@
-    Parser.Ligodity.parse_file source in
-  let%bind simplified =
-    trace (simple_error "simplifying") @@
-    Simplify.Ligodity.simpl_program raw in
-  ok simplified
-
-let parsify_expression_ligodity = fun source ->
-  let%bind raw =
-    trace (simple_error "parsing expression") @@
-    Parser.Ligodity.parse_expression source in
-  let%bind simplified =
-    trace (simple_error "simplifying expression") @@
-    Simplify.Ligodity.simpl_expression raw in
-  ok simplified
-
-type s_syntax = Syntax_name of string
-type v_syntax =  [`pascaligo | `cameligo ]
-
-let syntax_to_variant : s_syntax -> string option -> v_syntax result =
-  fun syntax source_filename ->
-  let subr s n =
-    String.sub s (String.length s - n) n in
-  let endswith s suffix =
-    let suffixlen = String.length suffix in
-    (  String.length s >= suffixlen
-       && String.equal (subr s suffixlen) suffix)
-  in
-  match syntax with
-    Syntax_name syntax ->
-    begin
-      if String.equal syntax "auto" then
-        begin
-          match source_filename with
-          | Some source_filename
-            when endswith source_filename ".ligo"
-            -> ok `pascaligo
-          | Some source_filename
-            when endswith source_filename ".mligo"
-            -> ok `cameligo
-          | _ -> simple_fail "cannot auto-detect syntax, pleas use -s name_of_syntax"
-        end
-      else if String.equal syntax "pascaligo" then ok `pascaligo
-      else if String.equal syntax "cameligo" then ok `cameligo
-      else simple_fail "unrecognized parser"
-    end
-
-let parsify = fun (syntax : v_syntax) source_filename ->
-  let%bind parsify = match syntax with
-    | `pascaligo -> ok parsify_pascaligo
-    | `cameligo -> ok parsify_ligodity
-  in
-  parsify source_filename
-
-let parsify_expression = fun syntax source ->
-  let%bind parsify = match syntax with
-    | `pascaligo -> ok parsify_expression_pascaligo
-    | `cameligo -> ok parsify_expression_ligodity
-  in
-  parsify source
+open Helpers
 
 let compile_contract_file : string -> string -> s_syntax -> string result = fun source_filename entry_point syntax ->
   let%bind syntax = syntax_to_variant syntax (Some source_filename) in

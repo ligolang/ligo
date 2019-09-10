@@ -1,6 +1,6 @@
 (library
-  (name main)
-  (public_name ligo.main)
+  (name run)
+  (public_name ligo.run)
   (libraries
     simple-utils
     tezos-utils

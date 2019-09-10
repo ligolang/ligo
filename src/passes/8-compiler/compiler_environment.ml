@@ -3,6 +3,8 @@ open Mini_c
 open Environment
 open Michelson
 
+let empty : environment = []
+
 let get : environment -> string -> michelson result = fun e s ->
   let%bind (_ , position) =
     let error =
