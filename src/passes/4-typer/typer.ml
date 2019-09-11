@@ -582,9 +582,9 @@ and type_expression : environment -> ?tv_opt:O.type_value -> I.expression -> O.a
         bind_map_option (evaluate_type e) output_type
       in
       let e' = Environment.add_ez_binder (fst binder) input_type e in
-      let%bind result = type_expression ?tv_opt:output_type e' result in
-      let output_type = result.type_annotation in
-      return (E_lambda {binder = fst binder;input_type;output_type;result}) (t_function input_type output_type ())
+      let%bind body = type_expression ?tv_opt:output_type e' result in
+      let output_type = body.type_annotation in
+      return (E_lambda {binder = fst binder ; body}) (t_function input_type output_type ())
     )
   | E_constant (name, lst) ->
       let%bind lst' = bind_list @@ List.map (type_expression e) lst in
@@ -796,11 +796,12 @@ let rec untype_expression (e:O.annotated_expression) : (I.expression) result =
       let%bind f' = untype_expression f in
       let%bind arg' = untype_expression arg in
       return (e_application f' arg')
-  | E_lambda {binder;input_type;output_type;result} ->
-      let%bind input_type = untype_type_value input_type in
-      let%bind output_type = untype_type_value output_type in
-      let%bind result = untype_expression result in
+  | E_lambda {binder ; body} -> (
+      let%bind io = get_t_function e.type_annotation in
+      let%bind (input_type , output_type) = bind_map_pair untype_type_value io in
+      let%bind result = untype_expression body in
       return (e_lambda binder (Some input_type) (Some output_type) result)
+    )
   | E_tuple lst ->
       let%bind lst' = bind_list
         @@ List.map untype_expression lst in

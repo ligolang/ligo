@@ -639,7 +639,7 @@ module Compiler = struct
   include Helpers.Compiler
   open Tezos_utils.Michelson
 
-  let predicates = Map.String.of_list [
+  let operators = Map.String.of_list [
     ("ADD" , simple_binary @@ prim I_ADD) ;
     ("SUB" , simple_binary @@ prim I_SUB) ;
     ("TIMES" , simple_binary @@ prim I_MUL) ;
@@ -693,6 +693,9 @@ module Compiler = struct
     ("CONCAT" , simple_binary @@ prim I_CONCAT) ;
   ]
 
-  (* Some complex predicates will need to be added in compiler/compiler_program *)
+  (*
+    Some complex operators will need to be added in compiler/compiler_program.
+    All operators whose compilations involve a type are found there.
+  *)
 
 end

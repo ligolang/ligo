@@ -164,12 +164,10 @@ let e_let_int v tv expr body : expression = Expression.(make_tpl (
 
 let ez_e_sequence a b : expression = Expression.(make_tpl (E_sequence (make_tpl (a , t_unit) , b) , get_type b))
 
-let ez_e_return e : expression = e
-
 let d_unit : value = D_unit
 
 let basic_quote expr : anon_function result =
-  ok @@ quote "input" (ez_e_return expr)
+  ok @@ quote "input" expr
 
 let basic_int_quote expr : anon_function result =
   basic_quote expr

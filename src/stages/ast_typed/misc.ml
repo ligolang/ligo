@@ -171,7 +171,7 @@ module Free_variables = struct
 
   and lambda : bindings -> lambda -> bindings = fun b l ->
     let b' = union (singleton l.binder) b in
-    annotated_expression b' l.result
+    annotated_expression b' l.body
 
   and annotated_expression : bindings -> annotated_expression -> bindings = fun b ae ->
     expression b ae.expression

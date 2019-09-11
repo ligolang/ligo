@@ -1,7 +1,7 @@
 open Trace
+open Ast_typed
 
-let transpile_value
-    (e:Ast_typed.annotated_expression) : Mini_c.value result =
+let evaluate (e : annotated_expression) : annotated_expression result =
   let%bind (f , ty) =
     let open Transpiler in
     let (f , _) = functionalize e in
@@ -32,7 +32,8 @@ let evaluate_typed
 
 let run_typed
     ?(debug_mini_c = false) ?(debug_michelson = false) ?options (entry:string)
-    (program:Ast_typed.program) (input:Ast_typed.annotated_expression) : Ast_typed.annotated_expression result =
+    (program : Ast_typed.program) (input : Ast_typed.annotated_expression) : Ast_typed.annotated_expression result =
+  let%bind 
   let%bind () =
     let open Ast_typed in
     let%bind (Declaration_constant (d , _)) = get_declaration_by_name program entry in

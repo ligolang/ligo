@@ -69,10 +69,10 @@ and named_type_value = {
 }
 
 and lambda = {
-  binder: name ;
-  input_type: tv ;
-  output_type: tv ;
-  result: ae ;
+  binder : name ;
+  (* input_type: tv ;
+   * output_type: tv ; *)
+  body : ae ;
 }
 
 and let_in = {

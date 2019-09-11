@@ -56,6 +56,10 @@ let get_type' (x:type_value) = x.type_value'
 let get_environment (x:annotated_expression) = x.environment
 let get_expression (x:annotated_expression) = x.expression
 
+let get_lambda e : _ result = match e with
+  | E_lambda l -> ok l
+  | _ -> simple_fail "not a lambda"
+
 let get_t_bool (t:type_value) : unit result = match t.type_value' with
   | T_constant ("bool", []) -> ok ()
   | _ -> simple_fail "not a bool"
@@ -235,7 +239,7 @@ let e_a_string s = make_a_e (e_string s) (t_string ())
 let e_a_address s = make_a_e (e_address s) (t_address ())
 let e_a_pair a b = make_a_e (e_pair a b) (t_pair a.type_annotation b.type_annotation ())
 let e_a_some s = make_a_e (e_some s) (t_option s.type_annotation ())
-let e_a_lambda l = make_a_e (e_lambda l) (t_function l.input_type l.output_type ())
+let e_a_lambda l in_ty out_ty = make_a_e (e_lambda l) (t_function in_ty out_ty ())
 let e_a_none t = make_a_e e_none (t_option t ())
 let e_a_tuple lst = make_a_e (E_tuple lst) (t_tuple (List.map get_type_annotation lst) ())
 let e_a_record r = make_a_e (e_record r) (t_record (SMap.map get_type_annotation r) ())

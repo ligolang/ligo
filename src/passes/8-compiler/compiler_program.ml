@@ -1,14 +1,11 @@
 open Trace
 open Mini_c
-
 open Michelson
-
 open Memory_proto_alpha.Protocol.Script_ir_translator
-
 open Operators.Compiler
 
-let get_predicate : string -> type_value -> expression list -> predicate result = fun s ty lst ->
-  match Map.String.find_opt s Operators.Compiler.predicates with
+let get_operator : string -> type_value -> expression list -> predicate result = fun s ty lst ->
+  match Map.String.find_opt s Operators.Compiler.operators with
   | Some x -> ok x
   | None -> (
       match s with
@@ -196,7 +193,7 @@ and translate_expression (expr:expression) (env:environment) : michelson result 
             PP.environment env ;
           ok (seq [ expr_code ; dip code ]) in
         bind_fold_right_list aux (seq []) lst in
-      let%bind predicate = get_predicate str ty lst in
+      let%bind predicate = get_operator str ty lst in
       let%bind code = match (predicate, List.length lst) with
         | Constant c, 0 -> ok @@ seq [
             pre_code ;

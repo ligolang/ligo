@@ -24,10 +24,9 @@ let rec annotated_expression ppf (ae:annotated_expression) : unit =
   | _ -> fprintf ppf "@[<v>%a@]" expression ae.expression
 
 and lambda ppf l =
-  let {binder;input_type;output_type;result} = l in
-  fprintf ppf "lambda (%s:%a) : %a return %a"
-    binder type_value input_type type_value output_type
-    annotated_expression result
+  let ({ binder ; body } : lambda) = l in
+  fprintf ppf "lambda (%s) -> %a"
+    binder annotated_expression body
 
 and expression ppf (e:expression) : unit =
   match e with

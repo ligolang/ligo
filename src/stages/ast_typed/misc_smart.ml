@@ -4,7 +4,7 @@ open Combinators
 open Misc
 
 let program_to_main : program -> string -> lambda result = fun p s ->
-  let%bind (main , input_type , output_type) =
+  let%bind (main , input_type , _) =
     let pred = fun d ->
       match d with
       | Declaration_constant (d , _) when d.name = s -> Some d.annotated_expression
@@ -25,15 +25,13 @@ let program_to_main : program -> string -> lambda result = fun p s ->
       | Declaration_constant (_ , (_ , post_env)) -> post_env in
     List.fold_left aux Environment.full_empty (List.map Location.unwrap p) in
   let binder = "@contract_input" in
-  let result =
+  let body =
     let input_expr = e_a_variable binder input_type env in
     let main_expr = e_a_variable s (get_type_annotation main) env in
     e_a_application main_expr input_expr env in
   ok {
     binder ;
-    input_type ;
-    output_type ;
-    result ;
+    body ;
   }
 
 module Captured_variables = struct

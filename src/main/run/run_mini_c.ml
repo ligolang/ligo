@@ -4,6 +4,13 @@ open Trace
 open Mini_c
 open Compiler.Program
 
+module Errors = struct
+
+  let entry_error =
+    simple_error "error translating entry point"
+
+end
+
 type options = {
   entry_point : anon_function ;
   input_type : type_value ;
@@ -14,7 +21,7 @@ type options = {
 
 let run_entry ?(debug_michelson = false) ?options (entry : anon_function) ty (input:value) : value result =
   let%bind compiled =
-    trace error @@
+    trace Errors.entry_error @@
     translate_entry entry ty in
   let%bind input_michelson = translate_value input (fst ty) in
   if debug_michelson then (
