@@ -451,7 +451,7 @@ and type_expression : environment -> ?tv_opt:O.type_value -> I.expression -> O.a
           )
         | Access_map ae' -> (
             let%bind ae'' = type_expression e ae' in
-            let%bind (k , v) = get_t_map prev.type_annotation in
+            let%bind (k , v) = bind_map_or (get_t_map , get_t_big_map) prev.type_annotation in
             let%bind () =
               Ast_typed.assert_type_value_eq (k , get_type_annotation ae'') in
             return (E_look_up (prev , ae'')) v
@@ -570,7 +570,7 @@ and type_expression : environment -> ?tv_opt:O.type_value -> I.expression -> O.a
             bind_fold_list aux None
             @@ List.map get_type_annotation
             @@ List.map fst lst' in
-          let%bind annot = bind_map_option get_t_map_key tv_opt in
+          let%bind annot = bind_map_option get_t_big_map_key tv_opt in
           trace (simple_info "empty map expression without a type annotation") @@
           O.merge_annotation annot sub (needs_annotation ae "this map literal")
         in
@@ -579,7 +579,7 @@ and type_expression : environment -> ?tv_opt:O.type_value -> I.expression -> O.a
             bind_fold_list aux None
             @@ List.map get_type_annotation
             @@ List.map snd lst' in
-          let%bind annot = bind_map_option get_t_map_value tv_opt in
+          let%bind annot = bind_map_option get_t_big_map_value tv_opt in
           trace (simple_info "empty map expression without a type annotation") @@
           O.merge_annotation annot sub (needs_annotation ae "this map literal")
         in
@@ -644,7 +644,7 @@ and type_expression : environment -> ?tv_opt:O.type_value -> I.expression -> O.a
       return (E_application (f' , arg)) tv
   | E_look_up dsi ->
       let%bind (ds, ind) = bind_map_pair (type_expression e) dsi in
-      let%bind (src, dst) = get_t_map ds.type_annotation in
+      let%bind (src, dst) = bind_map_or (get_t_map , get_t_big_map) ds.type_annotation in
       let%bind _ = O.assert_type_value_eq (ind.type_annotation, src) in
       return (E_look_up (ds , ind)) (t_option dst ())
   (* Advanced *)

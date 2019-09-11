@@ -48,6 +48,7 @@ type value =
   | D_some of value
   | D_none
   | D_map of (value * value) list
+  | D_big_map of (value * value) list
   | D_list of value list
   | D_set of value list
   (* | `Macro of anon_macro ... The future. *)

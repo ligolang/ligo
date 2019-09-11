@@ -434,10 +434,24 @@ and translate_annotated_expression (ae:AST.annotated_expression) : expression re
       let%bind (init : expression) = return @@ E_make_empty_set t in
       bind_fold_list aux init lst'
     )
-  | (E_map m | E_big_map m) -> (
+  | E_map m -> (
       let%bind (src, dst) =
         trace_strong (corner_case ~loc:__LOC__ "not a map") @@
         Mini_c.Combinators.get_t_map tv in
+      let aux : expression result -> (AST.ae * AST.ae) -> expression result = fun prev (k, v) ->
+        let%bind prev' = prev in
+        let%bind (k', v') =
+          let v' = e_a_some v ae.environment in
+          bind_map_pair (translate_annotated_expression) (k , v') in
+        return @@ E_constant ("UPDATE", [k' ; v' ; prev'])
+      in
+      let init = return @@ E_make_empty_map (src, dst) in
+      List.fold_left aux init m
+    )
+  | E_big_map m -> (
+      let%bind (src, dst) =
+        trace_strong (corner_case ~loc:__LOC__ "not a map") @@
+        Mini_c.Combinators.get_t_big_map tv in
       let aux : expression result -> (AST.ae * AST.ae) -> expression result = fun prev (k, v) ->
         let%bind prev' = prev in
         let%bind (k', v') =
@@ -800,8 +814,8 @@ let rec untranspile (v : value) (t : AST.type_value) : AST.annotated_expression 
     )
   | T_constant ("big_map", [k_ty;v_ty]) -> (
       let%bind lst =
-        trace_strong (wrong_mini_c_value "map" v) @@
-        get_map v in
+        trace_strong (wrong_mini_c_value "big_map" v) @@
+        get_big_map v in
       let%bind lst' =
         let aux = fun (k, v) ->
           let%bind k' = untranspile k k_ty in

@@ -140,13 +140,12 @@ let get_t_record (t:type_value) : type_value SMap.t result = match t.type_value'
 let get_t_map (t:type_value) : (type_value * type_value) result =
   match t.type_value' with
   | T_constant ("map", [k;v]) -> ok (k, v)
-  | T_constant ("big_map", [k;v]) -> ok (k, v)
-  | _ -> simple_fail "get: not a map or a big_map"
-
-let get_t_map_not_big_map (t:type_value) : (type_value * type_value) result =
-  match t.type_value' with
-  | T_constant ("map", [k;v]) -> ok (k, v)
   | _ -> simple_fail "get: not a map"
+
+let get_t_big_map (t:type_value) : (type_value * type_value) result =
+  match t.type_value' with
+  | T_constant ("big_map", [k;v]) -> ok (k, v)
+  | _ -> simple_fail "get: not a big_map"
 
 let get_t_map_key : type_value -> type_value result = fun t ->
   let%bind (key , _) = get_t_map t in
@@ -156,11 +155,20 @@ let get_t_map_value : type_value -> type_value result = fun t ->
   let%bind (_ , value) = get_t_map t in
   ok value
 
+let get_t_big_map_key : type_value -> type_value result = fun t ->
+  let%bind (key , _) = get_t_big_map t in
+  ok key
+
+let get_t_big_map_value : type_value -> type_value result = fun t ->
+  let%bind (_ , value) = get_t_big_map t in
+  ok value
+
 let assert_t_map = fun t ->
   let%bind _ = get_t_map t in
   ok ()
 
-let is_t_map_not_big_map = Function.compose to_bool get_t_map_not_big_map
+let is_t_map = Function.compose to_bool get_t_map
+let is_t_big_map = Function.compose to_bool get_t_big_map
 
 let assert_t_tez : type_value -> unit result = get_t_tez
 let assert_t_key = get_t_key

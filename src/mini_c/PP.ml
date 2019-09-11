@@ -62,6 +62,7 @@ let rec value ppf : value -> unit = function
   | D_none -> fprintf ppf "None"
   | D_some s -> fprintf ppf "Some (%a)" value s
   | D_map m -> fprintf ppf "Map[%a]" (list_sep_d value_assoc) m
+  | D_big_map m -> fprintf ppf "Big_map[%a]" (list_sep_d value_assoc) m
   | D_list lst -> fprintf ppf "List[%a]" (list_sep_d value) lst
   | D_set lst -> fprintf ppf "Set[%a]" (list_sep_d value) lst
 
