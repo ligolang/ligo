@@ -3,4 +3,9 @@ set -e
 set -x
 
 eval $(opam config env)
-opam repo add tezos-opam-repository https://gitlab.com/nomadic-labs/tezos-opam-repository.git
+
+# Remove the nomadic-labs tezos repo (from ligo switch only)
+opam repository remove tezos-opam-repository
+
+# Add ligolang tezos repo
+opam repository add ligolang-tezos-opam-repository https://gitlab.com/ligolang/tezos-opam-repository.git
