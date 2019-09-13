@@ -1,4 +1,3 @@
-// type storage_ is big_map(int, int)
 type storage_ is big_map(int, int) * unit
 
 function main(const p : unit; const s : storage_) : list(operation) * storage_ is
@@ -9,15 +8,6 @@ function main(const p : unit; const s : storage_) : list(operation) * storage_ i
     s.0 := r;
   }
   with ((nil: list(operation)), s)
-
-
-
-// type foobar is map(int, int)
-
-// const fb : foobar = map
-//   23 -> 0 ;
-//   42 -> 0 ;
-// end
 
 function set_ (var n : int ; var m : storage_) : storage_ is block {
   var tmp : big_map(int,int) := m.0 ;
@@ -31,10 +21,6 @@ function rm (var m : storage_) : storage_ is block {
   m.0 := tmp;
 } with m
 
-// not supported
-// function size_ (const m : storage_) : nat is
-//   block {skip} with (size(m.0))
-
 function gf (const m : storage_) : int is begin skip end with get_force(23, m.0)
 
 function get (const m : storage_) : option(int) is
@@ -42,7 +28,9 @@ function get (const m : storage_) : option(int) is
     skip
   end with m.0[42]
 
-// const bm : storage_ = map
+// the following is not supported (negative test cases):
+
+// const bm : storage_ = big_map
 //   144 -> 23 ;
 //   51 -> 23 ;
 //   42 -> 23 ;
@@ -50,7 +38,15 @@ function get (const m : storage_) : option(int) is
 //   421 -> 23 ;
 // end
 
-// not supported
+// type foobar is big_map(int, int)
+// const fb : foobar = big_map
+//   23 -> 0 ;
+//   42 -> 0 ;
+// end
+
+// function size_ (const m : storage_) : nat is
+//   block {skip} with (size(m.0))
+
 // function iter_op (const m : storage_) : int is
 //   var r : int := 0 ;
 //   function aggregate (const i : int ; const j : int) : unit is block { r := r + i + j } with unit ;

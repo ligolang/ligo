@@ -402,16 +402,7 @@ let big_map () : unit result =
   let%bind () =
     let make_input = fun n -> ez [(23, n) ; (42, 4)] in
     let make_expected = e_int in
-    expect_eq_n program "gf" make_input make_expected
-  in
-  (* let%bind () =
-    let make_input = fun n -> ez List.(map (fun x -> (x, x)) @@ range n) in
-    let make_expected = e_nat in
-    expect_eq_n_strict_pos_small program "size_" make_input make_expected
-  in
-  let%bind () =
-    let expected = ez [(23, 0) ; (42, 0)] in
-    expect_eq_evaluate program "fb" expected
+    expect_eq_n ?input_to_value:(Some true) program "gf" make_input make_expected
   in
   let%bind () =
     let make_input = fun n ->
@@ -419,32 +410,18 @@ let big_map () : unit result =
       e_tuple [(e_int n) ; m]
     in
     let make_expected = fun n -> ez [(23 , n) ; (42 , 0)] in
-    expect_eq_n_pos_small program "set_" make_input make_expected
+    expect_eq_n_pos_small ?input_to_value:(Some true) program "set_" make_input make_expected
   in
   let%bind () =
     let make_input = fun n -> ez [(23, n) ; (42, 4)] in
     let make_expected = fun _ -> e_some @@ e_int 4 in
-    expect_eq_n program "get" make_input make_expected
-  in
-  let%bind () =
-    let expected = ez @@ List.map (fun x -> (x, 23)) [144 ; 51 ; 42 ; 120 ; 421] in
-    expect_eq_evaluate program "bm" expected
+    expect_eq_n ?input_to_value:(Some true) program "get" make_input make_expected
   in
   let%bind () =
     let input = ez [(23, 23) ; (42, 42)] in
     let expected = ez [23, 23] in
-    expect_eq program "rm" input expected
-  in *)
-  (* let%bind () =
-    let input = ez [(1 , 10) ; (2 , 20) ; (3 , 30) ] in
-    let expected = e_int 66 in
-    expect_eq program "iter_op" input expected
+    expect_eq ?input_to_value:(Some true) program "rm" input expected
   in
-  let%bind () =
-    let input = ez [(1 , 10) ; (2 , 20) ; (3 , 30) ] in
-    let expected = ez [(1 , 11) ; (2 , 21) ; (3 , 31) ] in
-    expect_eq program "map_op" input expected
-  in *)
   ok ()
 
 let list () : unit result =
