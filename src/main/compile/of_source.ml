@@ -17,3 +17,38 @@ let compile_file_parameter : string -> string -> string -> s_syntax -> Michelson
   let%bind syntax = syntax_to_variant syntax (Some source_filename) in
   let%bind simplified = parsify_expression syntax expression in
   Of_simplified.compile_expression simplified
+
+let compile_file_expression : string -> string -> string -> s_syntax -> Michelson.t result =
+  fun source_filename _entry_point expression syntax ->
+  let%bind syntax = syntax_to_variant syntax (Some source_filename) in
+  let%bind simplified = parsify_expression syntax expression in
+  Of_simplified.compile_expression simplified
+
+let compile_file_storage : string -> string -> string -> s_syntax -> Michelson.t result =
+  fun source_filename _entry_point expression syntax ->
+  let%bind syntax = syntax_to_variant syntax (Some source_filename) in
+  let%bind simplified = parsify_expression syntax expression in
+  Of_simplified.compile_expression simplified
+
+let compile_file_contract_args =
+  fun source_filename _entry_point storage parameter syntax ->
+  let%bind syntax = syntax_to_variant syntax (Some source_filename) in
+  let%bind storage_simplified = parsify_expression syntax storage in
+  let%bind parameter_simplified = parsify_expression syntax parameter in
+  let args = Ast_simplified.e_pair storage_simplified parameter_simplified in
+  Of_simplified.compile_expression args
+
+let type_file ?(debug_simplify = false) ?(debug_typed = false)
+    syntax (source_filename:string) : Ast_typed.program result =
+  let%bind syntax = syntax_to_variant syntax (Some source_filename) in
+  let%bind simpl = parsify syntax source_filename in
+  (if debug_simplify then
+     Format.(printf "Simplified : %a\n%!" Ast_simplified.PP.program simpl)
+  ) ;
+  let%bind typed =
+    trace (simple_error "typing") @@
+    Typer.type_program simpl in
+  (if debug_typed then (
+      Format.(printf "Typed : %a\n%!" Ast_typed.PP.program typed)
+    )) ;
+  ok typed

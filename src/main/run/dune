@@ -13,6 +13,7 @@
     mini_c
     operators
     compiler
+    compile
   )
   (preprocess
     (pps ppx_let)

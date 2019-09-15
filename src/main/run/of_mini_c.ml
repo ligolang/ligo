@@ -16,7 +16,7 @@ type options = {
   input_type : type_value ;
   output_type : type_value ;
   input : value ;
-  michelson_options : From_michelson.options ;
+  michelson_options : Of_michelson.options ;
 }
 
 let run_entry ?(debug_michelson = false) ?options (entry : anon_function) ty (input:value) : value result =
@@ -31,7 +31,7 @@ let run_entry ?(debug_michelson = false) ?options (entry : anon_function) ty (in
     Format.printf "Input Type: %a\n" PP.type_ (fst ty) ;
     Format.printf "Compiled Input: %a\n" Michelson.pp input_michelson ;
   ) ;
-  let%bind ex_ty_value = From_michelson.run ?options compiled input_michelson in
+  let%bind ex_ty_value = Of_michelson.run ?options compiled input_michelson in
   if debug_michelson then (
     let (Ex_typed_value (ty , v)) = ex_ty_value in
     ignore @@
@@ -41,5 +41,5 @@ let run_entry ?(debug_michelson = false) ?options (entry : anon_function) ty (in
     Format.printf "Compiled Output: %a\n" Michelson.pp michelson_value ;
     ok ()
   ) ;
-  let%bind (result : value) = Compiler.Uncompiler.translate_value ex_ty_value in
+  let%bind (result : value) = Compile.Of_mini_c.uncompile_value ex_ty_value in
   ok result

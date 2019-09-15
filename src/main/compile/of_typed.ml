@@ -51,6 +51,27 @@ let compile_function expr =
   in
   Of_mini_c.compile_function f in_ty out_ty
 
+
+let get_entry (lst : program) (name : string) : (annotated_expression * int) result =
+  let%bind entry_expression =
+    trace_option (Errors.missing_entry_point name) @@
+    let aux x =
+      let (Declaration_constant (an , _)) = Location.unwrap x in
+      if (an.name = name)
+      then Some an.annotated_expression
+      else None
+    in
+    List.find_map aux lst
+  in
+  let entry_index =
+    let aux x =
+      let (Declaration_constant (an , _)) = Location.unwrap x in
+      an.name = name
+    in
+    List.find_index aux lst
+  in
+  ok (entry_expression , entry_index)
+
 (*
    Assume the following code:
    ```
@@ -68,50 +89,61 @@ let compile_function expr =
        x + y
    ```
 
-   To do so, each declaration `const variable = expr` is translated in
-   a function `body -> let variable = expr in body`. Those functions are
-   then applied in order, which yields `let x = 42 in let y = 120 in ...`.
-
    The entry-point can be an expression, which is then functionalized if
    `to_functionalize` is set to true.
 *)
-let aggregate_declarations_for_entry (lst : program) (name : string) (to_functionalize : bool) : annotated_expression result =
-  let rec aux acc (lst : program) =
-    let%bind acc = acc in
-    match lst with
-    | [] -> fail @@ Errors.missing_entry_point name
-    | hd :: tl -> (
-        let (Declaration_constant (an , (pre_env , _))) = Location.unwrap hd in
-        if (an.name <> name) then (
-          let next = fun expr ->
-            let cur = e_a_let_in an.name an.annotated_expression expr pre_env in
-            acc cur in
-          aux (ok next) tl
-        ) else (
-          match (an.annotated_expression.expression , to_functionalize) with
-          | (E_lambda l , false) -> (
-            let l' = { l with body = acc l.body } in
-            let e' = { an.annotated_expression with expression = E_lambda l' } in
-            ok e'
-          )
-          | (_ , true) -> (
-              ok @@ functionalize @@ acc an.annotated_expression
-            )
-          | _ -> fail @@ Errors.not_functional_main an.annotated_expression.location
-        )
-      )
+let get_aggregated_entry (lst : program) (name : string) (to_functionalize : bool) : annotated_expression result =
+  let%bind (entry_expression , entry_index) = get_entry lst name in
+  let pre_declarations =
+    let sub_program = List.until entry_index lst in
+    let aux x = Location.unwrap x in
+    List.map aux sub_program
   in
-  let%bind l = aux (ok (fun x -> x)) lst in
-  ok l
+  let wrapper =
+    let aux prec cur =
+      let (Declaration_constant (an , (pre_env , _))) = cur in
+      e_a_let_in an.name an.annotated_expression prec pre_env
+    in
+    fun expr -> List.fold_right' aux expr pre_declarations
+  in
+  match (entry_expression.expression , to_functionalize) with
+  | (E_lambda l , false) -> (
+      let l' = { l with body = wrapper l.body } in
+      let e' = { entry_expression with expression = E_lambda l' } in
+      ok e'
+    )
+  | (_ , true) -> (
+      ok @@ functionalize @@ wrapper entry_expression
+    )
+  | _ -> fail @@ Errors.not_functional_main entry_expression.location
 
 let compile_function_entry : program -> string -> _ = fun p entry ->
-  let%bind expr = aggregate_declarations_for_entry p entry false in
+  let%bind expr = get_aggregated_entry p entry false in
   compile_function expr
 
 let compile_expression_entry : program -> string -> _ = fun p entry ->
-  let%bind expr = aggregate_declarations_for_entry p entry true in
+  let%bind expr = get_aggregated_entry p entry true in
   compile_function expr
 
 let compile_expression_as_function : annotated_expression -> Compiler.Program.compiled_program result = fun e ->
   let expr = functionalize e in
   compile_function expr
+
+let uncompile_value : _ -> _ -> annotated_expression result = fun x ty ->
+  let%bind mini_c = Of_mini_c.uncompile_value x in
+  Transpiler.untranspile mini_c ty
+
+let uncompile_entry_function_result = fun program entry ex_ty_value ->
+  let%bind output_type =
+    let%bind (entry_expression , _ ) = get_entry program entry in
+    let%bind (_ , output_type) = get_t_function entry_expression.type_annotation in
+    ok output_type
+  in
+  uncompile_value ex_ty_value output_type
+
+let uncompile_entry_expression_result = fun program entry ex_ty_value ->
+  let%bind output_type =
+    let%bind (entry_expression , _ ) = get_entry program entry in
+    ok entry_expression.type_annotation
+  in
+  uncompile_value ex_ty_value output_type
