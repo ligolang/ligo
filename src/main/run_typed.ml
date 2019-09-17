@@ -30,7 +30,7 @@ let evaluate_typed
     Transpiler.untranspile result typed_main.type_annotation in
   ok typed_result
 
-(* returns a big_map if any *)
+(* returns a big_map if any. used to reconstruct the map from the diff when uncompiling *)
 let rec fetch_big_map (v: Mini_c.value) : Mini_c.value option =
   match v with
   | D_pair (l , r) ->
@@ -40,7 +40,7 @@ let rec fetch_big_map (v: Mini_c.value) : Mini_c.value option =
     | None -> fetch_big_map r 
     end
   | D_big_map _ as bm -> Some bm 
-  | _ -> let () = Printf.printf "lal\n" in None
+  | _ -> None
 
 (* try to convert expression to a literal *)
 let rec exp_to_value (exp: Mini_c.expression) : Mini_c.value result =
@@ -67,6 +67,7 @@ let rec exp_to_value (exp: Mini_c.expression) : Mini_c.value result =
       let%bind fstl = exp_to_value fst in
       let%bind sndl = exp_to_value snd in
       ok @@ D_pair (fstl , sndl)
+    | E_constant ("UNIT", _) -> ok @@ D_unit
     | E_constant ("UPDATE", _) ->
       let rec handle_prev upd =
         match upd.content with

@@ -46,6 +46,17 @@ include struct
     ok ()
 end
 
+let transpile_value_literals 
+    (e:Ast_typed.annotated_expression) : (Mini_c.value * _) result =
+  let%bind (_ , ty) =
+    let open Transpiler in
+    let (f , _) = functionalize e in
+    let%bind main = translate_main f e.location in
+    ok main
+  in
+  let%bind lit = Run_typed.convert_to_literals e in
+  ok (lit , snd ty)
+
 let transpile_value
     (e:Ast_typed.annotated_expression) : (Mini_c.value * _) result =
   let%bind (f , ty) =
@@ -196,8 +207,20 @@ let compile_contract_parameter : string -> string -> string -> s_syntax -> strin
   in
   ok expr
 
+(* Replace occurrences of E_map with E_big_map in the AST  *)
+let rec transform_map_to_big_map (e: Ast_simplified.expression) : Ast_simplified.expression result = 
+  let open Ast_simplified in
+  match e.wrap_content with
+  | E_tuple [fst;snd] ->
+    let%bind tr_fst = transform_map_to_big_map fst in
+    let new_tuple = Location.wrap (E_tuple [tr_fst;snd]) in
+    ok @@ new_tuple
+  | E_map lst ->
+    let tr_map = Location.wrap (E_big_map lst) in
+    ok @@ tr_map
+  | _ -> fail @@ simple_error "can not replace map with big_map"
 
-let compile_contract_storage : string -> string -> string -> s_syntax -> string result = fun source_filename entry_point expression syntax ->
+let compile_contract_storage ?(bigmap = false) source_filename entry_point expression syntax : string result =
   let%bind syntax = syntax_to_variant syntax (Some source_filename) in
   let%bind (program , storage_tv) =
     let%bind simplified = parsify syntax source_filename in
@@ -212,6 +235,7 @@ let compile_contract_storage : string -> string -> string -> s_syntax -> string 
   in
   let%bind expr =
     let%bind simplified = parsify_expression syntax expression in
+    let%bind simplified = if bigmap then transform_map_to_big_map simplified else ok @@ simplified in
     let%bind typed =
       let env =
         let last_declaration = Location.unwrap List.(hd @@ rev program) in
@@ -225,7 +249,7 @@ let compile_contract_storage : string -> string -> string -> s_syntax -> string 
       Ast_typed.assert_type_value_eq (storage_tv , typed.type_annotation) in
     let%bind (mini_c , mini_c_ty) =
       trace (simple_error "transpiling expression") @@
-      transpile_value typed in
+      (if bigmap then transpile_value_literals typed else transpile_value typed) in
     let%bind michelson =
       trace (simple_error "compiling expression") @@
       Compiler.translate_value mini_c mini_c_ty in
@@ -249,7 +273,7 @@ let type_file ?(debug_simplify = false) ?(debug_typed = false)
     )) ;
   ok typed
 
-let run_contract ?amount source_filename entry_point storage input syntax =
+let run_contract ?(bigmap = false) ?amount source_filename entry_point storage input syntax =
   let%bind syntax = syntax_to_variant syntax (Some source_filename) in
   let%bind typed =
     type_file syntax source_filename in
@@ -257,11 +281,12 @@ let run_contract ?amount source_filename entry_point storage input syntax =
     parsify_expression syntax storage in
   let%bind input_simpl =
     parsify_expression syntax input in
+  let%bind input_simpl = if bigmap then transform_map_to_big_map input_simpl else ok @@ input_simpl in
   let options =
     let open Proto_alpha_utils.Memory_proto_alpha in
     let amount = Option.bind (fun amount -> Protocol.Alpha_context.Tez.of_string amount) amount in
     (make_options ?amount ()) in
-  Run_simplified.run_simplityped ~options typed entry_point (Ast_simplified.e_pair storage_simpl input_simpl)
+  Run_simplified.run_simplityped ?input_to_value:(Some bigmap) ~options typed entry_point (Ast_simplified.e_pair storage_simpl input_simpl)
 
 let run_function ?amount source_filename entry_point parameter syntax =
   let%bind syntax = syntax_to_variant syntax (Some source_filename) in

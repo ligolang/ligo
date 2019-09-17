@@ -37,6 +37,14 @@ let syntax =
     info ~docv ~doc ["syntax" ; "s"] in
   value @@ opt string "auto" info
 
+let bigmap =
+  let open Arg in
+  let info =
+    let docv = "BIGMAP" in
+    let doc = "$(docv) is necessary when your storage embeds a big_map." in
+    info ~docv ~doc ["bigmap"] in
+  value @@ flag info
+
 let amount =
   let open Arg in
   let info =
@@ -76,30 +84,30 @@ let compile_parameter =
   (term , Term.info ~docs cmdname)
 
 let compile_storage =
-  let f source entry_point expression syntax =
+  let f source entry_point expression syntax bigmap =
     toplevel @@
     let%bind value =
       trace (simple_error "compile-storage") @@
-      Ligo.Run.compile_contract_storage source entry_point expression (Syntax_name syntax) in
+      Ligo.Run.compile_contract_storage ?bigmap:(Some bigmap) source entry_point expression (Syntax_name syntax) in
     Format.printf "%s\n" value;
     ok ()
   in
   let term =
-    Term.(const f $ source 0 $ entry_point 1 $ expression "STORAGE" 2 $ syntax) in
+    Term.(const f $ source 0 $ entry_point 1 $ expression "STORAGE" 2 $ syntax $ bigmap) in
   let cmdname = "compile-storage" in
   let docs = "Subcommand: compile an initial storage in ligo syntax to a michelson expression. The resulting michelson expression can be passed as an argument in a transaction which originates a contract. See `ligo " ^ cmdname ^ " --help' for a list of options specific to this subcommand." in
   (term , Term.info ~docs cmdname)
 
 let dry_run =
-  let f source entry_point storage input amount syntax =
+  let f source entry_point storage input bigmap amount syntax =
     toplevel @@
     let%bind output =
-      Ligo.Run.run_contract ~amount source entry_point storage input (Syntax_name syntax) in
+      Ligo.Run.run_contract ~bigmap ~amount source entry_point storage input (Syntax_name syntax) in
     Format.printf "%a\n" Ast_simplified.PP.expression output ;
     ok ()
   in
   let term =
-    Term.(const f $ source 0 $ entry_point 1 $ expression "PARAMETER" 2 $ expression "STORAGE" 3 $ amount $ syntax) in
+    Term.(const f $ source 0 $ entry_point 1 $ expression "PARAMETER" 2 $ expression "STORAGE" 3 $ bigmap $ amount $ syntax) in
   let cmdname = "dry-run" in
   let docs = "Subcommand: run a smart-contract with the given storage and input." in
   (term , Term.info ~docs cmdname)

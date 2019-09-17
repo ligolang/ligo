@@ -5,6 +5,7 @@ function main(const p : unit; const s : storage_) : list(operation) * storage_ i
   var toto : option (int) := Some(0);
   block {
     toto := r[23];
+    r[2] := 444;
     s.0 := r;
   }
   with ((nil: list(operation)), s)
