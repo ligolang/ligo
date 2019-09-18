@@ -78,7 +78,6 @@ and expression' =
 and expression = {
   content : expression' ;
   type_value : type_value ;
-  is_toplevel : bool ;
 }
 
 and assignment = var_name * expression
@@ -87,7 +86,7 @@ and toplevel_statement = assignment * environment_wrap
 
 and anon_function = {
   binder : string ;
-  result : expression ;
+  body : expression ;
 }
 
 and program = toplevel_statement list

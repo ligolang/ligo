@@ -21,14 +21,10 @@ let run_entry
 
 let evaluate ?options (e : annotated_expression) : annotated_expression result =
   let%bind code = Compile.Of_typed.compile_expression_as_function e in
-  let fake_input = e_a_unit Environment.full_empty in
-  let%bind input = Compile.Of_typed.compile_expression fake_input in
-  let%bind ex_ty_value = Of_michelson.run ?options code input in
+  let%bind ex_ty_value = Of_michelson.evaluate ?options code in
   Compile.Of_typed.uncompile_value ex_ty_value e.type_annotation
 
 let evaluate_entry ?options program entry =
-  let%bind code = Compile.Of_typed.compile_expression_entry program entry in
-  let fake_input = e_a_unit Environment.full_empty in
-  let%bind input = Compile.Of_typed.compile_expression fake_input in
-  let%bind ex_ty_value = Of_michelson.run ?options code input in
+  let%bind code = Compile.Of_typed.compile_expression_as_function_entry program entry in
+  let%bind ex_ty_value = Of_michelson.evaluate ?options code in
   Compile.Of_typed.uncompile_entry_expression_result program entry ex_ty_value

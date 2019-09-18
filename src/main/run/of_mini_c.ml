@@ -2,7 +2,7 @@ open Proto_alpha_utils
 open Memory_proto_alpha.X
 open Trace
 open Mini_c
-open Compiler.Program
+open! Compiler.Program
 
 module Errors = struct
 
@@ -19,27 +19,29 @@ type options = {
   michelson_options : Of_michelson.options ;
 }
 
-let run_entry ?(debug_michelson = false) ?options (entry : anon_function) ty (input:value) : value result =
-  let%bind compiled =
-    trace Errors.entry_error @@
-    translate_entry entry ty in
-  let%bind input_michelson = translate_value input (fst ty) in
-  if debug_michelson then (
-    Format.printf "Program: %a\n" Michelson.pp compiled.body ;
-    Format.printf "Expression: %a\n" PP.expression entry.result ;
-    Format.printf "Input: %a\n" PP.value input ;
-    Format.printf "Input Type: %a\n" PP.type_ (fst ty) ;
-    Format.printf "Compiled Input: %a\n" Michelson.pp input_michelson ;
-  ) ;
-  let%bind ex_ty_value = Of_michelson.run ?options compiled input_michelson in
-  if debug_michelson then (
-    let (Ex_typed_value (ty , v)) = ex_ty_value in
-    ignore @@
-    let%bind michelson_value =
-      trace_tzresult_lwt (simple_error "debugging run_mini_c") @@
-      Proto_alpha_utils.Memory_proto_alpha.unparse_michelson_data ty v in
-    Format.printf "Compiled Output: %a\n" Michelson.pp michelson_value ;
-    ok ()
-  ) ;
-  let%bind (result : value) = Compile.Of_mini_c.uncompile_value ex_ty_value in
-  ok result
+let evaluate ?options expression =
+  let%bind code = Compile.Of_mini_c.compile_expression_as_function expression in
+  let%bind ex_ty_value = Of_michelson.evaluate ?options code in
+  Compile.Of_mini_c.uncompile_value ex_ty_value
+
+let evaluate_entry ?options program entry =
+  let%bind code = Compile.Of_mini_c.compile_expression_as_function_entry program entry in
+  let%bind ex_ty_value = Of_michelson.evaluate ?options code in
+  Compile.Of_mini_c.uncompile_value ex_ty_value
+
+let run_function ?options expression input ty =
+  let%bind code = Compile.Of_mini_c.compile_function expression in
+  let%bind input = Compile.Of_mini_c.compile_value input ty in
+  let%bind ex_ty_value = Of_michelson.run ?options code input in
+  Compile.Of_mini_c.uncompile_value ex_ty_value
+
+let run_function_entry ?options program entry input =
+  let%bind code = Compile.Of_mini_c.compile_function_entry program entry in
+  let%bind input_michelson =
+    let%bind code = Compile.Of_mini_c.compile_expression_as_function input in
+    let%bind (Ex_typed_value (ty , value)) = Of_michelson.evaluate ?options code in
+    Trace.trace_tzresult_lwt (simple_error "error unparsing input") @@
+    Memory_proto_alpha.unparse_michelson_data ty value
+  in
+  let%bind ex_ty_value = Of_michelson.run ?options code input_michelson in
+  Compile.Of_mini_c.uncompile_value ex_ty_value

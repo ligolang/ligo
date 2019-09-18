@@ -76,7 +76,7 @@ let run_function ?amount source_filename entry_point input syntax =
 
 let evaluate ?amount source_filename entry_point syntax =
   let%bind program = Compile.Of_source.type_file syntax source_filename in
-  let%bind code = Compile.Of_typed.compile_expression_entry program entry_point in
+  let%bind code = Compile.Of_typed.compile_expression_as_function_entry program entry_point in
   let%bind input =
     let fake_input = Ast_simplified.e_unit () in
     Compile.Of_simplified.compile_expression fake_input

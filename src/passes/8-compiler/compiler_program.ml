@@ -361,10 +361,10 @@ and translate_expression (expr:expression) (env:environment) : michelson result 
       ]
     )
 
-and translate_function_body ({result ; binder} : anon_function) lst input : michelson result =
+and translate_function_body ({body ; binder} : anon_function) lst input : michelson result =
   let pre_env = Environment.of_list lst in
   let env = Environment.(add (binder , input) pre_env) in
-  let%bind expr_code = translate_expression result env in
+  let%bind expr_code = translate_expression body env in
   let%bind unpack_closure_code = Compiler_environment.unpack_closure pre_env in
   let code = seq [
       i_comment "unpack closure env" ;

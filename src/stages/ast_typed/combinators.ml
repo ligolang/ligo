@@ -60,6 +60,11 @@ let get_lambda e : _ result = match e with
   | E_lambda l -> ok l
   | _ -> simple_fail "not a lambda"
 
+let get_lambda_with_type e =
+  match (e.expression , e.type_annotation.type_value') with
+  | E_lambda l , T_function io -> ok (l , io)
+  | _ -> simple_fail "not a lambda with functional type"
+
 let get_t_bool (t:type_value) : unit result = match t.type_value' with
   | T_constant ("bool", []) -> ok ()
   | _ -> simple_fail "not a bool"

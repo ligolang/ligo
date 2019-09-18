@@ -51,7 +51,7 @@ let compile_file =
     let%bind contract =
       trace (simple_info "compiling contract to michelson") @@
       Ligo.Compile.Of_source.compile_file_contract_entry source entry_point (Syntax_name syntax) in
-    Format.printf "%a\n" Tezos_utils.Michelson.pp contract ;
+    Format.printf "%a\n" Tezos_utils.Michelson.pp contract.body ;
     ok ()
   in
   let term =

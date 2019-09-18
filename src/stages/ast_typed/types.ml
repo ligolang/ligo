@@ -148,23 +148,3 @@ and 'a matching =
   | Match_variant of (((constructor_name * name) * 'a) list * type_value)
 
 and matching_expr = ae matching
-
-open Trace
-
-let get_entry (p:program) (entry : string) : annotated_expression result =
-  let aux (d:declaration) =
-    match d with
-    | Declaration_constant ({name ; annotated_expression} , _) when entry = name -> Some annotated_expression
-    | Declaration_constant _ -> None
-  in
-  let%bind result =
-    trace_option (simple_error "no entry point with given name") @@
-    List.find_map aux (List.map Location.unwrap p) in
-  ok result
-
-let get_functional_entry (p:program) (entry : string) : (lambda * type_value) result =
-  let%bind entry = get_entry p entry in
-  match entry.expression with
-  | E_lambda l -> ok (l , entry.type_annotation)
-  | _ -> simple_fail "given entry point is not functional"
-

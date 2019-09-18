@@ -7,18 +7,15 @@ module Expression = struct
 
   let get_content : t -> t' = fun e -> e.content
   let get_type : t -> type_value = fun e -> e.type_value
-  let is_toplevel : t -> bool = fun e -> e.is_toplevel
 
-  let make = fun ?(itl = false) e' t -> {
+  let make = fun e' t -> {
     content = e' ;
     type_value = t ;
-    is_toplevel = itl ;
   }
 
-  let make_tpl = fun ?(itl = false) (e' , t) -> {
+  let make_tpl = fun (e' , t) -> {
     content = e' ;
     type_value = t ;
-    is_toplevel = itl ;
   }
 
   let pair : t -> t -> t' = fun a b -> E_constant ("PAIR" , [ a ; b ])
@@ -69,6 +66,20 @@ let get_list (v:value) = match v with
 let get_set (v:value) = match v with
   | D_set lst -> ok lst
   | _ -> simple_fail "not a set"
+
+let get_function_with_ty (e : expression) =
+  match (e.content , e.type_value) with
+  | E_literal (D_function f) , T_function ty -> ok (f , ty)
+  | _ -> simple_fail "not a function with functional type"
+
+let get_function (e : expression) =
+  match (e.content) with
+  | E_literal (D_function f) -> ok (D_function f)
+  | _ -> simple_fail "not a function"
+
+let get_t_function tv = match tv with
+  | T_function ty -> ok ty
+  | _ -> simple_fail "not a function"
 
 let get_t_option (v:type_value) = match v with
   | T_option t -> ok t
@@ -146,10 +157,10 @@ let t_deep_closure x y z : type_value = T_deep_closure ( x , y , z )
 let t_pair x y : type_value = T_pair ( x , y )
 let t_union x y : type_value = T_or ( x , y )
 
-let quote binder result : anon_function =
+let quote binder body : anon_function =
   {
     binder ;
-    result ;
+    body ;
   }
 
 
@@ -157,7 +168,7 @@ let e_int expr : expression = Expression.make_tpl (expr, t_int)
 let e_unit : expression = Expression.make_tpl (E_literal D_unit, t_unit)
 let e_skip : expression = Expression.make_tpl (E_skip, t_unit)
 let e_var_int name : expression = e_int (E_variable name)
-let e_let_int v tv expr body : expression = Expression.(make_tpl (
+let e_let_in v tv expr body : expression = Expression.(make_tpl (
     E_let_in ((v , tv) , expr , body) ,
     get_type body
   ))
@@ -166,11 +177,12 @@ let ez_e_sequence a b : expression = Expression.(make_tpl (E_sequence (make_tpl 
 
 let d_unit : value = D_unit
 
-let basic_quote expr : anon_function result =
-  ok @@ quote "input" expr
+let basic_quote expr in_ty out_ty : expression result =
+  let expr' = E_literal (D_function (quote "input" expr)) in
+  ok @@ Expression.make_tpl (expr' , t_function in_ty out_ty)
 
-let basic_int_quote expr : anon_function result =
-  basic_quote expr
+let basic_int_quote expr : expression result =
+  basic_quote expr t_int t_int
 
 
 let environment_wrap pre_environment post_environment = { pre_environment ; post_environment }

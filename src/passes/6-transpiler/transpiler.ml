@@ -313,7 +313,7 @@ and transpile_annotated_expression (ae:AST.annotated_expression) : expression re
               let%bind f' = match f.expression with
                 | E_lambda l -> (
                     let%bind body' = transpile_annotated_expression l.body in
-                    let%bind (input , _) = get_t_function f.type_annotation in
+                    let%bind (input , _) = AST.get_t_function f.type_annotation in
                     let%bind input' = transpile_type input in
                     ok ((l.binder , input') , body')
                   )
@@ -326,7 +326,7 @@ and transpile_annotated_expression (ae:AST.annotated_expression) : expression re
                         match f.expression with
                         | E_lambda l -> (
                             let%bind body' = transpile_annotated_expression l.body in
-                            let%bind (input , _) = get_t_function f.type_annotation in
+                            let%bind (input , _) = AST.get_t_function f.type_annotation in
                             let%bind input' = transpile_type input in
                             ok ((l.binder , input') , body')
                           )
@@ -357,7 +357,7 @@ and transpile_annotated_expression (ae:AST.annotated_expression) : expression re
     let%bind env =
       trace_strong (corner_case ~loc:__LOC__ "environment") @@
       transpile_environment ae.environment in
-    let%bind io = get_t_function ae.type_annotation in
+    let%bind io = AST.get_t_function ae.type_annotation in
     transpile_lambda env l io
   | E_list lst -> (
       let%bind t =
@@ -513,8 +513,8 @@ and transpile_lambda_deep : Mini_c.Environment.t -> AST.lambda -> _ -> Mini_c.ex
   let%bind (f_expr' , input_tv , output_tv) =
     let%bind raw_input = transpile_type input_type in
     let%bind output = transpile_type output_type in
-    let%bind result = transpile_annotated_expression body in
-    let expr' = E_closure { binder ; result } in
+    let%bind body = transpile_annotated_expression body in
+    let expr' = E_closure { binder ; body } in
     ok (expr' , raw_input , output) in
   let tv = Mini_c.t_deep_closure c_env input_tv output_tv in
   ok @@ Expression.make_tpl (f_expr' , tv)
@@ -529,7 +529,7 @@ and transpile_lambda env l (input_type , output_type) =
         let%bind input = transpile_type input_type in
         let%bind output = transpile_type output_type in
         let tv = Combinators.t_function input output in
-        let content = D_function { binder ; result = result'} in
+        let content = D_function { binder ; body = result'} in
         ok @@ Combinators.Expression.make_tpl (E_literal content , tv)
       )
     | _ -> (
@@ -545,7 +545,7 @@ let transpile_declaration env (d:AST.declaration) : toplevel_statement result =
       let env' = Environment.add (name, tv) env in
       ok @@ ((name, expression), environment_wrap env env')
 
-let transpile_program (lst:AST.program) : program result =
+let transpile_program (lst : AST.program) : program result =
   let aux (prev:(toplevel_statement list * Environment.t) result) cur =
     let%bind (tl, env) = prev in
     let%bind ((_, env') as cur') = transpile_declaration env cur in

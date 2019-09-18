@@ -100,10 +100,10 @@ and expression_with_type : _ -> expression -> _  = fun ppf e ->
     expression' e.content
     type_ e.type_value
 
-and function_ ppf ({binder ; result}:anon_function) =
+and function_ ppf ({binder ; body}:anon_function) =
   fprintf ppf "fun %s -> (%a)"
     binder
-    expression result
+    expression body
 
 and assignment ppf ((n, e):assignment) = fprintf ppf "%s = %a;" n expression e
 

@@ -3,9 +3,9 @@ open Mini_c
 open Combinators
 open Test_helpers
 
-let run_entry_int (e:anon_function) (n:int) : int result =
+let run_entry_int e (n:int) : int result =
   let param : value = D_int n in
-  let%bind result = Run.Of_mini_c.run_entry e (t_int , t_int) param in
+  let%bind result = Run.Of_mini_c.run_function e param t_int in
   match result with
   | D_int n -> ok n
   | _ -> simple_fail "result is not an int"
@@ -18,10 +18,10 @@ let identity () : unit result =
 
 let multiple_vars () : unit result =
   let expr =
-    e_let_int "a" t_int (e_var_int "input") @@
-    e_let_int "b" t_int (e_var_int "input") @@
-    e_let_int "c" t_int (e_var_int "a") @@
-    e_let_int "output" t_int (e_var_int "c") @@
+    e_let_in "a" t_int (e_var_int "input") @@
+    e_let_in "b" t_int (e_var_int "input") @@
+    e_let_in "c" t_int (e_var_int "a") @@
+    e_let_in "output" t_int (e_var_int "c") @@
     e_var_int "output" in
   let%bind f = basic_int_quote expr in
   let%bind result = run_entry_int f 42 in

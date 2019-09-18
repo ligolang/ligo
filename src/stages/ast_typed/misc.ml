@@ -125,6 +125,23 @@ module Errors = struct
       ("missing_key" , fun () -> Format.asprintf "%s" k)
     ] in
     error ~data title message ()
+
+  let missing_entry_point name =
+    let title () = "missing entry point" in
+    let content () = "no entry point with the given name" in
+    let data = [
+      ("name" , fun () -> name) ;
+    ] in
+    error ~data title content
+
+  let not_functional_main location =
+    let title () = "not functional main" in
+    let content () = "main should be a function" in
+    let data = [
+      ("location" , fun () -> Format.asprintf "%a" Location.pp location) ;
+    ] in
+    error ~data title content
+
 end
 
 module Free_variables = struct
@@ -473,3 +490,13 @@ let merge_annotation (a:type_value option) (b:type_value option) err : type_valu
       match a.simplified, b.simplified with
       | _, None -> ok a
       | _, Some _ -> ok b
+
+let get_entry (lst : program) (name : string) : annotated_expression result =
+  trace_option (Errors.missing_entry_point name) @@
+  let aux x =
+    let (Declaration_constant (an , _)) = Location.unwrap x in
+    if (an.name = name)
+    then Some an.annotated_expression
+    else None
+  in
+  List.find_map aux lst

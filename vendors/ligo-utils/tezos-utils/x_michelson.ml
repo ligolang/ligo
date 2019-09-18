@@ -15,7 +15,6 @@ let annotate annot = function
 
 let seq s : michelson = Seq (0, s)
 
-let i_comment s : michelson = seq [ prim ~annot:["\"" ^ s ^ "\""] I_UNIT ; prim I_DROP ]
 
 let contract parameter storage code =
   seq [
@@ -45,6 +44,9 @@ let i_piar = seq [ i_swap ; i_pair ]
 let i_push ty code = prim ~children:[ty;code] I_PUSH
 let i_push_unit = i_push t_unit d_unit
 let i_push_string str = i_push t_string (string str)
+
+let i_comment s : michelson = seq [ i_push_string s ; prim I_DROP ]
+
 let i_none ty = prim ~children:[ty] I_NONE
 let i_nil ty = prim ~children:[ty] I_NIL
 let i_empty_set ty = prim ~children:[ty] I_EMPTY_SET

@@ -18,15 +18,10 @@ let run_typed_program
   let%bind ex_ty_value = Of_michelson.run ?options code input in
   Compile.Of_simplified.uncompile_typed_program_entry_function_result program entry ex_ty_value
 
-
 let evaluate_typed_program_entry
     ?options
     (program : Ast_typed.program) (entry : string)
   : Ast_simplified.expression result =
-  let%bind code = Compile.Of_typed.compile_expression_entry program entry in
-  let%bind input =
-    let fake_input = Ast_typed.(e_a_unit Environment.full_empty) in
-
-  in
-  let%bind ex_ty_value = Of_michelson.run ?options code input in
+  let%bind code = Compile.Of_typed.compile_expression_as_function_entry program entry in
+  let%bind ex_ty_value = Of_michelson.evaluate ?options code in
   Compile.Of_simplified.uncompile_typed_program_entry_expression_result program entry ex_ty_value
