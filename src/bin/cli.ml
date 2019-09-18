@@ -50,8 +50,8 @@ let compile_file =
     toplevel @@
     let%bind contract =
       trace (simple_info "compiling contract to michelson") @@
-      Ligo.Run.compile_contract_file source entry_point (Syntax_name syntax) in
-    Format.printf "%s\n" contract ;
+      Ligo.Compile.Of_source.compile_file_contract_entry source entry_point (Syntax_name syntax) in
+    Format.printf "%a\n" Tezos_utils.Michelson.pp contract ;
     ok ()
   in
   let term =
@@ -65,8 +65,8 @@ let compile_parameter =
     toplevel @@
     let%bind value =
       trace (simple_error "compile-input") @@
-      Ligo.Run.compile_contract_parameter source entry_point expression (Syntax_name syntax) in
-    Format.printf "%s\n" value;
+      Ligo.Compile.Of_source.compile_file_contract_parameter source entry_point expression (Syntax_name syntax) in
+    Format.printf "%a\n" Tezos_utils.Michelson.pp value;
     ok ()
   in
   let term =
@@ -80,8 +80,8 @@ let compile_storage =
     toplevel @@
     let%bind value =
       trace (simple_error "compile-storage") @@
-      Ligo.Run.compile_contract_storage source entry_point expression (Syntax_name syntax) in
-    Format.printf "%s\n" value;
+      Ligo.Compile.Of_source.compile_file_contract_storage source entry_point expression (Syntax_name syntax) in
+    Format.printf "%a\n" Tezos_utils.Michelson.pp value;
     ok ()
   in
   let term =
@@ -94,7 +94,7 @@ let dry_run =
   let f source entry_point storage input amount syntax =
     toplevel @@
     let%bind output =
-      Ligo.Run.run_contract ~amount source entry_point storage input (Syntax_name syntax) in
+      Ligo.Run.Of_source.run_contract ~amount source entry_point storage input (Syntax_name syntax) in
     Format.printf "%a\n" Ast_simplified.PP.expression output ;
     ok ()
   in
@@ -108,7 +108,7 @@ let run_function =
   let f source entry_point parameter amount syntax =
     toplevel @@
     let%bind output =
-      Ligo.Run.run_function ~amount source entry_point parameter (Syntax_name syntax) in
+      Ligo.Run.Of_source.run_function ~amount source entry_point parameter (Syntax_name syntax) in
     Format.printf "%a\n" Ast_simplified.PP.expression output ;
     ok ()
   in
@@ -122,7 +122,7 @@ let evaluate_value =
   let f source entry_point amount syntax =
     toplevel @@
     let%bind output =
-      Ligo.Run.evaluate_value ~amount source entry_point (Syntax_name syntax) in
+      Ligo.Run.Of_source.evaluate ~amount source entry_point (Syntax_name syntax) in
     Format.printf "%a\n" Ast_simplified.PP.expression output ;
     ok ()
   in

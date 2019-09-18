@@ -1,11 +1,11 @@
 open Trace
-open Ligo.Mini_c
+open Mini_c
 open Combinators
 open Test_helpers
 
 let run_entry_int (e:anon_function) (n:int) : int result =
   let param : value = D_int n in
-  let%bind result = Main.Run_mini_c.run_entry e (t_int , t_int) param in
+  let%bind result = Run.Of_mini_c.run_entry e (t_int , t_int) param in
   match result with
   | D_int n -> ok n
   | _ -> simple_fail "result is not an int"

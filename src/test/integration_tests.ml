@@ -1,11 +1,10 @@
 open Trace
-open Ligo.Run
 open Test_helpers
 
 open Ast_simplified.Combinators
 
-let mtype_file ?debug_simplify ?debug_typed = type_file ?debug_simplify ?debug_typed Cameligo
-let type_file = type_file Pascaligo
+let mtype_file ?debug_simplify ?debug_typed = Ligo.Compile.Of_source.type_file ?debug_simplify ?debug_typed (Syntax_name "cameligo")
+let type_file = Ligo.Compile.Of_source.type_file (Syntax_name "pascaligo")
 
 let type_alias () : unit result =
   let%bind program = type_file "./contracts/type-alias.ligo" in
@@ -184,9 +183,9 @@ let bytes_arithmetic () : unit result =
   let%bind () = expect_eq program "slice_op" tata at in
   let%bind () = expect_fail program "slice_op" foo in
   let%bind () = expect_fail program "slice_op" ba in
-  let%bind b1 = run_simplityped program "hasherman" foo in
+  let%bind b1 = Run.Of_simplified.run_typed_program program "hasherman" foo in
   let%bind () = expect_eq program "hasherman" foo b1 in
-  let%bind b3 = run_simplityped program "hasherman" foototo in
+  let%bind b3 = Run.Of_simplified.run_typed_program program "hasherman" foototo in
   let%bind () = Assert.assert_fail @@ Ast_simplified.Misc.assert_value_eq (b3 , b1) in
   ok ()
 
@@ -577,9 +576,9 @@ let guess_string_mligo () : unit result =
 
 let basic_mligo () : unit result =
   let%bind typed = mtype_file ~debug_simplify:true "./contracts/basic.mligo" in
-  let%bind result = evaluate_typed "foo" typed in
-  Ligo.AST_Typed.assert_value_eq
-    (Ligo.AST_Typed.Combinators.e_a_empty_int (42 + 127), result)
+  let%bind result = Run.Of_typed.evaluate_entry typed "foo" in
+  Ast_typed.assert_value_eq
+    (Ast_typed.Combinators.e_a_empty_int (42 + 127), result)
 
 let counter_mligo () : unit result =
   let%bind program = mtype_file "./contracts/counter.mligo" in

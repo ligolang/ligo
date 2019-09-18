@@ -12,7 +12,13 @@ let compile_file_entry : string -> string -> s_syntax -> Compiler.Program.compil
   let%bind simplified = parse_file_program source_filename syntax in
   Of_simplified.compile_function_entry simplified entry_point
 
-let compile_file_parameter : string -> string -> string -> s_syntax -> Michelson.t result =
+let compile_file_contract_entry : string -> string -> s_syntax -> Michelson.t result =
+  fun source_filename entry_point syntax ->
+  let%bind simplified = parse_file_program source_filename syntax in
+  let%bind f = Of_simplified.compile_function_entry simplified entry_point in
+  ok f.body
+
+let compile_file_contract_parameter : string -> string -> string -> s_syntax -> Michelson.t result =
   fun source_filename _entry_point expression syntax ->
   let%bind syntax = syntax_to_variant syntax (Some source_filename) in
   let%bind simplified = parsify_expression syntax expression in
@@ -24,7 +30,7 @@ let compile_file_expression : string -> string -> string -> s_syntax -> Michelso
   let%bind simplified = parsify_expression syntax expression in
   Of_simplified.compile_expression simplified
 
-let compile_file_storage : string -> string -> string -> s_syntax -> Michelson.t result =
+let compile_file_contract_storage : string -> string -> string -> s_syntax -> Michelson.t result =
   fun source_filename _entry_point expression syntax ->
   let%bind syntax = syntax_to_variant syntax (Some source_filename) in
   let%bind simplified = parsify_expression syntax expression in

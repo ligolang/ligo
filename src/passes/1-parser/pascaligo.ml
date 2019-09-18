@@ -4,7 +4,7 @@ module Parser = Parser_pascaligo.Parser
 module AST = Parser_pascaligo.AST
 module ParserLog = Parser_pascaligo.ParserLog
 
-let parse_file (source: string) : AST.t result =  
+let parse_file (source: string) : AST.t result =
   let pp_input =
     let prefix = Filename.(source |> basename |> remove_extension)
     and suffix = ".pp.ligo"

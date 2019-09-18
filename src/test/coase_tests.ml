@@ -1,10 +1,9 @@
 (* Copyright Coase, Inc 2019 *)
 
 open Trace
-open Ligo.Run
 open Test_helpers
 
-let type_file = type_file Pascaligo
+let type_file = Ligo.Compile.Of_source.type_file (Syntax_name "pascaligo")
 
 let get_program =
   let s = ref None in

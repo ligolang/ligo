@@ -38,7 +38,7 @@ let expect ?options program entry_point input expecter =
       let content () = Format.asprintf "Entry_point: %s" entry_point in
       error title content in
     trace run_error @@
-    Ligo.Run.run_simplityped ~debug_michelson:true ?options program entry_point input in
+    Ligo.Run.Of_simplified.run_typed_program ?options program entry_point input in
   expecter result
 
 let expect_fail ?options program entry_point input =
@@ -49,7 +49,7 @@ let expect_fail ?options program entry_point input =
   in
   trace run_error @@
   Assert.assert_fail
-  @@ Ligo.Run.run_simplityped ~debug_michelson:true ?options program entry_point input
+  @@ Ligo.Run.Of_simplified.run_typed_program ?options program entry_point input
 
 
 let expect_eq ?options program entry_point input expected =
@@ -70,7 +70,7 @@ let expect_evaluate program entry_point expecter =
     let content () = Format.asprintf "Entry_point: %s" entry_point in
     error title content in
   trace error @@
-  let%bind result = Ligo.Run.evaluate_simplityped ~debug_mini_c:true ~debug_michelson:true program entry_point in
+  let%bind result = Ligo.Run.Of_simplified.evaluate_typed_program_entry program entry_point in
   expecter result
 
 let expect_eq_evaluate program entry_point expected =
