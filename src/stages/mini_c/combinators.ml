@@ -81,6 +81,10 @@ let get_t_function tv = match tv with
   | T_function ty -> ok ty
   | _ -> simple_fail "not a function"
 
+let get_t_closure tv = match tv with
+  | T_deep_closure ty -> ok ty
+  | _ -> simple_fail "not a function"
+
 let get_t_option (v:type_value) = match v with
   | T_option t -> ok t
   | _ -> simple_fail "not an option"

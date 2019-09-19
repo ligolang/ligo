@@ -125,3 +125,14 @@ and map_cases : mapper -> matching_expr -> matching_expr result = fun f m ->
       let%bind lst' = bind_map_list aux lst in
       ok @@ Match_variant lst'
     )
+
+and map_program : mapper -> program -> program result = fun m p ->
+  let aux = fun (x : declaration) ->
+    match x with
+    | Declaration_constant (t , o , e) -> (
+        let%bind e' = map_expression m e in
+        ok (Declaration_constant (t , o , e'))
+      )
+    | Declaration_type _ -> ok x
+  in
+  bind_map_list (bind_map_location aux) p

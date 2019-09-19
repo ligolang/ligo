@@ -28,9 +28,6 @@ let annotation () : unit result =
   let%bind () =
     expect_eq_evaluate program "address" (e_address "tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx")
   in
-  let%bind () =
-    expect_eq_evaluate program "address_2" (e_address "tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx")
-  in
   ok ()
 
 let complex_function () : unit result =
@@ -99,14 +96,21 @@ let higher_order () : unit result =
 
 let shared_function () : unit result =
   let%bind program = type_file "./contracts/function-shared.ligo" in
+  Format.printf "inc\n" ;
   let%bind () =
     let make_expect = fun n -> (n + 1) in
     expect_eq_n_int program "inc" make_expect
   in
+  Format.printf "double inc?\n" ;
+  let%bind () =
+    expect_eq program "double_inc" (e_int 0) (e_int 2)
+  in
+  Format.printf "double incd!\n" ;
   let%bind () =
     let make_expect = fun n -> (n + 2) in
     expect_eq_n_int program "double_inc" make_expect
   in
+  Format.printf "foo\n" ;
   let%bind () =
     let make_expect = fun n -> (2 * n + 3) in
     expect_eq program "foo" (e_int 0) (e_int @@ make_expect 0)

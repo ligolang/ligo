@@ -1,1 +1,2 @@
-let convert_annotation = Helpers.map_expression Tezos_type_annotation.peephole_expression
+let convert_annotation_expression = Helpers.map_expression Tezos_type_annotation.peephole_expression
+let convert_annotation_program = Helpers.map_program Tezos_type_annotation.peephole_expression

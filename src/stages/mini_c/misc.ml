@@ -87,7 +87,22 @@ let aggregate_entry (lst : program) (name : string) (to_functionalize : bool) : 
       let e' = { entry_expression with content = E_literal (D_function l') } in
       ok e'
     )
+  | (E_closure l , false) -> (
+      let l' = { l with body = wrapper l.body } in
+      let%bind t' =
+        let%bind (_ , input_ty , output_ty) = get_t_closure entry_expression.type_value in
+        ok (t_function input_ty output_ty)
+      in
+      let e' = {
+        content = E_literal (D_function l') ;
+        type_value = t' ;
+      } in
+      ok e'
+    )
   | (_ , true) -> (
       ok @@ functionalize @@ wrapper entry_expression
     )
-  | _ -> fail @@ Errors.not_functional_main name
+  | _ -> (
+      Format.printf "Not functional: %a\n" PP.expression entry_expression ;
+      fail @@ Errors.not_functional_main name
+  )

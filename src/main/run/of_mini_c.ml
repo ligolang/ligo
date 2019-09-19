@@ -35,6 +35,12 @@ let run_function ?options expression input ty =
   let%bind ex_ty_value = Of_michelson.run ?options code input in
   Compile.Of_mini_c.uncompile_value ex_ty_value
 
+let run_function_value ?options expression input ty =
+  let%bind code = Compile.Of_mini_c.compile_function expression in
+  let%bind input = Compile.Of_mini_c.compile_value input ty in
+  let%bind ex_ty_value = Of_michelson.run ~is_input_value:true ?options code input in
+  Compile.Of_mini_c.uncompile_value ex_ty_value
+
 let run_function_entry ?options program entry input =
   let%bind code = Compile.Of_mini_c.compile_function_entry program entry in
   let%bind input_michelson =

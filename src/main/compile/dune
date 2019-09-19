@@ -7,6 +7,7 @@
     parser
     simplify
     ast_simplified
+    self_ast_simplified
     typer
     ast_typed
     transpiler

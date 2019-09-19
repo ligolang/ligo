@@ -547,9 +547,9 @@ let transpile_declaration env (d:AST.declaration) : toplevel_statement result =
 
 let transpile_program (lst : AST.program) : program result =
   let aux (prev:(toplevel_statement list * Environment.t) result) cur =
-    let%bind (tl, env) = prev in
+    let%bind (hds, env) = prev in
     let%bind ((_, env') as cur') = transpile_declaration env cur in
-    ok (cur' :: tl, env'.post_environment)
+    ok (hds @ [ cur' ], env'.post_environment)
   in
   let%bind (statements, _) = List.fold_left aux (ok ([], Environment.empty)) (temp_unwrap_loc_list lst) in
   ok statements

@@ -69,7 +69,7 @@ and value_assoc ppf : (value * value) -> unit = fun (a, b) ->
 
 and expression' ppf (e:expression') = match e with
   | E_skip -> fprintf ppf "skip"
-  | E_closure x -> function_ ppf x
+  | E_closure x -> fprintf ppf "C(%a)" function_ x
   | E_variable v -> fprintf ppf "V(%s)" v
   | E_application(a, b) -> fprintf ppf "(%a)@(%a)" expression a expression b
   | E_constant(p, lst) -> fprintf ppf "%s %a" p (pp_print_list ~pp_sep:space_sep expression) lst
