@@ -25,4 +25,4 @@
   (targets Version.ml)
   (action
     (progn (run "sh" "-c" "printf 'let version = \"%s\"'\\\\n \"$(echo UNKNOWN)\" > Version.ml")))
-  (mode promote-until-clean))
+  (mode (promote (until-clean) (only *))))

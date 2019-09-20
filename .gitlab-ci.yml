@@ -9,7 +9,7 @@ stages:
   - test
 
 .website_build: &website_build
-  stage: test # TODO DODODODODODODODODODODODODODODODODODODODODODODODODODODODODODODODODODODODODODODODODODO restore to  build_and_deploy_website
+  stage: build_and_deploy_website
   image: node:8
   before_script:
     - scripts/install_native_dependencies.sh
@@ -18,18 +18,12 @@ stages:
     - eval $(opam config env)
     - scripts/setup_switch.sh
     - eval $(opam config env)
-    - scripts/debug_show_versions.sh || true
+    - scripts/setup_repos.sh
 
     # install deps for internal documentation
-    - opam install -y odoc
-    # - vendors/opam-repository-tools/rewrite-local-opam-repository.sh
-    # - opam repository add localrepo "file://$PWD/vendors/ligo-opam-repository-local-generated/"
     - scripts/install_vendors_deps.sh
+    - opam install -y odoc
     - scripts/build_ligo_local.sh
-    # - opam install -y --build-test --deps-only ./src/
-    # - dune build -p ligo
-    # TODO: also try instead from time to time:
-    #- (cd ./src/; dune build -p ligo)
 
     # build with odoc
     - dune build @doc
@@ -67,14 +61,10 @@ stages:
     - scripts/install_native_dependencies.sh
     - scripts/install_opam.sh # TODO: or scripts/install_build_environment.sh ?
     - export PATH="/usr/local/bin${PATH:+:}${PATH:-}"
-    - echo "$PATH"; which ocaml || true
     - eval $(opam config env)
-    - echo "$PATH"; which ocaml || true
     - scripts/setup_switch.sh
-    - echo "$PATH"; which ocaml || true
     - eval $(opam config env)
-    - echo "$PATH"; which ocaml || true
-    - scripts/debug_show_versions.sh || true
+    - scripts/setup_repos.sh
 
 local-dune-job:
   <<: *before_script
@@ -115,7 +105,7 @@ remote-repo-job:
 
 # Run a docker build without publishing to the registry
 build-current-docker-image:
-  stage: test # TODO DODODODODODODODODODODODODODODODODODODODODODODODODODODODODODODODODODODODODODODODODODO restore to  build_docker
+  stage: build_docker
   <<: *docker
   <<: *docker_build
   except:
@@ -125,7 +115,7 @@ build-current-docker-image:
 # When a MR/PR is merged to dev
 # take the previous build and publish it to Docker Hub
 build-and-publish-latest-docker-image:
-  stage: test # TODO DODODODODODODODODODODODODODODODODODODODODODODODODODODODODODODODODODODODODODODODODODO restore to  build_and_deploy_docker
+  stage: build_and_deploy_docker
   <<: *docker
   <<: *docker_build
   after_script:
@@ -133,9 +123,6 @@ build-and-publish-latest-docker-image:
     - docker push $LIGO_REGISTRY_IMAGE:next
   only:
     - dev
-    - refactor/new-tezos-deps-ci
-    - refactor/new-tezos-deps-cicliexe
-
 
 # Pages are deployed from both master & dev, be careful not to override 'next'
 # in case something gets merged into 'dev' while releasing.
@@ -144,5 +131,3 @@ pages:
   only:
     - master
     - dev
-    - refactor/new-tezos-deps-ci
-    - refactor/new-tezos-deps-cicliexe

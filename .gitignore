@@ -1,5 +1,5 @@
 /_build/
-/dune-project
+dune-project
 *~
 *.merlin
 cache/*

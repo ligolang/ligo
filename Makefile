@@ -10,20 +10,14 @@ install-deps:
 	scripts/install_build_environment.sh # TODO: or scripts/install_opam.sh ?
 
 build-deps:
-	echo aa
 	export PATH="/usr/local/bin$${PATH:+:}$${PATH:-}"
 #	Create opam dev switch locally for use with Ligo, add merlin/etc
 	if [ -n "`opam switch show | grep -P ".+/ligo"`" ];
 	then :; else scripts/setup_dev_switch.sh;
 	fi
-	echo bb
 	eval $$(opam config env)
-	echo cc
 #	Install OCaml build dependencies for Ligo
 	scripts/install_vendors_deps.sh
-	echo dd
-	scripts/install_ligo_with_dependencies.sh # TODO: rename & cleanup
-	echo ee
 
 build: build-deps
 	export PATH="/usr/local/bin$${PATH:+:}$${PATH:-}"
