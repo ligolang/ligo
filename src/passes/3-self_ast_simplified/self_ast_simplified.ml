@@ -1,2 +1,3 @@
 let convert_annotation_expression = Helpers.map_expression Tezos_type_annotation.peephole_expression
 let convert_annotation_program = Helpers.map_program Tezos_type_annotation.peephole_expression
+let convert_none_variant_to_const = Helpers.map_program None_variant.peephole_expression

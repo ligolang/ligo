@@ -340,6 +340,18 @@ let option () : unit result =
   in
   ok ()
 
+let moption () : unit result =
+  let%bind program = mtype_file "./contracts/option.mligo" in
+  let%bind () =
+    let expected = e_some (e_int 42) in
+    expect_eq_evaluate program "s" expected
+  in
+  let%bind () =
+    let expected = e_typed_none t_int in
+    expect_eq_evaluate program "n" expected
+  in
+  ok ()
+
 let map () : unit result =
   let%bind program = type_file "./contracts/map.ligo" in
   let ez lst =
@@ -692,6 +704,7 @@ let main = test_suite "Integration (End to End)" [
     test "unit" unit_expression ;
     test "string" string_expression ;
     test "option" option ;
+    test "option (mligo)" moption ;
     test "map" map ;
     test "list" list ;
     test "loop" loop ;

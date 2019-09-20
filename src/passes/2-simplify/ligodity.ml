@@ -404,6 +404,9 @@ let rec simpl_expression :
       | "Some" -> (
           return @@ e_some ~loc arg
         )
+      | "None" -> (
+          return @@ e_none ~loc ()
+        )
       | _ -> (
           return @@ e_constructor ~loc c_name arg
         )
@@ -699,6 +702,24 @@ and simpl_cases : type a . (Raw.pattern * a) list -> a matching result =
       )
     | _ -> fail @@ only_constructors t
   in
+  let rec get_constr_opt (t:Raw.pattern) =
+    match t with
+    | PPar p -> get_constr_opt p.value.inside
+    | PConstr v -> (
+        let (const , pat_opt) = v.value in
+        let%bind var_opt =
+          match pat_opt with
+          | None -> ok None
+          | Some pat -> (
+              let%bind single_pat = get_single pat in
+              let%bind var = get_var single_pat in
+              ok (Some var)
+            )
+        in
+        ok (const.value , var_opt)
+      )
+    | _ -> fail @@ only_constructors t
+  in
   let%bind patterns =
     let aux (x , y) =
       let xs = get_tuple x in
@@ -727,21 +748,44 @@ and simpl_cases : type a . (Raw.pattern * a) list -> a matching result =
       ok @@ Match_list {match_cons = (a, b, cons) ; match_nil = nil}
     )
   | lst -> (
-      trace (simple_info "currently, only booleans, lists and constructors \
-                          are supported in patterns") @@
-      let%bind constrs =
+      let error x =
+        let title () = "Pattern" in
+        let content () =
+          Format.asprintf "Pattern : %a" (PP_helpers.printer Raw.print_pattern) x in
+        error title content
+      in
+      let as_variant () =
+        trace (simple_info "currently, only booleans, lists, options, and constructors \
+                            are supported in patterns") @@
+        let%bind constrs =
+          let aux (x , y) =
+            let%bind x' =
+              trace (error x) @@
+              get_constr x
+            in
+            ok (x' , y)
+          in
+          bind_map_list aux lst
+        in
+        ok @@ Match_variant constrs
+      in
+      let as_option () =
         let aux (x , y) =
-          let error =
-            let title () = "Pattern" in
-            let content () =
-              Format.asprintf "Pattern : %a" (PP_helpers.printer Raw.print_pattern) x in
-            error title content in
           let%bind x' =
-            trace error @@
-            get_constr x in
-          ok (x' , y) in
-        bind_map_list aux lst in
-      ok @@ Match_variant constrs
+            trace (error x) @@
+            get_constr_opt x
+          in
+          ok (x' , y)
+        in
+        let%bind constrs = bind_map_list aux lst in
+        match constrs with
+        | [ (("Some" , Some some_var) , some_expr) ; (("None" , None) , none_expr) ]
+        | [ (("None" , None) , none_expr) ; (("Some" , Some some_var) , some_expr) ] -> (
+            ok @@ Match_option { match_some = (some_var , some_expr) ; match_none = none_expr }
+          )
+        | _ -> simple_fail "bad option pattern"
+      in
+      bind_or (as_option () , as_variant ())
     )
 
 let simpl_program : Raw.ast -> program result = fun t ->
