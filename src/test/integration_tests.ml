@@ -406,6 +406,14 @@ let list () : unit result =
     expect_eq_evaluate program "fb" expected
   in
   let%bind () =
+    let expected = ez [144 ; 23 ; 42] in
+    expect_eq_evaluate program "fb2" expected
+  in
+  let%bind () =
+    let expected = ez [688 ; 144 ; 23 ; 42] in
+    expect_eq_evaluate program "fb3" expected
+  in
+  let%bind () =
     let make_input = fun n -> (ez @@ List.range n) in
     let make_expected = e_nat in
     expect_eq_n_strict_pos_small program "size_" make_input make_expected

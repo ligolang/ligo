@@ -88,6 +88,7 @@ module Simplify = struct
       ("sha_256" , "SHA256") ;
       ("sha_512" , "SHA512") ;
       ("blake2b" , "BLAKE2b") ;
+      ("cons" , "CONS") ;
     ]
 
     let type_constants = type_constants
@@ -227,6 +228,11 @@ module Typer = struct
       fail (simple_error "Typing substraction, bad parameters.")
 
   let some = typer_1 "SOME" @@ fun a -> ok @@ t_option a ()
+
+  let list_cons : typer = typer_2 "CONS" @@ fun hd tl ->
+    let%bind tl' = get_t_list tl in
+    let%bind () = assert_type_value_eq (hd , tl') in
+    ok tl
 
   let map_remove : typer = typer_2 "MAP_REMOVE" @@ fun k m ->
     let%bind (src , _) = get_t_map m in
@@ -617,6 +623,7 @@ module Typer = struct
       slice ;
       address ;
       assertion ;
+      list_cons ;
     ]
 
 end
@@ -691,6 +698,7 @@ module Compiler = struct
     ("HASH_KEY" , simple_unary @@ prim I_HASH_KEY) ;
     ("PACK" , simple_unary @@ prim I_PACK) ;
     ("CONCAT" , simple_binary @@ prim I_CONCAT) ;
+    ("CONS" , simple_binary @@ prim I_CONS) ;
   ]
 
   (*
