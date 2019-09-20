@@ -86,7 +86,7 @@ let rec exp_to_value (exp: Mini_c.expression) : Mini_c.value result =
           end
         | E_make_empty_map _ ->
           ok @@ []
-        | _ -> failwith "impossible"
+        | _ -> failwith "Ill-constructed map"
       in
       begin
       match exp.type_value with
@@ -98,8 +98,9 @@ let rec exp_to_value (exp: Mini_c.expression) : Mini_c.value result =
           ok @@ D_map kvl
         | _ -> failwith "UPDATE with a non-map type_value"
       end
-    | _ ->
-      fail @@ simple_error "Can not convert expression to literal"
+    | _ as nl -> 
+      let expp = Format.asprintf "'%a'" Mini_c.PP.expression' nl in
+      fail @@ simple_error ("Can not convert expression "^expp^" to literal")
 
 let convert_to_literals (e:Ast_typed.annotated_expression) : Mini_c.value result =
   let open Transpiler in
