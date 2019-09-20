@@ -18,15 +18,13 @@ const versions = require(`${CWD}/versions.json`);
 function Versions(props) {
   const {config: siteConfig} = props;
   const latestVersion = versions[0];
-  const repoUrl = `https://github.com/${siteConfig.organizationName}/${
-    siteConfig.projectName
-  }`;
+  const repoUrl = `${siteConfig.repoUrl}`;
   return (
     <div className="docMainWrapper wrapper">
       <Container className="mainContainer versionsContainer">
         <div className="post">
           <header className="postHeader">
-            <h1>{siteConfig.title} Versions</h1>
+            <h1>{siteConfig.title} Versions </h1>
           </header>
           <h3 id="latest">Current version</h3>
           <table className="versions">
