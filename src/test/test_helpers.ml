@@ -12,14 +12,14 @@ let wrap_test name f =
   match result with
   | Ok ((), annotations) -> ignore annotations; ()
   | Error err ->
-    Format.printf "%a\n%!" Ligo.Display.error_pp (err ()) ;
+    Format.printf "%a\n%!" (Ligo.Display.error_pp ~dev:true) (err ()) ;
     raise Alcotest.Test_error
 
 let wrap_test_raw f =
   match f () with
   | Trace.Ok ((), annotations) -> ignore annotations; ()
   | Error err ->
-    Format.printf "%a\n%!" Ligo.Display.error_pp (err ())
+    Format.printf "%a\n%!" (Ligo.Display.error_pp ~dev:true) (err ())
 
 let test name f =
   Test (

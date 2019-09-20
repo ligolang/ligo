@@ -28,6 +28,10 @@ let compile_function_entry : program -> string -> _ = fun p entry ->
   let%bind prog_mini_c = Transpiler.transpile_program p in
   Of_mini_c.compile_function_entry prog_mini_c entry
 
+let compile_contract_entry : program -> string -> _ = fun p entry ->
+  let%bind prog_mini_c = Transpiler.transpile_program p in
+  Of_mini_c.compile_contract_entry prog_mini_c entry
+
 let compile_expression_as_function_entry : program -> string -> _ = fun p entry ->
   let%bind prog_mini_c = Transpiler.transpile_program p in
   Of_mini_c.compile_expression_as_function_entry prog_mini_c entry

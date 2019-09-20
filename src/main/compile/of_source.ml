@@ -15,7 +15,8 @@ let compile_file_entry : string -> string -> s_syntax -> _ result =
 let compile_file_contract_entry : string -> string -> s_syntax -> _ result =
   fun source_filename entry_point syntax ->
   let%bind simplified = parse_file_program source_filename syntax in
-  Of_simplified.compile_function_entry simplified entry_point
+  let%bind compiled_contract = Of_simplified.compile_contract_entry simplified entry_point in
+  ok compiled_contract
 
 let compile_file_contract_parameter : string -> string -> string -> s_syntax -> Michelson.t result =
   fun source_filename _entry_point expression syntax ->

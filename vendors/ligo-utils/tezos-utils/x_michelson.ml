@@ -86,6 +86,18 @@ let pp ppf (michelson:michelson) =
   let node = printable string_of_prim canonical in
   print_expr ppf node
 
+let pp_json ppf (michelson : michelson) =
+  let open Micheline_printer in
+  let canonical = strip_locations michelson in
+  let node = printable string_of_prim canonical in
+  let json = Tezos_data_encoding.(
+      Json.construct
+        (Micheline.erased_encoding ~variant:"???" {comment = None} Data_encoding.string)
+        node
+    )
+  in
+  Format.fprintf ppf "%a" Tezos_data_encoding.Json.pp json
+
 let pp_stripped ppf (michelson:michelson) =
   let open Micheline_printer in
   let michelson' = strip_nops @@ strip_annots michelson in

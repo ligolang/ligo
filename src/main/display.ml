@@ -97,3 +97,18 @@ let formatted_string_result_pp (display_format : display_format) =
   | `Human_readable -> string_result_pp_hr
   | `Dev -> string_result_pp_dev
   | `Json -> string_result_pp_json
+
+type michelson_format = [
+  | `Michelson
+  | `Micheline
+]
+
+let michelson_format_of_string = fun s : michelson_format result ->
+  match s with
+  | "michelson" -> ok `Michelson
+  | "micheline" -> ok `Micheline
+  | _ -> simple_fail "bad michelson format"
+
+let michelson_pp (mf : michelson_format) = match mf with
+  | `Michelson -> Michelson.pp
+  | `Micheline -> Michelson.pp_json

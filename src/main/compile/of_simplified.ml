@@ -2,6 +2,10 @@ open Ast_simplified
 open Trace
 open Tezos_utils
 
+let compile_contract_entry (program : program) entry_point =
+  let%bind prog_typed = Typer.type_program program in
+  Of_typed.compile_contract_entry prog_typed entry_point
+
 let compile_function_entry (program : program) entry_point : _ result =
   let%bind prog_typed = Typer.type_program program in
   Of_typed.compile_function_entry prog_typed entry_point

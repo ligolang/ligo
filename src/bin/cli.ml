@@ -53,16 +53,25 @@ let display_format =
     info ~docv ~doc ["format" ; "display-format"] in
   value @@ opt string "human-readable" info
 
+let michelson_code_format =
+  let open Arg in
+  let info  =
+    let docv = "MICHELSON_FORMAT" in
+    let doc = "$(docv) is the format that will be used by compile-contract for the resulting Michelson. Available formats are 'micheline', and 'michelson' (default). Micheline is the format used by [XXX]." in
+    info ~docv ~doc ["michelson-format"] in
+  value @@ opt string "michelson" info
+
 let compile_file =
-  let f source entry_point syntax display_format =
+  let f source entry_point syntax display_format michelson_format =
     toplevel ~display_format @@
+    let%bind michelson_format = Main.Display.michelson_format_of_string michelson_format in
     let%bind contract =
       trace (simple_info "compiling contract to michelson") @@
       Ligo.Compile.Of_source.compile_file_contract_entry source entry_point (Syntax_name syntax) in
-    ok @@ Format.asprintf "%a\n" Tezos_utils.Michelson.pp contract.body
+    ok @@ Format.asprintf "%a\n" (Main.Display.michelson_pp michelson_format) contract
   in
   let term =
-    Term.(const f $ source 0 $ entry_point 1 $ syntax $ display_format) in
+    Term.(const f $ source 0 $ entry_point 1 $ syntax $ display_format $ michelson_code_format) in
   let cmdname = "compile-contract" in
   let docs = "Subcommand: compile a contract. See `ligo " ^ cmdname ^ " --help' for a list of options specific to this subcommand." in
   (term , Term.info ~docs cmdname)
