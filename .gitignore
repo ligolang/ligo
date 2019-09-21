@@ -5,3 +5,4 @@ dune-project
 cache/*
 Version.ml
 /_opam/
+/*.pp.ligo
