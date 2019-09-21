@@ -274,7 +274,7 @@ and type_match : type i o . (environment -> i -> o result) -> environment -> O.t
       let e' = Environment.add_ez_binder hd t_list e in
       let e' = Environment.add_ez_binder tl t e' in
       let%bind b' = f e' b in
-      ok (O.Match_list {match_nil ; match_cons = (hd, tl, b')})
+      ok (O.Match_list {match_nil ; match_cons = (((hd , t_list), (tl , t)), b')})
   | Match_tuple (lst, b) ->
       let%bind t_tuple =
         trace_strong (match_error ~expected:i ~actual:t loc)
@@ -646,7 +646,7 @@ and type_expression : environment -> ?tv_opt:O.type_value -> I.expression -> O.a
             let aux (cur:O.value O.matching) =
               match cur with
               | Match_bool { match_true ; match_false } -> [ match_true ; match_false ]
-              | Match_list { match_nil ; match_cons = (_ , _ , match_cons) } -> [ match_nil ; match_cons ]
+              | Match_list { match_nil ; match_cons = ((_ , _) , match_cons) } -> [ match_nil ; match_cons ]
               | Match_option { match_none ; match_some = (_ , match_some) } -> [ match_none ; match_some ]
               | Match_tuple (_ , match_tuple) -> [ match_tuple ]
               | Match_variant (lst , _) -> List.map snd lst in
@@ -862,10 +862,10 @@ and untype_matching : type o i . (o -> i result) -> o O.matching -> (i I.matchin
       let%bind some = f some in
       let match_some = fst v, some in
       ok @@ Match_option {match_none ; match_some}
-  | Match_list {match_nil ; match_cons = (hd, tl, cons)} ->
+  | Match_list {match_nil ; match_cons = (((hd_name , _) , (tl_name , _)), cons)} ->
       let%bind match_nil = f match_nil in
       let%bind cons = f cons in
-      let match_cons = hd, tl, cons in
+      let match_cons = hd_name , tl_name , cons in
       ok @@ Match_list {match_nil ; match_cons}
   | Match_variant (lst , _) ->
       let aux ((a,b),c) =

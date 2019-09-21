@@ -448,8 +448,22 @@ and transpile_annotated_expression (ae:AST.annotated_expression) : expression re
           let%bind (tv' , s') =
             let%bind tv' = transpile_type tv in
             let%bind s' = transpile_annotated_expression s in
-            ok (tv' , s') in
+            ok (tv' , s')
+          in
           return @@ E_if_none (expr' , n , ((name , tv') , s'))
+      | Match_list {
+          match_nil ;
+          match_cons = (((hd_name , hd_ty) , (tl_name , tl_ty)) , match_cons) ;
+        } -> (
+          let%bind nil = transpile_annotated_expression match_nil in
+          let%bind cons =
+            let%bind hd_ty' = transpile_type hd_ty in
+            let%bind tl_ty' = transpile_type tl_ty in
+            let%bind match_cons' = transpile_annotated_expression match_cons in
+            ok (((hd_name , hd_ty') , (tl_name , tl_ty')) , match_cons')
+          in
+          return @@ E_if_cons (expr' , nil , cons)
+        )
       | Match_variant (lst , variant) -> (
           let%bind tree =
             trace_strong (corner_case ~loc:__LOC__ "getting lr tree") @@
@@ -498,7 +512,6 @@ and transpile_annotated_expression (ae:AST.annotated_expression) : expression re
           trace_strong (corner_case ~loc:__LOC__ "building constructor") @@
           aux expr' tree''
         )
-      | AST.Match_list _ -> fail @@ unsupported_pattern_matching "list" ae.location
       | AST.Match_tuple _ -> fail @@ unsupported_pattern_matching "tuple" ae.location
     )
 

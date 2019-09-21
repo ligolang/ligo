@@ -138,7 +138,7 @@ and 'a matching =
     }
   | Match_list of {
       match_nil : 'a ;
-      match_cons : name * name * 'a ;
+      match_cons : ((name * type_value) * (name * type_value)) * 'a ;
     }
   | Match_option of {
       match_none : 'a ;

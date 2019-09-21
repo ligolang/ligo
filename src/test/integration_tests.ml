@@ -722,7 +722,7 @@ let main = test_suite "Integration (End to End)" [
     test "let-in (mligo)" let_in_mligo ;
     test "match variant (mligo)" match_variant ;
     test "match variant 2 (mligo)" match_matej ;
-    (* test "list matching (mligo)" mligo_list ; *)
+    test "list matching (mligo)" mligo_list ;
     (* test "guess the hash mligo" guess_the_hash_mligo ; WIP? *)
     (* test "failwith mligo" failwith_mligo ; *)
     (* test "guess string mligo" guess_string_mligo ; WIP? *)

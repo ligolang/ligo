@@ -80,6 +80,7 @@ and expression' ppf (e:expression') = match e with
   | E_make_none _ -> fprintf ppf "none"
   | E_if_bool (c, a, b) -> fprintf ppf "%a ? %a : %a" expression c expression a expression b
   | E_if_none (c, n, ((name, _) , s)) -> fprintf ppf "%a ?? %a : %s -> %a" expression c expression n name expression s
+  | E_if_cons (c, n, (((hd_name, _) , (tl_name, _)) , cons)) -> fprintf ppf "%a ?? %a : (%s :: %s) -> %a" expression c expression n hd_name tl_name expression cons
   | E_if_left (c, ((name_l, _) , l), ((name_r, _) , r)) ->
       fprintf ppf "%a ?? %s -> %a : %s -> %a" expression c name_l expression l name_r expression r
   | E_sequence (a , b) -> fprintf ppf "%a ;; %a" expression a expression b

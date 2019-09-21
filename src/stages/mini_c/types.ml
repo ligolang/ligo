@@ -69,6 +69,7 @@ and expression' =
   | E_iterator of (string * ((var_name * type_value) * expression) * expression)
   | E_if_bool of expression * expression * expression
   | E_if_none of expression * expression * ((var_name * type_value) * expression)
+  | E_if_cons of (expression * expression * (((var_name * type_value) * (var_name * type_value)) * expression))
   | E_if_left of expression * ((var_name * type_value) * expression) * ((var_name * type_value) * expression)
   | E_let_in of ((var_name * type_value) * expression * expression)
   | E_sequence of (expression * expression)

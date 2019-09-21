@@ -89,8 +89,8 @@ and matching : type a . (formatter -> a -> unit) -> _ -> a matching -> unit = fu
       fprintf ppf "%a" (list_sep (matching_variant_case f) (tag "@.")) lst
   | Match_bool {match_true ; match_false} ->
       fprintf ppf "| True -> %a @.| False -> %a" f match_true f match_false
-  | Match_list {match_nil ; match_cons = (hd, tl, match_cons)} ->
-      fprintf ppf "| Nil -> %a @.| %s :: %s -> %a" f match_nil hd tl f match_cons
+  | Match_list {match_nil ; match_cons = (((hd_name , _), (tl_name , _)), match_cons)} ->
+      fprintf ppf "| Nil -> %a @.| %s :: %s -> %a" f match_nil hd_name tl_name f match_cons
   | Match_option {match_none ; match_some = (some, match_some)} ->
       fprintf ppf "| None -> %a @.| Some %s -> %a" f match_none (fst some) f match_some
 

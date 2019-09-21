@@ -107,7 +107,7 @@ module Captured_variables = struct
       let%bind t' = f b t in
       let%bind fa' = f b fa in
       ok @@ union t' fa'
-    | Match_list { match_nil = n ; match_cons = (hd, tl, c) } ->
+    | Match_list { match_nil = n ; match_cons = (((hd, _), (tl, _)), c) } ->
       let%bind n' = f b n in
       let%bind c' = f (union (of_list [hd ; tl]) b) c in
       ok @@ union n' c'

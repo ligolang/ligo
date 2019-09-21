@@ -256,6 +256,24 @@ and translate_expression (expr:expression) (env:environment) : michelson result 
         ]) in
       return code
     )
+  | E_if_cons (cond , nil , ((hd , tl) , cons)) -> (
+      let%bind cond' = translate_expression cond env in
+      let%bind nil' = translate_expression nil env in
+      let s_env =
+        Environment.add hd
+        @@ Environment.add tl env
+      in
+      let%bind s' = translate_expression cons s_env in
+      let%bind code = ok (seq [
+          cond' ;
+          i_if_cons (seq [
+              s' ;
+              dip (seq [ i_drop ; i_drop ]) ;
+            ]) nil'
+          ;
+        ]) in
+      return code
+    )
   | E_if_left (c, (l_ntv , l), (r_ntv , r)) -> (
       let%bind c' = translate_expression c env in
       let l_env = Environment.add l_ntv env in
