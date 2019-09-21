@@ -1,3 +1,5 @@
+// Test functions with several parameters in PascaLIGO
+
 function ab(const a : int; const b : int) : int is
   begin skip end with (a + b)
 

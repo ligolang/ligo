@@ -1,3 +1,5 @@
+// Test PascaLIGO boolean operators
+
 function or_true (const b : bool) : bool is
   begin skip end with b or True
 

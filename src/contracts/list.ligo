@@ -1,3 +1,5 @@
+// Test list type and related built-in functions in PascaLIGO
+
 type foobar is list(int)
 
 const fb : foobar = list

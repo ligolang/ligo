@@ -1,3 +1,5 @@
+// Test set type and basic operations in PascaLIGO
+
 const s_e : set(string) = (set_empty : set(string))
 
 const s_fb : set(string) = set [

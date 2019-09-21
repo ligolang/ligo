@@ -1,3 +1,5 @@
+// Test map type and related built-in functions in PascaLIGO
+
 type foobar is map(int, int)
 
 const fb : foobar = map
