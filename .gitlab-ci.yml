@@ -76,14 +76,14 @@ local-dune-job:
 
 # TODO: uncomment this
 
-# TODO
-# local-repo-job:
-#   <<: *before_script
-#   stage: test
-#   script:
-#     - scripts/install_vendors_deps.sh
-#     # TODO: also try from time to time with --build-test
-#     - opam install -y ligo
+local-repo-job:
+  <<: *before_script
+  stage: test
+  script:
+    - scripts/install_vendors_deps.sh
+    # TODO: also try from time to time with --build-test
+    - opam install -y ligo
+    - ligo
 
 remote-repo-job:
   <<: *before_script
