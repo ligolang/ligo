@@ -247,7 +247,9 @@ module Errors = struct
     let pattern_loc = Raw.pattern_to_region p in
     let data = [
       ("pattern_loc",
-       fun () -> Format.asprintf "%a" Location.pp_lift @@ pattern_loc)
+       fun () -> Format.asprintf "%a" Location.pp_lift @@ pattern_loc) ;
+      ("pattern",
+       fun () -> Format.asprintf "%a" (Simple_utils.PP_helpers.printer Parser.Pascaligo.ParserLog.print_pattern) p) ;
     ] in
     error ~data title message
 
@@ -914,7 +916,6 @@ and simpl_cases : type a . (Raw.pattern * a) list -> a matching result = fun t -
     | p -> fail @@ unsupported_non_var_pattern p in
   let get_tuple (t: Raw.pattern) =
     match t with
-    | PCons v -> npseq_to_list v.value
     | PTuple v -> npseq_to_list v.value.inside
     | x -> [ x ] in
   let get_single (t: Raw.pattern) =
@@ -923,6 +924,15 @@ and simpl_cases : type a . (Raw.pattern * a) list -> a matching result = fun t -
       trace_strong (unsupported_tuple_pattern t) @@
       Assert.assert_list_size t' 1 in
     ok (List.hd t') in
+  let get_toplevel (t : Raw.pattern) =
+    match t with
+    | PCons x -> (
+        let (x' , lst) = x.value in
+        match lst with
+        | [] -> ok x'
+        | _ -> ok t
+      )
+    | _ -> fail @@ corner_case ~loc:__LOC__ "unexpected pattern" in
   let get_constr (t: Raw.pattern) =
     match t with
     | PConstr v -> (
@@ -943,10 +953,8 @@ and simpl_cases : type a . (Raw.pattern * a) list -> a matching result = fun t -
     | _ -> fail @@ only_constructors t in
   let%bind patterns =
     let aux (x , y) =
-      let xs = get_tuple x in
-      trace_strong (unsupported_tuple_pattern x) @@
-      Assert.assert_list_size xs 1 >>? fun () ->
-      ok (List.hd xs , y)
+      let%bind x' = get_toplevel x in
+      ok (x' , y)
     in bind_map_list aux t in
   match patterns with
   | [(PFalse _ , f) ; (PTrue _ , t)]

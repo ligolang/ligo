@@ -29,3 +29,10 @@ function match_expr_option (const o : option(int)) : int is
   | None -> 42
   | Some (s) -> s
   end
+
+function match_expr_list (const l : list(int)) : int is
+  begin skip end with
+  case l of
+  | nil -> -1
+  | hd # tl -> hd
+  end
