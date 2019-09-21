@@ -74,17 +74,6 @@ local-dune-job:
     - scripts/build_ligo_local.sh
     - dune build @ligo-test
 
-# TODO: uncomment this
-
-local-repo-job:
-  <<: *before_script
-  stage: test
-  script:
-    - scripts/install_vendors_deps.sh
-    # TODO: also try from time to time with --build-test
-    - opam install -y ligo
-    - ligo
-
 remote-repo-job:
   <<: *before_script
   stage: test
