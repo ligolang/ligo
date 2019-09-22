@@ -1,10 +1,10 @@
 open Trace
-open Ligo.AST_Simplified
+open Ast_simplified
 open Test_helpers
 
-module Typed = Ligo.AST_Typed
-module Typer = Ligo.Typer
-module Simplified = Ligo.AST_Simplified
+module Typed = Ast_typed
+module Typer = Typer
+module Simplified = Ast_simplified
 
 let int () : unit result =
   let open Combinators in

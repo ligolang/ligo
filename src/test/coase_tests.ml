@@ -1,10 +1,9 @@
 (* Copyright Coase, Inc 2019 *)
 
 open Trace
-open Ligo.Run
 open Test_helpers
 
-let type_file = type_file `pascaligo
+let type_file = Ligo.Compile.Of_source.type_file (Syntax_name "pascaligo")
 
 let get_program =
   let s = ref None in
@@ -210,9 +209,9 @@ let sell () =
       e_pair sell_action storage
     in
     let make_expecter : int -> expression -> unit result = fun n result ->
-      let%bind (ops , storage) = get_e_pair @@ Location.unwrap result in
+      let%bind (ops , storage) = get_e_pair result.expression in
       let%bind () =
-        let%bind lst = get_e_list @@ Location.unwrap ops in
+        let%bind lst = get_e_list ops.expression in
         Assert.assert_list_size lst 1 in
       let expected_storage =
         let cards = List.hds @@ cards_ez first_owner n in
