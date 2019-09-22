@@ -417,7 +417,7 @@ let big_map () : unit result =
   let%bind () =
     let make_input = fun n -> ez [(23, n) ; (42, 4)] in
     let make_expected = e_int in
-    expect_eq_n ?input_to_value:(Some true) program "gf" make_input make_expected
+    expect_eq_n ~input_to_value:true program "gf" make_input make_expected
   in
   let%bind () =
     let make_input = fun n ->

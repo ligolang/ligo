@@ -106,3 +106,61 @@ let aggregate_entry (lst : program) (name : string) (to_functionalize : bool) : 
       Format.printf "Not functional: %a\n" PP.expression entry_expression ;
       fail @@ Errors.not_functional_main name
   )
+
+let rec expression_to_value (exp: expression) : value result =
+  match exp.content with
+    | E_literal v -> ok @@ v
+    | E_constant ("map" , lst) ->
+      let aux el =
+        let%bind l = expression_to_value el in
+        match l with
+          | D_pair (a , b) -> ok @@ (a , b)
+          | _ -> fail @@ simple_error "??" in
+      let%bind lstl = bind_map_list aux lst in
+      ok @@ D_map lstl
+    | E_constant ("big_map" , lst) ->
+      let aux el =
+        let%bind l = expression_to_value el in
+        match l with
+          | D_pair (a , b) -> ok @@ (a , b)
+          | _ -> fail @@ simple_error "??" in
+      let%bind lstl = bind_map_list aux lst in
+      ok @@ D_big_map lstl
+    | E_constant ("PAIR" , fst::snd::[]) ->
+      let%bind fstl = expression_to_value fst in
+      let%bind sndl = expression_to_value snd in
+      ok @@ D_pair (fstl , sndl)
+    | E_constant ("UNIT", _) -> ok @@ D_unit
+    | E_constant ("UPDATE", _) ->
+      let rec handle_prev upd =
+        match upd.content with
+        | E_constant ("UPDATE" , [k;v;prev]) ->
+          begin
+            match v.content with
+              | E_constant ("SOME" , [i]) ->
+                let%bind kl = expression_to_value k in
+                let%bind il  = expression_to_value i in
+                let%bind prevl = handle_prev prev in
+                ok @@ (kl,il)::prevl
+              | E_constant ("NONE" , []) ->
+                let%bind prevl = handle_prev prev in
+                ok @@ prevl
+              | _ -> failwith "UPDATE second parameter is not an option"
+          end
+        | E_make_empty_map _ ->
+          ok @@ []
+        | _ -> failwith "Ill-constructed map"
+      in
+      begin
+      match exp.type_value with
+        | T_big_map _ ->
+          let%bind kvl = handle_prev exp in
+          ok @@ D_big_map kvl
+        | T_map _ ->
+          let%bind kvl = handle_prev exp in
+          ok @@ D_map kvl
+        | _ -> failwith "UPDATE with a non-map type_value"
+      end
+    | _ as nl ->
+      let expp = Format.asprintf "'%a'" PP.expression' nl in
+      fail @@ simple_error ("Can not convert expression "^expp^" to literal")

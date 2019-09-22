@@ -103,7 +103,7 @@ let compile_storage =
     toplevel ~display_format @@
     let%bind value =
       trace (simple_error "compile-storage") @@
-      Ligo.Compile.Of_source.compile_file_contract_storage ~bigmap source entry_point expression (Syntax_name syntax) in
+      Ligo.Compile.Of_source.compile_file_contract_storage ~value:bigmap source entry_point expression (Syntax_name syntax) in
     ok @@ Format.asprintf "%a\n" Tezos_utils.Michelson.pp value
   in
   let term =
@@ -116,7 +116,7 @@ let dry_run =
   let f source entry_point storage input amount syntax display_format bigmap =
     toplevel ~display_format @@
     let%bind output =
-      Ligo.Run.Of_source.run_contract ~amount ~bigmap source entry_point storage input (Syntax_name syntax) in
+      Ligo.Run.Of_source.run_contract ~amount ~storage_value:bigmap source entry_point storage input (Syntax_name syntax) in
     ok @@ Format.asprintf "%a\n" Ast_simplified.PP.expression output
   in
   let term =

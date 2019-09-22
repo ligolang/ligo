@@ -77,10 +77,12 @@ let rec translate_value ?bm_opt (Ex_typed_value (ty, value)) : value result =
         let aux k v acc = (k, v) :: acc in
         let lst = Script_ir_translator.map_fold aux m.diff [] in
         List.rev lst in
-      let%bind original_big_map = 
+      let%bind original_big_map =
         match bm_opt with
         | Some (D_big_map l) -> ok @@ l
-        | _ -> fail @@ simple_error "Do not have access to the original big_map" in
+        | _ -> ok []
+        (* | _ -> fail @@ simple_error "Do not have access to the original big_map" . When does this matter? *)
+      in
       let%bind lst' =
         let aux orig (k, v) =
           let%bind k' = translate_value (Ex_typed_value (k_ty, k)) in

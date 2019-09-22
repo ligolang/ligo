@@ -30,19 +30,19 @@ let compile_file_expression : string -> string -> string -> s_syntax -> Michelso
   let%bind simplified = parsify_expression syntax expression in
   Of_simplified.compile_expression simplified
 
-let compile_file_contract_storage : string -> string -> string -> s_syntax -> Michelson.t result =
+let compile_file_contract_storage ~value : string -> string -> string -> s_syntax -> Michelson.t result =
   fun source_filename _entry_point expression syntax ->
   let%bind syntax = syntax_to_variant syntax (Some source_filename) in
   let%bind simplified = parsify_expression syntax expression in
-  Of_simplified.compile_expression simplified
+  Of_simplified.compile_expression ~value simplified
 
 let compile_file_contract_args =
-  fun source_filename _entry_point storage parameter syntax ->
+  fun ?value source_filename _entry_point storage parameter syntax ->
   let%bind syntax = syntax_to_variant syntax (Some source_filename) in
   let%bind storage_simplified = parsify_expression syntax storage in
   let%bind parameter_simplified = parsify_expression syntax parameter in
   let args = Ast_simplified.e_pair storage_simplified parameter_simplified in
-  Of_simplified.compile_expression args
+  Of_simplified.compile_expression ?value args
 
 let type_file ?(debug_simplify = false) ?(debug_typed = false)
     syntax (source_filename:string) : Ast_typed.program result =

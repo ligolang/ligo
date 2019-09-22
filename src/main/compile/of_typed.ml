@@ -4,9 +4,8 @@ open Tezos_utils
 
 
 let compile_expression ?(value = false) : annotated_expression -> Michelson.t result = fun e ->
-  let _ = value in
   let%bind mini_c_expression = Transpiler.transpile_annotated_expression e in
-  let%bind expr = Of_mini_c.compile_expression mini_c_expression in
+  let%bind expr = Of_mini_c.compile_expression ~value mini_c_expression in
   ok expr
 
 let compile_expression_as_function : annotated_expression -> _ result = fun e ->
