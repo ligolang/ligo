@@ -1,3 +1,5 @@
+// Test while loops in PascaLIGO
+
 function counter (var n : nat) : nat is block {
   var i : nat := 0n ;
   while (i < n) block {

@@ -1,3 +1,5 @@
+// Test if conditional in PascaLIGO
+
 function main (const i : int) : int is
   var result : int := 23 ;
   begin

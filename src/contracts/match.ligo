@@ -1,3 +1,5 @@
+// Test the pattern matching functionality of PascaLIGO
+
 function match_bool (const i : int) : int is
   var result : int := 23 ;
   begin

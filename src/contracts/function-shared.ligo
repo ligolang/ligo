@@ -1,3 +1,5 @@
+// Test a PascaLIGO function which uses other functions as subroutines
+
 function inc ( const i : int ) : int is
  block { skip } with i + 1
 
