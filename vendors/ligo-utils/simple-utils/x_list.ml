@@ -22,7 +22,7 @@ let fold_map_right : type acc ele ret . (acc -> ele -> (acc * ret)) -> acc -> el
   in
   snd @@ aux (acc , []) f (List.rev lst)
 
-let fold_map : type acc ele ret . (acc -> ele -> (acc * ret)) -> acc -> ele list -> ret list =
+let fold_map_acc : type acc ele ret . (acc -> ele -> (acc * ret)) -> acc -> ele list -> acc * ret list =
   fun f acc lst ->
   let rec aux (acc , prev) f = function
     | [] -> (acc , prev)
@@ -30,7 +30,12 @@ let fold_map : type acc ele ret . (acc -> ele -> (acc * ret)) -> acc -> ele list
         let (acc' , hd') = f acc hd in
         aux (acc' , hd' :: prev) f tl
   in
-  List.rev @@ snd @@ aux (acc , []) f lst
+  let (acc, lst) = aux (acc , []) f lst in
+  (acc, List.rev lst)
+
+let fold_map : type acc ele ret . (acc -> ele -> (acc * ret)) -> acc -> ele list -> ret list =
+  fun f acc lst ->
+  snd (fold_map_acc f acc lst)
 
 let fold_right' f init lst = List.fold_left f init (List.rev lst)
 
