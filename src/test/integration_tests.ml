@@ -643,11 +643,28 @@ let dispatch_counter_contract () : unit result =
     e_pair (e_typed_list [] t_operation) (e_int (op 42 n)) in
   expect_eq_n program "main" make_input make_expected
 
+let failwith_ligo () : unit result =
+  let%bind program = type_file "./contracts/failwith.ligo" in
+  let should_fail = expect_fail program "main" in
+  let should_work input = expect_eq program "main" input (e_pair (e_typed_list [] t_operation) (e_unit ())) in
+  let%bind _ = should_work (e_pair (e_constructor "Zero" (e_nat 0)) (e_unit ())) in
+  let%bind _ = should_fail (e_pair (e_constructor "Zero" (e_nat 1)) (e_unit ())) in
+  let%bind _ = should_work (e_pair (e_constructor "Pos" (e_nat 1)) (e_unit ())) in
+  let%bind _ = should_fail (e_pair (e_constructor "Pos" (e_nat 0)) (e_unit ())) in
+  ok ()
+
 let failwith_mligo () : unit result =
   let%bind program = mtype_file "./contracts/failwith.mligo" in
   let make_input = e_pair (e_unit ()) (e_unit ()) in
+  expect_fail program "main" make_input
+
+let assert_mligo () : unit result =
+  let%bind program = mtype_file "./contracts/assert.mligo" in
+  let make_input b = e_pair (e_bool b) (e_unit ()) in
   let make_expected = e_pair (e_typed_list [] t_operation) (e_unit ()) in
-  expect_eq program "main" make_input make_expected
+  let%bind _ = expect_fail program "main" (make_input false) in
+  let%bind _ = expect_eq program "main" (make_input true) make_expected in
+  ok ()
 
 let guess_the_hash_mligo () : unit result =
   let%bind program = mtype_file "./contracts/new-syntax.mligo" in
@@ -800,7 +817,9 @@ let main = test_suite "Integration (End to End)" [
     test "match variant 2 (mligo)" match_matej ;
     test "list matching (mligo)" mligo_list ;
     (* test "guess the hash mligo" guess_the_hash_mligo ; WIP? *)
-    (* test "failwith mligo" failwith_mligo ; *)
+    test "failwith ligo" failwith_ligo ;
+    test "failwith mligo" failwith_mligo ;
+    test "assert mligo" assert_mligo ;
     (* test "guess string mligo" guess_string_mligo ; WIP? *)
     test "lambda mligo" lambda_mligo ;
     test "lambda ligo" lambda_ligo ;
