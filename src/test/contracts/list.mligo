@@ -12,3 +12,7 @@ let%entry main (p : param) storage =
       [] -> storage
     | hd::tl -> storage.(0) + hd, tl
   in (([] : operation list), storage)
+
+let fold_op (s : int list) : int =
+  let aggregate = fun (prec : int) (cur : int) -> prec + cur in
+  List.fold s 10 aggregate

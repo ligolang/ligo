@@ -90,6 +90,8 @@ and expression' ppf (e:expression') = match e with
       fprintf ppf "let %s = %a in ( %a )" name expression expr expression body
   | E_iterator (s , ((name , _) , body) , expr) ->
       fprintf ppf "for_%s %s of %a do ( %a )" s name expression expr expression body
+  | E_fold (((name , _) , body) , collection , initial) ->
+      fprintf ppf "fold %a on %a with %s do ( %a )" expression collection expression initial name expression body
   | E_assignment (r , path , e) ->
       fprintf ppf "%s.%a := %a" r (list_sep lr (const ".")) path expression e
   | E_while (e , b) ->

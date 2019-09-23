@@ -339,6 +339,20 @@ and translate_expression (expr:expression) (env:environment) : michelson result 
           fail error
         )
     )
+  | E_fold ((v , body) , collection , initial) -> (
+      let%bind collection' = translate_expression collection env in
+      let%bind initial' = translate_expression initial env in
+      let%bind body' = translate_expression body (Environment.add v env) in
+      let code = seq [
+          collection' ;
+          dip initial' ;
+          i_iter (seq [
+              i_swap ;
+              i_pair ; body' ; dip i_drop ;
+            ]) ;
+        ] in
+      ok code
+    )
   | E_assignment (name , lrs , expr) -> (
       let%bind expr' = translate_expression expr env in
       let%bind get_code = Compiler_environment.get env name in

@@ -69,6 +69,7 @@ and expression' =
   | E_make_empty_set of type_value
   | E_make_none of type_value
   | E_iterator of (string * ((var_name * type_value) * expression) * expression)
+  | E_fold of (((var_name * type_value) * expression) * expression * expression)
   | E_if_bool of expression * expression * expression
   | E_if_none of expression * expression * ((var_name * type_value) * expression)
   | E_if_cons of (expression * expression * (((var_name * type_value) * (var_name * type_value)) * expression))

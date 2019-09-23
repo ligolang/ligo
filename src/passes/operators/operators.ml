@@ -82,6 +82,7 @@ module Simplify = struct
       ("set_remove" , "SET_REMOVE") ;
       ("set_iter" , "SET_ITER") ;
       ("list_iter" , "LIST_ITER") ;
+      ("list_fold" , "LIST_FOLD") ;
       ("list_map" , "LIST_MAP") ;
       ("map_iter" , "MAP_ITER") ;
       ("map_map" , "MAP_MAP") ;
@@ -152,6 +153,8 @@ module Simplify = struct
       ("Map.update" , "MAP_UPDATE") ;
       ("Map.add" , "MAP_ADD") ;
       ("Map.remove" , "MAP_REMOVE") ;
+      ("Map.iter" , "MAP_ITER") ;
+      ("Map.map" , "MAP_MAP") ;
 
       ("String.length", "SIZE") ;
       ("String.size", "SIZE") ;
@@ -161,7 +164,9 @@ module Simplify = struct
 
       ("List.length", "SIZE") ;
       ("List.size", "SIZE") ;
-      ("List.iter", "ITER") ;
+      ("List.iter", "LIST_ITER") ;
+      ("List.map" , "LIST_MAP") ;
+      ("List.fold" , "LIST_FOLD") ;
 
       ("Operation.transaction" , "CALL") ;
       ("Operation.get_contract" , "CONTRACT") ;
@@ -483,7 +488,21 @@ module Typer = struct
     let%bind key = get_t_list lst in
     if eq_1 key arg
     then ok (t_list res ())
-    else simple_fail "bad list iter"
+    else simple_fail "bad list map"
+
+  let list_fold = typer_3 "LIST_FOLD" @@ fun lst init body ->
+    let%bind (arg , res) = get_t_function body in
+    let%bind (prec , cur) = get_t_pair arg in
+    let%bind key = get_t_list lst in
+    let msg = Format.asprintf "%a vs %a"
+        Ast_typed.PP.type_value key
+        Ast_typed.PP.type_value arg
+    in
+    trace (simple_error ("bad list fold:" ^ msg)) @@
+    let%bind () = assert_eq_1 ~msg:"key cur" key cur in
+    let%bind () = assert_eq_1 ~msg:"prec res" prec res in
+    let%bind () = assert_eq_1 ~msg:"res init" res init in
+    ok res
 
   let not_ = typer_1 "NOT" @@ fun elt ->
     if eq_1 elt (t_bool ())
@@ -570,6 +589,7 @@ module Typer = struct
       set_iter ;
       list_iter ;
       list_map ;
+      list_fold ;
       int ;
       size ;
       failwith_ ;

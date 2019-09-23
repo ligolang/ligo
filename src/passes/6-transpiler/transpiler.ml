@@ -361,47 +361,52 @@ and transpile_annotated_expression (ae:AST.annotated_expression) : expression re
       let expr = List.fold_left aux record' path in
       ok expr
   | E_constant (name , lst) -> (
-      let (iter , map) =
-        let iterator name = fun (lst : AST.annotated_expression list) -> match lst with
-          | [i ; f] -> (
-              let%bind f' = match f.expression with
-                | E_lambda l -> (
-                    let%bind body' = transpile_annotated_expression l.body in
-                    let%bind (input , _) = AST.get_t_function f.type_annotation in
-                    let%bind input' = transpile_type input in
-                    ok ((l.binder , input') , body')
-                  )
-                | E_variable v -> (
-                    let%bind elt =
-                      trace_option (corner_case ~loc:__LOC__ "missing var") @@
-                      AST.Environment.get_opt v f.environment in
-                    match elt.definition with
-                    | ED_declaration (f , _) -> (
-                        match f.expression with
-                        | E_lambda l -> (
-                            let%bind body' = transpile_annotated_expression l.body in
-                            let%bind (input , _) = AST.get_t_function f.type_annotation in
-                            let%bind input' = transpile_type input in
-                            ok ((l.binder , input') , body')
-                          )
-                        | _ -> fail @@ unsupported_iterator f.location
-                      )
-                    | _ -> fail @@ unsupported_iterator f.location
-                  )
-                | _ -> fail @@ unsupported_iterator f.location
-              in
-              let%bind i' = transpile_annotated_expression i in
-              return @@ E_iterator (name , f' , i')
-            )
-          | _ -> fail @@ corner_case ~loc:__LOC__ "bad iterator arity"
+      let iterator_generator iterator_name =
+        let lambda_to_iterator_body (f : AST.annotated_expression) (l : AST.lambda) =
+          let%bind body' = transpile_annotated_expression l.body in
+          let%bind (input , _) = AST.get_t_function f.type_annotation in
+          let%bind input' = transpile_type input in
+          ok ((l.binder , input') , body')
         in
-        iterator "ITER" , iterator "MAP" in
+        let expression_to_iterator_body (f : AST.annotated_expression) =
+          match f.expression with
+          | E_lambda l -> lambda_to_iterator_body f l
+          | E_variable v -> (
+              let%bind elt =
+                trace_option (corner_case ~loc:__LOC__ "missing var") @@
+                AST.Environment.get_opt v f.environment in
+              match elt.definition with
+              | ED_declaration (f , _) -> (
+                  match f.expression with
+                  | E_lambda l -> lambda_to_iterator_body f l
+                  | _ -> fail @@ unsupported_iterator f.location
+                )
+              | _ -> fail @@ unsupported_iterator f.location
+            )
+          | _ -> fail @@ unsupported_iterator f.location
+        in
+        fun (lst : AST.annotated_expression list) -> match (lst , iterator_name) with
+          | [i ; f] , "ITER" | [i ; f] , "MAP" -> (
+              let%bind f' = expression_to_iterator_body f in
+              let%bind i' = transpile_annotated_expression i in
+              return @@ E_iterator (iterator_name , f' , i')
+            )
+          | [ collection ; initial ; f ] , "FOLD" -> (
+              let%bind f' = expression_to_iterator_body f in
+              let%bind initial' = transpile_annotated_expression initial in
+              let%bind collection' = transpile_annotated_expression collection in
+              return @@ E_fold (f' , collection' , initial')
+            )
+          | _ -> fail @@ corner_case ~loc:__LOC__ ("bad iterator arity:" ^ iterator_name)
+      in
+      let (iter , map , fold) = iterator_generator "ITER" , iterator_generator "MAP" , iterator_generator "FOLD" in
       match (name , lst) with
       | ("SET_ITER" , lst) -> iter lst
       | ("LIST_ITER" , lst) -> iter lst
       | ("MAP_ITER" , lst) -> iter lst
       | ("LIST_MAP" , lst) -> map lst
       | ("MAP_MAP" , lst) -> map lst
+      | ("LIST_FOLD" , lst) -> fold lst
       | _ -> (
           let%bind lst' = bind_map_list (transpile_annotated_expression) lst in
           return @@ E_constant (name , lst')
