@@ -224,6 +224,11 @@ let set_arithmetic () : unit result =
     expect_eq program "mem_op"
       (e_set [e_string "foo" ; e_string "bar"])
       (e_bool false) in
+  let%bind () =
+    expect_eq program_1 "fold_op"
+      (e_set [ e_int 4 ; e_int 10 ])
+      (e_int 29)
+  in
   ok ()
 
 let unit_expression () : unit result =

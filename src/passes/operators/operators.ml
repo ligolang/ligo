@@ -81,6 +81,7 @@ module Simplify = struct
       ("set_add" , "SET_ADD") ;
       ("set_remove" , "SET_REMOVE") ;
       ("set_iter" , "SET_ITER") ;
+      ("set_fold" , "SET_FOLD") ;
       ("list_iter" , "LIST_ITER") ;
       ("list_fold" , "LIST_FOLD") ;
       ("list_map" , "LIST_MAP") ;
@@ -148,6 +149,7 @@ module Simplify = struct
       ("Set.empty" , "SET_EMPTY") ;
       ("Set.add" , "SET_ADD") ;
       ("Set.remove" , "SET_REMOVE") ;
+      ("Set.fold" , "SET_FOLD") ;
 
       ("Map.find_opt" , "MAP_FIND_OPT") ;
       ("Map.find" , "MAP_FIND") ;
@@ -156,7 +158,7 @@ module Simplify = struct
       ("Map.remove" , "MAP_REMOVE") ;
       ("Map.iter" , "MAP_ITER") ;
       ("Map.map" , "MAP_MAP") ;
-      ("Map.fold" , "LIST_FOLD") ;
+      ("Map.fold" , "MAP_FOLD") ;
 
       ("String.length", "SIZE") ;
       ("String.size", "SIZE") ;
@@ -496,6 +498,20 @@ module Typer = struct
     let%bind () = assert_eq_1 ~msg:"res init" res init in
     ok res
 
+  let set_fold = typer_3 "SET_FOLD" @@ fun lst init body ->
+    let%bind (arg , res) = get_t_function body in
+    let%bind (prec , cur) = get_t_pair arg in
+    let%bind key = get_t_set lst in
+    let msg = Format.asprintf "%a vs %a"
+        Ast_typed.PP.type_value key
+        Ast_typed.PP.type_value arg
+    in
+    trace (simple_error ("bad set fold:" ^ msg)) @@
+    let%bind () = assert_eq_1 ~msg:"key cur" key cur in
+    let%bind () = assert_eq_1 ~msg:"prec res" prec res in
+    let%bind () = assert_eq_1 ~msg:"res init" res init in
+    ok res
+
   let map_fold = typer_3 "MAP_FOLD" @@ fun map init body ->
     let%bind (arg , res) = get_t_function body in
     let%bind (prec , cur) = get_t_pair arg in
@@ -593,6 +609,7 @@ module Typer = struct
       set_add ;
       set_remove ;
       set_iter ;
+      set_fold ;
       list_iter ;
       list_map ;
       list_fold ;
