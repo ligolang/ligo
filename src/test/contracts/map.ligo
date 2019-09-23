@@ -44,3 +44,7 @@ function iter_op (const m : foobar) : int is
 function map_op (const m : foobar) : foobar is
   function increment (const i : int ; const j : int) : int is block { skip } with j + 1 ;
   block { skip } with map_map(m , increment) ;
+
+function fold_op (const m : foobar) : int is
+  function aggregate (const i : int ; const j : (int * int)) : int is block { skip } with i + j.0 + j.1 ;
+  block { skip } with map_fold(m , 10 , aggregate)

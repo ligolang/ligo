@@ -86,6 +86,7 @@ module Simplify = struct
       ("list_map" , "LIST_MAP") ;
       ("map_iter" , "MAP_ITER") ;
       ("map_map" , "MAP_MAP") ;
+      ("map_fold" , "MAP_FOLD") ;
       ("sha_256" , "SHA256") ;
       ("sha_512" , "SHA512") ;
       ("blake2b" , "BLAKE2b") ;
@@ -155,6 +156,7 @@ module Simplify = struct
       ("Map.remove" , "MAP_REMOVE") ;
       ("Map.iter" , "MAP_ITER") ;
       ("Map.map" , "MAP_MAP") ;
+      ("Map.fold" , "LIST_FOLD") ;
 
       ("String.length", "SIZE") ;
       ("String.size", "SIZE") ;
@@ -284,16 +286,6 @@ module Typer = struct
     let%bind (arg , res) = get_t_function f in
     let%bind () = assert_eq_1 arg (t_pair k v ()) in
     ok @@ t_map k res ()
-
-  let map_fold : typer = typer_2 "MAP_FOLD" @@ fun f m ->
-    let%bind (k, v) = get_t_map m in
-    let%bind (arg_1 , res) = get_t_function f in
-    let%bind (arg_2 , res') = get_t_function res in
-    let%bind (arg_3 , res'') = get_t_function res' in
-    let%bind () = assert_eq_1 arg_1 k in
-    let%bind () = assert_eq_1 arg_2 v in
-    let%bind () = assert_eq_1 arg_3 res'' in
-    ok @@ res'
 
   let size = typer_1 "SIZE" @@ fun t ->
     let%bind () =
@@ -500,6 +492,20 @@ module Typer = struct
     in
     trace (simple_error ("bad list fold:" ^ msg)) @@
     let%bind () = assert_eq_1 ~msg:"key cur" key cur in
+    let%bind () = assert_eq_1 ~msg:"prec res" prec res in
+    let%bind () = assert_eq_1 ~msg:"res init" res init in
+    ok res
+
+  let map_fold = typer_3 "MAP_FOLD" @@ fun map init body ->
+    let%bind (arg , res) = get_t_function body in
+    let%bind (prec , cur) = get_t_pair arg in
+    let%bind (key , value) = get_t_map map in
+    let msg = Format.asprintf "%a vs %a"
+        Ast_typed.PP.type_value key
+        Ast_typed.PP.type_value arg
+    in
+    trace (simple_error ("bad list fold:" ^ msg)) @@
+    let%bind () = assert_eq_1 ~msg:"key cur" (t_pair key value ()) cur in
     let%bind () = assert_eq_1 ~msg:"prec res" prec res in
     let%bind () = assert_eq_1 ~msg:"res init" res init in
     ok res

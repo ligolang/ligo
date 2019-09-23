@@ -402,6 +402,11 @@ let map () : unit result =
   in
   let%bind () =
     let input = ez [(1 , 10) ; (2 , 20) ; (3 , 30) ] in
+    let expected = e_int 76 in
+    expect_eq program "fold_op" input expected
+  in
+  let%bind () =
+    let input = ez [(1 , 10) ; (2 , 20) ; (3 , 30) ] in
     let expected = ez [(1 , 11) ; (2 , 21) ; (3 , 31) ] in
     expect_eq program "map_op" input expected
   in
@@ -676,19 +681,19 @@ let mligo_list () : unit result =
   let%bind program = mtype_file "./contracts/list.mligo" in
   let aux lst = e_list @@ List.map e_int lst in
   let%bind () = expect_eq program "fold_op" (aux [ 1 ; 2 ; 3 ]) (e_int 16) in
-  (* let%bind () =
-   *   let make_input n =
-   *     e_pair (e_list [e_int n; e_int (2*n)])
-   *       (e_pair (e_int 3) (e_list [e_int 8])) in
-   *   let make_expected n =
-   *     e_pair (e_typed_list [] t_operation)
-   *       (e_pair (e_int (n+3)) (e_list [e_int (2*n)]))
-   *   in
-   *   expect_eq_n program "main" make_input make_expected
-   * in
-   * let%bind () = expect_eq_evaluate program "x" (e_list []) in
-   * let%bind () = expect_eq_evaluate program "y" (e_list @@ List.map e_int [3 ; 4 ; 5]) in
-   * let%bind () = expect_eq_evaluate program "z" (e_list @@ List.map e_int [2 ; 3 ; 4 ; 5]) in *)
+  let%bind () =
+    let make_input n =
+      e_pair (e_list [e_int n; e_int (2*n)])
+        (e_pair (e_int 3) (e_list [e_int 8])) in
+    let make_expected n =
+      e_pair (e_typed_list [] t_operation)
+        (e_pair (e_int (n+3)) (e_list [e_int (2*n)]))
+    in
+    expect_eq_n program "main" make_input make_expected
+  in
+  let%bind () = expect_eq_evaluate program "x" (e_list []) in
+  let%bind () = expect_eq_evaluate program "y" (e_list @@ List.map e_int [3 ; 4 ; 5]) in
+  let%bind () = expect_eq_evaluate program "z" (e_list @@ List.map e_int [2 ; 3 ; 4 ; 5]) in
   ok ()
 
 let lambda_mligo () : unit result =

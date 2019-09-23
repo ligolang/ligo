@@ -407,6 +407,7 @@ and transpile_annotated_expression (ae:AST.annotated_expression) : expression re
       | ("LIST_MAP" , lst) -> map lst
       | ("MAP_MAP" , lst) -> map lst
       | ("LIST_FOLD" , lst) -> fold lst
+      | ("MAP_FOLD" , lst) -> fold lst
       | _ -> (
           let%bind lst' = bind_map_list (transpile_annotated_expression) lst in
           return @@ E_constant (name , lst')
