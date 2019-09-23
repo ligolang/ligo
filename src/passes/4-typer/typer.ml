@@ -424,33 +424,53 @@ and type_expression : environment -> Solver.state -> I.expression -> (O.annotate
       let expr'' = e_failwith expr' in
       return expr''  state' constraints expr_type
     )
-  | E_variable name ->
-    let%bind tv' =
-      trace_option (unbound_variable e name ae.location)
-      @@ Environment.get_opt name e in
-    let (constraints , expr_type) = Wrap.variable name tv'.type_expression in
-    let expr' = e_variable name in
-    return (E_variable name) tv'.type_value
-  | E_literal (Literal_bool b) ->
-    return (E_literal (Literal_bool b)) (t_bool ())
-  | E_literal Literal_unit | E_skip ->
-    return (E_literal (Literal_unit)) (t_unit ())
-  | E_literal (Literal_string s) ->
-    return (E_literal (Literal_string s)) (t_string ())
-  | E_literal (Literal_bytes s) ->
-    return (E_literal (Literal_bytes s)) (t_bytes ())
-  | E_literal (Literal_int n) ->
-    return (E_literal (Literal_int n)) (t_int ())
-  | E_literal (Literal_nat n) ->
-    return (E_literal (Literal_nat n)) (t_nat ())
-  | E_literal (Literal_timestamp n) ->
-    return (E_literal (Literal_timestamp n)) (t_timestamp ())
-  | E_literal (Literal_mutez n) ->
-    return (E_literal (Literal_mutez n)) (t_tez ())
-  | E_literal (Literal_address s) ->
-    return (e_address s) (t_address ())
-  | E_literal (Literal_operation op) ->
-    return (e_operation op) (t_operation ())
+  | E_variable name -> (
+      let%bind tv' =
+        trace_option (unbound_variable e name ae.location)
+        @@ Environment.get_opt name e in
+      let (constraints , expr_type) = Wrap.variable name tv'.type_expression in
+      let expr' = e_variable name in
+      return expr' state constraints expr_type
+    )
+  | E_literal (Literal_bool b) -> (
+      return_wrapped (e_bool b) state @@ Wrap.literal (t_bool ())
+    )
+  | E_literal (Literal_string s) -> (
+      return_wrapped (e_string s) state @@ Wrap.literal (t_string ())
+    )
+  | E_literal (Literal_bytes b) -> (
+      return_wrapped (e_bytes b) state @@ Wrap.literal (t_bytes ())
+    )
+  | E_literal (Literal_int i) -> (
+      return_wrapped (e_int i) state @@ Wrap.literal (t_int ())
+    )
+  | E_literal (Literal_nat n) -> (
+      return_wrapped (e_nat n) state @@ Wrap.literal (t_nat ())
+    )
+  | E_literal (Literal_tez t) -> (
+      return_wrapped (e_tez t) state @@ Wrap.literal (t_tez ())
+    )
+  | E_literal (Literal_address a) -> (
+      return_wrapped (e_address a) state @@ Wrap.literal (t_address ())
+    )
+  | E_literal (Literal_timestamp t) -> (
+      return_wrapped (e_timestamp t) state @@ Wrap.literal (t_timestamp ())
+    )
+  | E_literal (Literal_operation o) -> (
+      return_wrapped (e_operation o) state @@ Wrap.literal (t_operation ())
+    )
+  | E_literal (Literal_unit) -> (
+      return_wrapped (e_unit) state @@ Wrap.literal (t_unit ())
+    )
+  | E_skip -> (
+      failwith "TODO: missing implementation for E_skip"
+    )
+  (* | E_literal (Literal_string s) -> (
+   *     L.log (Format.asprintf "literal_string option type: %a" PP_helpers.(option O.PP.type_expression) tv_opt) ;
+   *     match Option.map Ast_typed.get_type' tv_opt with
+   *     | Some (T_constant ("address" , [])) -> return (E_literal (Literal_address s)) (t_address ())
+   *     | _ -> return (E_literal (Literal_string s)) (t_string ())
+   *   ) *)
   (* Tuple *)
   | E_tuple lst ->
     let aux state hd = type_expression e state hd >>? swap in
