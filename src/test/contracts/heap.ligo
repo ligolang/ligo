@@ -1,3 +1,6 @@
+// Implementation of the heap data structure in PascaLIGO
+// See: https://en.wikipedia.org/wiki/Heap_%28data_structure%29
+
 type heap is map(nat, heap_element) ;
 
 function is_empty (const h : heap) : bool is

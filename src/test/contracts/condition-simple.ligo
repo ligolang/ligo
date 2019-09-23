@@ -1,3 +1,5 @@
+// Test if conditional with trivial conditions in PascaLIGO
+
 function main (const i : int) : int is
   begin
     if 1 = 1 then

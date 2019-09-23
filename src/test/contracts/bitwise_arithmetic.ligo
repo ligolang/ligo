@@ -1,3 +1,5 @@
+// Test PascaLIGO bitwise operators
+
 function or_op (const n : nat) : nat is
   begin skip end with bitwise_or(n , 4n)
 

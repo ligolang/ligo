@@ -1,3 +1,5 @@
+// Test PascaLIGO arithmetic operators
+
 function mod_op (const n : int) : nat is
   begin skip end with n mod 42
 

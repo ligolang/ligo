@@ -1,3 +1,5 @@
+// Test a PascaLIGO function which takes another PascaLIGO function as an argument
+
 function foobar (const i : int) : int is
   function foo (const i : int) : int is
     block { skip } with i ;

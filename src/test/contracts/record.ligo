@@ -1,3 +1,5 @@
+// Test record type in PascaLIGO
+
 type foobar is record
      foo : int ;
      bar : int ;
