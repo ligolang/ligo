@@ -20,6 +20,10 @@ let rec map_expression : mapper -> expression -> expression result = fun f e ->
     let%bind lst' = bind_map_list (bind_map_pair self) lst in
     return @@ E_map lst'
   )
+  | E_big_map lst -> (
+    let%bind lst' = bind_map_list (bind_map_pair self) lst in
+    return @@ E_big_map lst'
+  )
   | E_sequence ab -> (
       let%bind ab' = bind_map_pair self ab in
       return @@ E_sequence ab'

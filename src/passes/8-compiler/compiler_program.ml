@@ -32,7 +32,7 @@ let get_operator : string -> type_value -> expression list -> predicate result =
       | "MAP_REMOVE" ->
           let%bind v = match lst with
             | [ _ ; expr ] ->
-                let%bind (_, v) = Mini_c.Combinators.(get_t_map (Expression.get_type expr)) in
+                let%bind (_, v) = Mini_c.Combinators.(bind_map_or (get_t_map , get_t_big_map) (Expression.get_type expr)) in
                 ok v
             | _ -> simple_fail "mini_c . MAP_REMOVE" in
           let%bind v_ty = Compiler_type.type_ v in
@@ -97,6 +97,15 @@ let rec translate_value (v:value) ty : michelson result = match v with
       ok @@ prim ~children:[s'] D_Some
   | D_map lst -> (
       let%bind (k_ty , v_ty) = get_t_map ty in
+      let%bind lst' =
+        let aux (k , v) = bind_pair (translate_value k k_ty , translate_value v v_ty) in
+        bind_map_list aux lst in
+      let sorted = List.sort (fun (x , _) (y , _) -> compare x y) lst' in
+      let aux (a, b) = prim ~children:[a;b] D_Elt in
+      ok @@ seq @@ List.map aux sorted
+    )
+  | D_big_map lst -> (
+      let%bind (k_ty , v_ty) = get_t_big_map ty in
       let%bind lst' =
         let aux (k , v) = bind_pair (translate_value k k_ty , translate_value v v_ty) in
         bind_map_list aux lst in

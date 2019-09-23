@@ -639,6 +639,8 @@ let bind_or (a, b) =
   match a with
   | Ok _ as o -> o
   | _ -> b
+let bind_map_or (fa , fb) c =
+  bind_or (fa c , fb c)
 
 let bind_lr (type a b) ((a : a result), (b:b result)) : [`Left of a | `Right of b] result =
   match (a, b) with

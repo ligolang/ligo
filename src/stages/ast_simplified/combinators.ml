@@ -43,6 +43,7 @@ let ez_t_sum (lst:(string * type_expression) list) : type_expression =
 
 let t_function param result : type_expression = T_function (param, result)
 let t_map key value = (T_constant ("map", [key ; value]))
+let t_big_map key value = (T_constant ("big_map", [key ; value]))
 let t_set key = (T_constant ("set", [key]))
 
 let make_name (s : string) : name = s
@@ -67,6 +68,7 @@ let e'_bytes b : expression' result =
 let e_bytes ?loc b : expression result =
   let%bind e' = e'_bytes b in
   ok @@ location_wrap ?loc e'
+let e_big_map ?loc lst : expression = location_wrap ?loc @@ E_big_map lst
 let e_record ?loc map : expression = location_wrap ?loc @@ E_record map
 let e_tuple ?loc lst : expression = location_wrap ?loc @@ E_tuple lst
 let e_some ?loc s : expression = location_wrap ?loc @@ E_constant ("SOME", [s])
@@ -113,6 +115,7 @@ let e_typed_list ?loc lst t =
   e_annotation ?loc (e_list lst) (t_list t)
 
 let e_typed_map ?loc lst k v = e_annotation ?loc (e_map lst) (t_map k v)
+let e_typed_big_map ?loc lst k v = e_annotation ?loc (e_big_map lst) (t_big_map k v)
 
 let e_typed_set ?loc lst k = e_annotation ?loc (e_set lst) (t_set k)
 

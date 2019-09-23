@@ -41,6 +41,7 @@ let rec expression ppf (e:expression) = match e.expression with
   | E_accessor (ae, p) -> fprintf ppf "%a.%a" expression ae access_path p
   | E_record m -> fprintf ppf "record[%a]" (smap_sep_d expression) m
   | E_map m -> fprintf ppf "map[%a]" (list_sep_d assoc_expression) m
+  | E_big_map m -> fprintf ppf "big_map[%a]" (list_sep_d assoc_expression) m
   | E_list lst -> fprintf ppf "list[%a]" (list_sep_d expression) lst
   | E_set lst -> fprintf ppf "set[%a]" (list_sep_d expression) lst
   | E_look_up (ds, ind) -> fprintf ppf "(%a)[%a]" expression ds expression ind

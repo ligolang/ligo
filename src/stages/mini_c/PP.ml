@@ -27,6 +27,7 @@ let rec type_ ppf : type_value -> _ = function
   | T_base b -> type_base ppf b
   | T_function(a, b) -> fprintf ppf "(%a) -> (%a)" type_ a type_ b
   | T_map(k, v) -> fprintf ppf "map(%a -> %a)" type_ k type_ v
+  | T_big_map(k, v) -> fprintf ppf "big_map(%a -> %a)" type_ k type_ v
   | T_list(t) -> fprintf ppf "list(%a)" type_ t
   | T_set(t) -> fprintf ppf "set(%a)" type_ t
   | T_option(o) -> fprintf ppf "option(%a)" type_ o
@@ -61,6 +62,7 @@ let rec value ppf : value -> unit = function
   | D_none -> fprintf ppf "None"
   | D_some s -> fprintf ppf "Some (%a)" value s
   | D_map m -> fprintf ppf "Map[%a]" (list_sep_d value_assoc) m
+  | D_big_map m -> fprintf ppf "Big_map[%a]" (list_sep_d value_assoc) m
   | D_list lst -> fprintf ppf "List[%a]" (list_sep_d value) lst
   | D_set lst -> fprintf ppf "Set[%a]" (list_sep_d value) lst
 

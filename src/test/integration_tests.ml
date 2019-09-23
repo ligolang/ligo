@@ -407,6 +407,38 @@ let map () : unit result =
   in
   ok ()
 
+let big_map () : unit result =
+  let%bind program = type_file "./contracts/big_map.ligo" in
+  let ez lst =
+    let open Ast_simplified.Combinators in
+    let lst' = List.map (fun (x, y) -> e_int x, e_int y) lst in
+    e_pair (e_typed_big_map lst' t_int t_int) (e_unit ())
+  in
+  let%bind () =
+    let make_input = fun n -> ez [(23, n) ; (42, 4)] in
+    let make_expected = e_int in
+    expect_eq_n ~input_to_value:true program "gf" make_input make_expected
+  in
+  let%bind () =
+    let make_input = fun n ->
+      let m = ez [(23 , 0) ; (42 , 0)] in
+      e_tuple [(e_int n) ; m]
+    in
+    let make_expected = fun n -> ez [(23 , n) ; (42 , 0)] in
+    expect_eq_n_pos_small ?input_to_value:(Some true) program "set_" make_input make_expected
+  in
+  let%bind () =
+    let make_input = fun n -> ez [(23, n) ; (42, 4)] in
+    let make_expected = fun _ -> e_some @@ e_int 4 in
+    expect_eq_n ?input_to_value:(Some true) program "get" make_input make_expected
+  in
+  let%bind () =
+    let input = ez [(23, 23) ; (42, 42)] in
+    let expected = ez [23, 23] in
+    expect_eq ?input_to_value:(Some true) program "rm" input expected
+  in
+  ok ()
+
 let list () : unit result =
   let%bind program = type_file "./contracts/list.ligo" in
   let ez lst =
@@ -720,6 +752,7 @@ let main = test_suite "Integration (End to End)" [
     test "option" option ;
     test "option (mligo)" moption ;
     test "map" map ;
+    test "big_map" big_map ;
     test "list" list ;
     test "loop" loop ;
     test "matching" matching ;

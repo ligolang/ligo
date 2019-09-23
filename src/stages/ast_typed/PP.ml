@@ -41,6 +41,7 @@ and expression ppf (e:expression) : unit =
   | E_tuple lst -> fprintf ppf "tuple[@;  @[<v>%a@]@;]" (list_sep annotated_expression (tag ",@;")) lst
   | E_record m -> fprintf ppf "record[%a]" (smap_sep_d annotated_expression) m
   | E_map m -> fprintf ppf "map[@;  @[<v>%a@]@;]" (list_sep assoc_annotated_expression (tag ",@;")) m
+  | E_big_map m -> fprintf ppf "big_map[@;  @[<v>%a@]@;]" (list_sep assoc_annotated_expression (tag ",@;")) m
   | E_list m -> fprintf ppf "list[@;  @[<v>%a@]@;]" (list_sep annotated_expression (tag ",@;")) m
   | E_set m -> fprintf ppf "set[@;  @[<v>%a@]@;]" (list_sep annotated_expression (tag ",@;")) m
   | E_look_up (ds, i) -> fprintf ppf "(%a)[%a]" annotated_expression ds annotated_expression i

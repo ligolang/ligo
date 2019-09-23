@@ -14,9 +14,9 @@ let compile_expression_as_function_entry (program : program) entry_point : _ res
   let%bind typed_program = Typer.type_program program in
   Of_typed.compile_expression_as_function_entry typed_program entry_point
 
-let compile_expression ?(env = Ast_typed.Environment.full_empty) ae : Michelson.t result =
+let compile_expression ?(env = Ast_typed.Environment.full_empty) ?value ae : Michelson.t result =
   let%bind typed = Typer.type_expression env ae in
-  Of_typed.compile_expression typed
+  Of_typed.compile_expression ?value typed
 
 let uncompile_typed_program_entry_expression_result program entry ex_ty_value =
   let%bind output_type =

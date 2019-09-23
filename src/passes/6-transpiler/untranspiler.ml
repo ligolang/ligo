@@ -129,6 +129,18 @@ let rec untranspile (v : value) (t : AST.type_value) : AST.annotated_expression 
         bind_map_list aux lst in
       return (E_map lst')
     )
+  | T_constant ("big_map", [k_ty;v_ty]) -> (
+      let%bind lst =
+        trace_strong (wrong_mini_c_value "big_map" v) @@
+        get_big_map v in
+      let%bind lst' =
+        let aux = fun (k, v) ->
+          let%bind k' = untranspile k k_ty in
+          let%bind v' = untranspile v v_ty in
+          ok (k', v') in
+        bind_map_list aux lst in
+      return (E_big_map lst')
+    )
   | T_constant ("list", [ty]) -> (
       let%bind lst =
         trace_strong (wrong_mini_c_value "list" v) @@

@@ -41,6 +41,7 @@ let ez_t_record lst ?s () : type_value =
   t_record m ?s ()
 
 let t_map key value ?s () = make_t (T_constant ("map", [key ; value])) s
+let t_big_map key value ?s () = make_t (T_constant ("big_map", [key ; value])) s
 
 let t_sum m ?s () : type_value = make_t (T_sum m) s
 let make_t_ez_sum (lst:(string * type_value) list) : type_value =
@@ -161,6 +162,14 @@ let get_t_map_key : type_value -> type_value result = fun t ->
 
 let get_t_map_value : type_value -> type_value result = fun t ->
   let%bind (_ , value) = get_t_map t in
+  ok value
+
+let get_t_big_map_key : type_value -> type_value result = fun t ->
+  let%bind (key , _) = get_t_big_map t in
+  ok key
+
+let get_t_big_map_value : type_value -> type_value result = fun t ->
+  let%bind (_ , value) = get_t_big_map t in
   ok value
 
 let assert_t_map = fun t ->

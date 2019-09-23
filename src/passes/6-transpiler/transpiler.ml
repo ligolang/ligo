@@ -5,7 +5,6 @@ module AST = Ast_typed
 module Append_tree = Tree.Append
 open AST.Combinators
 open Mini_c
-open Combinators
 
 let untranspile = Untranspiler.untranspile
 
@@ -46,6 +45,58 @@ them. please report this to the developers." in
         row_loc location ;
       ] in
     error ~data title content
+
+  let not_functional_main location =
+    let title () = "not functional main" in
+    let content () = "main should be a function" in
+    let data = [
+      ("location" , fun () -> Format.asprintf "%a" Location.pp location) ;
+    ] in
+    error ~data title content
+
+  let bad_big_map location =
+    let title () = "bad arguments for main" in
+    let content () = "only one big_map per program which must appear 
+      on the left hand side of a pair in the contract's storage" in
+    let data = [
+      ("location" , fun () -> Format.asprintf "%a" Location.pp location) ;
+    ] in
+    error ~data title content
+
+  let missing_entry_point name =
+    let title () = "missing entry point" in
+    let content () = "no entry point with the given name" in
+    let data = [
+      ("name" , fun () -> name) ;
+    ] in
+    error ~data title content
+
+  let wrong_mini_c_value expected_type actual =
+    let title () = "illed typed intermediary value" in
+    let content () = "type of intermediary value doesn't match what was expected" in
+    let data = [
+      ("expected_type" , fun () -> expected_type) ;
+      ("actual" , fun () -> Format.asprintf "%a" Mini_c.PP.value actual ) ;
+    ] in
+    error ~data title content
+
+  let bad_untranspile bad_type value =
+    let title () = "untranspiling bad value" in
+    let content () = Format.asprintf "can not untranspile %s" bad_type in
+    let data = [
+      ("bad_type" , fun () -> bad_type) ;
+      ("value" , fun () -> Format.asprintf "%a" Mini_c.PP.value value) ;
+    ] in
+    error ~data title content
+
+  let unknown_untranspile unknown_type value =
+    let title () = "untranspiling unknown value" in
+    let content () = Format.asprintf "can not untranspile %s" unknown_type in
+    let data = [
+      ("unknown_type" , fun () -> unknown_type) ;
+      ("value" , fun () -> Format.asprintf "%a" Mini_c.PP.value value) ;
+    ] in
+    error ~data title content
 end
 open Errors
 
@@ -67,6 +118,9 @@ let rec transpile_type (t:AST.type_value) : type_value result =
   | T_constant ("map", [key;value]) ->
       let%bind kv' = bind_map_pair transpile_type (key, value) in
       ok (T_map kv')
+  | T_constant ("big_map", [key;value] ) ->
+      let%bind kv' = bind_map_pair transpile_type (key, value) in
+      ok (T_big_map kv')
   | T_constant ("list", [t]) ->
       let%bind t' = transpile_type t in
       ok (T_list t')
@@ -362,7 +416,7 @@ and transpile_annotated_expression (ae:AST.annotated_expression) : expression re
   | E_list lst -> (
       let%bind t =
         trace_strong (corner_case ~loc:__LOC__ "not a list") @@
-        Mini_c.Combinators.get_t_list tv in
+        get_t_list tv in
       let%bind lst' = bind_map_list (transpile_annotated_expression) lst in
       let aux : expression -> expression -> expression result = fun prev cur ->
         return @@ E_constant ("CONS", [cur ; prev]) in
@@ -372,7 +426,7 @@ and transpile_annotated_expression (ae:AST.annotated_expression) : expression re
   | E_set lst -> (
       let%bind t =
         trace_strong (corner_case ~loc:__LOC__ "not a set") @@
-        Mini_c.Combinators.get_t_set tv in
+        get_t_set tv in
       let%bind lst' = bind_map_list (transpile_annotated_expression) lst in
       let aux : expression -> expression -> expression result = fun prev cur ->
         return @@ E_constant ("SET_ADD", [cur ; prev]) in
@@ -383,6 +437,20 @@ and transpile_annotated_expression (ae:AST.annotated_expression) : expression re
       let%bind (src, dst) =
         trace_strong (corner_case ~loc:__LOC__ "not a map") @@
         Mini_c.Combinators.get_t_map tv in
+      let aux : expression result -> (AST.ae * AST.ae) -> expression result = fun prev (k, v) ->
+        let%bind prev' = prev in
+        let%bind (k', v') =
+          let v' = e_a_some v ae.environment in
+          bind_map_pair (transpile_annotated_expression) (k , v') in
+        return @@ E_constant ("UPDATE", [k' ; v' ; prev'])
+      in
+      let init = return @@ E_make_empty_map (src, dst) in
+      List.fold_left aux init m
+    )
+  | E_big_map m -> (
+      let%bind (src, dst) =
+        trace_strong (corner_case ~loc:__LOC__ "not a map") @@
+        Mini_c.Combinators.get_t_big_map tv in
       let aux : expression result -> (AST.ae * AST.ae) -> expression result = fun prev (k, v) ->
         let%bind prev' = prev in
         let%bind (k', v') =
@@ -566,3 +634,63 @@ let transpile_program (lst : AST.program) : program result =
   in
   let%bind (statements, _) = List.fold_left aux (ok ([], Environment.empty)) (temp_unwrap_loc_list lst) in
   ok statements
+
+(* check whether the storage contains a big_map, if yes, check that
+  it appears on the left hand side of a pair *)
+let check_storage f ty loc : (anon_function * _) result =
+  let rec aux (t:type_value) on_big_map =
+    match t with
+      | T_big_map _ -> on_big_map
+      | T_pair (a , b) -> (aux a true) && (aux b false)
+      | T_or (a,b) -> (aux a false) && (aux b false)
+      | T_function (a,b) -> (aux a false) && (aux b false)
+      | T_deep_closure (_,a,b) -> (aux a false) && (aux b false)
+      | T_map (a,b) -> (aux a false) && (aux b false)
+      | T_list a -> (aux a false)
+      | T_set a -> (aux a false)
+      | T_contract a -> (aux a false)
+      | T_option a -> (aux a false)
+      | _ -> true
+  in
+  match f.body.type_value with
+    | T_pair (_, storage) ->
+      if aux storage false then ok (f, ty) else fail @@ bad_big_map loc
+    | _ -> ok (f, ty)
+
+let extract_constructor (v : value) (tree : _ Append_tree.t') : (string * value * AST.type_value) result =
+  let open Append_tree in
+  let rec aux tv : (string * value * AST.type_value) result=
+    match tv with
+    | Leaf (k, t), v -> ok (k, v, t)
+    | Node {a}, D_left v -> aux (a, v)
+    | Node {b}, D_right v -> aux (b, v)
+    | _ -> fail @@ internal_assertion_failure "bad constructor path"
+  in
+  let%bind (s, v, t) = aux (tree, v) in
+  ok (s, v, t)
+
+let extract_tuple (v : value) (tree : AST.type_value Append_tree.t') : ((value * AST.type_value) list) result =
+  let open Append_tree in
+  let rec aux tv : ((value * AST.type_value) list) result =
+    match tv with
+    | Leaf t, v -> ok @@ [v, t]
+    | Node {a;b}, D_pair (va, vb) ->
+        let%bind a' = aux (a, va) in
+        let%bind b' = aux (b, vb) in
+        ok (a' @ b')
+    | _ -> fail @@ internal_assertion_failure "bad tuple path"
+  in
+  aux (tree, v)
+
+let extract_record (v : value) (tree : _ Append_tree.t') : (_ list) result =
+  let open Append_tree in
+  let rec aux tv : ((string * (value * AST.type_value)) list) result =
+    match tv with
+    | Leaf (s, t), v -> ok @@ [s, (v, t)]
+    | Node {a;b}, D_pair (va, vb) ->
+        let%bind a' = aux (a, va) in
+        let%bind b' = aux (b, vb) in
+        ok (a' @ b')
+    | _ -> fail @@ internal_assertion_failure "bad record path"
+  in
+  aux (tree, v)

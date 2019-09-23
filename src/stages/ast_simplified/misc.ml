@@ -120,7 +120,7 @@ let rec assert_value_eq (a, b: (expression * expression )) : unit result =
   | E_record _, _ ->
       simple_fail "comparing record with other stuff"
 
-  | E_map lsta, E_map lstb -> (
+  | (E_map lsta, E_map lstb | E_big_map lsta, E_big_map lstb) -> (
       let%bind lst = generic_try (simple_error "maps of different lengths")
           (fun () ->
              let lsta' = List.sort compare lsta in
@@ -133,7 +133,7 @@ let rec assert_value_eq (a, b: (expression * expression )) : unit result =
       let%bind _all = bind_map_list aux lst in
       ok ()
     )
-  | E_map _, _ ->
+  | (E_map _ | E_big_map _), _ ->
       simple_fail "comparing map with other stuff"
 
   | E_list lsta, E_list lstb -> (

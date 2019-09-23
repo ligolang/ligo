@@ -7,15 +7,15 @@ let get_final_environment program =
   post_env
 
 let run_typed_program
-    ?options
+    ?options ?input_to_value
     (program : Ast_typed.program) (entry : string)
     (input : expression) : expression result =
   let%bind code = Compile.Of_typed.compile_function_entry program entry in
   let%bind input =
     let env = get_final_environment program in
-    Compile.Of_simplified.compile_expression ~env input
+    Compile.Of_simplified.compile_expression ~env ?value:input_to_value input
   in
-  let%bind ex_ty_value = Of_michelson.run ?options code input in
+  let%bind ex_ty_value = Of_michelson.run ?is_input_value:input_to_value ?options code input in
   Compile.Of_simplified.uncompile_typed_program_entry_function_result program entry ex_ty_value
 
 let evaluate_typed_program_entry

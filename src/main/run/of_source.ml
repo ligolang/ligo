@@ -46,10 +46,10 @@ include struct
     ok ()
 end
 
-let run_contract ?amount source_filename entry_point storage parameter syntax =
+let run_contract ?amount ?storage_value source_filename entry_point storage parameter syntax =
   let%bind program = Compile.Of_source.type_file syntax source_filename in
   let%bind code = Compile.Of_typed.compile_function_entry program entry_point in
-  let%bind args = Compile.Of_source.compile_file_contract_args source_filename entry_point storage parameter syntax in
+  let%bind args = Compile.Of_source.compile_file_contract_args ?value:storage_value source_filename entry_point storage parameter syntax in
   let%bind ex_value_ty =
     let options =
       let open Proto_alpha_utils.Memory_proto_alpha in

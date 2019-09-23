@@ -59,6 +59,10 @@ let get_map (v:value) = match v with
   | D_map lst -> ok lst
   | _ -> simple_fail "not a map"
 
+let get_big_map (v:value) = match v with
+  | D_big_map lst -> ok lst
+  | _ -> simple_fail "not a big_map"
+
 let get_list (v:value) = match v with
   | D_list lst -> ok lst
   | _ -> simple_fail "not a list"
@@ -104,6 +108,10 @@ let get_t_or (t:type_value) = match t with
 let get_t_map (t:type_value) = match t with
   | T_map kv -> ok kv
   | _ -> simple_fail "not a type map"
+
+let get_t_big_map (t:type_value) = match t with
+  | T_big_map kv -> ok kv
+  | _ -> simple_fail "not a type big_map"
 
 let get_t_list (t:type_value) = match t with
   | T_list t -> ok t

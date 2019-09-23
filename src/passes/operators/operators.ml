@@ -235,35 +235,35 @@ module Typer = struct
     ok tl
 
   let map_remove : typer = typer_2 "MAP_REMOVE" @@ fun k m ->
-    let%bind (src , _) = get_t_map m in
+    let%bind (src , _) = bind_map_or (get_t_map , get_t_big_map) m in
     let%bind () = assert_type_value_eq (src , k) in
     ok m
 
   let map_add : typer = typer_3 "MAP_ADD" @@ fun k v m ->
-    let%bind (src, dst) = get_t_map m in
+    let%bind (src, dst) = bind_map_or (get_t_map , get_t_big_map) m in
     let%bind () = assert_type_value_eq (src, k) in
     let%bind () = assert_type_value_eq (dst, v) in
     ok m
 
   let map_update : typer = typer_3 "MAP_UPDATE" @@ fun k v m ->
-    let%bind (src, dst) = get_t_map m in
+    let%bind (src, dst) = bind_map_or (get_t_map , get_t_big_map) m in
     let%bind () = assert_type_value_eq (src, k) in
     let%bind v' = get_t_option v in
     let%bind () = assert_type_value_eq (dst, v') in
     ok m
 
   let map_mem : typer = typer_2 "MAP_MEM" @@ fun k m ->
-    let%bind (src, _dst) = get_t_map m in
+    let%bind (src, _dst) = bind_map_or (get_t_map , get_t_big_map) m in
     let%bind () = assert_type_value_eq (src, k) in
     ok @@ t_bool ()
 
   let map_find : typer = typer_2 "MAP_FIND" @@ fun k m ->
-    let%bind (src, dst) = get_t_map m in
+    let%bind (src, dst) = bind_map_or (get_t_map , get_t_big_map) m in
     let%bind () = assert_type_value_eq (src, k) in
     ok @@ dst
 
   let map_find_opt : typer = typer_2 "MAP_FIND_OPT" @@ fun k m ->
-    let%bind (src, dst) = get_t_map m in
+    let%bind (src, dst) = bind_map_or (get_t_map , get_t_big_map) m in
     let%bind () = assert_type_value_eq (src, k) in
     ok @@ t_option dst ()
 
@@ -290,39 +290,10 @@ module Typer = struct
     let%bind () = assert_eq_1 arg_3 res'' in
     ok @@ res'
 
-  let big_map_remove : typer = typer_2 "BIG_MAP_REMOVE" @@ fun k m ->
-    let%bind (src , _) = get_t_big_map m in
-    let%bind () = assert_type_value_eq (src , k) in
-    ok m
-
-  let big_map_add : typer = typer_3 "BIG_MAP_ADD" @@ fun k v m ->
-    let%bind (src, dst) = get_t_big_map m in
-    let%bind () = assert_type_value_eq (src, k) in
-    let%bind () = assert_type_value_eq (dst, v) in
-    ok m
-
-  let big_map_update : typer = typer_3 "BIG_MAP_UPDATE" @@ fun k v m ->
-    let%bind (src, dst) = get_t_big_map m in
-    let%bind () = assert_type_value_eq (src, k) in
-    let%bind v' = get_t_option v in
-    let%bind () = assert_type_value_eq (dst, v') in
-    ok m
-
-  let big_map_mem : typer = typer_2 "BIG_MAP_MEM" @@ fun k m ->
-    let%bind (src, _dst) = get_t_big_map m in
-    let%bind () = assert_type_value_eq (src, k) in
-    ok @@ t_bool ()
-
-  let big_map_find : typer = typer_2 "BIG_MAP_FIND" @@ fun k m ->
-    let%bind (src, dst) = get_t_big_map m in
-    let%bind () = assert_type_value_eq (src, k) in
-    ok @@ dst
-
-
   let size = typer_1 "SIZE" @@ fun t ->
     let%bind () =
       Assert.assert_true @@
-      (is_t_map t || is_t_list t || is_t_string t || is_t_bytes t || is_t_set t || is_t_big_map t) in
+      (is_t_map t || is_t_list t || is_t_string t || is_t_bytes t || is_t_set t ) in
     ok @@ t_nat ()
 
   let slice = typer_3 "SLICE" @@ fun i j s ->
@@ -341,7 +312,7 @@ module Typer = struct
     ok @@ t_unit ()
 
   let get_force = typer_2 "MAP_GET_FORCE" @@ fun i m ->
-    let%bind (src, dst) = get_t_map m in
+    let%bind (src, dst) = bind_map_or (get_t_map , get_t_big_map) m in
     let%bind _ = assert_type_value_eq (src, i) in
     ok dst
 
@@ -592,7 +563,6 @@ module Typer = struct
       map_map ;
       map_fold ;
       map_iter ;
-      map_map ;
       set_empty ;
       set_mem ;
       set_add ;
@@ -671,6 +641,8 @@ module Compiler = struct
     ("MAP_GET_FORCE" , simple_binary @@ seq [prim I_GET ; i_assert_some_msg (i_push_string "GET_FORCE")]) ;
     ("MAP_FIND" , simple_binary @@ seq [prim I_GET ; i_assert_some_msg (i_push_string "MAP FIND")]) ;
     ("MAP_GET" , simple_binary @@ prim I_GET) ;
+    ("MAP_ADD" , simple_ternary @@ seq [dip (i_some) ; prim I_UPDATE]) ;
+    ("MAP_UPDATE" , simple_ternary @@ prim I_UPDATE) ;
     ("SIZE" , simple_unary @@ prim I_SIZE) ;
     ("FAILWITH" , simple_unary @@ prim I_FAILWITH) ;
     ("ASSERT_INFERRED" , simple_binary @@ i_if (seq [i_failwith]) (seq [i_drop ; i_push_unit])) ;
@@ -685,8 +657,6 @@ module Compiler = struct
     ("CALL" , simple_ternary @@ prim I_TRANSFER_TOKENS) ;
     ("SOURCE" , simple_constant @@ prim I_SOURCE) ;
     ("SENDER" , simple_constant @@ prim I_SENDER) ;
-    ("MAP_ADD" , simple_ternary @@ seq [dip (i_some) ; prim I_UPDATE]) ;
-    ("MAP_UPDATE" , simple_ternary @@ prim I_UPDATE) ;
     ("SET_MEM" , simple_binary @@ prim I_MEM) ;
     ("SET_ADD" , simple_binary @@ seq [dip (i_push (prim T_bool) (prim D_True)) ; prim I_UPDATE]) ;
     ("SET_REMOVE" , simple_binary @@ seq [dip (i_push (prim T_bool) (prim D_False)) ; prim I_UPDATE]) ;

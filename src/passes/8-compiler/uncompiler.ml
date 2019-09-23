@@ -6,19 +6,19 @@ open Protocol
 open Script_typed_ir
 open Script_ir_translator
 
-let rec translate_value (Ex_typed_value (ty, value)) : value result =
+let rec translate_value ?bm_opt (Ex_typed_value (ty, value)) : value result =
   match (ty, value) with
   | Pair_t ((a_ty, _, _), (b_ty, _, _), _), (a, b) -> (
-      let%bind a = translate_value @@ Ex_typed_value(a_ty, a) in
-      let%bind b = translate_value @@ Ex_typed_value(b_ty, b) in
+      let%bind a = translate_value ?bm_opt @@ Ex_typed_value(a_ty, a) in
+      let%bind b = translate_value ?bm_opt @@ Ex_typed_value(b_ty, b) in
       ok @@ D_pair(a, b)
     )
   | Union_t ((a_ty, _), _, _), L a -> (
-      let%bind a = translate_value @@ Ex_typed_value(a_ty, a) in
+      let%bind a = translate_value ?bm_opt @@ Ex_typed_value(a_ty, a) in
       ok @@ D_left a
     )
   | Union_t (_, (b_ty, _), _), R b -> (
-      let%bind b = translate_value @@ Ex_typed_value(b_ty, b) in
+      let%bind b = translate_value ?bm_opt @@ Ex_typed_value(b_ty, b) in
       ok @@ D_right b
     )
   | (Int_t _), n ->
@@ -71,6 +71,30 @@ let rec translate_value (Ex_typed_value (ty, value)) : value result =
         bind_map_list aux lst
       in
       ok @@ D_map lst'
+  | (Big_map_t (k_cty, v_ty, _)), m ->
+      let k_ty = Script_ir_translator.ty_of_comparable_ty k_cty in
+      let lst =
+        let aux k v acc = (k, v) :: acc in
+        let lst = Script_ir_translator.map_fold aux m.diff [] in
+        List.rev lst in
+      let%bind original_big_map =
+        match bm_opt with
+        | Some (D_big_map l) -> ok @@ l
+        | _ -> ok []
+        (* | _ -> fail @@ simple_error "Do not have access to the original big_map" . When does this matter? *)
+      in
+      let%bind lst' =
+        let aux orig (k, v) =
+          let%bind k' = translate_value (Ex_typed_value (k_ty, k)) in
+          let orig_rem = List.remove_assoc k' orig in
+          match v with
+          | Some vadd ->
+            let%bind v' = translate_value (Ex_typed_value (v_ty, vadd)) in
+            if (List.mem_assoc k' orig) then ok @@ (k', v')::orig_rem
+            else ok @@ (k', v')::orig
+          | None -> ok orig_rem in
+        bind_fold_list aux original_big_map lst in
+      ok @@ D_big_map lst'
   | (List_t (ty, _)), lst ->
       let%bind lst' =
         let aux = fun t -> translate_value (Ex_typed_value (ty, t)) in
