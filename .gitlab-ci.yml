@@ -74,17 +74,6 @@ local-dune-job:
     - scripts/build_ligo_local.sh
     - dune build @ligo-test
 
-# TODO: uncomment this
-
-# TODO
-# local-repo-job:
-#   <<: *before_script
-#   stage: test
-#   script:
-#     - scripts/install_vendors_deps.sh
-#     # TODO: also try from time to time with --build-test
-#     - opam install -y ligo
-
 remote-repo-job:
   <<: *before_script
   stage: test
@@ -108,6 +97,8 @@ build-current-docker-image:
   stage: build_docker
   <<: *docker
   <<: *docker_build
+  after_script:
+    - scripts/test_cli.sh
   except:
     - master
     - dev
@@ -120,6 +111,7 @@ build-and-publish-latest-docker-image:
   <<: *docker_build
   after_script:
     - docker login -u $LIGO_REGISTRY_USER -p $LIGO_REGISTRY_PASSWORD
+    - scripts/test_cli.sh
     - docker push $LIGO_REGISTRY_IMAGE:next
   only:
     - dev

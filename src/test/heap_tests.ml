@@ -1,8 +1,7 @@
 open Trace
-open Ligo.Run
 open Test_helpers
 
-let type_file = type_file `pascaligo
+let type_file = Ligo.Compile.Of_source.type_file (Syntax_name "pascaligo")
 
 let get_program =
   let s = ref None in
@@ -44,6 +43,8 @@ let dummy n =
     @@ tl
     @@ range (n + 1)
   )
+
+let run_typed = Run.Of_typed.run_entry
 
 let is_empty () : unit result =
   let%bind program = get_program () in
