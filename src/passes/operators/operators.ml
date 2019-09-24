@@ -147,6 +147,7 @@ module Simplify = struct
 
       ("Set.mem" , "SET_MEM") ;
       ("Set.empty" , "SET_EMPTY") ;
+      ("Set.literal" , "SET_LITERAL") ;
       ("Set.add" , "SET_ADD") ;
       ("Set.remove" , "SET_REMOVE") ;
       ("Set.fold" , "SET_FOLD") ;

@@ -32,4 +32,22 @@ let peephole_expression : expression -> expression result = fun e ->
       in
       return @@ E_map []
     )
+  | E_constant ("SET_LITERAL" , lst) -> (
+      let%bind elt =
+        trace_option (simple_error "map literal expects a single parameter") @@
+        List.to_singleton lst
+      in
+      let%bind lst =
+        trace (simple_error "map literal expects a list as parameter") @@
+        get_e_list elt.expression
+      in
+      return @@ E_set lst
+    )
+  | E_constant ("SET_EMPTY" , lst) -> (
+      let%bind () =
+        trace_strong (simple_error "SET_EMPTY expects no parameter") @@
+        Assert.assert_list_empty lst
+      in
+      return @@ E_set []
+    )
   | e -> return e
