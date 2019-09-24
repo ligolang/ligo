@@ -40,7 +40,7 @@ let rec translate_value ?bm_opt (Ex_typed_value (ty, value)) : value result =
       let%bind n =
         generic_try (simple_error "too big to fit an int") @@
         (fun () -> Int64.to_int @@ Alpha_context.Tez.to_mutez n) in
-      ok @@ D_nat n
+      ok @@ D_mutez n
   | (Bool_t _), b ->
       ok @@ D_bool b
   | (String_t _), s ->

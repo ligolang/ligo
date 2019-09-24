@@ -66,7 +66,7 @@ let rec translate_value (v:value) ty : michelson result = match v with
   | D_int n -> ok @@ int (Z.of_int n)
   | D_nat n -> ok @@ int (Z.of_int n)
   | D_timestamp n -> ok @@ int (Z.of_int n)
-  | D_tez n -> ok @@ int (Z.of_int n)
+  | D_mutez n -> ok @@ int (Z.of_int n)
   | D_string s -> ok @@ string s
   | D_bytes s -> ok @@ bytes (Tezos_stdlib.MBytes.of_bytes s)
   | D_unit -> ok @@ prim D_Unit
@@ -338,6 +338,20 @@ and translate_expression (expr:expression) (env:environment) : michelson result 
           let error = error (thunk "bad iterator") (thunk s) in
           fail error
         )
+    )
+  | E_fold ((v , body) , collection , initial) -> (
+      let%bind collection' = translate_expression collection env in
+      let%bind initial' = translate_expression initial env in
+      let%bind body' = translate_expression body (Environment.add v env) in
+      let code = seq [
+          collection' ;
+          dip initial' ;
+          i_iter (seq [
+              i_swap ;
+              i_pair ; body' ; dip i_drop ;
+            ]) ;
+        ] in
+      ok code
     )
   | E_assignment (name , lrs , expr) -> (
       let%bind expr' = translate_expression expr env in

@@ -86,8 +86,8 @@ let rec untranspile (v : value) (t : AST.type_value) : AST.annotated_expression 
   | T_constant ("tez", []) -> (
       let%bind n =
         trace_strong (wrong_mini_c_value "tez" v) @@
-        get_nat v in
-      return (E_literal (Literal_tez n))
+        get_mutez v in
+      return (E_literal (Literal_mutez n))
     )
   | T_constant ("string", []) -> (
       let%bind n =

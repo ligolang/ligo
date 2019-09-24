@@ -9,3 +9,8 @@ function iter_op (const s : set(int)) : int is
   begin
     set_iter(s , aggregate) ;
   end with r
+
+function fold_op (const s : set(int)) : int is
+  function aggregate (const i : int ; const j : int) : int is
+  block { skip } with i + j
+  block { skip } with set_fold(s , 15 , aggregate)

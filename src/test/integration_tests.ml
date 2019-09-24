@@ -224,6 +224,11 @@ let set_arithmetic () : unit result =
     expect_eq program "mem_op"
       (e_set [e_string "foo" ; e_string "bar"])
       (e_bool false) in
+  let%bind () =
+    expect_eq program_1 "fold_op"
+      (e_set [ e_int 4 ; e_int 10 ])
+      (e_int 29)
+  in
   ok ()
 
 let unit_expression () : unit result =
@@ -352,6 +357,15 @@ let moption () : unit result =
   in
   ok ()
 
+let mmap () : unit result =
+  let%bind program = mtype_file "./contracts/map.mligo" in
+  let%bind () = expect_eq_evaluate program "foobar"
+      (e_annotation (e_map []) (t_map t_int t_int)) in
+  let%bind () = expect_eq_evaluate program "foobarz"
+      (e_annotation (e_map [(e_int 1 , e_int 10) ; (e_int 2 , e_int 20)]) (t_map t_int t_int)) in
+  let%bind () = expect_eq_evaluate program "foo" (e_int 10) in
+  ok ()
+
 let map () : unit result =
   let%bind program = type_file "./contracts/map.ligo" in
   let ez lst =
@@ -387,6 +401,11 @@ let map () : unit result =
     expect_eq_n program "get" make_input make_expected
   in
   let%bind () =
+    let make_input = fun n -> ez [(23, n) ; (42, 4)] in
+    let make_expected = fun _ -> e_some @@ e_int 4 in
+    expect_eq_n program "get_" make_input make_expected
+  in
+  let%bind () =
     let expected = ez @@ List.map (fun x -> (x, 23)) [144 ; 51 ; 42 ; 120 ; 421] in
     expect_eq_evaluate program "bm" expected
   in
@@ -399,6 +418,11 @@ let map () : unit result =
     let input = ez [(1 , 10) ; (2 , 20) ; (3 , 30) ] in
     let expected = e_int 66 in
     expect_eq program "iter_op" input expected
+  in
+  let%bind () =
+    let input = ez [(1 , 10) ; (2 , 20) ; (3 , 30) ] in
+    let expected = e_int 76 in
+    expect_eq program "fold_op" input expected
   in
   let%bind () =
     let input = ez [(1 , 10) ; (2 , 20) ; (3 , 30) ] in
@@ -674,6 +698,8 @@ let match_matej () : unit result =
 
 let mligo_list () : unit result =
   let%bind program = mtype_file "./contracts/list.mligo" in
+  let aux lst = e_list @@ List.map e_int lst in
+  let%bind () = expect_eq program "fold_op" (aux [ 1 ; 2 ; 3 ]) (e_int 16) in
   let%bind () =
     let make_input n =
       e_pair (e_list [e_int n; e_int (2*n)])
@@ -687,6 +713,8 @@ let mligo_list () : unit result =
   let%bind () = expect_eq_evaluate program "x" (e_list []) in
   let%bind () = expect_eq_evaluate program "y" (e_list @@ List.map e_int [3 ; 4 ; 5]) in
   let%bind () = expect_eq_evaluate program "z" (e_list @@ List.map e_int [2 ; 3 ; 4 ; 5]) in
+  let%bind () = expect_eq program "map_op" (aux [2 ; 3 ; 4 ; 5]) (aux [3 ; 4 ; 5 ; 6]) in
+  let%bind () = expect_eq program "iter_op" (aux [2 ; 3 ; 4 ; 5]) (e_unit ()) in
   ok ()
 
 let lambda_mligo () : unit result =
@@ -752,6 +780,7 @@ let main = test_suite "Integration (End to End)" [
     test "option" option ;
     test "option (mligo)" moption ;
     test "map" map ;
+    test "map (mligo)" mmap ;
     test "big_map" big_map ;
     test "list" list ;
     test "loop" loop ;

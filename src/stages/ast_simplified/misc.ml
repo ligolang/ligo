@@ -45,9 +45,9 @@ let assert_literal_eq (a, b : literal * literal) : unit result =
   | Literal_timestamp a, Literal_timestamp b when a = b -> ok ()
   | Literal_timestamp _, Literal_timestamp _ -> fail @@ different_literals "different timestamps" a b
   | Literal_timestamp _, _ -> fail @@ different_literals_because_different_types "timestamp vs non-timestamp" a b
-  | Literal_tez a, Literal_tez b when a = b -> ok ()
-  | Literal_tez _, Literal_tez _ -> fail @@ different_literals "different tezs" a b
-  | Literal_tez _, _ -> fail @@ different_literals_because_different_types "tez vs non-tez" a b
+  | Literal_mutez a, Literal_mutez b when a = b -> ok ()
+  | Literal_mutez _, Literal_mutez _ -> fail @@ different_literals "different tezs" a b
+  | Literal_mutez _, _ -> fail @@ different_literals_because_different_types "tez vs non-tez" a b
   | Literal_string a, Literal_string b when a = b -> ok ()
   | Literal_string _, Literal_string _ -> fail @@ different_literals "different strings" a b
   | Literal_string _, _ -> fail @@ different_literals_because_different_types "string vs non-string" a b

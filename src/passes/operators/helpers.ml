@@ -104,7 +104,7 @@ module Typer = struct
   let eq_1 a cst = type_value_eq (a , cst)
   let eq_2 (a , b) cst = type_value_eq (a , cst) && type_value_eq (b , cst)
 
-  let assert_eq_1 a b = Assert.assert_true (eq_1 a b)
+  let assert_eq_1 ?msg a b = Assert.assert_true ?msg (eq_1 a b)
 
   let comparator : string -> typer = fun s -> typer_2 s @@ fun a b ->
     let%bind () =

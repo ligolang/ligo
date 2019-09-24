@@ -81,10 +81,16 @@ module Simplify = struct
       ("set_add" , "SET_ADD") ;
       ("set_remove" , "SET_REMOVE") ;
       ("set_iter" , "SET_ITER") ;
+      ("set_fold" , "SET_FOLD") ;
       ("list_iter" , "LIST_ITER") ;
+      ("list_fold" , "LIST_FOLD") ;
       ("list_map" , "LIST_MAP") ;
       ("map_iter" , "MAP_ITER") ;
       ("map_map" , "MAP_MAP") ;
+      ("map_fold" , "MAP_FOLD") ;
+      ("map_remove" , "MAP_REMOVE") ;
+      ("map_update" , "MAP_UPDATE") ;
+      ("map_get" , "MAP_GET") ;
       ("sha_256" , "SHA256") ;
       ("sha_512" , "SHA512") ;
       ("blake2b" , "BLAKE2b") ;
@@ -144,14 +150,21 @@ module Simplify = struct
 
       ("Set.mem" , "SET_MEM") ;
       ("Set.empty" , "SET_EMPTY") ;
+      ("Set.literal" , "SET_LITERAL") ;
       ("Set.add" , "SET_ADD") ;
       ("Set.remove" , "SET_REMOVE") ;
+      ("Set.fold" , "SET_FOLD") ;
 
       ("Map.find_opt" , "MAP_FIND_OPT") ;
       ("Map.find" , "MAP_FIND") ;
       ("Map.update" , "MAP_UPDATE") ;
       ("Map.add" , "MAP_ADD") ;
       ("Map.remove" , "MAP_REMOVE") ;
+      ("Map.iter" , "MAP_ITER") ;
+      ("Map.map" , "MAP_MAP") ;
+      ("Map.fold" , "MAP_FOLD") ;
+      ("Map.empty" , "MAP_EMPTY") ;
+      ("Map.literal" , "MAP_LITERAL" ) ;
 
       ("String.length", "SIZE") ;
       ("String.size", "SIZE") ;
@@ -161,7 +174,9 @@ module Simplify = struct
 
       ("List.length", "SIZE") ;
       ("List.size", "SIZE") ;
-      ("List.iter", "ITER") ;
+      ("List.iter", "LIST_ITER") ;
+      ("List.map" , "LIST_MAP") ;
+      ("List.fold" , "LIST_FOLD") ;
 
       ("Operation.transaction" , "CALL") ;
       ("Operation.get_contract" , "CONTRACT") ;
@@ -258,7 +273,9 @@ module Typer = struct
     ok @@ t_bool ()
 
   let map_find : typer = typer_2 "MAP_FIND" @@ fun k m ->
-    let%bind (src, dst) = bind_map_or (get_t_map , get_t_big_map) m in
+    let%bind (src, dst) =
+      trace_strong (simple_error "MAP_FIND: not map or bigmap") @@
+      bind_map_or (get_t_map , get_t_big_map) m in
     let%bind () = assert_type_value_eq (src, k) in
     ok @@ dst
 
@@ -279,16 +296,6 @@ module Typer = struct
     let%bind (arg , res) = get_t_function f in
     let%bind () = assert_eq_1 arg (t_pair k v ()) in
     ok @@ t_map k res ()
-
-  let map_fold : typer = typer_2 "MAP_FOLD" @@ fun f m ->
-    let%bind (k, v) = get_t_map m in
-    let%bind (arg_1 , res) = get_t_function f in
-    let%bind (arg_2 , res') = get_t_function res in
-    let%bind (arg_3 , res'') = get_t_function res' in
-    let%bind () = assert_eq_1 arg_1 k in
-    let%bind () = assert_eq_1 arg_2 v in
-    let%bind () = assert_eq_1 arg_3 res'' in
-    ok @@ res'
 
   let size = typer_1 "SIZE" @@ fun t ->
     let%bind () =
@@ -311,10 +318,15 @@ module Typer = struct
       (is_t_string t) in
     ok @@ t_unit ()
 
-  let get_force = typer_2 "MAP_GET_FORCE" @@ fun i m ->
+  let map_get_force = typer_2 "MAP_GET_FORCE" @@ fun i m ->
     let%bind (src, dst) = bind_map_or (get_t_map , get_t_big_map) m in
     let%bind _ = assert_type_value_eq (src, i) in
     ok dst
+
+  let map_get = typer_2 "MAP_GET" @@ fun i m ->
+    let%bind (src, dst) = bind_map_or (get_t_map , get_t_big_map) m in
+    let%bind _ = assert_type_value_eq (src, i) in
+    ok @@ t_option dst ()
 
   let int : typer = typer_1 "INT" @@ fun t ->
     let%bind () = assert_t_nat t in
@@ -483,7 +495,49 @@ module Typer = struct
     let%bind key = get_t_list lst in
     if eq_1 key arg
     then ok (t_list res ())
-    else simple_fail "bad list iter"
+    else simple_fail "bad list map"
+
+  let list_fold = typer_3 "LIST_FOLD" @@ fun lst init body ->
+    let%bind (arg , res) = get_t_function body in
+    let%bind (prec , cur) = get_t_pair arg in
+    let%bind key = get_t_list lst in
+    let msg = Format.asprintf "%a vs %a"
+        Ast_typed.PP.type_value key
+        Ast_typed.PP.type_value arg
+    in
+    trace (simple_error ("bad list fold:" ^ msg)) @@
+    let%bind () = assert_eq_1 ~msg:"key cur" key cur in
+    let%bind () = assert_eq_1 ~msg:"prec res" prec res in
+    let%bind () = assert_eq_1 ~msg:"res init" res init in
+    ok res
+
+  let set_fold = typer_3 "SET_FOLD" @@ fun lst init body ->
+    let%bind (arg , res) = get_t_function body in
+    let%bind (prec , cur) = get_t_pair arg in
+    let%bind key = get_t_set lst in
+    let msg = Format.asprintf "%a vs %a"
+        Ast_typed.PP.type_value key
+        Ast_typed.PP.type_value arg
+    in
+    trace (simple_error ("bad set fold:" ^ msg)) @@
+    let%bind () = assert_eq_1 ~msg:"key cur" key cur in
+    let%bind () = assert_eq_1 ~msg:"prec res" prec res in
+    let%bind () = assert_eq_1 ~msg:"res init" res init in
+    ok res
+
+  let map_fold = typer_3 "MAP_FOLD" @@ fun map init body ->
+    let%bind (arg , res) = get_t_function body in
+    let%bind (prec , cur) = get_t_pair arg in
+    let%bind (key , value) = get_t_map map in
+    let msg = Format.asprintf "%a vs %a"
+        Ast_typed.PP.type_value key
+        Ast_typed.PP.type_value arg
+    in
+    trace (simple_error ("bad list fold:" ^ msg)) @@
+    let%bind () = assert_eq_1 ~msg:"key cur" (t_pair key value ()) cur in
+    let%bind () = assert_eq_1 ~msg:"prec res" prec res in
+    let%bind () = assert_eq_1 ~msg:"res init" res init in
+    ok res
 
   let not_ = typer_1 "NOT" @@ fun elt ->
     if eq_1 elt (t_bool ())
@@ -563,17 +617,20 @@ module Typer = struct
       map_map ;
       map_fold ;
       map_iter ;
+      map_get_force ;
+      map_get ;
       set_empty ;
       set_mem ;
       set_add ;
       set_remove ;
       set_iter ;
+      set_fold ;
       list_iter ;
       list_map ;
+      list_fold ;
       int ;
       size ;
       failwith_ ;
-      get_force ;
       bytes_pack ;
       bytes_unpack ;
       hash256 ;
@@ -641,6 +698,7 @@ module Compiler = struct
     ("MAP_GET_FORCE" , simple_binary @@ seq [prim I_GET ; i_assert_some_msg (i_push_string "GET_FORCE")]) ;
     ("MAP_FIND" , simple_binary @@ seq [prim I_GET ; i_assert_some_msg (i_push_string "MAP FIND")]) ;
     ("MAP_GET" , simple_binary @@ prim I_GET) ;
+    ("MAP_FIND_OPT" , simple_binary @@ prim I_GET) ;
     ("MAP_ADD" , simple_ternary @@ seq [dip (i_some) ; prim I_UPDATE]) ;
     ("MAP_UPDATE" , simple_ternary @@ prim I_UPDATE) ;
     ("SIZE" , simple_unary @@ prim I_SIZE) ;
