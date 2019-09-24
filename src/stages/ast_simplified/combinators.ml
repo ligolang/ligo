@@ -162,6 +162,11 @@ let get_e_list = fun t ->
   | E_list lst -> ok lst
   | _ -> simple_fail "not a list"
 
+let get_e_tuple = fun t ->
+  match t with
+  | E_tuple lst -> ok lst
+  | _ -> simple_fail "not a tuple"
+
 let get_e_failwith = fun e ->
   match e.expression with
   | E_failwith fw -> ok fw

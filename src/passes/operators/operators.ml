@@ -159,6 +159,8 @@ module Simplify = struct
       ("Map.iter" , "MAP_ITER") ;
       ("Map.map" , "MAP_MAP") ;
       ("Map.fold" , "MAP_FOLD") ;
+      ("Map.empty" , "MAP_EMPTY") ;
+      ("Map.literal" , "MAP_LITERAL" ) ;
 
       ("String.length", "SIZE") ;
       ("String.size", "SIZE") ;

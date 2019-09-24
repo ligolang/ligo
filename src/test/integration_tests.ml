@@ -357,6 +357,14 @@ let moption () : unit result =
   in
   ok ()
 
+let mmap () : unit result =
+  let%bind program = mtype_file "./contracts/map.mligo" in
+  let%bind () = expect_eq_evaluate program "foobar"
+      (e_annotation (e_map []) (t_map t_int t_int)) in
+  let%bind () = expect_eq_evaluate program "foobarz"
+      (e_annotation (e_map [(e_int 1 , e_int 10) ; (e_int 2 , e_int 20)]) (t_map t_int t_int)) in
+  ok ()
+
 let map () : unit result =
   let%bind program = type_file "./contracts/map.ligo" in
   let ez lst =
@@ -766,6 +774,7 @@ let main = test_suite "Integration (End to End)" [
     test "option" option ;
     test "option (mligo)" moption ;
     test "map" map ;
+    test "map (mligo)" mmap ;
     test "big_map" big_map ;
     test "list" list ;
     test "loop" loop ;

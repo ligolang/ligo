@@ -63,7 +63,7 @@ let parsify = fun (syntax : v_syntax) source_filename ->
     | Cameligo -> ok parsify_ligodity
   in
   let%bind parsified = parsify source_filename in
-  let%bind applied = Self_ast_simplified.convert_annotation_program parsified in
+  let%bind applied = Self_ast_simplified.all_program parsified in
   ok applied
 
 let parsify_expression = fun syntax source ->
@@ -72,5 +72,5 @@ let parsify_expression = fun syntax source ->
     | Cameligo -> ok parsify_expression_ligodity
   in
   let%bind parsified = parsify source in
-  let%bind applied = Self_ast_simplified.convert_annotation_expression parsified in
+  let%bind applied = Self_ast_simplified.all_expression parsified in
   ok applied
