@@ -16,6 +16,11 @@ let function_ () : unit result =
   let make_expect = fun n -> n in
   expect_eq_n_int program "main" make_expect
 
+let procedure () : unit result =
+  let%bind program = type_file "./contracts/procedure.ligo" in
+  let make_expect = fun n -> n in
+  expect_eq_n_int program "main" make_expect
+
 let assign () : unit result =
   let%bind program = type_file "./contracts/assign.ligo" in
   let make_expect = fun n -> n + 1 in
@@ -459,9 +464,21 @@ let loop () : unit result =
   let%bind () =
     let make_input = e_nat in
     let make_expected = fun n -> e_nat (n * (n + 1) / 2) in
-    expect_eq_n_pos_mid program "sum" make_input make_expected
-  in
+    expect_eq_n_pos_mid program "while_sum" make_input make_expected
+  in(* For loop is currently unsupported 
+      
+  let%bind () = 
+    let make_input = e_nat in
+    let make_expected = fun n -> e_nat (n * (n + 1) / 2) in
+    expect_eq_n_pos_mid program "for_sum" make_input make_expected
+  in *)
   ok ()
+
+(* Don't know how to assert parse error happens in this test framework
+let for_fail () : unit result =
+  let%bind program = type_file "./contracts/for_fail.ligo" in
+  let%bind () = expect_fail program "main" (e_nat 0)
+  in ok () *)
 
 let matching () : unit result =
   let%bind program = type_file "./contracts/match.ligo" in
@@ -666,6 +683,7 @@ let website2_ligo () : unit result =
 let main = test_suite "Integration (End to End)" [
     test "type alias" type_alias ;
     test "function" function_ ;
+    test "procedure"  procedure ;
     test "assign" assign ;
     test "declaration local" declaration_local ;
     test "complex function" complex_function ;

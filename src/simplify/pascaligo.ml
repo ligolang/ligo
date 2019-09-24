@@ -145,7 +145,7 @@ module Errors = struct
   let unsupported_for_loops region =
     let title () = "bounded iterators" in
     let message () =
-      Format.asprintf "only simple for loops are supported yet" in
+      Format.asprintf "only simple for loops are supported for now" in
     let data = [
       ("loop_loc",
        fun () -> Format.asprintf "%a" Location.pp_lift @@ region)
