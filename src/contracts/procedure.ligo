@@ -1,6 +1,11 @@
 // Test a trivial PascaLIGO procedure
 
-procedure main (const i : int) : int is
+procedure sub (const j: int) is 
   begin
-    skip
-  end with i
+    i := i + 1
+  end
+
+function main (const i: int) : int is 
+  begin 
+    sub(i)
+  end with i 

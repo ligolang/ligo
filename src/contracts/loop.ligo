@@ -16,12 +16,12 @@ function while_sum (var n : nat) : nat is block {
   }
 } with r
 
-function for_sum (var n : nat) : nat is block {
+(* function for_sum (var n : nat) : nat is block {
   for i := 1 to 100
     begin 
       n := n + 1;
     end }
-  with n
+  with n *)
 
 function dummy (const n : nat) : nat is block {
   while (False) block { skip }
