@@ -164,7 +164,9 @@ const siteConfig = {
   // You may provide arbitrary config keys to be used as needed by your
   // template. For example, if you need your repo's URL...
     repoUrl: 'https://gitlab.com/ligolang/ligo',
-
+  stylesheets: [
+    "https://fonts.googleapis.com/css?family=DM+Sans|Open+Sans|Source+Code+Pro&display=swap"
+  ],
   algolia: {
     apiKey: '12be98d9fd4242a5f16b70a5cc6b0158',
     indexName: 'ligolang',

@@ -1,3 +1,88 @@
+:root {
+    --color-primary-brand: #3AA0FF;
+    --color-secondary-brand: #FC683A;
+    --color-accent: #37D7C3;
+    --color-primary-text: #0D0F33;
+    --color-secondary-text: #5A5C74;
+    --color-gray: #EBEBEB;
+    --color-light-blue: #EBF6FF;
+    --color-light-gray: #FAFAFA;
+    --color-white: #FFFFFF;
+    --color-code-background1: #EFF4F7;
+    --color-code-background2: #D2DFE9;
+    --padding-level-1: 20px;
+    --padding-level-2: 25px;
+    --padding-level-3: 30px;
+    --padding-level-4: 45px;
+    --padding-level-5: 60px;
+    --padding-level-6: 100px;
+}
+
+html {
+    font-size: 16px;
+}
+
+h1, h2, h3, h4, .landing .headline {
+    font-family: "DM Sans", sans-serif;
+    font-weight: bold;
+}
+
+body, .body, .headline, .subhead, .footnote {
+    font-family: "Open Sans", sans-serif;
+}
+
+.mono {
+    font-family: "Source Code Pro", monospace;
+    font-size: 1rem;
+}
+
+h1 {
+    font-size: 2.625rem;
+}
+.landing h1 {
+    font-size: 4.5rem;
+  }
+  h2 {
+    font-size: 2.25rem;
+   }
+  .landing h2 {
+    font-size: 3rem;
+   }
+  h3 {
+    font-size: 1.5rem;
+   }
+  .landing h3 {
+    font-size: 2.25rem;
+   }
+  h4 {
+    font-size: 1.125rem;
+   }
+  .landing h4 {
+    font-size: 1.5rem;
+   }
+  .headline {
+    font-weight: bold;
+    font-size: 1rem;
+   }
+  .landing .headline {
+    font-size: 1.125rem;
+   }
+  body, .body {
+    font-size: 1rem;
+   }
+  .landing .body, .landing {
+    font-size: 1.125rem;
+   }
+  .subhead {
+    font-size: 0.875rem;
+   }
+  .landing .subhead {
+    font-size: 1rem;
+   }
+  .footnote {
+    font-size: 0.75rem;
+   }
+
 .projectTitle small {
     max-width: 700px;
     text-align: center;
@@ -12,7 +97,7 @@
 .fixedHeaderContainer header img {}
 
 .nav-footer {
-    background: #1A1A1A;
+    background: var(--color-primary-text);
 }
 
 .navigationSlider .slidingNav {
