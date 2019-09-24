@@ -38,7 +38,7 @@ type value =
   | D_bool of bool
   | D_nat of int
   | D_timestamp of int
-  | D_tez of int
+  | D_mutez of int
   | D_int of int
   | D_string of string
   | D_bytes of bytes

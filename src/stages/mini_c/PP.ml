@@ -49,7 +49,7 @@ let rec value ppf : value -> unit = function
   | D_int n -> fprintf ppf "%d" n
   | D_nat n -> fprintf ppf "+%d" n
   | D_timestamp n -> fprintf ppf "+%d" n
-  | D_tez n -> fprintf ppf "%dtz" n
+  | D_mutez n -> fprintf ppf "%dmtz" n
   | D_unit -> fprintf ppf "unit"
   | D_string s -> fprintf ppf "\"%s\"" s
   | D_bytes x ->

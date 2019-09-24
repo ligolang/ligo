@@ -88,6 +88,9 @@ module Simplify = struct
       ("map_iter" , "MAP_ITER") ;
       ("map_map" , "MAP_MAP") ;
       ("map_fold" , "MAP_FOLD") ;
+      ("map_remove" , "MAP_REMOVE") ;
+      ("map_update" , "MAP_UPDATE") ;
+      ("map_get" , "MAP_GET") ;
       ("sha_256" , "SHA256") ;
       ("sha_512" , "SHA512") ;
       ("blake2b" , "BLAKE2b") ;
@@ -270,7 +273,9 @@ module Typer = struct
     ok @@ t_bool ()
 
   let map_find : typer = typer_2 "MAP_FIND" @@ fun k m ->
-    let%bind (src, dst) = bind_map_or (get_t_map , get_t_big_map) m in
+    let%bind (src, dst) =
+      trace_strong (simple_error "MAP_FIND: not map or bigmap") @@
+      bind_map_or (get_t_map , get_t_big_map) m in
     let%bind () = assert_type_value_eq (src, k) in
     ok @@ dst
 
@@ -313,10 +318,15 @@ module Typer = struct
       (is_t_string t) in
     ok @@ t_unit ()
 
-  let get_force = typer_2 "MAP_GET_FORCE" @@ fun i m ->
+  let map_get_force = typer_2 "MAP_GET_FORCE" @@ fun i m ->
     let%bind (src, dst) = bind_map_or (get_t_map , get_t_big_map) m in
     let%bind _ = assert_type_value_eq (src, i) in
     ok dst
+
+  let map_get = typer_2 "MAP_GET" @@ fun i m ->
+    let%bind (src, dst) = bind_map_or (get_t_map , get_t_big_map) m in
+    let%bind _ = assert_type_value_eq (src, i) in
+    ok @@ t_option dst ()
 
   let int : typer = typer_1 "INT" @@ fun t ->
     let%bind () = assert_t_nat t in
@@ -607,6 +617,8 @@ module Typer = struct
       map_map ;
       map_fold ;
       map_iter ;
+      map_get_force ;
+      map_get ;
       set_empty ;
       set_mem ;
       set_add ;
@@ -619,7 +631,6 @@ module Typer = struct
       int ;
       size ;
       failwith_ ;
-      get_force ;
       bytes_pack ;
       bytes_unpack ;
       hash256 ;
@@ -687,6 +698,7 @@ module Compiler = struct
     ("MAP_GET_FORCE" , simple_binary @@ seq [prim I_GET ; i_assert_some_msg (i_push_string "GET_FORCE")]) ;
     ("MAP_FIND" , simple_binary @@ seq [prim I_GET ; i_assert_some_msg (i_push_string "MAP FIND")]) ;
     ("MAP_GET" , simple_binary @@ prim I_GET) ;
+    ("MAP_FIND_OPT" , simple_binary @@ prim I_GET) ;
     ("MAP_ADD" , simple_ternary @@ seq [dip (i_some) ; prim I_UPDATE]) ;
     ("MAP_UPDATE" , simple_ternary @@ prim I_UPDATE) ;
     ("SIZE" , simple_unary @@ prim I_SIZE) ;

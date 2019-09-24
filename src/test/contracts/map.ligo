@@ -26,6 +26,11 @@ function get (const m : foobar) : option(int) is
     skip
   end with m[42]
 
+function get_ (const m : foobar) : option(int) is
+  begin
+    skip
+  end with map_get(42 , m)
+
 const bm : foobar = map
   144 -> 23 ;
   51 -> 23 ;

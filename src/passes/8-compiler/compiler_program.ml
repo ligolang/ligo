@@ -66,7 +66,7 @@ let rec translate_value (v:value) ty : michelson result = match v with
   | D_int n -> ok @@ int (Z.of_int n)
   | D_nat n -> ok @@ int (Z.of_int n)
   | D_timestamp n -> ok @@ int (Z.of_int n)
-  | D_tez n -> ok @@ int (Z.of_int n)
+  | D_mutez n -> ok @@ int (Z.of_int n)
   | D_string s -> ok @@ string s
   | D_bytes s -> ok @@ bytes (Tezos_stdlib.MBytes.of_bytes s)
   | D_unit -> ok @@ prim D_Unit

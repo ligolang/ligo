@@ -416,8 +416,8 @@ and type_expression : environment -> ?tv_opt:O.type_value -> I.expression -> O.a
       return (E_literal (Literal_nat n)) (t_nat ())
   | E_literal (Literal_timestamp n) ->
       return (E_literal (Literal_timestamp n)) (t_timestamp ())
-  | E_literal (Literal_tez n) ->
-      return (E_literal (Literal_tez n)) (t_tez ())
+  | E_literal (Literal_mutez n) ->
+      return (E_literal (Literal_mutez n)) (t_tez ())
   | E_literal (Literal_address s) ->
       return (e_address s) (t_address ())
   | E_literal (Literal_operation op) ->
@@ -803,7 +803,7 @@ let untype_literal (l:O.literal) : I.literal result =
   | Literal_bool b -> ok (Literal_bool b)
   | Literal_nat n -> ok (Literal_nat n)
   | Literal_timestamp n -> ok (Literal_timestamp n)
-  | Literal_tez n -> ok (Literal_tez n)
+  | Literal_mutez n -> ok (Literal_mutez n)
   | Literal_int n -> ok (Literal_int n)
   | Literal_string s -> ok (Literal_string s)
   | Literal_bytes b -> ok (Literal_bytes b)

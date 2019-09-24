@@ -204,7 +204,7 @@ let rec transpile_literal : AST.literal -> value = fun l -> match l with
   | Literal_int n -> D_int n
   | Literal_nat n -> D_nat n
   | Literal_timestamp n -> D_timestamp n
-  | Literal_tez n -> D_tez n
+  | Literal_mutez n -> D_mutez n
   | Literal_bytes s -> D_bytes s
   | Literal_string s -> D_string s
   | Literal_address s -> D_string s

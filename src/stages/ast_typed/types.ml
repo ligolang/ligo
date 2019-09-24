@@ -119,7 +119,7 @@ and literal =
   | Literal_int of int
   | Literal_nat of int
   | Literal_timestamp of int
-  | Literal_tez of int
+  | Literal_mutez of int
   | Literal_string of string
   | Literal_bytes of bytes
   | Literal_address of string

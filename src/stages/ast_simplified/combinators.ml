@@ -61,7 +61,7 @@ let e_timestamp ?loc n : expression = location_wrap ?loc @@ E_literal (Literal_t
 let e_bool ?loc   b : expression = location_wrap ?loc @@ E_literal (Literal_bool b)
 let e_string ?loc s : expression = location_wrap ?loc @@ E_literal (Literal_string s)
 let e_address ?loc s : expression = location_wrap ?loc @@ E_literal (Literal_address s)
-let e_tez ?loc s : expression = location_wrap ?loc @@ E_literal (Literal_tez s)
+let e_mutez ?loc s : expression = location_wrap ?loc @@ E_literal (Literal_mutez s)
 let e'_bytes b : expression' result =
   let%bind bytes = generic_try (simple_error "bad hex to bytes") (fun () -> Hex.to_bytes (`Hex b)) in
   ok @@ E_literal (Literal_bytes bytes)

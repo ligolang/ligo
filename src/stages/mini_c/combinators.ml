@@ -34,6 +34,10 @@ let get_nat (v:value) = match v with
   | D_nat n -> ok n
   | _ -> simple_fail "not a nat"
 
+let get_mutez (v:value) = match v with
+  | D_mutez n -> ok n
+  | _ -> simple_fail "not a mutez"
+
 let get_timestamp (v:value) = match v with
   | D_timestamp n -> ok n
   | _ -> simple_fail "not a timestamp"

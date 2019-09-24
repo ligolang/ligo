@@ -47,7 +47,7 @@ let card_pattern_ty =
   ]
 
 let card_pattern_ez (coeff , qtt) =
-  card_pattern (e_tez coeff , e_nat qtt)
+  card_pattern (e_mutez coeff , e_nat qtt)
 
 let make_card_patterns lst =
   let card_pattern_id_ty = t_nat  in

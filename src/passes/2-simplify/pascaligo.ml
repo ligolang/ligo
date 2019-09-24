@@ -500,7 +500,7 @@ let rec simpl_expression (t:Raw.expr) : expr result =
   | EArith (Mtz n) -> (
     let (n , loc) = r_split n in
     let n = Z.to_int @@ snd @@ n in
-    return @@ e_literal ~loc (Literal_tez n)
+    return @@ e_literal ~loc (Literal_mutez n)
   )
   | EArith (Neg e) -> simpl_unop "NEG" e
   | EString (String s) ->

@@ -363,6 +363,7 @@ let mmap () : unit result =
       (e_annotation (e_map []) (t_map t_int t_int)) in
   let%bind () = expect_eq_evaluate program "foobarz"
       (e_annotation (e_map [(e_int 1 , e_int 10) ; (e_int 2 , e_int 20)]) (t_map t_int t_int)) in
+  let%bind () = expect_eq_evaluate program "foo" (e_int 10) in
   ok ()
 
 let map () : unit result =
@@ -398,6 +399,11 @@ let map () : unit result =
     let make_input = fun n -> ez [(23, n) ; (42, 4)] in
     let make_expected = fun _ -> e_some @@ e_int 4 in
     expect_eq_n program "get" make_input make_expected
+  in
+  let%bind () =
+    let make_input = fun n -> ez [(23, n) ; (42, 4)] in
+    let make_expected = fun _ -> e_some @@ e_int 4 in
+    expect_eq_n program "get_" make_input make_expected
   in
   let%bind () =
     let expected = ez @@ List.map (fun x -> (x, 23)) [144 ; 51 ; 42 ; 120 ; 421] in
