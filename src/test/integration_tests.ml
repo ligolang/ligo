@@ -127,6 +127,7 @@ let bool_expression () : unit result =
       ("or_false", fun b -> b || false) ;
       ("and_true", fun b -> b && true) ;
       ("and_false", fun b -> b && false) ;
+      ("not_bool", fun b -> not b) ;
     ] in
   ok ()
 

@@ -11,3 +11,6 @@ function and_true (const b : bool) : bool is
 
 function and_false (const b : bool) : bool is
   begin skip end with b and False
+
+function not_bool (const b: bool) : bool is
+  begin skip end with not b
