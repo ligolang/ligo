@@ -699,6 +699,8 @@ let mligo_list () : unit result =
   let%bind () = expect_eq_evaluate program "x" (e_list []) in
   let%bind () = expect_eq_evaluate program "y" (e_list @@ List.map e_int [3 ; 4 ; 5]) in
   let%bind () = expect_eq_evaluate program "z" (e_list @@ List.map e_int [2 ; 3 ; 4 ; 5]) in
+  let%bind () = expect_eq program "map_op" (aux [2 ; 3 ; 4 ; 5]) (aux [3 ; 4 ; 5 ; 6]) in
+  let%bind () = expect_eq program "iter_op" (aux [2 ; 3 ; 4 ; 5]) (e_unit ()) in
   ok ()
 
 let lambda_mligo () : unit result =
