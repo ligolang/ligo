@@ -159,15 +159,27 @@ footnote {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: var(--padding-level-4);
+  padding: var(--padding-level-3);
 }
 
 .home-text {
   max-width: 40%;
 }
 
-.code-sample {
-  max-width: 55%;
+.sample-code-container {
+  display: flex;
+  justify-content: center;
+  box-sizing: border-box;
+  max-width: 60%;
+  background: url("/img/geo.svg") top right/140px 140px no-repeat,
+    url("/img/geo.svg") bottom left/200px 200px no-repeat;
+}
+
+.sample-code {
+  max-width: 80%;
+  padding: 25px;
+  box-shadow: 0px 0px 70px rgba(13, 15, 51, 0.06);
+  background-color: white;
 }
 
 blockquote {
@@ -555,12 +567,25 @@ body
 }
 
 @media only screen and (max-width: 1023px) {
+  .home-container {
+    flex-direction: column-reverse;
+    margin-top: var(--padding-level-1);
+  }
+  .home-text {
+    align-content: center;
+    text-align: center;
+    max-width: 90%;
+    padding-top: var(--padding-level-2);
+  }
+  .sample-code-container {
+    max-width: 100%;
+  }
 }
 
 @media only screen and (min-width: 1280px) {
 }
 
-@media only screen and (min-width: 1400px) {
+@media only screen and (min-width: 1440px) {
   .landing h4.tagline-text {
     font-size: 2.25rem;
   }

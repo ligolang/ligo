@@ -107,29 +107,31 @@ class HomeSplash extends React.Component {
     const docUrl = doc => `${baseUrl}${docsPart}${langPart}${doc}`;
 
     const SampleCode = props => (
-      <div className="sample-code">
-        <div className="tabs">
-          <div className="nav-tabs">
-            <div
-              id="tab-group-3-tab-4"
-              className="nav-link active"
-              data-group="group_3"
-              data-tab="tab-group-3-content-4"
-            >
-              PascaLIGO
+      <div className="sample-code-container">
+        <div className="sample-code">
+          <div className="tabs">
+            <div className="nav-tabs">
+              <div
+                id="tab-group-3-tab-4"
+                className="nav-link active"
+                data-group="group_3"
+                data-tab="tab-group-3-content-4"
+              >
+                PascaLIGO
+              </div>
+              <div
+                className="nav-link"
+                data-group="group_3"
+                data-tab="tab-group-3-content-5"
+              >
+                CameLIGO
+              </div>
+              <div className="disabled">ReasonLIGO (coming soon) </div>
             </div>
-            <div
-              className="nav-link"
-              data-group="group_3"
-              data-tab="tab-group-3-content-5"
-            >
-              CameLIGO
+            <div className="tab-content">
+              {PascalLIGOTab()}
+              {CamelLIGOTab()}
             </div>
-            <div className="disabled">ReasonLIGO (coming soon) </div>
-          </div>
-          <div className="tab-content">
-            {PascalLIGOTab()}
-            {CamelLIGOTab()}
           </div>
         </div>
       </div>
