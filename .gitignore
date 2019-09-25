@@ -5,5 +5,10 @@ dune-project
 cache/*
 Version.ml
 /_opam/
+<<<<<<< HEAD
 /*.pp.ligo
+<<<<<<< HEAD
 **/.DS_Store
+=======
+**/.DS_Store
+>>>>>>> [LIGO-93] redesign profile pics
