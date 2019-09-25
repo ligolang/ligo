@@ -1,11 +1,6 @@
 open Trace
 open Ast_simplified
 
-let get_final_environment program =
-  let last_declaration = Location.unwrap List.(hd @@ rev program) in
-  let (Ast_typed.Declaration_constant (_ , (_ , post_env))) = last_declaration in
-  post_env
-
 let compile_expression ?(value = false) ?env expr =
   if value
   then (
@@ -22,7 +17,7 @@ let run_typed_program
     (input : expression) : expression result =
   let%bind code = Compile.Of_typed.compile_function_entry program entry in
   let%bind input =
-    let env = get_final_environment program in
+    let env = Ast_typed.program_environment program in
     compile_expression ?value:input_to_value ~env input
   in
   let%bind ex_ty_value = Of_michelson.run ?options code input in

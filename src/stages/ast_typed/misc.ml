@@ -500,3 +500,8 @@ let get_entry (lst : program) (name : string) : annotated_expression result =
     else None
   in
   List.find_map aux lst
+
+let program_environment (program : program) : full_environment =
+  let last_declaration = Location.unwrap List.(hd @@ rev program) in
+  match last_declaration with
+  | Declaration_constant (_ , (_ , post_env)) -> post_env
