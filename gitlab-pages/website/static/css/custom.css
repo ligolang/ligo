@@ -29,6 +29,8 @@ h4,
 .landing .headline {
   font-family: "DM Sans", sans-serif;
   font-weight: bold;
+  /** Override docusaurus rule that makes a huge top margin **/
+  margin-top: 1rem;
 }
 
 body,
@@ -490,6 +492,10 @@ body
   align-items: stretch;
 }
 
+.team .flex-inline-container {
+  align-items: flex-start;
+}
+
 /** Feature Cards **/
 .card {
   display: flex;
@@ -507,6 +513,27 @@ body
 
 .card-text {
   text-align: center;
+}
+
+/** Partners **/
+.partners-container {
+  background-color: var(--color-light-gray);
+  display: flex;
+  justify-content: space-around;
+  align-content: center;
+  padding: var(--padding-level-3);
+}
+
+.partners-container a {
+  display: flex;
+  align-content: center;
+  justify-content: center;
+  margin: 0 10px;
+}
+
+.partners-text {
+  padding: 0 var(--padding-level-1);
+  border-left: 5px solid var(--color-primary-brand);
 }
 
 @media (min-width: 560px) and (max-width: 768px) {
@@ -537,6 +564,9 @@ body
   .profileContainer {
     max-width: 100%;
     width: 100%;
+  }
+  .hide-small {
+    display: none;
   }
 }
 
