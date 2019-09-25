@@ -50,15 +50,19 @@ end
 
 let compile_file_contract_parameter : string -> string -> string -> Compile.Helpers.s_syntax -> Michelson.t result =
   fun source_filename _entry_point expression syntax ->
+  let%bind program = Compile.Of_source.type_file syntax source_filename in
+  let env = Ast_typed.program_environment program in
   let%bind syntax = Compile.Helpers.syntax_to_variant syntax (Some source_filename) in
   let%bind simplified = Compile.Helpers.parsify_expression syntax expression in
-  Of_simplified.compile_expression simplified
+  Of_simplified.compile_expression simplified ~env
 
 let compile_file_expression : string -> string -> string -> Compile.Helpers.s_syntax -> Michelson.t result =
   fun source_filename _entry_point expression syntax ->
+  let%bind program = Compile.Of_source.type_file syntax source_filename in
+  let env = Ast_typed.program_environment program in
   let%bind syntax = Compile.Helpers.syntax_to_variant syntax (Some source_filename) in
   let%bind simplified = Compile.Helpers.parsify_expression syntax expression in
-  Of_simplified.compile_expression simplified
+  Of_simplified.compile_expression simplified ~env
 
 let compile_expression : string -> Compile.Helpers.s_syntax -> Michelson.t result =
   fun expression syntax ->
@@ -68,17 +72,21 @@ let compile_expression : string -> Compile.Helpers.s_syntax -> Michelson.t resul
 
 let compile_file_contract_storage ~value : string -> string -> string -> Compile.Helpers.s_syntax -> Michelson.t result =
   fun source_filename _entry_point expression syntax ->
+  let%bind program = Compile.Of_source.type_file syntax source_filename in
+  let env = Ast_typed.program_environment program in
   let%bind syntax = Compile.Helpers.syntax_to_variant syntax (Some source_filename) in
   let%bind simplified = Compile.Helpers.parsify_expression syntax expression in
-  Of_simplified.compile_expression ~value simplified
+  Of_simplified.compile_expression ~value simplified ~env
 
 let compile_file_contract_args =
   fun ?value source_filename _entry_point storage parameter syntax ->
+  let%bind program = Compile.Of_source.type_file syntax source_filename in
+  let env = Ast_typed.program_environment program in
   let%bind syntax = Compile.Helpers.syntax_to_variant syntax (Some source_filename) in
   let%bind storage_simplified = Compile.Helpers.parsify_expression syntax storage in
   let%bind parameter_simplified = Compile.Helpers.parsify_expression syntax parameter in
   let args = Ast_simplified.e_pair storage_simplified parameter_simplified in
-  Of_simplified.compile_expression ?value args
+  Of_simplified.compile_expression ?value args ~env
 
 
 let run_contract ?amount ?storage_value source_filename entry_point storage parameter syntax =
