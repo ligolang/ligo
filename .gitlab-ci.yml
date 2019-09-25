@@ -50,8 +50,6 @@ stages:
   services:
     - docker:dind
 
-.docker_build: &docker_build
-  - docker build -t $LIGO_REGISTRY_IMAGE:next -f ./docker/Dockerfile .
 
 .before_script: &before_script
   before_script:
@@ -96,7 +94,7 @@ build-current-docker-image:
   stage: build_docker
   <<: *docker
   script:
-    <<: *docker_build
+    - docker build -t $LIGO_REGISTRY_IMAGE:next -f ./docker/Dockerfile .
     - sh scripts/test_cli.sh
   except:
     - master
@@ -108,9 +106,9 @@ build-and-publish-latest-docker-image:
   stage: build_and_deploy_docker
   <<: *docker
   script:
-    <<: *docker_build
-    - docker login -u $LIGO_REGISTRY_USER -p $LIGO_REGISTRY_PASSWORD
+    - docker build -t $LIGO_REGISTRY_IMAGE:next -f ./docker/Dockerfile .
     - sh scripts/test_cli.sh
+    - docker login -u $LIGO_REGISTRY_USER -p $LIGO_REGISTRY_PASSWORD
     - docker push $LIGO_REGISTRY_IMAGE:next
   only:
     - dev
