@@ -295,7 +295,7 @@ class Index extends React.Component {
     };
 
     return (
-      <div>
+      <div className="landing">
         <HomeSplash siteConfig={siteConfig} language={language} />
         <div className="mainContainer">
           
