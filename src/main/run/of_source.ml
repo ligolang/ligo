@@ -46,10 +46,45 @@ include struct
     ok ()
 end
 
+(* open Tezos_utils *)
+
+let compile_file_contract_parameter : string -> string -> string -> Compile.Helpers.s_syntax -> Michelson.t result =
+  fun source_filename _entry_point expression syntax ->
+  let%bind syntax = Compile.Helpers.syntax_to_variant syntax (Some source_filename) in
+  let%bind simplified = Compile.Helpers.parsify_expression syntax expression in
+  Of_simplified.compile_expression simplified
+
+let compile_file_expression : string -> string -> string -> Compile.Helpers.s_syntax -> Michelson.t result =
+  fun source_filename _entry_point expression syntax ->
+  let%bind syntax = Compile.Helpers.syntax_to_variant syntax (Some source_filename) in
+  let%bind simplified = Compile.Helpers.parsify_expression syntax expression in
+  Of_simplified.compile_expression simplified
+
+let compile_expression : string -> Compile.Helpers.s_syntax -> Michelson.t result =
+  fun expression syntax ->
+  let%bind syntax = Compile.Helpers.syntax_to_variant syntax None in
+  let%bind simplified = Compile.Helpers.parsify_expression syntax expression in
+  Of_simplified.compile_expression simplified
+
+let compile_file_contract_storage ~value : string -> string -> string -> Compile.Helpers.s_syntax -> Michelson.t result =
+  fun source_filename _entry_point expression syntax ->
+  let%bind syntax = Compile.Helpers.syntax_to_variant syntax (Some source_filename) in
+  let%bind simplified = Compile.Helpers.parsify_expression syntax expression in
+  Of_simplified.compile_expression ~value simplified
+
+let compile_file_contract_args =
+  fun ?value source_filename _entry_point storage parameter syntax ->
+  let%bind syntax = Compile.Helpers.syntax_to_variant syntax (Some source_filename) in
+  let%bind storage_simplified = Compile.Helpers.parsify_expression syntax storage in
+  let%bind parameter_simplified = Compile.Helpers.parsify_expression syntax parameter in
+  let args = Ast_simplified.e_pair storage_simplified parameter_simplified in
+  Of_simplified.compile_expression ?value args
+
+
 let run_contract ?amount ?storage_value source_filename entry_point storage parameter syntax =
   let%bind program = Compile.Of_source.type_file syntax source_filename in
   let%bind code = Compile.Of_typed.compile_function_entry program entry_point in
-  let%bind args = Compile.Of_source.compile_file_contract_args ?value:storage_value source_filename entry_point storage parameter syntax in
+  let%bind args = compile_file_contract_args ?value:storage_value source_filename entry_point storage parameter syntax in
   let%bind ex_value_ty =
     let options =
       let open Proto_alpha_utils.Memory_proto_alpha in
@@ -60,10 +95,10 @@ let run_contract ?amount ?storage_value source_filename entry_point storage para
   in
   Compile.Of_simplified.uncompile_typed_program_entry_function_result program entry_point ex_value_ty
 
-let run_function ?amount source_filename entry_point input syntax =
+let run_function_entry ?amount source_filename entry_point input syntax =
   let%bind program = Compile.Of_source.type_file syntax source_filename in
   let%bind code = Compile.Of_typed.compile_function_entry program entry_point in
-  let%bind args = Compile.Of_source.compile_file_expression source_filename entry_point input syntax in
+  let%bind args = compile_file_expression source_filename entry_point input syntax in
   let%bind ex_value_ty =
     let options =
       let open Proto_alpha_utils.Memory_proto_alpha in
@@ -74,19 +109,21 @@ let run_function ?amount source_filename entry_point input syntax =
   in
   Compile.Of_simplified.uncompile_typed_program_entry_function_result program entry_point ex_value_ty
 
-let evaluate ?amount source_filename entry_point syntax =
+let evaluate_entry ?amount source_filename entry_point syntax =
   let%bind program = Compile.Of_source.type_file syntax source_filename in
   let%bind code = Compile.Of_typed.compile_expression_as_function_entry program entry_point in
-  let%bind input =
-    let fake_input = Ast_simplified.e_unit () in
-    Compile.Of_simplified.compile_expression fake_input
-  in
   let%bind ex_value_ty =
     let options =
       let open Proto_alpha_utils.Memory_proto_alpha in
       let amount = Option.bind (fun amount -> Protocol.Alpha_context.Tez.of_string amount) amount in
       (make_options ?amount ())
     in
-    Of_michelson.run ~options code input
+    Of_michelson.evaluate ~options code
   in
   Compile.Of_simplified.uncompile_typed_program_entry_expression_result program entry_point ex_value_ty
+
+let evaluate_michelson expression syntax =
+  let%bind code = Compile.Of_source.compile_expression_as_function expression syntax in
+  Of_michelson.evaluate_michelson code
+
+

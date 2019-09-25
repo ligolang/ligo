@@ -1,6 +1,5 @@
 open Trace
 open Helpers
-open Tezos_utils
 
 let parse_file_program source_filename syntax =
   let%bind syntax = syntax_to_variant syntax (Some source_filename) in
@@ -18,31 +17,11 @@ let compile_file_contract_entry : string -> string -> s_syntax -> _ result =
   let%bind compiled_contract = Of_simplified.compile_contract_entry simplified entry_point in
   ok compiled_contract
 
-let compile_file_contract_parameter : string -> string -> string -> s_syntax -> Michelson.t result =
-  fun source_filename _entry_point expression syntax ->
-  let%bind syntax = syntax_to_variant syntax (Some source_filename) in
+let compile_expression_as_function : string -> s_syntax -> _ result =
+  fun expression syntax ->
+  let%bind syntax = syntax_to_variant syntax None in
   let%bind simplified = parsify_expression syntax expression in
-  Of_simplified.compile_expression simplified
-
-let compile_file_expression : string -> string -> string -> s_syntax -> Michelson.t result =
-  fun source_filename _entry_point expression syntax ->
-  let%bind syntax = syntax_to_variant syntax (Some source_filename) in
-  let%bind simplified = parsify_expression syntax expression in
-  Of_simplified.compile_expression simplified
-
-let compile_file_contract_storage ~value : string -> string -> string -> s_syntax -> Michelson.t result =
-  fun source_filename _entry_point expression syntax ->
-  let%bind syntax = syntax_to_variant syntax (Some source_filename) in
-  let%bind simplified = parsify_expression syntax expression in
-  Of_simplified.compile_expression ~value simplified
-
-let compile_file_contract_args =
-  fun ?value source_filename _entry_point storage parameter syntax ->
-  let%bind syntax = syntax_to_variant syntax (Some source_filename) in
-  let%bind storage_simplified = parsify_expression syntax storage in
-  let%bind parameter_simplified = parsify_expression syntax parameter in
-  let args = Ast_simplified.e_pair storage_simplified parameter_simplified in
-  Of_simplified.compile_expression ?value args
+  Of_simplified.compile_expression_as_function simplified
 
 let type_file ?(debug_simplify = false) ?(debug_typed = false)
     syntax (source_filename:string) : Ast_typed.program result =

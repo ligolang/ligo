@@ -5,21 +5,15 @@ open Tezos_utils
 let compile_value : value -> type_value -> Michelson.t result =
   Compiler.Program.translate_value
 
-let compile_expression ?(value = false)  : expression -> _ result = fun e ->
-  if value then (
-    let%bind value = expression_to_value e in
-    Format.printf "Compile to value\n" ;
-    let%bind result = compile_value value e.type_value in
-    Format.printf "Compiled to value\n" ;
-    ok result
-  ) else (
-    Compiler.Program.translate_expression e Compiler.Environment.empty
-  )
+let compile_expression_as_value  : expression -> _ result = fun e ->
+  let%bind value = expression_to_value e in
+  let%bind result = compile_value value e.type_value in
+  ok result
 
 let compile_expression_as_function : expression -> _ result = fun e ->
   let (input , output) = t_unit , e.type_value in
-  let%bind body = get_function e in
-  let%bind body = compile_value body (t_function input output) in
+  let%bind body = Compiler.Program.translate_expression e Compiler.Environment.empty in
+  let body = Michelson.(seq [ i_drop ; body ]) in
   let%bind (input , output) = bind_map_pair Compiler.Type.Ty.type_ (input , output) in
   let open! Compiler.Program in
   ok { input ; output ; body }
