@@ -97,8 +97,8 @@ build-current-docker-image:
   stage: build_docker
   <<: *docker
   <<: *docker_build
-  after_script:
-    - scripts/test_cli.sh
+  script:
+    - sh scripts/test_cli.sh
   except:
     - master
     - dev
@@ -109,7 +109,7 @@ build-and-publish-latest-docker-image:
   stage: build_and_deploy_docker
   <<: *docker
   <<: *docker_build
-  after_script:
+  script:
     - docker login -u $LIGO_REGISTRY_USER -p $LIGO_REGISTRY_PASSWORD
     - sh scripts/test_cli.sh
     - docker push $LIGO_REGISTRY_IMAGE:next
