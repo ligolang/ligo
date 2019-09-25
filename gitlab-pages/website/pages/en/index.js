@@ -259,33 +259,42 @@ class Index extends React.Component {
       </Block>
     );
 
+    const FeatureCard = props => (
+      <div className="card" key={props.title}>
+        <img src={props.image} />
+        <div className="card-text">
+          <h4>{props.title}</h4>
+          <p className="body">{props.content}</p>
+        </div>
+      </div>
+    );
+
     const Features = () => (
       <div className="features">
-        <h1 className="sectionTitle blockTitle">Features</h1>
-        <Block layout="fourColumn">
+        <h2 className="sectionTitle">Features</h2>
+
+        <div className="flex-inline-container">
           {[
             {
               content:
-                "Write in PascaLIGO (pascal-like syntax) or CameLIGO (caml-like syntax). If you know OCaml, you can also add your own syntax.",
-              image: `${baseUrl}img/edit.svg`,
-              imageAlign: "top",
-              title: "Syntax Agnostic"
-            },
-            {
-              content:
                 "Write types, then code, and benefit from the safety coming from type systems.",
-              image: `${baseUrl}img/lightning.svg`,
-              imageAlign: "top",
+              image: `${baseUrl}img/strong-type-system.svg`,
               title: "Strong Type System"
             },
             {
+              content:
+                "Write in PascaLIGO (pascal-like syntax) or CameLIGO (caml-like syntax). If you know OCaml, you can also add your own syntax.",
+              image: `${baseUrl}img/syntax-agnostic.svg`,
+              title: "Syntax Agnostic"
+            },
+
+            {
               content: "With Granary, you can use LIGO as a lib from NodeJS.",
-              image: `${baseUrl}img/puzzle.svg`,
-              imageAlign: "top",
+              image: `${baseUrl}img/easy-integration.svg`,
               title: "Easy Integration"
             }
-          ]}
-        </Block>
+          ].map(FeatureCard)}
+        </div>
       </div>
     );
 
@@ -339,7 +348,7 @@ class Index extends React.Component {
 
       return (
         <div className="productShowcaseSection paddingBottom">
-          <h1 className="sectionTitle">Partners</h1>
+          <h2 className="sectionTitle">Partners</h2>
           <div className="logos">{showcase}</div>
           {/* <div className="more-users">
             <a className="button" href={pageUrl('users.html')}>
@@ -372,8 +381,8 @@ class Index extends React.Component {
 
       return (
         <div className="productShowcaseSection paddingBottom team">
-          <h1 className="sectionTitle">Team</h1>
-          <div className="team-container">{showcase}</div>
+          <h2 className="sectionTitle">Team</h2>
+          <div className="flex-inline-container">{showcase}</div>
           {/* <div className="more-users">
             <a className="button" href={pageUrl('users.html')}>
               More {siteConfig.title} Users

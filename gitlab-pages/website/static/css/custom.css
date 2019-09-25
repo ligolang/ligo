@@ -462,7 +462,7 @@ body
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  max-width: fit-content;
+  max-width: 20%;
   color: var(--color-primary-text);
   padding: 0 var(--padding-level-1);
 }
@@ -474,18 +474,71 @@ body
 .profileImage {
   max-height: 195px;
   max-width: 195px;
+  width: 100%;
   border: var(--color-gray);
 }
 .profileImage:hover {
   box-shadow: 12px 12px 0px var(--color-primary-brand);
 }
 
-.team-container {
+.flex-inline-container {
   display: flex;
   flex-direction: row;
   justify-content: space-around;
   padding: var(--padding-level-1);
   flex-wrap: wrap;
+  align-items: flex-start;
+}
+
+/** Feature Cards **/
+.card {
+  display: flex;
+  flex-direction: column;
+  padding: 2rem;
+  align-items: center;
+  justify-content: flex-start;
+  max-width: 30%;
+  height: auto;
+  background-color: var(--color-light-gray);
+}
+
+.card:hover {
+  background-color: var(--color-light-blue);
+}
+
+.card-text {
+  text-align: center;
+}
+
+@media (min-width: 560px) and (max-width: 768px) {
+  /** Special rules to reorient feature cards at only one screen size**/
+  .card {
+    flex-direction: row;
+    width: 100%;
+    max-width: 100%;
+    justify-content: left;
+    margin: var(--padding-level-1) 0;
+  }
+  .card-text {
+    text-align: left;
+  }
+}
+
+@media (max-width: 768px) {
+  .profileContainer {
+    max-width: 30%;
+  }
+}
+
+@media (max-width: 560px) {
+  .card {
+    max-width: 100%;
+    margin: var(--padding-level-1) 0;
+  }
+  .profileContainer {
+    max-width: 100%;
+    width: 100%;
+  }
 }
 
 @media only screen and (min-device-width: 360px) and (max-device-width: 736px) {
