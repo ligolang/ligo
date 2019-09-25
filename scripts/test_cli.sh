@@ -115,3 +115,5 @@ if [ "$dry_run_output" != "$expected_dry_run_output" ]; then
     echo "Expected $expected_dry_run_output as dry-run output, got $dry_run_output instead";
     exit 1;
 fi
+
+echo "CLI tests passed";
