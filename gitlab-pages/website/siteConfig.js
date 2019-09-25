@@ -82,7 +82,8 @@ const team = [
 const siteConfig = {
   title: "LIGO", // Title for your website.
   tagline:
-    "LIGO is a statically typed high-level smart-contract language that compiles down to Michelson. It seeks to be easy to use, extensible and safe.",
+    "LIGO is a statically typed high-level smart-contract language that compiles down to Michelson.",
+  taglineSub: "It seeks to be easy to use, extensible and safe.",
   url: "https://your-docusaurus-test-site.com", // Your website URL
   baseUrl: "/", // Base URL for your project */
   // For github.io type URLs, you would set the url and baseUrl like:
