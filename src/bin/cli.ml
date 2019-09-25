@@ -89,7 +89,7 @@ let compile_parameter =
     toplevel ~display_format @@
     let%bind value =
       trace (simple_error "compile-input") @@
-      Ligo.Compile.Of_source.compile_file_contract_parameter source entry_point expression (Syntax_name syntax) in
+      Ligo.Run.Of_source.compile_file_contract_parameter source entry_point expression (Syntax_name syntax) in
     ok @@ Format.asprintf "%a\n" Tezos_utils.Michelson.pp value
   in
   let term =
@@ -103,7 +103,7 @@ let compile_storage =
     toplevel ~display_format @@
     let%bind value =
       trace (simple_error "compile-storage") @@
-      Ligo.Compile.Of_source.compile_file_contract_storage ~value:bigmap source entry_point expression (Syntax_name syntax) in
+      Ligo.Run.Of_source.compile_file_contract_storage ~value:bigmap source entry_point expression (Syntax_name syntax) in
     ok @@ Format.asprintf "%a\n" Tezos_utils.Michelson.pp value
   in
   let term =
@@ -129,7 +129,7 @@ let run_function =
   let f source entry_point parameter amount syntax display_format =
     toplevel ~display_format @@
     let%bind output =
-      Ligo.Run.Of_source.run_function ~amount source entry_point parameter (Syntax_name syntax) in
+      Ligo.Run.Of_source.run_function_entry ~amount source entry_point parameter (Syntax_name syntax) in
     ok @@ Format.asprintf "%a\n" Ast_simplified.PP.expression output
   in
   let term =
@@ -142,7 +142,7 @@ let evaluate_value =
   let f source entry_point amount syntax display_format =
     toplevel ~display_format @@
     let%bind output =
-      Ligo.Run.Of_source.evaluate ~amount source entry_point (Syntax_name syntax) in
+      Ligo.Run.Of_source.evaluate_entry ~amount source entry_point (Syntax_name syntax) in
     ok @@ Format.asprintf "%a\n" Ast_simplified.PP.expression output
   in
   let term =
@@ -151,11 +151,26 @@ let evaluate_value =
   let docs = "Subcommand: evaluate a given definition." in
   (term , Term.info ~docs cmdname)
 
+let compile_expression =
+  let f expression syntax display_format =
+    toplevel ~display_format @@
+    let%bind value =
+      trace (simple_error "compile-input") @@
+      Ligo.Run.Of_source.compile_expression expression (Syntax_name syntax) in
+    ok @@ Format.asprintf "%a\n" Tezos_utils.Michelson.pp value
+  in
+  let term =
+    Term.(const f $ expression "" 0 $ syntax $ display_format) in
+  let cmdname = "compile-expression" in
+  let docs = "Subcommand: compile to a michelson value." in
+  (term , Term.info ~docs cmdname)
+
 
 let () = Term.exit @@ Term.eval_choice main [
     compile_file ;
     compile_parameter ;
     compile_storage ;
+    compile_expression ;
     dry_run ;
     run_function ;
     evaluate_value ;
