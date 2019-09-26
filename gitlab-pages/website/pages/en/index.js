@@ -271,7 +271,7 @@ class Index extends React.Component {
 
     const Features = () => (
       <div className="features">
-        <h2 className="sectionTitle">Features</h2>
+        <h2>Features</h2>
 
         <div className="flex-inline-container">
           {[
@@ -336,25 +336,24 @@ class Index extends React.Component {
         return null;
       }
 
-      const showcase = siteConfig.partners
+      const PartnerShowcase = siteConfig.partners
         .filter(user => user.pinned)
         .map(user => (
-          <a href={user.infoLink} key={user.infoLink}>
+          <a className="partner-link" href={user.infoLink} key={user.infoLink}>
             <img src={user.image} alt={user.caption} title={user.caption} />
           </a>
         ));
 
-      const pageUrl = page => baseUrl + (language ? `${language}/` : "") + page;
-
       return (
-        <div className="productShowcaseSection paddingBottom">
-          <h2 className="sectionTitle">Partners</h2>
-          <div className="logos">{showcase}</div>
-          {/* <div className="more-users">
-            <a className="button" href={pageUrl('users.html')}>
-              More {siteConfig.title} Users
-            </a>
-          </div> */}
+        <div className="partners-container hide-small">
+          {PartnerShowcase}
+          {/* <div className="partners-list"></div> */}
+          <div className="partners-text">
+            <h3>Our Partners</h3>
+            <p className="body">
+              We are not alone in this world -- here're some guys who support us
+            </p>
+          </div>
         </div>
       );
     };
@@ -381,7 +380,7 @@ class Index extends React.Component {
 
       return (
         <div className="productShowcaseSection paddingBottom team">
-          <h2 className="sectionTitle">Team</h2>
+          <h2>Team</h2>
           <div className="flex-inline-container">{showcase}</div>
           {/* <div className="more-users">
             <a className="button" href={pageUrl('users.html')}>
