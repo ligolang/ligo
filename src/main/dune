@@ -2,17 +2,8 @@
   (name main)
   (public_name ligo.main)
   (libraries
-    simple-utils
-    tezos-utils
-    parser
-    simplify
-    ast_simplified
-    typer
-    ast_typed
-    transpiler
-    mini_c
-    operators
-    compiler
+    run
+    compile
   )
   (preprocess
     (pps ppx_let)
