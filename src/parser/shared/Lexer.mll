@@ -461,7 +461,6 @@ let nl         = ['\n' '\r'] | "\r\n"
 let blank      = ' ' | '\t'
 let digit      = ['0'-'9']
 let natural    = digit | digit (digit | '_')* digit
-let integer    = '-'? natural
 let small      = ['a'-'z']
 let capital    = ['A'-'Z']
 let letter     = small | capital
@@ -503,7 +502,7 @@ and scan state = parse
 | bytes         { (mk_bytes seq) state lexbuf |> enqueue   }
 | natural 'n'   { mk_nat         state lexbuf |> enqueue   }
 | natural "mtz" { mk_mtz         state lexbuf |> enqueue   }
-| integer       { mk_int         state lexbuf |> enqueue   }
+| natural       { mk_int         state lexbuf |> enqueue   }
 | symbol        { mk_sym         state lexbuf |> enqueue   }
 | eof           { mk_eof         state lexbuf |> enqueue   }
 
@@ -546,7 +545,7 @@ and scan state = parse
     processed).
   *)
 
-| '#' blank* ("line" blank+)? (integer as line) blank+
+| '#' blank* ("line" blank+)? (natural as line) blank+
     '"' (string as file) '"' {
     let  _, _, state = sync state lexbuf in
     let flags, state = scan_flags state [] lexbuf in
@@ -562,7 +561,7 @@ and scan state = parse
 
      Some special errors are recognised in the semantic actions of the
      following regular expressions. The first error is a minus sign
-     separated from the integer it modifies by some markup (space or
+     separated from the integer it applies by some markup (space or
      tabs). The second is a minus sign immediately followed by
      anything else than a natural number (matched above) or markup and
      a number (previous error). The third is the strange occurrence of
@@ -581,7 +580,7 @@ and scan state = parse
               fail region Orphan_minus
         | _ -> fail region Unterminated_integer }
 
-| '-' "0x" byte_seq?
+| "-0x" byte_seq?
       { let region, _, _ = sync state lexbuf
         in fail region Negative_byte_sequence }
 
@@ -593,7 +592,7 @@ and scan state = parse
 and scan_flags state acc = parse
   blank+          { let _, _, state = sync state lexbuf
                     in scan_flags state acc lexbuf          }
-| integer as code { let _, _, state = sync state lexbuf in
+| natural as code { let _, _, state = sync state lexbuf in
                     let acc = int_of_string code :: acc
                     in scan_flags state acc lexbuf          }
 | nl              { List.rev acc, push_newline state lexbuf }
@@ -699,7 +698,7 @@ and scan_utf8 thread state = parse
    report special error patterns), we need to keep a hidden reference
    to a queue of recognised lexical units (that is, tokens and markup)
    that acts as a mutable state between the calls to
-   [read_token]. When [read_token] is called, that queue is consulted
+   [read_token]. When [read_token] is called, that queue is examined
    first and, if it contains at least one token, that token is
    returned; otherwise, the lexing buffer is scanned for at least one
    more new token. That is the general principle: we put a high-level
@@ -794,19 +793,18 @@ let open_token_stream file_path_opt =
         Some ([], next) ->
           let pos    = (Token.to_region token)#stop in
           let region = Region.make ~start:pos ~stop:pos in
-          if is_bytes token && is_int next then
+          if is_int next then
             fail region Odd_lengthed_bytes
           else
-          if is_ident next || is_string next
-             || is_bytes next || is_int next then
+          if is_ident next || is_string next || is_bytes next then
             fail region Missing_break
       | _ -> ()
     else
-    if Token.is_ident token || Token.is_string token then
+    if is_ident token || is_string token then
       match next_token buffer with
         Some ([], next) ->
-          if Token.is_ident next || Token.is_string next
-             || Token.is_bytes next || Token.is_int next
+          if is_ident next || is_string next
+             || is_bytes next || is_int next
           then
             let pos    = (Token.to_region token)#stop in
             let region = Region.make ~start:pos ~stop:pos

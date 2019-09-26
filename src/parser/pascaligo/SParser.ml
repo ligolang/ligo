@@ -138,20 +138,11 @@ and field_decl = parser
 and lambda_decl = parser
   [< _=fun_decl >] -> ()
 | [< _=proc_decl >] -> ()
-| [< _=entry_decl >] -> ()
 
 and fun_decl = parser
   [< 'Function _; 'Ident _; _=parameters; 'COLON _;
      _=type_expr; 'Is _; _ = seq local_decl; _=block;
      'With _; _=expr >] -> ()
-
-and entry_decl = parser
-  [< 'Entrypoint _; 'Ident _; _=entry_params;
-     'COLON _; _ = type_expr; 'Is _; _ = seq local_decl;
-     _=block; 'With _; _=expr >] -> ()
-
-and entry_params = parser
-  [< p = par (nsepseq entry_param_decl semi) >] -> p
 
 and proc_decl = parser
   [< 'Procedure _; 'Ident _; _parameters; 'Is _;
@@ -163,10 +154,6 @@ and parameters = parser
 and param_decl = parser
   [< 'Var _; 'Ident _; 'COLON _; _=param_type >] -> ()
 | [< 'Const _; 'Ident _; 'COLON _; _=param_type >] -> ()
-
-and entry_param_decl = parser
-  [< _ = param_decl >] -> ()
-| [< 'Storage _; 'Ident _; 'COLON _; _=param_type >] -> ()
 
 and param_type = parser [< c = cartesian >] -> c
 

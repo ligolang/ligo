@@ -144,7 +144,6 @@ and print_type_tuple {value; _} =
 and print_lambda_decl = function
   FunDecl     fun_decl -> print_fun_decl   fun_decl
 | ProcDecl   proc_decl -> print_proc_decl  proc_decl
-| EntryDecl entry_decl -> print_entry_decl entry_decl
 
 and print_fun_decl {value; _} =
   let {kwd_function; name; param; colon;
@@ -172,40 +171,6 @@ and print_proc_decl {value; _} =
   print_local_decls local_decls;
   print_block       block;
   print_terminator  terminator
-
-and print_entry_decl {value; _} =
-  let {kwd_entrypoint; name; param; colon;
-       ret_type; kwd_is; local_decls;
-       block; kwd_with; return; terminator} = value in
-  print_token        kwd_entrypoint "entrypoint";
-  print_var          name;
-  print_entry_params param;
-  print_token        colon ":";
-  print_type_expr    ret_type;
-  print_token        kwd_is "is";
-  print_local_decls  local_decls;
-  print_block        block;
-  print_token        kwd_with "with";
-  print_expr         return;
-  print_terminator   terminator
-
-and print_entry_params {value; _} =
-  let {lpar; inside; rpar} = value in
-  print_token lpar "(";
-  print_nsepseq ";" print_entry_param_decl inside;
-  print_token rpar ")"
-
-and print_entry_param_decl = function
-  EntryConst param_const -> print_param_const param_const
-| EntryVar   param_var   -> print_param_var   param_var
-| EntryStore param_store -> print_storage     param_store
-
-and print_storage {value; _} =
-  let {kwd_storage; var; colon; storage_type} = value in
-  print_token kwd_storage "storage";
-  print_var var;
-  print_token colon ":";
-  print_type_expr storage_type
 
 and print_parameters {value; _} =
   let {lpar; inside; rpar} = value in

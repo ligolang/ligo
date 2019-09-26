@@ -17,5 +17,4 @@ $HOME/git/ligo/src/parser/shared/Markup.ml
 $HOME/git/ligo/src/parser/shared/Markup.mli
 $HOME/git/ligo/src/parser/shared/Utils.mli
 $HOME/git/ligo/src/parser/shared/Utils.ml
-$HOME/git/ligo/src/parser/shared/Version.ml
 Stubs/Simple_utils.ml
