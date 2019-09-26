@@ -652,10 +652,10 @@ let failwith_ligo () : unit result =
   let%bind _ = should_work (e_pair (e_constructor "Pos" (e_nat 1)) (e_unit ())) in
   let%bind _ = should_fail (e_pair (e_constructor "Pos" (e_nat 0)) (e_unit ())) in
   let should_fail input = expect_fail program "foobar" (e_int input) in
-  let should_work input = expect_eq program "foobar" (e_int input) (e_unit ()) in
-  let%bind () = should_fail @@ 10 in
+  let should_work input n = expect_eq program "foobar" (e_int input) (e_int n) in
+  let%bind () = should_fail 10 in
   let%bind () = should_fail @@ -10 in
-  let%bind () = should_work @@ 5 in
+  let%bind () = should_work 5 6 in
   ok ()
 
 let failwith_mligo () : unit result =

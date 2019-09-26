@@ -11,7 +11,7 @@ function main (const p : param; const s : unit) : list(operation) * unit is
   }
   with ((nil : list(operation)), s)
 
-function foobar (const i : int) : unit is
+function foobar (const i : int) : int is
   var p : param := Zero (42n) ;
   block {
     if i > 0 then block {
@@ -27,4 +27,7 @@ function foobar (const i : int) : unit is
       | Pos (n) -> skip
       end
     }
-  } with unit
+  } with case p of
+  | Zero (n) -> i
+  | Pos (n) -> (failwith ("waaaa") : int)
+  end
