@@ -56,7 +56,7 @@ them. please report this to the developers." in
 
   let bad_big_map location =
     let title () = "bad arguments for main" in
-    let content () = "only one big_map per program which must appear 
+    let content () = "only one big_map per program which must appear
       on the left hand side of a pair in the contract's storage" in
     let data = [
       ("location" , fun () -> Format.asprintf "%a" Location.pp location) ;
@@ -659,8 +659,8 @@ let check_storage f ty loc : (anon_function * _) result =
   let rec aux (t:type_value) on_big_map =
     match t with
       | T_big_map _ -> on_big_map
-      | T_pair (a , b) -> (aux a true) && (aux b false)
-      | T_or (a,b) -> (aux a false) && (aux b false)
+      | T_pair (a , b) -> (aux (snd a) true) && (aux (snd b) false)
+      | T_or (a,b) -> (aux (snd a) false) && (aux (snd b) false)
       | T_function (a,b) -> (aux a false) && (aux b false)
       | T_deep_closure (_,a,b) -> (aux a false) && (aux b false)
       | T_map (a,b) -> (aux a false) && (aux b false)
@@ -672,7 +672,7 @@ let check_storage f ty loc : (anon_function * _) result =
   in
   match f.body.type_value with
     | T_pair (_, storage) ->
-      if aux storage false then ok (f, ty) else fail @@ bad_big_map loc
+      if aux (snd storage) false then ok (f, ty) else fail @@ bad_big_map loc
     | _ -> ok (f, ty)
 
 let extract_constructor (v : value) (tree : _ Append_tree.t') : (string * value * AST.type_value) result =
