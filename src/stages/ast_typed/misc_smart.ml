@@ -88,7 +88,6 @@ module Captured_variables = struct
       let%bind a' = self a in
       let%bind cs' = matching_expression b cs in
       ok @@ union a' cs'
-    | E_failwith a -> self a
     | E_sequence (_ , b) -> self b
     | E_loop (expr , body) ->
       let%bind lst' = bind_map_list self [ expr ; body ] in

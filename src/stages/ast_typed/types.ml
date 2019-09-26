@@ -105,7 +105,6 @@ and expression =
   | E_look_up of (ae * ae)
   (* Advanced *)
   | E_matching of (ae * matching_expr)
-  | E_failwith of ae
   (* Replace Statements *)
   | E_sequence of (ae * ae)
   | E_loop of (ae * ae)

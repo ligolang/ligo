@@ -253,10 +253,6 @@ and transpile_annotated_expression (ae:AST.annotated_expression) : expression re
     let%bind rhs' = transpile_annotated_expression rhs in
     let%bind result' = transpile_annotated_expression result in
     return (E_let_in ((binder, rhs'.type_value), rhs', result'))
-  | E_failwith ae -> (
-      let%bind ae' = transpile_annotated_expression ae in
-      return @@ E_constant ("FAILWITH" , [ae'])
-    )
   | E_literal l -> return @@ E_literal (transpile_literal l)
   | E_variable name -> (
       let%bind ele =

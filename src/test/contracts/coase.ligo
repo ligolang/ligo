@@ -41,7 +41,7 @@ function transfer_single(const action : action_transfer_single ; const s : stora
   begin
     const cards : cards = s.cards ;
     const card : card = get_force(action.card_to_transfer , cards) ;
-    if (card.card_owner =/= source) then fail "This card doesn't belong to you" else skip ;
+    if (card.card_owner =/= source) then failwith ("This card doesn't belong to you") else skip ;
     card.card_owner := action.destination ;
     cards[action.card_to_transfer] := card ;
     s.cards := cards ;
@@ -51,7 +51,7 @@ function transfer_single(const action : action_transfer_single ; const s : stora
 function sell_single(const action : action_sell_single ; const s : storage_type) : (list(operation) * storage_type) is
   begin
     const card : card = get_force(action.card_to_sell , s.cards) ;
-    if (card.card_owner =/= source) then fail "This card doesn't belong to you" else skip ;
+    if (card.card_owner =/= source) then failwith ("This card doesn't belong to you") else skip ;
     const card_pattern : card_pattern = get_force(card.card_pattern , s.card_patterns) ;
     card_pattern.quantity := abs(card_pattern.quantity - 1n);
     const card_patterns : card_patterns = s.card_patterns ;
@@ -71,7 +71,7 @@ function buy_single(const action : action_buy_single ; const s : storage_type) :
     // Check funds
     const card_pattern : card_pattern = get_force(action.card_to_buy , s.card_patterns) ;
     const price : tez = card_pattern.coefficient * (card_pattern.quantity + 1n) ;
-    if (price > amount) then fail "Not enough money" else skip ;
+    if (price > amount) then failwith ("Not enough money") else skip ;
     // Administrative procedure
     const operations : list(operation) = nil ;
     // Increase quantity

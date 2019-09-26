@@ -287,17 +287,12 @@ and print_single_instr = function
 | Assign      assign     -> print_assignment assign
 | Loop        loop       -> print_loop loop
 | ProcCall    fun_call   -> print_fun_call fun_call
-| Fail        {value; _} -> print_fail value
 | Skip        kwd_skip   -> print_token kwd_skip "skip"
 | RecordPatch {value; _} -> print_record_patch value
 | MapPatch    {value; _} -> print_map_patch value
 | SetPatch    {value; _} -> print_set_patch value
 | MapRemove   {value; _} -> print_map_remove value
 | SetRemove   {value; _} -> print_set_remove value
-
-and print_fail {kwd_fail; fail_expr} =
-  print_token kwd_fail "fail";
-  print_expr fail_expr
 
 and print_conditional node =
   let {kwd_if; test; kwd_then; ifso; terminator;
