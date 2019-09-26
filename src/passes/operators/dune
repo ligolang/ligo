@@ -1,0 +1,14 @@
+(library
+  (name operators)
+  (public_name ligo.operators)
+  (libraries
+    simple-utils
+    tezos-utils
+    ast_typed
+    mini_c
+  )
+  (preprocess
+    (pps ppx_let)
+  )
+  (flags (:standard -open Simple_utils ))
+)

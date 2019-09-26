@@ -1,3 +1,6 @@
+#!/bin/sh
+set -e
+
 # This script installs opam for the user. It should NOT be included in any makefiles/etc.
 
 if [ -n "`which opam`" ]

@@ -1,4 +1,8 @@
-opam switch create . ocaml-base-compiler.4.06.1
-eval $(opam env)
+#!/bin/sh
+set -e
+
+"$(dirname "$0")"/setup_switch.sh
+"$(dirname "$0")"/setup_repos.sh
+
 opam install -y ocp-indent tuareg merlin alcotest-lwt crowbar
 opam -y user-setup install

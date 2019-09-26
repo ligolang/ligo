@@ -1,6 +1,6 @@
-open Trace
+open! Trace
 
-let error_pp out (e : error) =
+let rec error_pp ?(dev = false) out (e : error) =
   let open JSON_string_utils in
   let message =
     let opt = e |> member "message" |> string in
@@ -26,6 +26,12 @@ let error_pp out (e : error) =
     | `List lst -> lst
     | `Null -> []
     | x -> [ x ] in
+  let children =
+    let infos = e |> member "children" in
+    match infos with
+    | `List lst -> lst
+    | `Null -> []
+    | x -> [ x ] in
   let location =
     let opt = e |> member "data" |> member "location" |> string in
     let aux prec cur =
@@ -38,5 +44,73 @@ let error_pp out (e : error) =
     | Some s -> s ^ ". "
   in
   let print x = Format.fprintf out x in
-  print "%s%s%s%s%s" location title error_code message data
-  (* Format.fprintf out "%s%s%s.\n%s%s" title error_code message data infos *)
+  if not dev then (
+    print "%s%s%s%s%s" location title error_code message data
+  ) else (
+    print "%s%s%s.\n%s%s\n%a\n%a\n" title error_code message data location
+      (Format.pp_print_list (error_pp ~dev)) infos
+      (Format.pp_print_list (error_pp ~dev)) children
+  )
+
+let result_pp_hr f out (r : _ result) =
+  match r with
+  | Ok (s , _) -> Format.fprintf out "%a" f s
+  | Error e -> Format.fprintf out "%a" (error_pp ~dev:false) (e ())
+
+let string_result_pp_hr = result_pp_hr (fun out s -> Format.fprintf out "%s" s)
+
+let result_pp_dev f out (r : _ result) =
+  match r with
+  | Ok (s , _) -> Format.fprintf out "%a" f s
+  | Error e -> Format.fprintf out "%a" (error_pp ~dev:false) (e ())
+
+let string_result_pp_dev = result_pp_hr (fun out s -> Format.fprintf out "%s" s)
+
+let json_pp out x = Format.fprintf out "%s" (J.to_string x)
+
+let string_result_pp_json out (r : string result) =
+  let status_json status content : J.t = `Assoc ([
+      ("status" , `String status) ;
+      ("content" , content) ;
+    ]) in
+  match r with
+  | Ok (x , _) -> (
+      Format.fprintf out "%a" json_pp (status_json "ok" (`String x))
+    )
+  | Error e -> (
+      Format.fprintf out "%a" json_pp (status_json "error" (e ()))
+    )
+
+type display_format = [
+  | `Human_readable
+  | `Json
+  | `Dev
+]
+
+let display_format_of_string = fun s : display_format ->
+  match s with
+  | "dev" -> `Dev
+  | "json" -> `Json
+  | "human-readable" -> `Human_readable
+  | _ -> failwith "bad display_format"
+
+let formatted_string_result_pp (display_format : display_format) =
+  match display_format with
+  | `Human_readable -> string_result_pp_hr
+  | `Dev -> string_result_pp_dev
+  | `Json -> string_result_pp_json
+
+type michelson_format = [
+  | `Michelson
+  | `Micheline
+]
+
+let michelson_format_of_string = fun s : michelson_format result ->
+  match s with
+  | "michelson" -> ok `Michelson
+  | "micheline" -> ok `Micheline
+  | _ -> simple_fail "bad michelson format"
+
+let michelson_pp (mf : michelson_format) = match mf with
+  | `Michelson -> Michelson.pp
+  | `Micheline -> Michelson.pp_json

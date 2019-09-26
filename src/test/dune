@@ -6,7 +6,24 @@
     alcotest
   )
   (preprocess
-    (pps simple-utils.ppx_let_generalized)
+    (pps ppx_let)
   )
   (flags (:standard -w +1..62-4-9-44-40-42-48@39@33 -open Simple_utils ))
+)
+
+(alias
+  (name ligo-test)
+  (action (run ./test.exe))
+  (deps (glob_files contracts/*))
+)
+
+(alias
+  (name runtest)
+  (deps (alias ligo-test))
+)
+
+(alias
+  (name manual-test)
+  (action (run ./manual_test.exe))
+  (deps (glob_files contracts/*))
 )

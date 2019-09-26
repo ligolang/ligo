@@ -1,0 +1,66 @@
+(library
+  (name parser_camligo)
+  (public_name ligo.parser.camligo)
+  (libraries
+    simple-utils
+    tezos-utils
+    lex
+  )
+  (modules ast ast_generated parser user)
+  (flags (:standard -w +1..62-4-9-44-40-42-48@39@33 -open Simple_utils -open Tezos_utils ))
+  (preprocess
+    (pps
+      ppx_let
+      ppx_deriving.std
+    )
+  )
+)
+
+;; Generating parser
+
+(rule
+  (targets parser.ml parser.mli)
+  (deps parser_generated.mly ast.ml)
+  (action (system "menhir --explain --unused-tokens --external-tokens Lex.Token lex/token.mly parser_generated.mly --base parser"))
+)
+
+(rule
+ (targets parser_generated.mly)
+ (deps partial_parser.mly pre_parser.mly)
+ (action (system "cat pre_parser.mly partial_parser.mly > parser_generated.mly"))
+ (mode (promote (until-clean) (only *)))
+)
+
+(rule
+ (targets partial_parser.mly)
+ (deps generator.exe)
+ (action (system "./generator.exe parser > partial_parser.mly"))
+)
+
+;; Generating AST
+
+(rule
+ (targets ast_generated.ml)
+ (deps generator.exe)
+ (action (system "./generator.exe ast > ast_generated.ml"))
+ (mode (promote (until-clean) (only *)))
+)
+
+;; Generating Generator
+
+(executable
+  (name generator)
+  (libraries
+    ocamlgraph
+    simple-utils
+    tezos-utils
+    lex
+  )
+  (modules generator)
+  (preprocess
+    (pps
+      ppx_let
+      ppx_deriving.std
+    )
+  )
+)

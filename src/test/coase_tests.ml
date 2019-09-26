@@ -1,10 +1,9 @@
 (* Copyright Coase, Inc 2019 *)
 
 open Trace
-open Ligo.Run
 open Test_helpers
 
-let type_file = type_file `pascaligo
+let type_file = Ligo.Compile.Of_source.type_file (Syntax_name "pascaligo")
 
 let get_program =
   let s = ref None in
@@ -48,7 +47,7 @@ let card_pattern_ty =
   ]
 
 let card_pattern_ez (coeff , qtt) =
-  card_pattern (e_tez coeff , e_nat qtt)
+  card_pattern (e_mutez coeff , e_nat qtt)
 
 let make_card_patterns lst =
   let card_pattern_id_ty = t_nat  in
@@ -75,13 +74,13 @@ let (first_owner , first_contract) =
   let open Proto_alpha_utils.Memory_proto_alpha in
   let id = List.nth dummy_environment.identities 0 in
   let kt = id.implicit_contract in
-  Alpha_context.Contract.to_b58check kt , kt
+  Protocol.Alpha_context.Contract.to_b58check kt , kt
 
 let second_owner =
   let open Proto_alpha_utils.Memory_proto_alpha in
   let id = List.nth dummy_environment.identities 1 in
   let kt = id.implicit_contract in
-  Alpha_context.Contract.to_b58check kt
+  Protocol.Alpha_context.Contract.to_b58check kt
 
 let basic a b cards next_id =
   let card_patterns = List.map card_pattern_ez [
@@ -113,13 +112,13 @@ let buy () =
     let%bind () =
       let%bind amount =
         trace_option (simple_error "getting amount for run") @@
-        Memory_proto_alpha.Alpha_context.Tez.of_mutez @@ Int64.of_int 10000000000 in
+        Memory_proto_alpha.Protocol.Alpha_context.Tez.of_mutez @@ Int64.of_int 10000000000 in
       let options = Proto_alpha_utils.Memory_proto_alpha.make_options ~amount () in
       expect_eq_n_pos_small ~options program "buy_single" make_input make_expected in
     let%bind () =
       let%bind amount =
         trace_option (simple_error "getting amount for run") @@
-        Memory_proto_alpha.Alpha_context.Tez.of_mutez @@ Int64.of_int 0 in
+        Memory_proto_alpha.Protocol.Alpha_context.Tez.of_mutez @@ Int64.of_int 0 in
       let options = Proto_alpha_utils.Memory_proto_alpha.make_options ~amount () in
       trace_strong (simple_error "could buy without money") @@
       Assert.assert_fail
@@ -152,13 +151,13 @@ let dispatch_buy () =
     let%bind () =
       let%bind amount =
         trace_option (simple_error "getting amount for run") @@
-        Memory_proto_alpha.Alpha_context.Tez.of_mutez @@ Int64.of_int 10000000000 in
+        Memory_proto_alpha.Protocol.Alpha_context.Tez.of_mutez @@ Int64.of_int 10000000000 in
       let options = Proto_alpha_utils.Memory_proto_alpha.make_options ~amount () in
       expect_eq_n_pos_small ~options program "main" make_input make_expected in
     let%bind () =
       let%bind amount =
         trace_option (simple_error "getting amount for run") @@
-        Memory_proto_alpha.Alpha_context.Tez.of_mutez @@ Int64.of_int 0 in
+        Memory_proto_alpha.Protocol.Alpha_context.Tez.of_mutez @@ Int64.of_int 0 in
       let options = Proto_alpha_utils.Memory_proto_alpha.make_options ~amount () in
       trace_strong (simple_error "could buy without money") @@
       Assert.assert_fail
@@ -190,7 +189,7 @@ let transfer () =
       e_pair ops storage
     in
     let%bind () =
-      let amount = Memory_proto_alpha.Alpha_context.Tez.zero in
+      let amount = Memory_proto_alpha.Protocol.Alpha_context.Tez.zero in
       let payer = first_contract in
       let options = Proto_alpha_utils.Memory_proto_alpha.make_options ~amount ~payer () in
       expect_eq_n_strict_pos_small ~options program "transfer_single" make_input make_expected in
@@ -210,9 +209,9 @@ let sell () =
       e_pair sell_action storage
     in
     let make_expecter : int -> expression -> unit result = fun n result ->
-      let%bind (ops , storage) = get_e_pair @@ Location.unwrap result in
+      let%bind (ops , storage) = get_e_pair result.expression in
       let%bind () =
-        let%bind lst = get_e_list @@ Location.unwrap ops in
+        let%bind lst = get_e_list ops.expression in
         Assert.assert_list_size lst 1 in
       let expected_storage =
         let cards = List.hds @@ cards_ez first_owner n in
@@ -220,7 +219,7 @@ let sell () =
       Ast_simplified.Misc.assert_value_eq (expected_storage , storage)
     in
     let%bind () =
-      let amount = Memory_proto_alpha.Alpha_context.Tez.zero in
+      let amount = Memory_proto_alpha.Protocol.Alpha_context.Tez.zero in
       let payer = first_contract in
       let options = Proto_alpha_utils.Memory_proto_alpha.make_options ~amount ~payer () in
       expect_n_strict_pos_small ~options program "sell_single" make_input make_expecter in

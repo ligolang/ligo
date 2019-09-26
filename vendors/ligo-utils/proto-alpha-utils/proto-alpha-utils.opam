@@ -18,7 +18,9 @@ depends: [
   "ezjsonm"
   "hex"
   "hidapi"
-  "ipaddr"
+  # opam does not handle tezos' constraints well (why?)
+  "ipaddr" { >= "3.1.0" & < "4.0.0" }
+  "macaddr" { >= "3.1.0" & < "4.0.0" }
   "irmin"
   "js_of_ocaml"
   "lwt"
@@ -31,7 +33,8 @@ depends: [
   "stdio"
   "uri"
   "uutf"
-  "zarith"
+  # tezos does not constrain their required version
+  "zarith" {= "1.7"}
   "ocplib-json-typed"
   "ocplib-json-typed-bson"
   "tezos-crypto"
@@ -39,6 +42,7 @@ depends: [
   "tezos-data-encoding"
   "tezos-protocol-environment"
   "tezos-protocol-alpha"
+  "tezos-protocol-alpha-parameters"
   "michelson-parser"
   "simple-utils"
   "tezos-utils"

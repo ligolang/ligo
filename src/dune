@@ -6,27 +6,9 @@
     simple-utils
     tezos-utils
     tezos-micheline
-    meta_michelson
     main
   )
   (preprocess
-    (pps simple-utils.ppx_let_generalized)
+    (pps ppx_let)
   )
-)
-
-(alias
-  (name ligo-test)
-  (action (run test/test.exe))
-  (deps (glob_files contracts/*))
-)
-
-(alias
-  (name runtest)
-  (deps (alias ligo-test))
-)
-
-(alias
-  (name manual-test)
-  (action (run test/manual_test.exe))
-  (deps (glob_files contracts/*))  
 )
