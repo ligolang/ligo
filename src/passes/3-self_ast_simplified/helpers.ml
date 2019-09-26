@@ -45,10 +45,6 @@ let rec map_expression : mapper -> expression -> expression result = fun f e ->
       let%bind path' = map_path f path in
       return @@ E_assign (name , path' , e')
     )
-  | E_failwith e -> (
-      let%bind e' = self e in
-      return @@ E_failwith e'
-    )
   | E_matching (e , cases) -> (
       let%bind e' = self e in
       let%bind cases' = map_cases f cases in

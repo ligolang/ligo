@@ -787,10 +787,6 @@ and simpl_single_instruction : Raw.single_instr -> (_ -> expression result) resu
           let%bind lst = bind_map_list simpl_expression args' in
           return_statement @@ e_constant ~loc s lst
     )
-  | Fail e -> (
-      let%bind expr = simpl_expression e.value.fail_expr in
-      return_statement @@ e_failwith expr
-    )
   | Skip reg -> (
       let loc = Location.lift reg in
       return_statement @@ e_skip ~loc ()

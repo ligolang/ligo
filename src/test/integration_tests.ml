@@ -670,6 +670,11 @@ let failwith_ligo () : unit result =
   let%bind _ = should_fail (e_pair (e_constructor "Zero" (e_nat 1)) (e_unit ())) in
   let%bind _ = should_work (e_pair (e_constructor "Pos" (e_nat 1)) (e_unit ())) in
   let%bind _ = should_fail (e_pair (e_constructor "Pos" (e_nat 0)) (e_unit ())) in
+  let should_fail input = expect_fail program "foobar" (e_int input) in
+  let should_work input n = expect_eq program "foobar" (e_int input) (e_int n) in
+  let%bind () = should_fail 10 in
+  let%bind () = should_fail @@ -10 in
+  let%bind () = should_work 5 6 in
   ok ()
 
 let failwith_mligo () : unit result =
@@ -698,7 +703,7 @@ let guess_string_mligo () : unit result =
   in expect_eq_n program "main" make_input make_expected
 
 let basic_mligo () : unit result =
-  let%bind typed = mtype_file ~debug_simplify:true "./contracts/basic.mligo" in
+  let%bind typed = mtype_file "./contracts/basic.mligo" in
   let%bind result = Run.Of_typed.evaluate_entry typed "foo" in
   Ast_typed.assert_value_eq
     (Ast_typed.Combinators.e_a_empty_int (42 + 127), result)
