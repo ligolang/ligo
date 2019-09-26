@@ -41,10 +41,18 @@ body,
   font-family: "Open Sans", sans-serif;
 }
 
-code,
+/** TODO: code font size is currently 85%; designs have it as 1rem (16px);
+this breaks some of the tiny-text in the internal pages, so wait until those
+are fixed to set this to the correct size
+**/
+.landing code,
 .mono {
   font-family: "Source Code Pro", monospace;
   font-size: 1rem;
+}
+
+code {
+  font-family: "Source Code Pro", monospace;
 }
 
 h1 {
@@ -191,24 +199,8 @@ blockquote {
 blockquote code {
   opacity: 0.5;
 }
-/* 
-blockquote a {
-    color: rgba(255,255,255, 0.8);
-    border-bottom: 1px solid rgba(255,255,255, 0.8);
-}
 
-blockquote a:hover {
-    color: rgba(255,255,255, 1);
-    border-bottom: 1px solid rgba(255,255,255, 1);
-} */
-/* 
-blockquote {
-    background-color: rgba(252, 214, 0, 0.687);
-    border-left-color: rgba(240, 210, 37, 1);
-    color: rgba(0, 0, 0, 0.632);
-} */
-
-a {
+.landing a {
   color: var(--color-white);
 }
 
