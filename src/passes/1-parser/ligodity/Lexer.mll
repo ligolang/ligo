@@ -276,7 +276,7 @@ rule scan = parse
 
 | integer as n       { Token.Int (n, Z.of_string n)          }
 | integer as n "p"   { Token.Nat (n ^ "p", Z.of_string n)    }
-| integer as tz "tz" { Token.Mtz (tz ^ "tz", Z.of_string tz) }
+| integer as tz "tz" { Token.Mtz (tz ^ "tz", Z.mul (Z.of_int 1_000_000) (Z.of_string tz)) }
 | decimal as tz "tz" {
     match format_tz tz with
       Some z -> Token.Mtz (tz ^ "tz", z)
