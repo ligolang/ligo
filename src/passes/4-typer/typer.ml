@@ -206,6 +206,14 @@ module Errors = struct
     ] in
     error ~data title message ()
 
+  let deprecated_fail (ae : I.expression) () =
+    let title () = "fail is deprecated, use failwith instead" in
+    let message = title in
+    let data = [
+      ("location" , fun () -> Format.asprintf "%a" Location.pp ae.location) ;
+    ] in
+    error ~data title message ()
+
   let constant_error loc lst tv_opt =
     let title () = "typing constant" in
     let message () = "" in
@@ -396,7 +404,7 @@ and type_expression : environment -> ?tv_opt:O.type_value -> I.expression -> O.a
   trace main_error @@
   match ae.expression with
   (* Basic *)
-  | E_failwith _ -> fail @@ needs_annotation ae "the failwith keyword"
+  | E_failwith _ -> fail @@ deprecated_fail ae
   | E_variable name ->
       let%bind tv' =
         trace_option (unbound_variable e name ae.location)

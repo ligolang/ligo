@@ -684,7 +684,7 @@ let guess_string_mligo () : unit result =
   in expect_eq_n program "main" make_input make_expected
 
 let basic_mligo () : unit result =
-  let%bind typed = mtype_file ~debug_simplify:true "./contracts/basic.mligo" in
+  let%bind typed = mtype_file "./contracts/basic.mligo" in
   let%bind result = Run.Of_typed.evaluate_entry typed "foo" in
   Ast_typed.assert_value_eq
     (Ast_typed.Combinators.e_a_empty_int (42 + 127), result)
