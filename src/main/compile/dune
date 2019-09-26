@@ -14,7 +14,6 @@
     mini_c
     compiler
     self_michelson
-    operators
   )
   (preprocess
     (pps ppx_let)
