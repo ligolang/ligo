@@ -4,3 +4,4 @@ dune-project
 cache/*
 Version.ml
 /_opam/
+**/.DS_Store
