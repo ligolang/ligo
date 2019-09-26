@@ -14,7 +14,7 @@ const partners = [
     caption: "Nomadic Labs",
     // You will need to prepend the image path with your baseUrl
     // if it is not '/', like: '/test-site/img/image.jpg'.
-    image: "/img/nomadic-logo.jpg",
+    image: "/img/nomadic-logo.svg",
     infoLink: "https://www.nomadic-labs.com/",
     pinned: true
   },
@@ -22,7 +22,7 @@ const partners = [
     caption: "Tocqueville Group",
     // You will need to prepend the image path with your baseUrl
     // if it is not '/', like: '/test-site/img/image.jpg'.
-    image: "/img/tq-logo.svg",
+    image: "/img/tq-logo-2.svg",
     infoLink: "https://tqgroup.io/",
     pinned: true
   },
@@ -30,7 +30,7 @@ const partners = [
     caption: "Stove Labs",
     // You will need to prepend the image path with your baseUrl
     // if it is not '/', like: '/test-site/img/image.jpg'.
-    image: "/img/stove-logo.png",
+    image: "/img/stove-logo.svg",
     infoLink: "https://stove-labs.com",
     pinned: true
   }
@@ -82,7 +82,8 @@ const team = [
 const siteConfig = {
   title: "LIGO", // Title for your website.
   tagline:
-    "LIGO is a statically typed high-level smart-contract language that compiles down to Michelson. It seeks to be easy to use, extensible and safe.",
+    "LIGO is a statically typed high-level smart-contract language that compiles down to Michelson.",
+  taglineSub: "It seeks to be easy to use, extensible and safe.",
   url: "https://your-docusaurus-test-site.com", // Your website URL
   baseUrl: "/", // Base URL for your project */
   // For github.io type URLs, you would set the url and baseUrl like:
