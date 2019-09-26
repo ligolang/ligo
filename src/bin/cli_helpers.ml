@@ -9,4 +9,8 @@ let toplevel ~(display_format : string) (x : string result) =
         failwith "Display format"
       )
   in
-  Format.printf "%a" (formatted_string_result_pp display_format) x
+  match x with
+  | Ok _ -> Format.printf "%a" (formatted_string_result_pp display_format) x
+  | Error _ ->
+     Format.eprintf "%a" (formatted_string_result_pp display_format) x ;
+     exit 1
