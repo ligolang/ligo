@@ -1,6 +1,8 @@
 /_build/
 dune-project
 *~
+*.merlin
 cache/*
 Version.ml
 /_opam/
+/*.pp.ligo

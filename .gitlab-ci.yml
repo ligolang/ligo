@@ -50,9 +50,6 @@ stages:
   services:
     - docker:dind
 
-.docker_build: &docker_build
-  script:
-    - docker build -t $LIGO_REGISTRY_IMAGE:next -f ./docker/Dockerfile .
 
 .before_script: &before_script
   before_script:
@@ -73,17 +70,6 @@ local-dune-job:
     - scripts/install_vendors_deps.sh
     - scripts/build_ligo_local.sh
     - dune build @ligo-test
-
-# TODO: uncomment this
-
-# TODO
-# local-repo-job:
-#   <<: *before_script
-#   stage: test
-#   script:
-#     - scripts/install_vendors_deps.sh
-#     # TODO: also try from time to time with --build-test
-#     - opam install -y ligo
 
 remote-repo-job:
   <<: *before_script
@@ -107,7 +93,9 @@ remote-repo-job:
 build-current-docker-image:
   stage: build_docker
   <<: *docker
-  <<: *docker_build
+  script:
+    - docker build -t $LIGO_REGISTRY_IMAGE:next -f ./docker/Dockerfile .
+    - sh scripts/test_cli.sh
   except:
     - master
     - dev
@@ -117,8 +105,9 @@ build-current-docker-image:
 build-and-publish-latest-docker-image:
   stage: build_and_deploy_docker
   <<: *docker
-  <<: *docker_build
-  after_script:
+  script:
+    - docker build -t $LIGO_REGISTRY_IMAGE:next -f ./docker/Dockerfile .
+    - sh scripts/test_cli.sh
     - docker login -u $LIGO_REGISTRY_USER -p $LIGO_REGISTRY_PASSWORD
     - docker push $LIGO_REGISTRY_IMAGE:next
   only:
