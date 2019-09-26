@@ -703,6 +703,7 @@ module Compiler = struct
     ("MAP_UPDATE" , simple_ternary @@ prim I_UPDATE) ;
     ("SIZE" , simple_unary @@ prim I_SIZE) ;
     ("FAILWITH" , simple_unary @@ prim I_FAILWITH) ;
+    ("ASSERT_INFERRED" , simple_binary @@ i_if (seq [i_failwith]) (seq [i_drop ; i_push_unit])) ;
     ("ASSERT" , simple_unary @@ i_if (seq [i_push_unit]) (seq [i_push_unit ; i_failwith])) ;
     ("INT" , simple_unary @@ prim I_INT) ;
     ("ABS" , simple_unary @@ prim I_ABS) ;

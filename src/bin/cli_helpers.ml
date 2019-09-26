@@ -10,7 +10,7 @@ let toplevel ~(display_format : string) (x : string result) =
       )
   in
   match x with
-  | Ok _ -> Format.printf "%a" (formatted_string_result_pp display_format) x
+  | Ok _ -> Format.printf "%a\n%!" (formatted_string_result_pp display_format) x
   | Error _ ->
-     Format.eprintf "%a" (formatted_string_result_pp display_format) x ;
+     Format.eprintf "%a\n%!" (formatted_string_result_pp display_format) x ;
      exit 1
