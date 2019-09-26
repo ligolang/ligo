@@ -200,11 +200,19 @@ blockquote code {
   opacity: 0.5;
 }
 
+a {
+  color: var(--color-primary-text);
+}
+
+a:hover {
+  color: var(--color-primary-brand);
+}
+
 .landing a {
   color: var(--color-white);
 }
 
-a:hover {
+.landing a:hover {
   font-weight: bold;
 }
 
