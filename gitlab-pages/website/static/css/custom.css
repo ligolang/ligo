@@ -41,10 +41,18 @@ body,
   font-family: "Open Sans", sans-serif;
 }
 
-code,
+/** TODO: code font size is currently 85%; designs have it as 1rem (16px);
+this breaks some of the tiny-text in the internal pages, so wait until those
+are fixed to set this to the correct size
+**/
+.landing code,
 .mono {
   font-family: "Source Code Pro", monospace;
   font-size: 1rem;
+}
+
+code {
+  font-family: "Source Code Pro", monospace;
 }
 
 h1 {
@@ -92,15 +100,9 @@ body,
 .landing .subhead {
   font-size: 1rem;
 }
-.footnote {
+.footnote,
+footnote {
   font-size: 0.75rem;
-}
-
-.projectTitle small {
-  max-width: 700px;
-  text-align: center;
-  margin: 0 auto;
-  margin-top: 0.7em;
 }
 
 .fixedHeaderContainer header .headerTitleWithLogo {
@@ -118,12 +120,7 @@ body,
   background: #1a1a1a;
 }
 
-.homeContainer {
-  box-shadow: inset 0 -10px 10px -6px rgba(177, 176, 176, 0.2);
-  background: #f6f4f4;
-}
-
-.homeContainer .hljs {
+.hljs {
   text-align: left;
   background: transparent;
 }
@@ -149,9 +146,9 @@ body,
   border-bottom: 4px solid #1a1a1a;
 }
 
-.homeContainer .tabs .nav-tabs > div:last-of-type {
+.disabled {
   cursor: default;
-  color: #24292e64;
+  color: #24292e64 !important;
   border-bottom: none;
 }
 
@@ -165,9 +162,32 @@ body,
   top: 4px;
 }
 
-.promoSection .buttonWrapper:first-of-type > a.button {
-  background: #b2210c;
-  color: white;
+/** Top Section **/
+.home-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--padding-level-3);
+}
+
+.home-text {
+  max-width: 40%;
+}
+
+.sample-code-container {
+  display: flex;
+  justify-content: center;
+  box-sizing: border-box;
+  max-width: 60%;
+  background: url("/img/geo.svg") top right/140px 140px no-repeat,
+    url("/img/geo.svg") bottom left/200px 200px no-repeat;
+}
+
+.sample-code {
+  width: 80%;
+  padding: 25px;
+  box-shadow: 0px 0px 70px rgba(13, 15, 51, 0.06);
+  background-color: white;
 }
 
 blockquote {
@@ -179,44 +199,13 @@ blockquote {
 blockquote code {
   opacity: 0.5;
 }
-/* 
-blockquote a {
-    color: rgba(255,255,255, 0.8);
-    border-bottom: 1px solid rgba(255,255,255, 0.8);
-}
 
-blockquote a:hover {
-    color: rgba(255,255,255, 1);
-    border-bottom: 1px solid rgba(255,255,255, 1);
-} */
-/* 
-blockquote {
-    background-color: rgba(252, 214, 0, 0.687);
-    border-left-color: rgba(240, 210, 37, 1);
-    color: rgba(0, 0, 0, 0.632);
-} */
-
-a {
-  color: rgba(178, 33, 12, 0.8);
+.landing a {
+  color: var(--color-white);
 }
 
 a:hover {
-  color: rgba(178, 33, 12, 1);
-}
-
-.homeContainer .homeWrapper .projectLogo {
-  display: block;
-  position: relative;
-  padding: 0;
-}
-
-.projectTitle {
-  margin-top: 30px;
-  margin-bottom: 0;
-}
-
-.projectTitle small {
-  margin: 0 auto;
+  font-weight: bold;
 }
 
 .promoSection .promoRow {
@@ -240,7 +229,8 @@ a:hover {
   margin-top: -25px;
 }
 
-.features {
+.features,
+.team {
   background: white;
   margin-top: -40px;
   position: relative;
@@ -269,24 +259,16 @@ html {
   color: #b2210c;
 }
 
-.productShowcaseSection.team .logos img {
-  border-radius: 50%;
-  height: 150px;
-  margin-bottom: 0px;
-  padding-left: 40px;
-  padding-right: 40px;
-}
-
-.productShowcaseSection.team .logos p {
-  padding-top: 0px;
-}
-
 .toc .toggleNav {
   margin-top: 12px;
 }
 
 .mainContainer {
   padding-top: 60px;
+}
+
+.mainContainer > * {
+  padding: var(--padding-level-4) 0;
 }
 
 .tocActive .onPageNav > .toc-headings {
@@ -357,6 +339,7 @@ body
   font-weight: normal;
   line-height: 1.375rem;
   text-transform: none;
+  text-align: center;
 }
 
 .button,
@@ -385,7 +368,8 @@ body
 .large-secondary-button,
 .large-secondary-button:hover {
   border-radius: 37px;
-  padding: 20px;
+  padding: 5px 20px;
+  min-height: 56px;
   min-width: 132px;
   color: var(--color-white);
 }
@@ -473,14 +457,15 @@ body
   color: var(--color-primary-brand);
 }
 
+.profileContainer:hover .profileImage {
+  box-shadow: 12px 12px 0px var(--color-primary-brand);
+}
+
 .profileImage {
   max-height: 195px;
   max-width: 195px;
   width: 100%;
   border: var(--color-gray);
-}
-.profileImage:hover {
-  box-shadow: 12px 12px 0px var(--color-primary-brand);
 }
 
 .flex-inline-container {
@@ -522,6 +507,7 @@ body
   justify-content: space-around;
   align-content: center;
   padding: var(--padding-level-3);
+  margin: var(--padding-level-4) 0;
 }
 
 .partners-container a {
@@ -573,13 +559,29 @@ body
 @media only screen and (min-device-width: 360px) and (max-device-width: 736px) {
 }
 
-@media only screen and (min-width: 1200px) {
-}
-
 @media only screen and (max-width: 1023px) {
+  .home-container {
+    flex-direction: column-reverse;
+    margin-top: var(--padding-level-1);
+  }
+  .home-text {
+    align-content: center;
+    text-align: center;
+    max-width: 90%;
+    padding-top: var(--padding-level-2);
+  }
+  .sample-code-container {
+    max-width: 100%;
+  }
 }
 
-@media only screen and (min-width: 1400px) {
+@media only screen and (min-width: 1280px) {
+}
+
+@media only screen and (min-width: 1440px) {
+  .landing h4.tagline-text {
+    font-size: 2.25rem;
+  }
 }
 
 @media only screen and (min-width: 1500px) {
