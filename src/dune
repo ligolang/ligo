@@ -12,20 +12,3 @@
     (pps ppx_let)
   )
 )
-
-(alias
-  (name ligo-test)
-  (action (run test/test.exe))
-  (deps (glob_files contracts/*))
-)
-
-(alias
-  (name runtest)
-  (deps (alias ligo-test))
-)
-
-(alias
-  (name manual-test)
-  (action (run test/manual_test.exe))
-  (deps (glob_files contracts/*))  
-)

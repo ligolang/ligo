@@ -1,11 +1,10 @@
 open Trace
-open Ligo.Run
 open Test_helpers
 
 open Ast_simplified.Combinators
 
-let mtype_file ?debug_simplify ?debug_typed = type_file ?debug_simplify ?debug_typed `cameligo
-let type_file = type_file `pascaligo
+let mtype_file ?debug_simplify ?debug_typed = Ligo.Compile.Of_source.type_file ?debug_simplify ?debug_typed (Syntax_name "cameligo")
+let type_file = Ligo.Compile.Of_source.type_file (Syntax_name "pascaligo")
 
 let type_alias () : unit result =
   let%bind program = type_file "./contracts/type-alias.ligo" in
@@ -28,9 +27,6 @@ let annotation () : unit result =
   in
   let%bind () =
     expect_eq_evaluate program "address" (e_address "tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx")
-  in
-  let%bind () =
-    expect_eq_evaluate program "address_2" (e_address "tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx")
   in
   ok ()
 
@@ -100,14 +96,21 @@ let higher_order () : unit result =
 
 let shared_function () : unit result =
   let%bind program = type_file "./contracts/function-shared.ligo" in
+  Format.printf "inc\n" ;
   let%bind () =
     let make_expect = fun n -> (n + 1) in
     expect_eq_n_int program "inc" make_expect
   in
+  Format.printf "double inc?\n" ;
+  let%bind () =
+    expect_eq program "double_inc" (e_int 0) (e_int 2)
+  in
+  Format.printf "double incd!\n" ;
   let%bind () =
     let make_expect = fun n -> (n + 2) in
     expect_eq_n_int program "double_inc" make_expect
   in
+  Format.printf "foo\n" ;
   let%bind () =
     let make_expect = fun n -> (2 * n + 3) in
     expect_eq program "foo" (e_int 0) (e_int @@ make_expect 0)
@@ -184,9 +187,9 @@ let bytes_arithmetic () : unit result =
   let%bind () = expect_eq program "slice_op" tata at in
   let%bind () = expect_fail program "slice_op" foo in
   let%bind () = expect_fail program "slice_op" ba in
-  let%bind b1 = run_simplityped program "hasherman" foo in
+  let%bind b1 = Run.Of_simplified.run_typed_program program "hasherman" foo in
   let%bind () = expect_eq program "hasherman" foo b1 in
-  let%bind b3 = run_simplityped program "hasherman" foototo in
+  let%bind b3 = Run.Of_simplified.run_typed_program program "hasherman" foototo in
   let%bind () = Assert.assert_fail @@ Ast_simplified.Misc.assert_value_eq (b3 , b1) in
   ok ()
 
@@ -221,6 +224,11 @@ let set_arithmetic () : unit result =
     expect_eq program "mem_op"
       (e_set [e_string "foo" ; e_string "bar"])
       (e_bool false) in
+  let%bind () =
+    expect_eq program_1 "fold_op"
+      (e_set [ e_int 4 ; e_int 10 ])
+      (e_int 29)
+  in
   ok ()
 
 let unit_expression () : unit result =
@@ -337,6 +345,27 @@ let option () : unit result =
   in
   ok ()
 
+let moption () : unit result =
+  let%bind program = mtype_file "./contracts/option.mligo" in
+  let%bind () =
+    let expected = e_some (e_int 42) in
+    expect_eq_evaluate program "s" expected
+  in
+  let%bind () =
+    let expected = e_typed_none t_int in
+    expect_eq_evaluate program "n" expected
+  in
+  ok ()
+
+let mmap () : unit result =
+  let%bind program = mtype_file "./contracts/map.mligo" in
+  let%bind () = expect_eq_evaluate program "foobar"
+      (e_annotation (e_map []) (t_map t_int t_int)) in
+  let%bind () = expect_eq_evaluate program "foobarz"
+      (e_annotation (e_map [(e_int 1 , e_int 10) ; (e_int 2 , e_int 20)]) (t_map t_int t_int)) in
+  let%bind () = expect_eq_evaluate program "foo" (e_int 10) in
+  ok ()
+
 let map () : unit result =
   let%bind program = type_file "./contracts/map.ligo" in
   let ez lst =
@@ -372,6 +401,11 @@ let map () : unit result =
     expect_eq_n program "get" make_input make_expected
   in
   let%bind () =
+    let make_input = fun n -> ez [(23, n) ; (42, 4)] in
+    let make_expected = fun _ -> e_some @@ e_int 4 in
+    expect_eq_n program "get_" make_input make_expected
+  in
+  let%bind () =
     let expected = ez @@ List.map (fun x -> (x, 23)) [144 ; 51 ; 42 ; 120 ; 421] in
     expect_eq_evaluate program "bm" expected
   in
@@ -387,8 +421,45 @@ let map () : unit result =
   in
   let%bind () =
     let input = ez [(1 , 10) ; (2 , 20) ; (3 , 30) ] in
+    let expected = e_int 76 in
+    expect_eq program "fold_op" input expected
+  in
+  let%bind () =
+    let input = ez [(1 , 10) ; (2 , 20) ; (3 , 30) ] in
     let expected = ez [(1 , 11) ; (2 , 21) ; (3 , 31) ] in
     expect_eq program "map_op" input expected
+  in
+  ok ()
+
+let big_map () : unit result =
+  let%bind program = type_file "./contracts/big_map.ligo" in
+  let ez lst =
+    let open Ast_simplified.Combinators in
+    let lst' = List.map (fun (x, y) -> e_int x, e_int y) lst in
+    e_pair (e_typed_big_map lst' t_int t_int) (e_unit ())
+  in
+  let%bind () =
+    let make_input = fun n -> ez [(23, n) ; (42, 4)] in
+    let make_expected = e_int in
+    expect_eq_n ~input_to_value:true program "gf" make_input make_expected
+  in
+  let%bind () =
+    let make_input = fun n ->
+      let m = ez [(23 , 0) ; (42 , 0)] in
+      e_tuple [(e_int n) ; m]
+    in
+    let make_expected = fun n -> ez [(23 , n) ; (42 , 0)] in
+    expect_eq_n_pos_small ?input_to_value:(Some true) program "set_" make_input make_expected
+  in
+  let%bind () =
+    let make_input = fun n -> ez [(23, n) ; (42, 4)] in
+    let make_expected = fun _ -> e_some @@ e_int 4 in
+    expect_eq_n ?input_to_value:(Some true) program "get" make_input make_expected
+  in
+  let%bind () =
+    let input = ez [(23, 23) ; (42, 42)] in
+    let expected = ez [23, 23] in
+    expect_eq ?input_to_value:(Some true) program "rm" input expected
   in
   ok ()
 
@@ -502,6 +573,13 @@ let matching () : unit result =
     bind_iter_list aux
       [Some 0 ; Some 2 ; Some 42 ; Some 163 ; Some (-1) ; None]
   in
+  let%bind () =
+    let aux lst = e_annotation (e_list @@ List.map e_int lst) (t_list t_int) in
+    let%bind () = expect_eq program "match_expr_list" (aux [ 14 ; 2 ; 3 ]) (e_int 14) in
+    let%bind () = expect_eq program "match_expr_list" (aux [ 13 ; 2 ; 3 ]) (e_int 13) in
+    let%bind () = expect_eq program "match_expr_list" (aux []) (e_int (-1)) in
+    ok ()
+  in
   ok ()
 
 let declarations () : unit result =
@@ -565,11 +643,28 @@ let dispatch_counter_contract () : unit result =
     e_pair (e_typed_list [] t_operation) (e_int (op 42 n)) in
   expect_eq_n program "main" make_input make_expected
 
+let failwith_ligo () : unit result =
+  let%bind program = type_file "./contracts/failwith.ligo" in
+  let should_fail = expect_fail program "main" in
+  let should_work input = expect_eq program "main" input (e_pair (e_typed_list [] t_operation) (e_unit ())) in
+  let%bind _ = should_work (e_pair (e_constructor "Zero" (e_nat 0)) (e_unit ())) in
+  let%bind _ = should_fail (e_pair (e_constructor "Zero" (e_nat 1)) (e_unit ())) in
+  let%bind _ = should_work (e_pair (e_constructor "Pos" (e_nat 1)) (e_unit ())) in
+  let%bind _ = should_fail (e_pair (e_constructor "Pos" (e_nat 0)) (e_unit ())) in
+  ok ()
+
 let failwith_mligo () : unit result =
   let%bind program = mtype_file "./contracts/failwith.mligo" in
   let make_input = e_pair (e_unit ()) (e_unit ()) in
+  expect_fail program "main" make_input
+
+let assert_mligo () : unit result =
+  let%bind program = mtype_file "./contracts/assert.mligo" in
+  let make_input b = e_pair (e_bool b) (e_unit ()) in
   let make_expected = e_pair (e_typed_list [] t_operation) (e_unit ()) in
-  expect_eq program "main" make_input make_expected
+  let%bind _ = expect_fail program "main" (make_input false) in
+  let%bind _ = expect_eq program "main" (make_input true) make_expected in
+  ok ()
 
 let guess_the_hash_mligo () : unit result =
   let%bind program = mtype_file "./contracts/new-syntax.mligo" in
@@ -585,9 +680,9 @@ let guess_string_mligo () : unit result =
 
 let basic_mligo () : unit result =
   let%bind typed = mtype_file ~debug_simplify:true "./contracts/basic.mligo" in
-  let%bind result = evaluate_typed "foo" typed in
-  Ligo.AST_Typed.assert_value_eq
-    (Ligo.AST_Typed.Combinators.e_a_empty_int (42 + 127), result)
+  let%bind result = Run.Of_typed.evaluate_entry typed "foo" in
+  Ast_typed.assert_value_eq
+    (Ast_typed.Combinators.e_a_empty_int (42 + 127), result)
 
 let counter_mligo () : unit result =
   let%bind program = mtype_file "./contracts/counter.mligo" in
@@ -620,13 +715,24 @@ let match_matej () : unit result =
 
 let mligo_list () : unit result =
   let%bind program = mtype_file "./contracts/list.mligo" in
-  let make_input n =
-    e_pair (e_list [e_int n; e_int (2*n)])
-           (e_pair (e_int 3) (e_list [e_int 8])) in
-  let make_expected n =
-    e_pair (e_typed_list [] t_operation)
-      (e_pair (e_int (n+3)) (e_list [e_int (2*n)]))
-  in expect_eq_n program "main" make_input make_expected
+  let aux lst = e_list @@ List.map e_int lst in
+  let%bind () = expect_eq program "fold_op" (aux [ 1 ; 2 ; 3 ]) (e_int 16) in
+  let%bind () =
+    let make_input n =
+      e_pair (e_list [e_int n; e_int (2*n)])
+        (e_pair (e_int 3) (e_list [e_int 8])) in
+    let make_expected n =
+      e_pair (e_typed_list [] t_operation)
+        (e_pair (e_int (n+3)) (e_list [e_int (2*n)]))
+    in
+    expect_eq_n program "main" make_input make_expected
+  in
+  let%bind () = expect_eq_evaluate program "x" (e_list []) in
+  let%bind () = expect_eq_evaluate program "y" (e_list @@ List.map e_int [3 ; 4 ; 5]) in
+  let%bind () = expect_eq_evaluate program "z" (e_list @@ List.map e_int [2 ; 3 ; 4 ; 5]) in
+  let%bind () = expect_eq program "map_op" (aux [2 ; 3 ; 4 ; 5]) (aux [3 ; 4 ; 5 ; 6]) in
+  let%bind () = expect_eq program "iter_op" (aux [2 ; 3 ; 4 ; 5]) (e_unit ()) in
+  ok ()
 
 let lambda_mligo () : unit result =
   let%bind program = mtype_file "./contracts/lambda.mligo" in
@@ -689,7 +795,10 @@ let main = test_suite "Integration (End to End)" [
     test "unit" unit_expression ;
     test "string" string_expression ;
     test "option" option ;
+    test "option (mligo)" moption ;
     test "map" map ;
+    test "map (mligo)" mmap ;
+    test "big_map" big_map ;
     test "list" list ;
     test "loop" loop ;
     test "matching" matching ;
@@ -706,9 +815,11 @@ let main = test_suite "Integration (End to End)" [
     test "let-in (mligo)" let_in_mligo ;
     test "match variant (mligo)" match_variant ;
     test "match variant 2 (mligo)" match_matej ;
-    (* test "list matching (mligo)" mligo_list ; *)
+    test "list matching (mligo)" mligo_list ;
     (* test "guess the hash mligo" guess_the_hash_mligo ; WIP? *)
-    (* test "failwith mligo" failwith_mligo ; *)
+    test "failwith ligo" failwith_ligo ;
+    test "failwith mligo" failwith_mligo ;
+    test "assert mligo" assert_mligo ;
     (* test "guess string mligo" guess_string_mligo ; WIP? *)
     test "lambda mligo" lambda_mligo ;
     test "lambda ligo" lambda_ligo ;
