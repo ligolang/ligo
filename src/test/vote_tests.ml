@@ -1,13 +1,14 @@
 open Trace
-open Ligo.Run
 open Test_helpers
+
+let type_file = Ligo.Compile.Of_source.type_file (Syntax_name "cameligo")
 
 let get_program =
   let s = ref None in
   fun () -> match !s with
     | Some s -> ok s
     | None -> (
-        let%bind program = type_file `cameligo "./contracts/vote.mligo" in
+        let%bind program = type_file "./contracts/vote.mligo" in
         s := Some program ;
         ok program
       )
@@ -39,7 +40,7 @@ let vote str =
 
 let init_vote () =
   let%bind program = get_program () in
-  let%bind result = Ligo.Run.run_simplityped program "main" (e_pair (vote "Yes") (init_storage "basic")) in
+  let%bind result = Ligo.Run.Of_simplified.run_typed_program program "main" (e_pair (vote "Yes") (init_storage "basic")) in
   let%bind (_ , storage) = extract_pair result in
   let%bind storage' = extract_record storage in
   let votes = List.assoc "candidates" storage' in
