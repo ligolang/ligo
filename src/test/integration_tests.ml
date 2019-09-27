@@ -377,35 +377,12 @@ let moption () : unit result =
   in
   ok ()
 
-let mmap () : unit result =
-  let%bind program = mtype_file "./contracts/map.mligo" in
-  let%bind () = expect_eq_evaluate program "foobar"
-      (e_annotation (e_map []) (t_map t_int t_int)) in
-  let%bind () = expect_eq_evaluate program "foobarz"
-      (e_annotation (e_map [(e_int 1 , e_int 10) ; (e_int 2 , e_int 20)]) (t_map t_int t_int)) in
-  let%bind () = expect_eq_evaluate program "foo" (e_int 10) in
-  ok ()
-
-let map () : unit result =
-  let%bind program = type_file "./contracts/map.ligo" in
+let map_ type_f path : unit result =
+  let%bind program = type_f path in
   let ez lst =
     let open Ast_simplified.Combinators in
     let lst' = List.map (fun (x, y) -> e_int x, e_int y) lst in
     e_typed_map lst' t_int t_int
-  in
-  let%bind () =
-    let make_input = fun n -> ez [(23, n) ; (42, 4)] in
-    let make_expected = e_int in
-    expect_eq_n program "gf" make_input make_expected
-  in
-  let%bind () =
-    let make_input = fun n -> ez List.(map (fun x -> (x, x)) @@ range n) in
-    let make_expected = e_nat in
-    expect_eq_n_strict_pos_small program "size_" make_input make_expected
-  in
-  let%bind () =
-    let expected = ez [(23, 0) ; (42, 0)] in
-    expect_eq_evaluate program "fb" expected
   in
   let%bind () =
     let make_input = fun n ->
@@ -414,6 +391,21 @@ let map () : unit result =
     in
     let make_expected = fun n -> ez [(23 , n) ; (42 , 0)] in
     expect_eq_n_pos_small program "set_" make_input make_expected
+  in
+  let%bind () =
+    let input = ez [(23, 23) ; (42, 42)] in
+    let expected = ez [23, 23] in
+    expect_eq program "rm" input expected
+  in
+  let%bind () =
+    let make_input = fun n -> ez List.(map (fun x -> (x, x)) @@ range n) in
+    let make_expected = e_nat in
+    expect_eq_n_strict_pos_small program "size_" make_input make_expected
+  in
+  let%bind () =
+    let make_input = fun n -> ez [(23, n) ; (42, 4)] in
+    let make_expected = e_int in
+    expect_eq_n program "gf" make_input make_expected
   in
   let%bind () =
     let make_input = fun n -> ez [(23, n) ; (42, 4)] in
@@ -425,34 +417,35 @@ let map () : unit result =
     let make_expected = fun _ -> e_some @@ e_int 4 in
     expect_eq_n program "get_" make_input make_expected
   in
+  let%bind () = expect_eq_evaluate program "empty_map"
+    (e_annotation (e_map []) (t_map t_int t_int)) in
   let%bind () =
     let expected = ez @@ List.map (fun x -> (x, 23)) [144 ; 51 ; 42 ; 120 ; 421] in
-    expect_eq_evaluate program "bm" expected
+    expect_eq_evaluate program "map1" expected
   in
   let%bind () =
-    let input = ez [(23, 23) ; (42, 42)] in
-    let expected = ez [23, 23] in
-    expect_eq program "rm" input expected
+    let expected = ez [(23, 0) ; (42, 0)] in
+    expect_eq_evaluate program "map2" expected
   in
   let%bind () =
-    let input = ez [(1 , 10) ; (2 , 20) ; (3 , 30) ] in
-    let expected = e_int 66 in
+    let input = ez [(1 , 1) ; (2 , 2) ; (3 , 3) ] in
+    let expected = e_unit () in
     expect_eq program "iter_op" input expected
-  in
-  let%bind () =
-    let input = ez [(1 , 10) ; (2 , 20) ; (3 , 30) ] in
-    let expected = e_int 76 in
-    expect_eq program "fold_op" input expected
   in
   let%bind () =
     let input = ez [(1 , 10) ; (2 , 20) ; (3 , 30) ] in
     let expected = ez [(1 , 11) ; (2 , 21) ; (3 , 31) ] in
     expect_eq program "map_op" input expected
   in
+  let%bind () =
+    let input = ez [(1 , 10) ; (2 , 20) ; (3 , 30) ] in
+    let expected = e_int 76 in
+    expect_eq program "fold_op" input expected
+  in
   ok ()
 
-let big_map () : unit result =
-  let%bind program = type_file "./contracts/big_map.ligo" in
+let big_map_ type_f path : unit result =
+  let%bind program = type_f path in
   let ez lst =
     let open Ast_simplified.Combinators in
     let lst' = List.map (fun (x, y) -> e_int x, e_int y) lst in
@@ -482,6 +475,13 @@ let big_map () : unit result =
     expect_eq ?input_to_value:(Some true) program "rm" input expected
   in
   ok ()
+
+
+let map () : unit result = map_ type_file "./contracts/map.ligo"
+let mmap () : unit result = map_ mtype_file "./contracts/map.mligo"
+let big_map () : unit result = big_map_ type_file "./contracts/big_map.ligo"
+let mbig_map () : unit result = big_map_ mtype_file "./contracts/big_map.mligo"
+
 
 let list () : unit result =
   let%bind program = type_file "./contracts/list.ligo" in
@@ -853,6 +853,7 @@ let main = test_suite "Integration (End to End)" [
     test "map" map ;
     test "map (mligo)" mmap ;
     test "big_map" big_map ;
+    test "big_map (mligo)" mbig_map ;
     test "list" list ;
     test "loop" loop ;
     test "matching" matching ;

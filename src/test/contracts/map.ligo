@@ -2,7 +2,16 @@
 
 type foobar is map(int, int)
 
-const fb : foobar = map
+const empty_map : foobar = map end
+
+const map1 : foobar = map
+  144 -> 23 ;
+  51 -> 23 ;
+  42 -> 23 ;
+  120 -> 23 ;
+  421 -> 23 ;
+end
+const map2 : foobar = map
   23 -> 0 ;
   42 -> 0 ;
 end
@@ -31,20 +40,12 @@ function get_ (const m : foobar) : option(int) is
     skip
   end with map_get(42 , m)
 
-const bm : foobar = map
-  144 -> 23 ;
-  51 -> 23 ;
-  42 -> 23 ;
-  120 -> 23 ;
-  421 -> 23 ;
-end
-
-function iter_op (const m : foobar) : int is
-  var r : int := 0 ;
-  function aggregate (const i : int ; const j : int) : unit is block { r := r + i + j } with unit ;
-  block {
-    map_iter(m , aggregate) ;
-  } with r ;
+function iter_op (const m : foobar) : unit is
+  function aggregate (const i : int ; const j : int) : unit is block
+    { if (i=j) then skip else failwith("fail") } with unit ;
+  block {skip}
+    // map_iter(m , aggregate) ;
+  with map_iter(m, aggregate) ;
 
 function map_op (const m : foobar) : foobar is
   function increment (const i : int ; const j : int) : int is block { skip } with j + 1 ;
