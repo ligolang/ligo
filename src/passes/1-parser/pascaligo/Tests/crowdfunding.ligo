@@ -10,7 +10,7 @@ function back (var store : store) : list (operation) * store is
   var operations : list (operation) := list []
   begin
     if now > store.deadline then
-      fail "Deadline passed";
+      failwith ("Deadline passed");
     else
       case store.backers[sender] of [
         None -> store.backers[sender] := amount
@@ -23,14 +23,14 @@ function claim (var store : store) : list (operation) * store is
   var operations : list (operation) := nil
   begin
     if now <= store.deadline then
-      fail "Too soon."
+      failwith ("Too soon.")
     else
       case store.backers[sender] of
         None ->
-          fail "Not a backer."
+          failwith ("Not a backer.")
       | Some (amount) ->
           if balance >= store.goal or store.funded then
-            fail "Goal reached: no refund."
+            failwith ("Goal reached: no refund.")
           else
             begin
               operations := list [transaction (unit, sender, amount)];
@@ -49,7 +49,7 @@ function withdraw (var store : store) : list (operation) * store is
  // or:      patch store with record funded = True end;
              operations := list [Transfer (owner, balance)];
         };
-        else fail "Below target."
+        else failwith ("Below target.")
       else fail "Too soon.";
     else skip
   end with (operations, store)
