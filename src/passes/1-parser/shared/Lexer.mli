@@ -28,11 +28,11 @@
    source regions, so useful error messages can be printed, therefore
    they are part of the signature [TOKEN] that parameterises the
    functor generated here. For instance, if, in a future release of
-   LIGO, new tokens may be added, and the recognition of their lexemes
-   may entail new errors, the signature [TOKEN] will have to be
-   augmented and the lexer specification changed. However, in
-   practice, it is more likely that instructions or types are added,
-   instead of new kinds of tokens.
+   LIGO, new tokens are added, and the recognition of their lexemes
+   entails new errors, the signature [TOKEN] will have to be augmented
+   and this lexer specification changed. However, in practice, it is
+   more likely that instructions or types will be added, instead of
+   new kinds of tokens.
 *)
 
 module Region = Simple_utils.Region

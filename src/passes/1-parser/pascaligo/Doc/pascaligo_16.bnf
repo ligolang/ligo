@@ -184,11 +184,13 @@ single_instr ::=
 | loop
 | Fail expr
 | Skip
-| Patch path With record_expr
-| Patch path With injection(Map,binding)
-| Patch path With injection(Set,expr)
+| Patch path With structure
 | Remove expr From Map path
 | Remove expr From Set path
+
+path ::=
+  Ident (* var *)
+| Ident (* struct_name *) DOT nsepseq(selection,DOT)
 
 injection(Kind,element) ::=
   Kind series(element,SEMI,End)
@@ -211,7 +213,8 @@ case(rhs) ::=
 | Case expr Of LBRACKET cases(rhs) RBRACKET
 
 cases(rhs) ::=
-  option(VBAR) nsepseq(case_clause(rhs),VBAR)
+  nsepseq(case_clause(rhs),VBAR)
+| VBAR nsepseq(case_clause(rhs),VBAR)
 
 case_clause(rhs) ::=
   pattern ARROW rhs
@@ -241,44 +244,38 @@ expr ::=
 | disj_expr
 
 disj_expr ::=
-  disj_expr Or conj_expr
-| conj_expr
+  left_assoc(conj_expr,Or)
 
 conj_expr ::=
-  conj_expr And set_membership
-| set_membership
+  left_assoc(set_membership,And)
 
 set_membership ::=
   core_expr Contains set_membership
 | comp_expr
 
 comp_expr ::=
-  comp_expr LT cat_expr
-| comp_expr LEQ cat_expr
-| comp_expr GT cat_expr
-| comp_expr GEQ cat_expr
-| comp_expr EQUAL cat_expr
-| comp_expr NEQ cat_expr
-| cat_expr
+  left_assoc(cat_expr,op_comp)
+
+op_comp ::=
+  LT | LEQ | GT | GEQ | EQUAL | NEQ
 
 cat_expr ::=
-  cons_expr CAT cat_expr
-| cons_expr
+  right_assoc(cons_expr,CAT)
 
 cons_expr ::=
-  add_expr CONS cons_expr
-| add_expr
+  left_assoc(add_expr,CONS)
 
 add_expr ::=
-  add_expr PLUS mult_expr
-| add_expr MINUS mult_expr
-| mult_expr
+  left_assoc(mult_expr,add_op)
+
+add_op ::=
+  PLUS | MINUS
 
 mult_expr ::=
-  mult_expr TIMES unary_expr
-| mult_expr SLASH unary_expr
-| mult_expr Mod unary_expr
-| unary_expr
+  left_assoc(unary_expr,mult_op)
+
+mult_op ::=
+  TIMES | SLASH | Mod
 
 unary_expr ::=
   MINUS core_expr
@@ -290,40 +287,33 @@ core_expr ::=
 | Nat
 | Mtz
 | Ident (* var *)
+| Ident (* var *) brackets(expr) (* lookup *)
+| Ident (* struct_name *) DOT nsepseq(selection,DOT) option(brackets(expr))
+| Ident (* fun_name *) arguments
 | String
 | Bytes
 | C_False
 | C_True
 | C_Unit
-| annot_expr
-| tuple_expr
-| list_expr
 | C_None
-| fun_call
-| map_expr
-| set_expr
-| record_expr
-| Ident (* struct_name *) DOT nsepseq(selection,DOT)
-| Constr arguments
-| Constr
 | C_Some arguments
+| Constr option(arguments)
+| LPAR paren_expr RPAR
+| injection(List,expr)
+| Nil
+| structure
 
-annot_expr ::=
-  LPAR disj_expr COLON type_expr RPAR
+paren_expr ::=
+  disj_expr COLON type_expr
+| disj_expr
+| disj_expr COMMA nsepseq(expr,COMMA)
+| case(expr)
+| case(expr) COMMA nsepseq(expr,COMMA)
 
-set_expr ::=
-  injection(Set,expr)
-
-map_expr ::=
-  map_lookup
-| injection(Map,binding)
-
-map_lookup ::=
-  path brackets(expr)
-
-path ::=
-  Ident (* var *)
-| Ident (* struct_name *) DOT nsepseq(selection,DOT)
+structure ::=
+  injection(Map,binding)
+| injection(Set,expr)
+| record_expr
 
 selection ::=
   Ident (* field_name *)
@@ -336,21 +326,8 @@ record_expr ::=
 field_assignment ::=
   Ident (* field_name *) EQUAL expr
 
-fun_call ::=
-  Ident (* fun_name *) arguments
-
-tuple_expr ::=
-  tuple_inj
-
-tuple_inj ::=
-  par(nsepseq(expr,COMMA))
-
 arguments ::=
-  tuple_inj
-
-list_expr ::=
-  injection(List,expr)
-| Nil
+  par(nsepseq(expr,COMMA))
 
 (* Patterns *)
 
@@ -366,22 +343,15 @@ core_pattern ::=
 | C_False
 | C_True
 | C_None
-| list_pattern
-| tuple_pattern
-| constr_pattern
 | C_Some par(core_pattern)
-
-list_pattern ::=
-  injection(List,core_pattern)
+| Constr option(tuple_pattern)
+| injection(List,core_pattern)
 | Nil
 | par(cons_pattern)
-
-cons_pattern ::=
-  core_pattern CONS pattern
+| par(nsepseq(core_pattern,COMMA))
 
 tuple_pattern ::=
   par(nsepseq(core_pattern,COMMA))
 
-constr_pattern ::=
-  Constr tuple_pattern
-| Constr
+cons_pattern ::=
+  core_pattern CONS pattern

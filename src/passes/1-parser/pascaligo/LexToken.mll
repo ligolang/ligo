@@ -77,7 +77,6 @@ type t =
 | Down       of Region.t  (* "down"       *)
 | Else       of Region.t  (* "else"       *)
 | End        of Region.t  (* "end"        *)
-| Entrypoint of Region.t  (* "entrypoint" *)
 | Fail       of Region.t  (* "fail"       *)
 | For        of Region.t  (* "for"        *)
 | From       of Region.t  (* "from"       *)
@@ -99,7 +98,6 @@ type t =
 | Set        of Region.t  (* "set"        *)
 | Skip       of Region.t  (* "skip"       *)
 | Step       of Region.t  (* "step"       *)
-| Storage    of Region.t  (* "storage"    *)
 | Then       of Region.t  (* "then"       *)
 | To         of Region.t  (* "to"         *)
 | Type       of Region.t  (* "type"       *)
@@ -210,7 +208,6 @@ let proj_token = function
 | Down       region -> region, "Down"
 | Else       region -> region, "Else"
 | End        region -> region, "End"
-| Entrypoint region -> region, "Entrypoint"
 | Fail       region -> region, "Fail"
 | For        region -> region, "For"
 | From       region -> region, "From"
@@ -232,7 +229,6 @@ let proj_token = function
 | Set        region -> region, "Set"
 | Skip       region -> region, "Skip"
 | Step       region -> region, "Step"
-| Storage    region -> region, "Storage"
 | Then       region -> region, "Then"
 | To         region -> region, "To"
 | Type       region -> region, "Type"
@@ -304,7 +300,6 @@ let to_lexeme = function
 | Down       _ -> "down"
 | Else       _ -> "else"
 | End        _ -> "end"
-| Entrypoint _ -> "entrypoint"
 | Fail       _ -> "fail"
 | For        _ -> "for"
 | From       _ -> "from"
@@ -326,7 +321,6 @@ let to_lexeme = function
 | Set        _ -> "set"
 | Skip       _ -> "skip"
 | Step       _ -> "step"
-| Storage    _ -> "storage"
 | Then       _ -> "then"
 | To         _ -> "to"
 | Type       _ -> "type"
@@ -366,7 +360,6 @@ let keywords = [
   (fun reg -> Down       reg);
   (fun reg -> Else       reg);
   (fun reg -> End        reg);
-  (fun reg -> Entrypoint reg);
   (fun reg -> For        reg);
   (fun reg -> From       reg);
   (fun reg -> Function   reg);
@@ -388,7 +381,6 @@ let keywords = [
   (fun reg -> Set        reg);
   (fun reg -> Skip       reg);
   (fun reg -> Step       reg);
-  (fun reg -> Storage    reg);
   (fun reg -> Then       reg);
   (fun reg -> To         reg);
   (fun reg -> Type       reg);
@@ -584,7 +576,6 @@ let is_kwd = function
 | Down       _
 | Else       _
 | End        _
-| Entrypoint _
 | Fail       _
 | For        _
 | From       _
@@ -606,7 +597,6 @@ let is_kwd = function
 | Set        _
 | Skip       _
 | Step       _
-| Storage    _
 | Then       _
 | To         _
 | Type       _

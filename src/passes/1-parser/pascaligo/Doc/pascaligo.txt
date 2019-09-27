@@ -136,15 +136,15 @@ the latter can be reassigned. The syntax is slightly different for
 both. For example, the variables "x" and "y" above could have been
 declared as follows:
 
-var x : nat := 0;
-var y : nat := 0;
+var x : nat := 0n;
+var y : nat := 0n;
 
 It is possible to specify that the value of a variable will not change
 (the name "variable" is misleading in that context), that is, they
 remain constant:
 
-const ten : nat = 10;
-const eleven : nat = ten + 1;
+const ten : nat = 10n;
+const eleven : nat = ten + 1n;
 
 Similarly, function declarations have their parameters and return
 value annotated with their types. For instance,
@@ -160,10 +160,10 @@ the result of calling the function is given after the keyword "with".
 A another example would be
 
 function factorial (const n : nat) : nat is
-  var m : nat := 0;
-  var f : nat := 1;
+  var m : nat := 0n;
+  var f : nat := 1n;
   begin
-    if n <= 0 then f := 1
+    if n <= 0n then f := 1n
     else
       for m := 1 to n
         begin
