@@ -46,17 +46,6 @@ module Errors = struct
     ] in
     error ~data title message
 
-  let unsupported_entry_decl decl =
-    let title () = "entry point declarations" in
-    let message () =
-      Format.asprintf "entry points within the contract \
-                       are not supported yet" in
-    let data = [
-      ("declaration",
-       fun () -> Format.asprintf "%a" Location.pp_lift @@ decl.Region.region)
-    ] in
-    error ~data title message
-
   let unsupported_proc_decl decl =
     let title () = "procedure declarations" in
     let message () =
@@ -103,6 +92,17 @@ module Errors = struct
     let title () = "arithmetic expressions" in
     let message () =
       Format.asprintf "this arithmetic operator is not supported yet" in
+    let expr_loc = Raw.expr_to_region expr in
+    let data = [
+      ("expr_loc",
+       fun () -> Format.asprintf "%a" Location.pp_lift @@ expr_loc)
+    ] in
+    error ~data title message
+
+  let unsupported_string_catenation expr =
+    let title () = "string expressions" in
+    let message () =
+      Format.asprintf "string concatenation is not supported yet" in
     let expr_loc = Raw.expr_to_region expr in
     let data = [
       ("expr_loc",
@@ -740,8 +740,6 @@ and simpl_declaration : Raw.declaration -> declaration Location.wrap result =
     )
   | LambdaDecl (ProcDecl decl) ->
       fail @@ unsupported_proc_decl decl
-  | LambdaDecl (EntryDecl decl) ->
-      fail @@ unsupported_entry_decl decl
 
 and simpl_statement : Raw.statement -> (_ -> expression result) result =
   fun s ->
