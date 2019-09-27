@@ -667,6 +667,7 @@ let bind_map_pair f (a, b) =
   bind_pair (f a, f b)
 
 
+
 (**
    Wraps a call that might trigger an exception in a result.
 *)
