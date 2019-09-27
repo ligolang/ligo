@@ -110,8 +110,15 @@ let shadow () : unit result =
 
 let higher_order () : unit result =
   let%bind program = type_file "./contracts/high-order.ligo" in
-  let make_expect = fun n -> n in
-  expect_eq_n_int program "foobar" make_expect
+  let%bind _ = 
+    let make_expect = fun n -> n in
+    expect_eq_n_int program "foobar" make_expect
+  in
+  let%bind _ = 
+    let make_expect = fun n -> n in
+    expect_eq_n_int program "foobar2" make_expect
+  in
+  ok ()
 
 let shared_function () : unit result =
   let%bind program = type_file "./contracts/function-shared.ligo" in
