@@ -1,4 +1,4 @@
-(* Parsing the command-line options of PascaLIGO *)
+(* Parsing command-line options *)
 
 (* The type [command] denotes some possible behaviours of the
    compiler. *)
@@ -27,10 +27,10 @@ let abort msg =
 
 (* Help *)
 
-let help () =
+let help language extension () =
   let file = Filename.basename Sys.argv.(0) in
-  printf "Usage: %s [<option> ...] [<input>.ligo | \"-\"]\n" file;
-  print "where <input>.ligo is the PascaLIGO source file (default: stdin),";
+  printf "Usage: %s [<option> ...] [<input>%s | \"-\"]\n" file extension;
+  printf "where <input>%s is the %s source file (default: stdin)," extension language;
   print "and each <option> (if any) is one of the following:";
   print "  -I <paths>             Library paths (colon-separated)";
   print "  -c, --copy             Print lexemes of tokens and markup (lexer)";
@@ -70,7 +70,7 @@ let add_verbose d =
                             !verbose
                             (split_at_colon d)
 
-let specs =
+let specs language extension =
   let open! Getopt in [
     'I',     nolong,    None, Some add_path;
     'c',     "copy",    set copy true, None;
@@ -80,7 +80,7 @@ let specs =
     noshort, "columns", set columns true, None;
     noshort, "bytes",   set bytes true, None;
     noshort, "verbose", None, Some add_verbose;
-    'h',     "help",    Some help, None;
+    'h',     "help",    Some (help language extension), None;
     noshort, "version", Some version, None
   ]
 ;;
@@ -119,7 +119,7 @@ let print_opt () =
   printf "libs     = %s\n" (string_of_path !libs)
 ;;
 
-let check () =
+let check extension =
   let () =
     if Utils.String.Set.mem "cmdline" !verbose then print_opt () in
 
@@ -127,11 +127,11 @@ let check () =
     match !input with
       None | Some "-" -> !input
     | Some file_path ->
-        if   Filename.check_suffix file_path ".ligo"
+        if   Filename.check_suffix file_path extension
         then if   Sys.file_exists file_path
              then Some file_path
              else abort "Source file not found."
-        else abort "Source file lacks the extension .ligo." in
+        else abort ("Source file lacks the extension " ^ extension ^ ".") in
 
   (* Exporting remaining options as non-mutable values *)
 
@@ -172,12 +172,12 @@ let check () =
 
 (* Parsing the command-line options *)
 
-let read () =
+let read language extension =
   try
-    Getopt.parse_cmdline specs anonymous;
+    Getopt.parse_cmdline (specs language extension) anonymous;    
     (verb_str :=
        let apply e a =
          if a <> "" then Printf.sprintf "%s, %s" e a else e
        in Utils.String.Set.fold apply !verbose "");
-    check ()
+    check extension
   with Getopt.Error msg -> abort msg

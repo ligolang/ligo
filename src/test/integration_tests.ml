@@ -54,6 +54,19 @@ let variant () : unit result =
     expect_eq_evaluate program "kee" expected in
   ok ()
 
+let variant_mligo () : unit result =
+  let%bind program = mtype_file "./contracts/variant.mligo" in
+  let%bind () =
+    let expected = e_constructor "Foo" (e_int 42) in
+    expect_eq_evaluate program "foo" expected in
+  let%bind () =
+    let expected = e_constructor "Bar" (e_bool true) in
+    expect_eq_evaluate program "bar" expected in
+  let%bind () =
+    let expected = e_constructor "Kee" (e_nat 23) in
+    expect_eq_evaluate program "kee" expected in
+  ok ()
+
 let variant_matching () : unit result =
   let%bind program = type_file "./contracts/variant-matching.ligo" in
   let%bind () =
@@ -818,6 +831,7 @@ let main = test_suite "Integration (End to End)" [
     test "shared function" shared_function ;
     test "higher order" higher_order ;
     test "variant" variant ;
+    test "variant (mligo)" variant_mligo ;
     test "variant matching" variant_matching ;
     test "tuple" tuple ;
     test "record" record ;

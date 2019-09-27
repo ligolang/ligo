@@ -1,4 +1,4 @@
-(* Driver for the parser of CameLIGO *)
+(* Driver for the parser of Ligodity *)
 
 (* Error printing and exception tracing *)
 
@@ -6,11 +6,40 @@ let () = Printexc.record_backtrace true
 
 (* Reading the command-line options *)
 
-let options = EvalOpt.read ()
+let options = EvalOpt.read "Ligodity" ".mligo"
 
 open EvalOpt
 
-(* Path to the Mini-ML standard library *)
+(* Auxiliary functions *)
+
+let sprintf = Printf.sprintf
+
+(* Extracting the input file *)
+
+let file =
+  match options.input with
+    None | Some "-" -> false
+  |         Some _  -> true
+
+(* Error printing and exception tracing *)
+
+let () = Printexc.record_backtrace true
+
+let external_ text =
+  Utils.highlight (Printf.sprintf "External error: %s" text); exit 1;;
+
+type Error.t += ParseError
+
+let error_to_string = function
+  ParseError -> "Syntax error.\n"
+| _ -> assert false
+
+let print_error ?(offsets=true) mode Region.{region; value} ~file =
+  let  msg = error_to_string value in
+  let  reg = region#to_string ~file ~offsets mode in
+  Utils.highlight (sprintf "Parse error %s:\n%s%!" reg msg)
+
+(* Path for CPP inclusions (#include) *)
 
 let lib_path =
   match options.libs with
@@ -18,36 +47,76 @@ let lib_path =
   | libs -> let mk_I dir path = Printf.sprintf " -I %s%s" dir path
             in List.fold_right mk_I libs ""
 
-(* Opening the input channel and setting the lexing engine *)
+(* Preprocessing the input source and opening the input channels *)
 
-let cin, reset =
+let prefix =
   match options.input with
-    None | Some "-" -> stdin, ignore
-  |       Some file -> open_in file, Lexer.reset_file ~file
+    None | Some "-" -> "temp"
+  | Some file ->  Filename.(file |> basename |> remove_extension)
 
-let buffer = Lexing.from_channel cin
-let     () = reset buffer
+let suffix = ".pp.mligo"
+
+let pp_input =
+  if Utils.String.Set.mem "cpp" options.verbose
+  then prefix ^ suffix
+  else let pp_input, pp_out = Filename.open_temp_file prefix suffix
+       in close_out pp_out; pp_input
+
+let cpp_cmd =
+  match options.input with
+    None | Some "-" ->
+      Printf.sprintf "cpp -traditional-cpp%s - > %s"
+                     lib_path pp_input
+  | Some file ->
+      Printf.sprintf "cpp -traditional-cpp%s %s > %s"
+                     lib_path file pp_input
+
+let () =
+  if Utils.String.Set.mem "cpp" options.verbose
+  then Printf.eprintf "%s\n%!" cpp_cmd;
+  if Sys.command cpp_cmd <> 0 then
+    external_ (Printf.sprintf "the command \"%s\" failed." cpp_cmd)
+
+(* Instanciating the lexer *)
+
+module Lexer = Lexer.Make (LexToken)
+
+module Log = LexerLog.Make (Lexer)
+
+let Lexer.{read; buffer; get_pos; get_last; close} =
+  Lexer.open_token_stream (Some pp_input)
+
+and cout = stdout
+
+let log = Log.output_token ~offsets:options.offsets
+                           options.mode options.cmd cout
+
+and close_all () = close (); close_out cout
 
 (* Tokeniser *)
 
-let tokeniser =
-  if Utils.String.Set.mem "lexer" options.verbose then
-    Lexer.get_token ~log:(stdout, Lexer.output_token buffer)
-  else Lexer.get_token ?log:None
+let tokeniser = read ~log
+
+(* Main *)
 
 let () =
   try
-    let ast = Parser.program tokeniser buffer in
-    if Utils.String.Set.mem "parser" options.verbose
-    then AST.print_tokens ast
+    let ast = Parser.contract tokeniser buffer in
+    if Utils.String.Set.mem "ast" options.verbose
+    then begin
+           ParserLog.offsets := options.offsets;
+           ParserLog.mode    := options.mode;
+           ParserLog.print_tokens ast
+         end
   with
-    Lexer.Error diag ->
-      close_in cin; Lexer.prerr ~kind:"Lexical" diag
+    Lexer.Error err ->
+      close_all ();
+      Lexer.print_error ~offsets:options.offsets
+                        options.mode err ~file
   | Parser.Error ->
-      let start  = Pos.from_byte (Lexing.lexeme_start_p buffer)
-      and stop   = Pos.from_byte (Lexing.lexeme_end_p buffer) in
-      let region = Region.make ~start ~stop in
-      close_in cin;
-      Lexer.prerr ~kind:"Syntactical"
-                  Region.{value="Parse error."; region}
+      let region = get_last () in
+      let error = Region.{region; value=ParseError} in
+      let () = close_all () in
+      print_error ~offsets:options.offsets
+                  options.mode error ~file
   | Sys_error msg -> Utils.highlight msg

@@ -1,8 +1,10 @@
 open Trace
-open Parser_pascaligo
+
 module Parser = Parser_pascaligo.Parser
 module AST = Parser_pascaligo.AST
 module ParserLog = Parser_pascaligo.ParserLog
+module LexToken = Parser_pascaligo.LexToken
+module Lexer = Lexer.Make(LexToken)
 
 let parse_file (source: string) : AST.t result =
   let pp_input =
@@ -18,7 +20,6 @@ let parse_file (source: string) : AST.t result =
     generic_try (simple_error "error opening file") @@
     (fun () -> open_in pp_input) in
   let lexbuf = Lexing.from_channel channel in
-  let module Lexer = Lexer.Make(LexToken) in
   let Lexer.{read ; close ; _} =
     Lexer.open_token_stream None in
   specific_try (function
@@ -54,9 +55,7 @@ let parse_file (source: string) : AST.t result =
   ok raw
 
 let parse_string (s:string) : AST.t result =
-  
   let lexbuf = Lexing.from_string s in
-  let module Lexer = Lexer.Make(LexToken) in
   let Lexer.{read ; close ; _} =
     Lexer.open_token_stream None in
   specific_try (function
@@ -80,7 +79,6 @@ let parse_string (s:string) : AST.t result =
 
 let parse_expression (s:string) : AST.expr result =
   let lexbuf = Lexing.from_string s in
-  let module Lexer = Lexer.Make(LexToken) in
   let Lexer.{read ; close; _} =
     Lexer.open_token_stream None in
   specific_try (function

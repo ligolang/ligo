@@ -31,6 +31,16 @@
   (flags (:standard -open Parser_shared -open Parser_pascaligo))
 )
 
+(executable
+  (name ParserMain)
+  (libraries 
+   parser_pascaligo)
+  (modules    
+    ParserMain
+  )
+  (flags (:standard -open Simple_utils -open Parser_shared -open Parser_pascaligo))
+)
+
 ;; Les deux directives (rule) qui suivent sont pour le dev local.
 ;; Il suffit de faire "dune build Parser.exe" pour avoir un Parser.exe dans le dossier.
 ;; Pour le purger, il faut faire "dune clean".

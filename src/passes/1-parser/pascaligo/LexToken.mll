@@ -484,14 +484,22 @@ let mk_int lexeme region =
   then Error Non_canonical_zero
   else Ok (Int Region.{region; value = lexeme, z})
 
+type invalid_natural = 
+  | Invalid_natural
+  | Non_canonical_zero_nat
+
 let mk_nat lexeme region =
-  let z =
-    Str.(global_replace (regexp "_") "" lexeme) |>
-    Str.(global_replace (regexp "n") "") |>
-    Z.of_string in
-  if Z.equal z Z.zero && lexeme <> "0n"
-  then Error Non_canonical_zero
-  else Ok (Nat Region.{region; value = lexeme, z})
+  match (String.index_opt lexeme 'n') with  
+  | None -> Error Invalid_natural
+  | Some _ -> (  
+    let z =
+      Str.(global_replace (regexp "_") "" lexeme) |>
+      Str.(global_replace (regexp "n") "") |>
+      Z.of_string in
+    if Z.equal z Z.zero && lexeme <> "0n"
+    then Error Non_canonical_zero_nat
+    else Ok (Nat Region.{region; value = lexeme, z})
+  )
 
 let mk_mtz lexeme region =
   let z =
