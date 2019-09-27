@@ -133,7 +133,8 @@ type_decl:
       kwd_is     = $3;
       type_expr  = $4;
       terminator = $5}
-    in {region; value}}
+    in {region; value}
+  }
 
 type_expr:
   cartesian   {   TProd $1 }

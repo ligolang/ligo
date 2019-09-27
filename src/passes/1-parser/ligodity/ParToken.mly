@@ -1,75 +1,70 @@
 %{
 %}
 
-(* Tokens (mirroring those defined in module Token) *)
+%token <Region.t> MINUS
+%token <Region.t> PLUS
+%token <Region.t> SLASH
+%token <Region.t> TIMES
 
-%token MINUS
-%token PLUS
-%token SLASH
-%token TIMES
+%token <Region.t> LPAR
+%token <Region.t> RPAR
+%token <Region.t> LBRACKET
+%token <Region.t> RBRACKET
+%token <Region.t> LBRACE
+%token <Region.t> RBRACE
 
-%token LPAR
-%token RPAR
-%token LBRACKET
-%token RBRACKET
-%token LBRACE
-%token RBRACE
-
-%token ARROW
-%token CONS
-%token CAT
+%token <Region.t> ARROW
+%token <Region.t> CONS
+%token <Region.t> CAT
 (*%token APPEND*)
-%token DOT
+%token <Region.t> DOT
 
-%token COMMA
-%token SEMI
-%token COLON
-%token VBAR
+%token <Region.t> COMMA
+%token <Region.t> SEMI
+%token <Region.t> COLON
+%token <Region.t> VBAR
 
-%token WILD
+%token <Region.t> WILD
 
-%token EQ
-%token NE
-%token LT
-%token GT
-%token LE
-%token GE
+%token <Region.t> EQ
+%token <Region.t> NE
+%token <Region.t> LT
+%token <Region.t> GT
+%token <Region.t> LE
+%token <Region.t> GE
 
-%token BOOL_OR
-%token BOOL_AND
+%token <Region.t> BOOL_OR
+%token <Region.t> BOOL_AND
 
-%token <string> Ident
-%token <string> Constr
-%token <string> Str
+%token <string Region.reg> Ident
+%token <string Region.reg> Constr
+%token <string Region.reg> Str
 
-%token <string * Z.t> Int
-%token <string * Z.t> Mtz
-%token <string * Z.t> Nat
+%token <(string * Z.t) Region.reg> Int
+%token <(string * Z.t) Region.reg> Nat
+%token <(string * Z.t) Region.reg> Mtz
 
 (*%token And*)
-%token Begin
-%token Else
-%token End
-%token False
-%token Fun
-%token If
-%token In
-%token Let
-%token List
-%token Map
-%token Match
-%token Mod
-%token Not
-%token Of
-%token Or
-%token Set
-%token Then
-%token True
-%token Type
-%token With
-%token LetEntry
-%token MatchNat
+%token <Region.t> Begin
+%token <Region.t> Else
+%token <Region.t> End
+%token <Region.t> False
+%token <Region.t> Fun
+%token <Region.t> If
+%token <Region.t> In
+%token <Region.t> Let
+%token <Region.t> Match
+%token <Region.t> Mod
+%token <Region.t> Not
+%token <Region.t> Of
+%token <Region.t> Or
+%token <Region.t> Then
+%token <Region.t> True
+%token <Region.t> Type
+%token <Region.t> With
+%token <Region.t> LetEntry
+%token <Region.t> MatchNat
 
-%token EOF
+%token <Region.t> EOF
 
 %%

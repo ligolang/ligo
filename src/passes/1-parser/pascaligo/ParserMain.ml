@@ -6,7 +6,7 @@ let () = Printexc.record_backtrace true
 
 (* Reading the command-line options *)
 
-let options = EvalOpt.read ()
+let options = EvalOpt.read "Pascaligo" ".ligo"
 
 open EvalOpt
 

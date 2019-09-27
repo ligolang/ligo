@@ -1,4 +1,4 @@
-(* Abstract Syntax Tree (AST) for LIGO *)
+(* Abstract Syntax Tree (AST) for Pascaligo *)
 
 [@@@warning "-30"]
 

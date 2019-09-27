@@ -49,4 +49,4 @@ type options = {
 
 (* Parsing the command-line options on stdin *)
 
-val read : unit -> options
+val read : string -> string -> options

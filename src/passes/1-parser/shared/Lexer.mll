@@ -101,15 +101,18 @@ module type TOKEN =
 
     (* Errors *)
 
-    type   int_err = Non_canonical_zero
-    type ident_err = Reserved_name
+    type   int_err       = Non_canonical_zero
+    type ident_err       = Reserved_name
+    type invalid_natural =
+      | Invalid_natural
+      | Non_canonical_zero_nat
 
     (* Injections *)
 
     val mk_string : lexeme -> Region.t -> token
     val mk_bytes  : lexeme -> Region.t -> token
     val mk_int    : lexeme -> Region.t -> (token,   int_err) result
-    val mk_nat    : lexeme -> Region.t -> (token,   int_err) result
+    val mk_nat    : lexeme -> Region.t -> (token,   invalid_natural) result
     val mk_mtz    : lexeme -> Region.t -> (token,   int_err) result
     val mk_ident  : lexeme -> Region.t -> (token, ident_err) result
     val mk_constr : lexeme -> Region.t -> token
@@ -340,6 +343,7 @@ module Make (Token: TOKEN) : (S with module Token = Token) =
     type Error.t += Broken_string
     type Error.t += Invalid_character_in_string
     type Error.t += Reserved_name
+    type Error.t += Invalid_natural
 
     let error_to_string = function
       Invalid_utf8_sequence ->
@@ -382,6 +386,8 @@ module Make (Token: TOKEN) : (S with module Token = Token) =
     | Reserved_name ->
         "Reserved named.\n\
          Hint: Change the name.\n"
+    | Invalid_natural ->
+        "Invalid natural."
     | _ -> assert false
 
     exception Error of Error.t Region.reg
@@ -421,8 +427,10 @@ module Make (Token: TOKEN) : (S with module Token = Token) =
       let region, lexeme, state = sync state buffer in
       match Token.mk_nat lexeme region with
         Ok token -> token, state
-      | Error Token.Non_canonical_zero ->
+      | Error Token.Non_canonical_zero_nat ->
           fail region Non_canonical_zero
+      | Error Token.Invalid_natural ->
+          fail region Invalid_natural
 
     let mk_mtz state buffer =
       let region, lexeme, state = sync state buffer in
@@ -430,6 +438,43 @@ module Make (Token: TOKEN) : (S with module Token = Token) =
         Ok token -> token, state
       | Error Token.Non_canonical_zero ->
           fail region Non_canonical_zero
+
+    let mk_tz state buffer =
+      let region, lexeme, state = sync state buffer in
+      let lexeme = Str.string_before lexeme (String.index lexeme 't') in
+      let lexeme = Z.mul (Z.of_int 1_000_000) (Z.of_string lexeme) in
+      match Token.mk_mtz (Z.to_string lexeme ^ "mtz") region with
+        Ok token -> token, state
+      | Error Token.Non_canonical_zero ->
+          fail region Non_canonical_zero
+
+    let format_tz s =
+      match String.index s '.' with
+        index ->
+          let len         = String.length s in
+          let integral    = Str.first_chars s index
+          and fractional  = Str.last_chars s (len-index-1) in
+          let num         = Z.of_string (integral ^ fractional)
+          and den         = Z.of_string ("1" ^ String.make (len-index-1) '0')
+          and million     = Q.of_string "1000000" in
+          let mtz         = Q.make num den |> Q.mul million in
+          let should_be_1 = Q.den mtz in
+          if Z.equal Z.one should_be_1 then Some (Q.num mtz) else None
+      | exception Not_found -> assert false
+
+    let mk_tz_decimal state buffer =
+      let region, lexeme, state = sync state buffer in
+      let lexeme = Str.string_before lexeme (String.index lexeme 't') in
+      match format_tz lexeme with
+      | Some tz -> (
+        match Token.mk_mtz (Z.to_string tz ^ "mtz") region with
+          Ok token ->
+          token, state
+        | Error Token.Non_canonical_zero ->
+            fail region Non_canonical_zero
+        )
+      | None -> assert false
+
 
     let mk_ident state buffer =
       let region, lexeme, state = sync state buffer in
@@ -461,10 +506,11 @@ let nl         = ['\n' '\r'] | "\r\n"
 let blank      = ' ' | '\t'
 let digit      = ['0'-'9']
 let natural    = digit | digit (digit | '_')* digit
+let decimal    = digit+ '.' digit+
 let small      = ['a'-'z']
 let capital    = ['A'-'Z']
 let letter     = small | capital
-let ident      = small (letter | '_' | digit)*
+let ident      = small (letter | '_' | digit | '%')*
 let constr     = capital (letter | '_' | digit)*
 let hexa_digit = digit | ['A'-'F']
 let byte       = hexa_digit hexa_digit
@@ -476,6 +522,7 @@ let symbol     = ';' | ',' | '(' | ')'| '[' | ']' | '{' | '}'
                | '#' | '|' | "->" | ":=" | '=' | ':'
                | '<' | "<=" | '>' | ">=" | "=/="
                | '+' | '-' | '*' | '/' | '.' | '_' | '^'
+               | "::" | "||" | "&&"
 let string     = [^'"' '\\' '\n']*  (* For strings of #include *)
 
 (* RULES *)
@@ -496,12 +543,14 @@ and scan state = parse
   nl            { scan (push_newline state lexbuf) lexbuf }
 | ' '+          { scan (push_space   state lexbuf) lexbuf }
 | '\t'+         { scan (push_tabs    state lexbuf) lexbuf }
-
 | ident         { mk_ident       state lexbuf |> enqueue   }
 | constr        { mk_constr      state lexbuf |> enqueue   }
 | bytes         { (mk_bytes seq) state lexbuf |> enqueue   }
 | natural 'n'   { mk_nat         state lexbuf |> enqueue   }
+| natural 'p'   { mk_nat         state lexbuf |> enqueue   }
 | natural "mtz" { mk_mtz         state lexbuf |> enqueue   }
+| natural "tz"  { mk_tz          state lexbuf |> enqueue   }
+| decimal "tz"  { mk_tz_decimal  state lexbuf |> enqueue   }
 | natural       { mk_int         state lexbuf |> enqueue   }
 | symbol        { mk_sym         state lexbuf |> enqueue   }
 | eof           { mk_eof         state lexbuf |> enqueue   }

@@ -60,15 +60,18 @@ module type TOKEN =
 
     (* Errors *)
 
-    type   int_err = Non_canonical_zero
-    type ident_err = Reserved_name
+    type   int_err       = Non_canonical_zero
+    type ident_err       = Reserved_name
+    type invalid_natural = 
+      | Invalid_natural
+      | Non_canonical_zero_nat
 
     (* Injections *)
 
     val mk_string : lexeme -> Region.t -> token
     val mk_bytes  : lexeme -> Region.t -> token
     val mk_int    : lexeme -> Region.t -> (token,   int_err) result
-    val mk_nat    : lexeme -> Region.t -> (token,   int_err) result
+    val mk_nat    : lexeme -> Region.t -> (token,   invalid_natural) result
     val mk_mtz    : lexeme -> Region.t -> (token,   int_err) result
     val mk_ident  : lexeme -> Region.t -> (token, ident_err) result
     val mk_constr : lexeme -> Region.t -> token
