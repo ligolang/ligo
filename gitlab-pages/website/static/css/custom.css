@@ -109,9 +109,6 @@ footnote {
   display: none;
 }
 
-.fixedHeaderContainer header img {
-}
-
 .nav-footer {
   background: var(--color-primary-text);
 }
@@ -120,13 +117,40 @@ footnote {
   background: #1a1a1a;
 }
 
+/** Top Section **/
+.home-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  padding: var(--padding-level-3);
+}
+
+.home-text {
+  width: 35%;
+}
+
+.sample-code-container {
+  display: flex;
+  width: 65%;
+  justify-content: center;
+  box-sizing: border-box;
+  background: url(/img/geo.svg) top right/20% 30% no-repeat,
+    url(/img/geo.svg) bottom left/30% 50% no-repeat;
+}
+
+.sample-code {
+  width: 80%;
+  padding: 25px;
+  box-shadow: 0px 0px 70px rgba(13, 15, 51, 0.06);
+  background-color: white;
+}
+
 .hljs {
   text-align: left;
   background: transparent;
 }
 
 .tabs {
-  max-width: 800px;
   margin: 0 auto;
   border-top: none;
   border-bottom: 4px solid #e0e0e0;
@@ -146,12 +170,6 @@ footnote {
   border-bottom: 4px solid #1a1a1a;
 }
 
-.disabled {
-  cursor: default;
-  color: #24292e64 !important;
-  border-bottom: none;
-}
-
 .tab-content {
   border-top: 4px solid #e0e0e0;
 }
@@ -162,32 +180,12 @@ footnote {
   top: 4px;
 }
 
-/** Top Section **/
-.home-container {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: var(--padding-level-3);
-}
+/** **/
 
-.home-text {
-  max-width: 40%;
-}
-
-.sample-code-container {
-  display: flex;
-  justify-content: center;
-  box-sizing: border-box;
-  max-width: 60%;
-  background: url("/img/geo.svg") top right/140px 140px no-repeat,
-    url("/img/geo.svg") bottom left/200px 200px no-repeat;
-}
-
-.sample-code {
-  width: 80%;
-  padding: 25px;
-  box-shadow: 0px 0px 70px rgba(13, 15, 51, 0.06);
-  background-color: white;
+.disabled {
+  cursor: default;
+  color: #24292e64 !important;
+  border-bottom: none;
 }
 
 blockquote {
@@ -456,12 +454,15 @@ body
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  max-width: 20%;
-  color: var(--color-primary-text);
+  width: 20%;
   padding: 0 var(--padding-level-1);
 }
 
-.profileContainer:hover {
+.profileContainer p {
+  color: var(--color-primary-text);
+}
+
+.profileContainer:hover p {
   color: var(--color-primary-brand);
 }
 
@@ -470,8 +471,6 @@ body
 }
 
 .profileImage {
-  max-height: 195px;
-  max-width: 195px;
   width: 100%;
   border: var(--color-gray);
 }
@@ -575,11 +574,11 @@ body
   .home-text {
     align-content: center;
     text-align: center;
-    max-width: 90%;
+    width: 90%;
     padding-top: var(--padding-level-2);
   }
   .sample-code-container {
-    max-width: 100%;
+    width: 90%;
   }
 }
 
