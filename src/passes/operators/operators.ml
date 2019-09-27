@@ -165,6 +165,7 @@ module Simplify = struct
       ("Map.fold" , "MAP_FOLD") ;
       ("Map.empty" , "MAP_EMPTY") ;
       ("Map.literal" , "MAP_LITERAL" ) ;
+      ("Map.size" , "SIZE" ) ;
 
       ("String.length", "SIZE") ;
       ("String.size", "SIZE") ;
@@ -615,6 +616,7 @@ module Typer = struct
       map_update ;
       map_mem ;
       map_find ;
+      map_find_opt ;
       map_map ;
       map_fold ;
       map_iter ;
