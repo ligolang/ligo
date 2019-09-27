@@ -312,11 +312,12 @@ module Typer = struct
     then ok @@ t_bytes ()
     else simple_fail "bad slice"
 
-  let failwith_ = typer_1 "FAILWITH" @@ fun t ->
+  let failwith_ = typer_1_opt "FAILWITH" @@ fun t opt ->
     let%bind () =
       Assert.assert_true @@
       (is_t_string t) in
-    ok @@ t_unit ()
+    let default = t_unit () in
+    ok @@ Simple_utils.Option.unopt ~default opt
 
   let map_get_force = typer_2 "MAP_GET_FORCE" @@ fun i m ->
     let%bind (src, dst) = bind_map_or (get_t_map , get_t_big_map) m in

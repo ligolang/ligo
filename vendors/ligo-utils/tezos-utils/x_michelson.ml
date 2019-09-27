@@ -75,12 +75,6 @@ let rec strip_annots : michelson -> michelson = function
   | Prim (l, p, lst, _) -> Prim (l, p, List.map strip_annots lst, [])
   | x -> x
 
-let rec strip_nops : michelson -> michelson = function
-  | Seq(l, [Prim (_, I_UNIT, _, _) ; Prim(_, I_DROP, _, _)]) -> Seq (l, [])
-  | Seq(l, s) -> Seq(l, List.map strip_nops s)
-  | Prim (l, p, lst, a) -> Prim (l, p, List.map strip_nops lst, a)
-  | x -> x
-
 let pp ppf (michelson:michelson) =
   let open Micheline_printer in
   let canonical = strip_locations michelson in
@@ -98,15 +92,3 @@ let pp_json ppf (michelson : michelson) =
     )
   in
   Format.fprintf ppf "%a" Tezos_data_encoding.Json.pp json
-
-let pp_stripped ppf (michelson:michelson) =
-  let open Micheline_printer in
-  let michelson' = strip_nops @@ strip_annots michelson in
-  let canonical = strip_locations michelson' in
-  let node = printable string_of_prim canonical in
-  print_expr ppf node
-
-let pp_naked ppf m =
-  let naked = strip_annots m in
-  pp ppf naked
-

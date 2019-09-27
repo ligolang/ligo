@@ -37,7 +37,8 @@
   },
   "version-next-tutorials": {
     "Get Started": [
-      "version-next-tutorials/get-started/tezos-taco-shop-smart-contract"
+      "version-next-tutorials/get-started/tezos-taco-shop-smart-contract",
+      "version-next-tutorials/get-started/tezos-taco-shop-payout"
     ]
   }
 }

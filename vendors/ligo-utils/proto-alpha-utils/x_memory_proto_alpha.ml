@@ -953,8 +953,6 @@ let parse_michelson (type aft)
     ?type_logger
     (bef:'a Script_typed_ir.stack_ty) (aft:aft Script_typed_ir.stack_ty)
   =
-  let michelson = Michelson.strip_annots michelson in
-  let michelson = Michelson.strip_nops michelson in
   parse_instr
     ?type_logger
     top_level tezos_context
@@ -975,8 +973,6 @@ let parse_michelson_fail (type aft)
     ?type_logger
     (bef:'a Script_typed_ir.stack_ty) (aft:aft Script_typed_ir.stack_ty)
   =
-  let michelson = Michelson.strip_annots michelson in
-  let michelson = Michelson.strip_nops michelson in
   parse_instr
     ?type_logger
     top_level tezos_context
@@ -995,8 +991,6 @@ let parse_michelson_fail (type aft)
 let parse_michelson_data
     ?(tezos_context = dummy_environment.tezos_context)
     michelson ty =
-  let michelson = Michelson.strip_annots michelson in
-  let michelson = Michelson.strip_nops michelson in
   parse_data tezos_context ty michelson >>=?? fun (data, _) ->
   return data
 
@@ -1004,8 +998,6 @@ let parse_michelson_ty
     ?(tezos_context = dummy_environment.tezos_context)
     ?(allow_big_map = true) ?(allow_operation = true)
     michelson =
-  let michelson = Michelson.strip_annots michelson in
-  let michelson = Michelson.strip_nops michelson in
   Lwt.return @@ parse_ty tezos_context ~allow_big_map ~allow_operation michelson >>=?? fun (ty, _) ->
   return ty
 

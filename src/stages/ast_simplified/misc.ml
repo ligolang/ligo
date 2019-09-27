@@ -163,7 +163,7 @@ let rec assert_value_eq (a, b: (expression * expression )) : unit result =
   | (E_variable _, _) | (E_lambda _, _)
   | (E_application _, _) | (E_let_in _, _)
   | (E_accessor _, _)
-  | (E_look_up _, _) | (E_matching _, _) | (E_failwith _, _) | (E_sequence _, _)
+  | (E_look_up _, _) | (E_matching _, _) | (E_sequence _, _)
   | (E_loop _, _) | (E_assign _, _) | (E_skip, _) -> simple_fail "comparing not a value"
 
 let is_value_eq (a , b) = to_bool @@ assert_value_eq (a , b)

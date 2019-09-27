@@ -176,7 +176,6 @@ module Free_variables = struct
     | (E_map m | E_big_map m) -> unions @@ List.map self @@ List.concat @@ List.map (fun (a, b) -> [ a ; b ]) m
     | E_look_up (a , b) -> unions @@ List.map self [ a ; b ]
     | E_matching (a , cs) -> union (self a) (matching_expression b cs)
-    | E_failwith a -> self a
     | E_sequence (a , b) -> unions @@ List.map self [ a ; b ]
     | E_loop (expr , body) -> unions @@ List.map self [ expr ; body ]
     | E_assign (_ , _ , expr) -> self expr
@@ -476,7 +475,7 @@ let rec assert_value_eq (a, b: (value*value)) : unit result =
   | (E_literal _, _) | (E_variable _, _) | (E_application _, _)
   | (E_lambda _, _) | (E_let_in _, _) | (E_tuple_accessor _, _)
   | (E_record_accessor _, _)
-  | (E_look_up _, _) | (E_matching _, _) | (E_failwith _, _)
+  | (E_look_up _, _) | (E_matching _, _)
   | (E_assign _ , _)
   | (E_sequence _, _) | (E_loop _, _)-> fail @@ error_uncomparable_values "can't compare sequences nor loops" a b
 

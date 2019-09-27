@@ -102,11 +102,11 @@ let get_pair (v:value) = match v with
   | _ -> simple_fail "not a pair"
 
 let get_t_pair (t:type_value) = match t with
-  | T_pair (a, b) -> ok (a, b)
+  | T_pair ((_, a), (_, b)) -> ok (a, b)
   | _ -> simple_fail "not a type pair"
 
 let get_t_or (t:type_value) = match t with
-  | T_or (a, b) -> ok (a, b)
+  | T_or ((_, a), (_, b)) -> ok (a, b)
   | _ -> simple_fail "not a type or"
 
 let get_t_map (t:type_value) = match t with
@@ -144,11 +144,11 @@ let wrong_type name t =
   error title content
 
 let get_t_left t = match t with
-  | T_or (a , _) -> ok a
+  | T_or ((_, a) , _) -> ok a
   | _ -> fail @@ wrong_type "union" t
 
 let get_t_right t = match t with
-  | T_or (_ , b) -> ok b
+  | T_or (_ , (_, b)) -> ok b
   | _ -> fail @@ wrong_type "union" t
 
 let get_t_contract t = match t with

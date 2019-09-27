@@ -56,7 +56,7 @@ them. please report this to the developers." in
 
   let bad_big_map location =
     let title () = "bad arguments for main" in
-    let content () = "only one big_map per program which must appear 
+    let content () = "only one big_map per program which must appear
       on the left hand side of a pair in the contract's storage" in
     let data = [
       ("location" , fun () -> Format.asprintf "%a" Location.pp location) ;
@@ -131,28 +131,39 @@ let rec transpile_type (t:AST.type_value) : type_value result =
       let%bind o' = transpile_type o in
       ok (T_option o')
   | T_constant (name , _lst) -> fail @@ unrecognized_type_constant name
+  (* TODO hmm *)
   | T_sum m ->
-      let node = Append_tree.of_list @@ list_of_map m in
-      let aux a b : type_value result =
+      let node = Append_tree.of_list @@ kv_list_of_map m in
+      let aux a b : type_value annotated result =
         let%bind a = a in
         let%bind b = b in
-        ok (T_or (a, b))
+        ok (None, T_or (a, b))
       in
-      Append_tree.fold_ne transpile_type aux node
+      let%bind m' = Append_tree.fold_ne
+                      (fun (ann, a) ->
+                        let%bind a = transpile_type a in
+                        ok (Some (String.uncapitalize_ascii ann), a))
+                      aux node in
+      ok @@ snd m'
   | T_record m ->
-      let node = Append_tree.of_list @@ list_of_map m in
-      let aux a b : type_value result =
+      let node = Append_tree.of_list @@ kv_list_of_map m in
+      let aux a b : type_value annotated result =
         let%bind a = a in
         let%bind b = b in
-        ok (T_pair (a, b))
+        ok (None, T_pair (a, b))
       in
-      Append_tree.fold_ne transpile_type aux node
+      let%bind m' = Append_tree.fold_ne
+                      (fun (ann, a) ->
+                        let%bind a = transpile_type a in
+                        ok (Some ann, a))
+                      aux node in
+      ok @@ snd m'
   | T_tuple lst ->
       let node = Append_tree.of_list lst in
       let aux a b : type_value result =
         let%bind a = a in
         let%bind b = b in
-        ok (T_pair (a, b))
+        ok (T_pair ((None, a), (None, b)))
       in
       Append_tree.fold_ne transpile_type aux node
   | T_function (param, result) -> (
@@ -253,10 +264,6 @@ and transpile_annotated_expression (ae:AST.annotated_expression) : expression re
     let%bind rhs' = transpile_annotated_expression rhs in
     let%bind result' = transpile_annotated_expression result in
     return (E_let_in ((binder, rhs'.type_value), rhs', result'))
-  | E_failwith ae -> (
-      let%bind ae' = transpile_annotated_expression ae in
-      return @@ E_constant ("FAILWITH" , [ae'])
-    )
   | E_literal l -> return @@ E_literal (transpile_literal l)
   | E_variable name -> (
       let%bind ele =
@@ -289,10 +296,10 @@ and transpile_annotated_expression (ae:AST.annotated_expression) : expression re
         let%bind a = a in
         let%bind b = b in
         match (a, b) with
-        | (None, a), (None, b) -> ok (None, T_or (a, b))
+        | (None, a), (None, b) -> ok (None, T_or ((None, a), (None, b)))
         | (Some _, _), (Some _, _) -> fail @@ corner_case ~loc:__LOC__ "multiple identical constructors in the same variant"
-        | (Some v, a), (None, b) -> ok (Some (E_constant ("LEFT", [Combinators.Expression.make_tpl (v, a)])), T_or (a, b))
-        | (None, a), (Some v, b) -> ok (Some (E_constant ("RIGHT", [Combinators.Expression.make_tpl (v, b)])), T_or (a, b))
+        | (Some v, a), (None, b) -> ok (Some (E_constant ("LEFT", [Combinators.Expression.make_tpl (v, a)])), T_or ((None, a), (None, b)))
+        | (None, a), (Some v, b) -> ok (Some (E_constant ("RIGHT", [Combinators.Expression.make_tpl (v, b)])), T_or ((None, a), (None, b)))
       in
       let%bind (ae_opt, tv) = Append_tree.fold_ne leaf node node_tv in
       let%bind ae =
@@ -307,7 +314,7 @@ and transpile_annotated_expression (ae:AST.annotated_expression) : expression re
         let%bind b = b in
         let a_ty = Combinators.Expression.get_type a in
         let b_ty = Combinators.Expression.get_type b in
-        let tv = T_pair (a_ty , b_ty) in
+        let tv = T_pair ((None, a_ty) , (None, b_ty)) in
         return ~tv @@ E_constant ("PAIR", [a; b])
       in
       Append_tree.fold_ne (transpile_annotated_expression) aux node
@@ -337,7 +344,7 @@ and transpile_annotated_expression (ae:AST.annotated_expression) : expression re
         let%bind b = b in
         let a_ty = Combinators.Expression.get_type a in
         let b_ty = Combinators.Expression.get_type b in
-        let tv = T_pair (a_ty , b_ty) in
+        let tv = T_pair ((None, a_ty) , (None, b_ty)) in
         return ~tv @@ E_constant ("PAIR", [a; b])
       in
       trace_strong (corner_case ~loc:__LOC__ "record build") @@
@@ -555,7 +562,7 @@ and transpile_annotated_expression (ae:AST.annotated_expression) : expression re
               | Node {a ; b} ->
                   let%bind a' = aux a in
                   let%bind b' = aux b in
-                  let tv' = Mini_c.t_union (snd a') (snd b') in
+                  let tv' = Mini_c.t_union (None, snd a') (None, snd b') in
                   ok (`Node (a' , b') , tv')
             in aux tree'
           in
@@ -648,8 +655,8 @@ let check_storage f ty loc : (anon_function * _) result =
   let rec aux (t:type_value) on_big_map =
     match t with
       | T_big_map _ -> on_big_map
-      | T_pair (a , b) -> (aux a true) && (aux b false)
-      | T_or (a,b) -> (aux a false) && (aux b false)
+      | T_pair (a , b) -> (aux (snd a) true) && (aux (snd b) false)
+      | T_or (a,b) -> (aux (snd a) false) && (aux (snd b) false)
       | T_function (a,b) -> (aux a false) && (aux b false)
       | T_deep_closure (_,a,b) -> (aux a false) && (aux b false)
       | T_map (a,b) -> (aux a false) && (aux b false)
@@ -661,7 +668,7 @@ let check_storage f ty loc : (anon_function * _) result =
   in
   match f.body.type_value with
     | T_pair (_, storage) ->
-      if aux storage false then ok (f, ty) else fail @@ bad_big_map loc
+      if aux (snd storage) false then ok (f, ty) else fail @@ bad_big_map loc
     | _ -> ok (f, ty)
 
 let extract_constructor (v : value) (tree : _ Append_tree.t') : (string * value * AST.type_value) result =

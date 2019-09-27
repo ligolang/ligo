@@ -10,7 +10,7 @@ license: "MIT"
 depends: [
   "ocamlfind" { build }
   "dune" { build & >= "1.0.1" }
-  "menhir"
+  "menhir" { = "20190626" }
   "ppx_let"
   "ppx_deriving"
   "tezos-utils"

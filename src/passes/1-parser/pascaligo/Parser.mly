@@ -401,7 +401,6 @@ single_instr:
 | assignment   {      Assign $1 }
 | loop         {        Loop $1 }
 | proc_call    {    ProcCall $1 }
-| fail_instr   {        Fail $1 }
 | Skip         {        Skip $1 }
 | record_patch { RecordPatch $1 }
 | map_patch    {    MapPatch $1 }
@@ -509,12 +508,6 @@ record_patch:
       path       = $2;
       kwd_with   = $3;
       record_inj = $4}
-    in {region; value}}
-
-fail_instr:
-  Fail expr {
-    let region = cover $1 (expr_to_region $2)
-    and value  = {kwd_fail = $1; fail_expr = $2}
     in {region; value}}
 
 proc_call:
