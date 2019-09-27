@@ -49,7 +49,6 @@ type kwd_contains   = Region.t
 type kwd_down       = Region.t
 type kwd_else       = Region.t
 type kwd_end        = Region.t
-type kwd_fail       = Region.t
 type kwd_for        = Region.t
 type kwd_from       = Region.t
 type kwd_function   = Region.t
@@ -312,7 +311,6 @@ and single_instr =
 | Assign      of assignment reg
 | Loop        of loop
 | ProcCall    of fun_call
-| Fail        of fail_instr reg
 | Skip        of kwd_skip
 | RecordPatch of record_patch reg
 | MapPatch    of map_patch reg
@@ -361,11 +359,6 @@ and record_patch = {
   path       : path;
   kwd_with   : kwd_with;
   record_inj : record_expr
-}
-
-and fail_instr = {
-  kwd_fail  : kwd_fail;
-  fail_expr : expr
 }
 
 and conditional = {
@@ -726,7 +719,6 @@ let instr_to_region = function
 | Single Loop For ForCollect {region; _}
 | Single ProcCall            {region; _}
 | Single Skip                region
-| Single Fail                {region; _}
 | Single RecordPatch         {region; _}
 | Single MapPatch            {region; _}
 | Single SetPatch            {region; _}

@@ -52,8 +52,6 @@ let rec expression ppf (e:expression) = match e.expression with
         expression result
   | E_matching (ae, m) ->
       fprintf ppf "match %a with %a" expression ae (matching expression) m
-  | E_failwith ae ->
-      fprintf ppf "failwith %a" expression ae
   | E_sequence (a , b) ->
     fprintf ppf "%a ; %a"
       expression a

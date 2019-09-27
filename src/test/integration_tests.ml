@@ -670,6 +670,11 @@ let failwith_ligo () : unit result =
   let%bind _ = should_fail (e_pair (e_constructor "Zero" (e_nat 1)) (e_unit ())) in
   let%bind _ = should_work (e_pair (e_constructor "Pos" (e_nat 1)) (e_unit ())) in
   let%bind _ = should_fail (e_pair (e_constructor "Pos" (e_nat 0)) (e_unit ())) in
+  let should_fail input = expect_fail program "foobar" (e_int input) in
+  let should_work input n = expect_eq program "foobar" (e_int input) (e_int n) in
+  let%bind () = should_fail 10 in
+  let%bind () = should_fail @@ -10 in
+  let%bind () = should_work 5 6 in
   ok ()
 
 let failwith_mligo () : unit result =
@@ -698,7 +703,7 @@ let guess_string_mligo () : unit result =
   in expect_eq_n program "main" make_input make_expected
 
 let basic_mligo () : unit result =
-  let%bind typed = mtype_file ~debug_simplify:true "./contracts/basic.mligo" in
+  let%bind typed = mtype_file "./contracts/basic.mligo" in
   let%bind result = Run.Of_typed.evaluate_entry typed "foo" in
   Ast_typed.assert_value_eq
     (Ast_typed.Combinators.e_a_empty_int (42 + 127), result)
@@ -787,6 +792,21 @@ let website2_ligo () : unit result =
     e_pair (e_typed_list [] t_operation) (e_int (op 42 n)) in
   expect_eq_n program "main" make_input make_expected
 
+let tez_ligo () : unit result =
+  let%bind program = type_file "./contracts/tez.ligo" in
+  let%bind _ = expect_eq_evaluate program "add_tez" (e_mutez 42) in
+  let%bind _ = expect_eq_evaluate program "sub_tez" (e_mutez 1) in
+  let%bind _ = expect_eq_evaluate program "not_enough_tez" (e_mutez 4611686018427387903) in
+  ok ()
+
+let tez_mligo () : unit result =
+  let%bind program = mtype_file "./contracts/tez.mligo" in
+  let%bind _ = expect_eq_evaluate program "add_tez" (e_mutez 42) in
+  let%bind _ = expect_eq_evaluate program "sub_tez" (e_mutez 1) in
+  let%bind _ = expect_eq_evaluate program "not_enough_tez" (e_mutez 4611686018427387903) in
+  let%bind _ = expect_eq_evaluate program "add_more_tez" (e_mutez 111111000) in
+  ok ()
+
 let main = test_suite "Integration (End to End)" [
     test "type alias" type_alias ;
     test "function" function_ ;
@@ -844,6 +864,8 @@ let main = test_suite "Integration (End to End)" [
     test "lambda mligo" lambda_mligo ;
     test "lambda ligo" lambda_ligo ;
     (* test "lambda2 mligo" lambda2_mligo ; *)
+    test "tez (ligo)" tez_ligo ;
+    test "tez (mligo)" tez_mligo ;
     test "website1 ligo" website1_ligo ;
     test "website2 ligo" website2_ligo ;
   ]

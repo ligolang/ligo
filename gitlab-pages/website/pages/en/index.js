@@ -5,116 +5,167 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-const React = require('react');
+const React = require("react");
 
-const CompLibrary = require('../../core/CompLibrary.js');
+const CompLibrary = require("../../core/CompLibrary.js");
 
 const MarkdownBlock = CompLibrary.MarkdownBlock; /* Used to read markdown */
 const Container = CompLibrary.Container;
 const GridBlock = CompLibrary.GridBlock;
 
+const PascalLIGOTab = () => (
+  <div
+    id="tab-group-3-content-4"
+    className="tab-pane active"
+    data-group="group_3"
+    tabIndex="-1"
+  >
+    <div>
+      <span>
+        <pre>
+          <code className="hljs css language-Pascal">
+            // variant defining pseudo multi-entrypoint actions
+            <br />
+            type action is
+            <br />| Increment of int
+            <br />| Decrement of int
+            <br />
+            <br />
+            function add (const a : int ; const b : int) : int is
+            <br /> block {"{ skip }"} with a + b<br />
+            <br />
+            function subtract (const a : int ; const b : int) : int is
+            <br /> block {"{ skip }"} with a - b<br />
+            <br />
+            // real entrypoint that re-routes the flow based on the action
+            provided
+            <br />
+            function main (const p : action ; const s : int) : (list(operation)
+            * int) is
+            <br /> block {"{ skip }"} with ((nil : list(operation)),
+            <br /> case p of
+            <br /> | Increment(n) -&gt; add(s, n)
+            <br /> | Decrement(n) -&gt; subtract(s, n)
+            <br /> end)
+            <br />
+          </code>
+        </pre>
+      </span>
+    </div>
+  </div>
+);
+
+const CamelLIGOTab = () => (
+  <div
+    id="tab-group-3-content-5"
+    className="tab-pane"
+    data-group="group_3"
+    tabIndex="-1"
+  >
+    <div>
+      <pre>
+        <code className="hljs css language-Pascal">
+          type storage = int <br />
+          <br />
+          (* variant defining pseudo multi-entrypoint actions *) <br />
+          <br />
+          type action =<br />| Increment of int
+          <br />| Decrement of int
+          <br />
+          <br />
+          let add (a: int) (b: int) : int = a + b<br />
+          <br />
+          let subtract (a: int) (b: int) : int = a - b<br />
+          <br />
+          (* real entrypoint that re-routes the flow based on the action
+          provided *)
+          <br />
+          <br />
+          let%entry main (p : action) storage =<br /> let storage =<br /> match
+          p with
+          <br /> | Increment n -> add storage n<br /> | Decrement n -> subtract
+          storage n<br /> in (([] : operation list), storage)
+          <br />
+        </code>
+      </pre>
+    </div>
+  </div>
+);
+
+const LinkButton = props => (
+  <a href={props.href} target={props.target}>
+    <button className={props.className}>{props.children}</button>
+  </a>
+);
+
 class HomeSplash extends React.Component {
   render() {
-    const {siteConfig, language = ''} = this.props;
-    const {baseUrl, docsUrl} = siteConfig;
-    const docsPart = `${docsUrl ? `${docsUrl}/` : ''}`;
-    const langPart = `${language ? `${language}/` : ''}`;
+    const { siteConfig, language = "" } = this.props;
+    const { baseUrl, docsUrl } = siteConfig;
+    const docsPart = `${docsUrl ? `${docsUrl}/` : ""}`;
+    const langPart = `${language ? `${language}/` : ""}`;
     const docUrl = doc => `${baseUrl}${docsPart}${langPart}${doc}`;
 
-    const SplashContainer = props => (
-      <div className="homeContainer">
-        <div className="homeSplashFade">
-          <div className="wrapper homeWrapper">
-            
+    const SampleCode = props => (
+      <div className="sample-code-container">
+        <div className="sample-code">
           <div className="tabs">
             <div className="nav-tabs">
-              <div id="tab-group-3-tab-4" className="nav-link active" data-group="group_3"
-                data-tab="tab-group-3-content-4">PascaLIGO</div>
-              <div className="nav-link" data-group="group_3"
-                data-tab="tab-group-3-content-5">CameLIGO</div>
-              <div className="nav-link">ReasonLIGO (coming soon) </div>
-              {/* <div id="tab-group-3-tab-5" className="nav-link" data-group="group_3"
-                data-tab="tab-group-3-content-5">Camligo</div> */}
+              <div
+                id="tab-group-3-tab-4"
+                className="nav-link active"
+                data-group="group_3"
+                data-tab="tab-group-3-content-4"
+              >
+                PascaLIGO
+              </div>
+              <div
+                className="nav-link"
+                data-group="group_3"
+                data-tab="tab-group-3-content-5"
+              >
+                CameLIGO
+              </div>
+              <div className="disabled">ReasonLIGO (coming soon) </div>
             </div>
             <div className="tab-content">
-              <div id="tab-group-3-content-4" className="tab-pane active" data-group="group_3" tabIndex="-1">
-                <div>
-                  <span>
-                    <pre><code className="hljs css language-Pascal">// variant defining pseudo multi-entrypoint actions<br />type action is<br />| Increment of int<br />| Decrement of int<br /><br />function add (const a : int ; const b : int) : int is<br />    block {'{ skip }'} with a + b<br /><br />function subtract (const a : int ; const b : int) : int is<br />    block {'{ skip }'} with a - b<br /><br />// real entrypoint that re-routes the flow based on the action provided<br />function main (const p : action ; const s : int) : (list(operation) * int) is<br />  block {'{ skip }'} with ((nil : list(operation)),<br />    case p of<br />    | Increment(n) -&gt; add(s, n)<br />    | Decrement(n) -&gt; subtract(s, n)<br />    end)<br /></code></pre>
-                  </span>
-                </div>
-              </div>
-              <div id="tab-group-3-content-5" className="tab-pane" data-group="group_3" tabIndex="-1">
-                <div>
-                  <pre>
-                    <code className="hljs css language-Pascal">
-                    type storage = int <br/><br/>(* variant defining pseudo multi-entrypoint actions *) <br/><br/>type action =<br/>| Increment of int<br/>| Decrement of int<br/><br/>let add (a: int) (b: int) : int = a + b<br/><br/>let subtract (a: int) (b: int) : int = a - b<br/><br/>(* real entrypoint that re-routes the flow based on the action provided *)<br/><br/>let%entry main (p : action) storage =<br/>  let storage =<br/>    match p with<br/>     | Increment n -> add storage n<br/>     | Decrement n -> subtract storage n<br/>  in (([] : operation list), storage)<br/>
-                    </code>
-                  </pre>
-                </div>
-              </div>
+              {PascalLIGOTab()}
+              {CamelLIGOTab()}
             </div>
           </div>
-
-            {props.children}
-          </div>
         </div>
-      </div>
-    );
-
-    const Logo = props => (
-      <div className="projectLogo">
-        <img src={props.img_src} alt="Project Logo" />
-      </div>
-    );
-
-    const ProjectTitle = () => (
-      <h2 className="projectTitle">
-        <small>{siteConfig.tagline}</small>
-      </h2>
-    );
-
-    const PromoSection = props => (
-      <div className="section promoSection">
-        <div className="promoRow">
-          <div className="pluginRowBlock">{props.children}</div>
-        </div>
-      </div>
-    );
-
-    const Button = props => (
-      <div className="pluginWrapper buttonWrapper">
-        <a className="button" href={props.href} target={props.target}>
-          {props.children}
-        </a>
       </div>
     );
 
     return (
-      <SplashContainer>
-        <div className="inner">
-          <ProjectTitle siteConfig={siteConfig} />
-          <PromoSection>
-            <Button href={docUrl('setup/installation.html')}>Get Started</Button>
-            <Button href={docUrl('tutorials/get-started/tezos-taco-shop-smart-contract')}>Tutorials</Button>
-            <Button href={docUrl('contributors/origin.html')}>Contribute</Button>
-          </PromoSection>
+      <div className="home-container">
+        <div className="home-text">
+          <h4 className="tagline-text">{siteConfig.tagline}</h4>
+          <p className="body">{siteConfig.taglineSub}</p>
+          <LinkButton
+            href={docUrl("setup/installation.html")}
+            className="large-primary-button"
+          >
+            Get Started
+          </LinkButton>
         </div>
-      </SplashContainer>
+        <SampleCode />
+      </div>
     );
   }
 }
 
 class Index extends React.Component {
   render() {
-    const {config: siteConfig, language = ''} = this.props;
-    const {baseUrl} = siteConfig;
+    const { config: siteConfig, language = "" } = this.props;
+    const { baseUrl } = siteConfig;
 
     const Block = props => (
       <Container
-        padding={['bottom', 'top']}
+        padding={["bottom", "top"]}
         id={props.id}
-        background={props.background}>
+        background={props.background}
+      >
         <GridBlock
           align="center"
           contents={props.children}
@@ -126,7 +177,8 @@ class Index extends React.Component {
     const FeatureCallout = () => (
       <div
         className="productShowcaseSection paddingBottom"
-        style={{textAlign: 'center'}}>
+        style={{ textAlign: "center" }}
+      >
         <h2>Feature Callout</h2>
         <MarkdownBlock>These are features of this project</MarkdownBlock>
       </div>
@@ -137,13 +189,13 @@ class Index extends React.Component {
         {[
           {
             content:
-              'To make your landing page more attractive, use illustrations! Check out ' +
-              '[**unDraw**](https://undraw.co/) which provides you with customizable illustrations which are free to use. ' +
-              'The illustrations you see on this page are from unDraw.',
+              "To make your landing page more attractive, use illustrations! Check out " +
+              "[**unDraw**](https://undraw.co/) which provides you with customizable illustrations which are free to use. " +
+              "The illustrations you see on this page are from unDraw.",
             image: `${baseUrl}img/undraw_code_review.svg`,
-            imageAlign: 'left',
-            title: 'Wonderful SVG Illustrations',
-          },
+            imageAlign: "left",
+            title: "Wonderful SVG Illustrations"
+          }
         ]}
       </Block>
     );
@@ -153,11 +205,11 @@ class Index extends React.Component {
         {[
           {
             content:
-              'This is another description of how this project is useful',
+              "This is another description of how this project is useful",
             image: `${baseUrl}img/undraw_note_list.svg`,
-            imageAlign: 'right',
-            title: 'Description',
-          },
+            imageAlign: "right",
+            title: "Description"
+          }
         ]}
       </Block>
     );
@@ -167,58 +219,69 @@ class Index extends React.Component {
         {[
           {
             content:
-              'Each new Docusaurus project has **randomly-generated** theme colors.',
+              "Each new Docusaurus project has **randomly-generated** theme colors.",
             image: `${baseUrl}img/undraw_youtube_tutorial.svg`,
-            imageAlign: 'right',
-            title: 'Randomly Generated Theme Colors',
-          },
+            imageAlign: "right",
+            title: "Randomly Generated Theme Colors"
+          }
         ]}
       </Block>
     );
 
+    const FeatureCard = props => (
+      <div className="card" key={props.title}>
+        <img src={props.image} />
+        <div className="card-text">
+          <h4>{props.title}</h4>
+          <p className="body">{props.content}</p>
+        </div>
+      </div>
+    );
+
     const Features = () => (
       <div className="features">
-        <h1 className="sectionTitle blockTitle">Features</h1>
-        <Block layout="fourColumn">
+        <h2>Features</h2>
+
+        <div className="flex-inline-container">
           {[
             {
-              content: 'Write in PascaLIGO (pascal-like syntax) or CameLIGO (caml-like syntax). If you know OCaml, you can also add your own syntax.',
-              image: `${baseUrl}img/edit.svg`,
-              imageAlign: 'top',
-              title: 'Syntax Agnostic',
+              content:
+                "Write types, then code, and benefit from the safety coming from type systems.",
+              image: `${baseUrl}img/strong-type-system.svg`,
+              title: "Strong Type System"
             },
             {
-              content: 'Write types, then code, and benefit from the safety coming from type systems.',
-              image: `${baseUrl}img/lightning.svg`,
-              imageAlign: 'top',
-              title: 'Strong Type System',
+              content:
+                "Write in PascaLIGO (pascal-like syntax) or CameLIGO (caml-like syntax). If you know OCaml, you can also add your own syntax.",
+              image: `${baseUrl}img/syntax-agnostic.svg`,
+              title: "Syntax Agnostic"
             },
+
             {
-              content: 'With Granary, you can use LIGO as a lib from NodeJS.',
-              image: `${baseUrl}img/puzzle.svg`,
-              imageAlign: 'top',
-              title: 'Easy Integration',
+              content: "With Granary, you can use LIGO as a lib from NodeJS.",
+              image: `${baseUrl}img/easy-integration.svg`,
+              title: "Easy Integration"
             }
-          ]}
-        </Block>
+          ].map(FeatureCard)}
+        </div>
       </div>
     );
 
     const Roadmap = () => (
       <div className="roadmap">
-        <Block background="light" >
+        <Block background="light">
           {[
             {
-              content: 
+              content:
                 "<h4>June 2019</h4>" +
-                "<em><ul>" + 
+                "<em><ul>" +
                 "<li>First public release</li>" +
                 "<li>PascaLIGO and CameLIGO syntaxes</li>" +
                 "<li>Docs and Tutorials</li>" +
                 "<li>Integration testing in ReasonML/JS with Granary</li>" +
                 "</ul></em>" +
                 "<h4>July 2019</h4>" +
-                "<em><ul>" + 
+                "<em><ul>" +
                 "<li>Try LIGO online editor</li>" +
                 "<li>Unit testing toolkit</li>" +
                 "<li>ReasonLIGO syntax support</li>" +
@@ -229,9 +292,9 @@ class Index extends React.Component {
                 "Long term plans will be announced soon" +
                 "</em>",
               image: ``,
-              imageAlign: 'right',
-              title: 'Roadmap',
-            },
+              imageAlign: "right",
+              title: "Roadmap"
+            }
           ]}
         </Block>
       </div>
@@ -242,25 +305,23 @@ class Index extends React.Component {
         return null;
       }
 
-      const showcase = siteConfig.partners
+      const PartnerShowcase = siteConfig.partners
         .filter(user => user.pinned)
         .map(user => (
-          <a href={user.infoLink} key={user.infoLink}>
+          <a className="partner-link" href={user.infoLink} key={user.infoLink}>
             <img src={user.image} alt={user.caption} title={user.caption} />
           </a>
         ));
 
-      const pageUrl = page => baseUrl + (language ? `${language}/` : '') + page;
-
       return (
-        <div className="productShowcaseSection paddingBottom">
-          <h1 className="sectionTitle">Partners</h1>
-          <div className="logos">{showcase}</div>
-          {/* <div className="more-users">
-            <a className="button" href={pageUrl('users.html')}>
-              More {siteConfig.title} Users
-            </a>
-          </div> */}
+        <div className="partners-container hide-small">
+          {PartnerShowcase}
+          <div className="partners-text">
+            <h3>Our Partners</h3>
+            <p className="body">
+              We are not alone in this world -- here're some guys who support us
+            </p>
+          </div>
         </div>
       );
     };
@@ -273,32 +334,28 @@ class Index extends React.Component {
       const showcase = siteConfig.team
         .filter(user => user.pinned)
         .map(user => (
-          <a href={user.infoLink} key={user.infoLink}>
-            <img src={user.image} alt={user.caption} title={user.caption} />
-            <p>{user.caption}</p>
+          <a
+            className="profileContainer"
+            href={user.infoLink}
+            key={user.infoLink}
+          >
+            <img className="profileImage" src={user.image} alt={user.caption} />
+            <p className="headline">{user.caption}</p>
           </a>
         ));
 
-      const pageUrl = page => baseUrl + (language ? `${language}/` : '') + page;
-
       return (
-        <div className="productShowcaseSection paddingBottom team">
-          <h1 className="sectionTitle">Team</h1>
-          <div className="logos">{showcase}</div>
-          {/* <div className="more-users">
-            <a className="button" href={pageUrl('users.html')}>
-              More {siteConfig.title} Users
-            </a>
-          </div> */}
+        <div className="team">
+          <h2>Team</h2>
+          <div className="flex-inline-container">{showcase}</div>
         </div>
       );
     };
 
     return (
-      <div>
+      <div className="landing">
         <HomeSplash siteConfig={siteConfig} language={language} />
         <div className="mainContainer">
-          
           <Features />
           {/* <Roadmap /> */}
           {/* <FeatureCallout /> */}

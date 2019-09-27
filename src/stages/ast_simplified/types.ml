@@ -65,7 +65,6 @@ and expression' =
   | E_look_up of (expr * expr)
   (* Matching *)
   | E_matching of (expr * matching_expr)
-  | E_failwith of expr
   (* Replace Statements *)
   | E_sequence of (expr * expr)
   | E_loop of (expr * expr)
