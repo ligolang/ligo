@@ -88,50 +88,61 @@ let compile_file_contract_args =
   let args = Ast_simplified.e_pair storage_simplified parameter_simplified in
   Of_simplified.compile_expression ?value args ~env
 
+type dry_run_options =
+  { amount : string ;
+    sender : string option ;
+    source : string option }
 
-let run_contract ?amount ?storage_value source_filename entry_point storage parameter syntax =
+let make_dry_run_options (opts : dry_run_options) : Of_michelson.options result =
+  let open Proto_alpha_utils.Trace in
+  let open Proto_alpha_utils.Memory_proto_alpha in
+  let open Protocol.Alpha_context in
+  let%bind amount = match Tez.of_string opts.amount with
+    | None -> simple_fail "invalid amount"
+    | Some amount -> ok amount in
+  let%bind sender =
+    match opts.sender with
+    | None -> ok None
+    | Some sender ->
+      let%bind sender =
+        trace_alpha_tzresult
+          (simple_error "invalid address")
+          (Contract.of_b58check sender) in
+      ok (Some sender) in
+  let%bind source =
+    match opts.source with
+    | None -> ok None
+    | Some source ->
+      let%bind source =
+        trace_alpha_tzresult
+          (simple_error "invalid source address")
+          (Contract.of_b58check source) in
+      ok (Some source) in
+  ok @@ make_options ~amount ?source:sender ?payer:source ()
+
+let run_contract ~options ?storage_value source_filename entry_point storage parameter syntax =
   let%bind program = Compile.Of_source.type_file syntax source_filename in
   let%bind code = Compile.Of_typed.compile_function_entry program entry_point in
   let%bind args = compile_file_contract_args ?value:storage_value source_filename entry_point storage parameter syntax in
-  let%bind ex_value_ty =
-    let options =
-      let open Proto_alpha_utils.Memory_proto_alpha in
-      let amount = Option.bind (fun amount -> Protocol.Alpha_context.Tez.of_string amount) amount in
-      (make_options ?amount ())
-    in
-    Of_michelson.run ~options code args
-  in
+  let%bind options = make_dry_run_options options in
+  let%bind ex_value_ty = Of_michelson.run ~options code args in
   Compile.Of_simplified.uncompile_typed_program_entry_function_result program entry_point ex_value_ty
 
-let run_function_entry ?amount source_filename entry_point input syntax =
+let run_function_entry ~options source_filename entry_point input syntax =
   let%bind program = Compile.Of_source.type_file syntax source_filename in
   let%bind code = Compile.Of_typed.compile_function_entry program entry_point in
   let%bind args = compile_file_expression source_filename entry_point input syntax in
-  let%bind ex_value_ty =
-    let options =
-      let open Proto_alpha_utils.Memory_proto_alpha in
-      let amount = Option.bind (fun amount -> Protocol.Alpha_context.Tez.of_string amount) amount in
-      (make_options ?amount ())
-    in
-    Of_michelson.run ~options code args
-  in
+  let%bind options = make_dry_run_options options in
+  let%bind ex_value_ty = Of_michelson.run ~options code args in
   Compile.Of_simplified.uncompile_typed_program_entry_function_result program entry_point ex_value_ty
 
-let evaluate_entry ?amount source_filename entry_point syntax =
+let evaluate_entry ~options source_filename entry_point syntax =
   let%bind program = Compile.Of_source.type_file syntax source_filename in
   let%bind code = Compile.Of_typed.compile_expression_as_function_entry program entry_point in
-  let%bind ex_value_ty =
-    let options =
-      let open Proto_alpha_utils.Memory_proto_alpha in
-      let amount = Option.bind (fun amount -> Protocol.Alpha_context.Tez.of_string amount) amount in
-      (make_options ?amount ())
-    in
-    Of_michelson.evaluate ~options code
-  in
+  let%bind options = make_dry_run_options options in
+  let%bind ex_value_ty = Of_michelson.evaluate ~options code in
   Compile.Of_simplified.uncompile_typed_program_entry_expression_result program entry_point ex_value_ty
 
 let evaluate_michelson expression syntax =
   let%bind code = Compile.Of_source.compile_expression_as_function expression syntax in
   Of_michelson.evaluate_michelson code
-
-
