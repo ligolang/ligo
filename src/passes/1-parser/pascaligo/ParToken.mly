@@ -53,6 +53,10 @@
 %token <Region.t> Down        (* "down"       *)
 %token <Region.t> Else        (* "else"       *)
 %token <Region.t> End         (* "end"        *)
+<<<<<<< HEAD
+=======
+%token <Region.t> Fail        (* "fail"       *)
+>>>>>>> e5e9fb8e2faa1a67595553ab83279d3eb2b64470
 %token <Region.t> For         (* "for"        *)
 %token <Region.t> Function    (* "function"   *)
 %token <Region.t> From        (* "from"       *)

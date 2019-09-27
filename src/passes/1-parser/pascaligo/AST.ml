@@ -49,6 +49,10 @@ type kwd_contains   = Region.t
 type kwd_down       = Region.t
 type kwd_else       = Region.t
 type kwd_end        = Region.t
+<<<<<<< HEAD
+=======
+type kwd_fail       = Region.t
+>>>>>>> e5e9fb8e2faa1a67595553ab83279d3eb2b64470
 type kwd_for        = Region.t
 type kwd_from       = Region.t
 type kwd_function   = Region.t
