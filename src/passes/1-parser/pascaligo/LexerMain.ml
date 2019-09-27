@@ -6,7 +6,7 @@ let () = Printexc.record_backtrace true
 
 (* Running the lexer on the source *)
 
-let options = EvalOpt.read ()
+let options = EvalOpt.read "PascaLIGO" ".ligo"
 
 open EvalOpt
 
