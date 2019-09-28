@@ -427,29 +427,29 @@ module UnionFindWrapper = struct
       dbs
   let merge_variables : type_variable -> type_variable -> structured_dbs -> structured_dbs =
     fun variable_a variable_b dbs ->
-      let variable_repr_a , aliases = UF.get_or_set variable_a dbs.aliases in
-      let dbs = { dbs with aliases } in
-      let variable_repr_b , aliases = UF.get_or_set variable_b dbs.aliases in
-      let dbs = { dbs with aliases } in
-      let default d = function None -> d | Some y -> y in
-      let get_constraints ab =
-        TypeVariableMap.find_opt ab dbs.grouped_by_variable
-        |> default { constructor = [] ; poly = [] ; tc = [] } in
-      let constraints_a = get_constraints variable_repr_a in
-      let constraints_b = get_constraints variable_repr_b in
-      let all_constraints = {
-        (* TODO: should be a Set.union, not @ *)
-        constructor = constraints_a.constructor @ constraints_b.constructor ;
-        poly        = constraints_a.poly        @ constraints_b.poly        ;
-        tc          = constraints_a.tc          @ constraints_b.tc          ;
-      } in
-      let grouped_by_variable =
-        TypeVariableMap.add variable_repr_a all_constraints dbs.grouped_by_variable in
-      let dbs = { dbs with grouped_by_variable} in
-      let grouped_by_variable =
-        TypeVariableMap.remove variable_repr_b dbs.grouped_by_variable in
-      let dbs = { dbs with grouped_by_variable} in
-      dbs
+    let variable_repr_a , aliases = UF.get_or_set variable_a dbs.aliases in
+    let dbs = { dbs with aliases } in
+    let variable_repr_b , aliases = UF.get_or_set variable_b dbs.aliases in
+    let dbs = { dbs with aliases } in
+    let default d = function None -> d | Some y -> y in
+    let get_constraints ab =
+      TypeVariableMap.find_opt ab dbs.grouped_by_variable
+      |> default { constructor = [] ; poly = [] ; tc = [] } in
+    let constraints_a = get_constraints variable_repr_a in
+    let constraints_b = get_constraints variable_repr_b in
+    let all_constraints = {
+      (* TODO: should be a Set.union, not @ *)
+      constructor = constraints_a.constructor @ constraints_b.constructor ;
+      poly        = constraints_a.poly        @ constraints_b.poly        ;
+      tc          = constraints_a.tc          @ constraints_b.tc          ;
+    } in
+    let grouped_by_variable =
+      TypeVariableMap.add variable_repr_a all_constraints dbs.grouped_by_variable in
+    let dbs = { dbs with grouped_by_variable} in
+    let grouped_by_variable =
+      TypeVariableMap.remove variable_repr_b dbs.grouped_by_variable in
+    let dbs = { dbs with grouped_by_variable} in
+    dbs
 end
 
 (* sub-sub component: constraint normalizer: remove dupes and give structure
@@ -642,24 +642,24 @@ let selector_break_ctor : (type_constraint_simpl, output_break_ctor) selector =
 
 let propagator_break_ctor : output_break_ctor propagator =
   fun selected dbs ->
-    let () = ignore (dbs) in (* this propagator doesn't need to use the dbs *)
-    let a = selected#a_k_var in
-    let b = selected#a_k'_var' in
-    (* produce constraints: *)
+  let () = ignore (dbs) in (* this propagator doesn't need to use the dbs *)
+  let a = selected#a_k_var in
+  let b = selected#a_k'_var' in
+  (* produce constraints: *)
 
-    (* a.tv = b.tv *)
-    let eq1 = C_equation (P_variable a.tv, P_variable b.tv) in
-    (* a.c_tag = b.c_tag *)
-    if a.c_tag <> b.c_tag then
-      failwith "type error: incompatible types, not same ctor (TODO error message)"
-    else
-      (* a.tv_list = b.tv_list *)
-    if List.length a.tv_list <> List.length b.tv_list then
-      failwith "type error: incompatible types, not same length (TODO error message)"
-    else
-      let eqs3 = List.map2 (fun aa bb -> C_equation (P_variable aa, P_variable bb)) a.tv_list b.tv_list in
-      let eqs = eq1 :: eqs3 in
-      (eqs , []) (* no new assignments *)
+  (* a.tv = b.tv *)
+  let eq1 = C_equation (P_variable a.tv, P_variable b.tv) in
+  (* a.c_tag = b.c_tag *)
+  if a.c_tag <> b.c_tag then
+    failwith "type error: incompatible types, not same ctor (TODO error message)"
+  else
+    (* a.tv_list = b.tv_list *)
+  if List.length a.tv_list <> List.length b.tv_list then
+    failwith "type error: incompatible types, not same length (TODO error message)"
+  else
+    let eqs3 = List.map2 (fun aa bb -> C_equation (P_variable aa, P_variable bb)) a.tv_list b.tv_list in
+    let eqs = eq1 :: eqs3 in
+    (eqs , []) (* no new assignments *)
 
 (* TODO : with our selectors, the selection depends on the order in which the constraints are added :-( :-( :-( :-(
    We need to return a lazy stream of constraints. *)
@@ -700,15 +700,15 @@ let propagator_specialize1 : output_specialize1 propagator =
 let select_and_propagate : ('old_input, 'selector_output) selector -> 'selector_output propagator -> 'a -> structured_dbs -> new_constraints * new_assignments =
   fun selector propagator ->
   fun todo dbs ->
-    match selector todo dbs with
-      WasSelected selected_outputs ->
-      (* Call the propagation rule *)
-      let new_contraints_and_assignments = List.map (fun s -> propagator s dbs) selected_outputs in
-      let (new_constraints , new_assignments) = List.split new_contraints_and_assignments in
-      (* return so that the new constraints are pushed to some kind of work queue and the new assignments stored *)
-      (List.flatten new_constraints , List.flatten new_assignments)
-    | WasNotSelected ->
-      ([] , [])
+  match selector todo dbs with
+    WasSelected selected_outputs ->
+    (* Call the propagation rule *)
+    let new_contraints_and_assignments = List.map (fun s -> propagator s dbs) selected_outputs in
+    let (new_constraints , new_assignments) = List.split new_contraints_and_assignments in
+    (* return so that the new constraints are pushed to some kind of work queue and the new assignments stored *)
+    (List.flatten new_constraints , List.flatten new_assignments)
+  | WasNotSelected ->
+    ([] , [])
 
 let select_and_propagate_break_ctor = select_and_propagate selector_break_ctor propagator_break_ctor
 let select_and_propagate_specialize1 = select_and_propagate selector_specialize1 propagator_specialize1
