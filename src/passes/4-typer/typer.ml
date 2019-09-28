@@ -456,7 +456,7 @@ and type_expression : environment -> Solver.state -> I.expression -> (O.annotate
   | E_literal (Literal_timestamp t) -> (
       return_wrapped (e_timestamp t) state @@ Wrap.literal (t_timestamp ())
     )
-  | E_literal (Literal_operation o) -> (
+<  | E_literal (Literal_operation o) -> (
       return_wrapped (e_operation o) state @@ Wrap.literal (t_operation ())
     )
   | E_literal (Literal_unit) -> (

@@ -39,9 +39,16 @@
     | L_string of string
 
   type type_value =
-    | P_forall       of (type_variable * type_constraint list * type_value)
+    | P_forall       of p_forall
     | P_variable     of type_variable
     | P_constant     of (constant_tag * type_value list)
+    | P_apply        of (type_value * type_value)
+
+  and p_forall = {
+    binder      : type_variable ;
+    constraints : type_constraint list ;
+    body        : type_value
+  }
 
   and simple_c_constructor = (constant_tag * type_variable list) (* non-empty list *)
   and simple_c_constant = (constant_tag) (* for type constructors that do not take arguments *)
