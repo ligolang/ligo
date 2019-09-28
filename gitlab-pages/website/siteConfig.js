@@ -115,7 +115,6 @@ const siteConfig = {
   team,
 
   /* path to images for header/footer */
-  headerIcon: "img/logo.svg",
   footerIcon: "img/logo.svg",
   favicon: "img/logo.svg",
 
@@ -140,7 +139,7 @@ const siteConfig = {
   */
 
   // This copyright info is used in /core/Footer.js and blog RSS/Atom feeds.
-  copyright: `Copyright © ${new Date().getFullYear()} Marigold`,
+  copyright: `© ${new Date().getFullYear()} LIGO. All rights reserved.`,
 
   highlight: {
     // Highlight.js theme to use for syntax highlighting in code blocks.
