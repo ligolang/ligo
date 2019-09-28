@@ -9,9 +9,72 @@ const React = require("react");
 
 const CompLibrary = require("../../core/CompLibrary.js");
 
+const hljs = require("highlight.js");
+
 const MarkdownBlock = CompLibrary.MarkdownBlock; /* Used to read markdown */
 const Container = CompLibrary.Container;
 const GridBlock = CompLibrary.GridBlock;
+
+const pascaligoHighlighting = `
+function pascaligo(hljs) {
+  return {
+    case_insensitive: true,
+    keywords: 'and begin block case const contains down else end fail for ' +
+              'from function if in is list map mod nil not of or patch ' +
+              'procedure record remove set skip step then to type var while'
+    ,
+    literal: 'true false unit int string some none',
+    lexemes: '[a-z_]\\w*!?'
+    
+  }
+}
+`
+
+const pre = "```";
+
+const pascaligoExample = `${pre}pascaligo
+// variant defining pseudo multi-entrypoint actions
+type action is
+  | Increment
+  | Decrement
+
+function add(const a: int ; const b: int): int is
+  block { skip } with a + b
+
+function subtract(const a: int ; const b: int): int is
+  block { skip } with a - b
+
+// real entrypoint that re-routes the flow based on the action provided
+function main(const p: action ; const s: int): (list(operation) * int) is
+block { skip } with ((nil: list(operation)),
+ case p of
+  | Increment(n) -> add(s, n)
+  | Decrement(n) -> subtract(s, n)
+end)
+${ pre} `;
+
+const cameligoExample = `${pre}ocaml
+type storage = int
+
+(* variant defining pseudo multi - entrypoint actions *)
+
+type action =
+  | Increment of int
+  | Decrement of int
+
+let add (a: int) (b: int): int = a + b
+
+let subtract (a: int) (b: int): int = a - b
+
+(* real entrypoint that re - routes the flow based on 
+  the action provided *)
+let%entry main(p : action) storage =
+  let storage =
+    match p with
+    | Increment n -> add storage n
+    | Decrement n -> subtract storage n
+  in (([] : operation list), storage)
+${ pre} `;
 
 const PascalLIGOTab = () => (
   <div
@@ -20,38 +83,7 @@ const PascalLIGOTab = () => (
     data-group="group_3"
     tabIndex="-1"
   >
-    <div>
-      <span>
-        <pre>
-          <code className="hljs css language-Pascal">
-            // variant defining pseudo multi-entrypoint actions
-            <br />
-            type action is
-            <br />| Increment of int
-            <br />| Decrement of int
-            <br />
-            <br />
-            function add (const a : int ; const b : int) : int is
-            <br /> block {"{ skip }"} with a + b<br />
-            <br />
-            function subtract (const a : int ; const b : int) : int is
-            <br /> block {"{ skip }"} with a - b<br />
-            <br />
-            // real entrypoint that re-routes the flow based on the action
-            provided
-            <br />
-            function main (const p : action ; const s : int) : (list(operation)
-            * int) is
-            <br /> block {"{ skip }"} with ((nil : list(operation)),
-            <br /> case p of
-            <br /> | Increment(n) -&gt; add(s, n)
-            <br /> | Decrement(n) -&gt; subtract(s, n)
-            <br /> end)
-            <br />
-          </code>
-        </pre>
-      </span>
-    </div>
+    <MarkdownBlock>{pascaligoExample}</MarkdownBlock>
   </div>
 );
 
@@ -62,33 +94,7 @@ const CamelLIGOTab = () => (
     data-group="group_3"
     tabIndex="-1"
   >
-    <div>
-      <pre>
-        <code className="hljs css language-Pascal">
-          type storage = int <br />
-          <br />
-          (* variant defining pseudo multi-entrypoint actions *) <br />
-          <br />
-          type action =<br />| Increment of int
-          <br />| Decrement of int
-          <br />
-          <br />
-          let add (a: int) (b: int) : int = a + b<br />
-          <br />
-          let subtract (a: int) (b: int) : int = a - b<br />
-          <br />
-          (* real entrypoint that re-routes the flow based on the action
-          provided *)
-          <br />
-          <br />
-          let%entry main (p : action) storage =<br /> let storage =<br /> match
-          p with
-          <br /> | Increment n -> add storage n<br /> | Decrement n -> subtract
-          storage n<br /> in (([] : operation list), storage)
-          <br />
-        </code>
-      </pre>
-    </div>
+    <MarkdownBlock>{cameligoExample}</MarkdownBlock>
   </div>
 );
 
@@ -134,6 +140,11 @@ class HomeSplash extends React.Component {
             </div>
           </div>
         </div>
+
+        <script>
+          {pascaligoHighlighting}
+          hljs.registerLanguage('pascaligo', pascaligo);
+        </script>
       </div>
     );
 
@@ -319,7 +330,7 @@ class Index extends React.Component {
           <div className="partners-text">
             <h3>Our Partners</h3>
             <p className="body">
-              We are not alone in this world -- here're some guys who support us
+              We are not alone in this world -- here're some people who support us
             </p>
           </div>
         </div>
