@@ -109,6 +109,10 @@ footnote {
   display: none;
 }
 
+.fixedHeaderContainer {
+  left: 0;
+}
+
 .nav-footer {
   background: var(--color-primary-text);
 }
@@ -122,11 +126,10 @@ footnote {
   display: flex;
   align-items: center;
   justify-content: space-around;
-  padding: var(--padding-level-3);
 }
 
 .home-text {
-  width: 35%;
+  flex: 1;
 }
 
 .sample-code-container {
@@ -194,6 +197,11 @@ blockquote {
   color: rgba(255, 255, 255, 1);
 }
 
+.tab-pane {
+  height: 550px;
+  overflow-x: auto;
+}
+
 blockquote code {
   opacity: 0.5;
 }
@@ -259,6 +267,11 @@ a:hover {
 body,
 html {
   background: white;
+}
+
+body {
+  margin: 0 auto;
+  max-width: 1500px;
 }
 
 .copyright a {
@@ -563,33 +576,45 @@ body
   }
 }
 
-@media only screen and (min-device-width: 360px) and (max-device-width: 736px) {
-}
-
-@media only screen and (max-width: 1023px) {
+@media only screen and (min-device-width: 360px){
   .home-container {
-    flex-direction: column-reverse;
-    margin-top: var(--padding-level-1);
-  }
-  .home-text {
+    flex-direction: column;
     align-content: center;
-    text-align: center;
-    width: 90%;
-    padding-top: var(--padding-level-2);
   }
+
+  .home-text {
+    text-align: center;
+    padding: var(--padding-level-2) 0;
+  }
+
   .sample-code-container {
     width: 90%;
+  }
+  
+  .sample-code {
+    padding: 0;
+    width: 100%;
   }
 }
 
 @media only screen and (min-width: 1280px) {
-}
+  .home-container {
+    flex-direction: row;
+    margin: var(--padding-level-1);    
+    max-width: 90%;
+    padding: var(--padding-level-3);
+  }
 
-@media only screen and (min-width: 1440px) {
   .landing h4.tagline-text {
     font-size: 2.25rem;
   }
-}
 
-@media only screen and (min-width: 1500px) {
+  .sample-code-container {
+    max-width: 60%;
+  }
+
+  .sample-code {
+    padding: 25px;
+    width: 80%;    
+  }
 }
