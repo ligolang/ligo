@@ -420,7 +420,7 @@ and type_expression : environment -> Solver.state -> I.expression -> (O.annotate
   (* Basic *)
   | E_failwith expr -> (
       let%bind (expr', state') = type_expression e state expr in
-      let (constraints , expr_type) = Wrap.failwith () in
+      let (constraints , expr_type) = Wrap.failwith_ () in
       let expr'' = e_failwith expr' in
       return expr''  state' constraints expr_type
     )

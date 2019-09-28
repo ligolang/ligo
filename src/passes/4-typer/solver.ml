@@ -38,7 +38,7 @@ module Wrap = struct
           | "unit"   -> C_unit
           | "bool"   -> C_bool
           | "string" -> C_string
-          | _        -> failwith "TODO")
+          | _        -> failwith "unknown type constructor")
       in
       P_constant (csttag, List.map type_expression_to_type_value args)
 
@@ -58,8 +58,7 @@ module Wrap = struct
           [] 
       )
 
-  (* TODO: this should be renamed to failwith_ *)
-  let failwith : unit -> (constraints * O.type_variable) = fun () ->
+  let failwith_ : unit -> (constraints * O.type_variable) = fun () ->
     let type_name = Core.fresh_type_variable () in
     [] , type_name
 
@@ -368,6 +367,7 @@ type structured_dbs = {
 }
 
 and constraints = {
+  (* If implemented in a language with decent sets, these should be sets not lists. *)
   constructor : c_constructor_simpl list ; (* List of ('a = constructor(args…)) constraints *)
   poly        : c_poly_simpl        list ; (* List of ('a = forall 'b, some_type) constraints *)
   tc          : c_typeclass_simpl   list ; (* List of (typeclass(args…)) constraints *)
@@ -392,11 +392,12 @@ and c_poly_simpl = {
 and type_constraint_simpl =
     SC_Constructor of c_constructor_simpl             (* α = ctor(β, …) *)
   | SC_Alias       of (type_variable * type_variable) (* α = β *)
-  | SC_Poly        of c_poly_simpl (* α = forall β, δ where δ can be a more complex type, TODO: maybe type_value is too much and we want sth simpler? *)
+  | SC_Poly        of c_poly_simpl                    (* α = forall β, δ where δ can be a more complex type *)
   | SC_Typeclass   of c_typeclass_simpl               (* TC(α, …) *)
 
 module UnionFindWrapper = struct
-  (* TODO: API for the structured db, to access it modulo unification variable aliases. *)
+  (* Light wrapper for API for grouped_by_variable in the structured
+     db, to access it modulo unification variable aliases. *)
   let get_constraints_related_to : type_variable -> structured_dbs -> constraints =
     fun variable dbs ->
       let variable , aliases = UF.get_or_set variable dbs.aliases in
@@ -438,7 +439,6 @@ module UnionFindWrapper = struct
     let constraints_a = get_constraints variable_repr_a in
     let constraints_b = get_constraints variable_repr_b in
     let all_constraints = {
-      (* TODO: should be a Set.union, not @ *)
       constructor = constraints_a.constructor @ constraints_b.constructor ;
       poly        = constraints_a.poly        @ constraints_b.poly        ;
       tc          = constraints_a.tc          @ constraints_b.tc          ;
@@ -457,6 +457,7 @@ end
  * later: better database-like organisation of knowledge *)
 
 (* Each normalizer returns a  *)
+(* If implemented in a language with decent sets, should be 'b set not 'b list. *)
 type ('a , 'b) normalizer = structured_dbs -> 'a -> (structured_dbs * 'b list)
 
 let normalizer_all_constraints : (type_constraint_simpl , type_constraint_simpl) normalizer =
@@ -494,53 +495,58 @@ let type_level_eval : type_value -> type_value * type_constraint list = failwith
 
 let check_applied ((reduced, _new_constraints) as x) =
   let () = match reduced with
-      P_apply _ -> failwith "internal error: shouldn't happen" (* failwith "could not reduce type-level application. Arbitrary type-level applications are not supported for now." (* TODO: report real error *) *)
+      P_apply _ -> failwith "internal error: shouldn't happen" (* failwith "could not reduce type-level application. Arbitrary type-level applications are not supported for now." *)
     | _ -> ()
   in x
 
+(* TODO: at some point there may be uses of named type aliases (type
+   foo = int; let x : foo = 42). These should be inlined. *)
 
 let rec normalizer_simpl : (type_constraint , type_constraint_simpl) normalizer =
   fun dbs new_constraint ->
-  match new_constraint with
-  (* TODO: merge the cases that just insert a fresh variable *)
-  | C_equation ((P_forall _ as a), (P_forall _ as b))
-    (* break down (forall 'b, body = forall 'c, body') into ('a = forall 'b, body and 'a = forall 'c, body')) *)
-  | C_equation ((P_forall _ as a), (P_constant _ as b))
-    (* break down (forall 'b, body = c(args)) into ('a = forall 'b, body and 'a = c(args)) *)
-  | C_equation ((P_constant _ as a), (P_constant _ as b))
-    (* break down (c(args) = c'(args')) into ('a = c(args) and 'a = c'(args')) *)
-  | C_equation ((P_constant _ as a), (P_forall _ as b))
-    ->
-    (* break down (c(args) = forall 'b, body) into ('a = c(args) and 'a = forall 'b, body) *)
+  let insert_fresh a b = 
     let fresh = Core.fresh_type_variable () in
     let (dbs , cs1) = normalizer_simpl dbs (C_equation (P_variable fresh, a)) in
     let (dbs , cs2) = normalizer_simpl dbs (C_equation (P_variable fresh, b)) in
-    (dbs , cs1 @ cs2) (* TODO: O(n) concatenation! *)
-  | C_equation ((P_forall _ as a), (P_variable _ as b))   -> normalizer_simpl dbs (C_equation (b , a))
-  | C_equation (P_variable a, P_forall forall)            -> (dbs , [SC_Poly { tv=a; forall }])
-  | C_equation (P_variable a, P_variable b)               -> (dbs , [SC_Alias (a, b)])
-  | C_equation (P_variable a, P_constant (c_tag, args))   ->
+    (dbs , cs1 @ cs2) in
+  let split_constant a c_tag args =
     let fresh_vars = List.map (fun _ -> Core.fresh_type_variable ()) args in
     let fresh_eqns = List.map (fun (v,t) -> C_equation (P_variable v, t)) (List.combine fresh_vars args) in
     let (dbs , recur) = List.fold_map normalizer_simpl dbs fresh_eqns in
-    (dbs , [SC_Constructor {tv=a;c_tag;tv_list=fresh_vars}] @ List.flatten recur)
-  | C_equation ((P_constant _ as a), (P_variable _ as b)) -> normalizer_simpl dbs (C_equation (b , a))
-  | C_equation ((_ as a), (P_apply _ as b)) ->
-    (*  Reduce the type-level application, and simplify the resulting constraint + the extra constraints (typeclasses) that appeared at the forall binding site *)
+    (dbs , [SC_Constructor {tv=a;c_tag;tv_list=fresh_vars}] @ List.flatten recur) in
+  let gather_forall a forall = (dbs , [SC_Poly { tv=a; forall }]) in
+  let gather_alias a b = (dbs , [SC_Alias (a, b)]) in
+  let reduce_type_app a b =
     let (reduced, new_constraints) = check_applied @@ type_level_eval b in
     let (dbs , recur) = List.fold_map normalizer_simpl dbs new_constraints in
-    let (dbs , resimpl) = normalizer_simpl dbs (C_equation (a , reduced)) in
-    (dbs , resimpl @ List.flatten recur)
-  | C_equation ((P_apply _ as a), (_ as b)) ->
-    normalizer_simpl dbs (C_equation (b , a)) (* TODO: have a bunch of functions for the different cases, and call these functions possibly with the arguments swapped etc. *)
-  | C_typeclass (args, tc)                                ->
-    (* break down (TC(args)) into (TC('a, …) and ('a = arg) …) *)
+    let (dbs , resimpl) = normalizer_simpl dbs (C_equation (a , reduced)) in (* Note: this calls recursively but cant't fall in the same case. *)
+    (dbs , resimpl @ List.flatten recur) in
+  let split_typeclass args tc =
     let fresh_vars = List.map (fun _ -> Core.fresh_type_variable ()) args in
     let fresh_eqns = List.map (fun (v,t) -> C_equation (P_variable v, t)) (List.combine fresh_vars args) in
     let (dbs , recur) = List.fold_map normalizer_simpl dbs fresh_eqns in
-    (dbs, [SC_Typeclass { tc ; args = fresh_vars }] @ List.flatten recur)
-  | C_access_label (tv, label, result) -> let _todo = ignore (tv, label, result) in failwith "TODO"
+    (dbs, [SC_Typeclass { tc ; args = fresh_vars }] @ List.flatten recur) in
 
+  match new_constraint with
+  (* break down (forall 'b, body = forall 'c, body') into ('a = forall 'b, body and 'a = forall 'c, body')) *)
+  | C_equation ((P_forall _ as a), (P_forall _ as b))     -> insert_fresh a b
+  (* break down (forall 'b, body = c(args)) into ('a = forall 'b, body and 'a = c(args)) *)
+  | C_equation ((P_forall _ as a), (P_constant _ as b))   -> insert_fresh a b
+  (* break down (c(args) = c'(args')) into ('a = c(args) and 'a = c'(args')) *)
+  | C_equation ((P_constant _ as a), (P_constant _ as b)) -> insert_fresh a b
+  (* break down (c(args) = forall 'b, body) into ('a = c(args) and 'a = forall 'b, body) *)
+  | C_equation ((P_constant _ as a), (P_forall _ as b))   -> insert_fresh a b
+  | C_equation ((P_forall forall), (P_variable b))        -> gather_forall b forall
+  | C_equation (P_variable a, P_forall forall)            -> gather_forall a forall
+  | C_equation (P_variable a, P_variable b)               -> gather_alias a b
+  | C_equation (P_variable a, P_constant (c_tag , args))  -> split_constant a c_tag args
+  | C_equation (P_constant (c_tag , args), P_variable b)  -> split_constant b c_tag args
+  (*  Reduce the type-level application, and simplify the resulting constraint + the extra constraints (typeclasses) that appeared at the forall binding site *)
+  | C_equation ((_ as a), (P_apply _ as b))               -> reduce_type_app a b
+  | C_equation ((P_apply _ as a), (_ as b))               -> reduce_type_app b a
+  (* break down (TC(args)) into (TC('a, …) and ('a = arg) …) *)
+  | C_typeclass (args, tc)                                -> split_typeclass args tc
+  | C_access_label (tv, label, result)                    -> let _todo = ignore (tv, label, result) in failwith "TODO"
 
 (* Random notes from live discussion. Kept here to include bits as a rationale later on / remind me of the discussion in the short term.
  * Feel free to erase if it rots here for too long.
@@ -585,19 +591,6 @@ let lift f =
 (* TODO: move this to the List module *)
 let named_fold_left f ~acc ~lst = List.fold_left (fun acc lst -> f ~acc ~lst) acc lst
 
-(* TODO: place the list of normalizers in a map *)
-(* (\* cons for heterogeneous lists *\)
- * type 'b f = { f : 'a . ('a -> 'b) -> 'a -> 'b }
- * type ('hd , 'tl) hcons = { hd : 'hd ; tl : 'tl ; map : 'b . 'b f -> ('b , 'tl) hcons }
- * let (+::) hd tl = { hd ; tl ; map = fun x ->  }
- *
- * let list_of_normalizers =
- *   normalizer_simpl +::
- *   normalizer_all_constraints +::
- *   normalizer_assignments +::
- *   normalizer_grouped_by_variable +::
- *   () *)
-
 module Fun = struct let id x = x end (* in stdlib as of 4.08, we're in 4.07 for now *)
 
 let normalizers : type_constraint -> structured_dbs -> (structured_dbs , 'modified_constraint) state_list_monad =
@@ -612,8 +605,6 @@ let normalizers : type_constraint -> structured_dbs -> (structured_dbs , 'modifi
 (* sub-sub component: lazy selector (don't re-try all selectors every time)
  * For now: just re-try everytime *)
 
-type todo = unit
-let todo : todo = ()
 type 'old_constraint_type selector_input = 'old_constraint_type (* some info about the constraint just added, so that we know what to look for *)
 type 'selector_output selector_outputs =
     WasSelected of 'selector_output list
@@ -627,14 +618,14 @@ type 'selector_output propagator = 'selector_output -> structured_dbs -> new_con
 (* selector / propagation rule for breaking down composite types
  * For now: break pair(a, b) = pair(c, d) into a = c, b = d *)
 
-type output_break_ctor = < a_k_var : c_constructor_simpl ; a_k'_var' : c_constructor_simpl > (* TODO: replace with a struct *)
+type output_break_ctor = { a_k_var : c_constructor_simpl ; a_k'_var' : c_constructor_simpl }
 let selector_break_ctor : (type_constraint_simpl, output_break_ctor) selector =
   (* find two rules with the shape a = k(var …) and a = k'(var' …) *)
-  fun todo dbs ->
-  match todo with
+  fun type_constraint_simpl dbs ->
+  match type_constraint_simpl with
     SC_Constructor c ->
     let other_cs = (UnionFindWrapper.get_constraints_related_to c.tv dbs).constructor in
-    let cs_pairs = List.map (fun x -> object method a_k_var = c method a_k'_var' = x end) other_cs in
+    let cs_pairs = List.map (fun x -> { a_k_var = c ; a_k'_var' = x }) other_cs in
     WasSelected cs_pairs
   | SC_Alias       _                -> WasNotSelected (* TODO: ??? *)
   | SC_Poly        _                -> WasNotSelected (* TODO: ??? *)
@@ -643,19 +634,19 @@ let selector_break_ctor : (type_constraint_simpl, output_break_ctor) selector =
 let propagator_break_ctor : output_break_ctor propagator =
   fun selected dbs ->
   let () = ignore (dbs) in (* this propagator doesn't need to use the dbs *)
-  let a = selected#a_k_var in
-  let b = selected#a_k'_var' in
+  let a = selected.a_k_var in
+  let b = selected.a_k'_var' in
   (* produce constraints: *)
 
   (* a.tv = b.tv *)
   let eq1 = C_equation (P_variable a.tv, P_variable b.tv) in
   (* a.c_tag = b.c_tag *)
   if a.c_tag <> b.c_tag then
-    failwith "type error: incompatible types, not same ctor (TODO error message)"
+    failwith "type error: incompatible types, not same ctor"
   else
     (* a.tv_list = b.tv_list *)
   if List.length a.tv_list <> List.length b.tv_list then
-    failwith "type error: incompatible types, not same length (TODO error message)"
+    failwith "type error: incompatible types, not same length"
   else
     let eqs3 = List.map2 (fun aa bb -> C_equation (P_variable aa, P_variable bb)) a.tv_list b.tv_list in
     let eqs = eq1 :: eqs3 in
@@ -664,27 +655,28 @@ let propagator_break_ctor : output_break_ctor propagator =
 (* TODO : with our selectors, the selection depends on the order in which the constraints are added :-( :-( :-( :-(
    We need to return a lazy stream of constraints. *)
 
-type output_specialize1 = < poly : c_poly_simpl ; a_k_var : c_constructor_simpl >
+type output_specialize1 = { poly : c_poly_simpl ; a_k_var : c_constructor_simpl }
 let selector_specialize1 : (type_constraint_simpl, output_specialize1) selector =
   (* find two rules with the shape (a = forall b, d) and a = k'(var' …) *)
   (* TODO: do the same for two rules with the shape (a = forall b, d) and tc(a…) *)
   (* TODO: do the appropriate thing for two rules with the shape (a = forall b, d) and (a = forall b', d') *)
-  fun todo dbs ->
-  match todo with
+  fun type_constraint_simpl dbs ->
+  match type_constraint_simpl with
     SC_Constructor _                -> WasNotSelected
   | SC_Alias       _                -> WasNotSelected (* TODO: ??? *)
   | SC_Poly        p                ->
     let other_cs = (UnionFindWrapper.get_constraints_related_to p.tv dbs).constructor in
-    let cs_pairs = List.map (fun x -> object method poly = p method a_k_var = x end) other_cs in
+    let cs_pairs = List.map (fun x -> { poly = p ; a_k_var = x }) other_cs in
     WasSelected cs_pairs
   | SC_Typeclass   _                -> WasNotSelected
 
 let propagator_specialize1 : output_specialize1 propagator =
   fun selected dbs ->
   let () = ignore (dbs) in (* this propagator doesn't need to use the dbs *)
-  let a = selected#poly in
-  let b = selected#a_k_var in
-  assert (a.tv = b.tv);         (* TODO: throw a propper internal error if this fails / prove that it won't in Coq. *)
+  let a = selected.poly in
+  let b = selected.a_k_var in
+  let () = if (a.tv <> b.tv) then failwith "internal error" else () in
+
   (* produce constraints: *)
 
   (* create a fresh existential variable to instantiate the polymorphic type b *)
@@ -699,8 +691,8 @@ let propagator_specialize1 : output_specialize1 propagator =
 
 let select_and_propagate : ('old_input, 'selector_output) selector -> 'selector_output propagator -> 'a -> structured_dbs -> new_constraints * new_assignments =
   fun selector propagator ->
-  fun todo dbs ->
-  match selector todo dbs with
+  fun old_type_constraint dbs ->
+  match selector old_type_constraint dbs with
     WasSelected selected_outputs ->
     (* Call the propagation rule *)
     let new_contraints_and_assignments = List.map (fun s -> propagator s dbs) selected_outputs in
@@ -713,7 +705,7 @@ let select_and_propagate : ('old_input, 'selector_output) selector -> 'selector_
 let select_and_propagate_break_ctor = select_and_propagate selector_break_ctor propagator_break_ctor
 let select_and_propagate_specialize1 = select_and_propagate selector_specialize1 propagator_specialize1
 
-let select_and_propagate_all' : type_constraint_simpl selector_input -> structured_dbs -> 'todo_result =
+let select_and_propagate_all' : type_constraint_simpl selector_input -> structured_dbs -> new_constraints * structured_dbs =
   fun new_constraint dbs ->
     let (new_constraints, new_assignments) = select_and_propagate_break_ctor new_constraint dbs in
     let assignments = List.fold_left (fun acc ({tv;c_tag=_;tv_list=_} as ele) -> TypeVariableMap.update tv (function None -> Some ele | x -> x) acc) dbs.assignments new_assignments in
@@ -722,7 +714,7 @@ let select_and_propagate_all' : type_constraint_simpl selector_input -> structur
     (* We should try each selector in turn. If multiple selectors work, what should we do? *)
     (new_constraints , dbs)
 
-let rec select_and_propagate_all : type_constraint selector_input list -> structured_dbs -> 'todo_result =
+let rec select_and_propagate_all : type_constraint selector_input list -> structured_dbs -> structured_dbs =
   fun new_constraints dbs ->
     match new_constraints with
     | [] -> dbs
@@ -782,32 +774,9 @@ let initial_state : state = {
 (*     | C_typeclass (l , rs)         -> C_typeclass (List.map aux_tv l , aux_tc rs) *)
 (*   in List.map aux state *)
 
-(* let check_equal       a  b  = failwith "TODO"
- * let check_same_length l1 l2 = failwith "TODO"
- * 
- * let rec unify : type_value * type_value -> type_constraint list result = function
- *   | (P_variable v           , P_constant (y , argsy)) ->
- *     failwith "TODO: replace v with the constant everywhere."
- *   | (P_constant (x , argsx) , P_variable w) ->
- *     failwith "TODO: "
- *   | (P_variable v           , P_variable w) ->
- *     failwith "TODO: replace v with w everywhere"
- *   | (P_constant (x , argsx) , P_constant (y , argsy)) ->
- *     let%bind () = check_equal x y in
- *     let%bind () = check_same_length argsx argsy in
- *     let%bind _ =  bind_map_list unify (List.combine argsx argsy) in
- *     ok []
- *   | _ -> failwith "TODO" *)
-
-(* (\* unify a and b, possibly produce new constraints *\) *)
-(* let () = ignore (a,b) in *)
-(* ok [] *)
-
 (* This is the solver *)
 let aggregate_constraints : state -> type_constraint list -> state result = fun state newc ->
   (* TODO: Iterate over constraints *)
-  (* TODO: try to unify things:
-             if we have a = X and b = Y, try to unify X and Y *)
   let _todo = ignore (state, newc) in
   failwith "TODO"
 (*let { constraints ; eqv } = state in
@@ -819,7 +788,7 @@ let aggregate_constraints : state -> type_constraint list -> state result = fun 
 
 
 
-(* TODO: later on, we'll ensure that all the heuristics register the
+(* Later on, we'll ensure that all the heuristics register the
    existential/unification variables that they create, as well as the
    new constraints that they create. We will then check that they only
    use a small set of core axioms to derive new constraints, and
