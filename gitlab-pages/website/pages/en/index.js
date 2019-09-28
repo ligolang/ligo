@@ -15,49 +15,64 @@ const MarkdownBlock = CompLibrary.MarkdownBlock; /* Used to read markdown */
 const Container = CompLibrary.Container;
 const GridBlock = CompLibrary.GridBlock;
 
-const pascaligoHighlighting = `
 function pascaligo(hljs) {
   return {
-    case_insensitive: true,
-    keywords: 'and begin block case const contains down else end fail for ' +
-              'from function if in is list map mod nil not of or patch ' +
-              'procedure record remove set skip step then to type var while'
-    ,
-    literal: 'true false unit int string some none',
-    lexemes: '[a-z_]\\w*!?'
-    
+    // case_insensitive: true,
+    beginKeywords: '',
+    keywords: {
+      keyword: 'and begin block case const contains down else end fail for ' +
+        'from function if in is list map mod nil not of or patch ' +
+        'procedure record remove set skip step then to type var while with',
+      literal: 'true false unit int string some none bool nat list'
+    },
+    lexemes: '[a-zA-Z][a-zA-Z0-9_]*',
+    contains: [
+      hljs.C_LINE_COMMENT_MODE,
+
+      {
+        className: 'type',
+        begin: /[A-Z][a-z]+/
+      },
+      {
+        begin: /[*+-:;\(\)\{\}|\>\<]/,
+        // className: 'ignore'
+      }
+    ]
   }
 }
-`
+
+hljs.registerLanguage('pascaligo', pascaligo);
+
 
 const pre = "```";
 
 const pascaligoExample = `${pre}pascaligo
 // variant defining pseudo multi-entrypoint actions
 type action is
-  | Increment
-  | Decrement
+| Increment of int
+| Decrement of int
 
-function add(const a: int ; const b: int): int is
-  block { skip } with a + b
+function add (const a : int ; const b : int) : int is
+ block { skip } with a + b
 
-function subtract(const a: int ; const b: int): int is
-  block { skip } with a - b
+function subtract (const a : int ; const b : int) : int is
+ block { skip } with a - b
 
-// real entrypoint that re-routes the flow based on the action provided
-function main(const p: action ; const s: int): (list(operation) * int) is
-block { skip } with ((nil: list(operation)),
- case p of
+// real entrypoint that re-routes the flow based 
+// on the action provided
+function main (const p : action ; const s : int) : 
+  (list(operation) * int) is
+ block { skip } with ((nil : list(operation)),
+  case p of
   | Increment(n) -> add(s, n)
   | Decrement(n) -> subtract(s, n)
-end)
-${ pre} `;
+ end)
+${pre}`;
 
 const cameligoExample = `${pre}ocaml
 type storage = int
 
 (* variant defining pseudo multi-entrypoint actions *)
-
 type action =
   | Increment of int
   | Decrement of int
@@ -67,14 +82,14 @@ let add (a: int) (b: int): int = a + b
 let subtract (a: int) (b: int): int = a - b
 
 (* real entrypoint that re-routes the flow based on 
-  the action provided *)
+   the action provided *)
 let%entry main(p : action) storage =
   let storage =
     match p with
     | Increment n -> add storage n
     | Decrement n -> subtract storage n
   in (([] : operation list), storage)
-${ pre} `;
+${pre}`;
 
 const PascalLIGOTab = () => (
   <div
@@ -140,12 +155,7 @@ class HomeSplash extends React.Component {
             </div>
           </div>
         </div>
-
-        <script>
-          {pascaligoHighlighting}
-          hljs.registerLanguage('pascaligo', pascaligo);
-        </script>
-      </div>
+      </div >
     );
 
     return (
