@@ -504,7 +504,7 @@ let check_applied ((reduced, _new_constraints) as x) =
 
 let rec normalizer_simpl : (type_constraint , type_constraint_simpl) normalizer =
   fun dbs new_constraint ->
-  let insert_fresh a b = 
+  let insert_fresh a b =
     let fresh = Core.fresh_type_variable () in
     let (dbs , cs1) = normalizer_simpl dbs (C_equation (P_variable fresh, a)) in
     let (dbs , cs2) = normalizer_simpl dbs (C_equation (P_variable fresh, b)) in
@@ -512,19 +512,19 @@ let rec normalizer_simpl : (type_constraint , type_constraint_simpl) normalizer 
   let split_constant a c_tag args =
     let fresh_vars = List.map (fun _ -> Core.fresh_type_variable ()) args in
     let fresh_eqns = List.map (fun (v,t) -> C_equation (P_variable v, t)) (List.combine fresh_vars args) in
-    let (dbs , recur) = List.fold_map normalizer_simpl dbs fresh_eqns in
+    let (dbs , recur) = List.fold_map_acc normalizer_simpl dbs fresh_eqns in
     (dbs , [SC_Constructor {tv=a;c_tag;tv_list=fresh_vars}] @ List.flatten recur) in
   let gather_forall a forall = (dbs , [SC_Poly { tv=a; forall }]) in
   let gather_alias a b = (dbs , [SC_Alias (a, b)]) in
   let reduce_type_app a b =
     let (reduced, new_constraints) = check_applied @@ type_level_eval b in
-    let (dbs , recur) = List.fold_map normalizer_simpl dbs new_constraints in
+    let (dbs , recur) = List.fold_map_acc normalizer_simpl dbs new_constraints in
     let (dbs , resimpl) = normalizer_simpl dbs (C_equation (a , reduced)) in (* Note: this calls recursively but cant't fall in the same case. *)
     (dbs , resimpl @ List.flatten recur) in
   let split_typeclass args tc =
     let fresh_vars = List.map (fun _ -> Core.fresh_type_variable ()) args in
     let fresh_eqns = List.map (fun (v,t) -> C_equation (P_variable v, t)) (List.combine fresh_vars args) in
-    let (dbs , recur) = List.fold_map normalizer_simpl dbs fresh_eqns in
+    let (dbs , recur) = List.fold_map_acc normalizer_simpl dbs fresh_eqns in
     (dbs, [SC_Typeclass { tc ; args = fresh_vars }] @ List.flatten recur) in
 
   match new_constraint with

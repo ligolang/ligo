@@ -239,7 +239,7 @@ let rec type_program (p:I.program) : O.program result =
 (*
   Extract pairs of (name,type) in the declaration and add it to the environment
 *)
-let rec type_declaration env state : I.declaration -> (environment * Solver.state * O.declaration option) result = function
+and type_declaration env state : I.declaration -> (environment * Solver.state * O.declaration option) result = function
   | Declaration_type (type_name , type_expression) ->
     let%bind tv = evaluate_type env type_expression in
     let env' = Environment.add_type type_name tv env in
@@ -256,7 +256,7 @@ let rec type_declaration env state : I.declaration -> (environment * Solver.stat
       ok (env', state' , Some (O.Declaration_constant ((make_n_e name ae') , (env , env'))))
     )
 
-and type_match : environment -> Solver.state -> O.type_expression -> 'i I.matching -> I.expression -> Location.t -> (O.value O.matching * Solver.state) result =
+and type_match : environment -> Solver.state -> O.type_value -> 'i I.matching -> I.expression -> Location.t -> (O.value O.matching * Solver.state) result =
   fun e state t i ae loc -> match i with
     | Match_bool {match_true ; match_false} ->
       let%bind _ =
@@ -284,7 +284,7 @@ and type_match : environment -> Solver.state -> O.type_expression -> 'i I.matchi
       let e' = Environment.add_ez_binder hd t_list e in
       let e' = Environment.add_ez_binder tl t e' in
       let%bind (b' , state'') = type_expression e' state' b in
-      ok (O.Match_list {match_nil ; match_cons = (hd, tl, b')} , state'')
+      ok (O.Match_list {match_nil ; match_cons = ((hd, t_list), (tl, t)), b'} , state'')
     | Match_tuple (lst, b) ->
       let%bind t_tuple =
         trace_strong (match_error ~expected:i ~actual:t loc)
@@ -456,7 +456,7 @@ and type_expression : environment -> Solver.state -> I.expression -> (O.annotate
   | E_literal (Literal_timestamp t) -> (
       return_wrapped (e_timestamp t) state @@ Wrap.literal (t_timestamp ())
     )
-<  | E_literal (Literal_operation o) -> (
+  | E_literal (Literal_operation o) -> (
       return_wrapped (e_operation o) state @@ Wrap.literal (t_operation ())
     )
   | E_literal (Literal_unit) -> (

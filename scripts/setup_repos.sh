@@ -5,7 +5,7 @@ set -x
 eval $(opam config env)
 
 # Remove the nomadic-labs tezos repo (from ligo switch only)
-opam repository remove tezos-opam-repository
+opam repository remove tezos-opam-repository || true
 
 # Add ligolang tezos repo
 opam repository add ligolang-tezos-opam-repository https://gitlab.com/ligolang/tezos-opam-repository.git
