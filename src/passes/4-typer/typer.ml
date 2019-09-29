@@ -222,6 +222,7 @@ end
 open Errors
 
 let swap (a,b) = ok (b,a)
+(*
 let rec type_program (p:I.program) : O.program result =
   let aux (e, acc:(environment * O.declaration Location.wrap list)) (d:I.declaration Location.wrap) =
     let%bind ed' = (bind_map_location (type_declaration e)) d in
@@ -235,11 +236,12 @@ let rec type_program (p:I.program) : O.program result =
     trace (fun () -> program_error p ()) @@
     bind_fold_list aux (Environment.full_empty, []) p in
   ok @@ List.rev lst
+*)
 
 (*
   Extract pairs of (name,type) in the declaration and add it to the environment
 *)
-and type_declaration env state : I.declaration -> (environment * Solver.state * O.declaration option) result = function
+let rec type_declaration env state : I.declaration -> (environment * Solver.state * O.declaration option) result = function
   | Declaration_type (type_name , type_expression) ->
     let%bind tv = evaluate_type env type_expression in
     let env' = Environment.add_type type_name tv env in
@@ -409,7 +411,7 @@ and type_expression : environment -> Solver.state -> I.expression -> (O.annotate
     ] in
     error ~data title content in
   trace main_error @@
-  match ae.expression' with
+  match ae.expression with
 
   (* TODO: this file should take care only of the order in which program fragments
      are translated by Wrap.xyz
