@@ -224,15 +224,15 @@ let rec transpile_literal : AST.literal -> value = fun l -> match l with
 
 and transpile_environment_element_type : AST.environment_element -> type_value result = fun ele ->
   match (AST.get_type' ele.type_value , ele.definition) with
-  | (AST.T_function (f , arg) , ED_declaration (ae , ((_ :: _) as captured_variables)) ) ->
+  | (AST.T_function (arg , ret) , ED_declaration (ae , ((_ :: _) as captured_variables)) ) ->
   begin
     match ae.expression with
     | E_lambda _ ->
-      let%bind f' = transpile_type f in
+      let%bind ret' = transpile_type ret in
       let%bind arg' = transpile_type arg in
       let%bind env' = transpile_environment ae.environment in
       let sub_env = Mini_c.Environment.select captured_variables env' in
-      ok @@ Combinators.t_deep_closure sub_env f' arg'
+      ok @@ Combinators.t_deep_closure sub_env arg' ret'
     | _ -> transpile_type ele.type_value
   end
   | _ -> transpile_type ele.type_value
