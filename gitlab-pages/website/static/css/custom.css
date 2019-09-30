@@ -648,7 +648,7 @@ body
     color: #3AA0FF;
   }
 
-  .tab-pane {
+  .home-container .tab-pane {
     height: 500px;
   }
   
@@ -817,3 +817,7 @@ input#search_input_react::placeholder {
   font-weight:bold
  }
  
+ .docMainWrapper .hljs {
+  border: solid 1px lightgray;
+  overflow-x: auto;
+}
