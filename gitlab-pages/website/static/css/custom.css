@@ -139,6 +139,10 @@ footnote {
   display: none;
 }
 
+.fixedHeaderContainer {
+  left: 0;
+}
+
 .nav-footer {
   background: var(--color-primary-text);
 }
@@ -184,11 +188,10 @@ footnote {
   display: flex;
   align-items: center;
   justify-content: space-around;
-  padding: var(--padding-level-3);
 }
 
 .home-text {
-  width: 35%;
+  flex: 1;
 }
 
 .sample-code-container {
@@ -256,6 +259,10 @@ blockquote {
   color: rgba(255, 255, 255, 1);
 }
 
+.tab-pane {
+  height: 550px;
+}
+
 blockquote code {
   opacity: 0.5;
 }
@@ -321,6 +328,11 @@ a:hover {
 body,
 html {
   background: white;
+}
+
+body {
+  margin: 0 auto;
+  max-width: 1500px;
 }
 
 .copyright a {
@@ -683,31 +695,105 @@ body
 
 @media only screen and (max-width: 1023px) {
   .home-container {
-    flex-direction: column-reverse;
-    margin-top: var(--padding-level-1);
-  }
-  .home-text {
+    flex-direction: column;
     align-content: center;
-    text-align: center;
-    width: 90%;
-    padding-top: var(--padding-level-2);
   }
+
+  .home-text {
+    text-align: center;
+    padding: var(--padding-level-2) 0;
+  }
+
   .sample-code-container {
     width: 90%;
   }
+  
+  .sample-code {
+    padding: 0;
+    width: 100%;
+  }
 }
 
+@media only screen and (min-width: 1280px) {
+  .home-container {
+    flex-direction: row;
+    margin: var(--padding-level-1);    
+    max-width: 90%;
+    padding: var(--padding-level-3);
+  }
 @media only screen and (max-width: 1023px) {
   .reactNavSearchWrapper input#search_input_react {
     background-color: rgba(0, 0, 0, 0.2);
   }
 }
 
-@media only screen and (min-width: 1440px) {
   .landing h4.tagline-text {
     font-size: 2.25rem;
   }
+
+  .sample-code-container {
+    max-width: 60%;
+  }
+
+  .sample-code {
+    padding: 25px;
+    width: 80%;    
+  }
 }
 
-@media only screen and (min-width: 1500px) {
-}
+
+/* code highlights */
+.hljs {
+  display:block;
+  overflow-x:hidden;
+  padding:.5em;
+  background:white;
+  color:black
+ }
+ .hljs-comment,
+ .hljs-quote,
+ .hljs-variable {
+  color:#008000
+ }
+ .hljs-keyword,
+ .hljs-selector-tag,
+ .hljs-built_in,
+ .hljs-name,
+ .hljs-tag {
+  color:#00f
+ }
+ .hljs-string,
+ .hljs-title,
+ .hljs-section,
+ .hljs-attribute,
+ .hljs-literal,
+ .hljs-template-tag,
+ .hljs-template-variable,
+ .hljs-type,
+ .hljs-addition {
+  color:#a31515
+ }
+ .hljs-deletion,
+ .hljs-selector-attr,
+ .hljs-selector-pseudo,
+ .hljs-meta {
+  color:#2b91af
+ }
+ .hljs-doctag {
+  color:#808080
+ }
+ .hljs-attr {
+  color:#f00
+ }
+ .hljs-symbol,
+ .hljs-bullet,
+ .hljs-link {
+  color:#00b0e8
+ }
+ .hljs-emphasis {
+  font-style:italic
+ }
+ .hljs-strong {
+  font-weight:bold
+ }
+ 
