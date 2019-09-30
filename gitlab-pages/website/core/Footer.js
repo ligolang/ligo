@@ -29,7 +29,7 @@ class Footer extends React.Component {
             <a className="nav-home"></a>
             <div>
               <h5>Docs</h5>
-              <a href={this.docUrl('setup-installation.html', this.props.language)}>
+              <a href={this.docUrl('setup/installation/', this.props.language)}>
                 Installation
               </a>
               <a href={this.docUrl('api-cli-commands.html', this.props.language)}>
@@ -69,8 +69,8 @@ class Footer extends React.Component {
             {this.props.config.copyright}
           </div>
         </section>
-      
-        
+
+
       </footer>
     );
   }

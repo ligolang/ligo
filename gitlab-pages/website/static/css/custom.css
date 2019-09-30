@@ -207,7 +207,7 @@ footnote {
 .sample-code {
   border: solid 1px lightgray;
   width: 80%;
-  padding: 10px;
+  padding: 10gipx;
   background-color: white;
 }
 
@@ -740,9 +740,15 @@ body
 
 }
 
+input#search_input_react::placeholder {
+  color: white;
+  opacity: .8;
+}
+
 @media only screen and (max-width: 1023px) {
   .reactNavSearchWrapper input#search_input_react {
     background-color: rgba(0, 0, 0, 0.2);
+    color: white;
   }
 
   .landing code {
