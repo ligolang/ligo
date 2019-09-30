@@ -26,7 +26,7 @@ const dogBreed: animalBreed = "Saluki";
 ### Simple types
 <!--DOCUSAURUS_CODE_TABS-->
 <!--Pascaligo-->
-```Pascal
+```pascaligo
 // accountBalances is a simple type, a map of address <-> tez
 type accountBalances is map(address, tez);
 
@@ -46,7 +46,7 @@ In the example below you can see definition of data types for a ledger, that kee
 
 <!--DOCUSAURUS_CODE_TABS-->
 <!--Pascaligo-->
-```Pascal
+```pascaligo
 // alias two types
 type account is address;
 type numberOfTransactions is nat;
