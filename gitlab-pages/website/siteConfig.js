@@ -14,7 +14,7 @@ const partners = [
     caption: "Nomadic Labs",
     // You will need to prepend the image path with your baseUrl
     // if it is not '/', like: '/test-site/img/image.jpg'.
-    image: "/img/nomadic-logo.svg",
+    image: "/img/nomadic-logo.jpg",
     infoLink: "https://www.nomadic-labs.com/",
     pinned: true
   },
@@ -22,7 +22,7 @@ const partners = [
     caption: "Tocqueville Group",
     // You will need to prepend the image path with your baseUrl
     // if it is not '/', like: '/test-site/img/image.jpg'.
-    image: "/img/tq-logo-2.svg",
+    image: "/img/tq-logo.svg",
     infoLink: "https://tqgroup.io/",
     pinned: true
   },
@@ -30,7 +30,7 @@ const partners = [
     caption: "Stove Labs",
     // You will need to prepend the image path with your baseUrl
     // if it is not '/', like: '/test-site/img/image.jpg'.
-    image: "/img/stove-logo.svg",
+    image: "/img/stove-logo.png",
     infoLink: "https://stove-labs.com",
     pinned: true
   }
@@ -82,8 +82,7 @@ const team = [
 const siteConfig = {
   title: "LIGO", // Title for your website.
   tagline:
-    "LIGO is a statically typed high-level smart-contract language that compiles down to Michelson.",
-  taglineSub: "It seeks to be easy to use, extensible and safe.",
+    "LIGO is a statically typed high-level smart-contract language that compiles down to Michelson. It seeks to be easy to use, extensible and safe.",
   url: "https://your-docusaurus-test-site.com", // Your website URL
   baseUrl: "/", // Base URL for your project */
   // For github.io type URLs, you would set the url and baseUrl like:
@@ -116,7 +115,6 @@ const siteConfig = {
   team,
 
   /* path to images for header/footer */
-  headerIcon: "img/logo.svg",
   footerIcon: "img/logo.svg",
   favicon: "img/logo.svg",
 
@@ -141,7 +139,7 @@ const siteConfig = {
   */
 
   // This copyright info is used in /core/Footer.js and blog RSS/Atom feeds.
-  copyright: `Copyright © ${new Date().getFullYear()} Marigold`,
+  copyright: `© ${new Date().getFullYear()} LIGO. All rights reserved.`,
 
   highlight: {
     // Highlight.js theme to use for syntax highlighting in code blocks.
