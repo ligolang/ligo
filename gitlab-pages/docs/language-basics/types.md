@@ -13,7 +13,7 @@ Type aliasing is a great choice when working towards a readable / maintainable s
 
 <!--DOCUSAURUS_CODE_TABS-->
 <!--Pascaligo-->
-```Pascal
+```pascaligo
 type animalBreed is string;
 
 const dogBreed: animalBreed = "Saluki"; 

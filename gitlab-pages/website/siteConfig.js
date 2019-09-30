@@ -144,7 +144,34 @@ const siteConfig = {
 
   highlight: {
     // Highlight.js theme to use for syntax highlighting in code blocks.
-    theme: "default"
+    theme: "default",
+    hljs: function (hljs) {
+      hljs.registerLanguage('pascaligo', function (hljs) {
+        return {
+          // case_insensitive: true,
+          beginKeywords: '',
+          keywords: {
+            keyword: 'and begin block case const contains down else end fail for ' +
+              'from function if in is list map mod nil not of or patch ' +
+              'procedure record remove set skip step then to type var while with',
+            literal: 'true false unit int string some none bool nat list'
+          },
+          lexemes: '[a-zA-Z][a-zA-Z0-9_]*',
+          contains: [
+            hljs.C_LINE_COMMENT_MODE,
+
+            {
+              className: 'type',
+              begin: /[A-Z][a-z]+/
+            },
+            {
+              begin: /[*+-:;\(\)\{\}|\>\<]/,
+              // className: 'ignore'
+            }
+          ]
+        }
+      });
+    }
   },
 
   // Add custom scripts here that would be placed in <script> tags.

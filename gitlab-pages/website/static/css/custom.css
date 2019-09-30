@@ -817,3 +817,7 @@ input#search_input_react::placeholder {
   font-weight:bold
  }
  
+ .docMainWrapper .hljs {
+  border: solid 1px lightgray;
+  overflow-x: auto;
+}

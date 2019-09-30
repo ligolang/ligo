@@ -35,7 +35,7 @@ Each taco kind, has its own `max_price` that it sells for, and a finite supply f
 
 Current purchase price is calculated with the following equation:
 
-```
+```pascaligo
 current_purchase_price = max_price / available_stock
 ```
 
@@ -71,8 +71,8 @@ The best way to install the dockerized LIGO is as a **global executable** throug
 To begin implementing our smart contract, we need an entry point. We'll call it `main` and it'll specify our contract's storage (`int`) and input parameter (`int`). Of course this is not the final storage/parameter of our contract, but it's something to get us started and test our LIGO installation as well.
 
 ### `taco-shop.ligo`
-```Pascal
-function main (const parameter : int;  const contractStorage : int) : (list(operation) * int) is
+```pascaligo
+function main (const parameter: int; const contractStorage: int) : (list(operation) * int) is
   block {skip} with ((nil : list(operation)), contractStorage + parameter)
 ```
 
@@ -129,7 +129,7 @@ ligo dry-run taco-shop.ligo --syntax pascaligo main 4 3
 We know that Pedro's Taco Shop serves two kinds of tacos, so we'll need to manage stock individually, per kind. Let's define a type, that will keep the `stock` & `max_price` per kind - in a record with two fields. Additionally, we'll want to combine our `taco_supply` type into a map, consisting of the entire offer of Pedro's shop.
 
 **Taco shop's storage**
-```Pascal
+```pascaligo
 type taco_supply is record
     current_stock : nat;
     max_price : tez;
@@ -141,7 +141,7 @@ type taco_shop_storage is map(nat, taco_supply);
 Next step is to update the `main` entry point to include `taco_shop_storage` as its storage - while doing that let's set the `parameter` to `unit` as well to clear things up.
 
 **`taco-shop.ligo`**
-```Pascal
+```pascaligo
 type taco_supply is record
     current_stock : nat;
     max_price : tez;
@@ -208,7 +208,7 @@ Let's start by customizing our contract a bit, we will:
 - change `taco_shop_storage` to a `var` instead of a `const`, because we'll want to modify it
 
 **`taco-shop.ligo`**
-```Pascal
+```pascaligo
 type taco_supply is record
     current_stock : nat;
     max_price : tez;
@@ -231,7 +231,7 @@ In order to decrease the stock in our contract's storage for a specific taco kin
 
 **`taco-shop.ligo`**
 
-```Pascal
+```pascaligo
 type taco_supply is record
     current_stock : nat;
     max_price : tez;
@@ -266,7 +266,7 @@ To make sure we get paid, we will:
   - if yes, stock for the given `taco_kind` will be decreased and the payment accepted
 
 **`taco-shop.ligo`**
-```Pascal
+```pascaligo
 type taco_supply is record
     current_stock : nat;
     max_price : tez;
@@ -327,11 +327,11 @@ end"
 If you'd like to accept tips in your contract as well, simply change the following line, depending on which behavior do you prefer.
 
 **Without tips**
-```Pascal
+```pascaligo
 if amount =/= current_purchase_price then
 ```
 
 **With tips**
-```Pascal
+```pascaligo
 if amount >= current_purchase_price then
 ```

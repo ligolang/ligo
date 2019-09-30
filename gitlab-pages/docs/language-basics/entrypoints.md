@@ -13,7 +13,7 @@ Contract below is effectively an empty contract, that takes a `unit` as a parame
 
 <!--DOCUSAURUS_CODE_TABS-->
 <!--Pascaligo-->
-```Pascal
+```pascaligo
 function main (const p : unit ; const s : unit) : (list(operation) * unit) is
   block {skip} with ((nil : list(operation)), s)
 ```
@@ -27,7 +27,7 @@ In the example below we have a simple counter contract, that can be either `Incr
 
 <!--DOCUSAURUS_CODE_TABS-->
 <!--Pascaligo-->
-```Pascal
+```pascaligo
 // variant defining pseudo multi-entrypoint actions
 type action is
 | Increment of int

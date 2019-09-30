@@ -15,35 +15,6 @@ const MarkdownBlock = CompLibrary.MarkdownBlock; /* Used to read markdown */
 const Container = CompLibrary.Container;
 const GridBlock = CompLibrary.GridBlock;
 
-function pascaligo(hljs) {
-  return {
-    // case_insensitive: true,
-    beginKeywords: '',
-    keywords: {
-      keyword: 'and begin block case const contains down else end fail for ' +
-        'from function if in is list map mod nil not of or patch ' +
-        'procedure record remove set skip step then to type var while with',
-      literal: 'true false unit int string some none bool nat list'
-    },
-    lexemes: '[a-zA-Z][a-zA-Z0-9_]*',
-    contains: [
-      hljs.C_LINE_COMMENT_MODE,
-
-      {
-        className: 'type',
-        begin: /[A-Z][a-z]+/
-      },
-      {
-        begin: /[*+-:;\(\)\{\}|\>\<]/,
-        // className: 'ignore'
-      }
-    ]
-  }
-}
-
-hljs.registerLanguage('pascaligo', pascaligo);
-
-
 const pre = "```";
 
 const pascaligoExampleSmall = `${pre}pascaligo

@@ -9,7 +9,7 @@ Body of a function consists of two parts, the first part (**`block {}`** or **`b
 
 <!--DOCUSAURUS_CODE_TABS-->
 <!--Pascaligo-->
-```Pascal
+```pascaligo
 const availableSupply: nat = 15n;
 const totalSupply: nat = 100n;
 
@@ -30,7 +30,7 @@ A short hand syntax for the same function as above can inline the price calculat
 While this approach can have it's benefits, it can decrease readability.
 <!--DOCUSAURUS_CODE_TABS-->
 <!--Pascaligo-->
-```Pascal
+```pascaligo
 const availableSupply: nat = 15n;
 const totalSupply: nat = 100n;
 
