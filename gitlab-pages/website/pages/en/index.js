@@ -46,6 +46,34 @@ hljs.registerLanguage('pascaligo', pascaligo);
 
 const pre = "```";
 
+const pascaligoExampleSmall = `${pre}pascaligo
+// variant defining pseudo multi-entrypoint 
+// actions
+type action is
+| Increment of int
+| Decrement of int
+
+function add 
+  (const a: int; const b: int): int is 
+  block { skip } with a + b
+
+function subtract 
+  (const a: int; const b: int): int 
+  is block { skip } with a - b
+
+// real entrypoint that re-routes the flow 
+// based on the action provided
+function main 
+  (const p: action; const s: int): 
+  (list(operation) * int) is
+ block { skip } 
+  with ((nil : list(operation)),
+    case p of
+    | Increment(n) -> add(s, n)
+    | Decrement(n) -> subtract(s, n)
+  end)
+${pre}`;
+
 const pascaligoExample = `${pre}pascaligo
 // variant defining pseudo multi-entrypoint actions
 type action is
@@ -67,6 +95,28 @@ function main (const p : action ; const s : int) :
   | Increment(n) -> add(s, n)
   | Decrement(n) -> subtract(s, n)
  end)
+${pre}`;
+const cameligoExampleSmall = `${pre}ocaml
+type storage = int
+
+(* variant defining pseudo multi-entrypoint 
+  actions *)
+type action =
+  | Increment of int
+  | Decrement of int
+
+let add (a: int) (b: int): int = a + b
+
+let subtract (a: int) (b: int): int = a - b
+
+(* real entrypoint that re-routes the flow 
+   based on the action provided *)
+let%entry main(p : action) storage =
+  let storage =
+    match p with
+    | Increment n -> add storage n
+    | Decrement n -> subtract storage n
+  in (([] : operation list), storage)
 ${pre}`;
 
 const cameligoExample = `${pre}ocaml
@@ -94,10 +144,11 @@ ${pre}`;
 const PascalLIGOTab = () => (
   <div
     id="tab-group-3-content-4"
-    className="tab-pane active"
+    className="tab-pane active code-snippet"
     data-group="group_3"
     tabIndex="-1"
   >
+    <MarkdownBlock>{pascaligoExampleSmall}</MarkdownBlock>
     <MarkdownBlock>{pascaligoExample}</MarkdownBlock>
   </div>
 );
@@ -105,10 +156,11 @@ const PascalLIGOTab = () => (
 const CamelLIGOTab = () => (
   <div
     id="tab-group-3-content-5"
-    className="tab-pane"
+    className="tab-pane code-snippet"
     data-group="group_3"
     tabIndex="-1"
   >
+    <MarkdownBlock>{cameligoExampleSmall}</MarkdownBlock>
     <MarkdownBlock>{cameligoExample}</MarkdownBlock>
   </div>
 );
@@ -161,6 +213,9 @@ class HomeSplash extends React.Component {
     return (
       <div className="home-container">
         <div className="home-text">
+          <div className="projectTitle">
+            <img alt={siteConfig.title} src={`${siteConfig.baseUrl}img/logo.svg`} />
+          </div>
           <h4 className="tagline-text">{siteConfig.tagline}</h4>
           <p className="body">{siteConfig.taglineSub}</p>
           <LinkButton

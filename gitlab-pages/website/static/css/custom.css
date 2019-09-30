@@ -191,6 +191,7 @@ footnote {
 }
 
 .home-text {
+  text-align: center;
   flex: 1;
 }
 
@@ -204,9 +205,9 @@ footnote {
 }
 
 .sample-code {
+  border: solid 1px lightgray;
   width: 80%;
-  padding: 25px;
-  box-shadow: 0px 0px 70px rgba(13, 15, 51, 0.06);
+  padding: 10px;
   background-color: white;
 }
 
@@ -257,10 +258,6 @@ blockquote {
   background-color: rgba(26, 26, 26, 0.3);
   border-left: 8px solid rgba(26, 26, 26, 0.1);
   color: rgba(255, 255, 255, 1);
-}
-
-.tab-pane {
-  height: 550px;
 }
 
 blockquote code {
@@ -628,7 +625,21 @@ body
   border-left: 5px solid var(--color-primary-brand);
 }
 
+.code-snippet > div:nth-child(2) {
+  display: none;
+}
+
 @media only screen and (min-width: 1024px) {
+  .code-snippet > div:nth-child(2) {
+    display: block;
+  }
+
+  .code-snippet > div:nth-child(1) {
+    display: none;
+  }
+}
+
+@media only screen and (min-width: 768px) {
   .navigationSlider .slidingNav ul li a {
     color: #0D0F33;
   }
@@ -636,6 +647,11 @@ body
   .navigationSlider .slidingNav ul li a:hover {
     color: #3AA0FF;
   }
+
+  .tab-pane {
+    height: 500px;
+  }
+  
 }
 
 @media (min-width: 560px) and (max-width: 768px) {
@@ -701,11 +717,11 @@ body
 
   .home-text {
     text-align: center;
-    padding: var(--padding-level-2) 0;
+    padding: var(--padding-level-2);
   }
 
   .sample-code-container {
-    width: 90%;
+    width: 100%;
   }
   
   .sample-code {
@@ -721,24 +737,22 @@ body
     max-width: 90%;
     padding: var(--padding-level-3);
   }
+
+}
+
 @media only screen and (max-width: 1023px) {
   .reactNavSearchWrapper input#search_input_react {
     background-color: rgba(0, 0, 0, 0.2);
   }
-}
+
+  .landing code {
+    font-size: .8rem;
+  }
 
   .landing h4.tagline-text {
-    font-size: 2.25rem;
+    font-size: 1.5rem;
   }
 
-  .sample-code-container {
-    max-width: 60%;
-  }
-
-  .sample-code {
-    padding: 25px;
-    width: 80%;    
-  }
 }
 
 
@@ -748,7 +762,7 @@ body
   overflow-x:hidden;
   padding:.5em;
   background:white;
-  color:black
+  color:black;
  }
  .hljs-comment,
  .hljs-quote,
