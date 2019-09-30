@@ -393,10 +393,8 @@ class Index extends React.Component {
         <div className="partners-container hide-small">
           {PartnerShowcase}
           <div className="partners-text">
-            <h3>Our Partners</h3>
-            <p className="body">
-              We are not alone in this world -- here're some people who support us
-            </p>
+            <h3>Partners</h3>
+
           </div>
         </div>
       );
