@@ -190,11 +190,20 @@ class HomeSplash extends React.Component {
           <h4 className="tagline-text">{siteConfig.tagline}</h4>
           <p className="body">{siteConfig.taglineSub}</p>
           <LinkButton
-            href={docUrl("setup/installation.html")}
+            href="https://ligolang.gitlab.io/ligo-web-ide/"
             className="large-primary-button"
+          >
+            Try Online
+          </LinkButton>
+          <p></p>
+          <LinkButton
+            href={docUrl("setup/installation.html")}
+            className="large-secondary-button"
           >
             Get Started
           </LinkButton>
+
+
         </div>
         <SampleCode />
       </div>
