@@ -14,7 +14,7 @@ if [ -n "$dockerfile" ]; then
     docker build --build-arg targetBuildImage="$tag_build" --build-arg version="$version" -t "$tag_package" -f "$dockerfile" .
     # Copy the package to host's (our own) file system
     mkdir -p "$PWD/dist/package/$target"
-    docker run -v $PWD:$PWD "$tag_package" cp -r /package/dist/. "$PWD/dist/package/$target"
+    docker run --entrypoint '/bin/sh' -v $PWD:$PWD "$tag_package" -c "cp -r /package/dist/. $PWD/dist/package/$target"
 else
     echo "Dockerfile not found for target: $target"
 fi

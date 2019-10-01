@@ -43,6 +43,9 @@ stages:
     # build with odoc
     - dune build @doc
 
+    # copy .deb packages into website
+    - find dist -name \*.deb -exec sh -c 'cp {} gitlab-pages/website/static/deb/ligo_$(basename $(dirname {})).deb' \;
+
     # npm
     - cd gitlab-pages/website
     - npm install
