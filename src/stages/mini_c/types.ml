@@ -64,7 +64,7 @@ and expression' =
   | E_closure of anon_function
   | E_skip
   | E_constant of string * expression list
-  | E_application of expression * expression
+  | E_application of (expression * expression)
   | E_variable of var_name
   | E_make_empty_map of (type_value * type_value)
   | E_make_empty_list of type_value
@@ -72,14 +72,14 @@ and expression' =
   | E_make_none of type_value
   | E_iterator of (string * ((var_name * type_value) * expression) * expression)
   | E_fold of (((var_name * type_value) * expression) * expression * expression)
-  | E_if_bool of expression * expression * expression
+  | E_if_bool of (expression * expression * expression)
   | E_if_none of expression * expression * ((var_name * type_value) * expression)
   | E_if_cons of (expression * expression * (((var_name * type_value) * (var_name * type_value)) * expression))
   | E_if_left of expression * ((var_name * type_value) * expression) * ((var_name * type_value) * expression)
   | E_let_in of ((var_name * type_value) * expression * expression)
   | E_sequence of (expression * expression)
   | E_assignment of (string * [`Left | `Right] list * expression)
-  | E_while of expression * expression
+  | E_while of (expression * expression)
 
 and expression = {
   content : expression' ;

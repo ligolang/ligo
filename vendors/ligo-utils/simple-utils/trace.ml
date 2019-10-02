@@ -661,10 +661,17 @@ let bind_and (a, b) =
   a >>? fun a ->
   b >>? fun b ->
   ok (a, b)
+let bind_and3 (a, b, c) =
+  a >>? fun a ->
+  b >>? fun b ->
+  c >>? fun c ->
+  ok (a, b, c)
 
 let bind_pair = bind_and
 let bind_map_pair f (a, b) =
   bind_pair (f a, f b)
+let bind_map_triple f (a, b, c) =
+  bind_and3 (f a, f b, f c)
 
 
 (**
