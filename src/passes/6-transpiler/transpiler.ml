@@ -280,7 +280,13 @@ and transpile_annotated_expression (ae:AST.annotated_expression) : expression re
   | E_application (a, b) ->
       let%bind a = transpile_annotated_expression a in
       let%bind b = transpile_annotated_expression b in
-      return @@ E_application (a, b)
+      let%bind b' = Self_mini_c.Helpers.map_expression
+        (fun exp ->
+          match exp.type_value with
+          | T_deep_closure _ -> fail @@ simple_error "Cannot apply closure in function argument"
+          | _ -> ok exp
+        ) b in
+      return @@ E_application (a, b')
   | E_constructor (m, param) -> (
       let%bind param' = transpile_annotated_expression param in
       let (param'_expr , param'_tv) = Combinators.Expression.(get_content param' , get_type param') in

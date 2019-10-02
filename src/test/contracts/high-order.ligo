@@ -16,3 +16,10 @@ function foobar2 (const i : int) : int is
   function foo2 (const i : int) : int is
     block { skip } with i;
   block { skip } with higher2(i,foo2)
+
+// This is not supported yet:
+// const a : int = 123;
+// function foobar3 (const i : int) : int is
+//   function foo2 (const i : int) : int is
+//     block { skip } with (a+i);
+//   block { skip } with higher2(i,foo2)
