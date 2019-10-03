@@ -23,3 +23,15 @@ function foobar2 (const i : int) : int is
 //   function foo2 (const i : int) : int is
 //     block { skip } with (a+i);
 //   block { skip } with higher2(i,foo2)
+
+function f (const i : int) : int is
+  block { skip }
+  with i
+
+function g (const i : int) : int is
+  block { skip }
+  with f(i)
+
+function foobar4 (const i : int) : int is
+  block { skip }
+  with g(g(i))

@@ -283,13 +283,18 @@ and transpile_annotated_expression (ae:AST.annotated_expression) : expression re
   | E_application (a, b) ->
       let%bind a = transpile_annotated_expression a in
       let%bind b = transpile_annotated_expression b in
-      let%bind b' = Self_mini_c.Helpers.map_expression
-        (fun exp ->
-          match exp.type_value with
-          | T_deep_closure _ -> fail @@ simple_error "Cannot apply closure in function argument"
-          | _ -> ok exp
-        ) b in
-      return @@ E_application (a, b')
+      let%bind _err = Self_mini_c.Helpers.fold_expression
+        (fun sub_arg exp ->
+          match (exp.type_value , exp.content) with
+          | T_pair _ , _ -> ok false
+          | T_base _ , E_application _ -> ok true
+          | (T_deep_closure _), _ ->
+            let errmsg = Format.asprintf "Cannot apply closure in function arguments: %a\n"
+              Mini_c.PP.expression_with_type b in
+            if sub_arg then ok sub_arg else fail @@ simple_error errmsg
+          | _,_ -> ok sub_arg
+        ) false b in
+      return @@ E_application (a, b)
   | E_constructor (m, param) -> (
       let%bind param' = transpile_annotated_expression param in
       let (param'_expr , param'_tv) = Combinators.Expression.(get_content param' , get_type param') in

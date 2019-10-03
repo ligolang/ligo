@@ -1,8 +1,75 @@
 open Mini_c
 open Trace
 
+type 'a folder = 'a -> expression -> 'a result
+let rec fold_expression : 'a folder -> 'a -> expression -> 'a result = fun f init e ->
+  let self = fold_expression f in 
+  let%bind init' = f init e in
+  match e.content with
+  | E_variable _ | E_skip | E_make_none _
+  | E_make_empty_map (_,_) | E_make_empty_list _ 
+  | E_make_empty_set _ -> (
+    ok init'
+  )
+  | E_literal v -> (
+    match v with
+    | D_function an -> self init' an.body
+    | _ -> ok init'
+  )
+  | E_constant (_, lst) -> (
+      let%bind res = bind_fold_list self init' lst in
+      ok res
+  )
+  | E_closure af -> (
+      let%bind res = self init' af.body in
+      ok res
+  )
+  | E_application farg -> (
+      let%bind res = bind_fold_pair self init' farg in 
+      ok res
+  )
+  | E_iterator (_, ((_ , _) , body) , exp) -> (
+      let%bind res = bind_fold_pair self init' (exp,body) in
+      ok res
+  )
+  | E_fold (((_ , _) , body) , col , init) -> (
+      let%bind res = bind_fold_triple self init' (body,col,init) in
+      ok res
+  )
+  | E_while eb -> (
+      let%bind res = bind_fold_pair self init' eb in
+      ok res
+  ) 
+  | E_if_bool cab -> (
+      let%bind res = bind_fold_triple self init' cab in
+      ok res
+  )
+  | E_if_none (c, n, ((_, _) , s)) -> (
+      let%bind res = bind_fold_triple self init' (c,n,s) in
+      ok res
+  )
+  | E_if_cons (c, n, (((_, _) , (_, _)) , cons)) -> (
+      let%bind res = bind_fold_triple self init' (c,n,cons) in
+      ok res
+  )
+  | E_if_left (c, ((_, _) , l), ((_, _) , r)) -> (
+      let%bind res = bind_fold_triple self init' (c,l,r) in
+      ok res
+  )
+  | E_let_in ((_, _) , expr , body) -> (
+      let%bind res = bind_fold_pair self init' (expr,body) in
+      ok res
+  )
+  | E_sequence ab -> (
+      let%bind res = bind_fold_pair self init' ab in
+      ok res
+  )
+  | E_assignment (_, _, exp) -> (
+      let%bind res = self init' exp in
+      ok res
+  )
+
 type mapper = expression -> expression result
-(* fold ('a -> 'b -> 'a) -> 'a -> 'b list -> 'a *)
 
 let rec map_expression : mapper -> expression -> expression result = fun f e ->
   let self = map_expression f in
