@@ -8,7 +8,6 @@ open Combinators
 
 let nseq_to_list (hd, tl) = hd :: tl
 let npseq_to_list (hd, tl) = hd :: (List.map snd tl)
-let npseq_to_nelist (hd, tl) = hd, (List.map snd tl)
 let pseq_to_list = function
   | None -> []
   | Some lst -> npseq_to_list lst
@@ -33,16 +32,6 @@ module Errors = struct
     let data = [
       ("none_expr",
        fun () -> Format.asprintf "%a" Location.pp_lift @@ region)
-    ] in
-    error ~data title message
-
-  let bad_bytes loc str =
-    let title () = "bad bytes string" in
-    let message () =
-      Format.asprintf "bytes string contained non-hexadecimal chars" in
-    let data = [
-      ("location", fun () -> Format.asprintf "%a" Location.pp loc) ;
-      ("bytes", fun () -> str) ;
     ] in
     error ~data title message
 
@@ -88,17 +77,6 @@ module Errors = struct
     ] in
     error ~data title message
 
-  let unsupported_arith_op expr =
-    let title () = "arithmetic expressions" in
-    let message () =
-      Format.asprintf "this arithmetic operator is not supported yet" in
-    let expr_loc = Raw.expr_to_region expr in
-    let data = [
-      ("expr_loc",
-       fun () -> Format.asprintf "%a" Location.pp_lift @@ expr_loc)
-    ] in
-    error ~data title message
-
   let unsupported_string_catenation expr =
     let title () = "string expressions" in
     let message () =
@@ -107,16 +85,6 @@ module Errors = struct
     let data = [
       ("expr_loc",
        fun () -> Format.asprintf "%a" Location.pp_lift @@ expr_loc)
-    ] in
-    error ~data title message
-
-  let unsupported_proc_calls call =
-    let title () = "procedure calls" in
-    let message () =
-      Format.asprintf "procedure calls are not supported yet" in
-    let data = [
-      ("call_loc",
-       fun () -> Format.asprintf "%a" Location.pp_lift @@ call.Region.region)
     ] in
     error ~data title message
 
