@@ -1,13 +1,8 @@
 (library
-  (name transpiler)
-  (public_name ligo.transpiler)
+  (name self_mini_c)
+  (public_name ligo.self_mini_c)
   (libraries
-    simple-utils
-    tezos-utils
-    ast_typed
     mini_c
-    self_mini_c
-    operators
   )
   (preprocess
     (pps ppx_let)
