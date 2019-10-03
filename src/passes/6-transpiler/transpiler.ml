@@ -232,7 +232,10 @@ and transpile_environment_element_type : AST.environment_element -> type_value r
       let%bind arg' = transpile_type arg in
       let%bind env' = transpile_environment ae.environment in
       let sub_env = Mini_c.Environment.select captured_variables env' in
-      ok @@ Combinators.t_deep_closure sub_env arg' ret'
+      if sub_env = [] then
+        transpile_type ele.type_value
+      else
+        ok @@ Combinators.t_deep_closure sub_env arg' ret'
     | _ -> transpile_type ele.type_value
   end
   | _ -> transpile_type ele.type_value
