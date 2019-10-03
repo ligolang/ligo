@@ -1,6 +1,26 @@
 open Mini_c
 open Trace
 
+let rec fold_type_value : ('a -> type_value -> 'a result) -> 'a -> type_value -> 'a result = fun f init t ->
+  let self = fold_type_value f in
+  let%bind init' = f init t in
+  match t with
+  | T_pair ((_, a), (_, b))
+  | T_or ((_, a), (_, b))
+  | T_function (a, b)
+  | T_map (a, b)
+  | T_big_map (a, b) ->
+     bind_fold_pair self init' (a, b)
+  | T_deep_closure (env, a, b) ->
+     bind_fold_list self init' (List.map snd env @ [a; b])
+  | T_list a
+  | T_set a
+  | T_contract a
+  | T_option a ->
+     self init' a
+  | T_base _ ->
+     ok init'
+
 type 'a folder = 'a -> expression -> 'a result
 let rec fold_expression : 'a folder -> 'a -> expression -> 'a result = fun f init e ->
   let self = fold_expression f in 
