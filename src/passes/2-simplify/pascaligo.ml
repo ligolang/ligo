@@ -488,8 +488,11 @@ let rec simpl_expression (t:Raw.expr) : expr result =
         String.(sub s 1 (length s - 2))
       in
       return @@ e_literal ~loc (Literal_string s')
-  | EString (Cat _) as e ->
-      fail @@ unsupported_string_catenation e
+  | EString (Cat bo) ->
+    let (bo , loc) = r_split bo in
+    let%bind sl = simpl_expression bo.arg1 in
+    let%bind sr = simpl_expression bo.arg2 in
+    return @@ e_string_cat ~loc sl sr
   | ELogic l -> simpl_logic_expression l
   | EList l -> simpl_list_expression l
   | ESet s -> simpl_set_expression s
