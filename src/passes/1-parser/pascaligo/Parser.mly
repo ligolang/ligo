@@ -591,7 +591,11 @@ assignment:
     in {region; value}}
 
 rhs:
-  expr  { Expr $1 }
+  expr {
+    match $1 with
+      EConstr (NoneExpr e) -> (NoneExpr e : rhs)
+    | e -> Expr e
+  }
 
 lhs:
   path       {    Path $1 }
