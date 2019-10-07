@@ -1,3 +1,5 @@
+[@@@warning "-42"]
+
 open AST
 open! Region
 
@@ -351,7 +353,6 @@ and print_fun_expr {value; _} =
   print_expr body
 
 and print_conditional {value; _} =
-   let open Region in
    let {kwd_if; test; kwd_then; ifso; kwd_else; ifnot} = value
    in print_token ghost "(";
    print_token kwd_if "if";

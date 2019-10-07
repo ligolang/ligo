@@ -119,9 +119,9 @@ use the non-operation `skip`.
           end
       end with f
 
-  Like Pascal, PascaLIGO offers procedures, as well as functions. The
-difference follows the divide between expressions and instructions:
-function calls are expressions, procedure calls are instructions.
+<!--   Like Pascal, PascaLIGO offers procedures, as well as functions. The -->
+<!-- difference follows the divide between expressions and instructions: -->
+<!-- function calls are expressions, procedure calls are instructions. -->
 
   In order for a function to be a candidate to be an entrypoint to the
 contract, it needs to return a specific type: `list (operation) *
@@ -554,7 +554,7 @@ given the declarations (in verbose style)
 
 then the value of `r.f` is `4`.
 
-### Predefined functions, procedures and instructions
+### Predefined functions instructions
 
 Beyond a few operators, PascaLIGO features some predefined values and
 functions.
@@ -590,54 +590,54 @@ string: if `offset + length` is greater than the length of `string`,
 the result is `None`, otherwise `Some (substring)`. See section
 "Options".
 
-#### Lists
+<!-- #### Lists -->
 
-PascaLIGO offers two kinds of iterators on lists.
+<!-- PascaLIGO offers two kinds of iterators on lists. -->
 
-The first applies a given function to all the items of a given list,
-each call returning the predefined value `Unit`. If the function name
-is `f` and the list is `l`, this is expressed as
+<!-- The first applies a given function to all the items of a given list, -->
+<!-- each call returning the predefined value `Unit`. If the function name -->
+<!-- is `f` and the list is `l`, this is expressed as -->
 
-    list_iter (l, f);
+<!--     list_iter (l, f); -->
 
-Note: `list_iter` is a predefined _procedure_. Procedures are
-functions that return `Unit` and whose calls are instructions, not
-expressions. The same holds for the iterated function `f` here. See
-section "Declarations/Procedures".
+<!-- Note: `list_iter` is a predefined _procedure_. Procedures are -->
+<!-- functions that return `Unit` and whose calls are instructions, not -->
+<!-- expressions. The same holds for the iterated function `f` here. See -->
+<!-- section "Declarations/Procedures". -->
 
-For an iterator like `list_iter` to be useful, it needs to be able to
-perform a side effect, which user-defined procedures and functions
-cannot do. Like so:
+<!-- For an iterator like `list_iter` to be useful, it needs to be able to -->
+<!-- perform a side effect, which user-defined procedures and functions -->
+<!-- cannot do. Like so: -->
 
-    function iter (const delta : int; const l : list (int)) : int is
-      var acc : int := 0
-      procedure aggregate (const i : int) is
-        begin
-          acc := acc + i
-        end
-      begin
-        aggregate (delta);         // Has no effect on acc
-        list_iter (l, aggregate)   // Has an effect on acc
-      end with acc
+<!--     function iter (const delta : int; const l : list (int)) : int is -->
+<!--       var acc : int := 0 -->
+<!--       procedure aggregate (const i : int) is -->
+<!--         begin -->
+<!--           acc := acc + i -->
+<!--         end -->
+<!--       begin -->
+<!--         aggregate (delta);         // Has no effect on acc -->
+<!--         list_iter (l, aggregate)   // Has an effect on acc -->
+<!--       end with acc -->
 
-The other predefined iterator on lists is `list_map`. It is useful
-when we need to apply a function to all the items of a list and gather
-them into another list, in the same order as the original items. (In
-mathematical terms, `list_map` builds the list of the images through
-the function.) For instance, the function `iter`
+<!-- The other predefined iterator on lists is `list_map`. It is useful -->
+<!-- when we need to apply a function to all the items of a list and gather -->
+<!-- them into another list, in the same order as the original items. (In -->
+<!-- mathematical terms, `list_map` builds the list of the images through -->
+<!-- the function.) For instance, the function `iter` -->
 
-    function iter (const l : list (int)) : list (int) is
-      function incr (const i : int) : int is
-        begin
-          skip
-        end with i+1
-      begin
-        skip
-      end with list_map (l, incr)
+<!--     function iter (const l : list (int)) : list (int) is -->
+<!--       function incr (const i : int) : int is -->
+<!--         begin -->
+<!--           skip -->
+<!--         end with i+1 -->
+<!--       begin -->
+<!--         skip -->
+<!--       end with list_map (l, incr) -->
 
-will take a list of integers as a parameter and return a list with the
-integers all incremented, e.g., `iter (list [1;2;3])` evaluates in
-`list [2;3;4]`.
+<!-- will take a list of integers as a parameter and return a list with the -->
+<!-- integers all incremented, e.g., `iter (list [1;2;3])` evaluates in -->
+<!-- `list [2;3;4]`. -->
 
 ####  Sets
 
@@ -709,18 +709,13 @@ functions to update sets.
 
     has value `3`.
 
-
-  - The iterator `set_iter` is similar to `list_iter`: it takes a set
-    and a procedure (or function returning `Unit`) and applies it in
-    turn to all the elements of the set.
-
-  - Another form of complete iteration on sets is performed by
-    loops. See section "Loops".
+  - Complete iteration on sets is performed by loops. See section
+    "Loops".
 
 #### Maps
 
 Currently, maps have less support than sets. PascaLIGO offers the
-following functions and procedures on maps:
+following functions on maps:
 
   - Adding bindings to a map is only possible if the map is mutable,
     that is, if it was declared with the annotation `var`, like so, in
@@ -768,19 +763,8 @@ following functions and procedures on maps:
     where `sender` is a key and `backers` is a map. If the key is
     absent in the map, this instruction is a non-operation.
 
-  - The iterator `map_iter` is similar to `list_iter`: it takes a set
-    and a procedure (or function returning `Unit`) and applies it in
-    turn to all the bindings of the map. The type of the iterated
-    procedure/function is expected to be `key * value -> unit`.
-
-  - The iterator `map_map` is similar to `list_map`: it takes a map
-    and a function and builds a new map by applying the function to
-    all the bindings. In particular, this means that the expected
-    return type of the iterated function must be the type of the
-    values in the map.
-
-  - Another form of complete iteration on maps is performed by
-    loops. See section "Loops".
+  - Complete iteration on maps is performed by loops. See section
+    "Loops".
 
 #### Failures
 
@@ -800,17 +784,17 @@ can chose.
 ## Declarations
 
 There are several kinds of declarations: types, mutable variables,
-constants, functions, procedures, fields. Depending on the syntactic
-context, only some of those declarations will be allowed. Declarations
-may be separated by a semicolon. (Because each declaration starts with a
+constants, functions, fields. Depending on the syntactic context, only
+some of those declarations will be allowed. Declarations may be
+separated by a semicolon. (Because each declaration starts with a
 keyword they can be parsed without separators.)
 
 
 ### Types
 
 Type declarations are found only at top-level, that is, outside any
-function or procedure. They associate a type name to a type
-expression. The general syntax is
+function. They associate a type name to a type expression. The general
+syntax is
 
     type some_type_name is some_type_expression
 
@@ -959,27 +943,39 @@ is valid and changes the value of the mutable variable `counter` to be
 `3n`. This is the semantics found in all imperative languages.
 
 IMPORTANT: Mutable variables cannot be declared at top-level, but only
-in the scope of function and procedure bodies. This is to avoid global
-side effects that hide the control flow and makes static analysis
-extremely difficult.
+in the scope of function bodies. This is to avoid global side effects
+that hide the control flow and makes static analysis extremely
+difficult.
 
 ### Functions
 
-Function declarations can occur both at top-level and inside functions
-and procedures (in the tradition of Pascal). We saw an example
-earlier:
+Function declarations can occur both at top-level and inside
+functions, in the tradition of Pascal. For example,
 
-    function iter (const l : list (int)) : list (int) is
-      function incr (const i : int) : int is
+    function incr_list (const l : list (int)) : list (int) is
+      function incr_int (const i : int) : int is
         begin
           skip
         end with i+1
+        const item : int = 0
       begin
-        skip
-      end with list_map (l, incr)
+        var temp : list (int) := nil;
+        for item in l
+          begin
+            temp := incr_int (item) # temp
+          end;
+        var new_l : list (int) := nil;
+        for item in temp
+          begin
+            new_l := item # new_l
+          end
+      end with new_l
 
-Here, the function `incr` is declared inside the declaration of the
-function `iter`. The general shape of a function declaration is
+Here, the function `incr_int` is declared inside the declaration of
+the function `incr_list`, which take a list of integers and a list
+containing the same integers plus one.
+
+The general shape of a function declaration is
 
     function my_name ( ... (* parameters here *)) : return_type is
       ... // local declarations here
@@ -1042,7 +1038,7 @@ copies. Let us copy an example seen above:
 
     function iter (const delta : int; const l : list (int)) : int is
       var acc : int := 0
-      procedure aggregate (const i : int) is
+      function aggregate (const i : int) : unit is
         begin
           acc := acc + i // acc is part of the copied environment
         end
@@ -1058,41 +1054,41 @@ value in return.
 IMPORTANT: _Functions cannot be recursive in PascaLIGO_, that is why
 loops or iterators are needed.
 
-### Procedures
+<!-- ### Procedures -->
 
-WARNING: Procedures are not implemented in the current version of LIGO, they
-will appear in a future version with these semantics but cannot currently be
-used.
+<!-- WARNING: Procedures are not implemented in the current version of LIGO, they -->
+<!-- will appear in a future version with these semantics but cannot currently be -->
+<!-- used. -->
 
-Procedures are a special kind of functions that return `Unit`. They
-are declared as follows:
+<!-- Procedures are a special kind of functions that return `Unit`. They -->
+<!-- are declared as follows: -->
 
-    procedure my_name ( ... (* parameters here *)) is
-      ... // local declarations here
-      begin
-        ... // instructions here
-      end
+<!--     procedure my_name ( ... (* parameters here *)) is -->
+<!--       ... // local declarations here -->
+<!--       begin -->
+<!--         ... // instructions here -->
+<!--       end -->
 
-Since function calls (see section "Functions") leave the environment
-invariant, one may wonder what use there is to procedures. As we have
-seen in the section about "Lists" and their iterators, the exception
-to this rule are predefined iterators, like `list_iter`. They actually
-allow the iterated function to perform side effects. Here is the
-example again:
+<!-- Since function calls (see section "Functions") leave the environment -->
+<!-- invariant, one may wonder what use there is to procedures. As we have -->
+<!-- seen in the section about "Lists" and their iterators, the exception -->
+<!-- to this rule are predefined iterators, like `list_iter`. They actually -->
+<!-- allow the iterated function to perform side effects. Here is the -->
+<!-- example again: -->
 
-    function iter (const delta : int; const l : list (int)) : int is
-      var acc : int := 0
-      procedure aggregate (const i : int) is
-        begin
-          acc := acc + i
-        end
-      begin
-        aggregate (delta);         // Has no effect on acc
-        list_iter (l, aggregate)   // Has an effect on acc
-      end with acc
+<!--     function iter (const delta : int; const l : list (int)) : int is -->
+<!--       var acc : int := 0 -->
+<!--       procedure aggregate (const i : int) is -->
+<!--         begin -->
+<!--           acc := acc + i -->
+<!--         end -->
+<!--       begin -->
+<!--         aggregate (delta);         // Has no effect on acc -->
+<!--         list_iter (l, aggregate)   // Has an effect on acc -->
+<!--       end with acc -->
 
-(For the keen reader, this is because the iterated function is inlined
-by the compiler.)
+<!-- (For the keen reader, this is because the iterated function is inlined -->
+<!-- by the compiler.) -->
 
 ## Instructions
 
@@ -1154,7 +1150,7 @@ To iterate on a set `s`, we would write, for instance,
         ... // instructions
       end
 
-where `e` is bound in turn in increasing orde to each element of the
+where `e` is bound in turn in increasing order to each element of the
 set `s`. For example, given the declarations
 
     const s : set (int) = set 3; 1; 2 end
@@ -1329,7 +1325,7 @@ PascaLIGO has an explicit keyword for the non-operation: `skip`. Using
 
 - The `for` loop is not supported yet.
 
-- Procedures are not supported yet.
+<!-- - Procedures are not supported yet. -->
 
 - Nested code blocks are not supported yet.
 

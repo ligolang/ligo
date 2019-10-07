@@ -174,7 +174,7 @@ let check extension =
 
 let read language extension =
   try
-    Getopt.parse_cmdline (specs language extension) anonymous;    
+    Getopt.parse_cmdline (specs language extension) anonymous;
     (verb_str :=
        let apply e a =
          if a <> "" then Printf.sprintf "%s, %s" e a else e

@@ -6,7 +6,7 @@ let () = Printexc.record_backtrace true
 
 (* Running the lexer on the source *)
 
-let options = EvalOpt.read "Ligodity" ".mligo"
+let options = EvalOpt.read "CameLIGO" ".mligo"
 
 open EvalOpt
 
