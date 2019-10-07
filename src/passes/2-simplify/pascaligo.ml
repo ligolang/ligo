@@ -792,7 +792,8 @@ and simpl_single_instruction : Raw.single_instr -> (_ -> expression result) resu
       let (a , loc) = r_split a in
       let%bind value_expr = match a.rhs with
         | Expr e -> simpl_expression e
-        | NoneExpr reg -> fail @@ unsupported_ass_None reg
+        (* | NoneExpr reg -> fail @@ unsupported_ass_None reg *)
+        | NoneExpr reg -> simpl_expression (Raw.EConstr (Raw.NoneExpr reg)) 
       in
       match a.lhs with
         | Path path -> (

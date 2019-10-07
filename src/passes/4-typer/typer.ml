@@ -615,6 +615,8 @@ and type_expression : environment -> ?tv_opt:O.type_value -> I.expression -> O.a
       let output_type = body.type_annotation in
       return (E_lambda {binder = fst binder ; body}) (t_function input_type output_type ())
     )
+  | E_constant ("NONE", []) ->
+    return (E_constant ("NONE", [])) (t_option_none ())
   | E_constant (name, lst) ->
       let%bind lst' = bind_list @@ List.map (type_expression e) lst in
       let tv_lst = List.map get_type_annotation lst' in

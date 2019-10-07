@@ -130,6 +130,8 @@ let rec transpile_type (t:AST.type_value) : type_value result =
   | T_constant ("option", [o]) ->
       let%bind o' = transpile_type o in
       ok (T_option o')
+  | T_constant ("option_none", []) ->
+      ok (T_option (T_base Base_unit))
   | T_constant (name , _lst) -> fail @@ unrecognized_type_constant name
   (* TODO hmm *)
   | T_sum m ->
