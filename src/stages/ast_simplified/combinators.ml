@@ -73,6 +73,7 @@ let e_record ?loc map : expression = location_wrap ?loc @@ E_record map
 let e_tuple ?loc lst : expression = location_wrap ?loc @@ E_tuple lst
 let e_some ?loc s : expression = location_wrap ?loc @@ E_constant ("SOME", [s])
 let e_none ?loc () : expression = location_wrap ?loc @@ E_constant ("NONE", [])
+let e_string_cat ?loc sl sr : expression = location_wrap ?loc @@ E_constant ("CONCAT" , [sl ; sr ])
 let e_map_add ?loc k v old : expression = location_wrap ?loc @@ E_constant ("MAP_ADD" , [k ; v ; old])
 let e_map ?loc lst : expression = location_wrap ?loc @@ E_map lst
 let e_set ?loc lst : expression = location_wrap ?loc @@ E_set lst

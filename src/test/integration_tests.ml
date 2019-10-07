@@ -262,7 +262,8 @@ let unit_expression () : unit result =
 
 let string_expression () : unit result =
   let%bind program = type_file "./contracts/string.ligo" in
-  expect_eq_evaluate program "s" (e_string "toto")
+  let%bind _ = expect_eq_evaluate program "s" (e_string "toto") in
+  expect_eq_evaluate program "y" (e_string "foototobar")
 
 let include_ () : unit result =
   let%bind program = type_file "./contracts/includer.ligo" in
