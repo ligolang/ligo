@@ -29,7 +29,6 @@ module Errors : sig
   *)
   val unsupported_arith_op : Raw.expr -> unit -> error
   (*
-  val unsupported_string_catenation : Raw.expr -> unit -> error
   val unsupported_set_expr : Raw.expr -> unit -> error
   *)
   val unsupported_proc_calls : 'a Raw.reg -> unit -> error

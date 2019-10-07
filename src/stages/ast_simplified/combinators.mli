@@ -61,6 +61,7 @@ val e_record  : ?loc:Location.t -> ( expr * expr ) list -> expression
 val e_tuple : ?loc:Location.t -> expression list -> expression
 val e_some : ?loc:Location.t -> expression -> expression
 val e_none : ?loc:Location.t -> unit -> expression
+val e_string_cat : ?loc:Location.t -> expression -> expression -> expression
 val e_map_add : ?loc:Location.t -> expression -> expression ->  expression -> expression
 val e_map : ?loc:Location.t -> ( expression * expression ) list -> expression
 val e_set : ?loc:Location.t -> expression list -> expression
