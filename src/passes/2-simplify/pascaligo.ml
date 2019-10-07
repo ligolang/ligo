@@ -89,17 +89,6 @@ module Errors = struct
     ] in
     error ~data title message
 
-  let unsupported_string_catenation expr =
-    let title () = "string expressions" in
-    let message () =
-      Format.asprintf "string concatenation is not supported yet" in
-    let expr_loc = Raw.expr_to_region expr in
-    let data = [
-      ("expr_loc",
-       fun () -> Format.asprintf "%a" Location.pp_lift @@ expr_loc)
-    ] in
-    error ~data title message
-
   let unsupported_proc_calls call =
     let title () = "procedure calls" in
     let message () =
