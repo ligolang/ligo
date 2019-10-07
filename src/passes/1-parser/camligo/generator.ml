@@ -1,8 +1,8 @@
 open Simple_utils
 
 type 'a name = {
-  content : 'a ;
   name : string ;
+  content : 'a ;
 }
 
 let make_name name content = { name ; content }
@@ -736,4 +736,3 @@ let () =
     Format.printf "%a@.%a\n" PP_helpers.comment "AST" Print_AST.language language
   )
   | _ -> exit 1
-
