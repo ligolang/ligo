@@ -782,7 +782,7 @@ and simpl_single_instruction : Raw.single_instr -> (_ -> expression result) resu
       let (a , loc) = r_split a in
       let%bind value_expr = match a.rhs with
         | Expr e -> simpl_expression e
-        | NoneExpr reg -> simpl_expression (EConstr (NoneExpr reg)) 
+        | NoneExpr reg -> simpl_expression (EConstr (NoneExpr reg))
       in
       match a.lhs with
         | Path path -> (

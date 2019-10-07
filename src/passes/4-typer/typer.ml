@@ -616,7 +616,11 @@ and type_expression : environment -> ?tv_opt:O.type_value -> I.expression -> O.a
       return (E_lambda {binder = fst binder ; body}) (t_function input_type output_type ())
     )
   | E_constant ("NONE", []) ->
-    return (E_constant ("NONE", [])) (t_option_none ())
+    let%bind tv_opt = bind_map_option get_t_option tv_opt in
+    begin match tv_opt with
+    | None -> fail @@ simple_info "None without a type annotation"
+    | Some tv -> return (E_constant ("NONE", [])) (t_option tv ())
+    end
   | E_constant (name, lst) ->
       let%bind lst' = bind_list @@ List.map (type_expression e) lst in
       let tv_lst = List.map get_type_annotation lst' in
@@ -728,7 +732,7 @@ and type_expression : environment -> ?tv_opt:O.type_value -> I.expression -> O.a
           fail @@ not_supported_yet "assign expressions with maps are not supported yet" ae
       in
       bind_fold_list aux (typed_name.type_value , []) path in
-    let%bind expr' = type_expression e expr in
+    let%bind expr' = type_expression e ~tv_opt:assign_tv expr in
     let t_expr' = get_type_annotation expr' in
     let%bind () =
       trace_strong (type_error

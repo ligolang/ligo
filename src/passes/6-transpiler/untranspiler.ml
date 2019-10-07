@@ -107,14 +107,12 @@ let rec untranspile (v : value) (t : AST.type_value) : AST.annotated_expression 
         get_string v in
       return (E_literal (Literal_address n))
     )
-  | T_constant ("option_none", []) ->
-    ok e_a_empty_none
   | T_constant ("option", [o]) -> (
       let%bind opt =
         trace_strong (wrong_mini_c_value "option" v) @@
         get_option v in
       match opt with
-      | None -> ok e_a_empty_none
+      | None -> ok (e_a_empty_none o)
       | Some s ->
           let%bind s' = untranspile s o in
           ok (e_a_empty_some s')
