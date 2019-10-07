@@ -726,7 +726,7 @@ and type_expression : environment -> ?tv_opt:O.type_value -> I.expression -> O.a
           fail @@ not_supported_yet "assign expressions with maps are not supported yet" ae
       in
       bind_fold_list aux (typed_name.type_value , []) path in
-    let%bind expr' = type_expression e expr in
+    let%bind expr' = type_expression e ~tv_opt:assign_tv expr in
     let t_expr' = get_type_annotation expr' in
     let%bind () =
       trace_strong (type_error

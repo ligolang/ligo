@@ -369,6 +369,10 @@ let option () : unit result =
     let expected = e_typed_none t_int in
     expect_eq_evaluate program "n" expected
   in
+  let%bind () =
+    let expected = e_typed_none t_int in
+    expect_eq program "assign" (e_int 12) expected
+  in
   ok ()
 
 let moption () : unit result =

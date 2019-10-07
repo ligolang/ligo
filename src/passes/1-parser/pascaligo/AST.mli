@@ -390,9 +390,7 @@ and lhs =
   Path    of path
 | MapPath of map_lookup reg
 
-and rhs =
-      Expr of expr
-| NoneExpr of c_None
+and rhs = expr
 
 and loop =
   While of while_loop reg

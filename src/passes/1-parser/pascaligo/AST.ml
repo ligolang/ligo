@@ -406,9 +406,7 @@ and lhs =
   Path    of path
 | MapPath of map_lookup reg
 
-and rhs =
-      Expr of expr
-| NoneExpr of c_None
+and rhs = expr
 
 and loop =
   While of while_loop reg
@@ -758,9 +756,7 @@ let lhs_to_region : lhs -> Region.t = function
   Path path -> path_to_region path
 | MapPath {region; _} -> region
 
-let rhs_to_region = function
-      Expr e -> expr_to_region e
-| NoneExpr r -> r
+let rhs_to_region = expr_to_region
 
 let selection_to_region = function
   FieldName {region; _}
