@@ -780,9 +780,7 @@ and simpl_single_instruction : Raw.single_instr -> (_ -> expression result) resu
     )
   | Assign a -> (
       let (a , loc) = r_split a in
-      let%bind value_expr = match a.rhs with
-        | Expr e -> simpl_expression e
-      in
+      let%bind value_expr = simpl_expression a.rhs in
       match a.lhs with
         | Path path -> (
             let (name , path') = simpl_path path in

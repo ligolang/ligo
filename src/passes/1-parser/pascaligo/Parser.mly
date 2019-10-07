@@ -591,7 +591,7 @@ assignment:
     in {region; value}}
 
 rhs:
-  expr  { Expr $1 }
+  expr  { $1 }
 
 lhs:
   path       {    Path $1 }

@@ -309,8 +309,7 @@ and print_assignment {value; _} =
   print_token assign ":=";
   print_rhs rhs
 
-and print_rhs = function
-      Expr e -> print_expr e
+and print_rhs e = print_expr e
 
 and print_lhs = function
   Path path -> print_path path
