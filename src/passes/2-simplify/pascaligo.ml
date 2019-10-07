@@ -26,16 +26,6 @@ module Errors = struct
     ] in
     error ~data title message
 
-  let unsupported_ass_None region =
-    let title () = "assignment of None" in
-    let message () =
-      Format.asprintf "assignments of None are not supported yet" in
-    let data = [
-      ("none_expr",
-       fun () -> Format.asprintf "%a" Location.pp_lift @@ region)
-    ] in
-    error ~data title message
-
   let bad_bytes loc str =
     let title () = "bad bytes string" in
     let message () =
@@ -792,8 +782,7 @@ and simpl_single_instruction : Raw.single_instr -> (_ -> expression result) resu
       let (a , loc) = r_split a in
       let%bind value_expr = match a.rhs with
         | Expr e -> simpl_expression e
-        (* | NoneExpr reg -> fail @@ unsupported_ass_None reg *)
-        | NoneExpr reg -> simpl_expression (Raw.EConstr (Raw.NoneExpr reg)) 
+        | NoneExpr reg -> simpl_expression (EConstr (NoneExpr reg)) 
       in
       match a.lhs with
         | Path path -> (
