@@ -311,7 +311,6 @@ and print_assignment {value; _} =
 
 and print_rhs = function
       Expr e -> print_expr e
-| NoneExpr r -> print_token r "None"
 
 and print_lhs = function
   Path path -> print_path path

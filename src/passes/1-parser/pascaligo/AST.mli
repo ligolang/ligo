@@ -392,7 +392,6 @@ and lhs =
 
 and rhs =
       Expr of expr
-| NoneExpr of c_None
 
 and loop =
   While of while_loop reg

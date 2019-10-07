@@ -408,7 +408,6 @@ and lhs =
 
 and rhs =
       Expr of expr
-| NoneExpr of c_None
 
 and loop =
   While of while_loop reg
@@ -760,7 +759,6 @@ let lhs_to_region : lhs -> Region.t = function
 
 let rhs_to_region = function
       Expr e -> expr_to_region e
-| NoneExpr r -> r
 
 let selection_to_region = function
   FieldName {region; _}
