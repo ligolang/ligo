@@ -242,6 +242,10 @@ let set_arithmetic () : unit result =
       (e_set [e_string "foo" ; e_string "bar" ; e_string "foobar"])
       (e_set [e_string "foo" ; e_string "bar"]) in
   let%bind () =
+    expect_eq program "remove_syntax"
+      (e_set [e_string "foo" ; e_string "bar" ; e_string "foobar"])
+      (e_set [e_string "foo" ; e_string "bar"]) in
+  let%bind () =
     expect_eq program "mem_op"
       (e_set [e_string "foo" ; e_string "bar" ; e_string "foobar"])
       (e_bool true) in
