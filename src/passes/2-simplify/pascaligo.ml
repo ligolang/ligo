@@ -163,7 +163,8 @@ module Errors = struct
     ] in
     error ~data title message
 
-  let unsupported_set_removal remove =
+
+  (* let unsupported_set_removal remove =
     let title () = "set removals" in
     let message () =
       Format.asprintf "removal of elements in a set is not \
@@ -172,6 +173,16 @@ module Errors = struct
       ("removal_loc",
        fun () -> Format.asprintf "%a" Location.pp_lift @@ remove.Region.region)
     ] in
+    error ~data title message *)
+
+  let unsupported_deep_set_rm path = 
+    let title () = "set removals" in
+    let message () = 
+      Format.asprintf "removal of members from embedded sets is not supported yet" in
+    let data = [
+      ("path_loc",
+       fun () -> Format.asprintf "%a" Location.pp_lift @@ path.Region.region)
+      ] in
     error ~data title message
 
   let unsupported_non_var_pattern p =
@@ -840,7 +851,15 @@ and simpl_single_instruction : Raw.single_instr -> (_ -> expression result) resu
       let expr = e_constant ~loc "MAP_REMOVE" [key' ; e_variable map] in
       return_statement @@ e_assign ~loc map [] expr
     )
-  | SetRemove r -> fail @@ unsupported_set_removal r
+  | SetRemove r -> (
+      let (set_rm, loc) = r_split r in
+      let%bind set = match set_rm.set with
+        | Name v -> ok v.value
+        | Path path -> fail @@ unsupported_deep_set_rm path in 
+      let%bind removed' = simpl_expression set_rm.element in
+      let expr = e_constant ~loc "SET_REMOVE" [removed' ; e_variable set] in
+      return_statement @@ e_assign ~loc set [] expr
+    )
 
 and simpl_path : Raw.path -> string * Ast_simplified.access_path = fun p ->
   match p with
