@@ -25,13 +25,13 @@ module Errors = struct
     ] in
     error ~data title message
 
-  let unsupported_ass_None region =
-    let title () = "assignment of None" in
+  let bad_bytes loc str =
+    let title () = "bad bytes string" in
     let message () =
-      Format.asprintf "assignments of None are not supported yet" in
+      Format.asprintf "bytes string contained non-hexadecimal chars" in
     let data = [
-      ("none_expr",
-       fun () -> Format.asprintf "%a" Location.pp_lift @@ region)
+      ("location", fun () -> Format.asprintf "%a" Location.pp loc) ;
+      ("bytes", fun () -> str) ;
     ] in
     error ~data title message
 
@@ -77,14 +77,24 @@ module Errors = struct
     ] in
     error ~data title message
 
-  let unsupported_string_catenation expr =
-    let title () = "string expressions" in
+  let unsupported_arith_op expr =
+    let title () = "arithmetic expressions" in
     let message () =
-      Format.asprintf "string concatenation is not supported yet" in
+      Format.asprintf "this arithmetic operator is not supported yet" in
     let expr_loc = Raw.expr_to_region expr in
     let data = [
       ("expr_loc",
        fun () -> Format.asprintf "%a" Location.pp_lift @@ expr_loc)
+    ] in
+    error ~data title message
+
+  let unsupported_proc_calls call =
+    let title () = "procedure calls" in
+    let message () =
+      Format.asprintf "procedure calls are not supported yet" in
+    let data = [
+      ("call_loc",
+       fun () -> Format.asprintf "%a" Location.pp_lift @@ call.Region.region)
     ] in
     error ~data title message
 
@@ -152,7 +162,8 @@ module Errors = struct
     ] in
     error ~data title message
 
-  let unsupported_set_removal remove =
+
+  (* let unsupported_set_removal remove =
     let title () = "set removals" in
     let message () =
       Format.asprintf "removal of elements in a set is not \
@@ -161,6 +172,16 @@ module Errors = struct
       ("removal_loc",
        fun () -> Format.asprintf "%a" Location.pp_lift @@ remove.Region.region)
     ] in
+    error ~data title message *)
+
+  let unsupported_deep_set_rm path = 
+    let title () = "set removals" in
+    let message () = 
+      Format.asprintf "removal of members from embedded sets is not supported yet" in
+    let data = [
+      ("path_loc",
+       fun () -> Format.asprintf "%a" Location.pp_lift @@ path.Region.region)
+      ] in
     error ~data title message
 
   let unsupported_non_var_pattern p =
@@ -456,8 +477,11 @@ let rec simpl_expression (t:Raw.expr) : expr result =
         String.(sub s 1 (length s - 2))
       in
       return @@ e_literal ~loc (Literal_string s')
-  | EString (Cat _) as e ->
-      fail @@ unsupported_string_catenation e
+  | EString (Cat bo) ->
+    let (bo , loc) = r_split bo in
+    let%bind sl = simpl_expression bo.arg1 in
+    let%bind sr = simpl_expression bo.arg2 in
+    return @@ e_string_cat ~loc sl sr
   | ELogic l -> simpl_logic_expression l
   | EList l -> simpl_list_expression l
   | ESet s -> simpl_set_expression s
@@ -758,10 +782,7 @@ and simpl_single_instruction : Raw.single_instr -> (_ -> expression result) resu
     )
   | Assign a -> (
       let (a , loc) = r_split a in
-      let%bind value_expr = match a.rhs with
-        | Expr e -> simpl_expression e
-        | NoneExpr reg -> fail @@ unsupported_ass_None reg
-      in
+      let%bind value_expr = simpl_expression a.rhs in
       match a.lhs with
         | Path path -> (
             let (name , path') = simpl_path path in
@@ -829,7 +850,15 @@ and simpl_single_instruction : Raw.single_instr -> (_ -> expression result) resu
       let expr = e_constant ~loc "MAP_REMOVE" [key' ; e_variable map] in
       return_statement @@ e_assign ~loc map [] expr
     )
-  | SetRemove r -> fail @@ unsupported_set_removal r
+  | SetRemove r -> (
+      let (set_rm, loc) = r_split r in
+      let%bind set = match set_rm.set with
+        | Name v -> ok v.value
+        | Path path -> fail @@ unsupported_deep_set_rm path in 
+      let%bind removed' = simpl_expression set_rm.element in
+      let expr = e_constant ~loc "SET_REMOVE" [removed' ; e_variable set] in
+      return_statement @@ e_assign ~loc set [] expr
+    )
 
 and simpl_path : Raw.path -> string * Ast_simplified.access_path = fun p ->
   match p with

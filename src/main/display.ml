@@ -62,7 +62,7 @@ let string_result_pp_hr = result_pp_hr (fun out s -> Format.fprintf out "%s" s)
 let result_pp_dev f out (r : _ result) =
   match r with
   | Ok (s , _) -> Format.fprintf out "%a" f s
-  | Error e -> Format.fprintf out "%a" (error_pp ~dev:false) (e ())
+  | Error e -> Format.fprintf out "%a" (error_pp ~dev:true) (e ())
 
 let string_result_pp_dev = result_pp_hr (fun out s -> Format.fprintf out "%s" s)
 

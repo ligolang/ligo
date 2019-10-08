@@ -168,6 +168,11 @@ core_type:
     let type_constr = {value="map"; region=$1}
     in TApp {region; value = type_constr, $2}
   }
+| BigMap type_tuple {
+    let region = cover $1 $2.region in
+    let type_constr = {value="big_map"; region=$1}
+    in TApp {region; value = type_constr, $2}
+  }
 | Set par(type_expr) {
     let total = cover $1 $2.region in
     let type_constr = {value="set"; region=$1} in
@@ -591,7 +596,7 @@ assignment:
     in {region; value}}
 
 rhs:
-  expr  { Expr $1 }
+  expr  { $1 }
 
 lhs:
   path       {    Path $1 }
