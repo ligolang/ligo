@@ -72,6 +72,7 @@ type t =
 
 | And        of Region.t  (* "and"        *)
 | Begin      of Region.t  (* "begin"      *)
+| BigMap     of Region.t  (* "big_map"    *)
 | Block      of Region.t  (* "block"      *)
 | Case       of Region.t  (* "case"       *)
 | Const      of Region.t  (* "const"      *)
@@ -141,7 +142,7 @@ type int_err =
 
 type ident_err = Reserved_name
 
-type invalid_natural = 
+type invalid_natural =
   | Invalid_natural
   | Non_canonical_zero_nat
 

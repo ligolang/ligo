@@ -70,6 +70,7 @@ type t =
 
 | And        of Region.t  (* "and"        *)
 | Begin      of Region.t  (* "begin"      *)
+| BigMap     of Region.t  (* "big_map"    *)
 | Block      of Region.t  (* "block"      *)
 | Case       of Region.t  (* "case"       *)
 | Const      of Region.t  (* "const"      *)
@@ -201,6 +202,7 @@ let proj_token = function
 
 | And        region -> region, "And"
 | Begin      region -> region, "Begin"
+| BigMap     region -> region, "BigMap"
 | Block      region -> region, "Block"
 | Case       region -> region, "Case"
 | Const      region -> region, "Const"
@@ -293,6 +295,7 @@ let to_lexeme = function
 
 | And        _ -> "and"
 | Begin      _ -> "begin"
+| BigMap     _ -> "big_map"
 | Block      _ -> "block"
 | Case       _ -> "case"
 | Const      _ -> "const"
@@ -353,6 +356,7 @@ let to_region token = proj_token token |> fst
 let keywords = [
   (fun reg -> And        reg);
   (fun reg -> Begin      reg);
+  (fun reg -> BigMap     reg);
   (fun reg -> Block      reg);
   (fun reg -> Case       reg);
   (fun reg -> Const      reg);
@@ -476,14 +480,14 @@ let mk_int lexeme region =
   then Error Non_canonical_zero
   else Ok (Int Region.{region; value = lexeme, z})
 
-type invalid_natural = 
+type invalid_natural =
   | Invalid_natural
   | Non_canonical_zero_nat
 
 let mk_nat lexeme region =
-  match (String.index_opt lexeme 'n') with  
+  match (String.index_opt lexeme 'n') with
   | None -> Error Invalid_natural
-  | Some _ -> (  
+  | Some _ -> (
     let z =
       Str.(global_replace (regexp "_") "" lexeme) |>
       Str.(global_replace (regexp "n") "") |>
@@ -569,6 +573,7 @@ let is_ident = function
 let is_kwd = function
   And        _
 | Begin      _
+| BigMap     _
 | Block      _
 | Case       _
 | Const      _
