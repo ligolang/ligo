@@ -771,9 +771,9 @@ and simpl_single_instruction : Raw.single_instr -> (_ -> expression result) resu
             let%bind (varname,map,path) = match v'.path with
               | Name name -> ok (name.value , e_variable name.value, [])
               | Path p ->
-                let (_,p') = simpl_path v'.path in
+                let (name,p') = simpl_path v'.path in
                 let%bind accessor = simpl_projection p in 
-                ok @@ (p.value.struct_name.value , accessor , p')
+                ok @@ (name , accessor , p')
             in
             let%bind key_expr = simpl_expression v'.index.value.inside in
             let expr' = e_map_add key_expr value_expr map in
@@ -827,9 +827,9 @@ and simpl_single_instruction : Raw.single_instr -> (_ -> expression result) resu
       let%bind (varname,map,path) = match v.map with
         | Name v -> ok (v.value , e_variable v.value , [])
         | Path p ->
-          let (_,p') = simpl_path v.map in
+          let (name,p') = simpl_path v.map in
           let%bind accessor = simpl_projection p in 
-          ok @@ (p.value.struct_name.value , accessor , p')
+          ok @@ (name , accessor , p')
       in
       let%bind key' = simpl_expression key in
       let expr = e_constant ~loc "MAP_REMOVE" [key' ; map] in
