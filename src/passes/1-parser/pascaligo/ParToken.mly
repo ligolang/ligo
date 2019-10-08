@@ -46,6 +46,7 @@
 
 %token <Region.t> And         (* "and"        *)
 %token <Region.t> Begin       (* "begin"      *)
+%token <Region.t> BigMap      (* "big_map"    *)
 %token <Region.t> Block       (* "block"      *)
 %token <Region.t> Case        (* "case"       *)
 %token <Region.t> Const       (* "const"      *)
