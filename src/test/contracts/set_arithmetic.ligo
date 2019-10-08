@@ -13,6 +13,10 @@ function add_op (const s : set(string)) : set(string) is
 function remove_op (const s : set(string)) : set(string) is
   begin skip end with set_remove("foobar" , s)
 
+// Test the PascaLIGO syntactic sugar for set removal vs. the function call
+function remove_syntax (var s : set(string)) : set(string) is
+  begin remove "foobar" from set s; end with s
+
 function mem_op (const s : set(string)) : bool is
   begin skip end with set_mem("foobar" , s)
 
