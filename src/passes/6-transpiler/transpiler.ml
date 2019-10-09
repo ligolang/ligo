@@ -28,6 +28,11 @@ them. please report this to the developers." in
     let content () = name in
     error title content
 
+  let no_type_variable name =
+    let title () = "type variables can't be transpiled" in
+    let content () = name in
+    error title content
+
   let row_loc l = ("location" , fun () -> Format.asprintf "%a" Location.pp l)
 
   let unsupported_pattern_matching kind location =
@@ -102,6 +107,7 @@ open Errors
 
 let rec transpile_type (t:AST.type_value) : type_value result =
   match t.type_value' with
+  | T_variable name -> fail @@ no_type_variable name
   | T_constant ("bool", []) -> ok (T_base Base_bool)
   | T_constant ("int", []) -> ok (T_base Base_int)
   | T_constant ("nat", []) -> ok (T_base Base_nat)

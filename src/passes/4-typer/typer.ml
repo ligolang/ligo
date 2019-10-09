@@ -420,17 +420,17 @@ and type_expression : environment -> Solver.state -> I.expression -> (O.annotate
      to actually perform the recursive calls *)
 
   (* Basic *)
-  | E_failwith expr -> (
-      let%bind (expr', state') = type_expression e state expr in
-      let (constraints , expr_type) = Wrap.failwith_ () in
-      let expr'' = e_failwith expr' in
-      return expr''  state' constraints expr_type
-    )
+  (* | E_failwith expr -> (
+   *     let%bind (expr', state') = type_expression e state expr in
+   *     let (constraints , expr_type) = Wrap.failwith_ () in
+   *     let expr'' = e_failwith expr' in
+   *     return expr''  state' constraints expr_type
+   *   ) *)
   | E_variable name -> (
-      let%bind tv' =
+      let%bind (tv' : Environment.element) =
         trace_option (unbound_variable e name ae.location)
         @@ Environment.get_opt name e in
-      let (constraints , expr_type) = Wrap.variable name tv'.type_expression in
+      let (constraints , expr_type) = Wrap.variable name tv'.type_value in
       let expr' = e_variable name in
       return expr' state constraints expr_type
     )
@@ -449,8 +449,8 @@ and type_expression : environment -> Solver.state -> I.expression -> (O.annotate
   | E_literal (Literal_nat n) -> (
       return_wrapped (e_nat n) state @@ Wrap.literal (t_nat ())
     )
-  | E_literal (Literal_tez t) -> (
-      return_wrapped (e_tez t) state @@ Wrap.literal (t_tez ())
+  | E_literal (Literal_mutez t) -> (
+      return_wrapped (e_mutez t) state @@ Wrap.literal (t_mutez ())
     )
   | E_literal (Literal_address a) -> (
       return_wrapped (e_address a) state @@ Wrap.literal (t_address ())

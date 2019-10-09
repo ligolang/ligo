@@ -203,3 +203,4 @@ let rec untranspile (v : value) (t : AST.type_value) : AST.annotated_expression 
       let m' = map_of_kv_list lst in
       return (E_record m')
   | T_function _ -> fail @@ bad_untranspile "function" v
+  | T_variable v -> return (E_variable v)

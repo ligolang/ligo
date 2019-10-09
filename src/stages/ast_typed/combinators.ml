@@ -21,11 +21,12 @@ let t_int ?s () : type_value = make_t (T_constant ("int", [])) s
 let t_address ?s () : type_value = make_t (T_constant ("address", [])) s
 let t_operation ?s () : type_value = make_t (T_constant ("operation", [])) s
 let t_nat ?s () : type_value = make_t (T_constant ("nat", [])) s
-let t_tez ?s () : type_value = make_t (T_constant ("tez", [])) s
+let t_mutez ?s () : type_value = make_t (T_constant ("tez", [])) s
 let t_timestamp ?s () : type_value = make_t (T_constant ("timestamp", [])) s
 let t_unit ?s () : type_value = make_t (T_constant ("unit", [])) s
 let t_option o ?s () : type_value = make_t (T_constant ("option", [o])) s
 let t_tuple lst ?s () : type_value = make_t (T_tuple lst) s
+let t_variable t ?s () : type_value = make_t (T_variable t) s
 let t_list t ?s () : type_value = make_t (T_constant ("list", [t])) s
 let t_set t ?s () : type_value = make_t (T_constant ("set", [t])) s
 let t_contract t ?s () : type_value = make_t (T_constant ("contract", [t])) s
@@ -82,7 +83,7 @@ let get_t_unit (t:type_value) : unit result = match t.type_value' with
   | T_constant ("unit", []) -> ok ()
   | _ -> simple_fail "not a unit"
 
-let get_t_tez (t:type_value) : unit result = match t.type_value' with
+let get_t_mutez (t:type_value) : unit result = match t.type_value' with
   | T_constant ("tez", []) -> ok ()
   | _ -> simple_fail "not a tez"
 
@@ -179,7 +180,7 @@ let assert_t_map = fun t ->
 let is_t_map = Function.compose to_bool get_t_map
 let is_t_big_map = Function.compose to_bool get_t_big_map
 
-let assert_t_tez : type_value -> unit result = get_t_tez
+let assert_t_mutez : type_value -> unit result = get_t_mutez
 let assert_t_key = get_t_key
 let assert_t_signature = get_t_signature
 let assert_t_key_hash = get_t_key_hash
@@ -235,6 +236,8 @@ let e_nat n : expression = E_literal (Literal_nat n)
 let e_mutez n : expression = E_literal (Literal_mutez n)
 let e_bool b : expression = E_literal (Literal_bool b)
 let e_string s : expression = E_literal (Literal_string s)
+let e_bytes s : expression = E_literal (Literal_bytes s)
+let e_timestamp s : expression = E_literal (Literal_timestamp s)
 let e_address s : expression = E_literal (Literal_address s)
 let e_operation s : expression = E_literal (Literal_operation s)
 let e_lambda l : expression = E_lambda l
@@ -247,7 +250,7 @@ let e_let_in binder rhs result = E_let_in { binder ; rhs ; result }
 let e_a_unit = make_a_e e_unit (t_unit ())
 let e_a_int n = make_a_e (e_int n) (t_int ())
 let e_a_nat n = make_a_e (e_nat n) (t_nat ())
-let e_a_mutez n = make_a_e (e_mutez n) (t_tez ())
+let e_a_mutez n = make_a_e (e_mutez n) (t_mutez ())
 let e_a_bool b = make_a_e (e_bool b) (t_bool ())
 let e_a_string s = make_a_e (e_string s) (t_string ())
 let e_a_address s = make_a_e (e_address s) (t_address ())

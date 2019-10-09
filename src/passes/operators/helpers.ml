@@ -113,7 +113,7 @@ module Typer = struct
       List.exists (eq_2 (a , b)) [
         t_int () ;
         t_nat () ;
-        t_tez () ;
+        t_mutez () ;
         t_string () ;
         t_bytes () ;
         t_address () ;

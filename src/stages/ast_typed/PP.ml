@@ -14,6 +14,7 @@ let rec type_value' ppf (tv':type_value') : unit =
   | T_function (a, b) -> fprintf ppf "%a -> %a" type_value a type_value b
   | T_constant (c, []) -> fprintf ppf "%s" c
   | T_constant (c, n) -> fprintf ppf "%s(%a)" c (list_sep_d type_value) n
+  | T_variable name -> fprintf ppf "%s" name
 
 and type_value ppf (tv:type_value) : unit =
   type_value' ppf tv.type_value'

@@ -297,8 +297,8 @@ module Typer = struct
     then ok @@ t_int () else
     if (eq_1 a (t_timestamp ()) && eq_1 b (t_int ()))
     then ok @@ t_timestamp () else
-    if (eq_2 (a , b) (t_tez ()))
-    then ok @@ t_tez () else
+    if (eq_2 (a , b) (t_mutez ()))
+    then ok @@ t_mutez () else
       fail (simple_error "Typing substraction, bad parameters.")
 
   let some = typer_1 "SOME" @@ fun a -> ok @@ t_option a ()
@@ -428,16 +428,16 @@ module Typer = struct
 
   let unit = constant "UNIT" @@ t_unit ()
 
-  let amount = constant "AMOUNT" @@ t_tez ()
+  let amount = constant "AMOUNT" @@ t_mutez ()
 
-  let balance = constant "BALANCE" @@ t_tez ()
+  let balance = constant "BALANCE" @@ t_mutez ()
 
   let address = constant "ADDRESS" @@ t_address ()
 
   let now = constant "NOW" @@ t_timestamp ()
 
   let transaction = typer_3 "CALL" @@ fun param amount contract ->
-    let%bind () = assert_t_tez amount in
+    let%bind () = assert_t_mutez amount in
     let%bind contract_param = get_t_contract contract in
     let%bind () = assert_type_value_eq (param , contract_param) in
     ok @@ t_operation ()
@@ -447,7 +447,7 @@ module Typer = struct
     let%bind () = assert_eq_1 delegate_opt (t_option (t_key_hash ()) ()) in
     let%bind () = assert_eq_1 spendable (t_bool ()) in
     let%bind () = assert_eq_1 delegatable (t_bool ()) in
-    let%bind () = assert_t_tez init_balance in
+    let%bind () = assert_t_mutez init_balance in
     let%bind (arg , res) = get_t_function code in
     let%bind (_param , storage) = get_t_pair arg in
     let%bind (storage' , op_lst) = get_t_pair res in
@@ -485,8 +485,8 @@ module Typer = struct
     then ok @@ t_nat () else
     if eq_2 (a , b) (t_int ())
     then ok @@ t_int () else
-    if (eq_1 a (t_nat ()) && eq_1 b (t_tez ())) || (eq_1 b (t_nat ()) && eq_1 a (t_tez ()))
-    then ok @@ t_tez () else
+    if (eq_1 a (t_nat ()) && eq_1 b (t_mutez ())) || (eq_1 b (t_nat ()) && eq_1 a (t_mutez ()))
+    then ok @@ t_mutez () else
       simple_fail "Multiplying with wrong types"
 
   let div = typer_2 "DIV" @@ fun a b ->
@@ -494,8 +494,8 @@ module Typer = struct
     then ok @@ t_nat () else
     if eq_2 (a , b) (t_int ())
     then ok @@ t_int () else
-    if eq_1 a (t_tez ()) && eq_1 b (t_nat ())
-    then ok @@ t_tez () else
+    if eq_1 a (t_mutez ()) && eq_1 b (t_nat ())
+    then ok @@ t_mutez () else
       simple_fail "Dividing with wrong types"
 
   let mod_ = typer_2 "MOD" @@ fun a b ->
@@ -508,8 +508,8 @@ module Typer = struct
     then ok @@ t_nat () else
     if eq_2 (a , b) (t_int ())
     then ok @@ t_int () else
-    if eq_2 (a , b) (t_tez ())
-    then ok @@ t_tez () else
+    if eq_2 (a , b) (t_mutez ())
+    then ok @@ t_mutez () else
     if (eq_1 a (t_nat ()) && eq_1 b (t_int ())) || (eq_1 b (t_nat ()) && eq_1 a (t_int ()))
     then ok @@ t_int () else
     if (eq_1 a (t_timestamp ()) && eq_1 b (t_int ())) || (eq_1 b (t_timestamp ()) && eq_1 a (t_int ()))

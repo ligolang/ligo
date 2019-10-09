@@ -56,6 +56,7 @@ and type_value' =
   | T_sum of tv_map
   | T_record of tv_map
   | T_constant of type_name * tv list
+  | T_variable of type_name
   | T_function of (tv * tv)
 
 and type_value = {
