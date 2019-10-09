@@ -8,357 +8,455 @@ open! Region
 let sprintf = Printf.sprintf
 
 let offsets = ref true
-
 let mode = ref `Point
 
 let compact (region: Region.t) =
   region#compact ~offsets:!offsets !mode
 
-let print_nsepseq sep print (head,tail) =
+let print_nsepseq buffer sep print (head,tail) =
   let print_aux ((sep_reg:Region.t), item) =
-    Printf.printf "%s: %s\n" (compact sep_reg) sep;
-    print item
-  in print head; List.iter print_aux tail
+    let sep_line = sprintf "%s: %s\n" (compact sep_reg) sep
+    in Buffer.add_string buffer sep_line;
+    print buffer item
+  in print buffer head; List.iter print_aux tail
 
-let print_sepseq sep print = function
+let print_sepseq buffer sep print = function
       None -> ()
-| Some seq -> print_nsepseq sep print seq
+| Some seq -> print_nsepseq buffer sep print seq
 
-let print_csv print = print_nsepseq "," print
+let print_csv buffer print = print_nsepseq buffer "," print
 
-let print_token (reg: Region.t) conc =
-  Printf.printf "%s: %s\n" (compact reg) conc
+let print_token buffer (reg: Region.t) conc =
+  let line = sprintf "%s: %s\n" (compact reg) conc
+  in Buffer.add_string buffer line
 
-let print_var Region.{region; value} =
-  Printf.printf "%s: Ident %s\n" (compact region) value
+let print_var buffer Region.{region; value} =
+  let line = sprintf "%s: Ident %s\n" (compact region) value
+  in Buffer.add_string buffer line
 
-let print_uident Region.{region; value} =
-  Printf.printf "%s: Uident %s\n" (compact region) value
+let print_pvar buffer Region.{region; value} =
+  let line = sprintf "%s: PVar %s\n" (compact region) value
+  in Buffer.add_string buffer line
 
-let print_str Region.{region; value} =
-  Printf.printf "%s: Str \"%s\"\n" (compact region) value
+let print_uident buffer Region.{region; value} =
+  let line = sprintf "%s: Uident %s\n" (compact region) value
+  in Buffer.add_string buffer line
 
-let print_bytes Region.{region; value=lexeme, abstract} =
-  Printf.printf "%s: Bytes (\"%s\", \"0x%s\")\n"
-    (compact region) lexeme (Hex.to_string abstract)
+let print_str buffer Region.{region; value} =
+  let line = sprintf "%s: Str \"%s\"\n" (compact region) value
+  in Buffer.add_string buffer line
 
-let rec print_tokens {decl;eof} =
-  Utils.nseq_iter print_statement decl; print_token eof "EOF"
+let print_bytes buffer Region.{region; value=lexeme, abstract} =
+  let line = sprintf "%s: Bytes (\"%s\", \"0x%s\")\n"
+               (compact region) lexeme (Hex.to_string abstract)
+  in Buffer.add_string buffer line
 
-and print_statement = function
+let print_int buffer Region.{region; value=lex,z} =
+  let line = sprintf "PInt %s (%s)" lex (Z.to_string z)
+  in print_token buffer region line
+
+let rec print_tokens buffer {decl;eof} =
+  Utils.nseq_iter (print_statement buffer) decl;
+  print_token buffer eof "EOF"
+
+and print_statement buffer = function
   Let {value=kwd_let, let_binding; _} ->
-    print_token kwd_let "let";
-    print_let_binding let_binding
+    print_token       buffer kwd_let "let";
+    print_let_binding buffer let_binding
 | LetEntry {value=kwd_let_entry, let_binding; _} ->
-    print_token kwd_let_entry "let%entry";
-    print_let_binding let_binding
+    print_token       buffer kwd_let_entry "let%entry";
+    print_let_binding buffer let_binding
 | TypeDecl {value={kwd_type; name; eq; type_expr}; _} ->
-    print_token kwd_type "type";
-    print_var name;
-    print_token eq "=";
-    print_type_expr type_expr
+    print_token     buffer kwd_type "type";
+    print_var       buffer name;
+    print_token     buffer eq "=";
+    print_type_expr buffer type_expr
 
-and print_type_expr = function
-  TProd prod       -> print_cartesian prod
-| TSum {value; _}  -> print_nsepseq "|" print_variant value
-| TRecord t        -> print_record_type t
-| TApp app         -> print_type_app app
-| TPar par         -> print_type_par par
-| TAlias var       -> print_var var
-| TFun t           -> print_fun_type t
+and print_type_expr buffer = function
+  TProd prod       -> print_cartesian buffer prod
+| TSum {value; _}  -> print_nsepseq buffer "|" print_variant value
+| TRecord t        -> print_record_type buffer t
+| TApp app         -> print_type_app buffer app
+| TPar par         -> print_type_par buffer par
+| TAlias var       -> print_var buffer var
+| TFun t           -> print_fun_type buffer t
 
-and print_fun_type {value; _} =
+and print_fun_type buffer {value; _} =
   let domain, arrow, range = value in
-  print_type_expr domain;
-  print_token arrow "->";
-  print_type_expr range
+  print_type_expr buffer domain;
+  print_token     buffer arrow "->";
+  print_type_expr buffer range
 
-and print_type_app {value; _} =
+and print_type_app buffer {value; _} =
   let type_constr, type_tuple = value in
-  print_type_tuple type_tuple;
-  print_var type_constr
+  print_type_tuple buffer type_tuple;
+  print_var        buffer type_constr
 
-and print_type_tuple {value; _} =
+and print_type_tuple buffer {value; _} =
   let {lpar; inside; rpar} = value in
-  print_token lpar "(";
-  print_nsepseq "," print_type_expr inside;
-  print_token rpar ")"
+  print_token   buffer lpar "(";
+  print_nsepseq buffer "," print_type_expr inside;
+  print_token   buffer rpar ")"
 
-and print_type_par {value={lpar;inside=t;rpar}; _} =
-  print_token lpar "(";
-  print_type_expr t;
-  print_token rpar ")"
+and print_type_par buffer {value={lpar;inside=t;rpar}; _} =
+  print_token     buffer lpar "(";
+  print_type_expr buffer t;
+  print_token     buffer rpar ")"
 
-and print_projection node =
+and print_projection buffer node =
   let {struct_name; selector; field_path} = node in
-  print_var struct_name;
-  print_token selector ".";
-  print_nsepseq "." print_selection field_path
+  print_var     buffer struct_name;
+  print_token   buffer selector ".";
+  print_nsepseq buffer "." print_selection field_path
 
-and print_selection = function
-  FieldName id -> print_var id
+and print_selection buffer = function
+  FieldName id ->
+    print_var buffer id
 | Component {value; _} ->
     let {lpar; inside; rpar} = value in
     let Region.{value=lexeme,z; region} = inside in
-    print_token lpar "(";
-    print_token region
+    print_token buffer lpar "(";
+    print_token buffer region
       (sprintf "Int %s (%s)" lexeme (Z.to_string z));
-    print_token rpar ")"
+    print_token buffer rpar ")"
 
-and print_cartesian Region.{value;_} =
-  print_nsepseq "*" print_type_expr value
+and print_cartesian buffer Region.{value;_} =
+  print_nsepseq buffer "*" print_type_expr value
 
-and print_variant {value = {constr; args}; _} =
-  print_uident constr;
+and print_variant buffer {value = {constr; args}; _} =
+  print_uident buffer constr;
   match args with
     None -> ()
   | Some (kwd_of, cartesian) ->
-      print_token kwd_of "of";
-      print_cartesian cartesian
+      print_token     buffer kwd_of "of";
+      print_cartesian buffer cartesian
 
-and print_record_type record_type =
-  print_injection print_field_decl record_type
+and print_record_type buffer record_type =
+  print_injection buffer print_field_decl record_type
 
-and print_field_decl {value; _} =
+and print_field_decl buffer {value; _} =
   let {field_name; colon; field_type} = value
-  in print_var field_name;
-     print_token colon ":";
-     print_type_expr field_type
+  in print_var       buffer field_name;
+     print_token     buffer colon ":";
+     print_type_expr buffer field_type
 
 and print_injection :
-  'a.('a -> unit) -> 'a injection reg -> unit =
-  fun print {value; _} ->
+  'a.Buffer.t -> (Buffer.t -> 'a -> unit) -> 'a injection reg -> unit =
+  fun buffer print {value; _} ->
     let {opening; elements; terminator; closing} = value in
-    print_opening opening;
-    print_sepseq ";" print elements;
-    print_terminator terminator;
-    print_closing closing
+    print_opening    buffer opening;
+    print_sepseq     buffer ";" print elements;
+    print_terminator buffer terminator;
+    print_closing    buffer closing
 
-and print_opening = function
-  Begin    region -> print_token region "begin"
-| With     region -> print_token region "with"
-| LBrace   region -> print_token region "{"
-| LBracket region -> print_token region "["
+and print_opening buffer = function
+  Begin    region -> print_token buffer region "begin"
+| With     region -> print_token buffer region "with"
+| LBrace   region -> print_token buffer region "{"
+| LBracket region -> print_token buffer region "["
 
-and print_closing = function
-  End      region -> print_token region "end"
-| RBrace   region -> print_token region "}"
-| RBracket region -> print_token region "]"
+and print_closing buffer = function
+  End      region -> print_token buffer region "end"
+| RBrace   region -> print_token buffer region "}"
+| RBracket region -> print_token buffer region "]"
 
-and print_terminator = function
-  Some semi -> print_token semi ";"
+and print_terminator buffer = function
+  Some semi -> print_token buffer semi ";"
 | None -> ()
 
-and print_let_binding {bindings; lhs_type; eq; let_rhs} =
-  List.iter print_pattern bindings;
-  (match lhs_type with
-     None -> ()
-   | Some (colon, type_expr) ->
-       print_token colon ":";
-       print_type_expr type_expr);
-  (print_token eq "="; print_expr let_rhs)
+and print_let_binding buffer {bindings; lhs_type; eq; let_rhs} =
+  let () = List.iter (print_pattern buffer) bindings in
+  let () =
+    match lhs_type with
+      None -> ()
+    | Some (colon, type_expr) ->
+        print_token     buffer colon ":";
+        print_type_expr buffer type_expr in
+  let () = print_token buffer eq "="
+  in print_expr buffer let_rhs
 
-and print_pattern = function
-  PTuple {value=patterns;_} -> print_csv print_pattern patterns
-| PList p -> print_list_pattern p
-| PVar {region; value} ->
-    Printf.printf "%s: PVar %s\n" (compact region) value
+and print_pattern buffer = function
+  PTuple {value=patterns;_} ->
+    print_csv buffer print_pattern patterns
+| PList p ->
+    print_list_pattern buffer p
+| PVar v ->
+    print_pvar buffer v
 | PUnit {value=lpar,rpar; _} ->
-    print_token lpar "("; print_token rpar ")"
-| PInt {region; value=lex,z} ->
-    print_token region (sprintf "PInt %s (%s)" lex (Z.to_string z))
-| PTrue kwd_true -> print_token kwd_true "true"
-| PFalse kwd_false -> print_token kwd_false "false"
-| PString s -> print_str s
-| PWild wild -> print_token wild "_"
+    print_token buffer lpar "(";
+    print_token buffer rpar ")"
+| PInt i ->
+    print_int buffer i
+| PTrue kwd_true ->
+    print_token buffer kwd_true "true"
+| PFalse kwd_false ->
+    print_token buffer kwd_false "false"
+| PString s ->
+    print_str buffer s
+| PWild wild ->
+    print_token buffer wild "_"
 | PPar {value={lpar;inside=p;rpar}; _} ->
-    print_token lpar "("; print_pattern p; print_token rpar ")"
-| PConstr p -> print_constr_pattern p
-| PRecord r -> print_record_pattern r
-| PTyped t -> print_typed_pattern t
+    print_token   buffer lpar "(";
+    print_pattern buffer p;
+    print_token   buffer rpar ")"
+| PConstr p ->
+    print_constr_pattern buffer p
+| PRecord r ->
+    print_record_pattern buffer r
+| PTyped t ->
+    print_typed_pattern buffer t
 
-and print_list_pattern = function
-  Sugar p -> print_injection print_pattern p
-| PCons p -> print_raw p
+and print_list_pattern buffer = function
+  Sugar p -> print_injection buffer print_pattern p
+| PCons p -> print_raw       buffer p
 
-and print_raw {value=p1,c,p2; _} =
-  print_pattern p1; print_token c "::"; print_pattern p2
+and print_raw buffer {value=p1,c,p2; _} =
+  print_pattern buffer p1;
+  print_token   buffer c "::";
+  print_pattern buffer p2
 
-and print_typed_pattern {value; _} =
+and print_typed_pattern buffer {value; _} =
   let {pattern; colon; type_expr} = value in
-  print_pattern pattern;
-  print_token colon ":";
-  print_type_expr type_expr
+  print_pattern   buffer pattern;
+  print_token     buffer colon ":";
+  print_type_expr buffer type_expr
 
-and print_record_pattern record_pattern =
-  print_injection print_field_pattern record_pattern
+and print_record_pattern buffer record_pattern =
+  print_injection buffer print_field_pattern record_pattern
 
-and print_field_pattern {value; _} =
+and print_field_pattern buffer {value; _} =
   let {field_name; eq; pattern} = value in
-  print_var field_name;
-  print_token eq "=";
-  print_pattern pattern
+  print_var     buffer field_name;
+  print_token   buffer eq "=";
+  print_pattern buffer pattern
 
-and print_constr_pattern {value=constr, p_opt; _} =
-  print_uident constr;
+and print_constr_pattern buffer {value=constr, p_opt; _} =
+  print_uident buffer constr;
   match p_opt with
     None -> ()
-  | Some pattern -> print_pattern pattern
+  | Some pattern -> print_pattern buffer pattern
 
-and print_expr = function
-  ELetIn {value;_} -> print_let_in value
-|       ECond cond -> print_conditional cond
-| ETuple {value;_} -> print_csv print_expr value
-| ECase {value;_}  -> print_match_expr value
-| EFun e           -> print_fun_expr e
+and print_expr buffer = function
+  ELetIn {value;_} -> print_let_in      buffer value
+|       ECond cond -> print_conditional buffer cond
+| ETuple {value;_} -> print_csv         buffer print_expr value
+| ECase {value;_}  -> print_match_expr  buffer value
+| EFun e           -> print_fun_expr    buffer e
 
-| EAnnot e -> print_annot_expr e
-| ELogic e -> print_logic_expr e
-| EArith e -> print_arith_expr e
-| EString e -> print_string_expr e
+| EAnnot e  -> print_annot_expr  buffer e
+| ELogic e  -> print_logic_expr  buffer e
+| EArith e  -> print_arith_expr  buffer e
+| EString e -> print_string_expr buffer e
 
 | ECall {value=f,l; _} ->
-    print_expr f; Utils.nseq_iter print_expr l
-| EVar v -> print_var v
-| EProj p -> print_projection p.value
+    print_expr buffer f;
+    Utils.nseq_iter (print_expr buffer) l
+| EVar v ->
+    print_var buffer v
+| EProj p ->
+    print_projection buffer p.value
 | EUnit {value=lpar,rpar; _} ->
-    print_token lpar "("; print_token rpar ")"
-| EBytes b -> print_bytes b
+    print_token buffer lpar "(";
+    print_token buffer rpar ")"
+| EBytes b ->
+    print_bytes buffer b
 | EPar {value={lpar;inside=e;rpar}; _} ->
-    print_token lpar "("; print_expr e; print_token rpar ")"
-| EList e -> print_list_expr e
-| ESeq seq -> print_sequence seq
-| ERecord e -> print_record_expr e
-| EConstr {value=constr,None; _} -> print_uident constr
+    print_token buffer lpar "(";
+    print_expr  buffer e;
+    print_token buffer rpar ")"
+| EList e ->
+    print_list_expr buffer e
+| ESeq seq ->
+    print_sequence buffer seq
+| ERecord e ->
+    print_record_expr buffer e
+| EConstr {value=constr,None; _} ->
+    print_uident buffer constr
 | EConstr {value=(constr, Some arg); _} ->
-    print_uident constr; print_expr arg
+    print_uident buffer constr;
+    print_expr   buffer arg
 
-and print_annot_expr {value=e,t; _} =
-  print_expr e;
-  print_token Region.ghost ":";
-  print_type_expr t
+and print_annot_expr buffer {value=e,t; _} =
+  print_expr      buffer e;
+  print_token     buffer Region.ghost ":";
+  print_type_expr buffer t
 
-and print_list_expr = function
+and print_list_expr buffer = function
   Cons {value={arg1;op;arg2}; _} ->
-    print_expr arg1;
-    print_token op "::";
-    print_expr arg2
-| List e -> print_injection print_expr e
-(*| Append {value=e1,append,e2; _} ->
-    print_expr e1;
-    print_token append "@";
-    print_expr e2 *)
+    print_expr  buffer arg1;
+    print_token buffer op "::";
+    print_expr  buffer arg2
+| List e -> print_injection buffer print_expr e
+(*
+| Append {value=e1,append,e2; _} ->
+    print_expr  buffer e1;
+    print_token buffer append "@";
+    print_expr  buffer e2
+*)
 
-and print_arith_expr = function
+and print_arith_expr buffer = function
   Add {value={arg1;op;arg2}; _} ->
-    print_expr arg1; print_token op "+"; print_expr arg2
+    print_expr  buffer arg1;
+    print_token buffer op "+";
+    print_expr  buffer arg2
 | Sub {value={arg1;op;arg2}; _} ->
-    print_expr arg1; print_token op "-"; print_expr arg2
+    print_expr  buffer arg1;
+    print_token buffer op "-";
+    print_expr  buffer arg2
 | Mult {value={arg1;op;arg2}; _} ->
-    print_expr arg1; print_token op "*"; print_expr arg2
+    print_expr  buffer arg1;
+    print_token buffer op "*";
+    print_expr  buffer arg2
 | Div {value={arg1;op;arg2}; _} ->
-    print_expr arg1; print_token op "/"; print_expr arg2
+    print_expr  buffer arg1;
+    print_token buffer op "/";
+    print_expr  buffer arg2
 | Mod {value={arg1;op;arg2}; _} ->
-    print_expr arg1; print_token op "mod"; print_expr arg2
-| Neg {value={op;arg}; _} -> print_token op "-"; print_expr arg
+    print_expr  buffer arg1;
+    print_token buffer op "mod";
+    print_expr  buffer arg2
+| Neg {value={op;arg}; _} ->
+    print_token buffer op "-";
+    print_expr  buffer arg
 | Int {region; value=lex,z} ->
-    print_token region (sprintf "Int %s (%s)" lex (Z.to_string z))
+    let line = sprintf "Int %s (%s)" lex (Z.to_string z)
+    in print_token buffer region line
 | Mtz {region; value=lex,z} ->
-    print_token region (sprintf "Mtz %s (%s)" lex (Z.to_string z))
+    let line = sprintf "Mtz %s (%s)" lex (Z.to_string z)
+    in print_token buffer region line
 | Nat {region; value=lex,z} ->
-    print_token region (sprintf "Nat %s (%s)" lex (Z.to_string z))
+    let line = sprintf "Nat %s (%s)" lex (Z.to_string z)
+    in print_token buffer region line
 
-and print_string_expr = function
+and print_string_expr buffer = function
   Cat {value={arg1;op;arg2}; _} ->
-    print_expr arg1; print_token op "^"; print_expr arg2
-| String s -> print_str s
+    print_expr  buffer arg1;
+    print_token buffer op "^";
+    print_expr  buffer arg2
+| String s ->
+    print_str buffer s
 
-and print_logic_expr = function
-  BoolExpr e -> print_bool_expr e
-| CompExpr e -> print_comp_expr e
+and print_logic_expr buffer = function
+  BoolExpr e -> print_bool_expr buffer e
+| CompExpr e -> print_comp_expr buffer e
 
-and print_bool_expr = function
+and print_bool_expr buffer = function
   Or {value={arg1;op;arg2}; _} ->
-    print_expr arg1; print_token op "||"; print_expr arg2
+    print_expr  buffer arg1;
+    print_token buffer op "||";
+    print_expr  buffer arg2
 | And {value={arg1;op;arg2}; _} ->
-    print_expr arg1; print_token op "&&"; print_expr arg2
-| Not {value={op;arg}; _} -> print_token op "not"; print_expr arg
-| True kwd_true -> print_token kwd_true "true"
-| False kwd_false -> print_token kwd_false "false"
+    print_expr  buffer arg1;
+    print_token buffer op "&&";
+    print_expr  buffer arg2
+| Not {value={op;arg}; _} ->
+    print_token buffer op "not";
+    print_expr  buffer arg
+| True kwd_true ->
+    print_token buffer kwd_true "true"
+| False kwd_false ->
+    print_token buffer kwd_false "false"
 
-and print_comp_expr = function
+and print_comp_expr buffer = function
   Lt {value={arg1;op;arg2}; _} ->
-    print_expr arg1; print_token op "<"; print_expr arg2
+    print_expr  buffer arg1;
+    print_token buffer op "<";
+    print_expr  buffer arg2
 | Leq {value={arg1;op;arg2}; _} ->
-    print_expr arg1; print_token op "<="; print_expr arg2
+    print_expr  buffer arg1;
+    print_token buffer op "<=";
+    print_expr  buffer arg2
 | Gt {value={arg1;op;arg2}; _} ->
-    print_expr arg1; print_token op ">"; print_expr arg2
+    print_expr  buffer arg1;
+    print_token buffer op ">";
+    print_expr  buffer arg2
 | Geq {value={arg1;op;arg2}; _} ->
-    print_expr arg1; print_token op ">="; print_expr arg2
+    print_expr  buffer arg1;
+    print_token buffer op ">=";
+    print_expr  buffer arg2
 | Neq {value={arg1;op;arg2}; _} ->
-    print_expr arg1; print_token op "<>"; print_expr arg2
+    print_expr  buffer arg1;
+    print_token buffer op "<>";
+    print_expr  buffer arg2
 | Equal {value={arg1;op;arg2}; _} ->
-    print_expr arg1; print_token op "="; print_expr arg2
+    print_expr  buffer arg1;
+    print_token buffer op "=";
+    print_expr  buffer arg2
 
-and print_record_expr e =
-  print_injection print_field_assign e
+and print_record_expr buffer e =
+  print_injection buffer print_field_assign e
 
-and print_field_assign {value; _} =
+and print_field_assign buffer {value; _} =
   let {field_name; assignment; field_expr} = value in
-  print_var field_name;
-  print_token assignment "=";
-  print_expr field_expr
+  print_var   buffer field_name;
+  print_token buffer assignment "=";
+  print_expr  buffer field_expr
 
-and print_sequence seq = print_injection print_expr seq
+and print_sequence buffer seq =
+  print_injection buffer print_expr seq
 
-and print_match_expr expr =
+and print_match_expr buffer expr =
   let {kwd_match; expr; opening;
        lead_vbar; cases; closing} = expr in
-  print_token kwd_match "match";
-  print_expr expr;
-  print_opening opening;
-  print_token_opt lead_vbar "|";
-  print_cases cases;
-  print_closing closing
+  print_token     buffer kwd_match "match";
+  print_expr      buffer expr;
+  print_opening   buffer opening;
+  print_token_opt buffer lead_vbar "|";
+  print_cases     buffer cases;
+  print_closing   buffer closing
 
-and print_token_opt = function
+and print_token_opt buffer = function
          None -> fun _ -> ()
-| Some region -> print_token region
+| Some region -> print_token buffer region
 
-and print_cases {value; _} =
-  print_nsepseq "|" print_case_clause value
+and print_cases buffer {value; _} =
+  print_nsepseq buffer "|" print_case_clause value
 
-and print_case_clause {value; _} =
+and print_case_clause buffer {value; _} =
   let {pattern; arrow; rhs} = value in
-  print_pattern pattern;
-  print_token arrow "->";
-  print_expr rhs
+  print_pattern buffer pattern;
+  print_token   buffer arrow "->";
+  print_expr    buffer rhs
 
-and print_let_in (bind: let_in) =
+and print_let_in buffer (bind: let_in) =
   let {kwd_let; binding; kwd_in; body} = bind in
-  print_token kwd_let "let";
-  print_let_binding binding;
-  print_token kwd_in "in";
-  print_expr body
+  print_token       buffer kwd_let "let";
+  print_let_binding buffer binding;
+  print_token       buffer kwd_in "in";
+  print_expr        buffer body
 
-and print_fun_expr {value; _} =
+and print_fun_expr buffer {value; _} =
   let {kwd_fun; params; p_annot; arrow; body} = value in
-  print_token kwd_fun "fun";
-  (match p_annot with
-     None -> List.iter print_pattern params
-   | Some (colon, type_expr) ->
-      print_token colon ":";
-      print_type_expr type_expr);
-  print_token arrow "->";
-  print_expr body
+  let () = print_token buffer kwd_fun "fun" in
+  let () =
+    match p_annot with
+      None -> List.iter (print_pattern buffer) params
+    | Some (colon, type_expr) ->
+       print_token     buffer colon ":";
+       print_type_expr buffer type_expr in
+  let () =
+    print_token buffer arrow "->"
+  in print_expr buffer body
 
-and print_conditional {value; _} =
-   let {kwd_if; test; kwd_then; ifso; kwd_else; ifnot} = value
-   in print_token ghost "(";
-   print_token kwd_if "if";
-   print_expr test;
-   print_token kwd_then "then";
-   print_expr ifso;
-   print_token kwd_else "else";
-   print_expr ifnot;
-   print_token ghost ")"
+and print_conditional buffer {value; _} =
+  let {kwd_if; test; kwd_then;
+       ifso; kwd_else; ifnot} = value in
+   print_token buffer ghost "(";
+   print_token    buffer kwd_if "if";
+   print_expr     buffer test;
+   print_token    buffer kwd_then "then";
+   print_expr     buffer ifso;
+   print_token    buffer kwd_else "else";
+   print_expr     buffer ifnot;
+   print_token    buffer ghost ")"
+
+(* Conversion to string *)
+
+let to_string printer node =
+  let buffer = Buffer.create 131 in
+  let () = printer buffer node
+  in Buffer.contents buffer
+
+let tokens_to_string  = to_string print_tokens
+let pattern_to_string = to_string print_pattern
+let expr_to_string    = to_string print_expr

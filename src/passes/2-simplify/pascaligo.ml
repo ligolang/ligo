@@ -175,9 +175,9 @@ module Errors = struct
     ] in
     error ~data title message *)
 
-  let unsupported_deep_set_rm path = 
+  let unsupported_deep_set_rm path =
     let title () = "set removals" in
-    let message () = 
+    let message () =
       Format.asprintf "removal of members from embedded sets is not supported yet" in
     let data = [
       ("path_loc",
@@ -217,7 +217,7 @@ module Errors = struct
       ("pattern_loc",
        fun () -> Format.asprintf "%a" Location.pp_lift @@ pattern_loc) ;
       ("pattern",
-       fun () -> Format.asprintf "%a" (Simple_utils.PP_helpers.printer Parser.Pascaligo.ParserLog.print_pattern) p) ;
+       fun () -> Parser.Pascaligo.ParserLog.pattern_to_string p)
     ] in
     error ~data title message
 
@@ -261,7 +261,7 @@ module Errors = struct
     let message () = "" in
     let data = [
       ("instruction",
-       fun () -> Format.asprintf "%a" PP_helpers.(printer Parser.Pascaligo.ParserLog.print_instruction) t)
+       fun () -> Parser.Pascaligo.ParserLog.instruction_to_string t)
     ] in
     error ~data title message
 end
@@ -855,7 +855,7 @@ and simpl_single_instruction : Raw.single_instr -> (_ -> expression result) resu
       let (set_rm, loc) = r_split r in
       let%bind set = match set_rm.set with
         | Name v -> ok v.value
-        | Path path -> fail @@ unsupported_deep_set_rm path in 
+        | Path path -> fail @@ unsupported_deep_set_rm path in
       let%bind removed' = simpl_expression set_rm.element in
       let expr = e_constant ~loc "SET_REMOVE" [removed' ; e_variable set] in
       return_statement @@ e_assign ~loc set [] expr
@@ -957,7 +957,8 @@ and simpl_cases : type a . (Raw.pattern * a) list -> a matching result = fun t -
           let error =
             let title () = "Pattern" in
             let content () =
-              Format.asprintf "Pattern : %a" (PP_helpers.printer Parser.Pascaligo.ParserLog.print_pattern) x in
+              Printf.sprintf "Pattern : %s"
+                (Parser.Pascaligo.ParserLog.pattern_to_string x) in
             error title content in
           let%bind x' =
             trace error @@

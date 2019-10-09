@@ -50,6 +50,6 @@ function withdraw (var store : store) : list (operation) * store is
              operations := list [Transfer (owner, balance)];
         };
         else failwith ("Below target.")
-      else fail "Too soon.";
+      else failwith ("Too soon.");
     else skip
   end with (operations, store)
