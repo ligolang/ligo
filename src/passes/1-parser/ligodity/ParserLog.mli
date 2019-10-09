@@ -10,13 +10,10 @@ val mode    : [`Byte | `Point] ref
    the AST to be unparsed before printing (those nodes that have been
    normalised with function [norm_let] and [norm_fun]). *)
 
-val print_tokens : AST.t -> unit
+val print_tokens  : Buffer.t -> AST.t -> unit
+val print_pattern : Buffer.t -> AST.pattern -> unit
+val print_expr    : Buffer.t -> AST.expr -> unit
 
-(* val print_path : AST.path -> unit *)
-val print_pattern : AST.pattern -> unit
-val print_expr : AST.expr -> unit
-(* val print_instruction : AST.instruction -> unit *)
-
-(* val print_projection : projection -> unit
-val print_pattern : pattern -> unit
-val print_expr : expr -> unit *)
+val tokens_to_string  : AST.t -> string
+val pattern_to_string : AST.pattern -> string
+val expr_to_string    : AST.expr -> string
