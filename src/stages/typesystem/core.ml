@@ -17,6 +17,7 @@
     | C_record    (* ( label , * ) … -> * *)
     | C_variant   (* ( label , * ) … -> * *)
     | C_map       (* * -> * -> * *)
+    | C_big_map       (* * -> * -> * *)
     | C_list      (* * -> * *)
     | C_set       (* * -> * *)
     | C_unit      (* * *)

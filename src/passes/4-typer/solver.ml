@@ -112,8 +112,8 @@ module Wrap = struct
     [C_equation (P_variable (type_name) , pattern)] , type_name
    *)
 
-  let tuple : I.type_expression list -> (constraints * O.type_variable) = fun tys ->
-    let patterns = List.map type_expression_to_type_value_copypasted tys in
+  let tuple : T.type_value list -> (constraints * O.type_variable) = fun tys ->
+    let patterns = List.map type_expression_to_type_value tys in
     let pattern = O.(P_constant (C_tuple , patterns)) in
     let type_name = Core.fresh_type_variable () in
     [C_equation (P_variable (type_name) , pattern)] , type_name
@@ -143,7 +143,7 @@ module Wrap = struct
   end
 
   (* TODO: I think we should take an I.expression for the base+label *)
-  let access_label ~base ~label : (constraints * O.type_variable) =
+  let access_label ~(base : T.type_value) ~(label : O.label) : (constraints * O.type_variable) =
     let base' = type_expression_to_type_value base in
     let expr_type = Core.fresh_type_variable () in
     [O.C_access_label (base' , label , expr_type)] , expr_type
@@ -151,14 +151,14 @@ module Wrap = struct
   let access_int ~base ~index = access_label ~base ~label:(L_int index)
   let access_string ~base ~property = access_label ~base ~label:(L_string property)
 
-  let access_map : base:I.type_expression -> key:I.type_expression -> (constraints * O.type_variable) =
+  let access_map : base:T.type_value -> key:T.type_value -> (constraints * O.type_variable) =
     let mk_map_type key_type element_type =
       O.P_constant O.(C_map , [P_variable element_type; P_variable key_type]) in
     fun ~base ~key ->
       let key_type = Core.fresh_type_variable () in
       let element_type = Core.fresh_type_variable () in
-      let base' = type_expression_to_type_value_copypasted base in
-      let key' = type_expression_to_type_value_copypasted key in
+      let base' = type_expression_to_type_value base in
+      let key' = type_expression_to_type_value key in
       let base_expected = mk_map_type key_type element_type in
       let expr_type = Core.fresh_type_variable () in
       O.[C_equation (base' , base_expected);
@@ -166,27 +166,27 @@ module Wrap = struct
          C_equation (P_variable expr_type , P_variable element_type)] , expr_type
 
   let constructor
-    : I.type_expression -> I.type_expression -> I.type_expression -> (constraints * O.type_variable)
+    : T.type_value -> T.type_value -> T.type_value -> (constraints * O.type_variable)
     = fun t_arg c_arg sum ->
-      let t_arg = type_expression_to_type_value_copypasted t_arg in
-      let c_arg = type_expression_to_type_value_copypasted c_arg in
-      let sum = type_expression_to_type_value_copypasted sum in
+      let t_arg = type_expression_to_type_value t_arg in
+      let c_arg = type_expression_to_type_value c_arg in
+      let sum = type_expression_to_type_value sum in
       let whole_expr = Core.fresh_type_variable () in
       [
         C_equation (P_variable (whole_expr) , sum) ;
         C_equation (t_arg , c_arg)
       ] , whole_expr
 
-  let record : I.type_expression I.type_name_map -> (constraints * O.type_variable) = fun fields ->
-    let record_type = type_expression_to_type_value_copypasted (I.t_record fields) in
+  let record : T.type_value I.type_name_map -> (constraints * O.type_variable) = fun fields ->
+    let record_type = type_expression_to_type_value (T.t_record fields ()) in
     let whole_expr = Core.fresh_type_variable () in
     [C_equation (P_variable whole_expr , record_type)] , whole_expr
 
-  let collection : O.constant_tag -> I.type_expression list -> (constraints * O.type_variable) =
+  let collection : O.constant_tag -> T.type_value list -> (constraints * O.type_variable) =
     fun ctor element_tys ->
       let elttype = O.P_variable (Core.fresh_type_variable ()) in
       let aux elt =
-        let elt' = type_expression_to_type_value_copypasted elt
+        let elt' = type_expression_to_type_value elt
         in O.C_equation (elttype , elt') in
       let equations = List.map aux element_tys in
       let whole_expr = Core.fresh_type_variable () in
@@ -197,15 +197,15 @@ module Wrap = struct
   let list = collection O.C_list
   let set  = collection O.C_set
 
-  let map : (I.type_expression * I.type_expression) list -> (constraints * O.type_variable) =
+  let map : (T.type_value * T.type_value) list -> (constraints * O.type_variable) =
     fun kv_tys ->
       let k_type = O.P_variable (Core.fresh_type_variable ()) in
       let v_type = O.P_variable (Core.fresh_type_variable ()) in
       let aux_k (k , _v) =
-        let k' = type_expression_to_type_value_copypasted k in
+        let k' = type_expression_to_type_value k in
         O.C_equation (k_type , k') in
       let aux_v (_k , v) =
-        let v' = type_expression_to_type_value_copypasted v in
+        let v' = type_expression_to_type_value v in
         O.C_equation (v_type , v') in
       let equations_k = List.map aux_k kv_tys in
       let equations_v = List.map aux_v kv_tys in
@@ -214,19 +214,38 @@ module Wrap = struct
         C_equation (P_variable whole_expr , O.P_constant (C_map , [k_type ; v_type]))
       ] @ equations_k @ equations_v , whole_expr
 
-  let application : I.type_expression -> I.type_expression -> (constraints * O.type_variable) =
+  let big_map : (T.type_value * T.type_value) list -> (constraints * O.type_variable) =
+    fun kv_tys ->
+      let k_type = O.P_variable (Core.fresh_type_variable ()) in
+      let v_type = O.P_variable (Core.fresh_type_variable ()) in
+      let aux_k (k , _v) =
+        let k' = type_expression_to_type_value k in
+        O.C_equation (k_type , k') in
+      let aux_v (_k , v) =
+        let v' = type_expression_to_type_value v in
+        O.C_equation (v_type , v') in
+      let equations_k = List.map aux_k kv_tys in
+      let equations_v = List.map aux_v kv_tys in
+      let whole_expr = Core.fresh_type_variable () in
+      O.[
+        (* TODO: this doesn't tag big_maps uniquely (i.e. if two
+           big_map have the same type, they can be swapped. *)
+        C_equation (P_variable whole_expr , O.P_constant (C_big_map , [k_type ; v_type]))
+      ] @ equations_k @ equations_v , whole_expr
+
+  let application : T.type_value -> T.type_value -> (constraints * O.type_variable) =
     fun f arg ->
       let whole_expr = Core.fresh_type_variable () in
-      let f'   = type_expression_to_type_value_copypasted f in
-      let arg' = type_expression_to_type_value_copypasted arg in
+      let f'   = type_expression_to_type_value f in
+      let arg' = type_expression_to_type_value arg in
       O.[
         C_equation (f' , P_constant (C_arrow , [arg' ; P_variable whole_expr]))
       ] , whole_expr
 
-  let look_up : I.type_expression -> I.type_expression -> (constraints * O.type_variable) =
+  let look_up : T.type_value -> T.type_value -> (constraints * O.type_variable) =
     fun ds ind ->
-      let ds'  = type_expression_to_type_value_copypasted ds in
-      let ind' = type_expression_to_type_value_copypasted ind in
+      let ds'  = type_expression_to_type_value ds in
+      let ind' = type_expression_to_type_value ind in
       let whole_expr = Core.fresh_type_variable () in
       let v = Core.fresh_type_variable () in
       O.[
@@ -234,20 +253,20 @@ module Wrap = struct
         C_equation (P_variable whole_expr , P_constant (C_option , [P_variable v]))
       ] , whole_expr
 
-  let sequence : I.type_expression -> I.type_expression -> (constraints * O.type_variable) =
+  let sequence : T.type_value -> T.type_value -> (constraints * O.type_variable) =
     fun a b ->
-      let a' = type_expression_to_type_value_copypasted a in
-      let b' = type_expression_to_type_value_copypasted b in
+      let a' = type_expression_to_type_value a in
+      let b' = type_expression_to_type_value b in
       let whole_expr = Core.fresh_type_variable () in
       O.[
         C_equation (a' , P_constant (C_unit , [])) ;
         C_equation (b' , P_variable whole_expr)
       ] , whole_expr
 
-  let loop : I.type_expression -> I.type_expression -> (constraints * O.type_variable) =
+  let loop : T.type_value -> T.type_value -> (constraints * O.type_variable) =
     fun expr body ->
-      let expr' = type_expression_to_type_value_copypasted expr in
-      let body' = type_expression_to_type_value_copypasted body in
+      let expr' = type_expression_to_type_value expr in
+      let body' = type_expression_to_type_value body in
       let whole_expr = Core.fresh_type_variable () in
       O.[
         C_equation (expr'                 , P_constant (C_bool , [])) ;
@@ -255,13 +274,13 @@ module Wrap = struct
         C_equation (P_variable whole_expr , P_constant (C_unit , []))
       ] , whole_expr
 
-  let let_in : I.type_expression -> I.type_expression option -> I.type_expression -> (constraints * O.type_variable) =
+  let let_in : T.type_value -> T.type_value option -> T.type_value -> (constraints * O.type_variable) =
     fun rhs rhs_tv_opt result ->
-      let rhs'        = type_expression_to_type_value_copypasted rhs in
-      let result'     = type_expression_to_type_value_copypasted result in
+      let rhs'        = type_expression_to_type_value rhs in
+      let result'     = type_expression_to_type_value result in
       let rhs_tv_opt' = match rhs_tv_opt with
           None -> []
-        | Some annot -> O.[C_equation (rhs' , type_expression_to_type_value_copypasted annot)] in
+        | Some annot -> O.[C_equation (rhs' , type_expression_to_type_value annot)] in
       let whole_expr = Core.fresh_type_variable () in
       O.[
         C_equation (result' , P_variable whole_expr)

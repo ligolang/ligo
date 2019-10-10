@@ -246,6 +246,7 @@ let e_application a b : expression = E_application (a , b)
 let e_variable v : expression = E_variable v
 let e_list lst : expression = E_list lst
 let e_let_in binder rhs result = E_let_in { binder ; rhs ; result }
+let e_tuple lst : expression = E_tuple lst
 
 let e_a_unit = make_a_e e_unit (t_unit ())
 let e_a_int n = make_a_e (e_int n) (t_int ())

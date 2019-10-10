@@ -665,7 +665,10 @@ let bind_and (a, b) =
 let bind_pair = bind_and
 let bind_map_pair f (a, b) =
   bind_pair (f a, f b)
-
+let bind_fold_map_pair f acc (a, b) =
+  f acc a >>? fun (acc' , a') ->
+  f acc' b >>? fun (acc'' , b') ->
+  ok (acc'' , (a' , b'))
 
 
 (**

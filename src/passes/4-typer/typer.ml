@@ -474,39 +474,35 @@ and type_expression : environment -> Solver.state -> I.expression -> (O.annotate
    *     | _ -> return (E_literal (Literal_string s)) (t_string ())
    *   ) *)
   (* Tuple *)
-  | E_tuple lst ->
-    let aux state hd = type_expression e state hd >>? swap in
-    let%bind (state', lst') = bind_fold_map_list aux state lst in
-    let tv_lst = List.map get_type_annotation lst' in
-    return (E_tuple lst') (t_tuple tv_lst ())
-  | E_accessor (ae', path) ->
-    let%bind e' = type_expression e ae' in
-    let aux (prev:O.annotated_expression) (a:I.access) : O.annotated_expression result =
-      match a with
-      | Access_tuple index -> (
-          let%bind tpl_tv = get_t_tuple prev.type_annotation in
-          let%bind tv =
-            generic_try (bad_tuple_index index ae' prev.type_annotation ae.location)
-            @@ (fun () -> List.nth tpl_tv index) in
-          return (E_tuple_accessor (prev , index)) tv
-        )
-      | Access_record property -> (
-          let%bind r_tv = get_t_record prev.type_annotation in
-          let%bind tv =
-            generic_try (bad_record_access property ae' prev.type_annotation ae.location)
-            @@ (fun () -> SMap.find property r_tv) in
-          return (E_record_accessor (prev , property)) tv
-        )
-      | Access_map ae' -> (
-          let%bind ae'' = type_expression e ae' in
-          let%bind (k , v) = bind_map_or (get_t_map , get_t_big_map) prev.type_annotation in
-          let%bind () =
-            Ast_typed.assert_type_value_eq (k , get_type_annotation ae'') in
-          return (E_look_up (prev , ae'')) v
-        )
-    in
-    trace (simple_info "accessing") @@
-    bind_fold_list aux e' path
+  | E_tuple lst  -> (
+      let aux state hd = type_expression e state hd >>? swap in
+      let%bind (state', lst') = bind_fold_map_list aux state lst in
+      let tv_lst = List.map get_type_annotation lst' in
+      return_wrapped (e_tuple lst') state' @@ Wrap.tuple tv_lst
+    )
+  | E_accessor (base , [Access_tuple index]) -> (
+      let%bind (base' , state') = type_expression e state base in
+      let wrapped = Wrap.access_int ~base:base'.type_annotation ~index in
+      return_wrapped (E_tuple_accessor (base' , index)) state' wrapped
+    )
+  | E_accessor (base , [Access_record property]) -> (
+      let%bind (base' , state') = type_expression e state base in
+      let wrapped = Wrap.access_string ~base:base'.type_annotation ~property in
+      return_wrapped (E_record_accessor (base' , property)) state' wrapped
+    )
+  | E_accessor (base , [Access_map key_ae]) -> (
+      let%bind (base' , state') = type_expression e state base in
+      let%bind (key_ae' , state'') = type_expression e state' key_ae in
+      let xyz = get_type_annotation key_ae' in
+      let wrapped = Wrap.access_map ~base:base'.type_annotation ~key:xyz in
+      return_wrapped (E_look_up (base' , key_ae')) state'' wrapped
+    )
+
+  | E_accessor (_base , []) | E_accessor (_base , _ :: _ :: _) -> (
+      failwith
+        "The simplifier should produce E_accessor with only a single path element, not a list of path elements."
+    )
+
   (* Sum *)
   | E_constructor (c, expr) ->
     let%bind (c_tv, sum_tv) =
@@ -520,9 +516,10 @@ and type_expression : environment -> Solver.state -> I.expression -> (O.annotate
       trace_option error @@
       Environment.get_constructor c e in
     let%bind (expr' , state') = type_expression e state expr in
-    let%bind _assert = O.assert_type_expression_eq (expr'.type_annotation, c_tv) in
+    let%bind _assert = O.assert_type_value_eq (expr'.type_annotation, c_tv) in
     let wrapped = Wrap.constructor expr'.type_annotation c_tv sum_tv in
     return_wrapped (E_constructor (c , expr')) state' wrapped
+
   (* Record *)
   | E_record m ->
     let aux (acc, state) k expr =
@@ -533,6 +530,8 @@ and type_expression : environment -> Solver.state -> I.expression -> (O.annotate
     let wrapped = Wrap.record (SMap.map get_type_annotation m') in
     return_wrapped (E_record m') state' wrapped
   (* Data-structure *)
+
+(*
   | E_list lst ->
     let%bind lst' = bind_map_list (type_expression e) lst in
     let%bind tv =
@@ -605,112 +604,152 @@ and type_expression : environment -> Solver.state -> I.expression -> (O.annotate
       ok (t_map key_type value_type ())
     in
     return (E_map lst') tv
-  | E_big_map lst ->
-    let%bind lst' = bind_map_list (bind_map_pair (type_expression e)) lst in
-    let%bind tv =
-      let aux opt c =
-        match opt with
-        | None -> ok (Some c)
-        | Some c' ->
-          let%bind _eq = Ast_typed.assert_type_value_eq (c, c') in
-          ok (Some c') in
-      let%bind key_type =
-        let%bind sub =
-          bind_fold_list aux None
-          @@ List.map get_type_annotation
-          @@ List.map fst lst' in
-        let%bind annot = bind_map_option get_t_big_map_key tv_opt in
-        trace (simple_info "empty map expression without a type annotation") @@
-        O.merge_annotation annot sub (needs_annotation ae "this map literal")
-      in
-      let%bind value_type =
-        let%bind sub =
-          bind_fold_list aux None
-          @@ List.map get_type_annotation
-          @@ List.map snd lst' in
-        let%bind annot = bind_map_option get_t_big_map_value tv_opt in
-        trace (simple_info "empty map expression without a type annotation") @@
-        O.merge_annotation annot sub (needs_annotation ae "this map literal")
-      in
-      ok (t_big_map key_type value_type ())
-    in
-    return (E_big_map lst') tv
-  | E_lambda {
-      binder ;
-      input_type ;
-      output_type ;
-      result ;
-    } -> (
-      let%bind input_type =
-        let%bind input_type =
-          (* Hack to take care of let_in introduced by `simplify/ligodity.ml` in ECase's hack *)
-          let default_action e () = fail @@ (needs_annotation e "the returned value") in
-          match input_type with
-          | Some ty -> ok ty
-          | None -> (
-              match result.expression with
-              | I.E_let_in li -> (
-                  match li.rhs.expression with
-                  | I.E_variable name when name = (fst binder) -> (
-                      match snd li.binder with
-                      | Some ty -> ok ty
-                      | None -> default_action li.rhs ()
-                    )
-                  | _ -> default_action li.rhs ()
-                )
-              | _ -> default_action result ()
-            )
-        in
-        evaluate_type e input_type in
-      let%bind output_type =
-        bind_map_option (evaluate_type e) output_type
-      in
-      let e' = Environment.add_ez_binder (fst binder) input_type e in
-      let%bind body = type_expression ?tv_opt:output_type e' result in
-      let output_type = body.type_annotation in
-      return (E_lambda {binder = fst binder ; body}) (t_function input_type output_type ())
-    )
-  | E_constant (name, lst) ->
-    let%bind lst' = bind_list @@ List.map (type_expression e) lst in
-    let tv_lst = List.map get_type_annotation lst' in
-    let%bind (name', tv) =
-      type_constant name tv_lst tv_opt ae.location in
-    return (E_constant (name' , lst')) tv
+*)
+
+  | E_list lst ->
+    let%bind (state', lst') =
+      bind_fold_map_list (fun state' elt -> type_expression e state' elt >>? swap) state lst in
+    let wrapped = Wrap.list (List.map (fun x -> O.(x.type_annotation)) lst') in
+    return_wrapped (E_list lst') state' wrapped
+  | E_set set ->
+    let aux = fun state' elt -> type_expression e state' elt >>? swap in
+    let%bind (state', set') =
+      bind_fold_map_list aux state set in
+    let wrapped = Wrap.set (List.map (fun x -> O.(x.type_annotation)) set') in
+    return_wrapped (E_set set') state' wrapped
+  | E_map map ->
+    let aux' state' elt = type_expression e state' elt >>? swap in
+    let aux = fun state' elt -> bind_fold_map_pair aux' state' elt in
+    let%bind (state', map') =
+      bind_fold_map_list aux state map in
+    let aux (x, y) = O.(x.type_annotation , y.type_annotation) in
+    let wrapped = Wrap.map (List.map aux map') in
+    return_wrapped (E_map map') state' wrapped
+
+  (* | E_big_map lst ->
+   *   let%bind lst' = bind_map_list (bind_map_pair (type_expression e)) lst in
+   *   let%bind tv =
+   *     let aux opt c =
+   *       match opt with
+   *       | None -> ok (Some c)
+   *       | Some c' ->
+   *         let%bind _eq = Ast_typed.assert_type_value_eq (c, c') in
+   *         ok (Some c') in
+   *     let%bind key_type =
+   *       let%bind sub =
+   *         bind_fold_list aux None
+   *         @@ List.map get_type_annotation
+   *         @@ List.map fst lst' in
+   *       let%bind annot = bind_map_option get_t_big_map_key tv_opt in
+   *       trace (simple_info "empty map expression without a type annotation") @@
+   *       O.merge_annotation annot sub (needs_annotation ae "this map literal")
+   *     in
+   *     let%bind value_type =
+   *       let%bind sub =
+   *         bind_fold_list aux None
+   *         @@ List.map get_type_annotation
+   *         @@ List.map snd lst' in
+   *       let%bind annot = bind_map_option get_t_big_map_value tv_opt in
+   *       trace (simple_info "empty map expression without a type annotation") @@
+   *       O.merge_annotation annot sub (needs_annotation ae "this map literal")
+   *     in
+   *     ok (t_big_map key_type value_type ())
+   *   in
+   *   return (E_big_map lst') tv *)
+  | E_big_map big_map ->
+    let aux' state' elt = type_expression e state' elt >>? swap in
+    let aux = fun state' elt -> bind_fold_map_pair aux' state' elt in
+    let%bind (state', big_map') =
+      bind_fold_map_list aux state big_map in
+    let aux (x, y) = O.(x.type_annotation , y.type_annotation) in
+    let wrapped = Wrap.big_map (List.map aux big_map') in
+    return_wrapped (E_big_map big_map') state' wrapped
+
+  (* | E_lambda {
+   *     binder ;
+   *     input_type ;
+   *     output_type ;
+   *     result ;
+   *   } -> (
+   *     let%bind input_type =
+   *       let%bind input_type =
+   *         (\* Hack to take care of let_in introduced by `simplify/ligodity.ml` in ECase's hack *\)
+   *         let default_action e () = fail @@ (needs_annotation e "the returned value") in
+   *         match input_type with
+   *         | Some ty -> ok ty
+   *         | None -> (
+   *             match result.expression with
+   *             | I.E_let_in li -> (
+   *                 match li.rhs.expression with
+   *                 | I.E_variable name when name = (fst binder) -> (
+   *                     match snd li.binder with
+   *                     | Some ty -> ok ty
+   *                     | None -> default_action li.rhs ()
+   *                   )
+   *                 | _ -> default_action li.rhs ()
+   *               )
+   *             | _ -> default_action result ()
+   *           )
+   *       in
+   *       evaluate_type e input_type in
+   *     let%bind output_type =
+   *       bind_map_option (evaluate_type e) output_type
+   *     in
+   *     let e' = Environment.add_ez_binder (fst binder) input_type e in
+   *     let%bind body = type_expression ?tv_opt:output_type e' result in
+   *     let output_type = body.type_annotation in
+   *     return (E_lambda {binder = fst binder ; body}) (t_function input_type output_type ())
+   *   ) *)
+
+  (* | E_constant (name, lst) ->
+   *   let%bind lst' = bind_list @@ List.map (type_expression e) lst in
+   *   let tv_lst = List.map get_type_annotation lst' in
+   *   let%bind (name', tv) =
+   *     type_constant name tv_lst tv_opt ae.location in
+   *   return (E_constant (name' , lst')) tv *)
   | E_application (f, arg) ->
     let%bind (f' , state') = type_expression e state f in
     let%bind (arg , state'') = type_expression e state' arg in
     let wrapped = Wrap.application f'.type_annotation arg.type_annotation in
     return_wrapped (E_application (f' , arg)) state'' wrapped
+
+  (* | E_look_up dsi ->
+   *   let%bind (ds, ind) = bind_map_pair (type_expression e) dsi in
+   *   let%bind (src, dst) = bind_map_or (get_t_map , get_t_big_map) ds.type_annotation in
+   *   let%bind _ = O.assert_type_value_eq (ind.type_annotation, src) in
+   *   return (E_look_up (ds , ind)) (t_option dst ()) *)
+
   | E_look_up dsi ->
-    let%bind (ds, ind) = bind_map_pair (type_expression e) dsi in
-    let%bind (src, dst) = bind_map_or (get_t_map , get_t_big_map) ds.type_annotation in
-    let%bind _ = O.assert_type_value_eq (ind.type_annotation, src) in
-    return (E_look_up (ds , ind)) (t_option dst ())
+    let aux' state' elt = type_expression e state' elt >>? swap in
+    let%bind (state'' , (ds , ind)) = bind_fold_map_pair aux' state dsi in
+    let wrapped = Wrap.look_up ds.type_annotation ind.type_annotation in
+    return_wrapped (E_look_up (ds , ind)) state'' wrapped
+
   (* Advanced *)
-  | E_matching (ex, m) -> (
-      let%bind ex' = type_expression e ex in
-      let%bind m' = type_match (type_expression ?tv_opt:None) e ex'.type_annotation m ae ae.location in
-      let tvs =
-        let aux (cur:O.value O.matching) =
-          match cur with
-          | Match_bool { match_true ; match_false } -> [ match_true ; match_false ]
-          | Match_list { match_nil ; match_cons = ((_ , _) , match_cons) } -> [ match_nil ; match_cons ]
-          | Match_option { match_none ; match_some = (_ , match_some) } -> [ match_none ; match_some ]
-          | Match_tuple (_ , match_tuple) -> [ match_tuple ]
-          | Match_variant (lst , _) -> List.map snd lst in
-        List.map get_type_annotation @@ aux m' in
-      let aux prec cur =
-        let%bind () =
-          match prec with
-          | None -> ok ()
-          | Some cur' -> Ast_typed.assert_type_value_eq (cur , cur') in
-        ok (Some cur) in
-      let%bind tv_opt = bind_fold_list aux None tvs in
-      let%bind tv =
-        trace_option (match_empty_variant m ae.location) @@
-        tv_opt in
-      return (O.E_matching (ex', m')) tv
-    )
+  (* | E_matching (ex, m) -> (
+   *     let%bind ex' = type_expression e ex in
+   *     let%bind m' = type_match (type_expression ?tv_opt:None) e ex'.type_annotation m ae ae.location in
+   *     let tvs =
+   *       let aux (cur:O.value O.matching) =
+   *         match cur with
+   *         | Match_bool { match_true ; match_false } -> [ match_true ; match_false ]
+   *         | Match_list { match_nil ; match_cons = ((_ , _) , match_cons) } -> [ match_nil ; match_cons ]
+   *         | Match_option { match_none ; match_some = (_ , match_some) } -> [ match_none ; match_some ]
+   *         | Match_tuple (_ , match_tuple) -> [ match_tuple ]
+   *         | Match_variant (lst , _) -> List.map snd lst in
+   *       List.map get_type_annotation @@ aux m' in
+   *     let aux prec cur =
+   *       let%bind () =
+   *         match prec with
+   *         | None -> ok ()
+   *         | Some cur' -> Ast_typed.assert_type_value_eq (cur , cur') in
+   *       ok (Some cur) in
+   *     let%bind tv_opt = bind_fold_list aux None tvs in
+   *     let%bind tv =
+   *       trace_option (match_empty_variant m ae.location) @@
+   *       tv_opt in
+   *     return (O.E_matching (ex', m')) tv
+   *   ) *)
   | E_sequence (a , b) ->
     let%bind (a' , state') = type_expression e state a in
     let%bind (b' , state'') = type_expression e state' b in
