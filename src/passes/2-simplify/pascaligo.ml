@@ -141,7 +141,7 @@ module Errors = struct
     ] in
     error ~data title message
 
-  let unsupported_set_patches patch =
+  (* let unsupported_set_patches patch =
     let title () = "set patches" in
     let message () =
       Format.asprintf "set patches (a.k.a. functional updates) are \
@@ -150,7 +150,7 @@ module Errors = struct
       ("patch_loc",
        fun () -> Format.asprintf "%a" Location.pp_lift @@ patch.Region.region)
     ] in
-    error ~data title message
+    error ~data title message *)
 
   let unsupported_deep_map_rm path =
     let title () = "binding removals" in
@@ -162,18 +162,6 @@ module Errors = struct
        fun () -> Format.asprintf "%a" Location.pp_lift @@ path.Region.region)
     ] in
     error ~data title message
-
-
-  (* let unsupported_set_removal remove =
-    let title () = "set removals" in
-    let message () =
-      Format.asprintf "removal of elements in a set is not \
-                       supported yet" in
-    let data = [
-      ("removal_loc",
-       fun () -> Format.asprintf "%a" Location.pp_lift @@ remove.Region.region)
-    ] in
-    error ~data title message *)
 
   let unsupported_deep_set_rm path = 
     let title () = "set removals" in
@@ -839,8 +827,28 @@ and simpl_single_instruction : Raw.single_instr -> (_ -> expression result) resu
     )
   | MapPatch patch ->
       fail @@ unsupported_map_patches patch
-  | SetPatch patch ->
-      fail @@ unsupported_set_patches patch
+  | SetPatch patch -> (
+      let setp = patch.value in
+      let (name , access_path) = simpl_path setp.path in
+      let%bind inj = bind_list
+          @@ List.map (fun (x:Raw.expr) ->
+            let%bind e = simpl_expression x
+            in ok e)
+          @@ pseq_to_list setp.set_inj.value.elements in
+      let%bind expr =
+        let aux = fun (v) ->
+          e_assign name access_path (e_constant "SET_ADD" [v ; e_variable name]) in
+        let assigns = List.map aux inj in
+        match assigns with
+        | [] -> fail @@ unsupported_empty_record_patch setp.set_inj
+        | hd :: tl -> (
+            let aux acc cur = e_sequence acc cur in
+            ok @@ List.fold_left aux hd tl
+          )
+      in
+      return_statement @@ expr
+    )
+
   | MapRemove r -> (
       let (v , loc) = r_split r in
       let key = v.key in
