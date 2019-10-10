@@ -25,17 +25,15 @@ let compile_expression_as_function : string -> s_syntax -> _ result =
 
 let type_file ?(debug_simplify = false) ?(debug_typed = false)
     syntax (source_filename:string) : Ast_typed.program result =
-  let _ = debug_simplify, debug_typed, syntax, source_filename in
-  failwith "TODO"
-  (* let%bind syntax = syntax_to_variant syntax (Some source_filename) in
-   * let%bind simpl = parsify syntax source_filename in
-   * (if debug_simplify then
-   *    Format.(printf "Simplified : %a\n%!" Ast_simplified.PP.program simpl)
-   * ) ;
-   * let%bind typed =
-   *   trace (simple_error "typing") @@
-   *   Typer.type_program simpl in
-   * (if debug_typed then (
-   *     Format.(printf "Typed : %a\n%!" Ast_typed.PP.program typed)
-   *   )) ;
-   * ok typed *)
+  let%bind syntax = syntax_to_variant syntax (Some source_filename) in
+  let%bind simpl = parsify syntax source_filename in
+  (if debug_simplify then
+     Format.(printf "Simplified : %a\n%!" Ast_simplified.PP.program simpl)
+  ) ;
+  let%bind typed =
+    trace (simple_error "typing") @@
+    Typer.type_program simpl in
+  (if debug_typed then (
+      Format.(printf "Typed : %a\n%!" Ast_typed.PP.program typed)
+    )) ;
+  ok typed

@@ -873,9 +873,8 @@ and type_expression : environment -> Solver.state -> I.expression -> (O.annotate
       let%bind (result , state') = type_expression e' state result in
       let output_type = result.type_annotation in
       let wrapped = Wrap.lambda fresh input_type' output_type' in
-      let _TODO = output_type in
       return_wrapped
-        (E_lambda {binder = fst binder;(* input_type=fresh;output_type; *)body=result})
+        (E_lambda {binder = fst binder; input_type=fresh;output_type; body=result})
         state' wrapped
     )
 

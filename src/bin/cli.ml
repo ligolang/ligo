@@ -139,18 +139,17 @@ let run_function =
   (term , Term.info ~docs cmdname)
 
 let evaluate_value =
-  failwith "TODO"
-  (* let f source entry_point amount syntax display_format =
-   *   toplevel ~display_format @@
-   *   let%bind output =
-   *     Ligo.Run.Of_source.evaluate_entry ~amount source entry_point (Syntax_name syntax) in
-   *   ok @@ Format.asprintf "%a\n" Ast_simplified.PP.expression output
-   * in
-   * let term =
-   *   Term.(const f $ source 0 $ entry_point 1 $ amount $ syntax $ display_format) in
-   * let cmdname = "evaluate-value" in
-   * let docs = "Subcommand: evaluate a given definition." in
-   * (term , Term.info ~docs cmdname) *)
+  let f source entry_point amount syntax display_format =
+    toplevel ~display_format @@
+    let%bind output =
+      Ligo.Run.Of_source.evaluate_entry ~amount source entry_point (Syntax_name syntax) in
+    ok @@ Format.asprintf "%a\n" Ast_simplified.PP.expression output
+  in
+  let term =
+    Term.(const f $ source 0 $ entry_point 1 $ amount $ syntax $ display_format) in
+  let cmdname = "evaluate-value" in
+  let docs = "Subcommand: evaluate a given definition." in
+  (term , Term.info ~docs cmdname)
 
 let compile_expression =
   let f expression syntax display_format =
