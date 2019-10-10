@@ -793,7 +793,7 @@ and type_expression : environment -> Solver.state -> I.expression -> (O.annotate
         | Access_map _ ->
           fail @@ not_supported_yet "assign expressions with maps are not supported yet" ae
       in
-      bind_fold_list aux (typed_name.type_expression , []) path in
+      bind_fold_list aux (typed_name.type_value , []) path in
     let%bind (expr' , state') = type_expression e state expr in
     let wrapped = Wrap.assign assign_tv expr'.type_annotation in
     return_wrapped (O.E_assign (typed_name , path' , expr')) state' wrapped
@@ -814,7 +814,7 @@ and type_expression : environment -> Solver.state -> I.expression -> (O.annotate
         let aux (cur:O.value O.matching) =
           match cur with
           | Match_bool { match_true ; match_false } -> [ match_true ; match_false ]
-          | Match_list { match_nil ; match_cons = (_ , _ , match_cons) } -> [ match_nil ; match_cons ]
+          | Match_list { match_nil ; match_cons = ((_ , _) , match_cons) } -> [ match_nil ; match_cons ]
           | Match_option { match_none ; match_some = (_ , match_some) } -> [ match_none ; match_some ]
           | Match_tuple (_ , match_tuple) -> [ match_tuple ]
           | Match_variant (lst , _) -> List.map snd lst in
@@ -867,14 +867,14 @@ and type_expression : environment -> Solver.state -> I.expression -> (O.annotate
       let%bind input_type' = bind_map_option (evaluate_type e) input_type in
       let%bind output_type' = bind_map_option (evaluate_type e) output_type in
 
-      let fresh : O.type_expression = t_variable (Wrap.fresh_binder ()) () in
+      let fresh : O.type_value = t_variable (Wrap.fresh_binder ()) () in
       let e' = Environment.add_ez_binder (fst binder) fresh e in
 
       let%bind (result , state') = type_expression e' state result in
       let output_type = result.type_annotation in
       let wrapped = Wrap.lambda fresh input_type' output_type' in
       return_wrapped
-        (E_lambda {binder = fst binder;input_type=fresh;output_type;result})
+        (E_lambda {binder = fst binder; input_type=fresh;output_type; body=result})
         state' wrapped
     )
 
@@ -964,8 +964,27 @@ let type_program' : I.program -> O.program result = fun p ->
 (*
   Tranform a Ast_typed type_expression into an ast_simplified type_expression
 *)
-let untype_type_expression (t:O.type_expression) : (I.type_expression) result =
-  ok t
+let rec untype_type_expression (t:O.type_value) : (I.type_expression) result =
+  (* TODO: or should we use t.simplified if present? *)
+  match t.type_value' with
+  | O.T_tuple x ->
+    let%bind x' = bind_map_list untype_type_expression x in
+    ok @@ I.T_tuple x'
+  | O.T_sum x ->
+    let%bind x' = bind_map_smap untype_type_expression x in
+    ok @@ I.T_sum x'
+  | O.T_record x ->
+    let%bind x' = bind_map_smap untype_type_expression x in
+    ok @@ I.T_record x'
+  | O.T_constant (tag, args) ->
+    let%bind args' = bind_map_list untype_type_expression args in
+    ok @@ I.T_constant (tag, args')
+  | O.T_variable name -> ok @@ I.T_variable name (* TODO: is this the right conversion? *)
+  | O.T_function (a , b) ->
+    let%bind a' = untype_type_expression a in
+    let%bind b' = untype_type_expression b in
+    ok @@ I.T_function (a' , b')
+
 (* match t.simplified with *)
 (* | Some s -> ok s *)
 (* | _ -> fail @@ internal_assertion_failure "trying to untype generated type" *)
@@ -1049,9 +1068,9 @@ let rec untype_expression (e:O.annotated_expression) : (I.expression) result =
     let%bind ae' = untype_expression ae in
     let%bind m' = untype_matching untype_expression m in
     return (e_matching ae' m')
-  | E_failwith ae ->
-    let%bind ae' = untype_expression ae in
-    return (e_failwith ae')
+  (* | E_failwith ae ->
+   *   let%bind ae' = untype_expression ae in
+   *   return (e_failwith ae') *)
   | E_sequence _
   | E_loop _
   | E_assign _ -> fail @@ not_supported_yet_untranspile "not possible to untranspile statements yet" e.expression
