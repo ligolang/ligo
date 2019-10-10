@@ -828,7 +828,7 @@ and simpl_single_instruction : Raw.single_instr -> (_ -> expression result) resu
   | MapPatch patch ->
       fail @@ unsupported_map_patches patch
   | SetPatch patch -> (
-      let setp = patch.value in
+      let (setp, loc) = r_split patch in
       let (name , access_path) = simpl_path setp.path in
       let%bind inj = bind_list
           @@ List.map (fun (x:Raw.expr) ->
@@ -840,7 +840,7 @@ and simpl_single_instruction : Raw.single_instr -> (_ -> expression result) resu
           e_assign name access_path (e_constant "SET_ADD" [v ; e_variable name]) in
         let assigns = List.map aux inj in
         match assigns with
-        | [] -> fail @@ unsupported_empty_record_patch setp.set_inj
+        | [] -> ok @@ e_skip ~loc ()
         | hd :: tl -> (
             let aux acc cur = e_sequence acc cur in
             ok @@ List.fold_left aux hd tl
