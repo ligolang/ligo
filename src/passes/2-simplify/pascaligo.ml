@@ -667,7 +667,42 @@ and simpl_single_instruction : Raw.instruction -> (_ -> expression result) resul
       let%bind body = simpl_block l.block.value in
       let%bind body = body None in
       return_statement @@ e_loop cond body
-  | Loop (For (ForInt {region; _} | ForCollect {region ; _})) ->
+  | Loop (For (ForInt fi)) -> 
+      (* cond part *)
+      let%bind _var = ok @@ e_variable fi.value.assign.value.name.value in
+      let%bind _value = simpl_expression fi.value.assign.value.expr in
+      let%bind _bound = simpl_expression fi.value.bound in
+      let%bind _comp = match fi.value.down with
+        | Some _ -> ok @@ e_annotation (e_constant "GE" [_var ; _bound]) t_bool
+        | None -> ok @@ e_annotation (e_constant "LE" [_var ; _bound]) t_bool
+      in
+
+      (* body part *)
+      let%bind _body = simpl_block fi.value.block.value in
+      let%bind _body = _body None in
+      let%bind _step =  match fi.value.step with
+        | Some (_,e) -> simpl_expression e
+        | None -> ok (e_int 1) in
+      let%bind _ctrl = match fi.value.down with
+        | Some _ ->
+          let%bind _addi = ok @@ e_constant "SUB" [ _var ; _step ] in 
+          ok @@ e_assign fi.value.assign.value.name.value [] _addi 
+        | None ->
+          let%bind _subi = ok @@ e_constant "ADD" [ _var ; _step ] in 
+          ok @@ e_assign fi.value.assign.value.name.value [] _subi
+      in
+      let rec add_to_seq expr = match expr.expression with
+        | E_sequence (_,a) -> add_to_seq a
+        | _ -> e_sequence _body _ctrl in
+      let%bind _body' = ok @@ add_to_seq _body in
+
+      let%bind _loop = ok @@ e_loop _comp _body' in
+
+      let _ = Format.printf " -> %a\n" Ast_simplified.PP.expression _body' in
+
+      return_statement @@
+        e_let_in (fi.value.assign.value.name.value, Some t_int) _value _loop
+  | Loop (For (ForCollect {region ; _})) ->
       fail @@ unsupported_for_loops region
   | Cond c -> (
       let (c , loc) = r_split c in

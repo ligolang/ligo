@@ -658,13 +658,18 @@ let loop () : unit result =
     let make_input = e_nat in
     let make_expected = fun n -> e_nat (n * (n + 1) / 2) in
     expect_eq_n_pos_mid program "while_sum" make_input make_expected
+<<<<<<< HEAD
   in(* For loop is currently unsupported
 
   let%bind () =
+=======
+  in
+  let%bind () = 
+>>>>>>> First version for ForInt loops
     let make_input = e_nat in
-    let make_expected = fun n -> e_nat (n * (n + 1) / 2) in
+    let make_expected = fun n -> e_nat (n + 100) in
     expect_eq_n_pos_mid program "for_sum" make_input make_expected
-  in *)
+  in
   ok ()
 
 (* Don't know how to assert parse error happens in this test framework
