@@ -25,6 +25,10 @@ function rm (var m : foobar) : foobar is block {
   remove 42 from map m
 } with m
 
+function patch_ (var m: foobar) : foobar is block {
+  patch m with map [0 -> 5; 1 -> 6; 2 -> 7]
+} with m
+
 function size_ (const m : foobar) : nat is
   block {skip} with (size(m))
 
