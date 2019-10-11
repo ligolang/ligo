@@ -834,6 +834,9 @@ let tez_ligo () : unit result =
   let%bind _ = expect_eq_evaluate program "tez_div_tez1" (e_nat 100) in
   let%bind _ = expect_eq_evaluate program "tez_div_tez2" (e_nat 1) in
   let%bind _ = expect_eq_evaluate program "tez_div_tez3" (e_nat 0) in
+  let%bind _ = expect_eq_evaluate program "tez_mod_tez1" (e_mutez 0) in
+  let%bind _ = expect_eq_evaluate program "tez_mod_tez2" (e_mutez 10) in
+  let%bind _ = expect_eq_evaluate program "tez_mod_tez3" (e_mutez 100) in
   ok ()
 
 let tez_mligo () : unit result =
