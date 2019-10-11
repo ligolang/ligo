@@ -806,15 +806,19 @@ and simpl_single_instruction : Raw.single_instr -> (_ -> expression result) resu
             in ok e)
           @@ pseq_to_list setp.set_inj.value.elements in
       let%bind expr =
-        let aux = fun (v) ->
-          e_assign name access_path (e_constant "SET_ADD" [v ; e_variable name]) in
-        let assigns = List.map aux inj in
+        let rec chain_add = fun lst s : expression ->
+            match lst with
+                | [] -> s
+                | hd :: tl -> chain_add tl (e_constant "SET_ADD" [hd ; s]) in
+        let assigns =
+          match inj with
+            | [] -> e_skip ~loc ()
+            | _ :: _ -> chain_add inj (e_variable name) in
         match assigns with
-        | [] -> ok @@ e_skip ~loc ()
-        | hd :: tl -> (
-            let aux acc cur = e_sequence acc cur in
-            ok @@ List.fold_left aux hd tl
-          )
+        | {expression = E_skip; _} -> ok @@ e_skip ~loc ()
+        | {expression = E_constant e; location = loc} ->
+          ok @@ e_assign name access_path {expression = (E_constant e); location = loc}
+        | _ -> fail @@ corner_case ~loc:__LOC__ "Unexpected expression type"
       in
       return_statement @@ expr
     )
