@@ -438,6 +438,8 @@ module Typer = struct
     then ok @@ t_int () else
     if eq_1 a (t_tez ()) && eq_1 b (t_nat ())
     then ok @@ t_tez () else
+    if eq_1 a (t_tez ()) && eq_1 b (t_tez ())
+    then ok @@ t_nat () else
       simple_fail "Dividing with wrong types"
 
   let mod_ = typer_2 "MOD" @@ fun a b ->
