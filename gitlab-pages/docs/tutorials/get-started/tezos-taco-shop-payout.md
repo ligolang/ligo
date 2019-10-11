@@ -17,14 +17,15 @@ In the [previous tutorial](tutorials/get-started/tezos-taco-shop-smart-contract.
 ## Analyzing the current contract
 
 ### **`taco-shop.ligo`**
-```
+```pascaligo
 type taco_supply is record
     current_stock : nat;
     max_price : tez;
 end
 type taco_shop_storage is map(nat, taco_supply);
 
-function buy_taco (const taco_kind_index: nat ; var taco_shop_storage : taco_shop_storage) : (list(operation) * taco_shop_storage) is
+function buy_taco (const taco_kind_index: nat ; var taco_shop_storage : taco_shop_storage) : 
+  (list(operation) * taco_shop_storage) is
   begin
     // Retrieve the taco_kind from the contract's storage
     const taco_kind : taco_supply = get_force(taco_kind_index, taco_shop_storage);
@@ -46,7 +47,7 @@ function buy_taco (const taco_kind_index: nat ; var taco_shop_storage : taco_sho
 ### Purchase price formula
 Pedro's Taco Shop contract currently enables customers to buy tacos, at a computed price based on a simple formula. 
 
-```
+```pascaligo
 const current_purchase_price : tez = taco_kind.max_price / taco_kind.current_stock;
 ```
 
@@ -66,7 +67,7 @@ This means that after all the *purchase conditions* of our contract are met - e.
 ### Defining the recipient
 In order to send tokens, we will need a receiver address - which in our case will be Pedro's personal account. Additionally we'll wrap the given address as a *`contract(unit)`* - which represents either a contract with no parameters, or an implicit account.
 
-```
+```pascaligo
 const ownerAddress : address = "tz1TGu6TN5GSez2ndXXeDX6LgUDvLzPLqgYV";
 const receiver : contract(unit) = get_contract(ownerAddress);
 ```
@@ -77,7 +78,7 @@ const receiver : contract(unit) = get_contract(ownerAddress);
 Now we can transfer the `amount` received by `buy_taco` to Pedro's `ownerAddress`. We will do so by forging a `transaction(unit, amount, receiver)` within a list of operations returned at the end of our contract.
 
 
-```
+```pascaligo
 const payoutOperation : operation = transaction(unit, amount, receiver) ;
 const operations : list(operation) = list
     payoutOperation
@@ -89,7 +90,7 @@ end;
 ## Finalizing the contract
 
 ### **`taco-shop.ligo`**
-```
+```pascaligo
 type taco_supply is record
     current_stock : nat;
     max_price : tez;
@@ -129,7 +130,7 @@ function buy_taco (const taco_kind_index: nat ; var taco_shop_storage : taco_sho
 
 To confirm that our contract is valid, we can dry run it. As a result we see a *new operation* in the list of returned operations to be executed subsequently.
 
-```
+```pascaligo
 ligo dry-run taco-shop.ligo --syntax pascaligo --amount 1 buy_taco 1n "map
     1n -> record
         current_stock = 50n;
@@ -157,12 +158,12 @@ end"
 
 Because Pedro is a member of the (STA) Specialty Taco Association, he has decided to donate **10%** of the earnings to the STA. We'll just add a `donationAddress` to the contract, and compute a 10% donation sum from each taco purchase.
 
-```
+```pascaligo
 const ownerAddress: address = "tz1TGu6TN5GSez2ndXXeDX6LgUDvLzPLqgYV";
 const donationAddress: address = "tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx";
 ```
 
-```
+```pascaligo
 const receiver : contract(unit) = get_contract(ownerAddress);
 const donationReceiver : contract(unit) = get_contract(donationAddress);
 

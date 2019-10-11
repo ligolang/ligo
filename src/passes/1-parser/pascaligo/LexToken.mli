@@ -72,6 +72,7 @@ type t =
 
 | And        of Region.t  (* "and"        *)
 | Begin      of Region.t  (* "begin"      *)
+| BigMap     of Region.t  (* "big_map"    *)
 | Block      of Region.t  (* "block"      *)
 | Case       of Region.t  (* "case"       *)
 | Const      of Region.t  (* "const"      *)
@@ -79,7 +80,6 @@ type t =
 | Down       of Region.t  (* "down"       *)
 | Else       of Region.t  (* "else"       *)
 | End        of Region.t  (* "end"        *)
-| Entrypoint of Region.t  (* "entrypoint" *)
 | Fail       of Region.t  (* "fail"       *)
 | For        of Region.t  (* "for"        *)
 | From       of Region.t  (* "from"       *)
@@ -101,7 +101,6 @@ type t =
 | Set        of Region.t  (* "set"        *)
 | Skip       of Region.t  (* "skip"       *)
 | Step       of Region.t  (* "step"       *)
-| Storage    of Region.t  (* "storage"    *)
 | Then       of Region.t  (* "then"       *)
 | To         of Region.t  (* "to"         *)
 | Type       of Region.t  (* "type"       *)
@@ -143,10 +142,14 @@ type int_err =
 
 type ident_err = Reserved_name
 
+type invalid_natural =
+  | Invalid_natural
+  | Non_canonical_zero_nat
+
 val mk_string : lexeme -> Region.t -> token
 val mk_bytes  : lexeme -> Region.t -> token
 val mk_int    : lexeme -> Region.t -> (token,   int_err) result
-val mk_nat    : lexeme -> Region.t -> (token,   int_err) result
+val mk_nat    : lexeme -> Region.t -> (token,   invalid_natural) result
 val mk_mtz    : lexeme -> Region.t -> (token,   int_err) result
 val mk_ident  : lexeme -> Region.t -> (token, ident_err) result
 val mk_constr : lexeme -> Region.t -> token

@@ -47,6 +47,9 @@ type options = {
   cmd     : command
 }
 
-(* Parsing the command-line options on stdin *)
+(* Parsing the command-line options on stdin.  The first parameter is
+   the name of the concrete syntax, e.g., "pascaligo", and the second
+   is the file extension, e.g., ".ligo".
+ *)
 
-val read : unit -> options
+val read : string -> string -> options

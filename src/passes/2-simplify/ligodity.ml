@@ -121,7 +121,7 @@ module Errors = struct
     let message () = "" in
     let data = [
       ("expression" ,
-       thunk @@ Format.asprintf "%a" (PP_helpers.printer Raw.print_expr) t)
+       thunk @@ Parser.Ligodity.ParserLog.expr_to_string t)
     ] in
     error ~data title message
 
@@ -751,7 +751,8 @@ and simpl_cases : type a . (Raw.pattern * a) list -> a matching result =
       let error x =
         let title () = "Pattern" in
         let content () =
-          Format.asprintf "Pattern : %a" (PP_helpers.printer Raw.print_pattern) x in
+          Printf.sprintf "Pattern : %s"
+            (Parser.Ligodity.ParserLog.pattern_to_string x) in
         error title content
       in
       let as_variant () =

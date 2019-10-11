@@ -6,6 +6,7 @@
     tezos-utils
     ast_typed
     mini_c
+    self_mini_c
     operators
   )
   (preprocess

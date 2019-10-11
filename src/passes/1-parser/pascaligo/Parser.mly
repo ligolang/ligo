@@ -133,7 +133,8 @@ type_decl:
       kwd_is     = $3;
       type_expr  = $4;
       terminator = $5}
-    in {region; value}}
+    in {region; value}
+  }
 
 type_expr:
   cartesian   {   TProd $1 }
@@ -165,6 +166,11 @@ core_type:
 | Map type_tuple {
     let region = cover $1 $2.region in
     let type_constr = {value="map"; region=$1}
+    in TApp {region; value = type_constr, $2}
+  }
+| BigMap type_tuple {
+    let region = cover $1 $2.region in
+    let type_constr = {value="big_map"; region=$1}
     in TApp {region; value = type_constr, $2}
   }
 | Set par(type_expr) {
@@ -234,7 +240,6 @@ field_decl:
 lambda_decl:
   fun_decl   {   FunDecl $1 }
 | proc_decl  {  ProcDecl $1 }
-| entry_decl { EntryDecl $1 }
 
 fun_decl:
   Function fun_name parameters COLON type_expr Is
@@ -259,33 +264,6 @@ fun_decl:
       return       = $10;
       terminator   = $11}
     in {region; value}}
-
-entry_decl:
-  Entrypoint fun_name entry_params COLON type_expr Is
-    seq(local_decl)
-    block
-  With expr option(SEMI) {
-    let stop =
-      match $11 with
-        Some region -> region
-      |        None -> expr_to_region $10 in
-    let region = cover $1 stop
-    and value = {
-      kwd_entrypoint = $1;
-      name           = $2;
-      param          = $3;
-      colon          = $4;
-      ret_type       = $5;
-      kwd_is         = $6;
-      local_decls    = $7;
-      block          = $8;
-      kwd_with       = $9;
-      return         = $10;
-      terminator     = $11}
-    in {region; value}}
-
-entry_params:
-  par(nsepseq(entry_param_decl,SEMI)) { $1 }
 
 proc_decl:
   Procedure fun_name parameters Is
@@ -330,22 +308,6 @@ param_decl:
       colon      = $3;
       param_type = $4}
     in ParamConst {region; value}}
-
-entry_param_decl:
-  param_decl {
-    match $1 with
-      ParamConst const -> EntryConst const
-    | ParamVar     var -> EntryVar   var
-  }
-| Storage var COLON param_type {
-    let stop   = type_expr_to_region $4 in
-    let region = cover $1 stop
-    and value  = {
-      kwd_storage  = $1;
-      var          = $2;
-      colon        = $3;
-      storage_type = $4}
-    in EntryStore {region; value}}
 
 param_type:
   cartesian { TProd $1 }
@@ -634,7 +596,7 @@ assignment:
     in {region; value}}
 
 rhs:
-  expr  { Expr $1 }
+  expr  { $1 }
 
 lhs:
   path       {    Path $1 }
@@ -696,8 +658,7 @@ interactive_expr:
 
 expr:
   case(expr) { ECase ($1 expr_to_region) }
-  (*| annot_expr { $1                        }*)
-| disj_expr { $1 }
+| disj_expr  { $1                        }
 
 disj_expr:
   disj_expr Or conj_expr {

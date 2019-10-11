@@ -1,6 +1,6 @@
-option(X) :=
+option(item) :=
   (**)
-| X
+| item
 
 series(item,sep,term) ::=
   item after_item(item,sep,term)
@@ -15,33 +15,34 @@ item_or_closing(item,sep,term) ::=
 
 (* Compound constructs *)
 
-par(X) ::= LPAR X RPAR
+par(item) ::=
+  LPAR item RPAR
 
-brackets(X) ::= LBRACKET X RBRACKET
+brackets(item) ::=
+  LBRACKET item RBRACKET
 
 (* Sequences *)
 
 (* Possibly empty sequence of items *)
 
-seq(X) ::=
-  (**)
-| X seq(X)
+seq(item) ::=
+  option(nseq(item))
 
 (* Non-empty sequence of items *)
 
-nseq(X) ::= X seq(X)
+nseq(item) ::=
+  item seq(item)
 
 (* Non-empty separated sequence of items *)
 
-nsepseq(X,Sep) ::=
-  X
-| X Sep nsepseq(X,Sep)
+nsepseq(item,Sep) ::=
+  item
+| item Sep nsepseq(item,Sep)
 
-(* Possibly empy separated sequence of items *)
+(* Possibly empty separated sequence of items *)
 
-sepseq(X,Sep) ::=
-  (**)
-| nsepseq(X,Sep)
+sepseq(item,Sep) ::=
+  option(nsepseq(item,Sep))
 
 (* Main *)
 
@@ -266,10 +267,6 @@ interactive_expr ::=
 
 expr ::=
   case(expr)
-| annot_expr
-
-annot_expr ::=
-  LPAR disj_expr COLON type_expr RPAR
 | disj_expr
 
 disj_expr ::=
@@ -327,6 +324,7 @@ core_expr ::=
 | C_False
 | C_True
 | C_Unit
+| annot_expr
 | tuple_expr
 | list_expr
 | C_None
@@ -338,6 +336,9 @@ core_expr ::=
 | Constr arguments
 | Constr
 | C_Some arguments
+
+annot_expr ::=
+  LPAR disj_expr COLON type_expr RPAR
 
 set_expr ::=
   injection(Set,expr)

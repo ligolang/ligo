@@ -230,12 +230,20 @@ let rec transpile_literal : AST.literal -> value = fun l -> match l with
 
 and transpile_environment_element_type : AST.environment_element -> type_value result = fun ele ->
   match (AST.get_type' ele.type_value , ele.definition) with
-  | (AST.T_function (f , arg) , ED_declaration (ae , ((_ :: _) as captured_variables)) ) ->
-    let%bind f' = transpile_type f in
-    let%bind arg' = transpile_type arg in
-    let%bind env' = transpile_environment ae.environment in
-    let sub_env = Mini_c.Environment.select captured_variables env' in
-    ok @@ Combinators.t_deep_closure sub_env f' arg'
+  | (AST.T_function (arg , ret) , ED_declaration (ae , ((_ :: _) as captured_variables)) ) ->
+  begin
+    match ae.expression with
+    | E_lambda _ ->
+      let%bind ret' = transpile_type ret in
+      let%bind arg' = transpile_type arg in
+      let%bind env' = transpile_environment ae.environment in
+      let sub_env = Mini_c.Environment.select captured_variables env' in
+      if sub_env = [] then
+        transpile_type ele.type_value
+      else
+        ok @@ Combinators.t_deep_closure sub_env arg' ret'
+    | _ -> transpile_type ele.type_value
+  end
   | _ -> transpile_type ele.type_value
 
 and transpile_small_environment : AST.small_environment -> Environment.t result = fun x ->
@@ -281,7 +289,21 @@ and transpile_annotated_expression (ae:AST.annotated_expression) : expression re
   | E_application (a, b) ->
       let%bind a = transpile_annotated_expression a in
       let%bind b = transpile_annotated_expression b in
-      return @@ E_application (a, b)
+      let%bind contains_closure =
+        Self_mini_c.Helpers.fold_type_value
+          (fun contains_closure exp ->
+            ok (contains_closure
+                || match exp with
+                   | T_deep_closure _ -> true
+                   | _ -> false))
+          false
+          b.type_value in
+      if contains_closure
+      then
+        let errmsg = Format.asprintf "Cannot apply closure in function arguments: %a\n"
+                       Mini_c.PP.expression_with_type b in
+        fail @@ simple_error errmsg
+      else return @@ E_application (a, b)
   | E_constructor (m, param) -> (
       let%bind param' = transpile_annotated_expression param in
       let (param'_expr , param'_tv) = Combinators.Expression.(get_content param' , get_type param') in

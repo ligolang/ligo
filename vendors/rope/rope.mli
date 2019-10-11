@@ -1,3 +1,4 @@
+(*
 module RopeImplementation = Rope_implementation
 type impl = RopeImplementation.t
 type 'a t =
@@ -16,3 +17,4 @@ val finish : impl -> impl
 val ( ~% ) : (((impl -> 'a) -> 'a) -> 'b) t -> 'b
 val ( % ) : 'a -> ('a -> 'b) t -> 'b
 val ( #% ) : ((impl -> impl) -> 'a -> 'b) -> 'a -> 'b
+*)

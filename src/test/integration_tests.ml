@@ -54,6 +54,19 @@ let variant () : unit result =
     expect_eq_evaluate program "kee" expected in
   ok ()
 
+let variant_mligo () : unit result =
+  let%bind program = mtype_file "./contracts/variant.mligo" in
+  let%bind () =
+    let expected = e_constructor "Foo" (e_int 42) in
+    expect_eq_evaluate program "foo" expected in
+  let%bind () =
+    let expected = e_constructor "Bar" (e_bool true) in
+    expect_eq_evaluate program "bar" expected in
+  let%bind () =
+    let expected = e_constructor "Kee" (e_nat 23) in
+    expect_eq_evaluate program "kee" expected in
+  ok ()
+
 let variant_matching () : unit result =
   let%bind program = type_file "./contracts/variant-matching.ligo" in
   let%bind () =
@@ -98,7 +111,12 @@ let shadow () : unit result =
 let higher_order () : unit result =
   let%bind program = type_file "./contracts/high-order.ligo" in
   let make_expect = fun n -> n in
-  expect_eq_n_int program "foobar" make_expect
+  let%bind _ = expect_eq_n_int program "foobar" make_expect in
+  let%bind _ = expect_eq_n_int program "foobar2" make_expect in
+  (* not supported yet:
+  let%bind _ = expect_eq_n_int program "foobar3" make_expect in *)
+  let%bind _ = expect_eq_n_int program "foobar4" make_expect in
+  ok () 
 
 let shared_function () : unit result =
   let%bind program = type_file "./contracts/function-shared.ligo" in
@@ -224,6 +242,10 @@ let set_arithmetic () : unit result =
       (e_set [e_string "foo" ; e_string "bar" ; e_string "foobar"])
       (e_set [e_string "foo" ; e_string "bar"]) in
   let%bind () =
+    expect_eq program "remove_syntax"
+      (e_set [e_string "foo" ; e_string "bar" ; e_string "foobar"])
+      (e_set [e_string "foo" ; e_string "bar"]) in
+  let%bind () =
     expect_eq program "mem_op"
       (e_set [e_string "foo" ; e_string "bar" ; e_string "foobar"])
       (e_bool true) in
@@ -244,7 +266,8 @@ let unit_expression () : unit result =
 
 let string_expression () : unit result =
   let%bind program = type_file "./contracts/string.ligo" in
-  expect_eq_evaluate program "s" (e_string "toto")
+  let%bind _ = expect_eq_evaluate program "s" (e_string "toto") in
+  expect_eq_evaluate program "y" (e_string "foototobar")
 
 let include_ () : unit result =
   let%bind program = type_file "./contracts/includer.ligo" in
@@ -350,6 +373,10 @@ let option () : unit result =
     let expected = e_typed_none t_int in
     expect_eq_evaluate program "n" expected
   in
+  let%bind () =
+    let expected = e_typed_none t_int in
+    expect_eq program "assign" (e_int 12) expected
+  in
   ok ()
 
 let moption () : unit result =
@@ -364,35 +391,12 @@ let moption () : unit result =
   in
   ok ()
 
-let mmap () : unit result =
-  let%bind program = mtype_file "./contracts/map.mligo" in
-  let%bind () = expect_eq_evaluate program "foobar"
-      (e_annotation (e_map []) (t_map t_int t_int)) in
-  let%bind () = expect_eq_evaluate program "foobarz"
-      (e_annotation (e_map [(e_int 1 , e_int 10) ; (e_int 2 , e_int 20)]) (t_map t_int t_int)) in
-  let%bind () = expect_eq_evaluate program "foo" (e_int 10) in
-  ok ()
-
-let map () : unit result =
-  let%bind program = type_file "./contracts/map.ligo" in
+let map_ type_f path : unit result =
+  let%bind program = type_f path in
   let ez lst =
     let open Ast_simplified.Combinators in
     let lst' = List.map (fun (x, y) -> e_int x, e_int y) lst in
     e_typed_map lst' t_int t_int
-  in
-  let%bind () =
-    let make_input = fun n -> ez [(23, n) ; (42, 4)] in
-    let make_expected = e_int in
-    expect_eq_n program "gf" make_input make_expected
-  in
-  let%bind () =
-    let make_input = fun n -> ez List.(map (fun x -> (x, x)) @@ range n) in
-    let make_expected = e_nat in
-    expect_eq_n_strict_pos_small program "size_" make_input make_expected
-  in
-  let%bind () =
-    let expected = ez [(23, 0) ; (42, 0)] in
-    expect_eq_evaluate program "fb" expected
   in
   let%bind () =
     let make_input = fun n ->
@@ -401,6 +405,21 @@ let map () : unit result =
     in
     let make_expected = fun n -> ez [(23 , n) ; (42 , 0)] in
     expect_eq_n_pos_small program "set_" make_input make_expected
+  in
+  let%bind () =
+    let input = ez [(23, 23) ; (42, 42)] in
+    let expected = ez [23, 23] in
+    expect_eq program "rm" input expected
+  in
+  let%bind () =
+    let make_input = fun n -> ez List.(map (fun x -> (x, x)) @@ range n) in
+    let make_expected = e_nat in
+    expect_eq_n_strict_pos_small program "size_" make_input make_expected
+  in
+  let%bind () =
+    let make_input = fun n -> ez [(23, n) ; (42, 4)] in
+    let make_expected = e_int in
+    expect_eq_n program "gf" make_input make_expected
   in
   let%bind () =
     let make_input = fun n -> ez [(23, n) ; (42, 4)] in
@@ -412,19 +431,25 @@ let map () : unit result =
     let make_expected = fun _ -> e_some @@ e_int 4 in
     expect_eq_n program "get_" make_input make_expected
   in
+  let%bind () = expect_eq_evaluate program "empty_map"
+    (e_annotation (e_map []) (t_map t_int t_int)) in
   let%bind () =
     let expected = ez @@ List.map (fun x -> (x, 23)) [144 ; 51 ; 42 ; 120 ; 421] in
-    expect_eq_evaluate program "bm" expected
+    expect_eq_evaluate program "map1" expected
   in
   let%bind () =
-    let input = ez [(23, 23) ; (42, 42)] in
-    let expected = ez [23, 23] in
-    expect_eq program "rm" input expected
+    let expected = ez [(23, 0) ; (42, 0)] in
+    expect_eq_evaluate program "map2" expected
+  in
+  let%bind () =
+    let input = ez [(1 , 1) ; (2 , 2) ; (3 , 3) ] in
+    let expected = e_unit () in
+    expect_eq program "iter_op" input expected
   in
   let%bind () =
     let input = ez [(1 , 10) ; (2 , 20) ; (3 , 30) ] in
-    let expected = e_int 66 in
-    expect_eq program "iter_op" input expected
+    let expected = ez [(1 , 11) ; (2 , 21) ; (3 , 31) ] in
+    expect_eq program "map_op" input expected
   in
   let%bind () =
     let input = ez [(1 , 10) ; (2 , 20) ; (3 , 30) ] in
@@ -432,14 +457,14 @@ let map () : unit result =
     expect_eq program "fold_op" input expected
   in
   let%bind () =
-    let input = ez [(1 , 10) ; (2 , 20) ; (3 , 30) ] in
-    let expected = ez [(1 , 11) ; (2 , 21) ; (3 , 31) ] in
-    expect_eq program "map_op" input expected
+    let input = ez [(2 , 20) ; (42 , 10)] in
+    let expected = ez [(2 , 20) ; (32 , 16) ] in
+    expect_eq program "deep_op" input expected
   in
   ok ()
 
-let big_map () : unit result =
-  let%bind program = type_file "./contracts/big_map.ligo" in
+let big_map_ type_f path : unit result =
+  let%bind program = type_f path in
   let ez lst =
     let open Ast_simplified.Combinators in
     let lst' = List.map (fun (x, y) -> e_int x, e_int y) lst in
@@ -469,6 +494,13 @@ let big_map () : unit result =
     expect_eq ?input_to_value:(Some true) program "rm" input expected
   in
   ok ()
+
+
+let map () : unit result = map_ type_file "./contracts/map.ligo"
+let mmap () : unit result = map_ mtype_file "./contracts/map.mligo"
+let big_map () : unit result = big_map_ type_file "./contracts/big_map.ligo"
+let mbig_map () : unit result = big_map_ mtype_file "./contracts/big_map.mligo"
+
 
 let list () : unit result =
   let%bind program = type_file "./contracts/list.ligo" in
@@ -818,6 +850,7 @@ let main = test_suite "Integration (End to End)" [
     test "shared function" shared_function ;
     test "higher order" higher_order ;
     test "variant" variant ;
+    test "variant (mligo)" variant_mligo ;
     test "variant matching" variant_matching ;
     test "tuple" tuple ;
     test "record" record ;
@@ -839,6 +872,7 @@ let main = test_suite "Integration (End to End)" [
     test "map" map ;
     test "map (mligo)" mmap ;
     test "big_map" big_map ;
+    test "big_map (mligo)" mbig_map ;
     test "list" list ;
     test "loop" loop ;
     test "matching" matching ;

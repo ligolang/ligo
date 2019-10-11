@@ -82,8 +82,8 @@ const team = [
 const siteConfig = {
   title: "LIGO", // Title for your website.
   tagline:
-    "LIGO is a statically typed high-level smart-contract language that compiles down to Michelson.",
-  taglineSub: "It seeks to be easy to use, extensible and safe.",
+    "LIGO is a friendly smart-contract language for Tezos",
+  taglineSub: "Michelson was never so easy",
   url: "https://your-docusaurus-test-site.com", // Your website URL
   baseUrl: "/", // Base URL for your project */
   // For github.io type URLs, you would set the url and baseUrl like:
@@ -116,7 +116,6 @@ const siteConfig = {
   team,
 
   /* path to images for header/footer */
-  headerIcon: "img/logo.svg",
   footerIcon: "img/logo.svg",
   favicon: "img/logo.svg",
 
@@ -141,11 +140,38 @@ const siteConfig = {
   */
 
   // This copyright info is used in /core/Footer.js and blog RSS/Atom feeds.
-  copyright: `Copyright © ${new Date().getFullYear()} Marigold`,
+  copyright: `© ${new Date().getFullYear()} LIGO. All rights reserved.`,
 
   highlight: {
     // Highlight.js theme to use for syntax highlighting in code blocks.
-    theme: "default"
+    theme: "default",
+    hljs: function (hljs) {
+      hljs.registerLanguage('pascaligo', function (hljs) {
+        return {
+          // case_insensitive: true,
+          beginKeywords: '',
+          keywords: {
+            keyword: 'and begin block case const contains down else end fail for ' +
+              'from function if in is list map mod nil not of or patch ' +
+              'procedure record remove set skip step then to type var while with',
+            literal: 'true false unit int string some none bool nat list'
+          },
+          lexemes: '[a-zA-Z][a-zA-Z0-9_]*',
+          contains: [
+            hljs.C_LINE_COMMENT_MODE,
+
+            {
+              className: 'type',
+              begin: /[A-Z][a-z]+/
+            },
+            {
+              begin: /[*+-:;\(\)\{\}|\>\<]/,
+              // className: 'ignore'
+            }
+          ]
+        }
+      });
+    }
   },
 
   // Add custom scripts here that would be placed in <script> tags.

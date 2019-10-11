@@ -49,7 +49,6 @@ type kwd_contains   = Region.t
 type kwd_down       = Region.t
 type kwd_else       = Region.t
 type kwd_end        = Region.t
-type kwd_entrypoint = Region.t
 type kwd_for        = Region.t
 type kwd_from       = Region.t
 type kwd_function   = Region.t
@@ -70,7 +69,6 @@ type kwd_remove     = Region.t
 type kwd_set        = Region.t
 type kwd_skip       = Region.t
 type kwd_step       = Region.t
-type kwd_storage    = Region.t
 type kwd_then       = Region.t
 type kwd_to         = Region.t
 type kwd_type       = Region.t
@@ -192,7 +190,7 @@ and type_expr =
 | TSum    of (variant reg, vbar) nsepseq reg
 | TRecord of record_type
 | TApp    of (type_name * type_tuple) reg
-| TFun    of (type_expr * arrow  * type_expr) reg
+| TFun    of (type_expr * arrow * type_expr) reg
 | TPar    of type_expr par reg
 | TAlias  of variable
 
@@ -218,7 +216,6 @@ and type_tuple = (type_expr, comma) nsepseq par reg
 and lambda_decl =
   FunDecl   of fun_decl   reg
 | ProcDecl  of proc_decl  reg
-| EntryDecl of entry_decl reg
 
 and fun_decl = {
   kwd_function : kwd_function;
@@ -244,35 +241,7 @@ and proc_decl = {
   terminator    : semi option
 }
 
-and entry_decl = {
-  kwd_entrypoint : kwd_entrypoint;
-  name           : variable;
-  param          : entry_params;
-  colon          : colon;
-  ret_type       : type_expr;
-  kwd_is         : kwd_is;
-  local_decls    : local_decl list;
-  block          : block reg;
-  kwd_with       : kwd_with;
-  return         : expr;
-  terminator     : semi option
-}
-
 and parameters = (param_decl, semi) nsepseq par reg
-
-and entry_params = (entry_param_decl, semi) nsepseq par reg
-
-and entry_param_decl =
-  EntryConst of param_const reg
-| EntryVar   of param_var reg
-| EntryStore of storage reg
-
-and storage = {
-  kwd_storage  : kwd_storage;
-  var          : variable;
-  colon        : colon;
-  storage_type : type_expr
-}
 
 and param_decl =
   ParamConst of param_const reg
@@ -437,9 +406,7 @@ and lhs =
   Path    of path
 | MapPath of map_lookup reg
 
-and rhs =
-      Expr of expr
-| NoneExpr of c_None
+and rhs = expr
 
 and loop =
   While of while_loop reg
@@ -789,9 +756,7 @@ let lhs_to_region : lhs -> Region.t = function
   Path path -> path_to_region path
 | MapPath {region; _} -> region
 
-let rhs_to_region = function
-      Expr e -> expr_to_region e
-| NoneExpr r -> r
+let rhs_to_region = expr_to_region
 
 let selection_to_region = function
   FieldName {region; _}

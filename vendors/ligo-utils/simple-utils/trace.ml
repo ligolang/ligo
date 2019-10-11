@@ -592,6 +592,20 @@ let bind_fold_list f init lst =
   in
   List.fold_left aux (ok init) lst
 
+let bind_fold_pair f init (a,b) = 
+  let aux x y =
+    x >>? fun x ->
+    f x y
+  in
+  List.fold_left aux (ok init) [a;b]
+
+let bind_fold_triple f init (a,b,c) = 
+  let aux x y =
+    x >>? fun x ->
+    f x y
+  in
+  List.fold_left aux (ok init) [a;b;c]
+
 let bind_fold_map_list = fun f acc lst ->
   let rec aux (acc , prev) f = function
     | [] -> ok (acc , prev)
@@ -661,6 +675,11 @@ let bind_and (a, b) =
   a >>? fun a ->
   b >>? fun b ->
   ok (a, b)
+let bind_and3 (a, b, c) =
+  a >>? fun a ->
+  b >>? fun b ->
+  c >>? fun c ->
+  ok (a, b, c)
 
 let bind_pair = bind_and
 let bind_map_pair f (a, b) =
@@ -669,6 +688,8 @@ let bind_fold_map_pair f acc (a, b) =
   f acc a >>? fun (acc' , a') ->
   f acc' b >>? fun (acc'' , b') ->
   ok (acc'' , (a' , b'))
+let bind_map_triple f (a, b, c) =
+  bind_and3 (f a, f b, f c)
 
 
 (**

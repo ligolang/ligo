@@ -1,6 +1,8 @@
+(* Abstract Syntax Tree (AST) for Ligodity *)
+
 [@@@warning "-30"]
 
-(* Abstract Syntax Tree (AST) for Mini-ML *)
+open Utils
 
 (* Regions
 
@@ -14,6 +16,9 @@
 *)
 
 type 'a reg = 'a Region.reg
+
+val last : ('a -> Region.t) -> 'a list -> Region.t
+val nsepseq_to_region : ('a -> Region.t) -> ('a,'sep) nsepseq -> Region.t
 
 (* Some keywords of OCaml *)
 
@@ -457,16 +462,6 @@ val norm : ?reg:(Region.t * kwd_fun) -> pattern Utils.nseq -> sep -> expr -> fun
    let f l = let n = l in n
 *)
 
-(* Printing the tokens reconstructed from the AST. This is very useful
-   for debugging, as the output of [print_token ast] can be textually
-   compared to that of [Lexer.trace] (see module [LexerMain]). The
-   optional parameter [undo] is bound to [true] if the caller wants
-   the AST to be unparsed before printing (those nodes that have been
-   normalised with function [norm_let] and [norm_fun]). *)
-
-val print_tokens : (*?undo:bool ->*) ast -> unit
-
-
 (* Projecting regions from sundry nodes of the AST. See the first
    comment at the beginning of this file. *)
 
@@ -481,9 +476,3 @@ val type_expr_to_region : type_expr -> Region.t
    contains. *)
 
 val unpar : expr -> expr
-
-(* TODO *)
-
-val print_projection : projection -> unit
-val print_pattern : pattern -> unit
-val print_expr : expr -> unit
