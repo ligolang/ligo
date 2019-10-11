@@ -14,6 +14,9 @@ let rm (m : foobar) : foobar = Map.remove 42 m
 (* Dummy test so that we can add the same test for PascaLIGO *)
 let patch_ (m : foobar) : foobar = Map.literal [ (0, 5) ; (1, 6) ; (2, 7) ]
 
+(* Second dummy test, see above *)
+let patch_empty (m : foobar) : foobar = Map.literal [ (0, 0) ; (1, 1) ; (2, 2) ]
+
 let size_ (m : foobar) : nat = Map.size m
 
 let gf (m : foobar) : int = Map.find 23 m

@@ -29,6 +29,10 @@ function patch_ (var m: foobar) : foobar is block {
   patch m with map [0 -> 5; 1 -> 6; 2 -> 7]
 } with m
 
+function patch_empty (var m : foobar) : foobar is block {
+  patch m with map []
+} with m
+
 function size_ (const m : foobar) : nat is
   block {skip} with (size(m))
 
