@@ -809,28 +809,25 @@ and simpl_single_instruction : Raw.single_instr -> (_ -> expression result) resu
   | MapPatch patch -> (
       let (map_p, loc) = r_split patch in
       let (name, access_path) = simpl_path map_p.path in
-      let%bind inj = bind_list 
-          @@ List.map (fun (x:Raw.binding Region.reg) -> 
-            let (x , loc) = r_split x in
+      let%bind inj = bind_list
+          @@ List.map (fun (x:Raw.binding Region.reg) ->
+            let x = x.value in
             let (key, value) = x.source, x.image in
             let%bind key' = simpl_expression key in
             let%bind value' = simpl_expression value
-            in ok @@ (access_path, key', value', loc) 
+            in ok @@ (key', value')
           )
         @@ pseq_to_list map_p.map_inj.value.elements in
-      let%bind expr = 
-        let aux = fun (access, key, value, loc) ->
-          let map = e_variable name in 
-          e_assign ~loc name access (e_map_add key value map) in
-        let assigns = List.map aux inj in
-        match assigns with
-        | [] -> ok @@ e_skip ~loc ()
-        | hd :: tl -> (
-            let aux acc cur = e_sequence acc cur in
-            ok @@ List.fold_left aux hd tl
-          )
-      in 
-      return_statement @@ expr
+      let expr =
+        match inj with
+        | [] -> e_skip ~loc ()
+        | _ :: _ ->
+          let assigns = List.fold_left
+              (fun map (key, value) -> (e_map_add key value map))
+              (e_variable name)
+              inj
+          in e_assign ~loc name access_path assigns
+      in return_statement @@ expr
     )
   | SetPatch patch ->
       fail @@ unsupported_set_patches patch
