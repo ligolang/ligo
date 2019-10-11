@@ -3,15 +3,18 @@ open Trace
 open Tezos_utils
 
 let compile_contract_entry (program : program) entry_point =
-  let%bind prog_typed = Typer.type_program program in
+  let%bind (prog_typed , state) = Typer.type_program program in
+  let () = Typer.Solver.discard_state state in
   Of_typed.compile_contract_entry prog_typed entry_point
 
 let compile_function_entry (program : program) entry_point : _ result =
-  let%bind prog_typed = Typer.type_program program in
+  let%bind (prog_typed , state) = Typer.type_program program in
+  let () = Typer.Solver.discard_state state in
   Of_typed.compile_function_entry prog_typed entry_point
 
 let compile_expression_as_function_entry (program : program) entry_point : _ result =
-  let%bind typed_program = Typer.type_program program in
+  let%bind (typed_program , state) = Typer.type_program program in
+  let () = Typer.Solver.discard_state state in
   Of_typed.compile_expression_as_function_entry typed_program entry_point
 
 (* TODO: do we need to thread the state here? Also, make the state arg. optional. *)
@@ -21,7 +24,7 @@ let compile_expression_as_value ?(env = Ast_typed.Environment.full_empty) ~(stat
   let typed = let () = failwith "TODO : subst all" in let _todo = ignore (env, state) in typed in
   Of_typed.compile_expression_as_value typed
 
-let compile_expression_as_function ?(env = Ast_typed.Environment.full_empty) ~(state : Typer.Solver.state) ae : _ result =
+let compile_expression_as_function ?(env = Ast_typed.Environment.full_empty) ~(state : Typer.Solver.state) (ae : Ast_simplified.expression) : _ result =
   let%bind (typed , state) = Typer.type_expression env state ae in
   (* TODO: move this to typer.ml *)
   let typed = let () = failwith "TODO : subst all" in let _todo = ignore (env, state) in typed in

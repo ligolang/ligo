@@ -939,10 +939,10 @@ let type_program_returns_state (p:I.program) : (environment * Solver.state * O.p
   let () = ignore (env' , state') in
   ok (env', state', declarations)
 
-let type_program (p : I.program) : O.program result =
+let type_program (p : I.program) : (O.program * Solver.state) result =
   let%bind (env, state, program) = type_program_returns_state p in
   let program = let () = failwith "TODO : subst all" in let _todo = ignore (env, state) in program in
-  ok program
+  ok (program, state)
 
  (*
  Similar to type_program but use a fold_map_list and List.fold_left and add element to the left or the list which gives a better complexity

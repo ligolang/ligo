@@ -804,6 +804,15 @@ let initial_state : state = {
   assignments = TypeVariableMap.empty ;
 }
 
+(* This function is called when a program is fully compiled, and the
+   typechecker's state is discarded. TODO: either get rid of the state
+   earlier, or perform a sanity check here (e.g. that types have been
+   inferred for all bindings and expressions, etc.
+
+   Also, we should check at these places that we indeed do not need the
+   state any further. Suwanne *)
+let discard_state (_ : state) = ()
+
 (* let replace_var_in_state = fun (v : type_variable) (state : state) -> *)
 (*   let aux_tv : type_value -> _ = function *)
 (*     | P_forall    (w  , cs , tval) -> failwith "TODO" *)
