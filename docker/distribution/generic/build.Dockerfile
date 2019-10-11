@@ -1,5 +1,7 @@
-# At the moment, this really means 4.07.1
-FROM ocaml/opam2:4.07
+ARG target
+FROM ocaml/opam2:${target}
+
+RUN opam switch 4.07 && eval $(opam env)
 
 USER root
 
@@ -10,17 +12,12 @@ USER root
 # because the currently checkout out version (from git) will be used
 # to build the image
 ADD . /ligo
-
 # Set the current working directory to /ligo for
 # the upcoming scripts
 WORKDIR /ligo
 
 # Install required native dependencies
 RUN sh scripts/install_native_dependencies.sh
-
-# Install OPAM
-# TODO: or scripts/install_build_environment.sh ?
-RUN sh scripts/install_opam.sh
 
 # Add tezos repository
 RUN sh scripts/setup_repos.sh

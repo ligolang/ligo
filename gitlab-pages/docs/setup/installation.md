@@ -3,7 +3,7 @@ id: installation
 title: Installation
 ---
 
-There are currently two ways to get started with Ligo, both of those will allow you to use the Ligo CLI with your contracts. You can choose to use either a Docker image, or to compile & build the Ligo CLI yourself.
+There are currently two ways to get started with Ligo. You can choose to either use a Docker image, or to install packages for your Debian Linux distribution.
 
 ## Dockerized installation (recommended)
 
@@ -40,6 +40,12 @@ ligo --help
 ```
 
 
-## Manual installation (advanced)
+## Debian Linux package installation
 
-For now, please refer to the steps described in the [Dockerfile](https://gitlab.com/ligolang/ligo/blob/master/docker/Dockerfile).
+We have produced .deb packages for a few Debian Linuxes. They will install a global `ligo` executable. You can install them in the usual way.
+
+- [Ubuntu 18.04](/deb/ligo_ubuntu-18.04.deb)
+- [Ubuntu 19.04](/deb/ligo_ubuntu-19.04.deb)
+- [Debian 9](/deb/ligo_debian-9.deb)
+- [Debian 10](/deb/ligo_debian-10.deb)
+
