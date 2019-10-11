@@ -20,6 +20,9 @@ function remove_syntax (var s : set(string)) : set(string) is
 function patch_op (var s: set(string)) : set(string) is
   begin patch s with set ["foobar"]; end with s
 
+function patch_op_deep (var s: set(string)*nat) : set(string)*nat is
+  begin patch s.0 with set ["foobar"]; end with s
+
 function patch_op_empty (var s: set(string)) : set(string) is
   begin patch s with set []; end with s
 
