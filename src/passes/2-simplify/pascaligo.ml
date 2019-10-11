@@ -800,26 +800,18 @@ and simpl_single_instruction : Raw.single_instr -> (_ -> expression result) resu
   | SetPatch patch -> (
       let (setp, loc) = r_split patch in
       let (name , access_path) = simpl_path setp.path in
-      let%bind inj = bind_list
-          @@ List.map (fun (x:Raw.expr) ->
-            let%bind e = simpl_expression x
-            in ok e)
-          @@ pseq_to_list setp.set_inj.value.elements in
-      let%bind expr =
-        let rec chain_add = fun lst s : expression ->
-            match lst with
-                | [] -> s
-                | hd :: tl -> chain_add tl (e_constant "SET_ADD" [hd ; s]) in
-        let assigns =
-          match inj with
-            | [] -> e_skip ~loc ()
-            | _ :: _ -> chain_add inj (e_variable name) in
-        match assigns with
-        | {expression = E_skip; _} -> ok @@ e_skip ~loc ()
-        | {expression = E_constant e; location = loc} ->
-          ok @@ e_assign name access_path {expression = (E_constant e); location = loc}
-        | _ -> fail @@ corner_case ~loc:__LOC__ "Unexpected expression type"
-      in
+      let%bind inj =
+        bind_list @@
+        List.map simpl_expression @@
+        pseq_to_list setp.set_inj.value.elements in
+      let expr =
+        match inj with
+        | [] -> e_skip ~loc ()
+        | _ :: _ ->
+          let assigns = List.fold_right
+            (fun hd s -> e_constant "SET_ADD" [hd ; s])
+            inj (e_variable name) in
+          e_assign ~loc name access_path assigns in
       return_statement @@ expr
     )
 
