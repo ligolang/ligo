@@ -871,10 +871,9 @@ and type_expression : environment -> Solver.state -> I.expression -> (O.annotate
       let e' = Environment.add_ez_binder (fst binder) fresh e in
 
       let%bind (result , state') = type_expression e' state result in
-      let output_type = result.type_annotation in
       let wrapped = Wrap.lambda fresh input_type' output_type' in
       return_wrapped
-        (E_lambda {binder = fst binder; input_type=fresh;output_type; body=result})
+        (E_lambda {binder = fst binder; body=result}) (* TODO: is the type of the entire lambda enough to access the input_type=fresh; ? *)
         state' wrapped
     )
 
@@ -923,7 +922,7 @@ let untype_type_value (t:O.type_value) : (I.type_expression) result =
 (*
 Apply type_declaration on all the node of the AST_simplified from the root p 
 *)
-let type_program (p:I.program) : (environment * Solver.state * O.program) result =
+let type_program_returns_state (p:I.program) : (environment * Solver.state * O.program) result =
   let env = Ast_typed.Environment.full_empty in
   let state = Solver.initial_state in
   let aux ((e : environment), (s : Solver.state) , (ds : O.declaration Location.wrap list)) (d:I.declaration Location.wrap) =
@@ -939,6 +938,11 @@ let type_program (p:I.program) : (environment * Solver.state * O.program) result
     bind_fold_list aux (env , state , []) p in
   let () = ignore (env' , state') in
   ok (env', state', declarations)
+
+let type_program (p : I.program) : O.program result =
+  let%bind (env, state, program) = type_program_returns_state p in
+  let program = let () = failwith "TODO : subst all" in let _todo = ignore (env, state) in program in
+  ok program
 
  (*
  Similar to type_program but use a fold_map_list and List.fold_left and add element to the left or the list which gives a better complexity
