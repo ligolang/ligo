@@ -119,17 +119,6 @@ module Errors = struct
     ] in
     error ~data title message
 
- (* let unsupported_map_patches patch =
-    let title () = "map patches" in
-    let message () =
-      Format.asprintf "map patches (a.k.a. functional updates) are \
-                       not supported yet" in
-    let data = [
-      ("patch_loc",
-       fun () -> Format.asprintf "%a" Location.pp_lift @@ patch.Region.region)
-    ] in
-    error ~data title message *)
-
   let unsupported_set_patches patch =
     let title () = "set patches" in
     let message () =
