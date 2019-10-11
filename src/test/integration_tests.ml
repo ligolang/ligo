@@ -464,6 +464,11 @@ let map_ type_f path : unit result =
     let expected = e_int 76 in
     expect_eq program "fold_op" input expected
   in
+  let%bind () =
+    let input = ez [(2 , 20) ; (42 , 10)] in
+    let expected = ez [(2 , 20) ; (32 , 16) ] in
+    expect_eq program "deep_op" input expected
+  in
   ok ()
 
 let big_map_ type_f path : unit result =

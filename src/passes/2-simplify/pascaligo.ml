@@ -109,17 +109,6 @@ module Errors = struct
     ] in
     error ~data title message
 
-  let unsupported_deep_map_assign v =
-    let title () = "map assignments" in
-    let message () =
-      Format.asprintf "assignments to embedded maps are not \
-                       supported yet" in
-    let data = [
-      ("lhs_loc",
-       fun () -> Format.asprintf "%a" Location.pp_lift @@ v.Region.region)
-    ] in
-    error ~data title message
-
   let unsupported_empty_record_patch record_expr =
     let title () = "empty record patch" in
     let message () =
@@ -141,31 +130,9 @@ module Errors = struct
     ] in
     error ~data title message
 
-  (* let unsupported_set_patches patch =
-    let title () = "set patches" in
-    let message () =
-      Format.asprintf "set patches (a.k.a. functional updates) are \
-                       not supported yet" in
-    let data = [
-      ("patch_loc",
-       fun () -> Format.asprintf "%a" Location.pp_lift @@ patch.Region.region)
-    ] in
-    error ~data title message *)
-
-  let unsupported_deep_map_rm path =
-    let title () = "binding removals" in
-    let message () =
-      Format.asprintf "removal of bindings from embedded maps \
-                       are not supported yet" in
-    let data = [
-      ("path_loc",
-       fun () -> Format.asprintf "%a" Location.pp_lift @@ path.Region.region)
-    ] in
-    error ~data title message
-
-  let unsupported_deep_set_rm path = 
+  let unsupported_deep_set_rm path =
     let title () = "set removals" in
-    let message () = 
+    let message () =
       Format.asprintf "removal of members from embedded sets is not supported yet" in
     let data = [
       ("path_loc",
@@ -205,7 +172,7 @@ module Errors = struct
       ("pattern_loc",
        fun () -> Format.asprintf "%a" Location.pp_lift @@ pattern_loc) ;
       ("pattern",
-       fun () -> Format.asprintf "%a" (Simple_utils.PP_helpers.printer Parser.Pascaligo.ParserLog.print_pattern) p) ;
+       fun () -> Parser.Pascaligo.ParserLog.pattern_to_string p)
     ] in
     error ~data title message
 
@@ -249,7 +216,7 @@ module Errors = struct
     let message () = "" in
     let data = [
       ("instruction",
-       fun () -> Format.asprintf "%a" PP_helpers.(printer Parser.Pascaligo.ParserLog.print_instruction) t)
+       fun () -> Parser.Pascaligo.ParserLog.instruction_to_string t)
     ] in
     error ~data title message
 end
@@ -779,13 +746,16 @@ and simpl_single_instruction : Raw.single_instr -> (_ -> expression result) resu
           )
         | MapPath v -> (
             let v' = v.value in
-            let%bind name = match v'.path with
-              | Name name -> ok name
-              | _ -> fail @@ unsupported_deep_map_assign v in
+            let%bind (varname,map,path) = match v'.path with
+              | Name name -> ok (name.value , e_variable name.value, [])
+              | Path p ->
+                let (name,p') = simpl_path v'.path in
+                let%bind accessor = simpl_projection p in 
+                ok @@ (name , accessor , p')
+            in
             let%bind key_expr = simpl_expression v'.index.value.inside in
-            let old_expr = e_variable name.value in
-            let expr' = e_map_add key_expr value_expr old_expr in
-            return_statement @@ e_assign ~loc name.value [] expr'
+            let expr' = e_map_add key_expr value_expr map in
+            return_statement @@ e_assign ~loc varname path expr'
           )
     )
   | CaseInstr c -> (
@@ -852,18 +822,22 @@ and simpl_single_instruction : Raw.single_instr -> (_ -> expression result) resu
   | MapRemove r -> (
       let (v , loc) = r_split r in
       let key = v.key in
-      let%bind map = match v.map with
-        | Name v -> ok v.value
-        | Path path -> fail @@ unsupported_deep_map_rm path in
+      let%bind (varname,map,path) = match v.map with
+        | Name v -> ok (v.value , e_variable v.value , [])
+        | Path p ->
+          let (name,p') = simpl_path v.map in
+          let%bind accessor = simpl_projection p in 
+          ok @@ (name , accessor , p')
+      in
       let%bind key' = simpl_expression key in
-      let expr = e_constant ~loc "MAP_REMOVE" [key' ; e_variable map] in
-      return_statement @@ e_assign ~loc map [] expr
+      let expr = e_constant ~loc "MAP_REMOVE" [key' ; map] in
+      return_statement @@ e_assign ~loc varname path expr
     )
   | SetRemove r -> (
       let (set_rm, loc) = r_split r in
       let%bind set = match set_rm.set with
         | Name v -> ok v.value
-        | Path path -> fail @@ unsupported_deep_set_rm path in 
+        | Path path -> fail @@ unsupported_deep_set_rm path in
       let%bind removed' = simpl_expression set_rm.element in
       let expr = e_constant ~loc "SET_REMOVE" [removed' ; e_variable set] in
       return_statement @@ e_assign ~loc set [] expr
@@ -965,7 +939,8 @@ and simpl_cases : type a . (Raw.pattern * a) list -> a matching result = fun t -
           let error =
             let title () = "Pattern" in
             let content () =
-              Format.asprintf "Pattern : %a" (PP_helpers.printer Parser.Pascaligo.ParserLog.print_pattern) x in
+              Printf.sprintf "Pattern : %s"
+                (Parser.Pascaligo.ParserLog.pattern_to_string x) in
             error title content in
           let%bind x' =
             trace error @@

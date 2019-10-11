@@ -29,3 +29,9 @@ let map_op (m : foobar) : foobar =
 let fold_op (m : foobar) : foobar =
     let aggregate = fun (i : int) (j : (int * int)) -> i + j.(0) + j.(1) in
     Map.fold m 10 aggregate
+
+let deep_op (m : foobar) : foobar =
+  let coco = (0,m) in
+  let coco = (0 , Map.remove 42 coco.(1)) in
+  let coco = (0 , Map.update 32 (Some 16) coco.(1)) in
+  coco.(1)

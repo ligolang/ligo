@@ -54,3 +54,10 @@ function map_op (const m : foobar) : foobar is
 function fold_op (const m : foobar) : int is
   function aggregate (const i : int ; const j : (int * int)) : int is block { skip } with i + j.0 + j.1 ;
   block { skip } with map_fold(m , 10 , aggregate)
+
+function deep_op (var m : foobar) : foobar is
+var coco : (int*foobar) := (0, m);
+block {
+  remove 42 from map coco.1 ;
+  coco.1[32] := 16 ;
+} with coco.1
