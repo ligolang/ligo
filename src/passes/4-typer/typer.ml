@@ -138,25 +138,25 @@ module Errors = struct
       ] in
       error ~data title message ()
 
-  let needs_annotation (e : I.expression) (case : string) () =
-    let title = (thunk "this expression must be annotated with its type") in
-    let message () = Format.asprintf "%s needs an annotation" case in
-    let data = [
-      ("expression" , fun () -> Format.asprintf "%a" I.PP.expression e) ;
-      ("location" , fun () -> Format.asprintf "%a" Location.pp e.location)
-    ] in
-    error ~data title message ()
+  (* let needs_annotation (e : I.expression) (case : string) () =
+   *   let title = (thunk "this expression must be annotated with its type") in
+   *   let message () = Format.asprintf "%s needs an annotation" case in
+   *   let data = [
+   *     ("expression" , fun () -> Format.asprintf "%a" I.PP.expression e) ;
+   *     ("location" , fun () -> Format.asprintf "%a" Location.pp e.location)
+   *   ] in
+   *   error ~data title message () *)
 
-  let type_error_approximate ?(msg="") ~(expected: string) ~(actual: O.type_value) ~(expression : I.expression) (loc:Location.t) () =
-    let title = (thunk "type error") in
-    let message () = msg in
-    let data = [
-      ("expected"   , fun () -> Format.asprintf "%s" expected);
-      ("actual"     , fun () -> Format.asprintf "%a" O.PP.type_value actual);
-      ("expression" , fun () -> Format.asprintf "%a" I.PP.expression expression) ;
-      ("location" , fun () -> Format.asprintf "%a" Location.pp loc)
-    ] in
-    error ~data title message ()
+  (* let type_error_approximate ?(msg="") ~(expected: string) ~(actual: O.type_value) ~(expression : I.expression) (loc:Location.t) () =
+   *   let title = (thunk "type error") in
+   *   let message () = msg in
+   *   let data = [
+   *     ("expected"   , fun () -> Format.asprintf "%s" expected);
+   *     ("actual"     , fun () -> Format.asprintf "%a" O.PP.type_value actual);
+   *     ("expression" , fun () -> Format.asprintf "%a" I.PP.expression expression) ;
+   *     ("location" , fun () -> Format.asprintf "%a" Location.pp loc)
+   *   ] in
+   *   error ~data title message () *)
 
   let type_error ?(msg="") ~(expected: O.type_value) ~(actual: O.type_value) ~(expression : I.expression) (loc:Location.t) () =
     let title = (thunk "type error") in
@@ -945,7 +945,7 @@ let type_program (p : I.program) : (O.program * Solver.state) result =
   ok (program, state)
 
  (*
- Similar to type_program but use a fold_map_list and List.fold_left and add element to the left or the list which gives a better complexity
+TODO: Similar to type_program but use a fold_map_list and List.fold_left and add element to the left or the list which gives a better complexity
  *)
 let type_program' : I.program -> O.program result = fun p ->
   let initial_state = Solver.initial_state in
