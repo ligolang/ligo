@@ -668,37 +668,9 @@ and simpl_single_instruction : Raw.instruction -> (_ -> expression result) resul
       let%bind body = body None in
       return_statement @@ e_loop cond body
   | Loop (For (ForInt fi)) -> 
-      (* cond part *)
-      let%bind var = ok @@ e_variable fi.value.assign.value.name.value in
-      let%bind value = simpl_expression fi.value.assign.value.expr in
-      let%bind bound = simpl_expression fi.value.bound in
-      let%bind comp = match fi.value.down with
-        | Some _ -> ok @@ e_annotation (e_constant "GE" [var ; bound]) t_bool
-        | None -> ok @@ e_annotation (e_constant "LE" [var ; bound]) t_bool
-      in
-
-      (* body part *)
-      let%bind body = simpl_block fi.value.block.value in
-      let%bind body = body None in
-      let%bind step =  match fi.value.step with
-        | Some (_,e) -> simpl_expression e
-        | None -> ok (e_int 1) in
-      let%bind ctrl = match fi.value.down with
-        | Some _ ->
-          let%bind _addi = ok @@ e_constant "SUB" [ var ; step ] in 
-          ok @@ e_assign fi.value.assign.value.name.value [] _addi 
-        | None ->
-          let%bind _subi = ok @@ e_constant "ADD" [ var ; step ] in 
-          ok @@ e_assign fi.value.assign.value.name.value [] _subi
-      in
-      let rec add_to_seq expr = match expr.expression with
-        | E_sequence (_,a) -> add_to_seq a
-        | _ -> e_sequence body ctrl in
-      let%bind body' = ok @@ add_to_seq body in
-      let%bind loop = ok @@ e_loop comp body' in
-
-      return_statement @@
-        e_let_in (fi.value.assign.value.name.value, Some t_int) value loop
+      let%bind loop = simpl_for_int fi.value in
+      let%bind loop = loop None in 
+      return_statement @@ loop
   | Loop (For (ForCollect {region ; _})) ->
       fail @@ unsupported_for_loops region
   | Cond c -> (
@@ -992,6 +964,36 @@ and simpl_statements : Raw.statements -> (_ -> expression result) result =
 
 and simpl_block : Raw.block -> (_ -> expression result) result = fun t ->
   simpl_statements t.statements
+
+and simpl_for_int : Raw.for_int -> (_ -> expression result) result = fun fi ->
+  (* cond part *)
+  let%bind var = ok @@ e_variable fi.assign.value.name.value in
+  let%bind value = simpl_expression fi.assign.value.expr in
+  let%bind bound = simpl_expression fi.bound in
+  let%bind comp = match fi.down with
+    | Some _ -> ok @@ e_annotation (e_constant "GE" [var ; bound]) t_bool
+    | None -> ok @@ e_annotation (e_constant "LE" [var ; bound]) t_bool
+  in
+  (* body part *)
+  let%bind body = simpl_block fi.block.value in
+  let%bind body = body None in
+  let%bind step =  match fi.step with
+    | Some (_,e) -> simpl_expression e
+    | None -> ok (e_int 1) in
+  let%bind ctrl = match fi.down with
+    | Some _ ->
+      let%bind _addi = ok @@ e_constant "SUB" [ var ; step ] in 
+      ok @@ e_assign fi.assign.value.name.value [] _addi 
+    | None ->
+      let%bind _subi = ok @@ e_constant "ADD" [ var ; step ] in 
+      ok @@ e_assign fi.assign.value.name.value [] _subi
+  in
+  let rec add_to_seq expr = match expr.expression with
+    | E_sequence (_,a) -> add_to_seq a
+    | _ -> e_sequence body ctrl in
+  let%bind body' = ok @@ add_to_seq body in
+  let%bind loop = ok @@ e_loop comp body' in
+  return_statement @@ e_let_in (fi.assign.value.name.value, Some t_int) value loop
 
 let simpl_program : Raw.ast -> program result = fun t ->
   bind_list @@ List.map simpl_declaration @@ nseq_to_list t.decl

@@ -16,12 +16,34 @@ function while_sum (var n : nat) : nat is block {
   }
 } with r
 
-function for_sum (var n : nat) : nat is block {
-  for i := 1 to 100 step 1
+function for_sum_up (var n : nat) : int is block {
+  var acc : int := 0 ;
+  for i := 1 to int(n) step 1
     begin 
-      n := n + 1n ;
-    end }
-  with n 
+      acc := acc + i ;
+    end
+} with acc 
+
+function for_sum_down (var n : nat) : int is block {
+  var acc : int := 0 ;
+  for i := int(n) down to 1 step 1
+    begin 
+      acc := acc + i ;
+    end
+} with acc 
+
+function for_sum_step (var n : nat) : int is block {
+  var acc : int := 0 ;
+  var mystep : int := 2 ;
+  for i := 1 to int(n) step mystep
+    begin 
+      acc := acc + i ;
+    end;
+  for i := 0 to int(n) step mystep
+    begin 
+      acc := acc + i ;
+    end;
+} with acc 
 
 function dummy (const n : nat) : nat is block {
   while (False) block { skip }

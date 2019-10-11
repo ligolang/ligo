@@ -667,8 +667,18 @@ let loop () : unit result =
   let%bind () = 
 >>>>>>> First version for ForInt loops
     let make_input = e_nat in
-    let make_expected = fun n -> e_nat (n + 100) in
-    expect_eq_n_pos_mid program "for_sum" make_input make_expected
+    let make_expected = fun n -> e_int (n * (n + 1) / 2) in
+    expect_eq_n_pos_mid program "for_sum_up" make_input make_expected
+  in
+  let%bind () = 
+    let make_input = e_nat in
+    let make_expected = fun n -> e_int (n * (n + 1) / 2) in
+    expect_eq_n_pos_mid program "for_sum_down" make_input make_expected
+  in
+  let%bind () = 
+    let make_input = e_nat in
+    let make_expected = fun n -> e_int (n * (n + 1) / 2) in
+    expect_eq_n_pos_mid program "for_sum_step" make_input make_expected
   in
   ok ()
 
