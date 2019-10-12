@@ -740,3 +740,517 @@ let tokens_to_string      = to_string print_tokens
 let path_to_string        = to_string print_path
 let pattern_to_string     = to_string print_pattern
 let instruction_to_string = to_string print_instruction
+
+(* Pretty-printing the AST *)
+
+let mk_pad len rank pc =
+  pc ^ (if rank = len-1 then "`-- " else "|-- "),
+  pc ^ (if rank = len-1 then "    " else "|   ")
+
+let rec pp_ast buffer ~pad:(pd,pc) {decl; _} =
+  let node = sprintf "%s<ast>\n" pd in
+  let () = Buffer.add_string buffer node in
+  let apply len rank =
+    let pad = mk_pad len rank pc in
+    pp_declaration buffer ~pad in
+  let decls = Utils.nseq_to_list decl
+  in List.iteri (List.length decls |> apply) decls
+
+and pp_ident buffer ~pad:(pd,_) name =
+  let node = sprintf "%s%s\n" pd name
+  in Buffer.add_string buffer node
+
+and pp_string buffer = pp_ident buffer
+
+and pp_declaration buffer ~pad:(pd,pc) = function
+  TypeDecl {value; _} ->
+    let node = sprintf "%sTypeDecl\n" pd in
+    Buffer.add_string buffer node;
+    pp_ident buffer ~pad:(mk_pad 2 0 pc) value.name.value;
+    pp_type_expr buffer ~pad:(mk_pad 2 1 pc) value.type_expr
+| ConstDecl {value; _} ->
+    let node = sprintf "%sConstDecl\n" pd in
+    Buffer.add_string buffer node;
+    pp_const_decl buffer ~pad:(mk_pad 1 0 pc) value
+| LambdaDecl lamb ->
+    let node = sprintf "%sLambdaDecl\n" pd in
+    Buffer.add_string buffer node;
+    pp_lambda_decl buffer ~pad:(mk_pad 1 0 pc) lamb
+
+and pp_const_decl buffer ~pad:(_,pc) decl =
+  pp_ident buffer ~pad:(mk_pad 3 0 pc) decl.name.value;
+  pp_type_expr buffer ~pad:(mk_pad 3 1 pc) decl.const_type;
+  pp_expr buffer ~pad:(mk_pad 3 2 pc) decl.init
+
+and pp_type_expr buffer ~pad:(pd,pc as pad) = function
+  TProd cartesian ->
+    let node = sprintf "%sTProd\n" pd in
+    Buffer.add_string buffer node;
+    pp_cartesian buffer ~pad cartesian
+| TAlias {value; _} ->
+    let node = sprintf "%sTAlias\n" pd in
+    Buffer.add_string buffer node;
+    pp_ident buffer ~pad:(mk_pad 1 0 pc) value
+| TPar {value; _} ->
+    let node = sprintf "%sTPar\n" pd in
+    Buffer.add_string buffer node;
+    pp_type_expr buffer ~pad:(mk_pad 1 0 pc) value.inside
+| TApp {value=name,tuple; _} ->
+    let node = sprintf "%sTApp\n" pd in
+    Buffer.add_string buffer node;
+    pp_ident buffer ~pad:(mk_pad 1 0 pc) name.value;
+    pp_type_tuple buffer ~pad:(mk_pad 2 1 pc) tuple
+| TFun {value; _} ->
+    let node = sprintf "%sTFun\n" pd in
+    let () = Buffer.add_string buffer node in
+    let apply len rank =
+      let pad = mk_pad len rank pc in
+      pp_type_expr buffer ~pad in
+    let domain, _, range = value in
+    List.iteri (apply 2) [domain; range]
+| TSum {value; _} ->
+    let node = sprintf "%sTSum\n" pd in
+    let () = Buffer.add_string buffer node in
+    let apply len rank variant =
+      let pad = mk_pad len rank pc in
+      pp_variant buffer ~pad variant.value in
+    let variants = Utils.nsepseq_to_list value in
+    List.iteri (List.length variants |> apply) variants
+| TRecord {value; _} ->
+    let node = sprintf "%sTRecord\n" pd in
+    let () = Buffer.add_string buffer node in
+    let apply len rank field_decl =
+      pp_field_decl buffer ~pad:(mk_pad len rank pc)
+                    field_decl.value in
+    let fields = Utils.sepseq_to_list value.elements in
+    List.iteri (List.length fields |> apply) fields
+
+and pp_cartesian buffer ~pad:(_,pc) {value; _} =
+  let apply len rank =
+    pp_type_expr buffer ~pad:(mk_pad len rank pc) in
+  let components = Utils.nsepseq_to_list value
+  in List.iteri (List.length components |> apply) components
+
+and pp_variant buffer ~pad:(pd,_ as pad) {constr; args} =
+  let node = sprintf "%s%s\n" pd constr.value in
+  Buffer.add_string buffer node;
+  match args with
+          None -> ()
+  | Some (_,c) -> pp_cartesian buffer ~pad c
+
+and pp_field_decl buffer ~pad:(pd,pc) decl =
+  let node = sprintf "%s%s\n" pd decl.field_name.value in
+  Buffer.add_string buffer node;
+  pp_type_expr buffer ~pad:(mk_pad 1 0 pc) decl.field_type
+
+and pp_type_tuple buffer ~pad:(_,pc) {value; _} =
+  let components = Utils.nsepseq_to_list value.inside in
+  let apply len rank =
+    pp_type_expr buffer ~pad:(mk_pad len rank pc)
+  in List.iteri (List.length components |> apply) components
+
+and pp_lambda_decl buffer ~pad = function
+  FunDecl {value; _} ->
+    let node = sprintf "%sFunDecl\n" (fst pad) in
+    Buffer.add_string buffer node;
+    pp_fun_decl buffer ~pad value
+| ProcDecl {value; _} ->
+    let node = sprintf "%sProcDecl\n" (fst pad) in
+    Buffer.add_string buffer node;
+    pp_proc_decl buffer ~pad value
+
+and pp_fun_decl buffer ~pad:(_,pc) decl =
+  let () =
+    let pad = mk_pad 6 0 pc in
+    pp_ident buffer ~pad decl.name.value in
+  let () =
+    let pd, _ as pad = mk_pad 6 1 pc in
+    let node = sprintf "%s<parameters>\n" pd in
+    Buffer.add_string buffer node;
+    pp_parameters buffer ~pad decl.param in
+  let () =
+    let pd, pc = mk_pad 6 2 pc in
+    let node = sprintf "%s<return type>\n" pd in
+    Buffer.add_string buffer node;
+    pp_type_expr buffer ~pad:(mk_pad 1 0 pc) decl.ret_type in
+  let () =
+    let pd, _ as pad = mk_pad 6 3 pc in
+    let node = sprintf "%s<local declarations>\n" pd in
+    Buffer.add_string buffer node;
+    pp_local_decls buffer ~pad decl.local_decls in
+  let () =
+    let pd, _ as pad = mk_pad 6 4 pc in
+    let node = sprintf "%s<block>\n" pd in
+    let statements = decl.block.value.statements in
+    Buffer.add_string buffer node;
+    pp_statements buffer ~pad statements in
+  let () =
+    let pd, pc = mk_pad 6 5 pc in
+    let node = sprintf "%s<return>\n" pd in
+    Buffer.add_string buffer node;
+    pp_expr buffer ~pad:(mk_pad 1 0 pc) decl.return
+  in ()
+
+and pp_parameters buffer ~pad:(_,pc) {value; _} =
+  let params = Utils.nsepseq_to_list value.inside in
+  let arity  = List.length params in
+  let apply len rank =
+    pp_param_decl buffer ~pad:(mk_pad len rank pc)
+  in List.iteri (apply arity) params
+
+and pp_param_decl buffer ~pad:(pd,pc) = function
+  ParamConst {value; _} ->
+    let node = sprintf "%sParamConst\n" pd in
+    Buffer.add_string buffer node;
+    pp_ident buffer ~pad:(mk_pad 2 0 pc) value.var.value;
+    pp_type_expr buffer ~pad:(mk_pad 2 1 pc) value.param_type
+| ParamVar {value; _} ->
+    let node = sprintf "%sParamVar\n" pd in
+    Buffer.add_string buffer node;
+    pp_ident buffer ~pad:(mk_pad 2 0 pc) value.var.value;
+    pp_type_expr buffer ~pad:(mk_pad 2 1 pc) value.param_type
+
+and pp_statements buffer ~pad:(_,pc) statements =
+  let statements = Utils.nsepseq_to_list statements in
+  let length     = List.length statements in
+  let apply len rank =
+    pp_statement buffer ~pad:(mk_pad len rank pc)
+  in List.iteri (apply length) statements
+
+and pp_statement buffer ~pad:(pd,pc as pad) = function
+  Instr instr ->
+    let node = sprintf "%sInstr\n" pd in
+    Buffer.add_string buffer node;
+    pp_instruction buffer ~pad:(mk_pad 1 0 pc) instr
+| Data data_decl ->
+    let node = sprintf "%sData\n" pd in
+    Buffer.add_string buffer node;
+    pp_data_decl buffer ~pad data_decl
+
+and pp_instruction buffer ~pad:(pd,pc as pad) = function
+  Single single_instr ->
+    let node = sprintf "%sSingle\n" pd in
+    Buffer.add_string buffer node;
+    pp_single_instr buffer ~pad:(mk_pad 1 0 pc) single_instr
+| Block {value; _} ->
+    let node = sprintf "%sBlock\n" pd in
+    Buffer.add_string buffer node;
+    pp_statements buffer ~pad value.statements
+
+and pp_single_instr buffer ~pad:(pd,pc as pad) = function
+  Cond {value; _} ->
+    let node = sprintf "%sCond\n" pd in
+    Buffer.add_string buffer node;
+    pp_conditional buffer ~pad value
+| CaseInstr {value; _} ->
+    let node = sprintf "%sCaseInstr\n" pd in
+    Buffer.add_string buffer node;
+    pp_case pp_instruction buffer ~pad value
+| Assign {value; _} ->
+    let node = sprintf "%sAssign\n" pd in
+    Buffer.add_string buffer node;
+    pp_assignment buffer ~pad value
+| Loop loop ->
+    let node = sprintf "%sLoop\n" pd in
+    Buffer.add_string buffer node;
+    pp_loop buffer ~pad:(mk_pad 1 0 pc) loop
+| ProcCall call ->
+    let node = sprintf "%sProcCall\n" pd in
+    Buffer.add_string buffer node;
+    pp_fun_call buffer ~pad:(mk_pad 1 0 pc) call
+| Skip _ ->
+    let node = sprintf "%sSkip\n" pd in
+    Buffer.add_string buffer node
+| RecordPatch {value; _} ->
+    let node = sprintf "%sRecordPatch\n" pd in
+    Buffer.add_string buffer node;
+    pp_record_patch buffer ~pad:(mk_pad 1 0 pc) value
+| MapPatch {value; _} ->
+    let node = sprintf "%sMapPatch\n" pd in
+    Buffer.add_string buffer node;
+    pp_map_patch buffer ~pad:(mk_pad 1 0 pc) value
+| SetPatch {value; _} ->
+    let node = sprintf "%SetPatch\n" pd in
+    Buffer.add_string buffer node;
+    pp_set_patch buffer ~pad:(mk_pad 1 0 pc) value
+| MapRemove {value; _} ->
+    let node = sprintf "%sMapRemove\n" pd in
+    Buffer.add_string buffer node;
+    pp_map_remove buffer ~pad:(mk_pad 1 0 pc) value
+| SetRemove {value; _} ->
+    let node = sprintf "%sSetRemove\n" pd in
+    Buffer.add_string buffer node;
+    pp_set_remove buffer ~pad:(mk_pad 1 0 pc) value
+
+and pp_conditional buffer ~pad:(_,pc) cond =
+  let () =
+    let pd, pc = mk_pad 3 0 pc in
+    let node = sprintf "%s<condition>\n" pd in
+    Buffer.add_string buffer node;
+    pp_expr buffer ~pad:(mk_pad 1 0 pc) cond.test in
+  let () =
+    let pd, pc = mk_pad 3 1 pc in
+    let node = sprintf "%s<true>\n" pd in
+    Buffer.add_string buffer node;
+    pp_if_clause buffer ~pad:(mk_pad 1 0 pc) cond.ifso in
+  let () =
+    let pd, pc = mk_pad 3 2 pc in
+    let node = sprintf "%s<false>\n" pd in
+    Buffer.add_string buffer node;
+    pp_if_clause buffer ~pad:(mk_pad 2 1 pc) cond.ifnot
+  in ()
+
+and pp_if_clause buffer ~pad:(pd,pc) = function
+  ClauseInstr instr ->
+    let node = sprintf "%sClauseInstr\n" pd in
+    Buffer.add_string buffer node;
+    pp_instruction buffer ~pad:(mk_pad 1 0 pc) instr
+| ClauseBlock {value; _} ->
+    let node = sprintf "%sClauseBlock\n" pd in
+    let statements, _ = value.inside in
+    Buffer.add_string buffer node;
+    pp_statements buffer ~pad:(mk_pad 1 0 pc) statements
+
+and pp_case printer buffer ~pad:(_,pc) case =
+  let clauses = Utils.nsepseq_to_list case.cases.value in
+  let length  = List.length clauses in
+  let apply len rank =
+    pp_case_clause printer buffer ~pad:(mk_pad len rank pc)
+  in pp_expr buffer ~pad:(mk_pad length 0 pc) case.expr;
+  List.iteri (apply length) clauses
+
+and pp_case_clause printer buffer ~pad:(pd,pc) {value; _} =
+  let node = sprintf "%s<clause>\n" pd in
+  Buffer.add_string buffer node;
+  pp_pattern buffer ~pad:(mk_pad 2 0 pc) value.pattern;
+  printer buffer ~pad:(mk_pad 2 1 pc) value.rhs
+
+and pp_pattern buffer ~pad:(pd,pc as pad) = function
+  PNone _ ->
+    let node = sprintf "%sPNone\n" pd in
+    Buffer.add_string buffer node
+| PSome {value=_,{value=par; _}; _} ->
+    let node = sprintf "%sPSome\n" pd in
+    Buffer.add_string buffer node;
+    pp_pattern buffer ~pad:(mk_pad 1 0 pc) par.inside
+| PWild _ ->
+    let node = sprintf "%sPWild\n" pd
+    in Buffer.add_string buffer node
+| PConstr {value; _} ->
+    let node = sprintf "%sPConstr\n" pd in
+    Buffer.add_string buffer node;
+    pp_constr buffer ~pad:(mk_pad 1 0 pc) value
+| PCons {value; _} ->
+  let node     = sprintf "%sPCons\n" pd in
+  let patterns = Utils.nsepseq_to_list value in
+  let length   = List.length patterns in
+  let apply len rank =
+    pp_pattern buffer ~pad:(mk_pad len rank pc) in
+  Buffer.add_string buffer node;
+  List.iteri (apply length) patterns
+| PVar {value; _} ->
+    let node = sprintf "%sPVar\n" pd in
+    Buffer.add_string buffer node;
+    pp_ident buffer ~pad:(mk_pad 1 0 pc) value
+| PInt {value; _} ->
+    let node = sprintf "%sPInt\n" pd in
+    Buffer.add_string buffer node;
+    pp_int buffer ~pad value
+| PBytes {value; _} ->
+    let node = sprintf "%sPBytes\n" pd in
+    Buffer.add_string buffer node;
+    pp_bytes buffer ~pad value
+| PString {value; _} ->
+    let node = sprintf "%sPString\n" pd in
+    Buffer.add_string buffer node;
+    pp_ident buffer ~pad:(mk_pad 1 0 pc) value
+| PUnit _ ->
+    let node = sprintf "%sPUnit\n" pd in
+    Buffer.add_string buffer node
+| PFalse _ ->
+    let node = sprintf "%sPFalse\n" pd in
+    Buffer.add_string buffer node
+| PTrue _ ->
+    let node = sprintf "%sPTrue\n" pd in
+    Buffer.add_string buffer node
+| PList plist ->
+    let node = sprintf "%sPList\n" pd in
+    Buffer.add_string buffer node;
+    pp_plist buffer ~pad:(mk_pad 1 0 pc) plist
+| PTuple {value; _} ->
+    let node = sprintf "%sPTuple\n" pd in
+    Buffer.add_string buffer node;
+    pp_tuple_pattern buffer ~pad:(mk_pad 1 0 pc) value
+
+and pp_bytes buffer ~pad:(_,pc) (lexeme, hex) =
+  pp_string buffer ~pad:(mk_pad 2 0 pc) lexeme;
+  pp_string buffer ~pad:(mk_pad 2 1 pc) (Hex.to_string hex)
+
+and pp_int buffer ~pad:(_,pc) (lexeme, z) =
+  pp_string buffer ~pad:(mk_pad 2 0 pc) lexeme;
+  pp_string buffer ~pad:(mk_pad 2 1 pc) (Z.to_string z)
+
+and pp_constr buffer ~pad = function
+  {value; _}, None ->
+    pp_ident buffer ~pad value
+| {value=id; _}, Some {value=ptuple; _} ->
+    pp_ident buffer ~pad id;
+    pp_tuple_pattern buffer ~pad ptuple
+
+and pp_plist buffer ~pad:(pd,pc) = function
+  Sugar {value; _} ->
+    let node = sprintf "%sSugar\n" pd in
+    Buffer.add_string buffer node;
+    pp_injection pp_pattern buffer ~pad:(mk_pad 1 0 pc) value
+| PNil _ ->
+    let node = sprintf "%sPNil\n" pd in
+    Buffer.add_string buffer node
+| Raw {value; _} ->
+    let node = sprintf "%sRaw\n" pd in
+    Buffer.add_string buffer node;
+    pp_raw buffer ~pad:(mk_pad 1 0 pc) value.inside
+
+and pp_raw buffer ~pad:(_,pc) (head, _, tail) =
+  pp_pattern buffer ~pad:(mk_pad 2 0 pc) head;
+  pp_pattern buffer ~pad:(mk_pad 2 1 pc) tail
+
+and pp_injection printer buffer ~pad:(_,pc) inj =
+  let elements = Utils.sepseq_to_list inj.elements in
+  let length   = List.length elements in
+  let apply len rank =
+    printer buffer ~pad:(mk_pad len rank pc)
+  in List.iteri (apply length) elements
+
+and pp_tuple_pattern buffer ~pad:(_,pc) tuple =
+  let patterns = Utils.nsepseq_to_list tuple.inside in
+  let length   = List.length patterns in
+  let apply len rank =
+    pp_pattern buffer ~pad:(mk_pad len rank pc)
+  in List.iteri (apply length) patterns
+
+and pp_assignment buffer ~pad:(_,pc) asgn =
+  pp_lhs buffer ~pad:(mk_pad 2 0 pc) asgn.lhs;
+  pp_rhs buffer ~pad:(mk_pad 2 1 pc) asgn.rhs
+
+and pp_rhs buffer ~pad:(pd,pc) rhs =
+  let node = sprintf "%s<rhs>\n" pd in
+  Buffer.add_string buffer node;
+  pp_expr buffer ~pad:(mk_pad 1 0 pc) rhs
+
+and pp_lhs buffer ~pad:(pd,pc) lhs =
+  let node = sprintf "%s<lhs>\n" pd in
+  Buffer.add_string buffer node;
+  let pd, pc as pad = mk_pad 1 0 pc in
+  match lhs with
+    Path path ->
+      let node = sprintf "%sPath\n" pd in
+      Buffer.add_string buffer node;
+      pp_path buffer ~pad:(mk_pad 1 0 pc) path
+  | MapPath {value; _} ->
+      let node = sprintf "%sMapPath\n" pd in
+      Buffer.add_string buffer node;
+      pp_map_lookup buffer ~pad value
+
+and pp_path buffer ~pad:(pd,pc as pad) = function
+  Name {value; _} ->
+    let node = sprintf "%sName\n" pd in
+    Buffer.add_string buffer node;
+    pp_ident buffer ~pad:(mk_pad 1 0 pc) value
+| Path {value; _} ->
+    let node = sprintf "%sPath\n" pd in
+    Buffer.add_string buffer node;
+    pp_projection buffer ~pad value
+
+and pp_projection buffer ~pad:(_,pc) proj =
+  let selections = Utils.nsepseq_to_list proj.field_path in
+  let len = List.length selections in
+  let apply len rank =
+    pp_selection buffer ~pad:(mk_pad len rank pc) in
+  pp_ident buffer ~pad:(mk_pad (1+len) 0 pc) proj.struct_name.value;
+  List.iteri (apply len) selections
+
+and pp_selection buffer ~pad:(pd,pc as pad) = function
+  FieldName {value; _} ->
+    let node = sprintf "%sFieldName\n" pd in
+    Buffer.add_string buffer node;
+    pp_ident buffer ~pad:(mk_pad 1 0 pc) value
+| Component {value; _} ->
+    let node = sprintf "%sComponent\n" pd in
+    Buffer.add_string buffer node;
+    pp_int buffer ~pad value
+
+and pp_map_lookup buffer ~pad:(_,pc) lookup =
+  pp_path buffer ~pad:(mk_pad 2 0 pc) lookup.path;
+  pp_expr buffer ~pad:(mk_pad 2 1 pc) lookup.index.value.inside
+
+and pp_loop buffer ~pad:(pd,pc) loop =
+  let node = sprintf "%sPP_LOOP\n" pd in
+  Buffer.add_string buffer node
+
+and pp_fun_call buffer ~pad:(pd,pc) call =
+  let node = sprintf "%sPP_FUN_CALL\n" pd in
+  Buffer.add_string buffer node
+
+and pp_record_patch buffer ~pad:(pd,pc) patch =
+  let node = sprintf "%sPP_RECORD_PATCH\n" pd in
+  Buffer.add_string buffer node
+
+and pp_map_patch buffer ~pad:(pd,pc) patch =
+  let node = sprintf "%sPP_MAP_PATCH\n" pd in
+  Buffer.add_string buffer node
+
+and pp_set_patch buffer ~pad:(pd,pc) patch =
+  let node = sprintf "%sPP_SET_PATCH\n" pd in
+  Buffer.add_string buffer node
+
+and pp_map_remove buffer ~pad:(pd,pc) rem =
+  let node = sprintf "%sPP_MAP_REMOVE\n" pd in
+  Buffer.add_string buffer node
+
+and pp_set_remove buffer ~pad:(pd,pc) rem =
+  let node = sprintf "%sPP_SET_REMOVE\n" pd in
+  Buffer.add_string buffer node
+
+and pp_local_decls buffer ~pad:(_,pc) decls =
+  let apply len rank =
+    pp_local_decl buffer ~pad:(mk_pad len rank pc)
+  in List.iteri (List.length decls |> apply) decls
+
+and pp_local_decl buffer ~pad:(pd,pc) = function
+  LocalFun {value; _} ->
+    let node = sprintf "%sLocalFun\n" pd in
+    Buffer.add_string buffer node;
+    pp_fun_decl buffer ~pad:(mk_pad 1 0 pc) value
+| LocalProc {value; _} ->
+    let node = sprintf "%sLocalProc\n" pd in
+    Buffer.add_string buffer node;
+    pp_proc_decl buffer ~pad:(mk_pad 1 0 pc) value
+| LocalData data ->
+    let node = sprintf "%sLocalData\n" pd in
+    Buffer.add_string buffer node;
+    pp_data_decl buffer ~pad:(mk_pad 1 0 pc) data
+
+and pp_data_decl buffer ~pad = function
+  LocalConst {value; _} ->
+    let node = sprintf "%sLocalConst\n" (fst pad) in
+    Buffer.add_string buffer node;
+    pp_const_decl buffer ~pad value
+| LocalVar {value; _} ->
+    let node = sprintf "%sLocalVar\n" (fst pad) in
+    Buffer.add_string buffer node;
+    pp_var_decl buffer ~pad value
+
+and pp_var_decl buffer ~pad:(_,pc) decl =
+  pp_ident buffer ~pad:(mk_pad 3 0 pc) decl.name.value;
+  pp_type_expr buffer ~pad:(mk_pad 3 1 pc) decl.var_type;
+  pp_expr buffer ~pad:(mk_pad 3 2 pc) decl.init
+
+and pp_proc_decl buffer ~pad:(pd,pc) decl =
+  let node = sprintf "%sPP_PROC_DECL\n" pd in
+  Buffer.add_string buffer node
+
+and pp_expr buffer ~pad:(pd,pc) decl =
+  let node = sprintf "%sPP_EXPR\n" pd in
+  Buffer.add_string buffer node
+
+let pp_ast buffer = pp_ast buffer ~pad:("","")

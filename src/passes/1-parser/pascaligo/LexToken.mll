@@ -480,9 +480,9 @@ let mk_int lexeme region =
   then Error Non_canonical_zero
   else Ok (Int Region.{region; value = lexeme, z})
 
-type invalid_natural =
-  | Invalid_natural
-  | Non_canonical_zero_nat
+type nat_err =
+  Invalid_natural
+| Non_canonical_zero_nat
 
 let mk_nat lexeme region =
   match (String.index_opt lexeme 'n') with
@@ -508,35 +508,42 @@ let mk_mtz lexeme region =
 
 let eof region = EOF region
 
+type sym_err = Invalid_symbol
+
 let mk_sym lexeme region =
   match lexeme with
-    ";"   -> SEMI     region
-  | ","   -> COMMA    region
-  | "("   -> LPAR     region
-  | ")"   -> RPAR     region
-  | "{"   -> LBRACE   region
-  | "}"   -> RBRACE   region
-  | "["   -> LBRACKET region
-  | "]"   -> RBRACKET region
-  | "#"   -> CONS     region
-  | "|"   -> VBAR     region
-  | "->"  -> ARROW    region
-  | ":="  -> ASS      region
-  | "="   -> EQUAL    region
-  | ":"   -> COLON    region
-  | "<"   -> LT       region
-  | "<="  -> LEQ      region
-  | ">"   -> GT       region
-  | ">="  -> GEQ      region
-  | "=/=" -> NEQ      region
-  | "+"   -> PLUS     region
-  | "-"   -> MINUS    region
-  | "/"   -> SLASH    region
-  | "*"   -> TIMES    region
-  | "."   -> DOT      region
-  | "_"   -> WILD     region
-  | "^"   -> CAT      region
-  |     _ -> assert false
+  (* Lexemes in common with all concrete syntaxes *)
+    ";"   -> Ok (SEMI     region)
+  | ","   -> Ok (COMMA    region)
+  | "("   -> Ok (LPAR     region)
+  | ")"   -> Ok (RPAR     region)
+  | "["   -> Ok (LBRACKET region)
+  | "]"   -> Ok (RBRACKET region)
+  | "{"   -> Ok (LBRACE   region)
+  | "}"   -> Ok (RBRACE   region)
+  | "="   -> Ok (EQUAL    region)
+  | ":"   -> Ok (COLON    region)
+  | "|"   -> Ok (VBAR     region)
+  | "->"  -> Ok (ARROW    region)
+  | "."   -> Ok (DOT      region)
+  | "_"   -> Ok (WILD     region)
+  | "^"   -> Ok (CAT      region)
+  | "+"   -> Ok (PLUS     region)
+  | "-"   -> Ok (MINUS    region)
+  | "*"   -> Ok (TIMES    region)
+  | "/"   -> Ok (SLASH    region)
+  | "<"   -> Ok (LT       region)
+  | "<="  -> Ok (LEQ      region)
+  | ">"   -> Ok (GT       region)
+  | ">="  -> Ok (GEQ      region)
+
+  (* Lexemes specific to PascaLIGO *)
+  | "=/=" -> Ok (NEQ      region)
+  | "#"   -> Ok (CONS     region)
+  | ":="  -> Ok (ASS      region)
+
+  (* Invalid lexemes *)
+  |     _ -> Error Invalid_symbol
 
 (* Identifiers *)
 

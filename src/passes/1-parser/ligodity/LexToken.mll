@@ -200,8 +200,8 @@ let to_lexeme = function
   | BOOL_AND _ -> "&&"
   | Ident id -> id.Region.value
   | Constr id -> id.Region.value
-  | Int i 
-  | Nat i 
+  | Int i
+  | Nat i
   | Mtz i -> fst i.Region.value
   | Str s -> s.Region.value
   | Bytes b -> fst b.Region.value
@@ -264,7 +264,7 @@ let keywords = [
 
 let reserved =
   let open SSet in
-  empty 
+  empty
     |> add "and"
     |> add "as"
     |> add "asr"
@@ -284,7 +284,7 @@ let reserved =
     |> add "lazy"
     |> add "lor"
     |> add "lsl"
-    |> add "lsr"    
+    |> add "lsr"
     |> add "lxor"
     |> add "method"
     |> add "module"
@@ -306,7 +306,7 @@ let reserved =
 
 let constructors = [
   (fun reg -> False reg);
-  (fun reg -> True  reg);  
+  (fun reg -> True  reg);
 ]
 
 let add map (key, value) = SMap.add key value map
@@ -379,15 +379,14 @@ let mk_int lexeme region =
   then Error Non_canonical_zero
   else Ok (Int Region.{region; value = lexeme, z})
 
-type invalid_natural = 
-  | Invalid_natural
-  | Non_canonical_zero_nat
-
+type nat_err =
+  Invalid_natural
+| Non_canonical_zero_nat
 
 let mk_nat lexeme region =
-  match (String.index_opt lexeme 'p') with  
+  match (String.index_opt lexeme 'p') with
   | None -> Error Invalid_natural
-  | Some _ -> (  
+  | Some _ -> (
     let z =
       Str.(global_replace (regexp "_") "" lexeme) |>
       Str.(global_replace (regexp "p") "") |>
@@ -408,35 +407,41 @@ let mk_mtz lexeme region =
 
 let eof region = EOF region
 
+type sym_err = Invalid_symbol
+
 let mk_sym lexeme region =
   match lexeme with
-    "->"   ->   ARROW     region
-  | "::"   ->   CONS      region
-  | "^"   ->    CAT       region
-  | "-"   ->    MINUS     region
-  | "+"   ->    PLUS      region
-  | "/"   ->    SLASH     region
-  | "*"   ->    TIMES     region
-  | "["   ->    LBRACKET  region
-  | "]"   ->    RBRACKET  region
-  | "{"   ->    LBRACE    region
-  | "}"  ->     RBRACE    region
-  | ","  ->     COMMA     region
-  | ";"   ->    SEMI      region
-  | "|"   ->    VBAR      region
-  | ":"   ->    COLON     region
-  | "."  ->     DOT       region
-  | "_"   ->    WILD      region
-  | "="  ->     EQ        region
-  | "<>" ->     NE        region
-  | "<"   ->    LT        region
-  | ">"   ->    GT        region
-  | "=<"   ->   LE        region
-  | ">="   ->   GE        region
-  | "||"   ->   BOOL_OR   region
-  | "&&"   ->   BOOL_AND  region
-  | "("    ->   LPAR      region
-  | ")"    ->   RPAR      region
+  (* Lexemes in common with all concrete syntaxes *)
+    ";"   -> Ok (SEMI     region)
+  | ","   -> Ok (COMMA    region)
+  | "("   -> Ok (LPAR     region)
+  | ")"   -> Ok (RPAR     region)
+  | "["   -> Ok (LBRACKET region)
+  | "]"   -> Ok (RBRACKET region)
+  | "{"   -> Ok (LBRACE   region)
+  | "}"   -> Ok (RBRACE   region)
+  | "="   -> Ok (EQUAL    region)
+  | ":"   -> Ok (COLON    region)
+  | "|"   -> Ok (VBAR     region)
+  | "->"  -> Ok (ARROW    region)
+  | "."   -> Ok (DOT      region)
+  | "_"   -> Ok (WILD     region)
+  | "^"   -> Ok (CAT      region)
+  | "+"   -> Ok (PLUS     region)
+  | "-"   -> Ok (MINUS    region)
+  | "*"   -> Ok (TIMES    region)
+  | "/"   -> Ok (SLASH    region)
+  | "<"   -> Ok (LT       region)
+  | "<="  -> Ok (LEQ      region)
+  | ">"   -> Ok (GT       region)
+  | ">="  -> Ok (GEQ      region)
+
+
+  | "<>"  -> Ok (NE        region)
+  | "::"  -> Ok (CONS      region)
+  | "||"  -> Ok (BOOL_OR   region)
+  | "&&"  -> Ok (BOOL_AND  region)
+
   |  a  ->   failwith ("Not understood token: " ^ a)
 
 (* Identifiers *)

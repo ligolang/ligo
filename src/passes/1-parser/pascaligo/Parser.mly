@@ -935,14 +935,17 @@ list_expr:
 (* Patterns *)
 
 pattern:
-  nsepseq(core_pattern,CONS) {
-    let region = nsepseq_to_region pattern_to_region $1
-    in PCons {region; value=$1}}
+  core_pattern CONS nsepseq(core_pattern,CONS) {
+    let value = Utils.nsepseq_cons $1 $2 $3 in
+    let region = nsepseq_to_region pattern_to_region value
+    in PCons {region; value}}
+| core_pattern { $1 }
 
 core_pattern:
   var                      {    PVar $1 }
 | WILD                     {   PWild $1 }
 | Int                      {    PInt $1 }
+| Bytes                    {  PBytes $1 }
 | String                   { PString $1 }
 | C_Unit                   {   PUnit $1 }
 | C_False                  {  PFalse $1 }

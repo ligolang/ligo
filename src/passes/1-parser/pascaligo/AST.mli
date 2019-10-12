@@ -172,7 +172,7 @@ and type_decl = {
 and type_expr =
   TProd   of cartesian
 | TSum    of (variant reg, vbar) nsepseq reg
-| TRecord of record_type
+| TRecord of field_decl reg injection reg
 | TApp    of (type_name * type_tuple) reg
 | TFun    of (type_expr * arrow * type_expr) reg
 | TPar    of type_expr par reg
@@ -184,8 +184,6 @@ and variant = {
   constr : constr;
   args   : (kwd_of * cartesian) option
 }
-
-and record_type = field_decl reg injection reg
 
 and field_decl = {
   field_name : field_name;
