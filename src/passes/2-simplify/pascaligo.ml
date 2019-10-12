@@ -824,7 +824,7 @@ and simpl_single_instruction : Raw.single_instr -> (_ -> expression result) resu
         | _ :: _ ->
           let assigns = List.fold_left
               (fun map (key, value) -> (e_map_add key value map))
-              (e_variable name)
+              (e_accessor ~loc (e_variable name) access_path)
               inj
           in e_assign ~loc name access_path assigns
       in return_statement @@ expr
