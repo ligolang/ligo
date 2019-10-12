@@ -829,6 +829,14 @@ let tez_ligo () : unit result =
   let%bind _ = expect_eq_evaluate program "add_tez" (e_mutez 42) in
   let%bind _ = expect_eq_evaluate program "sub_tez" (e_mutez 1) in
   let%bind _ = expect_eq_evaluate program "not_enough_tez" (e_mutez 4611686018427387903) in
+  let%bind _ = expect_eq_evaluate program "nat_mul_tez" (e_mutez 100) in
+  let%bind _ = expect_eq_evaluate program "tez_mul_nat" (e_mutez 1000) in
+  let%bind _ = expect_eq_evaluate program "tez_div_tez1" (e_nat 100) in
+  let%bind _ = expect_eq_evaluate program "tez_div_tez2" (e_nat 1) in
+  let%bind _ = expect_eq_evaluate program "tez_div_tez3" (e_nat 0) in
+  let%bind _ = expect_eq_evaluate program "tez_mod_tez1" (e_mutez 0) in
+  let%bind _ = expect_eq_evaluate program "tez_mod_tez2" (e_mutez 10) in
+  let%bind _ = expect_eq_evaluate program "tez_mod_tez3" (e_mutez 100) in
   ok ()
 
 let tez_mligo () : unit result =
