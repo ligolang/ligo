@@ -246,6 +246,22 @@ let set_arithmetic () : unit result =
       (e_set [e_string "foo" ; e_string "bar" ; e_string "foobar"])
       (e_set [e_string "foo" ; e_string "bar"]) in
   let%bind () =
+    expect_eq program "patch_op"
+      (e_set [e_string "foo" ; e_string "bar"])
+      (e_set [e_string "foo" ; e_string "bar"; e_string "foobar"]) in
+  let%bind () =
+    expect_eq program "patch_op_deep"
+      (e_pair
+         (e_set [e_string "foo" ; e_string "bar"])
+         (e_nat 42))
+      (e_pair
+         (e_set [e_string "foo" ; e_string "bar" ; e_string "foobar"])
+         (e_nat 42)) in
+  let%bind () =
+    expect_eq program "patch_op_empty"
+      (e_set [e_string "foo" ; e_string "bar"])
+      (e_set [e_string "foo" ; e_string "bar"]) in
+  let%bind () =
     expect_eq program "mem_op"
       (e_set [e_string "foo" ; e_string "bar" ; e_string "foobar"])
       (e_bool true) in

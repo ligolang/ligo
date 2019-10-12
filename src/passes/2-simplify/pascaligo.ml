@@ -130,28 +130,6 @@ module Errors = struct
     ] in
     error ~data title message
 
-  let unsupported_set_patches patch =
-    let title () = "set patches" in
-    let message () =
-      Format.asprintf "set patches (a.k.a. functional updates) are \
-                       not supported yet" in
-    let data = [
-      ("patch_loc",
-       fun () -> Format.asprintf "%a" Location.pp_lift @@ patch.Region.region)
-    ] in
-    error ~data title message
-
-  (* let unsupported_set_removal remove =
-    let title () = "set removals" in
-    let message () =
-      Format.asprintf "removal of elements in a set is not \
-                       supported yet" in
-    let data = [
-      ("removal_loc",
-       fun () -> Format.asprintf "%a" Location.pp_lift @@ remove.Region.region)
-    ] in
-    error ~data title message *)
-
   let unsupported_deep_set_rm path =
     let title () = "set removals" in
     let message () =
@@ -819,8 +797,24 @@ and simpl_single_instruction : Raw.single_instr -> (_ -> expression result) resu
     )
   | MapPatch patch ->
       fail @@ unsupported_map_patches patch
-  | SetPatch patch ->
-      fail @@ unsupported_set_patches patch
+  | SetPatch patch -> (
+      let (setp, loc) = r_split patch in
+      let (name , access_path) = simpl_path setp.path in
+      let%bind inj =
+        bind_list @@
+        List.map simpl_expression @@
+        pseq_to_list setp.set_inj.value.elements in
+      let expr =
+        match inj with
+        | [] -> e_skip ~loc ()
+        | _ :: _ ->
+          let assigns = List.fold_left
+            (fun s hd -> e_constant "SET_ADD" [hd ; s])
+            (e_accessor ~loc (e_variable name) access_path) inj in
+          e_assign ~loc name access_path assigns in
+      return_statement @@ expr
+    )
+
   | MapRemove r -> (
       let (v , loc) = r_split r in
       let key = v.key in
