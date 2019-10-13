@@ -51,13 +51,13 @@ type t =
 | VBAR     of Region.t
 | ARROW    of Region.t
 | ASS      of Region.t
-| EQUAL    of Region.t
+| EQ       of Region.t
 | COLON    of Region.t
 | LT       of Region.t
-| LEQ      of Region.t
+| LE       of Region.t
 | GT       of Region.t
-| GEQ      of Region.t
-| NEQ      of Region.t
+| GE       of Region.t
+| NE       of Region.t
 | PLUS     of Region.t
 | MINUS    of Region.t
 | SLASH    of Region.t
@@ -183,13 +183,13 @@ let proj_token = function
 | VBAR     region -> region, "VBAR"
 | ARROW    region -> region, "ARROW"
 | ASS      region -> region, "ASS"
-| EQUAL    region -> region, "EQUAL"
+| EQ       region -> region, "EQ"
 | COLON    region -> region, "COLON"
 | LT       region -> region, "LT"
-| LEQ      region -> region, "LEQ"
+| LE       region -> region, "LE"
 | GT       region -> region, "GT"
-| GEQ      region -> region, "GEQ"
-| NEQ      region -> region, "NEQ"
+| GE       region -> region, "GE"
+| NE       region -> region, "NE"
 | PLUS     region -> region, "PLUS"
 | MINUS    region -> region, "MINUS"
 | SLASH    region -> region, "SLASH"
@@ -276,13 +276,13 @@ let to_lexeme = function
 | VBAR     _ -> "|"
 | ARROW    _ -> "->"
 | ASS      _ -> ":="
-| EQUAL    _ -> "="
+| EQ       _ -> "="
 | COLON    _ -> ":"
 | LT       _ -> "<"
-| LEQ      _ -> "<="
+| LE       _ -> "<="
 | GT       _ -> ">"
-| GEQ      _ -> ">="
-| NEQ      _ -> "=/="
+| GE       _ -> ">="
+| NE       _ -> "=/="
 | PLUS     _ -> "+"
 | MINUS    _ -> "-"
 | SLASH    _ -> "/"
@@ -521,7 +521,7 @@ let mk_sym lexeme region =
   | "]"   -> Ok (RBRACKET region)
   | "{"   -> Ok (LBRACE   region)
   | "}"   -> Ok (RBRACE   region)
-  | "="   -> Ok (EQUAL    region)
+  | "="   -> Ok (EQ       region)
   | ":"   -> Ok (COLON    region)
   | "|"   -> Ok (VBAR     region)
   | "->"  -> Ok (ARROW    region)
@@ -533,12 +533,12 @@ let mk_sym lexeme region =
   | "*"   -> Ok (TIMES    region)
   | "/"   -> Ok (SLASH    region)
   | "<"   -> Ok (LT       region)
-  | "<="  -> Ok (LEQ      region)
+  | "<="  -> Ok (LE      region)
   | ">"   -> Ok (GT       region)
-  | ">="  -> Ok (GEQ      region)
+  | ">="  -> Ok (GE      region)
 
   (* Lexemes specific to PascaLIGO *)
-  | "=/=" -> Ok (NEQ      region)
+  | "=/=" -> Ok (NE       region)
   | "#"   -> Ok (CONS     region)
   | ":="  -> Ok (ASS      region)
 
@@ -639,13 +639,13 @@ let is_sym = function
 | VBAR     _
 | ARROW    _
 | ASS      _
-| EQUAL    _
+| EQ       _
 | COLON    _
 | LT       _
-| LEQ      _
+| LE       _
 | GT       _
-| GEQ      _
-| NEQ      _
+| GE       _
+| NE       _
 | PLUS     _
 | MINUS    _
 | SLASH    _

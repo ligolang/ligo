@@ -423,10 +423,8 @@ and for_loop =
 and for_int = {
   kwd_for : kwd_for;
   assign  : var_assign reg;
-  down    : kwd_down option;
   kwd_to  : kwd_to;
   bound   : expr;
-  step    : (kwd_step * expr) option;
   block   : block reg
 }
 

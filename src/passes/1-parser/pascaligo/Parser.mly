@@ -342,7 +342,7 @@ open_data_decl:
 | open_var_decl   { LocalVar   $1 }
 
 open_const_decl:
-  Const unqualified_decl(EQUAL) {
+  Const unqualified_decl(EQ) {
     let name, colon, const_type, equal, init, stop = $2 in
     let region = cover $1 stop
     and value = {
@@ -616,16 +616,14 @@ while_loop:
     in While {region; value}}
 
 for_loop:
-  For var_assign Down? To expr option(step_clause) block {
-    let region = cover $1 $7.region in
+  For var_assign To expr block {
+    let region = cover $1 $5.region in
     let value = {
       kwd_for = $1;
       assign  = $2;
-      down    = $3;
-      kwd_to  = $4;
-      bound   = $5;
-      step    = $6;
-      block   = $7}
+      kwd_to  = $3;
+      bound   = $4;
+      block   = $5}
     in For (ForInt {region; value})
   }
 | For var option(arrow_clause) In expr block {
@@ -644,9 +642,6 @@ var_assign:
     let region = cover $1.region (expr_to_region $3)
     and value  = {name = $1; assign = $2; expr = $3}
     in {region; value}}
-
-step_clause:
-  Step expr { $1,$2 }
 
 arrow_clause:
   ARROW var { $1,$2 }
@@ -701,7 +696,7 @@ comp_expr:
     and value  = {arg1 = $1; op = $2; arg2 = $3}
     in ELogic (CompExpr (Lt {region; value}))
   }
-| comp_expr LEQ cat_expr {
+| comp_expr LE cat_expr {
     let start  = expr_to_region $1
     and stop   = expr_to_region $3 in
     let region = cover start stop
@@ -715,21 +710,21 @@ comp_expr:
     and value  = {arg1 = $1; op = $2; arg2 = $3}
     in ELogic (CompExpr (Gt {region; value}))
   }
-| comp_expr GEQ cat_expr {
+| comp_expr GE cat_expr {
     let start  = expr_to_region $1
     and stop   = expr_to_region $3 in
     let region = cover start stop
     and value  = {arg1 = $1; op = $2; arg2 = $3}
     in ELogic (CompExpr (Geq {region; value}))
   }
-| comp_expr EQUAL cat_expr {
+| comp_expr EQ cat_expr {
     let start  = expr_to_region $1
     and stop   = expr_to_region $3 in
     let region = cover start stop
     and value  = {arg1 = $1; op = $2; arg2 = $3}
     in ELogic (CompExpr (Equal {region; value}))
   }
-| comp_expr NEQ cat_expr {
+| comp_expr NE cat_expr {
     let start  = expr_to_region $1
     and stop   = expr_to_region $3 in
     let region = cover start stop
@@ -906,7 +901,7 @@ record_expr:
    in {region; value} }
 
 field_assignment:
-  field_name EQUAL expr {
+  field_name EQ expr {
     let region = cover $1.region (expr_to_region $3)
     and value = {
       field_name = $1;

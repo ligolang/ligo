@@ -342,14 +342,11 @@ and print_for_loop buffer = function
 | ForCollect for_collect -> print_for_collect buffer for_collect
 
 and print_for_int buffer ({value; _} : for_int reg) =
-  let {kwd_for; assign; down; kwd_to;
-       bound; step; block} = value in
+  let {kwd_for; assign; kwd_to; bound; block} = value in
   print_token      buffer kwd_for "for";
   print_var_assign buffer assign;
-  print_down       buffer down;
   print_token      buffer kwd_to "to";
   print_expr       buffer bound;
-  print_step       buffer step;
   print_block      buffer block
 
 and print_var_assign buffer {value; _} =
@@ -357,16 +354,6 @@ and print_var_assign buffer {value; _} =
   print_var   buffer name;
   print_token buffer assign ":=";
   print_expr  buffer expr
-
-and print_down buffer = function
-  Some kwd_down -> print_token buffer kwd_down "down"
-| None          -> ()
-
-and print_step buffer = function
-  Some (kwd_step, expr) ->
-    print_token buffer kwd_step "step";
-    print_expr  buffer expr
-| None -> ()
 
 and print_for_collect buffer ({value; _} : for_collect reg) =
   let {kwd_for; var; bind_to; kwd_in; expr; block} = value in
@@ -954,33 +941,33 @@ and pp_single_instr buffer ~pad:(pd,pc as pad) = function
     let node = sprintf "%sLoop\n" pd in
     Buffer.add_string buffer node;
     pp_loop buffer ~pad:(mk_pad 1 0 pc) loop
-| ProcCall call ->
+| ProcCall {value; _} ->
     let node = sprintf "%sProcCall\n" pd in
     Buffer.add_string buffer node;
-    pp_fun_call buffer ~pad:(mk_pad 1 0 pc) call
+    pp_fun_call buffer ~pad:(mk_pad 1 0 pc) value
 | Skip _ ->
     let node = sprintf "%sSkip\n" pd in
     Buffer.add_string buffer node
 | RecordPatch {value; _} ->
     let node = sprintf "%sRecordPatch\n" pd in
     Buffer.add_string buffer node;
-    pp_record_patch buffer ~pad:(mk_pad 1 0 pc) value
+    pp_record_patch buffer ~pad value
 | MapPatch {value; _} ->
     let node = sprintf "%sMapPatch\n" pd in
     Buffer.add_string buffer node;
-    pp_map_patch buffer ~pad:(mk_pad 1 0 pc) value
+    pp_map_patch buffer ~pad value
 | SetPatch {value; _} ->
-    let node = sprintf "%SetPatch\n" pd in
+    let node = sprintf "%sSetPatch\n" pd in
     Buffer.add_string buffer node;
-    pp_set_patch buffer ~pad:(mk_pad 1 0 pc) value
+    pp_set_patch buffer ~pad value
 | MapRemove {value; _} ->
     let node = sprintf "%sMapRemove\n" pd in
     Buffer.add_string buffer node;
-    pp_map_remove buffer ~pad:(mk_pad 1 0 pc) value
+    pp_map_remove buffer ~pad value
 | SetRemove {value; _} ->
     let node = sprintf "%sSetRemove\n" pd in
     Buffer.add_string buffer node;
-    pp_set_remove buffer ~pad:(mk_pad 1 0 pc) value
+    pp_set_remove buffer ~pad value
 
 and pp_conditional buffer ~pad:(_,pc) cond =
   let () =
@@ -997,10 +984,10 @@ and pp_conditional buffer ~pad:(_,pc) cond =
     let pd, pc = mk_pad 3 2 pc in
     let node = sprintf "%s<false>\n" pd in
     Buffer.add_string buffer node;
-    pp_if_clause buffer ~pad:(mk_pad 2 1 pc) cond.ifnot
+    pp_if_clause buffer ~pad:(mk_pad 1 0 pc) cond.ifnot
   in ()
 
-and pp_if_clause buffer ~pad:(pd,pc) = function
+and pp_if_clause buffer ~pad:(pd,pc as pad) = function
   ClauseInstr instr ->
     let node = sprintf "%sClauseInstr\n" pd in
     Buffer.add_string buffer node;
@@ -1009,7 +996,7 @@ and pp_if_clause buffer ~pad:(pd,pc) = function
     let node = sprintf "%sClauseBlock\n" pd in
     let statements, _ = value.inside in
     Buffer.add_string buffer node;
-    pp_statements buffer ~pad:(mk_pad 1 0 pc) statements
+    pp_statements buffer ~pad statements
 
 and pp_case printer buffer ~pad:(_,pc) case =
   let clauses = Utils.nsepseq_to_list case.cases.value in
@@ -1114,7 +1101,10 @@ and pp_raw buffer ~pad:(_,pc) (head, _, tail) =
   pp_pattern buffer ~pad:(mk_pad 2 0 pc) head;
   pp_pattern buffer ~pad:(mk_pad 2 1 pc) tail
 
-and pp_injection printer buffer ~pad:(_,pc) inj =
+and pp_injection :
+  'a.(Buffer.t -> pad:(string*string) -> 'a -> unit)
+  -> Buffer.t -> pad:(string*string) -> 'a injection -> unit =
+  fun printer buffer ~pad:(_,pc) inj ->
   let elements = Utils.sepseq_to_list inj.elements in
   let length   = List.length elements in
   let apply len rank =
@@ -1183,33 +1173,131 @@ and pp_map_lookup buffer ~pad:(_,pc) lookup =
   pp_path buffer ~pad:(mk_pad 2 0 pc) lookup.path;
   pp_expr buffer ~pad:(mk_pad 2 1 pc) lookup.index.value.inside
 
-and pp_loop buffer ~pad:(pd,pc) loop =
-  let node = sprintf "%sPP_LOOP\n" pd in
-  Buffer.add_string buffer node
+and pp_loop buffer ~pad:(pd,pc) = function
+  While {value; _} ->
+    let node = sprintf "%s<while>\n" pd in
+    Buffer.add_string buffer node;
+    let () =
+      let pd, pc = mk_pad 2 0 pc in
+      let node = sprintf "%s<condition>\n" pd in
+      Buffer.add_string buffer node;
+      pp_expr buffer ~pad:(mk_pad 1 0 pc) value.cond in
+    let () =
+      let pd, _ as pad = mk_pad 2 1 pc in
+      let node = sprintf "%s<statements>\n" pd in
+      let statements = value.block.value.statements in
+      Buffer.add_string buffer node;
+      pp_statements buffer ~pad statements
+    in ()
+| For for_loop ->
+    let node = sprintf "%s<for>\n" pd in
+    Buffer.add_string buffer node;
+    pp_for_loop buffer ~pad:(mk_pad 1 0 pc) for_loop
 
-and pp_fun_call buffer ~pad:(pd,pc) call =
-  let node = sprintf "%sPP_FUN_CALL\n" pd in
-  Buffer.add_string buffer node
+and pp_for_loop buffer ~pad:(pd,_ as pad) = function
+  ForInt {value; _} ->
+    let node = sprintf "%sForInt\n" pd in
+    Buffer.add_string buffer node;
+    pp_for_int buffer ~pad value
+| ForCollect {value; _} ->
+    let node = sprintf "%sForCollect\n" pd in
+    Buffer.add_string buffer node;
+    pp_for_collect buffer ~pad value
 
-and pp_record_patch buffer ~pad:(pd,pc) patch =
-  let node = sprintf "%sPP_RECORD_PATCH\n" pd in
-  Buffer.add_string buffer node
+and pp_for_int buffer ~pad:(_,pc) for_int =
+  let () =
+    let pd, _ as pad = mk_pad 3 0 pc in
+    let node = sprintf "%s<init>\n" pd in
+    Buffer.add_string buffer node;
+    pp_var_assign buffer ~pad for_int.assign.value in
+  let () =
+    let pd, pc = mk_pad 3 1 pc in
+    let node = sprintf "%s<bound>\n" pd in
+    Buffer.add_string buffer node;
+    pp_expr buffer ~pad:(mk_pad 1 0 pc) for_int.bound in
+  let () =
+    let pd, _ as pad = mk_pad 3 2 pc in
+    let node = sprintf "%s<statements>\n" pd in
+    let statements = for_int.block.value.statements in
+    Buffer.add_string buffer node;
+    pp_statements buffer ~pad statements
+  in ()
 
-and pp_map_patch buffer ~pad:(pd,pc) patch =
-  let node = sprintf "%sPP_MAP_PATCH\n" pd in
-  Buffer.add_string buffer node
+and pp_var_assign buffer ~pad:(_,pc) asgn =
+  let pad = mk_pad 2 0 pc in
+  pp_ident buffer ~pad asgn.name.value;
+  let pad = mk_pad 2 1 pc in
+  pp_expr buffer ~pad asgn.expr
 
-and pp_set_patch buffer ~pad:(pd,pc) patch =
-  let node = sprintf "%sPP_SET_PATCH\n" pd in
-  Buffer.add_string buffer node
+and pp_for_collect buffer ~pad:(_,pc) collect =
+  let () =
+    let pad = mk_pad 3 0 pc in
+    match collect.bind_to with
+      None ->
+        pp_ident buffer ~pad collect.var.value
+    | Some (_, var) ->
+        pp_var_binding buffer ~pad (collect.var, var) in
+  let () =
+    let pd, pc = mk_pad 3 1 pc in
+    let node = sprintf "%s<collection>\n" pd in
+    Buffer.add_string buffer node;
+    pp_expr buffer ~pad:(mk_pad 1 0 pc) collect.expr in
+  let () =
+      let pd, _ as pad = mk_pad 3 2 pc in
+      let node = sprintf "%s<statements>\n" pd in
+      let statements = collect.block.value.statements in
+      Buffer.add_string buffer node;
+      pp_statements buffer ~pad statements
+  in ()
 
-and pp_map_remove buffer ~pad:(pd,pc) rem =
-  let node = sprintf "%sPP_MAP_REMOVE\n" pd in
-  Buffer.add_string buffer node
+and pp_var_binding buffer ~pad:(pd,pc) (source, image) =
+  let node = sprintf "%s<binding>\n" pd in
+  Buffer.add_string buffer node;
+  pp_ident buffer ~pad:(mk_pad 2 0 pc) source.value;
+  pp_ident buffer ~pad:(mk_pad 2 1 pc) image.value
 
-and pp_set_remove buffer ~pad:(pd,pc) rem =
-  let node = sprintf "%sPP_SET_REMOVE\n" pd in
-  Buffer.add_string buffer node
+and pp_fun_call buffer ~pad:(_,pc as pad) (name, args) =
+  pp_ident buffer ~pad name.value;
+  let args = Utils.nsepseq_to_list args.value.inside in
+  let arity = List.length args in
+  let apply len rank =
+    pp_expr buffer ~pad:(mk_pad len rank pc)
+  in List.iteri (apply arity) args
+
+and pp_record_patch buffer ~pad:(_,pc as pad) patch =
+  pp_path buffer ~pad:(mk_pad 2 0 pc) patch.path;
+  pp_injection pp_field_assign buffer
+    ~pad patch.record_inj.value
+
+and pp_field_assign buffer ~pad:(pd,pc) {value; _} =
+  let node = sprintf "%s<field assignment>\n" pd in
+  Buffer.add_string buffer node;
+  pp_ident buffer ~pad:(mk_pad 2 0 pc) value.field_name.value;
+  pp_expr  buffer ~pad:(mk_pad 2 1 pc) value.field_expr
+
+and pp_map_patch buffer ~pad:(_,pc as pad) patch =
+  pp_path buffer ~pad:(mk_pad 2 0 pc) patch.path;
+  pp_injection pp_binding buffer
+    ~pad patch.map_inj.value
+
+and pp_binding buffer ~pad:(pd,pc) {value; _} =
+  let source, image = value.source, value.image in
+  let node = sprintf "%s<binding>\n" pd in
+  Buffer.add_string buffer node;
+  pp_expr buffer ~pad:(mk_pad 2 0 pc) source;
+  pp_expr buffer ~pad:(mk_pad 2 1 pc) image
+
+and pp_set_patch buffer ~pad:(_,pc as pad) patch =
+  pp_path buffer ~pad:(mk_pad 2 0 pc) patch.path;
+  pp_injection pp_expr buffer ~pad patch.set_inj.value
+
+and pp_map_remove buffer ~pad:(_,pc) rem =
+  pp_expr buffer ~pad:(mk_pad 2 0 pc) rem.key;
+  pp_path buffer ~pad:(mk_pad 2 1 pc) rem.map
+
+and pp_set_remove buffer ~pad:(_,pc) rem =
+  pp_expr buffer ~pad:(mk_pad 2 0 pc) rem.element;
+  pp_path buffer ~pad:(mk_pad 2 1 pc) rem.set
 
 and pp_local_decls buffer ~pad:(_,pc) decls =
   let apply len rank =
@@ -1245,12 +1333,78 @@ and pp_var_decl buffer ~pad:(_,pc) decl =
   pp_type_expr buffer ~pad:(mk_pad 3 1 pc) decl.var_type;
   pp_expr buffer ~pad:(mk_pad 3 2 pc) decl.init
 
-and pp_proc_decl buffer ~pad:(pd,pc) decl =
+and pp_proc_decl buffer ~pad:(pd,_pc) _decl =
   let node = sprintf "%sPP_PROC_DECL\n" pd in
   Buffer.add_string buffer node
 
-and pp_expr buffer ~pad:(pd,pc) decl =
-  let node = sprintf "%sPP_EXPR\n" pd in
-  Buffer.add_string buffer node
+and pp_expr buffer ~pad:(pd,pc as pad) = function
+  ECase {value; _} ->
+    let node = sprintf "%sECase\n" pd in
+    Buffer.add_string buffer node;
+    ignore value
+| EAnnot {value; _} ->
+    let node = sprintf "%sEAnnot\n" pd in
+    Buffer.add_string buffer node;
+    ignore value
+| ELogic e_logic ->
+    let node = sprintf "%sELogic\n" pd in
+    Buffer.add_string buffer node;
+    ignore e_logic
+| EArith e_arith ->
+    let node = sprintf "%sEArith\n" pd in
+    Buffer.add_string buffer node;
+    ignore e_arith
+| EString e_string ->
+    let node = sprintf "%sEString\n" pd in
+    Buffer.add_string buffer node;
+    ignore e_string
+| EList e_list ->
+    let node = sprintf "%sEList\n" pd in
+    Buffer.add_string buffer node;
+    ignore e_list
+| ESet e_set ->
+    let node = sprintf "%sESet\n" pd in
+    Buffer.add_string buffer node;
+    ignore e_set
+| EConstr e_constr ->
+    let node = sprintf "%sEConstr\n" pd in
+    Buffer.add_string buffer node;
+    ignore e_constr
+| ERecord e_record ->
+    let node = sprintf "%sERecord\n" pd in
+    Buffer.add_string buffer node;
+    ignore e_record
+| EProj {value; _} ->
+    let node = sprintf "%sEProj\n" pd in
+    Buffer.add_string buffer node;
+    ignore value
+| EMap e_map ->
+    let node = sprintf "%sEMap\n" pd in
+    Buffer.add_string buffer node;
+    ignore e_map
+| EVar {value; _} ->
+    let node = sprintf "%sEVar\n" pd in
+    Buffer.add_string buffer node;
+    pp_ident buffer ~pad:(mk_pad 1 0 pc) value
+| ECall fun_call ->
+    let node = sprintf "%sECall\n" pd in
+    Buffer.add_string buffer node;
+    ignore fun_call
+| EBytes {value; _} ->
+    let node = sprintf "%sEBytes\n" pd in
+    Buffer.add_string buffer node;
+    pp_bytes buffer ~pad value;
+    ignore value
+| EUnit _ ->
+    let node = sprintf "%sEUnit\n" pd
+    in Buffer.add_string buffer node
+| ETuple e_tuple ->
+    let node = sprintf "%sETuple\n" pd
+    in Buffer.add_string buffer node;
+    ignore e_tuple
+| EPar {value; _} ->
+    let node = sprintf "%sEpar\n" pd in
+    Buffer.add_string buffer node;
+    pp_expr buffer ~pad:(mk_pad 1 0 pc) value.inside
 
 let pp_ast buffer = pp_ast buffer ~pad:("","")

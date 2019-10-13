@@ -407,10 +407,8 @@ and for_loop =
 and for_int = {
   kwd_for : kwd_for;
   assign  : var_assign reg;
-  down    : kwd_down option;
   kwd_to  : kwd_to;
   bound   : expr;
-  step    : (kwd_step * expr) option;
   block   : block reg
 }
 
@@ -432,7 +430,7 @@ and for_collect = {
 (* Expressions *)
 
 and expr =
-| ECase   of expr case reg
+  ECase   of expr case reg
 | EAnnot  of annot_expr reg
 | ELogic  of logic_expr
 | EArith  of arith_expr
