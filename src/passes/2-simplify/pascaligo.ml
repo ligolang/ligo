@@ -772,7 +772,7 @@ and simpl_single_instruction : Raw.single_instr -> (_ -> expression result) resu
               | Name name -> ok (name.value , e_variable name.value, [])
               | Path p ->
                 let (name,p') = simpl_path v'.path in
-                let%bind accessor = simpl_projection p in 
+                let%bind accessor = simpl_projection p in
                 ok @@ (name , accessor , p')
             in
             let%bind key_expr = simpl_expression v'.index.value.inside in
@@ -828,7 +828,7 @@ and simpl_single_instruction : Raw.single_instr -> (_ -> expression result) resu
         | Name v -> ok (v.value , e_variable v.value , [])
         | Path p ->
           let (name,p') = simpl_path v.map in
-          let%bind accessor = simpl_projection p in 
+          let%bind accessor = simpl_projection p in
           ok @@ (name , accessor , p')
       in
       let%bind key' = simpl_expression key in
@@ -886,7 +886,7 @@ and simpl_cases : type a . (Raw.pattern * a) list -> a matching result = fun t -
         | [] -> ok x'
         | _ -> ok t
       )
-    | _ -> fail @@ corner_case ~loc:__LOC__ "unexpected pattern" in
+    | pattern -> ok pattern in
   let get_constr (t: Raw.pattern) =
     match t with
     | PConstr v -> (
