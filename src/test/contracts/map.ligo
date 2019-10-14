@@ -25,6 +25,17 @@ function rm (var m : foobar) : foobar is block {
   remove 42 from map m
 } with m
 
+function patch_ (var m: foobar) : foobar is block {
+  patch m with map [0 -> 5; 1 -> 6; 2 -> 7]
+} with m
+
+function patch_empty (var m : foobar) : foobar is block {
+  patch m with map []
+} with m
+
+function patch_deep (var m: foobar * nat) : foobar * nat is
+  begin patch m.0 with map [1 -> 9]; end with m
+
 function size_ (const m : foobar) : nat is
   block {skip} with (size(m))
 
@@ -54,3 +65,10 @@ function map_op (const m : foobar) : foobar is
 function fold_op (const m : foobar) : int is
   function aggregate (const i : int ; const j : (int * int)) : int is block { skip } with i + j.0 + j.1 ;
   block { skip } with map_fold(m , 10 , aggregate)
+
+function deep_op (var m : foobar) : foobar is
+var coco : (int*foobar) := (0, m);
+block {
+  remove 42 from map coco.1 ;
+  coco.1[32] := 16 ;
+} with coco.1

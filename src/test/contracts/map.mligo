@@ -11,6 +11,15 @@ let set_ (n : int) (m : foobar) : foobar =
 
 let rm (m : foobar) : foobar = Map.remove 42 m
 
+(* Dummy test so that we can add the same test for PascaLIGO *)
+let patch_ (m : foobar) : foobar = Map.literal [ (0, 5) ; (1, 6) ; (2, 7) ]
+
+(* Second dummy test, see above *)
+let patch_empty (m : foobar) : foobar = Map.literal [ (0, 0) ; (1, 1) ; (2, 2) ]
+
+(* Third dummy test, see above *)
+let patch_deep (m: foobar * nat) : foobar * nat = (Map.literal [ (0, 0) ; (1, 9) ; (2, 2) ], 10p)
+
 let size_ (m : foobar) : nat = Map.size m
 
 let gf (m : foobar) : int = Map.find 23 m
@@ -29,3 +38,9 @@ let map_op (m : foobar) : foobar =
 let fold_op (m : foobar) : foobar =
     let aggregate = fun (i : int) (j : (int * int)) -> i + j.(0) + j.(1) in
     Map.fold m 10 aggregate
+
+let deep_op (m : foobar) : foobar =
+  let coco = (0,m) in
+  let coco = (0 , Map.remove 42 coco.(1)) in
+  let coco = (0 , Map.update 32 (Some 16) coco.(1)) in
+  coco.(1)

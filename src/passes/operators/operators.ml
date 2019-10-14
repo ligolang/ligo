@@ -438,11 +438,15 @@ module Typer = struct
     then ok @@ t_int () else
     if eq_1 a (t_tez ()) && eq_1 b (t_nat ())
     then ok @@ t_tez () else
+    if eq_1 a (t_tez ()) && eq_1 b (t_tez ())
+    then ok @@ t_nat () else
       simple_fail "Dividing with wrong types"
 
   let mod_ = typer_2 "MOD" @@ fun a b ->
     if (eq_1 a (t_nat ()) || eq_1 a (t_int ())) && (eq_1 b (t_nat ()) || eq_1 b (t_int ()))
     then ok @@ t_nat () else
+    if eq_1 a (t_tez ()) && eq_1 b (t_tez ())
+    then ok @@ t_tez () else
       simple_fail "Computing modulo with wrong types"
 
   let add = typer_2 "ADD" @@ fun a b ->
