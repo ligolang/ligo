@@ -422,6 +422,15 @@ let map_ type_f path : unit result =
     expect_eq program "patch_empty" input expected
   in
   let%bind () =
+    let input = (e_pair
+                   (ez [(0,0) ; (1,1) ; (2,2)])
+                   (e_nat 10)) in
+    let expected = (e_pair
+                      (ez [(0,0) ; (1,9) ; (2,2)])
+                      (e_nat 10)) in
+    expect_eq program "patch_deep" input expected
+  in
+  let%bind () =
     let make_input = fun n -> ez List.(map (fun x -> (x, x)) @@ range n) in
     let make_expected = e_nat in
     expect_eq_n_strict_pos_small program "size_" make_input make_expected
