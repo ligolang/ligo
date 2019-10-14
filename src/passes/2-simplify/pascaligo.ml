@@ -119,16 +119,6 @@ module Errors = struct
     ] in
     error ~data title message
 
-  let unsupported_deep_set_rm path =
-    let title () = "set removals" in
-    let message () =
-      Format.asprintf "removal of members from embedded sets is not supported yet" in
-    let data = [
-      ("path_loc",
-       fun () -> Format.asprintf "%a" Location.pp_lift @@ path.Region.region)
-      ] in
-    error ~data title message
-
   let unsupported_non_var_pattern p =
     let title () = "pattern is not a variable" in
     let message () =
@@ -831,7 +821,7 @@ and simpl_single_instruction : Raw.single_instr -> (_ -> expression result) resu
         | Name v -> ok (v.value , e_variable v.value , [])
         | Path p ->
           let (name,p') = simpl_path v.map in
-          let%bind accessor = simpl_projection p in 
+          let%bind accessor = simpl_projection p in
           ok @@ (name , accessor , p')
       in
       let%bind key' = simpl_expression key in
@@ -840,12 +830,16 @@ and simpl_single_instruction : Raw.single_instr -> (_ -> expression result) resu
     )
   | SetRemove r -> (
       let (set_rm, loc) = r_split r in
-      let%bind set = match set_rm.set with
-        | Name v -> ok v.value
-        | Path path -> fail @@ unsupported_deep_set_rm path in
+      let%bind (varname, set, path) = match set_rm.set with
+        | Name v -> ok (v.value, e_variable v.value, [])
+        | Path path ->
+          let(name, p') = simpl_path set_rm.set in
+          let%bind accessor = simpl_projection path in
+          ok @@ (name, accessor, p')
+      in
       let%bind removed' = simpl_expression set_rm.element in
-      let expr = e_constant ~loc "SET_REMOVE" [removed' ; e_variable set] in
-      return_statement @@ e_assign ~loc set [] expr
+      let expr = e_constant ~loc "SET_REMOVE" [removed' ; set] in
+      return_statement @@ e_assign ~loc varname path expr
     )
 
 and simpl_path : Raw.path -> string * Ast_simplified.access_path = fun p ->
