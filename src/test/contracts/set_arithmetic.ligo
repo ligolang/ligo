@@ -17,6 +17,9 @@ function remove_op (const s : set(string)) : set(string) is
 function remove_syntax (var s : set(string)) : set(string) is
   begin remove "foobar" from set s; end with s
 
+function remove_deep (var s : set(string) * nat) : set(string) * nat is
+  begin remove "foobar" from set s.0; end with s
+
 function patch_op (var s: set(string)) : set(string) is
   begin patch s with set ["foobar"]; end with s
 
