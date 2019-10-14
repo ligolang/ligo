@@ -800,10 +800,10 @@ and simpl_single_instruction : Raw.single_instr -> (_ -> expression result) resu
         match inj with
         | [] -> e_skip ~loc ()
         | _ :: _ ->
-          let assigns = List.fold_left
-              (fun map (key, value) -> (e_map_add key value map))
-              (e_accessor ~loc (e_variable name) access_path)
+          let assigns = List.fold_right
+              (fun (key, value) map -> (e_map_add key value map))
               inj
+              (e_accessor ~loc (e_variable name) access_path)
           in e_assign ~loc name access_path assigns
       in return_statement @@ expr
     )
@@ -818,9 +818,9 @@ and simpl_single_instruction : Raw.single_instr -> (_ -> expression result) resu
         match inj with
         | [] -> e_skip ~loc ()
         | _ :: _ ->
-          let assigns = List.fold_left
-            (fun s hd -> e_constant "SET_ADD" [hd ; s])
-            (e_accessor ~loc (e_variable name) access_path) inj in
+          let assigns = List.fold_right
+            (fun hd s -> e_constant "SET_ADD" [hd ; s])
+            inj (e_accessor ~loc (e_variable name) access_path) in
           e_assign ~loc name access_path assigns in
       return_statement @@ expr
     )
