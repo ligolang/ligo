@@ -119,17 +119,6 @@ module Errors = struct
     ] in
     error ~data title message
 
-  let unsupported_map_patches patch =
-    let title () = "map patches" in
-    let message () =
-      Format.asprintf "map patches (a.k.a. functional updates) are \
-                       not supported yet" in
-    let data = [
-      ("patch_loc",
-       fun () -> Format.asprintf "%a" Location.pp_lift @@ patch.Region.region)
-    ] in
-    error ~data title message
-
   let unsupported_deep_set_rm path =
     let title () = "set removals" in
     let message () =
@@ -795,8 +784,29 @@ and simpl_single_instruction : Raw.single_instr -> (_ -> expression result) resu
       in
       return_statement @@ expr
     )
-  | MapPatch patch ->
-      fail @@ unsupported_map_patches patch
+  | MapPatch patch -> (
+      let (map_p, loc) = r_split patch in
+      let (name, access_path) = simpl_path map_p.path in
+      let%bind inj = bind_list
+          @@ List.map (fun (x:Raw.binding Region.reg) ->
+            let x = x.value in
+            let (key, value) = x.source, x.image in
+            let%bind key' = simpl_expression key in
+            let%bind value' = simpl_expression value
+            in ok @@ (key', value')
+          )
+        @@ pseq_to_list map_p.map_inj.value.elements in
+      let expr =
+        match inj with
+        | [] -> e_skip ~loc ()
+        | _ :: _ ->
+          let assigns = List.fold_right
+              (fun (key, value) map -> (e_map_add key value map))
+              inj
+              (e_accessor ~loc (e_variable name) access_path)
+          in e_assign ~loc name access_path assigns
+      in return_statement @@ expr
+    )
   | SetPatch patch -> (
       let (setp, loc) = r_split patch in
       let (name , access_path) = simpl_path setp.path in
@@ -808,13 +818,12 @@ and simpl_single_instruction : Raw.single_instr -> (_ -> expression result) resu
         match inj with
         | [] -> e_skip ~loc ()
         | _ :: _ ->
-          let assigns = List.fold_left
-            (fun s hd -> e_constant "SET_ADD" [hd ; s])
-            (e_accessor ~loc (e_variable name) access_path) inj in
+          let assigns = List.fold_right
+            (fun hd s -> e_constant "SET_ADD" [hd ; s])
+            inj (e_accessor ~loc (e_variable name) access_path) in
           e_assign ~loc name access_path assigns in
       return_statement @@ expr
     )
-
   | MapRemove r -> (
       let (v , loc) = r_split r in
       let key = v.key in
