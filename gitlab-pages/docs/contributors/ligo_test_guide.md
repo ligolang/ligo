@@ -3,7 +3,7 @@
 Adding to the LIGO test suite is one of the more accessible ways to contribute. It exposes you to the compiler structure and primitives without necessarily demanding a deep understanding of OCaml or compiler development. And you'll probably become more familiar with LIGO itself in the process, which is helpful. 
 
 Unfortunately right now LIGO itself doesn't have a good way to do automated testing. So the tests are written in OCaml, outside of the LIGO language. Thankfully the test code is typically less demanding than the features being tested. These tests are currently contained in [src/test](https://gitlab.com/ligolang/ligo/tree/dev/src/test), but the bulk are integration tests which rely on test contracts kept in [src/test/contracts](https://gitlab.com/ligolang/ligo/tree/dev/src/test/contracts). If you're new to LIGO, reading these contracts can be a useful introduction to a given syntax. In the future we plan 
-to have detailed documentation for each syntax, but at the moment we only have a reference manual for [PascaLIGO](https://gitlab.com/ligolang/ligo/blob/dev/src/passes/2-simplify/pascaligo.ml)
+to have detailed documentation for each syntax, but at the moment we only have a reference manual for [PascaLIGO](https://gitlab.com/ligolang/ligo/blob/dev/src/passes/1-parser/pascaligo/Doc/pascaligo.md)
 
 ## How To Find Good Test Cases
 
