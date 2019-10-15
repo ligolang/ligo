@@ -630,16 +630,25 @@ for_loop:
       block   = $5}
     in For (ForInt {region; value})
   }
-| For var option(arrow_clause) In expr block {
-    let region = cover $1 $6.region in
+| For var option(arrow_clause) COLON type_expr
+  In collection expr block {
+    let region = cover $1 $9.region in
     let value = {
-      kwd_for = $1;
-      var     = $2;
-      bind_to = $3;
-      kwd_in  = $4;
-      expr    = $5;
-      block   = $6}
+      kwd_for    = $1;
+      var        = $2;
+      bind_to    = $3;
+      colon      = $4;
+      elt_type   = $5;
+      kwd_in     = $6;
+      collection = $7;
+      expr       = $8;
+      block      = $9}
     in For (ForCollect {region; value})}
+
+collection:
+  Map  { Map  $1 }
+| Set  { Set  $1 }
+| List { List $1 }
 
 var_assign:
   var ASS expr {

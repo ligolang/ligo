@@ -435,13 +435,21 @@ and var_assign = {
 }
 
 and for_collect = {
-  kwd_for : kwd_for;
-  var     : variable;
-  bind_to : (arrow * variable) option;
-  kwd_in  : kwd_in;
-  expr    : expr;
-  block   : block reg
+  kwd_for    : kwd_for;
+  var        : variable;
+  bind_to    : (arrow * variable) option;
+  colon      : colon;
+  elt_type   : type_expr;
+  kwd_in     : kwd_in;
+  collection : collection;
+  expr       : expr;
+  block      : block reg
 }
+
+and collection =
+  Map  of kwd_map
+| Set  of kwd_set
+| List of kwd_list
 
 (* Expressions *)
 
