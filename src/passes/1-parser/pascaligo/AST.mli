@@ -135,8 +135,15 @@ type 'a braces = {
   rbrace : rbrace
 }
 
-(* The Abstract Syntax Tree *)
+(** The Abstract Syntax Tree 
 
+The AST mirrors the contents of Parser.mly, which defines a tree of parsing
+productions that are used to make a syntax tree from a given program input.
+
+This file defines the concrete AST for PascaLIGO, which is used to associate
+regions of the source code text with the contents of the syntax tree.
+
+*)
 type t = {
   decl : declaration nseq;
   eof  : eof

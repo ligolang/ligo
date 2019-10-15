@@ -8,7 +8,6 @@ open Combinators
 
 let nseq_to_list (hd, tl) = hd :: tl
 let npseq_to_list (hd, tl) = hd :: (List.map snd tl)
-let npseq_to_nelist (hd, tl) = hd, (List.map snd tl)
 let pseq_to_list = function
   | None -> []
   | Some lst -> npseq_to_list lst

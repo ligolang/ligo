@@ -1,4 +1,4 @@
-(* This signature defines the lexical tokens for LIGO
+(** This signature defines the lexical tokens for LIGO
 
    _Tokens_ are the abstract units which are used by the parser to
    build the abstract syntax tree (AST), in other words, the stream of
