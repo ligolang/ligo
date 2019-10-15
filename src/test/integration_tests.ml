@@ -680,6 +680,11 @@ let loop () : unit result =
     let make_expected = fun n -> e_int (n * (n + 1) / 2) in
     expect_eq_n_pos_mid program "for_sum_step" make_input make_expected
   in
+  let%bind () = 
+    let make_input = fun _n -> e_set [e_int 1; e_int 2] in
+    let make_expected = fun _n -> e_int 3 in
+    expect_eq_n_pos_mid program "for_sum_step" make_input make_expected
+  in
   ok ()
 
 (* Don't know how to assert parse error happens in this test framework

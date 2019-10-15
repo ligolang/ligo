@@ -45,6 +45,14 @@ function for_sum_step (var n : nat) : int is block {
     end;
 } with acc 
 
+function for_collection (var n : set(int)) : int is block {
+  var acc : int := 0;
+  for i in n
+    begin
+      acc := acc + i ;
+    end;
+} with acc
+
 function dummy (const n : nat) : nat is block {
   while (False) block { skip }
 } with n

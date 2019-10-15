@@ -68,7 +68,7 @@ module Errors = struct
     ] in
     error ~data title message
 
-  let unsupported_for_loops region =
+  (* let unsupported_for_loops region =
     let title () = "bounded iterators" in
     let message () =
       Format.asprintf "only simple for loops are supported for now" in
@@ -76,7 +76,7 @@ module Errors = struct
       ("loop_loc",
        fun () -> Format.asprintf "%a" Location.pp_lift @@ region)
     ] in
-    error ~data title message
+    error ~data title message *)
 
   let unsupported_non_var_pattern p =
     let title () = "pattern is not a variable" in
@@ -671,8 +671,10 @@ and simpl_single_instruction : Raw.instruction -> (_ -> expression result) resul
       let%bind loop = simpl_for_int fi.value in
       let%bind loop = loop None in 
       return_statement @@ loop
-  | Loop (For (ForCollect {region ; _})) ->
-      fail @@ unsupported_for_loops region
+  | Loop (For (ForCollect fc)) ->
+      let%bind loop = simpl_for_collect fc.value in
+      let%bind loop = loop None in 
+      return_statement @@ loop
   | Cond c -> (
       let (c , loc) = r_split c in
       let%bind expr = simpl_expression c.test in
@@ -994,6 +996,19 @@ and simpl_for_int : Raw.for_int -> (_ -> expression result) result = fun fi ->
   let%bind body' = ok @@ add_to_seq body in
   let%bind loop = ok @@ e_loop comp body' in
   return_statement @@ e_let_in (fi.assign.value.name.value, Some t_int) value loop
+
+and simpl_for_collect : Raw.for_collect -> (_ -> expression result) result = fun fc ->
+  let%bind col = simpl_expression fc.expr in
+
+  let%bind body = simpl_block fc.block.value in
+  let%bind body = body None in
+
+  let%bind invar = ok @@ e_variable fc.var.value in
+  let%bind letin = ok @@ e_let_in (fc.var.value, None) invar body in
+  let%bind lambda = ok @@ e_lambda fc.var.value None (Some t_unit) letin in
+  (* let%bind lambda = ok @@ e_lambda fc.var.value None (Some t_unit) body in *)
+
+  return_statement @@ e_constant "SET_ITER" [col ; lambda]
 
 let simpl_program : Raw.ast -> program result = fun t ->
   bind_list @@ List.map simpl_declaration @@ nseq_to_list t.decl
