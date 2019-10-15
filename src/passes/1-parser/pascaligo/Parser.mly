@@ -137,23 +137,27 @@ type_decl:
   }
 
 type_expr:
-  cartesian   {   TProd $1 }
-| sum_type    {    TSum $1 }
+  sum_type    {    TSum $1 }
 | record_type { TRecord $1 }
+| cartesian   {         $1 }
 
 cartesian:
-  nsepseq(function_type,TIMES) {
-    let region = nsepseq_to_region type_expr_to_region $1
-    in {region; value=$1}}
+  function_type TIMES nsepseq(function_type,TIMES) {
+    let value  = Utils.nsepseq_cons $1 $2 $3 in
+    let region = nsepseq_to_region type_expr_to_region value
+    in TProd {region; value}
+  }
+| function_type { ($1 : type_expr) }
 
 function_type:
   core_type {
     $1
   }
 | core_type ARROW function_type {
-    let region = cover (type_expr_to_region $1)
-                       (type_expr_to_region $3)
-    in TFun {region; value = ($1, $2, $3)} }
+    let start  = type_expr_to_region $1
+    and stop   = type_expr_to_region $3 in
+    let region = cover start stop in
+    TFun {region; value = $1,$2,$3} }
 
 core_type:
   type_name {
@@ -200,7 +204,7 @@ sum_type:
 
 variant:
   Constr Of cartesian {
-    let region = cover $1.region $3.region
+    let region = cover $1.region (type_expr_to_region $3)
     and value = {constr = $1; args = Some ($2, $3)}
     in {region; value}
   }
@@ -310,7 +314,7 @@ param_decl:
     in ParamConst {region; value}}
 
 param_type:
-  cartesian { TProd $1 }
+  cartesian { $1 }
 
 block:
   Begin sep_or_term_list(statement,SEMI) End {
@@ -821,6 +825,7 @@ core_expr:
 | C_Unit           { EUnit $1                     }
 | annot_expr       { EAnnot $1                    }
 | tuple_expr       { ETuple $1                    }
+| par(expr)        { EPar $1                      }
 | list_expr        { EList $1                     }
 | C_None           { EConstr (NoneExpr $1)        }
 | fun_call         { ECall $1                     }
@@ -915,13 +920,14 @@ fun_call:
     in {region; value = $1,$2}}
 
 tuple_expr:
-  tuple_inj { TupleInj $1 }
+  par(tuple_comp) { $1 }
 
-tuple_inj:
-  par(nsepseq(expr,COMMA)) { $1 }
+tuple_comp:
+  expr COMMA nsepseq(expr,COMMA) {
+    Utils.nsepseq_cons $1 $2 $3}
 
 arguments:
-  tuple_inj { $1 }
+  par(nsepseq(expr,COMMA)) { $1 }
 
 list_expr:
   injection(List,expr) { List $1 }
@@ -940,6 +946,7 @@ core_pattern:
   var                      {    PVar $1 }
 | WILD                     {   PWild $1 }
 | Int                      {    PInt $1 }
+| Nat                      {    PNat $1 }
 | Bytes                    {  PBytes $1 }
 | String                   { PString $1 }
 | C_Unit                   {   PUnit $1 }

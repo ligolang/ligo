@@ -317,10 +317,11 @@ let rec simpl_type_expression (t:Raw.type_expr) : type_expression result =
         let args =
           match v.value.args with
             None -> []
-          | Some (_, product) ->
-              npseq_to_list product.value in
-        let%bind te = simpl_list_type_expression
-          @@ args in
+          | Some (_, t_expr) ->
+              match t_expr with
+                TProd product -> npseq_to_list product.value
+              | _ -> [t_expr] in
+        let%bind te = simpl_list_type_expression @@ args in
         ok (v.value.constr.value, te)
       in
       let%bind lst = bind_list
@@ -389,8 +390,7 @@ let rec simpl_expression (t:Raw.expr) : expr result =
     let (x' , loc) = r_split x in
     return @@ e_literal ~loc (Literal_bytes (Bytes.of_string @@ fst x'))
   | ETuple tpl ->
-      let (Raw.TupleInj tpl') = tpl in
-      let (tpl' , loc) = r_split tpl' in
+      let (tpl' , loc) = r_split tpl in
       simpl_tuple_expression ~loc @@ npseq_to_list tpl'.inside
   | ERecord r ->
       let%bind fields = bind_list

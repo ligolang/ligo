@@ -107,8 +107,15 @@ let () =
          begin
            ParserLog.offsets := options.offsets;
            ParserLog.mode    := options.mode;
-           (*           ParserLog.print_tokens buffer ast;*)
            ParserLog.pp_ast buffer ast;
+           Buffer.output_buffer stdout buffer
+         end
+    else if Utils.String.Set.mem "ast-tokens" options.verbose
+    then let buffer = Buffer.create 131 in
+         begin
+           ParserLog.offsets := options.offsets;
+           ParserLog.mode    := options.mode;
+           ParserLog.print_tokens buffer ast;
            Buffer.output_buffer stdout buffer
          end
   with

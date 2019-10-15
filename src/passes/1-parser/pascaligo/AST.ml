@@ -198,7 +198,7 @@ and cartesian = (type_expr, times) nsepseq reg
 
 and variant = {
   constr : constr;
-  args   : (kwd_of * cartesian) option
+  args   : (kwd_of * type_expr) option
 }
 
 and field_decl = {
@@ -573,16 +573,13 @@ and selection =
   FieldName of field_name
 | Component of (Lexer.lexeme * Z.t) reg
 
-and tuple_expr =
-  TupleInj of tuple_injection
-
-and tuple_injection = (expr, comma) nsepseq par reg
+and tuple_expr = (expr, comma) nsepseq par reg
 
 and none_expr = c_None
 
 and fun_call = (fun_name * arguments) reg
 
-and arguments = tuple_injection
+and arguments = tuple_expr
 
 (* Patterns *)
 
@@ -592,6 +589,7 @@ and pattern =
 | PVar    of Lexer.lexeme reg
 | PWild   of wild
 | PInt    of (Lexer.lexeme * Z.t) reg
+| PNat    of (Lexer.lexeme * Z.t) reg
 | PBytes  of (Lexer.lexeme * Hex.t) reg
 | PString of Lexer.lexeme reg
 | PUnit   of c_Unit
@@ -641,8 +639,7 @@ let rec expr_to_region = function
 | ECase  {region;_}
 | EPar   {region; _} -> region
 
-and tuple_expr_to_region = function
-  TupleInj {region; _} -> region
+and tuple_expr_to_region {region; _} = region
 
 and map_expr_to_region = function
   MapLookUp {region; _}
@@ -729,6 +726,7 @@ let pattern_to_region = function
 | PVar        {region; _}
 | PWild        region
 | PInt        {region; _}
+| PNat        {region; _}
 | PBytes      {region; _}
 | PString     {region; _}
 | PUnit        region
