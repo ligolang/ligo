@@ -327,20 +327,20 @@ expression, typically performing a side effect.
 There are three kinds of native numerical types in PascaLIGO: `int`,
 `nat` and `tez`.
 
-    * The first is the type of signed integers, e.g., `-4`, `0` or
+* The first is the type of signed integers, e.g., `-4`, `0` or
 `13`. Note that the value zero has a canonical form, `0`, and no
 other, for example `00` is invalid. Also, for the sake of convenience,
 underscores are allowed in the literals, like `1_000_000`.
 
-    * The second numerical type is the type of the natural numbers,
-e.g., `0n` or `13n`. Note that the `nat` literals must be annotated
-with the suffix `n`, which distinguishes them from `int` literals. The
-same convenient use of underscores as with integer literals is allowed
-too and the canonical form of zero is `0n`.
+* The second numerical type is the type of the natural numbers, e.g.,
+`0n` or `13n`. Note that the `nat` literals must be annotated with the
+suffix `n`, which distinguishes them from `int` literals. The same
+convenient use of underscores as with integer literals is allowed too
+and the canonical form of zero is `0n`.
 
-    * The last kind of native numerical type is `tez`, which is a unit
-of measure of the amounts (fees, accounts). Beware: the literals of
-the type `tez` are annotated with the suffix `mtz`, which stands for
+* The last kind of native numerical type is `tez`, which is a unit of
+measure of the amounts (fees, accounts). Beware: the literals of the
+type `tez` are annotated with the suffix `mtz`, which stands for
 millionth of Tez, for instance, `0mtz` or `1200000mtz`. The same handy
 use of underscores as in natural literals help in the writing, like
 `1_200_000mtz`.
@@ -533,14 +533,13 @@ in terse style (see section "Predefined types and values/Lists").
 
 Given a tuple `t` with _n_ components, the `i`th component is
 
-    t.(i)
+    t.i
 
-where `t.(0)` is the first component. For example, given the
-declaration
+where `t.0` is the first component. For example, given the declaration
 
     const t : int * string = (4, "four")
 
-the expression `t.(1)` has the value `"four"`.
+the expression `t.1` has the value `"four"`.
 
 #### Records
 
