@@ -114,9 +114,9 @@ contract:
   }
 
 declaration:
-  type_decl   {    TypeDecl $1 }
-| const_decl  {   ConstDecl $1 }
-| lambda_decl {  LambdaDecl $1 }
+  type_decl  {   TypeDecl $1 }
+| const_decl {  ConstDecl $1 }
+| fun_decl   {    FunDecl $1 }
 
 (* Type declarations *)
 
@@ -239,11 +239,7 @@ field_decl:
     and value  = {field_name = $1; colon = $2; field_type = $3}
     in {region; value} }
 
-(* Function and procedure declarations *)
-
-lambda_decl:
-  fun_decl   {   FunDecl $1 }
-| proc_decl  {  ProcDecl $1 }
+(* Function declarations *)
 
 fun_decl:
   Function fun_name parameters COLON type_expr Is
@@ -268,26 +264,6 @@ fun_decl:
       return       = $10;
       terminator   = $11}
     in {region; value}}
-
-proc_decl:
-  Procedure fun_name parameters Is
-    seq(local_decl)
-    block option(SEMI)
-    {
-     let stop =
-       match $7 with
-         Some region -> region
-       |        None -> $6.region in
-     let region = cover $1 stop
-     and value = {
-       kwd_procedure = $1;
-       name          = $2;
-       param         = $3;
-       kwd_is        = $4;
-       local_decls   = $5;
-       block         = $6;
-       terminator    = $7}
-     in {region; value}}
 
 parameters:
   par(nsepseq(param_decl,SEMI)) { $1 }
@@ -375,7 +351,6 @@ open_var_decl:
 
 local_decl:
   fun_decl  { LocalFun  $1 }
-| proc_decl { LocalProc $1 }
 | data_decl { LocalData $1 }
 
 data_decl:

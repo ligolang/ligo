@@ -67,7 +67,6 @@
 %token <Region.t> Of          (* "of"         *)
 %token <Region.t> Or          (* "or"         *)
 %token <Region.t> Patch       (* "patch"      *)
-%token <Region.t> Procedure   (* "procedure"  *)
 %token <Region.t> Record      (* "record"     *)
 %token <Region.t> Remove      (* "remove"     *)
 %token <Region.t> Set         (* "set"        *)

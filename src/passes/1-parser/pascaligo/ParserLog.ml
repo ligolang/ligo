@@ -76,9 +76,9 @@ let rec print_tokens buffer ast =
   print_token buffer eof "EOF"
 
 and print_decl buffer = function
-  TypeDecl   decl -> print_type_decl   buffer decl
-| ConstDecl  decl -> print_const_decl  buffer decl
-| LambdaDecl decl -> print_lambda_decl buffer decl
+  TypeDecl  decl -> print_type_decl  buffer decl
+| ConstDecl decl -> print_const_decl buffer decl
+| FunDecl   decl -> print_fun_decl   buffer decl
 
 and print_const_decl buffer {value; _} =
   let {kwd_const; name; colon; const_type;
@@ -156,10 +156,6 @@ and print_type_tuple buffer {value; _} =
   print_nsepseq buffer "," print_type_expr inside;
   print_token buffer rpar ")"
 
-and print_lambda_decl buffer = function
-  FunDecl     fun_decl -> print_fun_decl   buffer fun_decl
-| ProcDecl   proc_decl -> print_proc_decl  buffer proc_decl
-
 and print_fun_decl buffer {value; _} =
   let {kwd_function; name; param; colon;
        ret_type; kwd_is; local_decls;
@@ -174,17 +170,6 @@ and print_fun_decl buffer {value; _} =
   print_block       buffer block;
   print_token       buffer kwd_with "with";
   print_expr        buffer return;
-  print_terminator  buffer terminator
-
-and print_proc_decl buffer {value; _} =
-  let {kwd_procedure; name; param; kwd_is;
-       local_decls; block; terminator} = value in
-  print_token       buffer kwd_procedure "procedure";
-  print_var         buffer name;
-  print_parameters  buffer param;
-  print_token       buffer kwd_is "is";
-  print_local_decls buffer local_decls;
-  print_block       buffer block;
   print_terminator  buffer terminator
 
 and print_parameters buffer {value; _} =
@@ -234,7 +219,6 @@ and print_local_decls buffer sequence =
 
 and print_local_decl buffer = function
   LocalFun  decl -> print_fun_decl  buffer decl
-| LocalProc decl -> print_proc_decl buffer decl
 | LocalData decl -> print_data_decl buffer decl
 
 and print_data_decl buffer = function
@@ -773,9 +757,9 @@ and pp_declaration buffer ~pad:(_,pc as pad) = function
 | ConstDecl {value; _} ->
     pp_node buffer ~pad "ConstDecl";
     pp_const_decl buffer ~pad:(mk_pad 1 0 pc) value
-| LambdaDecl lamb ->
-    pp_node buffer ~pad "LambdaDecl";
-    pp_lambda_decl buffer ~pad:(mk_pad 1 0 pc) lamb
+| FunDecl {value; _} ->
+    pp_node buffer ~pad "FunDecl";
+    pp_fun_decl buffer ~pad:(mk_pad 1 0 pc) value
 
 and pp_const_decl buffer ~pad:(_,pc) decl =
   pp_ident buffer ~pad:(mk_pad 3 0 pc) decl.name.value;
@@ -840,14 +824,6 @@ and pp_type_tuple buffer ~pad:(_,pc) {value; _} =
   let apply len rank =
     pp_type_expr buffer ~pad:(mk_pad len rank pc)
   in List.iteri (List.length components |> apply) components
-
-and pp_lambda_decl buffer ~pad = function
-  FunDecl {value; _} ->
-    pp_node buffer ~pad "FunDecl";
-    pp_fun_decl buffer ~pad value
-| ProcDecl {value; _} ->
-    pp_node buffer ~pad "ProcDecl";
-    pp_proc_decl buffer ~pad value
 
 and pp_fun_decl buffer ~pad:(_,pc) decl =
   let () =
@@ -1256,9 +1232,6 @@ and pp_local_decl buffer ~pad:(_,pc as pad) = function
   LocalFun {value; _} ->
     pp_node buffer ~pad "LocalFun";
     pp_fun_decl buffer ~pad:(mk_pad 1 0 pc) value
-| LocalProc {value; _} ->
-    pp_node buffer ~pad "LocalProc";
-    pp_proc_decl buffer ~pad:(mk_pad 1 0 pc) value
 | LocalData data ->
     pp_node buffer ~pad "LocalData";
     pp_data_decl buffer ~pad:(mk_pad 1 0 pc) data
@@ -1275,9 +1248,6 @@ and pp_var_decl buffer ~pad:(_,pc) decl =
   pp_ident     buffer ~pad:(mk_pad 3 0 pc) decl.name.value;
   pp_type_expr buffer ~pad:(mk_pad 3 1 pc) decl.var_type;
   pp_expr      buffer ~pad:(mk_pad 3 2 pc) decl.init
-
-and pp_proc_decl buffer ~pad _decl =
-  pp_node buffer ~pad "PP_PROC_DECL"
 
 and pp_expr buffer ~pad:(_,pc as pad) = function
   ECase {value; _} ->

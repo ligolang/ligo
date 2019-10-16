@@ -47,7 +47,6 @@ type kwd_not        = Region.t
 type kwd_of         = Region.t
 type kwd_or         = Region.t
 type kwd_patch      = Region.t
-type kwd_procedure  = Region.t
 type kwd_record     = Region.t
 type kwd_remove     = Region.t
 type kwd_set        = Region.t
@@ -135,7 +134,7 @@ type 'a braces = {
   rbrace : rbrace
 }
 
-(** The Abstract Syntax Tree 
+(** The Abstract Syntax Tree
 
 The AST mirrors the contents of Parser.mly, which defines a tree of parsing
 productions that are used to make a syntax tree from a given program input.
@@ -152,9 +151,9 @@ type t = {
 and ast = t
 
 and declaration =
-  TypeDecl   of type_decl reg
-| ConstDecl  of const_decl reg
-| LambdaDecl of lambda_decl
+  TypeDecl  of type_decl reg
+| ConstDecl of const_decl reg
+| FunDecl   of fun_decl reg
 
 and const_decl = {
   kwd_const  : kwd_const;
@@ -200,11 +199,7 @@ and field_decl = {
 
 and type_tuple = (type_expr, comma) nsepseq par reg
 
-(* Function and procedure declarations *)
-
-and lambda_decl =
-  FunDecl   of fun_decl   reg
-| ProcDecl  of proc_decl  reg
+(* Function declarations *)
 
 and fun_decl = {
   kwd_function : kwd_function;
@@ -218,16 +213,6 @@ and fun_decl = {
   kwd_with     : kwd_with;
   return       : expr;
   terminator   : semi option
-}
-
-and proc_decl = {
-  kwd_procedure : kwd_procedure;
-  name          : variable;
-  param         : parameters;
-  kwd_is        : kwd_is;
-  local_decls   : local_decl list;
-  block         : block reg;
-  terminator    : semi option
 }
 
 and parameters = (param_decl, semi) nsepseq par reg
@@ -273,7 +258,6 @@ and statement =
 
 and local_decl =
   LocalFun  of fun_decl reg
-| LocalProc of proc_decl reg
 | LocalData of data_decl
 
 and data_decl =
