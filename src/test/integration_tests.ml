@@ -246,6 +246,31 @@ let set_arithmetic () : unit result =
       (e_set [e_string "foo" ; e_string "bar" ; e_string "foobar"])
       (e_set [e_string "foo" ; e_string "bar"]) in
   let%bind () =
+    expect_eq program "remove_deep" 
+      (e_pair 
+         (e_set [e_string "foo" ; e_string "bar" ; e_string "foobar"])
+         (e_nat 42))
+      (e_pair 
+        (e_set [e_string "foo" ; e_string "bar"])
+        (e_nat 42))
+  in
+  let%bind () =
+    expect_eq program "patch_op"
+      (e_set [e_string "foo" ; e_string "bar"])
+      (e_set [e_string "foo" ; e_string "bar"; e_string "foobar"]) in
+  let%bind () =
+    expect_eq program "patch_op_deep"
+      (e_pair
+         (e_set [e_string "foo" ; e_string "bar"])
+         (e_nat 42))
+      (e_pair
+         (e_set [e_string "foo" ; e_string "bar" ; e_string "foobar"])
+         (e_nat 42)) in
+  let%bind () =
+    expect_eq program "patch_op_empty"
+      (e_set [e_string "foo" ; e_string "bar"])
+      (e_set [e_string "foo" ; e_string "bar"]) in
+  let%bind () =
     expect_eq program "mem_op"
       (e_set [e_string "foo" ; e_string "bar" ; e_string "foobar"])
       (e_bool true) in
@@ -410,6 +435,25 @@ let map_ type_f path : unit result =
     let input = ez [(23, 23) ; (42, 42)] in
     let expected = ez [23, 23] in
     expect_eq program "rm" input expected
+  in
+  let%bind () =
+    let input = ez [(0,0) ; (1,1) ; (2,2)] in
+    let expected = ez [(0, 5) ; (1, 6) ; (2, 7)] in
+    expect_eq program "patch_" input expected
+  in
+  let%bind () =
+    let input = ez [(0,0) ; (1,1) ; (2,2)] in
+    let expected = ez [(0,0) ; (1,1) ; (2,2)] in
+    expect_eq program "patch_empty" input expected
+  in
+  let%bind () =
+    let input = (e_pair
+                   (ez [(0,0) ; (1,1) ; (2,2)])
+                   (e_nat 10)) in
+    let expected = (e_pair
+                      (ez [(0,0) ; (1,9) ; (2,2)])
+                      (e_nat 10)) in
+    expect_eq program "patch_deep" input expected
   in
   let%bind () =
     let make_input = fun n -> ez List.(map (fun x -> (x, x)) @@ range n) in
@@ -829,6 +873,14 @@ let tez_ligo () : unit result =
   let%bind _ = expect_eq_evaluate program "add_tez" (e_mutez 42) in
   let%bind _ = expect_eq_evaluate program "sub_tez" (e_mutez 1) in
   let%bind _ = expect_eq_evaluate program "not_enough_tez" (e_mutez 4611686018427387903) in
+  let%bind _ = expect_eq_evaluate program "nat_mul_tez" (e_mutez 100) in
+  let%bind _ = expect_eq_evaluate program "tez_mul_nat" (e_mutez 1000) in
+  let%bind _ = expect_eq_evaluate program "tez_div_tez1" (e_nat 100) in
+  let%bind _ = expect_eq_evaluate program "tez_div_tez2" (e_nat 1) in
+  let%bind _ = expect_eq_evaluate program "tez_div_tez3" (e_nat 0) in
+  let%bind _ = expect_eq_evaluate program "tez_mod_tez1" (e_mutez 0) in
+  let%bind _ = expect_eq_evaluate program "tez_mod_tez2" (e_mutez 10) in
+  let%bind _ = expect_eq_evaluate program "tez_mod_tez3" (e_mutez 100) in
   ok ()
 
 let tez_mligo () : unit result =
