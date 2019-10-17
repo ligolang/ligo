@@ -1,5 +1,4 @@
 opam-version: "2.0"
-version: "ligo"
 maintainer: "contact@tezos.com"
 authors: [ "Tezos devteam" ]
 homepage: "https://www.tezos.com/"
@@ -11,16 +10,10 @@ depends: [
   "ocamlfind" { build }
   "dune" { build & >= "1.7" }
   "tezos-base"
-  "tezos-protocol-compiler"
+  "tezos-protocol-environment"
+  "tezos-protocol-005-PsBabyM1"
 ]
 build: [
-  [
-    "%{tezos-protocol-compiler:lib}%/replace"
-    "%{tezos-protocol-compiler:lib}%/dune_protocol.template"
-    "dune"
-    "alpha"
-  ]
-  ["dune" "build" "-p" name "-j" jobs]
-  ["dune" "runtest" "-p" name "-j" jobs] {with-test}
+  [ "dune" "build" "-p" name "-j" jobs ]
 ]
-synopsis: "Tezos/Protocol: economic-protocol definition"
+synopsis: "Tezos/Protocol: parameters"

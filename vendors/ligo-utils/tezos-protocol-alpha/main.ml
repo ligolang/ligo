@@ -54,7 +54,6 @@ type operation = Alpha_context.packed_operation = {
   protocol_data: operation_data ;
 }
 
-
 let acceptable_passes = Alpha_context.Operation.acceptable_passes
 
 let max_block_length =
@@ -81,10 +80,12 @@ type validation_mode =
   | Application of {
       block_header : Alpha_context.Block_header.t ;
       baker : Alpha_context.public_key_hash ;
+      block_delay : Alpha_context.Period.t ;
     }
   | Partial_application of {
       block_header : Alpha_context.Block_header.t ;
       baker : Alpha_context.public_key_hash ;
+      block_delay : Alpha_context.Period.t ;
     }
   | Partial_construction of {
       predecessor : Block_hash.t ;
@@ -93,6 +94,7 @@ type validation_mode =
       predecessor : Block_hash.t ;
       protocol_data : Alpha_context.Block_header.contents ;
       baker : Alpha_context.public_key_hash ;
+      block_delay : Alpha_context.Period.t ;
     }
 
 type validation_state =
@@ -114,12 +116,12 @@ let begin_partial_application
   let level = block_header.shell.level in
   let fitness = predecessor_fitness in
   let timestamp = block_header.shell.timestamp in
-  Alpha_context.prepare ~level ~timestamp ~fitness ctxt >>=? fun ctxt ->
+  Alpha_context.prepare ~level ~predecessor_timestamp ~timestamp ~fitness ctxt >>=? fun ctxt ->
   Apply.begin_application
-    ctxt chain_id block_header predecessor_timestamp >>=? fun (ctxt, baker) ->
+    ctxt chain_id block_header predecessor_timestamp >>=? fun (ctxt, baker, block_delay) ->
   let mode =
     Partial_application
-      { block_header ; baker = Signature.Public_key.hash baker } in
+      { block_header ; baker = Signature.Public_key.hash baker ; block_delay } in
   return { mode ; chain_id ; ctxt ; op_count = 0 }
 
 let begin_application
@@ -131,16 +133,17 @@ let begin_application
   let level = block_header.shell.level in
   let fitness = predecessor_fitness in
   let timestamp = block_header.shell.timestamp in
-  Alpha_context.prepare ~level ~timestamp ~fitness ctxt >>=? fun ctxt ->
+  Alpha_context.prepare ~level ~predecessor_timestamp ~timestamp ~fitness ctxt >>=? fun ctxt ->
   Apply.begin_application
-    ctxt chain_id block_header predecessor_timestamp >>=? fun (ctxt, baker) ->
-  let mode = Application { block_header ; baker = Signature.Public_key.hash baker } in
+    ctxt chain_id block_header predecessor_timestamp >>=? fun (ctxt, baker, block_delay) ->
+  let mode =
+    Application { block_header ; baker = Signature.Public_key.hash baker ; block_delay } in
   return { mode ; chain_id ; ctxt ; op_count = 0 }
 
 let begin_construction
     ~chain_id
     ~predecessor_context:ctxt
-    ~predecessor_timestamp:pred_timestamp
+    ~predecessor_timestamp
     ~predecessor_level:pred_level
     ~predecessor_fitness:pred_fitness
     ~predecessor
@@ -149,7 +152,7 @@ let begin_construction
     () =
   let level = Int32.succ pred_level in
   let fitness = pred_fitness in
-  Alpha_context.prepare ~timestamp ~level ~fitness ctxt >>=? fun ctxt ->
+  Alpha_context.prepare ~level ~predecessor_timestamp ~timestamp ~fitness ctxt >>=? fun ctxt ->
   begin
     match protocol_data with
     | None ->
@@ -158,11 +161,11 @@ let begin_construction
         return (mode, ctxt)
     | Some proto_header ->
         Apply.begin_full_construction
-          ctxt pred_timestamp
-          proto_header.contents >>=? fun (ctxt, protocol_data, baker) ->
+          ctxt predecessor_timestamp
+          proto_header.contents >>=? fun (ctxt, protocol_data, baker, block_delay) ->
         let mode =
           let baker = Signature.Public_key.hash baker in
-          Full_construction { predecessor ; baker ; protocol_data } in
+          Full_construction { predecessor ; baker ; protocol_data ; block_delay } in
         return (mode, ctxt)
   end >>=? fun (mode, ctxt) ->
   return { mode ; chain_id ; ctxt ; op_count = 0 }
@@ -192,13 +195,7 @@ let apply_operation
         | Partial_construction { predecessor }
           -> predecessor, Signature.Public_key_hash.zero
       in
-      let partial =
-        match mode with
-        | Partial_construction _ -> true
-        | Application _
-        | Full_construction _
-        | Partial_application _ -> false in
-      Apply.apply_operation ~partial ctxt chain_id Optimized predecessor baker
+      Apply.apply_operation ctxt chain_id Optimized predecessor baker
         (Alpha_context.Operation.hash operation)
         operation >>=? fun (ctxt, result) ->
       let op_count = op_count + 1 in
@@ -224,8 +221,12 @@ let finalize_block { mode ; ctxt ; op_count } =
                                     consumed_gas = Z.zero ;
                                     deactivated = [];
                                     balance_updates = []})
-  | Partial_application { baker ; _ } ->
-      let level = Alpha_context. Level.current ctxt in
+  | Partial_application { block_header ; baker ; block_delay } ->
+      let level = Alpha_context.Level.current ctxt in
+      let included_endorsements = Alpha_context.included_endorsements ctxt in
+      Apply.check_minimum_endorsements ctxt
+        block_header.protocol_data.contents
+        block_delay included_endorsements >>=? fun () ->
       Alpha_context.Vote.get_current_period_kind ctxt >>=? fun voting_period_kind ->
       let ctxt = Alpha_context.finalize ctxt in
       return (ctxt, Apply_results.{ baker ;
@@ -236,16 +237,16 @@ let finalize_block { mode ; ctxt ; op_count } =
                                     deactivated = [];
                                     balance_updates = []})
   | Application
-      { baker ;  block_header = { protocol_data = { contents = protocol_data ; _ } ; _ } }
-  | Full_construction { protocol_data ; baker ; _ } ->
-      Apply.finalize_application ctxt protocol_data baker >>=? fun (ctxt, receipt) ->
+      { baker ; block_delay ; block_header = { protocol_data = { contents = protocol_data ; _ } ; _ } }
+  | Full_construction { protocol_data ; baker ; block_delay ; _ } ->
+      Apply.finalize_application ctxt protocol_data baker ~block_delay >>=? fun (ctxt, receipt) ->
       let level = Alpha_context.Level.current ctxt in
       let priority = protocol_data.priority in
       let raw_level = Alpha_context.Raw_level.to_int32 level.level in
       let fitness = Alpha_context.Fitness.current ctxt in
       let commit_message =
         Format.asprintf
-          "lvl %ld, fit %Ld, prio %d, %d ops"
+          "lvl %ld, fit 1:%Ld, prio %d, %d ops"
           raw_level fitness priority op_count in
       let ctxt = Alpha_context.finalize ~commit_message ctxt in
       return (ctxt, receipt)
@@ -298,11 +299,17 @@ let init ctxt block_header =
   let fitness = block_header.fitness in
   let timestamp = block_header.timestamp in
   let typecheck (ctxt:Alpha_context.context) (script:Alpha_context.Script.t) =
-    Script_ir_translator.parse_script ctxt script >>=? fun (ex_script, ctxt) ->
-    Script_ir_translator.big_map_initialization ctxt Optimized ex_script >>=? fun (big_map_diff, ctxt) ->
-    return ((script, big_map_diff), ctxt)
+    Script_ir_translator.parse_script ctxt ~legacy:false script >>=? fun (Ex_script parsed_script, ctxt) ->
+    Script_ir_translator.extract_big_map_diff ctxt Optimized parsed_script.storage_type parsed_script.storage
+      ~to_duplicate: Script_ir_translator.no_big_map_id
+      ~to_update: Script_ir_translator.no_big_map_id
+      ~temporary:false >>=? fun (storage, big_map_diff, ctxt) ->
+    Script_ir_translator.unparse_data ctxt Optimized parsed_script.storage_type storage >>=? fun (storage, ctxt) ->
+    let storage = Alpha_context.Script.lazy_expr (Micheline.strip_locations storage) in
+    return (({ script with storage }, big_map_diff), ctxt)
   in
   Alpha_context.prepare_first_block
     ~typecheck
     ~level ~timestamp ~fitness ctxt >>=? fun ctxt ->
   return (Alpha_context.finalize ctxt)
+(* Vanity nonce: 415767323 *)

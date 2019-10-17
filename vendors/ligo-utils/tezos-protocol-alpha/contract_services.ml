@@ -28,35 +28,28 @@ open Alpha_context
 let custom_root =
   (RPC_path.(open_root / "context" / "contracts") : RPC_context.t RPC_path.context)
 
+let big_map_root =
+  (RPC_path.(open_root / "context" / "big_maps") : RPC_context.t RPC_path.context)
+
 type info = {
-  manager: public_key_hash ;
   balance: Tez.t ;
-  spendable: bool ;
-  delegate: bool * public_key_hash option ;
-  counter: counter ;
+  delegate: public_key_hash option ;
+  counter: counter option ;
   script: Script.t option ;
 }
 
 let info_encoding =
   let open Data_encoding in
   conv
-    (fun {manager ; balance ; spendable ; delegate ;
-          script ; counter } ->
-      (manager, balance, spendable, delegate,
-       script, counter))
-    (fun (manager, balance, spendable, delegate,
-          script, counter) ->
-      {manager ; balance ; spendable ; delegate ;
-       script ; counter}) @@
-  obj6
-    (req "manager" Signature.Public_key_hash.encoding)
+    (fun {balance ; delegate ; script ; counter } ->
+      (balance, delegate, script, counter))
+    (fun (balance, delegate, script, counter) ->
+      {balance ; delegate ; script ; counter}) @@
+  obj4
     (req "balance" Tez.encoding)
-    (req "spendable" bool)
-    (req "delegate" @@ obj2
-       (req "setable" bool)
-       (opt "value" Signature.Public_key_hash.encoding))
+    (opt "delegate" Signature.Public_key_hash.encoding)
     (opt "script" Script.encoding)
-    (req "counter" n)
+    (opt "counter" n)
 
 module S = struct
 
@@ -69,20 +62,11 @@ module S = struct
       ~output: Tez.encoding
       RPC_path.(custom_root /: Contract.rpc_arg / "balance")
 
-  let manager =
-    RPC_service.get_service
-      ~description: "Access the manager of a contract."
-      ~query: RPC_query.empty
-      ~output: Signature.Public_key_hash.encoding
-      RPC_path.(custom_root /: Contract.rpc_arg / "manager")
-
   let manager_key =
     RPC_service.get_service
       ~description: "Access the manager of a contract."
       ~query: RPC_query.empty
-      ~output: (obj2
-                  (req "manager" Signature.Public_key_hash.encoding)
-                  (opt "key" Signature.Public_key.encoding))
+      ~output: (option Signature.Public_key.encoding)
       RPC_path.(custom_root /: Contract.rpc_arg / "manager_key")
 
   let delegate =
@@ -99,20 +83,6 @@ module S = struct
       ~output: z
       RPC_path.(custom_root /: Contract.rpc_arg / "counter")
 
-  let spendable =
-    RPC_service.get_service
-      ~description: "Tells if the contract tokens can be spent by the manager."
-      ~query: RPC_query.empty
-      ~output: bool
-      RPC_path.(custom_root /: Contract.rpc_arg / "spendable")
-
-  let delegatable =
-    RPC_service.get_service
-      ~description: "Tells if the contract delegate can be changed."
-      ~query: RPC_query.empty
-      ~output: bool
-      RPC_path.(custom_root /: Contract.rpc_arg / "delegatable")
-
   let script =
     RPC_service.get_service
       ~description: "Access the code and data of the contract."
@@ -127,15 +97,43 @@ module S = struct
       ~output: Script.expr_encoding
       RPC_path.(custom_root /: Contract.rpc_arg / "storage")
 
-  let big_map_get =
-    RPC_service.post_service
-      ~description: "Access the value associated with a key in the big map storage  of the contract."
+  let entrypoint_type =
+    RPC_service.get_service
+      ~description: "Return the type of the given entrypoint of the contract"
       ~query: RPC_query.empty
-      ~input: (obj2
-                 (req "key" Script.expr_encoding)
-                 (req "type" Script.expr_encoding))
-      ~output: (option Script.expr_encoding)
-      RPC_path.(custom_root /: Contract.rpc_arg / "big_map_get")
+      ~output: Script.expr_encoding
+      RPC_path.(custom_root /: Contract.rpc_arg / "entrypoints" /: RPC_arg.string)
+
+
+  let list_entrypoints =
+    RPC_service.get_service
+      ~description: "Return the list of entrypoints of the contract"
+      ~query: RPC_query.empty
+      ~output: (obj2
+                  (dft "unreachable"
+                     (Data_encoding.list
+                        (obj1 (req "path" (Data_encoding.list Michelson_v1_primitives.prim_encoding))))
+                     [])
+                  (req "entrypoints"
+                     (assoc Script.expr_encoding)))
+      RPC_path.(custom_root /: Contract.rpc_arg / "entrypoints")
+
+  let contract_big_map_get_opt =
+     RPC_service.post_service
+       ~description: "Access the value associated with a key in a big map of the contract (deprecated)."
+       ~query: RPC_query.empty
+       ~input: (obj2
+                  (req "key" Script.expr_encoding)
+                  (req "type" Script.expr_encoding))
+       ~output: (option Script.expr_encoding)
+       RPC_path.(custom_root /: Contract.rpc_arg / "big_map_get")
+
+  let big_map_get =
+    RPC_service.get_service
+      ~description: "Access the value associated with a key in a big map."
+      ~query: RPC_query.empty
+      ~output: Script.expr_encoding
+      RPC_path.(big_map_root /: Big_map.rpc_arg /: Script_expr_hash.rpc_arg)
 
   let info =
     RPC_service.get_service
@@ -170,20 +168,39 @@ let register () =
          f ctxt a1 >>=? function
          | None -> raise Not_found
          | Some v -> return v) in
+  let do_big_map_get ctxt id key =
+    let open Script_ir_translator in
+    let ctxt = Gas.set_unlimited ctxt in
+    Big_map.exists ctxt id >>=? fun (ctxt, types) ->
+    match types with
+    | None -> raise Not_found
+    | Some (_, value_type) ->
+        Lwt.return (parse_ty ctxt
+                      ~legacy:true ~allow_big_map:false ~allow_operation:false ~allow_contract:true
+                      (Micheline.root value_type))
+        >>=? fun (Ex_ty value_type, ctxt) ->
+        Big_map.get_opt ctxt id key >>=? fun (_ctxt, value) ->
+        match value with
+        | None -> raise Not_found
+        | Some value ->
+            parse_data ctxt ~legacy:true value_type (Micheline.root value) >>=? fun (value, ctxt) ->
+            unparse_data ctxt Readable value_type value >>=? fun (value, _ctxt) ->
+            return (Micheline.strip_locations value) in
   register_field S.balance Contract.get_balance ;
-  register_field S.manager Contract.get_manager ;
-  register_field S.manager_key
-    (fun ctxt c ->
-       Contract.get_manager ctxt c >>=? fun mgr ->
-       Contract.is_manager_key_revealed ctxt c >>=? fun revealed ->
-       if revealed then
-         Contract.get_manager_key ctxt c >>=? fun key ->
-         return (mgr, Some key)
-       else return (mgr, None)) ;
+  register1 S.manager_key
+    (fun ctxt contract () () ->
+       match Contract.is_implicit contract with
+       | None -> raise Not_found
+       | Some mgr ->
+           Contract.is_manager_key_revealed ctxt mgr >>=? function
+           | false -> return_none
+           | true -> Contract.get_manager_key ctxt mgr >>=? return_some) ;
   register_opt_field S.delegate Delegate.get ;
-  register_field S.counter Contract.get_counter ;
-  register_field S.spendable Contract.is_spendable ;
-  register_field S.delegatable Contract.is_delegatable ;
+  register1 S.counter
+    (fun ctxt contract () () ->
+       match Contract.is_implicit contract with
+       | None -> raise Not_found
+       | Some mgr -> Contract.get_counter ctxt mgr) ;
   register_opt_field S.script
     (fun c v -> Contract.get_script c v >>=? fun (_, v) -> return v) ;
   register_opt_field S.storage (fun ctxt contract ->
@@ -193,39 +210,95 @@ let register () =
       | Some script ->
           let ctxt = Gas.set_unlimited ctxt in
           let open Script_ir_translator in
-          parse_script ctxt script >>=? fun (Ex_script script, ctxt) ->
+          parse_script ctxt ~legacy:true script >>=? fun (Ex_script script, ctxt) ->
           unparse_script ctxt Readable script >>=? fun (script, ctxt) ->
           Script.force_decode ctxt script.storage >>=? fun (storage, _ctxt) ->
           return_some storage) ;
-  register1 S.big_map_get (fun ctxt contract () (key, key_type) ->
-      let open Script_ir_translator in
-      let ctxt = Gas.set_unlimited ctxt in
-      Lwt.return (parse_ty ctxt ~allow_big_map:false ~allow_operation:false (Micheline.root key_type))
-      >>=? fun (Ex_ty key_type, ctxt) ->
-      parse_data ctxt key_type (Micheline.root key) >>=? fun (key, ctxt) ->
-      hash_data ctxt key_type key >>=? fun (key_hash, ctxt) ->
-      Contract.Big_map.get_opt ctxt contract key_hash >>=? fun (_ctxt, value) ->
-      return value) ;
+  register2 S.entrypoint_type
+    (fun ctxt v entrypoint () () -> Contract.get_script_code ctxt v >>=? fun (_, expr) ->
+      match expr with
+      | None -> raise Not_found
+      | Some expr ->
+          let ctxt = Gas.set_unlimited ctxt in
+          let legacy = true in
+          let open Script_ir_translator in
+          Script.force_decode ctxt expr >>=? fun (expr, _) ->
+          Lwt.return
+            begin
+              parse_toplevel ~legacy expr >>? fun (arg_type, _, _, root_name) ->
+              parse_ty ctxt ~legacy
+                ~allow_big_map:true ~allow_operation:false
+                ~allow_contract:true arg_type >>? fun (Ex_ty arg_type, _) ->
+              Script_ir_translator.find_entrypoint ~root_name arg_type
+                entrypoint
+            end >>= function
+            Ok (_f , Ex_ty ty)->
+              unparse_ty ctxt ty >>=? fun (ty_node, _) ->
+              return (Micheline.strip_locations ty_node)
+          | Error _ -> raise Not_found) ;
+  register1 S.list_entrypoints
+    (fun ctxt v () () -> Contract.get_script_code ctxt v >>=? fun (_, expr) ->
+      match expr with
+      | None -> raise Not_found
+      | Some expr ->
+          let ctxt = Gas.set_unlimited ctxt in
+          let legacy = true in
+          let open Script_ir_translator in
+          Script.force_decode ctxt expr >>=? fun (expr, _) ->
+          Lwt.return
+            begin
+              parse_toplevel ~legacy expr >>? fun (arg_type, _, _, root_name) ->
+              parse_ty ctxt ~legacy
+                ~allow_big_map:true ~allow_operation:false
+                ~allow_contract:true arg_type >>? fun (Ex_ty arg_type, _) ->
+              Script_ir_translator.list_entrypoints ~root_name arg_type ctxt
+            end >>=? fun (unreachable_entrypoint,map) ->
+          return
+            (unreachable_entrypoint,
+             Entrypoints_map.fold
+               begin fun entry (_,ty) acc ->
+                 (entry , Micheline.strip_locations ty) ::acc end
+               map [])
+    ) ;
+  register1 S.contract_big_map_get_opt (fun ctxt contract () (key, key_type) ->
+      Contract.get_script ctxt contract >>=? fun (ctxt, script) ->
+      Lwt.return (Script_ir_translator.parse_packable_ty ctxt ~legacy:true (Micheline.root key_type)) >>=? fun (Ex_ty key_type, ctxt) ->
+      Script_ir_translator.parse_data ctxt ~legacy:true key_type (Micheline.root key) >>=? fun (key, ctxt) ->
+      Script_ir_translator.hash_data ctxt key_type key >>=? fun (key, ctxt) ->
+      match script with
+      | None -> raise Not_found
+      | Some script ->
+          let ctxt = Gas.set_unlimited ctxt in
+          let open Script_ir_translator in
+          parse_script ctxt ~legacy:true script >>=? fun (Ex_script script, ctxt) ->
+          Script_ir_translator.collect_big_maps ctxt script.storage_type script.storage >>=? fun (ids, _ctxt) ->
+          let ids = Script_ir_translator.list_of_big_map_ids ids in
+          let rec find = function
+            | [] -> return_none
+            | (id : Z.t) :: ids -> try do_big_map_get ctxt id key >>=? return_some with Not_found -> find ids in
+          find ids) ;
+  register2 S.big_map_get (fun ctxt id key () () ->
+      do_big_map_get ctxt id key) ;
   register_field S.info (fun ctxt contract ->
       Contract.get_balance ctxt contract >>=? fun balance ->
-      Contract.get_manager ctxt contract >>=? fun manager ->
       Delegate.get ctxt contract >>=? fun delegate ->
-      Contract.get_counter ctxt contract >>=? fun counter ->
-      Contract.is_delegatable ctxt contract >>=? fun delegatable ->
-      Contract.is_spendable ctxt contract >>=? fun spendable ->
+      begin match Contract.is_implicit contract with
+        | Some manager ->
+            Contract.get_counter ctxt manager >>=? fun counter ->
+            return_some counter
+        | None -> return None
+      end >>=? fun counter ->
       Contract.get_script ctxt contract >>=? fun (ctxt, script) ->
       begin match script with
         | None -> return (None, ctxt)
         | Some script ->
             let ctxt = Gas.set_unlimited ctxt in
             let open Script_ir_translator in
-            parse_script ctxt script >>=? fun (Ex_script script, ctxt) ->
+            parse_script ctxt ~legacy:true script >>=? fun (Ex_script script, ctxt) ->
             unparse_script ctxt Readable script >>=? fun (script, ctxt) ->
             return (Some script, ctxt)
       end >>=? fun (script, _ctxt) ->
-      return { manager ; balance ;
-               spendable ; delegate = (delegatable, delegate) ;
-               script ; counter })
+      return { balance ; delegate ; script ; counter })
 
 let list ctxt block =
   RPC_context.make_call0 S.list ctxt block () ()
@@ -236,11 +309,8 @@ let info ctxt block contract =
 let balance ctxt block contract =
   RPC_context.make_call1 S.balance ctxt block contract () ()
 
-let manager ctxt block contract =
-  RPC_context.make_call1 S.manager ctxt block contract () ()
-
-let manager_key ctxt block contract =
-  RPC_context.make_call1 S.manager_key ctxt block contract () ()
+let manager_key ctxt block mgr =
+  RPC_context.make_call1 S.manager_key ctxt block (Contract.implicit_contract mgr) () ()
 
 let delegate ctxt block contract =
   RPC_context.make_call1 S.delegate ctxt block contract () ()
@@ -248,14 +318,8 @@ let delegate ctxt block contract =
 let delegate_opt ctxt block contract =
   RPC_context.make_opt_call1 S.delegate ctxt block contract () ()
 
-let counter ctxt block contract =
-  RPC_context.make_call1 S.counter ctxt block contract () ()
-
-let is_delegatable ctxt block contract =
-  RPC_context.make_call1 S.delegatable ctxt block contract () ()
-
-let is_spendable ctxt block contract =
-  RPC_context.make_call1 S.spendable ctxt block contract () ()
+let counter ctxt block mgr =
+  RPC_context.make_call1 S.counter ctxt block (Contract.implicit_contract mgr) () ()
 
 let script ctxt block contract =
   RPC_context.make_call1 S.script ctxt block contract () ()
@@ -266,8 +330,17 @@ let script_opt ctxt block contract =
 let storage ctxt block contract =
   RPC_context.make_call1 S.storage ctxt block contract () ()
 
+let entrypoint_type ctxt block contract entrypoint =
+  RPC_context.make_call2 S.entrypoint_type ctxt block contract entrypoint () ()
+
+let list_entrypoints ctxt block contract =
+  RPC_context.make_call1 S.list_entrypoints ctxt block contract () ()
+
 let storage_opt ctxt block contract =
   RPC_context.make_opt_call1 S.storage ctxt block contract () ()
 
-let big_map_get_opt ctxt block contract key =
-  RPC_context.make_call1 S.big_map_get ctxt block contract () key
+let big_map_get ctxt block id key =
+  RPC_context.make_call2 S.big_map_get ctxt block id key () ()
+
+let contract_big_map_get_opt ctxt block contract key =
+  RPC_context.make_call1 S.contract_big_map_get_opt ctxt block contract () key

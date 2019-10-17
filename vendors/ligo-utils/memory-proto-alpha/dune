@@ -3,6 +3,6 @@
   (public_name tezos-memory-proto-alpha)
   (libraries
     tezos-protocol-environment
-    tezos-protocol-alpha
+    tezos-protocol-005-PsBabyM1
   )
 )

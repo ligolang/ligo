@@ -56,182 +56,221 @@ include struct
   open Michelson_v1_primitives
   open Protocol.Environment
 
+
+
   let rec unparse_data_generic
-          : type a. context -> ?mapper:(ex_typed_value -> Script.node option tzresult Lwt.t) ->
-                 unparsing_mode -> a ty -> a -> (Script.node * context) tzresult Lwt.t
+    : type a. context -> ?mapper:_ -> unparsing_mode -> a ty -> a -> (Script.node * context) tzresult Lwt.t
     = fun ctxt ?(mapper = fun _ -> return None) mode ty a ->
-    Lwt.return (Gas.consume ctxt Unparse_costs.cycle) >>=? fun ctxt ->
-    mapper (Ex_typed_value (ty, a)) >>=? function
-    | Some x -> return (x, ctxt)
-    | None -> (
-      match ty, a with
-      | Unit_t _, () ->
-         Lwt.return (Gas.consume ctxt Unparse_costs.unit) >>=? fun ctxt ->
-         return (Prim (-1, D_Unit, [], []), ctxt)
-      | Int_t _, v ->
-         Lwt.return (Gas.consume ctxt (Unparse_costs.int v)) >>=? fun ctxt ->
-         return (Int (-1, Script_int.to_zint v), ctxt)
-      | Nat_t _, v ->
-         Lwt.return (Gas.consume ctxt (Unparse_costs.int v)) >>=? fun ctxt ->
-         return (Int (-1, Script_int.to_zint v), ctxt)
-      | String_t _, s ->
-         Lwt.return (Gas.consume ctxt (Unparse_costs.string s)) >>=? fun ctxt ->
-         return (String (-1, s), ctxt)
-      | Bytes_t _, s ->
-         Lwt.return (Gas.consume ctxt (Unparse_costs.bytes s)) >>=? fun ctxt ->
-         return (Bytes (-1, s), ctxt)
-      | Bool_t _, true ->
-         Lwt.return (Gas.consume ctxt Unparse_costs.bool) >>=? fun ctxt ->
-         return (Prim (-1, D_True, [], []), ctxt)
-      | Bool_t _, false ->
-         Lwt.return (Gas.consume ctxt Unparse_costs.bool) >>=? fun ctxt ->
-         return (Prim (-1, D_False, [], []), ctxt)
-      | Timestamp_t _, t ->
-         Lwt.return (Gas.consume ctxt (Unparse_costs.timestamp t)) >>=? fun ctxt ->
-         begin
-           match mode with
-           | Optimized -> return (Int (-1, Script_timestamp.to_zint t), ctxt)
-           | Readable ->
-              match Script_timestamp.to_notation t with
-              | None -> return (Int (-1, Script_timestamp.to_zint t), ctxt)
-              | Some s -> return (String (-1, s), ctxt)
-         end
-      | Address_t _, c  ->
-         Lwt.return (Gas.consume ctxt Unparse_costs.contract) >>=? fun ctxt ->
-         begin
-           match mode with
-           | Optimized ->
-              let bytes = Data_encoding.Binary.to_bytes_exn Contract.encoding c in
-              return (Bytes (-1, bytes), ctxt)
-           | Readable -> return (String (-1, Contract.to_b58check c), ctxt)
-         end
-      | Contract_t _, (_, c)  ->
-         Lwt.return (Gas.consume ctxt Unparse_costs.contract) >>=? fun ctxt ->
-         begin
-           match mode with
-           | Optimized ->
-              let bytes = Data_encoding.Binary.to_bytes_exn Contract.encoding c in
-              return (Bytes (-1, bytes), ctxt)
-           | Readable -> return (String (-1, Contract.to_b58check c), ctxt)
-         end
-      | Signature_t _, s ->
-         Lwt.return (Gas.consume ctxt Unparse_costs.signature) >>=? fun ctxt ->
-         begin
-           match mode with
-           | Optimized ->
-              let bytes = Data_encoding.Binary.to_bytes_exn Signature.encoding s in
-              return (Bytes (-1, bytes), ctxt)
-           | Readable ->
-              return (String (-1, Signature.to_b58check s), ctxt)
-         end
-      | Mutez_t _, v ->
-         Lwt.return (Gas.consume ctxt Unparse_costs.tez) >>=? fun ctxt ->
-         return (Int (-1, Z.of_int64 (Tez.to_mutez v)), ctxt)
-      | Key_t _, k ->
-         Lwt.return (Gas.consume ctxt Unparse_costs.key) >>=? fun ctxt ->
-         begin
-           match mode with
-           | Optimized ->
-              let bytes = Data_encoding.Binary.to_bytes_exn Signature.Public_key.encoding k in
-              return (Bytes (-1, bytes), ctxt)
-           | Readable ->
-              return (String (-1, Signature.Public_key.to_b58check k), ctxt)
-         end
-      | Key_hash_t _, k ->
-         Lwt.return (Gas.consume ctxt Unparse_costs.key_hash) >>=? fun ctxt ->
-         begin
-           match mode with
-           | Optimized ->
-              let bytes = Data_encoding.Binary.to_bytes_exn Signature.Public_key_hash.encoding k in
-              return (Bytes (-1, bytes), ctxt)
-           | Readable ->
-              return (String (-1, Signature.Public_key_hash.to_b58check k), ctxt)
-         end
-      | Operation_t _, op ->
-         let bytes = Data_encoding.Binary.to_bytes_exn Alpha_context.Operation.internal_operation_encoding op in
-         Lwt.return (Gas.consume ctxt (Unparse_costs.operation bytes)) >>=? fun ctxt ->
-         return (Bytes (-1, bytes), ctxt)
-      | Pair_t ((tl, _, _), (tr, _, _), _), (l, r) ->
-         Lwt.return (Gas.consume ctxt Unparse_costs.pair) >>=? fun ctxt ->
-         unparse_data_generic ~mapper ctxt mode tl l >>=? fun (l, ctxt) ->
-         unparse_data_generic ~mapper ctxt mode tr r >>=? fun (r, ctxt) ->
-         return (Prim (-1, D_Pair, [ l; r ], []), ctxt)
-      | Union_t ((tl, _), _, _), L l ->
-         Lwt.return (Gas.consume ctxt Unparse_costs.union) >>=? fun ctxt ->
-         unparse_data_generic ~mapper ctxt mode tl l >>=? fun (l, ctxt) ->
-         return (Prim (-1, D_Left, [ l ], []), ctxt)
-      | Union_t (_, (tr, _), _), R r ->
-         Lwt.return (Gas.consume ctxt Unparse_costs.union) >>=? fun ctxt ->
-         unparse_data_generic ~mapper ctxt mode tr r >>=? fun (r, ctxt) ->
-         return (Prim (-1, D_Right, [ r ], []), ctxt)
-      | Option_t ((t, _), _, _), Some v ->
-         Lwt.return (Gas.consume ctxt Unparse_costs.some) >>=? fun ctxt ->
-         unparse_data_generic ~mapper ctxt mode t v >>=? fun (v, ctxt) ->
-         return (Prim (-1, D_Some, [ v ], []), ctxt)
-      | Option_t _, None ->
-         Lwt.return (Gas.consume ctxt Unparse_costs.none) >>=? fun ctxt ->
-         return (Prim (-1, D_None, [], []), ctxt)
-      | List_t (t, _), items ->
-         fold_left_s
-           (fun (l, ctxt) element ->
-             Lwt.return (Gas.consume ctxt Unparse_costs.list_element) >>=? fun ctxt ->
-             unparse_data_generic ~mapper ctxt mode t element >>=? fun (unparsed, ctxt) ->
-             return (unparsed :: l, ctxt))
-           ([], ctxt)
-           items >>=? fun (items, ctxt) ->
-         return (Micheline.Seq (-1, List.rev items), ctxt)
-      | Set_t (t, _), set ->
-         let t = ty_of_comparable_ty t in
-         fold_left_s
-           (fun (l, ctxt) item ->
-             Lwt.return (Gas.consume ctxt Unparse_costs.set_element) >>=? fun ctxt ->
-             unparse_data_generic ~mapper ctxt mode t item >>=? fun (item, ctxt) ->
-             return (item :: l, ctxt))
-           ([], ctxt)
-           (set_fold (fun e acc -> e :: acc) set []) >>=? fun (items, ctxt) ->
-         return (Micheline.Seq (-1, items), ctxt)
-      | Map_t (kt, vt, _), map ->
-         let kt = ty_of_comparable_ty kt in
-         fold_left_s
-           (fun (l, ctxt) (k, v) ->
-             Lwt.return (Gas.consume ctxt Unparse_costs.map_element) >>=? fun ctxt ->
-             unparse_data_generic ~mapper ctxt mode kt k >>=? fun (key, ctxt) ->
-             unparse_data_generic ~mapper ctxt mode vt v >>=? fun (value, ctxt) ->
-             return (Prim (-1, D_Elt, [ key ; value ], []) :: l, ctxt))
-           ([], ctxt)
-           (map_fold (fun k v acc -> (k, v) :: acc) map []) >>=? fun (items, ctxt) ->
-         return (Micheline.Seq (-1, items), ctxt)
-      | Big_map_t (_kt, _kv, _), _map ->
-         return (Micheline.Seq (-1, []), ctxt)
-      | Lambda_t _, Lam (_, original_code) ->
-         unparse_code_generic ~mapper ctxt mode (root original_code)
-    )
+      Lwt.return (Gas.consume ctxt Unparse_costs.cycle) >>=? fun ctxt ->
+      mapper (Ex_typed_value (ty, a)) >>=? function
+      | Some x -> return (x , ctxt)
+      | None -> (
+          match ty, a with
+          | Unit_t _, () ->
+            Lwt.return (Gas.consume ctxt Unparse_costs.unit) >>=? fun ctxt ->
+            return (Prim (-1, D_Unit, [], []), ctxt)
+          | Int_t _, v ->
+            Lwt.return (Gas.consume ctxt (Unparse_costs.int v)) >>=? fun ctxt ->
+            return (Int (-1, Script_int.to_zint v), ctxt)
+          | Nat_t _, v ->
+            Lwt.return (Gas.consume ctxt (Unparse_costs.int v)) >>=? fun ctxt ->
+            return (Int (-1, Script_int.to_zint v), ctxt)
+          | String_t _, s ->
+            Lwt.return (Gas.consume ctxt (Unparse_costs.string s)) >>=? fun ctxt ->
+            return (String (-1, s), ctxt)
+          | Bytes_t _, s ->
+            Lwt.return (Gas.consume ctxt (Unparse_costs.bytes s)) >>=? fun ctxt ->
+            return (Bytes (-1, s), ctxt)
+          | Bool_t _, true ->
+            Lwt.return (Gas.consume ctxt Unparse_costs.bool) >>=? fun ctxt ->
+            return (Prim (-1, D_True, [], []), ctxt)
+          | Bool_t _, false ->
+            Lwt.return (Gas.consume ctxt Unparse_costs.bool) >>=? fun ctxt ->
+            return (Prim (-1, D_False, [], []), ctxt)
+          | Timestamp_t _, t ->
+            Lwt.return (Gas.consume ctxt (Unparse_costs.timestamp t)) >>=? fun ctxt ->
+            begin
+              match mode with
+              | Optimized -> return (Int (-1, Script_timestamp.to_zint t), ctxt)
+              | Readable ->
+                match Script_timestamp.to_notation t with
+                | None -> return (Int (-1, Script_timestamp.to_zint t), ctxt)
+                | Some s -> return (String (-1, s), ctxt)
+            end
+          | Address_t _, (c, entrypoint)  ->
+            Lwt.return (Gas.consume ctxt Unparse_costs.contract) >>=? fun ctxt ->
+            begin
+              match mode with
+              | Optimized ->
+                let entrypoint = match entrypoint with "default" -> "" | name -> name in
+                let bytes = Data_encoding.Binary.to_bytes_exn
+                    Data_encoding.(tup2 Contract.encoding Variable.string)
+                    (c, entrypoint) in
+                return (Bytes (-1, bytes), ctxt)
+              | Readable ->
+                let notation = match entrypoint with
+                  | "default" -> Contract.to_b58check c
+                  | entrypoint -> Contract.to_b58check c ^ "%" ^ entrypoint in
+                return (String (-1, notation), ctxt)
+            end
+          | Contract_t _, (_, (c, entrypoint))  ->
+            Lwt.return (Gas.consume ctxt Unparse_costs.contract) >>=? fun ctxt ->
+            begin
+              match mode with
+              | Optimized ->
+                let entrypoint = match entrypoint with "default" -> "" | name -> name in
+                let bytes = Data_encoding.Binary.to_bytes_exn
+                    Data_encoding.(tup2 Contract.encoding Variable.string)
+                    (c, entrypoint) in
+                return (Bytes (-1, bytes), ctxt)
+              | Readable ->
+                let notation = match entrypoint with
+                  | "default" -> Contract.to_b58check c
+                  | entrypoint -> Contract.to_b58check c ^ "%" ^ entrypoint in
+                return (String (-1, notation), ctxt)
+            end
+          | Signature_t _, s ->
+            Lwt.return (Gas.consume ctxt Unparse_costs.signature) >>=? fun ctxt ->
+            begin
+              match mode with
+              | Optimized ->
+                let bytes = Data_encoding.Binary.to_bytes_exn Signature.encoding s in
+                return (Bytes (-1, bytes), ctxt)
+              | Readable ->
+                return (String (-1, Signature.to_b58check s), ctxt)
+            end
+          | Mutez_t _, v ->
+            Lwt.return (Gas.consume ctxt Unparse_costs.tez) >>=? fun ctxt ->
+            return (Int (-1, Z.of_int64 (Tez.to_mutez v)), ctxt)
+          | Key_t _, k ->
+            Lwt.return (Gas.consume ctxt Unparse_costs.key) >>=? fun ctxt ->
+            begin
+              match mode with
+              | Optimized ->
+                let bytes = Data_encoding.Binary.to_bytes_exn Signature.Public_key.encoding k in
+                return (Bytes (-1, bytes), ctxt)
+              | Readable ->
+                return (String (-1, Signature.Public_key.to_b58check k), ctxt)
+            end
+          | Key_hash_t _, k ->
+            Lwt.return (Gas.consume ctxt Unparse_costs.key_hash) >>=? fun ctxt ->
+            begin
+              match mode with
+              | Optimized ->
+                let bytes = Data_encoding.Binary.to_bytes_exn Signature.Public_key_hash.encoding k in
+                return (Bytes (-1, bytes), ctxt)
+              | Readable ->
+                return (String (-1, Signature.Public_key_hash.to_b58check k), ctxt)
+            end
+          | Operation_t _, (op, _big_map_diff) ->
+            let bytes = Data_encoding.Binary.to_bytes_exn Alpha_context.Operation.internal_operation_encoding op in
+            Lwt.return (Gas.consume ctxt (Unparse_costs.operation bytes)) >>=? fun ctxt ->
+            return (Bytes (-1, bytes), ctxt)
+          | Chain_id_t _, chain_id ->
+            let bytes = Data_encoding.Binary.to_bytes_exn Chain_id.encoding chain_id in
+            Lwt.return (Gas.consume ctxt (Unparse_costs.chain_id bytes)) >>=? fun ctxt ->
+            return (Bytes (-1, bytes), ctxt)
+          | Pair_t ((tl, _, _), (tr, _, _), _, _), (l, r) ->
+            Lwt.return (Gas.consume ctxt Unparse_costs.pair) >>=? fun ctxt ->
+            unparse_data_generic ctxt mode tl l >>=? fun (l, ctxt) ->
+            unparse_data_generic ctxt mode tr r >>=? fun (r, ctxt) ->
+            return (Prim (-1, D_Pair, [ l; r ], []), ctxt)
+          | Union_t ((tl, _), _, _, _), L l ->
+            Lwt.return (Gas.consume ctxt Unparse_costs.union) >>=? fun ctxt ->
+            unparse_data_generic ctxt mode tl l >>=? fun (l, ctxt) ->
+            return (Prim (-1, D_Left, [ l ], []), ctxt)
+          | Union_t (_, (tr, _), _, _), R r ->
+            Lwt.return (Gas.consume ctxt Unparse_costs.union) >>=? fun ctxt ->
+            unparse_data_generic ctxt mode tr r >>=? fun (r, ctxt) ->
+            return (Prim (-1, D_Right, [ r ], []), ctxt)
+          | Option_t (t, _, _), Some v ->
+            Lwt.return (Gas.consume ctxt Unparse_costs.some) >>=? fun ctxt ->
+            unparse_data_generic ctxt mode t v >>=? fun (v, ctxt) ->
+            return (Prim (-1, D_Some, [ v ], []), ctxt)
+          | Option_t _, None ->
+            Lwt.return (Gas.consume ctxt Unparse_costs.none) >>=? fun ctxt ->
+            return (Prim (-1, D_None, [], []), ctxt)
+          | List_t (t, _, _), items ->
+            fold_left_s
+              (fun (l, ctxt) element ->
+                 Lwt.return (Gas.consume ctxt Unparse_costs.list_element) >>=? fun ctxt ->
+                 unparse_data_generic ctxt mode t element >>=? fun (unparsed, ctxt) ->
+                 return (unparsed :: l, ctxt))
+              ([], ctxt)
+              items >>=? fun (items, ctxt) ->
+            return (Micheline.Seq (-1, List.rev items), ctxt)
+          | Set_t (t, _), set ->
+            let t = ty_of_comparable_ty t in
+            fold_left_s
+              (fun (l, ctxt) item ->
+                 Lwt.return (Gas.consume ctxt Unparse_costs.set_element) >>=? fun ctxt ->
+                 unparse_data_generic ctxt mode t item >>=? fun (item, ctxt) ->
+                 return (item :: l, ctxt))
+              ([], ctxt)
+              (set_fold (fun e acc -> e :: acc) set []) >>=? fun (items, ctxt) ->
+            return (Micheline.Seq (-1, items), ctxt)
+          | Map_t (kt, vt, _, _), map ->
+            let kt = ty_of_comparable_ty kt in
+            fold_left_s
+              (fun (l, ctxt) (k, v) ->
+                 Lwt.return (Gas.consume ctxt Unparse_costs.map_element) >>=? fun ctxt ->
+                 unparse_data_generic ctxt mode kt k >>=? fun (key, ctxt) ->
+                 unparse_data_generic ctxt mode vt v >>=? fun (value, ctxt) ->
+                 return (Prim (-1, D_Elt, [ key ; value ], []) :: l, ctxt))
+              ([], ctxt)
+              (map_fold (fun k v acc -> (k, v) :: acc) map []) >>=? fun (items, ctxt) ->
+            return (Micheline.Seq (-1, items), ctxt)
+          | Big_map_t (kt, vt, _), { id = None ; diff = (module Diff) ; _ } ->
+            (* this branch is to allow roundtrip of big map literals *)
+            let kt = ty_of_comparable_ty kt in
+            fold_left_s
+              (fun (l, ctxt) (k, v) ->
+                 Lwt.return (Gas.consume ctxt Unparse_costs.map_element) >>=? fun ctxt ->
+                 unparse_data_generic ctxt mode kt k >>=? fun (key, ctxt) ->
+                 unparse_data_generic ctxt mode vt v >>=? fun (value, ctxt) ->
+                 return (Prim (-1, D_Elt, [ key ; value ], []) :: l, ctxt))
+              ([], ctxt)
+              (Diff.OPS.fold
+                 (fun k v acc -> match v with | None -> acc | Some v -> (k, v) :: acc)
+                 (fst Diff.boxed) []) >>=? fun (items, ctxt) ->
+            return (Micheline.Seq (-1, items), ctxt)
+          | Big_map_t (_kt, _kv, _), { id = Some id ; diff = (module Diff) ; _ } ->
+            if Compare.Int.(Diff.OPS.cardinal (fst Diff.boxed) = 0) then
+              return (Micheline.Int (-1, id), ctxt)
+            else
+              (* this can only be the result of an execution and the map
+                 must have been flushed at this point *)
+              assert false
+          | Lambda_t _, Lam (_, original_code) ->
+            unparse_code_generic ctxt ~mapper mode original_code
+        )
 
-  and unparse_code_generic ctxt ?mapper mode = function
+  and unparse_code_generic ctxt ?mapper mode =
+    let legacy = true in
+    function
     | Prim (loc, I_PUSH, [ ty ; data ], annot) ->
-       Lwt.return (parse_ty ctxt ~allow_big_map:false ~allow_operation:false ty) >>=? fun (Ex_ty t, ctxt) ->
-       parse_data ctxt t data >>=? fun (data, ctxt) ->
-       unparse_data_generic ?mapper ctxt mode t data >>=? fun (data, ctxt) ->
-       Lwt.return (Gas.consume ctxt (Unparse_costs.prim_cost 2 annot)) >>=? fun ctxt ->
-       return (Prim (loc, I_PUSH, [ ty ; data ], annot), ctxt)
+      Lwt.return (parse_packable_ty ctxt ~legacy ty) >>=? fun (Ex_ty t, ctxt) ->
+      parse_data ctxt ~legacy t data >>=? fun (data, ctxt) ->
+      unparse_data_generic ctxt ?mapper mode t data >>=? fun (data, ctxt) ->
+      Lwt.return (Gas.consume ctxt (Unparse_costs.prim_cost 2 annot)) >>=? fun ctxt ->
+      return (Prim (loc, I_PUSH, [ ty ; data ], annot), ctxt)
     | Seq (loc, items) ->
-       fold_left_s
-         (fun (l, ctxt) item ->
-           unparse_code_generic ?mapper ctxt mode item >>=? fun (item, ctxt) ->
+      fold_left_s
+        (fun (l, ctxt) item ->
+           unparse_code_generic ctxt ?mapper mode item >>=? fun (item, ctxt) ->
            return (item :: l, ctxt))
-         ([], ctxt) items >>=? fun (items, ctxt) ->
-       Lwt.return (Gas.consume ctxt (Unparse_costs.seq_cost (List.length items))) >>=? fun ctxt ->
-       return (Micheline.Seq (loc, List.rev items), ctxt)
+        ([], ctxt) items >>=? fun (items, ctxt) ->
+      Lwt.return (Gas.consume ctxt (Unparse_costs.seq_cost (List.length items))) >>=? fun ctxt ->
+      return (Micheline.Seq (loc, List.rev items), ctxt)
     | Prim (loc, prim, items, annot) ->
-       fold_left_s
-         (fun (l, ctxt) item ->
-           unparse_code_generic ?mapper ctxt mode item >>=? fun (item, ctxt) ->
+      fold_left_s
+        (fun (l, ctxt) item ->
+           unparse_code_generic ctxt ?mapper mode item >>=? fun (item, ctxt) ->
            return (item :: l, ctxt))
-         ([], ctxt) items >>=? fun (items, ctxt) ->
-       Lwt.return (Gas.consume ctxt (Unparse_costs.prim_cost 3 annot)) >>=? fun ctxt ->
-       return (Prim (loc, prim, List.rev items, annot), ctxt)
+        ([], ctxt) items >>=? fun (items, ctxt) ->
+      Lwt.return (Gas.consume ctxt (Unparse_costs.prim_cost 3 annot)) >>=? fun ctxt ->
+      return (Prim (loc, prim, List.rev items, annot), ctxt)
     | Int _ | String _ | Bytes _ as atom -> return (atom, ctxt)
-
 
 end
 

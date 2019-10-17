@@ -42,7 +42,7 @@ depends: [
   "tezos-data-encoding"
   "tezos-protocol-environment"
   "tezos-protocol-alpha"
-  "tezos-protocol-alpha-parameters"
+  "tezos-protocol-005-PsBabyM1-parameters"
   "michelson-parser"
   "simple-utils"
   "tezos-utils"

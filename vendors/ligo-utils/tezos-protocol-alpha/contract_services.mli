@@ -29,11 +29,9 @@ val list:
   'a #RPC_context.simple -> 'a -> Contract.t list shell_tzresult Lwt.t
 
 type info = {
-  manager: public_key_hash ;
   balance: Tez.t ;
-  spendable: bool ;
-  delegate: bool * public_key_hash option ;
-  counter: counter ;
+  delegate: public_key_hash option ;
+  counter: counter option ;
   script: Script.t option ;
 }
 
@@ -45,11 +43,8 @@ val info:
 val balance:
   'a #RPC_context.simple -> 'a -> Contract.t -> Tez.t shell_tzresult Lwt.t
 
-val manager:
-  'a #RPC_context.simple -> 'a -> Contract.t -> public_key_hash shell_tzresult Lwt.t
-
 val manager_key:
-  'a #RPC_context.simple -> 'a -> Contract.t -> (public_key_hash * public_key option) shell_tzresult Lwt.t
+  'a #RPC_context.simple -> 'a -> public_key_hash -> public_key option shell_tzresult Lwt.t
 
 val delegate:
   'a #RPC_context.simple -> 'a -> Contract.t -> public_key_hash shell_tzresult Lwt.t
@@ -57,14 +52,8 @@ val delegate:
 val delegate_opt:
   'a #RPC_context.simple -> 'a -> Contract.t -> public_key_hash option shell_tzresult Lwt.t
 
-val is_delegatable:
-  'a #RPC_context.simple -> 'a -> Contract.t -> bool shell_tzresult Lwt.t
-
-val is_spendable:
-  'a #RPC_context.simple -> 'a -> Contract.t -> bool shell_tzresult Lwt.t
-
 val counter:
-  'a #RPC_context.simple -> 'a -> Contract.t -> counter shell_tzresult Lwt.t
+  'a #RPC_context.simple -> 'a -> public_key_hash -> counter shell_tzresult Lwt.t
 
 val script:
   'a #RPC_context.simple -> 'a -> Contract.t -> Script.t shell_tzresult Lwt.t
@@ -75,12 +64,22 @@ val script_opt:
 val storage:
   'a #RPC_context.simple -> 'a -> Contract.t -> Script.expr shell_tzresult Lwt.t
 
+val entrypoint_type:
+  'a #RPC_context.simple -> 'a -> Contract.t -> string -> Script.expr shell_tzresult Lwt.t
+
+val list_entrypoints:
+  'a #RPC_context.simple -> 'a -> Contract.t ->
+  (Michelson_v1_primitives.prim list list *
+   (string * Script.expr) list) shell_tzresult Lwt.t
+
 val storage_opt:
   'a #RPC_context.simple -> 'a -> Contract.t -> Script.expr option shell_tzresult Lwt.t
 
-val big_map_get_opt:
-  'a #RPC_context.simple -> 'a -> Contract.t -> Script.expr * Script.expr ->
-  Script.expr option shell_tzresult Lwt.t
+val big_map_get:
+  'a #RPC_context.simple -> 'a -> Z.t -> Script_expr_hash.t ->
+  Script.expr shell_tzresult Lwt.t
 
+val contract_big_map_get_opt:
+  'a #RPC_context.simple -> 'a -> Contract.t -> Script.expr * Script.expr -> Script.expr option shell_tzresult Lwt.t
 
 val register: unit -> unit

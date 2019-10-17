@@ -142,17 +142,19 @@ let earlier_predecessor_timestamp ctxt level =
 let check_timestamp c priority pred_timestamp =
   minimal_time c priority pred_timestamp >>=? fun minimal_time ->
   let timestamp = Alpha_context.Timestamp.current c in
-  fail_unless Timestamp.(minimal_time <= timestamp)
-    (Timestamp_too_early (minimal_time, timestamp))
+  Lwt.return
+    (record_trace (Timestamp_too_early (minimal_time, timestamp))
+       Timestamp.(timestamp -? minimal_time))
 
 let check_baking_rights c { Block_header.priority ; _ }
     pred_timestamp =
   let level = Level.current c in
   Roll.baking_rights_owner c level ~priority >>=? fun delegate ->
-  check_timestamp c priority pred_timestamp >>=? fun () ->
-  return delegate
+  check_timestamp c priority pred_timestamp >>=? fun block_delay ->
+  return (delegate, block_delay)
 
 type error += Incorrect_priority (* `Permanent *)
+type error += Incorrect_number_of_endorsements (* `Permanent *)
 
 let () =
   register_error_kind
@@ -166,7 +168,34 @@ let () =
     (function Incorrect_priority -> Some () | _ -> None)
     (fun () -> Incorrect_priority)
 
-let endorsement_reward ctxt ~block_priority:prio n =
+let () =
+  let description = "The number of endorsements must be non-negative and \
+                     at most the endosers_per_block constant." in
+  register_error_kind
+    `Permanent
+    ~id:"incorrect_number_of_endorsements"
+    ~title:"Incorrect number of endorsements"
+    ~description
+    ~pp:(fun ppf () -> Format.fprintf ppf "%s" description)
+    Data_encoding.unit
+    (function Incorrect_number_of_endorsements -> Some () | _ -> None)
+    (fun () -> Incorrect_number_of_endorsements)
+
+let baking_reward ctxt ~block_priority:prio ~included_endorsements:num_endo =
+  fail_unless Compare.Int.(prio >= 0) Incorrect_priority >>=? fun () ->
+  let max_endorsements = Constants.endorsers_per_block ctxt in
+  fail_unless Compare.Int.(num_endo >= 0 && num_endo <= max_endorsements)
+    Incorrect_number_of_endorsements >>=? fun () ->
+  let prio_factor_denominator = Int64.(succ (of_int prio)) in
+  let endo_factor_numerator = Int64.of_int (8 + 2 * num_endo / max_endorsements) in
+  let endo_factor_denominator = 10L in
+  Lwt.return
+    Tez.(
+      Constants.block_reward ctxt *? endo_factor_numerator >>? fun val1 ->
+      val1 /? endo_factor_denominator >>? fun val2 ->
+      val2 /? prio_factor_denominator)
+
+let endorsing_reward ctxt ~block_priority:prio n =
   if Compare.Int.(prio >= 0)
   then
     Lwt.return
@@ -271,9 +300,7 @@ let check_signature block chain_id key =
     fail (Invalid_block_signature (Block_header.hash block,
                                    Signature.Public_key.hash key))
 
-let max_fitness_gap ctxt =
-  let slots = Int64.of_int (Constants.endorsers_per_block ctxt + 1) in
-  Int64.add slots 1L
+let max_fitness_gap _ctxt = 1L
 
 let check_fitness_gap ctxt (block : Block_header.t) =
   let current_fitness = Fitness.current ctxt in
@@ -294,3 +321,36 @@ let dawn_of_a_new_cycle ctxt =
     return_some level.cycle
   else
     return_none
+
+let minimum_allowed_endorsements ctxt ~block_delay =
+  let minimum = Constants.initial_endorsers ctxt in
+  let delay_per_missing_endorsement =
+    Int64.to_int
+      (Period.to_seconds
+         (Constants.delay_per_missing_endorsement ctxt))
+  in
+  let reduced_time_constraint =
+    let delay = Int64.to_int (Period.to_seconds block_delay) in
+    if Compare.Int.(delay_per_missing_endorsement = 0) then
+      delay
+    else
+      delay / delay_per_missing_endorsement
+  in
+  Compare.Int.max 0 (minimum - reduced_time_constraint)
+
+let minimal_valid_time ctxt ~priority ~endorsing_power =
+  let predecessor_timestamp = Timestamp.current ctxt in
+  minimal_time ctxt
+    priority predecessor_timestamp >>=? fun minimal_time ->
+  let minimal_required_endorsements = Constants.initial_endorsers ctxt in
+  let delay_per_missing_endorsement =
+    Constants.delay_per_missing_endorsement ctxt
+  in
+  let missing_endorsements =
+    Compare.Int.max 0 (minimal_required_endorsements - endorsing_power) in
+  match Period.mult
+          (Int32.of_int missing_endorsements)
+          delay_per_missing_endorsement with
+  | Ok delay ->
+      return (Time.add minimal_time (Period.to_seconds delay))
+  | Error _ as err -> Lwt.return err

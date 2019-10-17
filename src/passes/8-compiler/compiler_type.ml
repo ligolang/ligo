@@ -32,24 +32,24 @@ module Ty = struct
   let mutez = Mutez_t None
   let string = String_t None
   let key = Key_t None
-  let list a = List_t (a, None)
+  let list a = List_t (a, None , has_big_map a)
   let set a = Set_t (a, None)
   let address = Address_t None
-  let option a = Option_t ((a, None), None, None)
+  let option a = Option_t (a, None , has_big_map a)
   let contract a = Contract_t (a, None)
   let lambda a b = Lambda_t (a, b, None)
   let timestamp = Timestamp_t None
-  let map a b = Map_t (a, b, None)
-  let pair a b = Pair_t ((a, None, None), (b, None, None), None)
-  let union a b = Union_t ((a, None), (b, None), None)
+  let map a b = Map_t (a, b, None , has_big_map b)
+  let pair a b = Pair_t ((a, None, None), (b, None, None), None , has_big_map a || has_big_map b)
+  let union a b = Union_t ((a, None), (b, None), None , has_big_map a || has_big_map b)
 
   let field_annot = Option.map (fun ann -> `Field_annot ann)
 
   let union_ann (anna, a) (annb, b) =
-    Union_t ((a, field_annot anna), (b, field_annot annb), None)
+    Union_t ((a, field_annot anna), (b, field_annot annb), None , has_big_map a || has_big_map b)
 
   let pair_ann (anna, a) (annb, b) =
-    Pair_t ((a, field_annot anna, None), (b, field_annot annb, None), None)
+    Pair_t ((a, field_annot anna, None), (b, field_annot annb, None), None , has_big_map a || has_big_map b)
 
   let not_comparable name () = error (thunk "not a comparable type") (fun () -> name) ()
   let not_compilable_type name () = error (thunk "not a compilable type") (fun () -> name) ()
