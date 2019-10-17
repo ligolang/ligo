@@ -67,6 +67,9 @@ let i_assert_some = i_if_none (seq [i_push_string "ASSERT_SOME" ; i_failwith]) (
 let i_assert_some_msg msg = i_if_none (seq [msg ; i_failwith]) (seq [])
 
 let dip code : michelson = prim ~children:[seq [code]] I_DIP
+let dipn n code = prim ~children:[Int (0 , Z.of_int n) ; seq [code]] I_DIP
+let i_dig n : michelson = prim ~children:[Int (0 , Z.of_int n)] I_DIG
+let i_dug n : michelson = prim ~children:[Int (0 , Z.of_int n)] I_DUG
 let i_unpair = seq [i_dup ; i_car ; dip i_cdr]
 let i_unpiar = seq [i_dup ; i_cdr ; dip i_car]
 

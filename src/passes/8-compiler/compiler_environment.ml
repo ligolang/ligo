@@ -14,31 +14,46 @@ let get : environment -> string -> michelson result = fun e s ->
       error title content in
     generic_try error @@
     (fun () -> Environment.get_i s e) in
-  let rec aux = fun n ->
+  let rec aux_bubble = fun n ->
     match n with
     | 0 -> i_dup
     | n -> seq [
-        dip @@ aux (n - 1) ;
+        dip @@ aux_bubble (n - 1) ;
         i_swap ;
       ]
   in
-  let code = aux position in
+  let aux_dig = fun n -> seq [
+      dipn n i_dup ;
+      i_dig n ;
+    ]
+  in
+  let code =
+    if position < 2
+    then aux_bubble position
+    else aux_dig position in
 
   ok code
 
 let set : environment -> string -> michelson result = fun e s ->
   let%bind (_ , position) =
-    generic_try (simple_error "Environment.get") @@
+    generic_try (simple_error "Environment.set") @@
     (fun () -> Environment.get_i s e) in
-  let rec aux = fun n ->
+  let rec aux_bubble = fun n ->
     match n with
     | 0 -> dip i_drop
     | n -> seq [
         i_swap ;
-        dip (aux (n - 1)) ;
+        dip (aux_bubble (n - 1)) ;
       ]
   in
-  let code = aux position in
+  let aux_dug = fun n -> seq [
+      dipn (n + 1) i_drop ;
+      i_dug n ;
+    ] in
+  let code =
+    if position < 2
+    then aux_bubble position
+    else aux_dug position in
 
   ok code
 
