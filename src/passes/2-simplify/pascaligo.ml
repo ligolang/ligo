@@ -35,26 +35,6 @@ module Errors = struct
     ] in
     error ~data title message
 
-  let unsupported_proc_decl decl =
-    let title () = "procedure declarations" in
-    let message () =
-      Format.asprintf "procedures are not supported yet" in
-    let data = [
-      ("declaration",
-       fun () -> Format.asprintf "%a" Location.pp_lift @@ decl.Region.region)
-    ] in
-    error ~data title message
-
-  let unsupported_local_proc region =
-    let title () = "local procedure declarations" in
-    let message () =
-      Format.asprintf "local procedures are not supported yet" in
-    let data = [
-      ("declaration",
-       fun () -> Format.asprintf "%a" Location.pp_lift @@ region)
-    ] in
-    error ~data title message
-
   let corner_case ~loc message =
     let title () = "corner case" in
     let content () = "We don't have a good error message for this case. \
@@ -85,16 +65,6 @@ module Errors = struct
     let data = [
       ("expr_loc",
        fun () -> Format.asprintf "%a" Location.pp_lift @@ expr_loc)
-    ] in
-    error ~data title message
-
-  let unsupported_proc_calls call =
-    let title () = "procedure calls" in
-    let message () =
-      Format.asprintf "procedure calls are not supported yet" in
-    let data = [
-      ("call_loc",
-       fun () -> Format.asprintf "%a" Location.pp_lift @@ call.Region.region)
     ] in
     error ~data title message
 
@@ -273,10 +243,11 @@ let rec simpl_type_expression (t:Raw.type_expr) : type_expression result =
         let args =
           match v.value.args with
             None -> []
-          | Some (_, product) ->
-              npseq_to_list product.value in
-        let%bind te = simpl_list_type_expression
-          @@ args in
+          | Some (_, t_expr) ->
+              match t_expr with
+                TProd product -> npseq_to_list product.value
+              | _ -> [t_expr] in
+        let%bind te = simpl_list_type_expression @@ args in
         ok (v.value.constr.value, te)
       in
       let%bind lst = bind_list
@@ -345,8 +316,7 @@ let rec simpl_expression (t:Raw.expr) : expr result =
     let (x' , loc) = r_split x in
     return @@ e_literal ~loc (Literal_bytes (Bytes.of_string @@ fst x'))
   | ETuple tpl ->
-      let (Raw.TupleInj tpl') = tpl in
-      let (tpl' , loc) = r_split tpl' in
+      let (tpl' , loc) = r_split tpl in
       simpl_tuple_expression ~loc @@ npseq_to_list tpl'.inside
   | ERecord r ->
       let%bind fields = bind_list
@@ -550,8 +520,7 @@ and simpl_local_declaration : Raw.local_decl -> _ result = fun t ->
       let (f , loc) = r_split f in
       let%bind (name , e) = simpl_fun_declaration ~loc f in
       return_let_in ~loc name e
-  | LocalProc d ->
-      fail @@ unsupported_local_proc d.Region.region
+
 and simpl_data_declaration : Raw.data_decl -> _ result = fun t ->
   match t with
   | LocalVar x ->
@@ -659,13 +628,11 @@ and simpl_declaration : Raw.declaration -> declaration Location.wrap result =
         ok @@ Declaration_constant (name.value , type_annotation , expression)
       in
       bind_map_location simpl_const_decl (Location.lift_region x)
-  | LambdaDecl (FunDecl x) -> (
+  | FunDecl x -> (
       let (x , loc) = r_split x in
       let%bind ((name , ty_opt) , expr) = simpl_fun_declaration ~loc x in
       ok @@ Location.wrap ~loc (Declaration_constant (name , ty_opt , expr))
     )
-  | LambdaDecl (ProcDecl decl) ->
-      fail @@ unsupported_proc_decl decl
 
 and simpl_statement : Raw.statement -> (_ -> expression result) result =
   fun s ->
@@ -728,7 +695,7 @@ and simpl_single_instruction : Raw.single_instr -> (_ -> expression result) resu
               | Name name -> ok (name.value , e_variable name.value, [])
               | Path p ->
                 let (name,p') = simpl_path v'.path in
-                let%bind accessor = simpl_projection p in 
+                let%bind accessor = simpl_projection p in
                 ok @@ (name , accessor , p')
             in
             let%bind key_expr = simpl_expression v'.index.value.inside in
@@ -882,7 +849,7 @@ and simpl_cases : type a . (Raw.pattern * a) list -> a matching result = fun t -
         | [] -> ok x'
         | _ -> ok t
       )
-    | _ -> fail @@ corner_case ~loc:__LOC__ "unexpected pattern" in
+    | pattern -> ok pattern in
   let get_constr (t: Raw.pattern) =
     match t with
     | PConstr v -> (

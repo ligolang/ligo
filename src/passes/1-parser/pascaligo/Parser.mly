@@ -114,9 +114,9 @@ contract:
   }
 
 declaration:
-  type_decl   {    TypeDecl $1 }
-| const_decl  {   ConstDecl $1 }
-| lambda_decl {  LambdaDecl $1 }
+  type_decl  {   TypeDecl $1 }
+| const_decl {  ConstDecl $1 }
+| fun_decl   {    FunDecl $1 }
 
 (* Type declarations *)
 
@@ -137,23 +137,27 @@ type_decl:
   }
 
 type_expr:
-  cartesian   {   TProd $1 }
-| sum_type    {    TSum $1 }
+  sum_type    {    TSum $1 }
 | record_type { TRecord $1 }
+| cartesian   {         $1 }
 
 cartesian:
-  nsepseq(function_type,TIMES) {
-    let region = nsepseq_to_region type_expr_to_region $1
-    in {region; value=$1}}
+  function_type TIMES nsepseq(function_type,TIMES) {
+    let value  = Utils.nsepseq_cons $1 $2 $3 in
+    let region = nsepseq_to_region type_expr_to_region value
+    in TProd {region; value}
+  }
+| function_type { ($1 : type_expr) }
 
 function_type:
   core_type {
     $1
   }
 | core_type ARROW function_type {
-    let region = cover (type_expr_to_region $1)
-                       (type_expr_to_region $3)
-    in TFun {region; value = ($1, $2, $3)} }
+    let start  = type_expr_to_region $1
+    and stop   = type_expr_to_region $3 in
+    let region = cover start stop in
+    TFun {region; value = $1,$2,$3} }
 
 core_type:
   type_name {
@@ -200,7 +204,7 @@ sum_type:
 
 variant:
   Constr Of cartesian {
-    let region = cover $1.region $3.region
+    let region = cover $1.region (type_expr_to_region $3)
     and value = {constr = $1; args = Some ($2, $3)}
     in {region; value}
   }
@@ -235,11 +239,7 @@ field_decl:
     and value  = {field_name = $1; colon = $2; field_type = $3}
     in {region; value} }
 
-(* Function and procedure declarations *)
-
-lambda_decl:
-  fun_decl   {   FunDecl $1 }
-| proc_decl  {  ProcDecl $1 }
+(* Function declarations *)
 
 fun_decl:
   Function fun_name parameters COLON type_expr Is
@@ -264,26 +264,6 @@ fun_decl:
       return       = $10;
       terminator   = $11}
     in {region; value}}
-
-proc_decl:
-  Procedure fun_name parameters Is
-    seq(local_decl)
-    block option(SEMI)
-    {
-     let stop =
-       match $7 with
-         Some region -> region
-       |        None -> $6.region in
-     let region = cover $1 stop
-     and value = {
-       kwd_procedure = $1;
-       name          = $2;
-       param         = $3;
-       kwd_is        = $4;
-       local_decls   = $5;
-       block         = $6;
-       terminator    = $7}
-     in {region; value}}
 
 parameters:
   par(nsepseq(param_decl,SEMI)) { $1 }
@@ -310,7 +290,7 @@ param_decl:
     in ParamConst {region; value}}
 
 param_type:
-  cartesian { TProd $1 }
+  cartesian { $1 }
 
 block:
   Begin sep_or_term_list(statement,SEMI) End {
@@ -342,7 +322,7 @@ open_data_decl:
 | open_var_decl   { LocalVar   $1 }
 
 open_const_decl:
-  Const unqualified_decl(EQUAL) {
+  Const unqualified_decl(EQ) {
     let name, colon, const_type, equal, init, stop = $2 in
     let region = cover $1 stop
     and value = {
@@ -371,7 +351,6 @@ open_var_decl:
 
 local_decl:
   fun_decl  { LocalFun  $1 }
-| proc_decl { LocalProc $1 }
 | data_decl { LocalData $1 }
 
 data_decl:
@@ -616,37 +595,41 @@ while_loop:
     in While {region; value}}
 
 for_loop:
-  For var_assign Down? To expr option(step_clause) block {
-    let region = cover $1 $7.region in
+  For var_assign To expr block {
+    let region = cover $1 $5.region in
     let value = {
       kwd_for = $1;
       assign  = $2;
-      down    = $3;
-      kwd_to  = $4;
-      bound   = $5;
-      step    = $6;
-      block   = $7}
+      kwd_to  = $3;
+      bound   = $4;
+      block   = $5}
     in For (ForInt {region; value})
   }
-| For var option(arrow_clause) In expr block {
-    let region = cover $1 $6.region in
+| For var option(arrow_clause) COLON type_expr
+  In collection expr block {
+    let region = cover $1 $9.region in
     let value = {
-      kwd_for = $1;
-      var     = $2;
-      bind_to = $3;
-      kwd_in  = $4;
-      expr    = $5;
-      block   = $6}
+      kwd_for    = $1;
+      var        = $2;
+      bind_to    = $3;
+      colon      = $4;
+      elt_type   = $5;
+      kwd_in     = $6;
+      collection = $7;
+      expr       = $8;
+      block      = $9}
     in For (ForCollect {region; value})}
+
+collection:
+  Map  { Map  $1 }
+| Set  { Set  $1 }
+| List { List $1 }
 
 var_assign:
   var ASS expr {
     let region = cover $1.region (expr_to_region $3)
     and value  = {name = $1; assign = $2; expr = $3}
     in {region; value}}
-
-step_clause:
-  Step expr { $1,$2 }
 
 arrow_clause:
   ARROW var { $1,$2 }
@@ -701,7 +684,7 @@ comp_expr:
     and value  = {arg1 = $1; op = $2; arg2 = $3}
     in ELogic (CompExpr (Lt {region; value}))
   }
-| comp_expr LEQ cat_expr {
+| comp_expr LE cat_expr {
     let start  = expr_to_region $1
     and stop   = expr_to_region $3 in
     let region = cover start stop
@@ -715,21 +698,21 @@ comp_expr:
     and value  = {arg1 = $1; op = $2; arg2 = $3}
     in ELogic (CompExpr (Gt {region; value}))
   }
-| comp_expr GEQ cat_expr {
+| comp_expr GE cat_expr {
     let start  = expr_to_region $1
     and stop   = expr_to_region $3 in
     let region = cover start stop
     and value  = {arg1 = $1; op = $2; arg2 = $3}
     in ELogic (CompExpr (Geq {region; value}))
   }
-| comp_expr EQUAL cat_expr {
+| comp_expr EQ cat_expr {
     let start  = expr_to_region $1
     and stop   = expr_to_region $3 in
     let region = cover start stop
     and value  = {arg1 = $1; op = $2; arg2 = $3}
     in ELogic (CompExpr (Equal {region; value}))
   }
-| comp_expr NEQ cat_expr {
+| comp_expr NE cat_expr {
     let start  = expr_to_region $1
     and stop   = expr_to_region $3 in
     let region = cover start stop
@@ -826,6 +809,7 @@ core_expr:
 | C_Unit           { EUnit $1                     }
 | annot_expr       { EAnnot $1                    }
 | tuple_expr       { ETuple $1                    }
+| par(expr)        { EPar $1                      }
 | list_expr        { EList $1                     }
 | C_None           { EConstr (NoneExpr $1)        }
 | fun_call         { ECall $1                     }
@@ -906,7 +890,7 @@ record_expr:
    in {region; value} }
 
 field_assignment:
-  field_name EQUAL expr {
+  field_name EQ expr {
     let region = cover $1.region (expr_to_region $3)
     and value = {
       field_name = $1;
@@ -920,13 +904,14 @@ fun_call:
     in {region; value = $1,$2}}
 
 tuple_expr:
-  tuple_inj { TupleInj $1 }
+  par(tuple_comp) { $1 }
 
-tuple_inj:
-  par(nsepseq(expr,COMMA)) { $1 }
+tuple_comp:
+  expr COMMA nsepseq(expr,COMMA) {
+    Utils.nsepseq_cons $1 $2 $3}
 
 arguments:
-  tuple_inj { $1 }
+  par(nsepseq(expr,COMMA)) { $1 }
 
 list_expr:
   injection(List,expr) { List $1 }
@@ -935,14 +920,18 @@ list_expr:
 (* Patterns *)
 
 pattern:
-  nsepseq(core_pattern,CONS) {
-    let region = nsepseq_to_region pattern_to_region $1
-    in PCons {region; value=$1}}
+  core_pattern CONS nsepseq(core_pattern,CONS) {
+    let value = Utils.nsepseq_cons $1 $2 $3 in
+    let region = nsepseq_to_region pattern_to_region value
+    in PCons {region; value}}
+| core_pattern { $1 }
 
 core_pattern:
   var                      {    PVar $1 }
 | WILD                     {   PWild $1 }
 | Int                      {    PInt $1 }
+| Nat                      {    PNat $1 }
+| Bytes                    {  PBytes $1 }
 | String                   { PString $1 }
 | C_Unit                   {   PUnit $1 }
 | C_False                  {  PFalse $1 }

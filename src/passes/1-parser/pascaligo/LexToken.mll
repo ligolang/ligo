@@ -51,13 +51,13 @@ type t =
 | VBAR     of Region.t
 | ARROW    of Region.t
 | ASS      of Region.t
-| EQUAL    of Region.t
+| EQ       of Region.t
 | COLON    of Region.t
 | LT       of Region.t
-| LEQ      of Region.t
+| LE       of Region.t
 | GT       of Region.t
-| GEQ      of Region.t
-| NEQ      of Region.t
+| GE       of Region.t
+| NE       of Region.t
 | PLUS     of Region.t
 | MINUS    of Region.t
 | SLASH    of Region.t
@@ -183,13 +183,13 @@ let proj_token = function
 | VBAR     region -> region, "VBAR"
 | ARROW    region -> region, "ARROW"
 | ASS      region -> region, "ASS"
-| EQUAL    region -> region, "EQUAL"
+| EQ       region -> region, "EQ"
 | COLON    region -> region, "COLON"
 | LT       region -> region, "LT"
-| LEQ      region -> region, "LEQ"
+| LE       region -> region, "LE"
 | GT       region -> region, "GT"
-| GEQ      region -> region, "GEQ"
-| NEQ      region -> region, "NEQ"
+| GE       region -> region, "GE"
+| NE       region -> region, "NE"
 | PLUS     region -> region, "PLUS"
 | MINUS    region -> region, "MINUS"
 | SLASH    region -> region, "SLASH"
@@ -276,13 +276,13 @@ let to_lexeme = function
 | VBAR     _ -> "|"
 | ARROW    _ -> "->"
 | ASS      _ -> ":="
-| EQUAL    _ -> "="
+| EQ       _ -> "="
 | COLON    _ -> ":"
 | LT       _ -> "<"
-| LEQ      _ -> "<="
+| LE       _ -> "<="
 | GT       _ -> ">"
-| GEQ      _ -> ">="
-| NEQ      _ -> "=/="
+| GE       _ -> ">="
+| NE       _ -> "=/="
 | PLUS     _ -> "+"
 | MINUS    _ -> "-"
 | SLASH    _ -> "/"
@@ -480,9 +480,9 @@ let mk_int lexeme region =
   then Error Non_canonical_zero
   else Ok (Int Region.{region; value = lexeme, z})
 
-type invalid_natural =
-  | Invalid_natural
-  | Non_canonical_zero_nat
+type nat_err =
+  Invalid_natural
+| Non_canonical_zero_nat
 
 let mk_nat lexeme region =
   match (String.index_opt lexeme 'n') with
@@ -508,35 +508,42 @@ let mk_mtz lexeme region =
 
 let eof region = EOF region
 
+type sym_err = Invalid_symbol
+
 let mk_sym lexeme region =
   match lexeme with
-    ";"   -> SEMI     region
-  | ","   -> COMMA    region
-  | "("   -> LPAR     region
-  | ")"   -> RPAR     region
-  | "{"   -> LBRACE   region
-  | "}"   -> RBRACE   region
-  | "["   -> LBRACKET region
-  | "]"   -> RBRACKET region
-  | "#"   -> CONS     region
-  | "|"   -> VBAR     region
-  | "->"  -> ARROW    region
-  | ":="  -> ASS      region
-  | "="   -> EQUAL    region
-  | ":"   -> COLON    region
-  | "<"   -> LT       region
-  | "<="  -> LEQ      region
-  | ">"   -> GT       region
-  | ">="  -> GEQ      region
-  | "=/=" -> NEQ      region
-  | "+"   -> PLUS     region
-  | "-"   -> MINUS    region
-  | "/"   -> SLASH    region
-  | "*"   -> TIMES    region
-  | "."   -> DOT      region
-  | "_"   -> WILD     region
-  | "^"   -> CAT      region
-  |     _ -> assert false
+  (* Lexemes in common with all concrete syntaxes *)
+    ";"   -> Ok (SEMI     region)
+  | ","   -> Ok (COMMA    region)
+  | "("   -> Ok (LPAR     region)
+  | ")"   -> Ok (RPAR     region)
+  | "["   -> Ok (LBRACKET region)
+  | "]"   -> Ok (RBRACKET region)
+  | "{"   -> Ok (LBRACE   region)
+  | "}"   -> Ok (RBRACE   region)
+  | "="   -> Ok (EQ       region)
+  | ":"   -> Ok (COLON    region)
+  | "|"   -> Ok (VBAR     region)
+  | "->"  -> Ok (ARROW    region)
+  | "."   -> Ok (DOT      region)
+  | "_"   -> Ok (WILD     region)
+  | "^"   -> Ok (CAT      region)
+  | "+"   -> Ok (PLUS     region)
+  | "-"   -> Ok (MINUS    region)
+  | "*"   -> Ok (TIMES    region)
+  | "/"   -> Ok (SLASH    region)
+  | "<"   -> Ok (LT       region)
+  | "<="  -> Ok (LE      region)
+  | ">"   -> Ok (GT       region)
+  | ">="  -> Ok (GE      region)
+
+  (* Lexemes specific to PascaLIGO *)
+  | "=/=" -> Ok (NE       region)
+  | "#"   -> Ok (CONS     region)
+  | ":="  -> Ok (ASS      region)
+
+  (* Invalid lexemes *)
+  |     _ -> Error Invalid_symbol
 
 (* Identifiers *)
 
@@ -632,13 +639,13 @@ let is_sym = function
 | VBAR     _
 | ARROW    _
 | ASS      _
-| EQUAL    _
+| EQ       _
 | COLON    _
 | LT       _
-| LEQ      _
+| LE       _
 | GT       _
-| GEQ      _
-| NEQ      _
+| GE       _
+| NE       _
 | PLUS     _
 | MINUS    _
 | SLASH    _
