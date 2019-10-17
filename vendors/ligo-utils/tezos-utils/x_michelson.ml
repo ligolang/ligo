@@ -45,6 +45,8 @@ let i_push ty code = prim ~children:[ty;code] I_PUSH
 let i_push_unit = i_push t_unit d_unit
 let i_push_string str = i_push t_string (string str)
 
+let i_apply = prim I_APPLY
+
 let i_comment s : michelson = seq [ i_push_string s ; prim I_DROP ]
 
 let i_none ty = prim ~children:[ty] I_NONE

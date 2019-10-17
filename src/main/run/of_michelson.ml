@@ -10,16 +10,16 @@ let run ?options (* ?(is_input_value = false) *) (program:compiled_program) (inp
   let Compiler.Program.{input;output;body} : compiled_program = program in
   let (Ex_ty input_ty) = input in
   let (Ex_ty output_ty) = output in
-  (* let%bind input_ty_mich =
-   *   Trace.trace_tzresult_lwt (simple_error "error unparsing input ty") @@
-   *   Memory_proto_alpha.unparse_michelson_ty input_ty in
-   * let%bind output_ty_mich =
-   *   Trace.trace_tzresult_lwt (simple_error "error unparsing output ty") @@
-   *   Memory_proto_alpha.unparse_michelson_ty output_ty in
-   * Format.printf "code: %a\n" Michelson.pp program.body ;
-   * Format.printf "input_ty: %a\n" Michelson.pp input_ty_mich ;
-   * Format.printf "output_ty: %a\n" Michelson.pp output_ty_mich ;
-   * Format.printf "input: %a\n" Michelson.pp input_michelson ; *)
+  let%bind input_ty_mich =
+    Trace.trace_tzresult_lwt (simple_error "error unparsing input ty") @@
+    Memory_proto_alpha.unparse_michelson_ty input_ty in
+  let%bind output_ty_mich =
+    Trace.trace_tzresult_lwt (simple_error "error unparsing output ty") @@
+    Memory_proto_alpha.unparse_michelson_ty output_ty in
+  Format.printf "code: %a\n" Michelson.pp program.body ;
+  Format.printf "input_ty: %a\n" Michelson.pp input_ty_mich ;
+  Format.printf "output_ty: %a\n" Michelson.pp output_ty_mich ;
+  Format.printf "input: %a\n" Michelson.pp input_michelson ;
   let%bind input =
     Trace.trace_tzresult_lwt (simple_error "error parsing input") @@
     Memory_proto_alpha.parse_michelson_data input_michelson input_ty
