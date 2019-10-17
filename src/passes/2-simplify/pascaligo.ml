@@ -545,11 +545,8 @@ and simpl_fun_declaration :
   fun ~loc x ->
   let open! Raw in
   let {name;param;ret_type;local_decls;block;return} : fun_decl = x in
-  (match npseq_to_list param.value.inside with
-   | [] ->
-       fail @@
-       corner_case ~loc:__LOC__ "parameter-less function should not exist"
-   | [a] -> (
+  (match param.value.inside with
+     a, [] -> (
        let%bind input = simpl_param a in
        let name = name.value in
        let (binder , input_type) = input in
@@ -570,6 +567,7 @@ and simpl_fun_declaration :
        ok ((name , type_annotation) , expression)
      )
    | lst -> (
+       let lst = npseq_to_list lst in
        let arguments_name = "arguments" in
        let%bind params = bind_map_list simpl_param lst in
        let (binder , input_type) =
