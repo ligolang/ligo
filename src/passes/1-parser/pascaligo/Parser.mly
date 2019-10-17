@@ -377,10 +377,6 @@ var_decl:
 | open_var_decl { $1 }
 
 instruction:
-  single_instr {      Single $1 }
-| block        {      Block  $1 }
-
-single_instr:
   conditional  {        Cond $1 }
 | case_instr   {   CaseInstr $1 }
 | assignment   {      Assign $1 }
@@ -512,16 +508,19 @@ conditional:
     in {region; value} }
 
 if_clause:
-  instruction {
-    ClauseInstr $1
-  }
+  instruction  { ClauseInstr $1 }
+| clause_block { ClauseBlock $1 }
+
+clause_block:
+  block {
+    LongBlock $1 }
 | LBRACE sep_or_term_list(statement,SEMI) RBRACE {
-   let region = cover $1 $3 in
-   let value = {
-     lbrace = $1;
-     inside = $2;
-     rbrace = $3} in
-   ClauseBlock {value; region} }
+    let region = cover $1 $3 in
+    let value = {
+      lbrace = $1;
+      inside = $2;
+      rbrace = $3} in
+    ShortBlock {value; region} }
 
 case_instr:
   case(instruction) { $1 instr_to_region }
