@@ -64,4 +64,4 @@ else
     fi	   	   
 fi
 
-opam init -a --bare --disable-sandboxing
+opam init -a --bare

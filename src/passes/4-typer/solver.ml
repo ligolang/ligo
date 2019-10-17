@@ -70,22 +70,6 @@ module Wrap = struct
       in
       P_constant (csttag, List.map type_expression_to_type_value_copypasted args)
 
-  (** TODO *)
-  let type_declaration : I.declaration -> constraints = fun td ->
-    match td with
-    | Declaration_type (name , te) ->
-      let pattern = type_expression_to_type_value_copypasted te in
-      [C_equation (P_variable (name) , pattern)] (* TODO: this looks wrong. If this is a type declaration, it should not set any constraints. *)
-    | Declaration_constant (name, te, _) ->(
-        match te with 
-        | Some (exp) ->
-          let pattern = type_expression_to_type_value_copypasted exp in
-          [C_equation (P_variable (name) , pattern)] (* TODO: this looks wrong. If this is a type declaration, it should not set any constraints. *)
-        | None -> 
-          (** TODO *)
-          [] 
-      )
-
   let failwith_ : unit -> (constraints * O.type_variable) = fun () ->
     let type_name = Core.fresh_type_variable () in
     [] , type_name
