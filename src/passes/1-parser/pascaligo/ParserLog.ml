@@ -244,10 +244,6 @@ and print_statement buffer = function
 | Data  data  -> print_data_decl   buffer data
 
 and print_instruction buffer = function
-  Single instr -> print_single_instr buffer instr
-| Block  block -> print_block        buffer block
-
-and print_single_instr buffer = function
   Cond        {value; _} -> print_conditional buffer value
 | CaseInstr   {value; _} -> print_case_instr buffer value
 | Assign      assign     -> print_assignment buffer assign
@@ -273,7 +269,12 @@ and print_conditional buffer node =
 
 and print_if_clause buffer = function
   ClauseInstr instr -> print_instruction buffer instr
-| ClauseBlock {value; _} ->
+| ClauseBlock block -> print_clause_block buffer block
+
+and print_clause_block buffer = function
+  LongBlock block ->
+    print_block buffer block
+| ShortBlock {value; _} ->
     let {lbrace; inside; rbrace} = value in
     let statements, terminator = inside in
     print_token      buffer lbrace "{";
@@ -885,14 +886,6 @@ and pp_statement buffer ~pad:(_,pc as pad) = function
     pp_data_decl buffer ~pad:(mk_pad 1 0 pc) data_decl
 
 and pp_instruction buffer ~pad:(_,pc as pad) = function
-  Single single_instr ->
-    pp_node buffer ~pad "Single";
-    pp_single_instr buffer ~pad:(mk_pad 1 0 pc) single_instr
-| Block {value; _} ->
-    pp_node buffer ~pad "Block";
-    pp_statements buffer ~pad value.statements
-
-and pp_single_instr buffer ~pad:(_,pc as pad) = function
   Cond {value; _} ->
     pp_node buffer ~pad "Cond";
     pp_conditional buffer ~pad value
@@ -945,9 +938,17 @@ and pp_if_clause buffer ~pad:(_,pc as pad) = function
   ClauseInstr instr ->
     pp_node buffer ~pad "ClauseInstr";
     pp_instruction buffer ~pad:(mk_pad 1 0 pc) instr
-| ClauseBlock {value; _} ->
+| ClauseBlock block ->
     pp_node buffer ~pad "ClauseBlock";
-    let statements, _ = value.inside in
+    pp_clause_block buffer ~pad:(mk_pad 1 0 pc) block
+
+and pp_clause_block buffer ~pad = function
+  LongBlock {value; _} ->
+    pp_node buffer ~pad "LongBlock";
+    pp_statements buffer ~pad value.statements
+| ShortBlock {value; _} ->
+    pp_node buffer ~pad "ShortBlock";
+    let statements = fst value.inside in
     pp_statements buffer ~pad statements
 
 and pp_case :

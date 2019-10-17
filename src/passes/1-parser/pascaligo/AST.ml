@@ -284,10 +284,6 @@ and var_decl = {
 }
 
 and instruction =
-  Single of single_instr
-| Block  of block reg
-
-and single_instr =
   Cond        of conditional reg
 | CaseInstr   of instruction case reg
 | Assign      of assignment reg
@@ -355,7 +351,11 @@ and conditional = {
 
 and if_clause =
   ClauseInstr of instruction
-| ClauseBlock of (statements * semi option) braces reg
+| ClauseBlock of clause_block
+
+and clause_block =
+  LongBlock  of block reg
+| ShortBlock of (statements * semi option) braces reg
 
 and set_membership = {
   set          : expr;
@@ -661,7 +661,7 @@ and comp_expr_to_region = function
 | Neq   {region; _} -> region
 
 and arith_expr_to_region = function
-| Add  {region; _}
+  Add  {region; _}
 | Sub  {region; _}
 | Mult {region; _}
 | Div  {region; _}
@@ -675,7 +675,7 @@ and string_expr_to_region = function
   Cat    {region; _}
 | String {region; _} -> region
 
-and annot_expr_to_region ({region; _}) = region
+and annot_expr_to_region {region; _} = region
 
 and list_expr_to_region = function
   Cons {region; _}
@@ -694,24 +694,27 @@ let path_to_region = function
 | Path {region; _} -> region
 
 let instr_to_region = function
-  Single Cond                {region; _}
-| Single CaseInstr           {region; _}
-| Single Assign              {region; _}
-| Single Loop While          {region; _}
-| Single Loop For ForInt     {region; _}
-| Single Loop For ForCollect {region; _}
-| Single ProcCall            {region; _}
-| Single Skip                region
-| Single RecordPatch         {region; _}
-| Single MapPatch            {region; _}
-| Single SetPatch            {region; _}
-| Single MapRemove           {region; _}
-| Single SetRemove           {region; _}
-| Block                      {region; _} -> region
+  Cond                {region; _}
+| CaseInstr           {region; _}
+| Assign              {region; _}
+| Loop While          {region; _}
+| Loop For ForInt     {region; _}
+| Loop For ForCollect {region; _}
+| ProcCall            {region; _}
+| Skip                region
+| RecordPatch         {region; _}
+| MapPatch            {region; _}
+| SetPatch            {region; _}
+| MapRemove           {region; _}
+| SetRemove           {region; _} -> region
+
+let clause_block_to_region = function
+  LongBlock {region; _}
+| ShortBlock {region; _} -> region
 
 let if_clause_to_region = function
   ClauseInstr instr       -> instr_to_region instr
-| ClauseBlock {region; _} -> region
+| ClauseBlock clause_block -> clause_block_to_region clause_block
 
 let pattern_to_region = function
   PCons       {region; _}

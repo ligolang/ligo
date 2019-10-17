@@ -275,10 +275,6 @@ and var_decl = {
 }
 
 and instruction =
-  Single of single_instr
-| Block  of block reg
-
-and single_instr =
   Cond        of conditional reg
 | CaseInstr   of instruction case reg
 | Assign      of assignment reg
@@ -346,7 +342,11 @@ and conditional = {
 
 and if_clause =
   ClauseInstr of instruction
-| ClauseBlock of (statements * semi option) braces reg
+| ClauseBlock of clause_block
+
+and clause_block =
+  LongBlock  of block reg
+| ShortBlock of (statements * semi option) braces reg
 
 and set_membership = {
   set          : expr;

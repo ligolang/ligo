@@ -147,16 +147,6 @@ module Errors = struct
     ] in
     error ~data title message
 
-  let unsupported_sub_blocks b =
-    let title () = "block instructions" in
-    let message () =
-      Format.asprintf "Sub-blocks are not supported yet" in
-    let data = [
-      ("block_loc",
-       fun () -> Format.asprintf "%a" Location.pp_lift @@ b.Region.region)
-    ] in
-    error ~data title message
-
   (* Logging *)
 
   let simplifying_instruction t =
@@ -640,7 +630,7 @@ and simpl_statement : Raw.statement -> (_ -> expression result) result =
   | Instr i -> simpl_instruction i
   | Data d -> simpl_data_declaration d
 
-and simpl_single_instruction : Raw.single_instr -> (_ -> expression result) result =
+and simpl_single_instruction : Raw.instruction -> (_ -> expression result) result =
   fun t ->
   match t with
   | ProcCall x -> (
@@ -672,11 +662,23 @@ and simpl_single_instruction : Raw.single_instr -> (_ -> expression result) resu
       let (c , loc) = r_split c in
       let%bind expr = simpl_expression c.test in
       let%bind match_true = match c.ifso with
-        | ClauseInstr i -> simpl_instruction_block i
-        | ClauseBlock b -> simpl_statements @@ fst b.value.inside in
+          ClauseInstr i ->
+            simpl_single_instruction i
+        | ClauseBlock b ->
+            match b with
+              LongBlock {value; _} ->
+                simpl_block value
+            | ShortBlock {value; _} ->
+                simpl_statements @@ fst value.inside in
       let%bind match_false = match c.ifnot with
-        | ClauseInstr i -> simpl_instruction_block i
-        | ClauseBlock b -> simpl_statements @@ fst b.value.inside in
+          ClauseInstr i ->
+            simpl_single_instruction i
+        | ClauseBlock b ->
+            match b with
+              LongBlock {value; _} ->
+                simpl_block value
+            | ShortBlock {value; _} ->
+                simpl_statements @@ fst value.inside in
       let%bind match_true = match_true None in
       let%bind match_false = match_false None in
       return_statement @@ e_matching expr ~loc (Match_bool {match_true; match_false})
@@ -708,7 +710,7 @@ and simpl_single_instruction : Raw.single_instr -> (_ -> expression result) resu
       let%bind expr = simpl_expression c.expr in
       let%bind cases =
         let aux (x : Raw.instruction Raw.case_clause Raw.reg) =
-          let%bind i = simpl_instruction_block x.value.rhs in
+          let%bind i = simpl_instruction x.value.rhs in
           let%bind i = i None in
           ok (x.value.pattern, i) in
         bind_list
@@ -914,18 +916,9 @@ and simpl_cases : type a . (Raw.pattern * a) list -> a matching result = fun t -
         bind_map_list aux lst in
       ok @@ Match_variant constrs
 
-and simpl_instruction_block : Raw.instruction -> (_ -> expression result) result =
-  fun t ->
-  match t with
-  | Single s -> simpl_single_instruction s
-  | Block b -> simpl_block b.value
-
 and simpl_instruction : Raw.instruction -> (_ -> expression result) result =
   fun t ->
-  trace (simplifying_instruction t) @@
-  match t with
-  | Single s -> simpl_single_instruction s
-  | Block b -> fail @@ unsupported_sub_blocks b
+  trace (simplifying_instruction t) @@ simpl_single_instruction t
 
 and simpl_statements : Raw.statements -> (_ -> expression result) result =
   fun ss ->
