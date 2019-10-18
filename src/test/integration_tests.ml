@@ -587,9 +587,16 @@ let list () : unit result =
 
 let condition () : unit result =
   let%bind program = type_file "./contracts/condition.ligo" in
-  let make_input = e_int in
-  let make_expected = fun n -> e_int (if n = 2 then 42 else 0) in
-  expect_eq_n program "main" make_input make_expected
+  let%bind _ =
+    let make_input = e_int in
+    let make_expected = fun n -> e_int (if n = 2 then 42 else 0) in
+    expect_eq_n program "main" make_input make_expected
+  in
+  let%bind _ =
+    let make_expected = fun b -> e_int (if b then 42 else 1) in
+    expect_eq_b program "main" make_expected
+  in
+  ok ()
 
 let condition_simple () : unit result =
   let%bind program = type_file "./contracts/condition-simple.ligo" in

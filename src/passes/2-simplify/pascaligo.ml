@@ -379,28 +379,22 @@ let rec simpl_expression (t:Raw.expr) : expr result =
   | ELogic l -> simpl_logic_expression l
   | EList l -> simpl_list_expression l
   | ESet s -> simpl_set_expression s
-  | ECond _ -> ( failwith "TODO"
-(*
-      let (c , loc) = r_split c in
+  | ECond c -> (*fail @@ simple_error "TODO"*)
+      (* let (c , loc) = r_split c in
       let%bind expr = simpl_expression c.test in
-
       let%bind match_true = simpl_expression c.ifso in
       let%bind match_false = simpl_expression c.ifnot in
+      return @@ e_matching expr ~loc (Match_bool {match_true; match_false}) *)
 
-      let%bind match_true = match_true None in
-      let%bind match_false = match_false None in
-      return @@ e_matching expr ~loc (Match_bool {match_true; match_false})
-*)
-
-(*
-      let%bind lst =
-        bind_list @@
-        [ok (Raw.PTrue Region.ghost, simpl_expression c.ifso);
-         ok (Raw.PFalse Region.ghost, simpl_expression c.ifnot)] in
+      let (c , loc) = r_split c in
+      let%bind expr = simpl_expression c.test in
+      let%bind match_true = simpl_expression c.ifso in
+      let%bind match_false = simpl_expression c.ifnot in
+      let%bind lst = ok @@
+        [(Raw.PTrue Region.ghost, match_true);
+         (Raw.PFalse Region.ghost, match_false)] in
       let%bind cases = simpl_cases lst in
-      return @@ e_matching ~loc e cases
-*)
-    )
+      return @@ e_matching ~loc expr cases
   | ECase c -> (
       let (c , loc) = r_split c in
       let%bind e = simpl_expression c.expr in
