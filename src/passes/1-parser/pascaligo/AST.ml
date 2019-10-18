@@ -49,6 +49,7 @@ type kwd_contains   = Region.t
 type kwd_down       = Region.t
 type kwd_else       = Region.t
 type kwd_end        = Region.t
+type kwd_expr       = Region.t
 type kwd_for        = Region.t
 type kwd_from       = Region.t
 type kwd_function   = Region.t
@@ -210,19 +211,29 @@ and type_tuple = (type_expr, comma) nsepseq par reg
 
 (* Function and procedure declarations *)
 
-and fun_decl = {
-  kwd_function : kwd_function;
-  name         : variable;
-  param        : parameters;
-  colon        : colon;
-  ret_type     : type_expr;
-  kwd_is       : kwd_is;
-  local_decls  : local_decl list;
-  block        : block reg;
-  kwd_with     : kwd_with;
-  return       : expr;
-  terminator   : semi option
-}
+and fun_decl =
+  BlockFun of {
+    kwd_function : kwd_function;
+    name         : variable;
+    param        : parameters;
+    colon        : colon;
+    ret_type     : type_expr;
+    kwd_is       : kwd_is;
+    local_decls  : local_decl list;
+    block        : block reg;
+    kwd_with     : kwd_with;
+    return       : expr;
+    terminator   : semi option }
+  | BlocklessFun of
+      { kwd_function : kwd_function;
+        name         : variable;
+        param        : parameters;
+        colon        : colon;
+        ret_type     : type_expr;
+        kwd_is       : kwd_is;
+        kwd_expr     : kwd_expr;
+        return       : expr;
+        terminator   : semi option }
 
 and parameters = (param_decl, semi) nsepseq par reg
 
