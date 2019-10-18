@@ -330,6 +330,16 @@ and record_patch = {
   record_inj : field_assign reg injection reg
 }
 
+and cond_expr = {
+  kwd_if     : kwd_if;
+  test       : expr;
+  kwd_then   : kwd_then;
+  ifso       : expr;
+  terminator : semi option;
+  kwd_else   : kwd_else;
+  ifnot      : expr
+}
+
 and conditional = {
   kwd_if     : kwd_if;
   test       : expr;
@@ -430,6 +440,7 @@ and collection =
 
 and expr =
   ECase   of expr case reg
+| ECond   of cond_expr reg
 | EAnnot  of annot_expr reg
 | ELogic  of logic_expr
 | EArith  of arith_expr
