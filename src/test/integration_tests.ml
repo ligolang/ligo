@@ -594,7 +594,7 @@ let condition () : unit result =
   in
   let%bind _ =
     let make_expected = fun b -> e_int (if b then 42 else 1) in
-    expect_eq_b program "main" make_expected
+    expect_eq_b program "foo" make_expected
   in
   ok ()
 
