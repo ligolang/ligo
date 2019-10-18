@@ -8,3 +8,9 @@ function main (const i : int) : int is
     else
       result := 0
   end with result
+
+function foo (const b : bool) : int is
+  var x : int := 41 ;
+  begin
+    x := 1 + (if b then x else main(x)) ;
+  end with x
