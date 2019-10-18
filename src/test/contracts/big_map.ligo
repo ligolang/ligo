@@ -19,3 +19,17 @@ function rm (var m : storage_) : storage_ is block {
 function gf (const m : storage_) : int is begin skip end with get_force(23, m.0)
 
 function get (const m : storage_) : option(int) is begin skip end with m.0[42]
+
+function mutimaps (const m : storage_; const n : storage_) : storage_ is block
+{
+  var foo : big_map(int,int) := m.0 ;
+  foo[42] := 0 ;
+  n.0[42] := get_force(42, foo) ; 
+} with n
+
+const empty_big_map : big_map(int,int) = big_map end
+
+const map1 : big_map(int,int) = big_map
+  23 -> 0 ;
+  42 -> 0 ;
+end
