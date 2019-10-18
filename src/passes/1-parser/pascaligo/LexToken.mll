@@ -78,6 +78,7 @@ type t =
 | Down       of Region.t  (* "down"       *)
 | Else       of Region.t  (* "else"       *)
 | End        of Region.t  (* "end"        *)
+| Expr       of Region.t  (* "expr"       *)
 | Fail       of Region.t  (* "fail"       *)
 | For        of Region.t  (* "for"        *)
 | From       of Region.t  (* "from"       *)
@@ -210,6 +211,7 @@ let proj_token = function
 | Down       region -> region, "Down"
 | Else       region -> region, "Else"
 | End        region -> region, "End"
+| Expr       region -> region, "Expr"
 | Fail       region -> region, "Fail"
 | For        region -> region, "For"
 | From       region -> region, "From"
@@ -303,6 +305,7 @@ let to_lexeme = function
 | Down       _ -> "down"
 | Else       _ -> "else"
 | End        _ -> "end"
+| Expr       _ -> "expr"
 | Fail       _ -> "fail"
 | For        _ -> "for"
 | From       _ -> "from"
@@ -364,6 +367,7 @@ let keywords = [
   (fun reg -> Down       reg);
   (fun reg -> Else       reg);
   (fun reg -> End        reg);
+  (fun reg -> Expr       reg);
   (fun reg -> For        reg);
   (fun reg -> From       reg);
   (fun reg -> Function   reg);
@@ -588,6 +592,7 @@ let is_kwd = function
 | Down       _
 | Else       _
 | End        _
+| Expr       _
 | Fail       _
 | For        _
 | From       _

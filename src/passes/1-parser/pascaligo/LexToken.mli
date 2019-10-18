@@ -80,6 +80,7 @@ type t =
 | Down       of Region.t  (* "down"       *)
 | Else       of Region.t  (* "else"       *)
 | End        of Region.t  (* "end"        *)
+| Expr       of Region.t  (* "expr"       *)
 | Fail       of Region.t  (* "fail"       *)
 | For        of Region.t  (* "for"        *)
 | From       of Region.t  (* "from"       *)

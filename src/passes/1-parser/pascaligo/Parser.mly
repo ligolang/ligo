@@ -264,6 +264,25 @@ fun_decl:
       return       = $10;
       terminator   = $11}
     in {region; value}}
+  | Function fun_name parameters COLON type_expr Is
+      Expr expr option(SEMI) {
+        let stop = 
+          match $9 with
+            Some region -> region
+          | None -> expr_to_region $8 in
+        let region = cover $1 stop
+        and value = {
+            kwd_function = $1;
+            name         = $2;
+            param        = $3;
+            colon        = $4;
+            ret_type     = $5;
+            kwd_is       = $6;
+            kwd_expr     = $7;
+            expr         = $8;
+            terminator   = $9;
+          }
+        in {region; value}}
 
 parameters:
   par(nsepseq(param_decl,SEMI)) { $1 }
