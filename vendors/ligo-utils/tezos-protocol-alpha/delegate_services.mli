@@ -36,7 +36,7 @@ type info = {
   frozen_balance: Tez.t ;
   frozen_balance_by_cycle: Delegate.frozen_balance Cycle.Map.t ;
   staking_balance: Tez.t ;
-  delegated_contracts: Contract_hash.t list ;
+  delegated_contracts: Contract_repr.t list ;
   delegated_balance: Tez.t ;
   deactivated: bool ;
   grace_period: Cycle.t ;
@@ -72,7 +72,7 @@ val staking_balance:
 val delegated_contracts:
   'a #RPC_context.simple -> 'a ->
   Signature.Public_key_hash.t ->
-  Contract_hash.t list shell_tzresult Lwt.t
+  Contract_repr.t list shell_tzresult Lwt.t
 
 val delegated_balance:
   'a #RPC_context.simple -> 'a ->
@@ -162,6 +162,32 @@ module Endorsing_rights : sig
 
 end
 
+module Endorsing_power : sig
+
+  val get:
+    'a #RPC_context.simple -> 'a ->
+    Alpha_context.packed_operation ->
+    Chain_id.t ->
+    int shell_tzresult Lwt.t
+
+end
+
+module Required_endorsements : sig
+
+  val get:
+    'a #RPC_context.simple -> 'a ->
+    Period.t -> int shell_tzresult Lwt.t
+
+end
+
+module Minimal_valid_time : sig
+
+  val get:
+    'a #RPC_context.simple -> 'a ->
+    int -> int -> Time.t shell_tzresult Lwt.t
+
+end
+
 (* temporary export for deprecated unit test *)
 val endorsement_rights:
   Alpha_context.t ->
@@ -172,5 +198,21 @@ val baking_rights:
   Alpha_context.t ->
   int option ->
   (Raw_level.t * (public_key_hash * Time.t option) list) tzresult Lwt.t
+
+val endorsing_power:
+  Alpha_context.t ->
+  (Alpha_context.packed_operation * Chain_id.t) ->
+  int tzresult Lwt.t
+
+val required_endorsements:
+  Alpha_context.t ->
+  Alpha_context.Period.t ->
+  int tzresult Lwt.t
+
+val minimal_valid_time:
+  Alpha_context.t ->
+  int ->
+  int ->
+  Time.t tzresult Lwt.t
 
 val register: unit -> unit

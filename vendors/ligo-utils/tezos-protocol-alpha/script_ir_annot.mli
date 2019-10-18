@@ -72,28 +72,28 @@ val var_to_field_annot : var_annot option -> field_annot option
 (** Replace an annotation by its default value if it is [None] *)
 val default_annot : default:'a option -> 'a option -> 'a option
 
-(** Generate annotation for field accesses, of the form @var.field1.field2 *)
+(** Generate annotation for field accesses, of the form [var.field1.field2] *)
 val gen_access_annot :
   var_annot option ->
   ?default:field_annot option -> field_annot option -> var_annot option
 
 (** Merge type annotations.
-    @returns an error {!Inconsistent_type_annotations} if they are both present
-    and different *)
+    @return an error {!Inconsistent_type_annotations} if they are both present
+    and different, unless [legacy] *)
 val merge_type_annot :
-  type_annot option -> type_annot option -> type_annot option tzresult
+  legacy: bool -> type_annot option -> type_annot option -> type_annot option tzresult
 
 (** Merge field annotations.
-    @returns an error {!Inconsistent_type_annotations} if they are both present
-    and different *)
+    @return an error {!Inconsistent_type_annotations} if they are both present
+    and different, unless [legacy] *)
 val merge_field_annot :
-  field_annot option -> field_annot option -> field_annot option tzresult
+  legacy: bool -> field_annot option -> field_annot option -> field_annot option tzresult
 
 (** Merge variable annotations, does not fail ([None] if different). *)
 val merge_var_annot :
   var_annot option -> var_annot option -> var_annot option
 
-(** @returns an error {!Unexpected_annotation} in the monad the list is not empty. *)
+(** @return an error {!Unexpected_annotation} in the monad the list is not empty. *)
 val error_unexpected_annot : int -> 'a list -> unit tzresult
 
 (** Same as {!error_unexpected_annot} in Lwt. *)
@@ -116,11 +116,6 @@ val parse_type_field_annot :
 val parse_composed_type_annot :
   int -> string list ->
   (type_annot option * field_annot option * field_annot option) tzresult
-
-(** Check that type annotations on constants are consistent *)
-val check_const_type_annot :
-  int -> string list -> type_annot option -> field_annot option list ->
-  unit tzresult Lwt.t
 
 (** Extract and remove a field annotation from a node *)
 val extract_field_annot :
@@ -155,6 +150,12 @@ val parse_destr_annot :
   field_name:field_annot option ->
   pair_annot:var_annot option ->
   value_annot:var_annot option ->
+  (var_annot option * field_annot option) tzresult
+
+val parse_entrypoint_annot :
+  int ->
+  ?default:var_annot option ->
+  string list ->
   (var_annot option * field_annot option) tzresult
 
 val parse_var_type_annot :

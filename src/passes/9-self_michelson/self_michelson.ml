@@ -92,6 +92,11 @@ let arity : prim -> int option = function
  | I_ISNAT -> Some 1
  | I_CAST -> None
  | I_RENAME -> None
+ | I_CHAIN_ID -> Some 0
+ | I_EMPTY_BIG_MAP -> Some 0
+ | I_APPLY -> None
+ | I_DIG -> None
+ | I_DUG -> None
 
  | K_parameter
  | K_storage
@@ -126,7 +131,9 @@ let arity : prim -> int option = function
  | T_timestamp
  | T_unit
  | T_operation
- | T_address -> None
+ | T_address
+ | T_chain_id
+   -> None
 
 let is_nullary_op (p : prim) : bool =
   match arity p with

@@ -62,9 +62,16 @@ module Script_int = Script_int_repr
 module Script_timestamp = struct
   include Script_timestamp_repr
   let now ctxt =
-    Raw_context.current_timestamp ctxt
-    |> Timestamp.to_seconds
-    |> of_int64
+    let { Constants_repr.time_between_blocks ; _ } =
+      Raw_context.constants ctxt in
+    match time_between_blocks with
+    | [] -> failwith "Internal error: 'time_between_block' constants \
+                      is an empty list."
+    | first_delay :: _ ->
+        let current_timestamp = Raw_context.predecessor_timestamp ctxt in
+        Time.add current_timestamp (Period_repr.to_seconds first_delay)
+        |> Timestamp.to_seconds
+        |> of_int64
 end
 module Script = struct
   include Michelson_v1_primitives
@@ -79,6 +86,7 @@ module Script = struct
       (Script_repr.force_bytes lexpr >>? fun (b, cost) ->
        Raw_context.consume_gas ctxt cost >|? fun ctxt ->
        (b, ctxt))
+  module Legacy_support = Legacy_script_support_repr
 end
 module Fees = Fees_storage
 
@@ -113,12 +121,29 @@ module Contract = struct
   include Contract_repr
   include Contract_storage
 
-  let originate c contract ~balance ~manager ?script ~delegate
-      ~spendable ~delegatable =
-    originate c contract ~balance ~manager ?script ~delegate
-      ~spendable ~delegatable
+  let originate c contract ~balance ~script ~delegate =
+    originate c contract ~balance ~script ~delegate
   let init_origination_nonce = Raw_context.init_origination_nonce
   let unset_origination_nonce = Raw_context.unset_origination_nonce
+end
+module Big_map = struct
+  type id = Z.t
+  let fresh = Storage.Big_map.Next.incr
+  let fresh_temporary = Raw_context.fresh_temporary_big_map
+  let mem c m k = Storage.Big_map.Contents.mem (c, m) k
+  let get_opt c m k = Storage.Big_map.Contents.get_option (c, m) k
+  let rpc_arg = Storage.Big_map.rpc_arg
+  let cleanup_temporary c =
+    Raw_context.temporary_big_maps c Storage.Big_map.remove_rec c >>= fun c ->
+    Lwt.return (Raw_context.reset_temporary_big_map c)
+  let exists c id =
+    Lwt.return (Raw_context.consume_gas c (Gas_limit_repr.read_bytes_cost Z.zero)) >>=? fun c ->
+    Storage.Big_map.Key_type.get_option c id >>=? fun kt ->
+    match kt with
+    | None -> return (c, None)
+    | Some kt ->
+        Storage.Big_map.Value_type.get c id >>=? fun kv ->
+        return (c, Some (kt, kv))
 end
 module Delegate = Delegate_storage
 module Roll = struct
@@ -148,8 +173,8 @@ module Commitment = struct
 end
 
 module Global = struct
-  let get_last_block_priority = Storage.Last_block_priority.get
-  let set_last_block_priority = Storage.Last_block_priority.set
+  let get_block_priority = Storage.Block_priority.get
+  let set_block_priority = Storage.Block_priority.set
 end
 
 let prepare_first_block = Init_storage.prepare_first_block
@@ -169,6 +194,7 @@ let fork_test_chain = Raw_context.fork_test_chain
 let record_endorsement = Raw_context.record_endorsement
 let allowed_endorsements = Raw_context.allowed_endorsements
 let init_endorsements = Raw_context.init_endorsements
+let included_endorsements = Raw_context.included_endorsements
 
 let reset_internal_nonce = Raw_context.reset_internal_nonce
 let fresh_internal_nonce = Raw_context.fresh_internal_nonce

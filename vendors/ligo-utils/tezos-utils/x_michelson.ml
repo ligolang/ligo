@@ -45,6 +45,8 @@ let i_push ty code = prim ~children:[ty;code] I_PUSH
 let i_push_unit = i_push t_unit d_unit
 let i_push_string str = i_push t_string (string str)
 
+let i_apply = prim I_APPLY
+
 let i_comment s : michelson = seq [ i_push_string s ; prim I_DROP ]
 
 let i_none ty = prim ~children:[ty] I_NONE
@@ -67,6 +69,9 @@ let i_assert_some = i_if_none (seq [i_push_string "ASSERT_SOME" ; i_failwith]) (
 let i_assert_some_msg msg = i_if_none (seq [msg ; i_failwith]) (seq [])
 
 let dip code : michelson = prim ~children:[seq [code]] I_DIP
+let dipn n code = prim ~children:[Int (0 , Z.of_int n) ; seq [code]] I_DIP
+let i_dig n : michelson = prim ~children:[Int (0 , Z.of_int n)] I_DIG
+let i_dug n : michelson = prim ~children:[Int (0 , Z.of_int n)] I_DUG
 let i_unpair = seq [i_dup ; i_car ; dip i_cdr]
 let i_unpiar = seq [i_dup ; i_cdr ; dip i_car]
 

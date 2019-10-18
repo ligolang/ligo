@@ -113,9 +113,9 @@ let higher_order () : unit result =
   let make_expect = fun n -> n in
   let%bind _ = expect_eq_n_int program "foobar" make_expect in
   let%bind _ = expect_eq_n_int program "foobar2" make_expect in
-  (* not supported yet:
-  let%bind _ = expect_eq_n_int program "foobar3" make_expect in *)
+  let%bind _ = expect_eq_n_int program "foobar3" make_expect in
   let%bind _ = expect_eq_n_int program "foobar4" make_expect in
+  let%bind _ = expect_eq_n_int program "foobar5" make_expect in
   ok () 
 
 let shared_function () : unit result =

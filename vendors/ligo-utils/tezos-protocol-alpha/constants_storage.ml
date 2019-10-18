@@ -44,6 +44,12 @@ let time_between_blocks c =
 let endorsers_per_block c =
   let constants = Raw_context.constants c in
   constants.endorsers_per_block
+let initial_endorsers c =
+  let constants = Raw_context.constants c in
+  constants.initial_endorsers
+let delay_per_missing_endorsement c =
+  let constants = Raw_context.constants c in
+  constants.delay_per_missing_endorsement
 let hard_gas_limit_per_operation c =
   let constants = Raw_context.constants c in
   constants.hard_gas_limit_per_operation
@@ -86,5 +92,14 @@ let endorsement_reward c =
 let test_chain_duration c =
   let constants = Raw_context.constants c in
   constants.test_chain_duration
+let quorum_min c =
+  let constants = Raw_context.constants c in
+  constants.quorum_min
+let quorum_max c =
+  let constants = Raw_context.constants c in
+  constants.quorum_max
+let min_proposal_quorum c =
+  let constants = Raw_context.constants c in
+  constants.min_proposal_quorum
 let parametric c =
   Raw_context.constants c

@@ -151,33 +151,21 @@ and translate_expression (expr:expression) (env:environment) : michelson result 
           return @@ seq [
             closure_pack_code ;
             i_push lambda_ty lambda_body_code ;
-            i_pair ;
+            i_swap ;
+            i_apply ;
           ]
         )
       | _ -> simple_fail "expected closure type"
     )
   | E_application (f , arg) -> (
-      match Combinators.Expression.get_type f with
-      | T_function _ -> (
-          trace (simple_error "Compiling quote application") @@
-          let%bind f = translate_expression f env in
-          let%bind arg = translate_expression arg env in
-          return @@ seq [
-            arg ;
-            dip f ;
-            prim I_EXEC ;
-          ]
-        )
-      | T_deep_closure (_ , _ , _) -> (
-          let%bind f_code = translate_expression f env in
-          let%bind arg_code = translate_expression arg env in
-          return @@ seq [
-            arg_code ;
-            dip (seq [ f_code ; i_unpair ; i_swap ]) ; i_pair ;
-            prim I_EXEC ;
-          ]
-        )
-      | _ -> simple_fail "E_applicationing something not appliable"
+      trace (simple_error "Compiling quote application") @@
+      let%bind f = translate_expression f env in
+      let%bind arg = translate_expression arg env in
+      return @@ seq [
+        arg ;
+        dip f ;
+        prim I_EXEC ;
+      ]
     )
   | E_variable x ->
     let%bind code = Compiler_environment.get env x in

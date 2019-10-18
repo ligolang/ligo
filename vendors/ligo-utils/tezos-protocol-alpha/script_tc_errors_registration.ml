@@ -170,8 +170,9 @@ let () =
     ~id:"michelson_v1.unexpected_bigmap"
     ~title: "Big map in unauthorized position (type error)"
     ~description:
-      "When parsing script, a big_map type was found somewhere else \
-       than in the left component of the toplevel storage pair."
+      "When parsing script, a big_map type was found in a position \
+       where it could end up stored inside a big_map, which is \
+       forbidden for now."
     (obj1
        (req "loc" location_encoding))
     (function Unexpected_big_map loc -> Some loc | _ -> None)
@@ -180,14 +181,70 @@ let () =
   register_error_kind
     `Permanent
     ~id:"michelson_v1.unexpected_operation"
-    ~title: "Big map in unauthorized position (type error)"
+    ~title: "Operation in unauthorized position (type error)"
     ~description:
-      "When parsing script, a operation type was found \
+      "When parsing script, an operation type was found \
        in the storage or parameter field."
     (obj1
        (req "loc" location_encoding))
     (function Unexpected_operation loc -> Some loc | _ -> None)
     (fun loc -> Unexpected_operation loc) ;
+  (* No such entrypoint *)
+  register_error_kind
+    `Permanent
+    ~id:"michelson_v1.no_such_entrypoint"
+    ~title: "No such entrypoint (type error)"
+    ~description:
+      "An entrypoint was not found when calling a contract."
+    (obj1
+       (req "entrypoint" string))
+    (function No_such_entrypoint entrypoint -> Some entrypoint | _ -> None)
+    (fun entrypoint -> No_such_entrypoint entrypoint) ;
+  (* Unreachable entrypoint *)
+  register_error_kind
+    `Permanent
+    ~id:"michelson_v1.unreachable_entrypoint"
+    ~title: "Unreachable entrypoint (type error)"
+    ~description:
+      "An entrypoint in the contract is not reachable."
+    (obj1
+       (req "path" (list prim_encoding)))
+    (function Unreachable_entrypoint path -> Some path | _ -> None)
+    (fun path -> Unreachable_entrypoint path) ;
+  (* Duplicate entrypoint *)
+  register_error_kind
+    `Permanent
+    ~id:"michelson_v1.duplicate_entrypoint"
+    ~title: "Duplicate entrypoint (type error)"
+    ~description:
+      "Two entrypoints have the same name."
+    (obj1
+       (req "path" string))
+    (function Duplicate_entrypoint entrypoint -> Some entrypoint | _ -> None)
+    (fun entrypoint -> Duplicate_entrypoint entrypoint) ;
+  (* Entrypoint name too long *)
+  register_error_kind
+    `Permanent
+    ~id:"michelson_v1.entrypoint_name_too_long"
+    ~title: "Entrypoint name too long (type error)"
+    ~description:
+      "An entrypoint name exceeds the maximum length of 31 characters."
+    (obj1
+       (req "name" string))
+    (function Entrypoint_name_too_long entrypoint -> Some entrypoint | _ -> None)
+    (fun entrypoint -> Entrypoint_name_too_long entrypoint) ;
+  (* Unexpected contract *)
+  register_error_kind
+    `Permanent
+    ~id:"michelson_v1.unexpected_contract"
+    ~title: "Contract in unauthorized position (type error)"
+    ~description:
+      "When parsing script, a contract type was found \
+       in the storage or parameter field."
+    (obj1
+       (req "loc" location_encoding))
+    (function Unexpected_contract loc -> Some loc | _ -> None)
+    (fun loc -> Unexpected_contract loc) ;
   (* -- Value typing errors ---------------------- *)
   (* Unordered map keys *)
   register_error_kind
@@ -454,6 +511,22 @@ let () =
       | _ -> None)
     (fun (loc, (ty, expr)) ->
        Invalid_constant (loc, expr, ty)) ;
+  (* Invalid syntactic constant *)
+  register_error_kind
+    `Permanent
+    ~id:"invalidSyntacticConstantError"
+    ~title: "Invalid constant (parse error)"
+    ~description:
+      "A compile-time constant was invalid for its expected form."
+    (located (obj2
+                (req "expectedForm" Script.expr_encoding)
+                (req "wrongExpression" Script.expr_encoding)))
+    (function
+      | Invalid_constant (loc, expr, ty) ->
+          Some (loc, (ty, expr))
+      | _ -> None)
+    (fun (loc, (ty, expr)) ->
+       Invalid_constant (loc, expr, ty)) ;
   (* Invalid contract *)
   register_error_kind
     `Permanent
@@ -469,6 +542,21 @@ let () =
       | _ -> None)
     (fun (loc, c) ->
        Invalid_contract (loc, c)) ;
+  (* Invalid big_map *)
+  register_error_kind
+    `Permanent
+    ~id:"michelson_v1.invalid_big_map"
+    ~title: "Invalid big_map"
+    ~description:
+      "A script or data expression references a big_map that does not \
+       exist or assumes a wrong type for an existing big_map."
+    (located (obj1 (req "big_map" z)))
+    (function
+      | Invalid_big_map (loc, c) ->
+          Some (loc, c)
+      | _ -> None)
+    (fun (loc, c) ->
+       Invalid_big_map (loc, c)) ;
   (* Comparable type expected *)
   register_error_kind
     `Permanent
@@ -619,4 +707,14 @@ let () =
                   the provided gas"
     Data_encoding.empty
     (function Cannot_serialize_error -> Some () | _ -> None)
-    (fun () -> Cannot_serialize_error)
+    (fun () -> Cannot_serialize_error) ;
+  (* Deprecated instruction *)
+  register_error_kind
+    `Permanent
+    ~id:"michelson_v1.deprecated_instruction"
+    ~title:"Script is using a deprecated instruction"
+    ~description:
+      "A deprecated instruction usage is disallowed in newly created contracts"
+    (obj1 (req "prim" prim_encoding))
+    (function Deprecated_instruction prim -> Some prim | _ -> None)
+    (fun prim -> Deprecated_instruction prim) ;

@@ -23,7 +23,7 @@
 (*                                                                           *)
 (*****************************************************************************)
 
-(** {1 Errors} ****************************************************************)
+(** {1 Errors} *)
 
 type error += Too_many_internal_operations (* `Permanent *)
 
@@ -40,7 +40,7 @@ type error += Failed_to_decode_parameter of Data_encoding.json * string
 
 val storage_error: storage_error -> 'a tzresult Lwt.t
 
-(** {1 Abstract Context} **************************************************)
+(** {1 Abstract Context} *)
 
 (** Abstract view of the context.
     Includes a handle to the functional key-value database
@@ -54,13 +54,14 @@ type root_context = t
     with this version of the protocol. *)
 val prepare:
   level: Int32.t ->
+  predecessor_timestamp: Time.t ->
   timestamp: Time.t ->
   fitness: Fitness.t ->
   Context.t -> context tzresult Lwt.t
 
 type previous_protocol =
   | Genesis of Parameters_repr.t
-  | Alpha_previous
+  | Athens_004
 
 val prepare_first_block:
   level:int32 ->
@@ -71,14 +72,12 @@ val prepare_first_block:
 val activate: context -> Protocol_hash.t -> t Lwt.t
 val fork_test_chain: context -> Protocol_hash.t -> Time.t -> t Lwt.t
 
-val register_resolvers:
-  'a Base58.encoding -> (context -> string -> 'a list Lwt.t) -> unit
-
 (** Returns the state of the database resulting of operations on its
     abstract view *)
 val recover: context -> Context.t
 
 val current_level: context -> Level_repr.t
+val predecessor_timestamp: context -> Time.t
 val current_timestamp: context -> Time.t
 
 val current_fitness: context -> Int64.t
@@ -129,7 +128,7 @@ val origination_nonce: t -> Contract_repr.origination_nonce tzresult
 val increment_origination_nonce: t -> (t * Contract_repr.origination_nonce) tzresult
 val unset_origination_nonce: t -> t
 
-(** {1 Generic accessors} *************************************************)
+(** {1 Generic accessors} *)
 
 type key = string list
 
@@ -241,6 +240,9 @@ val allowed_endorsements:
   context ->
   (Signature.Public_key.t * int list * bool) Signature.Public_key_hash.Map.t
 
+(** Keep track of the number of endorsements that are included in a block *)
+val included_endorsements: context -> int
+
 (** Initializes the map of allowed endorsements, this function must only be
     called once. *)
 val init_endorsements:
@@ -251,3 +253,12 @@ val init_endorsements:
 (** Marks an endorsment in the map as used. *)
 val record_endorsement:
   context -> Signature.Public_key_hash.t -> context
+
+(** Provide a fresh identifier for a temporary big map (negative index). *)
+val fresh_temporary_big_map: context -> context * Z.t
+
+(** Reset the temporary big_map identifier generator to [-1]. *)
+val reset_temporary_big_map: context -> context
+
+(** Iterate over all created temporary big maps since the last {!reset_temporary_big_map}. *)
+val temporary_big_maps: context -> ('a -> Z.t -> 'a Lwt.t) -> 'a -> 'a Lwt.t
