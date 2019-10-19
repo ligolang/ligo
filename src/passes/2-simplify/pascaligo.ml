@@ -544,7 +544,23 @@ and simpl_fun_declaration :
   loc:_ -> Raw.fun_decl -> ((name * type_expression option) * expression) result =
   fun ~loc x ->
   let open! Raw in
-  let {name;param;ret_type;local_decls;block;return} : fun_decl = x in
+  let (name, param, ret_type, return) = 
+    match x with 
+    | BlockFun f -> (f.name, f.param, f.ret_type, f.return)
+    | BlocklessFun f -> (f.name, f.param, f.ret_type, f.return) 
+  in
+  let block =
+    match x with
+    | BlockFun f -> f.block
+    | BlocklessFun _ -> 
+      {region = Region.ghost; 
+       value = {
+         opening = Raw.keyword;
+         statements = [(Raw.kwd_skip * Raw.SEMI)];
+         terminator = Some Raw.SEMI;
+         closing = Raw.kwd_end;
+       }
+  in
   (match param.value.inside with
      a, [] -> (
        let%bind input = simpl_param a in
