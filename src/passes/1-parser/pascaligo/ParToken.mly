@@ -53,7 +53,6 @@
 %token <Region.t> Contains    (* "contains"   *)
 %token <Region.t> Else        (* "else"       *)
 %token <Region.t> End         (* "end"        *)
-%token <Region.t> Expr        (* "expr"       *)
 %token <Region.t> For         (* "for"        *)
 %token <Region.t> Function    (* "function"   *)
 %token <Region.t> From        (* "from"       *)
