@@ -202,33 +202,18 @@ and type_tuple = (type_expr, comma) nsepseq par reg
 
 (* Function declarations *)
 
-and fun_decl =
-    BlockFun of block_fun
-  | BlocklessFun of blockless_fun
-
-and block_fun = {
+and fun_decl ={
     kwd_function : kwd_function;
     name         : variable;
     param        : parameters;
     colon        : colon;
     ret_type     : type_expr;
     kwd_is       : kwd_is;
-    local_decls  : local_decl list;
-    block        : block reg;
-    kwd_with     : kwd_with;
+    local_decls  : local_decl list option;
+    block        : block reg option;
+    kwd_with     : kwd_with option;
     return       : expr;
     terminator   : semi option }
-
-and blockless_fun =  {
-  kwd_function : kwd_function;
-  name         : variable;
-  param        : parameters;
-  colon        : colon;
-  ret_type     : type_expr;
-  kwd_is       : kwd_is;
-  kwd_expr     : kwd_expr;
-  return       : expr;
-  terminator   : semi option }
 
 and parameters = (param_decl, semi) nsepseq par reg
 

@@ -544,22 +544,16 @@ and simpl_fun_declaration :
   loc:_ -> Raw.fun_decl -> ((name * type_expression option) * expression) result =
   fun ~loc x ->
   let open! Raw in
-  let (name, param, ret_type, return) = 
-    match x with 
-    | BlockFun f -> (f.name, f.param, f.ret_type, f.return)
-    | BlocklessFun f -> (f.name, f.param, f.ret_type, f.return) 
+  let {name;param;ret_type;local_decls;block;return} : fun_decl = x in
+  let local_decls =
+    match local_decls with
+    | Some local_decls -> local_decls
+    | None -> []
   in
-  let block =
-    match x with
-    | BlockFun f -> f.block
-    | BlocklessFun _ -> 
-      {region = Region.ghost; 
-       value = {
-         opening = Raw.keyword;
-         statements = [(Raw.kwd_skip * Raw.SEMI)];
-         terminator = Some Raw.SEMI;
-         closing = Raw.kwd_end;
-       }
+  let statements =
+    match block with
+    | Some block -> npseq_to_list block.value.statements
+    | None -> []
   in
   (match param.value.inside with
      a, [] -> (
@@ -570,7 +564,7 @@ and simpl_fun_declaration :
          bind_map_list simpl_local_declaration local_decls in
        let%bind instructions = bind_list
          @@ List.map simpl_statement
-         @@ npseq_to_list block.value.statements in
+         @@ statements in
        let%bind result = simpl_expression return in
        let%bind output_type = simpl_type_expression ret_type in
        let body = local_declarations @ instructions in
@@ -601,7 +595,7 @@ and simpl_fun_declaration :
          bind_map_list simpl_local_declaration local_decls in
        let%bind instructions = bind_list
          @@ List.map simpl_statement
-         @@ npseq_to_list block.value.statements in
+         @@ statements in
        let%bind result = simpl_expression return in
        let%bind output_type = simpl_type_expression ret_type in
        let body = tpl_declarations @ local_declarations @ instructions in
