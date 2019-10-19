@@ -263,7 +263,8 @@ fun_decl:
       kwd_with     = $9;
       return       = $10;
       terminator   = $11}
-    in BlockFun {region; value}}
+    in {region = region; 
+        value = BlockFun value} }
   | Function fun_name parameters COLON type_expr Is
       Expr expr option(SEMI) {
         let stop = 
@@ -282,7 +283,8 @@ fun_decl:
             return       = $8;
             terminator   = $9;
           }
-        in BlocklessFun {region; value}}
+        in {region = region; 
+            value = BlocklessFun value} }
 
 parameters:
   par(nsepseq(param_decl,SEMI)) { $1 }

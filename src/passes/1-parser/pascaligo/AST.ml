@@ -212,8 +212,8 @@ and type_tuple = (type_expr, comma) nsepseq par reg
 (* Function and procedure declarations *)
 
 and fun_decl =
-  BlockFun of block_fun reg 
-  | BlocklessFun of blockless_fun reg
+  BlockFun of block_fun
+  | BlocklessFun of blockless_fun 
 
 and block_fun = {
     kwd_function : kwd_function;
