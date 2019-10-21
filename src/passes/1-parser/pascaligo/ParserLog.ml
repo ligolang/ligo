@@ -434,6 +434,7 @@ and print_case_clause_expr buffer {value; _} =
 and print_map_expr buffer = function
   MapLookUp {value; _} -> print_map_lookup buffer value
 | MapInj inj           -> print_injection  buffer "map" print_binding inj
+| BigMapInj inj        -> print_injection  buffer "big_map" print_binding inj
 
 and print_set_expr buffer = function
   SetInj inj -> print_injection buffer "set" print_expr inj
@@ -1445,7 +1446,7 @@ and pp_map_expr buffer ~pad = function
   MapLookUp {value; _} ->
     pp_node buffer ~pad "MapLookUp";
     pp_map_lookup buffer ~pad value
-| MapInj {value; _} ->
+| MapInj {value; _} | BigMapInj {value; _} ->
     pp_node buffer ~pad "MapInj";
     pp_injection pp_binding buffer ~pad value
 
