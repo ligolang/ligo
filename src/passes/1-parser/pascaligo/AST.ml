@@ -211,18 +211,17 @@ and type_tuple = (type_expr, comma) nsepseq par reg
 (* Function and procedure declarations *)
 
 and fun_decl = {
-  kwd_function : kwd_function;
-  name         : variable;
-  param        : parameters;
-  colon        : colon;
-  ret_type     : type_expr;
-  kwd_is       : kwd_is;
-  local_decls  : local_decl list;
-  block        : block reg;
-  kwd_with     : kwd_with;
-  return       : expr;
-  terminator   : semi option
-}
+    kwd_function : kwd_function;
+    name         : variable;
+    param        : parameters;
+    colon        : colon;
+    ret_type     : type_expr;
+    kwd_is       : kwd_is;
+    local_decls  : local_decl list option;
+    block        : block reg option;
+    kwd_with     : kwd_with option;
+    return       : expr;
+    terminator   : semi option }
 
 and parameters = (param_decl, semi) nsepseq par reg
 

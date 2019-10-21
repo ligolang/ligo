@@ -168,7 +168,10 @@ and print_fun_decl buffer {value; _} =
   print_token       buffer kwd_is "is";
   print_local_decls buffer local_decls;
   print_block       buffer block;
-  print_token       buffer kwd_with "with";
+  match kwd_with with
+  | Some kwd_with ->
+    print_token       buffer kwd_with "with";
+  | None          ->  ();
   print_expr        buffer return;
   print_terminator  buffer terminator
 
@@ -196,12 +199,16 @@ and print_param_var buffer {value; _} =
   print_token     buffer colon ":";
   print_type_expr buffer param_type
 
-and print_block buffer {value; _} =
-  let {opening; statements; terminator; closing} = value in
-  print_block_opening buffer opening;
-  print_statements    buffer statements;
-  print_terminator    buffer terminator;
-  print_block_closing buffer closing
+and print_block buffer reg =
+  match reg with
+  | Some reg ->
+    let value = reg.value in
+    let {opening; statements; terminator; closing} = value in
+    print_block_opening buffer opening;
+    print_statements    buffer statements;
+    print_terminator    buffer terminator;
+    print_block_closing buffer closing
+  | None -> ()
 
 and print_block_opening buffer = function
   Block (kwd_block, lbrace) ->
@@ -215,7 +222,10 @@ and print_block_closing buffer = function
 | End kwd_end  -> print_token buffer kwd_end "end"
 
 and print_local_decls buffer sequence =
-  List.iter (print_local_decl buffer) sequence
+  match sequence with
+  | Some sequence -> 
+    List.iter (print_local_decl buffer) sequence
+  | None -> ()
 
 and print_local_decl buffer = function
   LocalFun  decl -> print_fun_decl  buffer decl
@@ -279,9 +289,8 @@ and print_if_clause buffer = function
 | ClauseBlock block -> print_clause_block buffer block
 
 and print_clause_block buffer = function
-  LongBlock block ->
-    print_block buffer block
-| ShortBlock {value; _} ->
+    LongBlock block ->  print_block buffer (Some block)
+  | ShortBlock {value; _} ->
     let {lbrace; inside; rbrace} = value in
     let statements, terminator = inside in
     print_token      buffer lbrace "{";
@@ -332,7 +341,7 @@ and print_while_loop buffer value =
   let {kwd_while; cond; block} = value in
   print_token buffer kwd_while "while";
   print_expr  buffer cond;
-  print_block buffer block
+  print_block buffer (Some block)
 
 and print_for_loop buffer = function
   ForInt     for_int     -> print_for_int     buffer for_int
@@ -344,7 +353,7 @@ and print_for_int buffer ({value; _} : for_int reg) =
   print_var_assign buffer assign;
   print_token      buffer kwd_to "to";
   print_expr       buffer bound;
-  print_block      buffer block
+  print_block      buffer (Some block)
 
 and print_var_assign buffer {value; _} =
   let {name; assign; expr} = value in
@@ -363,7 +372,7 @@ and print_for_collect buffer ({value; _} : for_collect reg) =
   print_token      buffer kwd_in "in";
   print_collection buffer collection;
   print_expr       buffer expr;
-  print_block      buffer block
+  print_block      buffer (Some block)
 
 and print_collection buffer = function
   Map kwd_map ->
@@ -853,7 +862,10 @@ and pp_fun_decl buffer ~pad:(_,pc) decl =
   let () =
     let pad = mk_pad 6 4 pc in
     pp_node buffer ~pad "<block>";
-    let statements = decl.block.value.statements in
+    let statements =
+      match decl.block with
+        | Some block -> block.value.statements
+        | None ->  Instr (Skip Region.ghost), [] in
     pp_statements buffer ~pad statements in
   let () =
     let _, pc as pad = mk_pad 6 5 pc in
@@ -1248,9 +1260,12 @@ and pp_set_remove buffer ~pad:(_,pc) rem =
   pp_path buffer ~pad:(mk_pad 2 1 pc) rem.set
 
 and pp_local_decls buffer ~pad:(_,pc) decls =
-  let apply len rank =
-    pp_local_decl buffer ~pad:(mk_pad len rank pc)
-  in List.iteri (List.length decls |> apply) decls
+  match decls with
+  | Some decls ->
+    let apply len rank =
+      pp_local_decl buffer ~pad:(mk_pad len rank pc)
+    in List.iteri (List.length decls |> apply) decls
+  | None -> ()
 
 and pp_local_decl buffer ~pad:(_,pc as pad) = function
   LocalFun {value; _} ->

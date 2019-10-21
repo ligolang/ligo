@@ -258,12 +258,33 @@ fun_decl:
       colon        = $4;
       ret_type     = $5;
       kwd_is       = $6;
-      local_decls  = $7;
-      block        = $8;
-      kwd_with     = $9;
+      local_decls  = Some $7;
+      block        = Some $8;
+      kwd_with     = Some $9;
       return       = $10;
       terminator   = $11}
-    in {region; value}}
+    in {region;value}}
+  | Function fun_name parameters COLON type_expr Is
+      expr option(SEMI) {
+        let stop = 
+          match $8 with
+            Some region -> region
+          | None -> expr_to_region $7 in
+        let region = cover $1 stop
+        and value = {
+            kwd_function = $1;
+            name         = $2;
+            param        = $3;
+            colon        = $4;
+            ret_type     = $5;
+            kwd_is       = $6;
+            local_decls  = None;
+            block        = None;
+            kwd_with     = None;
+            return       = $7;
+            terminator   = $8;
+          }
+        in {region;value}}
 
 parameters:
   par(nsepseq(param_decl,SEMI)) { $1 }

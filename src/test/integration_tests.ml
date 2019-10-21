@@ -15,6 +15,11 @@ let function_ () : unit result =
   let make_expect = fun n -> n in
   expect_eq_n_int program "main" make_expect
 
+let blockless () : unit result =
+  let%bind program = type_file "./contracts/blockless.ligo" in
+  let make_expect = fun n-> n + 10 in
+  expect_eq_n_int program "blockless" make_expect
+
 (* Procedures are not supported yet 
   let procedure () : unit result =
   let%bind program = type_file "./contracts/procedure.ligo" in
@@ -901,6 +906,7 @@ let tez_mligo () : unit result =
 let main = test_suite "Integration (End to End)" [
     test "type alias" type_alias ;
     test "function" function_ ;
+    test "blockless function" blockless;
     (* test "procedure"  procedure ; *)
     test "assign" assign ;
     test "declaration local" declaration_local ;
