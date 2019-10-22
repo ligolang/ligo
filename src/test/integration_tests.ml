@@ -522,7 +522,7 @@ let big_map_ type_f path : unit result =
   let ez lst =
     let open Ast_simplified.Combinators in
     let lst' = List.map (fun (x, y) -> e_int x, e_int y) lst in
-    e_pair (e_typed_big_map lst' t_int t_int) (e_unit ())
+    (e_typed_big_map lst' t_int t_int)
   in
   let%bind () =
     let make_input = fun n -> ez [(23, n) ; (42, 4)] in
