@@ -78,16 +78,6 @@ module Errors = struct
     ] in
     error ~data title message
 
-  let unsupported_empty_record_patch record_expr =
-    let title () = "empty record patch" in
-    let message () =
-      Format.asprintf "empty record patches are not supported yet" in
-    let data = [
-      ("record_loc",
-       fun () -> Format.asprintf "%a" Location.pp_lift @@ record_expr.Region.region)
-    ] in
-    error ~data title message
-
   let unsupported_non_var_pattern p =
     let title () = "pattern is not a variable" in
     let message () =
@@ -225,7 +215,7 @@ let rec simpl_type_expression (t:Raw.type_expr) : type_expression result =
       let%bind lst = bind_list
         @@ List.map aux
         @@ List.map apply
-        @@ pseq_to_list r.value.elements in
+        @@ npseq_to_list r.value.ne_elements in
       let m = List.fold_left (fun m (x, y) -> SMap.add x y m) SMap.empty lst in
       ok @@ T_record m
   | TSum s ->
@@ -551,11 +541,6 @@ and simpl_fun_declaration :
   fun ~loc x ->
   let open! Raw in
   let {name;param;ret_type;local_decls;block;return} : fun_decl = x in
-  let local_decls =
-    match local_decls with
-    | Some local_decls -> local_decls
-    | None -> []
-  in
   let statements =
     match block with
     | Some block -> npseq_to_list block.value.statements
@@ -736,26 +721,32 @@ and simpl_single_instruction : Raw.instruction -> (_ -> expression result) resul
   | RecordPatch r -> (
       let r = r.value in
       let (name , access_path) = simpl_path r.path in
-      let%bind inj = bind_list
-        @@ List.map (fun (x:Raw.field_assign Region.reg) ->
+
+      let head, tail = r.record_inj.value.ne_elements in
+
+      let%bind tail' = bind_list
+        @@ List.map (fun (x: Raw.field_assign Region.reg) ->
             let (x , loc) = r_split x in
             let%bind e = simpl_expression x.field_expr
             in ok (x.field_name.value, e , loc)
           )
-        @@ pseq_to_list r.record_inj.value.elements in
+        @@ List.map snd tail in
+
+      let%bind head' =
+        let (x , loc) = r_split head in
+        let%bind e = simpl_expression x.field_expr
+        in ok (x.field_name.value, e , loc) in
+
       let%bind expr =
         let aux = fun (access , v , loc) ->
-          e_assign ~loc name (access_path @ [ Access_record access ]) v in
-        let assigns = List.map aux inj in
-        match assigns with
-        | [] -> fail @@ unsupported_empty_record_patch r.record_inj
-        | hd :: tl -> (
-            let aux acc cur = e_sequence acc cur in
-            ok @@ List.fold_left aux hd tl
-          )
+          e_assign ~loc name (access_path @ [Access_record access]) v in
+
+        let hd, tl = aux head', List.map aux tail' in
+        let aux acc cur = e_sequence acc cur in
+        ok @@ List.fold_left aux hd tl
       in
       return_statement @@ expr
-    )
+  )
   | MapPatch patch -> (
       let (map_p, loc) = r_split patch in
       let (name, access_path) = simpl_path map_p.path in
@@ -767,7 +758,7 @@ and simpl_single_instruction : Raw.instruction -> (_ -> expression result) resul
             let%bind value' = simpl_expression value
             in ok @@ (key', value')
           )
-        @@ pseq_to_list map_p.map_inj.value.elements in
+        @@ npseq_to_list map_p.map_inj.value.ne_elements in
       let expr =
         match inj with
         | [] -> e_skip ~loc ()
@@ -785,7 +776,7 @@ and simpl_single_instruction : Raw.instruction -> (_ -> expression result) resul
       let%bind inj =
         bind_list @@
         List.map simpl_expression @@
-        pseq_to_list setp.set_inj.value.elements in
+        npseq_to_list setp.set_inj.value.ne_elements in
       let expr =
         match inj with
         | [] -> e_skip ~loc ()

@@ -20,7 +20,7 @@ let blockless () : unit result =
   let make_expect = fun n-> n + 10 in
   expect_eq_n_int program "blockless" make_expect
 
-(* Procedures are not supported yet 
+(* Procedures are not supported yet
   let procedure () : unit result =
   let%bind program = type_file "./contracts/procedure.ligo" in
   let make_expect = fun n -> n + 1 in
@@ -121,7 +121,7 @@ let higher_order () : unit result =
   let%bind _ = expect_eq_n_int program "foobar3" make_expect in
   let%bind _ = expect_eq_n_int program "foobar4" make_expect in
   let%bind _ = expect_eq_n_int program "foobar5" make_expect in
-  ok () 
+  ok ()
 
 let shared_function () : unit result =
   let%bind program = type_file "./contracts/function-shared.ligo" in
@@ -256,11 +256,11 @@ let set_arithmetic () : unit result =
       (e_set [e_string "foo" ; e_string "bar" ; e_string "foobar"])
       (e_set [e_string "foo" ; e_string "bar"]) in
   let%bind () =
-    expect_eq program "remove_deep" 
-      (e_pair 
+    expect_eq program "remove_deep"
+      (e_pair
          (e_set [e_string "foo" ; e_string "bar" ; e_string "foobar"])
          (e_nat 42))
-      (e_pair 
+      (e_pair
         (e_set [e_string "foo" ; e_string "bar"])
         (e_nat 42))
   in
@@ -276,10 +276,6 @@ let set_arithmetic () : unit result =
       (e_pair
          (e_set [e_string "foo" ; e_string "bar" ; e_string "foobar"])
          (e_nat 42)) in
-  let%bind () =
-    expect_eq program "patch_op_empty"
-      (e_set [e_string "foo" ; e_string "bar"])
-      (e_set [e_string "foo" ; e_string "bar"]) in
   let%bind () =
     expect_eq program "mem_op"
       (e_set [e_string "foo" ; e_string "bar" ; e_string "foobar"])
@@ -450,11 +446,6 @@ let map_ type_f path : unit result =
     let input = ez [(0,0) ; (1,1) ; (2,2)] in
     let expected = ez [(0, 5) ; (1, 6) ; (2, 7)] in
     expect_eq program "patch_" input expected
-  in
-  let%bind () =
-    let input = ez [(0,0) ; (1,1) ; (2,2)] in
-    let expected = ez [(0,0) ; (1,1) ; (2,2)] in
-    expect_eq program "patch_empty" input expected
   in
   let%bind () =
     let input = (e_pair
@@ -630,9 +621,9 @@ let loop () : unit result =
     let make_input = e_nat in
     let make_expected = fun n -> e_nat (n * (n + 1) / 2) in
     expect_eq_n_pos_mid program "while_sum" make_input make_expected
-  in(* For loop is currently unsupported 
-      
-  let%bind () = 
+  in(* For loop is currently unsupported
+
+  let%bind () =
     let make_input = e_nat in
     let make_expected = fun n -> e_nat (n * (n + 1) / 2) in
     expect_eq_n_pos_mid program "for_sum" make_input make_expected

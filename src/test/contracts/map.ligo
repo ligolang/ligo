@@ -29,10 +29,6 @@ function patch_ (var m: foobar) : foobar is block {
   patch m with map [0 -> 5; 1 -> 6; 2 -> 7]
 } with m
 
-function patch_empty (var m : foobar) : foobar is block {
-  patch m with map []
-} with m
-
 function patch_deep (var m: foobar * nat) : foobar * nat is
   begin patch m.0 with map [1 -> 9]; end with m
 

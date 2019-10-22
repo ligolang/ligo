@@ -213,21 +213,21 @@ variant:
 
 record_type:
   Record sep_or_term_list(field_decl,SEMI) End {
-    let elements, terminator = $2 in
+    let ne_elements, terminator = $2 in
     let region = cover $1 $3
-    and value  = {
+    and value = {
      opening = Kwd $1;
-     elements = Some elements;
+     ne_elements;
      terminator;
      closing = End $3}
    in {region; value}
   }
 | Record LBRACKET sep_or_term_list(field_decl,SEMI) RBRACKET {
-   let elements, terminator = $3 in
+   let ne_elements, terminator = $3 in
    let region = cover $1 $4
-   and value  = {
+   and value = {
      opening = KwdBracket ($1,$2);
-     elements = Some elements;
+     ne_elements;
      terminator;
      closing = RBracket $4}
    in {region; value} }
@@ -258,7 +258,7 @@ fun_decl:
       colon        = $4;
       ret_type     = $5;
       kwd_is       = $6;
-      local_decls  = Some $7;
+      local_decls  = $7;
       block        = Some $8;
       kwd_with     = Some $9;
       return       = $10;
@@ -266,7 +266,7 @@ fun_decl:
     in {region;value}}
   | Function fun_name parameters COLON type_expr Is
       expr option(SEMI) {
-        let stop = 
+        let stop =
           match $8 with
             Some region -> region
           | None -> expr_to_region $7 in
@@ -278,7 +278,7 @@ fun_decl:
             colon        = $4;
             ret_type     = $5;
             kwd_is       = $6;
-            local_decls  = None;
+            local_decls  = [];
             block        = None;
             kwd_with     = None;
             return       = $7;
@@ -433,7 +433,7 @@ map_remove:
     in {region; value}}
 
 set_patch:
-  Patch path With injection(Set,expr) {
+  Patch path With ne_injection(Set,expr) {
     let region = cover $1 $4.region in
     let value  = {
       kwd_patch = $1;
@@ -443,7 +443,7 @@ set_patch:
     in {region; value}}
 
 map_patch:
-  Patch path With injection(Map,binding) {
+  Patch path With ne_injection(Map,binding) {
     let region = cover $1 $4.region in
     let value  = {
       kwd_patch = $1;
@@ -491,6 +491,28 @@ injection(Kind,element):
       closing    = RBracket $3}
     in {region; value}}
 
+ne_injection(Kind,element):
+  Kind sep_or_term_list(element,SEMI) End {
+    let ne_elements, terminator = $2 in
+    let region = cover $1 $3
+    and value = {
+      opening  = Kwd $1;
+      ne_elements;
+      terminator;
+      closing = End $3}
+    in {region; value}
+  }
+| Kind LBRACKET sep_or_term_list(element,SEMI) RBRACKET {
+    let ne_elements, terminator = $3 in
+    let region = cover $1 $4
+    and value = {
+      opening  = KwdBracket ($1,$2);
+      ne_elements;
+      terminator;
+      closing = RBracket $4}
+    in {region; value}
+  }
+
 binding:
   expr ARROW expr {
     let start  = expr_to_region $1
@@ -503,7 +525,7 @@ binding:
     in {region; value}}
 
 record_patch:
-  Patch path With record_expr {
+  Patch path With ne_injection(Record,field_assignment) {
     let region = cover $1 $4.region in
     let value  = {
       kwd_patch  = $1;
@@ -906,7 +928,7 @@ record_expr:
   Record sep_or_term_list(field_assignment,SEMI) End {
     let elements, terminator = $2 in
     let region = cover $1 $3
-    and value = {
+    and value : field_assign AST.reg injection = {
       opening = Kwd $1;
       elements = Some elements;
       terminator;
@@ -916,7 +938,7 @@ record_expr:
 | Record LBRACKET sep_or_term_list(field_assignment,SEMI) RBRACKET {
    let elements, terminator = $3 in
    let region = cover $1 $4
-   and value  = {
+   and value : field_assign AST.reg injection = {
      opening = KwdBracket ($1,$2);
      elements = Some elements;
      terminator;
