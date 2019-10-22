@@ -43,7 +43,6 @@ module Wrap = struct
       in
       P_constant (csttag, List.map type_expression_to_type_value args)
 
-
   let rec type_expression_to_type_value_copypasted : I.type_expression -> O.type_value = fun te ->
     match te with
     | T_tuple types ->
@@ -650,16 +649,19 @@ type 'selector_output propagator = 'selector_output -> structured_dbs -> new_con
  * For now: break pair(a, b) = pair(c, d) into a = c, b = d *)
 
 type output_break_ctor = { a_k_var : c_constructor_simpl ; a_k'_var' : c_constructor_simpl }
-let selector_break_ctor : (type_constraint_simpl, output_break_ctor) selector =
+let selector_break_ctor :  (type_constraint_simpl, output_break_ctor) selector =
   (* find two rules with the shape a = k(var …) and a = k'(var' …) *)
   fun type_constraint_simpl dbs ->
   match type_constraint_simpl with
     SC_Constructor c ->
+    (* finding other constraints related to the same type variable and
+       with the same sort of constraint (constructor vs. constructor)
+       is symmetric *)
     let other_cs = (UnionFindWrapper.get_constraints_related_to c.tv dbs).constructor in
     let cs_pairs = List.map (fun x -> { a_k_var = c ; a_k'_var' = x }) other_cs in
     WasSelected cs_pairs
-  | SC_Alias       _                -> WasNotSelected (* TODO: ??? *)
-  | SC_Poly        _                -> WasNotSelected (* TODO: ??? *)
+  | SC_Alias       _                -> WasNotSelected (* TODO: ??? (beware: symmetry) *)
+  | SC_Poly        _                -> WasNotSelected (* TODO: ??? (beware: symmetry) *)
   | SC_Typeclass   _                -> WasNotSelected
 
 let propagator_break_ctor : output_break_ctor propagator =
@@ -686,17 +688,213 @@ let propagator_break_ctor : output_break_ctor propagator =
 (* TODO : with our selectors, the selection depends on the order in which the constraints are added :-( :-( :-( :-(
    We need to return a lazy stream of constraints. *)
 
+module type BLABLA = Set.OrderedType (* Set.S *)
+
 type output_specialize1 = { poly : c_poly_simpl ; a_k_var : c_constructor_simpl }
+
+
+module Comparators = struct
+  module Int = struct
+    (* Restrict use of Pervasives.compare to just `int`, because we
+       don't want to risk the type of a field changing from int to
+       something not compatible with Pervasives.compare, and not
+       noticing that the comparator needs to be updated. *)
+    let compare (a : int) (b : int) = Pervasives.compare a b
+  end
+  let (<?) ca cb =
+    if ca = 0 then cb () else ca
+  let rec compare_list f = function
+    | hd1::tl1 -> (function
+          [] -> 1
+        | hd2::tl2 ->
+          f hd1 hd2 <? fun () ->
+            compare_list f tl1 tl2)
+    | [] -> (function [] -> 0 | _::_ -> -1) (* This follows the behaviour of Pervasives.compare for lists of different length *)
+  let compare_type_variable a b =
+    String.compare a b
+  let compare_label = function
+    | L_int a -> (function L_int b -> Int.compare a b | L_string _ -> -1)
+    | L_string a -> (function L_int _ -> 1 | L_string b -> String.compare a b)
+  let compare_simple_c_constant = function
+    | C_arrow -> (function
+        (* N/A -> 1 *)
+        | C_arrow -> 0
+        | C_option | C_tuple | C_record | C_variant | C_map | C_big_map | C_list | C_set | C_unit | C_bool | C_string | C_nat | C_tez | C_timestamp | C_int | C_address | C_bytes | C_key_hash | C_key | C_signature | C_operation | C_contract -> -1)
+    | C_option -> (function
+        | C_arrow -> 1
+        | C_option -> 0
+        | C_tuple | C_record | C_variant | C_map | C_big_map | C_list | C_set | C_unit | C_bool | C_string | C_nat | C_tez | C_timestamp | C_int | C_address | C_bytes | C_key_hash | C_key | C_signature | C_operation | C_contract -> -1)
+    | C_tuple -> (function
+        | C_arrow | C_option -> 1
+        | C_tuple -> 0
+        | C_record | C_variant | C_map | C_big_map | C_list | C_set | C_unit | C_bool | C_string | C_nat | C_tez | C_timestamp | C_int | C_address | C_bytes | C_key_hash | C_key | C_signature | C_operation | C_contract -> -1)
+    | C_record -> (function
+        | C_arrow | C_option | C_tuple -> 1
+        | C_record -> 0
+        | C_variant | C_map | C_big_map | C_list | C_set | C_unit | C_bool | C_string | C_nat | C_tez | C_timestamp | C_int | C_address | C_bytes | C_key_hash | C_key | C_signature | C_operation | C_contract -> -1)
+    | C_variant -> (function
+        | C_arrow | C_option | C_tuple | C_record -> 1
+        | C_variant -> 0
+        | C_map | C_big_map | C_list | C_set | C_unit | C_bool | C_string | C_nat | C_tez | C_timestamp | C_int | C_address | C_bytes | C_key_hash | C_key | C_signature | C_operation | C_contract -> -1)
+    | C_map -> (function
+        | C_arrow | C_option | C_tuple | C_record | C_variant -> 1
+        | C_map -> 0
+        | C_big_map | C_list | C_set | C_unit | C_bool | C_string | C_nat | C_tez | C_timestamp | C_int | C_address | C_bytes | C_key_hash | C_key | C_signature | C_operation | C_contract -> -1)
+    | C_big_map -> (function
+        | C_arrow | C_option | C_tuple | C_record | C_variant | C_map -> 1
+        | C_big_map -> 0
+        | C_list | C_set | C_unit | C_bool | C_string | C_nat | C_tez | C_timestamp | C_int | C_address | C_bytes | C_key_hash | C_key | C_signature | C_operation | C_contract -> -1)
+    | C_list -> (function
+        | C_arrow | C_option | C_tuple | C_record | C_variant | C_map | C_big_map -> 1
+        | C_list -> 0
+        | C_set | C_unit | C_bool | C_string | C_nat | C_tez | C_timestamp | C_int | C_address | C_bytes | C_key_hash | C_key | C_signature | C_operation | C_contract -> -1)
+    | C_set -> (function
+        | C_arrow | C_option | C_tuple | C_record | C_variant | C_map | C_big_map | C_list -> 1
+        | C_set -> 0
+        | C_unit | C_bool | C_string | C_nat | C_tez | C_timestamp | C_int | C_address | C_bytes | C_key_hash | C_key | C_signature | C_operation | C_contract -> -1)
+    | C_unit -> (function
+        | C_arrow | C_option | C_tuple | C_record | C_variant | C_map | C_big_map | C_list | C_set -> 1
+        | C_unit -> 0
+        | C_bool | C_string | C_nat | C_tez | C_timestamp | C_int | C_address | C_bytes | C_key_hash | C_key | C_signature | C_operation | C_contract -> -1)
+    | C_bool -> (function
+        | C_arrow | C_option | C_tuple | C_record | C_variant | C_map | C_big_map | C_list | C_set | C_unit -> 1
+        | C_bool -> 0
+        | C_string | C_nat | C_tez | C_timestamp | C_int | C_address | C_bytes | C_key_hash | C_key | C_signature | C_operation | C_contract -> -1)
+    | C_string -> (function
+        | C_arrow | C_option | C_tuple | C_record | C_variant | C_map | C_big_map | C_list | C_set | C_unit | C_bool -> 1
+        | C_string -> 0
+        | C_nat | C_tez | C_timestamp | C_int | C_address | C_bytes | C_key_hash | C_key | C_signature | C_operation | C_contract -> -1)
+    | C_nat -> (function
+        | C_arrow | C_option | C_tuple | C_record | C_variant | C_map | C_big_map | C_list | C_set | C_unit | C_bool | C_string -> 1
+        | C_nat -> 0
+        | C_tez | C_timestamp | C_int | C_address | C_bytes | C_key_hash | C_key | C_signature | C_operation | C_contract -> -1)
+    | C_tez -> (function
+        | C_arrow | C_option | C_tuple | C_record | C_variant | C_map | C_big_map | C_list | C_set | C_unit | C_bool | C_string | C_nat -> 1
+        | C_tez -> 0
+        | C_timestamp | C_int | C_address | C_bytes | C_key_hash | C_key | C_signature | C_operation | C_contract -> -1)
+    | C_timestamp -> (function
+        | C_arrow | C_option | C_tuple | C_record | C_variant | C_map | C_big_map | C_list | C_set | C_unit | C_bool | C_string | C_nat | C_tez -> 1
+        | C_timestamp -> 0
+        | C_int | C_address | C_bytes | C_key_hash | C_key | C_signature | C_operation | C_contract -> -1)
+    | C_int -> (function
+        | C_arrow | C_option | C_tuple | C_record | C_variant | C_map | C_big_map | C_list | C_set | C_unit | C_bool | C_string | C_nat | C_tez | C_timestamp -> 1
+        | C_int -> 0
+        | C_address | C_bytes | C_key_hash | C_key | C_signature | C_operation | C_contract -> -1)
+    | C_address -> (function
+        | C_arrow | C_option | C_tuple | C_record | C_variant | C_map | C_big_map | C_list | C_set | C_unit | C_bool | C_string | C_nat | C_tez | C_timestamp | C_int -> 1
+        | C_address -> 0
+        | C_bytes | C_key_hash | C_key | C_signature | C_operation | C_contract -> -1)
+    | C_bytes -> (function
+        | C_arrow | C_option | C_tuple | C_record | C_variant | C_map | C_big_map | C_list | C_set | C_unit | C_bool | C_string | C_nat | C_tez | C_timestamp | C_int | C_address -> 1
+        | C_bytes -> 0
+        | C_key_hash | C_key | C_signature | C_operation | C_contract -> -1)
+    | C_key_hash -> (function
+        | C_arrow | C_option | C_tuple | C_record | C_variant | C_map | C_big_map | C_list | C_set | C_unit | C_bool | C_string | C_nat | C_tez | C_timestamp | C_int | C_address | C_bytes -> 1
+        | C_key_hash -> 0
+        | C_key | C_signature | C_operation | C_contract -> -1)
+    | C_key -> (function
+        | C_arrow | C_option | C_tuple | C_record | C_variant | C_map | C_big_map | C_list | C_set | C_unit | C_bool | C_string | C_nat | C_tez | C_timestamp | C_int | C_address | C_bytes | C_key_hash -> 1
+        | C_key -> 0
+        | C_signature | C_operation | C_contract -> -1)
+    | C_signature -> (function
+        | C_arrow | C_option | C_tuple | C_record | C_variant | C_map | C_big_map | C_list | C_set | C_unit | C_bool | C_string | C_nat | C_tez | C_timestamp | C_int | C_address | C_bytes | C_key_hash | C_key -> 1
+        | C_signature -> 0
+        | C_operation | C_contract -> -1)
+    | C_operation -> (function
+        | C_arrow | C_option | C_tuple | C_record | C_variant | C_map | C_big_map | C_list | C_set | C_unit | C_bool | C_string | C_nat | C_tez | C_timestamp | C_int | C_address | C_bytes | C_key_hash | C_key | C_signature -> 1
+        | C_operation -> 0
+        | C_contract -> -1)
+    | C_contract -> (function
+        | C_arrow | C_option | C_tuple | C_record | C_variant | C_map | C_big_map | C_list | C_set | C_unit | C_bool | C_string | C_nat | C_tez | C_timestamp | C_int | C_address | C_bytes | C_key_hash | C_key | C_signature | C_operation -> 1
+        | C_contract -> 0
+        (* N/A -> -1 *)
+      )
+  let rec compare_typeclass a b = compare_list (compare_list compare_type_value) a b
+  and compare_type_value = function
+    | P_forall { binder=a1; constraints=a2; body=a3 } -> (function
+        | P_forall { binder=b1; constraints=b2; body=b3 } ->
+          compare_type_variable a1 b1 <? fun () ->
+            compare_list compare_type_constraint a2 b2  <? fun () ->
+              compare_type_value a3 b3
+        | P_variable _ -> -1
+        | P_constant _ -> -1
+        | P_apply _ -> -1)
+      | P_variable a -> (function
+        | P_forall _ -> 1
+        | P_variable b -> String.compare a b
+        | P_constant _ -> -1
+        | P_apply _ -> -1)
+      | P_constant (a1, a2) -> (function
+        | P_forall _ -> 1
+        | P_variable _ -> 1
+        | P_constant (b1, b2) -> compare_simple_c_constant a1 b1 <? fun () -> compare_list compare_type_value a2 b2
+        | P_apply _ -> -1)
+      | P_apply (a1, a2) -> (function
+        | P_forall _ -> 1
+        | P_variable _ -> 1
+        | P_constant _ -> 1
+        | P_apply (b1, b2) -> compare_type_value a1 b1 <? fun () -> compare_type_value a2 b2)
+  and compare_type_constraint = function
+    | C_equation (a1, a2) -> (function
+        | C_equation (b1, b2) -> compare_type_value a1 b1 <? fun () -> compare_type_value a2 b2
+        | C_typeclass _ -> -1
+        | C_access_label _ -> -1)
+    | C_typeclass (a1, a2) -> (function
+        | C_equation _ -> 1
+        | C_typeclass (b1, b2) -> compare_list compare_type_value a1 b1 <? fun () -> compare_typeclass a2 b2
+        | C_access_label _ -> -1)
+    | C_access_label (a1, a2, a3) -> (function
+        | C_equation _ -> 1
+        | C_typeclass _ -> 1
+        | C_access_label (b1, b2, b3) -> compare_type_value a1 b1 <? fun () -> compare_label a2 b2  <? fun () -> compare_type_variable a3 b3)
+  let rec compare_type_constraint_list = compare_list compare_type_constraint
+  let compare_p_forall
+      { binder = a1; constraints = a2; body = a3 }
+      { binder = b1; constraints = b2; body = b3 } =
+    compare_type_variable a1 b1 <? fun () ->
+      compare_type_constraint_list a2 b2 <? fun () ->
+        compare_type_value a3 b3
+  let compare_c_poly_simpl { tv = a1; forall = a2 } { tv = b1; forall = b2 } =
+    compare_type_variable a1 b1 <? fun () ->
+    compare_p_forall a2 b2
+  let compare_c_constructor_simpl { tv=a1; c_tag=a2; tv_list=a3 } { tv=b1; c_tag=b2; tv_list=b3 } =
+    compare_type_variable a1 b1 <? fun () -> compare_simple_c_constant a2 b2  <? fun () -> compare_list compare_type_variable a3 b3
+
+  let compare_output_specialize1 { poly = a1; a_k_var = a2 } { poly = b1; a_k_var = b2 } =
+    compare_c_poly_simpl a1 b1 <? fun () ->
+    compare_c_constructor_simpl a2 b2
+
+  let compare_output_break_ctor { a_k_var=a1; a_k'_var'=a2 } { a_k_var=b1; a_k'_var'=b2 } =
+    compare_c_constructor_simpl a1 b1 <? fun () -> compare_c_constructor_simpl a2 b2
+end
+
+module OutputSpecialize1 : BLABLA = struct
+  type t = output_specialize1
+  let compare = Comparators.compare_output_specialize1
+end
+
+
+module BreakCtor : BLABLA = struct
+  type t = output_break_ctor
+  let compare = Comparators.compare_output_break_ctor
+end
+
 let selector_specialize1 : (type_constraint_simpl, output_specialize1) selector =
-  (* find two rules with the shape (a = forall b, d) and a = k'(var' …) *)
+  (* find two rules with the shape (a = forall b, d) and a = k'(var' …) or vice versa *)
   (* TODO: do the same for two rules with the shape (a = forall b, d) and tc(a…) *)
   (* TODO: do the appropriate thing for two rules with the shape (a = forall b, d) and (a = forall b', d') *)
   fun type_constraint_simpl dbs ->
   match type_constraint_simpl with
-    SC_Constructor _                -> WasNotSelected
+    SC_Constructor c                ->
+    (* vice versa *)
+    let other_cs = (UnionFindWrapper.get_constraints_related_to c.tv dbs).poly in
+    let other_cs = List.filter (fun (x : c_poly_simpl) -> c.tv == x.tv) other_cs in (* TODO: does equality work in OCaml? *)
+    let cs_pairs = List.map (fun x -> { poly = x ; a_k_var = c }) other_cs in
+    WasSelected cs_pairs
   | SC_Alias       _                -> WasNotSelected (* TODO: ??? *)
   | SC_Poly        p                ->
     let other_cs = (UnionFindWrapper.get_constraints_related_to p.tv dbs).constructor in
+    let other_cs = List.filter (fun (x : c_constructor_simpl) -> x.tv == p.tv) other_cs in (* TODO: does equality work in OCaml? *)
     let cs_pairs = List.map (fun x -> { poly = p ; a_k_var = x }) other_cs in
     WasSelected cs_pairs
   | SC_Typeclass   _                -> WasNotSelected
@@ -720,11 +918,19 @@ let propagator_specialize1 : output_specialize1 propagator =
   let eqs = eq1 :: new_constraints in
   (eqs, []) (* no new assignments *)
 
-let select_and_propagate : ('old_input, 'selector_output) selector -> 'selector_output propagator -> 'a -> structured_dbs -> new_constraints * new_assignments =
+module M (BlaBla : BLABLA) = struct
+  module AlreadySelected = Set.Make(BlaBla)
+
+let select_and_propagate : ('old_input, 'selector_output) selector -> BlaBla.t propagator -> 'a -> structured_dbs -> new_constraints * new_assignments =
   fun selector propagator ->
   fun old_type_constraint dbs ->
+    (* TODO: thread some state to know which selector outputs were already seen *)
+    let already_selected = (??) in
   match selector old_type_constraint dbs with
     WasSelected selected_outputs ->
+    (* TODO: fold instead. *)
+    let selected_outputs = List.filter (fun elt -> AlreadySelected.mem elt already_selected) selected_outputs in
+    let blahblah = List.fold_left (fun acc elt -> AlreadySelected.add elt acc) already_selected selected_outputs in
     (* Call the propagation rule *)
     let new_contraints_and_assignments = List.map (fun s -> propagator s dbs) selected_outputs in
     let (new_constraints , new_assignments) = List.split new_contraints_and_assignments in
@@ -732,9 +938,13 @@ let select_and_propagate : ('old_input, 'selector_output) selector -> 'selector_
     (List.flatten new_constraints , List.flatten new_assignments)
   | WasNotSelected ->
     ([] , [])
+end
 
-let select_and_propagate_break_ctor = select_and_propagate selector_break_ctor propagator_break_ctor
-let select_and_propagate_specialize1 = select_and_propagate selector_specialize1 propagator_specialize1
+module M_break_ctor = M(BreakCtor)
+module M_specialize1 = M(OutputSpecialize1)
+
+let select_and_propagate_break_ctor = M_break_ctor.select_and_propagate selector_break_ctor propagator_break_ctor
+let select_and_propagate_specialize1 = M_specialize1.select_and_propagate selector_specialize1 propagator_specialize1
 
 let select_and_propagate_all' : type_constraint_simpl selector_input -> structured_dbs -> new_constraints * structured_dbs =
   fun new_constraint dbs ->
