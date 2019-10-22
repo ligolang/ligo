@@ -266,16 +266,23 @@ and print_instruction buffer = function
 | MapRemove   {value; _} -> print_map_remove buffer value
 | SetRemove   {value; _} -> print_set_remove buffer value
 
-and print_conditional buffer node =
-  let {kwd_if; test; kwd_then; ifso; terminator;
-       kwd_else; ifnot} = node in
-  print_token      buffer kwd_if "if";
-  print_expr       buffer test;
-  print_token      buffer kwd_then "then";
-  print_if_clause  buffer ifso;
-  print_terminator buffer terminator;
-  print_token      buffer kwd_else "else";
-  print_if_clause  buffer ifnot
+and print_cond_expr buffer (node: cond_expr) =
+  print_token      buffer node.kwd_if "if";
+  print_expr       buffer node.test;
+  print_token      buffer node.kwd_then "then";
+  print_expr       buffer node.ifso;
+  print_terminator buffer node.terminator;
+  print_token      buffer node.kwd_else "else";
+  print_expr       buffer node.ifnot
+
+and print_conditional buffer (node: conditional) =
+  print_token      buffer node.kwd_if "if";
+  print_expr       buffer node.test;
+  print_token      buffer node.kwd_then "then";
+  print_if_clause  buffer node.ifso;
+  print_terminator buffer node.terminator;
+  print_token      buffer node.kwd_else "else";
+  print_if_clause  buffer node.ifnot
 
 and print_if_clause buffer = function
   ClauseInstr instr -> print_instruction buffer instr
@@ -383,6 +390,7 @@ and print_bind_to buffer = function
 
 and print_expr buffer = function
   ECase   {value;_} -> print_case_expr buffer value
+| ECond   {value;_} -> print_cond_expr buffer value
 | EAnnot  {value;_} -> print_annot_expr buffer value
 | ELogic  e -> print_logic_expr buffer e
 | EArith  e -> print_arith_expr buffer e
@@ -931,7 +939,22 @@ and pp_instruction buffer ~pad:(_,pc as pad) = function
     pp_node buffer ~pad "SetRemove";
     pp_set_remove buffer ~pad value
 
-and pp_conditional buffer ~pad:(_,pc) cond =
+and pp_cond_expr buffer ~pad:(_,pc) (cond: cond_expr) =
+  let () =
+    let _, pc as pad = mk_pad 3 0 pc in
+    pp_node buffer ~pad "<condition>";
+    pp_expr buffer ~pad:(mk_pad 1 0 pc) cond.test in
+  let () =
+    let _, pc as pad = mk_pad 3 1 pc in
+    pp_node buffer ~pad "<true>";
+    pp_expr buffer ~pad:(mk_pad 1 0 pc) cond.ifso in
+  let () =
+    let _, pc as pad = mk_pad 3 2 pc in
+    pp_node buffer ~pad "<false>";
+    pp_expr buffer ~pad:(mk_pad 1 0 pc) cond.ifnot
+  in ()
+
+and pp_conditional buffer ~pad:(_,pc) (cond: conditional) =
   let () =
     let _, pc as pad = mk_pad 3 0 pc in
     pp_node buffer ~pad "<condition>";
@@ -1269,6 +1292,9 @@ and pp_expr buffer ~pad:(_,pc as pad) = function
   ECase {value; _} ->
     pp_node buffer ~pad "ECase";
     pp_case pp_expr buffer ~pad value
+| ECond {value; _} ->
+    pp_node buffer ~pad "ECond";
+    pp_cond_expr buffer ~pad value
 | EAnnot {value; _} ->
     pp_node buffer ~pad "EAnnot";
     pp_annotated buffer ~pad value

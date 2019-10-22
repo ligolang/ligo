@@ -338,6 +338,16 @@ and record_patch = {
   record_inj : record_expr
 }
 
+and cond_expr = {
+  kwd_if     : kwd_if;
+  test       : expr;
+  kwd_then   : kwd_then;
+  ifso       : expr;
+  terminator : semi option;
+  kwd_else   : kwd_else;
+  ifnot      : expr
+}
+
 and conditional = {
   kwd_if     : kwd_if;
   test       : expr;
@@ -437,7 +447,8 @@ and collection =
 (* Expressions *)
 
 and expr =
-| ECase   of expr case reg
+  ECase   of expr case reg
+| ECond   of cond_expr reg
 | EAnnot  of annot_expr reg
 | ELogic  of logic_expr
 | EArith  of arith_expr
@@ -628,6 +639,7 @@ let rec expr_to_region = function
 | EBytes {region; _}
 | EUnit   region
 | ECase  {region;_}
+| ECond  {region; _}
 | EPar   {region; _} -> region
 
 and tuple_expr_to_region {region; _} = region

@@ -379,6 +379,12 @@ let rec simpl_expression (t:Raw.expr) : expr result =
   | ELogic l -> simpl_logic_expression l
   | EList l -> simpl_list_expression l
   | ESet s -> simpl_set_expression s
+  | ECond c ->
+      let (c , loc) = r_split c in
+      let%bind expr = simpl_expression c.test in
+      let%bind match_true = simpl_expression c.ifso in
+      let%bind match_false = simpl_expression c.ifnot in
+      return @@ e_matching expr ~loc (Match_bool {match_true; match_false})
   | ECase c -> (
       let (c , loc) = r_split c in
       let%bind e = simpl_expression c.expr in

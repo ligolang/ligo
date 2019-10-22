@@ -518,7 +518,7 @@ proc_call:
 conditional:
   If expr Then if_clause option(SEMI) Else if_clause {
     let region = cover $1 (if_clause_to_region $7) in
-    let value = {
+    let value : conditional = {
       kwd_if     = $1;
       test       = $2;
       kwd_then   = $3;
@@ -661,14 +661,28 @@ interactive_expr:
 
 expr:
   case(expr) { ECase ($1 expr_to_region) }
+| cond_expr  { $1                        }
 | disj_expr  { $1                        }
+
+cond_expr:
+  If expr Then expr option(SEMI) Else expr {
+    let region = cover $1 (expr_to_region $7) in
+    let value : cond_expr = {
+      kwd_if     = $1;
+      test       = $2;
+      kwd_then   = $3;
+      ifso       = $4;
+      terminator = $5;
+      kwd_else   = $6;
+      ifnot      = $7}
+    in ECond {region; value} }
 
 disj_expr:
   disj_expr Or conj_expr {
     let start  = expr_to_region $1
     and stop   = expr_to_region $3 in
     let region = cover start stop
-    and value  = {arg1 = $1; op = $2; arg2 = $3} in
+    and value  = {arg1=$1; op=$2; arg2=$3} in
     ELogic (BoolExpr (Or {region; value}))
   }
 | conj_expr { $1 }
@@ -678,7 +692,7 @@ conj_expr:
     let start  = expr_to_region $1
     and stop   = expr_to_region $3 in
     let region = cover start stop
-    and value  = {arg1 = $1; op = $2; arg2 = $3}
+    and value  = {arg1=$1; op=$2; arg2=$3}
     in ELogic (BoolExpr (And {region; value}))
   }
 | set_membership { $1 }
