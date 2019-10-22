@@ -203,6 +203,11 @@ let string_arithmetic () : unit result =
   let%bind () = expect_fail program "slice_op" (e_string "ba") in
   ok ()
 
+let string_arithmetic_mligo () : unit result =
+  let%bind program = mtype_file "./contracts/string_arithmetic.mligo" in
+  let%bind () = expect_eq program "concat_syntax" (e_string "string_") (e_string "string_test_literal")
+  in ok ()
+
 let bytes_arithmetic () : unit result =
   let%bind program = type_file "./contracts/bytes_arithmetic.ligo" in
   let%bind foo = e_bytes "0f00" in
@@ -921,6 +926,7 @@ let main = test_suite "Integration (End to End)" [
     test "arithmetic" arithmetic ;
     test "bitiwse_arithmetic" bitwise_arithmetic ;
     test "string_arithmetic" string_arithmetic ;
+    test "string_arithmetic (mligo)" string_arithmetic_mligo ;
     test "bytes_arithmetic" bytes_arithmetic ;
     test "set_arithmetic" set_arithmetic ;
     test "unit" unit_expression ;
