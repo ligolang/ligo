@@ -972,24 +972,14 @@ and simpl_for_int : Raw.for_int -> (_ -> expression result) result = fun fi ->
   let var = e_variable fi.assign.value.name.value in
   let%bind value = simpl_expression fi.assign.value.expr in
   let%bind bound = simpl_expression fi.bound in
-  let comp = match fi.down with
-    | Some _ -> e_annotation (e_constant "GE" [var ; bound]) t_bool
-    | None -> e_annotation (e_constant "LE" [var ; bound]) t_bool
+  let comp = e_annotation (e_constant "LE" [var ; bound]) t_bool
   in
   (* body part *)
   let%bind body = simpl_block fi.block.value in
   let%bind body = body None in
-  let%bind step =  match fi.step with
-    | Some (_,e) -> simpl_expression e
-    | None -> ok (e_int 1) in
-  let ctrl = match fi.down with
-    | Some _ ->
-      let _addi = e_constant "SUB" [ var ; step ] in 
-      e_assign fi.assign.value.name.value [] _addi 
-    | None ->
-      let _subi = e_constant "ADD" [ var ; step ] in 
-      e_assign fi.assign.value.name.value [] _subi
-  in
+  let step = e_int 1 in
+  let ctrl = e_assign
+    fi.assign.value.name.value [] (e_constant "ADD" [ var ; step ]) in
   let rec add_to_seq expr = match expr.expression with
     | E_sequence (_,a) -> add_to_seq a
     | _ -> e_sequence body ctrl in
@@ -998,14 +988,30 @@ and simpl_for_int : Raw.for_int -> (_ -> expression result) result = fun fi ->
   return_statement @@ e_let_in (fi.assign.value.name.value, Some t_int) value loop
 
 and simpl_for_collect : Raw.for_collect -> (_ -> expression result) result = fun fc ->
-  let%bind col = simpl_expression fc.expr in
-  let%bind body = simpl_block fc.block.value in
-  let%bind body = body None in
-  let invar = e_variable fc.var.value in
-  let letin = e_let_in (fc.var.value, None) invar body in
-  let lambda = e_lambda fc.var.value None (Some t_unit) letin in
-  (* let%bind lambda = ok @@ e_lambda fc.var.value None (Some t_unit) body in *)
-  return_statement @@ e_constant "SET_ITER" [col ; lambda]
+  let statements = npseq_to_list fc.block.value.statements in
+  (* building initial record *)
+  let aux (el : Raw.statement) : Raw.instruction option = match el with
+      | Raw.Instr (Assign _ as i)  -> Some i
+      | _ -> None in
+  let assign_instrs = List.filter_map aux statements in
+  let%bind assign_instrs' = bind_map_list
+    (fun el ->
+      let%bind assign' = simpl_instruction el in
+      let%bind assign' = assign' None in
+      ok @@ assign')
+    assign_instrs in
+  let aux prev ass_exp =
+    match ass_exp.expression with
+    | E_variable name -> SMap.add name ass_exp prev 
+    | _ -> prev in
+  let init_record = e_record (List.fold_left aux SMap.empty assign_instrs') in
+  (*later , init_record will be placed in a let_in *)
+
+  (* replace assignments to variable to assignments to record  *)
+
+
+
+  return_statement @@ init_record
 
 let simpl_program : Raw.ast -> program result = fun t ->
   bind_list @@ List.map simpl_declaration @@ nseq_to_list t.decl
