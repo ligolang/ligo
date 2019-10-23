@@ -178,7 +178,7 @@ and type_decl = {
 and type_expr =
   TProd   of cartesian
 | TSum    of (variant reg, vbar) nsepseq reg
-| TRecord of field_decl reg injection reg
+| TRecord of field_decl reg ne_injection reg
 | TApp    of (type_name * type_tuple) reg
 | TFun    of (type_expr * arrow * type_expr) reg
 | TPar    of type_expr par reg
@@ -208,7 +208,7 @@ and fun_decl ={
     colon        : colon;
     ret_type     : type_expr;
     kwd_is       : kwd_is;
-    local_decls  : local_decl list option;
+    local_decls  : local_decl list;
     block        : block reg option;
     kwd_with     : kwd_with option;
     return       : expr;
@@ -306,14 +306,14 @@ and set_patch  = {
   kwd_patch : kwd_patch;
   path      : path;
   kwd_with  : kwd_with;
-  set_inj   : expr injection reg
+  set_inj   : expr ne_injection reg
 }
 
 and map_patch  = {
   kwd_patch : kwd_patch;
   path      : path;
   kwd_with  : kwd_with;
-  map_inj   : binding reg injection reg
+  map_inj   : binding reg ne_injection reg
 }
 
 and binding = {
@@ -326,7 +326,7 @@ and record_patch = {
   kwd_patch  : kwd_patch;
   path       : path;
   kwd_with   : kwd_with;
-  record_inj : field_assign reg injection reg
+  record_inj : field_assign reg ne_injection reg
 }
 
 and cond_expr = {
@@ -468,6 +468,13 @@ and 'a injection = {
   elements   : ('a, semi) sepseq;
   terminator : semi option;
   closing    : closing
+}
+
+and 'a ne_injection = {
+  opening     : opening;
+  ne_elements : ('a, semi) nsepseq;
+  terminator  : semi option;
+  closing     : closing
 }
 
 and opening =

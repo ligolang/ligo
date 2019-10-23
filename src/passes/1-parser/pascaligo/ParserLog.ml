@@ -125,7 +125,7 @@ and print_sum_type buffer {value; _} =
   print_nsepseq buffer "|" print_variant value
 
 and print_record_type buffer record_type =
-  print_injection buffer "record" print_field_decl record_type
+  print_ne_injection buffer "record" print_field_decl record_type
 
 and print_type_app buffer {value; _} =
   let type_name, type_tuple = value in
@@ -222,10 +222,7 @@ and print_block_closing buffer = function
 | End kwd_end  -> print_token buffer kwd_end "end"
 
 and print_local_decls buffer sequence =
-  match sequence with
-  | Some sequence -> 
-    List.iter (print_local_decl buffer) sequence
-  | None -> ()
+  List.iter (print_local_decl buffer) sequence
 
 and print_local_decl buffer = function
   LocalFun  decl -> print_fun_decl  buffer decl
@@ -576,24 +573,24 @@ and print_selection buffer = function
 
 and print_record_patch buffer node =
   let {kwd_patch; path; kwd_with; record_inj} = node in
-  print_token       buffer kwd_patch "patch";
-  print_path        buffer path;
-  print_token       buffer kwd_with "with";
-  print_record_expr buffer record_inj
+  print_token        buffer kwd_patch "patch";
+  print_path         buffer path;
+  print_token        buffer kwd_with "with";
+  print_ne_injection buffer "record" print_field_assign record_inj
 
 and print_set_patch buffer node =
   let {kwd_patch; path; kwd_with; set_inj} = node in
-  print_token     buffer kwd_patch "patch";
-  print_path      buffer path;
-  print_token     buffer kwd_with "with";
-  print_injection buffer "set" print_expr set_inj
+  print_token        buffer kwd_patch "patch";
+  print_path         buffer path;
+  print_token        buffer kwd_with "with";
+  print_ne_injection buffer "set" print_expr set_inj
 
 and print_map_patch buffer node =
   let {kwd_patch; path; kwd_with; map_inj} = node in
-  print_token      buffer kwd_patch "patch";
-  print_path       buffer path;
-  print_token      buffer kwd_with "with";
-  print_injection  buffer "map" print_binding map_inj
+  print_token        buffer kwd_patch "patch";
+  print_path         buffer path;
+  print_token        buffer kwd_with "with";
+  print_ne_injection buffer "map" print_binding map_inj
 
 and print_map_remove buffer node =
   let {kwd_remove; key; kwd_from; kwd_map; map} = node in
@@ -618,6 +615,16 @@ and print_injection :
     let {opening; elements; terminator; closing} = value in
     print_opening    buffer kwd opening;
     print_sepseq     buffer ";" print elements;
+    print_terminator buffer terminator;
+    print_closing    buffer closing
+
+and print_ne_injection :
+  'a.Buffer.t -> string -> (Buffer.t -> 'a -> unit) ->
+  'a ne_injection reg -> unit =
+  fun buffer kwd print {value; _} ->
+    let {opening; ne_elements; terminator; closing} = value in
+    print_opening    buffer kwd opening;
+    print_nsepseq    buffer ";" print ne_elements;
     print_terminator buffer terminator;
     print_closing    buffer closing
 
@@ -774,10 +781,10 @@ and pp_declaration buffer ~pad:(_,pc as pad) = function
     pp_type_expr buffer ~pad:(mk_pad 2 1 pc) value.type_expr
 | ConstDecl {value; _} ->
     pp_node buffer ~pad "ConstDecl";
-    pp_const_decl buffer ~pad:(mk_pad 1 0 pc) value
+    pp_const_decl buffer ~pad value
 | FunDecl {value; _} ->
     pp_node buffer ~pad "FunDecl";
-    pp_fun_decl buffer ~pad:(mk_pad 1 0 pc) value
+    pp_fun_decl buffer ~pad value
 
 and pp_const_decl buffer ~pad:(_,pc) decl =
   pp_ident buffer ~pad:(mk_pad 3 0 pc) decl.name.value;
@@ -817,7 +824,7 @@ and pp_type_expr buffer ~pad:(_,pc as pad) = function
     let apply len rank field_decl =
       pp_field_decl buffer ~pad:(mk_pad len rank pc)
                     field_decl.value in
-    let fields = Utils.sepseq_to_list value.elements in
+    let fields = Utils.nsepseq_to_list value.ne_elements in
     List.iteri (List.length fields |> apply) fields
 
 and pp_cartesian buffer ~pad:(_,pc) {value; _} =
@@ -844,23 +851,26 @@ and pp_type_tuple buffer ~pad:(_,pc) {value; _} =
   in List.iteri (List.length components |> apply) components
 
 and pp_fun_decl buffer ~pad:(_,pc) decl =
+  let fields =
+    if decl.local_decls = [] then 5 else 6 in
   let () =
-    let pad = mk_pad 6 0 pc in
+    let pad = mk_pad fields 0 pc in
     pp_ident buffer ~pad decl.name.value in
   let () =
-    let pad = mk_pad 6 1 pc in
+    let pad = mk_pad fields 1 pc in
     pp_node buffer ~pad "<parameters>";
     pp_parameters buffer ~pad decl.param in
   let () =
-    let _, pc as pad = mk_pad 6 2 pc in
+    let _, pc as pad = mk_pad fields 2 pc in
     pp_node buffer ~pad "<return type>";
     pp_type_expr buffer ~pad:(mk_pad 1 0 pc) decl.ret_type in
   let () =
-    let pad = mk_pad 6 3 pc in
-    pp_node buffer ~pad "<local declarations>";
-    pp_local_decls buffer ~pad decl.local_decls in
+    if fields = 6 then
+      let pad = mk_pad fields 3 pc in
+      pp_node buffer ~pad "<local declarations>";
+      pp_local_decls buffer ~pad decl.local_decls in
   let () =
-    let pad = mk_pad 6 4 pc in
+    let pad = mk_pad fields (fields - 2) pc in
     pp_node buffer ~pad "<block>";
     let statements =
       match decl.block with
@@ -868,7 +878,7 @@ and pp_fun_decl buffer ~pad:(_,pc) decl =
         | None ->  Instr (Skip Region.ghost), [] in
     pp_statements buffer ~pad statements in
   let () =
-    let _, pc as pad = mk_pad 6 5 pc in
+    let _, pc as pad = mk_pad fields (fields - 1) pc in
     pp_node buffer ~pad "<return>";
     pp_expr buffer ~pad:(mk_pad 1 0 pc) decl.return
   in ()
@@ -1090,6 +1100,15 @@ and pp_injection :
   let apply len rank = printer buffer ~pad:(mk_pad len rank pc)
   in List.iteri (apply length) elements
 
+and pp_ne_injection :
+  'a.(Buffer.t -> pad:(string*string) -> 'a -> unit)
+  -> Buffer.t -> pad:(string*string) -> 'a ne_injection -> unit =
+  fun printer buffer ~pad:(_,pc) inj ->
+  let ne_elements = Utils.nsepseq_to_list inj.ne_elements in
+  let length      = List.length ne_elements in
+  let apply len rank = printer buffer ~pad:(mk_pad len rank pc)
+  in List.iteri (apply length) ne_elements
+
 and pp_tuple_pattern buffer ~pad:(_,pc) tuple =
   let patterns = Utils.nsepseq_to_list tuple.inside in
   let length   = List.length patterns in
@@ -1228,7 +1247,7 @@ and pp_fun_call buffer ~pad:(_,pc) (name, args) =
 
 and pp_record_patch buffer ~pad:(_,pc as pad) patch =
   pp_path buffer ~pad:(mk_pad 2 0 pc) patch.path;
-  pp_injection pp_field_assign buffer
+  pp_ne_injection pp_field_assign buffer
     ~pad patch.record_inj.value
 
 and pp_field_assign buffer ~pad:(_,pc as pad) {value; _} =
@@ -1238,7 +1257,7 @@ and pp_field_assign buffer ~pad:(_,pc as pad) {value; _} =
 
 and pp_map_patch buffer ~pad:(_,pc as pad) patch =
   pp_path buffer ~pad:(mk_pad 2 0 pc) patch.path;
-  pp_injection pp_binding buffer
+  pp_ne_injection pp_binding buffer
     ~pad patch.map_inj.value
 
 and pp_binding buffer ~pad:(_,pc as pad) {value; _} =
@@ -1249,7 +1268,7 @@ and pp_binding buffer ~pad:(_,pc as pad) {value; _} =
 
 and pp_set_patch buffer ~pad:(_,pc as pad) patch =
   pp_path buffer ~pad:(mk_pad 2 0 pc) patch.path;
-  pp_injection pp_expr buffer ~pad patch.set_inj.value
+  pp_ne_injection pp_expr buffer ~pad patch.set_inj.value
 
 and pp_map_remove buffer ~pad:(_,pc) rem =
   pp_expr buffer ~pad:(mk_pad 2 0 pc) rem.key;
@@ -1260,17 +1279,14 @@ and pp_set_remove buffer ~pad:(_,pc) rem =
   pp_path buffer ~pad:(mk_pad 2 1 pc) rem.set
 
 and pp_local_decls buffer ~pad:(_,pc) decls =
-  match decls with
-  | Some decls ->
-    let apply len rank =
-      pp_local_decl buffer ~pad:(mk_pad len rank pc)
-    in List.iteri (List.length decls |> apply) decls
-  | None -> ()
+  let apply len rank =
+    pp_local_decl buffer ~pad:(mk_pad len rank pc)
+  in List.iteri (List.length decls |> apply) decls
 
 and pp_local_decl buffer ~pad:(_,pc as pad) = function
   LocalFun {value; _} ->
     pp_node buffer ~pad "LocalFun";
-    pp_fun_decl buffer ~pad:(mk_pad 1 0 pc) value
+    pp_fun_decl buffer ~pad value
 | LocalData data ->
     pp_node buffer ~pad "LocalData";
     pp_data_decl buffer ~pad:(mk_pad 1 0 pc) data
@@ -1469,10 +1485,9 @@ and pp_annotated buffer ~pad:(_,pc) (expr, t_expr) =
   pp_expr buffer ~pad:(mk_pad 2 0 pc) expr;
   pp_type_expr buffer ~pad:(mk_pad 2 1 pc) t_expr
 
-and pp_bin_op node buffer ~pad:(_,pc) op =
-  pp_node buffer ~pad:(mk_pad 1 0 pc) node;
-  let _, pc = mk_pad 1 0 pc in
-  (pp_expr buffer ~pad:(mk_pad 2 0 pc) op.arg1;
-   pp_expr buffer ~pad:(mk_pad 2 1 pc) op.arg2)
+and pp_bin_op node buffer ~pad:(_,pc as pad) op =
+  pp_node buffer ~pad node;
+  pp_expr buffer ~pad:(mk_pad 2 0 pc) op.arg1;
+  pp_expr buffer ~pad:(mk_pad 2 1 pc) op.arg2
 
 let pp_ast buffer = pp_ast buffer ~pad:("","")
