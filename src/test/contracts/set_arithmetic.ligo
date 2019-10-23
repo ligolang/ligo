@@ -31,6 +31,3 @@ function patch_op_empty (var s: set(string)) : set(string) is
 
 function mem_op (const s : set(string)) : bool is
   begin skip end with set_mem("foobar" , s)
-
-function size_op (const s : set(string)) : nat is
-  set_size(s);
