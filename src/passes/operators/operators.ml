@@ -82,6 +82,7 @@ module Simplify = struct
       ("set_remove" , "SET_REMOVE") ;
       ("set_iter" , "SET_ITER") ;
       ("set_fold" , "SET_FOLD") ;
+      ("set_size" , "SIZE");
       ("list_iter" , "LIST_ITER") ;
       ("list_fold" , "LIST_FOLD") ;
       ("list_map" , "LIST_MAP") ;
@@ -154,6 +155,7 @@ module Simplify = struct
       ("Set.add" , "SET_ADD") ;
       ("Set.remove" , "SET_REMOVE") ;
       ("Set.fold" , "SET_FOLD") ;
+      ("Set.size", "SIZE") ;
 
       ("Map.find_opt" , "MAP_FIND_OPT") ;
       ("Map.find" , "MAP_FIND") ;
