@@ -22,6 +22,103 @@ module Errors = struct
 
 end
 
+module Free_variables = struct
+
+  type bindings = string list
+  let mem : string -> bindings -> bool = List.mem
+  let singleton : string -> bindings = fun s -> [ s ]
+  let union : bindings -> bindings -> bindings = (@)
+  let unions : bindings list -> bindings = List.concat
+  let empty : bindings = []
+  let of_list : string list -> bindings = fun x -> x
+
+  let rec expression : bindings -> expression -> bindings = fun b e ->
+    let self = expression b in
+    match e.content with
+    | E_literal v -> value b v
+    | E_closure f -> lambda b f
+    | E_skip -> empty
+    | E_constant (_, xs) -> unions @@ List.map self xs
+    | E_application (f, x) -> unions @@ [ self f ; self x ]
+    | E_variable n -> var_name b n
+    | E_make_empty_map _ -> empty
+    | E_make_empty_list _ -> empty
+    | E_make_empty_set _ -> empty
+    | E_make_none _ -> empty
+    | E_iterator (_, ((v, _), body), expr) ->
+      unions [ expression (union (singleton v) b) body ;
+               self expr ;
+             ]
+    | E_fold (((v, _), body), collection, initial) ->
+      unions [ expression (union (singleton v) b) body ;
+               self collection ;
+               self initial ;
+             ]
+    | E_if_bool (x, bt, bf) -> unions [ self x ; self bt ; self bf ]
+    | E_if_none (x, bn, ((s, _), bs)) ->
+      unions [ self x ;
+               self bn ;
+               expression (union (singleton s) b) bs ;
+             ]
+    | E_if_cons (x, bnil , (((h, _) , (t, _)) , bcons)) ->
+      unions [ self x ;
+               self bnil ;
+               expression (unions [ singleton h ; singleton t ; b ]) bcons ;
+             ]
+    | E_if_left (x, ((l, _), bl), ((r, _), br)) ->
+      unions [ self x ;
+               expression (union (singleton l) b) bl ;
+               expression (union (singleton r) b) br ;
+             ]
+    | E_let_in ((v , _) , expr , body) ->
+      unions [ self expr ;
+               expression (union (singleton v) b) body ;
+             ]
+    | E_sequence (x, y) -> union (self x) (self y)
+    (* we do not consider the assigned variable free... seems strange,
+       but, matches ast_typed, and does not cause any troubles? *)
+    | E_assignment (_, _, e) -> self e
+    | E_while (cond , body) -> union (self cond) (self body)
+
+  and var_name : bindings -> var_name -> bindings = fun b n ->
+    if mem n b
+    then empty
+    else singleton n
+
+  and value : bindings -> value -> bindings = fun b v ->
+    let self = value b in
+    match v with
+    | D_unit
+    | D_bool _
+    | D_nat _
+    | D_timestamp _
+    | D_mutez _
+    | D_int _
+    | D_string _
+    | D_bytes _
+    | D_none
+    | D_operation _
+      -> empty
+    | D_pair (x, y) -> unions [ self x ; self y ]
+    | D_left x
+    | D_right x
+    | D_some x
+      -> self x
+    | D_map kvs
+    | D_big_map kvs
+      -> unions @@ List.map (fun (k, v) -> unions [ self k ; self v ]) kvs
+    | D_list xs
+    | D_set xs
+      -> unions @@ List.map self xs
+    | D_function f ->
+      lambda b f
+
+  and lambda : bindings -> anon_function -> bindings = fun b l ->
+    let b = union (singleton l.binder) b in
+    expression b l.body
+
+end
+
 (*
    Converts `expr` in `fun () -> expr`.
 *)
