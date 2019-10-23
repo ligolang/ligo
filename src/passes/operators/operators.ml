@@ -103,20 +103,9 @@ module Simplify = struct
   module Camligo = struct
     let constants = [
       ("Bytes.pack" , "PACK") ;
-
-      ("Map.remove" , "MAP_REMOVE") ;
-      ("Map.update" , "MAP_UPDATE") ;
-      ("Map.add"    , "MAP_ADD") ;
-      ("Map.mem"    , "MAP_MEM") ;
-      ("Map.find"   , "MAP_FIND") ;
-      ("Map.fold"   , "MAP_FOLD") ;
-      ("Map.map"    , "MAP_MAP") ;
-
       ("Crypto.hash" , "HASH") ;
-
       ("Operation.transaction" , "CALL") ;
       ("Operation.get_contract" , "CONTRACT") ;
-
       ("sender" , "SENDER") ;
       ("unit" , "UNIT") ;
       ("source" , "SOURCE") ;
@@ -715,13 +704,6 @@ module Compiler = struct
     ("MAP_FIND_OPT" , simple_binary @@ prim I_GET) ;
     ("MAP_ADD" , simple_ternary @@ seq [dip (i_some) ; prim I_UPDATE]) ;
     ("MAP_UPDATE" , simple_ternary @@ prim I_UPDATE) ;
-    (* ("GET_CONTRACT" , simple_constant @@ prim I_CONTRACT) ; *)
-    (* ( "MAP_REMOVE"   , simple_binary @@ seq [prim I_NONE TODO: + annotation ; prim I_UPDATE ]) ; *)
-    ( "MAP_MEM"         , simple_binary @@ prim I_MEM) ;
-    (* ( "MAP_FOLD"     , simple_ternary @@ prim TODO I_ITER?) ; *)
-    ( "MAP_MAP"         , simple_binary @@ prim I_MAP) ;
-    (* ( "MAP_MAP_FOLD" , simple_ternary @@ prim TODO I_ITER?) ; *)
-    (* ( "MAP_ITER"     , simple_binary @@ prim TODO I_ITER?) ; *)
     ("SIZE" , simple_unary @@ prim I_SIZE) ;
     ("FAILWITH" , simple_unary @@ prim I_FAILWITH) ;
     ("ASSERT_INFERRED" , simple_binary @@ i_if (seq [i_failwith]) (seq [i_drop ; i_push_unit])) ;
