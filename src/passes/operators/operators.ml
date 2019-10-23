@@ -154,6 +154,7 @@ module Simplify = struct
       ("Set.add" , "SET_ADD") ;
       ("Set.remove" , "SET_REMOVE") ;
       ("Set.fold" , "SET_FOLD") ;
+      ("Set.size", "SIZE") ;
 
       ("Map.find_opt" , "MAP_FIND_OPT") ;
       ("Map.find" , "MAP_FIND") ;

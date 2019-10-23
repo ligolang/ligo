@@ -295,6 +295,13 @@ let set_arithmetic () : unit result =
   in
   ok ()
 
+let set_arithmetic_mligo () : unit result =
+  let%bind program = mtype_file "./contracts/set_arithmetic.mligo" in
+  let%bind () =
+    expect_eq program "size_op"
+      (e_set [e_string "foo"; e_string "bar"; e_string "foobar"])
+      (e_nat 3) in ok ()
+
 let unit_expression () : unit result =
   let%bind program = type_file "./contracts/unit.ligo" in
   expect_eq_evaluate program "u" (e_unit ())
@@ -936,6 +943,7 @@ let main = test_suite "Integration (End to End)" [
     test "string_arithmetic (mligo)" string_arithmetic_mligo ;
     test "bytes_arithmetic" bytes_arithmetic ;
     test "set_arithmetic" set_arithmetic ;
+    test "set_arithmetic (mligo)" set_arithmetic_mligo ;
     test "unit" unit_expression ;
     test "string" string_expression ;
     test "option" option ;
