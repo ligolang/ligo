@@ -1,16 +1,16 @@
 // Test CameLIGO boolean operators
 
 let or_true (b : bool) : bool =
-   b or True
+   b || true
 
 let or_false (b : bool) : bool =
-   b or False
+   b || false
 
 let and_true (b : bool) : bool =
-   b and True
+   b && true
 
 let and_false (b : bool) : bool =
-   b and False
+   b && false
 
 let not_bool (b: bool) : bool =
    not b
