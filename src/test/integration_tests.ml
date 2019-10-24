@@ -150,6 +150,14 @@ let shared_function () : unit result =
   in
   ok ()
 
+let shared_function_mligo () : unit result =
+  let%bind program = mtype_file "./contracts/function-shared.mligo" in
+  let%bind () =
+    let make_expect = fun n -> (2 * n + 70) in
+    expect_eq_n_int program "foobar" make_expect
+  in
+  ok ()
+
 let bool_expression () : unit result =
   let%bind program = type_file "./contracts/boolean_operators.ligo" in
   let%bind _ =
@@ -955,6 +963,7 @@ let main = test_suite "Integration (End to End)" [
     test "complex function" complex_function ;
     test "closure" closure ;
     test "shared function" shared_function ;
+    test "shared function (mligo)" shared_function_mligo ;
     test "higher order" higher_order ;
     test "variant" variant ;
     test "variant (mligo)" variant_mligo ;
