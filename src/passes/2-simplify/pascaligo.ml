@@ -718,14 +718,14 @@ and simpl_single_instruction : Raw.instruction -> (_ -> expression result) resul
                   LongBlock {value; _} ->
                     simpl_block value
                 | ShortBlock {value; _} ->
-                    simpl_statements @@ fst value.inside in
-          ok (x.value.pattern, case_clause None) in
+                  simpl_statements @@ fst value.inside in
+          let%bind case_clause = case_clause None in
+          ok (x.value.pattern, case_clause) in
         bind_list
         @@ List.map aux
         @@ npseq_to_list c.cases.value in
       let%bind m = simpl_cases cases in
-      let%bind toto = ok @@ e_matching ~loc expr m in
-      return_statement @@ toto
+      return_statement @@ e_matching ~loc expr m
     )
   | RecordPatch r -> (
       let r = r.value in
