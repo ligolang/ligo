@@ -606,6 +606,20 @@ let condition () : unit result =
   in
   ok ()
 
+let condition_mligo () : unit result =
+  let%bind _ =
+    let aux file =
+      let%bind program = mtype_file file in
+      let make_input = e_int in
+      let make_expected = fun n -> e_int (if n = 2 then 42 else 0) in
+      expect_eq_n program "main"  make_input make_expected in
+    bind_map_list aux [
+      "./contracts/condition.mligo";
+      "./contracts/condition-shadowing.mligo";
+      "./contracts/condition-annot.mligo";
+    ] in
+  ok ()
+
 let condition_simple () : unit result =
   let%bind program = type_file "./contracts/condition-simple.ligo" in
   let make_input = e_int in
@@ -867,6 +881,12 @@ let lambda2_mligo () : unit result =
   let make_expected = (e_unit ()) in
   expect_eq program "main" make_input make_expected
 
+let fibo_mligo () : unit result =
+  let%bind program = mtype_file "./contracts/fibo.mligo" in
+  let make_input = e_pair (e_unit ()) (e_unit ()) in
+  let make_expected = (e_int 42) in
+  expect_eq program "main" make_input make_expected
+
 let website1_ligo () : unit result =
   let%bind program = type_file "./contracts/website1.ligo" in
   let make_input = fun n-> e_pair (e_int n) (e_int 42) in
@@ -906,6 +926,16 @@ let tez_mligo () : unit result =
   let%bind _ = expect_eq_evaluate program "add_more_tez" (e_mutez 111111000) in
   ok ()
 
+let website2_mligo () : unit result =
+  let%bind program = mtype_file "./contracts/website2.mligo" in
+  let make_input = fun n ->
+    let action = if n mod 2 = 0 then "Increment" else "Decrement" in
+    e_pair (e_constructor action (e_int n)) (e_int 42) in
+  let make_expected = fun n ->
+    let op = if n mod 2 = 0 then (+) else (-) in
+    e_pair (e_typed_list [] t_operation) (e_int (op 42 n)) in
+  expect_eq_n program "main" make_input make_expected
+
 let main = test_suite "Integration (End to End)" [
     test "type alias" type_alias ;
     test "function" function_ ;
@@ -923,7 +953,8 @@ let main = test_suite "Integration (End to End)" [
     test "tuple" tuple ;
     test "record" record ;
     test "condition simple" condition_simple ;
-    test "condition" condition ;
+    test "condition (ligo)" condition ;
+    test "condition (mligo)" condition_mligo ;
     test "shadow" shadow ;
     test "annotation" annotation ;
     test "multiple parameters" multiple_parameters ;
@@ -967,9 +998,14 @@ let main = test_suite "Integration (End to End)" [
     (* test "guess string mligo" guess_string_mligo ; WIP? *)
     test "lambda mligo" lambda_mligo ;
     test "lambda ligo" lambda_ligo ;
-    (* test "lambda2 mligo" lambda2_mligo ; *)
     test "tez (ligo)" tez_ligo ;
     test "tez (mligo)" tez_mligo ;
+    test "lambda2 mligo" lambda2_mligo ;
+    (* test "fibo (mligo)" fibo_mligo ; *)
+    (* test "fibo2 (mligo)" fibo2_mligo ; *)
+    (* test "fibo3 (mligo)" fibo3_mligo ; *)
+    (* test "fibo4 (mligo)" fibo4_mligo ; *)
     test "website1 ligo" website1_ligo ;
     test "website2 ligo" website2_ligo ;
+    test "website2 (mligo)" website2_mligo ;
   ]
