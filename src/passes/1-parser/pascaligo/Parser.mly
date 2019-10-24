@@ -566,7 +566,7 @@ clause_block:
     ShortBlock {value; region} }
 
 case_instr:
-  case(instruction) { $1 instr_to_region }
+  case(if_clause) { $1 if_clause_to_region }
 
 case(rhs):
   Case expr Of option(VBAR) cases(rhs) End {

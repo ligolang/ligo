@@ -295,7 +295,7 @@ and print_clause_block buffer = function
     print_terminator buffer terminator;
     print_token      buffer rbrace "}"
 
-and print_case_instr buffer (node : instruction case) =
+and print_case_instr buffer (node : if_clause case) =
   let {kwd_case; expr; opening;
        lead_vbar; cases; closing} = node in
   print_token       buffer kwd_case "case";
@@ -314,9 +314,9 @@ and print_cases_instr buffer {value; _} =
 
 and print_case_clause_instr buffer {value; _} =
   let {pattern; arrow; rhs} = value in
-  print_pattern     buffer pattern;
-  print_token       buffer arrow "->";
-  print_instruction buffer rhs
+  print_pattern   buffer pattern;
+  print_token     buffer arrow "->";
+  print_if_clause buffer rhs
 
 and print_assignment buffer {value; _} =
   let {lhs; assign; rhs} = value in
@@ -921,7 +921,7 @@ and pp_instruction buffer ~pad:(_,pc as pad) = function
     pp_conditional buffer ~pad value
 | CaseInstr {value; _} ->
     pp_node buffer ~pad "CaseInstr";
-    pp_case pp_instruction buffer ~pad value
+    pp_case pp_if_clause buffer ~pad value
 | Assign {value; _} ->
     pp_node buffer ~pad "Assign";
     pp_assignment buffer ~pad value

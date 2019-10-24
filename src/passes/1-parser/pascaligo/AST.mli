@@ -275,7 +275,7 @@ and var_decl = {
 
 and instruction =
   Cond        of conditional reg
-| CaseInstr   of instruction case reg
+| CaseInstr   of if_clause case reg
 | Assign      of assignment reg
 | Loop        of loop
 | ProcCall    of fun_call
