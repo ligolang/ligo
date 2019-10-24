@@ -708,15 +708,24 @@ and simpl_single_instruction : Raw.instruction -> (_ -> expression result) resul
       let (c , loc) = r_split c in
       let%bind expr = simpl_expression c.expr in
       let%bind cases =
-        let aux (x : Raw.instruction Raw.case_clause Raw.reg) =
-          let%bind i = simpl_instruction x.value.rhs in
-          let%bind i = i None in
-          ok (x.value.pattern, i) in
+        let aux (x : Raw.if_clause Raw.case_clause Raw.reg) =
+          let%bind case_clause =
+            match x.value.rhs with
+              ClauseInstr i ->
+                simpl_single_instruction i
+            | ClauseBlock b ->
+                match b with
+                  LongBlock {value; _} ->
+                    simpl_block value
+                | ShortBlock {value; _} ->
+                    simpl_statements @@ fst value.inside in
+          ok (x.value.pattern, case_clause None) in
         bind_list
         @@ List.map aux
         @@ npseq_to_list c.cases.value in
       let%bind m = simpl_cases cases in
-      return_statement @@ e_matching ~loc expr m
+      let%bind toto = ok @@ e_matching ~loc expr m in
+      return_statement @@ toto
     )
   | RecordPatch r -> (
       let r = r.value in
