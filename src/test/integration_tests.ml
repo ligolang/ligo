@@ -163,6 +163,19 @@ let bool_expression () : unit result =
     ] in
   ok ()
 
+let bool_expression_mligo () : unit result =
+  let%bind program = mtype_file "./contracts/boolean_operators.mligo" in
+  let%bind _ =
+    let aux (name, f) = expect_eq_b_bool program name f in
+    bind_map_list aux [
+      ("or_true", fun b -> b || true) ;
+      ("or_false", fun b -> b || false) ;
+      ("and_true", fun b -> b && true) ;
+      ("and_false", fun b -> b && false) ;
+      ("not_bool", fun b -> not b) ;
+    ] in
+  ok ()
+
 let arithmetic () : unit result =
   let%bind program = type_file "./contracts/arithmetic.ligo" in
   let%bind _ =
@@ -941,6 +954,7 @@ let main = test_suite "Integration (End to End)" [
     test "annotation" annotation ;
     test "multiple parameters" multiple_parameters ;
     test "bool" bool_expression ;
+    test "bool (mligo)" bool_expression_mligo ;
     test "arithmetic" arithmetic ;
     test "arithmetic (mligo)" arithmetic_mligo ;
     test "bitiwse_arithmetic" bitwise_arithmetic ;
