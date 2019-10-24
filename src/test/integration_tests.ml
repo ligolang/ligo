@@ -619,6 +619,19 @@ let condition () : unit result =
   in
   ok ()
 
+let condition_mligo () : unit result =
+  let%bind program = mtype_file "./contracts/condition.mligo" in
+  let%bind _ =
+    let make_input = e_int in
+    let make_expected = fun n -> e_int (if n = 2 then 42 else 0) in
+  expect_eq_n program "main" make_input make_expected
+  in
+  let%bind _ =
+    let make_expected = fun b -> e_int (if b then 42 else 1) in
+    expect_eq_b program "foo" make_expected
+  in
+  ok ()
+
 let condition_simple () : unit result =
   let%bind program = type_file "./contracts/condition-simple.ligo" in
   let make_input = e_int in
@@ -937,6 +950,7 @@ let main = test_suite "Integration (End to End)" [
     test "record" record ;
     test "condition simple" condition_simple ;
     test "condition" condition ;
+    test "condition (mligo)" condition_mligo ;
     test "shadow" shadow ;
     test "annotation" annotation ;
     test "multiple parameters" multiple_parameters ;
