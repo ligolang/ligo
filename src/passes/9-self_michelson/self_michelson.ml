@@ -365,6 +365,21 @@ let rec opt_tail_fail : michelson -> michelson =
      Prim (l, p, List.map opt_tail_fail args, annot)
   | x -> x
 
+let opt_combine_drops : peep2 = function
+  (* DROP ; DROP  ↦  DROP 2 *)
+  | Prim (_, I_DROP, [], _), Prim (_, I_DROP, [], _) ->
+    Some [i_dropn 2]
+  (* DROP ; DROP m  ↦  DROP 1+m *)
+  | Prim (_, I_DROP, [], _), Prim (_, I_DROP, [Int (_, m)], _) ->
+    Some [i_dropn (1 + Z.to_int m)]
+  (* DROP n ; DROP  ↦  DROP n+1 *)
+  | Prim (_, I_DROP, [Int (_, n)], _), Prim (_, I_DROP, [], _) ->
+    Some [i_dropn (Z.to_int n + 1)]
+  (* DROP n ; DROP m  ↦  DROP n+m *)
+  | Prim (_, I_DROP, [Int (_, n)], _), Prim (_, I_DROP, [Int (_, m)], _) ->
+    Some [i_dropn (Z.to_int n + Z.to_int m)]
+  | _ -> None
+
 let optimize : michelson -> michelson =
   fun x ->
   let x = use_lambda_instr x in
@@ -378,4 +393,5 @@ let optimize : michelson -> michelson =
                      peephole @@ peep2 opt_swap2 ;
                    ] in
   let x = iterate_optimizer (sequence_optimizers optimizers) x in
+  let x = iterate_optimizer (peephole @@ peep2 opt_combine_drops) x in
   x
