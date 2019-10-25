@@ -488,6 +488,7 @@ and closing =
 and map_expr =
   MapLookUp of map_lookup reg
 | MapInj    of binding reg injection reg
+| BigMapInj    of binding reg injection reg
 
 and map_lookup = {
   path  : path;

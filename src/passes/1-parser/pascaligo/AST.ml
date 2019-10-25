@@ -497,6 +497,7 @@ and closing =
 and map_expr =
   MapLookUp of map_lookup reg
 | MapInj    of binding reg injection reg
+| BigMapInj    of binding reg injection reg
 
 and map_lookup = {
   path  : path;
@@ -654,6 +655,7 @@ and tuple_expr_to_region {region; _} = region
 and map_expr_to_region = function
   MapLookUp {region; _}
 | MapInj    {region; _} -> region
+| BigMapInj {region; _} -> region
 
 and set_expr_to_region = function
   SetInj {region; _}

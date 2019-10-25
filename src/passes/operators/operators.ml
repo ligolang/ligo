@@ -85,6 +85,7 @@ module Simplify = struct
       ("list_iter" , "LIST_ITER") ;
       ("list_fold" , "LIST_FOLD") ;
       ("list_map" , "LIST_MAP") ;
+      (*ici*)
       ("map_iter" , "MAP_ITER") ;
       ("map_map" , "MAP_MAP") ;
       ("map_fold" , "MAP_FOLD") ;
@@ -167,6 +168,14 @@ module Simplify = struct
       ("Map.empty" , "MAP_EMPTY") ;
       ("Map.literal" , "MAP_LITERAL" ) ;
       ("Map.size" , "SIZE" ) ;
+
+      ("Big_map.find_opt" , "MAP_FIND_OPT") ;
+      ("Big_map.find" , "MAP_FIND") ;
+      ("Big_map.update" , "MAP_UPDATE") ;
+      ("Big_map.add" , "MAP_ADD") ;
+      ("Big_map.remove" , "MAP_REMOVE") ;
+      ("Big_map.literal" , "BIG_MAP_LITERAL" ) ;
+      ("Big_map.empty" , "BIG_MAP_EMPTY" ) ;
 
       ("String.length", "SIZE") ;
       ("String.size", "SIZE") ;

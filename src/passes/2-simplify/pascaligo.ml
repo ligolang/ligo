@@ -389,7 +389,7 @@ let rec simpl_expression (t:Raw.expr) : expr result =
       let%bind cases = simpl_cases lst in
       return @@ e_matching ~loc e cases
     )
-  | EMap (MapInj mi) -> (
+  | EMap (MapInj mi)  -> (
       let (mi , loc) = r_split mi in
       let%bind lst =
         let lst = List.map get_value @@ pseq_to_list mi.elements in
@@ -400,6 +400,18 @@ let rec simpl_expression (t:Raw.expr) : expr result =
             ok (src, dst) in
         bind_map_list aux lst in
       return @@ e_map ~loc lst
+    )
+  | EMap (BigMapInj mi) -> (
+      let (mi , loc) = r_split mi in
+      let%bind lst =
+        let lst = List.map get_value @@ pseq_to_list mi.elements in
+        let aux : Raw.binding -> (expression * expression) result =
+          fun b ->
+            let%bind src = simpl_expression b.source in
+            let%bind dst = simpl_expression b.image in
+            ok (src, dst) in
+        bind_map_list aux lst in
+      return @@ e_big_map ~loc lst
     )
   | EMap (MapLookUp lu) -> (
       let (lu , loc) = r_split lu in

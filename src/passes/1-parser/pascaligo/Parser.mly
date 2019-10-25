@@ -899,6 +899,7 @@ set_expr:
 map_expr:
   map_lookup             { MapLookUp $1 }
 | injection(Map,binding) {    MapInj $1 }
+| injection(BigMap,binding) { BigMapInj $1 }
 
 map_lookup:
   path brackets(expr) {
