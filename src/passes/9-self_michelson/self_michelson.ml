@@ -271,15 +271,15 @@ let rec iterate_optimizer (f : michelson -> bool * michelson) : michelson -> mic
 
 let opt_drop2 : peep2 = function
   (* nullary_op ; DROP  ↦  *)
-  | Prim (_, p, _, _), Prim (_, I_DROP, _, _) when is_nullary_op p -> Some []
+  | Prim (_, p, _, _), Prim (_, I_DROP, [], _) when is_nullary_op p -> Some []
   (* DUP ; DROP  ↦  *)
-  | Prim (_, I_DUP, _, _), Prim (_, I_DROP, _, _) -> Some []
+  | Prim (_, I_DUP, _, _), Prim (_, I_DROP, [], _) -> Some []
   (* unary_op ; DROP  ↦  DROP *)
-  | Prim (_, p, _, _), Prim (_, I_DROP, _, _) when is_unary_op p -> Some [i_drop]
+  | Prim (_, p, _, _), Prim (_, I_DROP, [], _) when is_unary_op p -> Some [i_drop]
   (* binary_op ; DROP  ↦  DROP ; DROP *)
-  | Prim (_, p, _, _), Prim (_, I_DROP, _, _) when is_binary_op p -> Some [i_drop; i_drop]
+  | Prim (_, p, _, _), Prim (_, I_DROP, [], _) when is_binary_op p -> Some [i_drop; i_drop]
   (* ternary_op ; DROP  ↦  DROP ; DROP ; DROP *)
-  | Prim (_, p, _, _), Prim (_, I_DROP, _, _) when is_ternary_op p -> Some [i_drop; i_drop; i_drop]
+  | Prim (_, p, _, _), Prim (_, I_DROP, [], _) when is_ternary_op p -> Some [i_drop; i_drop; i_drop]
   | _ -> None
 
 let opt_drop4 : peep4 = function
@@ -287,7 +287,7 @@ let opt_drop4 : peep4 = function
   | Prim (_, I_DUP, _, _),
     (Prim (_, p, _, _) as unary_op),
     Prim (_, I_SWAP, _, _),
-    Prim (_, I_DROP, _, _)
+    Prim (_, I_DROP, [], _)
     when is_unary_op p ->
     Some [unary_op]
   | _ -> None
@@ -301,19 +301,6 @@ let opt_dip1 : peep1 = function
   (* DIP { unary_op }  ↦  SWAP ; unary_op ; SWAP *)
   | Prim (_, I_DIP, [Seq (_, [(Prim (_, p, _, _) as unary_op)])], _) when is_unary_op p ->
      Some [i_swap ; unary_op ; i_swap]
-  (* saves 5 bytes *)
-  (* DIP { DROP }  ↦  SWAP ; DROP *)
-  | Prim (_, I_DIP, [Seq (_, [Prim (_, I_DROP, _, _)])], _) ->
-     Some [i_swap; i_drop]
-  (* saves 3 bytes *)
-  (* DIP { DROP ; DROP }  ↦  SWAP ; DROP ; SWAP ; DROP *)
-  | Prim (_, I_DIP, [Seq (_, [Prim (_, I_DROP, _, _) ; Prim (_, I_DROP, _, _)])], _) ->
-     Some [i_swap; i_drop; i_swap; i_drop]
-  (* still saves 1 byte *)
-  (* DIP { DROP ; DROP ; DROP }  ↦  SWAP ; DROP ; SWAP ; DROP ; SWAP ; DROP *)
-  | Prim (_, I_DIP, [Seq (_, [Prim (_, I_DROP, _, _) ; Prim (_, I_DROP, _, _) ; Prim (_, I_DROP, _, _)])], _) ->
-     Some [i_swap; i_drop; i_swap; i_drop; i_swap; i_drop]
-  (* after this, DIP { DROP ; ... } is smaller *)
   | _ -> None
 
 let opt_dip2 : peep2 = function
@@ -323,16 +310,16 @@ let opt_dip2 : peep2 = function
   | Prim (_, I_DIP, [Seq (_, code1)], _), Prim (_, I_DIP, [Seq (_, code2)], _) ->
      Some [Prim (0, I_DIP, [Seq (0, code1 @ code2)], [])]
   (* DIP { code } ; DROP  ↦  DROP ; code *)
-  | Prim (_, I_DIP, code, _), (Prim (_, I_DROP, _, _) as drop) ->
+  | Prim (_, I_DIP, [Seq (_, code)], _), (Prim (_, I_DROP, [], _) as drop) ->
      Some (drop :: code)
   (* nullary_op ; DIP { code }  ↦  code ; nullary_op *)
   | (Prim (_, p, _, _) as nullary_op), Prim (_, I_DIP, [Seq (_, code)], _) when is_nullary_op p ->
      Some (code @ [nullary_op])
   (* DIP { code } ; unary_op  ↦  unary_op ; DIP { code } *)
-  | (Prim (_, I_DIP, _, _) as dip), (Prim (_, p, _, _) as unary_op) when is_unary_op p ->
+  | (Prim (_, I_DIP, [Seq _], _) as dip), (Prim (_, p, _, _) as unary_op) when is_unary_op p ->
      Some [unary_op; dip]
   (* unary_op ; DIP { code }  ↦  DIP { code } ; unary_op *)
-  (* | (Prim (_, p, _, _) as unary_op), (Prim (_, I_DIP, _, _) as dip) when is_unary_op p ->
+  (* | (Prim (_, p, _, _) as unary_op), (Prim (_, I_DIP, [Seq _], _) as dip) when is_unary_op p ->
    *    Some [dip; unary_op] *)
   | _ -> None
 
