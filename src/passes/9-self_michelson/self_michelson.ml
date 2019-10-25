@@ -372,20 +372,23 @@ let rec opt_tail_fail : michelson -> michelson =
      Prim (l, p, List.map opt_tail_fail args, annot)
   | x -> x
 
-let opt_combine_drops : peep2 = function
-  (* DROP ; DROP  ↦  DROP 2 *)
-  | Prim (_, I_DROP, [], _), Prim (_, I_DROP, [], _) ->
-    Some [i_dropn 2]
-  (* DROP ; DROP m  ↦  DROP 1+m *)
-  | Prim (_, I_DROP, [], _), Prim (_, I_DROP, [Int (_, m)], _) ->
-    Some [i_dropn (1 + Z.to_int m)]
-  (* DROP n ; DROP  ↦  DROP n+1 *)
-  | Prim (_, I_DROP, [Int (_, n)], _), Prim (_, I_DROP, [], _) ->
-    Some [i_dropn (Z.to_int n + 1)]
-  (* DROP n ; DROP m  ↦  DROP n+m *)
-  | Prim (_, I_DROP, [Int (_, n)], _), Prim (_, I_DROP, [Int (_, m)], _) ->
-    Some [i_dropn (Z.to_int n + Z.to_int m)]
-  | _ -> None
+let rec opt_combine_drops (x : michelson) : michelson =
+  let rec combine : michelson list -> michelson list = function
+    | [] -> []
+    | Prim (_, I_DROP, [], []) :: xs ->
+      let xs' = combine xs in
+      begin match xs' with
+      | [] -> [Prim (-1, I_DROP, [], [])]
+      | Prim (_, I_DROP, [], []) :: xs' -> Prim (-1, I_DROP, [Int (-1, Z.of_int 2)], []) :: xs'
+      | Prim (_, I_DROP, [Int (_, n)], []) :: xs' -> Prim (-1, I_DROP, [Int (-1, Z.of_int (1 + Z.to_int n))], []) :: xs'
+      | x' :: xs' -> Prim (-1, I_DROP, [], []) :: x' :: xs'
+      end
+    | x :: xs -> x :: combine xs in
+  match x with
+  | Seq (l, args) -> Seq (l, combine (List.map opt_combine_drops args))
+  | Prim (l, p, args, annot) ->
+    Prim (l, p, List.map opt_combine_drops args, annot)
+  | x -> x
 
 let optimize : michelson -> michelson =
   fun x ->
@@ -400,5 +403,5 @@ let optimize : michelson -> michelson =
                      peephole @@ peep2 opt_swap2 ;
                    ] in
   let x = iterate_optimizer (sequence_optimizers optimizers) x in
-  let x = iterate_optimizer (peephole @@ peep2 opt_combine_drops) x in
+  let x = opt_combine_drops x in
   x
