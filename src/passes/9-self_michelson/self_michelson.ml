@@ -14,13 +14,44 @@ open Tezos_utils.Michelson
    without effects other than gas consumption. It must never fail. *)
 
 let arity : prim -> int option = function
+ (* stack things *)
+ | I_DIP -> None
+ | I_DROP -> None
+ | I_DUP -> None
+ | I_SWAP -> None
+ | I_DIG -> None
+ | I_DUG -> None
+ (* control *)
+ | I_FAILWITH -> None
+ | I_EXEC -> None
+ | I_IF -> None
+ | I_IF_CONS -> None
+ | I_IF_LEFT -> None
+ | I_IF_NONE -> None
+ | I_LOOP -> None
+ | I_MAP -> None
+ | I_ITER -> None
+ | I_LOOP_LEFT -> None
+ (* internal ops *)
+ | I_CREATE_ACCOUNT -> None
+ | I_CREATE_CONTRACT -> None
+ | I_TRANSFER_TOKENS -> None
+ | I_SET_DELEGATE -> None
+ (* tez arithmetic (can fail) *)
+ | I_ADD -> None
+ | I_MUL -> None
+ | I_SUB -> None (* can fail for tez *)
+ (* etc *)
+ | I_CONCAT -> None (* sometimes 1, sometimes 2 :( *)
+ | I_CAST -> None
+ | I_RENAME -> None
+ (* stuff *)
  | I_PACK -> Some 1
  | I_UNPACK -> Some 1
  | I_BLAKE2B -> Some 1
  | I_SHA256 -> Some 1
  | I_SHA512 -> Some 1
  | I_ABS -> Some 1
- | I_ADD -> None (* can fail for tez *)
  | I_AMOUNT -> Some 0
  | I_AND -> Some 2
  | I_BALANCE -> Some 0
@@ -28,39 +59,24 @@ let arity : prim -> int option = function
  | I_CDR -> Some 1
  | I_CHECK_SIGNATURE -> Some 3
  | I_COMPARE -> Some 2
- | I_CONCAT -> None (* sometimes 1, sometimes 2 :( *)
  | I_CONS -> Some 2
- | I_CREATE_ACCOUNT -> None (* effects, kind of *)
- | I_CREATE_CONTRACT -> None (* effects, kind of *)
  | I_IMPLICIT_ACCOUNT -> Some 1
- | I_DIP -> None
- | I_DROP -> None
- | I_DUP -> None
  | I_EDIV -> Some 2
  | I_EMPTY_MAP -> Some 0
  | I_EMPTY_SET -> Some 0
  | I_EQ -> Some 1
- | I_EXEC -> None (* effects *)
- | I_FAILWITH -> None
  | I_GE -> Some 1
  | I_GET -> Some 2
  | I_GT -> Some 1
  | I_HASH_KEY -> Some 1
- | I_IF -> None
- | I_IF_CONS -> None
- | I_IF_LEFT -> None
- | I_IF_NONE -> None
  | I_INT -> Some 1
  | I_LAMBDA -> Some 0
  | I_LE -> Some 1
  | I_LEFT -> Some 1
- | I_LOOP -> None
  | I_LSL -> Some 1
  | I_LSR -> Some 1
  | I_LT -> Some 1
- | I_MAP -> None
  | I_MEM -> Some 2
- | I_MUL -> None (* can fail for tez *)
  | I_NEG -> Some 1
  | I_NEQ -> Some 1
  | I_NIL -> Some 0
@@ -78,26 +94,17 @@ let arity : prim -> int option = function
  | I_SELF -> Some 0
  | I_SLICE -> Some 3
  | I_STEPS_TO_QUOTA -> Some 0
- | I_SUB -> None (* can fail for tez *)
- | I_SWAP -> None
- | I_TRANSFER_TOKENS -> None (* effects, kind of *)
- | I_SET_DELEGATE -> None (* effects, kind of *)
  | I_UNIT -> Some 0
  | I_UPDATE -> Some 3
  | I_XOR -> Some 2
- | I_ITER -> None
- | I_LOOP_LEFT -> None
  | I_ADDRESS -> Some 1
  | I_CONTRACT -> Some 1
  | I_ISNAT -> Some 1
- | I_CAST -> None
- | I_RENAME -> None
  | I_CHAIN_ID -> Some 0
  | I_EMPTY_BIG_MAP -> Some 0
- | I_APPLY -> None
- | I_DIG -> None
- | I_DUG -> None
+ | I_APPLY -> Some 2
 
+ (* not instructions *)
  | K_parameter
  | K_storage
  | K_code
