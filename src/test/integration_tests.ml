@@ -239,6 +239,9 @@ let string_arithmetic () : unit result =
 
 let string_arithmetic_mligo () : unit result =
   let%bind program = mtype_file "./contracts/string_arithmetic.mligo" in
+  let%bind () = expect_eq program "size_op"  (e_string "tata") (e_nat 4) in
+  let%bind () = expect_eq program "slice_op" (e_string "tata") (e_string "at") in
+  let%bind () = expect_eq program "slice_op" (e_string "foo") (e_string "oo") in
   let%bind () = expect_eq program "concat_syntax" (e_string "string_") (e_string "string_test_literal")
   in ok ()
 
