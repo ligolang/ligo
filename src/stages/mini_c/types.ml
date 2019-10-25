@@ -14,7 +14,6 @@ type type_value =
   | T_pair of (type_value annotated * type_value annotated)
   | T_or of (type_value annotated * type_value annotated)
   | T_function of (type_value * type_value)
-  | T_deep_closure of (environment * type_value * type_value)
   | T_base of type_base
   | T_map of (type_value * type_value)
   | T_big_map of (type_value * type_value)
@@ -54,7 +53,6 @@ type value =
   | D_list of value list
   | D_set of value list
   (* | `Macro of anon_macro ... The future. *)
-  | D_function of anon_function
   | D_operation of Memory_proto_alpha.Protocol.Alpha_context.packed_internal_operation
 
 and selector = var_name list

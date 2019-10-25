@@ -110,8 +110,6 @@ module Free_variables = struct
     | D_list xs
     | D_set xs
       -> unions @@ List.map self xs
-    | D_function f ->
-      lambda b f
 
   and lambda : bindings -> anon_function -> bindings = fun b l ->
     let b = union (singleton l.binder) b in
@@ -123,7 +121,7 @@ end
    Converts `expr` in `fun () -> expr`.
 *)
 let functionalize (body : expression) : expression =
-  let content = E_literal (D_function { binder = "_" ; body }) in
+  let content = E_closure { binder = "_" ; body } in
   let type_value = t_function t_unit body.type_value in
   { content ; type_value }
 
@@ -179,19 +177,14 @@ let aggregate_entry (lst : program) (name : string) (to_functionalize : bool) : 
     fun expr -> List.fold_right' aux expr pre_declarations
   in
   match (entry_expression.content , to_functionalize) with
-  | (E_literal (D_function l) , false) -> (
-      let l' = { l with body = wrapper l.body } in
-      let e' = { entry_expression with content = E_literal (D_function l') } in
-      ok e'
-    )
   | (E_closure l , false) -> (
       let l' = { l with body = wrapper l.body } in
       let%bind t' =
-        let%bind (_ , input_ty , output_ty) = get_t_closure entry_expression.type_value in
+        let%bind (input_ty , output_ty) = get_t_function entry_expression.type_value in
         ok (t_function input_ty output_ty)
       in
       let e' = {
-        content = E_literal (D_function l') ;
+        content = E_closure l' ;
         type_value = t' ;
       } in
       ok e'

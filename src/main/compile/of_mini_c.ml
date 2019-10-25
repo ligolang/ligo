@@ -25,7 +25,7 @@ let compile_expression_as_function : expression -> _ result = fun e ->
 let compile_function = fun e ->
   let%bind (input , output) = get_t_function e.type_value in
   let%bind body = get_function e in
-  let%bind body = compile_value body (t_function input output) in
+  let%bind body = Compiler.Program.translate_function_body body [] input in
   let body = Self_michelson.optimize body in
   let%bind (input , output) = bind_map_pair Compiler.Type.Ty.type_ (input , output) in
   let open! Compiler.Program in
