@@ -619,7 +619,7 @@ let lift f =
     { state = new_state ; list = List.flatten new_lists }
 
 (* TODO: move this to the List module *)
-let named_fold_left f ~acc ~lst = List.fold_left (fun acc lst -> f ~acc ~lst) acc lst
+let named_fold_left f ~acc ~lst = List.fold_left (fun acc elt -> f ~acc ~elt) acc lst
 
 module Fun = struct let id x = x end (* in stdlib as of 4.08, we're in 4.07 for now *)
 
@@ -844,7 +844,7 @@ and compare_type_constraint = function
       | C_equation _ -> 1
       | C_typeclass _ -> 1
       | C_access_label (b1, b2, b3) -> compare_type_value a1 b1 <? fun () -> compare_label a2 b2  <? fun () -> compare_type_variable a3 b3)
-let rec compare_type_constraint_list = compare_list compare_type_constraint
+let compare_type_constraint_list = compare_list compare_type_constraint
 let compare_p_forall
     { binder = a1; constraints = a2; body = a3 }
     { binder = b1; constraints = b2; body = b3 } =
@@ -884,13 +884,13 @@ let selector_specialize1 : (type_constraint_simpl, output_specialize1) selector 
     SC_Constructor c                ->
     (* vice versa *)
     let other_cs = (UnionFindWrapper.get_constraints_related_to c.tv dbs).poly in
-    let other_cs = List.filter (fun (x : c_poly_simpl) -> c.tv == x.tv) other_cs in (* TODO: does equality work in OCaml? *)
+    let other_cs = List.filter (fun (x : c_poly_simpl) -> c.tv = x.tv) other_cs in (* TODO: does equality work in OCaml? *)
     let cs_pairs = List.map (fun x -> { poly = x ; a_k_var = c }) other_cs in
     WasSelected cs_pairs
   | SC_Alias       _                -> WasNotSelected (* TODO: ??? *)
   | SC_Poly        p                ->
     let other_cs = (UnionFindWrapper.get_constraints_related_to p.tv dbs).constructor in
-    let other_cs = List.filter (fun (x : c_constructor_simpl) -> x.tv == p.tv) other_cs in (* TODO: does equality work in OCaml? *)
+    let other_cs = List.filter (fun (x : c_constructor_simpl) -> x.tv = p.tv) other_cs in (* TODO: does equality work in OCaml? *)
     let cs_pairs = List.map (fun x -> { poly = p ; a_k_var = x }) other_cs in
     WasSelected cs_pairs
   | SC_Typeclass   _                -> WasNotSelected
@@ -917,24 +917,22 @@ let propagator_specialize1 : output_specialize1 propagator =
 module M (BlaBla : Set.OrderedType) = struct
   module AlreadySelected = Set.Make(BlaBla)
 
-  let select_and_propagate : ('old_input, 'selector_output) selector -> BlaBla.t propagator -> 'a -> structured_dbs -> new_constraints * new_assignments =
+  let select_and_propagate : ('old_input, 'selector_output) selector -> BlaBla.t propagator -> _ -> 'a -> structured_dbs -> _ * new_constraints * new_assignments =
     fun selector propagator ->
-    fun old_type_constraint dbs ->
+    fun already_selected old_type_constraint dbs ->
       (* TODO: thread some state to know which selector outputs were already seen *)
-      let already_selected = failwith "(?????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????? TODO)" in
       match selector old_type_constraint dbs with
         WasSelected selected_outputs ->
         (* TODO: fold instead. *)
-        let selected_outputs = List.filter (fun elt -> AlreadySelected.mem elt already_selected) selected_outputs in
-        let blahblah = List.fold_left (fun acc elt -> AlreadySelected.add elt acc) already_selected selected_outputs in
-        let _______________________________________________________________________________________________________________________________________TODO = blahblah in
+        let (already_selected , selected_outputs) = List.fold_left (fun (already_selected, selected_outputs) elt -> if AlreadySelected.mem elt already_selected then (AlreadySelected.add elt already_selected , elt :: selected_outputs)
+  else (already_selected , selected_outputs)) (already_selected , selected_outputs) selected_outputs in
         (* Call the propagation rule *)
         let new_contraints_and_assignments = List.map (fun s -> propagator s dbs) selected_outputs in
         let (new_constraints , new_assignments) = List.split new_contraints_and_assignments in
         (* return so that the new constraints are pushed to some kind of work queue and the new assignments stored *)
-        (List.flatten new_constraints , List.flatten new_assignments)
+        (already_selected , List.flatten new_constraints , List.flatten new_assignments)
       | WasNotSelected ->
-        ([] , [])
+        (already_selected, [] , [])
 end
 
 module M_break_ctor = M(BreakCtor)
@@ -943,30 +941,52 @@ module M_specialize1 = M(OutputSpecialize1)
 let select_and_propagate_break_ctor = M_break_ctor.select_and_propagate selector_break_ctor propagator_break_ctor
 let select_and_propagate_specialize1 = M_specialize1.select_and_propagate selector_specialize1 propagator_specialize1
 
-let select_and_propagate_all' : type_constraint_simpl selector_input -> structured_dbs -> new_constraints * structured_dbs =
-  fun new_constraint dbs ->
-    let (new_constraints, new_assignments) = select_and_propagate_break_ctor new_constraint dbs in
+type already_selected = {
+  break_ctor  : M_break_ctor.AlreadySelected.t  ;
+  specialize1 : M_specialize1.AlreadySelected.t ;
+}
+
+(* Takes a constraint, applies all selector+propagator pairs to it.
+   Keeps track of which constraints have already been selected. *)
+let select_and_propagate_all' : _ -> type_constraint_simpl selector_input -> structured_dbs -> _ * new_constraints * structured_dbs =
+  let aux sel_propag new_constraint (already_selected , new_constraints , dbs) =
+    let (already_selected , new_constraints', new_assignments) = sel_propag already_selected new_constraint dbs in
     let assignments = List.fold_left (fun acc ({tv;c_tag=_;tv_list=_} as ele) -> TypeVariableMap.update tv (function None -> Some ele | x -> x) acc) dbs.assignments new_assignments in
     let dbs = { dbs with assignments } in
-    (* let blah2 = select_ … in … *)
-    (* We should try each selector in turn. If multiple selectors work, what should we do? *)
-    (new_constraints , dbs)
+    (already_selected , new_constraints' @ new_constraints , dbs)
+  in
+  fun already_selected new_constraint dbs ->
+    (* The order in which the propagators are applied to constraints
+       is entirely accidental (dfs/bfs/something in-between). *)
+    let (already_selected , new_constraints , dbs) = (already_selected , [] , dbs) in
 
-let rec select_and_propagate_all : type_constraint selector_input list -> structured_dbs -> structured_dbs =
-  fun new_constraints dbs ->
+    (* We must have a different already_selected for each selector,
+       so this is more verbose than a few uses of `aux'. *)
+    let (already_selected' , new_constraints , dbs) = aux select_and_propagate_break_ctor new_constraint (already_selected.break_ctor , new_constraints , dbs) in
+    let (already_selected , new_constraints , dbs) = ({already_selected with break_ctor = already_selected'}, new_constraints , dbs) in
+
+    let (already_selected' , new_constraints , dbs) = aux select_and_propagate_specialize1 new_constraint (already_selected.specialize1 , new_constraints , dbs) in
+    let (already_selected , new_constraints , dbs) = ({already_selected with specialize1 = already_selected'}, new_constraints , dbs) in
+
+    (already_selected , new_constraints , dbs)
+
+(* Takes a list of constraints, applies all selector+propagator pairs
+   to each in turn. *)
+let rec select_and_propagate_all : _ -> type_constraint selector_input list -> structured_dbs -> structured_dbs =
+  fun already_selected new_constraints dbs ->
     match new_constraints with
     | [] -> dbs
     | new_constraint :: tl ->
       let { state = dbs ; list = modified_constraints } = normalizers new_constraint dbs in
-      let (new_constraints' , dbs) =
+      let (already_selected , new_constraints' , dbs) =
         List.fold_left
-          (fun (nc , dbs) c ->
-             let (new_constraints' , dbs) = select_and_propagate_all' c dbs in
-             (new_constraints' @ nc , dbs))
-          ([] , dbs)
+          (fun (already_selected , nc , dbs) c ->
+             let (already_selected , new_constraints' , dbs) = select_and_propagate_all' already_selected c dbs in
+             (already_selected , new_constraints' @ nc , dbs))
+          (already_selected , [] , dbs)
           modified_constraints in
       let new_constraints = new_constraints' @ tl in
-      select_and_propagate_all new_constraints dbs
+      select_and_propagate_all already_selected new_constraints dbs
 
 (* sub-component: constraint selector (worklist / dynamic queries) *)
 

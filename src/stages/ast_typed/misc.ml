@@ -346,7 +346,7 @@ let rec assert_type_value_eq (a, b: (type_value * type_value)) : unit result = m
       let%bind _ = assert_type_value_eq (result, result') in
       ok ()
   | T_function _, _ -> fail @@ different_kinds a b
-  | T_variable x, T_variable y -> let _ = x == y in failwith "TODO : we must check that the two types were bound at the same location (even if they have the same name), i.e. use something like De Bruijn indices or a propper graph encoding"
+  | T_variable x, T_variable y -> let _ = (x = y) in failwith "TODO : we must check that the two types were bound at the same location (even if they have the same name), i.e. use something like De Bruijn indices or a propper graph encoding"
   | T_variable _, _ -> fail @@ different_kinds a b
 
 (* No information about what made it fail *)
