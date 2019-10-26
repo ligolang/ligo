@@ -75,20 +75,26 @@ let display_format =
     let docv = "DISPLAY_FORMAT" in
     let doc = "$(docv) is the format that will be used by the CLI. Available formats are 'dev', 'json', and 'human-readable' (default). When human-readable lacks details (we are still tweaking it), please contact us and use another format in the meanwhile." in
     info ~docv ~doc ["format" ; "display-format"] in
-  value @@ opt string "human-readable" info
+  value @@
+  opt
+    (enum [("human-readable", `Human_readable); ("dev", `Dev); ("json", `Json)])
+    `Human_readable
+    info
 
 let michelson_code_format =
   let open Arg in
   let info  =
     let docv = "MICHELSON_FORMAT" in
-    let doc = "$(docv) is the format that will be used by compile-contract for the resulting Michelson. Available formats are 'micheline', and 'michelson' (default). Micheline is the format used by [XXX]." in
+    let doc = "$(docv) is the format that will be used by compile-contract for the resulting Michelson. Available formats are 'text' (default), 'json' and 'hex'." in
     info ~docv ~doc ["michelson-format"] in
-  value @@ opt string "michelson" info
+  value @@
+  opt
+    (enum [("text", `Text); ("json", `Json); ("hex", `Hex)])
+    `Text info
 
 let compile_file =
   let f source_file entry_point syntax display_format michelson_format =
     toplevel ~display_format @@
-    let%bind michelson_format = Main.Display.michelson_format_of_string michelson_format in
     let%bind contract =
       trace (simple_info "compiling contract to michelson") @@
       Ligo.Compile.Of_source.compile_file_contract_entry source_file entry_point (Syntax_name syntax) in
