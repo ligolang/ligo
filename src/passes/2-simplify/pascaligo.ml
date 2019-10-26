@@ -1037,7 +1037,11 @@ and simpl_for_collect : Raw.for_collect -> (_ -> expression result) result = fun
   (* Here it's not possible to know the type of the variable captures in the record ..*)
   let lambda = e_lambda "_COMPILER_for_collect_lambda" None None block'' in
   let%bind collect = simpl_expression fc.expr in
-  let fold = e_constant "LIST_FOLD" [collect ; init_record ; lambda] in
+  let op_name = match fc.collection with
+   | Map _ -> "MAP_FOLD" 
+   | Set _ -> "SET_FOLD" 
+   | List _ -> "LIST_FOLD" in
+  let fold = e_constant op_name [collect ; init_record ; lambda] in
 
   let final =   e_let_in ("_COMPILER_init_record", None) init_record 
             @@ (e_let_in  ("_COMPILER_folded_record", None) fold (e_skip ())) in
