@@ -1002,16 +1002,60 @@ and simpl_for_collect : Raw.for_collect -> (_ -> expression result) result = fun
     assign_instrs in
   let aux prev ass_exp =
     match ass_exp.expression with
-    | E_variable name -> SMap.add name ass_exp prev 
+    | E_assign ( name , _ , _ ) ->
+      let expr' = e_variable name in
+      SMap.add name expr' prev
     | _ -> prev in
+  let captured_list = List.filter_map
+    (fun ass_exp -> match ass_exp.expression with
+      | E_assign ( name, _ , _ ) -> Some name
+      | _ -> None )
+    assign_instrs' in
   let init_record = e_record (List.fold_left aux SMap.empty assign_instrs') in
-  (*later , init_record will be placed in a let_in *)
 
-  (* replace assignments to variable to assignments to record  *)
+  (* replace assignments to X  assignments to record  *)
+  let%bind block' = simpl_block fc.block.value in
+  let%bind block' = block' None in
+  let replace_with_record exp = 
+    match exp.expression with
+    | E_assign ( name , path , expr ) ->
+      let path' = ( match path with
+        | [] -> [Access_record name]
+        (* This will fail for deep tuple access, see LIGO-131 *)
+        | _ -> ((Access_record name)::path) ) in
+      ok @@ e_assign "_COMPILER_fold_record" path' expr
+    | E_variable name ->
+      if (List.mem name captured_list) then
+        ok @@ e_accessor (e_variable "_COMPILER_fold_record") [Access_record name]
+      else ok @@ exp
+    | _ -> ok @@ exp in
+  let%bind block'' = Self_ast_simplified.map_expression replace_with_record block' in
 
+  (* build the lambda*)
+  (* let%bind (elt_type'   : type_expression) = simpl_type_expression fc.elt_type in *)
+  (* let%bind (record_type : type_expression) = ... in   *) 
+  (* Here it's not possible to know the type of the variable captures in the record ..*)
+  let lambda = e_lambda "_COMPILER_for_collect_lambda" None None block'' in
+  let%bind collect = simpl_expression fc.expr in
+  let fold = e_constant "LIST_FOLD" [collect ; init_record ; lambda] in
 
+  let final =   e_let_in ("_COMPILER_init_record", None) init_record 
+            @@ (e_let_in  ("_COMPILER_folded_record", None) fold (e_skip ())) in
 
-  return_statement @@ init_record
+  (* build the sequence of assigments back to the original variables *)
+  let aux (prev : expression) (captured_varname : string) =
+    let access = e_accessor (e_variable "_COMPILER_folded_record")
+      [Access_record captured_varname] in
+    let assign = e_assign captured_varname [] access in
+    e_sequence prev assign in
+
+  let ( final_sequence : expression ) = List.fold_left aux final captured_list in
+
+  return_statement @@ final_sequence
+
+(** NODE TO AVOID THE DIRT: 
+  have a E_unsimplified 'a which is then transformed in a self pass ??
+**)
 
 let simpl_program : Raw.ast -> program result = fun t ->
   bind_list @@ List.map simpl_declaration @@ nseq_to_list t.decl
