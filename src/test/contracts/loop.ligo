@@ -49,13 +49,13 @@ function for_collection (var nee : unit; var nuu : unit) : (int * string) is blo
 function for_collection_ (var nee : unit; var nuu : unit) : (int * string) is block {
   var acc : int := 0 ;
   var st : string := "to" ;
-  var toto : (string * string) := ("foo","bar") ;
+  // var toto : (string * string) := ("foo","bar") ;
 
   var mylist : list(int) := list 1 ; 1 ; 1 end ;
 
   for x : int in list mylist
   begin
-    toto.1 := "r";
+    // toto.1 := "r";
     acc := acc + x ;
     st := st^"to" ;
   end
