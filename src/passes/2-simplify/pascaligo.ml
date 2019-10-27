@@ -348,7 +348,7 @@ let rec simpl_expression (t:Raw.expr) : expr result =
       let n = Z.to_int @@ snd @@ n in
       return @@ e_literal ~loc (Literal_nat n)
     )
-  | EArith (Mtz n) -> (
+  | EArith (Mutez n) -> (
     let (n , loc) = r_split n in
     let n = Z.to_int @@ snd @@ n in
     return @@ e_literal ~loc (Literal_mutez n)

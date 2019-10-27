@@ -340,10 +340,10 @@ and the canonical form of zero is `0n`.
 
 * The last kind of native numerical type is `tez`, which is a unit of
 measure of the amounts (fees, accounts). Beware: the literals of the
-type `tez` are annotated with the suffix `mtz`, which stands for
-millionth of Tez, for instance, `0mtz` or `1200000mtz`. The same handy
-use of underscores as in natural literals help in the writing, like
-`1_200_000mtz`.
+type `tez` are annotated with the suffix `mutez`, which stands for
+millionth of Tez, for instance, `0mutez` or `1200000mutez`. The same
+handy use of underscores as in natural literals help in the writing,
+like `1_200_000mutez`.
 
 To see how numerical types can be used in expressions see the sections
 "Predefined operators" and "Predefined values".
@@ -832,7 +832,7 @@ example, in verbose style:
 A value of that type could be
 
     record
-      goal     = 10mtz;
+      goal     = 10mutez;
       deadline = "...";
       backers  = map end;
       funded   = False

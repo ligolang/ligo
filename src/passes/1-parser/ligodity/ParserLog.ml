@@ -321,8 +321,8 @@ and print_arith_expr buffer = function
 | Int {region; value=lex,z} ->
     let line = sprintf "Int %s (%s)" lex (Z.to_string z)
     in print_token buffer region line
-| Mtz {region; value=lex,z} ->
-    let line = sprintf "Mtz %s (%s)" lex (Z.to_string z)
+| Mutez {region; value=lex,z} ->
+    let line = sprintf "Mutez %s (%s)" lex (Z.to_string z)
     in print_token buffer region line
 | Nat {region; value=lex,z} ->
     let line = sprintf "Nat %s (%s)" lex (Z.to_string z)

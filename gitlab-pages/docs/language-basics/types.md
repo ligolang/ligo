@@ -31,7 +31,7 @@ const dogBreed: animalBreed = "Saluki";
 type accountBalances is map(address, tez);
 
 const ledger: accountBalances = map
-    ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address) -> 10mtz
+    ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address) -> 10mutez
 end
 ```
 
@@ -60,10 +60,10 @@ end
 type accountBalances is map(account, accountData);
 
 // pseudo-JSON representation of our map 
-// { "tz1...": {balance: 10mtz, numberOfTransactions: 5n} }
+// { "tz1...": {balance: 10mutez, numberOfTransactions: 5n} }
 const ledger: accountBalances = map
     ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address) -> record
-      balance = 10mtz;
+      balance = 10mutez;
       numberOfTransactions = 5n;
     end
 end

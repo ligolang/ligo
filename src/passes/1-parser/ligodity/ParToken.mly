@@ -42,7 +42,7 @@
 
 %token <(string * Z.t) Region.reg> Int
 %token <(string * Z.t) Region.reg> Nat
-%token <(string * Z.t) Region.reg> Mtz
+%token <(string * Z.t) Region.reg> Mutez
 
 (*%token And*)
 %token <Region.t> Begin

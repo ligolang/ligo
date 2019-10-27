@@ -28,8 +28,8 @@ Each taco kind, has its own `max_price` that it sells for, and a finite supply f
 
 |**kind** |id |**available_stock**| **max_price**|
 |---|---|---|---|
-|el clásico | `1n` | `50n` | `50000000mtz` |
-|especial del chef | `2n` | `20n` | `75000000mtz` |
+|el clásico | `1n` | `50n` | `50000000mutez` |
+|especial del chef | `2n` | `20n` | `75000000mutez` |
 
 ### Calculating the current purchase price
 
@@ -42,16 +42,16 @@ current_purchase_price = max_price / available_stock
 #### El clásico
 |**available_stock**|**max_price**|**current_purchase_price**|
 |---|---|---|
-| `50n` | `50000000mtz` | `1tz`|
-| `20n` | `50000000mtz` | `2.5tz` |
-| `5n` | `50000000mtz` | `10tz` |
+| `50n` | `50000000mutez` | `1tz`|
+| `20n` | `50000000mutez` | `2.5tz` |
+| `5n` | `50000000mutez` | `10tz` |
 
 #### Especial del chef
 |**available_stock**|**max_price**|**current_purchase_price**|
 |---|---|---|
-| `20n` | `75000000mtz` | `3.75tz` |
-| `10n` | `75000000mtz` | `7.5tz`|
-| `5n` | `75000000mtz` | `15tz` |
+| `20n` | `75000000mutez` | `3.75tz` |
+| `10n` | `75000000mutez` | `7.5tz`|
+| `5n` | `75000000mutez` | `15tz` |
 
 ---
 
@@ -161,11 +161,11 @@ When dry-running a contract, it's crucial to provide a correct initial storage v
 map
     1n -> record
         current_stock = 50n;
-        max_price = 50000000mtz;
+        max_price = 50000000mutez;
     end;
     2n -> record
         current_stock = 20n;
-        max_price = 75000000mtz;
+        max_price = 75000000mutez;
     end;
 end
 ```
@@ -177,11 +177,11 @@ end
 ligo dry-run taco-shop.ligo --syntax pascaligo main unit "map
     1n -> record
         current_stock = 50n;
-        max_price = 50000000mtz;
+        max_price = 50000000mutez;
     end;
     2n -> record
         current_stock = 20n;
-        max_price = 75000000mtz;
+        max_price = 75000000mutez;
     end;
 end"
 ```
@@ -298,11 +298,11 @@ In order to test the `amount` sent, we'll use the `--amount` option of `dry-run`
 ligo dry-run taco-shop.ligo --syntax pascaligo --amount 1 buy_taco 1n "map
     1n -> record
         current_stock = 50n;
-        max_price = 50000000mtz;
+        max_price = 50000000mutez;
     end;
     2n -> record
         current_stock = 20n;
-        max_price = 75000000mtz;
+        max_price = 75000000mutez;
     end;
 end"
 ```

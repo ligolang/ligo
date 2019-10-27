@@ -292,7 +292,7 @@ unary_expr ::=
 core_expr ::=
   Int
 | Nat
-| Mtz
+| Mutez
 | Ident (* var *)
 | String
 | Bytes
