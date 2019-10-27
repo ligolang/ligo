@@ -576,7 +576,6 @@ and simpl_fun_declaration :
          bind_fold_right_list aux result body in
        let expression : expression = e_lambda ~loc binder (Some input_type)
            (Some output_type) result in
-       (* let _toto = Format.printf "TAMERE %a \n" Ast_simplified.PP.expression expression in *)
        let type_annotation = Some (T_function (input_type, output_type)) in
        ok ((name , type_annotation) , expression)
      )
@@ -1019,7 +1018,7 @@ and simpl_for_collect : Raw.for_collect -> (_ -> expression result) result = fun
   let%bind block' = simpl_block fc.block.value in
   let%bind block' = block' None in
 
-  let replace_with_record exp =
+  let replace exp =
     match exp.expression with
     (* replace asignement *)
     | E_assign ( name , path , expr ) ->
@@ -1038,7 +1037,7 @@ and simpl_for_collect : Raw.for_collect -> (_ -> expression result) result = fun
         ok @@ e_accessor (e_variable "_COMPILER_acc") [Access_record name]
       else ok @@ exp
     | _ -> ok @@ exp in
-  let%bind block' = Self_ast_simplified.map_expression replace_with_record block' in
+  let%bind block' = Self_ast_simplified.map_expression replace block' in
 
   (* append the return value *)
   let rec add_return expr = match expr.expression with
@@ -1050,12 +1049,11 @@ and simpl_for_collect : Raw.for_collect -> (_ -> expression result) result = fun
   let%bind elt_type = simpl_type_expression fc.elt_type in 
   let acc = e_accessor (e_variable "arguments") [Access_tuple 0] in
   let collec_elt = e_accessor (e_variable "arguments") [Access_tuple 1] in
-  let args_let_in = e_let_in ("_COMPILER_acc", None)                 acc        @@ 
-                    e_let_in ("_COMPILER_collec_elt", Some elt_type) collec_elt (e_skip ()) in
-  let block' = e_sequence args_let_in block' in
+  let block' = e_let_in ("_COMPILER_acc", None)                 acc        @@ 
+               e_let_in ("_COMPILER_collec_elt", Some elt_type) collec_elt (block') in
 
 
-  (* build the lambda*)
+  (* build the X_FOLD constant *)
   let lambda = e_lambda "_COMPILER_for_collect_lambda" None None block' in
   let%bind collect = simpl_expression fc.expr in
   let op_name = match fc.collection with
@@ -1063,17 +1061,22 @@ and simpl_for_collect : Raw.for_collect -> (_ -> expression result) result = fun
    | Set _ -> "SET_FOLD" 
    | List _ -> "LIST_FOLD" in
   let fold = e_constant op_name [collect ; init_record ; lambda] in
-  let folded_record = e_let_in ("_COMPILER_folded_record", None) fold (e_skip ()) in
 
   (* append assigments of fold result to the original captured variables *)
-  let aux (prev : expression) (captured_varname : string) =
+  let aux (prev : expression option) (captured_varname : string) =
     let access = e_accessor (e_variable "_COMPILER_folded_record")
       [Access_record captured_varname] in
     let assign = e_assign captured_varname [] access in
-    e_sequence prev assign in
+    match prev with 
+    | None -> Some assign 
+    | Some p -> Some (e_sequence p assign) in
+  let ( reassign_sequence : expression option ) = List.fold_left aux None captured_list in
 
-  let ( final_sequence : expression ) = List.fold_left aux folded_record captured_list in
-
+  let final_sequence = match reassign_sequence with
+    (* None case means that no variables were captured *)
+    | None -> e_let_in ("_COMPILER_folded_record", None) fold (e_skip ())
+    | Some seq -> e_let_in ("_COMPILER_folded_record", None) fold seq in
+  
   return_statement @@ final_sequence
 
 (** NODE TO AVOID THE DIRT: 
@@ -1083,6 +1086,7 @@ and simpl_for_collect : Raw.for_collect -> (_ -> expression result) result = fun
     begin
       i := .. 
     end
+  - global definition of strings
 **)
 
 let simpl_program : Raw.ast -> program result = fun t ->
