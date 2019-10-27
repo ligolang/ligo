@@ -989,105 +989,80 @@ and simpl_for_int : Raw.for_int -> (_ -> expression result) result = fun fi ->
 
 and simpl_for_collect : Raw.for_collect -> (_ -> expression result) result = fun fc ->
   let statements = npseq_to_list fc.block.value.statements in
-  (* building initial record *)
-  let aux (el : Raw.statement) : Raw.instruction option = match el with
+  (* build initial record *)
+  let filter_assignments (el : Raw.statement) : Raw.instruction option = match el with
       | Raw.Instr (Assign _ as i)  -> Some i
       | _ -> None in
-  let assign_instrs = List.filter_map aux statements in
+  let assign_instrs = List.filter_map filter_assignments statements in
   let%bind assign_instrs' = bind_map_list
     (fun el ->
       let%bind assign' = simpl_instruction el in
       let%bind assign' = assign' None in
       ok @@ assign')
     assign_instrs in
-  let aux prev ass_exp =
-    match ass_exp.expression with
-    | E_assign ( name , _ , _ ) ->
-      let expr' = e_variable name in
-      SMap.add name expr' prev
-    | _ -> prev in
-  let captured_list = List.filter_map
+  let captured_name_list = List.filter_map
     (fun ass_exp -> match ass_exp.expression with
-      | E_assign ( name, _ , _ ) -> Some name
-      | _ -> None )
+      | E_assign ( name, _ , _ ) -> Some name | _ -> None )
     assign_instrs' in
-  let init_record = e_record (List.fold_left aux SMap.empty assign_instrs') in
-
-  (* replace assignments to X assignments to record in the for_collect
-     block which will become the body of the lambda  *)
-  let%bind block' = simpl_block fc.block.value in
-  let%bind block' = block' None in
-
+  let add_to_record (prev: expression type_name_map) (captured_name: string) =
+    SMap.add captured_name (e_variable captured_name) prev in
+  let init_record = e_record (List.fold_left add_to_record SMap.empty captured_name_list) in
+  (* replace references to the future lambda arguments in the for body *)
+  let%bind for_body = simpl_block fc.block.value in
+  let%bind for_body = for_body None in
   let replace exp =
+    (* TODO: map and set updated/remove must also be captured *)
     match exp.expression with
-    (* replace asignement *)
     | E_assign ( name , path , expr ) ->
+      (* replace references to fold accumulator as rhs *)
       let path' = ( match path with
         | [] -> [Access_record name]
-        (* This will fail for deep tuple access, see LIGO-131 *)
+        (* This might fail for deep tuple access, see LIGO-131 *)
         | _ -> ( (Access_record name) :: path )
       ) in
       ok @@ e_assign "_COMPILER_acc" path' expr
     | E_variable name ->
       if (name = fc.var.value ) then
-        (* replace reference to the collection element *)
+        (* replace references to the collection element *)
         ok @@ (e_variable "_COMPILER_collec_elt")
-      else if (List.mem name captured_list) then
-        (* replace reference fold accumulator *)
+      else if (List.mem name captured_name_list) then
+        (* replace references to fold accumulator as lhs *)
         ok @@ e_accessor (e_variable "_COMPILER_acc") [Access_record name]
       else ok @@ exp
     | _ -> ok @@ exp in
-  let%bind block' = Self_ast_simplified.map_expression replace block' in
-
-  (* append the return value *)
-  let rec add_return expr = match expr.expression with
+  let%bind for_body = Self_ast_simplified.map_expression replace for_body in
+  (* append the return value (the accumulator) to the for body *)
+  let rec add_return (expr : expression) = match expr.expression with
     | E_sequence (a,b) -> e_sequence a (add_return b)
     | _  -> e_sequence expr (e_variable "_COMPILER_acc") in
-  let block' = add_return block' in
-
-  (* prepend the body with let accumulator = argument.0 in let collec_elt = argument.1 in*)
+  let for_body = add_return for_body in
+  (* prepend for body with args declaration (accumulator and collection element)*)
   let%bind elt_type = simpl_type_expression fc.elt_type in 
   let acc = e_accessor (e_variable "arguments") [Access_tuple 0] in
   let collec_elt = e_accessor (e_variable "arguments") [Access_tuple 1] in
-  let block' = e_let_in ("_COMPILER_acc", None)                 acc        @@ 
-               e_let_in ("_COMPILER_collec_elt", Some elt_type) collec_elt (block') in
-
-
+  let for_body = e_let_in ("_COMPILER_acc", None)                 acc @@ 
+                 e_let_in ("_COMPILER_collec_elt", Some elt_type) collec_elt (for_body) in
   (* build the X_FOLD constant *)
-  let lambda = e_lambda "arguments" None None block' in
   let%bind collect = simpl_expression fc.expr in
+  let lambda = e_lambda "arguments" None None for_body in
   let op_name = match fc.collection with
-   | Map _ -> "MAP_FOLD" 
-   | Set _ -> "SET_FOLD" 
-   | List _ -> "LIST_FOLD" in
+   | Map _ -> "MAP_FOLD" | Set _ -> "SET_FOLD" | List _ -> "LIST_FOLD" in
   let fold = e_constant op_name [collect ; init_record ; lambda] in
-
-  (* append assigments of fold result to the original captured variables *)
-  let aux (prev : expression option) (captured_varname : string) =
+  (* build sequence to re-assign fold result to the original captured variables *)
+  let assign_back (prev : expression option) (captured_varname : string) : expression option =
     let access = e_accessor (e_variable "_COMPILER_folded_record")
       [Access_record captured_varname] in
     let assign = e_assign captured_varname [] access in
     match prev with 
     | None -> Some assign 
     | Some p -> Some (e_sequence p assign) in
-  let ( reassign_sequence : expression option ) = List.fold_left aux None captured_list in
-
+  let reassign_sequence = List.fold_left assign_back None captured_name_list in
+  (* attach the folded record to the re-assign sequence *)
   let final_sequence = match reassign_sequence with
     (* None case means that no variables were captured *)
     | None -> e_let_in ("_COMPILER_folded_record", None) fold (e_skip ())
     | Some seq -> e_let_in ("_COMPILER_folded_record", None) fold seq in
-  
   return_statement @@ final_sequence
-
-(** NODE TO AVOID THE DIRT: 
-  - have a E_unsimplified 'a which is then transformed in a self pass ??
-  - need to forbid that ? 
-    for i in somelist
-    begin
-      i := .. 
-    end
-  - global definition of strings
-**)
 
 let simpl_program : Raw.ast -> program result = fun t ->
   bind_list @@ List.map simpl_declaration @@ nseq_to_list t.decl
