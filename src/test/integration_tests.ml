@@ -667,7 +667,12 @@ let loop () : unit result =
   let%bind () = 
     let input = e_unit () in
     let expected = e_pair (e_int 3) (e_string "totototo") in
-    expect_eq program "for_collection" input expected
+    expect_eq program "for_collection_list" input expected
+  in
+  let%bind () = 
+    let input = e_unit () in
+    let expected = e_pair (e_int 6) (e_string "totototo") in
+    expect_eq program "for_collection_set" input expected
   in
   ok ()
 
