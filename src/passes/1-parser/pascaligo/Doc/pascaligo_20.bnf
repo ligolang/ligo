@@ -270,7 +270,7 @@ unary_expr ::=
 core_expr ::=
   Int
 | Nat
-| Mtz
+| Mutez
 | Ident (* var *)
 | Ident (* var *) brackets(expr) (* lookup *)
 | Ident (* struct_name *) DOT nsepseq(selection,DOT) option(brackets(expr))
