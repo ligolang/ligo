@@ -1054,7 +1054,7 @@ and simpl_for_collect : Raw.for_collect -> (_ -> expression result) result = fun
 
 
   (* build the X_FOLD constant *)
-  let lambda = e_lambda "_COMPILER_for_collect_lambda" None None block' in
+  let lambda = e_lambda "arguments" None None block' in
   let%bind collect = simpl_expression fc.expr in
   let op_name = match fc.collection with
    | Map _ -> "MAP_FOLD" 

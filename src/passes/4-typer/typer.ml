@@ -618,7 +618,7 @@ and type_expression : environment -> ?tv_opt:O.type_value -> I.expression -> O.a
   | E_constant ( ("LIST_FOLD"|"MAP_FOLD"|"SET_FOLD") as opname ,
                   [ collect ; 
                     init_record ;
-                    ( { expression = (I.E_lambda { binder = (name, None) ;
+                    ( { expression = (I.E_lambda { binder = (lname, None) ;
                                                    input_type = None ; 
                                                    output_type = None ; 
                                                    result }) ;
@@ -636,10 +636,10 @@ and type_expression : environment -> ?tv_opt:O.type_value -> I.expression -> O.a
       let input_type = t_tuple (tv_out::[collect_inner_type]) () in 
       let output_type = Some tv_out in
 
-      let e' = Environment.add_ez_binder "arguments" input_type e in
+      let e' = Environment.add_ez_binder lname input_type e in
       let%bind body = type_expression ?tv_opt:output_type e' result in
       let output_type = body.type_annotation in
-      let%bind lambda' = ok @@ make_a_e (E_lambda {binder = name ; body}) (t_function input_type output_type ()) e in
+      let%bind lambda' = ok @@ make_a_e (E_lambda {binder = lname ; body}) (t_function input_type output_type ()) e in
 
       let%bind lst' = ok @@ lst'@[lambda'] in
       let tv_lst = List.map get_type_annotation lst' in
