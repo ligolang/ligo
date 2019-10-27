@@ -31,7 +31,7 @@ function lamby (var accu : (record st : string ; acc : int end) ; var i : int )
     accu.st := accu.st ^ "to" ;
 } with accu
 
-function for_collection (var nee : unit; var nuu : unit) : (int * string) is block {
+function for_collection_ (var nee : unit; var nuu : unit) : (int * string) is block {
   var acc : int := 0 ;
   var st : string := "to" ;
   var mylist : list(int) := list 1 ; 1 ; 1 end ;
@@ -46,7 +46,7 @@ function for_collection (var nee : unit; var nuu : unit) : (int * string) is blo
 
 } with (folded_record.acc , folded_record.st)
 
-function for_collection_ (var nee : unit; var nuu : unit) : (int * string) is block {
+function for_collection (var nee : unit) : (int * string) is block {
   var acc : int := 0 ;
   var st : string := "to" ;
   // var toto : (string * string) := ("foo","bar") ;
@@ -60,7 +60,7 @@ function for_collection_ (var nee : unit; var nuu : unit) : (int * string) is bl
     st := st^"to" ;
   end
 
-} with acc
+} with (acc, st)
 
 function dummy (const n : nat) : nat is block {
   while (False) block { skip }
