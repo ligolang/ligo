@@ -137,6 +137,17 @@ module Errors = struct
     ] in
     error ~data title message
 
+  let unsupported_deep_access_for_collection for_col =
+    let title () = "deep access in loop over collection" in
+    let message () =
+      Format.asprintf "currently, we do not support deep \
+                       accesses in loops over collection" in
+    let data = [
+      ("pattern_loc",
+       fun () -> Format.asprintf "%a" Location.pp_lift @@ for_col.Region.region)
+    ] in
+    error ~data title message
+
   (* Logging *)
 
   let simplifying_instruction t =
@@ -1013,14 +1024,11 @@ and simpl_for_collect : Raw.for_collect -> (_ -> expression result) result = fun
   let replace exp =
     (* TODO: map and set updated/remove must also be captured *)
     match exp.expression with
-    | E_assign ( name , path , expr ) ->
-      (* replace references to fold accumulator as rhs *)
-      let path' = ( match path with
-        | [] -> [Access_record name]
-        (* This might fail for deep tuple access, see LIGO-131 *)
-        | _ -> ( (Access_record name) :: path )
-      ) in
-      ok @@ e_assign "_COMPILER_acc" path' expr
+    (* replace references to fold accumulator as rhs *)
+    | E_assign ( name , path , expr ) -> ( match path with
+        | [] -> ok @@ e_assign "_COMPILER_acc" [Access_record name] expr
+        (* This fails for deep accesses, see LIGO-131 *)
+        | _ -> fail @@ unsupported_deep_access_for_collection fc.block )
     | E_variable name ->
       if (name = fc.var.value ) then
         (* replace references to the collection element *)
