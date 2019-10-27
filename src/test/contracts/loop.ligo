@@ -39,7 +39,6 @@ function for_collection_ (var nee : unit; var nuu : unit) : (int * string) is bl
     record st = st; acc = acc; end;
   var folded_record : (record st : string; acc : int end ) :=
     list_fold(mylist , init_record , lamby) ;
-  skip ;
   st := folded_record.st ;
   acc := folded_record.acc ;
 } with (folded_record.acc , folded_record.st)
@@ -65,6 +64,17 @@ function for_collection_set (var nee : unit) : (int * string) is block {
     st := st^"to" ;
   end
 } with (acc, st)
+
+// function for_collection_map (var nee : unit) : (int * string) is block {
+//   var acc : int := 0 ;
+//   var st : string := "" ;
+//   var mymap : map(string,int) := map "one" -> 1 ; "two" -> 2 ; "three" -> 3 end ;
+//   for k -> v : (string * int) in map mymap
+//   begin
+//     acc := acc + v ;
+//     st := k^st ;
+//   end
+// } with (acc, st)
 
 function dummy (const n : nat) : nat is block {
   while (False) block { skip }

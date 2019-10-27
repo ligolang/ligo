@@ -629,13 +629,13 @@ and type_expression : environment -> ?tv_opt:O.type_value -> I.expression -> O.a
       let%bind (v_col , v_initr ) = bind_map_pair (type_expression e) (collect , init_record ) in
       let tv_col = get_type_annotation v_col   in (* this is the type of the collection  *) 
       let tv_out = get_type_annotation v_initr in (* this is the output type of the lambda*)
-      let%bind col_inner_type = match tv_col.type_value' with
-        | O.T_constant ( ("list"|"set"|"map") , [t]) -> ok t
+      let%bind input_type = match tv_col.type_value' with
+        | O.T_constant ( ("list"|"set") , t) -> ok @@ t_tuple (tv_out::t) ()
+        | O.T_constant ( "map" , t) -> ok @@ t_tuple (tv_out::[(t_tuple t ())]) () 
         | _ ->
           let wtype = Format.asprintf
-            "Loops over collections expect lists, sets or maps,  type %a" O.PP.type_value tv_col in 
+            "Loops over collections expect lists, sets or maps, got type %a" O.PP.type_value tv_col in 
           fail @@ simple_error wtype in 
-      let input_type = t_tuple (tv_out::[col_inner_type]) () in 
       let e' = Environment.add_ez_binder lname input_type e in
       let%bind body = type_expression ?tv_opt:(Some tv_out) e' result in
       let output_type = body.type_annotation in
