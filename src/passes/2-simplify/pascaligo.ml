@@ -1189,7 +1189,7 @@ and simpl_for_collect : Raw.for_collect -> (_ -> expression result) result = fun
   (* STEP 9 *)
   let final_sequence = match reassign_sequence with
     (* None case means that no variables were captured *)
-    | None -> e_let_in ("#COMPILER#folded_record", None) fold (e_skip ())
+    | None -> e_skip ()
     | Some seq -> e_let_in ("#COMPILER#folded_record", None) fold seq in
   return_statement @@ final_sequence
 

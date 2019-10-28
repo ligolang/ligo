@@ -46,6 +46,27 @@ function for_collection_set (var nee : unit) : (int * string) is block {
   end
 } with (acc, st)
 
+// function for_collection_assignements_in_ifs (var nee : unit) : int is block {
+//   var acc : int := 0 ;
+//   var myset : set(int) := set 1 ; 2 ; 3 end ;
+//   for x : int in set myset
+//   begin
+//     if (x=1) then 
+//      acc := acc + x ;
+//     else 
+//      acc := acc + 10 ;
+//   end
+// } with acc
+
+function for_collection_empty (var nee : unit) : int is block {
+  var acc : int := 0 ;
+  var myset : set(int) := set 1 ; 2 ; 3 end ;
+  for x : int in set myset
+  begin
+    skip ;
+  end
+} with acc
+
 // function for_collection_map (var nee : unit) : (int * string) is block {
 //   var acc : int := 0 ;
 //   var st : string := "" ;

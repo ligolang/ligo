@@ -674,6 +674,11 @@ let loop () : unit result =
     let expected = e_pair (e_int 6) (e_string "totototo") in
     expect_eq program "for_collection_set" input expected
   in
+  let%bind () = 
+    let input = e_unit () in
+    let expected = (e_int 0) in
+    expect_eq program "for_collection_empty" input expected
+  in
   ok ()
 
 (* Don't know how to assert parse error happens in this test framework
