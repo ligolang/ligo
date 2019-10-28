@@ -177,6 +177,10 @@ module Simplify = struct
       ("Big_map.literal" , "BIG_MAP_LITERAL" ) ;
       ("Big_map.empty" , "BIG_MAP_EMPTY" ) ;
 
+      ("Bitwise.lor" , "OR") ;
+      ("Bitwise.land" , "AND") ;
+      ("Bitwise.lxor" , "XOR") ;
+
       ("String.length", "SIZE") ;
       ("String.size", "SIZE") ;
       ("String.slice", "SLICE") ;

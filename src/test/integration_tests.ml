@@ -194,6 +194,22 @@ let bitwise_arithmetic () : unit result =
   let%bind () = expect_eq program "xor_op" (e_nat 7) (e_nat 0) in
   ok ()
 
+let bitwise_arithmetic_mligo () : unit result =
+  let%bind program = mtype_file "./contracts/bitwise_arithmetic.mligo" in
+  let%bind () = expect_eq program "or_op" (e_nat 7) (e_nat 7) in
+  let%bind () = expect_eq program "or_op" (e_nat 3) (e_nat 7) in
+  let%bind () = expect_eq program "or_op" (e_nat 2) (e_nat 6) in
+  let%bind () = expect_eq program "or_op" (e_nat 14) (e_nat 14) in
+  let%bind () = expect_eq program "or_op" (e_nat 10) (e_nat 14) in
+  let%bind () = expect_eq program "and_op" (e_nat 7) (e_nat 7) in
+  let%bind () = expect_eq program "and_op" (e_nat 3) (e_nat 3) in
+  let%bind () = expect_eq program "and_op" (e_nat 2) (e_nat 2) in
+  let%bind () = expect_eq program "and_op" (e_nat 14) (e_nat 6) in
+  let%bind () = expect_eq program "and_op" (e_nat 10) (e_nat 2) in
+  let%bind () = expect_eq program "xor_op" (e_nat 0) (e_nat 7) in
+  let%bind () = expect_eq program "xor_op" (e_nat 7) (e_nat 0) in
+  ok ()
+
 let string_arithmetic () : unit result =
   let%bind program = type_file "./contracts/string_arithmetic.ligo" in
   let%bind () = expect_eq program "concat_op" (e_string "foo") (e_string "foototo") in
@@ -960,7 +976,8 @@ let main = test_suite "Integration (End to End)" [
     test "multiple parameters" multiple_parameters ;
     test "bool" bool_expression ;
     test "arithmetic" arithmetic ;
-    test "bitiwse_arithmetic" bitwise_arithmetic ;
+    test "bitwise_arithmetic" bitwise_arithmetic ;
+    test "bitwise_arithmetic (mligo)" bitwise_arithmetic_mligo;
     test "string_arithmetic" string_arithmetic ;
     test "string_arithmetic (mligo)" string_arithmetic_mligo ;
     test "bytes_arithmetic" bytes_arithmetic ;
