@@ -12,5 +12,5 @@
 
 (test
  (modules PartitionMain)
- (libraries UnionFind)
+ (libraries union_find)
  (name PartitionMain))

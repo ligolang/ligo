@@ -43,7 +43,10 @@ let get_constructor : string -> t -> (type_value * type_value) option = fun k x 
   let aux = fun x ->
     let aux = fun (_type_name , x) ->
       match x.type_value' with
-      | T_sum m when Map.String.mem k m -> Some (Map.String.find k m , x)
+      | T_sum m ->
+        (match Map.String.find_opt k m with
+           Some km -> Some (km , x)
+         | None -> None)
       | _ -> None
     in
     List.find_map aux (Small.get_type_environment x) in

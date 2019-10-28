@@ -920,7 +920,7 @@ let untype_type_value (t:O.type_value) : (I.type_expression) result =
 (* TODO: we ended up with two versions of type_program… ??? *)
 
 (*
-Apply type_declaration on all the node of the AST_simplified from the root p 
+Apply type_declaration on all the node of the AST_simplified from the root p
 *)
 let type_program_returns_state (p:I.program) : (environment * Solver.state * O.program) result =
   let env = Ast_typed.Environment.full_empty in
@@ -941,7 +941,14 @@ let type_program_returns_state (p:I.program) : (environment * Solver.state * O.p
 
 let type_program (p : I.program) : (O.program * Solver.state) result =
   let%bind (env, state, program) = type_program_returns_state p in
-  let program = let () = failwith "TODO : subst all" in let _todo = ignore (env, state) in program in
+  let subst_all =
+    let assignments = state.structured_dbs.assignments in
+    let aux (v : O.type_name) (expr : Solver.c_constructor_simpl) (p:O.program) =
+      Typesystem.Misc.Substitution.Pattern.program ~p ~v ~expr in
+    let p = SMap.fold aux assignments program in
+    p in
+  let program = subst_all in
+  let () = ignore env in        (* TODO: shouldn't we use the `env` somewhere? *)
   ok (program, state)
 
  (*

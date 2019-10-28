@@ -6,10 +6,17 @@ module Substitution = struct
 
   module Pattern = struct
 
+    let rec declaration ~(d : Ast_typed.declaration Location.wrap) ~v ~expr : Ast_typed.declaration Location.wrap =
+      let _TODO = (d, v, expr) in
+      failwith "TODO: subst declaration"
+
+    and program ~(p : Ast_typed.program) ~v ~expr : Ast_typed.program =
+      List.map (fun d -> declaration ~d ~v ~expr) p
+
     (*
        Computes `P[v := expr]`.
     *)
-    let rec type_value ~tv ~v ~expr =
+    and type_value ~tv ~v ~expr =
       let self tv = type_value ~tv ~v ~expr in
       match tv with
       | P_variable v' when v' = v -> expr
@@ -52,6 +59,13 @@ module Substitution = struct
     and typeclass ~tc ~v ~expr =
       List.map (List.map (fun tv -> type_value ~tv ~v ~expr)) tc
 
+    (* Performs beta-reduction at the root of the type *)
+    let eval_beta_root ~(tv : type_value) =
+      match tv with
+        P_apply (P_forall { binder; constraints; body }, arg) ->
+        let constraints = List.map (fun c -> constraint_ ~c ~v:binder ~expr:arg) constraints in
+        (type_value ~tv:body ~v:binder ~expr:arg , constraints)
+      | _ -> (tv , [])
   end
 
 end

@@ -102,6 +102,13 @@ them. please report this to the developers." in
       ("value" , fun () -> Format.asprintf "%a" Mini_c.PP.value value) ;
     ] in
     error ~data title content
+
+  let not_found content =
+    let title () = "Not_found" in
+    let content () = content in
+    let data = [
+    ] in
+    error ~data title content
 end
 open Errors
 
@@ -539,7 +546,10 @@ and transpile_annotated_expression (ae:AST.annotated_expression) : expression re
               let%bind ty'_map = bind_map_smap transpile_type ty_map in
               let%bind path = record_access_to_lr ty' ty'_map prop in
               let path' = List.map snd path in
-            ok (Map.String.find prop ty_map, acc @ path')
+            let%bind prop_in_ty_map = trace_option
+                (Errors.not_found "acessing prop in ty_map [TODO: better error message]")
+                (Map.String.find_opt prop ty_map) in
+            ok (prop_in_ty_map, acc @ path')
           )
           | Access_map _k -> fail (corner_case ~loc:__LOC__ "no patch for map yet")
       in

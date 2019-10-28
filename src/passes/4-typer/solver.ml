@@ -7,6 +7,21 @@ module Wrap = struct
   module T = Ast_typed
   module O = Core
 
+  module Errors = struct
+
+    let unknown_type_constructor (ctor : string) (te : T.type_value) () =
+      let title = (thunk "unknown type constructor") in
+      (* TODO: sanitize the "ctor" argument before displaying it. *)
+      let message () = ctor in
+      let data = [
+        ("ctor" , fun () -> ctor) ;
+        ("expression" , fun () -> Format.asprintf "%a"  T.PP.type_value te) ;
+        (* ("location" , fun () -> Format.asprintf "%a" Location.pp te.location) *) (* TODO *)
+      ] in
+      error ~data title message ()
+  end
+
+
   type constraints = O.type_constraint list
 
   (* let add_type state t = *)
@@ -30,16 +45,33 @@ module Wrap = struct
     | T_variable type_name -> P_variable type_name
     | T_constant (type_name , args) ->
       let csttag = Core.(match type_name with
-          | "arrow"  -> C_arrow
-          | "option" -> C_option
-          | "tuple"  -> C_tuple
-          | "map"    -> C_map
-          | "list"   -> C_list
-          | "set"    -> C_set
-          | "unit"   -> C_unit
-          | "bool"   -> C_bool
-          | "string" -> C_string
-          | _        -> failwith "unknown type constructor")
+          | "arrow"     -> C_arrow
+          | "option"    -> C_option
+          | "tuple"     -> C_tuple
+          (* record *)
+          (* variant *)
+          | "map"       -> C_map
+          | "big_map"   -> C_map
+          | "list"      -> C_list
+          | "set"       -> C_set
+          | "unit"      -> C_unit
+          | "bool"      -> C_bool
+          | "string"    -> C_string
+          | "nat"       -> C_nat
+          | "mutez"     -> C_tez  (* TODO: rename tez to mutez*)
+          | "timestamp" -> C_timestamp
+          | "int"       -> C_int
+          | "address"   -> C_address
+          | "bytes"     -> C_bytes
+          | "key_hash"  -> C_key_hash
+          | "key"       -> C_key
+          | "signature" -> C_signature
+          | "operation" -> C_operation
+          | "contract"  -> C_contract
+          | unknown  ->
+            (* TODO: return a Trace.result *)
+            let _ = fail (fun () -> Errors.unknown_type_constructor unknown te ()) in
+            failwith ("unknown type constructor " ^ unknown))
       in
       P_constant (csttag, List.map type_expression_to_type_value args)
 
@@ -336,10 +368,6 @@ module UF = Union_find.Partition0.Make(TV)
 
 type unionfind = UF.t
 
-let empty = UF.empty                           (* DEMO *)
-let representative_toto = UF.repr "toto" empty (* DEMO *)
-let merge x y = UF.equiv x y                   (* DEMO *)
-
 (* end unionfind *)
 
 (* representant for an equivalence class of type variables *)
@@ -521,7 +549,8 @@ let normalizer_assignments : (type_constraint_simpl , type_constraint_simpl) nor
     | _ ->
       (dbs , [new_constraint])
 
-let type_level_eval : type_value -> type_value * type_constraint list = failwith "implemented in other branch"
+let type_level_eval : type_value -> type_value * type_constraint list =
+  fun tv -> Typesystem.Misc.Substitution.Pattern.eval_beta_root ~tv
 
 let check_applied ((reduced, _new_constraints) as x) =
   let () = match reduced with
@@ -972,10 +1001,10 @@ let select_and_propagate_all' : _ -> type_constraint_simpl selector_input -> str
 
 (* Takes a list of constraints, applies all selector+propagator pairs
    to each in turn. *)
-let rec select_and_propagate_all : _ -> type_constraint selector_input list -> structured_dbs -> structured_dbs =
+let rec select_and_propagate_all : _ -> type_constraint selector_input list -> structured_dbs -> _ * structured_dbs =
   fun already_selected new_constraints dbs ->
     match new_constraints with
-    | [] -> dbs
+    | [] -> (already_selected, dbs)
     | new_constraint :: tl ->
       let { state = dbs ; list = modified_constraints } = normalizers new_constraint dbs in
       let (already_selected , new_constraints' , dbs) =
@@ -998,21 +1027,40 @@ let rec select_and_propagate_all : _ -> type_constraint selector_input list -> s
 
 (* Below is a draft *)
 
+(* type state = {
+ *   (\* when α-renaming x to y, we put them in the same union-find class *\)
+ *   unification_vars : unionfind ;
+ *
+ *   (\* assigns a value to the representant in the unionfind *\)
+ *   assignments : type_value TypeVariableMap.t ;
+ *
+ *   (\* constraints related to a type variable *\)
+ *   constraints : constraints TypeVariableMap.t ;
+ * } *)
+
 type state = {
-  (* when α-renaming x to y, we put them in the same union-find class *)
-  unification_vars : unionfind ;
-
-  (* assigns a value to the representant in the unionfind *)
-  assignments : type_value TypeVariableMap.t ;
-
-  (* constraints related to a type variable *)
-  constraints : constraints TypeVariableMap.t ;
+  structured_dbs   : structured_dbs   ;
+  already_selected : already_selected ;
 }
 
-let initial_state : state = {
-  unification_vars = UF.empty ;
-  constraints = TypeVariableMap.empty ;
-  assignments = TypeVariableMap.empty ;
+let initial_state : state = (* {
+ *   unification_vars = UF.empty ;
+ *   constraints = TypeVariableMap.empty ;
+ *   assignments = TypeVariableMap.empty ;
+ * } *)
+{
+  structured_dbs =
+  {
+    all_constraints = [] ; (* type_constraint_simpl list *)
+    aliases = UF.empty ; (* unionfind *)
+    assignments = TypeVariableMap.empty; (* c_constructor_simpl TypeVariableMap.t *)
+    grouped_by_variable = TypeVariableMap.empty; (* constraints TypeVariableMap.t *)
+    cycle_detection_toposort = (); (* unit *)
+  } ;
+  already_selected = {
+    break_ctor = M_break_ctor.AlreadySelected.empty ;
+    specialize1 = M_specialize1.AlreadySelected.empty ;
+  }
 }
 
 (* This function is called when a program is fully compiled, and the
@@ -1045,7 +1093,8 @@ let discard_state (_ : state) = ()
 let aggregate_constraints : state -> type_constraint list -> state result = fun state newc ->
   (* TODO: Iterate over constraints *)
   let _todo = ignore (state, newc) in
-  failwith "TODO"
+  let (a, b) = select_and_propagate_all state.already_selected newc state.structured_dbs in
+  ok { already_selected = a ; structured_dbs = b }
 (*let { constraints ; eqv } = state in
   ok { constraints = constraints @ newc ; eqv }*)
 
