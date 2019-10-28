@@ -939,15 +939,19 @@ let type_program_returns_state (p:I.program) : (environment * Solver.state * O.p
   let () = ignore (env' , state') in
   ok (env', state', declarations)
 
+module TSMap = TMap(Solver.TypeVariable)
+
 let type_program (p : I.program) : (O.program * Solver.state) result =
   let%bind (env, state, program) = type_program_returns_state p in
   let subst_all =
     let assignments = state.structured_dbs.assignments in
-    let aux (v : O.type_name) (expr : Solver.c_constructor_simpl) (p:O.program) =
+    let aux (v : O.type_name) (expr : Solver.c_constructor_simpl) (p:O.program result) =
+      let%bind p = p in
       Typesystem.Misc.Substitution.Pattern.program ~p ~v ~expr in
-    let p = SMap.fold aux assignments program in
+    (* let p = TSMap.bind_fold_Map aux program assignments in *) (* TODO: Module magic: this does not work *)
+    let p = Solver.TypeVariableMap.fold aux assignments (ok program) in
     p in
-  let program = subst_all in
+  let%bind program = subst_all in
   let () = ignore env in        (* TODO: shouldn't we use the `env` somewhere? *)
   ok (program, state)
 

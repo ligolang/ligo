@@ -6,12 +6,17 @@ module Substitution = struct
 
   module Pattern = struct
 
-    let rec declaration ~(d : Ast_typed.declaration Location.wrap) ~v ~expr : Ast_typed.declaration Location.wrap =
-      let _TODO = (d, v, expr) in
-      failwith "TODO: subst declaration"
+    open Trace
 
-    and program ~(p : Ast_typed.program) ~v ~expr : Ast_typed.program =
-      List.map (fun d -> declaration ~d ~v ~expr) p
+    let rec declaration ~(d : Ast_typed.declaration Location.wrap) ~v ~expr : Ast_typed.declaration Location.wrap result =
+      Trace.bind_map_location (function
+            Ast_typed.Declaration_constant (e, (env1, env2)) ->
+            let _ = v, expr, failwith "TODO: subst" in
+            ok @@ Ast_typed.Declaration_constant (e, (env1, env2))
+        ) d
+
+    and program ~(p : Ast_typed.program) ~v ~expr : Ast_typed.program Trace.result =
+      Trace.bind_map_list (fun d -> declaration ~d ~v ~expr) p
 
     (*
        Computes `P[v := expr]`.

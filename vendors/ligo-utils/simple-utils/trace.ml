@@ -592,6 +592,16 @@ let bind_fold_list f init lst =
   in
   List.fold_left aux (ok init) lst
 
+module TMap(X : Map.OrderedType) = struct
+  module MX = Map.Make(X)
+  let bind_fold_Map f init map =
+    let aux k v x  =
+      x >>? fun x ->
+      f ~x ~k ~v
+    in
+    MX.fold aux map (ok init)
+end
+
 let bind_fold_pair f init (a,b) = 
   let aux x y =
     x >>? fun x ->
