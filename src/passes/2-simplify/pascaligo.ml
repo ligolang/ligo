@@ -138,16 +138,6 @@ module Errors = struct
     ] in
     error ~data title message
 
-  let unsupported_for_collect_map for_col =
-    let title () = "for loop over map" in
-    let message () =
-      Format.asprintf "for loops over map are not supported yet" in
-    let data = [
-      ("loop_loc",
-       fun () -> Format.asprintf "%a" Location.pp_lift @@ for_col.Region.region)
-    ] in
-    error ~data title message
-
   (* Logging *)
 
   let simplifying_instruction t =
@@ -1071,7 +1061,6 @@ and simpl_for_int : Raw.for_int -> (_ -> expression result) result = fun fi ->
 
 **)
 and simpl_for_collect : Raw.for_collect -> (_ -> expression result) result = fun fc ->
-  match fc.collection with | Map _ -> fail @@ unsupported_for_collect_map fc.block | _ ->
   (* STEP 1 *)
   let%bind for_body = simpl_block fc.block.value in
   let%bind for_body = for_body None in
@@ -1136,10 +1125,16 @@ and simpl_for_collect : Raw.for_collect -> (_ -> expression result) result = fun
     let ( arg_access: Types.access_path -> expression ) = e_accessor (e_variable "arguments") in
     ( match fc.collection with 
       | Map _ ->
-        let acc          = arg_access [Access_tuple 0 ; Access_tuple 0] in
+        (* let acc          = arg_access [Access_tuple 0 ; Access_tuple 0] in
         let collec_elt_v = arg_access [Access_tuple 1 ; Access_tuple 0] in
-        let collec_elt_k = arg_access [Access_tuple 1 ; Access_tuple 1] in
+        let collec_elt_k = arg_access [Access_tuple 1 ; Access_tuple 1] in *)
+        (* The above should work, but not yet (see LIGO-131) *)
+        let temp_kv      = arg_access [Access_tuple 1] in
+        let acc          = arg_access [Access_tuple 0] in
+        let collec_elt_v = e_accessor (e_variable "#COMPILER#temp_kv") [Access_tuple 0] in
+        let collec_elt_k = e_accessor (e_variable "#COMPILER#temp_kv") [Access_tuple 1] in
         e_let_in ("#COMPILER#acc", None) acc @@
+        e_let_in ("#COMPILER#temp_kv", None) temp_kv @@
         e_let_in ("#COMPILER#collec_elt_k", None) collec_elt_v @@
         e_let_in ("#COMPILER#collec_elt_v", None) collec_elt_k (for_body)
       | _ ->

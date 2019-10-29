@@ -116,16 +116,25 @@ function for_collection_empty (var nee : unit) : int is block {
   end
 } with acc
 
-// function for_collection_map (var nee : unit) : (int * string) is block {
-//   var acc : int := 0 ;
-//   var st : string := "" ;
-//   var mymap : map(string,int) := map "one" -> 1 ; "two" -> 2 ; "three" -> 3 end ;
-//   for k -> v : (string * int) in map mymap
-//   begin
-//     acc := acc + v ;
-//     st := k^st ;
-//   end
-// } with (acc, st)
+function for_collection_map_kv (var nee : unit) : (int * string) is block {
+  var acc : int := 0 ;
+  var st : string := "" ;
+  var mymap : map(string,int) := map "1" -> 1 ; "2" -> 2 ; "3" -> 3 end ;
+  for k -> v : (string * int) in map mymap
+  begin
+    acc := acc + v ;
+    st := st^k ;
+  end
+} with (acc, st)
+
+function for_collection_map_k (var nee : unit) : string is block {
+  var st : string := "" ;
+  var mymap : map(string,int) := map "1" -> 1 ; "2" -> 2 ; "3" -> 3 end ;
+  for k : string in map mymap
+  begin
+    st := st^k ;
+  end
+} with st
 
 function dummy (const n : nat) : nat is block {
   while (False) block { skip }
