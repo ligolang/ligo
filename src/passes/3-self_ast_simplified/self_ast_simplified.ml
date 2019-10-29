@@ -23,3 +23,5 @@ let all_expression =
   bind_chain all_p
 
 let map_expression = Helpers.map_expression
+
+let fold_expression = Helpers.fold_expression
