@@ -136,6 +136,21 @@ function for_collection_map_k (var nee : unit) : string is block {
   end
 } with st
 
+// function nested_for_collection (var nee : unit) : (int*string) is block {
+//   var myint : int := 0;
+//   var myst : string := "";
+//   var mylist : list(int) := list 1 ; 2 ; 3 end ;
+//   for i : int in list mylist
+//   begin
+//     myint := myint + i ;
+//     var myset : set(string) := set "1" ; "2" ; "3" end ;
+//     for st : string in set myset
+//     begin
+//       myst := myst ^ st ;
+//     end 
+//   end
+// } with (myint,myst)
+
 function dummy (const n : nat) : nat is block {
   while (False) block { skip }
 } with n

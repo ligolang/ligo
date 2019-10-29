@@ -1068,7 +1068,11 @@ and simpl_for_collect : Raw.for_collect -> (_ -> expression result) result = fun
   let%bind captured_name_list = Self_ast_simplified.fold_expression
     (fun (prev : type_name list) (ass_exp : expression) ->
       match ass_exp.expression with
-      | E_assign ( name , _ , _ ) -> ok (name::prev)
+      | E_assign ( name , _ , _ ) ->
+        if (String.contains name '#') then
+          ok prev
+        else
+          ok (name::prev)
       | _ -> ok prev )
     []
     for_body in

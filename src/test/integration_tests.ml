@@ -688,6 +688,9 @@ let loop () : unit result =
   let%bind () =
     let expected = (e_int 20) in
     expect_eq program "for_collection_comp_with_acc" input expected in
+  (* let%bind () =
+    let expected = e_pair (e_int 6) (e_string "123123123") in
+    expect_eq program "nested_for_collection" input expected in *)
   let%bind () =
     let ez lst =
       let open Ast_simplified.Combinators in
