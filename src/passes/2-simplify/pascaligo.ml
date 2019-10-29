@@ -1132,7 +1132,6 @@ and simpl_for_collect : Raw.for_collect -> (_ -> expression result) result = fun
     | _  -> e_sequence expr (e_variable "#COMPILER#acc") in
   let for_body = add_return for_body in
   (* STEP 6 *)
-  let%bind elt_type = simpl_type_expression fc.elt_type in 
   let for_body =
     let ( arg_access: Types.access_path -> expression ) = e_accessor (e_variable "arguments") in
     ( match fc.collection with 
@@ -1147,7 +1146,7 @@ and simpl_for_collect : Raw.for_collect -> (_ -> expression result) result = fun
         let acc        = arg_access [Access_tuple 0] in
         let collec_elt = arg_access [Access_tuple 1] in
         e_let_in ("#COMPILER#acc", None) acc @@
-        e_let_in ("#COMPILER#collec_elt", Some elt_type) collec_elt (for_body)
+        e_let_in ("#COMPILER#collec_elt", None) collec_elt (for_body)
     ) in
   (* STEP 7 *)
   let%bind collect = simpl_expression fc.expr in
