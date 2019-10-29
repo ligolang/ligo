@@ -647,38 +647,49 @@ let loop () : unit result =
   let%bind () =
     let make_input = e_nat in
     let make_expected = e_nat in
-    expect_eq_n_pos program "dummy" make_input make_expected
-  in
+    expect_eq_n_pos program "dummy" make_input make_expected in
   let%bind () =
     let make_input = e_nat in
     let make_expected = e_nat in
-    expect_eq_n_pos_mid program "counter" make_input make_expected
-  in
+    expect_eq_n_pos_mid program "counter" make_input make_expected in
   let%bind () =
     let make_input = e_nat in
     let make_expected = fun n -> e_nat (n * (n + 1) / 2) in
-    expect_eq_n_pos_mid program "while_sum" make_input make_expected
-  in
+    expect_eq_n_pos_mid program "while_sum" make_input make_expected in
   let%bind () = 
     let make_input = e_nat in
     let make_expected = fun n -> e_int (n * (n + 1) / 2) in
-    expect_eq_n_pos_mid program "for_sum" make_input make_expected
-  in
+    expect_eq_n_pos_mid program "for_sum" make_input make_expected in
+  let input = e_unit () in
   let%bind () = 
-    let input = e_unit () in
     let expected = e_pair (e_int 3) (e_string "totototo") in
-    expect_eq program "for_collection_list" input expected
-  in
+    expect_eq program "for_collection_list" input expected in
   let%bind () = 
-    let input = e_unit () in
     let expected = e_pair (e_int 6) (e_string "totototo") in
-    expect_eq program "for_collection_set" input expected
-  in
+    expect_eq program "for_collection_set" input expected in
   let%bind () = 
-    let input = e_unit () in
     let expected = (e_int 0) in
-    expect_eq program "for_collection_empty" input expected
-  in
+    expect_eq program "for_collection_empty" input expected in
+  let%bind () = 
+    let expected = (e_int 13) in
+    expect_eq program "for_collection_if_and_local_var" input expected in
+  let%bind () =
+    let expected = (e_int 1020) in
+    expect_eq program "for_collection_rhs_capture" input expected in
+  let%bind () =
+    let expected = (e_int 1040) in
+    expect_eq program "for_collection_proc_call" input expected in
+  let%bind () =
+    let expected = (e_int 20) in
+    expect_eq program "for_collection_comp_with_acc" input expected in
+  let%bind () =
+    let ez lst =
+      let open Ast_simplified.Combinators in
+      let lst' = List.map (fun (x, y) -> e_string x, e_int y) lst in
+        e_typed_map lst' t_string t_int
+    in
+    let expected = ez [ ("I" , 12) ; ("am" , 12) ; ("foo" , 12) ] in
+    expect_eq program "for_collection_with_patches" input expected in
   ok ()
 
 (* Don't know how to assert parse error happens in this test framework
