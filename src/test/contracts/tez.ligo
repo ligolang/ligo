@@ -1,16 +1,16 @@
-const add_tez : tez = 21mtz + 0.000021tz;
-const sub_tez : tez = 21mtz - 20mtz;
+const add_tez : tez = 21mutez + 0.000021tz;
+const sub_tez : tez = 21mutez - 20mutez;
 (* This is not enough. *)
-const not_enough_tez : tez = 4611686018427387903mtz;
+const not_enough_tez : tez = 4611686018427387903mutez;
 
 
-const nat_mul_tez : tez = 1n * 100mtz;
-const tez_mul_nat : tez = 100mtz * 10n;
+const nat_mul_tez : tez = 1n * 100mutez;
+const tez_mul_nat : tez = 100mutez * 10n;
 
-const tez_div_tez1 : nat = 100mtz / 1mtz;
-const tez_div_tez2 : nat = 100mtz / 90mtz;
-const tez_div_tez3 : nat = 100mtz / 110mtz;
+const tez_div_tez1 : nat = 100mutez / 1mutez;
+const tez_div_tez2 : nat = 100mutez / 90mutez;
+const tez_div_tez3 : nat = 100mutez / 110mutez;
 
-const tez_mod_tez1 : tez = 100mtz mod 1mtz;
-const tez_mod_tez2 : tez = 100mtz mod 90mtz;
-const tez_mod_tez3 : tez = 100mtz mod 110mtz;
+const tez_mod_tez1 : tez = 100mutez mod 1mutez;
+const tez_mod_tez2 : tez = 100mutez mod 90mutez;
+const tez_mod_tez3 : tez = 100mutez mod 110mutez;

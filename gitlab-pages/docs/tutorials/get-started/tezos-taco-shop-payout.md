@@ -134,11 +134,11 @@ To confirm that our contract is valid, we can dry run it. As a result we see a *
 ligo dry-run taco-shop.ligo --syntax pascaligo --amount 1 buy_taco 1n "map
     1n -> record
         current_stock = 50n;
-        max_price = 50000000mtz;
+        max_price = 50000000mutez;
     end;
     2n -> record
         current_stock = 20n;
-        max_price = 75000000mtz;
+        max_price = 75000000mutez;
     end;
 end"
 ```

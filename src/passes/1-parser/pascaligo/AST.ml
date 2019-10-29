@@ -547,7 +547,7 @@ and arith_expr =
 | Neg  of minus    un_op reg
 | Int  of (Lexer.lexeme * Z.t) reg
 | Nat  of (Lexer.lexeme * Z.t) reg
-| Mtz  of (Lexer.lexeme * Z.t) reg
+| Mutez  of (Lexer.lexeme * Z.t) reg
 
 and string_expr =
   Cat    of cat bin_op reg
@@ -689,7 +689,7 @@ and arith_expr_to_region = function
 | Neg  {region; _}
 | Int  {region; _}
 | Nat  {region; _}
-| Mtz  {region; _} -> region
+| Mutez  {region; _} -> region
 
 and string_expr_to_region = function
   Cat    {region; _}

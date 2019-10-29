@@ -69,7 +69,7 @@ and literal ppf (l:literal) : unit =
   | Literal_int n -> fprintf ppf "%d" n
   | Literal_nat n -> fprintf ppf "+%d" n
   | Literal_timestamp n -> fprintf ppf "+%d" n
-  | Literal_mutez n -> fprintf ppf "%dmtz" n
+  | Literal_mutez n -> fprintf ppf "%dmutez" n
   | Literal_string s -> fprintf ppf "%s" s
   | Literal_bytes b -> fprintf ppf "0x%s" @@ Bytes.to_string @@ Bytes.escaped b
   | Literal_address s -> fprintf ppf "@%s" s

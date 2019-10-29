@@ -527,7 +527,7 @@ and print_arith_expr buffer = function
     print_expr  buffer arg
 | Int i
 | Nat i
-| Mtz i -> print_int buffer i
+| Mutez i -> print_int buffer i
 
 and print_string_expr buffer = function
   Cat {value = {arg1; op; arg2}; _} ->
@@ -1391,8 +1391,8 @@ and pp_arith_expr buffer ~pad:(_,pc as pad) = function
 | Nat {value; _} ->
     pp_node buffer ~pad "Nat";
     pp_int  buffer ~pad value
-| Mtz {value; _} ->
-    pp_node buffer ~pad "Mtz";
+| Mutez {value; _} ->
+    pp_node buffer ~pad "Mutez";
     pp_int  buffer ~pad value
 
 and pp_set_expr buffer ~pad:(_,pc as pad) = function

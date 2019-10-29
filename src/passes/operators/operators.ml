@@ -177,6 +177,10 @@ module Simplify = struct
       ("Big_map.literal" , "BIG_MAP_LITERAL" ) ;
       ("Big_map.empty" , "BIG_MAP_EMPTY" ) ;
 
+      ("Bitwise.lor" , "OR") ;
+      ("Bitwise.land" , "AND") ;
+      ("Bitwise.lxor" , "XOR") ;
+
       ("String.length", "SIZE") ;
       ("String.size", "SIZE") ;
       ("String.slice", "SLICE") ;
@@ -407,7 +411,10 @@ module Typer = struct
     let%bind () = assert_eq_1 op_lst (t_list (t_operation ()) ()) in
     ok @@ (t_pair (t_operation ()) (t_address ()) ())
 
-  let get_contract = typer_1_opt "CONTRACT" @@ fun _ tv_opt ->
+  let get_contract = typer_1_opt "CONTRACT" @@ fun addr_tv tv_opt ->
+    if not (type_value_eq (addr_tv, t_address ()))
+    then fail @@ simple_error (Format.asprintf "get_contract expects an address, got %a" PP.type_value addr_tv)
+    else
     let%bind tv =
       trace_option (simple_error "get_contract needs a type annotation") tv_opt in
     let%bind tv' =

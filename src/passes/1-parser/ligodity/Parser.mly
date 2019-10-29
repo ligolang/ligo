@@ -761,7 +761,7 @@ call_expr:
 
 core_expr:
   Int                                               { EArith (Int $1) }
-| Mtz                                               { EArith (Mtz $1) }
+| Mutez                                               { EArith (Mutez $1) }
 | Nat                                               { EArith (Nat $1) }
 | Ident | module_field                                      { EVar $1 }
 | projection                                               { EProj $1 }
