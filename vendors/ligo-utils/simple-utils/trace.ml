@@ -600,9 +600,20 @@ module TMap(X : Map.OrderedType) = struct
       f ~x ~k ~v
     in
     MX.fold aux map (ok init)
+
+  let bind_map_Map f map =
+    let aux k v map'  =
+      map' >>? fun map' ->
+      f ~k ~v >>? fun v' ->
+      ok @@ MX.update k (function
+          | None -> Some v'
+          | Some _ -> failwith "key collision, shouldn't happen in bind_map_Map")
+        map'
+    in
+    MX.fold aux map (ok MX.empty)
 end
 
-let bind_fold_pair f init (a,b) = 
+let bind_fold_pair f init (a,b) =
   let aux x y =
     x >>? fun x ->
     f x y

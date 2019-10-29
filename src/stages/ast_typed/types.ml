@@ -38,7 +38,6 @@ and annotated_expression = {
   type_annotation : tv ;
   environment : full_environment ;
   location : Location.t ;
-  dummy_field : unit ;
 }
 
 and named_expression = {

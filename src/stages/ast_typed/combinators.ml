@@ -5,7 +5,6 @@ let make_t type_value' simplified = { type_value' ; simplified }
 let make_a_e ?(location = Location.generated) expression type_annotation environment = {
   expression ;
   type_annotation ;
-  dummy_field = () ;
   environment ;
   location ;
 }
