@@ -871,6 +871,14 @@ let match_variant () : unit result =
       e_pair (e_typed_list [] t_operation) (e_int (3-n))
   in expect_eq_n program "main" make_input make_expected in
   let%bind () =
+    let input = e_bool true in
+    let expected = e_int 10 in
+    expect_eq program "match_bool" input expected in
+  let%bind () =
+    let input = e_bool false in
+    let expected = e_int 0 in
+    expect_eq program "match_bool" input expected in
+  let%bind () =
     let input = e_list [e_int 3] in
     let expected = e_int 3 in
     expect_eq program "match_list" input expected in
@@ -878,6 +886,10 @@ let match_variant () : unit result =
     let input = e_typed_list [] t_int in
     let expected = e_int 10 in
     expect_eq program "match_list" input expected in
+  let%bind () =
+    let make_input n = e_some (e_int n) in
+    let make_expected n = e_int n in
+    expect_eq_n program "match_option" make_input make_expected in
   ok ()
 
 let match_matej () : unit result =
