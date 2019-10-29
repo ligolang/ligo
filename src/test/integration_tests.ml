@@ -367,6 +367,18 @@ let multiple_parameters () : unit result  =
     ] in
   ok ()
 
+let multiple_parameters_mligo () : unit result  =
+  let%bind program = mtype_file "./contracts/multiple-parameters.mligo" in
+  let aux ((name : string) , make_input , make_output) =
+    let make_output' = fun n -> e_int @@ make_output n in
+    expect_eq_n program name make_input make_output'
+  in
+  let%bind _ = bind_list @@ List.map aux [
+      (* Didn't include the other tests because they're probably not necessary *)
+      ("abcde", tuple_ez_int ["a";"b";"c";"d";"e"], fun n -> 2 * n + 3) ;
+    ] in
+  ok ()
+
 let record () : unit result  =
   let%bind program = type_file "./contracts/record.ligo" in
   let%bind () =
@@ -1001,6 +1013,7 @@ let main = test_suite "Integration (End to End)" [
     test "shadow" shadow ;
     test "annotation" annotation ;
     test "multiple parameters" multiple_parameters ;
+    test "multiple parameters (mligo)" multiple_parameters_mligo ;
     test "bool" bool_expression ;
     test "bool (mligo)" bool_expression_mligo ;
     test "arithmetic" arithmetic ;
