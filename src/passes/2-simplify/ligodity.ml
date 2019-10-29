@@ -49,17 +49,6 @@ module Errors = struct
     ] in
     error ~data title message
 
-  let unsupported_arith_op expr =
-    let title () = "arithmetic expressions" in
-    let message () =
-      Format.asprintf "this arithmetic operator is not supported yet" in
-    let expr_loc = Raw.expr_to_region expr in
-    let data = [
-      ("expr_loc",
-       fun () -> Format.asprintf "%a" Location.pp_lift @@ expr_loc)
-    ] in
-    error ~data title message
-
   let untyped_fun_param var =
     let title () = "function parameter" in
     let message () =
@@ -425,8 +414,7 @@ let rec simpl_expression :
       let n = Z.to_int @@ snd @@ n in
       return @@ e_literal ~loc (Literal_mutez n)
     )
-  | EArith _ as e ->
-       fail @@ unsupported_arith_op e
+  | EArith (Neg e) -> simpl_unop "NEG" e
   | EString (String s) -> (
       let (s , loc) = r_split s in
       let s' =

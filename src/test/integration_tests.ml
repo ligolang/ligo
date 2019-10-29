@@ -178,6 +178,16 @@ let arithmetic () : unit result =
   let%bind () = expect_eq_n_pos program "div_op" e_int (fun n -> e_int (n / 2)) in
   ok ()
 
+let arithmetic_mligo () : unit result =
+  let%bind program = mtype_file "./contracts/arithmetic.mligo" in
+  let%bind _ =
+    let aux (name , f) = expect_eq_n_int program name f in
+    bind_map_list aux [
+      ("neg_op", fun n -> (-n)) ;
+      ("neg_op_2", fun n -> -(n + 10)) ;
+    ] in
+  ok ()
+
 let bitwise_arithmetic () : unit result =
   let%bind program = type_file "./contracts/bitwise_arithmetic.ligo" in
   let%bind () = expect_eq program "or_op" (e_nat 7) (e_nat 7) in
@@ -1010,6 +1020,7 @@ let main = test_suite "Integration (End to End)" [
     test "multiple parameters" multiple_parameters ;
     test "bool" bool_expression ;
     test "arithmetic" arithmetic ;
+    test "arithmetic (mligo)" arithmetic_mligo ;
     test "bitwise_arithmetic" bitwise_arithmetic ;
     test "bitwise_arithmetic (mligo)" bitwise_arithmetic_mligo;
     test "string_arithmetic" string_arithmetic ;
