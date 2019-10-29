@@ -184,6 +184,7 @@ let arithmetic_mligo () : unit result =
     let aux (name , f) = expect_eq_n_int program name f in
     bind_map_list aux [
       ("neg_op", fun n -> (-n)) ;
+      ("neg_op_2", fun n -> -(n + 10)) ;
     ] in
   ok ()
 
