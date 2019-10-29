@@ -1029,9 +1029,7 @@ and simpl_for_int : Raw.for_int -> (_ -> expression result) result = fun fi ->
   ```
   
   We are performing the following steps:
-    1) Filtering out of the body all the constructions that can't
-       alter the environment (assignements and map/set patches)
-       and simplifying only those.
+    1) Simplifying the for body using ̀simpl_block`
 
     2) Detect the free variables and build a list of their names
        (myint and myst in the previous example)
@@ -1074,76 +1072,56 @@ and simpl_for_int : Raw.for_int -> (_ -> expression result) result = fun fi ->
 **)
 and simpl_for_collect : Raw.for_collect -> (_ -> expression result) result = fun fc ->
   match fc.collection with | Map _ -> fail @@ unsupported_for_collect_map fc.block | _ ->
-  let statements = npseq_to_list fc.block.value.statements in
   (* STEP 1 *)
-  let filter_assignments (el : Raw.statement) : Raw.instruction option =
-    match el with
-    | Raw.Instr (Assign _ as i)  -> Some i
-    | _ -> None in
-  let assign_instrs = List.filter_map filter_assignments statements in
-  let%bind assign_instrs' = bind_map_list
-    (fun el ->
-      let%bind assign' = simpl_instruction el in
-      let%bind assign' = assign' None in
-      ok @@ assign')
-    assign_instrs in
+  let%bind for_body = simpl_block fc.block.value in
+  let%bind for_body = for_body None in
   (* STEP 2 *)
-  let captured_name_list = List.filter_map
-    (fun ass_exp ->
+  let%bind captured_name_list = Self_ast_simplified.fold_expression
+    (fun (prev : type_name list) (ass_exp : expression) ->
       match ass_exp.expression with
-      | E_assign ( name, _ , _ ) -> Some name
-      | _ -> None )
-    assign_instrs' in
+      | E_assign ( name , _ , _ ) -> ok (name::prev)
+      | _ -> ok prev )
+    []
+    for_body in
   (* STEP 3 *)
   let add_to_record (prev: expression type_name_map) (captured_name: string) =
     SMap.add captured_name (e_variable captured_name) prev in
   let init_record = e_record (List.fold_left add_to_record SMap.empty captured_name_list) in
   (* STEP 4 *)
-  let%bind for_body = simpl_block fc.block.value in
-  let%bind for_body = for_body None in
   let replace exp =
-    (* TODO: map and set updated/remove must also be captured *)
     match exp.expression with
     (* replace references to fold accumulator as rhs *)
     | E_assign ( name , path , expr ) -> (
-        match path with
-        | [] -> ok @@ e_assign "#COMPILER#acc" [Access_record name] expr
-        (* This fails for deep accesses, see LIGO-131 LIGO-134 *)
-        | _ ->
-          (* ok @@ e_assign "#COMPILER#acc" ((Access_record name)::path) expr) *)
-          fail @@ unsupported_deep_access_for_collection fc.block )
+      match path with
+      | [] -> ok @@ e_assign "#COMPILER#acc" [Access_record name] expr
+      (* This fails for deep accesses, see LIGO-131 LIGO-134 *)
+      | _ ->
+        (* ok @@ e_assign "#COMPILER#acc" ((Access_record name)::path) expr) *)
+        fail @@ unsupported_deep_access_for_collection fc.block )
     | E_variable name -> (
-      match fc.collection with 
+      if (List.mem name captured_name_list) then
+        (* replace references to fold accumulator as lhs *)
+        ok @@ e_accessor (e_variable "#COMPILER#acc") [Access_record name]
+      else match fc.collection with 
       (* loop on map *)
       | Map _ ->
         let k' = e_variable "#COMPILER#collec_elt_k" in
-        let v' = e_variable "#COMPILER#collec_elt_v" in
-        ( match fc.bind_to with
-        | Some (_,v) ->
-          if ( name = fc.var.value ) then
-            ok @@ k' (* replace references to the the key *)
-          else if ( name = v.value ) then
-            ok @@ v' (* replace references to the the value *)
-          else if (List.mem name captured_name_list) then
-            (* replace references to fold accumulator as lhs *)
-            ok @@ e_accessor (e_variable "#COMPILER#acc") [Access_record name]
-          else ok @@ exp
-        | None ->
-          if ( name = fc.var.value ) then
-            ok @@ k' (* replace references to the key *)
-          else if (List.mem name captured_name_list) then
-            (* replace references to fold accumulator as lhs *)
-            ok @@ e_accessor (e_variable "#COMPILER#acc") [Access_record name]
-          else ok @@ exp
+        if ( name = fc.var.value ) then
+          ok @@ k' (* replace references to the the key *)
+        else (
+          match fc.bind_to with
+          | Some (_,v) ->
+            let v' = e_variable "#COMPILER#collec_elt_v" in
+            if ( name = v.value ) then
+              ok @@ v' (* replace references to the the value *)
+            else ok @@ exp
+          | None -> ok @@ exp
       )
       (* loop on set or list *)
       | (Set _ | List _) ->
         if (name = fc.var.value ) then
           (* replace references to the collection element *)
           ok @@ (e_variable "#COMPILER#collec_elt")
-        else if (List.mem name captured_name_list) then
-          (* replace references to fold accumulator as lhs *)
-          ok @@ e_accessor (e_variable "#COMPILER#acc") [Access_record name]
         else ok @@ exp
     )
     | _ -> ok @@ exp in
