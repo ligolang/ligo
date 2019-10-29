@@ -864,11 +864,21 @@ let let_in_mligo () : unit result =
 
 let match_variant () : unit result =
   let%bind program = mtype_file "./contracts/match.mligo" in
-  let make_input n =
-    e_pair (e_constructor "Sub" (e_int n)) (e_int 3) in
-  let make_expected n =
-    e_pair (e_typed_list [] t_operation) (e_int (3-n))
-  in expect_eq_n program "main" make_input make_expected
+  let%bind () =
+    let make_input n =
+      e_pair (e_constructor "Sub" (e_int n)) (e_int 3) in
+    let make_expected n =
+      e_pair (e_typed_list [] t_operation) (e_int (3-n))
+  in expect_eq_n program "main" make_input make_expected in
+  let%bind () =
+    let input = e_list [e_int 3] in
+    let expected = e_int 3 in
+    expect_eq program "match_list" input expected in
+  let%bind () =
+    let input = e_typed_list [] t_int in
+    let expected = e_int 10 in
+    expect_eq program "match_list" input expected in
+  ok ()
 
 let match_matej () : unit result =
   let%bind program = mtype_file "./contracts/match_bis.mligo" in
