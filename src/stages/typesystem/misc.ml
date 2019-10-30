@@ -12,19 +12,69 @@ module Substitution = struct
 
     type 'a w = 'a -> 'a result
 
-    let todo = failwith "TODO"
-
     let rec rec_yes = true
+    and s_environment_element_definition ~v ~expr = function
+        | T.ED_binder -> ok @@ T.ED_binder
+        | T.ED_declaration (val_, free_variables) ->
+          let%bind val_ = s_annotated_expression ~v ~expr  val_ in
+          let%bind free_variables = bind_map_list (s_type_variable ~v ~expr) free_variables in
+          ok @@ T.ED_declaration (val_, free_variables)
+    and s_environment ~v ~expr = fun lst ->
+      bind_map_list (fun (type_variable, T.{ type_value; source_environment; definition }) ->
+          let _ = type_value in
+          let%bind type_variable = s_type_variable ~v ~expr type_variable in
+          let%bind type_value = s_type_value ~v ~expr type_value in
+          let%bind source_environment = s_full_environment ~v ~expr source_environment in
+          let%bind definition = s_environment_element_definition ~v ~expr definition in
+          ok @@ (type_variable, T.{ type_value; source_environment; definition })
+        ) lst
+    and s_type_environment ~v ~expr : T.type_environment w = fun _ ->
+      let _TODO = (v, expr) in
+      failwith "TODO: subst: unimplemented case s_type_environment"
+    and s_small_environment ~v ~expr : T.small_environment w = fun (environment, type_environment) ->
+      let%bind environment = s_environment ~v ~expr environment in
+      let%bind type_environment = s_type_environment ~v ~expr type_environment in
+      ok @@ (environment, type_environment)
     and s_full_environment ~v ~expr : T.full_environment w = fun (a , b) ->
-      let%bind a = todo ~v ~expr a in
-      let%bind b = bind_map_list (todo ~v ~expr) b in
+      let%bind a = s_small_environment ~v ~expr a in
+      let%bind b = bind_map_list (s_small_environment ~v ~expr) b in
       ok (a , b)
 
-    and s_variable ~v ~expr : T.name w = fun var -> todo
+    and s_variable ~v ~expr : T.name w = fun var ->
+      let () = ignore (v, expr) in
+      ok var
 
-    and s_type_variable ~v ~expr : T.name w = fun tvar -> todo
+    and s_type_variable ~v ~expr : T.name w = fun tvar ->
+      let _TODO = ignore (v, expr, tvar) in
+      failwith "TODO: subst: unimplemented case s_type_variable"
+      (* if String.equal tvar v then
+       *   expr
+       * else
+       *   ok tvar *)
 
-    and s_type_value ~v ~expr : T.type_value w = fun { type_value'; simplified } -> todo
+    and s_type_value' ~v ~expr : T.type_value' w = fun _ ->
+      let _TODO = (v, expr) in
+      failwith "TODO: subst: unimplemented case s_type_value'"
+    and s_type_expression ~v ~expr : Ast_simplified.type_expression w = fun _ ->
+      let _TODO = (v, expr) in
+      failwith "TODO: subst: unimplemented case s_type_expression"
+
+    and s_type_value ~v ~expr : T.type_value w = fun { type_value'; simplified } ->
+      let%bind type_value' = s_type_value' ~v ~expr type_value' in
+      let%bind simplified = bind_map_option (s_type_expression ~v ~expr) simplified in
+      ok @@ T.{ type_value'; simplified }
+    and s_literal ~v ~expr : T.literal w = fun _ ->
+      let _TODO = v, expr in
+      failwith "TODO: subst: unimplemented case s_literal"
+    and s_matching_expr ~v ~expr : T.matching_expr w = fun _ ->
+      let _TODO = v, expr in
+      failwith "TODO: subst: unimplemented case s_matching"
+    and s_named_type_value ~v ~expr : T.named_type_value w = fun _ ->
+      let _TODO = v, expr in
+      failwith "TODO: subst: unimplemented case s_named_type_value"
+    and s_access_path  ~v ~expr : T.access_path w = fun _ ->
+      let _TODO = v, expr in
+      failwith "TODO: subst: unimplemented case s_access_path"
 
     and s_expression ~v ~expr : T.expression w = function
       | T.E_literal         x ->
@@ -62,11 +112,13 @@ module Substitution = struct
         let%bind val_ = s_annotated_expression ~v ~expr val_ in
         ok @@ T.E_constructor (tvar, val_)
       | T.E_record          aemap ->
-        let%bind aemap = TSMap.bind_map_Map (fun ~k:key ~v:val_ ->
-            let key = s_type_variable ~v ~expr key in
-            let val_ = s_annotated_expression ~v ~expr val_ in
-            ok @@ (key , val_)) aemap in
-        ok @@ T.E_record aemap
+        let _TODO = aemap in
+        failwith "TODO: subst in record"
+        (* let%bind aemap = TSMap.bind_map_Map (fun ~k:key ~v:val_ ->
+         *     let key = s_type_variable ~v ~expr key in
+         *     let val_ = s_annotated_expression ~v ~expr val_ in
+         *     ok @@ (key , val_)) aemap in
+         * ok @@ T.E_record aemap *)
       | T.E_record_accessor (val_, tvar) ->
         let%bind val_ = s_annotated_expression ~v ~expr val_ in
         let%bind tvar = s_type_variable ~v ~expr tvar in
@@ -75,29 +127,29 @@ module Substitution = struct
         let%bind val_val_list = bind_map_list (fun (val1 , val2) ->
             let%bind val1 = s_annotated_expression ~v ~expr val1 in
             let%bind val2 = s_annotated_expression ~v ~expr val2 in
-            (val1 , val2)
+            ok @@ (val1 , val2)
           ) val_val_list in
         ok @@ T.E_map val_val_list
       | T.E_big_map         val_val_list ->
         let%bind val_val_list = bind_map_list (fun (val1 , val2) ->
             let%bind val1 = s_annotated_expression ~v ~expr val1 in
             let%bind val2 = s_annotated_expression ~v ~expr val2 in
-            (val1 , val2)
+            ok @@ (val1 , val2)
           ) val_val_list in
         ok @@ T.E_big_map val_val_list
       | T.E_list            vals ->
-        let%bind vals = bind_map_list s_annotated_expression ~v ~expr vals in
+        let%bind vals = bind_map_list (s_annotated_expression ~v ~expr) vals in
         ok @@ T.E_list vals
       | T.E_set             vals ->
-        let%bind vals = bind_map_list s_annotated_expression ~v ~expr vals in
+        let%bind vals = bind_map_list (s_annotated_expression ~v ~expr) vals in
         ok @@ T.E_set vals
       | T.E_look_up         (val1, val2) ->
         let%bind val1 = s_annotated_expression ~v ~expr val1 in
         let%bind val2 = s_annotated_expression ~v ~expr val2 in
         ok @@ T.E_look_up (val1 , val2)
-      | T.E_matching         (val_ , matching) ->
+      | T.E_matching         (val_ , matching_expr) ->
         let%bind val_ = s_annotated_expression ~v ~expr val_ in
-        let%bind matching = s_matching matching in
+        let%bind matching = s_matching_expr ~v ~expr matching_expr in
         ok @@ T.E_matching (val_ , matching)
       | T.E_sequence        (val1, val2) ->
         let%bind val1 = s_annotated_expression ~v ~expr val1 in
@@ -121,22 +173,24 @@ module Substitution = struct
       ok T.{ expression; type_annotation; environment; location }
 
     and s_named_expression ~v ~expr : T.named_expression w = fun { name; annotated_expression } ->
-      let name = name in
-      let annotated_expression = s_annotated_expression annotated_expression in
+      let%bind name = s_type_variable ~v ~expr name in
+      let%bind annotated_expression = s_annotated_expression ~v ~expr annotated_expression in
       ok T.{ name; annotated_expression }
 
     and s_declaration ~v ~expr : T.declaration w =
       function
         Ast_typed.Declaration_constant (e, (env1, env2)) ->
-        let e = s_named_expression ~v ~expr e in
-        let env1 = s_full_environment ~v ~expr env1 in
-        let env2 = s_full_environment ~v ~expr env2 in
+        let%bind e = s_named_expression ~v ~expr e in
+        let%bind env1 = s_full_environment ~v ~expr env1 in
+        let%bind env2 = s_full_environment ~v ~expr env2 in
         ok @@ Ast_typed.Declaration_constant (e, (env1, env2))
 
     and s_declaration_wrap ~v ~expr : T.declaration Location.wrap w = fun d ->
       Trace.bind_map_location (s_declaration ~v ~expr) d
 
-    and program ~(p : Ast_typed.program) ~v ~expr : Ast_typed.program Trace.result =
+    (* Replace the type variable ~v with ~expr everywhere within the
+       program ~p. TODO: issues with scoping/shadowing. *)
+    and program ~(p : Ast_typed.program) ~(v:type_variable) ~expr : Ast_typed.program Trace.result =
       Trace.bind_map_list (s_declaration_wrap ~v ~expr) p
 
     (*

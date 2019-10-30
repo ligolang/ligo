@@ -419,6 +419,7 @@ type structured_dbs = {
   (* assignments (passive data structure).
      Now: just a map from unification vars to types (pb: what about partial types?)
      maybe just local assignments (allow only vars as children of pair(α,β)) *)
+  (* TODO: the rhs of the map should not repeat the variable name. *)
   assignments         : c_constructor_simpl TypeVariableMap.t ;
   grouped_by_variable : constraints TypeVariableMap.t ; (* map from (unionfind) variables to constraints containing them *)
   cycle_detection_toposort : unit ; (* example of structured db that we'll add later *)
