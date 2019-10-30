@@ -333,7 +333,24 @@ let set_arithmetic_mligo () : unit result =
   let%bind () =
     expect_eq program "size_op"
       (e_set [e_string "foo"; e_string "bar"; e_string "foobar"])
-      (e_nat 3) in ok ()
+      (e_nat 3) in
+  let%bind () =
+    expect_eq program "add_op"
+      (e_set [e_string "foo" ; e_string "bar"])
+      (e_set [e_string "foo" ; e_string "bar" ; e_string "foobar"]) in
+  let%bind () =
+    expect_eq program "add_op"
+      (e_set [e_string "foo" ; e_string "bar" ; e_string "foobar"])
+      (e_set [e_string "foo" ; e_string "bar" ; e_string "foobar"]) in
+  let%bind () =
+    expect_eq program "remove_op"
+      (e_set [e_string "foo" ; e_string "bar"])
+      (e_set [e_string "foo" ; e_string "bar"]) in
+  let%bind () =
+    expect_eq program "remove_op"
+      (e_set [e_string "foo" ; e_string "bar" ; e_string "foobar"])
+      (e_set [e_string "foo" ; e_string "bar"]) in
+  ok ()
 
 let unit_expression () : unit result =
   let%bind program = type_file "./contracts/unit.ligo" in
