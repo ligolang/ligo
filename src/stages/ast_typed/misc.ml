@@ -296,7 +296,7 @@ let rec assert_type_value_eq (a, b: (type_value * type_value)) : unit result = m
       bind_list_iter assert_type_value_eq (List.combine ta tb)
     )
   | T_tuple _, _ -> fail @@ different_kinds a b
-  | T_constant (ca, lsta), T_constant (cb, lstb) -> (
+  | T_constant (Type_name ca, lsta), T_constant (Type_name cb, lstb) -> (
       let%bind _ =
         trace_strong (different_size_constants a b)
         @@ Assert.assert_true List.(length lsta = length lstb) in

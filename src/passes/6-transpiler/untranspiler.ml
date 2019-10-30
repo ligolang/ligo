@@ -53,61 +53,61 @@ let rec untranspile (v : value) (t : AST.type_value) : AST.annotated_expression 
   let open! AST in
   let return e = ok (make_a_e_empty e t) in
   match t.type_value' with
-  | T_constant ("unit", []) -> (
+  | T_constant (Type_name "unit", []) -> (
       let%bind () =
         trace_strong (wrong_mini_c_value "unit" v) @@
         get_unit v in
       return (E_literal Literal_unit)
     )
-  | T_constant ("bool", []) -> (
+  | T_constant (Type_name "bool", []) -> (
       let%bind b =
         trace_strong (wrong_mini_c_value "bool" v) @@
         get_bool v in
       return (E_literal (Literal_bool b))
     )
-  | T_constant ("int", []) -> (
+  | T_constant (Type_name "int", []) -> (
       let%bind n =
         trace_strong (wrong_mini_c_value "int" v) @@
         get_int v in
       return (E_literal (Literal_int n))
     )
-  | T_constant ("nat", []) -> (
+  | T_constant (Type_name "nat", []) -> (
       let%bind n =
         trace_strong (wrong_mini_c_value "nat" v) @@
         get_nat v in
       return (E_literal (Literal_nat n))
     )
-  | T_constant ("timestamp", []) -> (
+  | T_constant (Type_name "timestamp", []) -> (
       let%bind n =
         trace_strong (wrong_mini_c_value "timestamp" v) @@
         get_timestamp v in
       return (E_literal (Literal_timestamp n))
     )
-  | T_constant ("tez", []) -> (
+  | T_constant (Type_name "tez", []) -> (
       let%bind n =
         trace_strong (wrong_mini_c_value "tez" v) @@
         get_mutez v in
       return (E_literal (Literal_mutez n))
     )
-  | T_constant ("string", []) -> (
+  | T_constant (Type_name "string", []) -> (
       let%bind n =
         trace_strong (wrong_mini_c_value "string" v) @@
         get_string v in
       return (E_literal (Literal_string n))
     )
-  | T_constant ("bytes", []) -> (
+  | T_constant (Type_name "bytes", []) -> (
       let%bind n =
         trace_strong (wrong_mini_c_value "bytes" v) @@
         get_bytes v in
       return (E_literal (Literal_bytes n))
     )
-  | T_constant ("address", []) -> (
+  | T_constant (Type_name "address", []) -> (
       let%bind n =
         trace_strong (wrong_mini_c_value "address" v) @@
         get_string v in
       return (E_literal (Literal_address n))
     )
-  | T_constant ("option", [o]) -> (
+  | T_constant (Type_name "option", [o]) -> (
       let%bind opt =
         trace_strong (wrong_mini_c_value "option" v) @@
         get_option v in
@@ -117,7 +117,7 @@ let rec untranspile (v : value) (t : AST.type_value) : AST.annotated_expression 
           let%bind s' = untranspile s o in
           ok (e_a_empty_some s')
     )
-  | T_constant ("map", [k_ty;v_ty]) -> (
+  | T_constant (Type_name "map", [k_ty;v_ty]) -> (
       let%bind lst =
         trace_strong (wrong_mini_c_value "map" v) @@
         get_map v in
@@ -129,7 +129,7 @@ let rec untranspile (v : value) (t : AST.type_value) : AST.annotated_expression 
         bind_map_list aux lst in
       return (E_map lst')
     )
-  | T_constant ("big_map", [k_ty;v_ty]) -> (
+  | T_constant (Type_name "big_map", [k_ty;v_ty]) -> (
       let%bind lst =
         trace_strong (wrong_mini_c_value "big_map" v) @@
         get_big_map v in
@@ -141,7 +141,7 @@ let rec untranspile (v : value) (t : AST.type_value) : AST.annotated_expression 
         bind_map_list aux lst in
       return (E_big_map lst')
     )
-  | T_constant ("list", [ty]) -> (
+  | T_constant (Type_name "list", [ty]) -> (
       let%bind lst =
         trace_strong (wrong_mini_c_value "list" v) @@
         get_list v in
@@ -150,7 +150,7 @@ let rec untranspile (v : value) (t : AST.type_value) : AST.annotated_expression 
         bind_map_list aux lst in
       return (E_list lst')
     )
-  | T_constant ("set", [ty]) -> (
+  | T_constant (Type_name "set", [ty]) -> (
       let%bind lst =
         trace_strong (wrong_mini_c_value "set" v) @@
         get_set v in
@@ -159,15 +159,15 @@ let rec untranspile (v : value) (t : AST.type_value) : AST.annotated_expression 
         bind_map_list aux lst in
       return (E_set lst')
     )
-  | T_constant ("contract" , [_ty]) ->
+  | T_constant (Type_name "contract" , [_ty]) ->
     fail @@ bad_untranspile "contract" v
-  | T_constant ("operation" , []) -> (
+  | T_constant (Type_name "operation" , []) -> (
       let%bind op =
         trace_strong (wrong_mini_c_value "operation" v) @@
         get_operation v in
       return (E_literal (Literal_operation op))
     )
-  | T_constant (name , _lst) ->
+  | T_constant (Type_name name , _lst) ->
     fail @@ unknown_untranspile name v
   | T_sum m ->
       let lst = kv_list_of_map m in
@@ -203,4 +203,4 @@ let rec untranspile (v : value) (t : AST.type_value) : AST.annotated_expression 
       let m' = map_of_kv_list lst in
       return (E_record m')
   | T_function _ -> fail @@ bad_untranspile "function" v
-  | T_variable v -> return (E_variable v)
+  | T_variable (Type_name v) -> return (E_variable v)

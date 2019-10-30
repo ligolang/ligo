@@ -190,7 +190,7 @@ module Substitution = struct
 
     (* Replace the type variable ~v with ~expr everywhere within the
        program ~p. TODO: issues with scoping/shadowing. *)
-    and program ~(p : Ast_typed.program) ~(v:type_variable) ~expr : Ast_typed.program Trace.result =
+    and program ~(p : Ast_typed.program) ~(v:string (* this string is a type_name or type_variable I think *)) ~expr : Ast_typed.program Trace.result =
       Trace.bind_map_list (s_declaration_wrap ~v ~expr) p
 
     (*

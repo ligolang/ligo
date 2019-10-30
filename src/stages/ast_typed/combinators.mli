@@ -24,7 +24,7 @@ val t_option : type_value -> ?s:S.type_expression -> unit -> type_value
 val t_pair : type_value -> type_value -> ?s:S.type_expression -> unit -> type_value
 val t_list  : type_value -> ?s:S.type_expression -> unit -> type_value
 val t_tuple : type_value list -> ?s:S.type_expression -> unit -> type_value
-val t_variable : name -> ?s:S.type_expression -> unit -> type_value
+val t_variable : type_name -> ?s:S.type_expression -> unit -> type_value
 val t_record : tv_map -> ?s:S.type_expression -> unit -> type_value
 val make_t_ez_record : (string * type_value) list -> type_value 
 (*

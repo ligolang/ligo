@@ -389,7 +389,7 @@ and evaluate_type (e:environment) (t:I.type_expression) : O.type_value result =
     ok tv
   | T_constant (cst, lst) ->
     let%bind lst' = bind_list @@ List.map (evaluate_type e) lst in
-    return (T_constant(cst, lst'))
+    return (T_constant(Type_name cst, lst'))
 
 and type_expression : environment -> Solver.state -> I.expression -> (O.annotated_expression * Solver.state) result = fun e state ae ->
   let open Solver in
@@ -867,7 +867,7 @@ and type_expression : environment -> Solver.state -> I.expression -> (O.annotate
       let%bind input_type' = bind_map_option (evaluate_type e) input_type in
       let%bind output_type' = bind_map_option (evaluate_type e) output_type in
 
-      let fresh : O.type_value = t_variable (Wrap.fresh_binder ()) () in
+      let fresh : O.type_value = t_variable (Type_name (Wrap.fresh_binder ())) () in
       let e' = Environment.add_ez_binder (fst binder) fresh e in
 
       let%bind (result , state') = type_expression e' state result in
@@ -945,7 +945,7 @@ let type_program (p : I.program) : (O.program * Solver.state) result =
   let%bind (env, state, program) = type_program_returns_state p in
   let subst_all =
     let assignments = state.structured_dbs.assignments in
-    let aux (v : O.type_name) (expr : Solver.c_constructor_simpl) (p:O.program result) =
+    let aux (v : string (* this string is a type_name or type_variable I think *)) (expr : Solver.c_constructor_simpl) (p:O.program result) =
       let%bind p = p in
       Typesystem.Misc.Substitution.Pattern.program ~p ~v ~expr in
     (* let p = TSMap.bind_fold_Map aux program assignments in *) (* TODO: Module magic: this does not work *)
@@ -991,10 +991,10 @@ let rec untype_type_expression (t:O.type_value) : (I.type_expression) result =
   | O.T_record x ->
     let%bind x' = bind_map_smap untype_type_expression x in
     ok @@ I.T_record x'
-  | O.T_constant (tag, args) ->
+  | O.T_constant (Type_name tag, args) ->
     let%bind args' = bind_map_list untype_type_expression args in
     ok @@ I.T_constant (tag, args')
-  | O.T_variable name -> ok @@ I.T_variable name (* TODO: is this the right conversion? *)
+  | O.T_variable (Type_name name) -> ok @@ I.T_variable name (* TODO: is this the right conversion? *)
   | O.T_function (a , b) ->
     let%bind a' = untype_type_expression a in
     let%bind b' = untype_type_expression b in

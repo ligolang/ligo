@@ -5,7 +5,7 @@ module S = Ast_simplified
 module SMap = Map.String
 
 type name = string
-type type_name = string
+type type_name = Type_name of string
 type constructor_name = string
 
 type 'a name_map = 'a SMap.t
