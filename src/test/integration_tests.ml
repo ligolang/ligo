@@ -150,10 +150,31 @@ let shared_function () : unit result =
   in
   ok ()
 
+let shared_function_mligo () : unit result =
+  let%bind program = mtype_file "./contracts/function-shared.mligo" in
+  let%bind () =
+    let make_expect = fun n -> (2 * n + 70) in
+    expect_eq_n_int program "foobar" make_expect
+  in
+  ok ()
+
 let bool_expression () : unit result =
   let%bind program = type_file "./contracts/boolean_operators.ligo" in
   let%bind _ =
     let aux (name , f) = expect_eq_b_bool program name f in
+    bind_map_list aux [
+      ("or_true", fun b -> b || true) ;
+      ("or_false", fun b -> b || false) ;
+      ("and_true", fun b -> b && true) ;
+      ("and_false", fun b -> b && false) ;
+      ("not_bool", fun b -> not b) ;
+    ] in
+  ok ()
+
+let bool_expression_mligo () : unit result =
+  let%bind program = mtype_file "./contracts/boolean_operators.mligo" in
+  let%bind _ =
+    let aux (name, f) = expect_eq_b_bool program name f in
     bind_map_list aux [
       ("or_true", fun b -> b || true) ;
       ("or_false", fun b -> b || false) ;
@@ -181,11 +202,16 @@ let arithmetic () : unit result =
 let arithmetic_mligo () : unit result =
   let%bind program = mtype_file "./contracts/arithmetic.mligo" in
   let%bind _ =
-    let aux (name , f) = expect_eq_n_int program name f in
+    let aux (name, f) = expect_eq_n_int program name f in
     bind_map_list aux [
+      ("plus_op", fun n -> (n + 42)) ;
+      ("minus_op", fun n -> (n - 42)) ;
+      ("times_op", fun n -> (n * 42)) ;
       ("neg_op", fun n -> (-n)) ;
       ("neg_op_2", fun n -> -(n + 10)) ;
     ] in
+  let%bind () = expect_eq_n_pos program "mod_op" e_int (fun n -> e_nat (n mod 42)) in
+  let%bind () = expect_eq_n_pos program "div_op" e_int (fun n -> e_int (n / 2)) in
   ok ()
 
 let bitwise_arithmetic () : unit result =
@@ -231,6 +257,9 @@ let string_arithmetic () : unit result =
 
 let string_arithmetic_mligo () : unit result =
   let%bind program = mtype_file "./contracts/string_arithmetic.mligo" in
+  let%bind () = expect_eq program "size_op"  (e_string "tata") (e_nat 4) in
+  let%bind () = expect_eq program "slice_op" (e_string "tata") (e_string "at") in
+  let%bind () = expect_eq program "slice_op" (e_string "foo") (e_string "oo") in
   let%bind () = expect_eq program "concat_syntax" (e_string "string_") (e_string "string_test_literal")
   in ok ()
 
@@ -319,10 +348,33 @@ let set_arithmetic () : unit result =
 
 let set_arithmetic_mligo () : unit result =
   let%bind program = mtype_file "./contracts/set_arithmetic.mligo" in
+  let%bind program_1 = type_file "./contracts/set_arithmetic-1.ligo" in
   let%bind () =
     expect_eq program "size_op"
       (e_set [e_string "foo"; e_string "bar"; e_string "foobar"])
-      (e_nat 3) in ok ()
+      (e_nat 3) in
+  let%bind () =
+    expect_eq program "add_op"
+      (e_set [e_string "foo" ; e_string "bar"])
+      (e_set [e_string "foo" ; e_string "bar" ; e_string "foobar"]) in
+  let%bind () =
+    expect_eq program "add_op"
+      (e_set [e_string "foo" ; e_string "bar" ; e_string "foobar"])
+      (e_set [e_string "foo" ; e_string "bar" ; e_string "foobar"]) in
+  let%bind () =
+    expect_eq program "remove_op"
+      (e_set [e_string "foo" ; e_string "bar"])
+      (e_set [e_string "foo" ; e_string "bar"]) in
+  let%bind () =
+    expect_eq program "remove_op"
+      (e_set [e_string "foo" ; e_string "bar" ; e_string "foobar"])
+      (e_set [e_string "foo" ; e_string "bar"]) in
+  let%bind () =
+    expect_eq program_1 "fold_op"
+      (e_set [ e_int 4 ; e_int 10 ])
+      (e_int 29)
+  in
+  ok ()
 
 let unit_expression () : unit result =
   let%bind program = type_file "./contracts/unit.ligo" in
@@ -352,6 +404,18 @@ let multiple_parameters () : unit result  =
   let%bind _ = bind_list @@ List.map aux [
       ("ab", tuple_ez_int ["a";"b"], fun n -> 2 * n) ;
       ("abcd", tuple_ez_int ["a";"b";"c";"d"], fun n -> 4 * n + 2) ;
+      ("abcde", tuple_ez_int ["a";"b";"c";"d";"e"], fun n -> 2 * n + 3) ;
+    ] in
+  ok ()
+
+let multiple_parameters_mligo () : unit result  =
+  let%bind program = mtype_file "./contracts/multiple-parameters.mligo" in
+  let aux ((name : string) , make_input , make_output) =
+    let make_output' = fun n -> e_int @@ make_output n in
+    expect_eq_n program name make_input make_output'
+  in
+  let%bind _ = bind_list @@ List.map aux [
+      (* Didn't include the other tests because they're probably not necessary *)
       ("abcde", tuple_ez_int ["a";"b";"c";"d";"e"], fun n -> 2 * n + 3) ;
     ] in
   ok ()
@@ -420,6 +484,30 @@ let tuple () : unit result  =
     let make_input = fun n -> ez [n ; n ; n] in
     let make_expected = fun n -> ez [n ; 2048 ; n] in
     expect_eq_n program "modify_abc" make_input make_expected
+  in
+  let%bind () =
+    let expected = ez [23 ; 23 ; 23 ; 23 ; 23] in
+    expect_eq_evaluate program "br" expected
+  in
+  ok ()
+
+let tuple_mligo () : unit result  =
+  let%bind program = mtype_file "./contracts/tuple.mligo" in
+  let ez n =
+    e_tuple (List.map e_int n) in
+  let%bind () =
+    let expected = ez [0 ; 0] in
+    expect_eq_evaluate program "fb" expected
+  in
+  let%bind () =
+    let make_input = fun n -> ez [n ; n] in
+    let make_expected = fun n -> e_int (2 * n) in
+    expect_eq_n program "projection" make_input make_expected
+  in
+  let%bind () =
+    let make_input = fun n -> ez [n ; 2 * n ; n] in
+    let make_expected = fun n -> e_int (2 * n) in
+    expect_eq_n program "projection_abc" make_input make_expected
   in
   let%bind () =
     let expected = ez [23 ; 23 ; 23 ; 23 ; 23] in
@@ -888,11 +976,33 @@ let let_in_mligo () : unit result =
 
 let match_variant () : unit result =
   let%bind program = mtype_file "./contracts/match.mligo" in
-  let make_input n =
-    e_pair (e_constructor "Sub" (e_int n)) (e_int 3) in
-  let make_expected n =
-    e_pair (e_typed_list [] t_operation) (e_int (3-n))
-  in expect_eq_n program "main" make_input make_expected
+  let%bind () =
+    let make_input n =
+      e_pair (e_constructor "Sub" (e_int n)) (e_int 3) in
+    let make_expected n =
+      e_pair (e_typed_list [] t_operation) (e_int (3-n))
+  in expect_eq_n program "main" make_input make_expected in
+  let%bind () =
+    let input = e_bool true in
+    let expected = e_int 10 in
+    expect_eq program "match_bool" input expected in
+  let%bind () =
+    let input = e_bool false in
+    let expected = e_int 0 in
+    expect_eq program "match_bool" input expected in
+  let%bind () =
+    let input = e_list [e_int 3] in
+    let expected = e_int 3 in
+    expect_eq program "match_list" input expected in
+  let%bind () =
+    let input = e_typed_list [] t_int in
+    let expected = e_int 10 in
+    expect_eq program "match_list" input expected in
+  let%bind () =
+    let make_input n = e_some (e_int n) in
+    let make_expected n = e_int n in
+    expect_eq_n program "match_option" make_input make_expected in
+  ok ()
 
 let match_matej () : unit result =
   let%bind program = mtype_file "./contracts/match_bis.mligo" in
@@ -1006,11 +1116,13 @@ let main = test_suite "Integration (End to End)" [
     test "complex function" complex_function ;
     test "closure" closure ;
     test "shared function" shared_function ;
+    test "shared function (mligo)" shared_function_mligo ;
     test "higher order" higher_order ;
     test "variant" variant ;
     test "variant (mligo)" variant_mligo ;
     test "variant matching" variant_matching ;
     test "tuple" tuple ;
+    test "tuple (mligo)" tuple_mligo ;
     test "record" record ;
     test "condition simple" condition_simple ;
     test "condition (ligo)" condition ;
@@ -1018,7 +1130,9 @@ let main = test_suite "Integration (End to End)" [
     test "shadow" shadow ;
     test "annotation" annotation ;
     test "multiple parameters" multiple_parameters ;
+    test "multiple parameters (mligo)" multiple_parameters_mligo ;
     test "bool" bool_expression ;
+    test "bool (mligo)" bool_expression_mligo ;
     test "arithmetic" arithmetic ;
     test "arithmetic (mligo)" arithmetic_mligo ;
     test "bitwise_arithmetic" bitwise_arithmetic ;
