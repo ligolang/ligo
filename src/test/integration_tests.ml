@@ -467,6 +467,30 @@ let tuple () : unit result  =
   in
   ok ()
 
+let tuple_mligo () : unit result  =
+  let%bind program = mtype_file "./contracts/tuple.mligo" in
+  let ez n =
+    e_tuple (List.map e_int n) in
+  let%bind () =
+    let expected = ez [0 ; 0] in
+    expect_eq_evaluate program "fb" expected
+  in
+  let%bind () =
+    let make_input = fun n -> ez [n ; n] in
+    let make_expected = fun n -> e_int (2 * n) in
+    expect_eq_n program "projection" make_input make_expected
+  in
+  let%bind () =
+    let make_input = fun n -> ez [n ; 2 * n ; n] in
+    let make_expected = fun n -> e_int (2 * n) in
+    expect_eq_n program "projection_abc" make_input make_expected
+  in
+  let%bind () =
+    let expected = ez [23 ; 23 ; 23 ; 23 ; 23] in
+    expect_eq_evaluate program "br" expected
+  in
+  ok ()
+
 let option () : unit result =
   let%bind program = type_file "./contracts/option.ligo" in
   let%bind () =
@@ -1023,6 +1047,7 @@ let main = test_suite "Integration (End to End)" [
     test "variant (mligo)" variant_mligo ;
     test "variant matching" variant_matching ;
     test "tuple" tuple ;
+    test "tuple (mligo)" tuple_mligo ;
     test "record" record ;
     test "condition simple" condition_simple ;
     test "condition" condition ;
