@@ -295,7 +295,7 @@ and print_clause_block buffer = function
     print_terminator buffer terminator;
     print_token      buffer rbrace "}"
 
-and print_case_instr buffer (node : instruction case) =
+and print_case_instr buffer (node : if_clause case) =
   let {kwd_case; expr; opening;
        lead_vbar; cases; closing} = node in
   print_token       buffer kwd_case "case";
@@ -314,9 +314,9 @@ and print_cases_instr buffer {value; _} =
 
 and print_case_clause_instr buffer {value; _} =
   let {pattern; arrow; rhs} = value in
-  print_pattern     buffer pattern;
-  print_token       buffer arrow "->";
-  print_instruction buffer rhs
+  print_pattern   buffer pattern;
+  print_token     buffer arrow "->";
+  print_if_clause buffer rhs
 
 and print_assignment buffer {value; _} =
   let {lhs; assign; rhs} = value in
@@ -431,6 +431,7 @@ and print_case_clause_expr buffer {value; _} =
 and print_map_expr buffer = function
   MapLookUp {value; _} -> print_map_lookup buffer value
 | MapInj inj           -> print_injection  buffer "map" print_binding inj
+| BigMapInj inj        -> print_injection  buffer "big_map" print_binding inj
 
 and print_set_expr buffer = function
   SetInj inj -> print_injection buffer "set" print_expr inj
@@ -526,7 +527,7 @@ and print_arith_expr buffer = function
     print_expr  buffer arg
 | Int i
 | Nat i
-| Mtz i -> print_int buffer i
+| Mutez i -> print_int buffer i
 
 and print_string_expr buffer = function
   Cat {value = {arg1; op; arg2}; _} ->
@@ -921,7 +922,7 @@ and pp_instruction buffer ~pad:(_,pc as pad) = function
     pp_conditional buffer ~pad value
 | CaseInstr {value; _} ->
     pp_node buffer ~pad "CaseInstr";
-    pp_case pp_instruction buffer ~pad value
+    pp_case pp_if_clause buffer ~pad value
 | Assign {value; _} ->
     pp_node buffer ~pad "Assign";
     pp_assignment buffer ~pad value
@@ -1390,8 +1391,8 @@ and pp_arith_expr buffer ~pad:(_,pc as pad) = function
 | Nat {value; _} ->
     pp_node buffer ~pad "Nat";
     pp_int  buffer ~pad value
-| Mtz {value; _} ->
-    pp_node buffer ~pad "Mtz";
+| Mutez {value; _} ->
+    pp_node buffer ~pad "Mutez";
     pp_int  buffer ~pad value
 
 and pp_set_expr buffer ~pad:(_,pc as pad) = function
@@ -1461,7 +1462,7 @@ and pp_map_expr buffer ~pad = function
   MapLookUp {value; _} ->
     pp_node buffer ~pad "MapLookUp";
     pp_map_lookup buffer ~pad value
-| MapInj {value; _} ->
+| MapInj {value; _} | BigMapInj {value; _} ->
     pp_node buffer ~pad "MapInj";
     pp_injection pp_binding buffer ~pad value
 

@@ -6,6 +6,7 @@
     tezos-utils
     parser
     ast_simplified
+    self_ast_simplified
     operators)
   (modules ligodity pascaligo simplify)
   (preprocess

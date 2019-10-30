@@ -275,7 +275,7 @@ and var_decl = {
 
 and instruction =
   Cond        of conditional reg
-| CaseInstr   of instruction case reg
+| CaseInstr   of if_clause case reg
 | Assign      of assignment reg
 | Loop        of loop
 | ProcCall    of fun_call
@@ -488,6 +488,7 @@ and closing =
 and map_expr =
   MapLookUp of map_lookup reg
 | MapInj    of binding reg injection reg
+| BigMapInj    of binding reg injection reg
 
 and map_lookup = {
   path  : path;
@@ -537,7 +538,7 @@ and arith_expr =
 | Neg  of minus    un_op reg
 | Int  of (Lexer.lexeme * Z.t) reg
 | Nat  of (Lexer.lexeme * Z.t) reg
-| Mtz  of (Lexer.lexeme * Z.t) reg
+| Mutez  of (Lexer.lexeme * Z.t) reg
 
 and string_expr =
   Cat    of cat bin_op reg

@@ -85,6 +85,7 @@ module Simplify = struct
       ("list_iter" , "LIST_ITER") ;
       ("list_fold" , "LIST_FOLD") ;
       ("list_map" , "LIST_MAP") ;
+      (*ici*)
       ("map_iter" , "MAP_ITER") ;
       ("map_map" , "MAP_MAP") ;
       ("map_fold" , "MAP_FOLD") ;
@@ -167,6 +168,18 @@ module Simplify = struct
       ("Map.empty" , "MAP_EMPTY") ;
       ("Map.literal" , "MAP_LITERAL" ) ;
       ("Map.size" , "SIZE" ) ;
+
+      ("Big_map.find_opt" , "MAP_FIND_OPT") ;
+      ("Big_map.find" , "MAP_FIND") ;
+      ("Big_map.update" , "MAP_UPDATE") ;
+      ("Big_map.add" , "MAP_ADD") ;
+      ("Big_map.remove" , "MAP_REMOVE") ;
+      ("Big_map.literal" , "BIG_MAP_LITERAL" ) ;
+      ("Big_map.empty" , "BIG_MAP_EMPTY" ) ;
+
+      ("Bitwise.lor" , "OR") ;
+      ("Bitwise.land" , "AND") ;
+      ("Bitwise.lxor" , "XOR") ;
 
       ("String.length", "SIZE") ;
       ("String.size", "SIZE") ;
@@ -398,7 +411,10 @@ module Typer = struct
     let%bind () = assert_eq_1 op_lst (t_list (t_operation ()) ()) in
     ok @@ (t_pair (t_operation ()) (t_address ()) ())
 
-  let get_contract = typer_1_opt "CONTRACT" @@ fun _ tv_opt ->
+  let get_contract = typer_1_opt "CONTRACT" @@ fun addr_tv tv_opt ->
+    if not (type_value_eq (addr_tv, t_address ()))
+    then fail @@ simple_error (Format.asprintf "get_contract expects an address, got %a" PP.type_value addr_tv)
+    else
     let%bind tv =
       trace_option (simple_error "get_contract needs a type annotation") tv_opt in
     let%bind tv' =

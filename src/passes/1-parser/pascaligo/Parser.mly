@@ -566,7 +566,7 @@ clause_block:
     ShortBlock {value; region} }
 
 case_instr:
-  case(instruction) { $1 instr_to_region }
+  case(if_clause) { $1 if_clause_to_region }
 
 case(rhs):
   Case expr Of option(VBAR) cases(rhs) End {
@@ -856,7 +856,7 @@ unary_expr:
 core_expr:
   Int              { EArith (Int $1)              }
 | Nat              { EArith (Nat $1)              }
-| Mtz              { EArith (Mtz $1)              }
+| Mutez              { EArith (Mutez $1)              }
 | var              { EVar $1                      }
 | String           { EString (String $1)          }
 | Bytes            { EBytes $1                    }
@@ -899,6 +899,7 @@ set_expr:
 map_expr:
   map_lookup             { MapLookUp $1 }
 | injection(Map,binding) {    MapInj $1 }
+| injection(BigMap,binding) { BigMapInj $1 }
 
 map_lookup:
   path brackets(expr) {

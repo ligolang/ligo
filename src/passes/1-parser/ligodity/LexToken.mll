@@ -64,7 +64,7 @@ type t =
 | Constr of string Region.reg
 | Int    of (string * Z.t) Region.reg
 | Nat    of (string * Z.t) Region.reg
-| Mtz    of (string * Z.t) Region.reg
+| Mutez  of (string * Z.t) Region.reg
 | Str    of string Region.reg
 | Bytes  of (string * Hex.t) Region.reg
 
@@ -141,8 +141,8 @@ let proj_token = function
     region, sprintf "Int (\"%s\", %s)" s (Z.to_string n)
   | Nat Region.{region; value = s,n} ->
     region, sprintf "Nat (\"%s\", %s)" s (Z.to_string n)
-  | Mtz Region.{region; value = s,n} ->
-    region, sprintf "Mtz (\"%s\", %s)" s (Z.to_string n)
+  | Mutez Region.{region; value = s,n} ->
+    region, sprintf "Mutez (\"%s\", %s)" s (Z.to_string n)
   | Str Region.{region; value} ->
     region, sprintf "Str %s" value
   | Bytes Region.{region; value = s,b} ->
@@ -202,7 +202,7 @@ let to_lexeme = function
   | Constr id -> id.Region.value
   | Int i
   | Nat i
-  | Mtz i -> fst i.Region.value
+  | Mutez i -> fst i.Region.value
   | Str s -> s.Region.value
   | Bytes b -> fst b.Region.value
   | Begin _ -> "begin"
@@ -280,12 +280,9 @@ let reserved =
     |> add "functor"
     |> add "inherit"
     |> add "initializer"
-    |> add "land"
     |> add "lazy"
-    |> add "lor"
     |> add "lsl"
     |> add "lsr"
-    |> add "lxor"
     |> add "method"
     |> add "module"
     |> add "mutable"
@@ -396,14 +393,14 @@ let mk_nat lexeme region =
     else Ok (Nat Region.{region; value = lexeme, z})
   )
 
-let mk_mtz lexeme region =
+let mk_mutez lexeme region =
   let z =
     Str.(global_replace (regexp "_") "" lexeme) |>
-    Str.(global_replace (regexp "mtz") "") |>
+    Str.(global_replace (regexp "mutez") "") |>
     Z.of_string in
-  if Z.equal z Z.zero && lexeme <> "0mtz"
+  if Z.equal z Z.zero && lexeme <> "0mutez"
   then Error Non_canonical_zero
-  else Ok (Mtz Region.{region; value = lexeme, z})
+  else Ok (Mutez Region.{region; value = lexeme, z})
 
 let eof region = EOF region
 

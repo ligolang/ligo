@@ -35,7 +35,7 @@ type t =
 | Bytes  of (lexeme * Hex.t) Region.reg
 | Int    of (lexeme * Z.t) Region.reg
 | Nat    of (lexeme * Z.t) Region.reg
-| Mtz    of (lexeme * Z.t) Region.reg
+| Mutez    of (lexeme * Z.t) Region.reg
 | Ident  of lexeme Region.reg
 | Constr of lexeme Region.reg
 
@@ -145,7 +145,7 @@ type   sym_err = Invalid_symbol
 
 val mk_int    : lexeme -> Region.t -> (token,   int_err) result
 val mk_nat    : lexeme -> Region.t -> (token,   nat_err) result
-val mk_mtz    : lexeme -> Region.t -> (token,   int_err) result
+val mk_mutez  : lexeme -> Region.t -> (token,   int_err) result
 val mk_ident  : lexeme -> Region.t -> (token, ident_err) result
 val mk_sym    : lexeme -> Region.t -> (token,   sym_err) result
 val mk_string : lexeme -> Region.t -> token

@@ -190,7 +190,7 @@ class HomeSplash extends React.Component {
           <h4 className="tagline-text">{siteConfig.tagline}</h4>
           <p className="body">{siteConfig.taglineSub}</p>
           <LinkButton
-            href="https://ligolang.gitlab.io/ligo-web-ide/"
+            href="https://ide.ligolang.org/"
             className="large-primary-button"
           >
             Try Online
