@@ -14,6 +14,7 @@ let forall_tc binder f =
   let (tc, ty) = f (P_variable freshvar) in
   P_forall { binder = freshvar ; constraints = tc ; body = ty }
 
+(* chained forall *)
 let forall2 a b f =
   forall a @@ fun a' ->
   forall b @@ fun b' ->

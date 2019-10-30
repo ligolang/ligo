@@ -3,6 +3,7 @@ open Core
 let pair_map = fun f (x , y) -> (f x , f y)
 
 module Substitution = struct
+  (* Replace Types variables by the infered type *)
 
   module Pattern = struct
 
@@ -14,11 +15,11 @@ module Substitution = struct
 
     let rec rec_yes = true
     and s_environment_element_definition ~v ~expr = function
-        | T.ED_binder -> ok @@ T.ED_binder
-        | T.ED_declaration (val_, free_variables) ->
-          let%bind val_ = s_annotated_expression ~v ~expr  val_ in
-          let%bind free_variables = bind_map_list (s_type_variable ~v ~expr) free_variables in
-          ok @@ T.ED_declaration (val_, free_variables)
+      | T.ED_binder -> ok @@ T.ED_binder
+      | T.ED_declaration (val_, free_variables) ->
+        let%bind val_ = s_annotated_expression ~v ~expr  val_ in
+        let%bind free_variables = bind_map_list (s_type_variable ~v ~expr) free_variables in
+        ok @@ T.ED_declaration (val_, free_variables)
     and s_environment ~v ~expr = fun lst ->
       bind_map_list (fun (type_variable, T.{ type_value; source_environment; definition }) ->
           let _ = type_value in
@@ -47,10 +48,10 @@ module Substitution = struct
     and s_type_variable ~v ~expr : T.name w = fun tvar ->
       let _TODO = ignore (v, expr, tvar) in
       failwith "TODO: subst: unimplemented case s_type_variable"
-      (* if String.equal tvar v then
-       *   expr
-       * else
-       *   ok tvar *)
+    (* if String.equal tvar v then
+     *   expr
+     * else
+     *   ok tvar *)
 
     and s_type_value' ~v ~expr : T.type_value' w = fun _ ->
       let _TODO = (v, expr) in
@@ -114,11 +115,11 @@ module Substitution = struct
       | T.E_record          aemap ->
         let _TODO = aemap in
         failwith "TODO: subst in record"
-        (* let%bind aemap = TSMap.bind_map_Map (fun ~k:key ~v:val_ ->
-         *     let key = s_type_variable ~v ~expr key in
-         *     let val_ = s_annotated_expression ~v ~expr val_ in
-         *     ok @@ (key , val_)) aemap in
-         * ok @@ T.E_record aemap *)
+      (* let%bind aemap = TSMap.bind_map_Map (fun ~k:key ~v:val_ ->
+       *     let key = s_type_variable ~v ~expr key in
+       *     let val_ = s_annotated_expression ~v ~expr val_ in
+       *     ok @@ (key , val_)) aemap in
+       * ok @@ T.E_record aemap *)
       | T.E_record_accessor (val_, tvar) ->
         let%bind val_ = s_annotated_expression ~v ~expr val_ in
         let%bind tvar = s_type_variable ~v ~expr tvar in
