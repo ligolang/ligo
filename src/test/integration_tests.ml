@@ -330,6 +330,7 @@ let set_arithmetic () : unit result =
 
 let set_arithmetic_mligo () : unit result =
   let%bind program = mtype_file "./contracts/set_arithmetic.mligo" in
+  let%bind program_1 = type_file "./contracts/set_arithmetic-1.ligo" in
   let%bind () =
     expect_eq program "size_op"
       (e_set [e_string "foo"; e_string "bar"; e_string "foobar"])
@@ -350,6 +351,11 @@ let set_arithmetic_mligo () : unit result =
     expect_eq program "remove_op"
       (e_set [e_string "foo" ; e_string "bar" ; e_string "foobar"])
       (e_set [e_string "foo" ; e_string "bar"]) in
+  let%bind () =
+    expect_eq program_1 "fold_op"
+      (e_set [ e_int 4 ; e_int 10 ])
+      (e_int 29)
+  in
   ok ()
 
 let unit_expression () : unit result =
