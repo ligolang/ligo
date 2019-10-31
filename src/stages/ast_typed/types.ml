@@ -24,18 +24,18 @@ and environment_element_definition =
 and free_variables = name list
 
 and environment_element = {
-  type_value : type_value ;
+  type_value : type_value ;     (* SUBST ??? *)
   source_environment : full_environment ;
   definition : environment_element_definition ;
 }
 and environment = (string * environment_element) list
-and type_environment = (string * type_value) list
+and type_environment = (string * type_value) list (* SUBST ??? *)
 and small_environment = (environment * type_environment)
 and full_environment = small_environment List.Ne.t
 
 and annotated_expression = {
   expression : expression ;
-  type_annotation : tv ;
+  type_annotation : tv ;        (* SUBST *)
   environment : full_environment ;
   location : Location.t ;
 }
@@ -54,20 +54,24 @@ and type_value' =
   | T_tuple of tv list
   | T_sum of tv_map
   | T_record of tv_map
-  | T_constant of type_name * tv list
-  | T_variable of type_name
+  | T_constant of type_name * tv list (* SUBST ??? I think not, at least not necessary for now and the types don't match *)
+  | T_variable of type_name     (* SUBST *)
   | T_function of (tv * tv)
 
 and type_value = {
   type_value' : type_value' ;
-  simplified : S.type_expression option ;
+  simplified : S.type_expression option ; (* If we have the simplified this AST fragment comes from, it is stored here, for easier untyping. *)
 }
 
+(* This is used in E_assign of (named_type_value * access_path * ae).
+   In mini_c, we need the type associated with `x` in the assignment
+   expression `x.y.z := 42`, so it is stored here. *)
 and named_type_value = {
   type_name: name ;
   type_value : type_value ;
 }
 
+(* E_lamba and other expressions are always wrapped as an annotated_expression. *)
 and lambda = {
   binder : name ;
   (* input_type: tv ;

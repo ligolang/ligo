@@ -3,7 +3,6 @@ open Core
 let pair_map = fun f (x , y) -> (f x , f y)
 
 module Substitution = struct
-  (* Replace Types variables by the infered type *)
 
   module Pattern = struct
 
@@ -29,9 +28,11 @@ module Substitution = struct
           let%bind definition = s_environment_element_definition ~v ~expr definition in
           ok @@ (type_variable, T.{ type_value; source_environment; definition })
         ) lst
-    and s_type_environment ~v ~expr : T.type_environment w = fun _ ->
-      let _TODO = (v, expr) in
-      failwith "TODO: subst: unimplemented case s_type_environment"
+    and s_type_environment ~v ~expr : T.type_environment w = fun tenv ->
+      bind_map_list (fun (type_variable , type_value) ->
+        let%bind type_variable = s_type_variable ~v ~expr type_variable in
+        let%bind type_value = s_type_value ~v ~expr type_value in
+        ok @@ (type_variable , type_value)) tenv
     and s_small_environment ~v ~expr : T.small_environment w = fun (environment, type_environment) ->
       let%bind environment = s_environment ~v ~expr environment in
       let%bind type_environment = s_type_environment ~v ~expr type_environment in
@@ -46,27 +47,62 @@ module Substitution = struct
       ok var
 
     and s_type_variable ~v ~expr : T.name w = fun tvar ->
-      let _TODO = ignore (v, expr, tvar) in
-      failwith "TODO: subst: unimplemented case s_type_variable"
-    (* if String.equal tvar v then
-     *   expr
-     * else
-     *   ok tvar *)
+      let _TODO = ignore (v, expr) in
+      Printf.printf "TODO: subst: unimplemented case s_type_variable";
+      ok @@ tvar
+      (* if String.equal tvar v then
+       *   expr
+       * else
+       *   ok tvar *)
 
-    and s_type_value' ~v ~expr : T.type_value' w = fun _ ->
-      let _TODO = (v, expr) in
-      failwith "TODO: subst: unimplemented case s_type_value'"
-    and s_type_expression ~v ~expr : Ast_simplified.type_expression w = fun _ ->
-      let _TODO = (v, expr) in
-      failwith "TODO: subst: unimplemented case s_type_expression"
+    and s_type_name_constant ~v ~expr : T.type_name w = fun type_name ->
+      (* TODO: we don't need to subst anything, right? *)
+      let () = ignore (v , expr) in
+      ok @@ type_name
+
+    and s_type_value' ~v ~expr : T.type_value' w = function
+        | T.T_tuple type_value_list ->
+          let%bind type_value_list = bind_map_list (s_type_value ~v ~expr) type_value_list in
+          ok @@ T.T_tuple type_value_list
+        | T.T_sum _ -> failwith "TODO: T_sum"
+        | T.T_record _ -> failwith "TODO: T_record"
+        | T.T_constant (type_name, type_value_list) ->
+          let%bind type_name = s_type_name_constant ~v ~expr type_name in
+          let%bind type_value_list = bind_map_list (s_type_value ~v ~expr) type_value_list in
+          ok @@ T.T_constant (type_name, type_value_list)
+        | T.T_variable _ -> failwith "TODO: T_variable"
+        | T.T_function _ ->
+          let _TODO = (v, expr) in
+          failwith "TODO: T_function"
+
+    and s_type_expression ~v ~expr : Ast_simplified.type_expression w = function
+      | Ast_simplified.T_tuple _ -> failwith "TODO: subst: unimplemented case s_type_expression"
+      | Ast_simplified.T_sum _ -> failwith "TODO: subst: unimplemented case s_type_expression"
+      | Ast_simplified.T_record _ -> failwith "TODO: subst: unimplemented case s_type_expression"
+      | Ast_simplified.T_function (_, _) -> failwith "TODO: subst: unimplemented case s_type_expression"
+      | Ast_simplified.T_variable _ -> failwith "TODO: subst: unimplemented case s_type_expression"
+      | Ast_simplified.T_constant (_, _) ->
+        let _TODO = (v, expr) in
+        failwith "TODO: subst: unimplemented case s_type_expression"
 
     and s_type_value ~v ~expr : T.type_value w = fun { type_value'; simplified } ->
       let%bind type_value' = s_type_value' ~v ~expr type_value' in
       let%bind simplified = bind_map_option (s_type_expression ~v ~expr) simplified in
       ok @@ T.{ type_value'; simplified }
-    and s_literal ~v ~expr : T.literal w = fun _ ->
-      let _TODO = v, expr in
-      failwith "TODO: subst: unimplemented case s_literal"
+    and s_literal ~v ~expr : T.literal w = function
+      | T.Literal_unit ->
+        let () = ignore (v, expr) in
+        ok @@ T.Literal_unit
+      | (T.Literal_bool _ as x)
+      | (T.Literal_int _ as x)
+      | (T.Literal_nat _ as x)
+      | (T.Literal_timestamp _ as x)
+      | (T.Literal_mutez _ as x)
+      | (T.Literal_string _ as x)
+      | (T.Literal_bytes _ as x)
+      | (T.Literal_address _ as x)
+      | (T.Literal_operation _ as x) ->
+        ok @@ x
     and s_matching_expr ~v ~expr : T.matching_expr w = fun _ ->
       let _TODO = v, expr in
       failwith "TODO: subst: unimplemented case s_matching"
@@ -115,11 +151,11 @@ module Substitution = struct
       | T.E_record          aemap ->
         let _TODO = aemap in
         failwith "TODO: subst in record"
-      (* let%bind aemap = TSMap.bind_map_Map (fun ~k:key ~v:val_ ->
-       *     let key = s_type_variable ~v ~expr key in
-       *     let val_ = s_annotated_expression ~v ~expr val_ in
-       *     ok @@ (key , val_)) aemap in
-       * ok @@ T.E_record aemap *)
+        (* let%bind aemap = TSMap.bind_map_Map (fun ~k:key ~v:val_ ->
+         *     let key = s_type_variable ~v ~expr key in
+         *     let val_ = s_annotated_expression ~v ~expr val_ in
+         *     ok @@ (key , val_)) aemap in
+         * ok @@ T.E_record aemap *)
       | T.E_record_accessor (val_, tvar) ->
         let%bind val_ = s_annotated_expression ~v ~expr val_ in
         let%bind tvar = s_type_variable ~v ~expr tvar in
