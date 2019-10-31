@@ -20,6 +20,7 @@ let type_base ppf : type_base -> _ = function
   | Base_timestamp -> fprintf ppf "timestamp"
   | Base_bytes -> fprintf ppf "bytes"
   | Base_operation -> fprintf ppf "operation"
+  | Base_signature -> fprintf ppf "signature"
 
 let rec type_ ppf : type_value -> _ = function
   | T_or(a, b) -> fprintf ppf "(%a) | (%a)" annotated a annotated b
