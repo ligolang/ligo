@@ -54,6 +54,7 @@ type prim =
   | I_BALANCE
   | I_CAR
   | I_CDR
+  | I_CHAIN_ID
   | I_CHECK_SIGNATURE
   | I_COMPARE
   | I_CONCAT
@@ -65,10 +66,12 @@ type prim =
   | I_DROP
   | I_DUP
   | I_EDIV
+  | I_EMPTY_BIG_MAP
   | I_EMPTY_MAP
   | I_EMPTY_SET
   | I_EQ
   | I_EXEC
+  | I_APPLY
   | I_FAILWITH
   | I_GE
   | I_GET
@@ -120,6 +123,8 @@ type prim =
   | I_ISNAT
   | I_CAST
   | I_RENAME
+  | I_DIG
+  | I_DUG
   | T_bool
   | T_contract
   | T_int
@@ -142,6 +147,7 @@ type prim =
   | T_unit
   | T_operation
   | T_address
+  | T_chain_id
 
 let valid_case name =
   let is_lower = function  '_' | 'a'..'z' -> true | _ -> false in
@@ -187,6 +193,7 @@ let string_of_prim = function
   | I_BALANCE -> "BALANCE"
   | I_CAR -> "CAR"
   | I_CDR -> "CDR"
+  | I_CHAIN_ID -> "CHAIN_ID"
   | I_CHECK_SIGNATURE -> "CHECK_SIGNATURE"
   | I_COMPARE -> "COMPARE"
   | I_CONCAT -> "CONCAT"
@@ -198,10 +205,12 @@ let string_of_prim = function
   | I_DROP -> "DROP"
   | I_DUP -> "DUP"
   | I_EDIV -> "EDIV"
+  | I_EMPTY_BIG_MAP -> "EMPTY_BIG_MAP"
   | I_EMPTY_MAP -> "EMPTY_MAP"
   | I_EMPTY_SET -> "EMPTY_SET"
   | I_EQ -> "EQ"
   | I_EXEC -> "EXEC"
+  | I_APPLY -> "APPLY"
   | I_FAILWITH -> "FAILWITH"
   | I_GE -> "GE"
   | I_GET -> "GET"
@@ -253,6 +262,8 @@ let string_of_prim = function
   | I_ISNAT -> "ISNAT"
   | I_CAST -> "CAST"
   | I_RENAME -> "RENAME"
+  | I_DIG -> "DIG"
+  | I_DUG -> "DUG"
   | T_bool -> "bool"
   | T_contract -> "contract"
   | T_int -> "int"
@@ -275,6 +286,7 @@ let string_of_prim = function
   | T_unit -> "unit"
   | T_operation -> "operation"
   | T_address -> "address"
+  | T_chain_id -> "chain_id"
 
 let prim_of_string = function
   | "parameter" -> ok K_parameter
@@ -301,6 +313,7 @@ let prim_of_string = function
   | "BALANCE" -> ok I_BALANCE
   | "CAR" -> ok I_CAR
   | "CDR" -> ok I_CDR
+  | "CHAIN_ID" -> ok I_CHAIN_ID
   | "CHECK_SIGNATURE" -> ok I_CHECK_SIGNATURE
   | "COMPARE" -> ok I_COMPARE
   | "CONCAT" -> ok I_CONCAT
@@ -312,10 +325,12 @@ let prim_of_string = function
   | "DROP" -> ok I_DROP
   | "DUP" -> ok I_DUP
   | "EDIV" -> ok I_EDIV
+  | "EMPTY_BIG_MAP" -> ok I_EMPTY_BIG_MAP
   | "EMPTY_MAP" -> ok I_EMPTY_MAP
   | "EMPTY_SET" -> ok I_EMPTY_SET
   | "EQ" -> ok I_EQ
   | "EXEC" -> ok I_EXEC
+  | "APPLY" -> ok I_APPLY
   | "FAILWITH" -> ok I_FAILWITH
   | "GE" -> ok I_GE
   | "GET" -> ok I_GET
@@ -367,6 +382,8 @@ let prim_of_string = function
   | "ISNAT" -> ok I_ISNAT
   | "CAST" -> ok I_CAST
   | "RENAME" -> ok I_RENAME
+  | "DIG" -> ok I_DIG
+  | "DUG" -> ok I_DUG
   | "bool" -> ok T_bool
   | "contract" -> ok T_contract
   | "int" -> ok T_int
@@ -389,6 +406,7 @@ let prim_of_string = function
   | "unit" -> ok T_unit
   | "operation" -> ok T_operation
   | "address" -> ok T_address
+  | "chain_id" -> ok T_chain_id
   | n ->
       if valid_case n then
         error (Unknown_primitive_name n)
@@ -436,6 +454,7 @@ let prim_encoding =
   let open Data_encoding in
   def "michelson.v1.primitives" @@
   string_enum [
+    (* /!\ NEW INSTRUCTIONS MUST BE ADDED AT THE END OF THE STRING_ENUM, FOR BACKWARD COMPATIBILITY OF THE ENCODING. *)
     ("parameter", K_parameter) ;
     ("storage", K_storage) ;
     ("code", K_code) ;
@@ -446,6 +465,7 @@ let prim_encoding =
     ("Pair", D_Pair) ;
     ("Right", D_Right) ;
     ("Some", D_Some) ;
+    (* /!\ NEW INSTRUCTIONS MUST BE ADDED AT THE END OF THE STRING_ENUM, FOR BACKWARD COMPATIBILITY OF THE ENCODING. *)
     ("True", D_True) ;
     ("Unit", D_Unit) ;
     ("PACK", I_PACK) ;
@@ -456,6 +476,7 @@ let prim_encoding =
     ("ABS", I_ABS) ;
     ("ADD", I_ADD) ;
     ("AMOUNT", I_AMOUNT) ;
+    (* /!\ NEW INSTRUCTIONS MUST BE ADDED AT THE END OF THE STRING_ENUM, FOR BACKWARD COMPATIBILITY OF THE ENCODING. *)
     ("AND", I_AND) ;
     ("BALANCE", I_BALANCE) ;
     ("CAR", I_CAR) ;
@@ -466,6 +487,7 @@ let prim_encoding =
     ("CONS", I_CONS) ;
     ("CREATE_ACCOUNT", I_CREATE_ACCOUNT) ;
     ("CREATE_CONTRACT", I_CREATE_CONTRACT) ;
+    (* /!\ NEW INSTRUCTIONS MUST BE ADDED AT THE END OF THE STRING_ENUM, FOR BACKWARD COMPATIBILITY OF THE ENCODING. *)
     ("IMPLICIT_ACCOUNT", I_IMPLICIT_ACCOUNT) ;
     ("DIP", I_DIP) ;
     ("DROP", I_DROP) ;
@@ -476,6 +498,7 @@ let prim_encoding =
     ("EQ", I_EQ) ;
     ("EXEC", I_EXEC) ;
     ("FAILWITH", I_FAILWITH) ;
+    (* /!\ NEW INSTRUCTIONS MUST BE ADDED AT THE END OF THE STRING_ENUM, FOR BACKWARD COMPATIBILITY OF THE ENCODING. *)
     ("GE", I_GE) ;
     ("GET", I_GET) ;
     ("GT", I_GT) ;
@@ -486,6 +509,7 @@ let prim_encoding =
     ("IF_NONE", I_IF_NONE) ;
     ("INT", I_INT) ;
     ("LAMBDA", I_LAMBDA) ;
+    (* /!\ NEW INSTRUCTIONS MUST BE ADDED AT THE END OF THE STRING_ENUM, FOR BACKWARD COMPATIBILITY OF THE ENCODING. *)
     ("LE", I_LE) ;
     ("LEFT", I_LEFT) ;
     ("LOOP", I_LOOP) ;
@@ -496,6 +520,7 @@ let prim_encoding =
     ("MEM", I_MEM) ;
     ("MUL", I_MUL) ;
     ("NEG", I_NEG) ;
+    (* /!\ NEW INSTRUCTIONS MUST BE ADDED AT THE END OF THE STRING_ENUM, FOR BACKWARD COMPATIBILITY OF THE ENCODING. *)
     ("NEQ", I_NEQ) ;
     ("NIL", I_NIL) ;
     ("NONE", I_NONE) ;
@@ -506,6 +531,7 @@ let prim_encoding =
     ("PUSH", I_PUSH) ;
     ("RIGHT", I_RIGHT) ;
     ("SIZE", I_SIZE) ;
+    (* /!\ NEW INSTRUCTIONS MUST BE ADDED AT THE END OF THE STRING_ENUM, FOR BACKWARD COMPATIBILITY OF THE ENCODING. *)
     ("SOME", I_SOME) ;
     ("SOURCE", I_SOURCE) ;
     ("SENDER", I_SENDER) ;
@@ -516,6 +542,7 @@ let prim_encoding =
     ("TRANSFER_TOKENS", I_TRANSFER_TOKENS) ;
     ("SET_DELEGATE", I_SET_DELEGATE) ;
     ("UNIT", I_UNIT) ;
+    (* /!\ NEW INSTRUCTIONS MUST BE ADDED AT THE END OF THE STRING_ENUM, FOR BACKWARD COMPATIBILITY OF THE ENCODING. *)
     ("UPDATE", I_UPDATE) ;
     ("XOR", I_XOR) ;
     ("ITER", I_ITER) ;
@@ -526,6 +553,7 @@ let prim_encoding =
     ("CAST", I_CAST) ;
     ("RENAME", I_RENAME) ;
     ("bool", T_bool) ;
+    (* /!\ NEW INSTRUCTIONS MUST BE ADDED AT THE END OF THE STRING_ENUM, FOR BACKWARD COMPATIBILITY OF THE ENCODING. *)
     ("contract", T_contract) ;
     ("int", T_int) ;
     ("key", T_key) ;
@@ -536,6 +564,7 @@ let prim_encoding =
     ("big_map", T_big_map) ;
     ("nat", T_nat) ;
     ("option", T_option) ;
+    (* /!\ NEW INSTRUCTIONS MUST BE ADDED AT THE END OF THE STRING_ENUM, FOR BACKWARD COMPATIBILITY OF THE ENCODING. *)
     ("or", T_or) ;
     ("pair", T_pair) ;
     ("set", T_set) ;
@@ -546,9 +575,18 @@ let prim_encoding =
     ("timestamp", T_timestamp) ;
     ("unit", T_unit) ;
     ("operation", T_operation) ;
+    (* /!\ NEW INSTRUCTIONS MUST BE ADDED AT THE END OF THE STRING_ENUM, FOR BACKWARD COMPATIBILITY OF THE ENCODING. *)
     ("address", T_address) ;
     (* Alpha_002 addition *)
     ("SLICE", I_SLICE) ;
+    (* Alpha_005 addition *)
+    ("DIG", I_DIG) ;
+    ("DUG", I_DUG) ;
+    ("EMPTY_BIG_MAP", I_EMPTY_BIG_MAP) ;
+    ("APPLY", I_APPLY) ;
+    ("chain_id", T_chain_id) ;
+    ("CHAIN_ID", I_CHAIN_ID)
+    (* New instructions must be added here, for backward compatibility of the encoding. *)
   ]
 
 let () =

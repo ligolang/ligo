@@ -12,3 +12,5 @@ val tokens_to_string      : AST.t -> string
 val path_to_string        : AST.path -> string
 val pattern_to_string     : AST.pattern -> string
 val instruction_to_string : AST.instruction -> string
+
+val pp_ast : Buffer.t -> AST.t -> unit

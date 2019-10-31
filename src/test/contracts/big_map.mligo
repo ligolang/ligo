@@ -1,12 +1,21 @@
-type storage_ = ((int, int) big_map * unit)
+type foo = (int, int) big_map
 
-let set_ (n : int) (m : storage_) : storage_ =
-    (Map.update 23 (Some(n)) m.(0), ())
+let set_ (n : int) (m : foo) : foo = Big_map.update 23 (Some(n)) m
 
-let rm (m : storage_) : storage_ =
-    (Map.remove 42 m.(0), ())
+let rm (m : foo) : foo = Big_map.remove 42 m
 
-let gf (m : storage_) : int = Map.find 23 m.(0)
+let gf (m : foo) : int = Big_map.find 23 m
 
-let get (m: storage_): int option =
-    Map.find_opt 42 m.(0)
+let get (m: foo): int option = Big_map.find_opt 42 m
+
+let empty_map : foo = Big_map.empty
+
+let map1 : foo = Big_map.literal
+  [ (23 , 0) ; (42, 0) ]
+
+let map1 : foo = Big_map.literal
+  [ (23 , 0) ; (42, 0) ]
+
+let mutimaps (m : foo) (n : foo) : foo =
+  let bar : foo = Big_map.update 42 (Some(0)) m in
+  Big_map.update 42 (get(bar)) n

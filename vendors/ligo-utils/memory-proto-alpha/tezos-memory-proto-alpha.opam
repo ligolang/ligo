@@ -10,7 +10,7 @@ bug-reports: "https://gitlab.com/ligolang/tezos/issues"
 depends: [
   "dune"
   "tezos-protocol-environment"
-  "tezos-protocol-alpha"
+  "tezos-protocol-005-PsBabyM1"
 ]
 build: [
   ["dune" "build" "-p" name]

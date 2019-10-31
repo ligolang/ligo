@@ -1,3 +1,5 @@
+(** Pretty printer for the Simplified Abstract Syntax Tree *)
+
 open Types
 open Format
 
@@ -32,7 +34,7 @@ val matching_variant_case : (formatter -> 'a -> unit) -> formatter -> (construct
 val matching : (formatter -> 'a -> unit) -> formatter -> 'a matching -> unit
 *)
 
-(* Shows the type expected for the matched value *)
+(** Shows the type expected for the matched value *)
 val matching_type : formatter -> 'a matching -> unit
 
 (*
@@ -41,4 +43,5 @@ val matching_variant_case_type : formatter -> ( ( constructor_name * name) * 'a)
 val declaration : formatter -> declaration -> unit
 
 *)
+(** Pretty print a full program AST *)
 val program : formatter -> program -> unit

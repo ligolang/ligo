@@ -312,7 +312,7 @@ and unary_expr = parser
 and core_expr = parser
   [< 'Int _ >] -> ()
 | [< 'Nat _ >] -> ()
-| [< 'Mtz _ >] -> ()
+| [< 'Mutez _ >] -> ()
 | [< 'Ident _; _ = opt core_suffix >] -> ()
 | [< 'String _ >] -> ()
 | [< 'Bytes _ >] -> ()

@@ -349,7 +349,7 @@ XXX
 core_expr ::=
   Int
 | Nat
-| Mtz
+| Mutez
 | Ident option(core_suffix)
 | String
 | Bytes

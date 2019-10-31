@@ -8,16 +8,16 @@ open Script_ir_translator
 
 let rec translate_value ?bm_opt (Ex_typed_value (ty, value)) : value result =
   match (ty, value) with
-  | Pair_t ((a_ty, _, _), (b_ty, _, _), _), (a, b) -> (
+  | Pair_t ((a_ty, _, _), (b_ty, _, _), _ , _), (a, b) -> (
       let%bind a = translate_value ?bm_opt @@ Ex_typed_value(a_ty, a) in
       let%bind b = translate_value ?bm_opt @@ Ex_typed_value(b_ty, b) in
       ok @@ D_pair(a, b)
     )
-  | Union_t ((a_ty, _), _, _), L a -> (
+  | Union_t ((a_ty, _), _, _ , _), L a -> (
       let%bind a = translate_value ?bm_opt @@ Ex_typed_value(a_ty, a) in
       ok @@ D_left a
     )
-  | Union_t (_, (b_ty, _), _), R b -> (
+  | Union_t (_, (b_ty, _), _ , _), R b -> (
       let%bind b = translate_value ?bm_opt @@ Ex_typed_value(b_ty, b) in
       ok @@ D_right b
     )
@@ -47,16 +47,16 @@ let rec translate_value ?bm_opt (Ex_typed_value (ty, value)) : value result =
       ok @@ D_string s
   | (Bytes_t _), b ->
       ok @@ D_bytes (Tezos_stdlib.MBytes.to_bytes b)
-  | (Address_t _), s ->
+  | (Address_t _), (s , _) ->
       ok @@ D_string (Alpha_context.Contract.to_b58check s)
   | (Unit_t _), () ->
       ok @@ D_unit
   | (Option_t _), None ->
       ok @@ D_none
-  | (Option_t ((o_ty, _), _, _)), Some s ->
+  | (Option_t (o_ty, _, _)), Some s ->
       let%bind s' = translate_value @@ Ex_typed_value (o_ty, s) in
       ok @@ D_some s'
-  | (Map_t (k_cty, v_ty, _)), m ->
+  | (Map_t (k_cty, v_ty, _ , _)), m ->
       let k_ty = Script_ir_translator.ty_of_comparable_ty k_cty in
       let lst =
         let aux k v acc = (k, v) :: acc in
@@ -95,7 +95,7 @@ let rec translate_value ?bm_opt (Ex_typed_value (ty, value)) : value result =
           | None -> ok orig_rem in
         bind_fold_list aux original_big_map lst in
       ok @@ D_big_map lst'
-  | (List_t (ty, _)), lst ->
+  | (List_t (ty, _ , _)), lst ->
       let%bind lst' =
         let aux = fun t -> translate_value (Ex_typed_value (ty, t)) in
         bind_map_list aux lst
@@ -113,7 +113,7 @@ let rec translate_value ?bm_opt (Ex_typed_value (ty, value)) : value result =
       in
       ok @@ D_set lst''
     )
-  | (Operation_t _) , op ->
+  | (Operation_t _) , (op , _) ->
       ok @@ D_operation op
   | ty, v ->
       let%bind error =

@@ -1,7 +1,8 @@
 open Tezos_micheline
 open Micheline
 
-include Memory_proto_alpha.Protocol.Michelson_v1_primitives
+open Memory_proto_alpha.Protocol
+include Michelson_v1_primitives
 
 type michelson = (int, prim) node
 type t = michelson
@@ -45,6 +46,8 @@ let i_push ty code = prim ~children:[ty;code] I_PUSH
 let i_push_unit = i_push t_unit d_unit
 let i_push_string str = i_push t_string (string str)
 
+let i_apply = prim I_APPLY
+
 let i_comment s : michelson = seq [ i_push_string s ; prim I_DROP ]
 
 let i_none ty = prim ~children:[ty] I_NONE
@@ -56,6 +59,7 @@ let i_some = prim I_SOME
 let i_lambda arg ret body = prim ~children:[arg;ret;body] I_LAMBDA
 let i_empty_map src dst = prim ~children:[src;dst] I_EMPTY_MAP
 let i_drop = prim I_DROP
+let i_dropn n = prim I_DROP ~children:[int (Z.of_int n)]
 let i_exec = prim I_EXEC
 
 let i_if a b = prim ~children:[seq [a] ; seq[b]] I_IF
@@ -67,6 +71,9 @@ let i_assert_some = i_if_none (seq [i_push_string "ASSERT_SOME" ; i_failwith]) (
 let i_assert_some_msg msg = i_if_none (seq [msg ; i_failwith]) (seq [])
 
 let dip code : michelson = prim ~children:[seq [code]] I_DIP
+let dipn n code = prim ~children:[Int (0 , Z.of_int n) ; seq [code]] I_DIP
+let i_dig n : michelson = prim ~children:[Int (0 , Z.of_int n)] I_DIG
+let i_dug n : michelson = prim ~children:[Int (0 , Z.of_int n)] I_DUG
 let i_unpair = seq [i_dup ; i_car ; dip i_cdr]
 let i_unpiar = seq [i_dup ; i_cdr ; dip i_car]
 
@@ -92,3 +99,10 @@ let pp_json ppf (michelson : michelson) =
     )
   in
   Format.fprintf ppf "%a" Tezos_data_encoding.Json.pp json
+
+let pp_hex ppf (michelson : michelson) =
+  let canonical = strip_locations michelson in
+  let bytes = Tezos_data_encoding.Binary_writer.to_bytes_exn Script_repr.expr_encoding canonical in
+  let bytes = Tezos_stdlib.MBytes.to_bytes bytes in
+  let hex = Hex.of_bytes bytes in
+  Format.fprintf ppf "%a" Hex.pp hex

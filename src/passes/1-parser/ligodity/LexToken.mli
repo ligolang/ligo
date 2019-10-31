@@ -31,50 +31,50 @@ type lexeme = string
 type t =
   (* Symbols *)
 
-  ARROW of Region.t   (* "->" *)
-| CONS of Region.t     (* "::" *)
-| CAT of Region.t      (* "^"  *)
-  (*| APPEND   (* "@"  *)*)
+  ARROW of Region.t  (* "->" *)
+| CONS  of Region.t  (* "::" *)
+| CAT   of Region.t  (* "^"  *)
+(*| APPEND   (* "@"  *)*)
 
   (* Arithmetics *)
 
 | MINUS of Region.t    (* "-" *)
-| PLUS of Region.t     (* "+" *)
+| PLUS  of Region.t    (* "+" *)
 | SLASH of Region.t    (* "/" *)
-| TIMES of Region.t   (* "*" *)
+| TIMES of Region.t    (* "*" *)
 
   (* Compounds *)
 
-| LPAR of Region.t    (* "(" *)
-| RPAR of Region.t   (* ")" *)
-| LBRACKET of Region.t (* "[" *)
-| RBRACKET of Region.t (* "]" *)
-| LBRACE of Region.t  (* "{" *)
-| RBRACE of Region.t  (* "}" *)
+| LPAR     of Region.t  (* "(" *)
+| RPAR     of Region.t  (* ")" *)
+| LBRACKET of Region.t  (* "[" *)
+| RBRACKET of Region.t  (* "]" *)
+| LBRACE   of Region.t  (* "{" *)
+| RBRACE   of Region.t  (* "}" *)
 
   (* Separators *)
 
-| COMMA of Region.t   (* "," *)
-| SEMI  of Region.t   (* ";" *)
-| VBAR of Region.t    (* "|" *)
-| COLON of Region.t   (* ":" *)
-| DOT of Region.t     (* "." *)
+| COMMA of Region.t  (* "," *)
+| SEMI  of Region.t  (* ";" *)
+| VBAR  of Region.t  (* "|" *)
+| COLON of Region.t  (* ":" *)
+| DOT   of Region.t  (* "." *)
 
   (* Wildcard *)
 
-| WILD of Region.t    (* "_" *)
+| WILD of Region.t  (* "_" *)
 
   (* Comparisons *)
 
 | EQ of Region.t      (* "="  *)
-| NE of Region.t       (* "<>" *)
-| LT of Region.t       (* "<"  *)
-| GT of Region.t    (* ">"  *)
+| NE of Region.t      (* "<>" *)
+| LT of Region.t      (* "<"  *)
+| GT of Region.t      (* ">"  *)
 | LE of Region.t      (* "=<" *)
-| GE of Region.t       (* ">=" *)
+| GE of Region.t      (* ">=" *)
 
-| BOOL_OR of Region.t (* "||" *)
-| BOOL_AND of Region.t(* "&&" *)
+| BOOL_OR  of Region.t (* "||" *)
+| BOOL_AND of Region.t (* "&&" *)
 
   (* Identifiers, labels, numbers and strings *)
 
@@ -82,7 +82,7 @@ type t =
 | Constr of string Region.reg
 | Int    of (string * Z.t) Region.reg
 | Nat    of (string * Z.t) Region.reg
-| Mtz    of (string * Z.t) Region.reg
+| Mutez  of (string * Z.t) Region.reg
 | Str    of string Region.reg
 | Bytes  of (string * Hex.t) Region.reg
 
@@ -90,24 +90,24 @@ type t =
 
 (*| And*)
 | Begin of Region.t
-| Else of Region.t
-| End of Region.t
+| Else  of Region.t
+| End   of Region.t
 | False of Region.t
-| Fun of Region.t
-| If of Region.t
-| In of Region.t
-| Let of Region.t
+| Fun   of Region.t
+| If    of Region.t
+| In    of Region.t
+| Let   of Region.t
 | Match of Region.t
-| Mod of Region.t
-| Not of Region.t
-| Of of Region.t
-| Or of Region.t
-| Then of Region.t
-| True of Region.t
-| Type of Region.t
-| With of Region.t
+| Mod   of Region.t
+| Not   of Region.t
+| Of    of Region.t
+| Or    of Region.t
+| Then  of Region.t
+| True  of Region.t
+| Type  of Region.t
+| With  of Region.t
 
-  (* Liquidity specific *)
+  (* Liquidity-specific *)
 
 | LetEntry of Region.t
 | MatchNat of Region.t
@@ -137,23 +137,20 @@ val to_region : token -> Region.t
 
 (* Injections *)
 
-type int_err =
-  Non_canonical_zero
-
+type   int_err = Non_canonical_zero
 type ident_err = Reserved_name
+type   nat_err = Invalid_natural
+               | Non_canonical_zero_nat
+type   sym_err = Invalid_symbol
 
-type invalid_natural = 
-  | Invalid_natural
-  | Non_canonical_zero_nat
-
+val mk_int    : lexeme -> Region.t -> (token,   int_err) result
+val mk_nat    : lexeme -> Region.t -> (token,   nat_err) result
+val mk_mutez  : lexeme -> Region.t -> (token,   int_err) result
+val mk_ident  : lexeme -> Region.t -> (token, ident_err) result
+val mk_sym    : lexeme -> Region.t -> (token,   sym_err) result
 val mk_string : lexeme -> Region.t -> token
 val mk_bytes  : lexeme -> Region.t -> token
-val mk_int    : lexeme -> Region.t -> (token,   int_err) result
-val mk_nat    : lexeme -> Region.t -> (token,   invalid_natural) result
-val mk_mtz    : lexeme -> Region.t -> (token,   int_err) result
-val mk_ident  : lexeme -> Region.t -> (token, ident_err) result
 val mk_constr : lexeme -> Region.t -> token
-val mk_sym    : lexeme -> Region.t -> token
 val eof       : Region.t -> token
 
 (* Predicates *)

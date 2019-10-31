@@ -4,7 +4,7 @@
   (libraries
     tezos-error-monad
     tezos-stdlib-unix
-    tezos-protocol-alpha-parameters
+    tezos-protocol-005-PsBabyM1-parameters
     tezos-memory-proto-alpha
     simple-utils
     tezos-utils

@@ -101,22 +101,22 @@ module type TOKEN =
 
     (* Errors *)
 
-    type   int_err       = Non_canonical_zero
-    type ident_err       = Reserved_name
-    type invalid_natural =
-      | Invalid_natural
-      | Non_canonical_zero_nat
+    type   int_err = Non_canonical_zero
+    type ident_err = Reserved_name
+    type   nat_err = Invalid_natural
+                   | Non_canonical_zero_nat
+    type   sym_err = Invalid_symbol
 
     (* Injections *)
 
+    val mk_int    : lexeme -> Region.t -> (token,   int_err) result
+    val mk_nat    : lexeme -> Region.t -> (token,   nat_err) result
+    val mk_mutez  : lexeme -> Region.t -> (token,   int_err) result
+    val mk_ident  : lexeme -> Region.t -> (token, ident_err) result
+    val mk_sym    : lexeme -> Region.t -> (token,   sym_err) result
     val mk_string : lexeme -> Region.t -> token
     val mk_bytes  : lexeme -> Region.t -> token
-    val mk_int    : lexeme -> Region.t -> (token,   int_err) result
-    val mk_nat    : lexeme -> Region.t -> (token,   invalid_natural) result
-    val mk_mtz    : lexeme -> Region.t -> (token,   int_err) result
-    val mk_ident  : lexeme -> Region.t -> (token, ident_err) result
     val mk_constr : lexeme -> Region.t -> token
-    val mk_sym    : lexeme -> Region.t -> token
     val eof       : Region.t -> token
 
     (* Predicates *)
@@ -343,6 +343,7 @@ module Make (Token: TOKEN) : (S with module Token = Token) =
     type Error.t += Broken_string
     type Error.t += Invalid_character_in_string
     type Error.t += Reserved_name
+    type Error.t += Invalid_symbol
     type Error.t += Invalid_natural
 
     let error_to_string = function
@@ -386,6 +387,9 @@ module Make (Token: TOKEN) : (S with module Token = Token) =
     | Reserved_name ->
         "Reserved named.\n\
          Hint: Change the name.\n"
+    | Invalid_symbol ->
+        "Invalid symbol.\n\
+         Hint: Check the LIGO syntax you use.\n"
     | Invalid_natural ->
         "Invalid natural."
     | _ -> assert false
@@ -432,9 +436,9 @@ module Make (Token: TOKEN) : (S with module Token = Token) =
       | Error Token.Invalid_natural ->
           fail region Invalid_natural
 
-    let mk_mtz state buffer =
+    let mk_mutez state buffer =
       let region, lexeme, state = sync state buffer in
-      match Token.mk_mtz lexeme region with
+      match Token.mk_mutez lexeme region with
         Ok token -> token, state
       | Error Token.Non_canonical_zero ->
           fail region Non_canonical_zero
@@ -443,7 +447,7 @@ module Make (Token: TOKEN) : (S with module Token = Token) =
       let region, lexeme, state = sync state buffer in
       let lexeme = Str.string_before lexeme (String.index lexeme 't') in
       let lexeme = Z.mul (Z.of_int 1_000_000) (Z.of_string lexeme) in
-      match Token.mk_mtz (Z.to_string lexeme ^ "mtz") region with
+      match Token.mk_mutez (Z.to_string lexeme ^ "mutez") region with
         Ok token -> token, state
       | Error Token.Non_canonical_zero ->
           fail region Non_canonical_zero
@@ -457,9 +461,9 @@ module Make (Token: TOKEN) : (S with module Token = Token) =
           let num         = Z.of_string (integral ^ fractional)
           and den         = Z.of_string ("1" ^ String.make (len-index-1) '0')
           and million     = Q.of_string "1000000" in
-          let mtz         = Q.make num den |> Q.mul million in
-          let should_be_1 = Q.den mtz in
-          if Z.equal Z.one should_be_1 then Some (Q.num mtz) else None
+          let mutez         = Q.make num den |> Q.mul million in
+          let should_be_1 = Q.den mutez in
+          if Z.equal Z.one should_be_1 then Some (Q.num mutez) else None
       | exception Not_found -> assert false
 
     let mk_tz_decimal state buffer =
@@ -467,7 +471,7 @@ module Make (Token: TOKEN) : (S with module Token = Token) =
       let lexeme = Str.string_before lexeme (String.index lexeme 't') in
       match format_tz lexeme with
       | Some tz -> (
-        match Token.mk_mtz (Z.to_string tz ^ "mtz") region with
+        match Token.mk_mutez (Z.to_string tz ^ "mutez") region with
           Ok token ->
           token, state
         | Error Token.Non_canonical_zero ->
@@ -487,8 +491,10 @@ module Make (Token: TOKEN) : (S with module Token = Token) =
       in Token.mk_constr lexeme region, state
 
     let mk_sym state buffer =
-      let region, lexeme, state = sync state buffer
-      in Token.mk_sym lexeme region, state
+      let region, lexeme, state = sync state buffer in
+      match Token.mk_sym lexeme region with
+        Ok token -> token, state
+      | Error Token.Invalid_symbol -> fail region Invalid_symbol
 
     let mk_eof state buffer =
       let region, _, state = sync state buffer
@@ -518,12 +524,17 @@ let byte_seq   = byte | byte (byte | '_')* byte
 let bytes      = "0x" (byte_seq? as seq)
 let esc        = "\\n" | "\\\"" | "\\\\" | "\\b"
                | "\\r" | "\\t" | "\\x" byte
-let symbol     = ';' | ',' | '(' | ')'| '[' | ']' | '{' | '}'
-               | '#' | '|' | "->" | ":=" | '=' | ':'
-               | '<' | "<=" | '>' | ">=" | "=/=" | "<>"
-               | '+' | '-' | '*' | '/' | '.' | '_' | '^'
-               | "::" | "||" | "&&"
-let string     = [^'"' '\\' '\n']*  (* For strings of #include *)
+let pascaligo_sym = "=/=" | '#' | ":="
+let cameligo_sym = "<>" | "::" | "||" | "&&"
+
+let symbol =
+  ';' | ',' | '(' | ')'| '[' | ']' | '{' | '}'
+| '=' | ':' | '|' | "->" | '.' | '_' | '^'
+| '+' | '-' | '*' | '/'
+| '<' | "<=" | '>' | ">="
+| pascaligo_sym | cameligo_sym
+
+let string = [^'"' '\\' '\n']*  (* For strings of #include *)
 
 (* RULES *)
 
@@ -548,7 +559,7 @@ and scan state = parse
 | bytes         { (mk_bytes seq) state lexbuf |> enqueue   }
 | natural 'n'   { mk_nat         state lexbuf |> enqueue   }
 | natural 'p'   { mk_nat         state lexbuf |> enqueue   }
-| natural "mtz" { mk_mtz         state lexbuf |> enqueue   }
+| natural "mutez" { mk_mutez     state lexbuf |> enqueue   }
 | natural "tz"  { mk_tz          state lexbuf |> enqueue   }
 | decimal "tz"  { mk_tz_decimal  state lexbuf |> enqueue   }
 | natural       { mk_int         state lexbuf |> enqueue   }

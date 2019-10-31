@@ -32,11 +32,17 @@ type ex_comparable_ty = Ex_comparable_ty : 'a Script_typed_ir.comparable_ty -> e
 type ex_ty = Ex_ty : 'a Script_typed_ir.ty -> ex_ty
 type ex_stack_ty = Ex_stack_ty : 'a Script_typed_ir.stack_ty -> ex_stack_ty
 type ex_script = Ex_script : ('a, 'b) Script_typed_ir.script -> ex_script
-
 type tc_context =
   | Lambda : tc_context
   | Dip : 'a Script_typed_ir.stack_ty * tc_context -> tc_context
-  | Toplevel : { storage_type : 'sto Script_typed_ir.ty ; param_type : 'param Script_typed_ir.ty } -> tc_context
+  | Toplevel : { storage_type : 'sto Script_typed_ir.ty ;
+                 param_type : 'param Script_typed_ir.ty ;
+                 root_name : string option ;
+                 legacy_create_contract_literal : bool } -> tc_context
+type 'bef judgement =
+  | Typed : ('bef, 'aft) Script_typed_ir.descr -> 'bef judgement
+  | Failed :
+      { descr : 'aft. 'aft Script_typed_ir.stack_ty -> ('bef, 'aft) Script_typed_ir.descr } -> 'bef judgement
 
 type unparsing_mode = Optimized | Readable
 
@@ -64,21 +70,20 @@ val map_get : 'key -> ('key, 'value) Script_typed_ir.map -> 'value option
 val map_key_ty : ('a, 'b) Script_typed_ir.map -> 'a Script_typed_ir.comparable_ty
 val map_size : ('a, 'b) Script_typed_ir.map -> Script_int.n Script_int.num
 
+val empty_big_map : 'a Script_typed_ir.comparable_ty -> 'b Script_typed_ir.ty -> ('a, 'b) Script_typed_ir.big_map
 val big_map_mem :
-  context -> Contract.t -> 'key ->
+  context -> 'key ->
   ('key, 'value) Script_typed_ir.big_map ->
   (bool * context) tzresult Lwt.t
 val big_map_get :
-  context ->
-  Contract.t -> 'key ->
+  context -> 'key ->
   ('key, 'value) Script_typed_ir.big_map ->
   ('value option * context) tzresult Lwt.t
 val big_map_update :
   'key -> 'value option -> ('key, 'value) Script_typed_ir.big_map ->
   ('key, 'value) Script_typed_ir.big_map
 
-val ty_of_comparable_ty :
-  'a Script_typed_ir.comparable_ty -> 'a Script_typed_ir.ty
+val has_big_map : 't Script_typed_ir.ty -> bool
 
 
 val ty_eq :
@@ -86,25 +91,41 @@ val ty_eq :
   'ta Script_typed_ir.ty -> 'tb Script_typed_ir.ty ->
   (('ta Script_typed_ir.ty, 'tb Script_typed_ir.ty) eq * context) tzresult
 
+val compare_comparable : 'a Script_typed_ir.comparable_ty -> 'a -> 'a -> int
+
+val ty_of_comparable_ty : ('a, 's) Script_typed_ir.comparable_struct -> 'a Script_typed_ir.ty
+
 val parse_data :
   ?type_logger: type_logger ->
-  context ->
+  context -> legacy: bool ->
   'a Script_typed_ir.ty -> Script.node -> ('a * context) tzresult Lwt.t
 val unparse_data :
   context -> unparsing_mode -> 'a Script_typed_ir.ty -> 'a ->
   (Script.node * context) tzresult Lwt.t
 
+val parse_instr :
+  ?type_logger: type_logger ->
+  tc_context -> context -> legacy: bool ->
+  Script.node -> 'bef Script_typed_ir.stack_ty -> ('bef judgement * context) tzresult Lwt.t
+
 val parse_ty :
-  context ->
+  context -> legacy: bool ->
   allow_big_map: bool ->
   allow_operation: bool ->
+  allow_contract: bool ->
   Script.node -> (ex_ty * context) tzresult
+
+val parse_packable_ty :
+  context -> legacy: bool -> Script.node -> (ex_ty * context) tzresult
 
 val unparse_ty :
   context -> 'a Script_typed_ir.ty -> (Script.node * context) tzresult Lwt.t
 
 val parse_toplevel :
-  Script.expr -> (Script.node * Script.node * Script.node) tzresult
+  legacy: bool -> Script.expr -> (Script.node * Script.node * Script.node * string option) tzresult
+
+val add_field_annot :
+  [ `Field_annot of string ] option -> [ `Var_annot of string ] option -> Script.node -> Script.node
 
 val typecheck_code :
   context -> Script.expr -> (type_map * context) tzresult Lwt.t
@@ -113,18 +134,9 @@ val typecheck_data :
   ?type_logger: type_logger ->
   context -> Script.expr * Script.expr -> context tzresult Lwt.t
 
-type 'bef judgement =
-  | Typed : ('bef, 'aft) Script_typed_ir.descr -> 'bef judgement
-  | Failed : { descr : 'aft. 'aft Script_typed_ir.stack_ty -> ('bef, 'aft) Script_typed_ir.descr } -> 'bef judgement
-
-val parse_instr :
-    ?type_logger: type_logger ->
-    tc_context -> context ->
-    Script.node -> 'bef Script_typed_ir.stack_ty -> ('bef judgement * context) tzresult Lwt.t
-
 val parse_script :
   ?type_logger: type_logger ->
-  context -> Script.t -> (ex_script * context) tzresult Lwt.t
+  context -> legacy: bool -> Script.t -> (ex_script * context) tzresult Lwt.t
 
 (* Gas accounting may not be perfect in this function, as it is only called by RPCs. *)
 val unparse_script :
@@ -132,23 +144,44 @@ val unparse_script :
   ('a, 'b) Script_typed_ir.script -> (Script.t * context) tzresult Lwt.t
 
 val parse_contract :
-  context -> Script.location -> 'a Script_typed_ir.ty -> Contract.t ->
+  legacy: bool -> context -> Script.location -> 'a Script_typed_ir.ty -> Contract.t ->
+  entrypoint: string ->
   (context * 'a Script_typed_ir.typed_contract) tzresult Lwt.t
 
 val parse_contract_for_script :
-  context -> Script.location -> 'a Script_typed_ir.ty -> Contract.t ->
+  legacy: bool -> context -> Script.location -> 'a Script_typed_ir.ty -> Contract.t ->
+  entrypoint: string ->
   (context * 'a Script_typed_ir.typed_contract option) tzresult Lwt.t
+
+val find_entrypoint :
+  't Script_typed_ir.ty -> root_name: string option -> string -> ((Script.node -> Script.node) * ex_ty) tzresult
+
+module Entrypoints_map : S.MAP with type key = string
+
+val list_entrypoints :
+  't Script_typed_ir.ty ->
+  context ->
+  root_name: string option ->
+  (Michelson_v1_primitives.prim list list *
+   (Michelson_v1_primitives.prim list * Script.node) Entrypoints_map.t)
+    tzresult
 
 val pack_data : context -> 'a Script_typed_ir.ty -> 'a -> (MBytes.t * context) tzresult Lwt.t
 val hash_data : context -> 'a Script_typed_ir.ty -> 'a -> (Script_expr_hash.t * context) tzresult Lwt.t
 
-val extract_big_map :
-  'a Script_typed_ir.ty -> 'a -> Script_typed_ir.ex_big_map option
+type big_map_ids
 
-val diff_of_big_map :
-  context -> unparsing_mode -> Script_typed_ir.ex_big_map ->
-  (Contract.big_map_diff * context) tzresult Lwt.t
+val no_big_map_id : big_map_ids
 
-val big_map_initialization :
-  context -> unparsing_mode -> ex_script ->
-  (Contract.big_map_diff option * context) tzresult Lwt.t
+val collect_big_maps :
+  context -> 'a Script_typed_ir.ty -> 'a -> (big_map_ids * context) tzresult Lwt.t
+
+val list_of_big_map_ids : big_map_ids -> Z.t list
+
+val extract_big_map_diff :
+  context -> unparsing_mode ->
+  temporary: bool ->
+  to_duplicate: big_map_ids ->
+  to_update: big_map_ids ->
+  'a Script_typed_ir.ty -> 'a ->
+  ('a * Contract.big_map_diff option * context) tzresult Lwt.t

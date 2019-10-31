@@ -36,10 +36,15 @@
 
 open Storage_sigs
 
-module Last_block_priority : sig
+module Block_priority : sig
   val get : Raw_context.t -> int tzresult Lwt.t
   val set : Raw_context.t -> int -> Raw_context.t tzresult Lwt.t
   val init : Raw_context.t -> int -> Raw_context.t tzresult Lwt.t
+end
+
+(* Only for migration from 004 *)
+module Last_block_priority : sig
+  val delete : Raw_context.t -> Raw_context.t tzresult Lwt.t
 end
 
 module Roll : sig
@@ -152,7 +157,13 @@ module Contract : sig
      and type value = Signature.Public_key_hash.t
      and type t := Raw_context.t
 
+  (** All contracts (implicit and originated) that are delegated, if any  *)
   module Delegated : Data_set_storage
+    with type elt = Contract_repr.t
+     and type t = Raw_context.t * Contract_repr.t
+
+  (** Only for migration from proto_004  *)
+  module Delegated_004 : Data_set_storage
     with type elt = Contract_hash.t
      and type t = Raw_context.t * Contract_repr.t
 
@@ -166,11 +177,11 @@ module Contract : sig
      and type value = Cycle_repr.t
      and type t := Raw_context.t
 
-  module Spendable : Data_set_storage
+  module Spendable_004 : Data_set_storage
     with type elt = Contract_repr.t
      and type t := Raw_context.t
 
-  module Delegatable : Data_set_storage
+  module Delegatable_004 : Data_set_storage
     with type elt = Contract_repr.t
      and type t := Raw_context.t
 
@@ -179,15 +190,39 @@ module Contract : sig
      and type value = Z.t
      and type t := Raw_context.t
 
-  module Code : Non_iterable_indexed_carbonated_data_storage
-    with type key = Contract_repr.t
-     and type value = Script_repr.lazy_expr
-     and type t := Raw_context.t
+  module Code : sig
+    include Non_iterable_indexed_carbonated_data_storage
+      with type key = Contract_repr.t
+       and type value = Script_repr.lazy_expr
+       and type t := Raw_context.t
 
-  module Storage : Non_iterable_indexed_carbonated_data_storage
-    with type key = Contract_repr.t
-     and type value = Script_repr.lazy_expr
-     and type t := Raw_context.t
+    (** Only used for 005 migration to avoid gas cost.
+        Allocates a storage bucket at the given key and initializes it ;
+        returns a {!Storage_error Existing_key} if the bucket exists. *)
+    val init_free: Raw_context.t -> Contract_repr.t -> Script_repr.lazy_expr -> (Raw_context.t * int) tzresult Lwt.t
+
+    (** Only used for 005 migration to avoid gas cost.
+        Updates the content of a bucket ; returns A {!Storage_Error
+        Missing_key} if the value does not exists. *)
+    val set_free: Raw_context.t -> Contract_repr.t -> Script_repr.lazy_expr -> (Raw_context.t * int) tzresult Lwt.t
+  end
+
+  module Storage : sig
+    include Non_iterable_indexed_carbonated_data_storage
+      with type key = Contract_repr.t
+       and type value = Script_repr.lazy_expr
+       and type t := Raw_context.t
+
+    (** Only used for 005 migration to avoid gas cost.
+        Allocates a storage bucket at the given key and initializes it ;
+        returns a {!Storage_error Existing_key} if the bucket exists. *)
+    val init_free: Raw_context.t -> Contract_repr.t -> Script_repr.lazy_expr -> (Raw_context.t * int) tzresult Lwt.t
+
+    (** Only used for 005 migration to avoid gas cost.
+        Updates the content of a bucket ; returns A {!Storage_Error
+        Missing_key} if the value does not exists. *)
+    val set_free: Raw_context.t -> Contract_repr.t -> Script_repr.lazy_expr -> (Raw_context.t * int) tzresult Lwt.t
+  end
 
   (** Current storage space in bytes.
       Includes code, global storage and big map elements. *)
@@ -202,12 +237,50 @@ module Contract : sig
      and type value = Z.t
      and type t := Raw_context.t
 
-  type bigmap_key = Raw_context.t * Contract_repr.t
+end
 
-  module Big_map : Non_iterable_indexed_carbonated_data_storage
+module Big_map : sig
+
+  module Next : sig
+    val incr : Raw_context.t -> (Raw_context.t * Z.t) tzresult Lwt.t
+    val init : Raw_context.t -> Raw_context.t tzresult Lwt.t
+  end
+
+  (** The domain of alive big maps *)
+  val fold :
+    Raw_context.t ->
+    init:'a -> f:(Z.t -> 'a -> 'a Lwt.t) -> 'a Lwt.t
+  val list : Raw_context.t -> Z.t list Lwt.t
+
+  val remove_rec : Raw_context.t -> Z.t -> Raw_context.t Lwt.t
+
+  val copy : Raw_context.t -> from:Z.t -> to_:Z.t ->  Raw_context.t tzresult Lwt.t
+
+  type key = Raw_context.t * Z.t
+
+  val rpc_arg : Z.t RPC_arg.t
+
+  module Index : Storage_description.INDEX with type t = Z.t
+
+  module Contents : Non_iterable_indexed_carbonated_data_storage
     with type key = Script_expr_hash.t
      and type value = Script_repr.expr
-     and type t := bigmap_key
+     and type t := key
+
+  module Total_bytes : Indexed_data_storage
+    with type key = Z.t
+     and type value = Z.t
+     and type t := Raw_context.t
+
+  module Key_type : Indexed_data_storage
+    with type key = Z.t
+     and type value = Script_repr.expr
+     and type t := Raw_context.t
+
+  module Value_type : Indexed_data_storage
+    with type key = Z.t
+     and type value = Script_repr.expr
+     and type t := Raw_context.t
 
 end
 
@@ -234,8 +307,14 @@ module Vote : sig
     with type value = Voting_period_repr.kind
      and type t := Raw_context.t
 
-  (** Expected quorum, in centile of percentage *)
-  module Current_quorum : Single_data_storage
+  (** Only for migration from 004.
+      Expected quorum, in centile of percentage *)
+  module Current_quorum_004 : Single_data_storage
+    with type value = int32
+     and type t := Raw_context.t
+
+  (** Participation exponential moving average, in centile of percentage *)
+  module Participation_ema : Single_data_storage
     with type value = int32
      and type t := Raw_context.t
 

@@ -59,14 +59,16 @@ module Scripts = struct
     let path = RPC_path.(path / "scripts")
 
     let run_code_input_encoding =
-      (obj7
+      (obj9
          (req "script" Script.expr_encoding)
          (req "storage" Script.expr_encoding)
          (req "input" Script.expr_encoding)
          (req "amount" Tez.encoding)
+         (req "chain_id" Chain_id.encoding)
          (opt "source" Contract.encoding)
          (opt "payer" Contract.encoding)
-         (opt "gas" z))
+         (opt "gas" z)
+         (dft "entrypoint" string "default"))
 
     let trace_encoding =
       def "scripted.trace" @@
@@ -147,9 +149,38 @@ module Scripts = struct
         ~description:
           "Run an operation without signature checks"
         ~query: RPC_query.empty
-        ~input: Operation.encoding
+        ~input: (obj2
+                   (req "operation" Operation.encoding)
+                   (req "chain_id" Chain_id.encoding))
         ~output: Apply_results.operation_data_and_metadata_encoding
         RPC_path.(path / "run_operation")
+
+    let entrypoint_type =
+      RPC_service.post_service
+        ~description: "Return the type of the given entrypoint"
+        ~query: RPC_query.empty
+        ~input: (obj2
+                   (req "script" Script.expr_encoding)
+                   (dft "entrypoint" string "default"))
+        ~output: (obj1
+                    (req "entrypoint_type" Script.expr_encoding))
+        RPC_path.(path / "entrypoint")
+
+
+    let list_entrypoints =
+      RPC_service.post_service
+        ~description: "Return the list of entrypoints of the given script"
+        ~query: RPC_query.empty
+        ~input: (obj1
+                   (req "script" Script.expr_encoding))
+        ~output: (obj2
+                    (dft "unreachable"
+                       (Data_encoding.list
+                          (obj1 (req "path" (Data_encoding.list Michelson_v1_primitives.prim_encoding))))
+                       [])
+                    (req "entrypoints"
+                       (assoc Script.expr_encoding)))
+        RPC_path.(path / "entrypoints")
 
   end
 
@@ -163,14 +194,11 @@ module Scripts = struct
         | None -> assert false in
       Contract.originate ctxt dummy_contract
         ~balance
-        ~manager: Signature.Public_key_hash.zero
         ~delegate: None
-        ~spendable: false
-        ~delegatable: false
         ~script: (script, None) >>=? fun ctxt ->
       return (ctxt, dummy_contract) in
     register0 S.run_code begin fun ctxt ()
-      (code, storage, parameter, amount, source, payer, gas) ->
+      (code, storage, parameter, amount, chain_id, source, payer, gas, entrypoint) ->
       let storage = Script.lazy_expr storage in
       let code = Script.lazy_expr code in
       originate_dummy_contract ctxt { storage ; code } >>=? fun (ctxt, dummy_contract) ->
@@ -183,17 +211,24 @@ module Scripts = struct
         | Some gas -> gas
         | None -> Constants.hard_gas_limit_per_operation ctxt in
       let ctxt = Gas.set_limit ctxt gas in
+      let step_constants =
+        let open Script_interpreter in
+        { source ;
+          payer ;
+          self = dummy_contract ;
+          amount ;
+          chain_id } in
       Script_interpreter.execute
         ctxt Readable
-        ~source
-        ~payer
-        ~self:(dummy_contract, { storage ; code })
-        ~amount ~parameter
+        step_constants
+        ~script:{ storage ; code }
+        ~entrypoint
+        ~parameter
       >>=? fun { Script_interpreter.storage ; operations ; big_map_diff ; _ } ->
       return (storage, operations, big_map_diff)
     end ;
     register0 S.trace_code begin fun ctxt ()
-      (code, storage, parameter, amount, source, payer, gas) ->
+      (code, storage, parameter, amount, chain_id, source, payer, gas, entrypoint) ->
       let storage = Script.lazy_expr storage in
       let code = Script.lazy_expr code in
       originate_dummy_contract ctxt { storage ; code } >>=? fun (ctxt, dummy_contract) ->
@@ -206,12 +241,19 @@ module Scripts = struct
         | Some gas -> gas
         | None -> Constants.hard_gas_limit_per_operation ctxt in
       let ctxt = Gas.set_limit ctxt gas in
+      let step_constants =
+        let open Script_interpreter in
+        { source ;
+          payer ;
+          self = dummy_contract ;
+          amount ;
+          chain_id } in
       Script_interpreter.trace
         ctxt Readable
-        ~source
-        ~payer
-        ~self:(dummy_contract, { storage ; code })
-        ~amount ~parameter
+        step_constants
+        ~script:{ storage ; code }
+        ~entrypoint
+        ~parameter
       >>=? fun ({ Script_interpreter.storage ; operations ; big_map_diff ; _ }, trace) ->
       return (storage, operations, trace, big_map_diff)
     end ;
@@ -234,13 +276,13 @@ module Scripts = struct
       let ctxt = match maybe_gas with
         | None -> Gas.set_unlimited ctxt
         | Some gas -> Gas.set_limit ctxt gas in
-      Lwt.return (parse_ty ctxt ~allow_big_map:false ~allow_operation:false (Micheline.root typ)) >>=? fun (Ex_ty typ, ctxt) ->
-      parse_data ctxt typ (Micheline.root expr) >>=? fun (data, ctxt) ->
+      Lwt.return (parse_packable_ty ctxt ~legacy:true (Micheline.root typ)) >>=? fun (Ex_ty typ, ctxt) ->
+      parse_data ctxt ~legacy:true typ (Micheline.root expr) >>=? fun (data, ctxt) ->
       Script_ir_translator.pack_data ctxt typ data >>=? fun (bytes, ctxt) ->
       return (bytes, Gas.level ctxt)
     end ;
     register0 S.run_operation begin fun ctxt ()
-      { shell ; protocol_data = Operation_data protocol_data } ->
+      ({ shell ; protocol_data = Operation_data protocol_data }, chain_id) ->
       (* this code is a duplicate of Apply without signature check *)
       let partial_precheck_manager_contents
           (type kind) ctxt (op : kind Kind.manager contents)
@@ -249,15 +291,15 @@ module Scripts = struct
         Lwt.return (Gas.check_limit ctxt gas_limit) >>=? fun () ->
         let ctxt = Gas.set_limit ctxt gas_limit in
         Lwt.return (Fees.check_storage_limit ctxt storage_limit) >>=? fun () ->
-        Contract.must_be_allocated ctxt source >>=? fun () ->
+        Contract.must_be_allocated ctxt (Contract.implicit_contract source) >>=? fun () ->
         Contract.check_counter_increment ctxt source counter >>=? fun () ->
         begin
           match operation with
           | Reveal pk ->
               Contract.reveal_manager_key ctxt source pk
-          | Transaction { parameters = Some arg ; _ } ->
+          | Transaction { parameters ; _ } ->
               (* Here the data comes already deserialized, so we need to fake the deserialization to mimic apply *)
-              let arg_bytes = Data_encoding.Binary.to_bytes_exn Script.lazy_expr_encoding arg in
+              let arg_bytes = Data_encoding.Binary.to_bytes_exn Script.lazy_expr_encoding parameters in
               let arg = match Data_encoding.Binary.of_bytes Script.lazy_expr_encoding arg_bytes with
                 | Some arg -> arg
                 | None -> assert false in
@@ -267,7 +309,7 @@ module Scripts = struct
               (* Fail if not enough gas for complete deserialization cost *)
               trace Apply.Gas_quota_exceeded_init_deserialize @@
               Script.force_decode ctxt arg >>|? fun (_arg, ctxt) -> ctxt
-          | Origination { script = Some script ; _ } ->
+          | Origination { script = script ; _ } ->
               (* Here the data comes already deserialized, so we need to fake the deserialization to mimic apply *)
               let script_bytes = Data_encoding.Binary.to_bytes_exn Script.encoding script in
               let script = match Data_encoding.Binary.of_bytes Script.encoding script_bytes with
@@ -287,7 +329,7 @@ module Scripts = struct
         Contract.get_manager_key ctxt source >>=? fun _public_key ->
         (* signature check unplugged from here *)
         Contract.increment_counter ctxt source >>=? fun ctxt ->
-        Contract.spend ctxt source fee >>=? fun ctxt ->
+        Contract.spend ctxt (Contract.implicit_contract source) fee >>=? fun ctxt ->
         return ctxt in
       let rec partial_precheck_manager_contents_list
         : type kind.
@@ -310,27 +352,61 @@ module Scripts = struct
       match protocol_data.contents with
       | Single (Manager_operation _) as op ->
           partial_precheck_manager_contents_list ctxt op >>=? fun ctxt ->
-          Apply.apply_manager_contents_list ctxt Optimized baker op >>= fun (_ctxt, result) ->
+          Apply.apply_manager_contents_list ctxt Optimized baker chain_id op >>= fun (_ctxt, result) ->
           return result
       | Cons (Manager_operation _, _) as op ->
           partial_precheck_manager_contents_list ctxt op >>=? fun ctxt ->
-          Apply.apply_manager_contents_list ctxt Optimized baker op >>= fun (_ctxt, result) ->
+          Apply.apply_manager_contents_list ctxt Optimized baker chain_id op >>= fun (_ctxt, result) ->
           return result
       | _ ->
           Apply.apply_contents_list
-            ctxt ~partial:true Chain_id.zero Optimized shell.branch baker operation
+            ctxt chain_id Optimized shell.branch baker operation
             operation.protocol_data.contents >>=? fun (_ctxt, result) ->
           return result
-
+    end;
+    register0 S.entrypoint_type begin fun ctxt () (expr, entrypoint) ->
+      let ctxt = Gas.set_unlimited ctxt in
+      let legacy = false in
+      let open Script_ir_translator in
+      Lwt.return
+        begin
+          parse_toplevel ~legacy expr >>? fun (arg_type, _, _, root_name) ->
+          parse_ty ctxt ~legacy
+            ~allow_big_map:true ~allow_operation:false
+            ~allow_contract:true arg_type >>? fun (Ex_ty arg_type, _) ->
+          Script_ir_translator.find_entrypoint ~root_name arg_type
+            entrypoint
+        end >>=? fun (_f , Ex_ty ty)->
+      unparse_ty ctxt ty >>=? fun (ty_node, _) ->
+      return (Micheline.strip_locations ty_node)
+    end ;
+    register0 S.list_entrypoints begin fun ctxt () expr ->
+      let ctxt = Gas.set_unlimited ctxt in
+      let legacy = false in
+      let open Script_ir_translator in
+      Lwt.return
+        begin
+          parse_toplevel ~legacy expr >>? fun (arg_type, _, _, root_name) ->
+          parse_ty ctxt ~legacy
+            ~allow_big_map:true ~allow_operation:false
+            ~allow_contract:true arg_type >>? fun (Ex_ty arg_type, _) ->
+          Script_ir_translator.list_entrypoints ~root_name arg_type ctxt
+        end >>=? fun (unreachable_entrypoint,map) ->
+      return
+        (unreachable_entrypoint,
+         Entrypoints_map.fold
+           begin fun entry (_,ty) acc ->
+             (entry , Micheline.strip_locations ty) ::acc end
+           map [])
     end
 
-  let run_code ctxt block code (storage, input, amount, source, payer, gas) =
+  let run_code ctxt block code (storage, input, amount, chain_id, source, payer, gas, entrypoint) =
     RPC_context.make_call0 S.run_code ctxt
-      block () (code, storage, input, amount, source, payer, gas)
+      block () (code, storage, input, amount, chain_id, source, payer, gas, entrypoint)
 
-  let trace_code ctxt block code (storage, input, amount, source, payer, gas) =
+  let trace_code ctxt block code (storage, input, amount, chain_id, source, payer, gas, entrypoint) =
     RPC_context.make_call0 S.trace_code ctxt
-      block () (code, storage, input, amount, source, payer, gas)
+      block () (code, storage, input, amount, chain_id, source, payer, gas, entrypoint)
 
   let typecheck_code ctxt block =
     RPC_context.make_call0 S.typecheck_code ctxt block ()
@@ -343,6 +419,13 @@ module Scripts = struct
 
   let run_operation ctxt block =
     RPC_context.make_call0 S.run_operation ctxt block ()
+
+  let entrypoint_type ctxt block =
+    RPC_context.make_call0 S.entrypoint_type ctxt block ()
+
+  let list_entrypoints ctxt block =
+    RPC_context.make_call0 S.list_entrypoints ctxt block ()
+
 
 end
 
@@ -403,7 +486,7 @@ module Forge = struct
         ~gas_limit ~storage_limit operations =
       Contract_services.manager_key ctxt block source >>= function
       | Error _ as e -> Lwt.return e
-      | Ok (_, revealed) ->
+      | Ok revealed ->
           let ops =
             List.map
               (fun (Manager operation) ->
@@ -431,28 +514,23 @@ module Forge = struct
 
     let transaction ctxt
         block ~branch ~source ?sourcePubKey ~counter
-        ~amount ~destination ?parameters
+        ~amount ~destination ?(entrypoint = "default") ?parameters
         ~gas_limit ~storage_limit ~fee ()=
-      let parameters = Option.map ~f:Script.lazy_expr parameters in
+      let parameters = Option.unopt_map ~f:Script.lazy_expr ~default:Script.unit_parameter parameters in
       operations ctxt block ~branch ~source ?sourcePubKey ~counter
         ~fee ~gas_limit ~storage_limit
-        [Manager (Transaction { amount ; parameters ; destination })]
+        [Manager (Transaction { amount ; parameters ; destination ; entrypoint })]
 
     let origination ctxt
         block ~branch
         ~source ?sourcePubKey ~counter
-        ~managerPubKey ~balance
-        ?(spendable = true)
-        ?(delegatable = true)
-        ?delegatePubKey ?script
+        ~balance
+        ?delegatePubKey ~script
         ~gas_limit ~storage_limit ~fee () =
       operations ctxt block ~branch ~source ?sourcePubKey ~counter
         ~fee ~gas_limit ~storage_limit
-        [Manager (Origination { manager = managerPubKey ;
-                                delegate = delegatePubKey ;
+        [Manager (Origination { delegate = delegatePubKey ;
                                 script ;
-                                spendable ;
-                                delegatable ;
                                 credit = balance ;
                                 preorigination = None })]
 

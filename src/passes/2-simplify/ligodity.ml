@@ -49,28 +49,6 @@ module Errors = struct
     ] in
     error ~data title message
 
-  let unsupported_arith_op expr =
-    let title () = "arithmetic expressions" in
-    let message () =
-      Format.asprintf "this arithmetic operator is not supported yet" in
-    let expr_loc = Raw.expr_to_region expr in
-    let data = [
-      ("expr_loc",
-       fun () -> Format.asprintf "%a" Location.pp_lift @@ expr_loc)
-    ] in
-    error ~data title message
-
-  let unsupported_string_catenation expr =
-    let title () = "string expressions" in
-    let message () =
-      Format.asprintf "string concatenation is not supported yet" in
-    let expr_loc = Raw.expr_to_region expr in
-    let data = [
-      ("expr_loc",
-       fun () -> Format.asprintf "%a" Location.pp_lift @@ expr_loc)
-    ] in
-    error ~data title message
-
   let untyped_fun_param var =
     let title () = "function parameter" in
     let message () =
@@ -431,13 +409,12 @@ let rec simpl_expression :
       let n = Z.to_int @@ snd @@ n in
       return @@ e_literal ~loc (Literal_nat n)
     )
-  | EArith (Mtz n) -> (
+  | EArith (Mutez n) -> (
       let (n , loc) = r_split n in
       let n = Z.to_int @@ snd @@ n in
       return @@ e_literal ~loc (Literal_mutez n)
     )
-  | EArith _ as e ->
-       fail @@ unsupported_arith_op e
+  | EArith (Neg e) -> simpl_unop "NEG" e
   | EString (String s) -> (
       let (s , loc) = r_split s in
       let s' =
@@ -446,8 +423,11 @@ let rec simpl_expression :
       in
       return @@ e_literal ~loc (Literal_string s')
     )
-  | EString (Cat _) as e ->
-      fail @@ unsupported_string_catenation e
+  | EString (Cat c) ->
+    let (c, loc) = r_split c in
+    let%bind string_left = simpl_expression c.arg1 in
+    let%bind string_right = simpl_expression c.arg2 in
+    return @@ e_string_cat ~loc string_left string_right
   | ELogic l -> simpl_logic_expression l
   | EList l -> simpl_list_expression l
   | ECase c -> (

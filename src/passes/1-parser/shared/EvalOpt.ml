@@ -39,7 +39,7 @@ let help language extension () =
   print "  -q, --quiet            No output, except errors (default)";
   print "      --columns          Columns for source locations";
   print "      --bytes            Bytes for source locations";
-  print "      --verbose=<stages> cmdline, cpp, ast (colon-separated)";
+  print "      --verbose=<stages> cmdline, cpp, ast-tokens, ast (colon-separated)";
   print "      --version          Commit hash on stdout";
   print "  -h, --help             This help";
   exit 0

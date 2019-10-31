@@ -1,4 +1,4 @@
-(* This signature defines the lexical tokens for LIGO
+(** This signature defines the lexical tokens for LIGO
 
    _Tokens_ are the abstract units which are used by the parser to
    build the abstract syntax tree (AST), in other words, the stream of
@@ -35,7 +35,7 @@ type t =
 | Bytes  of (lexeme * Hex.t) Region.reg
 | Int    of (lexeme * Z.t) Region.reg
 | Nat    of (lexeme * Z.t) Region.reg
-| Mtz    of (lexeme * Z.t) Region.reg
+| Mutez    of (lexeme * Z.t) Region.reg
 | Ident  of lexeme Region.reg
 | Constr of lexeme Region.reg
 
@@ -53,13 +53,13 @@ type t =
 | VBAR     of Region.t  (* "|"   *)
 | ARROW    of Region.t  (* "->"  *)
 | ASS      of Region.t  (* ":="  *)
-| EQUAL    of Region.t  (* "="   *)
+| EQ       of Region.t  (* "="   *)
 | COLON    of Region.t  (* ":"   *)
 | LT       of Region.t  (* "<"   *)
-| LEQ      of Region.t  (* "<="  *)
+| LE       of Region.t  (* "<="  *)
 | GT       of Region.t  (* ">"   *)
-| GEQ      of Region.t  (* ">="  *)
-| NEQ      of Region.t  (* "=/=" *)
+| GE       of Region.t  (* ">="  *)
+| NE       of Region.t  (* "=/=" *)
 | PLUS     of Region.t  (* "+"   *)
 | MINUS    of Region.t  (* "-"   *)
 | SLASH    of Region.t  (* "/"   *)
@@ -137,23 +137,20 @@ val to_region : token -> Region.t
 
 (* Injections *)
 
-type int_err =
-  Non_canonical_zero
-
+type   int_err = Non_canonical_zero
 type ident_err = Reserved_name
+type   nat_err = Invalid_natural
+               | Non_canonical_zero_nat
+type   sym_err = Invalid_symbol
 
-type invalid_natural =
-  | Invalid_natural
-  | Non_canonical_zero_nat
-
+val mk_int    : lexeme -> Region.t -> (token,   int_err) result
+val mk_nat    : lexeme -> Region.t -> (token,   nat_err) result
+val mk_mutez  : lexeme -> Region.t -> (token,   int_err) result
+val mk_ident  : lexeme -> Region.t -> (token, ident_err) result
+val mk_sym    : lexeme -> Region.t -> (token,   sym_err) result
 val mk_string : lexeme -> Region.t -> token
 val mk_bytes  : lexeme -> Region.t -> token
-val mk_int    : lexeme -> Region.t -> (token,   int_err) result
-val mk_nat    : lexeme -> Region.t -> (token,   invalid_natural) result
-val mk_mtz    : lexeme -> Region.t -> (token,   int_err) result
-val mk_ident  : lexeme -> Region.t -> (token, ident_err) result
 val mk_constr : lexeme -> Region.t -> token
-val mk_sym    : lexeme -> Region.t -> token
 val eof       : Region.t -> token
 
 (* Predicates *)
