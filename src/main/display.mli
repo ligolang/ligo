@@ -21,15 +21,12 @@ type display_format = [
   | `Dev
 ]
 
-val display_format_of_string : string -> display_format
-
 val formatted_string_result_pp : display_format -> Format.formatter -> string Simple_utils.Trace.result -> unit
 
 type michelson_format = [
-  | `Michelson
-  | `Micheline
+  | `Text
+  | `Json
+  | `Hex
 ]
-
-val michelson_format_of_string : string -> michelson_format Simple_utils.Trace.result
 
 val michelson_pp : michelson_format -> Format.formatter -> Tezos_utils.Michelson.michelson -> unit

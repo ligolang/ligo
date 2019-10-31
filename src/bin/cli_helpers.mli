@@ -1,3 +1,3 @@
 open Trace
 
-val toplevel : display_format : string -> string result -> unit
+val toplevel : display_format : Main.Display.display_format -> string result -> unit

@@ -1,7 +1,8 @@
 open Tezos_micheline
 open Micheline
 
-include Memory_proto_alpha.Protocol.Michelson_v1_primitives
+open Memory_proto_alpha.Protocol
+include Michelson_v1_primitives
 
 type michelson = (int, prim) node
 type t = michelson
@@ -98,3 +99,10 @@ let pp_json ppf (michelson : michelson) =
     )
   in
   Format.fprintf ppf "%a" Tezos_data_encoding.Json.pp json
+
+let pp_hex ppf (michelson : michelson) =
+  let canonical = strip_locations michelson in
+  let bytes = Tezos_data_encoding.Binary_writer.to_bytes_exn Script_repr.expr_encoding canonical in
+  let bytes = Tezos_stdlib.MBytes.to_bytes bytes in
+  let hex = Hex.of_bytes bytes in
+  Format.fprintf ppf "%a" Hex.pp hex
