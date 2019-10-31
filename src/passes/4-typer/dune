@@ -1,13 +1,12 @@
 (library
-  (name typer_new)
-  (public_name ligo.typer_new)
+  (name typer)
+  (public_name ligo.typer)
   (libraries
     simple-utils
     tezos-utils
     ast_simplified
     ast_typed
     operators
-    union_find
   )
   (preprocess
     (pps ppx_let)
