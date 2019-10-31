@@ -58,6 +58,7 @@ let i_some = prim I_SOME
 let i_lambda arg ret body = prim ~children:[arg;ret;body] I_LAMBDA
 let i_empty_map src dst = prim ~children:[src;dst] I_EMPTY_MAP
 let i_drop = prim I_DROP
+let i_dropn n = prim I_DROP ~children:[int (Z.of_int n)]
 let i_exec = prim I_EXEC
 
 let i_if a b = prim ~children:[seq [a] ; seq[b]] I_IF
