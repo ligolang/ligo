@@ -6,7 +6,7 @@ type type_base =
   | Base_int | Base_nat | Base_tez
   | Base_timestamp
   | Base_string | Base_bytes | Base_address
-  | Base_operation
+  | Base_operation | Base_signature
 
 type 'a annotated = string option * 'a
 
