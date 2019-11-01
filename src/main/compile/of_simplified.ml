@@ -21,13 +21,23 @@ let compile_expression_as_function_entry (program : program) entry_point : _ res
 let compile_expression_as_value ?(env = Ast_typed.Environment.full_empty) ~(state : Typer.Solver.state) ae : Michelson.t result =
   let%bind (typed , state) = Typer.type_expression env state ae in
   (* TODO: move this to typer.ml *)
-  let typed = let () = failwith "TODO : subst all" in let _todo = ignore (env, state) in typed in
+  let typed =
+    if false then
+      let () = failwith "TODO : subst all" in let _todo = ignore (env, state) in typed
+    else
+      typed
+  in
   Of_typed.compile_expression_as_value typed
 
 let compile_expression_as_function ?(env = Ast_typed.Environment.full_empty) ~(state : Typer.Solver.state) (ae : Ast_simplified.expression) : _ result =
   let%bind (typed , state) = Typer.type_expression env state ae in
   (* TODO: move this to typer.ml *)
-  let typed = let () = failwith "TODO : subst all" in let _todo = ignore (env, state) in typed in
+  let typed =
+    if false then
+      let () = failwith "TODO : subst all" in let _todo = ignore (env, state) in typed
+    else
+      typed
+  in
   Of_typed.compile_expression_as_function typed
 
 let uncompile_typed_program_entry_expression_result program entry ex_ty_value =
