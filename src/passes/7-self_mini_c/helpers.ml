@@ -25,7 +25,9 @@ let rec fold_expression : 'a folder -> 'a -> expression -> 'a result = fun f ini
   let%bind init' = f init e in
   match e.content with
   | E_variable _ | E_skip | E_make_none _
-  | E_make_empty_map (_,_) | E_make_empty_list _ 
+  | E_make_empty_map _
+  | E_make_empty_big_map _
+  | E_make_empty_list _
   | E_make_empty_set _ -> (
     ok init'
   )
@@ -91,7 +93,10 @@ let rec map_expression : mapper -> expression -> expression result = fun f e ->
   let return content = ok { e' with content } in
   match e'.content with
   | E_variable _ | E_literal _ | E_skip | E_make_none _
-  | E_make_empty_map (_,_) | E_make_empty_list _ | E_make_empty_set _ as em -> return em
+  | E_make_empty_map _
+  | E_make_empty_big_map _
+  | E_make_empty_list _
+  | E_make_empty_set _ as em -> return em
   | E_constant (name, lst) -> (
       let%bind lst' = bind_map_list self lst in
       return @@ E_constant (name,lst')

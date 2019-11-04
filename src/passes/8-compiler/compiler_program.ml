@@ -238,6 +238,9 @@ and translate_expression (expr:expression) (env:environment) : michelson result 
   | E_make_empty_map sd ->
       let%bind (src, dst) = bind_map_pair Compiler_type.type_ sd in
       return @@ i_empty_map src dst
+  | E_make_empty_big_map sd ->
+      let%bind (src, dst) = bind_map_pair Compiler_type.type_ sd in
+      return @@ i_empty_big_map src dst
   | E_make_empty_list t ->
       let%bind t' = Compiler_type.type_ t in
       return @@ i_nil t'

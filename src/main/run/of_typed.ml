@@ -1,15 +1,9 @@
 open Trace
 open Ast_typed
 
-let compile_expression ?(value = false) expr =
-  if value
-  then (
-    Compile.Of_typed.compile_expression_as_value expr
-  )
-  else (
-    let%bind code = Compile.Of_typed.compile_expression_as_function expr in
-    Of_michelson.evaluate_michelson code
-  )
+let compile_expression expr =
+  let%bind code = Compile.Of_typed.compile_expression_as_function expr in
+  Of_michelson.evaluate_michelson code
 
 let run_function ?options f input =
   let%bind code = Compile.Of_typed.compile_function f in

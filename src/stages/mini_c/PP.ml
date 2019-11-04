@@ -77,6 +77,7 @@ and expression' ppf (e:expression') = match e with
   | E_constant(p, lst) -> fprintf ppf "%s %a" p (pp_print_list ~pp_sep:space_sep expression) lst
   | E_literal v -> fprintf ppf "L(%a)" value v
   | E_make_empty_map _ -> fprintf ppf "map[]"
+  | E_make_empty_big_map _ -> fprintf ppf "big_map[]"
   | E_make_empty_list _ -> fprintf ppf "list[]"
   | E_make_empty_set _ -> fprintf ppf "set[]"
   | E_make_none _ -> fprintf ppf "none"

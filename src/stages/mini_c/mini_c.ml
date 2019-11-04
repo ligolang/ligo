@@ -2,10 +2,7 @@ module Types = Types
 include Types
 
 module PP = PP
-module Combinators = struct
-  include Combinators
-  include Combinators_smart
-end
+module Combinators = Combinators
 include Combinators
 module Environment = Environment
 include Misc

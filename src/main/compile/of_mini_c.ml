@@ -2,17 +2,6 @@ open Trace
 open Mini_c
 open Tezos_utils
 
-let compile_value : value -> type_value -> Michelson.t result = fun x a ->
-  let%bind body = Compiler.Program.translate_value x a in
-  let body = Self_michelson.optimize body in
-  ok body
-
-let compile_expression_as_value  : expression -> _ result = fun e ->
-  let%bind value = expression_to_value e in
-  let%bind result = compile_value value e.type_value in
-  let result = Self_michelson.optimize result in
-  ok result
-
 let compile_expression_as_function : expression -> _ result = fun e ->
   let (input , output) = t_unit , e.type_value in
   let%bind body = Compiler.Program.translate_expression e Compiler.Environment.empty in
