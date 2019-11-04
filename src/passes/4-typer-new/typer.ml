@@ -391,7 +391,8 @@ and evaluate_type (e:environment) (t:I.type_expression) : O.type_value result =
     let%bind lst' = bind_list @@ List.map (evaluate_type e) lst in
     return (T_constant(Type_name cst, lst'))
 
-and type_expression : environment -> Solver.state -> I.expression -> (O.annotated_expression * Solver.state) result = fun e state ae ->
+and type_expression : environment -> Solver.state -> ?tv_opt:O.type_value -> I.expression -> (O.annotated_expression * Solver.state) result = fun e state ?tv_opt ae ->
+  let () = ignore tv_opt in     (* For compatibility with the old typer's API, this argument can be removed once the new typer is used. *)
   let open Solver in
   let module L = Logger.Stateful() in
   let return : _ -> Solver.state -> _ -> _ (* return of type_expression *) = fun expr state constraints type_name ->

@@ -22,7 +22,7 @@ let compile_expression_as_value ?(env = Ast_typed.Environment.full_empty) ~(stat
   let%bind (typed , state) = Typer.type_expression env state ae in
   (* TODO: move this to typer.ml *)
   let typed =
-    if false then
+    if Typer.use_new_typer then
       let () = failwith "TODO : subst all" in let _todo = ignore (env, state) in typed
     else
       typed

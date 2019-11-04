@@ -1,11 +1,12 @@
 (library
-  (name typer_old)
-  (public_name ligo.typer_old)
+  (name typer)
+  (public_name ligo.typer)
   (libraries
     simple-utils
     tezos-utils
     ast_simplified
     ast_typed
+    typer_old
     typer_new
     operators
   )

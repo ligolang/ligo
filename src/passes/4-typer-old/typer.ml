@@ -8,11 +8,11 @@ module SMap = O.SMap
 
 module Environment = O.Environment
 
-module Solver = struct
+module Solver = Typer_new.Solver (* struct
   type state = Placeholder_for_state_of_new_typer
   let discard_state (_ : state) = ()
   let initial_state = Placeholder_for_state_of_new_typer
-end
+end *)
 
 type environment = Environment.t
 
@@ -226,7 +226,7 @@ open Errors
 
 let rec type_program (p:I.program) : (O.program * Solver.state) result =
   let aux (e, acc:(environment * O.declaration Location.wrap list)) (d:I.declaration Location.wrap) =
-    let%bind ed' = (bind_map_location (type_declaration e Solver.Placeholder_for_state_of_new_typer)) d in
+    let%bind ed' = (bind_map_location (type_declaration e (Solver.placeholder_for_state_of_new_typer ()))) d in
     let loc : 'a . 'a Location.wrap -> _ -> _ = fun x v -> Location.wrap ~loc:x.location v in
     let (e', _placeholder_for_state_of_new_typer , d') = Location.unwrap ed' in
     match d' with
@@ -236,20 +236,20 @@ let rec type_program (p:I.program) : (O.program * Solver.state) result =
   let%bind (_, lst) =
     trace (fun () -> program_error p ()) @@
     bind_fold_list aux (Environment.full_empty, []) p in
-  ok @@ (List.rev lst , Solver.Placeholder_for_state_of_new_typer)
+  ok @@ (List.rev lst , (Solver.placeholder_for_state_of_new_typer ()))
 
 and type_declaration env (_placeholder_for_state_of_new_typer : Solver.state) : I.declaration -> (environment * Solver.state * O.declaration option) result = function
   | Declaration_type (type_name , type_expression) ->
       let%bind tv = evaluate_type env type_expression in
       let env' = Environment.add_type type_name tv env in
-      ok (env', Solver.Placeholder_for_state_of_new_typer , None)
+      ok (env', (Solver.placeholder_for_state_of_new_typer ()) , None)
   | Declaration_constant (name , tv_opt , expression) -> (
       let%bind tv'_opt = bind_map_option (evaluate_type env) tv_opt in
       let%bind ae' =
         trace (constant_declaration_error name expression tv'_opt) @@
         type_expression' ?tv_opt:tv'_opt env expression in
       let env' = Environment.add_ez_ae name ae' env in
-      ok (env', Solver.Placeholder_for_state_of_new_typer , Some (O.Declaration_constant ((make_n_e name ae') , (env , env'))))
+      ok (env', (Solver.placeholder_for_state_of_new_typer ()) , Some (O.Declaration_constant ((make_n_e name ae') , (env , env'))))
     )
 
 and type_match : type i o . (environment -> i -> o result) -> environment -> O.type_value -> i I.matching -> I.expression -> Location.t -> o O.matching result =
@@ -384,7 +384,7 @@ and evaluate_type (e:environment) (t:I.type_expression) : O.type_value result =
 and type_expression : environment -> Solver.state -> ?tv_opt:O.type_value -> I.expression -> (O.annotated_expression * Solver.state) result
   = fun e _placeholder_for_state_of_new_typer ?tv_opt ae ->
     let%bind res = type_expression' e ?tv_opt ae in
-    ok (res, Solver.Placeholder_for_state_of_new_typer)
+    ok (res, (Solver.placeholder_for_state_of_new_typer ()))
 and type_expression' : environment -> ?tv_opt:O.type_value -> I.expression -> O.annotated_expression result = fun e ?tv_opt ae ->
   let module L = Logger.Stateful() in
   let return expr tv =

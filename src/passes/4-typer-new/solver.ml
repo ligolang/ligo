@@ -1113,3 +1113,5 @@ let aggregate_constraints : state -> type_constraint list -> state result = fun 
    constraints, and that all existential variables are instantiated
    (possibly by first generalizing the type and then using the
    polymorphic type argument to instantiate the existential). *)
+
+let placeholder_for_state_of_new_typer () = initial_state

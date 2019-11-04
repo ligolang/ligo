@@ -44,7 +44,7 @@ val type_program' : I.program -> (O.program) result (* TODO: merge with type_pro
 val type_declaration : environment -> Solver.state -> I.declaration -> (environment * Solver.state * O.declaration option) result
 (* val type_match : (environment -> 'i -> 'o result) -> environment -> O.type_value -> 'i I.matching -> I.expression -> Location.t -> 'o O.matching result *)
 val evaluate_type : environment -> I.type_expression -> O.type_value result
-val type_expression : environment -> Solver.state -> I.expression -> (O.annotated_expression * Solver.state) result
+val type_expression : environment -> Solver.state -> ?tv_opt:O.type_value -> I.expression -> (O.annotated_expression * Solver.state) result
 val type_constant : string -> O.type_value list -> O.type_value option -> Location.t -> (string * O.type_value) result
 (*
 val untype_type_value : O.type_value -> (I.type_expression) result
