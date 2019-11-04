@@ -194,6 +194,10 @@ module Simplify = struct
       ("List.map" , "LIST_MAP") ;
       ("List.fold" , "LIST_FOLD") ;
 
+      ("Loop.fold_while" , "FOLD_WHILE") ;
+      ("continue" , "CONTINUE") ;
+      ("stop" , "STOP") ;
+
       ("Operation.transaction" , "CALL") ;
       ("Operation.get_contract" , "CONTRACT") ;
       ("int" , "INT") ;
@@ -563,6 +567,25 @@ module Typer = struct
     let%bind () = assert_eq_1 ~msg:"res init" res init in
     ok res
 
+  (** FOLD_WHILE is a fold operation that takes an initial value of a certain type
+      and then iterates on it until a condition is reached. The auxillary function
+      that does the fold returns either boolean true or boolean false to indicate
+      whether the fold should continue or not. Necessarily then the initial value
+      must match the input parameter of the auxillary function, and the auxillary
+      should return type (bool * input) *)
+  let fold_while = typer_2 "FOLD_WHILE" @@ fun init body ->
+    let%bind (arg, result) = get_t_function body in
+    let%bind () = assert_eq_1 arg init in
+    let%bind () = assert_eq_1 (t_pair (t_bool ()) init ()) result
+    in ok init
+
+  (* Continue and Stop are just syntactic sugar for building a pair (bool * a') *)
+  let continue = typer_1 "CONTINUE" @@ fun arg ->
+    ok @@ t_pair (t_bool ()) arg ()
+
+  let stop = typer_1 "STOP" @@ fun arg ->
+    ok (t_pair (t_bool ()) arg ())
+
   let not_ = typer_1 "NOT" @@ fun elt ->
     if eq_1 elt (t_bool ())
     then ok @@ t_bool ()
@@ -641,6 +664,9 @@ module Typer = struct
       map_find_opt ;
       map_map ;
       map_fold ;
+      fold_while ;
+      continue ;
+      stop ;
       map_iter ;
       map_get_force ;
       map_get ;
@@ -726,6 +752,13 @@ module Compiler = struct
     ("MAP_FIND_OPT" , simple_binary @@ prim I_GET) ;
     ("MAP_ADD" , simple_ternary @@ seq [dip (i_some) ; prim I_UPDATE]) ;
     ("MAP_UPDATE" , simple_ternary @@ prim I_UPDATE) ;
+    ("FOLD_WHILE" , simple_binary @@ seq [(i_push (prim T_bool) (prim D_True)) ;
+                                          prim ~children:[seq [dip i_dup; i_exec; i_unpair]] I_LOOP ;
+                                          i_swap ; i_drop]) ;
+    ("CONTINUE" , simple_unary @@ seq [(i_push (prim T_bool) (prim D_True)) ;
+                                       i_pair]) ;
+    ("STOP" , simple_unary @@ seq [(i_push (prim T_bool) (prim D_False)) ;
+                                   i_pair]) ;
     ("SIZE" , simple_unary @@ prim I_SIZE) ;
     ("FAILWITH" , simple_unary @@ prim I_FAILWITH) ;
     ("ASSERT_INFERRED" , simple_binary @@ i_if (seq [i_failwith]) (seq [i_drop ; i_push_unit])) ;

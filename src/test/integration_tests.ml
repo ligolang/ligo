@@ -805,6 +805,24 @@ let for_fail () : unit result =
   let%bind () = expect_fail program "main" (e_nat 0)
   in ok () *)
 
+let loop_mligo () : unit result =
+  let%bind program = mtype_file "./contracts/loop.mligo" in
+  let%bind () =
+    let input = e_int 0 in
+    let expected = e_int 100 in
+    expect_eq program "counter_simple" input expected
+  in
+  let%bind () =
+    let input = e_int 100 in
+    let expected = e_int 5050 in
+    expect_eq program "counter" input expected
+  in
+  let%bind () =
+    let input = e_int 100 in
+    let expected = e_int 10000 in
+    expect_eq program "counter_nest" input expected
+  in ok ()
+
 let matching () : unit result =
   let%bind program = type_file "./contracts/match.ligo" in
   let%bind () =
@@ -1152,6 +1170,7 @@ let main = test_suite "Integration (End to End)" [
     test "big_map (mligo)" mbig_map ;
     test "list" list ;
     test "loop" loop ;
+    test "loop (mligo)" loop_mligo ;
     test "matching" matching ;
     test "declarations" declarations ;
     test "quote declaration" quote_declaration ;
