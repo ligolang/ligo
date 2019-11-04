@@ -84,7 +84,7 @@ const siteConfig = {
   tagline:
     "LIGO is a friendly smart-contract language for Tezos",
   taglineSub: "Michelson was never so easy",
-  url: "https://your-docusaurus-test-site.com", // Your website URL
+  url: "https://ligolang.org", // Your website URL
   baseUrl: "/", // Base URL for your project */
   // For github.io type URLs, you would set the url and baseUrl like:
   //   url: 'https://facebook.github.io',
@@ -183,7 +183,7 @@ const siteConfig = {
   cleanUrl: true,
 
   // Open Graph and Twitter card images.
-  ogImage: "img/undraw_online.svg",
+  ogImage: "img/logo.svg",
   twitterImage: "img/undraw_tweetstorm.svg",
 
   // Show documentation's last contributor's name.
