@@ -17,3 +17,7 @@ val print_expr    : Buffer.t -> AST.expr -> unit
 val tokens_to_string  : AST.t -> string
 val pattern_to_string : AST.pattern -> string
 val expr_to_string    : AST.expr -> string
+
+(* Pretty-printing of the AST *)
+
+val pp_ast : Buffer.t -> AST.t -> unit

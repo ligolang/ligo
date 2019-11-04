@@ -52,7 +52,7 @@ type t =
 | NE of Region.t      (* "<>" *)
 | LT of Region.t      (* "<"  *)
 | GT of Region.t      (* ">"  *)
-| LE of Region.t      (* "=<" *)
+| LE of Region.t      (* "<=" *)
 | GE of Region.t      (* ">=" *)
 
 | BOOL_OR  of Region.t (* "||" *)
@@ -65,7 +65,7 @@ type t =
 | Int    of (string * Z.t) Region.reg
 | Nat    of (string * Z.t) Region.reg
 | Mutez  of (string * Z.t) Region.reg
-| Str    of string Region.reg
+| String of string Region.reg
 | Bytes  of (string * Hex.t) Region.reg
 
   (* Keywords *)
@@ -89,15 +89,10 @@ type t =
 | Type  of Region.t
 | With  of Region.t
 
-  (* Liquidity-specific *)
+  (* Data constructors *)
 
-| LetEntry of Region.t
-| MatchNat of Region.t
-(*
-| Contract
-| Sig
-| Struct
-*)
+| C_None  of Region.t  (* "None"  *)
+| C_Some  of Region.t  (* "Some"  *)
 
   (* Virtual tokens *)
 
@@ -106,125 +101,131 @@ type t =
 type token = t
 
 let proj_token = function
-  | ARROW region -> region, "ARROW"
-  | CONS region -> region, "CONS"
-  | CAT region -> region, "CAT"
-  | MINUS region -> region, "MINUS"
-  | PLUS region -> region, "PLUS"
-  | SLASH region -> region, "SLASH"
-  | TIMES region -> region, "TIMES"
-  | LPAR region -> region, "LPAR"
-  | RPAR region -> region, "RPAR"
-  | LBRACKET region -> region, "LBRACKET"
-  | RBRACKET region -> region, "RBRACKET"
-  | LBRACE region -> region, "LBRACE"
-  | RBRACE region -> region, "RBRACE"
-  | COMMA region -> region, "COMMA"
-  | SEMI region -> region, "SEMI"
-  | VBAR region -> region, "VBAR"
-  | COLON region -> region, "COLON"
-  | DOT region -> region, "DOT"
-  | WILD region -> region, "WILD"
-  | EQ region -> region, "EQ"
-  | NE region -> region, "NE"
-  | LT region -> region, "LT"
-  | GT region -> region, "GT"
-  | LE region -> region, "LE"
-  | GE region -> region, "GE"
-  | BOOL_OR region -> region, "BOOL_OR"
-  | BOOL_AND region -> region, "BOOL_AND"
-  | Ident Region.{region; value} ->
+  ARROW region -> region, "ARROW"
+| CONS region -> region, "CONS"
+| CAT region -> region, "CAT"
+| MINUS region -> region, "MINUS"
+| PLUS region -> region, "PLUS"
+| SLASH region -> region, "SLASH"
+| TIMES region -> region, "TIMES"
+| LPAR region -> region, "LPAR"
+| RPAR region -> region, "RPAR"
+| LBRACKET region -> region, "LBRACKET"
+| RBRACKET region -> region, "RBRACKET"
+| LBRACE region -> region, "LBRACE"
+| RBRACE region -> region, "RBRACE"
+| COMMA region -> region, "COMMA"
+| SEMI region -> region, "SEMI"
+| VBAR region -> region, "VBAR"
+| COLON region -> region, "COLON"
+| DOT region -> region, "DOT"
+| WILD region -> region, "WILD"
+| EQ region -> region, "EQ"
+| NE region -> region, "NE"
+| LT region -> region, "LT"
+| GT region -> region, "GT"
+| LE region -> region, "LE"
+| GE region -> region, "GE"
+| BOOL_OR region -> region, "BOOL_OR"
+| BOOL_AND region -> region, "BOOL_AND"
+| Ident Region.{region; value} ->
     region, sprintf "Ident %s" value
-  | Constr Region.{region; value} ->
+| Constr Region.{region; value} ->
     region, sprintf "Constr %s" value
-  | Int Region.{region; value = s,n} ->
+| Int Region.{region; value = s,n} ->
     region, sprintf "Int (\"%s\", %s)" s (Z.to_string n)
-  | Nat Region.{region; value = s,n} ->
+| Nat Region.{region; value = s,n} ->
     region, sprintf "Nat (\"%s\", %s)" s (Z.to_string n)
-  | Mutez Region.{region; value = s,n} ->
+| Mutez Region.{region; value = s,n} ->
     region, sprintf "Mutez (\"%s\", %s)" s (Z.to_string n)
-  | Str Region.{region; value} ->
+| String Region.{region; value} ->
     region, sprintf "Str %s" value
-  | Bytes Region.{region; value = s,b} ->
+| Bytes Region.{region; value = s,b} ->
     region,
     sprintf "Bytes (\"%s\", \"0x%s\")"
       s (Hex.to_string b)
-  | Begin region -> region, "Begin"
-  | Else region -> region, "Else"
-  | End region -> region, "End"
-  | False region -> region, "False"
-  | Fun region -> region, "Fun"
-  | If region -> region, "If"
-  | In region -> region, "In"
-  | Let region -> region, "Let"
-  | Match region -> region, "Match"
-  | Mod region -> region, "Mod"
-  | Not region -> region, "Not"
-  | Of region -> region, "Of"
-  | Or region -> region, "Or"
-  | Then region -> region, "Then"
-  | True region -> region, "True"
-  | Type region -> region, "Type"
-  | With region -> region, "With"
-  | LetEntry region -> region, "LetEntry"
-  | MatchNat region -> region, "MatchNat"
-  | EOF region -> region, "EOF"
+| Begin region -> region, "Begin"
+| Else region -> region, "Else"
+| End region -> region, "End"
+| False region -> region, "False"
+| Fun region -> region, "Fun"
+| If region -> region, "If"
+| In region -> region, "In"
+| Let region -> region, "Let"
+| Match region -> region, "Match"
+| Mod region -> region, "Mod"
+| Not region -> region, "Not"
+| Of region -> region, "Of"
+| Or region -> region, "Or"
+| Then region -> region, "Then"
+| True region -> region, "True"
+| Type region -> region, "Type"
+| With region -> region, "With"
+
+| C_None  region -> region, "C_None"
+| C_Some  region -> region, "C_Some"
+
+| EOF region -> region, "EOF"
 
 let to_lexeme = function
-  | ARROW _ -> "->"
-  | CONS _ -> "::"
-  | CAT _ -> "^"
-  | MINUS _ -> "-"
-  | PLUS _ -> "+"
-  | SLASH _ -> "/"
-  | TIMES _ -> "*"
-  | LPAR _ -> "("
-  | RPAR _ -> ")"
-  | LBRACKET _ -> "["
-  | RBRACKET _ -> "]"
-  | LBRACE _ -> "{"
-  | RBRACE _ -> "}"
-  | COMMA _ -> ","
-  | SEMI _ -> ";"
-  | VBAR _ -> "|"
-  | COLON _ -> ":"
-  | DOT _ -> "."
-  | WILD _ -> "_"
-  | EQ _ -> "="
-  | NE _ -> "<>"
-  | LT _ -> "<"
-  | GT _ -> ">"
-  | LE _ -> "=<"
-  | GE _ -> ">="
-  | BOOL_OR _ -> "||"
-  | BOOL_AND _ -> "&&"
-  | Ident id -> id.Region.value
-  | Constr id -> id.Region.value
-  | Int i
-  | Nat i
-  | Mutez i -> fst i.Region.value
-  | Str s -> s.Region.value
-  | Bytes b -> fst b.Region.value
-  | Begin _ -> "begin"
-  | Else _ -> "else"
-  | End _ -> "end"
-  | False _ -> "false"
-  | Fun _ -> "fun"
-  | If _ -> "if"
-  | In _ -> "in"
-  | Let _ -> "let"
-  | Match _ -> "match"
-  | Mod _ -> "mod"
-  | Not _ -> "not"
-  | Of _ -> "of"
-  | Or _ -> "or"
-  | True _ -> "true"
-  | Type _ -> "type"
-  | Then _ -> "then"
-  | With _ -> "with"
-  | LetEntry _ -> "let%entry"
-  | MatchNat _ -> "match%nat"
-  | EOF _ -> ""
+  ARROW _    -> "->"
+| CONS _     -> "::"
+| CAT _      -> "^"
+| MINUS _    -> "-"
+| PLUS _     -> "+"
+| SLASH _    -> "/"
+| TIMES _    -> "*"
+| LPAR _     -> "("
+| RPAR _     -> ")"
+| LBRACKET _ -> "["
+| RBRACKET _ -> "]"
+| LBRACE _   -> "{"
+| RBRACE _   -> "}"
+| COMMA _    -> ","
+| SEMI _     -> ";"
+| VBAR _     -> "|"
+| COLON _    -> ":"
+| DOT _      -> "."
+| WILD _     -> "_"
+| EQ _       -> "="
+| NE _       -> "<>"
+| LT _       -> "<"
+| GT _       -> ">"
+| LE _       -> "<="
+| GE _       -> ">="
+| BOOL_OR _  -> "||"
+| BOOL_AND _ -> "&&"
+
+| Ident id   -> id.Region.value
+| Constr id  -> id.Region.value
+| Int i
+| Nat i
+| Mutez i   -> fst i.Region.value
+| String s  -> s.Region.value
+| Bytes b   -> fst b.Region.value
+
+| Begin _ -> "begin"
+| Else _  -> "else"
+| End _   -> "end"
+| False _ -> "false"
+| Fun _   -> "fun"
+| If _    -> "if"
+| In _    -> "in"
+| Let _   -> "let"
+| Match _ -> "match"
+| Mod _   -> "mod"
+| Not _   -> "not"
+| Of _    -> "of"
+| Or _    -> "or"
+| True _  -> "true"
+| Type _  -> "type"
+| Then _  -> "then"
+| With _  -> "with"
+
+| C_None  _ -> "None"
+| C_Some  _ -> "Some"
+
+| EOF _ -> ""
 
 let to_string token ?(offsets=true) mode =
   let region, val_str = proj_token token in
@@ -257,9 +258,7 @@ let keywords = [
   (fun reg -> Then  reg);
   (fun reg -> True  reg);
   (fun reg -> Type  reg);
-  (fun reg -> With  reg);
-  (fun reg -> LetEntry reg);
-  (fun reg -> MatchNat reg);
+  (fun reg -> With  reg)
 ]
 
 let reserved =
@@ -302,8 +301,8 @@ let reserved =
     |> add "while"
 
 let constructors = [
-  (fun reg -> False reg);
-  (fun reg -> True  reg);
+  (fun reg -> C_None  reg);
+  (fun reg -> C_Some  reg)
 ]
 
 let add map (key, value) = SMap.add key value map
@@ -336,7 +335,7 @@ let small   = ['a'-'z']
 let capital = ['A'-'Z']
 let letter  = small | capital
 let digit   = ['0'-'9']
-let ident   = small (letter | '_' | digit | '%')*
+let ident   = small (letter | '_' | digit)*
 let constr  = capital (letter | '_' | digit)*
 
 (* Rules *)
@@ -362,7 +361,8 @@ and scan_constr region lexicon = parse
 
 (* Smart constructors (injections) *)
 
-let mk_string lexeme region = Str Region.{region; value=lexeme}
+let mk_string lexeme region =
+  String Region.{region; value=lexeme}
 
 let mk_bytes lexeme region =
   let norm = Str.(global_replace (regexp "_") "" lexeme) in
@@ -370,27 +370,27 @@ let mk_bytes lexeme region =
   in Bytes Region.{region; value}
 
 let mk_int lexeme region =
-  let z = Str.(global_replace (regexp "_") "" lexeme)
-          |> Z.of_string in
-  if   Z.equal z Z.zero && lexeme <> "0"
-  then Error Non_canonical_zero
-  else Ok (Int Region.{region; value = lexeme, z})
+  let z =
+    Str.(global_replace (regexp "_") "" lexeme) |> Z.of_string
+  in if   Z.equal z Z.zero && lexeme <> "0"
+     then Error Non_canonical_zero
+     else Ok (Int Region.{region; value = lexeme,z})
 
 type nat_err =
   Invalid_natural
 | Non_canonical_zero_nat
 
 let mk_nat lexeme region =
-  match (String.index_opt lexeme 'p') with
+  match (String.index_opt lexeme 'n') with
   | None -> Error Invalid_natural
   | Some _ -> (
     let z =
       Str.(global_replace (regexp "_") "" lexeme) |>
-      Str.(global_replace (regexp "p") "") |>
+      Str.(global_replace (regexp "n") "") |>
       Z.of_string in
-    if Z.equal z Z.zero && lexeme <> "0p"
+    if Z.equal z Z.zero && lexeme <> "0n"
     then Error Non_canonical_zero_nat
-    else Ok (Nat Region.{region; value = lexeme, z})
+    else Ok (Nat Region.{region; value = lexeme,z})
   )
 
 let mk_mutez lexeme region =
@@ -433,32 +433,30 @@ let mk_sym lexeme region =
   | ">"   -> Ok (GT       region)
   | ">="  -> Ok (GE       region)
 
-
+  (* Lexemes specific to CameLIGO *)
   | "<>"  -> Ok (NE        region)
   | "::"  -> Ok (CONS      region)
   | "||"  -> Ok (BOOL_OR   region)
   | "&&"  -> Ok (BOOL_AND  region)
 
-  |  a  ->   failwith ("Not understood token: " ^ a)
+  (* Invalid lexemes *)
+  |     _ -> Error Invalid_symbol
+
 
 (* Identifiers *)
 
-let mk_ident' lexeme region lexicon =
+let mk_ident lexeme region =
   Lexing.from_string lexeme |> scan_ident region lexicon
-
-let mk_ident lexeme region = mk_ident' lexeme region lexicon
 
 (* Constructors *)
 
-let mk_constr' lexeme region lexicon =
+let mk_constr lexeme region =
   Lexing.from_string lexeme |> scan_constr region lexicon
-
-let mk_constr lexeme region = mk_constr' lexeme region lexicon
 
 (* Predicates *)
 
 let is_string = function
-  Str _ -> true
+  String _ -> true
 |        _ -> false
 
 let is_bytes = function
@@ -490,8 +488,6 @@ let is_kwd = function
   | Then _
   | True _
   | Type _
-  | LetEntry _
-  | MatchNat _
   | With _ -> true
   | _ -> false
 

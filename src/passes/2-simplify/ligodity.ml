@@ -6,9 +6,11 @@ open Ast_simplified
 module Raw = Parser.Ligodity.AST
 module SMap = Map.String
 module Option = Simple_utils.Option
+(* TODO: move 1-parser/shared/Utils.ml{i} to Simple_utils/ *)
 
 open Combinators
 
+type 'a nseq = 'a * 'a list
 let nseq_to_list (hd, tl) = hd :: tl
 let npseq_to_list (hd, tl) = hd :: (List.map snd tl)
 let npseq_to_nelist (hd, tl) = hd, (List.map snd tl)
@@ -124,34 +126,6 @@ module Errors = struct
        fun () -> Format.asprintf "%a" Location.pp_lift @@ region)
     ] in
     error ~data title message
-
-  let bad_set_definition =
-    let title () = "bad set definition" in
-    let message () = "a set definition is a list" in
-    info title message
-
-  let bad_list_definition =
-    let title () = "bad list definition" in
-    let message () = "a list definition is a list" in
-    info title message
-
-  let bad_map_definition =
-    let title () = "bad map definition" in
-    let message () = "a map definition is a list of pairs" in
-    info title message
-
-  let corner_case ~loc message =
-    let title () = "corner case" in
-    let content () = "We don't have a good error message for this case. \
-                      We are striving find ways to better report them and \
-                      find the use-cases that generate them. \
-                      Please report this to the developers." in
-    let data = [
-      ("location" , fun () -> loc) ;
-      ("message" , fun () -> message) ;
-    ] in
-    error ~data title content
-
 end
 
 open Errors
@@ -185,18 +159,18 @@ let rec expr_to_typed_expr : Raw.expr -> _ = fun e ->
   | EAnnot a -> ok (fst a.value , Some (snd a.value))
   | _ -> ok (e , None)
 
-let patterns_to_var : Raw.pattern list -> _ = fun ps ->
+let patterns_to_var : Raw.pattern nseq -> _ = fun ps ->
   match ps with
-  | [ pattern ] -> pattern_to_var pattern
-  | _ -> fail @@ multiple_patterns "let" ps
+  | pattern, [] -> pattern_to_var pattern
+  | _ -> fail @@ multiple_patterns "let" (nseq_to_list ps)
 
 let rec simpl_type_expression : Raw.type_expr -> type_expression result = fun te ->
   trace (simple_info "simplifying this type expression...") @@
   match te with
-  | TPar x -> simpl_type_expression x.value.inside
-  | TAlias v -> (
+    TPar x -> simpl_type_expression x.value.inside
+  | TVar v -> (
       match List.assoc_opt v.value type_constants with
-      | Some s -> ok @@ T_constant (s , [])
+        Some s -> ok @@ T_constant (s , [])
       | None -> ok @@ T_variable v.value
     )
   | TFun x -> (
@@ -230,20 +204,18 @@ let rec simpl_type_expression : Raw.type_expr -> type_expression result = fun te
         bind_list
         @@ List.map aux
         @@ List.map apply
-        @@ pseq_to_list r.value.elements in
+        @@ npseq_to_list r.value.ne_elements in
       let m = List.fold_left (fun m (x, y) -> SMap.add x y m) SMap.empty lst in
       ok @@ T_record m
   | TSum s ->
       let aux (v:Raw.variant Raw.reg) =
         let args =
-          match v.value.args with
+          match v.value.arg with
             None -> []
-          | Some (_, cartesian) ->
-              npseq_to_list cartesian.value in
-        let%bind te = simpl_list_type_expression
-          @@ args in
-        ok (v.value.constr.value, te)
-      in
+          | Some (_, TProd product) -> npseq_to_list product.value
+          | Some (_, t_expr) -> [t_expr] in
+        let%bind te = simpl_list_type_expression @@ args in
+        ok (v.value.constr.value, te) in
       let%bind lst = bind_list
         @@ List.map aux
         @@ npseq_to_list s.value in
@@ -270,10 +242,8 @@ let rec simpl_expression :
     let path' =
       let aux (s:Raw.selection) =
         match s with
-        | FieldName property -> Access_record property.value
-        | Component index ->
-            let index = index.value.inside in
-            Access_tuple (Z.to_int (snd index.value))
+          FieldName property -> Access_record property.value
+        | Component index -> Access_tuple (Z.to_int (snd index.value))
       in
       List.map aux @@ npseq_to_list path in
     return @@ e_accessor ~loc var path'
@@ -281,35 +251,29 @@ let rec simpl_expression :
 
   trace (simplifying_expr t) @@
   match t with
-  | Raw.ELetIn e -> (
-      let Raw.{binding ; body ; _} = e.value in
-      let Raw.{bindings ; lhs_type ; let_rhs ; _} = binding in
-      let%bind variable = patterns_to_var bindings in
+    Raw.ELetIn e ->
+      let Raw.{binding; body; _} = e.value in
+      let Raw.{binders; lhs_type; let_rhs; _} = binding in
+      let%bind variable = patterns_to_var binders in
       let%bind ty_opt =
-        bind_map_option
-          (fun (_ , type_expr) -> simpl_type_expression type_expr)
-          lhs_type in
+        bind_map_option (fun (_,te) -> simpl_type_expression te) lhs_type in
       let%bind rhs = simpl_expression let_rhs in
       let rhs' =
         match ty_opt with
-        | None -> rhs
+          None -> rhs
         | Some ty -> e_annotation rhs ty in
       let%bind body = simpl_expression body in
       return @@ e_let_in (variable.value , None) rhs' body
-    )
-  | Raw.EAnnot a -> (
-      let (a , loc) = r_split a in
-      let (expr , type_expr) = a in
+  | Raw.EAnnot a ->
+      let (expr , type_expr), loc = r_split a in
       let%bind expr' = simpl_expression expr in
       let%bind type_expr' = simpl_type_expression type_expr in
       return @@ e_annotation ~loc expr' type_expr'
-    )
-  | EVar c -> (
+  | EVar c ->
       let c' = c.value in
-      match List.assoc_opt c' constants with
-      | None -> return @@ e_variable c.value
-      | Some s -> return @@ e_constant s []
-    )
+      (match List.assoc_opt c' constants with
+         None -> return @@ e_variable c.value
+       | Some s -> return @@ e_constant s [])
   | ECall x -> (
       let ((e1 , e2) , loc) = r_split x in
       let%bind args = bind_map_list simpl_expression (nseq_to_list e2) in
@@ -323,72 +287,44 @@ let rec simpl_expression :
             )
           | Some s -> return @@ e_constant ~loc s args
         )
-      | e1 -> (
+      | e1 ->
           let%bind e1' = simpl_expression e1 in
           let%bind arg = simpl_tuple_expression (nseq_to_list e2) in
           return @@ e_application ~loc e1' arg
-      )
     )
   | EPar x -> simpl_expression x.value.inside
-  | EUnit reg -> (
+  | EUnit reg ->
       let (_ , loc) = r_split reg in
       return @@ e_literal ~loc Literal_unit
-    )
-  | EBytes x -> (
+  | EBytes x ->
       let (x , loc) = r_split x in
       return @@ e_literal ~loc (Literal_bytes (Bytes.of_string @@ fst x))
-    )
   | ETuple tpl -> simpl_tuple_expression @@ (npseq_to_list tpl.value)
-  | ERecord r -> (
+  | ERecord r ->
       let (r , loc) = r_split r in
       let%bind fields = bind_list
         @@ List.map (fun ((k : _ Raw.reg), v) -> let%bind v = simpl_expression v in ok (k.value, v))
         @@ List.map (fun (x:Raw.field_assign Raw.reg) -> (x.value.field_name, x.value.field_expr))
-        @@ pseq_to_list r.elements in
+        @@ npseq_to_list r.ne_elements in
       let map = SMap.of_list fields in
       return @@ e_record ~loc map
-    )
   | EProj p -> simpl_projection p
-  | EConstr c -> (
-      let ((c_name , args) , loc) = r_split c in
-      let (c_name , _c_loc) = r_split c_name in
+  | EConstr (ESomeApp a) ->
+      let (_, args), loc = r_split a in
+      let%bind arg = simpl_expression args in
+      return @@ e_constant ~loc "SOME" [arg]
+  | EConstr (ENone reg) ->
+      let loc = Location.lift reg in
+      return @@ e_none ~loc ()
+  | EConstr (EConstrApp c) ->
+      let (c_name, args), loc = r_split c in
+      let c_name, _c_loc = r_split c_name in
       let args =
         match args with
-        | None -> []
+          None -> []
         | Some arg -> [arg] in
-      let%bind arg = simpl_tuple_expression @@ args in
-      match c_name with
-      | "Set" -> (
-          let%bind args' =
-            trace bad_set_definition @@
-            extract_list arg in
-          return @@ e_set ~loc args'
-        )
-      | "List" -> (
-          let%bind args' =
-            trace bad_list_definition @@
-            extract_list arg in
-          return @@ e_list ~loc args'
-        )
-      | "Map" -> (
-          let%bind args' =
-            trace bad_map_definition @@
-            extract_list arg in
-          let%bind pairs =
-            trace bad_map_definition @@
-            bind_map_list extract_pair args' in
-          return @@ e_map ~loc pairs
-        )
-      | "Some" -> (
-          return @@ e_some ~loc arg
-        )
-      | "None" -> (
-          return @@ e_none ~loc ()
-        )
-      | _ -> (
-          return @@ e_constructor ~loc c_name arg
-        )
-    )
+      let%bind arg = simpl_tuple_expression @@ args
+      in return @@ e_constructor ~loc c_name arg
   | EArith (Add c) ->
       simpl_binop "ADD" c
   | EArith (Sub c) ->
@@ -415,7 +351,7 @@ let rec simpl_expression :
       return @@ e_literal ~loc (Literal_mutez n)
     )
   | EArith (Neg e) -> simpl_unop "NEG" e
-  | EString (String s) -> (
+  | EString (StrLit s) -> (
       let (s , loc) = r_split s in
       let s' =
         let s = s in
@@ -444,7 +380,7 @@ let rec simpl_expression :
       let default_action () =
         let%bind cases = simpl_cases lst in
         return @@ e_matching ~loc e  cases in
-      (* Hack to take care of patterns introduced by `parser/ligodity/Parser.mly` in "norm_fun_expr" *)
+      (* Hack to take care of patterns introduced by `parser/ligodity/Parser.mly` in "norm_fun_expr". TODO: Still needed? *)
       match lst with
       | [ (pattern , rhs) ] -> (
           match pattern with
@@ -492,7 +428,7 @@ and simpl_fun lamb' : expr result =
   let return x = ok x in
   let (lamb , loc) = r_split lamb' in
   let%bind args' =
-    let args = lamb.params in
+    let args = nseq_to_list lamb.binders in
     let%bind p_args = bind_map_list pattern_to_typed_var args in
     let aux ((var : Raw.variable) , ty_opt) =
       match var.value , ty_opt with
@@ -571,8 +507,8 @@ and simpl_logic_expression ?te_annot (t:Raw.logic_expr) : expr result =
 and simpl_list_expression (t:Raw.list_expr) : expression result =
   let return x = ok @@ x in
   match t with
-  | Cons c -> simpl_binop "CONS" c
-  | List lst -> (
+    ECons c -> simpl_binop "CONS" c
+  | EListComp lst -> (
       let (lst , loc) = r_split lst in
       let%bind lst' =
         bind_map_list simpl_expression @@
@@ -612,38 +548,31 @@ and simpl_declaration : Raw.declaration -> declaration Location.wrap result =
       let {name;type_expr} : Raw.type_decl = x.value in
       let%bind type_expression = simpl_type_expression type_expr in
       ok @@ loc x @@ Declaration_type (name.value , type_expression)
-  | LetEntry x
   | Let x -> (
       let _ , binding = x.value in
-      let {bindings ; lhs_type ; let_rhs} = binding in
-      let%bind (var , args) =
-        let%bind (hd , tl) =
-          match bindings with
-          | [] -> fail @@ corner_case ~loc:__LOC__ "let without bindings"
-          | hd :: tl -> ok (hd , tl)
-        in
+      let {binders; lhs_type; let_rhs} = binding in
+      let%bind (var, args) =
+        let%bind (hd, tl) =
+          let hd, tl = binders in ok (hd, tl) in
         let%bind var = pattern_to_var hd in
         ok (var , tl)
       in
       match args with
-      | [] -> (
-          let%bind lhs_type' = bind_map_option
-              (fun (_ , te) -> simpl_type_expression te) lhs_type in
+        [] ->
+          let%bind lhs_type' =
+            bind_map_option (fun (_,te) -> simpl_type_expression te) lhs_type in
           let%bind rhs' = simpl_expression let_rhs in
           ok @@ loc x @@ (Declaration_constant (var.value , lhs_type' , rhs'))
-        )
-      | _ -> (
+      | param1::others ->
           let fun_ = {
-            kwd_fun = Region.ghost ;
-            params = args ;
-            p_annot = lhs_type ;
-            arrow = Region.ghost ;
-            body = let_rhs ;
-          } in
+            kwd_fun = Region.ghost;
+            binders = param1, others;
+            lhs_type;
+            arrow   = Region.ghost;
+            body    = let_rhs} in
           let rhs = Raw.EFun {region=Region.ghost ; value=fun_} in
           let%bind rhs' = simpl_expression rhs in
           ok @@ loc x @@ (Declaration_constant (var.value , None , rhs'))
-        )
     )
 
 and simpl_cases : type a . (Raw.pattern * a) list -> a matching result =
@@ -653,53 +582,55 @@ and simpl_cases : type a . (Raw.pattern * a) list -> a matching result =
     match t with
     | PVar v -> ok v.value
     | PPar p -> get_var p.value.inside
-    | _ -> fail @@ unsupported_non_var_pattern t
-  in
+    | _ -> fail @@ unsupported_non_var_pattern t in
   let rec get_tuple (t:Raw.pattern) =
     match t with
     | PTuple v -> npseq_to_list v.value
     | PPar p -> get_tuple p.value.inside
-    | x -> [ x ]
-  in
+    | x -> [ x ] in
   let get_single (t:Raw.pattern) =
     let t' = get_tuple t in
     let%bind () =
       trace_strong (unsupported_tuple_pattern t) @@
       Assert.assert_list_size t' 1 in
-    ok (List.hd t')
-  in
+    ok (List.hd t') in
   let rec get_constr (t:Raw.pattern) =
     match t with
-    | PPar p -> get_constr p.value.inside
-    | PConstr v -> (
-        let (const , pat_opt) = v.value in
+      PPar p -> get_constr p.value.inside
+    | PConstr v ->
+       let const, pat_opt =
+         match v with
+           PConstrApp {value; _} -> value
+         | PSomeApp {value=region,pat; _} ->
+            {value="Some"; region}, Some pat
+         | PNone region ->
+            {value="None"; region}, None in
         let%bind pat =
-          trace_option (unsupported_cst_constr t) @@
-          pat_opt in
+          trace_option (unsupported_cst_constr t) @@ pat_opt in
         let%bind single_pat = get_single pat in
         let%bind var = get_var single_pat in
-        ok (const.value , var)
-      )
-    | _ -> fail @@ only_constructors t
-  in
+        ok (const.value, var)
+    | _ -> fail @@ only_constructors t in
   let rec get_constr_opt (t:Raw.pattern) =
     match t with
-    | PPar p -> get_constr_opt p.value.inside
-    | PConstr v -> (
-        let (const , pat_opt) = v.value in
+      PPar p -> get_constr_opt p.value.inside
+    | PConstr v ->
+       let const, pat_opt =
+         match v with
+           PConstrApp {value; _} -> value
+         | PSomeApp {value=region,pat; _} ->
+            {value="Some"; region}, Some pat
+         | PNone region ->
+            {value="None"; region}, None in
         let%bind var_opt =
           match pat_opt with
           | None -> ok None
-          | Some pat -> (
+          | Some pat ->
               let%bind single_pat = get_single pat in
               let%bind var = get_var single_pat in
               ok (Some var)
-            )
-        in
-        ok (const.value , var_opt)
-      )
-    | _ -> fail @@ only_constructors t
-  in
+        in ok (const.value , var_opt)
+    | _ -> fail @@ only_constructors t in
   let%bind patterns =
     let aux (x , y) =
       let xs = get_tuple x in
@@ -709,25 +640,23 @@ and simpl_cases : type a . (Raw.pattern * a) list -> a matching result =
     in
     bind_map_list aux t in
   match patterns with
-  | [(PFalse _ , f) ; (PTrue _ , t)]
-  | [(PTrue _ , t) ; (PFalse _ , f)] ->
+  | [(PFalse _, f) ; (PTrue _, t)]
+  | [(PTrue _, t) ; (PFalse _, f)] ->
       ok @@ Match_bool {match_true = t ; match_false = f}
-  | [(PList (PCons c) , cons) ; (PList (Sugar sugar_nil) , nil)]
-  | [(PList (Sugar sugar_nil) , nil) ; (PList (PCons c),  cons)] -> (
+  | [(PList (PCons c), cons); (PList (PListComp sugar_nil), nil)]
+  | [(PList (PListComp sugar_nil), nil); (PList (PCons c), cons)] ->
       let%bind () =
         trace_strong (unsupported_sugared_lists sugar_nil.region)
         @@ Assert.assert_list_empty
         @@ pseq_to_list
         @@ sugar_nil.value.elements in
       let%bind (a, b) =
-        let (a , _ , b) = c.value in
+        let a, _, b = c.value in
         let%bind a = get_var a in
         let%bind b = get_var b in
-        ok (a, b)
-      in
-      ok @@ Match_list {match_cons = (a, b, cons) ; match_nil = nil}
-    )
-  | lst -> (
+        ok (a, b) in
+      ok @@ Match_list {match_cons=(a, b, cons); match_nil=nil}
+  | lst ->
       let error x =
         let title () = "Pattern" in
         let content () =
@@ -739,35 +668,26 @@ and simpl_cases : type a . (Raw.pattern * a) list -> a matching result =
         trace (simple_info "currently, only booleans, lists, options, and constructors \
                             are supported in patterns") @@
         let%bind constrs =
-          let aux (x , y) =
-            let%bind x' =
-              trace (error x) @@
-              get_constr x
-            in
-            ok (x' , y)
-          in
-          bind_map_list aux lst
-        in
-        ok @@ Match_variant constrs
-      in
+          let aux (x, y) =
+            let%bind x' = trace (error x) @@ get_constr x
+            in ok (x', y)
+          in bind_map_list aux lst
+        in ok @@ Match_variant constrs in
       let as_option () =
-        let aux (x , y) =
-          let%bind x' =
-            trace (error x) @@
-            get_constr_opt x
-          in
-          ok (x' , y)
-        in
+        let aux (x, y) =
+          let%bind x' = trace (error x) @@ get_constr_opt x
+          in ok (x', y) in
         let%bind constrs = bind_map_list aux lst in
         match constrs with
-        | [ (("Some" , Some some_var) , some_expr) ; (("None" , None) , none_expr) ]
-        | [ (("None" , None) , none_expr) ; (("Some" , Some some_var) , some_expr) ] -> (
-            ok @@ Match_option { match_some = (some_var , some_expr) ; match_none = none_expr }
-          )
+        | [ (("Some", Some some_var), some_expr);
+            (("None" , None) , none_expr) ]
+        | [ (("None", None), none_expr);
+            (("Some", Some some_var), some_expr) ] ->
+           ok @@ Match_option {
+                    match_some = (some_var, some_expr);
+                    match_none = none_expr }
         | _ -> simple_fail "bad option pattern"
-      in
-      bind_or (as_option () , as_variant ())
-    )
+      in bind_or (as_option () , as_variant ())
 
 let simpl_program : Raw.ast -> program result = fun t ->
-  bind_list @@ List.map simpl_declaration @@ List.rev @@ nseq_to_list t.decl
+  bind_list @@ List.map simpl_declaration @@ nseq_to_list t.decl
