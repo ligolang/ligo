@@ -76,6 +76,7 @@ module Simplify = struct
       ("string_slice" , "SLICE") ;
       ("bytes_concat" , "CONCAT") ;
       ("bytes_slice" , "SLICE") ;
+      ("bytes_pack" , "PACK") ;
       ("set_empty" , "SET_EMPTY") ;
       ("set_mem" , "SET_MEM") ;
       ("set_add" , "SET_ADD") ;

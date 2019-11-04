@@ -18,9 +18,8 @@ depends: [
   "ezjsonm"
   "hex"
   "hidapi"
-  # opam does not handle tezos' constraints well (why?)
-  "ipaddr" { >= "3.1.0" & < "4.0.0" }
-  "macaddr" { >= "3.1.0" & < "4.0.0" }
+  "ipaddr"
+  "macaddr"
   "irmin"
   "js_of_ocaml"
   "lwt"

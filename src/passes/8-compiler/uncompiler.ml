@@ -46,7 +46,7 @@ let rec translate_value ?bm_opt (Ex_typed_value (ty, value)) : value result =
   | (String_t _), s ->
       ok @@ D_string s
   | (Bytes_t _), b ->
-      ok @@ D_bytes (Tezos_stdlib.MBytes.to_bytes b)
+      ok @@ D_bytes b
   | (Address_t _), (s , _) ->
       ok @@ D_string (Alpha_context.Contract.to_b58check s)
   | (Unit_t _), () ->
