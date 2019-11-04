@@ -86,11 +86,6 @@ let rec translate_value (v:value) ty : michelson result = match v with
       let%bind b' = translate_value b b_ty in
       ok @@ prim ~children:[b'] D_Right
     )
-  | D_function func -> (
-      match ty with
-      | T_function (in_ty , _) -> translate_function_body func [] in_ty
-      | _ -> simple_fail "expected function type"
-    )
   | D_none -> ok @@ prim D_None
   | D_some s ->
       let%bind s' = translate_value s ty in
@@ -143,19 +138,9 @@ and translate_expression (expr:expression) (env:environment) : michelson result 
       return @@ i_push t v
   | E_closure anon -> (
       match ty with
-      | T_deep_closure (small_env , input_ty , output_ty) -> (
-          let selector = List.map fst small_env in
-          let%bind closure_pack_code = Compiler_environment.pack_closure env selector in
-          let%bind lambda_ty = Compiler_type.lambda_closure (small_env , input_ty , output_ty) in
-          let%bind lambda_body_code = translate_function_body anon small_env input_ty in
-          return @@ seq [
-            closure_pack_code ;
-            i_push lambda_ty lambda_body_code ;
-            i_swap ;
-            i_apply ;
-          ]
-        )
-      | _ -> simple_fail "expected closure type"
+      | T_function (input_ty , output_ty) ->
+        translate_function anon env input_ty output_ty
+      | _ -> simple_fail "expected function type"
     )
   | E_application (f , arg) -> (
       trace (simple_error "Compiling quote application") @@
@@ -407,6 +392,24 @@ and translate_function_body ({body ; binder} : anon_function) lst input : michel
 
   ok code
 
+and translate_function anon env input_ty output_ty : michelson result =
+  let fvs = Mini_c.Free_variables.lambda [] anon in
+  let small_env = Mini_c.Environment.select fvs env in
+  let%bind lambda_ty = Compiler_type.lambda_closure (small_env , input_ty , output_ty) in
+  let%bind lambda_body_code = translate_function_body anon small_env input_ty in
+  match fvs with
+  | [] -> ok @@ seq [ i_push lambda_ty lambda_body_code ]
+  | _ :: _ ->
+    let selector = List.map fst small_env in
+    let%bind closure_pack_code = Compiler_environment.pack_closure env selector in
+    ok @@ seq [
+      closure_pack_code ;
+      i_push lambda_ty lambda_body_code ;
+      i_swap ;
+      i_apply ;
+    ]
+
+
 type compiled_program = {
   input : ex_ty ;
   output : ex_ty ;
@@ -416,7 +419,7 @@ type compiled_program = {
 let get_main : program -> string -> (anon_function * _) result = fun p entry ->
   let is_main (((name , expr), _):toplevel_statement) =
     match Combinators.Expression.(get_content expr , get_type expr)with
-    | (E_literal (D_function content) , T_function ty)
+    | (E_closure content , T_function ty)
       when name = entry ->
         Some (content , ty)
     | _ ->  None

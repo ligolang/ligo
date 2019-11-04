@@ -77,20 +77,16 @@ let get_set (v:value) = match v with
 
 let get_function_with_ty (e : expression) =
   match (e.content , e.type_value) with
-  | E_literal (D_function f) , T_function ty -> ok (f , ty)
+  | E_closure f , T_function ty -> ok (f , ty)
   | _ -> simple_fail "not a function with functional type"
 
 let get_function (e : expression) =
   match (e.content) with
-  | E_literal (D_function f) -> ok (D_function f)
+  | E_closure f -> ok f
   | _ -> simple_fail "not a function"
 
 let get_t_function tv = match tv with
   | T_function ty -> ok ty
-  | _ -> simple_fail "not a function"
-
-let get_t_closure tv = match tv with
-  | T_deep_closure ty -> ok ty
   | _ -> simple_fail "not a function"
 
 let get_t_option (v:type_value) = match v with
@@ -169,7 +165,6 @@ let t_unit : type_value = T_base Base_unit
 let t_nat : type_value = T_base Base_nat
 
 let t_function x y : type_value = T_function ( x , y )
-let t_deep_closure x y z : type_value = T_deep_closure ( x , y , z )
 let t_pair x y : type_value = T_pair ( x , y )
 let t_union x y : type_value = T_or ( x , y )
 
@@ -194,7 +189,7 @@ let ez_e_sequence a b : expression = Expression.(make_tpl (E_sequence (make_tpl 
 let d_unit : value = D_unit
 
 let basic_quote expr in_ty out_ty : expression result =
-  let expr' = E_literal (D_function (quote "input" expr)) in
+  let expr' = E_closure (quote "input" expr) in
   ok @@ Expression.make_tpl (expr' , t_function in_ty out_ty)
 
 let basic_int_quote expr : expression result =

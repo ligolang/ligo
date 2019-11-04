@@ -12,6 +12,7 @@
     ast_typed
     transpiler
     mini_c
+    self_mini_c
     compiler
     self_michelson
   )

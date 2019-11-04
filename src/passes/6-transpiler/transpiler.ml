@@ -228,36 +228,7 @@ let rec transpile_literal : AST.literal -> value = fun l -> match l with
   | Literal_unit -> D_unit
 
 and transpile_environment_element_type : AST.environment_element -> type_value result = fun ele ->
-  match (AST.get_type' ele.type_value , ele.definition) with
-  | (AST.T_function (arg , ret) , ED_declaration (ae , ((_ :: _) as captured_variables)) ) ->
-  begin
-    match ae.expression with
-    | E_lambda _ ->
-      let%bind ret' = transpile_type ret in
-      let%bind arg' = transpile_type arg in
-      let%bind env' = transpile_environment ae.environment in
-      let sub_env = Mini_c.Environment.select captured_variables env' in
-      if sub_env = [] then
-        transpile_type ele.type_value
-      else
-        ok @@ Combinators.t_deep_closure sub_env arg' ret'
-    | _ -> transpile_type ele.type_value
-  end
-  | _ -> transpile_type ele.type_value
-
-and transpile_small_environment : AST.small_environment -> Environment.t result = fun x ->
-  let x' = AST.Environment.Small.get_environment x in
-  let aux prec (name , (ele : AST.environment_element)) =
-    let%bind tv' = transpile_environment_element_type ele in
-    ok @@ Environment.add (name , tv') prec
-  in
-  let%bind result =
-    bind_fold_right_list aux Environment.empty x' in
-  ok result
-
-and transpile_environment : AST.full_environment -> Environment.t result = fun x ->
-  let%bind nlst = bind_map_ne_list transpile_small_environment x in
-  ok @@ Environment.concat @@ List.Ne.to_list nlst
+  transpile_type ele.type_value
 
 and tree_of_sum : AST.type_value -> (type_name * AST.type_value) Append_tree.t result = fun t ->
   let%bind map_tv = get_t_sum t in
@@ -435,11 +406,8 @@ and transpile_annotated_expression (ae:AST.annotated_expression) : expression re
         )
     )
   | E_lambda l ->
-    let%bind env =
-      trace_strong (corner_case ~loc:__LOC__ "environment") @@
-      transpile_environment ae.environment in
     let%bind io = AST.get_t_function ae.type_annotation in
-    transpile_lambda env l io
+    transpile_lambda l io
   | E_list lst -> (
       let%bind t =
         trace_strong (corner_case ~loc:__LOC__ "not a list") @@
@@ -610,40 +578,14 @@ and transpile_annotated_expression (ae:AST.annotated_expression) : expression re
       | AST.Match_tuple _ -> fail @@ unsupported_pattern_matching "tuple" ae.location
     )
 
-and transpile_lambda_deep : Mini_c.Environment.t -> AST.lambda -> _ -> Mini_c.expression result =
-  fun env l (input_type , output_type)->
+and transpile_lambda l (input_type , output_type) =
   let { binder ; body } : AST.lambda = l in
-  (* Deep capture. Capture the relevant part of the environment. *)
-  let%bind c_env =
-    let free_variables = Ast_typed.Free_variables.lambda [] l in
-    let sub_env = Mini_c.Environment.select free_variables env in
-    ok sub_env in
-  let%bind (f_expr' , input_tv , output_tv) =
-    let%bind raw_input = transpile_type input_type in
-    let%bind output = transpile_type output_type in
-    let%bind body = transpile_annotated_expression body in
-    let expr' = E_closure { binder ; body } in
-    ok (expr' , raw_input , output) in
-  let tv = Mini_c.t_deep_closure c_env input_tv output_tv in
-  ok @@ Expression.make_tpl (f_expr' , tv)
-
-and transpile_lambda env l (input_type , output_type) =
-  let { binder ; body } : AST.lambda = l in
-  let fvs = AST.Free_variables.(annotated_expression (singleton binder) body) in
-  let%bind result =
-    match fvs with
-    | [] -> (
-        let%bind result' = transpile_annotated_expression body in
-        let%bind input = transpile_type input_type in
-        let%bind output = transpile_type output_type in
-        let tv = Combinators.t_function input output in
-        let content = D_function { binder ; body = result'} in
-        ok @@ Combinators.Expression.make_tpl (E_literal content , tv)
-      )
-    | _ -> (
-        transpile_lambda_deep env l (input_type , output_type)
-      ) in
-  ok result
+  let%bind result' = transpile_annotated_expression body in
+  let%bind input = transpile_type input_type in
+  let%bind output = transpile_type output_type in
+  let tv = Combinators.t_function input output in
+  let closure = E_closure { binder ; body = result'} in
+  ok @@ Combinators.Expression.make_tpl (closure , tv)
 
 let transpile_declaration env (d:AST.declaration) : toplevel_statement result =
   match d with
@@ -671,7 +613,6 @@ let check_storage f ty loc : (anon_function * _) result =
       | T_pair (a , b) -> (aux (snd a) true) && (aux (snd b) false)
       | T_or (a,b) -> (aux (snd a) false) && (aux (snd b) false)
       | T_function (a,b) -> (aux a false) && (aux b false)
-      | T_deep_closure (_,a,b) -> (aux a false) && (aux b false)
       | T_map (a,b) -> (aux a false) && (aux b false)
       | T_list a -> (aux a false)
       | T_set a -> (aux a false)

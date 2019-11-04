@@ -11,8 +11,6 @@ let rec fold_type_value : ('a -> type_value -> 'a result) -> 'a -> type_value ->
   | T_map (a, b)
   | T_big_map (a, b) ->
      bind_fold_pair self init' (a, b)
-  | T_deep_closure (env, a, b) ->
-     bind_fold_list self init' (List.map snd env @ [a; b])
   | T_list a
   | T_set a
   | T_contract a
@@ -31,11 +29,7 @@ let rec fold_expression : 'a folder -> 'a -> expression -> 'a result = fun f ini
   | E_make_empty_set _ -> (
     ok init'
   )
-  | E_literal v -> (
-    match v with
-    | D_function an -> self init' an.body
-    | _ -> ok init'
-  )
+  | E_literal _ -> ok init'
   | E_constant (_, lst) -> (
       let%bind res = bind_fold_list self init' lst in
       ok res
@@ -96,16 +90,8 @@ let rec map_expression : mapper -> expression -> expression result = fun f e ->
   let%bind e' = f e in
   let return content = ok { e' with content } in
   match e'.content with
-  | E_variable _ | E_skip | E_make_none _
+  | E_variable _ | E_literal _ | E_skip | E_make_none _
   | E_make_empty_map (_,_) | E_make_empty_list _ | E_make_empty_set _ as em -> return em
-  | E_literal v -> (
-      let%bind v' = match v with
-      | D_function an ->
-        let%bind body = self an.body in
-        ok @@ D_function { an with body }
-      | _ -> ok v in
-      return @@ E_literal v'
-  )
   | E_constant (name, lst) -> (
       let%bind lst' = bind_map_list self lst in
       return @@ E_constant (name,lst')

@@ -33,10 +33,6 @@ let rec type_ ppf : type_value -> _ = function
   | T_set(t) -> fprintf ppf "set(%a)" type_ t
   | T_option(o) -> fprintf ppf "option(%a)" type_ o
   | T_contract(t) -> fprintf ppf "contract(%a)" type_ t
-  | T_deep_closure(c, arg, ret) ->
-      fprintf ppf "[%a](%a)->(%a)"
-        environment c
-        type_ arg type_ ret
 
 and annotated ppf : type_value annotated -> _ = function
   | (Some ann, a) -> fprintf ppf "(%a %%%s)" type_ a ann
@@ -63,7 +59,6 @@ let rec value ppf : value -> unit = function
   | D_pair (a, b) -> fprintf ppf "(%a), (%a)" value a value b
   | D_left a -> fprintf ppf "L(%a)" value a
   | D_right b -> fprintf ppf "R(%a)" value b
-  | D_function x -> function_ ppf x
   | D_none -> fprintf ppf "None"
   | D_some s -> fprintf ppf "Some (%a)" value s
   | D_map m -> fprintf ppf "Map[%a]" (list_sep_d value_assoc) m

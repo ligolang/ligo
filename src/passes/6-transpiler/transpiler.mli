@@ -33,14 +33,11 @@ val tuple_access_to_lr : type_value -> type_value list -> int -> (type_value * [
 val record_access_to_lr : type_value -> type_value AST.type_name_map -> string -> (type_value * [`Left | `Right]) list result 
 val translate_literal : AST.literal -> value
 val transpile_environment_element_type : AST.environment_element -> type_value result
-val transpile_small_environment : AST.small_environment -> Environment.t result
-val transpile_environment : AST.full_environment -> Environment.t result
 val tree_of_sum : AST.type_value -> (type_name * AST.type_value) Append_tree.t result
 *)
 val transpile_annotated_expression : AST.annotated_expression -> expression result
 (*
-val transpile_lambda_deep : Mini_c.Environment.t -> AST.lambda -> Mini_c.expression result
-val transpile_lambda : Environment.t -> AST.lambda -> expression result
+val transpile_lambda : AST.lambda -> expression result
 val transpile_declaration : environment -> AST.declaration -> toplevel_statement result
 *)
 
