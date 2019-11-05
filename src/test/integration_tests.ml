@@ -283,6 +283,26 @@ let bytes_arithmetic () : unit result =
   let%bind () = Assert.assert_fail @@ Ast_simplified.Misc.assert_value_eq (b3 , b1) in
   ok ()
 
+let bytes_arithmetic_mligo () : unit result =
+  let%bind program = mtype_file "./contracts/bytes_arithmetic.mligo" in
+  let%bind foo = e_bytes "0f00" in
+  let%bind foototo = e_bytes "0f007070" in
+  let%bind toto = e_bytes "7070" in
+  let%bind empty = e_bytes "" in
+  let%bind tata = e_bytes "7a7a7a7a" in
+  let%bind at = e_bytes "7a7a" in
+  let%bind ba = e_bytes "ba" in
+  let%bind () = expect_eq program "concat_op" foo foototo in
+  let%bind () = expect_eq program "concat_op" empty toto in
+  let%bind () = expect_eq program "slice_op" tata at in
+  let%bind () = expect_fail program "slice_op" foo in
+  let%bind () = expect_fail program "slice_op" ba in
+  let%bind b1 = Run.Of_simplified.run_typed_program program "hasherman" foo in
+  let%bind () = expect_eq program "hasherman" foo b1 in
+  let%bind b3 = Run.Of_simplified.run_typed_program program "hasherman" foototo in
+  let%bind () = Assert.assert_fail @@ Ast_simplified.Misc.assert_value_eq (b3 , b1) in
+  ok ()
+
 let set_arithmetic () : unit result =
   let%bind program = type_file "./contracts/set_arithmetic.ligo" in
   let%bind program_1 = type_file "./contracts/set_arithmetic-1.ligo" in
@@ -1158,6 +1178,7 @@ let main = test_suite "Integration (End to End)" [
     test "string_arithmetic" string_arithmetic ;
     test "string_arithmetic (mligo)" string_arithmetic_mligo ;
     test "bytes_arithmetic" bytes_arithmetic ;
+    test "bytes_arithmetic (mligo)" bytes_arithmetic_mligo ;
     test "set_arithmetic" set_arithmetic ;
     test "set_arithmetic (mligo)" set_arithmetic_mligo ;
     test "unit" unit_expression ;
