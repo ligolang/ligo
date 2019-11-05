@@ -753,7 +753,7 @@ and pp_fun_expr buffer ~pad:(_,pc) node =
   let () =
     let pad = mk_pad fields (fields - 1) pc in
     pp_node buffer ~pad "<body>";
-    pp_expr buffer ~pad body
+    pp_expr buffer ~pad:(mk_pad 1 0 pc) body
   in ()
 
 and pp_let_in buffer ~pad:(_,pc) node =
@@ -772,13 +772,13 @@ and pp_let_in buffer ~pad:(_,pc) node =
        pp_node buffer ~pad "<lhs type>";
        pp_type_expr buffer ~pad:(mk_pad 1 0 pc) type_expr in
   let () =
-    let pad = mk_pad fields (fields - 2) pc in
+    let _, pc as pad = mk_pad fields (fields - 2) pc in
     pp_node buffer ~pad "<rhs>";
-    pp_expr buffer ~pad let_rhs in
+    pp_expr buffer ~pad:(mk_pad 1 0 pc) let_rhs in
   let () =
-    let pad = mk_pad fields (fields - 1) pc in
+    let _, pc as pad = mk_pad fields (fields - 1) pc in
     pp_node buffer ~pad "<body>";
-    pp_expr buffer ~pad body
+    pp_expr buffer ~pad:(mk_pad 1 0 pc) body
   in ()
 
 and pp_tuple_expr buffer ~pad:(_,pc) {value; _} =
