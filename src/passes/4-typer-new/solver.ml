@@ -1070,7 +1070,7 @@ let initial_state : state = (* {
    inferred for all bindings and expressions, etc.
 
    Also, we should check at these places that we indeed do not need the
-   state any further. Suwanne *)
+   state any further. Suzanne *)
 let discard_state (_ : state) = ()
 
 (* let replace_var_in_state = fun (v : type_variable) (state : state) -> *)

@@ -8,11 +8,7 @@ module SMap = O.SMap
 
 module Environment = O.Environment
 
-module Solver = Typer_new.Solver (* struct
-  type state = Placeholder_for_state_of_new_typer
-  let discard_state (_ : state) = ()
-  let initial_state = Placeholder_for_state_of_new_typer
-end *)
+module Solver = Typer_new.Solver
 
 type environment = Environment.t
 

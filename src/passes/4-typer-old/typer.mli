@@ -6,11 +6,7 @@ module O = Ast_typed
 module SMap = O.SMap
 module Environment = O.Environment
 
-module Solver : module type of Typer_new.Solver (* sig
-  type state = Placeholder_for_state_of_new_typer
-  val discard_state : state -> unit
-  val initial_state : state
-end *)
+module Solver : module type of Typer_new.Solver
 
 type environment = Environment.t
 
