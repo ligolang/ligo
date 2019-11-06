@@ -432,8 +432,6 @@ and for_collect = {
   kwd_for    : kwd_for;
   var        : variable;
   bind_to    : (arrow * variable) option;
-  colon      : colon;
-  elt_type   : type_expr;
   kwd_in     : kwd_in;
   collection : collection;
   expr       : expr;
