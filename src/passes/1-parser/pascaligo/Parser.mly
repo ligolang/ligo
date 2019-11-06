@@ -161,7 +161,7 @@ function_type:
 
 core_type:
   type_name {
-    TAlias $1
+    TVar $1
   }
 | type_name type_tuple {
     let region = cover $1.region $2.region
@@ -200,16 +200,16 @@ type_tuple:
 sum_type:
   option(VBAR) nsepseq(variant,VBAR) {
     let region = nsepseq_to_region (fun x -> x.region) $2
-    in {region; value = $2} }
+    in {region; value=$2} }
 
 variant:
   Constr Of cartesian {
     let region = cover $1.region (type_expr_to_region $3)
-    and value = {constr = $1; args = Some ($2, $3)}
+    and value = {constr = $1; arg = Some ($2, $3)}
     in {region; value}
   }
 | Constr {
-    {region=$1.region; value= {constr=$1; args=None}} }
+    {region=$1.region; value= {constr=$1; arg=None}} }
 
 record_type:
   Record sep_or_term_list(field_decl,SEMI) End {
@@ -793,7 +793,7 @@ cons_expr:
     and stop   = expr_to_region $3 in
     let region = cover start stop
     and value  = {arg1 = $1; op = $2; arg2 = $3}
-    in EList (Cons {region; value})
+    in EList (ECons {region; value})
   }
 | add_expr { $1 }
 
@@ -856,13 +856,13 @@ unary_expr:
 core_expr:
   Int              { EArith (Int $1)              }
 | Nat              { EArith (Nat $1)              }
-| Mutez              { EArith (Mutez $1)              }
+| Mutez            { EArith (Mutez $1)            }
 | var              { EVar $1                      }
 | String           { EString (String $1)          }
 | Bytes            { EBytes $1                    }
-| C_False          { ELogic (BoolExpr (False $1)) }
-| C_True           { ELogic (BoolExpr (True  $1)) }
-| C_Unit           { EUnit $1                     }
+| False            { ELogic (BoolExpr (False $1)) }
+| True             { ELogic (BoolExpr (True  $1)) }
+| Unit             { EUnit $1                     }
 | annot_expr       { EAnnot $1                    }
 | tuple_expr       { ETuple $1                    }
 | par(expr)        { EPar $1                      }
@@ -927,21 +927,21 @@ selection:
 
 record_expr:
   Record sep_or_term_list(field_assignment,SEMI) End {
-    let elements, terminator = $2 in
+    let ne_elements, terminator = $2 in
     let region = cover $1 $3
-    and value : field_assign AST.reg injection = {
+    and value : field_assign AST.reg ne_injection = {
       opening = Kwd $1;
-      elements = Some elements;
+      ne_elements;
       terminator;
       closing = End $3}
     in {region; value}
   }
 | Record LBRACKET sep_or_term_list(field_assignment,SEMI) RBRACKET {
-   let elements, terminator = $3 in
+   let ne_elements, terminator = $3 in
    let region = cover $1 $4
-   and value : field_assign AST.reg injection = {
+   and value : field_assign AST.reg ne_injection = {
      opening = KwdBracket ($1,$2);
-     elements = Some elements;
+     ne_elements;
      terminator;
      closing = RBracket $4}
    in {region; value} }
@@ -971,8 +971,8 @@ arguments:
   par(nsepseq(expr,COMMA)) { $1 }
 
 list_expr:
-  injection(List,expr) { List $1 }
-| Nil                  {  Nil $1 }
+  injection(List,expr) { EListComp $1 }
+| Nil                  {      ENil $1 }
 
 (* Patterns *)
 
@@ -980,7 +980,7 @@ pattern:
   core_pattern CONS nsepseq(core_pattern,CONS) {
     let value = Utils.nsepseq_cons $1 $2 $3 in
     let region = nsepseq_to_region pattern_to_region value
-    in PCons {region; value}}
+    in PList (PCons {region; value}) }
 | core_pattern { $1 }
 
 core_pattern:
@@ -990,21 +990,14 @@ core_pattern:
 | Nat                      {    PNat $1 }
 | Bytes                    {  PBytes $1 }
 | String                   { PString $1 }
-| C_Unit                   {   PUnit $1 }
-| C_False                  {  PFalse $1 }
-| C_True                   {   PTrue $1 }
-| C_None                   {   PNone $1 }
 | list_pattern             {   PList $1 }
 | tuple_pattern            {  PTuple $1 }
 | constr_pattern           { PConstr $1 }
-| C_Some par(core_pattern) {
-    let region = cover $1 $2.region
-    in PSome {region; value = $1,$2}}
 
 list_pattern:
-  injection(List,core_pattern) { Sugar $1 }
-| Nil                          {  PNil $1 }
-| par(cons_pattern)            {   Raw $1 }
+  injection(List,core_pattern) { PListComp $1 }
+| Nil                          {      PNil $1 }
+| par(cons_pattern)            {  PParCons $1 }
 
 cons_pattern:
   core_pattern CONS pattern { $1,$2,$3 }
@@ -1013,10 +1006,17 @@ tuple_pattern:
   par(nsepseq(core_pattern,COMMA)) { $1 }
 
 constr_pattern:
-  Constr tuple_pattern {
+  Unit                     {   PUnit $1 }
+| False                    {  PFalse $1 }
+| True                     {   PTrue $1 }
+| C_None                   {   PNone $1 }
+| C_Some par(core_pattern) {
+    let region = cover $1 $2.region
+    in PSomeApp {region; value = $1,$2}
+  }
+| Constr tuple_pattern {
     let region = cover $1.region $2.region
-    in {region; value = $1, Some $2}
+    in PConstrApp {region; value = $1, Some $2}
   }
 | Constr {
-    {region=$1.region; value = $1, None}
-  }
+    PConstrApp {region=$1.region; value = $1, None} }

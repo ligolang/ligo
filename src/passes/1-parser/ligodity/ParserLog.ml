@@ -878,13 +878,13 @@ and pp_arith_expr buffer ~pad:(_,pc as pad) = function
     pp_node buffer ~pad "Mutez";
     pp_int  buffer ~pad m
 
-and pp_e_logic buffer ~pad = function
+and pp_e_logic buffer ~pad:(_,pc as pad) = function
   BoolExpr e ->
     pp_node buffer ~pad "BoolExpr";
-    pp_bool_expr buffer ~pad e
+    pp_bool_expr buffer ~pad:(mk_pad 1 0 pc) e
 | CompExpr e ->
     pp_node buffer ~pad "CompExpr";
-    pp_comp_expr buffer ~pad e
+    pp_comp_expr buffer ~pad:(mk_pad 1 0 pc) e
 
 and pp_bool_expr buffer ~pad:(_,pc as pad) = function
   Or {value; region} ->
@@ -892,13 +892,12 @@ and pp_bool_expr buffer ~pad:(_,pc as pad) = function
 | And {value; region} ->
     pp_bin_op "And" region buffer ~pad value
 | Not {value; _} ->
-    let _, pc as pad = mk_pad 1 0 pc in
     pp_node buffer ~pad "Not";
     pp_expr buffer ~pad:(mk_pad 1 0 pc) value.arg
 | False region ->
-    pp_loc_node buffer ~pad:(mk_pad 1 0 pc) "False" region
+    pp_loc_node buffer ~pad "False" region
 | True region ->
-    pp_loc_node buffer ~pad:(mk_pad 1 0 pc) "True" region
+    pp_loc_node buffer ~pad "True" region
 
 and pp_comp_expr buffer ~pad = function
   Lt {value; region} ->

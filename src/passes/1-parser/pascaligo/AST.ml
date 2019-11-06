@@ -191,13 +191,13 @@ and type_expr =
 | TApp    of (type_name * type_tuple) reg
 | TFun    of (type_expr * arrow * type_expr) reg
 | TPar    of type_expr par reg
-| TAlias  of variable
+| TVar    of variable
 
 and cartesian = (type_expr, times) nsepseq reg
 
 and variant = {
   constr : constr;
-  args   : (kwd_of * type_expr) option
+  arg    : (kwd_of * type_expr) option
 }
 
 and field_decl = {
@@ -211,17 +211,18 @@ and type_tuple = (type_expr, comma) nsepseq par reg
 (* Function and procedure declarations *)
 
 and fun_decl = {
-    kwd_function : kwd_function;
-    name         : variable;
-    param        : parameters;
-    colon        : colon;
-    ret_type     : type_expr;
-    kwd_is       : kwd_is;
-    local_decls  : local_decl list;
-    block        : block reg option;
-    kwd_with     : kwd_with option;
-    return       : expr;
-    terminator   : semi option }
+  kwd_function : kwd_function;
+  name         : variable;
+  param        : parameters;
+  colon        : colon;
+  ret_type     : type_expr;
+  kwd_is       : kwd_is;
+  local_decls  : local_decl list;
+  block        : block reg option;
+  kwd_with     : kwd_with option;
+  return       : expr;
+  terminator   : semi option
+}
 
 and parameters = (param_decl, semi) nsepseq par reg
 
@@ -456,7 +457,7 @@ and expr =
 | EList   of list_expr
 | ESet    of set_expr
 | EConstr of constr_expr
-| ERecord of record_expr
+| ERecord of field_assign reg ne_injection reg
 | EProj   of projection reg
 | EMap    of map_expr
 | EVar    of Lexer.lexeme reg
@@ -497,7 +498,7 @@ and closing =
 and map_expr =
   MapLookUp of map_lookup reg
 | MapInj    of binding reg injection reg
-| BigMapInj    of binding reg injection reg
+| BigMapInj of binding reg injection reg
 
 and map_lookup = {
   path  : path;
@@ -554,18 +555,14 @@ and string_expr =
 | String of Lexer.lexeme reg
 
 and list_expr =
-  Cons of cons bin_op reg
-| List of expr injection reg
-| Nil  of nil
-
-and nil = kwd_nil
+  ECons     of cons bin_op reg
+| EListComp of expr injection reg
+| ENil      of kwd_nil
 
 and constr_expr =
   SomeApp   of (c_Some * arguments) reg
-| NoneExpr  of none_expr
+| NoneExpr  of c_None
 | ConstrApp of (constr * arguments option) reg
-
-and record_expr = field_assign reg injection reg
 
 and field_assign = {
   field_name : field_name;
@@ -585,8 +582,6 @@ and selection =
 
 and tuple_expr = (expr, comma) nsepseq par reg
 
-and none_expr = c_None
-
 and fun_call = (fun_name * arguments) reg
 
 and arguments = tuple_expr
@@ -594,28 +589,31 @@ and arguments = tuple_expr
 (* Patterns *)
 
 and pattern =
-  PCons   of (pattern, cons) nsepseq reg
-| PConstr of (constr * tuple_pattern option) reg
+  PConstr of constr_pattern
 | PVar    of Lexer.lexeme reg
 | PWild   of wild
 | PInt    of (Lexer.lexeme * Z.t) reg
 | PNat    of (Lexer.lexeme * Z.t) reg
 | PBytes  of (Lexer.lexeme * Hex.t) reg
 | PString of Lexer.lexeme reg
-| PUnit   of c_Unit
-| PFalse  of c_False
-| PTrue   of c_True
-| PNone   of c_None
-| PSome   of (c_Some * pattern par reg) reg
 | PList   of list_pattern
 | PTuple  of tuple_pattern
+
+and constr_pattern =
+  PUnit      of c_Unit
+| PFalse     of c_False
+| PTrue      of c_True
+| PNone      of c_None
+| PSomeApp   of (c_Some * pattern par reg) reg
+| PConstrApp of (constr * tuple_pattern option) reg
 
 and tuple_pattern = (pattern, comma) nsepseq par reg
 
 and list_pattern =
-  Sugar of pattern injection reg
-| PNil  of kwd_nil
-| Raw   of (pattern * cons * pattern) par reg
+  PListComp of pattern injection reg
+| PNil      of kwd_nil
+| PParCons  of (pattern * cons * pattern) par reg
+| PCons     of (pattern, cons) nsepseq reg
 
 (* Projecting regions *)
 
@@ -628,7 +626,7 @@ let type_expr_to_region = function
 | TApp    {region; _}
 | TFun    {region; _}
 | TPar    {region; _}
-| TAlias  {region; _} -> region
+| TVar    {region; _} -> region
 
 let rec expr_to_region = function
 | ELogic  e -> logic_expr_to_region e
@@ -698,9 +696,9 @@ and string_expr_to_region = function
 and annot_expr_to_region {region; _} = region
 
 and list_expr_to_region = function
-  Cons {region; _}
-| List {region; _}
-| Nil  region -> region
+  ECons {region; _}
+| EListComp {region; _}
+| ENil region -> region
 
 and constr_expr_to_region = function
   NoneExpr  region
@@ -733,26 +731,26 @@ let clause_block_to_region = function
 | ShortBlock {region; _} -> region
 
 let if_clause_to_region = function
-  ClauseInstr instr       -> instr_to_region instr
+  ClauseInstr instr        -> instr_to_region instr
 | ClauseBlock clause_block -> clause_block_to_region clause_block
 
 let pattern_to_region = function
-  PCons       {region; _}
-| PVar        {region; _}
+  PVar        {region; _}
 | PWild        region
 | PInt        {region; _}
 | PNat        {region; _}
 | PBytes      {region; _}
 | PString     {region; _}
-| PUnit        region
-| PFalse       region
-| PTrue        region
-| PNone        region
-| PSome       {region; _}
-| PList Sugar {region; _}
+| PConstr PUnit   region
+| PConstr PFalse  region
+| PConstr PTrue   region
+| PConstr PNone   region
+| PConstr PSomeApp {region; _}
+| PConstr PConstrApp {region; _}
+| PList PListComp  {region; _}
 | PList PNil  region
-| PList Raw   {region; _}
-| PConstr     {region; _}
+| PList PParCons {region; _}
+| PList PCons {region; _}
 | PTuple      {region; _} -> region
 
 let local_decl_to_region = function

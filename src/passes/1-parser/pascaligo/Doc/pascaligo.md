@@ -956,7 +956,7 @@ functions, in the tradition of Pascal. For example,
         begin
           skip
         end with i+1
-        const item : int = 0
+      const item : int = 0
       begin
         var temp : list (int) := nil;
         for item in l

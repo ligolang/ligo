@@ -57,17 +57,6 @@ module Errors = struct
     ] in
     error ~data title message
 
-  let unsupported_arith_op expr =
-    let title () = "arithmetic expressions" in
-    let message () =
-      Format.asprintf "this arithmetic operator is not supported yet" in
-    let expr_loc = Raw.expr_to_region expr in
-    let data = [
-      ("expr_loc",
-       fun () -> Format.asprintf "%a" Location.pp_lift @@ expr_loc)
-    ] in
-    error ~data title message
-
   let unsupported_non_var_pattern p =
     let title () = "pattern is not a variable" in
     let message () =
@@ -175,15 +164,14 @@ let return_let_in ?loc binder rhs = ok @@ fun expr'_opt ->
   | Some expr' -> ok @@ e_let_in ?loc binder rhs expr'
 
 let return_statement expr = ok @@ fun expr'_opt ->
-  let expr = expr in
   match expr'_opt with
   | None -> ok @@ expr
   | Some expr' -> ok @@ e_sequence expr expr'
 
 let rec simpl_type_expression (t:Raw.type_expr) : type_expression result =
   match t with
-  | TPar x -> simpl_type_expression x.value.inside
-  | TAlias v -> (
+    TPar x -> simpl_type_expression x.value.inside
+  | TVar v -> (
       match List.assoc_opt v.value type_constants with
       | Some s -> ok @@ T_constant (s , [])
       | None -> ok @@ T_variable v.value
@@ -222,12 +210,10 @@ let rec simpl_type_expression (t:Raw.type_expr) : type_expression result =
   | TSum s ->
       let aux (v:Raw.variant Raw.reg) =
         let args =
-          match v.value.args with
+          match v.value.arg with
             None -> []
-          | Some (_, t_expr) ->
-              match t_expr with
-                TProd product -> npseq_to_list product.value
-              | _ -> [t_expr] in
+          | Some (_, TProd product) -> npseq_to_list product.value
+          | Some (_, t_expr) -> [t_expr] in
         let%bind te = simpl_list_type_expression @@ args in
         ok (v.value.constr.value, te)
       in
@@ -303,7 +289,7 @@ let rec simpl_expression (t:Raw.expr) : expr result =
       let%bind fields = bind_list
         @@ List.map (fun ((k : _ Raw.reg), v) -> let%bind v = simpl_expression v in ok (k.value, v))
         @@ List.map (fun (x:Raw.field_assign Raw.reg) -> (x.value.field_name, x.value.field_expr))
-        @@ pseq_to_list r.value.elements in
+        @@ npseq_to_list r.value.ne_elements in
       let aux prev (k, v) = SMap.add k v prev in
       return @@ e_record (List.fold_left aux SMap.empty fields)
   | EProj p -> simpl_projection p
@@ -460,19 +446,17 @@ and simpl_logic_expression (t:Raw.logic_expr) : expression result =
 and simpl_list_expression (t:Raw.list_expr) : expression result =
   let return x = ok x in
   match t with
-  | Cons c ->
+    ECons c ->
       simpl_binop "CONS" c
-  | List lst -> (
+  | EListComp lst ->
       let (lst , loc) = r_split lst in
       let%bind lst' =
         bind_map_list simpl_expression @@
         pseq_to_list lst.elements in
       return @@ e_list ~loc lst'
-    )
-  | Nil reg -> (
+  | ENil reg ->
       let loc = Location.lift reg in
       return @@ e_list ~loc []
-    )
 
 and simpl_set_expression (t:Raw.set_expr) : expression result =
   match t with
@@ -668,13 +652,13 @@ and simpl_single_instruction : Raw.instruction -> (_ -> expression result) resul
       let%bind body = simpl_block l.block.value in
       let%bind body = body None in
       return_statement @@ e_loop cond body
-  | Loop (For (ForInt fi)) -> 
+  | Loop (For (ForInt fi)) ->
       let%bind loop = simpl_for_int fi.value in
-      let%bind loop = loop None in 
+      let%bind loop = loop None in
       return_statement @@ loop
   | Loop (For (ForCollect fc)) ->
       let%bind loop = simpl_for_collect fc.value in
-      let%bind loop = loop None in 
+      let%bind loop = loop None in
       return_statement @@ loop
   | Cond c -> (
       let (c , loc) = r_split c in
@@ -878,7 +862,7 @@ and simpl_cases : type a . (Raw.pattern * a) list -> a matching result = fun t -
     ok (List.hd t') in
   let get_toplevel (t : Raw.pattern) =
     match t with
-    | PCons x -> (
+    | PList PCons x -> (
         let (x' , lst) = x.value in
         match lst with
         | [] -> ok x'
@@ -887,8 +871,8 @@ and simpl_cases : type a . (Raw.pattern * a) list -> a matching result = fun t -
     | pattern -> ok pattern in
   let get_constr (t: Raw.pattern) =
     match t with
-    | PConstr v -> (
-        let (const , pat_opt) = v.value in
+    | PConstr (PConstrApp v) -> (
+       let const, pat_opt = v.value in
         let%bind pat =
           trace_option (unsupported_cst_constr t) @@
           pat_opt in
@@ -896,12 +880,6 @@ and simpl_cases : type a . (Raw.pattern * a) list -> a matching result = fun t -
         let%bind var = get_var single_pat in
         ok (const.value , var)
       )
-(*
-    | PConstr {value = constr, Some tuple; _} ->
-        let%bind var = get_single (PTuple tuple) >>? get_var in
-        ok (constr.value, var)
-    | PConstr {value = constr, None; _} ->
-              *)
     | _ -> fail @@ only_constructors t in
   let%bind patterns =
     let aux (x , y) =
@@ -909,19 +887,19 @@ and simpl_cases : type a . (Raw.pattern * a) list -> a matching result = fun t -
       ok (x' , y)
     in bind_map_list aux t in
   match patterns with
-  | [(PFalse _ , f) ; (PTrue _ , t)]
-  | [(PTrue _ , t) ; (PFalse _ , f)] ->
+  | [(PConstr PFalse _ , f) ; (PConstr PTrue _ , t)]
+  | [(PConstr PTrue _ , t) ; (PConstr PFalse _ , f)] ->
       ok @@ Match_bool {match_true = t ; match_false = f}
-  | [(PSome v , some) ; (PNone _ , none)]
-  | [(PNone _ , none) ; (PSome v , some)] -> (
+  | [(PConstr PSomeApp v , some) ; (PConstr PNone _ , none)]
+  | [(PConstr PNone _ , none) ; (PConstr PSomeApp v , some)] -> (
       let (_, v) = v.value in
       let%bind v = match v.value.inside with
         | PVar v -> ok v.value
         | p -> fail @@ unsupported_deep_Some_patterns p in
       ok @@ Match_option {match_none = none ; match_some = (v, some) }
     )
-  | [(PCons c , cons) ; (PList (PNil _) , nil)]
-  | [(PList (PNil _) , nil) ; (PCons c,  cons)] ->
+  | [(PList PCons c, cons) ; (PList (PNil _), nil)]
+  | [(PList (PNil _), nil) ; (PList PCons c, cons)] ->
       let%bind (a, b) =
         match c.value with
         | a, [(_, b)] ->
@@ -1002,11 +980,11 @@ and simpl_for_int : Raw.for_int -> (_ -> expression result) result = fun fi ->
   are implemented using a MAP_FOLD, LIST_FOLD or SET_FOLD:
 
   ``` pseudo Ast_simplified
-  let #COMPILER#folded_record = list_fold(  mylist , 
+  let #COMPILER#folded_record = list_fold(  mylist ,
                                   record st = st; acc = acc; end;
-                                  lamby = fun arguments -> ( 
+                                  lamby = fun arguments -> (
                                       let #COMPILER#acc = arguments.0 in
-                                      let #COMPILER#elt = arguments.1 in 
+                                      let #COMPILER#elt = arguments.1 in
                                       #COMPILER#acc.myint := #COMPILER#acc.myint + #COMPILER#elt ;
                                       #COMPILER#acc.myst  := #COMPILER#acc.myst ^ "to" ;
                                       #COMPILER#acc
@@ -1017,7 +995,7 @@ and simpl_for_int : Raw.for_int -> (_ -> expression result) result = fun fi ->
     myint := #COMPILER#folded_record.myint ;
   }
   ```
-  
+
   We are performing the following steps:
     1) Simplifying the for body using ̀simpl_block`
 
@@ -1032,10 +1010,10 @@ and simpl_for_int : Raw.for_int -> (_ -> expression result) result = fun fi ->
         - free variable of name X as rhs ==> accessor `#COMPILER#acc.X`
         - free variable of name X as lhs ==> accessor `#COMPILER#acc.X`
         And, in the case of a map:
-             - references to the iterated key   ==> variable `#COMPILER#elt_key`  
-             - references to the iterated value ==> variable `#COMPILER#elt_value`  
+             - references to the iterated key   ==> variable `#COMPILER#elt_key`
+             - references to the iterated value ==> variable `#COMPILER#elt_value`
              in the case of a set/list:
-             - references to the iterated value ==> variable `#COMPILER#elt`  
+             - references to the iterated value ==> variable `#COMPILER#elt`
 
     5) Append the return value to the body
 
@@ -1045,18 +1023,18 @@ and simpl_for_int : Raw.for_int -> (_ -> expression result) result = fun fi ->
        tuple holding:
         * In the case of `list` or ̀set`:
           ( folding record , current list/set element ) as
-          ( #COMPILER#acc  , #COMPILER#elt            ) 
+          ( #COMPILER#acc  , #COMPILER#elt            )
         * In the case of `map`:
           ( folding record , current map key ,   current map value   ) as
-          ( #COMPILER#acc  , #COMPILER#elt_key , #COMPILER#elt_value ) 
+          ( #COMPILER#acc  , #COMPILER#elt_key , #COMPILER#elt_value )
 
     7) Build the lambda using the final body of (6)
 
-    8) Build a sequence of assignments for all the captured variables 
+    8) Build a sequence of assignments for all the captured variables
        to their new value, namely an access to the folded record
        (#COMPILER#folded_record)
 
-    9) Attach the sequence of 8 to the ̀let .. in` declaration 
+    9) Attach the sequence of 8 to the ̀let .. in` declaration
        of #COMPILER#folded_record
 
 **)
@@ -1095,7 +1073,7 @@ and simpl_for_collect : Raw.for_collect -> (_ -> expression result) result = fun
       if (List.mem name captured_name_list) then
         (* replace references to fold accumulator as lhs *)
         ok @@ e_accessor (e_variable "#COMPILER#acc") [Access_record name]
-      else match fc.collection with 
+      else match fc.collection with
       (* loop on map *)
       | Map _ ->
         let k' = e_variable "#COMPILER#collec_elt_k" in
@@ -1127,7 +1105,7 @@ and simpl_for_collect : Raw.for_collect -> (_ -> expression result) result = fun
   (* STEP 6 *)
   let for_body =
     let ( arg_access: Types.access_path -> expression ) = e_accessor (e_variable "arguments") in
-    ( match fc.collection with 
+    ( match fc.collection with
       | Map _ ->
         (* let acc          = arg_access [Access_tuple 0 ; Access_tuple 0] in
         let collec_elt_v = arg_access [Access_tuple 1 ; Access_tuple 0] in
@@ -1158,8 +1136,8 @@ and simpl_for_collect : Raw.for_collect -> (_ -> expression result) result = fun
     let access = e_accessor (e_variable "#COMPILER#folded_record")
       [Access_record captured_varname] in
     let assign = e_assign captured_varname [] access in
-    match prev with 
-    | None -> Some assign 
+    match prev with
+    | None -> Some assign
     | Some p -> Some (e_sequence p assign) in
   let reassign_sequence = List.fold_left assign_back None captured_name_list in
   (* STEP 9 *)
