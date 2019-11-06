@@ -83,7 +83,7 @@ type t =
 | Int    of (string * Z.t) Region.reg
 | Nat    of (string * Z.t) Region.reg
 | Mutez  of (string * Z.t) Region.reg
-| Str    of string Region.reg
+| String of string Region.reg
 | Bytes  of (string * Hex.t) Region.reg
 
   (* Keywords *)
@@ -107,15 +107,10 @@ type t =
 | Type  of Region.t
 | With  of Region.t
 
-  (* Liquidity-specific *)
+(* Data constructors *)
 
-| LetEntry of Region.t
-| MatchNat of Region.t
-(*
-| Contract
-| Sig
-| Struct
-*)
+| C_None  of Region.t  (* "None"  *)
+| C_Some  of Region.t  (* "Some"  *)
 
 (* Virtual tokens *)
 

@@ -17,7 +17,7 @@ type action =
   | Init of init_action
 
 let init (init_params : init_action) (_ : storage) =
-  let candidates = Map [
+  let candidates = Map.literal [
       ("Yes" , 0) ;
       ("No" , 0)
     ] in
@@ -26,7 +26,7 @@ let init (init_params : init_action) (_ : storage) =
     {
       title = init_params.title ;
       candidates = candidates ;
-      voters = (Set [] : address set) ;
+      voters = (Set.empty : address set) ;
       beginning_time = init_params.beginning_time ;
       finish_time = init_params.finish_time ;
     }

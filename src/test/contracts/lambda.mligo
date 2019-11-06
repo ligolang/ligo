@@ -1,9 +1,8 @@
 type storage = unit
 
 (* not supported yet
-let%entry main (p:unit) storage =
+let main (p:unit) storage =
   (fun x -> ()) ()
 *)
 
-let%entry main (p:unit) storage =
-  (fun (x : unit) -> ()) ()
+let main (p: unit) storage = (fun (_: unit) -> ()) ()

@@ -380,7 +380,7 @@ module Make (Token: TOKEN) : (S with module Token = Token) =
          Hint: Remove the leading minus sign.\n"
     | Broken_string ->
         "The string starting here is interrupted by a line break.\n\
-         Hint: Remove the break or close the string before.\n"
+         Hint: Remove the break, close the string before or insert a backslash.\n"
     | Invalid_character_in_string ->
         "Invalid character in string.\n\
          Hint: Remove or replace the character.\n"
@@ -516,7 +516,7 @@ let decimal    = digit+ '.' digit+
 let small      = ['a'-'z']
 let capital    = ['A'-'Z']
 let letter     = small | capital
-let ident      = small (letter | '_' | digit | '%')*
+let ident      = small (letter | '_' | digit)*
 let constr     = capital (letter | '_' | digit)*
 let hexa_digit = digit | ['A'-'F']
 let byte       = hexa_digit hexa_digit
@@ -551,20 +551,19 @@ rule init state = parse
 | _        { rollback lexbuf; scan state lexbuf  }
 
 and scan state = parse
-  nl            { scan (push_newline state lexbuf) lexbuf }
-| ' '+          { scan (push_space   state lexbuf) lexbuf }
-| '\t'+         { scan (push_tabs    state lexbuf) lexbuf }
-| ident         { mk_ident       state lexbuf |> enqueue   }
-| constr        { mk_constr      state lexbuf |> enqueue   }
-| bytes         { (mk_bytes seq) state lexbuf |> enqueue   }
-| natural 'n'   { mk_nat         state lexbuf |> enqueue   }
-| natural 'p'   { mk_nat         state lexbuf |> enqueue   }
-| natural "mutez" { mk_mutez     state lexbuf |> enqueue   }
-| natural "tz"  { mk_tz          state lexbuf |> enqueue   }
-| decimal "tz"  { mk_tz_decimal  state lexbuf |> enqueue   }
-| natural       { mk_int         state lexbuf |> enqueue   }
-| symbol        { mk_sym         state lexbuf |> enqueue   }
-| eof           { mk_eof         state lexbuf |> enqueue   }
+  nl              { scan (push_newline state lexbuf) lexbuf }
+| ' '+            { scan (push_space   state lexbuf) lexbuf }
+| '\t'+           { scan (push_tabs    state lexbuf) lexbuf }
+| ident           { mk_ident       state lexbuf |> enqueue   }
+| constr          { mk_constr      state lexbuf |> enqueue   }
+| bytes           { (mk_bytes seq) state lexbuf |> enqueue   }
+| natural 'n'     { mk_nat         state lexbuf |> enqueue   }
+| natural "mutez" { mk_mutez       state lexbuf |> enqueue   }
+| natural "tz"    { mk_tz          state lexbuf |> enqueue   }
+| decimal "tz"    { mk_tz_decimal  state lexbuf |> enqueue   }
+| natural         { mk_int         state lexbuf |> enqueue   }
+| symbol          { mk_sym         state lexbuf |> enqueue   }
+| eof             { mk_eof         state lexbuf |> enqueue   }
 
 | '"'  { let opening, _, state = sync state lexbuf in
          let thread = {opening; len=1; acc=['"']} in

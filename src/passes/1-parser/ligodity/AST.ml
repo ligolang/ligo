@@ -1,6 +1,23 @@
+(* Abstract Syntax Tree (AST) for CameLIGO *)
+
+(* To disable warning about multiply-defined record labels. *)
+
 [@@@warning "-30-40-42"]
 
-(* Abstract Syntax Tree (AST) for Mini-ML *)
+(* Utilities *)
+
+open Utils
+
+(* Regions
+
+   The AST carries all the regions where tokens have been found by the
+   lexer, plus additional regions corresponding to whole subtrees
+   (like entire expressions, patterns etc.). These regions are needed
+   for error reporting and source-to-source transformations. To make
+   these pervasive regions more legible, we define singleton types for
+   the symbols, keywords etc. with suggestive names like "kwd_and"
+   denoting the _region_ of the occurrence of the keyword "and".
+*)
 
 type 'a reg = 'a Region.reg
 
@@ -35,6 +52,11 @@ type kwd_true  = Region.t
 type kwd_type  = Region.t
 type kwd_with  = Region.t
 type kwd_let_entry = Region.t
+
+(* Data constructors *)
+
+type c_None  = Region.t
+type c_Some  = Region.t
 
 (* Symbols *)
 
@@ -111,7 +133,7 @@ type the_unit = lpar * rpar
 (* The Abstract Syntax Tree *)
 
 type t = {
-  decl : declaration Utils.nseq;
+  decl : declaration nseq;
   eof  : eof
 }
 
@@ -119,13 +141,12 @@ and ast = t
 
 and declaration =
   Let      of (kwd_let * let_binding) reg
-| LetEntry of (kwd_let_entry * let_binding) reg
 | TypeDecl of type_decl reg
 
 (* Non-recursive values *)
 
 and let_binding = {
-  bindings : pattern list;
+  binders  : pattern nseq;
   lhs_type : (colon * type_expr) option;
   eq       : equal;
   let_rhs  : expr
@@ -142,21 +163,19 @@ and type_decl = {
 
 and type_expr =
   TProd   of cartesian
-| TSum    of (variant reg, vbar) Utils.nsepseq reg
-| TRecord of record_type
+| TSum    of (variant reg, vbar) nsepseq reg
+| TRecord of field_decl reg ne_injection reg
 | TApp    of (type_constr * type_tuple) reg
 | TFun    of (type_expr * arrow * type_expr) reg
 | TPar    of type_expr par reg
-| TAlias  of variable
+| TVar    of variable
 
-and cartesian = (type_expr, times) Utils.nsepseq reg
+and cartesian = (type_expr, times) nsepseq reg
 
 and variant = {
   constr : constr;
-  args   : (kwd_of * cartesian) option
+  arg    : (kwd_of * type_expr) option
 }
-
-and record_type = field_decl reg injection reg
 
 and field_decl = {
   field_name : field_name;
@@ -164,34 +183,39 @@ and field_decl = {
   field_type : type_expr
 }
 
-and type_tuple = (type_expr, comma) Utils.nsepseq par reg
+and type_tuple = (type_expr, comma) nsepseq par reg
 
 and pattern =
-  PTuple  of (pattern, comma) Utils.nsepseq reg
-| PList   of list_pattern
-| PVar    of variable
+  PConstr of constr_pattern
 | PUnit   of the_unit reg
-| PInt    of (string * Z.t) reg
-| PTrue   of kwd_true
 | PFalse  of kwd_false
+| PTrue   of kwd_true
+| PVar    of variable
+| PInt    of (Lexer.lexeme * Z.t) reg
+| PNat    of (Lexer.lexeme * Z.t) reg
+| PBytes  of (Lexer.lexeme * Hex.t) reg
 | PString of string reg
 | PWild   of wild
+| PList   of list_pattern
+| PTuple  of (pattern, comma) nsepseq reg
 | PPar    of pattern par reg
-| PConstr of (constr * pattern option) reg
-| PRecord of record_pattern
+| PRecord of field_pattern reg ne_injection reg
 | PTyped  of typed_pattern reg
 
+and constr_pattern =
+  PNone      of c_None
+| PSomeApp   of (c_Some * pattern) reg
+| PConstrApp of (constr * pattern option) reg
+
 and list_pattern =
-  Sugar of pattern injection reg
-| PCons of (pattern * cons * pattern) reg
+  PListComp of pattern injection reg
+| PCons     of (pattern * cons * pattern) reg
 
 and typed_pattern = {
   pattern   : pattern;
   colon     : colon;
   type_expr : type_expr
 }
-
-and record_pattern = field_pattern reg injection reg
 
 and field_pattern = {
   field_name : field_name;
@@ -201,77 +225,77 @@ and field_pattern = {
 
 and expr =
   ECase   of expr case reg
-| EAnnot  of annot_expr reg
+| ECond   of cond_expr reg
+| EAnnot  of (expr * type_expr) reg
 | ELogic  of logic_expr
 | EArith  of arith_expr
 | EString of string_expr
 | EList   of list_expr
-| EConstr of constr_expr reg
-| ERecord of record_expr
+| EConstr of constr_expr
+| ERecord of field_assign reg ne_injection reg
 | EProj   of projection reg
 | EVar    of variable
-| ECall   of (expr * expr Utils.nseq) reg
+| ECall   of (expr * expr nseq) reg
 | EBytes  of (string * Hex.t) reg
 | EUnit   of the_unit reg
-| ETuple  of (expr, comma) Utils.nsepseq reg
+| ETuple  of (expr, comma) nsepseq reg
 | EPar    of expr par reg
 | ELetIn  of let_in reg
 | EFun    of fun_expr reg
-| ECond   of conditional reg
-| ESeq    of sequence
-
-and constr_expr = constr * expr option
-
-and annot_expr = expr * type_expr
+| ESeq    of expr injection reg
 
 and 'a injection = {
-  opening    : opening;
-  elements   : ('a, semi) Utils.sepseq;
-  terminator : semi option;
-  closing    : closing
+  compound   : compound;
+  elements   : ('a, semi) sepseq;
+  terminator : semi option
 }
 
-and opening =
-  Begin    of kwd_begin
-| With     of kwd_with
-| LBrace   of lbrace
-| LBracket of lbracket
+and 'a ne_injection = {
+  compound    : compound;
+  ne_elements : ('a, semi) nsepseq;
+  terminator  : semi option
+}
 
-and closing =
-  End      of kwd_end
-| RBrace   of rbrace
-| RBracket of rbracket
+and compound =
+  BeginEnd of kwd_begin * kwd_end
+| Braces   of lbrace * rbrace
+| Brackets of lbracket * rbracket
 
 and list_expr =
-  Cons   of cons bin_op reg
-| List   of expr injection reg
+  ECons     of cons bin_op reg
+| EListComp of expr injection reg
   (*| Append of (expr * append * expr) reg*)
 
 and string_expr =
   Cat    of cat bin_op reg
-| String of string reg
+| StrLit of string reg
+
+and constr_expr =
+  ENone      of c_None
+| ESomeApp   of (c_Some * expr) reg
+| EConstrApp of (constr * expr option) reg
 
 and arith_expr =
-  Add  of plus bin_op reg
-| Sub  of minus bin_op reg
-| Mult of times bin_op reg
-| Div  of slash bin_op reg
-| Mod  of kwd_mod bin_op reg
-| Neg  of minus un_op reg
-| Int  of (string * Z.t) reg
-| Nat  of (string * Z.t) reg
-| Mutez  of (string * Z.t) reg
+  Add   of plus bin_op reg
+| Sub   of minus bin_op reg
+| Mult  of times bin_op reg
+| Div   of slash bin_op reg
+| Mod   of kwd_mod bin_op reg
+| Neg   of minus un_op reg
+| Int   of (string * Z.t) reg
+| Nat   of (string * Z.t) reg
+| Mutez of (string * Z.t) reg
 
 and logic_expr =
   BoolExpr of bool_expr
 | CompExpr of comp_expr
 
 and bool_expr =
-  Or       of kwd_or bin_op reg
-| And      of kwd_and bin_op reg
-| Not      of kwd_not un_op reg
-| True     of kwd_true
-| False    of kwd_false
+  Or    of kwd_or bin_op reg
+| And   of kwd_and bin_op reg
+| Not   of kwd_not un_op reg
+| True  of kwd_true
+| False of kwd_false
 
 and 'a bin_op = {
   op   : 'a;
@@ -295,14 +319,12 @@ and comp_expr =
 and projection = {
   struct_name : variable;
   selector    : dot;
-  field_path  : (selection, dot) Utils.nsepseq
+  field_path  : (selection, dot) nsepseq
 }
 
 and selection =
   FieldName of variable
-| Component of (string * Z.t) reg par reg
-
-and record_expr = field_assign reg injection reg
+| Component of (string * Z.t) reg
 
 and field_assign = {
   field_name : field_name;
@@ -310,15 +332,12 @@ and field_assign = {
   field_expr : expr
 }
 
-and sequence = expr injection reg
-
 and 'a case = {
   kwd_match : kwd_match;
   expr      : expr;
-  opening   : opening;
+  kwd_with  : kwd_with;
   lead_vbar : vbar option;
-  cases     : ('a case_clause reg, vbar) Utils.nsepseq reg;
-  closing   : closing
+  cases     : ('a case_clause reg, vbar) nsepseq reg
 }
 
 and 'a case_clause = {
@@ -335,14 +354,14 @@ and let_in = {
 }
 
 and fun_expr = {
-  kwd_fun : kwd_fun;
-  params  : pattern list;
-  p_annot : (colon * type_expr) option;
-  arrow   : arrow;
-  body    : expr
+  kwd_fun  : kwd_fun;
+  binders  : pattern nseq;
+  lhs_type : (colon * type_expr) option;
+  arrow    : arrow;
+  body     : expr
 }
 
-and conditional = {
+and cond_expr = {
   kwd_if   : kwd_if;
   test     : expr;
   kwd_then : kwd_then;
@@ -360,19 +379,27 @@ let type_expr_to_region = function
 | TApp {region; _}
 | TFun {region; _}
 | TPar {region; _}
-| TAlias {region; _} -> region
+| TVar {region; _} -> region
 
 let list_pattern_to_region = function
-  Sugar {region; _} | PCons {region; _} -> region
+  PListComp {region; _} | PCons {region; _} -> region
+
+let constr_pattern_to_region = function
+  PNone region | PSomeApp {region;_}
+| PConstrApp {region;_} -> region
 
 let pattern_to_region = function
-  PList p -> list_pattern_to_region p
-| PTuple {region;_} | PVar {region;_}
-| PUnit {region;_} | PInt {region;_}
+| PList p -> list_pattern_to_region p
+| PConstr c -> constr_pattern_to_region c
+| PUnit {region;_}
 | PTrue region | PFalse region
+| PTuple {region;_} | PVar {region;_}
+| PInt {region;_}
 | PString {region;_} | PWild region
-| PConstr {region; _} | PPar {region;_}
-| PRecord {region; _} | PTyped {region; _} -> region
+| PPar {region;_}
+| PRecord {region; _} | PTyped {region; _}
+| PNat {region; _} | PBytes {region; _}
+  -> region
 
 let bool_expr_to_region = function
   Or {region;_} | And {region;_}
@@ -395,24 +422,29 @@ let arith_expr_to_region = function
 | Nat {region; _} -> region
 
 let string_expr_to_region = function
-  String {region;_} | Cat {region;_} -> region
+  StrLit {region;_} | Cat {region;_} -> region
 
 let list_expr_to_region = function
-  Cons {region; _} | List {region; _}
+  ECons {region; _} | EListComp {region; _}
 (* | Append {region; _}*) -> region
+
+and constr_expr_to_region = function
+  ENone region
+| EConstrApp {region; _}
+| ESomeApp   {region; _} -> region
 
 let expr_to_region = function
   ELogic e -> logic_expr_to_region e
 | EArith e -> arith_expr_to_region e
 | EString e -> string_expr_to_region e
 | EList e -> list_expr_to_region e
+| EConstr e -> constr_expr_to_region e
 | EAnnot {region;_ } | ELetIn {region;_} | EFun {region;_}
 | ECond {region;_} | ETuple {region;_} | ECase {region;_}
 | ECall {region;_} | EVar {region; _} | EProj {region; _}
 | EUnit {region;_} | EPar {region;_} | EBytes {region; _}
-| ESeq {region; _} | ERecord {region; _}
-| EConstr {region; _} -> region
+| ESeq {region; _} | ERecord {region; _} -> region
 
-let rec unpar = function
-  EPar {value={inside=expr;_}; _} -> unpar expr
-| e -> e
+let selection_to_region = function
+  FieldName f -> f.region
+| Component c -> c.region

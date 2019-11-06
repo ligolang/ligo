@@ -1,6 +1,20 @@
 %{
 %}
 
+(* Tokens (mirroring thise defined in module LexToken) *)
+
+  (* Literals *)
+
+%token                    <string Region.reg> String
+%token <(LexToken.lexeme * Hex.t) Region.reg> Bytes
+%token            <(string * Z.t) Region.reg> Int
+%token            <(string * Z.t) Region.reg> Nat
+%token            <(string * Z.t) Region.reg> Mutez
+%token                    <string Region.reg> Ident
+%token                    <string Region.reg> Constr
+
+  (* Symbols *)
+
 %token <Region.t> MINUS
 %token <Region.t> PLUS
 %token <Region.t> SLASH
@@ -36,13 +50,7 @@
 %token <Region.t> BOOL_OR
 %token <Region.t> BOOL_AND
 
-%token <string Region.reg> Ident
-%token <string Region.reg> Constr
-%token <string Region.reg> Str
-
-%token <(string * Z.t) Region.reg> Int
-%token <(string * Z.t) Region.reg> Nat
-%token <(string * Z.t) Region.reg> Mutez
+ (* Keywords *)
 
 (*%token And*)
 %token <Region.t> Begin
@@ -62,8 +70,13 @@
 %token <Region.t> True
 %token <Region.t> Type
 %token <Region.t> With
-%token <Region.t> LetEntry
-%token <Region.t> MatchNat
+
+  (* Data constructors *)
+
+%token <Region.t> C_None      (* "None" *)
+%token <Region.t> C_Some      (* "Some" *)
+
+  (* Virtual tokens *)
 
 %token <Region.t> EOF
 
