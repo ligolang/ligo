@@ -303,9 +303,9 @@ let bytes_arithmetic_mligo () : unit result =
   let%bind () = expect_eq program "slice_op" tata at in
   let%bind () = expect_fail program "slice_op" foo in
   let%bind () = expect_fail program "slice_op" ba in
-  let%bind b1 = Run.Of_simplified.run_typed_program program "hasherman" foo in
+  let%bind b1 = Run.Of_simplified.run_typed_program program Typer.Solver.initial_state "hasherman" foo in
   let%bind () = expect_eq program "hasherman" foo b1 in
-  let%bind b3 = Run.Of_simplified.run_typed_program program "hasherman" foototo in
+  let%bind b3 = Run.Of_simplified.run_typed_program program Typer.Solver.initial_state "hasherman" foototo in
   let%bind () = Assert.assert_fail @@ Ast_simplified.Misc.assert_value_eq (b3 , b1) in
   ok ()
 
