@@ -13,4 +13,6 @@ val path_to_string        : AST.path -> string
 val pattern_to_string     : AST.pattern -> string
 val instruction_to_string : AST.instruction -> string
 
+(* Pretty-printing of the AST *)
+
 val pp_ast : Buffer.t -> AST.t -> unit

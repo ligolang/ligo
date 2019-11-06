@@ -9,7 +9,6 @@ module SMap = Map.String
 module Errors :
   sig
     val bad_bytes : Location.t -> string -> unit -> error
-    val unsupported_arith_op : Raw.expr -> unit -> error
   end
 
 

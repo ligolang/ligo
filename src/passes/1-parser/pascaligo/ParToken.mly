@@ -53,6 +53,7 @@
 %token <Region.t> Contains    (* "contains"   *)
 %token <Region.t> Else        (* "else"       *)
 %token <Region.t> End         (* "end"        *)
+%token <Region.t> False       (* "False"      *)
 %token <Region.t> For         (* "for"        *)
 %token <Region.t> Function    (* "function"   *)
 %token <Region.t> From        (* "from"       *)
@@ -73,18 +74,17 @@
 %token <Region.t> Skip        (* "skip"       *)
 %token <Region.t> Then        (* "then"       *)
 %token <Region.t> To          (* "to"         *)
+%token <Region.t> True        (* "True"       *)
 %token <Region.t> Type        (* "type"       *)
+%token <Region.t> Unit        (* "Unit"       *)
 %token <Region.t> Var         (* "var"        *)
 %token <Region.t> While       (* "while"      *)
 %token <Region.t> With        (* "with"       *)
 
   (* Data constructors *)
 
-%token <Region.t> C_False     (* "False" *)
 %token <Region.t> C_None      (* "None"  *)
 %token <Region.t> C_Some      (* "Some"  *)
-%token <Region.t> C_True      (* "True"  *)
-%token <Region.t> C_Unit      (* "Unit"  *)
 
   (* Virtual tokens *)
 

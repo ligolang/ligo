@@ -182,13 +182,13 @@ and type_expr =
 | TApp    of (type_name * type_tuple) reg
 | TFun    of (type_expr * arrow * type_expr) reg
 | TPar    of type_expr par reg
-| TAlias  of variable
+| TVar    of variable
 
 and cartesian = (type_expr, times) nsepseq reg
 
 and variant = {
   constr : constr;
-  args   : (kwd_of * type_expr) option
+  arg    : (kwd_of * type_expr) option
 }
 
 and field_decl = {
@@ -447,7 +447,7 @@ and expr =
 | EList   of list_expr
 | ESet    of set_expr
 | EConstr of constr_expr
-| ERecord of record_expr
+| ERecord of field_assign reg ne_injection reg
 | EProj   of projection reg
 | EMap    of map_expr
 | EVar    of Lexer.lexeme reg
@@ -545,18 +545,14 @@ and string_expr =
 | String of Lexer.lexeme reg
 
 and list_expr =
-  Cons of cons bin_op reg
-| List of expr injection reg
-| Nil  of nil
-
-and nil = kwd_nil
+  ECons     of cons bin_op reg
+| EListComp of expr injection reg
+| ENil      of kwd_nil
 
 and constr_expr =
   SomeApp   of (c_Some * arguments) reg
-| NoneExpr  of none_expr
+| NoneExpr  of c_None
 | ConstrApp of (constr * arguments option) reg
-
-and record_expr = field_assign reg injection reg
 
 and field_assign = {
   field_name : field_name;
@@ -576,8 +572,6 @@ and selection =
 
 and tuple_expr = (expr, comma) nsepseq par reg
 
-and none_expr = c_None
-
 and fun_call = (fun_name * arguments) reg
 
 and arguments = tuple_expr
@@ -585,28 +579,31 @@ and arguments = tuple_expr
 (* Patterns *)
 
 and pattern =
-  PCons   of (pattern, cons) nsepseq reg
-| PConstr of (constr * tuple_pattern option) reg
+  PConstr of constr_pattern
 | PVar    of Lexer.lexeme reg
 | PWild   of wild
 | PInt    of (Lexer.lexeme * Z.t) reg
 | PNat    of (Lexer.lexeme * Z.t) reg
 | PBytes  of (Lexer.lexeme * Hex.t) reg
 | PString of Lexer.lexeme reg
-| PUnit   of c_Unit
-| PFalse  of c_False
-| PTrue   of c_True
-| PNone   of c_None
-| PSome   of (c_Some * pattern par reg) reg
 | PList   of list_pattern
 | PTuple  of tuple_pattern
+
+and constr_pattern =
+  PUnit      of c_Unit
+| PFalse     of c_False
+| PTrue      of c_True
+| PNone      of c_None
+| PSomeApp   of (c_Some * pattern par reg) reg
+| PConstrApp of (constr * tuple_pattern option) reg
 
 and tuple_pattern = (pattern, comma) nsepseq par reg
 
 and list_pattern =
-  Sugar of pattern injection reg
-| PNil  of kwd_nil
-| Raw   of (pattern * cons * pattern) par reg
+  PListComp of pattern injection reg
+| PNil      of kwd_nil
+| PParCons  of (pattern * cons * pattern) par reg
+| PCons     of (pattern, cons) nsepseq reg
 
 (* Projecting regions *)
 

@@ -68,73 +68,50 @@ type t =
 
   (* Keywords *)
 
-| And        of Region.t  (* "and"        *)
-| Begin      of Region.t  (* "begin"      *)
-| BigMap     of Region.t  (* "big_map"    *)
-| Block      of Region.t  (* "block"      *)
-| Case       of Region.t  (* "case"       *)
-| Const      of Region.t  (* "const"      *)
-| Contains   of Region.t  (* "contains"   *)
-| Down       of Region.t  (* "down"       *)
-| Else       of Region.t  (* "else"       *)
-| End        of Region.t  (* "end"        *)
-| Fail       of Region.t  (* "fail"       *)
-| For        of Region.t  (* "for"        *)
-| From       of Region.t  (* "from"       *)
-| Function   of Region.t  (* "function"   *)
-| If         of Region.t  (* "if"         *)
-| In         of Region.t  (* "in"         *)
-| Is         of Region.t  (* "is"         *)
-| List       of Region.t  (* "list"       *)
-| Map        of Region.t  (* "map"        *)
-| Mod        of Region.t  (* "mod"        *)
-| Nil        of Region.t  (* "nil"        *)
-| Not        of Region.t  (* "not"        *)
-| Of         of Region.t  (* "of"         *)
-| Or         of Region.t  (* "or"         *)
-| Patch      of Region.t  (* "patch"      *)
-| Procedure  of Region.t  (* "procedure"  *)
-| Record     of Region.t  (* "record"     *)
-| Remove     of Region.t  (* "remove"     *)
-| Set        of Region.t  (* "set"        *)
-| Skip       of Region.t  (* "skip"       *)
-| Step       of Region.t  (* "step"       *)
-| Then       of Region.t  (* "then"       *)
-| To         of Region.t  (* "to"         *)
-| Type       of Region.t  (* "type"       *)
-| Var        of Region.t  (* "var"        *)
-| While      of Region.t  (* "while"      *)
-| With       of Region.t  (* "with"       *)
+| And        of Region.t  (* "and"      *)
+| Begin      of Region.t  (* "begin"    *)
+| BigMap     of Region.t  (* "big_map"  *)
+| Block      of Region.t  (* "block"    *)
+| Case       of Region.t  (* "case"     *)
+| Const      of Region.t  (* "const"    *)
+| Contains   of Region.t  (* "contains" *)
+| Down       of Region.t  (* "down"     *)
+| Else       of Region.t  (* "else"     *)
+| End        of Region.t  (* "end"      *)
+| Fail       of Region.t  (* "fail"     *)
+| False      of Region.t  (* "False"    *)
+| For        of Region.t  (* "for"      *)
+| From       of Region.t  (* "from"     *)
+| Function   of Region.t  (* "function" *)
+| If         of Region.t  (* "if"       *)
+| In         of Region.t  (* "in"       *)
+| Is         of Region.t  (* "is"       *)
+| List       of Region.t  (* "list"     *)
+| Map        of Region.t  (* "map"      *)
+| Mod        of Region.t  (* "mod"      *)
+| Nil        of Region.t  (* "nil"      *)
+| Not        of Region.t  (* "not"      *)
+| Of         of Region.t  (* "of"       *)
+| Or         of Region.t  (* "or"       *)
+| Patch      of Region.t  (* "patch"    *)
+| Record     of Region.t  (* "record"   *)
+| Remove     of Region.t  (* "remove"   *)
+| Set        of Region.t  (* "set"      *)
+| Skip       of Region.t  (* "skip"     *)
+| Step       of Region.t  (* "step"     *)
+| Then       of Region.t  (* "then"     *)
+| To         of Region.t  (* "to"       *)
+| True       of Region.t  (* "True"     *)
+| Type       of Region.t  (* "type"     *)
+| Unit       of Region.t  (* "Unit"     *)
+| Var        of Region.t  (* "var"      *)
+| While      of Region.t  (* "while"    *)
+| With       of Region.t  (* "with"     *)
 
-  (* Types *)
-(*
-| T_address   of Region.t  (* "address"   *)
-| T_big_map   of Region.t  (* "big_map"   *)
-| T_bool      of Region.t  (* "bool"      *)
-| T_bytes     of Region.t  (* "bytes"     *)
-| T_contract  of Region.t  (* "contract"  *)
-| T_int       of Region.t  (* "int"       *)
-| T_key       of Region.t  (* "key"       *)
-| T_key_hash  of Region.t  (* "key_hash"  *)
-| T_list      of Region.t  (* "list"      *)
-| T_map       of Region.t  (* "map"       *)
-| T_mutez     of Region.t  (* "mutez"     *)
-| T_nat       of Region.t  (* "nat"       *)
-| T_operation of Region.t  (* "operation" *)
-| T_option    of Region.t  (* "option"    *)
-| T_set       of Region.t  (* "set"       *)
-| T_signature of Region.t  (* "signature" *)
-| T_string    of Region.t  (* "string"    *)
-| T_timestamp of Region.t  (* "timestamp" *)
-| T_unit      of Region.t  (* "unit"      *)
-*)
   (* Data constructors *)
 
-| C_False of Region.t  (* "False" *)
 | C_None  of Region.t  (* "None"  *)
 | C_Some  of Region.t  (* "Some"  *)
-| C_True  of Region.t  (* "True"  *)
-| C_Unit  of Region.t  (* "Unit"  *)
 
   (* Virtual tokens *)
 
@@ -211,6 +188,7 @@ let proj_token = function
 | Else       region -> region, "Else"
 | End        region -> region, "End"
 | Fail       region -> region, "Fail"
+| False      region -> region, "False"
 | For        region -> region, "For"
 | From       region -> region, "From"
 | Function   region -> region, "Function"
@@ -225,7 +203,6 @@ let proj_token = function
 | Of         region -> region, "Of"
 | Or         region -> region, "Or"
 | Patch      region -> region, "Patch"
-| Procedure  region -> region, "Procedure"
 | Record     region -> region, "Record"
 | Remove     region -> region, "Remove"
 | Set        region -> region, "Set"
@@ -233,18 +210,17 @@ let proj_token = function
 | Step       region -> region, "Step"
 | Then       region -> region, "Then"
 | To         region -> region, "To"
+| True       region -> region, "True"
 | Type       region -> region, "Type"
+| Unit       region -> region, "Unit"
 | Var        region -> region, "Var"
 | While      region -> region, "While"
 | With       region -> region, "With"
 
   (* Data *)
 
-| C_False region -> region, "C_False"
 | C_None  region -> region, "C_None"
 | C_Some  region -> region, "C_Some"
-| C_True  region -> region, "C_True"
-| C_Unit  region -> region, "C_Unit"
 
   (* Virtual tokens *)
 
@@ -304,6 +280,7 @@ let to_lexeme = function
 | Else       _ -> "else"
 | End        _ -> "end"
 | Fail       _ -> "fail"
+| False      _ -> "False"
 | For        _ -> "for"
 | From       _ -> "from"
 | Function   _ -> "function"
@@ -318,7 +295,6 @@ let to_lexeme = function
 | Of         _ -> "of"
 | Or         _ -> "or"
 | Patch      _ -> "patch"
-| Procedure  _ -> "procedure"
 | Record     _ -> "record"
 | Remove     _ -> "remove"
 | Set        _ -> "set"
@@ -326,18 +302,17 @@ let to_lexeme = function
 | Step       _ -> "step"
 | Then       _ -> "then"
 | To         _ -> "to"
+| True       _ -> "True"
 | Type       _ -> "type"
+| Unit       _ -> "Unit"
 | Var        _ -> "var"
 | While      _ -> "while"
 | With       _ -> "with"
 
   (* Data constructors *)
 
-| C_False _ -> "False"
 | C_None  _ -> "None"
 | C_Some  _ -> "Some"
-| C_True  _ -> "True"
-| C_Unit  _ -> "Unit"
 
   (* Virtual tokens *)
 
@@ -368,6 +343,7 @@ let keywords = [
   (fun reg -> From       reg);
   (fun reg -> Function   reg);
   (fun reg -> Fail       reg);
+  (fun reg -> False      reg);
   (fun reg -> If         reg);
   (fun reg -> In         reg);
   (fun reg -> Is         reg);
@@ -376,10 +352,10 @@ let keywords = [
   (fun reg -> Mod        reg);
   (fun reg -> Nil        reg);
   (fun reg -> Not        reg);
+  (fun reg -> C_None     reg);
   (fun reg -> Of         reg);
   (fun reg -> Or         reg);
   (fun reg -> Patch      reg);
-  (fun reg -> Procedure  reg);
   (fun reg -> Record     reg);
   (fun reg -> Remove     reg);
   (fun reg -> Set        reg);
@@ -387,7 +363,9 @@ let keywords = [
   (fun reg -> Step       reg);
   (fun reg -> Then       reg);
   (fun reg -> To         reg);
+  (fun reg -> True       reg);
   (fun reg -> Type       reg);
+  (fun reg -> Unit       reg);
   (fun reg -> Var        reg);
   (fun reg -> While      reg);
   (fun reg -> With       reg)
@@ -398,11 +376,11 @@ let reserved =
   empty |> add "args"
 
 let constructors = [
-  (fun reg -> C_False reg);
-  (fun reg -> C_None  reg);
-  (fun reg -> C_Some  reg);
-  (fun reg -> C_True  reg);
-  (fun reg -> C_Unit  reg)
+  (fun reg -> False  reg);
+  (fun reg -> True   reg);
+  (fun reg -> Unit   reg);
+  (fun reg -> C_None reg);
+  (fun reg -> C_Some reg)
 ]
 
 let add map (key, value) = SMap.add key value map
@@ -474,11 +452,11 @@ let mk_bytes lexeme region =
 type int_err = Non_canonical_zero
 
 let mk_int lexeme region =
-  let z = Str.(global_replace (regexp "_") "" lexeme)
-          |> Z.of_string in
-  if   Z.equal z Z.zero && lexeme <> "0"
-  then Error Non_canonical_zero
-  else Ok (Int Region.{region; value = lexeme, z})
+  let z =
+    Str.(global_replace (regexp "_") "" lexeme) |> Z.of_string
+  in if   Z.equal z Z.zero && lexeme <> "0"
+     then Error Non_canonical_zero
+     else Ok (Int Region.{region; value = lexeme,z})
 
 type nat_err =
   Invalid_natural
@@ -494,7 +472,7 @@ let mk_nat lexeme region =
       Z.of_string in
     if Z.equal z Z.zero && lexeme <> "0n"
     then Error Non_canonical_zero_nat
-    else Ok (Nat Region.{region; value = lexeme, z})
+    else Ok (Nat Region.{region; value = lexeme,z})
   )
 
 let mk_mutez lexeme region =
@@ -533,9 +511,9 @@ let mk_sym lexeme region =
   | "*"   -> Ok (TIMES    region)
   | "/"   -> Ok (SLASH    region)
   | "<"   -> Ok (LT       region)
-  | "<="  -> Ok (LE      region)
+  | "<="  -> Ok (LE       region)
   | ">"   -> Ok (GT       region)
-  | ">="  -> Ok (GE      region)
+  | ">="  -> Ok (GE       region)
 
   (* Lexemes specific to PascaLIGO *)
   | "=/=" -> Ok (NE       region)
@@ -545,19 +523,16 @@ let mk_sym lexeme region =
   (* Invalid lexemes *)
   |     _ -> Error Invalid_symbol
 
+
 (* Identifiers *)
 
-let mk_ident' lexeme region lexicon =
+let mk_ident lexeme region =
   Lexing.from_string lexeme |> scan_ident region lexicon
-
-let mk_ident lexeme region = mk_ident' lexeme region lexicon
 
 (* Constructors *)
 
-let mk_constr' lexeme region lexicon =
+let mk_constr lexeme region =
   Lexing.from_string lexeme |> scan_constr region lexicon
-
-let mk_constr lexeme region = mk_constr' lexeme region lexicon
 
 (* Predicates *)
 
@@ -589,6 +564,7 @@ let is_kwd = function
 | Else       _
 | End        _
 | Fail       _
+| False      _
 | For        _
 | From       _
 | Function   _
@@ -603,7 +579,6 @@ let is_kwd = function
 | Of         _
 | Or         _
 | Patch      _
-| Procedure  _
 | Record     _
 | Remove     _
 | Set        _
@@ -611,7 +586,9 @@ let is_kwd = function
 | Step       _
 | Then       _
 | To         _
+| True       _
 | Type       _
+| Unit       _
 | Var        _
 | While      _
 | With       _ -> true
@@ -619,11 +596,8 @@ let is_kwd = function
 
 let is_constr = function
   Constr  _
-| C_False _
 | C_None  _
-| C_Some  _
-| C_True  _
-| C_Unit  _ -> true
+| C_Some  _ -> true
 |         _ -> false
 
 let is_sym = function

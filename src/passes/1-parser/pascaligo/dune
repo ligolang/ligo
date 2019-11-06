@@ -11,7 +11,7 @@
  (modules AST pascaligo Parser ParserLog LexToken)
  (libraries
    parser_shared
-   hex   
+   hex
    simple-utils
    tezos-utils
  )
@@ -20,12 +20,12 @@
 
 (executable
   (name LexerMain)
-  (libraries 
+  (libraries
    hex
    simple-utils
-   tezos-utils 
+   tezos-utils
    parser_pascaligo)
-  (modules 
+  (modules
     LexerMain
   )
   (flags (:standard -open Parser_shared -open Parser_pascaligo))
@@ -33,9 +33,9 @@
 
 (executable
   (name ParserMain)
-  (libraries 
+  (libraries
    parser_pascaligo)
-  (modules    
+  (modules
     ParserMain
   )
   (flags (:standard -open Simple_utils -open Parser_shared -open Parser_pascaligo))
