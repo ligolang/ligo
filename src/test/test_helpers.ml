@@ -38,7 +38,7 @@ let expect ?input_to_value ?options program entry_point input expecter =
       let content () = Format.asprintf "Entry_point: %s" entry_point in
       error title content in
     trace run_error @@
-    Ligo.Run.Of_simplified.run_typed_program ?input_to_value ?options program entry_point input in
+    Ligo.Run.Of_simplified.run_typed_program ?input_to_value ?options program Typer.Solver.initial_state entry_point input in
   expecter result
 
 let expect_fail ?options program entry_point input =
@@ -49,7 +49,7 @@ let expect_fail ?options program entry_point input =
   in
   trace run_error @@
   Assert.assert_fail
-  @@ Ligo.Run.Of_simplified.run_typed_program ?options program entry_point input
+  @@ Ligo.Run.Of_simplified.run_typed_program ?options program Typer.Solver.initial_state entry_point input
 
 
 let expect_eq ?input_to_value ?options program entry_point input expected =

@@ -32,6 +32,11 @@ them. please report this to the developers." in
     let content () = name in
     error title content
 
+  let no_type_variable name =
+    let title () = "type variables can't be transpiled" in
+    let content () = name in
+    error title content
+
   let row_loc l = ("location" , fun () -> Format.asprintf "%a" Location.pp l)
 
   let unsupported_pattern_matching kind location =
@@ -101,41 +106,49 @@ them. please report this to the developers." in
       ("value" , fun () -> Format.asprintf "%a" Mini_c.PP.value value) ;
     ] in
     error ~data title content
+
+  let not_found content =
+    let title () = "Not_found" in
+    let content () = content in
+    let data = [
+    ] in
+    error ~data title content
 end
 open Errors
 
 let rec transpile_type (t:AST.type_value) : type_value result =
   match t.type_value' with
-  | T_constant ("bool", []) -> ok (T_base Base_bool)
-  | T_constant ("int", []) -> ok (T_base Base_int)
-  | T_constant ("nat", []) -> ok (T_base Base_nat)
-  | T_constant ("tez", []) -> ok (T_base Base_tez)
-  | T_constant ("string", []) -> ok (T_base Base_string)
-  | T_constant ("bytes", []) -> ok (T_base Base_bytes)
-  | T_constant ("address", []) -> ok (T_base Base_address)
-  | T_constant ("timestamp", []) -> ok (T_base Base_timestamp)
-  | T_constant ("unit", []) -> ok (T_base Base_unit)
-  | T_constant ("operation", []) -> ok (T_base Base_operation)
-  | T_constant ("signature", []) -> ok (T_base Base_signature)
-  | T_constant ("contract", [x]) ->
+  | T_variable (Type_name name) -> fail @@ no_type_variable name
+  | T_constant (Type_name "bool", []) -> ok (T_base Base_bool)
+  | T_constant (Type_name "int", []) -> ok (T_base Base_int)
+  | T_constant (Type_name "nat", []) -> ok (T_base Base_nat)
+  | T_constant (Type_name "tez", []) -> ok (T_base Base_tez)
+  | T_constant (Type_name "string", []) -> ok (T_base Base_string)
+  | T_constant (Type_name "bytes", []) -> ok (T_base Base_bytes)
+  | T_constant (Type_name "address", []) -> ok (T_base Base_address)
+  | T_constant (Type_name "timestamp", []) -> ok (T_base Base_timestamp)
+  | T_constant (Type_name "unit", []) -> ok (T_base Base_unit)
+  | T_constant (Type_name "operation", []) -> ok (T_base Base_operation)
+  | T_constant (Type_name "signature", []) -> ok (T_base Base_signature)
+  | T_constant (Type_name "contract", [x]) ->
       let%bind x' = transpile_type x in
       ok (T_contract x')
-  | T_constant ("map", [key;value]) ->
+  | T_constant (Type_name "map", [key;value]) ->
       let%bind kv' = bind_map_pair transpile_type (key, value) in
       ok (T_map kv')
-  | T_constant ("big_map", [key;value] ) ->
+  | T_constant (Type_name "big_map", [key;value] ) ->
       let%bind kv' = bind_map_pair transpile_type (key, value) in
       ok (T_big_map kv')
-  | T_constant ("list", [t]) ->
+  | T_constant (Type_name "list", [t]) ->
       let%bind t' = transpile_type t in
       ok (T_list t')
-  | T_constant ("set", [t]) ->
+  | T_constant (Type_name "set", [t]) ->
       let%bind t' = transpile_type t in
       ok (T_set t')
-  | T_constant ("option", [o]) ->
+  | T_constant (Type_name "option", [o]) ->
       let%bind o' = transpile_type o in
       ok (T_option o')
-  | T_constant (name , _lst) -> fail @@ unrecognized_type_constant name
+  | T_constant (Type_name name , _lst) -> fail @@ unrecognized_type_constant name
   (* TODO hmm *)
   | T_sum m ->
       let node = Append_tree.of_list @@ kv_list_of_map m in
@@ -492,7 +505,10 @@ and transpile_annotated_expression (ae:AST.annotated_expression) : expression re
               let%bind ty'_map = bind_map_smap transpile_type ty_map in
               let%bind path = record_access_to_lr ty' ty'_map prop in
               let path' = List.map snd path in
-            ok (Map.String.find prop ty_map, acc @ path')
+            let%bind prop_in_ty_map = trace_option
+                (Errors.not_found "acessing prop in ty_map [TODO: better error message]")
+                (Map.String.find_opt prop ty_map) in
+            ok (prop_in_ty_map, acc @ path')
           )
           | Access_map _k -> fail (corner_case ~loc:__LOC__ "no patch for map yet")
       in

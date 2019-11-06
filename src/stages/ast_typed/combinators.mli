@@ -17,13 +17,14 @@ val t_set : type_value -> ?s:S.type_expression -> unit -> type_value
 val t_contract : type_value -> ?s:S.type_expression -> unit -> type_value
 val t_int : ?s:S.type_expression -> unit -> type_value
 val t_nat : ?s:S.type_expression -> unit -> type_value
-val t_tez : ?s:S.type_expression -> unit -> type_value
+val t_mutez : ?s:S.type_expression -> unit -> type_value
 val t_address : ?s:S.type_expression -> unit -> type_value
 val t_unit : ?s:S.type_expression -> unit -> type_value
 val t_option : type_value -> ?s:S.type_expression -> unit -> type_value
 val t_pair : type_value -> type_value -> ?s:S.type_expression -> unit -> type_value
 val t_list  : type_value -> ?s:S.type_expression -> unit -> type_value
 val t_tuple : type_value list -> ?s:S.type_expression -> unit -> type_value
+val t_variable : type_name -> ?s:S.type_expression -> unit -> type_value
 val t_record : tv_map -> ?s:S.type_expression -> unit -> type_value
 val make_t_ez_record : (string * type_value) list -> type_value 
 (*
@@ -47,7 +48,7 @@ val get_t_bool : type_value -> unit result
 val get_t_int : type_value -> unit result
 val get_t_nat : type_value -> unit result
 val get_t_unit : type_value -> unit result
-val get_t_tez : type_value -> unit result
+val get_t_mutez : type_value -> unit result
 val get_t_bytes : type_value -> unit result 
 val get_t_string : type_value -> unit result
 *)
@@ -77,7 +78,7 @@ val assert_t_map : type_value -> unit result
 val is_t_map : type_value -> bool
 val is_t_big_map : type_value -> bool 
 
-val assert_t_tez : type_value -> unit result
+val assert_t_mutez : type_value -> unit result
 val assert_t_key : type_value -> unit result
 val assert_t_signature : type_value -> unit result
 val assert_t_key_hash : type_value -> unit result
@@ -104,26 +105,27 @@ val assert_t_unit : type_value -> unit result
 val e_record : ae_map -> expression
 val ez_e_record : ( string * annotated_expression ) list -> expression
 
+*)
 val e_some : value -> expression
 val e_none : expression
 val e_map : ( value * value ) list -> expression
 val e_unit : expression
 val e_int : int -> expression
 val e_nat : int -> expression
-val e_tez : int -> expression
+val e_mutez : int -> expression
 val e_bool : bool -> expression
 val e_string : string -> expression
-*)
+val e_bytes : bytes -> expression
+val e_timestamp : int -> expression
 val e_address : string -> expression
 val e_operation : Memory_proto_alpha.Protocol.Alpha_context.packed_internal_operation -> expression
-(*
 val e_lambda : lambda -> expression
 val e_pair : value -> value -> expression
 val e_application : value -> value -> expression
 val e_variable : name -> expression
 val e_list : value list -> expression
 val e_let_in : string -> value -> value -> expression
-*)
+val e_tuple : value list -> expression
 
 val e_a_unit : full_environment -> annotated_expression
 val e_a_int : int -> full_environment -> annotated_expression

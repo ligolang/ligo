@@ -8,7 +8,8 @@ let get_program =
   fun () -> match !s with
     | Some s -> ok s
     | None -> (
-        let%bind program = type_file "./contracts/heap-instance.ligo" in
+        let%bind (program , state) = type_file "./contracts/heap-instance.ligo" in
+        let () = Typer.Solver.discard_state state in
         s := Some program ;
         ok program
       )

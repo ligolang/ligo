@@ -183,9 +183,11 @@ let evaluate_value =
 let compile_expression =
   let f expression syntax display_format michelson_format =
     toplevel ~display_format @@
+    (* This is an actual compiler entry-point, so we start with a blank state *)
+    let state = Typer.Solver.initial_state in
     let%bind value =
       trace (simple_error "compile-input") @@
-      Ligo.Run.Of_source.compile_expression expression (Syntax_name syntax) in
+      Ligo.Run.Of_source.compile_expression expression state (Syntax_name syntax) in
     ok @@ Format.asprintf "%a\n" (Main.Display.michelson_pp michelson_format) value
   in
   let term =
