@@ -592,7 +592,28 @@ let bind_fold_list f init lst =
   in
   List.fold_left aux (ok init) lst
 
-let bind_fold_pair f init (a,b) = 
+module TMap(X : Map.OrderedType) = struct
+  module MX = Map.Make(X)
+  let bind_fold_Map f init map =
+    let aux k v x  =
+      x >>? fun x ->
+      f ~x ~k ~v
+    in
+    MX.fold aux map (ok init)
+
+  let bind_map_Map f map =
+    let aux k v map'  =
+      map' >>? fun map' ->
+      f ~k ~v >>? fun v' ->
+      ok @@ MX.update k (function
+          | None -> Some v'
+          | Some _ -> failwith "key collision, shouldn't happen in bind_map_Map")
+        map'
+    in
+    MX.fold aux map (ok MX.empty)
+end
+
+let bind_fold_pair f init (a,b) =
   let aux x y =
     x >>? fun x ->
     f x y
@@ -613,8 +634,8 @@ let bind_fold_map_list = fun f acc lst ->
         f acc hd >>? fun (acc' , hd') ->
         aux (acc' , hd' :: prev) f tl
   in
-  aux (acc , []) f lst >>? fun (_acc' , lst') ->
-  ok @@ List.rev lst'
+  aux (acc , []) f lst >>? fun (acc' , lst') ->
+  ok @@ (acc' , List.rev lst')
 
 let bind_fold_map_right_list = fun f acc lst ->
   let rec aux (acc , prev) f = function
@@ -684,6 +705,10 @@ let bind_and3 (a, b, c) =
 let bind_pair = bind_and
 let bind_map_pair f (a, b) =
   bind_pair (f a, f b)
+let bind_fold_map_pair f acc (a, b) =
+  f acc a >>? fun (acc' , a') ->
+  f acc' b >>? fun (acc'' , b') ->
+  ok (acc'' , (a' , b'))
 let bind_map_triple f (a, b, c) =
   bind_and3 (f a, f b, f c)
 

@@ -3,8 +3,14 @@ open Test_helpers
 
 open Ast_simplified.Combinators
 
-let mtype_file ?debug_simplify ?debug_typed = Ligo.Compile.Of_source.type_file ?debug_simplify ?debug_typed (Syntax_name "cameligo")
-let type_file = Ligo.Compile.Of_source.type_file (Syntax_name "pascaligo")
+let mtype_file ?debug_simplify ?debug_typed f =
+  let%bind (typed , state) = Ligo.Compile.Of_source.type_file ?debug_simplify ?debug_typed (Syntax_name "cameligo") f in
+  let () = Typer.Solver.discard_state state in
+  ok typed
+let type_file f =
+  let%bind (typed , state) = Ligo.Compile.Of_source.type_file (Syntax_name "pascaligo") f in
+  let () = Typer.Solver.discard_state state in
+  ok typed
 
 let type_alias () : unit result =
   let%bind program = type_file "./contracts/type-alias.ligo" in
@@ -277,9 +283,9 @@ let bytes_arithmetic () : unit result =
   let%bind () = expect_eq program "slice_op" tata at in
   let%bind () = expect_fail program "slice_op" foo in
   let%bind () = expect_fail program "slice_op" ba in
-  let%bind b1 = Run.Of_simplified.run_typed_program program "hasherman" foo in
+  let%bind b1 = Run.Of_simplified.run_typed_program program Typer.Solver.initial_state "hasherman" foo in
   let%bind () = expect_eq program "hasherman" foo b1 in
-  let%bind b3 = Run.Of_simplified.run_typed_program program "hasherman" foototo in
+  let%bind b3 = Run.Of_simplified.run_typed_program program Typer.Solver.initial_state "hasherman" foototo in
   let%bind () = Assert.assert_fail @@ Ast_simplified.Misc.assert_value_eq (b3 , b1) in
   ok ()
 

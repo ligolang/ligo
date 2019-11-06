@@ -21,19 +21,19 @@ let compile_expression_as_function : string -> s_syntax -> _ result =
   fun expression syntax ->
   let%bind syntax = syntax_to_variant syntax None in
   let%bind simplified = parsify_expression syntax expression in
-  Of_simplified.compile_expression_as_function simplified
+  Of_simplified.compile_expression_as_function ~state:Typer.Solver.initial_state (* TODO: thread state or start with initial? *) simplified
 
 let type_file ?(debug_simplify = false) ?(debug_typed = false)
-    syntax (source_filename:string) : Ast_typed.program result =
+    syntax (source_filename:string) : (Ast_typed.program * Typer.Solver.state) result =
   let%bind syntax = syntax_to_variant syntax (Some source_filename) in
   let%bind simpl = parsify syntax source_filename in
   (if debug_simplify then
      Format.(printf "Simplified : %a\n%!" Ast_simplified.PP.program simpl)
   ) ;
-  let%bind typed =
+  let%bind (typed, state) =
     trace (simple_error "typing") @@
     Typer.type_program simpl in
   (if debug_typed then (
       Format.(printf "Typed : %a\n%!" Ast_typed.PP.program typed)
     )) ;
-  ok typed
+  ok (typed, state)

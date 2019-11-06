@@ -1,0 +1,16 @@
+(library
+  (name union_find)
+  (public_name ligo.union_find)
+  (wrapped false) ;; TODO: do we need this?
+  (modules Partition0 Partition1 Partition2 Partition3 Partition Union_find)
+  (modules_without_implementation Partition)
+;;   (preprocess
+;;     (pps simple-utils.ppx_let_generalized)
+;;   )
+;;   (flags (:standard -w +1..62-4-9-44-40-42-48-30@39@33 -open Simple_utils ))
+  )
+
+(test
+ (modules PartitionMain)
+ (libraries union_find)
+ (name PartitionMain))

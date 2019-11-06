@@ -5,30 +5,30 @@ let make_t type_value' simplified = { type_value' ; simplified }
 let make_a_e ?(location = Location.generated) expression type_annotation environment = {
   expression ;
   type_annotation ;
-  dummy_field = () ;
   environment ;
   location ;
 }
 let make_n_e name a_e = { name ; annotated_expression = a_e }
 let make_n_t type_name type_value = { type_name ; type_value }
 
-let t_bool ?s () : type_value = make_t (T_constant ("bool", [])) s
-let t_string ?s () : type_value = make_t (T_constant ("string", [])) s
-let t_bytes ?s () : type_value = make_t (T_constant ("bytes", [])) s
-let t_key ?s () : type_value = make_t (T_constant ("key", [])) s
-let t_key_hash ?s () : type_value = make_t (T_constant ("key_hash", [])) s
-let t_int ?s () : type_value = make_t (T_constant ("int", [])) s
-let t_address ?s () : type_value = make_t (T_constant ("address", [])) s
-let t_operation ?s () : type_value = make_t (T_constant ("operation", [])) s
-let t_nat ?s () : type_value = make_t (T_constant ("nat", [])) s
-let t_tez ?s () : type_value = make_t (T_constant ("tez", [])) s
-let t_timestamp ?s () : type_value = make_t (T_constant ("timestamp", [])) s
-let t_unit ?s () : type_value = make_t (T_constant ("unit", [])) s
-let t_option o ?s () : type_value = make_t (T_constant ("option", [o])) s
+let t_bool ?s () : type_value = make_t (T_constant (Type_name "bool", [])) s
+let t_string ?s () : type_value = make_t (T_constant (Type_name "string", [])) s
+let t_bytes ?s () : type_value = make_t (T_constant (Type_name "bytes", [])) s
+let t_key ?s () : type_value = make_t (T_constant (Type_name "key", [])) s
+let t_key_hash ?s () : type_value = make_t (T_constant (Type_name "key_hash", [])) s
+let t_int ?s () : type_value = make_t (T_constant (Type_name "int", [])) s
+let t_address ?s () : type_value = make_t (T_constant (Type_name "address", [])) s
+let t_operation ?s () : type_value = make_t (T_constant (Type_name "operation", [])) s
+let t_nat ?s () : type_value = make_t (T_constant (Type_name "nat", [])) s
+let t_mutez ?s () : type_value = make_t (T_constant (Type_name "tez", [])) s
+let t_timestamp ?s () : type_value = make_t (T_constant (Type_name "timestamp", [])) s
+let t_unit ?s () : type_value = make_t (T_constant (Type_name "unit", [])) s
+let t_option o ?s () : type_value = make_t (T_constant (Type_name "option", [o])) s
 let t_tuple lst ?s () : type_value = make_t (T_tuple lst) s
-let t_list t ?s () : type_value = make_t (T_constant ("list", [t])) s
-let t_set t ?s () : type_value = make_t (T_constant ("set", [t])) s
-let t_contract t ?s () : type_value = make_t (T_constant ("contract", [t])) s
+let t_variable t ?s () : type_value = make_t (T_variable t) s
+let t_list t ?s () : type_value = make_t (T_constant (Type_name "list", [t])) s
+let t_set t ?s () : type_value = make_t (T_constant (Type_name "set", [t])) s
+let t_contract t ?s () : type_value = make_t (T_constant (Type_name "contract", [t])) s
 let t_pair a b ?s () = t_tuple [a ; b] ?s ()
 
 let t_record m ?s () : type_value = make_t (T_record m) s
@@ -40,8 +40,8 @@ let ez_t_record lst ?s () : type_value =
   let m = SMap.of_list lst in
   t_record m ?s ()
 
-let t_map key value ?s () = make_t (T_constant ("map", [key ; value])) s
-let t_big_map key value ?s () = make_t (T_constant ("big_map", [key ; value])) s
+let t_map key value ?s () = make_t (T_constant (Type_name "map", [key ; value])) s
+let t_big_map key value ?s () = make_t (T_constant (Type_name "big_map", [key ; value])) s
 
 let t_sum m ?s () : type_value = make_t (T_sum m) s
 let make_t_ez_sum (lst:(string * type_value) list) : type_value =
@@ -67,59 +67,59 @@ let get_lambda_with_type e =
   | _ -> simple_fail "not a lambda with functional type"
 
 let get_t_bool (t:type_value) : unit result = match t.type_value' with
-  | T_constant ("bool", []) -> ok ()
+  | T_constant (Type_name "bool", []) -> ok ()
   | _ -> simple_fail "not a bool"
 
 let get_t_int (t:type_value) : unit result = match t.type_value' with
-  | T_constant ("int", []) -> ok ()
+  | T_constant (Type_name "int", []) -> ok ()
   | _ -> simple_fail "not a int"
 
 let get_t_nat (t:type_value) : unit result = match t.type_value' with
-  | T_constant ("nat", []) -> ok ()
+  | T_constant (Type_name "nat", []) -> ok ()
   | _ -> simple_fail "not a nat"
 
 let get_t_unit (t:type_value) : unit result = match t.type_value' with
-  | T_constant ("unit", []) -> ok ()
+  | T_constant (Type_name "unit", []) -> ok ()
   | _ -> simple_fail "not a unit"
 
-let get_t_tez (t:type_value) : unit result = match t.type_value' with
-  | T_constant ("tez", []) -> ok ()
+let get_t_mutez (t:type_value) : unit result = match t.type_value' with
+  | T_constant (Type_name "tez", []) -> ok ()
   | _ -> simple_fail "not a tez"
 
 let get_t_bytes (t:type_value) : unit result = match t.type_value' with
-  | T_constant ("bytes", []) -> ok ()
+  | T_constant (Type_name "bytes", []) -> ok ()
   | _ -> simple_fail "not a bytes"
 
 let get_t_string (t:type_value) : unit result = match t.type_value' with
-  | T_constant ("string", []) -> ok ()
+  | T_constant (Type_name "string", []) -> ok ()
   | _ -> simple_fail "not a string"
 
 let get_t_contract (t:type_value) : type_value result = match t.type_value' with
-  | T_constant ("contract", [x]) -> ok x
+  | T_constant (Type_name "contract", [x]) -> ok x
   | _ -> simple_fail "not a contract"
 
 let get_t_option (t:type_value) : type_value result = match t.type_value' with
-  | T_constant ("option", [o]) -> ok o
+  | T_constant (Type_name "option", [o]) -> ok o
   | _ -> simple_fail "not a option"
 
 let get_t_list (t:type_value) : type_value result = match t.type_value' with
-  | T_constant ("list", [o]) -> ok o
+  | T_constant (Type_name "list", [o]) -> ok o
   | _ -> simple_fail "not a list"
 
 let get_t_set (t:type_value) : type_value result = match t.type_value' with
-  | T_constant ("set", [o]) -> ok o
+  | T_constant (Type_name "set", [o]) -> ok o
   | _ -> simple_fail "not a set"
 
 let get_t_key (t:type_value) : unit result = match t.type_value' with
-  | T_constant ("key", []) -> ok ()
+  | T_constant (Type_name "key", []) -> ok ()
   | _ -> simple_fail "not a key"
 
 let get_t_signature (t:type_value) : unit result = match t.type_value' with
-  | T_constant ("signature", []) -> ok ()
+  | T_constant (Type_name "signature", []) -> ok ()
   | _ -> simple_fail "not a signature"
 
 let get_t_key_hash (t:type_value) : unit result = match t.type_value' with
-  | T_constant ("key_hash", []) -> ok ()
+  | T_constant (Type_name "key_hash", []) -> ok ()
   | _ -> simple_fail "not a key_hash"
 
 let get_t_tuple (t:type_value) : type_value list result = match t.type_value' with
@@ -148,12 +148,12 @@ let get_t_record (t:type_value) : type_value SMap.t result = match t.type_value'
 
 let get_t_map (t:type_value) : (type_value * type_value) result =
   match t.type_value' with
-  | T_constant ("map", [k;v]) -> ok (k, v)
+  | T_constant (Type_name "map", [k;v]) -> ok (k, v)
   | _ -> simple_fail "get: not a map"
 
 let get_t_big_map (t:type_value) : (type_value * type_value) result =
   match t.type_value' with
-  | T_constant ("big_map", [k;v]) -> ok (k, v)
+  | T_constant (Type_name "big_map", [k;v]) -> ok (k, v)
   | _ -> simple_fail "get: not a big_map"
 
 let get_t_map_key : type_value -> type_value result = fun t ->
@@ -179,7 +179,7 @@ let assert_t_map = fun t ->
 let is_t_map = Function.compose to_bool get_t_map
 let is_t_big_map = Function.compose to_bool get_t_big_map
 
-let assert_t_tez : type_value -> unit result = get_t_tez
+let assert_t_mutez : type_value -> unit result = get_t_mutez
 let assert_t_key = get_t_key
 let assert_t_signature = get_t_signature
 let assert_t_key_hash = get_t_key_hash
@@ -201,7 +201,7 @@ let assert_t_bytes = fun t ->
 
 let assert_t_operation (t:type_value) : unit result =
   match t.type_value' with
-  | T_constant ("operation" , []) -> ok ()
+  | T_constant (Type_name "operation" , []) -> ok ()
   | _ -> simple_fail "assert: not an operation"
 
 let assert_t_list_operation (t : type_value) : unit result =
@@ -209,11 +209,11 @@ let assert_t_list_operation (t : type_value) : unit result =
   assert_t_operation t'
 
 let assert_t_int : type_value -> unit result = fun t -> match t.type_value' with
-  | T_constant ("int", []) -> ok ()
+  | T_constant (Type_name "int", []) -> ok ()
   | _ -> simple_fail "not an int"
 
 let assert_t_nat : type_value -> unit result = fun t -> match t.type_value' with
-  | T_constant ("nat", []) -> ok ()
+  | T_constant (Type_name "nat", []) -> ok ()
   | _ -> simple_fail "not an nat"
 
 let assert_t_bool : type_value -> unit result = fun v -> get_t_bool v
@@ -235,6 +235,8 @@ let e_nat n : expression = E_literal (Literal_nat n)
 let e_mutez n : expression = E_literal (Literal_mutez n)
 let e_bool b : expression = E_literal (Literal_bool b)
 let e_string s : expression = E_literal (Literal_string s)
+let e_bytes s : expression = E_literal (Literal_bytes s)
+let e_timestamp s : expression = E_literal (Literal_timestamp s)
 let e_address s : expression = E_literal (Literal_address s)
 let e_operation s : expression = E_literal (Literal_operation s)
 let e_lambda l : expression = E_lambda l
@@ -243,11 +245,12 @@ let e_application a b : expression = E_application (a , b)
 let e_variable v : expression = E_variable v
 let e_list lst : expression = E_list lst
 let e_let_in binder rhs result = E_let_in { binder ; rhs ; result }
+let e_tuple lst : expression = E_tuple lst
 
 let e_a_unit = make_a_e e_unit (t_unit ())
 let e_a_int n = make_a_e (e_int n) (t_int ())
 let e_a_nat n = make_a_e (e_nat n) (t_nat ())
-let e_a_mutez n = make_a_e (e_mutez n) (t_tez ())
+let e_a_mutez n = make_a_e (e_mutez n) (t_mutez ())
 let e_a_bool b = make_a_e (e_bool b) (t_bool ())
 let e_a_string s = make_a_e (e_string s) (t_string ())
 let e_a_address s = make_a_e (e_address s) (t_address ())

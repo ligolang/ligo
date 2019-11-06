@@ -5,6 +5,7 @@
     simple-utils
     tezos-utils
     ast_typed
+    typesystem
     mini_c
   )
   (preprocess
