@@ -751,6 +751,7 @@ module Typer = struct
       sender ;
       source ;
       unit ;
+      balance ;
       amount ;
       transaction ;
       get_contract ;
@@ -827,6 +828,7 @@ module Compiler = struct
     ("ABS" , simple_unary @@ prim I_ABS) ;
     ("CONS" , simple_binary @@ prim I_CONS) ;
     ("UNIT" , simple_constant @@ prim I_UNIT) ;
+    ("BALANCE" , simple_constant @@ prim I_BALANCE) ;
     ("AMOUNT" , simple_constant @@ prim I_AMOUNT) ;
     ("ADDRESS" , simple_constant @@ prim I_ADDRESS) ;
     ("NOW" , simple_constant @@ prim I_NOW) ;
