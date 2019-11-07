@@ -185,17 +185,16 @@ class HomeSplash extends React.Component {
       <div className="home-container">
         <div className="home-text">
           <div className="projectTitle">
-            <img alt={siteConfig.title} src={`${siteConfig.baseUrl}img/logo.svg`} />
+            LIGO is a statically typed high-level smart-contract programming language that compiles to Michelson
           </div>
-          <h4 className="tagline-text">{siteConfig.tagline}</h4>
-          <p className="body">{siteConfig.taglineSub}</p>
+          {/* <h4 className="tagline-text">{siteConfig.tagline}</h4> */}
+          <p className="body subtagline-text">It seeks to be easy to use, extensible and safe.</p>
           <LinkButton
             href="https://ide.ligolang.org/"
             className="large-primary-button"
           >
             Try Online
           </LinkButton>
-          <p></p>
           <LinkButton
             href={docUrl("setup/installation.html")}
             className="large-secondary-button"
@@ -370,12 +369,15 @@ class Index extends React.Component {
         ));
 
       return (
-        <div className="partners-container hide-small">
-          {PartnerShowcase}
-          <div className="partners-text">
-            <h3>Partners</h3>
-
+        <div className="partners-container-wrapper hide-small">
+          <div className="partners-container">
+            {PartnerShowcase}
+            <div className="partners-text">
+              <h3>Partners</h3>
+              <p>We're not alone in this world.</p>
+            </div>
           </div>
+          
         </div>
       );
     };

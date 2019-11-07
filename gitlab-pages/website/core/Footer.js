@@ -26,7 +26,6 @@ class Footer extends React.Component {
       <footer className="nav-footer" id="footer">
         <section className="footer-wrapper">
           <div className="sitemap">
-            <a className="nav-home"></a>
             <div>
               <h5>Docs</h5>
               <a href={this.docUrl('setup/installation/', this.props.language)}>
@@ -70,6 +69,8 @@ class Footer extends React.Component {
           </div>
         </section>
 
+        {/* Load the DM Sans font, there's most likely a more appropriate place to load it in docusaurus than here */}
+        <link href="https://fonts.googleapis.com/css?family=DM+Sans:400,400i,500,500i,700,700i&display=swap&subset=latin-ext" rel="stylesheet"></link>
 
       </footer>
     );

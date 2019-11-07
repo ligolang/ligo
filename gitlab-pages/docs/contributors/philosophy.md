@@ -3,23 +3,22 @@ id: philosophy
 title: Philosophy
 ---
 
-To understand LIGO’s design choices, it’s important to get its philosophy. There are two main concerns that we have in mind when building LIGO.
-
-
+To understand LIGO’s design choices it’s important to understand its philosophy. We have two main concerns in mind while building LIGO.
 
 ## Safety
 Once a smart-contract is deployed, it will likely be impossible to change it. You must get it right on the first try, and LIGO should help as much as possible. There are multiple ways to make LIGO a safer language for smart-contracts.
 
 ### Automated Testing
-Automated Testing is the process through which a program will run some other program, and check that this other program behaves correctly.
+Automated Testing is the process through which a program runs another program, and checks that this other program behaves correctly.  
+
 There already is a testing library for LIGO programs written in OCaml that is used to test LIGO itself. Making it accessible to users will greatly improve safety. A way to do so would be to make it accessible from within LIGO.
 
 ### Static Analysis
 Static analysis is the process of having a program analyze another one.
-For instance, type systems are a kind of static analysis through which it is possible to find lots of bugs. There is already a fairly simple type system in LIGO, and we plan to make it much stronger.
+For instance, type systems are a kind of static analysis through which it is possible to find lots of bugs. LIGO already has a simple type system, and we plan to make it much stronger.
 
 ### Conciseness
-Writing less code gives you less room to introduce errors and that's why LIGO encourages writing lean rather than chunky smart-contracts.
+Writing less code gives you less room to introduce errors. That's why LIGO encourages writing lean rather than chunky smart-contracts.
 
 ---
 

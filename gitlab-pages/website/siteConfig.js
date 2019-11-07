@@ -99,7 +99,7 @@ const siteConfig = {
 
   // For no header links in the top nav bar -> headerLinks: [],
   headerLinks: [
-    { doc: "setup/installation", label: "Docs" },
+    { doc: "intro/what-and-why", label: "Docs" },
     {
       doc: "tutorials/get-started/tezos-taco-shop-smart-contract",
       label: "Tutorials"
