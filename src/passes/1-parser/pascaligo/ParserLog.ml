@@ -359,13 +359,11 @@ and print_var_assign buffer {value; _} =
   print_expr  buffer expr
 
 and print_for_collect buffer ({value; _} : for_collect reg) =
-  let {kwd_for; var; bind_to; colon; elt_type;
+  let {kwd_for; var; bind_to;
        kwd_in; collection; expr; block} = value in
   print_token      buffer kwd_for "for";
   print_var        buffer var;
   print_bind_to    buffer bind_to;
-  print_token      buffer colon ":";
-  print_type_expr  buffer elt_type;
   print_token      buffer kwd_in "in";
   print_collection buffer collection;
   print_expr       buffer expr;
@@ -1221,23 +1219,19 @@ and pp_var_assign buffer ~pad:(_,pc) asgn =
 
 and pp_for_collect buffer ~pad:(_,pc) collect =
   let () =
-    let pad = mk_pad 4 0 pc in
+    let pad = mk_pad 3 0 pc in
     match collect.bind_to with
       None ->
         pp_ident buffer ~pad collect.var
     | Some (_, var) ->
         pp_var_binding buffer ~pad (collect.var, var) in
   let () =
-    let _, pc  as pad = mk_pad 4 1 pc in
-    pp_node buffer ~pad "<element type>";
-    pp_type_expr buffer ~pad:(mk_pad 1 0 pc) collect.elt_type in
-  let () =
-    let _, pc  as pad = mk_pad 4 2 pc in
+    let _, pc  as pad = mk_pad 3 1 pc in
     pp_node buffer ~pad "<collection>";
     pp_collection buffer ~pad:(mk_pad 2 0 pc) collect.collection;
     pp_expr buffer ~pad:(mk_pad 1 0 pc) collect.expr in
   let () =
-      let pad = mk_pad 4 3 pc in
+      let pad = mk_pad 3 2 pc in
       let statements = collect.block.value.statements in
       pp_node buffer ~pad "<statements>";
       pp_statements buffer ~pad statements
