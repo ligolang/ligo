@@ -38,7 +38,7 @@ title: Cheat Sheet
 |Maps|<pre><code>type prices is map(nat, tez);<br/><br/>const prices : prices = map<br/>&nbsp;&nbsp;10n -> 60mutez;<br/>&nbsp;&nbsp;50n -> 30mutez;<br/>&nbsp;&nbsp;100n -> 10mutez;<br/>end<br/><br/>const price: option(tez) = prices[50n];<br/><br/>prices[200n] := 5mutez;</code></pre>|
 |Contracts & Accounts|<pre><code>const destinationAddress : address = "tz1...";<br/>const contract : contract(unit) = get_contract(destinationAddress);</code></pre>|
 |Transactions|<pre><code>const payment : operation = transaction(unit, amount, receiver);</code></pre>|
-|Exception/Failure|`fail("Your descriptive error message for the user goes here.")`|
+|Exception/Failure|`failwith("Your descriptive error message for the user goes here.")`|
 
 
 <!--END_DOCUSAURUS_CODE_TABS-->

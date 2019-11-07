@@ -1,13 +1,22 @@
 {
   "docs": {
-    "Setup": ["setup/installation", "setup/editor-support"],
+    "Intro": ["intro/what-and-why", "intro/installation", "intro/editor-support"],
     "Language Basics": [
       "language-basics/cheat-sheet",
       "language-basics/types",
-      "language-basics/variables",
+      "language-basics/constants-and-variables",
+      "language-basics/math-numbers-tez",
+      "language-basics/strings",
       "language-basics/functions",
-      "language-basics/entrypoints",
-      "language-basics/operators"
+      "language-basics/boolean-if-else",
+      "language-basics/unit-option-pattern-matching",
+      "language-basics/maps-records",
+      "language-basics/sets-lists-touples"
+    ],
+    "Advanced": [
+      "advanced/timestamps-addresses",
+      "advanced/entrypoints-contracts",
+      "advanced/first-contract"
     ],
     "API": ["api-cli-commands"]
   },

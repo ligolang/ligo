@@ -3,13 +3,13 @@ id: entrypoints
 title: Entrypoints
 ---
 
-Entrypoints serve as a gate to our smart contracts. In LIGO each entrypoint is a function that accepts two arguments - first one is the parameter used to invoke the contract, and the second is the current storage of the contract. Each entrypoint has to return a list of operations to apply as a result of the smart contract call, and a new storage value.
+Entrypoints are the gates to a smart contract. In LIGO each entrypoint is a function that accepts two arguments. The first is the parameter used to invoke the contract, and the second is the current storage of the contract. Each entrypoint must return a list of operations to apply as a result of the smart contract call, and a new storage value.
 
 > If you don't want to update the storage, don't worry, just re-cycle your last storage value.
 
 ## Defining an entry point
 
-Contract below is effectively an empty contract, that takes a `unit` as a parameter, and returns a `unit` as well.
+The contract below is effectively an empty contract. It takes a `unit` as a parameter, and returns a `unit`.
 
 <!--DOCUSAURUS_CODE_TABS-->
 <!--Pascaligo-->
@@ -21,7 +21,7 @@ function main (const p : unit ; const s : unit) : (list(operation) * unit) is
 
 ## Multiple entry points
 
-Multiple entrypoints are currently not supported in Michelson yet, however with Ligo, you can work that around by using variants & pattern matching.
+Multiple entrypoints are currently not supported in Michelson. But with Ligo you can work around that by using variants & pattern matching.
 
 In the example below we have a simple counter contract, that can be either `Increment(int)`-ed, or `Decrement(int)`-ed.
 

@@ -1,8 +1,9 @@
 {
   "version-next-docs": {
-    "Setup": [
-      "version-next-setup/installation",
-      "version-next-setup/editor-support"
+    "Intro": [
+      "version-next-intro/what-and-why",
+      "version-next-intro/installation",
+      "version-next-intro/editor-support"
     ],
     "Language Basics": [
       "version-next-language-basics/cheat-sheet",

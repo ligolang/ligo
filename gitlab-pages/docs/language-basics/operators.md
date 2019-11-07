@@ -5,7 +5,7 @@ title: Operators
 
 ## Available operators
 
-> This list is non-exhaustive, more operators will be added in the upcoming LIGO releases.
+> This list is non-exhaustive. More operators will be added in upcoming LIGO releases.
 
 |Michelson   	|Pascaligo   	|Description |
 |---	|---	|---	|
