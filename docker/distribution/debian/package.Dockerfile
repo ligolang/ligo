@@ -19,7 +19,7 @@ RUN echo "Package: ligo\n\
 Version: $version\n\
 Architecture: all\n\
 Maintainer: info@ligolang.org\n\
-Depends: libev-dev, perl, pkg-config, libgmp-dev, libhidapi-dev, m4, libcap-dev, bubblewrap, rsync\n\
+Depends: libev4, libgmp10, libgmpxx4ldbl, cpp\n\
 Homepage: http://ligolang.org\n\
 Description: LIGO is a statically typed high-level smart-contract language that compiles down to Michelson." >> /package/DEBIAN/control
 
