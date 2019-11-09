@@ -82,14 +82,14 @@ let h: bool = (a =/= b)
 <!--DOCUSAURUS_CODE_TABS-->
 <!--Pascaligo-->
 ```pascaligo
-const a: tez = 5mtz;
-const b: tez = 10mtz;
+const a: tez = 5mutez;
+const b: tez = 10mutez;
 const c: bool = (a = b);
 ```
 <!--Cameligo-->
 ```cameligo
-let a: tez = 5mtz
-let b: tez = 10mtz
+let a: tez = 5mutez
+let b: tez = 10mutez
 // false
 let c: bool = (a = b)
 ```

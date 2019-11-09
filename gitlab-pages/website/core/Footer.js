@@ -28,13 +28,13 @@ class Footer extends React.Component {
           <div className="sitemap">
             <div>
               <h5>Docs</h5>
-              <a href={this.docUrl('setup/installation/', this.props.language)}>
+              <a href={this.docUrl('next/intro/installation')}>
                 Installation
               </a>
-              <a href={this.docUrl('api-cli-commands.html', this.props.language)}>
+              <a href={this.docUrl('next/api/cli-commands.html')}>
                 CLI Commands
               </a>
-              <a href={this.docUrl('contributors/origin.html', this.props.language)}>
+              <a href={this.docUrl('next/contributors/origin.html')}>
                 Contribute
               </a>
               <a href="/odoc">
@@ -59,7 +59,7 @@ class Footer extends React.Component {
             <div>
               <h5>More</h5>
               <a href={`${this.props.config.baseUrl}blog`}>Blog</a>
-              <a href={this.docUrl('tutorials/get-started/tezos-taco-shop-smart-contract.html', this.props.language)}>Tutorials</a>
+              <a href={this.docUrl('tutorials/get-started/tezos-taco-shop-smart-contract.html')}>Tutorials</a>
               <a href={`${this.props.config.repoUrl}`}>Gitlab</a>
             </div>
           </div>

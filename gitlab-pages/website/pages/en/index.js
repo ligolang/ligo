@@ -196,7 +196,7 @@ class HomeSplash extends React.Component {
             Try Online
           </LinkButton>
           <LinkButton
-            href={docUrl("setup/installation.html")}
+            href={docUrl("intro/what-and-why.html")}
             className="large-secondary-button"
           >
             Get Started
