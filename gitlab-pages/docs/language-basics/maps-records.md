@@ -31,8 +31,8 @@ And here's how a map value is populated:
 
 ```pascaligo
 const ledger: ledger = map
-    ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address) -> 1000mtz;
-    ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address) -> 2000mtz;
+    ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address) -> 1000mutez;
+    ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address) -> 2000mutez;
 end
 ```
 > Notice the `->` between the key and its value and `;` to separate individual map entries.
@@ -43,8 +43,8 @@ end
 
 ```cameligo
 let ledger: ledger = Map.literal
-  [ (("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address), 1000mtz) ;
-    (("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address), 2000mtz) ;
+  [ (("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address), 1000mutez) ;
+    (("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address), 2000mutez) ;
   ]
 ```
 > Map.literal constructs the map from a list of key-value pair tuples, `(<key>, <value>)`.

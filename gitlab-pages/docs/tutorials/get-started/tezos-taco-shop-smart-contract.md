@@ -57,7 +57,7 @@ current_purchase_price = max_price / available_stock
 
 ## Installing LIGO
 
-In this tutorial, we'll use LIGO's dockerized version for the sake of simplicity. You can find the installation instructions [here](setup/installation.md#dockerized-installation-recommended).
+In this tutorial, we'll use LIGO's dockerized version for the sake of simplicity. You can find the installation instructions [here](intro/installation.md#dockerized-installation-recommended).
 
 The best way to install the dockerized LIGO is as a **global executable** through the installation script, as shown in the screenshot below:
 
@@ -66,7 +66,7 @@ The best way to install the dockerized LIGO is as a **global executable** throug
 
 ## Implementing our first entry point
 
-> From now on we'll get a bit more technical. If you run into something we have not covered yet - please try checking out the [LIGO cheat sheet](language-basics/cheat-sheet.md) for some extra tips & tricks.
+> From now on we'll get a bit more technical. If you run into something we have not covered yet - please try checking out the [LIGO cheat sheet](api/cheat-sheet.md) for some extra tips & tricks.
 
 To begin implementing our smart contract, we need an entry point. We'll call it `main` and it'll specify our contract's storage (`int`) and input parameter (`int`). Of course this is not the final storage/parameter of our contract, but it's something to get us started and test our LIGO installation as well.
 

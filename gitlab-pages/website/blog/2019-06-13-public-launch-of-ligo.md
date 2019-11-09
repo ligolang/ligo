@@ -15,7 +15,7 @@ The core language is being developed by The Marigold Project. George Dupéron an
 Our previous Medium posts about LIGO can be found [here](https://medium.com/tezos/introducing-ligo-a-new-smart-contract-language-for-tezos-233fa17f21c7) and [here](https://medium.com/tezos/ligo-becomes-polyglot-a474e2cb0c24).
 
 ## The State of LIGO
-Today, we are publicly releasing LIGO in beta\*. We've focused on making the onboarding process for LIGO as painless as possible and encourage you to check out our [tutorials](/docs/tutorials/get-started/tezos-taco-shop-smart-contract) and [documentation](https://ligolang.org/docs/next/setup/installation).
+Today, we are publicly releasing LIGO in beta\*. We've focused on making the onboarding process for LIGO as painless as possible and encourage you to check out our [tutorials](/docs/tutorials/get-started/tezos-taco-shop-smart-contract) and [documentation](https://ligolang.org/docs/next/intro/installation).
 
 We are fixing bugs and adding features to LIGO (e.g. some Michelson primitives like iterators are missing) by the day. Please submit issues about bugs and missing features you need when you encounter them, and you just might find those solved in the following week.
 
