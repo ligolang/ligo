@@ -51,8 +51,7 @@ let compile_contract_entry = fun program name ->
   in
   let%bind param_michelson = Compiler.Type.type_ param_ty in
   let%bind storage_michelson = Compiler.Type.type_ storage_ty in
-  let body = Michelson.strip_annots compiled.body in
-  let contract = Michelson.contract param_michelson storage_michelson body in
+  let contract = Michelson.contract param_michelson storage_michelson compiled.body in
   ok contract
 
 

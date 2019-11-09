@@ -24,7 +24,6 @@ let run ?options (* ?(is_input_value = false) *) (program:compiled_program) (inp
     Trace.trace_tzresult_lwt (simple_error "error parsing input") @@
     Memory_proto_alpha.parse_michelson_data input_michelson input_ty
   in
-  let body = Michelson.strip_annots body in
   let%bind descr =
     Trace.trace_tzresult_lwt (simple_error "error parsing program code") @@
     Memory_proto_alpha.parse_michelson body

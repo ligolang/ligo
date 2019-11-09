@@ -27,6 +27,7 @@ module Typer : sig
   val typer'_2 : name -> (type_value -> type_value -> type_value result) -> typer'
   *)
   val typer_2 : name -> (type_value -> type_value -> type_value result) -> typer
+  val typer_2_opt : name -> (type_value -> type_value -> type_value option -> type_value result) -> typer
   (*
   val typer'_3 : name -> (type_value -> type_value -> type_value -> type_value result) -> typer'
   *)

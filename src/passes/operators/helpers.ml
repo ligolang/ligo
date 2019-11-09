@@ -61,6 +61,15 @@ module Typer = struct
     | _ -> fail @@ wrong_param_number s 2 lst
   let typer_2 name f : typer = (name , typer'_2 name f)
 
+  let typer'_2_opt : name -> (type_value -> type_value -> type_value option -> type_value result) -> typer' = fun s f lst tv_opt ->
+    match lst with
+    | [ a ; b ] -> (
+        let%bind tv' = f a b tv_opt in
+        ok (s , tv')
+      )
+    | _ -> fail @@ wrong_param_number s 2 lst
+  let typer_2_opt name f : typer = (name , typer'_2_opt name f)
+
   let typer'_3 : name -> (type_value -> type_value -> type_value -> type_value result) -> typer' = fun s f lst _ ->
     match lst with
     | [ a ; b ; c ] -> (
