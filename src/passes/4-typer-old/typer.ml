@@ -191,15 +191,6 @@ module Errors = struct
     ] in
     error ~data title message ()
 
-  let not_supported_yet (message : string) (ae : I.expression) () =
-    let title = (thunk "not suported yet") in
-    let message () = message in
-    let data = [
-      ("expression" , fun () -> Format.asprintf "%a"  I.PP.expression ae) ;
-      ("location" , fun () -> Format.asprintf "%a" Location.pp ae.location)
-    ] in
-    error ~data title message ()
-
   let not_supported_yet_untranspile (message : string) (ae : O.expression) () =
     let title = (thunk "not suported yet") in
     let message () = message in
@@ -449,13 +440,6 @@ and type_expression' : environment -> ?tv_opt:O.type_value -> I.expression -> O.
               generic_try (bad_record_access property ae' prev.type_annotation ae.location)
               @@ (fun () -> SMap.find property r_tv) in
             return (E_record_accessor (prev , property)) tv
-          )
-        | Access_map ae' -> (
-            let%bind ae'' = type_expression' e ae' in
-            let%bind (k , v) = bind_map_or (get_t_map , get_t_big_map) prev.type_annotation in
-            let%bind () =
-              Ast_typed.assert_type_value_eq (k , get_type_annotation ae'') in
-            return (E_look_up (prev , ae'')) v
           )
       in
       trace (simple_info "accessing") @@
@@ -758,8 +742,6 @@ and type_expression' : environment -> ?tv_opt:O.type_value -> I.expression -> O.
               Map.String.find_opt property m in
             ok (tv' , prec_path @ [O.Access_record property])
           )
-        | Access_map _ ->
-          fail @@ not_supported_yet "assign expressions with maps are not supported yet" ae
       in
       bind_fold_list aux (typed_name.type_value , []) path in
     let%bind expr' = type_expression' e ~tv_opt:assign_tv expr in

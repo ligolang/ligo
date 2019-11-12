@@ -148,8 +148,7 @@ let assert_e_accessor = fun t ->
 
 let get_access_record : access -> string result = fun a ->
   match a with
-  | Access_tuple _
-  | Access_map _ -> simple_fail "not an access record"
+  | Access_tuple _ -> simple_fail "not an access record"
   | Access_record s -> ok s
 
 let get_e_pair = fun t ->

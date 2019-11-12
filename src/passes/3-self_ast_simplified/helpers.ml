@@ -8,26 +8,25 @@ let rec fold_expression : 'a folder -> 'a -> expression -> 'a result = fun f ini
   match e.expression with
   | E_literal _ | E_variable _ | E_skip -> ok init'
   | E_list lst | E_set lst | E_tuple lst | E_constant (_ , lst) -> (
-    let%bind res' = bind_fold_list self init' lst in
-    ok res'
+    let%bind res = bind_fold_list self init' lst in
+    ok res
   )
   | E_map lst | E_big_map lst -> (
-    let%bind res' = bind_fold_list (bind_fold_pair self) init' lst in
-    ok res'
+    let%bind res = bind_fold_list (bind_fold_pair self) init' lst in
+    ok res
   )
   | E_look_up ab | E_sequence ab | E_loop ab | E_application ab -> (
-      let%bind res' = bind_fold_pair self init' ab in
-      ok res'
+      let%bind res = bind_fold_pair self init' ab in
+      ok res
     )
   | E_lambda { binder = _ ; input_type = _ ; output_type = _ ; result = e }
   | E_annotation (e , _) | E_constructor (_ , e) -> (
-      let%bind res' = self init' e in
-      ok res'
+      let%bind res = self init' e in
+      ok res
     )
-  | E_assign (_ , path , e) | E_accessor (e , path) -> (
-      let%bind res' = fold_path f init' path in
-      let%bind res' = self res' e in
-      ok res'
+  | E_assign (_ , _path , e) | E_accessor (e , _path) -> (
+      let%bind res = self init' e in
+      ok res
     )
   | E_matching (e , cases) -> (
       let%bind res = self init' e in
@@ -36,8 +35,8 @@ let rec fold_expression : 'a folder -> 'a -> expression -> 'a result = fun f ini
     )
   | E_record m -> (
     let aux init'' _ expr =
-      let%bind res' = fold_expression self init'' expr in
-      ok res'
+      let%bind res = fold_expression self init'' expr in
+      ok res
     in
     let%bind res = bind_fold_smap aux (ok init') m in
     ok res
@@ -47,16 +46,6 @@ let rec fold_expression : 'a folder -> 'a -> expression -> 'a result = fun f ini
       let%bind res = self res result in
       ok res
     )
-
-and fold_path : 'a folder -> 'a -> access_path -> 'a result = fun f init p -> bind_fold_list (fold_access f) init p
-
-and fold_access : 'a folder -> 'a -> access -> 'a result = fun f init a ->
-  match a with
-  | Access_map e -> (
-      let%bind e' = fold_expression f init e in
-      ok e'
-    )
-  | _ -> ok init
 
 and fold_cases : 'a folder -> 'a -> matching_expr -> 'a result = fun f init m ->
   match m with
@@ -127,8 +116,7 @@ let rec map_expression : mapper -> expression -> expression result = fun f e ->
     )
   | E_assign (name , path , e) -> (
       let%bind e' = self e in
-      let%bind path' = map_path f path in
-      return @@ E_assign (name , path' , e')
+      return @@ E_assign (name , path , e')
     )
   | E_matching (e , cases) -> (
       let%bind e' = self e in
@@ -137,8 +125,7 @@ let rec map_expression : mapper -> expression -> expression result = fun f e ->
     )
   | E_accessor (e , path) -> (
       let%bind e' = self e in
-      let%bind path' = map_path f path in
-      return @@ E_accessor (e' , path')
+      return @@ E_accessor (e' , path)
     )
   | E_record m -> (
     let%bind m' = bind_map_smap self m in
@@ -171,15 +158,6 @@ let rec map_expression : mapper -> expression -> expression result = fun f e ->
     )
   | E_literal _ | E_variable _ | E_skip as e' -> return e'
 
-and map_path : mapper -> access_path -> access_path result = fun f p -> bind_map_list (map_access f) p
-
-and map_access : mapper -> access -> access result = fun f a ->
-  match a with
-  | Access_map e -> (
-      let%bind e' = map_expression f e in
-      ok @@ Access_map e'
-    )
-  | a -> ok a
 
 and map_cases : mapper -> matching_expr -> matching_expr result = fun f m ->
   match m with
