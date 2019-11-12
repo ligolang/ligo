@@ -191,15 +191,6 @@ module Errors = struct
     ] in
     error ~data title message ()
 
-  let not_supported_yet (message : string) (ae : I.expression) () =
-    let title = (thunk "not supported yet") in
-    let message () = message in
-    let data = [
-      ("expression" , fun () -> Format.asprintf "%a"  I.PP.expression ae) ;
-      ("location" , fun () -> Format.asprintf "%a" Location.pp ae.location)
-    ] in
-    error ~data title message ()
-
   let not_supported_yet_untranspile (message : string) (ae : O.expression) () =
     let title = (thunk "not supported yet") in
     let message () = message in
@@ -491,14 +482,6 @@ and type_expression : environment -> Solver.state -> ?tv_opt:O.type_value -> I.e
       let wrapped = Wrap.access_string ~base:base'.type_annotation ~property in
       return_wrapped (E_record_accessor (base' , property)) state' wrapped
     )
-  | E_accessor (base , [Access_map key_ae]) -> (
-      let%bind (base' , state') = type_expression e state base in
-      let%bind (key_ae' , state'') = type_expression e state' key_ae in
-      let xyz = get_type_annotation key_ae' in
-      let wrapped = Wrap.access_map ~base:base'.type_annotation ~key:xyz in
-      return_wrapped (E_look_up (base' , key_ae')) state'' wrapped
-    )
-
   | E_accessor (_base , []) | E_accessor (_base , _ :: _ :: _) -> (
       failwith
         "The simplifier should produce E_accessor with only a single path element, not a list of path elements."
@@ -791,8 +774,6 @@ and type_expression : environment -> Solver.state -> ?tv_opt:O.type_value -> I.e
               Map.String.find_opt property m in
             ok (tv' , prec_path @ [O.Access_record property])
           )
-        | Access_map _ ->
-          fail @@ not_supported_yet "assign expressions with maps are not supported yet" ae
       in
       bind_fold_list aux (typed_name.type_value , []) path in
     let%bind (expr' , state') = type_expression e state expr in

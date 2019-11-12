@@ -98,7 +98,6 @@ and matching : type a . (formatter -> a -> unit) -> _ -> a matching -> unit = fu
 and pre_access ppf (a:access) = match a with
   | Access_record n -> fprintf ppf ".%s" n
   | Access_tuple i -> fprintf ppf ".%d" i
-  | Access_map n -> fprintf ppf ".%a" annotated_expression n
 
 let declaration ppf (d:declaration) =
   match d with

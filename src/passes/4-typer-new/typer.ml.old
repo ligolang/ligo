@@ -449,13 +449,6 @@ and type_expression : environment -> ?tv_opt:O.type_expression -> I.expression -
               @@ (fun () -> SMap.find property r_tv) in
             return (E_record_accessor (prev , property)) tv
           )
-        | Access_map ae' -> (
-            let%bind ae'' = type_expression e ae' in
-            let%bind (k , v) = get_t_map prev.type_annotation in
-            let%bind () =
-              Ast_typed.assert_type_expression_eq (k , get_type_annotation ae'') in
-            return (E_look_up (prev , ae'')) v
-          )
       in
       trace (simple_info "accessing") @@
       bind_fold_list aux e' path
@@ -725,8 +718,6 @@ and type_expression : environment -> ?tv_opt:O.type_expression -> I.expression -
               Map.String.find_opt property m in
             ok (tv' , prec_path @ [O.Access_record property])
           )
-        | Access_map _ ->
-          fail @@ not_supported_yet "assign expressions with maps are not supported yet" ae
       in
       bind_fold_list aux (typed_name.type_expression , []) path in
     let%bind expr' = type_expression e expr in
