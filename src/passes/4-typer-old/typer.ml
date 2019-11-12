@@ -432,18 +432,29 @@ and type_expression' : environment -> ?tv_opt:O.type_value -> I.expression -> O.
             let%bind tv =
               generic_try (bad_tuple_index index ae' prev.type_annotation ae.location)
               @@ (fun () -> List.nth tpl_tv index) in
-            return (E_tuple_accessor (prev , index)) tv
+            let location = ae.location in
+            ok @@ make_a_e ~location (E_tuple_accessor(prev , index)) tv e
           )
         | Access_record property -> (
             let%bind r_tv = get_t_record prev.type_annotation in
             let%bind tv =
               generic_try (bad_record_access property ae' prev.type_annotation ae.location)
               @@ (fun () -> SMap.find property r_tv) in
-            return (E_record_accessor (prev , property)) tv
+            let location = ae.location in
+            ok @@ make_a_e ~location (E_record_accessor (prev , property)) tv e
           )
       in
+      let%bind ae =
       trace (simple_info "accessing") @@
-      bind_fold_list aux e' path
+      bind_fold_list aux e' path in
+      (* check type annotation of the final accessed element *)
+      let%bind () =
+        match tv_opt with
+        | None -> ok ()
+        | Some tv' -> O.assert_type_value_eq (tv' , ae.type_annotation) in
+      ok(ae)
+
+
   (* Sum *)
   | E_constructor (c, expr) ->
       let%bind (c_tv, sum_tv) =
