@@ -64,6 +64,7 @@ module Simplify = struct
       ("int" , "INT") ;
       ("abs" , "ABS") ;
       ("amount" , "AMOUNT") ;
+      ("balance", "BALANCE") ;
       ("now" , "NOW") ;
       ("unit" , "UNIT") ;
       ("source" , "SOURCE") ;

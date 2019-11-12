@@ -1151,6 +1151,13 @@ let website2_mligo () : unit result =
   expect_eq_n program "main" make_input make_expected
 
 let balance_constant () : unit result =
+  let%bind program = type_file "./contracts/balance_constant.ligo" in
+  let input = e_tuple [e_unit () ; e_mutez 0]  in
+  let expected = e_tuple [e_list []; e_mutez 4000000000000] in
+  expect_eq program "main" input expected
+
+
+let balance_constant_mligo () : unit result =
   let%bind program = mtype_file "./contracts/balance_constant.mligo" in
   let input = e_tuple [e_unit () ; e_mutez 0]  in
   let expected = e_tuple [e_list []; e_mutez 4000000000000] in
@@ -1236,5 +1243,6 @@ let main = test_suite "Integration (End to End)" [
     test "website1 ligo" website1_ligo ;
     test "website2 ligo" website2_ligo ;
     test "website2 (mligo)" website2_mligo ;
-    test "balance constant (mligo)" balance_constant ;
+    test "balance constant" balance_constant ;
+    test "balance constant (mligo)" balance_constant_mligo ;
   ]
