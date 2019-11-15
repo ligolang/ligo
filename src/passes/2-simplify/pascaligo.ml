@@ -116,17 +116,6 @@ module Errors = struct
     ] in
     error ~data title message
 
-  let unsupported_deep_access_for_collection for_col =
-    let title () = "deep access in loop over collection" in
-    let message () =
-      Format.asprintf "currently, we do not support deep \
-                       accesses in loops over collection" in
-    let data = [
-      ("pattern_loc",
-       fun () -> Format.asprintf "%a" Location.pp_lift @@ for_col.Region.region)
-    ] in
-    error ~data title message
-
   (* Logging *)
 
   let simplifying_instruction t =
@@ -1047,10 +1036,8 @@ and simpl_for_collect : Raw.for_collect -> (_ -> expression result) result = fun
     (fun (prev : type_name list) (ass_exp : expression) ->
       match ass_exp.expression with
       | E_assign ( name , _ , _ ) ->
-        if (String.contains name '#') then
-          ok prev
-        else
-          ok (name::prev)
+        if (String.contains name '#') then ok prev
+        else ok (name::prev)
       | _ -> ok prev )
     []
     for_body in
@@ -1063,12 +1050,13 @@ and simpl_for_collect : Raw.for_collect -> (_ -> expression result) result = fun
     match exp.expression with
     (* replace references to fold accumulator as rhs *)
     | E_assign ( name , path , expr ) -> (
-      match path with
-      | [] -> ok @@ e_assign "#COMPILER#acc" [Access_record name] expr
-      (* This fails for deep accesses, see LIGO-131 LIGO-134 *)
-      | _ ->
-        (* ok @@ e_assign "#COMPILER#acc" ((Access_record name)::path) expr) *)
-        fail @@ unsupported_deep_access_for_collection fc.block )
+      let path' = List.filter
+        ( fun el ->
+          match el with
+          | Access_record name -> not (String.contains name '#')
+          | _ -> true )
+        ((Access_record name)::path) in
+      ok @@ e_assign "#COMPILER#acc" path' expr)
     | E_variable name -> (
       if (List.mem name captured_name_list) then
         (* replace references to fold accumulator as lhs *)
@@ -1107,16 +1095,10 @@ and simpl_for_collect : Raw.for_collect -> (_ -> expression result) result = fun
     let ( arg_access: Types.access_path -> expression ) = e_accessor (e_variable "arguments") in
     ( match fc.collection with
       | Map _ ->
-        (* let acc          = arg_access [Access_tuple 0 ; Access_tuple 0] in
+        let acc          = arg_access [Access_tuple 0 ] in
         let collec_elt_v = arg_access [Access_tuple 1 ; Access_tuple 0] in
-        let collec_elt_k = arg_access [Access_tuple 1 ; Access_tuple 1] in *)
-        (* The above should work, but not yet (see LIGO-131) *)
-        let temp_kv      = arg_access [Access_tuple 1] in
-        let acc          = arg_access [Access_tuple 0] in
-        let collec_elt_v = e_accessor (e_variable "#COMPILER#temp_kv") [Access_tuple 0] in
-        let collec_elt_k = e_accessor (e_variable "#COMPILER#temp_kv") [Access_tuple 1] in
+        let collec_elt_k = arg_access [Access_tuple 1 ; Access_tuple 1] in
         e_let_in ("#COMPILER#acc", None) acc @@
-        e_let_in ("#COMPILER#temp_kv", None) temp_kv @@
         e_let_in ("#COMPILER#collec_elt_k", None) collec_elt_v @@
         e_let_in ("#COMPILER#collec_elt_v", None) collec_elt_k (for_body)
       | _ ->
