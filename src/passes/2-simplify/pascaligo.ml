@@ -12,6 +12,7 @@ let pseq_to_list = function
   | None -> []
   | Some lst -> npseq_to_list lst
 let get_value : 'a Raw.reg -> 'a = fun x -> x.value
+let is_compiler_generated = fun name -> String.contains name '#'
 
 module Errors = struct
   let unsupported_cst_constr p =
@@ -990,6 +991,16 @@ and simpl_for_int : Raw.for_int -> (_ -> expression result) result = fun fi ->
 
     2) Detect the free variables and build a list of their names
        (myint and myst in the previous example)
+       Free variables are simply variables being assigned.
+       Note:  In the case of a nested loops, assignements to a compiler
+              generated value (#COMPILER#acc) correspond to variables
+              that were already renamed in the inner loop.
+              e.g :
+              ```
+              #COMPILER#acc.myint := #COMPILER#acc.myint + #COMPILER#elt ;
+              #COMPILER#acc.myst  := #COMPILER#acc.myst ^ "to" ;
+              ```
+              They must not be considered as free variables
 
     3) Build the initial record (later passed as 2nd argument of
       `MAP/SET/LIST_FOLD`) capturing the environment using the
@@ -998,11 +1009,15 @@ and simpl_for_int : Raw.for_int -> (_ -> expression result) result = fun fi ->
     4) In the filtered body of (1), replace occurences:
         - free variable of name X as rhs ==> accessor `#COMPILER#acc.X`
         - free variable of name X as lhs ==> accessor `#COMPILER#acc.X`
-        And, in the case of a map:
-             - references to the iterated key   ==> variable `#COMPILER#elt_key`
-             - references to the iterated value ==> variable `#COMPILER#elt_value`
-             in the case of a set/list:
-             - references to the iterated value ==> variable `#COMPILER#elt`
+       And, in the case of a map:
+            - references to the iterated key   ==> variable `#COMPILER#elt_key`
+            - references to the iterated value ==> variable `#COMPILER#elt_value`
+            in the case of a set/list:
+            - references to the iterated value ==> variable `#COMPILER#elt`
+       Note: In the case of an inner loop capturing variable from an outer loop
+             the free variable name can be `#COMPILER#acc.Y` and because we do not
+             capture the accumulator record in the inner loop, we don't want to 
+             generate `#COMPILER#acc.#COMPILER#acc.Y` but `#COMPILER#acc.Y`
 
     5) Append the return value to the body
 
@@ -1036,7 +1051,7 @@ and simpl_for_collect : Raw.for_collect -> (_ -> expression result) result = fun
     (fun (prev : type_name list) (ass_exp : expression) ->
       match ass_exp.expression with
       | E_assign ( name , _ , _ ) ->
-        if (String.contains name '#') then ok prev
+        if is_compiler_generated name then ok prev
         else ok (name::prev)
       | _ -> ok prev )
     []
@@ -1048,18 +1063,18 @@ and simpl_for_collect : Raw.for_collect -> (_ -> expression result) result = fun
   (* STEP 4 *)
   let replace exp =
     match exp.expression with
-    (* replace references to fold accumulator as rhs *)
+    (* replace references to fold accumulator as lhs *)
     | E_assign ( name , path , expr ) -> (
       let path' = List.filter
         ( fun el ->
           match el with
-          | Access_record name -> not (String.contains name '#')
+          | Access_record name -> not @@ is_compiler_generated name
           | _ -> true )
         ((Access_record name)::path) in
       ok @@ e_assign "#COMPILER#acc" path' expr)
     | E_variable name -> (
       if (List.mem name captured_name_list) then
-        (* replace references to fold accumulator as lhs *)
+        (* replace references to fold accumulator as rhs *)
         ok @@ e_accessor (e_variable "#COMPILER#acc") [Access_record name]
       else match fc.collection with
       (* loop on map *)
