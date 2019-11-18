@@ -863,14 +863,12 @@ core_expr:
 | Unit             { EUnit $1                     }
 | annot_expr       { EAnnot $1                    }
 | tuple_expr       { ETuple $1                    }
-| par(expr)        { EPar $1                      }
 | list_expr        { EList $1                     }
 | C_None           { EConstr (NoneExpr $1)        }
-| fun_call         { ECall $1                     }
+| fun_call_or_par_or_projection { $1              }
 | map_expr         { EMap $1                      }
 | set_expr         { ESet $1                      }
 | record_expr      { ERecord $1                   }
-| projection       { EProj $1                     }
 | Constr arguments {
     let region = cover $1.region $2.region in
     EConstr (ConstrApp {region; value = $1, Some $2})
@@ -881,6 +879,30 @@ core_expr:
 | C_Some arguments {
     let region = cover $1 $2.region in
     EConstr (SomeApp {region; value = $1,$2})}
+
+
+fun_call_or_par_or_projection:
+| par(expr) option(arguments) {
+  let parenthesized = EPar $1 in
+  match $2 with
+  | None -> parenthesized
+  | Some args -> (
+    let region_1 = $1.region in
+    let region = cover region_1 args.region in
+    ECall {region; value = parenthesized,args}
+  )
+}
+| projection option(arguments) {
+  let project = EProj $1 in
+  match $2 with
+  | None -> project
+  | Some args -> (
+    let region_1 = $1.region in
+    let region = cover region_1 args.region in
+    ECall {region; value = project,args}
+  )
+}
+| fun_call { ECall $1 }
 
 annot_expr:
   LPAR disj_expr COLON type_expr RPAR {
@@ -956,7 +978,7 @@ field_assignment:
 fun_call:
   fun_name arguments {
     let region = cover $1.region $2.region
-    in {region; value = $1,$2}}
+    in {region; value = (EVar $1),$2}}
 
 tuple_expr:
   par(tuple_comp) { $1 }

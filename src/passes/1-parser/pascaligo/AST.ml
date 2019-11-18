@@ -580,7 +580,7 @@ and selection =
 
 and tuple_expr = (expr, comma) nsepseq par reg
 
-and fun_call = (fun_name * arguments) reg
+and fun_call = (expr * arguments) reg
 
 and arguments = tuple_expr
 

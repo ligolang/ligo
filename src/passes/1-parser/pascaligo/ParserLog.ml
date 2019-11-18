@@ -655,8 +655,8 @@ and print_nil buffer value = print_token buffer value "nil"
 and print_none_expr buffer value = print_token buffer value "None"
 
 and print_fun_call buffer {value; _} =
-  let fun_name, arguments = value in
-  print_var        buffer fun_name;
+  let expr, arguments = value in
+  print_expr       buffer expr;
   print_tuple_expr buffer arguments
 
 and print_constr_app buffer {value; _} =
@@ -1247,12 +1247,12 @@ and pp_var_binding buffer ~pad:(_,pc as pad) (source, image) =
   pp_ident buffer ~pad:(mk_pad 2 0 pc) source;
   pp_ident buffer ~pad:(mk_pad 2 1 pc) image
 
-and pp_fun_call buffer ~pad:(_,pc) (name, args) =
+and pp_fun_call buffer ~pad:(_,pc) (expr, args) =
   let args  = Utils.nsepseq_to_list args.value.inside in
   let arity = List.length args in
   let apply len rank =
     pp_expr buffer ~pad:(mk_pad len rank pc)
-  in pp_ident buffer ~pad:(mk_pad (1+arity) 0 pc) name;
+  in pp_expr buffer ~pad:(mk_pad (1+arity) 0 pc) expr;
      List.iteri (apply arity) args
 
 and pp_record_patch buffer ~pad:(_,pc as pad) patch =

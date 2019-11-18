@@ -253,17 +253,25 @@ let rec simpl_expression (t:Raw.expr) : expr result =
       | Some s -> return @@ e_constant ~loc s []
     )
   | ECall x -> (
-      let ((name, args) , loc) = r_split x in
-      let (f , f_loc) = r_split name in
+      let ((f, args) , loc) = r_split x in
       let (args , args_loc) = r_split args in
       let args' = npseq_to_list args.inside in
-      match List.assoc_opt f constants with
-      | None ->
-          let%bind arg = simpl_tuple_expression ~loc:args_loc args' in
-          return @@ e_application ~loc (e_variable ~loc:f_loc f) arg
-      | Some s ->
-          let%bind lst = bind_map_list simpl_expression args' in
-          return @@ e_constant ~loc s lst
+      match f with
+      | EVar name -> (
+        let (f_name , f_loc) = r_split name in
+        match List.assoc_opt f_name constants with
+        | None ->
+           let%bind arg = simpl_tuple_expression ~loc:args_loc args' in
+           return @@ e_application ~loc (e_variable ~loc:f_loc f_name) arg
+        | Some s ->
+           let%bind lst = bind_map_list simpl_expression args' in
+           return @@ e_constant ~loc s lst
+      )
+      | f -> (
+        let%bind f' = simpl_expression f in
+        let%bind arg = simpl_tuple_expression ~loc:args_loc args' in
+        return @@ e_application ~loc f' arg
+      )
     )
   | EPar x -> simpl_expression x.value.inside
   | EUnit reg ->
@@ -620,18 +628,26 @@ and simpl_single_instruction : Raw.instruction -> (_ -> expression result) resul
   fun t ->
   match t with
   | ProcCall x -> (
-      let ((name, args) , loc) = r_split x in
-      let (f , f_loc) = r_split name in
-      let (args , args_loc) = r_split args in
-      let args' = npseq_to_list args.inside in
-      match List.assoc_opt f constants with
+    let ((f, args) , loc) = r_split x in
+    let (args , args_loc) = r_split args in
+    let args' = npseq_to_list args.inside in
+    match f with
+    | EVar name -> (
+      let (f_name , f_loc) = r_split name in
+      match List.assoc_opt f_name constants with
       | None ->
-          let%bind arg = simpl_tuple_expression ~loc:args_loc args' in
-          return_statement @@ e_application ~loc (e_variable ~loc:f_loc f) arg
+         let%bind arg = simpl_tuple_expression ~loc:args_loc args' in
+         return_statement @@ e_application ~loc (e_variable ~loc:f_loc f_name) arg
       | Some s ->
-          let%bind lst = bind_map_list simpl_expression args' in
-          return_statement @@ e_constant ~loc s lst
+         let%bind lst = bind_map_list simpl_expression args' in
+         return_statement @@ e_constant ~loc s lst
     )
+    | f -> (
+      let%bind f' = simpl_expression f in
+      let%bind arg = simpl_tuple_expression ~loc:args_loc args' in
+      return_statement @@ e_application ~loc f' arg
+    )
+  )
   | Skip reg -> (
       let loc = Location.lift reg in
       return_statement @@ e_skip ~loc ()
