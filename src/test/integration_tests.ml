@@ -52,6 +52,13 @@ let complex_function () : unit result =
   let make_expect = fun n -> (3 * n + 2) in
   expect_eq_n_int program "main" make_expect
 
+let anon_function () : unit result =
+  let%bind program = type_file "./contracts/function-anon.ligo" in
+  let%bind () =
+    expect_eq_evaluate program "x" (e_int 42)
+  in
+  ok ()
+
 let application () : unit result =
   let%bind program = type_file "./contracts/application.ligo" in
   let%bind () =
@@ -1196,6 +1203,7 @@ let main = test_suite "Integration (End to End)" [
     test "assign" assign ;
     test "declaration local" declaration_local ;
     test "complex function" complex_function ;
+    test "anon function" anon_function ;
     test "various applications" application ;
     test "closure" closure ;
     test "shared function" shared_function ;
