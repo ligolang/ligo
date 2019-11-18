@@ -2,8 +2,8 @@ type storage_ is big_map(int, int) * unit
 type foo is big_map(int, int)
 
 function main(const p : unit; const s : storage_) : list(operation) * storage_ is
-  var toto : option (int) := Some(0);
   block {
+    var toto : option (int) := Some(0);
     toto := s.0[23];
     s.0[2] := 444;
   }
@@ -32,5 +32,5 @@ function mutimaps (const m : foo ; const n : foo) : foo is block
 {
   var bar : foo := m ;
   bar[42] := 0 ;
-  n[42] := get_force(42, bar) ; 
+  n[42] := get_force(42, bar) ;
 } with n

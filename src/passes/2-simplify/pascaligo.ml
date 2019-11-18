@@ -117,6 +117,22 @@ module Errors = struct
     ] in
     error ~data title message
 
+  let unexpected_anonymous_function loc =
+    let title () = "unexpected anonymous function" in
+    let message () = "you provided a function declaration without name" in
+    let data = [
+        ("loc" , fun () -> Format.asprintf "%a" Location.pp @@ loc)
+      ] in
+    error ~data title message
+
+  let unexpected_named_function loc =
+    let title () = "unexpected named function" in
+    let message () = "you provided a function expression with a name (remove it)" in
+    let data = [
+        ("loc" , fun () -> Format.asprintf "%a" Location.pp @@ loc)
+      ] in
+    error ~data title message
+
   (* Logging *)
 
   let simplifying_instruction t =
@@ -410,6 +426,13 @@ let rec simpl_expression (t:Raw.expr) : expr result =
       let%bind index = simpl_expression lu.index.value.inside in
       return @@ e_look_up ~loc path index
     )
+  | EFun f -> (
+    let (f , loc) = r_split f in
+    let%bind ((name_opt , _ty_opt) , f') = simpl_fun_expression ~loc f in
+    match name_opt with
+    | None -> return @@ f'
+    | Some _ -> fail @@ unexpected_named_function loc
+  )
 
 and simpl_logic_expression (t:Raw.logic_expr) : expression result =
   let return x = ok x in
@@ -497,10 +520,6 @@ and simpl_local_declaration : Raw.local_decl -> _ result = fun t ->
   match t with
   | LocalData d ->
       simpl_data_declaration d
-  | LocalFun f  ->
-      let (f , loc) = r_split f in
-      let%bind (name , e) = simpl_fun_declaration ~loc f in
-      return_let_in ~loc name e
 
 and simpl_data_declaration : Raw.data_decl -> _ result = fun t ->
   match t with
@@ -516,6 +535,11 @@ and simpl_data_declaration : Raw.data_decl -> _ result = fun t ->
       let%bind t = simpl_type_expression x.const_type in
       let%bind expression = simpl_expression x.init in
       return_let_in ~loc (name , Some t) expression
+  | LocalFun f  ->
+      let (f , loc) = r_split f in
+      let%bind ((name_opt , ty_opt) , e) = simpl_fun_expression ~loc f.fun_expr.value in
+      let%bind name = trace_option (unexpected_anonymous_function loc) name_opt in
+      return_let_in ~loc (name , ty_opt) e
 
 and simpl_param : Raw.param_decl -> (type_name * type_expression) result =
   fun t ->
@@ -531,11 +555,11 @@ and simpl_param : Raw.param_decl -> (type_name * type_expression) result =
       let%bind type_expression = simpl_type_expression c.param_type in
       ok (type_name , type_expression)
 
-and simpl_fun_declaration :
-  loc:_ -> Raw.fun_decl -> ((name * type_expression option) * expression) result =
+and simpl_fun_expression :
+  loc:_ -> Raw.fun_expr -> ((name option * type_expression option) * expression) result =
   fun ~loc x ->
   let open! Raw in
-  let {name;param;ret_type;local_decls;block;return} : fun_decl = x in
+  let {name;param;ret_type;local_decls;block;return} : fun_expr = x in
   let statements =
     match block with
     | Some block -> npseq_to_list block.value.statements
@@ -544,7 +568,7 @@ and simpl_fun_declaration :
   (match param.value.inside with
      a, [] -> (
        let%bind input = simpl_param a in
-       let name = name.value in
+       let name = Option.map (fun (x : _ reg) -> x.value) name in
        let (binder , input_type) = input in
        let%bind local_declarations =
          bind_map_list simpl_local_declaration local_decls in
@@ -591,7 +615,8 @@ and simpl_fun_declaration :
        let expression =
          e_lambda ~loc binder (Some input_type) (Some output_type) result in
        let type_annotation = Some (T_function (input_type, output_type)) in
-       ok ((name.value , type_annotation) , expression)
+       let name = Option.map (fun (x : _ reg) -> x.value) name in
+       ok ((name , type_annotation) , expression)
      )
   )
 and simpl_declaration : Raw.declaration -> declaration Location.wrap result =
@@ -614,7 +639,8 @@ and simpl_declaration : Raw.declaration -> declaration Location.wrap result =
       bind_map_location simpl_const_decl (Location.lift_region x)
   | FunDecl x -> (
       let (x , loc) = r_split x in
-      let%bind ((name , ty_opt) , expr) = simpl_fun_declaration ~loc x in
+      let%bind ((name_opt , ty_opt) , expr) = simpl_fun_expression ~loc x.fun_expr.value in
+      let%bind name = trace_option (unexpected_anonymous_function loc) name_opt in
       ok @@ Location.wrap ~loc (Declaration_constant (name , ty_opt , expr))
     )
 

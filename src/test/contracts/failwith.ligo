@@ -12,8 +12,8 @@ function main (const p : param; const s : unit) : list(operation) * unit is
   with ((nil : list(operation)), s)
 
 function foobar (const i : int) : int is
-  var p : param := Zero (42n) ;
   block {
+    var p : param := Zero (42n) ;
     if i > 0 then block {
       i := i + 1 ;
       if i > 10 then block {

@@ -1,5 +1,6 @@
 function foobar(const i : int) : int is
-  const j : int = 3 ;
-  function toto(const k : int) : int is
-    block { skip } with i + j + k ;
-  block { skip } with toto(42)
+  block {
+    const j : int = 3 ;
+    function toto(const k : int) : int is
+      i + j + k ;
+  } with toto(42)
