@@ -146,6 +146,7 @@ function nested_for_collection (var nee : unit) : (int*string) is block {
     var myset : set(string) := set "1" ; "2" ; "3" end ;
     for st in set myset
     begin
+      myint := myint + i ;
       mystoo := mystoo ^ st ;
       for k -> v in map mymap
       begin

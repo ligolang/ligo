@@ -990,8 +990,8 @@ and simpl_for_int : Raw.for_int -> (_ -> expression result) result = fun fi ->
                                   record st = st; acc = acc; end;
                                   lamby = fun arguments -> (
                                       let #COMPILER#acc = arguments.0 in
-                                      let #COMPILER#elt = arguments.1 in
-                                      #COMPILER#acc.myint := #COMPILER#acc.myint + #COMPILER#elt ;
+                                      let #COMPILER#elt_x = arguments.1 in
+                                      #COMPILER#acc.myint := #COMPILER#acc.myint + #COMPILER#elt_x ;
                                       #COMPILER#acc.myst  := #COMPILER#acc.myst ^ "to" ;
                                       #COMPILER#acc
                                   )
@@ -1013,7 +1013,7 @@ and simpl_for_int : Raw.for_int -> (_ -> expression result) result = fun fi ->
               that were already renamed in the inner loop.
               e.g :
               ```
-              #COMPILER#acc.myint := #COMPILER#acc.myint + #COMPILER#elt ;
+              #COMPILER#acc.myint := #COMPILER#acc.myint + #COMPILER#elt_x ;
               #COMPILER#acc.myst  := #COMPILER#acc.myst ^ "to" ;
               ```
               They must not be considered as free variables
@@ -1026,10 +1026,10 @@ and simpl_for_int : Raw.for_int -> (_ -> expression result) result = fun fi ->
         - free variable of name X as rhs ==> accessor `#COMPILER#acc.X`
         - free variable of name X as lhs ==> accessor `#COMPILER#acc.X`
        And, in the case of a map:
-            - references to the iterated key   ==> variable `#COMPILER#elt_key`
-            - references to the iterated value ==> variable `#COMPILER#elt_value`
+            - references to the iterated key   ==> variable `#COMPILER#elt_K`
+            - references to the iterated value ==> variable `#COMPILER#elt_V`
             in the case of a set/list:
-            - references to the iterated value ==> variable `#COMPILER#elt`
+            - references to the iterated value ==> variable `#COMPILER#elt_X`
        Note: In the case of an inner loop capturing variable from an outer loop
              the free variable name can be `#COMPILER#acc.Y` and because we do not
              capture the accumulator record in the inner loop, we don't want to 
@@ -1043,10 +1043,11 @@ and simpl_for_int : Raw.for_int -> (_ -> expression result) result = fun fi ->
        tuple holding:
         * In the case of `list` or ̀set`:
           ( folding record , current list/set element ) as
-          ( #COMPILER#acc  , #COMPILER#elt            )
+          ( #COMPILER#acc  , #COMPILER#elt_X          )
         * In the case of `map`:
           ( folding record , current map key ,   current map value   ) as
-          ( #COMPILER#acc  , #COMPILER#elt_key , #COMPILER#elt_value )
+          ( #COMPILER#acc  , #COMPILER#elt_K ,   #COMPILER#elt_V     )
+       Note: X , K and V above have to be replaced with their given name
 
     7) Build the lambda using the final body of (6)
 
@@ -1059,6 +1060,10 @@ and simpl_for_int : Raw.for_int -> (_ -> expression result) result = fun fi ->
 
 **)
 and simpl_for_collect : Raw.for_collect -> (_ -> expression result) result = fun fc ->
+  let elt_name = "#COMPILER#elt_"^fc.var.value in
+  let elt_v_name = match fc.bind_to with
+    | Some v -> "#COMPILER#elt"^(snd v).value
+    | None -> "#COMPILER#elt_unused" in
   (* STEP 1 *)
   let%bind for_body = simpl_block fc.block.value in
   let%bind for_body = for_body None in
@@ -1095,13 +1100,13 @@ and simpl_for_collect : Raw.for_collect -> (_ -> expression result) result = fun
       else match fc.collection with
       (* loop on map *)
       | Map _ ->
-        let k' = e_variable "#COMPILER#collec_elt_k" in
+        let k' = e_variable elt_name in
         if ( name = fc.var.value ) then
           ok @@ k' (* replace references to the the key *)
         else (
           match fc.bind_to with
           | Some (_,v) ->
-            let v' = e_variable "#COMPILER#collec_elt_v" in
+            let v' = e_variable elt_v_name in
             if ( name = v.value ) then
               ok @@ v' (* replace references to the the value *)
             else ok @@ exp
@@ -1111,7 +1116,7 @@ and simpl_for_collect : Raw.for_collect -> (_ -> expression result) result = fun
       | (Set _ | List _) ->
         if (name = fc.var.value ) then
           (* replace references to the collection element *)
-          ok @@ (e_variable "#COMPILER#collec_elt")
+          ok @@ (e_variable elt_name)
         else ok @@ exp
     )
     | _ -> ok @@ exp in
@@ -1130,13 +1135,13 @@ and simpl_for_collect : Raw.for_collect -> (_ -> expression result) result = fun
         let collec_elt_v = arg_access [Access_tuple 1 ; Access_tuple 0] in
         let collec_elt_k = arg_access [Access_tuple 1 ; Access_tuple 1] in
         e_let_in ("#COMPILER#acc", None) acc @@
-        e_let_in ("#COMPILER#collec_elt_k", None) collec_elt_v @@
-        e_let_in ("#COMPILER#collec_elt_v", None) collec_elt_k (for_body)
+        e_let_in (elt_name, None) collec_elt_v @@
+        e_let_in (elt_v_name, None) collec_elt_k (for_body)
       | _ ->
         let acc        = arg_access [Access_tuple 0] in
         let collec_elt = arg_access [Access_tuple 1] in
         e_let_in ("#COMPILER#acc", None) acc @@
-        e_let_in ("#COMPILER#collec_elt", None) collec_elt (for_body)
+        e_let_in (elt_name, None) collec_elt (for_body)
     ) in
   (* STEP 7 *)
   let%bind collect = simpl_expression fc.expr in
