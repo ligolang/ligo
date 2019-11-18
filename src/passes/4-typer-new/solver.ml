@@ -150,7 +150,6 @@ module Wrap = struct
     (* let t_literal_t   = t *)
     let t_literal_bool   = bool
     let t_literal_string = string
-    let t_access_map     = forall2 "k" "v" @@ fun k v -> map k v --> k --> v
     let t_application    = forall2 "a" "b" @@ fun a b -> (a --> b) --> a --> b
     let t_look_up        = forall2 "ind" "v" @@ fun ind v -> map ind v --> ind --> option v
     let t_sequence       = forall "b" @@ fun b -> unit --> b --> b
@@ -165,20 +164,6 @@ module Wrap = struct
 
   let access_int ~base ~index = access_label ~base ~label:(L_int index)
   let access_string ~base ~property = access_label ~base ~label:(L_string property)
-
-  let access_map : base:T.type_value -> key:T.type_value -> (constraints * T.type_name) =
-    let mk_map_type key_type element_type =
-      O.P_constant O.(C_map , [P_variable element_type; P_variable key_type]) in
-    fun ~base ~key ->
-      let key_type = Core.fresh_type_variable () in
-      let element_type = Core.fresh_type_variable () in
-      let base' = type_expression_to_type_value base in
-      let key' = type_expression_to_type_value key in
-      let base_expected = mk_map_type key_type element_type in
-      let expr_type = Core.fresh_type_variable () in
-      O.[C_equation (base' , base_expected);
-         C_equation (key' , P_variable key_type);
-         C_equation (P_variable expr_type , P_variable element_type)] , Type_name expr_type
 
   let constructor
     : T.type_value -> T.type_value -> T.type_value -> (constraints * T.type_name)

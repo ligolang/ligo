@@ -72,7 +72,7 @@ const ownerAddress : address = "tz1TGu6TN5GSez2ndXXeDX6LgUDvLzPLqgYV";
 const receiver : contract(unit) = get_contract(ownerAddress);
 ```
 
-> Would you like to learn more about addresses, contracts and operations in LIGO? Check out the [LIGO cheat sheet](language-basics/cheat-sheet.md)
+> Would you like to learn more about addresses, contracts and operations in LIGO? Check out the [LIGO cheat sheet](api/cheat-sheet.md)
 
 ### Adding the transaction to the list of output operations
 Now we can transfer the `amount` received by `buy_taco` to Pedro's `ownerAddress`. We will do so by forging a `transaction(unit, amount, receiver)` within a list of operations returned at the end of our contract.

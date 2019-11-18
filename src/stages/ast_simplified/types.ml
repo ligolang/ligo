@@ -56,6 +56,7 @@ and expression' =
   | E_constructor of (name * expr) (* For user defined constructors *)
   (* E_record *)
   | E_record of expr_map
+  (* TODO: Change it to (expr * access) *)
   | E_accessor of (expr * access_path)
   (* Data Structures *)
   | E_map of (expr * expr) list
@@ -81,7 +82,6 @@ and expression = {
 and access =
   | Access_tuple of int
   | Access_record of string
-  | Access_map of expr
 
 and access_path = access list
 

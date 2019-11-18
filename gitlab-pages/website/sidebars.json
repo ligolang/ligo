@@ -2,7 +2,6 @@
   "docs": {
     "Intro": ["intro/what-and-why", "intro/installation", "intro/editor-support"],
     "Language Basics": [
-      "language-basics/cheat-sheet",
       "language-basics/types",
       "language-basics/constants-and-variables",
       "language-basics/math-numbers-tez",
@@ -18,7 +17,10 @@
       "advanced/entrypoints-contracts",
       "advanced/first-contract"
     ],
-    "API": ["api-cli-commands"]
+    "API": [
+      "api/cli-commands",
+      "api/cheat-sheet"
+    ]
   },
   "contributors-docs": {
     "Introduction": [

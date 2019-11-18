@@ -510,7 +510,6 @@ and transpile_annotated_expression (ae:AST.annotated_expression) : expression re
                 (Map.String.find_opt prop ty_map) in
             ok (prop_in_ty_map, acc @ path')
           )
-          | Access_map _k -> fail (corner_case ~loc:__LOC__ "no patch for map yet")
       in
       let%bind (_, path) = bind_fold_right_list aux (ty, []) path in
       let%bind expr' = transpile_annotated_expression expr in

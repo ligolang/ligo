@@ -75,9 +75,8 @@ module Free_variables = struct
                expression (union (singleton v) b) body ;
              ]
     | E_sequence (x, y) -> union (self x) (self y)
-    (* we do not consider the assigned variable free... seems strange,
-       but, matches ast_typed, and does not cause any troubles? *)
-    | E_assignment (_, _, e) -> self e
+    (* NB different from ast_typed... *)
+    | E_assignment (v, _, e) -> unions [ var_name b v ; self e ]
     | E_while (cond , body) -> union (self cond) (self body)
 
   and var_name : bindings -> var_name -> bindings = fun b n ->

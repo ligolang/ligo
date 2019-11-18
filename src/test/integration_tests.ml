@@ -825,9 +825,10 @@ let loop () : unit result =
   let%bind () =
     let expected = (e_int 20) in
     expect_eq program "for_collection_comp_with_acc" input expected in
-  (* let%bind () =
-    let expected = e_pair (e_int 6) (e_string "123123123") in
-    expect_eq program "nested_for_collection" input expected in *)
+  let%bind () =
+    let expected = e_pair (e_int 6)
+      (e_string "1 one,two 2 one,two 3 one,two 1 one,two 2 one,two 3 one,two 1 one,two 2 one,two 3 one,two ") in
+    expect_eq program "nested_for_collection" input expected in
   let%bind () =
     let ez lst =
       let open Ast_simplified.Combinators in
@@ -1164,10 +1165,28 @@ let website2_mligo () : unit result =
   expect_eq_n program "main" make_input make_expected
 
 let balance_constant () : unit result =
+  let%bind program = type_file "./contracts/balance_constant.ligo" in
+  let input = e_tuple [e_unit () ; e_mutez 0]  in
+  let expected = e_tuple [e_list []; e_mutez 4000000000000] in
+  expect_eq program "main" input expected
+
+
+let balance_constant_mligo () : unit result =
   let%bind program = mtype_file "./contracts/balance_constant.mligo" in
   let input = e_tuple [e_unit () ; e_mutez 0]  in
   let expected = e_tuple [e_list []; e_mutez 4000000000000] in
   expect_eq program "main" input expected
+let simple_access_ligo () : unit result =
+  let%bind program = type_file "./contracts/simple_access.ligo" in
+  let make_input = e_tuple [e_int 0; e_int 1] in
+  let make_expected = e_int 2 in
+  expect_eq program "main" make_input make_expected
+
+let deep_access_ligo () : unit result =
+  let%bind program = type_file "./contracts/deep_access.ligo" in
+  let make_input = e_unit () in
+  let make_expected = e_int 2 in
+  expect_eq program "main" make_input make_expected
 
 let main = test_suite "Integration (End to End)" [
     test "type alias" type_alias ;
@@ -1250,5 +1269,8 @@ let main = test_suite "Integration (End to End)" [
     test "website1 ligo" website1_ligo ;
     test "website2 ligo" website2_ligo ;
     test "website2 (mligo)" website2_mligo ;
-    test "balance constant (mligo)" balance_constant ;
+    test "balance constant" balance_constant ;
+    test "balance constant (mligo)" balance_constant_mligo ;
+    test "simple_access (ligo)" simple_access_ligo;
+    test "deep_access (ligo)" deep_access_ligo;
   ]
