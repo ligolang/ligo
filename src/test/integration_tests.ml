@@ -1218,6 +1218,11 @@ let deep_access_ligo () : unit result =
   let make_expected = e_int 2 in
   expect_eq program "main" make_input make_expected
 
+let entrypoints_ligo () : unit result =
+  let%bind _program = type_file "./contracts/entrypoints.ligo" in
+  (* hmm... *)
+  ok ()
+
 let main = test_suite "Integration (End to End)" [
     test "type alias" type_alias ;
     test "function" function_ ;
@@ -1305,4 +1310,5 @@ let main = test_suite "Integration (End to End)" [
     test "balance constant (mligo)" balance_constant_mligo ;
     test "simple_access (ligo)" simple_access_ligo;
     test "deep_access (ligo)" deep_access_ligo;
+    test "entrypoints (ligo)" entrypoints_ligo ;
   ]
