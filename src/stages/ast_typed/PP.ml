@@ -74,6 +74,8 @@ and literal ppf (l:literal) : unit =
   | Literal_string s -> fprintf ppf "%s" s
   | Literal_bytes b -> fprintf ppf "0x%s" @@ Bytes.to_string @@ Bytes.escaped b
   | Literal_address s -> fprintf ppf "@%s" s
+  | Literal_signature s -> fprintf ppf "@%s" s
+  | Literal_key s -> fprintf ppf "@%s" s
   | Literal_operation _ -> fprintf ppf "Operation(...bytes)"
 
 and single_record_patch ppf ((s, ae) : string * ae) =

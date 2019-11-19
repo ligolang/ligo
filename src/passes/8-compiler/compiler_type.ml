@@ -69,6 +69,7 @@ module Ty = struct
     | Base_bytes -> return bytes_k
     | Base_operation -> fail (not_comparable "operation")
     | Base_signature -> fail (not_comparable "signature")
+    | Base_key -> fail (not_comparable "key")
 
   let comparable_type : type_value -> ex_comparable_ty result = fun tv ->
     match tv with
@@ -98,6 +99,7 @@ module Ty = struct
     | Base_bytes -> return bytes
     | Base_operation -> return operation
     | Base_signature -> return signature
+    | Base_key -> return key
 
   let rec type_ : type_value -> ex_ty result =
     function
@@ -180,6 +182,7 @@ let base_type : type_base -> O.michelson result =
   | Base_bytes -> ok @@ O.prim T_bytes
   | Base_operation -> ok @@ O.prim T_operation
   | Base_signature -> ok @@ O.prim T_signature
+  | Base_key -> ok @@ O.prim T_key
 
 let rec type_ : type_value -> O.michelson result =
   function

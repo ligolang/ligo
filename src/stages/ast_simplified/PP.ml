@@ -29,6 +29,8 @@ let literal ppf (l:literal) = match l with
   | Literal_string s -> fprintf ppf "%S" s
   | Literal_bytes b -> fprintf ppf "0x%s" @@ Bytes.to_string @@ Bytes.escaped b
   | Literal_address s -> fprintf ppf "@%S" s
+  | Literal_signature s -> fprintf ppf "@%S" s
+  | Literal_key s -> fprintf ppf "@%S" s
   | Literal_operation _ -> fprintf ppf "Operation(...bytes)"
 
 let rec expression ppf (e:expression) = match e.expression with

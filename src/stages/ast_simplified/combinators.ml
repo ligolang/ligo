@@ -24,6 +24,8 @@ let t_nat       : type_expression = T_constant ("nat", [])
 let t_tez       : type_expression = T_constant ("tez", [])
 let t_unit      : type_expression = T_constant ("unit", [])
 let t_address      : type_expression = T_constant ("address", [])
+let t_signature : type_expression = T_constant ("signature", [])
+let t_key      : type_expression = T_constant ("key", [])
 let t_option  o : type_expression = T_constant ("option", [o])
 let t_list  t : type_expression = T_constant ("list", [t])
 let t_variable n : type_expression = T_variable n
@@ -62,6 +64,8 @@ let e_bool ?loc   b : expression = location_wrap ?loc @@ E_literal (Literal_bool
 let e_string ?loc s : expression = location_wrap ?loc @@ E_literal (Literal_string s)
 let e_address ?loc s : expression = location_wrap ?loc @@ E_literal (Literal_address s)
 let e_mutez ?loc s : expression = location_wrap ?loc @@ E_literal (Literal_mutez s)
+let e_signature ?loc s : expression = location_wrap ?loc @@ E_literal (Literal_signature s)
+let e_key ?loc s : expression = location_wrap ?loc @@ E_literal (Literal_key s)
 let e'_bytes b : expression' result =
   let%bind bytes = generic_try (simple_error "bad hex to bytes") (fun () -> Hex.to_bytes (`Hex b)) in
   ok @@ E_literal (Literal_bytes bytes)

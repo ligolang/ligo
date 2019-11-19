@@ -126,6 +126,8 @@ and literal =
   | Literal_string of string
   | Literal_bytes of bytes
   | Literal_address of string
+  | Literal_signature of string
+  | Literal_key of string
   | Literal_operation of Memory_proto_alpha.Protocol.Alpha_context.packed_internal_operation
 
 and access =

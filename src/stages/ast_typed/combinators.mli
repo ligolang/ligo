@@ -19,6 +19,7 @@ val t_int : ?s:S.type_expression -> unit -> type_value
 val t_nat : ?s:S.type_expression -> unit -> type_value
 val t_mutez : ?s:S.type_expression -> unit -> type_value
 val t_address : ?s:S.type_expression -> unit -> type_value
+val t_signature : ?s:S.type_expression -> unit -> type_value
 val t_unit : ?s:S.type_expression -> unit -> type_value
 val t_option : type_value -> ?s:S.type_expression -> unit -> type_value
 val t_pair : type_value -> type_value -> ?s:S.type_expression -> unit -> type_value
@@ -118,6 +119,8 @@ val e_string : string -> expression
 val e_bytes : bytes -> expression
 val e_timestamp : int -> expression
 val e_address : string -> expression
+val e_signature : string -> expression
+val e_key : string -> expression
 val e_operation : Memory_proto_alpha.Protocol.Alpha_context.packed_internal_operation -> expression
 val e_lambda : lambda -> expression
 val e_pair : value -> value -> expression

@@ -31,6 +31,12 @@ let rec translate_value (Ex_typed_value (ty, value)) : value result =
         trace_option (simple_error "too big to fit an int") @@
         Alpha_context.Script_int.to_int n in
       ok @@ D_nat n
+  | (Key_t _ ), n ->
+    let%bind s =  match n with
+      | Ed25519 x -> ok @@ TP.Base58.simple_encode (TP.Ed25519.Public_key.b58check_encoding) x
+      | Secp256k1 x -> ok @@ TP.Base58.simple_encode (TP.Secp256k1.Public_key.b58check_encoding) x
+      | P256 x -> ok @@ TP.Base58.simple_encode (TP.P256.Public_key.b58check_encoding) x in
+    ok @@ D_string s
   | (Timestamp_t _), n ->
       let n =
         Z.to_int @@
