@@ -538,7 +538,7 @@ and simpl_tuple_expression ?loc (lst:Raw.expr list) : expression result =
       let%bind lst = bind_list @@ List.map simpl_expression lst in
       return @@ e_tuple ?loc lst
 
-and simpl_declaration : Raw.declaration -> declaration Location.wrap result =
+and simpl_declaration : Raw.declaration -> declaration Location.wrap list result =
   fun t ->
   let open! Raw in
   let loc : 'a . 'a Raw.reg -> _ -> _ =
@@ -547,33 +547,96 @@ and simpl_declaration : Raw.declaration -> declaration Location.wrap result =
   | TypeDecl x ->
       let {name;type_expr} : Raw.type_decl = x.value in
       let%bind type_expression = simpl_type_expression type_expr in
-      ok @@ loc x @@ Declaration_type (name.value , type_expression)
+      ok @@ [loc x @@ Declaration_type (name.value , type_expression)]
   | Let x -> (
-      let _ , binding = x.value in
+      let binding, _ = r_split x in
+      let binding = snd binding in
       let {binders; lhs_type; let_rhs} = binding in
+      let%bind (hd, _) =
+        let (hd, tl) = binders in ok (hd, tl) in
+        match hd with
+        | PTuple pt ->
+          let process_variable (var_pair: pattern * Raw.expr) :
+            Ast_simplified.declaration Location.wrap result =
+           (let (par_var, rhs_expr) = var_pair in
+            let%bind (v, v_type) = pattern_to_typed_var par_var in
+            let%bind v_type_expression =
+              match v_type with
+              | Some v_type -> ok @@ (simpl_type_expression v_type)
+              | None -> fail @@ wrong_pattern "typed var tuple" par_var in
+            let%bind v_type_expression = v_type_expression in
+            let%bind simpl_rhs_expr = simpl_expression rhs_expr in
+              ok @@ loc x @@ Declaration_constant (v.value, Some v_type_expression, simpl_rhs_expr) )
+          in let%bind variables = ok @@ npseq_to_list pt.value
+          in let%bind expr_bind_lst =
+               match let_rhs with
+               | ETuple et -> ok @@ npseq_to_list et.value
+               | EVar v -> (* Handle variable bound to tuple *)
+                 let name = v.value in
+                 let rec gen_access_tuple ?(i: int = 0)
+                     ?(accesses: Raw.expr list = []) (name: string)
+                   : Raw.expr list =
+                   let build_access_expr : Raw.expr = EProj
+                     {region = v.region;
+                      value =
+                        { struct_name = v;
+                          selector = Region.ghost ;
+                          field_path =
+                            (
+                              (Component
+                                 {region = Region.ghost;
+                                  value = name, Z.of_int i;} : Raw.selection)
+                              , []);
+                        }
+                     }
+                   in
+                   if i = (List.length variables) then accesses
+                   else
+                     let accesses =
+                        build_access_expr :: accesses
+                     in
+                     gen_access_tuple name ~i: (i + 1) ~accesses
+                 in ok (gen_access_tuple name)
+               (* TODO: Improve this error message *)
+               | other -> fail @@ simplifying_expr other
+          in let%bind decls =
+               bind_map_list process_variable (List.combine variables expr_bind_lst)
+          in ok @@ decls
+        | PPar {region = _ ; value = { lpar = _ ; inside = pt; rpar = _; } } ->
+          (* Extract parenthetical multi-bind *)
+          let wild = fst @@ fst @@ r_split x in
+          simpl_declaration
+            (Let {
+                region = x.region;
+                value = (wild, {binders = (pt, []);
+                                lhs_type = lhs_type;
+                                eq = Region.ghost ;
+                                let_rhs = let_rhs})}
+            : Raw.declaration)
+        | _ ->
       let%bind (var, args) =
         let%bind (hd, tl) =
           let hd, tl = binders in ok (hd, tl) in
         let%bind var = pattern_to_var hd in
         ok (var , tl)
-      in
-      match args with
-        [] ->
-          let%bind lhs_type' =
-            bind_map_option (fun (_,te) -> simpl_type_expression te) lhs_type in
-          let%bind rhs' = simpl_expression let_rhs in
-          ok @@ loc x @@ (Declaration_constant (var.value , lhs_type' , rhs'))
-      | param1::others ->
-          let fun_ = {
-            kwd_fun = Region.ghost;
-            binders = param1, others;
-            lhs_type;
-            arrow   = Region.ghost;
-            body    = let_rhs} in
-          let rhs = Raw.EFun {region=Region.ghost ; value=fun_} in
-          let%bind rhs' = simpl_expression rhs in
-          ok @@ loc x @@ (Declaration_constant (var.value , None , rhs'))
-    )
+        in
+        match args with
+        | [] ->
+            let%bind lhs_type' =
+              bind_map_option (fun (_,te) -> simpl_type_expression te) lhs_type in
+            let%bind rhs' = simpl_expression let_rhs in
+            ok @@ [loc x @@ Declaration_constant (var.value , lhs_type' , rhs')]
+        |  param1::others ->
+            let fun_ = {
+              kwd_fun = Region.ghost;
+              binders = param1, others;
+              lhs_type;
+              arrow   = Region.ghost;
+              body    = let_rhs} in
+            let rhs = Raw.EFun {region=Region.ghost ; value=fun_} in
+            let%bind rhs' = simpl_expression rhs in
+            ok @@ [loc x @@ Declaration_constant (var.value , None , rhs')]
+      )
 
 and simpl_cases : type a . (Raw.pattern * a) list -> a matching result =
   fun t ->
@@ -690,4 +753,5 @@ and simpl_cases : type a . (Raw.pattern * a) list -> a matching result =
       in bind_or (as_option () , as_variant ())
 
 let simpl_program : Raw.ast -> program result = fun t ->
-  bind_list @@ List.map simpl_declaration @@ nseq_to_list t.decl
+  let%bind decls = bind_list (List.map simpl_declaration @@ nseq_to_list t.decl) in
+  ok @@ List.concat @@ decls
