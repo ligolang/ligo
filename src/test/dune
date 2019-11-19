@@ -4,6 +4,7 @@
     simple-utils
     ligo
     alcotest
+    tezos-crypto
   )
   (preprocess
     (pps ppx_let)

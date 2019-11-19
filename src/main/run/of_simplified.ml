@@ -35,3 +35,11 @@ let evaluate_typed_program_entry
   let%bind code = Compile.Of_typed.compile_expression_as_function_entry program entry in
   let%bind ex_ty_value = Of_michelson.evaluate ?options code in
   Compile.Of_simplified.uncompile_typed_program_entry_expression_result program entry ex_ty_value
+
+let compile_program
+    ?options
+    (program : Ast_typed.program) (entry : string)
+  : unit result =
+  let%bind code = Compile.Of_typed.compile_expression_as_function_entry program entry in
+  let%bind _ex_ty_value = Of_michelson.evaluate ?options code in
+  ok ()

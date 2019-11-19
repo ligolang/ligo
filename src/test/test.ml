@@ -11,6 +11,7 @@ let () =
     Heap_tests.main ;
     Coase_tests.main ;
     Vote_tests.main ;
+    Multisig_tests.main ;
     Bin_tests.main ;
   ] ;
   ()
