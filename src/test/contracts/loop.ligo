@@ -156,6 +156,25 @@ function nested_for_collection (var nee : unit) : (int*string) is block {
   end
 } with (myint,mystoo)
 
+function nested_for_collection_local_var (var nee : unit) : (int*string) is block {
+  var myint : int := 0;
+  var myst : string := "";
+  var mylist : list(int) := list 1 ; 2 ; 3 end ;
+
+  for i in list mylist
+  begin
+    var myst_loc : string := "" ;
+    myint := myint + i ;
+    var myset : set(string) := set "1" ; "2" ; "3" end ;
+    for st in set myset
+    begin
+      myint := myint + i ;
+      myst_loc := myst_loc ^ st ;
+    end;
+    myst := myst_loc ^ myst ;
+  end
+} with (myint,myst)
+
 function dummy (const n : nat) : nat is block {
   while False block { skip }
 } with n
