@@ -837,6 +837,10 @@ let loop () : unit result =
       (e_string "1 one,two 2 one,two 3 one,two 1 one,two 2 one,two 3 one,two 1 one,two 2 one,two 3 one,two ") in
     expect_eq program "nested_for_collection" input expected in
   let%bind () =
+    let expected = e_pair (e_int 24)
+      (e_string "123123123") in
+    expect_eq program "nested_for_collection_local_var" input expected in
+  let%bind () =
     let ez lst =
       let open Ast_simplified.Combinators in
       let lst' = List.map (fun (x, y) -> e_string x, e_int y) lst in
