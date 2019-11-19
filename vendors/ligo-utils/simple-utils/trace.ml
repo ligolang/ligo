@@ -764,6 +764,12 @@ module Assert = struct
   let assert_equal ?msg expected actual =
     assert_true ?msg (expected = actual)
 
+  let assert_equal_string ?msg expected actual =
+    let msg =
+      let default = Format.asprintf "Not equal string : expected \"%s\", got \"%s\"" expected actual in
+      X_option.unopt ~default msg in
+    assert_equal ~msg expected actual
+
   let assert_equal_int ?msg expected actual =
     let msg =
       let default = Format.asprintf "Not equal int : expected %d, got %d" expected actual in
