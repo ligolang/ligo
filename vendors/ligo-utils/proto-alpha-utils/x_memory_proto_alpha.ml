@@ -1119,5 +1119,7 @@ let failure_interpret
   | Error ((Reject (_, expr, _))::_t) -> return @@ Fail expr (* This catches failwith errors *)
   | Error errs -> Lwt.return @@ Error (List.map (alpha_error_wrap) errs)
 
+let pack (data_ty: 'a ty) (data: 'a) : bytes tzresult Lwt.t =
+  pack_data dummy_environment.tezos_context data_ty data >>=?? fun (packed,_) -> return packed
 
 let strings_of_prims = Michelson_v1_primitives.strings_of_prims
