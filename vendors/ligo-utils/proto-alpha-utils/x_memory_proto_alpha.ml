@@ -1095,3 +1095,29 @@ let interpret ?(options = default_options) (instr:('a, 'b) descr) (bef:'a stack)
   let step_constants = { source ; self ; payer ; amount ; chain_id } in
   Script_interpreter.step tezos_context step_constants instr bef >>=??
   fun (stack, _) -> return stack
+
+type 'a interpret_res =
+  | Succeed of 'a stack
+  | Fail of Script_repr.expr
+
+let failure_interpret
+    ?(options = default_options) 
+    (instr:('a, 'b) descr)
+    (bef:'a stack) : 'b interpret_res tzresult Lwt.t =
+  let {
+    tezos_context ;
+    source ;
+    self ;
+    payer ;
+    amount ;
+    chain_id ;
+  } = options in
+  let step_constants = { source ; self ; payer ; amount ; chain_id } in
+  Script_interpreter.step tezos_context step_constants instr bef >>= fun x ->
+  match x with
+  | Ok (s , _ctxt) -> return @@ Succeed s
+  | Error ((Reject (_, expr, _))::_t) -> return @@ Fail expr (* This catches failwith errors *)
+  | Error errs -> Lwt.return @@ Error (List.map (alpha_error_wrap) errs)
+
+
+let strings_of_prims = Michelson_v1_primitives.strings_of_prims

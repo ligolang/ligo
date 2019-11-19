@@ -35,6 +35,40 @@ let run ?options (* ?(is_input_value = false) *) (program:compiled_program) (inp
     Memory_proto_alpha.interpret ?options descr (Item(input, Empty)) in
   ok (Ex_typed_value (output_ty, output))
 
+type failwith_res =
+  | Failwith_int of int
+  | Failwith_string of string
+  | Failwith_bytes of bytes
+
+let get_exec_error_aux ?options (program:compiled_program) (input_michelson:Michelson.t) : Memory_proto_alpha.Protocol.Script_repr.expr result =
+  let Compiler.Program.{input;output;body} : compiled_program = program in
+  let (Ex_ty input_ty) = input in
+  let (Ex_ty output_ty) = output in
+  let%bind input =
+    Trace.trace_tzresult_lwt (simple_error "error parsing input") @@
+    Memory_proto_alpha.parse_michelson_data input_michelson input_ty
+  in
+  let body = Michelson.strip_annots body in
+  let%bind descr =
+    Trace.trace_tzresult_lwt (simple_error "error parsing program code") @@
+    Memory_proto_alpha.parse_michelson body
+      (Item_t (input_ty, Empty_t, None)) (Item_t (output_ty, Empty_t, None)) in
+  let%bind err =
+    Trace.trace_tzresult_lwt (simple_error "unexpected error of execution") @@
+    Memory_proto_alpha.failure_interpret ?options descr (Item(input, Empty)) in
+  match err with
+  | Memory_proto_alpha.Succeed _ -> simple_fail "an error of execution was expected" 
+  | Memory_proto_alpha.Fail expr ->
+    ok expr
+
+let get_exec_error ?options (program:compiled_program) (input_michelson:Michelson.t) : failwith_res result =
+  let%bind expr = get_exec_error_aux ?options program input_michelson in
+  match Tezos_micheline.Micheline.root @@ Memory_proto_alpha.strings_of_prims expr with
+  | Int (_ , i)    -> ok (Failwith_int (Z.to_int i))
+  | String (_ , s) -> ok (Failwith_string s)
+  | Bytes (_,b)    -> ok (Failwith_bytes b)
+  | _  -> simple_fail "Unknown failwith"
+
 let evaluate ?options program = run ?options program Michelson.d_unit
 
 let ex_value_ty_to_michelson (v : ex_typed_value) : Michelson.t result =
