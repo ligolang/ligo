@@ -77,6 +77,7 @@ module Simplify = struct
       ("bitwise_xor" , "XOR") ;
       ("string_concat" , "CONCAT") ;
       ("string_slice" , "SLICE") ;
+      ("crypto_check", "CHECK_SIGNATURE") ;
       ("bytes_concat" , "CONCAT") ;
       ("bytes_slice" , "SLICE") ;
       ("bytes_pack" , "PACK") ;
