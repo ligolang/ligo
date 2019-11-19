@@ -96,6 +96,11 @@ val make : start:Pos.t -> stop:Pos.t -> t
 
 val ghost : t (* Two [Pos.ghost] positions *)
 
+(* This wraps a value with a ghost region. *)
+
+val wrap_ghost : 'a -> 'a reg
+
+
 (* Occasionnally, we may need a minimum region. It is here made of two
    minimal positions. *)
 

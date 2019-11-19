@@ -43,6 +43,9 @@ Variables, unlike constants, are mutable. They can't be used in a *global scope*
 
 > 💡 Don't worry if you don't understand the function syntax yet. We'll get to it in upcoming sections of the docs.
 
+> ⚠️ Please be wary that mutation only works within the function scope itself, values outside of the function scope will not be affected.
+
+
 
 ```pascaligo
 // won't work, use const for global values instead

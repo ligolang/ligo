@@ -239,17 +239,11 @@ field_decl:
     and value  = {field_name = $1; colon = $2; field_type = $3}
     in {region; value} }
 
-(* Function declarations *)
-
-fun_decl:
-  Function fun_name parameters COLON type_expr Is
-    seq(local_decl)
+fun_expr:
+  Function option(fun_name) parameters COLON type_expr Is
     block
-  With expr option(SEMI) {
-    let stop =
-      match $11 with
-        Some region -> region
-      |        None -> expr_to_region $10 in
+  With expr {
+    let stop = expr_to_region $9 in
     let region = cover $1 stop
     and value = {
       kwd_function = $1;
@@ -258,18 +252,15 @@ fun_decl:
       colon        = $4;
       ret_type     = $5;
       kwd_is       = $6;
-      local_decls  = $7;
-      block        = Some $8;
-      kwd_with     = Some $9;
-      return       = $10;
-      terminator   = $11}
+      local_decls  = [];
+      block        = Some $7;
+      kwd_with     = Some $8;
+      return       = $9;
+      }
     in {region;value}}
-  | Function fun_name parameters COLON type_expr Is
-      expr option(SEMI) {
-        let stop =
-          match $8 with
-            Some region -> region
-          | None -> expr_to_region $7 in
+  | Function option(fun_name) parameters COLON type_expr Is
+      expr {
+        let stop = expr_to_region $7 in
         let region = cover $1 stop
         and value = {
             kwd_function = $1;
@@ -282,9 +273,35 @@ fun_decl:
             block        = None;
             kwd_with     = None;
             return       = $7;
-            terminator   = $8;
           }
         in {region;value}}
+
+
+
+(* Function declarations *)
+
+fun_decl:
+  fun_expr option(SEMI) {
+    let stop =
+      match $2 with
+        Some region -> region
+      |        None -> $1.region in
+    let region = cover $1.region stop
+    and value = {
+      fun_expr = $1;
+      terminator = $2;
+      }
+    in {region;value}}
+
+open_fun_decl:
+  fun_expr {
+    let region = $1.region
+    and value = {
+      fun_expr = $1;
+      terminator = None;
+      }
+    in {region;value}}
+
 
 parameters:
   par(nsepseq(param_decl,SEMI)) { $1 }
@@ -341,6 +358,7 @@ statement:
 open_data_decl:
   open_const_decl { LocalConst $1 }
 | open_var_decl   { LocalVar   $1 }
+| open_fun_decl   { LocalFun   $1 }
 
 open_const_decl:
   Const unqualified_decl(EQ) {
@@ -370,14 +388,6 @@ open_var_decl:
       terminator = None}
     in {region; value}}
 
-local_decl:
-  fun_decl  { LocalFun  $1 }
-| data_decl { LocalData $1 }
-
-data_decl:
-  const_decl { LocalConst $1 }
-| var_decl   { LocalVar   $1 }
-
 unqualified_decl(OP):
   var COLON type_expr OP expr {
     let region = expr_to_region $5
@@ -390,12 +400,6 @@ const_decl:
   }
 | open_const_decl { $1 }
 
-var_decl:
-  open_var_decl SEMI {
-    let var_decl : AST.var_decl = $1.value in
-    {$1 with value = {var_decl with terminator = Some $2}}
-  }
-| open_var_decl { $1 }
 
 instruction:
   conditional  {        Cond $1 }
@@ -683,6 +687,7 @@ expr:
   case(expr) { ECase ($1 expr_to_region) }
 | cond_expr  { $1                        }
 | disj_expr  { $1                        }
+| fun_expr   { EFun $1                   }
 
 cond_expr:
   If expr Then expr option(SEMI) Else expr {

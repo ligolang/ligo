@@ -156,12 +156,13 @@ and print_type_tuple buffer {value; _} =
   print_nsepseq buffer "," print_type_expr inside;
   print_token buffer rpar ")"
 
-and print_fun_decl buffer {value; _} =
+and print_fun_expr buffer {value; _} =
   let {kwd_function; name; param; colon;
        ret_type; kwd_is; local_decls;
-       block; kwd_with; return; terminator} = value in
+       block; kwd_with; return;} = value in
+  let anonymous_name = Region.wrap_ghost "#anonymous" in
   print_token       buffer kwd_function "function";
-  print_var         buffer name;
+  print_var         buffer @@ Simple_utils.Option.unopt ~default:anonymous_name name;
   print_parameters  buffer param;
   print_token       buffer colon ":";
   print_type_expr   buffer ret_type;
@@ -173,7 +174,11 @@ and print_fun_decl buffer {value; _} =
     print_token       buffer kwd_with "with";
   | None          ->  ();
   print_expr        buffer return;
-  print_terminator  buffer terminator
+
+and print_fun_decl buffer {value; _} =
+  let {fun_expr ; terminator;} = value in
+  print_fun_expr buffer fun_expr;
+  print_terminator buffer terminator;
 
 and print_parameters buffer {value; _} =
   let {lpar; inside; rpar} = value in
@@ -225,12 +230,12 @@ and print_local_decls buffer sequence =
   List.iter (print_local_decl buffer) sequence
 
 and print_local_decl buffer = function
-  LocalFun  decl -> print_fun_decl  buffer decl
 | LocalData decl -> print_data_decl buffer decl
 
 and print_data_decl buffer = function
   LocalConst decl -> print_const_decl buffer decl
 | LocalVar   decl -> print_var_decl   buffer decl
+| LocalFun  decl -> print_fun_decl  buffer decl
 
 and print_var_decl buffer {value; _} =
   let {kwd_var; name; colon; var_type;
@@ -402,6 +407,7 @@ and print_expr buffer = function
 | EUnit   r -> print_token buffer r "Unit"
 | ETuple  e -> print_tuple_expr buffer e
 | EPar    e -> print_par_expr buffer e
+| EFun    e -> print_fun_expr buffer e
 
 and print_annot_expr buffer (expr , type_expr) =
   print_expr buffer expr;
@@ -795,7 +801,7 @@ and pp_declaration buffer ~pad:(_,pc as pad) = function
     pp_const_decl buffer ~pad value
 | FunDecl {value; region} ->
     pp_loc_node buffer ~pad "FunDecl" region;
-    pp_fun_decl buffer ~pad value
+    pp_fun_expr buffer ~pad value.fun_expr.value
 
 and pp_const_decl buffer ~pad:(_,pc) decl =
   pp_ident buffer ~pad:(mk_pad 3 0 pc) decl.name;
@@ -861,12 +867,13 @@ and pp_type_tuple buffer ~pad:(_,pc) {value; _} =
     pp_type_expr buffer ~pad:(mk_pad len rank pc)
   in List.iteri (List.length components |> apply) components
 
-and pp_fun_decl buffer ~pad:(_,pc) decl =
+and pp_fun_expr buffer ~pad:(_,pc) decl =
   let fields =
     if decl.local_decls = [] then 5 else 6 in
   let () =
     let pad = mk_pad fields 0 pc in
-    pp_ident buffer ~pad decl.name in
+    let anonymous_name = Region.wrap_ghost "#anonymous" in
+    pp_ident buffer ~pad @@ Simple_utils.Option.unopt ~default:anonymous_name decl.name in
   let () =
     let pad = mk_pad fields 1 pc in
     pp_node buffer ~pad "<parameters>";
@@ -1294,9 +1301,6 @@ and pp_local_decls buffer ~pad:(_,pc) decls =
   in List.iteri (List.length decls |> apply) decls
 
 and pp_local_decl buffer ~pad:(_,pc as pad) = function
-  LocalFun {value; region} ->
-    pp_loc_node buffer ~pad "LocalFun" region;
-    pp_fun_decl buffer ~pad value
 | LocalData data ->
     pp_node buffer ~pad "LocalData";
     pp_data_decl buffer ~pad:(mk_pad 1 0 pc) data
@@ -1308,6 +1312,9 @@ and pp_data_decl buffer ~pad = function
 | LocalVar {value; region} ->
     pp_loc_node buffer ~pad "LocalVar" region;
     pp_var_decl buffer ~pad value
+| LocalFun {value; region} ->
+    pp_loc_node buffer ~pad "LocalFun" region;
+    pp_fun_expr buffer ~pad value.fun_expr.value
 
 and pp_var_decl buffer ~pad:(_,pc) decl =
   pp_ident     buffer ~pad:(mk_pad 3 0 pc) decl.name;
@@ -1368,6 +1375,9 @@ and pp_expr buffer ~pad:(_,pc as pad) = function
 | EPar {value; region} ->
     pp_loc_node buffer ~pad "EPar" region;
     pp_expr buffer ~pad:(mk_pad 1 0 pc) value.inside
+| EFun {value; region} ->
+    pp_loc_node buffer ~pad "EFun" region;
+    pp_fun_expr ~pad buffer value;
 
 and pp_list_expr buffer ~pad:(_,pc as pad) = function
   ECons {value; region} ->

@@ -210,9 +210,9 @@ and type_tuple = (type_expr, comma) nsepseq par reg
 
 (* Function and procedure declarations *)
 
-and fun_decl = {
+and fun_expr = {
   kwd_function : kwd_function;
-  name         : variable;
+  name         : variable option;
   param        : parameters;
   colon        : colon;
   ret_type     : type_expr;
@@ -221,7 +221,11 @@ and fun_decl = {
   block        : block reg option;
   kwd_with     : kwd_with option;
   return       : expr;
-  terminator   : semi option
+}
+
+and fun_decl = {
+  fun_expr : fun_expr reg ;
+  terminator : semi option ;
 }
 
 and parameters = (param_decl, semi) nsepseq par reg
@@ -266,12 +270,12 @@ and statement =
 | Data  of data_decl
 
 and local_decl =
-  LocalFun  of fun_decl reg
 | LocalData of data_decl
 
 and data_decl =
   LocalConst of const_decl reg
 | LocalVar   of var_decl reg
+| LocalFun  of fun_decl reg
 
 and var_decl = {
   kwd_var    : kwd_var;
@@ -464,6 +468,7 @@ and expr =
 | EUnit   of c_Unit
 | ETuple  of tuple_expr
 | EPar    of expr par reg
+| EFun    of fun_expr reg
 
 and annot_expr = (expr * type_expr)
 
@@ -644,7 +649,8 @@ let rec expr_to_region = function
 | EUnit   region
 | ECase  {region;_}
 | ECond  {region; _}
-| EPar   {region; _} -> region
+| EPar   {region; _}
+| EFun   {region; _} -> region
 
 and tuple_expr_to_region {region; _} = region
 
@@ -752,7 +758,7 @@ let pattern_to_region = function
 | PTuple      {region; _} -> region
 
 let local_decl_to_region = function
-  LocalFun             {region; _}
+| LocalData LocalFun   {region; _}
 | LocalData LocalConst {region; _}
 | LocalData LocalVar   {region; _} -> region
 

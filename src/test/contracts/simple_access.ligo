@@ -7,15 +7,15 @@ end
 type mpi is map(string,int)
 
 function main (const toto : tpi) : int is
-	var a : tpi := toto;
-	var b : rpi := record x = 0; y=1 ; end;
-	var m : mpi := map "y" -> 1; end;
-	begin 
-		a.0 := 2;
-		b.x := a.0;
-		m["x"] := b.x;
-	end with 
-	case m["x"] of
-	| Some (s) -> s
-	| None   -> 42
-	end
+  begin
+    var a : tpi := toto;
+    var b : rpi := record x = 0; y=1 ; end;
+    var m : mpi := map "y" -> 1; end;
+    a.0 := 2;
+    b.x := a.0;
+    m["x"] := b.x;
+  end with
+  case m["x"] of
+  | Some (s) -> s
+  | None -> 42
+  end

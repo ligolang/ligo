@@ -201,18 +201,23 @@ and type_tuple = (type_expr, comma) nsepseq par reg
 
 (* Function declarations *)
 
-and fun_decl ={
-    kwd_function : kwd_function;
-    name         : variable;
-    param        : parameters;
-    colon        : colon;
-    ret_type     : type_expr;
-    kwd_is       : kwd_is;
-    local_decls  : local_decl list;
-    block        : block reg option;
-    kwd_with     : kwd_with option;
-    return       : expr;
-    terminator   : semi option }
+and fun_expr = {
+  kwd_function : kwd_function;
+  name         : variable option;
+  param        : parameters;
+  colon        : colon;
+  ret_type     : type_expr;
+  kwd_is       : kwd_is;
+  local_decls  : local_decl list;
+  block        : block reg option;
+  kwd_with     : kwd_with option;
+  return       : expr;
+}
+
+and fun_decl = {
+  fun_expr : fun_expr reg ;
+  terminator : semi option ;
+}
 
 and parameters = (param_decl, semi) nsepseq par reg
 
@@ -256,12 +261,12 @@ and statement =
 | Data  of data_decl
 
 and local_decl =
-  LocalFun  of fun_decl reg
 | LocalData of data_decl
 
 and data_decl =
   LocalConst of const_decl reg
 | LocalVar   of var_decl reg
+| LocalFun  of fun_decl reg
 
 and var_decl = {
   kwd_var    : kwd_var;
@@ -454,6 +459,7 @@ and expr =
 | EUnit   of c_Unit
 | ETuple  of tuple_expr
 | EPar    of expr par reg
+| EFun    of fun_expr reg
 
 and annot_expr = (expr * type_expr)
 

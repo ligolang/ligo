@@ -48,23 +48,25 @@ function get_ (const m : foobar) : option(int) is
   end with map_get(42 , m)
 
 function iter_op (const m : foobar) : unit is
-  function aggregate (const i : int ; const j : int) : unit is block
-    { if (i=j) then skip else failwith("fail") } with unit ;
-  block {skip}
+  block {
+    function aggregate (const i : int ; const j : int) : unit is block
+      { if (i=j) then skip else failwith("fail") } with unit ;
     // map_iter(m , aggregate) ;
-  with map_iter(m, aggregate) ;
+  } with map_iter(m, aggregate) ;
 
 function map_op (const m : foobar) : foobar is
-  function increment (const i : int ; const j : int) : int is block { skip } with j + 1 ;
-  block { skip } with map_map(m , increment) ;
+  block {
+    function increment (const i : int ; const j : int) : int is block { skip } with j + 1 ;
+  } with map_map(m , increment) ;
 
 function fold_op (const m : foobar) : int is
-  function aggregate (const i : int ; const j : (int * int)) : int is block { skip } with i + j.0 + j.1 ;
-  block { skip } with map_fold(m , 10 , aggregate)
+  block {
+    function aggregate (const i : int ; const j : (int * int)) : int is block { skip } with i + j.0 + j.1 ;
+  } with map_fold(m , 10 , aggregate)
 
 function deep_op (var m : foobar) : foobar is
-var coco : (int*foobar) := (0, m);
-block {
-  remove 42 from map coco.1 ;
-  coco.1[32] := 16 ;
-} with coco.1
+  block {
+    var coco : (int*foobar) := (0, m);
+    remove 42 from map coco.1 ;
+    coco.1[32] := 16 ;
+  } with coco.1
