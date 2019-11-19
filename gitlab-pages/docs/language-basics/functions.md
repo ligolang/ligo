@@ -35,8 +35,10 @@ Here's how you define a basic function that accepts two `ints` and returns a sin
 
 
 ```pascaligo
-function add(const a: int; const b: int): int is
-    block { skip } with a + b
+function add(const a: int; const b: int): int is 
+    begin
+        const result: int = a + b;
+    end with result;
 ```
 
 The function body consists of two parts:
@@ -44,9 +46,14 @@ The function body consists of two parts:
 - `block {<code>}` - logic of the function
 - `with <value>` - the return value of the function
 
-> 💡 `skip` can be used as a placeholder for empty function blocks, when all the neccessary logic fits into `with` at the end. It is also possible to omit `block { skip } with`
-in the above example, leaving only `a + b`.
+#### Blockless functions
 
+Functions that can contain all of their logic into a single instruction/expression, can be defined without the surrounding `block`.
+Instead, you can inline the necessary logic directly, like this:
+
+```pascaligo
+function add(const a: int; const b: int): int is a + b
+```
 
 <!--Cameligo-->
 
@@ -65,3 +72,25 @@ value.
 
 <!--END_DOCUSAURUS_CODE_TABS-->
 
+<!--DOCUSAURUS_CODE_TABS-->
+<!--Pascaligo-->
+```pascaligo
+const increment : (int -> int) = (function (const i : int) : int is i + 1);
+// a = 2
+const a: int = increment(1);
+```
+<!--END_DOCUSAURUS_CODE_TABS-->
+
+## Anonymous functions
+
+Functions without a name, also known as anonymous functions are useful in cases when you want to pass the function as an argument or assign it to a key in a record/map.
+
+Here's how to define an anonymous function assigned to a variable `increment`, with it's appropriate function type signature.
+<!--DOCUSAURUS_CODE_TABS-->
+<!--Pascaligo-->
+```pascaligo
+const increment : (int -> int) = (function (const i : int) : int is i + 1);
+// a = 2
+const a: int = increment(1);
+```
+<!--END_DOCUSAURUS_CODE_TABS-->
