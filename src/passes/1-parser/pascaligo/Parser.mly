@@ -388,14 +388,6 @@ open_var_decl:
       terminator = None}
     in {region; value}}
 
-/* local_decl: */
-/*   fun_decl  { LocalFun  $1 } */
-/* | data_decl { LocalData $1 } */
-
-/* data_decl: */
-/*   const_decl { LocalConst $1 } */
-/* | var_decl   { LocalVar   $1 } */
-
 unqualified_decl(OP):
   var COLON type_expr OP expr {
     let region = expr_to_region $5
@@ -408,12 +400,6 @@ const_decl:
   }
 | open_const_decl { $1 }
 
-/* var_decl: */
-/*   open_var_decl SEMI { */
-/*     let var_decl : AST.var_decl = $1.value in */
-/*     {$1 with value = {var_decl with terminator = Some $2}} */
-/*   } */
-/* | open_var_decl { $1 } */
 
 instruction:
   conditional  {        Cond $1 }
