@@ -1175,6 +1175,25 @@ let website2_mligo () : unit result =
     e_pair (e_typed_list [] t_operation) (e_int (op 42 n)) in
   expect_eq_n program "main" make_input make_expected
 
+let mligo_let_multiple () : unit result =
+  let%bind program = mtype_file "./contracts/let_multiple.mligo" in
+  let%bind () =
+    let input = e_unit () in
+    let expected = e_int 3 in
+    expect_eq program "main" input expected
+  in
+  let%bind () =
+    let input = e_unit () in
+    let expected = e_int 6 in
+    expect_eq program "main_paren" input expected
+  in
+  let%bind () =
+    let input = e_unit () in
+    let expected = e_int 65 in
+    expect_eq program "non_tuple_rhs" input expected
+  in
+  ok ()
+
 let balance_constant () : unit result =
   let%bind program = type_file "./contracts/balance_constant.ligo" in
   let input = e_tuple [e_unit () ; e_mutez 0]  in
@@ -1281,6 +1300,7 @@ let main = test_suite "Integration (End to End)" [
     test "website1 ligo" website1_ligo ;
     test "website2 ligo" website2_ligo ;
     test "website2 (mligo)" website2_mligo ;
+    test "let multiple (mligo)" mligo_let_multiple ;
     test "balance constant" balance_constant ;
     test "balance constant (mligo)" balance_constant_mligo ;
     test "simple_access (ligo)" simple_access_ligo;
