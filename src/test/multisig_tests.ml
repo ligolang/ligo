@@ -33,22 +33,26 @@ let str_keys (raw_pk, raw_sk) =
   let (sk_str:string) = Base58.simple_encode (Ed25519.Secret_key.b58check_encoding) raw_sk in
   (pk_str,sk_str)
 
-let sign_message (msg : expression) raw_sk : string result =
+let sign_message (payload : expression) raw_sk : string result =
   let open Tezos_crypto in
   let (sk : Signature.secret_key) = Signature.Ed25519 raw_sk in
   let%bind program,_ = get_program () in
-  let%bind (msg : Tezos_utils.Michelson.michelson) =
+  let%bind code =
     let env = Ast_typed.program_environment program in
-    Ligo.Run.Of_simplified.compile_expression ~env ~state:(Typer.Solver.initial_state) msg
-  in
-  let%bind msg' = Ligo.Run.Of_michelson.pack_message_lambda msg in
-  let (signed_data:Signature.t) = Signature.sign sk msg' in
+    Compile.Of_simplified.compile_expression_as_function
+      ~env ~state:(Typer.Solver.initial_state) payload in
+  let Compiler.Program.{input=_;output=(Ex_ty payload_ty);body=_} = code in
+  let%bind (payload: Tezos_utils.Michelson.michelson) =
+    Ligo.Run.Of_michelson.evaluate_michelson code in
+  let%bind packed_payload = Ligo.Run.Of_michelson.pack_payload payload payload_ty in
+  let (signed_data:Signature.t) = Signature.sign sk packed_payload in
   let signature_str = Signature.to_b58check signed_data in
   ok signature_str
 
 let init_storage threshold counter pkeys =
   let keys = List.map (fun el -> e_key @@ fst @@ str_keys el) pkeys in
   ez_e_record [
+    ("id" , e_string "MULTISIG" ) ;
     ("counter" , e_nat counter ) ;
     ("threshold" , e_nat threshold) ;
     ("auth" , e_typed_list keys t_key ) ;
@@ -59,11 +63,19 @@ let empty_op_list =
 let empty_message = e_lambda "arguments"
   (Some t_unit) (Some (t_list t_operation))
   empty_op_list
+let chain_id_zero = e_chain_id @@ Tezos_crypto.Base58.simple_encode
+  Tezos_base__TzPervasives.Chain_id.b58check_encoding
+  Tezos_base__TzPervasives.Chain_id.zero
 
 (* sign the same message 'msg' with the secret keys of 'keys' *)
 let params counter msg keys = 
   let aux = fun acc sk ->
-    let%bind signature = sign_message msg (snd sk) in
+    let payload = e_tuple
+      [ msg ; 
+        e_nat counter ; 
+        e_string "MULTISIG" ; 
+        chain_id_zero ] in
+    let%bind signature = sign_message payload (snd sk) in
     ok @@ (e_signature signature)::acc in
   let%bind signed_msgs = Trace.bind_fold_list aux [] keys in
   ok @@ e_constructor

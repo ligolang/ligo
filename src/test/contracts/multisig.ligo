@@ -2,8 +2,10 @@
 type counter_t is nat
 type threshold_t is nat
 type authorized_keys_t is list(key)
+type id_t is string
 
 type storage_t is record
+  id : id_t ;
   counter : counter_t ;
   threshold : threshold_t ;
   auth : authorized_keys_t ;
@@ -28,14 +30,15 @@ function check_message (const param : check_message_pt;
   if param.counter =/= s.counter then
     failwith ("Counters does not match")
   else block {
-    var packed_msg : bytes := bytes_pack(message) ;
+    const packed_payload : bytes =
+      bytes_pack((message , param.counter , s.id , get_chain_id));
     var valid : nat := 0n ;
 
     for sig in list param.signatures block {
       var is_valid : bool := False ;
 
       for pk in list s.auth block {
-        if crypto_check(pk,sig,packed_msg) then is_valid := True
+        if crypto_check(pk,sig,packed_payload) then is_valid := True
         else skip;
       };
 
