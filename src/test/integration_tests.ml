@@ -742,6 +742,11 @@ let list () : unit result =
     expect_eq_evaluate program "bl" expected
   in
   let%bind () =
+    expect_eq program "fold_op"
+      (e_list [e_int 2 ; e_int 4 ; e_int 7])
+      (e_int 23)
+  in
+  let%bind () =
     expect_eq program "iter_op"
       (e_list [e_int 2 ; e_int 4 ; e_int 7])
       (e_int 13)

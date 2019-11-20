@@ -30,15 +30,15 @@ let get_ (m: foobar) : int option = Map.find_opt 42 m
 
 let iter_op (m : foobar) : unit =
   let assert_eq = fun (i: int) (j: int) -> assert (i=j)
-  in Map.iter m assert_eq
+  in Map.iter assert_eq m
 
 let map_op (m : foobar) : foobar =
   let increment = fun (_: int) (j: int) -> j+1
-  in Map.map m increment
+  in Map.map increment m
 
 let fold_op (m : foobar) : foobar =
   let aggregate = fun (i: int) (j: int * int) -> i + j.0 + j.1
-  in Map.fold m 10 aggregate
+  in Map.fold aggregate m 10
 
 let deep_op (m: foobar) : foobar =
   let coco = 0,m in

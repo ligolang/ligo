@@ -52,17 +52,17 @@ function iter_op (const m : foobar) : unit is
     function aggregate (const i : int ; const j : int) : unit is block
       { if (i=j) then skip else failwith("fail") } with unit ;
     // map_iter(m , aggregate) ;
-  } with map_iter(m, aggregate) ;
+  } with map_iter(aggregate, m) ;
 
 function map_op (const m : foobar) : foobar is
   block {
     function increment (const i : int ; const j : int) : int is block { skip } with j + 1 ;
-  } with map_map(m , increment) ;
+  } with map_map(increment, m) ;
 
 function fold_op (const m : foobar) : int is
   block {
     function aggregate (const i : int ; const j : (int * int)) : int is block { skip } with i + j.0 + j.1 ;
-  } with map_fold(m , 10 , aggregate)
+  } with map_fold(aggregate, m , 10)
 
 function deep_op (var m : foobar) : foobar is
   block {
