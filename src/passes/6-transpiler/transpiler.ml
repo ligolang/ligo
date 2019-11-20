@@ -390,12 +390,12 @@ and transpile_annotated_expression (ae:AST.annotated_expression) : expression re
           | _ -> fail @@ unsupported_iterator f.location
         in
         fun (lst : AST.annotated_expression list) -> match (lst , iterator_name) with
-          | [i ; f] , "ITER" | [i ; f] , "MAP" -> (
+          | [f ; i] , "ITER" | [f ; i] , "MAP" -> (
               let%bind f' = expression_to_iterator_body f in
               let%bind i' = transpile_annotated_expression i in
               return @@ E_iterator (iterator_name , f' , i')
             )
-          | [ collection ; initial ; f ] , "FOLD" -> (
+          | [ f ; collection ; initial ] , "FOLD" -> (
               let%bind f' = expression_to_iterator_body f in
               let%bind initial' = transpile_annotated_expression initial in
               let%bind collection' = transpile_annotated_expression collection in

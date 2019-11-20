@@ -1205,7 +1205,7 @@ and simpl_for_collect : Raw.for_collect -> (_ -> expression result) result = fun
   let lambda = e_lambda "arguments" None None for_body in
   let op_name = match fc.collection with
    | Map _ -> "MAP_FOLD" | Set _ -> "SET_FOLD" | List _ -> "LIST_FOLD" in
-  let fold = e_constant op_name [collect ; init_record ; lambda] in
+  let fold = e_constant op_name [lambda; collect ; init_record] in
   (* STEP 8 *)
   let assign_back (prev : expression option) (captured_varname : string) : expression option =
     let access = e_accessor (e_variable "#COMPILER#folded_record")

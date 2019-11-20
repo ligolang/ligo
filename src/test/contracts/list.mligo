@@ -15,11 +15,11 @@ let main (p: param) storage =
 
 let fold_op (s: int list) : int =
   let aggregate = fun (prec: int) (cur: int) -> prec + cur
-  in List.fold s 10 aggregate
+  in List.fold aggregate s 10
 
 let map_op (s: int list) : int list =
-  List.map s (fun (cur: int) -> cur + 1)
+  List.map (fun (cur: int) -> cur + 1) s
 
 let iter_op (s : int list) : unit =
   let do_nothing = fun (_: int) -> unit
-  in List.iter s do_nothing
+  in List.iter do_nothing s

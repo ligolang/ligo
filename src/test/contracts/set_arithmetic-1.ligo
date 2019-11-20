@@ -7,11 +7,11 @@ function iter_op (const s : set(int)) : int is
       begin
         r := r + i ;
       end with unit ;
-    set_iter(s , aggregate) ;
+    set_iter(aggregate, s) ;
   end with r
 
 function fold_op (const s : set(int)) : int is
   block {
     function aggregate (const i : int ; const j : int) : int is
       i + j
-  } with set_fold(s , 15 , aggregate)
+  } with set_fold(aggregate, s , 15)

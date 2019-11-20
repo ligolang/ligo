@@ -366,14 +366,14 @@ module Typer = struct
     let%bind () = assert_type_value_eq (src, k) in
     ok @@ t_option dst ()
 
-  let map_iter : typer = typer_2 "MAP_ITER" @@ fun m f ->
+  let map_iter : typer = typer_2 "MAP_ITER" @@ fun f m ->
     let%bind (k, v) = get_t_map m in
     let%bind (arg , res) = get_t_function f in
     let%bind () = assert_eq_1 arg (t_pair k v ()) in
     let%bind () = assert_eq_1 res (t_unit ()) in
     ok @@ t_unit ()
 
-  let map_map : typer = typer_2 "MAP_MAP" @@ fun m f ->
+  let map_map : typer = typer_2 "MAP_MAP" @@ fun f m ->
     let%bind (k, v) = get_t_map m in
     let%bind (arg , res) = get_t_function f in
     let%bind () = assert_eq_1 arg (t_pair k v ()) in
@@ -578,7 +578,7 @@ module Typer = struct
     then ok set
     else simple_fail "Set_remove: elt and set don't match"
 
-  let set_iter = typer_2 "SET_ITER" @@ fun set body ->
+  let set_iter = typer_2 "SET_ITER" @@ fun body set ->
     let%bind (arg , res) = get_t_function body in
     let%bind () = Assert.assert_true (eq_1 res (t_unit ())) in
     let%bind key = get_t_set set in
@@ -586,7 +586,7 @@ module Typer = struct
     then ok (t_unit ())
     else simple_fail "bad set iter"
 
-  let list_iter = typer_2 "LIST_ITER" @@ fun lst body ->
+  let list_iter = typer_2 "LIST_ITER" @@ fun body lst ->
     let%bind (arg , res) = get_t_function body in
     let%bind () = Assert.assert_true (eq_1 res (t_unit ())) in
     let%bind key = get_t_list lst in
@@ -594,14 +594,14 @@ module Typer = struct
     then ok (t_unit ())
     else simple_fail "bad list iter"
 
-  let list_map = typer_2 "LIST_MAP" @@ fun lst body ->
+  let list_map = typer_2 "LIST_MAP" @@ fun body lst ->
     let%bind (arg , res) = get_t_function body in
     let%bind key = get_t_list lst in
     if eq_1 key arg
     then ok (t_list res ())
     else simple_fail "bad list map"
 
-  let list_fold = typer_3 "LIST_FOLD" @@ fun lst init body ->
+  let list_fold = typer_3 "LIST_FOLD" @@ fun body lst init ->
     let%bind (arg , res) = get_t_function body in
     let%bind (prec , cur) = get_t_pair arg in
     let%bind key = get_t_list lst in
@@ -615,7 +615,7 @@ module Typer = struct
     let%bind () = assert_eq_1 ~msg:"res init" res init in
     ok res
 
-  let set_fold = typer_3 "SET_FOLD" @@ fun lst init body ->
+  let set_fold = typer_3 "SET_FOLD" @@ fun body lst init ->
     let%bind (arg , res) = get_t_function body in
     let%bind (prec , cur) = get_t_pair arg in
     let%bind key = get_t_set lst in
@@ -629,7 +629,7 @@ module Typer = struct
     let%bind () = assert_eq_1 ~msg:"res init" res init in
     ok res
 
-  let map_fold = typer_3 "MAP_FOLD" @@ fun map init body ->
+  let map_fold = typer_3 "MAP_FOLD" @@ fun body map init ->
     let%bind (arg , res) = get_t_function body in
     let%bind (prec , cur) = get_t_pair arg in
     let%bind (key , value) = get_t_map map in
@@ -649,7 +649,7 @@ module Typer = struct
       whether the fold should continue or not. Necessarily then the initial value
       must match the input parameter of the auxillary function, and the auxillary
       should return type (bool * input) *)
-  let fold_while = typer_2 "FOLD_WHILE" @@ fun init body ->
+  let fold_while = typer_2 "FOLD_WHILE" @@ fun body init ->
     let%bind (arg, result) = get_t_function body in
     let%bind () = assert_eq_1 arg init in
     let%bind () = assert_eq_1 (t_pair (t_bool ()) init ()) result
@@ -831,7 +831,7 @@ module Compiler = struct
     ("MAP_FIND_OPT" , simple_binary @@ prim I_GET) ;
     ("MAP_ADD" , simple_ternary @@ seq [dip (i_some) ; prim I_UPDATE]) ;
     ("MAP_UPDATE" , simple_ternary @@ prim I_UPDATE) ;
-    ("FOLD_WHILE" , simple_binary @@ seq [(i_push (prim T_bool) (prim D_True)) ;
+    ("FOLD_WHILE" , simple_binary @@ seq [i_swap ; (i_push (prim T_bool) (prim D_True)) ;
                                           prim ~children:[seq [dip i_dup; i_exec; i_unpair]] I_LOOP ;
                                           i_swap ; i_drop]) ;
     ("CONTINUE" , simple_unary @@ seq [(i_push (prim T_bool) (prim D_True)) ;
