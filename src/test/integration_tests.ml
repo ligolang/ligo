@@ -1225,6 +1225,19 @@ let is_nat () : unit result =
     expect_eq program "main" input expected
   in ok ()
 
+let is_nat_mligo () : unit result =
+  let%bind program = mtype_file "./contracts/isnat.mligo" in
+  let%bind () = 
+    let input = e_int 10 in
+    let expected = e_some (e_nat 10) in
+    expect_eq program "main" input expected
+  in
+  let%bind () =
+    let input = e_int (-10) in
+    let expected = e_none () in
+    expect_eq program "main" input expected
+  in ok ()
+
 let simple_access_ligo () : unit result =
   let%bind program = type_file "./contracts/simple_access.ligo" in
   let make_input = e_tuple [e_int 0; e_int 1] in
@@ -1328,6 +1341,7 @@ let main = test_suite "Integration (End to End)" [
     test "balance constant" balance_constant ;
     test "balance constant (mligo)" balance_constant_mligo ;
     test "is_nat" is_nat ;
+    test "is_not (mligo)" is_nat_mligo ;
     test "simple_access (ligo)" simple_access_ligo;
     test "deep_access (ligo)" deep_access_ligo;
     test "entrypoints (ligo)" entrypoints_ligo ;

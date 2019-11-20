@@ -208,6 +208,8 @@ module Simplify = struct
       ("abs" , "ABS") ;
       ("unit" , "UNIT") ;
       ("source" , "SOURCE") ;
+
+      ("Michelson.is_nat" , "ISNAT") ;
     ]
 
     let type_constants = type_constants
