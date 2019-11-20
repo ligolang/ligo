@@ -22,6 +22,7 @@ let type_base ppf : type_base -> _ = function
   | Base_operation -> fprintf ppf "operation"
   | Base_signature -> fprintf ppf "signature"
   | Base_key -> fprintf ppf "key"
+  | Base_chain_id -> fprintf ppf "chain_id"
 
 let rec type_ ppf : type_value -> _ = function
   | T_or(a, b) -> fprintf ppf "(%a) | (%a)" annotated a annotated b

@@ -438,6 +438,9 @@ and type_expression : environment -> Solver.state -> ?tv_opt:O.type_value -> I.e
   | E_literal (Literal_key s) -> (
       return_wrapped (e_key s) state @@ Wrap.literal (t_key ())
     )
+  | E_literal (Literal_chain_id s) -> (
+      return_wrapped (e_chain_id s) state @@ Wrap.literal (t_chain_id ())
+    )
   | E_literal (Literal_bytes b) -> (
       return_wrapped (e_bytes b) state @@ Wrap.literal (t_bytes ())
     )
@@ -1007,6 +1010,7 @@ let untype_literal (l:O.literal) : I.literal result =
   | Literal_int n -> ok (Literal_int n)
   | Literal_string s -> ok (Literal_string s)
   | Literal_key s -> ok (Literal_key s)
+  | Literal_chain_id s -> ok (Literal_chain_id s)
   | Literal_signature s -> ok (Literal_signature s)
   | Literal_bytes b -> ok (Literal_bytes b)
   | Literal_address s -> ok (Literal_address s)

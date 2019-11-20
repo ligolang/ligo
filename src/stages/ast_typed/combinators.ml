@@ -19,6 +19,7 @@ let t_key_hash ?s () : type_value = make_t (T_constant (Type_name "key_hash", []
 let t_signature ?s () : type_value = make_t (T_constant (Type_name "signature", [])) s
 let t_int ?s () : type_value = make_t (T_constant (Type_name "int", [])) s
 let t_address ?s () : type_value = make_t (T_constant (Type_name "address", [])) s
+let t_chain_id ?s () : type_value = make_t (T_constant (Type_name "chain_id", [])) s
 let t_operation ?s () : type_value = make_t (T_constant (Type_name "operation", [])) s
 let t_nat ?s () : type_value = make_t (T_constant (Type_name "nat", [])) s
 let t_mutez ?s () : type_value = make_t (T_constant (Type_name "tez", [])) s
@@ -185,6 +186,10 @@ let assert_t_key = get_t_key
 let assert_t_signature = get_t_signature
 let assert_t_key_hash = get_t_key_hash
 
+let assert_t_contract (t:type_value) : unit result = match t.type_value' with
+  | T_constant (Type_name "contract", _) -> ok ()
+  | _ -> simple_fail "not a contract"
+
 let assert_t_list t =
   let%bind _ = get_t_list t in
   ok ()
@@ -241,6 +246,7 @@ let e_timestamp s : expression = E_literal (Literal_timestamp s)
 let e_address s : expression = E_literal (Literal_address s)
 let e_signature s : expression = E_literal (Literal_signature s)
 let e_key s : expression = E_literal (Literal_key s)
+let e_chain_id s : expression = E_literal (Literal_chain_id s)
 let e_operation s : expression = E_literal (Literal_operation s)
 let e_lambda l : expression = E_lambda l
 let e_pair a b : expression = E_tuple [a; b]

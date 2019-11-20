@@ -52,12 +52,14 @@ module Simplify = struct
     ("set" , "set") ;
     ("map" , "map") ;
     ("big_map" , "big_map") ;
+    ("chain_id" , "chain_id") ;
   ]
 
   module Pascaligo = struct
 
     let constants = [
       ("get_force" , "MAP_GET_FORCE") ;
+      ("get_chain_id", "CHAIN_ID");
       ("transaction" , "CALL") ;
       ("get_contract" , "CONTRACT") ;
       ("get_entrypoint" , "CONTRACT_ENTRYPOINT") ;
@@ -90,7 +92,6 @@ module Simplify = struct
       ("list_iter" , "LIST_ITER") ;
       ("list_fold" , "LIST_FOLD") ;
       ("list_map" , "LIST_MAP") ;
-      (*ici*)
       ("map_iter" , "MAP_ITER") ;
       ("map_map" , "MAP_MAP") ;
       ("map_fold" , "MAP_FOLD") ;
@@ -459,7 +460,11 @@ module Typer = struct
 
   let balance = constant "BALANCE" @@ t_mutez ()
 
-  let address = constant "ADDRESS" @@ t_address ()
+  let chain_id = constant "CHAIN_ID" @@ t_chain_id ()
+
+  let address = typer_1 "ADDRESS" @@ fun contract ->
+    let%bind () = assert_t_contract contract in
+    ok @@ t_address ()
 
   let now = constant "NOW" @@ t_timestamp ()
 
@@ -775,6 +780,7 @@ module Typer = struct
       check_signature ;
       sender ;
       source ;
+      chain_id ;
       unit ;
       balance ;
       amount ;
@@ -858,7 +864,7 @@ module Compiler = struct
     ("UNIT" , simple_constant @@ prim I_UNIT) ;
     ("BALANCE" , simple_constant @@ prim I_BALANCE) ;
     ("AMOUNT" , simple_constant @@ prim I_AMOUNT) ;
-    ("ADDRESS" , simple_constant @@ prim I_ADDRESS) ;
+    ("ADDRESS" , simple_unary @@ prim I_ADDRESS) ;
     ("NOW" , simple_constant @@ prim I_NOW) ;
     ("CALL" , simple_ternary @@ prim I_TRANSFER_TOKENS) ;
     ("SOURCE" , simple_constant @@ prim I_SOURCE) ;
@@ -875,6 +881,7 @@ module Compiler = struct
     ("PACK" , simple_unary @@ prim I_PACK) ;
     ("CONCAT" , simple_binary @@ prim I_CONCAT) ;
     ("CONS" , simple_binary @@ prim I_CONS) ;
+    ("CHAIN_ID", simple_constant @@ prim I_CHAIN_ID ) ;
   ]
 
   (*

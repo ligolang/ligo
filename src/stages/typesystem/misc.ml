@@ -103,6 +103,7 @@ module Substitution = struct
       | (T.Literal_address _ as x)
       | (T.Literal_signature _ as x)
       | (T.Literal_key _ as x)
+      | (T.Literal_chain_id _ as x)
       | (T.Literal_operation _ as x) ->
         ok @@ x
     and s_matching_expr ~v ~expr : T.matching_expr w = fun _ ->

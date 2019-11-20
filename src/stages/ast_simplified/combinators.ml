@@ -66,6 +66,7 @@ let e_address ?loc s : expression = location_wrap ?loc @@ E_literal (Literal_add
 let e_mutez ?loc s : expression = location_wrap ?loc @@ E_literal (Literal_mutez s)
 let e_signature ?loc s : expression = location_wrap ?loc @@ E_literal (Literal_signature s)
 let e_key ?loc s : expression = location_wrap ?loc @@ E_literal (Literal_key s)
+let e_chain_id ?loc s : expression = location_wrap ?loc @@ E_literal (Literal_chain_id s)
 let e'_bytes b : expression' result =
   let%bind bytes = generic_try (simple_error "bad hex to bytes") (fun () -> Hex.to_bytes (`Hex b)) in
   ok @@ E_literal (Literal_bytes bytes)

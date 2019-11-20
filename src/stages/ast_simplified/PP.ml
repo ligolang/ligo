@@ -31,6 +31,7 @@ let literal ppf (l:literal) = match l with
   | Literal_address s -> fprintf ppf "@%S" s
   | Literal_signature s -> fprintf ppf "@%S" s
   | Literal_key s -> fprintf ppf "@%S" s
+  | Literal_chain_id s -> fprintf ppf "@%S" s
   | Literal_operation _ -> fprintf ppf "Operation(...bytes)"
 
 let rec expression ppf (e:expression) = match e.expression with

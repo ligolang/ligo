@@ -156,6 +156,12 @@ let rec untranspile (v : value) (t : AST.type_value) : AST.annotated_expression 
       get_string v in
     return (E_literal (Literal_key n))
   )
+  | T_constant (Type_name "chain_id", []) -> (
+    let%bind n =
+      trace_strong (wrong_mini_c_value "chain_id" v) @@
+      get_string v in
+    return (E_literal (Literal_chain_id n))
+  )
   | T_constant (Type_name "set", [ty]) -> (
       let%bind lst =
         trace_strong (wrong_mini_c_value "set" v) @@

@@ -1267,7 +1267,18 @@ let entrypoints_ligo () : unit result =
   (* hmm... *)
   ok ()
 
+let chain_id () : unit result =
+  let%bind program = type_file "./contracts/chain_id.ligo" in
+  let pouet = Tezos_crypto.Base58.simple_encode
+    Tezos_base__TzPervasives.Chain_id.b58check_encoding
+    Tezos_base__TzPervasives.Chain_id.zero in
+  let make_input = e_chain_id pouet in
+  let make_expected = e_chain_id pouet in
+  let%bind () = expect_eq program "get_chain_id" make_input make_expected in
+  ok ()
+
 let main = test_suite "Integration (End to End)" [
+    test "chain id" chain_id ;
     test "type alias" type_alias ;
     test "function" function_ ;
     test "blockless function" blockless;

@@ -24,9 +24,13 @@ let run ?options (* ?(is_input_value = false) *) (program:compiled_program) (inp
     Trace.trace_tzresult_lwt (simple_error "error parsing input") @@
     Memory_proto_alpha.parse_michelson_data input_michelson input_ty
   in
+  let body = Michelson.strip_annots body in
+  let open! Memory_proto_alpha.Protocol.Script_ir_translator in 
+  let top_level = Toplevel { storage_type = output_ty ; param_type = input_ty ;
+                             root_name = None ; legacy_create_contract_literal = false } in
   let%bind descr =
     Trace.trace_tzresult_lwt (simple_error "error parsing program code") @@
-    Memory_proto_alpha.parse_michelson body
+    Memory_proto_alpha.parse_michelson ~top_level body
       (Item_t (input_ty, Empty_t, None)) (Item_t (output_ty, Empty_t, None)) in
   let open! Memory_proto_alpha.Protocol.Script_interpreter in
   let%bind (Item(output, Empty)) =
