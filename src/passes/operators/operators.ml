@@ -64,6 +64,7 @@ module Simplify = struct
       ("size" , "SIZE") ;
       ("int" , "INT") ;
       ("abs" , "ABS") ;
+      ("is_nat", "ISNAT") ;
       ("amount" , "AMOUNT") ;
       ("balance", "BALANCE") ;
       ("now" , "NOW") ;
@@ -207,6 +208,8 @@ module Simplify = struct
       ("abs" , "ABS") ;
       ("unit" , "UNIT") ;
       ("source" , "SOURCE") ;
+
+      ("Michelson.is_nat" , "ISNAT") ;
     ]
 
     let type_constants = type_constants
@@ -511,6 +514,10 @@ module Typer = struct
     let%bind () = assert_t_int t in
     ok @@ t_nat ()
 
+  let is_nat = typer_1 "ISNAT" @@ fun t ->
+    let%bind () = assert_t_int t in
+    ok @@ t_option (t_nat ()) ()
+
   let neg = typer_1 "NEG" @@ fun t ->
     let%bind () = Assert.assert_true (eq_1 t (t_nat ()) || eq_1 t (t_int ())) in
     ok @@ t_int ()
@@ -775,6 +782,7 @@ module Typer = struct
       get_entrypoint ;
       neg ;
       abs ;
+      is_nat ;
       cons ;
       now ;
       slice ;
@@ -844,6 +852,7 @@ module Compiler = struct
     ("ASSERT" , simple_unary @@ i_if (seq [i_push_unit]) (seq [i_push_unit ; i_failwith])) ;
     ("INT" , simple_unary @@ prim I_INT) ;
     ("ABS" , simple_unary @@ prim I_ABS) ;
+    ("ISNAT", simple_unary @@ prim I_ISNAT) ;
     ("CONS" , simple_binary @@ prim I_CONS) ;
     ("UNIT" , simple_constant @@ prim I_UNIT) ;
     ("BALANCE" , simple_constant @@ prim I_BALANCE) ;
