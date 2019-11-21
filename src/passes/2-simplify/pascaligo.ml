@@ -41,12 +41,27 @@ let detect_free_variables (for_body : expression) (local_decl_names : string lis
       | E_assign ( name , _ , _ ) ->
         if is_compiler_generated name then ok prev
         else ok (name::prev)
+      | E_constant (n, [a;b])
+        when n="OR" || n="AND" || n="LT" || n="GT" ||
+             n="LE" || n="GE"  || n="EQ" || n="NEQ" -> (
+          match (a.expression,b.expression) with
+          | E_variable na , E_variable nb -> 
+            let ret = [] in
+            let ret = if not (is_compiler_generated na) then
+              na::ret else ret in
+            let ret = if not (is_compiler_generated nb) then
+              nb::ret else ret in
+            ok (ret@prev)
+          | E_variable n , _ 
+          | _            , E_variable n ->
+            if not (is_compiler_generated n) then
+            ok (n::prev) else ok prev
+          | _ -> ok prev)
       | _ -> ok prev )
     []
     for_body in
   ok @@ SSet.elements
      @@ SSet.diff (SSet.of_list captured_names) (SSet.of_list local_decl_names)
-
 
 module Errors = struct
   let unsupported_cst_constr p =
@@ -1125,11 +1140,14 @@ and simpl_for_collect : Raw.for_collect -> (_ -> expression result) result = fun
   let elt_v_name = match fc.bind_to with
     | Some v -> "#COMPILER#elt"^(snd v).value
     | None -> "#COMPILER#elt_unused" in
+  let element_names = ok @@ match fc.bind_to with 
+    | Some v -> [fc.var.value;(snd v).value]
+    | None -> [fc.var.value] in
   (* STEP 1 *)
   let%bind for_body = simpl_block fc.block.value in
   let%bind for_body = for_body None in
   (* STEP 2 *)
-  let%bind local_decl_name_list = detect_local_declarations for_body in
+  let%bind local_decl_name_list = bind_concat (detect_local_declarations for_body) element_names in
   let%bind captured_name_list = detect_free_variables for_body local_decl_name_list in
   (* STEP 3 *)
   let add_to_record (prev: expression type_name_map) (captured_name: string) =
