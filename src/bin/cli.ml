@@ -3,8 +3,7 @@ open Trace
 open Cli_helpers
 
 let main =
-  let term = Term.(const print_endline $ const "Ligo needs a command. Do ligo --help") in
-  (term , Term.info "ligo")
+  (Term.(ret (const (`Help (`Auto, None)))) , Term.info "ligo")
 
 let source_file n =
   let open Arg in

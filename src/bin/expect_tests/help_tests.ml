@@ -3,7 +3,48 @@ open Cli_expect
 let%expect_test _ =
   (* TODO good? *)
   run_ligo_good [] ;
-  [%expect {| Ligo needs a command. Do ligo --help |} ] ;
+  [%expect {|
+    NAME
+           ligo
+
+    SYNOPSIS
+           ligo COMMAND ...
+
+    COMMANDS
+           compile-contract
+               Subcommand: compile a contract. See `ligo compile-contract --help'
+               for a list of options specific to this subcommand.
+
+           compile-expression
+               Subcommand: compile to a michelson value.
+
+           compile-parameter
+               Subcommand: compile parameters to a michelson expression. The
+               resulting michelson expression can be passed as an argument in a
+               transaction which calls a contract. See `ligo compile-parameter
+               --help' for a list of options specific to this subcommand.
+
+           compile-storage
+               Subcommand: compile an initial storage in ligo syntax to a
+               michelson expression. The resulting michelson expression can be
+               passed as an argument in a transaction which originates a
+               contract. See `ligo compile-storage --help' for a list of options
+               specific to this subcommand.
+
+           dry-run
+               Subcommand: run a smart-contract with the given storage and input.
+
+           evaluate-value
+               Subcommand: evaluate a given definition.
+
+           run-function
+               Subcommand: run a function with the given parameter.
+
+    OPTIONS
+           --help[=FMT] (default=auto)
+               Show this help in format FMT. The value FMT must be one of `auto',
+               `pager', `groff' or `plain'. With `auto', the format is `pager` or
+               `plain' whenever the TERM env var is `dumb' or undefined. |} ] ;
 
   run_ligo_good [ "--help" ] ;
   [%expect {|
