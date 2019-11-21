@@ -13,6 +13,7 @@ depends: [
   "menhir" { = "20190626" }
   "ppx_let"
   "ppx_deriving"
+  "ppx_expect"
   "tezos-utils"
   "proto-alpha-utils"
   "yojson"
