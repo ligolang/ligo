@@ -42,10 +42,10 @@ let sign_message (payload : expression) sk : string result =
     Compile.Of_simplified.compile_expression_as_function
       ~env ~state:(Typer.Solver.initial_state) payload in
   let Compiler.Program.{input=_;output=(Ex_ty payload_ty);body=_} = code in
-  let%bind (payload: Tezos_utils.Michelson.michelson) =
+  let%bind payload =
     Ligo.Run.Of_michelson.evaluate_michelson code in
   let%bind packed_payload = Ligo.Run.Of_michelson.pack_payload payload payload_ty in
-  let (signed_data:Signature.t) = Signature.sign sk packed_payload in
+  let signed_data = Signature.sign sk packed_payload in
   let signature_str = Signature.to_b58check signed_data in
   ok signature_str
 
