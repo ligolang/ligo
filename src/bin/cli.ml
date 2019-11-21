@@ -3,7 +3,10 @@ open Trace
 open Cli_helpers
 
 let main =
-  (Term.(ret (const (`Help (`Auto, None)))) , Term.info "ligo")
+  let man =
+    [ `S "MORE HELP";
+      `P "Use `$(mname) $(i,COMMAND) --help' for help on a single command." ] in
+  (Term.(ret (const (`Help (`Auto, None)))), Term.info "ligo" ~man)
 
 let source_file n =
   let open Arg in
@@ -94,7 +97,7 @@ let compile_file =
   let term =
     Term.(const f $ source_file 0 $ entry_point 1 $ syntax $ display_format $ michelson_code_format) in
   let cmdname = "compile-contract" in
-  let doc = "Subcommand: compile a contract. See `ligo " ^ cmdname ^ " --help' for a list of options specific to this subcommand." in
+  let doc = "Subcommand: compile a contract." in
   (term , Term.info ~doc cmdname)
 
 let compile_parameter =
@@ -108,7 +111,7 @@ let compile_parameter =
   let term =
     Term.(const f $ source_file 0 $ entry_point 1 $ expression "PARAMETER" 2 $ syntax $ display_format $ michelson_code_format) in
   let cmdname = "compile-parameter" in
-  let doc = "Subcommand: compile parameters to a michelson expression. The resulting michelson expression can be passed as an argument in a transaction which calls a contract. See `ligo " ^ cmdname ^ " --help' for a list of options specific to this subcommand." in
+  let doc = "Subcommand: compile parameters to a michelson expression. The resulting michelson expression can be passed as an argument in a transaction which calls a contract." in
   (term , Term.info ~doc cmdname)
 
 let compile_storage =
@@ -122,7 +125,7 @@ let compile_storage =
   let term =
     Term.(const f $ source_file 0 $ entry_point 1 $ expression "STORAGE" 2 $ syntax $ display_format $ michelson_code_format) in
   let cmdname = "compile-storage" in
-  let doc = "Subcommand: compile an initial storage in ligo syntax to a michelson expression. The resulting michelson expression can be passed as an argument in a transaction which originates a contract. See `ligo " ^ cmdname ^ " --help' for a list of options specific to this subcommand." in
+  let doc = "Subcommand: compile an initial storage in ligo syntax to a michelson expression. The resulting michelson expression can be passed as an argument in a transaction which originates a contract." in
   (term , Term.info ~doc cmdname)
 
 let dry_run =

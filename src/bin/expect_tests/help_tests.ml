@@ -10,10 +10,12 @@ let%expect_test _ =
     SYNOPSIS
            ligo COMMAND ...
 
+    MORE HELP
+           Use `ligo COMMAND --help' for help on a single command.
+
     COMMANDS
            compile-contract
-               Subcommand: compile a contract. See `ligo compile-contract --help'
-               for a list of options specific to this subcommand.
+               Subcommand: compile a contract.
 
            compile-expression
                Subcommand: compile to a michelson value.
@@ -21,15 +23,13 @@ let%expect_test _ =
            compile-parameter
                Subcommand: compile parameters to a michelson expression. The
                resulting michelson expression can be passed as an argument in a
-               transaction which calls a contract. See `ligo compile-parameter
-               --help' for a list of options specific to this subcommand.
+               transaction which calls a contract.
 
            compile-storage
                Subcommand: compile an initial storage in ligo syntax to a
                michelson expression. The resulting michelson expression can be
                passed as an argument in a transaction which originates a
-               contract. See `ligo compile-storage --help' for a list of options
-               specific to this subcommand.
+               contract.
 
            dry-run
                Subcommand: run a smart-contract with the given storage and input.
@@ -54,10 +54,12 @@ let%expect_test _ =
     SYNOPSIS
            ligo COMMAND ...
 
+    MORE HELP
+           Use `ligo COMMAND --help' for help on a single command.
+
     COMMANDS
            compile-contract
-               Subcommand: compile a contract. See `ligo compile-contract --help'
-               for a list of options specific to this subcommand.
+               Subcommand: compile a contract.
 
            compile-expression
                Subcommand: compile to a michelson value.
@@ -65,15 +67,13 @@ let%expect_test _ =
            compile-parameter
                Subcommand: compile parameters to a michelson expression. The
                resulting michelson expression can be passed as an argument in a
-               transaction which calls a contract. See `ligo compile-parameter
-               --help' for a list of options specific to this subcommand.
+               transaction which calls a contract.
 
            compile-storage
                Subcommand: compile an initial storage in ligo syntax to a
                michelson expression. The resulting michelson expression can be
                passed as an argument in a transaction which originates a
-               contract. See `ligo compile-storage --help' for a list of options
-               specific to this subcommand.
+               contract.
 
            dry-run
                Subcommand: run a smart-contract with the given storage and input.
@@ -93,9 +93,7 @@ let%expect_test _ =
   run_ligo_good [ "compile-contract" ; "--help" ] ;
   [%expect {|
     NAME
-           ligo-compile-contract - Subcommand: compile a contract. See `ligo
-           compile-contract --help' for a list of options specific to this
-           subcommand.
+           ligo-compile-contract - Subcommand: compile a contract.
 
     SYNOPSIS
            ligo compile-contract [OPTION]... SOURCE_FILE ENTRY_POINT
@@ -137,9 +135,7 @@ let%expect_test _ =
     NAME
            ligo-compile-parameter - Subcommand: compile parameters to a michelson
            expression. The resulting michelson expression can be passed as an
-           argument in a transaction which calls a contract. See `ligo
-           compile-parameter --help' for a list of options specific to this
-           subcommand.
+           argument in a transaction which calls a contract.
 
     SYNOPSIS
            ligo compile-parameter [OPTION]... SOURCE_FILE ENTRY_POINT
@@ -186,8 +182,7 @@ let%expect_test _ =
            ligo-compile-storage - Subcommand: compile an initial storage in ligo
            syntax to a michelson expression. The resulting michelson expression
            can be passed as an argument in a transaction which originates a
-           contract. See `ligo compile-storage --help' for a list of options
-           specific to this subcommand.
+           contract.
 
     SYNOPSIS
            ligo compile-storage [OPTION]... SOURCE_FILE ENTRY_POINT
