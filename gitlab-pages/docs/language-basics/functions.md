@@ -93,4 +93,10 @@ const increment : (int -> int) = (function (const i : int) : int is i + 1);
 // a = 2
 const a: int = increment(1);
 ```
+
+<!--Cameligo-->
+```cameligo
+let increment : (int -> int) = fun (i: int) -> i + 1
+```
+
 <!--END_DOCUSAURUS_CODE_TABS-->
