@@ -15,6 +15,7 @@
  (name   runtest_dune_template)
  (action (diff dune.inc dune.inc.gen)))
 
-(alias
- (name runtest)
- (deps (alias runtest_dune_template)))
+;;; for ligo, don't test this
+; (alias
+;  (name runtest)
+;  (deps (alias runtest_dune_template)))
