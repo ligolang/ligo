@@ -41,9 +41,12 @@ let my_set: int_set =
 const my_set: int_set = set end;
 const my_set_2: int_set = set_empty;
 ```
+<!--Cameligo-->
+```cameligo
+let my_set: int_set = (Set.empty: int set)
+```
+
 <!--END_DOCUSAURUS_CODE_TABS-->
-
-
 
 ### Checking if set contains an element
 
