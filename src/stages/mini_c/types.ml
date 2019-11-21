@@ -5,8 +5,9 @@ type type_base =
   | Base_bool
   | Base_int | Base_nat | Base_tez
   | Base_timestamp
-  | Base_string | Base_bytes | Base_address
+  | Base_string | Base_bytes | Base_address | Base_key
   | Base_operation | Base_signature
+  | Base_chain_id | Base_key_hash
 
 type 'a annotated = string option * 'a
 

@@ -24,9 +24,13 @@ let run ?options (* ?(is_input_value = false) *) (program:compiled_program) (inp
     Trace.trace_tzresult_lwt (simple_error "error parsing input") @@
     Memory_proto_alpha.parse_michelson_data input_michelson input_ty
   in
+  let body = Michelson.strip_annots body in
+  let open! Memory_proto_alpha.Protocol.Script_ir_translator in 
+  let top_level = Toplevel { storage_type = output_ty ; param_type = input_ty ;
+                             root_name = None ; legacy_create_contract_literal = false } in
   let%bind descr =
     Trace.trace_tzresult_lwt (simple_error "error parsing program code") @@
-    Memory_proto_alpha.parse_michelson body
+    Memory_proto_alpha.parse_michelson ~top_level body
       (Item_t (input_ty, Empty_t, None)) (Item_t (output_ty, Empty_t, None)) in
   let open! Memory_proto_alpha.Protocol.Script_interpreter in
   let%bind (Item(output, Empty)) =
@@ -79,13 +83,11 @@ let evaluate_michelson ?options program =
   let%bind etv = evaluate ?options program in
   ex_value_ty_to_michelson etv
 
-let pack_message_lambda (lambda:Michelson.t) =
-  let open Memory_proto_alpha.Protocol.Script_typed_ir in
-  let input_ty = Lambda_t (Unit_t None , List_t ((Operation_t None),None,false) , None) in
-  let%bind lambda =
+let pack_payload (payload:Michelson.t) ty =
+  let%bind payload =
     Trace.trace_tzresult_lwt (simple_error "error parsing message") @@
-    Memory_proto_alpha.parse_michelson_data lambda input_ty in
+    Memory_proto_alpha.parse_michelson_data payload ty in
   let%bind data =
     Trace.trace_tzresult_lwt (simple_error "error packing message") @@
-    Memory_proto_alpha.pack input_ty lambda in
+    Memory_proto_alpha.pack ty payload in
   ok @@ data

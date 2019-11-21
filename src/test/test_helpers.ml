@@ -95,6 +95,17 @@ let expect_n_aux ?options lst program entry_point make_input make_expecter =
   let%bind _ = bind_map_list aux lst in
   ok ()
 
+let expect_eq_n_trace_aux ?options lst program entry_point make_input make_expected =
+  let aux n =
+    let%bind input = make_input n in
+    let%bind expected = make_expected n in
+    trace (simple_error ("expect_eq_n " ^ (string_of_int n))) @@
+    let result = expect_eq ?options program entry_point input expected in
+    result
+  in
+  let%bind _ = bind_map_list_seq aux lst in
+  ok ()
+
 let expect_eq_n_aux ?options lst program entry_point make_input make_expected =
   let aux n =
     let input = make_input n in

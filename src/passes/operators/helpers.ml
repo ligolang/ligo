@@ -127,6 +127,7 @@ module Typer = struct
         t_bytes () ;
         t_address () ;
         t_timestamp () ;
+        t_key_hash () ;
       ] in
     ok @@ t_bool ()
 

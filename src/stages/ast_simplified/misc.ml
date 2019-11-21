@@ -61,6 +61,18 @@ let assert_literal_eq (a, b : literal * literal) : unit result =
   | Literal_address _, _ -> fail @@ different_literals_because_different_types "address vs non-address" a b
   | Literal_operation _, Literal_operation _ -> fail @@ error_uncomparable_literals "can't compare operations" a b
   | Literal_operation _, _ -> fail @@ different_literals_because_different_types "operation vs non-operation" a b
+  | Literal_signature a, Literal_signature b when a = b -> ok ()
+  | Literal_signature _, Literal_signature _ -> fail @@ different_literals "different signature" a b
+  | Literal_signature _, _ -> fail @@ different_literals_because_different_types "signature vs non-signature" a b
+  | Literal_key a, Literal_key b when a = b -> ok ()
+  | Literal_key _, Literal_key _ -> fail @@ different_literals "different key" a b
+  | Literal_key _, _ -> fail @@ different_literals_because_different_types "key vs non-key" a b
+  | Literal_key_hash a, Literal_key_hash b when a = b -> ok ()
+  | Literal_key_hash _, Literal_key_hash _ -> fail @@ different_literals "different key_hash" a b
+  | Literal_key_hash _, _ -> fail @@ different_literals_because_different_types "key_hash vs non-key_hash" a b
+  | Literal_chain_id a, Literal_chain_id b when a = b -> ok ()
+  | Literal_chain_id _, Literal_chain_id _ -> fail @@ different_literals "different chain_id" a b
+  | Literal_chain_id _, _ -> fail @@ different_literals_because_different_types "chain_id vs non-chain_id" a b
 
 let rec assert_value_eq (a, b: (expression * expression )) : unit result =
   let error_content () =

@@ -31,6 +31,15 @@ let rec translate_value (Ex_typed_value (ty, value)) : value result =
         trace_option (simple_error "too big to fit an int") @@
         Alpha_context.Script_int.to_int n in
       ok @@ D_nat n
+  | (Chain_id_t _), id ->
+    let str = Tezos_crypto.Base58.simple_encode
+      (Tezos_base__TzPervasives.Chain_id.b58check_encoding)
+      id in
+    ok @@ D_string str
+  | (Key_hash_t _ ), n ->
+    ok @@ D_string (Signature.Public_key_hash.to_b58check n)
+  | (Key_t _ ), n ->
+    ok @@ D_string (Signature.Public_key.to_b58check n)
   | (Timestamp_t _), n ->
       let n =
         Z.to_int @@
