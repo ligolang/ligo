@@ -35,7 +35,7 @@ module Errors = struct
       Format.asprintf "multiple patterns in \"%s\" are not supported yet" construct in
     let patterns_loc =
       List.fold_left (fun a p -> Region.cover a (Raw.pattern_to_region p))
-        Region.min patterns in
+        Region.ghost patterns in
     let data = [
       ("patterns_loc", fun () -> Format.asprintf "%a" Location.pp_lift @@ patterns_loc)
     ] in
