@@ -406,6 +406,8 @@ and type_expression' : environment -> ?tv_opt:O.type_value -> I.expression -> O.
       return (E_literal (Literal_string s)) (t_string ())
   | E_literal (Literal_key s) ->
       return (E_literal (Literal_key s)) (t_key ())
+  | E_literal (Literal_key_hash s) ->
+      return (E_literal (Literal_key_hash s)) (t_key_hash ())
   | E_literal (Literal_chain_id s) ->
       return (E_literal (Literal_chain_id s)) (t_chain_id ())
   | E_literal (Literal_signature s) ->
@@ -816,6 +818,7 @@ let untype_literal (l:O.literal) : I.literal result =
   | Literal_string s -> ok (Literal_string s)
   | Literal_signature s -> ok (Literal_signature s)
   | Literal_key s -> ok (Literal_key s)
+  | Literal_key_hash s -> ok (Literal_key_hash s)
   | Literal_chain_id s -> ok (Literal_chain_id s)
   | Literal_bytes b -> ok (Literal_bytes b)
   | Literal_address s -> ok (Literal_address s)

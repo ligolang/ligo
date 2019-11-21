@@ -123,6 +123,7 @@ val e_timestamp : int -> expression
 val e_address : string -> expression
 val e_signature : string -> expression
 val e_key : string -> expression
+val e_key_hash : string -> expression
 val e_chain_id : string -> expression
 val e_operation : Memory_proto_alpha.Protocol.Alpha_context.packed_internal_operation -> expression
 val e_lambda : lambda -> expression

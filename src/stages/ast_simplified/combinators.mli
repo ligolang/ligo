@@ -18,7 +18,8 @@ val t_nat       : type_expression
 val t_tez       : type_expression
 val t_unit      : type_expression
 val t_address   : type_expression
-val t_key   : type_expression
+val t_key       : type_expression
+val t_key_hash  : type_expression
 val t_signature : type_expression
 (*
 val t_option    : type_expression -> type_expression
@@ -55,6 +56,7 @@ val e_string : ?loc:Location.t -> string -> expression
 val e_address : ?loc:Location.t -> string -> expression 
 val e_signature : ?loc:Location.t -> string -> expression 
 val e_key : ?loc:Location.t -> string -> expression 
+val e_key_hash : ?loc:Location.t -> string -> expression 
 val e_chain_id : ?loc:Location.t -> string -> expression 
 val e_mutez : ?loc:Location.t -> int -> expression
 val e'_bytes : string -> expression' result

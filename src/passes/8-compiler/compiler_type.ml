@@ -32,6 +32,7 @@ module Ty = struct
   let mutez = Mutez_t None
   let string = String_t None
   let key = Key_t None
+  let key_hash = Key_hash_t None
   let chain_id = Chain_id_t None
   let list a = List_t (a, None , has_big_map a)
   let set a = Set_t (a, None)
@@ -71,6 +72,7 @@ module Ty = struct
     | Base_operation -> fail (not_comparable "operation")
     | Base_signature -> fail (not_comparable "signature")
     | Base_key -> fail (not_comparable "key")
+    | Base_key_hash -> fail (not_comparable "key_hash")
     | Base_chain_id -> fail (not_comparable "chain_id")
 
   let comparable_type : type_value -> ex_comparable_ty result = fun tv ->
@@ -88,7 +90,7 @@ module Ty = struct
 
   let base_type : type_base -> ex_ty result = fun b ->
     let return x = ok @@ Ex_ty x in
-    match b with
+   match b with
     | Base_unit -> return unit
     | Base_void -> fail (not_compilable_type "void")
     | Base_bool -> return bool
@@ -102,6 +104,7 @@ module Ty = struct
     | Base_operation -> return operation
     | Base_signature -> return signature
     | Base_key -> return key
+    | Base_key_hash -> return key_hash
     | Base_chain_id -> return chain_id
 
   let rec type_ : type_value -> ex_ty result =
@@ -186,6 +189,7 @@ let base_type : type_base -> O.michelson result =
   | Base_operation -> ok @@ O.prim T_operation
   | Base_signature -> ok @@ O.prim T_signature
   | Base_key -> ok @@ O.prim T_key
+  | Base_key_hash -> ok @@ O.prim T_key_hash
   | Base_chain_id -> ok @@ O.prim T_chain_id
 
 let rec type_ : type_value -> O.michelson result =

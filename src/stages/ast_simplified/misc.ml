@@ -67,6 +67,9 @@ let assert_literal_eq (a, b : literal * literal) : unit result =
   | Literal_key a, Literal_key b when a = b -> ok ()
   | Literal_key _, Literal_key _ -> fail @@ different_literals "different key" a b
   | Literal_key _, _ -> fail @@ different_literals_because_different_types "key vs non-key" a b
+  | Literal_key_hash a, Literal_key_hash b when a = b -> ok ()
+  | Literal_key_hash _, Literal_key_hash _ -> fail @@ different_literals "different key_hash" a b
+  | Literal_key_hash _, _ -> fail @@ different_literals_because_different_types "key_hash vs non-key_hash" a b
   | Literal_chain_id a, Literal_chain_id b when a = b -> ok ()
   | Literal_chain_id _, Literal_chain_id _ -> fail @@ different_literals "different chain_id" a b
   | Literal_chain_id _, _ -> fail @@ different_literals_because_different_types "chain_id vs non-chain_id" a b

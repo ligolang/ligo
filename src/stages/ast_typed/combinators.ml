@@ -246,6 +246,7 @@ let e_timestamp s : expression = E_literal (Literal_timestamp s)
 let e_address s : expression = E_literal (Literal_address s)
 let e_signature s : expression = E_literal (Literal_signature s)
 let e_key s : expression = E_literal (Literal_key s)
+let e_key_hash s : expression = E_literal (Literal_key_hash s)
 let e_chain_id s : expression = E_literal (Literal_chain_id s)
 let e_operation s : expression = E_literal (Literal_operation s)
 let e_lambda l : expression = E_lambda l

@@ -80,6 +80,7 @@ module Simplify = struct
       ("string_concat" , "CONCAT") ;
       ("string_slice" , "SLICE") ;
       ("crypto_check", "CHECK_SIGNATURE") ;
+      ("crypto_hash_key", "HASH_KEY") ;
       ("bytes_concat" , "CONCAT") ;
       ("bytes_slice" , "SLICE") ;
       ("bytes_pack" , "PACK") ;
