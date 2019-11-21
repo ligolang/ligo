@@ -1,12 +1,6 @@
 open Trace
 open Ast_typed
-open Tezos_utils
 
-
-let compile_expression_as_value : annotated_expression -> Michelson.t result = fun e ->
-  let%bind mini_c_expression = Transpiler.transpile_annotated_expression e in
-  let%bind expr = Of_mini_c.compile_expression_as_value mini_c_expression in
-  ok expr
 
 let compile_expression_as_function : annotated_expression -> _ result = fun e ->
   let%bind mini_c_expression = Transpiler.transpile_annotated_expression e in
@@ -17,12 +11,6 @@ let compile_function : annotated_expression -> _ result = fun e ->
   let%bind mini_c_expression = Transpiler.transpile_annotated_expression e in
   let%bind expr = Of_mini_c.compile_function mini_c_expression in
   ok expr
-
-(*
-   val compile_value : annotated_expression -> Michelson.t result
-   This requires writing a function
-   `transpile_expression_as_value : annotated_expression -> Mini_c.value result`
- *)
 
 let compile_function_entry : program -> string -> _ = fun p entry ->
   let%bind prog_mini_c = Transpiler.transpile_program p in

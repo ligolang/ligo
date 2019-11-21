@@ -70,23 +70,23 @@ let compile_expression : string -> Typer.Solver.state -> Compile.Helpers.s_synta
   let%bind simplified = Compile.Helpers.parsify_expression syntax expression in
   Of_simplified.compile_expression ~state simplified
 
-let compile_file_contract_storage ~value : string -> string -> string -> Compile.Helpers.s_syntax -> Michelson.t result =
+let compile_file_contract_storage : string -> string -> string -> Compile.Helpers.s_syntax -> Michelson.t result =
   fun source_filename _entry_point expression syntax ->
   let%bind (program , state) = Compile.Of_source.type_file syntax source_filename in
   let env = Ast_typed.program_environment program in
   let%bind syntax = Compile.Helpers.syntax_to_variant syntax (Some source_filename) in
   let%bind simplified = Compile.Helpers.parsify_expression syntax expression in
-  Of_simplified.compile_expression ~value simplified ~env ~state
+  Of_simplified.compile_expression simplified ~env ~state
 
 let compile_file_contract_args =
-  fun ?value source_filename _entry_point storage parameter syntax ->
+  fun source_filename _entry_point storage parameter syntax ->
   let%bind (program , state) = Compile.Of_source.type_file syntax source_filename in
   let env = Ast_typed.program_environment program in
   let%bind syntax = Compile.Helpers.syntax_to_variant syntax (Some source_filename) in
   let%bind storage_simplified = Compile.Helpers.parsify_expression syntax storage in
   let%bind parameter_simplified = Compile.Helpers.parsify_expression syntax parameter in
   let args = Ast_simplified.e_pair storage_simplified parameter_simplified in
-  Of_simplified.compile_expression ?value args ~env ~state
+  Of_simplified.compile_expression args ~env ~state
 
 type dry_run_options =
   { amount : string ;
@@ -120,11 +120,11 @@ let make_dry_run_options (opts : dry_run_options) : Of_michelson.options result 
       ok (Some source) in
   ok @@ make_options ~amount ?source:sender ?payer:source ()
 
-let run_contract ~options ?storage_value source_filename entry_point storage parameter syntax =
+let run_contract ~options source_filename entry_point storage parameter syntax =
   let%bind (program , state) = Compile.Of_source.type_file syntax source_filename in
   let () = Typer.Solver.discard_state state in
   let%bind code = Compile.Of_typed.compile_function_entry program entry_point in
-  let%bind args = compile_file_contract_args ?value:storage_value source_filename entry_point storage parameter syntax in
+  let%bind args = compile_file_contract_args source_filename entry_point storage parameter syntax in
   let%bind options = make_dry_run_options options in
   let%bind ex_value_ty = Of_michelson.run ~options code args in
   Compile.Of_simplified.uncompile_typed_program_entry_function_result program entry_point ex_value_ty

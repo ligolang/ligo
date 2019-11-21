@@ -466,7 +466,7 @@ and transpile_annotated_expression (ae:AST.annotated_expression) : expression re
           bind_map_pair (transpile_annotated_expression) (k , v') in
         return @@ E_constant ("UPDATE", [k' ; v' ; prev'])
       in
-      let init = return @@ E_make_empty_map (src, dst) in
+      let init = return @@ E_make_empty_big_map (src, dst) in
       List.fold_left aux init m
     )
   | E_look_up dsi -> (

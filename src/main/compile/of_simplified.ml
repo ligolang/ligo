@@ -1,6 +1,5 @@
 open Ast_simplified
 open Trace
-open Tezos_utils
 
 let compile_contract_entry (program : program) entry_point =
   let%bind (prog_typed , state) = Typer.type_program program in
@@ -18,17 +17,6 @@ let compile_expression_as_function_entry (program : program) entry_point : _ res
   Of_typed.compile_expression_as_function_entry typed_program entry_point
 
 (* TODO: do we need to thread the state here? Also, make the state arg. optional. *)
-let compile_expression_as_value ?(env = Ast_typed.Environment.full_empty) ~(state : Typer.Solver.state) ae : Michelson.t result =
-  let%bind (typed , state) = Typer.type_expression env state ae in
-  (* TODO: move this to typer.ml *)
-  let typed =
-    if Typer.use_new_typer then
-      let () = failwith "TODO : subst all" in let _todo = ignore (env, state) in typed
-    else
-      typed
-  in
-  Of_typed.compile_expression_as_value typed
-
 let compile_expression_as_function ?(env = Ast_typed.Environment.full_empty) ~(state : Typer.Solver.state) (ae : Ast_simplified.expression) : _ result =
   let%bind (typed , state) = Typer.type_expression env state ae in
   (* TODO: move this to typer.ml *)

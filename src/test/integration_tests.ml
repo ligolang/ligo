@@ -694,7 +694,7 @@ let big_map_ type_f path : unit result =
   let%bind () =
     let make_input = fun n -> ez [(23, n) ; (42, 4)] in
     let make_expected = e_int in
-    expect_eq_n ~input_to_value:true program "gf" make_input make_expected
+    expect_eq_n program "gf" make_input make_expected
   in
   let%bind () =
     let make_input = fun n ->
@@ -702,17 +702,17 @@ let big_map_ type_f path : unit result =
       e_tuple [(e_int n) ; m]
     in
     let make_expected = fun n -> ez [(23 , n) ; (42 , 0)] in
-    expect_eq_n_pos_small ?input_to_value:(Some true) program "set_" make_input make_expected
+    expect_eq_n_pos_small program "set_" make_input make_expected
   in
   let%bind () =
     let make_input = fun n -> ez [(23, n) ; (42, 4)] in
     let make_expected = fun _ -> e_some @@ e_int 4 in
-    expect_eq_n ?input_to_value:(Some true) program "get" make_input make_expected
+    expect_eq_n program "get" make_input make_expected
   in
   let%bind () =
     let input = ez [(23, 23) ; (42, 42)] in
     let expected = ez [23, 23] in
-    expect_eq ?input_to_value:(Some true) program "rm" input expected
+    expect_eq program "rm" input expected
   in
   ok ()
 

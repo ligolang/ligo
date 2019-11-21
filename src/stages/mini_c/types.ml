@@ -65,6 +65,7 @@ and expression' =
   | E_application of (expression * expression)
   | E_variable of var_name
   | E_make_empty_map of (type_value * type_value)
+  | E_make_empty_big_map of (type_value * type_value)
   | E_make_empty_list of type_value
   | E_make_empty_set of type_value
   | E_make_none of type_value

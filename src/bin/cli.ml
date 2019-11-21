@@ -37,14 +37,6 @@ let syntax =
     info ~docv ~doc ["syntax" ; "s"] in
   value @@ opt string "auto" info
 
-let bigmap =
-  let open Arg in
-  let info =
-    let docv = "BIGMAP" in
-    let doc = "$(docv) is necessary when your storage embeds a big_map." in
-    info ~docv ~doc ["bigmap"] in
-  value @@ flag info
-
 let amount =
   let open Arg in
   let info =
@@ -121,31 +113,30 @@ let compile_parameter =
   (term , Term.info ~docs cmdname)
 
 let compile_storage =
-  let f source_file entry_point expression syntax display_format michelson_format bigmap =
+  let f source_file entry_point expression syntax display_format michelson_format =
     toplevel ~display_format @@
     let%bind value =
       trace (simple_error "compile-storage") @@
-      Ligo.Run.Of_source.compile_file_contract_storage ~value:bigmap source_file entry_point expression (Syntax_name syntax) in
+      Ligo.Run.Of_source.compile_file_contract_storage source_file entry_point expression (Syntax_name syntax) in
     ok @@ Format.asprintf "%a\n" (Main.Display.michelson_pp michelson_format) value
   in
   let term =
-    Term.(const f $ source_file 0 $ entry_point 1 $ expression "STORAGE" 2 $ syntax $ display_format $ michelson_code_format $ bigmap) in
+    Term.(const f $ source_file 0 $ entry_point 1 $ expression "STORAGE" 2 $ syntax $ display_format $ michelson_code_format) in
   let cmdname = "compile-storage" in
   let docs = "Subcommand: compile an initial storage in ligo syntax to a michelson expression. The resulting michelson expression can be passed as an argument in a transaction which originates a contract. See `ligo " ^ cmdname ^ " --help' for a list of options specific to this subcommand." in
   (term , Term.info ~docs cmdname)
 
 let dry_run =
-  let f source_file entry_point storage input amount sender source syntax display_format bigmap =
+  let f source_file entry_point storage input amount sender source syntax display_format =
     toplevel ~display_format @@
     let%bind output =
       Ligo.Run.Of_source.run_contract
         ~options:{ amount ; sender ; source }
-        ~storage_value:bigmap
         source_file entry_point storage input (Syntax_name syntax) in
     ok @@ Format.asprintf "%a\n" Ast_simplified.PP.expression output
   in
   let term =
-    Term.(const f $ source_file 0 $ entry_point 1 $ expression "PARAMETER" 2 $ expression "STORAGE" 3 $ amount $ sender $ source $ syntax $ display_format $ bigmap) in
+    Term.(const f $ source_file 0 $ entry_point 1 $ expression "PARAMETER" 2 $ expression "STORAGE" 3 $ amount $ sender $ source $ syntax $ display_format) in
   let cmdname = "dry-run" in
   let docs = "Subcommand: run a smart-contract with the given storage and input." in
   (term , Term.info ~docs cmdname)
