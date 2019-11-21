@@ -134,6 +134,15 @@ let closure () : unit result =
   in
   ok ()
 
+let closure_mligo () : unit result =
+  let%bind program = mtype_file "./contracts/closure.mligo" in
+  let%bind _ =
+    let input = e_int 0 in
+    let expected = e_int 25 in
+    expect_eq program "test" input expected
+  in
+  ok ()
+
 let shadow () : unit result =
   let%bind program = type_file "./contracts/shadow.ligo" in
   let make_expect = fun _ -> 0 in
@@ -1269,6 +1278,7 @@ let main = test_suite "Integration (End to End)" [
     test "anon function" anon_function ;
     test "various applications" application ;
     test "closure" closure ;
+    test "closure (mligo)" closure_mligo ;
     test "shared function" shared_function ;
     test "shared function (mligo)" shared_function_mligo ;
     test "higher order" higher_order ;
