@@ -118,6 +118,13 @@ let rec translate_value (Ex_typed_value (ty, value)) : value result =
     )
   | (Operation_t _) , (op , _) ->
       ok @@ D_operation op
+  | (Lambda_t _ as ty) , _ ->
+      let%bind m_ty =
+        trace_tzresult_lwt (simple_error "unparsing unrecognized data") @@
+        Proto_alpha_utils.Memory_proto_alpha.unparse_michelson_ty ty in
+      let pp_lambda =
+        Format.asprintf "[lambda of type: %a ]" Michelson.pp m_ty in
+        ok @@ D_string pp_lambda
   | ty, v ->
       let%bind error =
         let%bind m_data =
