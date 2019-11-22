@@ -220,5 +220,9 @@ let rec untranspile (v : value) (t : AST.type_value) : AST.annotated_expression 
         @@ List.map (fun (x, (y, z)) -> let%bind yz = untranspile y z in ok (x, yz)) lst in
       let m' = map_of_kv_list lst in
       return (E_record m')
-  | T_function _ -> fail @@ bad_untranspile "function" v
+  | T_function _ ->
+      let%bind n =
+        trace_strong (wrong_mini_c_value "lambda as string" v) @@
+        get_string v in
+      return (E_literal (Literal_string n))
   | T_variable (Type_name v) -> return (E_variable v)
