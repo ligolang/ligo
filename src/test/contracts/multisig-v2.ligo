@@ -1,7 +1,7 @@
 // storage type
 type threshold_t is nat
 type addr_set_t is set(address)
-type message_store_t is map(bytes,addr_set_t)
+type message_store_t is big_map(bytes,addr_set_t)
 
 type storage_t is record
   threshold : threshold_t ;
@@ -19,28 +19,24 @@ type entry_point_t is
 | Send of send_pt
 
 function send (const param : send_pt; const s : storage_t) : contract_return_t is block {
+
+  if not set_mem(sender,s.auth) then failwith("Unauthorized address") else skip ;
+  
   var message : message_t := param ;
+  const packed_msg : bytes = bytes_pack(message) ;
   var ret_ops : list(operation) := (nil : list(operation)) ;
 
-  if set_mem(source,s.auth) then block {
-    const packed_msg : bytes = bytes_pack(message) ;
-    var store_patch : addr_set_t := set_empty ;
-
+  var new_store : addr_set_t :=
     case map_get(packed_msg, s.message_store) of
-    | Some(voters) ->
-      if set_mem(source,voters) then failwith("Already accounted message")
-      else store_patch := set_add(source,voters)
-    | None -> store_patch := set source end
-    end;
+    | Some(voters) -> set_add(sender,voters)
+    | None         -> (set_empty : addr_set_t) end
+  ;
 
-    if size(store_patch) >= s.threshold then block {
-      remove packed_msg from map s.message_store ;
-      ret_ops := message(unit) ;
-    } else
-      patch s.message_store with map [packed_msg -> store_patch]
-  }
-  else
-    failwith("Unauthorized address");
+  if size(new_store) >= s.threshold then block {
+    remove packed_msg from map s.message_store ;
+    ret_ops := message(unit) ;
+  } else
+    s.message_store[packed_msg] := new_store
 
 } with ( ret_ops , s)
 

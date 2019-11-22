@@ -43,7 +43,7 @@ let storage threshold id_list store_list = e_ez_record [
   ("auth"     , e_typed_set
     (List.fold_left (fun acc el -> (e_address @@ addr el)::acc) [] id_list) 
     t_address) ;
-  ("message_store" , e_typed_map store_list t_bytes (t_set t_address))
+  ("message_store" , e_typed_big_map store_list t_bytes (t_set t_address))
 ]
 
 (* sender not stored in the authorized set *)
@@ -51,8 +51,8 @@ let wrong_addr () =
   let%bind program,_ = get_program () in
   let init_storage = storage 1 [1;2] [] in
   let amount = Memory_proto_alpha.Protocol.Alpha_context.Tez.zero in
-  let payer = contract 3 in
-  let options = Proto_alpha_utils.Memory_proto_alpha.make_options ~amount ~payer () in
+  let source = contract 3 in
+  let options = Proto_alpha_utils.Memory_proto_alpha.make_options ~amount ~source () in
   let%bind () =
     let exp_failwith = "Unauthorized address" in
     expect_string_failwith ~options program "main"
@@ -64,17 +64,14 @@ let already_accounted () =
   let%bind program,_ = get_program () in
   let%bind packed_payload = pack_payload program empty_message in
   let%bind bytes = e_bytes_ofbytes packed_payload in
-  let init_storage = storage 1 [1;2]
+  let init_storage = storage 2 [1;2]
     [(bytes, e_set [e_address@@ addr 1])] in
-  let%bind () =
   let options =
     let amount = Memory_proto_alpha.Protocol.Alpha_context.Tez.zero in
-    let payer = contract 1 in
-    Proto_alpha_utils.Memory_proto_alpha.make_options ~amount ~payer () in
-  let exp_failwith = "Already accounted message" in
-  expect_string_failwith ~options program "main"
-    (e_pair param init_storage) exp_failwith in
-  ok ()
+    let source = contract 1 in
+    Proto_alpha_utils.Memory_proto_alpha.make_options ~amount ~source () in
+  expect_eq ~options program "main"
+    (e_pair param init_storage) (e_pair empty_op_list init_storage)
 
 (* successful storing in the message store *)
 let succeeded_storing () =
@@ -83,8 +80,8 @@ let succeeded_storing () =
   let%bind bytes = e_bytes_ofbytes packed_payload in
   let options =
     let amount = Memory_proto_alpha.Protocol.Alpha_context.Tez.zero in
-    let payer = contract 1 in
-    Proto_alpha_utils.Memory_proto_alpha.make_options ~amount ~payer () in
+    let source = contract 1 in
+    Proto_alpha_utils.Memory_proto_alpha.make_options ~amount ~source () in
   let%bind () = expect_eq_n_trace_aux ~options [1;2] program "main"
       (fun th ->
         let init_storage = storage th [1;2;3]
