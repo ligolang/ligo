@@ -29,6 +29,26 @@ let test name f =
 
 let test_suite name lst = Test_suite (name , lst)
 
+
+open Ast_simplified
+
+let pack_payload (program:Ast_typed.program) (payload:expression) : bytes result =
+  let%bind code =
+    let env = Ast_typed.program_environment program in
+    Compile.Of_simplified.compile_expression_as_function
+      ~env ~state:(Typer.Solver.initial_state) payload in
+  let Compiler.Program.{input=_;output=(Ex_ty payload_ty);body=_} = code in
+  let%bind (payload: Tezos_utils.Michelson.michelson) =
+    Ligo.Run.Of_michelson.evaluate_michelson code in
+  Ligo.Run.Of_michelson.pack_payload payload payload_ty
+
+let sign_message (program:Ast_typed.program) (payload : expression) sk : string result =
+  let open Tezos_crypto in
+  let%bind packed_payload = pack_payload program payload in
+  let signed_data = Signature.sign sk packed_payload in
+  let signature_str = Signature.to_b58check signed_data in
+  ok signature_str
+
 open Ast_simplified.Combinators
 
 let expect ?options program entry_point input expecter =
