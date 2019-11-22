@@ -158,6 +158,17 @@ let higher_order () : unit result =
   let%bind _ = expect_eq_n_int program "foobar5" make_expect in
   ok ()
 
+let higher_order_mligo () : unit result =
+  let%bind program = mtype_file "./contracts/high-order.mligo" in
+  let make_expect = fun n -> n in
+  let%bind _ = expect_eq_n_int program "foobar" make_expect in
+  let%bind _ = expect_eq_n_int program "foobar2" make_expect in
+  let%bind _ = expect_eq_n_int program "foobar3" make_expect in
+  let%bind _ = expect_eq_n_int program "foobar4" make_expect in
+  let%bind _ = expect_eq_n_int program "foobar5" make_expect in
+  ok ()
+
+
 let shared_function () : unit result =
   let%bind program = type_file "./contracts/function-shared.ligo" in
   Format.printf "inc\n" ;
@@ -1305,6 +1316,7 @@ let main = test_suite "Integration (End to End)" [
     test "shared function" shared_function ;
     test "shared function (mligo)" shared_function_mligo ;
     test "higher order" higher_order ;
+    test "higher order (mligo)" higher_order_mligo ;
     test "variant" variant ;
     test "variant (mligo)" variant_mligo ;
     test "variant matching" variant_matching ;
