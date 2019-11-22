@@ -22,17 +22,6 @@ let compile_main () =
 
 open Ast_simplified
 
-let pack_payload (payload:expression) : bytes result =
-  let%bind program,_ = get_program () in
-  let%bind code =
-    let env = Ast_typed.program_environment program in
-    Compile.Of_simplified.compile_expression_as_function
-      ~env ~state:(Typer.Solver.initial_state) payload in
-  let Compiler.Program.{input=_;output=(Ex_ty payload_ty);body=_} = code in
-  let%bind (payload: Tezos_utils.Michelson.michelson) =
-    Ligo.Run.Of_michelson.evaluate_michelson code in
-  Ligo.Run.Of_michelson.pack_payload payload payload_ty
-
 let contract id = 
   let open Proto_alpha_utils.Memory_proto_alpha in
   let id = List.nth dummy_environment.identities id in
@@ -73,7 +62,7 @@ let wrong_addr () =
 (* sender message is already stored in the message store *)
 let already_accounted () =
   let%bind program,_ = get_program () in
-  let%bind packed_payload = pack_payload empty_message in
+  let%bind packed_payload = pack_payload program empty_message in
   let%bind bytes = e_bytes_ofbytes packed_payload in
   let init_storage = storage 1 [1;2]
     [(bytes, e_set [e_address@@ addr 1])] in
@@ -90,7 +79,7 @@ let already_accounted () =
 (* successful storing in the message store *)
 let succeeded_storing () =
   let%bind program,_ = get_program () in
-  let%bind packed_payload = pack_payload empty_message in
+  let%bind packed_payload = pack_payload program empty_message in
   let%bind bytes = e_bytes_ofbytes packed_payload in
   let options =
     let amount = Memory_proto_alpha.Protocol.Alpha_context.Tez.zero in

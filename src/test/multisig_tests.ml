@@ -34,21 +34,6 @@ let str_keys (raw_pkh, raw_pk, raw_sk) =
   let pkh_str = Signature.Public_key_hash.to_b58check raw_pkh in
   (pkh_str,pk_str,sk_str)
 
-let sign_message (payload : expression) sk : string result =
-  let open Tezos_crypto in
-  let%bind program,_ = get_program () in
-  let%bind code =
-    let env = Ast_typed.program_environment program in
-    Compile.Of_simplified.compile_expression_as_function
-      ~env ~state:(Typer.Solver.initial_state) payload in
-  let Compiler.Program.{input=_;output=(Ex_ty payload_ty);body=_} = code in
-  let%bind payload =
-    Ligo.Run.Of_michelson.evaluate_michelson code in
-  let%bind packed_payload = Ligo.Run.Of_michelson.pack_payload payload payload_ty in
-  let signed_data = Signature.sign sk packed_payload in
-  let signature_str = Signature.to_b58check signed_data in
-  ok signature_str
-
 let init_storage threshold counter pkeys =
   let keys = List.map
     (fun el ->
@@ -73,6 +58,7 @@ let chain_id_zero = e_chain_id @@ Tezos_crypto.Base58.simple_encode
 
 (* sign the message 'msg' with 'keys', if 'is_valid'=false the providid signature will be incorrect *)
 let params counter msg keys is_validl  = 
+  let%bind program,_ = get_program () in
   let aux = fun acc (key,is_valid) ->
     let (_,_pk,sk) = key in
     let (pkh,_,_) = str_keys key in
@@ -81,7 +67,7 @@ let params counter msg keys is_validl  =
         e_nat counter ; 
         e_string (if is_valid then "MULTISIG" else "XX") ; 
         chain_id_zero ] in
-    let%bind signature = sign_message payload sk in
+    let%bind signature = sign_message program payload sk in
     ok @@ (e_pair (e_key_hash pkh) (e_signature signature))::acc in
   let%bind signed_msgs = Trace.bind_fold_list aux [] (List.rev @@ List.combine keys is_validl) in
   ok @@ e_constructor
@@ -91,7 +77,6 @@ let params counter msg keys is_validl  =
       ("message" , msg) ;
       ("signatures" , e_typed_list signed_msgs (t_pair (t_key_hash,t_signature)) ) ;
     ])
-
 
 (* Provide one valid signature when the threshold is two of two keys *)
 let not_enough_1_of_2 () =
