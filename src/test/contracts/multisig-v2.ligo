@@ -29,7 +29,7 @@ function send (const param : send_pt; const s : storage_t) : contract_return_t i
   var new_store : addr_set_t :=
     case map_get(packed_msg, s.message_store) of
     | Some(voters) -> set_add(sender,voters)
-    | None         -> (set_empty : addr_set_t) end
+    | None         -> set sender end end
   ;
 
   if size(new_store) >= s.threshold then block {

@@ -73,6 +73,22 @@ let already_accounted () =
   expect_eq ~options program "main"
     (e_pair param init_storage) (e_pair empty_op_list init_storage)
 
+(* sender message isn't stored in the message store *)
+let never_accounted () =
+  let%bind program,_ = get_program () in
+  let%bind packed_payload = pack_payload program empty_message in
+  let%bind bytes = e_bytes_ofbytes packed_payload in
+  let init_storage = storage 2 [1;2]
+    [] in
+  let final_storage = storage 2 [1;2]
+    [(bytes, e_set [e_address@@ addr 1])] in
+  let options =
+    let amount = Memory_proto_alpha.Protocol.Alpha_context.Tez.zero in
+    let source = contract 1 in
+    Proto_alpha_utils.Memory_proto_alpha.make_options ~amount ~source () in
+  expect_eq ~options program "main"
+    (e_pair param init_storage) (e_pair empty_op_list final_storage)
+
 (* successful storing in the message store *)
 let succeeded_storing () =
   let%bind program,_ = get_program () in
@@ -102,5 +118,6 @@ let main = test_suite "Multisig v2" [
     test "compile"           compile_main      ;
     test "wrong_addr"        wrong_addr        ;
     test "already_accounted" already_accounted ;
+    test "never_accounted"   never_accounted   ;
     test "succeeded_storing" succeeded_storing ;
   ]
