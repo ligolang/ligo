@@ -126,6 +126,30 @@ let expect_eq_n_trace_aux ?options lst program entry_point make_input make_expec
   let%bind _ = bind_map_list_seq aux lst in
   ok ()
 
+let expect_eq_exp_trace_aux ?options explst program entry_point make_input make_expected =
+  let aux exp =
+    let%bind input = make_input exp in
+    let%bind expected = make_expected exp in
+    let pps = Format.asprintf "%a" Ast_simplified.PP.expression exp in
+    trace (simple_error ("expect_eq_exp " ^ pps )) @@
+    let result = expect_eq ?options program entry_point input expected in
+    result
+  in
+  let%bind _ = bind_map_list_seq aux explst in
+  ok ()
+
+let expect_failwith_exp_trace_aux ?options explst program entry_point make_input make_expected_failwith =
+  let aux exp =
+    let%bind input = make_input exp in
+    let%bind expected = make_expected_failwith exp in
+    let pps = Format.asprintf "%a" Ast_simplified.PP.expression exp in
+    trace (simple_error ("expect_eq_exp " ^ pps )) @@
+    let result = expect_string_failwith ?options program entry_point input expected in
+    result
+  in
+  let%bind _ = bind_map_list_seq aux explst in
+  ok ()
+
 let expect_eq_n_aux ?options lst program entry_point make_input make_expected =
   let aux n =
     let input = make_input n in
