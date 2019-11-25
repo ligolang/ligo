@@ -187,8 +187,8 @@ let compile_expression =
   let docs = "Subcommand: compile to a michelson value." in
   (term , Term.info ~docs cmdname)
 
-
-let () = Term.exit @@ Term.eval_choice main [
+let run ?argv () =
+  Term.eval_choice ?argv main [
     compile_file ;
     compile_parameter ;
     compile_storage ;
