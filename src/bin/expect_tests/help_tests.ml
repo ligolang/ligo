@@ -48,6 +48,10 @@ let%expect_test _ =
            dry-run
 
 
+    COMMANDS
+           measure-contract
+               Subcommand: measure a contract's compiled size in bytes.
+
     OPTIONS
            --help[=FMT] (default=auto)
                Show this help in format FMT. The value FMT must be one of `auto',

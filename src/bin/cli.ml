@@ -98,6 +98,21 @@ let compile_file =
   let docs = "Subcommand: compile a contract. See `ligo " ^ cmdname ^ " --help' for a list of options specific to this subcommand." in
   (term , Term.info ~docs cmdname)
 
+let measure_contract =
+  let f source_file entry_point syntax display_format  =
+    toplevel ~display_format @@
+    let%bind contract =
+      trace (simple_info "compiling contract to michelson") @@
+      Ligo.Compile.Of_source.compile_file_contract_entry source_file entry_point (Syntax_name syntax) in
+    let open Tezos_utils in
+    ok @@ Format.asprintf "%d bytes\n" (Michelson.measure contract)
+  in
+  let term =
+    Term.(const f $ source_file 0 $ entry_point 1 $ syntax $ display_format) in
+  let cmdname = "measure-contract" in
+  let doc = "Subcommand: measure a contract's compiled size in bytes." in
+  (term , Term.info ~doc cmdname)
+
 let compile_parameter =
   let f source_file entry_point expression syntax display_format michelson_format =
     toplevel ~display_format @@
@@ -190,6 +205,7 @@ let compile_expression =
 let run ?argv () =
   Term.eval_choice ?argv main [
     compile_file ;
+    measure_contract ;
     compile_parameter ;
     compile_storage ;
     compile_expression ;
