@@ -5,12 +5,12 @@ open Michelson
 
 let empty : environment = []
 
-let get : environment -> string -> michelson result = fun e s ->
+let get : environment -> Var.t -> michelson result = fun e s ->
   let%bind (_ , position) =
     let error =
       let title () = "Environment.get" in
-      let content () = Format.asprintf "%s in %a"
-          s PP.environment e in
+      let content () = Format.asprintf "%a in %a"
+          Var.pp s PP.environment e in
       error title content in
     generic_try error @@
     (fun () -> Environment.get_i s e) in
@@ -34,7 +34,7 @@ let get : environment -> string -> michelson result = fun e s ->
 
   ok code
 
-let set : environment -> string -> michelson result = fun e s ->
+let set : environment -> Var.t -> michelson result = fun e s ->
   let%bind (_ , position) =
     generic_try (simple_error "Environment.set") @@
     (fun () -> Environment.get_i s e) in
@@ -65,8 +65,8 @@ let pack_closure : environment -> selector -> michelson result = fun e lst ->
   let e_lst =
     let e_lst = Environment.to_list e in
     let aux selector (s , _) =
-      match List.mem s selector with
-      | true -> List.remove_element s selector , true
+      match List.mem ~compare:Var.compare s selector with
+      | true -> List.remove_element ~compare:Var.compare s selector , true
       | false -> selector , false in
     let e_lst' = List.fold_map_right aux lst e_lst in
     let e_lst'' = List.combine e_lst e_lst' in

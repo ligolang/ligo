@@ -24,13 +24,16 @@ end
 
 module Free_variables = struct
 
-  type bindings = string list
-  let mem : string -> bindings -> bool = List.mem
-  let singleton : string -> bindings = fun s -> [ s ]
+  type bindings = Var.t list
+  let mem : Var.t -> bindings -> bool = List.memq ~eq:Var.equal
+  let mem_count : Var.t -> bindings -> int =
+    fun x fvs ->
+    List.length (List.filter (Var.equal x) fvs)
+  let singleton : Var.t -> bindings = fun s -> [ s ]
   let union : bindings -> bindings -> bindings = (@)
   let unions : bindings list -> bindings = List.concat
   let empty : bindings = []
-  let of_list : string list -> bindings = fun x -> x
+  let of_list : Var.t list -> bindings = fun x -> x
 
   let rec expression : bindings -> expression -> bindings = fun b e ->
     let self = expression b in
@@ -121,7 +124,7 @@ end
    Converts `expr` in `fun () -> expr`.
 *)
 let functionalize (body : expression) : expression =
-  let content = E_closure { binder = "_" ; body } in
+  let content = E_closure { binder = Var.fresh () ; body } in
   let type_value = t_function t_unit body.type_value in
   { content ; type_value }
 
@@ -130,7 +133,7 @@ let get_entry (lst : program) (name : string) : (expression * int) result =
     trace_option (Errors.missing_entry_point name) @@
     let aux x =
       let (((decl_name , decl_expr) , _)) = x in
-      if (decl_name = name)
+      if (Var.equal decl_name (Var.of_name name))
       then Some decl_expr
       else None
     in
@@ -139,7 +142,7 @@ let get_entry (lst : program) (name : string) : (expression * int) result =
   let entry_index =
     let aux x =
       let (((decl_name , _) , _)) = x in
-      decl_name = name
+      Var.equal decl_name (Var.of_name name)
     in
     List.find_index aux lst
   in

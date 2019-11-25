@@ -706,13 +706,6 @@ let propagator_break_ctor : output_break_ctor propagator =
 type output_specialize1 = { poly : c_poly_simpl ; a_k_var : c_constructor_simpl }
 
 
-module Int = struct
-  (* Restrict use of Pervasives.compare to just `int`, because we
-     don't want to risk the type of a field changing from int to
-     something not compatible with Pervasives.compare, and not
-     noticing that the comparator needs to be updated. *)
-  let compare (a : int) (b : int) = Pervasives.compare a b
-end
 let (<?) ca cb =
   if ca = 0 then cb () else ca
 let rec compare_list f = function
