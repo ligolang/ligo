@@ -49,6 +49,27 @@ let sign_message (program:Ast_typed.program) (payload : expression) sk : string 
   let signature_str = Signature.to_b58check signed_data in
   ok signature_str
 
+let contract id = 
+  let open Proto_alpha_utils.Memory_proto_alpha in
+  let id = List.nth dummy_environment.identities id in
+  id.implicit_contract
+
+let addr id =
+  let open Proto_alpha_utils.Memory_proto_alpha in
+  Protocol.Alpha_context.Contract.to_b58check @@ contract id
+
+let gen_keys = fun () ->
+  let open Tezos_crypto in
+  let (raw_pkh,raw_pk,raw_sk) = Signature.generate_key () in
+  (raw_pkh,raw_pk,raw_sk)
+
+let str_keys (raw_pkh, raw_pk, raw_sk) =
+  let open Tezos_crypto in
+  let sk_str = Signature.Secret_key.to_b58check raw_sk in
+  let pk_str = Signature.Public_key.to_b58check raw_pk in
+  let pkh_str = Signature.Public_key_hash.to_b58check raw_pkh in
+  (pkh_str,pk_str,sk_str)
+
 open Ast_simplified.Combinators
 
 let expect ?options program entry_point input expecter =
