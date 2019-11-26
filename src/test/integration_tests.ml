@@ -1269,9 +1269,21 @@ let simple_access_ligo () : unit result =
 
 let deep_access_ligo () : unit result =
   let%bind program = type_file "./contracts/deep_access.ligo" in
-  let make_input = e_unit () in
-  let make_expected = e_int 2 in
-  expect_eq program "main" make_input make_expected
+  let%bind () =
+    let make_input = e_unit () in
+    let make_expected = e_int 2 in
+    expect_eq program "main" make_input make_expected in
+  let%bind () =
+    let make_input = e_unit () in
+    let make_expected = e_int 6 in
+    expect_eq program "asymetric_tuple_access" make_input make_expected in
+  let%bind () =
+    let make_input = e_ez_record [ ("nesty",
+      e_ez_record [ ("mymap", e_typed_map [] t_int t_string) ] ) ; ] in
+    let make_expected = e_string "one" in
+    expect_eq program "nested_record" make_input make_expected in
+  ok ()
+  
 
 let entrypoints_ligo () : unit result =
   let%bind _program = type_file "./contracts/entrypoints.ligo" in
