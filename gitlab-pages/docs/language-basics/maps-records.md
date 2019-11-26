@@ -91,7 +91,7 @@ let balance: tez = Map.find ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address) le
 ### Iteration over the contents of a map
 
 There are three kinds of iteration on LIGO maps, `iter`, `map` and `fold`. `iter`
-is an imperative iteration over the map with no return value, its only use is to
+is an iteration over the map with no return value, its only use is to
 generate side effects. This can be useful if for example you would like to check
 that each value inside of a map is within a certain range, with an error thrown
 otherwise.
