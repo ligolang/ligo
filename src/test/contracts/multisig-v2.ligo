@@ -5,16 +5,16 @@ type max_message_size_t is nat
 type state_hash_t is bytes
 type addr_set_t is set(address)
 type message_store_t is map(bytes,addr_set_t)
-type counter_store_t is map(address,nat)
+type proposal_counters_t is map(address,nat)
 
 type storage_t is record
   state_hash : state_hash_t ;
   threshold : threshold_t ;
   max_proposal : max_proposal_t ;
   max_message_size : max_message_size_t ;
-  auth : addr_set_t ;
+  authorized_addresses : addr_set_t ;
   message_store : message_store_t ;
-  counter_store : counter_store_t ;
+  proposal_counters : proposal_counters_t ;
 end
 
 // I/O types
@@ -34,7 +34,7 @@ type entry_point_t is
 function send (const param : send_pt; const s : storage_t) : contract_return_t is block {
 
   // check sender against the authorized addresses
-  if not set_mem(sender,s.auth) then failwith("Unauthorized address") else skip ;
+  if not set_mem(sender,s.authorized_addresses) then failwith("Unauthorized address") else skip ;
 
   // check message size against the stored limit
   var message : message_t := param ;
@@ -48,18 +48,18 @@ function send (const param : send_pt; const s : storage_t) : contract_return_t i
   | Some(voters) -> block { // the message is already stored
     // increment the counter only if the sender isn't already associated with the message
     if set_mem(sender,voters) then skip
-    else s.counter_store[sender] := get_force(sender,s.counter_store) + 1n ;
+    else s.proposal_counters[sender] := get_force(sender,s.proposal_counters) + 1n ;
 
     new_store := set_add(sender,voters)
   } 
   | None -> block { // the message has never been received before
-    s.counter_store[sender] := get_force(sender,s.counter_store) + 1n ;
+    s.proposal_counters[sender] := get_force(sender,s.proposal_counters) + 1n ;
     new_store := set [sender];
   }
   end ;
 
   // check sender counters against the maximum number of proposal
-  var sender_proposal_counter : nat := get_force(sender,s.counter_store) ;
+  var sender_proposal_counter : nat := get_force(sender,s.proposal_counters) ;
   if sender_proposal_counter > s.max_proposal then failwith("Maximum number of proposal reached")
   else skip ;
 
@@ -70,8 +70,12 @@ function send (const param : send_pt; const s : storage_t) : contract_return_t i
     ret_ops := message(s.state_hash) ;
     // update the state hash
     s.state_hash := sha_256 ( bytes_concat (s.state_hash , packed_msg) ) ;
-    // reset the counter
-    s.counter_store[sender] := abs (sender_proposal_counter - 1n) ;
+    // decrement the counters
+    for addr -> ctr in map s.proposal_counters block {
+      if set_mem(addr,new_store) then
+        s.proposal_counters[addr] := abs (ctr - 1n)
+      else skip ;
+    }
   } else
     s.message_store[packed_msg] := new_store
   
@@ -88,7 +92,7 @@ function withdraw (const param : withdraw_pt; const s : storage_t) : contract_re
 
     // decrement the counter only if the sender was already associated with the message
     if size(voters) =/= size(new_set) then
-      s.counter_store[sender] := abs (get_force(sender,s.counter_store) - 1n)
+      s.proposal_counters[sender] := abs (get_force(sender,s.proposal_counters) - 1n)
     else skip ;
 
     // if the message is left without any associated addresses, remove the corresponding message_store field

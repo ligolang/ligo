@@ -50,13 +50,13 @@ let storage {state_hash ; threshold ; max_proposal ; max_msg_size ; id_counter_l
     ([],[])
     id_counter_list in
   e_ez_record [
-    ("state_hash"      , e_bytes_ofbytes state_hash                               ) ;
-    ("threshold"       , e_nat threshold                                          ) ;
-    ("max_proposal"    , e_nat max_proposal                                       ) ;
-    ("max_message_size", e_nat max_msg_size                                       ) ;
-    ("auth"            , e_typed_set auth_set t_address                           ) ;
-    ("message_store"   , e_typed_map msg_store_list t_bytes (t_set t_address)     ) ;
-    ("counter_store"   , e_typed_map counter_store t_address t_nat                ) ;
+    ("state_hash"          , e_bytes_ofbytes state_hash                            ) ;
+    ("threshold"           , e_nat threshold                                       ) ;
+    ("max_proposal"        , e_nat max_proposal                                    ) ;
+    ("max_message_size"    , e_nat max_msg_size                                    ) ;
+    ("authorized_addresses", e_typed_set auth_set       t_address                  ) ;
+    ("message_store"       , e_typed_map msg_store_list t_bytes  (t_set t_address) ) ;
+    ("proposal_counters"   , e_typed_map counter_store  t_address t_nat            ) ;
   ]
 
 (* sender not stored in the authorized set *)
@@ -188,6 +188,29 @@ let withdraw_already_accounted_two () =
   expect_eq ~options program "main"
     (e_pair param init_storage) (e_pair empty_op_list final_storage)
 
+(* triggers the threshold and check that all the participants get their counters decremented *)
+let counters_reset () =
+  let%bind program,_ = get_program () in
+  let%bind packed_payload = pack_payload program empty_message in
+  let bytes = e_bytes_ofbytes packed_payload in
+  let param = send_param empty_message in
+  let hash_after_msg = sha_256_hash (Bytes.concat Bytes.empty [Bytes.empty ; packed_payload]) in
+  let init_storage' = {
+    threshold = 3 ; max_proposal = 2 ;  max_msg_size = 15 ; state_hash = Bytes.empty ;
+    id_counter_list = [1,1 ; 2,1 ; 3,0] ;
+    msg_store_list = [(bytes, e_set [e_address@@ addr 1; e_address@@ addr 2])] ;
+  } in
+  let init_storage = storage init_storage' in
+  let final_storage = storage { init_storage' with
+    state_hash = hash_after_msg ;
+    id_counter_list = [1,0 ; 2,0 ; 3,0] ;
+    msg_store_list = [] } in
+  let options =
+    let source = contract 3 in
+    Proto_alpha_utils.Memory_proto_alpha.make_options ~source () in
+  expect_eq ~options program "main"
+    (e_pair param init_storage) (e_pair empty_op_list final_storage)
+
 (* sender withdraw message was never accounted *)
 let withdraw_never_accounted () =
   let%bind program,_ = get_program () in
@@ -245,4 +268,5 @@ let main = test_suite "Multisig v2" [
     test "succeeded_storing"              succeeded_storing              ;
     test "withdraw_already_accounted_one" withdraw_already_accounted_one ;
     test "withdraw_already_accounted_two" withdraw_already_accounted_two ;
+    test "counters_reset"                 counters_reset                 ;
   ]
