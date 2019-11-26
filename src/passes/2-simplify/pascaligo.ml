@@ -1138,7 +1138,7 @@ and simpl_for_int : Raw.for_int -> (_ -> expression result) result = fun fi ->
 and simpl_for_collect : Raw.for_collect -> (_ -> expression result) result = fun fc ->
   let elt_name = "#COMPILER#elt_"^fc.var.value in
   let elt_v_name = match fc.bind_to with
-    | Some v -> "#COMPILER#elt"^(snd v).value
+    | Some v -> "#COMPILER#elt_"^(snd v).value
     | None -> "#COMPILER#elt_unused" in
   let element_names = ok @@ match fc.bind_to with 
     | Some v -> [fc.var.value;(snd v).value]
