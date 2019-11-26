@@ -30,38 +30,47 @@ type entry_point_t is
 | Withdraw of withdraw_pt
 | Default of default_pt
 
+
 function send (const param : send_pt; const s : storage_t) : contract_return_t is block {
 
+  // check sender against the authorized addresses
   if not set_mem(sender,s.auth) then failwith("Unauthorized address") else skip ;
-  
-  var message : message_t := param ;
-  var new_store : addr_set_t := set_empty ;
-  var ret_ops : list(operation) := (nil : list(operation)) ;
 
+  // check message size against the stored limit
+  var message : message_t := param ;
   const packed_msg : bytes = bytes_pack(message) ;
   if size(packed_msg) > s.max_message_size then failwith("Message size exceed maximum limit")
   else skip ;
 
+  // compute the new set of addresses associated with the message and update counters
+  var new_store : addr_set_t := set_empty ;
   case map_get(packed_msg, s.message_store) of
-  | Some(voters) -> block {
+  | Some(voters) -> block { // the message is already stored
+    // increment the counter only if the sender isn't already associated with the message
     if set_mem(sender,voters) then skip
     else s.counter_store[sender] := get_force(sender,s.counter_store) + 1n ;
+
     new_store := set_add(sender,voters)
-  }
-  | None -> block {
+  } 
+  | None -> block { // the message has never been received before
     s.counter_store[sender] := get_force(sender,s.counter_store) + 1n ;
     new_store := set [sender];
   }
   end ;
 
+  // check sender counters against the maximum number of proposal
   var sender_proposal_counter : nat := get_force(sender,s.counter_store) ;
   if sender_proposal_counter > s.max_proposal then failwith("Maximum number of proposal reached")
   else skip ;
 
+  // check the threshold
+  var ret_ops : list(operation) := (nil : list(operation)) ;
   if size(new_store) >= s.threshold then block {
     remove packed_msg from map s.message_store ;
     ret_ops := message(s.state_hash) ;
+    // update the state hash
     s.state_hash := sha_256 ( bytes_concat (s.state_hash , packed_msg) ) ;
+    // reset the counter
     s.counter_store[sender] := abs (sender_proposal_counter - 1n) ;
   } else
     s.message_store[packed_msg] := new_store
@@ -74,17 +83,19 @@ function withdraw (const param : withdraw_pt; const s : storage_t) : contract_re
   const packed_msg : bytes = bytes_pack(message) ;
 
   case map_get(packed_msg, s.message_store) of
-  | Some(voters) -> block {
+  | Some(voters) -> block { // the message is stored
     const new_set : addr_set_t = set_remove(sender,voters) ;
 
+    // decrement the counter only if the sender was already associated with the message
     if size(voters) =/= size(new_set) then
       s.counter_store[sender] := abs (get_force(sender,s.counter_store) - 1n)
     else skip ;
 
+    // if the message is left without any associated addresses, remove the corresponding message_store field
     if size(new_set) = 0n then remove packed_msg from map s.message_store
     else s.message_store[packed_msg] := new_set
   }
-  | None -> skip end
+  | None -> skip end // the message isn't stored, ignore
 
 } with ( (nil: list(operation)) , s)
 
@@ -93,7 +104,11 @@ function default (const p : default_pt; const s : storage_t) : contract_return_t
 
 function main(const param : entry_point_t; const s : storage_t) : contract_return_t is 
   case param of
+  // propagate message p if the number authorized addresses having
+  // voted for the same message p equals the threshold
   | Send     (p) -> send(p,s)
+  // withraw vote for message p
   | Withdraw (p) -> withdraw(p,s)
+  // use this entry-point to transfer tez to the contract
   | Default  (p) -> default(p,s)
 end
