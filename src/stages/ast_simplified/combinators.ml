@@ -75,8 +75,8 @@ let e'_bytes b : expression' result =
 let e_bytes ?loc b : expression result =
   let%bind e' = e'_bytes b in
   ok @@ location_wrap ?loc e'
-let e_bytes_ofbytes ?loc (b: bytes) : expression result =
-  ok @@ location_wrap ?loc @@ E_literal (Literal_bytes b)
+let e_bytes_ofbytes ?loc (b: bytes) : expression =
+  location_wrap ?loc @@ E_literal (Literal_bytes b)
 let e_big_map ?loc lst : expression = location_wrap ?loc @@ E_big_map lst
 let e_record ?loc map : expression = location_wrap ?loc @@ E_record map
 let e_tuple ?loc lst : expression = location_wrap ?loc @@ E_tuple lst

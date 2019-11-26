@@ -22,18 +22,6 @@ let compile_main () =
 
 open Ast_simplified
 
-let gen_keys = fun () ->
-  let open Tezos_crypto in
-  let (raw_pkh,raw_pk,raw_sk) = Signature.generate_key () in
-  (raw_pkh,raw_pk,raw_sk)
-
-let str_keys (raw_pkh, raw_pk, raw_sk) =
-  let open Tezos_crypto in
-  let sk_str = Signature.Secret_key.to_b58check raw_sk in
-  let pk_str = Signature.Public_key.to_b58check raw_pk in
-  let pkh_str = Signature.Public_key_hash.to_b58check raw_pkh in
-  (pkh_str,pk_str,sk_str)
-
 let init_storage threshold counter pkeys =
   let keys = List.map
     (fun el ->

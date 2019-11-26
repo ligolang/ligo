@@ -49,6 +49,31 @@ let sign_message (program:Ast_typed.program) (payload : expression) sk : string 
   let signature_str = Signature.to_b58check signed_data in
   ok signature_str
 
+let contract id = 
+  let open Proto_alpha_utils.Memory_proto_alpha in
+  let id = List.nth dummy_environment.identities id in
+  id.implicit_contract
+
+let addr id =
+  let open Proto_alpha_utils.Memory_proto_alpha in
+  Protocol.Alpha_context.Contract.to_b58check @@ contract id
+
+let gen_keys = fun () ->
+  let open Tezos_crypto in
+  let (raw_pkh,raw_pk,raw_sk) = Signature.generate_key () in
+  (raw_pkh,raw_pk,raw_sk)
+
+let str_keys (raw_pkh, raw_pk, raw_sk) =
+  let open Tezos_crypto in
+  let sk_str = Signature.Secret_key.to_b58check raw_sk in
+  let pk_str = Signature.Public_key.to_b58check raw_pk in
+  let pkh_str = Signature.Public_key_hash.to_b58check raw_pkh in
+  (pkh_str,pk_str,sk_str)
+
+let sha_256_hash pl =
+  let open Proto_alpha_utils.Memory_proto_alpha.Alpha_environment in
+  Raw_hashes.sha256 pl
+
 open Ast_simplified.Combinators
 
 let expect ?options program entry_point input expecter =
@@ -124,6 +149,30 @@ let expect_eq_n_trace_aux ?options lst program entry_point make_input make_expec
     result
   in
   let%bind _ = bind_map_list_seq aux lst in
+  ok ()
+
+let expect_eq_exp_trace_aux ?options explst program entry_point make_input make_expected =
+  let aux exp =
+    let%bind input = make_input exp in
+    let%bind expected = make_expected exp in
+    let pps = Format.asprintf "%a" Ast_simplified.PP.expression exp in
+    trace (simple_error ("expect_eq_exp " ^ pps )) @@
+    let result = expect_eq ?options program entry_point input expected in
+    result
+  in
+  let%bind _ = bind_map_list_seq aux explst in
+  ok ()
+
+let expect_failwith_exp_trace_aux ?options explst program entry_point make_input make_expected_failwith =
+  let aux exp =
+    let%bind input = make_input exp in
+    let%bind expected = make_expected_failwith exp in
+    let pps = Format.asprintf "%a" Ast_simplified.PP.expression exp in
+    trace (simple_error ("expect_eq_exp " ^ pps )) @@
+    let result = expect_string_failwith ?options program entry_point input expected in
+    result
+  in
+  let%bind _ = bind_map_list_seq aux explst in
   ok ()
 
 let expect_eq_n_aux ?options lst program entry_point make_input make_expected =
