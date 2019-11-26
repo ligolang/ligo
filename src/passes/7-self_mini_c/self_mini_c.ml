@@ -17,12 +17,29 @@ let map_expression :
    assuming arguments are pure *)
 let is_pure_constant : string -> bool =
   function
-  | "CAR"
-  | "CDR"
-  | "PAIR"
+  | "UNIT"
+  | "CAR" | "CDR" | "PAIR"
+  | "NIL" | "CONS"
+  | "NEG" | "OR" | "AND" | "XOR" | "NOT"
+  | "EQ" | "NEQ" | "LT" | "LE" | "GT" | "GE"
+  | "SOME"
+  | "UPDATE" | "MAP_GET" | "MAP_FIND_OPT" | "MAP_ADD" | "MAP_UPDATE"
+  | "INT" | "ABS" | "ISNAT"
+  | "BALANCE" | "AMOUNT" | "ADDRESS" | "NOW" | "SOURCE" | "SENDER" | "CHAIN_ID"
+  | "SET_MEM" | "SET_ADD" | "SET_REMOVE" | "SLICE"
+  | "SHA256" | "SHA512" | "BLAKE2B" | "CHECK_SIGNATURE"
+  | "HASH_KEY" | "PACK" | "CONCAT"
     -> true
+  (* unfortunately impure: *)
+  | "ADD"|"SUB"|"TIMES"|"DIV"|"MOD"
+  (* impure: *)
+  | "ASSERT" | "ASSERT_INFERRED"
+  | "MAP_GET_FORCE" | "MAP_FIND"
+  | "FOLD_WHILE"
+  | "CALL"
   (* TODO... *)
-  | _ -> false
+  | _
+    -> false
 
 let rec is_pure : expression -> bool = fun e ->
   match e.content with

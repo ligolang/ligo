@@ -5,7 +5,7 @@ let contract basename =
 
 let%expect_test _ =
   run_ligo_good [ "measure-contract" ; contract "coase.ligo" ; "main" ] ;
-  [%expect {| 2068 bytes |}] ;
+  [%expect {| 2066 bytes |}] ;
 
   run_ligo_good [ "measure-contract" ; contract "multisig.ligo" ; "main" ] ;
   [%expect {| 1093 bytes |}] ;
@@ -14,7 +14,7 @@ let%expect_test _ =
   [%expect {| 627 bytes |}] ;
 
   run_ligo_good [ "measure-contract" ; contract "vote.mligo" ; "main" ] ;
-  [%expect {| 714 bytes |}] ;
+  [%expect {| 628 bytes |}] ;
 
   ()
 
@@ -204,10 +204,9 @@ let%expect_test _ =
                      NIL operation ;
                      SWAP ;
                      CONS ;
-                     DUP ;
-                     DIP { DIP 8 { DUP } ; DIG 8 } ;
+                     DIP { DIP 7 { DUP } ; DIG 7 } ;
                      PAIR ;
-                     DIP { DROP 12 } } ;
+                     DIP { DROP 11 } } ;
                  DIP { DROP } }
                { DUP ;
                  DIP { DIP { DUP } ; SWAP } ;
@@ -482,35 +481,28 @@ let%expect_test _ =
              CAR ;
              IF_LEFT
                { DUP ;
-                 PUSH int 0 ;
-                 SOME ;
+                 DUP ;
+                 CAR ;
+                 CAR ;
                  DIP { PUSH int 0 ;
                        SOME ;
-                       EMPTY_MAP string int ;
-                       SWAP ;
-                       PUSH string "Yes" ;
+                       DIP { PUSH int 0 ;
+                             SOME ;
+                             EMPTY_MAP string int ;
+                             SWAP ;
+                             PUSH string "Yes" ;
+                             UPDATE } ;
+                       PUSH string "No" ;
                        UPDATE } ;
-                 PUSH string "No" ;
-                 UPDATE ;
-                 DIP { DUP } ;
-                 SWAP ;
-                 CAR ;
-                 CAR ;
-                 DIP { DUP } ;
                  PAIR ;
-                 DIP { DIP { DUP } ;
-                       SWAP ;
-                       CAR ;
-                       CDR ;
-                       DIP { DIP { DUP } ; SWAP ; CDR } ;
-                       PAIR } ;
+                 DIP { DUP ; CAR ; CDR ; DIP { DUP ; CDR } ; PAIR } ;
                  PAIR ;
                  EMPTY_SET address ;
                  SWAP ;
                  PAIR ;
                  NIL operation ;
                  PAIR ;
-                 DIP { DROP 3 } }
+                 DIP { DROP 2 } }
                { DUP ;
                  DIP { DIP { DUP } ; SWAP ; CDR } ;
                  PAIR ;
@@ -519,41 +511,36 @@ let%expect_test _ =
                  DIP { DUP } ;
                  SWAP ;
                  CDR ;
-                 NOW ;
-                 SOURCE ;
-                 DIP 3 { DUP } ;
-                 DIG 3 ;
-                 DIP { DIP 2 { DUP } ; DIG 2 ; CAR ; CAR ; CDR } ;
+                 DIP { DUP } ;
+                 SWAP ;
+                 DIP { DUP ; CAR ; CAR ; CDR } ;
                  GET ;
                  IF_NONE { PUSH string "MAP FIND" ; FAILWITH } {} ;
-                 DIP 3 { DUP } ;
-                 DIG 3 ;
+                 DIP { DUP } ;
+                 SWAP ;
                  CAR ;
                  CAR ;
                  CAR ;
-                 DIP { DIP 4 { DUP } ;
-                       DIG 4 ;
+                 DIP { DIP 2 { DUP } ;
+                       DIG 2 ;
                        DIP { DUP ;
                              PUSH int 1 ;
                              ADD ;
                              SOME ;
-                             DIP { DIP 3 { DUP } ; DIG 3 ; CAR ; CAR ; CDR } } ;
+                             DIP { DIP { DUP } ; SWAP ; CAR ; CAR ; CDR } } ;
                        UPDATE } ;
-                 PAIR ;
-                 DIP { DIP 3 { DUP } ;
-                       DIG 3 ;
-                       CAR ;
-                       CDR ;
-                       CAR ;
-                       DIP { DIP 3 { DUP } ; DIG 3 ; CAR ; CDR ; CDR } ;
-                       PAIR } ;
                  PAIR ;
                  DIP { DIP { DUP } ;
                        SWAP ;
-                       DIP { DIP 3 { DUP } ; DIG 3 ; CDR ; PUSH bool True } ;
-                       UPDATE } ;
+                       CAR ;
+                       CDR ;
+                       CAR ;
+                       DIP { DIP { DUP } ; SWAP ; CAR ; CDR ; CDR } ;
+                       PAIR } ;
+                 PAIR ;
+                 DIP { DIP { DUP } ; SWAP ; CDR ; PUSH bool True ; SOURCE ; UPDATE } ;
                  PAIR ;
                  NIL operation ;
                  PAIR ;
-                 DIP { DROP 7 } } ;
+                 DIP { DROP 5 } } ;
              DIP { DROP } } } |}]
