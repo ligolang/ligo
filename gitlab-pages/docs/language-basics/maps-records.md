@@ -135,6 +135,13 @@ let map_op (m : ledger) : ledger =
 
 `fold` is an aggregation function that return the combination of a maps contents.
 
+The fold is a loop which extracts an element of the map on each iteration. It then
+provides this element and an existing value to a folding function which combines them.
+On the first iteration, the existing value is an initial expression given by the
+programmer. On each subsequent iteration it is the result of the previous iteration.
+It eventually returns the result of combining all the elements.
+
+
 <!--DOCUSAURUS_CODE_TABS-->
 <!--Pascaligo-->
 ```pascaligo
