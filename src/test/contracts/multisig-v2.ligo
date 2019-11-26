@@ -21,12 +21,14 @@ end
 type message_t is (bytes -> list(operation))
 type send_pt is message_t
 type withdraw_pt is message_t
+type default_pt is unit
 
 type contract_return_t is (list(operation) * storage_t)
 
 type entry_point_t is
 | Send of send_pt
 | Withdraw of withdraw_pt
+| Default of default_pt
 
 function send (const param : send_pt; const s : storage_t) : contract_return_t is block {
 
@@ -86,8 +88,12 @@ function withdraw (const param : withdraw_pt; const s : storage_t) : contract_re
 
 } with ( (nil: list(operation)) , s)
 
+function default (const p : default_pt; const s : storage_t) : contract_return_t is
+  ((nil: list(operation)) , s)
+
 function main(const param : entry_point_t; const s : storage_t) : contract_return_t is 
   case param of
-  | Send (p) -> send(p,s)
+  | Send     (p) -> send(p,s)
   | Withdraw (p) -> withdraw(p,s)
+  | Default  (p) -> default(p,s)
 end
