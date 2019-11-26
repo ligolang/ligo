@@ -2,11 +2,13 @@
 type threshold_t is nat
 type max_proposal_t is nat
 type max_message_size_t is nat
+type state_hash_t is bytes
 type addr_set_t is set(address)
 type message_store_t is map(bytes,addr_set_t)
 type counter_store_t is map(address,nat)
 
 type storage_t is record
+  state_hash : state_hash_t ;
   threshold : threshold_t ;
   max_proposal : max_proposal_t ;
   max_message_size : max_message_size_t ;
@@ -16,7 +18,7 @@ type storage_t is record
 end
 
 // I/O types
-type message_t is (unit -> list(operation))
+type message_t is (bytes -> list(operation))
 type send_pt is message_t
 type withdraw_pt is message_t
 
@@ -56,7 +58,8 @@ function send (const param : send_pt; const s : storage_t) : contract_return_t i
 
   if size(new_store) >= s.threshold then block {
     remove packed_msg from map s.message_store ;
-    ret_ops := message(unit) ;
+    ret_ops := message(s.state_hash) ;
+    s.state_hash := sha_256 ( bytes_concat (s.state_hash , packed_msg) ) ;
     s.counter_store[sender] := abs (sender_proposal_counter - 1n) ;
   } else
     s.message_store[packed_msg] := new_store

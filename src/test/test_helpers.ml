@@ -70,6 +70,10 @@ let str_keys (raw_pkh, raw_pk, raw_sk) =
   let pkh_str = Signature.Public_key_hash.to_b58check raw_pkh in
   (pkh_str,pk_str,sk_str)
 
+let sha_256_hash pl =
+  let open Proto_alpha_utils.Memory_proto_alpha.Alpha_environment in
+  Raw_hashes.sha256 pl
+
 open Ast_simplified.Combinators
 
 let expect ?options program entry_point input expecter =
