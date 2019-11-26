@@ -85,8 +85,73 @@ const balance: tez = get_force(("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address)
 ```cameligo
 let balance: tez = Map.find ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address) ledger
 ```
+
 <!--END_DOCUSAURUS_CODE_TABS-->
 
+### Iteration over the contents of a map
+
+There are three kinds of iteration on LIGO maps, `iter`, `map` and `fold`. `iter`
+is an imperative iteration over the map with no return value, its only use is to
+generate side effects. This can be useful if for example you would like to check
+that each value inside of a map is within a certain range, with an error thrown
+otherwise.
+
+<!--DOCUSAURUS_CODE_TABS-->
+<!--Pascaligo-->
+```pascaligo
+function iter_op (const m : ledger) : unit is
+  block {
+    function aggregate (const i : address ; const j : tez) : unit is block
+      { if (j > 100) then skip else failwith("fail") } with unit ;
+  } with map_iter(aggregate, m) ;
+```
+
+<!--Cameligo-->
+```cameligo
+let iter_op (m : ledger) : unit =
+  let assert_eq = fun (i: address) (j: tez) -> assert (j > 100)
+  in Map.iter assert_eq m
+```
+<!--END_DOCUSAURUS_CODE_TABS-->
+
+`map` is a way to create a new map by modifying the contents of an existing one.
+
+<!--DOCUSAURUS_CODE_TABS-->
+<!--Pascaligo-->
+```pascaligo
+function map_op (const m : ledger) : ledger is
+  block {
+    function increment (const i : address ; const j : tez) : tez is block { skip } with j + 1 ;
+  } with map_map(increment, m) ;
+```
+
+<!--Cameligo-->
+```cameligo
+let map_op (m : ledger) : ledger =
+  let increment = fun (_: address) (j: tez) -> j+1
+  in Map.map increment m
+```
+<!--END_DOCUSAURUS_CODE_TABS-->
+
+`fold` is an aggregation function that return the combination of a maps contents.
+
+<!--DOCUSAURUS_CODE_TABS-->
+<!--Pascaligo-->
+```pascaligo
+function fold_op (const m : ledger) : tez is
+  block {
+    function aggregate (const i : address ; const j : (tez * tez)) : tez is block { skip } with j.0 + j.1 ;
+  } with map_fold(aggregate, m , 10)
+```
+
+<!--Cameligo-->
+```cameligo
+let fold_op (m : ledger) : ledger =
+  let aggregate = fun (_: address) (j: tez * tez) -> j.0 + j.1
+  in Map.fold aggregate m 10
+```
+
+<!--END_DOCUSAURUS_CODE_TABS-->
 
 ## Records
 
