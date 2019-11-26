@@ -518,7 +518,7 @@ and transpile_annotated_expression (ae:AST.annotated_expression) : expression re
             ok (prop_in_ty_map, acc @ path')
           )
       in
-      let%bind (_, path) = bind_fold_right_list aux (ty, []) path in
+      let%bind (_, path) = bind_fold_list aux (ty, []) path in
       let%bind expr' = transpile_annotated_expression expr in
       return (E_assignment (typed_name.type_name, path, expr'))
     )
