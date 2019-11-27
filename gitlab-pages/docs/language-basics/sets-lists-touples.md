@@ -207,9 +207,23 @@ let sum_of_a_list: int = List.fold sum my_list 0
 
 ## Tuples
 
-Tuples are useful for data that belong together but don't have an index or a specific name.
+Tuples are used to store related data that has a **specific order** and **defined
+length** without the need for named fields or a dedicated type identity. Probably
+the most common tuple is a pair of type `(a, b)`. For example, if we were storing
+coordinates on a two dimensional grid we might use a pair tuple of type `int * int`
+to store the coordinates x and y. There is a **specific order** because x and y must
+always stay in the same location within the tuple for the data to make sense. There is
+also a **defined length** because the tuple pair can only ever have two elements,
+if we added a third dimension `z` its type would be incompatible with that of the
+pair tuple.
+
+Like records, tuples can have members of arbitrary types in the same structure.
 
 ### Defining a tuple
+
+Unlike [a record](language-basics/maps-records.md), tuple types do not have to be
+defined before they can be used. However below we will give them names for the
+sake of illustration.
 
 <!--DOCUSAURUS_CODE_TABS-->
 <!--Pascaligo-->
@@ -229,6 +243,14 @@ let full_name: full_name = ("Alice", "Johnson")
 
 
 ### Accessing an element in a tuple
+
+The traditional way to access the elements of a tuple in OCaml is through
+[a pattern match](language-basics/unit-option-pattern-matching.md). LIGO **does
+not** currently support tuple patterns in its syntaxes.
+
+However, it is possible to access LIGO tuples by their position.
+Tuple elements are one-indexed and accessed like so:
+
 <!--DOCUSAURUS_CODE_TABS-->
 <!--Pascaligo-->
 ```pascaligo
