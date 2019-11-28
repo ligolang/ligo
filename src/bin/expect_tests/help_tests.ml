@@ -3,7 +3,48 @@ open Cli_expect
 let%expect_test _ =
   (* TODO good? *)
   run_ligo_good [] ;
-  [%expect {| Ligo needs a command. Do ligo --help |} ] ;
+  [%expect {|
+    NAME
+           ligo
+
+    SYNOPSIS
+           ligo COMMAND ...
+
+    MORE HELP
+           Use `ligo COMMAND --help' for help on a single command.
+
+    COMMANDS
+           compile-contract
+               Subcommand: compile a contract.
+
+           compile-expression
+               Subcommand: compile to a michelson value.
+
+           compile-parameter
+               Subcommand: compile parameters to a michelson expression. The
+               resulting michelson expression can be passed as an argument in a
+               transaction which calls a contract.
+
+           compile-storage
+               Subcommand: compile an initial storage in ligo syntax to a
+               michelson expression. The resulting michelson expression can be
+               passed as an argument in a transaction which originates a
+               contract.
+
+           dry-run
+               Subcommand: run a smart-contract with the given storage and input.
+
+           evaluate-value
+               Subcommand: evaluate a given definition.
+
+           run-function
+               Subcommand: run a function with the given parameter.
+
+    OPTIONS
+           --help[=FMT] (default=auto)
+               Show this help in format FMT. The value FMT must be one of `auto',
+               `pager', `groff' or `plain'. With `auto', the format is `pager` or
+               `plain' whenever the TERM env var is `dumb' or undefined. |} ] ;
 
   run_ligo_good [ "--help" ] ;
   [%expect {|
@@ -13,40 +54,35 @@ let%expect_test _ =
     SYNOPSIS
            ligo COMMAND ...
 
-    Subcommand: compile a contract. See `ligo compile-contract --help' for a list
-    of options specific to this subcommand.
+    MORE HELP
+           Use `ligo COMMAND --help' for help on a single command.
+
+    COMMANDS
            compile-contract
+               Subcommand: compile a contract.
 
-
-    Subcommand: compile an initial storage in ligo syntax to a michelson
-    expression. The resulting michelson expression can be passed as an argument
-    in a transaction which originates a contract. See `ligo compile-storage
-    --help' for a list of options specific to this subcommand.
-           compile-storage
-
-
-    Subcommand: compile parameters to a michelson expression. The resulting
-    michelson expression can be passed as an argument in a transaction which
-    calls a contract. See `ligo compile-parameter --help' for a list of options
-    specific to this subcommand.
-           compile-parameter
-
-
-    Subcommand: compile to a michelson value.
            compile-expression
+               Subcommand: compile to a michelson value.
 
+           compile-parameter
+               Subcommand: compile parameters to a michelson expression. The
+               resulting michelson expression can be passed as an argument in a
+               transaction which calls a contract.
 
-    Subcommand: evaluate a given definition.
-           evaluate-value
+           compile-storage
+               Subcommand: compile an initial storage in ligo syntax to a
+               michelson expression. The resulting michelson expression can be
+               passed as an argument in a transaction which originates a
+               contract.
 
-
-    Subcommand: run a function with the given parameter.
-           run-function
-
-
-    Subcommand: run a smart-contract with the given storage and input.
            dry-run
+               Subcommand: run a smart-contract with the given storage and input.
 
+           evaluate-value
+               Subcommand: evaluate a given definition.
+
+           run-function
+               Subcommand: run a function with the given parameter.
 
     OPTIONS
            --help[=FMT] (default=auto)
@@ -57,7 +93,7 @@ let%expect_test _ =
   run_ligo_good [ "compile-contract" ; "--help" ] ;
   [%expect {|
     NAME
-           ligo-compile-contract
+           ligo-compile-contract - Subcommand: compile a contract.
 
     SYNOPSIS
            ligo compile-contract [OPTION]... SOURCE_FILE ENTRY_POINT
@@ -97,7 +133,9 @@ let%expect_test _ =
   run_ligo_good [ "compile-parameter" ; "--help" ] ;
   [%expect {|
     NAME
-           ligo-compile-parameter
+           ligo-compile-parameter - Subcommand: compile parameters to a michelson
+           expression. The resulting michelson expression can be passed as an
+           argument in a transaction which calls a contract.
 
     SYNOPSIS
            ligo compile-parameter [OPTION]... SOURCE_FILE ENTRY_POINT
@@ -141,7 +179,10 @@ let%expect_test _ =
   run_ligo_good [ "compile-storage" ; "--help" ] ;
   [%expect {|
     NAME
-           ligo-compile-storage
+           ligo-compile-storage - Subcommand: compile an initial storage in ligo
+           syntax to a michelson expression. The resulting michelson expression
+           can be passed as an argument in a transaction which originates a
+           contract.
 
     SYNOPSIS
            ligo compile-storage [OPTION]... SOURCE_FILE ENTRY_POINT
@@ -185,7 +226,8 @@ let%expect_test _ =
   run_ligo_good [ "dry-run" ; "--help" ] ;
   [%expect {|
     NAME
-           ligo-dry-run
+           ligo-dry-run - Subcommand: run a smart-contract with the given storage
+           and input.
 
     SYNOPSIS
            ligo dry-run [OPTION]... SOURCE_FILE ENTRY_POINT PARAMETER_EXPRESSION
@@ -236,7 +278,8 @@ let%expect_test _ =
   run_ligo_good [ "run-function" ; "--help" ] ;
   [%expect {|
     NAME
-           ligo-run-function
+           ligo-run-function - Subcommand: run a function with the given
+           parameter.
 
     SYNOPSIS
            ligo run-function [OPTION]... SOURCE_FILE ENTRY_POINT
@@ -284,7 +327,7 @@ let%expect_test _ =
   run_ligo_good [ "evaluate-value" ; "--help" ] ;
   [%expect {|
     NAME
-           ligo-evaluate-value
+           ligo-evaluate-value - Subcommand: evaluate a given definition.
 
     SYNOPSIS
            ligo evaluate-value [OPTION]... SOURCE_FILE ENTRY_POINT
@@ -328,7 +371,7 @@ let%expect_test _ =
   run_ligo_good [ "compile-expression" ; "--help" ] ;
   [%expect {|
     NAME
-           ligo-compile-expression
+           ligo-compile-expression - Subcommand: compile to a michelson value.
 
     SYNOPSIS
            ligo compile-expression [OPTION]... _EXPRESSION

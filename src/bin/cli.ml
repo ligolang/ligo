@@ -3,8 +3,10 @@ open Trace
 open Cli_helpers
 
 let main =
-  let term = Term.(const print_endline $ const "Ligo needs a command. Do ligo --help") in
-  (term , Term.info "ligo")
+  let man =
+    [ `S "MORE HELP";
+      `P "Use `$(mname) $(i,COMMAND) --help' for help on a single command." ] in
+  (Term.(ret (const (`Help (`Auto, None)))), Term.info "ligo" ~man)
 
 let source_file n =
   let open Arg in
@@ -95,8 +97,8 @@ let compile_file =
   let term =
     Term.(const f $ source_file 0 $ entry_point 1 $ syntax $ display_format $ michelson_code_format) in
   let cmdname = "compile-contract" in
-  let docs = "Subcommand: compile a contract. See `ligo " ^ cmdname ^ " --help' for a list of options specific to this subcommand." in
-  (term , Term.info ~docs cmdname)
+  let doc = "Subcommand: compile a contract." in
+  (term , Term.info ~doc cmdname)
 
 let compile_parameter =
   let f source_file entry_point expression syntax display_format michelson_format =
@@ -109,8 +111,8 @@ let compile_parameter =
   let term =
     Term.(const f $ source_file 0 $ entry_point 1 $ expression "PARAMETER" 2 $ syntax $ display_format $ michelson_code_format) in
   let cmdname = "compile-parameter" in
-  let docs = "Subcommand: compile parameters to a michelson expression. The resulting michelson expression can be passed as an argument in a transaction which calls a contract. See `ligo " ^ cmdname ^ " --help' for a list of options specific to this subcommand." in
-  (term , Term.info ~docs cmdname)
+  let doc = "Subcommand: compile parameters to a michelson expression. The resulting michelson expression can be passed as an argument in a transaction which calls a contract." in
+  (term , Term.info ~doc cmdname)
 
 let compile_storage =
   let f source_file entry_point expression syntax display_format michelson_format =
@@ -123,8 +125,8 @@ let compile_storage =
   let term =
     Term.(const f $ source_file 0 $ entry_point 1 $ expression "STORAGE" 2 $ syntax $ display_format $ michelson_code_format) in
   let cmdname = "compile-storage" in
-  let docs = "Subcommand: compile an initial storage in ligo syntax to a michelson expression. The resulting michelson expression can be passed as an argument in a transaction which originates a contract. See `ligo " ^ cmdname ^ " --help' for a list of options specific to this subcommand." in
-  (term , Term.info ~docs cmdname)
+  let doc = "Subcommand: compile an initial storage in ligo syntax to a michelson expression. The resulting michelson expression can be passed as an argument in a transaction which originates a contract." in
+  (term , Term.info ~doc cmdname)
 
 let dry_run =
   let f source_file entry_point storage input amount sender source syntax display_format =
@@ -138,8 +140,8 @@ let dry_run =
   let term =
     Term.(const f $ source_file 0 $ entry_point 1 $ expression "PARAMETER" 2 $ expression "STORAGE" 3 $ amount $ sender $ source $ syntax $ display_format) in
   let cmdname = "dry-run" in
-  let docs = "Subcommand: run a smart-contract with the given storage and input." in
-  (term , Term.info ~docs cmdname)
+  let doc = "Subcommand: run a smart-contract with the given storage and input." in
+  (term , Term.info ~doc cmdname)
 
 let run_function =
   let f source_file entry_point parameter amount sender source syntax display_format =
@@ -153,8 +155,8 @@ let run_function =
   let term =
     Term.(const f $ source_file 0 $ entry_point 1 $ expression "PARAMETER" 2 $ amount $ sender $ source $ syntax $ display_format) in
   let cmdname = "run-function" in
-  let docs = "Subcommand: run a function with the given parameter." in
-  (term , Term.info ~docs cmdname)
+  let doc = "Subcommand: run a function with the given parameter." in
+  (term , Term.info ~doc cmdname)
 
 let evaluate_value =
   let f source_file entry_point amount sender source syntax display_format =
@@ -168,8 +170,8 @@ let evaluate_value =
   let term =
     Term.(const f $ source_file 0 $ entry_point 1 $ amount $ sender $ source $ syntax $ display_format) in
   let cmdname = "evaluate-value" in
-  let docs = "Subcommand: evaluate a given definition." in
-  (term , Term.info ~docs cmdname)
+  let doc = "Subcommand: evaluate a given definition." in
+  (term , Term.info ~doc cmdname)
 
 let compile_expression =
   let f expression syntax display_format michelson_format =
@@ -184,8 +186,8 @@ let compile_expression =
   let term =
     Term.(const f $ expression "" 0 $ syntax $ display_format $ michelson_code_format) in
   let cmdname = "compile-expression" in
-  let docs = "Subcommand: compile to a michelson value." in
-  (term , Term.info ~docs cmdname)
+  let doc = "Subcommand: compile to a michelson value." in
+  (term , Term.info ~doc cmdname)
 
 let run ?argv () =
   Term.eval_choice ?argv main [
