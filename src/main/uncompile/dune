@@ -1,10 +1,14 @@
 (library
-  (name main)
-  (public_name ligo.main)
+  (name uncompile)
+  (public_name ligo.uncompile)
   (libraries
-    run
-    compile
-    uncompile
+    simple-utils
+    compiler
+    typer_new
+    typer
+    ast_typed
+    mini_c
+    transpiler
   )
   (preprocess
     (pps ppx_let)

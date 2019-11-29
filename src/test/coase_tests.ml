@@ -3,7 +3,9 @@
 open Trace
 open Test_helpers
 
-let type_file = Ligo.Compile.Of_source.type_file (Syntax_name "pascaligo")
+let type_file f =
+  let%bind (typed , state , _env) = Ligo.Compile.Wrapper.source_to_typed (Syntax_name "pascaligo") f in
+  ok @@ (typed,state)
 
 let get_program =
   let s = ref None in

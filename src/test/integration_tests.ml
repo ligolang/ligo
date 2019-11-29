@@ -3,12 +3,12 @@ open Test_helpers
 
 open Ast_simplified.Combinators
 
-let mtype_file ?debug_simplify ?debug_typed f =
-  let%bind (typed , state) = Ligo.Compile.Of_source.type_file ?debug_simplify ?debug_typed (Syntax_name "cameligo") f in
+let mtype_file f =
+  let%bind (typed , state , _env) = Ligo.Compile.Wrapper.source_to_typed (Syntax_name "cameligo") f in
   let () = Typer.Solver.discard_state state in
   ok typed
 let type_file f =
-  let%bind (typed , state) = Ligo.Compile.Of_source.type_file (Syntax_name "pascaligo") f in
+  let%bind (typed , state , _env) = Ligo.Compile.Wrapper.source_to_typed (Syntax_name "pascaligo") f in
   let () = Typer.Solver.discard_state state in
   ok typed
 
@@ -323,9 +323,9 @@ let bytes_arithmetic () : unit result =
   let%bind () = expect_eq program "slice_op" tata at in
   let%bind () = expect_fail program "slice_op" foo in
   let%bind () = expect_fail program "slice_op" ba in
-  let%bind b1 = Run.Of_simplified.run_typed_program program Typer.Solver.initial_state "hasherman" foo in
+  let%bind b1 = Test_helpers.run_typed_program_with_simplified_input program "hasherman" foo in
   let%bind () = expect_eq program "hasherman" foo b1 in
-  let%bind b3 = Run.Of_simplified.run_typed_program program Typer.Solver.initial_state "hasherman" foototo in
+  let%bind b3 = Test_helpers.run_typed_program_with_simplified_input program "hasherman" foototo in
   let%bind () = Assert.assert_fail @@ Ast_simplified.Misc.assert_value_eq (b3 , b1) in
   ok ()
 
@@ -343,9 +343,9 @@ let bytes_arithmetic_mligo () : unit result =
   let%bind () = expect_eq program "slice_op" tata at in
   let%bind () = expect_fail program "slice_op" foo in
   let%bind () = expect_fail program "slice_op" ba in
-  let%bind b1 = Run.Of_simplified.run_typed_program program Typer.Solver.initial_state "hasherman" foo in
+  let%bind b1 = Test_helpers.run_typed_program_with_simplified_input program "hasherman" foo in
   let%bind () = expect_eq program "hasherman" foo b1 in
-  let%bind b3 = Run.Of_simplified.run_typed_program program Typer.Solver.initial_state "hasherman" foototo in
+  let%bind b3 = Test_helpers.run_typed_program_with_simplified_input program "hasherman" foototo in
   let%bind () = Assert.assert_fail @@ Ast_simplified.Misc.assert_value_eq (b3 , b1) in
   ok ()
 
@@ -1054,9 +1054,7 @@ let guess_string_mligo () : unit result =
 
 let basic_mligo () : unit result =
   let%bind typed = mtype_file "./contracts/basic.mligo" in
-  let%bind result = Run.Of_typed.evaluate_entry typed "foo" in
-  Ast_typed.assert_value_eq
-    (Ast_typed.Combinators.e_a_empty_int (42 + 127), result)
+  expect_eq_evaluate typed "foo" (e_int (42+127))
 
 let counter_mligo () : unit result =
   let%bind program = mtype_file "./contracts/counter.mligo" in
