@@ -318,9 +318,8 @@ module Typer = struct
     | Some t -> ok t
 
   let sub = typer_2 "SUB" @@ fun a b ->
-    if (eq_2 (a , b) (t_int ()))
-    then ok @@ t_int () else
-    if (eq_2 (a , b) (t_nat ()))
+    if (eq_1 a (t_int ()) || eq_1 a (t_nat ()))
+    && (eq_1 b (t_int ()) || eq_1 b (t_nat ()))
     then ok @@ t_int () else
     if (eq_2 (a , b) (t_timestamp ()))
     then ok @@ t_int () else
