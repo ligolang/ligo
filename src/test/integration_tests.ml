@@ -1241,6 +1241,14 @@ let address_mligo () : unit result =
   let%bind _ = mtype_file "./contracts/address.mligo" in
   ok ()
 
+let self_address () : unit result =
+  let%bind _ = type_file "./contracts/self_address.ligo" in
+  ok ()
+
+let self_address_mligo () : unit result =
+  let%bind _ = mtype_file "./contracts/self_address.mligo" in
+  ok ()
+
 let implicit_account () : unit result =
   let%bind _ = type_file "./contracts/implicit_account.ligo" in
   ok ()
@@ -1416,6 +1424,8 @@ let main = test_suite "Integration (End to End)" [
     test "balance constant (mligo)" balance_constant_mligo ;
     test "address" address ;
     test "address_mligo" address_mligo ;
+    test "self address" self_address ;
+    test "self address (mligo)" self_address_mligo ;
     test "implicit account" implicit_account ;
     test "implicit account (mligo)" implicit_account_mligo ;
     test "is_nat" is_nat ;

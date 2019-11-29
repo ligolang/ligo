@@ -74,6 +74,7 @@ module Simplify = struct
       ("source" , "SOURCE") ;
       ("sender" , "SENDER") ;
       ("address", "ADDRESS") ;
+      ("self_address", "SELF_ADDRESS") ;
       ("implicit_account", "IMPLICIT_ACCOUNT") ;
       ("failwith" , "FAILWITH") ;
       ("bitwise_or" , "OR") ;
@@ -139,6 +140,7 @@ module Simplify = struct
       ("Current.sender" , "SENDER") ;
       ("sender", "SENDER") ;
       ("Current.address", "ADDRESS") ;
+      ("Current.self_address", "SELF_ADDRESS") ;
       ("Current.implicit_account", "IMPLICIT_ACCOUNT") ;
       ("Current.source" , "SOURCE") ;
       ("source", "SOURCE") ;
@@ -468,6 +470,9 @@ module Typer = struct
 
   let address = typer_1 "ADDRESS" @@ fun contract ->
     let%bind () = assert_t_contract contract in
+    ok @@ t_address ()
+
+  let self_address = typer_0 "SELF_ADDRESS" @@ fun _ ->
     ok @@ t_address ()
 
   let implicit_account = typer_1 "IMPLICIT_ACCOUNT" @@ fun key_hash ->
@@ -802,7 +807,8 @@ module Typer = struct
       now ;
       slice ;
       address ;
-      implicit_account ; 
+      self_address ;
+      implicit_account ;
       assertion ;
       list_cons ;
     ]
@@ -874,6 +880,7 @@ module Compiler = struct
     ("BALANCE" , simple_constant @@ prim I_BALANCE) ;
     ("AMOUNT" , simple_constant @@ prim I_AMOUNT) ;
     ("ADDRESS" , simple_unary @@ prim I_ADDRESS) ;
+    ("SELF_ADDRESS", simple_constant @@ (seq [prim I_SELF ; prim I_ADDRESS])) ;
     ("IMPLICIT_CONTRACT", simple_unary @@ prim I_IMPLICIT_ACCOUNT) ;
     ("NOW" , simple_constant @@ prim I_NOW) ;
     ("CALL" , simple_ternary @@ prim I_TRANSFER_TOKENS) ;
