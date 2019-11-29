@@ -106,3 +106,8 @@ let pp_hex ppf (michelson : michelson) =
   let bytes = Tezos_data_encoding.Binary_writer.to_bytes_exn Script_repr.expr_encoding canonical in
   let hex = Hex.of_bytes bytes in
   Format.fprintf ppf "%a" Hex.pp hex
+
+let measure (michelson : michelson) =
+  let canonical = strip_locations michelson in
+  let bytes = Tezos_data_encoding.Binary_writer.to_bytes_exn Script_repr.expr_encoding canonical in
+  Bytes.length bytes

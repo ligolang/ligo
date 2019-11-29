@@ -84,6 +84,10 @@ let%expect_test _ =
            run-function
                Subcommand: run a function with the given parameter.
 
+    COMMANDS
+           measure-contract
+               Subcommand: measure a contract's compiled size in bytes.
+
     OPTIONS
            --help[=FMT] (default=auto)
                Show this help in format FMT. The value FMT must be one of `auto',

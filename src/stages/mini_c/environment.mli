@@ -11,15 +11,15 @@ module Environment : sig
   val add : element -> t -> t
   val concat : t list -> t
   (*
-  val get_opt : string -> t -> type_value option
-  val has : string -> t -> bool
+  val get_opt : Var.t -> t -> type_value option
+  val has : Var.t -> t -> bool
   *)
-  val get_i : string -> t -> (type_value * int)
+  val get_i : Var.t -> t -> (type_value * int)
   val of_list : element list -> t
   val to_list : t -> element list
-  val get_names : t -> string list
+  val get_names : t -> Var.t list
   val remove : int -> t -> t
-  val select : ?rev:bool -> ?keep:bool -> string list -> t -> t
+  val select : ?rev:bool -> ?keep:bool -> Var.t list -> t -> t
   (*
   val fold : ('a -> element -> 'a ) -> 'a -> t -> 'a
   val filter : ( element -> bool ) -> t -> t
@@ -36,20 +36,20 @@ val empty : t
 val add : element -> t -> t
 val concat : t list -> t
 (*
-val get_opt : string -> t -> type_value option
+val get_opt : Var.t -> t -> type_value option
 *)
-val has : string -> t -> bool
+val has : Var.t -> t -> bool
 (*
-val get_i : string -> t -> (type_value * int)
+val get_i : Var.t -> t -> (type_value * int)
 *)
 val of_list : element list -> t
 (*
 val to_list : t -> element list
-val get_names : t -> string list
+val get_names : t -> Var.t list
 val remove : int -> t -> t
 
 *)
-val select : ?rev:bool -> ?keep:bool -> string list -> t -> t
+val select : ?rev:bool -> ?keep:bool -> Var.t list -> t -> t
 val fold : ('a -> element -> 'a ) -> 'a -> t -> 'a
 val filter : ( element -> bool ) -> t -> t
 

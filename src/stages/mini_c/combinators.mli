@@ -66,18 +66,14 @@ val e_int : Expression.t' -> Expression.t
 *)
 val e_unit : Expression.t
 val e_skip : Expression.t
-val e_var_int : string -> Expression.t
-val e_let_in : string -> type_value -> Expression.t -> Expression.t -> Expression.t
+val e_var_int : Var.t -> Expression.t
+val e_let_in : Var.t -> type_value -> Expression.t -> Expression.t -> Expression.t
 
 val ez_e_sequence : Expression.t' -> Expression.t -> expression
 (*
 val ez_e_return : Expression.t -> Expression.t
 *)
 val d_unit : value
-(*
-val basic_quote : type_value -> type_value -> Expression.t -> anon_function result
-*)
-val basic_int_quote : expression -> expression result
 
 val environment_wrap : environment -> environment -> environment_wrap
 val id_environment_wrap : environment -> environment_wrap

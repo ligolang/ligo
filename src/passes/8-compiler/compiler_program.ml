@@ -457,7 +457,7 @@ let get_main : program -> string -> (anon_function * _) result = fun p entry ->
   let is_main (((name , expr), _):toplevel_statement) =
     match Combinators.Expression.(get_content expr , get_type expr)with
     | (E_closure content , T_function ty)
-      when name = entry ->
+      when Var.equal name (Var.of_name entry) ->
         Some (content , ty)
     | _ ->  None
   in

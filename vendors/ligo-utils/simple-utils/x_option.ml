@@ -72,3 +72,16 @@ let bind_smap (s:_ X_map.String.t) =
   fold aux s (Some empty)
 
 let bind_map_smap f smap = bind_smap (X_map.String.map f smap)
+
+let equal eq x y =
+  match (x, y) with
+  | (None, None) -> true
+  | (Some x, Some y) -> eq x y
+  | _ -> false
+
+let compare compare x y =
+  match (x, y) with
+  | (None, None) -> 0
+  | (None, Some _) -> -1
+  | (Some _, None) -> 1
+  | (Some x, Some y) -> compare x y

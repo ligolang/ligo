@@ -22,17 +22,17 @@ let compile_function = fun e ->
 
 let compile_expression_as_function_entry = fun program name ->
   let%bind aggregated = aggregate_entry program name true in
-  let%bind aggregated = Self_mini_c.all_expression aggregated in
+  let aggregated = Self_mini_c.all_expression aggregated in
   compile_function aggregated
 
 let compile_function_entry = fun program name ->
   let%bind aggregated = aggregate_entry program name false in
-  let%bind aggregated = Self_mini_c.all_expression aggregated in
+  let aggregated = Self_mini_c.all_expression aggregated in
   compile_function aggregated
 
 let compile_contract_entry = fun program name ->
   let%bind aggregated = aggregate_entry program name false in
-  let%bind aggregated = Self_mini_c.all_expression aggregated in
+  let aggregated = Self_mini_c.all_expression aggregated in
   let%bind compiled = compile_function aggregated in
   let%bind (param_ty , storage_ty) =
     let%bind fun_ty = get_t_function aggregated.type_value in

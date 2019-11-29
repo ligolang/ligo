@@ -39,11 +39,17 @@ let fold_map : type acc ele ret . (acc -> ele -> (acc * ret)) -> acc -> ele list
 
 let fold_right' f init lst = List.fold_left f init (List.rev lst)
 
-let rec remove_element x lst =
+(* breaking a dependency cycle with X_option *)
+let unopt ~default x = match x with
+  | None -> default
+  | Some x -> x
+
+let rec remove_element ?compare:cmp x lst =
+  let compare = unopt ~default:compare cmp in
   match lst with
   | [] -> raise (Failure "X_list.remove_element")
-  | hd :: tl when x = hd -> tl
-  | hd :: tl -> hd :: remove_element x tl
+  | hd :: tl when compare x hd = 0 -> tl
+  | hd :: tl -> hd :: remove_element ~compare x tl
 
 let filter_map f =
   let rec aux acc lst = match lst with
@@ -94,10 +100,10 @@ let find_full f lst =
   | _ :: tl -> aux (n + 1) tl in
   aux 0 lst
 
-let assoc_i x lst =
+let assoc_i ~compare x lst =
   let rec aux n = function
     | [] -> raise (Failure "List:assoc_i")
-    | (x', y) :: _ when x = x' -> (y, n)
+    | (x', y) :: _ when compare x x' = 0 -> (y, n)
     | _ :: tl -> aux (n + 1) tl
   in
   aux 0 lst
@@ -138,6 +144,35 @@ let to_pair = function
 let to_singleton = function
   | [a] -> Some a
   | _ -> None
+
+
+(** overriding stdlib List functions with optional compare/eq
+   arguments *)
+
+let rec mem ?compare:cmp x =
+  let compare = unopt ~default:compare cmp in
+  function
+  | [] -> false
+  | a::l -> compare a x = 0 || mem ~compare x l
+
+let rec memq ?eq:eq x =
+  let eq = unopt ~default:(=) eq in
+  function
+  | [] -> false
+  | a::l -> eq a x || memq ~eq x l
+
+let rec assoc ?compare:cmp x =
+  let compare = unopt ~default:compare cmp in
+  function
+    [] -> raise Not_found
+  | (a,b)::l -> if compare a x = 0 then b else assoc ~compare x l
+
+let rec assoc_opt ?compare:cmp x =
+  let compare = unopt ~default:compare cmp in
+  function
+    [] -> None
+  | (a,b)::l -> if compare a x = 0 then Some b else assoc_opt ~compare x l
+
 
 module Ne = struct
 

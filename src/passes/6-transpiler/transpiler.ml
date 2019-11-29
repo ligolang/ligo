@@ -2,6 +2,8 @@
 
 For more info, see back-end.md: https://gitlab.com/ligolang/ligo/blob/dev/gitlab-pages/docs/contributors/big-picture/back-end.md *)
 
+(* TODO(tomjack) all Var.of_name are suspicious, continue war against string? *)
+
 open! Trace
 open Helpers
 
@@ -267,14 +269,14 @@ and transpile_annotated_expression (ae:AST.annotated_expression) : expression re
   | E_let_in {binder; rhs; result} ->
     let%bind rhs' = transpile_annotated_expression rhs in
     let%bind result' = transpile_annotated_expression result in
-    return (E_let_in ((binder, rhs'.type_value), rhs', result'))
+    return (E_let_in ((Var.of_name binder, rhs'.type_value), rhs', result'))
   | E_literal l -> return @@ E_literal (transpile_literal l)
   | E_variable name -> (
       let%bind ele =
         trace_option (corner_case ~loc:__LOC__ "name not in environment") @@
         AST.Environment.get_opt name ae.environment in
       let%bind tv = transpile_environment_element_type ele in
-      return ~tv @@ E_variable name
+      return ~tv @@ E_variable (Var.of_name name)
     )
   | E_application (a, b) ->
       let%bind a = transpile_annotated_expression a in
@@ -377,7 +379,7 @@ and transpile_annotated_expression (ae:AST.annotated_expression) : expression re
           let%bind body' = transpile_annotated_expression l.body in
           let%bind (input , _) = AST.get_t_function f.type_annotation in
           let%bind input' = transpile_type input in
-          ok ((l.binder , input') , body')
+          ok ((Var.of_name l.binder , input') , body')
         in
         let expression_to_iterator_body (f : AST.annotated_expression) =
           match f.expression with
@@ -520,7 +522,7 @@ and transpile_annotated_expression (ae:AST.annotated_expression) : expression re
       in
       let%bind (_, path) = bind_fold_list aux (ty, []) path in
       let%bind expr' = transpile_annotated_expression expr in
-      return (E_assignment (typed_name.type_name, path, expr'))
+      return (E_assignment (Var.of_name typed_name.type_name, path, expr'))
     )
   | E_matching (expr, m) -> (
       let%bind expr' = transpile_annotated_expression expr in
@@ -535,7 +537,7 @@ and transpile_annotated_expression (ae:AST.annotated_expression) : expression re
             let%bind s' = transpile_annotated_expression s in
             ok (tv' , s')
           in
-          return @@ E_if_none (expr' , n , ((name , tv') , s'))
+          return @@ E_if_none (expr' , n , ((Var.of_name name , tv') , s'))
       | Match_list {
           match_nil ;
           match_cons = (((hd_name , hd_ty) , (tl_name , tl_ty)) , match_cons) ;
@@ -545,7 +547,7 @@ and transpile_annotated_expression (ae:AST.annotated_expression) : expression re
             let%bind hd_ty' = transpile_type hd_ty in
             let%bind tl_ty' = transpile_type tl_ty in
             let%bind match_cons' = transpile_annotated_expression match_cons in
-            ok (((hd_name , hd_ty') , (tl_name , tl_ty')) , match_cons')
+            ok (((Var.of_name hd_name , hd_ty') , (Var.of_name tl_name , tl_ty')) , match_cons')
           in
           return @@ E_if_cons (expr' , nil , cons)
         )
@@ -577,19 +579,19 @@ and transpile_annotated_expression (ae:AST.annotated_expression) : expression re
                   trace_option (corner_case ~loc:__LOC__ "missing match clause") @@
                   List.find_opt (fun ((constructor_name' , _) , _) -> constructor_name' = constructor_name) lst in
                 let%bind body' = transpile_annotated_expression body in
-                return @@ E_let_in ((name , tv) , top , body')
+                return @@ E_let_in ((Var.of_name name , tv) , top , body')
               )
             | ((`Node (a , b)) , tv) ->
                 let%bind a' =
                   let%bind a_ty = get_t_left tv in
-                  let a_var = "left" , a_ty in
-                  let%bind e = aux (((Expression.make (E_variable "left") a_ty))) a in
+                  let a_var = Var.of_name "left" , a_ty in
+                  let%bind e = aux (((Expression.make (E_variable (Var.of_name "left")) a_ty))) a in
                   ok (a_var , e)
                 in
                 let%bind b' =
                   let%bind b_ty = get_t_right tv in
-                  let b_var = "right" , b_ty in
-                  let%bind e = aux (((Expression.make (E_variable "right") b_ty))) b in
+                  let b_var = Var.of_name "right" , b_ty in
+                  let%bind e = aux (((Expression.make (E_variable (Var.of_name "right")) b_ty))) b in
                   ok (b_var , e)
                 in
                 return @@ E_if_left (top , a' , b')
@@ -606,7 +608,7 @@ and transpile_lambda l (input_type , output_type) =
   let%bind input = transpile_type input_type in
   let%bind output = transpile_type output_type in
   let tv = Combinators.t_function input output in
-  let closure = E_closure { binder ; body = result'} in
+  let closure = E_closure { binder = Var.of_name binder ; body = result'} in
   ok @@ Combinators.Expression.make_tpl (closure , tv)
 
 let transpile_declaration env (d:AST.declaration) : toplevel_statement result =
@@ -614,8 +616,8 @@ let transpile_declaration env (d:AST.declaration) : toplevel_statement result =
   | Declaration_constant ({name;annotated_expression} , _) ->
       let%bind expression = transpile_annotated_expression annotated_expression in
       let tv = Combinators.Expression.get_type expression in
-      let env' = Environment.add (name, tv) env in
-      ok @@ ((name, expression), environment_wrap env env')
+      let env' = Environment.add (Var.of_name name, tv) env in
+      ok @@ ((Var.of_name name, expression), environment_wrap env env')
 
 let transpile_program (lst : AST.program) : program result =
   let aux (prev:(toplevel_statement list * Environment.t) result) cur =

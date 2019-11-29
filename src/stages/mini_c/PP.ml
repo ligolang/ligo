@@ -42,7 +42,7 @@ and annotated ppf : type_value annotated -> _ = function
   | (None, a) -> type_ ppf a
 
 and environment_element ppf ((s, tv) : environment_element) =
-  Format.fprintf ppf "%s : %a" s type_ tv
+  Format.fprintf ppf "%a : %a" Var.pp s type_ tv
 
 and environment ppf (x:environment) =
   fprintf ppf "Env[%a]" (list_sep_d environment_element) x
@@ -75,7 +75,7 @@ and value_assoc ppf : (value * value) -> unit = fun (a, b) ->
 and expression' ppf (e:expression') = match e with
   | E_skip -> fprintf ppf "skip"
   | E_closure x -> fprintf ppf "C(%a)" function_ x
-  | E_variable v -> fprintf ppf "V(%s)" v
+  | E_variable v -> fprintf ppf "V(%a)" Var.pp v
   | E_application(a, b) -> fprintf ppf "(%a)@(%a)" expression a expression b
   | E_constant(p, lst) -> fprintf ppf "%s %a" p (pp_print_list ~pp_sep:space_sep expression) lst
   | E_literal v -> fprintf ppf "L(%a)" value v
@@ -85,19 +85,25 @@ and expression' ppf (e:expression') = match e with
   | E_make_empty_set _ -> fprintf ppf "set[]"
   | E_make_none _ -> fprintf ppf "none"
   | E_if_bool (c, a, b) -> fprintf ppf "%a ? %a : %a" expression c expression a expression b
-  | E_if_none (c, n, ((name, _) , s)) -> fprintf ppf "%a ?? %a : %s -> %a" expression c expression n name expression s
-  | E_if_cons (c, n, (((hd_name, _) , (tl_name, _)) , cons)) -> fprintf ppf "%a ?? %a : (%s :: %s) -> %a" expression c expression n hd_name tl_name expression cons
+  | E_if_none (c, n, ((name, _) , s)) ->
+    fprintf ppf "%a ?? %a : %a -> %a"
+      expression c expression n Var.pp name expression s
+  | E_if_cons (c, n, (((hd_name, _) , (tl_name, _)) , cons)) ->
+    fprintf ppf "%a ?? %a : (%a :: %a) -> %a"
+      expression c expression n Var.pp hd_name Var.pp tl_name expression cons
   | E_if_left (c, ((name_l, _) , l), ((name_r, _) , r)) ->
-      fprintf ppf "%a ?? %s -> %a : %s -> %a" expression c name_l expression l name_r expression r
+      fprintf ppf "%a ?? %a -> %a : %a -> %a"
+        expression c Var.pp name_l expression l Var.pp name_r expression r
   | E_sequence (a , b) -> fprintf ppf "%a ;; %a" expression a expression b
   | E_let_in ((name , _) , expr , body) ->
-      fprintf ppf "let %s = %a in ( %a )" name expression expr expression body
+      fprintf ppf "let %a = %a in ( %a )" Var.pp name expression expr expression body
   | E_iterator (s , ((name , _) , body) , expr) ->
-      fprintf ppf "for_%s %s of %a do ( %a )" s name expression expr expression body
+      fprintf ppf "for_%s %a of %a do ( %a )" s Var.pp name expression expr expression body
   | E_fold (((name , _) , body) , collection , initial) ->
-      fprintf ppf "fold %a on %a with %s do ( %a )" expression collection expression initial name expression body
+    fprintf ppf "fold %a on %a with %a do ( %a )"
+      expression collection expression initial Var.pp name expression body
   | E_assignment (r , path , e) ->
-      fprintf ppf "%s.%a := %a" r (list_sep lr (const ".")) path expression e
+      fprintf ppf "%a.%a := %a" Var.pp r (list_sep lr (const ".")) path expression e
   | E_while (e , b) ->
       fprintf ppf "while (%a) %a" expression e expression b
 
@@ -110,15 +116,28 @@ and expression_with_type : _ -> expression -> _  = fun ppf e ->
     type_ e.type_value
 
 and function_ ppf ({binder ; body}:anon_function) =
-  fprintf ppf "fun %s -> (%a)"
-    binder
+  fprintf ppf "fun %a -> (%a)"
+    Var.pp binder
     expression body
 
-and assignment ppf ((n, e):assignment) = fprintf ppf "%s = %a;" n expression e
+and assignment ppf ((n, e):assignment) = fprintf ppf "%a = %a;" Var.pp n expression e
 
-and declaration ppf ((n, e):assignment) = fprintf ppf "let %s = %a;" n expression e
+and declaration ppf ((n, e):assignment) = fprintf ppf "let %a = %a;" Var.pp n expression e
 
 let tl_statement ppf (ass, _) = assignment ppf ass
 
 let program ppf (p:program) =
   fprintf ppf "Program:\n---\n%a" (pp_print_list ~pp_sep:pp_print_newline tl_statement) p
+
+let%expect_test _ =
+  let pp = expression' Format.std_formatter in
+  let dummy_type = T_base Base_unit in
+  let wrap e = { content = e ; type_value = dummy_type } in
+  pp @@ E_closure { binder = Var.of_name "y" ; body = wrap (E_variable (Var.of_name "y")) } ;
+  [%expect{|
+    C(fun y -> (V(y)))
+  |}] ;
+  pp @@ E_closure { binder = Var.of_name "z" ; body = wrap (E_variable (Var.of_name "z")) } ;
+  [%expect{|
+    C(fun z -> (V(z)))
+  |}]
