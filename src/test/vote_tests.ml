@@ -1,7 +1,9 @@
 open Trace
 open Test_helpers
 
-let type_file = Ligo.Compile.Of_source.type_file (Syntax_name "cameligo")
+let type_file f =
+  let%bind (typed , state , _env) = Ligo.Compile.Wrapper.source_to_typed (Syntax_name "cameligo") f in
+  ok @@ (typed,state)
 
 let get_program =
   let s = ref None in
@@ -39,8 +41,8 @@ let vote str =
   e_constructor "Vote" vote
 
 let init_vote () =
-  let%bind (program , state) = get_program () in
-  let%bind result = Ligo.Run.Of_simplified.run_typed_program program state "main" (e_pair (vote "Yes") (init_storage "basic")) in
+  let%bind (program , _) = get_program () in
+  let%bind result = Test_helpers.run_typed_program_with_simplified_input program "main" (e_pair (vote "Yes") (init_storage "basic")) in
   let%bind (_ , storage) = extract_pair result in
   let%bind storage' = extract_record storage in
   let votes = List.assoc "candidates" storage' in

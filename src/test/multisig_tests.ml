@@ -1,7 +1,9 @@
 open Trace
 open Test_helpers
 
-let type_file = Ligo.Compile.Of_source.type_file (Syntax_name "pascaligo")
+let type_file f =
+  let%bind (typed , state , _env) = Ligo.Compile.Wrapper.source_to_typed (Syntax_name "pascaligo") f in
+  ok @@ (typed,state)
 
 let get_program =
   let s = ref None in
@@ -15,9 +17,8 @@ let get_program =
 
 let compile_main () = 
   let%bind program,_ = get_program () in
-  let%bind () =
-    Ligo.Run.Of_simplified.compile_program
-    program "main" in
+  let%bind michelson = Compile.Wrapper.typed_to_michelson_value_as_function program "main" in
+  let%bind _ex_ty_value = Ligo.Run.Of_michelson.evaluate michelson in
   ok ()
 
 open Ast_simplified

@@ -1,7 +1,9 @@
 open Trace
 open Test_helpers
 
-let type_file = Ligo.Compile.Of_source.type_file (Syntax_name "pascaligo")
+let type_file f =
+  let%bind (typed , state , _env) = Ligo.Compile.Wrapper.source_to_typed (Syntax_name "pascaligo") f in
+  ok @@ (typed,state)
 
 let get_program =
   let s = ref None in
@@ -45,7 +47,18 @@ let dummy n =
     @@ range (n + 1)
   )
 
-let run_typed = Run.Of_typed.run_entry
+let run_typed (entry_point:string) (program:Ast_typed.program) (input:Ast_typed.annotated_expression) =
+  let%bind program_mich = Compile.Wrapper.typed_to_michelson_program program entry_point in
+  let%bind input_mich = Compile.Wrapper.typed_expression_to_michelson_value_as_function input in
+  let%bind input_eval = Run.Of_michelson.evaluate_michelson input_mich in
+  let%bind res = Run.Of_michelson.run program_mich input_eval in
+  let%bind output_type =
+    let%bind entry_expression = Ast_typed.get_entry program entry_point in
+    let%bind (_ , output_type) = Ast_typed.get_t_function entry_expression.type_annotation in
+    ok output_type
+  in
+  let%bind mini_c = Compiler.Uncompiler.translate_value res in
+  Transpiler.untranspile mini_c output_type
 
 let is_empty () : unit result =
   let%bind program = get_program () in

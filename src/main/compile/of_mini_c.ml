@@ -42,7 +42,3 @@ let compile_contract_entry = fun program name ->
   let%bind storage_michelson = Compiler.Type.type_ storage_ty in
   let contract = Michelson.contract param_michelson storage_michelson compiled.body in
   ok contract
-
-
-let uncompile_value : Proto_alpha_utils.Memory_proto_alpha.X.ex_typed_value -> value result = fun x ->
-  Compiler.Uncompiler.translate_value x

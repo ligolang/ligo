@@ -35,7 +35,7 @@ open Ast_simplified
 let pack_payload (program:Ast_typed.program) (payload:expression) : bytes result =
   let%bind code =
     let env = Ast_typed.program_environment program in
-    Compile.Of_simplified.compile_expression_as_function
+    Compile.Wrapper.simplified_to_compiled_program
       ~env ~state:(Typer.Solver.initial_state) payload in
   let Compiler.Program.{input=_;output=(Ex_ty payload_ty);body=_} = code in
   let%bind (payload: Tezos_utils.Michelson.michelson) =
@@ -49,7 +49,7 @@ let sign_message (program:Ast_typed.program) (payload : expression) sk : string 
   let signature_str = Signature.to_b58check signed_data in
   ok signature_str
 
-let contract id = 
+let contract id =
   let open Proto_alpha_utils.Memory_proto_alpha in
   let id = List.nth dummy_environment.identities id in
   id.implicit_contract
@@ -76,14 +76,41 @@ let sha_256_hash pl =
 
 open Ast_simplified.Combinators
 
+let run_typed_program_with_simplified_input ?options
+    (program: Ast_typed.program) (entry_point: string)
+    (input: Ast_simplified.expression) : Ast_simplified.expression result =
+  let env = Ast_typed.program_environment program in
+  let%bind michelson_exp = Compile.Wrapper.simplified_to_compiled_program ~env ~state:(Typer.Solver.initial_state) input in
+  let%bind evaluated_exp = Ligo.Run.Of_michelson.evaluate_michelson michelson_exp in
+  let%bind michelson_program = Compile.Wrapper.typed_to_michelson_program program entry_point in
+  let%bind michelson_output = Ligo.Run.Of_michelson.run ?options michelson_program evaluated_exp in
+  Uncompile.uncompile_typed_program_entry_function_result program entry_point michelson_output
+
+let expect_fail_typed_program_with_simplified_input ?options
+    (program: Ast_typed.program) (entry_point: string)
+    (input: Ast_simplified.expression) : Ligo.Run.Of_michelson.failwith_res Simple_utils__Trace.result =
+  let env = Ast_typed.program_environment program in
+  let%bind michelson_exp = Compile.Wrapper.simplified_to_compiled_program ~env ~state:(Typer.Solver.initial_state) input in
+  let%bind evaluated_exp = Ligo.Run.Of_michelson.evaluate_michelson michelson_exp in
+  let%bind michelson_program = Compile.Wrapper.typed_to_michelson_program program entry_point in
+  Ligo.Run.Of_michelson.get_exec_error ?options michelson_program evaluated_exp
+
+let run_typed_value_as_function
+    (program: Ast_typed.program) (entry_point:string) : Ast_simplified.expression result =
+  let%bind michelson_value_as_f = Compile.Wrapper.typed_to_michelson_value_as_function program entry_point in
+  let%bind result = Ligo.Run.Of_michelson.evaluate michelson_value_as_f in
+  Uncompile.uncompile_typed_program_entry_expression_result program entry_point result
+
 let expect ?options program entry_point input expecter =
   let%bind result =
     let run_error =
       let title () = "expect run" in
       let content () = Format.asprintf "Entry_point: %s" entry_point in
-      error title content in
+      error title content
+    in
     trace run_error @@
-    Ligo.Run.Of_simplified.run_typed_program ?options program Typer.Solver.initial_state entry_point input in
+    run_typed_program_with_simplified_input ?options program entry_point input in
+
   expecter result
 
 let expect_fail ?options program entry_point input =
@@ -93,12 +120,11 @@ let expect_fail ?options program entry_point input =
     error title content
   in
   trace run_error @@
-  Assert.assert_fail
-  @@ Ligo.Run.Of_simplified.run_typed_program ?options program Typer.Solver.initial_state entry_point input
+  Assert.assert_fail @@
+  run_typed_program_with_simplified_input ?options program entry_point input
 
 let expect_string_failwith ?options program entry_point input expected_failwith =
-  let%bind err = Ligo.Run.Of_simplified.run_failwith_program
-      ?options program Typer.Solver.initial_state entry_point input in
+  let%bind err = expect_fail_typed_program_with_simplified_input ?options program entry_point input in
   match err with
     | Ligo.Run.Of_michelson.Failwith_string s -> Assert.assert_equal_string expected_failwith s
     | _ -> simple_fail "Expected to fail with a string"
@@ -121,7 +147,7 @@ let expect_evaluate program entry_point expecter =
     let content () = Format.asprintf "Entry_point: %s" entry_point in
     error title content in
   trace error @@
-  let%bind result = Ligo.Run.Of_simplified.evaluate_typed_program_entry program entry_point in
+  let%bind result = run_typed_value_as_function program entry_point in
   expecter result
 
 let expect_eq_evaluate program entry_point expected =

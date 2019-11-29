@@ -380,11 +380,16 @@ let%expect_test _ =
            ligo-compile-expression - Subcommand: compile to a michelson value.
 
     SYNOPSIS
-           ligo compile-expression [OPTION]... _EXPRESSION
+           ligo compile-expression [OPTION]... SYNTAX _EXPRESSION
 
     ARGUMENTS
            _EXPRESSION (required)
                _EXPRESSION is the expression that will be compiled.
+
+           SYNTAX (required)
+               SYNTAX is the syntax that will be used. Currently supported
+               syntaxes are "pascaligo" and "cameligo". By default, the syntax is
+               guessed from the extension (.ligo and .mligo, respectively).
 
     OPTIONS
            --format=DISPLAY_FORMAT, --display-format=DISPLAY_FORMAT
@@ -403,9 +408,4 @@ let%expect_test _ =
            --michelson-format=MICHELSON_FORMAT (absent=text)
                MICHELSON_FORMAT is the format that will be used by
                compile-contract for the resulting Michelson. Available formats
-               are 'text' (default), 'json' and 'hex'.
-
-           -s SYNTAX, --syntax=SYNTAX (absent=auto)
-               SYNTAX is the syntax that will be used. Currently supported
-               syntaxes are "pascaligo" and "cameligo". By default, the syntax is
-               guessed from the extension (.ligo and .mligo, respectively). |} ] ;
+               are 'text' (default), 'json' and 'hex'. |} ] ;

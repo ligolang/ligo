@@ -6,6 +6,38 @@ open Memory_proto_alpha.X
 
 type options = Memory_proto_alpha.options
 
+type dry_run_options =
+  { amount : string ;
+    sender : string option ;
+    source : string option }
+
+let make_dry_run_options (opts : dry_run_options) : options result =
+  let open Proto_alpha_utils.Trace in
+  let open Proto_alpha_utils.Memory_proto_alpha in
+  let open Protocol.Alpha_context in
+  let%bind amount = match Tez.of_string opts.amount with
+    | None -> simple_fail "invalid amount"
+    | Some amount -> ok amount in
+  let%bind sender =
+    match opts.sender with
+    | None -> ok None
+    | Some sender ->
+      let%bind sender =
+        trace_alpha_tzresult
+          (simple_error "invalid address")
+          (Contract.of_b58check sender) in
+      ok (Some sender) in
+  let%bind source =
+    match opts.source with
+    | None -> ok None
+    | Some source ->
+      let%bind source =
+        trace_alpha_tzresult
+          (simple_error "invalid source address")
+          (Contract.of_b58check source) in
+      ok (Some source) in
+  ok @@ make_options ~amount ?source:sender ?payer:source ()
+
 let run ?options (* ?(is_input_value = false) *) (program:compiled_program) (input_michelson:Michelson.t) : ex_typed_value result =
   let Compiler.Program.{input;output;body} : compiled_program = program in
   let (Ex_ty input_ty) = input in
