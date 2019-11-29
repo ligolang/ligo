@@ -1233,6 +1233,14 @@ let balance_constant_mligo () : unit result =
   let expected = e_tuple [e_list []; e_mutez 4000000000000] in
   expect_eq program "main" input expected
 
+let address () : unit result =
+  let%bind _ = type_file "./contracts/address.ligo" in
+  ok ()
+
+let address_mligo () : unit result =
+  let%bind _ = mtype_file "./contracts/address.mligo" in
+  ok ()
+
 let implicit_account () : unit result =
   let%bind _ = type_file "./contracts/implicit_account.ligo" in
   ok ()
@@ -1406,6 +1414,8 @@ let main = test_suite "Integration (End to End)" [
     test "let multiple (mligo)" mligo_let_multiple ;
     test "balance constant" balance_constant ;
     test "balance constant (mligo)" balance_constant_mligo ;
+    test "address" address ;
+    test "address_mligo" address_mligo ;
     test "implicit account" implicit_account ;
     test "implicit account (mligo)" implicit_account_mligo ;
     test "is_nat" is_nat ;

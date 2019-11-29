@@ -73,6 +73,7 @@ module Simplify = struct
       ("unit" , "UNIT") ;
       ("source" , "SOURCE") ;
       ("sender" , "SENDER") ;
+      ("address", "ADDRESS") ;
       ("implicit_account", "IMPLICIT_ACCOUNT") ;
       ("failwith" , "FAILWITH") ;
       ("bitwise_or" , "OR") ;
@@ -137,6 +138,7 @@ module Simplify = struct
       ("gas", "STEPS_TO_QUOTA") ;
       ("Current.sender" , "SENDER") ;
       ("sender", "SENDER") ;
+      ("Current.address", "ADDRESS") ;
       ("Current.implicit_account", "IMPLICIT_ACCOUNT") ;
       ("Current.source" , "SOURCE") ;
       ("source", "SOURCE") ;
