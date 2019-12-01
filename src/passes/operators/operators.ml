@@ -73,6 +73,9 @@ module Simplify = struct
       ("unit" , "UNIT") ;
       ("source" , "SOURCE") ;
       ("sender" , "SENDER") ;
+      ("address", "ADDRESS") ;
+      ("self_address", "SELF_ADDRESS") ;
+      ("implicit_account", "IMPLICIT_ACCOUNT") ;
       ("failwith" , "FAILWITH") ;
       ("bitwise_or" , "OR") ;
       ("bitwise_and" , "AND") ;
@@ -136,6 +139,9 @@ module Simplify = struct
       ("gas", "STEPS_TO_QUOTA") ;
       ("Current.sender" , "SENDER") ;
       ("sender", "SENDER") ;
+      ("Current.address", "ADDRESS") ;
+      ("Current.self_address", "SELF_ADDRESS") ;
+      ("Current.implicit_account", "IMPLICIT_ACCOUNT") ;
       ("Current.source" , "SOURCE") ;
       ("source", "SOURCE") ;
       ("Current.failwith", "FAILWITH") ;
@@ -466,6 +472,13 @@ module Typer = struct
     let%bind () = assert_t_contract contract in
     ok @@ t_address ()
 
+  let self_address = typer_0 "SELF_ADDRESS" @@ fun _ ->
+    ok @@ t_address ()
+
+  let implicit_account = typer_1 "IMPLICIT_ACCOUNT" @@ fun key_hash ->
+    let%bind () = assert_t_key_hash key_hash in
+    ok @@ t_contract (t_unit () ) ()
+
   let now = constant "NOW" @@ t_timestamp ()
 
   let transaction = typer_3 "CALL" @@ fun param amount contract ->
@@ -794,6 +807,8 @@ module Typer = struct
       now ;
       slice ;
       address ;
+      self_address ;
+      implicit_account ;
       assertion ;
       list_cons ;
     ]
@@ -865,6 +880,8 @@ module Compiler = struct
     ("BALANCE" , simple_constant @@ prim I_BALANCE) ;
     ("AMOUNT" , simple_constant @@ prim I_AMOUNT) ;
     ("ADDRESS" , simple_unary @@ prim I_ADDRESS) ;
+    ("SELF_ADDRESS", simple_constant @@ (seq [prim I_SELF ; prim I_ADDRESS])) ;
+    ("IMPLICIT_CONTRACT", simple_unary @@ prim I_IMPLICIT_ACCOUNT) ;
     ("NOW" , simple_constant @@ prim I_NOW) ;
     ("CALL" , simple_ternary @@ prim I_TRANSFER_TOKENS) ;
     ("SOURCE" , simple_constant @@ prim I_SOURCE) ;
