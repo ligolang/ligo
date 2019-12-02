@@ -13,7 +13,7 @@
 )
 
 (executable
-  (name ligo)
+  (name runligo)
   (public_name ligo)
   (libraries
     simple-utils
@@ -21,7 +21,7 @@
     ligo
     cli
   )
-  (modules ligo)
+  (modules runligo)
   (package ligo)
   (preprocess
     (pps ppx_let)
