@@ -1215,7 +1215,7 @@ let mligo_let_multiple () : unit result =
   in
   let%bind () =
     let input = e_unit () in
-    let expected = e_int 65 in
+    let expected = e_int 19 in
     expect_eq program "non_tuple_rhs" input expected
   in
   ok ()

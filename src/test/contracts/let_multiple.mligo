@@ -11,4 +11,4 @@ let main_paren (p: unit) : int = x + y
 let foobar : (int * int) = (23 , 42)
 let (foo : int) , (bar : int) = foobar
 
-let non_tuple_rhs (p: unit) : int = foo + bar
+let non_tuple_rhs (p: unit) : int = bar - foo 
