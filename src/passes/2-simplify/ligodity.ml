@@ -593,14 +593,15 @@ and simpl_declaration : Raw.declaration -> declaration Location.wrap list result
                    if i = (List.length variables) then accesses
                    else
                      let accesses =
-                        build_access_expr :: accesses
+                       build_access_expr :: accesses
                      in
                      gen_access_tuple name ~i: (i + 1) ~accesses
                  in ok (gen_access_tuple name)
                (* TODO: Improve this error message *)
                | other -> fail @@ simplifying_expr other
           in let%bind decls =
-               bind_map_list process_variable (List.combine variables expr_bind_lst)
+               (* TODO: Rewrite the gen_access_tuple so there's no List.rev *)
+               bind_map_list process_variable (List.combine variables (List.rev expr_bind_lst))
           in ok @@ decls
         | PPar {region = _ ; value = { lpar = _ ; inside = pt; rpar = _; } } ->
           (* Extract parenthetical multi-bind *)

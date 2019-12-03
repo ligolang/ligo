@@ -1215,8 +1215,23 @@ let mligo_let_multiple () : unit result =
   in
   let%bind () =
     let input = e_unit () in
-    let expected = e_int 65 in
+    let expected = e_tuple [e_int 23 ; e_int 42] in
+    expect_eq program "correct_values_bound" input expected
+  in
+  let%bind () =
+    let input = e_unit () in
+    let expected = e_int 19 in
     expect_eq program "non_tuple_rhs" input expected
+  in
+  let%bind () =
+    let input = e_unit () in
+    let expected = e_tuple [e_int 10; e_int 20; e_int 30; e_int 40; e_int 50] in
+    expect_eq program "correct_values_big_tuple" input expected
+  in
+  let%bind () =
+    let input = e_unit () in
+    let expected = e_tuple [e_int 10 ; e_string "hello"] in
+    expect_eq program "correct_values_different_types" input expected
   in
   ok ()
 
