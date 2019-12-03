@@ -881,7 +881,7 @@ module Compiler = struct
     ("AMOUNT" , simple_constant @@ prim I_AMOUNT) ;
     ("ADDRESS" , simple_unary @@ prim I_ADDRESS) ;
     ("SELF_ADDRESS", simple_constant @@ (seq [prim I_SELF ; prim I_ADDRESS])) ;
-    ("IMPLICIT_CONTRACT", simple_unary @@ prim I_IMPLICIT_ACCOUNT) ;
+    ("IMPLICIT_ACCOUNT", simple_unary @@ prim I_IMPLICIT_ACCOUNT) ;
     ("NOW" , simple_constant @@ prim I_NOW) ;
     ("CALL" , simple_ternary @@ prim I_TRANSFER_TOKENS) ;
     ("SOURCE" , simple_constant @@ prim I_SOURCE) ;
