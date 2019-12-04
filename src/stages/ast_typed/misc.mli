@@ -11,7 +11,7 @@ val merge_annotation : type_value option -> type_value option -> error_thunk -> 
 val type_value_eq : ( type_value * type_value ) -> bool
 
 module Free_variables : sig
-  type bindings = string list
+  type bindings = expression_variable list
 
   val matching_expression : bindings -> matching_expr -> bindings
   val lambda : bindings -> lambda -> bindings
@@ -19,7 +19,7 @@ module Free_variables : sig
   val annotated_expression : bindings -> annotated_expression -> bindings 
 
   val empty : bindings 
-  val singleton : string -> bindings 
+  val singleton : expression_variable -> bindings 
 
 (*
   val mem : string -> bindings -> bool

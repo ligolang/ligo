@@ -1,6 +1,7 @@
 open Simple_utils.PP_helpers
 open Types
 open Format
+include Stage_common.PP
 
 let list_sep_d x = list_sep x (const " , ")
 
@@ -14,7 +15,7 @@ let type_base ppf : type_base -> _ = function
   | Base_bool -> fprintf ppf "bool"
   | Base_int -> fprintf ppf "int"
   | Base_nat -> fprintf ppf "nat"
-  | Base_tez -> fprintf ppf "tez"
+  | Base_mutez -> fprintf ppf "tez"
   | Base_string -> fprintf ppf "string"
   | Base_address -> fprintf ppf "address"
   | Base_timestamp -> fprintf ppf "timestamp"
@@ -25,24 +26,24 @@ let type_base ppf : type_base -> _ = function
   | Base_key_hash -> fprintf ppf "key_hash"
   | Base_chain_id -> fprintf ppf "chain_id"
 
-let rec type_ ppf : type_value -> _ = function
+let rec type_variable ppf : type_value -> _ = function
   | T_or(a, b) -> fprintf ppf "(%a) | (%a)" annotated a annotated b
   | T_pair(a, b) -> fprintf ppf "(%a) & (%a)" annotated a annotated b
   | T_base b -> type_base ppf b
-  | T_function(a, b) -> fprintf ppf "(%a) -> (%a)" type_ a type_ b
-  | T_map(k, v) -> fprintf ppf "map(%a -> %a)" type_ k type_ v
-  | T_big_map(k, v) -> fprintf ppf "big_map(%a -> %a)" type_ k type_ v
-  | T_list(t) -> fprintf ppf "list(%a)" type_ t
-  | T_set(t) -> fprintf ppf "set(%a)" type_ t
-  | T_option(o) -> fprintf ppf "option(%a)" type_ o
-  | T_contract(t) -> fprintf ppf "contract(%a)" type_ t
+  | T_function(a, b) -> fprintf ppf "(%a) -> (%a)" type_variable a type_variable b
+  | T_map(k, v) -> fprintf ppf "map(%a -> %a)" type_variable k type_variable v
+  | T_big_map(k, v) -> fprintf ppf "big_map(%a -> %a)" type_variable k type_variable v
+  | T_list(t) -> fprintf ppf "list(%a)" type_variable t
+  | T_set(t) -> fprintf ppf "set(%a)" type_variable t
+  | T_option(o) -> fprintf ppf "option(%a)" type_variable o
+  | T_contract(t) -> fprintf ppf "contract(%a)" type_variable t
 
 and annotated ppf : type_value annotated -> _ = function
-  | (Some ann, a) -> fprintf ppf "(%a %%%s)" type_ a ann
-  | (None, a) -> type_ ppf a
+  | (Some ann, a) -> fprintf ppf "(%a %%%s)" type_variable a ann
+  | (None, a) -> type_variable ppf a
 
-and environment_element ppf ((s, tv) : environment_element) =
-  Format.fprintf ppf "%a : %a" Var.pp s type_ tv
+and environment_element ppf ((n, tv) : environment_element) =
+  Format.fprintf ppf "%a : %a" Stage_common.PP.name n type_variable tv
 
 and environment ppf (x:environment) =
   fprintf ppf "Env[%a]" (list_sep_d environment_element) x
@@ -75,9 +76,9 @@ and value_assoc ppf : (value * value) -> unit = fun (a, b) ->
 and expression' ppf (e:expression') = match e with
   | E_skip -> fprintf ppf "skip"
   | E_closure x -> fprintf ppf "C(%a)" function_ x
-  | E_variable v -> fprintf ppf "V(%a)" Var.pp v
+  | E_variable v -> fprintf ppf "V(%a)" Stage_common.PP.name v
   | E_application(a, b) -> fprintf ppf "(%a)@(%a)" expression a expression b
-  | E_constant(p, lst) -> fprintf ppf "%s %a" p (pp_print_list ~pp_sep:space_sep expression) lst
+  | E_constant(p, lst) -> fprintf ppf "%a %a" Stage_common.PP.constant p (pp_print_list ~pp_sep:space_sep expression) lst
   | E_literal v -> fprintf ppf "L(%a)" value v
   | E_make_empty_map _ -> fprintf ppf "map[]"
   | E_make_empty_big_map _ -> fprintf ppf "big_map[]"
@@ -85,25 +86,19 @@ and expression' ppf (e:expression') = match e with
   | E_make_empty_set _ -> fprintf ppf "set[]"
   | E_make_none _ -> fprintf ppf "none"
   | E_if_bool (c, a, b) -> fprintf ppf "%a ? %a : %a" expression c expression a expression b
-  | E_if_none (c, n, ((name, _) , s)) ->
-    fprintf ppf "%a ?? %a : %a -> %a"
-      expression c expression n Var.pp name expression s
-  | E_if_cons (c, n, (((hd_name, _) , (tl_name, _)) , cons)) ->
-    fprintf ppf "%a ?? %a : (%a :: %a) -> %a"
-      expression c expression n Var.pp hd_name Var.pp tl_name expression cons
+  | E_if_none (c, n, ((name, _) , s)) -> fprintf ppf "%a ?? %a : %a -> %a" expression c expression n Stage_common.PP.name name expression s
+  | E_if_cons (c, n, (((hd_name, _) , (tl_name, _)) , cons)) -> fprintf ppf "%a ?? %a : (%a :: %a) -> %a" expression c expression n Stage_common.PP.name hd_name Stage_common.PP.name tl_name expression cons
   | E_if_left (c, ((name_l, _) , l), ((name_r, _) , r)) ->
-      fprintf ppf "%a ?? %a -> %a : %a -> %a"
-        expression c Var.pp name_l expression l Var.pp name_r expression r
+      fprintf ppf "%a ?? %a -> %a : %a -> %a" expression c Stage_common.PP.name name_l expression l Stage_common.PP.name name_r expression r
   | E_sequence (a , b) -> fprintf ppf "%a ;; %a" expression a expression b
   | E_let_in ((name , _) , expr , body) ->
-      fprintf ppf "let %a = %a in ( %a )" Var.pp name expression expr expression body
-  | E_iterator (s , ((name , _) , body) , expr) ->
-      fprintf ppf "for_%s %a of %a do ( %a )" s Var.pp name expression expr expression body
+      fprintf ppf "let %a = %a in ( %a )" Stage_common.PP.name name expression expr expression body
+  | E_iterator (b , ((name , _) , body) , expr) ->
+      fprintf ppf "for_%a %a of %a do ( %a )" Stage_common.PP.constant b Stage_common.PP.name name expression expr expression body
   | E_fold (((name , _) , body) , collection , initial) ->
-    fprintf ppf "fold %a on %a with %a do ( %a )"
-      expression collection expression initial Var.pp name expression body
+      fprintf ppf "fold %a on %a with %a do ( %a )" expression collection expression initial Stage_common.PP.name name expression body
   | E_assignment (r , path , e) ->
-      fprintf ppf "%a.%a := %a" Var.pp r (list_sep lr (const ".")) path expression e
+      fprintf ppf "%a.%a := %a" Stage_common.PP.name r (list_sep lr (const ".")) path expression e
   | E_while (e , b) ->
       fprintf ppf "while (%a) %a" expression e expression b
 
@@ -113,16 +108,16 @@ and expression : _ -> expression -> _ = fun ppf e ->
 and expression_with_type : _ -> expression -> _  = fun ppf e ->
   fprintf ppf "%a : %a"
     expression' e.content
-    type_ e.type_value
+    type_variable e.type_value
 
 and function_ ppf ({binder ; body}:anon_function) =
   fprintf ppf "fun %a -> (%a)"
-    Var.pp binder
+    Stage_common.PP.name binder
     expression body
 
-and assignment ppf ((n, e):assignment) = fprintf ppf "%a = %a;" Var.pp n expression e
+and assignment ppf ((n, e):assignment) = fprintf ppf "%a = %a;" Stage_common.PP.name n expression e
 
-and declaration ppf ((n, e):assignment) = fprintf ppf "let %a = %a;" Var.pp n expression e
+and declaration ppf ((n, e):assignment) = fprintf ppf "let %a = %a;" Stage_common.PP.name n expression e
 
 let tl_statement ppf (ass, _) = assignment ppf ass
 

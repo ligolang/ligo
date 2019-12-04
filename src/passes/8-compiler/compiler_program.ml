@@ -26,32 +26,34 @@ them. please report this to the developers." in
 end
 open Errors
 
-let get_operator : string -> type_value -> expression list -> predicate result = fun s ty lst ->
-  match Map.String.find_opt s Operators.Compiler.operators with
-  | Some x -> ok x
-  | None -> (
+(* This does not makes sense to me *)
+let get_operator : constant -> type_value -> expression list -> predicate result = fun s ty lst ->
+  match Operators.Compiler.get_operators s with
+  | Trace.Ok (x,_) -> ok x
+  | Trace.Error _ -> (
       match s with
-      | "NONE" -> (
+      | C_NONE -> (
           let%bind ty' = Mini_c.get_t_option ty in
           let%bind m_ty = Compiler_type.type_ ty' in
           ok @@ simple_constant @@ prim ~children:[m_ty] I_NONE
+
         )
-      | "NIL" -> (
+      | C_NIL -> (
           let%bind ty' = Mini_c.get_t_list ty in
           let%bind m_ty = Compiler_type.type_ ty' in
           ok @@ simple_unary @@ prim ~children:[m_ty] I_NIL
         )
-      | "SET_EMPTY" -> (
+      | C_SET_EMPTY -> (
           let%bind ty' = Mini_c.get_t_set ty in
           let%bind m_ty = Compiler_type.type_ ty' in
           ok @@ simple_constant @@ prim ~children:[m_ty] I_EMPTY_SET
         )
-      | "UNPACK" -> (
+      | C_BYTES_UNPACK -> (
           let%bind ty' = Mini_c.get_t_option ty in
           let%bind m_ty = Compiler_type.type_ ty' in
           ok @@ simple_unary @@ prim ~children:[m_ty] I_UNPACK
         )
-      | "MAP_REMOVE" ->
+      | C_MAP_REMOVE ->
           let%bind v = match lst with
             | [ _ ; expr ] ->
                 let%bind (_, v) = Mini_c.Combinators.(bind_map_or (get_t_map , get_t_big_map) (Expression.get_type expr)) in
@@ -59,26 +61,26 @@ let get_operator : string -> type_value -> expression list -> predicate result =
             | _ -> simple_fail "mini_c . MAP_REMOVE" in
           let%bind v_ty = Compiler_type.type_ v in
           ok @@ simple_binary @@ seq [dip (i_none v_ty) ; prim I_UPDATE ]
-      | "LEFT" ->
+      | C_LEFT ->
           let%bind r = match lst with
             | [ _ ] -> get_t_right ty
             | _ -> simple_fail "mini_c . LEFT" in
           let%bind r_ty = Compiler_type.type_ r in
           ok @@ simple_unary @@ prim ~children:[r_ty] I_LEFT
-      | "RIGHT" ->
+      | C_RIGHT ->
           let%bind l = match lst with
             | [ _ ] -> get_t_left ty
             | _ -> simple_fail "mini_c . RIGHT" in
           let%bind l_ty = Compiler_type.type_ l in
           ok @@ simple_unary @@ prim ~children:[l_ty] I_RIGHT
-      | "CONTRACT" ->
+      | C_CONTRACT ->
           let%bind r = get_t_contract ty in
           let%bind r_ty = Compiler_type.type_ r in
           ok @@ simple_unary @@ seq [
             prim ~children:[r_ty] I_CONTRACT ;
             i_assert_some_msg (i_push_string "bad address for get_contract") ;
           ]
-      | "CONTRACT_ENTRYPOINT" ->
+      | C_CONTRACT_ENTRYPOINT ->
           let%bind r = get_t_contract ty in
           let%bind r_ty = Compiler_type.type_ r in
           let%bind entry = match lst with
@@ -92,7 +94,7 @@ let get_operator : string -> type_value -> expression list -> predicate result =
             prim ~annot:[entry] ~children:[r_ty] I_CONTRACT ;
             i_assert_some_msg (i_push_string @@ Format.sprintf "bad address for get_entrypoint (%s)" entry) ;
           ]
-      | x -> simple_fail ("predicate \"" ^ x ^ "\" doesn't exist")
+      | x -> simple_fail (Format.asprintf "predicate \"%a\" doesn't exist" Stage_common.PP.constant x)
     )
 
 let rec translate_value (v:value) ty : michelson result = match v with
@@ -159,7 +161,7 @@ let rec translate_value (v:value) ty : michelson result = match v with
 and translate_expression (expr:expression) (env:environment) : michelson result =
   let (expr' , ty) = Combinators.Expression.(get_content expr , get_type expr) in
   let error_message () =
-    Format.asprintf  "\n- expr: %a\n- type: %a\n" PP.expression expr PP.type_ ty
+    Format.asprintf  "\n- expr: %a\n- type: %a\n" PP.expression expr PP.type_variable ty
   in
   let return code = ok code in
 
@@ -227,7 +229,7 @@ and translate_expression (expr:expression) (env:environment) : michelson result 
             pre_code ;
             f ;
           ]
-        | _ -> simple_fail ("bad arity for " ^ str)
+        | _ -> simple_fail (Format.asprintf "bad arity for %a"  Stage_common.PP.constant str)
       in
       let error =
         let title () = "error compiling constant" in
@@ -329,7 +331,7 @@ and translate_expression (expr:expression) (env:environment) : michelson result 
       let%bind expr' = translate_expression expr env in
       let%bind body' = translate_expression body (Environment.add v env) in
       match name with
-      | "ITER" -> (
+      | C_ITER -> (
           let%bind code = ok (seq [
               expr' ;
               i_iter (seq [body' ; i_drop ; i_drop]) ;
@@ -337,7 +339,7 @@ and translate_expression (expr:expression) (env:environment) : michelson result 
             ]) in
           return code
         )
-      | "MAP" -> (
+      | C_MAP -> (
           let%bind code = ok (seq [
               expr' ;
               i_map (seq [body' ; dip i_drop]) ;
@@ -345,7 +347,8 @@ and translate_expression (expr:expression) (env:environment) : michelson result 
           return code
         )
       | s -> (
-          let error = error (thunk "bad iterator") (thunk s) in
+          let iter = Format.asprintf "iter %a" Stage_common.PP.constant s in
+          let error = error (thunk "bad iterator") (thunk iter) in
           fail error
         )
     )
@@ -454,7 +457,7 @@ type compiled_program = {
 }
 
 let get_main : program -> string -> (anon_function * _) result = fun p entry ->
-  let is_main (((name , expr), _):toplevel_statement) =
+  let is_main ((( name , expr), _):toplevel_statement) =
     match Combinators.Expression.(get_content expr , get_type expr)with
     | (E_closure content , T_function ty)
       when Var.equal name (Var.of_name entry) ->

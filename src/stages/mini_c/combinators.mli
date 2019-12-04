@@ -66,8 +66,8 @@ val e_int : Expression.t' -> Expression.t
 *)
 val e_unit : Expression.t
 val e_skip : Expression.t
-val e_var_int : Var.t -> Expression.t
-val e_let_in : Var.t -> type_value -> Expression.t -> Expression.t -> Expression.t
+val e_var_int : expression_variable -> Expression.t
+val e_let_in  : expression_variable -> type_value -> Expression.t -> Expression.t -> Expression.t
 
 val ez_e_sequence : Expression.t' -> Expression.t -> expression
 (*

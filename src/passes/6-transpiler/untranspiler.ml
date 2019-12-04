@@ -53,142 +53,148 @@ let rec untranspile (v : value) (t : AST.type_value) : AST.annotated_expression 
   let open! AST in
   let return e = ok (make_a_e_empty e t) in
   match t.type_value' with
-  | T_constant (Type_name "unit", []) -> (
-      let%bind () =
-        trace_strong (wrong_mini_c_value "unit" v) @@
-        get_unit v in
-      return (E_literal Literal_unit)
-    )
-  | T_constant (Type_name "bool", []) -> (
-      let%bind b =
-        trace_strong (wrong_mini_c_value "bool" v) @@
-        get_bool v in
-      return (E_literal (Literal_bool b))
-    )
-  | T_constant (Type_name "int", []) -> (
-      let%bind n =
-        trace_strong (wrong_mini_c_value "int" v) @@
-        get_int v in
-      return (E_literal (Literal_int n))
-    )
-  | T_constant (Type_name "nat", []) -> (
-      let%bind n =
-        trace_strong (wrong_mini_c_value "nat" v) @@
-        get_nat v in
-      return (E_literal (Literal_nat n))
-    )
-  | T_constant (Type_name "timestamp", []) -> (
-      let%bind n =
-        trace_strong (wrong_mini_c_value "timestamp" v) @@
-        get_timestamp v in
-      return (E_literal (Literal_timestamp n))
-    )
-  | T_constant (Type_name "tez", []) -> (
-      let%bind n =
-        trace_strong (wrong_mini_c_value "tez" v) @@
-        get_mutez v in
-      return (E_literal (Literal_mutez n))
-    )
-  | T_constant (Type_name "string", []) -> (
-      let%bind n =
-        trace_strong (wrong_mini_c_value "string" v) @@
-        get_string v in
-      return (E_literal (Literal_string n))
-    )
-  | T_constant (Type_name "bytes", []) -> (
-      let%bind n =
-        trace_strong (wrong_mini_c_value "bytes" v) @@
-        get_bytes v in
-      return (E_literal (Literal_bytes n))
-    )
-  | T_constant (Type_name "address", []) -> (
-      let%bind n =
-        trace_strong (wrong_mini_c_value "address" v) @@
-        get_string v in
-      return (E_literal (Literal_address n))
-    )
-  | T_constant (Type_name "option", [o]) -> (
-      let%bind opt =
-        trace_strong (wrong_mini_c_value "option" v) @@
-        get_option v in
-      match opt with
-      | None -> ok (e_a_empty_none o)
-      | Some s ->
-          let%bind s' = untranspile s o in
-          ok (e_a_empty_some s')
-    )
-  | T_constant (Type_name "map", [k_ty;v_ty]) -> (
-      let%bind lst =
-        trace_strong (wrong_mini_c_value "map" v) @@
-        get_map v in
-      let%bind lst' =
-        let aux = fun (k, v) ->
-          let%bind k' = untranspile k k_ty in
-          let%bind v' = untranspile v v_ty in
-          ok (k', v') in
-        bind_map_list aux lst in
-      return (E_map lst')
-    )
-  | T_constant (Type_name "big_map", [k_ty;v_ty]) -> (
-      let%bind lst =
-        trace_strong (wrong_mini_c_value "big_map" v) @@
-        get_big_map v in
-      let%bind lst' =
-        let aux = fun (k, v) ->
-          let%bind k' = untranspile k k_ty in
-          let%bind v' = untranspile v v_ty in
-          ok (k', v') in
-        bind_map_list aux lst in
-      return (E_big_map lst')
-    )
-  | T_constant (Type_name "list", [ty]) -> (
-      let%bind lst =
-        trace_strong (wrong_mini_c_value "list" v) @@
-        get_list v in
-      let%bind lst' =
-        let aux = fun e -> untranspile e ty in
-        bind_map_list aux lst in
-      return (E_list lst')
-    )
-  | T_constant (Type_name "key", []) -> (
-    let%bind n =
-      trace_strong (wrong_mini_c_value "key" v) @@
-      get_string v in
-    return (E_literal (Literal_key n))
+  | T_constant type_constant -> (
+    match type_constant with
+    | TC_unit -> (
+        let%bind () =
+          trace_strong (wrong_mini_c_value "unit" v) @@
+          get_unit v in
+        return (E_literal Literal_unit)
+      )
+    | TC_bool -> (
+        let%bind b =
+          trace_strong (wrong_mini_c_value "bool" v) @@
+          get_bool v in
+        return (E_literal (Literal_bool b))
+      )
+    | TC_int -> (
+        let%bind n =
+          trace_strong (wrong_mini_c_value "int" v) @@
+          get_int v in
+        return (E_literal (Literal_int n))
+      )
+    | TC_nat -> (
+        let%bind n =
+          trace_strong (wrong_mini_c_value "nat" v) @@
+          get_nat v in
+        return (E_literal (Literal_nat n))
+      )
+    | TC_timestamp -> (
+        let%bind n =
+          trace_strong (wrong_mini_c_value "timestamp" v) @@
+          get_timestamp v in
+        return (E_literal (Literal_timestamp n))
+      )
+    | TC_mutez -> (
+        let%bind n =
+          trace_strong (wrong_mini_c_value "tez" v) @@
+          get_mutez v in
+        return (E_literal (Literal_mutez n))
+      )
+    | TC_string -> (
+        let%bind n =
+          trace_strong (wrong_mini_c_value "string" v) @@
+          get_string v in
+        return (E_literal (Literal_string n))
+      )
+    | TC_bytes -> (
+        let%bind n =
+          trace_strong (wrong_mini_c_value "bytes" v) @@
+          get_bytes v in
+        return (E_literal (Literal_bytes n))
+      )
+    | TC_address -> (
+        let%bind n =
+          trace_strong (wrong_mini_c_value "address" v) @@
+          get_string v in
+        return (E_literal (Literal_address n))
+      )
+    | TC_operation -> (
+        let%bind op =
+          trace_strong (wrong_mini_c_value "operation" v) @@
+          get_operation v in
+        return (E_literal (Literal_operation op))
+      )
+    |  TC_key -> (
+        let%bind n =
+          trace_strong (wrong_mini_c_value "key" v) @@
+          get_string v in
+        return (E_literal (Literal_key n))
+      )
+    |  TC_key_hash -> (
+        let%bind n =
+          trace_strong (wrong_mini_c_value "key_hash" v) @@
+          get_string v in
+        return (E_literal (Literal_key_hash n))
+      )
+      | TC_chain_id -> (
+        let%bind n =
+          trace_strong (wrong_mini_c_value "chain_id" v) @@
+          get_string v in
+        return (E_literal (Literal_chain_id n))
+      )
+    |  TC_signature ->
+      fail @@ bad_untranspile "signature" v
   )
-  | T_constant (Type_name "key_hash", []) -> (
-    let%bind n =
-      trace_strong (wrong_mini_c_value "key_hash" v) @@
-      get_string v in
-    return (E_literal (Literal_key_hash n))
+  | T_operator type_operator -> (
+    match type_operator with
+    | TC_option o -> (
+        let%bind opt =
+          trace_strong (wrong_mini_c_value "option" v) @@
+          get_option v in
+        match opt with
+        | None -> ok (e_a_empty_none o)
+        | Some s ->
+            let%bind s' = untranspile s o in
+            ok (e_a_empty_some s')
+      )
+    | TC_map (k_ty,v_ty)-> (
+        let%bind lst =
+          trace_strong (wrong_mini_c_value "map" v) @@
+          get_map v in
+        let%bind lst' =
+          let aux = fun (k, v) ->
+            let%bind k' = untranspile k k_ty in
+            let%bind v' = untranspile v v_ty in
+            ok (k', v') in
+          bind_map_list aux lst in
+        return (E_map lst')
+      )
+    | TC_big_map (k_ty, v_ty) -> (
+        let%bind lst =
+          trace_strong (wrong_mini_c_value "big_map" v) @@
+          get_big_map v in
+        let%bind lst' =
+          let aux = fun (k, v) ->
+            let%bind k' = untranspile k k_ty in
+            let%bind v' = untranspile v v_ty in
+            ok (k', v') in
+          bind_map_list aux lst in
+        return (E_big_map lst')
+      )
+    | TC_list ty -> (
+        let%bind lst =
+          trace_strong (wrong_mini_c_value "list" v) @@
+          get_list v in
+        let%bind lst' =
+          let aux = fun e -> untranspile e ty in
+          bind_map_list aux lst in
+        return (E_list lst')
+      )
+    | TC_set ty -> (
+        let%bind lst =
+          trace_strong (wrong_mini_c_value "set" v) @@
+          get_set v in
+        let%bind lst' =
+          let aux = fun e -> untranspile e ty in
+          bind_map_list aux lst in
+        return (E_set lst')
+      )
+    | TC_contract _ ->
+      fail @@ bad_untranspile "contract" v
   )
-  | T_constant (Type_name "chain_id", []) -> (
-    let%bind n =
-      trace_strong (wrong_mini_c_value "chain_id" v) @@
-      get_string v in
-    return (E_literal (Literal_chain_id n))
-  )
-  | T_constant (Type_name "set", [ty]) -> (
-      let%bind lst =
-        trace_strong (wrong_mini_c_value "set" v) @@
-        get_set v in
-      let%bind lst' =
-        let aux = fun e -> untranspile e ty in
-        bind_map_list aux lst in
-      return (E_set lst')
-    )
-  | T_constant (Type_name "contract" , [_ty]) ->
-    fail @@ bad_untranspile "contract" v
-  | T_constant (Type_name "operation" , []) -> (
-      let%bind op =
-        trace_strong (wrong_mini_c_value "operation" v) @@
-        get_operation v in
-      return (E_literal (Literal_operation op))
-    )
-  | T_constant (Type_name name , _lst) ->
-    fail @@ unknown_untranspile name v
   | T_sum m ->
-      let lst = kv_list_of_map m in
+      let lst = kv_list_of_cmap m in
       let%bind node = match Append_tree.of_list lst with
         | Empty -> fail @@ corner_case ~loc:__LOC__ "empty sum type"
         | Full t -> ok t
@@ -197,7 +203,7 @@ let rec untranspile (v : value) (t : AST.type_value) : AST.annotated_expression 
         trace_strong (corner_case ~loc:__LOC__ "sum extract constructor") @@
         extract_constructor v node in
       let%bind sub = untranspile v tv in
-      return (E_constructor (name, sub))
+      return (E_constructor (Constructor name, sub))
   | T_tuple lst ->
       let%bind node = match Append_tree.of_list lst with
         | Empty -> fail @@ corner_case ~loc:__LOC__ "empty tuple"
@@ -209,7 +215,7 @@ let rec untranspile (v : value) (t : AST.type_value) : AST.annotated_expression 
         @@ List.map (fun (x, y) -> untranspile x y) tpl in
       return (E_tuple tpl')
   | T_record m ->
-      let lst = kv_list_of_map m in
+      let lst = kv_list_of_lmap m in
       let%bind node = match Append_tree.of_list lst with
         | Empty -> fail @@ corner_case ~loc:__LOC__ "empty record"
         | Full t -> ok t in
@@ -218,11 +224,12 @@ let rec untranspile (v : value) (t : AST.type_value) : AST.annotated_expression 
         extract_record v node in
       let%bind lst = bind_list
         @@ List.map (fun (x, (y, z)) -> let%bind yz = untranspile y z in ok (x, yz)) lst in
-      let m' = map_of_kv_list lst in
+      let m' = AST.LMap.of_list lst in
       return (E_record m')
-  | T_function _ ->
+  | T_arrow _ ->
       let%bind n =
         trace_strong (wrong_mini_c_value "lambda as string" v) @@
         get_string v in
       return (E_literal (Literal_string n))
-  | T_variable (Type_name v) -> return (E_variable v)
+  | T_variable _ ->
+    fail @@ corner_case ~loc:__LOC__ "trying to untranspile at variable type"

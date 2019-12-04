@@ -13,10 +13,10 @@ val e_a_empty_pair : annotated_expression -> annotated_expression -> annotated_e
 val e_a_empty_some : annotated_expression -> annotated_expression
 val e_a_empty_none : type_value -> annotated_expression
 val e_a_empty_tuple : annotated_expression list -> annotated_expression
-val e_a_empty_record : ae_map -> annotated_expression
+val e_a_empty_record : annotated_expression label_map -> annotated_expression
 val e_a_empty_map : (annotated_expression * annotated_expression ) list -> type_value -> type_value -> annotated_expression
 val e_a_empty_list : annotated_expression list -> type_value -> annotated_expression
-val ez_e_a_empty_record : ( name * annotated_expression ) list -> annotated_expression
-val e_a_empty_lambda : lambda -> tv -> tv -> annotated_expression
+val ez_e_a_empty_record : ( label * annotated_expression ) list -> annotated_expression
+val e_a_empty_lambda : lambda -> type_value -> type_value -> annotated_expression
 
-val env_sum_type : ?env:full_environment -> ?name:name -> (name * type_value) list ->  full_environment
+val env_sum_type : ?env:full_environment -> ?type_name:type_variable -> (constructor * type_value) list ->  full_environment

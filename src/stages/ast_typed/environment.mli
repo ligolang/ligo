@@ -4,17 +4,17 @@ open Trace
 type t = full_environment
 type element = environment_element
 
-val get_trace : string -> t -> element result
+val get_trace : expression_variable -> t -> element result
 val empty : environment
 val full_empty : t
-val add : string -> element -> t -> t
-val add_ez_binder : string -> type_value -> t -> t
-val add_ez_declaration : string -> annotated_expression -> t -> t
-val add_ez_ae : string -> annotated_expression -> t -> t
-val add_type : string -> type_value -> t -> t
-val get_opt : string -> t -> element option
-val get_type_opt : string -> t -> type_value option
-val get_constructor : string -> t -> (type_value * type_value) option
+val add : expression_variable -> element -> t -> t
+val add_ez_binder : expression_variable -> type_value -> t -> t
+val add_ez_declaration : expression_variable -> annotated_expression -> t -> t
+val add_ez_ae : expression_variable -> annotated_expression -> t -> t
+val add_type : type_variable -> type_value -> t -> t
+val get_opt : expression_variable -> t -> element option
+val get_type_opt : type_variable -> t -> type_value option
+val get_constructor : constructor -> t -> (type_value * type_value) option
 
 module Small : sig
   type t = small_environment

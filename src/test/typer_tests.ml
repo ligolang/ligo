@@ -23,7 +23,7 @@ module TestExpressions = struct
   let test_expression ?(env = Typer.Environment.full_empty)
                       ?(state = Typer.Solver.initial_state)
                       (expr : expression)
-                      (test_expected_ty : Typed.tv) =
+                      (test_expected_ty : Typed.type_value) =
     let pre = expr in
     let open Typer in
     let open! Typed in
@@ -46,7 +46,7 @@ module TestExpressions = struct
 
   let lambda () : unit result =
     test_expression
-      I.(e_lambda "x" (Some t_int) (Some t_int) (e_var "x"))
+      I.(e_lambda (Var.of_name "x") (Some t_int) (Some t_int) (e_var "x"))
       O.(t_function (t_int ()) (t_int ()) ())
 
   let tuple () : unit result =
@@ -56,7 +56,7 @@ module TestExpressions = struct
 
   let constructor () : unit result =
     let variant_foo_bar =
-      O.[("foo", t_int ()); ("bar", t_string ())]
+      O.[(Constructor "foo", t_int ()); (Constructor "bar", t_string ())]
     in test_expression
       ~env:(E.env_sum_type variant_foo_bar)
       I.(e_constructor "foo" (e_int 32))
@@ -65,7 +65,8 @@ module TestExpressions = struct
   let record () : unit result =
     test_expression
       I.(ez_e_record        [("foo", e_int 32);  ("bar", e_string "foo")])
-      O.(make_t_ez_record [("foo", t_int ()); ("bar", t_string ())])
+      O.(make_t_ez_record [(Label "foo", t_int ()); (Label "bar", t_string ())])
+
 
 end
 (* TODO: deep types (e.g. record of record)

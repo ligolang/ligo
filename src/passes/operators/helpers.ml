@@ -21,90 +21,80 @@ module Typer = struct
   end
   open Errors
 
-  type type_result = string * type_value
-  type typer' = type_value list -> type_value option -> type_result result
-  type typer = string * typer'
+  type type_result = type_value
+  type typer = type_value list -> type_value option -> type_result result
 
-  let typer'_0 : name -> (type_value option -> type_value result) -> typer' = fun s f lst tv_opt ->
+  let typer_0 : string -> (type_value option -> type_value result) -> typer = fun s f lst tv_opt ->
     match lst with
     | [] -> (
       let%bind tv' = f tv_opt in
-      ok (s , tv')
+      ok (tv')
     )
     | _ -> fail @@ wrong_param_number s 0 lst
-  let typer_0 name f : typer = (name , typer'_0 name f)
 
-  let typer'_1 : name -> (type_value -> type_value result) -> typer' = fun s f lst _ ->
+  let typer_1 : string -> (type_value -> type_value result) -> typer = fun s f lst _ ->
     match lst with
     | [ a ] -> (
         let%bind tv' = f a in
-        ok (s , tv')
+        ok (tv')
       )
     | _ -> fail @@ wrong_param_number s 1 lst
-  let typer_1 name f : typer = (name , typer'_1 name f)
 
-  let typer'_1_opt : name -> (type_value -> type_value option -> type_value result) -> typer' = fun s f lst tv_opt ->
+  let typer_1_opt : string -> (type_value -> type_value option -> type_value result) -> typer = fun s f lst tv_opt ->
     match lst with
     | [ a ] -> (
         let%bind tv' = f a tv_opt in
-        ok (s , tv')
+        ok (tv')
       )
     | _ -> fail @@ wrong_param_number s 1 lst
-  let typer_1_opt name f : typer = (name , typer'_1_opt name f)
 
-  let typer'_2 : name -> (type_value -> type_value -> type_value result) -> typer' = fun s f lst _ ->
+  let typer_2 : string -> (type_value -> type_value -> type_value result) -> typer = fun s f lst _ ->
     match lst with
     | [ a ; b ] -> (
         let%bind tv' = f a b in
-        ok (s , tv')
+        ok (tv')
       )
     | _ -> fail @@ wrong_param_number s 2 lst
-  let typer_2 name f : typer = (name , typer'_2 name f)
 
-  let typer'_2_opt : name -> (type_value -> type_value -> type_value option -> type_value result) -> typer' = fun s f lst tv_opt ->
+  let typer_2_opt : string -> (type_value -> type_value -> type_value option -> type_value result) -> typer = fun s f lst tv_opt ->
     match lst with
     | [ a ; b ] -> (
         let%bind tv' = f a b tv_opt in
-        ok (s , tv')
+        ok (tv')
       )
     | _ -> fail @@ wrong_param_number s 2 lst
-  let typer_2_opt name f : typer = (name , typer'_2_opt name f)
 
-  let typer'_3 : name -> (type_value -> type_value -> type_value -> type_value result) -> typer' = fun s f lst _ ->
+  let typer_3 : string -> (type_value -> type_value -> type_value -> type_value result) -> typer = fun s f lst _ ->
     match lst with
     | [ a ; b ; c ] -> (
         let%bind tv' = f a b c in
-        ok (s , tv')
+        ok (tv')
       )
     | _ -> fail @@ wrong_param_number s 3 lst
-  let typer_3 name f : typer = (name , typer'_3 name f)
 
-  let typer'_4 : name -> (type_value -> type_value -> type_value -> type_value -> type_value result) -> typer' = fun s f lst _ ->
+  let typer_4 : string -> (type_value -> type_value -> type_value -> type_value -> type_value result) -> typer = fun s f lst _ ->
     match lst with
     | [ a ; b ; c ; d ] -> (
         let%bind tv' = f a b c d in
-        ok (s , tv')
+        ok (tv')
       )
     | _ -> fail @@ wrong_param_number s 4 lst
-  let typer_4 name f : typer = (name , typer'_4 name f)
 
-  let typer'_5 : name -> (type_value -> type_value -> type_value -> type_value -> type_value -> type_value result) -> typer' = fun s f lst _ ->
+  let typer_5 : string -> (type_value -> type_value -> type_value -> type_value -> type_value -> type_value result) -> typer = fun s f lst _ ->
     match lst with
     | [ a ; b ; c ; d ; e ] -> (
         let%bind tv' = f a b c d e in
-        ok (s , tv')
+        ok (tv')
       )
     | _ -> fail @@ wrong_param_number s 5 lst
-  let typer_5 name f : typer = (name , typer'_5 name f)
 
-  let typer'_6 : name -> (type_value -> type_value -> type_value -> type_value -> type_value -> type_value -> type_value result) -> typer' = fun s f lst _ ->
+  let typer_6 : string -> (type_value -> type_value -> type_value -> type_value -> type_value -> type_value -> type_value result) -> typer = fun s f lst _ ->
     match lst with
     | [ a ; b ; c ; d ; e ; f_ ] -> (
         let%bind tv' = f a b c d e f_ in
-        ok (s , tv')
+        ok (tv')
       )
     | _ -> fail @@ wrong_param_number s 6 lst
-  let typer_6 name f : typer = (name , typer'_6 name f)
 
   let constant name cst = typer_0 name (fun _ -> ok cst)
 

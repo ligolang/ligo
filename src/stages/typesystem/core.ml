@@ -1,14 +1,9 @@
-type type_variable = (*Type_variable *) string
+include Stage_common.Types
+
 
 (* generate a new type variable and gave it an id *)
 let fresh_type_variable : ?name:string -> unit -> type_variable =
-  let id = ref 0 in
-  let inc () = id := !id + 1 in
-  fun ?name () ->
-    inc () ;
-    match name with
-    | None -> (*Type_variable*) "type_variable_" ^ (string_of_int !id)
-    | Some name -> (*Type_variable*)"tv_" ^ name ^ "_" ^ (string_of_int !id)
+    Var.fresh
 
 
 (* add information on the type or the kind for operator*)
@@ -26,7 +21,7 @@ type constant_tag =
   | C_bool      (* * *)
   | C_string    (* * *)
   | C_nat       (* * *)
-  | C_tez       (* * *)
+  | C_mutez       (* * *)
   | C_timestamp (* * *)
   | C_int       (* * *)
   | C_address   (* * *)
@@ -37,7 +32,7 @@ type constant_tag =
   | C_operation (* * *)
   | C_contract  (* * -> * *)
 
-type label =
+type accessor =
   | L_int of int
   | L_string of string
 
@@ -60,7 +55,7 @@ and simple_c_constant = (constant_tag) (* for type constructors that do not take
 and c_const = (type_variable * type_value)
 and c_equation = (type_value * type_value)
 and c_typeclass = (type_value list * typeclass)
-and c_access_label = (type_value * label * type_variable)
+and c_access_label = (type_value * accessor * type_variable)
 
 (*What i was saying just before *)
 and type_constraint =

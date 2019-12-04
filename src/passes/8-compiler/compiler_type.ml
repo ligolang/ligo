@@ -63,7 +63,7 @@ module Ty = struct
     | Base_void -> fail (not_comparable "void")
     | Base_bool -> fail (not_comparable "bool")
     | Base_nat -> return nat_k
-    | Base_tez -> return tez_k
+    | Base_mutez -> return tez_k
     | Base_int -> return int_k
     | Base_string -> return string_k
     | Base_address -> return address_k
@@ -96,7 +96,7 @@ module Ty = struct
     | Base_bool -> return bool
     | Base_int -> return int
     | Base_nat -> return nat
-    | Base_tez -> return tez
+    | Base_mutez -> return tez
     | Base_string -> return string
     | Base_address -> return address
     | Base_timestamp -> return timestamp
@@ -181,7 +181,7 @@ let base_type : type_base -> O.michelson result =
   | Base_bool -> ok @@ O.prim T_bool
   | Base_int -> ok @@ O.prim T_int
   | Base_nat -> ok @@ O.prim T_nat
-  | Base_tez -> ok @@ O.prim T_mutez
+  | Base_mutez -> ok @@ O.prim T_mutez
   | Base_string -> ok @@ O.prim T_string
   | Base_address -> ok @@ O.prim T_address
   | Base_timestamp -> ok @@ O.prim T_timestamp

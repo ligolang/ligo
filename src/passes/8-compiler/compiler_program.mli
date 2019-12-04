@@ -15,12 +15,13 @@ type compiled_program = {
   body : michelson ;
 }
 
-val get_operator : string -> type_value -> expression list -> predicate result
+val get_operator : constant -> type_value -> expression list -> predicate result
 val translate_expression : expression -> environment -> michelson result
 val translate_function_body : anon_function -> environment_element list -> type_value -> michelson result
 val translate_value : value -> type_value -> michelson result 
 
 val translate_program : program -> string -> compiled_program result
+
 
 val translate_contract : anon_function -> (type_value * type_value ) -> michelson result
 

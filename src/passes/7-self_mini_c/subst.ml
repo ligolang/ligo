@@ -317,7 +317,7 @@ let%expect_test _ =
   (* iter shadowed *)
   Var.reset_counter () ;
   show_subst
-    ~body:(wrap (E_iterator ("ITER", ((x , dummy_type) , var x) , var x)))
+    ~body:(wrap (E_iterator (C_ITER, ((x , dummy_type) , var x) , var x)))
     ~x:x
     ~expr:unit ;
   [%expect{|
@@ -328,7 +328,7 @@ let%expect_test _ =
   (* iter not shadowed *)
   Var.reset_counter () ;
   show_subst
-    ~body:(wrap (E_iterator ("ITER", ((y , dummy_type) , var x) , var x)))
+    ~body:(wrap (E_iterator (C_ITER, ((y , dummy_type) , var x) , var x)))
     ~x:x
     ~expr:unit ;
   [%expect{|
@@ -339,7 +339,7 @@ let%expect_test _ =
   (* iter capture-avoiding *)
   Var.reset_counter () ;
   show_subst
-    ~body:(wrap (E_iterator ("ITER", ((y , dummy_type) , app (var x) (var y)), app (var x) (var y))))
+    ~body:(wrap (E_iterator (C_ITER, ((y , dummy_type) , app (var x) (var y)), app (var x) (var y))))
     ~x:x
     ~expr:(var y) ;
   [%expect{|

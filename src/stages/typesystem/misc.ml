@@ -8,7 +8,7 @@ module Substitution = struct
 
     open Trace
     module T = Ast_typed
-    module TSMap = Trace.TMap(String)
+    (* module TSMap = Trace.TMap(String) *)
 
     type 'a w = 'a -> 'a result
 
@@ -17,17 +17,15 @@ module Substitution = struct
       | T.ED_binder -> ok @@ T.ED_binder
       | T.ED_declaration (val_, free_variables) ->
         let%bind val_ = s_annotated_expression ~v ~expr  val_ in
-        let%bind free_variables = bind_map_list (s_type_variable ~v ~expr) free_variables in
+        let%bind free_variables = bind_map_list (s_variable ~v ~expr) free_variables in
         ok @@ T.ED_declaration (val_, free_variables)
-    and s_environment ~v ~expr = fun lst ->
-      bind_map_list (fun (type_variable, T.{ type_value; source_environment; definition }) ->
-          let _ = type_value in
-          let%bind type_variable = s_type_variable ~v ~expr type_variable in
+    and s_environment ~v ~expr : T.environment w = fun env ->
+      bind_map_list (fun (variable, T.{ type_value; source_environment; definition }) ->
+          let%bind variable = s_variable ~v ~expr variable in
           let%bind type_value = s_type_value ~v ~expr type_value in
           let%bind source_environment = s_full_environment ~v ~expr source_environment in
           let%bind definition = s_environment_element_definition ~v ~expr definition in
-          ok @@ (type_variable, T.{ type_value; source_environment; definition })
-        ) lst
+          ok @@ (variable, T.{ type_value; source_environment; definition })) env
     and s_type_environment ~v ~expr : T.type_environment w = fun tenv ->
       bind_map_list (fun (type_variable , type_value) ->
         let%bind type_variable = s_type_variable ~v ~expr type_variable in
@@ -42,11 +40,11 @@ module Substitution = struct
       let%bind b = bind_map_list (s_small_environment ~v ~expr) b in
       ok (a , b)
 
-    and s_variable ~v ~expr : T.name w = fun var ->
+    and s_variable ~v ~expr : T.expression_variable w = fun var ->
       let () = ignore (v, expr) in
       ok var
 
-    and s_type_variable ~v ~expr : T.name w = fun tvar ->
+    and s_type_variable ~v ~expr : T.type_variable w = fun tvar ->
       let _TODO = ignore (v, expr) in
       Printf.printf "TODO: subst: unimplemented case s_type_variable";
       ok @@ tvar
@@ -54,8 +52,19 @@ module Substitution = struct
        *   expr
        * else
        *   ok tvar *)
+    and s_label ~v ~expr : T.label w = fun l ->
+      let () = ignore (v, expr) in
+      ok l
+    
+    and s_build_in ~v ~expr : T.constant w = fun b ->
+      let () = ignore (v, expr) in
+      ok b
 
-    and s_type_name_constant ~v ~expr : T.type_name w = fun type_name ->
+    and s_constructor ~v ~expr : T.constructor w = fun c ->
+      let () = ignore (v, expr) in
+      ok c
+
+    and s_type_name_constant ~v ~expr : T.type_constant w = fun type_name ->
       (* TODO: we don't need to subst anything, right? *)
       let () = ignore (v , expr) in
       ok @@ type_name
@@ -66,24 +75,26 @@ module Substitution = struct
           ok @@ T.T_tuple type_value_list
         | T.T_sum _ -> failwith "TODO: T_sum"
         | T.T_record _ -> failwith "TODO: T_record"
-        | T.T_constant (type_name, type_value_list) ->
+        | T.T_constant (type_name) ->
           let%bind type_name = s_type_name_constant ~v ~expr type_name in
-          let%bind type_value_list = bind_map_list (s_type_value ~v ~expr) type_value_list in
-          ok @@ T.T_constant (type_name, type_value_list)
+          ok @@ T.T_constant (type_name)
         | T.T_variable _ -> failwith "TODO: T_variable"
-        | T.T_function _ ->
+        | T.T_operator _ -> failwith "TODO: T_operator"
+        | T.T_arrow _ ->
           let _TODO = (v, expr) in
           failwith "TODO: T_function"
 
-    and s_type_expression ~v ~expr : Ast_simplified.type_expression w = function
-      | Ast_simplified.T_tuple _ -> failwith "TODO: subst: unimplemented case s_type_expression"
-      | Ast_simplified.T_sum _ -> failwith "TODO: subst: unimplemented case s_type_expression"
-      | Ast_simplified.T_record _ -> failwith "TODO: subst: unimplemented case s_type_expression"
-      | Ast_simplified.T_function (_, _) -> failwith "TODO: subst: unimplemented case s_type_expression"
-      | Ast_simplified.T_variable _ -> failwith "TODO: subst: unimplemented case s_type_expression"
-      | Ast_simplified.T_constant (_, _) ->
-        let _TODO = (v, expr) in
-        failwith "TODO: subst: unimplemented case s_type_expression"
+    and s_type_expression ~v ~expr : Ast_simplified.type_expression w = fun {type_expression'} ->
+      match type_expression' with
+        | Ast_simplified.T_tuple _ -> failwith "TODO: subst: unimplemented case s_type_expression"
+        | Ast_simplified.T_sum _ -> failwith "TODO: subst: unimplemented case s_type_expression"
+        | Ast_simplified.T_record _ -> failwith "TODO: subst: unimplemented case s_type_expression"
+        | Ast_simplified.T_arrow (_, _) -> failwith "TODO: subst: unimplemented case s_type_expression"
+        | Ast_simplified.T_variable _ -> failwith "TODO: subst: unimplemented case s_type_expression"
+        | Ast_simplified.T_operator _ -> failwith "TODO: subst: unimplemented case s_type_expression"
+        | Ast_simplified.T_constant _ ->
+          let _TODO = (v, expr) in
+          failwith "TODO: subst: unimplemented case s_type_expression"
 
     and s_type_value ~v ~expr : T.type_value w = fun { type_value'; simplified } ->
       let%bind type_value' = s_type_value' ~v ~expr type_value' in
@@ -122,7 +133,7 @@ module Substitution = struct
         let%bind x = s_literal ~v ~expr x in
         ok @@ T.E_literal x
       | T.E_constant        (var, vals) ->
-        let%bind var = s_variable ~v ~expr var in
+        let%bind var = s_build_in ~v ~expr var in
         let%bind vals = bind_map_list (s_annotated_expression ~v ~expr) vals in
         ok @@ T.E_constant (var, vals)
       | T.E_variable        tv ->
@@ -149,7 +160,7 @@ module Substitution = struct
         let i = i in
         ok @@ T.E_tuple_accessor (val_, i)
       | T.E_constructor     (tvar, val_) ->
-        let%bind tvar = s_type_variable ~v ~expr tvar in
+        let%bind tvar = s_constructor ~v ~expr tvar in
         let%bind val_ = s_annotated_expression ~v ~expr val_ in
         ok @@ T.E_constructor (tvar, val_)
       | T.E_record          aemap ->
@@ -160,10 +171,10 @@ module Substitution = struct
          *     let val_ = s_annotated_expression ~v ~expr val_ in
          *     ok @@ (key , val_)) aemap in
          * ok @@ T.E_record aemap *)
-      | T.E_record_accessor (val_, tvar) ->
+      | T.E_record_accessor (val_, l) ->
         let%bind val_ = s_annotated_expression ~v ~expr val_ in
-        let%bind tvar = s_type_variable ~v ~expr tvar in
-        ok @@ T.E_record_accessor (val_, tvar)
+        let%bind l = s_label ~v ~expr l in
+        ok @@ T.E_record_accessor (val_, l)
       | T.E_map             val_val_list ->
         let%bind val_val_list = bind_map_list (fun (val1 , val2) ->
             let%bind val1 = s_annotated_expression ~v ~expr val1 in
@@ -214,7 +225,7 @@ module Substitution = struct
       ok T.{ expression; type_annotation; environment; location }
 
     and s_named_expression ~v ~expr : T.named_expression w = fun { name; annotated_expression } ->
-      let%bind name = s_type_variable ~v ~expr name in
+      let%bind name = s_variable ~v ~expr name in
       let%bind annotated_expression = s_annotated_expression ~v ~expr annotated_expression in
       ok T.{ name; annotated_expression }
 
@@ -231,7 +242,7 @@ module Substitution = struct
 
     (* Replace the type variable ~v with ~expr everywhere within the
        program ~p. TODO: issues with scoping/shadowing. *)
-    and program ~(p : Ast_typed.program) ~(v:string (* this string is a type_name or type_variable I think *)) ~expr : Ast_typed.program Trace.result =
+    and program ~(p : Ast_typed.program) ~(v:type_variable) ~expr : Ast_typed.program Trace.result =
       Trace.bind_map_list (s_declaration_wrap ~v ~expr) p
 
     (*

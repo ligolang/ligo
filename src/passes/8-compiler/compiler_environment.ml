@@ -5,12 +5,13 @@ open Michelson
 
 let empty : environment = []
 
-let get : environment -> Var.t -> michelson result = fun e s ->
+let get : environment -> expression_variable -> michelson result = fun e s ->
   let%bind (_ , position) =
     let error =
       let title () = "Environment.get" in
       let content () = Format.asprintf "%a in %a"
-          Var.pp s PP.environment e in
+          Stage_common.PP.name s 
+          PP.environment e in
       error title content in
     generic_try error @@
     (fun () -> Environment.get_i s e) in
@@ -34,10 +35,10 @@ let get : environment -> Var.t -> michelson result = fun e s ->
 
   ok code
 
-let set : environment -> Var.t -> michelson result = fun e s ->
+let set : environment -> expression_variable -> michelson result = fun e n ->
   let%bind (_ , position) =
     generic_try (simple_error "Environment.set") @@
-    (fun () -> Environment.get_i s e) in
+    (fun () -> Environment.get_i n e) in
   let rec aux_bubble = fun n ->
     match n with
     | 0 -> dip i_drop

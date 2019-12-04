@@ -24,16 +24,16 @@ end
 
 module Free_variables = struct
 
-  type bindings = Var.t list
-  let mem : Var.t -> bindings -> bool = List.memq ~eq:Var.equal
-  let mem_count : Var.t -> bindings -> int =
+  type bindings = expression_variable list
+  let mem : expression_variable -> bindings -> bool = List.mem
+  let singleton : expression_variable -> bindings = fun s -> [ s ]
+  let mem_count : expression_variable -> bindings -> int =
     fun x fvs ->
     List.length (List.filter (Var.equal x) fvs)
-  let singleton : Var.t -> bindings = fun s -> [ s ]
   let union : bindings -> bindings -> bindings = (@)
   let unions : bindings list -> bindings = List.concat
   let empty : bindings = []
-  let of_list : Var.t list -> bindings = fun x -> x
+  let of_list : expression_variable list -> bindings = fun x -> x
 
   let rec expression : bindings -> expression -> bindings = fun b e ->
     let self = expression b in

@@ -11,6 +11,7 @@ open Trace
 
 module Simplify = struct
 
+  open Ast_simplified
   (*
     Each front-end has its owns constants.
 
@@ -31,197 +32,236 @@ module Simplify = struct
     - The left-hand-side is the reserved name in the given front-end.
     - The right-hand-side is the name that will be used in the AST.
   *)
+  let unit_expr = make_t @@ T_constant TC_unit 
 
-  let type_constants = [
-    ("unit" , "unit") ;
-    ("string" , "string") ;
-    ("bytes" , "bytes") ;
-    ("nat" , "nat") ;
-    ("int" , "int") ;
-    ("tez" , "tez") ;
-    ("bool" , "bool") ;
-    ("operation" , "operation") ;
-    ("address" , "address") ;
-    ("key" , "key") ;
-    ("key_hash" , "key_hash") ;
-    ("signature" , "signature") ;
-    ("timestamp" , "timestamp") ;
-    ("contract" , "contract") ;
-    ("list" , "list") ;
-    ("option" , "option") ;
-    ("set" , "set") ;
-    ("map" , "map") ;
-    ("big_map" , "big_map") ;
-    ("chain_id" , "chain_id") ;
-  ]
+  let type_constants s =
+  match s with
+    | "chain_id"  -> ok TC_chain_id
+    | "unit"      -> ok TC_unit
+    | "string"    -> ok TC_string
+    | "bytes"     -> ok TC_bytes
+    | "nat"       -> ok TC_nat
+    | "int"       -> ok TC_int
+    | "tez"       -> ok TC_mutez
+    | "bool"      -> ok TC_bool
+    | "operation" -> ok TC_operation
+    | "address"   -> ok TC_address
+    | "key"       -> ok TC_key
+    | "key_hash"  -> ok TC_key_hash
+    | "signature" -> ok TC_signature
+    | "timestamp" -> ok TC_timestamp
+    | _           -> simple_fail @@ "Not a type_constant " ^ s
+
+  let type_operators s =
+  match s with
+    | "list"      -> ok @@ TC_list unit_expr
+    | "option"    -> ok @@ TC_option unit_expr
+    | "set"       -> ok @@ TC_set unit_expr
+    | "map"       -> ok @@ TC_map (unit_expr,unit_expr)
+    | "big_map"   -> ok @@ TC_big_map (unit_expr,unit_expr)
+    | "contract"  -> ok @@ TC_contract unit_expr
+    | _           -> simple_fail @@ "Not a typ_operator " ^ s
+
 
   module Pascaligo = struct
 
-    let constants = [
-      ("get_force" , "MAP_GET_FORCE") ;
-      ("get_chain_id", "CHAIN_ID");
-      ("transaction" , "CALL") ;
-      ("get_contract" , "CONTRACT") ;
-      ("get_entrypoint" , "CONTRACT_ENTRYPOINT") ;
-      ("size" , "SIZE") ;
-      ("int" , "INT") ;
-      ("abs" , "ABS") ;
-      ("is_nat", "ISNAT") ;
-      ("amount" , "AMOUNT") ;
-      ("balance", "BALANCE") ;
-      ("now" , "NOW") ;
-      ("unit" , "UNIT") ;
-      ("source" , "SOURCE") ;
-      ("sender" , "SENDER") ;
-      ("address", "ADDRESS") ;
-      ("self_address", "SELF_ADDRESS") ;
-      ("implicit_account", "IMPLICIT_ACCOUNT") ;
-      ("failwith" , "FAILWITH") ;
-      ("bitwise_or" , "OR") ;
-      ("bitwise_and" , "AND") ;
-      ("bitwise_xor" , "XOR") ;
-      ("string_concat" , "CONCAT") ;
-      ("string_slice" , "SLICE") ;
-      ("crypto_check", "CHECK_SIGNATURE") ;
-      ("crypto_hash_key", "HASH_KEY") ;
-      ("bytes_concat" , "CONCAT") ;
-      ("bytes_slice" , "SLICE") ;
-      ("bytes_pack" , "PACK") ;
-      ("set_empty" , "SET_EMPTY") ;
-      ("set_mem" , "SET_MEM") ;
-      ("set_add" , "SET_ADD") ;
-      ("set_remove" , "SET_REMOVE") ;
-      ("set_iter" , "SET_ITER") ;
-      ("set_fold" , "SET_FOLD") ;
-      ("list_iter" , "LIST_ITER") ;
-      ("list_fold" , "LIST_FOLD") ;
-      ("list_map" , "LIST_MAP") ;
-      ("map_iter" , "MAP_ITER") ;
-      ("map_map" , "MAP_MAP") ;
-      ("map_fold" , "MAP_FOLD") ;
-      ("map_remove" , "MAP_REMOVE") ;
-      ("map_update" , "MAP_UPDATE") ;
-      ("map_get" , "MAP_GET") ;
-      ("sha_256" , "SHA256") ;
-      ("sha_512" , "SHA512") ;
-      ("blake2b" , "BLAKE2b") ;
-      ("cons" , "CONS") ;
-    ]
+    let constants = function
+      | "get_force"       -> ok C_MAP_GET_FORCE
+      | "get_chain_id"    -> ok C_CHAIN_ID
+      | "transaction"     -> ok C_CALL
+      | "get_contract"    -> ok C_CONTRACT
+      | "get_entrypoint"  -> ok C_CONTRACT_ENTRYPOINT
+      | "size"            -> ok C_SIZE
+      | "int"             -> ok C_INT
+      | "abs"             -> ok C_ABS
+      | "is_nat"          -> ok C_IS_NAT
+      | "amount"          -> ok C_AMOUNT
+      | "balance"         -> ok C_BALANCE
+      | "now"             -> ok C_NOW
+      | "unit"            -> ok C_UNIT
+      | "source"          -> ok C_SOURCE
+      | "sender"          -> ok C_SENDER
+      | "failwith"        -> ok C_FAILWITH
+      | "bitwise_or"      -> ok C_OR
+      | "bitwise_and"     -> ok C_AND
+      | "bitwise_xor"     -> ok C_XOR
+      | "string_concat"   -> ok C_CONCAT
+      | "string_slice"    -> ok C_SLICE
+      | "crypto_check"    -> ok C_CHECK_SIGNATURE
+      | "crypto_hash_key" -> ok C_HASH_KEY
+      | "bytes_concat"    -> ok C_CONCAT
+      | "bytes_slice"     -> ok C_SLICE
+      | "bytes_pack"      -> ok C_BYTES_PACK
+      | "set_empty"       -> ok C_SET_EMPTY
+      | "set_mem"         -> ok C_SET_MEM
+      | "set_add"         -> ok C_SET_ADD
+      | "set_remove"      -> ok C_SET_REMOVE
+      | "set_iter"        -> ok C_SET_ITER
+      | "set_fold"        -> ok C_SET_FOLD
+      | "list_iter"       -> ok C_LIST_ITER
+      | "list_fold"       -> ok C_LIST_FOLD
+      | "list_map"        -> ok C_LIST_MAP
+      | "map_iter"        -> ok C_MAP_ITER
+      | "map_map"         -> ok C_MAP_MAP
+      | "map_fold"        -> ok C_MAP_FOLD
+      | "map_remove"      -> ok C_MAP_REMOVE
+      | "map_update"      -> ok C_MAP_UPDATE
+      | "map_get"         -> ok C_MAP_GET
+      | "sha_256"         -> ok C_SHA256
+      | "sha_512"         -> ok C_SHA512
+      | "blake2b"         -> ok C_BLAKE2b
+      | "cons"            -> ok C_CONS
+      | "EQ"              -> ok C_EQ
+      | "NEQ"             -> ok C_NEQ
+      | "NEG"             -> ok C_NEG
+      | "ADD"             -> ok C_ADD
+      | "SUB"             -> ok C_SUB
+      | "TIMES"           -> ok C_MUL
+      | "DIV"             -> ok C_DIV
+      | "MOD"             -> ok C_MOD
+      | "NOT"             -> ok C_NOT
+      | "AND"             -> ok C_AND
+      | "OR"              -> ok C_OR
+      | "GT"              -> ok C_GT
+      | "GE"              -> ok C_GE
+      | "LT"              -> ok C_LT
+      | "LE"              -> ok C_LE
+      | "CONS"            -> ok C_CONS
+      | "address"         -> ok C_ADDRESS
+      | "self_address"    -> ok C_SELF_ADDRESS
+      | "implicit_account"-> ok C_IMPLICIT_ACCOUNT
+      | _                 -> simple_fail "Not a PascaLIGO constant"
 
     let type_constants = type_constants
+    let type_operators = type_operators
   end
 
   module Camligo = struct
-    let constants = [
-      ("Bytes.pack" , "PACK") ;
-      ("Crypto.hash" , "HASH") ;
-      ("Operation.transaction" , "CALL") ;
-      ("Operation.get_contract" , "CONTRACT") ;
-      ("sender" , "SENDER") ;
-      ("unit" , "UNIT") ;
-      ("source" , "SOURCE") ;
-    ]
+    let constants = function
+      | "Bytes.pack"             -> ok C_BYTES_PACK
+      | "Crypto.hash"            -> ok C_HASH    (* TODO : Check if right *)
+      | "Operation.transaction"  -> ok C_CALL
+      | "Operation.get_contract" -> ok C_CONTRACT
+      | "sender"                 -> ok C_SENDER
+      | "unit"                   -> ok C_UNIT
+      | "source"                 -> ok C_SOURCE
+      | _                        -> simple_fail "Not a CamLIGO constant"
 
     let type_constants = type_constants
+    let type_operators = type_operators
   end
 
   module Ligodity = struct
-    let constants = [
-      ("assert" , "ASSERT") ;
+    let constants = function
+      | "assert"                   -> ok C_ASSERTION
+      | "Current.balance"          -> ok C_BALANCE
+      | "balance"                  -> ok C_BALANCE
+      | "Current.time"             -> ok C_NOW
+      | "time"                     -> ok C_NOW
+      | "Current.amount"           -> ok C_AMOUNT
+      | "amount"                   -> ok C_AMOUNT
+      | "Current.gas"              -> ok C_STEPS_TO_QUOTA
+      | "gas"                      -> ok C_STEPS_TO_QUOTA
+      | "Current.sender"           -> ok C_SENDER
+      | "Current.address"          -> ok C_ADDRESS
+      | "Current.self_address"     -> ok C_SELF_ADDRESS
+      | "Current.implicit_account" -> ok C_IMPLICIT_ACCOUNT
+      | "sender"                   -> ok C_SENDER
+      | "Current.source"           -> ok C_SOURCE
+      | "source"                   -> ok C_SOURCE
+      | "Current.failwith"         -> ok C_FAILWITH
+      | "failwith"                 -> ok C_FAILWITH
 
-      ("Current.balance", "BALANCE") ;
-      ("balance", "BALANCE") ;
-      ("Current.time", "NOW") ;
-      ("time", "NOW") ;
-      ("Current.amount" , "AMOUNT") ;
-      ("amount", "AMOUNT") ;
-      ("Current.gas", "STEPS_TO_QUOTA") ;
-      ("gas", "STEPS_TO_QUOTA") ;
-      ("Current.sender" , "SENDER") ;
-      ("sender", "SENDER") ;
-      ("Current.address", "ADDRESS") ;
-      ("Current.self_address", "SELF_ADDRESS") ;
-      ("Current.implicit_account", "IMPLICIT_ACCOUNT") ;
-      ("Current.source" , "SOURCE") ;
-      ("source", "SOURCE") ;
-      ("Current.failwith", "FAILWITH") ;
-      ("failwith" , "FAILWITH") ;
+      | "Crypto.hash"              -> ok C_HASH
+      | "Crypto.black2b"           -> ok C_BLAKE2b
+      | "Crypto.sha256"            -> ok C_SHA256
+      | "Crypto.sha512"            -> ok C_SHA512
+      | "Crypto.hash_key"          -> ok C_HASH_KEY
+      | "Crypto.check"             -> ok C_CHECK_SIGNATURE
 
-      ("Crypto.hash" , "HASH") ;
-      ("Crypto.black2b", "BLAKE2B") ;
-      ("Crypto.sha256", "SHA256") ;
-      ("Crypto.sha512", "SHA512") ;
-      ("Crypto.hash_key", "HASH_KEY") ;
-      ("Crypto.check", "CHECK_SIGNATURE") ;
+      | "Bytes.pack"               -> ok C_BYTES_PACK
+      | "Bytes.unpack"             -> ok C_BYTES_UNPACK
+      | "Bytes.length"             -> ok C_SIZE
+      | "Bytes.size"               -> ok C_SIZE
+      | "Bytes.concat"             -> ok C_CONCAT
+      | "Bytes.slice"              -> ok C_SLICE
+      | "Bytes.sub"                -> ok C_SLICE
 
-      ("Bytes.pack" , "PACK") ;
-      ("Bytes.unpack", "UNPACK") ;
-      ("Bytes.length", "SIZE") ;
-      ("Bytes.size" , "SIZE") ;
-      ("Bytes.concat", "CONCAT") ;
-      ("Bytes.slice", "SLICE") ;
-      ("Bytes.sub", "SLICE") ;
+      | "Set.mem"                  -> ok C_SET_MEM
+      | "Set.empty"                -> ok C_SET_EMPTY
+      | "Set.literal"              -> ok C_SET_LITERAL
+      | "Set.add"                  -> ok C_SET_ADD
+      | "Set.remove"               -> ok C_SET_REMOVE
+      | "Set.fold"                 -> ok C_SET_FOLD
+      | "Set.size"                 -> ok C_SIZE
 
-      ("Set.mem" , "SET_MEM") ;
-      ("Set.empty" , "SET_EMPTY") ;
-      ("Set.literal" , "SET_LITERAL") ;
-      ("Set.add" , "SET_ADD") ;
-      ("Set.remove" , "SET_REMOVE") ;
-      ("Set.fold" , "SET_FOLD") ;
-      ("Set.size", "SIZE") ;
+      | "Map.find_opt"             -> ok C_MAP_FIND_OPT
+      | "Map.find"                 -> ok C_MAP_FIND
+      | "Map.update"               -> ok C_MAP_UPDATE
+      | "Map.add"                  -> ok C_MAP_ADD
+      | "Map.remove"               -> ok C_MAP_REMOVE
+      | "Map.iter"                 -> ok C_MAP_ITER
+      | "Map.map"                  -> ok C_MAP_MAP
+      | "Map.fold"                 -> ok C_MAP_FOLD
+      | "Map.empty"                -> ok C_MAP_EMPTY
+      | "Map.literal"              -> ok C_MAP_LITERAL
+      | "Map.size"                 -> ok C_SIZE
 
-      ("Map.find_opt" , "MAP_FIND_OPT") ;
-      ("Map.find" , "MAP_FIND") ;
-      ("Map.update" , "MAP_UPDATE") ;
-      ("Map.add" , "MAP_ADD") ;
-      ("Map.remove" , "MAP_REMOVE") ;
-      ("Map.iter" , "MAP_ITER") ;
-      ("Map.map" , "MAP_MAP") ;
-      ("Map.fold" , "MAP_FOLD") ;
-      ("Map.empty" , "MAP_EMPTY") ;
-      ("Map.literal" , "MAP_LITERAL" ) ;
-      ("Map.size" , "SIZE" ) ;
+      | "Big_map.find_opt"         -> ok C_MAP_FIND_OPT
+      | "Big_map.find"             -> ok C_MAP_FIND
+      | "Big_map.update"           -> ok C_MAP_UPDATE
+      | "Big_map.add"              -> ok C_MAP_ADD
+      | "Big_map.remove"           -> ok C_MAP_REMOVE
+      | "Big_map.literal"          -> ok C_BIG_MAP_LITERAL
+      | "Big_map.empty"            -> ok C_BIG_MAP_EMPTY
 
-      ("Big_map.find_opt" , "MAP_FIND_OPT") ;
-      ("Big_map.find" , "MAP_FIND") ;
-      ("Big_map.update" , "MAP_UPDATE") ;
-      ("Big_map.add" , "MAP_ADD") ;
-      ("Big_map.remove" , "MAP_REMOVE") ;
-      ("Big_map.literal" , "BIG_MAP_LITERAL" ) ;
-      ("Big_map.empty" , "BIG_MAP_EMPTY" ) ;
+      | "Bitwise.lor"              -> ok C_OR
+      | "Bitwise.land"             -> ok C_AND
+      | "Bitwise.lxor"             -> ok C_XOR
 
-      ("Bitwise.lor" , "OR") ;
-      ("Bitwise.land" , "AND") ;
-      ("Bitwise.lxor" , "XOR") ;
+      | "String.length"            -> ok C_SIZE
+      | "String.size"              -> ok C_SIZE
+      | "String.slice"             -> ok C_SLICE
+      | "String.sub"               -> ok C_SLICE
+      | "String.concat"            -> ok C_CONCAT
 
-      ("String.length", "SIZE") ;
-      ("String.size", "SIZE") ;
-      ("String.slice", "SLICE") ;
-      ("String.sub", "SLICE") ;
-      ("String.concat", "CONCAT") ;
+      | "List.length"              -> ok C_SIZE
+      | "List.size"                -> ok C_SIZE
+      | "List.iter"                -> ok C_LIST_ITER
+      | "List.map"                 -> ok C_LIST_MAP
+      | "List.fold"                -> ok C_LIST_FOLD
 
-      ("List.length", "SIZE") ;
-      ("List.size", "SIZE") ;
-      ("List.iter", "LIST_ITER") ;
-      ("List.map" , "LIST_MAP") ;
-      ("List.fold" , "LIST_FOLD") ;
+      | "Loop.fold_while"          -> ok C_FOLD_WHILE
+      | "continue"                 -> ok C_CONTINUE
+      | "stop"                     -> ok C_STOP
 
-      ("Loop.fold_while" , "FOLD_WHILE") ;
-      ("continue" , "CONTINUE") ;
-      ("stop" , "STOP") ;
+      | "Operation.transaction"    -> ok C_CALL
+      | "Operation.get_contract"   -> ok C_CONTRACT
+      | "Operation.get_entrypoint" -> ok C_CONTRACT_ENTRYPOINT
+      | "int"                      -> ok C_INT
+      | "abs"                      -> ok C_ABS
+      | "unit"                     -> ok C_UNIT
 
-      ("Operation.transaction" , "CALL") ;
-      ("Operation.get_contract" , "CONTRACT") ;
-      ("Operation.get_entrypoint" , "CONTRACT_ENTRYPOINT") ;
-      ("int" , "INT") ;
-      ("abs" , "ABS") ;
-      ("unit" , "UNIT") ;
-      ("source" , "SOURCE") ;
+      | "NEG"                      -> ok C_NEG
+      | "ADD"                      -> ok C_ADD
+      | "SUB"                      -> ok C_SUB
+      | "TIMES"                    -> ok C_MUL
+      | "DIV"                      -> ok C_DIV
+      | "MOD"                      -> ok C_MOD
+      | "EQ"                       -> ok C_EQ
+      | "NOT"                      -> ok C_NOT
+      | "AND"                      -> ok C_AND
+      | "OR"                       -> ok C_OR
+      | "GT"                       -> ok C_GT
+      | "LT"                       -> ok C_LT
+      | "LE"                       -> ok C_LE
+      | "CONS"                     -> ok C_CONS
 
-      ("Michelson.is_nat" , "ISNAT") ;
-    ]
+      | "Michelson.is_nat"         -> ok C_IS_NAT
+      | _                          -> simple_fail "Not a Ligodity constant"
 
     let type_constants = type_constants
+    let type_operators = type_operators
   end
 
 end
@@ -295,10 +335,10 @@ module Typer = struct
     let t_sender       = address
     let t_source       = address
     let t_unit         = unit
-    let t_amount       = tez
+    let t_amount       = mutez
     let t_address      = address
     let t_now          = timestamp
-    let t_transaction  = forall "a" @@ fun a -> a --> tez --> contract a --> operation
+    let t_transaction  = forall "a" @@ fun a -> a --> mutez --> contract a --> operation
     let t_get_contract = forall "a" @@ fun a -> contract a
     let t_abs          = int --> nat
     let t_cons         = forall "a" @@ fun a -> a --> list a --> list a
@@ -738,80 +778,93 @@ module Typer = struct
     let%bind () = assert_eq_1 hd elt in
     ok tl
 
-  let constant_typers = Map.String.of_list [
-      add ;
-      times ;
-      div ;
-      mod_ ;
-      sub ;
-      none ;
-      some ;
-      concat ;
-      slice ;
-      comparator "EQ" ;
-      comparator "NEQ" ;
-      comparator "LT" ;
-      comparator "GT" ;
-      comparator "LE" ;
-      comparator "GE" ;
-      or_ ;
-      and_ ;
-      xor ;
-      not_ ;
-      map_remove ;
-      map_add ;
-      map_update ;
-      map_mem ;
-      map_find ;
-      map_find_opt ;
-      map_map ;
-      map_fold ;
-      fold_while ;
-      continue ;
-      stop ;
-      map_iter ;
-      map_get_force ;
-      map_get ;
-      set_empty ;
-      set_mem ;
-      set_add ;
-      set_remove ;
-      set_iter ;
-      set_fold ;
-      list_iter ;
-      list_map ;
-      list_fold ;
-      int ;
-      size ;
-      failwith_ ;
-      bytes_pack ;
-      bytes_unpack ;
-      hash256 ;
-      hash512 ;
-      blake2b ;
-      hash_key ;
-      check_signature ;
-      sender ;
-      source ;
-      chain_id ;
-      unit ;
-      balance ;
-      amount ;
-      transaction ;
-      get_contract ;
-      get_entrypoint ;
-      neg ;
-      abs ;
-      is_nat ;
-      cons ;
-      now ;
-      slice ;
-      address ;
-      self_address ;
-      implicit_account ;
-      assertion ;
-      list_cons ;
-    ]
+  let constant_typers c : typer result = match c with
+    | C_INT                 -> ok @@ int ;
+    | C_UNIT                -> ok @@ unit ;
+    | C_NOW                 -> ok @@ now ;
+    | C_IS_NAT              -> ok @@ is_nat ;
+    | C_SOME                -> ok @@ some ;
+    | C_NONE                -> ok @@ none ;
+    | C_ASSERTION           -> ok @@ assertion ;
+    | C_FAILWITH            -> ok @@ failwith_ ;
+    (* LOOPS *)
+    | C_FOLD_WHILE          -> ok @@ fold_while ;
+    | C_CONTINUE            -> ok @@ continue ;
+    | C_STOP                -> ok @@ stop ;
+     (* MATH *)
+    | C_NEG                 -> ok @@ neg ;
+    | C_ABS                 -> ok @@ abs ;
+    | C_ADD                 -> ok @@ add ;
+    | C_SUB                 -> ok @@ sub ;
+    | C_MUL                 -> ok @@ times;
+    | C_DIV                 -> ok @@ div ;
+    | C_MOD                 -> ok @@ mod_ ;
+    (* LOGIC *)
+    | C_NOT                 -> ok @@ not_ ;
+    | C_AND                 -> ok @@ and_ ;
+    | C_OR                  -> ok @@ or_ ;
+    | C_XOR                 -> ok @@ xor ;
+    (* COMPARATOR *)
+    | C_EQ                  -> ok @@ comparator "EQ" ;
+    | C_NEQ                 -> ok @@ comparator "NEQ" ;
+    | C_LT                  -> ok @@ comparator "LT" ;
+    | C_GT                  -> ok @@ comparator "GT" ;
+    | C_LE                  -> ok @@ comparator "LE" ;
+    | C_GE                  -> ok @@ comparator "GE" ;
+    (* BYTES / STRING *)
+    | C_SIZE                -> ok @@ size ;
+    | C_CONCAT              -> ok @@ concat ;
+    | C_SLICE               -> ok @@ slice ;
+    | C_BYTES_PACK          -> ok @@ bytes_pack ;
+    | C_BYTES_UNPACK        -> ok @@ bytes_unpack ;
+    | C_CONS                -> ok @@ cons ;
+    (* SET  *)
+    | C_SET_EMPTY           -> ok @@ set_empty ;
+    | C_SET_ADD             -> ok @@ set_add ;
+    | C_SET_REMOVE          -> ok @@ set_remove ;
+    | C_SET_ITER            -> ok @@ set_iter ;
+    | C_SET_FOLD            -> ok @@ set_fold ;
+    | C_SET_MEM             -> ok @@ set_mem ;
+
+    (* LIST *)
+    | C_LIST_ITER           -> ok @@ list_iter ;
+    | C_LIST_MAP            -> ok @@ list_map ;
+    | C_LIST_FOLD           -> ok @@ list_fold ;
+    | C_LIST_CONS           -> ok @@ list_cons ;
+    (* MAP *)
+    | C_MAP_GET             -> ok @@ map_get ;
+    | C_MAP_GET_FORCE       -> ok @@ map_get_force ;
+    | C_MAP_ADD             -> ok @@ map_add ;
+    | C_MAP_REMOVE          -> ok @@ map_remove ;
+    | C_MAP_UPDATE          -> ok @@ map_update ;
+    | C_MAP_ITER            -> ok @@ map_iter ;
+    | C_MAP_MAP             -> ok @@ map_map ;
+    | C_MAP_FOLD            -> ok @@ map_fold ;
+    | C_MAP_MEM             -> ok @@ map_mem ;
+    | C_MAP_FIND            -> ok @@ map_find ;
+    | C_MAP_FIND_OPT        -> ok @@ map_find_opt ;
+    (* BIG MAP *)
+    (* CRYPTO *)
+    | C_SHA256              -> ok @@ hash256 ;
+    | C_SHA512              -> ok @@ hash512 ;
+    | C_BLAKE2b             -> ok @@ blake2b ;
+    | C_HASH_KEY            -> ok @@ hash_key ;
+    | C_CHECK_SIGNATURE     -> ok @@ check_signature ;
+    | C_CHAIN_ID            -> ok @@ chain_id ;
+    (*BLOCKCHAIN *)
+    | C_CONTRACT            -> ok @@ get_contract ;
+    | C_CONTRACT_ENTRYPOINT -> ok @@ get_entrypoint ;
+    | C_AMOUNT              -> ok @@ amount ;
+    | C_BALANCE             -> ok @@ balance ;
+    | C_CALL                -> ok @@ transaction ;
+    | C_SENDER              -> ok @@ sender ;
+    | C_SOURCE              -> ok @@ source ;
+    | C_ADDRESS             -> ok @@ address ;
+    | C_SELF_ADDRESS        -> ok @@ self_address;
+    | C_IMPLICIT_ACCOUNT    -> ok @@ implicit_account;
+    | _                     -> simple_fail @@ Format.asprintf "Typer not implemented for consant %a" Stage_common.PP.constant c
+
+
 
 end
 
@@ -832,74 +885,71 @@ module Compiler = struct
 
   include Helpers.Compiler
   open Tezos_utils.Michelson
+  open Mini_c
 
-  let operators = Map.String.of_list [
-    ("ADD" , simple_binary @@ prim I_ADD) ;
-    ("SUB" , simple_binary @@ prim I_SUB) ;
-    ("TIMES" , simple_binary @@ prim I_MUL) ;
-    ("DIV" , simple_binary @@ seq [prim I_EDIV ; i_assert_some_msg (i_push_string "DIV by 0") ; i_car]) ;
-    ("MOD" , simple_binary @@ seq [prim I_EDIV ; i_assert_some_msg (i_push_string "MOD by 0") ; i_cdr]) ;
-    ("NEG" , simple_unary @@ prim I_NEG) ;
-    ("OR" , simple_binary @@ prim I_OR) ;
-    ("AND" , simple_binary @@ prim I_AND) ;
-    ("XOR" , simple_binary @@ prim I_XOR) ;
-    ("NOT" , simple_unary @@ prim I_NOT) ;
-    ("PAIR" , simple_binary @@ prim I_PAIR) ;
-    ("CAR" , simple_unary @@ prim I_CAR) ;
-    ("CDR" , simple_unary @@ prim I_CDR) ;
-    ("EQ" , simple_binary @@ seq [prim I_COMPARE ; prim I_EQ]) ;
-    ("NEQ" , simple_binary @@ seq [prim I_COMPARE ; prim I_NEQ]) ;
-    ("LT" , simple_binary @@ seq [prim I_COMPARE ; prim I_LT]) ;
-    ("LE" , simple_binary @@ seq [prim I_COMPARE ; prim I_LE]) ;
-    ("GT" , simple_binary @@ seq [prim I_COMPARE ; prim I_GT]) ;
-    ("GE" , simple_binary @@ seq [prim I_COMPARE ; prim I_GE]) ;
-    ("UPDATE" , simple_ternary @@ prim I_UPDATE) ;
-    ("SOME" , simple_unary @@ prim I_SOME) ;
-    ("MAP_GET_FORCE" , simple_binary @@ seq [prim I_GET ; i_assert_some_msg (i_push_string "GET_FORCE")]) ;
-    ("MAP_FIND" , simple_binary @@ seq [prim I_GET ; i_assert_some_msg (i_push_string "MAP FIND")]) ;
-    ("MAP_GET" , simple_binary @@ prim I_GET) ;
-    ("MAP_FIND_OPT" , simple_binary @@ prim I_GET) ;
-    ("MAP_ADD" , simple_ternary @@ seq [dip (i_some) ; prim I_UPDATE]) ;
-    ("MAP_UPDATE" , simple_ternary @@ prim I_UPDATE) ;
-    ("FOLD_WHILE" , simple_binary @@ seq [i_swap ; (i_push (prim T_bool) (prim D_True)) ;
-                                          prim ~children:[seq [dip i_dup; i_exec; i_unpair]] I_LOOP ;
-                                          i_swap ; i_drop]) ;
-    ("CONTINUE" , simple_unary @@ seq [(i_push (prim T_bool) (prim D_True)) ;
-                                       i_pair]) ;
-    ("STOP" , simple_unary @@ seq [(i_push (prim T_bool) (prim D_False)) ;
-                                   i_pair]) ;
-    ("SIZE" , simple_unary @@ prim I_SIZE) ;
-    ("FAILWITH" , simple_unary @@ prim I_FAILWITH) ;
-    ("ASSERT_INFERRED" , simple_binary @@ i_if (seq [i_failwith]) (seq [i_drop ; i_push_unit])) ;
-    ("ASSERT" , simple_unary @@ i_if (seq [i_push_unit]) (seq [i_push_unit ; i_failwith])) ;
-    ("INT" , simple_unary @@ prim I_INT) ;
-    ("ABS" , simple_unary @@ prim I_ABS) ;
-    ("ISNAT", simple_unary @@ prim I_ISNAT) ;
-    ("CONS" , simple_binary @@ prim I_CONS) ;
-    ("UNIT" , simple_constant @@ prim I_UNIT) ;
-    ("BALANCE" , simple_constant @@ prim I_BALANCE) ;
-    ("AMOUNT" , simple_constant @@ prim I_AMOUNT) ;
-    ("ADDRESS" , simple_unary @@ prim I_ADDRESS) ;
-    ("SELF_ADDRESS", simple_constant @@ (seq [prim I_SELF ; prim I_ADDRESS])) ;
-    ("IMPLICIT_ACCOUNT", simple_unary @@ prim I_IMPLICIT_ACCOUNT) ;
-    ("NOW" , simple_constant @@ prim I_NOW) ;
-    ("CALL" , simple_ternary @@ prim I_TRANSFER_TOKENS) ;
-    ("SOURCE" , simple_constant @@ prim I_SOURCE) ;
-    ("SENDER" , simple_constant @@ prim I_SENDER) ;
-    ("SET_MEM" , simple_binary @@ prim I_MEM) ;
-    ("SET_ADD" , simple_binary @@ seq [dip (i_push (prim T_bool) (prim D_True)) ; prim I_UPDATE]) ;
-    ("SET_REMOVE" , simple_binary @@ seq [dip (i_push (prim T_bool) (prim D_False)) ; prim I_UPDATE]) ;
-    ("SLICE" , simple_ternary @@ seq [prim I_SLICE ; i_assert_some_msg (i_push_string "SLICE")]) ;
-    ("SHA256" , simple_unary @@ prim I_SHA256) ;
-    ("SHA512" , simple_unary @@ prim I_SHA512) ;
-    ("BLAKE2B" , simple_unary @@ prim I_BLAKE2B) ;
-    ("CHECK_SIGNATURE" , simple_ternary @@ prim I_CHECK_SIGNATURE) ;
-    ("HASH_KEY" , simple_unary @@ prim I_HASH_KEY) ;
-    ("PACK" , simple_unary @@ prim I_PACK) ;
-    ("CONCAT" , simple_binary @@ prim I_CONCAT) ;
-    ("CONS" , simple_binary @@ prim I_CONS) ;
-    ("CHAIN_ID", simple_constant @@ prim I_CHAIN_ID ) ;
-  ]
+  let get_operators c : predicate result =
+  match c with
+    | C_ADD             -> ok @@ simple_binary @@ prim I_ADD
+    | C_SUB             -> ok @@ simple_binary @@ prim I_SUB
+    | C_MUL             -> ok @@ simple_binary @@ prim I_MUL
+    | C_DIV             -> ok @@ simple_binary @@ seq [prim I_EDIV ; i_assert_some_msg (i_push_string "DIV by 0") ; i_car]
+    | C_MOD             -> ok @@ simple_binary @@ seq [prim I_EDIV ; i_assert_some_msg (i_push_string "MOD by 0") ; i_cdr]
+    | C_NEG             -> ok @@ simple_unary @@ prim I_NEG
+    | C_OR              -> ok @@ simple_binary @@ prim I_OR
+    | C_AND             -> ok @@ simple_binary @@ prim I_AND
+    | C_XOR             -> ok @@ simple_binary @@ prim I_XOR
+    | C_NOT             -> ok @@ simple_unary @@ prim I_NOT
+    | C_PAIR            -> ok @@ simple_binary @@ prim I_PAIR
+    | C_CAR             -> ok @@ simple_unary @@ prim I_CAR
+    | C_CDR             -> ok @@ simple_unary @@ prim I_CDR
+    | C_EQ              -> ok @@ simple_binary @@ seq [prim I_COMPARE ; prim I_EQ]
+    | C_NEQ             -> ok @@ simple_binary @@ seq [prim I_COMPARE ; prim I_NEQ]
+    | C_LT              -> ok @@ simple_binary @@ seq [prim I_COMPARE ; prim I_LT]
+    | C_LE              -> ok @@ simple_binary @@ seq [prim I_COMPARE ; prim I_LE]
+    | C_GT              -> ok @@ simple_binary @@ seq [prim I_COMPARE ; prim I_GT]
+    | C_GE              -> ok @@ simple_binary @@ seq [prim I_COMPARE ; prim I_GE]
+    | C_UPDATE          -> ok @@ simple_ternary @@ prim I_UPDATE
+    | C_SOME            -> ok @@ simple_unary  @@ prim I_SOME
+    | C_MAP_GET_FORCE   -> ok @@ simple_binary @@ seq [prim I_GET ; i_assert_some_msg (i_push_string "GET_FORCE")]
+    | C_MAP_FIND        -> ok @@ simple_binary @@ seq [prim I_GET ; i_assert_some_msg (i_push_string "MAP FIND")]
+    | C_MAP_GET         -> ok @@ simple_binary @@ prim I_GET
+    | C_MAP_FIND_OPT    -> ok @@ simple_binary @@ prim I_GET
+    | C_MAP_ADD         -> ok @@ simple_ternary @@ seq [dip (i_some) ; prim I_UPDATE]
+    | C_MAP_UPDATE      -> ok @@ simple_ternary @@ prim I_UPDATE
+    | C_FOLD_WHILE      -> ok @@ simple_binary @@ seq [i_swap ; (i_push (prim T_bool) (prim D_True));prim ~children:[seq [dip i_dup; i_exec; i_unpair]] I_LOOP ;i_swap ; i_drop]
+    | C_CONTINUE        -> ok @@ simple_unary @@ seq [(i_push (prim T_bool) (prim D_True)); i_pair]
+    | C_STOP            -> ok @@ simple_unary @@ seq [(i_push (prim T_bool) (prim D_False)); i_pair]
+    | C_SIZE            -> ok @@ simple_unary @@ prim I_SIZE
+    | C_FAILWITH        -> ok @@ simple_unary @@ prim I_FAILWITH
+    | C_ASSERT_INFERRED -> ok @@ simple_binary @@ i_if (seq [i_failwith]) (seq [i_drop ; i_push_unit])
+    | C_ASSERTION       -> ok @@ simple_unary @@ i_if (seq [i_push_unit]) (seq [i_push_unit ; i_failwith])
+    | C_INT             -> ok @@ simple_unary @@ prim I_INT
+    | C_ABS             -> ok @@ simple_unary @@ prim I_ABS
+    | C_IS_NAT          -> ok @@ simple_unary @@ prim I_ISNAT
+    | C_CONS            -> ok @@ simple_binary @@ prim I_CONS
+    | C_UNIT            -> ok @@ simple_constant @@ prim I_UNIT
+    | C_BALANCE         -> ok @@ simple_constant @@ prim I_BALANCE
+    | C_AMOUNT          -> ok @@ simple_constant @@ prim I_AMOUNT
+    | C_ADDRESS         -> ok @@ simple_constant @@ prim I_ADDRESS
+    | C_SELF_ADDRESS    -> ok @@ simple_constant @@ seq [prim I_SELF; prim I_ADDRESS]
+    | C_NOW             -> ok @@ simple_constant @@ prim I_NOW
+    | C_CALL            -> ok @@ simple_ternary @@ prim I_TRANSFER_TOKENS
+    | C_SOURCE          -> ok @@ simple_constant @@ prim I_SOURCE
+    | C_SENDER          -> ok @@ simple_constant @@ prim I_SENDER
+    | C_SET_MEM         -> ok @@ simple_binary @@ prim I_MEM
+    | C_SET_ADD         -> ok @@ simple_binary @@ seq [dip (i_push (prim T_bool) (prim D_True)) ; prim I_UPDATE]
+    | C_SET_REMOVE      -> ok @@ simple_binary @@ seq [dip (i_push (prim T_bool) (prim D_False)) ; prim I_UPDATE]
+    | C_SLICE           -> ok @@ simple_ternary @@ seq [prim I_SLICE ; i_assert_some_msg (i_push_string "SLICE")]
+    | C_SHA256          -> ok @@ simple_unary @@ prim I_SHA256
+    | C_SHA512          -> ok @@ simple_unary @@ prim I_SHA512
+    | C_BLAKE2b         -> ok @@ simple_unary @@ prim I_BLAKE2B
+    | C_CHECK_SIGNATURE -> ok @@ simple_ternary @@ prim I_CHECK_SIGNATURE
+    | C_HASH_KEY        -> ok @@ simple_unary @@ prim I_HASH_KEY
+    | C_BYTES_PACK      -> ok @@ simple_unary @@ prim I_PACK
+    | C_CONCAT          -> ok @@ simple_binary @@ prim I_CONCAT
+    | C_CHAIN_ID        -> ok @@ simple_constant @@ prim I_CHAIN_ID
+    | _                 -> simple_fail @@ Format.asprintf "operator not implemented for %a" Stage_common.PP.constant c
+  
 
   (*
     Some complex operators will need to be added in compiler/compiler_program.

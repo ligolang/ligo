@@ -35,7 +35,7 @@ val matching : (formatter -> 'a -> unit) -> formatter -> 'a matching -> unit
 *)
 
 (** Shows the type expected for the matched value *)
-val matching_type : formatter -> 'a matching -> unit
+val matching_type : formatter -> ('a, 'var) matching -> unit
 
 (*
 val matching_variant_case_type : formatter -> ( ( constructor_name * name) * 'a) -> unit

@@ -1,19 +1,24 @@
 
 module Simplify : sig
+ open Ast_simplified
+ open Trace
 
   module Pascaligo : sig
-    val constants : ( string * string ) list
-    val type_constants : ( string * string ) list
+    val constants  : string -> constant result
+    val type_constants : string -> type_constant result
+    val type_operators : string -> type_expression type_operator result
   end
 
   module Camligo : sig
-    val constants : ( string * string ) list
-    val type_constants : ( string * string ) list
+    val constants  : string -> constant result
+    val type_constants : string -> type_constant result
+    val type_operators : string -> type_expression type_operator result
   end
 
   module Ligodity : sig
-    val constants : ( string * string ) list
-    val type_constants : ( string * string ) list
+    val constants  : string -> constant result
+    val type_constants : string -> type_constant result
+    val type_operators : string -> type_expression type_operator result
   end
 
 end
@@ -21,6 +26,7 @@ end
 module Typer : sig
   open Helpers.Typer
   open Ast_typed
+  open Trace
 
   module Operators_types : sig
     (* TODO: we need a map from type names to type values. Then, all
@@ -169,7 +175,7 @@ module Typer : sig
   val concat : typer
   *)
   val cons : typer
-  val constant_typers : typer' type_name_map
+  val constant_typers : constant -> typer result
 
 end
 
@@ -178,6 +184,8 @@ module Compiler : sig
   include Helpers.Compiler
   *)
   open Tezos_utils.Michelson
+  open Mini_c
+  open Trace
 
   type predicate =
     | Constant of michelson
@@ -187,7 +195,7 @@ module Compiler : sig
     | Tetrary of michelson
     | Pentary of michelson
     | Hexary of michelson
-  val operators : predicate Map.String.t
+  val get_operators : constant -> predicate result
   val simple_constant : t -> predicate
   val simple_unary : t -> predicate
   val simple_binary : t -> predicate

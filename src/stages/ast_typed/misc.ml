@@ -12,11 +12,19 @@ module Errors = struct
     error ~data title message ()
 
   let different_constants a b () =
-    let title = (thunk "different constants") in
+    let title = (thunk "different type constants") in
     let message () = "" in
     let data = [
-      ("a" , fun () -> Format.asprintf "%s" a) ;
-      ("b" , fun () -> Format.asprintf "%s" b )
+      ("a" , fun () -> Format.asprintf "%a" Stage_common.PP.type_constant a) ;
+      ("b" , fun () -> Format.asprintf "%a" Stage_common.PP.type_constant b )
+    ] in
+    error ~data title message ()
+  let different_operators a b () =
+    let title = (thunk "different type operators") in
+    let message () = "" in
+    let data = [
+      ("a" , fun () -> Format.asprintf "%a" (Stage_common.PP.type_operator PP.type_value) a) ;
+      ("b" , fun () -> Format.asprintf "%a" (Stage_common.PP.type_operator PP.type_value) b)
     ] in
     error ~data title message ()
 
@@ -38,7 +46,7 @@ module Errors = struct
     ] in
     error ~data title message ()
 
-  let different_size_constants = different_size_type "constants"
+  let _different_size_constants = different_size_type "constants"
 
   let different_size_tuples = different_size_type "tuples"
 
@@ -146,13 +154,13 @@ end
 
 module Free_variables = struct
 
-  type bindings = string list
-  let mem : string -> bindings -> bool = List.mem
-  let singleton : string -> bindings = fun s -> [ s ]
+  type bindings = expression_variable list
+  let mem : expression_variable -> bindings -> bool = List.mem
+  let singleton : expression_variable -> bindings = fun s -> [ s ]
   let union : bindings -> bindings -> bindings = (@)
   let unions : bindings list -> bindings = List.concat
   let empty : bindings = []
-  let of_list : string list -> bindings = fun x -> x
+  let of_list : expression_variable list -> bindings = fun x -> x
 
   let rec expression : bindings -> expression -> bindings = fun b e ->
     let self = annotated_expression b in
@@ -168,7 +176,7 @@ module Free_variables = struct
     | E_application (a, b) -> unions @@ List.map self [ a ; b ]
     | E_tuple lst -> unions @@ List.map self lst
     | E_constructor (_ , a) -> self a
-    | E_record m -> unions @@ List.map self @@ Map.String.to_list m
+    | E_record m -> unions @@ List.map self @@ LMap.to_list m
     | E_record_accessor (a, _) -> self a
     | E_tuple_accessor (a, _) -> self a
     | E_list lst -> unions @@ List.map self lst
@@ -192,16 +200,17 @@ module Free_variables = struct
   and annotated_expression : bindings -> annotated_expression -> bindings = fun b ae ->
     expression b ae.expression
 
-  and matching_variant_case : type a . (bindings -> a -> bindings) -> bindings -> ((constructor_name * name) * a) -> bindings  = fun f b ((_,n),c) ->
+  and matching_variant_case : type a . (bindings -> a -> bindings) -> bindings -> ((constructor * expression_variable) * a) -> bindings  = fun f b ((_,n),c) ->
     f (union (singleton n) b) c
 
-  and matching : type a . (bindings -> a -> bindings) -> bindings -> a matching -> bindings = fun f b m ->
+  and matching : type a . (bindings -> a -> bindings) -> bindings -> (a,'var) matching -> bindings = fun f b m ->
     match m with
     | Match_bool { match_true = t ; match_false = fa } -> union (f b t) (f b fa)
-    | Match_list { match_nil = n ; match_cons = (((hd, _), (tl, _)), c) } -> union (f b n) (f (union (of_list [hd ; tl]) b) c)
-    | Match_option { match_none = n ; match_some = ((opt, _), s) } -> union (f b n) (f (union (singleton opt) b) s)
-    | Match_tuple (lst , a) -> f (union (of_list lst) b) a
-    | Match_variant (lst , _) -> unions @@ List.map (matching_variant_case f b) lst
+    | Match_list { match_nil = n ; match_cons = (hd, tl, c, _) } -> union (f b n) (f (union (of_list [hd ; tl]) b) c)
+    | Match_option { match_none = n ; match_some = (opt, s, _) } -> union (f b n) (f (union (singleton opt) b) s)
+    | Match_tuple ((lst , a), _) ->
+       f (union (of_list lst) b) a    
+    | Match_variant (lst,_) -> unions @@ List.map (matching_variant_case f b) lst
 
   and matching_expression = fun x -> matching annotated_expression x
 
@@ -288,6 +297,7 @@ end
 
 open Errors
 
+       
 let rec assert_type_value_eq (a, b: (type_value * type_value)) : unit result = match (a.type_value', b.type_value') with
   | T_tuple ta, T_tuple tb -> (
       let%bind _ =
@@ -296,20 +306,28 @@ let rec assert_type_value_eq (a, b: (type_value * type_value)) : unit result = m
       bind_list_iter assert_type_value_eq (List.combine ta tb)
     )
   | T_tuple _, _ -> fail @@ different_kinds a b
-  | T_constant (Type_name ca, lsta), T_constant (Type_name cb, lstb) -> (
-      let%bind _ =
-        trace_strong (different_size_constants a b)
-        @@ Assert.assert_true List.(length lsta = length lstb) in
-      let%bind _ =
-        trace_strong (different_constants ca cb)
-        @@ Assert.assert_true (ca = cb) in
-      trace (different_types "constant sub-expression" a b)
-      @@ bind_list_iter assert_type_value_eq (List.combine lsta lstb)
+  | T_constant ca, T_constant cb -> (
+      trace_strong (different_constants ca cb)
+      @@ Assert.assert_true (ca = cb)
     )
   | T_constant _, _ -> fail @@ different_kinds a b
+  | T_operator opa, T_operator opb -> (
+    let%bind (lsta, lstb) = match (opa, opb) with
+      | TC_option la, TC_option lb
+      | TC_list la, TC_list lb
+      | TC_contract la, TC_contract lb
+      | TC_set la, TC_set lb -> ok @@ ([la], [lb])
+      | TC_map (ka,va), TC_map (kb,vb)
+      | TC_big_map (ka,va), TC_big_map (kb,vb) -> ok @@ ([ka;va] ,[kb;vb]) 
+      | _,_ -> fail @@ different_operators opa opb
+      in
+    trace (different_types "constant sub-expression" a b)
+      @@ bind_list_iter (fun (a,b) -> assert_type_value_eq (a,b) )(List.combine lsta lstb)
+  )
+  | T_operator _, _ -> fail @@ different_kinds a b
   | T_sum sa, T_sum sb -> (
-      let sa' = SMap.to_kv_list sa in
-      let sb' = SMap.to_kv_list sb in
+      let sa' = CMap.to_kv_list sa in
+      let sb' = CMap.to_kv_list sb in
       let aux ((ka, va), (kb, vb)) =
         let%bind _ =
           Assert.assert_true ~msg:"different keys in sum types"
@@ -324,11 +342,13 @@ let rec assert_type_value_eq (a, b: (type_value * type_value)) : unit result = m
     )
   | T_sum _, _ -> fail @@ different_kinds a b
   | T_record ra, T_record rb -> (
-      let ra' = SMap.to_kv_list ra in
-      let rb' = SMap.to_kv_list rb in
+      let ra' = LMap.to_kv_list ra in
+      let rb' = LMap.to_kv_list rb in
       let aux ((ka, va), (kb, vb)) =
         let%bind _ =
           trace (different_types "records" a b) @@
+          let Label ka = ka in
+          let Label kb = kb in
           trace_strong (different_props_in_record ka kb) @@
           Assert.assert_true (ka = kb) in
         assert_type_value_eq (va, vb)
@@ -341,11 +361,11 @@ let rec assert_type_value_eq (a, b: (type_value * type_value)) : unit result = m
 
     )
   | T_record _, _ -> fail @@ different_kinds a b
-  | T_function (param, result), T_function (param', result') ->
+  | T_arrow (param, result), T_arrow (param', result') ->
       let%bind _ = assert_type_value_eq (param, param') in
       let%bind _ = assert_type_value_eq (result, result') in
       ok ()
-  | T_function _, _ -> fail @@ different_kinds a b
+  | T_arrow _, _ -> fail @@ different_kinds a b
   | T_variable x, T_variable y -> let _ = (x = y) in failwith "TODO : we must check that the two types were bound at the same location (even if they have the same name), i.e. use something like De Bruijn indices or a propper graph encoding"
   | T_variable _, _ -> fail @@ different_kinds a b
 
@@ -441,12 +461,12 @@ let rec assert_value_eq (a, b: (value*value)) : unit result =
       fail @@ different_values_because_different_types "tuple vs. non-tuple" a b
 
   | E_record sma, E_record smb -> (
-      let aux k a b =
+      let aux (Label k) a b =
         match a, b with
         | Some a, Some b -> Some (assert_value_eq (a, b))
         | _              -> Some (fail @@ missing_key_in_record_value k)
       in
-      let%bind _all = bind_smap @@ SMap.merge aux sma smb in
+      let%bind _all = bind_lmap @@ LMap.merge aux sma smb in
       ok ()
     )
   | E_record _, _ ->
@@ -508,7 +528,7 @@ let get_entry (lst : program) (name : string) : annotated_expression result =
   trace_option (Errors.missing_entry_point name) @@
   let aux x =
     let (Declaration_constant (an , _)) = Location.unwrap x in
-    if (an.name = name)
+    if (an.name = Var.of_name name)
     then Some an.annotated_expression
     else None
   in

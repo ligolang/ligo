@@ -737,7 +737,7 @@ and type_expression : environment -> ?tv_opt:O.type_expression -> I.expression -
     let e' = Environment.add_ez_declaration (fst binder) rhs e in
     let%bind result = type_expression e' result in
     return (E_let_in {binder = fst binder; rhs; result}) result.type_annotation
-  | E_annotation (expr , te) ->
+  | E_ascription (expr , te) ->
     let%bind tv = evaluate_type e te in
     let%bind expr' = type_expression ~tv_opt:tv e expr in
     let%bind type_annotation =
