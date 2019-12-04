@@ -41,7 +41,7 @@ let%expect_test _ =
 
   run_ligo_bad [ "compile-contract" ; "../../test/contracts/negative/error_typer_3.mligo" ; "main" ] ;
   [%expect {|
-    ligo: in file "error_typer_3.mligo", line 3, characters 34-53. different number of arguments to type constructors: Expected these two n-ary type constructors to be the same, but they have different numbers of arguments (both use the TC_tuple type constructor, but they have 3 and 2 arguments, respectively) {"a":"(TO_tuple[int , string , bool])","b":"(TO_tuple[int , string])","op":"TC_tuple","len_a":"3","len_b":"2"}
+    ligo: in file "error_typer_3.mligo", line 3, characters 34-53. records have different sizes: Expected these two types to be the same, but they're different (both are records, but with a different number of arguments) {"a":"record[2 -> bool , 1 -> string , 0 -> int]","b":"record[1 -> string , 0 -> int]"}
 
 
      If you're not sure how to fix this error, you can

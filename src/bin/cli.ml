@@ -259,7 +259,7 @@ let interpret =
         let%bind failstring = Run.failwith_to_string fail_res in
         ok @@ Format.asprintf "%s" failstring
       | Success value' ->
-        let%bind simplified_output = Uncompile.uncompile_expression typed_exp.type_annotation value' in
+        let%bind simplified_output = Uncompile.uncompile_expression typed_exp.type_expression value' in
         ok @@ Format.asprintf "%a\n" Ast_simplified.PP.expression simplified_output
   in
   let term =
@@ -341,6 +341,7 @@ let run_function =
     let%bind typed_prg,state = Compile.Of_simplified.compile simplified_prg in
     let      env             = Ast_typed.program_environment typed_prg in
     let%bind mini_c_prg      = Compile.Of_typed.compile typed_prg in
+
 
     let%bind simplified_param = Compile.Of_source.compile_expression v_syntax parameter in
     let%bind app              = Compile.Of_simplified.apply entry_point simplified_param in
