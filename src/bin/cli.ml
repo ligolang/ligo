@@ -163,10 +163,10 @@ let dry_run =
     let%bind v_syntax                  = Helpers.syntax_to_variant (Syntax_name syntax) (Some source_file) in
     let%bind (typed_program,state,env) = Compile.source_to_typed (Syntax_name syntax) source_file in
     let%bind compiled_param            = Compile.source_contract_input_to_michelson_value_as_function ~env ~state (storage,input) v_syntax in
-    let%bind michelson                 = Compile.typed_to_michelson_program typed_program entry_point in
+    let%bind michelson                 = Compile.typed_to_michelson_contract_as_exp typed_program entry_point in
     let%bind args_michelson            = Run.evaluate_michelson compiled_param in
     let%bind options                   = Run.make_dry_run_options {amount ; sender ; source } in
-    let%bind michelson_output          = Run.run ~options michelson args_michelson in
+    let%bind michelson_output          = Run.run_contract ~options michelson.expr michelson.expr_ty args_michelson true in
     let%bind simplified_output         = Uncompile.uncompile_typed_program_entry_function_result typed_program entry_point michelson_output in
     ok @@ Format.asprintf "%a\n" Ast_simplified.PP.expression simplified_output
   in

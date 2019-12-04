@@ -456,6 +456,11 @@ type compiled_program = {
   body : michelson ;
 }
 
+type compiled_expression = {
+  expr_ty : ex_ty ;
+  expr : michelson ;
+}
+
 let get_main : program -> string -> (anon_function * _) result = fun p entry ->
   let is_main ((( name , expr), _):toplevel_statement) =
     match Combinators.Expression.(get_content expr , get_type expr)with
