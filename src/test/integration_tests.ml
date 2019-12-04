@@ -2253,6 +2253,17 @@ let no_semicolon_religo () : unit result =
   in 
   ok ()
 
+let loop_bugs_ligo () : unit result =
+  let%bind program = type_file "./contracts/loop_bugs.ligo" in
+  let input = e_unit () in
+  let%bind () =
+    let expected = e_string "tata" in
+    expect_eq program "shadowing_in_body" input expected in
+  let%bind () =
+    let expected = e_string "toto" in
+    expect_eq program "shadowing_assigned_in_body" input expected in
+  ok ()
+
 let main = test_suite "Integration (End to End)" [
     test "bytes unpack" bytes_unpack ;
     test "bytes unpack (mligo)" bytes_unpack_mligo ;
@@ -2421,4 +2432,5 @@ let main = test_suite "Integration (End to End)" [
     test "tuple type (mligo)" tuple_type_mligo ;
     test "tuple type (religo)" tuple_type_religo ;
     test "no semicolon (religo)" no_semicolon_religo ;
+    test "loop_bugs (ligo)" loop_bugs_ligo ;
   ]
