@@ -8,7 +8,7 @@ val lr : formatter -> [< `Left ] -> unit
 val type_base : formatter -> type_base -> unit 
 *)
 
-val type_ : formatter -> type_value -> unit
+val type_variable : formatter -> type_value -> unit
 val environment_element : formatter -> environment_element -> unit
 val environment : formatter -> environment -> unit
 val value : formatter -> value -> unit

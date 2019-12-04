@@ -23,7 +23,7 @@ val lambda : formatter -> lambda -> unit
 
 val assoc_annotated_expression : formatter -> (ae * ae) -> unit
 
-val matching_variant_case : ( formatter -> 'a  -> unit ) -> formatter -> ( constructor_name * name ) * 'a -> unit
+val matching_variant_case : ( formatter -> 'a  -> unit ) -> formatter -> ( T.constructor_name * name ) * 'a -> unit
 
 val matching : ( formatter -> 'a -> unit ) -> formatter -> 'a matching -> unit
 

@@ -1,4 +1,4 @@
-type t = {
+type 'a t = {
   name : string ;
   counter : int option ;
 }
@@ -29,6 +29,16 @@ let of_name name =
   { name = name ;
     counter = None
   }
+
+(* This exception indicates that some code tried to throw away the
+   counter of a generated variable. It is not supposed to happen. *)
+exception Tried_to_unfreshen_variable
+
+(* TODO delete this *)
+let to_name var =
+  match var.counter with
+  | None -> var.name
+  | Some _ -> raise Tried_to_unfreshen_variable
 
 let fresh ?name () =
   let name = Option.unopt ~default:"" name in

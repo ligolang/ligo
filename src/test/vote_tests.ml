@@ -45,7 +45,7 @@ let init_vote () =
   let%bind result = Test_helpers.run_typed_program_with_simplified_input program "main" (e_pair (vote "Yes") (init_storage "basic")) in
   let%bind (_ , storage) = extract_pair result in
   let%bind storage' = extract_record storage in
-  let votes = List.assoc "candidates" storage' in
+  let votes = List.assoc (Label "candidates") storage' in
   let%bind votes' = extract_map votes in
   let%bind (_ , yess) =
     trace_option (simple_error "") @@

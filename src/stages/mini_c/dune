@@ -4,6 +4,7 @@
   (libraries
     simple-utils
     tezos-utils
+    stage_common
   )
   (inline_tests)
   (preprocess (pps ppx_expect ppx_let))

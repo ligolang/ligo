@@ -15,27 +15,30 @@
    does not accept names like "foo#121" as possible variable names, so
    this confusion should not arise for us.  *)
 
-type t
+type 'a t
 
-val equal : t -> t -> bool
-val compare : t -> t -> int
+val equal : 'a t -> 'a t -> bool
+val compare : 'a t -> 'a t -> int
 
 (* Prints vars as %s or %s#%d *)
-val pp : Format.formatter -> t -> unit
+val pp : Format.formatter -> 'a t -> unit
 
 (* Construct a user variable directly from a string. This should only
    be used for embedding user variable names. For programmatically
    generated variables, use `fresh`. Take care not to cause
    shadowing/capture except as the user intended. *)
-val of_name : string -> t
+val of_name : string -> 'a t
+
+(* TODO don't use this, this should not exist. *)
+val to_name : 'a t -> string
 
 (* Generate a variable, using a counter value from a _global_
    counter. If the name is not provided, it will be empty. *)
-val fresh : ?name:string -> unit -> t
+val fresh : ?name:string -> unit -> 'a t
 
 (* Generate a variable as with `fresh`, reusing the name part of the
    given variable. *)
-val fresh_like : t -> t
+val fresh_like : 'a t -> 'a t
 
 (* Reset the global counter. Danger, do not use... Provided for tests
    only. *)

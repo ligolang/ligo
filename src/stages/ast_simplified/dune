@@ -4,6 +4,7 @@
   (libraries
     simple-utils
     tezos-utils
+    stage_common
   )
   (preprocess
     (pps ppx_let)

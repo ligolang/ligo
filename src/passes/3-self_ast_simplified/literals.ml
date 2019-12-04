@@ -4,7 +4,7 @@ open Trace
 let peephole_expression : expression -> expression result = fun e ->
   let return expression = ok { e with expression } in
   match e.expression with
-  | E_constant ("BIG_MAP_LITERAL" , lst) -> (
+  | E_constant (C_BIG_MAP_LITERAL , lst) -> (
       let%bind elt =
         trace_option (simple_error "big_map literal expects a single parameter") @@
         List.to_singleton lst
@@ -25,7 +25,7 @@ let peephole_expression : expression -> expression result = fun e ->
       let%bind pairs = bind_map_list aux lst in
       return @@ E_big_map pairs
     )
-  | E_constant ("MAP_LITERAL" , lst) -> (
+  | E_constant (C_MAP_LITERAL, lst) -> (
       let%bind elt =
         trace_option (simple_error "map literal expects a single parameter") @@
         List.to_singleton lst
@@ -46,21 +46,21 @@ let peephole_expression : expression -> expression result = fun e ->
       let%bind pairs = bind_map_list aux lst in
       return @@ E_map pairs
     )
-  | E_constant ("BIG_MAP_EMPTY" , lst) -> (
+  | E_constant (C_BIG_MAP_EMPTY, lst) -> (
       let%bind () =
         trace_strong (simple_error "BIG_MAP_EMPTY expects no parameter") @@
         Assert.assert_list_empty lst
       in
       return @@ E_big_map []
     )
-  | E_constant ("MAP_EMPTY" , lst) -> (
+  | E_constant (C_MAP_EMPTY, lst) -> (
       let%bind () =
         trace_strong (simple_error "MAP_EMPTY expects no parameter") @@
         Assert.assert_list_empty lst
       in
       return @@ E_map []
     )
-  | E_constant ("SET_LITERAL" , lst) -> (
+  | E_constant (C_SET_LITERAL, lst) -> (
       let%bind elt =
         trace_option (simple_error "map literal expects a single parameter") @@
         List.to_singleton lst
@@ -71,7 +71,7 @@ let peephole_expression : expression -> expression result = fun e ->
       in
       return @@ E_set lst
     )
-  | E_constant ("SET_EMPTY" , lst) -> (
+  | E_constant (C_SET_EMPTY, lst) -> (
       let%bind () =
         trace_strong (simple_error "SET_EMPTY expects no parameter") @@
         Assert.assert_list_empty lst

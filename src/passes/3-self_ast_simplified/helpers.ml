@@ -20,7 +20,7 @@ let rec fold_expression : 'a folder -> 'a -> expression -> 'a result = fun f ini
       ok res
     )
   | E_lambda { binder = _ ; input_type = _ ; output_type = _ ; result = e }
-  | E_annotation (e , _) | E_constructor (_ , e) -> (
+  | E_ascription (e , _) | E_constructor (_ , e) -> (
       let%bind res = self init' e in
       ok res
     )
@@ -38,7 +38,7 @@ let rec fold_expression : 'a folder -> 'a -> expression -> 'a result = fun f ini
       let%bind res = fold_expression self init'' expr in
       ok res
     in
-    let%bind res = bind_fold_smap aux (ok init') m in
+    let%bind res = bind_fold_lmap aux (ok init') m in
     ok res
   )
   | E_let_in { binder = _ ; rhs ; result } -> (
@@ -54,21 +54,21 @@ and fold_cases : 'a folder -> 'a -> matching_expr -> 'a result = fun f init m ->
       let%bind res = fold_expression f res match_false in
       ok res
     )
-  | Match_list { match_nil ; match_cons = (_ , _ , cons) } -> (
+  | Match_list { match_nil ; match_cons = (_ , _ , cons, _) } -> (
       let%bind res = fold_expression f init match_nil in
       let%bind res = fold_expression f res cons in
       ok res
     )
-  | Match_option { match_none ; match_some = (_ , some) } -> (
+  | Match_option { match_none ; match_some = (_ , some, _) } -> (
       let%bind res = fold_expression f init match_none in
       let%bind res = fold_expression f res some in
       ok res
     )
-  | Match_tuple (_ , e) -> (
+  | Match_tuple ((_ , e), _) -> (
       let%bind res = fold_expression f init e in
       ok res
     )
-  | Match_variant lst -> (
+  | Match_variant (lst, _) -> (
       let aux init' ((_ , _) , e) =
         let%bind res' = fold_expression f init' e in
         ok res' in
@@ -110,9 +110,9 @@ let rec map_expression : mapper -> expression -> expression result = fun f e ->
       let%bind ab' = bind_map_pair self ab in
       return @@ E_loop ab'
     )
-  | E_annotation (e , t) -> (
+  | E_ascription (e , t) -> (
       let%bind e' = self e in
-      return @@ E_annotation (e' , t)
+      return @@ E_ascription (e' , t)
     )
   | E_assign (name , path , e) -> (
       let%bind e' = self e in
@@ -128,7 +128,7 @@ let rec map_expression : mapper -> expression -> expression result = fun f e ->
       return @@ E_accessor (e' , path)
     )
   | E_record m -> (
-    let%bind m' = bind_map_smap self m in
+    let%bind m' = bind_map_lmap self m in
     return @@ E_record m'
   )
   | E_constructor (name , e) -> (
@@ -166,27 +166,27 @@ and map_cases : mapper -> matching_expr -> matching_expr result = fun f m ->
       let%bind match_false = map_expression f match_false in
       ok @@ Match_bool { match_true ; match_false }
     )
-  | Match_list { match_nil ; match_cons = (hd , tl , cons) } -> (
+  | Match_list { match_nil ; match_cons = (hd , tl , cons, _) } -> (
       let%bind match_nil = map_expression f match_nil in
       let%bind cons = map_expression f cons in
-      ok @@ Match_list { match_nil ; match_cons = (hd , tl , cons) }
+      ok @@ Match_list { match_nil ; match_cons = (hd , tl , cons, ()) }
     )
-  | Match_option { match_none ; match_some = (name , some) } -> (
+  | Match_option { match_none ; match_some = (name , some, _) } -> (
       let%bind match_none = map_expression f match_none in
       let%bind some = map_expression f some in
-      ok @@ Match_option { match_none ; match_some = (name , some) }
+      ok @@ Match_option { match_none ; match_some = (name , some, ()) }
     )
-  | Match_tuple (names , e) -> (
+  | Match_tuple ((names , e), _) -> (
       let%bind e' = map_expression f e in
-      ok @@ Match_tuple (names , e')
+      ok @@ Match_tuple ((names , e'), [])
     )
-  | Match_variant lst -> (
+  | Match_variant (lst, _) -> (
       let aux ((a , b) , e) =
         let%bind e' = map_expression f e in
         ok ((a , b) , e')
       in
       let%bind lst' = bind_map_list aux lst in
-      ok @@ Match_variant lst'
+      ok @@ Match_variant (lst', ())
     )
 
 and map_program : mapper -> program -> program result = fun m p ->

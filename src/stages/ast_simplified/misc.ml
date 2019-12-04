@@ -126,7 +126,7 @@ let rec assert_value_eq (a, b: (expression * expression )) : unit result =
         | Some a, Some b -> Some (assert_value_eq (a, b))
         | _ -> Some (simple_fail "different record keys")
       in
-      let%bind _all = bind_smap @@ Map.String.merge aux sma smb in
+      let%bind _all = bind_lmap @@ LMap.merge aux sma smb in
       ok ()
     )
   | E_record _, _ ->
@@ -170,8 +170,8 @@ let rec assert_value_eq (a, b: (expression * expression )) : unit result =
   | E_set _, _ ->
       simple_fail "comparing set with other stuff"
 
-  | (E_annotation (a , _) ,  _b') -> assert_value_eq (a , b)
-  | (_a' , E_annotation (b , _)) -> assert_value_eq (a , b)
+  | (E_ascription (a , _) ,  _b') -> assert_value_eq (a , b)
+  | (_a' , E_ascription (b , _)) -> assert_value_eq (a , b)
   | (E_variable _, _) | (E_lambda _, _)
   | (E_application _, _) | (E_let_in _, _)
   | (E_accessor _, _)

@@ -15,28 +15,28 @@ let map_expression :
 
 (* true if the name names a pure constant -- i.e. if uses will be pure
    assuming arguments are pure *)
-let is_pure_constant : string -> bool =
+let is_pure_constant : constant -> bool =
   function
-  | "UNIT"
-  | "CAR" | "CDR" | "PAIR"
-  | "NIL" | "CONS"
-  | "NEG" | "OR" | "AND" | "XOR" | "NOT"
-  | "EQ" | "NEQ" | "LT" | "LE" | "GT" | "GE"
-  | "SOME"
-  | "UPDATE" | "MAP_GET" | "MAP_FIND_OPT" | "MAP_ADD" | "MAP_UPDATE"
-  | "INT" | "ABS" | "ISNAT"
-  | "BALANCE" | "AMOUNT" | "ADDRESS" | "NOW" | "SOURCE" | "SENDER" | "CHAIN_ID"
-  | "SET_MEM" | "SET_ADD" | "SET_REMOVE" | "SLICE"
-  | "SHA256" | "SHA512" | "BLAKE2B" | "CHECK_SIGNATURE"
-  | "HASH_KEY" | "PACK" | "CONCAT"
+  | C_UNIT
+  | C_CAR | C_CDR | C_PAIR
+  | C_NIL | C_CONS
+  | C_NEG | C_OR | C_AND | C_XOR | C_NOT
+  | C_EQ  | C_NEQ | C_LT | C_LE | C_GT | C_GE
+  | C_SOME
+  | C_UPDATE | C_MAP_GET | C_MAP_FIND_OPT | C_MAP_ADD | C_MAP_UPDATE
+  | C_INT | C_ABS | C_IS_NAT
+  | C_BALANCE | C_AMOUNT | C_ADDRESS | C_NOW | C_SOURCE | C_SENDER | C_CHAIN_ID
+  | C_SET_MEM | C_SET_ADD | C_SET_REMOVE | C_SLICE
+  | C_SHA256 | C_SHA512 | C_BLAKE2b | C_CHECK_SIGNATURE
+  | C_HASH_KEY | C_BYTES_PACK | C_CONCAT
     -> true
   (* unfortunately impure: *)
-  | "ADD"|"SUB"|"TIMES"|"DIV"|"MOD"
+  | C_ADD | C_SUB |C_MUL|C_DIV|C_MOD
   (* impure: *)
-  | "ASSERT" | "ASSERT_INFERRED"
-  | "MAP_GET_FORCE" | "MAP_FIND"
-  | "FOLD_WHILE"
-  | "CALL"
+  | C_ASSERTION | C_ASSERT_INFERRED
+  | C_MAP_GET_FORCE | C_MAP_FIND
+  | C_FOLD_WHILE
+  | C_CALL
   (* TODO... *)
   | _
     -> false
@@ -80,12 +80,12 @@ let rec is_pure : expression -> bool = fun e ->
   (* definitely not pure *)
   | E_assignment _ -> false
 
-let occurs_in : Var.t -> expression -> bool =
+let occurs_in : expression_variable -> expression -> bool =
   fun x e ->
   let fvs = Free_variables.expression [] e in
   Free_variables.mem x fvs
 
-let occurs_count : Var.t -> expression -> int =
+let occurs_count : expression_variable -> expression -> int =
   fun x e ->
   let fvs = Free_variables.expression [] e in
   Free_variables.mem_count x fvs
@@ -93,7 +93,7 @@ let occurs_count : Var.t -> expression -> int =
 (* If `ignore_lambdas` is true, ignore assignments which occur inside
    lambdas, which have no effect on the value of the variable outside
    of the lambda. *)
-let rec is_assigned : ignore_lambdas:bool -> Var.t -> expression -> bool =
+let rec is_assigned : ignore_lambdas:bool -> expression_variable -> expression -> bool =
   fun ~ignore_lambdas x e ->
   let self = is_assigned ~ignore_lambdas x in
   let selfs = List.exists self in
@@ -165,7 +165,7 @@ let rec is_assigned : ignore_lambdas:bool -> Var.t -> expression -> bool =
    - ?
 *)
 
-let can_inline : Var.t -> expression -> expression -> bool =
+let can_inline : expression_variable -> expression -> expression -> bool =
   fun x e1 e2 ->
   is_pure e1 &&
   (* if x does not occur in e2, there can be no other problems:
@@ -177,7 +177,7 @@ let can_inline : Var.t -> expression -> expression -> bool =
       (fun y -> not (is_assigned ~ignore_lambdas:true y e2))
       (Free_variables.expression [] e2)))
 
-let should_inline : Var.t -> expression -> bool =
+let should_inline : expression_variable -> expression -> bool =
   fun x e ->
   occurs_count x e <= 1
 
@@ -232,12 +232,12 @@ let beta : bool ref -> expression -> expression =
     else e
 
   (* also do CAR (PAIR x y) ↦ x, or CDR (PAIR x y) ↦ y, only if x and y are pure *)
-  | E_constant ("CAR"|"CDR" as const, [ { content = E_constant ("PAIR", [ e1 ; e2 ]) ; type_value = _ } ]) ->
+  | E_constant (C_CAR| C_CDR as const, [ { content = E_constant (C_PAIR, [ e1 ; e2 ]) ; type_value = _ } ]) ->
     if is_pure e1 && is_pure e2
     then (changed := true ;
           match const with
-          | "CAR" -> e1
-          | "CDR" -> e2
+          | C_CAR -> e1
+          | C_CDR -> e2
           | _ -> assert false)
     else e
   | _ -> e

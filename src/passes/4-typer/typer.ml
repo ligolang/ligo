@@ -3,7 +3,6 @@ let use_new_typer = false
 module I = Ast_simplified
 module O = Ast_typed
 
-module SMap = O.SMap
 module Environment = O.Environment
 
 module Solver = Typer_new.Solver (* Both the old typer and the new typer use the same solver state. *)

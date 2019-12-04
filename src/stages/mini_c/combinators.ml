@@ -18,7 +18,7 @@ module Expression = struct
     type_value = t ;
   }
 
-  let pair : t -> t -> t' = fun a b -> E_constant ("PAIR" , [ a ; b ])
+  let pair : t -> t -> t' = fun a b -> E_constant (C_PAIR , [ a ; b ])
 
 end
 
@@ -136,7 +136,7 @@ let get_or (v:value) = match v with
 
 let wrong_type name t =
   let title () = "not a " ^ name in
-  let content () = Format.asprintf "%a" PP.type_ t in
+  let content () = Format.asprintf "%a" PP.type_variable t in
   error title content
 
 let get_t_left t = match t with
