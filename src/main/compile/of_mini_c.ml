@@ -50,11 +50,14 @@ let compile_contract_as_exp = fun program name ->
 let build_contract : Compiler.compiled_expression -> Michelson.michelson result =
   fun compiled ->
   let%bind ((Ex_ty _param_ty),(Ex_ty _storage_ty)) = Self_michelson.fetch_lambda_parameters compiled.expr_ty in
-  (*TODO : bind pair trace_tzresult_lwt ? *)
-  let%bind (param_michelson : Tezos_raw_protocol_005_PsBabyM1.Alpha_context.Script.node) = 
-    Trace.trace_tzresult_lwt (simple_error "TODO") @@
+  let%bind param_michelson =
+    Trace.trace_tzresult_lwt (simple_error "Could not unparse contract lambda's parameter") @@
     Proto_alpha_utils.Memory_proto_alpha.unparse_ty_michelson _param_ty in
-  let%bind (storage_michelson : Tezos_raw_protocol_005_PsBabyM1.Alpha_context.Script.node) = 
-    Trace.trace_tzresult_lwt (simple_error "TODO") @@
+  let%bind storage_michelson =
+    Trace.trace_tzresult_lwt (simple_error "Could not unparse contract lambda's storage") @@
     Proto_alpha_utils.Memory_proto_alpha.unparse_ty_michelson _storage_ty in
-  ok @@ Michelson.contract param_michelson storage_michelson compiled.expr
+  let contract = Michelson.contract param_michelson storage_michelson compiled.expr in
+  let%bind () = 
+    Trace.trace_tzresult_lwt (simple_error "Invalid contract") @@
+    Proto_alpha_utils.Memory_proto_alpha.typecheck_contract contract in
+  ok contract

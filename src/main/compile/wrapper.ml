@@ -49,6 +49,7 @@ let typed_to_michelson_contract_as_exp
 
 (* produce a michelson contract e.g. the following sequence K_param ; K_storage ; K_code *)
 let source_to_michelson_contract syntax source_file entry_point =
-  let%bind (typed,_,_) = source_to_typed syntax source_file in
+  let%bind (typed,state,env) = source_to_typed syntax source_file in
   let%bind michelson = typed_to_michelson_contract_as_exp typed entry_point in
-  Of_mini_c.build_contract michelson
+  let%bind contract = Of_mini_c.build_contract michelson in
+  ok (contract, (typed,state,env))

@@ -147,18 +147,16 @@ let f = fun x -> let (Ex x') = x in x' (* la ca sort *)
       ('b ty * field_annot option * var_annot option) *
       type_annot option *
       bool -> ('a, 'b) pair ty *)
-let fetch_contract_args (contract_ty:ex_ty) =
+let fetch_lambda_types (contract_ty:ex_ty) =
   match contract_ty with
-  | Ex_ty (Contract_t (in_ty,_)) -> ok (Ex_ty in_ty, Ex_ty in_ty)
   | Ex_ty (Lambda_t (in_ty, out_ty, _)) -> ok (Ex_ty in_ty, Ex_ty out_ty)
-  | _ ->
-    simple_fail "mock"
+  | _ -> simple_fail "failed to fetch lambda types"
 
 (* type run_res = Failwith of failwith_res | Success of ex_typed_value
 let run_bis ?options (exp:Michelson.t) (input_michelson:Michelson.t) (is_contract:bool) : run_res result = *)
 let run_contract ?options (exp:Michelson.t) (exp_type:ex_ty) (input_michelson:Michelson.t) (is_contract:bool) : ex_typed_value result =
   let open! Tezos_raw_protocol_005_PsBabyM1 in
-  let%bind (Ex_ty input_ty, Ex_ty output_ty) = fetch_contract_args exp_type in
+  let%bind (Ex_ty input_ty, Ex_ty output_ty) = fetch_lambda_types exp_type in
   let%bind input =
     Trace.trace_tzresult_lwt (simple_error "error parsing input") @@
     Memory_proto_alpha.parse_michelson_data input_michelson input_ty
