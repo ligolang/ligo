@@ -97,8 +97,8 @@ let expect_fail_typed_program_with_simplified_input ?options
 
 let run_typed_value_as_function
     (program: Ast_typed.program) (entry_point:string) : Ast_simplified.expression result =
-  let%bind michelson_value_as_f = Compile.Wrapper.typed_to_michelson_value_as_function program entry_point in
-  let%bind result = Ligo.Run.Of_michelson.evaluate michelson_value_as_f in
+  let%bind michelson_value_as_f = Compile.Wrapper.typed_to_michelson_expression program entry_point in
+  let%bind result = Ligo.Run.Of_michelson.run_exp michelson_value_as_f.expr michelson_value_as_f.expr_ty in
   Uncompile.uncompile_typed_program_entry_expression_result program entry_point result
 
 let expect ?options program entry_point input expecter =

@@ -122,11 +122,11 @@ end
 
 (*
    Converts `expr` in `fun () -> expr`.
-*)
 let functionalize (body : expression) : expression =
   let content = E_closure { binder = Var.fresh () ; body } in
   let type_value = t_function t_unit body.type_value in
   { content ; type_value }
+*)
 
 let get_entry (lst : program) (name : string) : (expression * int) result =
   let%bind entry_expression =
@@ -166,10 +166,21 @@ let get_entry (lst : program) (name : string) : (expression * int) result =
        x + y
    ```
 
-   The entry-point can be an expression, which is then functionalized if
-   `to_functionalize` is set to true.
+   The entry-point can be an expression. In that case the following code:
+   ```
+     const x = 42
+     const y = 120
+     const z = 423
+     const some_exp = x+y
+   ```
+   Is transformed in:
+     let x = 42 in
+     let y = 120 in
+     let z = 423 in
+     x+y
+   ```
 *)
-let aggregate_entry (lst : program) (name : string) (to_functionalize : bool) : expression result =
+let aggregate_entry (lst : program) (name : string) (is_exp : bool) : expression result =
   let%bind (entry_expression , entry_index) = get_entry lst name in
   let pre_declarations = List.until entry_index lst in
   let wrapper =
@@ -179,7 +190,7 @@ let aggregate_entry (lst : program) (name : string) (to_functionalize : bool) : 
     in
     fun expr -> List.fold_right' aux expr pre_declarations
   in
-  match (entry_expression.content , to_functionalize) with
+  match (entry_expression.content , is_exp) with
   | (E_closure l , false) -> (
       let l' = { l with body = wrapper l.body } in
       let%bind t' =
@@ -193,7 +204,7 @@ let aggregate_entry (lst : program) (name : string) (to_functionalize : bool) : 
       ok e'
     )
   | (_ , true) -> (
-      ok @@ functionalize @@ wrapper entry_expression
+      ok @@ wrapper entry_expression
     )
   | _ -> (
       Format.printf "Not functional: %a\n" PP.expression entry_expression ;

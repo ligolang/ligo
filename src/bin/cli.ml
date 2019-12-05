@@ -125,12 +125,17 @@ let measure_contract =
   (term , Term.info ~doc cmdname)
 
 let compile_parameter =
-  let f source_file _entry_point expression syntax display_format michelson_format =
+  let f source_file entry_point expression syntax display_format michelson_format =
     toplevel ~display_format @@
     let%bind v_syntax      = Helpers.syntax_to_variant (Syntax_name syntax) (Some source_file) in
-    let%bind (_,state,env) = Compile.source_to_typed (Syntax_name syntax) source_file in
-    let%bind compiled_exp  = Compile.source_expression_to_michelson_value_as_function ~env ~state expression v_syntax in
-    let%bind value         = Run.evaluate_michelson compiled_exp in
+    (*
+      TODO:
+      source_to_michelson_contract will fail if the entry_point does not point to a michelson contract
+      but we do not check that the type of the parameter matches the type of the given expression
+    *)
+    let%bind (_,(_,state,env)) = Compile.source_to_michelson_contract (Syntax_name syntax) source_file entry_point in
+    let%bind compiled_exp      = Compile.source_expression_to_michelson ~env ~state expression v_syntax in
+    let%bind value             = Run.evaluate_expression compiled_exp.expr compiled_exp.expr_ty in
     ok @@ Format.asprintf "%a\n" (Main.Display.michelson_pp michelson_format) value
   in
   let term =
@@ -140,12 +145,17 @@ let compile_parameter =
   (term , Term.info ~doc cmdname)
 
 let compile_storage =
-  let f source_file _entry_point expression syntax display_format michelson_format =
+  let f source_file entry_point expression syntax display_format michelson_format =
     toplevel ~display_format @@
-    let%bind v_syntax      = Helpers.syntax_to_variant (Syntax_name syntax) (Some source_file) in
-    let%bind (_,state,env) = Compile.source_to_typed (Syntax_name syntax) source_file in
-    let%bind compiled      = Compile.source_expression_to_michelson_value_as_function ~env ~state expression v_syntax in
-    let%bind value         = Run.evaluate_michelson compiled in
+    let%bind v_syntax          = Helpers.syntax_to_variant (Syntax_name syntax) (Some source_file) in
+    (*
+      TODO:
+      source_to_michelson_contract will fail if the entry_point does not point to a michelson contract
+      but we do not check that the type of the storage matches the type of the given expression
+    *)
+    let%bind (_,(_,state,env)) = Compile.source_to_michelson_contract (Syntax_name syntax) source_file entry_point in
+    let%bind compiled_exp      = Compile.source_expression_to_michelson ~env ~state expression v_syntax in
+    let%bind value             = Run.evaluate_expression compiled_exp.expr compiled_exp.expr_ty in
     ok @@ Format.asprintf "%a\n" (Main.Display.michelson_pp michelson_format) value
   in
   let term =
@@ -159,11 +169,11 @@ let dry_run =
     toplevel ~display_format @@
     let%bind v_syntax                      = Helpers.syntax_to_variant (Syntax_name syntax) (Some source_file) in
     let%bind (_,(typed_program,state,env)) = Compile.source_to_michelson_contract (Syntax_name syntax) source_file entry_point in
-    let%bind compiled_param                = Compile.source_contract_input_to_michelson_value_as_function ~env ~state (storage,input) v_syntax in
-    let%bind michelson                     = Compile.typed_to_michelson_contract_as_exp typed_program entry_point in
-    let%bind args_michelson                = Run.evaluate_michelson compiled_param in
+    let%bind compiled_parameter            = Compile.source_contract_param_to_michelson ~env ~state (storage,input) v_syntax in
+    let%bind michelson                     = Compile.typed_to_michelson_fun typed_program entry_point in
+    let%bind args_michelson                = Run.evaluate_expression compiled_parameter.expr compiled_parameter.expr_ty in
     let%bind options                       = Run.make_dry_run_options {amount ; sender ; source } in
-    let%bind michelson_output              = Run.run_contract ~options michelson.expr michelson.expr_ty args_michelson true in
+    let%bind michelson_output              = Run.run_function ~options michelson.expr michelson.expr_ty args_michelson true in
     let%bind simplified_output             = Uncompile.uncompile_typed_program_entry_function_result typed_program entry_point michelson_output in
     ok @@ Format.asprintf "%a\n" Ast_simplified.PP.expression simplified_output
   in
@@ -178,11 +188,11 @@ let run_function =
     toplevel ~display_format @@
     let%bind v_syntax                  = Helpers.syntax_to_variant (Syntax_name syntax) (Some source_file) in
     let%bind (typed_program,state,env) = Compile.source_to_typed (Syntax_name syntax) source_file in
-    let%bind compiled_parameter        = Compile.source_expression_to_michelson_value_as_function ~env ~state parameter v_syntax in
-    let%bind michelson                 = Compile.typed_to_michelson_program typed_program entry_point in
-    let%bind args_michelson            = Run.evaluate_michelson compiled_parameter in
+    let%bind compiled_parameter        = Compile.source_expression_to_michelson ~env ~state parameter v_syntax in
+    let%bind michelson                 = Compile.typed_to_michelson_fun typed_program entry_point in
+    let%bind args_michelson            = Run.evaluate_expression compiled_parameter.expr compiled_parameter.expr_ty in
     let%bind options                   = Run.make_dry_run_options {amount ; sender ; source } in
-    let%bind michelson_output          = Run.run ~options michelson args_michelson in
+    let%bind michelson_output          = Run.run_function ~options michelson.expr michelson.expr_ty args_michelson false in
     let%bind simplified_output         = Uncompile.uncompile_typed_program_entry_function_result typed_program entry_point michelson_output in
     ok @@ Format.asprintf "%a\n" Ast_simplified.PP.expression simplified_output
   in
@@ -196,9 +206,9 @@ let evaluate_value =
   let f source_file entry_point amount sender source syntax display_format =
     toplevel ~display_format @@
     let%bind (typed_program,_,_) = Compile.source_to_typed (Syntax_name syntax) source_file in
-    let%bind contract            = Compile.typed_to_michelson_value_as_function typed_program entry_point in
+    let%bind compiled            = Compile.typed_to_michelson_expression typed_program entry_point in
     let%bind options             = Run.make_dry_run_options {amount ; sender ; source } in
-    let%bind michelson_output    = Run.evaluate ~options contract in
+    let%bind michelson_output    = Run.run_exp ~options compiled.expr compiled.expr_ty in
     let%bind simplified_output   = Uncompile.uncompile_typed_program_entry_expression_result typed_program entry_point michelson_output in
     ok @@ Format.asprintf "%a\n" Ast_simplified.PP.expression simplified_output
   in
@@ -212,10 +222,10 @@ let compile_expression =
   let f expression syntax display_format michelson_format =
     toplevel ~display_format @@
     let%bind v_syntax = Helpers.syntax_to_variant (Syntax_name syntax) (None) in
-    let%bind compiled = Compile.source_expression_to_michelson_value_as_function
+    let%bind compiled = Compile.source_expression_to_michelson
       ~env:(Ast_typed.Environment.full_empty) ~state:(Typer.Solver.initial_state)
       expression v_syntax in
-    let%bind value    = Run.evaluate_michelson compiled in
+    let%bind value    = Run.evaluate_expression compiled.expr compiled.expr_ty in
     ok @@ Format.asprintf "%a\n" (Main.Display.michelson_pp michelson_format) value
   in
   let term =

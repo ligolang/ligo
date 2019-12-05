@@ -16,9 +16,8 @@ let get_program =
       )
 
 let compile_main () = 
-  let%bind program,_ = get_program () in
-  let%bind michelson = Compile.Wrapper.typed_to_michelson_value_as_function program "main" in
-  let%bind _ex_ty_value = Ligo.Run.Of_michelson.evaluate michelson in
+  let%bind _ = Compile.Wrapper.source_to_michelson_contract
+      (Syntax_name "pascaligo") "./contracts/multisig.ligo" "main" in
   ok ()
 
 open Ast_simplified
