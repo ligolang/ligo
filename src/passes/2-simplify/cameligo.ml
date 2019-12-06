@@ -242,7 +242,7 @@ and simpl_list_type_expression (lst:Raw.type_expr list) : type_expression result
   | [hd] -> simpl_type_expression hd
   | lst ->
       let%bind lst = bind_map_list simpl_type_expression lst in
-      ok @@ make_t @@ T_tuple lst
+      ok @@ make_t @@ T_operator (TC_tuple lst)
 
 let rec simpl_expression :
   Raw.expr -> expr result = fun t ->

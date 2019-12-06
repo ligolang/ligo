@@ -43,7 +43,6 @@ module Errors : sig
   val different_size_type : name -> type_value -> type_value -> unit -> error
   val different_props_in_record : string -> string -> unit -> error
   val different_size_constants : type_value -> type_value -> unit -> error
-  val different_size_tuples : type_value -> type_value -> unit -> error
   val different_size_sums : type_value -> type_value -> unit -> error
   val different_size_records : type_value -> type_value -> unit -> error
   val different_types : name -> type_value -> type_value -> unit -> error

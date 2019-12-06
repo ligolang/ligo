@@ -72,9 +72,9 @@ module Substitution = struct
       ok @@ type_name
 
     and s_type_value' : T.type_value' w = fun ~substs -> function
-        | T.T_tuple type_value_list ->
+        | T.T_operator (TC_tuple type_value_list) ->
           let%bind type_value_list = bind_map_list (s_type_value ~substs) type_value_list in
-          ok @@ T.T_tuple type_value_list
+          ok @@ T.T_operator (TC_tuple type_value_list)
         | T.T_sum _ -> failwith "TODO: T_sum"
         | T.T_record _ -> failwith "TODO: T_record"
         | T.T_constant type_name ->
@@ -95,7 +95,6 @@ module Substitution = struct
           failwith "TODO: T_function"
 
     and s_type_expression' : _ Ast_simplified.type_expression' w = fun ~substs -> function
-      | Ast_simplified.T_tuple _ -> failwith "TODO: subst: unimplemented case s_type_expression tuple"
       | Ast_simplified.T_sum _ -> failwith "TODO: subst: unimplemented case s_type_expression sum"
       | Ast_simplified.T_record _ -> failwith "TODO: subst: unimplemented case s_type_expression record"
       | Ast_simplified.T_arrow (_, _) -> failwith "TODO: subst: unimplemented case s_type_expression arrow"
@@ -274,7 +273,7 @@ module Substitution = struct
       let self tv = type_value ~tv ~substs in
       let (v, expr) = substs in
       match tv with
-      | P_variable v' when String.equal v' v -> expr
+      | P_variable v' when Var.equal v' v -> expr
       | P_variable _ -> tv
       | P_constant (x , lst) -> (
           let lst' = List.map self lst in

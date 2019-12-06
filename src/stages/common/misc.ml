@@ -9,6 +9,7 @@ let map_type_operator f = function
   | TC_map (x , y) -> TC_map (f x , f y)
   | TC_big_map (x , y) -> TC_big_map (f x , f y)
   | TC_arrow (x , y) -> TC_arrow (f x , f y)
+  | TC_tuple lst -> TC_tuple (List.map f lst)
 
 let bind_map_type_operator f = function
     TC_contract x -> let%bind x = f x in ok @@ TC_contract x
@@ -18,6 +19,7 @@ let bind_map_type_operator f = function
   | TC_map (x , y) -> let%bind x = f x in let%bind y = f y in ok @@ TC_map (x , y)
   | TC_big_map (x , y) -> let%bind x = f x in let%bind y = f y in ok @@ TC_big_map (x , y)
   | TC_arrow (x , y) -> let%bind x = f x in let%bind y = f y in ok @@ TC_arrow (x , y)
+  | TC_tuple lst -> let%bind lst = bind_map_list f lst in ok @@ TC_tuple lst
 
 let type_operator_name = function
       TC_contract _ -> "TC_contract"
@@ -27,6 +29,7 @@ let type_operator_name = function
     | TC_map      _ -> "TC_map"
     | TC_big_map  _ -> "TC_big_map"
     | TC_arrow    _ -> "TC_arrow"
+    | TC_tuple    _ -> "TC_tuple"
 
 let type_expression'_of_string = function
   | "TC_contract" , [x]     -> ok @@ T_operator(TC_contract x)
@@ -65,6 +68,7 @@ let string_of_type_operator = function
   | TC_map       (x , y) -> "TC_map"      , [x ; y]
   | TC_big_map   (x , y) -> "TC_big_map"  , [x ; y]
   | TC_arrow     (x , y) -> "TC_arrow"    , [x ; y]
+  | TC_tuple     lst     -> "TC_tuple"    , lst
 
 let string_of_type_constant = function
   | TC_unit      -> "TC_unit", []
@@ -85,5 +89,5 @@ let string_of_type_constant = function
 let string_of_type_expression' = function
   | T_operator o -> string_of_type_operator o
   | T_constant c -> string_of_type_constant c
-  | T_tuple _|T_sum _|T_record _|T_arrow (_, _)|T_variable _ ->
+  | T_sum _|T_record _|T_arrow (_, _)|T_variable _ ->
      failwith "not a type operator or constant"

@@ -141,7 +141,6 @@ let lmap_sep_d x = lmap_sep x (const " , ")
 let rec type_expression' : type a . (formatter -> a -> unit) -> formatter -> a type_expression' -> unit =
   fun f ppf te ->
   match te with
-    | T_tuple lst -> fprintf ppf "tuple[%a]" (list_sep_d f) lst
     | T_sum m -> fprintf ppf "sum[%a]" (cmap_sep_d f) m
     | T_record m -> fprintf ppf "record[%a]" (lmap_sep_d f ) m
     | T_arrow (a, b) -> fprintf ppf "%a -> %a" f a f b
@@ -179,6 +178,7 @@ and type_operator : type a . (formatter -> a -> unit) -> formatter -> a type_ope
     | TC_big_map (k, v) -> Format.asprintf "Big Map (%a,%a)" f k f v
     | TC_contract (c) -> Format.asprintf "Contract (%a)" f c
     | TC_arrow (a , b) -> Format.asprintf "TC_Arrow (%a,%a)" f a f b
+    | TC_tuple lst -> Format.asprintf "tuple[%a]" (list_sep_d f) lst
     in
   fprintf ppf "(TO_%s)" s
 

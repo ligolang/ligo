@@ -66,7 +66,6 @@ and literal =
 
 (* The ast is a tree of node, 'a is the type of the node (type_variable or {type_variable, previous_type}) *)
 type 'a type_expression' = 
-  | T_tuple of 'a list 
   | T_sum of 'a constructor_map
   | T_record of 'a label_map
   | T_arrow of 'a * 'a
@@ -97,6 +96,7 @@ and 'a type_operator =
   | TC_map of 'a * 'a
   | TC_big_map of 'a * 'a
   | TC_arrow of 'a * 'a
+  | TC_tuple of 'a list
 
 type type_base =
   | Base_unit 

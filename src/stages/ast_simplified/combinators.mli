@@ -27,8 +27,8 @@ val t_option    : type_expression -> type_expression
 *)
 val t_list      : type_expression -> type_expression
 val t_variable  : string -> type_expression
-(*
 val t_tuple     : type_expression list -> type_expression
+(*
 val t_record    : te_map -> type_expression
 *)
 val t_pair : ( type_expression * type_expression ) -> type_expression

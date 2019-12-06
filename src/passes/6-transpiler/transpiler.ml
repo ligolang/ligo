@@ -173,7 +173,7 @@ let rec transpile_type (t:AST.type_value) : type_value result =
                         ok (Some ann, a))
                       aux node in
       ok @@ snd m'
-  | T_tuple lst ->
+  | T_operator (TC_tuple lst) ->
       let node = Append_tree.of_list lst in
       let aux a b : type_value result =
         let%bind a = a in

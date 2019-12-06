@@ -48,7 +48,7 @@ let t_mutez ?s ()      : type_value = make_t (T_constant TC_mutez) s
 let t_timestamp ?s ()  : type_value = make_t (T_constant TC_timestamp) s
 let t_unit ?s ()       : type_value = make_t (T_constant TC_unit) s
 let t_option o ?s ()   : type_value = make_t (T_operator (TC_option o)) s
-let t_tuple lst ?s ()  : type_value = make_t (T_tuple lst) s
+let t_tuple lst ?s ()  : type_value = make_t (T_operator (TC_tuple lst)) s
 let t_variable t ?s () : type_value = make_t (T_variable t) s
 let t_list t ?s ()     : type_value = make_t (T_operator (TC_list t)) s
 let t_set t ?s ()      : type_value = make_t (T_operator (TC_set t)) s
@@ -147,11 +147,11 @@ let get_t_key_hash (t:type_value) : unit result = match t.type_value' with
   | _ -> fail @@ Errors.not_a_x_type "key_hash" t ()
 
 let get_t_tuple (t:type_value) : type_value list result = match t.type_value' with
-  | T_tuple lst -> ok lst
+  | T_operator (TC_tuple lst) -> ok lst
   | _ -> fail @@ Errors.not_a_x_type "tuple" t ()
 
 let get_t_pair (t:type_value) : (type_value * type_value) result = match t.type_value' with
-  | T_tuple lst ->
+  | T_operator (TC_tuple lst) ->
       let%bind () =
         trace_strong (Errors.not_a_x_type "pair (tuple with two elements)" t ()) @@
         Assert.assert_list_size lst 2 in

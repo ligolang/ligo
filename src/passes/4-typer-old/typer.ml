@@ -327,9 +327,6 @@ and evaluate_type (e:environment) (t:I.type_expression) : O.type_value result =
       let%bind a' = evaluate_type e a in
       let%bind b' = evaluate_type e b in
       return (T_arrow (a', b'))
-  | T_tuple lst ->
-      let%bind lst' = bind_list @@ List.map (evaluate_type e) lst in
-      return (T_tuple lst')
   | T_sum m ->
       let aux k v prev =
         let%bind prev' = prev in
@@ -379,6 +376,9 @@ and evaluate_type (e:environment) (t:I.type_expression) : O.type_value result =
             let%bind arg' = evaluate_type e arg in
             let%bind ret' = evaluate_type e ret in
             ok @@ I.TC_arrow ( arg' , ret' )
+        | TC_tuple lst ->
+            let%bind lst' = bind_map_list (evaluate_type e) lst in
+            ok @@ I.TC_tuple lst'
         in
       return (T_operator (opt))
 

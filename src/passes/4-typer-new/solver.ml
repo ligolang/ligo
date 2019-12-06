@@ -34,8 +34,6 @@ module Wrap = struct
 
   let rec type_expression_to_type_value : T.type_value -> O.type_value = fun te ->
     match te.type_value' with
-    | T_tuple types ->
-      P_constant (C_tuple, List.map type_expression_to_type_value types)
     | T_sum kvmap ->
       P_constant (C_variant, T.CMap.to_list @@ T.CMap.map type_expression_to_type_value kvmap)
     | T_record kvmap ->
@@ -71,15 +69,13 @@ module Wrap = struct
           | TC_list l              -> (C_list, [l])
           | TC_contract c          -> (C_contract, [c])
           | TC_arrow ( arg , ret ) -> (C_arrow, [ arg ; ret ])
+          | TC_tuple lst           -> (C_tuple, lst)
       )
       in
       P_constant (csttag, List.map type_expression_to_type_value args)
-      
 
   let rec type_expression_to_type_value_copypasted : I.type_expression -> O.type_value = fun te ->
     match te.type_expression' with
-    | T_tuple types ->
-      P_constant (C_tuple, List.map type_expression_to_type_value_copypasted types)
     | T_sum kvmap ->
       P_constant (C_variant, I.CMap.to_list @@ I.CMap.map type_expression_to_type_value_copypasted kvmap)
     | T_record kvmap ->
@@ -104,6 +100,7 @@ module Wrap = struct
           | TC_big_map  ( k , v )  -> (C_big_map, [k;v])
           | TC_contract c          -> (C_contract, [c])
           | TC_arrow ( arg , ret ) -> (C_arrow, [ arg ; ret ])
+          | TC_tuple lst           -> (C_tuple, lst)
       )
       in
       P_constant (csttag, List.map type_expression_to_type_value_copypasted args)

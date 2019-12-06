@@ -36,15 +36,6 @@ them. please report this to the developers." in
     ] in
     error ~data title content
 
-  let unknown_untranspile unknown_type value =
-    let title () = "untranspiling unknown value" in
-    let content () = Format.asprintf "can not untranspile %s" unknown_type in
-    let data = [
-      ("unknown_type" , fun () -> unknown_type) ;
-      ("value" , fun () -> Format.asprintf "%a" Mini_c.PP.value value) ;
-    ] in
-    error ~data title content
-
 end
 
 open Errors
@@ -202,6 +193,16 @@ let rec untranspile (v : value) (t : AST.type_value) : AST.annotated_expression 
           get_string v in
         return (E_literal (Literal_string n))
       )
+    | TC_tuple lst ->
+      let%bind node = match Append_tree.of_list lst with
+        | Empty -> fail @@ corner_case ~loc:__LOC__ "empty tuple"
+        | Full t -> ok t in
+      let%bind tpl =
+        trace_strong (corner_case ~loc:__LOC__ "tuple extract") @@
+        extract_tuple v node in
+      let%bind tpl' = bind_list
+        @@ List.map (fun (x, y) -> untranspile x y) tpl in
+      return (E_tuple tpl')
   )
   | T_sum m ->
       let lst = kv_list_of_cmap m in
@@ -214,16 +215,6 @@ let rec untranspile (v : value) (t : AST.type_value) : AST.annotated_expression 
         extract_constructor v node in
       let%bind sub = untranspile v tv in
       return (E_constructor (Constructor name, sub))
-  | T_tuple lst ->
-      let%bind node = match Append_tree.of_list lst with
-        | Empty -> fail @@ corner_case ~loc:__LOC__ "empty tuple"
-        | Full t -> ok t in
-      let%bind tpl =
-        trace_strong (corner_case ~loc:__LOC__ "tuple extract") @@
-        extract_tuple v node in
-      let%bind tpl' = bind_list
-        @@ List.map (fun (x, y) -> untranspile x y) tpl in
-      return (E_tuple tpl')
   | T_record m ->
       let lst = kv_list_of_lmap m in
       let%bind node = match Append_tree.of_list lst with

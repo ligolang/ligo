@@ -334,9 +334,6 @@ and evaluate_type (e:environment) (t:I.type_expression) : O.type_value result =
     let%bind a' = evaluate_type e a in
     let%bind b' = evaluate_type e b in
     return (T_arrow (a', b'))
-  | T_tuple lst ->
-    let%bind lst' = bind_list @@ List.map (evaluate_type e) lst in
-    return (T_tuple lst')
   | T_sum m ->
     let aux k v prev =
       let%bind prev' = prev in
@@ -386,6 +383,9 @@ and evaluate_type (e:environment) (t:I.type_expression) : O.type_value result =
            let%bind arg' = evaluate_type e arg in
            let%bind ret' = evaluate_type e ret in
            ok @@ O.TC_arrow ( arg' , ret' )
+        | TC_tuple lst ->
+           let%bind lst' = bind_map_list (evaluate_type e) lst in
+           ok @@ O.TC_tuple lst'
         in
       return (T_operator (opt))
 
@@ -1022,9 +1022,6 @@ let type_program' : I.program -> O.program result = fun p ->
 let rec untype_type_expression (t:O.type_value) : (I.type_expression) result =
   (* TODO: or should we use t.simplified if present? *)
   let%bind t = match t.type_value' with
-  | O.T_tuple x ->
-    let%bind x' = bind_map_list untype_type_expression x in
-    ok @@ I.T_tuple x'
   | O.T_sum x ->
     let%bind x' = I.bind_map_cmap untype_type_expression x in
     ok @@ I.T_sum x'
@@ -1064,6 +1061,9 @@ let rec untype_type_expression (t:O.type_value) : (I.type_expression) result =
          let%bind arg' = untype_type_expression arg in
          let%bind ret' = untype_type_expression ret in
          ok @@ I.TC_arrow ( arg' , ret' )
+      | O.TC_tuple lst ->
+         let%bind lst' = bind_map_list untype_type_expression lst in
+         ok @@ I.TC_tuple lst'
       in
       ok @@ I.T_operator (type_name)
     in

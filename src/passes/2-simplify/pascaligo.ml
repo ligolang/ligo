@@ -266,7 +266,7 @@ and simpl_list_type_expression (lst:Raw.type_expr list) : type_expression result
   | [hd] -> simpl_type_expression hd
   | lst ->
       let%bind lst = bind_list @@ List.map simpl_type_expression lst in
-      ok @@ make_t @@ T_tuple lst
+      ok @@ make_t @@ T_operator (TC_tuple lst)
 
 let simpl_projection : Raw.projection Region.reg -> _ = fun p ->
   let (p' , loc) = r_split p in
@@ -636,7 +636,7 @@ and simpl_fun_decl :
        let arguments_name = Var.of_name "arguments" in
        let%bind params = bind_map_list simpl_param lst in
        let (binder , input_type) =
-         let type_expression = T_tuple (List.map snd params) in
+         let type_expression = t_tuple (List.map snd params) in
          (arguments_name , type_expression) in
        let%bind tpl_declarations =
          let aux = fun i x ->
@@ -657,8 +657,8 @@ and simpl_fun_decl :
          let aux prec cur = cur (Some prec) in
          bind_fold_right_list aux result body in
        let expression =
-         e_lambda ~loc binder (Some (make_t @@ input_type)) (Some output_type) result in
-       let type_annotation = Some (make_t @@ T_arrow (make_t input_type, output_type)) in
+         e_lambda ~loc binder (Some input_type) (Some output_type) result in
+       let type_annotation = Some (make_t @@ T_arrow (input_type, output_type)) in
        ok ((Var.of_name fun_name.value, type_annotation), expression)
      )
   )
@@ -694,7 +694,7 @@ and simpl_fun_expression :
        let arguments_name = Var.of_name "arguments" in
        let%bind params = bind_map_list simpl_param lst in
        let (binder , input_type) =
-         let type_expression = T_tuple (List.map snd params) in
+         let type_expression = t_tuple (List.map snd params) in
          (arguments_name , type_expression) in
        let%bind tpl_declarations =
          let aux = fun i x ->
@@ -715,8 +715,8 @@ and simpl_fun_expression :
          let aux prec cur = cur (Some prec) in
          bind_fold_right_list aux result body in
        let expression =
-         e_lambda ~loc binder (Some (make_t @@ input_type)) (Some output_type) result in
-       let type_annotation = Some (make_t @@ T_arrow (make_t input_type, output_type)) in
+         e_lambda ~loc binder (Some (input_type)) (Some output_type) result in
+       let type_annotation = Some (make_t @@ T_arrow (input_type, output_type)) in
        ok (type_annotation, expression)
      )
   )
