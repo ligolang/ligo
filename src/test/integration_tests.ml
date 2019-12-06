@@ -184,6 +184,26 @@ let higher_order () : unit result =
   let%bind _ = expect_eq_n_int program "foobar3" make_expect in
   let%bind _ = expect_eq_n_int program "foobar4" make_expect in
   let%bind _ = expect_eq_n_int program "foobar5" make_expect in
+
+
+  let%bind (typed_arg,_) = Compile.Of_simplified.compile_expression
+      ~env:(Ast_typed.Environment.full_empty) ~state:(Typer.Solver.initial_state) (e_int 1) in
+  let%bind mini_c_arg = Compile.Of_typed.compile_expression typed_arg in
+  let%bind compiled_arg = Compile.Of_mini_c.compile_expression mini_c_arg in
+  let%bind arg_michelson = Ligo.Run.Of_michelson.evaluate_expression compiled_arg.expr compiled_arg.expr_ty in
+
+  let%bind michelson = Compile.Wrapper.typed_to_michelson_fun program "foobar6" in
+  let%bind _michelson_output1 = Ligo.Run.Of_michelson.run_function michelson.expr michelson.expr_ty arg_michelson false in (* foobar6(1)  = f *)
+
+  let%bind _michelson_output1 = Ligo.Run.Of_michelson.ex_value_ty_to_michelson _michelson_output1 in
+  let%bind expr_ty = Compiler.Type.Ty.type_ (T_function (Mini_c.t_int,Mini_c.t_int)) in
+  let%bind _michelson_output2 = Ligo.Run.Of_michelson.run_function _michelson_output1 expr_ty arg_michelson  false in (* f(1) = 1*)
+  
+  let%bind mini_c_un = Compiler.Uncompiler.translate_value _michelson_output2 in
+  let%bind typed_un = Transpiler.untranspile mini_c_un (Ast_typed.t_int ()) in
+  let%bind _simplified_output = Typer.untype_expression typed_un in
+  let%bind () =  Ast_simplified.Misc.assert_value_eq (_simplified_output , e_int 1) in
+
   ok ()
 
 let higher_order_mligo () : unit result =
