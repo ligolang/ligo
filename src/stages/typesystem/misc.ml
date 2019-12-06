@@ -274,7 +274,7 @@ module Substitution = struct
       let self tv = type_value ~tv ~substs in
       let (v, expr) = substs in
       match tv with
-      | P_variable v' when v' = v -> expr
+      | P_variable v' when String.equal v' v -> expr
       | P_variable _ -> tv
       | P_constant (x , lst) -> (
           let lst' = List.map self lst in
