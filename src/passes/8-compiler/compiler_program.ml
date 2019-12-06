@@ -449,54 +449,7 @@ and translate_function anon env input_ty output_ty : michelson result =
       i_apply ;
     ]
 
-
-type compiled_program = {
-  input : ex_ty ;
-  output : ex_ty ;
-  body : michelson ;
-}
-
 type compiled_expression = {
   expr_ty : ex_ty ;
   expr : michelson ;
 }
-
-let get_main : program -> string -> (anon_function * _) result = fun p entry ->
-  let is_main ((( name , expr), _):toplevel_statement) =
-    match Combinators.Expression.(get_content expr , get_type expr)with
-    | (E_closure content , T_function ty)
-      when Var.equal name (Var.of_name entry) ->
-        Some (content , ty)
-    | _ ->  None
-  in
-  let%bind main =
-    trace_option (simple_error "no functional entry") @@
-    List.find_map is_main p
-  in
-  ok main
-
-let translate_program (p:program) (entry:string) : compiled_program result =
-  let%bind (main , (input , output)) = get_main p entry in
-  let%bind body = translate_function_body main [] input in
-  let%bind input = Compiler_type.Ty.type_ input in
-  let%bind output = Compiler_type.Ty.type_ output in
-  ok ({input;output;body}:compiled_program)
-
-let translate_entry (p:anon_function) ty : compiled_program result =
-  let (input , output) = ty in
-  let%bind body =
-    trace (simple_error "compile entry body") @@
-    translate_function_body p [] input in
-  let%bind input = Compiler_type.Ty.type_ input in
-  let%bind output = Compiler_type.Ty.type_ output in
-  ok ({input;output;body}:compiled_program)
-
-let translate_contract : anon_function -> _ -> michelson result = fun f ty ->
-  let%bind compiled_program =
-    trace_strong (corner_case ~loc:__LOC__ "compiling") @@
-    translate_entry f ty in
-  let%bind (param_ty , storage_ty) = Combinators.get_t_pair (fst ty) in
-  let%bind param_michelson = Compiler_type.type_ param_ty in
-  let%bind storage_michelson = Compiler_type.type_ storage_ty in
-  let contract = Michelson.contract param_michelson storage_michelson compiled_program.body in
-  ok contract
