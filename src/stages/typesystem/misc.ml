@@ -3,7 +3,6 @@ open Core
 let pair_map = fun f (x , y) -> (f x , f y)
 
 module Substitution = struct
-
   module Pattern = struct
 
     open Trace

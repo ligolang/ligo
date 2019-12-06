@@ -38,12 +38,10 @@ module Make (Item: Partition.Item) =
 
    (* Printing *)
 
-    let print (p: partition) =
-      let buffer = Buffer.create 80 in
+    let print ppf p =
       let print src dst =
-        let link =
-          Printf.sprintf "%s -> %s\n"
-                         (Item.to_string src) (Item.to_string dst)
-        in Buffer.add_string buffer link
-      in (ItemMap.iter print p; buffer)
+        Format.fprintf ppf "%s -> %s (%s)\n"
+          (Item.to_string src) (Item.to_string dst) (Item.to_string (repr src p))
+      in ItemMap.iter print p
+
   end

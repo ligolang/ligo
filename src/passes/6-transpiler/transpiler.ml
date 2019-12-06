@@ -181,6 +181,7 @@ let rec transpile_type (t:AST.type_value) : type_value result =
         ok (T_pair ((None, a), (None, b)))
       in
       Append_tree.fold_ne transpile_type aux node
+  | T_operator (TC_arrow (param, result))
   | T_arrow (param, result) -> (
       let%bind param' = transpile_type param in
       let%bind result' = transpile_type result in
@@ -320,7 +321,7 @@ and transpile_annotated_expression (ae:AST.annotated_expression) : expression re
   | E_tuple_accessor (tpl, ind) -> (
       let%bind ty' = transpile_type tpl.type_annotation in
       let%bind ty_lst =
-        trace_strong (corner_case ~loc:__LOC__ "not a tuple") @@
+        trace_strong (corner_case ~loc:__LOC__ "transpiler: E_tuple_accessor: not a tuple") @@
         get_t_tuple tpl.type_annotation in
       let%bind ty'_lst = bind_map_list transpile_type ty_lst in
       let%bind path =
@@ -509,7 +510,7 @@ and transpile_annotated_expression (ae:AST.annotated_expression) : expression re
           match cur with
           | Access_tuple ind -> (
               let%bind ty_lst =
-                trace_strong (corner_case ~loc:__LOC__ "not a tuple") @@
+                trace_strong (corner_case ~loc:__LOC__ "transpiler: E_assign: Access_tuple: not a tuple") @@
                 AST.Combinators.get_t_tuple prev in
               let%bind ty'_lst = bind_map_list transpile_type ty_lst in
               let%bind path = tuple_access_to_lr ty' ty'_lst ind in

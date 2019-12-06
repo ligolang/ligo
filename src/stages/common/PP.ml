@@ -178,6 +178,7 @@ and type_operator : type a . (formatter -> a -> unit) -> formatter -> a type_ope
     | TC_map    (k, v) -> Format.asprintf "Map (%a,%a)" f k f v
     | TC_big_map (k, v) -> Format.asprintf "Big Map (%a,%a)" f k f v
     | TC_contract (c) -> Format.asprintf "Contract (%a)" f c
+    | TC_arrow (a , b) -> Format.asprintf "TC_Arrow (%a,%a)" f a f b
     in
   fprintf ppf "(TO_%s)" s
 

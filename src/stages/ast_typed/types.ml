@@ -41,6 +41,7 @@ and named_expression = {
 
 and ae = annotated_expression
 and type_value' = type_value type_expression'
+
 and type_value = {
   type_value' : type_value';
   simplified : S.type_expression option ; (* If we have the simplified this AST fragment comes from, it is stored here, for easier untyping. *)
@@ -77,7 +78,7 @@ and 'a expression' =
   | E_application of (('a) * ('a))
   | E_lambda of lambda
   | E_let_in of let_in
-  (* Tuple *)
+  (* Tuple, TODO: remove tuples and use records with integer keys instead *)
   | E_tuple of ('a) list
   | E_tuple_accessor of (('a) * int) (* Access n'th tuple's element *)
   (* Sum *)

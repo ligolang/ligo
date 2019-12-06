@@ -96,6 +96,7 @@ and 'a type_operator =
   | TC_set of 'a
   | TC_map of 'a * 'a
   | TC_big_map of 'a * 'a
+  | TC_arrow of 'a * 'a
 
 type type_base =
   | Base_unit 

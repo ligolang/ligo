@@ -203,7 +203,7 @@ let get_e_list = fun t ->
 let get_e_tuple = fun t ->
   match t with
   | E_tuple lst -> ok lst
-  | _ -> simple_fail "not a tuple"
+  | _ -> simple_fail "ast_simplified: get_e_tuple: not a tuple"
 
 let extract_pair : expression -> (expression * expression) result = fun e ->
   match e.expression with

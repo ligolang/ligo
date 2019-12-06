@@ -64,12 +64,13 @@ module Wrap = struct
       P_constant (csttag, [])
     | T_operator (type_operator) ->
       let (csttag, args) = Core.(match type_operator with
-          | TC_option o      -> (C_option, [o])
-          | TC_set s         -> (C_set, [s])
-          | TC_map (k,v)     -> (C_map, [k;v])
-          | TC_big_map (k,v) -> (C_big_map, [k;v])
-          | TC_list l        -> (C_list, [l])
-          | TC_contract c    -> (C_contract, [c])
+          | TC_option o            -> (C_option, [o])
+          | TC_set s               -> (C_set, [s])
+          | TC_map ( k , v )       -> (C_map, [k;v])
+          | TC_big_map ( k , v)    -> (C_big_map, [k;v])
+          | TC_list l              -> (C_list, [l])
+          | TC_contract c          -> (C_contract, [c])
+          | TC_arrow ( arg , ret ) -> (C_arrow, [ arg ; ret ])
       )
       in
       P_constant (csttag, List.map type_expression_to_type_value args)
@@ -96,12 +97,13 @@ module Wrap = struct
       P_constant (csttag,[])
     | T_operator (type_name) ->
       let (csttag, args) = Core.(match type_name with
-          | TC_option o       -> (C_option , [o])
-          | TC_list l         -> (C_list   , [l])
-          | TC_set  s         -> (C_set    , [s]) 
-          | TC_map  (k,v)     -> (C_map    , [k;v])
-          | TC_big_map  (k,v) -> (C_big_map, [k;v])
-          | TC_contract c     -> (C_contract, [c])
+          | TC_option o            -> (C_option , [o])
+          | TC_list l              -> (C_list   , [l])
+          | TC_set  s              -> (C_set    , [s])
+          | TC_map  ( k , v )      -> (C_map    , [k;v])
+          | TC_big_map  ( k , v )  -> (C_big_map, [k;v])
+          | TC_contract c          -> (C_contract, [c])
+          | TC_arrow ( arg , ret ) -> (C_arrow, [ arg ; ret ])
       )
       in
       P_constant (csttag, List.map type_expression_to_type_value_copypasted args)
@@ -475,44 +477,69 @@ module UnionFindWrapper = struct
       in
       let dbs = { dbs with grouped_by_variable } in
       dbs
-  let merge_variables : type_variable -> type_variable -> structured_dbs -> structured_dbs =
+
+  let merge_constraints : type_variable -> type_variable -> structured_dbs -> structured_dbs =
     fun variable_a variable_b dbs ->
+    (* get old representant for variable_a *)
     let variable_repr_a , aliases = UF.get_or_set variable_a dbs.aliases in
     let dbs = { dbs with aliases } in
+    (* get old representant for variable_b *)
     let variable_repr_b , aliases = UF.get_or_set variable_b dbs.aliases in
     let dbs = { dbs with aliases } in
-    let default d = function None -> d | Some y -> y in
-    let get_constraints ab =
-      TypeVariableMap.find_opt ab dbs.grouped_by_variable
-      |> default { constructor = [] ; poly = [] ; tc = [] } in
-    let constraints_a = get_constraints variable_repr_a in
-    let constraints_b = get_constraints variable_repr_b in
-    let all_constraints = {
-      constructor = constraints_a.constructor @ constraints_b.constructor ;
-      poly        = constraints_a.poly        @ constraints_b.poly        ;
-      tc          = constraints_a.tc          @ constraints_b.tc          ;
-    } in
-    let grouped_by_variable =
-      TypeVariableMap.add variable_repr_a all_constraints dbs.grouped_by_variable in
-    let dbs = { dbs with grouped_by_variable} in
-    let grouped_by_variable =
-      TypeVariableMap.remove variable_repr_b dbs.grouped_by_variable in
-    let dbs = { dbs with grouped_by_variable} in
-    dbs
+
+    (* alias variable_a and variable_b together *)
+    let aliases = UF.alias variable_a variable_b dbs.aliases in
+    let dbs = { dbs with aliases } in
+
+    (* Replace the two entries in grouped_by_variable by a single one *)
+    begin
+      let get_constraints ab =
+        match TypeVariableMap.find_opt ab dbs.grouped_by_variable with
+        | Some x -> x
+        | None -> { constructor = [] ; poly = [] ; tc = [] } in
+      let constraints_a = get_constraints variable_repr_a in
+      let constraints_b = get_constraints variable_repr_b in
+      let all_constraints = {
+          constructor = constraints_a.constructor @ constraints_b.constructor ;
+          poly        = constraints_a.poly        @ constraints_b.poly        ;
+          tc          = constraints_a.tc          @ constraints_b.tc          ;
+        } in
+      let grouped_by_variable =
+        TypeVariableMap.add variable_repr_a all_constraints dbs.grouped_by_variable in
+      let dbs = { dbs with grouped_by_variable} in
+      let grouped_by_variable =
+        TypeVariableMap.remove variable_repr_b dbs.grouped_by_variable in
+      let dbs = { dbs with grouped_by_variable} in
+      dbs
+    end
 end
 
 (* sub-sub component: constraint normalizer: remove dupes and give structure
  * right now: union-find of unification vars
  * later: better database-like organisation of knowledge *)
 
-(* Each normalizer returns a  *)
-(* If implemented in a language with decent sets, should be 'b set not 'b list. *)
+(* Each normalizer returns an updated database (after storing the
+   incoming constraint) and a list of constraints, used when the
+   normalizer rewrites the constraints e.g. into simpler ones. *)
+(* TODO: If implemented in a language with decent sets, should be 'b set not 'b list. *)
 type ('a , 'b) normalizer = structured_dbs -> 'a -> (structured_dbs * 'b list)
 
+(** Updates the dbs.all_constraints field when new constraints are
+   discovered.
+
+   This field contains a list of all the constraints, without any form of
+   grouping or sorting. *)
 let normalizer_all_constraints : (type_constraint_simpl , type_constraint_simpl) normalizer =
   fun dbs new_constraint ->
     ({ dbs with all_constraints = new_constraint :: dbs.all_constraints } , [new_constraint])
 
+(** Updates the dbs.grouped_by_variable field when new constraints are
+   discovered.
+
+    This field contains a map from type variables to lists of
+   constraints that are related to that variable (in other words, the
+   key appears in the equation).
+ *)
 let normalizer_grouped_by_variable : (type_constraint_simpl , type_constraint_simpl) normalizer =
   fun dbs new_constraint ->
   let store_constraint tvars constraints =
@@ -520,16 +547,18 @@ let normalizer_grouped_by_variable : (type_constraint_simpl , type_constraint_si
       UnionFindWrapper.add_constraints_related_to tvar constraints dbs
     in List.fold_left aux dbs tvars
   in
-  let merge_constraints a b =
-    UnionFindWrapper.merge_variables a b dbs in
   let dbs = match new_constraint with
       SC_Constructor ({tv ; c_tag = _ ; tv_list} as c) -> store_constraint (tv :: tv_list) {constructor = [c] ; poly = []  ; tc = []}
     | SC_Typeclass   ({tc = _ ; args}            as c) -> store_constraint args            {constructor = []  ; poly = []  ; tc = [c]}
     | SC_Poly        ({tv; forall = _}           as c) -> store_constraint [tv]            {constructor = []  ; poly = [c] ; tc = []}
-    | SC_Alias (a , b) -> merge_constraints a b
+    | SC_Alias (a , b) -> UnionFindWrapper.merge_constraints a b dbs
   in (dbs , [new_constraint])
 
-(* Stores the first assinment ('a = ctor('b, …)) seen *)
+(** Stores the first assinment ('a = ctor('b, …)) that is encountered.
+
+    Subsequent ('a = ctor('b2, …)) with the same 'a are ignored.
+
+    TOOD: are we checking somewhere that 'b … = 'b2 … ? *)
 let normalizer_assignments : (type_constraint_simpl , type_constraint_simpl) normalizer =
   fun dbs new_constraint ->
     match new_constraint with
@@ -540,9 +569,14 @@ let normalizer_assignments : (type_constraint_simpl , type_constraint_simpl) nor
     | _ ->
       (dbs , [new_constraint])
 
+(** Evaluates a type-leval application. For now, only supports
+    immediate beta-reduction at the root of the type. *)
 let type_level_eval : type_value -> type_value * type_constraint list =
   fun tv -> Typesystem.Misc.Substitution.Pattern.eval_beta_root ~tv
 
+(** Checks that a type-level application has been fully reduced. For
+    now, only some simple cases like applications of `forall`
+    <polymorphic types are allowed. *)
 let check_applied ((reduced, _new_constraints) as x) =
   let () = match reduced with
       P_apply _ -> failwith "internal error: shouldn't happen" (* failwith "could not reduce type-level application. Arbitrary type-level applications are not supported for now." *)
@@ -552,6 +586,14 @@ let check_applied ((reduced, _new_constraints) as x) =
 (* TODO: at some point there may be uses of named type aliases (type
    foo = int; let x : foo = 42). These should be inlined. *)
 
+(** This function converts constraints from type_constraint to
+    type_constraint_simpl. The former has more possible cases, and the
+    latter uses a more minimalistic constraint language.
+
+    It does not modify the dbs, and only rewrites the constraint
+
+    TODO: update the code to show that the dbs are always copied as-is
+ *)
 let rec normalizer_simpl : (type_constraint , type_constraint_simpl) normalizer =
   fun dbs new_constraint ->
   let insert_fresh a b =

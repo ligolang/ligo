@@ -7,7 +7,8 @@ let map_type_operator f = function
   | TC_list x -> TC_list (f x)
   | TC_set x -> TC_set (f x)
   | TC_map (x , y) -> TC_map (f x , f y)
-  | TC_big_map (x , y)-> TC_big_map (f x , f y)
+  | TC_big_map (x , y) -> TC_big_map (f x , f y)
+  | TC_arrow (x , y) -> TC_arrow (f x , f y)
 
 let bind_map_type_operator f = function
     TC_contract x -> let%bind x = f x in ok @@ TC_contract x
@@ -15,7 +16,8 @@ let bind_map_type_operator f = function
   | TC_list x -> let%bind x = f x in ok @@ TC_list x
   | TC_set x -> let%bind x = f x in ok @@ TC_set x
   | TC_map (x , y) -> let%bind x = f x in let%bind y = f y in ok @@ TC_map (x , y)
-  | TC_big_map (x , y)-> let%bind x = f x in let%bind y = f y in ok @@ TC_big_map (x , y)
+  | TC_big_map (x , y) -> let%bind x = f x in let%bind y = f y in ok @@ TC_big_map (x , y)
+  | TC_arrow (x , y) -> let%bind x = f x in let%bind y = f y in ok @@ TC_arrow (x , y)
 
 let type_operator_name = function
       TC_contract _ -> "TC_contract"
@@ -24,6 +26,7 @@ let type_operator_name = function
     | TC_set      _ -> "TC_set"
     | TC_map      _ -> "TC_map"
     | TC_big_map  _ -> "TC_big_map"
+    | TC_arrow    _ -> "TC_arrow"
 
 let type_expression'_of_string = function
   | "TC_contract" , [x]     -> ok @@ T_operator(TC_contract x)
@@ -61,6 +64,7 @@ let string_of_type_operator = function
   | TC_set       x       -> "TC_set"      , [x]
   | TC_map       (x , y) -> "TC_map"      , [x ; y]
   | TC_big_map   (x , y) -> "TC_big_map"  , [x ; y]
+  | TC_arrow     (x , y) -> "TC_arrow"    , [x ; y]
 
 let string_of_type_constant = function
   | TC_unit      -> "TC_unit", []

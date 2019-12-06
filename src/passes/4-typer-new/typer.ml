@@ -382,6 +382,10 @@ and evaluate_type (e:environment) (t:I.type_expression) : O.type_value result =
         | TC_contract c ->
             let%bind c = evaluate_type e c in
             ok @@ O.TC_contract c
+        | TC_arrow ( arg , ret ) ->
+           let%bind arg' = evaluate_type e arg in
+           let%bind ret' = evaluate_type e ret in
+           ok @@ O.TC_arrow ( arg' , ret' )
         in
       return (T_operator (opt))
 
@@ -469,7 +473,7 @@ and type_expression : environment -> Solver.state -> ?tv_opt:O.type_value -> I.e
       return_wrapped (e_operation o) state @@ Wrap.literal (t_operation ())
     )
   | E_literal (Literal_unit) -> (
-      return_wrapped (e_unit) state @@ Wrap.literal (t_unit ())
+      return_wrapped (e_unit ()) state @@ Wrap.literal (t_unit ())
     )
   | E_skip -> (
       failwith "TODO: missing implementation for E_skip"
@@ -954,34 +958,6 @@ let type_program_returns_state (p:I.program) : (environment * Solver.state * O.p
   let () = ignore (env' , state') in
   ok (env', state', declarations)
 
-(* module TSMap = TMap(Solver.TypeVariable) *)
-
-(* let c_tag_to_string : Solver.Core.constant_tag -> string = function
- *   | Solver.Core.C_arrow     -> "arrow"
- *   | Solver.Core.C_option    -> "option"
- *   | Solver.Core.C_tuple     -> "tuple"
- *   | Solver.Core.C_record    -> failwith "record"
- *   | Solver.Core.C_variant   -> failwith "variant"
- *   | Solver.Core.C_map       -> "map"
- *   | Solver.Core.C_big_map   -> "big"
- *   | Solver.Core.C_list      -> "list"
- *   | Solver.Core.C_set       -> "set"
- *   | Solver.Core.C_unit      -> "unit"
- *   | Solver.Core.C_bool      -> "bool"
- *   | Solver.Core.C_string    -> "string"
- *   | Solver.Core.C_nat       -> "nat"
- *   | Solver.Core.C_mutez     -> "mutez"
- *   | Solver.Core.C_timestamp -> "timestamp"
- *   | Solver.Core.C_int       -> "int"
- *   | Solver.Core.C_address   -> "address"
- *   | Solver.Core.C_bytes     -> "bytes"
- *   | Solver.Core.C_key_hash  -> "key_hash"
- *   | Solver.Core.C_key       -> "key"
- *   | Solver.Core.C_signature -> "signature"
- *   | Solver.Core.C_operation -> "operation"
- *   | Solver.Core.C_contract  -> "contract"
- *   | Solver.Core.C_chain_id  -> "chain_id" *)
-
 let type_program (p : I.program) : (O.program * Solver.state) result =
   let%bind (env, state, program) = type_program_returns_state p in
   let subst_all =
@@ -1064,6 +1040,10 @@ let rec untype_type_expression (t:O.type_value) : (I.type_expression) result =
       | O.TC_contract c->
          let%bind c = untype_type_expression c in
          ok @@ I.TC_contract c
+      | O.TC_arrow ( arg , ret ) ->
+         let%bind arg' = untype_type_expression arg in
+         let%bind ret' = untype_type_expression ret in
+         ok @@ I.TC_arrow ( arg' , ret' )
       in
       ok @@ I.T_operator (type_name)
     in

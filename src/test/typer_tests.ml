@@ -37,7 +37,7 @@ module TestExpressions = struct
   module E = O
 
   let unit   () : unit result = test_expression I.(e_unit ())    O.(t_unit ())
-  let int    () : unit result = test_expression I.(e_int 32)  O.(t_int ())
+  let int    () : unit result = test_expression I.(e_int 32)     O.(t_int ())
   let bool   () : unit result = test_expression I.(e_bool true)  O.(t_bool ())
   let string () : unit result = test_expression I.(e_string "s") O.(t_string ())
   let bytes  () : unit result =

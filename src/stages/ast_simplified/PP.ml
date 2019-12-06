@@ -18,7 +18,7 @@ and type_expression ppf (te: type_expression) : unit =
   te' ppf te.type_expression'
 
 let rec expression ppf (e:expression) = match e.expression with
-  | E_literal l -> literal ppf l
+  | E_literal l -> fprintf ppf "%a" literal l
   | E_variable n -> fprintf ppf "%a" name n
   | E_application (f, arg) -> fprintf ppf "(%a)@(%a)" expression f expression arg
   | E_constructor (c, ae) -> fprintf ppf "%a(%a)" constructor c expression ae

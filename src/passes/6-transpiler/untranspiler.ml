@@ -196,6 +196,12 @@ let rec untranspile (v : value) (t : AST.type_value) : AST.annotated_expression 
       )
     | TC_contract _ ->
       fail @@ bad_untranspile "contract" v
+    | TC_arrow _ -> (
+        let%bind n =
+          trace_strong (wrong_mini_c_value "lambda as string" v) @@
+          get_string v in
+        return (E_literal (Literal_string n))
+      )
   )
   | T_sum m ->
       let lst = kv_list_of_cmap m in

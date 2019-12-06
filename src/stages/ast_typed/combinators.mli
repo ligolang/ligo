@@ -113,7 +113,7 @@ val ez_e_record : ( string * annotated_expression ) list -> expression
 val e_some : value -> expression
 val e_none : expression
 val e_map : ( value * value ) list -> expression
-val e_unit : expression
+val e_unit : unit -> expression
 val e_int : int -> expression
 val e_nat : int -> expression
 val e_mutez : int -> expression
