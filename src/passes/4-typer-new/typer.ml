@@ -941,9 +941,7 @@ let untype_type_value (t:O.type_value) : (I.type_expression) result =
 (*
 Apply type_declaration on all the node of the AST_simplified from the root p
 *)
-let type_program_returns_state (p:I.program) : (environment * Solver.state * O.program) result =
-  let env = Ast_typed.Environment.full_empty in
-  let state = Solver.initial_state in
+let type_program_returns_state ((env, state, p) : environment * Solver.state * I.program) : (environment * Solver.state * O.program) result =
   let aux ((e : environment), (s : Solver.state) , (ds : O.declaration Location.wrap list)) (d:I.declaration Location.wrap) =
     let%bind (e' , s' , d'_opt) = type_declaration e s (Location.unwrap d) in
     let ds' = match d'_opt with
@@ -958,8 +956,8 @@ let type_program_returns_state (p:I.program) : (environment * Solver.state * O.p
   let () = ignore (env' , state') in
   ok (env', state', declarations)
 
-let type_program (p : I.program) : (O.program * Solver.state) result =
-  let%bind (env, state, program) = type_program_returns_state p in
+let type_and_subst_xyz (env_state_node : environment * Solver.state * 'a) (apply_substs : 'b Typesystem.Misc.Substitution.Pattern.w) (type_xyz_returns_state : (environment * Solver.state * 'a) -> (environment * Solver.state * 'b) Trace.result) : ('b * Solver.state) result =
+  let%bind (env, state, program) = type_xyz_returns_state env_state_node in
   let subst_all =
     let aliases = state.structured_dbs.aliases in
     let assignments = state.structured_dbs.assignments in
@@ -977,11 +975,25 @@ let type_program (p : I.program) : (O.program * Solver.state) result =
       let%bind (expr : O.type_value') = Typesystem.Core.type_expression'_of_simple_c_constant (c_tag , (List.map (fun s -> O.{ type_value' = T_variable s ; simplified = None }) tv_list)) in
       ok @@ expr
     in
-    let p = Typesystem.Misc.Substitution.Pattern.s_program ~substs program in
+    let p = apply_substs ~substs program in
     p in
   let%bind program = subst_all in
   let () = ignore env in        (* TODO: shouldn't we use the `env` somewhere? *)
   ok (program, state)
+
+let type_program (p : I.program) : (O.program * Solver.state) result =
+  let empty_env = Ast_typed.Environment.full_empty in
+  let empty_state = Solver.initial_state in
+  type_and_subst_xyz (empty_env , empty_state , p) Typesystem.Misc.Substitution.Pattern.s_program type_program_returns_state
+
+let type_expression_returns_state : (environment * Solver.state * I.expression) -> (environment * Solver.state * O.annotated_expression) Trace.result =
+  fun (env, state, e) ->
+  let%bind (e , state) = type_expression env state e in
+  ok (env, state, e)
+
+let type_expression_subst (env : environment) (state : Solver.state) ?(tv_opt : O.type_value option) (e : I.expression) : (O.annotated_expression * Solver.state) result =
+  let () = ignore tv_opt in     (* For compatibility with the old typer's API, this argument can be removed once the new typer is used. *)
+  type_and_subst_xyz (env , state , e) Typesystem.Misc.Substitution.Pattern.s_annotated_expression type_expression_returns_state
 
  (*
 TODO: Similar to type_program but use a fold_map_list and List.fold_left and add element to the left or the list which gives a better complexity
