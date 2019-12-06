@@ -476,7 +476,8 @@ and type_expression : environment -> Solver.state -> ?tv_opt:O.type_value -> I.e
       return_wrapped (e_unit ()) state @@ Wrap.literal (t_unit ())
     )
   | E_skip -> (
-      failwith "TODO: missing implementation for E_skip"
+    (* E_skip just returns unit *)
+    return_wrapped (e_unit ()) state @@ Wrap.literal (t_unit ())
     )
   (* | E_literal (Literal_string s) -> (
    *     L.log (Format.asprintf "literal_string option type: %a" PP_helpers.(option O.PP.type_expression) tv_opt) ;
