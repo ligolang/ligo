@@ -1,355 +1,360 @@
 (** Trace tutorial
 
-    The module below guides the reader through the writing of a
-    simplified version of the trace monad (`result`), and the
-    definition of a few operations that make it easier to work with
-    `result`.
+    This module guides the reader through the writing of a simplified
+    version of the trace monad [result], and the definition of a few
+    operations that make it easier to work with [result].
 *)
 
 module Trace_tutorial = struct
-(** The trace monad is fairly similar to the option type: *)
+  (** The trace monad is fairly similar to the predefined option
+      type. *)
 
-type 'a option =
-    Some of 'a  (* Ok also stores a list of annotations *)
-  | None;;      (* Errors also stores a list of messages *)
+  type annotation = string
+  type      error = string
 
-type annotation = string;;
-type      error = string;;
-type 'a result =
+  (** The type ['a result] is used by the trace monad to both model an
+      expected value of type ['a] or the failure to obtain it, instead
+      of working directly with ['a] values and handling separately
+      errors, for example by means of exceptions. (See the type [('a,'b)
+      result] in the module [Pervasives] of the OCaml system for a
+      comparable approach to error handling.)
+
+      The type ['a result] carries either a value of type ['a], with a
+      list of annotations (information about past successful
+      computations), or it is a list of errors accumulated so far.
+      The former case is denoted by the data constructor [Ok], and the
+      second by [Errors].
+   *)
+  type 'a result =
     Ok of 'a * annotation list
-  | Errors of error list;;
+  | Errors of error list
 
-(** When applying a partial function on a result, it can return a valid result
-    (Some v), or indicate failure (None). *)
+  (** The function [divide_trace] shows the basic use of the trace
+      monad.
+   *)
+  let divide_trace a b =
+    if   b = 0
+    then Errors [Printf.sprintf "division by zero: %d/%d" a b]
+    else Ok (a/b, [])
 
-let divide a b =
-  if b = 0
-  then None
-  else Some (a/b);;
+  (** The function [divide_three] shows that when composing two
+      functions, if the first call fails, the error is passed along
+      and the second call is not evaluated. (A pattern called
+      "error-passing style").
+   *)
+  let divide_three a b c =
+    match divide_trace a b with
+      Ok (a_div_b , _) -> divide_trace a_div_b c
+    |          errors  -> errors
 
-(** With the trace monad, the Errors case also indicates some information about
-    the failure, to ease debugging. *)
+  (** The function [divide_three_annot] shows that when composing two
+      functions, if both calls are successful, the lists of
+      annotations are joined.
+   *)
+  let divide_three_annot a b c =
+    match divide_trace a b with
+      Ok (a_div_b, annot1) -> (
+        match divide_trace a_div_b c with
+           Ok (a_div_b_div_c, annot2) ->
+             Ok (a_div_b_div_c, annot2 @ annot1)
+        | errors -> errors)
+    | errors -> errors
 
-let divide_trace a b =
-  if b = 0
-  then (Errors [Printf.sprintf "division by zero: %d / %d" a b])
-  else Ok ((a/b) , []);;
+  (** The systematic matching of the result of each call in a function
+      composition is bulky, so we define a [bind] function which takes
+      a function [f: 'a -> 'b result] and applies it to a current ['a
+      result] (not ['a]).
+      {ul
+        {li If the current result is an error, then [bind]
+        returns that same error without calling [f];}
 
-(** when composing two functions, the error case is propagated. *)
+        {li otherwise [bind] unwraps the [Ok] of the current result
+        and calls [f] on it:
+          {ul
+            {li That call itself may return an error;}
+            {li if not, [bind] combines the annotations and returns the last
+       result.}}}}
+   *)
+  let bind (f: 'a -> 'b result) : 'a result -> 'b result =
+    function
+      Ok (x, annot) -> (
+        match f x with
+          Ok (x', annot') -> Ok (x', annot' @ annot)
+        |          errors -> ignore annot; errors)
+    | Errors _ as e -> e
 
-let divide_three a b c =
-  let maybe_a_div_b = divide_trace a b in
-  match maybe_a_div_b with
-     Ok (a_div_b , _) -> divide_trace a_div_b c
-   | (Errors _) as e -> e;;
+  (** The function [divide_three_bind] is equivalent to the verbose
+      [divide_three] above, but makes use of [bind].
+   *)
+  let divide_three_bind a b c =
+    let maybe_a_div_b = divide_trace a b in
+    let continuation a_div_b = divide_trace a_div_b c
+    in bind continuation maybe_a_div_b
 
-(** If both calls are successful, the lists of annotations are concatenated. *)
+  (** The operator [(>>?)] is a redefinition of [bind] that makes the
+      program shorter, at the cost of a slightly
+      awkward reading because the two parameters are swapped.
+   *)
+  let (>>?) x f = bind f x
 
-let divide_three_annots a b c =
-  let maybe_a_div_b = divide_trace a b in
-  match maybe_a_div_b with
-     Ok (a_div_b , annots1) ->
-       let maybe_a_div_b_div_c = divide_trace a_div_b c in
-       begin
-         match maybe_a_div_b_div_c with
-           Ok (a_div_b_div_c , annots2)
-           -> Ok (a_div_b_div_c , annots2 @ annots1)
-         | (Errors _) as e2 -> e2
-       end
-   | (Errors _) as e1 -> e1;;
+  (** The function [divide_three_bind_symbol] is equivalent to
+      [divide_three_bind], but makes use of the operator [(>>?)].
+   *)
+  let divide_three_bind_symbol a b c =
+    let maybe_a_div_b = divide_trace a b in
+    let continuation a_div_b = divide_trace a_div_b c in
+    maybe_a_div_b >>? continuation
 
-(** This incurs quite a lot of noise, so we define a `bind` operator which
-    takes a function ('x -> ('y result)) and applies it to an existing
-    ('x result).
+  (** The function [divide_three_bind_symbol'] is equivalent to
+      [divide_three_bind_symbol], where the two temporary [let]
+      definitions are inlined for a more compact reading.
+   *)
+  let divide_three_bind_symbol' a b c =
+    divide_trace a b >>? (fun a_div_b -> divide_trace a_div_b c)
 
-   * If the existing result is Errors, `bind` returns that error without
-     calling the function
-   * Otherwise `bind` unwraps the Ok and calls the function
-     * That function may itself return an error
-     * Otherwise `bind` combines the annotations and returns the second
-       result. *)
+  (** This is now fairly legible, but chaining many such functions is
+      not the usual way of writing code. We use the PPX extension to
+      the OCaml compiler [ppx_let] to add some syntactic sugar.
+      The extension framework PPX is enabled by adding the following
+      lines inside the section [(library ...)] or [(executable ...)]
+      of the [dune] file for the project that uses [ppx_let], like so:
+      [(preprocess
+         (pps simple-utils.ppx_let_generalized))]
+      The extension [ppx_let] requires the module [Let_syntax] to be
+      defined.
+   *)
+  module Let_syntax = struct
+    let bind m ~f = m >>? f
+    module Open_on_rhs_bind = struct end
+  end
 
-let bind f = function
-  | Ok (x, annotations) ->
-      (match f x with
-         Ok (x', annotations') -> Ok (x', annotations' @ annotations)
-       | Errors _ as e' -> ignore annotations; e')
-  | Errors _ as e -> e;;
+  (** The function [divide_three_bind_ppx_let] is equivalent to the
+      function [divide_three_bind_symbol']. The only difference is
+      that the module [Open_on_rhs_bind] is implicitly opened around
+      the expression on the righ-hand side of the [=] sign, namely
+      [divide_trace a b].
+   *)
+  let divide_three_bind_ppx_let a b c =
+    let%bind a_div_b = divide_trace a b
+    in divide_trace a_div_b c
 
-(** The following function divide_three_bind is equivalent to the verbose
-   divide_three. *)
+  (** The function [divide_many_bind_ppx_let] shows how well this
+      notation composes.
+   *)
+  let divide_many_bind_ppx_let a b c d e f  =
+    let      x = a                in
+    let%bind x = divide_trace x b in
+    let%bind x = divide_trace x c in
+    let%bind x = divide_trace x d in
+    let%bind x = divide_trace x e in
+    let%bind x = divide_trace x f
+    in Ok (x, [])
 
-let divide_three_bind a b c =
-  let maybe_a_div_b = divide_trace a b in
-  let continuation a_div_b = divide_trace a_div_b c in
-  bind continuation maybe_a_div_b;;
+  (** The function [ok] is a shorthand for an [Ok] without
+      annotations.
+   *)
+  let ok x = Ok (x, [])
 
-(** This made the code shorter, but the reading order is a bit awkward.
-    We define an operator symbol for `bind`: *)
+  (** The function [map] lifts a regular ['a -> 'b] function on values to
+      a function on results, of type ['a result -> 'b result].
+   *)
+  let map f = function
+    Ok (x, annotations) -> Ok (f x, annotations)
+  | e -> e
 
-let (>>?) x f = bind f x;;
+  (** The function [bind_list] turns a list of results of type [('a
+      result) list] into a result of list, of type [('a list) result],
+      as follows.
+      {ul
+        {li If the list only contains [Ok] values, it strips the [Ok]
+         of each element and returns that list wrapped with [Ok].}
+        {li Otherwise, one or more of the elements of the input list
+         is [Errors], then [bind_list] returns the first error in the
+         list.}}
+   *)
+  let rec bind_list = function
+    [] -> ok []
+  | hd::tl ->
+     hd >>? fun hd ->
+     bind_list tl >>? fun tl ->
+     ok @@ hd::tl
+  (** A major feature of [Trace] is that it enables having a stack of
+      errors (that should act as a simplified stack frame), rather
+      than a unique error. It is done by using the function
+      [trace]. For instance, let's say that you have a function that
+      can trigger two errors, and you want to pass their data along
+      with an other error, what you would usually do is:
+      [let foobarer ... = ... in
+        let value =
+          try get key map with
+            Bad_key _ -> raise (Error ("bad key", key, map))
+          | Missing_value _ -> raise (Error ("missing index", key, map))
+        in ...]
+      With [Trace], you would instead:
+      [let foobarer ... = ... in
+        let%bind value =
+          trace (simple_error "error getting key") @@
+          get key map
+        in ...]
+        And this will pass along the error triggered by [get key map].
+   *)
+  let trace err = function
+    Errors e -> Errors (err::e)
+  | ok -> ok
 
-let divide_three_bind_symbol a b c =
-  let maybe_a_div_b = divide_trace a b in
-  let continuation a_div_b = divide_trace a_div_b c in
-  maybe_a_div_b >>? continuation;;
-
-(** and we inline the two temporary let definitions: *)
-
-let divide_three_bind_symbol' a b c =
-  divide_trace a b >>? (fun a_div_b -> divide_trace a_div_b c);;
-
-(** This is now fairly legible, but chaining many such functions is
-    not the usual way of writing code. We use ppx_let to add some
-    syntactic sugar.
-
-    The ppx is enabled by adding the following lines inside the
-    section (library …) or (executable …) of the dune file for
-    the project that uses ppx_let.
-
-    (preprocess
-      (pps simple-utils.ppx_let_generalized))
-*)
-
-module Let_syntax = struct
-  let bind m ~f = m >>? f
-  module Open_on_rhs_bind = struct end
-end;;
-
-(** divide_three_bind_ppx_let is equivalent to divide_three_bind_symbol'.
-
-    Strictly speaking, the only difference is that the module
-    Open_on_rhs_bind is opened around the expression on the righ-hand side
-    of the `=` sign, namely `divide_trace a b` *)
-
-let divide_three_bind_ppx_let a b c =
-  let%bind a_div_b = divide_trace a b in
-  divide_trace a_div_b c;;
-
-(** This notation scales fairly well: *)
-
-let divide_many_bind_ppx_let a b c d e f  =
-  let      x = a                in
-  let%bind x = divide_trace x b in
-  let%bind x = divide_trace x c in
-  let%bind x = divide_trace x d in
-  let%bind x = divide_trace x e in
-  let%bind x = divide_trace x f in
-  Ok (x , []);;
-
-(** We define a couple of shorthands for common use cases.
-
-    `ok` lifts a ('foo) value to a ('foo result): *)
-
-let ok x = Ok (x, []);;
-
-(** `map` lifts a regular ('foo -> 'bar) function on values
-    to a function on results, with type ('foo result -> 'bar result): *)
-
-let map f = function
-  | Ok (x, annotations) -> Ok (f x, annotations)
-  | Errors _ as e -> e;;
-
-(** `bind_list` turns a (('foo result) list) into a (('foo list) result).
-
-    If the list only contains Ok values, it strips the Ok returns that list
-    wrapped with Ok.
-
-    Otherwise, when one or more of the elements of the original list is
-    Errors, `bind_list` returns the first error in the list. *)
-
-let rec bind_list = function
-  | [] -> ok []
-  | hd :: tl -> (
-      hd >>? fun hd ->
-      bind_list tl >>? fun tl ->
-      ok @@ hd :: tl
-    );;
-
-(**
-   A major feature of Trace is that it enables having a stack of errors (that
-   should act as a simplified stack frame), rather than a unique error.
-   It is done by using the function `trace`.
-   For instance, let's say that you have a function that can trigger two errors,
-   and you want to pass their data along with an other error, what you would
-   usually do is:
-   ```
-   let foobarer ... =
-     ... in
-     let value =
-       try ( get key map )
-       with
-       | Bad_key _ -> raise (Foobar_error ("bad key" , key , map))
-       | Missing_value _ -> raise (Foobar_error ("missing index" , key , map))
-     in ...
-   ```
-   With Trace, you would instead:
-   ```
-   let foobarer ... =
-     ... in
-     let%bind value =
-       trace (simple_error "error getting key") @@
-       get key map
-     in ...
-   ```
-   And this will pass along the error triggered by "get key map".
-*)
-
-let trace err = function
-  | Ok _ as o -> o
-  | Errors errs -> Errors (err :: errs);;
-
-(** The real trace monad is very similar to the one that we have
-    defined above. The main difference is that the errors and
-    annotations are structured data (instead of plain strings) and are
-    lazily-generated. *)
-
-let the_end = "End of the tutorial.";;
+  (** The real trace monad is very similar to the one that we have
+      defined above. The main difference is that the errors and
+      annotations are structured data (instead of plain strings) and
+      are generated lazily.
+   *)
+  let the_end = "End of the tutorial."
 
 end (* end Trace_tutorial. *)
 
 module J = Yojson.Basic
 
 module JSON_string_utils = struct
-  let member = fun n x ->
+  let member n x =
     match x with
-    | `Null -> `Null
+      `Null -> `Null
     | x -> J.Util.member n x
+
   let string = J.Util.to_string_option
+
   let to_list_option = fun x ->
-    try ( Some (J.Util.to_list x))
-    with _ -> None
+    try Some (J.Util.to_list x) with _ -> None
+
   let to_assoc_option = fun x ->
-    try ( Some (J.Util.to_assoc x))
-    with _ -> None
+    try Some (J.Util.to_assoc x) with _ -> None
+
   let list = to_list_option
+
   let assoc = to_assoc_option
+
   let int = J.Util.to_int_option
 
   let patch j k v =
     match assoc j with
-    | None -> j
+      None -> j
     | Some assoc -> `Assoc (
-        List.map (fun (k' , v') -> (k' , if k = k' then v else v')) assoc
+        List.map (fun (k', v') -> (k', if k = k' then v else v')) assoc
       )
-  
+
   let swap f l r = f r l
 
   let unit x = Some x
+
   let bind f = function None -> None | Some x -> Some (f x)
-  let bind2 f = fun l r -> match l, r with
+
+  let bind2 f l r =
+    match l, r with
       None,   None   -> None
     | None,   Some _ -> None
     | Some _, None   -> None
     | Some l, Some r -> Some (f l r)
 
   let default d = function
-      Some x -> x
-    | None -> d
+    Some x -> x
+  | None -> d
 
   let string_of_int = bind string_of_int
 
   let (||) l r = l |> default r
+
   let (|^) = bind2 (^)
+
 end
 
 type 'a thunk = unit -> 'a
 
-(**
-   Errors are encoded in JSON. This is because different libraries will
-   implement their own helpers, and we don't want to hardcode in their type how
-   they are supposed to interact.
-*)
+(** Errors are encoded in JSON. This is because different libraries
+    will implement their own helpers, and we do not want to hardcode
+    in their type how they are supposed to interact.
+ *)
 type error = J.t
 
-(**
-   Thunks are used because computing some errors can be costly, and we don't
-   to spend most of our time building errors. Instead, their computation is
-   deferred.
-*)
+(** Thunks are used because computing some errors can be costly, and
+    we do not want to spend most of our time building errors. Instead,
+    their computation is deferred.
+ *)
 type error_thunk = error thunk
 
-(**
-   Annotations should be used in debug mode to aggregate information about some
-   value history. Where it was produced, when it was modified, etc.
-   It's currently not being used.
-*)
+(** Annotations should be used in debug mode to aggregate information
+    about some value history. Where it was produced, when it was
+    modified, etc.  It is currently not being used.  *)
 type annotation = J.t
 
-(**
-   Even in debug mode, building annotations can be quite resource-intensive.
-   Instead, a thunk is passed, that is computed only when debug information is
-   queried (typically before a print).
-*)
+(** Even in debug mode, building annotations can be quite
+   resource-intensive.  Instead, a thunk is passed, that is computed
+   only when debug information is queried (typically before a print).
+ *)
 type annotation_thunk = annotation thunk
 
-(**
-   Types of traced elements. It might be good to rename it `trace` at some
-   point.
-*)
+(** Types of traced elements. It might be good to rename it [trace] at
+    some point.
+ *)
 type 'a result =
-  | Ok of 'a * annotation_thunk list
-  | Error of error_thunk
+  Ok    of 'a * annotation_thunk list
+| Error of error_thunk
 
 
-(**
-   Constructors
-*)
+(** {1 Constructors} *)
+
 let ok x = Ok (x, [])
+
 let fail err = Error err
 
-(**
-   Monadic operators
-*)
+(** {1 Monadic operators} *)
+
 let bind f = function
-  | Ok (x, annotations) ->
-      (match f x with
-         Ok (x', annotations') -> Ok (x', annotations' @ annotations)
-       | Error _ as e' -> ignore annotations; e')
-  | Error _ as e -> e
+  Ok (x, ann) -> (
+    match f x with
+      Ok (x', ann') -> Ok (x', ann' @ ann)
+    | Error _ as e' -> ignore ann; e')
+| Error _ as e -> e
 
 let map f = function
-  | Ok (x, annotations) -> Ok (f x, annotations)
-  | Error _ as e -> e
+  Ok (x, annotations) -> Ok (f x, annotations)
+| Error _ as e -> e
 
-(**
-   Usual bind-syntax is `>>=`, but this is taken from the Tezos code base. Where
-   the `result` bind is `>>?`, Lwt's (threading library) is `>>=`, and the
-   combination of both is `>>=?`.
-*)
-let (>>?) x f = bind f x
+(** The lexical convention usually adopted for the bind function is
+   [>>=], but ours comes from the Tezos code base, where the [result]
+   bind is [>>?], and [Lwt]'s (threading library) is [>>=], and the
+   combination of both is [>>=?].
+ *)
+let (>>?)  x f = bind f x
 let (>>|?) x f = map f x
 
 (**
    Used by PPX_let, an OCaml preprocessor.
    What it does is that, when you only care about the case where a result isn't
    an error, instead of writing:
-   ```
+   [
    (* Stuff that might return an error *) >>? fun ok_value ->
    (* Stuff being done on the result *)
-   ```
+   ]
    You can write:
-   ```
+   [
    let%bind ok_value = (* Stuff that might return an error *) in
    (* Stuff being done on the result *)
-   ```
-   This is much more typical of OCaml. makes the code more readable, easy to
-   write and refactor. It is used pervasively in LIGO.
-*)
+   ]
+   This is much more typical of OCaml. This makes the code more
+   readable, easy to write and refactor. It is used pervasively in
+   LIGO.
+ *)
 module Let_syntax = struct
   let bind m ~f = m >>? f
   module Open_on_rhs_bind = struct end
 end
 
 
-(**
-   Build a thunk from a constant.
-*)
+(** Build a thunk from a constant.
+  *)
 let thunk x () = x
 
-(**
-   Build a standard error, with a title, a message, an error code and some data.
-*)
+(** Build a standard error, with a title, a message, an error code and
+    some data.
+ *)
 let mk_error
     ?(error_code : int thunk option) ?(message : string thunk option)
     ?(data : (string * string thunk) list option)
@@ -407,48 +412,42 @@ let prepend_info = fun info err ->
   patch err "infos" (`List infos)
 
 
-(**
-   Helpers that ideally shouldn't be used in production.
+(** Helpers that ideally should not be used in production.
 *)
 let simple_error str () = mk_error ~title:(thunk str) ()
 let simple_info str () = mk_info ~title:(thunk str) ()
 let simple_fail str = fail @@ simple_error str
 let internal_assertion_failure str = simple_error ("assertion failed: " ^ str)
 
-(**
-   To be used when you only want to signal an error. It can be useful when
-   followed by `trace_strong`.
-*)
+(** To be used when you only want to signal an error. It can be useful
+    when followed by [trace_strong].
+ *)
 let dummy_fail = simple_fail "dummy"
 
 let trace info = function
-  | Ok _ as o -> o
-  | Error err -> Error (fun () -> prepend_info (info ()) (err ()))
+  Ok _ as o -> o
+| Error err -> Error (fun () -> prepend_info (info ()) (err ()))
 
-(**
-   Erase the current error stack, and replace it by the given error. It's useful
-   when using `Assert` and you want to discard its auto-generated message.
-*)
+(** Erase the current error stack, and replace it by the given
+   error. It's useful when using [Assert] and you want to discard its
+   autogenerated message.
+ *)
 let trace_strong err = function
-  | Ok _ as o -> o
-  | Error _ -> Error err
+  Ok _ as o -> o
+| Error _ -> Error err
 
 (**
    Sometimes, when you have a list of potentially erroneous elements, you need
    to retrieve all the errors, instead of just the first one. In that case, do:
-   ```
-   let type_list lst =
+   [let type_list lst =
      let%bind lst' =
        trace_list (simple_error "Error while typing a list") @@
        List.map type_element lst in
-     ...
-   ```
+     ...]
    Where before you would have written:
-   ```
-   let type_list lst =
+   [let type_list lst =
      let%bind lst' = bind_map_list type_element lst in
-     ...
-   ```
+     ...]
 *)
 let trace_list err lst =
   let oks =
@@ -520,18 +519,16 @@ let trace_option error = function
   | None -> fail error
   | Some s -> ok s
 
-(**
-   Utilities to interact with other data-structure.
-   `bind_t` takes an `'a result t` and makes a `'a t result` out of it. It
-   "lifts" the error out of the type.
-   The most common context is when mapping a given type. For instance, if you
-   use a function that can fail in `List.map`, you need to manage a whole list
-   of results. Instead, you do `let%bind lst' = bind_list @@ List.map f lst`,
-   which will yield an `'a list`.
-   `bind_map_t` is roughly syntactic sugar for `bind_t @@ T.map`. So that you
-   can rewrite the previous example as `let%bind lst' = bind_map_list f lst`.
-   Same thing with folds.
-*)
+(** Utilities to interact with other data-structure.  [bind_t] takes
+   an ['a result t] and makes a ['a t result] out of it. It "lifts" the
+   error out of the type.  The most common context is when mapping a
+   given type. For instance, if you use a function that can fail in
+   [List.map], you need to manage a whole list of results. Instead,
+   you do [let%bind lst' = bind_list @@ List.map f lst], which will
+   yield an ['a list].  [bind_map_t] is roughly syntactic sugar for
+   [bind_t @@ T.map]. So that you can rewrite the previous example as
+   [let%bind lst' = bind_map_list f lst].  Same thing with folds.
+ *)
 
 let bind_map_option f = function
   | None -> ok None
@@ -560,10 +557,8 @@ let bind_smap (s:_ X_map.String.t) =
 
 let bind_fold_smap f init (smap : _ X_map.String.t) =
   let aux k v prev =
-    prev >>? fun prev' ->
-    f prev' k v
-  in
-  X_map.String.fold aux smap init
+    prev >>? fun prev' -> f prev' k v
+  in X_map.String.fold aux smap init
 
 let bind_map_smap f smap = bind_smap (X_map.String.map f smap)
 
@@ -573,6 +568,7 @@ let bind_concat (l1:'a list result) (l2: 'a list result) =
   ok @@ (l1' @ l2')
 
 let bind_map_list f lst = bind_list (List.map f lst)
+
 let rec bind_map_list_seq f lst = match lst with
   | [] -> ok []
   | hd :: tl -> (
@@ -580,9 +576,10 @@ let rec bind_map_list_seq f lst = match lst with
       let%bind tl' = bind_map_list_seq f tl in
       ok (hd' :: tl')
     )
-let bind_map_ne_list : _ -> 'a X_list.Ne.t -> 'b X_list.Ne.t result = fun f lst -> bind_ne_list (X_list.Ne.map f lst)
-let bind_iter_list : (_ -> unit result) -> _ list -> unit result = fun f lst ->
-  bind_map_list f lst >>? fun _ -> ok ()
+let bind_map_ne_list : _ -> 'a X_list.Ne.t -> 'b X_list.Ne.t result =
+  fun f lst -> bind_ne_list (X_list.Ne.map f lst)
+let bind_iter_list : (_ -> unit result) -> _ list -> unit result =
+  fun f lst -> bind_map_list f lst >>? fun _ -> ok ()
 
 let bind_location (x:_ Location.wrap) =
   x.wrap_content >>? fun wrap_content ->
@@ -625,7 +622,7 @@ let bind_fold_pair f init (a,b) =
   in
   List.fold_left aux (ok init) [a;b]
 
-let bind_fold_triple f init (a,b,c) = 
+let bind_fold_triple f init (a,b,c) =
   let aux x y =
     x >>? fun x ->
     f x y
@@ -847,4 +844,3 @@ let errors_pp_short =
   Format.pp_print_list
     ~pp_sep:Format.pp_print_newline
     error_pp_short
-
