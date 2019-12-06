@@ -18,6 +18,11 @@ let get_program =
         ok program
       )
 
+let compile_main () = 
+  let%bind _ = Compile.Wrapper.source_to_michelson_contract
+      (Syntax_name "pascaligo") "./contracts/coase.ligo" "main" in
+  ok ()
+
 open Ast_simplified
 
 let card owner =
@@ -232,6 +237,7 @@ let sell () =
 
 
 let main = test_suite "Coase (End to End)" [
+    test "compile" compile_main ;
     test "buy" buy ;
     test "dispatch buy" dispatch_buy ;
     test "transfer" transfer ;

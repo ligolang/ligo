@@ -34,11 +34,14 @@ open Ast_simplified
 
 let pack_payload (program:Ast_typed.program) (payload:expression) : bytes result =
   let%bind code =
-    let env = Ast_typed.program_environment program in
     let%bind (typed,_) = Compile.Of_simplified.compile_expression
-        ~env ~state:(Typer.Solver.initial_state) payload in
+        ~env:(Ast_typed.program_environment program) ~state:(Typer.Solver.initial_state) payload in
     let%bind mini_c = Compile.Of_typed.compile_expression typed in
-    Compile.Of_mini_c.compile_expression mini_c in
+    let%bind expr = Compiler.Program.translate_expression mini_c Compiler.Environment.empty in
+    let expr = Self_michelson.optimize expr in
+    let%bind expr_ty = Compiler.Type.Ty.type_ mini_c.type_value in
+    let open! Compiler.Program in
+    ok { expr_ty ; expr } in
   let (Ex_ty payload_ty) = code.expr_ty in
   let%bind (payload: Tezos_utils.Michelson.michelson) =
     Ligo.Run.Of_michelson.evaluate_expression code.expr code.expr_ty in
@@ -84,7 +87,7 @@ let typed_program_with_simplified_input_to_michelson
   let env = Ast_typed.program_environment program in
   let%bind (typed_in,_)      = Compile.Of_simplified.compile_expression ~env ~state:(Typer.Solver.initial_state) input in
   let%bind mini_c_in         = Compile.Of_typed.compile_expression typed_in in
-  let%bind michelson_in      = Compile.Of_mini_c.compile_expression mini_c_in in
+  let%bind michelson_in      = Compile.Of_mini_c.compile mini_c_in in
   let%bind evaluated_in      = Ligo.Run.Of_michelson.evaluate_expression michelson_in.expr michelson_in.expr_ty in
   let%bind michelson_program = Compile.Wrapper.typed_to_michelson_fun program entry_point in
   ok (michelson_program, evaluated_in)
