@@ -6,7 +6,6 @@ let source_to_typed syntax source_file =
   let env = Ast_typed.program_environment typed in
   ok (typed,state,env)
 
-(* fetches entry_point which is a function and transform ir into a fun (..) { let .. in let .. in body } *)
 let typed_to_michelson_fun
     (typed: Ast_typed.program) (entry_point:string) : Compiler.compiled_expression result =
   let%bind mini_c = Of_typed.compile typed in
@@ -22,13 +21,13 @@ let source_expression_to_michelson ~env ~state parameter syntax =
   let%bind simplified = Of_source.compile_expression syntax parameter in
   let%bind (typed,_) = Of_simplified.compile_expression ~env ~state simplified in
   let%bind mini_c = Of_typed.compile_expression typed in
-  Of_mini_c.compile mini_c
+  Of_mini_c.compile_expression mini_c
 
 let source_contract_param_to_michelson ~env ~state (storage,parameter) syntax =
   let%bind simplified = Of_source.compile_contract_input storage parameter syntax in
   let%bind typed,_    = Of_simplified.compile_expression ~env ~state simplified in
   let%bind mini_c = Of_typed.compile_expression typed in
-  Of_mini_c.compile mini_c
+  Of_mini_c.compile_expression mini_c
 
 (*  produce a michelson contract e.g. the following sequence K_param ; K_storage ; K_code.
     and fails if the produced contract isn't valid                                         *)

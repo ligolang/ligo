@@ -72,13 +72,13 @@ let run_function_aux ?options (exp:Michelson.t) (exp_type:ex_ty) (input_michelso
     Trace.trace_tzresult_lwt (simple_error "error parsing input") @@
     Memory_proto_alpha.parse_michelson_data input_michelson input_ty
   in
-  let top_level = if is_contract then
-      Script_ir_translator.Toplevel
-        { storage_type = output_ty ; param_type = input_ty ;
-          root_name = None ; legacy_create_contract_literal = false }
-    else Script_ir_translator.Lambda
-  and ty_stack_before = Script_typed_ir.Item_t (input_ty, Empty_t, None)
-  and ty_stack_after = Script_typed_ir.Item_t (output_ty, Empty_t, None) in
+  let (top_level, ty_stack_before, ty_stack_after) =
+    (if is_contract then
+      Script_ir_translator.Toplevel { storage_type = output_ty ; param_type = input_ty ;
+                                      root_name = None ; legacy_create_contract_literal = false }
+    else Script_ir_translator.Lambda) ,
+    Script_typed_ir.Item_t (input_ty, Empty_t, None),
+    Script_typed_ir.Item_t (output_ty, Empty_t, None) in
   let exp = Michelson.strip_annots exp in
   let%bind descr =
     Trace.trace_tzresult_lwt (simple_error "error parsing program code") @@
