@@ -663,6 +663,14 @@ let map_ type_f path : unit result =
     let make_expected = fun _ -> e_some @@ e_int 4 in
     expect_eq_n program "get_" make_input make_expected
   in
+  let%bind () = 
+    let input_map = ez [(23, 10) ; (42, 4)] in
+    expect_eq program "mem" (e_tuple [(e_int 23) ; input_map]) (e_bool true)
+  in
+  let%bind () =
+    let input_map = ez [(23, 10) ; (42, 4)] in
+    expect_eq program "mem" (e_tuple [(e_int 1000) ; input_map]) (e_bool false)
+  in
   let%bind () = expect_eq_evaluate program "empty_map"
     (e_annotation (e_map []) (t_map t_int t_int)) in
   let%bind () =
