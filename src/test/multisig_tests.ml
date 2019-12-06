@@ -16,8 +16,8 @@ let get_program =
       )
 
 let compile_main () = 
-  let%bind _ = Compile.Wrapper.source_to_michelson_contract
-      (Syntax_name "pascaligo") "./contracts/multisig.ligo" "main" in
+  let%bind (_ : Tezos_utils.Michelson.michelson * (Ast_typed.program * Typer.Solver.state * Ast_typed.Types.full_environment)) =
+    Compile.Wrapper.source_to_michelson_contract (Syntax_name "pascaligo") "./contracts/multisig.ligo" "main" in
   ok ()
 
 open Ast_simplified
