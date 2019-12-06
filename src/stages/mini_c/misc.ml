@@ -120,14 +120,6 @@ module Free_variables = struct
 
 end
 
-(*
-   Converts `expr` in `fun () -> expr`.
-let functionalize (body : expression) : expression =
-  let content = E_closure { binder = Var.fresh () ; body } in
-  let type_value = t_function t_unit body.type_value in
-  { content ; type_value }
-*)
-
 let get_entry (lst : program) (name : string) : (expression * int) result =
   let%bind entry_expression =
     trace_option (Errors.missing_entry_point name) @@
