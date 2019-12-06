@@ -521,7 +521,6 @@ and type_expression : environment -> Solver.state -> ?tv_opt:O.type_value -> I.e
       trace_option error @@
       Environment.get_constructor c e in
     let%bind (expr' , state') = type_expression e state expr in
-    let%bind _assert = O.assert_type_value_eq (expr'.type_annotation, c_tv) in
     let wrapped = Wrap.constructor expr'.type_annotation c_tv sum_tv in
     return_wrapped (E_constructor (c , expr')) state' wrapped
 
