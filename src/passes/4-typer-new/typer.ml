@@ -961,15 +961,23 @@ let type_program_returns_state (p:I.program) : (environment * Solver.state * O.p
 let type_program (p : I.program) : (O.program * Solver.state) result =
   let%bind (env, state, program) = type_program_returns_state p in
   let subst_all =
+    let aliases = state.structured_dbs.aliases in
     let assignments = state.structured_dbs.assignments in
-    let aux (v : I.type_variable) (expr : Solver.c_constructor_simpl) (p:O.program result) =
-      let%bind p = p in
-      let Solver.{ tv ; c_tag ; tv_list } = expr in
+    let substs : variable: I.type_variable -> _ = fun ~variable ->
+      to_option @@
+      let%bind root =
+        trace_option (simple_error (Format.asprintf "can't find alias root of variable %a" Var.pp variable)) @@
+          (* TODO: after upgrading UnionFind, this will be an option, not an exception. *)
+          try Some (Solver.UF.repr variable aliases) with Not_found -> None in
+      let%bind assignment =
+        trace_option (simple_error (Format.asprintf "can't find assignment for root %a" Var.pp root)) @@
+          (Solver.TypeVariableMap.find_opt root assignments) in
+      let Solver.{ tv ; c_tag ; tv_list } = assignment in
       let () = ignore tv (* I think there is an issue where the tv is stored twice (as a key and in the element itself) *) in
       let%bind (expr : O.type_value') = Typesystem.Core.type_expression'_of_simple_c_constant (c_tag , (List.map (fun s -> O.{ type_value' = T_variable s ; simplified = None }) tv_list)) in
-      Typesystem.Misc.Substitution.Pattern.program ~p ~v ~expr in
-    (* let p = TSMap.bind_fold_Map aux program assignments in *) (* TODO: Module magic: this does not work *)
-    let p = Solver.TypeVariableMap.fold aux assignments (ok program) in
+      ok @@ expr
+    in
+    let p = Typesystem.Misc.Substitution.Pattern.s_program ~substs program in
     p in
   let%bind program = subst_all in
   let () = ignore env in        (* TODO: shouldn't we use the `env` somewhere? *)

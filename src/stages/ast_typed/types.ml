@@ -18,7 +18,7 @@ and environment_element_definition =
 and free_variables = expression_variable list
 
 and environment_element = {
-  type_value : type_value ;  
+  type_value : type_value ;
   source_environment : full_environment ;
   definition : environment_element_definition ;
 }
@@ -34,6 +34,12 @@ and annotated_expression = {
   location : Location.t ;
 }
 
+(* This seems to be used only for top-level declarations, and
+   represents the name of the top-level binding, and the expression
+   assigned to it. -- Suzanne.
+
+   TODO: if this is correct, then we should inline this in
+   "declaration" or at least move it close to it. *)
 and named_expression = {
   name: expression_variable ;
   annotated_expression: ae ;

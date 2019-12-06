@@ -352,7 +352,7 @@ end
 module TypeVariable =
 struct
   type t = Core.type_variable
-  let compare a b= Var.compare a b
+  let compare a b = Var.compare a b
   let to_string = (fun s -> Format.asprintf "%a" Var.pp s)
 
 end
