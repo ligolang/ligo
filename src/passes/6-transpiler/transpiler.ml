@@ -146,6 +146,11 @@ let rec transpile_type (t:AST.type_value) : type_value result =
   | T_operator (TC_option o) ->
       let%bind o' = transpile_type o in
       ok (T_option o')
+  | T_operator (TC_arrow (param , result)) -> (
+      let%bind param' = transpile_type param in
+      let%bind result' = transpile_type result in
+      ok (T_function (param', result'))
+    )
   (* TODO hmm *)
   | T_sum m ->
       let node = Append_tree.of_list @@ kv_list_of_cmap m in
@@ -181,7 +186,6 @@ let rec transpile_type (t:AST.type_value) : type_value result =
         ok (T_pair ((None, a), (None, b)))
       in
       Append_tree.fold_ne transpile_type aux node
-  | T_operator (TC_arrow (param, result))
   | T_arrow (param, result) -> (
       let%bind param' = transpile_type param in
       let%bind result' = transpile_type result in
