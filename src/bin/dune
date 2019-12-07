@@ -5,12 +5,19 @@
     cmdliner
     ligo
   )
-  (modules cli cli_helpers)
+  (modules cli cli_helpers version)
   (preprocess
     (pps ppx_let)
   )
   (flags (:standard -open Simple_utils))
 )
+
+(rule
+ (targets version.ml)
+ (action (with-stdout-to
+          version.ml
+          (run "sh" "-c"
+               "printf 'let hash = \"%s\"\nlet commit_date = \"%s\"\nlet job_id = \"%s\"\n' \"$(git rev-parse HEAD)\" \"$(git show --no-patch --format=%ci)\" \"${CI_JOB_ID}\""))))
 
 (executable
   (name runligo)

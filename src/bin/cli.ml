@@ -2,11 +2,18 @@ open Cmdliner
 open Trace
 open Cli_helpers
 
+let version =
+  Format.asprintf
+    "Rolling release\nHash: %s\nDate: %s\nCI job id: %s"
+    Version.hash
+    Version.commit_date
+    Version.job_id
+
 let main =
   let man =
     [ `S "MORE HELP";
       `P "Use `$(mname) $(i,COMMAND) --help' for help on a single command." ] in
-  (Term.(ret (const (`Help (`Auto, None)))), Term.info "ligo" ~man)
+  (Term.(ret (const (`Help (`Auto, None)))), Term.info "ligo" ~version ~man)
 
 let source_file n =
   let open Arg in
