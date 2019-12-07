@@ -47,6 +47,8 @@ function get_ (const m : foobar) : option(int) is
     skip
   end with map_get(42 , m)
 
+function mem (const k: int; const m: foobar) : bool is map_mem(k, m)
+
 function iter_op (const m : foobar) : unit is
   block {
     function aggregate (const i : int ; const j : int) : unit is block

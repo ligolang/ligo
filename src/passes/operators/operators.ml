@@ -107,6 +107,7 @@ module Simplify = struct
       | "map_remove"      -> ok C_MAP_REMOVE
       | "map_update"      -> ok C_MAP_UPDATE
       | "map_get"         -> ok C_MAP_GET
+      | "map_mem"         -> ok C_MAP_MEM
       | "sha_256"         -> ok C_SHA256
       | "sha_512"         -> ok C_SHA512
       | "blake2b"         -> ok C_BLAKE2b
@@ -203,6 +204,7 @@ module Simplify = struct
       | "Map.iter"                 -> ok C_MAP_ITER
       | "Map.map"                  -> ok C_MAP_MAP
       | "Map.fold"                 -> ok C_MAP_FOLD
+      | "Map.mem"                  -> ok C_MAP_MEM
       | "Map.empty"                -> ok C_MAP_EMPTY
       | "Map.literal"              -> ok C_MAP_LITERAL
       | "Map.size"                 -> ok C_SIZE
@@ -913,6 +915,7 @@ module Compiler = struct
     | C_MAP_GET_FORCE   -> ok @@ simple_binary @@ seq [prim I_GET ; i_assert_some_msg (i_push_string "GET_FORCE")]
     | C_MAP_FIND        -> ok @@ simple_binary @@ seq [prim I_GET ; i_assert_some_msg (i_push_string "MAP FIND")]
     | C_MAP_GET         -> ok @@ simple_binary @@ prim I_GET
+    | C_MAP_MEM         -> ok @@ simple_binary @@ prim I_MEM
     | C_MAP_FIND_OPT    -> ok @@ simple_binary @@ prim I_GET
     | C_MAP_ADD         -> ok @@ simple_ternary @@ seq [dip (i_some) ; prim I_UPDATE]
     | C_MAP_UPDATE      -> ok @@ simple_ternary @@ prim I_UPDATE
