@@ -178,7 +178,7 @@ module Ne = struct
 
   type 'a t = 'a * 'a list
 
-  let of_list lst = List.(hd lst, tl lst)
+  let of_list lst = List.hd lst, List.tl lst
   let to_list (hd, tl : _ t) = hd :: tl
   let singleton hd : 'a t = hd , []
   let hd : 'a t -> 'a = fst

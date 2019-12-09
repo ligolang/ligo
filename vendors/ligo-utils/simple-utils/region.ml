@@ -1,6 +1,10 @@
 (* Regions of a file *)
 
+(* A shorthand *)
+
 let sprintf = Printf.sprintf
+
+(* The object type for regions *)
 
 type t = <
   start : Pos.t;
@@ -28,7 +32,11 @@ type t = <
   compact   : ?file:bool -> ?offsets:bool -> [`Byte | `Point] -> string
 >
 
+(* A synonym *)
+
 type region = t
+
+(* A convenience *)
 
 type 'a reg = {region: t; value: 'a}
 
