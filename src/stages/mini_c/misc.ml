@@ -140,39 +140,25 @@ let get_entry (lst : program) (name : string) : (expression * int) result =
   in
   ok (entry_expression , entry_index)
 
-
 (*
-   Assume the following code:
-   ```
-     const x = 42
-     const y = 120
-     const z = 423
-     const f = () -> x + y
-   ```
-   It is transformed in:
-   ```
-     const f = () ->
-       let x = 42 in
-       let y = 120 in
-       let z = 423 in
-       x + y
-   ```
+  Assume the following program:
+  ```
+    const x = 42
+    const y = 120
+    const f = () -> x + y
+  ```
+  aggregate_entry program "f" (Some [unit]) would return:
+  ```
+    let x = 42 in
+    let y = 120 in
+    const y = e -> e + (f ())
+    f(unit)
+  ```
 
-   The entry-point can be an expression. In that case the following code:
-   ```
-     const x = 42
-     const y = 120
-     const z = 423
-     const some_exp = x+y
-   ```
-   Is transformed in:
-     let x = 42 in
-     let y = 120 in
-     let z = 423 in
-     x+y
-   ```
+  if arg_lst is None, it means that the entry point is not an arbitrary expression
 *)
-let aggregate_entry (lst : program) (name : string) (is_exp : bool) : expression result =
+
+let aggregate_entry (lst : program) (name : string) (arg_lst : expression list option) : expression result =
   let%bind (entry_expression , entry_index) = get_entry lst name in
   let pre_declarations = List.until entry_index lst in
   let wrapper =
@@ -182,23 +168,27 @@ let aggregate_entry (lst : program) (name : string) (is_exp : bool) : expression
     in
     fun expr -> List.fold_right' aux expr pre_declarations
   in
-  match (entry_expression.content , is_exp) with
-  | (E_closure l , false) -> (
-      let l' = { l with body = wrapper l.body } in
-      let%bind t' =
-        let%bind (input_ty , output_ty) = get_t_function entry_expression.type_value in
-        ok (t_function input_ty output_ty)
-      in
-      let e' = {
-        content = E_closure l' ;
-        type_value = t' ;
-      } in
-      ok e'
+  match (entry_expression.content , arg_lst) with
+  | (E_closure _ , Some (hd::tl)) -> (
+      let%bind type_value' = match entry_expression.type_value with
+        | T_function (_,t) -> ok t
+        | _ -> simple_fail "Trying to aggregate closure which does not have function type" in
+      let entry_expression' = List.fold_left
+        (fun acc el ->
+          let type_value' = match acc.type_value with
+            | T_function (_,t) -> t
+            | e -> e in
+          {
+            content = E_application (acc,el) ;
+            type_value = type_value' ;
+          }
+        )
+        {
+          content = E_application (entry_expression, hd) ;
+          type_value = type_value' ;
+        } tl in
+      ok @@ wrapper entry_expression'
     )
-  | (_ , true) -> (
+  | (_ , None) | (_, Some _) -> (
       ok @@ wrapper entry_expression
     )
-  | _ -> (
-      Format.printf "Not functional: %a\n" PP.expression entry_expression ;
-      fail @@ Errors.not_functional_main name
-  )

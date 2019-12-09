@@ -8,11 +8,13 @@ let retype_file f =
   let () = Typer.Solver.discard_state state in
   ok typed
 let mtype_file f =
-  let%bind (typed , state , _env) = Ligo.Compile.Wrapper.source_to_typed (Syntax_name "cameligo") f in
+  let%bind simplified  = Ligo.Compile.Of_source.compile f (Syntax_name "cameligo") in
+  let%bind typed,state = Ligo.Compile.Of_simplified.compile simplified in
   let () = Typer.Solver.discard_state state in
   ok typed
 let type_file f =
-  let%bind (typed , state , _env) = Ligo.Compile.Wrapper.source_to_typed (Syntax_name "pascaligo") f in
+  let%bind simplified  = Ligo.Compile.Of_source.compile f (Syntax_name "pascaligo") in
+  let%bind typed,state = Ligo.Compile.Of_simplified.compile simplified in
   let () = Typer.Solver.discard_state state in
   ok typed
 
@@ -184,26 +186,6 @@ let higher_order () : unit result =
   let%bind _ = expect_eq_n_int program "foobar3" make_expect in
   let%bind _ = expect_eq_n_int program "foobar4" make_expect in
   let%bind _ = expect_eq_n_int program "foobar5" make_expect in
-
-
-  let%bind (typed_arg,_) = Compile.Of_simplified.compile_expression
-      ~env:(Ast_typed.Environment.full_empty) ~state:(Typer.Solver.initial_state) (e_int 1) in
-  let%bind mini_c_arg = Compile.Of_typed.compile_expression typed_arg in
-  let%bind compiled_arg = Compile.Of_mini_c.compile_expression mini_c_arg in
-  let%bind arg_michelson = Ligo.Run.Of_michelson.evaluate_expression compiled_arg.expr compiled_arg.expr_ty in
-
-  let%bind michelson = Compile.Wrapper.typed_to_michelson_fun program "foobar6" in
-  let%bind _michelson_output1 = Ligo.Run.Of_michelson.run_function michelson.expr michelson.expr_ty arg_michelson false in (* foobar6(1)  = f *)
-
-  let%bind _michelson_output1 = Ligo.Run.Of_michelson.ex_value_ty_to_michelson _michelson_output1 in
-  let%bind expr_ty = Compiler.Type.Ty.type_ (T_function (Mini_c.t_int,Mini_c.t_int)) in
-  let%bind _michelson_output2 = Ligo.Run.Of_michelson.run_function _michelson_output1 expr_ty arg_michelson  false in (* f(1) = 1*)
-  
-  let%bind mini_c_un = Compiler.Uncompiler.translate_value _michelson_output2 in
-  let%bind typed_un = Transpiler.untranspile mini_c_un (Ast_typed.t_int ()) in
-  let%bind _simplified_output = Typer.untype_expression typed_un in
-  let%bind () =  Ast_simplified.Misc.assert_value_eq (_simplified_output , e_int 1) in
-
   ok ()
 
 let higher_order_mligo () : unit result =
@@ -228,21 +210,17 @@ let higher_order_religo () : unit result =
 
 let shared_function () : unit result =
   let%bind program = type_file "./contracts/function-shared.ligo" in
-  Format.printf "inc\n" ;
   let%bind () =
     let make_expect = fun n -> (n + 1) in
     expect_eq_n_int program "inc" make_expect
   in
-  Format.printf "double inc?\n" ;
   let%bind () =
     expect_eq program "double_inc" (e_int 0) (e_int 2)
   in
-  Format.printf "double incd!\n" ;
   let%bind () =
     let make_expect = fun n -> (n + 2) in
     expect_eq_n_int program "double_inc" make_expect
   in
-  Format.printf "foo\n" ;
   let%bind () =
     let make_expect = fun n -> (2 * n + 3) in
     expect_eq program "foo" (e_int 0) (e_int @@ make_expect 0)

@@ -2,7 +2,8 @@ open Trace
 open Test_helpers
 
 let type_file f = 
-  let%bind (typed , state , _env) = Ligo.Compile.Wrapper.source_to_typed (Syntax_name "pascaligo") f in
+  let%bind simplified  = Ligo.Compile.Of_source.compile f (Syntax_name "pascaligo") in
+  let%bind typed,state = Ligo.Compile.Of_simplified.compile simplified in
   ok @@ (typed,state)
 
 let get_program =
@@ -16,8 +17,13 @@ let get_program =
       )
 
 let compile_main () = 
-  let%bind (_ : Tezos_utils.Michelson.michelson * (Ast_typed.program * Typer.Solver.state * Ast_typed.Types.full_environment)) =
-    Compile.Wrapper.source_to_michelson_contract (Syntax_name "pascaligo") "./contracts/multisig-v2.ligo" "main" in
+  let%bind simplified      = Ligo.Compile.Of_source.compile "./contracts/multisig-v2.ligo" (Syntax_name "pascaligo") in
+  let%bind typed_prg,_ = Ligo.Compile.Of_simplified.compile simplified in
+  let%bind mini_c_prg      = Ligo.Compile.Of_typed.compile typed_prg in
+  let%bind michelson_prg   = Ligo.Compile.Of_mini_c.aggregate_and_compile mini_c_prg None "main" in
+  let%bind (_contract: Tezos_utils.Michelson.michelson) =
+    (* fails if the given entry point is not a valid contract *)
+    Ligo.Compile.Of_mini_c.build_contract michelson_prg in
   ok ()
 
 open Ast_simplified

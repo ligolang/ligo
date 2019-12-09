@@ -84,17 +84,21 @@ let typed_program_with_simplified_input_to_michelson
   let env = Ast_typed.program_environment program in
   let%bind (typed_in,_)      = Compile.Of_simplified.compile_expression ~env ~state:(Typer.Solver.initial_state) input in
   let%bind mini_c_in         = Compile.Of_typed.compile_expression typed_in in
+  (* might be useless *)
   let%bind michelson_in      = Compile.Of_mini_c.compile_expression mini_c_in in
   let%bind evaluated_in      = Ligo.Run.Of_michelson.evaluate_expression michelson_in.expr michelson_in.expr_ty in
-  let%bind michelson_program = Compile.Wrapper.typed_to_michelson_fun program entry_point in
+
+  let%bind mini_c_prg = Compile.Of_typed.compile program in
+  let%bind michelson_program = Compile.Of_mini_c.aggregate_and_compile mini_c_prg (Some [mini_c_in]) entry_point in
   ok (michelson_program, evaluated_in)
 
 let run_typed_program_with_simplified_input ?options
     (program: Ast_typed.program) (entry_point: string)
     (input: Ast_simplified.expression) : Ast_simplified.expression result =
-  let%bind (michelson_program, evaluated_in) = typed_program_with_simplified_input_to_michelson program entry_point input in
-  let%bind michelson_output  = Ligo.Run.Of_michelson.run_function
-      ?options michelson_program.expr michelson_program.expr_ty evaluated_in false in
+  let%bind (michelson_program, _evaluated_in) = typed_program_with_simplified_input_to_michelson program entry_point input in
+  (* let%bind michelson_output  = Ligo.Run.Of_michelson.run_contract
+      ?options michelson_program.expr michelson_program.expr_ty _evaluated_in false in *)
+  let%bind michelson_output  = Ligo.Run.Of_michelson.run ?options michelson_program.expr michelson_program.expr_ty in
   Uncompile.uncompile_typed_program_entry_function_result program entry_point michelson_output
 
 let expect ?options program entry_point input expecter =
@@ -120,9 +124,9 @@ let expect_fail ?options program entry_point input =
   run_typed_program_with_simplified_input ?options program entry_point input
 
 let expect_string_failwith ?options program entry_point input expected_failwith =
-  let%bind (michelson_program, evaluated_in) = typed_program_with_simplified_input_to_michelson program entry_point input in
+  let%bind (michelson_program, _evaluated_in) = typed_program_with_simplified_input_to_michelson program entry_point input in
   let%bind err = Ligo.Run.Of_michelson.run_failwith
-    ?options michelson_program.expr michelson_program.expr_ty evaluated_in false in
+    ?options michelson_program.expr michelson_program.expr_ty in
   match err with
     | Ligo.Run.Of_michelson.Failwith_string s -> Assert.assert_equal_string expected_failwith s
     | _ -> simple_fail "Expected to fail with a string"
@@ -145,8 +149,9 @@ let expect_evaluate program entry_point expecter =
     let content () = Format.asprintf "Entry_point: %s" entry_point in
     error title content in
   trace error @@
-  let%bind michelson_value_as_f = Compile.Wrapper.typed_to_michelson_expression program entry_point in
-  let%bind res_michelson = Ligo.Run.Of_michelson.run_exp michelson_value_as_f.expr michelson_value_as_f.expr_ty in
+  let%bind mini_c = Ligo.Compile.Of_typed.compile program in
+  let%bind michelson_value = Ligo.Compile.Of_mini_c.aggregate_and_compile mini_c (Some []) entry_point in
+  let%bind res_michelson = Ligo.Run.Of_michelson.run michelson_value.expr michelson_value.expr_ty in
   let%bind res_simpl = Uncompile.uncompile_typed_program_entry_expression_result program entry_point res_michelson in
   expecter res_simpl
 
