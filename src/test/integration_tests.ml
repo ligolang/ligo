@@ -186,6 +186,7 @@ let higher_order () : unit result =
   let%bind _ = expect_eq_n_int program "foobar3" make_expect in
   let%bind _ = expect_eq_n_int program "foobar4" make_expect in
   let%bind _ = expect_eq_n_int program "foobar5" make_expect in
+  (* let%bind _ = applies_expect_eq_n_int program "foobar5" make_expect in *)
   ok ()
 
 let higher_order_mligo () : unit result =

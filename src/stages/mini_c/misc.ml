@@ -151,7 +151,7 @@ let get_entry (lst : program) (name : string) : (expression * int) result =
   ```
     let x = 42 in
     let y = 120 in
-    const y = e -> e + (f ())
+    const f = () -> x + y
     f(unit)
   ```
 
