@@ -5,11 +5,26 @@ module.exports = props => {
   return (
     <div id="pageNotFoundPage" className="centered">
       <div id="mural">
-        <img className="muralPolygon1" src="img/404-mural/polygon1.svg" />
-        <img className="muralPolygon2" src="img/404-mural/polygon2.svg" />
-        <img className="muralPolygon3" src="img/404-mural/polygon3.svg" />
-        <img className="muralPolygon4" src="img/404-mural/polygon4.svg" />
-        <img className="muralPolygon5" src="img/404-mural/polygon5.svg" />
+        <img
+          className="muralPolygon1"
+          src={`${props.config.baseUrl}img/404-mural/polygon1.svg`}
+        />
+        <img
+          className="muralPolygon2"
+          src={`${props.config.baseUrl}img/404-mural/polygon2.svg`}
+        />
+        <img
+          className="muralPolygon3"
+          src={`${props.config.baseUrl}img/404-mural/polygon3.svg`}
+        />
+        <img
+          className="muralPolygon4"
+          src={`${props.config.baseUrl}img/404-mural/polygon4.svg`}
+        />
+        <img
+          className="muralPolygon5"
+          src={`${props.config.baseUrl}img/404-mural/polygon5.svg`}
+        />
       </div>
       <div id="message">
         <div className="title">404</div>
