@@ -43,22 +43,22 @@ const PARTNERS = [
   }
 ];
 
-const Feature = props => (
+const Feature = (config, props) => (
   <div className="feature" key={props.title}>
-    <img src={props.image} />
+    <img src={`${config.baseUrl}${props.image}`} />
     <h1>{props.title}</h1>
     <p>{props.content}</p>
   </div>
 );
 
-const Partner = props => (
+const Partner = (config, props) => (
   <a
     href={props.link}
     title={props.name}
     target="_blank"
     rel="noopener noreferrer"
   >
-    <img src={props.image} />
+    <img src={`${config.baseUrl}${props.image}`} />
   </a>
 );
 
@@ -83,13 +83,15 @@ module.exports = props => {
         </div>
       </div>
       <div id="features" className="centered">
-        {FEATURES.map(Feature)}
+        {FEATURES.map(entry => Feature(props.config, entry))}
       </div>
       <div id="partners">
         <div className="centered wrapper">
           <span id="heading">Our Partners</span>
           <div id="list">
-            {PARTNERS.filter(entry => entry.pinned).map(Partner)}
+            {PARTNERS.filter(entry => entry.pinned).map(entry =>
+              Partner(props.config, entry)
+            )}
           </div>
         </div>
       </div>

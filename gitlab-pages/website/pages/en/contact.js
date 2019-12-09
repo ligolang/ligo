@@ -63,7 +63,7 @@ const COMMUNICATION_CHANNELS = [
   }
 ];
 
-const Portrait = props => {
+const Portrait = (config, props) => {
   return (
     <a
       href={props.link}
@@ -72,7 +72,7 @@ const Portrait = props => {
       target="_blank"
       rel="noopener noreferrer"
     >
-      <img className="portrait" src={props.image} />
+      <img className="portrait" src={`${config.baseUrl}${props.image}`} />
       <div className="overlay">
         <span>{props.firstName}</span>
         <span>{props.lastName}</span>
@@ -81,7 +81,7 @@ const Portrait = props => {
   );
 };
 
-const CommunicationChannel = props => {
+const CommunicationChannel = (config, props) => {
   return (
     <a
       className="option"
@@ -89,13 +89,13 @@ const CommunicationChannel = props => {
       target="_blank"
       rel="noopener noreferrer"
     >
-      <img className="icon" src={props.icon} />
+      <img className="icon" src={`${config.baseUrl}${props.icon}`} />
       {props.description}
     </a>
   );
 };
 
-module.exports = () => {
+module.exports = props => {
   const pinnedMembers = TEAM.filter(member => member.pinned);
   const membersCeilCount = Math.ceil(pinnedMembers.length / 2);
   const membersInFistColumn = pinnedMembers.slice(0, membersCeilCount);
@@ -104,15 +104,19 @@ module.exports = () => {
   return (
     <div id="contactPage" className="centered">
       <div id="mural">
-        <div className="column">{membersInFistColumn.map(Portrait)}</div>
+        <div className="column">
+          {membersInFistColumn.map(entry => Portrait(props.config, entry))}
+        </div>
         <div className="offset column">
-          {membersInSecondColumn.map(Portrait)}
+          {membersInSecondColumn.map(entry => Portrait(props.config, entry))}
         </div>
       </div>
       <div id="message">
         <div className="title">Talk to us</div>
         <div className="communicationOptions">
-          {COMMUNICATION_CHANNELS.map(CommunicationChannel)}
+          {COMMUNICATION_CHANNELS.map(entry =>
+            CommunicationChannel(props.config, entry)
+          )}
         </div>
       </div>
     </div>
