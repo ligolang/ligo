@@ -4,7 +4,8 @@ open Trace
 open Test_helpers
 
 let type_file f =
-  let%bind (typed , state , _env) = Ligo.Compile.Wrapper.source_to_typed (Syntax_name "pascaligo") f in
+  let%bind simplified  = Ligo.Compile.Of_source.compile f (Syntax_name "pascaligo") in
+  let%bind typed,state = Ligo.Compile.Of_simplified.compile simplified in
   ok @@ (typed,state)
 
 let get_program =
@@ -17,6 +18,16 @@ let get_program =
         s := Some program ;
         ok program
       )
+
+let compile_main () = 
+  let%bind simplified      = Ligo.Compile.Of_source.compile "./contracts/coase.ligo" (Syntax_name "pascaligo") in
+  let%bind typed_prg,_ = Ligo.Compile.Of_simplified.compile simplified in
+  let%bind mini_c_prg      = Ligo.Compile.Of_typed.compile typed_prg in
+  let%bind michelson_prg   = Ligo.Compile.Of_mini_c.aggregate_and_compile_contract mini_c_prg "main" in
+  let%bind (_contract: Tezos_utils.Michelson.michelson) =
+    (* fails if the given entry point is not a valid contract *)
+    Ligo.Compile.Of_mini_c.build_contract michelson_prg in
+  ok ()
 
 open Ast_simplified
 
@@ -232,6 +243,7 @@ let sell () =
 
 
 let main = test_suite "Coase (End to End)" [
+    test "compile" compile_main ;
     test "buy" buy ;
     test "dispatch buy" dispatch_buy ;
     test "transfer" transfer ;

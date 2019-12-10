@@ -17,3 +17,15 @@ let rec map_expression : mapper -> michelson -> michelson result = fun f e ->
       ok @@ Seq (l , lst')
     )
   | x -> ok x
+
+open Memory_proto_alpha.Protocol.Script_ir_translator
+(* fetches lambda first and second parameter (parameter,storage) *)
+let fetch_lambda_parameters : ex_ty -> (ex_ty * ex_ty) result =
+  let error ()  = simple_fail "failed to fetch lambda parameters" in
+  function
+  | Ex_ty (Lambda_t (in_ty, _, _)) -> (
+    match in_ty with
+    | Pair_t ((param_ty,_,_),(storage_ty,_,_),_,_) ->
+      ok (Ex_ty param_ty, Ex_ty storage_ty)
+    |_ -> error () )
+  | _ -> error ()

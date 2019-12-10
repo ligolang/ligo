@@ -4,15 +4,19 @@ open Test_helpers
 open Ast_simplified.Combinators
 
 let retype_file f =
-  let%bind (typed , state , _env) = Ligo.Compile.Wrapper.source_to_typed (Syntax_name "reasonligo") f in
+  let%bind simplified  = Ligo.Compile.Of_source.compile f (Syntax_name "reasonligo") in
+  let%bind typed,state = Ligo.Compile.Of_simplified.compile simplified in
+  let () = Typer.Solver.discard_state state in
   let () = Typer.Solver.discard_state state in
   ok typed
 let mtype_file f =
-  let%bind (typed , state , _env) = Ligo.Compile.Wrapper.source_to_typed (Syntax_name "cameligo") f in
+  let%bind simplified  = Ligo.Compile.Of_source.compile f (Syntax_name "cameligo") in
+  let%bind typed,state = Ligo.Compile.Of_simplified.compile simplified in
   let () = Typer.Solver.discard_state state in
   ok typed
 let type_file f =
-  let%bind (typed , state , _env) = Ligo.Compile.Wrapper.source_to_typed (Syntax_name "pascaligo") f in
+  let%bind simplified  = Ligo.Compile.Of_source.compile f (Syntax_name "pascaligo") in
+  let%bind typed,state = Ligo.Compile.Of_simplified.compile simplified in
   let () = Typer.Solver.discard_state state in
   ok typed
 
@@ -184,6 +188,7 @@ let higher_order () : unit result =
   let%bind _ = expect_eq_n_int program "foobar3" make_expect in
   let%bind _ = expect_eq_n_int program "foobar4" make_expect in
   let%bind _ = expect_eq_n_int program "foobar5" make_expect in
+  (* let%bind _ = applies_expect_eq_n_int program "foobar5" make_expect in *)
   ok ()
 
 let higher_order_mligo () : unit result =
@@ -208,21 +213,17 @@ let higher_order_religo () : unit result =
 
 let shared_function () : unit result =
   let%bind program = type_file "./contracts/function-shared.ligo" in
-  Format.printf "inc\n" ;
   let%bind () =
     let make_expect = fun n -> (n + 1) in
     expect_eq_n_int program "inc" make_expect
   in
-  Format.printf "double inc?\n" ;
   let%bind () =
     expect_eq program "double_inc" (e_int 0) (e_int 2)
   in
-  Format.printf "double incd!\n" ;
   let%bind () =
     let make_expect = fun n -> (n + 2) in
     expect_eq_n_int program "double_inc" make_expect
   in
-  Format.printf "foo\n" ;
   let%bind () =
     let make_expect = fun n -> (2 * n + 3) in
     expect_eq program "foo" (e_int 0) (e_int @@ make_expect 0)

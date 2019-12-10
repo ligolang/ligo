@@ -8,6 +8,7 @@
 
 open Tezos_micheline.Micheline
 open Tezos_utils.Michelson
+include Helpers
 
 (* `arity p` should be `Some n` only if p is (always) an instruction
    which removes n items from the stack and uses them to push 1 item,

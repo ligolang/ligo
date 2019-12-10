@@ -2,7 +2,8 @@ open Trace
 open Test_helpers
 
 let type_file f =
-  let%bind (typed , state , _env) = Ligo.Compile.Wrapper.source_to_typed (Syntax_name "pascaligo") f in
+  let%bind simplified  = Ligo.Compile.Of_source.compile f (Syntax_name "pascaligo") in
+  let%bind typed,state = Ligo.Compile.Of_simplified.compile simplified in
   ok @@ (typed,state)
 
 let get_program =
@@ -48,10 +49,11 @@ let dummy n =
   )
 
 let run_typed (entry_point:string) (program:Ast_typed.program) (input:Ast_typed.annotated_expression) =
-  let%bind program_mich = Compile.Wrapper.typed_to_michelson_program program entry_point in
-  let%bind input_mich = Compile.Wrapper.typed_expression_to_michelson_value_as_function input in
-  let%bind input_eval = Run.Of_michelson.evaluate_michelson input_mich in
-  let%bind res = Run.Of_michelson.run program_mich input_eval in
+  let%bind input_mini_c = Compile.Of_typed.compile_expression input in
+  let%bind mini_c = Compile.Of_typed.compile program in
+  let%bind program_mich = Compile.Of_mini_c.aggregate_and_compile_expression
+      mini_c (Entry_name entry_point) [input_mini_c] in
+  let%bind res = Run.Of_michelson.run program_mich.expr program_mich.expr_ty in
   let%bind output_type =
     let%bind entry_expression = Ast_typed.get_entry program entry_point in
     let%bind (_ , output_type) = Ast_typed.get_t_function entry_expression.type_annotation in

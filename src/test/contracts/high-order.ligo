@@ -48,3 +48,5 @@ function foobar5 (const i : int) : int is
     function goo (const i : int) : int is
       foo(i);
   } with higher3(i,foo,goo)
+
+function foobar6 (const i : int) : (int->int) is f
