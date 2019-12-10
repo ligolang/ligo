@@ -3,6 +3,10 @@ open Test_helpers
 
 open Ast_simplified.Combinators
 
+let retype_file f =
+  let%bind (typed , state , _env) = Ligo.Compile.Wrapper.source_to_typed (Syntax_name "reasonligo") f in
+  let () = Typer.Solver.discard_state state in
+  ok typed
 let mtype_file f =
   let%bind (typed , state , _env) = Ligo.Compile.Wrapper.source_to_typed (Syntax_name "cameligo") f in
   let () = Typer.Solver.discard_state state in
@@ -98,6 +102,20 @@ let variant_mligo () : unit result =
     expect_eq_evaluate program "kee" expected in
   ok ()
 
+let variant_religo () : unit result =
+  let%bind program = retype_file "./contracts/variant.religo" in
+  let%bind () =
+    let expected = e_constructor "Foo" (e_int 42) in
+    expect_eq_evaluate program "foo" expected in
+  let%bind () =
+    let expected = e_constructor "Bar" (e_bool true) in
+    expect_eq_evaluate program "bar" expected in
+  let%bind () =
+    let expected = e_constructor "Kee" (e_nat 23) in
+    expect_eq_evaluate program "kee" expected in
+  ok ()
+
+
 let variant_matching () : unit result =
   let%bind program = type_file "./contracts/variant-matching.ligo" in
   let%bind () =
@@ -143,6 +161,16 @@ let closure_mligo () : unit result =
   in
   ok ()
 
+let closure_religo () : unit result =
+  let%bind program = retype_file "./contracts/closure.religo" in
+  let%bind _ =
+    let input = e_int 0 in
+    let expected = e_int 25 in
+    expect_eq program "test" input expected
+  in
+  ok ()
+
+
 let shadow () : unit result =
   let%bind program = type_file "./contracts/shadow.ligo" in
   let make_expect = fun _ -> 0 in
@@ -168,6 +196,15 @@ let higher_order_mligo () : unit result =
   let%bind _ = expect_eq_n_int program "foobar5" make_expect in
   ok ()
 
+let higher_order_religo () : unit result =
+  let%bind program = retype_file "./contracts/high-order.religo" in
+  let make_expect = fun n -> n in
+  let%bind _ = expect_eq_n_int program "foobar" make_expect in
+  let%bind _ = expect_eq_n_int program "foobar2" make_expect in
+  let%bind _ = expect_eq_n_int program "foobar3" make_expect in
+  let%bind _ = expect_eq_n_int program "foobar4" make_expect in
+  let%bind _ = expect_eq_n_int program "foobar5" make_expect in
+  ok ()
 
 let shared_function () : unit result =
   let%bind program = type_file "./contracts/function-shared.ligo" in
@@ -204,6 +241,14 @@ let shared_function_mligo () : unit result =
   in
   ok ()
 
+let shared_function_religo () : unit result =
+  let%bind program = retype_file "./contracts/function-shared.religo" in
+  let%bind () =
+    let make_expect = fun n -> (2 * n + 70) in
+    expect_eq_n_int program "foobar" make_expect
+  in
+  ok ()
+
 let bool_expression () : unit result =
   let%bind program = type_file "./contracts/boolean_operators.ligo" in
   let%bind _ =
@@ -219,6 +264,19 @@ let bool_expression () : unit result =
 
 let bool_expression_mligo () : unit result =
   let%bind program = mtype_file "./contracts/boolean_operators.mligo" in
+  let%bind _ =
+    let aux (name, f) = expect_eq_b_bool program name f in
+    bind_map_list aux [
+      ("or_true", fun b -> b || true) ;
+      ("or_false", fun b -> b || false) ;
+      ("and_true", fun b -> b && true) ;
+      ("and_false", fun b -> b && false) ;
+      ("not_bool", fun b -> not b) ;
+    ] in
+  ok ()
+
+let bool_expression_religo () : unit result =
+  let%bind program = retype_file "./contracts/boolean_operators.religo" in
   let%bind _ =
     let aux (name, f) = expect_eq_b_bool program name f in
     bind_map_list aux [
@@ -247,6 +305,21 @@ let arithmetic () : unit result =
 
 let arithmetic_mligo () : unit result =
   let%bind program = mtype_file "./contracts/arithmetic.mligo" in
+  let%bind _ =
+    let aux (name, f) = expect_eq_n_int program name f in
+    bind_map_list aux [
+      ("plus_op", fun n -> (n + 42)) ;
+      ("minus_op", fun n -> (n - 42)) ;
+      ("times_op", fun n -> (n * 42)) ;
+      ("neg_op", fun n -> (-n)) ;
+      ("neg_op_2", fun n -> -(n + 10)) ;
+    ] in
+  let%bind () = expect_eq_n_pos program "mod_op" e_int (fun n -> e_nat (n mod 42)) in
+  let%bind () = expect_eq_n_pos program "div_op" e_int (fun n -> e_int (n / 2)) in
+  ok ()
+
+let arithmetic_religo () : unit result =
+  let%bind program = retype_file "./contracts/arithmetic.religo" in
   let%bind _ =
     let aux (name, f) = expect_eq_n_int program name f in
     bind_map_list aux [
@@ -292,6 +365,22 @@ let bitwise_arithmetic_mligo () : unit result =
   let%bind () = expect_eq program "xor_op" (e_nat 7) (e_nat 0) in
   ok ()
 
+let bitwise_arithmetic_religo () : unit result =
+  let%bind program = retype_file "./contracts/bitwise_arithmetic.religo" in
+  let%bind () = expect_eq program "or_op" (e_nat 7) (e_nat 7) in
+  let%bind () = expect_eq program "or_op" (e_nat 3) (e_nat 7) in
+  let%bind () = expect_eq program "or_op" (e_nat 2) (e_nat 6) in
+  let%bind () = expect_eq program "or_op" (e_nat 14) (e_nat 14) in
+  let%bind () = expect_eq program "or_op" (e_nat 10) (e_nat 14) in
+  let%bind () = expect_eq program "and_op" (e_nat 7) (e_nat 7) in
+  let%bind () = expect_eq program "and_op" (e_nat 3) (e_nat 3) in
+  let%bind () = expect_eq program "and_op" (e_nat 2) (e_nat 2) in
+  let%bind () = expect_eq program "and_op" (e_nat 14) (e_nat 6) in
+  let%bind () = expect_eq program "and_op" (e_nat 10) (e_nat 2) in
+  let%bind () = expect_eq program "xor_op" (e_nat 0) (e_nat 7) in
+  let%bind () = expect_eq program "xor_op" (e_nat 7) (e_nat 0) in
+  ok ()
+
 let string_arithmetic () : unit result =
   let%bind program = type_file "./contracts/string_arithmetic.ligo" in
   let%bind () = expect_eq program "concat_op" (e_string "foo") (e_string "foototo") in
@@ -308,6 +397,15 @@ let string_arithmetic_mligo () : unit result =
   let%bind () = expect_eq program "slice_op" (e_string "foo") (e_string "oo") in
   let%bind () = expect_eq program "concat_syntax" (e_string "string_") (e_string "string_test_literal")
   in ok ()
+
+let string_arithmetic_religo () : unit result =
+  let%bind program = retype_file "./contracts/string_arithmetic.religo" in
+  let%bind () = expect_eq program "size_op"  (e_string "tata") (e_nat 4) in
+  let%bind () = expect_eq program "slice_op" (e_string "tata") (e_string "at") in
+  let%bind () = expect_eq program "slice_op" (e_string "foo") (e_string "oo") in
+  let%bind () = expect_eq program "concat_syntax" (e_string "string_") (e_string "string_test_literal")
+  in ok ()
+
 
 let bytes_arithmetic () : unit result =
   let%bind program = type_file "./contracts/bytes_arithmetic.ligo" in
@@ -344,6 +442,26 @@ let bytes_arithmetic_mligo () : unit result =
   let%bind () = expect_fail program "slice_op" foo in
   let%bind () = expect_fail program "slice_op" ba in
   let%bind b1 = Test_helpers.run_typed_program_with_simplified_input program "hasherman" foo in
+  let%bind () = expect_eq program "hasherman" foo b1 in
+  let%bind b3 = Test_helpers.run_typed_program_with_simplified_input program "hasherman" foototo in
+  let%bind () = Assert.assert_fail @@ Ast_simplified.Misc.assert_value_eq (b3 , b1) in
+  ok ()
+
+let bytes_arithmetic_religo () : unit result =
+  let%bind program = retype_file "./contracts/bytes_arithmetic.religo" in
+  let%bind foo = e_bytes "0f00" in
+  let%bind foototo = e_bytes "0f007070" in
+  let%bind toto = e_bytes "7070" in
+  let%bind empty = e_bytes "" in
+  let%bind tata = e_bytes "7a7a7a7a" in
+  let%bind at = e_bytes "7a7a" in
+  let%bind ba = e_bytes "ba" in
+  let%bind () = expect_eq program "concat_op" foo foototo in
+  let%bind () = expect_eq program "concat_op" empty toto in
+  let%bind () = expect_eq program "slice_op" tata at in
+  let%bind () = expect_fail program "slice_op" foo in
+  let%bind () = expect_fail program "slice_op" ba in
+  let%bind b1 = Test_helpers.run_typed_program_with_simplified_input program"hasherman" foo in
   let%bind () = expect_eq program "hasherman" foo b1 in
   let%bind b3 = Test_helpers.run_typed_program_with_simplified_input program "hasherman" foototo in
   let%bind () = Assert.assert_fail @@ Ast_simplified.Misc.assert_value_eq (b3 , b1) in
@@ -442,6 +560,36 @@ let set_arithmetic_mligo () : unit result =
   in
   ok ()
 
+let set_arithmetic_religo () : unit result =
+  let%bind program = retype_file "./contracts/set_arithmetic.religo" in
+  let%bind program_1 = type_file "./contracts/set_arithmetic-1.ligo" in
+  let%bind () =
+    expect_eq program "size_op"
+      (e_set [e_string "foo"; e_string "bar"; e_string "foobar"])
+      (e_nat 3) in
+  let%bind () =
+    expect_eq program "add_op"
+      (e_set [e_string "foo" ; e_string "bar"])
+      (e_set [e_string "foo" ; e_string "bar" ; e_string "foobar"]) in
+  let%bind () =
+    expect_eq program "add_op"
+      (e_set [e_string "foo" ; e_string "bar" ; e_string "foobar"])
+      (e_set [e_string "foo" ; e_string "bar" ; e_string "foobar"]) in
+  let%bind () =
+    expect_eq program "remove_op"
+      (e_set [e_string "foo" ; e_string "bar"])
+      (e_set [e_string "foo" ; e_string "bar"]) in
+  let%bind () =
+    expect_eq program "remove_op"
+      (e_set [e_string "foo" ; e_string "bar" ; e_string "foobar"])
+      (e_set [e_string "foo" ; e_string "bar"]) in
+  let%bind () =
+    expect_eq program_1 "fold_op"
+      (e_set [ e_int 4 ; e_int 10 ])
+      (e_int 29)
+  in
+  ok ()
+
 let unit_expression () : unit result =
   let%bind program = type_file "./contracts/unit.ligo" in
   expect_eq_evaluate program "u" (e_unit ())
@@ -476,6 +624,18 @@ let multiple_parameters () : unit result  =
 
 let multiple_parameters_mligo () : unit result  =
   let%bind program = mtype_file "./contracts/multiple-parameters.mligo" in
+  let aux ((name : string) , make_input , make_output) =
+    let make_output' = fun n -> e_int @@ make_output n in
+    expect_eq_n program name make_input make_output'
+  in
+  let%bind _ = bind_list @@ List.map aux [
+      (* Didn't include the other tests because they're probably not necessary *)
+      ("abcde", tuple_ez_int ["a";"b";"c";"d";"e"], fun n -> 2 * n + 3) ;
+    ] in
+  ok ()
+
+let multiple_parameters_religo () : unit result  =
+  let%bind program = retype_file "./contracts/multiple-parameters.religo" in
   let aux ((name : string) , make_input , make_output) =
     let make_output' = fun n -> e_int @@ make_output n in
     expect_eq_n program name make_input make_output'
@@ -581,6 +741,31 @@ let tuple_mligo () : unit result  =
   in
   ok ()
 
+
+let tuple_religo () : unit result  =
+  let%bind program = retype_file "./contracts/tuple.religo" in
+  let ez n =
+    e_tuple (List.map e_int n) in
+  let%bind () =
+    let expected = ez [0 ; 0] in
+    expect_eq_evaluate program "fb" expected
+  in
+  let%bind () =
+    let make_input = fun n -> ez [n ; n] in
+    let make_expected = fun n -> e_int (2 * n) in
+    expect_eq_n program "projection" make_input make_expected
+  in
+  let%bind () =
+    let make_input = fun n -> ez [n ; 2 * n ; n] in
+    let make_expected = fun n -> e_int (2 * n) in
+    expect_eq_n program "projection_abc" make_input make_expected
+  in
+  let%bind () =
+    let expected = ez [23 ; 23 ; 23 ; 23 ; 23] in
+    expect_eq_evaluate program "br" expected
+  in
+  ok ()
+
 let option () : unit result =
   let%bind program = type_file "./contracts/option.ligo" in
   let%bind () =
@@ -609,6 +794,19 @@ let moption () : unit result =
   in
   ok ()
 
+let reoption () : unit result =
+  let%bind program = retype_file "./contracts/option.religo" in
+  let%bind () =
+    let expected = e_some (e_int 42) in
+    expect_eq_evaluate program "s" expected
+  in
+  let%bind () =
+    let expected = e_typed_none t_int in
+    expect_eq_evaluate program "n" expected
+  in
+  ok ()
+
+
 let map_ type_f path : unit result =
   let%bind program = type_f path in
   let ez lst =
@@ -616,7 +814,7 @@ let map_ type_f path : unit result =
     let lst' = List.map (fun (x, y) -> e_int x, e_int y) lst in
     e_typed_map lst' t_int t_int
   in
-  let%bind () =
+   let%bind () =
     let make_input = fun n ->
       let m = ez [(23 , 0) ; (42 , 0)] in
       e_tuple [(e_int n) ; m]
@@ -738,8 +936,10 @@ let big_map_ type_f path : unit result =
 
 let map () : unit result = map_ type_file "./contracts/map.ligo"
 let mmap () : unit result = map_ mtype_file "./contracts/map.mligo"
+let remap () : unit result = map_ retype_file "./contracts/map.religo"
 let big_map () : unit result = big_map_ type_file "./contracts/big_map.ligo"
 let mbig_map () : unit result = big_map_ mtype_file "./contracts/big_map.mligo"
+let rebig_map () : unit result = big_map_ retype_file "./contracts/big_map.religo"
 
 
 let list () : unit result =
@@ -812,6 +1012,21 @@ let condition_mligo () : unit result =
       "./contracts/condition-annot.mligo";
     ] in
   ok ()
+
+let condition_religo () : unit result =
+  let%bind _ =
+    let aux file =
+      let%bind program = retype_file file in
+      let make_input = e_int in
+      let make_expected = fun n -> e_int (if n = 2 then 42 else 0) in
+      expect_eq_n program "main"  make_input make_expected in
+    bind_map_list aux [
+      "./contracts/condition.religo";
+      "./contracts/condition-shadowing.religo";
+      "./contracts/condition-annot.religo";
+    ] in
+  ok ()
+
 
 let condition_simple () : unit result =
   let%bind program = type_file "./contracts/condition-simple.ligo" in
@@ -909,6 +1124,25 @@ let loop_mligo () : unit result =
     let expected = e_int 10000 in
     expect_eq program "counter_nest" input expected
   in ok ()
+
+let loop_religo () : unit result =
+  let%bind program = retype_file "./contracts/loop.religo" in
+  let%bind () =
+    let input = e_int 0 in
+    let expected = e_int 100 in
+    expect_eq program "counter_simple" input expected
+  in
+  let%bind () =
+    let input = e_int 100 in
+    let expected = e_int 5050 in
+    expect_eq program "counter" input expected
+  in
+  let%bind () =
+    let input = e_int 100 in
+    let expected = e_int 10000 in
+    expect_eq program "counter_nest" input expected
+  in ok ()
+
 
 let matching () : unit result =
   let%bind program = type_file "./contracts/match.ligo" in
@@ -1010,6 +1244,17 @@ let super_counter_contract_mligo () : unit result =
     e_pair (e_typed_list [] t_operation) (e_int (op 42 n)) in
   expect_eq_n program "main" make_input make_expected
 
+let super_counter_contract_religo () : unit result =
+  let%bind program = retype_file "./contracts/super-counter.religo" in
+  let make_input = fun n ->
+    let action = if n mod 2 = 0 then "Increment" else "Decrement" in
+    e_pair (e_constructor action (e_int n)) (e_int 42) in
+  let make_expected = fun n ->
+    let op = if n mod 2 = 0 then (+) else (-) in
+    e_pair (e_typed_list [] t_operation) (e_int (op 42 n)) in
+  expect_eq_n program "main" make_input make_expected
+
+
 let dispatch_counter_contract () : unit result =
   let%bind program = type_file "./contracts/dispatch-counter.ligo" in
   let make_input = fun n ->
@@ -1040,8 +1285,21 @@ let failwith_mligo () : unit result =
   let make_input = e_pair (e_unit ()) (e_unit ()) in
   expect_fail program "main" make_input
 
+let failwith_religo () : unit result =
+  let%bind program = retype_file "./contracts/failwith.religo" in
+  let make_input = e_pair (e_unit ()) (e_unit ()) in
+  expect_fail program "main" make_input
+
 let assert_mligo () : unit result =
   let%bind program = mtype_file "./contracts/assert.mligo" in
+  let make_input b = e_pair (e_bool b) (e_unit ()) in
+  let make_expected = e_pair (e_typed_list [] t_operation) (e_unit ()) in
+  let%bind _ = expect_fail program "main" (make_input false) in
+  let%bind _ = expect_eq program "main" (make_input true) make_expected in
+  ok ()
+
+let assert_religo () : unit result =
+  let%bind program = retype_file "./contracts/assert.religo" in
   let make_input b = e_pair (e_bool b) (e_unit ()) in
   let make_expected = e_pair (e_typed_list [] t_operation) (e_unit ()) in
   let%bind _ = expect_fail program "main" (make_input false) in
@@ -1055,7 +1313,7 @@ let guess_the_hash_mligo () : unit result =
   expect_eq_n program "main" make_input make_expected
 
 let guess_string_mligo () : unit result =
-  let%bind program = mtype_file "./contracts/guess_string.mligo" in
+  let%bind program = type_file "./contracts/guess_string.mligo" in
   let make_input = fun n -> e_pair (e_int n) (e_int 42) in
   let make_expected = fun n -> e_pair (e_typed_list [] t_operation) (e_int (42 + n))
   in expect_eq_n program "main" make_input make_expected
@@ -1064,11 +1322,22 @@ let basic_mligo () : unit result =
   let%bind typed = mtype_file "./contracts/basic.mligo" in
   expect_eq_evaluate typed "foo" (e_int (42+127))
 
+let basic_religo () : unit result =
+  let%bind typed = retype_file "./contracts/basic.religo" in
+  expect_eq_evaluate typed "foo" (e_int (42+127))
+
 let counter_mligo () : unit result =
   let%bind program = mtype_file "./contracts/counter.mligo" in
   let make_input n = e_pair (e_int n) (e_int 42) in
   let make_expected n = e_pair (e_typed_list [] t_operation) (e_int (42 + n)) in
   expect_eq_n program "main" make_input make_expected
+
+let counter_religo () : unit result =
+  let%bind program = retype_file "./contracts/counter.religo" in
+  let make_input n = e_pair (e_int n) (e_int 42) in
+  let make_expected n = e_pair (e_typed_list [] t_operation) (e_int (42 + n)) in
+  expect_eq_n program "main" make_input make_expected
+
 
 let let_in_mligo () : unit result =
   let%bind program = mtype_file "./contracts/letin.mligo" in
@@ -1076,6 +1345,14 @@ let let_in_mligo () : unit result =
   let make_expected n =
     e_pair (e_typed_list [] t_operation) (e_pair (e_int (7+n)) (e_int (3+5)))
   in expect_eq_n program "main" make_input make_expected
+
+let let_in_religo () : unit result =
+  let%bind program = retype_file "./contracts/letin.religo" in
+  let make_input n = e_pair (e_int n) (e_pair (e_int 3) (e_int 5)) in
+  let make_expected n =
+    e_pair (e_typed_list [] t_operation) (e_pair (e_int (7+n)) (e_int (3+5)))
+  in expect_eq_n program "main" make_input make_expected
+
 
 let match_variant () : unit result =
   let%bind program = mtype_file "./contracts/match.mligo" in
@@ -1107,6 +1384,15 @@ let match_variant () : unit result =
     expect_eq_n program "match_option" make_input make_expected in
   ok ()
 
+let match_variant_re () : unit result =
+  let%bind program = retype_file "./contracts/match.religo" in
+  let make_input n =
+    e_pair (e_constructor "Sub" (e_int n)) (e_int 3) in
+  let make_expected n =
+    e_pair (e_typed_list [] t_operation) (e_int (3-n))
+  in expect_eq_n program "main" make_input make_expected
+
+
 let match_matej () : unit result =
   let%bind program = mtype_file "./contracts/match_bis.mligo" in
   let make_input n =
@@ -1115,8 +1401,38 @@ let match_matej () : unit result =
     e_pair (e_typed_list [] t_operation) (e_int (3-n))
   in expect_eq_n program "main" make_input make_expected
 
+let match_matej_re () : unit result =
+  let%bind program = retype_file "./contracts/match_bis.religo" in
+  let make_input n =
+    e_pair (e_constructor "Decrement" (e_int n)) (e_int 3) in
+  let make_expected n =
+    e_pair (e_typed_list [] t_operation) (e_int (3-n))
+  in expect_eq_n program "main" make_input make_expected
+
+
 let mligo_list () : unit result =
   let%bind program = mtype_file "./contracts/list.mligo" in
+  let aux lst = e_list @@ List.map e_int lst in
+  let%bind () = expect_eq program "fold_op" (aux [ 1 ; 2 ; 3 ]) (e_int 16) in
+  let%bind () =
+    let make_input n =
+      e_pair (e_list [e_int n; e_int (2*n)])
+        (e_pair (e_int 3) (e_list [e_int 8])) in
+    let make_expected n =
+      e_pair (e_typed_list [] t_operation)
+        (e_pair (e_int (n+3)) (e_list [e_int (2*n)]))
+    in
+    expect_eq_n program "main" make_input make_expected
+  in
+  let%bind () = expect_eq_evaluate program "x" (e_list []) in
+  let%bind () = expect_eq_evaluate program "y" (e_list @@ List.map e_int [3 ; 4 ; 5]) in
+  let%bind () = expect_eq_evaluate program "z" (e_list @@ List.map e_int [2 ; 3 ; 4 ; 5]) in
+  let%bind () = expect_eq program "map_op" (aux [2 ; 3 ; 4 ; 5]) (aux [3 ; 4 ; 5 ; 6]) in
+  let%bind () = expect_eq program "iter_op" (aux [2 ; 3 ; 4 ; 5]) (e_unit ()) in
+  ok ()
+
+let religo_list () : unit result =
+  let%bind program = retype_file "./contracts/list.religo" in
   let aux lst = e_list @@ List.map e_int lst in
   let%bind () = expect_eq program "fold_op" (aux [ 1 ; 2 ; 3 ]) (e_int 16) in
   let%bind () =
@@ -1142,6 +1458,13 @@ let lambda_mligo () : unit result =
   let make_expected = (e_unit ()) in
   expect_eq program "main" make_input make_expected
 
+let lambda_religo () : unit result =
+  let%bind program = retype_file "./contracts/lambda.religo" in
+  let make_input = e_pair (e_unit ()) (e_unit ()) in
+  let make_expected = (e_unit ()) in
+  expect_eq program "main" make_input make_expected
+
+
 let lambda_ligo () : unit result =
   let%bind program = type_file "./contracts/lambda.ligo" in
   let make_input = e_pair (e_unit ()) (e_unit ()) in
@@ -1153,6 +1476,13 @@ let lambda2_mligo () : unit result =
   let make_input = e_pair (e_unit ()) (e_unit ()) in
   let make_expected = (e_unit ()) in
   expect_eq program "main" make_input make_expected
+
+let lambda2_religo () : unit result =
+  let%bind program = retype_file "./contracts/lambda2.religo" in
+  let make_input = e_pair (e_unit ()) (e_unit ()) in
+  let make_expected = (e_unit ()) in
+  expect_eq program "main" make_input make_expected
+
 
 let fibo_mligo () : unit result =
   let%bind program = mtype_file "./contracts/fibo.mligo" in
@@ -1209,6 +1539,17 @@ let website2_mligo () : unit result =
     e_pair (e_typed_list [] t_operation) (e_int (op 42 n)) in
   expect_eq_n program "main" make_input make_expected
 
+let website2_religo () : unit result =
+  let%bind program = retype_file "./contracts/website2.religo" in
+  let make_input = fun n ->
+    let action = if n mod 2 = 0 then "Increment" else "Decrement" in
+    e_pair (e_constructor action (e_int n)) (e_int 42) in
+  let make_expected = fun n ->
+    let op = if n mod 2 = 0 then (+) else (-) in
+    e_pair (e_typed_list [] t_operation) (e_int (op 42 n)) in
+  expect_eq_n program "main" make_input make_expected
+
+
 let mligo_let_multiple () : unit result =
   let%bind program = mtype_file "./contracts/let_multiple.mligo" in
   let%bind () =
@@ -1243,6 +1584,25 @@ let mligo_let_multiple () : unit result =
   in
   ok ()
 
+let religo_let_multiple () : unit result =
+  let%bind program = retype_file "./contracts/let_multiple.religo" in
+  let%bind () =
+    let input = e_unit () in
+    let expected = e_int 3 in
+    expect_eq program "main" input expected
+  in
+  let%bind () =
+    let input = e_unit () in
+    let expected = e_int 6 in
+    expect_eq program "main_paren" input expected
+  in
+  let%bind () =
+    let input = e_unit () in
+    let expected = e_int 65 in
+    expect_eq program "non_tuple_rhs" input expected
+  in
+  ok ()
+
 let balance_constant () : unit result =
   let%bind program = type_file "./contracts/balance_constant.ligo" in
   let input = e_tuple [e_unit () ; e_mutez 0]  in
@@ -1256,6 +1616,13 @@ let balance_constant_mligo () : unit result =
   let expected = e_tuple [e_list []; e_mutez 4000000000000] in
   expect_eq program "main" input expected
 
+let balance_constant_religo () : unit result =
+  let%bind program = retype_file "./contracts/balance_constant.religo" in
+  let input = e_tuple [e_unit () ; e_mutez 0]  in
+  let expected = e_tuple [e_list []; e_mutez 4000000000000] in
+  expect_eq program "main" input expected
+
+
 let address () : unit result =
   let%bind _ = type_file "./contracts/address.ligo" in
   ok ()
@@ -1263,6 +1630,11 @@ let address () : unit result =
 let address_mligo () : unit result =
   let%bind _ = mtype_file "./contracts/address.mligo" in
   ok ()
+
+let address_religo () : unit result =
+  let%bind _ = retype_file "./contracts/address.religo" in
+  ok ()
+
 
 let self_address () : unit result =
   let%bind _ = type_file "./contracts/self_address.ligo" in
@@ -1272,12 +1644,25 @@ let self_address_mligo () : unit result =
   let%bind _ = mtype_file "./contracts/self_address.mligo" in
   ok ()
 
+let self_address_religo () : unit result =
+  let%bind _ = retype_file "./contracts/self_address.religo" in
+  ok ()
+
 let implicit_account () : unit result =
   let%bind _ = type_file "./contracts/implicit_account.ligo" in
   ok ()
 
 let implicit_account_mligo () : unit result =
   let%bind _ = mtype_file "./contracts/implicit_account.mligo" in
+  ok ()
+
+
+let implicit_account_religo () : unit result =
+  let%bind _ = retype_file "./contracts/implicit_account.religo" in
+  ok ()
+
+let tuples_sequences_functions_religo () : unit result =
+  let%bind _ = retype_file "./contracts/tuples_sequences_functions.religo" in    
   ok ()
 
 let is_nat () : unit result =
@@ -1305,6 +1690,20 @@ let is_nat_mligo () : unit result =
     let expected = e_none () in
     expect_eq program "main" input expected
   in ok ()
+
+let is_nat_religo () : unit result =
+  let%bind program = retype_file "./contracts/isnat.religo" in
+  let%bind () = 
+    let input = e_int 10 in
+    let expected = e_some (e_nat 10) in
+    expect_eq program "main" input expected
+  in
+  let%bind () =
+    let input = e_int (-10) in
+    let expected = e_none () in
+    expect_eq program "main" input expected
+  in ok ()
+
 
 let simple_access_ligo () : unit result =
   let%bind program = type_file "./contracts/simple_access.ligo" in
@@ -1370,46 +1769,63 @@ let main = test_suite "Integration (End to End)" [
     test "various applications" application ;
     test "closure" closure ;
     test "closure (mligo)" closure_mligo ;
+    test "closure (religo)" closure_religo ;
     test "shared function" shared_function ;
     test "shared function (mligo)" shared_function_mligo ;
+    test "shared function (religo)" shared_function_religo ;
     test "higher order" higher_order ;
     test "higher order (mligo)" higher_order_mligo ;
+    test "higher order (religo)" higher_order_religo ;
     test "variant" variant ;
     test "variant (mligo)" variant_mligo ;
+    test "variant (religo)" variant_religo ;
     test "variant matching" variant_matching ;
     test "tuple" tuple ;
     test "tuple (mligo)" tuple_mligo ;
+    test "tuple (religo)" tuple_religo ;
     test "record" record ;
     test "condition simple" condition_simple ;
     test "condition (ligo)" condition ;
     test "condition (mligo)" condition_mligo ;
+    test "condition (religo)" condition_religo ;
     test "shadow" shadow ;
     test "annotation" annotation ;
     test "multiple parameters" multiple_parameters ;
     test "multiple parameters (mligo)" multiple_parameters_mligo ;
+    test "multiple parameters (religo)" multiple_parameters_religo ;
     test "bool" bool_expression ;
     test "bool (mligo)" bool_expression_mligo ;
+    test "bool (religo)" bool_expression_religo ;
     test "arithmetic" arithmetic ;
     test "arithmetic (mligo)" arithmetic_mligo ;
+    test "arithmetic (religo)" arithmetic_religo ;
     test "bitwise_arithmetic" bitwise_arithmetic ;
     test "bitwise_arithmetic (mligo)" bitwise_arithmetic_mligo;
+    test "bitwise_arithmetic (religo)" bitwise_arithmetic_religo;
     test "string_arithmetic" string_arithmetic ;
     test "string_arithmetic (mligo)" string_arithmetic_mligo ;
+    test "string_arithmetic (religo)" string_arithmetic_religo ;
     test "bytes_arithmetic" bytes_arithmetic ;
     test "bytes_arithmetic (mligo)" bytes_arithmetic_mligo ;
+    test "bytes_arithmetic (religo)" bytes_arithmetic_religo ;
     test "set_arithmetic" set_arithmetic ;
     test "set_arithmetic (mligo)" set_arithmetic_mligo ;
+    test "set_arithmetic (religo)" set_arithmetic_religo ;
     test "unit" unit_expression ;
     test "string" string_expression ;
     test "option" option ;
     test "option (mligo)" moption ;
+    test "option (religo)" reoption ;
     test "map" map ;
     test "map (mligo)" mmap ;
+    test "map (religo)" remap ;
     test "big_map" big_map ;
     test "big_map (mligo)" mbig_map ;
+    test "big_map (religo)" rebig_map ;
     test "list" list ;
     test "loop" loop ;
     test "loop (mligo)" loop_mligo ;
+    test "loop (religo)" loop_religo ;
     test "matching" matching ;
     test "declarations" declarations ;
     test "quote declaration" quote_declaration ;
@@ -1420,21 +1836,30 @@ let main = test_suite "Integration (End to End)" [
     test "super counter contract" super_counter_contract_mligo ;
     test "dispatch counter contract" dispatch_counter_contract ;
     test "basic (mligo)" basic_mligo ;
+    test "basic (religo)" basic_religo ;
     test "counter contract (mligo)" counter_mligo ;
+    test "counter contract (religo)" counter_religo ;
     test "let-in (mligo)" let_in_mligo ;
+    test "let-in (religo)" let_in_religo ;
     test "match variant (mligo)" match_variant ;
+    test "match variant (religo)" match_variant_re ;
     test "match variant 2 (mligo)" match_matej ;
+    test "match variant 2 (religo)" match_matej_re ;
+    (* test "list matching (mligo)" mligo_list ; *)
     test "list matching (mligo)" mligo_list ;
+    test "list matching (religo)" religo_list ;
     (* test "guess the hash mligo" guess_the_hash_mligo ; WIP? *)
     test "failwith ligo" failwith_ligo ;
     test "failwith mligo" failwith_mligo ;
     test "assert mligo" assert_mligo ;
     (* test "guess string mligo" guess_string_mligo ; WIP? *)
     test "lambda mligo" lambda_mligo ;
+    test "lambda religo" lambda_religo ;
     test "lambda ligo" lambda_ligo ;
     test "tez (ligo)" tez_ligo ;
     test "tez (mligo)" tez_mligo ;
     test "lambda2 mligo" lambda2_mligo ;
+    test "lambda2 religo" lambda2_religo ;
     (* test "fibo (mligo)" fibo_mligo ; *)
     (* test "fibo2 (mligo)" fibo2_mligo ; *)
     (* test "fibo3 (mligo)" fibo3_mligo ; *)
@@ -1442,17 +1867,25 @@ let main = test_suite "Integration (End to End)" [
     test "website1 ligo" website1_ligo ;
     test "website2 ligo" website2_ligo ;
     test "website2 (mligo)" website2_mligo ;
+    test "website2 (religo)" website2_religo ;
     test "let multiple (mligo)" mligo_let_multiple ;
+    test "let multiple (religo)" religo_let_multiple ;
     test "balance constant" balance_constant ;
     test "balance constant (mligo)" balance_constant_mligo ;
+    test "balance constant (religo)" balance_constant_religo ;
     test "address" address ;
-    test "address_mligo" address_mligo ;
+    test "address (mligo)" address_mligo ;
+    test "address (religo)" address_religo ;
     test "self address" self_address ;
     test "self address (mligo)" self_address_mligo ;
+    test "self address (religo)" self_address_religo ;
     test "implicit account" implicit_account ;
     test "implicit account (mligo)" implicit_account_mligo ;
+    test "implicit account (religo)" implicit_account_religo ;
     test "is_nat" is_nat ;
-    test "is_not (mligo)" is_nat_mligo ;
+    test "is_nat (mligo)" is_nat_mligo ;
+    test "is_nat (religo)" is_nat_religo ;
+    test "tuples_sequences_functions (religo)" tuples_sequences_functions_religo ;
     test "simple_access (ligo)" simple_access_ligo;
     test "deep_access (ligo)" deep_access_ligo;
     test "entrypoints (ligo)" entrypoints_ligo ;

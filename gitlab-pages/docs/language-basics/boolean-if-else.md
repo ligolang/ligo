@@ -20,6 +20,12 @@ const b: bool = False;
 let a: bool = true
 let b: bool = false
 ```
+
+<!--Reasonligo-->
+```reasonligo
+let a: bool = true;
+let b: bool = false;
+```
 <!--END_DOCUSAURUS_CODE_TABS-->
 
 
@@ -43,6 +49,13 @@ let a: string = "Alice"
 let b: string = "Alice"
 // true
 let c: bool = (a = b)
+```
+<!--Reasonligo-->
+```reasonligo
+let a: string = "Alice";
+let b: string = "Alice";
+// true
+let c: bool = (a == b);
 ```
 <!--END_DOCUSAURUS_CODE_TABS-->
 
@@ -72,6 +85,18 @@ let f: bool = (a <= b)
 let g: bool = (a >= b)
 let h: bool = (a =/= b)
 ```
+
+<!--Reasonligo-->
+```reasonligo
+let a: int = 5;
+let b: int = 4;
+let c: bool = (a == b);
+let d: bool = (a > b);
+let e: bool = (a < b);
+let f: bool = (a <= b);
+let g: bool = (a >= b);
+let h: bool = (a != b);
+```
 <!--END_DOCUSAURUS_CODE_TABS-->
 
 
@@ -92,6 +117,13 @@ let a: tez = 5mutez
 let b: tez = 10mutez
 // false
 let c: bool = (a = b)
+```
+<!--Reasonligo-->
+```reasonligo
+let a: tez = 5mutez;
+let b: tez = 10mutez;
+// false
+let c: bool = (a == b);
 ```
 <!--END_DOCUSAURUS_CODE_TABS-->
 
@@ -143,6 +175,26 @@ let min_age: nat = 16n
 *)
 let is_adult (age: nat) : bool =
   if (age > min_age) then true else false
+```
+<!--Reasonligo-->
+```reasonligo
+let min_age: nat = 16n;
+
+/**
+
+    This function is really obnoxious, but it showcases
+    how the if statement and it's syntax can be used.
+
+    Normally, you'd use `with (age > min_age)` instead.
+
+*/
+
+let is_adult = (age: nat): bool =>
+  if (age > min_age) {
+    true;
+  } else {
+    false;
+  };
 ```
 
 > You can run the function above with

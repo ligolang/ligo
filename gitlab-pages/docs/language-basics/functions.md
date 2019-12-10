@@ -99,4 +99,9 @@ const a: int = increment(1);
 let increment : (int -> int) = fun (i: int) -> i + 1
 ```
 
+<!--Reasonligo-->
+```reasonligo
+let increment: (int => int) = (i: int) => i + 1;
+```
+
 <!--END_DOCUSAURUS_CODE_TABS-->

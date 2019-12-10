@@ -60,6 +60,29 @@ let g: int = 1_000_000
 >let g: int = 1_000_000;
 >```
 
+<!--Reasonligo-->
+
+```reasonligo
+// int + int produces int
+let a: int = 5 + 10;
+// nat + int produces int
+let b: int = 5n + 10;
+// tez + tez produces tez
+let c: tez = 5mutez + 10mutez;
+// you can't add tez + int or tez + nat, this won't compile
+// let d: tez = 5mutez + 10n;
+let e: nat = 5n + 10n;
+// nat + int produces an int, this won't compile
+// let f: nat = 5n + 10;
+let g: int = 1_000_000;
+```
+
+> Pro tip: you can use underscores for readability when defining large numbers
+>
+>```reasonligo
+>let g: int = 1_000_000;
+>```
+
 <!--END_DOCUSAURUS_CODE_TABS-->
 
 ## Subtraction
@@ -89,6 +112,16 @@ let b: int = 5n - 2n
 let d: tez = 5mutez - 1mt
 ```
 
+<!--Reasonligo-->
+```reasonligo
+let a: int = 5 - 10;
+// substraction of two nats, yields an int
+let b: int = 5n - 2n;
+// won't compile, result is an int, not a nat
+// let c: nat = 5n - 2n;
+let d: tez = 5mutez - 1mt;
+```
+
 <!--END_DOCUSAURUS_CODE_TABS-->
 
 
@@ -114,6 +147,14 @@ let b: nat = 5n * 5n
 let c: tez = 5n * 5mutez
 ```
 
+<!--Reasonligo-->
+```reasonligo
+let a: int = 5 * 5;
+let b: nat = 5n * 5n;
+// you can also multiply `nat` and `tez`
+let c: tez = 5n * 5mutez;
+```
+
 <!--END_DOCUSAURUS_CODE_TABS-->
 
 
@@ -136,6 +177,13 @@ const c: nat = 10mutez / 3mutez;
 let a: int = 10 / 3
 let b: nat = 10n / 3n
 let c: nat = 10mutez / 3mutez
+```
+
+<!--Reasonligo-->
+```reasonligo
+let a: int = 10 / 3;
+let b: nat = 10n / 3n;
+let c: nat = 10mutez / 3mutez;
 ```
 
 <!--END_DOCUSAURUS_CODE_TABS-->

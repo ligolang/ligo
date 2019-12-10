@@ -44,6 +44,34 @@ let%entry main(p : action) storage =
   in (([] : operation list), storage)
 ${pre}`;
 
+
+const REASONLIGO_EXAMPLE = `${pre}reasonligo
+type storage = int;
+
+/* variant defining pseudo multi-entrypoint
+   actions */
+type action =
+  | Increment(int)
+  | Decrement(int);
+
+let add = (a: int, b: int): int => a + b;
+
+let subtract = (a: int, b: int): int => a - b;
+
+/* real entrypoint that re-routes the flow
+   based on the action provided */
+let main = (p: action, storage) => {
+  let storage =
+    switch (p) {
+    | Increment(n) => add(storage, n)
+    | Decrement(n) => subtract(storage, n)
+    };
+  ([]: list(operation), storage);
+};
+
+${pre}`;
+
+
 module.exports = props => {
   const MarkdownBlock = props.MarkdownBlock;
 
@@ -60,7 +88,9 @@ module.exports = props => {
         <div className="nav-link" data-group="examples" data-tab="cameligo">
           CameLIGO
         </div>
-        <div className="disabled">ReasonLIGO (coming soon)</div>
+        <div className="nav-link" data-group="examples" data-tab="reasonligo">
+          ReasonLIGO
+        </div>
       </div>
       <div className="tab-content">
         <div id="pascaligo" className="tab-pane active" data-group="examples">
@@ -68,6 +98,9 @@ module.exports = props => {
         </div>
         <div id="cameligo" className="tab-pane" data-group="examples">
           <MarkdownBlock>{CAMELIGO_EXAMPLE}</MarkdownBlock>
+        </div>
+        <div id="reasonligo" className="tab-pane" data-group="examples">
+          <MarkdownBlock>{REASONLIGO_EXAMPLE}</MarkdownBlock>
         </div>
       </div>
     </div>

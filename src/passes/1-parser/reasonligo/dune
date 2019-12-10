@@ -1,0 +1,41 @@
+(ocamllex LexToken)
+
+(menhir
+ (merge_into Parser)
+ (modules ParToken Parser)
+ (flags -la 1 --explain --dump --strict --external-tokens LexToken))
+
+(library
+ (name parser_reasonligo)
+ (public_name ligo.parser.reasonligo)
+ (modules reasonligo LexToken Parser)
+ (libraries
+   parser_shared
+   parser_ligodity
+   str
+   simple-utils
+   tezos-utils
+   getopt   
+ )
+ (flags (:standard -open Simple_utils -open Parser_shared -open Parser_ligodity ))
+)
+
+(executable
+  (name LexerMain)
+  (libraries 
+   parser_reasonligo)
+  (modules 
+    LexerMain
+  )
+  (flags (:standard -open Parser_shared -open Parser_reasonligo))
+)
+
+(executable
+  (name ParserMain)
+  (libraries 
+   parser_reasonligo)
+  (modules    
+    ParserMain
+  )
+  (flags (:standard -open Simple_utils -open Parser_shared -open Parser_reasonligo))
+)
