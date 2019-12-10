@@ -157,9 +157,14 @@ let get_entry (lst : program) (name : string) : (expression * int) result =
 
   if arg_lst is None, it means that the entry point is not an arbitrary expression
 *)
+type form_t =
+  | ContractForm of (expression * int)
+  | ExpressionForm of ((expression * int) * expression list)
 
-let aggregate_entry (lst : program) (name : string) (arg_lst : expression list option) : expression result =
-  let%bind (entry_expression , entry_index) = get_entry lst name in
+let aggregate_entry (lst : program) (form : form_t) : expression result =
+  let (entry_expression , entry_index, arg_lst) = match form with
+    | ContractForm (exp,i) -> (exp,i,[])
+    | ExpressionForm ((exp,i),argl) -> (exp,i,argl) in
   let pre_declarations = List.until entry_index lst in
   let wrapper =
     let aux prec cur =
@@ -169,7 +174,7 @@ let aggregate_entry (lst : program) (name : string) (arg_lst : expression list o
     fun expr -> List.fold_right' aux expr pre_declarations
   in
   match (entry_expression.content , arg_lst) with
-  | (E_closure _ , Some (hd::tl)) -> (
+  | (E_closure _ , (hd::tl)) -> (
       let%bind type_value' = match entry_expression.type_value with
         | T_function (_,t) -> ok t
         | _ -> simple_fail "Trying to aggregate closure which does not have function type" in
@@ -189,6 +194,6 @@ let aggregate_entry (lst : program) (name : string) (arg_lst : expression list o
         } tl in
       ok @@ wrapper entry_expression'
     )
-  | (_ , None) | (_, Some _) -> (
+  | (_ , _) -> (
       ok @@ wrapper entry_expression
     )

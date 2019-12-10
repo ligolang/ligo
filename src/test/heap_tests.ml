@@ -51,7 +51,8 @@ let dummy n =
 let run_typed (entry_point:string) (program:Ast_typed.program) (input:Ast_typed.annotated_expression) =
   let%bind input_mini_c = Compile.Of_typed.compile_expression input in
   let%bind mini_c = Compile.Of_typed.compile program in
-  let%bind program_mich = Compile.Of_mini_c.aggregate_and_compile mini_c (Some [input_mini_c]) entry_point in
+  let%bind program_mich = Compile.Of_mini_c.aggregate_and_compile_expression
+      mini_c (Entry_name entry_point) [input_mini_c] in
   let%bind res = Run.Of_michelson.run program_mich.expr program_mich.expr_ty in
   let%bind output_type =
     let%bind entry_expression = Ast_typed.get_entry program entry_point in

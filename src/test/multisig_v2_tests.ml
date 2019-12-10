@@ -20,7 +20,7 @@ let compile_main () =
   let%bind simplified      = Ligo.Compile.Of_source.compile "./contracts/multisig-v2.ligo" (Syntax_name "pascaligo") in
   let%bind typed_prg,_ = Ligo.Compile.Of_simplified.compile simplified in
   let%bind mini_c_prg      = Ligo.Compile.Of_typed.compile typed_prg in
-  let%bind michelson_prg   = Ligo.Compile.Of_mini_c.aggregate_and_compile mini_c_prg None "main" in
+  let%bind michelson_prg   = Ligo.Compile.Of_mini_c.aggregate_and_compile_contract mini_c_prg "main" in
   let%bind (_contract: Tezos_utils.Michelson.michelson) =
     (* fails if the given entry point is not a valid contract *)
     Ligo.Compile.Of_mini_c.build_contract michelson_prg in
