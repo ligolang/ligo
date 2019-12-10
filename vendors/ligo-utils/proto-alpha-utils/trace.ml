@@ -11,7 +11,7 @@ let of_alpha_tz_error err = of_tz_error (AE.Ecoproto_error err)
 
 let trace_alpha_tzresult err : 'a AE.Error_monad.tzresult -> 'a result =
   function
-  | Result.Ok x -> ok x
+  | Ok x -> ok x
   | Error errs -> fail @@ thunk @@ patch_children (List.map of_alpha_tz_error errs) (err ())
 
 let trace_alpha_tzresult_lwt error (x:_ AE.Error_monad.tzresult Lwt.t) : _ result =
@@ -19,17 +19,17 @@ let trace_alpha_tzresult_lwt error (x:_ AE.Error_monad.tzresult Lwt.t) : _ resul
 
 let trace_tzresult err =
   function
-  | Result.Ok x -> ok x
+  | Ok x -> ok x
   | Error errs -> fail @@ thunk @@ patch_children (List.map of_tz_error errs) (err ())
 
 (* TODO: should be a combination of trace_tzresult and trace_r *)
 let trace_tzresult_r err_thunk_may_fail =
   function
-  | Result.Ok x -> ok x
+  | Ok x -> ok x
   | Error errs ->
       let tz_errs = List.map of_tz_error errs in
       match err_thunk_may_fail () with
-      | Simple_utils.Trace.Ok (err, annotations) ->
+      | Ok (err, annotations) ->
          ignore annotations ;
          Error (fun () -> patch_children tz_errs (err ()))
       | Error errors_while_generating_error ->

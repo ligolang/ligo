@@ -6,8 +6,8 @@
 *)
 
 module Trace_tutorial = struct
-  (** The trace monad is fairly similar to the predefined option
-      type. *)
+  (** The trace monad is fairly similar to the predefined [option]
+      type. It is an instance of the predefined [result] type. *)
 
   type annotation = string
   type      error = string
@@ -23,18 +23,20 @@ module Trace_tutorial = struct
       list of annotations (information about past successful
       computations), or it is a list of errors accumulated so far.
       The former case is denoted by the data constructor [Ok], and the
-      second by [Errors].
+      second by [Error].
    *)
-  type 'a result =
-    Ok of 'a * annotation list
-  | Errors of error list
+  type nonrec 'a result = ('a * annotation list, error list) result
+  (*
+  = Ok of 'a * annotation list
+  | Error of error list
+  *)
 
   (** The function [divide_trace] shows the basic use of the trace
       monad.
    *)
   let divide_trace a b =
     if   b = 0
-    then Errors [Printf.sprintf "division by zero: %d/%d" a b]
+    then Error [Printf.sprintf "division by zero: %d/%d" a b]
     else Ok (a/b, [])
 
   (** The function [divide_three] shows that when composing two
@@ -81,7 +83,7 @@ module Trace_tutorial = struct
         match f x with
           Ok (x', annot') -> Ok (x', annot' @ annot)
         |          errors -> ignore annot; errors)
-    | Errors _ as e -> e
+    | Error _ as e -> e
 
   (** The function [divide_three_bind] is equivalent to the verbose
       [divide_three] above, but makes use of [bind].
@@ -169,7 +171,7 @@ module Trace_tutorial = struct
         {li If the list only contains [Ok] values, it strips the [Ok]
          of each element and returns that list wrapped with [Ok].}
         {li Otherwise, one or more of the elements of the input list
-         is [Errors], then [bind_list] returns the first error in the
+         is [Error], then [bind_list] returns the first error in the
          list.}}
    *)
   let rec bind_list = function
@@ -199,7 +201,7 @@ module Trace_tutorial = struct
         And this will pass along the error triggered by [get key map].
    *)
   let trace err = function
-    Errors e -> Errors (err::e)
+    Error e -> Error (err::e)
   | ok -> ok
 
   (** The real trace monad is very similar to the one that we have
@@ -293,9 +295,11 @@ type annotation_thunk = annotation thunk
 (** Types of traced elements. It might be good to rename it [trace] at
     some point.
  *)
-type 'a result =
-  Ok    of 'a * annotation_thunk list
+type nonrec 'a result = ('a * annotation_thunk list, error_thunk) result
+(*
+= Ok    of 'a * annotation_thunk list
 | Error of error_thunk
+*)
 
 
 (** {1 Constructors} *)
