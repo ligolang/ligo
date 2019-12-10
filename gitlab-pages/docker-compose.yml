@@ -18,4 +18,5 @@ services:
       - ./website/sidebars.json:/app/website/sidebars.json
       - ./website/siteConfig.js:/app/website/siteConfig.js
       - ./website/versions.json:/app/website/versions.json
+      - ./website/node_modules/reason-highlightjs:/app/website/node_modules/reason-highlightjs
     working_dir: /app/website

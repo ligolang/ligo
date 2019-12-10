@@ -31,6 +31,13 @@ let my_set: int_set =
   Set.add 3 (Set.add 2 (Set.add 1 (Set.empty: int set)))
 ```
 
+<!--Reasonligo-->
+```reasonligo
+type int_set = set(int);
+let my_set: int_set =
+  Set.add(3, Set.add(2, Set.add(1, Set.empty: set(int))));
+```
+
 <!--END_DOCUSAURUS_CODE_TABS-->
 
 ### Empty sets
@@ -45,7 +52,10 @@ const my_set_2: int_set = set_empty;
 ```cameligo
 let my_set: int_set = (Set.empty: int set)
 ```
-
+<!--Reasonligo-->
+```reasonligo
+let my_set: int_set = (Set.empty: set(int));
+```
 <!--END_DOCUSAURUS_CODE_TABS-->
 
 ### Checking if set contains an element
@@ -62,6 +72,10 @@ const contains_three_fn: bool = set_mem(3, my_set);
 ```cameligo
 let contains_three: bool = Set.mem 3 my_set
 ```
+<!--Reasonligo-->
+```reasonligo
+let contains_three: bool = Set.mem(3, my_set);
+```
 
 <!--END_DOCUSAURUS_CODE_TABS-->
 
@@ -76,6 +90,11 @@ const set_size: nat = size(my_set);
 <!--Cameligo-->
 ```cameligo
 let set_size: nat = Set.size my_set
+```
+
+<!--Reasonligo-->
+```reasonligo
+let set_size: nat = Set.size(my_set);
 ```
 
 <!--END_DOCUSAURUS_CODE_TABS-->
@@ -96,6 +115,13 @@ let larger_set: int_set = Set.add 4 my_set
 let smaller_set: int_set = Set.remove 3 my_set
 ```
 
+<!--Reasonligo-->
+
+```reasonligo
+let larger_set: int_set = Set.add(4, my_set);
+let smaller_set: int_set = Set.remove(3, my_set);
+```
+
 <!--END_DOCUSAURUS_CODE_TABS-->
 
 
@@ -114,6 +140,11 @@ let sum (result: int) (i: int) : int = result + i
 let sum_of_a_set: int = Set.fold sum my_set 0
 ```
 
+<!--Reasonligo-->
+```reasonligo
+let sum = (result: int, i: int): int => result + i;
+let sum_of_a_set: int = Set.fold(sum, my_set, 0);
+```
 <!--END_DOCUSAURUS_CODE_TABS-->
 
 ## Lists
@@ -141,6 +172,12 @@ type int_list = int list
 let my_list: int_list = [1; 2; 3]
 ```
 
+<!--Reasonligo-->
+```reasonligo
+type int_list = list(int);
+let my_list: int_list = [1, 2, 3];
+```
+
 <!--END_DOCUSAURUS_CODE_TABS-->
 
 
@@ -157,6 +194,12 @@ const even_larger_list: int_list = 5 # larger_list;
 ```cameligo
 let larger_list: int_list = 4 :: my_list
 (* CameLIGO doesn't have a List.cons *)
+```
+
+<!--Reasonligo-->
+```reasonligo
+let larger_list: int_list = [4, ...my_list];
+/* Reasonligo doesn't have a List.cons */
 ```
 
 <!--END_DOCUSAURUS_CODE_TABS-->
@@ -182,6 +225,15 @@ let increment (i: int) : int = i + 1
 let incremented_list: int_list = List.map increment larger_list
 ```
 
+
+<!--Reasonligo-->
+
+```reasonligo
+let increment = (i: int): int => i + 1;
+/* Creates a new list with elements incremented by 1 */
+let incremented_list: int_list = List.map(increment, larger_list);
+```
+
 <!--END_DOCUSAURUS_CODE_TABS-->
 
 
@@ -200,6 +252,14 @@ const sum_of_a_list: int = list_fold(sum, my_list, 0);
 let sum (result: int) (i: int) : int = result + i
 // Outputs 6
 let sum_of_a_list: int = List.fold sum my_list 0
+```
+
+<!--Reasonligo-->
+
+```reasonligo
+let sum = (result: int, i: int): int => result + i;
+// Outputs 6
+let sum_of_a_list: int = List.fold(sum, my_list, 0);
 ```
 
 <!--END_DOCUSAURUS_CODE_TABS-->
@@ -239,6 +299,13 @@ type full_name = string * string
 let full_name: full_name = ("Alice", "Johnson")
 ```
 
+<!--Reasonligo-->
+```reasonligo
+type full_name = (string, string);
+/* The parenthesis here are optional */
+let full_name: full_name = ("Alice", "Johnson");
+```
+
 <!--END_DOCUSAURUS_CODE_TABS-->
 
 
@@ -260,6 +327,11 @@ const first_name: string = full_name.1;
 <!--Cameligo-->
 ```cameligo
 let first_name: string = full_name.1
+```
+
+<!--Reasonligo-->
+```reasonligo
+let first_name: string = full_name[1];
 ```
 
 <!--END_DOCUSAURUS_CODE_TABS-->
