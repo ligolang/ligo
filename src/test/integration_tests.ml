@@ -4,7 +4,9 @@ open Test_helpers
 open Ast_simplified.Combinators
 
 let retype_file f =
-  let%bind (typed , state , _env) = Ligo.Compile.Wrapper.source_to_typed (Syntax_name "reasonligo") f in
+  let%bind simplified  = Ligo.Compile.Of_source.compile f (Syntax_name "reasonligo") in
+  let%bind typed,state = Ligo.Compile.Of_simplified.compile simplified in
+  let () = Typer.Solver.discard_state state in
   let () = Typer.Solver.discard_state state in
   ok typed
 let mtype_file f =
