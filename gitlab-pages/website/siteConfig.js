@@ -1,5 +1,7 @@
 const repoUrl = 'https://gitlab.com/ligolang/ligo';
 
+let reasonHighlightJs = require('reason-highlightjs');
+
 const siteConfig = {
   title: 'LIGO', // Title for your website.
   tagline: 'LIGO is a friendly smart-contract language for Tezos',
@@ -77,8 +79,9 @@ const siteConfig = {
   highlight: {
     // Highlight.js theme to use for syntax highlighting in code blocks.
     theme: 'default',
-    hljs: function(hljs) {
-      hljs.registerLanguage('pascaligo', function(hljs) {
+    hljs: function (hljs) {
+      hljs.registerLanguage('reasonligo', reasonHighlightJs);
+      hljs.registerLanguage('pascaligo', function (hljs) {
         return {
           // case_insensitive: true,
           beginKeywords: '',

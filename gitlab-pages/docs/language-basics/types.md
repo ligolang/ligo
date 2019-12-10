@@ -27,6 +27,13 @@ type animal_breed = string
 let dog_breed: animal_breed = "Saluki"
 ```
 
+<!--Reasonligo-->
+
+```reasonligo
+type animal_breed = string;
+let dog_breed: animal_breed = "Saluki";
+```
+
 <!--END_DOCUSAURUS_CODE_TABS-->
 
 ## Simple types
@@ -44,10 +51,21 @@ end
 <!--Cameligo-->
 ```cameligo
 // account_balances is a simple type, a map of address <-> tez
-type account_balances is (address, tez) map
+type account_balances = (address, tez) map
 
 let ledger: account_balances = Map.literal
   [(("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address), 10mutez)]
+```
+
+<!--Reasonligo-->
+```reasonligo
+// account_balances is a simple type, a map of address <-> tez
+type account_balances = map(address, tez);
+
+let ledger: account_balances =
+  Map.literal([
+    ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address, 10(mutez)),
+  ]);
 ```
 
 <!--END_DOCUSAURUS_CODE_TABS-->
@@ -102,6 +120,31 @@ let ledger: account_balances = Map.literal
     {balance = 10mutez;
      number_of_transactions = 5n;}
    )]
+```
+
+<!--Reasonligo-->
+```reasonligo
+/* alias two types */
+type account = address;
+type number_of_transactions = nat;
+/* account_data consists of a record with two fields (balance, number_of_transactions) */
+type account_data = {
+  balance: tez,
+  number_of_transactions,
+};
+/* our ledger / account_balances is a map of account <-> account_data */
+type account_balances = map(account, account_data);
+
+// pseudo-JSON representation of our map
+// {"tz1...": {balance: 10mutez, number_of_transactions: 5n}}
+let ledger: account_balances =
+  Map.literal([
+    (
+      "tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address,
+      {balance: 10(mutez), number_of_transactions: 5n},
+    ),
+  ]);
+
 ```
 
 <!--END_DOCUSAURUS_CODE_TABS-->

@@ -39,6 +39,12 @@ let name: string = "Alice"
 let greeting: string = "Hello"
 let full_greeting: string = greeting ^ " " ^ name
 ```
+<!--Reasonligo-->
+```reasonligo
+let name: string = "Alice";
+let greeting: string = "Hello";
+let full_greeting: string = greeting ++ " " ++ name;
+```
 <!--END_DOCUSAURUS_CODE_TABS-->
 
 
@@ -57,6 +63,11 @@ const slice: string = string_slice(0n, 1n, name);
 ```cameligo
 let name: string = "Alice"
 let slice: string = String.slice 0n 1n name
+```
+<!--Reasonligo-->
+```reasonligo
+let name: string = "Alice";
+let slice: string = String.slice(0n, 1n, name);
 ```
 <!--END_DOCUSAURUS_CODE_TABS-->
 
@@ -77,5 +88,10 @@ const length: nat = size(name);
 ```cameligo
 let name: string = "Alice"
 let length: nat = String.size name
+```
+<!--Reasonligo-->
+```reasonligo
+let name: string = "Alice";
+let length: nat = String.size(name);
 ```
 <!--END_DOCUSAURUS_CODE_TABS-->

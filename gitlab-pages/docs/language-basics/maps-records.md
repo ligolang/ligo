@@ -22,6 +22,11 @@ type ledger is map(address, tez);
 type ledger = (address, tez) map
 ```
 
+<!--Reasonligo-->
+```reasonligo
+type ledger = map(address, tez);
+```
+
 <!--END_DOCUSAURUS_CODE_TABS-->
 
 And here's how a map value is populated:
@@ -51,6 +56,20 @@ let ledger: ledger = Map.literal
 > Note also the `;` to separate individual map entries.
 >
 > `("<string value>": address)` means that we type-cast a string into an address.
+
+<!--Reasonligo-->
+
+```reasonligo
+let ledger: ledger =
+  Map.literal([
+    ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address, 1000(mutez)),
+    ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address, 2000(mutez)),
+  ]);
+
+> Map.literal constructs the map from a list of key-value pair tuples, `(<key>, <value>)`.
+>
+> `("<string value>": address)` means that we type-cast a string into an address.
+```
 <!--END_DOCUSAURUS_CODE_TABS-->
 
 ### Accessing map values by key
@@ -68,6 +87,13 @@ const balance: option(tez) = ledger[("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": add
 ```cameligo
 let balance: tez option = Map.find_opt ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address) ledger
 ```
+
+<!--Reasonligo-->
+
+```reasonligo
+let balance: option(tez) =
+  Map.find_opt("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address, ledger);
+```
 <!--END_DOCUSAURUS_CODE_TABS-->
 
 #### Obtaining a map value forcefully
@@ -84,6 +110,13 @@ const balance: tez = get_force(("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address)
 
 ```cameligo
 let balance: tez = Map.find ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address) ledger
+```
+
+<!--Reasonligo-->
+
+```reasonligo
+let balance: tez =
+  Map.find("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address, ledger);
 ```
 
 <!--END_DOCUSAURUS_CODE_TABS-->
@@ -112,6 +145,14 @@ let iter_op (m : ledger) : unit =
   let assert_eq = fun (i: address) (j: tez) -> assert (j > 100)
   in Map.iter assert_eq m
 ```
+
+<!--Reasonligo-->
+```reasonligo
+let iter_op = (m: ledger): unit => {
+  let assert_eq = (i: address, j: tez) => assert(j > 100);
+  Map.iter(assert_eq, m);
+};
+```
 <!--END_DOCUSAURUS_CODE_TABS-->
 
 `map` is a way to create a new map by modifying the contents of an existing one.
@@ -130,6 +171,14 @@ function map_op (const m : ledger) : ledger is
 let map_op (m : ledger) : ledger =
   let increment = fun (_: address) (j: tez) -> j+1
   in Map.map increment m
+```
+
+<!--Reasonligo-->
+```reasonligo
+let map_op = (m: ledger): ledger => {
+  let increment = (ignore: address, j: tez) => j + 1;
+  Map.map(increment, m);
+};
 ```
 <!--END_DOCUSAURUS_CODE_TABS-->
 
@@ -154,8 +203,17 @@ function fold_op (const m : ledger) : tez is
 <!--Cameligo-->
 ```cameligo
 let fold_op (m : ledger) : ledger =
-  let aggregate = fun (_: address) (j: tez * tez) -> j.0 + j.1
+  let aggregate = fun (ignore: address) (j: tez * tez) -> j.0 + j.1
   in Map.fold aggregate m 10
+```
+
+<!--Reasonligo-->
+```reasonligo
+let fold_op = (m: ledger): ledger => {
+  let aggregate = (ignore: address, j: (tez, tez)) => j[0] + j[1];
+  Map.fold(aggregate, m, 10);
+};
+
 ```
 
 <!--END_DOCUSAURUS_CODE_TABS-->
@@ -185,6 +243,15 @@ type user = {
 }
 ```
 
+<!--Reasonligo-->
+```reasonligo
+type user = {
+  id: nat,
+  is_admin: bool,
+  name: string
+};
+```
+
 <!--END_DOCUSAURUS_CODE_TABS-->
 
 And here's how a record value is populated:
@@ -208,6 +275,14 @@ let user: user = {
 }
 ```
 
+<!--Reasonligo-->
+```reasonligo
+let user: user = {
+  id: 1n, 
+  is_admin: true, 
+  name: "Alice"
+};
+```
 <!--END_DOCUSAURUS_CODE_TABS-->
 
 
@@ -224,6 +299,11 @@ const is_admin: bool = user.is_admin;
 <!--Cameligo-->
 ```cameligo
 let is_admin: bool = user.is_admin
+```
+
+<!--Reasonligo-->
+```reasonligo
+let is_admin: bool = user.is_admin;
 ```
 
 <!--END_DOCUSAURUS_CODE_TABS-->

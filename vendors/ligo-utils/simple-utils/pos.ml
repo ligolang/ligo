@@ -126,13 +126,7 @@ let from_byte byte =
 
 let ghost = make ~byte:Lexing.dummy_pos ~point_num:(-1) ~point_bol:(-1)
 
-let min =
-  let byte = Lexing.{
-               pos_fname = "";
-               pos_lnum  = 1;
-               pos_bol   = 0;
-               pos_cnum  = 0}
-  in make ~byte ~point_num:0 ~point_bol:0
+let min = make ~byte:Lexing.dummy_pos ~point_num:0 ~point_bol:0
 
 (* Comparisons *)
 

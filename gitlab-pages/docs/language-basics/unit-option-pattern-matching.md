@@ -24,6 +24,11 @@ const n: unit = Unit;
 let n: unit = ()
 ```
 
+<!--Reasonligo-->
+```reasonligo
+let n: unit = ();
+```
+
 <!--END_DOCUSAURUS_CODE_TABS-->
 
 ## Variants
@@ -57,6 +62,18 @@ let u: user = Admin 1000n
 let g: user = Guest ()
 ```
 
+<!--Reasonligo-->
+```reasonligo
+type id = nat;
+type user =
+  | Admin(id)
+  | Manager(id)
+  | Guest(unit);
+
+let u: user = Admin(1000n);
+let g: user = Guest();
+```
+
 <!--END_DOCUSAURUS_CODE_TABS-->
 
 Defining a varient can be extremely useful for building semantically appealing contracts. We'll learn how to use variants for 'logic purposes' shortly.
@@ -82,6 +99,14 @@ type dinner = string option
 
 let p1: dinner = None
 let p2: dinner = Some "Hamburgers"
+```
+
+<!--Reasonligo-->
+```reasonligo
+type dinner = option(string);
+
+let p1: dinner = None;
+let p2: dinner = Some("Hamburgers");
 ```
 
 <!--END_DOCUSAURUS_CODE_TABS-->
@@ -111,6 +136,16 @@ let is_hungry (d: dinner) : bool =
   match d with
   | None -> true
   | Some s -> false
+```
+
+<!--Reasonligo-->
+```reasonligo
+type dinner = option(string);
+let is_hungry = (d: dinner): bool =>
+  switch (d) {
+  | None => true
+  | Some(s) => false
+  };
 ```
 
 <!--END_DOCUSAURUS_CODE_TABS-->

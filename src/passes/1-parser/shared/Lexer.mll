@@ -526,13 +526,14 @@ let esc        = "\\n" | "\\\"" | "\\\\" | "\\b"
                | "\\r" | "\\t" | "\\x" byte
 let pascaligo_sym = "=/=" | '#' | ":="
 let cameligo_sym = "<>" | "::" | "||" | "&&"
+let reasonligo_sym = '!' | "=>" | "!=" | "==" | "++" | "..." | "||" | "&&"
 
 let symbol =
   ';' | ',' | '(' | ')'| '[' | ']' | '{' | '}'
 | '=' | ':' | '|' | "->" | '.' | '_' | '^'
 | '+' | '-' | '*' | '/'
 | '<' | "<=" | '>' | ">="
-| pascaligo_sym | cameligo_sym
+| pascaligo_sym | cameligo_sym | reasonligo_sym
 
 let string = [^'"' '\\' '\n']*  (* For strings of #include *)
 
