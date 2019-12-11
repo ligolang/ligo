@@ -8,3 +8,4 @@ Version.ml
 **/.DS_Store
 .vscode/
 /ligo.install
+/_coverage/

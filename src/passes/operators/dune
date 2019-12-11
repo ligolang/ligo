@@ -9,7 +9,7 @@
     mini_c
   )
   (preprocess
-    (pps ppx_let)
+    (pps ppx_let bisect_ppx --conditional)
   )
   (flags (:standard -open Simple_utils ))
 )

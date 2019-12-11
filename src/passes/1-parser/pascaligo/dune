@@ -10,12 +10,17 @@
  (public_name ligo.parser.pascaligo)
  (modules AST pascaligo Parser ParserLog LexToken)
  (libraries
-    menhirLib
-    parser_shared
-    hex
-    simple-utils
-    tezos-utils)
- (flags (:standard  -open Parser_shared -open Simple_utils)))
+   menhirLib
+   parser_shared
+   hex
+   simple-utils
+   tezos-utils
+ )
+ (preprocess
+   (pps bisect_ppx --conditional)
+ )
+ (flags (:standard  -open Parser_shared -open Simple_utils))
+)
 
 (executable
   (name LexerMain)
