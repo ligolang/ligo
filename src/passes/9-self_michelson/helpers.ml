@@ -19,9 +19,8 @@ let rec map_expression : mapper -> michelson -> michelson result = fun f e ->
   | x -> ok x
 
 open Memory_proto_alpha.Protocol.Script_ir_translator
-(* fetches lambda first and second parameter (parameter,storage) *)
-let fetch_lambda_parameters : ex_ty -> (ex_ty * ex_ty) result =
-  let error ()  = simple_fail "failed to fetch lambda parameters" in
+let fetch_contract_inputs : ex_ty -> (ex_ty * ex_ty) result =
+  let error ()  = simple_fail "Invalid contract: Failed to fetch parameter and storage" in
   function
   | Ex_ty (Lambda_t (in_ty, _, _)) -> (
     match in_ty with
