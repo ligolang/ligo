@@ -27,20 +27,11 @@ let aggregate_and_compile = fun program form ->
   | ExpressionForm _ -> compile_expression aggregated'
 
 let aggregate_and_compile_contract = fun program name ->
-  let%bind (exp, idx) = get_entry program name in
-  aggregate_and_compile program (ContractForm (exp, idx))
+  let%bind (exp, _) = get_entry program name in
+  aggregate_and_compile program (ContractForm exp)
 
-type compiled_expression_t =
-  | Expression of expression
-  | Entry_name of string 
-
-let aggregate_and_compile_expression = fun program exp args ->
-  match exp with
-  | Expression exp ->
-    aggregate_and_compile program (ExpressionForm ((exp,List.length program), args))
-  | Entry_name name -> 
-    let%bind (exp, idx) = get_entry program name in
-    aggregate_and_compile program (ExpressionForm ((exp,idx), args))
+let aggregate_and_compile_expression = fun program exp ->
+  aggregate_and_compile program (ExpressionForm exp)
 
 let build_contract : Compiler.compiled_expression -> Michelson.michelson result =
   fun compiled ->
