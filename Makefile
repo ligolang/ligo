@@ -31,7 +31,8 @@ test: build
 	eval $$(opam config env)
 	scripts/test_ligo.sh
 
-coverage: build-deps
+coverage:
+	dune clean
 	BISECT_ENABLE=yes dune runtest --force
 	bisect-ppx-report html
 	bisect-ppx-report summary
