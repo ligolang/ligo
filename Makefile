@@ -30,3 +30,8 @@ test: build
 	export PATH="/usr/local/bin$${PATH:+:}$${PATH:-}"
 	eval $$(opam config env)
 	scripts/test_ligo.sh
+
+coverage: build-deps
+	BISECT_ENABLE=yes dune runtest --force
+	bisect-ppx-report html
+	bisect-ppx-report summary
