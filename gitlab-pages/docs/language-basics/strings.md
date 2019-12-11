@@ -17,7 +17,7 @@ const a: string = "Hello Alice";
 let a: string = "Hello Alice"
 ```
 <!--ReasonLIGO-->
-```
+```reasonligo
 let a: string = "Hello Alice";
 ```
 <!--END_DOCUSAURUS_CODE_TABS-->
