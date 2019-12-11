@@ -31,7 +31,7 @@ let my_set: int_set =
   Set.add 3 (Set.add 2 (Set.add 1 (Set.empty: int set)))
 ```
 
-<!--Reasonligo-->
+<!--ReasonLIGO-->
 ```reasonligo
 type int_set = set(int);
 let my_set: int_set =
@@ -52,7 +52,7 @@ const my_set_2: int_set = set_empty;
 ```cameligo
 let my_set: int_set = (Set.empty: int set)
 ```
-<!--Reasonligo-->
+<!--ReasonLIGO-->
 ```reasonligo
 let my_set: int_set = (Set.empty: set(int));
 ```
@@ -72,7 +72,7 @@ const contains_three_fn: bool = set_mem(3, my_set);
 ```cameligo
 let contains_three: bool = Set.mem 3 my_set
 ```
-<!--Reasonligo-->
+<!--ReasonLIGO-->
 ```reasonligo
 let contains_three: bool = Set.mem(3, my_set);
 ```
@@ -92,7 +92,7 @@ const set_size: nat = size(my_set);
 let set_size: nat = Set.size my_set
 ```
 
-<!--Reasonligo-->
+<!--ReasonLIGO-->
 ```reasonligo
 let set_size: nat = Set.size(my_set);
 ```
@@ -115,7 +115,7 @@ let larger_set: int_set = Set.add 4 my_set
 let smaller_set: int_set = Set.remove 3 my_set
 ```
 
-<!--Reasonligo-->
+<!--ReasonLIGO-->
 
 ```reasonligo
 let larger_set: int_set = Set.add(4, my_set);
@@ -140,7 +140,7 @@ let sum (result: int) (i: int) : int = result + i
 let sum_of_a_set: int = Set.fold sum my_set 0
 ```
 
-<!--Reasonligo-->
+<!--ReasonLIGO-->
 ```reasonligo
 let sum = (result: int, i: int): int => result + i;
 let sum_of_a_set: int = Set.fold(sum, my_set, 0);
@@ -172,7 +172,7 @@ type int_list = int list
 let my_list: int_list = [1; 2; 3]
 ```
 
-<!--Reasonligo-->
+<!--ReasonLIGO-->
 ```reasonligo
 type int_list = list(int);
 let my_list: int_list = [1, 2, 3];
@@ -196,10 +196,10 @@ let larger_list: int_list = 4 :: my_list
 (* CameLIGO doesn't have a List.cons *)
 ```
 
-<!--Reasonligo-->
+<!--ReasonLIGO-->
 ```reasonligo
 let larger_list: int_list = [4, ...my_list];
-/* Reasonligo doesn't have a List.cons */
+/* ReasonLIGO doesn't have a List.cons */
 ```
 
 <!--END_DOCUSAURUS_CODE_TABS-->
@@ -226,7 +226,7 @@ let incremented_list: int_list = List.map increment larger_list
 ```
 
 
-<!--Reasonligo-->
+<!--ReasonLIGO-->
 
 ```reasonligo
 let increment = (i: int): int => i + 1;
@@ -254,7 +254,7 @@ let sum (result: int) (i: int) : int = result + i
 let sum_of_a_list: int = List.fold sum my_list 0
 ```
 
-<!--Reasonligo-->
+<!--ReasonLIGO-->
 
 ```reasonligo
 let sum = (result: int, i: int): int => result + i;
@@ -299,7 +299,7 @@ type full_name = string * string
 let full_name: full_name = ("Alice", "Johnson")
 ```
 
-<!--Reasonligo-->
+<!--ReasonLIGO-->
 ```reasonligo
 type full_name = (string, string);
 /* The parenthesis here are optional */
@@ -329,7 +329,7 @@ const first_name: string = full_name.1;
 let first_name: string = full_name.1
 ```
 
-<!--Reasonligo-->
+<!--ReasonLIGO-->
 ```reasonligo
 let first_name: string = full_name[1];
 ```

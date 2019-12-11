@@ -48,7 +48,6 @@ val translate_main : AST.lambda -> Location.t ->( anon_function * ( type_value *
 
 (* From an expression [expr], build the expression [fun () -> expr] *)
 val translate_entry : AST.program -> string -> ( anon_function * ( type_value * type_value )) result
-val functionalize : AST.annotated_expression -> AST.lambda * AST.type_value
 *)
 val extract_constructor : value -> ( string * AST.type_value ) Append_tree.t' -> (string * value * AST.type_value) result
 val extract_tuple : value -> AST.type_value Append_tree.t' -> (value * AST.type_value) list result

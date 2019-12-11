@@ -27,7 +27,7 @@ type animal_breed = string
 let dog_breed: animal_breed = "Saluki"
 ```
 
-<!--Reasonligo-->
+<!--ReasonLIGO-->
 
 ```reasonligo
 type animal_breed = string;
@@ -64,7 +64,7 @@ type account_balances = map(address, tez);
 
 let ledger: account_balances =
   Map.literal([
-    ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address, 10(mutez)),
+    ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address, 10mutez),
   ]);
 ```
 
@@ -141,7 +141,7 @@ let ledger: account_balances =
   Map.literal([
     (
       "tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address,
-      {balance: 10(mutez), number_of_transactions: 5n},
+      {balance: 10mutez, number_of_transactions: 5n},
     ),
   ]);
 

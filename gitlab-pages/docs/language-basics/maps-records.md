@@ -22,7 +22,7 @@ type ledger is map(address, tez);
 type ledger = (address, tez) map
 ```
 
-<!--Reasonligo-->
+<!--ReasonLIGO-->
 ```reasonligo
 type ledger = map(address, tez);
 ```
@@ -57,19 +57,19 @@ let ledger: ledger = Map.literal
 >
 > `("<string value>": address)` means that we type-cast a string into an address.
 
-<!--Reasonligo-->
+<!--ReasonLIGO-->
 
 ```reasonligo
 let ledger: ledger =
   Map.literal([
-    ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address, 1000(mutez)),
-    ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address, 2000(mutez)),
+    ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address, 1000mutez),
+    ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address, 2000mutez),
   ]);
-
+```
 > Map.literal constructs the map from a list of key-value pair tuples, `(<key>, <value>)`.
 >
 > `("<string value>": address)` means that we type-cast a string into an address.
-```
+
 <!--END_DOCUSAURUS_CODE_TABS-->
 
 ### Accessing map values by key
@@ -88,7 +88,7 @@ const balance: option(tez) = ledger[("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": add
 let balance: tez option = Map.find_opt ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address) ledger
 ```
 
-<!--Reasonligo-->
+<!--ReasonLIGO-->
 
 ```reasonligo
 let balance: option(tez) =
@@ -112,7 +112,7 @@ const balance: tez = get_force(("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address)
 let balance: tez = Map.find ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address) ledger
 ```
 
-<!--Reasonligo-->
+<!--ReasonLIGO-->
 
 ```reasonligo
 let balance: tez =
@@ -146,7 +146,7 @@ let iter_op (m : ledger) : unit =
   in Map.iter assert_eq m
 ```
 
-<!--Reasonligo-->
+<!--ReasonLIGO-->
 ```reasonligo
 let iter_op = (m: ledger): unit => {
   let assert_eq = (i: address, j: tez) => assert(j > 100);
@@ -173,7 +173,7 @@ let map_op (m : ledger) : ledger =
   in Map.map increment m
 ```
 
-<!--Reasonligo-->
+<!--ReasonLIGO-->
 ```reasonligo
 let map_op = (m: ledger): ledger => {
   let increment = (ignore: address, j: tez) => j + 1;
@@ -207,7 +207,7 @@ let fold_op (m : ledger) : ledger =
   in Map.fold aggregate m 10
 ```
 
-<!--Reasonligo-->
+<!--ReasonLIGO-->
 ```reasonligo
 let fold_op = (m: ledger): ledger => {
   let aggregate = (ignore: address, j: (tez, tez)) => j[0] + j[1];
@@ -243,7 +243,7 @@ type user = {
 }
 ```
 
-<!--Reasonligo-->
+<!--ReasonLIGO-->
 ```reasonligo
 type user = {
   id: nat,
@@ -275,7 +275,7 @@ let user: user = {
 }
 ```
 
-<!--Reasonligo-->
+<!--ReasonLIGO-->
 ```reasonligo
 let user: user = {
   id: 1n, 
@@ -301,7 +301,7 @@ const is_admin: bool = user.is_admin;
 let is_admin: bool = user.is_admin
 ```
 
-<!--Reasonligo-->
+<!--ReasonLIGO-->
 ```reasonligo
 let is_admin: bool = user.is_admin;
 ```
