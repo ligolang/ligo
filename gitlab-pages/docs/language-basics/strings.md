@@ -16,15 +16,19 @@ const a: string = "Hello Alice";
 ```
 let a: string = "Hello Alice"
 ```
+<!--ReasonLIGO-->
+```
+let a: string = "Hello Alice";
+```
 <!--END_DOCUSAURUS_CODE_TABS-->
 
 
 ## Concatenating strings
 
-Strings can be concatenated using the `^` operator.
-
 <!--DOCUSAURUS_CODE_TABS-->
 <!--Pascaligo-->
+Strings can be concatenated using the `^` operator.
+
 ```pascaligo
 const name: string = "Alice";
 const greeting: string = "Hello";
@@ -34,12 +38,16 @@ const full_greeting: string = greeting ^ " " ^ name;
 const full_greeting_exclamation: string = string_concat(full_greeting, "!");
 ```
 <!--Cameligo-->
+Strings can be concatenated using the `^` operator.
+
 ```cameligo
 let name: string = "Alice"
 let greeting: string = "Hello"
 let full_greeting: string = greeting ^ " " ^ name
 ```
-<!--Reasonligo-->
+<!--ReasonLIGO-->
+Strings can be concatenated using the `++` operator.
+
 ```reasonligo
 let name: string = "Alice";
 let greeting: string = "Hello";
@@ -64,7 +72,7 @@ const slice: string = string_slice(0n, 1n, name);
 let name: string = "Alice"
 let slice: string = String.slice 0n 1n name
 ```
-<!--Reasonligo-->
+<!--ReasonLIGO-->
 ```reasonligo
 let name: string = "Alice";
 let slice: string = String.slice(0n, 1n, name);
@@ -89,7 +97,7 @@ const length: nat = size(name);
 let name: string = "Alice"
 let length: nat = String.size name
 ```
-<!--Reasonligo-->
+<!--ReasonLIGO-->
 ```reasonligo
 let name: string = "Alice";
 let length: nat = String.size(name);

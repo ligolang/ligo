@@ -70,6 +70,22 @@ let add (a: int) (b: int) : int = a + b
 The function body is a series of expressions, which are evaluated to give the return
 value.
 
+
+<!--ReasonLIGO-->
+
+Functions in ReasonLIGO are defined using the `let` keyword, like value bindings.
+The difference is that after the value name a list of function parameters is provided,
+along with a return type.
+
+Here's how you define a basic function that accepts two `ints` and returns an `int` as well:
+
+```reasonligo
+let add (a: int, b: int) : int = a + b;
+```
+
+The function body is a series of expressions, which are evaluated to give the return
+value.
+
 <!--END_DOCUSAURUS_CODE_TABS-->
 
 <!--DOCUSAURUS_CODE_TABS-->
@@ -99,7 +115,7 @@ const a: int = increment(1);
 let increment : (int -> int) = fun (i: int) -> i + 1
 ```
 
-<!--Reasonligo-->
+<!--ReasonLIGO-->
 ```reasonligo
 let increment: (int => int) = (i: int) => i + 1;
 ```

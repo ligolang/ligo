@@ -5,6 +5,8 @@ title: Constants & Variables
 
 The next building block after types are constants and variables.
 
+pleh.
+
 ## Constants
 
 Constants are immutable by design, which means their values can't be reassigned.
@@ -32,7 +34,7 @@ ligo evaluate-value -s cameligo gitlab-pages/docs/language-basics/src/variables-
 # Outputs: 25
 ```
 
-<!--Reasonligo-->
+<!--ReasonLIGO-->
 ```reasonligo
 let age: int = 25;
 ```
@@ -98,9 +100,9 @@ You can run the `add` function defined above using the LIGO compiler like this:
 ligo run-function -s cameligo gitlab-pages/docs/language-basics/src/variables-and-constants/add.mligo add '(1,1)' 
 # Outputs: 2
 ```
-<!--Reasonligo-->
+<!--ReasonLIGO-->
 
-As expected from a functional language, Reasonligo uses value-binding
+As expected from a functional language, ReasonLIGO uses value-binding
 for variables rather than assignment. Variables are changed by replacement,
 with a new value being bound in place of the old one.
 

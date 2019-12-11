@@ -24,7 +24,7 @@ const n: unit = Unit;
 let n: unit = ()
 ```
 
-<!--Reasonligo-->
+<!--ReasonLIGO-->
 ```reasonligo
 let n: unit = ();
 ```
@@ -62,7 +62,7 @@ let u: user = Admin 1000n
 let g: user = Guest ()
 ```
 
-<!--Reasonligo-->
+<!--ReasonLIGO-->
 ```reasonligo
 type id = nat;
 type user =
@@ -101,7 +101,7 @@ let p1: dinner = None
 let p2: dinner = Some "Hamburgers"
 ```
 
-<!--Reasonligo-->
+<!--ReasonLIGO-->
 ```reasonligo
 type dinner = option(string);
 
@@ -138,7 +138,7 @@ let is_hungry (d: dinner) : bool =
   | Some s -> false
 ```
 
-<!--Reasonligo-->
+<!--ReasonLIGO-->
 ```reasonligo
 type dinner = option(string);
 let is_hungry = (d: dinner): bool =>

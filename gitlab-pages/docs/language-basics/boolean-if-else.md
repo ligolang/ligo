@@ -21,7 +21,7 @@ let a: bool = true
 let b: bool = false
 ```
 
-<!--Reasonligo-->
+<!--ReasonLIGO-->
 ```reasonligo
 let a: bool = true;
 let b: bool = false;
@@ -50,7 +50,7 @@ let b: string = "Alice"
 // true
 let c: bool = (a = b)
 ```
-<!--Reasonligo-->
+<!--ReasonLIGO-->
 ```reasonligo
 let a: string = "Alice";
 let b: string = "Alice";
@@ -86,7 +86,7 @@ let g: bool = (a >= b)
 let h: bool = (a =/= b)
 ```
 
-<!--Reasonligo-->
+<!--ReasonLIGO-->
 ```reasonligo
 let a: int = 5;
 let b: int = 4;
@@ -118,7 +118,7 @@ let b: tez = 10mutez
 // false
 let c: bool = (a = b)
 ```
-<!--Reasonligo-->
+<!--ReasonLIGO-->
 ```reasonligo
 let a: tez = 5mutez;
 let b: tez = 10mutez;
@@ -176,7 +176,7 @@ let min_age: nat = 16n
 let is_adult (age: nat) : bool =
   if (age > min_age) then true else false
 ```
-<!--Reasonligo-->
+<!--ReasonLIGO-->
 ```reasonligo
 let min_age: nat = 16n;
 
@@ -199,7 +199,7 @@ let is_adult = (age: nat): bool =>
 
 > You can run the function above with
 > ```
-> ligo run-function -s cameligo src/if-else.mligo is_adult 21n
+> ligo run-function -s reasonligo src/if-else.religo is_adult 21n
 > ```
 
 <!--END_DOCUSAURUS_CODE_TABS-->
