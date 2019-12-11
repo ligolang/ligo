@@ -80,7 +80,7 @@ along with a return type.
 Here's how you define a basic function that accepts two `ints` and returns an `int` as well:
 
 ```reasonligo
-let add (a: int, b: int) : int = a + b;
+let add = (a: int, b: int) : int => a + b;
 ```
 
 The function body is a series of expressions, which are evaluated to give the return

@@ -5,8 +5,6 @@ title: Constants & Variables
 
 The next building block after types are constants and variables.
 
-pleh.
-
 ## Constants
 
 Constants are immutable by design, which means their values can't be reassigned.

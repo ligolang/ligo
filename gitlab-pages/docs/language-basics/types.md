@@ -57,9 +57,9 @@ let ledger: account_balances = Map.literal
   [(("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address), 10mutez)]
 ```
 
-<!--Reasonligo-->
+<!--ReasonLIGO-->
 ```reasonligo
-// account_balances is a simple type, a map of address <-> tez
+/* account_balances is a simple type, a map of address <-> tez */
 type account_balances = map(address, tez);
 
 let ledger: account_balances =
@@ -122,7 +122,7 @@ let ledger: account_balances = Map.literal
    )]
 ```
 
-<!--Reasonligo-->
+<!--ReasonLIGO-->
 ```reasonligo
 /* alias two types */
 type account = address;
@@ -135,8 +135,8 @@ type account_data = {
 /* our ledger / account_balances is a map of account <-> account_data */
 type account_balances = map(account, account_data);
 
-// pseudo-JSON representation of our map
-// {"tz1...": {balance: 10mutez, number_of_transactions: 5n}}
+/* pseudo-JSON representation of our map */
+/* {"tz1...": {balance: 10mutez, number_of_transactions: 5n}} */
 let ledger: account_balances =
   Map.literal([
     (

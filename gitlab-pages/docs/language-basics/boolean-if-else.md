@@ -54,7 +54,7 @@ let c: bool = (a = b)
 ```reasonligo
 let a: string = "Alice";
 let b: string = "Alice";
-// true
+/* true */
 let c: bool = (a == b);
 ```
 <!--END_DOCUSAURUS_CODE_TABS-->
@@ -122,7 +122,7 @@ let c: bool = (a = b)
 ```reasonligo
 let a: tez = 5mutez;
 let b: tez = 10mutez;
-// false
+/* false */
 let c: bool = (a == b);
 ```
 <!--END_DOCUSAURUS_CODE_TABS-->
