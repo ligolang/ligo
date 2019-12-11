@@ -162,9 +162,9 @@ type form_t =
   | ExpressionForm of ((expression * int) * expression list)
 
 let aggregate_entry (lst : program) (form : form_t) : expression result =
-  let (entry_expression , entry_index, arg_lst) = match form with
-    | ContractForm (exp,i) -> (exp,i,[])
-    | ExpressionForm ((exp,i),argl) -> (exp,i,argl) in
+  let (entry_expression , entry_index) = match form with
+    | ContractForm (exp,i) -> (exp,i)
+    | ExpressionForm ((exp,i),_) -> (exp,i) in
   let pre_declarations = List.until entry_index lst in
   let wrapper =
     let aux prec cur =
@@ -173,27 +173,45 @@ let aggregate_entry (lst : program) (form : form_t) : expression result =
     in
     fun expr -> List.fold_right' aux expr pre_declarations
   in
-  match (entry_expression.content , arg_lst) with
-  | (E_closure _ , (hd::tl)) -> (
-      let%bind type_value' = match entry_expression.type_value with
-        | T_function (_,t) -> ok t
-        | _ -> simple_fail "Trying to aggregate closure which does not have function type" in
-      let entry_expression' = List.fold_left
-        (fun acc el ->
-          let type_value' = match acc.type_value with
-            | T_function (_,t) -> t
-            | e -> e in
+  match form with
+  | ContractForm _ -> (
+    match (entry_expression.content) with
+    | (E_closure l) -> (
+        let l' = { l with body = wrapper l.body } in
+        let%bind t' =
+          let%bind (input_ty , output_ty) = get_t_function entry_expression.type_value in
+          ok (t_function input_ty output_ty)
+        in
+        let e' = {
+          content = E_closure l' ;
+          type_value = t' ;
+        } in
+        ok e'
+      )
+    | _ -> simple_fail "a contract must be a closure" )
+  | ExpressionForm (_,arg_lst) -> (
+    match (entry_expression.content , arg_lst) with
+    | (E_closure _ , (hd::tl)) -> (
+        let%bind type_value' = match entry_expression.type_value with
+          | T_function (_,t) -> ok t
+          | _ -> simple_fail "Trying to aggregate closure which does not have function type" in
+        let entry_expression' = List.fold_left
+          (fun acc el ->
+            let type_value' = match acc.type_value with
+              | T_function (_,t) -> t
+              | e -> e in
+            {
+              content = E_application (acc,el) ;
+              type_value = type_value' ;
+            }
+          )
           {
-            content = E_application (acc,el) ;
+            content = E_application (entry_expression, hd) ;
             type_value = type_value' ;
-          }
-        )
-        {
-          content = E_application (entry_expression, hd) ;
-          type_value = type_value' ;
-        } tl in
-      ok @@ wrapper entry_expression'
-    )
-  | (_ , _) -> (
-      ok @@ wrapper entry_expression
-    )
+          } tl in
+        ok @@ wrapper entry_expression'
+      )
+    | (_ , _) -> (
+        ok @@ wrapper entry_expression
+      )
+  )
