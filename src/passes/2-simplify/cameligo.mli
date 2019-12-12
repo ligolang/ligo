@@ -4,7 +4,7 @@ open Trace
 
 open Ast_simplified
 
-module Raw = Parser.Ligodity.AST
+module Raw = Parser.Cameligo.AST
 module SMap = Map.String
 module Option = Simple_utils.Option
 

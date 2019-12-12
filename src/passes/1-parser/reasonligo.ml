@@ -1,8 +1,8 @@
 open Trace
 
 module Parser = Parser_reasonligo.Parser
-module AST = Parser_ligodity.AST
-module ParserLog = Parser_ligodity.ParserLog
+module AST = Parser_cameligo.AST
+module ParserLog = Parser_cameligo.ParserLog
 module LexToken = Parser_reasonligo.LexToken
 module Lexer = Lexer.Make(LexToken)
 

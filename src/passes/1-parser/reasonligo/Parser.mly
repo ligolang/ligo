@@ -4,7 +4,7 @@
 [@@@warning "-42"]
 
 open Region
-module AST = Parser_ligodity.AST
+module AST = Parser_cameligo.AST
 open AST
 
 

@@ -20,7 +20,7 @@ type animalBreed is string;
 const dogBreed : animalBreed = "Saluki";
 ```
 
-<!--Cameligo-->
+<!--CameLIGO-->
 
 ```cameligo
 type animal_breed = string
@@ -48,7 +48,7 @@ const ledger: accountBalances = map
 end
 ```
 
-<!--Cameligo-->
+<!--CameLIGO-->
 ```cameligo
 // account_balances is a simple type, a map of address <-> tez
 type account_balances = (address, tez) map
@@ -100,7 +100,7 @@ const ledger: accountBalances = map
 end
 ```
 
-<!--Cameligo-->
+<!--CameLIGO-->
 ```cameligo
 (* alias two types *)
 type account = address

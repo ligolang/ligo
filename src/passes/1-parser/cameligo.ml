@@ -1,9 +1,9 @@
 open Trace
 
-module Parser = Parser_ligodity.Parser
-module AST = Parser_ligodity.AST
-module ParserLog = Parser_ligodity.ParserLog
-module LexToken = Parser_ligodity.LexToken
+module Parser = Parser_cameligo.Parser
+module AST = Parser_cameligo.AST
+module ParserLog = Parser_cameligo.ParserLog
+module LexToken = Parser_cameligo.LexToken
 module Lexer = Lexer.Make(LexToken)
 
 let parse_file (source: string) : AST.t result =

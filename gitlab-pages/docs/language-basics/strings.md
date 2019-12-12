@@ -12,7 +12,7 @@ Strings are defined using the built-in `string` type like this:
 ```
 const a: string = "Hello Alice";
 ```
-<!--Cameligo-->
+<!--CameLIGO-->
 ```
 let a: string = "Hello Alice"
 ```
@@ -37,7 +37,7 @@ const full_greeting: string = greeting ^ " " ^ name;
 // Hello Alice! (alternatively)
 const full_greeting_exclamation: string = string_concat(full_greeting, "!");
 ```
-<!--Cameligo-->
+<!--CameLIGO-->
 Strings can be concatenated using the `^` operator.
 
 ```cameligo
@@ -67,7 +67,7 @@ const name: string = "Alice";
 // slice = "A"
 const slice: string = string_slice(0n, 1n, name);
 ```
-<!--Cameligo-->
+<!--CameLIGO-->
 ```cameligo
 let name: string = "Alice"
 let slice: string = String.slice 0n 1n name
@@ -92,7 +92,7 @@ const name: string = "Alice";
 // length = 5
 const length: nat = size(name);
 ```
-<!--Cameligo-->
+<!--CameLIGO-->
 ```cameligo
 let name: string = "Alice"
 let length: nat = String.size name

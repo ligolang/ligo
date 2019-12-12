@@ -15,7 +15,7 @@ Here's how to define a boolean:
 const a: bool = True;
 const b: bool = False;
 ```
-<!--Cameligo-->
+<!--CameLIGO-->
 ```cameligo
 let a: bool = true
 let b: bool = false
@@ -43,7 +43,7 @@ const b: string = "Alice";
 // True
 const c: bool = (a = b);
 ```
-<!--Cameligo-->
+<!--CameLIGO-->
 ```cameligo
 let a: string = "Alice"
 let b: string = "Alice"
@@ -74,7 +74,7 @@ const f: bool = (a <= b);
 const g: bool = (a >= b);
 const h: bool = (a =/= b);
 ```
-<!--Cameligo-->
+<!--CameLIGO-->
 ```cameligo
 let a: int = 5
 let b: int = 4
@@ -111,7 +111,7 @@ const a: tez = 5mutez;
 const b: tez = 10mutez;
 const c: bool = (a = b);
 ```
-<!--Cameligo-->
+<!--CameLIGO-->
 ```cameligo
 let a: tez = 5mutez
 let b: tez = 10mutez
@@ -161,7 +161,7 @@ function is_adult(const age: nat): bool is
 > ligo run-function -s pascaligo src/if-else.ligo is_adult 21n
 > ```
 
-<!--Cameligo-->
+<!--CameLIGO-->
 ```cameligo
 let min_age: nat = 16n
 

@@ -672,7 +672,7 @@ and type_expression : environment -> Solver.state -> ?tv_opt:O.type_value -> I.e
    *   } -> (
    *     let%bind input_type =
    *       let%bind input_type =
-   *         (\* Hack to take care of let_in introduced by `simplify/ligodity.ml` in ECase's hack *\)
+   *         (\* Hack to take care of let_in introduced by `simplify/cameligo.ml` in ECase's hack *\)
    *         let default_action e () = fail @@ (needs_annotation e "the returned value") in
    *         match input_type with
    *         | Some ty -> ok ty

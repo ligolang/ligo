@@ -11,13 +11,13 @@
  (modules reasonligo LexToken Parser)
  (libraries
    parser_shared
-   parser_ligodity
+   parser_cameligo
    str
    simple-utils
    tezos-utils
    getopt   
  )
- (flags (:standard -open Simple_utils -open Parser_shared -open Parser_ligodity ))
+ (flags (:standard -open Simple_utils -open Parser_shared -open Parser_cameligo ))
 )
 
 (executable

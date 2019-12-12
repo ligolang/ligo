@@ -1,4 +1,4 @@
-(* Driver for the lexer of Ligodity *)
+(* Driver for the lexer of Cameligo *)
 
 (* Error printing and exception tracing *)
 

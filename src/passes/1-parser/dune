@@ -6,8 +6,7 @@
     tezos-utils
     parser_shared
     parser_pascaligo
-    parser_camligo
-    parser_ligodity
+    parser_cameligo
     parser_reasonligo
   )
   (preprocess

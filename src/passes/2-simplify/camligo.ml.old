@@ -1,12 +1,12 @@
 open Trace
 open Function
-module I = Parser.Camligo.Ast
+module I = Parser.Cameligo.Ast
 module O = Ast_simplified
 open O.Combinators
 
 let unwrap : type a . a Location.wrap -> a = Location.unwrap
 
-open Operators.Simplify.Camligo
+open Operators.Simplify.Cameligo
 
 let type_variable : string -> O.type_expression result = fun str ->
   match List.assoc_opt str type_constants with
