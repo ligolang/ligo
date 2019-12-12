@@ -23,9 +23,6 @@ depends: [
   # work around upstream in-place update
   "ocaml-migrate-parsetree" { = "1.4.0" }
 ]
-pin-depends: [
-  ["bisect_ppx.git" "git+https://github.com/aantron/bisect_ppx.git"]
-]
 build: [
   [ "dune" "build" "-p" name "-j" jobs ]
 ]
