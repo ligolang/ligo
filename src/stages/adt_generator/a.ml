@@ -14,3 +14,4 @@ and ta1 =
 
 and ta2 =
 | Z of ta2
+| W of unit

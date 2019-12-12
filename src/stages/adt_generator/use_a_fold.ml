@@ -2,7 +2,7 @@ open A
 open Fold
 
 let _ =
-  let some_root = ((failwith "assume we have some root") : root) in
+  let some_root : root = A { a1 = X (A { a1 = X (B 1) ; a2 = W () ; }) ; a2 = Z (W ()) ; } in
   let op = {
       no_op with
       a = fun the_a state continue_fold ->
@@ -11,8 +11,12 @@ let _ =
           ({
               a1' = a1' ;
               a2' = a2' ;
-            }, state'')
+            }, state'' + 1)
     } in
-  let state = () in
-  fold_root op some_root state
+  let state = 0 in
+  let (_, state) = fold_root op some_root state in
+  Printf.printf "trilili %d" state
 
+
+let _noi : int fold_config = no_op (* (fun _ -> ()) *)
+let _nob : bool fold_config = no_op (* (fun _ -> ()) *)
