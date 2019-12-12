@@ -157,13 +157,9 @@ let aggregate_entry (lst : program) (form : form_t) : expression result =
     match (entry_expression.content) with
     | (E_closure l) -> (
         let l' = { l with body = wrapper l.body } in
-        let%bind t' =
-          let%bind (input_ty , output_ty) = get_t_function entry_expression.type_value in
-          ok (t_function input_ty output_ty)
-        in
         let e' = {
           content = E_closure l' ;
-          type_value = t' ;
+          type_value = entry_expression.type_value ;
         } in
         ok e'
       )
