@@ -128,6 +128,11 @@ let lmap_sep value sep ppf m =
   let new_pp ppf (k, v) = fprintf ppf "%a -> %a" label k value v in
   fprintf ppf "%a" (list_sep new_pp sep) lst
 
+let lrecord_sep value sep ppf m =
+  let lst = Types.LMap.to_kv_list m in
+  let new_pp ppf (k, v) = fprintf ppf "%a = %a" label k value v in
+  fprintf ppf "%a" (list_sep new_pp sep) lst
+
 let list_sep_d x = list_sep x (const " , ")
 let cmap_sep_d x = cmap_sep x (const " , ")
 let lmap_sep_d x = lmap_sep x (const " , ")
