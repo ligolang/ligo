@@ -1,4 +1,4 @@
-(* Driver for the parser of Ligodity *)
+(* Driver for the parser of Cameligo *)
 
 (* Error printing and exception tracing *)
 

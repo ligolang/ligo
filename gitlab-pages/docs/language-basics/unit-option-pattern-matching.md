@@ -19,7 +19,7 @@ Here's how they're defined:
 const n: unit = Unit;
 ```
 
-<!--Cameligo-->
+<!--CameLIGO-->
 ```cameligo
 let n: unit = ()
 ```
@@ -50,7 +50,7 @@ const u: user = Admin(1000n);
 const g: user = Guest(Unit);
 ```
 
-<!--Cameligo-->
+<!--CameLIGO-->
 ```cameligo
 type id = nat
 type user =
@@ -93,7 +93,7 @@ const p1: dinner = None;
 const p2: dinner = Some("Hamburgers")
 ```
 
-<!--Cameligo-->
+<!--CameLIGO-->
 ```cameligo
 type dinner = string option
 
@@ -129,7 +129,7 @@ function is_hungry(const dinner: dinner): bool is block { skip }
     )
 ```
 
-<!--Cameligo-->
+<!--CameLIGO-->
 ```cameligo
 type dinner = string option
 let is_hungry (d: dinner) : bool =

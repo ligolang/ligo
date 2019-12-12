@@ -105,9 +105,9 @@ let () =
     if Utils.String.Set.mem "ast" options.verbose
     then let buffer = Buffer.create 131 in
          begin
-           Parser_ligodity.ParserLog.offsets := options.offsets;
-           Parser_ligodity.ParserLog.mode    := options.mode;
-           Parser_ligodity.ParserLog.print_tokens buffer ast;
+           Parser_cameligo.ParserLog.offsets := options.offsets;
+           Parser_cameligo.ParserLog.mode    := options.mode;
+           Parser_cameligo.ParserLog.print_tokens buffer ast;
            Buffer.output_buffer stdout buffer
          end
   with

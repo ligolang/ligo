@@ -9,13 +9,8 @@ module Simplify : sig
     val type_operators : string -> type_expression type_operator result
   end
 
-  module Camligo : sig
-    val constants  : string -> constant result
-    val type_constants : string -> type_constant result
-    val type_operators : string -> type_expression type_operator result
-  end
 
-  module Ligodity : sig
+  module Cameligo : sig
     val constants  : string -> constant result
     val type_constants : string -> type_constant result
     val type_operators : string -> type_expression type_operator result

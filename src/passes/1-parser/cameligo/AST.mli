@@ -1,4 +1,4 @@
-(* Abstract Syntax Tree (AST) for Ligodity *)
+(* Abstract Syntax Tree (AST) for Cameligo *)
 
 [@@@warning "-30"]
 

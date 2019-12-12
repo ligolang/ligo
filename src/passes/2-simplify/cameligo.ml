@@ -3,7 +3,7 @@
 open Trace
 open Ast_simplified
 
-module Raw = Parser.Ligodity.AST
+module Raw = Parser.Cameligo.AST
 module SMap = Map.String
 module Option = Simple_utils.Option
 (* TODO: move 1-parser/shared/Utils.ml{i} to Simple_utils/ *)
@@ -101,7 +101,7 @@ module Errors = struct
     let message () = "" in
     let data = [
       ("expression" ,
-       thunk @@ Parser.Ligodity.ParserLog.expr_to_string t)
+       thunk @@ Parser.Cameligo.ParserLog.expr_to_string t)
     ] in
     error ~data title message
 
@@ -130,7 +130,7 @@ end
 
 open Errors
 
-open Operators.Simplify.Ligodity
+open Operators.Simplify.Cameligo
 
 let r_split = Location.r_split
 
@@ -379,7 +379,7 @@ let rec simpl_expression :
       let default_action () =
         let%bind cases = simpl_cases lst in
         return @@ e_matching ~loc e  cases in
-      (* Hack to take care of patterns introduced by `parser/ligodity/Parser.mly` in "norm_fun_expr". TODO: Still needed? *)
+      (* Hack to take care of patterns introduced by `parser/cameligo/Parser.mly` in "norm_fun_expr". TODO: Still needed? *)
       match lst with
       | [ (pattern , rhs) ] -> (
           match pattern with
@@ -726,7 +726,7 @@ and simpl_cases : type a . (Raw.pattern * a) list -> (a, unit) matching result =
         let title () = "Pattern" in
         let content () =
           Printf.sprintf "Pattern : %s"
-            (Parser.Ligodity.ParserLog.pattern_to_string x) in
+            (Parser.Cameligo.ParserLog.pattern_to_string x) in
         error title content
       in
       let as_variant () =

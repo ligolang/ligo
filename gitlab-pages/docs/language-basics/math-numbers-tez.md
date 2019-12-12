@@ -36,7 +36,7 @@ const g: int = 1_000_000;
 >const g: int = 1_000_000;
 >```
 
-<!--Cameligo-->
+<!--CameLIGO-->
 
 ```cameligo
 // int + int produces int
@@ -103,7 +103,7 @@ const b: int = 5n - 2n;
 const d: tez = 5mutez - 1mt;
 ```
 
-<!--Cameligo-->
+<!--CameLIGO-->
 ```cameligo
 let a: int = 5 - 10
 // substraction of two nats, yields an int
@@ -140,7 +140,7 @@ const b: nat = 5n * 5n;
 const c: tez = 5n * 5mutez;
 ```
 
-<!--Cameligo-->
+<!--CameLIGO-->
 ```cameligo
 let a: int = 5 * 5
 let b: nat = 5n * 5n
@@ -173,7 +173,7 @@ const b: nat = 10n / 3n;
 const c: nat = 10mutez / 3mutez;
 ```
 
-<!--Cameligo-->
+<!--CameLIGO-->
 ```cameligo
 let a: int = 10 / 3
 let b: nat = 10n / 3n

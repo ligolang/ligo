@@ -55,7 +55,7 @@ Instead, you can inline the necessary logic directly, like this:
 function add(const a: int; const b: int): int is a + b
 ```
 
-<!--Cameligo-->
+<!--CameLIGO-->
 
 Functions in CameLIGO are defined using the `let` keyword, like value bindings.
 The difference is that after the value name a list of function parameters is provided,
@@ -110,7 +110,7 @@ const increment : (int -> int) = (function (const i : int) : int is i + 1);
 const a: int = increment(1);
 ```
 
-<!--Cameligo-->
+<!--CameLIGO-->
 ```cameligo
 let increment : (int -> int) = fun (i: int) -> i + 1
 ```

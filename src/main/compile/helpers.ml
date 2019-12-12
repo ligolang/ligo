@@ -41,22 +41,22 @@ let parsify_expression_pascaligo = fun source ->
     Simplify.Pascaligo.simpl_expression raw in
   ok simplified
 
-let parsify_ligodity = fun source ->
+let parsify_cameligo = fun source ->
   let%bind raw =
     trace (simple_error "parsing") @@
-    Parser.Ligodity.parse_file source in
+    Parser.Cameligo.parse_file source in
   let%bind simplified =
     trace (simple_error "simplifying") @@
-    Simplify.Ligodity.simpl_program raw in
+    Simplify.Cameligo.simpl_program raw in
   ok simplified
 
-let parsify_expression_ligodity = fun source ->
+let parsify_expression_cameligo = fun source ->
   let%bind raw =
     trace (simple_error "parsing expression") @@
-    Parser.Ligodity.parse_expression source in
+    Parser.Cameligo.parse_expression source in
   let%bind simplified =
     trace (simple_error "simplifying expression") @@
-    Simplify.Ligodity.simpl_expression raw in
+    Simplify.Cameligo.simpl_expression raw in
   ok simplified
 
 let parsify_reasonligo = fun source ->
@@ -65,7 +65,7 @@ let parsify_reasonligo = fun source ->
     Parser.Reasonligo.parse_file source in
   let%bind simplified =
     trace (simple_error "simplifying") @@
-    Simplify.Ligodity.simpl_program raw in
+    Simplify.Cameligo.simpl_program raw in
   ok simplified
 
 let parsify_string_reasonligo = fun source ->
@@ -74,7 +74,7 @@ let parsify_string_reasonligo = fun source ->
     Parser.Reasonligo.parse_string source in
   let%bind simplified =
     trace (simple_error "simplifying") @@
-    Simplify.Ligodity.simpl_program raw in
+    Simplify.Cameligo.simpl_program raw in
   ok simplified
 
 let parsify_expression_reasonligo = fun source ->
@@ -83,13 +83,13 @@ let parsify_expression_reasonligo = fun source ->
     Parser.Reasonligo.parse_expression source in
   let%bind simplified =
     trace (simple_error "simplifying expression") @@
-    Simplify.Ligodity.simpl_expression raw in
+    Simplify.Cameligo.simpl_expression raw in
   ok simplified
 
 let parsify = fun (syntax : v_syntax) source_filename ->
   let%bind parsify = match syntax with
     | Pascaligo -> ok parsify_pascaligo
-    | Cameligo -> ok parsify_ligodity
+    | Cameligo -> ok parsify_cameligo
     | ReasonLIGO -> ok parsify_reasonligo
   in
   let%bind parsified = parsify source_filename in
@@ -99,7 +99,7 @@ let parsify = fun (syntax : v_syntax) source_filename ->
 let parsify_expression = fun syntax source ->
   let%bind parsify = match syntax with
     | Pascaligo -> ok parsify_expression_pascaligo
-    | Cameligo -> ok parsify_expression_ligodity
+    | Cameligo -> ok parsify_expression_cameligo
     | ReasonLIGO -> ok parsify_expression_reasonligo
   in
   let%bind parsified = parsify source in

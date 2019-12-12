@@ -6,9 +6,9 @@
  (flags -la 1 --explain --external-tokens LexToken))
 
 (library
- (name parser_ligodity)
- (public_name ligo.parser.ligodity)
- (modules AST ligodity Parser ParserLog LexToken)
+ (name parser_cameligo)
+ (public_name ligo.parser.cameligo)
+ (modules AST cameligo Parser ParserLog LexToken)
  (libraries
    parser_shared
    str
@@ -22,19 +22,19 @@
 (executable
   (name LexerMain)
   (libraries 
-   parser_ligodity)
+   parser_cameligo)
   (modules 
     LexerMain
   )
-  (flags (:standard -open Parser_shared -open Parser_ligodity))
+  (flags (:standard -open Parser_shared -open Parser_cameligo))
 )
 
 (executable
   (name ParserMain)
   (libraries 
-   parser_ligodity)
+   parser_cameligo)
   (modules    
     ParserMain
   )
-  (flags (:standard -open Simple_utils -open Parser_shared -open Parser_ligodity))
+  (flags (:standard -open Simple_utils -open Parser_shared -open Parser_cameligo))
 )

@@ -8,7 +8,7 @@
     ast_simplified
     self_ast_simplified
     operators)
-  (modules ligodity pascaligo simplify)
+  (modules cameligo pascaligo simplify)
   (preprocess
     (pps
       ppx_let

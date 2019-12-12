@@ -1,2 +1,2 @@
 module Pascaligo = Pascaligo
-module Ligodity = Ligodity
+module Cameligo = Cameligo
