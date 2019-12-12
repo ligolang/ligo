@@ -153,7 +153,7 @@ let compile_parameter =
     let%bind simplified_param = Compile.Of_source.compile_expression v_syntax expression in
     let%bind (typed_param,_)  = Compile.Of_simplified.compile_expression ~env ~state simplified_param in
     let%bind mini_c_param     = Compile.Of_typed.compile_expression typed_param in
-    let%bind compiled_param   = Compile.Of_mini_c.aggregate_and_compile_expression mini_c_prg (Expression mini_c_param) [] in
+    let%bind compiled_param   = Compile.Of_mini_c.aggregate_and_compile_expression mini_c_prg mini_c_param in
     let%bind value            = Run.evaluate_expression compiled_param.expr compiled_param.expr_ty in
     ok @@ Format.asprintf "%a\n" (Main.Display.michelson_pp michelson_format) value
   in
@@ -235,10 +235,11 @@ let run_function =
     let%bind mini_c_prg      = Compile.Of_typed.compile typed_prg in
 
     let%bind simplified_param = Compile.Of_source.compile_expression v_syntax parameter in
-    let%bind (typed_param,_)  = Compile.Of_simplified.compile_expression ~env ~state simplified_param in
-    let%bind compiled_param   = Compile.Of_typed.compile_expression typed_param in
+    let%bind app              = Compile.Of_simplified.apply entry_point simplified_param in
+    let%bind (typed_app,_)    = Compile.Of_simplified.compile_expression ~env ~state app in
+    let%bind compiled_applied = Compile.Of_typed.compile_expression typed_app in
 
-    let%bind michelson         = Compile.Of_mini_c.aggregate_and_compile_expression mini_c_prg (Entry_name entry_point) [compiled_param] in
+    let%bind michelson         = Compile.Of_mini_c.aggregate_and_compile_expression mini_c_prg compiled_applied in
     let%bind options           = Run.make_dry_run_options {amount ; sender ; source } in
     let%bind michelson_output  = Run.run ~options michelson.expr michelson.expr_ty in
     let%bind simplified_output = Uncompile.uncompile_typed_program_entry_function_result typed_prg entry_point michelson_output in
@@ -257,7 +258,7 @@ let evaluate_value =
     let%bind typed_prg,_       = Compile.Of_simplified.compile simplified in
     let%bind mini_c            = Compile.Of_typed.compile typed_prg in
     let%bind (exp,_)           = Mini_c.get_entry mini_c entry_point in
-    let%bind compiled          = Compile.Of_mini_c.aggregate_and_compile_expression mini_c (Expression exp) [] in
+    let%bind compiled          = Compile.Of_mini_c.aggregate_and_compile_expression mini_c exp in
     let%bind options           = Run.make_dry_run_options {amount ; sender ; source } in
     let%bind michelson_output  = Run.run ~options compiled.expr compiled.expr_ty in
     let%bind simplified_output = Uncompile.uncompile_typed_program_entry_expression_result typed_prg entry_point michelson_output in

@@ -27,32 +27,23 @@ let aggregate_and_compile = fun program form ->
   | ExpressionForm _ -> compile_expression aggregated'
 
 let aggregate_and_compile_contract = fun program name ->
-  let%bind (exp, idx) = get_entry program name in
-  aggregate_and_compile program (ContractForm (exp, idx))
+  let%bind (exp, _) = get_entry program name in
+  aggregate_and_compile program (ContractForm exp)
 
-type compiled_expression_t =
-  | Expression of expression
-  | Entry_name of string 
-
-let aggregate_and_compile_expression = fun program exp args ->
-  match exp with
-  | Expression exp ->
-    aggregate_and_compile program (ExpressionForm ((exp,List.length program), args))
-  | Entry_name name -> 
-    let%bind (exp, idx) = get_entry program name in
-    aggregate_and_compile program (ExpressionForm ((exp,idx), args))
+let aggregate_and_compile_expression = fun program exp ->
+  aggregate_and_compile program (ExpressionForm exp)
 
 let build_contract : Compiler.compiled_expression -> Michelson.michelson result =
   fun compiled ->
-  let%bind ((Ex_ty _param_ty),(Ex_ty _storage_ty)) = Self_michelson.fetch_lambda_parameters compiled.expr_ty in
+  let%bind ((Ex_ty _param_ty),(Ex_ty _storage_ty)) = Self_michelson.fetch_contract_inputs compiled.expr_ty in
   let%bind param_michelson =
-    Trace.trace_tzresult_lwt (simple_error "Could not unparse contract lambda's parameter") @@
+    Trace.trace_tzresult_lwt (simple_error "Invalid contract: Could not unparse parameter") @@
     Proto_alpha_utils.Memory_proto_alpha.unparse_ty_michelson _param_ty in
   let%bind storage_michelson =
-    Trace.trace_tzresult_lwt (simple_error "Could not unparse contract lambda's storage") @@
+    Trace.trace_tzresult_lwt (simple_error "Invalid contract: Could not unparse storage") @@
     Proto_alpha_utils.Memory_proto_alpha.unparse_ty_michelson _storage_ty in
   let contract = Michelson.contract param_michelson storage_michelson compiled.expr in
   let%bind () = 
-    Trace.trace_tzresult_lwt (simple_error "Invalid contract") @@
+    Trace.trace_tzresult_lwt (simple_error "Invalid contract: Contract did not typecheck") @@
     Proto_alpha_utils.Memory_proto_alpha.typecheck_contract contract in
   ok contract

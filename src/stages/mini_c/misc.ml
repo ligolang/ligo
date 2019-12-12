@@ -140,60 +140,29 @@ let get_entry (lst : program) (name : string) : (expression * int) result =
   in
   ok (entry_expression , entry_index)
 
-(*
-  Assume the following program:
-  ```
-    const x = 42
-    const y = 120
-    const f = () -> x + y
-  ```
-  aggregate_entry program "f" (Some [unit]) would return:
-  ```
-    let x = 42 in
-    let y = 120 in
-    const f = () -> x + y
-    f(unit)
-  ```
-
-  if arg_lst is None, it means that the entry point is not an arbitrary expression
-*)
 type form_t =
-  | ContractForm of (expression * int)
-  | ExpressionForm of ((expression * int) * expression list)
+  | ContractForm of expression
+  | ExpressionForm of expression
 
 let aggregate_entry (lst : program) (form : form_t) : expression result =
-  let (entry_expression , entry_index, arg_lst) = match form with
-    | ContractForm (exp,i) -> (exp,i,[])
-    | ExpressionForm ((exp,i),argl) -> (exp,i,argl) in
-  let pre_declarations = List.until entry_index lst in
   let wrapper =
     let aux prec cur =
       let (((name , expr) , _)) = cur in
       e_let_in name expr.type_value expr prec
     in
-    fun expr -> List.fold_right' aux expr pre_declarations
+    fun expr -> List.fold_right' aux expr lst
   in
-  match (entry_expression.content , arg_lst) with
-  | (E_closure _ , (hd::tl)) -> (
-      let%bind type_value' = match entry_expression.type_value with
-        | T_function (_,t) -> ok t
-        | _ -> simple_fail "Trying to aggregate closure which does not have function type" in
-      let entry_expression' = List.fold_left
-        (fun acc el ->
-          let type_value' = match acc.type_value with
-            | T_function (_,t) -> t
-            | e -> e in
-          {
-            content = E_application (acc,el) ;
-            type_value = type_value' ;
-          }
-        )
-        {
-          content = E_application (entry_expression, hd) ;
-          type_value = type_value' ;
-        } tl in
-      ok @@ wrapper entry_expression'
-    )
-  | (_ , _) -> (
-      ok @@ wrapper entry_expression
-    )
+  match form with
+  | ContractForm entry_expression -> (
+    match (entry_expression.content) with
+    | (E_closure l) -> (
+        let l' = { l with body = wrapper l.body } in
+        let e' = {
+          content = E_closure l' ;
+          type_value = entry_expression.type_value ;
+        } in
+        ok e'
+      )
+    | _ -> simple_fail "a contract must be a closure" )
+  | ExpressionForm entry_expression ->
+    ok @@ wrapper entry_expression
