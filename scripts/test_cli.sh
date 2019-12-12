@@ -7,9 +7,7 @@ dry_run_output=$(./scripts/ligo_ci.sh dry-run src/test/contracts/website2.ligo m
 
 expected_compiled_parameter="(Right 1)";
 expected_compiled_storage=1;
-expected_dry_run_output="tuple[   list[]
-         2
-]";
+expected_dry_run_output="( [] , 2 )";
 
 if [ "$compiled_storage" != "$expected_compiled_storage" ]; then
     echo "Expected $expected_compiled_storage as compile-storage output, got $compiled_storage instead";

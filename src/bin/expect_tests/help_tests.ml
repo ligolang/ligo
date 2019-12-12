@@ -37,6 +37,10 @@ let%expect_test _ =
            evaluate-value
                Subcommand: evaluate a given definition.
 
+           interpret
+               Subcommand: interpret the expression in the context initialized by
+               the provided source file.
+
            measure-contract
                Subcommand: measure a contract's compiled size in bytes.
 
@@ -83,6 +87,10 @@ let%expect_test _ =
 
            evaluate-value
                Subcommand: evaluate a given definition.
+
+           interpret
+               Subcommand: interpret the expression in the context initialized by
+               the provided source file.
 
            measure-contract
                Subcommand: measure a contract's compiled size in bytes.

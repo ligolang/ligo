@@ -17,3 +17,8 @@ let uncompile_typed_program_entry_expression_result program entry ex_ty_value =
 
 let uncompile_typed_program_entry_function_result program entry ex_ty_value =
   uncompile_value Function program entry ex_ty_value
+
+let uncompile_expression type_value ex_ty_value =
+  let%bind mini_c = Compiler.Uncompiler.translate_value ex_ty_value in
+  let%bind typed = Transpiler.untranspile mini_c type_value in
+  Typer.untype_expression typed

@@ -47,6 +47,14 @@ let req_syntax n =
     info ~docv ~doc [] in
   required @@ pos n (some string) None info
 
+let init_file =
+  let open Arg in
+  let info =
+    let docv = "INIT_FILE" in
+    let doc = "$(docv) is the path to the .ligo or .mligo file to be used for context initialization." in
+    info ~docv ~doc ["init-file"] in
+  value @@ opt (some string) None info
+
 let amount =
   let open Arg in
   let info =
@@ -162,6 +170,35 @@ let compile_parameter =
   let cmdname = "compile-parameter" in
   let doc = "Subcommand: compile parameters to a michelson expression. The resulting michelson expression can be passed as an argument in a transaction which calls a contract." in
   (term , Term.info ~doc cmdname)
+
+let interpret =
+  let f expression init_file syntax amount sender source display_format =
+    toplevel ~display_format @@
+    let%bind (decl_list,state,env) = match init_file with
+      | Some init_file ->
+        let%bind simplified      = Compile.Of_source.compile init_file (Syntax_name syntax) in
+        let%bind typed_prg,state = Compile.Of_simplified.compile simplified in
+        let%bind mini_c_prg      = Compile.Of_typed.compile typed_prg in
+        let      env             = Ast_typed.program_environment typed_prg in
+        ok (mini_c_prg,state,env)
+      | None -> ok ([],Typer.Solver.initial_state,Ast_typed.Environment.full_empty) in
+    
+    let%bind v_syntax          = Helpers.syntax_to_variant (Syntax_name syntax) init_file in
+    let%bind simplified_exp    = Compile.Of_source.compile_expression v_syntax expression in
+    let%bind (typed_exp,_)     = Compile.Of_simplified.compile_expression ~env ~state simplified_exp in
+    let%bind mini_c_exp        = Compile.Of_typed.compile_expression typed_exp in
+    let%bind compiled_exp      = Compile.Of_mini_c.aggregate_and_compile_expression decl_list mini_c_exp in
+    let%bind options           = Run.make_dry_run_options {amount ; sender ; source } in
+    let%bind value             = Run.run ~options compiled_exp.expr compiled_exp.expr_ty in
+    let%bind simplified_output = Uncompile.uncompile_expression typed_exp.type_annotation value in
+    ok @@ Format.asprintf "%a\n" Ast_simplified.PP.expression simplified_output
+  in
+  let term =
+    Term.(const f $ expression "EXPRESSION" 0 $ init_file $ syntax $ amount $ sender $ source $ display_format ) in
+  let cmdname = "interpret" in
+  let doc = "Subcommand: interpret the expression in the context initialized by the provided source file." in
+  (term , Term.info ~doc cmdname)
+
 
 let compile_storage =
   let f source_file entry_point expression syntax display_format michelson_format =
@@ -296,6 +333,7 @@ let run ?argv () =
     compile_parameter ;
     compile_storage ;
     compile_expression ;
+    interpret ;
     dry_run ;
     run_function ;
     evaluate_value ;
