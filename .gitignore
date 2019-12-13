@@ -9,3 +9,6 @@ Version.ml
 .vscode/
 /ligo.install
 /_coverage/
+/_coverage_all/
+/_coverage_ligo/
+/_coverage_cli/
