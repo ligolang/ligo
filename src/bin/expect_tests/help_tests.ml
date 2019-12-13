@@ -51,7 +51,10 @@ let%expect_test _ =
            --help[=FMT] (default=auto)
                Show this help in format FMT. The value FMT must be one of `auto',
                `pager', `groff' or `plain'. With `auto', the format is `pager` or
-               `plain' whenever the TERM env var is `dumb' or undefined. |} ] ;
+               `plain' whenever the TERM env var is `dumb' or undefined.
+
+           --version
+               Show version information. |} ] ;
 
   run_ligo_good [ "--help" ] ;
   [%expect {|
@@ -102,7 +105,10 @@ let%expect_test _ =
            --help[=FMT] (default=auto)
                Show this help in format FMT. The value FMT must be one of `auto',
                `pager', `groff' or `plain'. With `auto', the format is `pager` or
-               `plain' whenever the TERM env var is `dumb' or undefined. |} ] ;
+               `plain' whenever the TERM env var is `dumb' or undefined.
+
+           --version
+               Show version information. |} ] ;
 
   run_ligo_good [ "compile-contract" ; "--help" ] ;
   [%expect {|
@@ -142,7 +148,10 @@ let%expect_test _ =
            -s SYNTAX, --syntax=SYNTAX (absent=auto)
                SYNTAX is the syntax that will be used. Currently supported
                syntaxes are "pascaligo" and "cameligo". By default, the syntax is
-               guessed from the extension (.ligo and .mligo, respectively). |} ] ;
+               guessed from the extension (.ligo and .mligo, respectively).
+
+           --version
+               Show version information. |} ] ;
 
   run_ligo_good [ "compile-parameter" ; "--help" ] ;
   [%expect {|
@@ -188,7 +197,10 @@ let%expect_test _ =
            -s SYNTAX, --syntax=SYNTAX (absent=auto)
                SYNTAX is the syntax that will be used. Currently supported
                syntaxes are "pascaligo" and "cameligo". By default, the syntax is
-               guessed from the extension (.ligo and .mligo, respectively). |} ] ;
+               guessed from the extension (.ligo and .mligo, respectively).
+
+           --version
+               Show version information. |} ] ;
 
   run_ligo_good [ "compile-storage" ; "--help" ] ;
   [%expect {|
@@ -235,7 +247,10 @@ let%expect_test _ =
            -s SYNTAX, --syntax=SYNTAX (absent=auto)
                SYNTAX is the syntax that will be used. Currently supported
                syntaxes are "pascaligo" and "cameligo". By default, the syntax is
-               guessed from the extension (.ligo and .mligo, respectively). |} ] ;
+               guessed from the extension (.ligo and .mligo, respectively).
+
+           --version
+               Show version information. |} ] ;
 
   run_ligo_good [ "dry-run" ; "--help" ] ;
   [%expect {|
@@ -287,7 +302,10 @@ let%expect_test _ =
                SENDER is the sender the dry-run transaction will use.
 
            --source=SOURCE
-               SOURCE is the source the dry-run transaction will use. |} ] ;
+               SOURCE is the source the dry-run transaction will use.
+
+           --version
+               Show version information. |} ] ;
 
   run_ligo_good [ "run-function" ; "--help" ] ;
   [%expect {|
@@ -336,7 +354,10 @@ let%expect_test _ =
                SENDER is the sender the dry-run transaction will use.
 
            --source=SOURCE
-               SOURCE is the source the dry-run transaction will use. |} ] ;
+               SOURCE is the source the dry-run transaction will use.
+
+           --version
+               Show version information. |} ] ;
 
   run_ligo_good [ "evaluate-value" ; "--help" ] ;
   [%expect {|
@@ -380,7 +401,10 @@ let%expect_test _ =
                SENDER is the sender the dry-run transaction will use.
 
            --source=SOURCE
-               SOURCE is the source the dry-run transaction will use. |} ] ;
+               SOURCE is the source the dry-run transaction will use.
+
+           --version
+               Show version information. |} ] ;
 
   run_ligo_good [ "compile-expression" ; "--help" ] ;
   [%expect {|
@@ -416,4 +440,7 @@ let%expect_test _ =
            --michelson-format=MICHELSON_FORMAT (absent=text)
                MICHELSON_FORMAT is the format that will be used by
                compile-contract for the resulting Michelson. Available formats
-               are 'text' (default), 'json' and 'hex'. |} ] ;
+               are 'text' (default), 'json' and 'hex'.
+
+           --version
+               Show version information. |} ] ;
