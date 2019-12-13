@@ -33,6 +33,7 @@ test: build
 
 clean:
 	dune clean
+	rm -fr _coverage_all _coverage_cli _coverage_ligo
 
 coverage: clean
 	BISECT_ENABLE=yes dune runtest --force
