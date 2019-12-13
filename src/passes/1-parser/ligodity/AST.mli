@@ -256,7 +256,7 @@ and list_expr =
 
 and string_expr =
   Cat    of cat bin_op reg                               (* e1  ^ e2      *)
-| StrLit of string reg                                   (* "foo"         *)
+| String of string reg                                   (* "foo"         *)
 
 and constr_expr =
   ENone      of c_None

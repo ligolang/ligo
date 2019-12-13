@@ -1,22 +1,32 @@
-(* Parsing command-line options *)
+(** Parsing command-line options *)
 
-(* The type [command] denotes some possible behaviours of the
-   compiler. *)
-
+(** The type [command] denotes some possible behaviours of the
+    compiler.
+*)
 type command = Quiet | Copy | Units | Tokens
 
-(* The type [options] gathers the command-line options. *)
-
-type options = {
+(** The type [options] gathers the command-line options.
+*)
+type options = <
   input   : string option;
   libs    : string list;
   verbose : Utils.String.Set.t;
   offsets : bool;
   mode    : [`Byte | `Point];
   cmd     : command
-}
+>
 
-(* Auxiliary functions *)
+let make ~input ~libs ~verbose ~offsets ~mode ~cmd =
+  object
+    method input   = input
+    method libs    = libs
+    method verbose = verbose
+    method offsets = offsets
+    method mode    = mode
+    method cmd     = cmd
+  end
+
+(** {1 Auxiliary functions} *)
 
 let  printf = Printf.printf
 let sprintf = Printf.sprintf
@@ -25,7 +35,7 @@ let   print = print_endline
 let abort msg =
   Utils.highlight (sprintf "Command-line error: %s\n" msg); exit 1
 
-(* Help *)
+(** {1 Help} *)
 
 let help language extension () =
   let file = Filename.basename Sys.argv.(0) in
@@ -44,11 +54,11 @@ let help language extension () =
   print "  -h, --help             This help";
   exit 0
 
-(* Version *)
+(** {1 Version} *)
 
 let version () = printf "%s\n" Version.version; exit 0
 
-(* Specifying the command-line options a la GNU *)
+(** {1 Specifying the command-line options a la GNU} *)
 
 let copy     = ref false
 and tokens   = ref false
@@ -85,8 +95,8 @@ let specs language extension =
   ]
 ;;
 
-(* Handler of anonymous arguments *)
-
+(** Handler of anonymous arguments
+*)
 let anonymous arg =
   match !input with
       None -> input := Some arg
@@ -94,8 +104,8 @@ let anonymous arg =
              abort (sprintf "Multiple inputs")
 ;;
 
-(* Checking options and exporting them as non-mutable values *)
-
+(** Checking options and exporting them as non-mutable values
+*)
 let string_of convert = function
     None -> "None"
 | Some s -> sprintf "Some %s" (convert s)
@@ -168,9 +178,9 @@ let check extension =
     | false, false, false,  true -> Tokens
     | _ -> abort "Choose one of -q, -c, -u, -t."
 
-  in {input; libs; verbose; offsets; mode; cmd}
+  in make ~input ~libs ~verbose ~offsets ~mode ~cmd
 
-(* Parsing the command-line options *)
+(** {1 Parsing the command-line options} *)
 
 let read language extension =
   try

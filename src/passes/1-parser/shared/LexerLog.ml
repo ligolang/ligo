@@ -1,4 +1,4 @@
-(* Embedding the lexer of PascaLIGO in a debug module *)
+(** Embedding the LIGO lexer in a debug module *)
 
 let sprintf = Printf.sprintf
 
@@ -24,10 +24,9 @@ module Make (Lexer: Lexer.S) : (S with module Lexer = Lexer) =
     module Lexer = Lexer
     module Token = Lexer.Token
 
-    (* Pretty-printing in a string the lexemes making up the markup
+    (** Pretty-printing in a string the lexemes making up the markup
        between two tokens, concatenated with the last lexeme
        itself. *)
-
     let output_token ?(offsets=true) mode command
                      channel left_mark token : unit =
       let output    str = Printf.fprintf channel "%s%!" str in

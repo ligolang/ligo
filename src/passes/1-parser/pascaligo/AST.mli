@@ -208,10 +208,8 @@ and fun_expr = {
   colon        : colon;
   ret_type     : type_expr;
   kwd_is       : kwd_is;
-  local_decls  : local_decl list;
-  block        : block reg option;
-  kwd_with     : kwd_with option;
-  return       : expr;
+  block_with   : (block reg * kwd_with) option;
+  return       : expr
 }
 
 and fun_decl = {
@@ -259,9 +257,6 @@ and statements = (statement, semi) nsepseq
 and statement =
   Instr of instruction
 | Data  of data_decl
-
-and local_decl =
-| LocalData of data_decl
 
 and data_decl =
   LocalConst of const_decl reg
@@ -615,7 +610,6 @@ val type_expr_to_region  : type_expr -> Region.t
 val expr_to_region       : expr -> Region.t
 val instr_to_region      : instruction -> Region.t
 val pattern_to_region    : pattern -> Region.t
-val local_decl_to_region : local_decl -> Region.t
 val path_to_region       : path -> Region.t
 val lhs_to_region        : lhs -> Region.t
 val rhs_to_region        : rhs -> Region.t
