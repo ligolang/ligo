@@ -102,7 +102,7 @@ module Errors = struct
     let data = [
         ("expression" ,
          (** TODO: The labelled arguments should be flowing from the CLI. *)
-       thunk @@ Parser.Ligodity.ParserLog.expr_to_string
+       thunk @@ Parser.Cameligo.ParserLog.expr_to_string
                  ~offsets:true ~mode:`Point t)
     ] in
     error ~data title message
@@ -729,7 +729,7 @@ and simpl_cases : type a . (Raw.pattern * a) list -> (a, unit) matching result =
          (** TODO: The labelled arguments should be flowing from the CLI. *)
         let content () =
           Printf.sprintf "Pattern : %s"
-                         (Parser.Ligodity.ParserLog.pattern_to_string
+                         (Parser.Cameligo.ParserLog.pattern_to_string
                             ~offsets:true ~mode:`Point x) in
         error title content
       in
