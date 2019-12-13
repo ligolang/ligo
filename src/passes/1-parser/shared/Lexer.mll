@@ -1,6 +1,7 @@
 (* Lexer specification for LIGO, to be processed by [ocamllex]. *)
 
 {
+[@@@warning "-42"]
 
 module Region = Simple_utils.Region
 module Pos = Simple_utils.Pos

@@ -1,4 +1,4 @@
-open Trace
+open! Trace
 open Ast_simplified
 
 module Raw = Parser.Pascaligo.AST
@@ -13,12 +13,12 @@ let pseq_to_list = function
   | None -> []
   | Some lst -> npseq_to_list lst
 let get_value : 'a Raw.reg -> 'a = fun x -> x.value
-let is_compiler_generated = fun (name) -> String.contains (Var.to_name name) '#'
+let is_compiler_generated name = String.contains (Var.to_name name) '#'
 
 let detect_local_declarations (for_body : expression) =
   let%bind aux = Self_ast_simplified.fold_expression
     (fun (nlist, cur_loop : expression_variable list * bool) (ass_exp : expression) ->
-      if cur_loop then 
+      if cur_loop then
         match ass_exp.expression with
         | E_let_in {binder;rhs = _;result = _} ->
           let (name,_) = binder in
@@ -45,14 +45,14 @@ let detect_free_variables (for_body : expression) (local_decl_names : expression
         when n=C_OR || n=C_AND || n=C_LT || n=C_GT ||
              n=C_LE || n=C_GE  || n=C_EQ || n=C_NEQ -> (
           match (a.expression,b.expression) with
-          | E_variable na , E_variable nb -> 
+          | E_variable na , E_variable nb ->
             let ret = [] in
             let ret = if not (is_compiler_generated na) then
               na::ret else ret in
             let ret = if not (is_compiler_generated nb) then
               nb::ret else ret in
             ok (ret@prev)
-          | E_variable n , _ 
+          | E_variable n , _
           | _            , E_variable n ->
             if not (is_compiler_generated n) then
             ok (n::prev) else ok prev
@@ -140,8 +140,10 @@ module Errors = struct
     let data = [
       ("pattern_loc",
        fun () -> Format.asprintf "%a" Location.pp_lift @@ pattern_loc) ;
+      (** TODO: The labelled arguments should be flowing from the CLI. *)
       ("pattern",
-       fun () -> Parser.Pascaligo.ParserLog.pattern_to_string p)
+       fun () -> Parser.Pascaligo.ParserLog.pattern_to_string
+                ~offsets:true ~mode:`Point p)
     ] in
     error ~data title message
 
@@ -189,9 +191,11 @@ module Errors = struct
   let simplifying_instruction t =
     let title () = "simplifiying instruction" in
     let message () = "" in
+    (** TODO: The labelled arguments should be flowing from the CLI. *)
     let data = [
       ("instruction",
-       fun () -> Parser.Pascaligo.ParserLog.instruction_to_string t)
+       fun () -> Parser.Pascaligo.ParserLog.instruction_to_string
+                ~offsets:true ~mode:`Point t)
     ] in
     error ~data title message
 end
@@ -569,11 +573,6 @@ and simpl_tuple_expression ?loc (lst:Raw.expr list) : expression result =
       let%bind lst = bind_list @@ List.map simpl_expression lst in
       return @@ e_tuple ?loc lst
 
-and simpl_local_declaration : Raw.local_decl -> _ result = fun t ->
-  match t with
-  | LocalData d ->
-      simpl_data_declaration d
-
 and simpl_data_declaration : Raw.data_decl -> _ result = fun t ->
   match t with
   | LocalVar x ->
@@ -612,10 +611,10 @@ and simpl_fun_expression :
   loc:_ -> Raw.fun_expr -> ((expression_variable option * type_expression option) * expression) result =
   fun ~loc x ->
   let open! Raw in
-  let {name;param;ret_type;local_decls;block;return} : fun_expr = x in
+  let {name;param;ret_type;block_with;return} : fun_expr = x in
   let statements =
-    match block with
-    | Some block -> npseq_to_list block.value.statements
+    match block_with with
+    | Some (block,_) -> npseq_to_list block.value.statements
     | None -> []
   in
   (match param.value.inside with
@@ -623,14 +622,12 @@ and simpl_fun_expression :
        let%bind input = simpl_param a in
        let name = Option.map (fun (x : _ reg) -> Var.of_name x.value) name in
        let (binder , input_type) = input in
-       let%bind local_declarations =
-         bind_map_list simpl_local_declaration local_decls in
        let%bind instructions = bind_list
          @@ List.map simpl_statement
          @@ statements in
        let%bind result = simpl_expression return in
        let%bind output_type = simpl_type_expression ret_type in
-       let body = local_declarations @ instructions in
+       let body = instructions in
        let%bind result =
          let aux prec cur = cur (Some prec) in
          bind_fold_right_list aux result body in
@@ -654,14 +651,12 @@ and simpl_fun_expression :
            ass
          in
          bind_list @@ List.mapi aux params in
-       let%bind local_declarations =
-         bind_map_list simpl_local_declaration local_decls in
        let%bind instructions = bind_list
          @@ List.map simpl_statement
          @@ statements in
        let%bind result = simpl_expression return in
        let%bind output_type = simpl_type_expression ret_type in
-       let body = tpl_declarations @ local_declarations @ instructions in
+       let body = tpl_declarations @ instructions in
        let%bind result =
          let aux prec cur = cur (Some prec) in
          bind_fold_right_list aux result body in
@@ -1002,9 +997,11 @@ and simpl_cases : type a . (Raw.pattern * a) list -> (a, unit) matching result =
         let aux (x , y) =
           let error =
             let title () = "Pattern" in
+            (** TODO: The labelled arguments should be flowing from the CLI. *)
             let content () =
               Printf.sprintf "Pattern : %s"
-                (Parser.Pascaligo.ParserLog.pattern_to_string x) in
+                (Parser.Pascaligo.ParserLog.pattern_to_string
+                   ~offsets:true ~mode:`Point x) in
             error title content in
           let%bind x' =
             trace error @@
@@ -1113,7 +1110,7 @@ and simpl_for_int : Raw.for_int -> (_ -> expression result) result = fun fi ->
             - references to the iterated value ==> variable `#COMPILER#elt_X`
        Note: In the case of an inner loop capturing variable from an outer loop
              the free variable name can be `#COMPILER#acc.Y` and because we do not
-             capture the accumulator record in the inner loop, we don't want to 
+             capture the accumulator record in the inner loop, we don't want to
              generate `#COMPILER#acc.#COMPILER#acc.Y` but `#COMPILER#acc.Y`
 
     5) Append the return value to the body
@@ -1145,7 +1142,7 @@ and simpl_for_collect : Raw.for_collect -> (_ -> expression result) result = fun
   let elt_v_name = match fc.bind_to with
     | Some v -> "#COMPILER#elt_"^(snd v).value
     | None -> "#COMPILER#elt_unused" in
-  let element_names = ok @@ match fc.bind_to with 
+  let element_names = ok @@ match fc.bind_to with
     | Some v -> [Var.of_name fc.var.value;Var.of_name (snd v).value]
     | None -> [Var.of_name fc.var.value] in
   (* STEP 1 *)

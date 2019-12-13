@@ -252,12 +252,9 @@ fun_expr:
       colon        = $4;
       ret_type     = $5;
       kwd_is       = $6;
-      local_decls  = [];
-      block        = Some $7;
-      kwd_with     = Some $8;
-      return       = $9;
-      }
-    in {region;value}}
+      block_with   = Some ($7, $8);
+      return       = $9}
+    in {region;value} }
   | Function option(fun_name) parameters COLON type_expr Is
       expr {
         let stop = expr_to_region $7 in
@@ -269,11 +266,8 @@ fun_expr:
             colon        = $4;
             ret_type     = $5;
             kwd_is       = $6;
-            local_decls  = [];
-            block        = None;
-            kwd_with     = None;
-            return       = $7;
-          }
+            block_with   = None;
+            return       = $7}
         in {region;value}}
 
 
@@ -288,20 +282,17 @@ fun_decl:
       |        None -> $1.region in
     let region = cover $1.region stop
     and value = {
-      fun_expr = $1;
-      terminator = $2;
-      }
-    in {region;value}}
+      fun_expr   = $1;
+      terminator = $2}
+    in {region; value} }
 
 open_fun_decl:
   fun_expr {
     let region = $1.region
     and value = {
-      fun_expr = $1;
-      terminator = None;
-      }
-    in {region;value}}
-
+      fun_expr   = $1;
+      terminator = None}
+    in {region; value} }
 
 parameters:
   par(nsepseq(param_decl,SEMI)) { $1 }

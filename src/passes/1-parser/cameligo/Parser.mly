@@ -690,7 +690,7 @@ core_expr:
 | Nat                                 {               EArith (Nat $1) }
 | Ident | module_field                {                       EVar $1 }
 | projection                          {                      EProj $1 }
-| String                              {           EString (StrLit $1) }
+| String                              {           EString (String $1) }
 | unit                                {                      EUnit $1 }
 | False                               {  ELogic (BoolExpr (False $1)) }
 | True                                {  ELogic (BoolExpr (True  $1)) }

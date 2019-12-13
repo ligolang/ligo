@@ -4,9 +4,6 @@ $HOME/git/ligo/vendors/ligo-utils/simple-utils/pos.mli
 $HOME/git/ligo/vendors/ligo-utils/simple-utils/pos.ml
 $HOME/git/ligo/vendors/ligo-utils/simple-utils/region.mli
 $HOME/git/ligo/vendors/ligo-utils/simple-utils/region.ml
-$HOME/git/ligo/vendors/ligo-utils/simple-utils/x_map.ml
-$HOME/git/ligo/vendors/ligo-utils/simple-utils/x_list.ml
-$HOME/git/ligo/vendors/ligo-utils/simple-utils/x_option.ml
 ../shared/Lexer.mli
 ../shared/Lexer.mll
 ../shared/Error.mli

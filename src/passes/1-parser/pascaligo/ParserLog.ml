@@ -1,1513 +1,1501 @@
 [@@@warning "-42"]
 
-open Utils
 open AST
 open! Region
 
-(* Printing the tokens with their source regions *)
-
 let sprintf = Printf.sprintf
 
-let offsets = ref true
-let mode    = ref `Point
+type state = <
+  offsets  : bool;
+  mode     : [`Point | `Byte];
+  buffer   : Buffer.t;
+  pad_path : string;
+  pad_node : string;
+  pad      : int -> int -> state
+>
 
-let compact (region: Region.t) =
-  region#compact ~offsets:!offsets !mode
+let mk_state ~offsets ~mode ~buffer =
+  object
+    method offsets  = offsets;
+    method mode     = mode;
+    method buffer   = buffer
+    val pad_path    = ""
+    method pad_path = pad_path
+    val pad_node    = ""
+    method pad_node = pad_node
+
+    (** The method [pad] updates the current padding, which is
+        comprised of two components: the padding to reach the new node
+        (space before reaching a subtree, then a vertical bar for it)
+        and the padding for the new node itself (Is it the last child
+        of its parent?).
+     *)
+    method pad arity rank =
+      {< pad_path =
+           pad_node ^ (if rank = arity-1 then "`-- " else "|-- ");
+         pad_node =
+           pad_node ^ (if rank = arity-1 then "    " else "|   ")
+      >}
+  end
+
+let compact state (region: Region.t) =
+  region#compact ~offsets:state#offsets state#mode
+
+(** {1 Printing the tokens with their source regions} *)
 
 let print_nsepseq :
-  Buffer.t -> string -> (Buffer.t -> 'a -> unit) ->
-  ('a, Region.t) nsepseq -> unit =
-  fun buffer sep print (head, tail) ->
+  state -> string -> (state -> 'a -> unit) ->
+  ('a, Region.t) Utils.nsepseq -> unit =
+  fun state sep print (head, tail) ->
     let print_aux (sep_reg, item) =
-      let sep_line = sprintf "%s: %s\n" (compact sep_reg) sep in
-      Buffer.add_string buffer sep_line;
-      print buffer item
-    in print buffer head; List.iter print_aux tail
+      let sep_line =
+        sprintf "%s: %s\n" (compact state sep_reg) sep in
+      Buffer.add_string state#buffer sep_line;
+      print state item
+    in print state head; List.iter print_aux tail
 
 let print_sepseq :
-  Buffer.t -> string -> (Buffer.t -> 'a -> unit) ->
-  ('a, Region.t) sepseq -> unit =
-  fun buffer sep print -> function
+  state -> string -> (state -> 'a -> unit) ->
+  ('a, Region.t) Utils.sepseq -> unit =
+  fun state sep print -> function
         None -> ()
-  | Some seq -> print_nsepseq buffer sep print seq
+  | Some seq -> print_nsepseq state sep print seq
 
-let print_token buffer region lexeme =
-  let line = sprintf "%s: %s\n"(compact region) lexeme
-  in Buffer.add_string buffer line
+let print_token state region lexeme =
+  let line =
+    sprintf "%s: %s\n"(compact state region) lexeme
+  in Buffer.add_string state#buffer line
 
-let print_var buffer {region; value=lexeme} =
-  let line = sprintf "%s: Ident \"%s\"\n"
-               (compact region) lexeme
-  in Buffer.add_string buffer line
+let print_var state {region; value} =
+  let line =
+    sprintf "%s: Ident \"%s\"\n"
+            (compact state region) value
+  in Buffer.add_string state#buffer line
 
-let print_constr buffer {region; value=lexeme} =
-  let line = sprintf "%s: Constr \"%s\"\n"
-               (compact region) lexeme
-  in Buffer.add_string buffer line
+let print_constr state {region; value} =
+  let line =
+    sprintf "%s: Constr \"%s\"\n"
+            (compact state region) value
+  in Buffer.add_string state#buffer line
 
-let print_string buffer {region; value=lexeme} =
-  let line = sprintf "%s: String %s\n"
-               (compact region) lexeme
-  in Buffer.add_string buffer line
+let print_string state {region; value} =
+  let line =
+    sprintf "%s: String %s\n"
+            (compact state region) value
+  in Buffer.add_string state#buffer line
 
-let print_bytes buffer {region; value = lexeme, abstract} =
-  let line = sprintf "%s: Bytes (\"%s\", \"0x%s\")\n"
-               (compact region) lexeme
-               (Hex.to_string abstract)
-  in Buffer.add_string buffer line
+let print_bytes state {region; value} =
+  let lexeme, abstract = value in
+  let line =
+    sprintf "%s: Bytes (\"%s\", \"0x%s\")\n"
+            (compact state region) lexeme
+            (Hex.to_string abstract)
+  in Buffer.add_string state#buffer line
 
-let print_int buffer {region; value = lexeme, abstract} =
-  let line = sprintf "%s: Int (\"%s\", %s)\n"
-               (compact region) lexeme
-               (Z.to_string abstract)
-  in Buffer.add_string buffer line
+let print_int state {region; value} =
+  let lexeme, abstract = value in
+  let line =
+    sprintf "%s: Int (\"%s\", %s)\n"
+            (compact state region) lexeme
+            (Z.to_string abstract)
+  in Buffer.add_string state#buffer line
 
-let print_nat buffer {region; value = lexeme, abstract} =
-  let line = sprintf "%s: Nat (\"%s\", %s)\n"
-               (compact region) lexeme
-               (Z.to_string abstract)
-  in Buffer.add_string buffer line
+let print_nat state {region; value} =
+  let lexeme, abstract = value in
+  let line =
+    sprintf "%s: Nat (\"%s\", %s)\n"
+            (compact state region) lexeme
+            (Z.to_string abstract)
+  in Buffer.add_string state#buffer line
 
-(* Main printing function *)
-
-let rec print_tokens buffer ast =
+let rec print_tokens state ast =
   let {decl; eof} = ast in
-  Utils.nseq_iter (print_decl buffer) decl;
-  print_token buffer eof "EOF"
+  Utils.nseq_iter (print_decl state) decl;
+  print_token state eof "EOF"
 
-and print_decl buffer = function
-  TypeDecl  decl -> print_type_decl  buffer decl
-| ConstDecl decl -> print_const_decl buffer decl
-| FunDecl   decl -> print_fun_decl   buffer decl
+and print_decl state = function
+  TypeDecl  decl -> print_type_decl  state decl
+| ConstDecl decl -> print_const_decl state decl
+| FunDecl   decl -> print_fun_decl   state decl
 
-and print_const_decl buffer {value; _} =
+and print_const_decl state {value; _} =
   let {kwd_const; name; colon; const_type;
        equal; init; terminator} = value in
-  print_token      buffer kwd_const "const";
-  print_var        buffer name;
-  print_token      buffer colon ":";
-  print_type_expr  buffer const_type;
-  print_token      buffer equal "=";
-  print_expr       buffer init;
-  print_terminator buffer terminator
+  print_token      state kwd_const "const";
+  print_var        state name;
+  print_token      state colon ":";
+  print_type_expr  state const_type;
+  print_token      state equal "=";
+  print_expr       state init;
+  print_terminator state terminator
 
-and print_type_decl buffer {value; _} =
+and print_type_decl state {value; _} =
   let {kwd_type; name; kwd_is;
        type_expr; terminator} = value in
-  print_token      buffer kwd_type "type";
-  print_var        buffer name;
-  print_token      buffer kwd_is "is";
-  print_type_expr  buffer type_expr;
-  print_terminator buffer terminator
+  print_token      state kwd_type "type";
+  print_var        state name;
+  print_token      state kwd_is "is";
+  print_type_expr  state type_expr;
+  print_terminator state terminator
 
-and print_type_expr buffer = function
-  TProd   cartesian   -> print_cartesian   buffer cartesian
-| TSum    sum_type    -> print_sum_type    buffer sum_type
-| TRecord record_type -> print_record_type buffer record_type
-| TApp    type_app    -> print_type_app    buffer type_app
-| TFun    type_fun    -> print_type_fun    buffer type_fun
-| TPar    par_type    -> print_par_type    buffer par_type
-| TVar    type_var    -> print_var         buffer type_var
+and print_type_expr state = function
+  TProd   cartesian   -> print_cartesian   state cartesian
+| TSum    sum_type    -> print_sum_type    state sum_type
+| TRecord record_type -> print_record_type state record_type
+| TApp    type_app    -> print_type_app    state type_app
+| TFun    type_fun    -> print_type_fun    state type_fun
+| TPar    par_type    -> print_par_type    state par_type
+| TVar    type_var    -> print_var         state type_var
 
-and print_cartesian buffer {value; _} =
-  print_nsepseq buffer "*" print_type_expr value
+and print_cartesian state {value; _} =
+  print_nsepseq state "*" print_type_expr value
 
-and print_variant buffer ({value; _}: variant reg) =
+and print_variant state ({value; _}: variant reg) =
   let {constr; arg} = value in
-  print_constr buffer constr;
+  print_constr state constr;
   match arg with
     None -> ()
   | Some (kwd_of, t_expr) ->
-      print_token     buffer kwd_of "of";
-      print_type_expr buffer t_expr
+      print_token     state kwd_of "of";
+      print_type_expr state t_expr
 
-and print_sum_type buffer {value; _} =
-  print_nsepseq buffer "|" print_variant value
+and print_sum_type state {value; _} =
+  print_nsepseq state "|" print_variant value
 
-and print_record_type buffer record_type =
-  print_ne_injection buffer "record" print_field_decl record_type
+and print_record_type state record_type =
+  print_ne_injection state "record" print_field_decl record_type
 
-and print_type_app buffer {value; _} =
+and print_type_app state {value; _} =
   let type_name, type_tuple = value in
-  print_var        buffer type_name;
-  print_type_tuple buffer type_tuple
+  print_var        state type_name;
+  print_type_tuple state type_tuple
 
-and print_type_fun buffer {value; _} =
+and print_type_fun state {value; _} =
   let type_expr_a, arrow, type_expr_b = value in
-  print_type_expr  buffer type_expr_a;
-  print_token      buffer arrow "->";
-  print_type_expr  buffer type_expr_b
+  print_type_expr  state type_expr_a;
+  print_token      state arrow "->";
+  print_type_expr  state type_expr_b
 
-and print_par_type buffer {value; _} =
+and print_par_type state {value; _} =
   let {lpar; inside; rpar} = value in
-  print_token     buffer lpar "(";
-  print_type_expr buffer inside;
-  print_token     buffer rpar ")"
+  print_token     state lpar "(";
+  print_type_expr state inside;
+  print_token     state rpar ")"
 
-and print_field_decl buffer {value; _} =
+and print_field_decl state {value; _} =
   let {field_name; colon; field_type} = value in
-  print_var       buffer field_name;
-  print_token     buffer colon ":";
-  print_type_expr buffer field_type
+  print_var       state field_name;
+  print_token     state colon ":";
+  print_type_expr state field_type
 
-and print_type_tuple buffer {value; _} =
+and print_type_tuple state {value; _} =
   let {lpar; inside; rpar} = value in
-  print_token buffer lpar "(";
-  print_nsepseq buffer "," print_type_expr inside;
-  print_token buffer rpar ")"
+  print_token state lpar "(";
+  print_nsepseq state "," print_type_expr inside;
+  print_token state rpar ")"
 
-and print_fun_expr buffer {value; _} =
+and print_fun_expr state {value; _} =
   let {kwd_function; name; param; colon;
-       ret_type; kwd_is; local_decls;
-       block; kwd_with; return;} = value in
-  let anonymous_name = Region.wrap_ghost "#anonymous" in
-  print_token       buffer kwd_function "function";
-  print_var         buffer @@ Simple_utils.Option.unopt ~default:anonymous_name name;
-  print_parameters  buffer param;
-  print_token       buffer colon ":";
-  print_type_expr   buffer ret_type;
-  print_token       buffer kwd_is "is";
-  print_local_decls buffer local_decls;
-  print_block       buffer block;
-  match kwd_with with
-  | Some kwd_with ->
-    print_token       buffer kwd_with "with";
-  | None          ->  ();
-  print_expr        buffer return;
+       ret_type; kwd_is; block_with; return} = value in
+  print_token state kwd_function "function";
+  (match name with
+     None -> print_var state (Region.wrap_ghost "#anon")
+   | Some var -> print_var state var);
+  print_parameters  state param;
+  print_token       state colon ":";
+  print_type_expr   state ret_type;
+  print_token       state kwd_is "is";
+  (match block_with with
+    None -> ()
+  | Some (block, kwd_with) ->
+     print_block state block;
+     print_token state kwd_with "with");
+  print_expr state return;
 
-and print_fun_decl buffer {value; _} =
+and print_fun_decl state {value; _} =
   let {fun_expr ; terminator;} = value in
-  print_fun_expr buffer fun_expr;
-  print_terminator buffer terminator;
+  print_fun_expr state fun_expr;
+  print_terminator state terminator;
 
-and print_parameters buffer {value; _} =
+and print_parameters state {value; _} =
   let {lpar; inside; rpar} = value in
-  print_token buffer lpar "(";
-  print_nsepseq buffer ";" print_param_decl inside;
-  print_token buffer rpar ")"
+  print_token state lpar "(";
+  print_nsepseq state ";" print_param_decl inside;
+  print_token state rpar ")"
 
-and print_param_decl buffer = function
-  ParamConst param_const -> print_param_const buffer param_const
-| ParamVar   param_var   -> print_param_var   buffer param_var
+and print_param_decl state = function
+  ParamConst param_const -> print_param_const state param_const
+| ParamVar   param_var   -> print_param_var   state param_var
 
-and print_param_const buffer {value; _} =
+and print_param_const state {value; _} =
   let {kwd_const; var; colon; param_type} = value in
-  print_token     buffer kwd_const "const";
-  print_var       buffer var;
-  print_token     buffer colon ":";
-  print_type_expr buffer param_type
+  print_token     state kwd_const "const";
+  print_var       state var;
+  print_token     state colon ":";
+  print_type_expr state param_type
 
-and print_param_var buffer {value; _} =
+and print_param_var state {value; _} =
   let {kwd_var; var; colon; param_type} = value in
-  print_token     buffer kwd_var "var";
-  print_var       buffer var;
-  print_token     buffer colon ":";
-  print_type_expr buffer param_type
+  print_token     state kwd_var "var";
+  print_var       state var;
+  print_token     state colon ":";
+  print_type_expr state param_type
 
-and print_block buffer reg =
-  match reg with
-  | Some reg ->
-    let value = reg.value in
-    let {opening; statements; terminator; closing} = value in
-    print_block_opening buffer opening;
-    print_statements    buffer statements;
-    print_terminator    buffer terminator;
-    print_block_closing buffer closing
-  | None -> ()
+and print_block state block =
+  let {opening; statements; terminator; closing} = block.value in
+  print_block_opening state opening;
+  print_statements    state statements;
+  print_terminator    state terminator;
+  print_block_closing state closing
 
-and print_block_opening buffer = function
+and print_block_opening state = function
   Block (kwd_block, lbrace) ->
-    print_token buffer kwd_block "block";
-    print_token buffer lbrace    "{"
+    print_token state kwd_block "block";
+    print_token state lbrace    "{"
 | Begin kwd_begin ->
-    print_token buffer kwd_begin "begin"
+    print_token state kwd_begin "begin"
 
-and print_block_closing buffer = function
-  Block rbrace -> print_token buffer rbrace  "}"
-| End kwd_end  -> print_token buffer kwd_end "end"
+and print_block_closing state = function
+  Block rbrace -> print_token state rbrace  "}"
+| End kwd_end  -> print_token state kwd_end "end"
 
-and print_local_decls buffer sequence =
-  List.iter (print_local_decl buffer) sequence
+and print_data_decl state = function
+  LocalConst decl -> print_const_decl state decl
+| LocalVar   decl -> print_var_decl   state decl
+| LocalFun  decl -> print_fun_decl  state decl
 
-and print_local_decl buffer = function
-| LocalData decl -> print_data_decl buffer decl
-
-and print_data_decl buffer = function
-  LocalConst decl -> print_const_decl buffer decl
-| LocalVar   decl -> print_var_decl   buffer decl
-| LocalFun  decl -> print_fun_decl  buffer decl
-
-and print_var_decl buffer {value; _} =
+and print_var_decl state {value; _} =
   let {kwd_var; name; colon; var_type;
        assign; init; terminator} = value in
-  print_token      buffer kwd_var "var";
-  print_var        buffer name;
-  print_token      buffer colon ":";
-  print_type_expr  buffer var_type;
-  print_token      buffer assign ":=";
-  print_expr       buffer init;
-  print_terminator buffer terminator
+  print_token      state kwd_var "var";
+  print_var        state name;
+  print_token      state colon ":";
+  print_type_expr  state var_type;
+  print_token      state assign ":=";
+  print_expr       state init;
+  print_terminator state terminator
 
-and print_statements buffer sequence =
-  print_nsepseq buffer ";" print_statement sequence
+and print_statements state sequence =
+  print_nsepseq state ";" print_statement sequence
 
-and print_statement buffer = function
-  Instr instr -> print_instruction buffer instr
-| Data  data  -> print_data_decl   buffer data
+and print_statement state = function
+  Instr instr -> print_instruction state instr
+| Data  data  -> print_data_decl   state data
 
-and print_instruction buffer = function
-  Cond        {value; _} -> print_conditional buffer value
-| CaseInstr   {value; _} -> print_case_instr buffer value
-| Assign      assign     -> print_assignment buffer assign
-| Loop        loop       -> print_loop buffer loop
-| ProcCall    fun_call   -> print_fun_call buffer fun_call
-| Skip        kwd_skip   -> print_token buffer kwd_skip "skip"
-| RecordPatch {value; _} -> print_record_patch buffer value
-| MapPatch    {value; _} -> print_map_patch buffer value
-| SetPatch    {value; _} -> print_set_patch buffer value
-| MapRemove   {value; _} -> print_map_remove buffer value
-| SetRemove   {value; _} -> print_set_remove buffer value
+and print_instruction state = function
+  Cond        {value; _} -> print_conditional state value
+| CaseInstr   {value; _} -> print_case_instr state value
+| Assign      assign     -> print_assignment state assign
+| Loop        loop       -> print_loop state loop
+| ProcCall    fun_call   -> print_fun_call state fun_call
+| Skip        kwd_skip   -> print_token state kwd_skip "skip"
+| RecordPatch {value; _} -> print_record_patch state value
+| MapPatch    {value; _} -> print_map_patch state value
+| SetPatch    {value; _} -> print_set_patch state value
+| MapRemove   {value; _} -> print_map_remove state value
+| SetRemove   {value; _} -> print_set_remove state value
 
-and print_cond_expr buffer (node: cond_expr) =
-  print_token      buffer node.kwd_if "if";
-  print_expr       buffer node.test;
-  print_token      buffer node.kwd_then "then";
-  print_expr       buffer node.ifso;
-  print_terminator buffer node.terminator;
-  print_token      buffer node.kwd_else "else";
-  print_expr       buffer node.ifnot
+and print_cond_expr state (node: cond_expr) =
+  print_token      state node.kwd_if "if";
+  print_expr       state node.test;
+  print_token      state node.kwd_then "then";
+  print_expr       state node.ifso;
+  print_terminator state node.terminator;
+  print_token      state node.kwd_else "else";
+  print_expr       state node.ifnot
 
-and print_conditional buffer (node: conditional) =
-  print_token      buffer node.kwd_if "if";
-  print_expr       buffer node.test;
-  print_token      buffer node.kwd_then "then";
-  print_if_clause  buffer node.ifso;
-  print_terminator buffer node.terminator;
-  print_token      buffer node.kwd_else "else";
-  print_if_clause  buffer node.ifnot
+and print_conditional state (node: conditional) =
+  print_token      state node.kwd_if "if";
+  print_expr       state node.test;
+  print_token      state node.kwd_then "then";
+  print_if_clause  state node.ifso;
+  print_terminator state node.terminator;
+  print_token      state node.kwd_else "else";
+  print_if_clause  state node.ifnot
 
-and print_if_clause buffer = function
-  ClauseInstr instr -> print_instruction buffer instr
-| ClauseBlock block -> print_clause_block buffer block
+and print_if_clause state = function
+  ClauseInstr instr -> print_instruction state instr
+| ClauseBlock block -> print_clause_block state block
 
-and print_clause_block buffer = function
-    LongBlock block ->  print_block buffer (Some block)
-  | ShortBlock {value; _} ->
+and print_clause_block state = function
+  LongBlock block ->
+    print_block state block
+| ShortBlock {value; _} ->
     let {lbrace; inside; rbrace} = value in
     let statements, terminator = inside in
-    print_token      buffer lbrace "{";
-    print_statements buffer statements;
-    print_terminator buffer terminator;
-    print_token      buffer rbrace "}"
+    print_token      state lbrace "{";
+    print_statements state statements;
+    print_terminator state terminator;
+    print_token      state rbrace "}"
 
-and print_case_instr buffer (node : if_clause case) =
+and print_case_instr state (node : if_clause case) =
   let {kwd_case; expr; opening;
        lead_vbar; cases; closing} = node in
-  print_token       buffer kwd_case "case";
-  print_expr        buffer expr;
-  print_opening     buffer "of" opening;
-  print_token_opt   buffer lead_vbar "|";
-  print_cases_instr buffer cases;
-  print_closing     buffer closing
+  print_token       state kwd_case "case";
+  print_expr        state expr;
+  print_opening     state "of" opening;
+  print_token_opt   state lead_vbar "|";
+  print_cases_instr state cases;
+  print_closing     state closing
 
-and print_token_opt buffer = function
+and print_token_opt state = function
          None -> fun _ -> ()
-| Some region -> print_token buffer region
+| Some region -> print_token state region
 
-and print_cases_instr buffer {value; _} =
-  print_nsepseq buffer "|" print_case_clause_instr value
+and print_cases_instr state {value; _} =
+  print_nsepseq state "|" print_case_clause_instr value
 
-and print_case_clause_instr buffer {value; _} =
+and print_case_clause_instr state {value; _} =
   let {pattern; arrow; rhs} = value in
-  print_pattern   buffer pattern;
-  print_token     buffer arrow "->";
-  print_if_clause buffer rhs
+  print_pattern   state pattern;
+  print_token     state arrow "->";
+  print_if_clause state rhs
 
-and print_assignment buffer {value; _} =
+and print_assignment state {value; _} =
   let {lhs; assign; rhs} = value in
-  print_lhs   buffer lhs;
-  print_token buffer assign ":=";
-  print_rhs   buffer rhs
+  print_lhs   state lhs;
+  print_token state assign ":=";
+  print_rhs   state rhs
 
-and print_rhs buffer e = print_expr buffer e
+and print_rhs state e = print_expr state e
 
-and print_lhs buffer = function
-  Path path          -> print_path buffer path
-| MapPath {value; _} -> print_map_lookup buffer value
+and print_lhs state = function
+  Path path          -> print_path state path
+| MapPath {value; _} -> print_map_lookup state value
 
-and print_loop buffer = function
-  While {value; _} -> print_while_loop buffer value
-| For     for_loop -> print_for_loop   buffer for_loop
+and print_loop state = function
+  While {value; _} -> print_while_loop state value
+| For     for_loop -> print_for_loop   state for_loop
 
-and print_while_loop buffer value =
+and print_while_loop state value =
   let {kwd_while; cond; block} = value in
-  print_token buffer kwd_while "while";
-  print_expr  buffer cond;
-  print_block buffer (Some block)
+  print_token state kwd_while "while";
+  print_expr  state cond;
+  print_block state block
 
-and print_for_loop buffer = function
-  ForInt     for_int     -> print_for_int     buffer for_int
-| ForCollect for_collect -> print_for_collect buffer for_collect
+and print_for_loop state = function
+  ForInt     for_int     -> print_for_int     state for_int
+| ForCollect for_collect -> print_for_collect state for_collect
 
-and print_for_int buffer ({value; _} : for_int reg) =
+and print_for_int state ({value; _} : for_int reg) =
   let {kwd_for; assign; kwd_to; bound; block} = value in
-  print_token      buffer kwd_for "for";
-  print_var_assign buffer assign;
-  print_token      buffer kwd_to "to";
-  print_expr       buffer bound;
-  print_block      buffer (Some block)
+  print_token      state kwd_for "for";
+  print_var_assign state assign;
+  print_token      state kwd_to "to";
+  print_expr       state bound;
+  print_block      state block
 
-and print_var_assign buffer {value; _} =
+and print_var_assign state {value; _} =
   let {name; assign; expr} = value in
-  print_var   buffer name;
-  print_token buffer assign ":=";
-  print_expr  buffer expr
+  print_var   state name;
+  print_token state assign ":=";
+  print_expr  state expr
 
-and print_for_collect buffer ({value; _} : for_collect reg) =
+and print_for_collect state ({value; _} : for_collect reg) =
   let {kwd_for; var; bind_to;
        kwd_in; collection; expr; block} = value in
-  print_token      buffer kwd_for "for";
-  print_var        buffer var;
-  print_bind_to    buffer bind_to;
-  print_token      buffer kwd_in "in";
-  print_collection buffer collection;
-  print_expr       buffer expr;
-  print_block      buffer (Some block)
+  print_token      state kwd_for "for";
+  print_var        state var;
+  print_bind_to    state bind_to;
+  print_token      state kwd_in "in";
+  print_collection state collection;
+  print_expr       state expr;
+  print_block      state block
 
-and print_collection buffer = function
+and print_collection state = function
   Map kwd_map ->
-    print_token buffer kwd_map "map"
+    print_token state kwd_map "map"
 | Set kwd_set ->
-    print_token buffer kwd_set "set"
+    print_token state kwd_set "set"
 | List kwd_list ->
-    print_token buffer kwd_list "list"
+    print_token state kwd_list "list"
 
-and print_bind_to buffer = function
+and print_bind_to state = function
   Some (arrow, variable) ->
-    print_token buffer arrow "->";
-    print_var   buffer variable
+    print_token state arrow "->";
+    print_var   state variable
 | None -> ()
 
-and print_expr buffer = function
-  ECase   {value;_} -> print_case_expr buffer value
-| ECond   {value;_} -> print_cond_expr buffer value
-| EAnnot  {value;_} -> print_annot_expr buffer value
-| ELogic  e -> print_logic_expr buffer e
-| EArith  e -> print_arith_expr buffer e
-| EString e -> print_string_expr buffer e
-| EList   e -> print_list_expr buffer e
-| ESet    e -> print_set_expr buffer e
-| EConstr e -> print_constr_expr buffer e
-| ERecord e -> print_record_expr buffer e
-| EProj   e -> print_projection buffer e
-| EMap    e -> print_map_expr buffer e
-| EVar    v -> print_var buffer v
-| ECall   e -> print_fun_call buffer e
-| EBytes  b -> print_bytes buffer b
-| EUnit   r -> print_token buffer r "Unit"
-| ETuple  e -> print_tuple_expr buffer e
-| EPar    e -> print_par_expr buffer e
-| EFun    e -> print_fun_expr buffer e
+and print_expr state = function
+  ECase   {value;_} -> print_case_expr state value
+| ECond   {value;_} -> print_cond_expr state value
+| EAnnot  {value;_} -> print_annot_expr state value
+| ELogic  e -> print_logic_expr state e
+| EArith  e -> print_arith_expr state e
+| EString e -> print_string_expr state e
+| EList   e -> print_list_expr state e
+| ESet    e -> print_set_expr state e
+| EConstr e -> print_constr_expr state e
+| ERecord e -> print_record_expr state e
+| EProj   e -> print_projection state e
+| EMap    e -> print_map_expr state e
+| EVar    v -> print_var state v
+| ECall   e -> print_fun_call state e
+| EBytes  b -> print_bytes state b
+| EUnit   r -> print_token state r "Unit"
+| ETuple  e -> print_tuple_expr state e
+| EPar    e -> print_par_expr state e
+| EFun    e -> print_fun_expr state e
 
-and print_annot_expr buffer (expr , type_expr) =
-  print_expr buffer expr;
-  print_type_expr buffer type_expr
+and print_annot_expr state (expr , type_expr) =
+  print_expr state expr;
+  print_type_expr state type_expr
 
-and print_case_expr buffer (node : expr case) =
+and print_case_expr state (node : expr case) =
   let {kwd_case; expr; opening;
        lead_vbar; cases; closing} = node in
-  print_token      buffer kwd_case "case";
-  print_expr       buffer expr;
-  print_opening    buffer "of" opening;
-  print_token_opt  buffer lead_vbar "|";
-  print_cases_expr buffer cases;
-  print_closing    buffer closing
+  print_token      state kwd_case "case";
+  print_expr       state expr;
+  print_opening    state "of" opening;
+  print_token_opt  state lead_vbar "|";
+  print_cases_expr state cases;
+  print_closing    state closing
 
-and print_cases_expr buffer {value; _} =
-  print_nsepseq buffer "|" print_case_clause_expr value
+and print_cases_expr state {value; _} =
+  print_nsepseq state "|" print_case_clause_expr value
 
-and print_case_clause_expr buffer {value; _} =
+and print_case_clause_expr state {value; _} =
   let {pattern; arrow; rhs} = value in
-  print_pattern buffer pattern;
-  print_token   buffer arrow "->";
-  print_expr    buffer rhs
+  print_pattern state pattern;
+  print_token   state arrow "->";
+  print_expr    state rhs
 
-and print_map_expr buffer = function
-  MapLookUp {value; _} -> print_map_lookup buffer value
-| MapInj inj           -> print_injection  buffer "map" print_binding inj
-| BigMapInj inj        -> print_injection  buffer "big_map" print_binding inj
+and print_map_expr state = function
+  MapLookUp {value; _} -> print_map_lookup state value
+| MapInj inj           -> print_injection  state "map" print_binding inj
+| BigMapInj inj        -> print_injection  state "big_map" print_binding inj
 
-and print_set_expr buffer = function
-  SetInj inj -> print_injection buffer "set" print_expr inj
-| SetMem mem -> print_set_membership buffer mem
+and print_set_expr state = function
+  SetInj inj -> print_injection state "set" print_expr inj
+| SetMem mem -> print_set_membership state mem
 
-and print_set_membership buffer {value; _} =
+and print_set_membership state {value; _} =
   let {set; kwd_contains; element} = value in
-  print_expr  buffer set;
-  print_token buffer kwd_contains "contains";
-  print_expr  buffer element
+  print_expr  state set;
+  print_token state kwd_contains "contains";
+  print_expr  state element
 
-and print_map_lookup buffer {path; index} =
+and print_map_lookup state {path; index} =
   let {lbracket; inside; rbracket} = index.value in
-  print_path  buffer path;
-  print_token buffer lbracket "[";
-  print_expr  buffer inside;
-  print_token buffer rbracket "]"
+  print_path  state path;
+  print_token state lbracket "[";
+  print_expr  state inside;
+  print_token state rbracket "]"
 
-and print_path buffer = function
-  Name var  -> print_var        buffer var
-| Path path -> print_projection buffer path
+and print_path state = function
+  Name var  -> print_var        state var
+| Path path -> print_projection state path
 
-and print_logic_expr buffer = function
-  BoolExpr e -> print_bool_expr buffer e
-| CompExpr e -> print_comp_expr buffer e
+and print_logic_expr state = function
+  BoolExpr e -> print_bool_expr state e
+| CompExpr e -> print_comp_expr state e
 
-and print_bool_expr buffer = function
+and print_bool_expr state = function
   Or {value = {arg1; op; arg2}; _} ->
-    print_expr  buffer arg1;
-    print_token buffer op "||";
-    print_expr  buffer arg2
+    print_expr  state arg1;
+    print_token state op "||";
+    print_expr  state arg2
 | And {value = {arg1; op; arg2}; _} ->
-    print_expr  buffer arg1;
-    print_token buffer op "&&";
-    print_expr  buffer arg2
+    print_expr  state arg1;
+    print_token state op "&&";
+    print_expr  state arg2
 | Not {value = {op; arg}; _} ->
-    print_token buffer op "not";
-    print_expr  buffer arg
+    print_token state op "not";
+    print_expr  state arg
 | False region ->
-    print_token buffer region "False"
+    print_token state region "False"
 | True region ->
-    print_token buffer region "True"
+    print_token state region "True"
 
-and print_comp_expr buffer = function
+and print_comp_expr state = function
   Lt {value = {arg1; op; arg2}; _} ->
-    print_expr  buffer arg1;
-    print_token buffer op "<";
-    print_expr  buffer arg2
+    print_expr  state arg1;
+    print_token state op "<";
+    print_expr  state arg2
 | Leq {value = {arg1; op; arg2}; _} ->
-    print_expr  buffer arg1;
-    print_token buffer op "<=";
-    print_expr  buffer arg2
+    print_expr  state arg1;
+    print_token state op "<=";
+    print_expr  state arg2
 | Gt {value = {arg1; op; arg2}; _} ->
-    print_expr  buffer arg1;
-    print_token buffer op ">";
-    print_expr  buffer arg2
+    print_expr  state arg1;
+    print_token state op ">";
+    print_expr  state arg2
 | Geq {value = {arg1; op; arg2}; _} ->
-    print_expr  buffer arg1;
-    print_token buffer op ">=";
-    print_expr  buffer arg2
+    print_expr  state arg1;
+    print_token state op ">=";
+    print_expr  state arg2
 | Equal {value = {arg1; op; arg2}; _} ->
-    print_expr  buffer arg1;
-    print_token buffer op "=";
-    print_expr  buffer arg2
+    print_expr  state arg1;
+    print_token state op "=";
+    print_expr  state arg2
 | Neq {value = {arg1; op; arg2}; _} ->
-    print_expr  buffer arg1;
-    print_token buffer op "=/=";
-    print_expr  buffer arg2
+    print_expr  state arg1;
+    print_token state op "=/=";
+    print_expr  state arg2
 
-and print_arith_expr buffer = function
+and print_arith_expr state = function
   Add {value = {arg1; op; arg2}; _} ->
-    print_expr  buffer arg1;
-    print_token buffer op "+";
-    print_expr  buffer arg2
+    print_expr  state arg1;
+    print_token state op "+";
+    print_expr  state arg2
 | Sub {value = {arg1; op; arg2}; _} ->
-    print_expr  buffer arg1;
-    print_token buffer op "-";
-    print_expr  buffer arg2
+    print_expr  state arg1;
+    print_token state op "-";
+    print_expr  state arg2
 | Mult {value = {arg1; op; arg2}; _} ->
-    print_expr  buffer arg1;
-    print_token buffer op "*";
-    print_expr  buffer arg2
+    print_expr  state arg1;
+    print_token state op "*";
+    print_expr  state arg2
 | Div {value = {arg1; op; arg2}; _} ->
-    print_expr  buffer arg1;
-    print_token buffer op "/";
-    print_expr  buffer arg2
+    print_expr  state arg1;
+    print_token state op "/";
+    print_expr  state arg2
 | Mod {value = {arg1; op; arg2}; _} ->
-    print_expr  buffer arg1;
-    print_token buffer op "mod";
-    print_expr  buffer arg2
+    print_expr  state arg1;
+    print_token state op "mod";
+    print_expr  state arg2
 | Neg {value = {op; arg}; _} ->
-    print_token buffer op "-";
-    print_expr  buffer arg
+    print_token state op "-";
+    print_expr  state arg
 | Int i
 | Nat i
-| Mutez i -> print_int buffer i
+| Mutez i -> print_int state i
 
-and print_string_expr buffer = function
+and print_string_expr state = function
   Cat {value = {arg1; op; arg2}; _} ->
-    print_expr  buffer arg1;
-    print_token buffer op "^";
-    print_expr  buffer arg2
+    print_expr  state arg1;
+    print_token state op "^";
+    print_expr  state arg2
 | String s ->
-    print_string buffer s
+    print_string state s
 
-and print_list_expr buffer = function
+and print_list_expr state = function
   ECons {value = {arg1; op; arg2}; _} ->
-    print_expr  buffer arg1;
-    print_token buffer op "#";
-    print_expr  buffer arg2
-| EListComp e -> print_injection buffer "list" print_expr e
-| ENil e -> print_nil buffer e
+    print_expr  state arg1;
+    print_token state op "#";
+    print_expr  state arg2
+| EListComp e -> print_injection state "list" print_expr e
+| ENil e -> print_nil state e
 
-and print_constr_expr buffer = function
-  SomeApp e   -> print_some_app   buffer e
-| NoneExpr e  -> print_none_expr  buffer e
-| ConstrApp e -> print_constr_app buffer e
+and print_constr_expr state = function
+  SomeApp e   -> print_some_app   state e
+| NoneExpr e  -> print_none_expr  state e
+| ConstrApp e -> print_constr_app state e
 
-and print_record_expr buffer e =
-  print_ne_injection buffer "record" print_field_assign e
+and print_record_expr state e =
+  print_ne_injection state "record" print_field_assign e
 
-and print_field_assign buffer {value; _} =
+and print_field_assign state {value; _} =
   let {field_name; equal; field_expr} = value in
-  print_var   buffer field_name;
-  print_token buffer equal "=";
-  print_expr  buffer field_expr
+  print_var   state field_name;
+  print_token state equal "=";
+  print_expr  state field_expr
 
-and print_projection buffer {value; _} =
+and print_projection state {value; _} =
   let {struct_name; selector; field_path} = value in
-  print_var        buffer struct_name;
-  print_token      buffer selector ".";
-  print_field_path buffer field_path
+  print_var        state struct_name;
+  print_token      state selector ".";
+  print_field_path state field_path
 
-and print_field_path buffer sequence =
-  print_nsepseq buffer "." print_selection sequence
+and print_field_path state sequence =
+  print_nsepseq state "." print_selection sequence
 
-and print_selection buffer = function
-  FieldName name -> print_var buffer name
-| Component int  -> print_int buffer int
+and print_selection state = function
+  FieldName name -> print_var state name
+| Component int  -> print_int state int
 
-and print_record_patch buffer node =
+and print_record_patch state node =
   let {kwd_patch; path; kwd_with; record_inj} = node in
-  print_token        buffer kwd_patch "patch";
-  print_path         buffer path;
-  print_token        buffer kwd_with "with";
-  print_ne_injection buffer "record" print_field_assign record_inj
+  print_token        state kwd_patch "patch";
+  print_path         state path;
+  print_token        state kwd_with "with";
+  print_ne_injection state "record" print_field_assign record_inj
 
-and print_set_patch buffer node =
+and print_set_patch state node =
   let {kwd_patch; path; kwd_with; set_inj} = node in
-  print_token        buffer kwd_patch "patch";
-  print_path         buffer path;
-  print_token        buffer kwd_with "with";
-  print_ne_injection buffer "set" print_expr set_inj
+  print_token        state kwd_patch "patch";
+  print_path         state path;
+  print_token        state kwd_with "with";
+  print_ne_injection state "set" print_expr set_inj
 
-and print_map_patch buffer node =
+and print_map_patch state node =
   let {kwd_patch; path; kwd_with; map_inj} = node in
-  print_token        buffer kwd_patch "patch";
-  print_path         buffer path;
-  print_token        buffer kwd_with "with";
-  print_ne_injection buffer "map" print_binding map_inj
+  print_token        state kwd_patch "patch";
+  print_path         state path;
+  print_token        state kwd_with "with";
+  print_ne_injection state "map" print_binding map_inj
 
-and print_map_remove buffer node =
+and print_map_remove state node =
   let {kwd_remove; key; kwd_from; kwd_map; map} = node in
-  print_token buffer kwd_remove "remove";
-  print_expr  buffer key;
-  print_token buffer kwd_from "from";
-  print_token buffer kwd_map "map";
-  print_path  buffer map
+  print_token state kwd_remove "remove";
+  print_expr  state key;
+  print_token state kwd_from "from";
+  print_token state kwd_map "map";
+  print_path  state map
 
-and print_set_remove buffer node =
+and print_set_remove state node =
   let {kwd_remove; element; kwd_from; kwd_set; set} = node in
-  print_token buffer kwd_remove "remove";
-  print_expr  buffer element;
-  print_token buffer kwd_from "from";
-  print_token buffer kwd_set "set";
-  print_path  buffer set
+  print_token state kwd_remove "remove";
+  print_expr  state element;
+  print_token state kwd_from "from";
+  print_token state kwd_set "set";
+  print_path  state set
 
 and print_injection :
-  'a.Buffer.t -> string -> (Buffer.t -> 'a -> unit) ->
+  'a.state -> string -> (state -> 'a -> unit) ->
   'a injection reg -> unit =
-  fun buffer kwd print {value; _} ->
+  fun state kwd print {value; _} ->
     let {opening; elements; terminator; closing} = value in
-    print_opening    buffer kwd opening;
-    print_sepseq     buffer ";" print elements;
-    print_terminator buffer terminator;
-    print_closing    buffer closing
+    print_opening    state kwd opening;
+    print_sepseq     state ";" print elements;
+    print_terminator state terminator;
+    print_closing    state closing
 
 and print_ne_injection :
-  'a.Buffer.t -> string -> (Buffer.t -> 'a -> unit) ->
+  'a.state -> string -> (state -> 'a -> unit) ->
   'a ne_injection reg -> unit =
-  fun buffer kwd print {value; _} ->
+  fun state kwd print {value; _} ->
     let {opening; ne_elements; terminator; closing} = value in
-    print_opening    buffer kwd opening;
-    print_nsepseq    buffer ";" print ne_elements;
-    print_terminator buffer terminator;
-    print_closing    buffer closing
+    print_opening    state kwd opening;
+    print_nsepseq    state ";" print ne_elements;
+    print_terminator state terminator;
+    print_closing    state closing
 
-and print_opening buffer lexeme = function
+and print_opening state lexeme = function
   Kwd kwd ->
-    print_token buffer kwd lexeme
+    print_token state kwd lexeme
 | KwdBracket (kwd, lbracket) ->
-    print_token buffer kwd lexeme;
-    print_token buffer lbracket "{"
+    print_token state kwd lexeme;
+    print_token state lbracket "{"
 
-and print_closing buffer = function
-  RBracket rbracket -> print_token buffer rbracket "}"
-| End kwd_end       -> print_token buffer kwd_end "end"
+and print_closing state = function
+  RBracket rbracket -> print_token state rbracket "}"
+| End kwd_end       -> print_token state kwd_end "end"
 
-and print_binding buffer {value; _} =
+and print_binding state {value; _} =
   let {source; arrow; image} = value in
-  print_expr  buffer source;
-  print_token buffer arrow "->";
-  print_expr  buffer image
+  print_expr  state source;
+  print_token state arrow "->";
+  print_expr  state image
 
-and print_tuple_expr buffer {value; _} =
+and print_tuple_expr state {value; _} =
   let {lpar; inside; rpar} = value in
-  print_token   buffer lpar "(";
-  print_nsepseq buffer "," print_expr inside;
-  print_token   buffer rpar ")"
+  print_token   state lpar "(";
+  print_nsepseq state "," print_expr inside;
+  print_token   state rpar ")"
 
-and print_nil buffer value = print_token buffer value "nil"
+and print_nil state value = print_token state value "nil"
 
-and print_none_expr buffer value = print_token buffer value "None"
+and print_none_expr state value = print_token state value "None"
 
-and print_fun_call buffer {value; _} =
+and print_fun_call state {value; _} =
   let expr, arguments = value in
-  print_expr       buffer expr;
-  print_tuple_expr buffer arguments
+  print_expr       state expr;
+  print_tuple_expr state arguments
 
-and print_constr_app buffer {value; _} =
+and print_constr_app state {value; _} =
   let constr, arguments = value in
-  print_constr buffer constr;
+  print_constr state constr;
   match arguments with
     None -> ()
-  | Some arg -> print_tuple_expr buffer arg
+  | Some arg -> print_tuple_expr state arg
 
-and print_some_app buffer {value; _} =
+and print_some_app state {value; _} =
   let c_Some, arguments = value in
-  print_token      buffer c_Some "Some";
-  print_tuple_expr buffer arguments
+  print_token      state c_Some "Some";
+  print_tuple_expr state arguments
 
-and print_par_expr buffer {value; _} =
+and print_par_expr state {value; _} =
   let {lpar; inside; rpar} = value in
-  print_token buffer lpar "(";
-  print_expr  buffer inside;
-  print_token buffer rpar ")"
+  print_token state lpar "(";
+  print_expr  state inside;
+  print_token state rpar ")"
 
-and print_pattern buffer = function
-  PVar var         -> print_var buffer var
-| PWild wild       -> print_token buffer wild "_"
-| PInt i           -> print_int buffer i
-| PNat n           -> print_nat buffer n
-| PBytes b         -> print_bytes buffer b
-| PString s        -> print_string buffer s
-| PList pattern    -> print_list_pattern buffer pattern
-| PTuple ptuple    -> print_ptuple buffer ptuple
-| PConstr pattern  -> print_constr_pattern buffer pattern
+and print_pattern state = function
+  PVar var         -> print_var state var
+| PWild wild       -> print_token state wild "_"
+| PInt i           -> print_int state i
+| PNat n           -> print_nat state n
+| PBytes b         -> print_bytes state b
+| PString s        -> print_string state s
+| PList pattern    -> print_list_pattern state pattern
+| PTuple ptuple    -> print_ptuple state ptuple
+| PConstr pattern  -> print_constr_pattern state pattern
 
-and print_constr_pattern buffer = function
-  PUnit region     -> print_token buffer region "Unit"
-| PFalse region    -> print_token buffer region "False"
-| PTrue region     -> print_token buffer region "True"
-| PNone region     -> print_token buffer region "None"
-| PSomeApp psome   -> print_psome buffer psome
+and print_constr_pattern state = function
+  PUnit region     -> print_token state region "Unit"
+| PFalse region    -> print_token state region "False"
+| PTrue region     -> print_token state region "True"
+| PNone region     -> print_token state region "None"
+| PSomeApp psome   -> print_psome state psome
 | PConstrApp {value; _} ->
     let constr, arg = value in
-    print_constr buffer constr;
+    print_constr state constr;
     match arg with
       None -> ()
-    | Some tuple -> print_ptuple buffer tuple
+    | Some tuple -> print_ptuple state tuple
 
-and print_psome buffer {value; _} =
+and print_psome state {value; _} =
   let c_Some, patterns = value in
-  print_token    buffer c_Some "Some";
-  print_patterns buffer patterns
+  print_token    state c_Some "Some";
+  print_patterns state patterns
 
-and print_patterns buffer {value; _} =
+and print_patterns state {value; _} =
   let {lpar; inside; rpar} = value in
-  print_token   buffer lpar "(";
-  print_pattern buffer inside;
-  print_token   buffer rpar ")"
+  print_token   state lpar "(";
+  print_pattern state inside;
+  print_token   state rpar ")"
 
-and print_list_pattern buffer = function
+and print_list_pattern state = function
   PListComp comp ->
-   print_injection buffer "list" print_pattern comp
+   print_injection state "list" print_pattern comp
 | PNil kwd_nil ->
-    print_token buffer kwd_nil "nil"
+    print_token state kwd_nil "nil"
 | PParCons cons ->
-    print_par_cons buffer cons
+    print_par_cons state cons
 | PCons {value; _} ->
-   print_nsepseq buffer "#" print_pattern value
+   print_nsepseq state "#" print_pattern value
 
-and print_par_cons buffer {value; _} =
+and print_par_cons state {value; _} =
   let {lpar; inside; rpar} = value in
   let head, cons, tail = inside in
-  print_token   buffer lpar "(";
-  print_pattern buffer head;
-  print_token   buffer cons "#";
-  print_pattern buffer tail;
-  print_token   buffer rpar ")"
+  print_token   state lpar "(";
+  print_pattern state head;
+  print_token   state cons "#";
+  print_pattern state tail;
+  print_token   state rpar ")"
 
-and print_ptuple buffer {value; _} =
+and print_ptuple state {value; _} =
   let {lpar; inside; rpar} = value in
-  print_token   buffer lpar "(";
-  print_nsepseq buffer "," print_pattern inside;
-  print_token   buffer rpar ")"
+  print_token   state lpar "(";
+  print_nsepseq state "," print_pattern inside;
+  print_token   state rpar ")"
 
-and print_terminator buffer = function
-  Some semi -> print_token buffer semi ";"
+and print_terminator state = function
+  Some semi -> print_token state semi ";"
 | None -> ()
 
 (* Conversion to string *)
 
-let to_string printer node =
+let to_string ~offsets ~mode printer node =
   let buffer = Buffer.create 131 in
-  let () = printer buffer node
+  let state = mk_state ~offsets ~mode ~buffer in
+  let () = printer state node
   in Buffer.contents buffer
 
-let tokens_to_string      = to_string print_tokens
-let path_to_string        = to_string print_path
-let pattern_to_string     = to_string print_pattern
-let instruction_to_string = to_string print_instruction
+let tokens_to_string ~offsets ~mode =
+  to_string ~offsets ~mode print_tokens
+let path_to_string ~offsets ~mode =
+  to_string ~offsets ~mode print_path
+let pattern_to_string ~offsets ~mode =
+  to_string ~offsets ~mode print_pattern
+let instruction_to_string ~offsets ~mode =
+  to_string ~offsets ~mode print_instruction
 
-(* Pretty-printing the AST *)
+(** {1 Pretty-printing the AST} *)
 
-(* The function [mk_pad] updates the current padding, which is
-   comprised of two components: the padding to reach the new node
-   (space before reaching a subtree, then a vertical bar for it) and
-   the padding for the new node itself (Is it the last child of its
-   parent?). *)
-let mk_pad len rank pc =
-  pc ^ (if rank = len-1 then "`-- " else "|-- "),
-  pc ^ (if rank = len-1 then "    " else "|   ")
+let pp_ident state {value=name; region} =
+  let reg  = compact state region in
+  let node = sprintf "%s%s (%s)\n" state#pad_path name reg
+  in Buffer.add_string state#buffer node
 
-let pp_ident buffer ~pad:(pd,_) Region.{value=name; region} =
-  let node = sprintf "%s%s (%s)\n" pd name (region#compact `Byte)
-  in Buffer.add_string buffer node
+let pp_node state name =
+  let node = sprintf "%s%s\n" state#pad_path name
+  in Buffer.add_string state#buffer node
 
-let pp_node buffer ~pad:(pd,_) name =
-  let node = sprintf "%s%s\n" pd name
-  in Buffer.add_string buffer node
+let pp_string state = pp_ident state
 
-let pp_string buffer = pp_ident buffer
+let pp_loc_node state name region =
+  pp_ident state {value=name; region}
 
-let pp_loc_node buffer ~pad name region =
-  pp_ident buffer ~pad Region.{value=name; region}
-
-let rec pp_ast buffer ~pad:(_,pc as pad) {decl; _} =
+let rec pp_ast state {decl; _} =
   let apply len rank =
-    let pad = mk_pad len rank pc in
-    pp_declaration buffer ~pad in
+    pp_declaration (state#pad len rank) in
   let decls = Utils.nseq_to_list decl in
-  pp_node buffer ~pad "<ast>";
+  pp_node state "<ast>";
   List.iteri (List.length decls |> apply) decls
 
-and pp_declaration buffer ~pad:(_,pc as pad) = function
+and pp_declaration state = function
   TypeDecl {value; region} ->
-    pp_loc_node buffer ~pad "TypeDecl" region;
-    pp_ident buffer ~pad:(mk_pad 2 0 pc) value.name;
-    pp_type_expr buffer ~pad:(mk_pad 2 1 pc) value.type_expr
+    pp_loc_node state "TypeDecl" region;
+    pp_ident (state#pad 2 0) value.name;
+    pp_type_expr (state#pad 2 1) value.type_expr
 | ConstDecl {value; region} ->
-    pp_loc_node buffer ~pad "ConstDecl" region;
-    pp_const_decl buffer ~pad value
+    pp_loc_node state "ConstDecl" region;
+    pp_const_decl state value
 | FunDecl {value; region} ->
-    pp_loc_node buffer ~pad "FunDecl" region;
-    pp_fun_expr buffer ~pad value.fun_expr.value
+    pp_loc_node state "FunDecl" region;
+    pp_fun_expr state value.fun_expr.value
 
-and pp_const_decl buffer ~pad:(_,pc) decl =
-  pp_ident buffer ~pad:(mk_pad 3 0 pc) decl.name;
-  pp_type_expr buffer ~pad:(mk_pad 3 1 pc) decl.const_type;
-  pp_expr buffer ~pad:(mk_pad 3 2 pc) decl.init
+and pp_const_decl state decl =
+  pp_ident (state#pad 3 0) decl.name;
+  pp_type_expr (state#pad 3 1) decl.const_type;
+  pp_expr (state#pad 3 2) decl.init
 
-and pp_type_expr buffer ~pad:(_,pc as pad) = function
+and pp_type_expr state = function
   TProd cartesian ->
-    pp_loc_node buffer ~pad "TProd" cartesian.region;
-    pp_cartesian buffer ~pad cartesian
+    pp_loc_node state "TProd" cartesian.region;
+    pp_cartesian state cartesian
 | TVar v ->
-    pp_node buffer ~pad "TVar";
-    pp_ident buffer ~pad:(mk_pad 1 0 pc) v
+    pp_node state "TVar";
+    pp_ident (state#pad 1 0) v
 | TPar {value; region} ->
-    pp_loc_node buffer ~pad "TPar" region;
-    pp_type_expr buffer ~pad:(mk_pad 1 0 pc) value.inside
+    pp_loc_node state "TPar" region;
+    pp_type_expr (state#pad 1 0) value.inside
 | TApp {value=name,tuple; region} ->
-    pp_loc_node buffer ~pad "TApp" region;
-    pp_ident buffer ~pad:(mk_pad 1 0 pc) name;
-    pp_type_tuple buffer ~pad:(mk_pad 2 1 pc) tuple
+    pp_loc_node state "TApp" region;
+    pp_ident (state#pad 1 0) name;
+    pp_type_tuple (state#pad 2 1) tuple
 | TFun {value; region} ->
-    pp_loc_node buffer ~pad "TFun" region;
+    pp_loc_node state "TFun" region;
     let apply len rank =
-      let pad = mk_pad len rank pc in
-      pp_type_expr buffer ~pad in
+      pp_type_expr (state#pad len rank) in
     let domain, _, range = value in
     List.iteri (apply 2) [domain; range]
 | TSum {value; region} ->
-    pp_loc_node buffer ~pad "TSum" region;
+    pp_loc_node state "TSum" region;
     let apply len rank variant =
-      let pad = mk_pad len rank pc in
-      pp_variant buffer ~pad variant.value in
+      pp_variant (state#pad len rank) variant.value in
     let variants = Utils.nsepseq_to_list value in
     List.iteri (List.length variants |> apply) variants
 | TRecord {value; region} ->
-    pp_loc_node buffer ~pad "TRecord" region;
+    pp_loc_node state "TRecord" region;
     let apply len rank field_decl =
-      pp_field_decl buffer ~pad:(mk_pad len rank pc)
+      pp_field_decl (state#pad len rank)
                     field_decl.value in
     let fields = Utils.nsepseq_to_list value.ne_elements in
     List.iteri (List.length fields |> apply) fields
 
-and pp_cartesian buffer ~pad:(_,pc) {value; _} =
+and pp_cartesian state {value; _} =
   let apply len rank =
-    pp_type_expr buffer ~pad:(mk_pad len rank pc) in
+    pp_type_expr (state#pad len rank) in
   let components = Utils.nsepseq_to_list value
   in List.iteri (List.length components |> apply) components
 
-and pp_variant buffer ~pad:(_,pc as pad) {constr; arg} =
-  pp_ident buffer ~pad constr;
+and pp_variant state {constr; arg} =
+  pp_ident state constr;
   match arg with
           None -> ()
-  | Some (_,c) ->
-      pp_type_expr buffer ~pad:(mk_pad 1 0 pc) c
+  | Some (_,c) -> pp_type_expr (state#pad 1 0) c
 
-and pp_field_decl buffer ~pad:(_,pc as pad) decl =
-  pp_ident buffer ~pad decl.field_name;
-  pp_type_expr buffer ~pad:(mk_pad 1 0 pc) decl.field_type
+and pp_field_decl state decl =
+  pp_ident state decl.field_name;
+  pp_type_expr (state#pad 1 0) decl.field_type
 
-and pp_type_tuple buffer ~pad:(_,pc) {value; _} =
+and pp_type_tuple state {value; _} =
   let components = Utils.nsepseq_to_list value.inside in
-  let apply len rank =
-    pp_type_expr buffer ~pad:(mk_pad len rank pc)
+  let apply len rank = pp_type_expr (state#pad len rank)
   in List.iteri (List.length components |> apply) components
 
-and pp_fun_expr buffer ~pad:(_,pc) decl =
-  let fields =
-    if decl.local_decls = [] then 5 else 6 in
+and pp_fun_expr state decl =
   let () =
-    let pad = mk_pad fields 0 pc in
-    let anonymous_name = Region.wrap_ghost "#anonymous" in
-    pp_ident buffer ~pad @@ Simple_utils.Option.unopt ~default:anonymous_name decl.name in
+    let state = state#pad 5 0 in
+    match decl.name with
+      None -> pp_ident state (Region.wrap_ghost "#anon")
+    | Some var -> pp_ident state var in
   let () =
-    let pad = mk_pad fields 1 pc in
-    pp_node buffer ~pad "<parameters>";
-    pp_parameters buffer ~pad decl.param in
+    let state = state#pad 5 1 in
+    pp_node state "<parameters>";
+    pp_parameters state decl.param in
   let () =
-    let _, pc as pad = mk_pad fields 2 pc in
-    pp_node buffer ~pad "<return type>";
-    pp_type_expr buffer ~pad:(mk_pad 1 0 pc) decl.ret_type in
+    let state = state#pad 5 2 in
+    pp_node state "<return type>";
+    pp_type_expr (state#pad 1 0) decl.ret_type in
   let () =
-    if fields = 6 then
-      let pad = mk_pad fields 3 pc in
-      pp_node buffer ~pad "<local declarations>";
-      pp_local_decls buffer ~pad decl.local_decls in
-  let () =
-    let pad = mk_pad fields (fields - 2) pc in
-    pp_node buffer ~pad "<block>";
+    let state = state#pad 5 3 in
+    pp_node state "<body>";
     let statements =
-      match decl.block with
-        Some block -> block.value.statements
+      match decl.block_with with
+        Some (block,_) -> block.value.statements
       | None -> Instr (Skip Region.ghost), [] in
-    pp_statements buffer ~pad statements in
+    pp_statements state statements in
   let () =
-    let _, pc as pad = mk_pad fields (fields - 1) pc in
-    pp_node buffer ~pad "<return>";
-    pp_expr buffer ~pad:(mk_pad 1 0 pc) decl.return
+    let state = state#pad 5 4 in
+    pp_node state "<return>";
+    pp_expr (state#pad 1 0) decl.return
   in ()
 
-and pp_parameters buffer ~pad:(_,pc) {value; _} =
+and pp_parameters state {value; _} =
   let params = Utils.nsepseq_to_list value.inside in
   let arity  = List.length params in
-  let apply len rank =
-    pp_param_decl buffer ~pad:(mk_pad len rank pc)
+  let apply len rank = pp_param_decl (state#pad len rank)
   in List.iteri (apply arity) params
 
-and pp_param_decl buffer ~pad:(_,pc as pad) = function
+and pp_param_decl state = function
   ParamConst {value; region} ->
-    pp_loc_node buffer ~pad "ParamConst" region;
-    pp_ident buffer ~pad:(mk_pad 2 0 pc) value.var;
-    pp_type_expr buffer ~pad:(mk_pad 2 1 pc) value.param_type
+    pp_loc_node state "ParamConst" region;
+    pp_ident (state#pad 2 0) value.var;
+    pp_type_expr (state#pad 2 1) value.param_type
 | ParamVar {value; region} ->
-    pp_loc_node buffer ~pad "ParamVar" region;
-    pp_ident buffer ~pad:(mk_pad 2 0 pc) value.var;
-    pp_type_expr buffer ~pad:(mk_pad 2 1 pc) value.param_type
+    pp_loc_node state "ParamVar" region;
+    pp_ident (state#pad 2 0) value.var;
+    pp_type_expr (state#pad 2 1) value.param_type
 
-and pp_statements buffer ~pad:(_,pc) statements =
+and pp_statements state statements =
   let statements = Utils.nsepseq_to_list statements in
   let length     = List.length statements in
-  let apply len rank =
-    pp_statement buffer ~pad:(mk_pad len rank pc)
+  let apply len rank = pp_statement (state#pad len rank)
   in List.iteri (apply length) statements
 
-and pp_statement buffer ~pad:(_,pc as pad) = function
+and pp_statement state = function
   Instr instr ->
-    pp_node buffer ~pad "Instr";
-    pp_instruction buffer ~pad:(mk_pad 1 0 pc) instr
+    pp_node state "Instr";
+    pp_instruction (state#pad 1 0) instr
 | Data data_decl ->
-    pp_node buffer ~pad "Data";
-    pp_data_decl buffer ~pad:(mk_pad 1 0 pc) data_decl
+    pp_node state "Data";
+    pp_data_decl (state#pad 1 0) data_decl
 
-and pp_instruction buffer ~pad:(_,pc as pad) = function
+and pp_instruction state = function
   Cond {value; region} ->
-    pp_loc_node buffer ~pad "Cond" region;
-    pp_conditional buffer ~pad value
+    pp_loc_node state "Cond" region;
+    pp_conditional state value
 | CaseInstr {value; region} ->
-    pp_loc_node buffer ~pad "CaseInstr" region;
-    pp_case pp_if_clause buffer ~pad value
+    pp_loc_node state "CaseInstr" region;
+    pp_case pp_if_clause state value
 | Assign {value; region} ->
-    pp_loc_node buffer ~pad "Assign" region;
-    pp_assignment buffer ~pad value
+    pp_loc_node state "Assign" region;
+    pp_assignment state value
 | Loop loop ->
-    pp_node buffer ~pad "Loop";
-    pp_loop buffer ~pad:(mk_pad 1 0 pc) loop
+    pp_node state "Loop";
+    pp_loop (state#pad 1 0) loop
 | ProcCall {value; region} ->
-    pp_loc_node buffer ~pad "ProcCall" region;
-    pp_fun_call buffer ~pad value
+    pp_loc_node state "ProcCall" region;
+    pp_fun_call state value
 | Skip region ->
-    pp_loc_node buffer ~pad "Skip" region
+    pp_loc_node state "Skip" region
 | RecordPatch {value; region} ->
-    pp_loc_node buffer ~pad "RecordPatch" region;
-    pp_record_patch buffer ~pad value
+    pp_loc_node state "RecordPatch" region;
+    pp_record_patch state value
 | MapPatch {value; region} ->
-    pp_loc_node buffer ~pad "MapPatch" region;
-    pp_map_patch buffer ~pad value
+    pp_loc_node state "MapPatch" region;
+    pp_map_patch state value
 | SetPatch {value; region} ->
-    pp_loc_node buffer ~pad "SetPatch" region;
-    pp_set_patch buffer ~pad value
+    pp_loc_node state "SetPatch" region;
+    pp_set_patch state value
 | MapRemove {value; region} ->
-    pp_loc_node buffer ~pad "MapRemove" region;
-    pp_map_remove buffer ~pad value
+    pp_loc_node state "MapRemove" region;
+    pp_map_remove state value
 | SetRemove {value; region} ->
-    pp_loc_node buffer ~pad "SetRemove" region;
-    pp_set_remove buffer ~pad value
+    pp_loc_node state "SetRemove" region;
+    pp_set_remove state value
 
-and pp_cond_expr buffer ~pad:(_,pc) (cond: cond_expr) =
+and pp_cond_expr state (cond: cond_expr) =
   let () =
-    let _, pc as pad = mk_pad 3 0 pc in
-    pp_node buffer ~pad "<condition>";
-    pp_expr buffer ~pad:(mk_pad 1 0 pc) cond.test in
+    let state = state#pad 3 0 in
+    pp_node state "<condition>";
+    pp_expr (state#pad 1 0) cond.test in
   let () =
-    let _, pc as pad = mk_pad 3 1 pc in
-    pp_node buffer ~pad "<true>";
-    pp_expr buffer ~pad:(mk_pad 1 0 pc) cond.ifso in
+    let state = state#pad 3 1 in
+    pp_node state "<true>";
+    pp_expr (state#pad 1 0) cond.ifso in
   let () =
-    let _, pc as pad = mk_pad 3 2 pc in
-    pp_node buffer ~pad "<false>";
-    pp_expr buffer ~pad:(mk_pad 1 0 pc) cond.ifnot
+    let state = state#pad 3 2 in
+    pp_node state "<false>";
+    pp_expr (state#pad 1 0) cond.ifnot
   in ()
 
-and pp_conditional buffer ~pad:(_,pc) (cond: conditional) =
+and pp_conditional state (cond: conditional) =
   let () =
-    let _, pc as pad = mk_pad 3 0 pc in
-    pp_node buffer ~pad "<condition>";
-    pp_expr buffer ~pad:(mk_pad 1 0 pc) cond.test in
+    let state = state#pad 3 0 in
+    pp_node state "<condition>";
+    pp_expr (state#pad 1 0) cond.test in
   let () =
-    let _, pc as pad = mk_pad 3 1 pc in
-    pp_node buffer ~pad "<true>";
-    pp_if_clause buffer ~pad:(mk_pad 1 0 pc) cond.ifso in
+    let state = state#pad 3 1 in
+    pp_node state "<true>";
+    pp_if_clause (state#pad 1 0) cond.ifso in
   let () =
-    let _, pc as pad = mk_pad 3 2 pc in
-    pp_node buffer ~pad "<false>";
-    pp_if_clause buffer ~pad:(mk_pad 1 0 pc) cond.ifnot
+    let state = state#pad 3 2 in
+    pp_node state "<false>";
+    pp_if_clause (state#pad 1 0) cond.ifnot
   in ()
 
-and pp_if_clause buffer ~pad:(_,pc as pad) = function
+and pp_if_clause state = function
   ClauseInstr instr ->
-    pp_node buffer ~pad "ClauseInstr";
-    pp_instruction buffer ~pad:(mk_pad 1 0 pc) instr
+    pp_node state "ClauseInstr";
+    pp_instruction (state#pad 1 0) instr
 | ClauseBlock block ->
-    pp_node buffer ~pad "ClauseBlock";
-    pp_clause_block buffer ~pad:(mk_pad 1 0 pc) block
+    pp_node state "ClauseBlock";
+    pp_clause_block (state#pad 1 0) block
 
-and pp_clause_block buffer ~pad = function
+and pp_clause_block state = function
   LongBlock {value; region} ->
-    pp_loc_node buffer ~pad "LongBlock" region;
-    pp_statements buffer ~pad value.statements
+    pp_loc_node state "LongBlock" region;
+    pp_statements state value.statements
 | ShortBlock {value; region} ->
-    pp_loc_node buffer ~pad "ShortBlock" region;
-    pp_statements buffer ~pad (fst value.inside)
+    pp_loc_node state "ShortBlock" region;
+    pp_statements state (fst value.inside)
 
 and pp_case :
-  'a.(Buffer.t -> pad:(string*string) -> 'a -> unit)
-  -> Buffer.t -> pad:(string*string) -> 'a case -> unit =
-  fun printer buffer ~pad:(_,pc) case ->
+  'a.(state -> 'a -> unit) -> state -> 'a case -> unit =
+  fun printer state case ->
     let clauses = Utils.nsepseq_to_list case.cases.value in
     let clauses = List.map (fun {value; _} -> value) clauses in
     let length  = List.length clauses + 1 in
     let apply len rank =
-      pp_case_clause printer buffer ~pad:(mk_pad len (rank+1) pc)
-    in pp_expr buffer ~pad:(mk_pad length 0 pc) case.expr;
+      let state = state#pad len (rank+1)
+      in pp_case_clause printer state
+    in pp_expr (state#pad length 0) case.expr;
     List.iteri (apply length) clauses
 
 and pp_case_clause :
-  'a.(Buffer.t -> pad:(string*string) -> 'a -> unit)
-  -> Buffer.t -> pad:(string*string) -> 'a case_clause -> unit =
-  fun printer buffer ~pad:(_,pc as pad) clause ->
-    pp_node buffer ~pad "<clause>";
-    pp_pattern buffer ~pad:(mk_pad 2 0 pc) clause.pattern;
-    printer buffer ~pad:(mk_pad 2 1 pc) clause.rhs
+  'a.(state -> 'a -> unit) -> state -> 'a case_clause -> unit =
+  fun printer state clause ->
+    pp_node state "<clause>";
+    pp_pattern (state#pad 2 0) clause.pattern;
+    printer (state#pad 2 1) clause.rhs
 
-and pp_pattern buffer ~pad:(_,pc as pad) = function
+and pp_pattern state = function
   PWild region ->
-    pp_loc_node buffer ~pad "PWild" region
+    pp_loc_node state "PWild" region
 | PConstr pattern ->
-    pp_node buffer ~pad "PConstr";
-    pp_constr_pattern buffer ~pad:(mk_pad 1 0 pc) pattern
+    pp_node state "PConstr";
+    pp_constr_pattern (state#pad 1 0) pattern
 | PVar v ->
-    pp_node buffer ~pad "PVar";
-    pp_ident buffer ~pad:(mk_pad 1 0 pc) v
+    pp_node state "PVar";
+    pp_ident (state#pad 1 0) v
 | PInt n ->
-    pp_node buffer ~pad "PInt";
-    pp_int buffer ~pad n
+    pp_node state "PInt";
+    pp_int state n
 | PNat n ->
-    pp_node buffer ~pad "PNat";
-    pp_int buffer ~pad n
+    pp_node state "PNat";
+    pp_int state n
 | PBytes b ->
-    pp_node buffer ~pad "PBytes";
-    pp_bytes buffer ~pad b
+    pp_node state "PBytes";
+    pp_bytes state b
 | PString s ->
-    pp_node buffer ~pad "PString";
-    pp_ident buffer ~pad:(mk_pad 1 0 pc) s
+    pp_node state "PString";
+    pp_ident (state#pad 1 0) s
 | PList plist ->
-    pp_node buffer ~pad "PList";
-    pp_list_pattern buffer ~pad:(mk_pad 1 0 pc) plist
+    pp_node state "PList";
+    pp_list_pattern (state#pad 1 0) plist
 | PTuple {value; region} ->
-    pp_loc_node buffer ~pad "PTuple" region;
-    pp_tuple_pattern buffer ~pad:(mk_pad 1 0 pc) value
+    pp_loc_node state "PTuple" region;
+    pp_tuple_pattern (state#pad 1 0) value
 
-and pp_bytes buffer ~pad:(_,pc) {value=lexeme,hex; region} =
-  pp_loc_node buffer ~pad:(mk_pad 2 0 pc) lexeme region;
-  pp_node     buffer ~pad:(mk_pad 2 1 pc) (Hex.to_string hex)
+and pp_bytes state {value=lexeme,hex; region} =
+  pp_loc_node (state#pad 2 0) lexeme region;
+  pp_node     (state#pad 2 1) (Hex.to_string hex)
 
-and pp_int buffer ~pad:(_,pc) {value=lexeme,z; region} =
-  pp_loc_node buffer ~pad:(mk_pad 2 0 pc) lexeme region;
-  pp_node     buffer ~pad:(mk_pad 2 1 pc) (Z.to_string z)
+and pp_int state {value=lexeme,z; region} =
+  pp_loc_node (state#pad 2 0) lexeme region;
+  pp_node     (state#pad 2 1) (Z.to_string z)
 
-and pp_constr_pattern buffer ~pad:(_,pc as pad) = function
+and pp_constr_pattern state = function
   PNone region ->
-    pp_loc_node buffer ~pad "PNone" region
+    pp_loc_node state "PNone" region
 | PSomeApp {value=_,{value=par; _}; region} ->
-    pp_loc_node buffer ~pad "PSomeApp" region;
-    pp_pattern buffer ~pad:(mk_pad 1 0 pc) par.inside
+    pp_loc_node state "PSomeApp" region;
+    pp_pattern (state#pad 1 0) par.inside
 | PUnit region ->
-    pp_loc_node buffer ~pad "PUnit" region
+    pp_loc_node state "PUnit" region
 | PFalse region ->
-    pp_loc_node buffer ~pad "PFalse" region
+    pp_loc_node state "PFalse" region
 | PTrue region ->
-    pp_loc_node buffer ~pad "PTrue" region
+    pp_loc_node state "PTrue" region
 | PConstrApp {value; region} ->
-    pp_loc_node buffer ~pad "PConstrApp" region;
-    pp_constr_app_pattern buffer ~pad:(mk_pad 1 0 pc) value
+    pp_loc_node state "PConstrApp" region;
+    pp_constr_app_pattern (state#pad 1 0) value
 
-and pp_constr_app_pattern buffer ~pad (constr, pat_opt) =
-  pp_ident buffer ~pad constr;
+and pp_constr_app_pattern state (constr, pat_opt) =
+  pp_ident state constr;
   match pat_opt with
                None -> ()
-  | Some {value; _} -> pp_tuple_pattern buffer ~pad value
+  | Some {value; _} -> pp_tuple_pattern state value
 
-and pp_list_pattern buffer ~pad:(_,pc as pad) = function
+and pp_list_pattern state = function
   PListComp {value; region} ->
-    pp_loc_node buffer ~pad "PListComp" region;
-    pp_injection pp_pattern buffer ~pad:(mk_pad 1 0 pc) value
+    pp_loc_node state "PListComp" region;
+    pp_injection pp_pattern (state#pad 1 0) value
 | PNil region ->
-    pp_loc_node buffer ~pad "PNil" region
+    pp_loc_node state "PNil" region
 | PParCons {value; region} ->
-    pp_loc_node buffer ~pad "PParCons" region;
-    pp_bin_cons buffer ~pad:(mk_pad 1 0 pc) value.inside
+    pp_loc_node state "PParCons" region;
+    pp_bin_cons (state#pad 1 0) value.inside
 | PCons {value; region} ->
     let patterns = Utils.nsepseq_to_list value in
     let length   = List.length patterns in
     let apply len rank =
-      pp_pattern buffer ~pad:(mk_pad len rank pc) in
-    pp_loc_node buffer ~pad "PCons" region;
+      pp_pattern (state#pad len rank) in
+    pp_loc_node state "PCons" region;
     List.iteri (apply length) patterns
 
-and pp_bin_cons buffer ~pad:(_,pc) (head, _, tail) =
-  pp_pattern buffer ~pad:(mk_pad 2 0 pc) head;
-  pp_pattern buffer ~pad:(mk_pad 2 1 pc) tail
+and pp_bin_cons state (head, _, tail) =
+  pp_pattern (state#pad 2 0) head;
+  pp_pattern (state#pad 2 1) tail
 
 and pp_injection :
-  'a.(Buffer.t -> pad:(string*string) -> 'a -> unit)
-  -> Buffer.t -> pad:(string*string) -> 'a injection -> unit =
-  fun printer buffer ~pad:(_,pc) inj ->
-  let elements = Utils.sepseq_to_list inj.elements in
-  let length   = List.length elements in
-  let apply len rank = printer buffer ~pad:(mk_pad len rank pc)
+  'a.(state -> 'a -> unit) -> state -> 'a injection -> unit =
+  fun printer state inj ->
+  let elements       = Utils.sepseq_to_list inj.elements in
+  let length         = List.length elements in
+  let apply len rank = printer (state#pad len rank)
   in List.iteri (apply length) elements
 
 and pp_ne_injection :
-  'a.(Buffer.t -> pad:(string*string) -> 'a -> unit)
-  -> Buffer.t -> pad:(string*string) -> 'a ne_injection -> unit =
-  fun printer buffer ~pad:(_,pc) inj ->
-  let ne_elements = Utils.nsepseq_to_list inj.ne_elements in
-  let length      = List.length ne_elements in
-  let apply len rank = printer buffer ~pad:(mk_pad len rank pc)
+  'a.(state -> 'a -> unit) -> state -> 'a ne_injection -> unit =
+  fun printer state inj ->
+  let ne_elements    = Utils.nsepseq_to_list inj.ne_elements in
+  let length         = List.length ne_elements in
+  let apply len rank = printer (state#pad len rank)
   in List.iteri (apply length) ne_elements
 
-and pp_tuple_pattern buffer ~pad:(_,pc) tuple =
-  let patterns = Utils.nsepseq_to_list tuple.inside in
-  let length   = List.length patterns in
-  let apply len rank =
-    pp_pattern buffer ~pad:(mk_pad len rank pc)
+and pp_tuple_pattern state tuple =
+  let patterns       = Utils.nsepseq_to_list tuple.inside in
+  let length         = List.length patterns in
+  let apply len rank = pp_pattern (state#pad len rank)
   in List.iteri (apply length) patterns
 
-and pp_assignment buffer ~pad:(_,pc) asgn =
-  pp_lhs  buffer ~pad:(mk_pad 2 0 pc) asgn.lhs;
-  pp_expr buffer ~pad:(mk_pad 2 1 pc) asgn.rhs
+and pp_assignment state asgn =
+  pp_lhs  (state#pad 2 0) asgn.lhs;
+  pp_expr (state#pad 2 1) asgn.rhs
 
-and pp_lhs buffer ~pad:(_,pc as pad) = function
+and pp_lhs state = function
   Path path ->
-    pp_node buffer ~pad "Path";
-    pp_path buffer ~pad:(mk_pad 1 0 pc) path
+    pp_node state "Path";
+    pp_path (state#pad 1 0) path
 | MapPath {value; region} ->
-    pp_loc_node buffer ~pad "MapPath" region;
-    pp_map_lookup buffer ~pad value
+    pp_loc_node state "MapPath" region;
+    pp_map_lookup state value
 
-and pp_path buffer ~pad:(_,pc as pad) = function
+and pp_path state = function
   Name name ->
-    pp_node buffer ~pad "Name";
-    pp_ident buffer ~pad:(mk_pad 1 0 pc) name
+    pp_node state "Name";
+    pp_ident (state#pad 1 0) name
 | Path {value; region} ->
-    pp_loc_node buffer ~pad "Path" region;
-    pp_projection buffer ~pad value
+    pp_loc_node state "Path" region;
+    pp_projection state value
 
-and pp_projection buffer ~pad:(_,pc) proj =
-  let selections = Utils.nsepseq_to_list proj.field_path in
-  let len = List.length selections in
-  let apply len rank =
-    pp_selection buffer ~pad:(mk_pad len rank pc) in
-  pp_ident buffer ~pad:(mk_pad (1+len) 0 pc) proj.struct_name;
+and pp_projection state proj =
+  let selections     = Utils.nsepseq_to_list proj.field_path in
+  let len            = List.length selections in
+  let apply len rank = pp_selection (state#pad len rank) in
+  pp_ident (state#pad (1+len) 0) proj.struct_name;
   List.iteri (apply len) selections
 
-and pp_selection buffer ~pad:(_,pc as pad) = function
+and pp_selection state = function
   FieldName name ->
-    pp_node buffer ~pad "FieldName";
-    pp_ident buffer ~pad:(mk_pad 1 0 pc) name
+    pp_node state "FieldName";
+    pp_ident (state#pad 1 0) name
 | Component comp ->
-    pp_node buffer ~pad "Component";
-    pp_int buffer ~pad comp
+    pp_node state "Component";
+    pp_int state comp
 
-and pp_map_lookup buffer ~pad:(_,pc) lookup =
-  pp_path buffer ~pad:(mk_pad 2 0 pc) lookup.path;
-  pp_expr buffer ~pad:(mk_pad 2 1 pc) lookup.index.value.inside
+and pp_map_lookup state lookup =
+  pp_path (state#pad 2 0) lookup.path;
+  pp_expr (state#pad 2 1) lookup.index.value.inside
 
-and pp_loop buffer ~pad:(_,pc as pad) = function
+and pp_loop state = function
   While {value; _} ->
-    pp_node buffer ~pad "<while>";
+    pp_node state "<while>";
     let () =
-      let _, pc as pad = mk_pad 2 0 pc in
-      pp_node buffer ~pad "<condition>";
-      pp_expr buffer ~pad:(mk_pad 1 0 pc) value.cond in
+      let state = state#pad 2 0 in
+      pp_node state "<condition>";
+      pp_expr (state#pad 1 0) value.cond in
     let () =
-      let pad = mk_pad 2 1 pc in
+      let state = state#pad 2 1 in
       let statements = value.block.value.statements in
-      pp_node buffer ~pad "<statements>";
-      pp_statements buffer ~pad statements
+      pp_node state "<statements>";
+      pp_statements state statements
     in ()
 | For for_loop ->
-    pp_node buffer ~pad "<for>";
-    pp_for_loop buffer ~pad:(mk_pad 1 0 pc) for_loop
+    pp_node state "<for>";
+    pp_for_loop (state#pad 1 0) for_loop
 
-and pp_for_loop buffer ~pad = function
+and pp_for_loop state = function
   ForInt {value; region} ->
-    pp_loc_node buffer ~pad "ForInt" region;
-    pp_for_int buffer ~pad value
+    pp_loc_node state "ForInt" region;
+    pp_for_int state value
 | ForCollect {value; region} ->
-    pp_loc_node buffer ~pad "ForCollect" region;
-    pp_for_collect buffer ~pad value
+    pp_loc_node state "ForCollect" region;
+    pp_for_collect state value
 
-and pp_for_int buffer ~pad:(_,pc) for_int =
+and pp_for_int state for_int =
   let () =
-    let pad = mk_pad 3 0 pc in
-    pp_node buffer ~pad "<init>";
-    pp_var_assign buffer ~pad for_int.assign.value in
+    let state = state#pad 3 0 in
+    pp_node state "<init>";
+    pp_var_assign state for_int.assign.value in
   let () =
-    let _, pc as pad = mk_pad 3 1 pc in
-    pp_node buffer ~pad "<bound>";
-    pp_expr buffer ~pad:(mk_pad 1 0 pc) for_int.bound in
+    let state = state#pad 3 1 in
+    pp_node state "<bound>";
+    pp_expr (state#pad 1 0) for_int.bound in
   let () =
-    let pad = mk_pad 3 2 pc in
+    let state = state#pad 3 2 in
     let statements = for_int.block.value.statements in
-    pp_node buffer ~pad "<statements>";
-    pp_statements buffer ~pad statements
+    pp_node state "<statements>";
+    pp_statements state statements
   in ()
 
-and pp_var_assign buffer ~pad:(_,pc) asgn =
-  let pad = mk_pad 2 0 pc in
-  pp_ident buffer ~pad asgn.name;
-  let pad = mk_pad 2 1 pc in
-  pp_expr buffer ~pad asgn.expr
+and pp_var_assign state asgn =
+  pp_ident (state#pad 2 0) asgn.name;
+  pp_expr  (state#pad 2 1) asgn.expr
 
-and pp_for_collect buffer ~pad:(_,pc) collect =
+and pp_for_collect state collect =
   let () =
-    let pad = mk_pad 3 0 pc in
+    let state = state#pad 3 0 in
     match collect.bind_to with
       None ->
-        pp_ident buffer ~pad collect.var
+        pp_ident state collect.var
     | Some (_, var) ->
-        pp_var_binding buffer ~pad (collect.var, var) in
+        pp_var_binding state (collect.var, var) in
   let () =
-    let _, pc  as pad = mk_pad 3 1 pc in
-    pp_node buffer ~pad "<collection>";
-    pp_collection buffer ~pad:(mk_pad 2 0 pc) collect.collection;
-    pp_expr buffer ~pad:(mk_pad 1 0 pc) collect.expr in
+    let state = state#pad 3 1 in
+    pp_node state "<collection>";
+    pp_collection (state#pad 2 0) collect.collection;
+    pp_expr (state#pad 1 0) collect.expr in
   let () =
-      let pad = mk_pad 3 2 pc in
+      let state = state#pad 3 2 in
       let statements = collect.block.value.statements in
-      pp_node buffer ~pad "<statements>";
-      pp_statements buffer ~pad statements
+      pp_node state "<statements>";
+      pp_statements state statements
   in ()
 
-and pp_collection buffer ~pad = function
-  Map  region -> pp_loc_node buffer ~pad "map"  region
-| Set  region -> pp_loc_node buffer ~pad "set"  region
-| List region -> pp_loc_node buffer ~pad "list" region
+and pp_collection state = function
+  Map  region -> pp_loc_node state "map"  region
+| Set  region -> pp_loc_node state "set"  region
+| List region -> pp_loc_node state "list" region
 
-and pp_var_binding buffer ~pad:(_,pc as pad) (source, image) =
-  pp_node buffer ~pad "<binding>";
-  pp_ident buffer ~pad:(mk_pad 2 0 pc) source;
-  pp_ident buffer ~pad:(mk_pad 2 1 pc) image
+and pp_var_binding state (source, image) =
+  pp_node  state "<binding>";
+  pp_ident (state#pad 2 0) source;
+  pp_ident (state#pad 2 1) image
 
-and pp_fun_call buffer ~pad:(_,pc) (expr, args) =
-  let args  = Utils.nsepseq_to_list args.value.inside in
-  let arity = List.length args in
-  let apply len rank =
-    pp_expr buffer ~pad:(mk_pad len rank pc)
-  in pp_expr buffer ~pad:(mk_pad (1+arity) 0 pc) expr;
+and pp_fun_call state (expr, args) =
+  let args           = Utils.nsepseq_to_list args.value.inside in
+  let arity          = List.length args in
+  let apply len rank = pp_expr (state#pad len rank)
+  in pp_expr (state#pad (1+arity) 0) expr;
      List.iteri (apply arity) args
 
-and pp_record_patch buffer ~pad:(_,pc as pad) patch =
-  pp_path buffer ~pad:(mk_pad 2 0 pc) patch.path;
-  pp_ne_injection pp_field_assign buffer
-    ~pad patch.record_inj.value
+and pp_record_patch state patch =
+  pp_path (state#pad 2 0) patch.path;
+  pp_ne_injection pp_field_assign state patch.record_inj.value
 
-and pp_field_assign buffer ~pad:(_,pc as pad) {value; _} =
-  pp_node buffer ~pad "<field assignment>";
-  pp_ident buffer ~pad:(mk_pad 2 0 pc) value.field_name;
-  pp_expr  buffer ~pad:(mk_pad 2 1 pc) value.field_expr
+and pp_field_assign state {value; _} =
+  pp_node  state "<field assignment>";
+  pp_ident (state#pad 2 0) value.field_name;
+  pp_expr  (state#pad 2 1) value.field_expr
 
-and pp_map_patch buffer ~pad:(_,pc as pad) patch =
-  pp_path buffer ~pad:(mk_pad 2 0 pc) patch.path;
-  pp_ne_injection pp_binding buffer
-    ~pad patch.map_inj.value
+and pp_map_patch state patch =
+  pp_path (state#pad 2 0) patch.path;
+  pp_ne_injection pp_binding state patch.map_inj.value
 
-and pp_binding buffer ~pad:(_,pc as pad) {value; _} =
+and pp_binding state {value; _} =
   let source, image = value.source, value.image in
-  pp_node buffer ~pad "<binding>";
-  pp_expr buffer ~pad:(mk_pad 2 0 pc) source;
-  pp_expr buffer ~pad:(mk_pad 2 1 pc) image
+  pp_node state "<binding>";
+  pp_expr (state#pad 2 0) source;
+  pp_expr (state#pad 2 1) image
 
-and pp_set_patch buffer ~pad:(_,pc as pad) patch =
-  pp_path buffer ~pad:(mk_pad 2 0 pc) patch.path;
-  pp_ne_injection pp_expr buffer ~pad patch.set_inj.value
+and pp_set_patch state patch =
+  pp_path (state#pad 2 0) patch.path;
+  pp_ne_injection pp_expr state patch.set_inj.value
 
-and pp_map_remove buffer ~pad:(_,pc) rem =
-  pp_expr buffer ~pad:(mk_pad 2 0 pc) rem.key;
-  pp_path buffer ~pad:(mk_pad 2 1 pc) rem.map
+and pp_map_remove state rem =
+  pp_expr (state#pad 2 0) rem.key;
+  pp_path (state#pad 2 1) rem.map
 
-and pp_set_remove buffer ~pad:(_,pc) rem =
-  pp_expr buffer ~pad:(mk_pad 2 0 pc) rem.element;
-  pp_path buffer ~pad:(mk_pad 2 1 pc) rem.set
+and pp_set_remove state rem =
+  pp_expr (state#pad 2 0) rem.element;
+  pp_path (state#pad 2 1) rem.set
 
-and pp_local_decls buffer ~pad:(_,pc) decls =
-  let apply len rank =
-    pp_local_decl buffer ~pad:(mk_pad len rank pc)
-  in List.iteri (List.length decls |> apply) decls
-
-and pp_local_decl buffer ~pad:(_,pc as pad) = function
-| LocalData data ->
-    pp_node buffer ~pad "LocalData";
-    pp_data_decl buffer ~pad:(mk_pad 1 0 pc) data
-
-and pp_data_decl buffer ~pad = function
+and pp_data_decl state = function
   LocalConst {value; region} ->
-    pp_loc_node buffer ~pad "LocalConst" region;
-    pp_const_decl buffer ~pad value
+    pp_loc_node state "LocalConst" region;
+    pp_const_decl state value
 | LocalVar {value; region} ->
-    pp_loc_node buffer ~pad "LocalVar" region;
-    pp_var_decl buffer ~pad value
+    pp_loc_node state "LocalVar" region;
+    pp_var_decl state value
 | LocalFun {value; region} ->
-    pp_loc_node buffer ~pad "LocalFun" region;
-    pp_fun_expr buffer ~pad value.fun_expr.value
+    pp_loc_node state "LocalFun" region;
+    pp_fun_expr state value.fun_expr.value
 
-and pp_var_decl buffer ~pad:(_,pc) decl =
-  pp_ident     buffer ~pad:(mk_pad 3 0 pc) decl.name;
-  pp_type_expr buffer ~pad:(mk_pad 3 1 pc) decl.var_type;
-  pp_expr      buffer ~pad:(mk_pad 3 2 pc) decl.init
+and pp_var_decl state decl =
+  pp_ident     (state#pad 3 0) decl.name;
+  pp_type_expr (state#pad 3 1) decl.var_type;
+  pp_expr      (state#pad 3 2) decl.init
 
-and pp_expr buffer ~pad:(_,pc as pad) = function
+and pp_expr state = function
   ECase {value; region} ->
-    pp_loc_node buffer ~pad "ECase" region;
-    pp_case pp_expr buffer ~pad value
+    pp_loc_node state "ECase" region;
+    pp_case pp_expr state value
 | ECond {value; region} ->
-    pp_loc_node buffer ~pad "ECond" region;
-    pp_cond_expr buffer ~pad value
+    pp_loc_node state "ECond" region;
+    pp_cond_expr state value
 | EAnnot {value; region} ->
-    pp_loc_node buffer ~pad "EAnnot" region;
-    pp_annotated buffer ~pad value
+    pp_loc_node state "EAnnot" region;
+    pp_annotated state value
 | ELogic e_logic ->
-    pp_node buffer ~pad "ELogic";
-    pp_e_logic buffer ~pad:(mk_pad 1 0 pc) e_logic
+    pp_node state "ELogic";
+    pp_e_logic (state#pad 1 0) e_logic
 | EArith e_arith ->
-    pp_node buffer ~pad "EArith";
-    pp_arith_expr buffer ~pad:(mk_pad 1 0 pc) e_arith
+    pp_node state "EArith";
+    pp_arith_expr (state#pad 1 0) e_arith
 | EString e_string ->
-    pp_node buffer ~pad "EString";
-    pp_string_expr buffer ~pad:(mk_pad 1 0 pc) e_string
+    pp_node state "EString";
+    pp_string_expr (state#pad 1 0) e_string
 | EList e_list ->
-    pp_node buffer ~pad "EList";
-    pp_list_expr buffer ~pad:(mk_pad 1 0 pc) e_list
+    pp_node state "EList";
+    pp_list_expr (state#pad 1 0) e_list
 | ESet e_set ->
-    pp_node buffer ~pad "ESet";
-    pp_set_expr buffer ~pad:(mk_pad 1 0 pc) e_set
+    pp_node state "ESet";
+    pp_set_expr (state#pad 1 0) e_set
 | EConstr e_constr ->
-    pp_node buffer ~pad "EConstr";
-    pp_constr_expr buffer ~pad:(mk_pad 1 0 pc) e_constr
+    pp_node state "EConstr";
+    pp_constr_expr (state#pad 1 0) e_constr
 | ERecord {value; region} ->
-    pp_loc_node buffer ~pad "ERecord" region;
-    pp_ne_injection pp_field_assign buffer ~pad value
+    pp_loc_node state "ERecord" region;
+    pp_ne_injection pp_field_assign state value
 | EProj {value; region} ->
-    pp_loc_node buffer ~pad "EProj" region;
-    pp_projection buffer ~pad value
+    pp_loc_node state "EProj" region;
+    pp_projection state value
 | EMap e_map ->
-    pp_node buffer ~pad "EMap";
-    pp_map_expr buffer ~pad:(mk_pad 1 0 pc) e_map
+    pp_node state "EMap";
+    pp_map_expr (state#pad 1 0) e_map
 | EVar v ->
-    pp_node buffer ~pad "EVar";
-    pp_ident buffer ~pad:(mk_pad 1 0 pc) v
+    pp_node state "EVar";
+    pp_ident (state#pad 1 0) v
 | ECall {value; region} ->
-    pp_loc_node buffer ~pad "ECall" region;
-    pp_fun_call buffer ~pad value
+    pp_loc_node state "ECall" region;
+    pp_fun_call state value
 | EBytes b ->
-    pp_node buffer ~pad "EBytes";
-    pp_bytes buffer ~pad b
+    pp_node state "EBytes";
+    pp_bytes state b
 | EUnit region ->
-    pp_loc_node buffer ~pad "EUnit" region
+    pp_loc_node state "EUnit" region
 | ETuple e_tuple ->
-    pp_node buffer ~pad "ETuple";
-    pp_tuple_expr buffer ~pad e_tuple
+    pp_node state "ETuple";
+    pp_tuple_expr state e_tuple
 | EPar {value; region} ->
-    pp_loc_node buffer ~pad "EPar" region;
-    pp_expr buffer ~pad:(mk_pad 1 0 pc) value.inside
+    pp_loc_node state "EPar" region;
+    pp_expr (state#pad 1 0) value.inside
 | EFun {value; region} ->
-    pp_loc_node buffer ~pad "EFun" region;
-    pp_fun_expr ~pad buffer value;
+    pp_loc_node state "EFun" region;
+    pp_fun_expr state value;
 
-and pp_list_expr buffer ~pad:(_,pc as pad) = function
+and pp_list_expr state = function
   ECons {value; region} ->
-    pp_loc_node buffer ~pad "ECons" region;
-    pp_expr buffer ~pad:(mk_pad 2 0 pc) value.arg1;
-    pp_expr buffer ~pad:(mk_pad 2 1 pc) value.arg2
+    pp_loc_node state "ECons" region;
+    pp_expr (state#pad 2 0) value.arg1;
+    pp_expr (state#pad 2 1) value.arg2
 | ENil region ->
-    pp_loc_node buffer ~pad "ENil" region
+    pp_loc_node state "ENil" region
 | EListComp {value; region} ->
-    pp_loc_node buffer ~pad "EListComp" region;
+    pp_loc_node state "EListComp" region;
     if value.elements = None then
-      pp_node buffer ~pad:(mk_pad 1 0 pc) "[]"
-    else
-      pp_injection pp_expr buffer ~pad value
+      pp_node (state#pad 1 0) "[]"
+    else pp_injection pp_expr state value
 
-and pp_arith_expr buffer ~pad:(_,pc as pad) = function
+and pp_arith_expr state = function
   Add {value; region} ->
-    pp_bin_op "Add" region buffer ~pad value
+    pp_bin_op "Add" region state value
 | Sub {value; region} ->
-    pp_bin_op "Sub" region buffer ~pad value
+    pp_bin_op "Sub" region state value
 | Mult {value; region} ->
-    pp_bin_op "Mult" region buffer ~pad value
+    pp_bin_op "Mult" region state value
 | Div {value; region} ->
-    pp_bin_op "Div" region buffer ~pad value
+    pp_bin_op "Div" region state value
 | Mod {value; region} ->
-    pp_bin_op "Mod" region buffer ~pad value
+    pp_bin_op "Mod" region state value
 | Neg {value; region} ->
-    pp_loc_node buffer ~pad "Neg" region;
-    pp_expr buffer ~pad:(mk_pad 1 0 pc) value.arg;
+    pp_loc_node state "Neg" region;
+    pp_expr (state#pad 1 0) value.arg;
 | Int i ->
-    pp_node buffer ~pad "Int";
-    pp_int  buffer ~pad i
+    pp_node state "Int";
+    pp_int  state i
 | Nat n ->
-    pp_node buffer ~pad "Nat";
-    pp_int  buffer ~pad n
+    pp_node state "Nat";
+    pp_int  state n
 | Mutez m ->
-    pp_node buffer ~pad "Mutez";
-    pp_int  buffer ~pad m
+    pp_node state "Mutez";
+    pp_int  state m
 
-and pp_set_expr buffer ~pad:(_,pc as pad) = function
+and pp_set_expr state = function
   SetInj {value; region} ->
-    pp_loc_node buffer ~pad "SetInj" region;
-    pp_injection pp_expr buffer ~pad value
+    pp_loc_node  state "SetInj" region;
+    pp_injection pp_expr state value
 | SetMem {value; region} ->
-    pp_loc_node buffer ~pad "SetMem" region;
-    pp_expr buffer ~pad:(mk_pad 2 0 pc) value.set;
-    pp_expr buffer ~pad:(mk_pad 2 1 pc) value.element
+    pp_loc_node state "SetMem" region;
+    pp_expr     (state#pad 2 0) value.set;
+    pp_expr     (state#pad 2 1) value.element
 
-and pp_e_logic buffer ~pad:(_, pc as pad) = function
+and pp_e_logic state = function
   BoolExpr e ->
-    pp_node buffer ~pad "BoolExpr";
-    pp_bool_expr buffer ~pad:(mk_pad 1 0 pc) e
+    pp_node state "BoolExpr";
+    pp_bool_expr (state#pad 1 0) e
 | CompExpr e ->
-    pp_node buffer ~pad "CompExpr";
-    pp_comp_expr buffer ~pad:(mk_pad 1 0 pc) e
+    pp_node state "CompExpr";
+    pp_comp_expr (state#pad 1 0) e
 
-and pp_bool_expr buffer ~pad:(_,pc as pad) = function
+and pp_bool_expr state = function
   Or {value; region} ->
-    pp_bin_op "Or" region buffer ~pad value
+    pp_bin_op "Or" region state value
 | And {value; region} ->
-    pp_bin_op "And" region buffer ~pad value
+    pp_bin_op "And" region state value
 | Not {value; region} ->
-    pp_loc_node buffer ~pad "Not" region;
-    pp_expr buffer ~pad:(mk_pad 1 0 pc) value.arg
+    pp_loc_node state "Not" region;
+    pp_expr     (state#pad 1 0) value.arg
 | False region ->
-    pp_loc_node buffer ~pad "False" region
+    pp_loc_node state "False" region
 | True region ->
-    pp_loc_node buffer ~pad "True" region
+    pp_loc_node state "True" region
 
-and pp_comp_expr buffer ~pad = function
+and pp_comp_expr state = function
   Lt {value; region} ->
-    pp_bin_op "Lt" region buffer ~pad value
+    pp_bin_op "Lt" region state value
 | Leq {value; region} ->
-    pp_bin_op "Leq" region buffer ~pad value
+    pp_bin_op "Leq" region state value
 | Gt {value; region} ->
-    pp_bin_op "Gt" region buffer ~pad value
+    pp_bin_op "Gt" region state value
 | Geq {value; region} ->
-    pp_bin_op "Geq" region buffer ~pad value
+    pp_bin_op "Geq" region state value
 | Equal {value; region} ->
-    pp_bin_op "Equal" region buffer ~pad value
+    pp_bin_op "Equal" region state  value
 | Neq {value; region} ->
-    pp_bin_op "Neq" region buffer ~pad value
+    pp_bin_op "Neq" region state value
 
-and pp_constr_expr buffer ~pad:(_, pc as pad) = function
+and pp_constr_expr state = function
   NoneExpr region ->
-    pp_loc_node buffer ~pad "NoneExpr" region
+    pp_loc_node state "NoneExpr" region
 | SomeApp {value=_,args; region} ->
-    pp_loc_node buffer ~pad "SomeApp" region;
-    pp_tuple_expr buffer ~pad args
+    pp_loc_node state "SomeApp" region;
+    pp_tuple_expr state args
 | ConstrApp {value; region} ->
-    pp_loc_node buffer ~pad "ConstrApp" region;
-    pp_constr_app buffer ~pad:(mk_pad 1 0 pc) value
+    pp_loc_node state "ConstrApp" region;
+    pp_constr_app (state#pad 1 0) value
 
-and pp_constr_app buffer ~pad (constr, args_opt) =
-  pp_ident buffer ~pad constr;
+and pp_constr_app state (constr, args_opt) =
+  pp_ident state constr;
   match args_opt with
          None -> ()
-  | Some args -> pp_tuple_expr buffer ~pad args
+  | Some args -> pp_tuple_expr state args
 
-and pp_map_expr buffer ~pad = function
+and pp_map_expr state = function
   MapLookUp {value; region} ->
-    pp_loc_node buffer ~pad "MapLookUp" region;
-    pp_map_lookup buffer ~pad value
+    pp_loc_node   state "MapLookUp" region;
+    pp_map_lookup state value
 | MapInj {value; region} | BigMapInj {value; region} ->
-    pp_loc_node buffer ~pad "MapInj" region;
-    pp_injection pp_binding buffer ~pad value
+    pp_loc_node  state "MapInj" region;
+    pp_injection pp_binding state value
 
-and pp_tuple_expr buffer ~pad:(_,pc) {value; _} =
-  let exprs  = Utils.nsepseq_to_list value.inside in
-  let length = List.length exprs in
-  let apply len rank =
-    pp_expr buffer ~pad:(mk_pad len rank pc)
+and pp_tuple_expr state {value; _} =
+  let exprs          = Utils.nsepseq_to_list value.inside in
+  let length         = List.length exprs in
+  let apply len rank = pp_expr (state#pad len rank)
   in List.iteri (apply length) exprs
 
-and pp_string_expr buffer ~pad:(_,pc as pad) = function
+and pp_string_expr state = function
   Cat {value; region} ->
-    pp_loc_node buffer ~pad "Cat" region;
-    pp_expr buffer ~pad:(mk_pad 2 0 pc) value.arg1;
-    pp_expr buffer ~pad:(mk_pad 2 1 pc) value.arg2;
+    pp_loc_node state "Cat" region;
+    pp_expr     (state#pad 2 0) value.arg1;
+    pp_expr     (state#pad 2 1) value.arg2;
 | String s ->
-    pp_node buffer ~pad "String";
-    pp_string buffer ~pad:(mk_pad 1 0 pc) s
+    pp_node   state "String";
+    pp_string (state#pad 1 0) s
 
-and pp_annotated buffer ~pad:(_,pc) (expr, t_expr) =
-  pp_expr buffer ~pad:(mk_pad 2 0 pc) expr;
-  pp_type_expr buffer ~pad:(mk_pad 2 1 pc) t_expr
+and pp_annotated state (expr, t_expr) =
+  pp_expr      (state#pad 2 0) expr;
+  pp_type_expr (state#pad 2 1) t_expr
 
-and pp_bin_op node region buffer ~pad:(_,pc as pad) op =
-  pp_loc_node buffer ~pad node region;
-  pp_expr buffer ~pad:(mk_pad 2 0 pc) op.arg1;
-  pp_expr buffer ~pad:(mk_pad 2 1 pc) op.arg2
-
-let pp_ast buffer = pp_ast buffer ~pad:("","")
+and pp_bin_op node region state op =
+  pp_loc_node state node region;
+  pp_expr     (state#pad 2 0) op.arg1;
+  pp_expr     (state#pad 2 1) op.arg2

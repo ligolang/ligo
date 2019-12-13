@@ -217,10 +217,8 @@ and fun_expr = {
   colon        : colon;
   ret_type     : type_expr;
   kwd_is       : kwd_is;
-  local_decls  : local_decl list;
-  block        : block reg option;
-  kwd_with     : kwd_with option;
-  return       : expr;
+  block_with   : (block reg * kwd_with) option;
+  return       : expr
 }
 
 and fun_decl = {
@@ -268,9 +266,6 @@ and statements = (statement, semi) nsepseq
 and statement =
   Instr of instruction
 | Data  of data_decl
-
-and local_decl =
-| LocalData of data_decl
 
 and data_decl =
   LocalConst of const_decl reg
@@ -756,11 +751,6 @@ let pattern_to_region = function
 | PList PParCons {region; _}
 | PList PCons {region; _}
 | PTuple      {region; _} -> region
-
-let local_decl_to_region = function
-| LocalData LocalFun   {region; _}
-| LocalData LocalConst {region; _}
-| LocalData LocalVar   {region; _} -> region
 
 let lhs_to_region : lhs -> Region.t = function
   Path path -> path_to_region path

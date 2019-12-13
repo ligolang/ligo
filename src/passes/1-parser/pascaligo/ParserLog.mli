@@ -1,18 +1,35 @@
-(* Printing the AST *)
+(** Printing the AST *)
 
-val offsets : bool ref
-val mode    : [`Byte | `Point] ref
+(** The type [state] captures the state that is threaded in the
+    printing iterators in this module.
+*)
+type state
 
-val print_tokens      : Buffer.t -> AST.t -> unit
-val print_path        : Buffer.t -> AST.path -> unit
-val print_pattern     : Buffer.t -> AST.pattern -> unit
-val print_instruction : Buffer.t -> AST.instruction -> unit
+val mk_state :
+  offsets:bool -> mode:[`Point|`Byte] -> buffer:Buffer.t -> state
 
-val tokens_to_string      : AST.t -> string
-val path_to_string        : AST.path -> string
-val pattern_to_string     : AST.pattern -> string
-val instruction_to_string : AST.instruction -> string
+(** {1 Printing tokens from the AST in a buffer}
 
-(* Pretty-printing of the AST *)
+   Printing the tokens reconstructed from the AST. This is very useful
+   for debugging, as the output of [print_token ast] can be textually
+   compared to that of [Lexer.trace] (see module [LexerMain]). *)
 
-val pp_ast : Buffer.t -> AST.t -> unit
+val print_tokens      : state -> AST.t -> unit
+val print_path        : state -> AST.path -> unit
+val print_pattern     : state -> AST.pattern -> unit
+val print_instruction : state -> AST.instruction -> unit
+
+(** {1 Printing tokens from the AST in a string} *)
+
+val tokens_to_string :
+  offsets:bool -> mode:[`Point|`Byte] -> AST.t -> string
+val path_to_string :
+  offsets:bool -> mode:[`Point|`Byte] -> AST.path -> string
+val pattern_to_string :
+  offsets:bool -> mode:[`Point|`Byte] -> AST.pattern -> string
+val instruction_to_string :
+  offsets:bool -> mode:[`Point|`Byte] -> AST.instruction -> string
+
+(** {1 Pretty-printing of the AST} *)
+
+val pp_ast : state -> AST.t -> unit

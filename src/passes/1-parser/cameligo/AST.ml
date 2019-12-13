@@ -268,7 +268,7 @@ and list_expr =
 
 and string_expr =
   Cat    of cat bin_op reg
-| StrLit of string reg
+| String of string reg
 
 and constr_expr =
   ENone      of c_None
@@ -422,7 +422,7 @@ let arith_expr_to_region = function
 | Nat {region; _} -> region
 
 let string_expr_to_region = function
-  StrLit {region;_} | Cat {region;_} -> region
+  String {region;_} | Cat {region;_} -> region
 
 let list_expr_to_region = function
   ECons {region; _} | EListComp {region; _}

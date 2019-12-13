@@ -3,8 +3,8 @@ type u is A | B of t * int | C of int -> (string -> int)
 type v is record a : t; b : record c : string end end
 
 function back (var store : store) : list (operation) * store is
-  var operations : list (operation) := list []
   begin
+    var operations : list (operation) := list [];
     const a : nat =  0n;
     x0 := record foo = "1"; bar = 4n end;
     x1 := nil;
@@ -31,8 +31,8 @@ function back (var store : store) : list (operation) * store is
     if now > store.deadline and (not True) then
       begin
         f (x,1);
-        for k -> d : int * string in map m block { skip };
-        for x : int in set s block { skip };
+        for k -> d in map m block { skip };
+        for x in set s block { skip };
         while i < 10n
           begin
             acc := 2 - (if toggle then f(x) else Unit);
@@ -53,8 +53,8 @@ function back (var store : store) : list (operation) * store is
   end with (operations, store)
 
 function claim (var store : store) : list (operation) * store is
-  var operations : list (operation) := nil
   begin
+    var operations : list (operation) := nil;
     if now <= store.deadline then
       failwith ("Too soon.")
     else
@@ -73,8 +73,8 @@ function claim (var store : store) : list (operation) * store is
   end with (operations, store)
 
 function withdraw (var store : store) : list (operation) * store is
-  var operations : list (operation) := list end
   begin
+    var operations : list (operation) := list end;
     if sender = owner then
       if now >= store.deadline then
         if balance >= store.goal then {

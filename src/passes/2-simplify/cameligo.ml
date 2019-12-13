@@ -100,8 +100,10 @@ module Errors = struct
     let title () = "simplifying expression" in
     let message () = "" in
     let data = [
-      ("expression" ,
-       thunk @@ Parser.Cameligo.ParserLog.expr_to_string t)
+        ("expression" ,
+         (** TODO: The labelled arguments should be flowing from the CLI. *)
+       thunk @@ Parser.Cameligo.ParserLog.expr_to_string
+                 ~offsets:true ~mode:`Point t)
     ] in
     error ~data title message
 
@@ -350,7 +352,7 @@ let rec simpl_expression :
       return @@ e_literal ~loc (Literal_mutez n)
     )
   | EArith (Neg e) -> simpl_unop "NEG" e
-  | EString (StrLit s) -> (
+  | EString (String s) -> (
       let (s , loc) = r_split s in
       let s' =
         let s = s in
@@ -724,9 +726,11 @@ and simpl_cases : type a . (Raw.pattern * a) list -> (a, unit) matching result =
   | lst ->
       let error x =
         let title () = "Pattern" in
+         (** TODO: The labelled arguments should be flowing from the CLI. *)
         let content () =
           Printf.sprintf "Pattern : %s"
-            (Parser.Cameligo.ParserLog.pattern_to_string x) in
+                         (Parser.Cameligo.ParserLog.pattern_to_string
+                            ~offsets:true ~mode:`Point x) in
         error title content
       in
       let as_variant () =
