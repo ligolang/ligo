@@ -5,7 +5,10 @@ include Stage_common.PP
 
 let list_sep_d x ppf lst = match lst with
   | [] -> ()
-  | _ -> fprintf ppf "@;  @[<v>%a@]@;" (list_sep x (tag "@;")) lst
+  | _ -> fprintf ppf " @[<v>%a@] " (list_sep x (tag " ; ")) lst
+let tuple_sep_d x ppf lst = match lst with
+  | [] -> ()
+  | _ -> fprintf ppf " @[<v>%a@] " (list_sep x (tag " , ")) lst
 
 let rec te' ppf (te : type_expression type_expression') : unit =
   type_expression' type_expression ppf te
@@ -19,13 +22,13 @@ let rec expression ppf (e:expression) = match e.expression with
   | E_application (f, arg) -> fprintf ppf "(%a)@(%a)" expression f expression arg
   | E_constructor (c, ae) -> fprintf ppf "%a(%a)" constructor c expression ae
   | E_constant (b, lst) -> fprintf ppf "%a(%a)" constant b (list_sep_d expression) lst
-  | E_tuple lst -> fprintf ppf "tuple[%a]" (list_sep_d expression) lst
+  | E_tuple lst -> fprintf ppf "(%a)" (tuple_sep_d expression) lst
   | E_accessor (ae, p) -> fprintf ppf "%a.%a" expression ae access_path p
-  | E_record m -> fprintf ppf "record[%a]" (lmap_sep expression (const " , ")) m
-  | E_map m -> fprintf ppf "map[%a]" (list_sep_d assoc_expression) m
+  | E_record m -> fprintf ppf "{%a}" (lrecord_sep expression (const " , ")) m
+  | E_map m -> fprintf ppf "[%a]" (list_sep_d assoc_expression) m
   | E_big_map m -> fprintf ppf "big_map[%a]" (list_sep_d assoc_expression) m
-  | E_list lst -> fprintf ppf "list[%a]" (list_sep_d expression) lst
-  | E_set lst -> fprintf ppf "set[%a]" (list_sep_d expression) lst
+  | E_list lst -> fprintf ppf "[%a]" (list_sep_d expression) lst
+  | E_set lst -> fprintf ppf "{%a}" (list_sep_d expression) lst
   | E_look_up (ds, ind) -> fprintf ppf "(%a)[%a]" expression ds expression ind
   | E_lambda {binder;input_type;output_type;result} ->
       fprintf ppf "lambda (%a:%a) : %a return %a"

@@ -5,8 +5,6 @@ title: Constants & Variables
 
 The next building block after types are constants and variables.
 
-pleh.
-
 ## Constants
 
 Constants are immutable by design, which means their values can't be reassigned.
@@ -23,7 +21,7 @@ You can evaluate the constant definition above using the following CLI command:
 ligo evaluate-value -s pascaligo gitlab-pages/docs/language-basics/src/variables-and-constants/const.ligo age
 # Outputs: 25
 ```
-<!--Cameligo-->
+<!--CameLIGO-->
 ```cameligo
 let age: int = 25
 ```
@@ -80,7 +78,7 @@ ligo run-function -s pascaligo gitlab-pages/docs/language-basics/src/variables-a
 # Outputs: 2
 ```
 
-<!--Cameligo-->
+<!--CameLIGO-->
 
 As expected from a functional language, CameLIGO uses value-binding
 for variables rather than assignment. Variables are changed by replacement,

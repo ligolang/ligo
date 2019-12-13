@@ -83,10 +83,11 @@ let typed_program_with_simplified_input_to_michelson
     (input: Ast_simplified.expression) : Compiler.compiled_expression result =
   let env = Ast_typed.program_environment program in
   let state = Typer.Solver.initial_state in
-  let%bind (typed_in,_) = Compile.Of_simplified.compile_expression ~env ~state input in
-  let%bind mini_c_in    = Compile.Of_typed.compile_expression typed_in in
-  let%bind mini_c_prg   = Compile.Of_typed.compile program in
-  Compile.Of_mini_c.aggregate_and_compile_expression mini_c_prg (Entry_name entry_point) [mini_c_in]
+  let%bind app              = Compile.Of_simplified.apply entry_point input in
+  let%bind (typed_app,_)    = Compile.Of_simplified.compile_expression ~env ~state app in
+  let%bind compiled_applied = Compile.Of_typed.compile_expression typed_app in
+  let%bind mini_c_prg       = Compile.Of_typed.compile program in
+  Compile.Of_mini_c.aggregate_and_compile_expression mini_c_prg compiled_applied
 
 let run_typed_program_with_simplified_input ?options
     (program: Ast_typed.program) (entry_point: string)
@@ -143,10 +144,11 @@ let expect_evaluate program entry_point expecter =
     let content () = Format.asprintf "Entry_point: %s" entry_point in
     error title content in
   trace error @@
-  let%bind mini_c = Ligo.Compile.Of_typed.compile program in
-  let%bind michelson_value = Ligo.Compile.Of_mini_c.aggregate_and_compile_expression mini_c (Entry_name entry_point) [] in
-  let%bind res_michelson = Ligo.Run.Of_michelson.run michelson_value.expr michelson_value.expr_ty in
-  let%bind res_simpl = Uncompile.uncompile_typed_program_entry_expression_result program entry_point res_michelson in
+  let%bind mini_c          = Ligo.Compile.Of_typed.compile program in
+  let%bind (exp,_)         = Mini_c.get_entry mini_c entry_point in
+  let%bind michelson_value = Ligo.Compile.Of_mini_c.aggregate_and_compile_expression mini_c exp in
+  let%bind res_michelson   = Ligo.Run.Of_michelson.run michelson_value.expr michelson_value.expr_ty in
+  let%bind res_simpl       = Uncompile.uncompile_typed_program_entry_expression_result program entry_point res_michelson in
   expecter res_simpl
 
 let expect_eq_evaluate program entry_point expected =

@@ -55,7 +55,7 @@ Instead, you can inline the necessary logic directly, like this:
 function add(const a: int; const b: int): int is a + b
 ```
 
-<!--Cameligo-->
+<!--CameLIGO-->
 
 Functions in CameLIGO are defined using the `let` keyword, like value bindings.
 The difference is that after the value name a list of function parameters is provided,
@@ -80,7 +80,7 @@ along with a return type.
 Here's how you define a basic function that accepts two `ints` and returns an `int` as well:
 
 ```reasonligo
-let add (a: int, b: int) : int = a + b;
+let add = (a: int, b: int) : int => a + b;
 ```
 
 The function body is a series of expressions, which are evaluated to give the return
@@ -110,7 +110,7 @@ const increment : (int -> int) = (function (const i : int) : int is i + 1);
 const a: int = increment(1);
 ```
 
-<!--Cameligo-->
+<!--CameLIGO-->
 ```cameligo
 let increment : (int -> int) = fun (i: int) -> i + 1
 ```

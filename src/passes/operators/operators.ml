@@ -137,22 +137,8 @@ module Simplify = struct
     let type_operators = type_operators
   end
 
-  module Camligo = struct
-    let constants = function
-      | "Bytes.pack"             -> ok C_BYTES_PACK
-      | "Crypto.hash"            -> ok C_HASH    (* TODO : Check if right *)
-      | "Operation.transaction"  -> ok C_CALL
-      | "Operation.get_contract" -> ok C_CONTRACT
-      | "sender"                 -> ok C_SENDER
-      | "unit"                   -> ok C_UNIT
-      | "source"                 -> ok C_SOURCE
-      | _                        -> simple_fail "Not a CamLIGO constant"
 
-    let type_constants = type_constants
-    let type_operators = type_operators
-  end
-
-  module Ligodity = struct
+  module Cameligo = struct
     let constants = function
       | "assert"                   -> ok C_ASSERTION
       | "Current.balance"          -> ok C_BALANCE

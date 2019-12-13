@@ -24,7 +24,7 @@ const my_set: int_set = set
 end
 ```
 
-<!--Cameligo-->
+<!--CameLIGO-->
 ```cameligo
 type int_set = int set
 let my_set: int_set =
@@ -48,7 +48,7 @@ let my_set: int_set =
 const my_set: int_set = set end;
 const my_set_2: int_set = set_empty;
 ```
-<!--Cameligo-->
+<!--CameLIGO-->
 ```cameligo
 let my_set: int_set = (Set.empty: int set)
 ```
@@ -68,7 +68,7 @@ const contains_three: bool = my_set contains 3;
 const contains_three_fn: bool = set_mem(3, my_set);
 ```
 
-<!--Cameligo-->
+<!--CameLIGO-->
 ```cameligo
 let contains_three: bool = Set.mem 3 my_set
 ```
@@ -87,7 +87,7 @@ let contains_three: bool = Set.mem(3, my_set);
 const set_size: nat = size(my_set);
 ```
 
-<!--Cameligo-->
+<!--CameLIGO-->
 ```cameligo
 let set_size: nat = Set.size my_set
 ```
@@ -108,7 +108,7 @@ const larger_set: int_set = set_add(4, my_set);
 const smaller_set: int_set = set_remove(3, my_set);
 ```
 
-<!--Cameligo-->
+<!--CameLIGO-->
 
 ```cameligo
 let larger_set: int_set = Set.add 4 my_set
@@ -134,7 +134,7 @@ function sum(const result: int; const i: int): int is result + i;
 const sum_of_a_set: int = set_fold(sum, my_set, 0);
 ```
 
-<!--Cameligo-->
+<!--CameLIGO-->
 ```cameligo
 let sum (result: int) (i: int) : int = result + i
 let sum_of_a_set: int = Set.fold sum my_set 0
@@ -166,7 +166,7 @@ const my_list: int_list = list
 end
 ```
 
-<!--Cameligo-->
+<!--CameLIGO-->
 ```cameligo
 type int_list = int list
 let my_list: int_list = [1; 2; 3]
@@ -190,7 +190,7 @@ const larger_list: int_list = cons(4, my_list);
 const even_larger_list: int_list = 5 # larger_list;
 ```
 
-<!--Cameligo-->
+<!--CameLIGO-->
 ```cameligo
 let larger_list: int_list = 4 :: my_list
 (* CameLIGO doesn't have a List.cons *)
@@ -217,7 +217,7 @@ function increment(const i: int): int is block { skip } with i + 1;
 const incremented_list: int_list = list_map(increment, even_larger_list);
 ```
 
-<!--Cameligo-->
+<!--CameLIGO-->
 
 ```cameligo
 let increment (i: int) : int = i + 1
@@ -246,7 +246,7 @@ function sum(const result: int; const i: int): int is block { skip } with result
 const sum_of_a_list: int = list_fold(sum, my_list, 0);
 ```
 
-<!--Cameligo-->
+<!--CameLIGO-->
 
 ```cameligo
 let sum (result: int) (i: int) : int = result + i
@@ -258,7 +258,7 @@ let sum_of_a_list: int = List.fold sum my_list 0
 
 ```reasonligo
 let sum = (result: int, i: int): int => result + i;
-// Outputs 6
+/* Outputs 6 */
 let sum_of_a_list: int = List.fold(sum, my_list, 0);
 ```
 
@@ -292,7 +292,7 @@ type full_name is string * string;
 const full_name: full_name = ("Alice", "Johnson");
 ```
 
-<!--Cameligo-->
+<!--CameLIGO-->
 ```cameligo
 type full_name = string * string
 (* The parenthesis here are optional *)
@@ -324,7 +324,7 @@ Tuple elements are one-indexed and accessed like so:
 const first_name: string = full_name.1;
 ```
 
-<!--Cameligo-->
+<!--CameLIGO-->
 ```cameligo
 let first_name: string = full_name.1
 ```

@@ -36,7 +36,7 @@ const g: int = 1_000_000;
 >const g: int = 1_000_000;
 >```
 
-<!--Cameligo-->
+<!--CameLIGO-->
 
 ```cameligo
 // int + int produces int
@@ -63,18 +63,18 @@ let g: int = 1_000_000
 <!--ReasonLIGO-->
 
 ```reasonligo
-// int + int produces int
+/* int + int produces int */
 let a: int = 5 + 10;
-// nat + int produces int
+/* nat + int produces int */
 let b: int = 5n + 10;
-// tez + tez produces tez
+/* tez + tez produces tez */
 let c: tez = 5mutez + 10mutez;
-// you can't add tez + int or tez + nat, this won't compile
-// let d: tez = 5mutez + 10n;
-// two nats produce a nat
+/* you can't add tez + int or tez + nat, this won't compile */
+/* let d: tez = 5mutez + 10n; */
+/* two nats produce a nat */
 let e: nat = 5n + 10n;
-// nat + int produces an int, this won't compile
-// let f: nat = 5n + 10;
+/* nat + int produces an int, this won't compile */
+/* let f: nat = 5n + 10; */
 let g: int = 1_000_000;
 ```
 
@@ -103,7 +103,7 @@ const b: int = 5n - 2n;
 const d: tez = 5mutez - 1mt;
 ```
 
-<!--Cameligo-->
+<!--CameLIGO-->
 ```cameligo
 let a: int = 5 - 10
 // substraction of two nats, yields an int
@@ -116,10 +116,10 @@ let d: tez = 5mutez - 1mt
 <!--ReasonLIGO-->
 ```reasonligo
 let a: int = 5 - 10;
-// substraction of two nats, yields an int
+/* substraction of two nats, yields an int */
 let b: int = 5n - 2n;
-// won't compile, result is an int, not a nat
-// let c: nat = 5n - 2n;
+/* won't compile, result is an int, not a nat */
+/* let c: nat = 5n - 2n; */
 let d: tez = 5mutez - 1mt;
 ```
 
@@ -140,7 +140,7 @@ const b: nat = 5n * 5n;
 const c: tez = 5n * 5mutez;
 ```
 
-<!--Cameligo-->
+<!--CameLIGO-->
 ```cameligo
 let a: int = 5 * 5
 let b: nat = 5n * 5n
@@ -152,7 +152,7 @@ let c: tez = 5n * 5mutez
 ```reasonligo
 let a: int = 5 * 5;
 let b: nat = 5n * 5n;
-// you can also multiply `nat` and `tez`
+/* you can also multiply `nat` and `tez` */
 let c: tez = 5n * 5mutez;
 ```
 
@@ -173,7 +173,7 @@ const b: nat = 10n / 3n;
 const c: nat = 10mutez / 3mutez;
 ```
 
-<!--Cameligo-->
+<!--CameLIGO-->
 ```cameligo
 let a: int = 10 / 3
 let b: nat = 10n / 3n

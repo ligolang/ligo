@@ -9,7 +9,7 @@ INTERNAL DOCUMENTATION OF THE SHARED PARSER FUNCTIONALITY
     The module EvalOpt parses the command-line for options to the
     parser. That action is performed as a side-effect when the module
     is initialised at run-time: this is ugly and easy to fix. See
-    ligo/src/parser/ligodity/EvalOpt.ml{i} for the right way to do
+    ligo/src/parser/cameligo/EvalOpt.ml{i} for the right way to do
     it. Ignore them: the file actually calling directly the parser is
     ligo/src/parser/parser.ml. Note that, as a consequence, no option
     is currently passed to the parser when building Pascaligo with

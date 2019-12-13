@@ -939,3 +939,18 @@ a:hover {
     width: 15em;
   }
 }
+
+
+/* ReasonLIGO specific syntax highlighting */
+.language-reasonligo .hljs-operator {
+  color: #a626a4;
+}
+.language-reasonligo .hljs-character {
+  color: #50a14f;
+}
+.language-reasonligo .hljs-module-identifier {
+  color: #00f;
+}
+.language-reasonligo .hljs-constructor {
+  color: #a31515;
+}

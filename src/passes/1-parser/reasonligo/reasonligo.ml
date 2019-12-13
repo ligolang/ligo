@@ -1,5 +1,5 @@
 module Parser = Parser
-module AST = Parser_ligodity.AST
+module AST = Parser_cameligo.AST
 module Lexer = Lexer
 module LexToken = LexToken
-module ParserLog = Parser_ligodity.ParserLog
+module ParserLog = Parser_cameligo.ParserLog

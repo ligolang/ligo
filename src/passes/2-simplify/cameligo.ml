@@ -3,7 +3,7 @@
 open Trace
 open Ast_simplified
 
-module Raw = Parser.Ligodity.AST
+module Raw = Parser.Cameligo.AST
 module SMap = Map.String
 module Option = Simple_utils.Option
 (* TODO: move 1-parser/shared/Utils.ml{i} to Simple_utils/ *)
@@ -132,7 +132,7 @@ end
 
 open Errors
 
-open Operators.Simplify.Ligodity
+open Operators.Simplify.Cameligo
 
 let r_split = Location.r_split
 
@@ -381,7 +381,7 @@ let rec simpl_expression :
       let default_action () =
         let%bind cases = simpl_cases lst in
         return @@ e_matching ~loc e  cases in
-      (* Hack to take care of patterns introduced by `parser/ligodity/Parser.mly` in "norm_fun_expr". TODO: Still needed? *)
+      (* Hack to take care of patterns introduced by `parser/cameligo/Parser.mly` in "norm_fun_expr". TODO: Still needed? *)
       match lst with
       | [ (pattern , rhs) ] -> (
           match pattern with

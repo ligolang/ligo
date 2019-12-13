@@ -17,7 +17,7 @@ Here's how a custom map type is defined:
 type ledger is map(address, tez);
 ```
 
-<!--Cameligo-->
+<!--CameLIGO-->
 ```cameligo
 type ledger = (address, tez) map
 ```
@@ -44,7 +44,7 @@ end
 >
 > `("<string value>": address)` means that we type-cast a string into an address.
 
-<!--Cameligo-->
+<!--CameLIGO-->
 
 ```cameligo
 let ledger: ledger = Map.literal
@@ -82,7 +82,7 @@ If we want to access a balance from our ledger above, we can use the `[]` operat
 const balance: option(tez) = ledger[("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address)];
 ```
 
-<!--Cameligo-->
+<!--CameLIGO-->
 
 ```cameligo
 let balance: tez option = Map.find_opt ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address) ledger
@@ -106,7 +106,7 @@ Accessing a value in a map yields an option, however you can also get the value 
 const balance: tez = get_force(("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address), ledger);
 ```
 
-<!--Cameligo-->
+<!--CameLIGO-->
 
 ```cameligo
 let balance: tez = Map.find ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address) ledger
@@ -139,7 +139,7 @@ function iter_op (const m : ledger) : unit is
   } with map_iter(aggregate, m) ;
 ```
 
-<!--Cameligo-->
+<!--CameLIGO-->
 ```cameligo
 let iter_op (m : ledger) : unit =
   let assert_eq = fun (i: address) (j: tez) -> assert (j > 100)
@@ -166,7 +166,7 @@ function map_op (const m : ledger) : ledger is
   } with map_map(increment, m) ;
 ```
 
-<!--Cameligo-->
+<!--CameLIGO-->
 ```cameligo
 let map_op (m : ledger) : ledger =
   let increment = fun (_: address) (j: tez) -> j+1
@@ -200,7 +200,7 @@ function fold_op (const m : ledger) : tez is
   } with map_fold(aggregate, m , 10)
 ```
 
-<!--Cameligo-->
+<!--CameLIGO-->
 ```cameligo
 let fold_op (m : ledger) : ledger =
   let aggregate = fun (ignore: address) (j: tez * tez) -> j.0 + j.1
@@ -234,7 +234,7 @@ type user is record
 end
 ```
 
-<!--Cameligo-->
+<!--CameLIGO-->
 ```cameligo
 type user = {
   id: nat;
@@ -266,7 +266,7 @@ const user: user = record
 end
 ```
 
-<!--Cameligo-->
+<!--CameLIGO-->
 ```cameligo
 let user: user = {
   id = 1n;
@@ -296,7 +296,7 @@ If we want to obtain a value from a record for a given key, we can do the follow
 const is_admin: bool = user.is_admin;
 ```
 
-<!--Cameligo-->
+<!--CameLIGO-->
 ```cameligo
 let is_admin: bool = user.is_admin
 ```
