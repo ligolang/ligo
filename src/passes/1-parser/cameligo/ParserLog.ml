@@ -369,10 +369,13 @@ and print_fun_call state {value=f,l; _} =
   print_expr state f;
   Utils.nseq_iter (print_expr state) l
 
-and print_annot_expr state {value=e,t; _} =
-  print_expr      state e;
-  print_token     state Region.ghost ":";
-  print_type_expr state t
+and print_annot_expr state {value; _} =
+  let {lpar; inside=e,colon,t; rpar} = value in
+  print_token state lpar "(";
+  print_expr  state e;
+  print_token state colon ":";
+  print_type_expr state t;
+  print_token state rpar ")"
 
 and print_list_expr state = function
   ECons {value={arg1;op;arg2}; _} ->
@@ -738,7 +741,7 @@ and pp_expr state = function
     pp_loc_node state "ECond" region;
     pp_cond_expr state value
 | EAnnot {value; region} ->
-    pp_loc_node state "EAnnot" region;
+    pp_loc_node  state "EAnnot" region;
     pp_annotated state value
 | ELogic e_logic ->
     pp_node state "ELogic";
@@ -967,7 +970,8 @@ and pp_bin_op node region state op =
   pp_expr (state#pad 2 0) op.arg1;
   pp_expr (state#pad 2 1) op.arg2
 
-and pp_annotated state (expr, t_expr) =
+and pp_annotated state annot =
+  let expr, _, t_expr = annot.inside in
   pp_expr      (state#pad 2 0) expr;
   pp_type_expr (state#pad 2 1) t_expr
 

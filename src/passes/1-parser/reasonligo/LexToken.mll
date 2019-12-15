@@ -38,7 +38,7 @@ type t =
 | VBAR of Region.t      (* "|" *)
 | COLON of Region.t     (* ":" *)
 | DOT of Region.t       (* "." *)
-| DOTDOTDOT of Region.t (* "..." *)
+| ELLIPSIS of Region.t (* "..." *)
 
   (* Wildcard *)
 
@@ -66,8 +66,8 @@ type t =
 | Constr of string Region.reg
 | Int    of (string * Z.t) Region.reg
 | Nat    of (string * Z.t) Region.reg
-| Mtz    of (string * Z.t) Region.reg
-| Str    of string Region.reg
+| Mutez  of (string * Z.t) Region.reg
+| String of string Region.reg
 | Bytes  of (string * Hex.t) Region.reg
 
   (* Keywords *)
@@ -110,7 +110,7 @@ let proj_token = function
   | VBAR region -> region, "VBAR"
   | COLON region -> region, "COLON"
   | DOT region -> region, "DOT"
-  | DOTDOTDOT region -> region, "DOTDOTDOT"
+  | ELLIPSIS region -> region, "ELLIPSIS"
   | WILD region -> region, "WILD"
   | EQ region -> region, "EQ"
   | EQEQ region -> region, "EQEQ"
@@ -130,10 +130,10 @@ let proj_token = function
     region, sprintf "Int (\"%s\", %s)" s (Z.to_string n)
   | Nat Region.{region; value = s,n} ->
     region, sprintf "Nat (\"%s\", %s)" s (Z.to_string n)
-  | Mtz Region.{region; value = s,n} ->
+  | Mutez Region.{region; value = s,n} ->
     region, sprintf "Mutez (\"%s\", %s)" s (Z.to_string n)
-  | Str Region.{region; value} ->
-    region, sprintf "Str %s" value
+  | String Region.{region; value} ->
+    region, sprintf "String %s" value
   | Bytes Region.{region; value = s,b} ->
     region,
     sprintf "Bytes (\"%s\", \"0x%s\")"
@@ -169,7 +169,7 @@ let to_lexeme = function
   | VBAR _ -> "|"
   | COLON _ -> ":"
   | DOT _ -> "."
-  | DOTDOTDOT _ -> "..."
+  | ELLIPSIS _ -> "..."
   | WILD _ -> "_"
   | EQ _ -> "="
   | EQEQ _ -> "=="
@@ -183,10 +183,10 @@ let to_lexeme = function
   | BOOL_AND _ -> "&&"
   | Ident id -> id.Region.value
   | Constr id -> id.Region.value
-  | Int i 
-  | Nat i 
-  | Mtz i -> fst i.Region.value
-  | Str s -> s.Region.value
+  | Int i
+  | Nat i
+  | Mutez i -> fst i.Region.value
+  | String s -> s.Region.value
   | Bytes b -> fst b.Region.value
   | Else _ -> "else"
   | False _ -> "false"
@@ -200,7 +200,7 @@ let to_lexeme = function
   | Type _ -> "type"
   | C_None  _ -> "None"
   | C_Some  _ -> "Some"
-  | EOF _ -> ""  
+  | EOF _ -> ""
 
 let to_string token ?(offsets=true) mode =
   let region, val_str = proj_token token in
@@ -231,11 +231,11 @@ let keywords = [
   (fun reg -> Type  reg);
 ]
 
-(* See: http://caml.inria.fr/pub/docs/manual-ocaml/lex.html#sec86 and 
+(* See: http://caml.inria.fr/pub/docs/manual-ocaml/lex.html#sec86 and
    https://github.com/facebook/reason/blob/master/src/reason-parser/reason_parser.mly *)
 let reserved =
   let open SSet in
-  empty     
+  empty
     |> add "and"
     |> add "as"
     |> add "asr"
@@ -257,9 +257,9 @@ let reserved =
     |> add "lazy"
     (* |> add "lor"  - see https://ligo.atlassian.net/browse/LIGO-263 *)
     |> add "lsl"
-    |> add "lsr"  
+    |> add "lsr"
     (* |> add "lxor"  - see https://ligo.atlassian.net/browse/LIGO-263 *)
-    |> add "match"  
+    |> add "match"
     |> add "method"
     |> add "module"
     |> add "mutable"
@@ -284,7 +284,7 @@ let reserved =
 
 let constructors = [
   (fun reg -> C_None reg);
-  (fun reg -> C_Some reg);  
+  (fun reg -> C_Some reg);
 ]
 
 let add map (key, value) = SMap.add key value map
@@ -346,7 +346,7 @@ let line_comment_start lexeme = lexeme = "//"
 
 (* Smart constructors (injections) *)
 
-let mk_string lexeme region = Str Region.{region; value=lexeme}
+let mk_string lexeme region = String Region.{region; value=lexeme}
 
 let mk_bytes lexeme region =
   let norm = Str.(global_replace (regexp "_") "" lexeme) in
@@ -376,12 +376,12 @@ let mk_mutez lexeme region =
     Z.of_string in
   if Z.equal z Z.zero && lexeme <> "0mutez"
   then Error Non_canonical_zero
-  else Ok (Mtz Region.{region; value = lexeme, z})
+  else Ok (Mutez Region.{region; value = lexeme, z})
 
 let eof region = EOF region
 
 let mk_sym lexeme region =
-  match lexeme with    
+  match lexeme with
     "-"   ->    Ok (MINUS     region)
   | "+"   ->    Ok (PLUS      region)
   | "/"   ->    Ok (SLASH     region)
@@ -394,9 +394,9 @@ let mk_sym lexeme region =
   | ";"   ->    Ok (SEMI      region)
   | "|"   ->    Ok (VBAR      region)
   | ":"   ->    Ok (COLON     region)
-  | "."  ->     Ok (DOT       region)  
+  | "."  ->     Ok (DOT       region)
   | "_"   ->    Ok (WILD      region)
-  | "="  ->     Ok (EQ        region)  
+  | "="  ->     Ok (EQ        region)
   | "!=" ->     Ok (NE        region)
   | "<"   ->    Ok (LT        region)
   | ">"   ->    Ok (GT        region)
@@ -406,10 +406,10 @@ let mk_sym lexeme region =
   | "&&"   ->   Ok (BOOL_AND  region)
   | "("    ->   Ok (LPAR      region)
   | ")"    ->   Ok (RPAR      region)
-  
+
   (* Symbols specific to ReasonLIGO *)
-  | "..."->     Ok (DOTDOTDOT region)
-  | "=>"    ->  Ok (ARROW     region)  
+  | "..."->     Ok (ELLIPSIS region)
+  | "=>"    ->  Ok (ARROW     region)
   | "=="  ->    Ok (EQEQ      region)
   | "!"    ->   Ok (NOT       region)
   | "++"   ->   Ok (CAT       region)
@@ -432,7 +432,7 @@ let mk_constr lexeme region = mk_constr' lexeme region lexicon
 (* Predicates *)
 
 let is_string = function
-  Str _ -> true
+  String _ -> true
 |        _ -> false
 
 let is_bytes = function
@@ -483,7 +483,7 @@ let is_sym = function
 | VBAR _
 | COLON _
 | DOT _
-| DOTDOTDOT _
+| ELLIPSIS _
 | WILD _
 | EQ _
 | EQEQ _

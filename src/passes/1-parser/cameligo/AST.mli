@@ -214,7 +214,7 @@ and field_pattern = {
 and expr =
   ECase   of expr case reg                   (* p1 -> e1 | p2 -> e2 | ... *)
 | ECond   of cond_expr   reg      (* if e1 then e2 else e3                *)
-| EAnnot  of (expr * type_expr) reg                              (* e : t *)
+| EAnnot  of (expr * colon * type_expr) par reg                (* (e : t) *)
 | ELogic  of logic_expr
 | EArith  of arith_expr
 | EString of string_expr

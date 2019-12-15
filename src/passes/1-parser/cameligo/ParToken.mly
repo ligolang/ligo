@@ -5,76 +5,76 @@
 
   (* Literals *)
 
-%token                    <string Region.reg> String
-%token <(LexToken.lexeme * Hex.t) Region.reg> Bytes
-%token            <(string * Z.t) Region.reg> Int
-%token            <(string * Z.t) Region.reg> Nat
-%token            <(string * Z.t) Region.reg> Mutez
-%token                    <string Region.reg> Ident
-%token                    <string Region.reg> Constr
+%token                    <string Region.reg> String "<string>"
+%token <(LexToken.lexeme * Hex.t) Region.reg> Bytes  "<bytes>"
+%token            <(string * Z.t) Region.reg> Int    "<int>"
+%token            <(string * Z.t) Region.reg> Nat    "<nat>"
+%token            <(string * Z.t) Region.reg> Mutez  "<mutez>"
+%token                    <string Region.reg> Ident  "<ident>"
+%token                    <string Region.reg> Constr "<constr>"
 
   (* Symbols *)
 
-%token <Region.t> MINUS
-%token <Region.t> PLUS
-%token <Region.t> SLASH
-%token <Region.t> TIMES
+%token <Region.t> MINUS "-"
+%token <Region.t> PLUS  "+"
+%token <Region.t> SLASH "/"
+%token <Region.t> TIMES "*"
 
-%token <Region.t> LPAR
-%token <Region.t> RPAR
-%token <Region.t> LBRACKET
-%token <Region.t> RBRACKET
-%token <Region.t> LBRACE
-%token <Region.t> RBRACE
+%token <Region.t> LPAR     "("
+%token <Region.t> RPAR     ")"
+%token <Region.t> LBRACKET "["
+%token <Region.t> RBRACKET "]"
+%token <Region.t> LBRACE   "{"
+%token <Region.t> RBRACE   "}"
 
-%token <Region.t> ARROW
-%token <Region.t> CONS
-%token <Region.t> CAT
-(*%token APPEND*)
-%token <Region.t> DOT
+%token <Region.t> ARROW "->"
+%token <Region.t> CONS  "::"
+%token <Region.t> CAT   "^"
+(*%token <Region.t> APPEND "@" *)
+%token <Region.t> DOT   "."
 
-%token <Region.t> COMMA
-%token <Region.t> SEMI
-%token <Region.t> COLON
-%token <Region.t> VBAR
+%token <Region.t> COMMA ","
+%token <Region.t> SEMI  ";"
+%token <Region.t> COLON ":"
+%token <Region.t> VBAR  "|"
 
-%token <Region.t> WILD
+%token <Region.t> WILD  "_"
 
-%token <Region.t> EQ
-%token <Region.t> NE
-%token <Region.t> LT
-%token <Region.t> GT
-%token <Region.t> LE
-%token <Region.t> GE
+%token <Region.t> EQ "="
+%token <Region.t> NE "<>"
+%token <Region.t> LT "<"
+%token <Region.t> GT ">"
+%token <Region.t> LE "<="
+%token <Region.t> GE ">="
 
-%token <Region.t> BOOL_OR
-%token <Region.t> BOOL_AND
+%token <Region.t> BOOL_OR  "||"
+%token <Region.t> BOOL_AND "&&"
 
  (* Keywords *)
 
 (*%token And*)
-%token <Region.t> Begin
-%token <Region.t> Else
-%token <Region.t> End
-%token <Region.t> False
-%token <Region.t> Fun
-%token <Region.t> If
-%token <Region.t> In
-%token <Region.t> Let
-%token <Region.t> Match
-%token <Region.t> Mod
-%token <Region.t> Not
-%token <Region.t> Of
-%token <Region.t> Or
-%token <Region.t> Then
-%token <Region.t> True
-%token <Region.t> Type
-%token <Region.t> With
+%token <Region.t> Begin "begin"
+%token <Region.t> Else  "else"
+%token <Region.t> End   "end"
+%token <Region.t> False "false"
+%token <Region.t> Fun   "fun"
+%token <Region.t> If    "if"
+%token <Region.t> In    "in"
+%token <Region.t> Let   "let"
+%token <Region.t> Match "match"
+%token <Region.t> Mod   "mod"
+%token <Region.t> Not   "not"
+%token <Region.t> Of    "of"
+%token <Region.t> Or    "or"
+%token <Region.t> Then  "then"
+%token <Region.t> True  "true"
+%token <Region.t> Type  "type"
+%token <Region.t> With  "with"
 
   (* Data constructors *)
 
-%token <Region.t> C_None      (* "None" *)
-%token <Region.t> C_Some      (* "Some" *)
+%token <Region.t> C_None "None"
+%token <Region.t> C_Some "Some"
 
   (* Virtual tokens *)
 
