@@ -213,8 +213,8 @@ and fun_expr = {
 }
 
 and fun_decl = {
-  fun_expr : fun_expr reg ;
-  terminator : semi option ;
+  fun_expr   : fun_expr reg;
+  terminator : semi option
 }
 
 and parameters = (param_decl, semi) nsepseq par reg
