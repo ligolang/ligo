@@ -899,3 +899,16 @@ let%expect_test _ =
                  PAIR ;
                  DIP { DROP 5 } } ;
              DIP { DROP } } } |}]
+
+let%expect_test _ =
+    run_ligo_good [ "compile-contract" ; contract "implicit.mligo" ; "main" ] ;
+    [%expect {|
+      { parameter key_hash ;
+        storage unit ;
+        code { DUP ;
+               CAR ;
+               IMPLICIT_ACCOUNT ;
+               UNIT ;
+               NIL operation ;
+               PAIR ;
+               DIP { DROP 2 } } } |}]
