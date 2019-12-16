@@ -150,11 +150,6 @@ let measure_contract =
 let compile_parameter =
   let f source_file entry_point expression syntax display_format michelson_format =
     toplevel ~display_format @@
-    (*
-      TODO:
-      source_to_michelson_contract will fail if the entry_point does not point to a michelson contract
-      but we do not check that the type of the parameter matches the type of the given expression
-    *)
     let%bind simplified      = Compile.Of_source.compile source_file (Syntax_name syntax) in
     let%bind typed_prg,state = Compile.Of_simplified.compile simplified in
     let%bind mini_c_prg      = Compile.Of_typed.compile typed_prg in
@@ -169,6 +164,7 @@ let compile_parameter =
     let%bind (typed_param,_)  = Compile.Of_simplified.compile_expression ~env ~state simplified_param in
     let%bind mini_c_param     = Compile.Of_typed.compile_expression typed_param in
     let%bind compiled_param   = Compile.Of_mini_c.aggregate_and_compile_expression mini_c_prg mini_c_param in
+    let%bind ()               = Compile.Of_mini_c.assert_equal_michelson_type Check_parameter michelson_prg compiled_param in
     let%bind value            = Run.evaluate_expression compiled_param.expr compiled_param.expr_ty in
     ok @@ Format.asprintf "%a\n" (Main.Display.michelson_pp michelson_format) value
   in
@@ -210,11 +206,6 @@ let interpret =
 let compile_storage =
   let f source_file entry_point expression syntax display_format michelson_format =
     toplevel ~display_format @@
-    (*
-      TODO:
-      source_to_michelson_contract will fail if the entry_point does not point to a michelson contract
-      but we do not check that the type of the storage matches the type of the given expression
-    *)
     let%bind simplified      = Compile.Of_source.compile source_file (Syntax_name syntax) in
     let%bind typed_prg,state = Compile.Of_simplified.compile simplified in
     let%bind mini_c_prg      = Compile.Of_typed.compile typed_prg in
@@ -229,6 +220,7 @@ let compile_storage =
     let%bind (typed_param,_)  = Compile.Of_simplified.compile_expression ~env ~state simplified_param in
     let%bind mini_c_param     = Compile.Of_typed.compile_expression typed_param in
     let%bind compiled_param   = Compile.Of_mini_c.compile_expression mini_c_param in
+    let%bind ()               = Compile.Of_mini_c.assert_equal_michelson_type Check_storage michelson_prg compiled_param in
     let%bind value            = Run.evaluate_expression compiled_param.expr compiled_param.expr_ty in
     ok @@ Format.asprintf "%a\n" (Main.Display.michelson_pp michelson_format) value
   in
