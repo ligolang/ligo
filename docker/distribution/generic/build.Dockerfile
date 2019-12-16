@@ -26,7 +26,7 @@ RUN opam update
 
 # Install ligo
 RUN sh scripts/install_vendors_deps.sh
-RUN opam install -y ./src
+RUN opam install -y .
 
 # Use the ligo binary as a default command
 ENTRYPOINT [ "/home/opam/.opam/4.07/bin/ligo" ]
