@@ -155,11 +155,10 @@ let rec pattern_to_typed_var : Raw.pattern -> _ = fun p ->
   | Raw.PWild r -> ok (({ region = r ; value = "_" } : Raw.variable) , None)
   | _ -> fail @@ wrong_pattern "typed variable" p
 
-let rec expr_to_typed_expr : Raw.expr -> _ = fun e ->
-  match e with
-  | EPar e -> expr_to_typed_expr e.value.inside
-  | EAnnot a -> ok (fst a.value , Some (snd a.value))
-  | _ -> ok (e , None)
+let rec expr_to_typed_expr : Raw.expr -> _ = function
+  EPar e -> expr_to_typed_expr e.value.inside
+| EAnnot {value={inside=e,_,t; _}; _} -> ok (e, Some t)
+| e -> ok (e , None)
 
 let patterns_to_var : Raw.pattern nseq -> _ = fun ps ->
   match ps with
@@ -266,7 +265,7 @@ let rec simpl_expression :
       let%bind body = simpl_expression body in
       return @@ e_let_in (Var.of_name variable.value , None) rhs' body
   | Raw.EAnnot a ->
-      let (expr , type_expr), loc = r_split a in
+      let Raw.{inside=expr, _, type_expr; _}, loc = r_split a in
       let%bind expr' = simpl_expression expr in
       let%bind type_expr' = simpl_type_expression type_expr in
       return @@ e_annotation ~loc expr' type_expr'

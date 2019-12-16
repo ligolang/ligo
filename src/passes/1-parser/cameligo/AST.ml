@@ -226,7 +226,7 @@ and field_pattern = {
 and expr =
   ECase   of expr case reg
 | ECond   of cond_expr reg
-| EAnnot  of (expr * type_expr) reg
+| EAnnot  of (expr * colon * type_expr) par reg
 | ELogic  of logic_expr
 | EArith  of arith_expr
 | EString of string_expr

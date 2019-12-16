@@ -222,8 +222,8 @@ and fun_expr = {
 }
 
 and fun_decl = {
-  fun_expr : fun_expr reg ;
-  terminator : semi option ;
+  fun_expr   : fun_expr reg;
+  terminator : semi option
 }
 
 and parameters = (param_decl, semi) nsepseq par reg
@@ -270,7 +270,7 @@ and statement =
 and data_decl =
   LocalConst of const_decl reg
 | LocalVar   of var_decl reg
-| LocalFun  of fun_decl reg
+| LocalFun   of fun_decl reg
 
 and var_decl = {
   kwd_var    : kwd_var;

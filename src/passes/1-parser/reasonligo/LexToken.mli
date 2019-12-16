@@ -56,7 +56,7 @@ type t =
 | VBAR of Region.t    (* "|" *)
 | COLON of Region.t   (* ":" *)
 | DOT of Region.t     (* "." *)
-| DOTDOTDOT of Region.t (* "..." *)
+| ELLIPSIS of Region.t (* "..." *)
 
   (* Wildcard *)
 
@@ -65,18 +65,18 @@ type t =
   (* Comparisons *)
 
 | EQ of Region.t      (* "="  *)
-| EQEQ of Region.t      (* "="  *)
-| NE of Region.t       (* "!=" *)
-| LT of Region.t       (* "<"  *)
-| GT of Region.t    (* ">"  *)
+| EQEQ of Region.t    (* "="  *)
+| NE of Region.t      (* "!=" *)
+| LT of Region.t      (* "<"  *)
+| GT of Region.t      (* ">"  *)
 | LE of Region.t      (* "=<" *)
-| GE of Region.t       (* ">=" *)
-| ARROW of Region.t       (* "=>" *)
+| GE of Region.t      (* ">=" *)
 
-| BOOL_OR of Region.t (* "||" *)
-| BOOL_AND of Region.t(* "&&" *)
+| ARROW of Region.t   (* "=>" *)
 
-| NOT of Region.t (* ! *)
+| BOOL_OR  of Region.t (* "||" *)
+| BOOL_AND of Region.t (* "&&" *)
+| NOT      of Region.t (* ! *)
 
   (* Identifiers, labels, numbers and strings *)
 
@@ -84,8 +84,8 @@ type t =
 | Constr of string Region.reg
 | Int    of (string * Z.t) Region.reg
 | Nat    of (string * Z.t) Region.reg
-| Mtz    of (string * Z.t) Region.reg
-| Str    of string Region.reg
+| Mutez  of (string * Z.t) Region.reg
+| String of string Region.reg
 | Bytes  of (string * Hex.t) Region.reg
 
   (* Keywords *)
