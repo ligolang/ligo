@@ -858,6 +858,13 @@ a:hover {
   }
 }
 
+@media (min-width: 1500px) {
+  .centered {
+    max-width: 1400px;
+  }
+}
+
+
 @media (max-width: 1023px) {
   .centered {
     flex-direction: column;
@@ -954,3 +961,4 @@ a:hover {
 .language-reasonligo .hljs-constructor {
   color: #a31515;
 }
+
