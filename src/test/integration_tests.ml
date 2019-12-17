@@ -1624,17 +1624,26 @@ let balance_constant_religo () : unit result =
   expect_eq program "main" input expected
 
 
+let addr_test program =
+  let open Proto_alpha_utils.Memory_proto_alpha in
+  let addr = Protocol.Alpha_context.Contract.to_b58check @@
+      (List.nth dummy_environment.identities 0).implicit_contract in
+  let open Tezos_crypto in
+  let key_hash = Signature.Public_key_hash.to_b58check @@
+      (List.nth dummy_environment.identities 0).public_key_hash in
+  expect_eq program "main" (e_key_hash key_hash) (e_address addr)
+
 let address () : unit result =
-  let%bind _ = type_file "./contracts/address.ligo" in
-  ok ()
+  let%bind program = type_file "./contracts/address.ligo" in
+  addr_test program
 
 let address_mligo () : unit result =
-  let%bind _ = mtype_file "./contracts/address.mligo" in
-  ok ()
+  let%bind program = mtype_file "./contracts/address.mligo" in
+  addr_test program
 
 let address_religo () : unit result =
-  let%bind _ = retype_file "./contracts/address.religo" in
-  ok ()
+  let%bind program = retype_file "./contracts/address.religo" in
+  addr_test program
 
 
 let self_address () : unit result =
