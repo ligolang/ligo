@@ -12,5 +12,6 @@ let () =
     Vote_tests.main ;
     Multisig_tests.main ;
     Multisig_v2_tests.main ;
+    Replaceable_id_tests.main ;
   ] ;
   ()

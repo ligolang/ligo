@@ -923,7 +923,7 @@ module Compiler = struct
     | C_UNIT            -> ok @@ simple_constant @@ prim I_UNIT
     | C_BALANCE         -> ok @@ simple_constant @@ prim I_BALANCE
     | C_AMOUNT          -> ok @@ simple_constant @@ prim I_AMOUNT
-    | C_ADDRESS         -> ok @@ simple_constant @@ prim I_ADDRESS
+    | C_ADDRESS         -> ok @@ simple_unary @@ prim I_ADDRESS
     | C_SELF_ADDRESS    -> ok @@ simple_constant @@ seq [prim I_SELF; prim I_ADDRESS]
     | C_IMPLICIT_ACCOUNT -> ok @@ simple_unary @@ prim I_IMPLICIT_ACCOUNT
     | C_SET_DELEGATE    -> ok @@ simple_unary @@ prim I_SET_DELEGATE
