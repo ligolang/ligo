@@ -12,13 +12,19 @@ type environment = Environment.t
 
 module Errors = struct
   let unbound_type_variable (e:environment) (tv:I.type_variable) () =
+    let name = Var.to_name tv in
+    let suggestion = match name with
+        | "integer" -> "int"
+        | "str" -> "string"
+        | _ -> "no suggestion" in
     let title = (thunk "unbound type variable") in
     let message () = "" in
     let data = [
       ("variable" , fun () -> Format.asprintf "%a" Stage_common.PP.type_variable tv) ;
       (* TODO: types don't have srclocs for now. *)
       (* ("location" , fun () -> Format.asprintf "%a" Location.pp (n.location)) ; *)
-      ("in" , fun () -> Format.asprintf "%a" Environment.PP.full_environment e)
+      ("in" , fun () -> Format.asprintf "%a" Environment.PP.full_environment e) ;
+      ("did_you_mean" , fun () -> suggestion)
     ] in
     error ~data title message ()
 
