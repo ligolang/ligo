@@ -464,8 +464,6 @@ and type_expression' : environment -> ?tv_opt:O.type_value -> I.expression -> O.
         | None -> ok ()
         | Some tv' -> O.assert_type_value_eq (tv' , ae.type_annotation) in
       ok(ae)
-
-
   (* Sum *)
   | E_constructor (c, expr) ->
       let%bind (c_tv, sum_tv) =
@@ -793,7 +791,12 @@ and type_expression' : environment -> ?tv_opt:O.type_value -> I.expression -> O.
         (Some tv)
         (Some expr'.type_annotation)
         (internal_assertion_failure "merge_annotations (Some ...) (Some ...) failed") in
-    ok {expr' with type_annotation}
+    (* check type annotation of the expression as a whole (e.g. let x : t = (v : t') ) *)
+    let%bind () =
+      match tv_opt with
+      | None -> ok ()
+      | Some tv' -> O.assert_type_value_eq (tv' , type_annotation) in
+    ok @@ {expr' with type_annotation}
 
 
 and type_constant (name:I.constant) (lst:O.type_value list) (tv_opt:O.type_value option) : (O.constant * O.type_value) result =
