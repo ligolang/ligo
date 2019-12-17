@@ -7,3 +7,4 @@ Version.ml
 /*.pp.ligo
 **/.DS_Store
 .vscode/
+/ligo.install
