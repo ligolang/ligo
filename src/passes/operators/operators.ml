@@ -131,6 +131,7 @@ module Simplify = struct
       | "address"         -> ok C_ADDRESS
       | "self_address"    -> ok C_SELF_ADDRESS
       | "implicit_account"-> ok C_IMPLICIT_ACCOUNT
+      | "set_delegate"    -> ok C_SET_DELEGATE
       | _                 -> simple_fail "Not a PascaLIGO constant"
 
     let type_constants = type_constants

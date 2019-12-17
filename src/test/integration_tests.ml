@@ -1756,6 +1756,14 @@ let key_hash () : unit result =
   let%bind () = expect_eq program "check_hash_key" make_input make_expected in
   ok ()
 
+let set_delegate () : unit result =
+  let open Tezos_crypto in
+  let (raw_pkh,_,_) = Signature.generate_key () in
+  let pkh_str = Signature.Public_key_hash.to_b58check raw_pkh in
+  let%bind program = type_file "./contracts/set_delegate.ligo" in
+  let%bind () = expect_eq program "main" (e_string pkh_str) (e_typed_list [] t_operation)
+  in ok ()
+
 let main = test_suite "Integration (End to End)" [
     test "key hash" key_hash ;
     test "chain id" chain_id ;
@@ -1883,6 +1891,7 @@ let main = test_suite "Integration (End to End)" [
     test "implicit account" implicit_account ;
     test "implicit account (mligo)" implicit_account_mligo ;
     test "implicit account (religo)" implicit_account_religo ;
+    test "set delegate" set_delegate ;
     test "is_nat" is_nat ;
     test "is_nat (mligo)" is_nat_mligo ;
     test "is_nat (religo)" is_nat_religo ;
