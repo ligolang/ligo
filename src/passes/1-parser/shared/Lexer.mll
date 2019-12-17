@@ -159,10 +159,11 @@ module type S = sig
 
   (* Error reporting *)
 
-  exception Error of Error.t Region.reg
+  type error
+  exception Error of error Region.reg
 
   val print_error : ?offsets:bool -> [`Byte | `Point] ->
-    Error.t Region.reg -> file:bool -> unit
+    error Region.reg -> file:bool -> unit
 end
 
 (* The functorised interface
@@ -330,22 +331,23 @@ module Make (Token: TOKEN) : (S with module Token = Token) =
 
     (* ERRORS *)
 
-    type Error.t += Invalid_utf8_sequence
-    type Error.t += Unexpected_character of char
-    type Error.t += Undefined_escape_sequence
-    type Error.t += Missing_break
-    type Error.t += Unterminated_string
-    type Error.t += Unterminated_integer
-    type Error.t += Odd_lengthed_bytes
-    type Error.t += Unterminated_comment
-    type Error.t += Orphan_minus
-    type Error.t += Non_canonical_zero
-    type Error.t += Negative_byte_sequence
-    type Error.t += Broken_string
-    type Error.t += Invalid_character_in_string
-    type Error.t += Reserved_name
-    type Error.t += Invalid_symbol
-    type Error.t += Invalid_natural
+    type error =
+      Invalid_utf8_sequence
+    | Unexpected_character of char
+    | Undefined_escape_sequence
+    | Missing_break
+    | Unterminated_string
+    | Unterminated_integer
+    | Odd_lengthed_bytes
+    | Unterminated_comment
+    | Orphan_minus
+    | Non_canonical_zero
+    | Negative_byte_sequence
+    | Broken_string
+    | Invalid_character_in_string
+    | Reserved_name
+    | Invalid_symbol
+    | Invalid_natural
 
     let error_to_string = function
       Invalid_utf8_sequence ->
@@ -393,9 +395,8 @@ module Make (Token: TOKEN) : (S with module Token = Token) =
          Hint: Check the LIGO syntax you use.\n"
     | Invalid_natural ->
         "Invalid natural."
-    | _ -> assert false
 
-    exception Error of Error.t Region.reg
+    exception Error of error Region.reg
 
     let print_error ?(offsets=true) mode Region.{region; value} ~file =
       let  msg = error_to_string value in

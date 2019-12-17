@@ -6,7 +6,6 @@ $HOME/git/ligo/vendors/ligo-utils/simple-utils/region.mli
 $HOME/git/ligo/vendors/ligo-utils/simple-utils/region.ml
 ../shared/Lexer.mli
 ../shared/Lexer.mll
-../shared/Error.mli
 ../shared/EvalOpt.ml
 ../shared/EvalOpt.mli
 ../shared/FQueue.ml

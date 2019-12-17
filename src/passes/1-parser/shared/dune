@@ -7,20 +7,15 @@
     simple-utils
     uutf
     getopt
-    zarith
-  )
+    zarith)
   (modules
-    Error
     Lexer
     LexerLog
     Utils
     Markup
     FQueue
     EvalOpt
-    Version
-  )
-  (modules_without_implementation Error)
-)
+    Version))
 
 (rule
   (targets Version.ml)
