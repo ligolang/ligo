@@ -1,6 +1,9 @@
 ARG target
 FROM ocaml/opam2:${target}
 
+ARG ci_job_id
+ENV CI_JOB_ID=$ci_job_id
+
 RUN opam switch 4.07 && eval $(opam env)
 
 USER root
@@ -26,7 +29,7 @@ RUN opam update
 
 # Install ligo
 RUN sh scripts/install_vendors_deps.sh
-RUN opam install -y ./src
+RUN opam install -y .
 
 # Use the ligo binary as a default command
 ENTRYPOINT [ "/home/opam/.opam/4.07/bin/ligo" ]

@@ -14,7 +14,8 @@ then
         m4 \
         libcap \
         bubblewrap \
-        rsync
+        rsync \
+        git
 
 else
     apt-get update -qq
@@ -27,5 +28,6 @@ else
         m4 \
         libcap-dev \
         bubblewrap \
-        rsync
+        rsync \
+        git
 fi
