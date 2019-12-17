@@ -16,6 +16,7 @@ module Errors = struct
     let suggestion = match name with
         | "integer" -> "int"
         | "str" -> "string"
+        | "boolean" -> "bool"
         | _ -> "no suggestion" in
     let title = (thunk "unbound type variable") in
     let message () = "" in
