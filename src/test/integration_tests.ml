@@ -1761,7 +1761,7 @@ let set_delegate () : unit result =
   let (raw_pkh,_,_) = Signature.generate_key () in
   let pkh_str = Signature.Public_key_hash.to_b58check raw_pkh in
   let%bind program = type_file "./contracts/set_delegate.ligo" in
-  let%bind () = expect_eq program "main" (e_string pkh_str) (e_typed_list [] t_operation)
+  let%bind () = expect_eq program "main" (e_key_hash pkh_str) (e_typed_list [] t_operation)
   in ok ()
 
 let main = test_suite "Integration (End to End)" [
