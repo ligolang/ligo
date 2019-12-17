@@ -225,6 +225,7 @@ module Simplify = struct
       | "stop"                     -> ok C_STOP
 
       | "Operation.transaction"    -> ok C_CALL
+      | "Operation.set_delegate"   -> ok C_SET_DELEGATE
       | "Operation.get_contract"   -> ok C_CONTRACT
       | "Operation.get_entrypoint" -> ok C_CONTRACT_ENTRYPOINT
       | "int"                      -> ok C_INT
