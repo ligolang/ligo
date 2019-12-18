@@ -15,7 +15,10 @@
     Markup
     FQueue
     EvalOpt
-    Version))
+    Version
+    SyntaxError)
+  (modules_without_implementation Error))
+
 
 (rule
   (targets Version.ml)

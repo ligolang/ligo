@@ -149,7 +149,7 @@ let rec type_expression' : type a . (formatter -> a -> unit) -> formatter -> a t
     | T_operator to_ -> type_operator f ppf to_
 
 and type_constant ppf (tc:type_constant) : unit =
-  let s = match tc with 
+  let s = match tc with
     | TC_unit      -> "unit"
     | TC_string    -> "string"
     | TC_bytes     -> "bytes"
@@ -165,7 +165,7 @@ and type_constant ppf (tc:type_constant) : unit =
     | TC_timestamp -> "timestamp"
     | TC_chain_id  -> "chain_id"
     in
-  fprintf ppf "(TC %s)" s
+  fprintf ppf "%s" s
 
 
 and type_operator : type a . (formatter -> a -> unit) -> formatter -> a type_operator -> unit =

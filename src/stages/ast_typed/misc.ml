@@ -12,16 +12,16 @@ module Errors = struct
     error ~data title message ()
 
   let different_constants a b () =
-    let title = (thunk "different type constants") in
-    let message () = "" in
+    let title = (thunk "different type constructors") in
+    let message () = "Expected these two constant type constructors to be the same, but they're different" in
     let data = [
       ("a" , fun () -> Format.asprintf "%a" Stage_common.PP.type_constant a) ;
       ("b" , fun () -> Format.asprintf "%a" Stage_common.PP.type_constant b )
     ] in
     error ~data title message ()
   let different_operators a b () =
-    let title = (thunk "different type operators") in
-    let message () = "" in
+    let title = (thunk "different type constructors") in
+    let message () = "Expected these two n-ary type constructors to be the same, but they're different" in
     let data = [
       ("a" , fun () -> Format.asprintf "%a" (Stage_common.PP.type_operator PP.type_value) a) ;
       ("b" , fun () -> Format.asprintf "%a" (Stage_common.PP.type_operator PP.type_value) b)
@@ -30,7 +30,7 @@ module Errors = struct
 
   let different_size_type name a b () =
     let title () = name ^ " have different sizes" in
-    let message () = "" in
+    let message () = "Expected these two types to be the same, but they're different (both are " ^ name ^ ", but with a different number of arguments)" in
     let data = [
       ("a" , fun () -> Format.asprintf "%a" PP.type_value a) ;
       ("b" , fun () -> Format.asprintf "%a" PP.type_value b )
@@ -46,7 +46,7 @@ module Errors = struct
     ] in
     error ~data title message ()
 
-  let _different_size_constants = different_size_type "constants"
+  let _different_size_constants = different_size_type "type constructors"
 
   let different_size_tuples = different_size_type "tuples"
 

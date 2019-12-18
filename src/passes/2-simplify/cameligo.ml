@@ -564,11 +564,11 @@ and simpl_declaration : Raw.declaration -> declaration Location.wrap list result
             let%bind (v, v_type) = pattern_to_typed_var par_var in
             let%bind v_type_expression =
               match v_type with
-              | Some v_type -> ok @@ (simpl_type_expression v_type)
-              | None -> fail @@ wrong_pattern "typed var tuple" par_var in
-            let%bind v_type_expression = v_type_expression in
+              | Some v_type -> ok (to_option (simpl_type_expression v_type))
+              | None -> ok None
+            in
             let%bind simpl_rhs_expr = simpl_expression rhs_expr in
-              ok @@ loc x @@ Declaration_constant (Var.of_name v.value, Some v_type_expression, simpl_rhs_expr) )
+              ok @@ loc x @@ Declaration_constant (Var.of_name v.value, v_type_expression, simpl_rhs_expr) )
           in let%bind variables = ok @@ npseq_to_list pt.value
           in let%bind expr_bind_lst =
                match let_rhs with
