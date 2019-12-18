@@ -138,7 +138,7 @@ let get_t_pair (t:type_value) : (type_value * type_value) result = match t.type_
 
 let get_t_function (t:type_value) : (type_value * type_value) result = match t.type_value' with
   | T_arrow (a,r) -> ok (a,r)
-  | _ -> simple_fail "not a tuple"
+  | _ -> simple_fail "not a function"
 
 let get_t_sum (t:type_value) : type_value constructor_map result = match t.type_value' with
   | T_sum m -> ok m
