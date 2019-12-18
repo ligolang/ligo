@@ -128,7 +128,7 @@ let compile_file =
     Term.(const f $ source_file 0 $ entry_point 1 $ syntax $ display_format $ michelson_code_format) in
   let cmdname = "compile-contract" in
   let doc = "Subcommand: compile a contract." in
-  (term , Term.info ~doc cmdname)
+  (Term.ret term , Term.info ~doc cmdname)
 
 let measure_contract =
   let f source_file entry_point syntax display_format  =
@@ -145,7 +145,7 @@ let measure_contract =
     Term.(const f $ source_file 0 $ entry_point 1 $ syntax $ display_format) in
   let cmdname = "measure-contract" in
   let doc = "Subcommand: measure a contract's compiled size in bytes." in
-  (term , Term.info ~doc cmdname)
+  (Term.ret term , Term.info ~doc cmdname)
 
 let compile_parameter =
   let f source_file entry_point expression syntax display_format michelson_format =
@@ -176,7 +176,7 @@ let compile_parameter =
     Term.(const f $ source_file 0 $ entry_point 1 $ expression "PARAMETER" 2 $ syntax $ display_format $ michelson_code_format) in
   let cmdname = "compile-parameter" in
   let doc = "Subcommand: compile parameters to a michelson expression. The resulting michelson expression can be passed as an argument in a transaction which calls a contract." in
-  (term , Term.info ~doc cmdname)
+  (Term.ret term , Term.info ~doc cmdname)
 
 let interpret =
   let f expression init_file syntax amount sender source display_format =
@@ -204,7 +204,7 @@ let interpret =
     Term.(const f $ expression "EXPRESSION" 0 $ init_file $ syntax $ amount $ sender $ source $ display_format ) in
   let cmdname = "interpret" in
   let doc = "Subcommand: interpret the expression in the context initialized by the provided source file." in
-  (term , Term.info ~doc cmdname)
+  (Term.ret term , Term.info ~doc cmdname)
 
 
 let compile_storage =
@@ -236,7 +236,7 @@ let compile_storage =
     Term.(const f $ source_file 0 $ entry_point 1 $ expression "STORAGE" 2 $ syntax $ display_format $ michelson_code_format) in
   let cmdname = "compile-storage" in
   let doc = "Subcommand: compile an initial storage in ligo syntax to a michelson expression. The resulting michelson expression can be passed as an argument in a transaction which originates a contract." in
-  (term , Term.info ~doc cmdname)
+  (Term.ret term , Term.info ~doc cmdname)
 
 let dry_run =
   let f source_file entry_point storage input amount sender source syntax display_format =
@@ -267,7 +267,7 @@ let dry_run =
     Term.(const f $ source_file 0 $ entry_point 1 $ expression "PARAMETER" 2 $ expression "STORAGE" 3 $ amount $ sender $ source $ syntax $ display_format) in
   let cmdname = "dry-run" in
   let doc = "Subcommand: run a smart-contract with the given storage and input." in
-  (term , Term.info ~doc cmdname)
+  (Term.ret term , Term.info ~doc cmdname)
 
 let run_function =
   let f source_file entry_point parameter amount sender source syntax display_format =
@@ -293,7 +293,7 @@ let run_function =
     Term.(const f $ source_file 0 $ entry_point 1 $ expression "PARAMETER" 2 $ amount $ sender $ source $ syntax $ display_format) in
   let cmdname = "run-function" in
   let doc = "Subcommand: run a function with the given parameter." in
-  (term , Term.info ~doc cmdname)
+  (Term.ret term , Term.info ~doc cmdname)
 
 let evaluate_value =
   let f source_file entry_point amount sender source syntax display_format =
@@ -312,7 +312,7 @@ let evaluate_value =
     Term.(const f $ source_file 0 $ entry_point 1 $ amount $ sender $ source $ syntax $ display_format) in
   let cmdname = "evaluate-value" in
   let doc = "Subcommand: evaluate a given definition." in
-  (term , Term.info ~doc cmdname)
+  (Term.ret term , Term.info ~doc cmdname)
 
 let compile_expression =
   let f expression syntax display_format michelson_format =
@@ -331,7 +331,7 @@ let compile_expression =
     Term.(const f $ expression "" 1 $ req_syntax 0 $ display_format $ michelson_code_format) in
   let cmdname = "compile-expression" in
   let doc = "Subcommand: compile to a michelson value." in
-  (term , Term.info ~doc cmdname)
+  (Term.ret term , Term.info ~doc cmdname)
 
 let run ?argv () =
   Term.eval_choice ?argv main [
