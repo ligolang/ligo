@@ -18,6 +18,7 @@
     FQueue
     EvalOpt
     Version
+    SyntaxError
   )
   (modules_without_implementation Error)
 )

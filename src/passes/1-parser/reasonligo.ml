@@ -22,7 +22,18 @@ let parse_file (source: string) : AST.t result =
   let lexbuf = Lexing.from_channel channel in
   let Lexer.{read ; close ; _} =
     Lexer.open_token_stream None in
-  specific_try (function
+  specific_try (function      
+      | SyntaxError.Error WrongFunctionArguments -> 
+          let start = Lexing.lexeme_start_p lexbuf in
+          let end_ = Lexing.lexeme_end_p lexbuf in
+          let str = Format.sprintf
+              "Incorrect function arguments at \"%s\" from (%d, %d) to (%d, %d). In file \"%s|%s\"\n"
+              (Lexing.lexeme lexbuf)
+              start.pos_lnum (start.pos_cnum - start.pos_bol)
+              end_.pos_lnum (end_.pos_cnum - end_.pos_bol)
+              start.pos_fname source
+          in
+          simple_error str
       | Parser.Error -> (
           let start = Lexing.lexeme_start_p lexbuf in
           let end_ = Lexing.lexeme_end_p lexbuf in
