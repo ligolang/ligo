@@ -23,7 +23,7 @@ let compile_main () =
   let%bind michelson_prg   = Ligo.Compile.Of_mini_c.aggregate_and_compile_contract mini_c_prg "main" in
   let%bind (_contract: Tezos_utils.Michelson.michelson) =
     (* fails if the given entry point is not a valid contract *)
-    Ligo.Compile.Of_mini_c.build_contract michelson_prg in
+    Ligo.Compile.Of_michelson.build_contract michelson_prg in
   ok ()
 open Ast_simplified
 

@@ -121,7 +121,7 @@ let compile_file =
     let%bind typed,_    = Compile.Of_simplified.compile simplified in
     let%bind mini_c     = Compile.Of_typed.compile typed in
     let%bind michelson  = Compile.Of_mini_c.aggregate_and_compile_contract mini_c entry_point in
-    let%bind contract   = Compile.Of_mini_c.build_contract michelson in
+    let%bind contract   = Compile.Of_michelson.build_contract michelson in
     ok @@ Format.asprintf "%a\n" (Main.Display.michelson_pp michelson_format) contract
   in
   let term =
@@ -137,7 +137,7 @@ let measure_contract =
     let%bind typed,_    = Compile.Of_simplified.compile simplified in
     let%bind mini_c     = Compile.Of_typed.compile typed in
     let%bind michelson  = Compile.Of_mini_c.aggregate_and_compile_contract mini_c entry_point in
-    let%bind contract   = Compile.Of_mini_c.build_contract michelson in
+    let%bind contract   = Compile.Of_michelson.build_contract michelson in
     let open Tezos_utils in
     ok @@ Format.asprintf "%d bytes\n" (Michelson.measure contract)
   in
@@ -157,14 +157,15 @@ let compile_parameter =
     let      env             = Ast_typed.program_environment typed_prg in
     let%bind (_contract: Tezos_utils.Michelson.michelson) =
       (* fails if the given entry point is not a valid contract *)
-      Compile.Of_mini_c.build_contract michelson_prg in
+      Compile.Of_michelson.build_contract michelson_prg in
 
     let%bind v_syntax         = Helpers.syntax_to_variant (Syntax_name syntax) (Some source_file) in
     let%bind simplified_param = Compile.Of_source.compile_expression v_syntax expression in
     let%bind (typed_param,_)  = Compile.Of_simplified.compile_expression ~env ~state simplified_param in
     let%bind mini_c_param     = Compile.Of_typed.compile_expression typed_param in
     let%bind compiled_param   = Compile.Of_mini_c.aggregate_and_compile_expression mini_c_prg mini_c_param in
-    let%bind ()               = Compile.Of_mini_c.assert_equal_michelson_type Check_parameter michelson_prg compiled_param in
+    let%bind ()               = Compile.Of_typed.assert_equal_contract_type Check_parameter entry_point typed_prg typed_param in
+    let%bind ()               = Compile.Of_michelson.assert_equal_contract_type Check_parameter michelson_prg compiled_param in
     let%bind value            = Run.evaluate_expression compiled_param.expr compiled_param.expr_ty in
     ok @@ Format.asprintf "%a\n" (Main.Display.michelson_pp michelson_format) value
   in
@@ -213,14 +214,15 @@ let compile_storage =
     let      env             = Ast_typed.program_environment typed_prg in
     let%bind (_contract: Tezos_utils.Michelson.michelson) =
       (* fails if the given entry point is not a valid contract *)
-      Compile.Of_mini_c.build_contract michelson_prg in
+      Compile.Of_michelson.build_contract michelson_prg in
 
     let%bind v_syntax         = Helpers.syntax_to_variant (Syntax_name syntax) (Some source_file) in
     let%bind simplified_param = Compile.Of_source.compile_expression v_syntax expression in
     let%bind (typed_param,_)  = Compile.Of_simplified.compile_expression ~env ~state simplified_param in
     let%bind mini_c_param     = Compile.Of_typed.compile_expression typed_param in
     let%bind compiled_param   = Compile.Of_mini_c.compile_expression mini_c_param in
-    let%bind ()               = Compile.Of_mini_c.assert_equal_michelson_type Check_storage michelson_prg compiled_param in
+    let%bind ()               = Compile.Of_typed.assert_equal_contract_type Check_storage entry_point typed_prg typed_param in
+    let%bind ()               = Compile.Of_michelson.assert_equal_contract_type Check_storage michelson_prg compiled_param in
     let%bind value            = Run.evaluate_expression compiled_param.expr compiled_param.expr_ty in
     ok @@ Format.asprintf "%a\n" (Main.Display.michelson_pp michelson_format) value
   in
@@ -240,7 +242,7 @@ let dry_run =
     let%bind michelson_prg   = Compile.Of_mini_c.aggregate_and_compile_contract mini_c_prg entry_point in
     let%bind (_contract: Tezos_utils.Michelson.michelson) =
       (* fails if the given entry point is not a valid contract *)
-      Compile.Of_mini_c.build_contract michelson_prg in
+      Compile.Of_michelson.build_contract michelson_prg in
 
     let%bind v_syntax          = Helpers.syntax_to_variant (Syntax_name syntax) (Some source_file) in
     let%bind simplified        = Compile.Of_source.compile_contract_input storage input v_syntax in
