@@ -1,4 +1,4 @@
-open! Trace
+open Trace
 
 type test_case = unit Alcotest.test_case
 type test =
@@ -17,7 +17,7 @@ let wrap_test name f =
 
 let wrap_test_raw f =
   match f () with
-  | Trace.Ok ((), annotations) -> ignore annotations; ()
+  | Ok ((), annotations) -> ignore annotations; ()
   | Error err ->
     Format.printf "%a\n%!" (Ligo.Display.error_pp ~dev:true) (err ())
 

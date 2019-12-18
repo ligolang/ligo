@@ -1,4 +1,4 @@
-open! Trace
+open Trace
 
 module AST = Ast_typed
 module Append_tree = Tree.Append

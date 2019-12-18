@@ -2,7 +2,7 @@
 
 For more info, see back-end.md: https://gitlab.com/ligolang/ligo/blob/dev/gitlab-pages/docs/contributors/big-picture/back-end.md *)
 
-open! Trace
+open Trace
 open Helpers
 
 module AST = Ast_typed
