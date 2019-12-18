@@ -7,10 +7,8 @@
     simple-utils
     uutf
     getopt
-    zarith
-  )
+    zarith)
   (modules
-    Error
     Lexer
     LexerLog
     Utils
@@ -18,10 +16,8 @@
     FQueue
     EvalOpt
     Version
-    SyntaxError
-  )
-  (modules_without_implementation Error)
-)
+    SyntaxError))
+
 
 (rule
   (targets Version.ml)

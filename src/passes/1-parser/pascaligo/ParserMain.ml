@@ -25,15 +25,14 @@ let () = Printexc.record_backtrace true
 let external_ text =
   Utils.highlight (Printf.sprintf "External error: %s" text); exit 1;;
 
-type Error.t += ParseError
+type error = SyntaxError
 
 let error_to_string = function
-  ParseError -> "Syntax error.\n"
-| _ -> assert false
+  SyntaxError -> "Syntax error.\n"
 
 let print_error ?(offsets=true) mode Region.{region; value} ~file =
-  let msg = error_to_string value in
-  let reg = region#to_string ~file ~offsets mode in
+  let msg = error_to_string value
+  and reg = region#to_string ~file ~offsets mode in
   Utils.highlight (sprintf "Parse error %s:\n%s%!" reg msg)
 
 (** {1 Preprocessing the input source and opening the input channels} *)
@@ -77,11 +76,11 @@ let () =
 (** {1 Instanciating the lexer} *)
 
 module Lexer = Lexer.Make (LexToken)
-
 module Log = LexerLog.Make (Lexer)
+module ParserFront = ParserAPI.Make (Lexer) (Parser)
 
-let Lexer.{read; buffer; get_pos; get_last; close} =
-  Lexer.open_token_stream (Some pp_input)
+let lexer_inst = Lexer.open_token_stream (Some pp_input)
+let Lexer.{read; buffer; get_pos; get_last; close} = lexer_inst
 
 and cout = stdout
 
@@ -98,7 +97,10 @@ let tokeniser = read ~log
 
 let () =
   try
-    let ast = Parser.contract tokeniser buffer in
+    (* The incremental API *)
+    let ast = ParserFront.incr_contract lexer_inst in
+    (* The monolithic API *)
+    (* let ast = ParserFront.mono_contract tokeniser buffer in *)
     if Utils.String.Set.mem "ast" options#verbose
     then let buffer = Buffer.create 131 in
          let state = ParserLog.mk_state
@@ -126,7 +128,7 @@ let () =
                         options#mode err ~file
   | Parser.Error ->
       let region = get_last () in
-      let error = Region.{region; value=ParseError} in
+      let error = Region.{region; value=SyntaxError} in
       let () = close_all () in
       print_error ~offsets:options#offsets
                   options#mode error ~file

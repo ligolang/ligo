@@ -136,11 +136,13 @@ module type S =
 
     (* Error reporting *)
 
-    exception Error of Error.t Region.reg
+    type error
+
+    exception Error of error Region.reg
 
     val print_error :
       ?offsets:bool -> [`Byte | `Point] ->
-      Error.t Region.reg -> file:bool -> unit
+      error Region.reg -> file:bool -> unit
 
   end
 

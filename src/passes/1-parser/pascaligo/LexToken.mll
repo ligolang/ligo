@@ -75,10 +75,8 @@ type t =
 | Case       of Region.t  (* "case"     *)
 | Const      of Region.t  (* "const"    *)
 | Contains   of Region.t  (* "contains" *)
-| Down       of Region.t  (* "down"     *)
 | Else       of Region.t  (* "else"     *)
 | End        of Region.t  (* "end"      *)
-| Fail       of Region.t  (* "fail"     *)
 | False      of Region.t  (* "False"    *)
 | For        of Region.t  (* "for"      *)
 | From       of Region.t  (* "from"     *)
@@ -98,7 +96,6 @@ type t =
 | Remove     of Region.t  (* "remove"   *)
 | Set        of Region.t  (* "set"      *)
 | Skip       of Region.t  (* "skip"     *)
-| Step       of Region.t  (* "step"     *)
 | Then       of Region.t  (* "then"     *)
 | To         of Region.t  (* "to"       *)
 | True       of Region.t  (* "True"     *)
@@ -184,10 +181,8 @@ let proj_token = function
 | Case       region -> region, "Case"
 | Const      region -> region, "Const"
 | Contains   region -> region, "Contains"
-| Down       region -> region, "Down"
 | Else       region -> region, "Else"
 | End        region -> region, "End"
-| Fail       region -> region, "Fail"
 | False      region -> region, "False"
 | For        region -> region, "For"
 | From       region -> region, "From"
@@ -207,7 +202,6 @@ let proj_token = function
 | Remove     region -> region, "Remove"
 | Set        region -> region, "Set"
 | Skip       region -> region, "Skip"
-| Step       region -> region, "Step"
 | Then       region -> region, "Then"
 | To         region -> region, "To"
 | True       region -> region, "True"
@@ -276,10 +270,8 @@ let to_lexeme = function
 | Case       _ -> "case"
 | Const      _ -> "const"
 | Contains   _ -> "contains"
-| Down       _ -> "down"
 | Else       _ -> "else"
 | End        _ -> "end"
-| Fail       _ -> "fail"
 | False      _ -> "False"
 | For        _ -> "for"
 | From       _ -> "from"
@@ -299,7 +291,6 @@ let to_lexeme = function
 | Remove     _ -> "remove"
 | Set        _ -> "set"
 | Skip       _ -> "skip"
-| Step       _ -> "step"
 | Then       _ -> "then"
 | To         _ -> "to"
 | True       _ -> "True"
@@ -336,13 +327,11 @@ let keywords = [
   (fun reg -> Case       reg);
   (fun reg -> Const      reg);
   (fun reg -> Contains   reg);
-  (fun reg -> Down       reg);
   (fun reg -> Else       reg);
   (fun reg -> End        reg);
   (fun reg -> For        reg);
   (fun reg -> From       reg);
   (fun reg -> Function   reg);
-  (fun reg -> Fail       reg);
   (fun reg -> False      reg);
   (fun reg -> If         reg);
   (fun reg -> In         reg);
@@ -360,7 +349,6 @@ let keywords = [
   (fun reg -> Remove     reg);
   (fun reg -> Set        reg);
   (fun reg -> Skip       reg);
-  (fun reg -> Step       reg);
   (fun reg -> Then       reg);
   (fun reg -> To         reg);
   (fun reg -> True       reg);
@@ -560,10 +548,8 @@ let is_kwd = function
 | Case       _
 | Const      _
 | Contains   _
-| Down       _
 | Else       _
 | End        _
-| Fail       _
 | False      _
 | For        _
 | From       _
@@ -583,7 +569,6 @@ let is_kwd = function
 | Remove     _
 | Set        _
 | Skip       _
-| Step       _
 | Then       _
 | To         _
 | True       _
