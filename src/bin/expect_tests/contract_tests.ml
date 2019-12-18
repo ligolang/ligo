@@ -16,6 +16,18 @@ let%expect_test _ =
   run_ligo_good [ "measure-contract" ; contract "vote.mligo" ; "main" ] ;
   [%expect {| 628 bytes |}] ;
 
+  run_ligo_good [ "compile-parameter" ; contract "coase.ligo" ; "main" ; "Buy_single (record card_to_buy = 1n end)" ] ;
+  [%expect {| (Left (Left 1)) |}] ;
+
+  run_ligo_good [ "compile-storage" ; contract "coase.ligo" ; "main" ; "record cards = (map end : cards) ; card_patterns = (map end : card_patterns) ; next_id = 3n ; end" ] ;
+  [%expect {| (Pair (Pair {} {}) 3) |}] ;
+
+  run_ligo_bad [ "compile-storage" ; contract "coase.ligo" ; "main" ; "Buy_single (record card_to_buy = 1n end)" ] ;
+  [%expect {| ligo: different kinds:  {"a":"record[next_id -> nat , cards -> (TO_Map (nat,record[card_pattern -> nat , card_owner -> address])) , card_patterns -> (TO_Map (nat,record[quantity -> nat , coefficient -> mutez]))]","b":"sum[Transfer_single -> record[destination -> address , card_to_transfer -> nat] , Sell_single -> record[card_to_sell -> nat] , Buy_single -> record[card_to_buy -> nat]]"} |}] ;
+
+  run_ligo_bad [ "compile-parameter" ; contract "coase.ligo" ; "main" ; "record cards = (map end : cards) ; card_patterns = (map end : card_patterns) ; next_id = 3n ; end" ] ;
+  [%expect {| ligo: different kinds:  {"a":"sum[Transfer_single -> record[destination -> address , card_to_transfer -> nat] , Sell_single -> record[card_to_sell -> nat] , Buy_single -> record[card_to_buy -> nat]]","b":"record[next_id -> nat , cards -> (TO_Map (nat,record[card_pattern -> nat , card_owner -> address])) , card_patterns -> (TO_Map (nat,record[quantity -> nat , coefficient -> mutez]))]"} |}] ;
+
   ()
 
 let%expect_test _ =
