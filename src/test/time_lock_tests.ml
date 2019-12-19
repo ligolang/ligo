@@ -43,26 +43,22 @@ let storage st = e_timestamp (Int64.to_int @@ to_sec st)
 
 let early_call () =
   let%bind program,_ = get_program () in
-  let%bind now = mk_time "2000-01-01T00:10:10Z" in
+  let%bind predecessor_timestamp = mk_time "2000-01-01T00:10:10Z" in
   let%bind lock_time = mk_time "2000-01-01T10:10:10Z" in
   let init_storage = storage lock_time in
   let options =
-    let tezos_context = { Proto_alpha_utils.Memory_proto_alpha.dummy_environment.tezos_context with
-      predecessor_timestamp = now ; } in
-    Proto_alpha_utils.Memory_proto_alpha.make_options ~tezos_context () in
+    Proto_alpha_utils.Memory_proto_alpha.make_options ~predecessor_timestamp () in
   let exp_failwith = "Contract is still time locked" in
   expect_string_failwith ~options program "main"
     (e_pair (call empty_message)  init_storage) exp_failwith
 
 let call_on_time () =
   let%bind program,_ = get_program () in
-  let%bind now = mk_time "2000-01-01T10:10:10Z" in
+  let%bind predecessor_timestamp = mk_time "2000-01-01T10:10:10Z" in
   let%bind lock_time = mk_time "2000-01-01T00:10:10Z" in
   let init_storage = storage lock_time in
   let options =
-    let tezos_context = { Proto_alpha_utils.Memory_proto_alpha.dummy_environment.tezos_context with
-      predecessor_timestamp = now ; } in
-    Proto_alpha_utils.Memory_proto_alpha.make_options ~tezos_context () in
+    Proto_alpha_utils.Memory_proto_alpha.make_options ~predecessor_timestamp () in
   expect_eq ~options program "main"
     (e_pair (call empty_message) init_storage) (e_pair empty_op_list init_storage)
 

@@ -16,6 +16,7 @@ type run_failwith_res =
 
 type dry_run_options =
   { amount : string ;
+    predecessor_timestamp : string option ;
     sender : string option ;
     source : string option }
 
@@ -44,7 +45,14 @@ let make_dry_run_options (opts : dry_run_options) : options result =
           (simple_error "invalid source address")
           (Contract.of_b58check source) in
       ok (Some source) in
-  ok @@ make_options ~amount ?source:sender ?payer:source ()
+  let%bind predecessor_timestamp =
+    match opts.predecessor_timestamp with
+    | None -> ok None
+    | Some st ->
+      match Memory_proto_alpha.Protocol.Alpha_context.Timestamp.of_notation st with
+        | Some t -> ok (Some t)
+        | None -> simple_fail "bad timestamp notation" in
+  ok @@ make_options ?predecessor_timestamp:predecessor_timestamp ~amount ?source:sender ?payer:source ()
 
 let ex_value_ty_to_michelson (v : ex_typed_value) : Michelson.t result =
   let (Ex_typed_value (value , ty)) = v in
