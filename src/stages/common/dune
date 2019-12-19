@@ -5,8 +5,9 @@
     simple-utils
     tezos-utils
   )
+  (inline_tests)
   (preprocess
-    (pps ppx_let)
+    (pps ppx_let ppx_expect)
   )
   (flags (:standard -open Simple_utils))
 )
