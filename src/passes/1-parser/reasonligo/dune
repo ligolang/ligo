@@ -8,7 +8,7 @@
 (library
  (name parser_reasonligo)
  (public_name ligo.parser.reasonligo)
- (modules reasonligo LexToken Parser)
+ (modules SyntaxError reasonligo LexToken Parser)
  (libraries
    menhirLib
    parser_shared

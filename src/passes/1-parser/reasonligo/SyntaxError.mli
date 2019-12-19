@@ -1,4 +1,4 @@
 type error = 
-  | WrongFunctionArguments
+  | WrongFunctionArguments of AST.expr
 
 exception Error of error

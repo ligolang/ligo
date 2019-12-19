@@ -15,8 +15,8 @@
     Markup
     FQueue
     EvalOpt
-    Version
-    SyntaxError))
+    Version  
+    ))
 
 
 (rule
