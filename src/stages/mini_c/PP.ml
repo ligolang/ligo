@@ -58,8 +58,7 @@ let rec value ppf : value -> unit = function
   | D_unit -> fprintf ppf "unit"
   | D_string s -> fprintf ppf "\"%s\"" s
   | D_bytes x ->
-     let (`Hex hex) = Hex.of_bytes x in
-     fprintf ppf "0x%s" hex
+     fprintf ppf "0x%a" Hex.pp @@ Hex.of_bytes x
   | D_pair (a, b) -> fprintf ppf "(%a), (%a)" value a value b
   | D_left a -> fprintf ppf "L(%a)" value a
   | D_right b -> fprintf ppf "R(%a)" value b
@@ -123,6 +122,10 @@ let tl_statement ppf (ass, _) = assignment ppf ass
 
 let program ppf (p:program) =
   fprintf ppf "Program:\n---\n%a" (pp_print_list ~pp_sep:pp_print_newline tl_statement) p
+
+let%expect_test _ =
+  Format.printf "%a" value (D_bytes (Bytes.of_string "foo")) ;
+  [%expect{| 0x666f6f |}]
 
 let%expect_test _ =
   let pp = expression' Format.std_formatter in
