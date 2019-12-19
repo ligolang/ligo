@@ -278,7 +278,7 @@ let%expect_test _ =
 
     OPTIONS
            --amount=AMOUNT (absent=0)
-               AMOUNT is the amount the dry-run transaction will use.
+               AMOUNT is the amount the michelson interpreter will use.
 
            --format=DISPLAY_FORMAT, --display-format=DISPLAY_FORMAT
            (absent=human-readable)
@@ -293,16 +293,22 @@ let%expect_test _ =
                `pager', `groff' or `plain'. With `auto', the format is `pager` or
                `plain' whenever the TERM env var is `dumb' or undefined.
 
+           --predecessor-timestamp=PREDECESSOR_TIMESTAMP
+               PREDECESSOR_TIMESTAMP is the pedecessor_timestamp the michelson
+               interpreter transaction will use (e.g. '2000-01-01T10:10:10Z')
+
            -s SYNTAX, --syntax=SYNTAX (absent=auto)
                SYNTAX is the syntax that will be used. Currently supported
                syntaxes are "pascaligo" and "cameligo". By default, the syntax is
                guessed from the extension (.ligo and .mligo, respectively).
 
            --sender=SENDER
-               SENDER is the sender the dry-run transaction will use.
+               SENDER is the sender the michelson interpreter transaction will
+               use.
 
            --source=SOURCE
-               SOURCE is the source the dry-run transaction will use.
+               SOURCE is the source the michelson interpreter transaction will
+               use.
 
            --version
                Show version information. |} ] ;
@@ -330,7 +336,7 @@ let%expect_test _ =
 
     OPTIONS
            --amount=AMOUNT (absent=0)
-               AMOUNT is the amount the dry-run transaction will use.
+               AMOUNT is the amount the michelson interpreter will use.
 
            --format=DISPLAY_FORMAT, --display-format=DISPLAY_FORMAT
            (absent=human-readable)
@@ -345,16 +351,22 @@ let%expect_test _ =
                `pager', `groff' or `plain'. With `auto', the format is `pager` or
                `plain' whenever the TERM env var is `dumb' or undefined.
 
+           --predecessor-timestamp=PREDECESSOR_TIMESTAMP
+               PREDECESSOR_TIMESTAMP is the pedecessor_timestamp the michelson
+               interpreter transaction will use (e.g. '2000-01-01T10:10:10Z')
+
            -s SYNTAX, --syntax=SYNTAX (absent=auto)
                SYNTAX is the syntax that will be used. Currently supported
                syntaxes are "pascaligo" and "cameligo". By default, the syntax is
                guessed from the extension (.ligo and .mligo, respectively).
 
            --sender=SENDER
-               SENDER is the sender the dry-run transaction will use.
+               SENDER is the sender the michelson interpreter transaction will
+               use.
 
            --source=SOURCE
-               SOURCE is the source the dry-run transaction will use.
+               SOURCE is the source the michelson interpreter transaction will
+               use.
 
            --version
                Show version information. |} ] ;
@@ -377,7 +389,7 @@ let%expect_test _ =
 
     OPTIONS
            --amount=AMOUNT (absent=0)
-               AMOUNT is the amount the dry-run transaction will use.
+               AMOUNT is the amount the michelson interpreter will use.
 
            --format=DISPLAY_FORMAT, --display-format=DISPLAY_FORMAT
            (absent=human-readable)
@@ -392,16 +404,22 @@ let%expect_test _ =
                `pager', `groff' or `plain'. With `auto', the format is `pager` or
                `plain' whenever the TERM env var is `dumb' or undefined.
 
+           --predecessor-timestamp=PREDECESSOR_TIMESTAMP
+               PREDECESSOR_TIMESTAMP is the pedecessor_timestamp the michelson
+               interpreter transaction will use (e.g. '2000-01-01T10:10:10Z')
+
            -s SYNTAX, --syntax=SYNTAX (absent=auto)
                SYNTAX is the syntax that will be used. Currently supported
                syntaxes are "pascaligo" and "cameligo". By default, the syntax is
                guessed from the extension (.ligo and .mligo, respectively).
 
            --sender=SENDER
-               SENDER is the sender the dry-run transaction will use.
+               SENDER is the sender the michelson interpreter transaction will
+               use.
 
            --source=SOURCE
-               SOURCE is the source the dry-run transaction will use.
+               SOURCE is the source the michelson interpreter transaction will
+               use.
 
            --version
                Show version information. |} ] ;
