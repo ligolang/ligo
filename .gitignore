@@ -1,5 +1,4 @@
 /_build/
-dune-project
 *~
 *.merlin
 cache/*
@@ -8,3 +7,4 @@ Version.ml
 /*.pp.ligo
 **/.DS_Store
 .vscode/
+/ligo.install
