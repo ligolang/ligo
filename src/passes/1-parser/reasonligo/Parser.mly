@@ -424,7 +424,7 @@ fun_expr:
           {p.value with inside = arg_to_pattern p.value.inside}
         in PPar {p with value}
     | EUnit u -> PUnit u
-    | _ -> raise (SyntaxError.Error WrongFunctionArguments)
+    | e -> raise (SyntaxError.Error (WrongFunctionArguments e))
     in
     let fun_args_to_pattern = function
       EAnnot {
@@ -453,7 +453,7 @@ fun_expr:
           in arg_to_pattern (fst fun_args), bindings
       | EUnit e ->
           arg_to_pattern (EUnit e), []
-      | _ -> raise (SyntaxError.Error WrongFunctionArguments)
+      | e -> raise (SyntaxError.Error (WrongFunctionArguments e))
     in
     let binders = fun_args_to_pattern $1 in
     let f = {kwd_fun;
