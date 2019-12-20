@@ -61,7 +61,7 @@ module Errors = struct
 
   let match_redundant_case : type a . (a, unit) I.matching -> Location.t -> unit -> _ =
     fun matching loc () ->
-    let title = (thunk "missing case in match") in
+    let title = (thunk "redundant case in match") in
     let message () = "" in
     let data = [
       ("variant" , fun () -> Format.asprintf "%a" I.PP.matching_type matching) ;
