@@ -116,6 +116,7 @@ let constant ppf : constant -> unit = function
   | C_ADDRESS               -> fprintf ppf "ADDRESS"
   | C_SELF_ADDRESS          -> fprintf ppf "SELF_ADDRESS"
   | C_IMPLICIT_ACCOUNT      -> fprintf ppf "IMPLICIT_ACCOUNT"
+  | C_SET_DELEGATE          -> fprintf ppf "SET_DELEGATE"
   | C_STEPS_TO_QUOTA        -> fprintf ppf "STEPS_TO_QUOTA"
 
 let cmap_sep value sep ppf m =

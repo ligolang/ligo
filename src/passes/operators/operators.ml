@@ -131,6 +131,7 @@ module Simplify = struct
       | "address"         -> ok C_ADDRESS
       | "self_address"    -> ok C_SELF_ADDRESS
       | "implicit_account"-> ok C_IMPLICIT_ACCOUNT
+      | "set_delegate"    -> ok C_SET_DELEGATE
       | _                 -> simple_fail "Not a PascaLIGO constant"
 
     let type_constants = type_constants
@@ -224,6 +225,7 @@ module Simplify = struct
       | "stop"                     -> ok C_STOP
 
       | "Operation.transaction"    -> ok C_CALL
+      | "Operation.set_delegate"   -> ok C_SET_DELEGATE
       | "Operation.get_contract"   -> ok C_CONTRACT
       | "Operation.get_entrypoint" -> ok C_CONTRACT_ENTRYPOINT
       | "int"                      -> ok C_INT
@@ -851,6 +853,7 @@ module Typer = struct
     | C_ADDRESS             -> ok @@ address ;
     | C_SELF_ADDRESS        -> ok @@ self_address;
     | C_IMPLICIT_ACCOUNT    -> ok @@ implicit_account;
+    | C_SET_DELEGATE        -> ok @@ set_delegate ;
     | _                     -> simple_fail @@ Format.asprintf "Typer not implemented for consant %a" Stage_common.PP.constant c
 
 
@@ -923,6 +926,7 @@ module Compiler = struct
     | C_ADDRESS         -> ok @@ simple_unary @@ prim I_ADDRESS
     | C_SELF_ADDRESS    -> ok @@ simple_constant @@ seq [prim I_SELF; prim I_ADDRESS]
     | C_IMPLICIT_ACCOUNT -> ok @@ simple_unary @@ prim I_IMPLICIT_ACCOUNT
+    | C_SET_DELEGATE    -> ok @@ simple_unary @@ prim I_SET_DELEGATE
     | C_NOW             -> ok @@ simple_constant @@ prim I_NOW
     | C_CALL            -> ok @@ simple_ternary @@ prim I_TRANSFER_TOKENS
     | C_SOURCE          -> ok @@ simple_constant @@ prim I_SOURCE
