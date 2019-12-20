@@ -140,31 +140,41 @@ module type TOKEN =
 
 (* The module type for lexers is [S]. *)
 
-module type S = sig
-  module Token : TOKEN
-  type token = Token.token
+module type S =
+  sig
+    module Token : TOKEN
+    type token = Token.token
 
-  type file_path = string
-  type logger = Markup.t list -> token -> unit
+    type file_path = string
+    type logger = Markup.t list -> token -> unit
 
-  type instance = {
-    read     : ?log:logger -> Lexing.lexbuf -> token;
-    buffer   : Lexing.lexbuf;
-    get_pos  : unit -> Pos.t;
-    get_last : unit -> Region.t;
-    close    : unit -> unit
-  }
+    type window =
+      Nil
+    | One of token
+    | Two of token * token
 
-  val open_token_stream : file_path option -> instance
+    val slide : token -> window -> window
 
-  (* Error reporting *)
+    type instance = {
+      read     : ?log:logger -> Lexing.lexbuf -> token;
+      buffer   : Lexing.lexbuf;
+      get_win  : unit -> window;
+      get_pos  : unit -> Pos.t;
+      get_last : unit -> Region.t;
+      close    : unit -> unit
+      }
 
-  type error
-  exception Error of error Region.reg
+    val open_token_stream : file_path option -> instance
 
-  val print_error : ?offsets:bool -> [`Byte | `Point] ->
-    error Region.reg -> file:bool -> unit
-end
+    (* Error reporting *)
+
+    type error
+
+    exception Error of error Region.reg
+
+    val format_error : ?offsets:bool -> [`Byte | `Point] ->
+                       error Region.reg -> file:bool -> string
+  end
 
 (* The functorised interface
 
@@ -209,7 +219,27 @@ module Make (Token: TOKEN) : (S with module Token = Token) =
 
     (* STATE *)
 
-    (* Beyond tokens, the result of lexing is a state. The type
+    (** The type [buffer] models a two-slot buffer of tokens for
+       reporting after a parse error.
+
+       In [Two(t1,t2)], the token [t2] is the next to be sent to the
+       parser.
+
+       The call [slide token buffer] pushes the token [token] in the
+       buffer [buffer]. If the buffer is full, that is, it is
+       [Two(t1,t2)], then the token [t2] is discarded to make room for
+       [token].
+     *)
+    type window =
+      Nil
+    | One of token
+    | Two of token * token
+
+    let slide token = function
+                    Nil -> One token
+    | One t | Two (t,_) -> Two (token,t)
+
+    (** Beyond tokens, the result of lexing is a state. The type
        [state] represents the logical state of the lexing engine, that
        is, a value which is threaded during scanning and which denotes
        useful, high-level information beyond what the type
@@ -235,6 +265,10 @@ module Make (Token: TOKEN) : (S with module Token = Token) =
        updated after a single character has been matched: that depends
        on the regular expression that matched the lexing buffer.
 
+         The field [win] is a two-token window, that is, a buffer that
+       contains the last recognised token, and the penultimate (if
+       any).
+
          The fields [decoder] and [supply] offer the support needed
        for the lexing of UTF-8 encoded characters in comments (the
        only place where they are allowed in LIGO). The former is the
@@ -243,10 +277,10 @@ module Make (Token: TOKEN) : (S with module Token = Token) =
        it to [decoder]. See the documentation of the third-party
        library Uutf.
      *)
-
     type state = {
       units   : (Markup.t list * token) FQueue.t;
       markup  : Markup.t list;
+      window  : window;
       last    : Region.t;
       pos     : Pos.t;
       decoder : Uutf.decoder;
@@ -398,10 +432,10 @@ module Make (Token: TOKEN) : (S with module Token = Token) =
 
     exception Error of error Region.reg
 
-    let print_error ?(offsets=true) mode Region.{region; value} ~file =
+    let format_error ?(offsets=true) mode Region.{region; value} ~file =
       let  msg = error_to_string value in
       let  reg = region#to_string ~file ~offsets mode in
-      Utils.highlight (sprintf "Lexical error %s:\n%s%!" reg msg)
+      sprintf "\027[31mLexical error %s:\n%s\027[0m%!" reg msg
 
     let fail region value = raise (Error Region.{region; value})
 
@@ -801,6 +835,7 @@ type logger = Markup.t list -> token -> unit
 type instance = {
   read     : ?log:logger -> Lexing.lexbuf -> token;
   buffer   : Lexing.lexbuf;
+  get_win  : unit -> window;
   get_pos  : unit -> Pos.t;
   get_last : unit -> Region.t;
   close    : unit -> unit
@@ -817,13 +852,15 @@ let open_token_stream file_path_opt =
   let     supply = Uutf.Manual.src decoder in
   let      state = ref {units = FQueue.empty;
                         last = Region.ghost;
+                        window = Nil;
                         pos;
                         markup = [];
                         decoder;
                         supply} in
 
   let get_pos  () = !state.pos
-  and get_last () = !state.last in
+  and get_last () = !state.last
+  and get_win  () = !state.window in
 
   let patch_buffer (start, stop) buffer =
     let open Lexing in
@@ -880,7 +917,9 @@ let open_token_stream file_path_opt =
         read_token ~log buffer
     | Some (units, (left_mark, token)) ->
         log left_mark token;
-        state := {!state with units; last = Token.to_region token};
+        state := {!state with units;
+                              last = Token.to_region token;
+                              window = slide token !state.window};
         check_right_context token buffer;
         patch_buffer (Token.to_region token)#byte_pos buffer;
         token in
@@ -893,7 +932,7 @@ let open_token_stream file_path_opt =
                    None | Some "-" -> ()
                  | Some file_path  -> reset ~file:file_path buffer
   and close () = close_in cin in
-  {read = read_token; buffer; get_pos; get_last; close}
+  {read = read_token; buffer; get_win; get_pos; get_last; close}
 
 end (* of functor [Make] in HEADER *)
 (* END TRAILER *)

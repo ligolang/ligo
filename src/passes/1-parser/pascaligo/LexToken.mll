@@ -224,7 +224,7 @@ let proj_token = function
 let to_lexeme = function
   (* Literals *)
 
-  String s  -> s.Region.value
+  String s  -> String.escaped s.Region.value
 | Bytes b   -> fst b.Region.value
 | Int i
 | Nat i

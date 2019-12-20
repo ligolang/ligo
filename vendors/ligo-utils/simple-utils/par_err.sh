@@ -1,8 +1,7 @@
 #!/bin/sh
 
-# This script extracts the error states of an LR automaton produced by
-# Menhir and generates minimal inputs that cover all of them and only
-# them.
+# This script calls Menhir with a message file, which generates the
+# corresponding OCaml file.
 
 # set -x
 
@@ -34,6 +33,10 @@ emphasise () {
   printf "\033[31m$1\033[0m\n"
 }
 
+display () {
+  printf "\033[31m"; cat $1; printf "\033[0m"
+}
+
 # ====================================================================
 # Parsing loop
 #
@@ -58,32 +61,12 @@ while : ; do
       no_eq=$1
       break
       ;;
-    --ext=*)
-      if test -n "$ext_opt"; then
-        fatal_error "Repeated option --ext."; fi
-      ext=$(expr "$1" : "[^=]*=\(.*\)")
+    --out=*)
+      if test -n "$out"; then
+        fatal_error "Repeated option --out."; fi
+      out=$(expr "$1" : "[^=]*=\(.*\)")
       ;;
-    --ext)
-      no_eq=$1
-      break
-      ;;
-    --dir=*)
-      if test -n "$dir_opt"; then
-        fatal_error "Repeated option --dir."; fi
-      dir=$(expr "$1" : "[^=]*=\(.*\)")
-      ;;
-    --dir)
-      no_eq=$1
-      break
-      ;;
-      # Help
-      #
-    --unlexer=*)
-      if test -n "$unlexer"; then
-        fatal_error "Repeated option --unlexer."; fi
-      unlexer=$(expr "$1" : "[^=]*=\(.*\)")
-      ;;
-    --unlexer)
+    --out)
       no_eq=$1
       break
       ;;
@@ -112,20 +95,12 @@ usage () {
   cat <<EOF
 Usage: $(basename $0) [-h|--help]
                 --par-tokens=<par_tolens>.mly
-                --lex-tokens=<par_tokens>.mli
-                --unlexer=<binary>
-                --ext=<extension>
-                --dir=<path>
+                --lex-tokens=<lex_tokens>.mli
+                --out=<par_err>.ml
                 <parser>.mly
 
-Generates in directory <path> a set of LIGO source files with
-extension <extension> covering all erroneous states of the LR
-automaton produced by Menhir from <parser>.mly, <par_tokens>.mly,
-<lex_tokens>.mli and <parser>.msg (see script `messages.sh` for
-generating the latter). The LIGO files will be numbered with their
-corresponding state number in the automaton. The executable <binary>
-reads a line on stdin of tokens and produces a line of corresponding
-lexemes.
+Generates <par_err>.ml from <parser>.msg and the parser specification
+(see messages.sh) in the current directory.
 
 The following options, if given, must be given only once.
 
@@ -135,12 +110,7 @@ Display control:
 Mandatory options:
       --lex-tokens=<name>.mli the lexical tokens
       --par-tokens=<name>.mly the syntactical tokens
-      --ext=EXT               Unix file extension for the
-                              generated LIGO files
-                              (no starting period)
-      --dir=PATH              directory to store the generated
-                              LIGO files (no trailing slash)
-      --unlexer=<binary>      from tokens to lexemes (one line on stdin)
+      --out=<par_err>.ml
 EOF
   exit 1
 }
@@ -159,9 +129,6 @@ then
 fi
 
 # Checking options
-
-if test -z "$unlexer"; then
-  fatal_error "Unlexer binary not found (use --unlexer)."; fi
 
 if test -z "$parser"; then
   fatal_error "No parser specification."; fi
@@ -200,29 +167,16 @@ parser_base=$(basename $mly .mly)
 par_tokens_base=$(basename $par_tokens .mly)
 lex_tokens_base=$(basename $lex_tokens .mli)
 
-# Checking the output directory
-
-if test -z "$dir"; then
-  fatal_error "No output directory (use --dir)."; fi
-
-if test ! -d "$dir"; then
-  fatal_error "Output directory \"$dir\" not found."; fi
-
-# Checking the LIGO extension
-
-if test -z "$ext"; then
-  fatal_error "No LIGO extension (use --ext)."; fi
-
-ext_start=$(expr "$ext" : "^\..*")
-if test "$ext_start" != "0"
-then fatal_error "LIGO extensions must not start with a period."
-fi
-
 # Checking the presence of the messages
 
 msg=$parser_base.msg
 if test ! -e $msg; then
   fatal_error "File $msg not found."; fi
+
+# Checking the output file
+
+if test -z "$out"; then
+  fatal_error "Output file missing (use --out)."; fi
 
 # ====================================================================
 # Menhir's flags
@@ -230,29 +184,16 @@ if test ! -e $msg; then
 flags="--table --strict --external-tokens $lex_tokens_base \
        --base $parser_base $par_tokens"
 
-# ====================================================================
-# Producing erroneous sentences from Menhir's error messages
+# ===================================================================
+# Generating source code from error messages
 
-msg=$parser_base.msg
-raw=$parser_base.msg.raw
-printf "Making $raw from $msg... "
-menhir --echo-errors $parser_base.msg $flags $mly > $raw 2>/dev/null
-sed -i -e 's/^.*: \(.*\)$/\1/g' $raw
-printf "done.\n"
+err=.$msg.err
 
-# ====================================================================
-# Converting Menhir's minimal erroneous sentences to concrete syntax
-
-printf "Unlexing the erroneous sentences... "
-states=$msg.states
-map=$msg.map
-sed -n "s/.* state\: \([0-9]\+\)./\1/p" $msg > $states
-paste -d ':' $states $raw > $map
-rm -f $dir/*.$ext
-while read -r line; do
-  state=$(echo $line | sed -n 's/\(.*\):.*/\1/p')
-  filename=$(printf "$dir/%04d.$ext" $state)
-  sentence=$(echo $line | sed -n 's/.*:\(.*\)/\1/p')
-  echo $sentence | $unlexer >> $filename
-done < $map
-printf "done.\n"
+printf "Making $out from $msg... "
+menhir --compile-errors $msg $flags $mly > $out 2> $err
+if test "$?" = "0"
+then printf "done.\n"
+     rm -f $err
+else failed ":"
+     display "$err"
+fi

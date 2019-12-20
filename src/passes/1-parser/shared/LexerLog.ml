@@ -65,9 +65,11 @@ module Make (Lexer: Lexer.S) : (S with module Lexer = Lexer) =
               let file =
                 match file_path_opt with
                   None | Some "-" -> false
-                |         Some _  -> true in
-              Lexer.print_error ~offsets mode e ~file;
-              close_all ()
+                  |         Some _  -> true in
+              let msg =
+                Lexer.format_error ~offsets mode e ~file
+              in prerr_string msg;
+                 close_all ()
         in iter ()
       with Sys_error msg -> Utils.highlight (sprintf "%s\n" msg)
 

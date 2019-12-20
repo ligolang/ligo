@@ -124,9 +124,17 @@ module type S =
     type file_path = string
     type logger = Markup.t list -> token -> unit
 
+    type window =
+      Nil
+    | One of token
+    | Two of token * token
+
+    val slide : token -> window -> window
+
     type instance = {
       read     : ?log:logger -> Lexing.lexbuf -> token;
       buffer   : Lexing.lexbuf;
+      get_win  : unit -> window;
       get_pos  : unit -> Pos.t;
       get_last : unit -> Region.t;
       close    : unit -> unit
@@ -140,9 +148,9 @@ module type S =
 
     exception Error of error Region.reg
 
-    val print_error :
+    val format_error :
       ?offsets:bool -> [`Byte | `Point] ->
-      error Region.reg -> file:bool -> unit
+      error Region.reg -> file:bool -> string
 
   end
 
