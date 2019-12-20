@@ -1,4 +1,4 @@
-open! Trace
+open Trace
 open Ast_simplified
 
 module Raw = Parser.Pascaligo.AST

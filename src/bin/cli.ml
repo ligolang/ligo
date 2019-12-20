@@ -66,7 +66,7 @@ let amount =
   let open Arg in
   let info =
     let docv = "AMOUNT" in
-    let doc = "$(docv) is the amount the dry-run transaction will use." in
+    let doc = "$(docv) is the amount the michelson interpreter will use." in
     info ~docv ~doc ["amount"] in
   value @@ opt string "0" info
 
@@ -74,7 +74,7 @@ let sender =
   let open Arg in
   let info =
     let docv = "SENDER" in
-    let doc = "$(docv) is the sender the dry-run transaction will use." in
+    let doc = "$(docv) is the sender the michelson interpreter transaction will use." in
     info ~docv ~doc ["sender"] in
   value @@ opt (some string) None info
 
@@ -82,8 +82,16 @@ let source =
   let open Arg in
   let info =
     let docv = "SOURCE" in
-    let doc = "$(docv) is the source the dry-run transaction will use." in
+    let doc = "$(docv) is the source the michelson interpreter transaction will use." in
     info ~docv ~doc ["source"] in
+  value @@ opt (some string) None info
+
+let predecessor_timestamp =
+  let open Arg in
+  let info =
+    let docv = "PREDECESSOR_TIMESTAMP" in
+    let doc = "$(docv) is the pedecessor_timestamp the michelson interpreter transaction will use (e.g. '2000-01-01T10:10:10Z')" in
+    info ~docv ~doc ["predecessor-timestamp"] in
   value @@ opt (some string) None info
 
 let display_format =
@@ -176,7 +184,7 @@ let compile_parameter =
   (Term.ret term , Term.info ~doc cmdname)
 
 let interpret =
-  let f expression init_file syntax amount sender source display_format =
+  let f expression init_file syntax amount sender source predecessor_timestamp display_format =
     toplevel ~display_format @@
     let%bind (decl_list,state,env) = match init_file with
       | Some init_file ->
@@ -192,13 +200,13 @@ let interpret =
     let%bind (typed_exp,_)     = Compile.Of_simplified.compile_expression ~env ~state simplified_exp in
     let%bind mini_c_exp        = Compile.Of_typed.compile_expression typed_exp in
     let%bind compiled_exp      = Compile.Of_mini_c.aggregate_and_compile_expression decl_list mini_c_exp in
-    let%bind options           = Run.make_dry_run_options {amount ; sender ; source } in
+    let%bind options           = Run.make_dry_run_options {predecessor_timestamp ; amount ; sender ; source } in
     let%bind value             = Run.run ~options compiled_exp.expr compiled_exp.expr_ty in
     let%bind simplified_output = Uncompile.uncompile_expression typed_exp.type_annotation value in
     ok @@ Format.asprintf "%a\n" Ast_simplified.PP.expression simplified_output
   in
   let term =
-    Term.(const f $ expression "EXPRESSION" 0 $ init_file $ syntax $ amount $ sender $ source $ display_format ) in
+    Term.(const f $ expression "EXPRESSION" 0 $ init_file $ syntax $ amount $ sender $ source $ predecessor_timestamp $ display_format ) in
   let cmdname = "interpret" in
   let doc = "Subcommand: interpret the expression in the context initialized by the provided source file." in
   (Term.ret term , Term.info ~doc cmdname)
@@ -233,7 +241,7 @@ let compile_storage =
   (Term.ret term , Term.info ~doc cmdname)
 
 let dry_run =
-  let f source_file entry_point storage input amount sender source syntax display_format =
+  let f source_file entry_point storage input amount sender source predecessor_timestamp syntax display_format =
     toplevel ~display_format @@
     let%bind simplified      = Compile.Of_source.compile source_file (Syntax_name syntax) in
     let%bind typed_prg,state = Compile.Of_simplified.compile simplified in
@@ -251,20 +259,20 @@ let dry_run =
     let%bind compiled_params   = Compile.Of_mini_c.compile_expression mini_c in
     let%bind args_michelson    = Run.evaluate_expression compiled_params.expr compiled_params.expr_ty in
 
-    let%bind options           = Run.make_dry_run_options {amount ; sender ; source } in
+    let%bind options           = Run.make_dry_run_options {predecessor_timestamp ; amount ; sender ; source } in
     let%bind michelson_output  = Run.run_contract ~options michelson_prg.expr michelson_prg.expr_ty args_michelson in
 
     let%bind simplified_output = Uncompile.uncompile_typed_program_entry_function_result typed_prg entry_point michelson_output in
     ok @@ Format.asprintf "%a\n" Ast_simplified.PP.expression simplified_output
   in
   let term =
-    Term.(const f $ source_file 0 $ entry_point 1 $ expression "PARAMETER" 2 $ expression "STORAGE" 3 $ amount $ sender $ source $ syntax $ display_format) in
+    Term.(const f $ source_file 0 $ entry_point 1 $ expression "PARAMETER" 2 $ expression "STORAGE" 3 $ amount $ sender $ source $ predecessor_timestamp $ syntax $ display_format) in
   let cmdname = "dry-run" in
   let doc = "Subcommand: run a smart-contract with the given storage and input." in
   (Term.ret term , Term.info ~doc cmdname)
 
 let run_function =
-  let f source_file entry_point parameter amount sender source syntax display_format =
+  let f source_file entry_point parameter amount sender source predecessor_timestamp syntax display_format =
     toplevel ~display_format @@
     let%bind v_syntax        = Helpers.syntax_to_variant (Syntax_name syntax) (Some source_file) in
     let%bind simplified_prg  = Compile.Of_source.compile source_file (Syntax_name syntax) in
@@ -278,32 +286,32 @@ let run_function =
     let%bind compiled_applied = Compile.Of_typed.compile_expression typed_app in
 
     let%bind michelson         = Compile.Of_mini_c.aggregate_and_compile_expression mini_c_prg compiled_applied in
-    let%bind options           = Run.make_dry_run_options {amount ; sender ; source } in
+    let%bind options           = Run.make_dry_run_options {predecessor_timestamp ; amount ; sender ; source } in
     let%bind michelson_output  = Run.run ~options michelson.expr michelson.expr_ty in
     let%bind simplified_output = Uncompile.uncompile_typed_program_entry_function_result typed_prg entry_point michelson_output in
     ok @@ Format.asprintf "%a\n" Ast_simplified.PP.expression simplified_output
   in
   let term =
-    Term.(const f $ source_file 0 $ entry_point 1 $ expression "PARAMETER" 2 $ amount $ sender $ source $ syntax $ display_format) in
+    Term.(const f $ source_file 0 $ entry_point 1 $ expression "PARAMETER" 2 $ amount $ sender $ source $ predecessor_timestamp $ syntax $ display_format) in
   let cmdname = "run-function" in
   let doc = "Subcommand: run a function with the given parameter." in
   (Term.ret term , Term.info ~doc cmdname)
 
 let evaluate_value =
-  let f source_file entry_point amount sender source syntax display_format =
+  let f source_file entry_point amount sender source predecessor_timestamp syntax display_format =
     toplevel ~display_format @@
     let%bind simplified        = Compile.Of_source.compile source_file (Syntax_name syntax) in
     let%bind typed_prg,_       = Compile.Of_simplified.compile simplified in
     let%bind mini_c            = Compile.Of_typed.compile typed_prg in
     let%bind (exp,_)           = Mini_c.get_entry mini_c entry_point in
     let%bind compiled          = Compile.Of_mini_c.aggregate_and_compile_expression mini_c exp in
-    let%bind options           = Run.make_dry_run_options {amount ; sender ; source } in
+    let%bind options           = Run.make_dry_run_options {predecessor_timestamp ; amount ; sender ; source } in
     let%bind michelson_output  = Run.run ~options compiled.expr compiled.expr_ty in
     let%bind simplified_output = Uncompile.uncompile_typed_program_entry_expression_result typed_prg entry_point michelson_output in
     ok @@ Format.asprintf "%a\n" Ast_simplified.PP.expression simplified_output
   in
   let term =
-    Term.(const f $ source_file 0 $ entry_point 1 $ amount $ sender $ source $ syntax $ display_format) in
+    Term.(const f $ source_file 0 $ entry_point 1 $ amount $ sender $ source $ predecessor_timestamp $ syntax $ display_format) in
   let cmdname = "evaluate-value" in
   let doc = "Subcommand: evaluate a given definition." in
   (Term.ret term , Term.info ~doc cmdname)

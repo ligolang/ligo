@@ -15,7 +15,8 @@
 (alias
   (name ligo-test)
   (action (run ./test.exe))
-  (deps (glob_files contracts/*))
+  (deps (glob_files contracts/*)
+        (glob_files contracts/negative/*))
 )
 
 (alias

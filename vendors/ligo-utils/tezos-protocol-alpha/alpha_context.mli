@@ -30,7 +30,7 @@ module type BASIC_DATA = sig
   val pp: Format.formatter -> t -> unit
 end
 
-type t
+type t = Raw_context.t
 type context = t
 
 type public_key = Signature.Public_key.t
