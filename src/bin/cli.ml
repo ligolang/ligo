@@ -410,6 +410,19 @@ let dump_changelog =
   let doc = "Dump the LIGO changelog to stdout." in
   (Term.ret term , Term.info ~doc cmdname)
 
+let list_declarations =
+  let f source_file syntax =
+    toplevel ~display_format:(`Human_readable) @@
+    let%bind simplified_prg  = Compile.Of_source.compile source_file (Syntax_name syntax) in
+    let json_decl = List.map (fun decl -> `String decl) @@ Compile.Of_simplified.list_declarations simplified_prg in
+    ok @@ J.to_string @@ `Assoc [ ("source_file", `String source_file) ; ("declarations", `List json_decl) ]
+  in
+  let term =
+    Term.(const f $ source_file 0 $ syntax ) in
+  let cmdname = "list-declarations" in
+  let doc = "Subcommand: list all the top-level decalarations." in
+  (Term.ret term , Term.info ~doc cmdname)
+
 let run ?argv () =
   Term.eval_choice ?argv main [
     compile_file ;
@@ -425,5 +438,6 @@ let run ?argv () =
     print_cst ;
     print_ast ;
     print_typed_ast ;
-    print_mini_c
+    print_mini_c ;
+    list_declarations ;
   ]
