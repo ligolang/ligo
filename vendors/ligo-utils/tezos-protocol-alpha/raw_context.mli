@@ -45,7 +45,34 @@ val storage_error: storage_error -> 'a tzresult Lwt.t
 (** Abstract view of the context.
     Includes a handle to the functional key-value database
     ({!Context.t}) along with some in-memory values (gas, etc.). *)
-type t
+module Int_set : sig
+  type t
+end
+type t = {
+  context: Context.t ;
+  constants: Constants_repr.parametric ;
+  first_level: Raw_level_repr.t ;
+  level: Level_repr.t ;
+  predecessor_timestamp: Time.t ;
+  timestamp: Time.t ;
+  fitness: Int64.t ;
+  deposits: Tez_repr.t Signature.Public_key_hash.Map.t ;
+  included_endorsements: int ;
+  allowed_endorsements:
+    (Signature.Public_key.t * int list * bool) Signature.Public_key_hash.Map.t ;
+  fees: Tez_repr.t ;
+  rewards: Tez_repr.t ;
+  block_gas: Z.t ;
+  operation_gas: Gas_limit_repr.t ;
+  internal_gas: Gas_limit_repr.internal_gas ;
+  storage_space_to_pay: Z.t option ;
+  allocated_contracts: int option ;
+  origination_nonce: Contract_repr.origination_nonce option ;
+  temporary_big_map: Z.t ;
+  internal_nonce: int ;
+  internal_nonces_used: Int_set.t ;
+}
+
 type context = t
 type root_context = t
 

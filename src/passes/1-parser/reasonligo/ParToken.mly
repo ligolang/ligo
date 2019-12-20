@@ -5,12 +5,13 @@
 
   (* Literals *)
 
-%token         <string Region.reg> Ident  "<ident>"
-%token         <string Region.reg> Constr "<constr>"
-%token         <string Region.reg> String "<string>"
-%token <(string * Z.t) Region.reg> Int    "<int>"
-%token <(string * Z.t) Region.reg> Nat    "<nat>"
-%token <(string * Z.t) Region.reg> Mutez  "<mutez>"
+%token                    <string Region.reg> String "<string>"
+%token <(LexToken.lexeme * Hex.t) Region.reg> Bytes  "<bytes>"
+%token            <(string * Z.t) Region.reg> Int    "<int>"
+%token            <(string * Z.t) Region.reg> Nat    "<nat>"
+%token            <(string * Z.t) Region.reg> Mutez  "<mutez>"
+%token                    <string Region.reg> Ident  "<ident>"
+%token                    <string Region.reg> Constr "<constr>"
 
   (* Symbols *)
 

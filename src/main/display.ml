@@ -1,4 +1,4 @@
-open! Trace
+open Trace
 
 let rec error_pp ?(dev = false) out (e : error) =
   let open JSON_string_utils in

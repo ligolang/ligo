@@ -12,13 +12,20 @@ type environment = Environment.t
 
 module Errors = struct
   let unbound_type_variable (e:environment) (tv:I.type_variable) () =
+    let name = Var.to_name tv in
+    let suggestion = match name with
+        | "integer" -> "int"
+        | "str" -> "string"
+        | "boolean" -> "bool"
+        | _ -> "no suggestion" in
     let title = (thunk "unbound type variable") in
     let message () = "" in
     let data = [
       ("variable" , fun () -> Format.asprintf "%a" Stage_common.PP.type_variable tv) ;
       (* TODO: types don't have srclocs for now. *)
       (* ("location" , fun () -> Format.asprintf "%a" Location.pp (n.location)) ; *)
-      ("in" , fun () -> Format.asprintf "%a" Environment.PP.full_environment e)
+      ("in" , fun () -> Format.asprintf "%a" Environment.PP.full_environment e) ;
+      ("did_you_mean" , fun () -> suggestion)
     ] in
     error ~data title message ()
 
@@ -54,7 +61,7 @@ module Errors = struct
 
   let match_redundant_case : type a . (a, unit) I.matching -> Location.t -> unit -> _ =
     fun matching loc () ->
-    let title = (thunk "missing case in match") in
+    let title = (thunk "redundant case in match") in
     let message () = "" in
     let data = [
       ("variant" , fun () -> Format.asprintf "%a" I.PP.matching_type matching) ;
@@ -464,8 +471,6 @@ and type_expression' : environment -> ?tv_opt:O.type_value -> I.expression -> O.
         | None -> ok ()
         | Some tv' -> O.assert_type_value_eq (tv' , ae.type_annotation) in
       ok(ae)
-
-
   (* Sum *)
   | E_constructor (c, expr) ->
       let%bind (c_tv, sum_tv) =
@@ -793,7 +798,12 @@ and type_expression' : environment -> ?tv_opt:O.type_value -> I.expression -> O.
         (Some tv)
         (Some expr'.type_annotation)
         (internal_assertion_failure "merge_annotations (Some ...) (Some ...) failed") in
-    ok {expr' with type_annotation}
+    (* check type annotation of the expression as a whole (e.g. let x : t = (v : t') ) *)
+    let%bind () =
+      match tv_opt with
+      | None -> ok ()
+      | Some tv' -> O.assert_type_value_eq (tv' , type_annotation) in
+    ok @@ {expr' with type_annotation}
 
 
 and type_constant (name:I.constant) (lst:O.type_value list) (tv_opt:O.type_value option) : (O.constant * O.type_value) result =

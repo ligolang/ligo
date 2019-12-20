@@ -29,8 +29,8 @@ open Errors
 (* This does not makes sense to me *)
 let get_operator : constant -> type_value -> expression list -> predicate result = fun s ty lst ->
   match Operators.Compiler.get_operators s with
-  | Trace.Ok (x,_) -> ok x
-  | Trace.Error _ -> (
+  | Ok (x,_) -> ok x
+  | Error _ -> (
       match s with
       | C_NONE -> (
           let%bind ty' = Mini_c.get_t_option ty in

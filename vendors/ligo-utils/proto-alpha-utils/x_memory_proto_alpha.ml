@@ -1066,13 +1066,16 @@ type options = {
 
 let make_options
     ?(tezos_context = dummy_environment.tezos_context)
+    ?(predecessor_timestamp = dummy_environment.tezos_context.predecessor_timestamp)
     ?(source = (List.nth dummy_environment.identities 0).implicit_contract)
     ?(self = (List.nth dummy_environment.identities 0).implicit_contract)
     ?(payer = (List.nth dummy_environment.identities 1).implicit_contract)
     ?(amount = Alpha_context.Tez.one)
     ?(chain_id = Environment.Chain_id.zero)
     ()
-  = {
+  =
+  let tezos_context = { tezos_context with predecessor_timestamp } in
+  {
     tezos_context ;
     source ;
     self ;
@@ -1104,6 +1107,10 @@ let typecheck_contract contract =
   let contract' = Tezos_micheline.Micheline.strip_locations contract in
   Script_ir_translator.typecheck_code dummy_environment.tezos_context contract' >>=??
   fun _ -> return ()
+
+let assert_equal_michelson_type ty1 ty2 =
+  (* alpha_wrap (Script_ir_translator.ty_eq tezos_context a b) >>? fun (Eq, _) -> *)
+  alpha_wrap (Script_ir_translator.ty_eq dummy_environment.tezos_context ty1 ty2)
 
 type 'a interpret_res =
   | Succeed of 'a stack

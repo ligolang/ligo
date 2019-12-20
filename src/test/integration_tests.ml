@@ -1789,6 +1789,12 @@ let set_delegate_religo () : unit result =
   let%bind () = expect_eq program "main" (e_key_hash pkh_str) (e_typed_list [] t_operation)
   in ok ()
 
+let type_tuple_destruct () : unit result =
+  let%bind program = mtype_file "./contracts/type_tuple_destruct.mligo" in
+  let%bind () = expect_eq program "type_tuple_d" (e_unit ()) (e_int 35) in
+  let%bind () = expect_eq program "type_tuple_d_2" (e_unit ()) (e_string "helloworld") in
+  ok ()
+
 let main = test_suite "Integration (End to End)" [
     test "key hash" key_hash ;
     test "chain id" chain_id ;
@@ -1926,4 +1932,5 @@ let main = test_suite "Integration (End to End)" [
     test "simple_access (ligo)" simple_access_ligo;
     test "deep_access (ligo)" deep_access_ligo;
     test "entrypoints (ligo)" entrypoints_ligo ;
+    test "type tuple destruct (mligo)" type_tuple_destruct ;
   ]

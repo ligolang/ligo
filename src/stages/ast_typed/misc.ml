@@ -56,7 +56,7 @@ module Errors = struct
 
   let different_types name a b () =
     let title () = name ^ " are different" in
-    let message () = "" in
+    let message () = "Expected these two types to be the same, but they're different" in
     let data = [
       ("a" , fun () -> Format.asprintf "%a" PP.type_value a) ;
       ("b" , fun () -> Format.asprintf "%a" PP.type_value b )
@@ -321,7 +321,7 @@ let rec assert_type_value_eq (a, b: (type_value * type_value)) : unit result = m
       | TC_big_map (ka,va), TC_big_map (kb,vb) -> ok @@ ([ka;va] ,[kb;vb]) 
       | _,_ -> fail @@ different_operators opa opb
       in
-    trace (different_types "constant sub-expression" a b)
+    trace (different_types "arguments to type operators" a b)
       @@ bind_list_iter (fun (a,b) -> assert_type_value_eq (a,b) )(List.combine lsta lstb)
   )
   | T_operator _, _ -> fail @@ different_kinds a b

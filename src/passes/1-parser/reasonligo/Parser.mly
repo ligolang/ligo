@@ -388,30 +388,14 @@ type_expr_simple_args:
   par(nsepseq(type_expr_simple, ",")) { $1 }
 
 type_expr_simple:
-  core_expr_2 type_expr_simple_args? {
+  type_name type_expr_simple_args? {
     let args = $2 in
-    let constr =
-      match $1 with
-        EVar i -> i
-      | EProj {value={struct_name; field_path; _}; region} ->
-          let app a = function
-            FieldName v -> a ^ "." ^ v.value
-          | Component {value = c, _; _} -> a ^ "." ^ c in
-          let value =
-            Utils.nsepseq_foldl app struct_name.value field_path
-          in {region; value}
-      | EArith Mutez r | EArith Int r | EArith Nat r ->
-          {r with value = fst r.value}
-      | EString String s -> s
-      | ELogic BoolExpr (True t)  -> {region=t; value="true"}
-      | ELogic BoolExpr (False f) -> {region=f; value="false"}
-      | _ -> failwith "Not supported"  (* TODO: raise a proper exception *)
-    in match args with
-         Some {value; _} ->
-           let region = cover (expr_to_region $1) value.rpar in
-           let value  = constr, {region; value}
-           in TApp {region; value}
-       | None -> TVar constr
+    match args with
+      Some {value; _} ->
+        let region = cover $1.region value.rpar in
+        let value  = $1, {region; value}
+        in TApp {region; value}
+    | None -> TVar $1
   }
 | "(" nsepseq(type_expr_simple, ",") ")" {
     TProd {region = cover $1 $3; value=$2}
@@ -440,8 +424,8 @@ fun_expr:
           {p.value with inside = arg_to_pattern p.value.inside}
         in PPar {p with value}
     | EUnit u -> PUnit u
-    | _ -> failwith "Not supported" in (* TODO: raise a proper exception *)
-
+    | e -> raise (SyntaxError.Error (WrongFunctionArguments e))
+    in
     let fun_args_to_pattern = function
       EAnnot {
         value = {
@@ -469,8 +453,8 @@ fun_expr:
           in arg_to_pattern (fst fun_args), bindings
       | EUnit e ->
           arg_to_pattern (EUnit e), []
-      | _ -> failwith "Not supported" in (* TODO: raise a proper exception *)
-
+      | e -> raise (SyntaxError.Error (WrongFunctionArguments e))
+    in
     let binders = fun_args_to_pattern $1 in
     let f = {kwd_fun;
              binders;

@@ -1,5 +1,5 @@
 open Mini_c
-open! Trace
+open Trace
 
 (* TODO hack to specialize map_expression to identity monad *)
 let map_expression :

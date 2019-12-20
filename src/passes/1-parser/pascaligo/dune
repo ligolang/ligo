@@ -3,43 +3,41 @@
 (menhir
  (merge_into Parser)
  (modules ParToken Parser)
- (flags -la 1 --explain --external-tokens LexToken))
+ (flags -la 1 --table --strict --explain --external-tokens LexToken))
 
 (library
  (name parser_pascaligo)
  (public_name ligo.parser.pascaligo)
  (modules AST pascaligo Parser ParserLog LexToken)
  (libraries
-   parser_shared
-   hex
-   simple-utils
-   tezos-utils
- )
- (flags (:standard  -open Parser_shared -open Simple_utils))
-)
+    menhirLib
+    parser_shared
+    hex
+    simple-utils
+    tezos-utils)
+ (flags (:standard  -open Parser_shared -open Simple_utils)))
 
 (executable
   (name LexerMain)
   (libraries
-   hex
-   simple-utils
-   tezos-utils
-   parser_pascaligo)
+     hex
+     simple-utils
+     tezos-utils
+     parser_pascaligo)
   (modules
-    LexerMain
-  )
-  (flags (:standard -open Parser_shared -open Parser_pascaligo))
-)
+     LexerMain)
+  (flags (:standard -open Parser_shared -open Parser_pascaligo)))
 
 (executable
   (name ParserMain)
   (libraries
-   parser_pascaligo)
-  (modules
-    ParserMain
-  )
-  (flags (:standard -open Simple_utils -open Parser_shared -open Parser_pascaligo))
-)
+     parser_pascaligo)
+  (modules ParserMain)
+  (flags (:standard -open Simple_utils -open Parser_shared -open Parser_pascaligo)))
+
+(executable
+  (name Unlexer)
+  (modules Unlexer))
 
 ;; Les deux directives (rule) qui suivent sont pour le dev local.
 ;; Il suffit de faire "dune build Parser.exe" pour avoir un Parser.exe dans le dossier.
