@@ -75,8 +75,6 @@ module Make (Lexer: Lexer.S)
 
     (* The parser has suspended itself because of a syntax error. Stop. *)
 
-    (* let fail _checkpoint = raise Parser.Error *)
-
     let failure get_win checkpoint =
       let message = ParErr.message (state checkpoint) in
       match get_win () with
