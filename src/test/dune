@@ -1,5 +1,7 @@
+(ocamllex md)
+
 (executables
-  (names test manual_test)
+  (names test manual_test doc_test)
   (libraries
     simple-utils
     ligo
@@ -10,6 +12,12 @@
     (pps ppx_let)
   )
   (flags (:standard -w +1..62-4-9-44-40-42-48@39@33 -open Simple_utils ))
+)
+
+(alias
+  (name doc-test)
+  (action (run ./doc_test.exe))
+  (deps (source_tree ../../gitlab-pages/docs/language-basics))
 )
 
 (alias

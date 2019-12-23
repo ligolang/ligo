@@ -45,9 +45,12 @@ coverage-ligo: clean
 	bisect-ppx-report html -o ./_coverage_ligo --title="LIGO test coverage"
 	bisect-ppx-report summary --per-file
 
+coverage-doc: clean
+	BISECT_ENABLE=yes dune build @doc-test --force
+	bisect-ppx-report html -o ./_coverage_doc --title="LIGO doc coverage"
+	bisect-ppx-report summary --per-file
+
 coverage-cli: clean
 	BISECT_ENABLE=yes dune runtest src/bin/expect_tests
 	bisect-ppx-report html -o ./_coverage_cli --title="CLI test coverage"
 	bisect-ppx-report summary --per-file
-	# PRE="CLI coverage: "
-	# bisect-ppx-report summary --per-file | grep 'src/bin/cli.ml\|src/bin/cli_helpers.ml' | awk -v ORS=" " '{print $1}' | awk -v PRE=${PRE} -v POST="%" '{print PRE ($1 + $2 / NF) POST}'
