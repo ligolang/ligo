@@ -36,6 +36,18 @@ module Errors = struct
     ] in
     error ~data title message
 
+  let multiple_patterns construct (patterns: Raw.pattern list) =
+    let title () = "multiple patterns" in
+    let message () =
+      Format.asprintf "multiple patterns in \"%s\" are not supported yet" construct in
+    let patterns_loc =
+      List.fold_left (fun a p -> Region.cover a (Raw.pattern_to_region p))
+        Region.ghost patterns in
+    let data = [
+      ("patterns_loc", fun () -> Format.asprintf "%a" Location.pp_lift @@ patterns_loc)
+    ] in
+    error ~data title message
+
   let unknown_predefined_type name =
     let title () = "type constants" in
     let message () =
@@ -123,6 +135,12 @@ module Errors = struct
        fun () -> Format.asprintf "%a" Location.pp_lift @@ region)
     ] in
     error ~data title message
+
+  let corner_case description =
+    let title () = "corner case" in
+    let message () = description in
+    error title message
+
 end
 
 open Errors
@@ -165,7 +183,7 @@ let rec patterns_to_typed_vars : Raw.pattern nseq -> _ = fun ps ->
     | Raw.PVar _ -> bind_list [pattern_to_typed_var pattern]
     | other -> (fail @@ wrong_pattern "bla bla" other)
     end
-  | hd, tl -> bind_map_list pattern_to_typed_var (nseq_to_list (hd, tl))
+  | _ -> fail @@ multiple_patterns "let" (nseq_to_list ps)
 
 let rec simpl_type_expression : Raw.type_expr -> type_expression result = fun te ->
   trace (simple_info "simplifying this type expression...") @@
@@ -275,7 +293,12 @@ let rec simpl_expression :
         in ok (var_expr, ty_expr_opt)
       in
       let%bind prep_vars = bind_list (List.map prepare_variable variables) in
-      let rec chain_let_in variables body : _ =
+      let%bind () =
+        if (List.length prep_vars) = 0
+        then fail @@ corner_case "let ... in without variables passed parsing stage"
+        else ok ()
+      in
+      let rec chain_let_in variables body : expression =
         match variables with
         | hd :: [] ->
           if (List.length prep_vars = 1)
@@ -285,7 +308,7 @@ let rec simpl_expression :
           e_let_in hd
           (e_accessor rhs' [Access_tuple ((List.length prep_vars) - (List.length tl) - 1)])
           (chain_let_in tl body)
-        | [] -> body (* Make this an error *)
+        | [] -> body (* Precluded by corner case assertion above *)
       in ok (chain_let_in prep_vars body)
   | Raw.EAnnot a ->
       let Raw.{inside=expr, _, type_expr; _}, loc = r_split a in

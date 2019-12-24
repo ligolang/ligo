@@ -1797,7 +1797,14 @@ let type_tuple_destruct () : unit result =
 
 let let_in_multi_bind () : unit result =
   let%bind program = mtype_file "./contracts/let_in_multi_bind.mligo" in
-  let%bind () = expect_eq program "sum" (e_tuple [e_int 10; e_int 10]) (e_int 20)
+  let%bind () = expect_eq program "sum" (e_tuple [e_int 10; e_int 10]) (e_int 20) in
+  let%bind () = expect_eq program "sum2"
+      (e_tuple
+         [e_string "my" ;
+          e_string "name" ;
+          e_string "is" ;
+          e_string "bob" ])
+      (e_string "mynameisbob")
   in ok ()
 
 let main = test_suite "Integration (End to End)" [
