@@ -22,22 +22,17 @@ let get_value : 'a Raw.reg -> 'a = fun x -> x.value
 module Errors = struct
   let wrong_pattern expected_name actual =
     let title () = "wrong pattern" in
-    let message () = "" in
+    let message () =
+    match actual with 
+    | Raw.PTuple _ -> "tuple"
+    | Raw.PRecord _ -> "record"
+    | Raw.PList _ -> "list"
+    | Raw.PBytes _ -> "bytes"
+    | _ -> "other"
+    in
     let data = [
       ("expected", fun () -> expected_name);
       ("actual_loc" , fun () -> Format.asprintf "%a" Location.pp_lift @@ Raw.pattern_to_region actual)
-    ] in
-    error ~data title message
-
-  let multiple_patterns construct (patterns: Raw.pattern list) =
-    let title () = "multiple patterns" in
-    let message () =
-      Format.asprintf "multiple patterns in \"%s\" are not supported yet" construct in
-    let patterns_loc =
-      List.fold_left (fun a p -> Region.cover a (Raw.pattern_to_region p))
-        Region.ghost patterns in
-    let data = [
-      ("patterns_loc", fun () -> Format.asprintf "%a" Location.pp_lift @@ patterns_loc)
     ] in
     error ~data title message
 
@@ -160,10 +155,17 @@ let rec expr_to_typed_expr : Raw.expr -> _ = function
 | EAnnot {value={inside=e,_,t; _}; _} -> ok (e, Some t)
 | e -> ok (e , None)
 
-let patterns_to_var : Raw.pattern nseq -> _ = fun ps ->
+let rec patterns_to_typed_vars : Raw.pattern nseq -> _ = fun ps ->
   match ps with
-  | pattern, [] -> pattern_to_var pattern
-  | _ -> fail @@ multiple_patterns "let" (nseq_to_list ps)
+  | pattern, [] ->
+    begin
+    match pattern with
+    | Raw.PPar pp -> patterns_to_typed_vars (pp.value.inside, [])
+    | Raw.PTuple pt -> bind_map_list pattern_to_typed_var (npseq_to_list pt.value)
+    | Raw.PVar _ -> bind_list [pattern_to_typed_var pattern]
+    | other -> (fail @@ wrong_pattern "bla bla" other)
+    end
+  | hd, tl -> bind_map_list pattern_to_typed_var (nseq_to_list (hd, tl))
 
 let rec simpl_type_expression : Raw.type_expr -> type_expression result = fun te ->
   trace (simple_info "simplifying this type expression...") @@
@@ -254,7 +256,7 @@ let rec simpl_expression :
     Raw.ELetIn e ->
       let Raw.{binding; body; _} = e.value in
       let Raw.{binders; lhs_type; let_rhs; _} = binding in
-      let%bind variable = patterns_to_var binders in
+      let%bind variables = patterns_to_typed_vars binders in
       let%bind ty_opt =
         bind_map_option (fun (_,te) -> simpl_type_expression te) lhs_type in
       let%bind rhs = simpl_expression let_rhs in
@@ -263,7 +265,28 @@ let rec simpl_expression :
           None -> rhs
         | Some ty -> e_annotation rhs ty in
       let%bind body = simpl_expression body in
-      return @@ e_let_in (Var.of_name variable.value , None) rhs' body
+      let prepare_variable (ty_var: Raw.variable * Raw.type_expr option) =
+        let variable, ty_opt = ty_var in
+        let var_expr = Var.of_name variable.value in
+        let%bind ty_expr_opt =
+          match ty_opt with
+          | Some ty -> bind_map_option simpl_type_expression (Some ty)
+          | None -> ok None
+        in ok (var_expr, ty_expr_opt)
+      in
+      let%bind prep_vars = bind_list (List.map prepare_variable variables) in
+      let rec chain_let_in variables body : _ =
+        match variables with
+        | hd :: [] ->
+          if (List.length prep_vars = 1)
+          then e_let_in hd rhs' body
+          else e_let_in hd (e_accessor rhs' [Access_tuple ((List.length prep_vars) - 1)]) body
+        | hd :: tl ->
+          e_let_in hd
+          (e_accessor rhs' [Access_tuple ((List.length prep_vars) - (List.length tl) - 1)])
+          (chain_let_in tl body)
+        | [] -> body (* Make this an error *)
+      in ok (chain_let_in prep_vars body)
   | Raw.EAnnot a ->
       let Raw.{inside=expr, _, type_expr; _}, loc = r_split a in
       let%bind expr' = simpl_expression expr in
