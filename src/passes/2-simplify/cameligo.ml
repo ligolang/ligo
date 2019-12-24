@@ -224,7 +224,7 @@ let rec simpl_type_expression : Raw.type_expr -> type_expression result = fun te
 
 and simpl_list_type_expression (lst:Raw.type_expr list) : type_expression result =
   match lst with
-  | [] -> assert false
+  | [] -> ok @@ t_unit
   | [hd] -> simpl_type_expression hd
   | lst ->
       let%bind lst = bind_map_list simpl_type_expression lst in
