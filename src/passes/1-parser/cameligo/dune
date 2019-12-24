@@ -2,13 +2,15 @@
 
 (menhir
  (merge_into Parser)
- (modules ParToken Parser)
+ (modules
+    ParToken Parser)
  (flags -la 1 --table --strict --explain --external-tokens LexToken))
 
 (library
  (name parser_cameligo)
  (public_name ligo.parser.cameligo)
- (modules AST cameligo Parser ParserLog LexToken)
+ (modules
+    AST cameligo Parser ParserLog LexToken)
  (libraries
    menhirLib
    parser_shared
@@ -21,16 +23,17 @@
 (executable
   (name LexerMain)
   (libraries
-   parser_cameligo)
+     parser_cameligo)
   (modules
-    LexerMain)
+     LexerMain)
   (flags (:standard -open Parser_shared -open Parser_cameligo)))
 
 (executable
   (name ParserMain)
   (libraries
-   parser_cameligo)
+     parser_cameligo)
   (modules
-    ParserAPI
-    ParserMain)
+     ParErr
+     ParserAPI
+     ParserMain)
   (flags (:standard -open Simple_utils -open Parser_shared -open Parser_cameligo)))
