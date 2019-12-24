@@ -42,7 +42,7 @@ val ez_t_sum : ( string * type_expression ) list -> type_expression
 val t_function : type_expression -> type_expression -> type_expression
 val t_map : type_expression -> type_expression -> type_expression
 
-val t_operator : 'a type_operator -> type_expression list -> type_expression
+val t_operator : type_expression type_operator -> type_expression list -> type_expression result
 val t_set : type_expression -> type_expression
 
 val e_var : ?loc:Location.t -> string -> expression
