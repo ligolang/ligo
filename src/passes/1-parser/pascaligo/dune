@@ -33,6 +33,7 @@
 
 (executable
   (name Unlexer)
+  (libraries str)
   (modules Unlexer))
 
 ;; Les deux directives (rule) qui suivent sont pour le dev local.
