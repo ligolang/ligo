@@ -924,3 +924,7 @@ let%expect_test _ =
                NIL operation ;
                PAIR ;
                DIP { DROP 2 } } } |}]
+
+let%expect_test _ =
+  run_ligo_bad [ "compile-contract" ; contract "bad_type_operator.ligo" ; "main" ] ;
+  [%expect {| ligo: bad type operator (TO_Map (unit,unit)): |}] ;

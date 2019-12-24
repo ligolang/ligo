@@ -8,8 +8,8 @@ val list_sep_d : (formatter -> 'a -> unit) -> formatter -> 'a list -> unit
 
 val smap_sep_d : (formatter -> 'a -> unit) -> formatter -> 'a Map.String.t -> unit
 
-val type_expression : formatter -> type_expression -> unit
 *)
+val type_expression : formatter -> type_expression -> unit
 
 val literal : formatter -> literal -> unit
 
