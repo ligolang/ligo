@@ -320,6 +320,8 @@ core_pattern:
 | "_"                                                    {   PWild $1 }
 | unit                                                   {   PUnit $1 }
 | "<int>"                                                {    PInt $1 }
+| "<nat>"                                                {    PNat $1 }
+| "<bytes>"                                              {  PBytes $1 }
 | "true"                                                 {   PTrue $1 }
 | "false"                                                {  PFalse $1 }
 | "<string>"                                             { PString $1 }
@@ -424,7 +426,8 @@ fun_expr:
           {p.value with inside = arg_to_pattern p.value.inside}
         in PPar {p with value}
     | EUnit u -> PUnit u
-    | e -> raise (SyntaxError.Error (WrongFunctionArguments e))
+    | e -> let open! SyntaxError
+          in raise (Error (WrongFunctionArguments e))
     in
     let fun_args_to_pattern = function
       EAnnot {
@@ -453,7 +456,8 @@ fun_expr:
           in arg_to_pattern (fst fun_args), bindings
       | EUnit e ->
           arg_to_pattern (EUnit e), []
-      | e -> raise (SyntaxError.Error (WrongFunctionArguments e))
+      | e -> let open! SyntaxError
+            in raise (Error (WrongFunctionArguments e))
     in
     let binders = fun_args_to_pattern $1 in
     let f = {kwd_fun;
@@ -601,7 +605,7 @@ comp_expr_level:
 | cat_expr_level { $1 }
 
 cat_expr_level:
-  bin_op(add_expr_level, "++", add_expr_level)    {  EString (Cat $1) }
+  bin_op(add_expr_level, "++", cat_expr_level)    {  EString (Cat $1) }
 | add_expr_level                                  {                $1 }
 
 add_expr_level:
@@ -682,6 +686,7 @@ common_expr:
   "<int>"                             {               EArith (Int $1) }
 | "<mutez>"                           {             EArith (Mutez $1) }
 | "<nat>"                             {               EArith (Nat $1) }
+| "<bytes>"                           {                     EBytes $1 }
 | "<ident>" | module_field            {                       EVar $1 }
 | projection                          {                      EProj $1 }
 | "<string>"                          {           EString (String $1) }
