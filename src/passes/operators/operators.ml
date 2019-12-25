@@ -243,6 +243,7 @@ module Simplify = struct
       | "AND"                      -> ok C_AND
       | "OR"                       -> ok C_OR
       | "GT"                       -> ok C_GT
+      | "GE"                       -> ok C_GE
       | "LT"                       -> ok C_LT
       | "LE"                       -> ok C_LE
       | "CONS"                     -> ok C_CONS
