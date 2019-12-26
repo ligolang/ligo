@@ -1,10 +1,4 @@
-(** Generic parser for LIGO *)
-
-(* Errors *)
-
-let format_error ?(offsets=true) mode Region.{region; value} ~file =
-  let reg = region#to_string ~file ~offsets mode in
-  Printf.sprintf "\027[31mParse error %s:\n%s\027[0m%!" reg value
+(* Generic parser for LIGO *)
 
 (* Main functor *)
 
@@ -12,12 +6,6 @@ module Make (Lexer: Lexer.S with module Token := LexToken)
             (Parser: module type of Parser)
             (ParErr: sig val message : int -> string end) =
   struct
-    type message = string
-    type valid   = Lexer.token
-    type invalid = Lexer.token
-
-    exception Point of message * valid option * invalid
-
     module I = Parser.MenhirInterpreter
     module S = MenhirLib.General (* Streams *)
 
@@ -42,6 +30,13 @@ module Make (Lexer: Lexer.S with module Token := LexToken)
 
     (* The parser has suspended itself because of a syntax error. Stop. *)
 
+    type message = string
+    type valid   = Lexer.token
+    type invalid = Lexer.token
+    type error = message * valid option * invalid
+
+    exception Point of error
+
     let failure get_win checkpoint =
       let message = ParErr.message (state checkpoint) in
       match get_win () with
@@ -51,7 +46,7 @@ module Make (Lexer: Lexer.S with module Token := LexToken)
       | Lexer.Two (invalid, valid) ->
           raise (Point (message, Some valid, invalid))
 
-    (* The generic parsing function *)
+    (* The two Menhir APIs are called from the following two functions. *)
 
     let incr_contract Lexer.{read; buffer; get_win; close; _} : AST.t =
       let supplier = I.lexer_lexbuf_to_supplier read buffer
@@ -61,4 +56,24 @@ module Make (Lexer: Lexer.S with module Token := LexToken)
       in close (); ast
 
     let mono_contract = Parser.contract
+
+    (* Errors *)
+
+    let format_error ?(offsets=true) mode (message, valid_opt, invalid) =
+      let invalid_lexeme = LexToken.to_lexeme invalid in
+      let invalid_region = LexToken.to_region invalid in
+      let header =
+        "Parse error " ^
+          invalid_region#to_string ~offsets mode in
+      let after =
+        match valid_opt with
+          None -> ","
+        | Some valid ->
+            let valid_lexeme = LexToken.to_lexeme valid
+            in Printf.sprintf ", after \"%s\" and" valid_lexeme in
+      let header = header ^ after in
+      let before = Printf.sprintf " before \"%s\"" invalid_lexeme in
+      let header = header ^ before in
+      header ^ (if message = "" then ".\n" else ":\n" ^ message)
+
   end

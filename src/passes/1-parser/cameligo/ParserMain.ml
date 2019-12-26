@@ -119,43 +119,27 @@ let () =
       in prerr_string msg
 
   (* Incremental API of Menhir *)
-  | ParserFront.Point (message, valid_opt, invalid) ->
-     let () = close_all () in
-     let invalid_lexeme = Lexer.Token.to_lexeme invalid in
-     let invalid_region = Lexer.Token.to_region invalid in
-     let header =
-       "Parse error " ^
-       invalid_region#to_string ~offsets:options#offsets
-                                options#mode in
-     let after =
-       match valid_opt with
-         None -> ","
-       | Some valid ->
-          let valid_lexeme = Lexer.Token.to_lexeme valid
-          in sprintf ", after \"%s\" and" valid_lexeme in
-     let header = header ^ after in
-     let before = sprintf " before \"%s\"" invalid_lexeme in
-     let header = header ^ before in
-     eprintf "\027[31m%s:\n%s\027[0m%!" header message
+  | ParserFront.Point point ->
+      let () = close_all () in
+      let error =
+        ParserFront.format_error ~offsets:options#offsets
+                                 options#mode point
+      in eprintf "\027[31m%s\027[0m%!" error
 
   (* Monolithic API of Menhir *)
   | Parser.Error ->
       let () = close_all () in
-      let token =
+      let invalid, valid_opt =
         match get_win () with
           Lexer.Nil ->
             assert false (* Safe: There is always at least EOF. *)
-        | Lexer.One token
-        | Lexer.Two (token, _) -> token in
-      let lexeme = Lexer.Token.to_lexeme token
-      and region = Lexer.Token.to_region token in
-      let msg    = sprintf "Syntax error on \"%s\".\n" lexeme in
-      let error  = Region.{region; value=msg} in
-      let ()     = close_all () in
-      let msg    =
-        ParserAPI.format_error ~offsets:options#offsets
-                               options#mode error ~file
-      in prerr_string msg
+        | Lexer.One invalid -> invalid, None
+        | Lexer.Two (invalid, valid) -> invalid, Some valid in
+      let point = "", valid_opt, invalid in
+      let error =
+        ParserFront.format_error ~offsets:options#offsets
+                                 options#mode point
+      in eprintf "\027[31m%s\027[0m%!" error
 
   (* I/O errors *)
   | Sys_error msg -> Utils.highlight msg
