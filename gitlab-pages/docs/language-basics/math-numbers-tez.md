@@ -14,7 +14,7 @@ In the following example you can find a series of arithmetic operations, includi
 <!--DOCUSAURUS_CODE_TABS-->
 <!--Pascaligo-->
 
-```pascaligo
+```pascaligo group=a
 // int + int produces int
 const a: int = 5 + 10;
 // nat + int produces int
@@ -38,7 +38,7 @@ const g: int = 1_000_000;
 
 <!--CameLIGO-->
 
-```cameligo
+```cameligo group=a
 // int + int produces int
 let a: int = 5 + 10
 // nat + int produces int
@@ -62,19 +62,19 @@ let g: int = 1_000_000
 
 <!--ReasonLIGO-->
 
-```reasonligo
-/* int + int produces int */
+```reasonligo group=a
+(* int + int produces int *)
 let a: int = 5 + 10;
-/* nat + int produces int */
+(* nat + int produces int *)
 let b: int = 5n + 10;
-/* tez + tez produces tez */
+(* tez + tez produces tez *)
 let c: tez = 5mutez + 10mutez;
-/* you can't add tez + int or tez + nat, this won't compile */
-/* let d: tez = 5mutez + 10n; */
-/* two nats produce a nat */
+(* you can't add tez + int or tez + nat, this won't compile:
+   let d: tez = 5mutez + 10n; *)
+(* two nats produce a nat *)
 let e: nat = 5n + 10n;
-/* nat + int produces an int, this won't compile */
-/* let f: nat = 5n + 10; */
+(* nat + int produces an int, this won't compile:
+let f: nat = 5n + 10; *)
 let g: int = 1_000_000;
 ```
 
@@ -94,33 +94,33 @@ The simpliest substraction looks like this:
 
 <!--DOCUSAURUS_CODE_TABS-->
 <!--Pascaligo-->
-```pascaligo
+```pascaligo group=b
 const a: int = 5 - 10;
 // substraction of two nats, yields an int
 const b: int = 5n - 2n;
 // won't compile, result is an int, not a nat
 // const c: nat = 5n - 2n;
-const d: tez = 5mutez - 1mt;
+const d: tez = 5mutez - 1mutez;
 ```
 
 <!--CameLIGO-->
-```cameligo
+```cameligo group=b
 let a: int = 5 - 10
 // substraction of two nats, yields an int
 let b: int = 5n - 2n
 // won't compile, result is an int, not a nat
 // const c: nat = 5n - 2n
-let d: tez = 5mutez - 1mt
+let d: tez = 5mutez - 1mutez
 ```
 
 <!--ReasonLIGO-->
-```reasonligo
+```reasonligo group=b
 let a: int = 5 - 10;
-/* substraction of two nats, yields an int */
+(* substraction of two nats, yields an int *)
 let b: int = 5n - 2n;
-/* won't compile, result is an int, not a nat */
-/* let c: nat = 5n - 2n; */
-let d: tez = 5mutez - 1mt;
+(* won't compile, result is an int, not a nat *)
+(* let c: nat = 5n - 2n; *)
+let d: tez = 5mutez - 1mutez;
 ```
 
 <!--END_DOCUSAURUS_CODE_TABS-->
@@ -133,7 +133,7 @@ You can multiply values of the same type, such as:
 <!--DOCUSAURUS_CODE_TABS-->
 <!--Pascaligo-->
 
-```pascaligo
+```pascaligo group=c
 const a: int = 5 * 5;
 const b: nat = 5n * 5n;
 // you can also multiply `nat` and `tez`
@@ -141,7 +141,7 @@ const c: tez = 5n * 5mutez;
 ```
 
 <!--CameLIGO-->
-```cameligo
+```cameligo group=c
 let a: int = 5 * 5
 let b: nat = 5n * 5n
 // you can also multiply `nat` and `tez`
@@ -149,10 +149,10 @@ let c: tez = 5n * 5mutez
 ```
 
 <!--ReasonLIGO-->
-```reasonligo
+```reasonligo group=c
 let a: int = 5 * 5;
 let b: nat = 5n * 5n;
-/* you can also multiply `nat` and `tez` */
+(* you can also multiply `nat` and `tez` *)
 let c: tez = 5n * 5mutez;
 ```
 
@@ -167,21 +167,21 @@ In LIGO you can divide `int`, `nat`, and `tez`. Here's how:
 
 <!--DOCUSAURUS_CODE_TABS-->
 <!--Pascaligo-->
-```pascaligo
+```pascaligo group=d
 const a: int = 10 / 3;
 const b: nat = 10n / 3n;
 const c: nat = 10mutez / 3mutez;
 ```
 
 <!--CameLIGO-->
-```cameligo
+```cameligo group=d
 let a: int = 10 / 3
 let b: nat = 10n / 3n
 let c: nat = 10mutez / 3mutez
 ```
 
 <!--ReasonLIGO-->
-```reasonligo
+```reasonligo group=d
 let a: int = 10 / 3;
 let b: nat = 10n / 3n;
 let c: nat = 10mutez / 3mutez;
@@ -195,13 +195,13 @@ You can *cast* an `int` to a `nat` and vice versa, here's how:
 
 <!--DOCUSAURUS_CODE_TABS-->
 <!--Pascaligo-->
-```pascaligo
+```pascaligo group=e
 const a: int = int(1n);
 const b: nat = abs(1);
 ```
 
 <!--ReasonLIGO-->
-```reasonligo
+```reasonligo group=e
 let a: int = int(1n);
 let b: nat = abs(1);
 ```
