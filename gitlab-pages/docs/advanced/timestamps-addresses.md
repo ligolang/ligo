@@ -14,7 +14,7 @@ You can obtain the current time using the built-in syntax specific expression, p
 
 <!--DOCUSAURUS_CODE_TABS-->
 <!--Pascaligo-->
-```pascaligo
+```pascaligo group=a
 const today: timestamp = now;
 ```
 <!--END_DOCUSAURUS_CODE_TABS-->
@@ -26,7 +26,7 @@ In LIGO, timestamps can be added with `int`(s), this enables you to set e.g. tim
 #### In 24 hours
 <!--DOCUSAURUS_CODE_TABS-->
 <!--Pascaligo-->
-```pascaligo
+```pascaligo group=b
 const today: timestamp = now;
 const one_day: int = 86400;
 const in_24_hrs: timestamp = today + one_day;
@@ -36,10 +36,10 @@ const in_24_hrs: timestamp = today + one_day;
 #### 24 hours ago
 <!--DOCUSAURUS_CODE_TABS-->
 <!--Pascaligo-->
-```pascaligo
+```pascaligo group=c
 const today: timestamp = now;
 const one_day: int = 86400;
-const 24_hrs_ago: timestamp = today - one_day;
+const in_24_hrs: timestamp = today - one_day;
 ```
 <!--END_DOCUSAURUS_CODE_TABS-->
 
@@ -49,7 +49,7 @@ You can also compare timestamps using the same comparison operators as for numbe
 
 <!--DOCUSAURUS_CODE_TABS-->
 <!--Pascaligo-->
-```pascaligo
+```pascaligo group=c
 const not_tommorow: bool = (now = in_24_hrs)
 ```
 <!--END_DOCUSAURUS_CODE_TABS-->
@@ -62,7 +62,7 @@ Here's how you can define an address:
 
 <!--DOCUSAURUS_CODE_TABS-->
 <!--Pascaligo-->
-```pascaligo
+```pascaligo group=d
 const my_account: address = ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address);
 ```
 <!--END_DOCUSAURUS_CODE_TABS-->
