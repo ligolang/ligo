@@ -29,7 +29,7 @@
 
 (alias
   (name runtest)
-  (deps (alias ligo-test))
+  (deps (alias ligo-test) (alias doc-test))
 )
 
 (alias
