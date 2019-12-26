@@ -38,3 +38,8 @@
     ParserAPI
     ParserMain)
   (flags (:standard -open Simple_utils -open Parser_cameligo -open Parser_shared -open Parser_reasonligo)))
+
+(executable
+  (name Unlexer)
+  (libraries str)
+  (modules Unlexer))
