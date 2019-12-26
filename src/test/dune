@@ -17,7 +17,7 @@
 (alias
   (name doc-test)
   (action (run ./doc_test.exe))
-  (deps (source_tree ../../gitlab-pages/docs/language-basics))
+  (deps (source_tree ../../gitlab-pages/docs))
 )
 
 (alias
