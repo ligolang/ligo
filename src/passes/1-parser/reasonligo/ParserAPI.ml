@@ -1,39 +1,6 @@
 (** Generic parser for LIGO *)
 
-module type PARSER =
-  sig
-    (* The type of tokens *)
-
-    type token
-
-    (* This exception is raised by the monolithic API functions *)
-
-    exception Error
-
-    (* The monolithic API *)
-
-    val contract : (Lexing.lexbuf -> token) -> Lexing.lexbuf -> AST.t
-
-    (* The incremental API *)
-
-    module MenhirInterpreter :
-      sig
-        include MenhirLib.IncrementalEngine.INCREMENTAL_ENGINE
-                with type token = token
-      end
-
-    module Incremental :
-      sig
-        val contract : Lexing.position -> AST.t MenhirInterpreter.checkpoint
-      end
-  end
-
 (* Errors *)
-
-module type PAR_ERR =
-  sig
-    val message : int -> string   (* From error states to messages *)
-  end
 
 let format_error ?(offsets=true) mode Region.{region; value} ~file =
   let reg = region#to_string ~file ~offsets mode in
@@ -41,9 +8,9 @@ let format_error ?(offsets=true) mode Region.{region; value} ~file =
 
 (* Main functor *)
 
-module Make (Lexer: Lexer.S)
-            (Parser: PARSER with type token = Lexer.Token.token)
-            (ParErr: PAR_ERR) =
+module Make (Lexer: Lexer.S with module Token := LexToken)
+            (Parser: module type of Parser)
+            (ParErr: sig val message : int -> string end) =
   struct
     type message = string
     type valid   = Lexer.token
@@ -90,9 +57,8 @@ module Make (Lexer: Lexer.S)
       let supplier = I.lexer_lexbuf_to_supplier read buffer
       and failure  = failure get_win in
       let parser   = Parser.Incremental.contract buffer.Lexing.lex_curr_p in
-      let ast = I.loop_handle success failure supplier parser
+      let ast      = I.loop_handle success failure supplier parser
       in close (); ast
 
     let mono_contract = Parser.contract
-
   end

@@ -15,9 +15,7 @@
     Markup
     FQueue
     EvalOpt
-    Version  
-    ))
-
+    Version))
 
 (rule
   (targets Version.ml)
