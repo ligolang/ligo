@@ -111,8 +111,8 @@ done
 usage () {
   cat <<EOF
 Usage: $(basename $0) [-h|--help]
-                --par-tokens=<par_tolens>.mly
-                --lex-tokens=<par_tokens>.mli
+                --par-tokens=<par_tokens>.mly
+                --lex-tokens=<lex_tokens>.mli
                 --unlexer=<binary>
                 --ext=<extension>
                 --dir=<path>
@@ -121,7 +121,7 @@ Usage: $(basename $0) [-h|--help]
 Generates in directory <path> a set of LIGO source files with
 extension <extension> covering all erroneous states of the LR
 automaton produced by Menhir from <parser>.mly, <par_tokens>.mly,
-<lex_tokens>.mli and <parser>.msg (see script `messages.sh` for
+<lex_tokens>.mli and <parser>.msg (see script messages.sh for
 generating the latter). The LIGO files will be numbered with their
 corresponding state number in the automaton. The executable <binary>
 reads a line on stdin of tokens and produces a line of corresponding
