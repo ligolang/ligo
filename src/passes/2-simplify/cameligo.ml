@@ -210,7 +210,7 @@ let rec simpl_type_expression : Raw.type_expr -> type_expression result = fun te
       let%bind cst =
         trace (unknown_predefined_type name) @@
         type_operators name.value in
-      ok @@ t_operator cst lst'
+      t_operator cst lst'
     )
   | TProd p -> (
       let%bind tpl = simpl_list_type_expression  @@ npseq_to_list p.value in

@@ -31,5 +31,6 @@
   (libraries
    parser_cameligo)
   (modules
+    ParserAPI
     ParserMain)
   (flags (:standard -open Simple_utils -open Parser_shared -open Parser_cameligo)))
