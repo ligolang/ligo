@@ -181,7 +181,7 @@ let rec patterns_to_typed_vars : Raw.pattern nseq -> _ = fun ps ->
     | Raw.PPar pp -> patterns_to_typed_vars (pp.value.inside, [])
     | Raw.PTuple pt -> bind_map_list pattern_to_typed_var (npseq_to_list pt.value)
     | Raw.PVar _ -> bind_list [pattern_to_typed_var pattern]
-    | other -> (fail @@ wrong_pattern "bla bla" other)
+    | other -> (fail @@ wrong_pattern "parenthetical, tuple, or variable" other)
     end
   | _ -> fail @@ multiple_patterns "let" (nseq_to_list ps)
 
@@ -278,10 +278,11 @@ let rec simpl_expression :
       let%bind ty_opt =
         bind_map_option (fun (_,te) -> simpl_type_expression te) lhs_type in
       let%bind rhs = simpl_expression let_rhs in
-      let rhs' =
+      let rhs_b = Var.fresh ~name: "rhs" () in
+      let rhs',rhs_b_expr =
         match ty_opt with
-          None -> rhs
-        | Some ty -> e_annotation rhs ty in
+          None -> rhs, e_variable rhs_b
+        | Some ty -> (e_annotation rhs ty), e_annotation (e_variable rhs_b) ty in
       let%bind body = simpl_expression body in
       let prepare_variable (ty_var: Raw.variable * Raw.type_expr option) =
         let variable, ty_opt = ty_var in
@@ -298,18 +299,26 @@ let rec simpl_expression :
         then fail @@ corner_case "let ... in without variables passed parsing stage"
         else ok ()
       in
+      let rhs_b_expr = (* We only want to evaluate the rhs first if multi-bind *)
+        if List.length prep_vars = 1
+        then rhs' else rhs_b_expr
+      in
       let rec chain_let_in variables body : expression =
         match variables with
         | hd :: [] ->
           if (List.length prep_vars = 1)
-          then e_let_in hd rhs' body
-          else e_let_in hd (e_accessor rhs' [Access_tuple ((List.length prep_vars) - 1)]) body
+          then e_let_in hd rhs_b_expr body
+          else e_let_in hd (e_accessor rhs_b_expr [Access_tuple ((List.length prep_vars) - 1)]) body
         | hd :: tl ->
           e_let_in hd
-          (e_accessor rhs' [Access_tuple ((List.length prep_vars) - (List.length tl) - 1)])
+          (e_accessor rhs_b_expr [Access_tuple ((List.length prep_vars) - (List.length tl) - 1)])
           (chain_let_in tl body)
         | [] -> body (* Precluded by corner case assertion above *)
-      in ok (chain_let_in prep_vars body)
+      in
+      if List.length prep_vars = 1
+      then ok (chain_let_in prep_vars body)
+      (* Bind the right hand side so we only evaluate it once *)
+      else ok (e_let_in (rhs_b, ty_opt) rhs' (chain_let_in prep_vars body))
   | Raw.EAnnot a ->
       let Raw.{inside=expr, _, type_expr; _}, loc = r_split a in
       let%bind expr' = simpl_expression expr in
