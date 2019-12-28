@@ -605,7 +605,7 @@ comp_expr_level:
 | cat_expr_level { $1 }
 
 cat_expr_level:
-  bin_op(add_expr_level, "++", add_expr_level)    {  EString (Cat $1) }
+  bin_op(add_expr_level, "++", cat_expr_level)    {  EString (Cat $1) }
 | add_expr_level                                  {                $1 }
 
 add_expr_level:
