@@ -4,7 +4,7 @@
 
 module Make (Lexer: Lexer.S with module Token := LexToken)
             (Parser: module type of Parser)
-            (ParErr: sig val message : int -> string end) =
+            (ParErr: module type of ParErr) =
   struct
     module I = Parser.MenhirInterpreter
     module S = MenhirLib.General (* Streams *)
