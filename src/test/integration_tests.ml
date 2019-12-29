@@ -1795,6 +1795,11 @@ let type_tuple_destruct () : unit result =
   let%bind () = expect_eq program "type_tuple_d_2" (e_unit ()) (e_string "helloworld") in
   ok ()
 
+let tuple_param_destruct () : unit result =
+  let%bind program = mtype_file "./contracts/tuple_param_destruct.mligo" in
+  let%bind () = expect_eq program "sum" (e_tuple [e_int 10; e_int 10]) (e_int 20)
+  in ok ()
+
 let let_in_multi_bind () : unit result =
   let%bind program = mtype_file "./contracts/let_in_multi_bind.mligo" in
   let%bind () = expect_eq program "sum" (e_tuple [e_int 10; e_int 10]) (e_int 20) in
@@ -1946,4 +1951,5 @@ let main = test_suite "Integration (End to End)" [
     test "entrypoints (ligo)" entrypoints_ligo ;
     test "type tuple destruct (mligo)" type_tuple_destruct ;
     test "let in multi-bind (mligo)" let_in_multi_bind ;
+    test "tuple param destruct (mligo)" tuple_param_destruct ;
   ]
