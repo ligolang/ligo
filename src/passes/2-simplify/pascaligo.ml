@@ -72,7 +72,7 @@ module Errors = struct
       Format.asprintf "constant constructors are not supported yet" in
     let pattern_loc = Raw.pattern_to_region p in
     let data = [
-      ("pattern_loc",
+      ("location",
        fun () -> Format.asprintf "%a" Location.pp_lift @@ pattern_loc)
     ] in
     error ~data title message
@@ -104,7 +104,7 @@ module Errors = struct
     let message () =
       Format.asprintf "unknown predefined type \"%s\"" name.Region.value in
     let data = [
-      ("typename_loc",
+      ("location",
        fun () -> Format.asprintf "%a" Location.pp_lift @@ name.Region.region)
     ] in
     error ~data title message
@@ -116,7 +116,7 @@ module Errors = struct
                        are not supported yet" in
     let pattern_loc = Raw.pattern_to_region p in
     let data = [
-      ("pattern_loc",
+      ("location",
        fun () -> Format.asprintf "%a" Location.pp_lift @@ pattern_loc)
     ] in
     error ~data title message
@@ -127,7 +127,7 @@ module Errors = struct
       Format.asprintf "currently, only constructors are supported in patterns" in
     let pattern_loc = Raw.pattern_to_region p in
     let data = [
-      ("pattern_loc",
+      ("location",
        fun () -> Format.asprintf "%a" Location.pp_lift @@ pattern_loc)
     ] in
     error ~data title message
@@ -138,7 +138,7 @@ module Errors = struct
       Format.asprintf "tuple patterns are not supported yet" in
     let pattern_loc = Raw.pattern_to_region p in
     let data = [
-      ("pattern_loc",
+      ("location",
        fun () -> Format.asprintf "%a" Location.pp_lift @@ pattern_loc) ;
       (** TODO: The labelled arguments should be flowing from the CLI. *)
       ("pattern",
@@ -154,7 +154,7 @@ module Errors = struct
                        in patterns are supported" in
     let pattern_loc = Raw.pattern_to_region pattern in
     let data = [
-      ("pattern_loc",
+      ("location",
        fun () -> Format.asprintf "%a" Location.pp_lift @@ pattern_loc)
     ] in
     error ~data title message
@@ -165,7 +165,7 @@ module Errors = struct
       Format.asprintf "currently, only empty lists and x::y \
                        are supported in patterns" in
     let data = [
-      ("pattern_loc",
+      ("location",
        fun () -> Format.asprintf "%a" Location.pp_lift @@ cons.Region.region)
     ] in
     error ~data title message
@@ -174,7 +174,7 @@ module Errors = struct
     let title () = "unexpected anonymous function" in
     let message () = "you provided a function declaration without name" in
     let data = [
-        ("loc" , fun () -> Format.asprintf "%a" Location.pp @@ loc)
+        ("location" , fun () -> Format.asprintf "%a" Location.pp @@ loc)
       ] in
     error ~data title message
 
@@ -182,7 +182,7 @@ module Errors = struct
     let title () = "unexpected named function" in
     let message () = "you provided a function expression with a name (remove it)" in
     let data = [
-        ("loc" , fun () -> Format.asprintf "%a" Location.pp @@ loc)
+        ("location" , fun () -> Format.asprintf "%a" Location.pp @@ loc)
       ] in
     error ~data title message
 
