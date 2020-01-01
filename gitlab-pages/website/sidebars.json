@@ -8,6 +8,7 @@
       "language-basics/strings",
       "language-basics/functions",
       "language-basics/boolean-if-else",
+      "language-basics/loops",
       "language-basics/unit-option-pattern-matching",
       "language-basics/maps-records",
       "language-basics/sets-lists-touples"
