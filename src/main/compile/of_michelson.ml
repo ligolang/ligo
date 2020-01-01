@@ -6,15 +6,15 @@ module Errors = struct
   let title_type_check_msg () = "Invalid contract"
   let bad_parameter () =
     let message () =
-      "bad contract parameter type (some michelson type are forbidden as contract parameter)" in
+      "bad contract parameter type (some michelson types are forbidden as contract parameter)" in
     error title_type_check_msg message
   let bad_storage () =
     let message () =
-      "bad storage type (some michelson type are forbidden as contract storage)" in
+      "bad storage type (some michelson types are forbidden as contract storage)" in
     error title_type_check_msg message
   let bad_contract () =
     let message () =
-      "bad contract type (contract entry point is expected to be of the form `parameter * storage -> list(operation) * storage`)" in
+      "bad contract type (contract entry point is expected to be of the form \"parameter * storage -> list(operation) * storage\")" in
     error title_type_check_msg message
   let unknown () =
     let message () =
@@ -32,7 +32,7 @@ let build_contract : Compiler.compiled_expression -> Michelson.michelson result 
     Trace.trace_tzresult_lwt (simple_error "Could not unparse storage") @@
     Proto_alpha_utils.Memory_proto_alpha.unparse_ty_michelson _storage_ty in
   let contract = Michelson.contract param_michelson storage_michelson compiled.expr in
-  let%bind res = 
+  let%bind res =
     Trace.trace_tzresult_lwt (simple_error "Could not typecheck the code") @@
     Proto_alpha_utils.Memory_proto_alpha.typecheck_contract contract in
   match res with
