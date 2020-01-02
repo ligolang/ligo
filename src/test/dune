@@ -1,5 +1,7 @@
+(ocamllex md)
+
 (executables
-  (names test manual_test)
+  (names test manual_test doc_test)
   (libraries
     simple-utils
     ligo
@@ -13,6 +15,12 @@
 )
 
 (alias
+  (name doc-test)
+  (action (run ./doc_test.exe))
+  (deps (source_tree ../../gitlab-pages/docs))
+)
+
+(alias
   (name ligo-test)
   (action (run ./test.exe))
   (deps (glob_files contracts/*)
@@ -21,7 +29,7 @@
 
 (alias
   (name runtest)
-  (deps (alias ligo-test))
+  (deps (alias ligo-test) (alias doc-test))
 )
 
 (alias

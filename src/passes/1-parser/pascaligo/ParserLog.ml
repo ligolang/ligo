@@ -1,4 +1,5 @@
 [@@@warning "-42"]
+[@@@coverage exclude_file]
 
 open AST
 open! Region

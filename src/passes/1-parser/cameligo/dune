@@ -15,8 +15,11 @@
    str
    simple-utils
    tezos-utils
-   getopt)
- (flags (:standard -open Simple_utils -open Parser_shared )))
+   getopt )
+ (preprocess
+   (pps bisect_ppx --conditional) )
+ (flags (:standard -open Simple_utils -open Parser_shared ))
+)
 
 (executable
   (name LexerMain)
@@ -24,6 +27,8 @@
    parser_cameligo)
   (modules
     LexerMain)
+  (preprocess
+    (pps bisect_ppx --conditional))
   (flags (:standard -open Parser_shared -open Parser_cameligo)))
 
 (executable
@@ -33,4 +38,6 @@
   (modules
     ParserAPI
     ParserMain)
+  (preprocess
+    (pps bisect_ppx --conditional))
   (flags (:standard -open Simple_utils -open Parser_shared -open Parser_cameligo)))

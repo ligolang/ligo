@@ -20,7 +20,7 @@ This means that every smart contract needs at least one entrypoint function, her
 
 <!--DOCUSAURUS_CODE_TABS-->
 <!--Pascaligo-->
-```
+```pascaligo group=a
 type parameter is unit;
 type store is unit;
 function main(const parameter: parameter; const store: store): (list(operation) * store) is
@@ -46,7 +46,7 @@ This example shows how `amount` and `failwith` can be used to decline a transact
 
 <!--DOCUSAURUS_CODE_TABS-->
 <!--Pascaligo-->
-```
+```pascaligo group=b
 function main (const p : unit ; const s : unit) : (list(operation) * unit) is
   block {
       if amount > 0mutez then failwith("This contract does not accept tez") else skip
@@ -60,7 +60,7 @@ This example shows how `sender` or `source` can be used to deny access to an ent
 
 <!--DOCUSAURUS_CODE_TABS-->
 <!--Pascaligo-->
-```
+```pascaligo group=c
 const owner: address = ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address);
 function main (const p : unit ; const s : unit) : (list(operation) * unit) is
   block {
@@ -79,7 +79,7 @@ In our case, we have a `counter.ligo` contract that accepts a parameter of type 
 
 <!--DOCUSAURUS_CODE_TABS-->
 <!--Pascaligo-->
-```
+```pascaligo group=dup
 // counter.types.ligo
 type action is
 | Increment of int
@@ -87,7 +87,7 @@ type action is
 | Reset of unit
 ```
 
-```
+```pascaligo group=d
 // counter.ligo
 type action is
 | Increment of int
@@ -95,7 +95,7 @@ type action is
 | Reset of unit
 ```
 
-```
+```pascaligo gorup=d
 // proxy.ligo
 #include "counter.types.ligo"
 

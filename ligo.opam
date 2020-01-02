@@ -11,6 +11,7 @@ depends: [
   "ocamlfind" { build }
   "dune" { build & = "1.11.4" }
   "menhir" { = "20190626" }
+  "bisect_ppx" {dev & >= "2.0.0"}
   "ppx_let"
   "ppx_deriving"
   "ppx_expect"
@@ -20,7 +21,10 @@ depends: [
   "alcotest" { with-test }
   "getopt"
   # work around upstream in-place update
-  "ocaml-migrate-parsetree" { = "1.3.1" }
+  "ocaml-migrate-parsetree" { = "1.4.0" }
+]
+pin-depends: [
+  ["bisect_ppx.git" "git+https://github.com/aantron/bisect_ppx.git#02dfb10188033a26d07d23480c2bc44a3a670357"]
 ]
 build: [
   [ "dune" "build" "-p" name "-j" jobs ]
