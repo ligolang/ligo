@@ -4,6 +4,7 @@
   (libraries
     simple-utils
     ast_simplified
+    proto-alpha-utils
   )
   (preprocess
     (pps ppx_let bisect_ppx --conditional)
