@@ -15,6 +15,7 @@
     "Advanced": [
       "advanced/timestamps-addresses",
       "advanced/entrypoints-contracts",
+      "advanced/include",
       "advanced/first-contract"
     ],
     "API": [

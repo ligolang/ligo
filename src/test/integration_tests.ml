@@ -604,6 +604,14 @@ let include_ () : unit result =
   let%bind program = type_file "./contracts/includer.ligo" in
   expect_eq_evaluate program "bar" (e_int 144)
 
+let include_mligo () : unit result =
+  let%bind program = mtype_file "./contracts/includer.mligo" in
+  expect_eq_evaluate program "bar" (e_int 144)
+
+let include_religo () : unit result =
+  let%bind program = retype_file "./contracts/includer.religo" in
+  expect_eq_evaluate program "bar" (e_int 144)
+
 let record_ez_int names n =
   ez_e_record @@ List.map (fun x -> x, e_int n) names
 
@@ -1899,6 +1907,8 @@ let main = test_suite "Integration (End to End)" [
     test "quote declaration" quote_declaration ;
     test "quote declarations" quote_declarations ;
     test "#include directives" include_ ;
+    test "#include directives (mligo)" include_mligo ;
+    test "#include directives (religo)" include_religo ;
     test "counter contract" counter_contract ;
     test "super counter contract" super_counter_contract ;
     test "super counter contract" super_counter_contract_mligo ;
