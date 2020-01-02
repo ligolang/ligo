@@ -3,18 +3,26 @@ open Proto_alpha_utils
 open Trace
 
 module Errors = struct
-  let title_type_check_msg () = "Invalid contract"
-  let bad_parameter () =
+(*
+  TODO: those errors should have been caught in the earlier stages on the ligo pipeline
+        Here, in case of contract not typechecking, we should write a warning with a "please report"
+        on stderr and print the ill-typed michelson code;
+*)
+  let title_type_check_msg () = "Invalid contract (This might be a compiler bug, please report) "
+  let bad_parameter c () =
     let message () =
-      "bad contract parameter type (some michelson types are forbidden as contract parameter)" in
+      let code = Format.asprintf "%a" Michelson.pp c in
+      "bad contract parameter type (some michelson types are forbidden as contract parameter):\n"^code in
     error title_type_check_msg message
-  let bad_storage () =
+  let bad_storage c () =
     let message () =
-      "bad storage type (some michelson types are forbidden as contract storage)" in
+      let code = Format.asprintf "%a" Michelson.pp c in
+      "bad storage type (some michelson types are forbidden as contract storage):\n"^code in
     error title_type_check_msg message
-  let bad_contract () =
+  let bad_contract c () =
     let message () =
-      "bad contract type (contract entry point is expected to be of the form \"parameter * storage -> list(operation) * storage\")" in
+      let code = Format.asprintf "%a" Michelson.pp c in
+      "bad contract type (contract entry point is expected to be of the form \"parameter * storage -> list(operation) * storage\"):\n"^code in
     error title_type_check_msg message
   let unknown () =
     let message () =
@@ -37,9 +45,9 @@ let build_contract : Compiler.compiled_expression -> Michelson.michelson result 
     Proto_alpha_utils.Memory_proto_alpha.typecheck_contract contract in
   match res with
   | Type_checked  -> ok contract
-  | Err_parameter -> fail @@ Errors.bad_parameter ()
-  | Err_storage   -> fail @@ Errors.bad_storage ()
-  | Err_contract  -> fail @@ Errors.bad_contract ()
+  | Err_parameter -> fail @@ Errors.bad_parameter contract ()
+  | Err_storage   -> fail @@ Errors.bad_storage contract ()
+  | Err_contract  -> fail @@ Errors.bad_contract contract ()
   | Err_unknown   -> fail @@ Errors.unknown ()
 
 type check_type = Check_parameter | Check_storage
