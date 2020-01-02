@@ -327,9 +327,9 @@ let rec simpl_expression :
       let%bind type_expr' = simpl_type_expression type_expr in
       return @@ e_annotation ~loc expr' type_expr'
   | EVar c ->
-      let c' = c.value in
+      let (c',loc) = r_split c in
       (match constants c' with
-       | Error _  -> return @@ e_variable (Var.of_name c.value)
+       | Error _  -> return @@ e_variable ~loc (Var.of_name c.value)
        | Ok (s,_) -> return @@ e_constant s [])
   | ECall x -> (
       let ((e1 , e2) , loc) = r_split x in
