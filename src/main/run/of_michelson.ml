@@ -3,6 +3,21 @@ open Trace
 open Memory_proto_alpha.Protocol.Script_ir_translator
 open Memory_proto_alpha.X
 
+module Errors = struct
+  let unknown_failwith_type () =
+    let title () = "Execution failed with an unknown failwith type" in
+    let message () = "only bytes, string or int are printable" in
+    error title message
+
+  let failwith data_str type_str () =
+    let title () = "Execution failed" in
+    let message () = "" in
+    let data = [
+      ("value" , fun () -> Format.asprintf "%s" data_str);
+      ("type"  , fun () -> Format.asprintf "%s" type_str);
+    ] in
+    error ~data title message
+end
 type options = Memory_proto_alpha.options
 
 type run_res =
@@ -121,7 +136,12 @@ let run ?options (exp:Michelson.t) (exp_type:ex_ty) : ex_typed_value result =
   let%bind expr = run_expression ?options exp exp_type in
   match expr with
   | Success res -> ok res
-  | _  -> simple_fail "Execution terminated with failwith"
+  | Fail res -> ( match Tezos_micheline.Micheline.root @@ Memory_proto_alpha.strings_of_prims res with
+    | Int (_ , i)    -> fail @@ Errors.failwith (Z.to_string i) "int" ()
+    | String (_ , s) -> fail @@ Errors.failwith s "string" ()
+    | Bytes (_, s)   -> fail @@ Errors.failwith (Bytes.to_string s) "bytes" ()
+    | _              -> fail @@ Errors.unknown_failwith_type () )
+
 
 let run_failwith ?options (exp:Michelson.t) (exp_type:ex_ty) : run_failwith_res result =
   let%bind expr = run_expression ?options exp exp_type in
@@ -129,7 +149,7 @@ let run_failwith ?options (exp:Michelson.t) (exp_type:ex_ty) : run_failwith_res 
   | Fail res -> ( match Tezos_micheline.Micheline.root @@ Memory_proto_alpha.strings_of_prims res with
     | Int (_ , i)    -> ok (Failwith_int (Z.to_int i))
     | String (_ , s) -> ok (Failwith_string s)
-    | Bytes (_,b)    -> ok (Failwith_bytes b)
+    | Bytes (_, b)    -> ok (Failwith_bytes b)
     | _              -> simple_fail "Unknown failwith type" )
   | _  -> simple_fail "An error of execution was expected"
 

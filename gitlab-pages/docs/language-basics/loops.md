@@ -36,13 +36,35 @@ that does the fold returns either boolean true or boolean false to indicate
 whether the fold should continue or not. The initial value must match the input
 parameter of the auxillary function, and the auxillary should return type `(bool * input)`.
 
+`continue` and `stop` are provided as syntactic sugar for the return values.
+
 ```cameligo
 let aux (i: int) : bool * int =
   if i < 100 then continue (i + 1) else stop i
 
 let counter_simple (n: int) : int =
-  Loop.fold_while aux_simple n
+  Loop.fold_while aux n
 ```
+
+<!--ReasonLIGO-->
+
+`Loop.fold_while` is a fold operation that takes an initial value of a certain type
+and then iterates on it until a condition is reached. The auxillary function
+that does the fold returns either boolean true or boolean false to indicate
+whether the fold should continue or not. The initial value must match the input
+parameter of the auxillary function, and the auxillary should return type `(bool, input)`.
+
+`continue` and `stop` are provided as syntactic sugar for the return values.
+
+```reasonligo
+let aux = (i: int): (bool, int) =>
+  if (i < 100) {
+    continue(i + 1);
+  } else {
+    stop(i);
+  };
+
+let counter_simple = (n: int): int => Loop.fold_while(aux, n);```
 
 <!--END_DOCUSAURUS_CODE_TABS-->
 

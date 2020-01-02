@@ -1,3 +1,4 @@
+[@@@coverage exclude_file]
 open Types
 open PP_helpers
 open Format

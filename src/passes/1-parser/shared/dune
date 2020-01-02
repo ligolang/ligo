@@ -7,7 +7,11 @@
     simple-utils
     uutf
     getopt
-    zarith)
+    zarith
+  )
+  (preprocess
+    (pps bisect_ppx --conditional)
+  )
   (modules
     Lexer
     LexerLog

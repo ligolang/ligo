@@ -604,6 +604,14 @@ let include_ () : unit result =
   let%bind program = type_file "./contracts/includer.ligo" in
   expect_eq_evaluate program "bar" (e_int 144)
 
+let include_mligo () : unit result =
+  let%bind program = mtype_file "./contracts/includer.mligo" in
+  expect_eq_evaluate program "bar" (e_int 144)
+
+let include_religo () : unit result =
+  let%bind program = retype_file "./contracts/includer.religo" in
+  expect_eq_evaluate program "bar" (e_int 144)
+
 let record_ez_int names n =
   ez_e_record @@ List.map (fun x -> x, e_int n) names
 
@@ -1812,7 +1820,18 @@ let let_in_multi_bind () : unit result =
       (e_string "mynameisbob")
   in ok ()
 
+let bytes_unpack () : unit result =
+  let%bind program = type_file "./contracts/bytes_unpack.ligo" in
+  let%bind () = expect_eq program "id_string" (e_string "teststring") (e_some (e_string "teststring")) in
+  let%bind () = expect_eq program "id_int" (e_int 42) (e_some (e_int 42)) in
+  let open Proto_alpha_utils.Memory_proto_alpha in
+  let addr = Protocol.Alpha_context.Contract.to_b58check @@
+      (List.nth dummy_environment.identities 0).implicit_contract in
+  let%bind () = expect_eq program "id_address" (e_address addr) (e_some (e_address addr)) in
+  ok ()
+
 let main = test_suite "Integration (End to End)" [
+    test "bytes unpack" bytes_unpack ;
     test "key hash" key_hash ;
     test "chain id" chain_id ;
     test "type alias" type_alias ;
@@ -1888,6 +1907,8 @@ let main = test_suite "Integration (End to End)" [
     test "quote declaration" quote_declaration ;
     test "quote declarations" quote_declarations ;
     test "#include directives" include_ ;
+    test "#include directives (mligo)" include_mligo ;
+    test "#include directives (religo)" include_religo ;
     test "counter contract" counter_contract ;
     test "super counter contract" super_counter_contract ;
     test "super counter contract" super_counter_contract_mligo ;
