@@ -92,6 +92,7 @@ let md_files = [
   "/gitlab-pages/docs/language-basics/sets-lists-touples.md";
   "/gitlab-pages/docs/language-basics/operators.md";
   "/gitlab-pages/docs/language-basics/unit-option-pattern-matching.md";
+  "/gitlab-pages/docs/language-basics/loops.md";
   "/gitlab-pages/docs/contributors/big-picture/back-end.md";
   "/gitlab-pages/docs/contributors/big-picture/vendors.md";
   "/gitlab-pages/docs/contributors/big-picture/front-end.md";
