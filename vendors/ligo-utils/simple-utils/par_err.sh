@@ -94,7 +94,7 @@ done
 usage () {
   cat <<EOF
 Usage: $(basename $0) [-h|--help]
-                --par-tokens=<par_tolens>.mly
+                --par-tokens=<par_tokens>.mly
                 --lex-tokens=<lex_tokens>.mli
                 --out=<par_err>.ml
                 <parser>.mly
