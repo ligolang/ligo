@@ -64,7 +64,8 @@ let aux = (i: int): (bool, int) =>
     stop(i);
   };
 
-let counter_simple = (n: int): int => Loop.fold_while(aux, n);```
+let counter_simple = (n: int): int => Loop.fold_while(aux, n);
+```
 
 <!--END_DOCUSAURUS_CODE_TABS-->
 
