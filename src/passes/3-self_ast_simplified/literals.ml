@@ -1,9 +1,17 @@
 open Ast_simplified
 open Trace
+open Proto_alpha_utils
 
 let peephole_expression : expression -> expression result = fun e ->
   let return expression = ok { e with expression } in
   match e.expression with
+  | E_literal (Literal_address s) as e -> (
+    let open Memory_proto_alpha in
+    let%bind (_contract:Protocol.Alpha_context.Contract.t) = 
+      Trace.trace_alpha_tzresult (simple_error ("address \""^s^"\" is not a valid address")) @@
+      Protocol.Alpha_context.Contract.of_b58check s in
+    return e
+    )
   | E_constant (C_BIG_MAP_LITERAL , lst) -> (
       let%bind elt =
         trace_option (simple_error "big_map literal expects a single parameter") @@
