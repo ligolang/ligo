@@ -1812,7 +1812,18 @@ let let_in_multi_bind () : unit result =
       (e_string "mynameisbob")
   in ok ()
 
+let bytes_unpack () : unit result =
+  let%bind program = type_file "./contracts/bytes_unpack.ligo" in
+  let%bind () = expect_eq program "id_string" (e_string "teststring") (e_some (e_string "teststring")) in
+  let%bind () = expect_eq program "id_int" (e_int 42) (e_some (e_int 42)) in
+  let open Proto_alpha_utils.Memory_proto_alpha in
+  let addr = Protocol.Alpha_context.Contract.to_b58check @@
+      (List.nth dummy_environment.identities 0).implicit_contract in
+  let%bind () = expect_eq program "id_address" (e_address addr) (e_some (e_address addr)) in
+  ok ()
+
 let main = test_suite "Integration (End to End)" [
+    test "bytes unpack" bytes_unpack ;
     test "key hash" key_hash ;
     test "chain id" chain_id ;
     test "type alias" type_alias ;
