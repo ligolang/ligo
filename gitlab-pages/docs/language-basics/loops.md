@@ -41,7 +41,7 @@ let aux (i: int) : bool * int =
   if i < 100 then continue (i + 1) else stop i
 
 let counter_simple (n: int) : int =
-  Loop.fold_while aux_simple n
+  Loop.fold_while aux n
 ```
 
 <!--END_DOCUSAURUS_CODE_TABS-->
