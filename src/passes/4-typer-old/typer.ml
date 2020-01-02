@@ -30,11 +30,11 @@ module Errors = struct
     error ~data title message ()
 
   let unbound_variable (e:environment) (n:I.expression_variable) (loc:Location.t) () =
-    let name = Format.asprintf "%a" Stage_common.PP.name n in
-    let title = (thunk ("unbound variable "^name)) in
+    let name () = Format.asprintf "%a" Stage_common.PP.name n in
+    let title = (thunk ("unbound variable "^(name ()))) in
     let message () = "" in
     let data = [
-      ("variable" , fun () -> name) ;
+      ("variable" , name) ;
       ("environment" , fun () -> Format.asprintf "%a" Environment.PP.full_environment e) ;
       ("location" , fun () -> Format.asprintf "%a" Location.pp loc)
     ] in
