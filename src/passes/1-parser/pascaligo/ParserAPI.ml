@@ -4,7 +4,7 @@
 
 module Make (Lexer: Lexer.S with module Token := LexToken)
             (Parser: module type of Parser)
-            (ParErr: module type of ParErr) =
+            (ParErr: sig val message : int -> string end) =
   struct
     module I = Parser.MenhirInterpreter
     module S = MenhirLib.General (* Streams *)
@@ -59,21 +59,24 @@ module Make (Lexer: Lexer.S with module Token := LexToken)
 
     (* Errors *)
 
-    let format_error ?(offsets=true) mode (message, valid_opt, invalid) =
-      let invalid_lexeme = LexToken.to_lexeme invalid in
+    let format_error ?(offsets=true) mode (msg, valid_opt, invalid) =
       let invalid_region = LexToken.to_region invalid in
       let header =
-        "Parse error " ^
-          invalid_region#to_string ~offsets mode in
-      let after =
+        "Parse error " ^ invalid_region#to_string ~offsets mode in
+      let trailer =
         match valid_opt with
-          None -> ","
+          None ->
+            if LexToken.is_eof invalid then ""
+            else let invalid_lexeme = LexToken.to_lexeme invalid in
+                 Printf.sprintf ", before \"%s\"" invalid_lexeme
         | Some valid ->
-            let valid_lexeme = LexToken.to_lexeme valid
-            in Printf.sprintf ", after \"%s\" and" valid_lexeme in
-      let header = header ^ after in
-      let before = Printf.sprintf " before \"%s\"" invalid_lexeme in
-      let header = header ^ before in
-      header ^ (if message = "" then ".\n" else ":\n" ^ message)
+            let valid_lexeme = LexToken.to_lexeme valid in
+            let s = Printf.sprintf ", after \"%s\"" valid_lexeme in
+            if LexToken.is_eof invalid then s
+            else
+              let invalid_lexeme = LexToken.to_lexeme invalid in
+              Printf.sprintf "%s and before \"%s\"" s invalid_lexeme in
+      let header = header ^ trailer in
+      header ^ (if msg = "" then ".\n" else ":\n" ^ msg)
 
   end

@@ -65,7 +65,7 @@ type t =
   (* Comparisons *)
 
 | EQ of Region.t      (* "="  *)
-| EQEQ of Region.t    (* "="  *)
+| EQEQ of Region.t    (* "==" *)
 | NE of Region.t      (* "!=" *)
 | LT of Region.t      (* "<"  *)
 | GT of Region.t      (* ">"  *)
