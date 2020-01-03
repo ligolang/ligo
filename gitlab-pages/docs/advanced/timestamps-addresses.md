@@ -19,7 +19,7 @@ const today: timestamp = now;
 ```
 <!--END_DOCUSAURUS_CODE_TABS-->
 
-> When running code with ligo CLI, option `--predecessor-timestamp` is allowing you to control what `now` returns.
+> When running code with ligo CLI, the option `--predecessor-timestamp` allows you to control what `now` returns.
 
 ### Timestamp arithmetic
 
