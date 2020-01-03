@@ -90,7 +90,7 @@ let predecessor_timestamp =
   let open Arg in
   let info =
     let docv = "PREDECESSOR_TIMESTAMP" in
-    let doc = "$(docv) is the pedecessor_timestamp (now value) the michelson interpreter will use (e.g. '2000-01-01T10:10:10Z')" in
+    let doc = "$(docv) is the pedecessor_timestamp (now value minus one minute) the michelson interpreter will use (e.g. '2000-01-01T10:10:10Z')" in
     info ~docv ~doc ["predecessor-timestamp"] in
   value @@ opt (some string) None info
 
