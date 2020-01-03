@@ -10,7 +10,6 @@ module Option = Simple_utils.Option
 
 open Combinators
 
-type 'a nseq = 'a * 'a list
 let nseq_to_list (hd, tl) = hd :: tl
 let npseq_to_list (hd, tl) = hd :: (List.map snd tl)
 let npseq_to_nelist (hd, tl) = hd, (List.map snd tl)
@@ -23,12 +22,13 @@ module Errors = struct
   let wrong_pattern expected_name actual =
     let title () = "wrong pattern" in
     let message () =
-    match actual with 
-    | Raw.PTuple _ -> "tuple"
-    | Raw.PRecord _ -> "record"
-    | Raw.PList _ -> "list"
-    | Raw.PBytes _ -> "bytes"
-    | _ -> "other"
+      match actual with
+      | Raw.PVar v -> v.value
+      | Raw.PTuple _ -> "tuple"
+      | Raw.PRecord _ -> "record"
+      | Raw.PList _ -> "list"
+      | Raw.PBytes _ -> "bytes"
+      | _ -> "other"
     in
     let data = [
       ("expected", fun () -> expected_name);
@@ -36,15 +36,14 @@ module Errors = struct
     ] in
     error ~data title message
 
-  let multiple_patterns construct (patterns: Raw.pattern list) =
-    let title () = "multiple patterns" in
-    let message () =
-      Format.asprintf "multiple patterns in \"%s\" are not supported yet" construct in
+  let unsuppported_let_in_function (patterns : Raw.pattern list) =
+    let title () = "unsupported 'let ... in' function" in
+    let message () = "defining functions via 'let ... in' is not supported yet" in
     let patterns_loc =
       List.fold_left (fun a p -> Region.cover a (Raw.pattern_to_region p))
         Region.ghost patterns in
     let data = [
-      ("patterns_loc", fun () -> Format.asprintf "%a" Location.pp_lift @@ patterns_loc)
+      ("loc", fun () -> Format.asprintf "%a" Location.pp_lift @@ patterns_loc)
     ] in
     error ~data title message
 
@@ -90,7 +89,7 @@ module Errors = struct
        fun () -> Format.asprintf "%a" Location.pp_lift @@ pattern_loc)
     ] in
     error ~data title message
-
+  
   let unsupported_non_var_pattern p =
     let title () = "pattern is not a variable" in
     let message () =
@@ -154,7 +153,7 @@ let rec pattern_to_var : Raw.pattern -> _ = fun p ->
   | Raw.PPar p -> pattern_to_var p.value.inside
   | Raw.PVar v -> ok v
   | Raw.PWild r -> ok @@ ({ region = r ; value = "_" } : Raw.variable)
-  | _ -> fail @@ wrong_pattern "var" p
+  | _ -> fail @@ wrong_pattern "single var" p
 
 let rec pattern_to_typed_var : Raw.pattern -> _ = fun p ->
   match p with
@@ -166,24 +165,19 @@ let rec pattern_to_typed_var : Raw.pattern -> _ = fun p ->
     )
   | Raw.PVar v -> ok (v , None)
   | Raw.PWild r -> ok (({ region = r ; value = "_" } : Raw.variable) , None)
-  | _ -> fail @@ wrong_pattern "typed variable" p
+  | _ -> fail @@ wrong_pattern "single typed variable" p
 
 let rec expr_to_typed_expr : Raw.expr -> _ = function
   EPar e -> expr_to_typed_expr e.value.inside
 | EAnnot {value={inside=e,_,t; _}; _} -> ok (e, Some t)
 | e -> ok (e , None)
 
-let rec patterns_to_typed_vars : Raw.pattern nseq -> _ = fun ps ->
-  match ps with
-  | pattern, [] ->
-    begin
-    match pattern with
-    | Raw.PPar pp -> patterns_to_typed_vars (pp.value.inside, [])
-    | Raw.PTuple pt -> bind_map_list pattern_to_typed_var (npseq_to_list pt.value)
-    | Raw.PVar _ -> bind_list [pattern_to_typed_var pattern]
-    | other -> (fail @@ wrong_pattern "parenthetical, tuple, or variable" other)
-    end
-  | _ -> fail @@ multiple_patterns "let" (nseq_to_list ps)
+let rec tuple_pattern_to_typed_vars : Raw.pattern -> _ = fun pattern ->
+  match pattern with
+  | Raw.PPar pp -> tuple_pattern_to_typed_vars pp.value.inside
+  | Raw.PTuple pt -> bind_map_list pattern_to_typed_var (npseq_to_list pt.value)
+  | Raw.PVar _ -> bind_list [pattern_to_typed_var pattern]
+  | other -> (fail @@ wrong_pattern "parenthetical, tuple, or variable" other)
 
 let rec simpl_type_expression : Raw.type_expr -> type_expression result = fun te ->
   trace (simple_info "simplifying this type expression...") @@
@@ -274,7 +268,10 @@ let rec simpl_expression :
     Raw.ELetIn e ->
       let Raw.{binding; body; _} = e.value in
       let Raw.{binders; lhs_type; let_rhs; _} = binding in
-      let%bind variables = patterns_to_typed_vars binders in
+      begin match binders with
+      (* let p = rhs in body *)
+      | (p, []) ->
+      let%bind variables = tuple_pattern_to_typed_vars p in
       let%bind ty_opt =
         bind_map_option (fun (_,te) -> simpl_type_expression te) lhs_type in
       let%bind rhs = simpl_expression let_rhs in
@@ -319,6 +316,11 @@ let rec simpl_expression :
       then ok (chain_let_in prep_vars body)
       (* Bind the right hand side so we only evaluate it once *)
       else ok (e_let_in (rhs_b, ty_opt) rhs' (chain_let_in prep_vars body))
+
+      (* let f p1 ps... = rhs in body *)
+      | (f, p1 :: ps) ->
+        fail @@ unsuppported_let_in_function (f :: p1 :: ps)
+      end
   | Raw.EAnnot a ->
       let Raw.{inside=expr, _, type_expr; _}, loc = r_split a in
       let%bind expr' = simpl_expression expr in
@@ -484,6 +486,28 @@ and simpl_fun lamb' : expr result =
   let (lamb , loc) = r_split lamb' in
   let%bind args' =
     let args = nseq_to_list lamb.binders in
+    let args = (* Handle case where we have tuple destructure in params *)
+      match lamb.binders with
+      (* TODO: currently works only if there is one param *)
+      | (Raw.PPar pp, []) ->
+        let pt = pp.value.inside in
+        (match pt with
+        | Raw.PTyped pt ->
+          begin
+          match pt.value.pattern with
+          | Raw.PVar _ -> args
+          | Raw.PTuple _ ->
+            [Raw.PTyped
+               {region=Region.ghost;
+                value=
+                  { pt.value with pattern=
+                                    Raw.PVar {region=Region.ghost;
+                                              value="#P"}}}]
+          | _ -> args
+        end
+        | _ -> args)
+      | _ -> args
+    in
     let%bind p_args = bind_map_list pattern_to_typed_var args in
     let aux ((var : Raw.variable) , ty_opt) =
       match var.value , ty_opt with
@@ -502,7 +526,41 @@ and simpl_fun lamb' : expr result =
   | [ single ] -> (
       let (binder , input_type) =
         (Var.of_name (fst single).value , snd single) in
-      let%bind (body , body_type) = expr_to_typed_expr lamb.body in
+      let%bind body =
+        let original_args = nseq_to_list lamb.binders in
+        let destruct = List.hd original_args in
+        match destruct with (* Handle tuple parameter destructuring *)
+        | Raw.PPar pp ->
+          (match pp.value.inside with
+           | Raw.PTyped pt ->
+             let vars = pt.value in
+             (match vars.pattern with
+             | PTuple vars ->
+               let let_in_binding: Raw.let_binding =
+                 {binders = (PTuple vars, []) ;
+                  lhs_type=None;
+                  eq=Region.ghost;
+                  let_rhs=(Raw.EVar {region=Region.ghost; value="#P"});
+                 }
+               in
+               let let_in: Raw.let_in =
+                 {kwd_let= Region.ghost;
+                  binding= let_in_binding;
+                  kwd_in= Region.ghost;
+                  body= lamb.body;
+                 }
+               in
+               ok (Raw.ELetIn
+                     {
+                       region=Region.ghost;
+                       value=let_in
+                     })
+             | Raw.PVar _ -> ok lamb.body
+             | _ ->  ok lamb.body)
+           | _ ->  ok lamb.body)
+        | _ ->  ok lamb.body
+      in
+      let%bind (body , body_type) = expr_to_typed_expr body in
       let%bind output_type =
         bind_map_option simpl_type_expression body_type in
       let%bind result = simpl_expression body in
@@ -721,7 +779,11 @@ and simpl_cases : type a . (Raw.pattern * a) list -> (a, unit) matching result =
     | PConstr v ->
        let const, pat_opt =
          match v with
-           PConstrApp {value; _} -> value
+           PConstrApp {value; _} -> 
+           (match value with
+           | constr, None ->              
+              constr, Some (PVar {value = "unit"; region = Region.ghost})
+           | _ -> value)
          | PSomeApp {value=region,pat; _} ->
             {value="Some"; region}, Some pat
          | PNone region ->

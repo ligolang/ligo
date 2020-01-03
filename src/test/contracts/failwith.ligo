@@ -31,3 +31,7 @@ function foobar (const i : int) : int is
   | Zero (n) -> i
   | Pos (n) -> (failwith ("waaaa") : int)
   end
+
+function failer(const p : int) : int is block {
+  if p = 1 then failwith("some_string") else skip ;
+} with p

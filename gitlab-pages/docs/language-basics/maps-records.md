@@ -135,21 +135,21 @@ otherwise.
 function iter_op (const m : ledger) : unit is
   block {
     function aggregate (const i : address ; const j : tez) : unit is block
-      { if (j > 100) then skip else failwith("fail") } with unit ;
+      { if (j > 100mutez) then skip else failwith("fail") } with unit ;
   } with map_iter(aggregate, m) ;
 ```
 
 <!--CameLIGO-->
 ```cameligo
 let iter_op (m : ledger) : unit =
-  let assert_eq = fun (i: address) (j: tez) -> assert (j > 100)
+  let assert_eq = fun (i: address) (j: tez) -> assert (j > 100tz)
   in Map.iter assert_eq m
 ```
 
 <!--ReasonLIGO-->
 ```reasonligo
 let iter_op = (m: ledger): unit => {
-  let assert_eq = (i: address, j: tez) => assert(j > 100);
+  let assert_eq = (i: address, j: tez) => assert(j > 100mutez);
   Map.iter(assert_eq, m);
 };
 ```
@@ -162,21 +162,21 @@ let iter_op = (m: ledger): unit => {
 ```pascaligo
 function map_op (const m : ledger) : ledger is
   block {
-    function increment (const i : address ; const j : tez) : tez is block { skip } with j + 1 ;
+    function increment (const i : address ; const j : tez) : tez is block { skip } with j + 1mutez ;
   } with map_map(increment, m) ;
 ```
 
 <!--CameLIGO-->
 ```cameligo
 let map_op (m : ledger) : ledger =
-  let increment = fun (_: address) (j: tez) -> j+1
+  let increment = fun (_: address) (j: tez) -> j + 1tz
   in Map.map increment m
 ```
 
 <!--ReasonLIGO-->
 ```reasonligo
 let map_op = (m: ledger): ledger => {
-  let increment = (ignore: address, j: tez) => j + 1;
+  let increment = (ignore: address, j: tez) => j + 1tz;
   Map.map(increment, m);
 };
 ```
@@ -196,22 +196,22 @@ It eventually returns the result of combining all the elements.
 ```pascaligo
 function fold_op (const m : ledger) : tez is
   block {
-    function aggregate (const i : address ; const j : (tez * tez)) : tez is block { skip } with j.0 + j.1 ;
-  } with map_fold(aggregate, m , 10)
+    function aggregate (const j : tez ; const cur : (address * tez)) : tez is j + cur.1 ;
+  } with map_fold(aggregate, m , 10mutez)
 ```
 
 <!--CameLIGO-->
 ```cameligo
 let fold_op (m : ledger) : ledger =
-  let aggregate = fun (ignore: address) (j: tez * tez) -> j.0 + j.1
-  in Map.fold aggregate m 10
+  let aggregate = fun (j: tez) (cur: address * tez) -> j + cur.1 in
+  Map.fold aggregate m 10tz
 ```
 
 <!--ReasonLIGO-->
 ```reasonligo
 let fold_op = (m: ledger): ledger => {
-  let aggregate = (ignore: address, j: (tez, tez)) => j[0] + j[1];
-  Map.fold(aggregate, m, 10);
+  let aggregate = (j: tez, cur: (address, tez)) => j + cur[1];
+  Map.fold(aggregate, m, 10tz);
 };
 
 ```

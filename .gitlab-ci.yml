@@ -85,6 +85,10 @@ local-dune-job:
     - scripts/install_vendors_deps.sh
     - scripts/build_ligo_local.sh
     - dune runtest
+    - make coverage
+  artifacts:
+    paths:
+      - _coverage_all
 
 # Run a docker build without publishing to the registry
 build-current-docker-image:

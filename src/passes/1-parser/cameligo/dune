@@ -1,27 +1,31 @@
 (ocamllex LexToken)
 
 (menhir
- (merge_into Parser)
- (modules ParToken Parser)
- (flags -la 1 --table --strict --explain --external-tokens LexToken))
+  (merge_into Parser)
+  (modules ParToken Parser)
+  (flags -la 1 --table --strict --explain --external-tokens LexToken))
 
 (library
- (name parser_cameligo)
- (public_name ligo.parser.cameligo)
- (modules AST cameligo Parser ParserLog LexToken)
- (libraries
-   menhirLib
-   parser_shared
-   str
-   simple-utils
-   tezos-utils
-   getopt)
- (flags (:standard -open Simple_utils -open Parser_shared )))
+  (name parser_cameligo)
+  (public_name ligo.parser.cameligo)
+  (modules AST cameligo Parser ParserLog LexToken)
+  (libraries
+     menhirLib
+     parser_shared
+     str
+     simple-utils
+     tezos-utils
+     getopt )
+  (preprocess
+    (pps bisect_ppx --conditional)  )
+  (flags (:standard -open Simple_utils -open Parser_shared)))
 
 (executable
   (name LexerMain)
   (libraries parser_cameligo)
   (modules LexerMain)
+  (preprocess
+    (pps bisect_ppx --conditional))
   (flags (:standard -open Parser_shared -open Parser_cameligo)))
 
 (executable
@@ -29,6 +33,8 @@
   (libraries parser_cameligo)
   (modules
      ParErr ParserAPI ParserMain)
+  (preprocess
+    (pps bisect_ppx --conditional))
   (flags (:standard -open Simple_utils -open Parser_shared -open Parser_cameligo)))
 
 (executable

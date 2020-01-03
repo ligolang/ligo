@@ -927,4 +927,12 @@ let%expect_test _ =
 
 let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; contract "bad_type_operator.ligo" ; "main" ] ;
-  [%expect {| ligo: bad type operator (TO_Map (unit,unit)): |}] ;
+  [%expect {| ligo: bad type operator (TO_Map (unit,unit)): |}]
+
+let%expect_test _ =
+  run_ligo_bad [ "run-function" ; contract "failwith.ligo" ; "failer" ; "1" ] ;
+  [%expect {| ligo: Execution failed:  {"value":"some_string","type":"string"} |}]
+
+let%expect_test _ =
+  run_ligo_bad [ "compile-contract" ; contract "bad_address_format.religo" ; "main" ] ;
+  [%expect {| ligo: in file "bad_address_format.religo", line 2, characters 25-47. Badly formatted address "KT1badaddr":  {"location":"in file \"bad_address_format.religo\", line 2, characters 25-47"} |}]

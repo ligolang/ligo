@@ -1,9 +1,28 @@
 open Ast_simplified
 open Trace
+open Proto_alpha_utils
+
+module Errors = struct
+  let bad_literal_address s_addr loc () =
+    let title = (thunk ("Badly formatted address \""^s_addr^"\"")) in
+    let message () = "" in
+    let data = [
+      ("location" , fun () -> Format.asprintf "%a" Location.pp loc)
+    ] in
+    error ~data title message ()
+end
+open Errors
 
 let peephole_expression : expression -> expression result = fun e ->
   let return expression = ok { e with expression } in
   match e.expression with
+  | E_literal (Literal_address s) as l -> (
+    let open Memory_proto_alpha in
+    let%bind (_contract:Protocol.Alpha_context.Contract.t) = 
+      Trace.trace_alpha_tzresult (bad_literal_address s e.location) @@
+      Protocol.Alpha_context.Contract.of_b58check s in
+    return l
+    )
   | E_constant (C_BIG_MAP_LITERAL , lst) -> (
       let%bind elt =
         trace_option (simple_error "big_map literal expects a single parameter") @@

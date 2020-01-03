@@ -10,11 +10,14 @@
  (public_name ligo.parser.pascaligo)
  (modules AST pascaligo Parser ParserLog LexToken)
  (libraries
-    menhirLib
-    parser_shared
-    hex
-    simple-utils
-    tezos-utils)
+   menhirLib
+   parser_shared
+   hex
+   simple-utils
+   tezos-utils
+ )
+ (preprocess
+   (pps bisect_ppx --conditional))
  (flags (:standard  -open Parser_shared -open Simple_utils)))
 
 (executable
@@ -22,6 +25,8 @@
   (libraries
      hex simple-utils tezos-utils parser_pascaligo)
   (modules LexerMain)
+  (preprocess
+    (pps bisect_ppx --conditional))
   (flags (:standard -open Parser_shared -open Parser_pascaligo)))
 
 (executable
@@ -29,11 +34,15 @@
   (libraries parser_pascaligo)
   (modules
      ParErr ParserAPI ParserMain)
+  (preprocess
+    (pps bisect_ppx --conditional))
   (flags (:standard -open Simple_utils -open Parser_shared -open Parser_pascaligo)))
 
 (executable
   (name Unlexer)
   (libraries str)
+  (preprocess
+    (pps bisect_ppx --conditional))
   (modules Unlexer))
 
 ;; Les deux directives (rule) qui suivent sont pour le dev local.

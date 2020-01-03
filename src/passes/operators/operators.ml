@@ -92,6 +92,7 @@ module Simplify = struct
       | "bytes_concat"    -> ok C_CONCAT
       | "bytes_slice"     -> ok C_SLICE
       | "bytes_pack"      -> ok C_BYTES_PACK
+      | "bytes_unpack"    -> ok C_BYTES_UNPACK
       | "set_empty"       -> ok C_SET_EMPTY
       | "set_mem"         -> ok C_SET_MEM
       | "set_add"         -> ok C_SET_ADD
@@ -243,6 +244,7 @@ module Simplify = struct
       | "AND"                      -> ok C_AND
       | "OR"                       -> ok C_OR
       | "GT"                       -> ok C_GT
+      | "GE"                       -> ok C_GE
       | "LT"                       -> ok C_LT
       | "LE"                       -> ok C_LE
       | "CONS"                     -> ok C_CONS
