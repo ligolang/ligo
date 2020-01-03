@@ -89,7 +89,7 @@ module Errors = struct
        fun () -> Format.asprintf "%a" Location.pp_lift @@ pattern_loc)
     ] in
     error ~data title message
-
+  
   let unsupported_non_var_pattern p =
     let title () = "pattern is not a variable" in
     let message () =
@@ -238,7 +238,7 @@ let rec simpl_type_expression : Raw.type_expr -> type_expression result = fun te
 
 and simpl_list_type_expression (lst:Raw.type_expr list) : type_expression result =
   match lst with
-  | [] -> assert false
+  | [] -> ok @@ t_unit
   | [hd] -> simpl_type_expression hd
   | lst ->
       let%bind lst = bind_map_list simpl_type_expression lst in
@@ -779,7 +779,11 @@ and simpl_cases : type a . (Raw.pattern * a) list -> (a, unit) matching result =
     | PConstr v ->
        let const, pat_opt =
          match v with
-           PConstrApp {value; _} -> value
+           PConstrApp {value; _} -> 
+           (match value with
+           | constr, None ->              
+              constr, Some (PVar {value = "unit"; region = Region.ghost})
+           | _ -> value)
          | PSomeApp {value=region,pat; _} ->
             {value="Some"; region}, Some pat
          | PNone region ->
