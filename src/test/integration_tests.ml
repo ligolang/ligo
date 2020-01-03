@@ -1830,6 +1830,48 @@ let bytes_unpack () : unit result =
   let%bind () = expect_eq program "id_address" (e_address addr) (e_some (e_address addr)) in
   ok ()
 
+let empty_case () : unit result = 
+  let%bind program = type_file "./contracts/empty_case.ligo" in
+  let%bind () =
+    let input _ = e_constructor "Bar" (e_int 1) in
+    let expected _ = e_int 1 in 
+    expect_eq_n program "main" input expected
+  in 
+  let%bind () =
+    let input _ = e_constructor "Baz" (e_unit ()) in
+    let expected _ = e_int (-1) in 
+    expect_eq_n program "main" input expected
+  in 
+  ok ()
+
+let empty_case_mligo () : unit result = 
+  let%bind program = mtype_file "./contracts/empty_case.mligo" in
+  let%bind () =
+    let input _ = e_constructor "Bar" (e_int 1) in
+    let expected _ = e_int 1 in 
+    expect_eq_n program "main" input expected
+  in 
+  let%bind () =
+    let input _ = e_constructor "Baz" (e_unit ()) in
+    let expected _ = e_int (-1) in 
+    expect_eq_n program "main" input expected
+  in 
+  ok ()
+
+let empty_case_religo () : unit result = 
+  let%bind program = retype_file "./contracts/empty_case.religo" in
+  let%bind () =
+    let input _ = e_constructor "Bar" (e_int 1) in
+    let expected _ = e_int 1 in 
+    expect_eq_n program "main" input expected
+  in 
+  let%bind () =
+    let input _ = e_constructor "Baz" (e_unit ()) in
+    let expected _ = e_int (-1) in 
+    expect_eq_n program "main" input expected
+  in 
+  ok ()
+
 let main = test_suite "Integration (End to End)" [
     test "bytes unpack" bytes_unpack ;
     test "key hash" key_hash ;
@@ -1973,4 +2015,7 @@ let main = test_suite "Integration (End to End)" [
     test "type tuple destruct (mligo)" type_tuple_destruct ;
     test "let in multi-bind (mligo)" let_in_multi_bind ;
     test "tuple param destruct (mligo)" tuple_param_destruct ;
+    test "empty case" empty_case ;
+    test "empty case (mligo)" empty_case_mligo ;
+    test "empty case (religo)" empty_case_religo ;
   ]

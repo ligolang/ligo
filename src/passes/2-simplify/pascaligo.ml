@@ -952,6 +952,11 @@ and simpl_cases : type a . (Raw.pattern * a) list -> (a, unit) matching result =
   let get_constr (t: Raw.pattern) =
     match t with
     | PConstr (PConstrApp v) -> (
+      let value = v.value in
+      match value with
+       | constr, None ->        
+        ok (constr.value, "unit")        
+      | _ -> 
        let const, pat_opt = v.value in
         let%bind pat =
           trace_option (unsupported_cst_constr t) @@
