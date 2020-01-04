@@ -1,9 +1,47 @@
 (* Generic parser for LIGO *)
 
+module type PARSER =
+  sig
+    (* The type of tokens, abstract syntax trees and expressions *)
+
+    type token
+    type ast
+    type expr
+
+    (* This exception is raised by the monolithic API functions. *)
+
+    exception Error
+
+    (* The monolithic API. *)
+
+    val interactive_expr :
+      (Lexing.lexbuf -> token) -> Lexing.lexbuf -> expr
+    val contract :
+      (Lexing.lexbuf -> token) -> Lexing.lexbuf -> ast
+
+    module MenhirInterpreter :
+      sig
+        (* The incremental API. *)
+
+        include MenhirLib.IncrementalEngine.INCREMENTAL_ENGINE
+                with type token = token
+    end
+
+    (* The entry point(s) to the incremental API. *)
+
+    module Incremental :
+      sig
+        val interactive_expr :
+          Lexing.position -> expr MenhirInterpreter.checkpoint
+        val contract :
+          Lexing.position -> ast MenhirInterpreter.checkpoint
+      end
+  end
+
 (* Main functor *)
 
-module Make (Lexer: Lexer.S with module Token := LexToken)
-            (Parser: module type of Parser)
+module Make (Lexer: Lexer.S)
+            (Parser: PARSER with type token = Lexer.Token.token)
             (ParErr: sig val message : int -> string end) =
   struct
     module I = Parser.MenhirInterpreter
@@ -31,9 +69,9 @@ module Make (Lexer: Lexer.S with module Token := LexToken)
     (* The parser has suspended itself because of a syntax error. Stop. *)
 
     type message = string
-    type valid   = Lexer.token
-    type invalid = Lexer.token
-    type error = message * valid option * invalid
+    type valid   = Parser.token
+    type invalid = Parser.token
+    type error   = message * valid option * invalid
 
     exception Point of error
 
@@ -48,7 +86,7 @@ module Make (Lexer: Lexer.S with module Token := LexToken)
 
     (* The two Menhir APIs are called from the following two functions. *)
 
-    let incr_contract Lexer.{read; buffer; get_win; close; _} : AST.t =
+    let incr_contract Lexer.{read; buffer; get_win; close; _} : Parser.ast =
       let supplier = I.lexer_lexbuf_to_supplier read buffer
       and failure  = failure get_win in
       let parser   = Parser.Incremental.contract buffer.Lexing.lex_curr_p in
@@ -60,21 +98,21 @@ module Make (Lexer: Lexer.S with module Token := LexToken)
     (* Errors *)
 
     let format_error ?(offsets=true) mode (msg, valid_opt, invalid) =
-      let invalid_region = LexToken.to_region invalid in
+      let invalid_region = Lexer.Token.to_region invalid in
       let header =
         "Parse error " ^ invalid_region#to_string ~offsets mode in
       let trailer =
         match valid_opt with
           None ->
-            if LexToken.is_eof invalid then ""
-            else let invalid_lexeme = LexToken.to_lexeme invalid in
+            if Lexer.Token.is_eof invalid then ""
+            else let invalid_lexeme = Lexer.Token.to_lexeme invalid in
                  Printf.sprintf ", before \"%s\"" invalid_lexeme
         | Some valid ->
-            let valid_lexeme = LexToken.to_lexeme valid in
+            let valid_lexeme = Lexer.Token.to_lexeme valid in
             let s = Printf.sprintf ", after \"%s\"" valid_lexeme in
-            if LexToken.is_eof invalid then s
+            if Lexer.Token.is_eof invalid then s
             else
-              let invalid_lexeme = LexToken.to_lexeme invalid in
+              let invalid_lexeme = Lexer.Token.to_lexeme invalid in
               Printf.sprintf "%s and before \"%s\"" s invalid_lexeme in
       let header = header ^ trailer in
       header ^ (if msg = "" then ".\n" else ":\n" ^ msg)
