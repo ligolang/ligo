@@ -1,39 +1,22 @@
 (** Generic parser API for LIGO *)
 
-module type PARSER =
+module Make (Lexer: Lexer.S with module Token := LexToken)
+            (Parser: module type of Parser)
+            (ParErr: sig val message: int -> string end) :
   sig
-    (* The type of tokens *)
+    (* Monolithic and incremental APIs of Menhir for parsing *)
 
-    type token
-
-    (* This exception is raised by the monolithic API functions *)
-
-    exception Error
-
-    (* The monolithic API *)
-
-    val contract : (Lexing.lexbuf -> token) -> Lexing.lexbuf -> AST.t
-
-    (* The incremental API *)
-
-    module MenhirInterpreter :
-      sig
-        include MenhirLib.IncrementalEngine.INCREMENTAL_ENGINE
-                with type token = token
-      end
-
-    module Incremental :
-      sig
-        val contract : Lexing.position -> AST.t MenhirInterpreter.checkpoint
-      end
-
-  end
-
-(* Main functor *)
-
-module Make (Lexer: Lexer.S)
-            (Parser: PARSER with type token = Lexer.Token.token) :
-  sig
     val mono_contract : (Lexing.lexbuf -> Lexer.token) -> Lexing.lexbuf -> AST.t
     val incr_contract : Lexer.instance -> AST.t
+
+    (* Error handling *)
+
+    type message = string
+    type valid   = Lexer.token
+    type invalid = Lexer.token
+    type error = message * valid option * invalid
+
+    exception Point of error
+
+    val format_error : ?offsets:bool -> [`Byte | `Point] -> error -> string
   end

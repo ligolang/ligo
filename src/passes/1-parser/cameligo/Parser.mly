@@ -566,6 +566,7 @@ core_expr:
   "<int>"                             {               EArith (Int $1) }
 | "<mutez>"                           {             EArith (Mutez $1) }
 | "<nat>"                             {               EArith (Nat $1) }
+| "<bytes>"                           {                     EBytes $1 }
 | "<ident>" | module_field            {                       EVar $1 }
 | projection                          {                      EProj $1 }
 | "<string>"                          {           EString (String $1) }

@@ -13,10 +13,11 @@ type options = <
   verbose : Utils.String.Set.t;
   offsets : bool;
   mode    : [`Byte | `Point];
-  cmd     : command
+  cmd     : command;
+  mono    : bool
 >
 
-let make ~input ~libs ~verbose ~offsets ~mode ~cmd =
+let make ~input ~libs ~verbose ~offsets ~mode ~cmd ~mono =
   object
     method input   = input
     method libs    = libs
@@ -24,6 +25,7 @@ let make ~input ~libs ~verbose ~offsets ~mode ~cmd =
     method offsets = offsets
     method mode    = mode
     method cmd     = cmd
+    method mono    = mono
   end
 
 (** {1 Auxiliary functions} *)
@@ -49,6 +51,7 @@ let help language extension () =
   print "  -q, --quiet            No output, except errors (default)";
   print "      --columns          Columns for source locations";
   print "      --bytes            Bytes for source locations";
+  print "      --mono             Use Menhir monolithic API";
   print "      --verbose=<stages> cmdline, cpp, ast-tokens, ast (colon-separated)";
   print "      --version          Commit hash on stdout";
   print "  -h, --help             This help";
@@ -70,6 +73,7 @@ and verbose  = ref Utils.String.Set.empty
 and input    = ref None
 and libs     = ref []
 and verb_str = ref ""
+and mono     = ref false
 
 let split_at_colon = Str.(split (regexp ":"))
 
@@ -89,6 +93,7 @@ let specs language extension =
     'q',     "quiet",   set quiet true, None;
     noshort, "columns", set columns true, None;
     noshort, "bytes",   set bytes true, None;
+    noshort, "mono",    set mono true, None;
     noshort, "verbose", None, Some add_verbose;
     'h',     "help",    Some (help language extension), None;
     noshort, "version", Some version, None
@@ -124,6 +129,7 @@ let print_opt () =
   printf "quiet    = %b\n" !quiet;
   printf "columns  = %b\n" !columns;
   printf "bytes    = %b\n" !bytes;
+  printf "mono     = %b\b" !mono;
   printf "verbose  = %s\n" !verb_str;
   printf "input    = %s\n" (string_of quote !input);
   printf "libs     = %s\n" (string_of_path !libs)
@@ -151,6 +157,7 @@ let check extension =
   and quiet   = !quiet
   and offsets = not !columns
   and mode    = if !bytes then `Byte else `Point
+  and mono    = !mono
   and verbose = !verbose
   and libs    = !libs in
 
@@ -164,6 +171,7 @@ let check extension =
         printf "quiet    = %b\n" quiet;
         printf "offsets  = %b\n" offsets;
         printf "mode     = %s\n" (if mode = `Byte then "`Byte" else "`Point");
+        printf "mono     = %b\n" mono;
         printf "verbose  = %s\n" !verb_str;
         printf "input    = %s\n" (string_of quote input);
         printf "libs     = %s\n" (string_of_path libs)
@@ -178,7 +186,7 @@ let check extension =
     | false, false, false,  true -> Tokens
     | _ -> abort "Choose one of -q, -c, -u, -t."
 
-  in make ~input ~libs ~verbose ~offsets ~mode ~cmd
+  in make ~input ~libs ~verbose ~offsets ~mode ~cmd ~mono
 
 (** {1 Parsing the command-line options} *)
 

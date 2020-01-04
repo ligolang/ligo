@@ -1,15 +1,13 @@
-(** Driver for the parser of PascaLIGO *)
+(** Driver for the PascaLIGO parser *)
 
 let extension = ".ligo"
 let options = EvalOpt.read "PascaLIGO" extension
 
+open Printf
+
 (** Error printing and exception tracing
 *)
 let () = Printexc.record_backtrace true
-
-(** Auxiliary functions
-*)
-let sprintf = Printf.sprintf
 
 (** Extracting the input file
 *)
@@ -23,17 +21,7 @@ let file =
 let () = Printexc.record_backtrace true
 
 let external_ text =
-  Utils.highlight (Printf.sprintf "External error: %s" text); exit 1;;
-
-type error = SyntaxError
-
-let error_to_string = function
-  SyntaxError -> "Syntax error.\n"
-
-let print_error ?(offsets=true) mode Region.{region; value} ~file =
-  let msg = error_to_string value
-  and reg = region#to_string ~file ~offsets mode in
-  Utils.highlight (sprintf "Parse error %s:\n%s%!" reg msg)
+  Utils.highlight (sprintf "External error: %s" text); exit 1;;
 
 (** {1 Preprocessing the input source and opening the input channels} *)
 
@@ -42,7 +30,7 @@ let print_error ?(offsets=true) mode Region.{region; value} ~file =
 let lib_path =
   match options#libs with
       [] -> ""
-  | libs -> let mk_I dir path = Printf.sprintf " -I %s%s" dir path
+  | libs -> let mk_I dir path = sprintf " -I %s%s" dir path
            in List.fold_right mk_I libs ""
 
 let prefix =
@@ -61,26 +49,26 @@ let pp_input =
 let cpp_cmd =
   match options#input with
     None | Some "-" ->
-      Printf.sprintf "cpp -traditional-cpp%s - > %s"
+      sprintf "cpp -traditional-cpp%s - > %s"
                      lib_path pp_input
   | Some file ->
-      Printf.sprintf "cpp -traditional-cpp%s %s > %s"
+      sprintf "cpp -traditional-cpp%s %s > %s"
                      lib_path file pp_input
 
 let () =
   if Utils.String.Set.mem "cpp" options#verbose
-  then Printf.eprintf "%s\n%!" cpp_cmd;
+  then eprintf "%s\n%!" cpp_cmd;
   if Sys.command cpp_cmd <> 0 then
-    external_ (Printf.sprintf "the command \"%s\" failed." cpp_cmd)
+    external_ (sprintf "the command \"%s\" failed." cpp_cmd)
 
 (** {1 Instanciating the lexer} *)
 
 module Lexer = Lexer.Make (LexToken)
 module Log = LexerLog.Make (Lexer)
-module ParserFront = ParserAPI.Make (Lexer) (Parser)
+module ParserFront = ParserAPI.Make (Lexer) (Parser) (ParErr)
 
 let lexer_inst = Lexer.open_token_stream (Some pp_input)
-let Lexer.{read; buffer; get_pos; get_last; close} = lexer_inst
+let Lexer.{read; buffer; get_win; get_pos; get_last; close} = lexer_inst
 
 and cout = stdout
 
@@ -97,10 +85,10 @@ let tokeniser = read ~log
 
 let () =
   try
-    (* The incremental API *)
-    let ast = ParserFront.incr_contract lexer_inst in
-    (* The monolithic API *)
-    (* let ast = ParserFront.mono_contract tokeniser buffer in *)
+     let ast =
+       if   options#mono
+       then ParserFront.mono_contract tokeniser buffer
+       else ParserFront.incr_contract lexer_inst in
     if Utils.String.Set.mem "ast" options#verbose
     then let buffer = Buffer.create 131 in
          let state = ParserLog.mk_state
@@ -122,14 +110,36 @@ let () =
            Buffer.output_buffer stdout buffer
          end
   with
+    (* Lexing errors *)
     Lexer.Error err ->
       close_all ();
-      Lexer.print_error ~offsets:options#offsets
-                        options#mode err ~file
-  | Parser.Error ->
-      let region = get_last () in
-      let error = Region.{region; value=SyntaxError} in
+      let msg =
+        Lexer.format_error ~offsets:options#offsets
+                           options#mode err ~file
+      in prerr_string msg
+
+  (* Incremental API of Menhir *)
+  | ParserFront.Point point ->
       let () = close_all () in
-      print_error ~offsets:options#offsets
-                  options#mode error ~file
+      let error =
+        ParserFront.format_error ~offsets:options#offsets
+                                 options#mode point
+      in eprintf "\027[31m%s\027[0m%!" error
+
+  (* Monolithic API of Menhir *)
+  | Parser.Error ->
+      let () = close_all () in
+      let invalid, valid_opt =
+        match get_win () with
+          Lexer.Nil ->
+            assert false (* Safe: There is always at least EOF. *)
+        | Lexer.One invalid -> invalid, None
+        | Lexer.Two (invalid, valid) -> invalid, Some valid in
+      let point = "", valid_opt, invalid in
+      let error =
+        ParserFront.format_error ~offsets:options#offsets
+                                 options#mode point
+      in eprintf "\027[31m%s\027[0m%!" error
+
+  (* I/O errors *)
   | Sys_error msg -> Utils.highlight msg

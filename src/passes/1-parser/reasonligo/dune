@@ -8,43 +8,40 @@
 (library
  (name parser_reasonligo)
  (public_name ligo.parser.reasonligo)
- (modules SyntaxError reasonligo LexToken Parser)
+ (modules
+    SyntaxError reasonligo LexToken Parser)
  (libraries
-   menhirLib
-   parser_shared
-   parser_cameligo
-   str
-   simple-utils
-   tezos-utils
-   getopt   
- )
+    menhirLib
+    parser_shared
+    parser_cameligo
+    str
+    simple-utils
+    tezos-utils
+    getopt)
  (preprocess
-   (pps bisect_ppx --conditional)
- )
- (flags (:standard -open Simple_utils -open Parser_shared -open Parser_cameligo ))
-)
+   (pps bisect_ppx --conditional))
+ (flags (:standard -open Simple_utils -open Parser_shared -open Parser_cameligo)))
 
 (executable
   (name LexerMain)
-  (libraries
-   parser_reasonligo)
-  (modules 
-    LexerMain)
+  (libraries parser_reasonligo)
+  (modules LexerMain)
   (preprocess
-   (pps bisect_ppx --conditional)
-  )
-  (flags (:standard -open Parser_shared -open Parser_reasonligo))
-)
+    (pps bisect_ppx --conditional))
+  (flags (:standard -open Parser_shared -open Parser_reasonligo)))
 
 (executable
   (name ParserMain)
   (libraries
-   parser_reasonligo
-   parser_cameligo)
+     parser_reasonligo
+     parser_cameligo)
   (modules
-    ParserAPI
-    ParserMain)
+     ParErr ParserAPI ParserMain)
   (preprocess
-   (pps bisect_ppx --conditional)
-  )
+    (pps bisect_ppx --conditional))
   (flags (:standard -open Simple_utils -open Parser_cameligo -open Parser_shared -open Parser_reasonligo)))
+
+(executable
+  (name Unlexer)
+  (libraries str)
+  (modules Unlexer))

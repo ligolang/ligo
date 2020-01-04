@@ -201,7 +201,7 @@ let to_lexeme = function
 | Int i
 | Nat i
 | Mutez i   -> fst i.Region.value
-| String s  -> s.Region.value
+| String s  -> String.escaped s.Region.value
 | Bytes b   -> fst b.Region.value
 
 | Begin _ -> "begin"

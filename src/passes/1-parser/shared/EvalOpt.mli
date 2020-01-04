@@ -49,7 +49,8 @@ type options = <
   verbose : Utils.String.Set.t;
   offsets : bool;
   mode    : [`Byte | `Point];
-  cmd     : command
+  cmd     : command;
+  mono    : bool
 >
 
 val make :
@@ -58,7 +59,9 @@ val make :
   verbose:Utils.String.Set.t ->
   offsets:bool ->
   mode:[`Byte | `Point] ->
-  cmd:command -> options
+  cmd:command ->
+  mono:bool ->
+  options
 
 (** Parsing the command-line options on stdin.  The first parameter is
    the name of the concrete syntax, e.g., "pascaligo", and the second
