@@ -138,6 +138,8 @@ module type S =
 
     type error
 
+    val error_to_string : error -> string
+
     exception Error of error Region.reg
 
     val print_error :
