@@ -90,7 +90,7 @@ let predecessor_timestamp =
   let open Arg in
   let info =
     let docv = "PREDECESSOR_TIMESTAMP" in
-    let doc = "$(docv) is the pedecessor_timestamp the michelson interpreter transaction will use (e.g. '2000-01-01T10:10:10Z')" in
+    let doc = "$(docv) is the pedecessor_timestamp (now value) the michelson interpreter will use (e.g. '2000-01-01T10:10:10Z')" in
     info ~docv ~doc ["predecessor-timestamp"] in
   value @@ opt (some string) None info
 
@@ -156,7 +156,7 @@ let measure_contract =
   (Term.ret term , Term.info ~doc cmdname)
 
 let compile_parameter =
-  let f source_file entry_point expression syntax display_format michelson_format =
+  let f source_file entry_point expression syntax amount sender source predecessor_timestamp display_format michelson_format =
     toplevel ~display_format @@
     let%bind simplified      = Compile.Of_source.compile source_file (Syntax_name syntax) in
     let%bind typed_prg,state = Compile.Of_simplified.compile simplified in
@@ -174,11 +174,12 @@ let compile_parameter =
     let%bind compiled_param   = Compile.Of_mini_c.aggregate_and_compile_expression mini_c_prg mini_c_param in
     let%bind ()               = Compile.Of_typed.assert_equal_contract_type Check_parameter entry_point typed_prg typed_param in
     let%bind ()               = Compile.Of_michelson.assert_equal_contract_type Check_parameter michelson_prg compiled_param in
-    let%bind value            = Run.evaluate_expression compiled_param.expr compiled_param.expr_ty in
+    let%bind options          = Run.make_dry_run_options {predecessor_timestamp ; amount ; sender ; source } in
+    let%bind value            = Run.evaluate_expression ~options compiled_param.expr compiled_param.expr_ty in
     ok @@ Format.asprintf "%a\n" (Main.Display.michelson_pp michelson_format) value
   in
   let term =
-    Term.(const f $ source_file 0 $ entry_point 1 $ expression "PARAMETER" 2 $ syntax $ display_format $ michelson_code_format) in
+    Term.(const f $ source_file 0 $ entry_point 1 $ expression "PARAMETER" 2 $ syntax $ amount $ sender $ source $ predecessor_timestamp $ display_format $ michelson_code_format) in
   let cmdname = "compile-parameter" in
   let doc = "Subcommand: compile parameters to a michelson expression. The resulting michelson expression can be passed as an argument in a transaction which calls a contract." in
   (Term.ret term , Term.info ~doc cmdname)
@@ -213,7 +214,7 @@ let interpret =
 
 
 let compile_storage =
-  let f source_file entry_point expression syntax display_format michelson_format =
+  let f source_file entry_point expression syntax amount sender source predecessor_timestamp display_format michelson_format =
     toplevel ~display_format @@
     let%bind simplified      = Compile.Of_source.compile source_file (Syntax_name syntax) in
     let%bind typed_prg,state = Compile.Of_simplified.compile simplified in
@@ -231,11 +232,12 @@ let compile_storage =
     let%bind compiled_param   = Compile.Of_mini_c.compile_expression mini_c_param in
     let%bind ()               = Compile.Of_typed.assert_equal_contract_type Check_storage entry_point typed_prg typed_param in
     let%bind ()               = Compile.Of_michelson.assert_equal_contract_type Check_storage michelson_prg compiled_param in
-    let%bind value            = Run.evaluate_expression compiled_param.expr compiled_param.expr_ty in
+    let%bind options          = Run.make_dry_run_options {predecessor_timestamp ; amount ; sender ; source } in
+    let%bind value            = Run.evaluate_expression ~options compiled_param.expr compiled_param.expr_ty in
     ok @@ Format.asprintf "%a\n" (Main.Display.michelson_pp michelson_format) value
   in
   let term =
-    Term.(const f $ source_file 0 $ entry_point 1 $ expression "STORAGE" 2 $ syntax $ display_format $ michelson_code_format) in
+    Term.(const f $ source_file 0 $ entry_point 1 $ expression "STORAGE" 2 $ syntax $ amount $ sender $ source $ predecessor_timestamp $ display_format $ michelson_code_format) in
   let cmdname = "compile-storage" in
   let doc = "Subcommand: compile an initial storage in ligo syntax to a michelson expression. The resulting michelson expression can be passed as an argument in a transaction which originates a contract." in
   (Term.ret term , Term.info ~doc cmdname)

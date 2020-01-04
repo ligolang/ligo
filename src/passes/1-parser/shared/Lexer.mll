@@ -170,6 +170,8 @@ module type S =
 
     type error
 
+    val error_to_string : error -> string
+
     exception Error of error Region.reg
 
     val format_error : ?offsets:bool -> [`Byte | `Point] ->
@@ -379,7 +381,7 @@ module Make (Token: TOKEN) : (S with module Token = Token) =
     | Negative_byte_sequence
     | Broken_string
     | Invalid_character_in_string
-    | Reserved_name
+    | Reserved_name of string
     | Invalid_symbol
     | Invalid_natural
 
@@ -421,8 +423,8 @@ module Make (Token: TOKEN) : (S with module Token = Token) =
     | Invalid_character_in_string ->
         "Invalid character in string.\n\
          Hint: Remove or replace the character.\n"
-    | Reserved_name ->
-        "Reserved named.\n\
+    | Reserved_name s ->
+        "Reserved name: " ^ s ^ ".\n\
          Hint: Change the name.\n"
     | Invalid_symbol ->
         "Invalid symbol.\n\
@@ -520,7 +522,7 @@ module Make (Token: TOKEN) : (S with module Token = Token) =
       let region, lexeme, state = sync state buffer in
       match Token.mk_ident lexeme region with
         Ok token -> token, state
-      | Error Token.Reserved_name -> fail region Reserved_name
+      | Error Token.Reserved_name -> fail region (Reserved_name lexeme)
 
     let mk_constr state buffer =
       let region, lexeme, state = sync state buffer

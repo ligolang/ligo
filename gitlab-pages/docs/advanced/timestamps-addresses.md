@@ -19,6 +19,8 @@ const today: timestamp = now;
 ```
 <!--END_DOCUSAURUS_CODE_TABS-->
 
+> When running code with ligo CLI, the option `--predecessor-timestamp` allows you to control what `now` returns.
+
 ### Timestamp arithmetic
 
 In LIGO, timestamps can be added with `int`(s), this enables you to set e.g. time constraints for your smart contracts like this:
@@ -30,6 +32,8 @@ In LIGO, timestamps can be added with `int`(s), this enables you to set e.g. tim
 const today: timestamp = now;
 const one_day: int = 86400;
 const in_24_hrs: timestamp = today + one_day;
+const some_date: timestamp = ("2000-01-01T10:10:10Z" : timestamp);
+const one_day_later: timestamp = some_date + one_day;
 ```
 <!--END_DOCUSAURUS_CODE_TABS-->
 

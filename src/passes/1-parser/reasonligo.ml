@@ -9,6 +9,16 @@ module SyntaxError = Parser_reasonligo.SyntaxError
 
 module Errors = struct
 
+  let lexer_error (e: Lexer.error AST.reg) =
+    let title () = "lexer error" in
+    let message () = Lexer.error_to_string e.value in
+    let data = [
+      ("parser_loc",
+       fun () -> Format.asprintf "%a" Location.pp_lift @@ e.region
+      )
+    ] in
+    error ~data title message
+
   let wrong_function_arguments expr =
     let title () = "wrong function arguments" in
     let message () = "" in
@@ -65,10 +75,13 @@ let parse (parser: 'a parser) lexbuf =
         let start = Lexing.lexeme_start_p lexbuf in
         let end_ = Lexing.lexeme_end_p lexbuf in
         fail @@ (parser_error start end_)
+      | Lexer.Error e ->
+        fail @@ (lexer_error e)
       | _ ->
+        let _ = Printexc.print_backtrace Pervasives.stdout in
         let start = Lexing.lexeme_start_p lexbuf in
         let end_ = Lexing.lexeme_end_p lexbuf in
-        fail @@ (unrecognized_error start end_)          
+        fail @@ (unrecognized_error start end_)
   in
   close ();
   result
