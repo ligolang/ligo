@@ -198,8 +198,9 @@ let%expect_test _ =
                are 'text' (default), 'json' and 'hex'.
 
            --predecessor-timestamp=PREDECESSOR_TIMESTAMP
-               PREDECESSOR_TIMESTAMP is the pedecessor_timestamp (now value) the
-               michelson interpreter will use (e.g. '2000-01-01T10:10:10Z')
+               PREDECESSOR_TIMESTAMP is the pedecessor_timestamp (now value minus
+               one minute) the michelson interpreter will use (e.g.
+               '2000-01-01T10:10:10Z')
 
            -s SYNTAX, --syntax=SYNTAX (absent=auto)
                SYNTAX is the syntax that will be used. Currently supported
@@ -263,8 +264,9 @@ let%expect_test _ =
                are 'text' (default), 'json' and 'hex'.
 
            --predecessor-timestamp=PREDECESSOR_TIMESTAMP
-               PREDECESSOR_TIMESTAMP is the pedecessor_timestamp (now value) the
-               michelson interpreter will use (e.g. '2000-01-01T10:10:10Z')
+               PREDECESSOR_TIMESTAMP is the pedecessor_timestamp (now value minus
+               one minute) the michelson interpreter will use (e.g.
+               '2000-01-01T10:10:10Z')
 
            -s SYNTAX, --syntax=SYNTAX (absent=auto)
                SYNTAX is the syntax that will be used. Currently supported
@@ -324,8 +326,9 @@ let%expect_test _ =
                `plain' whenever the TERM env var is `dumb' or undefined.
 
            --predecessor-timestamp=PREDECESSOR_TIMESTAMP
-               PREDECESSOR_TIMESTAMP is the pedecessor_timestamp (now value) the
-               michelson interpreter will use (e.g. '2000-01-01T10:10:10Z')
+               PREDECESSOR_TIMESTAMP is the pedecessor_timestamp (now value minus
+               one minute) the michelson interpreter will use (e.g.
+               '2000-01-01T10:10:10Z')
 
            -s SYNTAX, --syntax=SYNTAX (absent=auto)
                SYNTAX is the syntax that will be used. Currently supported
@@ -382,8 +385,9 @@ let%expect_test _ =
                `plain' whenever the TERM env var is `dumb' or undefined.
 
            --predecessor-timestamp=PREDECESSOR_TIMESTAMP
-               PREDECESSOR_TIMESTAMP is the pedecessor_timestamp (now value) the
-               michelson interpreter will use (e.g. '2000-01-01T10:10:10Z')
+               PREDECESSOR_TIMESTAMP is the pedecessor_timestamp (now value minus
+               one minute) the michelson interpreter will use (e.g.
+               '2000-01-01T10:10:10Z')
 
            -s SYNTAX, --syntax=SYNTAX (absent=auto)
                SYNTAX is the syntax that will be used. Currently supported
@@ -435,8 +439,9 @@ let%expect_test _ =
                `plain' whenever the TERM env var is `dumb' or undefined.
 
            --predecessor-timestamp=PREDECESSOR_TIMESTAMP
-               PREDECESSOR_TIMESTAMP is the pedecessor_timestamp (now value) the
-               michelson interpreter will use (e.g. '2000-01-01T10:10:10Z')
+               PREDECESSOR_TIMESTAMP is the pedecessor_timestamp (now value minus
+               one minute) the michelson interpreter will use (e.g.
+               '2000-01-01T10:10:10Z')
 
            -s SYNTAX, --syntax=SYNTAX (absent=auto)
                SYNTAX is the syntax that will be used. Currently supported
