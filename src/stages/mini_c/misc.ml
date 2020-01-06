@@ -129,14 +129,14 @@ let get_entry (lst : program) (name : string) : (expression * int) result =
       then Some decl_expr
       else None
     in
-    List.find_map aux lst
+    List.find_map aux (List.rev lst)
   in
   let entry_index =
     let aux x =
       let (((decl_name , _) , _)) = x in
       Var.equal decl_name (Var.of_name name)
     in
-    List.find_index aux lst
+    (List.length lst) - (List.find_index aux (List.rev lst)) - 1
   in
   ok (entry_expression , entry_index)
 

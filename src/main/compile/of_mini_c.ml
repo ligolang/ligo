@@ -25,9 +25,10 @@ let aggregate_and_compile = fun program form ->
   | ContractForm _ -> compile_contract aggregated'
   | ExpressionForm _ -> compile_expression aggregated'
 
-let aggregate_and_compile_contract = fun program name ->
-  let%bind (exp, _) = get_entry program name in
-  aggregate_and_compile program (ContractForm exp)
+let aggregate_and_compile_contract = fun (program : Types.program) name ->
+  let%bind (exp, idx) = get_entry program name in
+  let program' = List.remove_from idx program in
+  aggregate_and_compile program' (ContractForm exp)
 
 let aggregate_and_compile_expression = fun program exp ->
   aggregate_and_compile program (ExpressionForm exp)
