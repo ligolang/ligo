@@ -1,5 +1,5 @@
 (* Persistent implementation of Union/Find with height-balanced
-   forests and without path compression: O(n*log(n)).
+   forests and no path compression: O(n*log(n)).
 
    In the definition of type [t], the height component is that of the
    source, that is, if [ItemMap.find i m = (j,h)], then [h] is the
@@ -10,7 +10,6 @@ module Make (Item: Partition.Item) =
   struct
 
     type item = Item.t
-    type repr = item   (** Class representatives *)
 
     let equal i j = Item.compare i j = 0
 
@@ -23,18 +22,22 @@ module Make (Item: Partition.Item) =
 
     let empty = ItemMap.empty
 
-    let rec seek (i: item) (p: partition) : repr * height =
+    let rec seek (i: item) (p: partition) : item * height =
       let j, _ as i' = ItemMap.find i p in
       if equal i j then i' else seek j p
 
-    let repr item partition = fst (seek item partition)
+    let repr i p = fst (seek i p)
 
-    let is_equiv (i: item) (j: item) (p: partition) =
-      equal (repr i p) (repr j p)
+    let is_equiv (i: item) (j: item) (p: partition) : bool =
+      try equal (repr i p) (repr j p) with Not_found -> false
 
     let get_or_set (i: item) (p: partition) =
       try seek i p, p with
-        Not_found -> let i' = i,0 in (i', ItemMap.add i i' p)
+        Not_found -> let i' = i,0 in i', ItemMap.add i i' p
+
+    let mem i p = try Some (repr i p) with Not_found -> None
+
+    let repr i p = try repr i p with Not_found -> i
 
     let equiv (i: item) (j: item) (p: partition) : partition =
       let (ri,hi), p = get_or_set i p in
@@ -60,10 +63,13 @@ module Make (Item: Partition.Item) =
     (* Printing *)
 
     let print (p: partition) =
+      let buffer = Buffer.create 80 in
       let print i (j,hi) =
         let _,hj = ItemMap.find j p in
-        Printf.printf "%s,%d -> %s,%d\n"
-          (Item.to_string i) hi (Item.to_string j) hj
-      in ItemMap.iter print p
+        let link =
+          Printf.sprintf "%s,%d -> %s,%d\n"
+                         (Item.to_string i) hi (Item.to_string j) hj
+        in Buffer.add_string buffer link
+      in ItemMap.iter print p; buffer
 
   end
