@@ -190,12 +190,12 @@ let literal ppf (l:literal) = match l with
   | Literal_mutez n -> fprintf ppf "%dmutez" n
   | Literal_string s -> fprintf ppf "%S" s
   | Literal_bytes b -> fprintf ppf "0x%a" Hex.pp (Hex.of_bytes b)
-  | Literal_address s -> fprintf ppf "@%S" s
+  | Literal_address s -> fprintf ppf "address %S" s
   | Literal_operation _ -> fprintf ppf "Operation(...bytes)"
   | Literal_key s      -> fprintf ppf "key %s" s
   | Literal_key_hash s -> fprintf ppf "key_hash %s" s
-  | Literal_signature s -> fprintf ppf "Signature %s" s
-  | Literal_chain_id s -> fprintf ppf "Chain_id %s" s
+  | Literal_signature s -> fprintf ppf "signature %s" s
+  | Literal_chain_id s -> fprintf ppf "chain_id %s" s
 
 let%expect_test _ =
   Format.printf "%a" literal (Literal_bytes (Bytes.of_string "foo")) ;
