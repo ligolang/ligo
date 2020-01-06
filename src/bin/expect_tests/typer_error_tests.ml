@@ -104,4 +104,5 @@ let%expect_test _ =
     * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
     * Check the changelog by running 'ligo changelog' |} ] ;
 
-
+  run_ligo_bad [ "compile-contract" ; "../../test/contracts/negative/id.mligo" ; "main" ] ;
+  [%expect {| ligo: in file "id.mligo", line 45, characters 4-51. Expected a different type: Expected the type option but got the type record[profile -> bytes , owner -> address , controller -> address] |}] ;
