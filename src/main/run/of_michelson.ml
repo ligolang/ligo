@@ -103,7 +103,7 @@ let run_contract ?options (exp:Michelson.t) (exp_type:ex_ty) (input_michelson:Mi
   let exp = Michelson.strip_annots exp in
   let%bind descr =
     Trace.trace_tzresult_lwt (simple_error "error parsing program code") @@
-    Memory_proto_alpha.parse_michelson ~top_level exp ty_stack_before ty_stack_after in
+    Memory_proto_alpha.parse_michelson_fail ~top_level exp ty_stack_before ty_stack_after in
   let open! Memory_proto_alpha.Protocol.Script_interpreter in
   let%bind (Item(output, Empty)) =
     Trace.trace_tzresult_lwt (simple_error "error of execution") @@
@@ -120,7 +120,7 @@ let run_expression ?options (exp:Michelson.t) (exp_type:ex_ty) : run_res result 
   and ty_stack_after = Script_typed_ir.Item_t (exp_type', Empty_t, None) in
   let%bind descr =
     Trace.trace_tzresult_lwt (simple_error "error parsing program code") @@
-    Memory_proto_alpha.parse_michelson ~top_level exp ty_stack_before ty_stack_after in
+    Memory_proto_alpha.parse_michelson_fail ~top_level exp ty_stack_before ty_stack_after in
   let open! Memory_proto_alpha.Protocol.Script_interpreter in
   let%bind res =
     Trace.trace_tzresult_lwt (simple_error "error of execution") @@
