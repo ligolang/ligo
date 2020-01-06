@@ -5,6 +5,11 @@ let rec remove n = function
   | _  :: tl when n = 0 -> tl
   | hd :: tl -> hd :: remove (n - 1) tl
 
+let rec take n = function
+  | [] -> []
+  | _ when n = 0 -> []
+  | hd :: tl -> hd :: take (n - 1) tl
+
 let map ?(acc = []) f lst =
   let rec aux acc f = function
     | [] -> acc
