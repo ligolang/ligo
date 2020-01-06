@@ -1,6 +1,9 @@
 open Cli_expect
 
 let%expect_test _ =
+  run_ligo_bad [ "compile-contract" ; "../../test/contracts/negative/error_type.ligo" ; "main" ] ;
+  [%expect {| ligo: in file "error_type.ligo", line 3, characters 18-28. Adding with wrong types. Expected nat, int or tez. |} ] ;
+
   run_ligo_bad [ "compile-contract" ; "../../test/contracts/negative/error_typer_1.mligo" ; "main" ] ;
   [%expect {|
     ligo: in file "error_typer_1.mligo", line 3, characters 19-27. different type constructors: Expected these two constant type constructors to be the same, but they're different {"a":"string","b":"int"}
