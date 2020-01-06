@@ -72,6 +72,7 @@ print(f"type 'state fold_config =")
 print("  {")
 for t in adts:
   print(f"    {t.name} : {t.name} -> 'state -> ('state continue_fold) -> ({t.newName} * 'state) ;")
+  print(f"    {t.name}_pre_state : {t.name} -> 'state -> 'state ;")
   print(f"    {t.name}_post_state : {t.name} -> {t.newName} -> 'state -> 'state ;")
   for c in t.ctorsOrFields:
     print(f"    {t.name}_{c.name} : {c.type_} -> 'state -> ('state continue_fold) -> ({c.newType} * 'state) ;")
@@ -91,6 +92,7 @@ print("")
 for t in adts:
   print(f"and fold_{t.name} : type state . state fold_config -> {t.name} -> state -> ({t.newName} * state) = fun visitor x state ->")
   print("  let continue_fold : state continue_fold = mk_continue_fold visitor in")
+  print(f"  let state = visitor.{t.name}_pre_state x state in")
   print(f"  let (new_x, state) = visitor.{t.name} x state continue_fold in")
   print(f"  let state = visitor.{t.name}_post_state x new_x state in")
   print("  (new_x, state)")
@@ -120,6 +122,7 @@ for t in adts:
       print(f"{f.newName};", end=' ')
     print("}, state)")
   print("  );")
+  print(f"  {t.name}_pre_state = (fun v state -> ignore v; state) ;")
   print(f"  {t.name}_post_state = (fun v new_v state -> ignore (v, new_v); state) ;")
   for c in t.ctorsOrFields:
     print(f"  {t.name}_{c.name} = (fun v state continue ->", end=' ')
