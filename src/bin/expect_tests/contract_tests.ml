@@ -944,3 +944,11 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; contract "bad_timestamp.ligo" ; "main" ] ;
   [%expect {| ligo: in file "bad_timestamp.ligo", line 5, characters 29-43. Badly formatted timestamp "badtimestamp":  {"location":"in file \"bad_timestamp.ligo\", line 5, characters 29-43"} |}]
+
+let%expect_test _ =
+    run_ligo_good [ "dry-run" ; contract "redeclaration.ligo" ; "main" ; "unit" ; "0" ] ;
+    [%expect {|( [] , 0 ) |}]
+
+let%expect_test _ =
+    run_ligo_good [ "dry-run" ; contract "double_main.ligo" ; "main" ; "unit" ; "0" ] ;
+    [%expect {|( [] , 2 ) |}]
