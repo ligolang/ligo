@@ -7,7 +7,7 @@
     ast_simplified
     ast_typed
     operators
-    union_find
+    partition
   )
   (preprocess
     (pps ppx_let)

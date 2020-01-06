@@ -355,7 +355,7 @@ struct
 
 end
 
-module UF = Union_find.Partition0.Make(TypeVariable)
+module UF = UnionFind.Partition0.Make(TypeVariable)
 
 type unionfind = UF.t
 
