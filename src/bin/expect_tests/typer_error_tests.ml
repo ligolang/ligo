@@ -20,6 +20,6 @@ let%expect_test _ =
   [%expect {| ligo: in file "error_typer_6.mligo", line 1, characters 30-64. different type constructors: Expected these two constant type constructors to be the same, but they're different {"a":"string","b":"bool"} |} ] ;
 
   run_ligo_bad [ "compile-contract" ; "../../test/contracts/negative/error_typer_7.mligo" ; "main" ] ;
-  [%expect {| ligo: in file "error_typer_7.mligo", line 4, characters 17-56. records have different sizes: Expected these two types to be the same, but they're different (both are records, but with a different number of arguments) {"a":"record[b -> string , a -> int]","b":"record[c -> bool , b -> string , a -> int]"} |} ] ;
+  [%expect {| ligo: in file "error_typer_7.mligo", line 4, characters 18-48. records have different sizes: Expected these two types to be the same, but they're different (both are records, but with a different number of arguments) {"a":"record[b -> string , a -> int]","b":"record[c -> bool , b -> string , a -> int]"} |} ] ;
 
 

@@ -32,7 +32,7 @@ module Errors = struct
     in
     let data = [
       ("expected", fun () -> expected_name);
-      ("actual_loc" , fun () -> Format.asprintf "%a" Location.pp_lift @@ Raw.pattern_to_region actual)
+      ("location" , fun () -> Format.asprintf "%a" Location.pp_lift @@ Raw.pattern_to_region actual)
     ] in
     error ~data title message
 
@@ -43,7 +43,7 @@ module Errors = struct
       List.fold_left (fun a p -> Region.cover a (Raw.pattern_to_region p))
         Region.ghost patterns in
     let data = [
-      ("loc", fun () -> Format.asprintf "%a" Location.pp_lift @@ patterns_loc)
+      ("location", fun () -> Format.asprintf "%a" Location.pp_lift @@ patterns_loc)
     ] in
     error ~data title message
 
@@ -52,7 +52,7 @@ module Errors = struct
     let message () =
       Format.asprintf "unknown predefined type \"%s\"" name.Region.value in
     let data = [
-      ("typename_loc",
+      ("location",
        fun () -> Format.asprintf "%a" Location.pp_lift @@ name.Region.region)
     ] in
     error ~data title message
@@ -63,7 +63,7 @@ module Errors = struct
       Format.asprintf "untyped function parameters are not supported yet" in
     let param_loc = var.Region.region in
     let data = [
-      ("param_loc",
+      ("location",
        fun () -> Format.asprintf "%a" Location.pp_lift @@ param_loc)
     ] in
     error ~data title message
@@ -74,7 +74,7 @@ module Errors = struct
       Format.asprintf "tuple patterns are not supported yet" in
     let pattern_loc = Raw.pattern_to_region p in
     let data = [
-      ("pattern_loc",
+      ("location",
        fun () -> Format.asprintf "%a" Location.pp_lift @@ pattern_loc)
     ] in
     error ~data title message
@@ -85,7 +85,7 @@ module Errors = struct
       Format.asprintf "constant constructors are not supported yet" in
     let pattern_loc = Raw.pattern_to_region p in
     let data = [
-      ("pattern_loc",
+      ("location",
        fun () -> Format.asprintf "%a" Location.pp_lift @@ pattern_loc)
     ] in
     error ~data title message
@@ -97,7 +97,7 @@ module Errors = struct
                        are not supported yet" in
     let pattern_loc = Raw.pattern_to_region p in
     let data = [
-      ("pattern_loc",
+      ("location",
        fun () -> Format.asprintf "%a" Location.pp_lift @@ pattern_loc)
     ] in
     error ~data title message
@@ -119,7 +119,7 @@ module Errors = struct
       Format.asprintf "currently, only constructors are supported in patterns" in
     let pattern_loc = Raw.pattern_to_region p in
     let data = [
-      ("pattern_loc",
+      ("location",
        fun () -> Format.asprintf "%a" Location.pp_lift @@ pattern_loc)
     ] in
     error ~data title message
@@ -130,7 +130,7 @@ module Errors = struct
       Format.asprintf "currently, only empty lists and constructors (::) \
                        are supported in patterns" in
     let data = [
-      ("pattern_loc",
+      ("location",
        fun () -> Format.asprintf "%a" Location.pp_lift @@ region)
     ] in
     error ~data title message
