@@ -24,7 +24,7 @@ module Errors = struct
     let message () = "" in
     let expression_loc = AST.expr_to_region expr in
     let data = [
-      ("expression_loc",
+      ("location",
        fun () -> Format.asprintf "%a" Location.pp_lift @@ expression_loc)
     ] in
     error ~data title message
@@ -37,7 +37,7 @@ module Errors = struct
       ~stop:(Pos.from_byte end_) 
     in
     let data = [
-      ("parser_loc", 
+      ("location",
         fun () -> Format.asprintf "%a" Location.pp_lift @@ loc
       )      
     ] in
@@ -51,7 +51,7 @@ module Errors = struct
       ~stop:(Pos.from_byte end_) 
     in
     let data = [
-      ("unrecognized_loc", 
+      ("location",
         fun () -> Format.asprintf "%a" Location.pp_lift @@ loc
       )      
     ] in

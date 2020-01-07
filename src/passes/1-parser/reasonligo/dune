@@ -44,4 +44,6 @@
 (executable
   (name Unlexer)
   (libraries str)
+  (preprocess
+    (pps bisect_ppx --conditional))
   (modules Unlexer))

@@ -14,17 +14,20 @@ Here's how a custom map type is defined:
 <!--DOCUSAURUS_CODE_TABS-->
 <!--Pascaligo-->
 ```pascaligo
-type ledger is map(address, tez);
+type move is (int * int);
+type moveset is map(address, move);
 ```
 
 <!--CameLIGO-->
 ```cameligo
-type ledger = (address, tez) map
+type move = int * int
+type moveset = (address, move) map
 ```
 
 <!--ReasonLIGO-->
 ```reasonligo
-type ledger = map(address, tez);
+type move = (int, int);
+type moveset = map(address, move);
 ```
 
 <!--END_DOCUSAURUS_CODE_TABS-->
@@ -35,9 +38,9 @@ And here's how a map value is populated:
 <!--Pascaligo-->
 
 ```pascaligo
-const ledger: ledger = map
-    ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address) -> 1000mutez;
-    ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address) -> 2000mutez;
+const moves: moveset = map
+    ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address) -> (1, 2);
+    ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address) -> (0, 3);
 end
 ```
 > Notice the `->` between the key and its value and `;` to separate individual map entries.
@@ -47,9 +50,9 @@ end
 <!--CameLIGO-->
 
 ```cameligo
-let ledger: ledger = Map.literal
-  [ (("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address), 1000mutez) ;
-    (("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address), 2000mutez) ;
+let moves: moveset = Map.literal
+  [ (("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address), (1, 2)) ;
+    (("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address), (0, 3)) ;
   ]
 ```
 > Map.literal constructs the map from a list of key-value pair tuples, `(<key>, <value>)`.
@@ -60,10 +63,10 @@ let ledger: ledger = Map.literal
 <!--ReasonLIGO-->
 
 ```reasonligo
-let ledger: ledger =
+let moves: moveset =
   Map.literal([
-    ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address, 1000mutez),
-    ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address, 2000mutez),
+    ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address, (1, 2)),
+    ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address, (0, 3)),
   ]);
 ```
 > Map.literal constructs the map from a list of key-value pair tuples, `(<key>, <value>)`.
@@ -74,25 +77,25 @@ let ledger: ledger =
 
 ### Accessing map values by key
 
-If we want to access a balance from our ledger above, we can use the `[]` operator/accessor to read the associated `tez` value. However, the value we'll get will be wrapped as an optional; in our case `option(tez)`. Here's an example:
+If we want to access a move from our moveset above, we can use the `[]` operator/accessor to read the associated `move` value. However, the value we'll get will be wrapped as an optional; in our case `option(move)`. Here's an example:
 
 <!--DOCUSAURUS_CODE_TABS-->
 <!--Pascaligo-->
 ```pascaligo
-const balance: option(tez) = ledger[("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address)];
+const balance: option(move) = moves[("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address)];
 ```
 
 <!--CameLIGO-->
 
 ```cameligo
-let balance: tez option = Map.find_opt ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address) ledger
+let balance: move option = Map.find_opt ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address) moves
 ```
 
 <!--ReasonLIGO-->
 
 ```reasonligo
-let balance: option(tez) =
-  Map.find_opt("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address, ledger);
+let balance: option(move) =
+  Map.find_opt("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address, moves);
 ```
 <!--END_DOCUSAURUS_CODE_TABS-->
 
@@ -103,23 +106,60 @@ Accessing a value in a map yields an option, however you can also get the value 
 <!--DOCUSAURUS_CODE_TABS-->
 <!--Pascaligo-->
 ```pascaligo
-const balance: tez = get_force(("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address), ledger);
+const balance: move = get_force(("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address), moves);
 ```
 
 <!--CameLIGO-->
 
 ```cameligo
-let balance: tez = Map.find ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address) ledger
+let balance: move = Map.find ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address) moves
 ```
 
 <!--ReasonLIGO-->
 
 ```reasonligo
-let balance: tez =
-  Map.find("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address, ledger);
+let balance: move =
+  Map.find("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address, moves);
 ```
 
 <!--END_DOCUSAURUS_CODE_TABS-->
+
+### Updating the contents of a map
+
+<!--DOCUSAURUS_CODE_TABS-->
+
+<!--Pascaligo-->
+
+The values of a PascaLIGO map can be updated using the ordinary assignment syntax:
+
+```pascaligo
+
+function set_ (var m: moveset) : moveset is 
+  block { 
+    m[("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address)] := (4,9);
+  } with m
+```
+
+<!--Cameligo-->
+
+We can update a map in CameLIGO using the `Map.update` built-in:
+
+```cameligo
+
+let updated_map: moveset = Map.update ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address) (Some (4,9)) moves
+```
+
+<!--Reasonligo-->
+
+We can update a map in ReasonLIGO using the `Map.update` built-in:
+
+```reasonligo
+
+let updated_map: moveset = Map.update(("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address), Some((4,9)), moves);
+```
+
+<!--END_DOCUSAURUS_CODE_TABS-->
+
 
 ### Iteration over the contents of a map
 
@@ -132,24 +172,24 @@ otherwise.
 <!--DOCUSAURUS_CODE_TABS-->
 <!--Pascaligo-->
 ```pascaligo
-function iter_op (const m : ledger) : unit is
+function iter_op (const m : moveset) : unit is
   block {
-    function aggregate (const i : address ; const j : tez) : unit is block
-      { if (j > 100mutez) then skip else failwith("fail") } with unit ;
+    function aggregate (const i : address ; const j : move) : unit is block
+      { if (j.1 > 1) then skip else failwith("fail") } with unit ;
   } with map_iter(aggregate, m) ;
 ```
 
 <!--CameLIGO-->
 ```cameligo
-let iter_op (m : ledger) : unit =
-  let assert_eq = fun (i: address) (j: tez) -> assert (j > 100tz)
+let iter_op (m : moveset) : unit =
+  let assert_eq = fun (i: address) (j: move) -> assert (j.0 > 1)
   in Map.iter assert_eq m
 ```
 
 <!--ReasonLIGO-->
 ```reasonligo
-let iter_op = (m: ledger): unit => {
-  let assert_eq = (i: address, j: tez) => assert(j > 100mutez);
+let iter_op = (m: moveset): unit => {
+  let assert_eq = (i: address, j: move) => assert(j[0] > 1);
   Map.iter(assert_eq, m);
 };
 ```
@@ -160,23 +200,23 @@ let iter_op = (m: ledger): unit => {
 <!--DOCUSAURUS_CODE_TABS-->
 <!--Pascaligo-->
 ```pascaligo
-function map_op (const m : ledger) : ledger is
+function map_op (const m : moveset) : moveset is
   block {
-    function increment (const i : address ; const j : tez) : tez is block { skip } with j + 1mutez ;
+    function increment (const i : address ; const j : move) : move is block { skip } with (j.0, j.1 + 1) ;
   } with map_map(increment, m) ;
 ```
 
 <!--CameLIGO-->
 ```cameligo
-let map_op (m : ledger) : ledger =
-  let increment = fun (_: address) (j: tez) -> j + 1tz
+let map_op (m : moveset) : moveset =
+  let increment = fun (_: address) (j: move) -> (j.0, j.1 + 1)
   in Map.map increment m
 ```
 
 <!--ReasonLIGO-->
 ```reasonligo
-let map_op = (m: ledger): ledger => {
-  let increment = (ignore: address, j: tez) => j + 1tz;
+let map_op = (m: moveset): moveset => {
+  let increment = (ignore: address, j: move) => (j[0], j[1] + 1);
   Map.map(increment, m);
 };
 ```
@@ -194,26 +234,187 @@ It eventually returns the result of combining all the elements.
 <!--DOCUSAURUS_CODE_TABS-->
 <!--Pascaligo-->
 ```pascaligo
-function fold_op (const m : ledger) : tez is
+function fold_op (const m : moveset) : int is
   block {
-    function aggregate (const j : tez ; const cur : (address * tez)) : tez is j + cur.1 ;
-  } with map_fold(aggregate, m , 10mutez)
+    function aggregate (const j : int ; const cur : (address * (int * int))) : int is j + cur.1.1 ;
+  } with map_fold(aggregate, m , 5)
 ```
 
 <!--CameLIGO-->
 ```cameligo
-let fold_op (m : ledger) : ledger =
-  let aggregate = fun (j: tez) (cur: address * tez) -> j + cur.1 in
-  Map.fold aggregate m 10tz
+let fold_op (m : moveset) : moveset =
+  let aggregate = fun (j: int) (cur: address * (int * int)) -> j + cur.1.1 in
+  Map.fold aggregate m 5
 ```
 
 <!--ReasonLIGO-->
 ```reasonligo
-let fold_op = (m: ledger): ledger => {
-  let aggregate = (j: tez, cur: (address, tez)) => j + cur[1];
-  Map.fold(aggregate, m, 10tz);
+let fold_op = (m: moveset): moveset => {
+  let aggregate = (j: int, cur: (address, (int,int))) => j + cur[1][1];
+  Map.fold(aggregate, m, 5);
 };
 
+```
+
+<!--END_DOCUSAURUS_CODE_TABS-->
+
+## Big Maps
+
+Ordinary maps are fine for contracts with a finite lifespan or a bounded number
+of users. For many contracts however, the intention is to have a map hold *many*
+entries, potentially millions or billions. The cost of loading these entries into
+the environment each time a user executes the contract would eventually become
+too expensive were it not for big maps. Big maps are a data structure offered by
+Tezos which handles the scaling concerns for us. In LIGO, the interface for big
+maps is analogous to the one used for ordinary maps. 
+
+Here's how we define a big map:
+
+<!--DOCUSAURUS_CODE_TABS-->
+<!--Pascaligo-->
+```pascaligo
+type move is (int * int);
+type moveset is big_map(address, move);
+```
+
+<!--CameLIGO-->
+```cameligo
+type move = int * int
+type moveset = (address, move) big_map
+```
+
+<!--ReasonLIGO-->
+```reasonligo
+type move = (int, int);
+type moveset = big_map(address, move);
+```
+
+<!--END_DOCUSAURUS_CODE_TABS-->
+
+And here's how a map value is populated:
+
+<!--DOCUSAURUS_CODE_TABS-->
+<!--Pascaligo-->
+
+```pascaligo
+const moves: moveset = big_map
+    ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address) -> (1, 2);
+    ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address) -> (0, 3);
+end
+```
+> Notice the `->` between the key and its value and `;` to separate individual map entries.
+>
+> `("<string value>": address)` means that we type-cast a string into an address.
+
+<!--CameLIGO-->
+
+```cameligo
+let moves: moveset = Big_map.literal
+  [ (("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address), (1, 2)) ;
+    (("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address), (0, 3)) ;
+  ]
+```
+> Big_map.literal constructs the map from a list of key-value pair tuples, `(<key>, <value>)`.
+> Note also the `;` to separate individual map entries.
+>
+> `("<string value>": address)` means that we type-cast a string into an address.
+
+<!--ReasonLIGO-->
+
+```reasonligo
+let moves: moveset =
+  Big_map.literal([
+    ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address, (1, 2)),
+    ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address, (0, 3)),
+  ]);
+```
+> Big_map.literal constructs the map from a list of key-value pair tuples, `(<key>, <value>)`.
+>
+> `("<string value>": address)` means that we type-cast a string into an address.
+
+<!--END_DOCUSAURUS_CODE_TABS-->
+
+### Accessing map values by key
+
+If we want to access a move from our moveset above, we can use the `[]` operator/accessor to read the associated `move` value. However, the value we'll get will be wrapped as an optional; in our case `option(move)`. Here's an example:
+
+<!--DOCUSAURUS_CODE_TABS-->
+<!--Pascaligo-->
+```pascaligo
+const balance: option(move) = moves[("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address)];
+```
+
+<!--CameLIGO-->
+
+```cameligo
+let balance: move option = Big_map.find_opt ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address) moves
+```
+
+<!--ReasonLIGO-->
+
+```reasonligo
+let balance: option(move) =
+  Big_map.find_opt("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address, moves);
+```
+<!--END_DOCUSAURUS_CODE_TABS-->
+
+#### Obtaining a map value forcefully
+
+Accessing a value in a map yields an option, however you can also get the value directly:
+
+<!--DOCUSAURUS_CODE_TABS-->
+<!--Pascaligo-->
+```pascaligo
+const balance: move = get_force(("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address), moves);
+```
+
+<!--CameLIGO-->
+
+```cameligo
+let balance: move = Big_map.find ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address) moves
+```
+
+<!--ReasonLIGO-->
+
+```reasonligo
+let balance: move = Big_map.find("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address, moves);
+```
+
+<!--END_DOCUSAURUS_CODE_TABS-->
+
+### Updating the contents of a big map
+
+<!--DOCUSAURUS_CODE_TABS-->
+
+<!--Pascaligo-->
+
+The values of a PascaLIGO big map can be updated using the ordinary assignment syntax:
+
+```pascaligo
+
+function set_ (var m: moveset) : moveset is 
+  block { 
+    m[("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address)] := (4,9);
+  } with m
+```
+
+<!--Cameligo-->
+
+We can update a big map in CameLIGO using the `Big_map.update` built-in:
+
+```cameligo
+
+let updated_map: moveset =
+  Big_map.update ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address) (Some (4,9)) moves
+```
+
+<!--Reasonligo-->
+
+We can update a big map in ReasonLIGO using the `Big_map.update` built-in:
+
+```reasonligo
+let updated_map: moveset =
+  Big_map.update(("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address), Some((4,9)), moves);
 ```
 
 <!--END_DOCUSAURUS_CODE_TABS-->

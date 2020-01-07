@@ -34,12 +34,12 @@ let rec error_pp ?(dev = false) out (e : error) =
     | x -> [ x ] in
   let location =
     let opt = e |> member "data" |> member "location" |> string in
-    let aux prec cur =
+    let aux cur prec =
       match prec with
       | None -> cur |> member "data" |> member "location" |> string
       | Some s -> Some s
     in
-    match List.fold_left aux opt infos with
+    match List.fold_right aux infos opt with
     | None -> ""
     | Some s -> s ^ ". "
   in
