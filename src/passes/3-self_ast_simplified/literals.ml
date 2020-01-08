@@ -12,6 +12,42 @@ module Errors = struct
     ] in
     error ~data title message ()
 
+  let bad_empty_arity cst loc () =
+    let cst_name = thunk @@ Format.asprintf "%a" Stage_common.PP.constant cst in
+    let title = thunk @@ "Wrong "^(cst_name ())^" literal arity" in
+    let message = thunk @@ (cst_name ())^" literal expects no parameter" in
+    let data = [
+      ("location" , fun () -> Format.asprintf "%a" Location.pp loc) ;
+    ] in
+    error ~data title message ()
+
+  let bad_single_arity cst loc () =
+    let cst_name = thunk @@ Format.asprintf "%a" Stage_common.PP.constant cst in
+    let title = thunk @@ "Wrong "^(cst_name ())^" literal arity" in
+    let message = thunk @@ (cst_name ())^" literal expects a single parameter" in
+    let data = [
+      ("location" , fun () -> Format.asprintf "%a" Location.pp loc) ;
+    ] in
+    error ~data title message ()
+
+  let bad_map_param_type cst loc () =
+    let cst_name = thunk @@ Format.asprintf "%a" Stage_common.PP.constant cst in
+    let title = thunk @@ "Wrong "^(cst_name ())^" literal parameter type" in
+    let message = thunk @@ (cst_name ())^" literal expects a list of pairs as parameter" in
+    let data = [
+      ("location" , fun () -> Format.asprintf "%a" Location.pp loc) ;
+    ] in
+    error ~data title message ()
+
+  let bad_set_param_type cst loc () =
+    let cst_name = thunk @@ Format.asprintf "%a" Stage_common.PP.constant cst in
+    let title = thunk @@ "Wrong "^(cst_name ())^" literal parameter type" in
+    let message = thunk @@ (cst_name ())^" literal expects a list as parameter" in
+    let data = [
+      ("location" , fun () -> Format.asprintf "%a" Location.pp loc) ;
+    ] in
+    error ~data title message ()
+  
 end
 open Errors
 
@@ -32,18 +68,18 @@ let peephole_expression : expression -> expression result = fun e ->
       Protocol.Alpha_context.Contract.of_b58check s in
     return l
     )
-  | E_constant (C_BIG_MAP_LITERAL , lst) -> (
+  | E_constant (C_BIG_MAP_LITERAL as cst, lst) -> (
       let%bind elt =
-        trace_option (simple_error "big_map literal expects a single parameter") @@
+        trace_option (bad_single_arity cst e.location) @@
         List.to_singleton lst
       in
       let%bind lst =
-        trace (simple_error "big_map literal expects a list as parameter") @@
+        trace_strong (bad_map_param_type cst e.location) @@
         get_e_list elt.expression
       in
-      let aux = fun (e : expression) ->
-        trace (simple_error "big_map literal expects a list of pairs as parameter") @@
-        let%bind tpl = get_e_tuple e.expression in
+      let aux = fun (e' : expression) ->
+        trace_strong (bad_map_param_type cst e.location) @@
+        let%bind tpl = get_e_tuple e'.expression in
         let%bind (a , b) =
           trace_option (simple_error "of pairs") @@
           List.to_pair tpl
@@ -53,18 +89,18 @@ let peephole_expression : expression -> expression result = fun e ->
       let%bind pairs = bind_map_list aux lst in
       return @@ E_big_map pairs
     )
-  | E_constant (C_MAP_LITERAL, lst) -> (
+  | E_constant (C_MAP_LITERAL as cst, lst) -> (
       let%bind elt =
-        trace_option (simple_error "map literal expects a single parameter") @@
+        trace_option (bad_single_arity cst e.location) @@
         List.to_singleton lst
       in
       let%bind lst =
-        trace (simple_error "map literal expects a list as parameter") @@
+        trace_strong (bad_map_param_type cst e.location) @@
         get_e_list elt.expression
       in
-      let aux = fun (e : expression) ->
-        trace (simple_error "map literal expects a list of pairs as parameter") @@
-        let%bind tpl = get_e_tuple e.expression in
+      let aux = fun (e' : expression) ->
+        trace_strong (bad_map_param_type cst e.location) @@
+        let%bind tpl = get_e_tuple e'.expression in
         let%bind (a , b) =
           trace_option (simple_error "of pairs") @@
           List.to_pair tpl
@@ -74,34 +110,34 @@ let peephole_expression : expression -> expression result = fun e ->
       let%bind pairs = bind_map_list aux lst in
       return @@ E_map pairs
     )
-  | E_constant (C_BIG_MAP_EMPTY, lst) -> (
+  | E_constant (C_BIG_MAP_EMPTY as cst, lst) -> (
       let%bind () =
-        trace_strong (simple_error "BIG_MAP_EMPTY expects no parameter") @@
+        trace_strong (bad_empty_arity cst e.location) @@
         Assert.assert_list_empty lst
       in
       return @@ E_big_map []
     )
-  | E_constant (C_MAP_EMPTY, lst) -> (
+  | E_constant (C_MAP_EMPTY as cst, lst) -> (
       let%bind () =
-        trace_strong (simple_error "MAP_EMPTY expects no parameter") @@
+        trace_strong (bad_empty_arity cst e.location) @@
         Assert.assert_list_empty lst
       in
       return @@ E_map []
     )
-  | E_constant (C_SET_LITERAL, lst) -> (
+  | E_constant (C_SET_LITERAL as cst, lst) -> (
       let%bind elt =
-        trace_option (simple_error "map literal expects a single parameter") @@
+        trace_option (bad_single_arity cst e.location) @@
         List.to_singleton lst
       in
       let%bind lst =
-        trace (simple_error "map literal expects a list as parameter") @@
+        trace_strong (bad_set_param_type cst e.location) @@
         get_e_list elt.expression
       in
       return @@ E_set lst
     )
-  | E_constant (C_SET_EMPTY, lst) -> (
+  | E_constant (C_SET_EMPTY as cst, lst) -> (
       let%bind () =
-        trace_strong (simple_error "SET_EMPTY expects no parameter") @@
+        trace_strong (bad_empty_arity cst e.location) @@
         Assert.assert_list_empty lst
       in
       return @@ E_set []

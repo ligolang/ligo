@@ -47,9 +47,21 @@ module Errors = struct
     ] in
     error ~data title message
 
-  let parser_error start end_ =
+  let parser_error source (start: Lexing.position) (end_: Lexing.position) lexbuf =
     let title () = "parser error" in
-    let message () = "" in
+    let file = if source = "" then
+        ""
+      else
+        Format.sprintf "In file \"%s|%s\"" start.pos_fname source
+    in
+    let str = Format.sprintf
+              "Parse error at \"%s\" from (%d, %d) to (%d, %d). %s\n"
+              (Lexing.lexeme lexbuf)
+              start.pos_lnum (start.pos_cnum - start.pos_bol)
+              end_.pos_lnum (end_.pos_cnum - end_.pos_bol)
+              file
+    in
+    let message () = str in
     let loc = Region.make
       ~start:(Pos.from_byte start)
       ~stop:(Pos.from_byte end_)
@@ -61,9 +73,21 @@ module Errors = struct
     ] in
     error ~data title message
 
-  let unrecognized_error start end_ =
+  let unrecognized_error source (start: Lexing.position) (end_: Lexing.position) lexbuf =
     let title () = "unrecognized error" in
-    let message () = "" in
+    let file = if source = "" then
+        ""
+      else
+        Format.sprintf "In file \"%s|%s\"" start.pos_fname source
+    in
+    let str = Format.sprintf
+              "Parse error at \"%s\" from (%d, %d) to (%d, %d). %s\n"
+              (Lexing.lexeme lexbuf)
+              start.pos_lnum (start.pos_cnum - start.pos_bol)
+              end_.pos_lnum (end_.pos_cnum - end_.pos_bol)
+              file
+    in
+    let message () = str in
     let loc = Region.make
       ~start:(Pos.from_byte start)
       ~stop:(Pos.from_byte end_)
@@ -81,7 +105,7 @@ open Errors
 
 type 'a parser = (Lexing.lexbuf -> LexToken.token) -> Lexing.lexbuf -> 'a
 
-let parse (parser: 'a parser) lexbuf =
+let parse (parser: 'a parser) source lexbuf =
   let Lexer.{read ; close ; _} = Lexer.open_token_stream None in
   let result =
     try
@@ -95,15 +119,15 @@ let parse (parser: 'a parser) lexbuf =
         fail @@ (reserved_name name)
     | Parser.Error ->
         let start = Lexing.lexeme_start_p lexbuf in
-        let end_ = Lexing.lexeme_end_p lexbuf
-        in fail @@ (parser_error start end_)
+        let end_ = Lexing.lexeme_end_p lexbuf in
+        fail @@ (parser_error source start end_ lexbuf)
     | Lexer.Error e ->
         fail @@ (lexer_error e)
     | _ ->
         let _ = Printexc.print_backtrace Pervasives.stdout in
         let start = Lexing.lexeme_start_p lexbuf in
         let end_ = Lexing.lexeme_end_p lexbuf in
-        fail @@ (unrecognized_error start end_)
+        fail @@ (unrecognized_error source start end_ lexbuf)
   in
   close ();
   result
@@ -122,12 +146,12 @@ let parse_file (source: string) : AST.t result =
     generic_try (simple_error "error opening file") @@
     (fun () -> open_in pp_input) in
   let lexbuf = Lexing.from_channel channel in
-  parse (Parser.contract) lexbuf
+  parse (Parser.contract) source lexbuf
 
 let parse_string (s:string) : AST.t result =
   let lexbuf = Lexing.from_string s in
-  parse (Parser.contract) lexbuf
+  parse (Parser.contract) "" lexbuf
 
 let parse_expression (s:string) : AST.expr result =
   let lexbuf = Lexing.from_string s in
-  parse (Parser.interactive_expr) lexbuf
+  parse (Parser.interactive_expr) "" lexbuf

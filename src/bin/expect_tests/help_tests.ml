@@ -14,6 +14,9 @@ let%expect_test _ =
            Use `ligo COMMAND --help' for help on a single command.
 
     COMMANDS
+           changelog
+               Dump the LIGO changelog to stdout.
+
            compile-contract
                Subcommand: compile a contract.
 
@@ -68,6 +71,9 @@ let%expect_test _ =
            Use `ligo COMMAND --help' for help on a single command.
 
     COMMANDS
+           changelog
+               Dump the LIGO changelog to stdout.
+
            compile-contract
                Subcommand: compile a contract.
 
