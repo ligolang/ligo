@@ -63,7 +63,7 @@ let moves: moveset = Map.literal
 <!--ReasonLIGO-->
 
 ```reasonligo
-let moves: moveset =
+let moves : moveset =
   Map.literal([
     ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address, (1, 2)),
     ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address, (0, 3)),
@@ -82,19 +82,19 @@ If we want to access a move from our moveset above, we can use the `[]` operator
 <!--DOCUSAURUS_CODE_TABS-->
 <!--Pascaligo-->
 ```pascaligo
-const balance: option(move) = moves[("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address)];
+const my_balance : option(move) = moves[("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address)];
 ```
 
 <!--CameLIGO-->
 
 ```cameligo
-let balance: move option = Map.find_opt ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address) moves
+let my_balance : move option = Map.find_opt ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address) moves
 ```
 
 <!--ReasonLIGO-->
 
 ```reasonligo
-let balance: option(move) =
+let my_balance : option(move) =
   Map.find_opt("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address, moves);
 ```
 <!--END_DOCUSAURUS_CODE_TABS-->
@@ -106,19 +106,19 @@ Accessing a value in a map yields an option, however you can also get the value 
 <!--DOCUSAURUS_CODE_TABS-->
 <!--Pascaligo-->
 ```pascaligo
-const balance: move = get_force(("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address), moves);
+const my_balance : move = get_force(("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address), moves);
 ```
 
 <!--CameLIGO-->
 
 ```cameligo
-let balance: move = Map.find ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address) moves
+let my_balance : move = Map.find ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address) moves
 ```
 
 <!--ReasonLIGO-->
 
 ```reasonligo
-let balance: move =
+let my_balance : move =
   Map.find("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address, moves);
 ```
 
@@ -134,8 +134,8 @@ The values of a PascaLIGO map can be updated using the ordinary assignment synta
 
 ```pascaligo
 
-function set_ (var m: moveset) : moveset is 
-  block { 
+function set_ (var m: moveset) : moveset is
+  block {
     m[("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address)] := (4,9);
   } with m
 ```
@@ -266,7 +266,7 @@ entries, potentially millions or billions. The cost of loading these entries int
 the environment each time a user executes the contract would eventually become
 too expensive were it not for big maps. Big maps are a data structure offered by
 Tezos which handles the scaling concerns for us. In LIGO, the interface for big
-maps is analogous to the one used for ordinary maps. 
+maps is analogous to the one used for ordinary maps.
 
 Here's how we define a big map:
 
@@ -341,19 +341,19 @@ If we want to access a move from our moveset above, we can use the `[]` operator
 <!--DOCUSAURUS_CODE_TABS-->
 <!--Pascaligo-->
 ```pascaligo
-const balance: option(move) = moves[("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address)];
+const my_balance : option(move) = moves[("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address)];
 ```
 
 <!--CameLIGO-->
 
 ```cameligo
-let balance: move option = Big_map.find_opt ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address) moves
+let my_balance : move option = Big_map.find_opt ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address) moves
 ```
 
 <!--ReasonLIGO-->
 
 ```reasonligo
-let balance: option(move) =
+let my_balance : option(move) =
   Big_map.find_opt("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address, moves);
 ```
 <!--END_DOCUSAURUS_CODE_TABS-->
@@ -365,19 +365,19 @@ Accessing a value in a map yields an option, however you can also get the value 
 <!--DOCUSAURUS_CODE_TABS-->
 <!--Pascaligo-->
 ```pascaligo
-const balance: move = get_force(("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address), moves);
+const my_balance : move = get_force(("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address), moves);
 ```
 
 <!--CameLIGO-->
 
 ```cameligo
-let balance: move = Big_map.find ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address) moves
+let my_balance : move = Big_map.find ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address) moves
 ```
 
 <!--ReasonLIGO-->
 
 ```reasonligo
-let balance: move = Big_map.find("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address, moves);
+let my_balance : move = Big_map.find("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address, moves);
 ```
 
 <!--END_DOCUSAURUS_CODE_TABS-->
@@ -392,8 +392,8 @@ The values of a PascaLIGO big map can be updated using the ordinary assignment s
 
 ```pascaligo
 
-function set_ (var m: moveset) : moveset is 
-  block { 
+function set_ (var m : moveset) : moveset is
+  block {
     m[("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address)] := (4,9);
   } with m
 ```
@@ -404,7 +404,7 @@ We can update a big map in CameLIGO using the `Big_map.update` built-in:
 
 ```cameligo
 
-let updated_map: moveset =
+let updated_map : moveset =
   Big_map.update ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address) (Some (4,9)) moves
 ```
 
@@ -428,7 +428,7 @@ Here's how a custom record type is defined:
 <!--DOCUSAURUS_CODE_TABS-->
 <!--Pascaligo-->
 ```pascaligo
-type user is record 
+type user is record
     id: nat;
     is_admin: bool;
     name: string;
@@ -479,8 +479,8 @@ let user: user = {
 <!--ReasonLIGO-->
 ```reasonligo
 let user: user = {
-  id: 1n, 
-  is_admin: true, 
+  id: 1n,
+  is_admin: true,
   name: "Alice"
 };
 ```
@@ -494,12 +494,12 @@ If we want to obtain a value from a record for a given key, we can do the follow
 <!--DOCUSAURUS_CODE_TABS-->
 <!--Pascaligo-->
 ```pascaligo
-const is_admin: bool = user.is_admin;
+const is_admin : bool = user.is_admin;
 ```
 
 <!--CameLIGO-->
 ```cameligo
-let is_admin: bool = user.is_admin
+let is_admin : bool = user.is_admin
 ```
 
 <!--ReasonLIGO-->
