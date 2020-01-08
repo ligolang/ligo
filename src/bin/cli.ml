@@ -337,6 +337,14 @@ let compile_expression =
   let doc = "Subcommand: compile to a michelson value." in
   (Term.ret term , Term.info ~doc cmdname)
 
+let dump_changelog =
+  let f display_format = toplevel ~display_format @@ (ok @@ [%blob "../../CHANGELOG.md"]) in
+  let term =
+    Term.(const f $ display_format) in
+  let cmdname = "changelog" in
+  let doc = "Dump the LIGO changelog to stdout." in
+  (Term.ret term , Term.info ~doc cmdname)
+
 let run ?argv () =
   Term.eval_choice ?argv main [
     compile_file ;
@@ -348,4 +356,5 @@ let run ?argv () =
     dry_run ;
     run_function ;
     evaluate_value ;
+    dump_changelog ;
   ]

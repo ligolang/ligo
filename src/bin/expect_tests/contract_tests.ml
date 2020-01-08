@@ -23,10 +23,30 @@ let%expect_test _ =
   [%expect {| (Pair (Pair {} {}) 3) |}] ;
 
   run_ligo_bad [ "compile-storage" ; contract "coase.ligo" ; "main" ; "Buy_single (record card_to_buy = 1n end)" ] ;
-  [%expect {| ligo: different kinds:  {"a":"record[next_id -> nat , cards -> (TO_Map (nat,record[card_pattern -> nat , card_owner -> address])) , card_patterns -> (TO_Map (nat,record[quantity -> nat , coefficient -> mutez]))]","b":"sum[Transfer_single -> record[destination -> address , card_to_transfer -> nat] , Sell_single -> record[card_to_sell -> nat] , Buy_single -> record[card_to_buy -> nat]]"} |}] ;
+  [%expect {|
+    ligo: different kinds:  {"a":"record[next_id -> nat , cards -> (TO_Map (nat,record[card_pattern -> nat , card_owner -> address])) , card_patterns -> (TO_Map (nat,record[quantity -> nat , coefficient -> mutez]))]","b":"sum[Transfer_single -> record[destination -> address , card_to_transfer -> nat] , Sell_single -> record[card_to_sell -> nat] , Buy_single -> record[card_to_buy -> nat]]"}
+
+
+     If you're not sure how to fix this error, you can
+     do one of the following:
+
+    * Visit our documentation: https://ligolang.org/docs/intro/what-and-why/
+    * Ask a question on our Discord: https://discord.gg/9rhYaEt
+    * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
+    * Check the changelog by running 'ligo changelog' |}] ;
 
   run_ligo_bad [ "compile-parameter" ; contract "coase.ligo" ; "main" ; "record cards = (map end : cards) ; card_patterns = (map end : card_patterns) ; next_id = 3n ; end" ] ;
-  [%expect {| ligo: different kinds:  {"a":"sum[Transfer_single -> record[destination -> address , card_to_transfer -> nat] , Sell_single -> record[card_to_sell -> nat] , Buy_single -> record[card_to_buy -> nat]]","b":"record[next_id -> nat , cards -> (TO_Map (nat,record[card_pattern -> nat , card_owner -> address])) , card_patterns -> (TO_Map (nat,record[quantity -> nat , coefficient -> mutez]))]"} |}] ;
+  [%expect {|
+    ligo: different kinds:  {"a":"sum[Transfer_single -> record[destination -> address , card_to_transfer -> nat] , Sell_single -> record[card_to_sell -> nat] , Buy_single -> record[card_to_buy -> nat]]","b":"record[next_id -> nat , cards -> (TO_Map (nat,record[card_pattern -> nat , card_owner -> address])) , card_patterns -> (TO_Map (nat,record[quantity -> nat , coefficient -> mutez]))]"}
+
+
+     If you're not sure how to fix this error, you can
+     do one of the following:
+
+    * Visit our documentation: https://ligolang.org/docs/intro/what-and-why/
+    * Ask a question on our Discord: https://discord.gg/9rhYaEt
+    * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
+    * Check the changelog by running 'ligo changelog' |}] ;
 
   ()
 
@@ -931,19 +951,58 @@ let%expect_test _ =
 
 let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; contract "bad_type_operator.ligo" ; "main" ] ;
-  [%expect {| ligo: bad type operator (TO_Map (unit,unit)): |}]
+  [%expect {|
+    ligo: bad type operator (TO_Map (unit,unit)):
+
+     If you're not sure how to fix this error, you can
+     do one of the following:
+
+    * Visit our documentation: https://ligolang.org/docs/intro/what-and-why/
+    * Ask a question on our Discord: https://discord.gg/9rhYaEt
+    * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
+    * Check the changelog by running 'ligo changelog' |}]
 
 let%expect_test _ =
   run_ligo_bad [ "run-function" ; contract "failwith.ligo" ; "failer" ; "1" ] ;
-  [%expect {| ligo: Execution failed:  {"value":"some_string","type":"string"} |}]
+  [%expect {|
+    ligo: Execution failed:  {"value":"some_string","type":"string"}
+
+
+     If you're not sure how to fix this error, you can
+     do one of the following:
+
+    * Visit our documentation: https://ligolang.org/docs/intro/what-and-why/
+    * Ask a question on our Discord: https://discord.gg/9rhYaEt
+    * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
+    * Check the changelog by running 'ligo changelog' |}]
 
 let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; contract "bad_address_format.religo" ; "main" ] ;
-  [%expect {| ligo: in file "bad_address_format.religo", line 2, characters 25-47. Badly formatted literal: address "KT1badaddr" {"location":"in file \"bad_address_format.religo\", line 2, characters 25-47"} |}]
+  [%expect {|
+    ligo: in file "bad_address_format.religo", line 2, characters 25-47. Badly formatted literal: address "KT1badaddr" {"location":"in file \"bad_address_format.religo\", line 2, characters 25-47"}
+
+
+     If you're not sure how to fix this error, you can
+     do one of the following:
+
+    * Visit our documentation: https://ligolang.org/docs/intro/what-and-why/
+    * Ask a question on our Discord: https://discord.gg/9rhYaEt
+    * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
+    * Check the changelog by running 'ligo changelog' |}]
 
 let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; contract "bad_timestamp.ligo" ; "main" ] ;
-  [%expect {| ligo: in file "bad_timestamp.ligo", line 5, characters 29-43. Badly formatted timestamp "badtimestamp":  {"location":"in file \"bad_timestamp.ligo\", line 5, characters 29-43"} |}]
+  [%expect {|
+    ligo: in file "bad_timestamp.ligo", line 5, characters 29-43. Badly formatted timestamp "badtimestamp":  {"location":"in file \"bad_timestamp.ligo\", line 5, characters 29-43"}
+
+
+     If you're not sure how to fix this error, you can
+     do one of the following:
+
+    * Visit our documentation: https://ligolang.org/docs/intro/what-and-why/
+    * Ask a question on our Discord: https://discord.gg/9rhYaEt
+    * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
+    * Check the changelog by running 'ligo changelog' |}]
 
 let%expect_test _ =
     run_ligo_good [ "dry-run" ; contract "redeclaration.ligo" ; "main" ; "unit" ; "0" ] ;
