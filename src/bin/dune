@@ -7,8 +7,9 @@
   )
   (modules cli cli_helpers version)
   (preprocess
-    (pps ppx_let bisect_ppx --conditional)
+    (pps ppx_let ppx_blob bisect_ppx --conditional)
   )
+  (preprocessor_deps (file ../../CHANGELOG.md))
   (flags (:standard -open Simple_utils))
 )
 
@@ -31,7 +32,7 @@
   (modules runligo)
   (package ligo)
   (preprocess
-    (pps ppx_let bisect_ppx --conditional)
+    (pps ppx_let ppx_blob bisect_ppx --conditional)
   )
   (flags (:standard -open Simple_utils))
 )
