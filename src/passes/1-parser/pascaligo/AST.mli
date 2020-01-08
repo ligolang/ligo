@@ -615,3 +615,9 @@ val lhs_to_region        : lhs -> Region.t
 val rhs_to_region        : rhs -> Region.t
 val if_clause_to_region  : if_clause -> Region.t
 val selection_to_region  : selection -> Region.t
+
+(* Extracting variables from patterns *)
+
+module VSet : Set.S with type elt = string Region.reg
+
+val vars_of_pattern : pattern -> VSet.t

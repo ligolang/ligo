@@ -29,31 +29,31 @@ module Errors = struct
     ] in
     error ~data title message
 
-  let parser_error start end_ = 
+  let parser_error start end_ =
     let title () = "parser error" in
-    let message () = "" in    
-    let loc = Region.make 
-      ~start:(Pos.from_byte start) 
-      ~stop:(Pos.from_byte end_) 
+    let message () = "" in
+    let loc = Region.make
+      ~start:(Pos.from_byte start)
+      ~stop:(Pos.from_byte end_)
     in
     let data = [
       ("location",
         fun () -> Format.asprintf "%a" Location.pp_lift @@ loc
-      )      
+      )
     ] in
     error ~data title message
-  
-  let unrecognized_error start end_ = 
+
+  let unrecognized_error start end_ =
     let title () = "unrecognized error" in
     let message () = "" in
-    let loc = Region.make 
-      ~start:(Pos.from_byte start) 
-      ~stop:(Pos.from_byte end_) 
+    let loc = Region.make
+      ~start:(Pos.from_byte start)
+      ~stop:(Pos.from_byte end_)
     in
     let data = [
       ("location",
         fun () -> Format.asprintf "%a" Location.pp_lift @@ loc
-      )      
+      )
     ] in
     error ~data title message
 
@@ -63,13 +63,13 @@ open Errors
 
 type 'a parser = (Lexing.lexbuf -> LexToken.token) -> Lexing.lexbuf -> 'a
 
-let parse (parser: 'a parser) lexbuf = 
+let parse (parser: 'a parser) lexbuf =
   let Lexer.{read ; close ; _} = Lexer.open_token_stream None in
-  let result = 
+  let result =
     try
       ok (parser read lexbuf)
-    with 
-      | SyntaxError.Error (WrongFunctionArguments e) -> 
+    with
+      | SyntaxError.Error (WrongFunctionArguments e) ->
         fail @@ (wrong_function_arguments e)
       | Parser.Error ->
         let start = Lexing.lexeme_start_p lexbuf in
@@ -86,7 +86,7 @@ let parse (parser: 'a parser) lexbuf =
   close ();
   result
 
-let parse_file (source: string) : AST.t result =  
+let parse_file (source: string) : AST.t result =
   let pp_input =
     let prefix = Filename.(source |> basename |> remove_extension)
     and suffix = ".pp.religo"
@@ -107,5 +107,5 @@ let parse_string (s:string) : AST.t result =
   parse (Parser.contract) lexbuf
 
 let parse_expression (s:string) : AST.expr result =
-  let lexbuf = Lexing.from_string s in  
+  let lexbuf = Lexing.from_string s in
   parse (Parser.interactive_expr) lexbuf

@@ -389,6 +389,15 @@ let lexicon : lexis =
       cstr = build constructors;
       res  = reserved}
 
+(* Keywords *)
+
+type kwd_err = Invalid_keyword
+
+let mk_kwd ident region =
+  match SMap.find_opt ident lexicon.kwd with
+    Some mk_kwd -> Ok (mk_kwd region)
+  |        None -> Error Invalid_keyword
+
 (* Identifiers *)
 
 type ident_err = Reserved_name

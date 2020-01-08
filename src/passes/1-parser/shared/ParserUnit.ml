@@ -14,7 +14,8 @@ module type Pretty =
       state -> ast -> unit
     val mk_state :
       offsets:bool -> mode:[`Point|`Byte] -> buffer:Buffer.t -> state
-    val print_tokens : state -> ast -> unit
+    val print_tokens :
+      state -> ast -> unit
   end
 
 module Make (IO: S)
@@ -85,6 +86,9 @@ module Make (IO: S)
 
     module ParserFront = ParserAPI.Make (Lexer) (Parser) (ParErr)
 
+    let format_error = ParserFront.format_error
+    let short_error = ParserFront.short_error
+
     let lexer_inst = Lexer.open_token_stream (Some pp_input)
     let Lexer.{read; buffer; get_win; get_pos; get_last; close} = lexer_inst
 
@@ -103,7 +107,7 @@ module Make (IO: S)
 
     (* Main *)
 
-    let () =
+    let run () =
       try
         let ast =
           if   IO.options#mono
@@ -131,37 +135,41 @@ module Make (IO: S)
              end
       with
         (* Lexing errors *)
+
         Lexer.Error err ->
-        close_all ();
-        let msg =
-          Lexer.format_error ~offsets:IO.options#offsets
-                             IO.options#mode err ~file
-        in prerr_string msg
+          close_all ();
+          let msg =
+            Lexer.format_error ~offsets:IO.options#offsets
+                               IO.options#mode err ~file
+          in prerr_string msg
 
       (* Incremental API of Menhir *)
+
       | ParserFront.Point point ->
-         let () = close_all () in
-         let error =
-           ParserFront.format_error ~offsets:IO.options#offsets
-                                    IO.options#mode point
-         in eprintf "\027[31m%s\027[0m%!" error
+          let () = close_all () in
+          let error =
+            ParserFront.format_error ~offsets:IO.options#offsets
+                                     IO.options#mode point
+          in eprintf "\027[31m%s\027[0m%!" error
 
       (* Monolithic API of Menhir *)
+
       | Parser.Error ->
-         let () = close_all () in
-         let invalid, valid_opt =
+          let () = close_all () in
+          let invalid, valid_opt =
            match get_win () with
              Lexer.Nil ->
              assert false (* Safe: There is always at least EOF. *)
            | Lexer.One invalid -> invalid, None
            | Lexer.Two (invalid, valid) -> invalid, Some valid in
-         let point = "", valid_opt, invalid in
-         let error =
-           ParserFront.format_error ~offsets:IO.options#offsets
+          let point = "", valid_opt, invalid in
+          let error =
+            ParserFront.format_error ~offsets:IO.options#offsets
                                     IO.options#mode point
-         in eprintf "\027[31m%s\027[0m%!" error
+          in eprintf "\027[31m%s\027[0m%!" error
 
       (* I/O errors *)
+
       | Sys_error msg -> Utils.highlight msg
 
   end

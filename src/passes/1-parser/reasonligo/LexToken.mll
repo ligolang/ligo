@@ -1,4 +1,6 @@
 {
+(* START OF HEADER *)
+
 type lexeme = string
 
 let sprintf = Printf.sprintf
@@ -91,116 +93,117 @@ type t =
 
 | EOF of Region.t (* End of file *)
 
+
 type token = t
 
 let proj_token = function
-  | CAT region -> region, "CAT"
-  | MINUS region -> region, "MINUS"
-  | PLUS region -> region, "PLUS"
-  | SLASH region -> region, "SLASH"
-  | TIMES region -> region, "TIMES"
-  | LPAR region -> region, "LPAR"
-  | RPAR region -> region, "RPAR"
-  | LBRACKET region -> region, "LBRACKET"
-  | RBRACKET region -> region, "RBRACKET"
-  | LBRACE region -> region, "LBRACE"
-  | RBRACE region -> region, "RBRACE"
-  | COMMA region -> region, "COMMA"
-  | SEMI region -> region, "SEMI"
-  | VBAR region -> region, "VBAR"
-  | COLON region -> region, "COLON"
-  | DOT region -> region, "DOT"
-  | ELLIPSIS region -> region, "ELLIPSIS"
-  | WILD region -> region, "WILD"
-  | EQ region -> region, "EQ"
-  | EQEQ region -> region, "EQEQ"
-  | NE region -> region, "NE"
-  | LT region -> region, "LT"
-  | GT region -> region, "GT"
-  | LE region -> region, "LE"
-  | GE region -> region, "GE"
-  | ARROW region -> region, "ARROW"
-  | BOOL_OR region -> region, "BOOL_OR"
-  | BOOL_AND region -> region, "BOOL_AND"
-  | Ident Region.{region; value} ->
+  CAT region -> region, "CAT"
+| MINUS region -> region, "MINUS"
+| PLUS region -> region, "PLUS"
+| SLASH region -> region, "SLASH"
+| TIMES region -> region, "TIMES"
+| LPAR region -> region, "LPAR"
+| RPAR region -> region, "RPAR"
+| LBRACKET region -> region, "LBRACKET"
+| RBRACKET region -> region, "RBRACKET"
+| LBRACE region -> region, "LBRACE"
+| RBRACE region -> region, "RBRACE"
+| COMMA region -> region, "COMMA"
+| SEMI region -> region, "SEMI"
+| VBAR region -> region, "VBAR"
+| COLON region -> region, "COLON"
+| DOT region -> region, "DOT"
+| ELLIPSIS region -> region, "ELLIPSIS"
+| WILD region -> region, "WILD"
+| EQ region -> region, "EQ"
+| EQEQ region -> region, "EQEQ"
+| NE region -> region, "NE"
+| LT region -> region, "LT"
+| GT region -> region, "GT"
+| LE region -> region, "LE"
+| GE region -> region, "GE"
+| ARROW region -> region, "ARROW"
+| BOOL_OR region -> region, "BOOL_OR"
+| BOOL_AND region -> region, "BOOL_AND"
+| Ident Region.{region; value} ->
     region, sprintf "Ident %s" value
-  | Constr Region.{region; value} ->
+| Constr Region.{region; value} ->
     region, sprintf "Constr %s" value
-  | Int Region.{region; value = s,n} ->
+| Int Region.{region; value = s,n} ->
     region, sprintf "Int (\"%s\", %s)" s (Z.to_string n)
-  | Nat Region.{region; value = s,n} ->
+| Nat Region.{region; value = s,n} ->
     region, sprintf "Nat (\"%s\", %s)" s (Z.to_string n)
-  | Mutez Region.{region; value = s,n} ->
+| Mutez Region.{region; value = s,n} ->
     region, sprintf "Mutez (\"%s\", %s)" s (Z.to_string n)
-  | String Region.{region; value} ->
+| String Region.{region; value} ->
     region, sprintf "String %s" value
-  | Bytes Region.{region; value = s,b} ->
+| Bytes Region.{region; value = s,b} ->
     region,
     sprintf "Bytes (\"%s\", \"0x%s\")"
       s (Hex.to_string b)
-  | Else region -> region, "Else"
-  | False region -> region, "False"
-  | If region -> region, "If"
-  | Let region -> region, "Let"
-  | Switch region -> region, "Switch"
-  | Mod region -> region, "Mod"
-  | NOT region -> region, "!"
-  | Or region -> region, "Or"
-  | True region -> region, "True"
-  | Type region -> region, "Type"
-  | C_None  region -> region, "C_None"
-  | C_Some  region -> region, "C_Some"
-  | EOF region -> region, "EOF"
+| Else region -> region, "Else"
+| False region -> region, "False"
+| If region -> region, "If"
+| Let region -> region, "Let"
+| Switch region -> region, "Switch"
+| Mod region -> region, "Mod"
+| NOT region -> region, "!"
+| Or region -> region, "Or"
+| True region -> region, "True"
+| Type region -> region, "Type"
+| C_None  region -> region, "C_None"
+| C_Some  region -> region, "C_Some"
+| EOF region -> region, "EOF"
 
 let to_lexeme = function
-  | CAT _ -> "++"
-  | MINUS _ -> "-"
-  | PLUS _ -> "+"
-  | SLASH _ -> "/"
-  | TIMES _ -> "*"
-  | LPAR _ -> "("
-  | RPAR _ -> ")"
-  | LBRACKET _ -> "["
-  | RBRACKET _ -> "]"
-  | LBRACE _ -> "{"
-  | RBRACE _ -> "}"
-  | COMMA _ -> ","
-  | SEMI _ -> ";"
-  | VBAR _ -> "|"
-  | COLON _ -> ":"
-  | DOT _ -> "."
-  | ELLIPSIS _ -> "..."
-  | WILD _ -> "_"
-  | EQ _ -> "="
-  | EQEQ _ -> "=="
-  | NE _ -> "!="
-  | LT _ -> "<"
-  | GT _ -> ">"
-  | LE _ -> "<="
-  | GE _ -> ">="
-  | ARROW _ -> "=>"
-  | BOOL_OR _ -> "||"
-  | BOOL_AND _ -> "&&"
-  | Ident id -> id.Region.value
-  | Constr id -> id.Region.value
-  | Int i
-  | Nat i
-  | Mutez i -> fst i.Region.value
-  | String s -> s.Region.value
-  | Bytes b -> fst b.Region.value
-  | Else _ -> "else"
-  | False _ -> "false"
-  | If _ -> "if"
-  | Let _ -> "let"
-  | Mod _ -> "mod"
-  | NOT _ -> "!"
-  | Or _ -> "or"
-  | Switch _ -> "switch"
-  | True _ -> "true"
-  | Type _ -> "type"
-  | C_None  _ -> "None"
-  | C_Some  _ -> "Some"
-  | EOF _ -> ""
+  CAT _ -> "++"
+| MINUS _ -> "-"
+| PLUS _ -> "+"
+| SLASH _ -> "/"
+| TIMES _ -> "*"
+| LPAR _ -> "("
+| RPAR _ -> ")"
+| LBRACKET _ -> "["
+| RBRACKET _ -> "]"
+| LBRACE _ -> "{"
+| RBRACE _ -> "}"
+| COMMA _ -> ","
+| SEMI _ -> ";"
+| VBAR _ -> "|"
+| COLON _ -> ":"
+| DOT _ -> "."
+| ELLIPSIS _ -> "..."
+| WILD _ -> "_"
+| EQ _ -> "="
+| EQEQ _ -> "=="
+| NE _ -> "!="
+| LT _ -> "<"
+| GT _ -> ">"
+| LE _ -> "<="
+| GE _ -> ">="
+| ARROW _ -> "=>"
+| BOOL_OR _ -> "||"
+| BOOL_AND _ -> "&&"
+| Ident id -> id.Region.value
+| Constr id -> id.Region.value
+| Int i
+| Nat i
+| Mutez i -> fst i.Region.value
+| String s -> s.Region.value
+| Bytes b -> fst b.Region.value
+| Else _ -> "else"
+| False _ -> "false"
+| If _ -> "if"
+| Let _ -> "let"
+| Mod _ -> "mod"
+| NOT _ -> "!"
+| Or _ -> "or"
+| Switch _ -> "switch"
+| True _ -> "true"
+| Type _ -> "type"
+| C_None  _ -> "None"
+| C_Some  _ -> "Some"
+| EOF _ -> ""
 
 let to_string token ?(offsets=true) mode =
   let region, val_str = proj_token token in
@@ -216,20 +219,20 @@ type ident_err = Reserved_name
 type   nat_err = Invalid_natural
                | Non_canonical_zero_nat
 type   sym_err = Invalid_symbol
+type   kwd_err = Invalid_keyword
 
 (* LEXIS *)
 
 let keywords = [
-  (fun reg -> Else  reg);
-  (fun reg -> False reg);
-  (fun reg -> If    reg);
-  (fun reg -> Let   reg);
+  (fun reg -> Else   reg);
+  (fun reg -> False  reg);
+  (fun reg -> If     reg);
+  (fun reg -> Let    reg);
   (fun reg -> Switch reg);
-  (fun reg -> Mod   reg);
-  (fun reg -> Or    reg);
-  (fun reg -> True  reg);
-  (fun reg -> Type  reg);
-]
+  (fun reg -> Mod    reg);
+  (fun reg -> Or     reg);
+  (fun reg -> True   reg);
+  (fun reg -> Type   reg)]
 
 (* See: http://caml.inria.fr/pub/docs/manual-ocaml/lex.html#sec86 and
    https://github.com/facebook/reason/blob/master/src/reason-parser/reason_parser.mly *)
@@ -305,6 +308,14 @@ let lexicon : lexis =
       cstr = build constructors;
       res  = reserved}
 
+(* Keywords *)
+
+let mk_kwd ident region =
+  match SMap.find_opt ident lexicon.kwd with
+    Some mk_kwd -> Ok (mk_kwd region)
+  |        None -> Error Invalid_keyword
+
+(* END OF HEADER *)
 }
 
 (* START LEXER DEFINITION *)
@@ -380,40 +391,47 @@ let mk_mutez lexeme region =
 
 let eof region = EOF region
 
+(* Making symbols *)
+
 let mk_sym lexeme region =
   match lexeme with
-    "-"   ->    Ok (MINUS     region)
-  | "+"   ->    Ok (PLUS      region)
-  | "/"   ->    Ok (SLASH     region)
-  | "*"   ->    Ok (TIMES     region)
-  | "["   ->    Ok (LBRACKET  region)
-  | "]"   ->    Ok (RBRACKET  region)
-  | "{"   ->    Ok (LBRACE    region)
-  | "}"  ->     Ok (RBRACE    region)
-  | ","  ->     Ok (COMMA     region)
-  | ";"   ->    Ok (SEMI      region)
-  | "|"   ->    Ok (VBAR      region)
-  | ":"   ->    Ok (COLON     region)
-  | "."  ->     Ok (DOT       region)
-  | "_"   ->    Ok (WILD      region)
-  | "="  ->     Ok (EQ        region)
-  | "!=" ->     Ok (NE        region)
-  | "<"   ->    Ok (LT        region)
-  | ">"   ->    Ok (GT        region)
-  | "<="   ->   Ok (LE        region)
-  | ">="   ->   Ok (GE        region)
-  | "||"   ->   Ok (BOOL_OR   region)
-  | "&&"   ->   Ok (BOOL_AND  region)
-  | "("    ->   Ok (LPAR      region)
-  | ")"    ->   Ok (RPAR      region)
+    "-"  -> Ok (MINUS     region)
+  | "+"  -> Ok (PLUS      region)
+  | "/"  -> Ok (SLASH     region)
+  | "*"  -> Ok (TIMES     region)
+  | "["  -> Ok (LBRACKET  region)
+  | "]"  -> Ok (RBRACKET  region)
+  | "{"  -> Ok (LBRACE    region)
+  | "}"  -> Ok (RBRACE    region)
+  | ","  -> Ok (COMMA     region)
+  | ";"  -> Ok (SEMI      region)
+  | "|"  -> Ok (VBAR      region)
+  | ":"  -> Ok (COLON     region)
+  | "."  -> Ok (DOT       region)
+  | "_"  -> Ok (WILD      region)
+  | "="  -> Ok (EQ        region)
+  | "!=" -> Ok (NE        region)
+  | "<"  -> Ok (LT        region)
+  | ">"  -> Ok (GT        region)
+  | "<=" -> Ok (LE        region)
+  | ">=" -> Ok (GE        region)
+  | "||" -> Ok (BOOL_OR   region)
+  | "&&" -> Ok (BOOL_AND  region)
+  | "("  -> Ok (LPAR      region)
+  | ")"  -> Ok (RPAR      region)
 
   (* Symbols specific to ReasonLIGO *)
-  | "..."->     Ok (ELLIPSIS region)
-  | "=>"    ->  Ok (ARROW     region)
-  | "=="  ->    Ok (EQEQ      region)
-  | "!"    ->   Ok (NOT       region)
-  | "++"   ->   Ok (CAT       region)
-  |  _  ->  Error Invalid_symbol
+
+  | "..." ->  Ok (ELLIPSIS  region)
+  | "=>"  ->  Ok (ARROW     region)
+  | "=="  ->  Ok (EQEQ      region)
+  | "!"   ->  Ok (NOT       region)
+  | "++"  ->  Ok (CAT       region)
+
+  (* Invalid symbols *)
+
+  |     _ ->  Error Invalid_symbol
+
 
 (* Identifiers *)
 
@@ -448,26 +466,26 @@ let is_ident = function
 |       _ -> false
 
 let is_kwd = function
-  | Else _
-  | False _
-  | If _
-  | Let _
-  | Switch _
-  | Mod _
-  | Or _
-  | True _
-  | Type _
-  | _ -> false
+  Else _
+| False _
+| If _
+| Let _
+| Switch _
+| Mod _
+| Or _
+| True _
+| Type _ -> true
+| _ -> false
 
 let is_constr = function
-| Constr  _
+  Constr _
 | Ident _
 | False _
-| True _    -> true
-| _         -> false
+| True _ -> true
+| _ -> false
 
 let is_sym = function
-| CAT _
+  CAT _
 | MINUS _
 | PLUS _
 | SLASH _

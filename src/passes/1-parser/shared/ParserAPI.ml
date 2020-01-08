@@ -1,5 +1,7 @@
 (* Generic parser for LIGO *)
 
+module Region = Simple_utils.Region
+
 module type PARSER =
   sig
     (* The type of tokens, abstract syntax trees and expressions *)
@@ -104,17 +106,22 @@ module Make (Lexer: Lexer.S)
       let trailer =
         match valid_opt with
           None ->
-            if Lexer.Token.is_eof invalid then ""
-            else let invalid_lexeme = Lexer.Token.to_lexeme invalid in
-                 Printf.sprintf ", before \"%s\"" invalid_lexeme
+          if Lexer.Token.is_eof invalid then ""
+          else let invalid_lexeme = Lexer.Token.to_lexeme invalid in
+               Printf.sprintf ", before \"%s\"" invalid_lexeme
         | Some valid ->
-            let valid_lexeme = Lexer.Token.to_lexeme valid in
-            let s = Printf.sprintf ", after \"%s\"" valid_lexeme in
-            if Lexer.Token.is_eof invalid then s
-            else
-              let invalid_lexeme = Lexer.Token.to_lexeme invalid in
-              Printf.sprintf "%s and before \"%s\"" s invalid_lexeme in
+           let valid_lexeme = Lexer.Token.to_lexeme valid in
+           let s = Printf.sprintf ", after \"%s\"" valid_lexeme in
+           if Lexer.Token.is_eof invalid then s
+           else
+             let invalid_lexeme = Lexer.Token.to_lexeme invalid in
+             Printf.sprintf "%s and before \"%s\"" s invalid_lexeme in
       let header = header ^ trailer in
       header ^ (if msg = "" then ".\n" else ":\n" ^ msg)
 
+    let short_error ?(offsets=true) mode msg (invalid_region: Region.t) =
+      let () = assert (not (invalid_region#is_ghost)) in
+      let header =
+        "Parse error " ^ invalid_region#to_string ~offsets mode in
+      header ^ (if msg = "" then ".\n" else ":\n" ^ msg)
   end

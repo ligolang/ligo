@@ -5,8 +5,9 @@ module AST = Parser_pascaligo.AST
 module ParserLog = Parser_pascaligo.ParserLog
 module LexToken = Parser_pascaligo.LexToken
 module Lexer = Lexer.Make(LexToken)
+module SyntaxError = Parser_pascaligo.SyntaxError
 
-module Errors = struct 
+module Errors = struct
 
   let lexer_error (e: Lexer.error AST.reg) =
     let title () = "lexer error" in
@@ -18,31 +19,59 @@ module Errors = struct
     ] in
     error ~data title message
 
-  let parser_error start end_ = 
-    let title () = "parser error" in
-    let message () = "" in    
-    let loc = Region.make 
-      ~start:(Pos.from_byte start) 
-      ~stop:(Pos.from_byte end_) 
-    in
+  let reserved_name Region.{value; region} =
+    let title () = Printf.sprintf "reserved name \"%s\"" value in
+    let message () = "" in
     let data = [
-      ("parser_loc", 
-        fun () -> Format.asprintf "%a" Location.pp_lift @@ loc
-      )      
+      ("location",
+       fun () -> Format.asprintf "%a" Location.pp_lift @@ region)
     ] in
     error ~data title message
-  
-  let unrecognized_error start end_ = 
-    let title () = "unrecognized error" in
+
+  let duplicate_parameter Region.{value; region} =
+    let title () = Printf.sprintf "duplicate parameter \"%s\"" value in
     let message () = "" in
-    let loc = Region.make 
-      ~start:(Pos.from_byte start) 
-      ~stop:(Pos.from_byte end_) 
+    let data = [
+      ("location",
+       fun () -> Format.asprintf "%a" Location.pp_lift @@ region)
+    ] in
+    error ~data title message
+
+  let duplicate_variant Region.{value; region} =
+    let title () = Printf.sprintf "duplicate variant \"%s\" in this\
+                                   type declaration" value in
+    let message () = "" in
+    let data = [
+      ("location",
+       fun () -> Format.asprintf "%a" Location.pp_lift @@ region)
+    ] in
+    error ~data title message
+
+  let parser_error start end_ =
+    let title () = "parser error" in
+    let message () = "" in
+    let loc = Region.make
+      ~start:(Pos.from_byte start)
+      ~stop:(Pos.from_byte end_)
     in
     let data = [
-      ("unrecognized_loc", 
+      ("parser_loc",
         fun () -> Format.asprintf "%a" Location.pp_lift @@ loc
-      )      
+      )
+    ] in
+    error ~data title message
+
+  let unrecognized_error start end_ =
+    let title () = "unrecognized error" in
+    let message () = "" in
+    let loc = Region.make
+      ~start:(Pos.from_byte start)
+      ~stop:(Pos.from_byte end_)
+    in
+    let data = [
+      ("unrecognized_loc",
+        fun () -> Format.asprintf "%a" Location.pp_lift @@ loc
+      )
     ] in
     error ~data title message
 
@@ -52,19 +81,25 @@ open Errors
 
 type 'a parser = (Lexing.lexbuf -> LexToken.token) -> Lexing.lexbuf -> 'a
 
-let parse (parser: 'a parser) lexbuf = 
+let parse (parser: 'a parser) lexbuf =
   let Lexer.{read ; close ; _} = Lexer.open_token_stream None in
-  let result = 
+  let result =
     try
       ok (parser read lexbuf)
     with
-      | Parser.Error ->
+      SyntaxError.Error (Duplicate_parameter name) ->
+        fail @@ (duplicate_parameter name)
+    | SyntaxError.Error (Duplicate_variant name) ->
+        fail @@ (duplicate_variant name)
+    | SyntaxError.Error (Reserved_name name) ->
+        fail @@ (reserved_name name)
+    | Parser.Error ->
         let start = Lexing.lexeme_start_p lexbuf in
-        let end_ = Lexing.lexeme_end_p lexbuf in
-        fail @@ (parser_error start end_)
-      | Lexer.Error e ->
+        let end_ = Lexing.lexeme_end_p lexbuf
+        in fail @@ (parser_error start end_)
+    | Lexer.Error e ->
         fail @@ (lexer_error e)
-      | _ ->
+    | _ ->
         let _ = Printexc.print_backtrace Pervasives.stdout in
         let start = Lexing.lexeme_start_p lexbuf in
         let end_ = Lexing.lexeme_end_p lexbuf in
@@ -94,5 +129,5 @@ let parse_string (s:string) : AST.t result =
   parse (Parser.contract) lexbuf
 
 let parse_expression (s:string) : AST.expr result =
-  let lexbuf = Lexing.from_string s in  
+  let lexbuf = Lexing.from_string s in
   parse (Parser.interactive_expr) lexbuf

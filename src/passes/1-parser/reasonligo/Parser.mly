@@ -370,7 +370,7 @@ ptuple:
     in PTuple {value=$1; region} }
 
 unit:
-  "(" ")" { {region = cover $1 $2; value = ghost, ghost} }
+  "(" ")" { {region = cover $1 $2; value = $1, $2} }
 
 (* Expressions *)
 
@@ -790,7 +790,7 @@ sequence_or_record_in:
 
 sequence_or_record:
   "{" sequence_or_record_in "}" {
-    let compound = Braces($1, $3) in
+    let compound = Braces ($1,$3) in
     let region   = cover $1 $3 in
     match $2 with
       PaSequence s ->
