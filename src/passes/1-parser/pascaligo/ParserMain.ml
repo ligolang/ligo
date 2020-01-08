@@ -71,3 +71,19 @@ let () =
         Unit.format_error ~offsets:IO.options#offsets
                           IO.options#mode point
       in Printf.eprintf "\027[31m%s\027[0m%!" error
+
+  | Error (Non_linear_pattern var) ->
+      let () = Unit.close_all () in
+      let token =
+        MyLexer.Token.mk_ident var.Region.value var.Region.region in
+      (match token with
+         Stdlib.Error _ ->
+           assert false (* Should not fail if [name] is valid. *)
+       | Ok invalid ->
+          let point = "Repeated variable in this pattern.\n\
+                       Hint: Change the name.\n",
+                      None, invalid in
+          let error =
+            Unit.format_error ~offsets:IO.options#offsets
+                              IO.options#mode point
+          in Printf.eprintf "\027[31m%s\027[0m%!" error)
