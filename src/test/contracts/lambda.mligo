@@ -5,4 +5,4 @@ let main (p:unit) storage =
   (fun x -> ()) ()
 *)
 
-let main (p: unit) storage = (fun (_: unit) -> ()) ()
+let main (ps: unit * storage) = (fun (_: unit) -> ()) ()

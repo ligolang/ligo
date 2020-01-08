@@ -4,9 +4,9 @@ type param =
   Add of int
 | Sub of int
 
-let main (p: param) storage =
+let main (p, s: param * storage) =
   let storage =
-    storage +
+    s +
       (match p with
          Add n -> n
        | Sub n -> 0-n)

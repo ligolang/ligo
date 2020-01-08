@@ -1,4 +1,4 @@
 type storage = int
 
-let main (p:int) storage =
-  (([] : operation list) , p + storage)
+let main (ps: int * storage) =
+  (([] : operation list) , ps.0 + ps.1)

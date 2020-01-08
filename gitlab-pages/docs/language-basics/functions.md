@@ -61,10 +61,29 @@ Functions in CameLIGO are defined using the `let` keyword, like value bindings.
 The difference is that after the value name a list of function parameters is provided,
 along with a return type.
 
+CameLIGO is a little different from other syntaxes when it comes to function
+parameters. In OCaml, functions can only take one parameter. To get functions
+with multiple arguments like we're used to in traditional programming languages,
+a technique called [currying](https://en.wikipedia.org/wiki/Currying) is used.
+Currying essentially translates a function with multiple arguments into a series
+of single argument functions, each returning a new function accepting the next
+argument until every parameter is filled. This is useful because it means that
+CameLIGO can support [partial application](https://en.wikipedia.org/wiki/Partial_application).
+
+Currying is however *not* the preferred way to pass function arguments in CameLIGO.
+While this approach is faithful to the original OCaml, it's costlier in Michelson
+than naive function execution accepting multiple arguments. Instead for most
+functions with more than one parameter we should place the arguments in a
+[tuple](language-basics/sets-lists-touples.md) and pass the tuple in as a single
+parameter.
+
 Here's how you define a basic function that accepts two `ints` and returns an `int` as well:
 
 ```cameligo group=b
-let add (a: int) (b: int) : int = a + b
+
+let add (a,b: int * int) : int = a + b
+
+let add_curry (a: int) (b: int) : int = a + b
 ```
 
 The function body is a series of expressions, which are evaluated to give the return

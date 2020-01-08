@@ -11,9 +11,9 @@ let sub (a: int) (b: int) : int = a - b
 
 (* real entrypoint that re-routes the flow based on the action provided *)
 
-let main (p: action) storage =
+let main (p, s: action * storage) =
   let storage =
     match p  with
-      Increment n -> add storage n
-    | Decrement n -> sub storage n
+      Increment n -> add s n
+    | Decrement n -> sub s n
   in ([] : operation list), storage

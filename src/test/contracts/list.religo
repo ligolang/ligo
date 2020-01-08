@@ -6,7 +6,7 @@ let x: list(int) = [];
 let y: list(int) = [3, 4, 5];
 let z: list(int) = [2, ...y];
 
-let main = (p: param, storage) => {
+let main2 = (p: param, storage) => {
   let storage =
     switch (p) {
     | [] => storage
@@ -15,8 +15,10 @@ let main = (p: param, storage) => {
   ([]: list(operation), storage);
 };
 
+let main = (x: (param, storage)) => main2(x[0],x[1]);
+
 let fold_op = (s: list(int)): int => {
-  let aggregate = (prec: int, cur: int) => prec + cur;
+  let aggregate = (prec_cur: (int, int)) => prec_cur[0] + prec_cur[1];
   List.fold(aggregate, s, 10);
 };
 

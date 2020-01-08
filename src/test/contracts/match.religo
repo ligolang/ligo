@@ -4,7 +4,7 @@ type param =
   | Add(int)
   | Sub(int);
 
-let main = ((p: param), storage) => {
+let main2 = ((p: param), storage) => {
   let storage =
     storage
     + (
@@ -15,3 +15,5 @@ let main = ((p: param), storage) => {
   );
   (([]: list(operation)), storage);
 };
+
+let main = (x: (param, storage)) => main2(x[0],x[1]);

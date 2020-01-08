@@ -1,6 +1,8 @@
 type foo = big_map(int, int);
 
-let set_ = (n: int, m: foo): foo => Big_map.update(23, Some(n), m);
+let set2 = (n: int, m: foo): foo => Big_map.update(23, Some(n), m);
+
+let set_ = (x: (int, foo)): foo => set2(x[0], x[1]);
 
 let rm = (m: foo): foo => Big_map.remove(42, m);
 

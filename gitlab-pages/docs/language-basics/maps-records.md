@@ -182,14 +182,14 @@ function iter_op (const m : moveset) : unit is
 <!--CameLIGO-->
 ```cameligo
 let iter_op (m : moveset) : unit =
-  let assert_eq = fun (i: address) (j: move) -> assert (j.0 > 1)
+  let assert_eq = fun (i: address * move) -> assert (i.1.0 > 1)
   in Map.iter assert_eq m
 ```
 
 <!--ReasonLIGO-->
 ```reasonligo
 let iter_op = (m: moveset): unit => {
-  let assert_eq = (i: address, j: move) => assert(j[0] > 1);
+  let assert_eq = (i: (address, move)) => assert(i[1][0] > 1);
   Map.iter(assert_eq, m);
 };
 ```
@@ -209,14 +209,14 @@ function map_op (const m : moveset) : moveset is
 <!--CameLIGO-->
 ```cameligo
 let map_op (m : moveset) : moveset =
-  let increment = fun (_: address) (j: move) -> (j.0, j.1 + 1)
+  let increment = fun (i: address * move) -> (i.1.0, i.1.1 + 1)
   in Map.map increment m
 ```
 
 <!--ReasonLIGO-->
 ```reasonligo
 let map_op = (m: moveset): moveset => {
-  let increment = (ignore: address, j: move) => (j[0], j[1] + 1);
+  let increment = (i: (address, move)) => (i[1][0], i[1][1] + 1);
   Map.map(increment, m);
 };
 ```
@@ -243,14 +243,14 @@ function fold_op (const m : moveset) : int is
 <!--CameLIGO-->
 ```cameligo
 let fold_op (m : moveset) : moveset =
-  let aggregate = fun (j: int) (cur: address * (int * int)) -> j + cur.1.1 in
+  let aggregate = fun (i: int * (address * (int * int))) -> i.0 + i.1.1.1 in
   Map.fold aggregate m 5
 ```
 
 <!--ReasonLIGO-->
 ```reasonligo
 let fold_op = (m: moveset): moveset => {
-  let aggregate = (j: int, cur: (address, (int,int))) => j + cur[1][1];
+  let aggregate = (i: (int, (address, (int,int)))) => i[0] + i[1][1][1];
   Map.fold(aggregate, m, 5);
 };
 

@@ -2,9 +2,9 @@ type action =
 | Increment of int
 | Decrement of int
 
-let main (p : action) (s : int) : (operation list * int) =
+let main (ps : action * int) : (operation list * int) =
   let storage =
-    match p with
-    | Increment n -> s + n
-    | Decrement n -> s - n in
+    match ps.0 with
+    | Increment n -> ps.1 + n
+    | Decrement n -> ps.1 - n in
   (([] : operation list) , storage)
