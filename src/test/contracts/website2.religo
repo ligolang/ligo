@@ -11,7 +11,7 @@ let sub = (a: int, b: int): int => a - b;
 
 /* real entrypoint that re-routes the flow based on the action provided */
 
-let main = (p: action, storage) => {
+let main2 = (p: action, storage) => {
   let storage =
     switch (p) {
     | Increment(n) => add(storage, n)
@@ -19,3 +19,5 @@ let main = (p: action, storage) => {
     };
   ([]: list(operation), storage);
 };
+
+let main = (x: (action, storage)) => main2(x[0],x[1]);

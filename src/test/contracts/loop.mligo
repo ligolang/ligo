@@ -17,8 +17,8 @@ let counter (n : int) : int =
     if prev.counter <= n then
       continue ({ counter = prev.counter + 1 ; sum = prev.counter + prev.sum })
     else
-      stop ({ counter = prev.counter ; sum = prev.sum })
-  ) initial in out.sum
+      stop ({ counter = prev.counter ; sum = prev.sum }) )
+   initial in out.sum
 
 let aux_nest (prev: sum_aggregator) : bool * sum_aggregator =
   if prev.counter < 100 then

@@ -12,6 +12,6 @@ generated. unrecognized constant: {"constant":"BALANCE","location":"generated"}
 
 type storage = tez
 
-let main (p : unit) storage =
+let main (p, s : unit * storage) =
   ([] : operation list), balance
 

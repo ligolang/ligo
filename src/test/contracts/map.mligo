@@ -7,7 +7,9 @@ let map1 : foobar =
 
 let map2 : foobar = Map.literal [(23,0); (42,0)]
 
-let set_ (n: int) (m: foobar) : foobar = Map.update 23 (Some n) m
+let set_2 (n: int) (m: foobar) : foobar = Map.update 23 (Some n) m
+
+let set_ (t: int * foobar) : foobar = set_2 t.0 t.1
 
 let rm (m: foobar) : foobar = Map.remove 42 m
 
@@ -31,15 +33,15 @@ let get_ (m: foobar) : int option = Map.find_opt 42 m
 let mem (km: int * foobar) : bool = Map.mem km.0 km.1
 
 let iter_op (m : foobar) : unit =
-  let assert_eq = fun (i: int) (j: int) -> assert (i=j)
+  let assert_eq = fun (i: int * int) -> assert (i.0 = i.1)
   in Map.iter assert_eq m
 
 let map_op (m : foobar) : foobar =
-  let increment = fun (_: int) (j: int) -> j+1
+  let increment = fun (i: int * int) -> i.1 + 1
   in Map.map increment m
 
 let fold_op (m : foobar) : foobar =
-  let aggregate = fun (i: int) (j: int * int) -> i + j.0 + j.1
+  let aggregate = fun (i: int * (int * int)) -> i.0 + i.1.0 + i.1.1
   in Map.fold aggregate m 10
 
 let deep_op (m: foobar) : foobar =

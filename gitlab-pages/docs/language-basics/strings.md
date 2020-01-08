@@ -97,6 +97,7 @@ const length: nat = size(name);
 let name: string = "Alice"
 let length: nat = String.size name
 ```
+
 <!--ReasonLIGO-->
 ```reasonligo
 let name: string = "Alice";

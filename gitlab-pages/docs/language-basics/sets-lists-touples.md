@@ -136,13 +136,13 @@ const sum_of_a_set: int = set_fold(sum, my_set, 0);
 
 <!--CameLIGO-->
 ```cameligo group=a
-let sum (result: int) (i: int) : int = result + i
+let sum (result, i: int * int) : int = result + i
 let sum_of_a_set: int = Set.fold sum my_set 0
 ```
 
 <!--ReasonLIGO-->
 ```reasonligo group=a
-let sum = (result: int, i: int): int => result + i;
+let sum = (result_i: (int, int)): int => result_i[0] + result_i[1];
 let sum_of_a_set: int = Set.fold(sum, my_set, 0);
 ```
 <!--END_DOCUSAURUS_CODE_TABS-->
@@ -249,7 +249,7 @@ const sum_of_a_list: int = list_fold(sum, my_list, 0);
 <!--CameLIGO-->
 
 ```cameligo group=b
-let sum (result: int) (i: int) : int = result + i
+let sum (result, i: int * int) : int = result + i
 // Outputs 6
 let sum_of_a_list: int = List.fold sum my_list 0
 ```
@@ -257,7 +257,7 @@ let sum_of_a_list: int = List.fold sum my_list 0
 <!--ReasonLIGO-->
 
 ```reasonligo group=b
-let sum = (result: int, i: int): int => result + i;
+let sum = (result_i: (int, int)): int => result_i[0] + result_i[1];
 (* Outputs 6 *)
 let sum_of_a_list: int = List.fold(sum, my_list, 0);
 ```
@@ -286,6 +286,7 @@ defined before they can be used. However below we will give them names for the
 sake of illustration.
 
 <!--DOCUSAURUS_CODE_TABS-->
+
 <!--Pascaligo-->
 ```pascaligo group=c
 type full_name is string * string;
@@ -316,17 +317,23 @@ The traditional way to access the elements of a tuple in OCaml is through
 not** currently support tuple patterns in its syntaxes.
 
 However, it is possible to access LIGO tuples by their position.
-Tuple elements are one-indexed and accessed like so:
 
 <!--DOCUSAURUS_CODE_TABS-->
+
 <!--Pascaligo-->
+
+Tuple elements are one-indexed and accessed like so:
+
 ```pascaligo group=c
 const first_name: string = full_name.1;
 ```
 
-<!--CameLIGO-->
+<!--Cameligo-->
+
+Tuple elements are zero-indexed and accessed like so:
+
 ```cameligo group=c
-let first_name: string = full_name.1
+let first_name: string = full_name.0
 ```
 
 <!--ReasonLIGO-->

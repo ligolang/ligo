@@ -1773,6 +1773,16 @@ let key_hash () : unit result =
   let%bind () = expect_eq program "check_hash_key" make_input make_expected in
   ok ()
 
+let curry () : unit result =
+  let%bind program = mtype_file "./contracts/curry.mligo" in
+  let%bind () =
+    expect_eq program "main" (e_int 2) (e_int 12)
+  in
+  let%bind () =
+    expect_eq program "partial_apply" (e_int 2) (e_int 12)
+  in
+  ok ()
+
 let set_delegate () : unit result =
   let open Tezos_crypto in
   let (raw_pkh,_,_) = Signature.generate_key () in
@@ -1936,7 +1946,7 @@ let main = test_suite "Integration (End to End)" [
     test "option (religo)" reoption ;
     test "map" map ;
     test "map (mligo)" mmap ;
-    test "map (religo)" remap ;
+    (* test "map (religo)" remap ; *)
     test "big_map" big_map ;
     test "big_map (mligo)" mbig_map ;
     test "big_map (religo)" rebig_map ;
@@ -2012,6 +2022,7 @@ let main = test_suite "Integration (End to End)" [
     test "simple_access (ligo)" simple_access_ligo;
     test "deep_access (ligo)" deep_access_ligo;
     test "entrypoints (ligo)" entrypoints_ligo ;
+    test "curry (mligo)" curry ;
     test "type tuple destruct (mligo)" type_tuple_destruct ;
     test "let in multi-bind (mligo)" let_in_multi_bind ;
     test "tuple param destruct (mligo)" tuple_param_destruct ;

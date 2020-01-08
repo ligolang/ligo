@@ -1,6 +1,8 @@
 type foo = (int, int) big_map
 
-let set_ (n : int) (m : foo) : foo = Big_map.update 23 (Some(n)) m
+let set_2 (n : int) (m : foo) : foo = Big_map.update 23 (Some n) m
+
+let set_ (t: int * foo) : foo = set_2 t.0 t.1
 
 let rm (m : foo) : foo = Big_map.remove 42 m
 
@@ -17,5 +19,5 @@ let map1 : foo = Big_map.literal
   [ (23 , 0) ; (42, 0) ]
 
 let mutimaps (m : foo) (n : foo) : foo =
-  let bar : foo = Big_map.update 42 (Some(0)) m in
-  Big_map.update 42 (get(bar)) n
+  let bar : foo = Big_map.update 42 (Some 0) m in
+  Big_map.update 42 (get bar) n
