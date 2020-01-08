@@ -28,6 +28,15 @@ module Errors = struct
     ] in
     error ~data title message
 
+  let non_linear_pattern Region.{value; region} =
+    let title () = Printf.sprintf "repeated variable \"%s\" in this pattern" value in
+    let message () = "" in
+    let data = [
+      ("location",
+       fun () -> Format.asprintf "%a" Location.pp_lift @@ region)
+    ] in
+    error ~data title message
+
   let duplicate_parameter Region.{value; region} =
     let title () = Printf.sprintf "duplicate parameter \"%s\"" value in
     let message () = "" in
@@ -111,7 +120,9 @@ let parse (parser: 'a parser) source lexbuf =
     try
       ok (parser read lexbuf)
     with
-      SyntaxError.Error (Duplicate_parameter name) ->
+      SyntaxError.Error (Non_linear_pattern var) ->
+        fail @@ (non_linear_pattern var)
+    | SyntaxError.Error (Duplicate_parameter name) ->
         fail @@ (duplicate_parameter name)
     | SyntaxError.Error (Duplicate_variant name) ->
         fail @@ (duplicate_variant name)
