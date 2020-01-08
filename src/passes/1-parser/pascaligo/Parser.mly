@@ -6,7 +6,60 @@
 open Region
 open AST
 
-(* END HEADER *)
+module SSet = Utils.String.Set
+
+let reserved =
+  let open SSet in
+  empty
+  |> add "get_force"
+  |> add "get_chain_id"
+  |> add "transaction"
+  |> add "get_contract"
+  |> add "get_entrypoint"
+  |> add "size"
+  |> add "int"
+  |> add "abs"
+  |> add "is_nat"
+  |> add "amount"
+  |> add "balance"
+  |> add "now"
+  |> add "unit"
+  |> add "source"
+  |> add "sender"
+  |> add "failwith"
+  |> add "bitwise_or"
+  |> add "bitwise_and"
+  |> add "bitwise_xor"
+  |> add "string_concat"
+  |> add "string_slice"
+  |> add "crypto_check"
+  |> add "crypto_hash_key"
+  |> add "bytes_concat"
+  |> add "bytes_slice"
+  |> add "bytes_pack"
+  |> add "bytes_unpack"
+  |> add "set_empty"
+  |> add "set_mem"
+  |> add "set_add"
+  |> add "set_remove"
+  |> add "set_iter"
+  |> add "set_fold"
+  |> add "list_iter"
+  |> add "list_fold"
+  |> add "list_map"
+  |> add "map_iter"
+  |> add "map_map"
+  |> add "map_fold"
+  |> add "map_remove"
+  |> add "map_update"
+  |> add "map_get"
+  |> add "map_mem"
+  |> add "sha_256"
+  |> add "sha_512"
+  |> add "blake2b"
+  |> add "cons"
+
+ (* END HEADER *)
 %}
 
 (* See [ParToken.mly] for the definition of tokens. *)
@@ -118,6 +171,10 @@ declaration:
 
 type_decl:
   "type" type_name "is" type_expr ";"? {
+    let () =
+      if SSet.mem $2.value reserved then
+        let open! SyntaxError in
+        raise (Error (Reserved_name $2)) in
     let stop =
       match $5 with
         Some region -> region
@@ -185,6 +242,14 @@ type_tuple:
 
 sum_type:
   "|"? nsepseq(variant,"|") {
+    let add acc {value; _} =
+      if VSet.mem value.constr acc then
+        let open! SyntaxError in
+        raise (Error (Duplicate_variant value.constr))
+      else VSet.add value.constr acc in
+    let variants =
+      Utils.nsepseq_foldl add VSet.empty $2 in
+    let () = ignore variants in
     let region = nsepseq_to_region (fun x -> x.region) $2
     in TSum {region; value=$2} }
 
@@ -225,6 +290,13 @@ fun_expr:
   "function" fun_name? parameters ":" type_expr "is"
      block
   "with" expr {
+    let () =
+      match $2 with
+        Some name ->
+          if SSet.mem name.value reserved then
+            let open! SyntaxError in
+            raise (Error (Reserved_name name))
+      | None -> () in
     let stop   = expr_to_region $9 in
     let region = cover $1 stop
     and value  = {kwd_function = $1;
@@ -237,6 +309,13 @@ fun_expr:
                   return       = $9}
     in {region; value} }
 | "function" fun_name? parameters ":" type_expr "is" expr {
+    let () =
+      match $2 with
+        Some name ->
+          if SSet.mem name.value reserved then
+            let open! SyntaxError in
+            raise (Error (Reserved_name name))
+      | None -> () in
     let stop   = expr_to_region $7 in
     let region = cover $1 stop
     and value  = {kwd_function = $1;
@@ -256,7 +335,7 @@ fun_decl:
   open_fun_decl { $1 }
 | fun_expr ";"  {
     let region = cover $1.region $2
-    and value  = {fun_expr=$1; terminator= Some $2}
+    and value  = {fun_expr=$1; terminator = Some $2}
     in {region; value} }
 
 open_fun_decl:
@@ -266,10 +345,31 @@ open_fun_decl:
     in {region; value} }
 
 parameters:
-  par(nsepseq(param_decl,";")) { $1 }
+  par(nsepseq(param_decl,";")) {
+    let open! AST in
+    let contents : (param_decl, semi) Utils.nsepseq par reg = $1 in
+    let add acc = function
+      ParamConst {value; _} ->
+        if VSet.mem value.var acc then
+          let open! SyntaxError in
+          raise (Error (Duplicate_parameter value.var))
+        else VSet.add value.var acc
+    | ParamVar {value; _} ->
+        if VSet.mem value.var acc then
+          let open! SyntaxError in
+          raise (Error (Duplicate_parameter value.var))
+        else VSet.add value.var acc in
+    let params =
+      Utils.nsepseq_foldl add VSet.empty contents.value.inside in
+    let () = ignore params
+    in $1 }
 
 param_decl:
   "var" var ":" param_type {
+    let () =
+      if SSet.mem $2.value reserved then
+        let open! SyntaxError in
+        raise (Error (Reserved_name $2)) in
     let stop   = type_expr_to_region $4 in
     let region = cover $1 stop
     and value  = {kwd_var    = $1;
@@ -279,6 +379,10 @@ param_decl:
     in ParamVar {region; value}
   }
 | "const" var ":" param_type {
+    let () =
+      if SSet.mem $2.value reserved then
+        let open! SyntaxError in
+        raise (Error (Reserved_name $2)) in
     let stop   = type_expr_to_region $4 in
     let region = cover $1 stop
     and value  = {kwd_const  = $1;
@@ -346,13 +450,16 @@ open_var_decl:
 
 unqualified_decl(OP):
   var ":" type_expr OP expr {
+    let () =
+      if SSet.mem $1.value reserved then
+        let open! SyntaxError in
+        raise (Error (Reserved_name $1)) in
     let region = expr_to_region $5
     in $1, $2, $3, $4, $5, region }
 
 const_decl:
-  open_const_decl { $1 }
-| open_const_decl ";" {
-    {$1 with value = {$1.value with terminator = Some $2}} }
+  open_const_decl ";"? {
+    {$1 with value = {$1.value with terminator=$2}} }
 
 instruction:
   conditional  {        Cond $1 }
@@ -555,6 +662,14 @@ cases(rhs):
 
 case_clause(rhs):
   pattern "->" rhs {
+    let vars = AST.vars_of_pattern $1 in
+    let is_reserved elt = SSet.mem elt.value reserved in
+    let inter = VSet.filter is_reserved vars in
+    let () =
+      if not (VSet.is_empty inter) then
+        let clash = VSet.choose inter in
+        let open! SyntaxError in
+        raise (Error (Reserved_name clash)) in
     fun rhs_to_region ->
       let start  = pattern_to_region $1 in
       let region = cover start (rhs_to_region $3)
@@ -596,6 +711,10 @@ for_loop:
     in For (ForInt {region; value})
   }
 | "for" var arrow_clause? "in" collection expr block {
+    let () =
+      if SSet.mem $2.value reserved then
+        let open! SyntaxError in
+        raise (Error (Reserved_name $2)) in
     let region = cover $1 $7.region in
     let value  = {kwd_for    = $1;
                   var        = $2;
@@ -613,12 +732,21 @@ collection:
 
 var_assign:
   var ":=" expr {
+    let () =
+      if SSet.mem $1.value reserved then
+        let open! SyntaxError in
+        raise (Error (Reserved_name $1)) in
     let region = cover $1.region (expr_to_region $3)
     and value  = {name=$1; assign=$2; expr=$3}
     in {region; value} }
 
 arrow_clause:
-  "->" var { $1,$2 }
+  "->" var {
+    let () =
+      if SSet.mem $2.value reserved then
+        let open! SyntaxError in
+        raise (Error (Reserved_name $2))
+    in $1,$2 }
 
 (* Expressions *)
 
@@ -646,7 +774,7 @@ cond_expr:
 
 disj_expr:
   conj_expr { $1 }
-|  disj_expr "or" conj_expr {
+| disj_expr "or" conj_expr {
     let start  = expr_to_region $1
     and stop   = expr_to_region $3 in
     let region = cover start stop

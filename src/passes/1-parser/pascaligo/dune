@@ -8,7 +8,8 @@
 (library
  (name parser_pascaligo)
  (public_name ligo.parser.pascaligo)
- (modules AST pascaligo Parser ParserLog LexToken)
+ (modules
+    SyntaxError AST pascaligo Parser ParserLog LexToken)
  (libraries
     menhirLib
     parser_shared

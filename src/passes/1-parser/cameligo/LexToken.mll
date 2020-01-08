@@ -1,4 +1,6 @@
 {
+  (* START HEADER *)
+
 type lexeme = string
 
 let sprintf = Printf.sprintf
@@ -236,8 +238,7 @@ let to_region token = proj_token token |> fst
 
 (* Injections *)
 
-type int_err =
-  Non_canonical_zero
+type int_err = Non_canonical_zero
 
 (* LEXIS *)
 
@@ -258,8 +259,7 @@ let keywords = [
   (fun reg -> Then  reg);
   (fun reg -> True  reg);
   (fun reg -> Type  reg);
-  (fun reg -> With  reg)
-]
+  (fun reg -> With  reg)]
 
 let reserved =
   let open SSet in
@@ -323,8 +323,20 @@ let lexicon : lexis =
       cstr = build constructors;
       res  = reserved}
 
+(* Keywords *)
+
+type kwd_err = Invalid_keyword
+
+let mk_kwd ident region =
+  match SMap.find_opt ident lexicon.kwd with
+    Some mk_kwd -> Ok (mk_kwd region)
+  |        None -> Error Invalid_keyword
+
+(* Identifiers *)
+
 type ident_err = Reserved_name
 
+(* END OF HEADER *)
 }
 
 (* START LEXER DEFINITION *)

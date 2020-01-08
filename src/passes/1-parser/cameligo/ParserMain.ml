@@ -19,9 +19,9 @@ module ExtParserLog =
     include ParserLog
   end
 
-module M = ParserUnit.Make (IO)
-                           (Lexer.Make (LexToken))
-                           (AST)
-                           (ExtParser)
-                           (ParErr)
-                           (ExtParserLog)
+module MyLexer = Lexer.Make (LexToken)
+
+module Unit =
+  ParserUnit.Make (IO)(MyLexer)(AST)(ExtParser)(ParErr)(ExtParserLog)
+
+let () = Unit.run ()

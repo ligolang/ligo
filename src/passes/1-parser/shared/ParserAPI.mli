@@ -1,5 +1,7 @@
 (* Generic parser API for LIGO *)
 
+module Region = Simple_utils.Region
+
 module type PARSER =
   sig
     (* The type of tokens. *)
@@ -56,5 +58,9 @@ module Make (Lexer: Lexer.S)
 
     exception Point of error
 
-    val format_error : ?offsets:bool -> [`Byte | `Point] -> error -> string
+    val format_error :
+      ?offsets:bool -> [`Byte | `Point] -> error -> string
+
+    val short_error :
+      ?offsets:bool -> [`Byte | `Point] -> message -> Region.t -> string
   end
