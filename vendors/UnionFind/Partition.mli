@@ -43,21 +43,29 @@ module type S =
 
     (** {1 Projection} *)
 
-    (** The value of the call [repr i p] is the representative of item
-        [i] in the partition [p]. The built-in exception [Not_found]
-        is raised if [i] is not in [p]. *)
+    (** The value of the call [repr i p] is [j] if the item [i] is in
+        the partition [p] and its representative is [j]. If [i] is not
+        in [p], then the value is [i]. *)
     val repr : item -> partition -> item
 
-    (** The side-effect of the call [print p] is the printing of the
-        partition [p] on standard output, based on [Ord.to_string]. *)
-    val print : partition -> unit
+    (** The value of the call [mem i p] is [Some j] if the item [i] is
+        in the partition [p] and its representative is [j]. If [i] is
+        not in [p], then the value is [None]. *)
+    val mem : item -> partition -> item option
+
+    (** The call [print p] is a value of type [Buffer.t] containing
+        strings denoting the partition [p], based on
+        [Ord.to_string]. *)
+    val print : partition -> Buffer.t
 
     (** {1 Predicates} *)
 
     (** The value of [is_equiv i j p] is [true] if, and only if, the
         items [i] and [j] belong to the same equivalence class in the
         partition [p], that is, [i] and [j] have the same
-        representative. *)
+        representative. In particular, if either [i] or [j] do not
+        belong to [p], the value of [is_equiv i j p] is [false]. See
+        [mem] above. *)
     val is_equiv : item -> item -> partition -> bool
   end
 

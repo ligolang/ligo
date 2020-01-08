@@ -1,0 +1,19 @@
+opam-version : "2.0"
+version      : "1.0"
+maintainer   : "rinderknecht@free.fr"
+authors      : [ "Christian Rinderknecht" ]
+homepage     : "https://gitlab.com/rinderknecht/UnionFind"
+bug-reports  : "https://gitlab.com/rinderknecht/UnionFind/issues"
+dev-repo     : "git+https://gitlab.com/rinderknecht/UnionFind.git"
+license      : "MIT"
+
+depends      : [ "dune" ]
+
+build        : [
+                [ "sh" "-c" "printf 'let version = \"%s\"' \"$(git describe --always --dirty --abbrev=0)\" > Version.ml" ]
+                [ "dune" "build" "-p" name "-j" jobs ]
+               ]
+
+url {
+  src: "https://gitlab.com/rinderknecht/UnionFind/-/archive/master/UnionFind.tar.gz"
+}
