@@ -361,7 +361,7 @@ let mk_string lexeme region = String Region.{region; value=lexeme}
 
 let mk_bytes lexeme region =
   let norm = Str.(global_replace (regexp "_") "" lexeme) in
-  let value = lexeme, Hex.of_string norm
+  let value = lexeme, `Hex norm
   in Bytes Region.{region; value}
 
 let mk_int lexeme region =

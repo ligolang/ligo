@@ -356,7 +356,7 @@ let rec simpl_expression :
       return @@ e_literal ~loc Literal_unit
   | EBytes x ->
       let (x , loc) = r_split x in
-      return @@ e_literal ~loc (Literal_bytes (Bytes.of_string @@ fst x))
+      return @@ e_literal ~loc (Literal_bytes (Hex.to_bytes @@ snd x))
   | ETuple tpl -> simpl_tuple_expression @@ (npseq_to_list tpl.value)
   | ERecord r ->
       let (r , loc) = r_split r in

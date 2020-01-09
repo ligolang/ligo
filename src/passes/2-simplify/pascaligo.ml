@@ -326,7 +326,7 @@ let rec simpl_expression (t:Raw.expr) : expr result =
     return @@ e_literal ~loc Literal_unit
   | EBytes x ->
     let (x' , loc) = r_split x in
-    return @@ e_literal ~loc (Literal_bytes (Bytes.of_string @@ fst x'))
+    return @@ e_literal ~loc (Literal_bytes (Hex.to_bytes @@ snd x'))
   | ETuple tpl ->
       let (tpl' , loc) = r_split tpl in
       simpl_tuple_expression ~loc @@ npseq_to_list tpl'.inside
