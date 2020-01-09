@@ -61,16 +61,23 @@ module Errors = struct
               end_.pos_lnum (end_.pos_cnum - end_.pos_bol)
               file
     in
-    let message () = str in
-    let loc = Region.make
-      ~start:(Pos.from_byte start)
-      ~stop:(Pos.from_byte end_)
+    let message () = str in    
+    let loc = if start.pos_cnum = -1 then
+      Region.make
+        ~start: Pos.min
+        ~stop:(Pos.from_byte end_)    
+    else
+      Region.make
+        ~start:(Pos.from_byte start)
+        ~stop:(Pos.from_byte end_)
+    in 
+    let data =
+      [
+        ("parser_loc",
+          fun () -> Format.asprintf "%a" Location.pp_lift @@ loc
+        )
+      ]    
     in
-    let data = [
-      ("parser_loc",
-        fun () -> Format.asprintf "%a" Location.pp_lift @@ loc
-      )
-    ] in
     error ~data title message
 
   let unrecognized_error source (start: Lexing.position) (end_: Lexing.position) lexbuf =
