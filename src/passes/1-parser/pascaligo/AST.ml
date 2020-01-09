@@ -2,7 +2,7 @@
 
 (* To disable warning about multiply-defined record labels. *)
 
-[@@@warning "-30-42"]
+[@@@warning "-30-40-42"]
 
 (* Utilities *)
 
@@ -20,22 +20,6 @@ open Utils
 *)
 
 type 'a reg = 'a Region.reg
-
-let rec last to_region = function
-    [] -> Region.ghost
-|  [x] -> to_region x
-| _::t -> last to_region t
-
-let nseq_to_region to_region (hd,tl) =
-  Region.cover (to_region hd) (last to_region tl)
-
-let nsepseq_to_region to_region (hd,tl) =
-  let reg (_, item) = to_region item in
-  Region.cover (to_region hd) (last reg tl)
-
-let sepseq_to_region to_region = function
-      None -> Region.ghost
-| Some seq -> nsepseq_to_region to_region seq
 
 (* Keywords of LIGO *)
 
@@ -85,32 +69,32 @@ type c_Unit  = Region.t
 
 (* Symbols *)
 
-type semi     = Region.t
-type comma    = Region.t
-type lpar     = Region.t
-type rpar     = Region.t
-type lbrace   = Region.t
-type rbrace   = Region.t
-type lbracket = Region.t
-type rbracket = Region.t
-type cons     = Region.t
-type vbar     = Region.t
-type arrow    = Region.t
-type assign   = Region.t
-type equal    = Region.t
-type colon    = Region.t
-type lt       = Region.t
-type leq      = Region.t
-type gt       = Region.t
-type geq      = Region.t
-type neq      = Region.t
-type plus     = Region.t
-type minus    = Region.t
-type slash    = Region.t
-type times    = Region.t
-type dot      = Region.t
-type wild     = Region.t
-type cat      = Region.t
+type semi     = Region.t  (* ";"   *)
+type comma    = Region.t  (* ","   *)
+type lpar     = Region.t  (* "("   *)
+type rpar     = Region.t  (* ")"   *)
+type lbrace   = Region.t  (* "{"   *)
+type rbrace   = Region.t  (* "}"   *)
+type lbracket = Region.t  (* "["   *)
+type rbracket = Region.t  (* "]"   *)
+type cons     = Region.t  (* "#"   *)
+type vbar     = Region.t  (* "|"   *)
+type arrow    = Region.t  (* "->"  *)
+type assign   = Region.t  (* ":="  *)
+type equal    = Region.t  (* "="   *)
+type colon    = Region.t  (* ":"   *)
+type lt       = Region.t  (* "<"   *)
+type leq      = Region.t  (* "<="  *)
+type gt       = Region.t  (* ">"   *)
+type geq      = Region.t  (* ">="  *)
+type neq      = Region.t  (* "=/=" *)
+type plus     = Region.t  (* "+"   *)
+type minus    = Region.t  (* "-"   *)
+type slash    = Region.t  (* "/"   *)
+type times    = Region.t  (* "*"   *)
+type dot      = Region.t  (* "."   *)
+type wild     = Region.t  (* "_"   *)
+type cat      = Region.t  (* "^"   *)
 
 (* Virtual tokens *)
 
@@ -613,9 +597,24 @@ and list_pattern =
 | PParCons  of (pattern * cons * pattern) par reg
 | PCons     of (pattern, cons) nsepseq reg
 
+
 (* Projecting regions *)
 
-open! Region
+let rec last to_region = function
+    [] -> Region.ghost
+|  [x] -> to_region x
+| _::t -> last to_region t
+
+let nseq_to_region to_region (hd,tl) =
+  Region.cover (to_region hd) (last to_region tl)
+
+let nsepseq_to_region to_region (hd,tl) =
+  let reg (_, item) = to_region item in
+  Region.cover (to_region hd) (last reg tl)
+
+let sepseq_to_region to_region = function
+      None -> Region.ghost
+| Some seq -> nsepseq_to_region to_region seq
 
 let type_expr_to_region = function
   TProd   {region; _}
@@ -760,49 +759,4 @@ let rhs_to_region = expr_to_region
 
 let selection_to_region = function
   FieldName {region; _}
-  | Component {region; _} -> region
-
-(* Extracting variables from patterns *)
-
-module Ord =
-  struct
-    type t = string Region.reg
-    let compare v1 v2 =
-      compare v1.value v2.value
-  end
-
-module VSet = Set.Make (Ord)
-
-let rec vars_of_pattern env = function
-  PConstr p -> vars_of_pconstr env p
-| PVar v -> VSet.add v env
-| PWild _ | PInt _ | PNat _ | PBytes _ | PString _ -> env
-| PList l -> vars_of_plist env l
-| PTuple t -> vars_of_ptuple env t.value
-
-and vars_of_pconstr env = function
-  PUnit _ | PFalse _ | PTrue _ | PNone _ -> env
-| PSomeApp {value=_, {value={inside; _};_}; _} ->
-    vars_of_pattern env inside
-| PConstrApp {value=_, Some tuple; _} ->
-    vars_of_ptuple env tuple.value
-| PConstrApp {value=_,None; _} -> env
-
-and vars_of_plist env = function
-  PListComp {value; _} ->
-    vars_of_pinj env value
-| PNil _ ->
-    env
-| PParCons {value={inside; _}; _} ->
-   let head, _, tail = inside in
-   vars_of_pattern (vars_of_pattern env head) tail
-| PCons {value; _} ->
-    Utils.nsepseq_foldl vars_of_pattern env value
-
-and vars_of_pinj env inj =
-  Utils.sepseq_foldl vars_of_pattern env inj.elements
-
-and vars_of_ptuple env {inside; _} =
-    Utils.nsepseq_foldl vars_of_pattern env inside
-
-let vars_of_pattern = vars_of_pattern VSet.empty
+| Component {region; _} -> region

@@ -1,24 +1,42 @@
+;; Build of the lexer
+
 (ocamllex LexToken)
 
+;; Build of the parser
+
 (menhir
- (merge_into Parser)
- (modules ParToken Parser)
- (flags -la 1 --table --strict --explain --external-tokens LexToken))
+  (merge_into Parser)
+  (modules ParToken Parser)
+  (flags -la 1 --table --strict --external-tokens LexToken))
+
+;; Build of the parser as a library
 
 (library
- (name parser_pascaligo)
- (public_name ligo.parser.pascaligo)
- (modules
-    SyntaxError AST pascaligo Parser ParserLog LexToken)
- (libraries
-    menhirLib
-    parser_shared
-    hex
-    simple-utils
-    tezos-utils)
- (preprocess
-   (pps bisect_ppx --conditional))
- (flags (:standard -open Parser_shared -open Simple_utils)))
+  (name parser_pascaligo)
+  (public_name ligo.parser.pascaligo)
+  (modules
+     SyntaxError AST pascaligo Parser ParserLog LexToken)
+  (libraries
+     menhirLib
+     parser_shared
+     hex
+     simple-utils
+     tezos-utils)
+  (preprocess
+    (pps bisect_ppx --conditional))
+  (flags (:standard -open Parser_shared -open Simple_utils)))
+
+;; Build of the unlexer (for covering the
+;; error states of the LR automaton)
+
+(executable
+  (name Unlexer)
+  (libraries str)
+  (preprocess
+    (pps bisect_ppx --conditional))
+  (modules Unlexer))
+
+;; Local build of a standalone lexer
 
 (executable
   (name LexerMain)
@@ -29,6 +47,8 @@
     (pps bisect_ppx --conditional))
   (flags (:standard -open Parser_shared -open Parser_pascaligo)))
 
+;; Local build of a standalone parser
+
 (executable
   (name ParserMain)
   (libraries parser_pascaligo)
@@ -37,25 +57,3 @@
   (preprocess
     (pps bisect_ppx --conditional))
   (flags (:standard -open Simple_utils -open Parser_shared -open Parser_pascaligo)))
-
-(executable
-  (name Unlexer)
-  (libraries str)
-  (preprocess
-    (pps bisect_ppx --conditional))
-  (modules Unlexer))
-
-;; Les deux directives (rule) qui suivent sont pour le dev local.
-;; Il suffit de faire "dune build Parser.exe" pour avoir un Parser.exe dans le dossier.
-;; Pour le purger, il faut faire "dune clean".
-;(rule
-;  (targets Parser.exe)
-;  (deps ParserMain.exe)
-;  (action (copy ParserMain.exe Parser.exe))
-;  (mode promote-until-clean))
-
-;(rule
-;  (targets Lexer.exe)
-;  (deps LexerMain.exe)
-;  (action (copy LexerMain.exe Lexer.exe))
-;  (mode promote-until-clean))
