@@ -1012,3 +1012,27 @@ let%expect_test _ =
 let%expect_test _ =
     run_ligo_good [ "dry-run" ; contract "double_main.ligo" ; "main" ; "unit" ; "0" ] ;
     [%expect {|( [] , 2 ) |}]
+
+let%expect_test _ =
+  run_ligo_good [ "compile-contract" ; contract "subtle_nontail_fail.mligo" ; "main" ] ;
+  [%expect {|
+    { parameter unit ;
+      storage unit ;
+      code { PUSH bool True ;
+             IF { PUSH string "This contract always fails" ; FAILWITH }
+                { PUSH string "This contract still always fails" ; FAILWITH } } } |}]
+
+let%expect_test _ =
+  (* TODO should not be bad? *)
+  run_ligo_bad [ "dry-run" ; contract "subtle_nontail_fail.mligo" ; "main" ; "()" ; "()" ] ;
+  [%expect {|
+    ligo: error of execution
+
+     If you're not sure how to fix this error, you can
+     do one of the following:
+
+    * Visit our documentation: https://ligolang.org/docs/intro/what-and-why/
+    * Ask a question on our Discord: https://discord.gg/9rhYaEt
+    * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
+    * Check the changelog by running 'ligo changelog' |}]
+
