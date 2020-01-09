@@ -433,6 +433,7 @@ and print_expr state = function
 | ESet    e -> print_set_expr state e
 | EConstr e -> print_constr_expr state e
 | ERecord e -> print_record_expr state e
+| EUpdate e -> print_update_expr state e
 | EProj   e -> print_projection state e
 | EMap    e -> print_map_expr state e
 | EVar    v -> print_var state v
@@ -596,6 +597,12 @@ and print_field_assign state {value; _} =
   print_var   state field_name;
   print_token state equal "=";
   print_expr  state field_expr
+
+and print_update_expr state {value; _} = 
+  let {record; kwd_with; updates} = value in
+  print_path state record;
+  print_token state kwd_with "with";
+  print_record_expr state updates
 
 and print_projection state {value; _} =
   let {struct_name; selector; field_path} = value in
@@ -1191,6 +1198,10 @@ and pp_projection state proj =
   pp_ident (state#pad (1+len) 0) proj.struct_name;
   List.iteri (apply len) selections
 
+and pp_update state update =
+  pp_path state update.record;
+  pp_ne_injection pp_field_assign state update.updates.value
+
 and pp_selection state = function
   FieldName name ->
     pp_node state "FieldName";
@@ -1366,6 +1377,9 @@ and pp_expr state = function
 | EProj {value; region} ->
     pp_loc_node state "EProj" region;
     pp_projection state value
+| EUpdate {value; region} ->
+    pp_loc_node state "EUpdate" region;
+    pp_update state value
 | EMap e_map ->
     pp_node state "EMap";
     pp_map_expr (state#pad 1 0) e_map

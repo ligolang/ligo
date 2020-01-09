@@ -217,7 +217,7 @@ let record_access_to_lr : type_value -> type_value AST.label_map -> string -> (t
   let%bind (_ , lst) =
     let aux = fun (ty , acc) cur ->
       let%bind (a , b) =
-        trace_strong (corner_case ~loc:__LOC__ "recard access pair") @@
+        trace_strong (corner_case ~loc:__LOC__ "record access pair") @@
         Mini_c.get_t_pair ty in
       match cur with
       | `Left -> ok (a , acc @ [(a , `Left)])
@@ -365,6 +365,23 @@ and transpile_annotated_expression (ae:AST.annotated_expression) : expression re
       let%bind record' = transpile_annotated_expression record in
       let expr = List.fold_left aux record' path in
       ok expr
+  | E_record_update (record, updates) -> 
+      let%bind ty' = transpile_type (get_type_annotation record) in 
+      let%bind ty_lmap =
+        trace_strong (corner_case ~loc:__LOC__ "not a record") @@
+        get_t_record (get_type_annotation record) in
+      let%bind ty'_lmap = AST.bind_map_lmap transpile_type ty_lmap in
+      let aux (Label l, expr) =
+        let%bind path = 
+          trace_strong (corner_case ~loc:__LOC__ "record access") @@
+          record_access_to_lr ty' ty'_lmap l in
+        let path' = List.map snd path in
+        let%bind expr' = transpile_annotated_expression expr in
+        ok (path',expr') 
+      in
+      let%bind updates = bind_map_list aux updates in
+      let%bind record = transpile_annotated_expression record in
+      return @@ E_update (record, updates) 
   | E_constant (name , lst) -> (
       let iterator_generator iterator_name =
         let lambda_to_iterator_body (f : AST.annotated_expression) (l : AST.lambda) =

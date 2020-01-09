@@ -131,6 +131,19 @@ let rec assert_value_eq (a, b: (expression * expression )) : unit result =
     )
   | E_record _, _ ->
       simple_fail "comparing record with other stuff"
+  
+  | E_update ura, E_update urb ->
+    let%bind lst =
+      generic_try (simple_error "updates with different number of fields")
+      (fun () -> List.combine ura.updates urb.updates) in
+    let aux ((Label a,expra),(Label b, exprb))=
+      assert (String.equal a b); 
+      assert_value_eq (expra,exprb)
+    in
+    let%bind _all = bind_list @@ List.map aux lst in
+    ok ()
+  | E_update _, _ ->
+     simple_fail "comparing record update with orther stuff"
 
   | (E_map lsta, E_map lstb | E_big_map lsta, E_big_map lstb) -> (
       let%bind lst = generic_try (simple_error "maps of different lengths")

@@ -529,6 +529,15 @@ and type_expression : environment -> Solver.state -> ?tv_opt:O.type_value -> I.e
     let%bind (m' , state') = I.bind_fold_lmap aux (ok (I.LMap.empty , state)) m in
     let wrapped = Wrap.record (I.LMap.map get_type_annotation m') in
     return_wrapped (E_record m') state' wrapped
+  | E_update {record; updates} ->
+    let%bind (record, state') = type_expression e state record in
+    let aux (acc, state) (k, expr) =
+      let%bind (expr',state') = type_expression e state expr in
+      ok ((k,expr')::acc, state')
+    in 
+    let%bind(updates,state') = bind_fold_list aux ([], state') updates in
+    let wrapped = Wrap.list (List.map (fun (_,e) -> get_type_annotation e) updates) in
+    return_wrapped (E_record_update (record, updates)) state' wrapped
   (* Data-structure *)
 
 (*
@@ -1089,6 +1098,14 @@ let rec untype_expression (e:O.annotated_expression) : (I.expression) result =
   | E_record_accessor (r, Label s) ->
     let%bind r' = untype_expression r in
     return (e_accessor r' [Access_record s])
+  | E_record_update (r, updates) ->
+    let%bind r' = untype_expression r in
+    let aux (Label l,e) =
+      let%bind e = untype_expression e in 
+      ok (l, e)
+    in
+    let%bind updates = bind_map_list aux updates in
+    return (e_update r' updates)
   | E_map m ->
     let%bind m' = bind_map_list (bind_map_pair untype_expression) m in
     return (e_map m')

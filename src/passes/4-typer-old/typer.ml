@@ -496,6 +496,23 @@ and type_expression' : environment -> ?tv_opt:O.type_value -> I.expression -> O.
       in
       let%bind m' = I.bind_fold_lmap aux (ok I.LMap.empty) m in
       return (E_record m') (t_record (I.LMap.map get_type_annotation m') ())
+  | E_update {record; updates} ->
+    let%bind record = type_expression' e record in
+    let aux acc (k, expr) =
+      let%bind expr' = type_expression' e expr in
+      ok ((k,expr')::acc)
+    in 
+    let%bind updates = bind_fold_list aux ([]) updates in
+    let wrapped = get_type_annotation record in
+    let wrapped = match wrapped.type_value' with 
+    | T_record record ->
+        let aux acc (k, e) =
+          I.LMap.add k (get_type_annotation e) acc
+        in
+        t_record (List.fold_left aux record updates) ()
+    | _ -> failwith "Update something which is not a record"
+    in
+    return (E_record_update (record, updates)) wrapped
   (* Data-structure *)
   | E_list lst ->
       let%bind lst' = bind_map_list (type_expression' e) lst in
@@ -876,6 +893,14 @@ let rec untype_expression (e:O.annotated_expression) : (I.expression) result =
   | E_record_accessor (r, Label s) ->
       let%bind r' = untype_expression r in
       return (e_accessor r' [Access_record s])
+  | E_record_update (r, updates) ->
+    let%bind r' = untype_expression r in
+    let aux (Label l,e) =
+      let%bind e = untype_expression e in 
+      ok (l, e)
+    in
+    let%bind updates = bind_map_list aux updates in
+    return (e_update r' updates)
   | E_map m ->
       let%bind m' = bind_map_list (bind_map_pair untype_expression) m in
       return (e_map m')

@@ -402,6 +402,32 @@ and translate_expression (expr:expression) (env:environment) : michelson result 
         i_push_unit ;
       ]
     )
+  | E_update (record, updates) -> (
+    let%bind record = translate_expression record env in
+    let insts = [
+      i_comment "r_update: start, move the record on top # env";
+      record;] in 
+    let aux (init :t list) (update,expr) = 
+      let%bind expr' = translate_expression expr env in
+      let modify_code =
+        let aux acc step = match step with
+          | `Left -> seq [dip i_unpair ; acc ; i_pair]
+          | `Right -> seq [dip i_unpiar ; acc ; i_piar]
+        in
+        let init = dip i_drop in
+        List.fold_right' aux init update
+      in
+      ok @@ init @ [
+        expr';
+        i_comment "r_updates : compute rhs # rhs:env";
+        modify_code;
+        i_comment "r_update: modify code # record+rhs : env";
+        ]
+    in
+    let%bind insts = bind_fold_list aux insts updates in
+    return @@ seq insts
+
+  )
   | E_while (expr , block) -> (
       let%bind expr' = translate_expression expr env in
       let%bind block' = translate_expression block env in

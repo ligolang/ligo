@@ -43,6 +43,7 @@ and expression' =
   | E_record of expr label_map
   (* TODO: Change it to (expr * access) *)
   | E_accessor of (expr * access_path)
+  | E_update of update
   (* Data Structures *)
   | E_map of (expr * expr) list
   | E_big_map of (expr * expr) list
@@ -63,6 +64,6 @@ and expression = {
   expression : expression' ;
   location : Location.t ;
 }
-
+and update = {record: expr; updates: (label*expr)list}
 
 and matching_expr = (expr,unit) matching

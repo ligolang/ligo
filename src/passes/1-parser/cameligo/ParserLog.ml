@@ -175,6 +175,16 @@ and print_projection state {value; _} =
   print_token   state selector ".";
   print_nsepseq state "." print_selection field_path
 
+and print_update state {value; _} =
+ let {record; kwd_with; updates} = value in
+ print_path   state record;
+ print_token state kwd_with "with";
+ print_record_expr state updates
+
+and print_path state = function
+  Name var  -> print_var        state var
+| Path path -> print_projection state path
+
 and print_selection state = function
   FieldName id -> print_var state id
 | Component c  -> print_int state c
@@ -329,6 +339,7 @@ and print_expr state = function
 | ECall e       -> print_fun_call state e
 | EVar v        -> print_var state v
 | EProj p       -> print_projection state p
+| EUpdate u     -> print_update state u
 | EUnit e       -> print_unit state e
 | EBytes b      -> print_bytes state b
 | EPar e        -> print_expr_par state e
@@ -765,6 +776,9 @@ and pp_expr state = function
 | EProj {value; region} ->
     pp_loc_node state "EProj" region;
     pp_projection state value
+| EUpdate {value; region} ->
+    pp_loc_node state "EUpdate" region;
+    pp_update state value
 | EVar v ->
     pp_node  state "EVar";
     pp_ident (state#pad 1 0) v
@@ -856,6 +870,18 @@ and pp_projection state proj =
   let apply len rank = pp_selection (state#pad len rank) in
   pp_ident (state#pad (1+len) 0) proj.struct_name;
   List.iteri (apply len) selections
+
+and pp_update state update =
+  pp_path state update.record;
+  pp_ne_injection pp_field_assign state update.updates.value
+
+and pp_path state = function
+  Name name ->
+    pp_node state "Name";
+    pp_ident (state#pad 1 0) name
+| Path {value; region} ->
+    pp_loc_node state "Path" region;
+    pp_projection state value
 
 and pp_selection state = function
   FieldName fn ->

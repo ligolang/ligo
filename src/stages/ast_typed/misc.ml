@@ -178,6 +178,7 @@ module Free_variables = struct
     | E_constructor (_ , a) -> self a
     | E_record m -> unions @@ List.map self @@ LMap.to_list m
     | E_record_accessor (a, _) -> self a
+    | E_record_update (r,ups) -> union (self r) @@ unions @@ List.map (fun (_,e) -> self e) ups
     | E_tuple_accessor (a, _) -> self a
     | E_list lst -> unions @@ List.map self lst
     | E_set lst -> unions @@ List.map self lst
@@ -471,6 +472,21 @@ let rec assert_value_eq (a, b: (value*value)) : unit result =
     )
   | E_record _, _ ->
       fail @@ (different_values_because_different_types "record vs. non-record" a b)
+
+  | E_record_update (ra,upa), E_record_update (rb,upb) -> (
+    let%bind _r  = assert_value_eq (ra,rb) in
+    let%bind lst =
+      generic_try (simple_error "updates with different number of fields")
+      (fun () -> List.combine upa upb) in
+    let aux ((Label a,expra),(Label b, exprb))=
+      assert (String.equal a b); 
+      assert_value_eq (expra,exprb)
+    in
+    let%bind _all = bind_list @@ List.map aux lst in
+    ok ()
+  )
+  | E_record_update _ , _ ->
+      fail @@ (different_values_because_different_types "record update vs. non record update" a b)
 
   | (E_map lsta, E_map lstb | E_big_map lsta, E_big_map lstb) -> (
       let%bind lst = generic_try (different_size_values "maps of different lengths" a b)

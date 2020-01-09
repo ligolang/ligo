@@ -692,6 +692,43 @@ let record () : unit result  =
   in
   ok ()
 
+let record_mligo () : unit result  =
+  let%bind program = mtype_file "./contracts/record.mligo" in
+  let%bind () =
+    let expected = record_ez_int ["foo" ; "bar"] 0 in
+    expect_eq_evaluate program "fb" expected
+  in
+  let%bind () =
+    let%bind () = expect_eq_evaluate program "a" (e_int 42) in
+    let%bind () = expect_eq_evaluate program "b" (e_int 142) in
+    let%bind () = expect_eq_evaluate program "c" (e_int 242) in
+    ok ()
+  in
+  let%bind () =
+    let make_input = record_ez_int ["foo" ; "bar"] in
+    let make_expected = fun n -> e_int (2 * n) in
+    expect_eq_n program "projection" make_input make_expected
+  in
+  let%bind () =
+    let make_input = record_ez_int ["foo" ; "bar"] in
+    let make_expected = fun n -> ez_e_record [("foo" , e_int 256) ; ("bar" , e_int n) ] in
+    expect_eq_n program "modify" make_input make_expected
+  in
+  let%bind () =
+    let make_input = record_ez_int ["a" ; "b" ; "c"] in
+    let make_expected = fun n -> ez_e_record [
+        ("a" , e_int n) ;
+        ("b" , e_int 2048) ;
+        ("c" , e_int n)
+      ] in
+    expect_eq_n program "modify_abc" make_input make_expected
+  in
+  let%bind () =
+    let expected = record_ez_int ["a";"b";"c";"d";"e"] 23 in
+    expect_eq_evaluate program "br" expected
+  in
+  ok ()
+
 let tuple () : unit result  =
   let%bind program = type_file "./contracts/tuple.ligo" in
   let ez n =
@@ -1912,6 +1949,7 @@ let main = test_suite "Integration (End to End)" [
     test "tuple (mligo)" tuple_mligo ;
     test "tuple (religo)" tuple_religo ;
     test "record" record ;
+    test "record" record_mligo ;
     test "condition simple" condition_simple ;
     test "condition (ligo)" condition ;
     test "condition (mligo)" condition_mligo ;
