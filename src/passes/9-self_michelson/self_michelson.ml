@@ -359,13 +359,30 @@ let opt_swap2 : peep2 = function
    thwarting the intent of the Michelson tail fail restriction -- the
    LIGO _user_ might accidentally write dead code immediately after a
    failure, and we will simply erase it. *)
+let rec is_failing : michelson -> bool =
+  function
+  | Seq (_, []) -> false
+  | Seq (_, [arg]) -> is_failing arg
+  | Seq (l, _ :: args) -> is_failing (Seq (l, args))
+  | Prim (_, I_FAILWITH, _, _) -> true
+  | Prim (_, I_IF, [bt; bf], _)
+  | Prim (_, I_IF_CONS, [bt; bf], _)
+  | Prim (_, I_IF_LEFT, [bt; bf], _)
+  | Prim (_, I_IF_NONE, [bt; bf], _) ->
+    is_failing bt && is_failing bf
+  (* Note: the body of ITER, LOOP, LOOP_LEFT _can_ be
+     failing. However, the loop will _not_ be failing, because the
+     body might never be executed. The body of MAP _cannot_ be
+     failing. *)
+  | _ -> false
+
 let rec opt_tail_fail : michelson -> michelson =
   function
   | Seq (l, args) ->
      let rec aux args =
        match args with
        | [] -> []
-       | Prim (l, I_FAILWITH, args, annot) :: _ -> [ Prim (l, I_FAILWITH, args, annot) ]
+       | arg :: _ when is_failing arg -> [arg]
        | arg :: args -> arg :: aux args in
      let args = aux args in
      Seq (l, List.map opt_tail_fail args)
