@@ -195,13 +195,12 @@ and print_type_tuple state {value; _} =
   print_nsepseq state "," print_type_expr inside;
   print_token state rpar ")"
 
-and print_fun_expr state {value; _} =
-  let {kwd_function; name; param; colon;
-       ret_type; kwd_is; block_with; return} = value in
-  print_token state kwd_function "function";
-  (match name with
-     None -> print_var state (Region.wrap_ghost "#anon")
-   | Some var -> print_var state var);
+and print_fun_decl state {value; _} =
+  let {kwd_function; fun_name; param; colon;
+       ret_type; kwd_is; block_with;
+       return; terminator} = value in
+  print_token       state kwd_function "function";
+  print_var         state fun_name;
   print_parameters  state param;
   print_token       state colon ":";
   print_type_expr   state ret_type;
@@ -212,11 +211,17 @@ and print_fun_expr state {value; _} =
      print_block state block;
      print_token state kwd_with "with");
   print_expr state return;
+  print_terminator state terminator
 
-and print_fun_decl state {value; _} =
-  let {fun_expr ; terminator;} = value in
-  print_fun_expr state fun_expr;
-  print_terminator state terminator;
+and print_fun_expr state {value; _} =
+  let {kwd_function; param; colon;
+       ret_type; kwd_is; return} : fun_expr = value in
+  print_token       state kwd_function "function";
+  print_parameters  state param;
+  print_token       state colon ":";
+  print_type_expr   state ret_type;
+  print_token       state kwd_is "is";
+  print_expr        state return
 
 and print_parameters state {value; _} =
   let {lpar; inside; rpar} = value in
@@ -826,7 +831,33 @@ and pp_declaration state = function
     pp_const_decl state value
 | FunDecl {value; region} ->
     pp_loc_node state "FunDecl" region;
-    pp_fun_expr state value.fun_expr.value
+    pp_fun_decl state value
+
+and pp_fun_decl state decl =
+  let () =
+    let state = state#pad 5 0 in
+    pp_ident state decl.fun_name in
+  let () =
+    let state = state#pad 5 1 in
+    pp_node state "<parameters>";
+    pp_parameters state decl.param in
+  let () =
+    let state = state#pad 5 2 in
+    pp_node state "<return type>";
+    pp_type_expr (state#pad 1 0) decl.ret_type in
+  let () =
+    let state = state#pad 5 3 in
+    pp_node state "<body>";
+    let statements =
+      match decl.block_with with
+        Some (block,_) -> block.value.statements
+      | None -> Instr (Skip Region.ghost), [] in
+    pp_statements state statements in
+  let () =
+    let state = state#pad 5 4 in
+    pp_node state "<return>";
+    pp_expr (state#pad 1 0) decl.return
+  in ()
 
 and pp_const_decl state decl =
   pp_ident (state#pad 3 0) decl.name;
@@ -888,32 +919,19 @@ and pp_type_tuple state {value; _} =
   let apply len rank = pp_type_expr (state#pad len rank)
   in List.iteri (List.length components |> apply) components
 
-and pp_fun_expr state decl =
+and pp_fun_expr state (expr: fun_expr) =
   let () =
-    let state = state#pad 5 0 in
-    match decl.name with
-      None -> pp_ident state (Region.wrap_ghost "#anon")
-    | Some var -> pp_ident state var in
-  let () =
-    let state = state#pad 5 1 in
+    let state = state#pad 3 0 in
     pp_node state "<parameters>";
-    pp_parameters state decl.param in
+    pp_parameters state expr.param in
   let () =
-    let state = state#pad 5 2 in
+    let state = state#pad 3 1 in
     pp_node state "<return type>";
-    pp_type_expr (state#pad 1 0) decl.ret_type in
+    pp_type_expr (state#pad 1 0) expr.ret_type in
   let () =
-    let state = state#pad 5 3 in
-    pp_node state "<body>";
-    let statements =
-      match decl.block_with with
-        Some (block,_) -> block.value.statements
-      | None -> Instr (Skip Region.ghost), [] in
-    pp_statements state statements in
-  let () =
-    let state = state#pad 5 4 in
+    let state = state#pad 3 2 in
     pp_node state "<return>";
-    pp_expr (state#pad 1 0) decl.return
+    pp_expr (state#pad 1 0) expr.return
   in ()
 
 and pp_parameters state {value; _} =
@@ -1307,7 +1325,7 @@ and pp_data_decl state = function
     pp_var_decl state value
 | LocalFun {value; region} ->
     pp_loc_node state "LocalFun" region;
-    pp_fun_expr state value.fun_expr.value
+    pp_fun_decl state value
 
 and pp_var_decl state decl =
   pp_ident     (state#pad 3 0) decl.name;

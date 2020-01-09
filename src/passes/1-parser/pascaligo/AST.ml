@@ -196,18 +196,23 @@ and type_tuple = (type_expr, comma) nsepseq par reg
 
 and fun_expr = {
   kwd_function : kwd_function;
-  name         : variable option;
+  param        : parameters;
+  colon        : colon;
+  ret_type     : type_expr;
+  kwd_is       : kwd_is;
+  return       : expr
+}
+
+and fun_decl = {
+  kwd_function : kwd_function;
+  fun_name     : variable;
   param        : parameters;
   colon        : colon;
   ret_type     : type_expr;
   kwd_is       : kwd_is;
   block_with   : (block reg * kwd_with) option;
-  return       : expr
-}
-
-and fun_decl = {
-  fun_expr   : fun_expr reg;
-  terminator : semi option
+  return       : expr;
+  terminator   : semi option
 }
 
 and parameters = (param_decl, semi) nsepseq par reg

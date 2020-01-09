@@ -226,50 +226,54 @@ field_decl:
     in {region; value} }
 
 fun_expr:
-  "function" fun_name? parameters ":" type_expr "is"
-     block
-  "with" expr {
-    let ()     = SyntaxError.check_reserved_name_opt $2 in
-    let stop   = expr_to_region $9 in
+  "function" parameters ":" type_expr "is" expr {
+    let stop   = expr_to_region $6 in
     let region = cover $1 stop
     and value  = {kwd_function = $1;
-                  name         = $2;
-                  param        = $3;
-                  colon        = $4;
-                  ret_type     = $5;
-                  kwd_is       = $6;
-                  block_with   = Some ($7, $8);
-                  return       = $9}
+                  param        = $2;
+                  colon        = $3;
+                  ret_type     = $4;
+                  kwd_is       = $5;
+                  return       = $6}
     in {region; value} }
-| "function" fun_name? parameters ":" type_expr "is" expr {
-    let ()     = SyntaxError.check_reserved_name_opt $2 in
-    let stop   = expr_to_region $7 in
-    let region = cover $1 stop
-    and value  = {kwd_function = $1;
-                  name         = $2;
-                  param        = $3;
-                  colon        = $4;
-                  ret_type     = $5;
-                  kwd_is       = $6;
-                  block_with   = None;
-                  return       = $7}
-    in {region; value} }
-
 
 (* Function declarations *)
 
-fun_decl:
-  open_fun_decl { $1 }
-| fun_expr ";"  {
-    let region = cover $1.region $2
-    and value  = {fun_expr=$1; terminator = Some $2}
+open_fun_decl:
+  "function" fun_name parameters ":" type_expr "is"
+     block
+  "with" expr {
+    let fun_name = SyntaxError.check_reserved_name $2 in
+    let stop     = expr_to_region $9 in
+    let region   = cover $1 stop
+    and value    = {kwd_function = $1;
+                    fun_name;
+                    param        = $3;
+                    colon        = $4;
+                    ret_type     = $5;
+                    kwd_is       = $6;
+                    block_with   = Some ($7, $8);
+                    return       = $9;
+                    terminator   = None}
+    in {region; value} }
+| "function" fun_name parameters ":" type_expr "is" expr {
+    let fun_name = SyntaxError.check_reserved_name $2 in
+    let stop     = expr_to_region $7 in
+    let region   = cover $1 stop
+    and value    = {kwd_function = $1;
+                    fun_name;
+                    param        = $3;
+                    colon        = $4;
+                    ret_type     = $5;
+                    kwd_is       = $6;
+                    block_with   = None;
+                    return       = $7;
+                    terminator   = None}
     in {region; value} }
 
-open_fun_decl:
-  fun_expr {
-    let region = $1.region
-    and value  = {fun_expr=$1; terminator=None}
-    in {region; value} }
+fun_decl:
+  open_fun_decl ";"? {
+    {$1 with value = {$1.value with terminator=$2}} }
 
 parameters:
   par(nsepseq(param_decl,";")) {
