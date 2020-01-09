@@ -8,6 +8,11 @@ let failed_to_compile_md_file md_file (s,group,prg) =
   let content () = "\n"^prg in
   error title content
 
+let bad_code_block_argument arg =
+  let title () = Format.asprintf "Bad code block argument '%s'" arg in
+  let content () = "only 'group=NAME' or 'skip' are allowed" in
+  error title content
+
 (**
   binds the snippets by (syntax, group_name)
   e.g. :(pascaligo, a) -> "let .. in let .. in"
@@ -19,34 +24,39 @@ let get_groups md_file =
   let channel = open_in md_file in
   let lexbuf = Lexing.from_channel channel in
   let code_blocks = Md.token lexbuf in
-  List.fold_left
+  bind_fold_list
     (fun (grp_map: _ SnippetsGroup.t) (el:Md.block) ->
       match el.header  with
-      | Some s when (String.equal s "pascaligo") || (String.equal s "cameligo") || (String.equal s "reasonligo") -> (
+      | Some ("pascaligo" as s) | Some ("cameligo" as s) | Some ("reasonligo" as s) -> (
+        let%bind () = bind_iter_list
+          (fun arg -> match arg with
+          | Md.Field "" | Md.Field "skip" | Md.NameValue ("group",_) -> ok ()
+          | Md.Field f | Md.NameValue (f,_) -> fail @@ bad_code_block_argument f)
+          el.arguments in
         match el.arguments with
-        | [Md.Field ""] -> SnippetsGroup.update (s,"ungrouped")
+        | [Md.Field ""] ->
+          ok @@ SnippetsGroup.update (s,"ungrouped")
                   (fun arg_content ->
                     match arg_content with
                     | Some ct -> Some (String.concat "\n" (ct::el.contents))
                     | None -> Some (String.concat "\n" el.contents)
                   )
                   grp_map
-        | [Md.Field "skip"] -> grp_map
-        | _ ->
-        List.fold_left
+        | [Md.Field "skip"] -> ok grp_map
+        | _ -> bind_fold_list
           (fun grp_map arg -> match arg with
               | Md.NameValue ("group", name) ->
-                SnippetsGroup.update (s,name)
+                ok @@ SnippetsGroup.update (s,name)
                   (fun arg_content ->
                     match arg_content with
                     | Some ct -> Some (String.concat "\n" (ct::el.contents))
                     | None -> Some (String.concat "\n" el.contents)
                   )
                   grp_map
-              | _ -> grp_map
+              | _ -> ok grp_map
           )
           grp_map el.arguments )
-      | None | Some _ -> grp_map
+      | None | Some _ -> ok grp_map
     )
     SnippetsGroup.empty code_blocks
 
@@ -69,8 +79,9 @@ let compile_groups _filename grp_list =
   ok ()
 
 let compile filename () =
-  let groups = SnippetsGroup.bindings @@ get_groups filename in
-  let%bind () = compile_groups filename groups in
+  let%bind groups = get_groups filename in
+  let groups_map = SnippetsGroup.bindings groups in
+  let%bind () = compile_groups filename groups_map in
   ok ()
 
 (*
