@@ -95,7 +95,7 @@ type action is
 | Reset of unit
 ```
 
-```pascaligo gorup=d
+```pascaligo skip
 // proxy.ligo
 #include "counter.types.ligo"
 
