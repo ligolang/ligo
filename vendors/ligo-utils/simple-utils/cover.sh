@@ -78,6 +78,11 @@ while : ; do
       ;;
       # Help
       #
+    --concatenate*)
+      if test -n "$dir_opt"; then
+        fatal_error "Repeated option --concatenate."; fi
+      concatenate=yes
+      ;;
     --unlexer=*)
       if test -n "$unlexer"; then
         fatal_error "Repeated option --unlexer."; fi
@@ -119,7 +124,7 @@ done
 #
 usage () {
   cat <<EOF
-Usage: $(basename $0) [-h|--help]
+Usage: $(basename $0) [-h|--help] [--concatenate]
                 --par-tokens=<par_tokens>.mly
                 --lex-tokens=<lex_tokens>.mli
                 --messages=<parser>.msg
@@ -136,6 +141,8 @@ generating the latter). The LIGO files will be numbered with their
 corresponding state number in the automaton. The executable <binary>
 reads a line on stdin of tokens and produces a line of corresponding
 lexemes.
+If option --concatenate is used a single file 'all.<extension>' will
+be produced, containing the concatenation of all the erroneous expressions
 
 The following options, if given, must be given only once.
 
@@ -262,7 +269,11 @@ paste -d ':' $states $raw > $map
 rm -f $dir/*.$ext
 while read -r line; do
   state=$(echo $line | sed -n 's/\(.*\):.*/\1/p')
-  filename=$(printf "$dir/%04d.$ext" $state)
+  if test "$concatenate" = "yes"; then
+    filename="$dir/all.$ext"
+  else
+    filename=$(printf "$dir/%04d.$ext" $state)
+  fi
   sentence=$(echo $line | sed -n 's/.*:\(.*\)/\1/p')
   echo $sentence | $unlexer >> $filename
 done < $map
