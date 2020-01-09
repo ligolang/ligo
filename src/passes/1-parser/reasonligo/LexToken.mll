@@ -140,7 +140,7 @@ let proj_token = function
 | Bytes Region.{region; value = s,b} ->
     region,
     sprintf "Bytes (\"%s\", \"0x%s\")"
-      s (Hex.to_string b)
+      s (Hex.show b)
 | Else region -> region, "Else"
 | False region -> region, "False"
 | If region -> region, "If"
