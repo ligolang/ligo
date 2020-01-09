@@ -64,7 +64,7 @@ let () =
       let () = Unit.close_all () in
       let token =
         MyLexer.Token.mk_constr name.Region.value name.Region.region in
-      let point = "Duplicate variant in this type declaration.\n\
+      let point = "Duplicate variant in this sum type declaration.\n\
                    Hint: Change the name.\n",
                   None, token in
       let error =
@@ -80,10 +80,26 @@ let () =
          Stdlib.Error _ ->
            assert false (* Should not fail if [name] is valid. *)
        | Ok invalid ->
-          let point = "Repeated variable in this pattern.\n\
-                       Hint: Change the name.\n",
-                      None, invalid in
-          let error =
-            Unit.format_error ~offsets:IO.options#offsets
-                              IO.options#mode point
-          in Printf.eprintf "\027[31m%s\027[0m%!" error)
+           let point = "Repeated variable in this pattern.\n\
+                        Hint: Change the name.\n",
+                       None, invalid in
+           let error =
+             Unit.format_error ~offsets:IO.options#offsets
+                               IO.options#mode point
+           in Printf.eprintf "\027[31m%s\027[0m%!" error)
+
+  | Error (Duplicate_field name) ->
+      let () = Unit.close_all () in
+      let token =
+        MyLexer.Token.mk_ident name.Region.value name.Region.region in
+      (match token with
+         Stdlib.Error _ ->
+           assert false (* Should not fail if [name] is valid. *)
+       | Ok invalid ->
+           let point = "Duplicate field name in this record declaration.\n\
+                        Hint: Change the name.\n",
+                       None, invalid in
+           let error =
+             Unit.format_error ~offsets:IO.options#offsets
+                               IO.options#mode point
+           in Printf.eprintf "\027[31m%s\027[0m%!" error)

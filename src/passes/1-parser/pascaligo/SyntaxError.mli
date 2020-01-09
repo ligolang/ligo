@@ -3,6 +3,7 @@ type t =
 | Duplicate_parameter of AST.variable
 | Duplicate_variant   of AST.variable
 | Non_linear_pattern  of AST.variable
+| Duplicate_field     of AST.variable
 
 type error = t
 
@@ -22,3 +23,4 @@ val check_reserved_names    : VarSet.t -> VarSet.t
 val check_pattern           : AST.pattern -> unit
 val check_variants          : AST.variant Region.reg list -> unit
 val check_parameters        : AST.param_decl list -> unit
+val check_fields            : AST.field_decl Region.reg list -> unit

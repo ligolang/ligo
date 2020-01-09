@@ -5,6 +5,7 @@ type t =
 | Duplicate_parameter of AST.variable
 | Duplicate_variant   of AST.variable
 | Non_linear_pattern  of AST.variable
+| Duplicate_field     of AST.variable
 
 type error = t
 
@@ -77,6 +78,10 @@ let reserved =
   |> add "sha_512"
   |> add "blake2b"
   |> add "cons"
+  |> add "address"
+  |> add "self_address"
+  |> add "implicit_account"
+  |> add "set_delegate"
 
 let check_reserved_names vars =
   let is_reserved elt = SSet.mem elt.value reserved in
@@ -167,3 +172,14 @@ let check_parameters params =
   let params =
     List.fold_left add VarSet.empty params
   in ignore params
+
+(* Checking record fields *)
+
+let check_fields fields =
+  let add acc {value; _} =
+    if VarSet.mem (value: field_decl).field_name acc then
+      raise (Error (Duplicate_field value.field_name))
+    else VarSet.add value.field_name acc in
+  let fields =
+    List.fold_left add VarSet.empty fields
+  in ignore fields

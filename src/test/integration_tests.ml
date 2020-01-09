@@ -51,7 +51,7 @@ let annotation () : unit result =
     expect_eq_evaluate program "lst" (e_list [])
   in
   let%bind () =
-    expect_eq_evaluate program "address" (e_address "tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx")
+    expect_eq_evaluate program "my_address" (e_address "tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx")
   in
   ok ()
 

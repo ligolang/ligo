@@ -200,6 +200,8 @@ variant:
 record_type:
   "record" sep_or_term_list(field_decl,";") "end" {
     let ne_elements, terminator = $2 in
+    let () = Utils.nsepseq_to_list ne_elements
+             |> SyntaxError.check_fields in
     let region = cover $1 $3
     and value  = {opening = Kwd $1;
                   ne_elements;
