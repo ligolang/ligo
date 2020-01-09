@@ -1,7 +1,7 @@
 (ocamllex md)
 
 (executables
-  (names test manual_test doc_test)
+  (names test doc_test)
   (libraries
     simple-utils
     ligo
