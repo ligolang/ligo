@@ -77,16 +77,6 @@ module Errors = struct
     ] in
     error ~data title message
 
-  let bad_bytes loc str =
-    let title () = "bad bytes string" in
-    let message () =
-      Format.asprintf "bytes string contained non-hexadecimal chars" in
-    let data = [
-      ("location", fun () -> Format.asprintf "%a" Location.pp loc) ;
-      ("bytes", fun () -> str) ;
-    ] in
-    error ~data title message
-
   let corner_case ~loc message =
     let title () = "corner case" in
     let content () = "We don't have a good error message for this case. \
@@ -170,22 +160,6 @@ module Errors = struct
     ] in
     error ~data title message
 
-  let unexpected_anonymous_function loc =
-    let title () = "unexpected anonymous function" in
-    let message () = "you provided a function declaration without name" in
-    let data = [
-        ("location" , fun () -> Format.asprintf "%a" Location.pp @@ loc)
-      ] in
-    error ~data title message
-
-  let unexpected_named_function loc =
-    let title () = "unexpected named function" in
-    let message () = "you provided a function expression with a name (remove it)" in
-    let data = [
-        ("location" , fun () -> Format.asprintf "%a" Location.pp @@ loc)
-      ] in
-    error ~data title message
-
   (* Logging *)
 
   let simplifying_instruction t =
@@ -205,20 +179,21 @@ open Operators.Simplify.Pascaligo
 
 let r_split = Location.r_split
 
-(*
-  Statements can't be simplified in isolation. `a ; b ; c` can get simplified either
-  as `let x = expr in (b ; c)` if `a` is a ` const x = expr` declaration or as
-  `sequence(a , sequence(b , c))` for everything else.
-  Because of this, simplifying sequences depend on their contents. To avoid peeking in
-  their contents, we instead simplify sequences elements as functions from their next
-  elements to the actual result.
+(* Statements can't be simplified in isolation. [a ; b ; c] can get
+   simplified either as [let x = expr in (b ; c)] if [a] is a [const x
+   = expr] declaration or as [sequence(a, sequence(b, c))] for
+   everything else.  Because of this, simplifying sequences depend on
+   their contents. To avoid peeking in their contents, we instead
+   simplify sequences elements as functions from their next elements
+   to the actual result.
 
-  For `return_let_in`, if there is no follow-up element, an error is triggered, as
-  you can't have `let x = expr in ...` with no `...`. A cleaner option might be to add
-  a `unit` instead of erroring.
+   For [return_let_in], if there is no follow-up element, an error is
+   triggered, as you can't have [let x = expr in ...] with no [...]. A
+   cleaner option might be to add a [unit] instead of failing.
 
-  `return_statement` is used for non-let_in statements.
-*)
+   [return_statement] is used for non-let-in statements.
+ *)
+
 let return_let_in ?loc binder rhs = ok @@ fun expr'_opt ->
   match expr'_opt with
   | None -> fail @@ corner_case ~loc:__LOC__ "missing return"
@@ -246,7 +221,8 @@ let rec simpl_type_expression (t:Raw.type_expr) : type_expression result =
   | TApp x ->
       let (name, tuple) = x.value in
       let lst = npseq_to_list tuple.value.inside in
-      let%bind lst = bind_list @@ List.map simpl_type_expression lst in (** TODO: fix constant and operator*)
+      let%bind lst =
+        bind_list @@ List.map simpl_type_expression lst in (** TODO: fix constant and operator*)
       let%bind cst =
         trace (unknown_predefined_type name) @@
         type_operators name.value in
@@ -481,13 +457,10 @@ let rec simpl_expression (t:Raw.expr) : expr result =
       let%bind index = simpl_expression lu.index.value.inside in
       return @@ e_look_up ~loc path index
     )
-  | EFun f -> (
+  | EFun f ->
     let (f , loc) = r_split f in
-    let%bind ((name_opt , _ty_opt) , f') = simpl_fun_expression ~loc f in
-    match name_opt with
-    | None -> return @@ f'
-    | Some _ -> fail @@ unexpected_named_function loc
-  )
+    let%bind (_ty_opt, f') = simpl_fun_expression ~loc f
+    in return @@ f'
 
 and simpl_logic_expression (t:Raw.logic_expr) : expression result =
   let return x = ok x in
@@ -589,9 +562,8 @@ and simpl_data_declaration : Raw.data_decl -> _ result = fun t ->
       return_let_in ~loc (Var.of_name name , Some t) expression
   | LocalFun f  ->
       let (f , loc) = r_split f in
-      let%bind ((name_opt , ty_opt) , e) = simpl_fun_expression ~loc f.fun_expr.value in
-      let%bind name = trace_option (unexpected_anonymous_function loc) name_opt in
-      return_let_in ~loc (name , ty_opt) e
+      let%bind (binder, expr) = simpl_fun_decl ~loc f
+      in return_let_in ~loc binder expr
 
 and simpl_param : Raw.param_decl -> (expression_variable * type_expression) result =
   fun t ->
@@ -607,11 +579,11 @@ and simpl_param : Raw.param_decl -> (expression_variable * type_expression) resu
       let%bind type_expression = simpl_type_expression c.param_type in
       ok (type_name , type_expression)
 
-and simpl_fun_expression :
-  loc:_ -> Raw.fun_expr -> ((expression_variable option * type_expression option) * expression) result =
+and simpl_fun_decl :
+  loc:_ -> Raw.fun_decl -> ((expression_variable * type_expression option) * expression) result =
   fun ~loc x ->
   let open! Raw in
-  let {name;param;ret_type;block_with;return} : fun_expr = x in
+  let {fun_name;param;ret_type;block_with;return} : fun_decl = x in
   let statements =
     match block_with with
     | Some (block,_) -> npseq_to_list block.value.statements
@@ -620,7 +592,6 @@ and simpl_fun_expression :
   (match param.value.inside with
      a, [] -> (
        let%bind input = simpl_param a in
-       let name = Option.map (fun (x : _ reg) -> Var.of_name x.value) name in
        let (binder , input_type) = input in
        let%bind instructions = bind_list
          @@ List.map simpl_statement
@@ -633,19 +604,22 @@ and simpl_fun_expression :
          bind_fold_right_list aux result body in
        let expression : expression = e_lambda ~loc binder (Some input_type)
            (Some output_type) result in
-       let type_annotation = Some (make_t @@ T_arrow (input_type, output_type)) in
-       ok ((name , type_annotation) , expression)
+       let type_annotation =
+         Some (make_t @@ T_arrow (input_type, output_type)) in
+       ok ((Var.of_name fun_name.value, type_annotation), expression)
      )
    | lst -> (
        let lst = npseq_to_list lst in
-       let arguments_name = Var.of_name "arguments" in (* TODO wrong, should be fresh? *)
+       (* TODO wrong, should be fresh? *)
+       let arguments_name = Var.of_name "arguments" in
        let%bind params = bind_map_list simpl_param lst in
        let (binder , input_type) =
          let type_expression = T_tuple (List.map snd params) in
          (arguments_name , type_expression) in
        let%bind tpl_declarations =
          let aux = fun i x ->
-           let expr = e_accessor (e_variable arguments_name) [Access_tuple i] in
+           let expr =
+             e_accessor (e_variable arguments_name) [Access_tuple i] in
            let type_variable = Some (snd x) in
            let ass = return_let_in (fst x , type_variable) expr in
            ass
@@ -663,34 +637,91 @@ and simpl_fun_expression :
        let expression =
          e_lambda ~loc binder (Some (make_t @@ input_type)) (Some output_type) result in
        let type_annotation = Some (make_t @@ T_arrow (make_t input_type, output_type)) in
-       let name = Option.map (fun (x : _ reg) -> Var.of_name x.value) name in
-       ok ((name , type_annotation) , expression)
+       ok ((Var.of_name fun_name.value, type_annotation), expression)
      )
   )
+
+and simpl_fun_expression :
+  loc:_ -> Raw.fun_expr -> (type_expression option * expression) result =
+  fun ~loc x ->
+  let open! Raw in
+  let {param;ret_type;return;_} : fun_expr = x in
+  let statements = [] in
+  (match param.value.inside with
+     a, [] -> (
+       let%bind input = simpl_param a in
+       let (binder , input_type) = input in
+       let%bind instructions = bind_list
+         @@ List.map simpl_statement
+         @@ statements in
+       let%bind result = simpl_expression return in
+       let%bind output_type = simpl_type_expression ret_type in
+       let body = instructions in
+       let%bind result =
+         let aux prec cur = cur (Some prec) in
+         bind_fold_right_list aux result body in
+       let expression : expression = e_lambda ~loc binder (Some input_type)
+           (Some output_type) result in
+       let type_annotation =
+         Some (make_t @@ T_arrow (input_type, output_type)) in
+       ok (type_annotation, expression)
+     )
+   | lst -> (
+       let lst = npseq_to_list lst in
+       (* TODO wrong, should be fresh? *)
+       let arguments_name = Var.of_name "arguments" in
+       let%bind params = bind_map_list simpl_param lst in
+       let (binder , input_type) =
+         let type_expression = T_tuple (List.map snd params) in
+         (arguments_name , type_expression) in
+       let%bind tpl_declarations =
+         let aux = fun i x ->
+           let expr =
+             e_accessor (e_variable arguments_name) [Access_tuple i] in
+           let type_variable = Some (snd x) in
+           let ass = return_let_in (fst x , type_variable) expr in
+           ass
+         in
+         bind_list @@ List.mapi aux params in
+       let%bind instructions = bind_list
+         @@ List.map simpl_statement
+         @@ statements in
+       let%bind result = simpl_expression return in
+       let%bind output_type = simpl_type_expression ret_type in
+       let body = tpl_declarations @ instructions in
+       let%bind result =
+         let aux prec cur = cur (Some prec) in
+         bind_fold_right_list aux result body in
+       let expression =
+         e_lambda ~loc binder (Some (make_t @@ input_type)) (Some output_type) result in
+       let type_annotation = Some (make_t @@ T_arrow (make_t input_type, output_type)) in
+       ok (type_annotation, expression)
+     )
+  )
+
 and simpl_declaration : Raw.declaration -> declaration Location.wrap result =
   fun t ->
   let open! Raw in
   match t with
-  | TypeDecl x -> (
-      let (x , loc) = r_split x in
-      let {name;type_expr} : Raw.type_decl = x in
+  | TypeDecl x ->
+      let decl, loc = r_split x in
+      let {name;type_expr} : Raw.type_decl = decl in
       let%bind type_expression = simpl_type_expression type_expr in
-      ok @@ Location.wrap ~loc (Declaration_type (Var.of_name name.value , type_expression))
-    )
+      ok @@ Location.wrap ~loc (Declaration_type
+                                 (Var.of_name name.value, type_expression))
+
   | ConstDecl x ->
       let simpl_const_decl = fun {name;const_type;init} ->
         let%bind expression = simpl_expression init in
         let%bind t = simpl_type_expression const_type in
         let type_annotation = Some t in
-        ok @@ Declaration_constant (Var.of_name name.value , type_annotation , expression)
-      in
-      bind_map_location simpl_const_decl (Location.lift_region x)
-  | FunDecl x -> (
-      let (x , loc) = r_split x in
-      let%bind ((name_opt , ty_opt) , expr) = simpl_fun_expression ~loc x.fun_expr.value in
-      let%bind name = trace_option (unexpected_anonymous_function loc) name_opt in
-      ok @@ Location.wrap ~loc (Declaration_constant (name , ty_opt , expr))
-    )
+        ok @@ Declaration_constant
+               (Var.of_name name.value, type_annotation, expression)
+      in bind_map_location simpl_const_decl (Location.lift_region x)
+  | FunDecl x ->
+      let decl, loc = r_split x in
+      let%bind ((name, ty_opt), expr) = simpl_fun_decl ~loc decl in
+      ok @@ Location.wrap ~loc (Declaration_constant (name, ty_opt, expr))
 
 and simpl_statement : Raw.statement -> (_ -> expression result) result =
   fun s ->
@@ -954,9 +985,9 @@ and simpl_cases : type a . (Raw.pattern * a) list -> (a, unit) matching result =
     | PConstr (PConstrApp v) -> (
       let value = v.value in
       match value with
-       | constr, None ->        
-        ok (constr.value, "unit")        
-      | _ -> 
+      | constr, None ->
+         ok (constr.value, "unit")
+      | _ ->
        let const, pat_opt = v.value in
         let%bind pat =
           trace_option (unsupported_cst_constr t) @@

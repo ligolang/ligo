@@ -98,18 +98,20 @@ let make ~(start: Pos.t) ~(stop: Pos.t) =
                   info start_offset stop#line horizontal stop_offset
 
       method compact ?(file=true) ?(offsets=true) mode =
-        let prefix    = if file then start#file ^ ":" else ""
-        and start_str = start#anonymous ~offsets mode
-        and stop_str  = stop#anonymous ~offsets mode in
-        if start#file = stop#file then
-          if start#line = stop#line then
-            sprintf "%s%s-%i" prefix start_str
-                    (if offsets then stop#offset mode
-                     else stop#column mode)
-          else
-            sprintf "%s%s-%s" prefix start_str stop_str
-        else sprintf "%s:%s-%s:%s"
-                     start#file start_str stop#file stop_str
+        if start#is_ghost || stop#is_ghost then "ghost"
+        else
+          let prefix    = if file then start#file ^ ":" else ""
+          and start_str = start#anonymous ~offsets mode
+          and stop_str  = stop#anonymous ~offsets mode in
+          if start#file = stop#file then
+            if start#line = stop#line then
+              sprintf "%s%s-%i" prefix start_str
+                      (if offsets then stop#offset mode
+                       else stop#column mode)
+            else
+              sprintf "%s%s-%s" prefix start_str stop_str
+          else sprintf "%s:%s-%s:%s"
+                       start#file start_str stop#file stop_str
     end
 
 (* Special regions *)
