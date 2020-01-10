@@ -99,7 +99,7 @@ let rec assert_value_eq (a, b: (expression * expression )) : unit result =
           PP.expression a
           PP.expression b
       in
-      fail @@ (fun () -> error (thunk "comparing constant with other stuff") error_content ())
+      fail @@ (fun () -> error (thunk "comparing constant with other expression") error_content ())
 
   | E_constructor (ca, a), E_constructor (cb, b) when ca = cb -> (
       let%bind _eq = assert_value_eq (a, b) in
@@ -108,7 +108,7 @@ let rec assert_value_eq (a, b: (expression * expression )) : unit result =
   | E_constructor _, E_constructor _ ->
       simple_fail "different constructors"
   | E_constructor _, _ ->
-      simple_fail "comparing constructor with other stuff"
+      simple_fail "comparing constructor with other expression"
 
   | E_tuple lsta, E_tuple lstb -> (
       let%bind lst =
@@ -118,7 +118,7 @@ let rec assert_value_eq (a, b: (expression * expression )) : unit result =
       ok ()
     )
   | E_tuple _, _ ->
-      simple_fail "comparing tuple with other stuff"
+      simple_fail "comparing tuple with other expression"
 
   | E_record sma, E_record smb -> (
       let aux _ a b =
@@ -130,7 +130,7 @@ let rec assert_value_eq (a, b: (expression * expression )) : unit result =
       ok ()
     )
   | E_record _, _ ->
-      simple_fail "comparing record with other stuff"
+      simple_fail "comparing record with other expression"
   
   | E_update ura, E_update urb ->
     let%bind lst =
@@ -143,7 +143,7 @@ let rec assert_value_eq (a, b: (expression * expression )) : unit result =
     let%bind _all = bind_list @@ List.map aux lst in
     ok ()
   | E_update _, _ ->
-     simple_fail "comparing record update with orther stuff"
+     simple_fail "comparing record update with other expression"
 
   | (E_map lsta, E_map lstb | E_big_map lsta, E_big_map lstb) -> (
       let%bind lst = generic_try (simple_error "maps of different lengths")
@@ -159,7 +159,7 @@ let rec assert_value_eq (a, b: (expression * expression )) : unit result =
       ok ()
     )
   | (E_map _ | E_big_map _), _ ->
-      simple_fail "comparing map with other stuff"
+      simple_fail "comparing map with other expression"
 
   | E_list lsta, E_list lstb -> (
       let%bind lst =
@@ -169,7 +169,7 @@ let rec assert_value_eq (a, b: (expression * expression )) : unit result =
       ok ()
     )
   | E_list _, _ ->
-      simple_fail "comparing list with other stuff"
+      simple_fail "comparing list with other expression"
 
   | E_set lsta, E_set lstb -> (
       let lsta' = List.sort (compare) lsta in
@@ -181,7 +181,7 @@ let rec assert_value_eq (a, b: (expression * expression )) : unit result =
       ok ()
     )
   | E_set _, _ ->
-      simple_fail "comparing set with other stuff"
+      simple_fail "comparing set with other expression"
 
   | (E_ascription (a , _) ,  _b') -> assert_value_eq (a , b)
   | (_a' , E_ascription (b , _)) -> assert_value_eq (a , b)

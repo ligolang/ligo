@@ -504,13 +504,16 @@ and type_expression' : environment -> ?tv_opt:O.type_value -> I.expression -> O.
     in 
     let%bind updates = bind_fold_list aux ([]) updates in
     let wrapped = get_type_annotation record in
-    let wrapped = match wrapped.type_value' with 
+    let%bind () = match wrapped.type_value' with 
     | T_record record ->
-        let aux acc (k, e) =
-          I.LMap.add k (get_type_annotation e) acc
+        let aux (k, e) =
+          let field_op = I.LMap.find_opt k record in
+          match field_op with
+          | None -> failwith @@ Format.asprintf "field %a is not part of record" Stage_common.PP.label k
+          | Some tv -> O.assert_type_value_eq (tv, get_type_annotation e)
         in
-        t_record (List.fold_left aux record updates) ()
-    | _ -> failwith "Update something which is not a record"
+        bind_iter_list aux updates
+    | _ -> failwith "Update an expression which is not a record"
     in
     return (E_record_update (record, updates)) wrapped
   (* Data-structure *)

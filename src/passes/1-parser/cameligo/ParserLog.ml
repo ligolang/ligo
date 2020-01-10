@@ -176,10 +176,12 @@ and print_projection state {value; _} =
   print_nsepseq state "." print_selection field_path
 
 and print_update state {value; _} =
- let {record; kwd_with; updates} = value in
+ let {lbrace; record; kwd_with; updates; rbrace} = value in
+ print_token state lbrace "{";
  print_path   state record;
  print_token state kwd_with "with";
- print_record_expr state updates
+ print_record_expr state updates;
+ print_token state rbrace "}"
 
 and print_path state = function
   Name var  -> print_var        state var

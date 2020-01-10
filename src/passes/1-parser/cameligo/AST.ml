@@ -335,9 +335,11 @@ and field_assign = {
 }
 
 and update = {
+  lbrace : lbrace;
   record : path;
   kwd_with : kwd_with;
   updates : record reg;
+  rbrace : rbrace;
 }
 and path =
   Name of variable

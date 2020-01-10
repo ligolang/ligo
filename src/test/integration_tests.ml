@@ -682,13 +682,22 @@ let record () : unit result  =
     let make_expected = fun n -> ez_e_record [
         ("a" , e_int n) ;
         ("b" , e_int 2048) ;
-        ("c" , e_int n)
+        ("c" , e_int 42)
       ] in
     expect_eq_n program "modify_abc" make_input make_expected
   in
   let%bind () =
     let expected = record_ez_int ["a";"b";"c";"d";"e"] 23 in
     expect_eq_evaluate program "br" expected
+  in
+  let%bind () =
+    let make_input = fun n -> ez_e_record [("inner", record_ez_int ["a";"b";"c"] n)] in
+    let make_expected = fun n -> ez_e_record [("inner", ez_e_record[
+        ("a" , e_int n) ;
+        ("b" , e_int 2048) ;
+        ("c" , e_int n)
+    ])] in
+    expect_eq_n program "modify_inner" make_input make_expected
   in
   ok ()
 
@@ -719,13 +728,22 @@ let record_mligo () : unit result  =
     let make_expected = fun n -> ez_e_record [
         ("a" , e_int n) ;
         ("b" , e_int 2048) ;
-        ("c" , e_int n)
+        ("c" , e_int 42)
       ] in
     expect_eq_n program "modify_abc" make_input make_expected
   in
   let%bind () =
     let expected = record_ez_int ["a";"b";"c";"d";"e"] 23 in
     expect_eq_evaluate program "br" expected
+  in
+  let%bind () =
+    let make_input = fun n -> ez_e_record [("inner", record_ez_int ["a";"b";"c"] n)] in
+    let make_expected = fun n -> ez_e_record [("inner", ez_e_record[
+        ("a" , e_int n) ;
+        ("b" , e_int 2048) ;
+        ("c" , e_int n)
+    ])] in
+    expect_eq_n program "modify_inner" make_input make_expected
   in
   ok ()
 

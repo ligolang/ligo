@@ -530,14 +530,26 @@ and type_expression : environment -> Solver.state -> ?tv_opt:O.type_value -> I.e
     let wrapped = Wrap.record (I.LMap.map get_type_annotation m') in
     return_wrapped (E_record m') state' wrapped
   | E_update {record; updates} ->
-    let%bind (record, state') = type_expression e state record in
-    let aux (acc, state) (k, expr) =
-      let%bind (expr',state') = type_expression e state expr in
-      ok ((k,expr')::acc, state')
+    let%bind (record, state) = type_expression e state record in
+    let aux (lst,state) (k, expr) =
+      let%bind (expr', state) = type_expression e state expr in
+      ok ((k,expr')::lst, state)
     in 
-    let%bind(updates,state') = bind_fold_list aux ([], state') updates in
-    let wrapped = Wrap.list (List.map (fun (_,e) -> get_type_annotation e) updates) in
-    return_wrapped (E_record_update (record, updates)) state' wrapped
+    let%bind (updates, state) = bind_fold_list aux ([], state) updates in
+    let wrapped = get_type_annotation record in
+    let%bind wrapped = match wrapped.type_value' with 
+    | T_record record ->
+        let aux (k, e) =
+          let field_op = I.LMap.find_opt k record in
+          match field_op with
+          | None -> failwith @@ Format.asprintf "field %a is not part of record" Stage_common.PP.label k
+          | Some tv -> O.assert_type_value_eq (tv, get_type_annotation e)
+        in
+        let%bind () = bind_iter_list aux updates in
+        ok (record)
+    | _ -> failwith "Update an expression which is not a record"
+    in
+    return_wrapped (E_record_update (record, updates)) state (Wrap.record wrapped)
   (* Data-structure *)
 
 (*

@@ -616,12 +616,18 @@ record_expr:
     in {region; value} }
 
 update_record:
-  "{" path "with" record_expr "}" {
+  "{" path "with" sep_or_term_list(field_assignment,";") "}" {
     let region = cover $1 $5 in
+    let ne_elements, terminator = $4 in
     let value = {
-      record = $2;
+      lbrace   = $1;
+      record   = $2;
       kwd_with = $3;
-      updates = $4}
+      updates  = { value = {compound = Braces($1,$5);
+                  ne_elements;
+                  terminator};
+                  region = cover $3 $5};
+      rbrace   = $5}
     in {region; value} }
 
 field_assignment:
