@@ -22,9 +22,13 @@ stages:
       - dist/package/**/*
 
 .website_build: &website_build
-  # To run in sequence and save CPU usage, use stage: build_and_deploy_website
-  stage: test
+  stage: build_and_deploy_website
   image: node:8
+  dependencies:
+    - build-and-package-debian-9
+    - build-and-package-debian-10
+    - build-and-package-ubuntu-18-04
+    - build-and-package-ubuntu-19-04
   before_script:
     - scripts/install_native_dependencies.sh
     - scripts/install_opam.sh # TODO: or scripts/install_build_environment.sh ?
