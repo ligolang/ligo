@@ -1,0 +1,7 @@
+Build with:
+
+    dune build adt_generator.a
+
+Run with
+
+    python ./generator.py

@@ -1,0 +1,18 @@
+(rule
+  (target fold.ml)
+  (deps generator.py)
+  (action (with-stdout-to fold.ml (run python3 ./generator.py)))
+  (mode (promote (until-clean))))
+; (library
+;   (name adt_generator)
+;   (public_name ligo.adt_generator)
+;   (libraries
+;   )
+; )
+
+(executable
+  (name adt_generator)
+  (public_name ligo.adt_generator)
+  (libraries
+  )
+)
