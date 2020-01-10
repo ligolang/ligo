@@ -1,5 +1,4 @@
 $HOME/git/OCaml-build/Makefile
-$HOME/git/OCaml-build/Makefile.cfg
 $HOME/git/ligo/vendors/ligo-utils/simple-utils/pos.mli
 $HOME/git/ligo/vendors/ligo-utils/simple-utils/pos.ml
 $HOME/git/ligo/vendors/ligo-utils/simple-utils/region.mli

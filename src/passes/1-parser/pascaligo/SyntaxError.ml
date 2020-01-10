@@ -1,5 +1,6 @@
 [@@@warning "-42"]
 
+
 type t =
   Reserved_name       of AST.variable
 | Duplicate_parameter of AST.variable
@@ -95,10 +96,6 @@ let check_reserved_name var =
   if SSet.mem var.value reserved then
     raise (Error (Reserved_name var))
   else var
-
-let check_reserved_name_opt = function
-  Some var -> ignore (check_reserved_name var)
-| None     -> ()
 
 (* Checking the linearity of patterns *)
 

@@ -58,27 +58,16 @@
     (pps bisect_ppx --conditional))
   (flags (:standard -open Simple_utils -open Parser_shared -open Parser_pascaligo)))
 
-;; Les deux directives (rule) qui suivent sont pour le dev local.
-;; Il suffit de faire "dune build Parser.exe" pour avoir un Parser.exe dans le dossier.
-;; Pour le purger, il faut faire "dune clean".
-;(rule
-;  (targets Parser.exe)
-;  (deps ParserMain.exe)
-;  (action (copy ParserMain.exe Parser.exe))
-;  (mode promote-until-clean))
-
-;(rule
-;  (targets Lexer.exe)
-;  (deps LexerMain.exe)
-;  (action (copy LexerMain.exe Lexer.exe))
-;  (mode promote-until-clean))
+;; Build of the covering of error states in the LR automaton
 
 (rule
   (targets Parser.msg)
   (deps (:script_messages ../../../../vendors/ligo-utils/simple-utils/messages.sh) Parser.mly LexToken.mli ParToken.mly)
-  (action (run %{script_messages} --lex-tokens=LexToken.mli --par-tokens=ParToken.mly Parser.mly )))
+  (action (run %{script_messages} --lex-tokens=LexToken.mli --par-tokens=ParToken.mly Parser.mly)))
+
+;; Build of all the LIGO source file that cover all error states
 
 (rule
   (targets all.ligo)
   (deps (:script_cover ../../../../vendors/ligo-utils/simple-utils/cover.sh) Parser.mly LexToken.mli ParToken.mly Parser.msg Unlexer.exe)
-  (action (run %{script_cover} --lex-tokens=LexToken.mli --par-tokens=ParToken.mly --ext=ligo --unlexer=./Unlexer.exe --messages=Parser.msg --dir=. --concatenate Parser.mly )))
+  (action (run %{script_cover} --lex-tokens=LexToken.mli --par-tokens=ParToken.mly --ext=ligo --unlexer=./Unlexer.exe --messages=Parser.msg --dir=. --concatenate Parser.mly)))

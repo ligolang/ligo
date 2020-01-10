@@ -1,5 +1,4 @@
 $HOME/git/OCaml-build/Makefile
-$HOME/git/OCaml-build/Makefile.cfg
 $HOME/git/ligo/vendors/ligo-utils/simple-utils/pos.mli
 $HOME/git/ligo/vendors/ligo-utils/simple-utils/pos.ml
 $HOME/git/ligo/vendors/ligo-utils/simple-utils/region.mli
@@ -22,7 +21,6 @@ $HOME/git/ligo/vendors/ligo-utils/simple-utils/region.ml
 ../shared/ParserUnit.ml
 Stubs/Simple_utils.ml
 Stubs/Parser_cameligo.ml
-../cameligo/AST.mli
 ../cameligo/AST.ml
 ../cameligo/ParserLog.mli
 ../cameligo/ParserLog.ml

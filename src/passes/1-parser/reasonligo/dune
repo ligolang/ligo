@@ -1,9 +1,15 @@
+;; Build of the lexer
+
 (ocamllex LexToken)
 
+;; Build of the parser
+
 (menhir
- (merge_into Parser)
- (modules ParToken Parser)
- (flags -la 1 --table --explain --strict --external-tokens LexToken))
+  (merge_into Parser)
+  (modules ParToken Parser)
+  (flags -la 1 --table --explain --strict --external-tokens LexToken))
+
+;; Build of the parser as a library
 
 (library
  (name parser_reasonligo)
@@ -22,6 +28,18 @@
    (pps bisect_ppx --conditional))
  (flags (:standard -open Simple_utils -open Parser_shared -open Parser_cameligo)))
 
+;; Build of the unlexer (for covering the
+;; error states of the LR automaton)
+
+(executable
+  (name Unlexer)
+  (libraries str)
+  (preprocess
+    (pps bisect_ppx --conditional))
+  (modules Unlexer))
+
+;; Local build of a standalone lexer
+
 (executable
   (name LexerMain)
   (libraries parser_reasonligo)
@@ -29,6 +47,8 @@
   (preprocess
     (pps bisect_ppx --conditional))
   (flags (:standard -open Parser_shared -open Parser_reasonligo)))
+
+;; Local build of a standalone parser
 
 (executable
   (name ParserMain)
@@ -41,19 +61,16 @@
     (pps bisect_ppx --conditional))
   (flags (:standard -open Simple_utils -open Parser_cameligo -open Parser_shared -open Parser_reasonligo)))
 
-(executable
-  (name Unlexer)
-  (libraries str)
-  (preprocess
-    (pps bisect_ppx --conditional))
-  (modules Unlexer))
+;; Build of the covering of error states in the LR automaton
 
 (rule
   (targets Parser.msg)
   (deps (:script_messages ../../../../vendors/ligo-utils/simple-utils/messages.sh) Parser.mly LexToken.mli ParToken.mly)
   (action (run %{script_messages} --lex-tokens=LexToken.mli --par-tokens=ParToken.mly Parser.mly )))
 
+;; Build of all the LIGO source file that cover all error states
+
 (rule
   (targets all.ligo)
   (deps (:script_cover ../../../../vendors/ligo-utils/simple-utils/cover.sh) Parser.mly LexToken.mli ParToken.mly Parser.msg Unlexer.exe)
-  (action (run %{script_cover} --lex-tokens=LexToken.mli --par-tokens=ParToken.mly --ext=ligo --unlexer=./Unlexer.exe --messages=Parser.msg --dir=. --concatenate Parser.mly )))
+  (action (run %{script_cover} --lex-tokens=LexToken.mli --par-tokens=ParToken.mly --ext=religo --unlexer=./Unlexer.exe --messages=Parser.msg --dir=. --concatenate Parser.mly )))

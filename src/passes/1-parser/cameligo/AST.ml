@@ -21,15 +21,6 @@ open Utils
 
 type 'a reg = 'a Region.reg
 
-let rec last to_region = function
-    [] -> Region.ghost
-|  [x] -> to_region x
-| _::t -> last to_region t
-
-let nsepseq_to_region to_region (hd,tl) =
-  let reg (_, item) = to_region item in
-  Region.cover (to_region hd) (last reg tl)
-
 (* Keywords of OCaml *)
 
 type keyword   = Region.t
@@ -368,9 +359,18 @@ and cond_expr = {
   ifso     : expr;
   kwd_else : kwd_else;
   ifnot    : expr
-}
+  }
 
-(* Projecting regions of the input source code *)
+(* Projecting regions from some nodes of the AST *)
+
+let rec last to_region = function
+    [] -> Region.ghost
+|  [x] -> to_region x
+| _::t -> last to_region t
+
+let nsepseq_to_region to_region (hd,tl) =
+  let reg (_, item) = to_region item in
+  Region.cover (to_region hd) (last reg tl)
 
 let type_expr_to_region = function
   TProd {region; _}

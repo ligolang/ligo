@@ -1,3 +1,5 @@
+(* This module exports checks on scoping, called from the parser. *)
+
 type t =
   Reserved_name       of AST.variable
 | Duplicate_parameter of AST.variable
@@ -18,7 +20,6 @@ module Ord :
 module VarSet : Set.S with type elt = Ord.t
 
 val check_reserved_name     : AST.variable -> AST.variable
-val check_reserved_name_opt : AST.variable option -> unit
 val check_reserved_names    : VarSet.t -> VarSet.t
 val check_pattern           : AST.pattern -> unit
 val check_variants          : AST.variant Region.reg list -> unit
