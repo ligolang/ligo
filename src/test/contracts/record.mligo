@@ -28,7 +28,7 @@ let projection (r : foobar) : int = r.foo + r.bar
 
 let modify (r : foobar) : foobar = {foo = 256; bar = r.bar}
 
-let modify_abc (r : abc) : abc = {r with b = 2048; c = 42}
+let modify_abc (r : abc) : abc = let c = 42 in {r with b = 2048; c = c}
 
 type big_record = {
      a : int ;

@@ -403,12 +403,14 @@ and translate_expression (expr:expression) (env:environment) : michelson result 
       ]
     )
   | E_update (record, updates) -> (
-    let%bind record = translate_expression record env in
+    let%bind record' = translate_expression record env in
     let insts = [
       i_comment "r_update: start, move the record on top # env";
-      record;] in 
+      record';] in 
     let aux (init :t list) (update,expr) = 
-      let%bind expr' = translate_expression expr env in
+      let record_var = Var.fresh () in
+      let env' = Environment.add (record_var, record.type_value) env in
+      let%bind expr' = translate_expression expr env' in
       let modify_code =
         let aux acc step = match step with
           | `Left -> seq [dip i_unpair ; acc ; i_pair]

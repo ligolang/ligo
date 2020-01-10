@@ -473,21 +473,6 @@ let rec assert_value_eq (a, b: (value*value)) : unit result =
   | E_record _, _ ->
       fail @@ (different_values_because_different_types "record vs. non-record" a b)
 
-  | E_record_update (ra,upa), E_record_update (rb,upb) -> (
-    let%bind _r  = assert_value_eq (ra,rb) in
-    let%bind lst =
-      generic_try (simple_error "updates with different number of fields")
-      (fun () -> List.combine upa upb) in
-    let aux ((Label a,expra),(Label b, exprb))=
-      assert (String.equal a b); 
-      assert_value_eq (expra,exprb)
-    in
-    let%bind _all = bind_list @@ List.map aux lst in
-    ok ()
-  )
-  | E_record_update _ , _ ->
-      fail @@ (different_values_because_different_types "record update vs. non record update" a b)
-
   | (E_map lsta, E_map lstb | E_big_map lsta, E_big_map lstb) -> (
       let%bind lst = generic_try (different_size_values "maps of different lengths" a b)
           (fun () ->
@@ -524,6 +509,7 @@ let rec assert_value_eq (a, b: (value*value)) : unit result =
       fail @@ different_values_because_different_types "set vs. non-set" a b
   | (E_literal _, _) | (E_variable _, _) | (E_application _, _)
   | (E_lambda _, _) | (E_let_in _, _) | (E_tuple_accessor _, _)
+  | (E_record_update _,_)
   | (E_record_accessor _, _)
   | (E_look_up _, _) | (E_matching _, _)
   | (E_assign _ , _)

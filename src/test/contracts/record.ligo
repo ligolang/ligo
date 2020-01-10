@@ -38,7 +38,8 @@ function modify (const r : foobar) : foobar is
 
 function modify_abc (const r : abc) : abc is
   block {
-    r := r with record b = 2048; c = 42; end;
+    const c : int = 42;
+    r := r with record b = 2048; c = c; end;
   } with r
 
 type big_record is record
