@@ -12,7 +12,8 @@ stages:
   - build_and_deploy_website
 
 .build_binary: &build_binary
-  stage: build_and_package_binaries
+  # To run in sequence and save CPU usage, use stage: build_and_package_binaries
+  stage: test
   script:
     - $build_binary_script "$target_os_family" "$target_os" "$target_os_version"
     - $package_binary_script "$target_os_family" "$target_os" "$target_os_version"
@@ -23,6 +24,11 @@ stages:
 .website_build: &website_build
   stage: build_and_deploy_website
   image: node:8
+  dependencies:
+    - build-and-package-debian-9
+    - build-and-package-debian-10
+    - build-and-package-ubuntu-18-04
+    - build-and-package-ubuntu-19-04
   before_script:
     - scripts/install_native_dependencies.sh
     - scripts/install_opam.sh # TODO: or scripts/install_build_environment.sh ?
@@ -122,7 +128,8 @@ build-and-publish-latest-docker-image:
 # based on desired targets
 build-and-package-debian-9:
   <<: *docker
-  stage: build_and_package_binaries
+  # To run in sequence and save CPU usage, use stage: build_and_package_binaries
+  stage: test
   variables: 
     target_os_family: "debian"
     target_os: "debian"
@@ -131,7 +138,8 @@ build-and-package-debian-9:
 
 build-and-package-debian-10:
   <<: *docker
-  stage: build_and_package_binaries
+  # To run in sequence and save CPU usage, use stage: build_and_package_binaries
+  stage: test
   variables: 
     target_os_family: "debian"
     target_os: "debian"
@@ -140,7 +148,8 @@ build-and-package-debian-10:
 
 build-and-package-ubuntu-18-04:
   <<: *docker
-  stage: build_and_package_binaries
+  # To run in sequence and save CPU usage, use stage: build_and_package_binaries
+  stage: test
   variables: 
     target_os_family: "debian"
     target_os: "ubuntu"
@@ -149,7 +158,8 @@ build-and-package-ubuntu-18-04:
 
 build-and-package-ubuntu-19-04:
   <<: *docker
-  stage: build_and_package_binaries
+  # To run in sequence and save CPU usage, use stage: build_and_package_binaries
+  stage: test
   variables: 
     target_os_family: "debian"
     target_os: "ubuntu"
