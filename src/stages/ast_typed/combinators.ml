@@ -1,6 +1,28 @@
 open Trace
 open Types
 
+module Errors = struct
+  let not_a_x_expression expected_expression actual_expression () =
+    let message () =
+      Format.asprintf "Expected a %s expression but got a %a expression"
+        expected_expression
+        PP.expression actual_expression in
+    error (thunk "Expected a different expression") message
+
+  let not_a_x_type expected_type actual_type () =
+    let message () =
+      Format.asprintf "Expected the type %s but got the type %a"
+        expected_type
+        PP.type_value actual_type in
+    error (thunk "Expected a different type") message
+
+  let declaration_not_found expected_declaration () =
+    let message () =
+      Format.asprintf "Could not find a declaration with the name %s"
+        expected_declaration in
+    error (thunk "No declaration with the given name") message
+end
+
 let make_t type_value' simplified = { type_value' ; simplified }
 let make_a_e ?(location = Location.generated) expression type_annotation environment = {
   expression ;
@@ -61,102 +83,102 @@ let get_expression (x:annotated_expression) = x.expression
 
 let get_lambda e : _ result = match e with
   | E_lambda l -> ok l
-  | _ -> simple_fail "not a lambda"
+  | _ -> fail @@ Errors.not_a_x_expression "lambda" e ()
 
 let get_lambda_with_type e =
   match (e.expression , e.type_annotation.type_value') with
   | E_lambda l , T_arrow (i,o) -> ok (l , (i,o))
-  | _ -> simple_fail "not a lambda with functional type"
+  | _ -> fail @@ Errors.not_a_x_expression "lambda with functional type" e.expression ()
 
 let get_t_bool (t:type_value) : unit result = match t.type_value' with
   | T_constant (TC_bool) -> ok ()
-  | _ -> simple_fail "not a bool"
+  | _ -> fail @@ Errors.not_a_x_type "bool" t ()
 
 let get_t_int (t:type_value) : unit result = match t.type_value' with
   | T_constant (TC_int) -> ok ()
-  | _ -> simple_fail "not a int"
+  | _ -> fail @@ Errors.not_a_x_type "int" t ()
 
 let get_t_nat (t:type_value) : unit result = match t.type_value' with
   | T_constant (TC_nat) -> ok ()
-  | _ -> simple_fail "not a nat"
+  | _ -> fail @@ Errors.not_a_x_type "nat" t ()
 
 let get_t_unit (t:type_value) : unit result = match t.type_value' with
   | T_constant (TC_unit) -> ok ()
-  | _ -> simple_fail "not a unit"
+  | _ -> fail @@ Errors.not_a_x_type "unit" t ()
 
 let get_t_mutez (t:type_value) : unit result = match t.type_value' with
   | T_constant (TC_mutez) -> ok ()
-  | _ -> simple_fail "not a tez"
+  | _ -> fail @@ Errors.not_a_x_type "tez" t ()
 
 let get_t_bytes (t:type_value) : unit result = match t.type_value' with
   | T_constant (TC_bytes) -> ok ()
-  | _ -> simple_fail "not a bytes"
+  | _ -> fail @@ Errors.not_a_x_type "bytes" t ()
 
 let get_t_string (t:type_value) : unit result = match t.type_value' with
   | T_constant (TC_string) -> ok ()
-  | _ -> simple_fail "not a string"
+  | _ -> fail @@ Errors.not_a_x_type "string" t ()
 
 let get_t_contract (t:type_value) : type_value result = match t.type_value' with
   | T_operator (TC_contract x) -> ok x
-  | _ -> simple_fail "not a contract"
+  | _ -> fail @@ Errors.not_a_x_type "contract" t ()
 
 let get_t_option (t:type_value) : type_value result = match t.type_value' with
   | T_operator (TC_option o) -> ok o
-  | _ -> simple_fail "not a option"
+  | _ -> fail @@ Errors.not_a_x_type "option" t ()
 
 let get_t_list (t:type_value) : type_value result = match t.type_value' with
   | T_operator (TC_list l) -> ok l
-  | _ -> simple_fail "not a list"
+  | _ -> fail @@ Errors.not_a_x_type "list" t ()
 
 let get_t_set (t:type_value) : type_value result = match t.type_value' with
   | T_operator (TC_set s) -> ok s
-  | _ -> simple_fail "not a set"
+  | _ -> fail @@ Errors.not_a_x_type "set" t ()
 
 let get_t_key (t:type_value) : unit result = match t.type_value' with
   | T_constant (TC_key) -> ok ()
-  | _ -> simple_fail "not a key"
+  | _ -> fail @@ Errors.not_a_x_type "key" t ()
 
 let get_t_signature (t:type_value) : unit result = match t.type_value' with
   | T_constant (TC_signature) -> ok ()
-  | _ -> simple_fail "not a signature"
+  | _ -> fail @@ Errors.not_a_x_type "signature" t ()
 
 let get_t_key_hash (t:type_value) : unit result = match t.type_value' with
   | T_constant (TC_key_hash) -> ok ()
-  | _ -> simple_fail "not a key_hash"
+  | _ -> fail @@ Errors.not_a_x_type "key_hash" t ()
 
 let get_t_tuple (t:type_value) : type_value list result = match t.type_value' with
   | T_tuple lst -> ok lst
-  | _ -> simple_fail "not a tuple"
+  | _ -> fail @@ Errors.not_a_x_type "tuple" t ()
 
 let get_t_pair (t:type_value) : (type_value * type_value) result = match t.type_value' with
   | T_tuple lst ->
       let%bind () =
-        trace_strong (simple_error "not a pair") @@
+        trace_strong (Errors.not_a_x_type "pair (tuple with two elements)" t ()) @@
         Assert.assert_list_size lst 2 in
       ok List.(nth lst 0 , nth lst 1)
-  | _ -> simple_fail "not a tuple"
+  | _ -> fail @@ Errors.not_a_x_type "pair (tuple with two elements)" t ()
 
 let get_t_function (t:type_value) : (type_value * type_value) result = match t.type_value' with
   | T_arrow (a,r) -> ok (a,r)
-  | _ -> simple_fail "not a function"
+  | _ -> fail @@ Errors.not_a_x_type "function" t ()
 
 let get_t_sum (t:type_value) : type_value constructor_map result = match t.type_value' with
   | T_sum m -> ok m
-  | _ -> simple_fail "not a sum"
+  | _ -> fail @@ Errors.not_a_x_type "sum" t ()
 
 let get_t_record (t:type_value) : type_value label_map result = match t.type_value' with
   | T_record m -> ok m
-  | _ -> simple_fail "not a record type"
+  | _ -> fail @@ Errors.not_a_x_type "record" t ()
 
 let get_t_map (t:type_value) : (type_value * type_value) result =
   match t.type_value' with
   | T_operator (TC_map (k,v)) -> ok (k, v)
-  | _ -> simple_fail "get: not a map"
+  | _ -> fail @@ Errors.not_a_x_type "map" t ()
 
 let get_t_big_map (t:type_value) : (type_value * type_value) result =
   match t.type_value' with
   | T_operator (TC_big_map (k,v)) -> ok (k, v)
-  | _ -> simple_fail "get: not a big_map"
+  | _ -> fail @@ Errors.not_a_x_type "big_map" t ()
 
 let get_t_map_key : type_value -> type_value result = fun t ->
   let%bind (key , _) = get_t_map t in
@@ -303,5 +325,5 @@ let get_declaration_by_name : program -> string -> declaration result = fun p na
     match declaration with
     | Declaration_constant (d , _) -> d.name = Var.of_name name
   in
-  trace_option (simple_error "no declaration with given name") @@
+  trace_option (Errors.declaration_not_found name ()) @@
   List.find_opt aux @@ List.map Location.unwrap p
