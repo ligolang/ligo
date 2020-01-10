@@ -105,7 +105,7 @@ let print_bytes state {region; value} =
   let line =
     sprintf "%s: Bytes (\"%s\", \"0x%s\")\n"
             (compact state region) lexeme
-            (Hex.to_string abstract)
+            (Hex.show abstract)
   in Buffer.add_string state#buffer line
 
 let print_int state {region; value} =
@@ -712,7 +712,7 @@ and pp_ne_injection :
 
 and pp_bytes state {value=lexeme,hex; region} =
   pp_loc_node (state#pad 2 0) lexeme region;
-  pp_node     (state#pad 2 1) (Hex.to_string hex)
+  pp_node     (state#pad 2 1) (Hex.show hex)
 
 and pp_int state {value=lexeme,z; region} =
   pp_loc_node (state#pad 2 0) lexeme region;

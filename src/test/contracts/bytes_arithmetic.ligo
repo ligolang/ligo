@@ -1,5 +1,5 @@
 function concat_op (const s : bytes) : bytes is
-  begin skip end with bytes_concat(s , ("7070" : bytes))
+  begin skip end with bytes_concat(s , 0x7070)
 
 function slice_op (const s : bytes) : bytes is
   begin skip end with bytes_slice(1n , 2n , s)

@@ -145,7 +145,7 @@ let proj_token = function
 | Bytes Region.{region; value = s,b} ->
     region,
     sprintf "Bytes (\"%s\", \"0x%s\")"
-      s (Hex.to_string b)
+      s (Hex.show b)
 | Begin region -> region, "Begin"
 | Else region -> region, "Else"
 | End region -> region, "End"
@@ -378,7 +378,7 @@ let mk_string lexeme region =
 
 let mk_bytes lexeme region =
   let norm = Str.(global_replace (regexp "_") "" lexeme) in
-  let value = lexeme, Hex.of_string norm
+  let value = lexeme, `Hex norm
   in Bytes Region.{region; value}
 
 let mk_int lexeme region =
