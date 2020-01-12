@@ -4,8 +4,3 @@
   (wrapped false)
   (modules Partition0 Partition1 Partition2 Partition3 Partition UnionFind)
   (modules_without_implementation Partition))
-
-(test
- (modules PartitionMain)
- (libraries UnionFind)
- (name PartitionMain))
