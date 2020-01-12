@@ -576,6 +576,7 @@ core_expr:
 | list(expr)                          {          EList (EListComp $1) }
 | sequence                            {                       ESeq $1 }
 | record_expr                         {                    ERecord $1 }
+| update_record                       {                    EUpdate $1 }
 | par(expr)                           {                       EPar $1 }
 | par(expr ":" type_expr {$1,$2,$3})  {                     EAnnot $1 }
 
@@ -614,6 +615,21 @@ record_expr:
                   terminator}
     in {region; value} }
 
+update_record:
+  "{" path "with" sep_or_term_list(field_assignment,";") "}" {
+    let region = cover $1 $5 in
+    let ne_elements, terminator = $4 in
+    let value = {
+      lbrace   = $1;
+      record   = $2;
+      kwd_with = $3;
+      updates  = { value = {compound = Braces($1,$5);
+                  ne_elements;
+                  terminator};
+                  region = cover $3 $5};
+      rbrace   = $5}
+    in {region; value} }
+
 field_assignment:
   field_name "=" expr {
     let start  = $1.region in
@@ -635,3 +651,7 @@ sequence:
          Some ne_elements, terminator in
     let value = {compound; elements; terminator}
     in {region; value} }
+
+path :
+ "<ident>"  {Name $1}
+| projection { Path $1}

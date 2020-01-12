@@ -338,6 +338,7 @@ let rec simpl_expression (t:Raw.expr) : expr result =
       let aux prev (k, v) = SMap.add k v prev in
       return @@ e_record (List.fold_left aux SMap.empty fields)
   | EProj p -> simpl_projection p
+  | EUpdate u -> simpl_update u
   | EConstr (ConstrApp c) -> (
       let ((c, args) , loc) = r_split c in
       match args with
@@ -461,6 +462,24 @@ let rec simpl_expression (t:Raw.expr) : expr result =
     let (f , loc) = r_split f in
     let%bind (_ty_opt, f') = simpl_fun_expression ~loc f
     in return @@ f'
+
+
+and simpl_update = fun (u:Raw.update Region.reg) ->
+  let (u, loc) = r_split u in
+  let (name, path) = simpl_path u.record in
+  let record = match path with 
+  | [] -> e_variable (Var.of_name name)
+  | _ -> e_accessor (e_variable (Var.of_name name)) path in 
+  let updates = u.updates.value.ne_elements in
+  let%bind updates' =
+    let aux (f:Raw.field_assign Raw.reg) =
+      let (f,_) = r_split f in
+      let%bind expr = simpl_expression f.field_expr in
+      ok (f.field_name.value, expr)
+    in
+    bind_map_list aux @@ npseq_to_list updates 
+  in
+  ok @@ e_update ~loc record updates'
 
 and simpl_logic_expression (t:Raw.logic_expr) : expression result =
   let return x = ok x in

@@ -232,8 +232,9 @@ and expr =
 | EString of string_expr
 | EList   of list_expr
 | EConstr of constr_expr
-| ERecord of field_assign reg ne_injection reg
+| ERecord of record reg
 | EProj   of projection reg
+| EUpdate of update reg
 | EVar    of variable
 | ECall   of (expr * expr nseq) reg
 | EBytes  of (string * Hex.t) reg
@@ -316,6 +317,7 @@ and comp_expr =
 | Equal of equal bin_op reg
 | Neq   of neq   bin_op reg
 
+and record = field_assign reg ne_injection
 and projection = {
   struct_name : variable;
   selector    : dot;
@@ -331,6 +333,17 @@ and field_assign = {
   assignment : equal;
   field_expr : expr
 }
+
+and update = {
+  lbrace : lbrace;
+  record : path;
+  kwd_with : kwd_with;
+  updates : record reg;
+  rbrace : rbrace;
+}
+and path =
+  Name of variable
+| Path of projection reg
 
 and 'a case = {
   kwd_match : kwd_match;
@@ -443,8 +456,12 @@ let expr_to_region = function
 | ECond {region;_} | ETuple {region;_} | ECase {region;_}
 | ECall {region;_} | EVar {region; _} | EProj {region; _}
 | EUnit {region;_} | EPar {region;_} | EBytes {region; _}
-| ESeq {region; _} | ERecord {region; _} -> region
+| ESeq {region; _} | ERecord {region; _} | EUpdate {region; _} -> region
 
 let selection_to_region = function
   FieldName f -> f.region
 | Component c -> c.region
+
+let path_to_region = function
+  Name var -> var.region
+| Path {region; _} -> region

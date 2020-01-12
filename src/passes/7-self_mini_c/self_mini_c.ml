@@ -66,6 +66,8 @@ let rec is_pure : expression -> bool = fun e ->
 
   | E_constant (c, args)
     -> is_pure_constant c && List.for_all is_pure args
+  | E_update (e, updates)
+    -> is_pure e && List.for_all (fun (_,e) -> is_pure e) updates
 
   (* I'm not sure about these. Maybe can be tested better? *)
   | E_application _
@@ -109,6 +111,8 @@ let rec is_assigned : ignore_lambdas:bool -> expression_variable -> expression -
   match e.content with
   | E_assignment (x, _, e) ->
     it x || self e
+  | E_update (r, updates) ->
+    List.fold_left (fun prev (_,e) -> prev || self e) (self r) updates
   | E_closure { binder; body } ->
     if ignore_lambdas
     then false

@@ -324,7 +324,7 @@ and record_patch = {
   kwd_patch  : kwd_patch;
   path       : path;
   kwd_with   : kwd_with;
-  record_inj : field_assign reg ne_injection reg
+  record_inj : record reg
 }
 
 and cond_expr = {
@@ -443,8 +443,9 @@ and expr =
 | EList   of list_expr
 | ESet    of set_expr
 | EConstr of constr_expr
-| ERecord of field_assign reg ne_injection reg
+| ERecord of record reg
 | EProj   of projection reg
+| EUpdate of update reg
 | EMap    of map_expr
 | EVar    of Lexer.lexeme reg
 | ECall   of fun_call
@@ -556,11 +557,18 @@ and field_assign = {
   equal      : equal;
   field_expr : expr
 }
+and record = field_assign reg ne_injection
 
 and projection = {
   struct_name : variable;
   selector    : dot;
   field_path  : (selection, dot) nsepseq
+}
+
+and update = {
+  record : path;
+  kwd_with : kwd_with;
+  updates : record reg;
 }
 
 and selection =
@@ -641,6 +649,7 @@ let rec expr_to_region = function
 | ERecord e -> record_expr_to_region e
 | EMap    e -> map_expr_to_region e
 | ETuple  e -> tuple_expr_to_region e
+| EUpdate {region; _}
 | EProj  {region; _}
 | EVar   {region; _}
 | ECall  {region; _}

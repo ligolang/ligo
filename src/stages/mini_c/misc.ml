@@ -81,6 +81,7 @@ module Free_variables = struct
     | E_sequence (x, y) -> union (self x) (self y)
     (* NB different from ast_typed... *)
     | E_assignment (v, _, e) -> unions [ var_name b v ; self e ]
+    | E_update (e, updates) -> union (self e) (unions @@ List.map (fun (_,e) -> self e) updates)
     | E_while (cond , body) -> union (self cond) (self body)
 
   and var_name : bindings -> var_name -> bindings = fun b n ->
