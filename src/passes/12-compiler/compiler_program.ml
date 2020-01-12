@@ -251,11 +251,12 @@ and translate_expression (expr:expression) (env:environment) : michelson result 
     )
   | E_application (f , arg) -> (
       trace (simple_error "Compiling quote application") @@
-      let%bind f = translate_expression f env in
+      let%bind f = translate_expression f (Environment.add (Var.fresh (), arg.type_value) env) in
       let%bind arg = translate_expression arg env in
       return @@ seq [
         arg ;
-        dip f ;
+        f ;
+        i_swap ;
         prim I_EXEC ;
       ]
     )

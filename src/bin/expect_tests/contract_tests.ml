@@ -10,10 +10,10 @@ let%expect_test _ =
   [%expect {| 1874 bytes |}] ;
 
   run_ligo_good [ "measure-contract" ; contract "multisig.ligo" ; "main" ] ;
-  [%expect {| 1163 bytes |}] ;
+  [%expect {| 1169 bytes |}] ;
 
   run_ligo_good [ "measure-contract" ; contract "multisig-v2.ligo" ; "main" ] ;
-  [%expect {| 2867 bytes |}] ;
+  [%expect {| 2862 bytes |}] ;
 
   run_ligo_good [ "measure-contract" ; contract "vote.mligo" ; "main" ] ;
   [%expect {| 617 bytes |}] ;
@@ -431,9 +431,10 @@ let%expect_test _ =
                   DIP { DUP } ;
                   SWAP ;
                   DIP { DROP 4 } } ;
-             DIP { DUP } ;
-             SWAP ;
              UNIT ;
+             DIP 2 { DUP } ;
+             DIG 2 ;
+             SWAP ;
              EXEC ;
              DIP { DUP } ;
              PAIR ;
@@ -621,7 +622,9 @@ let%expect_test _ =
                           CDR ;
                           CAR ;
                           CDR ;
-                          DIP { DIP 12 { DUP } ; DIG 12 } ;
+                          DIP 13 { DUP } ;
+                          DIG 13 ;
+                          SWAP ;
                           EXEC ;
                           DIP { DUP } ;
                           SWAP ;
