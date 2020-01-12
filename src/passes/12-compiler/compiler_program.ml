@@ -274,15 +274,18 @@ and translate_expression (expr:expression) (env:environment) : michelson result 
   )
   | E_constant{cons_name=str;arguments= lst} ->
       let module L = Logger.Stateful() in
-      let%bind pre_code =
-        let aux code expr =
+      let%bind (pre_code, _env) =
+        let aux (code, env) expr =
           let%bind expr_code = translate_expression expr env in
           L.log @@ Format.asprintf "\n%a -> %a in %a\n"
             PP.expression expr
             Michelson.pp expr_code
             PP.environment env ;
-          ok (seq [ expr_code ; dip code ]) in
-        bind_fold_right_list aux (seq []) lst in
+          let env = Environment.add (Var.fresh (), expr.type_value) env in
+          let code = code @ [expr_code] in
+          ok (code, env) in
+        bind_fold_right_list aux ([], env) lst in
+      let pre_code = seq pre_code in
       let%bind predicate = get_operator str ty lst in
       let%bind code = match (predicate, List.length lst) with
         | Constant c, 0 -> ok @@ seq [
