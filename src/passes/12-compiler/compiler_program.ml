@@ -430,12 +430,15 @@ and translate_expression (expr:expression) (env:environment) : michelson result 
         )
     )
   | E_fold ((v , body) , collection , initial) -> (
-      let%bind collection' = translate_expression collection env in
+      let%bind collection' =
+        translate_expression
+          collection
+          (Environment.add (Var.fresh (), initial.type_value) env) in
       let%bind initial' = translate_expression initial env in
       let%bind body' = translate_expression body (Environment.add v env) in
       let code = seq [
+          initial' ;
           collection' ;
-          dip initial' ;
           i_iter (seq [
               i_swap ;
               i_pair ; body' ; dip i_drop ;
