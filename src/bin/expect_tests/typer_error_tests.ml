@@ -3,7 +3,7 @@ open Cli_expect
 let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; "../../test/contracts/negative/error_type.ligo" ; "main" ] ;
   [%expect {|
-    ligo: in file "error_type.ligo", line 3, characters 18-28. Adding with wrong types. Expected nat, int or tez.
+    ligo: in file "error_type.ligo", line 3, characters 18-28. Adding modulo with wrong types: Expected arguments with one of the following combinations of types: add(nat , nat) or add(int , int) or add(mutez , mutez) or add(nat , int) or add(int , nat) or add(timestamp , int) or add(int , timestamp) but got this combination instead: add(int , string)
 
      If you're not sure how to fix this error, you can
      do one of the following:
