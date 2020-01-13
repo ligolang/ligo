@@ -71,3 +71,44 @@ const my_account: address = ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address);
 ```
 <!--END_DOCUSAURUS_CODE_TABS-->
 
+## Signatures
+
+`signature` is a LIGO datatype used for Tezos signature (edsig, spsig).
+
+Here's how you can define a signature:
+
+<!--DOCUSAURUS_CODE_TABS-->
+<!--Pascaligo-->
+```pascaligo group=e
+const my_signature: signature = ("edsigthTzJ8X7MPmNeEwybRAvdxS1pupqcM5Mk4uCuyZAe7uEk68YpuGDeViW8wSXMrCi5CwoNgqs8V2w8ayB5dMJzrYCHhD8C7": signature);
+```
+<!--CameLIGO-->
+```cameligo group=e
+let my_signature: signature = ("edsigthTzJ8X7MPmNeEwybRAvdxS1pupqcM5Mk4uCuyZAe7uEk68YpuGDeViW8wSXMrCi5CwoNgqs8V2w8ayB5dMJzrYCHhD8C7": signature)
+```
+<!--ReasonLIGO-->
+```reasonligo group=e
+let my_signature: signature = ("edsigthTzJ8X7MPmNeEwybRAvdxS1pupqcM5Mk4uCuyZAe7uEk68YpuGDeViW8wSXMrCi5CwoNgqs8V2w8ayB5dMJzrYCHhD8C7": signature);
+```
+<!--END_DOCUSAURUS_CODE_TABS-->
+
+## keys
+
+`key` is a LIGO datatype used for Tezos public key.
+
+Here's how you can define a key:
+
+<!--DOCUSAURUS_CODE_TABS-->
+<!--Pascaligo-->
+```pascaligo group=f
+const my_key: key = ("edpkuBknW28nW72KG6RoHtYW7p12T6GKc7nAbwYX5m8Wd9sDVC9yav": key);
+```
+<!--CameLIGO-->
+```cameligo group=f
+let my_key: key = ("edpkuBknW28nW72KG6RoHtYW7p12T6GKc7nAbwYX5m8Wd9sDVC9yav": key)
+```
+<!--ReasonLIGO-->
+```reasonligo group=f
+let my_key: key = ("edpkuBknW28nW72KG6RoHtYW7p12T6GKc7nAbwYX5m8Wd9sDVC9yav": key);
+```
+<!--END_DOCUSAURUS_CODE_TABS-->
