@@ -18,6 +18,8 @@ let peephole_expression : expression -> expression result = fun e ->
   | E_ascription (e' , t) as e -> (
       match (e'.expression , t.type_expression') with
       | (E_literal (Literal_string s) , T_constant (TC_key_hash)) -> return @@ E_literal (Literal_key_hash s)
+      | (E_literal (Literal_string s) , T_constant (TC_signature)) -> return @@ E_literal (Literal_signature s)
+      | (E_literal (Literal_string s) , T_constant (TC_key)) -> return @@ E_literal (Literal_key s)
       | (E_literal (Literal_int i) , T_constant (TC_timestamp)) -> return @@ E_literal (Literal_timestamp i)
       | (E_literal (Literal_string str) , T_constant (TC_timestamp)) ->
         let%bind time =

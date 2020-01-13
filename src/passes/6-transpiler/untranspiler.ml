@@ -127,14 +127,18 @@ let rec untranspile (v : value) (t : AST.type_value) : AST.annotated_expression 
           get_string v in
         return (E_literal (Literal_key_hash n))
       )
-      | TC_chain_id -> (
-        let%bind n =
-          trace_strong (wrong_mini_c_value "chain_id" v) @@
-          get_string v in
-        return (E_literal (Literal_chain_id n))
-      )
-    |  TC_signature ->
-      fail @@ bad_untranspile "signature" v
+    | TC_chain_id -> (
+      let%bind n =
+        trace_strong (wrong_mini_c_value "chain_id" v) @@
+        get_string v in
+      return (E_literal (Literal_chain_id n))
+    )
+    |  TC_signature -> (
+      let%bind n =
+        trace_strong (wrong_mini_c_value "signature" v) @@
+        get_string v in
+      return (E_literal (Literal_signature n))
+    )
   )
   | T_operator type_operator -> (
     match type_operator with
