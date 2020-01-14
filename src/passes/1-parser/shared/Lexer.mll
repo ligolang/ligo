@@ -161,6 +161,7 @@ module type S =
       get_win  : unit -> window;
       get_pos  : unit -> Pos.t;
       get_last : unit -> Region.t;
+      get_file : unit -> file_path;
       close    : unit -> unit
       }
 
@@ -840,6 +841,7 @@ type instance = {
   get_win  : unit -> window;
   get_pos  : unit -> Pos.t;
   get_last : unit -> Region.t;
+  get_file : unit -> file_path;
   close    : unit -> unit
 }
 
@@ -862,7 +864,8 @@ let open_token_stream file_path_opt =
 
   let get_pos  () = !state.pos
   and get_last () = !state.last
-  and get_win  () = !state.window in
+  and get_win  () = !state.window
+  and get_file () = file_path in
 
   let patch_buffer (start, stop) buffer =
     let open Lexing in
@@ -934,7 +937,7 @@ let open_token_stream file_path_opt =
                    None | Some "-" -> ()
                  | Some file_path  -> reset ~file:file_path buffer
   and close () = close_in cin in
-  {read = read_token; buffer; get_win; get_pos; get_last; close}
+  {read = read_token; buffer; get_win; get_pos; get_last; get_file; close}
 
 end (* of functor [Make] in HEADER *)
 (* END TRAILER *)

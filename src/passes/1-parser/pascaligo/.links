@@ -18,5 +18,6 @@ $HOME/git/ligo/vendors/ligo-utils/simple-utils/region.ml
 ../shared/ParserAPI.mli
 ../shared/ParserAPI.ml
 ../shared/LexerUnit.ml
+../shared/ParserUnit.mli
 ../shared/ParserUnit.ml
 Stubs/Simple_utils.ml

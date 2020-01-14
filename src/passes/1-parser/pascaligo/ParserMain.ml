@@ -30,9 +30,9 @@ module Unit =
 let issue_error point =
   let error = Unit.format_error ~offsets:IO.options#offsets
                                 IO.options#mode point
-  in (Unit.close_all (); Stdlib.Error error)
+  in Stdlib.Error error
 
-let parse (parser: unit -> ('a,string) Stdlib.result) : ('a,string) Stdlib.result =
+let parse parser : ('a,string) Stdlib.result =
   try parser () with
     (* Scoping errors *)
 

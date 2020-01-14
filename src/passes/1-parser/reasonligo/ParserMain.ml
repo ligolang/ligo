@@ -30,9 +30,9 @@ module Unit =
 let issue_error point =
   let error = Unit.format_error ~offsets:IO.options#offsets
                                 IO.options#mode point
-  in (Unit.close_all (); Stdlib.Error error)
+  in Stdlib.Error error
 
-let parse (parser: unit -> ('a,string) Stdlib.result) : ('a,string) Stdlib.result =
+let parse parser : ('a,string) Stdlib.result =
   try parser () with
     (* Ad hoc errors from the parser *)
 
@@ -46,7 +46,7 @@ let parse (parser: unit -> ('a,string) Stdlib.result) : ('a,string) Stdlib.resul
       and reg = AST.expr_to_region expr in
       let error = Unit.short_error ~offsets:IO.options#offsets
                                    IO.options#mode msg reg
-      in (Unit.close_all (); Stdlib.Error error)
+      in Stdlib.Error error
 
   (* Scoping errors *)
 
@@ -90,10 +90,11 @@ let parse (parser: unit -> ('a,string) Stdlib.result) : ('a,string) Stdlib.resul
             reserved name for the lexer. *)
          Stdlib.Error _ -> assert false
        | Ok invalid ->
-           let point = "Duplicate field name in this record declaration.\n\
-                        Hint: Change the name.\n",
-                       None, invalid
-           in issue_error point)
+          let point =
+            "Duplicate field name in this record declaration.\n\
+             Hint: Change the name.\n",
+            None, invalid
+          in issue_error point)
 
 let () =
   if IO.options#expr

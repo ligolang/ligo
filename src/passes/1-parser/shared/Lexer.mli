@@ -105,6 +105,8 @@ module type TOKEN =
      * a function [get_pos] that returns the current position, and
      * a function [get_last] that returns the region of the last
        recognised token.
+     * a function [get_file] that returns the name of the file being scanned
+       (empty string if [stdin]).
 
    Note that a module [Token] is exported too, because the signature
    of the exported functions depend on it.
@@ -137,6 +139,7 @@ module type S =
       get_win  : unit -> window;
       get_pos  : unit -> Pos.t;
       get_last : unit -> Region.t;
+      get_file : unit -> file_path;
       close    : unit -> unit
     }
 
