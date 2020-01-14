@@ -68,6 +68,20 @@ let peephole_expression : expression -> expression result = fun e ->
       Protocol.Alpha_context.Contract.of_b58check s in
     return l
     )
+  | E_literal (Literal_signature s) as l -> (
+    let open Tezos_crypto in
+    let%bind (_sig:Crypto.Signature.t) = 
+      Trace.trace_tzresult (bad_format e) @@
+      Signature.of_b58check s in
+    return l
+    )
+  | E_literal (Literal_key s) as l -> (
+    let open Tezos_crypto in
+    let%bind (_k:Crypto.Signature.public_key) = 
+      Trace.trace_tzresult (bad_format e) @@
+      Signature.Public_key.of_b58check s in
+    return l
+    )
   | E_constant (C_BIG_MAP_LITERAL as cst, lst) -> (
       let%bind elt =
         trace_option (bad_single_arity cst e.location) @@

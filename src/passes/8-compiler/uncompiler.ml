@@ -40,6 +40,8 @@ let rec translate_value (Ex_typed_value (ty, value)) : value result =
     ok @@ D_string (Signature.Public_key_hash.to_b58check n)
   | (Key_t _ ), n ->
     ok @@ D_string (Signature.Public_key.to_b58check n)
+  | (Signature_t _ ), n ->
+    ok @@ D_string (Signature.to_b58check n)
   | (Timestamp_t _), n ->
       let n =
         Z.to_int @@

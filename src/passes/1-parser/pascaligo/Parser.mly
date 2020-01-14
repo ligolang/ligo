@@ -829,6 +829,7 @@ core_expr:
 | map_expr                      { EMap $1                      }
 | set_expr                      { ESet $1                      }
 | record_expr                   { ERecord $1                   }
+| update_record                 { EUpdate $1                   }
 | "<constr>" arguments {
     let region = cover $1.region $2.region in
     EConstr (ConstrApp {region; value = $1, Some $2})
@@ -920,6 +921,16 @@ record_expr:
      terminator;
      closing = RBracket $4}
    in {region; value} }
+
+update_record:
+  path "with" ne_injection("record",field_assignment){
+    let region = cover (path_to_region $1) $3.region in
+    let value = {
+      record = $1;
+      kwd_with = $2;
+      updates = $3}
+    in {region; value} }
+
 
 field_assignment:
   field_name "=" expr {

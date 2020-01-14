@@ -178,6 +178,7 @@ module Free_variables = struct
     | E_constructor (_ , a) -> self a
     | E_record m -> unions @@ List.map self @@ LMap.to_list m
     | E_record_accessor (a, _) -> self a
+    | E_record_update (r,ups) -> union (self r) @@ unions @@ List.map (fun (_,e) -> self e) ups
     | E_tuple_accessor (a, _) -> self a
     | E_list lst -> unions @@ List.map self lst
     | E_set lst -> unions @@ List.map self lst
@@ -508,6 +509,7 @@ let rec assert_value_eq (a, b: (value*value)) : unit result =
       fail @@ different_values_because_different_types "set vs. non-set" a b
   | (E_literal _, _) | (E_variable _, _) | (E_application _, _)
   | (E_lambda _, _) | (E_let_in _, _) | (E_tuple_accessor _, _)
+  | (E_record_update _,_)
   | (E_record_accessor _, _)
   | (E_look_up _, _) | (E_matching _, _)
   | (E_assign _ , _)

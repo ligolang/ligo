@@ -162,7 +162,7 @@ and type_constant ppf (tc:type_constant) : unit =
     | TC_address   -> "address"
     | TC_key       -> "key"
     | TC_key_hash  -> "key_hash"
-    | TC_signature -> "signatuer"
+    | TC_signature -> "signature"
     | TC_timestamp -> "timestamp"
     | TC_chain_id  -> "chain_id"
     in

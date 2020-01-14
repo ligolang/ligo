@@ -262,6 +262,40 @@ let rec simpl_expression :
       List.map aux @@ npseq_to_list path in
     return @@ e_accessor ~loc var path'
   in
+  let simpl_path : Raw.path -> string * Ast_simplified.access_path = fun p ->
+    match p with
+    | Raw.Name v -> (v.value , [])
+    | Raw.Path p -> (
+        let p' = p.value in
+        let var = p'.struct_name.value in
+        let path = p'.field_path in
+        let path' =
+          let aux (s:Raw.selection) =
+            match s with
+            | FieldName property -> Access_record property.value
+            | Component index -> Access_tuple (Z.to_int (snd index.value))
+          in
+          List.map aux @@ npseq_to_list path in
+        (var , path')
+      )
+  in
+  let simpl_update = fun (u:Raw.update Region.reg) ->
+    let (u, loc) = r_split u in
+    let (name, path) = simpl_path u.record in
+    let record = match path with 
+    | [] -> e_variable (Var.of_name name)
+    | _ -> e_accessor (e_variable (Var.of_name name)) path in 
+    let updates = u.updates.value.ne_elements in
+    let%bind updates' =
+      let aux (f:Raw.field_assign Raw.reg) =
+        let (f,_) = r_split f in
+        let%bind expr = simpl_expression f.field_expr in
+        ok (f.field_name.value, expr)
+      in
+      bind_map_list aux @@ npseq_to_list updates 
+    in
+    return @@ e_update ~loc record updates'
+  in
 
   trace (simplifying_expr t) @@
   match t with
@@ -367,6 +401,7 @@ let rec simpl_expression :
       let map = SMap.of_list fields in
       return @@ e_record ~loc map
   | EProj p -> simpl_projection p
+  | EUpdate u -> simpl_update u
   | EConstr (ESomeApp a) ->
       let (_, args), loc = r_split a in
       let%bind arg = simpl_expression args in

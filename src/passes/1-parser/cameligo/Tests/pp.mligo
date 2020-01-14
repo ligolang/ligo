@@ -24,3 +24,6 @@ let e = Some (a, B b)
 let z = z.1.2
 let v = "hello" ^ "world" ^ "!"
 let w = Map.literal [(1,"1"); (2,"2")]
+
+let r = { field = 0}
+let r = { r with field = 42}

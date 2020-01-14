@@ -24,6 +24,8 @@ function back (var store : store) : list (operation) * store is
     x := map [1 -> "1"; 2 -> "2"];
     y := a.b.c[3];
     a := "hello " ^ "world" ^ "!";
+    r := record a = 0 end;
+    r := r with record a = 42 end;
     patch store.backers with set [(1); f(2*3)];
     remove (1,2,3) from set foo.bar;
     remove 3 from map foo.bar;

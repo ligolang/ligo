@@ -26,6 +26,7 @@ let rec expression ppf (e:expression) = match e.expression with
   | E_tuple lst -> fprintf ppf "(%a)" (tuple_sep_d expression) lst
   | E_accessor (ae, p) -> fprintf ppf "%a.%a" expression ae access_path p
   | E_record m -> fprintf ppf "{%a}" (lrecord_sep expression (const " , ")) m
+  | E_update {record; updates} -> fprintf ppf "%a with {%a}" expression record (tuple_sep_d (fun ppf (a,b) -> fprintf ppf "%a = %a" label a expression b)) updates
   | E_map m -> fprintf ppf "[%a]" (list_sep_d assoc_expression) m
   | E_big_map m -> fprintf ppf "big_map[%a]" (list_sep_d assoc_expression) m
   | E_list lst -> fprintf ppf "[%a]" (list_sep_d expression) lst
