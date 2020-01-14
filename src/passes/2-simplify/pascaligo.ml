@@ -4,6 +4,7 @@ open Ast_simplified
 module Raw = Parser.Pascaligo.AST
 module SMap = Map.String
 module SSet = Set.Make (String)
+module ParserLog = Parser_pascaligo.ParserLog
 
 open Combinators
 
@@ -132,7 +133,7 @@ module Errors = struct
        fun () -> Format.asprintf "%a" Location.pp_lift @@ pattern_loc) ;
       (** TODO: The labelled arguments should be flowing from the CLI. *)
       ("pattern",
-       fun () -> Parser.Pascaligo.ParserLog.pattern_to_string
+       fun () -> ParserLog.pattern_to_string
                 ~offsets:true ~mode:`Point p)
     ] in
     error ~data title message
@@ -168,7 +169,7 @@ module Errors = struct
     (** TODO: The labelled arguments should be flowing from the CLI. *)
     let data = [
       ("instruction",
-       fun () -> Parser.Pascaligo.ParserLog.instruction_to_string
+       fun () -> ParserLog.instruction_to_string
                 ~offsets:true ~mode:`Point t)
     ] in
     error ~data title message
@@ -1036,7 +1037,7 @@ and simpl_cases : type a . (Raw.pattern * a) list -> (a, unit) matching result =
             (** TODO: The labelled arguments should be flowing from the CLI. *)
             let content () =
               Printf.sprintf "Pattern : %s"
-                (Parser.Pascaligo.ParserLog.pattern_to_string
+                (ParserLog.pattern_to_string
                    ~offsets:true ~mode:`Point x) in
             error title content in
           let%bind x' =

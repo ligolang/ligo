@@ -61,12 +61,12 @@ function claim (var store : store) : list (operation) * store is
       case store.backers[sender] of
         None ->
           failwith ("Not a backer.")
-      | Some (amount) ->
+      | Some (quantity) ->
           if balance >= store.goal or store.funded then
             failwith ("Goal reached: no refund.")
           else
             begin
-              operations.0.foo := list [transaction (unit, sender, amount)];
+              operations.0.foo := list [transaction (unit, sender, quantity)];
               remove sender from map store.backers
             end
       end

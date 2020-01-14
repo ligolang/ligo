@@ -16,8 +16,10 @@ module type PARSER =
 
     (* The monolithic API. *)
 
-    val interactive_expr : (Lexing.lexbuf -> token) -> Lexing.lexbuf -> expr
-    val contract : (Lexing.lexbuf -> token) -> Lexing.lexbuf -> ast
+    val interactive_expr :
+      (Lexing.lexbuf -> token) -> Lexing.lexbuf -> expr
+    val contract :
+      (Lexing.lexbuf -> token) -> Lexing.lexbuf -> ast
 
     (* The incremental API. *)
 
@@ -48,6 +50,11 @@ module Make (Lexer: Lexer.S)
       (Lexing.lexbuf -> Lexer.token) -> Lexing.lexbuf -> Parser.ast
     val incr_contract :
       Lexer.instance -> Parser.ast
+
+    val mono_expr :
+      (Lexing.lexbuf -> Lexer.token) -> Lexing.lexbuf -> Parser.expr
+    val incr_expr :
+      Lexer.instance -> Parser.expr
 
     (* Error handling *)
 

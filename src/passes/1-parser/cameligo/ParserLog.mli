@@ -25,6 +25,7 @@ val pattern_to_string :
 val expr_to_string :
   offsets:bool -> mode:[`Point|`Byte] -> AST.expr -> string
 
-(** {1 Pretty-printing of the AST} *)
+(** {1 Pretty-printing of AST nodes} *)
 
-val pp_ast : state -> AST.t -> unit
+val pp_ast  : state -> AST.t -> unit
+val pp_expr : state -> AST.expr -> unit

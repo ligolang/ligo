@@ -118,7 +118,7 @@ declaration:
 
 type_decl:
   "type" type_name "is" type_expr ";"? {
-    ignore (SyntaxError.check_reserved_name $2);
+    Scoping.check_reserved_name $2;
     let stop =
       match $5 with
         Some region -> region
@@ -186,7 +186,7 @@ type_tuple:
 
 sum_type:
   "|"? nsepseq(variant,"|") {
-    SyntaxError.check_variants (Utils.nsepseq_to_list $2);
+    Scoping.check_variants (Utils.nsepseq_to_list $2);
     let region = nsepseq_to_region (fun x -> x.region) $2
     in TSum {region; value=$2} }
 
@@ -201,7 +201,7 @@ record_type:
   "record" sep_or_term_list(field_decl,";") "end" {
     let ne_elements, terminator = $2 in
     let () = Utils.nsepseq_to_list ne_elements
-             |> SyntaxError.check_fields in
+             |> Scoping.check_fields in
     let region = cover $1 $3
     and value  = {opening = Kwd $1;
                   ne_elements;
@@ -243,11 +243,11 @@ open_fun_decl:
   "function" fun_name parameters ":" type_expr "is"
      block
   "with" expr {
-    let fun_name = SyntaxError.check_reserved_name $2 in
+    Scoping.check_reserved_name $2;
     let stop     = expr_to_region $9 in
     let region   = cover $1 stop
     and value    = {kwd_function = $1;
-                    fun_name;
+                    fun_name     = $2;
                     param        = $3;
                     colon        = $4;
                     ret_type     = $5;
@@ -257,11 +257,11 @@ open_fun_decl:
                     terminator   = None}
     in {region; value} }
 | "function" fun_name parameters ":" type_expr "is" expr {
-    let fun_name = SyntaxError.check_reserved_name $2 in
+    Scoping.check_reserved_name $2;
     let stop     = expr_to_region $7 in
     let region   = cover $1 stop
     and value    = {kwd_function = $1;
-                    fun_name;
+                    fun_name     = $2;
                     param        = $3;
                     colon        = $4;
                     ret_type     = $5;
@@ -279,26 +279,26 @@ parameters:
   par(nsepseq(param_decl,";")) {
     let params =
       Utils.nsepseq_to_list ($1.value: _ par).inside
-    in SyntaxError.check_parameters params;
+    in Scoping.check_parameters params;
        $1 }
 
 param_decl:
   "var" var ":" param_type {
-    let var    = SyntaxError.check_reserved_name $2 in
+    Scoping.check_reserved_name $2;
     let stop   = type_expr_to_region $4 in
     let region = cover $1 stop
     and value  = {kwd_var    = $1;
-                  var;
+                  var        = $2;
                   colon      = $3;
                   param_type = $4}
     in ParamVar {region; value}
   }
 | "const" var ":" param_type {
-    let var    = SyntaxError.check_reserved_name $2 in
+    Scoping.check_reserved_name $2;
     let stop   = type_expr_to_region $4 in
     let region = cover $1 stop
     and value  = {kwd_const  = $1;
-                  var;
+                  var        = $2;
                   colon      = $3;
                   param_type = $4}
     in ParamConst {region; value} }
@@ -362,9 +362,9 @@ open_var_decl:
 
 unqualified_decl(OP):
   var ":" type_expr OP expr {
-    let var    = SyntaxError.check_reserved_name $1 in
+    Scoping.check_reserved_name $1;
     let region = expr_to_region $5
-    in var, $2, $3, $4, $5, region }
+    in $1, $2, $3, $4, $5, region }
 
 const_decl:
   open_const_decl ";"? {
@@ -571,7 +571,7 @@ cases(rhs):
 
 case_clause(rhs):
   pattern "->" rhs {
-    SyntaxError.check_pattern $1;
+    Scoping.check_pattern $1;
     fun rhs_to_region ->
       let start  = pattern_to_region $1 in
       let region = cover start (rhs_to_region $3)
@@ -613,10 +613,10 @@ for_loop:
     in For (ForInt {region; value})
   }
 | "for" var arrow_clause? "in" collection expr block {
-    let var    = SyntaxError.check_reserved_name $2 in
+    Scoping.check_reserved_name $2;
     let region = cover $1 $7.region in
     let value  = {kwd_for    = $1;
-                  var;
+                  var        = $2;
                   bind_to    = $3;
                   kwd_in     = $4;
                   collection = $5;
@@ -631,13 +631,13 @@ collection:
 
 var_assign:
   var ":=" expr {
-    let name   = SyntaxError.check_reserved_name $1 in
-    let region = cover name.region (expr_to_region $3)
-    and value  = {name; assign=$2; expr=$3}
+    Scoping.check_reserved_name $1;
+    let region = cover $1.region (expr_to_region $3)
+    and value  = {name=$1; assign=$2; expr=$3}
     in {region; value} }
 
 arrow_clause:
-  "->" var { $1, SyntaxError.check_reserved_name $2 }
+  "->" var { Scoping.check_reserved_name $2; ($1,$2) }
 
 (* Expressions *)
 

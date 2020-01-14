@@ -1,4 +1,4 @@
-(** Parsing the command-line options of PascaLIGO *)
+(** Parsing the command-line options of LIGO *)
 
 (** The type [command] denotes some possible behaviours of the
     compiler. The constructors are
@@ -23,12 +23,11 @@ type command = Quiet | Copy | Units | Tokens
 (** The type [options] gathers the command-line options.
     {ul
 
-      {li If the field [input] is [Some src], the name of the
-          PascaLIGO source file, with the extension ".ligo", is
-          [src]. If [input] is [Some "-"] or [None], the source file
-          is read from standard input.}
+      {li If the field [input] is [Some src], the name of the LIGO
+          source file is [src]. If [input] is [Some "-"] or [None],
+          the source file is read from standard input.}
 
-      {li The field [libs] is the paths where to find PascaLIGO files
+      {li The field [libs] is the paths where to find LIGO files
           for inclusion (#include).}
 
       {li The field [verbose] is a set of stages of the compiler
@@ -41,8 +40,14 @@ type command = Quiet | Copy | Units | Tokens
       {li If the value [mode] is [`Byte], then the unit in which
           source positions and regions are expressed in messages is
           the byte. If [`Point], the unit is unicode points.}
-    }
- *)
+
+      {li If the field [mono] is [true], then the monolithic API of
+          Menhir is called, otherwise the incremental API is.}
+
+      {li If the field [expr] is [true], then the parser for
+          expressions is used, otherwise a full-fledged contract is
+          expected.}
+} *)
 type options = <
   input   : string option;
   libs    : string list;
@@ -50,7 +55,8 @@ type options = <
   offsets : bool;
   mode    : [`Byte | `Point];
   cmd     : command;
-  mono    : bool
+  mono    : bool;
+  expr    : bool
 >
 
 val make :
@@ -61,6 +67,7 @@ val make :
   mode:[`Byte | `Point] ->
   cmd:command ->
   mono:bool ->
+  expr:bool ->
   options
 
 (** Parsing the command-line options on stdin.  The first parameter is

@@ -95,7 +95,6 @@ let check_reserved_names vars =
 let check_reserved_name var =
   if SSet.mem var.value reserved then
     raise (Error (Reserved_name var))
-  else var
 
 (* Checking the linearity of patterns *)
 

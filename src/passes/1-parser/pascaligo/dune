@@ -15,7 +15,7 @@
   (name parser_pascaligo)
   (public_name ligo.parser.pascaligo)
   (modules
-     SyntaxError AST pascaligo Parser ParserLog LexToken)
+     Scoping AST pascaligo Parser ParserLog LexToken ParErr)
   (libraries
      menhirLib
      parser_shared
@@ -53,7 +53,7 @@
   (name ParserMain)
   (libraries parser_pascaligo)
   (modules
-     ParErr ParserMain)
+     ParserMain)
   (preprocess
     (pps bisect_ppx --conditional))
   (flags (:standard -open Simple_utils -open Parser_shared -open Parser_pascaligo)))

@@ -24,3 +24,5 @@ Stubs/Parser_cameligo.ml
 ../cameligo/AST.ml
 ../cameligo/ParserLog.mli
 ../cameligo/ParserLog.ml
+../cameligo/Scoping.mli
+../cameligo/Scoping.ml

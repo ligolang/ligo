@@ -86,16 +86,27 @@ module Make (Lexer: Lexer.S)
       | Lexer.Two (invalid, valid) ->
           raise (Point (message, Some valid, invalid))
 
-    (* The two Menhir APIs are called from the following two functions. *)
+    (* The two Menhir APIs are called from the following functions. *)
+
+    module Incr = Parser.Incremental
 
     let incr_contract Lexer.{read; buffer; get_win; close; _} : Parser.ast =
       let supplier = I.lexer_lexbuf_to_supplier read buffer
       and failure  = failure get_win in
-      let parser   = Parser.Incremental.contract buffer.Lexing.lex_curr_p in
+      let parser   = Incr.contract buffer.Lexing.lex_curr_p in
       let ast      = I.loop_handle success failure supplier parser
       in close (); ast
 
     let mono_contract = Parser.contract
+
+    let incr_expr  Lexer.{read; buffer; get_win; close; _} : Parser.expr =
+      let supplier = I.lexer_lexbuf_to_supplier read buffer
+      and failure  = failure get_win in
+      let parser   = Incr.interactive_expr buffer.Lexing.lex_curr_p in
+      let expr     = I.loop_handle success failure supplier parser
+      in close (); expr
+
+    let mono_expr = Parser.interactive_expr
 
     (* Errors *)
 

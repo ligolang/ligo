@@ -119,6 +119,7 @@ declaration:
 
 type_decl:
   "type" type_name "=" type_expr {
+    Scoping.check_reserved_name $2;
     let region = cover $1 (type_expr_to_region $4) in
     let value = {
       kwd_type   = $1;
@@ -175,6 +176,7 @@ type_tuple:
 
 sum_type:
   ioption("|") nsepseq(variant,"|") {
+    Scoping.check_variants (Utils.nsepseq_to_list $2);
     let region = nsepseq_to_region (fun x -> x.region) $2
     in TSum {region; value=$2} }
 
@@ -188,6 +190,8 @@ variant:
 record_type:
   "{" sep_or_term_list(field_decl,";") "}" {
     let ne_elements, terminator = $2 in
+    let () = Utils.nsepseq_to_list ne_elements
+             |> Scoping.check_fields in
     let region = cover $1 $3
     and value  = {compound = Braces ($1,$3); ne_elements; terminator}
     in TRecord {region; value} }
@@ -213,9 +217,11 @@ let_declaration:
 let_binding:
   "<ident>" nseq(sub_irrefutable) type_annotation? "=" expr {
     let binders = Utils.nseq_cons (PVar $1) $2 in
+    Utils.nseq_iter Scoping.check_pattern binders;
     {binders; lhs_type=$3; eq=$4; let_rhs=$5}
   }
 | irrefutable type_annotation? "=" expr {
+    Scoping.check_pattern $1;
     {binders=$1,[]; lhs_type=$2; eq=$3; let_rhs=$4} }
 
 type_annotation:
@@ -440,7 +446,9 @@ cases(right_expr):
     in fst_case, ($2,snd_case)::others }
 
 case_clause(right_expr):
-  pattern "->" right_expr { {pattern=$1; arrow=$2; rhs=$3} }
+  pattern "->" right_expr {
+    Scoping.check_pattern $1;
+    {pattern=$1; arrow=$2; rhs=$3} }
 
 let_expr(right_expr):
   "let" let_binding "in" right_expr {

@@ -71,6 +71,6 @@
 ;; Build of all the LIGO source file that cover all error states
 
 (rule
-  (targets all.ligo)
+  (targets all.religo)
   (deps (:script_cover ../../../../vendors/ligo-utils/simple-utils/cover.sh) Parser.mly LexToken.mli ParToken.mly Parser.msg Unlexer.exe)
   (action (run %{script_cover} --lex-tokens=LexToken.mli --par-tokens=ParToken.mly --ext=religo --unlexer=./Unlexer.exe --messages=Parser.msg --dir=. --concatenate Parser.mly )))

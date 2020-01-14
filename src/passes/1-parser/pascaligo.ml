@@ -2,10 +2,10 @@ open Trace
 
 module Parser = Parser_pascaligo.Parser
 module AST = Parser_pascaligo.AST
-module ParserLog = Parser_pascaligo.ParserLog
+(*module ParserLog = Parser_pascaligo.ParserLog*)
 module LexToken = Parser_pascaligo.LexToken
 module Lexer = Lexer.Make(LexToken)
-module SyntaxError = Parser_pascaligo.SyntaxError
+module Scoping = Parser_pascaligo.Scoping
 
 module Errors = struct
 
@@ -70,22 +70,22 @@ module Errors = struct
               end_.pos_lnum (end_.pos_cnum - end_.pos_bol)
               file
     in
-    let message () = str in    
+    let message () = str in
     let loc = if start.pos_cnum = -1 then
       Region.make
         ~start: Pos.min
-        ~stop:(Pos.from_byte end_)    
+        ~stop:(Pos.from_byte end_)
     else
       Region.make
         ~start:(Pos.from_byte start)
         ~stop:(Pos.from_byte end_)
-    in 
+    in
     let data =
       [
         ("parser_loc",
           fun () -> Format.asprintf "%a" Location.pp_lift @@ loc
         )
-      ]    
+      ]
     in
     error ~data title message
 
@@ -127,13 +127,13 @@ let parse (parser: 'a parser) source lexbuf =
     try
       ok (parser read lexbuf)
     with
-      SyntaxError.Error (Non_linear_pattern var) ->
+      Scoping.Error (Scoping.Non_linear_pattern var) ->
         fail @@ (non_linear_pattern var)
-    | SyntaxError.Error (Duplicate_parameter name) ->
+    | Scoping.Error (Duplicate_parameter name) ->
         fail @@ (duplicate_parameter name)
-    | SyntaxError.Error (Duplicate_variant name) ->
+    | Scoping.Error (Duplicate_variant name) ->
         fail @@ (duplicate_variant name)
-    | SyntaxError.Error (Reserved_name name) ->
+    | Scoping.Error (Reserved_name name) ->
         fail @@ (reserved_name name)
     | Parser.Error ->
         let start = Lexing.lexeme_start_p lexbuf in
