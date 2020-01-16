@@ -276,7 +276,7 @@ let e_pair a b : expression = E_tuple [a; b]
 let e_application a b : expression = E_application (a , b)
 let e_variable v : expression = E_variable v
 let e_list lst : expression = E_list lst
-let e_let_in binder rhs result = E_let_in { binder ; rhs ; result }
+let e_let_in binder inline rhs result = E_let_in { binder ; rhs ; result; inline }
 let e_tuple lst : expression = E_tuple lst
 
 let e_a_unit = make_a_e e_unit (t_unit ())
@@ -297,7 +297,7 @@ let e_a_variable v ty = make_a_e (e_variable v) ty
 let ez_e_a_record r = make_a_e (ez_e_record r) (ez_t_record (List.map (fun (x, y) -> x, y.type_annotation) r) ())
 let e_a_map lst k v = make_a_e (e_map lst) (t_map k v ())
 let e_a_list lst t = make_a_e (e_list lst) (t_list t ())
-let e_a_let_in binder expr body = make_a_e (e_let_in binder expr body) (get_type_annotation body)
+let e_a_let_in binder expr body attributes = make_a_e (e_let_in binder expr body attributes) (get_type_annotation body)
 
 let get_a_int (t:annotated_expression) =
   match t.expression with
@@ -323,7 +323,7 @@ let get_a_record_accessor = fun t ->
 let get_declaration_by_name : program -> string -> declaration result = fun p name ->
   let aux : declaration -> bool = fun declaration ->
     match declaration with
-    | Declaration_constant (d , _) -> d.name = Var.of_name name
+    | Declaration_constant (d , _, _) -> d.name = Var.of_name name
   in
   trace_option (Errors.declaration_not_found name ()) @@
   List.find_opt aux @@ List.map Location.unwrap p

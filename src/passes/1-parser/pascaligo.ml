@@ -56,6 +56,15 @@ module Errors = struct
     ] in
     error ~data title message
 
+  let detached_attributes (attrs: AST.attributes) = 
+    let title () = "detached attributes" in 
+    let message () = "" in
+    let data = [
+      ("location",
+       fun () -> Format.asprintf "%a" Location.pp_lift @@ attrs.region)
+    ] in
+    error ~data title message
+
   let parser_error source (start: Lexing.position) (end_: Lexing.position) lexbuf =
     let title () = "parser error" in
     let file = if source = "" then
@@ -135,6 +144,8 @@ let parse (parser: 'a parser) source lexbuf =
         fail @@ (duplicate_variant name)
     | SyntaxError.Error (Reserved_name name) ->
         fail @@ (reserved_name name)
+    | SyntaxError.Error (Detached_attributes attrs) ->
+        fail @@ (detached_attributes attrs)
     | Parser.Error ->
         let start = Lexing.lexeme_start_p lexbuf in
         let end_ = Lexing.lexeme_end_p lexbuf in

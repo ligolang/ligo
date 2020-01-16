@@ -109,6 +109,7 @@ type field_name = string reg
 type map_name   = string reg
 type set_name   = string reg
 type constr     = string reg
+type attribute   = string reg
 
 (* Parentheses *)
 
@@ -143,6 +144,8 @@ type t = {
 
 and ast = t
 
+and attributes = attribute list reg
+
 and declaration =
   TypeDecl  of type_decl reg
 | ConstDecl of const_decl reg
@@ -155,7 +158,8 @@ and const_decl = {
   const_type : type_expr;
   equal      : equal;
   init       : expr;
-  terminator : semi option
+  terminator : semi option;
+  attributes : attributes;
 }
 
 (* Type declarations *)
@@ -212,7 +216,8 @@ and fun_decl = {
   kwd_is       : kwd_is;
   block_with   : (block reg * kwd_with) option;
   return       : expr;
-  terminator   : semi option
+  terminator   : semi option;
+  attributes   : attributes;
 }
 
 and parameters = (param_decl, semi) nsepseq par reg
@@ -268,7 +273,7 @@ and var_decl = {
   var_type   : type_expr;
   assign     : assign;
   init       : expr;
-  terminator : semi option
+  terminator : semi option;
 }
 
 and instruction =

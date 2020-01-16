@@ -72,7 +72,7 @@ let rec fold_expression : 'a folder -> 'a -> expression -> 'a result = fun f ini
       let%bind res = bind_fold_triple self init' (c,l,r) in
       ok res
   )
-  | E_let_in ((_, _) , expr , body) -> (
+  | E_let_in ((_, _) , _inline, expr , body) -> (        
       let%bind res = bind_fold_pair self init' (expr,body) in
       ok res
   )
@@ -146,9 +146,9 @@ let rec map_expression : mapper -> expression -> expression result = fun f e ->
       let%bind (c',l',r') = bind_map_triple self (c,l,r) in
       return @@ E_if_left (c', ((name_l, tvl) , l'), ((name_r, tvr) , r'))
   )
-  | E_let_in ((v , tv) , expr , body) -> (
+  | E_let_in ((v , tv) , inline, expr , body) -> (
       let%bind (expr',body') = bind_map_pair self (expr,body) in
-      return @@ E_let_in ((v , tv) , expr' , body')
+      return @@ E_let_in ((v , tv) , inline , expr' , body')
   )
   | E_sequence ab -> (
       let%bind ab' = bind_map_pair self ab in

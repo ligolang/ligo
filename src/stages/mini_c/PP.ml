@@ -91,8 +91,8 @@ and expression' ppf (e:expression') = match e with
   | E_if_left (c, ((name_l, _) , l), ((name_r, _) , r)) ->
       fprintf ppf "%a ?? %a -> %a : %a -> %a" expression c Stage_common.PP.name name_l expression l Stage_common.PP.name name_r expression r
   | E_sequence (a , b) -> fprintf ppf "%a ;; %a" expression a expression b
-  | E_let_in ((name , _) , expr , body) ->
-      fprintf ppf "let %a = %a in ( %a )" Stage_common.PP.name name expression expr expression body
+  | E_let_in ((name , _) , inline, expr , body) ->
+      fprintf ppf "let %a = %a%a in ( %a )" Stage_common.PP.name name expression expr option_inline inline expression body
   | E_iterator (b , ((name , _) , body) , expr) ->
       fprintf ppf "for_%a %a of %a do ( %a )" Stage_common.PP.constant b Stage_common.PP.name name expression expr expression body
   | E_fold (((name , _) , body) , collection , initial) ->
@@ -117,9 +117,17 @@ and function_ ppf ({binder ; body}:anon_function) =
     Stage_common.PP.name binder
     expression body
 
-and assignment ppf ((n, e):assignment) = fprintf ppf "%a = %a;" Stage_common.PP.name n expression e
+and assignment ppf ((n, i, e):assignment) = 
+  fprintf ppf "%a = %a%a;" Stage_common.PP.name n expression e option_inline i
 
-and declaration ppf ((n, e):assignment) = fprintf ppf "let %a = %a;" Stage_common.PP.name n expression e
+and option_inline ppf inline = 
+  if inline then 
+    fprintf ppf "[@inline]"
+  else
+    fprintf ppf ""
+
+and declaration ppf ((n, i, e):assignment) = 
+  fprintf ppf "let %a = %a%a;" Stage_common.PP.name n expression e option_inline i
 
 let tl_statement ppf (ass, _) = assignment ppf ass
 

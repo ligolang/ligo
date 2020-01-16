@@ -132,7 +132,7 @@ val e_pair : value -> value -> expression
 val e_application : value -> value -> expression
 val e_variable : expression_variable -> expression
 val e_list : value list -> expression
-val e_let_in : expression_variable -> value -> value -> expression
+val e_let_in : expression_variable -> inline -> value -> value -> expression
 val e_tuple : value list -> expression
 
 val e_a_unit : full_environment -> annotated_expression
@@ -153,7 +153,7 @@ val e_a_variable : expression_variable -> type_value -> full_environment -> anno
 val ez_e_a_record : ( label * annotated_expression ) list -> full_environment -> annotated_expression
 val e_a_map : ( annotated_expression * annotated_expression ) list -> type_value -> type_value -> full_environment -> annotated_expression
 val e_a_list : annotated_expression list -> type_value -> full_environment -> annotated_expression
-val e_a_let_in : expression_variable -> annotated_expression -> annotated_expression -> full_environment -> annotated_expression
+val e_a_let_in : expression_variable -> inline -> annotated_expression -> annotated_expression -> full_environment -> annotated_expression
 
 val get_a_int : annotated_expression -> int result
 val get_a_unit : annotated_expression -> unit result

@@ -69,6 +69,7 @@ type t =
 | Mutez  of (string * Z.t) Region.reg
 | String of string Region.reg
 | Bytes  of (string * Hex.t) Region.reg
+| Attr2  of string Region.reg
 
   (* Keywords *)
 
@@ -163,10 +164,9 @@ let proj_token = function
 | True region -> region, "True"
 | Type region -> region, "Type"
 | With region -> region, "With"
-
 | C_None  region -> region, "C_None"
 | C_Some  region -> region, "C_Some"
-
+| Attr2 Region.{region; value} -> region, sprintf "Attr2 %s" value
 | EOF region -> region, "EOF"
 
 let to_lexeme = function
@@ -226,7 +226,7 @@ let to_lexeme = function
 
 | C_None  _ -> "None"
 | C_Some  _ -> "Some"
-
+| Attr2 a -> a.Region.value
 | EOF _ -> ""
 
 let to_string token ?(offsets=true) mode =
@@ -418,6 +418,8 @@ let eof region = EOF region
 
 type sym_err = Invalid_symbol
 
+type attr_err = Invalid_attribute
+
 let mk_sym lexeme region =
   match lexeme with
   (* Lexemes in common with all concrete syntaxes *)
@@ -464,6 +466,14 @@ let mk_ident lexeme region =
 
 let mk_constr lexeme region =
   Lexing.from_string lexeme |> scan_constr region lexicon
+
+(* Attributes *)
+
+let mk_attr _lexeme _region = 
+  Error Invalid_attribute
+
+let mk_attr2 lexeme region = 
+  Ok (Attr2 { value = lexeme; region })
 
 (* Predicates *)
 

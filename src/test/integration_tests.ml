@@ -1846,6 +1846,33 @@ let deep_access_ligo () : unit result =
     let make_expected = e_string "one" in
     expect_eq program "nested_record" make_input make_expected in
   ok ()
+  
+let attributes_ligo () : unit result =
+  let%bind program = type_file "./contracts/attributes.ligo" in
+  let%bind () = 
+    let input = e_int 3 in 
+    let expected = e_int 5 in
+    expect_eq program "foo" input expected 
+  in
+  ok ()
+
+let attributes_mligo () : unit result =
+  let%bind program = mtype_file "./contracts/attributes.mligo" in
+  let%bind () = 
+    let input = e_int 3 in 
+    let expected = e_int 5 in
+    expect_eq program "foo" input expected 
+  in
+  ok ()
+
+let attributes_religo () : unit result =
+  let%bind program = retype_file "./contracts/attributes.religo" in
+  let%bind () = 
+    let input = e_int 3 in 
+    let expected = e_int 5 in
+    expect_eq program "foo" input expected 
+  in
+  ok ()
 
 
 let entrypoints_ligo () : unit result =
@@ -2127,6 +2154,9 @@ let main = test_suite "Integration (End to End)" [
     test "entrypoints (ligo)" entrypoints_ligo ;
     test "curry (mligo)" curry ;
     test "type tuple destruct (mligo)" type_tuple_destruct ;
+    test "attributes (ligo)" attributes_ligo;
+    test "attributes (mligo)" attributes_mligo;
+    test "attributes (religo)" attributes_religo;
     test "let in multi-bind (mligo)" let_in_multi_bind ;
     test "tuple param destruct (mligo)" tuple_param_destruct ;
     test "empty case" empty_case ;

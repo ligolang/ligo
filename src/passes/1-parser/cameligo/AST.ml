@@ -119,6 +119,7 @@ type type_name   = string reg
 type field_name  = string reg
 type type_constr = string reg
 type constr      = string reg
+type attribute   = string reg
 
 (* Parentheses *)
 
@@ -139,8 +140,10 @@ type t = {
 
 and ast = t
 
+and attributes = attribute list 
+
 and declaration =
-  Let      of (kwd_let * let_binding) reg
+  Let      of (kwd_let * let_binding * attributes) reg
 | TypeDecl of type_decl reg
 
 (* Non-recursive values *)
@@ -360,18 +363,19 @@ and 'a case_clause = {
 }
 
 and let_in = {
-  kwd_let : kwd_let;
-  binding : let_binding;
-  kwd_in  : kwd_in;
-  body    : expr
+  kwd_let    : kwd_let;
+  binding    : let_binding;
+  kwd_in     : kwd_in;
+  body       : expr;
+  attributes : attributes
 }
 
 and fun_expr = {
-  kwd_fun  : kwd_fun;
-  binders  : pattern nseq;
-  lhs_type : (colon * type_expr) option;
-  arrow    : arrow;
-  body     : expr
+  kwd_fun    : kwd_fun;
+  binders    : pattern nseq;
+  lhs_type   : (colon * type_expr) option;
+  arrow      : arrow;
+  body       : expr;
 }
 
 and cond_expr = {
