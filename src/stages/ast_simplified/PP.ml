@@ -52,8 +52,8 @@ let rec expression ppf (e:expression) = match e.expression with
       name n
       PP_helpers.(list_sep access (const ".")) path
       expression expr
-  | E_let_in { binder ; rhs ; result } ->
-      fprintf ppf "let %a = %a in %a" option_type_name binder expression rhs expression result
+  | E_let_in { binder ; rhs ; result; inline } ->    
+    fprintf ppf "let %a = %a%a in %a" option_type_name binder expression rhs option_inline inline expression result
   | E_skip -> fprintf ppf "skip"
   | E_ascription (expr , ty) -> fprintf ppf "%a : %a" expression expr type_expression ty
 
@@ -61,6 +61,12 @@ and option_type_name ppf ((n , ty_opt) : expression_variable * type_expression o
   match ty_opt with
   | None -> fprintf ppf "%a" name n
   | Some ty -> fprintf ppf "%a : %a" name n type_expression ty
+
+and option_inline ppf inline = 
+  if inline then 
+    fprintf ppf "[@inline]"
+  else
+    fprintf ppf ""
 
 and assoc_expression ppf : (expr * expr) -> unit = fun (a, b) ->
   fprintf ppf "%a -> %a" expression a expression b
@@ -119,8 +125,8 @@ and matching_variant_case_type ppf ((c,n),_a) =
 let declaration ppf (d:declaration) = match d with
   | Declaration_type (type_name , te) ->
       fprintf ppf "type %a = %a" type_variable (type_name) type_expression te
-  | Declaration_constant (name , ty_opt , expr) ->
-      fprintf ppf "const %a = %a" option_type_name (name , ty_opt) expression expr
+  | Declaration_constant (name , ty_opt , inline, expr) ->            
+      fprintf ppf "const %a = %a%a" option_type_name (name , ty_opt) expression expr option_inline inline
 
 let program ppf (p:program) =
   fprintf ppf "@[<v>%a@]" (list_sep declaration (tag "@;")) (List.map Location.unwrap p)

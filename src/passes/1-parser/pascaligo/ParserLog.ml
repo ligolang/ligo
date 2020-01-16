@@ -114,6 +114,13 @@ let rec print_tokens state ast =
   Utils.nseq_iter (print_decl state) decl;
   print_token state eof "EOF"
 
+and print_attributes state attributes = 
+  let attributes = List.fold_left (fun all a -> all ^ a.value ^ ";") "" attributes.value in
+  let line =
+    sprintf "attributes[%s]"
+            attributes
+  in Buffer.add_string state#buffer line
+
 and print_decl state = function
   TypeDecl  decl -> print_type_decl  state decl
 | ConstDecl decl -> print_const_decl state decl
@@ -121,14 +128,15 @@ and print_decl state = function
 
 and print_const_decl state {value; _} =
   let {kwd_const; name; colon; const_type;
-       equal; init; terminator} = value in
+       equal; init; terminator; attributes} = value in
   print_token      state kwd_const "const";
   print_var        state name;
   print_token      state colon ":";
   print_type_expr  state const_type;
   print_token      state equal "=";
   print_expr       state init;
-  print_terminator state terminator
+  print_terminator state terminator;
+  print_attributes state attributes
 
 and print_type_decl state {value; _} =
   let {kwd_type; name; kwd_is;
@@ -198,7 +206,7 @@ and print_type_tuple state {value; _} =
 and print_fun_decl state {value; _} =
   let {kwd_function; fun_name; param; colon;
        ret_type; kwd_is; block_with;
-       return; terminator} = value in
+       return; terminator; attributes } = value in
   print_token       state kwd_function "function";
   print_var         state fun_name;
   print_parameters  state param;
@@ -211,7 +219,8 @@ and print_fun_decl state {value; _} =
      print_block state block;
      print_token state kwd_with "with");
   print_expr state return;
-  print_terminator state terminator
+  print_terminator state terminator;
+  print_attributes state attributes
 
 and print_fun_expr state {value; _} =
   let {kwd_function; param; colon;

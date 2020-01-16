@@ -68,42 +68,43 @@ type t =
 
   (* Keywords *)
 
-| And        of Region.t  (* "and"      *)
-| Begin      of Region.t  (* "begin"    *)
-| BigMap     of Region.t  (* "big_map"  *)
-| Block      of Region.t  (* "block"    *)
-| Case       of Region.t  (* "case"     *)
-| Const      of Region.t  (* "const"    *)
-| Contains   of Region.t  (* "contains" *)
-| Else       of Region.t  (* "else"     *)
-| End        of Region.t  (* "end"      *)
-| False      of Region.t  (* "False"    *)
-| For        of Region.t  (* "for"      *)
-| From       of Region.t  (* "from"     *)
-| Function   of Region.t  (* "function" *)
-| If         of Region.t  (* "if"       *)
-| In         of Region.t  (* "in"       *)
-| Is         of Region.t  (* "is"       *)
-| List       of Region.t  (* "list"     *)
-| Map        of Region.t  (* "map"      *)
-| Mod        of Region.t  (* "mod"      *)
-| Nil        of Region.t  (* "nil"      *)
-| Not        of Region.t  (* "not"      *)
-| Of         of Region.t  (* "of"       *)
-| Or         of Region.t  (* "or"       *)
-| Patch      of Region.t  (* "patch"    *)
-| Record     of Region.t  (* "record"   *)
-| Remove     of Region.t  (* "remove"   *)
-| Set        of Region.t  (* "set"      *)
-| Skip       of Region.t  (* "skip"     *)
-| Then       of Region.t  (* "then"     *)
-| To         of Region.t  (* "to"       *)
-| True       of Region.t  (* "True"     *)
-| Type       of Region.t  (* "type"     *)
-| Unit       of Region.t  (* "Unit"     *)
-| Var        of Region.t  (* "var"      *)
-| While      of Region.t  (* "while"    *)
-| With       of Region.t  (* "with"     *)
+| And        of Region.t  (* "and"        *)
+| Attributes of Region.t  (* "attributes" *)
+| Begin      of Region.t  (* "begin"      *)
+| BigMap     of Region.t  (* "big_map"    *)
+| Block      of Region.t  (* "block"      *)
+| Case       of Region.t  (* "case"       *)
+| Const      of Region.t  (* "const"      *)
+| Contains   of Region.t  (* "contains"   *)
+| Else       of Region.t  (* "else"       *)
+| End        of Region.t  (* "end"        *)
+| False      of Region.t  (* "False"      *)
+| For        of Region.t  (* "for"        *)
+| From       of Region.t  (* "from"       *)
+| Function   of Region.t  (* "function"   *)
+| If         of Region.t  (* "if"         *)
+| In         of Region.t  (* "in"         *)
+| Is         of Region.t  (* "is"         *)
+| List       of Region.t  (* "list"       *)
+| Map        of Region.t  (* "map"        *)
+| Mod        of Region.t  (* "mod"        *)
+| Nil        of Region.t  (* "nil"        *)
+| Not        of Region.t  (* "not"        *)
+| Of         of Region.t  (* "of"         *)
+| Or         of Region.t  (* "or"         *)
+| Patch      of Region.t  (* "patch"      *)
+| Record     of Region.t  (* "record"     *)
+| Remove     of Region.t  (* "remove"     *)
+| Set        of Region.t  (* "set"        *)
+| Skip       of Region.t  (* "skip"       *)
+| Then       of Region.t  (* "then"       *)
+| To         of Region.t  (* "to"         *)
+| True       of Region.t  (* "True"       *)
+| Type       of Region.t  (* "type"       *)
+| Unit       of Region.t  (* "Unit"       *)
+| Var        of Region.t  (* "var"        *)
+| While      of Region.t  (* "while"      *)
+| With       of Region.t  (* "with"       *)
 
   (* Data constructors *)
 
@@ -175,6 +176,7 @@ let proj_token = function
   (* Keywords *)
 
 | And        region -> region, "And"
+| Attributes region -> region, "Attributes"
 | Begin      region -> region, "Begin"
 | BigMap     region -> region, "BigMap"
 | Block      region -> region, "Block"
@@ -215,7 +217,7 @@ let proj_token = function
 
 | C_None  region -> region, "C_None"
 | C_Some  region -> region, "C_Some"
-
+  
   (* Virtual tokens *)
 
 | EOF region -> region, "EOF"
@@ -264,6 +266,7 @@ let to_lexeme = function
   (* Keywords *)
 
 | And        _ -> "and"
+| Attributes _ -> "attributes"
 | Begin      _ -> "begin"
 | BigMap     _ -> "big_map"
 | Block      _ -> "block"
@@ -321,6 +324,7 @@ let to_region token = proj_token token |> fst
 
 let keywords = [
   (fun reg -> And        reg);
+  (fun reg -> Attributes reg);
   (fun reg -> Begin      reg);
   (fun reg -> BigMap     reg);
   (fun reg -> Block      reg);
@@ -485,6 +489,8 @@ let eof region = EOF region
 
 type sym_err = Invalid_symbol
 
+type attr_err = Invalid_attribute
+
 let mk_sym lexeme region =
   match lexeme with
   (* Lexemes in common with all concrete syntaxes *)
@@ -531,6 +537,14 @@ let mk_ident lexeme region =
 let mk_constr lexeme region =
   Lexing.from_string lexeme |> scan_constr region lexicon
 
+(* Attributes *)
+
+let mk_attr _lexeme _region = 
+  Error Invalid_attribute
+
+let mk_attr2 _lexeme _region = 
+  Error Invalid_attribute
+
 (* Predicates *)
 
 let is_string = function
@@ -551,6 +565,7 @@ let is_ident = function
 
 let is_kwd = function
   And        _
+| Attributes _
 | Begin      _
 | BigMap     _
 | Block      _

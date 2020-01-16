@@ -147,11 +147,11 @@ module Substitution = struct
         let%bind binder = s_variable ~v ~expr binder in
         let%bind body = s_annotated_expression ~v ~expr body in
         ok @@ T.E_lambda { binder; body }
-      | T.E_let_in          { binder; rhs; result } ->
+      | T.E_let_in          { binder; rhs; result; inline } ->
         let%bind binder = s_variable ~v ~expr binder in
         let%bind rhs = s_annotated_expression ~v ~expr rhs in
         let%bind result = s_annotated_expression ~v ~expr result in
-        ok @@ T.E_let_in { binder; rhs; result }
+        ok @@ T.E_let_in { binder; rhs; result; inline }
       | T.E_tuple           vals ->
         let%bind vals = bind_map_list (s_annotated_expression ~v ~expr) vals in
         ok @@ T.E_tuple vals
@@ -235,11 +235,11 @@ module Substitution = struct
 
     and s_declaration ~v ~expr : T.declaration w =
       function
-        Ast_typed.Declaration_constant (e, (env1, env2)) ->
+        Ast_typed.Declaration_constant (e, i, (env1, env2)) ->
         let%bind e = s_named_expression ~v ~expr e in
         let%bind env1 = s_full_environment ~v ~expr env1 in
         let%bind env2 = s_full_environment ~v ~expr env2 in
-        ok @@ Ast_typed.Declaration_constant (e, (env1, env2))
+        ok @@ Ast_typed.Declaration_constant (e, i, (env1, env2))
 
     and s_declaration_wrap ~v ~expr : T.declaration Location.wrap w = fun d ->
       Trace.bind_map_location (s_declaration ~v ~expr) d

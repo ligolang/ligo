@@ -172,8 +172,8 @@ let e_int expr : expression = Expression.make_tpl (expr, t_int)
 let e_unit : expression = Expression.make_tpl (E_literal D_unit, t_unit)
 let e_skip : expression = Expression.make_tpl (E_skip, t_unit)
 let e_var_int name : expression = e_int (E_variable name)
-let e_let_in v tv expr body : expression = Expression.(make_tpl (
-    E_let_in ((v , tv) , expr , body) ,
+let e_let_in v tv inline expr body : expression = Expression.(make_tpl (
+    E_let_in ((v , tv) , inline, expr , body) ,
     get_type body
   ))
 
