@@ -1912,6 +1912,17 @@ let key_hash_mligo () : unit result =
   let%bind () = expect_eq program "check_hash_key" make_input make_expected in
   ok ()
 
+let key_hash_religo () : unit result =
+  let open Tezos_crypto in
+  let (raw_pkh,raw_pk,_) = Signature.generate_key () in
+  let pkh_str = Signature.Public_key_hash.to_b58check raw_pkh in
+  let pk_str = Signature.Public_key.to_b58check raw_pk in
+  let%bind program = retype_file "./contracts/key_hash.religo" in
+  let make_input = e_pair (e_key_hash pkh_str) (e_key pk_str) in
+  let make_expected = e_pair (e_bool true) (e_key_hash pkh_str) in
+  let%bind () = expect_eq program "check_hash_key" make_input make_expected in
+  ok ()
+
 let curry () : unit result =
   let%bind program = mtype_file "./contracts/curry.mligo" in
   let%bind () =
@@ -2047,6 +2058,7 @@ let main = test_suite "Integration (End to End)" [
     test "bytes unpack (religo)" bytes_unpack_religo ;
     test "key hash" key_hash ;
     test "key hash (mligo)" key_hash_mligo ;
+    test "key hash (religo)" key_hash_religo ;
     test "chain id" chain_id ;
     test "type alias" type_alias ;
     test "function" function_ ;
