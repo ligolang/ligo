@@ -9,31 +9,40 @@ module Errors = struct
     let message () = "only bytes, string or int are printable" in
     error title message
 
-  let failwith data_str type_str () =
+  let failwith str () =
     let title () = "Execution failed" in
     let message () = "" in
     let data = [
-      ("value" , fun () -> Format.asprintf "%s" data_str);
-      ("type"  , fun () -> Format.asprintf "%s" type_str);
+      ("value" , fun () -> Format.asprintf "%s" str);
     ] in
     error ~data title message
 end
-type options = Memory_proto_alpha.options
 
-type run_res =
-  | Success of ex_typed_value
-  | Fail of Memory_proto_alpha.Protocol.Script_repr.expr
+type options = Memory_proto_alpha.options
 
 type run_failwith_res =
   | Failwith_int of int
   | Failwith_string of string
   | Failwith_bytes of bytes
 
+type run_res =
+  | Success of ex_typed_value
+  | Fail of run_failwith_res
+
 type dry_run_options =
   { amount : string ;
     predecessor_timestamp : string option ;
     sender : string option ;
     source : string option }
+
+let failwith_to_string (f:run_failwith_res) : string result =
+  let%bind str = match f with
+  | Failwith_int i -> ok @@ string_of_int i
+  | Failwith_string s -> ok @@ s
+  | Failwith_bytes b ->
+    generic_try (simple_error "Could not convert failwith bytes to string") @@
+      (fun () -> Bytes.to_string b) in
+  ok @@ Format.asprintf "failed with value '%s'" str
 
 let make_dry_run_options (opts : dry_run_options) : options result =
   let open Proto_alpha_utils.Trace in
@@ -88,7 +97,7 @@ let fetch_lambda_types (contract_ty:ex_ty) =
   | Ex_ty (Lambda_t (in_ty, out_ty, _)) -> ok (Ex_ty in_ty, Ex_ty out_ty)
   | _ -> simple_fail "failed to fetch lambda types"
 
-let run_contract ?options (exp:Michelson.t) (exp_type:ex_ty) (input_michelson:Michelson.t) : ex_typed_value result =
+let run_contract ?options (exp:Michelson.t) (exp_type:ex_ty) (input_michelson:Michelson.t) : run_res result =
   let open! Tezos_raw_protocol_005_PsBabyM1 in
   let%bind (Ex_ty input_ty, Ex_ty output_ty) = fetch_lambda_types exp_type in
   let%bind input =
@@ -105,11 +114,18 @@ let run_contract ?options (exp:Michelson.t) (exp_type:ex_ty) (input_michelson:Mi
     Trace.trace_tzresult_lwt (simple_error "error parsing program code") @@
     Memory_proto_alpha.parse_michelson_fail ~top_level exp ty_stack_before ty_stack_after in
   let open! Memory_proto_alpha.Protocol.Script_interpreter in
-  let%bind (Item(output, Empty)) =
+  let%bind res =
     Trace.trace_tzresult_lwt (simple_error "error of execution") @@
-    Memory_proto_alpha.interpret ?options descr
-      (Item(input, Empty)) in
-  ok (Ex_typed_value (output_ty, output))
+    Memory_proto_alpha.failure_interpret ?options descr (Item(input, Empty)) in
+  match res with
+  | Memory_proto_alpha.Succeed stack ->
+    let (Item(output, Empty)) = stack in
+    ok @@ Success (Ex_typed_value (output_ty, output))
+  | Memory_proto_alpha.Fail expr -> ( match Tezos_micheline.Micheline.root @@ Memory_proto_alpha.strings_of_prims expr with
+    | Int (_ , i)    -> ok @@ Fail (Failwith_int (Z.to_int i))
+    | String (_ , s) -> ok @@ Fail (Failwith_string s)
+    | Bytes (_, s)   -> ok @@ Fail (Failwith_bytes s)
+    | _              -> fail @@ Errors.unknown_failwith_type () )
 
 let run_expression ?options (exp:Michelson.t) (exp_type:ex_ty) : run_res result =
   let open! Tezos_raw_protocol_005_PsBabyM1 in
@@ -129,30 +145,28 @@ let run_expression ?options (exp:Michelson.t) (exp_type:ex_ty) : run_res result 
   | Memory_proto_alpha.Succeed stack ->
     let (Item(output, Empty)) = stack in
     ok @@ Success (Ex_typed_value (exp_type', output))
-  | Memory_proto_alpha.Fail expr ->
-    ok (Fail expr)
-
-let run ?options (exp:Michelson.t) (exp_type:ex_ty) : ex_typed_value result =
-  let%bind expr = run_expression ?options exp exp_type in
-  match expr with
-  | Success res -> ok res
-  | Fail res -> ( match Tezos_micheline.Micheline.root @@ Memory_proto_alpha.strings_of_prims res with
-    | Int (_ , i)    -> fail @@ Errors.failwith (Z.to_string i) "int" ()
-    | String (_ , s) -> fail @@ Errors.failwith s "string" ()
-    | Bytes (_, s)   -> fail @@ Errors.failwith (Bytes.to_string s) "bytes" ()
+  | Memory_proto_alpha.Fail expr -> ( match Tezos_micheline.Micheline.root @@ Memory_proto_alpha.strings_of_prims expr with
+    | Int (_ , i)    -> ok @@ Fail (Failwith_int (Z.to_int i))
+    | String (_ , s) -> ok @@ Fail (Failwith_string s)
+    | Bytes (_, s)   -> ok @@ Fail (Failwith_bytes s)
     | _              -> fail @@ Errors.unknown_failwith_type () )
-
 
 let run_failwith ?options (exp:Michelson.t) (exp_type:ex_ty) : run_failwith_res result =
   let%bind expr = run_expression ?options exp exp_type in
   match expr with
-  | Fail res -> ( match Tezos_micheline.Micheline.root @@ Memory_proto_alpha.strings_of_prims res with
-    | Int (_ , i)    -> ok (Failwith_int (Z.to_int i))
-    | String (_ , s) -> ok (Failwith_string s)
-    | Bytes (_, b)    -> ok (Failwith_bytes b)
-    | _              -> simple_fail "Unknown failwith type" )
-  | _  -> simple_fail "An error of execution was expected"
+  | Success _  -> simple_fail "An error of execution was expected"
+  | Fail res -> ok res
+
+let run_no_failwith ?options (exp:Michelson.t) (exp_type:ex_ty) : ex_typed_value result =
+  let%bind expr = run_expression ?options exp exp_type in
+  match expr with
+  | Success tval  -> ok tval
+  | Fail _ -> simple_fail "Unexpected error of execution"
 
 let evaluate_expression ?options exp exp_type =
-  let%bind etv = run ?options exp exp_type in
-  ex_value_ty_to_michelson etv
+  let%bind etv = run_expression ?options exp exp_type in
+  match etv with
+    | Success etv' -> ex_value_ty_to_michelson etv'
+    | Fail res ->
+      let%bind str = failwith_to_string res in
+      fail @@ Errors.failwith str ()
