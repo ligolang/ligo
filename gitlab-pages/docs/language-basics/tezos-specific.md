@@ -78,3 +78,37 @@ let check_hash_key = (kh1_k2: (key_hash, key)) : (bool, key_hash) => {
 ```
 
 <!--END_DOCUSAURUS_CODE_TABS-->
+
+## Checking Signatures
+
+> ⚠️ There is no way to *generate* a signed message in LIGO. This is because that
+would require storing a private key on chain, at which point it isn't very private
+anymore.
+
+<!--DOCUSAURUS_CODE_TABS-->
+
+<!--PascaLIGO-->
+```pascaligo
+function check_signature
+    (const pk: key;
+     const signed: signature;
+     const msg: bytes) : bool
+  is crypto_check(pk, signed, msg)
+```
+
+<!--CameLIGO-->
+```cameligo
+let check_signature (pk, signed, msg: key * signature * bytes) : bool =
+  Crypto.check pk signed msg
+```
+
+<!--ReasonLIGO-->
+```reasonligo
+let check_signature = (param: (key, signature, bytes)) : bool => {
+  let pk, signed, msg = param;
+  Crypto.check(pk, signed, msg);
+};
+```
+
+<!--END_DOCUSAURUS_CODE_TABS-->
+ 
