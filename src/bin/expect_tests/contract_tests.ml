@@ -966,12 +966,12 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "run-function" ; contract "failwith.ligo" ; "failer" ; "1" ] ;
   [%expect {|
-    failed with string some_string |}]
+    failwith("some_string") |}]
 
 let%expect_test _ =
   run_ligo_good [ "run-function" ; contract "failwith.ligo" ; "failer" ; "1" ; "--format=json" ] ;
   [%expect {|
-    {"status":"ok","content":"failed with string some_string"} |}]
+    {"status":"ok","content":"failwith(\"some_string\")"} |}]
 
 let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; contract "bad_address_format.religo" ; "main" ] ;
@@ -1022,5 +1022,5 @@ let%expect_test _ =
   (* TODO should not be bad? *)
   run_ligo_good [ "dry-run" ; contract "subtle_nontail_fail.mligo" ; "main" ; "()" ; "()" ] ;
   [%expect {|
-    failed with string This contract always fails |}]
+    failwith("This contract always fails") |}]
 

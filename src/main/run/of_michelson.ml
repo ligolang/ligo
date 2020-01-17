@@ -38,11 +38,10 @@ type dry_run_options =
 let failwith_to_string (f:run_failwith_res) : string result =
   let%bind str = match f with
   | Failwith_int i -> ok @@ string_of_int i
-  | Failwith_string s -> ok @@ s
+  | Failwith_string s -> ok @@ Format.asprintf "\"%s\"" (String.escaped s)
   | Failwith_bytes b ->
-    generic_try (simple_error "Could not convert failwith bytes to string") @@
-      (fun () -> Bytes.to_string b) in
-  ok @@ Format.asprintf "failed with value '%s'" str
+    ok @@ Format.asprintf "0X%a" Hex.pp (Hex.of_bytes b) in
+  ok @@ Format.asprintf "failwith(%s)" str
 
 let make_dry_run_options (opts : dry_run_options) : options result =
   let open Proto_alpha_utils.Trace in
