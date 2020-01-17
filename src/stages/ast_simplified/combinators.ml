@@ -92,11 +92,13 @@ let e_chain_id ?loc s : expression = location_wrap ?loc @@ E_literal (Literal_ch
 let e'_bytes b : expression' result =
   let%bind bytes = generic_try (simple_error "bad hex to bytes") (fun () -> Hex.to_bytes (`Hex b)) in
   ok @@ E_literal (Literal_bytes bytes)
-let e_bytes ?loc b : expression result =
+let e_bytes_hex ?loc b : expression result =
   let%bind e' = e'_bytes b in
   ok @@ location_wrap ?loc e'
-let e_bytes_ofbytes ?loc (b: bytes) : expression =
+let e_bytes_raw ?loc (b: bytes) : expression =
   location_wrap ?loc @@ E_literal (Literal_bytes b)
+let e_bytes_string ?loc (s: string) : expression =
+  location_wrap ?loc @@ E_literal (Literal_bytes (Hex.to_bytes (Hex.of_string s)))
 let e_big_map ?loc lst : expression = location_wrap ?loc @@ E_big_map lst
 let e_record ?loc map : expression = location_wrap ?loc @@ E_record map
 let e_tuple ?loc lst : expression = location_wrap ?loc @@ E_tuple lst
