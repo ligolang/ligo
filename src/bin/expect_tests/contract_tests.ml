@@ -964,18 +964,14 @@ let%expect_test _ =
     * Check the changelog by running 'ligo changelog' |}]
 
 let%expect_test _ =
-  run_ligo_bad [ "run-function" ; contract "failwith.ligo" ; "failer" ; "1" ] ;
+  run_ligo_good [ "run-function" ; contract "failwith.ligo" ; "failer" ; "1" ] ;
   [%expect {|
-    ligo: Execution failed:  {"value":"some_string","type":"string"}
+    failed with string some_string |}]
 
-
-     If you're not sure how to fix this error, you can
-     do one of the following:
-
-    * Visit our documentation: https://ligolang.org/docs/intro/what-and-why/
-    * Ask a question on our Discord: https://discord.gg/9rhYaEt
-    * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
-    * Check the changelog by running 'ligo changelog' |}]
+let%expect_test _ =
+  run_ligo_good [ "run-function" ; contract "failwith.ligo" ; "failer" ; "1" ; "--format=json" ] ;
+  [%expect {|
+    {"status":"ok","content":"failed with string some_string"} |}]
 
 let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; contract "bad_address_format.religo" ; "main" ] ;
@@ -1024,15 +1020,7 @@ let%expect_test _ =
 
 let%expect_test _ =
   (* TODO should not be bad? *)
-  run_ligo_bad [ "dry-run" ; contract "subtle_nontail_fail.mligo" ; "main" ; "()" ; "()" ] ;
+  run_ligo_good [ "dry-run" ; contract "subtle_nontail_fail.mligo" ; "main" ; "()" ; "()" ] ;
   [%expect {|
-    ligo: error of execution
-
-     If you're not sure how to fix this error, you can
-     do one of the following:
-
-    * Visit our documentation: https://ligolang.org/docs/intro/what-and-why/
-    * Ask a question on our Discord: https://discord.gg/9rhYaEt
-    * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
-    * Check the changelog by running 'ligo changelog' |}]
+    failed with string This contract always fails |}]
 
