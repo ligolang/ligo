@@ -1949,6 +1949,19 @@ let check_signature_mligo () : unit result =
   let%bind () = expect_eq program "check_signature" make_input make_expected in
   ok ()
 
+let check_signature_religo () : unit result =
+  let open Tezos_crypto in
+  let (_, raw_pk, sk) = Signature.generate_key () in
+  let pk_str = Signature.Public_key.to_b58check raw_pk in
+  let signed = Signature.sign sk (Bytes.of_string "hello world") in
+  let%bind program = retype_file "./contracts/check_signature.religo" in
+  let make_input = e_tuple [e_key pk_str ;
+                            e_signature (Signature.to_b58check signed) ;
+                            e_bytes_ofbytes (Bytes.of_string "hello world")] in
+  let make_expected = e_bool true in
+  let%bind () = expect_eq program "check_signature" make_input make_expected in
+  ok ()
+
 let curry () : unit result =
   let%bind program = mtype_file "./contracts/curry.mligo" in
   let%bind () =
@@ -2087,6 +2100,7 @@ let main = test_suite "Integration (End to End)" [
     test "key hash (religo)" key_hash_religo ;
     test "check signature" check_signature ;
     test "check signature (mligo)" check_signature_mligo ;
+    test "check signature (religo)" check_signature_religo ;
     test "chain id" chain_id ;
     test "type alias" type_alias ;
     test "function" function_ ;
