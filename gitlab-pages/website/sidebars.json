@@ -11,7 +11,8 @@
       "language-basics/loops",
       "language-basics/unit-option-pattern-matching",
       "language-basics/maps-records",
-      "language-basics/sets-lists-touples"
+      "language-basics/sets-lists-touples",
+      "language-basics/tezos-specific"
     ],
     "Advanced": [
       "advanced/timestamps-addresses",
