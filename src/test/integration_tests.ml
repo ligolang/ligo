@@ -1968,6 +1968,16 @@ let bytes_unpack () : unit result =
   let%bind () = expect_eq program "id_address" (e_address addr) (e_some (e_address addr)) in
   ok ()
 
+let bytes_unpack_mligo () : unit result =
+  let%bind program = mtype_file "./contracts/bytes_unpack.mligo" in
+  let%bind () = expect_eq program "id_string" (e_string "teststring") (e_some (e_string "teststring")) in
+  let%bind () = expect_eq program "id_int" (e_int 42) (e_some (e_int 42)) in
+  let open Proto_alpha_utils.Memory_proto_alpha in
+  let addr = Protocol.Alpha_context.Contract.to_b58check @@
+      (List.nth dummy_environment.identities 0).implicit_contract in
+  let%bind () = expect_eq program "id_address" (e_address addr) (e_some (e_address addr)) in
+  ok ()
+
 let empty_case () : unit result =
   let%bind program = type_file "./contracts/empty_case.ligo" in
   let%bind () =
@@ -2012,6 +2022,7 @@ let empty_case_religo () : unit result =
 
 let main = test_suite "Integration (End to End)" [
     test "bytes unpack" bytes_unpack ;
+    test "bytes unpack (mligo)" bytes_unpack ;
     test "key hash" key_hash ;
     test "chain id" chain_id ;
     test "type alias" type_alias ;
