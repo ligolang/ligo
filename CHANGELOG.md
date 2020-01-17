@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+## [Failwith do not fail](https://gitlab.com/ligolang/ligo/merge_requests/337) - 2020-01-17
+### Added
+- running failing code in `ligo interpret`, `ligo dry-run`, `ligo run-function` will no longer be an error (return value : 0)
+
 ## [1899dfe8d7285580b3aa30fab933ed589f8f1bc5] - 2020-01-08
 ### Added
 - Partial application and OCaml-like currying behavior to CameLIGO & ReasonLIGO

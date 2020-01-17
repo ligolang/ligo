@@ -196,15 +196,20 @@ let interpret =
         ok (mini_c_prg,state,env)
       | None -> ok ([],Typer.Solver.initial_state,Ast_typed.Environment.full_empty) in
     
-    let%bind v_syntax          = Helpers.syntax_to_variant (Syntax_name syntax) init_file in
-    let%bind simplified_exp    = Compile.Of_source.compile_expression v_syntax expression in
-    let%bind (typed_exp,_)     = Compile.Of_simplified.compile_expression ~env ~state simplified_exp in
-    let%bind mini_c_exp        = Compile.Of_typed.compile_expression typed_exp in
-    let%bind compiled_exp      = Compile.Of_mini_c.aggregate_and_compile_expression decl_list mini_c_exp in
-    let%bind options           = Run.make_dry_run_options {predecessor_timestamp ; amount ; sender ; source } in
-    let%bind value             = Run.run ~options compiled_exp.expr compiled_exp.expr_ty in
-    let%bind simplified_output = Uncompile.uncompile_expression typed_exp.type_annotation value in
-    ok @@ Format.asprintf "%a\n" Ast_simplified.PP.expression simplified_output
+    let%bind v_syntax       = Helpers.syntax_to_variant (Syntax_name syntax) init_file in
+    let%bind simplified_exp = Compile.Of_source.compile_expression v_syntax expression in
+    let%bind (typed_exp,_)  = Compile.Of_simplified.compile_expression ~env ~state simplified_exp in
+    let%bind mini_c_exp     = Compile.Of_typed.compile_expression typed_exp in
+    let%bind compiled_exp   = Compile.Of_mini_c.aggregate_and_compile_expression decl_list mini_c_exp in
+    let%bind options        = Run.make_dry_run_options {predecessor_timestamp ; amount ; sender ; source } in
+    let%bind runres         = Run.run_expression ~options compiled_exp.expr compiled_exp.expr_ty in
+    match runres with
+      | Fail fail_res ->
+        let%bind failstring = Run.failwith_to_string fail_res in
+        ok @@ Format.asprintf "%s" failstring
+      | Success value' ->
+        let%bind simplified_output = Uncompile.uncompile_expression typed_exp.type_annotation value' in
+        ok @@ Format.asprintf "%a\n" Ast_simplified.PP.expression simplified_output
   in
   let term =
     Term.(const f $ expression "EXPRESSION" 0 $ init_file $ syntax $ amount $ sender $ source $ predecessor_timestamp $ display_format ) in
@@ -262,10 +267,14 @@ let dry_run =
     let%bind args_michelson    = Run.evaluate_expression compiled_params.expr compiled_params.expr_ty in
 
     let%bind options           = Run.make_dry_run_options {predecessor_timestamp ; amount ; sender ; source } in
-    let%bind michelson_output  = Run.run_contract ~options michelson_prg.expr michelson_prg.expr_ty args_michelson in
-
-    let%bind simplified_output = Uncompile.uncompile_typed_program_entry_function_result typed_prg entry_point michelson_output in
-    ok @@ Format.asprintf "%a\n" Ast_simplified.PP.expression simplified_output
+    let%bind runres  = Run.run_contract ~options michelson_prg.expr michelson_prg.expr_ty args_michelson in
+    match runres with
+      | Fail fail_res ->
+        let%bind failstring = Run.failwith_to_string fail_res in
+        ok @@ Format.asprintf "%s" failstring
+      | Success michelson_output ->
+        let%bind simplified_output = Uncompile.uncompile_typed_program_entry_function_result typed_prg entry_point michelson_output in
+        ok @@ Format.asprintf "%a\n" Ast_simplified.PP.expression simplified_output
   in
   let term =
     Term.(const f $ source_file 0 $ entry_point 1 $ expression "PARAMETER" 2 $ expression "STORAGE" 3 $ amount $ sender $ source $ predecessor_timestamp $ syntax $ display_format) in
@@ -287,11 +296,16 @@ let run_function =
     let%bind (typed_app,_)    = Compile.Of_simplified.compile_expression ~env ~state app in
     let%bind compiled_applied = Compile.Of_typed.compile_expression typed_app in
 
-    let%bind michelson         = Compile.Of_mini_c.aggregate_and_compile_expression mini_c_prg compiled_applied in
-    let%bind options           = Run.make_dry_run_options {predecessor_timestamp ; amount ; sender ; source } in
-    let%bind michelson_output  = Run.run ~options michelson.expr michelson.expr_ty in
-    let%bind simplified_output = Uncompile.uncompile_typed_program_entry_function_result typed_prg entry_point michelson_output in
-    ok @@ Format.asprintf "%a\n" Ast_simplified.PP.expression simplified_output
+    let%bind michelson        = Compile.Of_mini_c.aggregate_and_compile_expression mini_c_prg compiled_applied in
+    let%bind options          = Run.make_dry_run_options {predecessor_timestamp ; amount ; sender ; source } in
+    let%bind runres           = Run.run_expression ~options michelson.expr michelson.expr_ty in
+    match runres with
+      | Fail fail_res ->
+        let%bind failstring = Run.failwith_to_string fail_res in
+        ok @@ Format.asprintf "%s" failstring
+      | Success michelson_output ->
+        let%bind simplified_output = Uncompile.uncompile_typed_program_entry_function_result typed_prg entry_point michelson_output in
+        ok @@ Format.asprintf "%a\n" Ast_simplified.PP.expression simplified_output
   in
   let term =
     Term.(const f $ source_file 0 $ entry_point 1 $ expression "PARAMETER" 2 $ amount $ sender $ source $ predecessor_timestamp $ syntax $ display_format) in
@@ -308,8 +322,8 @@ let evaluate_value =
     let%bind (exp,_)           = Mini_c.get_entry mini_c entry_point in
     let%bind compiled          = Compile.Of_mini_c.aggregate_and_compile_expression mini_c exp in
     let%bind options           = Run.make_dry_run_options {predecessor_timestamp ; amount ; sender ; source } in
-    let%bind michelson_output  = Run.run ~options compiled.expr compiled.expr_ty in
-    let%bind simplified_output = Uncompile.uncompile_typed_program_entry_expression_result typed_prg entry_point michelson_output in
+    let%bind michelson_output  = Run.run_no_failwith ~options compiled.expr compiled.expr_ty in
+    let%bind simplified_output = Uncompile.uncompile_typed_program_entry_function_result typed_prg entry_point michelson_output in
     ok @@ Format.asprintf "%a\n" Ast_simplified.PP.expression simplified_output
   in
   let term =
