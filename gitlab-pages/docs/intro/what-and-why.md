@@ -82,6 +82,42 @@ function main (const p : action ; const s : int) : (list(operation) * int) is
   | Reset(n) -> 0
  end)
 ```
+
+<!--CameLIGO-->
+```cameligo
+type action =
+| Increment of int
+| Decrement of int
+| Reset of unit
+
+let main (p, s: action * int) : operation list * int =
+  let result =
+    match p with
+    | Increment n -> s + n
+    | Decrement n -> s - n
+    | Reset n -> 0
+  in
+  (([]: operation list), result)
+```
+
+<!--ReasonLIGO-->
+```reasonligo
+type action =
+| Increment(int)
+| Decrement(int)
+| Reset(unit);
+
+let main = (p_s: (action, int)) : (list(operation), int) => {
+  let p, s = p_s;
+  let result =
+    switch (p) {
+    | Increment(n) => s + n
+    | Decrement(n) => s - n
+    | Reset n => 0
+    };
+  (([]: list(operation)), result);
+};
+```
 <!--END_DOCUSAURUS_CODE_TABS-->
 
 
