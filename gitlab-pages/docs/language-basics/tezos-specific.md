@@ -12,8 +12,7 @@ Michelson provides the `PACK` and `UNPACK` instructions for data serialization.
 `PACK` converts Michelson data structures to a binary format, and `UNPACK`
 reverses it. This functionality can be accessed from within LIGO.
 
-> ⚠️ There should be a message here about the dangers of using `UNPACK` on untrusted
-data, perhaps about executable code?
+> ⚠️ An `UNPACK` isn't *quite* an `eval`, but it should be kept in mind that if you're deserializing untrusted input certain types could be problematic. If you deserialize an `operation` from an untrusted source and then execute it, [you are running eval on user input](https://nedbatchelder.com/blog/201206/eval_really_is_dangerous.html).
 
 <!--DOCUSAURUS_CODE_TABS-->
 
@@ -42,6 +41,11 @@ let id_string = (p: string) : option(string) => {
 <!--END_DOCUSAURUS_CODE_TABS-->
 
 ## Hashing Keys
+
+It's often desirable to hash a public key. In Michelson, certain data structures
+such as maps will not allow the use of the `key` type. Even if this weren't the case
+hashes are much smaller than keys, and storage on blockchains comes at a cost premium.
+You can hash keys with the `key_hash` type and associated built in function.
 
 <!--DOCUSAURUS_CODE_TABS-->
 
@@ -81,9 +85,12 @@ let check_hash_key = (kh1_k2: (key_hash, key)) : (bool, key_hash) => {
 
 ## Checking Signatures
 
-> ⚠️ There is no way to *generate* a signed message in LIGO. This is because that
-would require storing a private key on chain, at which point it isn't very private
-anymore.
+Sometimes a contract will want to check that a message has been signed by a
+particular key. For example, a point-of-sale system might want a customer to
+sign a transaction so it can be processed asynchronously. You can do this in LIGO
+using the `key` and `signature` types.
+
+> ⚠️ There is no way to *generate* a signed message in LIGO. This is because that would require storing a private key on chain, at which point it isn't very private anymore.
 
 <!--DOCUSAURUS_CODE_TABS-->
 
