@@ -17,6 +17,17 @@ You can obtain the current time using the built-in syntax specific expression, p
 ```pascaligo group=a
 const today: timestamp = now;
 ```
+
+<!--CameLIGO-->
+```cameligo group=a
+let today: timestamp = Current.time
+```
+
+<!--ReasonLIGO-->
+```reasonligo group=a
+let today: timestamp = Current.time;
+```
+
 <!--END_DOCUSAURUS_CODE_TABS-->
 
 > When running code with ligo CLI, the option `--predecessor-timestamp` allows you to control what `now` returns.
@@ -35,6 +46,25 @@ const in_24_hrs: timestamp = today + one_day;
 const some_date: timestamp = ("2000-01-01T10:10:10Z" : timestamp);
 const one_day_later: timestamp = some_date + one_day;
 ```
+
+<!--CameLIGO-->
+```cameligo group=b
+let today: timestamp = Current.time
+let one_day: int = 86400
+let in_24_hrs: timestamp = today + one_day
+let some_date: timestamp = ("2000-01-01t10:10:10Z" : timestamp)
+let one_day_later: timestamp = some_date + one_day
+```
+
+<!--ReasonLIGO-->
+```reasonligo group=b
+let today: timestamp = Current.time;
+let one_day: int = 86400;
+let in_24_hrs: timestamp = today + one_day;
+let some_date: timestamp = ("2000-01-01t10:10:10Z" : timestamp);
+let one_day_later: timestamp = some_date + one_day;
+```
+
 <!--END_DOCUSAURUS_CODE_TABS-->
 
 #### 24 hours ago
@@ -45,6 +75,21 @@ const today: timestamp = now;
 const one_day: int = 86400;
 const in_24_hrs: timestamp = today - one_day;
 ```
+
+<!--CameLIGO-->
+```cameligo group=c
+let today: timestamp = Current.time
+let one_day: int = 86400
+let in_24_hrs: timestamp = today - one_day
+```
+
+<!--ReasonLIGO-->
+```reasonligo group=c
+let today: timestamp = Current.time;
+let one_day: int = 86400;
+let in_24_hrs: timestamp = today - one_day;
+```
+
 <!--END_DOCUSAURUS_CODE_TABS-->
 
 ### Comparing timestamps
@@ -56,6 +101,17 @@ You can also compare timestamps using the same comparison operators as for numbe
 ```pascaligo group=c
 const not_tommorow: bool = (now = in_24_hrs)
 ```
+
+<!--CameLIGO-->
+```cameligo group=c
+let not_tomorrow: bool = (Current.time = in_24_hrs)
+```
+
+<!--ReasonLIGO-->
+```reasonligo group=c
+let not_tomorrow: bool = (Current.time == in_24_hrs);
+```
+
 <!--END_DOCUSAURUS_CODE_TABS-->
 
 ## Addresses
@@ -69,6 +125,17 @@ Here's how you can define an address:
 ```pascaligo group=d
 const my_account: address = ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address);
 ```
+
+<!--CameLIGO-->
+```cameligo group=d
+let my_account: address = ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address)
+```
+
+<!--ReasonLIGO-->
+```reasonligo group=d
+let my_account: address = ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address);
+```
+
 <!--END_DOCUSAURUS_CODE_TABS-->
 
 ## Signatures

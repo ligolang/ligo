@@ -107,15 +107,6 @@ value.
 
 <!--END_DOCUSAURUS_CODE_TABS-->
 
-<!--DOCUSAURUS_CODE_TABS-->
-<!--Pascaligo-->
-```pascaligo group=b
-const increment : (int -> int) = (function (const i : int) : int is i + 1);
-// a = 2
-const a: int = increment(1);
-```
-<!--END_DOCUSAURUS_CODE_TABS-->
-
 ## Anonymous functions
 
 Functions without a name, also known as anonymous functions are useful in cases when you want to pass the function as an argument or assign it to a key in a record/map.
