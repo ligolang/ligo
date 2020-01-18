@@ -72,7 +72,7 @@ let compile_groups _filename grp_list =
       let%bind typed,_    = Compile.Of_simplified.compile simplified in
       let%bind mini_c     = Compile.Of_typed.compile typed in
       bind_map_list
-        (fun ((_,exp),_) -> Compile.Of_mini_c.aggregate_and_compile_expression mini_c exp)
+        (fun ((_, _, exp),_) -> Compile.Of_mini_c.aggregate_and_compile_expression mini_c exp)
         mini_c
     )
     grp_list in

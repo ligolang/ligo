@@ -195,10 +195,10 @@ let r_split = Location.r_split
    [return_statement] is used for non-let-in statements.
  *)
 
-let return_let_in ?loc binder rhs = ok @@ fun expr'_opt ->
+let return_let_in ?loc binder inline rhs = ok @@ fun expr'_opt ->
   match expr'_opt with
   | None -> fail @@ corner_case ~loc:__LOC__ "missing return"
-  | Some expr' -> ok @@ e_let_in ?loc binder rhs expr'
+  | Some expr' -> ok @@ e_let_in ?loc binder inline rhs expr'
 
 let return_statement expr = ok @@ fun expr'_opt ->
   match expr'_opt with
@@ -573,17 +573,19 @@ and simpl_data_declaration : Raw.data_decl -> _ result = fun t ->
       let name = x.name.value in
       let%bind t = simpl_type_expression x.var_type in
       let%bind expression = simpl_expression x.init in
-      return_let_in ~loc (Var.of_name name , Some t) expression
+      return_let_in ~loc (Var.of_name name , Some t) false expression
   | LocalConst x ->
       let (x , loc) = r_split x in
       let name = x.name.value in
       let%bind t = simpl_type_expression x.const_type in
       let%bind expression = simpl_expression x.init in
-      return_let_in ~loc (Var.of_name name , Some t) expression
+      let inline = List.exists (fun (f: Raw.attribute) -> f.value = "\"inline\"") x.attributes.value in
+      return_let_in ~loc (Var.of_name name , Some t) inline expression
   | LocalFun f  ->
       let (f , loc) = r_split f in
-      let%bind (binder, expr) = simpl_fun_decl ~loc f
-      in return_let_in ~loc binder expr
+      let%bind (binder, expr) = simpl_fun_decl ~loc f in
+      let inline = List.exists (fun (f: Raw.attribute) -> f.value = "\"inline\"") f.attributes.value in      
+      return_let_in ~loc binder inline expr
 
 and simpl_param : Raw.param_decl -> (expression_variable * type_expression) result =
   fun t ->
@@ -603,7 +605,8 @@ and simpl_fun_decl :
   loc:_ -> Raw.fun_decl -> ((expression_variable * type_expression option) * expression) result =
   fun ~loc x ->
   let open! Raw in
-  let {fun_name;param;ret_type;block_with;return} : fun_decl = x in
+  let {fun_name;param;ret_type;block_with;return; attributes} : fun_decl = x in
+  let inline = List.exists (fun (a: Raw.attribute) -> a.value = "\"inline\"") attributes.value in
   let statements =
     match block_with with
     | Some (block,_) -> npseq_to_list block.value.statements
@@ -641,7 +644,7 @@ and simpl_fun_decl :
            let expr =
              e_accessor (e_variable arguments_name) [Access_tuple i] in
            let type_variable = Some (snd x) in
-           let ass = return_let_in (fst x , type_variable) expr in
+           let ass = return_let_in (fst x , type_variable) inline expr in
            ass
          in
          bind_list @@ List.mapi aux params in
@@ -699,7 +702,7 @@ and simpl_fun_expression :
            let expr =
              e_accessor (e_variable arguments_name) [Access_tuple i] in
            let type_variable = Some (snd x) in
-           let ass = return_let_in (fst x , type_variable) expr in
+           let ass = return_let_in (fst x , type_variable) false expr in
            ass
          in
          bind_list @@ List.mapi aux params in
@@ -731,17 +734,19 @@ and simpl_declaration : Raw.declaration -> declaration Location.wrap result =
                                  (Var.of_name name.value, type_expression))
 
   | ConstDecl x ->
-      let simpl_const_decl = fun {name;const_type;init} ->
+      let simpl_const_decl = fun {name;const_type; init; attributes} ->        
         let%bind expression = simpl_expression init in
         let%bind t = simpl_type_expression const_type in
         let type_annotation = Some t in
+        let inline = List.exists (fun (a: Raw.attribute) -> a.value = "\"inline\"") attributes.value in
         ok @@ Declaration_constant
-               (Var.of_name name.value, type_annotation, expression)
+              (Var.of_name name.value, type_annotation, inline, expression)
       in bind_map_location simpl_const_decl (Location.lift_region x)
   | FunDecl x ->
       let decl, loc = r_split x in
       let%bind ((name, ty_opt), expr) = simpl_fun_decl ~loc decl in
-      ok @@ Location.wrap ~loc (Declaration_constant (name, ty_opt, expr))
+      let inline = List.exists (fun (a: Raw.attribute) -> a.value = "\"inline\"") x.value.attributes.value in      
+      ok @@ Location.wrap ~loc (Declaration_constant (name, ty_opt, inline, expr))
 
 and simpl_statement : Raw.statement -> (_ -> expression result) result =
   fun s ->
@@ -1103,7 +1108,7 @@ and simpl_for_int : Raw.for_int -> (_ -> expression result) result = fun fi ->
     | _ -> e_sequence body ctrl in
   let body' = add_to_seq body in
   let loop = e_loop comp body' in
-  return_statement @@ e_let_in (Var.of_name fi.assign.value.name.value, Some t_int) value loop
+  return_statement @@ e_let_in (Var.of_name fi.assign.value.name.value, Some t_int) false value loop
 
 (** simpl_for_collect
   For loops over collections, like
@@ -1269,14 +1274,14 @@ and simpl_for_collect : Raw.for_collect -> (_ -> expression result) result = fun
         let acc          = arg_access [Access_tuple 0 ] in
         let collec_elt_v = arg_access [Access_tuple 1 ; Access_tuple 0] in
         let collec_elt_k = arg_access [Access_tuple 1 ; Access_tuple 1] in
-        e_let_in (Var.of_name "#COMPILER#acc", None) acc @@ (* TODO fresh *)
-        e_let_in (Var.of_name elt_name, None) collec_elt_v @@
-        e_let_in (Var.of_name elt_v_name, None) collec_elt_k (for_body)
+        e_let_in (Var.of_name "#COMPILER#acc", None) false acc @@ (* TODO fresh *)
+        e_let_in (Var.of_name elt_name, None) false collec_elt_v @@
+        e_let_in (Var.of_name elt_v_name, None) false collec_elt_k (for_body)
       | _ ->
         let acc        = arg_access [Access_tuple 0] in
         let collec_elt = arg_access [Access_tuple 1] in
-        e_let_in (Var.of_name "#COMPILER#acc", None) acc @@ (* TODO fresh *)
-        e_let_in (Var.of_name elt_name, None) collec_elt (for_body)
+        e_let_in (Var.of_name "#COMPILER#acc", None) false acc @@ (* TODO fresh *)
+        e_let_in (Var.of_name elt_name, None) false collec_elt (for_body)
     ) in
   (* STEP 7 *)
   let%bind collect = simpl_expression fc.expr in
@@ -1297,7 +1302,7 @@ and simpl_for_collect : Raw.for_collect -> (_ -> expression result) result = fun
   let final_sequence = match reassign_sequence with
     (* None case means that no variables were captured *)
     | None -> e_skip ()
-    | Some seq -> e_let_in (Var.of_name "#COMPILER#folded_record", None) fold seq in (* TODO fresh *)
+    | Some seq -> e_let_in (Var.of_name "#COMPILER#folded_record", None) false fold seq in (* TODO fresh *)
   return_statement @@ final_sequence
 
 let simpl_program : Raw.ast -> program result = fun t ->

@@ -81,11 +81,11 @@ let rec replace : expression -> var_name -> var_name -> expression =
     let v2 = replace_var v2 in
     let bt = replace bt in
     return @@ E_if_left (c, ((v1, tv1), bt), ((v2, tv2), bf))
-  | E_let_in ((v, tv), e1, e2) ->
+  | E_let_in ((v, tv), inline, e1, e2) ->
     let v = replace_var v in
     let e1 = replace e1 in
     let e2 = replace e2 in
-    return @@ E_let_in ((v, tv), e1, e2)
+    return @@ E_let_in ((v, tv), inline, e1, e2)
   | E_sequence (e1, e2) ->
     let e1 = replace e1 in
     let e2 = replace e2 in
@@ -144,10 +144,10 @@ let rec subst_expression : body:expression -> x:var_name -> expr:expression -> e
     let (binder, body) = subst_binder binder body in
     return @@ E_closure { binder ; body }
   )
-  | E_let_in ((v , tv) , expr , body) -> (
+  | E_let_in ((v , tv) , inline, expr , body) -> (
     let expr = self expr in
     let (v, body) = subst_binder v body in
-    return @@ E_let_in ((v , tv) , expr , body)
+    return @@ E_let_in ((v , tv) , inline, expr , body)
   )
   | E_iterator (s, ((name , tv) , body) , collection) -> (
     let (name, body) = subst_binder name body in
@@ -292,7 +292,7 @@ let%expect_test _ =
   (* let-in shadowed (not in rhs) *)
   Var.reset_counter () ;
   show_subst
-    ~body:(wrap (E_let_in ((x, dummy_type), var x, var x)))
+    ~body:(wrap (E_let_in ((x, dummy_type), false, var x, var x)))
     ~x:x
     ~expr:unit ;
   [%expect{|
@@ -303,7 +303,7 @@ let%expect_test _ =
   (* let-in not shadowed *)
   Var.reset_counter () ;
   show_subst
-    ~body:(wrap (E_let_in ((y, dummy_type), var x, var x)))
+    ~body:(wrap (E_let_in ((y, dummy_type), false, var x, var x)))
     ~x:x
     ~expr:unit ;
   [%expect{|
@@ -314,7 +314,7 @@ let%expect_test _ =
   (* let-in capture avoidance *)
   Var.reset_counter () ;
   show_subst
-    ~body:(wrap (E_let_in ((y, dummy_type), var x,
+    ~body:(wrap (E_let_in ((y, dummy_type), false, var x,
                            app (var x) (var y))))
     ~x:x
     ~expr:(var y) ;

@@ -4,12 +4,14 @@ include Stage_common.Types
 
 type program = declaration Location.wrap list
 
+and inline = bool
+
 and type_expression =  {
   type_expression' : type_expression type_expression'
   }
 and declaration =
   | Declaration_type of (type_variable * type_expression)
-  | Declaration_constant of (expression_variable * type_expression option * expression)
+  | Declaration_constant of (expression_variable * type_expression option * inline * expression)
   (* | Macro_declaration of macro_declaration *)
 
 and expr = expression
@@ -22,9 +24,10 @@ and lambda = {
 }
 
 and let_in = {
-  binder : (expression_variable * type_expression option) ;
-  rhs    : expr ;
-  result : expr ;
+  binder     : (expression_variable * type_expression option) ;
+  rhs        : expr ;
+  result     : expr ;
+  inline     : inline;
 }
 
 and expression' =

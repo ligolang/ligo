@@ -57,14 +57,14 @@ let result_pp_hr f out (r : _ result) =
   | Ok (s , _) -> Format.fprintf out "%a" f s
   | Error e -> Format.fprintf out "%a" (error_pp ~dev:false) (e ())
 
-let string_result_pp_hr = result_pp_hr (fun out s -> Format.fprintf out "%s" s)
+let string_result_pp_hr = result_pp_hr (fun out s -> Format.fprintf out "%s\n" s)
 
 let result_pp_dev f out (r : _ result) =
   match r with
   | Ok (s , _) -> Format.fprintf out "%a" f s
   | Error e -> Format.fprintf out "%a" (error_pp ~dev:true) (e ())
 
-let string_result_pp_dev = result_pp_hr (fun out s -> Format.fprintf out "%s" s)
+let string_result_pp_dev = result_pp_hr (fun out s -> Format.fprintf out "%s\n" s)
 
 let json_pp out x = Format.fprintf out "%s" (J.to_string x)
 
@@ -75,10 +75,10 @@ let string_result_pp_json out (r : string result) =
     ]) in
   match r with
   | Ok (x , _) -> (
-      Format.fprintf out "%a" json_pp (status_json "ok" (`String x))
+      Format.fprintf out "%a\n" json_pp (status_json "ok" (`String x))
     )
   | Error e -> (
-      Format.fprintf out "%a" json_pp (status_json "error" (e ()))
+      Format.fprintf out "%a\n" json_pp (status_json "error" (e ()))
     )
 
 type display_format = [

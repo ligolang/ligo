@@ -117,7 +117,7 @@ let e_variable ?loc v = location_wrap ?loc @@ E_variable v
 let e_skip ?loc () = location_wrap ?loc @@ E_skip
 let e_loop ?loc cond body = location_wrap ?loc @@ E_loop (cond , body)
 let e_sequence ?loc a b = location_wrap ?loc @@ E_sequence (a , b)
-let e_let_in ?loc (binder, ascr) rhs result = location_wrap ?loc @@ E_let_in { binder = (binder, ascr) ; rhs ; result }
+let e_let_in ?loc (binder, ascr) inline rhs result = location_wrap ?loc @@ E_let_in { binder = (binder, ascr) ; rhs ; result ; inline }
 let e_annotation ?loc expr ty = location_wrap ?loc @@ E_ascription (expr , ty)
 let e_application ?loc a b = location_wrap ?loc @@ E_application (a , b)
 let e_binop ?loc name a b  = location_wrap ?loc @@ E_constant (name , [a ; b])

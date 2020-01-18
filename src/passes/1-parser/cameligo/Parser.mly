@@ -206,12 +206,13 @@ field_decl:
 (* Top-level non-recursive definitions *)
 
 let_declaration:
-  "let" let_binding {
-    let kwd_let = $1 in
-    let binding = $2 in
-    let value   = kwd_let, binding in
-    let stop    = expr_to_region binding.let_rhs in
-    let region  = cover $1 stop
+  "let" let_binding seq(Attr2) {
+    let kwd_let    = $1 in
+    let attributes = $3 in
+    let binding    = $2 in    
+    let value      = kwd_let, binding, attributes in
+    let stop       = expr_to_region binding.let_rhs in
+    let region     = cover $1 stop
     in {region; value} }
 
 let_binding:
@@ -451,25 +452,27 @@ case_clause(right_expr):
     {pattern=$1; arrow=$2; rhs=$3} }
 
 let_expr(right_expr):
-  "let" let_binding "in" right_expr {
-    let kwd_let = $1
-    and binding = $2
-    and kwd_in  = $3
-    and body    = $4 in
-    let stop    = expr_to_region body in
-    let region  = cover kwd_let stop
-    and value   = {kwd_let; binding; kwd_in; body}
+  "let" let_binding seq(Attr2) "in" right_expr  {
+    let kwd_let    = $1 
+    and binding    = $2
+    and attributes = $3   
+    and kwd_in     = $4
+    and body       = $5 in
+    let stop       = expr_to_region body in
+    let region     = cover kwd_let stop
+    and value      = {kwd_let; binding; kwd_in; body; attributes}
     in ELetIn {region; value} }
 
 fun_expr(right_expr):
   "fun" nseq(irrefutable) "->" right_expr {
     let stop   = expr_to_region $4 in
     let region = cover $1 stop in
-    let value  = {kwd_fun  = $1;
-                  binders  = $2;
-                  lhs_type = None;
-                  arrow    = $3;
-                  body     = $4}
+    let value  = {kwd_fun    = $1;
+                  binders    = $2;
+                  lhs_type   = None;
+                  arrow      = $3;
+                  body       = $4
+                 }
     in EFun {region; value} }
 
 disj_expr_level:

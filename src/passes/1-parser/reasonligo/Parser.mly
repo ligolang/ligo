@@ -230,12 +230,13 @@ field_decl:
 (* Top-level non-recursive definitions *)
 
 let_declaration:
-  "let" let_binding {
-    let kwd_let = $1 in
-    let binding = $2 in
-    let value   = kwd_let, binding in
+  seq(Attr) "let" let_binding {    
+    let attributes = $1 in
+    let kwd_let = $2 in    
+    let binding = $3 in
+    let value   = kwd_let, binding, attributes in
     let stop    = expr_to_region binding.let_rhs in
-    let region  = cover $1 stop
+    let region  = cover $2 stop
     in {region; value} }
 
 es6_func:
@@ -416,6 +417,7 @@ type_expr_simple:
 type_annotation_simple:
   ":" type_expr_simple { $1,$2 }
 
+
 fun_expr:
   disj_expr_level es6_func {
     let arrow, body = $2 in
@@ -476,7 +478,8 @@ fun_expr:
              binders;
              lhs_type=None;
              arrow;
-             body}
+             body
+            }
     in EFun {region; value=f} }
 
 base_expr(right_expr):
@@ -558,14 +561,15 @@ case_clause(right_expr):
     in {region; value} }
 
 let_expr(right_expr):
-  "let" let_binding ";" right_expr {
-    let kwd_let = $1 in
-    let binding = $2 in
-    let kwd_in  = $3 in
-    let body    = $4 in
-    let stop    = expr_to_region $4 in
-    let region  = cover $1 stop
-    and value   = {kwd_let; binding; kwd_in; body}
+  seq(Attr) "let" let_binding ";" right_expr {
+    let attributes = $1 in    
+    let kwd_let = $2 in    
+    let binding = $3 in
+    let kwd_in  = $4 in
+    let body    = $5 in
+    let stop    = expr_to_region $5 in
+    let region  = cover $2 stop
+    and value   = {kwd_let; binding; kwd_in; body; attributes}
     in ELetIn {region; value} }
 
 disj_expr_level:

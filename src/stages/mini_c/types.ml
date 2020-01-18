@@ -27,6 +27,8 @@ type environment_wrap = {
 type var_name = expression_variable
 type fun_name = expression_variable
 
+type inline = bool
+
 type value =
   | D_unit
   | D_bool of bool
@@ -68,7 +70,7 @@ and expression' =
   | E_if_none of expression * expression * ((var_name * type_value) * expression)
   | E_if_cons of (expression * expression * (((var_name * type_value) * (var_name * type_value)) * expression))
   | E_if_left of expression * ((var_name * type_value) * expression) * ((var_name * type_value) * expression)
-  | E_let_in of ((var_name * type_value) * expression * expression)
+  | E_let_in of ((var_name * type_value) * inline * expression * expression)
   | E_sequence of (expression * expression)
   | E_assignment of (expression_variable * [`Left | `Right] list * expression)
   | E_update of (expression * ([`Left | `Right] list * expression) list)
@@ -79,7 +81,7 @@ and expression = {
   type_value : type_value ;
 }
 
-and assignment = var_name * expression
+and assignment = var_name * inline * expression
 
 and toplevel_statement = assignment * environment_wrap
 

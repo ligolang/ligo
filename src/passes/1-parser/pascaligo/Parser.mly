@@ -6,6 +6,39 @@
 open Region
 open AST
 
+type statement_attributes_mixed = 
+  PInstr of instruction
+| PData  of data_decl
+| PAttributes of attributes
+
+let attributes_to_statement (statement, statements)  =
+  if (List.length statements = 0) then 
+    match statement with 
+    | PInstr i -> Instr i, []
+    | PData d -> Data d, []
+    | PAttributes a -> 
+      let open! SyntaxError in
+      raise (Error (Detached_attributes a))
+  else (
+    let statements = (Region.ghost, statement) :: statements in
+    let rec inner result = function
+    | (t, PData  (LocalConst const)) :: (_, PAttributes a) :: rest -> 
+      inner (result @ [(t, Data (LocalConst {const with value = {const.value with attributes = a}}))]) rest
+    | (t, PData  (LocalFun func)) :: (_, PAttributes a) :: rest ->
+      inner (result @ [(t, Data (LocalFun {func with value = {func.value with attributes = a}}))]) rest  
+    | (t, PData d) :: rest ->
+      inner (result @ [(t, Data d)]) rest
+    | (t, PInstr i) :: rest ->
+      inner (result @ [(t, Instr i)]) rest
+    | (_, PAttributes _) :: rest ->
+      inner result rest
+    | [] -> 
+      result
+    in 
+    let result = inner [] statements in
+    (snd (List.hd result), List.tl result)
+  )
+
 (* END HEADER *)
 %}
 
@@ -112,7 +145,7 @@ contract:
 declaration:
   type_decl  {   TypeDecl $1 }
 | const_decl {  ConstDecl $1 }
-| fun_decl   {    FunDecl $1 }
+| fun_decl  {    FunDecl $1 }
 
 (* Type declarations *)
 
@@ -225,6 +258,7 @@ field_decl:
     and value  = {field_name=$1; colon=$2; field_type=$3}
     in {region; value} }
 
+  
 fun_expr:
   "function" parameters ":" type_expr "is" expr {
     let stop   = expr_to_region $6 in
@@ -234,7 +268,8 @@ fun_expr:
                   colon        = $3;
                   ret_type     = $4;
                   kwd_is       = $5;
-                  return       = $6}
+                  return       = $6
+                  }
     in {region; value} }
 
 (* Function declarations *)
@@ -254,7 +289,8 @@ open_fun_decl:
                     kwd_is       = $6;
                     block_with   = Some ($7, $8);
                     return       = $9;
-                    terminator   = None}
+                    terminator   = None;
+                    attributes   = {value = []; region = Region.ghost}}
     in {region; value} }
 | "function" fun_name parameters ":" type_expr "is" expr {
     Scoping.check_reserved_name $2;
@@ -268,12 +304,15 @@ open_fun_decl:
                     kwd_is       = $6;
                     block_with   = None;
                     return       = $7;
-                    terminator   = None}
+                    terminator   = None;
+                    attributes   = {value = []; region = Region.ghost}}
     in {region; value} }
 
 fun_decl:
-  open_fun_decl ";"? {
-    {$1 with value = {$1.value with terminator=$2}} }
+  open_fun_decl semi_attributes {
+    let attributes, terminator = $2 in
+    {$1 with value = {$1.value with terminator = terminator; attributes = attributes}}
+  }
 
 parameters:
   par(nsepseq(param_decl,";")) {
@@ -311,7 +350,7 @@ block:
      let statements, terminator = $2 in
      let region = cover $1 $3
      and value  = {opening    = Begin $1;
-                   statements;
+                   statements = attributes_to_statement statements;
                    terminator;
                    closing    = End $3}
      in {region; value}
@@ -320,14 +359,15 @@ block:
      let statements, terminator = $3 in
      let region = cover $1 $4
      and value  = {opening    = Block ($1,$2);
-                   statements;
+                   statements = attributes_to_statement statements;
                    terminator;
                    closing    = Block $4}
      in {region; value} }
 
 statement:
-  instruction     { Instr $1 }
-| open_data_decl  { Data  $1 }
+  instruction     { PInstr $1 }
+| open_data_decl  { PData  $1 }
+| attributes      { PAttributes $1 }
 
 open_data_decl:
   open_const_decl { LocalConst $1 }
@@ -344,8 +384,10 @@ open_const_decl:
                   const_type;
                   equal;
                   init;
-                  terminator = None}
+                  terminator = None;
+                  attributes = {value = []; region = Region.ghost}}
     in {region; value} }
+
 
 open_var_decl:
   "var" unqualified_decl(":=") {
@@ -357,7 +399,8 @@ open_var_decl:
                   var_type;
                   assign;
                   init;
-                  terminator = None}
+                  terminator = None;
+                  }
     in {region; value} }
 
 unqualified_decl(OP):
@@ -366,9 +409,23 @@ unqualified_decl(OP):
     let region = expr_to_region $5
     in $1, $2, $3, $4, $5, region }
 
+attributes: 
+  "attributes" "[" nsepseq(String,";") "]" {
+    let region = cover $1 $4 in
+    let value = (Utils.nsepseq_to_list $3) in
+    {region; value}
+  }
+
+semi_attributes: 
+   /* empty */ { {value = []; region = Region.ghost}, None }
+  | ";" { {value = []; region = Region.ghost}, Some $1 }
+  | ";" attributes ";" { $2, Some $1 }
+
 const_decl:
-  open_const_decl ";"? {
-    {$1 with value = {$1.value with terminator=$2}} }
+  open_const_decl semi_attributes {
+    let attributes, terminator = $2 in
+    {$1 with value = {$1.value with terminator = terminator; attributes = attributes }} 
+  }
 
 instruction:
   conditional  {        Cond $1 }
@@ -529,9 +586,10 @@ if_clause:
 clause_block:
   block { LongBlock $1 }
 | "{" sep_or_term_list(statement,";") "}" {
+    let statements, terminator = $2 in
     let region = cover $1 $3 in
     let value  = {lbrace = $1;
-                  inside = $2;
+                  inside = attributes_to_statement statements, terminator;
                   rbrace = $3} in
     ShortBlock {value; region} }
 

@@ -218,13 +218,13 @@ and type_declaration env (_placeholder_for_state_of_new_typer : Solver.state) : 
       let%bind tv = evaluate_type env type_expression in
       let env' = Environment.add_type type_name tv env in
       ok (env', (Solver.placeholder_for_state_of_new_typer ()) , None)
-  | Declaration_constant (name , tv_opt , expression) -> (
+  | Declaration_constant (name , tv_opt , inline, expression) -> (
       let%bind tv'_opt = bind_map_option (evaluate_type env) tv_opt in
       let%bind ae' =
         trace (constant_declaration_error name expression tv'_opt) @@
         type_expression' ?tv_opt:tv'_opt env expression in
       let env' = Environment.add_ez_ae name ae' env in
-      ok (env', (Solver.placeholder_for_state_of_new_typer ()) , Some (O.Declaration_constant ((make_n_e name ae') , (env , env'))))
+      ok (env', (Solver.placeholder_for_state_of_new_typer ()) , Some (O.Declaration_constant ((make_n_e name ae') , inline, (env , env'))))
     )
 
 and type_match : type i o . (environment -> i -> o result) -> environment -> O.type_value -> (i, unit) I.matching -> I.expression -> Location.t -> (o, O.type_value) O.matching result =
@@ -805,12 +805,12 @@ and type_expression' : environment -> ?tv_opt:O.type_value -> I.expression -> O.
                      expr'.location) @@
       Ast_typed.assert_type_value_eq (assign_tv , t_expr') in
     return (O.E_assign (typed_name , path' , expr')) (t_unit ())
-  | E_let_in {binder ; rhs ; result} ->
+  | E_let_in {binder ; rhs ; result; inline} ->
     let%bind rhs_tv_opt = bind_map_option (evaluate_type e) (snd binder) in
     let%bind rhs = type_expression' ?tv_opt:rhs_tv_opt e rhs in
     let e' = Environment.add_ez_declaration (fst binder) rhs e in
     let%bind result = type_expression' e' result in
-    return (E_let_in {binder = fst binder; rhs; result}) result.type_annotation
+    return (E_let_in {binder = fst binder; rhs; result; inline}) result.type_annotation
   | E_ascription (expr , te) ->
     let%bind tv = evaluate_type e te in
     let%bind expr' = type_expression' ~tv_opt:tv e expr in
@@ -926,11 +926,11 @@ let rec untype_expression (e:O.annotated_expression) : (I.expression) result =
   | E_sequence _
   | E_loop _
   | E_assign _ -> fail @@ not_supported_yet_untranspile "not possible to untranspile statements yet" e.expression
-  | E_let_in {binder;rhs;result} ->
+  | E_let_in {binder; rhs; result; inline} ->
       let%bind tv = untype_type_value rhs.type_annotation in
       let%bind rhs = untype_expression rhs in
       let%bind result = untype_expression result in
-      return (e_let_in (binder , (Some tv)) rhs result)
+      return (e_let_in (binder , (Some tv)) inline rhs result)
 
 and untype_matching : type o i . (o -> i result) -> (o,O.type_value) O.matching -> ((i,unit) I.matching) result = fun f m ->
   let open I in

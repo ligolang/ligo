@@ -300,10 +300,10 @@ let rec simpl_expression :
   trace (simplifying_expr t) @@
   match t with
     Raw.ELetIn e ->
-      let Raw.{binding; body; _} = e.value in
+      let Raw.{binding; body; attributes; _} = e.value in
+      let inline = List.exists (fun (a: Raw.attribute) -> a.value = "inline") attributes in
       let Raw.{binders; lhs_type; let_rhs; _} = binding in
       begin match binders with
-      (* let p = rhs in body *)
       | (p, []) ->
       let%bind variables = tuple_pattern_to_typed_vars p in
       let%bind ty_opt =
@@ -338,18 +338,19 @@ let rec simpl_expression :
         match variables with
         | hd :: [] ->
           if (List.length prep_vars = 1)
-          then e_let_in hd rhs_b_expr body
-          else e_let_in hd (e_accessor rhs_b_expr [Access_tuple ((List.length prep_vars) - 1)]) body
+          then e_let_in hd inline rhs_b_expr body
+          else e_let_in hd inline (e_accessor rhs_b_expr [Access_tuple ((List.length prep_vars) - 1)]) body
         | hd :: tl ->
           e_let_in hd
-          (e_accessor rhs_b_expr [Access_tuple ((List.length prep_vars) - (List.length tl) - 1)])
+          inline
+          (e_accessor rhs_b_expr [Access_tuple ((List.length prep_vars) - (List.length tl) - 1)])          
           (chain_let_in tl body)
         | [] -> body (* Precluded by corner case assertion above *)
       in
       if List.length prep_vars = 1
       then ok (chain_let_in prep_vars body)
       (* Bind the right hand side so we only evaluate it once *)
-      else ok (e_let_in (rhs_b, ty_opt) rhs' (chain_let_in prep_vars body))
+      else ok (e_let_in (rhs_b, ty_opt) inline rhs' (chain_let_in prep_vars body))
 
       (* let f p1 ps... = rhs in body *)
       | (f, p1 :: ps) ->
@@ -486,7 +487,7 @@ let rec simpl_expression :
                   | Raw.PVar y ->
                     let var_name = Var.of_name y.value in
                     let%bind type_expr = simpl_type_expression x'.type_expr in
-                    return @@ e_let_in (var_name , Some type_expr) e rhs
+                    return @@ e_let_in (var_name , Some type_expr) false e rhs
                   | _ -> default_action ()
                 )
               | _ -> default_action ()
@@ -597,6 +598,7 @@ and simpl_fun lamb' : expr result =
                binding= let_in_binding;
                kwd_in= Region.ghost;
                body= lamb.body;
+               attributes = []
               }
             in
             ok (Raw.ELetIn
@@ -701,8 +703,9 @@ and simpl_declaration : Raw.declaration -> declaration Location.wrap list result
       let%bind type_expression = simpl_type_expression type_expr in
       ok @@ [loc x @@ Declaration_type (Var.of_name name.value , type_expression)]
   | Let x -> (
-      let binding, _ = r_split x in
-      let binding = snd binding in
+      let (_, let_binding, attributes), _ = r_split x in
+      let inline = List.exists (fun (a: Raw.attribute) -> a.value = "inline") attributes in
+      let binding = let_binding in
       let {binders; lhs_type; let_rhs} = binding in
       let%bind (hd, _) =
         let (hd, tl) = binders in ok (hd, tl) in
@@ -716,9 +719,9 @@ and simpl_declaration : Raw.declaration -> declaration Location.wrap list result
               match v_type with
               | Some v_type -> ok (to_option (simpl_type_expression v_type))
               | None -> ok None
-            in
+            in            
             let%bind simpl_rhs_expr = simpl_expression rhs_expr in
-              ok @@ loc x @@ Declaration_constant (Var.of_name v.value, v_type_expression, simpl_rhs_expr) )
+              ok @@ loc x @@ Declaration_constant (Var.of_name v.value, v_type_expression, inline, simpl_rhs_expr) )
           in let%bind variables = ok @@ npseq_to_list pt.value
           in let%bind expr_bind_lst =
                match let_rhs with
@@ -757,14 +760,14 @@ and simpl_declaration : Raw.declaration -> declaration Location.wrap list result
           in ok @@ decls
         | PPar {region = _ ; value = { lpar = _ ; inside = pt; rpar = _; } } ->
           (* Extract parenthetical multi-bind *)
-          let wild = fst @@ fst @@ r_split x in
+          let (wild, _, attributes) = fst @@ r_split x in
           simpl_declaration
             (Let {
                 region = x.region;
                 value = (wild, {binders = (pt, []);
                                 lhs_type = lhs_type;
                                 eq = Region.ghost ;
-                                let_rhs = let_rhs})}
+                                let_rhs = let_rhs}, attributes)}
             : Raw.declaration)
         | _ ->
       let%bind (var, args) =
@@ -778,17 +781,18 @@ and simpl_declaration : Raw.declaration -> declaration Location.wrap list result
           let%bind lhs_type' =
             bind_map_option (fun (_,te) -> simpl_type_expression te) lhs_type in
           let%bind rhs' = simpl_expression let_rhs in
-          ok @@ [loc x @@ (Declaration_constant (Var.of_name var.value , lhs_type' , rhs'))]
+          ok @@ [loc x @@ (Declaration_constant (Var.of_name var.value , lhs_type' , inline, rhs'))]
       | param1::others ->
           let fun_ = {
             kwd_fun = Region.ghost;
             binders = param1, others;
             lhs_type;
             arrow   = Region.ghost;
-            body    = let_rhs} in
+            body    = let_rhs
+          } in
           let rhs = Raw.EFun {region=Region.ghost ; value=fun_} in
           let%bind rhs' = simpl_expression rhs in
-          ok @@ [loc x @@ (Declaration_constant (Var.of_name var.value , None , rhs'))]
+          ok @@ [loc x @@ (Declaration_constant (Var.of_name var.value , None , inline, rhs'))]
     )
 
 and simpl_cases : type a . (Raw.pattern * a) list -> (a, unit) matching result =

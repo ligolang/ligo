@@ -258,10 +258,10 @@ and transpile_annotated_expression (ae:AST.annotated_expression) : expression re
     info title content in
   trace info @@
   match ae.expression with
-  | E_let_in {binder; rhs; result} ->
+  | E_let_in {binder; rhs; result; inline} ->
     let%bind rhs' = transpile_annotated_expression rhs in
     let%bind result' = transpile_annotated_expression result in
-    return (E_let_in ((binder, rhs'.type_value), rhs', result'))
+    return (E_let_in ((binder, rhs'.type_value), inline, rhs', result'))
   | E_literal l -> return @@ E_literal (transpile_literal l)
   | E_variable name -> (
       let%bind ele =
@@ -587,7 +587,7 @@ and transpile_annotated_expression (ae:AST.annotated_expression) : expression re
                   trace_option (corner_case ~loc:__LOC__ "missing match clause") @@
                   List.find_opt (fun ((constructor_name' , _) , _) -> constructor_name' = constructor_name) lst in
                 let%bind body' = transpile_annotated_expression body in
-                return @@ E_let_in ((name , tv) , top , body')
+                return @@ E_let_in ((name , tv) , false , top , body')
               )
             | ((`Node (a , b)) , tv) ->
                 let%bind a' =
@@ -621,11 +621,11 @@ and transpile_lambda l (input_type , output_type) =
 
 let transpile_declaration env (d:AST.declaration) : toplevel_statement result =
   match d with
-  | Declaration_constant ({name;annotated_expression} , _) ->
+  | Declaration_constant ({name;annotated_expression} , inline , _) ->
       let%bind expression = transpile_annotated_expression annotated_expression in
       let tv = Combinators.Expression.get_type expression in
       let env' = Environment.add (name, tv) env in
-      ok @@ ((name, expression), environment_wrap env env')
+      ok @@ ((name, inline, expression), environment_wrap env env')
 
 let transpile_program (lst : AST.program) : program result =
   let aux (prev:(toplevel_statement list * Environment.t) result) cur =

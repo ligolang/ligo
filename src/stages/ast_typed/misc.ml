@@ -188,7 +188,7 @@ module Free_variables = struct
     | E_sequence (a , b) -> unions @@ List.map self [ a ; b ]
     | E_loop (expr , body) -> unions @@ List.map self [ expr ; body ]
     | E_assign (_ , _ , expr) -> self expr
-    | E_let_in { binder; rhs; result } ->
+    | E_let_in { binder; rhs; result; _ } ->
       let b' = union (singleton binder) b in
       union
         (annotated_expression b' result)
@@ -529,7 +529,7 @@ let merge_annotation (a:type_value option) (b:type_value option) err : type_valu
 let get_entry (lst : program) (name : string) : annotated_expression result =
   trace_option (Errors.missing_entry_point name) @@
   let aux x =
-    let (Declaration_constant (an , _)) = Location.unwrap x in
+    let (Declaration_constant (an , _, _)) = Location.unwrap x in
     if (an.name = Var.of_name name)
     then Some an.annotated_expression
     else None
@@ -539,4 +539,4 @@ let get_entry (lst : program) (name : string) : annotated_expression result =
 let program_environment (program : program) : full_environment =
   let last_declaration = Location.unwrap List.(hd @@ rev program) in
   match last_declaration with
-  | Declaration_constant (_ , (_ , post_env)) -> post_env
+  | Declaration_constant (_ , _, (_ , post_env)) -> post_env

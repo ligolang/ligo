@@ -45,6 +45,7 @@
   (* Keywords *)
 
 %token <Region.t> And         "and"
+%token <Region.t> Attributes  "attributes"
 %token <Region.t> Begin       "begin"
 %token <Region.t> BigMap      "big_map"
 %token <Region.t> Block       "block"

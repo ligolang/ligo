@@ -157,10 +157,10 @@ let rec map_expression : mapper -> expression -> expression result = fun f e ->
       let%bind ab' = bind_map_pair self ab in
       return @@ E_application ab'
     )
-  | E_let_in { binder ; rhs ; result } -> (
+  | E_let_in { binder ; rhs ; result; inline } -> (
       let%bind rhs = self rhs in
       let%bind result = self result in
-      return @@ E_let_in { binder ; rhs ; result }
+      return @@ E_let_in { binder ; rhs ; result; inline }
     )
   | E_lambda { binder ; input_type ; output_type ; result } -> (
       let%bind result = self result in
@@ -206,9 +206,9 @@ and map_cases : mapper -> matching_expr -> matching_expr result = fun f m ->
 and map_program : mapper -> program -> program result = fun m p ->
   let aux = fun (x : declaration) ->
     match x with
-    | Declaration_constant (t , o , e) -> (
+    | Declaration_constant (t , o , i, e) -> (
         let%bind e' = map_expression m e in
-        ok (Declaration_constant (t , o , e'))
+        ok (Declaration_constant (t , o , i, e'))
       )
     | Declaration_type _ -> ok x
   in

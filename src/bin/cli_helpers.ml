@@ -8,7 +8,7 @@ let error_suggest: string = "\n If you're not sure how to fix this error, you ca
 * Visit our documentation: https://ligolang.org/docs/intro/what-and-why/
 * Ask a question on our Discord: https://discord.gg/9rhYaEt
 * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
-* Check the changelog by running 'ligo changelog'"
+* Check the changelog by running 'ligo changelog'\n"
 
 let toplevel ~(display_format : display_format) (x : string result) : unit Term.ret =
   match x with

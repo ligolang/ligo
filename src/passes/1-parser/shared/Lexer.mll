@@ -107,6 +107,7 @@ module type TOKEN =
     type   nat_err = Invalid_natural
                    | Non_canonical_zero_nat
     type   sym_err = Invalid_symbol
+    type  attr_err = Invalid_attribute
 
     (* Injections *)
 
@@ -118,6 +119,8 @@ module type TOKEN =
     val mk_string : lexeme -> Region.t -> token
     val mk_bytes  : lexeme -> Region.t -> token
     val mk_constr : lexeme -> Region.t -> token
+    val mk_attr   : lexeme -> Region.t -> (token,  attr_err) result
+    val mk_attr2  : lexeme -> Region.t -> (token,  attr_err) result
     val eof       : Region.t -> token
 
     (* Predicates *)
@@ -385,6 +388,7 @@ module Make (Token: TOKEN) : (S with module Token = Token) =
     | Reserved_name of string
     | Invalid_symbol
     | Invalid_natural
+    | Invalid_attribute
 
     let error_to_string = function
       Invalid_utf8_sequence ->
@@ -432,6 +436,8 @@ module Make (Token: TOKEN) : (S with module Token = Token) =
          Hint: Check the LIGO syntax you use.\n"
     | Invalid_natural ->
         "Invalid natural."
+    | Invalid_attribute -> 
+        "Invalid attribute."
 
     exception Error of error Region.reg
 
@@ -525,6 +531,22 @@ module Make (Token: TOKEN) : (S with module Token = Token) =
         Ok token -> token, state
       | Error Token.Reserved_name -> fail region (Reserved_name lexeme)
 
+    let mk_attr state buffer attr = 
+      let region, _, state = sync state buffer in
+      match Token.mk_attr attr region with
+        Ok token -> 
+        token, state
+      | Error Token.Invalid_attribute -> 
+        fail region Invalid_attribute
+
+    let mk_attr2 state buffer attr = 
+      let region, _, state = sync state buffer in
+      match Token.mk_attr2 attr region with
+        Ok token -> 
+        token, state
+      | Error Token.Invalid_attribute -> 
+        fail region Invalid_attribute
+    
     let mk_constr state buffer =
       let region, lexeme, state = sync state buffer
       in Token.mk_constr lexeme region, state
@@ -538,6 +560,7 @@ module Make (Token: TOKEN) : (S with module Token = Token) =
     let mk_eof state buffer =
       let region, _, state = sync state buffer
       in Token.eof region, state
+    
 
 (* END HEADER *)
 }
@@ -564,8 +587,8 @@ let bytes      = "0x" (byte_seq? as seq)
 let esc        = "\\n" | "\\\"" | "\\\\" | "\\b"
                | "\\r" | "\\t" | "\\x" byte
 let pascaligo_sym = "=/=" | '#' | ":="
-let cameligo_sym = "<>" | "::" | "||" | "&&"
-let reasonligo_sym = '!' | "=>" | "!=" | "==" | "++" | "..." | "||" | "&&"
+let cameligo_sym = "<>" | "::" | "||" | "&&" | "[@"
+let reasonligo_sym = '!' | "=>" | "!=" | "==" | "++" | "..." | "||" | "&&" | "[@"
 
 let symbol =
   ';' | ',' | '(' | ')'| '[' | ']' | '{' | '}'
@@ -604,7 +627,8 @@ and scan state = parse
 | natural         { mk_int         state lexbuf |> enqueue   }
 | symbol          { mk_sym         state lexbuf |> enqueue   }
 | eof             { mk_eof         state lexbuf |> enqueue   }
-
+| "[@"  (ident|constr as attr) "]"  { mk_attr state lexbuf attr |> enqueue } 
+| "[@@" (ident|constr as attr) "]"  { mk_attr2 state lexbuf attr |> enqueue } 
 | '"'  { let opening, _, state = sync state lexbuf in
          let thread = {opening; len=1; acc=['"']} in
          scan_string thread state lexbuf |> mk_string |> enqueue }

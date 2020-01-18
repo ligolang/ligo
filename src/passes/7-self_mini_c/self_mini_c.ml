@@ -60,7 +60,7 @@ let rec is_pure : expression -> bool = fun e ->
   | E_if_left (cond, (_, bt), (_, bf))
     -> List.for_all is_pure [ cond ; bt ; bf ]
 
-  | E_let_in (_, e1, e2)
+  | E_let_in (_, _, e1, e2)
   | E_sequence (e1, e2)
     -> List.for_all is_pure [ e1 ; e2 ]
 
@@ -133,7 +133,7 @@ let rec is_assigned : ignore_lambdas:bool -> expression_variable -> expression -
     selfs [ e1 ; e2 ] || self_binder2 hd tl e3
   | E_if_left (e1, ((l, _), e2), ((r, _), e3)) ->
     self e1 || self_binder l e2 || self_binder r e3
-  | E_let_in ((x, _), e1, e2) ->
+  | E_let_in ((x, _), _, e1, e2) ->
     self e1 || self_binder x e2
   | E_sequence (e1, e2) ->
     selfs [ e1 ; e2 ]
@@ -188,8 +188,8 @@ let should_inline : expression_variable -> expression -> bool =
 let inline_let : bool ref -> expression -> expression =
   fun changed e ->
   match e.content with
-  | E_let_in ((x, _a), e1, e2) ->
-    if can_inline x e1 e2 && should_inline x e2
+  | E_let_in ((x, _a), should_inline_here, e1, e2) ->
+    if can_inline x e1 e2 && (should_inline_here || should_inline x e2)
     then
       (* can raise Subst.Bad_argument, but should not happen, due to
          can_inline *)
@@ -232,7 +232,7 @@ let beta : bool ref -> expression -> expression =
     if can_beta { binder = x ; body = e1 }
     then
       (changed := true ;
-       Expression.make (E_let_in ((x, xtv), e2, e1)) tv)
+       Expression.make (E_let_in ((x, xtv), false, e2, e1)) tv)
     else e
 
   (* also do CAR (PAIR x y) ↦ x, or CDR (PAIR x y) ↦ y, only if x and y are pure *)

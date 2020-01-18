@@ -128,10 +128,18 @@ let rec print_tokens state {decl;eof} =
   Utils.nseq_iter (print_statement state) decl;
   print_token state eof "EOF"
 
+and print_attributes state attributes =  
+  List.iter (
+    fun ({value = attribute; region}) -> 
+      let attribute_formatted = sprintf "[@%s]" attribute in
+      print_token state region attribute_formatted
+   ) attributes
+
 and print_statement state = function
-  Let {value=kwd_let, let_binding; _} ->
+  Let {value=kwd_let, let_binding, attributes; _} ->    
     print_token       state kwd_let "let";
-    print_let_binding state let_binding
+    print_let_binding state let_binding;
+    print_attributes  state attributes
 | TypeDecl {value={kwd_type; name; eq; type_expr}; _} ->
     print_token     state kwd_type "type";
     print_var       state name;
@@ -530,9 +538,10 @@ and print_case_clause state {value; _} =
   print_expr    state rhs
 
 and print_let_in state {value; _} =
-  let {kwd_let; binding; kwd_in; body} = value in
+  let {kwd_let; binding; kwd_in; body; attributes} = value in  
   print_token       state kwd_let "let";
   print_let_binding state binding;
+  print_attributes  state attributes;
   print_token       state kwd_in "in";
   print_expr        state body
 
@@ -601,9 +610,9 @@ let rec pp_ast state {decl; _} =
   List.iteri (List.length decls |> apply) decls
 
 and pp_declaration state = function
-  Let {value; region} ->
+  Let {value = (_, let_binding, _); region} ->
     pp_loc_node    state "Let" region;
-    pp_let_binding state (snd value)
+    pp_let_binding state let_binding
 | TypeDecl {value; region} ->
     pp_loc_node  state "TypeDecl" region;
     pp_type_decl state value

@@ -316,7 +316,7 @@ and translate_expression (expr:expression) (env:environment) : michelson result 
         ]) in
       return code
     )
-  | E_let_in (v , expr , body) -> (
+  | E_let_in (v , _, expr , body) -> (
       let%bind expr' = translate_expression expr env in
       let%bind body' = translate_expression body (Environment.add v env) in
       let%bind code = ok (seq [
