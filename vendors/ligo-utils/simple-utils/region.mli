@@ -54,9 +54,9 @@
 
       {li The method [compact] has the same signature as and calling
           convention as [to_string], except that the resulting string
-          is more compact.}}
+          is shorter (usually for debugging or tracing).}}
  *)
-type t = <
+type t = private <
   start : Pos.t;
   stop  : Pos.t;
 
@@ -86,9 +86,9 @@ type t = <
  *)
 type region = t
 
-(** The type ['a reg] enables the concept of something of type ['a] to
+(** The type ['a reg] enables the concept of some value of type ['a] to
     be related to a region in a source file.
- *)
+*)
 type 'a reg = {region: t; value: 'a}
 
 (* {1 Constructors} *)

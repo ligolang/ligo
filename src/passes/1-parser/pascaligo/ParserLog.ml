@@ -114,12 +114,10 @@ let rec print_tokens state ast =
   Utils.nseq_iter (print_decl state) decl;
   print_token state eof "EOF"
 
-and print_attributes state attributes = 
-  let attributes = List.fold_left (fun all a -> all ^ a.value ^ ";") "" attributes.value in
-  let line =
-    sprintf "attributes[%s]"
-            attributes
-  in Buffer.add_string state#buffer line
+and print_attributes state = function
+  None -> ()
+| Some attr ->
+    print_ne_injection state "attributes" print_string attr
 
 and print_decl state = function
   TypeDecl  decl -> print_type_decl  state decl
@@ -607,7 +605,7 @@ and print_field_assign state {value; _} =
   print_token state equal "=";
   print_expr  state field_expr
 
-and print_update_expr state {value; _} = 
+and print_update_expr state {value; _} =
   let {record; kwd_with; updates} = value in
   print_path state record;
   print_token state kwd_with "with";
@@ -850,19 +848,23 @@ and pp_declaration state = function
     pp_fun_decl state value
 
 and pp_fun_decl state decl =
+  let arity =
+    match decl.attributes with
+      None -> 5
+    | Some _ -> 6 in
   let () =
-    let state = state#pad 5 0 in
+    let state = state#pad arity 0 in
     pp_ident state decl.fun_name in
   let () =
-    let state = state#pad 5 1 in
+    let state = state#pad arity 1 in
     pp_node state "<parameters>";
     pp_parameters state decl.param in
   let () =
-    let state = state#pad 5 2 in
+    let state = state#pad arity 2 in
     pp_node state "<return type>";
     pp_type_expr (state#pad 1 0) decl.ret_type in
   let () =
-    let state = state#pad 5 3 in
+    let state = state#pad arity 3 in
     pp_node state "<body>";
     let statements =
       match decl.block_with with
@@ -870,15 +872,35 @@ and pp_fun_decl state decl =
       | None -> Instr (Skip Region.ghost), [] in
     pp_statements state statements in
   let () =
-    let state = state#pad 5 4 in
+    let state = state#pad arity 4 in
     pp_node state "<return>";
-    pp_expr (state#pad 1 0) decl.return
+    pp_expr (state#pad 1 0) decl.return in
+  let () =
+    match decl.attributes with
+      None -> ()
+    | Some attr ->
+       let state = state#pad arity 5 in
+       pp_node state "<attributes>";
+       pp_attributes (state#pad 1 0) attr
   in ()
 
+and pp_attributes state {value; _} =
+  pp_ne_injection pp_string state value
+
 and pp_const_decl state decl =
-  pp_ident (state#pad 3 0) decl.name;
-  pp_type_expr (state#pad 3 1) decl.const_type;
-  pp_expr (state#pad 3 2) decl.init
+  let arity =
+    match decl.attributes with
+      None -> 3
+    | Some _ -> 4 in
+  pp_ident (state#pad arity 0) decl.name;
+  pp_type_expr (state#pad arity 1) decl.const_type;
+  pp_expr (state#pad arity 2) decl.init;
+  match decl.attributes with
+    None -> ()
+  | Some attr ->
+      let state = state#pad arity 3 in
+      pp_node state "<attributes>";
+      pp_attributes (state#pad 1 0) attr
 
 and pp_type_expr state = function
   TProd cartesian ->

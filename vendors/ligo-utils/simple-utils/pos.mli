@@ -58,23 +58,36 @@
      {li The call [pos#byte_offset] is the offset of the position
          [pos] since the begininng of the file, counted in bytes.}}
  *)
-type t = <
+
+type invalid_pos = [
+  `Invalid_line
+| `Invalid_offset
+]
+
+type invalid_line   = `Invalid_line
+type invalid_offset = `Invalid_offset
+type invalid_nl     = `Invalid_newline
+
+type t = private <
   (* Payload *)
 
   byte       : Lexing.position;
-  point_num  : int;
-  point_bol  : int;
-  file       : string;
-  line       : int;
+  point_num  : int;    (* point_num >= point_bol *)
+  point_bol  : int;    (* point_bol >= 0         *)
+  file       : string; (* May be empty           *)
+  line       : int;    (* line > 0               *)
 
   (* Setters *)
 
   set_file   : string -> t;
-  set_line   : int -> t;
-  set_offset : int -> t;
-  set        : file:string -> line:int -> offset:int -> t;
+  set_line   : int -> (t, invalid_line) Stdlib.result;
+  set_offset : int -> (t, invalid_offset) Stdlib.result;
 
-  new_line : string -> t;
+  set : ?file:string -> line:int -> offset:int ->
+        (t, invalid_pos) Stdlib.result;
+
+  (* String must be "\n" or "\c\r" *)
+  new_line : string -> (t, invalid_newline) Stdlib.result
   add_nl   : t;
 
   shift_bytes     : int -> t;
@@ -93,9 +106,10 @@ type t = <
 
   (* Conversions to [string] *)
 
-  to_string : ?offsets:bool -> [`Byte | `Point] -> string;
-  compact   : ?offsets:bool -> [`Byte | `Point] -> string;
-  anonymous : ?offsets:bool -> [`Byte | `Point] -> string
+  to_string :
+    ?file:bool -> ?offsets:bool -> [`Byte | `Point] -> string;
+  compact :
+    ?file:bool -> ?offsets:bool -> [`Byte | `Point] -> string;
 >
 
 (** A shorthand after an [open Pos].
@@ -104,18 +118,22 @@ type pos = t
 
 (** {1 Constructors} *)
 
-val make      : byte:Lexing.position -> point_num:int -> point_bol:int -> t
-val from_byte : Lexing.position -> t
+val make :
+  byte:Lexing.position -> point_num:int -> point_bol:int ->
+  (t, invalid_pos) Stdlin.result
+
+val from_byte :
+  Lexing.position -> (t, invalid_pos) Stdlib.result
 
 (** {1 Special positions} *)
 
-(** The value [ghost] is the same as {! Lexing.dummy_pos}.
+(** The value [ghost] based on the same as {! Lexing.dummy_pos}.
  *)
 val ghost : t
 
-(** Lexing convention: line [1], offsets to [0] and file to [""].
+(** Lexing convention: line [1], offset to [0].
  *)
-val min : t
+val min : file:string -> t
 
 (** {1 Comparisons} *)
 

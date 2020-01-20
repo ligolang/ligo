@@ -312,6 +312,7 @@ and comp_expr =
 | Neq   of neq   bin_op reg
 
 and record = field_assign reg ne_injection
+
 and projection = {
   struct_name : variable;
   selector    : dot;
@@ -335,6 +336,7 @@ and update = {
   updates : record reg;
   rbrace : rbrace;
 }
+
 and path =
   Name of variable
 | Path of projection reg
@@ -376,7 +378,7 @@ and cond_expr = {
   ifso     : expr;
   kwd_else : kwd_else;
   ifnot    : expr
-  }
+}
 
 (* Projecting regions from some nodes of the AST *)
 

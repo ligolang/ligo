@@ -28,6 +28,11 @@ type lexeme = string
 
 (* TOKENS *)
 
+type attribute = {
+  header : string;
+  string : lexeme Region.reg
+}
+
 type t =
   (* Literals *)
 
@@ -38,6 +43,7 @@ type t =
 | Mutez  of (lexeme * Z.t) Region.reg
 | Ident  of lexeme Region.reg
 | Constr of lexeme Region.reg
+| Attr   of attribute
 
   (* Symbols *)
 
@@ -151,8 +157,7 @@ val mk_kwd    : lexeme -> Region.t -> (token,   kwd_err) result
 val mk_string : lexeme -> Region.t -> token
 val mk_bytes  : lexeme -> Region.t -> token
 val mk_constr : lexeme -> Region.t -> token
-val mk_attr   : lexeme -> Region.t -> (token,  attr_err) result
-val mk_attr2  : lexeme -> Region.t -> (token,  attr_err) result
+val mk_attr   : string -> lexeme -> Region.t -> (token, attr_err) result
 val eof       : Region.t -> token
 
 (* Predicates *)

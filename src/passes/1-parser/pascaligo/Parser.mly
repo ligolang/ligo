@@ -5,39 +5,40 @@
 
 open Region
 open AST
-
-type statement_attributes_mixed = 
+(*
+type statement_attributes_mixed =
   PInstr of instruction
 | PData  of data_decl
-| PAttributes of attributes
+| PAttr  of attributes
 
 let attributes_to_statement (statement, statements)  =
-  if (List.length statements = 0) then 
-    match statement with 
-    | PInstr i -> Instr i, []
-    | PData d -> Data d, []
-    | PAttributes a -> 
-      let open! SyntaxError in
-      raise (Error (Detached_attributes a))
-  else (
+  match statements with
+    [] ->
+      (match statement with
+       | PInstr i -> Instr i, []
+       | PData d -> Data d, []
+       | PAttr a ->
+          raise (Scoping.Error (Scoping.Detached_attributes a)))
+  | _ -> (
     let statements = (Region.ghost, statement) :: statements in
     let rec inner result = function
-    | (t, PData  (LocalConst const)) :: (_, PAttributes a) :: rest -> 
+    | (t, PData  (LocalConst const)) :: (_, PAttr a) :: rest ->
       inner (result @ [(t, Data (LocalConst {const with value = {const.value with attributes = a}}))]) rest
-    | (t, PData  (LocalFun func)) :: (_, PAttributes a) :: rest ->
-      inner (result @ [(t, Data (LocalFun {func with value = {func.value with attributes = a}}))]) rest  
+    | (t, PData  (LocalFun func)) :: (_, PAttr a) :: rest ->
+      inner (result @ [(t, Data (LocalFun {func with value = {func.value with attributes = a}}))]) rest
     | (t, PData d) :: rest ->
       inner (result @ [(t, Data d)]) rest
     | (t, PInstr i) :: rest ->
       inner (result @ [(t, Instr i)]) rest
-    | (_, PAttributes _) :: rest ->
+    | (_, PAttr _) :: rest ->
       inner result rest
-    | [] -> 
+    | [] ->
       result
-    in 
+    in
     let result = inner [] statements in
     (snd (List.hd result), List.tl result)
   )
+ *)
 
 (* END HEADER *)
 %}
@@ -145,7 +146,7 @@ contract:
 declaration:
   type_decl  {   TypeDecl $1 }
 | const_decl {  ConstDecl $1 }
-| fun_decl  {    FunDecl $1 }
+| fun_decl   {    FunDecl $1 }
 
 (* Type declarations *)
 
@@ -258,7 +259,7 @@ field_decl:
     and value  = {field_name=$1; colon=$2; field_type=$3}
     in {region; value} }
 
-  
+
 fun_expr:
   "function" parameters ":" type_expr "is" expr {
     let stop   = expr_to_region $6 in
@@ -290,7 +291,7 @@ open_fun_decl:
                     block_with   = Some ($7, $8);
                     return       = $9;
                     terminator   = None;
-                    attributes   = {value = []; region = Region.ghost}}
+                    attributes   = None}
     in {region; value} }
 | "function" fun_name parameters ":" type_expr "is" expr {
     Scoping.check_reserved_name $2;
@@ -305,14 +306,16 @@ open_fun_decl:
                     block_with   = None;
                     return       = $7;
                     terminator   = None;
-                    attributes   = {value = []; region = Region.ghost}}
+                    attributes   = None}
     in {region; value} }
 
 fun_decl:
-  open_fun_decl semi_attributes {
-    let attributes, terminator = $2 in
-    {$1 with value = {$1.value with terminator = terminator; attributes = attributes}}
-  }
+  open_fun_decl maybe_attributes? {
+    match $2 with
+      None -> $1
+    | Some (terminator, attributes) ->
+       let value = {$1.value with terminator; attributes}
+       in {$1 with value} }
 
 parameters:
   par(nsepseq(param_decl,";")) {
@@ -350,7 +353,7 @@ block:
      let statements, terminator = $2 in
      let region = cover $1 $3
      and value  = {opening    = Begin $1;
-                   statements = attributes_to_statement statements;
+                   statements (*= attributes_to_statement statements*);
                    terminator;
                    closing    = End $3}
      in {region; value}
@@ -359,15 +362,15 @@ block:
      let statements, terminator = $3 in
      let region = cover $1 $4
      and value  = {opening    = Block ($1,$2);
-                   statements = attributes_to_statement statements;
+                   statements (*= attributes_to_statement statements*);
                    terminator;
                    closing    = Block $4}
      in {region; value} }
 
 statement:
-  instruction     { PInstr $1 }
-| open_data_decl  { PData  $1 }
-| attributes      { PAttributes $1 }
+  instruction     { (*P*)Instr $1 }
+| open_data_decl  { (*P*)Data  $1 }
+                  (*| attributes      { PAttr  $1 }*)
 
 open_data_decl:
   open_const_decl { LocalConst $1 }
@@ -385,9 +388,8 @@ open_const_decl:
                   equal;
                   init;
                   terminator = None;
-                  attributes = {value = []; region = Region.ghost}}
+                  attributes = None}
     in {region; value} }
-
 
 open_var_decl:
   "var" unqualified_decl(":=") {
@@ -399,8 +401,7 @@ open_var_decl:
                   var_type;
                   assign;
                   init;
-                  terminator = None;
-                  }
+                  terminator=None}
     in {region; value} }
 
 unqualified_decl(OP):
@@ -409,23 +410,20 @@ unqualified_decl(OP):
     let region = expr_to_region $5
     in $1, $2, $3, $4, $5, region }
 
-attributes: 
-  "attributes" "[" nsepseq(String,";") "]" {
-    let region = cover $1 $4 in
-    let value = (Utils.nsepseq_to_list $3) in
-    {region; value}
-  }
+attributes:
+  ne_injection("attributes","<string>") { $1 }
 
-semi_attributes: 
-   /* empty */ { {value = []; region = Region.ghost}, None }
-  | ";" { {value = []; region = Region.ghost}, Some $1 }
-  | ";" attributes ";" { $2, Some $1 }
+maybe_attributes:
+  ";"                { Some $1, None    }
+| ";" attributes ";" { Some $1, Some $2 }
 
 const_decl:
-  open_const_decl semi_attributes {
-    let attributes, terminator = $2 in
-    {$1 with value = {$1.value with terminator = terminator; attributes = attributes }} 
-  }
+  open_const_decl maybe_attributes? {
+    match $2 with
+      None -> $1
+    | Some (terminator, attributes) ->
+       let value = {$1.value with terminator; attributes}
+       in {$1 with value} }
 
 instruction:
   conditional  {        Cond $1 }
@@ -589,7 +587,7 @@ clause_block:
     let statements, terminator = $2 in
     let region = cover $1 $3 in
     let value  = {lbrace = $1;
-                  inside = attributes_to_statement statements, terminator;
+                  inside = (*attributes_to_statement*) statements, terminator;
                   rbrace = $3} in
     ShortBlock {value; region} }
 

@@ -88,7 +88,6 @@ module Make (Lexer: Lexer.S)
     module Front = ParserAPI.Make (Lexer)(Parser)(ParErr)
 
     let format_error = Front.format_error
-    let short_error  = Front.short_error
 
     (* Parsing an expression *)
 
@@ -96,25 +95,28 @@ module Make (Lexer: Lexer.S)
           (AST.expr, string) Stdlib.result =
       let close_all () =
         lexer_inst.Lexer.close (); close_out stdout in
+      let lexbuf = lexer_inst.Lexer.buffer in
       let expr =
-        if IO.options#mono then
-          Front.mono_expr tokeniser lexer_inst.Lexer.buffer
-        else
-          Front.incr_expr lexer_inst in
+        try
+          if IO.options#mono then
+            Front.mono_expr tokeniser lexbuf
+          else
+            Front.incr_expr lexer_inst
+        with exn -> close_all (); raise exn in
       let () =
-        if SSet.mem "ast-tokens" IO.options#verbose
-        then begin
-               Buffer.clear output;
-               ParserLog.print_expr state expr;
-               Buffer.output_buffer stdout output
-             end in
+        if SSet.mem "ast-tokens" IO.options#verbose then
+          begin
+            Buffer.clear output;
+            ParserLog.print_expr state expr;
+            Buffer.output_buffer stdout output
+          end in
       let () =
-        if SSet.mem "ast" IO.options#verbose
-        then begin
-               Buffer.clear output;
-               ParserLog.pp_expr state expr;
-               Buffer.output_buffer stdout output
-             end
+        if SSet.mem "ast" IO.options#verbose then
+          begin
+            Buffer.clear output;
+            ParserLog.pp_expr state expr;
+            Buffer.output_buffer stdout output
+          end
       in close_all (); Ok expr
 
     (* Parsing a contract *)
@@ -123,27 +125,28 @@ module Make (Lexer: Lexer.S)
         : (AST.t, string) Stdlib.result =
       let close_all () =
         lexer_inst.Lexer.close (); close_out stdout in
+      let lexbuf = lexer_inst.Lexer.buffer in
       let ast =
         try
           if IO.options#mono then
-            Front.mono_contract tokeniser lexer_inst.Lexer.buffer
+            Front.mono_contract tokeniser lexbuf
           else
             Front.incr_contract lexer_inst
         with exn -> close_all (); raise exn in
       let () =
-        if SSet.mem "ast" IO.options#verbose
-        then begin
-               Buffer.clear output;
-               ParserLog.pp_ast state ast;
-               Buffer.output_buffer stdout output
-             end in
+        if SSet.mem "ast-tokens" IO.options#verbose then
+          begin
+            Buffer.clear output;
+            ParserLog.print_tokens state ast;
+            Buffer.output_buffer stdout output
+          end in
       let () =
-        if SSet.mem "ast-tokens" IO.options#verbose
-        then begin
-               Buffer.clear output;
-               ParserLog.print_tokens state ast;
-               Buffer.output_buffer stdout output
-             end
+        if SSet.mem "ast" IO.options#verbose then
+          begin
+            Buffer.clear output;
+            ParserLog.pp_ast state ast;
+            Buffer.output_buffer stdout output
+          end
       in close_all (); Ok ast
 
     (* Wrapper for the parsers above *)
@@ -157,7 +160,7 @@ module Make (Lexer: Lexer.S)
 
       if Sys.command cpp_cmd <> 0 then
         let msg =
-          sprintf "External error: the command \"%s\" failed." cpp_cmd
+          sprintf "External error: \"%s\" failed." cpp_cmd
         in Stdlib.Error msg
       else
         (* Instantiating the lexer *)

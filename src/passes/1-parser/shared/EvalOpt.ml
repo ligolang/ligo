@@ -47,9 +47,9 @@ let help language extension () =
   printf "where <input>%s is the %s source file (default: stdin),\n" extension language;
   print "and each <option> (if any) is one of the following:";
   print "  -I <paths>             Library paths (colon-separated)";
-  print "  -c, --copy             Print lexemes of tokens and markup (lexer)";
-  print "  -t, --tokens           Print tokens (lexer)";
-  print "  -u, --units            Print tokens and markup (lexer)";
+  print "  -t, --tokens           Print tokens";
+  print "  -u, --units            Print lexical units";
+  print "  -c, --copy             Print lexemes and markup";
   print "  -q, --quiet            No output, except errors (default)";
   print "      --columns          Columns for source locations";
   print "      --bytes            Bytes for source locations";
