@@ -428,8 +428,22 @@ fun_expr:
           {p.value with inside = arg_to_pattern p.value.inside}
         in PPar {p with value}
     | EUnit u -> PUnit u
-    | e -> let open! SyntaxError
-          in raise (Error (WrongFunctionArguments e))
+    | ETuple { value; region } -> 
+        PTuple { value = Utils.nsepseq_map arg_to_pattern value; region}
+    | EAnnot {region; value = {inside = ETuple _ as t, colon, typ; _}} -> 
+        let value = { pattern = arg_to_pattern t; colon; type_expr = typ} in
+        PPar {
+          value = {
+            lpar = Region.ghost;
+            rpar = Region.ghost; 
+            inside = PTyped {region; value}
+          };
+          region
+        }
+    | e -> (
+          let open! SyntaxError in
+          raise (Error (WrongFunctionArguments e))
+      )
     in
     let fun_args_to_pattern = function
       EAnnot {
