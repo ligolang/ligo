@@ -125,7 +125,7 @@ let%expect_test _ =
                      CDR ;
                      DIP { DIP 7 { DUP } ;
                            DIG 7 ;
-                           SOURCE ;
+                           SENDER ;
                            PAIR ;
                            SOME ;
                            DIP { DIP { DUP } ; SWAP ; CAR ; CDR } } ;
@@ -162,7 +162,7 @@ let%expect_test _ =
                      IF_NONE { PUSH string "MAP FIND" ; FAILWITH } {} ;
                      DUP ;
                      CAR ;
-                     SOURCE ;
+                     SENDER ;
                      SWAP ;
                      COMPARE ;
                      NEQ ;
@@ -207,7 +207,7 @@ let%expect_test _ =
                      CAR ;
                      DIP { DIP 2 { DUP } ; DIG 2 ; CDR } ;
                      MUL ;
-                     SOURCE ;
+                     SENDER ;
                      CONTRACT unit ;
                      IF_NONE { PUSH string "bad address for get_contract" ; FAILWITH } {} ;
                      DIP { DUP } ;
@@ -249,7 +249,7 @@ let%expect_test _ =
                  IF_NONE { PUSH string "MAP FIND" ; FAILWITH } {} ;
                  DUP ;
                  CAR ;
-                 SOURCE ;
+                 SENDER ;
                  SWAP ;
                  COMPARE ;
                  NEQ ;
@@ -1008,7 +1008,7 @@ let%expect_test _ =
                        DIP { DIP { DUP } ; SWAP ; CDR ; CAR ; CDR ; CDR } ;
                        PAIR } ;
                  PAIR ;
-                 DIP { DIP { DUP } ; SWAP ; CDR ; CDR ; PUSH bool True ; SOURCE ; UPDATE } ;
+                 DIP { DIP { DUP } ; SWAP ; CDR ; CDR ; PUSH bool True ; SENDER ; UPDATE } ;
                  PAIR ;
                  NIL operation ;
                  PAIR ;

@@ -48,7 +48,7 @@ function transfer_single (const action : action_transfer_single;
                           const s : storage) : return is block {
     const cards : cards = s.cards;
     const card : card = get_force (action.card_to_transfer, cards);
-    if card.card_owner =/= source then
+    if card.card_owner =/= sender then
       failwith ("This card doesn't belong to you")
     else skip;
     card.card_owner := action.destination;
@@ -61,7 +61,7 @@ function sell_single (const action : action_sell_single;
                       const s : storage) : return is
   block {
     const card : card = get_force (action.card_to_sell, s.cards);
-    if card.card_owner =/= source
+    if card.card_owner =/= sender
     then failwith ("This card doesn't belong to you")
     else skip;
     const card_pattern : card_pattern =
@@ -74,7 +74,7 @@ function sell_single (const action : action_sell_single;
     remove action.card_to_sell from map cards;
     s.cards := cards;
     const price : tez = card_pattern.coefficient * card_pattern.quantity;
-    const receiver : contract (unit) = get_contract (source);
+    const receiver : contract (unit) = get_contract (sender);
     const op : operation = transaction (unit, price, receiver);
     const operations : list (operation) = list [op]
   } with (operations, s)
@@ -98,7 +98,7 @@ function buy_single (const action : action_buy_single;
     // Add card
     const cards : cards = s.cards;
     cards[s.next_id] := record [
-      card_owner   = source;
+      card_owner   = sender;
       card_pattern = action.card_to_buy
     ];
     s.cards := cards;
