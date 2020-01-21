@@ -47,6 +47,22 @@ let%expect_test _ =
            measure-contract
                Subcommand: measure a contract's compiled size in bytes.
 
+           print-ast
+               Subcommand: print the ast. Warning: intended for development of 
+               LIGO and can break at any time.
+
+           print-cst
+               Subcommand: print the cst. Warning: intended for development of
+               LIGO and can break at any time.
+
+           print-mini-c
+               Subcommand: print mini c. Warning: intended for development of 
+               LIGO and can break at any time.
+
+           print-typed-ast
+               Subcommand: print the typed ast. Warning: intended for development 
+               of LIGO and can break at any time.
+
            run-function
                Subcommand: run a function with the given parameter.
 
@@ -103,6 +119,22 @@ let%expect_test _ =
 
            measure-contract
                Subcommand: measure a contract's compiled size in bytes.
+
+           print-ast
+               Subcommand: print the ast. Warning: intended for development of 
+               LIGO and can break at any time.
+
+           print-cst
+               Subcommand: print the cst. Warning: intended for development of 
+               LIGO and can break at any time.
+
+           print-mini-c
+               Subcommand: print mini c. Warning: intended for development of 
+               LIGO and can break at any time.
+
+           print-typed-ast
+               Subcommand: print the typed ast. Warning: intended for development 
+               of LIGO and can break at any time.
 
            run-function
                Subcommand: run a function with the given parameter.

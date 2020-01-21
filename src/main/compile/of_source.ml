@@ -18,3 +18,6 @@ let compile_contract_input : string -> string -> v_syntax -> Ast_simplified.expr
     fun storage parameter syntax ->
   let%bind (storage,parameter) = bind_map_pair (compile_expression syntax) (storage,parameter) in
   ok @@ Ast_simplified.e_pair storage parameter
+
+let pretty_print source_filename syntax = 
+  Helpers.pretty_print syntax source_filename 
