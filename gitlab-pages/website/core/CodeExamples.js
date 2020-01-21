@@ -24,50 +24,50 @@ ${pre}`;
 const CAMELIGO_EXAMPLE = `${pre}ocaml
 type storage = int
 
-(* variant defining pseudo multi-entrypoint 
-  actions *)
+(* variant defining pseudo multi-entrypoint actions *)
+
 type action =
-  | Increment of int
-  | Decrement of int
+| Increment of int
+| Decrement of int
 
-let add (a: int) (b: int): int = a + b
+let add (a: int) (b: int) : int = a + b
+let sub (a: int) (b: int) : int = a - b
 
-let subtract (a: int) (b: int): int = a - b
+(* real entrypoint that re-routes the flow based on the action provided *)
 
-(* real entrypoint that re-routes the flow 
-   based on the action provided *)
-let%entry main(p : action) storage =
-  let storage =
-    match p with
-    | Increment n -> add storage n
-    | Decrement n -> subtract storage n
-  in (([] : operation list), storage)
+let main (p,s: action * storage) =
+ let storage =
+   match p with
+   | Increment n -> add s n
+   | Decrement n -> sub s n
+ in ([] : operation list), storage
 ${pre}`;
 
 
 const REASONLIGO_EXAMPLE = `${pre}reasonligo
 type storage = int;
 
-/* variant defining pseudo multi-entrypoint
-   actions */
+/* variant defining pseudo multi-entrypoint actions */
+
 type action =
   | Increment(int)
   | Decrement(int);
 
 let add = (a: int, b: int): int => a + b;
+let sub = (a: int, b: int): int => a - b;
 
-let subtract = (a: int, b: int): int => a - b;
+/* real entrypoint that re-routes the flow based on the action provided */
 
-/* real entrypoint that re-routes the flow
-   based on the action provided */
-let main = (p: action, storage) => {
+let main2 = (p: action, storage) => {
   let storage =
     switch (p) {
     | Increment(n) => add(storage, n)
-    | Decrement(n) => subtract(storage, n)
+    | Decrement(n) => sub(storage, n)
     };
   ([]: list(operation), storage);
 };
+
+let main = (x: (action, storage)) => main2(x[0],x[1]);
 
 ${pre}`;
 

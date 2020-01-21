@@ -1,3 +1,5 @@
+(* IF YOU CHANGE THIS, CHANGE THE EXAMPLE ON THE FRONT PAGE OF THE WEBSITE *)
+
 type storage = int;
 
 /* variant defining pseudo multi-entrypoint actions */
@@ -21,3 +23,5 @@ let main2 = (p: action, storage) => {
 };
 
 let main = (x: (action, storage)) => main2(x[0],x[1]);
+
+(* IF YOU CHANGE THIS, CHANGE THE EXAMPLE ON THE FRONT PAGE OF THE WEBSITE *)
