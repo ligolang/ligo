@@ -22,3 +22,6 @@ let assert_equal_contract_type : check_type -> string -> Ast_typed.program -> As
       | _ -> dummy_fail
   )
   | _ -> dummy_fail )
+
+let pretty_print ppf program =
+  Ast_typed.PP.program ppf program

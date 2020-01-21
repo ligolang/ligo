@@ -18,3 +18,6 @@ let apply (entry_point : string) (param : Ast_simplified.expression) : Ast_simpl
     { expression = Ast_simplified.E_application (entry_point_var, param) ;
       location = Virtual "generated application" } in
   ok applied
+
+let pretty_print formatter (program : Ast_simplified.program) = 
+  Ast_simplified.PP.program formatter program

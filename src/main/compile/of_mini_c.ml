@@ -32,3 +32,6 @@ let aggregate_and_compile_contract = fun (program : Types.program) name ->
 
 let aggregate_and_compile_expression = fun program exp ->
   aggregate_and_compile program (ExpressionForm exp)
+
+let pretty_print program = 
+  Mini_c.PP.program program
