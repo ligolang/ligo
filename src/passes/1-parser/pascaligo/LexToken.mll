@@ -41,7 +41,6 @@ type t =
 | Mutez  of (lexeme * Z.t) Region.reg
 | Ident  of lexeme Region.reg
 | Constr of lexeme Region.reg
-| Attr   of attribute
 
   (* Symbols *)
 
@@ -150,8 +149,10 @@ let proj_token = function
 | Constr Region.{region; value} ->
     region, sprintf "Constr \"%s\"" value
 
+(*
 | Attr {header; string={region; value}} ->
     region, sprintf "Attr (\"%s\",\"%s\")" header value
+ *)
 
   (* Symbols *)
 
@@ -242,7 +243,6 @@ let to_lexeme = function
 | Mutez i     -> fst i.Region.value
 | Ident id
 | Constr id -> id.Region.value
-| Attr {string; _} -> string.Region.value
 
   (* Symbols *)
 

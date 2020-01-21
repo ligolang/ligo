@@ -5,40 +5,6 @@
 
 open Region
 open AST
-(*
-type statement_attributes_mixed =
-  PInstr of instruction
-| PData  of data_decl
-| PAttr  of attributes
-
-let attributes_to_statement (statement, statements)  =
-  match statements with
-    [] ->
-      (match statement with
-       | PInstr i -> Instr i, []
-       | PData d -> Data d, []
-       | PAttr a ->
-          raise (Scoping.Error (Scoping.Detached_attributes a)))
-  | _ -> (
-    let statements = (Region.ghost, statement) :: statements in
-    let rec inner result = function
-    | (t, PData  (LocalConst const)) :: (_, PAttr a) :: rest ->
-      inner (result @ [(t, Data (LocalConst {const with value = {const.value with attributes = a}}))]) rest
-    | (t, PData  (LocalFun func)) :: (_, PAttr a) :: rest ->
-      inner (result @ [(t, Data (LocalFun {func with value = {func.value with attributes = a}}))]) rest
-    | (t, PData d) :: rest ->
-      inner (result @ [(t, Data d)]) rest
-    | (t, PInstr i) :: rest ->
-      inner (result @ [(t, Instr i)]) rest
-    | (_, PAttr _) :: rest ->
-      inner result rest
-    | [] ->
-      result
-    in
-    let result = inner [] statements in
-    (snd (List.hd result), List.tl result)
-  )
- *)
 
 (* END HEADER *)
 %}
@@ -144,9 +110,18 @@ contract:
   nseq(declaration) EOF { {decl=$1; eof=$2} }
 
 declaration:
-  type_decl  {   TypeDecl $1 }
-| const_decl {  ConstDecl $1 }
-| fun_decl   {    FunDecl $1 }
+  type_decl  {  TypeDecl $1 }
+| const_decl { ConstDecl $1 }
+| fun_decl   {   FunDecl $1 }
+| attr_decl  {  AttrDecl $1 }
+
+(* Attribute declarations *)
+
+attr_decl:
+  open_attr_decl ";"? { $1 }
+
+open_attr_decl:
+  ne_injection("attributes","<string>") { $1 }
 
 (* Type declarations *)
 
@@ -269,60 +244,54 @@ fun_expr:
                   colon        = $3;
                   ret_type     = $4;
                   kwd_is       = $5;
-                  return       = $6
-                  }
+                  return       = $6}
     in {region; value} }
 
 (* Function declarations *)
 
 open_fun_decl:
   "function" fun_name parameters ":" type_expr "is"
-     block
-  "with" expr {
+  block "with" expr {
     Scoping.check_reserved_name $2;
-    let stop     = expr_to_region $9 in
-    let region   = cover $1 stop
-    and value    = {kwd_function = $1;
-                    fun_name     = $2;
-                    param        = $3;
-                    colon        = $4;
-                    ret_type     = $5;
-                    kwd_is       = $6;
-                    block_with   = Some ($7, $8);
-                    return       = $9;
-                    terminator   = None;
-                    attributes   = None}
-    in {region; value} }
+    let stop   = expr_to_region $9 in
+    let region = cover $1 stop
+    and value  = {kwd_function = $1;
+                  fun_name     = $2;
+                  param        = $3;
+                  colon        = $4;
+                  ret_type     = $5;
+                  kwd_is       = $6;
+                  block_with   = Some ($7, $8);
+                  return       = $9;
+                  terminator   = None;
+                  attributes   = None}
+    in {region; value}
+  }
 | "function" fun_name parameters ":" type_expr "is" expr {
     Scoping.check_reserved_name $2;
-    let stop     = expr_to_region $7 in
-    let region   = cover $1 stop
-    and value    = {kwd_function = $1;
-                    fun_name     = $2;
-                    param        = $3;
-                    colon        = $4;
-                    ret_type     = $5;
-                    kwd_is       = $6;
-                    block_with   = None;
-                    return       = $7;
-                    terminator   = None;
-                    attributes   = None}
+    let stop   = expr_to_region $7 in
+    let region = cover $1 stop
+    and value  = {kwd_function = $1;
+                  fun_name     = $2;
+                  param        = $3;
+                  colon        = $4;
+                  ret_type     = $5;
+                  kwd_is       = $6;
+                  block_with   = None;
+                  return       = $7;
+                  terminator   = None;
+                  attributes   = None}
     in {region; value} }
 
 fun_decl:
-  open_fun_decl maybe_attributes? {
-    match $2 with
-      None -> $1
-    | Some (terminator, attributes) ->
-       let value = {$1.value with terminator; attributes}
-       in {$1 with value} }
+  open_fun_decl ";"? {
+    {$1 with value = {$1.value with terminator=$2}} }
 
 parameters:
   par(nsepseq(param_decl,";")) {
     let params =
       Utils.nsepseq_to_list ($1.value: _ par).inside
-    in Scoping.check_parameters params;
-       $1 }
+    in Scoping.check_parameters params; $1 }
 
 param_decl:
   "var" var ":" param_type {
@@ -352,25 +321,25 @@ block:
   "begin" sep_or_term_list(statement,";") "end" {
      let statements, terminator = $2 in
      let region = cover $1 $3
-     and value  = {opening    = Begin $1;
-                   statements (*= attributes_to_statement statements*);
+     and value  = {opening = Begin $1;
+                   statements;
                    terminator;
-                   closing    = End $3}
+                   closing = End $3}
      in {region; value}
   }
 | "block" "{" sep_or_term_list(statement,";") "}" {
      let statements, terminator = $3 in
      let region = cover $1 $4
-     and value  = {opening    = Block ($1,$2);
-                   statements (*= attributes_to_statement statements*);
+     and value  = {opening = Block ($1,$2);
+                   statements;
                    terminator;
-                   closing    = Block $4}
+                   closing = Block $4}
      in {region; value} }
 
 statement:
-  instruction     { (*P*)Instr $1 }
-| open_data_decl  { (*P*)Data  $1 }
-                  (*| attributes      { PAttr  $1 }*)
+  instruction     { Instr $1 }
+| open_data_decl  { Data  $1 }
+| open_attr_decl  { Attr  $1 }
 
 open_data_decl:
   open_const_decl { LocalConst $1 }
@@ -410,20 +379,9 @@ unqualified_decl(OP):
     let region = expr_to_region $5
     in $1, $2, $3, $4, $5, region }
 
-attributes:
-  ne_injection("attributes","<string>") { $1 }
-
-maybe_attributes:
-  ";"                { Some $1, None    }
-| ";" attributes ";" { Some $1, Some $2 }
-
 const_decl:
-  open_const_decl maybe_attributes? {
-    match $2 with
-      None -> $1
-    | Some (terminator, attributes) ->
-       let value = {$1.value with terminator; attributes}
-       in {$1 with value} }
+  open_const_decl ";"? {
+    {$1 with value = {$1.value with terminator=$2}} }
 
 instruction:
   conditional  {        Cond $1 }
@@ -587,7 +545,7 @@ clause_block:
     let statements, terminator = $2 in
     let region = cover $1 $3 in
     let value  = {lbrace = $1;
-                  inside = (*attributes_to_statement*) statements, terminator;
+                  inside = statements, terminator;
                   rbrace = $3} in
     ShortBlock {value; region} }
 

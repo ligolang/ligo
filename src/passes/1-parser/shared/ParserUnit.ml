@@ -89,6 +89,9 @@ module Make (Lexer: Lexer.S)
 
     let format_error = Front.format_error
 
+    let short_error ?(offsets=true) mode msg (reg: Region.t) =
+      sprintf "Parse error %s:\n%s" (reg#to_string ~offsets mode) msg
+
     (* Parsing an expression *)
 
     let parse_expr lexer_inst tokeniser output state :

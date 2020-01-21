@@ -868,7 +868,7 @@ let open_token_stream file_path_opt =
   let  file_path = match file_path_opt with
                      None | Some "-" -> ""
                    | Some file_path  -> file_path in
-  let        pos = Pos.min#set_file file_path in
+  let        pos = Pos.min ~file:file_path in
   let    buf_reg = ref (pos#byte, pos#byte)
   and first_call = ref true
   and    decoder = Uutf.decoder ~encoding:`UTF_8 `Manual in

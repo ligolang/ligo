@@ -45,7 +45,7 @@ module Errors =
       let loc =
         if start.pos_cnum = -1
         then Region.make
-               ~start: Pos.min
+               ~start:(Pos.min ~file:source)
                ~stop:(Pos.from_byte end_)
         else Region.make
                ~start:(Pos.from_byte start)

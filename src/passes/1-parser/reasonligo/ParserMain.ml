@@ -43,10 +43,10 @@ let parse parser : ('a,string) Stdlib.result =
                Examples of valid functions:\n\
                let x = (a: string, b: int) : int => 3;\n\
                let x = (a: string) : string => \"Hello, \" ++ a;\n"
-      and reg = AST.expr_to_region expr in
-      let error = Unit.short_error ~offsets:IO.options#offsets
-                                   IO.options#mode msg reg
-      in Stdlib.Error error
+    and reg = AST.expr_to_region expr in
+    let error = Unit.short_error ~offsets:IO.options#offsets
+                                 IO.options#mode msg reg
+    in Stdlib.Error error
 
   (* Scoping errors *)
 

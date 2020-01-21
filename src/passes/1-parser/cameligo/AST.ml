@@ -131,7 +131,7 @@ type t = {
 
 and ast = t
 
-and attributes = attribute list 
+and attributes = attribute list
 
 and declaration =
   Let      of (kwd_let * let_binding * attributes) reg

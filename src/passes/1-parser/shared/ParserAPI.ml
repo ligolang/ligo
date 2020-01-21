@@ -77,44 +77,6 @@ module Make (Lexer: Lexer.S)
 
     exception Point of error
 
-    let failure get_win checkpoint =
-      let message = ParErr.message (state checkpoint) in
-      match get_win () with
-        Lexer.Nil -> assert false
-      | Lexer.One invalid ->
-          raise (Point (message, None, invalid))
-      | Lexer.Two (invalid, valid) ->
-          raise (Point (message, Some valid, invalid))
-
-    (* The two Menhir APIs are called from the following functions. *)
-
-    module Incr = Parser.Incremental
-
-    let incr_contract memo Lexer.{read; buffer; get_win; close; _} =
-      let supplier = I.lexer_lexbuf_to_supplier read buffer
-      and failure  = failure get_win in
-      let parser   = Incr.contract buffer.Lexing.lex_curr_p in
-      let ast      =
-        try I.loop_handle success failure supplier parser with
-          Point (message, valid_opt, invalid) ->
-          let error = Memo. (* TODO *)
-          in Stdlib.Error ()
-
-      in close (); ast
-
-    let mono_contract = Parser.contract
-
-    let incr_expr  Lexer.{read; buffer; get_win; close; _} : Parser.expr =
-      let supplier = I.lexer_lexbuf_to_supplier read buffer
-      and failure  = failure get_win in
-      let parser   = Incr.interactive_expr buffer.Lexing.lex_curr_p in
-      let expr     = I.loop_handle success failure supplier parser
-      in close (); expr
-
-    let mono_expr = Parser.interactive_expr
-
-    (* Errors *)
-
     let format_error ?(offsets=true) mode (msg, valid_opt, invalid) =
       let invalid_region = Lexer.Token.to_region invalid in
       let header =
@@ -134,5 +96,38 @@ module Make (Lexer: Lexer.S)
               Printf.sprintf "%s and before \"%s\"" s invalid_lexeme in
       let header = header ^ trailer in
       header ^ (if msg = "" then ".\n" else ":\n" ^ msg)
+
+    let failure get_win checkpoint =
+      let message = ParErr.message (state checkpoint) in
+      match get_win () with
+        Lexer.Nil -> assert false
+      | Lexer.One invalid ->
+          raise (Point (message, None, invalid))
+      | Lexer.Two (invalid, valid) ->
+          raise (Point (message, Some valid, invalid))
+
+    (* The monolithic API of Menhir *)
+
+    let mono_contract = Parser.contract
+
+    let mono_expr = Parser.interactive_expr
+
+    (* Incremental API of Menhir *)
+
+    module Incr = Parser.Incremental
+
+    let incr_contract Lexer.{read; buffer; get_win; close; _} =
+      let supplier = I.lexer_lexbuf_to_supplier read buffer
+      and failure  = failure get_win in
+      let parser   = Incr.contract buffer.Lexing.lex_curr_p in
+      let ast      = I.loop_handle success failure supplier parser
+      in close (); ast
+
+    let incr_expr  Lexer.{read; buffer; get_win; close; _} =
+      let supplier = I.lexer_lexbuf_to_supplier read buffer
+      and failure  = failure get_win in
+      let parser   = Incr.interactive_expr buffer.Lexing.lex_curr_p in
+      let expr     = I.loop_handle success failure supplier parser
+      in close (); expr
 
   end

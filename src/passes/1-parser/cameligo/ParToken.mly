@@ -12,7 +12,7 @@
 %token            <(string * Z.t) Region.reg> Mutez  "<mutez>"
 %token                    <string Region.reg> Ident  "<ident>"
 %token                    <string Region.reg> Constr "<constr>"
-%token                    <string Region.reg> Attr2  "<attr>"
+%token                    <string Region.reg> Attr   "<attr>"
 
   (* Symbols *)
 

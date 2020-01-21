@@ -206,10 +206,10 @@ field_decl:
 (* Top-level non-recursive definitions *)
 
 let_declaration:
-  "let" let_binding seq(Attr2) {
+  "let" let_binding seq(Attr) {
     let kwd_let    = $1 in
     let attributes = $3 in
-    let binding    = $2 in    
+    let binding    = $2 in
     let value      = kwd_let, binding, attributes in
     let stop       = expr_to_region binding.let_rhs in
     let region     = cover $1 stop
@@ -452,10 +452,10 @@ case_clause(right_expr):
     {pattern=$1; arrow=$2; rhs=$3} }
 
 let_expr(right_expr):
-  "let" let_binding seq(Attr2) "in" right_expr  {
-    let kwd_let    = $1 
+  "let" let_binding seq(Attr) "in" right_expr  {
+    let kwd_let    = $1
     and binding    = $2
-    and attributes = $3   
+    and attributes = $3
     and kwd_in     = $4
     and body       = $5 in
     let stop       = expr_to_region body in
@@ -634,9 +634,9 @@ update_record:
       lbrace   = $1;
       record   = $2;
       kwd_with = $3;
-      updates  = { value = {compound = Braces($1,$5);
-                  ne_elements;
-                  terminator};
+      updates  = {value = {compound = Braces($1,$5);
+                           ne_elements;
+                           terminator};
                   region = cover $3 $5};
       rbrace   = $5}
     in {region; value} }
@@ -664,5 +664,5 @@ sequence:
     in {region; value} }
 
 path :
- "<ident>"  {Name $1}
-| projection { Path $1}
+ "<ident>"   { Name $1 }
+| projection { Path $1 }

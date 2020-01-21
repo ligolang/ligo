@@ -46,6 +46,9 @@ module Make (Lexer: Lexer.S)
     val format_error :
       ?offsets:bool -> [`Byte | `Point] -> error -> string
 
+    val short_error :
+      ?offsets:bool -> [`Point | `Byte] -> string -> Region.t -> string
+
     (* Parsers *)
 
     val parse :

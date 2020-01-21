@@ -56,11 +56,8 @@ let make ~byte ~point_num ~point_bol =
     method set_offset offset =
       {< byte = Lexing.{byte with pos_cnum = byte.pos_bol + offset} >}
 
-    method set ?file ~line ~offset =
-      let pos =
-        match file with
-          None -> self
-        | Some name -> self#set_file name in
+    method set ~file ~line ~offset =
+      let pos = self#set_file file in
       let pos = pos#set_line line in
       let pos = pos#set_offset offset
       in pos
@@ -136,7 +133,7 @@ let from_byte byte =
 
 let ghost = make ~byte:Lexing.dummy_pos ~point_num:(-1) ~point_bol:(-1)
 
-let min file =
+let min ~file =
   let pos = make ~byte:Lexing.dummy_pos ~point_num:0 ~point_bol:0
   in pos#set_file file
 

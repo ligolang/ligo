@@ -43,7 +43,6 @@ type t =
 | Mutez  of (lexeme * Z.t) Region.reg
 | Ident  of lexeme Region.reg
 | Constr of lexeme Region.reg
-| Attr   of attribute
 
   (* Symbols *)
 

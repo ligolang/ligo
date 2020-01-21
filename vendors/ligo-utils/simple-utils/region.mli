@@ -56,7 +56,7 @@
           convention as [to_string], except that the resulting string
           is shorter (usually for debugging or tracing).}}
  *)
-type t = private <
+type t = <
   start : Pos.t;
   stop  : Pos.t;
 
@@ -119,7 +119,7 @@ val wrap_ghost : 'a -> 'a reg
 (** Occasionnally, we may need a minimum region. It is here made of
     two minimal positions.
 *)
-val min : t
+val min : file:string -> t
 
 (** {1 Comparisons} *)
 

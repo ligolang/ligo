@@ -114,27 +114,25 @@ let rec print_tokens state ast =
   Utils.nseq_iter (print_decl state) decl;
   print_token state eof "EOF"
 
-and print_attributes state = function
-  None -> ()
-| Some attr ->
-    print_ne_injection state "attributes" print_string attr
+and print_attr_decl state =
+  print_ne_injection state "attributes" print_string
 
 and print_decl state = function
   TypeDecl  decl -> print_type_decl  state decl
 | ConstDecl decl -> print_const_decl state decl
 | FunDecl   decl -> print_fun_decl   state decl
+| AttrDecl  decl -> print_attr_decl  state decl
 
 and print_const_decl state {value; _} =
   let {kwd_const; name; colon; const_type;
-       equal; init; terminator; attributes} = value in
+       equal; init; terminator; _} = value in
   print_token      state kwd_const "const";
   print_var        state name;
   print_token      state colon ":";
   print_type_expr  state const_type;
   print_token      state equal "=";
   print_expr       state init;
-  print_terminator state terminator;
-  print_attributes state attributes
+  print_terminator state terminator
 
 and print_type_decl state {value; _} =
   let {kwd_type; name; kwd_is;
@@ -204,7 +202,7 @@ and print_type_tuple state {value; _} =
 and print_fun_decl state {value; _} =
   let {kwd_function; fun_name; param; colon;
        ret_type; kwd_is; block_with;
-       return; terminator; attributes } = value in
+       return; terminator; _} = value in
   print_token       state kwd_function "function";
   print_var         state fun_name;
   print_parameters  state param;
@@ -218,7 +216,6 @@ and print_fun_decl state {value; _} =
      print_token state kwd_with "with");
   print_expr state return;
   print_terminator state terminator;
-  print_attributes state attributes
 
 and print_fun_expr state {value; _} =
   let {kwd_function; param; colon;
@@ -294,6 +291,7 @@ and print_statements state sequence =
 and print_statement state = function
   Instr instr -> print_instruction state instr
 | Data  data  -> print_data_decl   state data
+| Attr  attr  -> print_attr_decl   state attr
 
 and print_instruction state = function
   Cond        {value; _} -> print_conditional state value
@@ -686,10 +684,10 @@ and print_opening state lexeme = function
     print_token state kwd lexeme
 | KwdBracket (kwd, lbracket) ->
     print_token state kwd lexeme;
-    print_token state lbracket "{"
+    print_token state lbracket "["
 
 and print_closing state = function
-  RBracket rbracket -> print_token state rbracket "}"
+  RBracket rbracket -> print_token state rbracket "]"
 | End kwd_end       -> print_token state kwd_end "end"
 
 and print_binding state {value; _} =
@@ -846,12 +844,14 @@ and pp_declaration state = function
 | FunDecl {value; region} ->
     pp_loc_node state "FunDecl" region;
     pp_fun_decl state value
+| AttrDecl {value; region} ->
+    pp_loc_node state "AttrDecl" region;
+    pp_attr_decl state value
+
+and pp_attr_decl state = pp_ne_injection pp_string state
 
 and pp_fun_decl state decl =
-  let arity =
-    match decl.attributes with
-      None -> 5
-    | Some _ -> 6 in
+  let arity = 5 in
   let () =
     let state = state#pad arity 0 in
     pp_ident state decl.fun_name in
@@ -874,33 +874,14 @@ and pp_fun_decl state decl =
   let () =
     let state = state#pad arity 4 in
     pp_node state "<return>";
-    pp_expr (state#pad 1 0) decl.return in
-  let () =
-    match decl.attributes with
-      None -> ()
-    | Some attr ->
-       let state = state#pad arity 5 in
-       pp_node state "<attributes>";
-       pp_attributes (state#pad 1 0) attr
+    pp_expr (state#pad 1 0) decl.return
   in ()
 
-and pp_attributes state {value; _} =
-  pp_ne_injection pp_string state value
-
 and pp_const_decl state decl =
-  let arity =
-    match decl.attributes with
-      None -> 3
-    | Some _ -> 4 in
+  let arity = 3 in
   pp_ident (state#pad arity 0) decl.name;
   pp_type_expr (state#pad arity 1) decl.const_type;
-  pp_expr (state#pad arity 2) decl.init;
-  match decl.attributes with
-    None -> ()
-  | Some attr ->
-      let state = state#pad arity 3 in
-      pp_node state "<attributes>";
-      pp_attributes (state#pad 1 0) attr
+  pp_expr (state#pad arity 2) decl.init
 
 and pp_type_expr state = function
   TProd cartesian ->
@@ -1001,6 +982,9 @@ and pp_statement state = function
 | Data data_decl ->
     pp_node state "Data";
     pp_data_decl (state#pad 1 0) data_decl
+| Attr attr_decl ->
+    pp_node state "Attr";
+    pp_attr_decl state attr_decl.value
 
 and pp_instruction state = function
   Cond {value; region} ->
@@ -1183,18 +1167,18 @@ and pp_bin_cons state (head, _, tail) =
 and pp_injection :
   'a.(state -> 'a -> unit) -> state -> 'a injection -> unit =
   fun printer state inj ->
-  let elements       = Utils.sepseq_to_list inj.elements in
-  let length         = List.length elements in
-  let apply len rank = printer (state#pad len rank)
-  in List.iteri (apply length) elements
+    let elements       = Utils.sepseq_to_list inj.elements in
+    let length         = List.length elements in
+    let apply len rank = printer (state#pad len rank)
+    in List.iteri (apply length) elements
 
 and pp_ne_injection :
   'a.(state -> 'a -> unit) -> state -> 'a ne_injection -> unit =
   fun printer state inj ->
-  let ne_elements    = Utils.nsepseq_to_list inj.ne_elements in
-  let length         = List.length ne_elements in
-  let apply len rank = printer (state#pad len rank)
-  in List.iteri (apply length) ne_elements
+    let ne_elements    = Utils.nsepseq_to_list inj.ne_elements in
+    let length         = List.length ne_elements in
+    let apply len rank = printer (state#pad len rank)
+    in List.iteri (apply length) ne_elements
 
 and pp_tuple_pattern state tuple =
   let patterns       = Utils.nsepseq_to_list tuple.inside in

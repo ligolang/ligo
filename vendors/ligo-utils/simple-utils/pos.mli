@@ -58,17 +58,7 @@
      {li The call [pos#byte_offset] is the offset of the position
          [pos] since the begininng of the file, counted in bytes.}}
  *)
-
-type invalid_pos = [
-  `Invalid_line
-| `Invalid_offset
-]
-
-type invalid_line   = `Invalid_line
-type invalid_offset = `Invalid_offset
-type invalid_nl     = `Invalid_newline
-
-type t = private <
+type t = <
   (* Payload *)
 
   byte       : Lexing.position;
@@ -80,14 +70,12 @@ type t = private <
   (* Setters *)
 
   set_file   : string -> t;
-  set_line   : int -> (t, invalid_line) Stdlib.result;
-  set_offset : int -> (t, invalid_offset) Stdlib.result;
+  set_line   : int -> t;
+  set_offset : int -> t;
 
-  set : ?file:string -> line:int -> offset:int ->
-        (t, invalid_pos) Stdlib.result;
+  set : file:string -> line:int -> offset:int -> t;
 
-  (* String must be "\n" or "\c\r" *)
-  new_line : string -> (t, invalid_newline) Stdlib.result
+  new_line : string -> t;   (* String must be "\n" or "\c\r" *)
   add_nl   : t;
 
   shift_bytes     : int -> t;
@@ -119,11 +107,9 @@ type pos = t
 (** {1 Constructors} *)
 
 val make :
-  byte:Lexing.position -> point_num:int -> point_bol:int ->
-  (t, invalid_pos) Stdlin.result
+  byte:Lexing.position -> point_num:int -> point_bol:int -> t
 
-val from_byte :
-  Lexing.position -> (t, invalid_pos) Stdlib.result
+val from_byte : Lexing.position -> t
 
 (** {1 Special positions} *)
 

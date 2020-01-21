@@ -11,8 +11,8 @@ open Combinators
 let nseq_to_list (hd, tl) = hd :: tl
 let npseq_to_list (hd, tl) = hd :: (List.map snd tl)
 let pseq_to_list = function
-  | None -> []
-  | Some lst -> npseq_to_list lst
+  None -> []
+| Some lst -> npseq_to_list lst
 let get_value : 'a Raw.reg -> 'a = fun x -> x.value
 let is_compiler_generated name = String.contains (Var.to_name name) '#'
 
@@ -468,9 +468,9 @@ let rec simpl_expression (t:Raw.expr) : expr result =
 and simpl_update = fun (u:Raw.update Region.reg) ->
   let (u, loc) = r_split u in
   let (name, path) = simpl_path u.record in
-  let record = match path with 
+  let record = match path with
   | [] -> e_variable (Var.of_name name)
-  | _ -> e_accessor (e_variable (Var.of_name name)) path in 
+  | _ -> e_accessor (e_variable (Var.of_name name)) path in
   let updates = u.updates.value.ne_elements in
   let%bind updates' =
     let aux (f:Raw.field_assign Raw.reg) =
@@ -478,7 +478,7 @@ and simpl_update = fun (u:Raw.update Region.reg) ->
       let%bind expr = simpl_expression f.field_expr in
       ok (f.field_name.value, expr)
     in
-    bind_map_list aux @@ npseq_to_list updates 
+    bind_map_list aux @@ npseq_to_list updates
   in
   ok @@ e_update ~loc record updates'
 
@@ -563,31 +563,43 @@ and simpl_tuple_expression ?loc (lst:Raw.expr list) : expression result =
   | [] -> return @@ e_literal Literal_unit
   | [hd] -> simpl_expression hd
   | lst ->
-      let%bind lst = bind_list @@ List.map simpl_expression lst in
-      return @@ e_tuple ?loc lst
+      let%bind lst = bind_list @@ List.map simpl_expression lst
+      in return @@ e_tuple ?loc lst
 
-and simpl_data_declaration : Raw.data_decl -> _ result = fun t ->
+and simpl_data_declaration : Raw.data_decl -> _ result =
+  fun t ->
   match t with
   | LocalVar x ->
       let (x , loc) = r_split x in
       let name = x.name.value in
       let%bind t = simpl_type_expression x.var_type in
       let%bind expression = simpl_expression x.init in
-      return_let_in ~loc (Var.of_name name , Some t) false expression
+      return_let_in ~loc (Var.of_name name, Some t) false expression
   | LocalConst x ->
       let (x , loc) = r_split x in
       let name = x.name.value in
       let%bind t = simpl_type_expression x.const_type in
       let%bind expression = simpl_expression x.init in
-      let inline = List.exists (fun (f: Raw.attribute) -> f.value = "\"inline\"") x.attributes.value in
-      return_let_in ~loc (Var.of_name name , Some t) inline expression
+      let inline =
+        match x.attributes with
+          None -> false
+        | Some {value; _} ->
+           npseq_to_list value.ne_elements
+           |> List.exists (fun Region.{value; _} -> value = "\"inline\"")
+      in return_let_in ~loc (Var.of_name name, Some t) inline expression
   | LocalFun f  ->
       let (f , loc) = r_split f in
       let%bind (binder, expr) = simpl_fun_decl ~loc f in
-      let inline = List.exists (fun (f: Raw.attribute) -> f.value = "\"inline\"") f.attributes.value in      
-      return_let_in ~loc binder inline expr
+      let inline =
+        match f.attributes with
+          None -> false
+        | Some {value; _} ->
+           npseq_to_list value.ne_elements
+           |> List.exists (fun Region.{value; _} -> value = "\"inline\"")
+      in return_let_in ~loc binder inline expr
 
-and simpl_param : Raw.param_decl -> (expression_variable * type_expression) result =
+and simpl_param :
+      Raw.param_decl -> (expression_variable * type_expression) result =
   fun t ->
   match t with
   | ParamConst c ->
@@ -602,11 +614,18 @@ and simpl_param : Raw.param_decl -> (expression_variable * type_expression) resu
       ok (type_name , type_expression)
 
 and simpl_fun_decl :
-  loc:_ -> Raw.fun_decl -> ((expression_variable * type_expression option) * expression) result =
+      loc:_ -> Raw.fun_decl ->
+      ((expression_variable * type_expression option) * expression) result =
   fun ~loc x ->
   let open! Raw in
-  let {fun_name;param;ret_type;block_with;return; attributes} : fun_decl = x in
-  let inline = List.exists (fun (a: Raw.attribute) -> a.value = "\"inline\"") attributes.value in
+  let {fun_name; param; ret_type; block_with;
+       return; attributes} : fun_decl = x in
+  let inline =
+    match attributes with
+      None -> false
+    | Some {value; _} ->
+       npseq_to_list value.ne_elements
+       |> List.exists (fun Region.{value; _} -> value = "\"inline\"") in
   let statements =
     match block_with with
     | Some (block,_) -> npseq_to_list block.value.statements
@@ -616,9 +635,7 @@ and simpl_fun_decl :
      a, [] -> (
        let%bind input = simpl_param a in
        let (binder , input_type) = input in
-       let%bind instructions = bind_list
-         @@ List.map simpl_statement
-         @@ statements in
+       let%bind instructions = simpl_statement_list statements in
        let%bind result = simpl_expression return in
        let%bind output_type = simpl_type_expression ret_type in
        let body = instructions in
@@ -648,9 +665,7 @@ and simpl_fun_decl :
            ass
          in
          bind_list @@ List.mapi aux params in
-       let%bind instructions = bind_list
-         @@ List.map simpl_statement
-         @@ statements in
+       let%bind instructions = simpl_statement_list statements in
        let%bind result = simpl_expression return in
        let%bind output_type = simpl_type_expression ret_type in
        let body = tpl_declarations @ instructions in
@@ -674,9 +689,7 @@ and simpl_fun_expression :
      a, [] -> (
        let%bind input = simpl_param a in
        let (binder , input_type) = input in
-       let%bind instructions = bind_list
-         @@ List.map simpl_statement
-         @@ statements in
+       let%bind instructions = simpl_statement_list statements in
        let%bind result = simpl_expression return in
        let%bind output_type = simpl_type_expression ret_type in
        let body = instructions in
@@ -706,9 +719,7 @@ and simpl_fun_expression :
            ass
          in
          bind_list @@ List.mapi aux params in
-       let%bind instructions = bind_list
-         @@ List.map simpl_statement
-         @@ statements in
+       let%bind instructions = simpl_statement_list statements in
        let%bind result = simpl_expression return in
        let%bind output_type = simpl_type_expression ret_type in
        let body = tpl_declarations @ instructions in
@@ -722,44 +733,39 @@ and simpl_fun_expression :
      )
   )
 
-and simpl_declaration : Raw.declaration -> declaration Location.wrap result =
-  fun t ->
-  let open! Raw in
-  match t with
-  | TypeDecl x ->
-      let decl, loc = r_split x in
-      let {name;type_expr} : Raw.type_decl = decl in
-      let%bind type_expression = simpl_type_expression type_expr in
-      ok @@ Location.wrap ~loc (Declaration_type
-                                 (Var.of_name name.value, type_expression))
-
-  | ConstDecl x ->
-      let simpl_const_decl = fun {name;const_type; init; attributes} ->        
-        let%bind expression = simpl_expression init in
-        let%bind t = simpl_type_expression const_type in
-        let type_annotation = Some t in
-        let inline = List.exists (fun (a: Raw.attribute) -> a.value = "\"inline\"") attributes.value in
-        ok @@ Declaration_constant
-              (Var.of_name name.value, type_annotation, inline, expression)
-      in bind_map_location simpl_const_decl (Location.lift_region x)
-  | FunDecl x ->
-      let decl, loc = r_split x in
-      let%bind ((name, ty_opt), expr) = simpl_fun_decl ~loc decl in
-      let inline = List.exists (fun (a: Raw.attribute) -> a.value = "\"inline\"") x.value.attributes.value in      
-      ok @@ Location.wrap ~loc (Declaration_constant (name, ty_opt, inline, expr))
-
-and simpl_statement : Raw.statement -> (_ -> expression result) result =
-  fun s ->
-  match s with
-  | Instr i -> simpl_instruction i
-  | Data d -> simpl_data_declaration d
+and simpl_statement_list statements =
+  let open Raw in
+  let rec hook acc = function
+    [] -> acc
+  | [Attr _] ->
+      (* Detached attributes are erased. TODO: Warning. *)
+      acc
+  | Attr _ :: (Attr _ :: _ as statements) ->
+      (* Detached attributes are erased. TODO: Warning. *)
+      hook acc statements
+  | Attr decl :: Data (LocalConst {value; region}) :: statements ->
+      let new_const =
+        Data (LocalConst {value = {value with attributes = Some decl}; region})
+      in hook acc (new_const :: statements)
+  | Attr decl :: Data (LocalFun {value; region}) :: statements ->
+      let new_fun =
+        Data (LocalFun {value = {value with attributes = Some decl}; region})
+      in hook acc (new_fun :: statements)
+  | Attr _ :: statements ->
+      (* Detached attributes are erased. TODO: Warning. *)
+      hook acc statements
+  | Instr i :: statements ->
+      hook (simpl_instruction i :: acc) statements
+  | Data d :: statements ->
+      hook (simpl_data_declaration d :: acc) statements
+  in bind_list @@ hook [] (List.rev statements)
 
 and simpl_single_instruction : Raw.instruction -> (_ -> expression result) result =
   fun t ->
   match t with
   | ProcCall x -> (
-    let ((f, args) , loc) = r_split x in
-    let (args , args_loc) = r_split args in
+    let (f, args) , loc = r_split x in
+    let args, args_loc = r_split args in
     let args' = npseq_to_list args.inside in
     match f with
     | EVar name -> (
@@ -1058,7 +1064,7 @@ and simpl_cases : type a . (Raw.pattern * a) list -> (a, unit) matching result =
         let aux (x , y) =
           let error =
             let title () = "Pattern" in
-            (** TODO: The labelled arguments should be flowing from the CLI. *)
+            (* TODO: The labelled arguments should be flowing from the CLI. *)
             let content () =
               Printf.sprintf "Pattern : %s"
                 (ParserLog.pattern_to_string
@@ -1072,23 +1078,22 @@ and simpl_cases : type a . (Raw.pattern * a) list -> (a, unit) matching result =
       ok @@ ez_match_variant constrs
 
 and simpl_instruction : Raw.instruction -> (_ -> expression result) result =
-  fun t ->
-  trace (simplifying_instruction t) @@ simpl_single_instruction t
+  fun t -> trace (simplifying_instruction t) @@ simpl_single_instruction t
 
 and simpl_statements : Raw.statements -> (_ -> expression result) result =
-  fun ss ->
-  let lst = npseq_to_list ss in
-  let%bind fs = bind_map_list simpl_statement lst in
-  let aux : _ -> (expression option -> expression result) -> _ =
-    fun prec cur ->
-      let%bind res = cur prec in
-      ok @@ Some res in
-  ok @@ fun (expr' : _ option) ->
-  let%bind ret = bind_fold_right_list aux expr' fs in
-  ok @@ Option.unopt_exn ret
+  fun statements ->
+    let lst = npseq_to_list statements in
+    let%bind fs = simpl_statement_list lst in
+    let aux : _ -> (expression option -> expression result) -> _ =
+      fun prec cur ->
+        let%bind res = cur prec
+        in ok @@ Some res in
+    ok @@ fun (expr' : _ option) ->
+           let%bind ret = bind_fold_right_list aux expr' fs in
+           ok @@ Option.unopt_exn ret
 
-and simpl_block : Raw.block -> (_ -> expression result) result = fun t ->
-  simpl_statements t.statements
+and simpl_block : Raw.block -> (_ -> expression result) result =
+  fun t -> simpl_statements t.statements
 
 and simpl_for_int : Raw.for_int -> (_ -> expression result) result = fun fi ->
   (* cond part *)
@@ -1264,11 +1269,13 @@ and simpl_for_collect : Raw.for_collect -> (_ -> expression result) result = fun
   (* STEP 5 *)
   let rec add_return (expr : expression) = match expr.expression with
     | E_sequence (a,b) -> e_sequence a (add_return b)
-    | _  -> e_sequence expr (e_variable (Var.of_name "#COMPILER#acc")) in (* TODO fresh *)
+    | _  -> (* TODO fresh *)
+       e_sequence expr (e_variable (Var.of_name "#COMPILER#acc")) in
   let for_body = add_return for_body in
   (* STEP 6 *)
   let for_body =
-    let ( arg_access: Types.access_path -> expression ) = e_accessor (e_variable (Var.of_name "arguments")) in (* TODO fresh *)
+    let ( arg_access: Types.access_path -> expression ) =
+      e_accessor (e_variable (Var.of_name "arguments")) in (* TODO fresh *)
     ( match fc.collection with
       | Map _ ->
         let acc          = arg_access [Access_tuple 0 ] in
@@ -1291,7 +1298,8 @@ and simpl_for_collect : Raw.for_collect -> (_ -> expression result) result = fun
   let fold = e_constant op_name [lambda; collect ; init_record] in
   (* STEP 8 *)
   let assign_back (prev : expression option) (captured_varname : string) : expression option =
-    let access = e_accessor (e_variable (Var.of_name "#COMPILER#folded_record")) (* TODO fresh *)
+    let access = (* TODO fresh *)
+      e_accessor (e_variable (Var.of_name "#COMPILER#folded_record"))
       [Access_record captured_varname] in
     let assign = e_assign captured_varname [] access in
     match prev with
@@ -1304,6 +1312,73 @@ and simpl_for_collect : Raw.for_collect -> (_ -> expression result) result = fun
     | None -> e_skip ()
     | Some seq -> e_let_in (Var.of_name "#COMPILER#folded_record", None) false fold seq in (* TODO fresh *)
   return_statement @@ final_sequence
+(*
+and simpl_declaration : Raw.declaration -> declaration Location.wrap result =
+ *)
 
-let simpl_program : Raw.ast -> program result = fun t ->
-  bind_list @@ List.map simpl_declaration @@ nseq_to_list t.decl
+and simpl_declaration_list declarations :
+      Ast_simplified.declaration Location.wrap list result =
+  let open Raw in
+  let rec hook acc = function
+    [] -> acc
+  | [AttrDecl _] ->
+       (* Detached attributes are erased. TODO: Warning. *)
+       acc
+  | AttrDecl _ :: (AttrDecl _ :: _ as declarations) ->
+      (* Detached attributes are erased. TODO: Warning. *)
+      hook acc declarations
+  | AttrDecl decl :: ConstDecl {value; region} :: declarations ->
+      let new_const =
+        ConstDecl {value = {value with attributes = Some decl}; region}
+      in hook acc (new_const :: declarations)
+  | AttrDecl decl :: FunDecl {value; region} :: declarations ->
+      let new_fun =
+        FunDecl {value = {value with attributes = Some decl}; region}
+      in hook acc (new_fun :: declarations)
+  | AttrDecl _ :: declarations ->
+      (* Detached attributes are erased. TODO: Warning. *)
+      hook acc declarations
+  | TypeDecl decl :: declarations ->
+      let decl, loc = r_split decl in
+      let {name; type_expr} : Raw.type_decl = decl in
+      let%bind type_expression = simpl_type_expression type_expr in
+      let new_decl =
+        Declaration_type (Var.of_name name.value, type_expression) in
+      let res = ok @@ Location.wrap ~loc new_decl
+      in hook (res::acc) declarations
+  | ConstDecl decl :: declarations ->
+      let simpl_const_decl =
+        fun {name;const_type; init; attributes} ->
+          let%bind expression = simpl_expression init in
+          let%bind t = simpl_type_expression const_type in
+          let type_annotation = Some t in
+          let inline =
+            match attributes with
+              None -> false
+            | Some {value; _} ->
+                npseq_to_list value.ne_elements
+               |> List.exists (fun Region.{value; _} -> value = "\"inline\"") in
+          let new_decl =
+            Declaration_constant
+              (Var.of_name name.value, type_annotation, inline, expression)
+          in ok new_decl in
+      let res =
+        bind_map_location simpl_const_decl (Location.lift_region decl)
+      in hook (res::acc) declarations
+  | FunDecl fun_decl :: declarations ->
+      let decl, loc = r_split fun_decl in
+      let%bind ((name, ty_opt), expr) = simpl_fun_decl ~loc decl in
+      let inline =
+        match fun_decl.value.attributes with
+          None -> false
+        | Some {value; _} ->
+            npseq_to_list value.ne_elements
+            |> List.exists (fun Region.{value; _} -> value = "\"inline\"") in
+      let new_decl =
+        Declaration_constant (name, ty_opt, inline, expr) in
+      let res = ok @@ Location.wrap ~loc new_decl
+      in hook (res::acc) declarations
+  in bind_list @@ hook [] (List.rev declarations)
+
+let simpl_program : Raw.ast -> program result =
+  fun t -> simpl_declaration_list @@ nseq_to_list t.decl

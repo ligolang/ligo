@@ -47,24 +47,25 @@ module Make (Lexer: Lexer.S)
             (Parser: PARSER with type token = Lexer.Token.token)
             (ParErr: sig val message : int -> string end) :
   sig
-    (* The monolithic API of Menhir with memos *)
+    (* The monolithic API of Menhir *)
 
     val mono_contract :
-      (Lexing.lexbuf -> Lexer.token) ->
-      Lexing.lexbuf ->
-      (Parser.ast, string) Stdlib.result
+      (Lexing.lexbuf -> Lexer.token) -> Lexing.lexbuf -> Parser.ast
 
     val mono_expr :
-      (Lexing.lexbuf -> Lexer.token) ->
-      Lexing.lexbuf ->
-      (Parser.expr, string) Stdlib.result
+      (Lexing.lexbuf -> Lexer.token) -> Lexing.lexbuf -> Parser.expr
 
-    (* Incremental API of Menhir with memos *)
+    (* Incremental API of Menhir *)
 
-    val incr_contract :
-      Lexer.instance -> (Parser.ast, string) Stdlib.result
+    type message = string
+    type valid   = Parser.token
+    type invalid = Parser.token
+    type error   = message * valid option * invalid
 
-    val incr_expr :
-      Lexer.instance ->
-      (Parser.expr, string) Stdlib.result
+    exception Point of error
+
+    val incr_contract : Lexer.instance -> Parser.ast
+    val incr_expr     : Lexer.instance -> Parser.expr
+
+    val format_error : ?offsets:bool -> [`Point | `Byte] -> error -> string
   end

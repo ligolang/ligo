@@ -35,7 +35,7 @@ module Errors = struct
     let message () = str in
     let loc = if start.pos_cnum = -1 then
       Region.make
-        ~start: Pos.min
+        ~start:(Pos.min ~file:source)
         ~stop:(Pos.from_byte stop)
     else
       Region.make

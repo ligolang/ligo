@@ -1,48 +1,10 @@
 open Trace
 
-(*module Parser = Parser_pascaligo.Parser*)
-(*module ParserLog = Parser_pascaligo.ParserLog*)
 module AST = Parser_pascaligo.AST
-module ParErr = Parser_pascaligo.ParErr
 module LexToken = Parser_pascaligo.LexToken
 module Lexer = Lexer.Make(LexToken)
 module Scoping = Parser_pascaligo.Scoping
-module SSet = Utils.String.Set
-
-(* Mock options. TODO: Plug in cmdliner. *)
-
-let pre_options =
-  EvalOpt.make
-    ~libs:[]
-    ~verbose:SSet.empty
-    ~offsets:true
-    ~mode:`Point
-    ~cmd:EvalOpt.Quiet
-    ~mono:true (* Monolithic API of Menhir for now *)
-(*  ~input:None *)
-(*  ~expr:true  *)
-
-module Parser =
-  struct
-    type ast  = AST.t
-    type expr = AST.expr
-    include Parser_pascaligo.Parser
-  end
-
-module ParserLog =
-  struct
-    type ast  = AST.t
-    type expr = AST.expr
-    include Parser_pascaligo.ParserLog
-  end
-
-module PreUnit = ParserUnit.Make (Lexer)(AST)(Parser)(ParErr)(ParserLog)
-module Front   = ParserAPI.Make (Lexer)(Parser)(ParErr)
-
-let issue_error point =
-  let error = Front.format_error ~offsets:true (* TODO: CLI *)
-                                 `Point (* TODO: CLI *) point
-  in Stdlib.Error error
+module Parser = Parser_pascaligo.Parser
 
 module Errors =
   struct
@@ -103,14 +65,6 @@ module Errors =
          fun () -> Format.asprintf "%a" Location.pp_lift @@ loc)]
       in error ~data title message
 
-    let detached_attributes (attrs: AST.attributes) =
-      let title () = "detached attributes" in
-      let message () = "" in
-      let data = [
-      ("location",
-       fun () -> Format.asprintf "%a" Location.pp_lift @@ attrs.region)]
-      in error ~data title message
-
     let parser_error source (start: Lexing.position)
                      (stop: Lexing.position) lexbuf =
       let title () = "parser error" in
@@ -127,7 +81,8 @@ module Errors =
           file in
       let loc =
         if start.pos_cnum = -1 then
-          Region.make ~start: Pos.min ~stop:(Pos.from_byte stop)
+          Region.make
+            ~start:(Pos.min ~file:source) ~stop:(Pos.from_byte stop)
         else
           Region.make ~start:(Pos.from_byte start)
                       ~stop:(Pos.from_byte stop) in
@@ -167,14 +122,6 @@ let parse (parser: 'a parser) source lexbuf =
         fail @@ duplicate_variant name
     | Scoping.Error (Reserved_name name) ->
         fail @@ reserved_name name
-    | Scoping.Error (Detached_attributes attrs) ->
-        fail @@ detached_attributes attrs
-    | Parser.Error ->
-        let start = Lexing.lexeme_start_p lexbuf in
-        let end_ = Lexing.lexeme_end_p lexbuf in
-        fail @@ (parser_error source start end_ lexbuf)
-    | Lexer.Error e ->
-        fail @@ lexer_error e
     | _ ->
         let () = Printexc.print_backtrace Pervasives.stdout in
         let start = Lexing.lexeme_start_p lexbuf in
@@ -198,6 +145,7 @@ let parse_file (source: string) : AST.t result =
   let lexbuf = Lexing.from_channel channel in
   parse (Parser.contract) source lexbuf
 
+(*
 let parse_file' (source: string) : AST.t result =
   let module IO =
     struct
@@ -208,6 +156,7 @@ let parse_file' (source: string) : AST.t result =
   match Unit.parse Unit.parse_contract with
     Ok ast -> ok ast
   | Error error -> failwith "TODO" (* fail @@ parser_or_lexer_error error *)
+ *)
 
 let parse_string (s:string) : AST.t result =
   let lexbuf = Lexing.from_string s in

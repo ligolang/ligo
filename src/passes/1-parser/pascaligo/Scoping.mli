@@ -6,7 +6,6 @@ type t =
 | Duplicate_variant   of AST.variable
 | Non_linear_pattern  of AST.variable
 | Duplicate_field     of AST.variable
-| Detached_attributes of AST.attributes
 
 type error = t
 

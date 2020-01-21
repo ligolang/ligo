@@ -120,7 +120,7 @@ let ghost = make ~start:Pos.ghost ~stop:Pos.ghost
 
 let wrap_ghost value = {value ; region = ghost}
 
-let min = make ~start:Pos.min ~stop:Pos.min
+let min ~file = make ~start:(Pos.min ~file) ~stop:(Pos.min ~file)
 
 (* Comparisons *)
 
