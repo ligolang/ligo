@@ -430,7 +430,7 @@ fun_expr:
     | EUnit u -> PUnit u
     | ETuple { value; region } -> 
         PTuple { value = Utils.nsepseq_map arg_to_pattern value; region}
-    | EAnnot {region; value = {inside = ETuple _ as t, colon, typ; _}} -> 
+    | EAnnot {region; value = {inside = t, colon, typ; _}} -> 
         let value = { pattern = arg_to_pattern t; colon; type_expr = typ} in
         PPar {
           value = {

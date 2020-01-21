@@ -1943,13 +1943,15 @@ let type_tuple_destruct () : unit result =
 
 let tuple_param_destruct () : unit result =
   let%bind program = mtype_file "./contracts/tuple_param_destruct.mligo" in
-  let%bind () = expect_eq program "sum" (e_tuple [e_int 10; e_int 10]) (e_int 20)
-  in ok ()
+  let%bind () = expect_eq program "sum" (e_tuple [e_int 20; e_int 10]) (e_int 10) in
+  let%bind () = expect_eq program "parentheses" (e_tuple [e_int 20; e_int 10]) (e_int 10) in
+  ok ()
 
 let tuple_param_destruct_religo () : unit result =
   let%bind program = retype_file "./contracts/tuple_param_destruct.religo" in
-  let%bind () = expect_eq program "sum" (e_tuple [e_int 10; e_int 10]) (e_int 20)
-  in ok ()
+  let%bind () = expect_eq program "sum" (e_tuple [e_int 20; e_int 10]) (e_int 10) in
+  let%bind () = expect_eq program "parentheses" (e_tuple [e_int 20; e_int 10]) (e_int 10) in
+  ok ()
 
 let let_in_multi_bind () : unit result =
   let%bind program = mtype_file "./contracts/let_in_multi_bind.mligo" in

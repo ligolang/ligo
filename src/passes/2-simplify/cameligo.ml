@@ -179,6 +179,10 @@ let rec tuple_pattern_to_typed_vars : Raw.pattern -> _ = fun pattern ->
   | Raw.PVar _ -> bind_list [pattern_to_typed_var pattern]
   | other -> (fail @@ wrong_pattern "parenthetical, tuple, or variable" other)
 
+let rec unpar_pattern : Raw.pattern -> Raw.pattern = function
+  | PPar p -> unpar_pattern p.value.inside
+  | _ as p -> p
+
 let rec simpl_type_expression : Raw.type_expr -> type_expression result = fun te ->
   trace (simple_info "simplifying this type expression...") @@
   match te with
@@ -541,7 +545,8 @@ and simpl_fun lamb' : expr result =
         (match pt with
         | Raw.PTyped pt ->
           begin
-          match pt.value.pattern with
+          let pt_pattern = unpar_pattern pt.value.pattern in
+          match pt_pattern with
           | Raw.PVar _ -> params
           | Raw.PTuple _ ->
             [Raw.PTyped
@@ -581,10 +586,10 @@ and simpl_fun lamb' : expr result =
     match destruct with (* Handle tuple parameter destructuring *)
     (* In this section we create a let ... in that binds the original parameters *)
     | Raw.PPar pp ->
-      (match pp.value.inside with
+      (match unpar_pattern pp.value.inside with
        | Raw.PTyped pt ->
          let vars = pt.value in
-         (match vars.pattern with
+         (match unpar_pattern vars.pattern with
           | PTuple vars ->
             let let_in_binding: Raw.let_binding =
               {binders = (PTuple vars, []) ;
