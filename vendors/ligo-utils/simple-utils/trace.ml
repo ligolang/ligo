@@ -701,6 +701,9 @@ let bind_fold_map_pair f acc (a, b) =
 let bind_map_triple f (a, b, c) =
   bind_and3 (f a, f b, f c)
 
+let bind_list_cons v lst =
+  lst >>? fun lst ->
+  ok (v::lst)
 
 (**
    Wraps a call that might trigger an exception in a result.

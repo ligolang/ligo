@@ -1344,8 +1344,8 @@ and simpl_declaration_list declarations :
       let%bind type_expression = simpl_type_expression type_expr in
       let new_decl =
         Declaration_type (Var.of_name name.value, type_expression) in
-      let res = ok @@ Location.wrap ~loc new_decl
-      in hook (res::acc) declarations
+      let res = Location.wrap ~loc new_decl in
+      hook (bind_list_cons res acc) declarations
   | ConstDecl decl :: declarations ->
       let simpl_const_decl =
         fun {name;const_type; init; attributes} ->
@@ -1362,9 +1362,9 @@ and simpl_declaration_list declarations :
             Declaration_constant
               (Var.of_name name.value, type_annotation, inline, expression)
           in ok new_decl in
-      let res =
+      let%bind res =
         bind_map_location simpl_const_decl (Location.lift_region decl)
-      in hook (res::acc) declarations
+      in hook (bind_list_cons res acc) declarations
   | FunDecl fun_decl :: declarations ->
       let decl, loc = r_split fun_decl in
       let%bind ((name, ty_opt), expr) = simpl_fun_decl ~loc decl in
@@ -1376,9 +1376,10 @@ and simpl_declaration_list declarations :
             |> List.exists (fun Region.{value; _} -> value = "\"inline\"") in
       let new_decl =
         Declaration_constant (name, ty_opt, inline, expr) in
-      let res = ok @@ Location.wrap ~loc new_decl
-      in hook (res::acc) declarations
-  in bind_list @@ hook [] (List.rev declarations)
+      let res = Location.wrap ~loc new_decl in
+      hook (bind_list_cons res acc) declarations
+  in
+  hook (ok @@ []) (List.rev declarations)
 
 let simpl_program : Raw.ast -> program result =
   fun t -> simpl_declaration_list @@ nseq_to_list t.decl
