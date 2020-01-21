@@ -36,7 +36,7 @@ module Errors = struct
     ] in
     error ~data title message
 
-  let unsuppported_let_in_function (patterns : Raw.pattern list) =
+  let unsupported_let_in_function (patterns : Raw.pattern list) =
     let title () = "unsupported 'let ... in' function" in
     let message () = "defining functions via 'let ... in' is not supported yet" in
     let patterns_loc =
@@ -354,7 +354,7 @@ let rec simpl_expression :
 
       (* let f p1 ps... = rhs in body *)
       | (f, p1 :: ps) ->
-        fail @@ unsuppported_let_in_function (f :: p1 :: ps)
+        fail @@ unsupported_let_in_function (f :: p1 :: ps)
       end
   | Raw.EAnnot a ->
       let Raw.{inside=expr, _, type_expr; _}, loc = r_split a in
