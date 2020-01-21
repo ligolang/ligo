@@ -124,7 +124,7 @@ let check_signature = (param: (key, signature, bytes)) : bool => {
 Often you want to get the address of the contract being executed. You can do it with
 `self_address`.
 
-> ⚠️ Due to limitations in Michelson, self_address is only allowed in top-level expressions. Using it in a function will cause an error.
+> ⚠️ Due to limitations in Michelson, self_address in a contract is only allowed at the entry-point level. Using it in a utility function will cause an error.
 
 <!--DOCUSAURUS_CODE_TABS-->
 
