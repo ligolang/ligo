@@ -12,7 +12,7 @@ Michelson provides the `PACK` and `UNPACK` instructions for data serialization.
 `PACK` converts Michelson data structures to a binary format, and `UNPACK`
 reverses it. This functionality can be accessed from within LIGO.
 
-> ⚠️ An `UNPACK` isn't *quite* an `eval`, but it should be kept in mind that if you're deserializing untrusted input certain types could be problematic. If you deserialize an `operation` from an untrusted source and then execute it, [you are running eval on user input](https://nedbatchelder.com/blog/201206/eval_really_is_dangerous.html).
+> ⚠️ `PACK` and `UNPACK` are features of Michelson that are intended to be used by people that really know what they're doing. There are several failure cases (such as `UNPACK`ing a lambda from an untrusted source), most of which are beyond the scope of this document. Don't use these functions without doing your homework first.
 
 <!--DOCUSAURUS_CODE_TABS-->
 
@@ -119,3 +119,28 @@ let check_signature = (param: (key, signature, bytes)) : bool => {
 
 <!--END_DOCUSAURUS_CODE_TABS-->
  
+## Getting The Contract's Own Address
+
+Often you want to get the address of the contract being executed. You can do it with
+`self_address`.
+
+> ⚠️ Due to limitations in Michelson, self_address is only allowed in top-level expressions. Using it in a function will cause an error.
+
+<!--DOCUSAURUS_CODE_TABS-->
+
+<!--PascaLIGO-->
+```pascaligo
+const current_addr : address = self_address;
+```
+
+<!--CameLIGO-->
+```cameligo
+let current_addr : address = Current.self_address
+```
+
+<!--ReasonLIGO-->
+```reasonligo
+let current_addr : address = Current.self_address;
+```
+
+<!--END_DOCUSAURUS_CODE_TABS-->
