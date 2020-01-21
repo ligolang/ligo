@@ -250,6 +250,11 @@ let betas : bool ref -> expression -> expression =
   fun changed ->
   map_expression (beta changed)
 
+let contract_check =
+  let all = [Michelson_restrictions.self_in_lambdas] in
+  let all_e = List.map Helpers.map_sub_level_expression all in
+  bind_chain all_e
+
 let rec all_expression : expression -> expression =
   fun e ->
   let changed = ref false in

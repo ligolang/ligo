@@ -2,6 +2,8 @@ open Cli_expect
 
 let contract basename =
   "../../test/contracts/" ^ basename
+let bad_contract basename =
+  "../../test/contracts/negative/" ^ basename
 
 let%expect_test _ =
   run_ligo_good [ "measure-contract" ; contract "coase.ligo" ; "main" ] ;
@@ -1024,3 +1026,15 @@ let%expect_test _ =
   [%expect {|
     failwith("This contract always fails") |}]
 
+let%expect_test _ =
+  run_ligo_bad [ "compile-contract" ; bad_contract "self_in_lambda.mligo" ; "main" ] ;
+  [%expect {|
+    ligo: Wrong SELF_ADDRESS location: SELF_ADDRESS is only allowed at top-level
+
+     If you're not sure how to fix this error, you can
+     do one of the following:
+
+    * Visit our documentation: https://ligolang.org/docs/intro/what-and-why/
+    * Ask a question on our Discord: https://discord.gg/9rhYaEt
+    * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
+    * Check the changelog by running 'ligo changelog' |}]
