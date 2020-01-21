@@ -163,3 +163,11 @@ let rec map_expression : mapper -> expression -> expression result = fun f e ->
       let%bind updates = bind_map_list (fun (p,e) -> let%bind e = self e in ok(p,e)) updates in
       return @@ E_update(r,updates)
   )
+
+let map_sub_level_expression : mapper -> expression -> expression result = fun f e ->
+  match e.content with
+  | E_closure {binder ; body} ->
+    let%bind body = map_expression f body in
+    let content = E_closure {binder; body} in
+    ok @@ { e with content }
+  | _ -> ok e

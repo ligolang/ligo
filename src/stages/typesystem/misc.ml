@@ -78,23 +78,37 @@ module Substitution = struct
         | T.T_constant (type_name) ->
           let%bind type_name = s_type_name_constant ~v ~expr type_name in
           ok @@ T.T_constant (type_name)
-        | T.T_variable _ -> failwith "TODO: T_variable"
-        | T.T_operator _ -> failwith "TODO: T_operator"
+        | T.T_variable variable ->
+           if Var.equal variable v
+           then ok @@ expr
+           else ok @@ T.T_variable variable
+        | T.T_operator (type_name_and_args) ->
+          let bind_map_type_operator = Stage_common.Misc.bind_map_type_operator in (* TODO: write T.Misc.bind_map_type_operator, but it doesn't work *)
+          let%bind type_name_and_args = bind_map_type_operator (s_type_value ~v ~expr) type_name_and_args in
+          ok @@ T.T_operator type_name_and_args
         | T.T_arrow _ ->
           let _TODO = (v, expr) in
           failwith "TODO: T_function"
 
-    and s_type_expression ~v ~expr : Ast_simplified.type_expression w = fun {type_expression'} ->
+    and s_type_expression' ~v ~expr : _ Ast_simplified.type_expression' w = fun type_expression' ->
       match type_expression' with
-        | Ast_simplified.T_tuple _ -> failwith "TODO: subst: unimplemented case s_type_expression"
-        | Ast_simplified.T_sum _ -> failwith "TODO: subst: unimplemented case s_type_expression"
-        | Ast_simplified.T_record _ -> failwith "TODO: subst: unimplemented case s_type_expression"
-        | Ast_simplified.T_arrow (_, _) -> failwith "TODO: subst: unimplemented case s_type_expression"
-        | Ast_simplified.T_variable _ -> failwith "TODO: subst: unimplemented case s_type_expression"
-        | Ast_simplified.T_operator _ -> failwith "TODO: subst: unimplemented case s_type_expression"
-        | Ast_simplified.T_constant _ ->
-          let _TODO = (v, expr) in
-          failwith "TODO: subst: unimplemented case s_type_expression"
+        | Ast_simplified.T_tuple _ -> failwith "TODO: subst: unimplemented case s_type_expression tuple"
+        | Ast_simplified.T_sum _ -> failwith "TODO: subst: unimplemented case s_type_expression sum"
+        | Ast_simplified.T_record _ -> failwith "TODO: subst: unimplemented case s_type_expression record"
+        | Ast_simplified.T_arrow (_, _) -> failwith "TODO: subst: unimplemented case s_type_expression arrow"
+        | Ast_simplified.T_variable _ -> failwith "TODO: subst: unimplemented case s_type_expression variable"
+        | Ast_simplified.T_operator op ->
+           let%bind op =
+             Stage_common.Misc.bind_map_type_operator (* TODO: write Ast_simplified.Misc.type_operator_name *)
+               (s_type_expression ~v ~expr)
+               op in
+           ok @@ Ast_simplified.T_operator op
+        | Ast_simplified.T_constant constant ->
+           ok @@ Ast_simplified.T_constant constant
+
+    and s_type_expression ~v ~expr : Ast_simplified.type_expression w = fun {type_expression'} ->
+      let%bind type_expression' = s_type_expression' ~v ~expr type_expression' in
+      ok @@ Ast_simplified.{type_expression'}
 
     and s_type_value ~v ~expr : T.type_value w = fun { type_value'; simplified } ->
       let%bind type_value' = s_type_value' ~v ~expr type_value' in

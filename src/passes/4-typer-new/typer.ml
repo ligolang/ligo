@@ -956,12 +956,41 @@ let type_program_returns_state (p:I.program) : (environment * Solver.state * O.p
 
 (* module TSMap = TMap(Solver.TypeVariable) *)
 
+(* let c_tag_to_string : Solver.Core.constant_tag -> string = function
+ *   | Solver.Core.C_arrow     -> "arrow"
+ *   | Solver.Core.C_option    -> "option"
+ *   | Solver.Core.C_tuple     -> "tuple"
+ *   | Solver.Core.C_record    -> failwith "record"
+ *   | Solver.Core.C_variant   -> failwith "variant"
+ *   | Solver.Core.C_map       -> "map"
+ *   | Solver.Core.C_big_map   -> "big"
+ *   | Solver.Core.C_list      -> "list"
+ *   | Solver.Core.C_set       -> "set"
+ *   | Solver.Core.C_unit      -> "unit"
+ *   | Solver.Core.C_bool      -> "bool"
+ *   | Solver.Core.C_string    -> "string"
+ *   | Solver.Core.C_nat       -> "nat"
+ *   | Solver.Core.C_mutez     -> "mutez"
+ *   | Solver.Core.C_timestamp -> "timestamp"
+ *   | Solver.Core.C_int       -> "int"
+ *   | Solver.Core.C_address   -> "address"
+ *   | Solver.Core.C_bytes     -> "bytes"
+ *   | Solver.Core.C_key_hash  -> "key_hash"
+ *   | Solver.Core.C_key       -> "key"
+ *   | Solver.Core.C_signature -> "signature"
+ *   | Solver.Core.C_operation -> "operation"
+ *   | Solver.Core.C_contract  -> "contract"
+ *   | Solver.Core.C_chain_id  -> "chain_id" *)
+
 let type_program (p : I.program) : (O.program * Solver.state) result =
   let%bind (env, state, program) = type_program_returns_state p in
   let subst_all =
     let assignments = state.structured_dbs.assignments in
     let aux (v : I.type_variable) (expr : Solver.c_constructor_simpl) (p:O.program result) =
       let%bind p = p in
+      let Solver.{ tv ; c_tag ; tv_list } = expr in
+      let () = ignore tv (* I think there is an issue where the tv is stored twice (as a key and in the element itself) *) in
+      let%bind (expr : O.type_value') = Typesystem.Core.type_expression'_of_simple_c_constant (c_tag , (List.map (fun s -> O.{ type_value' = T_variable s ; simplified = None }) tv_list)) in
       Typesystem.Misc.Substitution.Pattern.program ~p ~v ~expr in
     (* let p = TSMap.bind_fold_Map aux program assignments in *) (* TODO: Module magic: this does not work *)
     let p = Solver.TypeVariableMap.fold aux assignments (ok program) in

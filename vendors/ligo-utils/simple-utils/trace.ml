@@ -718,6 +718,14 @@ let bind_fold_map_pair f acc (a, b) =
 let bind_map_triple f (a, b, c) =
   bind_and3 (f a, f b, f c)
 
+let rec bind_chain : ('a -> 'a result) list -> 'a -> 'a result = fun fs x ->
+  match fs with
+  | [] -> ok x
+  | hd :: tl -> (
+      let aux : 'a -> 'a result = fun x -> bind (bind_chain tl) (hd x) in
+      bind aux (ok x)
+    )
+
 
 (**
    Wraps a call that might trigger an exception in a result.
