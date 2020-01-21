@@ -48,7 +48,7 @@ let buy_id () =
   in
   let new_addr = first_owner in
   let options = Proto_alpha_utils.Memory_proto_alpha.make_options
-      ~payer:first_contract
+      ~sender:first_contract
       ~amount:(Memory_proto_alpha.Protocol.Alpha_context.Tez.one) ()
   in
   let new_website = e_bytes_string "ligolang.org" in
@@ -81,7 +81,7 @@ let buy_id_sender_addr () =
   in
   let new_addr = first_owner in
   let options = Proto_alpha_utils.Memory_proto_alpha.make_options
-      ~payer:first_contract
+      ~sender:first_contract
       ~amount:(Memory_proto_alpha.Protocol.Alpha_context.Tez.one) ()
   in
   let new_website = e_bytes_string "ligolang.org" in
@@ -115,7 +115,7 @@ let buy_id_wrong_amount () =
   in
   let new_addr = first_owner in
   let options = Proto_alpha_utils.Memory_proto_alpha.make_options
-      ~payer:first_contract
+      ~sender:first_contract
       ~amount:(Memory_proto_alpha.Protocol.Alpha_context.Tez.fifty_cents) ()
   in
   let param = e_pair owner_website (e_some (e_address new_addr)) in
@@ -134,7 +134,7 @@ let update_details_owner () =
   in
   let new_addr = first_owner in
   let options = Proto_alpha_utils.Memory_proto_alpha.make_options
-      ~payer:first_contract
+      ~sender:first_contract
       ~amount:(Memory_proto_alpha.Protocol.Alpha_context.Tez.zero) 
       ()
   in
@@ -175,7 +175,7 @@ let update_details_controller () =
   in
   let new_addr = first_owner in
   let options = Proto_alpha_utils.Memory_proto_alpha.make_options
-      ~payer:first_contract
+      ~sender:first_contract
       ~amount:(Memory_proto_alpha.Protocol.Alpha_context.Tez.zero)
       ()
   in
@@ -217,7 +217,7 @@ let update_details_nonexistent () =
   in
   let new_addr = first_owner in
   let options = Proto_alpha_utils.Memory_proto_alpha.make_options
-      ~payer:first_contract
+      ~sender:first_contract
       ~amount:(Memory_proto_alpha.Protocol.Alpha_context.Tez.zero)
       ()
   in
@@ -284,7 +284,7 @@ let update_details_unchanged () =
   in
   let new_addr = first_owner in
   let options = Proto_alpha_utils.Memory_proto_alpha.make_options
-      ~payer:first_contract
+      ~sender:first_contract
       ~amount:(Memory_proto_alpha.Protocol.Alpha_context.Tez.zero)
       ()
   in
@@ -316,7 +316,7 @@ let update_owner () =
   in
   let new_addr = first_owner in
   let options = Proto_alpha_utils.Memory_proto_alpha.make_options
-      ~payer:first_contract
+      ~sender:first_contract
       ~amount:(Memory_proto_alpha.Protocol.Alpha_context.Tez.zero)
       ()
   in
@@ -355,7 +355,7 @@ let update_owner_nonexistent () =
   in
   let new_addr = first_owner in
   let options = Proto_alpha_utils.Memory_proto_alpha.make_options
-      ~payer:first_contract
+      ~sender:first_contract
       ~amount:(Memory_proto_alpha.Protocol.Alpha_context.Tez.zero)
       ()
   in
@@ -386,7 +386,7 @@ let update_owner_wrong_addr () =
   in
   let new_addr = first_owner in
   let options = Proto_alpha_utils.Memory_proto_alpha.make_options
-      ~payer:first_contract
+      ~sender:first_contract
       ~amount:(Memory_proto_alpha.Protocol.Alpha_context.Tez.zero)
       ()
   in
@@ -416,7 +416,7 @@ let skip () =
   in
   let new_addr = first_owner in
   let options = Proto_alpha_utils.Memory_proto_alpha.make_options
-      ~payer:first_contract
+      ~sender:first_contract
       ~amount:(Memory_proto_alpha.Protocol.Alpha_context.Tez.one) ()
   in
   let new_website = e_bytes_string "ligolang.org" in
@@ -450,7 +450,7 @@ let skip_wrong_amount () =
   in
   let new_addr = first_owner in
   let options = Proto_alpha_utils.Memory_proto_alpha.make_options
-      ~payer:first_contract
+      ~sender:first_contract
       ~amount:(Memory_proto_alpha.Protocol.Alpha_context.Tez.fifty_cents) ()
   in
   let new_website = e_bytes_string "ligolang.org" in

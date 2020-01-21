@@ -204,8 +204,8 @@ let transfer () =
     in
     let%bind () =
       let amount = Memory_proto_alpha.Protocol.Alpha_context.Tez.zero in
-      let payer = first_contract in
-      let options = Proto_alpha_utils.Memory_proto_alpha.make_options ~amount ~payer () in
+      let source = first_contract in
+      let options = Proto_alpha_utils.Memory_proto_alpha.make_options ~amount ~source () in
       expect_eq_n_strict_pos_small ~options program "transfer_single" make_input make_expected in
     ok ()
   in
@@ -234,8 +234,8 @@ let sell () =
     in
     let%bind () =
       let amount = Memory_proto_alpha.Protocol.Alpha_context.Tez.zero in
-      let payer = first_contract in
-      let options = Proto_alpha_utils.Memory_proto_alpha.make_options ~amount ~payer () in
+      let source = first_contract in
+      let options = Proto_alpha_utils.Memory_proto_alpha.make_options ~amount ~source () in
       expect_n_strict_pos_small ~options program "sell_single" make_input make_expecter in
     ok ()
   in

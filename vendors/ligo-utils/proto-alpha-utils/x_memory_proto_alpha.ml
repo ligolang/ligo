@@ -1067,9 +1067,9 @@ type options = {
 let make_options
     ?(tezos_context = dummy_environment.tezos_context)
     ?(predecessor_timestamp = dummy_environment.tezos_context.predecessor_timestamp)
-    ?(source = (List.nth dummy_environment.identities 0).implicit_contract)
+    ?(sender = (List.nth dummy_environment.identities 0).implicit_contract)
     ?(self = (List.nth dummy_environment.identities 0).implicit_contract)
-    ?(payer = (List.nth dummy_environment.identities 1).implicit_contract)
+    ?(source = (List.nth dummy_environment.identities 1).implicit_contract)
     ?(amount = Alpha_context.Tez.one)
     ?(chain_id = Environment.Chain_id.zero)
     ()
@@ -1077,9 +1077,10 @@ let make_options
   let tezos_context = { tezos_context with predecessor_timestamp } in
   {
     tezos_context ;
-    source ;
+    (* yep *)
+    source = sender ;
+    payer = source ;
     self ;
-    payer ;
     amount ;
     chain_id ;
   }
