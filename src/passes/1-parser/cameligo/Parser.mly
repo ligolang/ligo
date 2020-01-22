@@ -129,22 +129,22 @@ type_decl:
     in {region; value} }
 
 type_expr:
-  cartesian | sum_type | record_type { $1 }
-
-cartesian:
-  fun_type { $1 }
-| fun_type "*" nsepseq(fun_type,"*") {
-    let value  = Utils.nsepseq_cons $1 $2 $3 in
-    let region = nsepseq_to_region type_expr_to_region value
-    in TProd {region; value} }
+  fun_type | sum_type | record_type { $1 }
 
 fun_type:
-  core_type { $1 }
-| core_type "->" fun_type {
+  cartesian { $1 }
+| cartesian "->" fun_type {
     let start  = type_expr_to_region $1
     and stop   = type_expr_to_region $3 in
     let region = cover start stop in
     TFun {region; value=$1,$2,$3} }
+
+cartesian:
+  core_type { $1 }
+| core_type "*" nsepseq(core_type,"*") {
+    let value  = Utils.nsepseq_cons $1 $2 $3 in
+    let region = nsepseq_to_region type_expr_to_region value
+    in TProd {region; value} }
 
 core_type:
   type_name      { TVar $1 }

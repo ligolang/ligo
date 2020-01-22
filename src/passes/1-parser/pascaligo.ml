@@ -145,19 +145,6 @@ let parse_file (source: string) : AST.t result =
   let lexbuf = Lexing.from_channel channel in
   parse (Parser.contract) source lexbuf
 
-(*
-let parse_file' (source: string) : AST.t result =
-  let module IO =
-    struct
-      let ext = "ligo"
-      let options = pre_options ~input:(Some source) ~expr:false
-    end in
-  let module Unit = PreUnit(IO) in
-  match Unit.parse Unit.parse_contract with
-    Ok ast -> ok ast
-  | Error error -> failwith "TODO" (* fail @@ parser_or_lexer_error error *)
- *)
-
 let parse_string (s:string) : AST.t result =
   let lexbuf = Lexing.from_string s in
   parse (Parser.contract) "" lexbuf

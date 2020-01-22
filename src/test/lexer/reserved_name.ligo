@@ -1,1 +1,1 @@
-let args = 1;
+let arguments = 1;
