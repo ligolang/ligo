@@ -69,7 +69,7 @@ type t =
 | Mutez  of (string * Z.t) Region.reg
 | String of string Region.reg
 | Bytes  of (string * Hex.t) Region.reg
-| Attr2  of string Region.reg
+| Attr   of string Region.reg
 
   (* Keywords *)
 
@@ -147,6 +147,8 @@ let proj_token = function
     region,
     sprintf "Bytes (\"%s\", \"0x%s\")"
       s (Hex.show b)
+| Attr Region.{region; value} ->
+   region, sprintf "Attr \"%s\"" value
 | Begin region -> region, "Begin"
 | Else region -> region, "Else"
 | End region -> region, "End"
@@ -166,7 +168,6 @@ let proj_token = function
 | With region -> region, "With"
 | C_None  region -> region, "C_None"
 | C_Some  region -> region, "C_Some"
-| Attr2 Region.{region; value} -> region, sprintf "Attr2 %s" value
 | EOF region -> region, "EOF"
 
 let to_lexeme = function
@@ -205,6 +206,7 @@ let to_lexeme = function
 | Mutez i   -> fst i.Region.value
 | String s  -> String.escaped s.Region.value
 | Bytes b   -> fst b.Region.value
+| Attr a    -> a.Region.value
 
 | Begin _ -> "begin"
 | Else _  -> "else"
@@ -226,7 +228,7 @@ let to_lexeme = function
 
 | C_None  _ -> "None"
 | C_Some  _ -> "Some"
-| Attr2 a -> a.Region.value
+
 | EOF _ -> ""
 
 let to_string token ?(offsets=true) mode =
@@ -469,11 +471,10 @@ let mk_constr lexeme region =
 
 (* Attributes *)
 
-let mk_attr _lexeme _region = 
-  Error Invalid_attribute
-
-let mk_attr2 lexeme region = 
-  Ok (Attr2 { value = lexeme; region })
+let mk_attr header lexeme region =
+  if header = "[@" then
+    Error Invalid_attribute
+  else Ok (Attr Region.{value=lexeme; region})
 
 (* Predicates *)
 

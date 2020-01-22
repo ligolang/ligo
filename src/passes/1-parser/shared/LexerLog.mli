@@ -11,7 +11,8 @@ module type S =
 
     val trace :
       ?offsets:bool -> [`Byte | `Point] ->
-      file_path option -> EvalOpt.command -> unit
+      file_path option -> EvalOpt.command ->
+      (unit, string) Stdlib.result
   end
 
 module Make (Lexer: Lexer.S) : S with module Lexer = Lexer

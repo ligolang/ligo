@@ -18,6 +18,7 @@ val print_tokens      : state -> AST.t -> unit
 val print_path        : state -> AST.path -> unit
 val print_pattern     : state -> AST.pattern -> unit
 val print_instruction : state -> AST.instruction -> unit
+val print_expr        : state -> AST.expr -> unit
 
 (** {1 Printing tokens from the AST in a string} *)
 
@@ -30,6 +31,7 @@ val pattern_to_string :
 val instruction_to_string :
   offsets:bool -> mode:[`Point|`Byte] -> AST.instruction -> string
 
-(** {1 Pretty-printing of the AST} *)
+(** {1 Pretty-printing of AST nodes} *)
 
-val pp_ast : state -> AST.t -> unit
+val pp_ast  : state -> AST.t -> unit
+val pp_expr : state -> AST.expr -> unit

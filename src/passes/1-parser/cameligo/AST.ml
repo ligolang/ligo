@@ -21,15 +21,6 @@ open Utils
 
 type 'a reg = 'a Region.reg
 
-let rec last to_region = function
-    [] -> Region.ghost
-|  [x] -> to_region x
-| _::t -> last to_region t
-
-let nsepseq_to_region to_region (hd,tl) =
-  let reg (_, item) = to_region item in
-  Region.cover (to_region hd) (last reg tl)
-
 (* Keywords of OCaml *)
 
 type keyword   = Region.t
@@ -140,7 +131,7 @@ type t = {
 
 and ast = t
 
-and attributes = attribute list 
+and attributes = attribute list
 
 and declaration =
   Let      of (kwd_let * let_binding * attributes) reg
@@ -321,6 +312,7 @@ and comp_expr =
 | Neq   of neq   bin_op reg
 
 and record = field_assign reg ne_injection
+
 and projection = {
   struct_name : variable;
   selector    : dot;
@@ -344,6 +336,7 @@ and update = {
   updates : record reg;
   rbrace : rbrace;
 }
+
 and path =
   Name of variable
 | Path of projection reg
@@ -387,7 +380,16 @@ and cond_expr = {
   ifnot    : expr
 }
 
-(* Projecting regions of the input source code *)
+(* Projecting regions from some nodes of the AST *)
+
+let rec last to_region = function
+    [] -> Region.ghost
+|  [x] -> to_region x
+| _::t -> last to_region t
+
+let nsepseq_to_region to_region (hd,tl) =
+  let reg (_, item) = to_region item in
+  Region.cover (to_region hd) (last reg tl)
 
 let type_expr_to_region = function
   TProd {region; _}

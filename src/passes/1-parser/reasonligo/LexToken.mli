@@ -143,8 +143,7 @@ val mk_int    : lexeme -> Region.t -> (token,   int_err) result
 val mk_nat    : lexeme -> Region.t -> (token,   nat_err) result
 val mk_mutez  : lexeme -> Region.t -> (token,   int_err) result
 val mk_ident  : lexeme -> Region.t -> (token, ident_err) result
-val mk_attr   : lexeme -> Region.t -> (token,  attr_err) result
-val mk_attr2  : lexeme -> Region.t -> (token,  attr_err) result
+val mk_attr   : string -> lexeme -> Region.t -> (token,  attr_err) result
 val mk_sym    : lexeme -> Region.t -> (token,   sym_err) result
 val mk_kwd    : lexeme -> Region.t -> (token,   kwd_err) result
 val mk_string : lexeme -> Region.t -> token

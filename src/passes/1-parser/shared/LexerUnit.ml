@@ -1,20 +1,19 @@
 (* Functor to build a standalone LIGO lexer *)
 
-module type S =
+module type IO =
   sig
     val ext : string              (* LIGO file extension *)
     val options : EvalOpt.options (* CLI options *)
   end
 
-module Make (IO: S) (Lexer: Lexer.S) =
+module Make (IO: IO) (Lexer: Lexer.S) =
   struct
     open Printf
+    module SSet = Utils.String.Set
+
     (* Error printing and exception tracing *)
 
     let () = Printexc.record_backtrace true
-
-    let external_ text =
-      Utils.highlight (sprintf "External error: %s" text); exit 1
 
     (*  Preprocessing the input source and opening the input channels *)
 
@@ -29,7 +28,7 @@ module Make (IO: S) (Lexer: Lexer.S) =
     let prefix =
       match IO.options#input with
         None | Some "-" -> "temp"
-        | Some file ->  Filename.(file |> basename |> remove_extension)
+      | Some file ->  Filename.(file |> basename |> remove_extension)
 
     let suffix = ".pp" ^ IO.ext
 
@@ -42,24 +41,68 @@ module Make (IO: S) (Lexer: Lexer.S) =
     let cpp_cmd =
       match IO.options#input with
         None | Some "-" ->
-           sprintf "cpp -traditional-cpp%s - > %s"
-                          lib_path pp_input
-        | Some file ->
-           sprintf "cpp -traditional-cpp%s %s > %s"
-                          lib_path file pp_input
-
-    let () =
-      if Utils.String.Set.mem "cpp" IO.options#verbose
-      then eprintf "%s\n%!" cpp_cmd;
-      if Sys.command cpp_cmd <> 0 then
-        external_ (sprintf "the command \"%s\" failed." cpp_cmd)
+          sprintf "cpp -traditional-cpp%s - > %s"
+                  lib_path pp_input
+      | Some file ->
+          sprintf "cpp -traditional-cpp%s %s > %s"
+                  lib_path file pp_input
 
     (* Running the lexer on the input file *)
 
+    let scan () : (Lexer.token list, string) Stdlib.result =
+      (* Preprocessing the input *)
+
+      if SSet.mem "cpp" IO.options#verbose
+      then eprintf "%s\n%!" cpp_cmd
+      else ();
+
+      if Sys.command cpp_cmd <> 0 then
+        let msg =
+          sprintf "External error: the command \"%s\" failed." cpp_cmd
+        in Stdlib.Error msg
+      else
+        try
+          let Lexer.{read; buffer; close; _} =
+            Lexer.open_token_stream (Some pp_input) in
+          let close_all () = close (); close_out stdout in
+          let rec read_tokens tokens =
+            match read ~log:(fun _ _ -> ()) buffer with
+              token ->
+                if   Lexer.Token.is_eof token
+                then Stdlib.Ok (List.rev tokens)
+                else read_tokens (token::tokens)
+            | exception Lexer.Error error ->
+                let file =
+                  match IO.options#input with
+                    None | Some "-" -> false
+                  |         Some _  -> true in
+                let msg =
+                  Lexer.format_error ~offsets:IO.options#offsets
+                                     IO.options#mode ~file error
+                in Stdlib.Error msg in
+          let result = read_tokens []
+          in close_all (); result
+        with Sys_error msg -> close_out stdout; Stdlib.Error msg
+
+    (* Tracing the lexing (effectful) *)
+
     module Log = LexerLog.Make (Lexer)
 
-    let () = Log.trace ~offsets:IO.options#offsets
-                       IO.options#mode (Some pp_input)
-                       IO.options#cmd
+    let trace () : (unit, string) Stdlib.result =
+      (* Preprocessing the input *)
+
+      if SSet.mem "cpp" IO.options#verbose
+      then eprintf "%s\n%!" cpp_cmd
+      else ();
+
+      if Sys.command cpp_cmd <> 0 then
+        let msg =
+          sprintf "External error: the command \"%s\" failed." cpp_cmd
+        in Stdlib.Error msg
+      else
+        Log.trace ~offsets:IO.options#offsets
+                  IO.options#mode
+                  (Some pp_input)
+                  IO.options#cmd
 
   end

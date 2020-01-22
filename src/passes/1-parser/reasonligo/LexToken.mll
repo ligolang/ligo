@@ -453,11 +453,10 @@ let mk_constr lexeme region = mk_constr' lexeme region lexicon
 
 (* Attributes *)
 
-let mk_attr lexeme region = 
-  Ok (Attr { value = lexeme; region })
-
-let mk_attr2 _lexeme _region = 
-  Error Invalid_attribute
+let mk_attr header lexeme region =
+  if header = "[@" then
+    Ok (Attr Region.{value=lexeme; region})
+  else Error Invalid_attribute
 
 (* Predicates *)
 
