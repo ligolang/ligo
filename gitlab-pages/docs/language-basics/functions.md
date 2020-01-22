@@ -71,7 +71,7 @@ argument until every parameter is filled. This is useful because it means that
 CameLIGO can support [partial application](https://en.wikipedia.org/wiki/Partial_application).
 
 Currying is however *not* the preferred way to pass function arguments in CameLIGO.
-While this approach is faithful to the original OCaml, it's costlier in Michelson
+While this approach is faithful to the original OCaml, it is costlier in Michelson
 than naive function execution accepting multiple arguments. Instead for most
 functions with more than one parameter we should place the arguments in a
 [tuple](language-basics/sets-lists-touples.md) and pass the tuple in as a single
@@ -111,7 +111,7 @@ value.
 
 Functions without a name, also known as anonymous functions are useful in cases when you want to pass the function as an argument or assign it to a key in a record/map.
 
-Here's how to define an anonymous function assigned to a variable `increment`, with it's appropriate function type signature.
+Here's how to define an anonymous function assigned to a variable `increment`, with its appropriate function type signature.
 <!--DOCUSAURUS_CODE_TABS-->
 <!--Pascaligo-->
 ```pascaligo group=c

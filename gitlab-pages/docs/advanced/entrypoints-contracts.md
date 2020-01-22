@@ -62,7 +62,7 @@ Each entrypoint function receives two arguments:
 - `parameter` - this is the parameter received in the invocation operation
 - `storage` - this is the current (real) on-chain storage value
 
-Storage can only be modified by running the smart contract entrypoint, which is responsible for returning a list of operations, and a new storage at the end of it's execution.
+Storage can only be modified by running the smart contract entrypoint, which is responsible for returning a list of operations, and a new storage at the end of its execution.
 
 
 ## Built-in contract variables
