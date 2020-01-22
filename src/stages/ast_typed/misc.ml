@@ -1,5 +1,6 @@
 open Trace
 open Types
+include Stage_common.Misc
 
 module Errors = struct
   let different_kinds a b () =

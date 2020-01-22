@@ -705,6 +705,14 @@ let bind_list_cons v lst =
   lst >>? fun lst ->
   ok (v::lst)
 
+let rec bind_chain : ('a -> 'a result) list -> 'a -> 'a result = fun fs x ->
+  match fs with
+  | [] -> ok x
+  | hd :: tl -> (
+      let aux : 'a -> 'a result = fun x -> bind (bind_chain tl) (hd x) in
+      bind aux (ok x)
+    )
+
 (**
    Wraps a call that might trigger an exception in a result.
 *)

@@ -49,6 +49,39 @@ function main (const p : action ; const s : int) : (list(operation) * int) is
     | Decrement (n) -> s - n
     end)
 ```
+
+<!--CameLIGO-->
+```cameligo
+type action =
+| Increment of int
+| Decrement of int
+
+let main (p, s: action * int) : operation list * int =
+  let result =
+    match p with
+    | Increment n -> s + n
+    | Decrement n -> s - n
+  in
+  (([]: operation list), result)
+```
+
+<!--ReasonLIGO-->
+```reasonligo
+type action =
+| Increment(int)
+| Decrement(int);
+
+let main = (p_s: (action, int)) : (list(operation), int) => {
+  let p, s = p_s;
+  let result =
+    switch (p) {
+    | Increment(n) => s + n
+    | Decrement(n) => s - n
+    };
+  (([]: list(operation)), result);
+};
+```
+
 <!--END_DOCUSAURUS_CODE_TABS-->
 
 To dry-run the counter contract, we will use the `main` entrypoint, provide a variant parameter of `Increment(5)` and an initial storage value of `5`.

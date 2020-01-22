@@ -1,5 +1,5 @@
 ---
-id: sets-lists-touples
+id: sets-lists-tuples
 title: Sets, Lists, Tuples
 ---
 

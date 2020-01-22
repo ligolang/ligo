@@ -12,6 +12,17 @@ Each LIGO smart contract is essentially a single function, that has the followin
 ```
 (const parameter: my_type, const store: my_store_type): (list(operation), my_store_type)
 ```
+
+<!--CameLIGO-->
+```
+(parameter, store: my_type * my_store_type) : operation list * my_store_type
+```
+
+<!--ReasonLIGO-->
+```
+(parameter_store: (my_type, my_store_type)) : (list(operation), my_store_type)
+```
+
 <!--END_DOCUSAURUS_CODE_TABS-->
 
 This means that every smart contract needs at least one entrypoint function, here's an example:
@@ -26,6 +37,25 @@ type store is unit;
 function main(const parameter: parameter; const store: store): (list(operation) * store) is
     block { skip } with ((nil : list(operation)), store)
 ```
+
+<!--CameLIGO-->
+```cameligo group=a
+type parameter = unit
+type store = unit
+let main (parameter, store: parameter * store) : operation list * store =
+  (([]: operation list), store)
+```
+
+<!--ReasonLIGO-->
+```reasonligo group=a
+type parameter = unit;
+type store = unit;
+let main = (parameter_store: (parameter, store)) : (list(operation), store) => {
+  let parameter, store = parameter_store;
+  (([]: list(operation)), store);
+};
+```
+
 <!--END_DOCUSAURUS_CODE_TABS-->
 
 Each entrypoint function receives two arguments:
@@ -52,9 +82,30 @@ function main (const p : unit ; const s : unit) : (list(operation) * unit) is
       if amount > 0mutez then failwith("This contract does not accept tez") else skip
   } with ((nil : list(operation)), unit);
 ```
+
+<!--CameLIGO-->
+```cameligo group=b
+let main (p, s: unit * unit) : operation list * unit =
+  if amount > 0mutez
+  then (failwith "This contract does not accept tez": operation list * unit)
+  else (([]: operation list), unit)
+```
+
+<!--ReasonLIGO-->
+```reasonligo group=b
+let main = (p_s: (unit, unit)) : (list(operation), unit) => {
+  if (amount > 0mutez) {
+    (failwith("This contract does not accept tez"): (list(operation), unit));
+  }
+  else {
+    (([]: list(operation)), ());
+  };
+};
+```
+
 <!--END_DOCUSAURUS_CODE_TABS-->
 
-### Access control locking
+### Access Control
 
 This example shows how `sender` or `source` can be used to deny access to an entrypoint.
 
@@ -66,6 +117,28 @@ function main (const p : unit ; const s : unit) : (list(operation) * unit) is
   block {
       if source =/= owner then failwith("This address can't call the contract") else skip
   } with ((nil : list(operation)), unit);
+```
+
+<!--CameLIGO-->
+```cameligo group=c
+let owner: address = ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address)
+let main (p,s: unit * unit) : operation list * unit =
+  if source <> owner
+  then (failwith "This address can't call the contract": operation list * unit)
+  else (([]: operation list), ())
+```
+
+<!--ReasonLIGO-->
+```reasonligo group=c
+let owner: address = ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address);
+let main = (p_s: (unit, unit)) : (list(operation), unit) => {
+  if (source != owner) {
+    (failwith("This address can't call the contract"): (list(operation), unit));
+  }
+  else {
+    (([]: list(operation)), ());
+  };
+};
 ```
 <!--END_DOCUSAURUS_CODE_TABS-->
 

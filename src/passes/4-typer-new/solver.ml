@@ -729,94 +729,98 @@ let compare_simple_c_constant = function
   | C_arrow -> (function
       (* N/A -> 1 *)
       | C_arrow -> 0
-      | C_option | C_tuple | C_record | C_variant | C_map | C_big_map | C_list | C_set | C_unit | C_bool | C_string | C_nat | C_mutez | C_timestamp | C_int | C_address | C_bytes | C_key_hash | C_key | C_signature | C_operation | C_contract -> -1)
+      | C_option | C_tuple | C_record | C_variant | C_map | C_big_map | C_list | C_set | C_unit | C_bool | C_string | C_nat | C_mutez | C_timestamp | C_int | C_address | C_bytes | C_key_hash | C_key | C_signature | C_operation | C_contract | C_chain_id -> -1)
   | C_option -> (function
       | C_arrow -> 1
       | C_option -> 0
-      | C_tuple | C_record | C_variant | C_map | C_big_map | C_list | C_set | C_unit | C_bool | C_string | C_nat | C_mutez | C_timestamp | C_int | C_address | C_bytes | C_key_hash | C_key | C_signature | C_operation | C_contract -> -1)
+      | C_tuple | C_record | C_variant | C_map | C_big_map | C_list | C_set | C_unit | C_bool | C_string | C_nat | C_mutez | C_timestamp | C_int | C_address | C_bytes | C_key_hash | C_key | C_signature | C_operation | C_contract | C_chain_id -> -1)
   | C_tuple -> (function
       | C_arrow | C_option -> 1
       | C_tuple -> 0
-      | C_record | C_variant | C_map | C_big_map | C_list | C_set | C_unit | C_bool | C_string | C_nat | C_mutez | C_timestamp | C_int | C_address | C_bytes | C_key_hash | C_key | C_signature | C_operation | C_contract -> -1)
+      | C_record | C_variant | C_map | C_big_map | C_list | C_set | C_unit | C_bool | C_string | C_nat | C_mutez | C_timestamp | C_int | C_address | C_bytes | C_key_hash | C_key | C_signature | C_operation | C_contract | C_chain_id -> -1)
   | C_record -> (function
       | C_arrow | C_option | C_tuple -> 1
       | C_record -> 0
-      | C_variant | C_map | C_big_map | C_list | C_set | C_unit | C_bool | C_string | C_nat | C_mutez | C_timestamp | C_int | C_address | C_bytes | C_key_hash | C_key | C_signature | C_operation | C_contract -> -1)
+      | C_variant | C_map | C_big_map | C_list | C_set | C_unit | C_bool | C_string | C_nat | C_mutez | C_timestamp | C_int | C_address | C_bytes | C_key_hash | C_key | C_signature | C_operation | C_contract | C_chain_id -> -1)
   | C_variant -> (function
       | C_arrow | C_option | C_tuple | C_record -> 1
       | C_variant -> 0
-      | C_map | C_big_map | C_list | C_set | C_unit | C_bool | C_string | C_nat | C_mutez | C_timestamp | C_int | C_address | C_bytes | C_key_hash | C_key | C_signature | C_operation | C_contract -> -1)
+      | C_map | C_big_map | C_list | C_set | C_unit | C_bool | C_string | C_nat | C_mutez | C_timestamp | C_int | C_address | C_bytes | C_key_hash | C_key | C_signature | C_operation | C_contract | C_chain_id -> -1)
   | C_map -> (function
       | C_arrow | C_option | C_tuple | C_record | C_variant -> 1
       | C_map -> 0
-      | C_big_map | C_list | C_set | C_unit | C_bool | C_string | C_nat | C_mutez | C_timestamp | C_int | C_address | C_bytes | C_key_hash | C_key | C_signature | C_operation | C_contract -> -1)
+      | C_big_map | C_list | C_set | C_unit | C_bool | C_string | C_nat | C_mutez | C_timestamp | C_int | C_address | C_bytes | C_key_hash | C_key | C_signature | C_operation | C_contract | C_chain_id -> -1)
   | C_big_map -> (function
       | C_arrow | C_option | C_tuple | C_record | C_variant | C_map -> 1
       | C_big_map -> 0
-      | C_list | C_set | C_unit | C_bool | C_string | C_nat | C_mutez | C_timestamp | C_int | C_address | C_bytes | C_key_hash | C_key | C_signature | C_operation | C_contract -> -1)
+      | C_list | C_set | C_unit | C_bool | C_string | C_nat | C_mutez | C_timestamp | C_int | C_address | C_bytes | C_key_hash | C_key | C_signature | C_operation | C_contract | C_chain_id -> -1)
   | C_list -> (function
       | C_arrow | C_option | C_tuple | C_record | C_variant | C_map | C_big_map -> 1
       | C_list -> 0
-      | C_set | C_unit | C_bool | C_string | C_nat | C_mutez | C_timestamp | C_int | C_address | C_bytes | C_key_hash | C_key | C_signature | C_operation | C_contract -> -1)
+      | C_set | C_unit | C_bool | C_string | C_nat | C_mutez | C_timestamp | C_int | C_address | C_bytes | C_key_hash | C_key | C_signature | C_operation | C_contract | C_chain_id -> -1)
   | C_set -> (function
       | C_arrow | C_option | C_tuple | C_record | C_variant | C_map | C_big_map | C_list -> 1
       | C_set -> 0
-      | C_unit | C_bool | C_string | C_nat | C_mutez | C_timestamp | C_int | C_address | C_bytes | C_key_hash | C_key | C_signature | C_operation | C_contract -> -1)
+      | C_unit | C_bool | C_string | C_nat | C_mutez | C_timestamp | C_int | C_address | C_bytes | C_key_hash | C_key | C_signature | C_operation | C_contract | C_chain_id -> -1)
   | C_unit -> (function
       | C_arrow | C_option | C_tuple | C_record | C_variant | C_map | C_big_map | C_list | C_set -> 1
       | C_unit -> 0
-      | C_bool | C_string | C_nat | C_mutez | C_timestamp | C_int | C_address | C_bytes | C_key_hash | C_key | C_signature | C_operation | C_contract -> -1)
+      | C_bool | C_string | C_nat | C_mutez | C_timestamp | C_int | C_address | C_bytes | C_key_hash | C_key | C_signature | C_operation | C_contract | C_chain_id -> -1)
   | C_bool -> (function
       | C_arrow | C_option | C_tuple | C_record | C_variant | C_map | C_big_map | C_list | C_set | C_unit -> 1
       | C_bool -> 0
-      | C_string | C_nat | C_mutez | C_timestamp | C_int | C_address | C_bytes | C_key_hash | C_key | C_signature | C_operation | C_contract -> -1)
+      | C_string | C_nat | C_mutez | C_timestamp | C_int | C_address | C_bytes | C_key_hash | C_key | C_signature | C_operation | C_contract | C_chain_id -> -1)
   | C_string -> (function
       | C_arrow | C_option | C_tuple | C_record | C_variant | C_map | C_big_map | C_list | C_set | C_unit | C_bool -> 1
       | C_string -> 0
-      | C_nat | C_mutez | C_timestamp | C_int | C_address | C_bytes | C_key_hash | C_key | C_signature | C_operation | C_contract -> -1)
+      | C_nat | C_mutez | C_timestamp | C_int | C_address | C_bytes | C_key_hash | C_key | C_signature | C_operation | C_contract | C_chain_id -> -1)
   | C_nat -> (function
       | C_arrow | C_option | C_tuple | C_record | C_variant | C_map | C_big_map | C_list | C_set | C_unit | C_bool | C_string -> 1
       | C_nat -> 0
-      | C_mutez | C_timestamp | C_int | C_address | C_bytes | C_key_hash | C_key | C_signature | C_operation | C_contract -> -1)
+      | C_mutez | C_timestamp | C_int | C_address | C_bytes | C_key_hash | C_key | C_signature | C_operation | C_contract | C_chain_id -> -1)
   | C_mutez -> (function
       | C_arrow | C_option | C_tuple | C_record | C_variant | C_map | C_big_map | C_list | C_set | C_unit | C_bool | C_string | C_nat -> 1
       | C_mutez -> 0
-      | C_timestamp | C_int | C_address | C_bytes | C_key_hash | C_key | C_signature | C_operation | C_contract -> -1)
+      | C_timestamp | C_int | C_address | C_bytes | C_key_hash | C_key | C_signature | C_operation | C_contract | C_chain_id -> -1)
   | C_timestamp -> (function
       | C_arrow | C_option | C_tuple | C_record | C_variant | C_map | C_big_map | C_list | C_set | C_unit | C_bool | C_string | C_nat | C_mutez -> 1
       | C_timestamp -> 0
-      | C_int | C_address | C_bytes | C_key_hash | C_key | C_signature | C_operation | C_contract -> -1)
+      | C_int | C_address | C_bytes | C_key_hash | C_key | C_signature | C_operation | C_contract | C_chain_id -> -1)
   | C_int -> (function
       | C_arrow | C_option | C_tuple | C_record | C_variant | C_map | C_big_map | C_list | C_set | C_unit | C_bool | C_string | C_nat | C_mutez | C_timestamp -> 1
       | C_int -> 0
-      | C_address | C_bytes | C_key_hash | C_key | C_signature | C_operation | C_contract -> -1)
+      | C_address | C_bytes | C_key_hash | C_key | C_signature | C_operation | C_contract | C_chain_id -> -1)
   | C_address -> (function
       | C_arrow | C_option | C_tuple | C_record | C_variant | C_map | C_big_map | C_list | C_set | C_unit | C_bool | C_string | C_nat | C_mutez | C_timestamp | C_int -> 1
       | C_address -> 0
-      | C_bytes | C_key_hash | C_key | C_signature | C_operation | C_contract -> -1)
+      | C_bytes | C_key_hash | C_key | C_signature | C_operation | C_contract | C_chain_id -> -1)
   | C_bytes -> (function
       | C_arrow | C_option | C_tuple | C_record | C_variant | C_map | C_big_map | C_list | C_set | C_unit | C_bool | C_string | C_nat | C_mutez | C_timestamp | C_int | C_address -> 1
       | C_bytes -> 0
-      | C_key_hash | C_key | C_signature | C_operation | C_contract -> -1)
+      | C_key_hash | C_key | C_signature | C_operation | C_contract | C_chain_id -> -1)
   | C_key_hash -> (function
       | C_arrow | C_option | C_tuple | C_record | C_variant | C_map | C_big_map | C_list | C_set | C_unit | C_bool | C_string | C_nat | C_mutez | C_timestamp | C_int | C_address | C_bytes -> 1
       | C_key_hash -> 0
-      | C_key | C_signature | C_operation | C_contract -> -1)
+      | C_key | C_signature | C_operation | C_contract | C_chain_id -> -1)
   | C_key -> (function
       | C_arrow | C_option | C_tuple | C_record | C_variant | C_map | C_big_map | C_list | C_set | C_unit | C_bool | C_string | C_nat | C_mutez | C_timestamp | C_int | C_address | C_bytes | C_key_hash -> 1
       | C_key -> 0
-      | C_signature | C_operation | C_contract -> -1)
+      | C_signature | C_operation | C_contract | C_chain_id -> -1)
   | C_signature -> (function
       | C_arrow | C_option | C_tuple | C_record | C_variant | C_map | C_big_map | C_list | C_set | C_unit | C_bool | C_string | C_nat | C_mutez | C_timestamp | C_int | C_address | C_bytes | C_key_hash | C_key -> 1
       | C_signature -> 0
-      | C_operation | C_contract -> -1)
+      | C_operation | C_contract | C_chain_id -> -1)
   | C_operation -> (function
       | C_arrow | C_option | C_tuple | C_record | C_variant | C_map | C_big_map | C_list | C_set | C_unit | C_bool | C_string | C_nat | C_mutez | C_timestamp | C_int | C_address | C_bytes | C_key_hash | C_key | C_signature -> 1
       | C_operation -> 0
-      | C_contract -> -1)
+      | C_contract | C_chain_id -> -1)
   | C_contract -> (function
       | C_arrow | C_option | C_tuple | C_record | C_variant | C_map | C_big_map | C_list | C_set | C_unit | C_bool | C_string | C_nat | C_mutez | C_timestamp | C_int | C_address | C_bytes | C_key_hash | C_key | C_signature | C_operation -> 1
       | C_contract -> 0
+      | C_chain_id -> -1)
+  | C_chain_id -> (function
+      | C_arrow | C_option | C_tuple | C_record | C_variant | C_map | C_big_map | C_list | C_set | C_unit | C_bool | C_string | C_nat | C_mutez | C_timestamp | C_int | C_address | C_bytes | C_key_hash | C_key | C_signature | C_operation | C_contract -> 1
+      | C_chain_id -> 0
       (* N/A -> -1 *)
     )
 let rec compare_typeclass a b = compare_list (compare_list compare_type_value) a b

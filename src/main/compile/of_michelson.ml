@@ -5,10 +5,9 @@ open Trace
 module Errors = struct
 (*
   TODO: those errors should have been caught in the earlier stages on the ligo pipeline
-        Here, in case of contract not typechecking, we should write a warning with a "please report"
-        on stderr and print the ill-typed michelson code;
+  build_contract is a kind of security net
 *)
-  let title_type_check_msg () = "Invalid contract (This might be a compiler bug, please report) "
+  let title_type_check_msg () = "generated Michelson contract failed to typecheck"
   let bad_parameter c () =
     let message () =
       let code = Format.asprintf "%a" Michelson.pp c in
@@ -22,7 +21,7 @@ module Errors = struct
   let bad_contract c () =
     let message () =
       let code = Format.asprintf "%a" Michelson.pp c in
-      "bad contract type (contract entry point is expected to be of the form \"parameter * storage -> list(operation) * storage\"):\n"^code in
+      "bad contract type\n"^code in
     error title_type_check_msg message
   let unknown () =
     let message () =

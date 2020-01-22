@@ -138,6 +138,57 @@ let compile_file =
   let doc = "Subcommand: compile a contract." in
   (Term.ret term , Term.info ~doc cmdname)
 
+let print_cst = 
+  let f source_file syntax display_format = (
+    toplevel ~display_format @@
+    let%bind pp = Compile.Of_source.pretty_print source_file (Syntax_name syntax) in 
+    ok @@ Format.asprintf "%s \n" (Buffer.contents pp)
+  )
+  in
+  let term = Term.(const f $ source_file 0 $ syntax $ display_format) in
+  let cmdname = "print-cst" in 
+  let doc = "Subcommand: print the cst. Warning: intended for development of LIGO and can break at any time." in
+  (Term.ret term, Term.info ~doc cmdname)
+
+let print_ast = 
+  let f source_file syntax display_format  = (
+    toplevel ~display_format @@
+    let%bind simplified = Compile.Of_source.compile source_file (Syntax_name syntax) in
+    ok @@ Format.asprintf "%a\n" Compile.Of_simplified.pretty_print simplified    
+  )
+  in
+  let term = Term.(const f $ source_file 0 $ syntax $ display_format) in
+  let cmdname = "print-ast" in 
+  let doc = "Subcommand: print the ast. Warning: intended for development of LIGO and can break at any time." in
+  (Term.ret term, Term.info ~doc cmdname)
+
+let print_typed_ast = 
+  let f source_file syntax display_format  = (
+    toplevel ~display_format @@
+    let%bind simplified = Compile.Of_source.compile source_file (Syntax_name syntax) in
+    let%bind typed,_    = Compile.Of_simplified.compile simplified in
+    ok @@ Format.asprintf "%a\n" Compile.Of_typed.pretty_print typed    
+  )
+  in
+  let term = Term.(const f $ source_file 0 $ syntax $ display_format) in
+  let cmdname = "print-typed-ast" in 
+  let doc = "Subcommand: print the typed ast. Warning: intended for development of LIGO and can break at any time." in
+  (Term.ret term, Term.info ~doc cmdname)
+
+let print_mini_c = 
+  let f source_file syntax display_format  = (
+    toplevel ~display_format @@
+    let%bind simplified = Compile.Of_source.compile source_file (Syntax_name syntax) in
+    let%bind typed,_    = Compile.Of_simplified.compile simplified in
+    let%bind mini_c     = Compile.Of_typed.compile typed in
+    ok @@ Format.asprintf "%a\n" Compile.Of_mini_c.pretty_print mini_c    
+  )
+  in
+  let term = Term.(const f $ source_file 0 $ syntax $ display_format) in
+  let cmdname = "print-mini-c" in 
+  let doc = "Subcommand: print mini c. Warning: intended for development of LIGO and can break at any time." in
+  (Term.ret term, Term.info ~doc cmdname)
+
 let measure_contract =
   let f source_file entry_point syntax display_format  =
     toplevel ~display_format @@
@@ -371,4 +422,8 @@ let run ?argv () =
     run_function ;
     evaluate_value ;
     dump_changelog ;
+    print_cst ;
+    print_ast ;
+    print_typed_ast ;
+    print_mini_c
   ]
