@@ -257,7 +257,7 @@ let sum_of_a_list: int = List.fold sum my_list 0
 <!--ReasonLIGO-->
 
 ```reasonligo group=b
-let sum = (result_i: (int, int)): int => result_i[0] + result_i[1];
+let sum = ((result, i): (int, int)): int => result + i;
 (* Outputs 6 *)
 let sum_of_a_list: int = List.fold(sum, my_list, 0);
 ```

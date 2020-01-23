@@ -50,8 +50,7 @@ let main (parameter, store: parameter * store) : operation list * store =
 ```reasonligo group=a
 type parameter = unit;
 type store = unit;
-let main = (parameter_store: (parameter, store)) : (list(operation), store) => {
-  let parameter, store = parameter_store;
+let main = ((parameter, store): (parameter, store)) : (list(operation), store) => {
   (([]: list(operation)), store);
 };
 ```
@@ -93,7 +92,7 @@ let main (p, s: unit * unit) : operation list * unit =
 
 <!--ReasonLIGO-->
 ```reasonligo group=b
-let main = (p_s: (unit, unit)) : (list(operation), unit) => {
+let main = ((p,s): (unit, unit)) : (list(operation), unit) => {
   if (amount > 0mutez) {
     (failwith("This contract does not accept tez"): (list(operation), unit));
   }
@@ -131,7 +130,7 @@ let main (p,s: unit * unit) : operation list * unit =
 <!--ReasonLIGO-->
 ```reasonligo group=c
 let owner: address = ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address);
-let main = (p_s: (unit, unit)) : (list(operation), unit) => {
+let main = ((p,s): (unit, unit)) : (list(operation), unit) => {
   if (source != owner) {
     (failwith("This address can't call the contract"): (list(operation), unit));
   }
@@ -230,10 +229,10 @@ type action =
 
 let dest: address = ("KT19wgxcuXG9VH4Af5Tpm1vqEKdaMFpznXT3": address);
 
-let proxy = (param_s: (action, unit)): (list(operation), unit) =>
+let proxy = ((param, s): (action, unit)): (list(operation), unit) =>
   let counter: contract(action) = Operation.get_contract(dest);
-  let op: operation = Operation.transaction(param_s[0], 0mutez, counter);
-  ([op], param_s[1]);
+  let op: operation = Operation.transaction(param, 0mutez, counter);
+  ([op], s);
 ```
 
 <!--END_DOCUSAURUS_CODE_TABS-->

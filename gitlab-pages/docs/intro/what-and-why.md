@@ -107,8 +107,7 @@ type action =
 | Decrement(int)
 | Reset(unit);
 
-let main = (p_s: (action, int)) : (list(operation), int) => {
-  let p, s = p_s;
+let main = ((p,s): (action, int)) : (list(operation), int) => {
   let result =
     switch (p) {
     | Increment(n) => s + n
