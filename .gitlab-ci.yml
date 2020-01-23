@@ -95,6 +95,9 @@ local-dune-job:
   artifacts:
     paths:
       - _coverage_all
+  only:
+    - merge_requests
+    - dev
 
 # Run a docker build without publishing to the registry
 build-current-docker-image:
@@ -105,9 +108,8 @@ build-current-docker-image:
   script:
     - sh scripts/build_docker_image.sh
     - sh scripts/test_cli.sh
-  except:
-    - master
-    - dev
+  only:
+    - merge_requests
 
 # When a MR/PR is merged to dev
 # take the previous build and publish it to Docker Hub
@@ -135,6 +137,8 @@ build-and-package-debian-9:
     target_os: "debian"
     target_os_version: "9"
   <<: *build_binary
+  only:
+    - dev
 
 build-and-package-debian-10:
   <<: *docker
@@ -145,6 +149,12 @@ build-and-package-debian-10:
     target_os: "debian"
     target_os_version: "10"
   <<: *build_binary
+  # this one is merge_requests and dev, because the debian 10 binary
+  # is used for build-current-docker-image and for
+  # build-and-publish-latest-docker-image
+  only:
+    - merge_requests
+    - dev
 
 build-and-package-ubuntu-18-04:
   <<: *docker
@@ -155,6 +165,8 @@ build-and-package-ubuntu-18-04:
     target_os: "ubuntu"
     target_os_version: "18.04"
   <<: *build_binary
+  only:
+    - dev
 
 build-and-package-ubuntu-19-04:
   <<: *docker
@@ -165,11 +177,12 @@ build-and-package-ubuntu-19-04:
     target_os: "ubuntu"
     target_os_version: "19.04"
   <<: *build_binary
+  only:
+    - dev
 
-# Pages are deployed from both master & dev, be careful not to override 'next'
+# Pages are deployed from dev, be careful not to override 'next'
 # in case something gets merged into 'dev' while releasing.
 pages:
   <<: *website_build
   only:
-    - master
     - dev
