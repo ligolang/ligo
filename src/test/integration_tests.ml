@@ -1931,7 +1931,7 @@ let check_signature () : unit result =
   let%bind program = type_file "./contracts/check_signature.ligo" in
   let make_input = e_tuple [e_key pk_str ;
                             e_signature (Signature.to_b58check signed) ;
-                            e_bytes_ofbytes (Bytes.of_string "hello world")] in
+                            e_bytes_string "hello world"] in
   let make_expected = e_bool true in
   let%bind () = expect_eq program "check_signature" make_input make_expected in
   ok ()
@@ -1944,7 +1944,7 @@ let check_signature_mligo () : unit result =
   let%bind program = mtype_file "./contracts/check_signature.mligo" in
   let make_input = e_tuple [e_key pk_str ;
                             e_signature (Signature.to_b58check signed) ;
-                            e_bytes_ofbytes (Bytes.of_string "hello world")] in
+                            e_bytes_string "hello world"] in
   let make_expected = e_bool true in
   let%bind () = expect_eq program "check_signature" make_input make_expected in
   ok ()
@@ -1957,7 +1957,7 @@ let check_signature_religo () : unit result =
   let%bind program = retype_file "./contracts/check_signature.religo" in
   let make_input = e_tuple [e_key pk_str ;
                             e_signature (Signature.to_b58check signed) ;
-                            e_bytes_ofbytes (Bytes.of_string "hello world")] in
+                            e_bytes_string "hello world"] in
   let make_expected = e_bool true in
   let%bind () = expect_eq program "check_signature" make_input make_expected in
   ok ()
