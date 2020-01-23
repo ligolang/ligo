@@ -34,38 +34,26 @@ module Make (Lexer: Lexer.S)
                                 and type expr = AST.expr)
             (IO: IO) :
   sig
-    (* Error handling (reexported from [ParserAPI]) *)
+    (* Error handling reexported from [ParserAPI] without the
+       exception [Point] *)
 
     type message = string
     type valid   = Parser.token
     type invalid = Parser.token
     type error   = message * valid option * invalid
 
-    exception Point of error
-
     val format_error :
-      ?offsets:bool -> [`Byte | `Point] -> error -> string
+      ?offsets:bool -> [`Byte | `Point] -> error -> string Region.reg
 
     val short_error :
-      ?offsets:bool -> [`Point | `Byte] -> string -> Region.t -> string
+      ?offsets:bool -> [`Point | `Byte] -> message -> Region.t -> string
 
     (* Parsers *)
 
-    val parse :
-      (Lexer.instance ->
-       (Lexing.lexbuf -> Lexer.token) ->
-       Buffer.t -> ParserLog.state -> ('a, string) result) ->
-      ('a, string) result
+    type 'a parser = Lexer.instance -> ('a, message Region.reg) result
 
-    val parse_contract :
-      Lexer.instance ->
-      (Lexing.lexbuf -> Lexer.token) ->
-      Buffer.t -> ParserLog.state ->
-      (AST.t, string) Stdlib.result
+    val apply : Lexer.instance -> 'a parser -> ('a, message Region.reg) result
 
-    val parse_expr :
-      Lexer.instance ->
-      (Lexing.lexbuf -> Lexer.token) ->
-      Buffer.t -> ParserLog.state -> (AST.expr, string) Stdlib.result
-
+    val parse_contract : AST.t parser
+    val parse_expr     : AST.expr parser
   end

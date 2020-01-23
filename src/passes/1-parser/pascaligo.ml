@@ -4,151 +4,235 @@ module AST = Parser_pascaligo.AST
 module LexToken = Parser_pascaligo.LexToken
 module Lexer = Lexer.Make(LexToken)
 module Scoping = Parser_pascaligo.Scoping
-module Parser = Parser_pascaligo.Parser
+module Region = Simple_utils.Region
+module ParErr = Parser_pascaligo.ParErr
+
+(* Mock IOs TODO: Fill them with CLI options *)
+
+module type IO =
+  sig
+    val ext : string
+    val options : EvalOpt.options
+  end
+
+module PreIO =
+  struct
+    let ext = ".ligo"
+    let pre_options =
+      EvalOpt.make ~input:None
+                   ~libs:[]
+                   ~verbose:Utils.String.Set.empty
+                   ~offsets:true
+                   ~mode:`Point
+                   ~cmd:EvalOpt.Quiet
+                   ~mono:true
+  end
+
+module Parser =
+  struct
+    type ast  = AST.t
+    type expr = AST.expr
+    include Parser_pascaligo.Parser
+  end
+
+module ParserLog =
+  struct
+    type ast  = AST.t
+    type expr = AST.expr
+    include Parser_pascaligo.ParserLog
+  end
+
+module PreUnit =
+  ParserUnit.Make (Lexer)(AST)(Parser)(ParErr)(ParserLog)
 
 module Errors =
   struct
     let reserved_name Region.{value; region} =
-      let title () = Printf.sprintf "reserved name \"%s\"" value in
+      let title () = Printf.sprintf "\nReserved name \"%s\"" value in
       let message () = "" in
       let data = [
-          ("location",
-           fun () -> Format.asprintf "%a" Location.pp_lift @@ region)]
-      in error ~data title message
-
-    let non_linear_pattern Region.{value; region} =
-      let title () =
-        Printf.sprintf "repeated variable \"%s\" in this pattern" value in
-      let message () = "" in
-      let data = [
-          ("location",
-           fun () -> Format.asprintf "%a" Location.pp_lift @@ region)]
+        ("location",
+         fun () -> Format.asprintf "%a" Location.pp_lift @@ region)]
       in error ~data title message
 
     let duplicate_parameter Region.{value; region} =
       let title () =
-        Printf.sprintf "duplicate parameter \"%s\"" value in
+        Printf.sprintf "\nDuplicate parameter \"%s\"" value in
       let message () = "" in
       let data = [
-          ("location",
-           fun () -> Format.asprintf "%a" Location.pp_lift @@ region)]
+        ("location",
+         fun () -> Format.asprintf "%a" Location.pp_lift @@ region)]
       in error ~data title message
 
     let duplicate_variant Region.{value; region} =
       let title () =
-        Printf.sprintf "duplicate variant \"%s\" in this\
+        Printf.sprintf "\nDuplicate variant \"%s\" in this \
                         type declaration" value in
       let message () = "" in
       let data = [
-          ("location",
-           fun () -> Format.asprintf "%a" Location.pp_lift @@ region)]
+        ("location",
+         fun () -> Format.asprintf "%a" Location.pp_lift @@ region)]
       in error ~data title message
 
-    let unrecognized_error source (start: Lexing.position)
-                           (stop: Lexing.position) lexbuf =
-      let title () = "unrecognized error" in
-      let file =
-        if source = "" then ""
-        else
-          Format.sprintf "In file \"%s|%s\"" start.pos_fname source in
-      let message () =
-        Format.sprintf
-                  "Parse error at \"%s\" from (%d, %d) to (%d, %d). %s\n"
-                  (Lexing.lexeme lexbuf)
-                  start.pos_lnum (start.pos_cnum - start.pos_bol)
-                  stop.pos_lnum (stop.pos_cnum - stop.pos_bol)
-                  file in
-      let loc = Region.make ~start:(Pos.from_byte start)
-                            ~stop:(Pos.from_byte stop) in
+    let non_linear_pattern Region.{value; region} =
+      let title () =
+        Printf.sprintf "\nRepeated variable \"%s\" in this pattern" value in
+      let message () = "" in
       let data = [
-        ("unrecognized_loc",
-         fun () -> Format.asprintf "%a" Location.pp_lift @@ loc)]
+        ("location",
+         fun () -> Format.asprintf "%a" Location.pp_lift @@ region)]
       in error ~data title message
 
-    let parser_error source (start: Lexing.position)
-                     (stop: Lexing.position) lexbuf =
-      let title () = "parser error" in
-      let file =
-        if source = "" then ""
-        else
-          Format.sprintf "In file \"%s|%s\"" start.pos_fname source in
-      let message () =
-        Format.sprintf
-          "Parse error at \"%s\" from (%d, %d) to (%d, %d). %s\n"
-          (Lexing.lexeme lexbuf)
-          start.pos_lnum (start.pos_cnum - start.pos_bol)
-          stop.pos_lnum (stop.pos_cnum - stop.pos_bol)
-          file in
-      let loc =
-        if start.pos_cnum = -1 then
-          Region.make
-            ~start:(Pos.min ~file:source) ~stop:(Pos.from_byte stop)
-        else
-          Region.make ~start:(Pos.from_byte start)
-                      ~stop:(Pos.from_byte stop) in
+    let duplicate_field Region.{value; region} =
+      let title () =
+        Printf.sprintf "\nDuplicate field name \"%s\" \
+                        in this record declaration" value in
+      let message () = "" in
+      let data = [
+        ("location",
+         fun () -> Format.asprintf "%a" Location.pp_lift @@ region)]
+      in error ~data title message
+
+    let parser_error Region.{value; region} =
+      let title () = ""
+      and message () = value
+      and loc = region in
       let data =
         [("parser_loc",
-          fun () -> Format.asprintf "%a" Location.pp_lift @@ loc)] in
-      error ~data title message
+          fun () -> Format.asprintf "%a" Location.pp_lift @@ loc)]
+      in error ~data title message
 
     let lexer_error (e: Lexer.error AST.reg) =
-      let title () = "lexer error" in
+      let title () = "\nLexer error" in
       let message () = Lexer.error_to_string e.value in
       let data = [
           ("parser_loc",
            fun () -> Format.asprintf "%a" Location.pp_lift @@ e.region)]
       in error ~data title message
-end
+  end
 
-open Errors
+let parse (module IO : IO) parser =
+  let module Unit = PreUnit (IO) in
+  let mk_error error =
+    Unit.format_error ~offsets:IO.options#offsets
+                      IO.options#mode error in
+  match parser () with
+    (* Scoping errors *)
 
-type 'a parser = (Lexing.lexbuf -> LexToken.token) -> Lexing.lexbuf -> 'a
+    Stdlib.Ok semantic_value -> ok semantic_value
+  | Stdlib.Error error -> fail @@ Errors.parser_error error
+  | exception Lexer.Error e -> fail @@ Errors.lexer_error e
 
-let parse (parser: 'a parser) source lexbuf =
-  let Lexer.{read; close; _} = Lexer.open_token_stream None in
-  let result =
-    try ok (parser read lexbuf) with
-      Lexer.Error e ->
-        fail @@ lexer_error e
-    | Parser.Error ->
-        let start = Lexing.lexeme_start_p lexbuf in
-        let stop = Lexing.lexeme_end_p lexbuf in
-        fail @@ parser_error source start stop lexbuf
-    | Scoping.Error (Scoping.Non_linear_pattern var) ->
-        fail @@ non_linear_pattern var
-    | Scoping.Error (Duplicate_parameter name) ->
-        fail @@ duplicate_parameter name
-    | Scoping.Error (Duplicate_variant name) ->
-        fail @@ duplicate_variant name
-    | Scoping.Error (Reserved_name name) ->
-        fail @@ reserved_name name
-    | _ ->
-        let () = Printexc.print_backtrace Pervasives.stdout in
-        let start = Lexing.lexeme_start_p lexbuf in
-        let stop = Lexing.lexeme_end_p lexbuf in
-        fail @@ unrecognized_error source start stop lexbuf
-  in close (); result
+  | exception Scoping.Error (Scoping.Reserved_name name) ->
+      let token =
+        Lexer.Token.mk_ident name.Region.value name.Region.region in
+      (match token with
+         (* Cannot fail because [name] is a not a
+            reserved name for the lexer. *)
+         Stdlib.Error _ -> assert false
+       | Ok invalid ->
+          let point =
+            "Reserved name.\nHint: Change the name.\n", None, invalid
+          in fail @@ Errors.reserved_name @@ mk_error point)
 
-let parse_file (source: string) : AST.t result =
+  | exception Scoping.Error (Scoping.Duplicate_parameter name) ->
+      let token =
+        Lexer.Token.mk_ident name.Region.value name.Region.region in
+      (match token with
+         (* Cannot fail because [name] is a not a
+            reserved name for the lexer. *)
+         Stdlib.Error _ -> assert false
+       | Ok invalid ->
+          let point =
+            "Duplicate parameter.\nHint: Change the name.\n",
+            None, invalid
+          in fail @@ Errors.duplicate_parameter @@ mk_error point)
+
+  | exception Scoping.Error (Scoping.Duplicate_variant name) ->
+      let token =
+        Lexer.Token.mk_constr name.Region.value name.Region.region in
+      let point =
+        "Duplicate constructor in this sum type declaration.\n\
+         Hint: Change the constructor.\n",
+        None, token
+      in fail @@ Errors.duplicate_variant @@ mk_error point
+
+  | exception Scoping.Error (Scoping.Non_linear_pattern var) ->
+      let token =
+        Lexer.Token.mk_ident var.Region.value var.Region.region in
+      (match token with
+         (* Cannot fail because [var] is a not a
+            reserved name for the lexer. *)
+         Stdlib.Error _ -> assert false
+       | Ok invalid ->
+           let point =
+             "Repeated variable in this pattern.\n\
+              Hint: Change the name.\n",
+             None, invalid
+           in fail @@ Errors.non_linear_pattern @@ mk_error point)
+
+  | exception Scoping.Error (Scoping.Duplicate_field name) ->
+      let token =
+        Lexer.Token.mk_ident name.Region.value name.Region.region in
+      (match token with
+         (* Cannot fail because [name] is a not a
+            reserved name for the lexer. *)
+         Stdlib.Error _ -> assert false
+       | Ok invalid ->
+           let point =
+             "Duplicate field name in this record declaration.\n\
+              Hint: Change the name.\n",
+             None, invalid
+           in fail @@ Errors.duplicate_field @@ mk_error point)
+
+let parse_file (source: string) =
+  let module IO =
+    struct
+      let ext = PreIO.ext
+      let options = PreIO.pre_options ~expr:false
+    end in
   let pp_input =
     let prefix = Filename.(source |> basename |> remove_extension)
     and suffix = ".pp.ligo"
     in prefix ^ suffix in
-
   let cpp_cmd = Printf.sprintf "cpp -traditional-cpp %s > %s"
                                source pp_input in
   let%bind () = sys_command cpp_cmd in
-
   let%bind channel =
-    generic_try (simple_error "error opening file") @@
+    generic_try (simple_error "Error when opening file") @@
     (fun () -> open_in pp_input) in
-  let lexbuf = Lexing.from_channel channel in
-  parse (Parser.contract) source lexbuf
+  let module Unit = PreUnit (IO) in
+  let instance =
+    match Lexer.open_token_stream (Lexer.Channel channel) with
+      Ok instance -> instance
+    | Stdlib.Error _ -> assert false (* No file opening *) in
+  let thunk () = Unit.apply instance Unit.parse_contract in
+  parse (module IO) thunk
 
-let parse_string (s:string) : AST.t result =
-  let lexbuf = Lexing.from_string s in
-  parse (Parser.contract) "" lexbuf
+let parse_string (s: string) =
+  let module IO =
+    struct
+      let ext = PreIO.ext
+      let options = PreIO.pre_options ~expr:false
+    end in
+  let module Unit = PreUnit (IO) in
+  let instance =
+    match Lexer.open_token_stream (Lexer.String s) with
+      Ok instance -> instance
+    | Stdlib.Error _ -> assert false (* No file opening *) in
+  let thunk () = Unit.apply instance Unit.parse_contract in
+  parse (module IO) thunk
 
-let parse_expression (s:string) : AST.expr result =
-  let lexbuf = Lexing.from_string s in
-  parse (Parser.interactive_expr) "" lexbuf
+let parse_expression (s: string)  =
+  let module IO =
+    struct
+      let ext = PreIO.ext
+      let options = PreIO.pre_options ~expr:true
+    end in
+  let module Unit = PreUnit (IO) in
+  let instance =
+    match Lexer.open_token_stream (Lexer.String s) with
+      Ok instance -> instance
+    | Stdlib.Error _ -> assert false (* No file opening *) in
+  let thunk () = Unit.apply instance Unit.parse_expr in
+  parse (module IO) thunk

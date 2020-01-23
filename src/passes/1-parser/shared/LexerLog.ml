@@ -1,4 +1,6 @@
-(** Embedding the LIGO lexer in a debug module *)
+(* Embedding the LIGO lexer in a debug module *)
+
+module Region = Simple_utils.Region
 
 module type S =
   sig
@@ -14,7 +16,7 @@ module type S =
     val trace :
       ?offsets:bool -> [`Byte | `Point] ->
       file_path option -> EvalOpt.command ->
-      (unit, string) Stdlib.result
+      (unit, string Region.reg) Stdlib.result
   end
 
 module Make (Lexer: Lexer.S) : (S with module Lexer = Lexer) =
@@ -48,28 +50,31 @@ module Make (Lexer: Lexer.S) : (S with module Lexer = Lexer) =
     type file_path = string
 
     let trace ?(offsets=true) mode file_path_opt command :
-          (unit, string) Stdlib.result =
-      try
-        let Lexer.{read; buffer; close; _} =
-          Lexer.open_token_stream file_path_opt in
-        let log = output_token ~offsets mode command stdout
-        and close_all () = close (); close_out stdout in
-        let rec iter () =
-          match read ~log buffer with
-            token ->
-              if   Token.is_eof token
-              then Stdlib.Ok ()
-              else iter ()
-          | exception Lexer.Error error ->
-              let file =
-                match file_path_opt with
-                  None | Some "-" -> false
-                |         Some _  -> true in
-              let msg =
-                Lexer.format_error ~offsets mode ~file error
-              in Stdlib.Error msg in
-          let result = iter ()
-          in (close_all (); result)
-      with Sys_error msg -> Stdlib.Error msg
-
+          (unit, string Region.reg) Stdlib.result =
+      let input =
+        match file_path_opt with
+          Some file_path -> Lexer.File file_path
+        | None -> Lexer.Stdin in
+      match Lexer.open_token_stream input with
+        Ok Lexer.{read; buffer; close; _} ->
+          let log = output_token ~offsets mode command stdout
+          and close_all () = close (); close_out stdout in
+          let rec iter () =
+            match read ~log buffer with
+              token ->
+                if   Token.is_eof token
+                then Stdlib.Ok ()
+                else iter ()
+            | exception Lexer.Error error ->
+                let file =
+                  match file_path_opt with
+                    None | Some "-" -> false
+                  |         Some _  -> true in
+                let msg =
+                  Lexer.format_error ~offsets mode ~file error
+                in Stdlib.Error msg in
+            let result = iter ()
+            in close_all (); result
+        | Stdlib.Error (Lexer.File_opening msg) ->
+            close_out stdout; Stdlib.Error (Region.wrap_ghost msg)
   end

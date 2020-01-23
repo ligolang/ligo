@@ -165,9 +165,18 @@ module type S =
       get_last : unit -> Region.t;
       get_file : unit -> file_path;
       close    : unit -> unit
-      }
+    }
 
-    val open_token_stream : file_path option -> instance
+    type input =
+      File    of file_path (* "-" means stdin *)
+    | Stdin
+    | String  of string
+    | Channel of in_channel
+    | Buffer  of Lexing.lexbuf
+
+    type open_err = File_opening of string
+
+    val open_token_stream : input -> (instance, open_err) Stdlib.result
 
     (* Error reporting *)
 
@@ -179,7 +188,7 @@ module type S =
 
     val format_error :
       ?offsets:bool -> [`Byte | `Point] ->
-      error Region.reg -> file:bool -> string
+      error Region.reg -> file:bool -> string Region.reg
   end
 
 (* The functorised interface
@@ -443,8 +452,9 @@ module Make (Token: TOKEN) : (S with module Token = Token) =
 
     let format_error ?(offsets=true) mode Region.{region; value} ~file =
       let msg = error_to_string value
-      and reg = region#to_string ~file ~offsets mode
-      in sprintf "Lexical error %s:\n%s" reg msg
+      and reg = region#to_string ~file ~offsets mode in
+      let value = sprintf "Lexical error %s:\n%s" reg msg
+      in Region.{value; region}
 
     let fail region value = raise (Error Region.{region; value})
 
@@ -864,10 +874,20 @@ type instance = {
   close    : unit -> unit
 }
 
-let open_token_stream file_path_opt =
-  let  file_path = match file_path_opt with
-                     None | Some "-" -> ""
-                   | Some file_path  -> file_path in
+type input =
+  File    of file_path (* "-" means stdin *)
+| Stdin
+| String  of string
+| Channel of in_channel
+| Buffer  of Lexing.lexbuf
+
+type open_err = File_opening of string
+
+let open_token_stream input =
+  let file_path  = match input with
+                     File file_path ->
+                       if file_path = "-" then "" else file_path
+                   | _ -> "" in
   let        pos = Pos.min ~file:file_path in
   let    buf_reg = ref (pos#byte, pos#byte)
   and first_call = ref true
@@ -934,11 +954,11 @@ let open_token_stream file_path_opt =
             in fail region Missing_break
       | _ -> () in
 
-  let rec read_token ?(log=fun _ _ -> ()) buffer =
+  let rec read ?(log=fun _ _ -> ()) buffer =
     match FQueue.deq !state.units with
       None ->
         scan buffer;
-        read_token ~log buffer
+        read ~log buffer
     | Some (units, (left_mark, token)) ->
         log left_mark token;
         state := {!state with units;
@@ -948,15 +968,33 @@ let open_token_stream file_path_opt =
         patch_buffer (Token.to_region token)#byte_pos buffer;
         token in
 
-  let      cin = match file_path_opt with
-                   None | Some "-" -> stdin
-                 | Some file_path  -> open_in file_path in
-  let   buffer = Lexing.from_channel cin in
-  let       () = match file_path_opt with
-                   None | Some "-" -> ()
-                 | Some file_path  -> reset ~file:file_path buffer
-  and close () = close_in cin in
-  {read = read_token; buffer; get_win; get_pos; get_last; get_file; close}
+  let buf_close_res =
+    match input with
+      File "" | File "-" | Stdin ->
+        Ok (Lexing.from_channel stdin, fun () -> close_in stdin)
+    | File path ->
+       (try
+          let chan = open_in path in
+          let close () = close_in chan in
+          Ok (Lexing.from_channel chan, close)
+        with
+          Sys_error msg -> Stdlib.Error (File_opening msg))
+    | String s ->
+       Ok (Lexing.from_string s, fun () -> ())
+    | Channel chan ->
+        let close () = close_in chan in
+        Ok (Lexing.from_channel chan, close)
+    | Buffer b -> Ok (b, fun () -> ()) in
+  match buf_close_res with
+    Ok (buffer, close) ->
+      let () =
+        match input with
+          File path when path <> "" -> reset ~file:path buffer
+        | _ -> () in
+      let instance = {
+        read; buffer; get_win; get_pos; get_last; get_file; close}
+      in Ok instance
+  | Error _ as e -> e
 
 end (* of functor [Make] in HEADER *)
 (* END TRAILER *)

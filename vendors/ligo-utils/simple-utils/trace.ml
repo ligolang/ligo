@@ -685,6 +685,7 @@ let bind_and (a, b) =
   a >>? fun a ->
   b >>? fun b ->
   ok (a, b)
+
 let bind_and3 (a, b, c) =
   a >>? fun a ->
   b >>? fun b ->
@@ -692,18 +693,18 @@ let bind_and3 (a, b, c) =
   ok (a, b, c)
 
 let bind_pair = bind_and
+
 let bind_map_pair f (a, b) =
   bind_pair (f a, f b)
+
 let bind_fold_map_pair f acc (a, b) =
   f acc a >>? fun (acc' , a') ->
   f acc' b >>? fun (acc'' , b') ->
   ok (acc'' , (a' , b'))
-let bind_map_triple f (a, b, c) =
-  bind_and3 (f a, f b, f c)
 
-let bind_list_cons v lst =
-  lst >>? fun lst ->
-  ok (v::lst)
+let bind_map_triple f (a, b, c) = bind_and3 (f a, f b, f c)
+
+let bind_list_cons v lst = lst >>? fun lst -> ok (v::lst)
 
 let rec bind_chain : ('a -> 'a result) list -> 'a -> 'a result = fun fs x ->
   match fs with

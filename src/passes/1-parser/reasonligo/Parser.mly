@@ -230,13 +230,13 @@ field_decl:
 (* Top-level non-recursive definitions *)
 
 let_declaration:
-  seq(Attr) "let" let_binding {    
+  seq(Attr) "let" let_binding {
     let attributes = $1 in
-    let kwd_let = $2 in    
-    let binding = $3 in
-    let value   = kwd_let, binding, attributes in
-    let stop    = expr_to_region binding.let_rhs in
-    let region  = cover $2 stop
+    let kwd_let    = $2 in
+    let binding    = $3 in
+    let value      = kwd_let, binding, attributes in
+    let stop       = expr_to_region binding.let_rhs in
+    let region     = cover $2 stop
     in {region; value} }
 
 es6_func:
@@ -439,23 +439,21 @@ fun_expr:
           {p.value with inside = arg_to_pattern p.value.inside}
         in PPar {p with value}
     | EUnit u -> PUnit u
-    | ETuple { value; region } -> 
+    | ETuple { value; region } ->
         PTuple { value = Utils.nsepseq_map arg_to_pattern value; region}
-    | EAnnot {region; value = {inside = t, colon, typ; _}} -> 
+    | EAnnot {region; value = {inside = t, colon, typ; _}} ->
         let value = { pattern = arg_to_pattern t; colon; type_expr = typ} in
         PPar {
           value = {
             lpar = Region.ghost;
-            rpar = Region.ghost; 
+            rpar = Region.ghost;
             inside = PTyped {region; value}
           };
           region
         }
-    | e -> (
-          let open! SyntaxError in
-          raise (Error (WrongFunctionArguments e))
-      )
-    in
+    | e ->
+        let open! SyntaxError in
+        raise (Error (WrongFunctionArguments e)) in
     let fun_args_to_pattern = function
       EAnnot {
         value = {
@@ -576,8 +574,8 @@ case_clause(right_expr):
 
 let_expr(right_expr):
   seq(Attr) "let" let_binding ";" right_expr {
-    let attributes = $1 in    
-    let kwd_let = $2 in    
+    let attributes = $1 in
+    let kwd_let = $2 in
     let binding = $3 in
     let kwd_in  = $4 in
     let body    = $5 in
@@ -811,7 +809,7 @@ path :
  "<ident>"  {Name $1}
 | projection { Path $1}
 
-update_record : 
+update_record :
   "{""..."path "," sep_or_term_list(field_assignment,",") "}" {
     let region = cover $1 $6 in
     let ne_elements, terminator = $5 in
