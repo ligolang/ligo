@@ -1,14 +1,16 @@
 type storage = {
-  last_use: timestamp;
+  next_use: timestamp;
   interval: int;
   execute: unit -> operation list;
 }
 
 let main (p,s: unit * storage) : operation list * storage =
-  if Current.time > (s.last_use + s.interval)
+  (* Multiple calls to Current.time give different values *)
+  let now: timestamp = Current.time in
+  if now > s.next_use
   then
     let s: storage = {
-                      last_use = Current.time;
+                      next_use = now + s.interval;
                       interval = s.interval;
                       execute = s.execute;
                       }
