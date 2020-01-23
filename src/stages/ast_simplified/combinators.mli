@@ -60,8 +60,9 @@ val e_key_hash : ?loc:Location.t -> string -> expression
 val e_chain_id : ?loc:Location.t -> string -> expression 
 val e_mutez : ?loc:Location.t -> int -> expression
 val e'_bytes : string -> expression' result
-val e_bytes : ?loc:Location.t -> string -> expression result
-val e_bytes_ofbytes : ?loc:Location.t -> bytes -> expression
+val e_bytes_hex : ?loc:Location.t -> string -> expression result
+val e_bytes_raw : ?loc:Location.t -> bytes -> expression
+val e_bytes_string : ?loc:Location.t -> string -> expression
 val e_big_map : ?loc:Location.t -> ( expr * expr ) list -> expression
 (*
 val e_record  : ?loc:Location.t -> ( expr * expr ) list -> expression
