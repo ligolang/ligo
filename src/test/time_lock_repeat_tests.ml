@@ -55,6 +55,8 @@ let early_call () =
   expect_string_failwith ~options program "main"
     (e_pair (e_unit ())  init_storage) exp_failwith
 
+let fake_uncompiled_empty_message = e_string "[lambda of type: (lambda unit (list operation)) ]"
+
 (* Test that when we use the contract the next use time advances by correct interval *)
 let interval_advance () =
   let%bind program,_ = get_program () in
@@ -63,11 +65,11 @@ let interval_advance () =
   let init_storage = storage lock_time 86400 empty_message in
   (* It takes a second for Current.now to be called, awful hack *)
   let%bind new_timestamp = mk_time "2000-01-02T10:10:11Z" in
-  let new_storage = storage new_timestamp 86400 empty_message in
+  let new_storage_fake = storage new_timestamp 86400 fake_uncompiled_empty_message in
   let options =
     Proto_alpha_utils.Memory_proto_alpha.make_options ~predecessor_timestamp () in
   expect_eq ~options program "main"
-  (e_pair (e_unit ()) init_storage) (e_pair empty_op_list new_storage)
+  (e_pair (e_unit ()) init_storage) (e_pair empty_op_list new_storage_fake)
 
 let main = test_suite "Time Lock Repeating" [
     test "compile" compile_main ;
