@@ -69,8 +69,7 @@ let check_hash_key (kh1, k2: key_hash * key) : bool * key_hash =
 
 <!--ReasonLIGO-->
 ```reasonligo
-let check_hash_key = (kh1_k2: (key_hash, key)) : (bool, key_hash) => {
-  let kh1, k2 = kh1_k2;
+let check_hash_key = ((kh1, k2): (key_hash, key)) : (bool, key_hash) => {
   let kh2 : key_hash = Crypto.hash_key(k2);
   if (kh1 == kh2) {
     (true, kh2);
@@ -111,8 +110,7 @@ let check_signature (pk, signed, msg: key * signature * bytes) : bool =
 
 <!--ReasonLIGO-->
 ```reasonligo
-let check_signature = (param: (key, signature, bytes)) : bool => {
-  let pk, signed, msg = param;
+let check_signature = ((pk, signed, msg): (key, signature, bytes)) : bool => {
   Crypto.check(pk, signed, msg);
 };
 ```
