@@ -119,8 +119,7 @@ module type TOKEN =
     val mk_string : lexeme -> Region.t -> token
     val mk_bytes  : lexeme -> Region.t -> token
     val mk_constr : lexeme -> Region.t -> token
-    val mk_attr   : lexeme -> Region.t -> (token,  attr_err) result
-    val mk_attr2  : lexeme -> Region.t -> (token,  attr_err) result
+    val mk_attr   : string -> lexeme -> Region.t -> (token, attr_err) result
     val eof       : Region.t -> token
 
     (* Predicates *)
@@ -164,6 +163,7 @@ module type S =
       get_win  : unit -> window;
       get_pos  : unit -> Pos.t;
       get_last : unit -> Region.t;
+      get_file : unit -> file_path;
       close    : unit -> unit
       }
 
@@ -177,8 +177,9 @@ module type S =
 
     exception Error of error Region.reg
 
-    val format_error : ?offsets:bool -> [`Byte | `Point] ->
-                       error Region.reg -> file:bool -> string
+    val format_error :
+      ?offsets:bool -> [`Byte | `Point] ->
+      error Region.reg -> file:bool -> string
   end
 
 (* The functorised interface
@@ -435,15 +436,15 @@ module Make (Token: TOKEN) : (S with module Token = Token) =
          Hint: Check the LIGO syntax you use.\n"
     | Invalid_natural ->
         "Invalid natural."
-    | Invalid_attribute -> 
+    | Invalid_attribute ->
         "Invalid attribute."
 
     exception Error of error Region.reg
 
     let format_error ?(offsets=true) mode Region.{region; value} ~file =
-      let  msg = error_to_string value in
-      let  reg = region#to_string ~file ~offsets mode in
-      sprintf "\027[31mLexical error %s:\n%s\027[0m%!" reg msg
+      let msg = error_to_string value
+      and reg = region#to_string ~file ~offsets mode
+      in sprintf "Lexical error %s:\n%s" reg msg
 
     let fail region value = raise (Error Region.{region; value})
 
@@ -505,7 +506,7 @@ module Make (Token: TOKEN) : (S with module Token = Token) =
           let num         = Z.of_string (integral ^ fractional)
           and den         = Z.of_string ("1" ^ String.make (len-index-1) '0')
           and million     = Q.of_string "1000000" in
-          let mutez         = Q.make num den |> Q.mul million in
+          let mutez       = Q.make num den |> Q.mul million in
           let should_be_1 = Q.den mutez in
           if Z.equal Z.one should_be_1 then Some (Q.num mutez) else None
       | exception Not_found -> assert false
@@ -530,22 +531,14 @@ module Make (Token: TOKEN) : (S with module Token = Token) =
         Ok token -> token, state
       | Error Token.Reserved_name -> fail region (Reserved_name lexeme)
 
-    let mk_attr state buffer attr = 
+    let mk_attr header attr state buffer =
       let region, _, state = sync state buffer in
-      match Token.mk_attr attr region with
-        Ok token -> 
-        token, state
-      | Error Token.Invalid_attribute -> 
-        fail region Invalid_attribute
+      match Token.mk_attr header attr region with
+        Ok token ->
+          token, state
+      | Error Token.Invalid_attribute ->
+          fail region Invalid_attribute
 
-    let mk_attr2 state buffer attr = 
-      let region, _, state = sync state buffer in
-      match Token.mk_attr2 attr region with
-        Ok token -> 
-        token, state
-      | Error Token.Invalid_attribute -> 
-        fail region Invalid_attribute
-    
     let mk_constr state buffer =
       let region, lexeme, state = sync state buffer
       in Token.mk_constr lexeme region, state
@@ -559,7 +552,7 @@ module Make (Token: TOKEN) : (S with module Token = Token) =
     let mk_eof state buffer =
       let region, _, state = sync state buffer
       in Token.eof region, state
-    
+
 
 (* END HEADER *)
 }
@@ -579,6 +572,7 @@ let capital    = ['A'-'Z']
 let letter     = small | capital
 let ident      = small (letter | '_' | digit)*
 let constr     = capital (letter | '_' | digit)*
+let attr       = ident | constr
 let hexa_digit = digit | ['A'-'F']
 let byte       = hexa_digit hexa_digit
 let byte_seq   = byte | byte (byte | '_')* byte
@@ -586,8 +580,8 @@ let bytes      = "0x" (byte_seq? as seq)
 let esc        = "\\n" | "\\\"" | "\\\\" | "\\b"
                | "\\r" | "\\t" | "\\x" byte
 let pascaligo_sym = "=/=" | '#' | ":="
-let cameligo_sym = "<>" | "::" | "||" | "&&" | "[@"
-let reasonligo_sym = '!' | "=>" | "!=" | "==" | "++" | "..." | "||" | "&&" | "[@"
+let cameligo_sym = "<>" | "::" | "||" | "&&"
+let reasonligo_sym = '!' | "=>" | "!=" | "==" | "++" | "..." | "||" | "&&"
 
 let symbol =
   ';' | ',' | '(' | ')'| '[' | ']' | '{' | '}'
@@ -613,21 +607,24 @@ rule init state = parse
 | _        { rollback lexbuf; scan state lexbuf  }
 
 and scan state = parse
-  nl              { scan (push_newline state lexbuf) lexbuf }
-| ' '+            { scan (push_space   state lexbuf) lexbuf }
-| '\t'+           { scan (push_tabs    state lexbuf) lexbuf }
-| ident           { mk_ident       state lexbuf |> enqueue   }
-| constr          { mk_constr      state lexbuf |> enqueue   }
-| bytes           { (mk_bytes seq) state lexbuf |> enqueue   }
-| natural 'n'     { mk_nat         state lexbuf |> enqueue   }
-| natural "mutez" { mk_mutez       state lexbuf |> enqueue   }
-| natural "tz"    { mk_tz          state lexbuf |> enqueue   }
-| decimal "tz"    { mk_tz_decimal  state lexbuf |> enqueue   }
-| natural         { mk_int         state lexbuf |> enqueue   }
-| symbol          { mk_sym         state lexbuf |> enqueue   }
-| eof             { mk_eof         state lexbuf |> enqueue   }
-| "[@"  (ident|constr as attr) "]"  { mk_attr state lexbuf attr |> enqueue } 
-| "[@@" (ident|constr as attr) "]"  { mk_attr2 state lexbuf attr |> enqueue } 
+  nl                     { scan (push_newline state lexbuf) lexbuf }
+| ' '+                   { scan (push_space   state lexbuf) lexbuf }
+| '\t'+                  { scan (push_tabs state lexbuf) lexbuf    }
+| ident                  { mk_ident        state lexbuf |> enqueue  }
+| constr                 { mk_constr       state lexbuf |> enqueue  }
+| bytes                  { mk_bytes seq    state lexbuf |> enqueue  }
+| natural 'n'            { mk_nat          state lexbuf |> enqueue  }
+| natural "mutez"        { mk_mutez        state lexbuf |> enqueue  }
+| natural "tz"
+| natural "tez"          { mk_tz           state lexbuf |> enqueue  }
+| decimal "tz"
+| decimal "tez"          { mk_tz_decimal   state lexbuf |> enqueue  }
+| natural                { mk_int          state lexbuf |> enqueue  }
+| symbol                 { mk_sym          state lexbuf |> enqueue  }
+| eof                    { mk_eof          state lexbuf |> enqueue  }
+| "[@"  (attr as a) "]"  { mk_attr "[@"  a state lexbuf |> enqueue  }
+| "[@@" (attr as a) "]"  { mk_attr "[@@" a state lexbuf |> enqueue  }
+
 | '"'  { let opening, _, state = sync state lexbuf in
          let thread = {opening; len=1; acc=['"']} in
          scan_string thread state lexbuf |> mk_string |> enqueue }
@@ -676,8 +673,7 @@ and scan state = parse
     and file         = Filename.basename file in
     let pos          = state.pos#set ~file ~line ~offset:0 in
     let state        = {state with pos} in
-    scan state lexbuf
-  }
+    scan state lexbuf }
 
   (* Some special errors
 
@@ -864,6 +860,7 @@ type instance = {
   get_win  : unit -> window;
   get_pos  : unit -> Pos.t;
   get_last : unit -> Region.t;
+  get_file : unit -> file_path;
   close    : unit -> unit
 }
 
@@ -871,7 +868,7 @@ let open_token_stream file_path_opt =
   let  file_path = match file_path_opt with
                      None | Some "-" -> ""
                    | Some file_path  -> file_path in
-  let        pos = Pos.min#set_file file_path in
+  let        pos = Pos.min ~file:file_path in
   let    buf_reg = ref (pos#byte, pos#byte)
   and first_call = ref true
   and    decoder = Uutf.decoder ~encoding:`UTF_8 `Manual in
@@ -886,7 +883,8 @@ let open_token_stream file_path_opt =
 
   let get_pos  () = !state.pos
   and get_last () = !state.last
-  and get_win  () = !state.window in
+  and get_win  () = !state.window
+  and get_file () = file_path in
 
   let patch_buffer (start, stop) buffer =
     let open Lexing in
@@ -958,7 +956,7 @@ let open_token_stream file_path_opt =
                    None | Some "-" -> ()
                  | Some file_path  -> reset ~file:file_path buffer
   and close () = close_in cin in
-  {read = read_token; buffer; get_win; get_pos; get_last; close}
+  {read = read_token; buffer; get_win; get_pos; get_last; get_file; close}
 
 end (* of functor [Make] in HEADER *)
 (* END TRAILER *)

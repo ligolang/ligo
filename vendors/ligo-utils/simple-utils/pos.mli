@@ -62,19 +62,20 @@ type t = <
   (* Payload *)
 
   byte       : Lexing.position;
-  point_num  : int;
-  point_bol  : int;
-  file       : string;
-  line       : int;
+  point_num  : int;    (* point_num >= point_bol *)
+  point_bol  : int;    (* point_bol >= 0         *)
+  file       : string; (* May be empty           *)
+  line       : int;    (* line > 0               *)
 
   (* Setters *)
 
   set_file   : string -> t;
   set_line   : int -> t;
   set_offset : int -> t;
-  set        : file:string -> line:int -> offset:int -> t;
 
-  new_line : string -> t;
+  set : file:string -> line:int -> offset:int -> t;
+
+  new_line : string -> t;   (* String must be "\n" or "\c\r" *)
   add_nl   : t;
 
   shift_bytes     : int -> t;
@@ -93,9 +94,10 @@ type t = <
 
   (* Conversions to [string] *)
 
-  to_string : ?offsets:bool -> [`Byte | `Point] -> string;
-  compact   : ?offsets:bool -> [`Byte | `Point] -> string;
-  anonymous : ?offsets:bool -> [`Byte | `Point] -> string
+  to_string :
+    ?file:bool -> ?offsets:bool -> [`Byte | `Point] -> string;
+  compact :
+    ?file:bool -> ?offsets:bool -> [`Byte | `Point] -> string;
 >
 
 (** A shorthand after an [open Pos].
@@ -104,18 +106,20 @@ type pos = t
 
 (** {1 Constructors} *)
 
-val make      : byte:Lexing.position -> point_num:int -> point_bol:int -> t
+val make :
+  byte:Lexing.position -> point_num:int -> point_bol:int -> t
+
 val from_byte : Lexing.position -> t
 
 (** {1 Special positions} *)
 
-(** The value [ghost] is the same as {! Lexing.dummy_pos}.
+(** The value [ghost] based on the same as {! Lexing.dummy_pos}.
  *)
 val ghost : t
 
-(** Lexing convention: line [1], offsets to [0] and file to [""].
+(** Lexing convention: line [1], offset to [0].
  *)
-val min : t
+val min : file:string -> t
 
 (** {1 Comparisons} *)
 

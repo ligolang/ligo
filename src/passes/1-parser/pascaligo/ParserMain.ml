@@ -6,100 +6,97 @@ module IO =
     let options = EvalOpt.read "PascaLIGO" ext
   end
 
-module ExtParser =
+module Parser =
   struct
-    type ast = AST.t
+    type ast  = AST.t
     type expr = AST.expr
     include Parser
   end
 
-module ExtParserLog =
+module ParserLog =
   struct
-    type ast = AST.t
+    type ast  = AST.t
+    type expr = AST.expr
     include ParserLog
   end
 
-module MyLexer = Lexer.Make (LexToken)
+module Lexer = Lexer.Make (LexToken)
 
 module Unit =
-  ParserUnit.Make (IO)(MyLexer)(AST)(ExtParser)(ParErr)(ExtParserLog)
+  ParserUnit.Make (Lexer)(AST)(Parser)(ParErr)(ParserLog)(IO)
 
-open! SyntaxError
+(* Main *)
 
-let () =
-  try Unit.run () with
-    (* Ad hoc errors from the parser *)
+let issue_error point =
+  let error = Unit.format_error ~offsets:IO.options#offsets
+                                IO.options#mode point
+  in Stdlib.Error error
 
-    Error (Reserved_name name) ->
-      let () = Unit.close_all () in
+let parse parser : ('a,string) Stdlib.result =
+  try parser () with
+    (* Scoping errors *)
+
+  | Scoping.Error (Scoping.Duplicate_parameter name) ->
       let token =
-        MyLexer.Token.mk_ident name.Region.value name.Region.region in
+        Lexer.Token.mk_ident name.Region.value name.Region.region in
       (match token with
-         Stdlib.Error _ ->
-           assert false (* Should not fail if [name] is valid. *)
+         (* Cannot fail because [name] is a not a
+            reserved name for the lexer. *)
+         Stdlib.Error _ -> assert false
        | Ok invalid ->
-           let point = "Reserved name.\nHint: Change the name.\n",
-                       None, invalid in
-           let error =
-             Unit.format_error ~offsets:IO.options#offsets
-                               IO.options#mode point
-           in Printf.eprintf "\027[31m%s\027[0m%!" error)
+           issue_error ("Duplicate parameter.\nHint: Change the name.\n",
+                        None, invalid))
 
-  | Error (Duplicate_parameter name) ->
-      let () = Unit.close_all () in
+  | Scoping.Error (Scoping.Reserved_name name) ->
       let token =
-        MyLexer.Token.mk_ident name.Region.value name.Region.region in
+        Lexer.Token.mk_ident name.Region.value name.Region.region in
       (match token with
-         Stdlib.Error _ ->
-           assert false (* Should not fail if [name] is valid. *)
+         (* Cannot fail because [name] is a not a
+            reserved name for the lexer. *)
+         Stdlib.Error _ -> assert false
        | Ok invalid ->
-           let point = "Duplicate parameter.\nHint: Change the name.\n",
-                       None, invalid in
-           let error =
-             Unit.format_error ~offsets:IO.options#offsets
-                               IO.options#mode point
-           in Printf.eprintf "\027[31m%s\027[0m%!" error)
+          issue_error
+            ("Reserved name.\nHint: Change the name.\n", None, invalid))
 
-  | Error (Duplicate_variant name) ->
-      let () = Unit.close_all () in
+  | Scoping.Error (Scoping.Duplicate_variant name) ->
       let token =
-        MyLexer.Token.mk_constr name.Region.value name.Region.region in
-      let point = "Duplicate variant in this sum type declaration.\n\
-                   Hint: Change the name.\n",
-                  None, token in
-      let error =
-        Unit.format_error ~offsets:IO.options#offsets
-                          IO.options#mode point
-      in Printf.eprintf "\027[31m%s\027[0m%!" error
+        Lexer.Token.mk_constr name.Region.value name.Region.region in
+      let point = "Duplicate constructor in this sum type declaration.\n\
+                   Hint: Change the constructor.\n",
+                  None, token
+      in issue_error point
 
-  | Error (Non_linear_pattern var) ->
-      let () = Unit.close_all () in
+  | Scoping.Error (Scoping.Non_linear_pattern var) ->
       let token =
-        MyLexer.Token.mk_ident var.Region.value var.Region.region in
+        Lexer.Token.mk_ident var.Region.value var.Region.region in
       (match token with
-         Stdlib.Error _ ->
-           assert false (* Should not fail if [name] is valid. *)
+         (* Cannot fail because [var] is a not a
+            reserved name for the lexer. *)
+         Stdlib.Error _ -> assert false
        | Ok invalid ->
            let point = "Repeated variable in this pattern.\n\
                         Hint: Change the name.\n",
-                       None, invalid in
-           let error =
-             Unit.format_error ~offsets:IO.options#offsets
-                               IO.options#mode point
-           in Printf.eprintf "\027[31m%s\027[0m%!" error)
+                       None, invalid
+           in issue_error point)
 
-  | Error (Duplicate_field name) ->
-      let () = Unit.close_all () in
+  | Scoping.Error (Scoping.Duplicate_field name) ->
       let token =
-        MyLexer.Token.mk_ident name.Region.value name.Region.region in
+        Lexer.Token.mk_ident name.Region.value name.Region.region in
       (match token with
-         Stdlib.Error _ ->
-           assert false (* Should not fail if [name] is valid. *)
+         (* Cannot fail because [name] is a not a
+            reserved name for the lexer. *)
+         Stdlib.Error _ -> assert false
        | Ok invalid ->
            let point = "Duplicate field name in this record declaration.\n\
                         Hint: Change the name.\n",
-                       None, invalid in
-           let error =
-             Unit.format_error ~offsets:IO.options#offsets
-                               IO.options#mode point
-           in Printf.eprintf "\027[31m%s\027[0m%!" error)
+                       None, invalid
+           in issue_error point)
+
+let () =
+  if IO.options#expr
+  then match parse (fun () -> Unit.parse Unit.parse_expr) with
+         Stdlib.Ok _ -> ()
+       | Error msg -> Printf.eprintf "\027[31m%s\027[0m%!" msg
+  else match parse (fun () -> Unit.parse Unit.parse_contract) with
+         Stdlib.Ok _ -> ()
+       | Error msg -> Printf.eprintf "\027[31m%s\027[0m%!" msg

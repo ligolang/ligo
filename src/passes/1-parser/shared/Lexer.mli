@@ -77,8 +77,7 @@ module type TOKEN =
     val mk_string : lexeme -> Region.t -> token
     val mk_bytes  : lexeme -> Region.t -> token
     val mk_constr : lexeme -> Region.t -> token
-    val mk_attr   : lexeme -> Region.t -> (token,  attr_err) result
-    val mk_attr2  : lexeme -> Region.t -> (token,  attr_err) result
+    val mk_attr   : string -> lexeme -> Region.t -> (token, attr_err) result
     val eof       : Region.t -> token
 
     (* Predicates *)
@@ -108,6 +107,8 @@ module type TOKEN =
      * a function [get_pos] that returns the current position, and
      * a function [get_last] that returns the region of the last
        recognised token.
+     * a function [get_file] that returns the name of the file being scanned
+       (empty string if [stdin]).
 
    Note that a module [Token] is exported too, because the signature
    of the exported functions depend on it.
@@ -140,6 +141,7 @@ module type S =
       get_win  : unit -> window;
       get_pos  : unit -> Pos.t;
       get_last : unit -> Region.t;
+      get_file : unit -> file_path;
       close    : unit -> unit
     }
 

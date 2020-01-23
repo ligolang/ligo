@@ -85,7 +85,7 @@ type t =
 | Mutez  of (string * Z.t) Region.reg
 | String of string Region.reg
 | Bytes  of (string * Hex.t) Region.reg
-| Attr2  of string Region.reg
+| Attr   of string Region.reg
 
   (* Keywords *)
 
@@ -150,8 +150,7 @@ val mk_kwd    : lexeme -> Region.t -> (token,   kwd_err) result
 val mk_string : lexeme -> Region.t -> token
 val mk_bytes  : lexeme -> Region.t -> token
 val mk_constr : lexeme -> Region.t -> token
-val mk_attr   : lexeme -> Region.t -> (token,  attr_err) result
-val mk_attr2  : lexeme -> Region.t -> (token,  attr_err) result
+val mk_attr   : string -> lexeme -> Region.t -> (token,  attr_err) result
 val eof       : Region.t -> token
 
 (* Predicates *)

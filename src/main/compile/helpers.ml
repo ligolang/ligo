@@ -133,3 +133,41 @@ let parsify_string = fun (syntax : v_syntax) source_filename ->
   let%bind parsified = parsify source_filename in
   let%bind applied = Self_ast_simplified.all_program parsified in
   ok applied
+
+let pretty_print_pascaligo = fun source ->
+  let%bind ast = Parser.Pascaligo.parse_file source in
+  let buffer = Buffer.create 59 in
+  let state = Parser_pascaligo.ParserLog.mk_state
+    ~offsets:true
+    ~mode:`Byte
+    ~buffer in
+  Parser_pascaligo.ParserLog.pp_ast state ast;
+  ok buffer
+
+let pretty_print_cameligo = fun source ->
+  let%bind ast = Parser.Cameligo.parse_file source in
+  let buffer = Buffer.create 59 in
+  let state = Parser_cameligo.ParserLog.mk_state
+    ~offsets:true
+    ~mode:`Byte
+    ~buffer in
+  Parser.Cameligo.ParserLog.pp_ast state ast;
+  ok buffer
+
+let pretty_print_reasonligo = fun source ->
+  let%bind ast = Parser.Reasonligo.parse_file source in
+  let buffer = Buffer.create 59 in
+  let state = Parser.Reasonligo.ParserLog.mk_state
+    ~offsets:true
+    ~mode:`Byte
+    ~buffer in
+  Parser.Reasonligo.ParserLog.pp_ast state ast;
+  ok buffer
+
+let pretty_print = fun syntax source_filename ->
+  let%bind v_syntax = syntax_to_variant syntax (Some source_filename) in
+  (match v_syntax with
+  | Pascaligo -> pretty_print_pascaligo
+  | Cameligo -> pretty_print_cameligo
+  | ReasonLIGO -> pretty_print_reasonligo)
+  source_filename

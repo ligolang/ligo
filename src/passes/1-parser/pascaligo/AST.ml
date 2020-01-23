@@ -25,6 +25,7 @@ type 'a reg = 'a Region.reg
 
 type keyword        = Region.t
 type kwd_and        = Region.t
+type kwd_attributes = Region.t
 type kwd_begin      = Region.t
 type kwd_block      = Region.t
 type kwd_case       = Region.t
@@ -109,7 +110,7 @@ type field_name = string reg
 type map_name   = string reg
 type set_name   = string reg
 type constr     = string reg
-type attribute   = string reg
+type attribute  = string reg
 
 (* Parentheses *)
 
@@ -144,12 +145,13 @@ type t = {
 
 and ast = t
 
-and attributes = attribute list reg
-
 and declaration =
-  TypeDecl  of type_decl reg
+  TypeDecl  of type_decl  reg
 | ConstDecl of const_decl reg
-| FunDecl   of fun_decl reg
+| FunDecl   of fun_decl   reg
+| AttrDecl  of attr_decl
+
+and attr_decl = string reg ne_injection reg
 
 and const_decl = {
   kwd_const  : kwd_const;
@@ -159,7 +161,7 @@ and const_decl = {
   equal      : equal;
   init       : expr;
   terminator : semi option;
-  attributes : attributes;
+  attributes : attr_decl option
 }
 
 (* Type declarations *)
@@ -217,7 +219,7 @@ and fun_decl = {
   block_with   : (block reg * kwd_with) option;
   return       : expr;
   terminator   : semi option;
-  attributes   : attributes;
+  attributes   : attr_decl option
 }
 
 and parameters = (param_decl, semi) nsepseq par reg
@@ -260,11 +262,12 @@ and statements = (statement, semi) nsepseq
 and statement =
   Instr of instruction
 | Data  of data_decl
+| Attr  of attr_decl
 
 and data_decl =
   LocalConst of const_decl reg
-| LocalVar   of var_decl reg
-| LocalFun   of fun_decl reg
+| LocalVar   of var_decl   reg
+| LocalFun   of fun_decl   reg
 
 and var_decl = {
   kwd_var    : kwd_var;
@@ -562,6 +565,7 @@ and field_assign = {
   equal      : equal;
   field_expr : expr
 }
+
 and record = field_assign reg ne_injection
 
 and projection = {

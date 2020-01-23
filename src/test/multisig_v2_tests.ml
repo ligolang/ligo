@@ -56,7 +56,7 @@ let storage {state_hash ; threshold ; max_proposal ; max_msg_size ; id_counter_l
     ([],[])
     id_counter_list in
   e_ez_record [
-    ("state_hash"          , e_bytes_ofbytes state_hash                            ) ;
+    ("state_hash"          , e_bytes_raw state_hash                                ) ;
     ("threshold"           , e_nat threshold                                       ) ;
     ("max_proposal"        , e_nat max_proposal                                    ) ;
     ("max_message_size"    , e_nat max_msg_size                                    ) ;
@@ -101,7 +101,7 @@ let message_size_exceeded () =
 let maximum_number_of_proposal () =
   let%bind program,_ = get_program () in
   let%bind packed_payload1 = pack_payload program (send_param empty_message) in
-  let bytes1 = e_bytes_ofbytes packed_payload1 in
+  let bytes1 = e_bytes_raw packed_payload1 in
   let init_storage = storage {
     threshold = 1 ; max_proposal = 1 ; max_msg_size = 15 ; state_hash = Bytes.empty ;
     id_counter_list = [1,1] ;
@@ -119,7 +119,7 @@ let maximum_number_of_proposal () =
 let send_already_accounted () =
   let%bind program,_ = get_program () in
   let%bind packed_payload = pack_payload program empty_message in
-  let bytes = e_bytes_ofbytes packed_payload in
+  let bytes = e_bytes_raw packed_payload in
   let init_storage = storage {
     threshold = 2 ;  max_proposal = 1 ;  max_msg_size = 15 ; state_hash = Bytes.empty ;
     id_counter_list = [1,1 ; 2,0] ;
@@ -135,7 +135,7 @@ let send_already_accounted () =
 let send_never_accounted () =
   let%bind program,_ = get_program () in
   let%bind packed_payload = pack_payload program empty_message in
-  let bytes = e_bytes_ofbytes packed_payload in
+  let bytes = e_bytes_raw packed_payload in
   let init_storage' = {
     threshold = 2 ; max_proposal = 1 ;  max_msg_size = 15 ; state_hash = Bytes.empty ;
     id_counter_list = [1,0 ; 2,0] ;
@@ -156,7 +156,7 @@ let send_never_accounted () =
 let withdraw_already_accounted_one () =
   let%bind program,_ = get_program () in
   let%bind packed_payload = pack_payload program empty_message in
-  let bytes = e_bytes_ofbytes packed_payload in
+  let bytes = e_bytes_raw packed_payload in
   let param = withdraw_param in
   let init_storage' = {
     threshold = 2 ; max_proposal = 1 ;  max_msg_size = 1 ; state_hash = Bytes.empty ;
@@ -177,7 +177,7 @@ let withdraw_already_accounted_one () =
 let withdraw_already_accounted_two () =
   let%bind program,_ = get_program () in
   let%bind packed_payload = pack_payload program empty_message in
-  let bytes = e_bytes_ofbytes packed_payload in
+  let bytes = e_bytes_raw packed_payload in
   let param = withdraw_param in
   let init_storage' = {
     threshold = 2 ; max_proposal = 2 ;  max_msg_size = 1 ; state_hash = Bytes.empty ;
@@ -198,7 +198,7 @@ let withdraw_already_accounted_two () =
 let counters_reset () =
   let%bind program,_ = get_program () in
   let%bind packed_payload = pack_payload program empty_message in
-  let bytes = e_bytes_ofbytes packed_payload in
+  let bytes = e_bytes_raw packed_payload in
   let param = send_param empty_message in
   let hash_after_msg = sha_256_hash (Bytes.concat Bytes.empty [Bytes.empty ; packed_payload]) in
   let init_storage' = {
@@ -236,7 +236,7 @@ let withdraw_never_accounted () =
 let succeeded_storing () =
   let%bind program,_ = get_program () in
   let%bind packed_payload = pack_payload program empty_message in
-  let bytes = e_bytes_ofbytes packed_payload in
+  let bytes = e_bytes_raw packed_payload in
   let init_storage th = {
     threshold = th ; max_proposal = 1 ;  max_msg_size = 15 ; state_hash = Bytes.empty ;
     id_counter_list = [1,0 ; 2,0 ; 3,0] ;
