@@ -11,6 +11,14 @@ stages:
   - build_and_deploy_docker
   - build_and_deploy_website
 
+# TODO provide sensible CI for master
+dont-merge-to-master:
+  stage: test
+  script:
+    - "false"
+  only:
+    - master
+
 .build_binary: &build_binary
   # To run in sequence and save CPU usage, use stage: build_and_package_binaries
   stage: test
