@@ -374,7 +374,7 @@ let evaluate_value =
     let%bind compiled          = Compile.Of_mini_c.aggregate_and_compile_expression mini_c exp in
     let%bind options           = Run.make_dry_run_options {predecessor_timestamp ; amount ; sender ; source } in
     let%bind michelson_output  = Run.run_no_failwith ~options compiled.expr compiled.expr_ty in
-    let%bind simplified_output = Uncompile.uncompile_typed_program_entry_function_result typed_prg entry_point michelson_output in
+    let%bind simplified_output = Uncompile.uncompile_typed_program_entry_expression_result typed_prg entry_point michelson_output in
     ok @@ Format.asprintf "%a\n" Ast_simplified.PP.expression simplified_output
   in
   let term =
