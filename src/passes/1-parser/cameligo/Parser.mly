@@ -119,6 +119,7 @@ declaration:
 
 type_decl:
   "type" type_name "=" type_expr {
+    Scoping.check_reserved_name $2;
     let region = cover $1 (type_expr_to_region $4) in
     let value = {
       kwd_type   = $1;
@@ -128,22 +129,22 @@ type_decl:
     in {region; value} }
 
 type_expr:
-  cartesian | sum_type | record_type { $1 }
-
-cartesian:
-  fun_type { $1 }
-| fun_type "*" nsepseq(fun_type,"*") {
-    let value  = Utils.nsepseq_cons $1 $2 $3 in
-    let region = nsepseq_to_region type_expr_to_region value
-    in TProd {region; value} }
+  fun_type | sum_type | record_type { $1 }
 
 fun_type:
-  core_type { $1 }
-| core_type "->" fun_type {
+  cartesian { $1 }
+| cartesian "->" fun_type {
     let start  = type_expr_to_region $1
     and stop   = type_expr_to_region $3 in
     let region = cover start stop in
     TFun {region; value=$1,$2,$3} }
+
+cartesian:
+  core_type { $1 }
+| core_type "*" nsepseq(core_type,"*") {
+    let value  = Utils.nsepseq_cons $1 $2 $3 in
+    let region = nsepseq_to_region type_expr_to_region value
+    in TProd {region; value} }
 
 core_type:
   type_name      { TVar $1 }
@@ -175,6 +176,7 @@ type_tuple:
 
 sum_type:
   ioption("|") nsepseq(variant,"|") {
+    Scoping.check_variants (Utils.nsepseq_to_list $2);
     let region = nsepseq_to_region (fun x -> x.region) $2
     in TSum {region; value=$2} }
 
@@ -188,6 +190,8 @@ variant:
 record_type:
   "{" sep_or_term_list(field_decl,";") "}" {
     let ne_elements, terminator = $2 in
+    let () = Utils.nsepseq_to_list ne_elements
+             |> Scoping.check_fields in
     let region = cover $1 $3
     and value  = {compound = Braces ($1,$3); ne_elements; terminator}
     in TRecord {region; value} }
@@ -202,10 +206,10 @@ field_decl:
 (* Top-level non-recursive definitions *)
 
 let_declaration:
-  "let" let_binding seq(Attr2) {
+  "let" let_binding seq(Attr) {
     let kwd_let    = $1 in
     let attributes = $3 in
-    let binding    = $2 in    
+    let binding    = $2 in
     let value      = kwd_let, binding, attributes in
     let stop       = expr_to_region binding.let_rhs in
     let region     = cover $1 stop
@@ -214,9 +218,11 @@ let_declaration:
 let_binding:
   "<ident>" nseq(sub_irrefutable) type_annotation? "=" expr {
     let binders = Utils.nseq_cons (PVar $1) $2 in
+    Utils.nseq_iter Scoping.check_pattern binders;
     {binders; lhs_type=$3; eq=$4; let_rhs=$5}
   }
 | irrefutable type_annotation? "=" expr {
+    Scoping.check_pattern $1;
     {binders=$1,[]; lhs_type=$2; eq=$3; let_rhs=$4} }
 
 type_annotation:
@@ -441,13 +447,15 @@ cases(right_expr):
     in fst_case, ($2,snd_case)::others }
 
 case_clause(right_expr):
-  pattern "->" right_expr { {pattern=$1; arrow=$2; rhs=$3} }
+  pattern "->" right_expr {
+    Scoping.check_pattern $1;
+    {pattern=$1; arrow=$2; rhs=$3} }
 
 let_expr(right_expr):
-  "let" let_binding seq(Attr2) "in" right_expr  {
-    let kwd_let    = $1 
+  "let" let_binding seq(Attr) "in" right_expr  {
+    let kwd_let    = $1
     and binding    = $2
-    and attributes = $3   
+    and attributes = $3
     and kwd_in     = $4
     and body       = $5 in
     let stop       = expr_to_region body in
@@ -626,9 +634,9 @@ update_record:
       lbrace   = $1;
       record   = $2;
       kwd_with = $3;
-      updates  = { value = {compound = Braces($1,$5);
-                  ne_elements;
-                  terminator};
+      updates  = {value = {compound = Braces($1,$5);
+                           ne_elements;
+                           terminator};
                   region = cover $3 $5};
       rbrace   = $5}
     in {region; value} }
@@ -656,5 +664,5 @@ sequence:
     in {region; value} }
 
 path :
- "<ident>"  {Name $1}
-| projection { Path $1}
+ "<ident>"   { Name $1 }
+| projection { Path $1 }

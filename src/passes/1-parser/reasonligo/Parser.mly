@@ -148,6 +148,7 @@ declaration:
 
 type_decl:
   "type" type_name "=" type_expr {
+    Scoping.check_reserved_name $2;
     let region = cover $1 (type_expr_to_region $4)
     and value = {kwd_type   = $1;
                  name       = $2;
@@ -192,6 +193,7 @@ core_type:
 
 sum_type:
   "|" nsepseq(variant,"|") {
+    Scoping.check_variants (Utils.nsepseq_to_list $2);
     let region = nsepseq_to_region (fun x -> x.region) $2
     in TSum {region; value=$2} }
 
@@ -205,6 +207,8 @@ variant:
 record_type:
   "{" sep_or_term_list(field_decl,",") "}" {
     let ne_elements, terminator = $2 in
+    let () = Utils.nsepseq_to_list ne_elements
+             |> Scoping.check_fields in
     let region = cover $1 $3
     and value  = {compound = Braces ($1,$3); ne_elements; terminator}
     in TRecord {region; value} }
@@ -240,21 +244,25 @@ es6_func:
 
 let_binding:
   "<ident>" type_annotation? "=" expr {
-    {binders = PVar $1,[]; lhs_type=$2; eq=$3; let_rhs=$4}
+    Scoping.check_reserved_name $1;
+    {binders = PVar $1, []; lhs_type=$2; eq=$3; let_rhs=$4}
   }
 | "_" type_annotation? "=" expr {
-    {binders = PWild $1,[]; lhs_type=$2; eq=$3; let_rhs=$4}
+    {binders = PWild $1, []; lhs_type=$2; eq=$3; let_rhs=$4}
   }
 | unit type_annotation? "=" expr {
-    {binders = PUnit $1,[]; lhs_type=$2; eq=$3; let_rhs=$4}
+    {binders = PUnit $1, []; lhs_type=$2; eq=$3; let_rhs=$4}
   }
 | record_pattern type_annotation? "=" expr {
+    Scoping.check_pattern (PRecord $1);
     {binders = PRecord $1, []; lhs_type=$2; eq=$3; let_rhs=$4}
   }
 | par(closed_irrefutable) type_annotation? "=" expr {
+    Scoping.check_pattern $1.value.inside;
     {binders = PPar $1, []; lhs_type=$2; eq=$3; let_rhs=$4}
   }
 | tuple(sub_irrefutable) type_annotation? "=" expr {
+    Utils.nsepseq_iter Scoping.check_pattern $1;
     let hd, tl  = $1 in
     let start   = pattern_to_region hd in
     let stop    = last fst tl in
@@ -419,8 +427,11 @@ fun_expr:
     let region      = cover start stop in
 
     let rec arg_to_pattern = function
-      EVar v -> PVar v
+      EVar v ->
+        Scoping.check_reserved_name v;
+        PVar v
     | EAnnot {region; value = {inside = EVar v, colon, typ; _}} ->
+        Scoping.check_reserved_name v;
         let value = {pattern = PVar v; colon; type_expr = typ}
         in PTyped {region; value}
     | EPar p ->
@@ -468,8 +479,9 @@ fun_expr:
           arg_to_pattern (EAnnot e), []
       | ETuple {value = fun_args; _} ->
           let bindings =
-            List.map (arg_to_pattern <@ snd) (snd fun_args)
-          in arg_to_pattern (fst fun_args), bindings
+            List.map (arg_to_pattern <@ snd) (snd fun_args) in
+          List.iter Scoping.check_pattern bindings;
+          arg_to_pattern (fst fun_args), bindings
       | EUnit e ->
           arg_to_pattern (EUnit e), []
       | e -> let open! SyntaxError
@@ -535,7 +547,7 @@ switch_expr(right_expr):
     let region = cover start stop
     and cases = {
       region = nsepseq_to_region (fun x -> x.region) $4;
-      value = $4} in
+      value  = $4} in
     let value = {
       kwd_match = $1;
       expr      = $2;
@@ -555,6 +567,7 @@ cases(right_expr):
 
 case_clause(right_expr):
   "|" pattern "=>" right_expr ";"? {
+    Scoping.check_pattern $2;
     let start  = pattern_to_region $2
     and stop   = expr_to_region $4 in
     let region = cover start stop

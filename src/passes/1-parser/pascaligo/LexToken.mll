@@ -26,6 +26,11 @@ let rollback buffer =
 
 (* TOKENS *)
 
+type attribute = {
+  header : string;
+  string : lexeme Region.reg
+}
+
 type t =
   (* Literals *)
 
@@ -33,7 +38,7 @@ type t =
 | Bytes  of (lexeme * Hex.t) Region.reg
 | Int    of (lexeme * Z.t) Region.reg
 | Nat    of (lexeme * Z.t) Region.reg
-| Mutez    of (lexeme * Z.t) Region.reg
+| Mutez  of (lexeme * Z.t) Region.reg
 | Ident  of lexeme Region.reg
 | Constr of lexeme Region.reg
 
@@ -144,6 +149,11 @@ let proj_token = function
 | Constr Region.{region; value} ->
     region, sprintf "Constr \"%s\"" value
 
+(*
+| Attr {header; string={region; value}} ->
+    region, sprintf "Attr (\"%s\",\"%s\")" header value
+ *)
+
   (* Symbols *)
 
 | SEMI     region -> region, "SEMI"
@@ -217,7 +227,7 @@ let proj_token = function
 
 | C_None  region -> region, "C_None"
 | C_Some  region -> region, "C_Some"
-  
+
   (* Virtual tokens *)
 
 | EOF region -> region, "EOF"
@@ -312,6 +322,7 @@ let to_lexeme = function
 
 | EOF _ -> ""
 
+(* CONVERSIONS *)
 
 let to_string token ?(offsets=true) mode =
   let region, val_str = proj_token token in
@@ -365,7 +376,7 @@ let keywords = [
 
 let reserved =
   let open SSet in
-  empty |> add "args"
+  empty |> add "arguments"
 
 let constructors = [
   (fun reg -> False  reg);
@@ -489,8 +500,6 @@ let eof region = EOF region
 
 type sym_err = Invalid_symbol
 
-type attr_err = Invalid_attribute
-
 let mk_sym lexeme region =
   match lexeme with
   (* Lexemes in common with all concrete syntaxes *)
@@ -539,10 +548,9 @@ let mk_constr lexeme region =
 
 (* Attributes *)
 
-let mk_attr _lexeme _region = 
-  Error Invalid_attribute
+type attr_err = Invalid_attribute
 
-let mk_attr2 _lexeme _region = 
+let mk_attr _header _string _region =
   Error Invalid_attribute
 
 (* Predicates *)

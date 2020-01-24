@@ -14,10 +14,11 @@ type options = <
   offsets : bool;
   mode    : [`Byte | `Point];
   cmd     : command;
-  mono    : bool
+  mono    : bool;
+  expr    : bool
 >
 
-let make ~input ~libs ~verbose ~offsets ~mode ~cmd ~mono =
+let make ~input ~libs ~verbose ~offsets ~mode ~cmd ~mono ~expr =
   object
     method input   = input
     method libs    = libs
@@ -26,6 +27,7 @@ let make ~input ~libs ~verbose ~offsets ~mode ~cmd ~mono =
     method mode    = mode
     method cmd     = cmd
     method mono    = mono
+    method expr    = expr
   end
 
 (** {1 Auxiliary functions} *)
@@ -42,17 +44,18 @@ let abort msg =
 let help language extension () =
   let file = Filename.basename Sys.argv.(0) in
   printf "Usage: %s [<option> ...] [<input>%s | \"-\"]\n" file extension;
-  printf "where <input>%s is the %s source file (default: stdin)," extension language;
+  printf "where <input>%s is the %s source file (default: stdin),\n" extension language;
   print "and each <option> (if any) is one of the following:";
   print "  -I <paths>             Library paths (colon-separated)";
-  print "  -c, --copy             Print lexemes of tokens and markup (lexer)";
-  print "  -t, --tokens           Print tokens (lexer)";
-  print "  -u, --units            Print tokens and markup (lexer)";
+  print "  -t, --tokens           Print tokens";
+  print "  -u, --units            Print lexical units";
+  print "  -c, --copy             Print lexemes and markup";
   print "  -q, --quiet            No output, except errors (default)";
   print "      --columns          Columns for source locations";
   print "      --bytes            Bytes for source locations";
   print "      --mono             Use Menhir monolithic API";
-  print "      --verbose=<stages> cmdline, cpp, ast-tokens, ast (colon-separated)";
+  print "      --expr             Parse an expression";
+  print "      --verbose=<stages> cli, cpp, ast-tokens, ast (colon-separated)";
   print "      --version          Commit hash on stdout";
   print "  -h, --help             This help";
   exit 0
@@ -74,6 +77,7 @@ and input    = ref None
 and libs     = ref []
 and verb_str = ref ""
 and mono     = ref false
+and expr     = ref false
 
 let split_at_colon = Str.(split (regexp ":"))
 
@@ -94,6 +98,7 @@ let specs language extension =
     noshort, "columns", set columns true, None;
     noshort, "bytes",   set bytes true, None;
     noshort, "mono",    set mono true, None;
+    noshort, "expr",    set expr true, None;
     noshort, "verbose", None, Some add_verbose;
     'h',     "help",    Some (help language extension), None;
     noshort, "version", Some version, None
@@ -129,7 +134,8 @@ let print_opt () =
   printf "quiet    = %b\n" !quiet;
   printf "columns  = %b\n" !columns;
   printf "bytes    = %b\n" !bytes;
-  printf "mono     = %b\b" !mono;
+  printf "mono     = %b\n" !mono;
+  printf "expr     = %b\n" !expr;
   printf "verbose  = %s\n" !verb_str;
   printf "input    = %s\n" (string_of quote !input);
   printf "libs     = %s\n" (string_of_path !libs)
@@ -137,7 +143,7 @@ let print_opt () =
 
 let check extension =
   let () =
-    if Utils.String.Set.mem "cmdline" !verbose then print_opt () in
+    if Utils.String.Set.mem "cli" !verbose then print_opt () in
 
   let input =
     match !input with
@@ -158,11 +164,12 @@ let check extension =
   and offsets = not !columns
   and mode    = if !bytes then `Byte else `Point
   and mono    = !mono
+  and expr    = !expr
   and verbose = !verbose
   and libs    = !libs in
 
   let () =
-    if Utils.String.Set.mem "cmdline" verbose then
+    if Utils.String.Set.mem "cli" verbose then
       begin
         printf "\nEXPORTED COMMAND LINE\n";
         printf "copy     = %b\n" copy;
@@ -172,6 +179,7 @@ let check extension =
         printf "offsets  = %b\n" offsets;
         printf "mode     = %s\n" (if mode = `Byte then "`Byte" else "`Point");
         printf "mono     = %b\n" mono;
+        printf "expr     = %b\n" expr;
         printf "verbose  = %s\n" !verb_str;
         printf "input    = %s\n" (string_of quote input);
         printf "libs     = %s\n" (string_of_path libs)
@@ -186,7 +194,7 @@ let check extension =
     | false, false, false,  true -> Tokens
     | _ -> abort "Choose one of -q, -c, -u, -t."
 
-  in make ~input ~libs ~verbose ~offsets ~mode ~cmd ~mono
+  in make ~input ~libs ~verbose ~offsets ~mode ~cmd ~mono ~expr
 
 (** {1 Parsing the command-line options} *)
 
@@ -195,7 +203,7 @@ let read language extension =
     Getopt.parse_cmdline (specs language extension) anonymous;
     (verb_str :=
        let apply e a =
-         if a <> "" then Printf.sprintf "%s, %s" e a else e
+         if a = "" then e else Printf.sprintf "%s, %s" e a
        in Utils.String.Set.fold apply !verbose "");
     check extension
   with Getopt.Error msg -> abort msg

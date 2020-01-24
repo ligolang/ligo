@@ -101,8 +101,8 @@ let make ~(start: Pos.t) ~(stop: Pos.t) =
         if start#is_ghost || stop#is_ghost then "ghost"
         else
           let prefix    = if file then start#file ^ ":" else ""
-          and start_str = start#anonymous ~offsets mode
-          and stop_str  = stop#anonymous ~offsets mode in
+          and start_str = start#compact ~file:false ~offsets mode
+          and stop_str  = stop#compact ~file:false ~offsets mode in
           if start#file = stop#file then
             if start#line = stop#line then
               sprintf "%s%s-%i" prefix start_str
@@ -120,7 +120,7 @@ let ghost = make ~start:Pos.ghost ~stop:Pos.ghost
 
 let wrap_ghost value = {value ; region = ghost}
 
-let min = make ~start:Pos.min ~stop:Pos.min
+let min ~file = make ~start:(Pos.min ~file) ~stop:(Pos.min ~file)
 
 (* Comparisons *)
 

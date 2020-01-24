@@ -23,9 +23,10 @@ type t = <
 
   is_ghost : bool;
 
-  to_string : ?offsets:bool -> [`Byte | `Point] -> string;
-  compact   : ?offsets:bool -> [`Byte | `Point] -> string;
-  anonymous : ?offsets:bool -> [`Byte | `Point] -> string
+  to_string :
+    ?file:bool -> ?offsets:bool -> [`Byte | `Point] -> string;
+  compact :
+    ?file:bool -> ?offsets:bool -> [`Byte | `Point] -> string;
 >
 
 type pos = t
@@ -61,8 +62,6 @@ let make ~byte ~point_num ~point_bol =
       let pos = pos#set_offset offset
       in pos
 
-    (* The string must not contain '\n'. See [new_line]. *)
-
     method shift_bytes len =
       {< byte = Lexing.{byte with pos_cnum = byte.pos_cnum + len};
          point_num = point_num + len >}
@@ -77,11 +76,13 @@ let make ~byte ~point_num ~point_bol =
                           pos_bol  = byte.pos_cnum};
          point_bol = point_num >}
 
+    (* The string must not contain '\n'. See [add_line]. *)
+
     method new_line string =
       let len = String.length string
       in (self#shift_bytes len)#add_nl
 
-    method is_ghost = byte = Lexing.dummy_pos
+    method is_ghost = (byte = Lexing.dummy_pos)
 
     method file = byte.Lexing.pos_fname
 
@@ -99,24 +100,30 @@ let make ~byte ~point_num ~point_bol =
 
     method byte_offset = byte.Lexing.pos_cnum
 
-    method to_string ?(offsets=true) mode =
-      let offset = self#offset mode in
-      let horizontal, value =
-        if offsets then "character", offset else "column", offset + 1
-      in sprintf "File \"%s\", line %i, %s %i"
-           self#file self#line horizontal value
-
-    method compact ?(offsets=true) mode =
+    method to_string ?(file=true) ?(offsets=true) mode =
       if self#is_ghost then "ghost"
       else
         let offset = self#offset mode in
-        sprintf "%s:%i:%i"
-          self#file self#line (if offsets then offset else offset + 1)
+        let horizontal, value =
+          if offsets then
+            "character", offset
+          else "column", offset + 1 in
+        if file && self#file <> "" then
+          sprintf "File \"%s\", line %i, %s %i"
+                  self#file self#line horizontal value
+        else sprintf "Line %i, %s %i"
+                     self#line horizontal value
 
-    method anonymous ?(offsets=true) mode =
-      if   self#is_ghost then "ghost"
-      else sprintf "%i:%i" self#line
-             (if offsets then self#offset mode else self#column mode)
+    method compact ?(file=true) ?(offsets=true) mode =
+      if self#is_ghost then "ghost"
+      else
+        let horizontal =
+          if offsets then self#offset mode
+          else self#column mode in
+        if file && self#file <> "" then
+          sprintf "%s:%i:%i" self#file self#line horizontal
+        else
+          sprintf "%i:%i" self#line horizontal
 end
 
 let from_byte byte =
@@ -126,7 +133,9 @@ let from_byte byte =
 
 let ghost = make ~byte:Lexing.dummy_pos ~point_num:(-1) ~point_bol:(-1)
 
-let min = make ~byte:Lexing.dummy_pos ~point_num:0 ~point_bol:0
+let min ~file =
+  let pos = make ~byte:Lexing.dummy_pos ~point_num:0 ~point_bol:0
+  in pos#set_file file
 
 (* Comparisons *)
 

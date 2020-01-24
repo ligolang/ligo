@@ -99,9 +99,9 @@ ligo: lexer error: Negative byte sequence.
 
  run_ligo_bad [ "compile-contract" ; "../../test/lexer/reserved_name.ligo" ; "main" ] ;
   [%expect {| 
-ligo: lexer error: Reserved name: args.
+ligo: lexer error: Reserved name: arguments.
       Hint: Change the name.
-       {"parser_loc":"in file \"reserved_name.ligo\", line 1, characters 4-8"}
+       {"parser_loc":"in file \"reserved_name.ligo\", line 1, characters 4-13"}
 
 
  If you're not sure how to fix this error, you can

@@ -6,7 +6,7 @@ module ParserLog = Parser_cameligo.ParserLog
 module LexToken = Parser_cameligo.LexToken
 module Lexer = Lexer.Make(LexToken)
 
-module Errors = struct 
+module Errors = struct
 
   let lexer_error (e: Lexer.error AST.reg) =
     let title () = "lexer error" in
@@ -18,62 +18,62 @@ module Errors = struct
     ] in
     error ~data title message
 
-  let parser_error source (start: Lexing.position) (end_: Lexing.position) lexbuf = 
+  let parser_error source (start: Lexing.position) (stop: Lexing.position) lexbuf =
     let title () = "parser error" in
-    let file = if source = "" then 
-        "" 
-      else 
+    let file = if source = "" then
+        ""
+      else
         Format.sprintf "In file \"%s|%s\"" start.pos_fname source
     in
     let str = Format.sprintf
               "Parse error at \"%s\" from (%d, %d) to (%d, %d). %s\n"
               (Lexing.lexeme lexbuf)
               start.pos_lnum (start.pos_cnum - start.pos_bol)
-              end_.pos_lnum (end_.pos_cnum - end_.pos_bol)
+              stop.pos_lnum (stop.pos_cnum - stop.pos_bol)
               file
     in
     let message () = str in
     let loc = if start.pos_cnum = -1 then
       Region.make
-        ~start: Pos.min
-        ~stop:(Pos.from_byte end_)    
+        ~start:(Pos.min ~file:source)
+        ~stop:(Pos.from_byte stop)
     else
       Region.make
         ~start:(Pos.from_byte start)
-        ~stop:(Pos.from_byte end_)
-    in 
+        ~stop:(Pos.from_byte stop)
+    in
     let data =
       [
         ("parser_loc",
           fun () -> Format.asprintf "%a" Location.pp_lift @@ loc
         )
-      ]    
+      ]
     in
     error ~data title message
-  
-  let unrecognized_error source (start: Lexing.position) (end_: Lexing.position) lexbuf = 
+
+  let unrecognized_error source (start: Lexing.position) (stop: Lexing.position) lexbuf =
     let title () = "unrecognized error" in
-    let file = if source = "" then 
-        "" 
-      else 
+    let file = if source = "" then
+        ""
+      else
         Format.sprintf "In file \"%s|%s\"" start.pos_fname source
     in
     let str = Format.sprintf
               "Parse error at \"%s\" from (%d, %d) to (%d, %d). %s\n"
               (Lexing.lexeme lexbuf)
               start.pos_lnum (start.pos_cnum - start.pos_bol)
-              end_.pos_lnum (end_.pos_cnum - end_.pos_bol)
+              stop.pos_lnum (stop.pos_cnum - stop.pos_bol)
               file
     in
     let message () = str in
-    let loc = Region.make 
-      ~start:(Pos.from_byte start) 
-      ~stop:(Pos.from_byte end_) 
+    let loc = Region.make
+      ~start:(Pos.from_byte start)
+      ~stop:(Pos.from_byte stop)
     in
     let data = [
-      ("unrecognized_loc", 
+      ("unrecognized_loc",
         fun () -> Format.asprintf "%a" Location.pp_lift @@ loc
-      )      
+      )
     ] in
     error ~data title message
 
@@ -83,23 +83,23 @@ open Errors
 
 type 'a parser = (Lexing.lexbuf -> LexToken.token) -> Lexing.lexbuf -> 'a
 
-let parse (parser: 'a parser) source lexbuf = 
+let parse (parser: 'a parser) source lexbuf =
   let Lexer.{read ; close ; _} = Lexer.open_token_stream None in
-  let result = 
+  let result =
     try
       ok (parser read lexbuf)
     with
       | Parser.Error ->
         let start = Lexing.lexeme_start_p lexbuf in
-        let end_ = Lexing.lexeme_end_p lexbuf in
-        fail @@ (parser_error source start end_ lexbuf)
+        let stop = Lexing.lexeme_end_p lexbuf in
+        fail @@ (parser_error source start stop lexbuf)
       | Lexer.Error e ->
         fail @@ (lexer_error e)
       | _ ->
         let _ = Printexc.print_backtrace Pervasives.stdout in
         let start = Lexing.lexeme_start_p lexbuf in
-        let end_ = Lexing.lexeme_end_p lexbuf in
-        fail @@ (unrecognized_error source start end_ lexbuf)
+        let stop = Lexing.lexeme_end_p lexbuf in
+        fail @@ (unrecognized_error source start stop lexbuf)
   in
   close ();
   result
@@ -122,8 +122,8 @@ let parse_file (source: string) : AST.t result =
 
 let parse_string (s:string) : AST.t result =
   let lexbuf = Lexing.from_string s in
-  parse (Parser.contract) "" lexbuf
+  parse Parser.contract "" lexbuf
 
 let parse_expression (s:string) : AST.expr result =
-  let lexbuf = Lexing.from_string s in  
-  parse (Parser.interactive_expr) "" lexbuf
+  let lexbuf = Lexing.from_string s in
+  parse Parser.interactive_expr "" lexbuf

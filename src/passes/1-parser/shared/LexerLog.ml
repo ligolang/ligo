@@ -1,7 +1,5 @@
 (** Embedding the LIGO lexer in a debug module *)
 
-let sprintf = Printf.sprintf
-
 module type S =
   sig
     module Lexer : Lexer.S
@@ -15,12 +13,12 @@ module type S =
 
     val trace :
       ?offsets:bool -> [`Byte | `Point] ->
-      file_path option -> EvalOpt.command -> unit
+      file_path option -> EvalOpt.command ->
+      (unit, string) Stdlib.result
   end
 
 module Make (Lexer: Lexer.S) : (S with module Lexer = Lexer) =
   struct
-
     module Lexer = Lexer
     module Token = Lexer.Token
 
@@ -49,28 +47,29 @@ module Make (Lexer: Lexer.S) : (S with module Lexer = Lexer) =
 
     type file_path = string
 
-    let trace ?(offsets=true) mode file_path_opt command : unit =
+    let trace ?(offsets=true) mode file_path_opt command :
+          (unit, string) Stdlib.result =
       try
         let Lexer.{read; buffer; close; _} =
-          Lexer.open_token_stream file_path_opt
-        and cout = stdout in
-        let log = output_token ~offsets mode command cout
-        and close_all () = close (); close_out cout in
+          Lexer.open_token_stream file_path_opt in
+        let log = output_token ~offsets mode command stdout
+        and close_all () = close (); close_out stdout in
         let rec iter () =
           match read ~log buffer with
             token ->
-              if Token.is_eof token then close_all ()
+              if   Token.is_eof token
+              then Stdlib.Ok ()
               else iter ()
-          | exception Lexer.Error e ->
+          | exception Lexer.Error error ->
               let file =
                 match file_path_opt with
                   None | Some "-" -> false
-                  |         Some _  -> true in
+                |         Some _  -> true in
               let msg =
-                Lexer.format_error ~offsets mode e ~file
-              in prerr_string msg;
-                 close_all ()
-        in iter ()
-      with Sys_error msg -> Utils.highlight (sprintf "%s\n" msg)
+                Lexer.format_error ~offsets mode ~file error
+              in Stdlib.Error msg in
+          let result = iter ()
+          in (close_all (); result)
+      with Sys_error msg -> Stdlib.Error msg
 
   end

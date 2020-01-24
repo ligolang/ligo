@@ -7,3 +7,8 @@ module IO =
   end
 
 module M = LexerUnit.Make (IO) (Lexer.Make (LexToken))
+
+let () =
+  match M.trace () with
+    Stdlib.Ok _ -> ()
+  | Error msg -> Printf.eprintf "\027[31m%s\027[0m%!" msg

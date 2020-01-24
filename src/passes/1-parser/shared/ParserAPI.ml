@@ -77,6 +77,26 @@ module Make (Lexer: Lexer.S)
 
     exception Point of error
 
+    let format_error ?(offsets=true) mode (msg, valid_opt, invalid) =
+      let invalid_region = Lexer.Token.to_region invalid in
+      let header =
+        "Parse error " ^ invalid_region#to_string ~offsets mode in
+      let trailer =
+        match valid_opt with
+          None ->
+            if Lexer.Token.is_eof invalid then ""
+            else let invalid_lexeme = Lexer.Token.to_lexeme invalid in
+                 Printf.sprintf ", before \"%s\"" invalid_lexeme
+        | Some valid ->
+            let valid_lexeme = Lexer.Token.to_lexeme valid in
+            let s = Printf.sprintf ", after \"%s\"" valid_lexeme in
+            if Lexer.Token.is_eof invalid then s
+            else
+              let invalid_lexeme = Lexer.Token.to_lexeme invalid in
+              Printf.sprintf "%s and before \"%s\"" s invalid_lexeme in
+      let header = header ^ trailer in
+      header ^ (if msg = "" then ".\n" else ":\n" ^ msg)
+
     let failure get_win checkpoint =
       let message = ParErr.message (state checkpoint) in
       match get_win () with
@@ -86,42 +106,28 @@ module Make (Lexer: Lexer.S)
       | Lexer.Two (invalid, valid) ->
           raise (Point (message, Some valid, invalid))
 
-    (* The two Menhir APIs are called from the following two functions. *)
-
-    let incr_contract Lexer.{read; buffer; get_win; close; _} : Parser.ast =
-      let supplier = I.lexer_lexbuf_to_supplier read buffer
-      and failure  = failure get_win in
-      let parser   = Parser.Incremental.contract buffer.Lexing.lex_curr_p in
-      let ast      = I.loop_handle success failure supplier parser
-      in close (); ast
+    (* The monolithic API of Menhir *)
 
     let mono_contract = Parser.contract
 
-    (* Errors *)
+    let mono_expr = Parser.interactive_expr
 
-    let format_error ?(offsets=true) mode (msg, valid_opt, invalid) =
-      let invalid_region = Lexer.Token.to_region invalid in
-      let header =
-        "Parse error " ^ invalid_region#to_string ~offsets mode in
-      let trailer =
-        match valid_opt with
-          None ->
-          if Lexer.Token.is_eof invalid then ""
-          else let invalid_lexeme = Lexer.Token.to_lexeme invalid in
-               Printf.sprintf ", before \"%s\"" invalid_lexeme
-        | Some valid ->
-           let valid_lexeme = Lexer.Token.to_lexeme valid in
-           let s = Printf.sprintf ", after \"%s\"" valid_lexeme in
-           if Lexer.Token.is_eof invalid then s
-           else
-             let invalid_lexeme = Lexer.Token.to_lexeme invalid in
-             Printf.sprintf "%s and before \"%s\"" s invalid_lexeme in
-      let header = header ^ trailer in
-      header ^ (if msg = "" then ".\n" else ":\n" ^ msg)
+    (* Incremental API of Menhir *)
 
-    let short_error ?(offsets=true) mode msg (invalid_region: Region.t) =
-      let () = assert (not (invalid_region#is_ghost)) in
-      let header =
-        "Parse error " ^ invalid_region#to_string ~offsets mode in
-      header ^ (if msg = "" then ".\n" else ":\n" ^ msg)
+    module Incr = Parser.Incremental
+
+    let incr_contract Lexer.{read; buffer; get_win; close; _} =
+      let supplier = I.lexer_lexbuf_to_supplier read buffer
+      and failure  = failure get_win in
+      let parser   = Incr.contract buffer.Lexing.lex_curr_p in
+      let ast      = I.loop_handle success failure supplier parser
+      in close (); ast
+
+    let incr_expr  Lexer.{read; buffer; get_win; close; _} =
+      let supplier = I.lexer_lexbuf_to_supplier read buffer
+      and failure  = failure get_win in
+      let parser   = Incr.interactive_expr buffer.Lexing.lex_curr_p in
+      let expr     = I.loop_handle success failure supplier parser
+      in close (); expr
+
   end

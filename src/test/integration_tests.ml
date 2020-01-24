@@ -410,13 +410,13 @@ let string_arithmetic_religo () : unit result =
 
 let bytes_arithmetic () : unit result =
   let%bind program = type_file "./contracts/bytes_arithmetic.ligo" in
-  let%bind foo = e_bytes "0f00" in
-  let%bind foototo = e_bytes "0f007070" in
-  let%bind toto = e_bytes "7070" in
-  let%bind empty = e_bytes "" in
-  let%bind tata = e_bytes "7a7a7a7a" in
-  let%bind at = e_bytes "7a7a" in
-  let%bind ba = e_bytes "ba" in
+  let%bind foo = e_bytes_hex "0f00" in
+  let%bind foototo = e_bytes_hex "0f007070" in
+  let%bind toto = e_bytes_hex "7070" in
+  let%bind empty = e_bytes_hex "" in
+  let%bind tata = e_bytes_hex "7a7a7a7a" in
+  let%bind at = e_bytes_hex "7a7a" in
+  let%bind ba = e_bytes_hex "ba" in
   let%bind () = expect_eq program "concat_op" foo foototo in
   let%bind () = expect_eq program "concat_op" empty toto in
   let%bind () = expect_eq program "slice_op" tata at in
@@ -430,13 +430,13 @@ let bytes_arithmetic () : unit result =
 
 let bytes_arithmetic_mligo () : unit result =
   let%bind program = mtype_file "./contracts/bytes_arithmetic.mligo" in
-  let%bind foo = e_bytes "0f00" in
-  let%bind foototo = e_bytes "0f007070" in
-  let%bind toto = e_bytes "7070" in
-  let%bind empty = e_bytes "" in
-  let%bind tata = e_bytes "7a7a7a7a" in
-  let%bind at = e_bytes "7a7a" in
-  let%bind ba = e_bytes "ba" in
+  let%bind foo = e_bytes_hex "0f00" in
+  let%bind foototo = e_bytes_hex "0f007070" in
+  let%bind toto = e_bytes_hex "7070" in
+  let%bind empty = e_bytes_hex "" in
+  let%bind tata = e_bytes_hex "7a7a7a7a" in
+  let%bind at = e_bytes_hex "7a7a" in
+  let%bind ba = e_bytes_hex "ba" in
   let%bind () = expect_eq program "concat_op" foo foototo in
   let%bind () = expect_eq program "concat_op" empty toto in
   let%bind () = expect_eq program "slice_op" tata at in
@@ -450,13 +450,13 @@ let bytes_arithmetic_mligo () : unit result =
 
 let bytes_arithmetic_religo () : unit result =
   let%bind program = retype_file "./contracts/bytes_arithmetic.religo" in
-  let%bind foo = e_bytes "0f00" in
-  let%bind foototo = e_bytes "0f007070" in
-  let%bind toto = e_bytes "7070" in
-  let%bind empty = e_bytes "" in
-  let%bind tata = e_bytes "7a7a7a7a" in
-  let%bind at = e_bytes "7a7a" in
-  let%bind ba = e_bytes "ba" in
+  let%bind foo = e_bytes_hex "0f00" in
+  let%bind foototo = e_bytes_hex "0f007070" in
+  let%bind toto = e_bytes_hex "7070" in
+  let%bind empty = e_bytes_hex "" in
+  let%bind tata = e_bytes_hex "7a7a7a7a" in
+  let%bind at = e_bytes_hex "7a7a" in
+  let%bind ba = e_bytes_hex "ba" in
   let%bind () = expect_eq program "concat_op" foo foototo in
   let%bind () = expect_eq program "concat_op" empty toto in
   let%bind () = expect_eq program "slice_op" tata at in
@@ -1846,31 +1846,31 @@ let deep_access_ligo () : unit result =
     let make_expected = e_string "one" in
     expect_eq program "nested_record" make_input make_expected in
   ok ()
-  
+
 let attributes_ligo () : unit result =
   let%bind program = type_file "./contracts/attributes.ligo" in
-  let%bind () = 
-    let input = e_int 3 in 
+  let%bind () =
+    let input = e_int 3 in
     let expected = e_int 5 in
-    expect_eq program "foo" input expected 
+    expect_eq program "foo" input expected
   in
   ok ()
 
 let attributes_mligo () : unit result =
   let%bind program = mtype_file "./contracts/attributes.mligo" in
-  let%bind () = 
-    let input = e_int 3 in 
+  let%bind () =
+    let input = e_int 3 in
     let expected = e_int 5 in
-    expect_eq program "foo" input expected 
+    expect_eq program "foo" input expected
   in
   ok ()
 
 let attributes_religo () : unit result =
   let%bind program = retype_file "./contracts/attributes.religo" in
-  let%bind () = 
-    let input = e_int 3 in 
+  let%bind () =
+    let input = e_int 3 in
     let expected = e_int 5 in
-    expect_eq program "foo" input expected 
+    expect_eq program "foo" input expected
   in
   ok ()
 
@@ -1899,6 +1899,67 @@ let key_hash () : unit result =
   let make_input = e_pair (e_key_hash pkh_str) (e_key pk_str) in
   let make_expected = e_pair (e_bool true) (e_key_hash pkh_str) in
   let%bind () = expect_eq program "check_hash_key" make_input make_expected in
+  ok ()
+
+let key_hash_mligo () : unit result =
+  let open Tezos_crypto in
+  let (raw_pkh,raw_pk,_) = Signature.generate_key () in
+  let pkh_str = Signature.Public_key_hash.to_b58check raw_pkh in
+  let pk_str = Signature.Public_key.to_b58check raw_pk in
+  let%bind program = mtype_file "./contracts/key_hash.mligo" in
+  let make_input = e_pair (e_key_hash pkh_str) (e_key pk_str) in
+  let make_expected = e_pair (e_bool true) (e_key_hash pkh_str) in
+  let%bind () = expect_eq program "check_hash_key" make_input make_expected in
+  ok ()
+
+let key_hash_religo () : unit result =
+  let open Tezos_crypto in
+  let (raw_pkh,raw_pk,_) = Signature.generate_key () in
+  let pkh_str = Signature.Public_key_hash.to_b58check raw_pkh in
+  let pk_str = Signature.Public_key.to_b58check raw_pk in
+  let%bind program = retype_file "./contracts/key_hash.religo" in
+  let make_input = e_pair (e_key_hash pkh_str) (e_key pk_str) in
+  let make_expected = e_pair (e_bool true) (e_key_hash pkh_str) in
+  let%bind () = expect_eq program "check_hash_key" make_input make_expected in
+  ok ()
+
+let check_signature () : unit result =
+  let open Tezos_crypto in
+  let (_, raw_pk, sk) = Signature.generate_key () in
+  let pk_str = Signature.Public_key.to_b58check raw_pk in
+  let signed = Signature.sign sk (Bytes.of_string "hello world") in
+  let%bind program = type_file "./contracts/check_signature.ligo" in
+  let make_input = e_tuple [e_key pk_str ;
+                            e_signature (Signature.to_b58check signed) ;
+                            e_bytes_string "hello world"] in
+  let make_expected = e_bool true in
+  let%bind () = expect_eq program "check_signature" make_input make_expected in
+  ok ()
+
+let check_signature_mligo () : unit result =
+  let open Tezos_crypto in
+  let (_, raw_pk, sk) = Signature.generate_key () in
+  let pk_str = Signature.Public_key.to_b58check raw_pk in
+  let signed = Signature.sign sk (Bytes.of_string "hello world") in
+  let%bind program = mtype_file "./contracts/check_signature.mligo" in
+  let make_input = e_tuple [e_key pk_str ;
+                            e_signature (Signature.to_b58check signed) ;
+                            e_bytes_string "hello world"] in
+  let make_expected = e_bool true in
+  let%bind () = expect_eq program "check_signature" make_input make_expected in
+  ok ()
+
+let check_signature_religo () : unit result =
+  let open Tezos_crypto in
+  let (_, raw_pk, sk) = Signature.generate_key () in
+  let pk_str = Signature.Public_key.to_b58check raw_pk in
+  let signed = Signature.sign sk (Bytes.of_string "hello world") in
+  let%bind program = retype_file "./contracts/check_signature.religo" in
+  let make_input = e_tuple [e_key pk_str ;
+                            e_signature (Signature.to_b58check signed) ;
+                            e_bytes_string "hello world"] in
+  let make_expected = e_bool true in
+  let%bind () = expect_eq program "check_signature" make_input make_expected in
   ok ()
 
 let curry () : unit result =
@@ -1975,6 +2036,26 @@ let bytes_unpack () : unit result =
   let%bind () = expect_eq program "id_address" (e_address addr) (e_some (e_address addr)) in
   ok ()
 
+let bytes_unpack_mligo () : unit result =
+  let%bind program = mtype_file "./contracts/bytes_unpack.mligo" in
+  let%bind () = expect_eq program "id_string" (e_string "teststring") (e_some (e_string "teststring")) in
+  let%bind () = expect_eq program "id_int" (e_int 42) (e_some (e_int 42)) in
+  let open Proto_alpha_utils.Memory_proto_alpha in
+  let addr = Protocol.Alpha_context.Contract.to_b58check @@
+      (List.nth dummy_environment.identities 0).implicit_contract in
+  let%bind () = expect_eq program "id_address" (e_address addr) (e_some (e_address addr)) in
+  ok ()
+
+let bytes_unpack_religo () : unit result =
+  let%bind program = retype_file "./contracts/bytes_unpack.religo" in
+  let%bind () = expect_eq program "id_string" (e_string "teststring") (e_some (e_string "teststring")) in
+  let%bind () = expect_eq program "id_int" (e_int 42) (e_some (e_int 42)) in
+  let open Proto_alpha_utils.Memory_proto_alpha in
+  let addr = Protocol.Alpha_context.Contract.to_b58check @@
+      (List.nth dummy_environment.identities 0).implicit_contract in
+  let%bind () = expect_eq program "id_address" (e_address addr) (e_some (e_address addr)) in
+  ok ()
+
 let empty_case () : unit result =
   let%bind program = type_file "./contracts/empty_case.ligo" in
   let%bind () =
@@ -2019,7 +2100,14 @@ let empty_case_religo () : unit result =
 
 let main = test_suite "Integration (End to End)" [
     test "bytes unpack" bytes_unpack ;
+    test "bytes unpack (mligo)" bytes_unpack_mligo ;
+    test "bytes unpack (religo)" bytes_unpack_religo ;
     test "key hash" key_hash ;
+    test "key hash (mligo)" key_hash_mligo ;
+    test "key hash (religo)" key_hash_religo ;
+    test "check signature" check_signature ;
+    test "check signature (mligo)" check_signature_mligo ;
+    test "check signature (religo)" check_signature_religo ;
     test "chain id" chain_id ;
     test "type alias" type_alias ;
     test "function" function_ ;
