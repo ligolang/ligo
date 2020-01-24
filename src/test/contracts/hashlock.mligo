@@ -1,6 +1,6 @@
 type commit = {
   date: timestamp;
-  hashed: bytes;
+  salted_hash: bytes;
 }
 
 type commit_set = (address, commit) big_map
@@ -23,7 +23,7 @@ type parameter =
 (* We use hash-commit so that a baker can't steal *)
 let commit ((p,s): unit * storage) : operation list * storage =
   let salted: bytes = Bytes.concat s.hashed (Bytes.pack sender) in
-  let commit: commit = {date = Current.time + 86400; hashed = salted;} in
+  let commit: commit = {date = Current.time + 86400; salted_hash = Crypto.sha256 salted;} in
   let updated_map: commit_set = Big_map.update sender (Some commit) s.commits in
   let s = {hashed = s.hashed; unused = s.unused; commits = updated_map} in
   (([]: operation list), s)
@@ -38,7 +38,7 @@ let reveal ((p,s): reveal * storage) : operation list * storage =
   then (failwith "It hasn't been 24 hours since your commit yet.": operation list * storage)
   else
   let salted = Bytes.concat (Crypto.sha256 p.hashable) (Bytes.pack sender) in
-  if ((Crypto.sha256 salted) = commit.hashed) && s.unused
+  if ((Crypto.sha256 salted) = commit.salted_hash) && s.unused
   then
     let s: storage = {hashed = s.hashed; unused = false; commits = s.commits} in
     ((p.message ()), s)

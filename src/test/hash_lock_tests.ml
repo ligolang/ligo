@@ -39,9 +39,9 @@ let mk_time st =
   | Some s -> ok s
   | None -> simple_fail "bad timestamp notation"
 let to_sec t = Tezos_utils.Time.Protocol.to_seconds t
-let storage hashed commits =
+let storage hashed used commits =
   e_ez_record [("hashed", hashed);
-               ("unused", e_bool false);
+               ("unused", e_bool used);
                ("commits", commits)]
 
 let (first_committer , first_contract) =
@@ -54,26 +54,25 @@ let commit () =
   let%bind program,_ = get_program () in
   let%bind predecessor_timestamp = mk_time "2000-01-01T00:10:10Z" in
   let%bind lock_time = mk_time "2000-01-02T00:10:11Z" in
-  let test_hash = e_bytes_raw (sha_256_hash (Bytes.of_string "hello world")) in
+  let test_hash_raw = sha_256_hash (Bytes.of_string "hello world") in
+  let test_hash = e_bytes_raw test_hash_raw in
+  let%bind packed_sender = pack_payload program (e_bytes_string first_committer) in
   let salted_hash = e_bytes_raw (sha_256_hash
-                                   (Bytes.concat
-                                      Bytes.empty
-                                      [Bytes.of_string first_committer;
-                                       (sha_256_hash (Bytes.of_string "hello world"))]
-                                   ))
+                                   (Bytes.concat Bytes.empty [test_hash_raw;
+                                                              packed_sender]))
   in
   let pre_commits = e_typed_big_map [] t_address (t_record_ez [("date", t_timestamp);
-                                                              ("hashed", t_bytes)])
+                                                              ("salted_hash", t_bytes)])
   in
-  let init_storage = storage test_hash pre_commits in
+  let init_storage = storage test_hash true pre_commits in
   let commit =
     e_ez_record [("date", e_timestamp
                     (Int64.to_int (to_sec lock_time)));
-                 ("hashed", salted_hash)]
+                 ("salted_hash", salted_hash)]
   in
   let post_commits = e_big_map [((e_address first_committer), commit)]
   in
-  let post_storage = storage salted_hash post_commits in
+  let post_storage = storage salted_hash true post_commits in
   let options =
     Proto_alpha_utils.Memory_proto_alpha.make_options
       ~predecessor_timestamp
