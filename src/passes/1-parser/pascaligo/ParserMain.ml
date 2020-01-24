@@ -142,11 +142,11 @@ let lexer_inst =
         match parse (fun () -> Unit.apply instance Unit.parse_expr) with
           Stdlib.Ok _ -> ()
         | Error Region.{value; _} ->
-           Printf.eprintf "\027[31m%s\027[0m%!" value
+            Printf.eprintf "\027[31m%s\027[0m%!" value
       else
         (match parse (fun () -> Unit.apply instance Unit.parse_contract) with
           Stdlib.Ok _ -> ()
         | Error Region.{value; _} ->
-           Printf.eprintf "\027[31m%s\027[0m%!" value)
+            Printf.eprintf "\027[31m%s\027[0m%!" value)
   | Stdlib.Error (Lexer.File_opening msg) ->
       Printf.eprintf "\027[31m%s\027[0m%!" msg

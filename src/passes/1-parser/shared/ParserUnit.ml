@@ -183,5 +183,4 @@ module Make (Lexer: Lexer.S)
 
        | exception Sys_error error ->
            Stdlib.Error (Region.wrap_ghost error)
-
   end

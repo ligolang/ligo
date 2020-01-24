@@ -1312,12 +1312,9 @@ and simpl_for_collect : Raw.for_collect -> (_ -> expression result) result = fun
     | None -> e_skip ()
     | Some seq -> e_let_in (Var.of_name "#COMPILER#folded_record", None) false fold seq in (* TODO fresh *)
   return_statement @@ final_sequence
-(*
-and simpl_declaration : Raw.declaration -> declaration Location.wrap result =
- *)
 
 and simpl_declaration_list declarations :
-      Ast_simplified.declaration Location.wrap list result =
+  Ast_simplified.declaration Location.wrap list result =
   let open Raw in
   let rec hook acc = function
     [] -> acc
@@ -1378,8 +1375,7 @@ and simpl_declaration_list declarations :
         Declaration_constant (name, ty_opt, inline, expr) in
       let res = Location.wrap ~loc new_decl in
       hook (bind_list_cons res acc) declarations
-  in
-  hook (ok @@ []) (List.rev declarations)
+  in hook (ok @@ []) (List.rev declarations)
 
 let simpl_program : Raw.ast -> program result =
   fun t -> simpl_declaration_list @@ nseq_to_list t.decl
