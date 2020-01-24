@@ -980,7 +980,7 @@ let open_token_stream input =
         with
           Sys_error msg -> Stdlib.Error (File_opening msg))
     | String s ->
-       Ok (Lexing.from_string s, fun () -> ())
+        Ok (Lexing.from_string s, fun () -> ())
     | Channel chan ->
         let close () = close_in chan in
         Ok (Lexing.from_channel chan, close)

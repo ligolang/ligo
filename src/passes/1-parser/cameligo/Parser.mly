@@ -217,6 +217,7 @@ let_declaration:
 
 let_binding:
   "<ident>" nseq(sub_irrefutable) type_annotation? "=" expr {
+    Scoping.check_reserved_name $1;
     let binders = Utils.nseq_cons (PVar $1) $2 in
     Utils.nseq_iter Scoping.check_pattern binders;
     {binders; lhs_type=$3; eq=$4; let_rhs=$5}

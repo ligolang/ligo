@@ -19,7 +19,7 @@ module PreIO =
     let ext = ".ligo"
     let pre_options =
       EvalOpt.make ~libs:[]
-                   ~verbose:(SSet.singleton "cpp")   (* TODO (Debug) *)
+                   ~verbose:SSet.empty
                    ~offsets:true
                    ~mode:`Point
                    ~cmd:EvalOpt.Quiet
@@ -45,81 +45,32 @@ module PreUnit =
 
 module Errors =
   struct
-    let reserved_name Region.{value; region} =
-      let title () = Printf.sprintf "\nReserved name \"%s\"" value in
-      let message () = "" in
-      let data = [
-        ("location",
-         fun () -> Format.asprintf "%a" Location.pp_lift @@ region)]
-      in Trace.error ~data title message
+    (* let data =
+         [("location",
+           fun () -> Format.asprintf "%a" Location.pp_lift @@ loc)]
+     *)
 
-    let duplicate_parameter Region.{value; region} =
-      let title () =
-        Printf.sprintf "\nDuplicate parameter \"%s\"" value in
-      let message () = "" in
-      let data = [
-        ("location",
-         fun () -> Format.asprintf "%a" Location.pp_lift @@ region)]
-      in Trace.error ~data title message
-
-    let duplicate_variant Region.{value; region} =
-      let title () =
-        Printf.sprintf "\nDuplicate variant \"%s\" in this \
-                        type declaration" value in
-      let message () = "" in
-      let data = [
-        ("location",
-         fun () -> Format.asprintf "%a" Location.pp_lift @@ region)]
-      in Trace.error ~data title message
-
-    let non_linear_pattern Region.{value; region} =
-      let title () =
-        Printf.sprintf "\nRepeated variable \"%s\" in this pattern" value in
-      let message () = "" in
-      let data = [
-        ("location",
-         fun () -> Format.asprintf "%a" Location.pp_lift @@ region)]
-      in Trace.error ~data title message
-
-    let duplicate_field Region.{value; region} =
-      let title () =
-        Printf.sprintf "\nDuplicate field name \"%s\" \
-                        in this record declaration" value in
-      let message () = "" in
-      let data = [
-        ("location",
-         fun () -> Format.asprintf "%a" Location.pp_lift @@ region)]
-      in Trace.error ~data title message
-
-    let parser_error Region.{value; region} =
+    let generic message =
       let title () = ""
-      and message () = value
-      and loc = region in
-      let data =
-        [("parser_loc",
-          fun () -> Format.asprintf "%a" Location.pp_lift @@ loc)]
-      in Trace.error ~data title message
+      and message () = message.Region.value
+      in Trace.error ~data:[] title message
 
-    let lexer_error (e: Lexer.error AST.reg) =
-      let title () = "\nLexer error" in
-      let message () = Lexer.error_to_string e.value in
-      let data = [
-          ("parser_loc",
-           fun () -> Format.asprintf "%a" Location.pp_lift @@ e.region)]
-      in Trace.error ~data title message
   end
 
 let parse (module IO : IO) parser =
   let module Unit = PreUnit (IO) in
-  let mk_error error =
+  let local_fail error =
     Unit.format_error ~offsets:IO.options#offsets
-                      IO.options#mode error in
+                      IO.options#mode error
+    |> Errors.generic |> Trace.fail in
   match parser () with
-    (* Scoping errors *)
-
     Stdlib.Ok semantic_value -> Trace.ok semantic_value
-  | Stdlib.Error error -> Trace.fail @@ Errors.parser_error error
-  | exception Lexer.Error e -> Trace.fail @@ Errors.lexer_error e
+
+  (* Lexing and parsing errors *)
+
+  | Stdlib.Error error ->
+     Trace.fail @@ Errors.generic error
+  (* Scoping errors *)
 
   | exception Scoping.Error (Scoping.Reserved_name name) ->
       let token =
@@ -129,9 +80,8 @@ let parse (module IO : IO) parser =
             reserved name for the lexer. *)
          Stdlib.Error _ -> assert false
        | Ok invalid ->
-          let point =
-            "Reserved name.\nHint: Change the name.\n", None, invalid
-          in Trace.fail @@ Errors.reserved_name @@ mk_error point)
+          local_fail
+            ("Reserved name.\nHint: Change the name.\n", None, invalid))
 
   | exception Scoping.Error (Scoping.Duplicate_parameter name) ->
       let token =
@@ -141,19 +91,16 @@ let parse (module IO : IO) parser =
             reserved name for the lexer. *)
          Stdlib.Error _ -> assert false
        | Ok invalid ->
-          let point =
-            "Duplicate parameter.\nHint: Change the name.\n",
-            None, invalid
-          in Trace.fail @@ Errors.duplicate_parameter @@ mk_error point)
+           local_fail
+             ("Duplicate parameter.\nHint: Change the name.\n",
+              None, invalid))
 
   | exception Scoping.Error (Scoping.Duplicate_variant name) ->
       let token =
-        Lexer.Token.mk_constr name.Region.value name.Region.region in
-      let point =
-        "Duplicate constructor in this sum type declaration.\n\
-         Hint: Change the constructor.\n",
-        None, token
-      in Trace.fail @@ Errors.duplicate_variant @@ mk_error point
+        Lexer.Token.mk_constr name.Region.value name.Region.region
+      in local_fail
+           ("Duplicate constructor in this sum type declaration.\n\
+             Hint: Change the constructor.\n", None, token)
 
   | exception Scoping.Error (Scoping.Non_linear_pattern var) ->
       let token =
@@ -163,11 +110,10 @@ let parse (module IO : IO) parser =
             reserved name for the lexer. *)
          Stdlib.Error _ -> assert false
        | Ok invalid ->
-           let point =
-             "Repeated variable in this pattern.\n\
-              Hint: Change the name.\n",
-             None, invalid
-           in Trace.fail @@ Errors.non_linear_pattern @@ mk_error point)
+           local_fail
+             ("Repeated variable in this pattern.\n\
+               Hint: Change the name.\n",
+              None, invalid))
 
   | exception Scoping.Error (Scoping.Duplicate_field name) ->
       let token =
@@ -177,11 +123,10 @@ let parse (module IO : IO) parser =
             reserved name for the lexer. *)
          Stdlib.Error _ -> assert false
        | Ok invalid ->
-           let point =
-             "Duplicate field name in this record declaration.\n\
-              Hint: Change the name.\n",
-             None, invalid
-           in Trace.fail @@ Errors.duplicate_field @@ mk_error point)
+           local_fail
+             ("Duplicate field name in this record declaration.\n\
+               Hint: Change the name.\n",
+              None, invalid))
 
 let parse_file (source: string) =
   let module IO =
