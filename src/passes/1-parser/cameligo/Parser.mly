@@ -182,7 +182,7 @@ sum_type:
 
 variant:
   "<constr>" { {$1 with value={constr=$1; arg=None}} }
-| "<constr>" "of" cartesian {
+| "<constr>" "of" fun_type {
     let region = cover $1.region (type_expr_to_region $3)
     and value  = {constr=$1; arg = Some ($2,$3)}
     in {region; value} }
