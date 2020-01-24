@@ -70,8 +70,7 @@ module Make (Lexer: Lexer.S)
         ParserLog.mk_state ~offsets:IO.options#offsets
                            ~mode:IO.options#mode
                            ~buffer:output in
-      let close_all () =
-        lexer_inst.Lexer.close (); close_out stdout in
+      let close () = lexer_inst.Lexer.close () in
       let expr =
         try
           if IO.options#mono then
@@ -80,7 +79,7 @@ module Make (Lexer: Lexer.S)
             in Front.mono_expr tokeniser lexbuf
           else
             Front.incr_expr lexer_inst
-        with exn -> close_all (); raise exn in
+        with exn -> close (); raise exn in
       let () =
         if SSet.mem "ast-tokens" IO.options#verbose then
           begin
@@ -95,7 +94,7 @@ module Make (Lexer: Lexer.S)
             ParserLog.pp_expr state expr;
             Buffer.output_buffer stdout output
           end
-      in close_all (); Ok expr
+      in close (); Ok expr
 
     (* Parsing a contract *)
 
@@ -106,8 +105,7 @@ module Make (Lexer: Lexer.S)
         ParserLog.mk_state ~offsets:IO.options#offsets
                            ~mode:IO.options#mode
                            ~buffer:output in
-      let close_all () =
-        lexer_inst.Lexer.close (); close_out stdout in
+      let close () = lexer_inst.Lexer.close () in
       let ast =
         try
           if IO.options#mono then
@@ -116,7 +114,7 @@ module Make (Lexer: Lexer.S)
             in Front.mono_contract tokeniser lexbuf
           else
             Front.incr_contract lexer_inst
-        with exn -> close_all (); raise exn in
+        with exn -> close (); raise exn in
       let () =
         if SSet.mem "ast-tokens" IO.options#verbose then
           begin
@@ -131,7 +129,7 @@ module Make (Lexer: Lexer.S)
             ParserLog.pp_ast state ast;
             Buffer.output_buffer stdout output
           end
-      in close_all (); Ok ast
+      in close (); Ok ast
 
     (* Wrapper for the parsers above *)
 

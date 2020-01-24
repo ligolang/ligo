@@ -221,10 +221,8 @@ let parse_file (source: string) =
     match Lexer.open_token_stream (Lexer.File pp_input) with
       Ok instance -> instance
     | Stdlib.Error _ -> assert false (* No file opening *) in
-  let thunk () = Unit.apply instance Unit.parse_contract in
-  let res = parse (module IO) thunk in
-  let () = prerr_endline "Pascaligo.parse_file: Leaving." in
-  res
+  let thunk () = Unit.apply instance Unit.parse_contract
+  in parse (module IO) thunk
 
 let parse_string (s: string) =
   let module IO =

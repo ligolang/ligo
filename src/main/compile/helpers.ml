@@ -24,11 +24,9 @@ let syntax_to_variant : s_syntax -> string option -> v_syntax result =
   | _ -> simple_fail "unrecognized parser"
 
 let parsify_pascaligo source =
-  let () = prerr_endline "Helpers.parsify_pascaligo: BEFORE" in
   let%bind raw =
     trace (simple_error "parsing") @@
     Parser.Pascaligo.parse_file source in
-  let () = prerr_endline "Helpers.parsify_pascaligo: AFTER" in
   let%bind simplified =
     trace (simple_error "simplifying") @@
       Simplify.Pascaligo.simpl_program raw
@@ -84,9 +82,7 @@ let parsify = fun (syntax : v_syntax) source_filename ->
     | Pascaligo -> ok parsify_pascaligo
     | Cameligo -> ok parsify_cameligo
     | ReasonLIGO -> ok parsify_reasonligo in
-  let () = prerr_endline "Helpers.parsify: BEFORE" in
   let%bind parsified = parsify source_filename in
-  let () = prerr_endline "Helpers.parsify: AFTER" in
   let%bind applied = Self_ast_simplified.all_program parsified in
   ok applied
 
