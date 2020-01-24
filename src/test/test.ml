@@ -14,5 +14,6 @@ let () =
     Multisig_v2_tests.main ;
     Replaceable_id_tests.main ;
     Time_lock_tests.main ;
+    Hash_lock_tests.main ;
   ] ;
   ()
