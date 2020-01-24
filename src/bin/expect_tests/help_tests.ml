@@ -44,6 +44,9 @@ let%expect_test _ =
                Subcommand: interpret the expression in the context initialized by
                the provided source file.
 
+           list-declarations
+               Subcommand: list all the top-level decalarations.
+
            measure-contract
                Subcommand: measure a contract's compiled size in bytes.
 
@@ -116,6 +119,9 @@ let%expect_test _ =
            interpret
                Subcommand: interpret the expression in the context initialized by
                the provided source file.
+
+           list-declarations
+               Subcommand: list all the top-level decalarations.
 
            measure-contract
                Subcommand: measure a contract's compiled size in bytes.
