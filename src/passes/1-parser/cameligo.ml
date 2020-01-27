@@ -144,7 +144,7 @@ let parse_file (source: string) =
   let open Trace in
   let%bind () = sys_command cpp_cmd in
   let module Unit = PreUnit (IO) in
-  match Lexer.open_token_stream (Lexer.File pp_input) with
+  match Lexer.(open_token_stream @@ File pp_input) with
     Ok instance ->
       let thunk () = Unit.apply instance Unit.parse_contract
       in parse (module IO) thunk
@@ -158,7 +158,7 @@ let parse_string (s: string) =
       let options = PreIO.pre_options ~input:None ~expr:false
     end in
   let module Unit = PreUnit (IO) in
-  match Lexer.open_token_stream (Lexer.String s) with
+  match Lexer.(open_token_stream @@ String s) with
     Ok instance ->
       let thunk () = Unit.apply instance Unit.parse_contract
       in parse (module IO) thunk
@@ -172,7 +172,7 @@ let parse_expression (s: string)  =
       let options = PreIO.pre_options ~input:None ~expr:true
     end in
   let module Unit = PreUnit (IO) in
-  match Lexer.open_token_stream (Lexer.String s) with
+  match Lexer.(open_token_stream @@ String s) with
     Ok instance ->
       let thunk () = Unit.apply instance Unit.parse_expr
       in parse (module IO) thunk

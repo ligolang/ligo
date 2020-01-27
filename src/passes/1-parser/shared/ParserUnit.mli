@@ -23,17 +23,17 @@ module type Pretty =
     val print_expr   : state -> expr -> unit
   end
 
-module type S =
+module Make (Lexer : Lexer.S)
+            (AST : sig type t type expr end)
+            (Parser : ParserAPI.PARSER
+                      with type ast   = AST.t
+                       and type expr  = AST.expr
+                       and type token = Lexer.token)
+            (ParErr : sig val message : int -> string end)
+            (ParserLog : Pretty with type ast  = AST.t
+                                 and type expr = AST.expr)
+            (IO: IO) :
   sig
-    module IO : IO
-    module Lexer : Lexer.S
-    module AST : sig type t type expr end
-    module Parser : ParserAPI.PARSER
-                     with type ast   = AST.t
-                      and type expr  = AST.expr
-                      and type token = Lexer.token
-
-
     (* Error handling reexported from [ParserAPI] without the
        exception [Point] *)
 
@@ -57,17 +57,3 @@ module type S =
     val parse_contract : AST.t parser
     val parse_expr     : AST.expr parser
   end
-
-module Make (Lexer : Lexer.S)
-            (AST : sig type t type expr end)
-            (Parser : ParserAPI.PARSER
-                      with type ast   = AST.t
-                       and type expr  = AST.expr
-                       and type token = Lexer.token)
-            (ParErr : sig val message : int -> string end)
-            (ParserLog : Pretty with type ast  = AST.t
-                                 and type expr = AST.expr)
-            (IO: IO) : S with module IO = IO
-                          and module Lexer = Lexer
-                          and module AST = AST
-                          and module Parser = Parser

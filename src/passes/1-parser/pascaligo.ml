@@ -55,12 +55,13 @@ module Errors =
       in Trace.error ~data:[] title message
   end
 
-let parse (module Unit : ParserUnit.S) parser =
+let parse (module IO : IO) parser =
+  let module Unit = PreUnit (IO) in
   let local_fail error =
     Trace.fail
     @@ Errors.generic
-    @@ Unit.format_error ~offsets:Unit.IO.options#offsets
-                        Unit.IO.options#mode error in
+    @@ Unit.format_error ~offsets:IO.options#offsets
+                        IO.options#mode error in
   match parser () with
     Stdlib.Ok semantic_value -> Trace.ok semantic_value
 
@@ -120,32 +121,71 @@ let parse (module Unit : ParserUnit.S) parser =
                Hint: Change the name.\n",
               None, invalid))
 
-let parse_file :
-      string -> (Unit.Parser.ast, string Region.reg) Stdlib.result =
-  fun source ->
+let parse_file source =
   let module IO =
     struct
       let ext = PreIO.ext
       let options =
         PreIO.pre_options ~input:(Some source) ~expr:false
     end in
-  let module Unit = PreUnit (IO)
-  in Wrapper.parse_file Errors.generic (module Unit : ParserUnit.S) parse
+  let module Unit = PreUnit (IO) in
+  let lib_path =
+    match IO.options#libs with
+        [] -> ""
+    | libs -> let mk_I dir path = Printf.sprintf " -I %s%s" dir path
+             in List.fold_right mk_I libs "" in
+  let prefix =
+    match IO.options#input with
+      None | Some "-" -> "temp"
+    | Some file -> Filename.(remove_extension @@ basename file) in
+  let suffix = ".pp" ^ IO.ext in
+  let pp_input =
+    if   SSet.mem "cpp" IO.options#verbose
+    then prefix ^ suffix
+    else let pp_input, pp_out =
+           Filename.open_temp_file prefix suffix
+         in close_out pp_out; pp_input in
+  let cpp_cmd =
+    match IO.options#input with
+      None | Some "-" ->
+        Printf.sprintf "cpp -traditional-cpp%s - > %s"
+                       lib_path pp_input
+    | Some file ->
+        Printf.sprintf "cpp -traditional-cpp%s %s > %s"
+                       lib_path file pp_input in
+  let open Trace in
+  let%bind () = sys_command cpp_cmd in
+  match Lexer.(open_token_stream @@ File pp_input) with
+    Ok instance ->
+      let thunk () = Unit.apply instance Unit.parse_contract
+      in parse (module IO) thunk
+  | Stdlib.Error (Lexer.File_opening msg) ->
+      Trace.fail @@ Errors.generic @@ Region.wrap_ghost msg
 
-let parse_string =
+let parse_string (s: string) =
   let module IO =
     struct
       let ext = PreIO.ext
       let options = PreIO.pre_options ~input:None ~expr:false
     end in
-  let module Unit = PreUnit (IO)
-  in Wrapper.parse_string Errors.generic (module Unit : ParserUnit.S) parse
+  let module Unit = PreUnit (IO) in
+  match Lexer.(open_token_stream @@ String s) with
+    Ok instance ->
+      let thunk () = Unit.apply instance Unit.parse_contract
+      in parse (module IO) thunk
+  | Stdlib.Error (Lexer.File_opening msg) ->
+      Trace.fail @@ Errors.generic @@ Region.wrap_ghost msg
 
-let parse_expression =
+let parse_expression (s: string) =
   let module IO =
     struct
       let ext = PreIO.ext
       let options = PreIO.pre_options ~input:None ~expr:true
     end in
-  let module Unit = PreUnit (IO)
-  in Wrapper.parse_expression Errors.generic (module Unit : ParserUnit.S) parse
+  let module Unit = PreUnit (IO) in
+  match Lexer.(open_token_stream @@ String s) with
+    Ok instance ->
+      let thunk () = Unit.apply instance Unit.parse_expr
+      in parse (module IO) thunk
+  | Stdlib.Error (Lexer.File_opening msg) ->
+      Trace.fail @@ Errors.generic @@ Region.wrap_ghost msg
