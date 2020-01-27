@@ -525,15 +525,12 @@ module Make (Token: TOKEN) : (S with module Token = Token) =
       let region, lexeme, state = sync state buffer in
       let lexeme = Str.string_before lexeme (String.index lexeme 't') in
       match format_tz lexeme with
-      | Some tz -> (
-        match Token.mk_mutez (Z.to_string tz ^ "mutez") region with
-          Ok token ->
-          token, state
+        None -> assert false
+      | Some tz ->
+          match Token.mk_mutez (Z.to_string tz ^ "mutez") region with
+            Ok token -> token, state
         | Error Token.Non_canonical_zero ->
             fail region Non_canonical_zero
-        )
-      | None -> assert false
-
 
     let mk_ident state buffer =
       let region, lexeme, state = sync state buffer in
@@ -563,7 +560,6 @@ module Make (Token: TOKEN) : (S with module Token = Token) =
       let region, _, state = sync state buffer
       in Token.eof region, state
 
-
 (* END HEADER *)
 }
 
@@ -589,8 +585,9 @@ let byte_seq   = byte | byte (byte | '_')* byte
 let bytes      = "0x" (byte_seq? as seq)
 let esc        = "\\n" | "\\\"" | "\\\\" | "\\b"
                | "\\r" | "\\t" | "\\x" byte
-let pascaligo_sym = "=/=" | '#' | ":="
-let cameligo_sym = "<>" | "::" | "||" | "&&"
+
+let pascaligo_sym  = "=/=" | '#' | ":="
+let cameligo_sym   = "<>" | "::" | "||" | "&&"
 let reasonligo_sym = '!' | "=>" | "!=" | "==" | "++" | "..." | "||" | "&&"
 
 let symbol =
@@ -689,7 +686,7 @@ and scan state = parse
 
      Some special errors are recognised in the semantic actions of the
      following regular expressions. The first error is a minus sign
-     separated from the integer it applies by some markup (space or
+     separated from the integer it applies to by some markup (space or
      tabs). The second is a minus sign immediately followed by
      anything else than a natural number (matched above) or markup and
      a number (previous error). The third is the strange occurrence of

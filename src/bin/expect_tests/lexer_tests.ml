@@ -37,10 +37,10 @@ ligo: : Lexical error in file "broken_string.mligo", line 1, characters 8-9:
 
  run_ligo_bad [ "compile-contract" ; "../../test/lexer/broken_string.religo" ; "main" ] ;
   [%expect {| 
-ligo: : Lexical error at line 1, characters 8-9:
+ligo: : Lexical error in file "broken_string.religo", line 1, characters 8-9:
       The string starting here is interrupted by a line break.
       Hint: Remove the break, close the string before or insert a backslash.
-       {"parser_loc":"in file \"broken_string.religo\", line 1, characters 8-9"}
+       {}
 
 
  If you're not sure how to fix this error, you can
@@ -88,10 +88,10 @@ ligo: : Lexical error in file "negative_byte_sequence.mligo", line 1, characters
 
 run_ligo_bad [ "compile-contract" ; "../../test/lexer/negative_byte_sequence.religo" ; "main" ] ;
   [%expect {| 
-ligo: : Lexical error at line 1, characters 8-13:
+ligo: : Lexical error in file "negative_byte_sequence.religo", line 1, characters 8-13:
       Negative byte sequence.
       Hint: Remove the leading minus sign.
-       {"parser_loc":"in file \"negative_byte_sequence.religo\", line 1, characters 8-13"}
+       {}
 
 
  If you're not sure how to fix this error, you can
@@ -122,10 +122,10 @@ ligo: : Lexical error in file "reserved_name.ligo", line 1, characters 4-13:
 
 run_ligo_bad [ "compile-contract" ; "../../test/lexer/reserved_name.religo" ; "main" ] ;
   [%expect {| 
-ligo: : Lexical error at line 1, characters 4-7:
+ligo: : Lexical error in file "reserved_name.religo", line 1, characters 4-7:
       Reserved name: end.
       Hint: Change the name.
-       {"parser_loc":"in file \"reserved_name.religo\", line 1, characters 4-7"}
+       {}
 
 
  If you're not sure how to fix this error, you can
@@ -188,9 +188,9 @@ ligo: : Lexical error in file "unexpected_character.mligo", line 1, characters 8
 
  run_ligo_bad [ "compile-contract" ; "../../test/lexer/unexpected_character.religo" ; "main" ] ;
   [%expect {| 
-ligo: : Lexical error at line 1, characters 8-9:
+ligo: : Lexical error in file "unexpected_character.religo", line 1, characters 8-9:
       Unexpected character '\239'.
-       {"parser_loc":"in file \"unexpected_character.religo\", line 1, characters 8-9"}
+       {}
 
 
  If you're not sure how to fix this error, you can
@@ -255,10 +255,10 @@ ligo: : Lexical error in file "invalid_symbol.mligo", line 1, characters 10-13:
 
 run_ligo_bad [ "compile-contract" ; "../../test/lexer/invalid_symbol.religo" ; "main" ] ;
   [%expect {| 
-ligo: : Lexical error at line 1, characters 10-11:
+ligo: : Lexical error in file "invalid_symbol.religo", line 1, characters 10-11:
       Invalid symbol.
       Hint: Check the LIGO syntax you use.
-       {"parser_loc":"in file \"invalid_symbol.religo\", line 1, characters 10-11"}
+       {}
 
 
  If you're not sure how to fix this error, you can
@@ -306,10 +306,10 @@ ligo: : Lexical error in file "missing_break.mligo", line 1, characters 11-11:
 
  run_ligo_bad [ "compile-contract" ; "../../test/lexer/missing_break.religo" ; "main" ] ;
   [%expect {| 
-ligo: : Lexical error at line 1, characters 11-11:
+ligo: : Lexical error in file "missing_break.religo", line 1, characters 11-11:
       Missing break.
       Hint: Insert some space.
-       {"parser_loc":"in file \"missing_break.religo\", line 1, characters 11-11"}
+       {}
 
 
  If you're not sure how to fix this error, you can
@@ -357,10 +357,10 @@ ligo: : Lexical error in file "invalid_character_in_string.mligo", line 1, chara
 
 run_ligo_bad [ "compile-contract" ; "../../test/lexer/invalid_character_in_string.religo" ; "main" ] ;
   [%expect {| 
-ligo: : Lexical error at line 1, characters 9-10:
+ligo: : Lexical error in file "invalid_character_in_string.religo", line 1, characters 9-10:
       Invalid character in string.
       Hint: Remove or replace the character.
-       {"parser_loc":"in file \"invalid_character_in_string.religo\", line 1, characters 9-10"}
+       {}
 
 
  If you're not sure how to fix this error, you can

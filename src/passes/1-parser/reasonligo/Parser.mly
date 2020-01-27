@@ -119,7 +119,7 @@ tuple(item):
 
 (* Possibly empty semicolon-separated values between brackets *)
 
-list(item):
+list__(item):
   "[" sep_or_term_list(item,";")? "]" {
     let compound = Brackets ($1,$3)
     and region = cover $1 $3 in
@@ -335,7 +335,7 @@ core_pattern:
 | "false"                                                {  PFalse $1 }
 | "<string>"                                             { PString $1 }
 | par(ptuple)                                            {    PPar $1 }
-| list(sub_pattern)                            { PList (PListComp $1) }
+| list__(sub_pattern)                          { PList (PListComp $1) }
 | constr_pattern                                         { PConstr $1 }
 | record_pattern                                         { PRecord $1 }
 
@@ -725,8 +725,8 @@ common_expr:
 | "true"                              {   ELogic (BoolExpr (True $1)) }
 
 core_expr_2:
-  common_expr {                   $1 }
-| list(expr)  { EList (EListComp $1) }
+  common_expr   {                   $1 }
+| list__(expr)  { EList (EListComp $1) }
 
 list_or_spread:
   "[" expr "," sep_or_term_list(expr, ",") "]" {

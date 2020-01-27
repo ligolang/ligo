@@ -47,38 +47,35 @@ module Errors =
   struct
     (* let data =
          [("location",
-           fun () -> Format.asprintf "%a" Location.pp_lift @@ loc)]
-     *)
+           fun () -> Format.asprintf "%a" Location.pp_lift @@ loc)] *)
 
     let generic message =
       let title () = ""
       and message () = message.Region.value
       in Trace.error ~data:[] title message
-
   end
 
 let parse (module IO : IO) parser =
   let module Unit = PreUnit (IO) in
   let local_fail error =
-    Unit.format_error ~offsets:IO.options#offsets
-                      IO.options#mode error
-    |> Errors.generic |> Trace.fail in
+    Trace.fail
+    @@ Errors.generic
+    @@ Unit.format_error ~offsets:IO.options#offsets
+                        IO.options#mode error in
   match parser () with
     Stdlib.Ok semantic_value -> Trace.ok semantic_value
 
   (* Lexing and parsing errors *)
 
-  | Stdlib.Error error ->
-     Trace.fail @@ Errors.generic error
+  | Stdlib.Error error -> Trace.fail @@ Errors.generic error
   (* Scoping errors *)
 
   | exception Scoping.Error (Scoping.Reserved_name name) ->
       let token =
         Lexer.Token.mk_ident name.Region.value name.Region.region in
       (match token with
-         (* Cannot fail because [name] is a not a
-            reserved name for the lexer. *)
-         Stdlib.Error _ -> assert false
+         Stdlib.Error LexToken.Reserved_name ->
+           Trace.fail @@ Errors.generic @@ Region.wrap_ghost "Reserved name."
        | Ok invalid ->
           local_fail
             ("Reserved name.\nHint: Change the name.\n", None, invalid))
@@ -94,22 +91,19 @@ let parse (module IO : IO) parser =
       let token =
         Lexer.Token.mk_ident var.Region.value var.Region.region in
       (match token with
-         (* Cannot fail because [var] is a not a
-            reserved name for the lexer. *)
-         Stdlib.Error _ -> assert false
+         Stdlib.Error LexToken.Reserved_name ->
+           Trace.fail @@ Errors.generic @@ Region.wrap_ghost "Reserved name."
        | Ok invalid ->
-           local_fail
-             ("Repeated variable in this pattern.\n\
-               Hint: Change the name.\n",
-              None, invalid))
+           local_fail ("Repeated variable in this pattern.\n\
+                        Hint: Change the name.\n",
+                       None, invalid))
 
   | exception Scoping.Error (Scoping.Duplicate_field name) ->
       let token =
         Lexer.Token.mk_ident name.Region.value name.Region.region in
       (match token with
-         (* Cannot fail because [name] is a not a
-            reserved name for the lexer. *)
-         Stdlib.Error _ -> assert false
+         Stdlib.Error LexToken.Reserved_name ->
+           Trace.fail @@ Errors.generic @@ Region.wrap_ghost "Reserved name."
        | Ok invalid ->
            local_fail
              ("Duplicate field name in this record declaration.\n\
@@ -131,7 +125,7 @@ let parse_file (source: string) =
   let prefix =
     match IO.options#input with
       None | Some "-" -> "temp"
-    | Some file -> Filename.(file |> basename |> remove_extension) in
+    | Some file -> Filename.(remove_extension @@ basename file) in
   let suffix = ".pp" ^ IO.ext in
   let pp_input =
     if   SSet.mem "cpp" IO.options#verbose
@@ -150,12 +144,12 @@ let parse_file (source: string) =
   let open Trace in
   let%bind () = sys_command cpp_cmd in
   let module Unit = PreUnit (IO) in
-  let instance =
-    match Lexer.open_token_stream (Lexer.File pp_input) with
-      Ok instance -> instance
-    | Stdlib.Error _ -> assert false (* No file opening *) in
-  let thunk () = Unit.apply instance Unit.parse_contract
-  in parse (module IO) thunk
+  match Lexer.open_token_stream (Lexer.File pp_input) with
+    Ok instance ->
+      let thunk () = Unit.apply instance Unit.parse_contract
+      in parse (module IO) thunk
+  | Stdlib.Error (Lexer.File_opening msg) ->
+      Trace.fail @@ Errors.generic @@ Region.wrap_ghost msg
 
 let parse_string (s: string) =
   let module IO =
@@ -164,12 +158,12 @@ let parse_string (s: string) =
       let options = PreIO.pre_options ~input:None ~expr:false
     end in
   let module Unit = PreUnit (IO) in
-  let instance =
-    match Lexer.open_token_stream (Lexer.String s) with
-      Ok instance -> instance
-    | Stdlib.Error _ -> assert false (* No file opening *) in
-  let thunk () = Unit.apply instance Unit.parse_contract
-  in parse (module IO) thunk
+  match Lexer.open_token_stream (Lexer.String s) with
+    Ok instance ->
+      let thunk () = Unit.apply instance Unit.parse_contract
+      in parse (module IO) thunk
+  | Stdlib.Error (Lexer.File_opening msg) ->
+      Trace.fail @@ Errors.generic @@ Region.wrap_ghost msg
 
 let parse_expression (s: string)  =
   let module IO =
@@ -178,9 +172,9 @@ let parse_expression (s: string)  =
       let options = PreIO.pre_options ~input:None ~expr:true
     end in
   let module Unit = PreUnit (IO) in
-  let instance =
-    match Lexer.open_token_stream (Lexer.String s) with
-      Ok instance -> instance
-    | Stdlib.Error _ -> assert false (* No file opening *) in
-  let thunk () = Unit.apply instance Unit.parse_expr
-  in parse (module IO) thunk
+  match Lexer.open_token_stream (Lexer.String s) with
+    Ok instance ->
+      let thunk () = Unit.apply instance Unit.parse_expr
+      in parse (module IO) thunk
+  | Stdlib.Error (Lexer.File_opening msg) ->
+      Trace.fail @@ Errors.generic @@ Region.wrap_ghost msg
