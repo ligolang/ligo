@@ -22,3 +22,13 @@ let apply (entry_point : string) (param : Ast_simplified.expression) : Ast_simpl
 
 let pretty_print formatter (program : Ast_simplified.program) = 
   Ast_simplified.PP.program formatter program
+
+let list_declarations (program : Ast_simplified.program) : string list =
+  List.fold_left
+    (fun prev el -> 
+      let open Location in
+      let open Ast_simplified in
+      match el.wrap_content with
+      | Declaration_constant (var,_,_,_) -> (Var.to_name var)::prev
+      | _ -> prev) 
+    [] program

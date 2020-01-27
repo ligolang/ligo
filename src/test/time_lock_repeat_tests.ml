@@ -1,8 +1,9 @@
 open Trace
 open Test_helpers
+open Ast_simplified
 
-let type_file f = 
-  let%bind simplified  = Ligo.Compile.Of_source.compile f (Syntax_name "pascaligo") in
+let type_file f =
+  let%bind simplified  = Ligo.Compile.Of_source.compile f (Syntax_name "cameligo") in
   let%bind typed,state = Ligo.Compile.Of_simplified.compile simplified in
   ok @@ (typed,state)
 
@@ -11,13 +12,13 @@ let get_program =
   fun () -> match !s with
     | Some s -> ok s
     | None -> (
-        let%bind program = type_file "./contracts/time-lock.ligo" in
+        let%bind program = type_file "./contracts/timelock_repeat.mligo" in
         s := Some program ;
         ok program
       )
 
 let compile_main () = 
-  let%bind simplified      = Ligo.Compile.Of_source.compile "./contracts/time-lock.ligo" (Syntax_name "pascaligo") in
+  let%bind simplified      = Ligo.Compile.Of_source.compile "./contracts/timelock_repeat.mligo" (Syntax_name "cameligo") in
   let%bind typed_prg,_ = Ligo.Compile.Of_simplified.compile simplified in
   let%bind mini_c_prg      = Ligo.Compile.Of_typed.compile typed_prg in
   let%bind michelson_prg   = Ligo.Compile.Of_mini_c.aggregate_and_compile_contract mini_c_prg "main" in
@@ -26,7 +27,6 @@ let compile_main () =
     Ligo.Compile.Of_michelson.build_contract michelson_prg in
   ok ()
 
-open Ast_simplified
 let empty_op_list =
   (e_typed_list [] t_operation)
 let empty_message = e_lambda (Var.of_name "arguments")
@@ -39,31 +39,40 @@ let mk_time st =
   | Some s -> ok s
   | None -> simple_fail "bad timestamp notation"
 let to_sec t = Tezos_utils.Time.Protocol.to_seconds t
-let storage st = e_timestamp (Int64.to_int @@ to_sec st)
+let storage st interval execute =
+  e_ez_record [("next_use", e_timestamp (Int64.to_int @@ to_sec st)) ;
+               ("interval", e_int interval) ;
+               ("execute", execute)]
 
 let early_call () =
   let%bind program,_ = get_program () in
   let%bind predecessor_timestamp = mk_time "2000-01-01T00:10:10Z" in
   let%bind lock_time = mk_time "2000-01-01T10:10:10Z" in
-  let init_storage = storage lock_time in
+  let init_storage = storage lock_time 86400 empty_message in
   let options =
     Proto_alpha_utils.Memory_proto_alpha.make_options ~predecessor_timestamp () in
-  let exp_failwith = "Contract is still time locked" in
+  let exp_failwith = "You have to wait before you can execute this contract again." in
   expect_string_failwith ~options program "main"
-    (e_pair (call empty_message)  init_storage) exp_failwith
+    (e_pair (e_unit ())  init_storage) exp_failwith
 
-let call_on_time () =
+let fake_uncompiled_empty_message = e_string "[lambda of type: (lambda unit (list operation)) ]"
+
+(* Test that when we use the contract the next use time advances by correct interval *)
+let interval_advance () =
   let%bind program,_ = get_program () in
   let%bind predecessor_timestamp = mk_time "2000-01-01T10:10:10Z" in
   let%bind lock_time = mk_time "2000-01-01T00:10:10Z" in
-  let init_storage = storage lock_time in
+  let init_storage = storage lock_time 86400 empty_message in
+  (* It takes a second for Current.now to be called, awful hack *)
+  let%bind new_timestamp = mk_time "2000-01-02T10:10:11Z" in
+  let new_storage_fake = storage new_timestamp 86400 fake_uncompiled_empty_message in
   let options =
     Proto_alpha_utils.Memory_proto_alpha.make_options ~predecessor_timestamp () in
   expect_eq ~options program "main"
-    (e_pair (call empty_message) init_storage) (e_pair empty_op_list init_storage)
+  (e_pair (e_unit ()) init_storage) (e_pair empty_op_list new_storage_fake)
 
-let main = test_suite "Time lock" [
+let main = test_suite "Time Lock Repeating" [
     test "compile" compile_main ;
     test "early call" early_call ;
-    test "call on time" call_on_time ;
+    test "interval advance" interval_advance ;
   ]

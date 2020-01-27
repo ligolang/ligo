@@ -285,7 +285,7 @@ let compile_storage =
     let%bind simplified_param = Compile.Of_source.compile_expression v_syntax expression in
     let%bind (typed_param,_)  = Compile.Of_simplified.compile_expression ~env ~state simplified_param in
     let%bind mini_c_param     = Compile.Of_typed.compile_expression typed_param in
-    let%bind compiled_param   = Compile.Of_mini_c.compile_expression mini_c_param in
+    let%bind compiled_param   = Compile.Of_mini_c.aggregate_and_compile_expression mini_c_prg mini_c_param in
     let%bind ()               = Compile.Of_typed.assert_equal_contract_type Check_storage entry_point typed_prg typed_param in
     let%bind ()               = Compile.Of_michelson.assert_equal_contract_type Check_storage michelson_prg compiled_param in
     let%bind options          = Run.make_dry_run_options {predecessor_timestamp ; amount ; sender ; source } in
@@ -374,7 +374,7 @@ let evaluate_value =
     let%bind compiled          = Compile.Of_mini_c.aggregate_and_compile_expression mini_c exp in
     let%bind options           = Run.make_dry_run_options {predecessor_timestamp ; amount ; sender ; source } in
     let%bind michelson_output  = Run.run_no_failwith ~options compiled.expr compiled.expr_ty in
-    let%bind simplified_output = Uncompile.uncompile_typed_program_entry_function_result typed_prg entry_point michelson_output in
+    let%bind simplified_output = Uncompile.uncompile_typed_program_entry_expression_result typed_prg entry_point michelson_output in
     ok @@ Format.asprintf "%a\n" Ast_simplified.PP.expression simplified_output
   in
   let term =
@@ -410,6 +410,19 @@ let dump_changelog =
   let doc = "Dump the LIGO changelog to stdout." in
   (Term.ret term , Term.info ~doc cmdname)
 
+let list_declarations =
+  let f source_file syntax =
+    toplevel ~display_format:(`Human_readable) @@
+    let%bind simplified_prg  = Compile.Of_source.compile source_file (Syntax_name syntax) in
+    let json_decl = List.map (fun decl -> `String decl) @@ Compile.Of_simplified.list_declarations simplified_prg in
+    ok @@ J.to_string @@ `Assoc [ ("source_file", `String source_file) ; ("declarations", `List json_decl) ]
+  in
+  let term =
+    Term.(const f $ source_file 0 $ syntax ) in
+  let cmdname = "list-declarations" in
+  let doc = "Subcommand: list all the top-level decalarations." in
+  (Term.ret term , Term.info ~doc cmdname)
+
 let run ?argv () =
   Term.eval_choice ?argv main [
     compile_file ;
@@ -425,5 +438,6 @@ let run ?argv () =
     print_cst ;
     print_ast ;
     print_typed_ast ;
-    print_mini_c
+    print_mini_c ;
+    list_declarations ;
   ]
