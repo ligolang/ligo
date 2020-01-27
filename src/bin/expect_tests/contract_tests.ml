@@ -1038,3 +1038,8 @@ let%expect_test _ =
     * Ask a question on our Discord: https://discord.gg/9rhYaEt
     * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
     * Check the changelog by running 'ligo changelog' |}]
+
+let%expect_test _ =
+  run_ligo_good [ "compile-storage" ; contract "big_map.ligo" ; "main" ; "(big_map1,unit)" ] ;
+  [%expect {|
+    (Pair { Elt 23 0 ; Elt 42 0 } Unit) |}]
