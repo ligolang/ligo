@@ -55,13 +55,12 @@ module Errors =
       in Trace.error ~data:[] title message
   end
 
-let parse (module IO : IO) parser =
-  let module Unit = PreUnit (IO) in
+let parse (module Unit : ParserUnit.S) parser =
   let local_fail error =
     Trace.fail
     @@ Errors.generic
-    @@ Unit.format_error ~offsets:IO.options#offsets
-                      IO.options#mode error in
+    @@ Unit.format_error ~offsets:Unit.IO.options#offsets
+                        Unit.IO.options#mode error in
   match parser () with
     Stdlib.Ok semantic_value -> Trace.ok semantic_value
 
@@ -121,7 +120,9 @@ let parse (module IO : IO) parser =
                Hint: Change the name.\n",
               None, invalid))
 
-let parse_file source =
+let parse_file :
+      string -> (Unit.Parser.ast, string Region.reg) Stdlib.result =
+  fun source ->
   let module IO =
     struct
       let ext = PreIO.ext

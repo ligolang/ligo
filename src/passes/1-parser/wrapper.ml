@@ -6,7 +6,10 @@ module type IO =
     val options : EvalOpt.options
   end
 
-let parse_file generic_error (module Unit : ParserUnit.S) parse =
+let parse_file generic_error
+               (module Unit : ParserUnit.S)
+               (parse: unit -> (Unit.Parser.ast, string Region.reg) Stdlib.result)
+    : (Unit.Parser.ast, string Region.reg) Stdlib.result =
   let lib_path =
     match Unit.IO.options#libs with
         [] -> ""
