@@ -496,26 +496,22 @@ and type_expression' : environment -> ?tv_opt:O.type_value -> I.expression -> O.
       in
       let%bind m' = I.bind_fold_lmap aux (ok I.LMap.empty) m in
       return (E_record m') (t_record (I.LMap.map get_type_annotation m') ())
-  | E_update {record; updates} ->
+  | E_update {record; update =(l,expr)} ->
     let%bind record = type_expression' e record in
-    let aux acc (k, expr) =
-      let%bind expr' = type_expression' e expr in
-      ok ((k,expr')::acc)
-    in 
-    let%bind updates = bind_fold_list aux ([]) updates in
+    let%bind expr' = type_expression' e expr in
     let wrapped = get_type_annotation record in
-    let%bind () = match wrapped.type_value' with 
-    | T_record record ->
-        let aux (k, e) =
-          let field_op = I.LMap.find_opt k record in
+    let%bind tv = 
+      match wrapped.type_value' with 
+      | T_record record -> (
+          let field_op = I.LMap.find_opt l record in
           match field_op with
-          | None -> failwith @@ Format.asprintf "field %a is not part of record" Stage_common.PP.label k
-          | Some tv -> O.assert_type_value_eq (tv, get_type_annotation e)
-        in
-        bind_iter_list aux updates
-    | _ -> failwith "Update an expression which is not a record"
+          | Some tv -> ok (tv)
+          | None -> failwith @@ Format.asprintf "field %a is not part of record %a" Stage_common.PP.label l O.PP.type_value wrapped
+      )
+      | _ -> failwith "Update an expression which is not a record"
     in
-    return (E_record_update (record, updates)) wrapped
+    let%bind () = O.assert_type_value_eq (tv, get_type_annotation expr') in
+    return (E_record_update (record, (l,expr'))) wrapped
   (* Data-structure *)
   | E_list lst ->
       let%bind lst' = bind_map_list (type_expression' e) lst in
@@ -896,14 +892,11 @@ let rec untype_expression (e:O.annotated_expression) : (I.expression) result =
   | E_record_accessor (r, Label s) ->
       let%bind r' = untype_expression r in
       return (e_accessor r' [Access_record s])
-  | E_record_update (r, updates) ->
+  | E_record_update (r, (l,e)) ->
     let%bind r' = untype_expression r in
-    let aux (Label l,e) =
-      let%bind e = untype_expression e in 
-      ok (l, e)
-    in
-    let%bind updates = bind_map_list aux updates in
-    return (e_update r' updates)
+    let%bind e = untype_expression e in 
+    let Label l = l in
+    return (e_update r' l e)
   | E_map m ->
       let%bind m' = bind_map_list (bind_map_pair untype_expression) m in
       return (e_map m')

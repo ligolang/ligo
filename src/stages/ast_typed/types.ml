@@ -85,7 +85,7 @@ and 'a expression' =
   (* Record *)
   | E_record of ('a) label_map
   | E_record_accessor of (('a) * label)
-  | E_record_update of ('a * (label* 'a) list)
+  | E_record_update of ('a * (label * 'a))
   (* Data Structures *)
   | E_map of (('a) * ('a)) list
   | E_big_map of (('a) * ('a)) list

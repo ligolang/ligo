@@ -109,7 +109,7 @@ val e_typed_set : ?loc:Location.t -> expression list -> type_expression -> expre
 
 val e_lambda : ?loc:Location.t -> expression_variable -> type_expression option -> type_expression option -> expression -> expression
 val e_record : ?loc:Location.t -> expr Map.String.t -> expression
-val e_update : ?loc:Location.t -> expression -> (string * expression) list -> expression
+val e_update : ?loc:Location.t -> expression -> string -> expression -> expression
 
 val e_ez_record : ?loc:Location.t -> ( string * expr ) list -> expression
 (*

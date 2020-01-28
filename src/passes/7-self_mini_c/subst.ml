@@ -94,10 +94,10 @@ let rec replace : expression -> var_name -> var_name -> expression =
     let v = replace_var v in
     let e = replace e in
     return @@ E_assignment (v, path, e)
-  | E_update (r, updates) ->
+  | E_update (r, (p,e)) ->
     let r = replace r in
-    let updates = List.map (fun (p,e)-> (p, replace e)) updates in
-    return @@ E_update (r,updates)
+    let e = replace e in
+    return @@ E_update (r, (p,e))
   | E_while (cond, body) ->
     let cond = replace cond in
     let body = replace body in
@@ -209,10 +209,10 @@ let rec subst_expression : body:expression -> x:var_name -> expr:expression -> e
       if Var.equal s x then raise Bad_argument ;
       return @@ E_assignment (s, lrl, exp')
   )
-  | E_update (r, updates) -> (
+  | E_update (r, (p,e)) -> (
     let r' = self r in
-    let updates' = List.map (fun (p,e) -> (p, self e)) updates in
-    return @@ E_update(r',updates')
+    let e' = self e in
+    return @@ E_update(r', (p,e'))
   )
 
 let%expect_test _ =

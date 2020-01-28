@@ -174,9 +174,10 @@ let e_ez_record ?loc (lst : (string * expr) list) : expression =
 let e_record ?loc map =
   let lst = Map.String.to_kv_list map in
   e_ez_record ?loc lst 
-let e_update ?loc record updates = 
-  let updates = List.map (fun (x,y) -> (Label x, y)) updates in
-  location_wrap ?loc @@ E_update {record; updates}
+
+let e_update ?loc record path expr = 
+  let update = (Label path, expr) in
+  location_wrap ?loc @@ E_update {record; update}
 
 let get_e_accessor = fun t ->
   match t with

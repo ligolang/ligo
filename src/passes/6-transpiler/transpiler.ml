@@ -206,11 +206,11 @@ let tuple_access_to_lr : type_value -> type_value list -> int -> (type_value * [
     bind_fold_list aux (ty , []) lr_path in
   ok lst
 
-let record_access_to_lr : type_value -> type_value AST.label_map -> string -> (type_value * [`Left | `Right]) list result = fun ty tym ind ->
+let record_access_to_lr : type_value -> type_value AST.label_map -> label -> (type_value * [`Left | `Right]) list result = fun ty tym ind ->
   let tys = kv_list_of_lmap tym in
   let node_tv = Append_tree.of_list tys in
   let%bind path =
-    let aux (Label i , _) = i = ind in
+    let aux (Label i , _) = let Label ind = ind in i = ind in
     trace_option (corner_case ~loc:__LOC__ "record access leaf") @@
     Append_tree.exists_path aux node_tv in
   let lr_path = List.map (fun b -> if b then `Right else `Left) path in
@@ -348,7 +348,7 @@ and transpile_annotated_expression (ae:AST.annotated_expression) : expression re
       trace_strong (corner_case ~loc:__LOC__ "record build") @@
       Append_tree.fold_ne (transpile_annotated_expression) aux node
     )
-  | E_record_accessor (record, Label property) ->
+  | E_record_accessor (record, property) ->
       let%bind ty' = transpile_type (get_type_annotation record) in
       let%bind ty_lmap =
         trace_strong (corner_case ~loc:__LOC__ "not a record") @@
@@ -365,23 +365,19 @@ and transpile_annotated_expression (ae:AST.annotated_expression) : expression re
       let%bind record' = transpile_annotated_expression record in
       let expr = List.fold_left aux record' path in
       ok expr
-  | E_record_update (record, updates) -> 
+  | E_record_update (record, (l,expr)) -> 
       let%bind ty' = transpile_type (get_type_annotation record) in 
       let%bind ty_lmap =
         trace_strong (corner_case ~loc:__LOC__ "not a record") @@
         get_t_record (get_type_annotation record) in
       let%bind ty'_lmap = AST.bind_map_lmap transpile_type ty_lmap in
-      let aux (Label l, expr) =
-        let%bind path = 
-          trace_strong (corner_case ~loc:__LOC__ "record access") @@
-          record_access_to_lr ty' ty'_lmap l in
-        let path' = List.map snd path in
-        let%bind expr' = transpile_annotated_expression expr in
-        ok (path',expr') 
-      in
-      let%bind updates = bind_map_list aux updates in
+      let%bind path = 
+        trace_strong (corner_case ~loc:__LOC__ "record access") @@
+        record_access_to_lr ty' ty'_lmap l in
+      let path' = List.map snd path in
+      let%bind expr' = transpile_annotated_expression expr in
       let%bind record = transpile_annotated_expression record in
-      return @@ E_update (record, updates) 
+      return @@ E_update (record, (path',expr')) 
   | E_constant (name , lst) -> (
       let iterator_generator iterator_name =
         let lambda_to_iterator_body (f : AST.annotated_expression) (l : AST.lambda) =
@@ -521,7 +517,7 @@ and transpile_annotated_expression (ae:AST.annotated_expression) : expression re
                 trace_strong (corner_case ~loc:__LOC__ "not a record") @@
                 AST.Combinators.get_t_record prev in
               let%bind ty'_map = bind_map_lmap transpile_type ty_map in
-              let%bind path = record_access_to_lr ty' ty'_map prop in
+              let%bind path = record_access_to_lr ty' ty'_map (Label prop) in
               let path' = List.map snd path in
             let%bind prop_in_ty_map = trace_option
                 (Errors.not_found "acessing prop in ty_map [TODO: better error message]")
