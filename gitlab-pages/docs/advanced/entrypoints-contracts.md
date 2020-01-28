@@ -5,63 +5,130 @@ title: Entrypoints, Contracts
 
 ## Entrypoints
 
-Each LIGO smart contract is essentially a single function, that has the following *(pseudo)* type signature:
+Each LIGO smart contract is essentially a single main function, referring to the following types:
 
 <!--DOCUSAURUS_CODE_TABS-->
 <!--Pascaligo-->
-```
-(const parameter: my_type, const store: my_store_type): (list(operation), my_store_type)
+```pascaligo group=a
+type parameter_t is unit
+type storage_t is unit
+type return_t is (list(operation) * storage_t)
 ```
 
 <!--CameLIGO-->
-```
-(parameter, store: my_type * my_store_type) : operation list * my_store_type
+```cameligo group=a
+type parameter_t = unit
+type storage_t = unit
+type return_t = (operation list * storage_t)
 ```
 
 <!--ReasonLIGO-->
+```reasonligo group=a
+type parameter_t = unit;
+type storage_t = unit;
+type return_t = (list(operation) , storage_t);
 ```
-(parameter_store: (my_type, my_store_type)) : (list(operation), my_store_type)
-```
-
 <!--END_DOCUSAURUS_CODE_TABS-->
 
-This means that every smart contract needs at least one entrypoint function, here's an example:
+Each main function receives two arguments:
+- `parameter` - this is the parameter received in the invocation operation
+- `storage` - this is the current (real) on-chain storage value
+
+Storage can only be modified by running the smart contract entrypoint, which is responsible for returning a pair holding a list of operations, and a new storage.
+
+Here is an example of a smart contract main function:
 
 > 💡 The contract below literally does *nothing*
 
 <!--DOCUSAURUS_CODE_TABS-->
 <!--Pascaligo-->
 ```pascaligo group=a
-type parameter is unit;
-type store is unit;
-function main(const parameter: parameter; const store: store): (list(operation) * store) is
-    block { skip } with ((nil : list(operation)), store)
+function main(const parameter: parameter_t; const store: storage_t): return_t is
+    ((nil : list(operation)), store)
 ```
 
 <!--CameLIGO-->
 ```cameligo group=a
-type parameter = unit
-type store = unit
-let main (parameter, store: parameter * store) : operation list * store =
+let main (parameter, store: parameter_t * storage_t) : return_t =
   (([]: operation list), store)
 ```
 
 <!--ReasonLIGO-->
 ```reasonligo group=a
-type parameter = unit;
-type store = unit;
-let main = ((parameter, store): (parameter, store)) : (list(operation), store) => {
+let main = ((parameter, store): (parameter_t, storage_t)) : return_t => {
   (([]: list(operation)), store);
 };
 ```
-
 <!--END_DOCUSAURUS_CODE_TABS-->
 
-Each entrypoint function receives two arguments:
-- `parameter` - this is the parameter received in the invocation operation
-- `storage` - this is the current (real) on-chain storage value
+A contract entrypoints are the constructors of the parameter type (variant) and you must use pattern matching (`case`, `match`, `switch`) on the parameter in order to associate each entrypoint to its corresponding handler.
 
-Storage can only be modified by running the smart contract entrypoint, which is responsible for returning a list of operations, and a new storage at the end of it's execution.
+> The Ligo variant's are compiled to Michelson annotated pairs.
+
+<!--DOCUSAURUS_CODE_TABS-->
+<!--Pascaligo-->
+```pascaligo group=recordentry
+type parameter_t is
+  | Entrypoint_a of int
+  | Entrypoint_b of string
+type storage_t is unit
+type return_t is (list(operation) * storage_t)
+
+function handle_a (const p : int; const store : storage_t) : return_t is
+  ((nil : list(operation)), store)
+
+function handle_b (const p : string; const store : storage_t) : return_t is
+  ((nil : list(operation)), store)
+
+function main(const parameter: parameter_t; const store: storage_t): return_t is
+  case parameter of
+  | Entrypoint_a (p) -> handle_a(p,store)
+  | Entrypoint_b (p) -> handle_b(p,store)
+end
+```
+
+<!--CameLIGO-->
+```cameligo group=recordentry
+type parameter_t =
+  | Entrypoint_a of int
+  | Entrypoint_b of string
+type storage_t = unit
+type return_t = (operation list * storage_t)
+
+let handle_a (parameter, store: int * storage_t) : return_t =
+  (([]: operation list), store)
+
+let handle_b (parameter, store: string * storage_t) : return_t =
+  (([]: operation list), store)
+
+let main (parameter, store: parameter_t * storage_t) : return_t =
+  match parameter with
+    | Entrypoint_a p -> handle_a (p,store)
+    | Entrypoint_b p -> handle_b (p,store)
+```
+
+<!--ReasonLIGO-->
+```reasonligo group=recordentry
+type parameter_t =
+  | Entrypoint_a(int)
+  | Entrypoint_b(string);
+type storage_t = unit;
+type return_t = (list(operation) , storage_t);
+
+let handle_a = ((parameter, store): (int, storage_t)) : return_t => {
+  (([]: list(operation)), store); };
+
+let handle_b = ((parameter, store): (string, storage_t)) : return_t => {
+  (([]: list(operation)), store); };
+
+let main = ((parameter, store): (parameter_t, storage_t)) : return_t => {
+  switch (parameter) {
+  | Entrypoint_a(p) => handle_a((p,store))
+  | Entrypoint_b(p) => handle_b((p,store))
+  }
+};
+```
+<!--END_DOCUSAURUS_CODE_TABS-->
 
 
 ## Built-in contract variables
