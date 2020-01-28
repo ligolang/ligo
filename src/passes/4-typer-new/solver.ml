@@ -489,7 +489,7 @@ module UnionFindWrapper = struct
     let dbs = { dbs with aliases } in
 
     (* Replace the two entries in grouped_by_variable by a single one *)
-    begin
+    (
       let get_constraints ab =
         match TypeVariableMap.find_opt ab dbs.grouped_by_variable with
         | Some x -> x
@@ -508,7 +508,7 @@ module UnionFindWrapper = struct
         TypeVariableMap.remove variable_repr_b dbs.grouped_by_variable in
       let dbs = { dbs with grouped_by_variable} in
       dbs
-    end
+    )
 end
 
 (* sub-sub component: constraint normalizer: remove dupes and give structure

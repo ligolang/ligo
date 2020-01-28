@@ -91,3 +91,4 @@ let string_of_type_expression' = function
   | T_constant c -> string_of_type_constant c
   | T_sum _|T_record _|T_arrow (_, _)|T_variable _ ->
      failwith "not a type operator or constant"
+

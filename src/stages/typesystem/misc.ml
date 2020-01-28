@@ -87,8 +87,7 @@ module Substitution = struct
              | None -> ok @@ T.T_variable variable
            end
         | T.T_operator type_name_and_args ->
-          let bind_map_type_operator = Stage_common.Misc.bind_map_type_operator in (* TODO: write T.Misc.bind_map_type_operator, but it doesn't work *)
-          let%bind type_name_and_args = bind_map_type_operator (s_type_value ~substs) type_name_and_args in
+          let%bind type_name_and_args = T.Misc.bind_map_type_operator (s_type_value ~substs) type_name_and_args in
           ok @@ T.T_operator type_name_and_args
         | T.T_arrow _ ->
           let _TODO = substs in
@@ -101,7 +100,7 @@ module Substitution = struct
       | Ast_simplified.T_variable _ -> failwith "TODO: subst: unimplemented case s_type_expression variable"
       | Ast_simplified.T_operator op ->
          let%bind op =
-           Stage_common.Misc.bind_map_type_operator (* TODO: write Ast_simplified.Misc.type_operator_name *)
+           Ast_simplified.Misc.bind_map_type_operator
              (s_type_expression ~substs)
              op in
          (* TODO: when we have generalized operators, we might need to subst the operator name itself? *)

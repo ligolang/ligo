@@ -1,6 +1,8 @@
 open Trace
 open Types
 
+include module type of Stage_common.Misc
+
 val assert_value_eq : ( value * value ) -> unit result
 
 val assert_type_value_eq : ( type_value * type_value ) -> unit result

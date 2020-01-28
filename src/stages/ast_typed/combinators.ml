@@ -254,7 +254,7 @@ let ez_e_record (lst : (label * ae) list) : expression =
   let map = List.fold_left aux LMap.empty lst in
   e_record map
 let e_some s : expression = E_constant (C_SOME, [s])
-let e_none   : expression = E_constant (C_NONE, [])
+let e_none () : expression = E_constant (C_NONE, [])
 
 let e_map lst : expression = E_map lst
 
@@ -290,7 +290,7 @@ let e_a_address s = make_a_e (e_address s) (t_address ())
 let e_a_pair a b = make_a_e (e_pair a b) (t_pair a.type_annotation b.type_annotation ())
 let e_a_some s = make_a_e (e_some s) (t_option s.type_annotation ())
 let e_a_lambda l in_ty out_ty = make_a_e (e_lambda l) (t_function in_ty out_ty ())
-let e_a_none t = make_a_e e_none (t_option t ())
+let e_a_none t = make_a_e (e_none ()) (t_option t ())
 let e_a_tuple lst = make_a_e (E_tuple lst) (t_tuple (List.map get_type_annotation lst) ())
 let e_a_record r = make_a_e (e_record r) (t_record (LMap.map get_type_annotation r) ())
 let e_a_application a b = make_a_e (e_application a b) (get_type_annotation b)
