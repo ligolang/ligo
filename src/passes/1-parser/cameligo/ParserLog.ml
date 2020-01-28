@@ -188,7 +188,7 @@ and print_update state {value; _} =
  print_token state lbrace "{";
  print_path   state record;
  print_token state kwd_with "with";
- print_record_expr state updates;
+ print_ne_injection state print_field_path_assign updates;
  print_token state rbrace "}"
 
 and print_path state = function
@@ -510,6 +510,12 @@ and print_record_expr state e =
 and print_field_assign state {value; _} =
   let {field_name; assignment; field_expr} = value in
   print_var   state field_name;
+  print_token state assignment "=";
+  print_expr  state field_expr
+
+and print_field_path_assign state {value; _} =
+  let {field_path; assignment; field_expr} = value in
+  print_nsepseq state "." print_var field_path;
   print_token state assignment "=";
   print_expr  state field_expr
 
@@ -905,7 +911,7 @@ and pp_projection state proj =
 
 and pp_update state update =
   pp_path state update.record;
-  pp_ne_injection pp_field_assign state update.updates.value
+  pp_ne_injection pp_field_path_assign state update.updates.value
 
 and pp_path state = function
   Name name ->
@@ -926,6 +932,12 @@ and pp_selection state = function
 and pp_field_assign state {value; _} =
   pp_node  state  "<field assignment>";
   pp_ident (state#pad 2 0) value.field_name;
+  pp_expr  (state#pad 2 1) value.field_expr
+
+and pp_field_path_assign state {value; _} =
+  pp_node  state "<field path for update>";
+  let path = Utils.nsepseq_to_list value.field_path in
+  List.iter (pp_ident (state#pad 2 0)) path;
   pp_expr  (state#pad 2 1) value.field_expr
 
 and pp_constr_expr state = function

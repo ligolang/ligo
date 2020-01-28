@@ -99,8 +99,8 @@ and expression' ppf (e:expression') = match e with
       fprintf ppf "fold %a on %a with %a do ( %a )" expression collection expression initial Stage_common.PP.name name expression body
   | E_assignment (r , path , e) ->
       fprintf ppf "%a.%a := %a" Stage_common.PP.name r (list_sep lr (const ".")) path expression e
-  | E_update (r, updates) ->
-      fprintf ppf "%a with {%a}" expression r (list_sep_d (fun ppf (path, e) -> fprintf ppf "%a = %a" (list_sep lr (const ".")) path expression e)) updates
+  | E_update (r, (path,e)) ->
+      fprintf ppf "%a with {%a=%a}" expression r (list_sep lr (const ".")) path expression e
   | E_while (e , b) ->
       fprintf ppf "while (%a) %a" expression e expression b
 

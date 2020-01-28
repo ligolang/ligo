@@ -333,10 +333,15 @@ and update = {
   lbrace : lbrace;
   record : path;
   kwd_with : kwd_with;
-  updates : record reg;
+  updates : field_path_assign reg ne_injection reg;
   rbrace : rbrace;
 }
 
+and field_path_assign = {
+  field_path  : (field_name, dot) nsepseq;
+  assignment : equal;
+  field_expr : expr
+}
 and path =
   Name of variable
 | Path of projection reg

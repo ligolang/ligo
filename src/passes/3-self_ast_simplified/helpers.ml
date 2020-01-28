@@ -41,13 +41,9 @@ let rec fold_expression : 'a folder -> 'a -> expression -> 'a result = fun f ini
     let%bind res = bind_fold_lmap aux (ok init') m in
     ok res
   )
-  | E_update {record;updates} -> (
+  | E_update {record;update=(_,expr)} -> (
     let%bind res = self init' record in
-    let aux res (_, expr) =
-      let%bind res = fold_expression self res expr in
-      ok res
-    in
-    let%bind res = bind_fold_list aux res updates in
+    let%bind res = fold_expression self res expr in
     ok res 
   )
   | E_let_in { binder = _ ; rhs ; result } -> (
@@ -140,10 +136,10 @@ let rec map_expression : mapper -> expression -> expression result = fun f e ->
     let%bind m' = bind_map_lmap self m in
     return @@ E_record m'
   )
-  | E_update {record; updates} -> (
+  | E_update {record; update=(l,expr)} -> (
     let%bind record = self record in
-    let%bind updates = bind_map_list (fun(l,e) -> let%bind e = self e in ok (l,e)) updates in
-    return @@ E_update {record;updates}
+    let%bind expr = self expr in
+    return @@ E_update {record;update=(l,expr)}
   )
   | E_constructor (name , e) -> (
       let%bind e' = self e in

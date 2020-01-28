@@ -291,14 +291,23 @@ let rec simpl_expression :
     | _ -> e_accessor (e_variable (Var.of_name name)) path in 
     let updates = u.updates.value.ne_elements in
     let%bind updates' =
-      let aux (f:Raw.field_assign Raw.reg) =
+      let aux (f:Raw.field_path_assign Raw.reg) =
         let (f,_) = r_split f in
         let%bind expr = simpl_expression f.field_expr in
-        ok (f.field_name.value, expr)
+        ok ( List.map (fun (x: _ Raw.reg) -> x.value) (npseq_to_list f.field_path), expr)
       in
       bind_map_list aux @@ npseq_to_list updates 
     in
-    return @@ e_update ~loc record updates'
+    let aux ur (path, expr) = 
+      let rec aux record = function
+        | [] -> failwith "error in parsing"
+        | hd :: [] -> ok @@ e_update ~loc record hd expr
+        | hd :: tl -> 
+          let%bind expr = (aux (e_accessor ~loc record [Access_record hd]) tl) in
+          ok @@ e_update ~loc record hd expr 
+      in
+      aux ur path in
+    bind_fold_list aux record updates'
   in
 
   trace (simplifying_expr t) @@
