@@ -135,14 +135,14 @@ let rec assert_value_eq (a, b: (expression * expression )) : unit result =
       simple_fail "comparing record with other expression"
   
   | E_update ura, E_update urb ->
-    let%bind lst =
-      generic_try (simple_error "updates with different number of fields")
-      (fun () -> List.combine ura.updates urb.updates) in
+    let _ = 
+      generic_try (simple_error "Updating different record") @@ 
+      fun () -> assert_value_eq (ura.record, urb.record) in
     let aux ((Label a,expra),(Label b, exprb))=
-      assert (String.equal a b); 
+      assert (String.equal a b);
       assert_value_eq (expra,exprb)
     in
-    let%bind _all = bind_list @@ List.map aux lst in
+    let%bind _all = aux (ura.update, urb.update) in
     ok ()
   | E_update _, _ ->
      simple_fail "comparing record update with other expression"

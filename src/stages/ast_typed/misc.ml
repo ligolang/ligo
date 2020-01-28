@@ -193,7 +193,7 @@ module Free_variables = struct
     | E_constructor (_ , a) -> self a
     | E_record m -> unions @@ List.map self @@ LMap.to_list m
     | E_record_accessor (a, _) -> self a
-    | E_record_update (r,ups) -> union (self r) @@ unions @@ List.map (fun (_,e) -> self e) ups
+    | E_record_update (r,(_,e)) -> union (self r) @@ self e
     | E_tuple_accessor (a, _) -> self a
     | E_list lst -> unions @@ List.map self lst
     | E_set lst -> unions @@ List.map self lst

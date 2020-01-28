@@ -13,3 +13,4 @@ val type_expression' : (formatter -> 'a -> unit) -> formatter -> 'a type_express
 val type_operator    : (formatter -> 'a -> unit) -> formatter -> 'a type_operator -> unit
 val type_constant    : formatter -> type_constant -> unit
 val literal          : formatter -> literal -> unit
+val list_sep_d       : (formatter -> 'a -> unit) -> formatter -> 'a list -> unit

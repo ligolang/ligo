@@ -39,7 +39,7 @@ and expression ppf (e:expression) : unit =
   | E_lambda l -> fprintf ppf "%a" lambda l
   | E_tuple_accessor (ae, i) -> fprintf ppf "%a.%d" annotated_expression ae i
   | E_record_accessor (ae, l) -> fprintf ppf "%a.%a" annotated_expression ae label l
-  | E_record_update (ae, ups) -> fprintf ppf "%a with record[%a]" annotated_expression ae (lmap_sep annotated_expression (const " , ")) (LMap.of_list ups)
+  | E_record_update (ae, (path,expr)) -> fprintf ppf "%a with record[%a=%a]" annotated_expression ae Stage_common.PP.label path annotated_expression expr
   | E_tuple lst -> fprintf ppf "tuple[@;  @[<v>%a@]@;]" (list_sep annotated_expression (tag ",@;")) lst
   | E_record m -> fprintf ppf "record[%a]" (lmap_sep annotated_expression (const " , ")) m
   | E_map m -> fprintf ppf "map[@;  @[<v>%a@]@;]" (list_sep assoc_annotated_expression (tag ",@;")) m

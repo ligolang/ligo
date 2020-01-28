@@ -26,11 +26,11 @@ let rec expression ppf (e:expression) = match e.expression with
   | E_tuple lst -> fprintf ppf "(%a)" (tuple_sep_d expression) lst
   | E_accessor (ae, p) -> fprintf ppf "%a.%a" expression ae access_path p
   | E_record m -> fprintf ppf "{%a}" (lrecord_sep expression (const " , ")) m
-  | E_update {record; updates} -> fprintf ppf "%a with {%a}" expression record (tuple_sep_d (fun ppf (a,b) -> fprintf ppf "%a = %a" label a expression b)) updates
+  | E_update {record; update=(path,expr)} -> fprintf ppf "%a with { %a = %a }" expression record Stage_common.PP.label path expression expr
   | E_map m -> fprintf ppf "[%a]" (list_sep_d assoc_expression) m
   | E_big_map m -> fprintf ppf "big_map[%a]" (list_sep_d assoc_expression) m
   | E_list lst -> fprintf ppf "[%a]" (list_sep_d expression) lst
-  | E_set lst -> fprintf ppf "{%a}" (list_sep_d expression) lst
+  | E_set lst  -> fprintf ppf "{%a}" (list_sep_d expression) lst
   | E_look_up (ds, ind) -> fprintf ppf "(%a)[%a]" expression ds expression ind
   | E_lambda {binder;input_type;output_type;result} ->
       fprintf ppf "lambda (%a:%a) : %a return %a"

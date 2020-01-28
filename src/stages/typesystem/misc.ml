@@ -191,10 +191,10 @@ module Substitution = struct
         let%bind val_ = s_annotated_expression ~substs val_ in
         let l = l in            (* Nothing to substitute, this is a label, not a type *)
         ok @@ T.E_record_accessor (val_, l)
-      | T.E_record_update (r, ups) ->
+      | T.E_record_update (r, (l, e)) ->
         let%bind r = s_annotated_expression ~substs r in
-        let%bind ups = bind_map_list (fun (l,e) -> let%bind e = s_annotated_expression ~substs e in ok (l,e)) ups in
-        ok @@ T.E_record_update (r,ups)
+        let%bind e = s_annotated_expression ~substs e in
+        ok @@ T.E_record_update (r, (l, e))
       | T.E_map             val_val_list ->
         let%bind val_val_list = bind_map_list (fun (val1 , val2) ->
             let%bind val1 = s_annotated_expression ~substs val1 in
