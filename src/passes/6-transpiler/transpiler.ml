@@ -146,6 +146,11 @@ let rec transpile_type (t:AST.type_value) : type_value result =
   | T_operator (TC_option o) ->
       let%bind o' = transpile_type o in
       ok (T_option o')
+  | T_operator (TC_arrow (param , result)) -> (
+      let%bind param' = transpile_type param in
+      let%bind result' = transpile_type result in
+      ok (T_function (param', result'))
+    )
   (* TODO hmm *)
   | T_sum m ->
       let node = Append_tree.of_list @@ kv_list_of_cmap m in
@@ -173,7 +178,7 @@ let rec transpile_type (t:AST.type_value) : type_value result =
                         ok (Some ann, a))
                       aux node in
       ok @@ snd m'
-  | T_tuple lst ->
+  | T_operator (TC_tuple lst) ->
       let node = Append_tree.of_list lst in
       let aux a b : type_value result =
         let%bind a = a in
@@ -320,7 +325,7 @@ and transpile_annotated_expression (ae:AST.annotated_expression) : expression re
   | E_tuple_accessor (tpl, ind) -> (
       let%bind ty' = transpile_type tpl.type_annotation in
       let%bind ty_lst =
-        trace_strong (corner_case ~loc:__LOC__ "not a tuple") @@
+        trace_strong (corner_case ~loc:__LOC__ "transpiler: E_tuple_accessor: not a tuple") @@
         get_t_tuple tpl.type_annotation in
       let%bind ty'_lst = bind_map_list transpile_type ty_lst in
       let%bind path =
@@ -505,7 +510,7 @@ and transpile_annotated_expression (ae:AST.annotated_expression) : expression re
           match cur with
           | Access_tuple ind -> (
               let%bind ty_lst =
-                trace_strong (corner_case ~loc:__LOC__ "not a tuple") @@
+                trace_strong (corner_case ~loc:__LOC__ "transpiler: E_assign: Access_tuple: not a tuple") @@
                 AST.Combinators.get_t_tuple prev in
               let%bind ty'_lst = bind_map_list transpile_type ty_lst in
               let%bind path = tuple_access_to_lr ty' ty'_lst ind in

@@ -334,9 +334,6 @@ and evaluate_type (e:environment) (t:I.type_expression) : O.type_value result =
     let%bind a' = evaluate_type e a in
     let%bind b' = evaluate_type e b in
     return (T_arrow (a', b'))
-  | T_tuple lst ->
-    let%bind lst' = bind_list @@ List.map (evaluate_type e) lst in
-    return (T_tuple lst')
   | T_sum m ->
     let aux k v prev =
       let%bind prev' = prev in
@@ -382,6 +379,13 @@ and evaluate_type (e:environment) (t:I.type_expression) : O.type_value result =
         | TC_contract c ->
             let%bind c = evaluate_type e c in
             ok @@ O.TC_contract c
+        | TC_arrow ( arg , ret ) ->
+           let%bind arg' = evaluate_type e arg in
+           let%bind ret' = evaluate_type e ret in
+           ok @@ O.TC_arrow ( arg' , ret' )
+        | TC_tuple lst ->
+           let%bind lst' = bind_map_list (evaluate_type e) lst in
+           ok @@ O.TC_tuple lst'
         in
       return (T_operator (opt))
 
@@ -469,10 +473,11 @@ and type_expression : environment -> Solver.state -> ?tv_opt:O.type_value -> I.e
       return_wrapped (e_operation o) state @@ Wrap.literal (t_operation ())
     )
   | E_literal (Literal_unit) -> (
-      return_wrapped (e_unit) state @@ Wrap.literal (t_unit ())
+      return_wrapped (e_unit ()) state @@ Wrap.literal (t_unit ())
     )
   | E_skip -> (
-      failwith "TODO: missing implementation for E_skip"
+    (* E_skip just returns unit *)
+    return_wrapped (e_unit ()) state @@ Wrap.literal (t_unit ())
     )
   (* | E_literal (Literal_string s) -> (
    *     L.log (Format.asprintf "literal_string option type: %a" PP_helpers.(option O.PP.type_expression) tv_opt) ;
@@ -516,7 +521,6 @@ and type_expression : environment -> Solver.state -> ?tv_opt:O.type_value -> I.e
       trace_option error @@
       Environment.get_constructor c e in
     let%bind (expr' , state') = type_expression e state expr in
-    let%bind _assert = O.assert_type_value_eq (expr'.type_annotation, c_tv) in
     let wrapped = Wrap.constructor expr'.type_annotation c_tv sum_tv in
     return_wrapped (E_constructor (c , expr')) state' wrapped
 
@@ -932,9 +936,7 @@ let untype_type_value (t:O.type_value) : (I.type_expression) result =
 (*
 Apply type_declaration on all the node of the AST_simplified from the root p
 *)
-let type_program_returns_state (p:I.program) : (environment * Solver.state * O.program) result =
-  let env = Ast_typed.Environment.full_empty in
-  let state = Solver.initial_state in
+let type_program_returns_state ((env, state, p) : environment * Solver.state * I.program) : (environment * Solver.state * O.program) result =
   let aux ((e : environment), (s : Solver.state) , (ds : O.declaration Location.wrap list)) (d:I.declaration Location.wrap) =
     let%bind (e' , s' , d'_opt) = type_declaration e s (Location.unwrap d) in
     let ds' = match d'_opt with
@@ -949,50 +951,44 @@ let type_program_returns_state (p:I.program) : (environment * Solver.state * O.p
   let () = ignore (env' , state') in
   ok (env', state', declarations)
 
-(* module TSMap = TMap(Solver.TypeVariable) *)
-
-(* let c_tag_to_string : Solver.Core.constant_tag -> string = function
- *   | Solver.Core.C_arrow     -> "arrow"
- *   | Solver.Core.C_option    -> "option"
- *   | Solver.Core.C_tuple     -> "tuple"
- *   | Solver.Core.C_record    -> failwith "record"
- *   | Solver.Core.C_variant   -> failwith "variant"
- *   | Solver.Core.C_map       -> "map"
- *   | Solver.Core.C_big_map   -> "big"
- *   | Solver.Core.C_list      -> "list"
- *   | Solver.Core.C_set       -> "set"
- *   | Solver.Core.C_unit      -> "unit"
- *   | Solver.Core.C_bool      -> "bool"
- *   | Solver.Core.C_string    -> "string"
- *   | Solver.Core.C_nat       -> "nat"
- *   | Solver.Core.C_mutez     -> "mutez"
- *   | Solver.Core.C_timestamp -> "timestamp"
- *   | Solver.Core.C_int       -> "int"
- *   | Solver.Core.C_address   -> "address"
- *   | Solver.Core.C_bytes     -> "bytes"
- *   | Solver.Core.C_key_hash  -> "key_hash"
- *   | Solver.Core.C_key       -> "key"
- *   | Solver.Core.C_signature -> "signature"
- *   | Solver.Core.C_operation -> "operation"
- *   | Solver.Core.C_contract  -> "contract"
- *   | Solver.Core.C_chain_id  -> "chain_id" *)
-
-let type_program (p : I.program) : (O.program * Solver.state) result =
-  let%bind (env, state, program) = type_program_returns_state p in
+let type_and_subst_xyz (env_state_node : environment * Solver.state * 'a) (apply_substs : 'b Typesystem.Misc.Substitution.Pattern.w) (type_xyz_returns_state : (environment * Solver.state * 'a) -> (environment * Solver.state * 'b) Trace.result) : ('b * Solver.state) result =
+  let%bind (env, state, program) = type_xyz_returns_state env_state_node in
   let subst_all =
+    let aliases = state.structured_dbs.aliases in
     let assignments = state.structured_dbs.assignments in
-    let aux (v : I.type_variable) (expr : Solver.c_constructor_simpl) (p:O.program result) =
-      let%bind p = p in
-      let Solver.{ tv ; c_tag ; tv_list } = expr in
+    let substs : variable: I.type_variable -> _ = fun ~variable ->
+      to_option @@
+      let%bind root =
+        trace_option (simple_error (Format.asprintf "can't find alias root of variable %a" Var.pp variable)) @@
+          (* TODO: after upgrading UnionFind, this will be an option, not an exception. *)
+          try Some (Solver.UF.repr variable aliases) with Not_found -> None in
+      let%bind assignment =
+        trace_option (simple_error (Format.asprintf "can't find assignment for root %a" Var.pp root)) @@
+          (Solver.TypeVariableMap.find_opt root assignments) in
+      let Solver.{ tv ; c_tag ; tv_list } = assignment in
       let () = ignore tv (* I think there is an issue where the tv is stored twice (as a key and in the element itself) *) in
       let%bind (expr : O.type_value') = Typesystem.Core.type_expression'_of_simple_c_constant (c_tag , (List.map (fun s -> O.{ type_value' = T_variable s ; simplified = None }) tv_list)) in
-      Typesystem.Misc.Substitution.Pattern.program ~p ~v ~expr in
-    (* let p = TSMap.bind_fold_Map aux program assignments in *) (* TODO: Module magic: this does not work *)
-    let p = Solver.TypeVariableMap.fold aux assignments (ok program) in
+      ok @@ expr
+    in
+    let p = apply_substs ~substs program in
     p in
   let%bind program = subst_all in
   let () = ignore env in        (* TODO: shouldn't we use the `env` somewhere? *)
   ok (program, state)
+
+let type_program (p : I.program) : (O.program * Solver.state) result =
+  let empty_env = Ast_typed.Environment.full_empty in
+  let empty_state = Solver.initial_state in
+  type_and_subst_xyz (empty_env , empty_state , p) Typesystem.Misc.Substitution.Pattern.s_program type_program_returns_state
+
+let type_expression_returns_state : (environment * Solver.state * I.expression) -> (environment * Solver.state * O.annotated_expression) Trace.result =
+  fun (env, state, e) ->
+  let%bind (e , state) = type_expression env state e in
+  ok (env, state, e)
+
+let type_expression_subst (env : environment) (state : Solver.state) ?(tv_opt : O.type_value option) (e : I.expression) : (O.annotated_expression * Solver.state) result =
+  let () = ignore tv_opt in     (* For compatibility with the old typer's API, this argument can be removed once the new typer is used. *)
+  type_and_subst_xyz (env , state , e) Typesystem.Misc.Substitution.Pattern.s_annotated_expression type_expression_returns_state
 
  (*
 TODO: Similar to type_program but use a fold_map_list and List.fold_left and add element to the left or the list which gives a better complexity
@@ -1021,9 +1017,6 @@ let type_program' : I.program -> O.program result = fun p ->
 let rec untype_type_expression (t:O.type_value) : (I.type_expression) result =
   (* TODO: or should we use t.simplified if present? *)
   let%bind t = match t.type_value' with
-  | O.T_tuple x ->
-    let%bind x' = bind_map_list untype_type_expression x in
-    ok @@ I.T_tuple x'
   | O.T_sum x ->
     let%bind x' = I.bind_map_cmap untype_type_expression x in
     ok @@ I.T_sum x'
@@ -1059,6 +1052,13 @@ let rec untype_type_expression (t:O.type_value) : (I.type_expression) result =
       | O.TC_contract c->
          let%bind c = untype_type_expression c in
          ok @@ I.TC_contract c
+      | O.TC_arrow ( arg , ret ) ->
+         let%bind arg' = untype_type_expression arg in
+         let%bind ret' = untype_type_expression ret in
+         ok @@ I.TC_arrow ( arg' , ret' )
+      | O.TC_tuple lst ->
+         let%bind lst' = bind_map_list untype_type_expression lst in
+         ok @@ I.TC_tuple lst'
       in
       ok @@ I.T_operator (type_name)
     in

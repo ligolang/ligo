@@ -12,7 +12,7 @@ let int () : unit result =
   let open Typer in
   let e = Environment.full_empty in
   let state = Typer.Solver.initial_state in
-  let%bind (post , new_state) = type_expression e state pre in
+  let%bind (post , new_state) = type_expression_subst e state pre in
   let () = Typer.Solver.discard_state new_state in
   let open! Typed in
   let open Combinators in
@@ -27,7 +27,7 @@ module TestExpressions = struct
     let pre = expr in
     let open Typer in
     let open! Typed in
-    let%bind (post , new_state) = type_expression env state pre in
+    let%bind (post , new_state) = type_expression_subst env state pre in
     let () = Typer.Solver.discard_state new_state in
     let%bind () = assert_type_value_eq (post.type_annotation, test_expected_ty) in
     ok ()
@@ -37,7 +37,7 @@ module TestExpressions = struct
   module E = O
 
   let unit   () : unit result = test_expression I.(e_unit ())    O.(t_unit ())
-  let int    () : unit result = test_expression I.(e_int 32)  O.(t_int ())
+  let int    () : unit result = test_expression I.(e_int 32)     O.(t_int ())
   let bool   () : unit result = test_expression I.(e_bool true)  O.(t_bool ())
   let string () : unit result = test_expression I.(e_string "s") O.(t_string ())
   let bytes  () : unit result =

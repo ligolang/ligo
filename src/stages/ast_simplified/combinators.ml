@@ -36,7 +36,7 @@ let t_key_hash     : type_expression = make_t @@ T_constant (TC_key_hash)
 let t_option  o    : type_expression = make_t @@ T_operator (TC_option o)
 let t_list  t      : type_expression = make_t @@ T_operator (TC_list t)
 let t_variable n   : type_expression = make_t @@ T_variable (Var.of_name n)
-let t_tuple lst    : type_expression = make_t @@ T_tuple lst
+let t_tuple lst    : type_expression = make_t @@ T_operator (TC_tuple lst)
 let t_pair (a , b) : type_expression = t_tuple [a ; b]
 let t_record_ez lst =
   let lst = List.map (fun (k, v) -> (Label k, v)) lst in
@@ -206,7 +206,7 @@ let get_e_list = fun t ->
 let get_e_tuple = fun t ->
   match t with
   | E_tuple lst -> ok lst
-  | _ -> simple_fail "not a tuple"
+  | _ -> simple_fail "ast_simplified: get_e_tuple: not a tuple"
 
 let extract_pair : expression -> (expression * expression) result = fun e ->
   match e.expression with

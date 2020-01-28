@@ -1,5 +1,6 @@
 open Trace
 open Types
+
 include Stage_common.Misc
 
 module Errors = struct
@@ -29,6 +30,21 @@ module Errors = struct
     ] in
     error ~data title message ()
 
+  let different_operator_number_of_arguments opa opb lena lenb () =
+    let title = (thunk "different number of arguments to type constructors") in
+    assert (String.equal (type_operator_name opa) (type_operator_name opb));
+    let message () = Format.asprintf
+                       "Expected these two n-ary type constructors to be the same, but they have different numbers of arguments (both use the %s type constructor, but they have %d and %d arguments, respectively)"
+                       (type_operator_name opa) lena lenb in
+    let data = [
+      ("a" , fun () -> Format.asprintf "%a" (Stage_common.PP.type_operator PP.type_value) opa) ;
+      ("b" , fun () -> Format.asprintf "%a" (Stage_common.PP.type_operator PP.type_value) opb) ;
+      ("op" , fun () -> type_operator_name opa) ;
+      ("len_a" , fun () -> Format.asprintf "%d" lena) ;
+      ("len_b" , fun () -> Format.asprintf "%d" lenb) ;
+    ] in
+    error ~data title message ()
+
   let different_size_type name a b () =
     let title () = name ^ " have different sizes" in
     let message () = "Expected these two types to be the same, but they're different (both are " ^ name ^ ", but with a different number of arguments)" in
@@ -48,8 +64,6 @@ module Errors = struct
     error ~data title message ()
 
   let _different_size_constants = different_size_type "type constructors"
-
-  let different_size_tuples = different_size_type "tuples"
 
   let different_size_sums = different_size_type "sums"
 
@@ -301,13 +315,6 @@ open Errors
 
        
 let rec assert_type_value_eq (a, b: (type_value * type_value)) : unit result = match (a.type_value', b.type_value') with
-  | T_tuple ta, T_tuple tb -> (
-      let%bind _ =
-        trace_strong (fun () -> (different_size_tuples a b ()))
-        @@ Assert.assert_true List.(length ta = length tb) in
-      bind_list_iter assert_type_value_eq (List.combine ta tb)
-    )
-  | T_tuple _, _ -> fail @@ different_kinds a b
   | T_constant ca, T_constant cb -> (
       trace_strong (different_constants ca cb)
       @@ Assert.assert_true (ca = cb)
@@ -321,10 +328,16 @@ let rec assert_type_value_eq (a, b: (type_value * type_value)) : unit result = m
       | TC_set la, TC_set lb -> ok @@ ([la], [lb])
       | TC_map (ka,va), TC_map (kb,vb)
       | TC_big_map (ka,va), TC_big_map (kb,vb) -> ok @@ ([ka;va] ,[kb;vb]) 
-      | _,_ -> fail @@ different_operators opa opb
+      | TC_tuple lsta, TC_tuple lstb -> ok @@ (lsta , lstb) 
+      | TC_arrow (froma , toa) , TC_arrow (fromb , tob) -> ok @@ ([froma;toa] , [fromb;tob]) 
+      | (TC_option _ | TC_list _ | TC_contract _ | TC_set _ | TC_map _ | TC_big_map _ | TC_tuple _ | TC_arrow _),
+        (TC_option _ | TC_list _ | TC_contract _ | TC_set _ | TC_map _ | TC_big_map _ | TC_tuple _ | TC_arrow _) -> fail @@ different_operators opa opb
       in
-    trace (different_types "arguments to type operators" a b)
-      @@ bind_list_iter (fun (a,b) -> assert_type_value_eq (a,b) )(List.combine lsta lstb)
+      if List.length lsta <> List.length lstb then
+        fail @@ different_operator_number_of_arguments opa opb (List.length lsta) (List.length lstb)
+      else
+        trace (different_types "arguments to type operators" a b)
+        @@ bind_list_iter (fun (a,b) -> assert_type_value_eq (a,b) )(List.combine lsta lstb)
   )
   | T_operator _, _ -> fail @@ different_kinds a b
   | T_sum sa, T_sum sb -> (
