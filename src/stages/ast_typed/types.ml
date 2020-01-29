@@ -18,7 +18,7 @@ and environment_element_definition =
 and free_variables = expression_variable list
 
 and environment_element = {
-  type_value : type_value ;  
+  type_value : type_value ;
   source_environment : full_environment ;
   definition : environment_element_definition ;
 }
@@ -34,6 +34,12 @@ and annotated_expression = {
   location : Location.t ;
 }
 
+(* This seems to be used only for top-level declarations, and
+   represents the name of the top-level binding, and the expression
+   assigned to it. -- Suzanne.
+
+   TODO: if this is correct, then we should inline this in
+   "declaration" or at least move it close to it. *)
 and named_expression = {
   name: expression_variable ;
   annotated_expression: ae ;
@@ -41,6 +47,7 @@ and named_expression = {
 
 and ae = annotated_expression
 and type_value' = type_value type_expression'
+
 and type_value = {
   type_value' : type_value';
   simplified : S.type_expression option ; (* If we have the simplified this AST fragment comes from, it is stored here, for easier untyping. *)
@@ -77,7 +84,7 @@ and 'a expression' =
   | E_application of (('a) * ('a))
   | E_lambda of lambda
   | E_let_in of let_in
-  (* Tuple *)
+  (* Tuple, TODO: remove tuples and use records with integer keys instead *)
   | E_tuple of ('a) list
   | E_tuple_accessor of (('a) * int) (* Access n'th tuple's element *)
   (* Sum *)
@@ -85,7 +92,7 @@ and 'a expression' =
   (* Record *)
   | E_record of ('a) label_map
   | E_record_accessor of (('a) * label)
-  | E_record_update of ('a * (label* 'a) list)
+  | E_record_update of ('a * (label * 'a))
   (* Data Structures *)
   | E_map of (('a) * ('a)) list
   | E_big_map of (('a) * ('a)) list

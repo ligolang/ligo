@@ -5,64 +5,132 @@ title: Entrypoints, Contracts
 
 ## Entrypoints
 
-Each LIGO smart contract is essentially a single function, that has the following *(pseudo)* type signature:
+Each LIGO smart contract is essentially a single main function, referring to the following types:
 
 <!--DOCUSAURUS_CODE_TABS-->
 <!--Pascaligo-->
-```
-(const parameter: my_type, const store: my_store_type): (list(operation), my_store_type)
+```pascaligo group=a
+type parameter_t is unit
+type storage_t is unit
+type return_t is (list(operation) * storage_t)
 ```
 
 <!--CameLIGO-->
-```
-(parameter, store: my_type * my_store_type) : operation list * my_store_type
+```cameligo group=a
+type parameter_t = unit
+type storage_t = unit
+type return_t = (operation list * storage_t)
 ```
 
 <!--ReasonLIGO-->
+```reasonligo group=a
+type parameter_t = unit;
+type storage_t = unit;
+type return_t = (list(operation) , storage_t);
 ```
-(parameter_store: (my_type, my_store_type)) : (list(operation), my_store_type)
-```
-
 <!--END_DOCUSAURUS_CODE_TABS-->
 
-This means that every smart contract needs at least one entrypoint function, here's an example:
+Each main function receives two arguments:
+- `parameter` - this is the parameter received in the invocation operation
+- `storage` - this is the current (real) on-chain storage value
+
+Storage can only be modified by running the smart contract entrypoint, which is responsible for returning a pair holding a list of operations, and a new storage.
+
+Here is an example of a smart contract main function:
 
 > 💡 The contract below literally does *nothing*
 
 <!--DOCUSAURUS_CODE_TABS-->
 <!--Pascaligo-->
 ```pascaligo group=a
-type parameter is unit;
-type store is unit;
-function main(const parameter: parameter; const store: store): (list(operation) * store) is
-    block { skip } with ((nil : list(operation)), store)
+function main(const parameter: parameter_t; const store: storage_t): return_t is
+    ((nil : list(operation)), store)
 ```
 
 <!--CameLIGO-->
 ```cameligo group=a
-type parameter = unit
-type store = unit
-let main (parameter, store: parameter * store) : operation list * store =
+let main (parameter, store: parameter_t * storage_t) : return_t =
   (([]: operation list), store)
 ```
 
 <!--ReasonLIGO-->
 ```reasonligo group=a
-type parameter = unit;
-type store = unit;
-let main = (parameter_store: (parameter, store)) : (list(operation), store) => {
-  let parameter, store = parameter_store;
+let main = ((parameter, store): (parameter_t, storage_t)) : return_t => {
   (([]: list(operation)), store);
 };
 ```
-
 <!--END_DOCUSAURUS_CODE_TABS-->
 
-Each entrypoint function receives two arguments:
-- `parameter` - this is the parameter received in the invocation operation
-- `storage` - this is the current (real) on-chain storage value
+A contract entrypoints are the constructors of the parameter type (variant) and you must use pattern matching (`case`, `match`, `switch`) on the parameter in order to associate each entrypoint to its corresponding handler.
 
-Storage can only be modified by running the smart contract entrypoint, which is responsible for returning a list of operations, and a new storage at the end of its execution.
+To access the 'entrypoints' of a contract, we define a main function whose parameter is a variant type with constructors for each entrypoint. This allows us to satisfy the requirement that LIGO contracts always begin execution from the same function. The main function simply takes this variant, pattern matches it to determine which entrypoint to dispatch the call to, then returns the result of executing that entrypoint with the projected arguments.
+
+> The LIGO variant's are compiled to a Michelson annotated tree of union type.
+
+<!--DOCUSAURUS_CODE_TABS-->
+<!--Pascaligo-->
+```pascaligo group=recordentry
+type parameter_t is
+  | Entrypoint_a of int
+  | Entrypoint_b of string
+type storage_t is unit
+type return_t is (list(operation) * storage_t)
+
+function handle_a (const p : int; const store : storage_t) : return_t is
+  ((nil : list(operation)), store)
+
+function handle_b (const p : string; const store : storage_t) : return_t is
+  ((nil : list(operation)), store)
+
+function main(const parameter: parameter_t; const store: storage_t): return_t is
+  case parameter of
+  | Entrypoint_a (p) -> handle_a(p,store)
+  | Entrypoint_b (p) -> handle_b(p,store)
+end
+```
+
+<!--CameLIGO-->
+```cameligo group=recordentry
+type parameter_t =
+  | Entrypoint_a of int
+  | Entrypoint_b of string
+type storage_t = unit
+type return_t = (operation list * storage_t)
+
+let handle_a (parameter, store: int * storage_t) : return_t =
+  (([]: operation list), store)
+
+let handle_b (parameter, store: string * storage_t) : return_t =
+  (([]: operation list), store)
+
+let main (parameter, store: parameter_t * storage_t) : return_t =
+  match parameter with
+    | Entrypoint_a p -> handle_a (p,store)
+    | Entrypoint_b p -> handle_b (p,store)
+```
+
+<!--ReasonLIGO-->
+```reasonligo group=recordentry
+type parameter_t =
+  | Entrypoint_a(int)
+  | Entrypoint_b(string);
+type storage_t = unit;
+type return_t = (list(operation) , storage_t);
+
+let handle_a = ((parameter, store): (int, storage_t)) : return_t => {
+  (([]: list(operation)), store); };
+
+let handle_b = ((parameter, store): (string, storage_t)) : return_t => {
+  (([]: list(operation)), store); };
+
+let main = ((parameter, store): (parameter_t, storage_t)) : return_t => {
+  switch (parameter) {
+  | Entrypoint_a(p) => handle_a((p,store))
+  | Entrypoint_b(p) => handle_b((p,store))
+  }
+};
+```
+<!--END_DOCUSAURUS_CODE_TABS-->
 
 
 ## Built-in contract variables
@@ -93,7 +161,7 @@ let main (p, s: unit * unit) : operation list * unit =
 
 <!--ReasonLIGO-->
 ```reasonligo group=b
-let main = (p_s: (unit, unit)) : (list(operation), unit) => {
+let main = ((p,s): (unit, unit)) : (list(operation), unit) => {
   if (amount > 0mutez) {
     (failwith("This contract does not accept tez"): (list(operation), unit));
   }
@@ -131,7 +199,7 @@ let main (p,s: unit * unit) : operation list * unit =
 <!--ReasonLIGO-->
 ```reasonligo group=c
 let owner: address = ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address);
-let main = (p_s: (unit, unit)) : (list(operation), unit) => {
+let main = ((p,s): (unit, unit)) : (list(operation), unit) => {
   if (source != owner) {
     (failwith("This address can't call the contract"): (list(operation), unit));
   }
@@ -152,7 +220,7 @@ In our case, we have a `counter.ligo` contract that accepts a parameter of type 
 
 <!--DOCUSAURUS_CODE_TABS-->
 <!--Pascaligo-->
-```pascaligo
+```pascaligo skip
 // counter.ligo
 type action is
 | Increment of int
@@ -230,10 +298,10 @@ type action =
 
 let dest: address = ("KT19wgxcuXG9VH4Af5Tpm1vqEKdaMFpznXT3": address);
 
-let proxy = (param_s: (action, unit)): (list(operation), unit) =>
+let proxy = ((param, s): (action, unit)): (list(operation), unit) =>
   let counter: contract(action) = Operation.get_contract(dest);
-  let op: operation = Operation.transaction(param_s[0], 0mutez, counter);
-  ([op], param_s[1]);
+  let op: operation = Operation.transaction(param, 0mutez, counter);
+  ([op], s);
 ```
 
 <!--END_DOCUSAURUS_CODE_TABS-->

@@ -1,5 +1,8 @@
 open Trace
 open Types
+
+include module type of Stage_common.Misc
+
 (*
 
 module Errors : sig

@@ -1,0 +1,1 @@
+const its_a_nat: option(nat) = is_nat(1)

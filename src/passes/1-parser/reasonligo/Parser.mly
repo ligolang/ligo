@@ -812,7 +812,7 @@ path :
 | projection { Path $1}
 
 update_record : 
-  "{""..."path "," sep_or_term_list(field_assignment,",") "}" {
+  "{""..."path "," sep_or_term_list(field_path_assignment,",") "}" {
     let region = cover $1 $6 in
     let ne_elements, terminator = $5 in
     let value = {
@@ -870,6 +870,24 @@ field_assignment:
     let region = cover start stop in
     let value  = {
       field_name = $1;
+      assignment = $2;
+      field_expr = $3}
+    in {region; value} }
+
+field_path_assignment:
+  field_name {
+    let value = {
+      field_path = ($1,[]);
+      assignment = ghost;
+      field_expr = EVar $1 }
+    in {$1 with value}
+  }
+| nsepseq(field_name,".") ":" expr {
+    let start  = nsepseq_to_region (fun x -> x.region) $1 in
+    let stop   = expr_to_region $3 in
+    let region = cover start stop in
+    let value  = {
+      field_path = $1;
       assignment = $2;
       field_expr = $3}
     in {region; value} }

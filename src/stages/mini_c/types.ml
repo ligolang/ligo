@@ -73,7 +73,7 @@ and expression' =
   | E_let_in of ((var_name * type_value) * inline * expression * expression)
   | E_sequence of (expression * expression)
   | E_assignment of (expression_variable * [`Left | `Right] list * expression)
-  | E_update of (expression * ([`Left | `Right] list * expression) list)
+  | E_update of (expression * ([`Left | `Right] list * expression))
   | E_while of (expression * expression)
 
 and expression = {

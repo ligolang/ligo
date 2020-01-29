@@ -1,6 +1,8 @@
 open Trace
 open Types
 
+include module type of Stage_common.Misc
+
 val assert_value_eq : ( value * value ) -> unit result
 
 val assert_type_value_eq : ( type_value * type_value ) -> unit result
@@ -43,7 +45,6 @@ module Errors : sig
   val different_size_type : name -> type_value -> type_value -> unit -> error
   val different_props_in_record : string -> string -> unit -> error
   val different_size_constants : type_value -> type_value -> unit -> error
-  val different_size_tuples : type_value -> type_value -> unit -> error
   val different_size_sums : type_value -> type_value -> unit -> error
   val different_size_records : type_value -> type_value -> unit -> error
   val different_types : name -> type_value -> type_value -> unit -> error

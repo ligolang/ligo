@@ -36,7 +36,7 @@ let t_key_hash     : type_expression = make_t @@ T_constant (TC_key_hash)
 let t_option  o    : type_expression = make_t @@ T_operator (TC_option o)
 let t_list  t      : type_expression = make_t @@ T_operator (TC_list t)
 let t_variable n   : type_expression = make_t @@ T_variable (Var.of_name n)
-let t_tuple lst    : type_expression = make_t @@ T_tuple lst
+let t_tuple lst    : type_expression = make_t @@ T_operator (TC_tuple lst)
 let t_pair (a , b) : type_expression = t_tuple [a ; b]
 let t_record_ez lst =
   let lst = List.map (fun (k, v) -> (Label k, v)) lst in
@@ -92,11 +92,13 @@ let e_chain_id ?loc s : expression = location_wrap ?loc @@ E_literal (Literal_ch
 let e'_bytes b : expression' result =
   let%bind bytes = generic_try (simple_error "bad hex to bytes") (fun () -> Hex.to_bytes (`Hex b)) in
   ok @@ E_literal (Literal_bytes bytes)
-let e_bytes ?loc b : expression result =
+let e_bytes_hex ?loc b : expression result =
   let%bind e' = e'_bytes b in
   ok @@ location_wrap ?loc e'
-let e_bytes_ofbytes ?loc (b: bytes) : expression =
+let e_bytes_raw ?loc (b: bytes) : expression =
   location_wrap ?loc @@ E_literal (Literal_bytes b)
+let e_bytes_string ?loc (s: string) : expression =
+  location_wrap ?loc @@ E_literal (Literal_bytes (Hex.to_bytes (Hex.of_string s)))
 let e_big_map ?loc lst : expression = location_wrap ?loc @@ E_big_map lst
 let e_record ?loc map : expression = location_wrap ?loc @@ E_record map
 let e_tuple ?loc lst : expression = location_wrap ?loc @@ E_tuple lst
@@ -172,9 +174,10 @@ let e_ez_record ?loc (lst : (string * expr) list) : expression =
 let e_record ?loc map =
   let lst = Map.String.to_kv_list map in
   e_ez_record ?loc lst 
-let e_update ?loc record updates = 
-  let updates = List.map (fun (x,y) -> (Label x, y)) updates in
-  location_wrap ?loc @@ E_update {record; updates}
+
+let e_update ?loc record path expr = 
+  let update = (Label path, expr) in
+  location_wrap ?loc @@ E_update {record; update}
 
 let get_e_accessor = fun t ->
   match t with
@@ -203,7 +206,7 @@ let get_e_list = fun t ->
 let get_e_tuple = fun t ->
   match t with
   | E_tuple lst -> ok lst
-  | _ -> simple_fail "not a tuple"
+  | _ -> simple_fail "ast_simplified: get_e_tuple: not a tuple"
 
 let extract_pair : expression -> (expression * expression) result = fun e ->
   match e.expression with

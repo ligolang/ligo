@@ -27,8 +27,8 @@ val t_option    : type_expression -> type_expression
 *)
 val t_list      : type_expression -> type_expression
 val t_variable  : string -> type_expression
-(*
 val t_tuple     : type_expression list -> type_expression
+(*
 val t_record    : te_map -> type_expression
 *)
 val t_pair : ( type_expression * type_expression ) -> type_expression
@@ -60,8 +60,9 @@ val e_key_hash : ?loc:Location.t -> string -> expression
 val e_chain_id : ?loc:Location.t -> string -> expression 
 val e_mutez : ?loc:Location.t -> int -> expression
 val e'_bytes : string -> expression' result
-val e_bytes : ?loc:Location.t -> string -> expression result
-val e_bytes_ofbytes : ?loc:Location.t -> bytes -> expression
+val e_bytes_hex : ?loc:Location.t -> string -> expression result
+val e_bytes_raw : ?loc:Location.t -> bytes -> expression
+val e_bytes_string : ?loc:Location.t -> string -> expression
 val e_big_map : ?loc:Location.t -> ( expr * expr ) list -> expression
 (*
 val e_record  : ?loc:Location.t -> ( expr * expr ) list -> expression
@@ -108,7 +109,7 @@ val e_typed_set : ?loc:Location.t -> expression list -> type_expression -> expre
 
 val e_lambda : ?loc:Location.t -> expression_variable -> type_expression option -> type_expression option -> expression -> expression
 val e_record : ?loc:Location.t -> expr Map.String.t -> expression
-val e_update : ?loc:Location.t -> expression -> (string * expression) list -> expression
+val e_update : ?loc:Location.t -> expression -> string -> expression -> expression
 
 val e_ez_record : ?loc:Location.t -> ( string * expr ) list -> expression
 (*

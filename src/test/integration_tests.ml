@@ -410,13 +410,13 @@ let string_arithmetic_religo () : unit result =
 
 let bytes_arithmetic () : unit result =
   let%bind program = type_file "./contracts/bytes_arithmetic.ligo" in
-  let%bind foo = e_bytes "0f00" in
-  let%bind foototo = e_bytes "0f007070" in
-  let%bind toto = e_bytes "7070" in
-  let%bind empty = e_bytes "" in
-  let%bind tata = e_bytes "7a7a7a7a" in
-  let%bind at = e_bytes "7a7a" in
-  let%bind ba = e_bytes "ba" in
+  let%bind foo = e_bytes_hex "0f00" in
+  let%bind foototo = e_bytes_hex "0f007070" in
+  let%bind toto = e_bytes_hex "7070" in
+  let%bind empty = e_bytes_hex "" in
+  let%bind tata = e_bytes_hex "7a7a7a7a" in
+  let%bind at = e_bytes_hex "7a7a" in
+  let%bind ba = e_bytes_hex "ba" in
   let%bind () = expect_eq program "concat_op" foo foototo in
   let%bind () = expect_eq program "concat_op" empty toto in
   let%bind () = expect_eq program "slice_op" tata at in
@@ -430,13 +430,13 @@ let bytes_arithmetic () : unit result =
 
 let bytes_arithmetic_mligo () : unit result =
   let%bind program = mtype_file "./contracts/bytes_arithmetic.mligo" in
-  let%bind foo = e_bytes "0f00" in
-  let%bind foototo = e_bytes "0f007070" in
-  let%bind toto = e_bytes "7070" in
-  let%bind empty = e_bytes "" in
-  let%bind tata = e_bytes "7a7a7a7a" in
-  let%bind at = e_bytes "7a7a" in
-  let%bind ba = e_bytes "ba" in
+  let%bind foo = e_bytes_hex "0f00" in
+  let%bind foototo = e_bytes_hex "0f007070" in
+  let%bind toto = e_bytes_hex "7070" in
+  let%bind empty = e_bytes_hex "" in
+  let%bind tata = e_bytes_hex "7a7a7a7a" in
+  let%bind at = e_bytes_hex "7a7a" in
+  let%bind ba = e_bytes_hex "ba" in
   let%bind () = expect_eq program "concat_op" foo foototo in
   let%bind () = expect_eq program "concat_op" empty toto in
   let%bind () = expect_eq program "slice_op" tata at in
@@ -450,13 +450,13 @@ let bytes_arithmetic_mligo () : unit result =
 
 let bytes_arithmetic_religo () : unit result =
   let%bind program = retype_file "./contracts/bytes_arithmetic.religo" in
-  let%bind foo = e_bytes "0f00" in
-  let%bind foototo = e_bytes "0f007070" in
-  let%bind toto = e_bytes "7070" in
-  let%bind empty = e_bytes "" in
-  let%bind tata = e_bytes "7a7a7a7a" in
-  let%bind at = e_bytes "7a7a" in
-  let%bind ba = e_bytes "ba" in
+  let%bind foo = e_bytes_hex "0f00" in
+  let%bind foototo = e_bytes_hex "0f007070" in
+  let%bind toto = e_bytes_hex "7070" in
+  let%bind empty = e_bytes_hex "" in
+  let%bind tata = e_bytes_hex "7a7a7a7a" in
+  let%bind at = e_bytes_hex "7a7a" in
+  let%bind ba = e_bytes_hex "ba" in
   let%bind () = expect_eq program "concat_op" foo foototo in
   let%bind () = expect_eq program "concat_op" empty toto in
   let%bind () = expect_eq program "slice_op" tata at in
@@ -1931,7 +1931,7 @@ let check_signature () : unit result =
   let%bind program = type_file "./contracts/check_signature.ligo" in
   let make_input = e_tuple [e_key pk_str ;
                             e_signature (Signature.to_b58check signed) ;
-                            e_bytes_ofbytes (Bytes.of_string "hello world")] in
+                            e_bytes_string "hello world"] in
   let make_expected = e_bool true in
   let%bind () = expect_eq program "check_signature" make_input make_expected in
   ok ()
@@ -1944,7 +1944,7 @@ let check_signature_mligo () : unit result =
   let%bind program = mtype_file "./contracts/check_signature.mligo" in
   let make_input = e_tuple [e_key pk_str ;
                             e_signature (Signature.to_b58check signed) ;
-                            e_bytes_ofbytes (Bytes.of_string "hello world")] in
+                            e_bytes_string "hello world"] in
   let make_expected = e_bool true in
   let%bind () = expect_eq program "check_signature" make_input make_expected in
   ok ()
@@ -1957,7 +1957,7 @@ let check_signature_religo () : unit result =
   let%bind program = retype_file "./contracts/check_signature.religo" in
   let make_input = e_tuple [e_key pk_str ;
                             e_signature (Signature.to_b58check signed) ;
-                            e_bytes_ofbytes (Bytes.of_string "hello world")] in
+                            e_bytes_string "hello world"] in
   let make_expected = e_bool true in
   let%bind () = expect_eq program "check_signature" make_input make_expected in
   ok ()

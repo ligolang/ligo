@@ -67,6 +67,6 @@ and expression = {
   expression : expression' ;
   location : Location.t ;
 }
-and update = {record: expr; updates: (label*expr)list}
+and update = { record: expr; update: (label *expr) }
 
 and matching_expr = (expr,unit) matching
