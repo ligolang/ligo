@@ -50,4 +50,4 @@ type double_record = {
   inner : abc;
 }
 
-let modify_inner (r : double_record) : double_record = {r with inner = {r.inner with b = 2048 }}
+let modify_inner (r : double_record) : double_record = {r with inner.b = 2048 }

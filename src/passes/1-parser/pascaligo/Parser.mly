@@ -937,7 +937,7 @@ record_expr:
    in {region; value} }
 
 update_record:
-  path "with" ne_injection("record",field_assignment){
+  path "with" ne_injection("record",field_path_assignment){
     let region = cover (path_to_region $1) $3.region in
     let value = {
       record = $1;
@@ -950,6 +950,14 @@ field_assignment:
   field_name "=" expr {
     let region = cover $1.region (expr_to_region $3)
     and value  = {field_name = $1;
+                  equal      = $2;
+                  field_expr = $3}
+    in {region; value} }
+
+field_path_assignment:
+  nsepseq(field_name,".") "=" expr {
+    let region = cover (nsepseq_to_region (fun x -> x.region) $1) (expr_to_region $3)
+    and value  = {field_path = $1;
                   equal      = $2;
                   field_expr = $3}
     in {region; value} }

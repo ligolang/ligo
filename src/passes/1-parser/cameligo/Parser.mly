@@ -628,7 +628,7 @@ record_expr:
     in {region; value} }
 
 update_record:
-  "{" path "with" sep_or_term_list(field_assignment,";") "}" {
+  "{" path "with" sep_or_term_list(field_path_assignment,";") "}" {
     let region = cover $1 $5 in
     let ne_elements, terminator = $4 in
     let value = {
@@ -641,6 +641,14 @@ update_record:
                   region = cover $3 $5};
       rbrace   = $5}
     in {region; value} }
+
+field_path_assignment :
+  nsepseq(field_name,".") "=" expr {
+    let region = cover (nsepseq_to_region (fun x -> x.region) $1) (expr_to_region $3) in
+    let value  = {field_path = $1;
+                  assignment = $2;
+                  field_expr = $3}
+    in {region; value}}
 
 field_assignment:
   field_name "=" expr {

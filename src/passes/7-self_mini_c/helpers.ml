@@ -84,13 +84,9 @@ let rec fold_expression : 'a folder -> 'a -> expression -> 'a result = fun f ini
       let%bind res = self init' exp in
       ok res
   )
-  | E_update (r, updates) -> (
+  | E_update (r, (_,e)) -> (
       let%bind res = self init' r in
-      let aux prev (_,e) =
-          let%bind res = self prev e in
-          ok res
-      in
-      let%bind res = bind_fold_list aux res updates in
+      let%bind res = self res e in
       ok res
   )
 
@@ -158,10 +154,10 @@ let rec map_expression : mapper -> expression -> expression result = fun f e ->
       let%bind exp' = self exp in
       return @@ E_assignment (s, lrl, exp')
   )
-  | E_update (r, updates) -> (
+  | E_update (r, (l,e)) -> (
       let%bind r = self r in
-      let%bind updates = bind_map_list (fun (p,e) -> let%bind e = self e in ok(p,e)) updates in
-      return @@ E_update(r,updates)
+      let%bind e = self e in
+      return @@ E_update(r,(l,e))
   )
 
 let map_sub_level_expression : mapper -> expression -> expression result = fun f e ->

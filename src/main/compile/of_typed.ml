@@ -14,7 +14,7 @@ let assert_equal_contract_type : check_type -> string -> Ast_typed.program -> As
   match entry_point.type_annotation.type_value' with
   | T_arrow (args,_) -> (
       match args.type_value' with
-      | T_tuple [param_exp;storage_exp] -> (
+      | T_operator (TC_tuple [param_exp;storage_exp]) -> (
           match c with
           | Check_parameter -> assert_type_value_eq (param_exp,   param.type_annotation)
           | Check_storage   -> assert_type_value_eq (storage_exp, param.type_annotation)

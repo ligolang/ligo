@@ -3,39 +3,37 @@ id: sets-lists-tuples
 title: Sets, Lists, Tuples
 ---
 
-Apart from complex data types such as `maps` and `records`, ligo also exposes `sets`, `lists` and `tuples`.
+Apart from complex data types such as `maps` and `records`, ligo also
+exposes `sets`, `lists` and `tuples`.
 
 > ⚠️ Make sure to pick the appropriate data type for your use case; it carries not only semantic but also gas related costs.
 
 ## Sets
 
-Sets are similar to lists. The main difference is that elements of a `set` must be *unique*.
+Sets are similar to lists. The main difference is that elements of a
+`set` must be *unique*.
 
 ### Defining a set
 
 <!--DOCUSAURUS_CODE_TABS-->
 <!--Pascaligo-->
 ```pascaligo group=a
-type int_set is set(int);
-const my_set: int_set = set 
-    1; 
-    2; 
-    3; 
-end
+type int_set is set (int);
+const my_set : int_set = set 1; 2; 3 end
 ```
 
 <!--CameLIGO-->
 ```cameligo group=a
 type int_set = int set
-let my_set: int_set =
+let my_set : int_set =
   Set.add 3 (Set.add 2 (Set.add 1 (Set.empty: int set)))
 ```
 
 <!--ReasonLIGO-->
 ```reasonligo group=a
-type int_set = set(int);
-let my_set: int_set =
-  Set.add(3, Set.add(2, Set.add(1, Set.empty: set(int))));
+type int_set = set (int);
+let my_set : int_set =
+  Set.add (3, Set.add (2, Set.add (1, Set.empty: set (int))));
 ```
 
 <!--END_DOCUSAURUS_CODE_TABS-->
@@ -45,8 +43,8 @@ let my_set: int_set =
 <!--DOCUSAURUS_CODE_TABS-->
 <!--Pascaligo-->
 ```pascaligo group=a
-const my_set: int_set = set end;
-const my_set_2: int_set = set_empty;
+const my_set: int_set = set end
+const my_set_2: int_set = set_empty
 ```
 <!--CameLIGO-->
 ```cameligo group=a
@@ -54,7 +52,7 @@ let my_set: int_set = (Set.empty: int set)
 ```
 <!--ReasonLIGO-->
 ```reasonligo group=a
-let my_set: int_set = (Set.empty: set(int));
+let my_set: int_set = (Set.empty: set (int));
 ```
 <!--END_DOCUSAURUS_CODE_TABS-->
 
@@ -63,9 +61,9 @@ let my_set: int_set = (Set.empty: set(int));
 <!--DOCUSAURUS_CODE_TABS-->
 <!--Pascaligo-->
 ```pascaligo group=a
-const contains_three: bool = my_set contains 3;
+const contains_three : bool = my_set contains 3
 // or alternatively
-const contains_three_fn: bool = set_mem(3, my_set);
+const contains_three_fn: bool = set_mem (3, my_set);
 ```
 
 <!--CameLIGO-->
@@ -84,7 +82,7 @@ let contains_three: bool = Set.mem(3, my_set);
 <!--DOCUSAURUS_CODE_TABS-->
 <!--Pascaligo-->
 ```pascaligo group=a
-const set_size: nat = size(my_set);
+const set_size: nat = size (my_set)
 ```
 
 <!--CameLIGO-->
@@ -94,7 +92,7 @@ let set_size: nat = Set.size my_set
 
 <!--ReasonLIGO-->
 ```reasonligo group=a
-let set_size: nat = Set.size(my_set);
+let set_size: nat = Set.size (my_set);
 ```
 
 <!--END_DOCUSAURUS_CODE_TABS-->
