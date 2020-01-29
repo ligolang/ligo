@@ -15,8 +15,6 @@ and declaration =
    *   the environment after the declaration (i.e. with that new declaration added to the original environment). *)
   | Declaration_constant of (named_expression * inline * (full_environment * full_environment))
 
-  (* | Macro_declaration of macro_declaration *)
-
 and environment_element_definition =
   | ED_binder
   | ED_declaration of (annotated_expression * free_variables)

@@ -19,8 +19,6 @@ and declaration =
    *   an expression *)
   | Declaration_constant of (expression_variable * type_expression option * inline * expression)
 
-  (* | Macro_declaration of macro_declaration *)
-
 and expr = expression
 
 and lambda = {
