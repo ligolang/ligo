@@ -145,7 +145,16 @@ module type S =
       close    : unit -> unit
     }
 
-    val open_token_stream : file_path option -> instance
+    type input =
+      File    of file_path (* "-" means stdin *)
+    | Stdin
+    | String  of string
+    | Channel of in_channel
+    | Buffer  of Lexing.lexbuf
+
+    type open_err = File_opening of string
+
+    val open_token_stream : input -> (instance, open_err) Stdlib.result
 
     (* Error reporting *)
 
@@ -157,7 +166,7 @@ module type S =
 
     val format_error :
       ?offsets:bool -> [`Byte | `Point] ->
-      error Region.reg -> file:bool -> string
+      error Region.reg -> file:bool -> string Region.reg
 
   end
 

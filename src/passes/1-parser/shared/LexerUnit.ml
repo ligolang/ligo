@@ -1,5 +1,7 @@
 (* Functor to build a standalone LIGO lexer *)
 
+module Region = Simple_utils.Region
+
 module type IO =
   sig
     val ext : string              (* LIGO file extension *)
@@ -49,7 +51,7 @@ module Make (IO: IO) (Lexer: Lexer.S) =
 
     (* Running the lexer on the input file *)
 
-    let scan () : (Lexer.token list, string) Stdlib.result =
+    let scan () : (Lexer.token list, string Region.reg) Stdlib.result =
       (* Preprocessing the input *)
 
       if SSet.mem "cpp" IO.options#verbose
@@ -59,36 +61,36 @@ module Make (IO: IO) (Lexer: Lexer.S) =
       if Sys.command cpp_cmd <> 0 then
         let msg =
           sprintf "External error: the command \"%s\" failed." cpp_cmd
-        in Stdlib.Error msg
+        in Stdlib.Error (Region.wrap_ghost msg)
       else
-        try
-          let Lexer.{read; buffer; close; _} =
-            Lexer.open_token_stream (Some pp_input) in
-          let close_all () = close (); close_out stdout in
-          let rec read_tokens tokens =
-            match read ~log:(fun _ _ -> ()) buffer with
-              token ->
-                if   Lexer.Token.is_eof token
-                then Stdlib.Ok (List.rev tokens)
-                else read_tokens (token::tokens)
-            | exception Lexer.Error error ->
-                let file =
-                  match IO.options#input with
-                    None | Some "-" -> false
-                  |         Some _  -> true in
-                let msg =
-                  Lexer.format_error ~offsets:IO.options#offsets
-                                     IO.options#mode ~file error
-                in Stdlib.Error msg in
-          let result = read_tokens []
-          in close_all (); result
-        with Sys_error msg -> close_out stdout; Stdlib.Error msg
+        match Lexer.open_token_stream (Lexer.File pp_input) with
+          Ok Lexer.{read; buffer; close; _} ->
+            let close_all () = close (); close_out stdout in
+            let rec read_tokens tokens =
+              match read ~log:(fun _ _ -> ()) buffer with
+                token ->
+                  if   Lexer.Token.is_eof token
+                  then Stdlib.Ok (List.rev tokens)
+                  else read_tokens (token::tokens)
+              | exception Lexer.Error error ->
+                  let file =
+                    match IO.options#input with
+                      None | Some "-" -> false
+                    |         Some _  -> true in
+                  let msg =
+                    Lexer.format_error ~offsets:IO.options#offsets
+                                       IO.options#mode ~file error
+                  in Stdlib.Error msg in
+            let result = read_tokens []
+            in close_all (); result
+        | Stdlib.Error (Lexer.File_opening msg) ->
+            close_out stdout; Stdlib.Error (Region.wrap_ghost msg)
 
     (* Tracing the lexing (effectful) *)
 
     module Log = LexerLog.Make (Lexer)
 
-    let trace () : (unit, string) Stdlib.result =
+    let trace () : (unit, string Region.reg) Stdlib.result =
       (* Preprocessing the input *)
 
       if SSet.mem "cpp" IO.options#verbose
@@ -98,7 +100,7 @@ module Make (IO: IO) (Lexer: Lexer.S) =
       if Sys.command cpp_cmd <> 0 then
         let msg =
           sprintf "External error: the command \"%s\" failed." cpp_cmd
-        in Stdlib.Error msg
+        in Stdlib.Error (Region.wrap_ghost msg)
       else
         Log.trace ~offsets:IO.options#offsets
                   IO.options#mode

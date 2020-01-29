@@ -1,4 +1,6 @@
-(** Driver for the PascaLIGO lexer *)
+(* Driver for the PascaLIGO lexer *)
+
+module Region = Simple_utils.Region
 
 module IO =
   struct
@@ -11,4 +13,5 @@ module M = LexerUnit.Make (IO) (Lexer.Make (LexToken))
 let () =
   match M.trace () with
     Stdlib.Ok _ -> ()
-  | Error msg -> Printf.eprintf "\027[31m%s\027[0m%!" msg
+  | Error Region.{value; _} ->
+     Printf.eprintf "\027[31m%s\027[0m%!" value

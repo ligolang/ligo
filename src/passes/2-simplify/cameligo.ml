@@ -32,46 +32,48 @@ module Errors = struct
     in
     let data = [
       ("expected", fun () -> expected_name);
-      ("location" , fun () -> Format.asprintf "%a" Location.pp_lift @@ Raw.pattern_to_region actual)
-    ] in
-    error ~data title message
+      ("location",
+       fun () -> Format.asprintf "%a" Location.pp_lift @@
+                Raw.pattern_to_region actual)]
+    in error ~data title message
 
   let unsupported_let_in_function (patterns : Raw.pattern list) =
-    let title () = "unsupported 'let ... in' function" in
-    let message () = "defining functions via 'let ... in' is not supported yet" in
+    let title () = "" in
+    let message () = "\nDefining functions with \"let ... in\" \
+                      is not supported yet.\n" in
     let patterns_loc =
       List.fold_left (fun a p -> Region.cover a (Raw.pattern_to_region p))
         Region.ghost patterns in
     let data = [
-      ("location", fun () -> Format.asprintf "%a" Location.pp_lift @@ patterns_loc)
-    ] in
-    error ~data title message
+      ("location",
+       fun () -> Format.asprintf "%a" Location.pp_lift @@ patterns_loc)]
+    in error ~data title message
 
   let unknown_predefined_type name =
-    let title () = "type constants" in
+    let title () = "Type constants" in
     let message () =
-      Format.asprintf "unknown predefined type \"%s\"" name.Region.value in
+      Format.asprintf "Unknown predefined type \"%s\".\n"
+                      name.Region.value in
     let data = [
       ("location",
-       fun () -> Format.asprintf "%a" Location.pp_lift @@ name.Region.region)
-    ] in
-    error ~data title message
+       fun () -> Format.asprintf "%a" Location.pp_lift @@ name.Region.region)]
+    in error ~data title message
 
   let untyped_fun_param var =
-    let title () = "function parameter" in
+    let title () = "" in
     let message () =
-      Format.asprintf "untyped function parameters are not supported yet" in
+      Format.asprintf "\nUntyped function parameters \
+                       are not supported yet.\n" in
     let param_loc = var.Region.region in
     let data = [
       ("location",
-       fun () -> Format.asprintf "%a" Location.pp_lift @@ param_loc)
-    ] in
-    error ~data title message
+       fun () -> Format.asprintf "%a" Location.pp_lift @@ param_loc)]
+    in error ~data title message
 
   let unsupported_tuple_pattern p =
-    let title () = "tuple pattern" in
+    let title () = "" in
     let message () =
-      Format.asprintf "tuple patterns are not supported yet" in
+      Format.asprintf "\nTuple patterns are not supported yet.\n" in
     let pattern_loc = Raw.pattern_to_region p in
     let data = [
       ("location",
@@ -80,21 +82,20 @@ module Errors = struct
     error ~data title message
 
   let unsupported_cst_constr p =
-    let title () = "constant constructor" in
+    let title () = "" in
     let message () =
-      Format.asprintf "constant constructors are not supported yet" in
+      Format.asprintf "\nConstant constructors are not supported yet.\n" in
     let pattern_loc = Raw.pattern_to_region p in
     let data = [
       ("location",
-       fun () -> Format.asprintf "%a" Location.pp_lift @@ pattern_loc)
-    ] in
-    error ~data title message
-  
+       fun () -> Format.asprintf "%a" Location.pp_lift @@ pattern_loc)]
+    in error ~data title message
+
   let unsupported_non_var_pattern p =
-    let title () = "pattern is not a variable" in
+    let title () = "" in
     let message () =
-      Format.asprintf "non-variable patterns in constructors \
-                       are not supported yet" in
+      Format.asprintf "\nNon-variable patterns in constructors \
+                       are not supported yet.\n" in
     let pattern_loc = Raw.pattern_to_region p in
     let data = [
       ("location",
@@ -103,20 +104,20 @@ module Errors = struct
     error ~data title message
 
   let simplifying_expr t =
-    let title () = "simplifying expression" in
+    let title () = "Simplifying expression" in
     let message () = "" in
     let data = [
         ("expression" ,
          (** TODO: The labelled arguments should be flowing from the CLI. *)
        thunk @@ Parser.Cameligo.ParserLog.expr_to_string
-                 ~offsets:true ~mode:`Point t)
-    ] in
-    error ~data title message
+                 ~offsets:true ~mode:`Point t)]
+    in error ~data title message
 
   let only_constructors p =
-    let title () = "constructors in patterns" in
+    let title () = "" in
     let message () =
-      Format.asprintf "currently, only constructors are supported in patterns" in
+      Format.asprintf "\nCurrently, only constructors are \
+                       supported in patterns.\n" in
     let pattern_loc = Raw.pattern_to_region p in
     let data = [
       ("location",
@@ -125,18 +126,18 @@ module Errors = struct
     error ~data title message
 
   let unsupported_sugared_lists region =
-    let title () = "lists in patterns" in
+    let title () = "" in
     let message () =
-      Format.asprintf "currently, only empty lists and constructors (::) \
-                       are supported in patterns" in
+      Format.asprintf "\nCurrently, only empty lists and \
+                       constructors (::) \
+                       are supported in patterns.\n" in
     let data = [
       ("location",
-       fun () -> Format.asprintf "%a" Location.pp_lift @@ region)
-    ] in
-    error ~data title message
+       fun () -> Format.asprintf "%a" Location.pp_lift @@ region)]
+    in error ~data title message
 
   let corner_case description =
-    let title () = "corner case" in
+    let title () = "Corner case" in
     let message () = description in
     error title message
 
@@ -286,9 +287,9 @@ let rec simpl_expression :
   let simpl_update = fun (u:Raw.update Region.reg) ->
     let (u, loc) = r_split u in
     let (name, path) = simpl_path u.record in
-    let record = match path with 
+    let record = match path with
     | [] -> e_variable (Var.of_name name)
-    | _ -> e_accessor (e_variable (Var.of_name name)) path in 
+    | _ -> e_accessor (e_variable (Var.of_name name)) path in
     let updates = u.updates.value.ne_elements in
     let%bind updates' =
       let aux (f:Raw.field_path_assign Raw.reg) =
@@ -296,7 +297,7 @@ let rec simpl_expression :
         let%bind expr = simpl_expression f.field_expr in
         ok ( List.map (fun (x: _ Raw.reg) -> x.value) (npseq_to_list f.field_path), expr)
       in
-      bind_map_list aux @@ npseq_to_list updates 
+      bind_map_list aux @@ npseq_to_list updates
     in
     let aux ur (path, expr) = 
       let rec aux record = function
@@ -356,7 +357,7 @@ let rec simpl_expression :
         | hd :: tl ->
           e_let_in hd
           inline
-          (e_accessor rhs_b_expr [Access_tuple ((List.length prep_vars) - (List.length tl) - 1)])          
+          (e_accessor rhs_b_expr [Access_tuple ((List.length prep_vars) - (List.length tl) - 1)])
           (chain_let_in tl body)
         | [] -> body (* Precluded by corner case assertion above *)
       in
@@ -733,7 +734,7 @@ and simpl_declaration : Raw.declaration -> declaration Location.wrap list result
               match v_type with
               | Some v_type -> ok (to_option (simpl_type_expression v_type))
               | None -> ok None
-            in            
+            in
             let%bind simpl_rhs_expr = simpl_expression rhs_expr in
               ok @@ loc x @@ Declaration_constant (Var.of_name v.value, v_type_expression, inline, simpl_rhs_expr) )
           in let%bind variables = ok @@ npseq_to_list pt.value
@@ -834,9 +835,9 @@ and simpl_cases : type a . (Raw.pattern * a) list -> (a, unit) matching result =
     | PConstr v ->
        let const, pat_opt =
          match v with
-           PConstrApp {value; _} -> 
+           PConstrApp {value; _} ->
            (match value with
-           | constr, None ->              
+           | constr, None ->
               constr, Some (PVar {value = "unit"; region = Region.ghost})
            | _ -> value)
          | PSomeApp {value=region,pat; _} ->
