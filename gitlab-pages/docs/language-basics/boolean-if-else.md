@@ -139,21 +139,8 @@ Conditional logic is an important part of every real world program.
 ```pascaligo group=e
 const min_age: nat = 16n;
 
-(*
-    This function is really obnoxious, but it showcases
-    how the if statement and it's syntax can be used.
-
-    Normally, you'd use `with (age > min_age)` instead.
-*)
 function is_adult(const age: nat): bool is
-    block {
-        var is_adult: bool := False;
-        if (age > min_age) then begin
-            is_adult := True;
-        end else begin
-            is_adult := False;
-        end
-    } with is_adult
+    if (age > min_age) then True else False
 ```
 
 > You can run the function above with
