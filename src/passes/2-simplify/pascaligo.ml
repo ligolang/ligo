@@ -267,7 +267,7 @@ and simpl_list_type_expression (lst:Raw.type_expr list) : type_expression result
   | [hd] -> simpl_type_expression hd
   | lst ->
       let%bind lst = bind_list @@ List.map simpl_type_expression lst in
-      ok @@ make_t @@ T_tuple lst
+      ok @@ make_t @@ T_operator (TC_tuple lst)
 
 let simpl_projection : Raw.projection Region.reg -> _ = fun p ->
   let (p' , loc) = r_split p in
@@ -473,14 +473,23 @@ and simpl_update = fun (u:Raw.update Region.reg) ->
   | _ -> e_accessor (e_variable (Var.of_name name)) path in
   let updates = u.updates.value.ne_elements in
   let%bind updates' =
-    let aux (f:Raw.field_assign Raw.reg) =
+    let aux (f:Raw.field_path_assign Raw.reg) =
       let (f,_) = r_split f in
       let%bind expr = simpl_expression f.field_expr in
-      ok (f.field_name.value, expr)
+        ok ( List.map (fun (x: _ Raw.reg) -> x.value) (npseq_to_list f.field_path), expr)
     in
     bind_map_list aux @@ npseq_to_list updates
   in
-  ok @@ e_update ~loc record updates'
+  let aux ur (path, expr) = 
+    let rec aux record = function
+      | [] -> failwith "error in parsing"
+      | hd :: [] -> ok @@ e_update ~loc record hd expr
+      | hd :: tl -> 
+        let%bind expr = (aux (e_accessor ~loc record [Access_record hd]) tl) in
+        ok @@ e_update ~loc record hd expr 
+    in
+    aux ur path in
+  bind_fold_list aux record updates'
 
 and simpl_logic_expression (t:Raw.logic_expr) : expression result =
   let return x = ok x in
@@ -654,7 +663,7 @@ and simpl_fun_decl :
        let arguments_name = Var.of_name "arguments" in
        let%bind params = bind_map_list simpl_param lst in
        let (binder , input_type) =
-         let type_expression = T_tuple (List.map snd params) in
+         let type_expression = t_tuple (List.map snd params) in
          (arguments_name , type_expression) in
        let%bind tpl_declarations =
          let aux = fun i x ->
@@ -673,8 +682,8 @@ and simpl_fun_decl :
          let aux prec cur = cur (Some prec) in
          bind_fold_right_list aux result body in
        let expression =
-         e_lambda ~loc binder (Some (make_t @@ input_type)) (Some output_type) result in
-       let type_annotation = Some (make_t @@ T_arrow (make_t input_type, output_type)) in
+         e_lambda ~loc binder (Some input_type) (Some output_type) result in
+       let type_annotation = Some (make_t @@ T_arrow (input_type, output_type)) in
        ok ((Var.of_name fun_name.value, type_annotation), expression)
      )
   )
@@ -708,7 +717,7 @@ and simpl_fun_expression :
        let arguments_name = Var.of_name "arguments" in
        let%bind params = bind_map_list simpl_param lst in
        let (binder , input_type) =
-         let type_expression = T_tuple (List.map snd params) in
+         let type_expression = t_tuple (List.map snd params) in
          (arguments_name , type_expression) in
        let%bind tpl_declarations =
          let aux = fun i x ->
@@ -727,8 +736,8 @@ and simpl_fun_expression :
          let aux prec cur = cur (Some prec) in
          bind_fold_right_list aux result body in
        let expression =
-         e_lambda ~loc binder (Some (make_t @@ input_type)) (Some output_type) result in
-       let type_annotation = Some (make_t @@ T_arrow (make_t input_type, output_type)) in
+         e_lambda ~loc binder (Some (input_type)) (Some output_type) result in
+       let type_annotation = Some (make_t @@ T_arrow (input_type, output_type)) in
        ok (type_annotation, expression)
      )
   )

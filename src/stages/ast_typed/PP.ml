@@ -15,13 +15,12 @@ and type_value ppf (tv:type_value) : unit =
 
 let rec annotated_expression ppf (ae:annotated_expression) : unit =
   match ae.type_annotation.simplified with
-  | Some _ -> fprintf ppf "@[<v>%a:%a@]" expression ae.expression type_value ae.type_annotation
-  | _ -> fprintf ppf "@[<v>%a@]" expression ae.expression
+  | _ -> fprintf ppf "@[<v>%a:%a@]" expression ae.expression type_value ae.type_annotation
 
 and lambda ppf l =
   let ({ binder ; body } : lambda) = l in
-  fprintf ppf "lambda (%a) -> %a"
-    name binder 
+  fprintf ppf "(lambda (%a) -> %a)"
+    name binder
     annotated_expression body
 
 and option_inline ppf inline = 
@@ -33,14 +32,14 @@ and option_inline ppf inline =
 and expression ppf (e:expression) : unit =
   match e with
   | E_literal l -> Stage_common.PP.literal ppf l
-  | E_constant (b, lst) -> fprintf ppf "%a(%a)" constant b (list_sep_d annotated_expression) lst
-  | E_constructor (c, lst) -> fprintf ppf "%a(%a)" constructor c annotated_expression lst
-  | E_variable a -> fprintf ppf "%a" name a
+  | E_constant (b, lst) -> fprintf ppf "(e_constant %a(%a))" constant b (list_sep_d annotated_expression) lst
+  | E_constructor (c, lst) -> fprintf ppf "(e_constructor %a(%a))" constructor c annotated_expression lst
+  | E_variable a -> fprintf ppf "(e_var %a)" name a
   | E_application (f, arg) -> fprintf ppf "(%a) (%a)" annotated_expression f annotated_expression arg
   | E_lambda l -> fprintf ppf "%a" lambda l
   | E_tuple_accessor (ae, i) -> fprintf ppf "%a.%d" annotated_expression ae i
   | E_record_accessor (ae, l) -> fprintf ppf "%a.%a" annotated_expression ae label l
-  | E_record_update (ae, ups) -> fprintf ppf "%a with record[%a]" annotated_expression ae (lmap_sep annotated_expression (const " , ")) (LMap.of_list ups)
+  | E_record_update (ae, (path,expr)) -> fprintf ppf "%a with record[%a=%a]" annotated_expression ae Stage_common.PP.label path annotated_expression expr
   | E_tuple lst -> fprintf ppf "tuple[@;  @[<v>%a@]@;]" (list_sep annotated_expression (tag ",@;")) lst
   | E_record m -> fprintf ppf "record[%a]" (lmap_sep annotated_expression (const " , ")) m
   | E_map m -> fprintf ppf "map[@;  @[<v>%a@]@;]" (list_sep assoc_annotated_expression (tag ",@;")) m
@@ -50,7 +49,7 @@ and expression ppf (e:expression) : unit =
   | E_look_up (ds, i) -> fprintf ppf "(%a)[%a]" annotated_expression ds annotated_expression i
   | E_matching (ae, m) ->
       fprintf ppf "match %a with %a" annotated_expression ae (matching annotated_expression) m
-  | E_sequence (a , b) -> fprintf ppf "%a ; %a" annotated_expression a annotated_expression b
+  | E_sequence (a , b) -> fprintf ppf "(e_seq %a ; %a)" annotated_expression a annotated_expression b
   | E_loop (expr , body) -> fprintf ppf "while %a { %a }" annotated_expression expr annotated_expression body
   | E_assign (name , path , expr) ->
     fprintf ppf "%a.%a := %a"

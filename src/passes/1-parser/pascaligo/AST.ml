@@ -577,7 +577,13 @@ and projection = {
 and update = {
   record : path;
   kwd_with : kwd_with;
-  updates : record reg;
+  updates : field_path_assign reg ne_injection reg
+}
+
+and field_path_assign = {
+  field_path  : (field_name, dot) nsepseq;
+  equal : equal;
+  field_expr : expr
 }
 
 and selection =

@@ -44,6 +44,7 @@ val type_declaration : environment -> Solver.state -> I.declaration -> (environm
 (* val type_match : (environment -> 'i -> 'o result) -> environment -> O.type_value -> 'i I.matching -> I.expression -> Location.t -> 'o O.matching result *)
 val evaluate_type : environment -> I.type_expression -> O.type_value result
 val type_expression : environment -> Solver.state -> ?tv_opt:O.type_value -> I.expression -> (O.annotated_expression * Solver.state) result
+val type_expression_subst : environment -> Solver.state -> ?tv_opt:O.type_value -> I.expression -> (O.annotated_expression * Solver.state) result
 val type_constant : I.constant -> O.type_value list -> O.type_value option -> (O.constant * O.type_value) result
 (*
 val untype_type_value : O.type_value -> (I.type_expression) result
