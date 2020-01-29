@@ -1916,6 +1916,26 @@ let attributes_religo () : unit result =
   in
   ok ()
 
+let get_contract_ligo () : unit result =
+  let%bind program = type_file "./contracts/get_contract.ligo" in
+  let%bind () =
+    let make_input = fun _n -> e_unit () in
+    let make_expected : int -> Ast_simplified.expression -> unit result = fun _n result ->
+      let%bind (ops , storage) = get_e_pair result.expression in
+      let%bind () =
+        let%bind lst = get_e_list ops.expression in
+        Assert.assert_list_size lst 1 in
+      let expected_storage = e_unit () in
+      Ast_simplified.Misc.assert_value_eq (expected_storage , storage)
+      in
+    let%bind () =
+      let amount = Memory_proto_alpha.Protocol.Alpha_context.Tez.zero in
+      let options = Proto_alpha_utils.Memory_proto_alpha.make_options ~amount () in
+      let%bind () = expect_n_strict_pos_small ~options program "cb" make_input make_expected in
+      expect_n_strict_pos_small ~options program "cbo" make_input make_expected in
+    ok ()
+  in
+  ok()
 
 let entrypoints_ligo () : unit result =
   let%bind _program = type_file "./contracts/entrypoints.ligo" in
@@ -2328,6 +2348,7 @@ let main = test_suite "Integration (End to End)" [
     test "tuples_sequences_functions (religo)" tuples_sequences_functions_religo ;
     test "simple_access (ligo)" simple_access_ligo;
     test "deep_access (ligo)" deep_access_ligo;
+    test "get_contract (ligo)" get_contract_ligo;
     test "entrypoints (ligo)" entrypoints_ligo ;
     test "curry (mligo)" curry ;
     test "type tuple destruct (mligo)" type_tuple_destruct ;
