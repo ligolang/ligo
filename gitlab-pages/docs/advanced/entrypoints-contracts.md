@@ -63,7 +63,9 @@ let main = ((parameter, store): (parameter_t, storage_t)) : return_t => {
 
 A contract entrypoints are the constructors of the parameter type (variant) and you must use pattern matching (`case`, `match`, `switch`) on the parameter in order to associate each entrypoint to its corresponding handler.
 
-> The Ligo variant's are compiled to Michelson annotated pairs.
+To access the 'entrypoints' of a contract, we define a main function whose parameter is a variant type with constructors for each entrypoint. This allows us to satisfy the requirement that LIGO contracts always begin execution from the same function. The main function simply takes this variant, pattern matches it to determine which entrypoint to dispatch the call to, then returns the result of executing that entrypoint with the projected arguments.
+
+> The LIGO variant's are compiled to a Michelson annotated tree of union type.
 
 <!--DOCUSAURUS_CODE_TABS-->
 <!--Pascaligo-->
