@@ -517,8 +517,9 @@ let%expect_test _ =
 
            SYNTAX (required)
                SYNTAX is the syntax that will be used. Currently supported
-               syntaxes are "pascaligo" and "cameligo". By default, the syntax is
-               guessed from the extension (.ligo and .mligo, respectively).
+               syntaxes are "pascaligo", "cameligo" and "reasonligo". By default,
+               the syntax is guessed from the extension (.ligo, .mligo, .religo
+               respectively).
 
     OPTIONS
            --format=DISPLAY_FORMAT, --display-format=DISPLAY_FORMAT
