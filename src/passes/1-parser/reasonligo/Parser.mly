@@ -24,6 +24,24 @@ type 'a sequence_or_record =
 
 let (<@) f g x = f (g x)
 
+(** 
+  Covert nsepseq to a chain of TFun's. 
+  
+  Necessary to handle cases like:
+  `type foo = (int, int) => int;`
+*)
+let rec nsepseq_to_curry hd rest = 
+  match hd, rest with 
+  | hd, (sep, item) :: rest -> 
+    let start = type_expr_to_region hd in
+    let stop = nsepseq_to_region type_expr_to_region (hd, rest) in
+    let region = cover start stop in 
+    TFun {
+      value = hd, sep, (nsepseq_to_curry item rest); 
+      region
+    } 
+  | hd, [] -> hd
+
 (* END HEADER *)
 %}
 
@@ -159,24 +177,40 @@ type_decl:
 type_expr:
   cartesian | sum_type | record_type { $1 }
 
-cartesian:
-  fun_type { $1 }
-| fun_type "," nsepseq(fun_type,",") {
-    let value  = Utils.nsepseq_cons $1 $2 $3 in
-    let region = nsepseq_to_region type_expr_to_region value
-    in TProd {region; value} }
+type_expr_func:
+  "=>" cartesian { 
+    $1, $2
+  }
 
-fun_type:
+cartesian:
   core_type { $1 }
-| core_type "=>" fun_type {
-    let start  = type_expr_to_region $1
-    and stop   = type_expr_to_region $3 in
-    let region = cover start stop in
-    TFun {region; value=$1,$2,$3} }
+| type_name type_expr_func { 
+  let (arrow, c) = $2 in
+  let value = TVar $1, arrow, c in
+  let region = cover $1.region (type_expr_to_region c) in
+  TFun { region; value }
+}
+| "(" cartesian ")" type_expr_func { 
+  let (arrow, c) = $4 in
+  let value = $2, arrow, c in
+  let region = cover $1 (type_expr_to_region c) in
+  TFun { region; value }
+}
+| "(" cartesian "," nsepseq(cartesian,",") ")" type_expr_func? {
+    match $6 with 
+    | Some (arrow, c) -> 
+      let (hd, rest) = Utils.nsepseq_cons $2 $3 $4 in
+      let rest = rest @ [(arrow, c)] in          
+      nsepseq_to_curry hd rest
+    | None ->
+      let value  = Utils.nsepseq_cons $2 $3 $4 in
+      let region = cover $1 $5 in
+      TProd {region; value} 
+  }
 
 core_type:
   type_name      { TVar $1 }
-| par(type_expr) { TPar $1 }
+| par(cartesian) { TPar $1 }
 | module_name "." type_name {
     let module_name = $1.value in
     let type_name   = $3.value in
@@ -471,17 +505,55 @@ fun_expr:
           _} ->
           (* ((foo:x, bar) : type) *)
          (arg_to_pattern fun_arg, [])
-      | EPar {value = {inside = fun_arg; _ }; _} ->
+      | EPar {value = {inside = EFun {
+          value = {
+              binders = PTyped { value = { pattern; colon; type_expr }; region = fun_region }, [];
+              arrow;
+              body;
+              _
+          };
+          _
+        }; _ }; region} ->
+
+        let expr_to_type = function 
+        | EVar v -> TVar v
+        | e -> let open! SyntaxError
+            in raise (Error (WrongFunctionArguments e))
+        in
+        let type_expr = (
+          match type_expr with
+          | TProd {value; _} -> 
+            let (hd, rest) = value in
+            let rest = rest @ [(arrow, expr_to_type body)] in          
+            nsepseq_to_curry hd rest          
+          | e ->               
+            TFun {
+              value = e, arrow, expr_to_type body;
+              region = fun_region
+            }          
+        )
+        in 
+        PTyped {
+          value = {
+            pattern;
+            colon;
+            type_expr
+          }; 
+          region;
+        }, []
+      | EPar {value = {inside =  fun_arg; _ }; _} ->
           arg_to_pattern fun_arg, []
-      | EAnnot e ->
-          arg_to_pattern (EAnnot e), []
+      | EAnnot _ as e ->
+          arg_to_pattern e, []
       | ETuple {value = fun_args; _} ->
           let bindings =
             List.map (arg_to_pattern <@ snd) (snd fun_args) in
           List.iter Scoping.check_pattern bindings;
           arg_to_pattern (fst fun_args), bindings
-      | EUnit e ->
-          arg_to_pattern (EUnit e), []
+      | EUnit _ as e ->
+          arg_to_pattern e, []
+      | EVar _ as e -> 
+          arg_to_pattern e, []
       | e -> let open! SyntaxError
             in raise (Error (WrongFunctionArguments e))
     in
