@@ -2,6 +2,12 @@
 
 module Region = Simple_utils.Region
 
+module type IO =
+  sig
+    val ext : string              (* LIGO file extension *)
+    val options : EvalOpt.options (* CLI options *)
+  end
+
 module type PARSER =
   sig
     (* The type of tokens, abstract syntax trees and expressions *)
@@ -42,7 +48,8 @@ module type PARSER =
 
 (* Main functor *)
 
-module Make (Lexer: Lexer.S)
+module Make (IO : IO)
+            (Lexer: Lexer.S)
             (Parser: PARSER with type token = Lexer.Token.token)
             (ParErr: sig val message : int -> string end) =
   struct
@@ -116,18 +123,21 @@ module Make (Lexer: Lexer.S)
 
     module Incr = Parser.Incremental
 
+    module Log = LexerLog.Make (Lexer)
+    let log    = Log.output_token ~offsets:IO.options#offsets
+                                  IO.options#mode IO.options#cmd stdout
+
     let incr_contract Lexer.{read; buffer; get_win; close; _} =
-      let supplier = I.lexer_lexbuf_to_supplier read buffer
-      and failure  = failure get_win in
-      let parser   = Incr.contract buffer.Lexing.lex_curr_p in
-      let ast      = I.loop_handle success failure supplier parser
+      let supplier  = I.lexer_lexbuf_to_supplier (read ~log) buffer
+      and failure   = failure get_win in
+      let parser    = Incr.contract buffer.Lexing.lex_curr_p in
+      let ast       = I.loop_handle success failure supplier parser
       in close (); ast
 
-    let incr_expr  Lexer.{read; buffer; get_win; close; _} =
-      let supplier = I.lexer_lexbuf_to_supplier read buffer
-      and failure  = failure get_win in
-      let parser   = Incr.interactive_expr buffer.Lexing.lex_curr_p in
-      let expr     = I.loop_handle success failure supplier parser
+    let incr_expr Lexer.{read; buffer; get_win; close; _} =
+      let supplier   = I.lexer_lexbuf_to_supplier (read ~log) buffer
+      and failure    = failure get_win in
+      let parser     = Incr.interactive_expr buffer.Lexing.lex_curr_p in
+      let expr       = I.loop_handle success failure supplier parser
       in close (); expr
-
   end

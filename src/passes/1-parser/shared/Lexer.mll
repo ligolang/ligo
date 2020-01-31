@@ -158,7 +158,7 @@ module type S =
     val slide : token -> window -> window
 
     type instance = {
-      read     : ?log:logger -> Lexing.lexbuf -> token;
+      read     : log:logger -> Lexing.lexbuf -> token;
       buffer   : Lexing.lexbuf;
       get_win  : unit -> window;
       get_pos  : unit -> Pos.t;
@@ -424,13 +424,14 @@ module Make (Token: TOKEN) : (S with module Token = Token) =
          Hint: Remove the leading minus sign.\n"
     | Broken_string ->
         "The string starting here is interrupted by a line break.\n\
-         Hint: Remove the break, close the string before or insert a backslash.\n"
+         Hint: Remove the break, close the string before or insert a \
+         backslash.\n"
     | Invalid_character_in_string ->
         "Invalid character in string.\n\
          Hint: Remove or replace the character.\n"
     | Reserved_name s ->
-        "Reserved name: " ^ s ^ ".\n\
-         Hint: Change the name.\n"
+        sprintf "Reserved name: \"%s\".\n\
+         Hint: Change the name.\n" s
     | Invalid_symbol ->
         "Invalid symbol.\n\
          Hint: Check the LIGO syntax you use.\n"
@@ -779,7 +780,7 @@ and scan_line thread state = parse
              and thread = push_string nl thread
              and state  = {state with pos = state.pos#new_line nl}
              in thread, state }
-| eof      { fail thread.opening Unterminated_comment }
+| eof      { thread, state }
 | _        { let     () = rollback lexbuf in
              let len    = thread.len in
              let thread,
@@ -855,7 +856,7 @@ and scan_utf8 thread state = parse
 type logger = Markup.t list -> token -> unit
 
 type instance = {
-  read     : ?log:logger -> Lexing.lexbuf -> token;
+  read     : log:logger -> Lexing.lexbuf -> token;
   buffer   : Lexing.lexbuf;
   get_win  : unit -> window;
   get_pos  : unit -> Pos.t;
@@ -934,7 +935,7 @@ let open_token_stream file_path_opt =
             in fail region Missing_break
       | _ -> () in
 
-  let rec read_token ?(log=fun _ _ -> ()) buffer =
+  let rec read_token ~log buffer =
     match FQueue.deq !state.units with
       None ->
         scan buffer;

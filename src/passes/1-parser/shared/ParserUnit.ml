@@ -85,7 +85,7 @@ module Make (Lexer: Lexer.S)
 
     (* Instantiating the parser *)
 
-    module Front = ParserAPI.Make (Lexer)(Parser)(ParErr)
+    module Front = ParserAPI.Make (IO)(Lexer)(Parser)(ParErr)
 
     let format_error = Front.format_error
 
