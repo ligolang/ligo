@@ -11,8 +11,13 @@ and type_expression =  {
   }
 and declaration =
   | Declaration_type of (type_variable * type_expression)
+
+  (* A Declaration_constant is described by
+   *   a name
+   *   an optional type annotation
+   *   a boolean indicating whether it should be inlined
+   *   an expression *)
   | Declaration_constant of (expression_variable * type_expression option * inline * expression)
-  (* | Macro_declaration of macro_declaration *)
 
 and expr = expression
 

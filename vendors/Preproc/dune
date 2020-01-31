@@ -1,0 +1,20 @@
+(ocamllex Escan Preproc)
+
+(menhir
+  (modules Eparser))
+
+(library
+  (name PreProc)
+;  (public_name ligo.preproc)
+  (wrapped false)
+  (modules Eparser Error Escan Etree Preproc))
+
+(test
+  (modules ProcMain)
+  (libraries PreProc)
+  (name ProcMain))
+
+(test
+  (modules EMain)
+  (libraries PreProc)
+  (name EMain))

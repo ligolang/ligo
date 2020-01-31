@@ -18,56 +18,56 @@ let%expect_test _ =
                Dump the LIGO changelog to stdout.
 
            compile-contract
-               Subcommand: compile a contract.
+               Subcommand: Compile a contract.
 
            compile-expression
-               Subcommand: compile to a michelson value.
+               Subcommand: Compile to a michelson value.
 
            compile-parameter
-               Subcommand: compile parameters to a michelson expression. The
-               resulting michelson expression can be passed as an argument in a
+               Subcommand: Compile parameters to a Michelson expression. The
+               resulting Michelson expression can be passed as an argument in a
                transaction which calls a contract.
 
            compile-storage
-               Subcommand: compile an initial storage in ligo syntax to a
-               michelson expression. The resulting michelson expression can be
+               Subcommand: Compile an initial storage in ligo syntax to a
+               Michelson expression. The resulting Michelson expression can be
                passed as an argument in a transaction which originates a
                contract.
 
            dry-run
-               Subcommand: run a smart-contract with the given storage and input.
+               Subcommand: Run a smart-contract with the given storage and input.
 
            evaluate-value
-               Subcommand: evaluate a given definition.
+               Subcommand: Evaluate a given definition.
 
            interpret
-               Subcommand: interpret the expression in the context initialized by
+               Subcommand: Interpret the expression in the context initialized by
                the provided source file.
 
            list-declarations
-               Subcommand: list all the top-level decalarations.
+               Subcommand: List all the top-level declarations.
 
            measure-contract
-               Subcommand: measure a contract's compiled size in bytes.
+               Subcommand: Measure a contract's compiled size in bytes.
 
            print-ast
-               Subcommand: print the ast. Warning: intended for development of 
+               Subcommand: Print the AST. Warning: Intended for development of
                LIGO and can break at any time.
 
            print-cst
-               Subcommand: print the cst. Warning: intended for development of
+               Subcommand: Print the CST. Warning: Intended for development of
                LIGO and can break at any time.
 
            print-mini-c
-               Subcommand: print mini c. Warning: intended for development of 
+               Subcommand: Print Mini-C. Warning: Intended for development of
                LIGO and can break at any time.
 
            print-typed-ast
-               Subcommand: print the typed ast. Warning: intended for development 
+               Subcommand: Print the typed AST. Warning: Intended for development
                of LIGO and can break at any time.
 
            run-function
-               Subcommand: run a function with the given parameter.
+               Subcommand: Run a function with the given parameter.
 
     OPTIONS
            --help[=FMT] (default=auto)
@@ -94,56 +94,56 @@ let%expect_test _ =
                Dump the LIGO changelog to stdout.
 
            compile-contract
-               Subcommand: compile a contract.
+               Subcommand: Compile a contract.
 
            compile-expression
-               Subcommand: compile to a michelson value.
+               Subcommand: Compile to a michelson value.
 
            compile-parameter
-               Subcommand: compile parameters to a michelson expression. The
-               resulting michelson expression can be passed as an argument in a
+               Subcommand: Compile parameters to a Michelson expression. The
+               resulting Michelson expression can be passed as an argument in a
                transaction which calls a contract.
 
            compile-storage
-               Subcommand: compile an initial storage in ligo syntax to a
-               michelson expression. The resulting michelson expression can be
+               Subcommand: Compile an initial storage in ligo syntax to a
+               Michelson expression. The resulting Michelson expression can be
                passed as an argument in a transaction which originates a
                contract.
 
            dry-run
-               Subcommand: run a smart-contract with the given storage and input.
+               Subcommand: Run a smart-contract with the given storage and input.
 
            evaluate-value
-               Subcommand: evaluate a given definition.
+               Subcommand: Evaluate a given definition.
 
            interpret
-               Subcommand: interpret the expression in the context initialized by
+               Subcommand: Interpret the expression in the context initialized by
                the provided source file.
 
            list-declarations
-               Subcommand: list all the top-level decalarations.
+               Subcommand: List all the top-level declarations.
 
            measure-contract
-               Subcommand: measure a contract's compiled size in bytes.
+               Subcommand: Measure a contract's compiled size in bytes.
 
            print-ast
-               Subcommand: print the ast. Warning: intended for development of 
+               Subcommand: Print the AST. Warning: Intended for development of
                LIGO and can break at any time.
 
            print-cst
-               Subcommand: print the cst. Warning: intended for development of 
+               Subcommand: Print the CST. Warning: Intended for development of
                LIGO and can break at any time.
 
            print-mini-c
-               Subcommand: print mini c. Warning: intended for development of 
+               Subcommand: Print Mini-C. Warning: Intended for development of
                LIGO and can break at any time.
 
            print-typed-ast
-               Subcommand: print the typed ast. Warning: intended for development 
+               Subcommand: Print the typed AST. Warning: Intended for development
                of LIGO and can break at any time.
 
            run-function
-               Subcommand: run a function with the given parameter.
+               Subcommand: Run a function with the given parameter.
 
     OPTIONS
            --help[=FMT] (default=auto)
@@ -157,7 +157,7 @@ let%expect_test _ =
   run_ligo_good [ "compile-contract" ; "--help" ] ;
   [%expect {|
     NAME
-           ligo-compile-contract - Subcommand: compile a contract.
+           ligo-compile-contract - Subcommand: Compile a contract.
 
     SYNOPSIS
            ligo compile-contract [OPTION]... SOURCE_FILE ENTRY_POINT
@@ -167,8 +167,7 @@ let%expect_test _ =
                ENTRY_POINT is entry-point that will be compiled.
 
            SOURCE_FILE (required)
-               SOURCE_FILE is the path to the .ligo or .mligo file of the
-               contract.
+               SOURCE_FILE is the path to the smart contract file.
 
     OPTIONS
            --format=DISPLAY_FORMAT, --display-format=DISPLAY_FORMAT
@@ -191,8 +190,9 @@ let%expect_test _ =
 
            -s SYNTAX, --syntax=SYNTAX (absent=auto)
                SYNTAX is the syntax that will be used. Currently supported
-               syntaxes are "pascaligo" and "cameligo". By default, the syntax is
-               guessed from the extension (.ligo and .mligo, respectively).
+               syntaxes are "pascaligo", "cameligo" and "reasonligo". By default,
+               the syntax is guessed from the extension (.ligo, .mligo, .religo
+               respectively).
 
            --version
                Show version information. |} ] ;
@@ -200,8 +200,8 @@ let%expect_test _ =
   run_ligo_good [ "compile-parameter" ; "--help" ] ;
   [%expect {|
     NAME
-           ligo-compile-parameter - Subcommand: compile parameters to a michelson
-           expression. The resulting michelson expression can be passed as an
+           ligo-compile-parameter - Subcommand: Compile parameters to a Michelson
+           expression. The resulting Michelson expression can be passed as an
            argument in a transaction which calls a contract.
 
     SYNOPSIS
@@ -216,12 +216,11 @@ let%expect_test _ =
                PARAMETER_EXPRESSION is the expression that will be compiled.
 
            SOURCE_FILE (required)
-               SOURCE_FILE is the path to the .ligo or .mligo file of the
-               contract.
+               SOURCE_FILE is the path to the smart contract file.
 
     OPTIONS
            --amount=AMOUNT (absent=0)
-               AMOUNT is the amount the michelson interpreter will use.
+               AMOUNT is the amount the Michelson interpreter will use.
 
            --format=DISPLAY_FORMAT, --display-format=DISPLAY_FORMAT
            (absent=human-readable)
@@ -242,21 +241,22 @@ let%expect_test _ =
                are 'text' (default), 'json' and 'hex'.
 
            --predecessor-timestamp=PREDECESSOR_TIMESTAMP
-               PREDECESSOR_TIMESTAMP is the pedecessor_timestamp (now value minus
-               one minute) the michelson interpreter will use (e.g.
+               PREDECESSOR_TIMESTAMP is the predecessor_timestamp (now value
+               minus one minute) the Michelson interpreter will use (e.g.
                '2000-01-01T10:10:10Z')
 
            -s SYNTAX, --syntax=SYNTAX (absent=auto)
                SYNTAX is the syntax that will be used. Currently supported
-               syntaxes are "pascaligo" and "cameligo". By default, the syntax is
-               guessed from the extension (.ligo and .mligo, respectively).
+               syntaxes are "pascaligo", "cameligo" and "reasonligo". By default,
+               the syntax is guessed from the extension (.ligo, .mligo, .religo
+               respectively).
 
            --sender=SENDER
-               SENDER is the sender the michelson interpreter transaction will
+               SENDER is the sender the Michelson interpreter transaction will
                use.
 
            --source=SOURCE
-               SOURCE is the source the michelson interpreter transaction will
+               SOURCE is the source the Michelson interpreter transaction will
                use.
 
            --version
@@ -265,8 +265,8 @@ let%expect_test _ =
   run_ligo_good [ "compile-storage" ; "--help" ] ;
   [%expect {|
     NAME
-           ligo-compile-storage - Subcommand: compile an initial storage in ligo
-           syntax to a michelson expression. The resulting michelson expression
+           ligo-compile-storage - Subcommand: Compile an initial storage in ligo
+           syntax to a Michelson expression. The resulting Michelson expression
            can be passed as an argument in a transaction which originates a
            contract.
 
@@ -279,15 +279,14 @@ let%expect_test _ =
                ENTRY_POINT is entry-point that will be compiled.
 
            SOURCE_FILE (required)
-               SOURCE_FILE is the path to the .ligo or .mligo file of the
-               contract.
+               SOURCE_FILE is the path to the smart contract file.
 
            STORAGE_EXPRESSION (required)
                STORAGE_EXPRESSION is the expression that will be compiled.
 
     OPTIONS
            --amount=AMOUNT (absent=0)
-               AMOUNT is the amount the michelson interpreter will use.
+               AMOUNT is the amount the Michelson interpreter will use.
 
            --format=DISPLAY_FORMAT, --display-format=DISPLAY_FORMAT
            (absent=human-readable)
@@ -308,21 +307,22 @@ let%expect_test _ =
                are 'text' (default), 'json' and 'hex'.
 
            --predecessor-timestamp=PREDECESSOR_TIMESTAMP
-               PREDECESSOR_TIMESTAMP is the pedecessor_timestamp (now value minus
-               one minute) the michelson interpreter will use (e.g.
+               PREDECESSOR_TIMESTAMP is the predecessor_timestamp (now value
+               minus one minute) the Michelson interpreter will use (e.g.
                '2000-01-01T10:10:10Z')
 
            -s SYNTAX, --syntax=SYNTAX (absent=auto)
                SYNTAX is the syntax that will be used. Currently supported
-               syntaxes are "pascaligo" and "cameligo". By default, the syntax is
-               guessed from the extension (.ligo and .mligo, respectively).
+               syntaxes are "pascaligo", "cameligo" and "reasonligo". By default,
+               the syntax is guessed from the extension (.ligo, .mligo, .religo
+               respectively).
 
            --sender=SENDER
-               SENDER is the sender the michelson interpreter transaction will
+               SENDER is the sender the Michelson interpreter transaction will
                use.
 
            --source=SOURCE
-               SOURCE is the source the michelson interpreter transaction will
+               SOURCE is the source the Michelson interpreter transaction will
                use.
 
            --version
@@ -331,7 +331,7 @@ let%expect_test _ =
   run_ligo_good [ "dry-run" ; "--help" ] ;
   [%expect {|
     NAME
-           ligo-dry-run - Subcommand: run a smart-contract with the given storage
+           ligo-dry-run - Subcommand: Run a smart-contract with the given storage
            and input.
 
     SYNOPSIS
@@ -346,15 +346,14 @@ let%expect_test _ =
                PARAMETER_EXPRESSION is the expression that will be compiled.
 
            SOURCE_FILE (required)
-               SOURCE_FILE is the path to the .ligo or .mligo file of the
-               contract.
+               SOURCE_FILE is the path to the smart contract file.
 
            STORAGE_EXPRESSION (required)
                STORAGE_EXPRESSION is the expression that will be compiled.
 
     OPTIONS
            --amount=AMOUNT (absent=0)
-               AMOUNT is the amount the michelson interpreter will use.
+               AMOUNT is the amount the Michelson interpreter will use.
 
            --format=DISPLAY_FORMAT, --display-format=DISPLAY_FORMAT
            (absent=human-readable)
@@ -370,21 +369,22 @@ let%expect_test _ =
                `plain' whenever the TERM env var is `dumb' or undefined.
 
            --predecessor-timestamp=PREDECESSOR_TIMESTAMP
-               PREDECESSOR_TIMESTAMP is the pedecessor_timestamp (now value minus
-               one minute) the michelson interpreter will use (e.g.
+               PREDECESSOR_TIMESTAMP is the predecessor_timestamp (now value
+               minus one minute) the Michelson interpreter will use (e.g.
                '2000-01-01T10:10:10Z')
 
            -s SYNTAX, --syntax=SYNTAX (absent=auto)
                SYNTAX is the syntax that will be used. Currently supported
-               syntaxes are "pascaligo" and "cameligo". By default, the syntax is
-               guessed from the extension (.ligo and .mligo, respectively).
+               syntaxes are "pascaligo", "cameligo" and "reasonligo". By default,
+               the syntax is guessed from the extension (.ligo, .mligo, .religo
+               respectively).
 
            --sender=SENDER
-               SENDER is the sender the michelson interpreter transaction will
+               SENDER is the sender the Michelson interpreter transaction will
                use.
 
            --source=SOURCE
-               SOURCE is the source the michelson interpreter transaction will
+               SOURCE is the source the Michelson interpreter transaction will
                use.
 
            --version
@@ -393,7 +393,7 @@ let%expect_test _ =
   run_ligo_good [ "run-function" ; "--help" ] ;
   [%expect {|
     NAME
-           ligo-run-function - Subcommand: run a function with the given
+           ligo-run-function - Subcommand: Run a function with the given
            parameter.
 
     SYNOPSIS
@@ -408,12 +408,11 @@ let%expect_test _ =
                PARAMETER_EXPRESSION is the expression that will be compiled.
 
            SOURCE_FILE (required)
-               SOURCE_FILE is the path to the .ligo or .mligo file of the
-               contract.
+               SOURCE_FILE is the path to the smart contract file.
 
     OPTIONS
            --amount=AMOUNT (absent=0)
-               AMOUNT is the amount the michelson interpreter will use.
+               AMOUNT is the amount the Michelson interpreter will use.
 
            --format=DISPLAY_FORMAT, --display-format=DISPLAY_FORMAT
            (absent=human-readable)
@@ -429,21 +428,22 @@ let%expect_test _ =
                `plain' whenever the TERM env var is `dumb' or undefined.
 
            --predecessor-timestamp=PREDECESSOR_TIMESTAMP
-               PREDECESSOR_TIMESTAMP is the pedecessor_timestamp (now value minus
-               one minute) the michelson interpreter will use (e.g.
+               PREDECESSOR_TIMESTAMP is the predecessor_timestamp (now value
+               minus one minute) the Michelson interpreter will use (e.g.
                '2000-01-01T10:10:10Z')
 
            -s SYNTAX, --syntax=SYNTAX (absent=auto)
                SYNTAX is the syntax that will be used. Currently supported
-               syntaxes are "pascaligo" and "cameligo". By default, the syntax is
-               guessed from the extension (.ligo and .mligo, respectively).
+               syntaxes are "pascaligo", "cameligo" and "reasonligo". By default,
+               the syntax is guessed from the extension (.ligo, .mligo, .religo
+               respectively).
 
            --sender=SENDER
-               SENDER is the sender the michelson interpreter transaction will
+               SENDER is the sender the Michelson interpreter transaction will
                use.
 
            --source=SOURCE
-               SOURCE is the source the michelson interpreter transaction will
+               SOURCE is the source the Michelson interpreter transaction will
                use.
 
            --version
@@ -452,7 +452,7 @@ let%expect_test _ =
   run_ligo_good [ "evaluate-value" ; "--help" ] ;
   [%expect {|
     NAME
-           ligo-evaluate-value - Subcommand: evaluate a given definition.
+           ligo-evaluate-value - Subcommand: Evaluate a given definition.
 
     SYNOPSIS
            ligo evaluate-value [OPTION]... SOURCE_FILE ENTRY_POINT
@@ -462,12 +462,11 @@ let%expect_test _ =
                ENTRY_POINT is entry-point that will be compiled.
 
            SOURCE_FILE (required)
-               SOURCE_FILE is the path to the .ligo or .mligo file of the
-               contract.
+               SOURCE_FILE is the path to the smart contract file.
 
     OPTIONS
            --amount=AMOUNT (absent=0)
-               AMOUNT is the amount the michelson interpreter will use.
+               AMOUNT is the amount the Michelson interpreter will use.
 
            --format=DISPLAY_FORMAT, --display-format=DISPLAY_FORMAT
            (absent=human-readable)
@@ -483,21 +482,22 @@ let%expect_test _ =
                `plain' whenever the TERM env var is `dumb' or undefined.
 
            --predecessor-timestamp=PREDECESSOR_TIMESTAMP
-               PREDECESSOR_TIMESTAMP is the pedecessor_timestamp (now value minus
-               one minute) the michelson interpreter will use (e.g.
+               PREDECESSOR_TIMESTAMP is the predecessor_timestamp (now value
+               minus one minute) the Michelson interpreter will use (e.g.
                '2000-01-01T10:10:10Z')
 
            -s SYNTAX, --syntax=SYNTAX (absent=auto)
                SYNTAX is the syntax that will be used. Currently supported
-               syntaxes are "pascaligo" and "cameligo". By default, the syntax is
-               guessed from the extension (.ligo and .mligo, respectively).
+               syntaxes are "pascaligo", "cameligo" and "reasonligo". By default,
+               the syntax is guessed from the extension (.ligo, .mligo, .religo
+               respectively).
 
            --sender=SENDER
-               SENDER is the sender the michelson interpreter transaction will
+               SENDER is the sender the Michelson interpreter transaction will
                use.
 
            --source=SOURCE
-               SOURCE is the source the michelson interpreter transaction will
+               SOURCE is the source the Michelson interpreter transaction will
                use.
 
            --version
@@ -506,7 +506,7 @@ let%expect_test _ =
   run_ligo_good [ "compile-expression" ; "--help" ] ;
   [%expect {|
     NAME
-           ligo-compile-expression - Subcommand: compile to a michelson value.
+           ligo-compile-expression - Subcommand: Compile to a michelson value.
 
     SYNOPSIS
            ligo compile-expression [OPTION]... SYNTAX _EXPRESSION
@@ -517,8 +517,9 @@ let%expect_test _ =
 
            SYNTAX (required)
                SYNTAX is the syntax that will be used. Currently supported
-               syntaxes are "pascaligo" and "cameligo". By default, the syntax is
-               guessed from the extension (.ligo and .mligo, respectively).
+               syntaxes are "pascaligo", "cameligo" and "reasonligo". By default,
+               the syntax is guessed from the extension (.ligo, .mligo, .religo
+               respectively).
 
     OPTIONS
            --format=DISPLAY_FORMAT, --display-format=DISPLAY_FORMAT

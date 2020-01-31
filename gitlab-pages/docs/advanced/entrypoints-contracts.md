@@ -220,7 +220,7 @@ In our case, we have a `counter.ligo` contract that accepts a parameter of type 
 
 <!--DOCUSAURUS_CODE_TABS-->
 <!--Pascaligo-->
-```pascaligo
+```pascaligo skip
 // counter.ligo
 type action is
 | Increment of int

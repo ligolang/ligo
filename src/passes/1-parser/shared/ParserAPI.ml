@@ -24,6 +24,7 @@ module type PARSER =
 
     val interactive_expr :
       (Lexing.lexbuf -> token) -> Lexing.lexbuf -> expr
+
     val contract :
       (Lexing.lexbuf -> token) -> Lexing.lexbuf -> ast
 
@@ -41,6 +42,7 @@ module type PARSER =
       sig
         val interactive_expr :
           Lexing.position -> expr MenhirInterpreter.checkpoint
+
         val contract :
           Lexing.position -> ast MenhirInterpreter.checkpoint
       end
@@ -102,7 +104,9 @@ module Make (IO : IO)
               let invalid_lexeme = Lexer.Token.to_lexeme invalid in
               Printf.sprintf "%s and before \"%s\"" s invalid_lexeme in
       let header = header ^ trailer in
-      header ^ (if msg = "" then ".\n" else ":\n" ^ msg)
+      let msg =
+        header ^ (if msg = "" then ".\n" else ":\n" ^ msg)
+      in Region.{value=msg; region=invalid_region}
 
     let failure get_win checkpoint =
       let message = ParErr.message (state checkpoint) in

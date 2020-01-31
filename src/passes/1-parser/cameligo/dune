@@ -15,17 +15,16 @@
   (name parser_cameligo)
   (public_name ligo.parser.cameligo)
   (modules
-     Scoping AST cameligo Parser ParserLog LexToken)
+     Scoping AST cameligo Parser ParserLog LexToken ParErr)
   (libraries
      menhirLib
      parser_shared
      str
      simple-utils
-     tezos-utils
-     getopt)
+     tezos-utils)
   (preprocess
     (pps bisect_ppx --conditional))
-  (flags (:standard -open Simple_utils -open Parser_shared)))
+  (flags (:standard -open Parser_shared -open Simple_utils)))
 
 ;; Build of the unlexer (for covering the
 ;; error states of the LR automaton)
@@ -52,8 +51,7 @@
 (executable
   (name ParserMain)
   (libraries parser_cameligo)
-  (modules
-     ParErr ParserMain)
+  (modules ParserMain)
   (preprocess
     (pps bisect_ppx --conditional))
   (flags (:standard -open Simple_utils -open Parser_shared -open Parser_cameligo)))

@@ -31,19 +31,30 @@ module VarSet = Set.Make (Ord)
 let reserved =
   let open SSet in
   empty
+  |> add "abs"
+  |> add "address"
+  |> add "amount"
   |> add "assert"
   |> add "balance"
-  |> add "time"
-  |> add "amount"
-  |> add "gas"
-  |> add "sender"
-  |> add "source"
-  |> add "failwith"
+  |> add "black2b"
+  |> add "check"
   |> add "continue"
-  |> add "stop"
+  |> add "failwith"
+  |> add "gas"
+  |> add "hash"
+  |> add "hash_key"
+  |> add "implicit_account"
   |> add "int"
-  |> add "abs"
+  |> add "pack"
+  |> add "self_address"
+  |> add "sender"
+  |> add "sha256"
+  |> add "sha512"
+  |> add "source"
+  |> add "stop"
+  |> add "time"
   |> add "unit"
+  |> add "unpack"
 
 let check_reserved_names vars =
   let is_reserved elt = SSet.mem elt.value reserved in

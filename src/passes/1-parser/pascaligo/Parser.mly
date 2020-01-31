@@ -141,22 +141,22 @@ type_decl:
     in {region; value} }
 
 type_expr:
-  sum_type | record_type | cartesian { $1 }
+  fun_type | sum_type | record_type { $1 }
 
-cartesian:
-  function_type { $1 }
-| function_type "*" nsepseq(function_type,"*") {
-    let value  = Utils.nsepseq_cons $1 $2 $3 in
-    let region = nsepseq_to_region type_expr_to_region value
-    in TProd {region; value} }
-
-function_type:
-  core_type { $1 }
-| core_type "->" function_type {
+fun_type:
+  cartesian { $1 }
+| cartesian "->" fun_type {
     let start  = type_expr_to_region $1
     and stop   = type_expr_to_region $3 in
     let region = cover start stop in
     TFun {region; value = $1,$2,$3} }
+
+cartesian:
+  core_type { $1 }
+| core_type "*" nsepseq(core_type,"*") {
+    let value  = Utils.nsepseq_cons $1 $2 $3 in
+    let region = nsepseq_to_region type_expr_to_region value
+    in TProd {region; value} }
 
 core_type:
   type_name      { TVar $1 }
@@ -201,7 +201,7 @@ sum_type:
 
 variant:
   "<constr>" { {$1 with value = {constr=$1; arg=None}} }
-| "<constr>" "of" cartesian {
+| "<constr>" "of" fun_type {
     let region = cover $1.region (type_expr_to_region $3)
     and value  = {constr=$1; arg = Some ($2,$3)}
     in {region; value} }
@@ -315,7 +315,7 @@ param_decl:
     in ParamConst {region; value} }
 
 param_type:
-  cartesian { $1 }
+  fun_type { $1 }
 
 block:
   "begin" sep_or_term_list(statement,";") "end" {

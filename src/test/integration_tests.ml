@@ -2098,6 +2098,44 @@ let empty_case_religo () : unit result =
   in
   ok ()
 
+let tuple_type_mligo () : unit result = 
+  let%bind program = mtype_file "./contracts/tuple_type.mligo" in
+  let%bind () = 
+    let input _ = e_int 0 in 
+    let expected _ = e_int 8 in
+    expect_eq_n program "test1" input expected
+  in
+  let%bind () = 
+    let input _ = e_int 0 in 
+    let expected _ = e_int 12 in
+    expect_eq_n program "test2" input expected
+  in
+  ok ()
+
+let tuple_type_religo () : unit result = 
+  let%bind program = retype_file "./contracts/tuple_type.religo" in
+  let%bind () = 
+    let input _ = e_int 0 in 
+    let expected _ = e_int 8 in
+    expect_eq_n program "arguments_test" input expected
+  in
+  let%bind () = 
+    let input _ = e_int 0 in 
+    let expected _ = e_int 8 in
+    expect_eq_n program "tuple_test" input expected
+  in
+  let%bind () = 
+    let input _ = e_int 0 in 
+    let expected _ = e_int 8 in
+    expect_eq_n program "arguments_test_inline" input expected
+  in
+  let%bind () = 
+    let input _ = e_int 0 in 
+    let expected _ = e_int 8 in
+    expect_eq_n program "tuple_test_inline" input expected
+  in
+  ok ()
+
 let main = test_suite "Integration (End to End)" [
     test "bytes unpack" bytes_unpack ;
     test "bytes unpack (mligo)" bytes_unpack_mligo ;
@@ -2258,4 +2296,6 @@ let main = test_suite "Integration (End to End)" [
     test "empty case" empty_case ;
     test "empty case (mligo)" empty_case_mligo ;
     test "empty case (religo)" empty_case_religo ;
+    test "tuple type (mligo)" tuple_type_mligo ;
+    test "tuple type (religo)" tuple_type_religo ;
   ]

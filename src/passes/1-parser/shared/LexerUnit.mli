@@ -1,5 +1,7 @@
 (* Functor to build a standalone LIGO lexer *)
 
+module Region = Simple_utils.Region
+
 module type IO =
   sig
     val ext : string              (* LIGO file extension *)
@@ -8,6 +10,6 @@ module type IO =
 
 module Make (IO: IO) (Lexer: Lexer.S) :
   sig
-    val scan  : unit -> (Lexer.token list, string) Stdlib.result
-    val trace : unit -> (unit, string) Stdlib.result
+    val scan  : unit -> (Lexer.token list, string Region.reg) Stdlib.result
+    val trace : unit -> (unit, string Region.reg) Stdlib.result
   end

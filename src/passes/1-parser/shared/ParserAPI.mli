@@ -54,6 +54,8 @@ module Make (IO: IO)
             (Parser: PARSER with type token = Lexer.Token.token)
             (ParErr: sig val message : int -> string end) :
   sig
+    (* WARNING: The following parsers may all raise [Lexer.Error] *)
+
     (* The monolithic API of Menhir *)
 
     val mono_contract :
@@ -74,5 +76,6 @@ module Make (IO: IO)
     val incr_contract : Lexer.instance -> Parser.ast
     val incr_expr     : Lexer.instance -> Parser.expr
 
-    val format_error : ?offsets:bool -> [`Point | `Byte] -> error -> string
+    val format_error :
+      ?offsets:bool -> [`Point | `Byte] -> error -> string Region.reg
   end

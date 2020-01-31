@@ -1,3 +1,5 @@
+module Region = Simple_utils.Region
+
 module type S =
   sig
     module Lexer : Lexer.S
@@ -12,7 +14,7 @@ module type S =
     val trace :
       ?offsets:bool -> [`Byte | `Point] ->
       file_path option -> EvalOpt.command ->
-      (unit, string) Stdlib.result
+      (unit, string Region.reg) Stdlib.result
   end
 
 module Make (Lexer: Lexer.S) : S with module Lexer = Lexer

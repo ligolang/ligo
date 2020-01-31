@@ -200,6 +200,18 @@ const a: int = int(1n);
 const b: nat = abs(1);
 ```
 
+<!--END_DOCUSAURUS_CODE_TABS-->
+
+## Check if a value is a `nat`
+
+You can check if a value is a `nat`, by using a syntax specific built-in function, which accepts an `int` and returns an `option(nat)`, more specifically `Some(nat)` if the provided integer is a natural number, and `None` otherwise:
+
+<!--DOCUSAURUS_CODE_TABS-->
+<!--Pascaligo-->
+```pascaligo
+const its_a_nat: option(nat) = is_nat(1)
+```
+
 <!--ReasonLIGO-->
 ```reasonligo group=e
 let a: int = int(1n);

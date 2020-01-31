@@ -1,4 +1,6 @@
-(** Driver for the PascaLIGO lexer *)
+(* Driver for the PascaLIGO lexer *)
+
+module Region = Simple_utils.Region
 
 module IO =
   struct

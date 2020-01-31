@@ -24,6 +24,24 @@ type 'a sequence_or_record =
 
 let (<@) f g x = f (g x)
 
+(** 
+  Covert nsepseq to a chain of TFun's. 
+  
+  Necessary to handle cases like:
+  `type foo = (int, int) => int;`
+*)
+let rec nsepseq_to_curry hd rest = 
+  match hd, rest with 
+  | hd, (sep, item) :: rest -> 
+    let start = type_expr_to_region hd in
+    let stop = nsepseq_to_region type_expr_to_region (hd, rest) in
+    let region = cover start stop in 
+    TFun {
+      value = hd, sep, (nsepseq_to_curry item rest); 
+      region
+    } 
+  | hd, [] -> hd
+
 (* END HEADER *)
 %}
 
@@ -119,7 +137,7 @@ tuple(item):
 
 (* Possibly empty semicolon-separated values between brackets *)
 
-list(item):
+list__(item):
   "[" sep_or_term_list(item,";")? "]" {
     let compound = Brackets ($1,$3)
     and region = cover $1 $3 in
@@ -159,24 +177,40 @@ type_decl:
 type_expr:
   cartesian | sum_type | record_type { $1 }
 
-cartesian:
-  fun_type { $1 }
-| fun_type "," nsepseq(fun_type,",") {
-    let value  = Utils.nsepseq_cons $1 $2 $3 in
-    let region = nsepseq_to_region type_expr_to_region value
-    in TProd {region; value} }
+type_expr_func:
+  "=>" cartesian { 
+    $1, $2
+  }
 
-fun_type:
+cartesian:
   core_type { $1 }
-| core_type "=>" fun_type {
-    let start  = type_expr_to_region $1
-    and stop   = type_expr_to_region $3 in
-    let region = cover start stop in
-    TFun {region; value=$1,$2,$3} }
+| type_name type_expr_func { 
+  let (arrow, c) = $2 in
+  let value = TVar $1, arrow, c in
+  let region = cover $1.region (type_expr_to_region c) in
+  TFun { region; value }
+}
+| "(" cartesian ")" type_expr_func { 
+  let (arrow, c) = $4 in
+  let value = $2, arrow, c in
+  let region = cover $1 (type_expr_to_region c) in
+  TFun { region; value }
+}
+| "(" cartesian "," nsepseq(cartesian,",") ")" type_expr_func? {
+    match $6 with 
+    | Some (arrow, c) -> 
+      let (hd, rest) = Utils.nsepseq_cons $2 $3 $4 in
+      let rest = rest @ [(arrow, c)] in          
+      nsepseq_to_curry hd rest
+    | None ->
+      let value  = Utils.nsepseq_cons $2 $3 $4 in
+      let region = cover $1 $5 in
+      TProd {region; value} 
+  }
 
 core_type:
   type_name      { TVar $1 }
-| par(type_expr) { TPar $1 }
+| par(cartesian) { TPar $1 }
 | module_name "." type_name {
     let module_name = $1.value in
     let type_name   = $3.value in
@@ -230,13 +264,13 @@ field_decl:
 (* Top-level non-recursive definitions *)
 
 let_declaration:
-  seq(Attr) "let" let_binding {    
+  seq(Attr) "let" let_binding {
     let attributes = $1 in
-    let kwd_let = $2 in    
-    let binding = $3 in
-    let value   = kwd_let, binding, attributes in
-    let stop    = expr_to_region binding.let_rhs in
-    let region  = cover $2 stop
+    let kwd_let    = $2 in
+    let binding    = $3 in
+    let value      = kwd_let, binding, attributes in
+    let stop       = expr_to_region binding.let_rhs in
+    let region     = cover $2 stop
     in {region; value} }
 
 es6_func:
@@ -335,7 +369,7 @@ core_pattern:
 | "false"                                                {  PFalse $1 }
 | "<string>"                                             { PString $1 }
 | par(ptuple)                                            {    PPar $1 }
-| list(sub_pattern)                            { PList (PListComp $1) }
+| list__(sub_pattern)                          { PList (PListComp $1) }
 | constr_pattern                                         { PConstr $1 }
 | record_pattern                                         { PRecord $1 }
 
@@ -439,23 +473,21 @@ fun_expr:
           {p.value with inside = arg_to_pattern p.value.inside}
         in PPar {p with value}
     | EUnit u -> PUnit u
-    | ETuple { value; region } -> 
+    | ETuple { value; region } ->
         PTuple { value = Utils.nsepseq_map arg_to_pattern value; region}
-    | EAnnot {region; value = {inside = t, colon, typ; _}} -> 
+    | EAnnot {region; value = {inside = t, colon, typ; _}} ->
         let value = { pattern = arg_to_pattern t; colon; type_expr = typ} in
         PPar {
           value = {
             lpar = Region.ghost;
-            rpar = Region.ghost; 
+            rpar = Region.ghost;
             inside = PTyped {region; value}
           };
           region
         }
-    | e -> (
-          let open! SyntaxError in
-          raise (Error (WrongFunctionArguments e))
-      )
-    in
+    | e ->
+        let open! SyntaxError in
+        raise (Error (WrongFunctionArguments e)) in
     let fun_args_to_pattern = function
       EAnnot {
         value = {
@@ -473,17 +505,55 @@ fun_expr:
           _} ->
           (* ((foo:x, bar) : type) *)
          (arg_to_pattern fun_arg, [])
-      | EPar {value = {inside = fun_arg; _ }; _} ->
+      | EPar {value = {inside = EFun {
+          value = {
+              binders = PTyped { value = { pattern; colon; type_expr }; region = fun_region }, [];
+              arrow;
+              body;
+              _
+          };
+          _
+        }; _ }; region} ->
+
+        let expr_to_type = function 
+        | EVar v -> TVar v
+        | e -> let open! SyntaxError
+            in raise (Error (WrongFunctionArguments e))
+        in
+        let type_expr = (
+          match type_expr with
+          | TProd {value; _} -> 
+            let (hd, rest) = value in
+            let rest = rest @ [(arrow, expr_to_type body)] in          
+            nsepseq_to_curry hd rest          
+          | e ->               
+            TFun {
+              value = e, arrow, expr_to_type body;
+              region = fun_region
+            }          
+        )
+        in 
+        PTyped {
+          value = {
+            pattern;
+            colon;
+            type_expr
+          }; 
+          region;
+        }, []
+      | EPar {value = {inside =  fun_arg; _ }; _} ->
           arg_to_pattern fun_arg, []
-      | EAnnot e ->
-          arg_to_pattern (EAnnot e), []
+      | EAnnot _ as e ->
+          arg_to_pattern e, []
       | ETuple {value = fun_args; _} ->
           let bindings =
             List.map (arg_to_pattern <@ snd) (snd fun_args) in
           List.iter Scoping.check_pattern bindings;
           arg_to_pattern (fst fun_args), bindings
-      | EUnit e ->
-          arg_to_pattern (EUnit e), []
+      | EUnit _ as e ->
+          arg_to_pattern e, []
+      | EVar _ as e -> 
+          arg_to_pattern e, []
       | e -> let open! SyntaxError
             in raise (Error (WrongFunctionArguments e))
     in
@@ -576,8 +646,8 @@ case_clause(right_expr):
 
 let_expr(right_expr):
   seq(Attr) "let" let_binding ";" right_expr {
-    let attributes = $1 in    
-    let kwd_let = $2 in    
+    let attributes = $1 in
+    let kwd_let = $2 in
     let binding = $3 in
     let kwd_in  = $4 in
     let body    = $5 in
@@ -727,8 +797,8 @@ common_expr:
 | "true"                              {   ELogic (BoolExpr (True $1)) }
 
 core_expr_2:
-  common_expr {                   $1 }
-| list(expr)  { EList (EListComp $1) }
+  common_expr   {                   $1 }
+| list__(expr)  { EList (EListComp $1) }
 
 list_or_spread:
   "[" expr "," sep_or_term_list(expr, ",") "]" {
@@ -807,11 +877,11 @@ projection:
                        field_path = snd $4}
     in {region; value} }
 
-path :
- "<ident>"  {Name $1}
-| projection { Path $1}
+path:
+ "<ident>"   { Name $1 }
+| projection { Path $1 }
 
-update_record : 
+update_record:
   "{""..."path "," sep_or_term_list(field_path_assignment,",") "}" {
     let region = cover $1 $6 in
     let ne_elements, terminator = $5 in

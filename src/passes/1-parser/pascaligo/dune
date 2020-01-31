@@ -7,7 +7,7 @@
 (menhir
   (merge_into Parser)
   (modules ParToken Parser)
-  (flags -la 1 --table --strict --external-tokens LexToken))
+  (flags -la 1 --table --strict --explain --external-tokens LexToken))
 
 ;; Build of the parser as a library
 
@@ -20,8 +20,7 @@
      menhirLib
      parser_shared
      hex
-     simple-utils
-     tezos-utils)
+     simple-utils)
   (preprocess
     (pps bisect_ppx --conditional))
   (flags (:standard -open Parser_shared -open Simple_utils)))
@@ -52,8 +51,7 @@
 (executable
   (name ParserMain)
   (libraries parser_pascaligo)
-  (modules
-     ParserMain)
+  (modules ParserMain)
   (preprocess
     (pps bisect_ppx --conditional))
   (flags (:standard -open Simple_utils -open Parser_shared -open Parser_pascaligo)))

@@ -68,9 +68,9 @@ let detect_free_variables (for_body : expression) (local_decl_names : expression
 
 module Errors = struct
   let unsupported_cst_constr p =
-    let title () = "constant constructor" in
+    let title () = "" in
     let message () =
-      Format.asprintf "constant constructors are not supported yet" in
+      Format.asprintf "\nConstant constructors are not supported yet.\n" in
     let pattern_loc = Raw.pattern_to_region p in
     let data = [
       ("location",
@@ -79,11 +79,11 @@ module Errors = struct
     error ~data title message
 
   let corner_case ~loc message =
-    let title () = "corner case" in
-    let content () = "We don't have a good error message for this case. \
+    let title () = "\nCorner case" in
+    let content () = "We do not have a good error message for this case. \
                       We are striving find ways to better report them and \
                       find the use-cases that generate them. \
-                      Please report this to the developers." in
+                      Please report this to the developers.\n" in
     let data = [
       ("location" , fun () -> loc) ;
       ("message" , fun () -> message) ;
@@ -91,9 +91,9 @@ module Errors = struct
     error ~data title content
 
   let unknown_predefined_type name =
-    let title () = "type constants" in
+    let title () = "\nType constants" in
     let message () =
-      Format.asprintf "unknown predefined type \"%s\"" name.Region.value in
+      Format.asprintf "Unknown predefined type \"%s\".\n" name.Region.value in
     let data = [
       ("location",
        fun () -> Format.asprintf "%a" Location.pp_lift @@ name.Region.region)
@@ -101,10 +101,10 @@ module Errors = struct
     error ~data title message
 
   let unsupported_non_var_pattern p =
-    let title () = "pattern is not a variable" in
+    let title () = "" in
     let message () =
-      Format.asprintf "non-variable patterns in constructors \
-                       are not supported yet" in
+      Format.asprintf "\nNon-variable patterns in constructors \
+                       are not supported yet.\n" in
     let pattern_loc = Raw.pattern_to_region p in
     let data = [
       ("location",
@@ -113,9 +113,10 @@ module Errors = struct
     error ~data title message
 
   let only_constructors p =
-    let title () = "constructors in patterns" in
+    let title () = "" in
     let message () =
-      Format.asprintf "currently, only constructors are supported in patterns" in
+      Format.asprintf "\nCurrently, only constructors \
+                       are supported in patterns.\n" in
     let pattern_loc = Raw.pattern_to_region p in
     let data = [
       ("location",
@@ -124,9 +125,9 @@ module Errors = struct
     error ~data title message
 
   let unsupported_tuple_pattern p =
-    let title () = "tuple pattern" in
+    let title () = "" in
     let message () =
-      Format.asprintf "tuple patterns are not supported yet" in
+      Format.asprintf "\nTuple patterns are not supported yet.\n" in
     let pattern_loc = Raw.pattern_to_region p in
     let data = [
       ("location",
@@ -139,10 +140,10 @@ module Errors = struct
     error ~data title message
 
   let unsupported_deep_Some_patterns pattern =
-    let title () = "option patterns" in
+    let title () = "" in
     let message () =
-      Format.asprintf "currently, only variables in Some constructors \
-                       in patterns are supported" in
+      Format.asprintf "\nCurrently, only variables in constructors \
+                       \"Some\" in patterns are supported.\n" in
     let pattern_loc = Raw.pattern_to_region pattern in
     let data = [
       ("location",
@@ -151,10 +152,10 @@ module Errors = struct
     error ~data title message
 
   let unsupported_deep_list_patterns cons =
-    let title () = "lists in patterns" in
+    let title () = "" in
     let message () =
-      Format.asprintf "currently, only empty lists and x::y \
-                       are supported in patterns" in
+      Format.asprintf "\nCurrently, only empty lists and x::y \
+                       are supported in patterns.\n" in
     let data = [
       ("location",
        fun () -> Format.asprintf "%a" Location.pp_lift @@ cons.Region.region)
@@ -164,7 +165,7 @@ module Errors = struct
   (* Logging *)
 
   let simplifying_instruction t =
-    let title () = "simplifiying instruction" in
+    let title () = "\nSimplifiying instruction" in
     let message () = "" in
     (** TODO: The labelled arguments should be flowing from the CLI. *)
     let data = [
@@ -1185,7 +1186,7 @@ and simpl_for_int : Raw.for_int -> (_ -> expression result) result = fun fi ->
             - references to the iterated value ==> variable `#COMPILER#elt_X`
        Note: In the case of an inner loop capturing variable from an outer loop
              the free variable name can be `#COMPILER#acc.Y` and because we do not
-             capture the accumulator record in the inner loop, we don't want to
+             capture the accumulator record in the inner loop, we do not want to
              generate `#COMPILER#acc.#COMPILER#acc.Y` but `#COMPILER#acc.Y`
 
     5) Append the return value to the body
@@ -1321,12 +1322,9 @@ and simpl_for_collect : Raw.for_collect -> (_ -> expression result) result = fun
     | None -> e_skip ()
     | Some seq -> e_let_in (Var.of_name "#COMPILER#folded_record", None) false fold seq in (* TODO fresh *)
   return_statement @@ final_sequence
-(*
-and simpl_declaration : Raw.declaration -> declaration Location.wrap result =
- *)
 
 and simpl_declaration_list declarations :
-      Ast_simplified.declaration Location.wrap list result =
+  Ast_simplified.declaration Location.wrap list result =
   let open Raw in
   let rec hook acc = function
     [] -> acc
@@ -1387,8 +1385,7 @@ and simpl_declaration_list declarations :
         Declaration_constant (name, ty_opt, inline, expr) in
       let res = Location.wrap ~loc new_decl in
       hook (bind_list_cons res acc) declarations
-  in
-  hook (ok @@ []) (List.rev declarations)
+  in hook (ok @@ []) (List.rev declarations)
 
 let simpl_program : Raw.ast -> program result =
   fun t -> simpl_declaration_list @@ nseq_to_list t.decl
