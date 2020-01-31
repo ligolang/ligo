@@ -3,7 +3,7 @@ id: crypto-reference
 title: Crypto
 ---
 
-## Crypto.black2b(data: bytes): bytes
+## Crypto.blake2b(data: bytes): bytes
 
 Runs the [blake2b hash algorithm](https://en.wikipedia.org/wiki/BLAKE_(hash_function)#BLAKE2)
 over the given `bytes` data and returns a `bytes` representing the hash.
