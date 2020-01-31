@@ -4,7 +4,7 @@ let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; "../../test/contracts/negative/error_syntax.ligo" ; "main" ] ;
   [%expect {|
     ligo: : Parse error in file "error_syntax.ligo", line 1, characters 16-17, after "bar" and before "-".
-           {}
+          15: <syntax error> {}
 
 
      If you're not sure how to fix this error, you can
