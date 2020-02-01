@@ -428,6 +428,48 @@ let bytes_arithmetic () : unit result =
   let%bind () = Assert.assert_fail @@ Ast_simplified.Misc.assert_value_eq (b3 , b1) in
   ok ()
 
+let crypto () : unit result =
+  let%bind program = type_file "./contracts/crypto.ligo" in
+  let%bind foo = e_bytes_hex "0f00" in
+  let%bind foototo = e_bytes_hex "0f007070" in
+  let%bind b1 = Test_helpers.run_typed_program_with_simplified_input program "hasherman512" foo in
+  let%bind () = expect_eq program "hasherman512" foo b1 in
+  let%bind b2 = Test_helpers.run_typed_program_with_simplified_input program "hasherman512" foototo in
+  let%bind () = Assert.assert_fail @@ Ast_simplified.Misc.assert_value_eq (b2 , b1) in
+  let%bind b4 = Test_helpers.run_typed_program_with_simplified_input program "hasherman_blake" foo in
+  let%bind () = expect_eq program "hasherman_blake" foo b4 in
+  let%bind b5 = Test_helpers.run_typed_program_with_simplified_input program "hasherman_blake" foototo in
+  let%bind () = Assert.assert_fail @@ Ast_simplified.Misc.assert_value_eq (b5 , b4) in
+  ok ()
+
+let crypto_mligo () : unit result =
+  let%bind program = mtype_file "./contracts/crypto.mligo" in
+  let%bind foo = e_bytes_hex "0f00" in
+  let%bind foototo = e_bytes_hex "0f007070" in
+  let%bind b1 = Test_helpers.run_typed_program_with_simplified_input program "hasherman512" foo in
+  let%bind () = expect_eq program "hasherman512" foo b1 in
+  let%bind b2 = Test_helpers.run_typed_program_with_simplified_input program "hasherman512" foototo in
+  let%bind () = Assert.assert_fail @@ Ast_simplified.Misc.assert_value_eq (b2 , b1) in
+  let%bind b4 = Test_helpers.run_typed_program_with_simplified_input program "hasherman_blake" foo in
+  let%bind () = expect_eq program "hasherman_blake" foo b4 in
+  let%bind b5 = Test_helpers.run_typed_program_with_simplified_input program "hasherman_blake" foototo in
+  let%bind () = Assert.assert_fail @@ Ast_simplified.Misc.assert_value_eq (b5 , b4) in
+  ok ()
+
+let crypto_religo () : unit result =
+  let%bind program = retype_file "./contracts/crypto.religo" in
+  let%bind foo = e_bytes_hex "0f00" in
+  let%bind foototo = e_bytes_hex "0f007070" in
+  let%bind b1 = Test_helpers.run_typed_program_with_simplified_input program "hasherman512" foo in
+  let%bind () = expect_eq program "hasherman512" foo b1 in
+  let%bind b2 = Test_helpers.run_typed_program_with_simplified_input program "hasherman512" foototo in
+  let%bind () = Assert.assert_fail @@ Ast_simplified.Misc.assert_value_eq (b2 , b1) in
+  let%bind b4 = Test_helpers.run_typed_program_with_simplified_input program "hasherman_blake" foo in
+  let%bind () = expect_eq program "hasherman_blake" foo b4 in
+  let%bind b5 = Test_helpers.run_typed_program_with_simplified_input program "hasherman_blake" foototo in
+  let%bind () = Assert.assert_fail @@ Ast_simplified.Misc.assert_value_eq (b5 , b4) in
+  ok ()
+
 let bytes_arithmetic_mligo () : unit result =
   let%bind program = mtype_file "./contracts/bytes_arithmetic.mligo" in
   let%bind foo = e_bytes_hex "0f00" in
@@ -2189,8 +2231,7 @@ let main = test_suite "Integration (End to End)" [
     test "bool (religo)" bool_expression_religo ;
     test "arithmetic" arithmetic ;
     test "arithmetic (mligo)" arithmetic_mligo ;
-    test "arithmetic (religo)" arithmetic_religo ;
-    test "bitwise_arithmetic" bitwise_arithmetic ;
+    test "arithmetic (religo)" arithmetic_religo ;    test "bitwise_arithmetic" bitwise_arithmetic ;
     test "bitwise_arithmetic (mligo)" bitwise_arithmetic_mligo;
     test "bitwise_arithmetic (religo)" bitwise_arithmetic_religo;
     test "string_arithmetic" string_arithmetic ;
@@ -2199,6 +2240,9 @@ let main = test_suite "Integration (End to End)" [
     test "bytes_arithmetic" bytes_arithmetic ;
     test "bytes_arithmetic (mligo)" bytes_arithmetic_mligo ;
     test "bytes_arithmetic (religo)" bytes_arithmetic_religo ;
+    test "crypto" crypto ;
+    test "crypto (mligo)" crypto_mligo ;
+    test "crypto (religo)" crypto_religo ;
     test "set_arithmetic" set_arithmetic ;
     test "set_arithmetic (mligo)" set_arithmetic_mligo ;
     test "set_arithmetic (religo)" set_arithmetic_religo ;

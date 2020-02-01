@@ -26,7 +26,7 @@ module PreIO =
                    ~offsets:true
                    ~mode:`Point
                    ~cmd:EvalOpt.Quiet
-                   ~mono:true
+                   ~mono:false
   end
 
 module Parser =

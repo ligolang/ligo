@@ -162,7 +162,7 @@ module Simplify = struct
       | "failwith"                 -> ok C_FAILWITH
 
       | "Crypto.hash"              -> ok C_HASH
-      | "Crypto.black2b"           -> ok C_BLAKE2b
+      | "Crypto.blake2b"           -> ok C_BLAKE2b
       | "Crypto.sha256"            -> ok C_SHA256
       | "Crypto.sha512"            -> ok C_SHA512
       | "Crypto.hash_key"          -> ok C_HASH_KEY
