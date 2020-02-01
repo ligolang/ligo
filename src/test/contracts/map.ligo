@@ -20,6 +20,7 @@ function set_ (var n : int ; var m : foobar) : foobar is block {
   m[23] := n ;
 } with m
 
+function add (var n : int ; var m : foobar) : foobar is set_(n,m)
 
 function rm (var m : foobar) : foobar is block {
   remove 42 from map m
