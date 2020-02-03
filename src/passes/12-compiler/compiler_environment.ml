@@ -15,14 +15,6 @@ let get : environment -> expression_variable -> michelson result = fun e s ->
       error title content in
     generic_try error @@
     (fun () -> Environment.get_i s e) in
-  let rec aux_bubble = fun n ->
-    match n with
-    | 0 -> i_dup
-    | n -> seq [
-        dip @@ aux_bubble (n - 1) ;
-        i_swap ;
-      ]
-  in
   let aux_dig = fun n -> seq [
       i_dig n ;
       i_dup ;
@@ -30,8 +22,8 @@ let get : environment -> expression_variable -> michelson result = fun e s ->
     ]
   in
   let code =
-    if position < 2
-    then aux_bubble position
+    if position < 1
+    then i_dup
     else aux_dig position in
 
   ok code
