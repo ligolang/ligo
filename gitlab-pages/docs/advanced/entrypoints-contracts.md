@@ -298,10 +298,11 @@ type action =
 
 let dest: address = ("KT19wgxcuXG9VH4Af5Tpm1vqEKdaMFpznXT3": address);
 
-let proxy = ((param, s): (action, unit)): (list(operation), unit) =>
+let proxy = ((param, s): (action, unit)): (list(operation), unit) => {
   let counter: contract(action) = Operation.get_contract(dest);
   let op: operation = Operation.transaction(param, 0mutez, counter);
   ([op], s);
+};
 ```
 
 <!--END_DOCUSAURUS_CODE_TABS-->
