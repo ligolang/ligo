@@ -55,7 +55,14 @@ module Errors =
 
     let wrong_function_arguments (expr: AST.expr) =
       let title () = "" in
-      let message () = "Wrong function arguments.\n" in
+      let message () = "It looks like you are defining a function, \
+               however we do not\n\
+               understand the parameters declaration.\n\
+               Examples of valid functions:\n\
+               let x = (a: string, b: int) : int => 3;\n\
+               let tuple = ((a, b): (int, int)) => a + b; \n\
+               let x = (a: string) : string => \"Hello, \" ++ a;\n" 
+      in
       let expression_loc = AST.expr_to_region expr in
       let data = [
         ("location",
