@@ -12,6 +12,7 @@ let%expect_test _ =
           let func = (a: int, b: int) => a + b;
            {}
 
+
      If you're not sure how to fix this error, you can
      do one of the following:
 
