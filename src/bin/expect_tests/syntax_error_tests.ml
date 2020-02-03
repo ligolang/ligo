@@ -23,7 +23,7 @@ let%expect_test _ =
           let x = (a: string, b: int) : int => 3;
           let tuple = ((a, b): (int, int)) => a + b; 
           let x = (a: string) : string => "Hello, " ++ a;
-           {"location":"in file \"basic.religo\", line 1, characters 14-27"}
+           {"location":"in file \"error_function_arguments.religo\", line 1, characters 14-27"}
       
 
      If you're not sure how to fix this error, you can
