@@ -24,8 +24,9 @@ let get : environment -> expression_variable -> michelson result = fun e s ->
       ]
   in
   let aux_dig = fun n -> seq [
-      dipn n i_dup ;
       i_dig n ;
+      i_dup ;
+      i_dug (n + 1) ;
     ]
   in
   let code =
