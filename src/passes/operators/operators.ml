@@ -320,51 +320,52 @@ module Typer = struct
     let tc_addargs  a b c = tc [a;b;c] [ (*TODO…*) ]
 
     let t_none         = forall "a" @@ fun a -> option a
-    let t_sub          = forall3_tc "a" "b" "c" @@ fun a b c -> [tc_subarg a b c] => a --> b --> c (* TYPECLASS *)
+    let t_sub          = forall3_tc "a" "b" "c" @@ fun a b c -> [tc_subarg a b c] => tuple2 a b --> c (* TYPECLASS *)
     let t_some         = forall "a" @@ fun a -> a --> option a
-    let t_map_remove   = forall2 "src" "dst" @@ fun src dst -> src --> map src dst --> map src dst
-    let t_map_add      = forall2 "src" "dst" @@ fun src dst -> src --> dst --> map src dst --> map src dst
-    let t_map_update   = forall2 "src" "dst" @@ fun src dst -> src --> option dst --> map src dst --> map src dst
-    let t_map_mem      = forall2 "src" "dst" @@ fun src dst -> src --> map src dst --> bool
-    let t_map_find     = forall2 "src" "dst" @@ fun src dst -> src --> map src dst --> dst
-    let t_map_find_opt = forall2 "src" "dst" @@ fun src dst -> src --> map src dst --> option dst
-    let t_map_fold     = forall3 "src" "dst" "acc" @@ fun src dst acc -> ( ( (src * dst) * acc ) --> acc ) --> map src dst --> acc --> acc
-    let t_map_map      = forall3 "k" "v" "result" @@ fun k v result -> ((k * v) --> result) --> map k v --> map k result
+    let t_map_remove   = forall2 "src" "dst" @@ fun src dst -> tuple2 src (map src dst) --> map src dst
+    let t_map_add      = forall2 "src" "dst" @@ fun src dst -> tuple3 src dst (map src dst) --> map src dst
+    let t_map_update   = forall2 "src" "dst" @@ fun src dst -> tuple3 src (option dst) (map src dst) --> map src dst
+    let t_map_mem      = forall2 "src" "dst" @@ fun src dst -> tuple2 src (map src dst) --> bool
+    let t_map_find     = forall2 "src" "dst" @@ fun src dst -> tuple2 src (map src dst) --> dst
+    let t_map_find_opt = forall2 "src" "dst" @@ fun src dst -> tuple2 src (map src dst) --> option dst
+    let t_map_fold     = forall3 "src" "dst" "acc" @@ fun src dst acc -> tuple3 ( ( (src * dst) * acc ) --> acc ) (map src dst) acc --> acc
+    let t_map_map      = forall3 "k" "v" "result" @@ fun k v result -> tuple2 ((k * v) --> result) (map k v) --> map k result
 
     (* TODO: the type of map_map_fold might be wrong, check it. *)
-    let t_map_map_fold = forall4 "k" "v" "acc" "dst" @@ fun k v acc dst -> ( ((k * v) * acc) --> acc * dst ) --> map k v --> (k * v) --> (map k dst * acc)
-    let t_map_iter     = forall2 "k" "v" @@ fun k v -> ( (k * v) --> unit ) --> map k v --> unit
-    let t_size         = forall_tc "c" @@ fun c -> [tc_sizearg c] => c --> nat (* TYPECLASS *)
-    let t_slice        = nat --> nat --> string --> string
-    let t_failwith     = string --> unit
-    let t_get_force    = forall2 "src" "dst" @@ fun src dst -> src --> map src dst --> dst
-    let t_int          = nat --> int
-    let t_bytes_pack   = forall_tc "a" @@ fun a -> [tc_packable a] => a --> bytes (* TYPECLASS *)
-    let t_bytes_unpack = forall_tc "a" @@ fun a -> [tc_packable a] => bytes --> a (* TYPECLASS *)
-    let t_hash256      = bytes --> bytes
-    let t_hash512      = bytes --> bytes
-    let t_blake2b      = bytes --> bytes
-    let t_hash_key     = key --> key_hash
-    let t_check_signature = key --> signature --> bytes --> bool
-    let t_sender       = address
-    let t_source       = address
-    let t_unit         = unit
-    let t_amount       = mutez
-    let t_address      = address
-    let t_now          = timestamp
-    let t_transaction  = forall "a" @@ fun a -> a --> mutez --> contract a --> operation
-    let t_get_contract = forall "a" @@ fun a -> contract a
-    let t_abs          = int --> nat
-    let t_cons         = forall "a" @@ fun a -> a --> list a --> list a
-    let t_assertion    = bool --> unit
-    let t_times        = forall3_tc "a" "b" "c" @@ fun a b c -> [tc_timargs a b c] => a --> b --> c (* TYPECLASS *)
-    let t_div          = forall3_tc "a" "b" "c" @@ fun a b c -> [tc_divargs a b c] => a --> b --> c (* TYPECLASS *)
-    let t_mod          = forall3_tc "a" "b" "c" @@ fun a b c -> [tc_modargs a b c] => a --> b --> c (* TYPECLASS *)
-    let t_add          = forall3_tc "a" "b" "c" @@ fun a b c -> [tc_addargs a b c] => a --> b --> c (* TYPECLASS *)
-    let t_set_mem      = forall "a" @@ fun a -> a --> set a --> bool
-    let t_set_add      = forall "a" @@ fun a -> a --> set a --> set a
-    let t_set_remove   = forall "a" @@ fun a -> a --> set a --> set a
-    let t_not          = bool --> bool
+    let t_map_map_fold = forall4 "k" "v" "acc" "dst" @@ fun k v acc dst -> tuple3 ( ((k * v) * acc) --> acc * dst ) (map k v) (k * v) --> (map k dst * acc)
+    let t_map_iter     = forall2 "k" "v" @@ fun k v -> tuple2 ( (k * v) --> unit ) (map k v) --> unit
+    let t_size         = forall_tc "c" @@ fun c -> [tc_sizearg c] => tuple1 c --> nat (* TYPECLASS *)
+    let t_slice        = tuple3 nat nat string --> string
+    let t_failwith     = tuple1 string --> unit
+    let t_get_force    = forall2 "src" "dst" @@ fun src dst -> tuple2 src (map src dst) --> dst
+    let t_int          = tuple1 nat --> int
+    let t_bytes_pack   = forall_tc "a" @@ fun a -> [tc_packable a] => tuple1 a --> bytes (* TYPECLASS *)
+    let t_bytes_unpack = forall_tc "a" @@ fun a -> [tc_packable a] => tuple1 bytes --> a (* TYPECLASS *)
+    let t_hash256      = tuple1 bytes --> bytes
+    let t_hash512      = tuple1 bytes --> bytes
+    let t_blake2b      = tuple1 bytes --> bytes
+    let t_hash_key     = tuple1 key --> key_hash
+    let t_check_signature = tuple3 key signature bytes --> bool
+    let t_chain_id     = tuple0 --> chain_id
+    let t_sender       = tuple0 --> address
+    let t_source       = tuple0 --> address
+    let t_unit         = tuple0 --> unit
+    let t_amount       = tuple0 --> mutez
+    let t_address      = tuple0 --> address
+    let t_now          = tuple0 --> timestamp
+    let t_transaction  = forall "a" @@ fun a -> tuple3 a mutez (contract a) --> operation
+    let t_get_contract = forall "a" @@ fun a -> tuple0 --> contract a
+    let t_abs          = tuple1 int --> nat
+    let t_cons         = forall "a" @@ fun a -> a --> tuple1 (list a) --> list a
+    let t_assertion    = tuple1 bool --> unit
+    let t_times        = forall3_tc "a" "b" "c" @@ fun a b c -> [tc_timargs a b c] => tuple2 a b --> c (* TYPECLASS *)
+    let t_div          = forall3_tc "a" "b" "c" @@ fun a b c -> [tc_divargs a b c] => tuple2 a b --> c (* TYPECLASS *)
+    let t_mod          = forall3_tc "a" "b" "c" @@ fun a b c -> [tc_modargs a b c] => tuple2 a b --> c (* TYPECLASS *)
+    let t_add          = forall3_tc "a" "b" "c" @@ fun a b c -> [tc_addargs a b c] => tuple2 a b --> c (* TYPECLASS *)
+    let t_set_mem      = forall "a" @@ fun a -> tuple2 a (set a) --> bool
+    let t_set_add      = forall "a" @@ fun a -> tuple2 a (set a) --> set a
+    let t_set_remove   = forall "a" @@ fun a -> tuple2 a (set a) --> set a
+    let t_not          = tuple1 bool --> bool
 
     let constant_type : constant -> Typesystem.Core.type_value result = function
       | C_INT                 -> ok @@ t_int ;
@@ -438,7 +439,7 @@ module Typer = struct
       | C_BLAKE2b             -> ok @@ t_blake2b ;
       | C_HASH_KEY            -> ok @@ t_hash_key ;
       | C_CHECK_SIGNATURE     -> ok @@ t_check_signature ;
-      | C_CHAIN_ID            -> ok @@ failwith "t_chain_id" ;
+      | C_CHAIN_ID            -> ok @@ t_chain_id ;
       (*BLOCKCHAIN *)
       | C_CONTRACT            -> ok @@ t_get_contract ;
       | C_CONTRACT_ENTRYPOINT -> ok @@ failwith "t_get_entrypoint" ;

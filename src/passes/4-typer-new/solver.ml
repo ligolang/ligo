@@ -346,6 +346,16 @@ module Wrap = struct
                                              P_variable unification_body]))
         ] @ arg' @ body' , whole_expr
 
+  (* This is pretty much a wrapper for an n-ary function. *)
+  let constant : O.type_value -> T.type_value list -> (constraints * T.type_variable) =
+    fun f args ->
+      let whole_expr = Core.fresh_type_variable () in
+      let args'      = List.map type_expression_to_type_value args in
+      let args_tuple = O.P_constant (C_tuple , args') in
+      O.[
+        C_equation (f , P_constant (C_arrow , [args_tuple ; P_variable whole_expr]))
+      ] , whole_expr
+
 end
 
 (* begin unionfind *)
@@ -727,47 +737,7 @@ let selector_break_ctor :  (type_constraint_simpl, output_break_ctor) selector =
   | SC_Poly        _                -> WasNotSelected (* TODO: ??? (beware: symmetry) *)
   | SC_Typeclass   _                -> WasNotSelected
 
-let propagator_break_ctor : output_break_ctor propagator =
-  fun selected dbs ->
-  let () = ignore (dbs) in (* this propagator doesn't need to use the dbs *)
-  let a = selected.a_k_var in
-  let b = selected.a_k'_var' in
-  (* produce constraints: *)
-
-  (* a.tv = b.tv *)
-  let eq1 = C_equation (P_variable a.tv, P_variable b.tv) in
-  (* a.c_tag = b.c_tag *)
-  if a.c_tag <> b.c_tag then
-    failwith "type error: incompatible types, not same ctor"
-  else
-    (* a.tv_list = b.tv_list *)
-  if List.length a.tv_list <> List.length b.tv_list then
-    failwith "type error: incompatible types, not same length"
-  else
-    let eqs3 = List.map2 (fun aa bb -> C_equation (P_variable aa, P_variable bb)) a.tv_list b.tv_list in
-    let eqs = eq1 :: eqs3 in
-    (eqs , []) (* no new assignments *)
-
-(* TODO : with our selectors, the selection depends on the order in which the constraints are added :-( :-( :-( :-(
-   We need to return a lazy stream of constraints. *)
-
-type output_specialize1 = { poly : c_poly_simpl ; a_k_var : c_constructor_simpl }
-
-
-let (<?) ca cb =
-  if ca = 0 then cb () else ca
-let rec compare_list f = function
-  | hd1::tl1 -> (function
-        [] -> 1
-      | hd2::tl2 ->
-        f hd1 hd2 <? fun () ->
-          compare_list f tl1 tl2)
-  | [] -> (function [] -> 0 | _::_ -> -1) (* This follows the behaviour of Pervasives.compare for lists of different length *)
-let compare_type_variable a b =
-  Var.compare a b
-let compare_label = function
-  | L_int a -> (function L_int b -> Int.compare a b | L_string _ -> -1)
-  | L_string a -> (function L_int _ -> 1 | L_string b -> String.compare a b)
+(* TODO: move this to a more appropriate place and/or auto-generate it. *)
 let compare_simple_c_constant = function
   | C_arrow -> (function
       (* N/A -> 1 *)
@@ -866,6 +836,83 @@ let compare_simple_c_constant = function
       | C_chain_id -> 0
       (* N/A -> -1 *)
     )
+
+(* Using a pretty-printer from the PP.ml module creates a dependency
+   loop, so the one that we need temporarily for debugging purposes
+   has been copied here. *)
+let debug_pp_constant : _ -> constant_tag -> unit = fun ppf c_tag ->
+    let ct = match c_tag with
+      | Core.C_arrow     -> "arrow"
+      | Core.C_option    -> "option"
+      | Core.C_tuple     -> "tuple"
+      | Core.C_record    -> failwith "record"
+      | Core.C_variant   -> failwith "variant"
+      | Core.C_map       -> "map"
+      | Core.C_big_map   -> "big_map"
+      | Core.C_list      -> "list"
+      | Core.C_set       -> "set"
+      | Core.C_unit      -> "unit"
+      | Core.C_bool      -> "bool"
+      | Core.C_string    -> "string"
+      | Core.C_nat       -> "nat"
+      | Core.C_mutez     -> "mutez"
+      | Core.C_timestamp -> "timestamp"
+      | Core.C_int       -> "int"
+      | Core.C_address   -> "address"
+      | Core.C_bytes     -> "bytes"
+      | Core.C_key_hash  -> "key_hash"
+      | Core.C_key       -> "key"
+      | Core.C_signature -> "signature"
+      | Core.C_operation -> "operation"
+      | Core.C_contract  -> "contract"
+      | Core.C_chain_id  -> "chain_id"
+    in
+    Format.fprintf ppf "%s" ct
+
+let debug_pp_c_constructor_simpl ppf { tv; c_tag; tv_list } =
+  Format.fprintf ppf "CTOR %a %a(%a)" Var.pp tv debug_pp_constant c_tag PP_helpers.(list_sep Var.pp (const " , ")) tv_list
+
+let propagator_break_ctor : output_break_ctor propagator =
+  fun selected dbs ->
+  let () = ignore (dbs) in (* this propagator doesn't need to use the dbs *)
+  let a = selected.a_k_var in
+  let b = selected.a_k'_var' in
+  (* produce constraints: *)
+
+  (* a.tv = b.tv *)
+  let eq1 = C_equation (P_variable a.tv, P_variable b.tv) in
+  (* a.c_tag = b.c_tag *)
+  if (compare_simple_c_constant a.c_tag b.c_tag) <> 0 then
+    failwith (Format.asprintf "type error: incompatible types, not same ctor %a vs. %a (compare returns %d)" debug_pp_c_constructor_simpl a debug_pp_c_constructor_simpl b (compare_simple_c_constant a.c_tag b.c_tag))
+  else
+    (* a.tv_list = b.tv_list *)
+  if List.length a.tv_list <> List.length b.tv_list then
+    failwith "type error: incompatible types, not same length"
+  else
+    let eqs3 = List.map2 (fun aa bb -> C_equation (P_variable aa, P_variable bb)) a.tv_list b.tv_list in
+    let eqs = eq1 :: eqs3 in
+    (eqs , []) (* no new assignments *)
+
+(* TODO : with our selectors, the selection depends on the order in which the constraints are added :-( :-( :-( :-(
+   We need to return a lazy stream of constraints. *)
+
+type output_specialize1 = { poly : c_poly_simpl ; a_k_var : c_constructor_simpl }
+
+
+let (<?) ca cb =
+  if ca = 0 then cb () else ca
+let rec compare_list f = function
+  | hd1::tl1 -> (function
+        [] -> 1
+      | hd2::tl2 ->
+        f hd1 hd2 <? fun () ->
+          compare_list f tl1 tl2)
+  | [] -> (function [] -> 0 | _::_ -> -1) (* This follows the behaviour of Pervasives.compare for lists of different length *)
+let compare_type_variable a b =
+  Var.compare a b
+let compare_label = function
+  | L_int a -> (function L_int b -> Int.compare a b | L_string _ -> -1)
+  | L_string a -> (function L_int _ -> 1 | L_string b -> String.compare a b)
 let rec compare_typeclass a b = compare_list (compare_list compare_type_value) a b
 and compare_type_value = function
   | P_forall { binder=a1; constraints=a2; body=a3 } -> (function
