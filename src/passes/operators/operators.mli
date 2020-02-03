@@ -94,6 +94,7 @@ module Typer : sig
       val t_set_add : Typesystem.Core.type_value
       val t_set_remove : Typesystem.Core.type_value
       val t_not : Typesystem.Core.type_value
+      val constant_type : constant -> Typesystem.Core.type_value Trace.result
     end
 
   (*
