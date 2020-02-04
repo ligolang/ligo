@@ -226,7 +226,7 @@ core_type:
    in TApp {region; value = constr,arg} }
 
 sum_type:
-  "|" nsepseq(variant,"|") {
+  ioption("|") nsepseq(variant,"|") {
     Scoping.check_variants (Utils.nsepseq_to_list $2);
     let region = nsepseq_to_region (fun x -> x.region) $2
     in TSum {region; value=$2} }
