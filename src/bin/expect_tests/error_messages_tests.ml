@@ -21,7 +21,6 @@ let%expect_test _ =
     * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
     * Check the changelog by running 'ligo changelog' |} ] ;
 
-let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; "../../test/contracts/negative/missing_rpar.religo" ; "main" ] ;
   [%expect {|
     ligo: : Parse error in file "missing_rpar.religo", line 5, characters 0-3, after "m" and before "let":
