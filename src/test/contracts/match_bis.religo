@@ -3,7 +3,7 @@ type storage = int;
 /* variant defining pseudo multi-entrypoint actions */
 
 type action =
-  | Increment(int)
+    Increment(int)
   | Decrement(int);
 
 let add = ((a: int), (b: int)) => a + b;
