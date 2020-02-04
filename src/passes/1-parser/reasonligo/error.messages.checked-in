@@ -2636,7 +2636,7 @@ interactive_expr: True LPAR True VBAR
 ## In state 220, spurious reduction of production expr -> base_cond__open(expr) 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Missing `)`.
 
 interactive_expr: True LPAR WILD
 ##
