@@ -159,8 +159,8 @@ declarations:
 | declaration declarations { Utils.nseq_cons $1 $2              }
 
 declaration:
-| type_decl ";"            { TypeDecl $1 }
-| let_declaration ";"      { Let      $1 }
+| type_decl ";"?           { TypeDecl $1 }
+| let_declaration ";"?     { Let      $1 }
 
 (* Type declarations *)
 
@@ -576,10 +576,10 @@ parenthesized_expr:
   "{" expr "}" | "(" expr ")" { $2 }
 
 if_then(right_expr):
-  "if" parenthesized_expr "{" closed_if "}" {
+  "if" parenthesized_expr "{" closed_if ";"? "}" {
     let the_unit = ghost, ghost in
     let ifnot    = EUnit {region=ghost; value=the_unit} in
-    let region   = cover $1 $5 in
+    let region   = cover $1 $6 in
     let value    = {kwd_if   = $1;
                     test     = $2;
                     kwd_then = $3;
@@ -589,8 +589,8 @@ if_then(right_expr):
     in ECond {region; value} }
 
 if_then_else(right_expr):
-  "if" parenthesized_expr "{" closed_if ";"  "}"
-  "else" "{" right_expr ";" "}" {
+  "if" parenthesized_expr "{" closed_if ";"?  "}"
+  "else" "{" right_expr ";"? "}" {
     let region = cover $1 $11 in
     let value  = {kwd_if   = $1;
                   test     = $2;

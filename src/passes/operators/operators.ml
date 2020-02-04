@@ -70,7 +70,9 @@ module Simplify = struct
       | "get_chain_id"    -> ok C_CHAIN_ID
       | "transaction"     -> ok C_CALL
       | "get_contract"    -> ok C_CONTRACT
+      | "get_contract_opt"-> ok C_CONTRACT_OPT
       | "get_entrypoint"  -> ok C_CONTRACT_ENTRYPOINT
+      | "get_entrypoint_opt" -> ok C_CONTRACT_ENTRYPOINT_OPT
       | "size"            -> ok C_SIZE
       | "int"             -> ok C_INT
       | "abs"             -> ok C_ABS
@@ -228,7 +230,9 @@ module Simplify = struct
       | "Operation.transaction"    -> ok C_CALL
       | "Operation.set_delegate"   -> ok C_SET_DELEGATE
       | "Operation.get_contract"   -> ok C_CONTRACT
+      | "Operation.get_contract_opt" -> ok C_CONTRACT_OPT
       | "Operation.get_entrypoint" -> ok C_CONTRACT_ENTRYPOINT
+      | "Operation.get_entrypoint_opt" -> ok C_CONTRACT_ENTRYPOINT_OPT
       | "int"                      -> ok C_INT
       | "abs"                      -> ok C_ABS
       | "unit"                     -> ok C_UNIT
@@ -657,6 +661,20 @@ module Typer = struct
       get_t_contract tv in
     ok @@ t_contract tv' ()
 
+  let get_contract_opt = typer_1_opt "CONTRACT OPT" @@ fun addr_tv tv_opt ->
+    if not (type_value_eq (addr_tv, t_address ()))
+    then fail @@ simple_error (Format.asprintf "get_contract_opt expects an address, got %a" PP.type_value addr_tv)
+    else
+    let%bind tv =
+      trace_option (simple_error "get_contract_opt needs a type annotation") tv_opt in
+    let%bind tv =
+      trace_strong (simple_error "get_entrypoint_opt has a not-option annotation") @@
+      get_t_option tv in
+    let%bind tv' =
+      trace_strong (simple_error "get_entrypoint_opt has a not-option(contract) annotation") @@
+      get_t_contract tv in
+    ok @@ t_option (t_contract tv' ()) ()
+
   let get_entrypoint = typer_2_opt "CONTRACT_ENTRYPOINT" @@ fun entry_tv addr_tv tv_opt ->
     if not (type_value_eq (entry_tv, t_string ()))
     then fail @@ simple_error (Format.asprintf "get_entrypoint expects a string entrypoint label for first argument, got %a" PP.type_value entry_tv)
@@ -670,6 +688,23 @@ module Typer = struct
       trace_strong (simple_error "get_entrypoint has a not-contract annotation") @@
       get_t_contract tv in
     ok @@ t_contract tv' ()
+
+  let get_entrypoint_opt = typer_2_opt "CONTRACT_ENTRYPOINT_OPT" @@ fun entry_tv addr_tv tv_opt ->
+    if not (type_value_eq (entry_tv, t_string ()))
+    then fail @@ simple_error (Format.asprintf "get_entrypoint_opt expects a string entrypoint label for first argument, got %a" PP.type_value entry_tv)
+    else
+    if not (type_value_eq (addr_tv, t_address ()))
+    then fail @@ simple_error (Format.asprintf "get_entrypoint_opt expects an address for second argument, got %a" PP.type_value addr_tv)
+    else
+    let%bind tv =
+      trace_option (simple_error "get_entrypoint_opt needs a type annotation") tv_opt in
+    let%bind tv =
+      trace_strong (simple_error "get_entrypoint_opt has a not-option annotation") @@
+      get_t_option tv in
+    let%bind tv' =
+      trace_strong (simple_error "get_entrypoint_opt has a not-option(contract) annotation") @@
+      get_t_contract tv in
+    ok @@ t_option (t_contract tv' ())()
 
   let set_delegate = typer_1 "SET_DELEGATE" @@ fun delegate_opt ->
     let%bind () = assert_eq_1 delegate_opt (t_option (t_key_hash ()) ()) in
@@ -1020,7 +1055,9 @@ module Typer = struct
     | C_CHAIN_ID            -> ok @@ chain_id ;
     (*BLOCKCHAIN *)
     | C_CONTRACT            -> ok @@ get_contract ;
+    | C_CONTRACT_OPT        -> ok @@ get_contract_opt ;
     | C_CONTRACT_ENTRYPOINT -> ok @@ get_entrypoint ;
+    | C_CONTRACT_ENTRYPOINT_OPT -> ok @@ get_entrypoint_opt ;
     | C_AMOUNT              -> ok @@ amount ;
     | C_BALANCE             -> ok @@ balance ;
     | C_CALL                -> ok @@ transaction ;

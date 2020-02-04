@@ -80,6 +80,12 @@ let get_operator : constant -> type_value -> expression list -> predicate result
             prim ~children:[r_ty] I_CONTRACT ;
             i_assert_some_msg (i_push_string "bad address for get_contract") ;
           ]
+      | C_CONTRACT_OPT -> 
+          let%bind tc = get_t_option ty in
+          let%bind r = get_t_contract tc in
+          let%bind r_ty = Compiler_type.type_ r in
+          ok @@ simple_unary @@ prim ~children:[r_ty] I_CONTRACT ;
+
       | C_CONTRACT_ENTRYPOINT ->
           let%bind r = get_t_contract ty in
           let%bind r_ty = Compiler_type.type_ r in
@@ -93,6 +99,20 @@ let get_operator : constant -> type_value -> expression list -> predicate result
             i_drop ; (* drop the entrypoint... *)
             prim ~annot:[entry] ~children:[r_ty] I_CONTRACT ;
             i_assert_some_msg (i_push_string @@ Format.sprintf "bad address for get_entrypoint (%s)" entry) ;
+          ]
+      | C_CONTRACT_ENTRYPOINT_OPT ->
+          let%bind tc = get_t_option ty in
+          let%bind r = get_t_contract tc in
+          let%bind r_ty = Compiler_type.type_ r in
+          let%bind entry = match lst with
+            | [ { content = E_literal (D_string entry); type_value = _ } ; _addr ] -> ok entry
+            | [ _entry ; _addr ] ->
+               fail @@ contract_entrypoint_must_be_literal ~loc:__LOC__
+            | _ ->
+               fail @@ corner_case ~loc:__LOC__ "mini_c . CONTRACT_ENTRYPOINT" in
+          ok @@ simple_binary @@ seq [
+            i_drop ; (* drop the entrypoint... *)
+            prim ~annot:[entry] ~children:[r_ty] I_CONTRACT ;
           ]
       | x -> simple_fail (Format.asprintf "predicate \"%a\" doesn't exist" Stage_common.PP.constant x)
     )
