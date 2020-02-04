@@ -2178,6 +2178,15 @@ let tuple_type_religo () : unit result =
   in
   ok ()
 
+let no_semicolon_religo () : unit result = 
+  let%bind program = retype_file "./contracts/no_semicolon.religo" in
+  let%bind () = 
+    let input _ = e_int 2 in 
+    let expected _ = e_int 3 in
+    expect_eq_n program "a" input expected
+  in 
+  ok ()
+
 let main = test_suite "Integration (End to End)" [
     test "bytes unpack" bytes_unpack ;
     test "bytes unpack (mligo)" bytes_unpack_mligo ;
@@ -2342,4 +2351,5 @@ let main = test_suite "Integration (End to End)" [
     test "empty case (religo)" empty_case_religo ;
     test "tuple type (mligo)" tuple_type_mligo ;
     test "tuple type (religo)" tuple_type_religo ;
+    test "no semicolon (religo)" no_semicolon_religo ;
   ]
