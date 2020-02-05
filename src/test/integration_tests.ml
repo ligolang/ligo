@@ -1774,6 +1774,41 @@ let balance_constant_religo () : unit result =
   let expected = e_tuple [e_list []; e_mutez 4000000000000] in
   expect_eq program "main" input expected
 
+let amount () : unit result =
+  let%bind program = type_file "./contracts/amount.ligo" in
+  let input = e_unit () in
+  let expected = e_int 42 in
+  let amount =
+    match Memory_proto_alpha.Protocol.Alpha_context.Tez.of_string "100" with
+    | Some t -> t
+    | None -> Memory_proto_alpha.Protocol.Alpha_context.Tez.one
+  in
+  let options = Proto_alpha_utils.Memory_proto_alpha.make_options ~amount () in
+  expect_eq ~options program "check" input expected
+
+let amount_mligo () : unit result =
+  let%bind program = mtype_file "./contracts/amount.mligo" in
+  let input = e_unit () in
+  let expected = e_int 42 in
+  let amount =
+    match Memory_proto_alpha.Protocol.Alpha_context.Tez.of_string "100" with
+    | Some t -> t
+    | None -> Memory_proto_alpha.Protocol.Alpha_context.Tez.one
+  in
+  let options = Proto_alpha_utils.Memory_proto_alpha.make_options ~amount () in
+  expect_eq ~options program "check_" input expected
+
+let amount_religo () : unit result =
+  let%bind program = retype_file "./contracts/amount.religo" in
+  let input = e_unit () in
+  let expected = e_int 42 in
+  let amount =
+    match Memory_proto_alpha.Protocol.Alpha_context.Tez.of_string "100" with
+    | Some t -> t
+    | None -> Memory_proto_alpha.Protocol.Alpha_context.Tez.one
+  in
+  let options = Proto_alpha_utils.Memory_proto_alpha.make_options ~amount () in
+  expect_eq ~options program "check_" input expected
 
 let addr_test program =
   let open Proto_alpha_utils.Memory_proto_alpha in
@@ -2339,6 +2374,9 @@ let main = test_suite "Integration (End to End)" [
     test "balance constant" balance_constant ;
     test "balance constant (mligo)" balance_constant_mligo ;
     test "balance constant (religo)" balance_constant_religo ;
+    test "amount" amount ;
+    test "amount (mligo)" amount_mligo ;
+    test "amount (religo)" amount_religo ;
     test "address" address ;
     test "address (mligo)" address_mligo ;
     test "address (religo)" address_religo ;
