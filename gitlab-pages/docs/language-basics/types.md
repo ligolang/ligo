@@ -3,163 +3,189 @@ id: types
 title: Types
 ---
 
-LIGO is strongly and statically typed. This means that the compiler checks your program at compilation time and makes sure there won't be any type related runtime errors. LIGO types are built on top of Michelson's type system. 
+LIGO is strongly and statically typed. This means that the compiler
+checks your program at compilation time and, if it passes the tests,
+this ensures that there will be no runtime error due to wrong
+assumptions on the data. This is called *type checking*.
+
+LIGO types are built on top of Michelson's type system.
 
 ## Built-in types
 
-For quick referrence, you can find all the built-in types [here](https://gitlab.com/ligolang/ligo/blob/dev/src/passes/operators/operators.ml#L35).
+For quick reference, you can find all the built-in types [here](https://gitlab.com/ligolang/ligo/blob/dev/src/passes/operators/operators.ml#L35).
 
 ## Type aliases
 
-Type aliasing is great for creating a readable / maintainable smart contract. One well typed type/variable is worth a thousand words. For example we can choose to *alias* a string as an animal breed - this will allow us to comunicate our intent with added clarity.
+*Type aliasing* consists in renaming a given type, when the context
+calls for a more precise name. This increases readability and
+maintainability of your smart contracts. For example we can choose to
+alias a string type as an animal breed - this will allow us to
+comunicate our intent with added clarity.
 
 <!--DOCUSAURUS_CODE_TABS-->
 <!--Pascaligo-->
-```pascaligo
-type animalBreed is string;
-const dogBreed : animalBreed = "Saluki";
+```pascaligo group=a
+type breed is string
+const dog_breed : breed = "Saluki"
 ```
 
 <!--CameLIGO-->
 
-```cameligo
-type animal_breed = string
-let dog_breed: animal_breed = "Saluki"
+```cameligo group=a
+type breed = string
+let dog_breed : breed = "Saluki"
 ```
 
 <!--ReasonLIGO-->
 
-```reasonligo
-type animal_breed = string;
-let dog_breed: animal_breed = "Saluki";
+```reasonligo group=a
+type breed = string;
+let dog_breed : breed = "Saluki";
 ```
 
 <!--END_DOCUSAURUS_CODE_TABS-->
 
-> Types in LIGO are `structural`, which means that `animalBreed`/`animal_breed` and `string` are interchangable and are considered equal.
+> The above type definitions are aliases, which means that `breed` and
+> `string` are interchangable in all contexts.
 
 ## Simple types
+
 <!--DOCUSAURUS_CODE_TABS-->
 <!--Pascaligo-->
-```pascaligo
-// accountBalances is a simple type, a map of address <-> tez
-type accountBalances is map(address, tez);
+```pascaligo group=b
+// The type accountBalances denotes maps from addresses to tez
 
-const ledger: accountBalances = map
-    ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address) -> 10mutez
-end
+type account_balances is map (address, tez)
+
+const ledger : account_balances =
+  map
+   [("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address) -> 10mutez]
+
 ```
 
 <!--CameLIGO-->
-```cameligo
-// account_balances is a simple type, a map of address <-> tez
+```cameligo group=b
+// The type account_balances denotes maps from addresses to tez
+
 type account_balances = (address, tez) map
 
-let ledger: account_balances = Map.literal
-  [(("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address), 10mutez)]
+let ledger : account_balances =
+  Map.literal
+    [(("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address), 10mutez)]
 ```
 
 <!--ReasonLIGO-->
-```reasonligo
-(* account_balances is a simple type, a map of address <-> tez *)
-type account_balances = map(address, tez);
+```reasonligo group=b
+// The type account_balances denotes maps from addresses to tez
+
+type account_balances = map (address, tez);
 
 let ledger: account_balances =
-  Map.literal([
-    ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address, 10mutez)
-  ]);
+  Map.literal
+    ([("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address, 10mutez)]);
 ```
 
 <!--END_DOCUSAURUS_CODE_TABS-->
 
-## Composed types
+## Structured types
 
-Often contracts require complex data structures, which in turn require well-typed storage or functions to work with. LIGO offers a simple way to compose simple types into larger & more expressive composed types.
+Often contracts require complex data structures, which in turn require
+well-typed storage or functions to work with. LIGO offers a simple way
+to compose simple types into *structured types*.
 
-In the example below you can see the definition of data types for a ledger that keeps the balance and number of previous transactions for a given account.
+The first of those structured types is the *record*, which aggregates
+types as *fields* and index them with a *field name*. In the example
+below you can see the definition of data types for a ledger that keeps
+the balance and number of previous transactions for a given account.
 
 <!--DOCUSAURUS_CODE_TABS-->
 <!--Pascaligo-->
-```pascaligo
-// alias two types
-type account is address;
-type numberOfTransactions is nat;
-// accountData consists of a record with two fields (balance, numberOfTransactions)
-type accountData is record
-    balance: tez;
-    numberOfTransactions: numberOfTransactions;
-end
-// our ledger / accountBalances is a map of account <-> accountData
-type accountBalances is map(account, accountData);
+```pascaligo group=c
+// Type aliasing
+type account is address
+type number_of_transactions is nat
 
-// pseudo-JSON representation of our map
-// { "tz1...": {balance: 10mutez, numberOfTransactions: 5n} }
-const ledger: accountBalances = map
-    ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address) -> record
-      balance = 10mutez;
-      numberOfTransactions = 5n;
-    end
-end
+// The type account_data is a record with two fields.
+type account_data is record [
+  balance : tez;
+  transactions : number_of_transactions
+]
+
+// A ledger is a map from accounts to account_data
+type ledger is map (account, account_data)
+
+const my_ledger : ledger = map [
+  ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address) ->
+  record [
+    balance = 10mutez;
+    transactions = 5n
+  ]
+]
 ```
 
 <!--CameLIGO-->
-```cameligo
-(* alias two types *)
+```cameligo group=c
+// Type aliasing
 type account = address
 type number_of_transactions = nat
-(* account_data consists of a record with two fields (balance, number_of_transactions) *)
+// The type account_data is a record with two fields.
 type account_data = {
- balance: tez;
- number_of_transactions: number_of_transactions;
+  balance : tez;
+  transactions : number_of_transactions
 }
-(* our ledger / account_balances is a map of account <-> account_data *)
-type account_balances = (account, account_data) map
+// A ledger is a map from accounts to account_data
+type ledger = (account, account_data) map
 
-// pseudo-JSON representation of our map
-// {"tz1...": {balance: 10mutez, number_of_transactions: 5n}}
-let ledger: account_balances = Map.literal
-  [(("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address),
-    {balance = 10mutez;
-     number_of_transactions = 5n;}
-   )]
+let my_ledger : ledger = Map.literal
+  [(("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address),
+    {balance = 10mutez; transactions = 5n})]
 ```
 
 <!--ReasonLIGO-->
-```reasonligo
-(* alias two types *)
+```reasonligo group=c
+// Type aliasing
 type account = address;
 type number_of_transactions = nat;
-(* account_data consists of a record with two fields (balance, number_of_transactions) *)
+
+// The type account_data is a record with two fields.
 type account_data = {
-  balance: tez,
-  number_of_transactions,
+  balance : tez,
+  transactions : number_of_transactions
 };
-(* our ledger / account_balances is a map of account <-> account_data *)
-type account_balances = map(account, account_data);
 
-(* pseudo-JSON representation of our map
-   {"tz1...": {balance: 10mutez, number_of_transactions: 5n}} *)
-let ledger: account_balances =
+// A ledger is a map from accounts to account_data
+type ledger = map (account, account_data);
+
+let my_ledger : ledger =
   Map.literal([
-    ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address,
-     {balance: 10mutez, number_of_transactions: 5n})
-  ]);
-
+    ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address,
+     {balance: 10mutez, transactions: 5n})]);
 ```
+
+The structured types which are dual to records are the *variant types*
+and they are described in the section about *pattern matching*. They
+are dual because records are a product of types (types are bundled
+into a record), whereas variant types are a sum of types (they are
+exclusive to each other).
 
 <!--END_DOCUSAURUS_CODE_TABS-->
 
 ## Annotations
 
-In certain cases, type of an expression cannot be properly determined. This can be circumvented by annotating an expression with it's desired type, here's an example:
+In certain cases, the type of an expression cannot be properly
+inferred by the compiler. In order to help the type checke, you can
+annotate an expression with its desired type. Here is an example:
 
 <!--DOCUSAURUS_CODE_TABS-->
 <!--Pascaligo-->
 ```pascaligo
-type int_map is map(int, int);
-function get_first(const int_map: int_map): option(int) is int_map[1]
-// empty map needs a type annotation
-const first: option(int) = get_first(((map end) : int_map ));
+type int_map is map (int, int)
+
+function get_first (const my_map : int_map): option (int) is my_map[1]
+
+// The empty map always needs a type annotation
+
+const first : option (int) = get_first (((map end) : int_map))
 ```
 
 <!--END_DOCUSAURUS_CODE_TABS-->

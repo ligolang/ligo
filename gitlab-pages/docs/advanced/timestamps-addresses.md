@@ -3,179 +3,204 @@ id: timestamps-addresses
 title: Timestamps, Addresses
 ---
 
-## Timestamps 
+## Timestamps
 
-Timestamps in LIGO, or in Michelson in general are available in smart contracts, while bakers baking the block (including the transaction in a block) are responsible for providing the given current timestamp for the contract.
+LIGO features timestamps, as Michelson does, while bakers baking the
+block (including the transaction in a block) are responsible for
+providing the given current timestamp for the contract.
 
-### Current time
+### Current Time
 
-You can obtain the current time using the built-in syntax specific expression, please be aware that it's up to the baker to set the current timestamp value.
-
+You can obtain the current time using the built-in syntax specific
+expression, please be aware that it is up to the baker to set the
+current timestamp value.
 
 <!--DOCUSAURUS_CODE_TABS-->
 <!--Pascaligo-->
 ```pascaligo group=a
-const today: timestamp = now;
+const today : timestamp = now
 ```
 
 <!--CameLIGO-->
 ```cameligo group=a
-let today: timestamp = Current.time
+let today : timestamp = Current.time
 ```
 
 <!--ReasonLIGO-->
 ```reasonligo group=a
-let today: timestamp = Current.time;
+let today : timestamp = Current.time;
 ```
 
 <!--END_DOCUSAURUS_CODE_TABS-->
 
-> When running code with ligo CLI, the option `--predecessor-timestamp` allows you to control what `now` returns.
+> When running code with ligo CLI, the option
+> `--predecessor-timestamp` allows you to control what `now` returns.
 
-### Timestamp arithmetic
+### Timestamp Arithmetic
 
-In LIGO, timestamps can be added with `int`(s), this enables you to set e.g. time constraints for your smart contracts like this:
+In LIGO, timestamps can be added to integers, allowing you to set time
+constraints on your smart contracts. Consider the following scenarios.
 
 #### In 24 hours
+
 <!--DOCUSAURUS_CODE_TABS-->
 <!--Pascaligo-->
 ```pascaligo group=b
-const today: timestamp = now;
-const one_day: int = 86400;
-const in_24_hrs: timestamp = today + one_day;
-const some_date: timestamp = ("2000-01-01T10:10:10Z" : timestamp);
-const one_day_later: timestamp = some_date + one_day;
+const today : timestamp = now
+const one_day : int = 86400
+const in_24_hrs : timestamp = today + one_day
+const some_date : timestamp = ("2000-01-01T10:10:10Z" : timestamp)
+const one_day_later : timestamp = some_date + one_day
 ```
 
 <!--CameLIGO-->
 ```cameligo group=b
-let today: timestamp = Current.time
-let one_day: int = 86400
-let in_24_hrs: timestamp = today + one_day
-let some_date: timestamp = ("2000-01-01t10:10:10Z" : timestamp)
-let one_day_later: timestamp = some_date + one_day
+let today : timestamp = Current.time
+let one_day : int = 86400
+let in_24_hrs : timestamp = today + one_day
+let some_date : timestamp = ("2000-01-01t10:10:10Z" : timestamp)
+let one_day_later : timestamp = some_date + one_day
 ```
 
 <!--ReasonLIGO-->
 ```reasonligo group=b
-let today: timestamp = Current.time;
-let one_day: int = 86400;
-let in_24_hrs: timestamp = today + one_day;
-let some_date: timestamp = ("2000-01-01t10:10:10Z" : timestamp);
-let one_day_later: timestamp = some_date + one_day;
+let today : timestamp = Current.time;
+let one_day : int = 86400;
+let in_24_hrs : timestamp = today + one_day;
+let some_date : timestamp = ("2000-01-01t10:10:10Z" : timestamp);
+let one_day_later : timestamp = some_date + one_day;
 ```
 
 <!--END_DOCUSAURUS_CODE_TABS-->
 
-#### 24 hours ago
+#### 24 hours Ago
+
 <!--DOCUSAURUS_CODE_TABS-->
 <!--Pascaligo-->
 ```pascaligo group=c
-const today: timestamp = now;
-const one_day: int = 86400;
-const in_24_hrs: timestamp = today - one_day;
+const today : timestamp = now
+const one_day : int = 86400
+const in_24_hrs : timestamp = today - one_day
 ```
 
 <!--CameLIGO-->
 ```cameligo group=c
-let today: timestamp = Current.time
-let one_day: int = 86400
-let in_24_hrs: timestamp = today - one_day
+let today : timestamp = Current.time
+let one_day : int = 86400
+let in_24_hrs : timestamp = today - one_day
 ```
 
 <!--ReasonLIGO-->
 ```reasonligo group=c
-let today: timestamp = Current.time;
-let one_day: int = 86400;
-let in_24_hrs: timestamp = today - one_day;
+let today : timestamp = Current.time;
+let one_day : int = 86400;
+let in_24_hrs : timestamp = today - one_day;
 ```
 
 <!--END_DOCUSAURUS_CODE_TABS-->
 
-### Comparing timestamps
+### Comparing Timestamps
 
-You can also compare timestamps using the same comparison operators as for numbers:
+You can also compare timestamps using the same comparison operators as
+for numbers.
 
 <!--DOCUSAURUS_CODE_TABS-->
 <!--Pascaligo-->
 ```pascaligo group=c
-const not_tommorow: bool = (now = in_24_hrs)
+const not_tommorow : bool = (now = in_24_hrs)
 ```
 
 <!--CameLIGO-->
 ```cameligo group=c
-let not_tomorrow: bool = (Current.time = in_24_hrs)
+let not_tomorrow : bool = (Current.time = in_24_hrs)
 ```
 
 <!--ReasonLIGO-->
 ```reasonligo group=c
-let not_tomorrow: bool = (Current.time == in_24_hrs);
+let not_tomorrow : bool = (Current.time == in_24_hrs);
 ```
 
 <!--END_DOCUSAURUS_CODE_TABS-->
 
 ## Addresses
 
-`address` is a LIGO datatype used for Tezos addresses (tz1, tz2, tz3, KT1, ...).
-
-Here's how you can define an address:
+The type `address` in LIGO is used to denote Tezos addresses (tz1,
+tz2, tz3, KT1, ...). Currently, addresses are created by casting a
+string to the type `address`. Beware of failures if the address is
+invalid. Consider the following examples.
 
 <!--DOCUSAURUS_CODE_TABS-->
 <!--Pascaligo-->
 ```pascaligo group=d
-const my_account: address = ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address);
+const my_account : address =
+  ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address)
 ```
 
 <!--CameLIGO-->
 ```cameligo group=d
-let my_account: address = ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address)
+let my_account : address =
+  ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address)
 ```
 
 <!--ReasonLIGO-->
 ```reasonligo group=d
-let my_account: address = ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address);
+let my_account : address =
+  ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address);
 ```
 
 <!--END_DOCUSAURUS_CODE_TABS-->
 
 ## Signatures
 
-`signature` is a LIGO datatype used for Tezos signature (edsig, spsig).
+The type `signature` in LIGO datatype is used for Tezos signature
+(edsig, spsig). Signatures are created by casting a string. Beware of
+failure if the signature is invalid.
 
-Here's how you can define a signature:
+Here is how you can define a signature:
 
 <!--DOCUSAURUS_CODE_TABS-->
 <!--Pascaligo-->
 ```pascaligo group=e
-const my_signature: signature = ("edsigthTzJ8X7MPmNeEwybRAvdxS1pupqcM5Mk4uCuyZAe7uEk68YpuGDeViW8wSXMrCi5CwoNgqs8V2w8ayB5dMJzrYCHhD8C7": signature);
+const my_sig : signature =
+  ("edsigthTzJ8X7MPmNeEwybRAvdxS1pupqcM5Mk4uCuyZAe7uEk68YpuGDeViW8wSXMrCi5CwoNgqs8V2w8ayB5dMJzrYCHhD8C7" :
+  signature)
 ```
 <!--CameLIGO-->
 ```cameligo group=e
-let my_signature: signature = ("edsigthTzJ8X7MPmNeEwybRAvdxS1pupqcM5Mk4uCuyZAe7uEk68YpuGDeViW8wSXMrCi5CwoNgqs8V2w8ayB5dMJzrYCHhD8C7": signature)
+let my_sig : signature =
+   ("edsigthTzJ8X7MPmNeEwybRAvdxS1pupqcM5Mk4uCuyZAe7uEk68YpuGDeViW8wSXMrCi5CwoNgqs8V2w8ayB5dMJzrYCHhD8C7" :
+   signature)
 ```
 <!--ReasonLIGO-->
 ```reasonligo group=e
-let my_signature: signature = ("edsigthTzJ8X7MPmNeEwybRAvdxS1pupqcM5Mk4uCuyZAe7uEk68YpuGDeViW8wSXMrCi5CwoNgqs8V2w8ayB5dMJzrYCHhD8C7": signature);
+let my_sig : signature =
+("edsigthTzJ8X7MPmNeEwybRAvdxS1pupqcM5Mk4uCuyZAe7uEk68YpuGDeViW8wSXMrCi5CwoNgqs8V2w8ayB5dMJzrYCHhD8C7" :
+signature);
 ```
 <!--END_DOCUSAURUS_CODE_TABS-->
 
-## keys
+## Keys
 
-`key` is a LIGO datatype used for Tezos public key.
+The type `key` in LIGO is used for Tezos public keys. Do not confuse
+them with map keys. Keys are made by casting strings. Beware of
+failure if the key is invalid.
 
-Here's how you can define a key:
+Here is how you can define a key.
 
 <!--DOCUSAURUS_CODE_TABS-->
 <!--Pascaligo-->
 ```pascaligo group=f
-const my_key: key = ("edpkuBknW28nW72KG6RoHtYW7p12T6GKc7nAbwYX5m8Wd9sDVC9yav": key);
+const my_key : key =
+("edpkuBknW28nW72KG6RoHtYW7p12T6GKc7nAbwYX5m8Wd9sDVC9yav" : key)
 ```
 <!--CameLIGO-->
 ```cameligo group=f
-let my_key: key = ("edpkuBknW28nW72KG6RoHtYW7p12T6GKc7nAbwYX5m8Wd9sDVC9yav": key)
+let my_key : key =
+  ("edpkuBknW28nW72KG6RoHtYW7p12T6GKc7nAbwYX5m8Wd9sDVC9yav" : key)
 ```
 <!--ReasonLIGO-->
 ```reasonligo group=f
-let my_key: key = ("edpkuBknW28nW72KG6RoHtYW7p12T6GKc7nAbwYX5m8Wd9sDVC9yav": key);
+let my_key : key =
+  ("edpkuBknW28nW72KG6RoHtYW7p12T6GKc7nAbwYX5m8Wd9sDVC9yav" : key);
 ```
 <!--END_DOCUSAURUS_CODE_TABS-->

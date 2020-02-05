@@ -106,7 +106,7 @@ ligo: : Lexical error in file "negative_byte_sequence.religo", line 1, character
  run_ligo_bad [ "compile-contract" ; "../../test/lexer/reserved_name.ligo" ; "main" ] ;
   [%expect {| 
 ligo: : Lexical error in file "reserved_name.ligo", line 1, characters 4-13:
-      Reserved name: arguments.
+      Reserved name: "arguments".
       Hint: Change the name.
        {}
 
@@ -123,7 +123,7 @@ ligo: : Lexical error in file "reserved_name.ligo", line 1, characters 4-13:
 run_ligo_bad [ "compile-contract" ; "../../test/lexer/reserved_name.religo" ; "main" ] ;
   [%expect {| 
 ligo: : Lexical error in file "reserved_name.religo", line 1, characters 4-7:
-      Reserved name: end.
+      Reserved name: "end".
       Hint: Change the name.
        {}
 
@@ -140,7 +140,7 @@ ligo: : Lexical error in file "reserved_name.religo", line 1, characters 4-7:
 run_ligo_bad [ "compile-contract" ; "../../test/lexer/reserved_name.mligo" ; "main" ] ;
   [%expect {| 
 ligo: : Lexical error in file "reserved_name.mligo", line 1, characters 4-10:
-      Reserved name: object.
+      Reserved name: "object".
       Hint: Change the name.
        {}
 

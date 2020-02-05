@@ -3,108 +3,229 @@ id: loops
 title: Loops
 ---
 
-
-
-## While Loop
+## General Iteration
 
 <!--DOCUSAURUS_CODE_TABS-->
 
 <!--Pascaligo-->
 
-The PascaLIGO while loop should look familiar to users of imperative languages. 
-While loops are of the form `while <condition clause> <block>`, and evaluate
-their associated block until the condition evaluates to false.
+General iteration in PascaLIGO takes the shape of "while" loops, which
+should be familiar to programmers of imperative languages. Those loops
+are of the form `while <condition> <block>`. Their associated block is
+repeatedly evaluated until the condition becomes true, or never
+evaluated if the condition is false at the start. The loop never
+terminates if the condition never becomes true. Because we are writing
+smart contracts on Tezos, when the condition of a "while" loops fails
+to become true, the execution will run out of gas and stop with a
+failure anyway.
 
-> ⚠️ The current PascaLIGO while loop has semantics that have diverged from other LIGO syntaxes. The goal of LIGO is that the various syntaxes express the same semantics, so this will be corrected in future versions. For details on how loops will likely work after refactoring, see the CameLIGO tab of this example.
+Here is how to compute the greatest common divisors of two natural
+number by means of Euclid's algorithm:
 
-```pascaligo
-function while_sum (var n : nat) : nat is block {
-  var i : nat := 0n ;
-  var r : nat := 0n ;
-  while i < n block {
-    i := i + 1n;
-    r := r + i;
+```pascaligo group=a
+function gcd (var x : nat; var y : nat) : nat is block {
+  if x < y then
+    block {
+      const z : nat = x;
+      x := y; y := z
+    }
+  else skip;
+  var r : nat := 0n;
+  while y =/= 0n block {
+    r := x mod y;
+    x := y;
+    y := r
   }
-} with r
+} with x
+```
+
+You can call the function `gcd` defined above using the LIGO compiler
+like so:
+```shell
+ligo run-function
+gitlab-pages/docs/language-basics/src/loops/gcd.ligo gcd '(2n*2n*3n*11n, 2n*2n*2n*3n*3n*5n*7n)'
+# Outputs: +12
 ```
 
 <!--CameLIGO-->
 
-`Loop.fold_while` is a fold operation that takes an initial value of a certain type
-and then iterates on it until a condition is reached. The auxillary function
-that does the fold returns either boolean true or boolean false to indicate
-whether the fold should continue or not. The initial value must match the input
-parameter of the auxillary function, and the auxillary should return type `(bool * input)`.
+CameLIGO is a functional language where user-defined values are
+constant, therefore it makes no sense in CameLIGO to feature loops,
+which we understand as syntactic constructs where the state of a
+stopping condition is mutated, as with "while" loops in PascaLIGO.
 
-`continue` and `stop` are provided as syntactic sugar for the return values.
+Instead, CameLIGO features a *fold operation* as a predefined function
+named `Loop.fold_while`. It takes an initial value of a certain type,
+called an *accumulator*, and repeatedly calls a given function, called
+*iterated function*, that takes that accumulator and returns the next
+value of the accumulator, until a condition is met and the fold stops
+with the final value of the accumulator. The iterated function needs
+to have a special type: if the type of the accumulator is `t`, then it
+must have the type `bool * t` (not simply `t`). It is the boolean
+value that denotes whether the stopping condition has been reached.
 
-```cameligo
-let aux (i: int) : bool * int =
-  if i < 100 then continue (i + 1) else stop i
+```cameligo group=b
+let iter (x,y : nat * nat) : bool * (nat * nat) =
+  if y = 0n then false, (x,y) else true, (y, x mod y)
 
-let counter_simple (n: int) : int =
-  Loop.fold_while aux n
+let gcd (x,y : nat * nat) : nat =
+  let x,y = if x < y then y,x else x,y in
+  let x,y = Loop.fold_while iter (x,y)
+  in x
+```
+
+To ease the writing and reading of the iterated functions (here,
+`iter`), two predefined functions are provided: `continue` and `stop`:
+
+```cameligo group=c
+let iter (x,y : nat * nat) : bool * (nat * nat) =
+  if y = 0n then stop (x,y) else continue (y, x mod y)
+
+let gcd (x,y : nat * nat) : nat =
+  let x,y = if x < y then y,x else x,y in
+  let x,y = Loop.fold_while iter (x,y)
+  in x
+```
+
+You can call the function `gcd` defined above using the LIGO compiler
+like so:
+```shell
+ligo run-function
+gitlab-pages/docs/language-basics/src/loops/gcd.mligo gcd (2n*2n*3n*11n, 2n*2n*2n*3n*3n*5n*7n)'
+# Outputs: +12
 ```
 
 <!--ReasonLIGO-->
 
-`Loop.fold_while` is a fold operation that takes an initial value of a certain type
-and then iterates on it until a condition is reached. The auxillary function
-that does the fold returns either boolean true or boolean false to indicate
-whether the fold should continue or not. The initial value must match the input
-parameter of the auxillary function, and the auxillary should return type `(bool, input)`.
+ReasonLIGO is a functional language where user-defined values are
+constant, therefore it makes no sense in ReasonLIGO to feature loops,
+which we understand as syntactic constructs where the state of a
+stopping condition is mutated, as with "while" loops in PascaLIGO.
 
-`continue` and `stop` are provided as syntactic sugar for the return values.
+Instead, ReasonLIGO features a *fold operation* as a predefined
+function named `Loop.fold_while`. It takes an initial value of a
+certain type, called an *accumulator*, and repeatedly calls a given
+function, called *iterated function*, that takes that accumulator and
+returns the next value of the accumulator, until a condition is met
+and the fold stops with the final value of the accumulator. The
+iterated function needs to have a special type: if the type of the
+accumulator is `t`, then it must have the type `bool * t` (not simply
+`t`). It is the boolean value that denotes whether the stopping
+condition has been reached.
 
-```reasonligo
-let aux = (i: int): (bool, int) =>
-  if (i < 100) {
-    continue(i + 1);
-  } else {
-    stop(i);
-  };
+```reasonligo group=d
+let iter = ((x,y) : (nat, nat)) : (bool, (nat, nat)) =>
+  if (y == 0n) { (false, (x,y)); } else { (true, (y, x mod y)); };
 
-let counter_simple = (n: int): int => Loop.fold_while(aux, n);
+let gcd = ((x,y) : (nat, nat)) : nat =>
+  let (x,y) = if (x < y) { (y,x); } else { (x,y); };
+  let (x,y) = Loop.fold_while (iter, (x,y));
+  x;
 ```
 
+To ease the writing and reading of the iterated functions (here,
+`iter`), two predefined functions are provided: `continue` and `stop`:
+
+```reasonligo group=e
+let iter = ((x,y) : (nat, nat)) : (bool, (nat, nat)) =>
+  if (y == 0n) { stop ((x,y)); } else { continue ((y, x mod y)); };
+
+let gcd = ((x,y) : (nat, nat)) : nat =>
+  let (x,y) = if (x < y) { (y,x); } else { (x,y); };
+  let (x,y) = Loop.fold_while (iter, (x,y));
+  x;
+```
 <!--END_DOCUSAURUS_CODE_TABS-->
 
-## For Loop
+## For Loops
 
 <!--DOCUSAURUS_CODE_TABS-->
 <!--Pascaligo-->
 
-To iterate over a range of integers you use a loop of the form `for <variable assignment> to <integer> <block>`.
+To iterate over a range of integers you use a loop of the form `for
+<variable assignment> to <upper integer bound> <block>`, which is
+familiar for programmers of imperative languages. Note that, for the
+sake of generality, the bounds are of type `int`, not `nat`.
 
-```pascaligo
-function for_sum (var n : nat) : int is block {
-  var acc : int := 0 ;
-  for i := 1 to int(n)
-    begin
-      acc := acc + i;
-    end
+```pascaligo group=f
+function sum (var n : nat) : int is block {
+  var acc : int := 0;
+  for i := 1 to int (n) block {
+    acc := acc + i
+  }
 } with acc
 ```
 
+You can call the function `sum` defined above using the LIGO compiler
+like so:
+```shell
+ligo run-function
+gitlab-pages/docs/language-basics/src/loops/sum.ligo sum 7n
+# Outputs: 28
+```
 <!--END_DOCUSAURUS_CODE_TABS-->
 
 <!--DOCUSAURUS_CODE_TABS-->
+
 <!--Pascaligo-->
 
-PascaLIGO for loops can also iterate through the contents of a collection. This is
-done with a loop of the form `for <element var> in <collection type> <collection var> <block>`.
+PascaLIGO "for" loops can also iterate through the contents of a
+collection, that is, a list, a set or a map. This is done with a loop
+of the form `for <element var> in <collection type> <collection var>
+<block>`, where `<collection type` is any of the following keywords:
+`list`, `set` or `map`.
 
-```pascaligo
-function for_collection_list (var nee : unit) : (int * string) is block {
-  var acc : int := 0;
-  var st : string := "to";
-  var mylist : list(int) := list 1; 1; 1 end;
-  for x in list mylist
-    begin
-      acc := acc + x;
-      st := st ^ "to";
-    end
-} with (acc, st)
+Here is an example where the integers in a list are summed up.
+
+```pascaligo group=g
+function sum_list (var l : list (int)) : int is block {
+  var total : int := 0;
+  for i in list l block {
+    total := total + i
+  }
+} with total
 ```
 
+You can call the function `sum_list` defined above using the LIGO compiler
+like so:
+```shell
+ligo run-function
+gitlab-pages/docs/language-basics/src/loops/collection.ligo sum_list
+'list [1;2;3]'
+# Outputs: 6
+```
+
+Here is an example where the integers in a set are summed up.
+
+```pascaligo=g
+function sum_set (var s : set (int)) : int is block {
+  var total : int := 0;
+  for i in set s block {
+    total := total + i
+  }
+} with total
+```
+
+You can call the function `sum_set` defined above using the LIGO compiler
+like so:
+```shell
+ligo run-function
+gitlab-pages/docs/language-basics/src/loops/collection.ligo sum_set
+'set [1;2;3]'
+# Outputs: 6
+```
+
+Loops over maps are actually loops over the bindings of the map, that
+is, a pair key-value noted `key -> value` (or any other
+variables). Give a map from strings to integers, here is how to sum
+all the integers and concatenate all the strings.
+
+You can call the function `sum_map` defined above using the LIGO compiler
+like so:
+```shell
+ligo run-function
+gitlab-pages/docs/language-basics/src/loops/collection.ligo sum_map
+'map ["1"->1; "2"->2; "3"->3]'
+# Outputs: ( "123", 6 )
+```
 <!--END_DOCUSAURUS_CODE_TABS-->
