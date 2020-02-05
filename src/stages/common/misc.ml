@@ -57,8 +57,8 @@ let type_expression'_of_string = function
   | "TC_timestamp" , [] -> ok @@ T_constant(TC_timestamp)
   | _,               [] ->
      failwith "internal error: wrong number of arguments for type constant"
-  | _                       ->
-     failwith "internal error: unknown type operator"
+  | op,              _  ->
+     failwith (Format.asprintf "internal error: unknown type operator in src/stages/common/misc.ml %s" op)
 
 let string_of_type_operator = function
   | TC_contract  x       -> "TC_contract" , [x]

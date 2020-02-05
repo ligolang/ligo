@@ -35,8 +35,10 @@ module Wrap = struct
   let rec type_expression_to_type_value : T.type_value -> O.type_value = fun te ->
     match te.type_value' with
     | T_sum kvmap ->
+      let () = failwith "fixme: don't use to_list, it drops the variant keys, rows have a differnt kind than argument lists for now!" in
       P_constant (C_variant, T.CMap.to_list @@ T.CMap.map type_expression_to_type_value kvmap)
     | T_record kvmap ->
+      let () = failwith "fixme: don't use to_list, it drops the record keys, rows have a differnt kind than argument lists for now!" in
       P_constant (C_record, T.LMap.to_list @@ T.LMap.map type_expression_to_type_value kvmap)
     | T_arrow (arg , ret) ->
       P_constant (C_arrow, List.map type_expression_to_type_value [ arg ; ret ])
@@ -77,8 +79,10 @@ module Wrap = struct
   let rec type_expression_to_type_value_copypasted : I.type_expression -> O.type_value = fun te ->
     match te.type_expression' with
     | T_sum kvmap ->
+      let () = failwith "fixme: don't use to_list, it drops the variant keys, rows have a differnt kind than argument lists for now!" in
       P_constant (C_variant, I.CMap.to_list @@ I.CMap.map type_expression_to_type_value_copypasted kvmap)
     | T_record kvmap ->
+      let () = failwith "fixme: don't use to_list, it drops the record keys, rows have a differnt kind than argument lists for now!" in
       P_constant (C_record, I.LMap.to_list @@ I.LMap.map type_expression_to_type_value_copypasted kvmap)
     | T_arrow (arg , ret) ->
       P_constant (C_arrow, List.map type_expression_to_type_value_copypasted [ arg ; ret ])

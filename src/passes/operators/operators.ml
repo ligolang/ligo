@@ -70,7 +70,9 @@ module Simplify = struct
       | "get_chain_id"    -> ok C_CHAIN_ID
       | "transaction"     -> ok C_CALL
       | "get_contract"    -> ok C_CONTRACT
+      | "get_contract_opt"-> ok C_CONTRACT_OPT
       | "get_entrypoint"  -> ok C_CONTRACT_ENTRYPOINT
+      | "get_entrypoint_opt" -> ok C_CONTRACT_ENTRYPOINT_OPT
       | "size"            -> ok C_SIZE
       | "int"             -> ok C_INT
       | "abs"             -> ok C_ABS
@@ -228,7 +230,9 @@ module Simplify = struct
       | "Operation.transaction"    -> ok C_CALL
       | "Operation.set_delegate"   -> ok C_SET_DELEGATE
       | "Operation.get_contract"   -> ok C_CONTRACT
+      | "Operation.get_contract_opt" -> ok C_CONTRACT_OPT
       | "Operation.get_entrypoint" -> ok C_CONTRACT_ENTRYPOINT
+      | "Operation.get_entrypoint_opt" -> ok C_CONTRACT_ENTRYPOINT_OPT
       | "int"                      -> ok C_INT
       | "abs"                      -> ok C_ABS
       | "unit"                     -> ok C_UNIT
@@ -365,6 +369,93 @@ module Typer = struct
     let t_set_add      = forall "a" @@ fun a -> a --> set a --> set a
     let t_set_remove   = forall "a" @@ fun a -> a --> set a --> set a
     let t_not          = bool --> bool
+
+    let constant_type : constant -> Typesystem.Core.type_value result = function
+      | C_INT                 -> ok @@ t_int ;
+      | C_UNIT                -> ok @@ t_unit ;
+      | C_NOW                 -> ok @@ t_now ;
+      | C_IS_NAT              -> ok @@ failwith "t_is_nat" ;
+      | C_SOME                -> ok @@ t_some ;
+      | C_NONE                -> ok @@ t_none ;
+      | C_ASSERTION           -> ok @@ t_assertion ;
+      | C_FAILWITH            -> ok @@ t_failwith ;
+      (* LOOPS *)
+      | C_FOLD_WHILE          -> ok @@ failwith "t_fold_while" ;
+      | C_CONTINUE            -> ok @@ failwith "t_continue" ;
+      | C_STOP                -> ok @@ failwith "t_stop" ;
+      (* MATH *)
+      | C_NEG                 -> ok @@ failwith "t_neg" ;
+      | C_ABS                 -> ok @@ t_abs ;
+      | C_ADD                 -> ok @@ t_add ;
+      | C_SUB                 -> ok @@ t_sub ;
+      | C_MUL                 -> ok @@ t_times;
+      | C_DIV                 -> ok @@ t_div ;
+      | C_MOD                 -> ok @@ t_mod ;
+      (* LOGIC *)
+      | C_NOT                 -> ok @@ t_not ;
+      | C_AND                 -> ok @@ failwith "t_and" ;
+      | C_OR                  -> ok @@ failwith "t_or" ;
+      | C_XOR                 -> ok @@ failwith "t_xor" ;
+      (* COMPARATOR *)
+      | C_EQ                  -> ok @@ failwith "t_comparator EQ" ;
+      | C_NEQ                 -> ok @@ failwith "t_comparator NEQ" ;
+      | C_LT                  -> ok @@ failwith "t_comparator LT" ;
+      | C_GT                  -> ok @@ failwith "t_comparator GT" ;
+      | C_LE                  -> ok @@ failwith "t_comparator LE" ;
+      | C_GE                  -> ok @@ failwith "t_comparator GE" ;
+      (* BYTES / STRING *)
+      | C_SIZE                -> ok @@ t_size ;
+      | C_CONCAT              -> ok @@ failwith "t_concat" ;
+      | C_SLICE               -> ok @@ t_slice ;
+      | C_BYTES_PACK          -> ok @@ t_bytes_pack ;
+      | C_BYTES_UNPACK        -> ok @@ t_bytes_unpack ;
+      | C_CONS                -> ok @@ t_cons ;
+      (* SET  *)
+      | C_SET_EMPTY           -> ok @@ failwith "t_set_empty" ;
+      | C_SET_ADD             -> ok @@ t_set_add ;
+      | C_SET_REMOVE          -> ok @@ t_set_remove ;
+      | C_SET_ITER            -> ok @@ failwith "t_set_iter" ;
+      | C_SET_FOLD            -> ok @@ failwith "t_set_fold" ;
+      | C_SET_MEM             -> ok @@ t_set_mem ;
+
+      (* LIST *)
+      | C_LIST_ITER           -> ok @@ failwith "t_list_iter" ;
+      | C_LIST_MAP            -> ok @@ failwith "t_list_map" ;
+      | C_LIST_FOLD           -> ok @@ failwith "t_list_fold" ;
+      | C_LIST_CONS           -> ok @@ failwith "t_list_cons" ;
+      (* MAP *)
+      | C_MAP_GET             -> ok @@ failwith "t_map_get" ;
+      | C_MAP_GET_FORCE       -> ok @@ failwith "t_map_get_force" ;
+      | C_MAP_ADD             -> ok @@ t_map_add ;
+      | C_MAP_REMOVE          -> ok @@ t_map_remove ;
+      | C_MAP_UPDATE          -> ok @@ t_map_update ;
+      | C_MAP_ITER            -> ok @@ t_map_iter ;
+      | C_MAP_MAP             -> ok @@ t_map_map ;
+      | C_MAP_FOLD            -> ok @@ t_map_fold ;
+      | C_MAP_MEM             -> ok @@ t_map_mem ;
+      | C_MAP_FIND            -> ok @@ t_map_find ;
+      | C_MAP_FIND_OPT        -> ok @@ t_map_find_opt ;
+      (* BIG MAP *)
+      (* CRYPTO *)
+      | C_SHA256              -> ok @@ t_hash256 ;
+      | C_SHA512              -> ok @@ t_hash512 ;
+      | C_BLAKE2b             -> ok @@ t_blake2b ;
+      | C_HASH_KEY            -> ok @@ t_hash_key ;
+      | C_CHECK_SIGNATURE     -> ok @@ t_check_signature ;
+      | C_CHAIN_ID            -> ok @@ failwith "t_chain_id" ;
+      (*BLOCKCHAIN *)
+      | C_CONTRACT            -> ok @@ t_get_contract ;
+      | C_CONTRACT_ENTRYPOINT -> ok @@ failwith "t_get_entrypoint" ;
+      | C_AMOUNT              -> ok @@ t_amount ;
+      | C_BALANCE             -> ok @@ failwith "t_balance" ;
+      | C_CALL                -> ok @@ t_transaction ;
+      | C_SENDER              -> ok @@ t_sender ;
+      | C_SOURCE              -> ok @@ t_source ;
+      | C_ADDRESS             -> ok @@ t_address ;
+      | C_SELF_ADDRESS        -> ok @@ failwith "t_self_address";
+      | C_IMPLICIT_ACCOUNT    -> ok @@ failwith "t_implicit_account";
+      | C_SET_DELEGATE        -> ok @@ failwith "t_set_delegate" ;
+      | c                     -> simple_fail @@ Format.asprintf "Typer not implemented for consant %a" Stage_common.PP.constant c
   end
 
   let none = typer_0 "NONE" @@ fun tv_opt ->
@@ -570,6 +661,20 @@ module Typer = struct
       get_t_contract tv in
     ok @@ t_contract tv' ()
 
+  let get_contract_opt = typer_1_opt "CONTRACT OPT" @@ fun addr_tv tv_opt ->
+    if not (type_value_eq (addr_tv, t_address ()))
+    then fail @@ simple_error (Format.asprintf "get_contract_opt expects an address, got %a" PP.type_value addr_tv)
+    else
+    let%bind tv =
+      trace_option (simple_error "get_contract_opt needs a type annotation") tv_opt in
+    let%bind tv =
+      trace_strong (simple_error "get_entrypoint_opt has a not-option annotation") @@
+      get_t_option tv in
+    let%bind tv' =
+      trace_strong (simple_error "get_entrypoint_opt has a not-option(contract) annotation") @@
+      get_t_contract tv in
+    ok @@ t_option (t_contract tv' ()) ()
+
   let get_entrypoint = typer_2_opt "CONTRACT_ENTRYPOINT" @@ fun entry_tv addr_tv tv_opt ->
     if not (type_value_eq (entry_tv, t_string ()))
     then fail @@ simple_error (Format.asprintf "get_entrypoint expects a string entrypoint label for first argument, got %a" PP.type_value entry_tv)
@@ -583,6 +688,23 @@ module Typer = struct
       trace_strong (simple_error "get_entrypoint has a not-contract annotation") @@
       get_t_contract tv in
     ok @@ t_contract tv' ()
+
+  let get_entrypoint_opt = typer_2_opt "CONTRACT_ENTRYPOINT_OPT" @@ fun entry_tv addr_tv tv_opt ->
+    if not (type_value_eq (entry_tv, t_string ()))
+    then fail @@ simple_error (Format.asprintf "get_entrypoint_opt expects a string entrypoint label for first argument, got %a" PP.type_value entry_tv)
+    else
+    if not (type_value_eq (addr_tv, t_address ()))
+    then fail @@ simple_error (Format.asprintf "get_entrypoint_opt expects an address for second argument, got %a" PP.type_value addr_tv)
+    else
+    let%bind tv =
+      trace_option (simple_error "get_entrypoint_opt needs a type annotation") tv_opt in
+    let%bind tv =
+      trace_strong (simple_error "get_entrypoint_opt has a not-option annotation") @@
+      get_t_option tv in
+    let%bind tv' =
+      trace_strong (simple_error "get_entrypoint_opt has a not-option(contract) annotation") @@
+      get_t_contract tv in
+    ok @@ t_option (t_contract tv' ())()
 
   let set_delegate = typer_1 "SET_DELEGATE" @@ fun delegate_opt ->
     let%bind () = assert_eq_1 delegate_opt (t_option (t_key_hash ()) ()) in
@@ -933,7 +1055,9 @@ module Typer = struct
     | C_CHAIN_ID            -> ok @@ chain_id ;
     (*BLOCKCHAIN *)
     | C_CONTRACT            -> ok @@ get_contract ;
+    | C_CONTRACT_OPT        -> ok @@ get_contract_opt ;
     | C_CONTRACT_ENTRYPOINT -> ok @@ get_entrypoint ;
+    | C_CONTRACT_ENTRYPOINT_OPT -> ok @@ get_entrypoint_opt ;
     | C_AMOUNT              -> ok @@ amount ;
     | C_BALANCE             -> ok @@ balance ;
     | C_CALL                -> ok @@ transaction ;

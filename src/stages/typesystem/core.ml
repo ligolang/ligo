@@ -77,7 +77,11 @@ let type_expression'_of_simple_c_constant = function
   | C_set       , [x]     -> ok @@ T_operator(TC_set x)
   | C_map       , [x ; y] -> ok @@ T_operator(TC_map (x , y))
   | C_big_map   , [x ; y] -> ok @@ T_operator(TC_big_map (x, y))
-  | (C_contract | C_option | C_list | C_set | C_map | C_big_map), _ ->
+  | C_arrow     , [x ; y] -> ok @@ T_operator(TC_arrow (x, y))
+  | C_tuple     , lst     -> ok @@ T_operator(TC_tuple lst)
+  | C_record    , _lst    -> ok @@ failwith "records are not supported yet: T_record lst"
+  | C_variant   , _lst    -> ok @@ failwith "sums are not supported yet: T_sum lst"
+  | (C_contract | C_option | C_list | C_set | C_map | C_big_map | C_arrow ), _ ->
      failwith "internal error: wrong number of arguments for type operator"
 
   | C_unit      , [] -> ok @@ T_constant(TC_unit)
@@ -94,8 +98,6 @@ let type_expression'_of_simple_c_constant = function
   | C_chain_id  , [] -> ok @@ T_constant(TC_chain_id)
   | C_signature , [] -> ok @@ T_constant(TC_signature)
   | C_timestamp , [] -> ok @@ T_constant(TC_timestamp)
-  | _           , [] ->
+  | (C_unit | C_string | C_bytes | C_nat | C_int | C_mutez | C_bool | C_operation | C_address | C_key | C_key_hash | C_chain_id | C_signature | C_timestamp), _::_ ->
      failwith "internal error: wrong number of arguments for type constant"
-  | _           , _  ->
-     failwith "internal error: unknown type operator"
 

@@ -897,7 +897,8 @@ and type_expression : environment -> Solver.state -> ?tv_opt:O.type_value -> I.e
 
   | E_constant (name, lst) ->
     let () = ignore (name , lst) in
-    Pervasives.failwith "TODO: E_constant"
+    let _t = Operators.Typer.Operators_types.constant_type name in
+    Pervasives.failwith (Format.asprintf "TODO: E_constant (%a(%a))" Stage_common.PP.constant name (Format.pp_print_list Ast_simplified.PP.expression) lst)
       (*
       let%bind lst' = bind_list @@ List.map (type_expression e) lst in
       let tv_lst = List.map get_type_annotation lst' in
