@@ -66,7 +66,7 @@ module Simplify = struct
   module Pascaligo = struct
 
     let constants = function
-      | "get_force"       -> ok C_MAP_FIND
+      | "assert"          -> ok C_ASSERTION
       | "get_chain_id"    -> ok C_CHAIN_ID
       | "transaction"     -> ok C_CALL
       | "get_contract"    -> ok C_CONTRACT
@@ -106,6 +106,7 @@ module Simplify = struct
       | "list_iter"       -> ok C_LIST_ITER
       | "list_fold"       -> ok C_LIST_FOLD
       | "list_map"        -> ok C_LIST_MAP
+      | "get_force"       -> ok C_MAP_FIND
       | "map_iter"        -> ok C_MAP_ITER
       | "map_map"         -> ok C_MAP_MAP
       | "map_fold"        -> ok C_MAP_FOLD
