@@ -490,7 +490,7 @@ and transpile_annotated_expression (ae:AST.annotated_expression) : expression re
     )
   | E_look_up dsi -> (
       let%bind (ds', i') = bind_map_pair f dsi in
-      return @@ E_constant (C_MAP_GET, [i' ; ds'])
+      return @@ E_constant (C_MAP_FIND_OPT, [i' ; ds'])
     )
   | E_sequence (a , b) -> (
       let%bind a' = transpile_annotated_expression a in

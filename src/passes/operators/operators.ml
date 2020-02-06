@@ -66,7 +66,7 @@ module Simplify = struct
   module Pascaligo = struct
 
     let constants = function
-      | "get_force"       -> ok C_MAP_GET_FORCE
+      | "get_force"       -> ok C_MAP_FIND
       | "get_chain_id"    -> ok C_CHAIN_ID
       | "transaction"     -> ok C_CALL
       | "get_contract"    -> ok C_CONTRACT
@@ -109,7 +109,7 @@ module Simplify = struct
       | "map_fold"        -> ok C_MAP_FOLD
       | "map_remove"      -> ok C_MAP_REMOVE
       | "map_update"      -> ok C_MAP_UPDATE
-      | "map_get"         -> ok C_MAP_GET
+      | "map_get"         -> ok C_MAP_FIND_OPT
       | "map_mem"         -> ok C_MAP_MEM
       | "sha_256"         -> ok C_SHA256
       | "sha_512"         -> ok C_SHA512
@@ -163,7 +163,6 @@ module Simplify = struct
       | "Current.failwith"         -> ok C_FAILWITH
       | "failwith"                 -> ok C_FAILWITH
 
-      | "Crypto.hash"              -> ok C_HASH
       | "Crypto.blake2b"           -> ok C_BLAKE2b
       | "Crypto.sha256"            -> ok C_SHA256
       | "Crypto.sha512"            -> ok C_SHA512
@@ -425,8 +424,6 @@ module Typer = struct
       | C_LIST_FOLD           -> ok @@ failwith "t_list_fold" ;
       | C_LIST_CONS           -> ok @@ failwith "t_list_cons" ;
       (* MAP *)
-      | C_MAP_GET             -> ok @@ failwith "t_map_get" ;
-      | C_MAP_GET_FORCE       -> ok @@ failwith "t_map_get_force" ;
       | C_MAP_ADD             -> ok @@ t_map_add ;
       | C_MAP_REMOVE          -> ok @@ t_map_remove ;
       | C_MAP_UPDATE          -> ok @@ t_map_update ;
@@ -562,16 +559,6 @@ module Typer = struct
       (is_t_string t) in
     let default = t_unit () in
     ok @@ Simple_utils.Option.unopt ~default opt
-
-  let map_get_force = typer_2 "MAP_GET_FORCE" @@ fun i m ->
-    let%bind (src, dst) = bind_map_or (get_t_map , get_t_big_map) m in
-    let%bind _ = assert_type_value_eq (src, i) in
-    ok dst
-
-  let map_get = typer_2 "MAP_GET" @@ fun i m ->
-    let%bind (src, dst) = bind_map_or (get_t_map , get_t_big_map) m in
-    let%bind _ = assert_type_value_eq (src, i) in
-    ok @@ t_option dst ()
 
   let int : typer = typer_1 "INT" @@ fun t ->
     let%bind () = assert_t_nat t in
@@ -1035,8 +1022,6 @@ module Typer = struct
     | C_LIST_FOLD           -> ok @@ list_fold ;
     | C_LIST_CONS           -> ok @@ list_cons ;
     (* MAP *)
-    | C_MAP_GET             -> ok @@ map_get ;
-    | C_MAP_GET_FORCE       -> ok @@ map_get_force ;
     | C_MAP_ADD             -> ok @@ map_add ;
     | C_MAP_REMOVE          -> ok @@ map_remove ;
     | C_MAP_UPDATE          -> ok @@ map_update ;
@@ -1116,9 +1101,7 @@ module Compiler = struct
     | C_GE              -> ok @@ simple_binary @@ seq [prim I_COMPARE ; prim I_GE]
     | C_UPDATE          -> ok @@ simple_ternary @@ prim I_UPDATE
     | C_SOME            -> ok @@ simple_unary  @@ prim I_SOME
-    | C_MAP_GET_FORCE   -> ok @@ simple_binary @@ seq [prim I_GET ; i_assert_some_msg (i_push_string "GET_FORCE")]
     | C_MAP_FIND        -> ok @@ simple_binary @@ seq [prim I_GET ; i_assert_some_msg (i_push_string "MAP FIND")]
-    | C_MAP_GET         -> ok @@ simple_binary @@ prim I_GET
     | C_MAP_MEM         -> ok @@ simple_binary @@ prim I_MEM
     | C_MAP_FIND_OPT    -> ok @@ simple_binary @@ prim I_GET
     | C_MAP_ADD         -> ok @@ simple_ternary @@ seq [dip (i_some) ; prim I_UPDATE]

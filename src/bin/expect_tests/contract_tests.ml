@@ -7,13 +7,13 @@ let bad_contract basename =
 
 let%expect_test _ =
   run_ligo_good [ "measure-contract" ; contract "coase.ligo" ; "main" ] ;
-  [%expect {| 2066 bytes |}] ;
+  [%expect {| 2062 bytes |}] ;
 
   run_ligo_good [ "measure-contract" ; contract "multisig.ligo" ; "main" ] ;
   [%expect {| 1093 bytes |}] ;
 
   run_ligo_good [ "measure-contract" ; contract "multisig-v2.ligo" ; "main" ] ;
-  [%expect {| 2717 bytes |}] ;
+  [%expect {| 2713 bytes |}] ;
 
   run_ligo_good [ "measure-contract" ; contract "vote.mligo" ; "main" ] ;
   [%expect {| 642 bytes |}] ;
@@ -86,7 +86,7 @@ let%expect_test _ =
                      SWAP ;
                      DIP { DUP ; CAR ; CAR } ;
                      GET ;
-                     IF_NONE { PUSH string "GET_FORCE" ; FAILWITH } {} ;
+                     IF_NONE { PUSH string "MAP FIND" ; FAILWITH } {} ;
                      DUP ;
                      CAR ;
                      DIP { DUP ; CDR ; PUSH nat 1 ; ADD } ;
@@ -168,7 +168,7 @@ let%expect_test _ =
                      SWAP ;
                      DIP { DUP ; CAR ; CDR } ;
                      GET ;
-                     IF_NONE { PUSH string "GET_FORCE" ; FAILWITH } {} ;
+                     IF_NONE { PUSH string "MAP FIND" ; FAILWITH } {} ;
                      DUP ;
                      CAR ;
                      SOURCE ;
@@ -182,7 +182,7 @@ let%expect_test _ =
                      CDR ;
                      DIP { DIP { DUP } ; SWAP ; CAR ; CAR } ;
                      GET ;
-                     IF_NONE { PUSH string "GET_FORCE" ; FAILWITH } {} ;
+                     IF_NONE { PUSH string "MAP FIND" ; FAILWITH } {} ;
                      DUP ;
                      CDR ;
                      PUSH nat 1 ;
@@ -262,7 +262,7 @@ let%expect_test _ =
                  CAR ;
                  DIP { DUP } ;
                  GET ;
-                 IF_NONE { PUSH string "GET_FORCE" ; FAILWITH } {} ;
+                 IF_NONE { PUSH string "MAP FIND" ; FAILWITH } {} ;
                  DUP ;
                  CAR ;
                  SOURCE ;
@@ -488,7 +488,7 @@ let%expect_test _ =
                          CAR ;
                          SENDER ;
                          GET ;
-                         IF_NONE { PUSH string "GET_FORCE" ; FAILWITH } {} ;
+                         IF_NONE { PUSH string "MAP FIND" ; FAILWITH } {} ;
                          PUSH nat 1 ;
                          ADD ;
                          SOME ;
@@ -529,7 +529,7 @@ let%expect_test _ =
                               CAR ;
                               SENDER ;
                               GET ;
-                              IF_NONE { PUSH string "GET_FORCE" ; FAILWITH } {} ;
+                              IF_NONE { PUSH string "MAP FIND" ; FAILWITH } {} ;
                               PUSH nat 1 ;
                               ADD ;
                               SOME ;
@@ -572,7 +572,7 @@ let%expect_test _ =
                      CAR ;
                      SENDER ;
                      GET ;
-                     IF_NONE { PUSH string "GET_FORCE" ; FAILWITH } {} ;
+                     IF_NONE { PUSH string "MAP FIND" ; FAILWITH } {} ;
                      DUP ;
                      DIP { DIP 4 { DUP } ; DIG 4 ; CAR ; CDR ; CAR } ;
                      COMPARE ;
@@ -768,7 +768,7 @@ let%expect_test _ =
                           CAR ;
                           SENDER ;
                           GET ;
-                          IF_NONE { PUSH string "GET_FORCE" ; FAILWITH } {} ;
+                          IF_NONE { PUSH string "MAP FIND" ; FAILWITH } {} ;
                           PUSH nat 1 ;
                           SWAP ;
                           SUB ;
