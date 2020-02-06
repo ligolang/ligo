@@ -101,8 +101,8 @@ let in_24_hrs : timestamp = today - one_day;
 
 ### Comparing Timestamps
 
-You can also compare timestamps using the same comparison operators as
-for numbers.
+You can compare timestamps using the same comparison operators
+applying to numbers.
 
 <!--DOCUSAURUS_CODE_TABS-->
 <!--Pascaligo-->
@@ -124,10 +124,10 @@ let not_tomorrow : bool = (Current.time == in_24_hrs);
 
 ## Addresses
 
-The type `address` in LIGO is used to denote Tezos addresses (tz1,
-tz2, tz3, KT1, ...). Currently, addresses are created by casting a
-string to the type `address`. Beware of failures if the address is
-invalid. Consider the following examples.
+The type `address` in LIGO denotes Tezos addresses (tz1, tz2, tz3,
+KT1, ...). Currently, addresses are created by casting a string to the
+type `address`. Beware of failures if the address is invalid. Consider
+the following examples.
 
 <!--DOCUSAURUS_CODE_TABS-->
 <!--Pascaligo-->
@@ -152,7 +152,7 @@ let my_account : address =
 
 ## Signatures
 
-The type `signature` in LIGO datatype is used for Tezos signature
+The `signature` type in LIGO datatype is used for Tezos signatures
 (edsig, spsig). Signatures are created by casting a string. Beware of
 failure if the signature is invalid.
 
@@ -181,7 +181,7 @@ signature);
 
 ## Keys
 
-The type `key` in LIGO is used for Tezos public keys. Do not confuse
+The `key` type in LIGO is used for Tezos public keys. Do not confuse
 them with map keys. Keys are made by casting strings. Beware of
 failure if the key is invalid.
 

@@ -34,7 +34,10 @@ In LIGO, only values of the same type can be compared. Moreover, not
 all values of the same type can be compared, only those with
 *comparable types*, which is a concept lifted from
 Michelson. Comparable types include, for instance, `int`, `nat`,
-`string`, `tez`, `timestamp`, `address`, etc.
+`string`, `tez`, `timestamp`, `address`, etc. As an example of
+non-comparable types: maps, sets or lists are not comparable: if you
+wish to compare them, you will have to write your own comparison
+function.
 
 ### Comparing Strings
 
@@ -110,7 +113,7 @@ let h : bool = (a != b);
 ```pascaligo group=d
 const a : tez  = 5mutez
 const b : tez  = 10mutez
-const c : bool = (a = b) // false
+const c : bool = (a = b) // False
 ```
 <!--CameLIGO-->
 ```cameligo group=d
@@ -129,7 +132,7 @@ let c : bool = (a == b); // false
 
 ## Conditionals
 
-Conditional logic enables to fork the control flow depending on the
+Conditional logic enables forking the control flow depending on the
 state.
 
 <!--DOCUSAURUS_CODE_TABS-->

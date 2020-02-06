@@ -64,7 +64,7 @@ to have a special type: if the type of the accumulator is `t`, then it
 must have the type `bool * t` (not simply `t`). It is the boolean
 value that denotes whether the stopping condition has been reached.
 
-```cameligo group=b
+```cameligo group=a
 let iter (x,y : nat * nat) : bool * (nat * nat) =
   if y = 0n then false, (x,y) else true, (y, x mod y)
 
@@ -77,7 +77,7 @@ let gcd (x,y : nat * nat) : nat =
 To ease the writing and reading of the iterated functions (here,
 `iter`), two predefined functions are provided: `continue` and `stop`:
 
-```cameligo group=c
+```cameligo group=a
 let iter (x,y : nat * nat) : bool * (nat * nat) =
   if y = 0n then stop (x,y) else continue (y, x mod y)
 
@@ -113,27 +113,29 @@ accumulator is `t`, then it must have the type `bool * t` (not simply
 `t`). It is the boolean value that denotes whether the stopping
 condition has been reached.
 
-```reasonligo group=d
+```reasonligo group=a
 let iter = ((x,y) : (nat, nat)) : (bool, (nat, nat)) =>
   if (y == 0n) { (false, (x,y)); } else { (true, (y, x mod y)); };
 
-let gcd = ((x,y) : (nat, nat)) : nat =>
+let gcd = ((x,y) : (nat, nat)) : nat => {
   let (x,y) = if (x < y) { (y,x); } else { (x,y); };
   let (x,y) = Loop.fold_while (iter, (x,y));
-  x;
+  x
+};
 ```
 
 To ease the writing and reading of the iterated functions (here,
 `iter`), two predefined functions are provided: `continue` and `stop`:
 
-```reasonligo group=e
+```reasonligo group=b
 let iter = ((x,y) : (nat, nat)) : (bool, (nat, nat)) =>
   if (y == 0n) { stop ((x,y)); } else { continue ((y, x mod y)); };
 
-let gcd = ((x,y) : (nat, nat)) : nat =>
+let gcd = ((x,y) : (nat, nat)) : nat => {
   let (x,y) = if (x < y) { (y,x); } else { (x,y); };
   let (x,y) = Loop.fold_while (iter, (x,y));
-  x;
+  x
+};
 ```
 <!--END_DOCUSAURUS_CODE_TABS-->
 
@@ -147,7 +149,7 @@ To iterate over a range of integers you use a loop of the form `for
 familiar for programmers of imperative languages. Note that, for the
 sake of generality, the bounds are of type `int`, not `nat`.
 
-```pascaligo group=f
+```pascaligo group=c
 function sum (var n : nat) : int is block {
   var acc : int := 0;
   for i := 1 to int (n) block {
@@ -177,7 +179,7 @@ of the form `for <element var> in <collection type> <collection var>
 
 Here is an example where the integers in a list are summed up.
 
-```pascaligo group=g
+```pascaligo group=d
 function sum_list (var l : list (int)) : int is block {
   var total : int := 0;
   for i in list l block {
@@ -197,7 +199,7 @@ gitlab-pages/docs/language-basics/src/loops/collection.ligo sum_list
 
 Here is an example where the integers in a set are summed up.
 
-```pascaligo=g
+```pascaligo=e
 function sum_set (var s : set (int)) : int is block {
   var total : int := 0;
   for i in set s block {

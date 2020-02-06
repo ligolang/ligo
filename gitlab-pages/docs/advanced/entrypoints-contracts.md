@@ -386,13 +386,14 @@ type return = (list (operation), storage);
 
 let dest : address = ("KT19wgxcuXG9VH4Af5Tpm1vqEKdaMFpznXT3" : address);
 
-let proxy = ((param, store): (parameter, storage)) : return =>
+let proxy = ((param, store): (parameter, storage)) : return => {
   let counter : contract (parameter) = Operation.get_contract (dest);
   (* Reuse the parameter in the subsequent
      transaction or use another one, `mock_param`. *)
   let mock_param : parameter = Increment (5n);
   let op : operation = Operation.transaction (param, 0mutez, counter);
-  ([op], store);
+  ([op], store)
+};
 ```
 
 <!--END_DOCUSAURUS_CODE_TABS-->

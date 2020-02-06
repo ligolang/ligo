@@ -8,15 +8,14 @@ LIGO offers three built-in numerical types: `int`, `nat` and `tez`.
 ## Addition
 
 Addition in LIGO is accomplished by means of the `+` infix
-operator. Some type constraints apply, for example you ca not add a
+operator. Some type constraints apply, for example you cannot add a
 value of type `tez` to a value of type `nat`.
 
 In the following example you can find a series of arithmetic
 operations, including various numerical types. However, some bits
-remain in comments because they would otherwise not compile because,
-for example, adding a value of type `int` to a value of type `tez` is
-invalid. Note that adding an integer to a natural number produces an
-integer.
+remain in comments as they would otherwise not compile, for example,
+adding a value of type `int` to a value of type `tez` is invalid. Note
+that adding an integer to a natural number produces an integer.
 
 <!--DOCUSAURUS_CODE_TABS-->
 <!--Pascaligo-->
@@ -115,7 +114,7 @@ let g : int = 1_000_000;
 
 ## Subtraction
 
-Subtraction looks like as follows.
+Subtraction looks as follows.
 
 > ⚠️ Even when subtracting two `nats`, the result is an `int`
 

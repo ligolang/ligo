@@ -10,11 +10,11 @@ logic into functions.
 ## Blocks
 
 In PascaLIGO, *blocks* enable the sequential composition of
-*instructions* into an isolated scope. Each `block` needs to include
-at least one instruction. If we need a placeholder *placeholder*, we
-use the instruction called `skip`, that leaves the state
-invariant. The rationale for `skip` instead of a truly empty block is
-that it prevents you from writing an empty block by mistake.
+instructions into an isolated scope. Each block needs to include at
+least one instruction. If we need a placeholder, we use the
+instruction `skip` which leaves the state unchanged.  The rationale
+for `skip` instead of a truly empty block is that it prevents you from
+writing an empty block by mistake.
 
 <!--DOCUSAURUS_CODE_TABS-->
 <!--Pascaligo-->
@@ -31,10 +31,10 @@ Blocks are more versatile than simply containing instructions:
 they can also include *declarations* of values, like so:
 ```pascaligo skip
 // terse style
-block { const a : int = 1; }
+block { const a : int = 1 }
 // verbose style
 begin
-  const a : int = 1;
+  const a : int = 1
 end
 ```
 

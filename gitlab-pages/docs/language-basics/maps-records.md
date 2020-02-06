@@ -358,7 +358,7 @@ let moves : register =
 let moves : register =
   Map.literal ([
     ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address, (1,2)),
-    ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" : address, (0,3)),]);
+    ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" : address, (0,3))]);
 ```
 
 > The `Map.literal` predefined function builds a map from a list of
@@ -377,8 +377,8 @@ example:
 <!--DOCUSAURUS_CODE_TABS-->
 <!--Pascaligo-->
 ```pascaligo group=f
-(*const my_balance : option (move) =
-  moves [("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" : address)] *)
+const my_balance : option (move) =
+  moves [("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" : address)]
 ```
 
 <!--Cameligo-->
@@ -418,11 +418,12 @@ let force_access (key, moves : address * register) : move =
 ```
 
 <!--Reasonligo-->
-```reasonlig group=f
-let force_access : ((key, moves) : address * register) : move => {
-  switch (Map.find_opt key moves) with
-    Some move -> move
-  | None -> (failwith "No move." : move)
+```reasonligo group=f
+let force_access = ((key, moves) : (address, register)) : move => {
+  switch (Map.find_opt (key, moves)) {
+  | Some (move) => move
+  | None => failwith ("No move.") : move
+  }
 };
 ```
 <!--END_DOCUSAURUS_CODE_TABS-->
@@ -475,9 +476,8 @@ let assign (m : register) : register =
 ```
 
 > Notice the optional value `Some (4,9)` instead of `(4,9)`. If we had
-> use `None` instead, that would have meant that the binding is only
-> defined on its key, but not its value. This encoding enables
-> partially defined bindings.
+> use `None` instead, that would have meant that the binding is
+> removed.
 
 <!--Reasonligo-->
 
@@ -492,9 +492,8 @@ let assign = (m : register) : register => {
 ```
 
 > Notice the optional value `Some (4,9)` instead of `(4,9)`. If we had
-> use `None` instead, that would have meant that the binding is only
-> defined on its key, but not its value. This encoding enables
-> partially defined bindings.
+> use `None` instead, that would have meant that the binding is
+> removed.
 
 <!--END_DOCUSAURUS_CODE_TABS-->
 
@@ -601,7 +600,7 @@ let map_op = (m : register) : register => {
 A *fold operation* is the most general of iterations. The iterated
 function takes two arguments: an *accumulator* and the structure
 *element* at hand, with which it then produces a new accumulator. This
-enables to have a partial result that becomes complete when the
+enables having a partial result that becomes complete when the
 traversal of the data structure is over.
 
 <!--DOCUSAURUS_CODE_TABS-->
@@ -622,7 +621,7 @@ let fold_op (m : register) : register =
 
 <!--Reasonligo-->
 ```reasonligo group=f
-let fold_op = (m: register): register => {
+let fold_op = (m : register) : register => {
   let aggregate = ((i,j): (int, (address, move))) => i + j[1][1];
   Map.fold (aggregate, m, 5);
 };
@@ -703,7 +702,7 @@ let moves : register =
 let moves : register =
   Big_map.literal ([
     ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address, (1,2)),
-    ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" : address, (0,3)),]);
+    ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" : address, (0,3))]);
 ```
 
 > The predefind function `Big_map.literal` constructs a big map from a
