@@ -45,6 +45,8 @@ let constant ppf : constant -> unit = function
   | C_AND                   -> fprintf ppf "AND"
   | C_OR                    -> fprintf ppf "OR"
   | C_XOR                   -> fprintf ppf "XOR"
+  | C_LSL                   -> fprintf ppf "LSL"
+  | C_LSR                   -> fprintf ppf "LSR"
   (* COMPARATOR *)
   | C_EQ                    -> fprintf ppf "EQ"
   | C_NEQ                   -> fprintf ppf "NEQ"

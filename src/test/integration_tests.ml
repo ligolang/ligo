@@ -348,6 +348,8 @@ let bitwise_arithmetic () : unit result =
   let%bind () = expect_eq program "and_op" (e_nat 10) (e_nat 2) in
   let%bind () = expect_eq program "xor_op" (e_nat 0) (e_nat 7) in
   let%bind () = expect_eq program "xor_op" (e_nat 7) (e_nat 0) in
+  let%bind () = expect_eq program "lsl_op" (e_nat 1000) (e_nat 128000) in
+  let%bind () = expect_eq program "lsr_op" (e_nat 128000) (e_nat 1000) in
   ok ()
 
 let bitwise_arithmetic_mligo () : unit result =
@@ -364,6 +366,8 @@ let bitwise_arithmetic_mligo () : unit result =
   let%bind () = expect_eq program "and_op" (e_nat 10) (e_nat 2) in
   let%bind () = expect_eq program "xor_op" (e_nat 0) (e_nat 7) in
   let%bind () = expect_eq program "xor_op" (e_nat 7) (e_nat 0) in
+  let%bind () = expect_eq program "lsl_op" (e_nat 1000) (e_nat 128000) in
+  let%bind () = expect_eq program "lsr_op" (e_nat 128000) (e_nat 1000) in
   ok ()
 
 let bitwise_arithmetic_religo () : unit result =
@@ -380,6 +384,8 @@ let bitwise_arithmetic_religo () : unit result =
   let%bind () = expect_eq program "and_op" (e_nat 10) (e_nat 2) in
   let%bind () = expect_eq program "xor_op" (e_nat 0) (e_nat 7) in
   let%bind () = expect_eq program "xor_op" (e_nat 7) (e_nat 0) in
+  let%bind () = expect_eq program "lsl_op" (e_nat 1000) (e_nat 128000) in
+  let%bind () = expect_eq program "lsr_op" (e_nat 128000) (e_nat 1000) in
   ok ()
 
 let string_arithmetic () : unit result =

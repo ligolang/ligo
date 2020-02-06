@@ -8,3 +8,9 @@ function and_op (const n : nat) : nat is
 
 function xor_op (const n : nat) : nat is
   begin skip end with bitwise_xor(n , 7n)
+
+function lsl_op (const n : nat) : nat is
+  begin skip end with bitwise_lsl(n , 7n)
+
+function lsr_op (const n : nat) : nat is
+  begin skip end with bitwise_lsr(n , 7n)
