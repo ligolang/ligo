@@ -20,7 +20,7 @@ let is_pure_constant : constant -> bool =
   | C_UNIT
   | C_CAR | C_CDR | C_PAIR
   | C_NIL | C_CONS
-  | C_NEG | C_OR | C_AND | C_LSL | C_LSR | C_XOR | C_NOT
+  | C_NEG | C_OR | C_AND | C_XOR | C_NOT
   | C_EQ  | C_NEQ | C_LT | C_LE | C_GT | C_GE
   | C_SOME
   | C_UPDATE | C_MAP_GET | C_MAP_FIND_OPT | C_MAP_ADD | C_MAP_UPDATE
@@ -31,7 +31,7 @@ let is_pure_constant : constant -> bool =
   | C_HASH_KEY | C_BYTES_PACK | C_CONCAT
     -> true
   (* unfortunately impure: *)
-  | C_ADD | C_SUB |C_MUL|C_DIV|C_MOD
+  | C_ADD | C_SUB |C_MUL|C_DIV|C_MOD | C_LSL | C_LSR 
   (* impure: *)
   | C_ASSERTION | C_ASSERT_INFERRED
   | C_MAP_GET_FORCE | C_MAP_FIND
