@@ -148,3 +148,84 @@ let comparison_string =
 
 let divs : (int * nat * tez * nat) =
   (1/2 , 1n/2n , 1tz/2n , 1tz/2tz)
+
+let var_neg =
+  let a = 2 in
+  -a
+
+let sizes =
+  let a = [ 1 ; 2 ; 3 ; 4 ; 5 ] in
+  let b = "12345" in
+  let c = Set.literal [ 1 ; 2 ; 3 ; 4 ; 5 ] in
+  let d = Map.literal [ (1,1) ; (2,2) ; (3,3) ] in
+  let e = 0xFFFF in
+  (List.size a, String.size b, Set.size c, Map.size d, Bytes.size e)
+
+let modi = 3 mod 2
+
+let fold_while =
+  let aux : int -> bool * int = fun (i:int) ->
+    if i < 10 then continue (i + 1) else stop i in
+  (Loop.fold_while aux 20, Loop.fold_while aux 0)
+
+let assertion_pass =
+  assert (1=1)
+
+let assertion_fail =
+  assert (1=2)
+
+let lit_address = ("KT1ThEdxfUcWUwqsdergy3QnbCWGHSUHeHJq" : address)
+
+let map_finds =
+  let m = Map.literal [ ("one" , 1) ; ("two" , 2) ; ("three" , 3) ] in
+  Map.find_opt "two" m
+
+let map_finds_fail =
+  let m = Map.literal [ ("one" , 1) ; ("two" , 2) ; ("three" , 3) ] in
+  Map.find "four" m
+
+let map_empty =
+  ((Map.empty : (int,int) map) , (Map.literal [] : (int,int) map))
+
+let m = Map.literal [ ("one" , 1) ; ("two" , 2) ; ("three" , 3) ]
+
+let map_fold =
+  let aux = fun (i: int * (string * int)) -> i.0 + i.1.1 in
+  Map.fold aux m (-2)
+
+let map_iter =
+  let aux = fun (i: string * int) -> if (i.1=12) then failwith "never" else () in
+  Map.iter aux m
+
+let map_map =
+  let aux = fun (i: string * int) -> i.1 + (String.size i.0) in
+  Map.map aux m
+
+let map_mem = (Map.mem "one" m , Map.mem "four" m)
+
+let map_remove = (Map.remove "one" m, Map.remove "four" m)
+
+let map_update = (
+  Map.update "one" (Some(1)) (Map.literal [ "one", 2 ]),
+  Map.update "one" (None : int option) (Map.literal [ "one", 1]),
+  Map.update "one" (None : int option) (Map.literal []:(string,int) map),
+  Map.update "one" (Some(1)) (Map.literal []:(string,int) map)
+)
+
+let s = Set.literal [ 1 ; 2 ; 3 ]
+
+let set_add = (
+  Set.add 1 s,
+  Set.add 4 s,
+  Set.add 1 (Set.literal [] : int set)
+)
+
+let set_iter_fail =
+  let aux = fun (i:int) -> if i = 1 then failwith "set_iter_fail" else () in
+  Set.iter aux (Set.literal [1 ; 2 ; 3])
+
+let set_mem = (
+  Set.mem 1 s,
+  Set.mem 4 s,
+  Set.mem 1 (Set.literal [] : int set)
+)

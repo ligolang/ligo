@@ -4,6 +4,40 @@ include Stage_common.Types
 
 module Env = Ligo_interpreter.Environment
 
+(* combinators ? *)
+let v_pair : value * value -> value =
+  fun (a,b) -> V_Record (LMap.of_list [(Label "0", a) ; (Label "1",b)])
+
+let v_bool : bool -> value =
+  fun b -> V_Ct (C_bool b)
+
+let v_unit : unit -> value =
+  fun () -> V_Ct (C_unit)
+
+let v_some : value -> value =
+  fun v -> V_Construct ("Some", v)
+
+let v_none : unit -> value =
+  fun () -> V_Construct ("None", v_unit ())
+
+let get_pair : value -> (value * value) result =
+  fun p ->
+    let err = simple_error "value is not a pair" in
+    ( match p with
+      | V_Record lmap ->
+        let%bind fst =  trace_option err @@
+          LMap.find_opt (Label "0") lmap in
+        let%bind snd =  trace_option err @@
+          LMap.find_opt (Label "1") lmap in
+        ok (fst,snd)
+      | _ -> fail err )
+
+let is_true : value -> bool result =
+  fun b -> match b with
+    | V_Ct (C_bool b) -> ok b
+    | _ -> simple_fail "value is not a bool"
+
+
 let apply_comparison : Ast_typed.constant -> value list -> value result =
   fun c operands -> match (c,operands) with
     | ( comp , [ V_Ct (C_int a'      ) ; V_Ct (C_int b'      ) ] )
@@ -18,7 +52,7 @@ let apply_comparison : Ast_typed.constant -> value list -> value result =
         | C_GT -> (>)
         | C_GE -> (>=)
         | _ -> failwith "apply compare must be called with a comparative constant" in
-      ok @@ V_Ct (C_bool (f_op a' b'))
+      ok @@ v_bool (f_op a' b')
 
     | ( comp     , [ V_Ct (C_string a'  ) ; V_Ct (C_string b'  ) ] )
     | ( comp     , [ V_Ct (C_address a' ) ; V_Ct (C_address b' ) ] )
@@ -32,7 +66,7 @@ let apply_comparison : Ast_typed.constant -> value list -> value result =
         | C_GT -> fun a b -> (String.compare a b > 0)
         | C_GE -> fun a b -> (String.compare a b >= 0)
         | _ -> failwith "apply compare must be called with a comparative constant" in
-      ok @@ V_Ct (C_bool (f_op a' b'))
+      ok @@ v_bool (f_op a' b')
 
     | ( comp     , [ V_Ct (C_bytes a'  ) ; V_Ct (C_bytes b'  ) ] ) ->
       let f_op = match comp with
@@ -44,15 +78,17 @@ let apply_comparison : Ast_typed.constant -> value list -> value result =
         | C_GT -> fun a b -> (Bytes.compare a b > 0)
         | C_GE -> fun a b -> (Bytes.compare a b >= 0)
         | _ -> failwith "apply compare must be called with a comparative constant" in
-      ok @@ V_Ct (C_bool (f_op a' b'))
-    | _ -> simple_fail "unsupported comparison"
+      ok @@ v_bool (f_op a' b')
+    | _ ->
+      let () = List.iter (fun el -> Format.printf "%s" (Ligo_interpreter.PP.pp_value el)) operands in
+      simple_fail "unsupported comparison"
 
 (* applying those operators does not involve extending the environment *)
 let rec apply_operator : Ast_typed.constant -> value list -> value result =
   fun c operands ->
   let return_ct v = ok @@ V_Ct v in
-  let return_none () = ok @@ V_Construct ("None" , V_Ct C_unit) in
-  let return_some v  = ok @@ V_Construct ("Some" , v) in
+  let return_none () = ok @@ v_none () in
+  let return_some v  = ok @@ v_some v in
   ( match (c,operands) with
     (* nullary *)
     | ( C_NONE , [] ) -> return_none ()
@@ -61,8 +97,13 @@ let rec apply_operator : Ast_typed.constant -> value list -> value result =
     (* unary *)
     | ( C_FAILWITH , [ V_Ct (C_string a') ] ) ->
       (*TODO This raise is here until we properly implement effects*)
-      raise (Temprorary_hack a')
+      raise (Temporary_hack a')
       (*TODO This raise is here until we properly implement effects*)
+
+    | ( C_SIZE   , [(V_Set l | V_List l)] ) -> return_ct @@ C_nat (List.length l)
+    | ( C_SIZE   , [ V_Map l            ] ) -> return_ct @@ C_nat (List.length l)
+    | ( C_SIZE   , [ V_Ct (C_string s ) ] ) -> return_ct @@ C_nat (String.length s)
+    | ( C_SIZE   , [ V_Ct (C_bytes b  ) ] ) -> return_ct @@ C_nat (Bytes.length b)
     | ( C_NOT    , [ V_Ct (C_bool a'  ) ] ) -> return_ct @@ C_bool (not a')
     | ( C_INT    , [ V_Ct (C_nat a')    ] ) -> return_ct @@ C_int a'
     | ( C_ABS    , [ V_Ct (C_int a')    ] ) -> return_ct @@ C_int (abs a')
@@ -71,20 +112,40 @@ let rec apply_operator : Ast_typed.constant -> value list -> value result =
     | ( C_IS_NAT , [ V_Ct (C_int a')    ] ) ->
       if a' > 0 then return_some @@ V_Ct (C_nat a')
       else return_none ()
+    | ( C_CONTINUE  , [ v ] ) -> ok @@ v_pair (v_bool true  , v)
+    | ( C_STOP      , [ v ] ) -> ok @@ v_pair (v_bool false , v)
+    | ( C_ASSERTION , [ v ] ) ->
+      let%bind pass = is_true v in
+      if pass then return_ct @@ C_unit
+      else raise (Temporary_hack "failed assertion")
+    | C_MAP_FIND_OPT , [ k ; V_Map l ] -> ( match List.assoc_opt k l with
+      | Some v -> ok @@ v_some v
+      | None -> ok @@ v_none ()
+    )
+    | C_MAP_FIND , [ k ; V_Map l ] -> ( match List.assoc_opt k l with
+      | Some v -> ok @@ v
+      | None -> raise (Temporary_hack "failed map find")
+    )
     (* binary *)
     | ( (C_EQ | C_NEQ | C_LT | C_LE | C_GT | C_GE) , _ ) -> apply_comparison c operands
     | ( C_SUB    , [ V_Ct (C_int a' | C_nat a') ; V_Ct (C_int b' | C_nat b') ] ) -> return_ct @@ C_int (a' - b')
-    | ( C_CONS   , [ v ; V_List vl ] ) -> ok @@ V_List (v::vl)
-    | ( C_ADD    , [ V_Ct (C_int a'  ) ; V_Ct (C_int b'  ) ] ) -> return_ct @@ C_int   (a' + b')
-    | ( C_ADD    , [ V_Ct (C_nat a'  ) ; V_Ct (C_nat b'  ) ] ) -> return_ct @@ C_nat   (a' + b')
-    | ( C_MUL    , [ V_Ct (C_int a'  ) ; V_Ct (C_int b'  ) ] ) -> return_ct @@ C_int   (a' * b')
-    | ( C_MUL    , [ V_Ct (C_nat a'  ) ; V_Ct (C_nat b'  ) ] ) -> return_ct @@ C_nat   (a' * b')
-    | ( C_MUL    , [ V_Ct (C_nat a'  ) ; V_Ct (C_mutez b') ] ) -> return_ct @@ C_mutez (a' * b')
-    | ( C_MUL    , [ V_Ct (C_mutez a') ; V_Ct (C_mutez b') ] ) -> return_ct @@ C_mutez (a' * b')
-    | ( C_DIV    , [ V_Ct (C_int a'  ) ; V_Ct (C_int b'  ) ] ) -> return_ct @@ C_int   (a' / b')
-    | ( C_DIV    , [ V_Ct (C_nat a'  ) ; V_Ct (C_nat b'  ) ] ) -> return_ct @@ C_nat   (a' / b')
-    | ( C_DIV    , [ V_Ct (C_mutez a') ; V_Ct (C_nat b'  ) ] ) -> return_ct @@ C_mutez (a' / b')
-    | ( C_DIV    , [ V_Ct (C_mutez a') ; V_Ct (C_mutez b') ] ) -> return_ct @@ C_nat   (a' / b')
+    | ( C_CONS   , [ v                  ; V_List vl          ] ) -> ok @@ V_List (v::vl)
+    | ( C_ADD    , [ V_Ct (C_int a'  )  ; V_Ct (C_int b'  )  ] ) -> return_ct @@ C_int   (a' + b')
+    | ( C_ADD    , [ V_Ct (C_nat a'  )  ; V_Ct (C_nat b'  )  ] ) -> return_ct @@ C_nat   (a' + b')
+    | ( C_ADD    , [ V_Ct (C_nat a'  )  ; V_Ct (C_int b'  )  ] ) -> return_ct @@ C_int   (a' + b')
+    | ( C_ADD    , [ V_Ct (C_int a'  )  ; V_Ct (C_nat b'  )  ] ) -> return_ct @@ C_int   (a' + b')
+    | ( C_MUL    , [ V_Ct (C_int a'  )  ; V_Ct (C_int b'  )  ] ) -> return_ct @@ C_int   (a' * b')
+    | ( C_MUL    , [ V_Ct (C_nat a'  )  ; V_Ct (C_nat b'  )  ] ) -> return_ct @@ C_nat   (a' * b')
+    | ( C_MUL    , [ V_Ct (C_nat a'  )  ; V_Ct (C_mutez b')  ] ) -> return_ct @@ C_mutez (a' * b')
+    | ( C_MUL    , [ V_Ct (C_mutez a')  ; V_Ct (C_mutez b')  ] ) -> return_ct @@ C_mutez (a' * b')
+    | ( C_DIV    , [ V_Ct (C_int a'  )  ; V_Ct (C_int b'  )  ] ) -> return_ct @@ C_int   (a' / b')
+    | ( C_DIV    , [ V_Ct (C_nat a'  )  ; V_Ct (C_nat b'  )  ] ) -> return_ct @@ C_nat   (a' / b')
+    | ( C_DIV    , [ V_Ct (C_mutez a')  ; V_Ct (C_nat b'  )  ] ) -> return_ct @@ C_mutez (a' / b')
+    | ( C_DIV    , [ V_Ct (C_mutez a')  ; V_Ct (C_mutez b')  ] ) -> return_ct @@ C_nat   (a' / b')
+    | ( C_MOD    , [ V_Ct (C_int a')    ; V_Ct (C_int b')    ] ) -> return_ct @@ C_nat   (a' mod b')
+    | ( C_MOD    , [ V_Ct (C_nat a')    ; V_Ct (C_nat b')    ] ) -> return_ct @@ C_nat   (a' mod b')
+    | ( C_MOD    , [ V_Ct (C_nat a')    ; V_Ct (C_int b')    ] ) -> return_ct @@ C_nat   (a' mod b')
+    | ( C_MOD    , [ V_Ct (C_int a')    ; V_Ct (C_nat b')    ] ) -> return_ct @@ C_nat   (a' mod b')
     | ( C_CONCAT , [ V_Ct (C_string a') ; V_Ct (C_string b') ] ) -> return_ct @@ C_string (a' ^ b')
     | ( C_CONCAT , [ V_Ct (C_bytes a' ) ; V_Ct (C_bytes b' ) ] ) -> return_ct @@ C_bytes  (Bytes.cat a' b')
     | ( C_OR     , [ V_Ct (C_bool a'  ) ; V_Ct (C_bool b'  ) ] ) -> return_ct @@ C_bool   (a' || b')
@@ -97,6 +158,15 @@ let rec apply_operator : Ast_typed.constant -> value list -> value result =
           eval body env')
         elts in
       ok @@ V_List elts'
+    | ( C_MAP_MAP , [ V_Func_val (arg_name, body, env) ; V_Map (elts) ] ) ->
+      let%bind elts' = bind_map_list
+        (fun (k,v) ->
+          let env' = Env.extend env (arg_name,v_pair (k,v)) in
+          let%bind v' = eval body env' in
+          ok @@ (k,v')
+        )
+        elts in
+      ok @@ V_Map elts'
     | ( C_LIST_ITER , [ V_Func_val (arg_name, body, env) ; V_List (elts) ] ) ->
       bind_fold_list
         (fun _ elt ->
@@ -104,98 +174,129 @@ let rec apply_operator : Ast_typed.constant -> value list -> value result =
           eval body env'
         )
         (V_Ct C_unit) elts
+    | ( C_MAP_ITER , [ V_Func_val (arg_name, body, env) ; V_Map (elts) ] ) ->
+      bind_fold_list
+        (fun _ kv ->
+          let env' = Env.extend env (arg_name,v_pair kv) in
+          eval body env'
+        )
+        (V_Ct C_unit) elts
+    | ( C_FOLD_WHILE , [ V_Func_val (arg_name, body, env) ; init ] ) ->
+      let rec aux el =
+        let%bind (b,folded_val) = get_pair el in
+        let env' = Env.extend env (arg_name, folded_val) in
+        let%bind res = eval body env' in
+        let%bind continue = is_true b in
+        if continue then aux res else ok folded_val in
+      aux @@ v_pair (v_bool true,init)
     (* tertiary *)
-    | ( C_LIST_FOLD , [ V_Func_val (arg_name, body, env) ; V_List (elts) ; init ] ) ->
+    | ( C_SLICE , [ V_Ct (C_nat st) ; V_Ct (C_nat ed) ; V_Ct (C_string s) ] ) ->
+      generic_try (simple_error "bad slice") @@ (fun () ->
+        V_Ct (C_string (String.sub s st ed))
+      )
+    | ( C_LIST_FOLD , [ V_Func_val (arg_name, body, env) ; V_List elts ; init ] ) ->
       bind_fold_list
         (fun prev elt ->
-          let fold_args = V_Record (LMap.of_list [(Label "0",prev) ; (Label "1",elt)]) in
+          let fold_args = v_pair (prev,elt) in
           let env' = Env.extend env (arg_name,  fold_args) in
           eval body env'
         )
         init elts
+    | ( C_MAP_FOLD , [ V_Func_val (arg_name, body, env) ; V_Map kvs ; init ] ) ->
+      bind_fold_list
+        (fun prev kv ->
+          let fold_args = v_pair (prev, v_pair kv) in
+          let env' = Env.extend env (arg_name,  fold_args) in
+          eval body env'
+        )
+        init kvs
+    | ( C_MAP_MEM , [ k ; V_Map kvs ] ) -> ok @@ v_bool (List.mem_assoc k kvs)
+    | ( C_MAP_ADD , [ k ; v ; V_Map kvs as vmap] ) ->
+      if (List.mem_assoc k kvs) then ok vmap
+      else ok (V_Map ((k,v)::kvs)) 
+    | ( C_MAP_REMOVE , [ k ; V_Map kvs] ) -> ok @@ V_Map (List.remove_assoc k kvs)
+    | ( C_MAP_UPDATE , [ k ; V_Construct (option,v) ; V_Map kvs] ) -> (match option with
+      | "Some" -> ok @@ V_Map ((k,v)::(List.remove_assoc k kvs))
+      | "None" -> ok @@ V_Map (List.remove_assoc k kvs)
+      | _ -> simple_fail "update without an option"
+    )
+    | ( C_SET_ADD , [ v ; V_Set l ] ) -> ok @@ V_Set (List.sort_uniq compare (v::l))
+    | ( C_SET_FOLD , [ V_Func_val (arg_name, body, env) ; V_Set elts ; init ] ) ->
+      bind_fold_list
+        (fun prev elt ->
+          let fold_args = v_pair (prev,elt) in
+          let env' = Env.extend env (arg_name, fold_args) in
+          eval body env'
+        )
+        init elts
+    | ( C_SET_ITER , [ V_Func_val (arg_name, body, env) ; V_Set (elts) ] ) ->
+      bind_fold_list
+        (fun _ elt ->
+          let env' = Env.extend env (arg_name,elt) in
+          eval body env'
+        )
+        (V_Ct C_unit) elts
+    | ( C_SET_MEM    , [ v ; V_Set (elts) ] ) -> ok @@ v_bool (List.mem v elts)
+    | ( C_SET_REMOVE , [ v ; V_Set (elts) ] ) -> ok @@ V_Set (List.filter (fun el -> not (el = v)) elts)
     | _ ->
       let () = Format.printf "%a\n" Stage_common.PP.constant c in
       let () = List.iter ( fun e -> Format.printf "%s\n" (Ligo_interpreter.PP.pp_value e)) operands in
       simple_fail "Unsupported constant op"
   )
 
-(*
-| C_NOW
-| C_ASSERTION
-| C_ASSERT_INFERRED
-| C_UPDATE
-| C_ITER
-| C_FOLD_WHILE
-| C_CONTINUE
-| C_STOP
-| C_FOLD
-| C_SUB
-| C_MOD
-| C_SIZE
-| C_SLICE
-| C_BYTES_PACK
-| C_BYTES_UNPACK
-| C_PAIR
-X| C_CAR
-X| C_CDR
-X| C_LEFT
-X| C_RIGHT
-| C_SET_EMPTY
-| C_SET_LITERAL
-| C_SET_ADD
-| C_SET_REMOVE
-| C_SET_ITER
-| C_SET_FOLD
-| C_SET_MEM
-| C_MAP
-| C_MAP_EMPTY
-| C_MAP_LITERAL
-| C_MAP_GET
-| C_MAP_GET_FORCE
-| C_MAP_ADD
-| C_MAP_REMOVE
-| C_MAP_UPDATE
-| C_MAP_ITER
-| C_MAP_MAP
-| C_MAP_FOLD
-| C_MAP_MEM
-| C_MAP_FIND
-| C_MAP_FIND_OPT
-| C_BIG_MAP
-| C_BIG_MAP_EMPTY
-| C_BIG_MAP_LITERAL
-x| C_LIST_CONS -> To remove ? seems unused
-| C_SHA256
-| C_SHA512
-| C_BLAKE2b
-| C_HASH
-| C_HASH_KEY
-| C_CHECK_SIGNATURE
-| C_CHAIN_ID
-| C_CALL
-| C_CONTRACT
-| C_CONTRACT_ENTRYPOINT
-| C_AMOUNT
-| C_BALANCE
-| C_SOURCE
-| C_SENDER
-| C_ADDRESS
-| C_SELF_ADDRESS
-| C_IMPLICIT_ACCOUNT
-| C_SET_DELEGATE
-| C_STEPS_TO_QUOTA
+(* TODO
+
+hash on bytes
+C_BLAKE2b
+C_SHA256
+C_SHA512
+hash on key
+C_HASH_KEY
+
+need exts
+C_AMOUNT
+C_BALANCE
+C_CHAIN_ID
+C_CONTRACT_ENTRYPOINT_OPT
+C_CONTRACT_OPT
+C_CONTRACT
+C_CONTRACT_ENTRYPOINT
+C_SELF_ADDRESS
+C_SOURCE
+C_SENDER
+C_NOW
+C_IMPLICIT_ACCOUNT
+
+C_CALL
+C_SET_DELEGATE
+
+C_BYTES_PACK
+C_BYTES_UNPACK
+C_CHECK_SIGNATURE
+C_ADDRESS
+
+
+WONT DO:
+C_STEPS_TO_QUOTA
+
 *)
 
 (*interpreter*)
 and eval_literal : Ast_typed.literal -> value result = function
-  | Literal_unit     -> ok @@ V_Ct (C_unit)
-  | Literal_int i    -> ok @@ V_Ct (C_int i)
-  | Literal_nat n    -> ok @@ V_Ct (C_nat n)
-  | Literal_string s -> ok @@ V_Ct (C_string s)
-  | Literal_bytes s  -> ok @@ V_Ct (C_bytes s)
-  | Literal_bool b   -> ok @@ V_Ct (C_bool b)
-  | Literal_mutez t  -> ok @@ V_Ct (C_mutez t)
-  | _ -> simple_fail "Unsupported literal"
+  | Literal_unit        -> ok @@ V_Ct (C_unit)
+  | Literal_bool b      -> ok @@ V_Ct (C_bool b)
+  | Literal_int i       -> ok @@ V_Ct (C_int i)
+  | Literal_nat n       -> ok @@ V_Ct (C_nat n)
+  | Literal_timestamp i -> ok @@ V_Ct (C_timestamp i)
+  | Literal_string s    -> ok @@ V_Ct (C_string s)
+  | Literal_bytes s     -> ok @@ V_Ct (C_bytes s)
+  | Literal_mutez t     -> ok @@ V_Ct (C_mutez t)
+  | Literal_address s   -> ok @@ V_Ct (C_address s)
+  | Literal_signature s -> ok @@ V_Ct (C_signature s)
+  | Literal_key s       -> ok @@ V_Ct (C_key s)
+  | Literal_key_hash s  -> ok @@ V_Ct (C_key_hash s)
+  | Literal_chain_id s  -> ok @@ V_Ct (C_key_hash s)
+  | Literal_operation o -> ok @@ V_Ct (C_operation o)
 
 and eval : Ast_typed.expression -> env -> value result
   = fun term env ->
@@ -226,6 +327,12 @@ and eval : Ast_typed.expression -> env -> value result
         (fun (exp:Ast_typed.annotated_expression) -> eval exp.expression env)
         expl in
       ok @@ V_List expl'
+    | E_set expl ->
+      let%bind expl' = bind_map_list
+        (fun (exp:Ast_typed.annotated_expression) -> eval exp.expression env)
+        (List.sort_uniq compare expl)
+      in
+      ok @@ V_Set expl'
     | E_literal l ->
       eval_literal l
     | E_variable var ->
@@ -320,7 +427,7 @@ and eval : Ast_typed.expression -> env -> value result
     (**********************************************
     This is not necessary after Ast simplification
     ***********************************************)
-    | E_look_up _ | E_loop _ | E_set _ | E_sequence _ | E_assign  _->
+    | E_look_up _ | E_loop _ | E_sequence _ | E_assign  _->
       let serr = Format.asprintf "Unsupported construct :\n %a\n" Ast_typed.PP.expression term in
       simple_fail serr
 
@@ -333,7 +440,7 @@ let dummy : Ast_typed.program -> string result =
         (*TODO This TRY-CATCH is here until we properly implement effects*)
         try
           eval named_exp.annotated_expression.expression top_env
-        with Temprorary_hack s -> ok @@ V_Failure s
+        with Temporary_hack s -> ok @@ V_Failure s
         (*TODO This TRY-CATCH is here until we properly implement effects*)
         in
         let pp' = pp^"\n val "^(Var.to_name named_exp.name)^" = "^(Ligo_interpreter.PP.pp_value v) in

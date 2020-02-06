@@ -9,6 +9,7 @@ let rec pp_value : value -> string = function
   | V_Ct (C_bool false) -> Format.asprintf "false"
   | V_Ct (C_bytes b) -> Format.asprintf "0x%a : bytes" Hex.pp (Hex.of_bytes b)
   | V_Ct (C_mutez i) -> Format.asprintf "%i : mutez" i 
+  | V_Ct (C_address s) -> Format.asprintf "\"%s\" : address" s
   | V_Ct _ -> Format.asprintf "PP, TODO"
   | V_Failure s -> Format.asprintf "\"%s\" : failure " s
   | V_Record recmap ->
@@ -20,13 +21,13 @@ let rec pp_value : value -> string = function
   | V_Func_val _ -> Format.asprintf "<fun>"
   | V_Construct (name,v) -> Format.asprintf "%s(%s)" name (pp_value v)
   | V_List vl ->
-    Format.asprintf "[ %s ]" @@
+    Format.asprintf "[%s]" @@
       List.fold_left (fun prev v -> Format.asprintf "%s ; %s" prev (pp_value v)) "" vl
   | V_Map vmap ->
-    Format.asprintf "[ %s ]" @@
+    Format.asprintf "[%s]" @@
       List.fold_left (fun prev (k,v) -> Format.asprintf "%s ; %s -> %s" prev (pp_value k) (pp_value v)) "" vmap
   | V_Set slist ->
-    Format.asprintf "{ %s }" @@
+    Format.asprintf "{%s}" @@
       List.fold_left (fun prev v -> Format.asprintf "%s ; %s" prev (pp_value v)) "" slist
 
 let pp_env : env -> unit = fun env ->

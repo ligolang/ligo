@@ -9,7 +9,7 @@ module Env = Map.Make(
 )
 
 (*TODO temporary hack to handle failwiths *)
-exception Temprorary_hack of string
+exception Temporary_hack of string
 
 type env = value Env.t
 
