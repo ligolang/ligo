@@ -128,43 +128,39 @@ let my_list : list (int) = [1, 2, 2]; // The head is 1
 
 ### Adding to a List
 
-<!--DOCUSAURUS_CODE_TABS-->
 
 Lists can be augmented by adding an element before the head (or, in
 terms of stack, by *pushing an element on top*). This operation is
 usually called *consing* in functional languages.
-
-<!--Pascaligo-->
 
 In PascaLIGO, the *cons operator* is infix and noted `#`. It is not
 symmetric: on the left lies the element to cons, and, on the right, a
 list on which to cons. (The symbol is helpfully asymmetric to remind
 you of that.)
 
-```pascaligo group=b
-const larger_list : list (int) = 5 # my_list
-```
-
-<!--CameLIGO-->
-
 In CameLIGO, the *cons operator* is infix and noted `::`. It is not
 symmetric: on the left lies the element to cons, and, on the right, a
 list on which to cons.
-
-```cameligo group=b
-let larger_list : int list = 5 :: my_list
-```
-
-<!--ReasonLIGO-->
 
 In ReasonLIGO, the *cons operator* is infix and noted `, ...`. It is
 not symmetric: on the left lies the element to cons, and, on the
 right, a list on which to cons.
 
+<!--DOCUSAURUS_CODE_TABS-->
+<!--Pascaligo-->
+```pascaligo group=b
+const larger_list : list (int) = 5 # my_list
+```
+
+<!--CameLIGO-->
+```cameligo group=b
+let larger_list : int list = 5 :: my_list
+```
+
+<!--ReasonLIGO-->
 ```reasonligo group=b
 let larger_list : list (int) = [5, ...my_list];
 ```
-
 <!--END_DOCUSAURUS_CODE_TABS-->
 
 <br/>
@@ -187,41 +183,32 @@ functions in LIGO. They take as a parameter the function to apply to
 all the elements. Of course, that function must return a value of the
 same type as the element.
 
-<!--DOCUSAURUS_CODE_TABS-->
-
-<!--Pascaligo-->
-
 In PascaLIGO, the map function is called `list_map`.
 
+In CameLIGO and ReasonLIGO, the map function is called `List.map`.
+
+<!--DOCUSAURUS_CODE_TABS-->
+<!--Pascaligo-->
 ```pascaligo group=b
 function increment (const i : int): int is i + 1
 
 // Creates a new list with all elements incremented by 1
 const plus_one : list (int) = list_map (increment, larger_list)
 ```
-
 <!--CameLIGO-->
-
-In CameLIGO, the map function is called `List.map`.
-
 ```cameligo group=b
 let increment (i : int) : int = i + 1
 
 // Creates a new list with all elements incremented by 1
 let plus_one : int list = List.map increment larger_list
 ```
-
 <!--ReasonLIGO-->
-
-In CameLIGO, the map function is called `List.map`.
-
 ```reasonligo group=b
 let increment = (i : int) : int => i + 1;
 
 // Creates a new list with all elements incremented by 1
 let plus_one : list (int) = List.map (increment, larger_list);
 ```
-
 <!--END_DOCUSAURUS_CODE_TABS-->
 
 
@@ -278,16 +265,17 @@ let my_set : set (int) = (Set.empty : set (int));
 
 ### Non-empty Sets
 
-<!--DOCUSAURUS_CODE_TABS-->
 
-<!--Pascaligo-->
 
 In PascaLIGO, the notation for sets is similar to that for lists,
 except the keyword `set` is used before:
 
+<!--DOCUSAURUS_CODE_TABS-->
+<!--Pascaligo-->
 ```pascaligo group=a
 const my_set : set (int) = set [3; 2; 2; 1]
 ```
+<!--END_DOCUSAURUS_CODE_TABS-->
 
 You can check that `2` is not repeated in `my_set` by using the LIGO
 compiler like this (the output will sort the elements of the set, but
@@ -299,16 +287,17 @@ gitlab-pages/docs/language-basics/src/sets-lists-tuples/sets.ligo my_set
 # Outputs: { 3 ; 2 ; 1 }
 ```
 
-<!--CameLIGO-->
-
 In CameLIGO, there is no predefined syntactic construct for sets: you
 must build your set by adding to the empty set. (This is the way in
 OCaml.)
 
+<!--DOCUSAURUS_CODE_TABS-->
+<!--CameLIGO-->
 ```cameligo group=a
 let my_set : int set =
   Set.add 3 (Set.add 2 (Set.add 2 (Set.add 1 (Set.empty : int set))))
 ```
+<!--END_DOCUSAURUS_CODE_TABS-->
 
 You can check that `2` is not repeated in `my_set` by using the LIGO
 compiler like this (the output will sort the elements of the set, but
@@ -320,16 +309,17 @@ gitlab-pages/docs/language-basics/src/sets-lists-tuples/sets.mligo my_set
 # Outputs: { 3 ; 2 ; 1 }
 ```
 
-<!--ReasonLIGO-->
-
 In ReasonLIGO, there is no predefined syntactic construct for sets:
 you must build your set by adding to the empty set. (This is the way
 in OCaml.)
 
+<!--DOCUSAURUS_CODE_TABS-->
+<!--ReasonLIGO-->
 ```reasonligo group=a
 let my_set : set (int) =
   Set.add (3, Set.add (2, Set.add (2, Set.add (1, Set.empty : set (int)))));
 ```
+<!--END_DOCUSAURUS_CODE_TABS-->
 
 You can check that `2` is not repeated in `my_set` by using the LIGO
 compiler like this (the output will sort the elements of the set, but
@@ -341,71 +331,63 @@ gitlab-pages/docs/language-basics/src/sets-lists-tuples/sets.religo my_set
 # Outputs: { 3 ; 2 ; 1 }
 ```
 
-<!--END_DOCUSAURUS_CODE_TABS-->
-
 ### Set Membership
 
-<!--DOCUSAURUS_CODE_TABS-->
 
-<!--Pascaligo-->
 
 PascaLIGO features a special keyword `constains` that operates like an
 infix operator checking membership in a set.
 
+<!--DOCUSAURUS_CODE_TABS-->
+<!--Pascaligo-->
 ```pascaligo group=a
 const contains_3 : bool = my_set contains 3
 ```
-
 <!--CameLIGO-->
 ```cameligo group=a
 let contains_3 : bool = Set.mem 3 my_set
 ```
-
 <!--ReasonLIGO-->
 ```reasonligo group=a
 let contains_3 : bool = Set.mem (3, my_set);
 ```
-
 <!--END_DOCUSAURUS_CODE_TABS-->
 
 
 ### Cardinal
 
 <!--DOCUSAURUS_CODE_TABS-->
-
 <!--Pascaligo-->
 ```pascaligo group=a
 const set_size : nat = size (my_set)
 ```
-
 <!--CameLIGO-->
 ```cameligo group=a
 let set_size : nat = Set.size my_set
 ```
-
 <!--ReasonLIGO-->
 ```reasonligo group=a
 let set_size : nat = Set.size (my_set);
 ```
-
 <!--END_DOCUSAURUS_CODE_TABS-->
 
 
 ### Adding or Removing from a Set
 
-<!--DOCUSAURUS_CODE_TABS-->
 
-<!--Pascaligo-->
 
 In PascaLIGO, there are two ways to update a set. Either we create a
 new set from the given one, or we modify it in-place. First, let us
 consider the former:
 
+<!--DOCUSAURUS_CODE_TABS-->
+<!--Pascaligo-->
 ```pascaligo group=a
 const larger_set  : set (int) = set_add (4, my_set)
 
 const smaller_set : set (int) = set_remove (3, my_set)
 ```
+<!--END_DOCUSAURUS_CODE_TABS-->
 
 If we are in a block, we can use an instruction to modify the set
 bound to a given variable. This is called a *patch*. It is only
@@ -418,61 +400,69 @@ this instruction is equivalent to perform the union of two sets, one
 that is modified in-place, and the other given as a literal
 (extensional definition).
 
-``pascaligo group=a
+<!--DOCUSAURUS_CODE_TABS-->
+<!--Pascaligo-->
+```pascaligo group=a
 function update (var s : set (int)) : set (int) is block {
   patch s with set [4; 7]
 } with s
 
 const new_set : set (int) = update (my_set)
 ```
+<!--END_DOCUSAURUS_CODE_TABS-->
 
-<!--CameLIGO-->
 
 In CameLIGO, we update a given set by creating another one, with or
 without some elements.
 
+<!--DOCUSAURUS_CODE_TABS-->
+<!--CameLIGO-->
 ```cameligo group=a
 let larger_set  : int set = Set.add 4 my_set
 
 let smaller_set : int set = Set.remove 3 my_set
 ```
+<!--END_DOCUSAURUS_CODE_TABS-->
 
-<!--ReasonLIGO-->
 
 In ReasonLIGO, we update a given set by creating another one, with or
 without some elements.
 
+<!--DOCUSAURUS_CODE_TABS-->
+<!--ReasonLIGO-->
 ```reasonligo group=a
 let larger_set  : set (int) = Set.add (4, my_set);
 
 let smaller_set : set (int) = Set.remove (3, my_set);
 ```
-
 <!--END_DOCUSAURUS_CODE_TABS-->
 
 
 ### Folding over a Set
 
-<!--DOCUSAURUS_CODE_TABS-->
 
 Given a set, we may want to apply a function in turn to all the
 elements it contains, while accumulating some value which is returned
 at the end. This is a *fold operation*. In the following example, we
 sum up all the elements of the set `my_set` defined above.
 
-<!--Pascaligo-->
 
 In PascaLIGO, the folded function takes the accumulator first and the
 (current) set element second. The predefined fold is called `set_fold`.
 
+<!--DOCUSAURUS_CODE_TABS-->
+<!--Pascaligo-->
 ```pascaligo group=a
 function sum (const acc : int; const i : int): int is acc + i
 
 const sum_of_elements : int = set_fold (sum, my_set, 0)
 ```
+<!--END_DOCUSAURUS_CODE_TABS-->
 
 It is possible to use a *loop* over a set as well.
 
+<!--DOCUSAURUS_CODE_TABS-->
+<!--Pascaligo-->
 ```pascaligo group=a
 function loop (const s : set (int)) : int is block {
   var sum : int := 0;
@@ -481,26 +471,27 @@ function loop (const s : set (int)) : int is block {
   }
 } with sum
 ```
-
-<!--CameLIGO-->
+<!--END_DOCUSAURUS_CODE_TABS-->
 
 In CameLIGO, the predefined fold over sets is called `Set.fold`.
 
+<!--DOCUSAURUS_CODE_TABS-->
+<!--CameLIGO-->
 ```cameligo group=a
 let sum (acc, i : int * int) : int = acc + i
 
 let sum_of_elements : int = Set.fold sum my_set 0
 ```
+<!--END_DOCUSAURUS_CODE_TABS-->
 
-<!--ReasonLIGO-->
-`
 In ReasonLIGO, the predefined fold over sets is called `Set.fold`.
 
-``reasonligo group=a
+<!--DOCUSAURUS_CODE_TABS-->
+<!--ReasonLIGO-->
+```reasonligo group=a
 let sum = ((acc, i) : (int, int)) : int => acc + i;
 
 let sum_of_elements : int = Set.fold (sum, my_set, 0);
 ```
 <!--END_DOCUSAURUS_CODE_TABS-->
 
-<!--END_DOCUSAURUS_CODE_TABS-->
