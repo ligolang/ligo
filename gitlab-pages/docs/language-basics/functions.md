@@ -205,3 +205,54 @@ ligo evaluate-value gitlab-pages/docs/language-basics/src/functions/anon.religo 
 ```
 
 <!--END_DOCUSAURUS_CODE_TABS-->
+
+If the example above seems contrived, here is a more common design
+pattern for lambdas: to be used as parameters to functions. Consider
+the use case of having a list of integers and mapping the increment
+function to all its elements.
+
+<!--DOCUSAURUS_CODE_TABS-->
+<!--Pascaligo-->
+```pascaligo group=c
+function incr_map (const l : list (int)) : list (int) is
+  list_map (function (const i : int) : int is i + 1, l)
+```
+You can call the function `incr_map` defined above using the LIGO compiler
+like so:
+```shell
+ligo run-function
+gitlab-pages/docs/language-basics/src/functions/incr_map.ligo incr_map
+"list [1;2;3]"
+# Outputs: [ 2 ; 3 ; 4 ]
+```
+
+<!--Cameligo-->
+```cameligo group=c
+let incr_map (l : int list) : int list =
+  List.map (fun (i : int) -> i + 1) l
+```
+You can call the function `incr_map` defined above using the LIGO compiler
+like so:
+```shell
+ligo run-function
+gitlab-pages/docs/language-basics/src/functions/incr_map.mligo incr_map
+"list [1;2;3]"
+# Outputs: [ 2 ; 3 ; 4 ]
+```
+
+<!--Reasonligo-->
+```reasonligo group=c
+let incr_map = (l : list (int)) : list (int) =>
+  List.map ((i : int) => i + 1, l);
+```
+You can call the function `incr_map` defined above using the LIGO compiler
+like so:
+```shell
+ligo run-function
+gitlab-pages/docs/language-basics/src/functions/incr_map.religo incr_map
+"list [1;2;3]"
+# Outputs: [ 2 ; 3 ; 4 ]
+```
+
+
+<!--END_DOCUSAURUS_CODE_TABS-->
