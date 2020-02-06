@@ -1122,7 +1122,7 @@ module Compiler = struct
     | C_SIZE            -> ok @@ simple_unary @@ prim I_SIZE
     | C_FAILWITH        -> ok @@ simple_unary @@ prim I_FAILWITH
     | C_ASSERT_INFERRED -> ok @@ simple_binary @@ i_if (seq [i_failwith]) (seq [i_drop ; i_push_unit])
-    | C_ASSERTION       -> ok @@ simple_unary @@ i_if (seq [i_push_unit]) (seq [i_push_unit ; i_failwith])
+    | C_ASSERTION       -> ok @@ simple_unary @@ i_if (seq [i_push_unit]) (seq [i_push_string "failed assertion" ; i_failwith])
     | C_INT             -> ok @@ simple_unary @@ prim I_INT
     | C_ABS             -> ok @@ simple_unary @@ prim I_ABS
     | C_IS_NAT          -> ok @@ simple_unary @@ prim I_ISNAT
