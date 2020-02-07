@@ -39,8 +39,7 @@ the string "tata" given to the function below would return "at".
 <!--DOCUSAURUS_CODE_TABS-->
 <!--PascaLIGO-->
 ```pascaligo
-function slice_op (const s : string) : string is
-  begin skip end with string_slice(1n , 2n , s)
+function slice_op (const s : string) : string is string_slice(1n , 2n , s)
 ```
 <!--CameLIGO-->
 ```cameligo
@@ -64,8 +63,7 @@ Concatenate two strings and return the result.
 
 <!--PascaLIGO-->
 ```pascaligo
-function concat_op (const s : string) : string is
-  begin skip end with string_concat(s , "toto")
+function concat_op (const s : string) : string is s ^ "toto"
 ```
 
 <!--CameLIGO-->
