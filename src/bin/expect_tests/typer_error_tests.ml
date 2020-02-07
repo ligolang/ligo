@@ -41,7 +41,7 @@ let%expect_test _ =
 
   run_ligo_bad [ "compile-contract" ; "../../test/contracts/negative/error_typer_3.mligo" ; "main" ] ;
   [%expect {|
-    ligo: in file "error_typer_3.mligo", line 3, characters 34-53. records have different sizes: Expected these two types to be the same, but they're different (both are records, but with a different number of arguments) {"a":"record[2 -> bool , 1 -> string , 0 -> int]","b":"record[1 -> string , 0 -> int]"}
+    ligo: in file "error_typer_3.mligo", line 3, characters 34-53. records have different sizes: Expected these two types to be the same, but they're different (both are records, but with a different number of arguments) {"a":"record[0 -> int , 1 -> string , 2 -> bool]","b":"record[0 -> int , 1 -> string]"}
 
 
      If you're not sure how to fix this error, you can
@@ -93,7 +93,7 @@ let%expect_test _ =
 
   run_ligo_bad [ "compile-contract" ; "../../test/contracts/negative/error_typer_7.mligo" ; "main" ] ;
   [%expect {|
-    ligo: in file "error_typer_7.mligo", line 4, characters 18-48. records have different sizes: Expected these two types to be the same, but they're different (both are records, but with a different number of arguments) {"a":"record[b -> string , a -> int]","b":"record[c -> bool , b -> string , a -> int]"}
+    ligo: in file "error_typer_7.mligo", line 4, characters 18-48. records have different sizes: Expected these two types to be the same, but they're different (both are records, but with a different number of arguments) {"a":"record[a -> int , b -> string]","b":"record[a -> int , b -> string , c -> bool]"}
 
 
      If you're not sure how to fix this error, you can
@@ -106,7 +106,7 @@ let%expect_test _ =
 
   run_ligo_bad [ "compile-contract" ; "../../test/contracts/negative/id.mligo" ; "main" ] ;
   [%expect {|
-    ligo: in file "id.mligo", line 45, characters 4-51. Expected a different type: Expected the type option but got the type record[profile -> bytes , owner -> address , controller -> address]
+    ligo: in file "id.mligo", line 45, characters 4-51. Expected a different type: Expected the type option but got the type record[controller -> address , owner -> address , profile -> bytes]
 
      If you're not sure how to fix this error, you can
      do one of the following:

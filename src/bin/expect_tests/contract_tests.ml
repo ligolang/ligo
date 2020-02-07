@@ -26,7 +26,7 @@ let%expect_test _ =
 
   run_ligo_bad [ "compile-storage" ; contract "coase.ligo" ; "main" ; "Buy_single (record card_to_buy = 1n end)" ] ;
   [%expect {|
-    ligo: different kinds:  {"a":"record[next_id -> nat , cards -> (TO_Map (nat,record[card_pattern -> nat , card_owner -> address])) , card_patterns -> (TO_Map (nat,record[quantity -> nat , coefficient -> mutez]))]","b":"sum[Transfer_single -> record[destination -> address , card_to_transfer -> nat] , Sell_single -> record[card_to_sell -> nat] , Buy_single -> record[card_to_buy -> nat]]"}
+    ligo: different kinds:  {"a":"record[card_patterns -> (TO_Map (nat,record[coefficient -> mutez , quantity -> nat])) , cards -> (TO_Map (nat,record[card_owner -> address , card_pattern -> nat])) , next_id -> nat]","b":"sum[Buy_single -> record[card_to_buy -> nat] , Sell_single -> record[card_to_sell -> nat] , Transfer_single -> record[card_to_transfer -> nat , destination -> address]]"}
 
 
      If you're not sure how to fix this error, you can
@@ -39,7 +39,7 @@ let%expect_test _ =
 
   run_ligo_bad [ "compile-parameter" ; contract "coase.ligo" ; "main" ; "record cards = (map end : cards) ; card_patterns = (map end : card_patterns) ; next_id = 3n ; end" ] ;
   [%expect {|
-    ligo: different kinds:  {"a":"sum[Transfer_single -> record[destination -> address , card_to_transfer -> nat] , Sell_single -> record[card_to_sell -> nat] , Buy_single -> record[card_to_buy -> nat]]","b":"record[next_id -> nat , cards -> (TO_Map (nat,record[card_pattern -> nat , card_owner -> address])) , card_patterns -> (TO_Map (nat,record[quantity -> nat , coefficient -> mutez]))]"}
+    ligo: different kinds:  {"a":"sum[Buy_single -> record[card_to_buy -> nat] , Sell_single -> record[card_to_sell -> nat] , Transfer_single -> record[card_to_transfer -> nat , destination -> address]]","b":"record[card_patterns -> (TO_Map (nat,record[coefficient -> mutez , quantity -> nat])) , cards -> (TO_Map (nat,record[card_owner -> address , card_pattern -> nat])) , next_id -> nat]"}
 
 
      If you're not sure how to fix this error, you can
@@ -1092,11 +1092,11 @@ let%expect_test _ =
 
 let%expect_test _ =
     run_ligo_good [ "dry-run" ; contract "redeclaration.ligo" ; "main" ; "unit" ; "0" ] ;
-    [%expect {|record[1 -> 0 , 0 -> list[]] |}]
+    [%expect {|record[0 -> list[] , 1 -> 0] |}]
 
 let%expect_test _ =
     run_ligo_good [ "dry-run" ; contract "double_main.ligo" ; "main" ; "unit" ; "0" ] ;
-    [%expect {|record[1 -> 2 , 0 -> list[]] |}]
+    [%expect {|record[0 -> list[] , 1 -> 2] |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile-contract" ; contract "subtle_nontail_fail.mligo" ; "main" ] ;

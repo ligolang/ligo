@@ -11,11 +11,13 @@ let label ppf (l:label) : unit =
 
 let cmap_sep value sep ppf m =
   let lst = CMap.to_kv_list m in
+  let lst = List.sort (fun (Constructor a,_) (Constructor b,_) -> String.compare a b) lst in
   let new_pp ppf (k, v) = fprintf ppf "%a -> %a" constructor k value v in
   fprintf ppf "%a" (list_sep new_pp sep) lst
 
 let lmap_sep value sep ppf m =
   let lst = LMap.to_kv_list m in
+  let lst = List.sort (fun (Label a,_) (Label b,_) -> String.compare a b) lst in
   let new_pp ppf (k, v) = fprintf ppf "%a -> %a" label k value v in
   fprintf ppf "%a" (list_sep new_pp sep) lst
 
