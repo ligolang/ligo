@@ -24,7 +24,7 @@ let rec expression ppf (e : expression) =
       fprintf ppf "%a(%a)" constant c.cons_name (list_sep_d expression)
         c.arguments
   | E_record m ->
-      fprintf ppf "record[%a]" (lmap_sep expression (const " , ")) m
+      fprintf ppf "%a" (tuple_or_record_sep_expr expression) m
   | E_record_accessor ra ->
       fprintf ppf "%a.%a" expression ra.expr label ra.label
   | E_record_update {record; path; update} ->

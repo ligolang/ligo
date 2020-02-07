@@ -43,29 +43,49 @@ module Errors = struct
     ] in
     error ~data title message ()
 
-  let different_size_type name a b () =
-    let title () = name ^ " have different sizes" in
-    let message () = "Expected these two types to be the same, but they're different (both are " ^ name ^ ", but with a different number of arguments)" in
+  let different_size_type names a b () =
+    let title () = names ^ " have different sizes" in
+    let message () = "Expected these two types to be the same, but they're different (both are " ^ names ^ ", but with a different number of arguments)" in
     let data = [
       ("a" , fun () -> Format.asprintf "%a" PP.type_expression a) ;
-      ("b" , fun () -> Format.asprintf "%a" PP.type_expression b )
+      ("b" , fun () -> Format.asprintf "%a" PP.type_expression b)
     ] in
     error ~data title message ()
 
-  let different_props_in_record ka kb () =
-    let title () = "different keys in record" in
+  let different_props_in_record a b ra rb ka kb () =
+    let names () = if Stage_common.Helpers.is_tuple_lmap ra && Stage_common.Helpers.is_tuple_lmap rb then "tuples" else "records" in
+    let title () = "different keys in " ^ (names ()) in
     let message () = "" in
     let data = [
       ("key_a" , fun () -> Format.asprintf "%s" ka) ;
-      ("key_b" , fun () -> Format.asprintf "%s" kb )
+      ("key_b" , fun () -> Format.asprintf "%s" kb ) ;
+      ("a" , fun () -> Format.asprintf "%a" PP.type_expression a) ;
+      ("b" , fun () -> Format.asprintf "%a" PP.type_expression b ) ;
     ] in
     error ~data title message ()
+
+  let different_kind_record_tuple a b ra rb () =
+    let name_a () = if Stage_common.Helpers.is_tuple_lmap ra then "tuple" else "record" in
+    let name_b () = if Stage_common.Helpers.is_tuple_lmap rb then "tuple" else "record" in
+    let title () = "different keys in " ^ (name_a ()) ^ " and " ^ (name_b ()) in
+    let message () = "Expected these two types to be the same, but they're different (one is a " ^ (name_a ()) ^ " and the other is a " ^ (name_b ()) ^ ")" in
+    let data = [
+      ("a" , fun () -> Format.asprintf "%a" PP.type_expression a) ;
+      ("b" , fun () -> Format.asprintf "%a" PP.type_expression b ) ;
+    ] in
+    error ~data title message ()
+
 
   let _different_size_constants = different_size_type "type constructors"
 
   let different_size_sums = different_size_type "sums"
 
-  let different_size_records = different_size_type "records"
+  let different_size_records_tuples a b ra rb =
+    different_size_type
+      (if Stage_common.Helpers.is_tuple_lmap ra && Stage_common.Helpers.is_tuple_lmap rb
+       then "tuples"
+       else "records")
+      a b
 
   let different_types name a b () =
     let title () = name ^ " are different" in
@@ -348,20 +368,25 @@ let rec assert_type_expression_eq (a, b: (type_expression * type_expression)) : 
       bind_list_iter aux (List.combine sa' sb')
     )
   | T_sum _, _ -> fail @@ different_kinds a b
+  | T_record ra, T_record rb
+       when Stage_common.Helpers.is_tuple_lmap ra <> Stage_common.Helpers.is_tuple_lmap rb -> (
+    fail @@ different_kind_record_tuple a b ra rb
+  )
   | T_record ra, T_record rb -> (
-      let ra' = LMap.to_kv_list ra in
-      let rb' = LMap.to_kv_list rb in
+      let sort_lmap r' = List.sort (fun (Label a,_) (Label b,_) -> String.compare a b) r' in
+      let ra' = sort_lmap @@ LMap.to_kv_list ra in
+      let rb' = sort_lmap @@ LMap.to_kv_list rb in
       let aux ((ka, va), (kb, vb)) =
         let%bind _ =
           trace (different_types "records" a b) @@
           let Label ka = ka in
           let Label kb = kb in
-          trace_strong (different_props_in_record ka kb) @@
+          trace_strong (different_props_in_record a b ra rb ka kb) @@
           Assert.assert_true (ka = kb) in
         assert_type_expression_eq (va, vb)
       in
       let%bind _ =
-        trace_strong (different_size_records a b)
+        trace_strong (different_size_records_tuples a b ra rb)
         @@ Assert.assert_list_same_size ra' rb' in
       trace (different_types "record type" a b)
       @@ bind_list_iter aux (List.combine ra' rb')

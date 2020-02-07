@@ -41,7 +41,7 @@ let%expect_test _ =
 
   run_ligo_bad [ "compile-contract" ; "../../test/contracts/negative/error_typer_3.mligo" ; "main" ] ;
   [%expect {|
-    ligo: in file "error_typer_3.mligo", line 3, characters 34-53. records have different sizes: Expected these two types to be the same, but they're different (both are records, but with a different number of arguments) {"a":"record[0 -> int , 1 -> string , 2 -> bool]","b":"record[0 -> int , 1 -> string]"}
+    ligo: in file "error_typer_3.mligo", line 3, characters 34-53. tuples have different sizes: Expected these two types to be the same, but they're different (both are tuples, but with a different number of arguments) {"a":"( int * string * bool )","b":"( int * string )"}
 
 
      If you're not sure how to fix this error, you can
@@ -54,7 +54,7 @@ let%expect_test _ =
 
   run_ligo_bad [ "compile-contract" ; "../../test/contracts/negative/error_typer_4.mligo" ; "main" ] ;
   [%expect {|
-    ligo: in file "error_typer_4.mligo", line 4, characters 17-56. different keys in record:  {"key_a":"d","key_b":"c"}
+    ligo: in file "error_typer_4.mligo", line 4, characters 17-56. different keys in records:  {"key_a":"c","key_b":"b","a":"record[a -> int , c -> bool , d -> string]","b":"record[a -> int , b -> string , c -> bool]"}
 
 
      If you're not sure how to fix this error, you can

@@ -2,7 +2,6 @@ open Types
 open Format
 open PP_helpers
 
-
 let constructor ppf (c:constructor') : unit =
   let Constructor c = c in fprintf ppf "%s" c
 
@@ -15,15 +14,31 @@ let cmap_sep value sep ppf m =
   let new_pp ppf (k, v) = fprintf ppf "%a -> %a" constructor k value v in
   fprintf ppf "%a" (list_sep new_pp sep) lst
 
-let lmap_sep value sep ppf m =
+let record_sep value sep ppf (m : 'a label_map) =
   let lst = LMap.to_kv_list m in
   let lst = List.sort (fun (Label a,_) (Label b,_) -> String.compare a b) lst in
   let new_pp ppf (k, v) = fprintf ppf "%a -> %a" label k value v in
   fprintf ppf "%a" (list_sep new_pp sep) lst
 
+let tuple_sep value sep ppf m =
+  assert (Helpers.is_tuple_lmap m);
+  let lst = LMap.to_kv_list m in
+  let lst = List.sort (fun (Label a,_) (Label b,_) -> String.compare a b) lst in
+  let new_pp ppf (_k, v) = fprintf ppf "%a" value v in
+  fprintf ppf "%a" (list_sep new_pp sep) lst
+
+(* Prints records which only contain the consecutive fields
+   0..(cardinal-1) as tuples *)
+let tuple_or_record_sep value format_record sep_record format_tuple sep_tuple ppf m =
+  if Helpers.is_tuple_lmap m then
+    fprintf ppf format_tuple (tuple_sep value (const sep_tuple)) m
+  else
+    fprintf ppf format_record (record_sep value (const sep_record)) m
+
 let list_sep_d x = list_sep x (const " , ")
 let cmap_sep_d x = cmap_sep x (const " , ")
-let lmap_sep_d x = lmap_sep x (const " , ")
+let tuple_or_record_sep_expr value = tuple_or_record_sep value "record[%a]" " , " "( %a )" " , "
+let tuple_or_record_sep_type value = tuple_or_record_sep value "record[%a]" " , " "( %a )" " * "
 
 let constant ppf : constant' -> unit = function
   | C_INT                   -> fprintf ppf "INT"
@@ -183,7 +198,7 @@ module Ast_PP_type (PARAMETER : AST_PARAMETER_TYPE) = struct
     | T_sum m ->
         fprintf ppf "sum[%a]" (cmap_sep_d f) m
     | T_record m ->
-        fprintf ppf "record[%a]" (lmap_sep_d f) m
+        fprintf ppf "%a" (tuple_or_record_sep_type f) m
     | T_arrow a ->
         fprintf ppf "%a -> %a" f a.type1 f a.type2
     | T_variable tv ->

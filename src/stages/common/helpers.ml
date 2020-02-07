@@ -28,3 +28,13 @@ let bind_fold_lmap f init (lmap:_ LMap.t) =
 
 let bind_map_lmap f map = bind_lmap (LMap.map f map)
 let bind_map_cmap f map = bind_cmap (CMap.map f map)
+
+let range i j =
+  let rec aux i j acc = if i >= j then acc else aux i (j-1) (j-1 :: acc) in
+  aux i j []
+
+let label_range i j =
+  List.map (fun i -> Label (string_of_int i)) @@ range i j
+
+let is_tuple_lmap m =
+  List.for_all (fun i -> LMap.mem i m) @@ (label_range 0 (LMap.cardinal m))

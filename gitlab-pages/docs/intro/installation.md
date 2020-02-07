@@ -20,7 +20,7 @@ If this is your first time using Docker, you probably want to set up a global LI
 
 ### Setting up a globally available `ligo` executable
 
-> You can install additional ligo versions by replacing `next` with the required version number
+> You can install additional ligo versions by replacing `next` with the desired version number
 
 Download the latest binaries here: https://gitlab.com/ligolang/ligo/pipelines/85536879/builds or get the latest pre-release:
 

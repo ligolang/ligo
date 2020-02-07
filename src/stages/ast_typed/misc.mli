@@ -46,6 +46,7 @@ module Errors : sig
   val different_size_tuples : type_expression -> type_expression -> unit -> error
   val different_size_sums : type_expression -> type_expression -> unit -> error
   val different_size_records : type_expression -> type_expression -> unit -> error
+  val different_size_tuples : type_expression -> type_expression -> unit -> error
   val different_types : name -> type_expression -> type_expression -> unit -> error
   val different_literals : name -> literal -> literal -> unit -> error
   val different_values : name -> value -> value -> unit -> error
