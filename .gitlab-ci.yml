@@ -131,7 +131,7 @@ build-and-publish-latest-docker-image:
     - sh scripts/build_docker_image.sh
     - sh scripts/test_cli.sh
     - docker login -u $LIGO_REGISTRY_USER -p $LIGO_REGISTRY_PASSWORD
-    - docker push $LIGO_REGISTRY_IMAGE:next
+    - docker push $LIGO_REGISTRY_IMAGE_BASE_NAME:next
   only:
     - dev
 
