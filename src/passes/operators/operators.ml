@@ -66,7 +66,7 @@ module Simplify = struct
   module Pascaligo = struct
 
     let constants = function
-      | "get_force"       -> ok C_MAP_FIND
+      | "assert"          -> ok C_ASSERTION
       | "get_chain_id"    -> ok C_CHAIN_ID
       | "transaction"     -> ok C_CALL
       | "get_contract"    -> ok C_CONTRACT
@@ -106,6 +106,7 @@ module Simplify = struct
       | "list_iter"       -> ok C_LIST_ITER
       | "list_fold"       -> ok C_LIST_FOLD
       | "list_map"        -> ok C_LIST_MAP
+      | "get_force"       -> ok C_MAP_FIND
       | "map_iter"        -> ok C_MAP_ITER
       | "map_map"         -> ok C_MAP_MAP
       | "map_fold"        -> ok C_MAP_FOLD
@@ -1122,7 +1123,7 @@ module Compiler = struct
     | C_SIZE            -> ok @@ simple_unary @@ prim I_SIZE
     | C_FAILWITH        -> ok @@ simple_unary @@ prim I_FAILWITH
     | C_ASSERT_INFERRED -> ok @@ simple_binary @@ i_if (seq [i_failwith]) (seq [i_drop ; i_push_unit])
-    | C_ASSERTION       -> ok @@ simple_unary @@ i_if (seq [i_push_unit]) (seq [i_push_unit ; i_failwith])
+    | C_ASSERTION       -> ok @@ simple_unary @@ i_if (seq [i_push_unit]) (seq [i_push_string "failed assertion" ; i_failwith])
     | C_INT             -> ok @@ simple_unary @@ prim I_INT
     | C_ABS             -> ok @@ simple_unary @@ prim I_ABS
     | C_IS_NAT          -> ok @@ simple_unary @@ prim I_ISNAT
