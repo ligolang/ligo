@@ -1,16 +1,16 @@
 // Test PascaLIGO bitwise operators
 
 function or_op (const n : nat) : nat is
-  begin skip end with bitwise_or(n , 4n)
+  bitwise_or(n , 4n)
 
 function and_op (const n : nat) : nat is
-  begin skip end with bitwise_and(n , 7n)
+  bitwise_and(n , 7n)
 
 function xor_op (const n : nat) : nat is
-  begin skip end with bitwise_xor(n , 7n)
+  bitwise_xor(n , 7n)
 
 function lsl_op (const n : nat) : nat is
-  begin skip end with bitwise_lsl(n , 7n)
+  bitwise_lsl(n , 7n)
 
 function lsr_op (const n : nat) : nat is
-  begin skip end with bitwise_lsr(n , 7n)
+  bitwise_lsr(n , 7n)
