@@ -1,0 +1,70 @@
+# This Gitlab CI config is triggerd by the main ligo gitlab config file
+image: docker
+services:
+  - docker:dind
+
+variables:
+  CONTAINER_NAME: "registry.gitlab.com/${CI_PROJECT_PATH}/ligo_webide"
+
+stages:
+  - unit-test
+  - build
+  - e2e-test
+  - deploy
+
+run-webide-unit-tests:
+  stage: unit-test
+  image: node:12-alpine
+  script:
+    - cd tools/webide/packages/server
+    - npm ci
+    - npm run test
+
+build-docker-image:
+  stage: build
+  script:
+    - cd tools/webide
+    - apk add curl unzip
+    # Fetch the builid artifact from the upstream debian10 build job, extract the deb
+    # package file and name it so that the Dockerfile can pick it up during the
+    # build process.
+    - > 
+      curl
+      --fail
+      --location
+      --output artifacts.zip
+      "https://gitlab.com/api/v4/projects/${CI_PROJECT_ID}/jobs/artifacts/${CI_COMMIT_REF_NAME}/download?job=build-and-package-debian-10"
+    - mv $(unzip -j artifacts.zip| sed -n 's/.*\('ligo_'.*\.deb\).*/\1/p') ligo_deb10.deb
+    - echo "${CI_BUILD_TOKEN}" | docker login -u gitlab-ci-token --password-stdin registry.gitlab.com
+    # Pull the last build to use as a cache image to shorten build times when
+    # possible
+    - docker pull "${CONTAINER_NAME}:latest" || true
+    - >
+      docker build 
+      --cache-from "${CONTAINER_NAME}:latest"
+      -t "${CONTAINER_NAME}:${CI_COMMIT_REF_NAME}" 
+      -t "${CONTAINER_NAME}:${CI_COMMIT_SHORT_SHA}" 
+      -t "${CONTAINER_NAME}:latest" 
+      --build-arg GIT_TAG="${CI_COMMIT_SHA}"
+      --build-arg GIT_COMMIT="${CI_COMMIT_REF_NAME}"
+      .
+    - docker push "${CONTAINER_NAME}:${CI_COMMIT_REF_NAME}"
+    - docker push "${CONTAINER_NAME}:${CI_COMMIT_SHORT_SHA}"
+    - docker push "${CONTAINER_NAME}:latest"
+
+run-webide-e2e-tests:
+  stage: e2e-test
+  image: tmaier/docker-compose
+  script:
+    - cd tools/webide/packages/e2e
+    - export WEBIDE_IMAGE="${CONTAINER_NAME}:${CI_COMMIT_SHORT_SHA}"
+    - docker-compose run e2e
+
+deploy-handoff:
+  # Handoff deployment duties to private repo
+  stage: deploy
+  variables:
+    IDE_DOCKER_IMAGE: "registry.gitlab.com/${CI_PROJECT_PATH}/ligo_webide"
+    LIGO_COMMIT_REF_NAME: "${CI_COMMIT_REF_NAME}"
+  trigger: jevonearth/ligoweb-deploy
+
