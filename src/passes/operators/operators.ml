@@ -87,6 +87,8 @@ module Simplify = struct
       | "bitwise_or"      -> ok C_OR
       | "bitwise_and"     -> ok C_AND
       | "bitwise_xor"     -> ok C_XOR
+      | "bitwise_lsl"     -> ok C_LSL
+      | "bitwise_lsr"     -> ok C_LSR
       | "string_concat"   -> ok C_CONCAT
       | "string_slice"    -> ok C_SLICE
       | "crypto_check"    -> ok C_CHECK_SIGNATURE
@@ -209,6 +211,8 @@ module Simplify = struct
       | "Bitwise.lor"              -> ok C_OR
       | "Bitwise.land"             -> ok C_AND
       | "Bitwise.lxor"             -> ok C_XOR
+      | "Bitwise.shift_left"       -> ok C_LSL
+      | "Bitwise.shift_right"      -> ok C_LSR
 
       | "String.length"            -> ok C_SIZE
       | "String.size"              -> ok C_SIZE
@@ -396,6 +400,8 @@ module Typer = struct
       | C_AND                 -> ok @@ failwith "t_and" ;
       | C_OR                  -> ok @@ failwith "t_or" ;
       | C_XOR                 -> ok @@ failwith "t_xor" ;
+      | C_LSL                 -> ok @@ failwith "t_lsl" ;
+      | C_LSR                 -> ok @@ failwith "t_lsr" ;
       (* COMPARATOR *)
       | C_EQ                  -> ok @@ failwith "t_comparator EQ" ;
       | C_NEQ                 -> ok @@ failwith "t_comparator NEQ" ;
@@ -994,6 +1000,8 @@ module Typer = struct
     | C_AND                 -> ok @@ and_ ;
     | C_OR                  -> ok @@ or_ ;
     | C_XOR                 -> ok @@ xor ;
+    | C_LSL                 -> ok @@ lsl_;
+    | C_LSR                 -> ok @@ lsr_;
     (* COMPARATOR *)
     | C_EQ                  -> ok @@ comparator "EQ" ;
     | C_NEQ                 -> ok @@ comparator "NEQ" ;
@@ -1089,6 +1097,8 @@ module Compiler = struct
     | C_OR              -> ok @@ simple_binary @@ prim I_OR
     | C_AND             -> ok @@ simple_binary @@ prim I_AND
     | C_XOR             -> ok @@ simple_binary @@ prim I_XOR
+    | C_LSL             -> ok @@ simple_binary @@ prim I_LSL
+    | C_LSR             -> ok @@ simple_binary @@ prim I_LSR
     | C_NOT             -> ok @@ simple_unary @@ prim I_NOT
     | C_PAIR            -> ok @@ simple_binary @@ prim I_PAIR
     | C_CAR             -> ok @@ simple_unary @@ prim I_CAR
