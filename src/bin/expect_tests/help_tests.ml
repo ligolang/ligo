@@ -44,6 +44,9 @@ let%expect_test _ =
                Subcommand: Interpret the expression in the context initialized by
                the provided source file.
 
+           ligo-interpret
+               Subcommand: (temporary / dev only) uses LIGO interpret.
+
            list-declarations
                Subcommand: List all the top-level declarations.
 
@@ -119,6 +122,9 @@ let%expect_test _ =
            interpret
                Subcommand: Interpret the expression in the context initialized by
                the provided source file.
+
+           ligo-interpret
+               Subcommand: (temporary / dev only) uses LIGO interpret.
 
            list-declarations
                Subcommand: List all the top-level declarations.
