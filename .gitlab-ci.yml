@@ -3,6 +3,7 @@ variables:
   GIT_SUBMODULE_STRATEGY: recursive
   build_binary_script: "./scripts/distribution/generic/build.sh"
   package_binary_script: "./scripts/distribution/generic/package.sh"
+  LIGO_REGISTRY_IMAGE_BASE_NAME: "${CI_PROJECT_PATH}/${CI_PROJECT_NAME}"
 
 stages:
   - test
@@ -75,9 +76,9 @@ dont-merge-to-master:
       - public
 
 .docker: &docker
-  image: docker:1.11
+  image: docker:19
   services:
-    - docker:dind
+    - docker:19-dind
 
 
 .before_script: &before_script
