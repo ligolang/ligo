@@ -66,5 +66,5 @@ deploy-handoff:
   variables:
     IDE_DOCKER_IMAGE: "registry.gitlab.com/${CI_PROJECT_PATH}/ligo_webide"
     LIGO_COMMIT_REF_NAME: "${CI_COMMIT_REF_NAME}"
-  trigger: jevonearth/ligoweb-deploy
+  trigger: ligolang/ligo-webide-deploy
 
