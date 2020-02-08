@@ -66,7 +66,7 @@ module Simplify = struct
   module Pascaligo = struct
 
     let constants = function
-      | "get_force"       -> ok C_MAP_GET_FORCE
+      | "assert"          -> ok C_ASSERTION
       | "get_chain_id"    -> ok C_CHAIN_ID
       | "transaction"     -> ok C_CALL
       | "get_contract"    -> ok C_CONTRACT
@@ -87,6 +87,8 @@ module Simplify = struct
       | "bitwise_or"      -> ok C_OR
       | "bitwise_and"     -> ok C_AND
       | "bitwise_xor"     -> ok C_XOR
+      | "bitwise_lsl"     -> ok C_LSL
+      | "bitwise_lsr"     -> ok C_LSR
       | "string_concat"   -> ok C_CONCAT
       | "string_slice"    -> ok C_SLICE
       | "crypto_check"    -> ok C_CHECK_SIGNATURE
@@ -104,12 +106,13 @@ module Simplify = struct
       | "list_iter"       -> ok C_LIST_ITER
       | "list_fold"       -> ok C_LIST_FOLD
       | "list_map"        -> ok C_LIST_MAP
+      | "get_force"       -> ok C_MAP_FIND
       | "map_iter"        -> ok C_MAP_ITER
       | "map_map"         -> ok C_MAP_MAP
       | "map_fold"        -> ok C_MAP_FOLD
       | "map_remove"      -> ok C_MAP_REMOVE
       | "map_update"      -> ok C_MAP_UPDATE
-      | "map_get"         -> ok C_MAP_GET
+      | "map_get"         -> ok C_MAP_FIND_OPT
       | "map_mem"         -> ok C_MAP_MEM
       | "sha_256"         -> ok C_SHA256
       | "sha_512"         -> ok C_SHA512
@@ -163,7 +166,6 @@ module Simplify = struct
       | "Current.failwith"         -> ok C_FAILWITH
       | "failwith"                 -> ok C_FAILWITH
 
-      | "Crypto.hash"              -> ok C_HASH
       | "Crypto.blake2b"           -> ok C_BLAKE2b
       | "Crypto.sha256"            -> ok C_SHA256
       | "Crypto.sha512"            -> ok C_SHA512
@@ -210,6 +212,8 @@ module Simplify = struct
       | "Bitwise.lor"              -> ok C_OR
       | "Bitwise.land"             -> ok C_AND
       | "Bitwise.lxor"             -> ok C_XOR
+      | "Bitwise.shift_left"       -> ok C_LSL
+      | "Bitwise.shift_right"      -> ok C_LSR
 
       | "String.length"            -> ok C_SIZE
       | "String.size"              -> ok C_SIZE
@@ -324,51 +328,52 @@ module Typer = struct
     let tc_addargs  a b c = tc [a;b;c] [ (*TODO…*) ]
 
     let t_none         = forall "a" @@ fun a -> option a
-    let t_sub          = forall3_tc "a" "b" "c" @@ fun a b c -> [tc_subarg a b c] => a --> b --> c (* TYPECLASS *)
+    let t_sub          = forall3_tc "a" "b" "c" @@ fun a b c -> [tc_subarg a b c] => tuple2 a b --> c (* TYPECLASS *)
     let t_some         = forall "a" @@ fun a -> a --> option a
-    let t_map_remove   = forall2 "src" "dst" @@ fun src dst -> src --> map src dst --> map src dst
-    let t_map_add      = forall2 "src" "dst" @@ fun src dst -> src --> dst --> map src dst --> map src dst
-    let t_map_update   = forall2 "src" "dst" @@ fun src dst -> src --> option dst --> map src dst --> map src dst
-    let t_map_mem      = forall2 "src" "dst" @@ fun src dst -> src --> map src dst --> bool
-    let t_map_find     = forall2 "src" "dst" @@ fun src dst -> src --> map src dst --> dst
-    let t_map_find_opt = forall2 "src" "dst" @@ fun src dst -> src --> map src dst --> option dst
-    let t_map_fold     = forall3 "src" "dst" "acc" @@ fun src dst acc -> ( ( (src * dst) * acc ) --> acc ) --> map src dst --> acc --> acc
-    let t_map_map      = forall3 "k" "v" "result" @@ fun k v result -> ((k * v) --> result) --> map k v --> map k result
+    let t_map_remove   = forall2 "src" "dst" @@ fun src dst -> tuple2 src (map src dst) --> map src dst
+    let t_map_add      = forall2 "src" "dst" @@ fun src dst -> tuple3 src dst (map src dst) --> map src dst
+    let t_map_update   = forall2 "src" "dst" @@ fun src dst -> tuple3 src (option dst) (map src dst) --> map src dst
+    let t_map_mem      = forall2 "src" "dst" @@ fun src dst -> tuple2 src (map src dst) --> bool
+    let t_map_find     = forall2 "src" "dst" @@ fun src dst -> tuple2 src (map src dst) --> dst
+    let t_map_find_opt = forall2 "src" "dst" @@ fun src dst -> tuple2 src (map src dst) --> option dst
+    let t_map_fold     = forall3 "src" "dst" "acc" @@ fun src dst acc -> tuple3 ( ( (src * dst) * acc ) --> acc ) (map src dst) acc --> acc
+    let t_map_map      = forall3 "k" "v" "result" @@ fun k v result -> tuple2 ((k * v) --> result) (map k v) --> map k result
 
     (* TODO: the type of map_map_fold might be wrong, check it. *)
-    let t_map_map_fold = forall4 "k" "v" "acc" "dst" @@ fun k v acc dst -> ( ((k * v) * acc) --> acc * dst ) --> map k v --> (k * v) --> (map k dst * acc)
-    let t_map_iter     = forall2 "k" "v" @@ fun k v -> ( (k * v) --> unit ) --> map k v --> unit
-    let t_size         = forall_tc "c" @@ fun c -> [tc_sizearg c] => c --> nat (* TYPECLASS *)
-    let t_slice        = nat --> nat --> string --> string
-    let t_failwith     = string --> unit
-    let t_get_force    = forall2 "src" "dst" @@ fun src dst -> src --> map src dst --> dst
-    let t_int          = nat --> int
-    let t_bytes_pack   = forall_tc "a" @@ fun a -> [tc_packable a] => a --> bytes (* TYPECLASS *)
-    let t_bytes_unpack = forall_tc "a" @@ fun a -> [tc_packable a] => bytes --> a (* TYPECLASS *)
-    let t_hash256      = bytes --> bytes
-    let t_hash512      = bytes --> bytes
-    let t_blake2b      = bytes --> bytes
-    let t_hash_key     = key --> key_hash
-    let t_check_signature = key --> signature --> bytes --> bool
-    let t_sender       = address
-    let t_source       = address
-    let t_unit         = unit
-    let t_amount       = mutez
-    let t_address      = address
-    let t_now          = timestamp
-    let t_transaction  = forall "a" @@ fun a -> a --> mutez --> contract a --> operation
-    let t_get_contract = forall "a" @@ fun a -> contract a
-    let t_abs          = int --> nat
-    let t_cons         = forall "a" @@ fun a -> a --> list a --> list a
-    let t_assertion    = bool --> unit
-    let t_times        = forall3_tc "a" "b" "c" @@ fun a b c -> [tc_timargs a b c] => a --> b --> c (* TYPECLASS *)
-    let t_div          = forall3_tc "a" "b" "c" @@ fun a b c -> [tc_divargs a b c] => a --> b --> c (* TYPECLASS *)
-    let t_mod          = forall3_tc "a" "b" "c" @@ fun a b c -> [tc_modargs a b c] => a --> b --> c (* TYPECLASS *)
-    let t_add          = forall3_tc "a" "b" "c" @@ fun a b c -> [tc_addargs a b c] => a --> b --> c (* TYPECLASS *)
-    let t_set_mem      = forall "a" @@ fun a -> a --> set a --> bool
-    let t_set_add      = forall "a" @@ fun a -> a --> set a --> set a
-    let t_set_remove   = forall "a" @@ fun a -> a --> set a --> set a
-    let t_not          = bool --> bool
+    let t_map_map_fold = forall4 "k" "v" "acc" "dst" @@ fun k v acc dst -> tuple3 ( ((k * v) * acc) --> acc * dst ) (map k v) (k * v) --> (map k dst * acc)
+    let t_map_iter     = forall2 "k" "v" @@ fun k v -> tuple2 ( (k * v) --> unit ) (map k v) --> unit
+    let t_size         = forall_tc "c" @@ fun c -> [tc_sizearg c] => tuple1 c --> nat (* TYPECLASS *)
+    let t_slice        = tuple3 nat nat string --> string
+    let t_failwith     = tuple1 string --> unit
+    let t_get_force    = forall2 "src" "dst" @@ fun src dst -> tuple2 src (map src dst) --> dst
+    let t_int          = tuple1 nat --> int
+    let t_bytes_pack   = forall_tc "a" @@ fun a -> [tc_packable a] => tuple1 a --> bytes (* TYPECLASS *)
+    let t_bytes_unpack = forall_tc "a" @@ fun a -> [tc_packable a] => tuple1 bytes --> a (* TYPECLASS *)
+    let t_hash256      = tuple1 bytes --> bytes
+    let t_hash512      = tuple1 bytes --> bytes
+    let t_blake2b      = tuple1 bytes --> bytes
+    let t_hash_key     = tuple1 key --> key_hash
+    let t_check_signature = tuple3 key signature bytes --> bool
+    let t_chain_id     = tuple0 --> chain_id
+    let t_sender       = tuple0 --> address
+    let t_source       = tuple0 --> address
+    let t_unit         = tuple0 --> unit
+    let t_amount       = tuple0 --> mutez
+    let t_address      = tuple0 --> address
+    let t_now          = tuple0 --> timestamp
+    let t_transaction  = forall "a" @@ fun a -> tuple3 a mutez (contract a) --> operation
+    let t_get_contract = forall "a" @@ fun a -> tuple0 --> contract a
+    let t_abs          = tuple1 int --> nat
+    let t_cons         = forall "a" @@ fun a -> a --> tuple1 (list a) --> list a
+    let t_assertion    = tuple1 bool --> unit
+    let t_times        = forall3_tc "a" "b" "c" @@ fun a b c -> [tc_timargs a b c] => tuple2 a b --> c (* TYPECLASS *)
+    let t_div          = forall3_tc "a" "b" "c" @@ fun a b c -> [tc_divargs a b c] => tuple2 a b --> c (* TYPECLASS *)
+    let t_mod          = forall3_tc "a" "b" "c" @@ fun a b c -> [tc_modargs a b c] => tuple2 a b --> c (* TYPECLASS *)
+    let t_add          = forall3_tc "a" "b" "c" @@ fun a b c -> [tc_addargs a b c] => tuple2 a b --> c (* TYPECLASS *)
+    let t_set_mem      = forall "a" @@ fun a -> tuple2 a (set a) --> bool
+    let t_set_add      = forall "a" @@ fun a -> tuple2 a (set a) --> set a
+    let t_set_remove   = forall "a" @@ fun a -> tuple2 a (set a) --> set a
+    let t_not          = tuple1 bool --> bool
 
     let constant_type : constant -> Typesystem.Core.type_value result = function
       | C_INT                 -> ok @@ t_int ;
@@ -396,6 +401,8 @@ module Typer = struct
       | C_AND                 -> ok @@ failwith "t_and" ;
       | C_OR                  -> ok @@ failwith "t_or" ;
       | C_XOR                 -> ok @@ failwith "t_xor" ;
+      | C_LSL                 -> ok @@ failwith "t_lsl" ;
+      | C_LSR                 -> ok @@ failwith "t_lsr" ;
       (* COMPARATOR *)
       | C_EQ                  -> ok @@ failwith "t_comparator EQ" ;
       | C_NEQ                 -> ok @@ failwith "t_comparator NEQ" ;
@@ -424,8 +431,6 @@ module Typer = struct
       | C_LIST_FOLD           -> ok @@ failwith "t_list_fold" ;
       | C_LIST_CONS           -> ok @@ failwith "t_list_cons" ;
       (* MAP *)
-      | C_MAP_GET             -> ok @@ failwith "t_map_get" ;
-      | C_MAP_GET_FORCE       -> ok @@ failwith "t_map_get_force" ;
       | C_MAP_ADD             -> ok @@ t_map_add ;
       | C_MAP_REMOVE          -> ok @@ t_map_remove ;
       | C_MAP_UPDATE          -> ok @@ t_map_update ;
@@ -442,7 +447,7 @@ module Typer = struct
       | C_BLAKE2b             -> ok @@ t_blake2b ;
       | C_HASH_KEY            -> ok @@ t_hash_key ;
       | C_CHECK_SIGNATURE     -> ok @@ t_check_signature ;
-      | C_CHAIN_ID            -> ok @@ failwith "t_chain_id" ;
+      | C_CHAIN_ID            -> ok @@ t_chain_id ;
       (*BLOCKCHAIN *)
       | C_CONTRACT            -> ok @@ t_get_contract ;
       | C_CONTRACT_ENTRYPOINT -> ok @@ failwith "t_get_entrypoint" ;
@@ -561,16 +566,6 @@ module Typer = struct
       (is_t_string t) in
     let default = t_unit () in
     ok @@ Simple_utils.Option.unopt ~default opt
-
-  let map_get_force = typer_2 "MAP_GET_FORCE" @@ fun i m ->
-    let%bind (src, dst) = bind_map_or (get_t_map , get_t_big_map) m in
-    let%bind _ = assert_type_value_eq (src, i) in
-    ok dst
-
-  let map_get = typer_2 "MAP_GET" @@ fun i m ->
-    let%bind (src, dst) = bind_map_or (get_t_map , get_t_big_map) m in
-    let%bind _ = assert_type_value_eq (src, i) in
-    ok @@ t_option dst ()
 
   let int : typer = typer_1 "INT" @@ fun t ->
     let%bind () = assert_t_nat t in
@@ -1006,6 +1001,8 @@ module Typer = struct
     | C_AND                 -> ok @@ and_ ;
     | C_OR                  -> ok @@ or_ ;
     | C_XOR                 -> ok @@ xor ;
+    | C_LSL                 -> ok @@ lsl_;
+    | C_LSR                 -> ok @@ lsr_;
     (* COMPARATOR *)
     | C_EQ                  -> ok @@ comparator "EQ" ;
     | C_NEQ                 -> ok @@ comparator "NEQ" ;
@@ -1034,8 +1031,6 @@ module Typer = struct
     | C_LIST_FOLD           -> ok @@ list_fold ;
     | C_LIST_CONS           -> ok @@ list_cons ;
     (* MAP *)
-    | C_MAP_GET             -> ok @@ map_get ;
-    | C_MAP_GET_FORCE       -> ok @@ map_get_force ;
     | C_MAP_ADD             -> ok @@ map_add ;
     | C_MAP_REMOVE          -> ok @@ map_remove ;
     | C_MAP_UPDATE          -> ok @@ map_update ;
@@ -1103,6 +1098,8 @@ module Compiler = struct
     | C_OR              -> ok @@ simple_binary @@ prim I_OR
     | C_AND             -> ok @@ simple_binary @@ prim I_AND
     | C_XOR             -> ok @@ simple_binary @@ prim I_XOR
+    | C_LSL             -> ok @@ simple_binary @@ prim I_LSL
+    | C_LSR             -> ok @@ simple_binary @@ prim I_LSR
     | C_NOT             -> ok @@ simple_unary @@ prim I_NOT
     | C_PAIR            -> ok @@ simple_binary @@ prim I_PAIR
     | C_CAR             -> ok @@ simple_unary @@ prim I_CAR
@@ -1115,9 +1112,7 @@ module Compiler = struct
     | C_GE              -> ok @@ simple_binary @@ seq [prim I_COMPARE ; prim I_GE]
     | C_UPDATE          -> ok @@ simple_ternary @@ prim I_UPDATE
     | C_SOME            -> ok @@ simple_unary  @@ prim I_SOME
-    | C_MAP_GET_FORCE   -> ok @@ simple_binary @@ seq [prim I_GET ; i_assert_some_msg (i_push_string "GET_FORCE")]
     | C_MAP_FIND        -> ok @@ simple_binary @@ seq [prim I_GET ; i_assert_some_msg (i_push_string "MAP FIND")]
-    | C_MAP_GET         -> ok @@ simple_binary @@ prim I_GET
     | C_MAP_MEM         -> ok @@ simple_binary @@ prim I_MEM
     | C_MAP_FIND_OPT    -> ok @@ simple_binary @@ prim I_GET
     | C_MAP_ADD         -> ok @@ simple_ternary @@ seq [dip (i_some) ; prim I_UPDATE]
@@ -1128,7 +1123,7 @@ module Compiler = struct
     | C_SIZE            -> ok @@ simple_unary @@ prim I_SIZE
     | C_FAILWITH        -> ok @@ simple_unary @@ prim I_FAILWITH
     | C_ASSERT_INFERRED -> ok @@ simple_binary @@ i_if (seq [i_failwith]) (seq [i_drop ; i_push_unit])
-    | C_ASSERTION       -> ok @@ simple_unary @@ i_if (seq [i_push_unit]) (seq [i_push_unit ; i_failwith])
+    | C_ASSERTION       -> ok @@ simple_unary @@ i_if (seq [i_push_unit]) (seq [i_push_string "failed assertion" ; i_failwith])
     | C_INT             -> ok @@ simple_unary @@ prim I_INT
     | C_ABS             -> ok @@ simple_unary @@ prim I_ABS
     | C_IS_NAT          -> ok @@ simple_unary @@ prim I_ISNAT

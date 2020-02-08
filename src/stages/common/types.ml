@@ -162,6 +162,8 @@ type constant =
   | C_AND
   | C_OR
   | C_XOR
+  | C_LSL
+  | C_LSR
   (* COMPARATOR *)
   | C_EQ
   | C_NEQ
@@ -199,8 +201,6 @@ type constant =
   | C_MAP
   | C_MAP_EMPTY
   | C_MAP_LITERAL
-  | C_MAP_GET
-  | C_MAP_GET_FORCE
   | C_MAP_ADD
   | C_MAP_REMOVE
   | C_MAP_UPDATE
@@ -218,7 +218,6 @@ type constant =
   | C_SHA256
   | C_SHA512
   | C_BLAKE2b
-  | C_HASH
   | C_HASH_KEY
   | C_CHECK_SIGNATURE
   | C_CHAIN_ID

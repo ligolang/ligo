@@ -348,6 +348,8 @@ let bitwise_arithmetic () : unit result =
   let%bind () = expect_eq program "and_op" (e_nat 10) (e_nat 2) in
   let%bind () = expect_eq program "xor_op" (e_nat 0) (e_nat 7) in
   let%bind () = expect_eq program "xor_op" (e_nat 7) (e_nat 0) in
+  let%bind () = expect_eq program "lsl_op" (e_nat 1000) (e_nat 128000) in
+  let%bind () = expect_eq program "lsr_op" (e_nat 128000) (e_nat 1000) in
   ok ()
 
 let bitwise_arithmetic_mligo () : unit result =
@@ -364,6 +366,8 @@ let bitwise_arithmetic_mligo () : unit result =
   let%bind () = expect_eq program "and_op" (e_nat 10) (e_nat 2) in
   let%bind () = expect_eq program "xor_op" (e_nat 0) (e_nat 7) in
   let%bind () = expect_eq program "xor_op" (e_nat 7) (e_nat 0) in
+  let%bind () = expect_eq program "lsl_op" (e_nat 1000) (e_nat 128000) in
+  let%bind () = expect_eq program "lsr_op" (e_nat 128000) (e_nat 1000) in
   ok ()
 
 let bitwise_arithmetic_religo () : unit result =
@@ -380,6 +384,8 @@ let bitwise_arithmetic_religo () : unit result =
   let%bind () = expect_eq program "and_op" (e_nat 10) (e_nat 2) in
   let%bind () = expect_eq program "xor_op" (e_nat 0) (e_nat 7) in
   let%bind () = expect_eq program "xor_op" (e_nat 7) (e_nat 0) in
+  let%bind () = expect_eq program "lsl_op" (e_nat 1000) (e_nat 128000) in
+  let%bind () = expect_eq program "lsr_op" (e_nat 128000) (e_nat 1000) in
   ok ()
 
 let string_arithmetic () : unit result =
@@ -1458,12 +1464,6 @@ let assert_religo () : unit result =
   let%bind _ = expect_eq program "main" (make_input true) make_expected in
   ok ()
 
-let guess_the_hash_mligo () : unit result =
-  let%bind program = mtype_file "./contracts/new-syntax.mligo" in
-  let make_input = fun n-> e_pair (e_int n) (e_int 42) in
-  let make_expected = fun n -> e_pair (e_typed_list [] t_operation) (e_int (42 + n)) in
-  expect_eq_n program "main" make_input make_expected
-
 let guess_string_mligo () : unit result =
   let%bind program = type_file "./contracts/guess_string.mligo" in
   let make_input = fun n -> e_pair (e_int n) (e_int 42) in
@@ -2314,7 +2314,6 @@ let main = test_suite "Integration (End to End)" [
     (* test "list matching (mligo)" mligo_list ; *)
     test "list matching (mligo)" mligo_list ;
     test "list matching (religo)" religo_list ;
-    (* test "guess the hash mligo" guess_the_hash_mligo ; WIP? *)
     test "failwith ligo" failwith_ligo ;
     test "failwith mligo" failwith_mligo ;
     test "assert mligo" assert_mligo ;
