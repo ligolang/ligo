@@ -11,8 +11,7 @@ const fb2 : foobar = 144 # fb
 
 const fb3 : foobar = cons(688 , fb2)
 
-function size_ (const m : foobar) : nat is
-  block {skip} with (size(m))
+function size_ (const m : foobar) : nat is size(m)
 
 // function hdf (const m : foobar) : int is begin skip end with hd(m)
 

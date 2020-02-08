@@ -1564,6 +1564,7 @@ let match_matej_re () : unit result =
 
 let mligo_list () : unit result =
   let%bind program = mtype_file "./contracts/list.mligo" in
+  let%bind () = expect_eq program "size_" (e_list [e_int 0; e_int 1; e_int 2]) (e_nat 3) in
   let aux lst = e_list @@ List.map e_int lst in
   let%bind () = expect_eq program "fold_op" (aux [ 1 ; 2 ; 3 ]) (e_int 16) in
   let%bind () =
@@ -1585,6 +1586,7 @@ let mligo_list () : unit result =
 
 let religo_list () : unit result =
   let%bind program = retype_file "./contracts/list.religo" in
+  let%bind () = expect_eq program "size_" (e_list [e_int 0; e_int 1; e_int 2]) (e_nat 3) in
   let aux lst = e_list @@ List.map e_int lst in
   let%bind () = expect_eq program "fold_op" (aux [ 1 ; 2 ; 3 ]) (e_int 16) in
   let%bind () =
