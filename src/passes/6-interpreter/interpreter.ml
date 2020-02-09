@@ -271,9 +271,7 @@ and eval : Ast_typed.expression -> env -> value result
   = fun term env ->
     match term.expression_content with
     | E_application ({expr1 = f; expr2 = args}) -> (
-      let%bind f' = match f.expression_content with
-        | E_variable f -> Env.lookup env f
-        | _ -> eval f env in
+      let%bind f' = eval f env in
       match f' with
       | V_Func_val (arg_names, body, f_env) ->
         let%bind args' = eval args env in
