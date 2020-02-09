@@ -64,7 +64,7 @@ Unfortunately (???), we **can't run Javascript on the Tezos blockchain** at the 
 
 ## C-like smart contracts instead of Michelson
 
-Let's take a look at a similar LIGO program. Don't worry if it's a little confusing at first; we'll explain all the syntax in the upcoming sections of the documentation.
+Let's take a look at a similar LIGO program. Don't worry if it is a little confusing at first; we'll explain all the syntax in the upcoming sections of the documentation.
 
 <!--DOCUSAURUS_CODE_TABS-->
 <!--Pascaligo-->
@@ -132,7 +132,7 @@ The LIGO contract behaves exactly* like the Michelson contract we've saw first, 
 ## Runnable code snippets & exercises
 
 Some of the sections in this documentation will include runnable code snippets and exercises. Sources for those are available at
-the [LIGO Gitlab repository](https://gitlab.com/ligolang/ligo). 
+the [LIGO GitLab repository](https://gitlab.com/ligolang/ligo). 
 
 ### Snippets
 For example **code snippets** for the *Types* subsection of this doc, can be found here:
@@ -141,7 +141,7 @@ For example **code snippets** for the *Types* subsection of this doc, can be fou
 ### Exercises
 Solutions to exercises can be found e.g. here:  `gitlab-pages/docs/language-basics/exercises/types/**/solutions/**`
 
-### Running snippets / excercise solutions
+### Running snippets / exercise solutions
 In certain cases it makes sense to be able to run/evaluate the given snippet or a solution, usually there'll be an example command which you can use, such as:
 
 ```shell

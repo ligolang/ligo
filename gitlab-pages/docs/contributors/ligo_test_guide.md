@@ -111,4 +111,4 @@ What if we want to write a test of our own? If the test is in the integration te
 1. Write a test contract which uses the new syntax or feature in [src/test/contracts](https://gitlab.com/ligolang/ligo/tree/dev/src/test/contracts).
 2. Write an integration test in [src/test/integration_tests.ml](https://gitlab.com/ligolang/ligo/blob/dev/src/test/integration_tests.ml) in the vein of existing tests, make sure you add it to the test runner that is currently located at the bottom of the file.
 3. Write the feature, assuming it doesn't already exist. Build the resulting version of LIGO without errors.
-4. Run the test suite, see if your test(s) pass. If they do, you're probably done. If not it's time to go debugging.
+4. Run the test suite, see if your test(s) pass. If they do, you're probably done. If not, it's time to go debugging.

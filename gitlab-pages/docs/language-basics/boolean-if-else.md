@@ -155,7 +155,7 @@ let min_age: nat = 16n
 (**
 
     This function is really obnoxious, but it showcases
-    how the if statement and it's syntax can be used.
+    how the if statement and its syntax can be used.
 
     Normally, you'd use `with (age > min_age)` instead.
 
@@ -170,7 +170,7 @@ let min_age: nat = 16n;
 (**
 
     This function is really obnoxious, but it showcases
-    how the if statement and it's syntax can be used.
+    how the if statement and its syntax can be used.
 
     Normally, you'd use `with (age > min_age)` instead.
 
