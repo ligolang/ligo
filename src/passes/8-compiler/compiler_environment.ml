@@ -10,7 +10,7 @@ let get : environment -> expression_variable -> michelson result = fun e s ->
     let error =
       let title () = "Environment.get" in
       let content () = Format.asprintf "%a in %a"
-          Stage_common.PP.name s 
+          Var.pp s 
           PP.environment e in
       error title content in
     generic_try error @@

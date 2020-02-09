@@ -31,6 +31,7 @@ val of_name : string -> 'a t
 
 (* TODO don't use this, this should not exist. *)
 val to_name : 'a t -> string
+val show : 'a t -> string
 
 (* Generate a variable, using a counter value from a _global_
    counter. If the name is not provided, it will be empty. *)
@@ -38,7 +39,7 @@ val fresh : ?name:string -> unit -> 'a t
 
 (* Generate a variable as with `fresh`, reusing the name part of the
    given variable. *)
-val fresh_like : 'a t -> 'a t
+val fresh_like : 'a t -> 'b t
 
 (* Reset the global counter. Danger, do not use... Provided for tests
    only. *)

@@ -32,7 +32,7 @@ let compile_main () =
 open Ast_simplified
 
 let card owner =
-  ez_e_record [
+  e_record_ez [
     ("card_owner" , owner) ;
     ("card_pattern" , e_nat 0) ;
   ]
@@ -49,7 +49,7 @@ let make_cards assoc_lst =
   e_typed_map assoc_lst card_id_ty card_ty
 
 let card_pattern (coeff , qtt) =
-  ez_e_record [
+  e_record_ez [
     ("coefficient" , coeff) ;
     ("quantity" , qtt) ;
   ]
@@ -69,7 +69,7 @@ let make_card_patterns lst =
   e_typed_map assoc_lst card_pattern_id_ty card_pattern_ty
 
 let storage cards_patterns cards next_id =
-  ez_e_record [
+  e_record_ez [
     ("cards" , cards) ;
     ("card_patterns" , cards_patterns) ;
     ("next_id" , next_id) ;
@@ -107,7 +107,7 @@ let buy () =
   let%bind program = get_program () in
   let%bind () =
     let make_input = fun n ->
-      let buy_action = ez_e_record [
+      let buy_action = e_record_ez [
           ("card_to_buy" , e_nat 0) ;
         ] in
       let storage = basic 100 1000 (cards_ez first_owner n) (2 * n) in
@@ -145,7 +145,7 @@ let dispatch_buy () =
   let%bind program = get_program () in
   let%bind () =
     let make_input = fun n ->
-      let buy_action = ez_e_record [
+      let buy_action = e_record_ez [
           ("card_to_buy" , e_nat 0) ;
         ] in
       let action = e_constructor "Buy_single" buy_action in
@@ -184,7 +184,7 @@ let transfer () =
   let%bind program = get_program () in
   let%bind () =
     let make_input = fun n ->
-      let transfer_action = ez_e_record [
+      let transfer_action = e_record_ez [
           ("card_to_transfer" , e_nat 0) ;
           ("destination" , e_address second_owner) ;
         ] in
@@ -215,7 +215,7 @@ let sell () =
   let%bind program = get_program () in
   let%bind () =
     let make_input = fun n ->
-      let sell_action = ez_e_record [
+      let sell_action = e_record_ez [
           ("card_to_sell" , e_nat (n - 1)) ;
         ] in
       let cards = cards_ez first_owner n in
@@ -223,9 +223,9 @@ let sell () =
       e_pair sell_action storage
     in
     let make_expecter : int -> expression -> unit result = fun n result ->
-      let%bind (ops , storage) = get_e_pair result.expression in
+      let%bind (ops , storage) = get_e_pair result.expression_content in
       let%bind () =
-        let%bind lst = get_e_list ops.expression in
+        let%bind lst = get_e_list ops.expression_content in
         Assert.assert_list_size lst 1 in
       let expected_storage =
         let cards = List.hds @@ cards_ez first_owner n in

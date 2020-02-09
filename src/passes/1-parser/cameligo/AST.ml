@@ -464,10 +464,10 @@ let expr_to_region = function
 | EList e -> list_expr_to_region e
 | EConstr e -> constr_expr_to_region e
 | EAnnot {region;_ } | ELetIn {region;_} | EFun {region;_}
-| ECond {region;_} | ETuple {region;_} | ECase {region;_}
-| ECall {region;_} | EVar {region; _} | EProj {region; _}
-| EUnit {region;_} | EPar {region;_} | EBytes {region; _}
-| ESeq {region; _} | ERecord {region; _} | EUpdate {region; _} -> region
+| ECond {region;_}   | ETuple {region;_} | ECase {region;_}
+| ECall {region;_}   | EVar {region; _}  | EProj {region; _}
+| EUnit {region;_}   | EPar {region;_}   | EBytes {region; _}
+| ESeq {region; _}   | ERecord {region; _} | EUpdate {region; _} -> region
 
 let selection_to_region = function
   FieldName f -> f.region

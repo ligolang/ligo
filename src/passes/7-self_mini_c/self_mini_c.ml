@@ -15,7 +15,7 @@ let map_expression :
 
 (* true if the name names a pure constant -- i.e. if uses will be pure
    assuming arguments are pure *)
-let is_pure_constant : constant -> bool =
+let is_pure_constant : constant' -> bool =
   function
   | C_UNIT
   | C_CAR | C_CDR | C_PAIR
@@ -64,10 +64,10 @@ let rec is_pure : expression -> bool = fun e ->
   | E_sequence (e1, e2)
     -> List.for_all is_pure [ e1 ; e2 ]
 
-  | E_constant (c, args)
-    -> is_pure_constant c && List.for_all is_pure args
-  | E_update (r, (_,e))
-    -> is_pure r && is_pure e
+  | E_constant (c)
+    -> is_pure_constant c.cons_name && List.for_all is_pure c.arguments
+  | E_record_update (e, _,up)
+    -> is_pure e && is_pure up
 
   (* I'm not sure about these. Maybe can be tested better? *)
   | E_application _
@@ -78,6 +78,7 @@ let rec is_pure : expression -> bool = fun e ->
   (* Could be pure, but, divergence is an effect, so halting problem
      is near... *)
   | E_while _ -> false
+
 
   (* definitely not pure *)
   | E_assignment _ -> false
@@ -111,14 +112,14 @@ let rec is_assigned : ignore_lambdas:bool -> expression_variable -> expression -
   match e.content with
   | E_assignment (x, _, e) ->
     it x || self e
-  | E_update (r, (_,e)) ->
+  | E_record_update (r, _, e) ->
     self r || self e
   | E_closure { binder; body } ->
     if ignore_lambdas
     then false
     else self_binder binder body
-  | E_constant (_, args) ->
-    selfs args
+  | E_constant (c) ->
+    selfs c.arguments
   | E_application (f, arg) ->
     selfs [ f ; arg ]
   | E_iterator (_, ((x, _), e1), e2) ->
@@ -236,7 +237,7 @@ let beta : bool ref -> expression -> expression =
     else e
 
   (* also do CAR (PAIR x y) ↦ x, or CDR (PAIR x y) ↦ y, only if x and y are pure *)
-  | E_constant (C_CAR| C_CDR as const, [ { content = E_constant (C_PAIR, [ e1 ; e2 ]) ; type_value = _ } ]) ->
+  | E_constant {cons_name = C_CAR| C_CDR as const; arguments = [ { content = E_constant {cons_name = C_PAIR; arguments = [ e1 ; e2 ]} ; type_value = _ } ]} ->
     if is_pure e1 && is_pure e2
     then (changed := true ;
           match const with

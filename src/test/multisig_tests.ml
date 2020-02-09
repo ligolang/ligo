@@ -34,7 +34,7 @@ let init_storage threshold counter pkeys =
       let (_,pk_str,_) = str_keys el in
       e_key @@ pk_str) 
     pkeys in
-  ez_e_record [
+  e_record_ez [
     ("id" , e_string "MULTISIG" ) ;
     ("counter" , e_nat counter ) ;
     ("threshold" , e_nat threshold) ;
@@ -66,7 +66,7 @@ let params counter msg keys is_validl  =
   let%bind signed_msgs = Trace.bind_fold_list aux [] (List.rev @@ List.combine keys is_validl) in
   ok @@ e_constructor
     "CheckMessage"
-    (ez_e_record [
+    (e_record_ez [
       ("counter" , e_nat counter ) ;
       ("message" , msg) ;
       ("signatures" , e_typed_list signed_msgs (t_pair (t_key_hash,t_signature)) ) ;
