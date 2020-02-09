@@ -6,7 +6,7 @@ include Stage_common.Types
 module Env = Ligo_interpreter.Environment
 
 
-let apply_comparison : Ast_typed.constant -> value list -> value result =
+let apply_comparison : Ast_typed.constant' -> value list -> value result =
   fun c operands -> match (c,operands) with
     | ( comp , [ V_Ct (C_int a'      ) ; V_Ct (C_int b'      ) ] )
     | ( comp , [ V_Ct (C_nat a'      ) ; V_Ct (C_nat b'      ) ] )
@@ -52,7 +52,7 @@ let apply_comparison : Ast_typed.constant -> value list -> value result =
       simple_fail "unsupported comparison"
 
 (* applying those operators does not involve extending the environment *)
-let rec apply_operator : Ast_typed.constant -> value list -> value result =
+let rec apply_operator : Ast_typed.constant' -> value list -> value result =
   fun c operands ->
   let return_ct v = ok @@ V_Ct v in
   let return_none () = ok @@ v_none () in
@@ -265,39 +265,40 @@ and eval_literal : Ast_typed.literal -> value result = function
   | Literal_key_hash s  -> ok @@ V_Ct (C_key_hash s)
   | Literal_chain_id s  -> ok @@ V_Ct (C_key_hash s)
   | Literal_operation o -> ok @@ V_Ct (C_operation o)
+  | Literal_void -> simple_fail "iguess ?"
 
 and eval : Ast_typed.expression -> env -> value result
   = fun term env ->
-    match term with
-    | E_application ({expression = f; _}, args) -> (
-      let%bind f' = match f with
+    match term.expression_content with
+    | E_application ({expr1 = f; expr2 = args}) -> (
+      let%bind f' = match f.expression_content with
         | E_variable f -> Env.lookup env f
         | _ -> eval f env in
       match f' with
       | V_Func_val (arg_names, body, f_env) ->
-        let%bind args' = eval args.expression env in
+        let%bind args' = eval args env in
         let f_env' = Env.extend f_env (arg_names, args') in
         eval body f_env'
       | _ -> simple_fail "trying to apply on something that is not a function"
     )
-    | E_lambda { binder; body;} ->
-      ok @@ V_Func_val (binder,body.expression,env)
-    | E_let_in { binder; rhs; result; _} ->
-      let%bind rhs' = eval rhs.expression env in
-      eval result.expression (Env.extend env (binder,rhs'))
+    | E_lambda { binder; result;} ->
+      ok @@ V_Func_val (binder,result,env)
+    | E_let_in { let_binder; rhs; let_result; _} ->
+      let%bind rhs' = eval rhs env in
+      eval let_result (Env.extend env (let_binder,rhs'))
     | E_map kvlist | E_big_map kvlist ->
       let%bind kvlist' = bind_map_list
-        (fun kv -> bind_map_pair (fun (el:Ast_typed.annotated_expression) -> eval el.expression env) kv)
+        (fun kv -> bind_map_pair (fun (el:Ast_typed.expression) -> eval el env) kv)
         kvlist in
       ok @@ V_Map kvlist'
     | E_list expl ->
       let%bind expl' = bind_map_list
-        (fun (exp:Ast_typed.annotated_expression) -> eval exp.expression env)
+        (fun (exp:Ast_typed.expression) -> eval exp env)
         expl in
       ok @@ V_List expl'
     | E_set expl ->
       let%bind expl' = bind_map_list
-        (fun (exp:Ast_typed.annotated_expression) -> eval exp.expression env)
+        (fun (exp:Ast_typed.expression) -> eval exp env)
         (List.sort_uniq compare expl)
       in
       ok @@ V_Set expl'
@@ -307,13 +308,13 @@ and eval : Ast_typed.expression -> env -> value result
       Env.lookup env var
     | E_record recmap ->
       let%bind lv' = bind_map_list
-        (fun (label,(v:Ast_typed.annotated_expression)) ->
-          let%bind v' = eval v.expression env in
+        (fun (label,(v:Ast_typed.expression)) ->
+          let%bind v' = eval v env in
           ok (label,v'))
         (LMap.to_kv_list recmap) in
       ok @@ V_Record (LMap.of_list lv')
-    | E_record_accessor (record,label) -> (
-      let%bind record' = eval record.expression env in
+    | E_record_accessor { expr ; label} -> (
+      let%bind record' = eval expr env in
       match record' with
       | V_Record recmap ->
         let%bind a = trace_option (simple_error "unknown record field") @@
@@ -321,35 +322,35 @@ and eval : Ast_typed.expression -> env -> value result
         ok a
       | _ -> simple_fail "trying to access a non-record"
     )
-    | E_record_update (record, (l,field)) -> (
-      let%bind record' = eval record.expression env in
+    | E_record_update {record ; path ; update} -> (
+      let%bind record' = eval record env in
       match record' with
       | V_Record recmap ->
-        if LMap.mem l recmap then
-          let%bind field' = eval field.expression env in
-          ok @@ V_Record (LMap.add l field' recmap)
+        if LMap.mem path recmap then
+          let%bind field' = eval update env in
+          ok @@ V_Record (LMap.add path field' recmap)
         else
           simple_fail "field l does not exist in record"
       | _ -> simple_fail "this expression isn't a record"
     )
-    | E_constant (op, operands) -> (
+    | E_constant {cons_name ; arguments} -> (
       let%bind operands' = bind_map_list
-        (fun (ae:Ast_typed.annotated_expression) -> eval ae.expression env)
-        operands in
-      apply_operator op operands'
+        (fun (ae:Ast_typed.expression) -> eval ae env)
+        arguments in
+      apply_operator cons_name operands'
     )
-    | E_constructor (Constructor c, v) ->
-      let%bind v' = eval v.expression env in
+    | E_constructor { constructor = Constructor c ; element } ->
+      let%bind v' = eval element env in
       ok @@ V_Construct (c,v')
-    | E_matching (e , cases) -> (
-      let%bind e' = eval e.expression env in
+    | E_matching { matchee ; cases} -> (
+      let%bind e' = eval matchee env in
       match cases, e' with
       | Match_list cases , V_List [] ->
-        eval cases.match_nil.expression env
+        eval cases.match_nil env
       | Match_list cases , V_List (head::tail) ->
         let (head_var,tail_var,body,_) = cases.match_cons in
         let env' = Env.extend (Env.extend env (head_var,head)) (tail_var, V_List tail) in
-        eval body.expression env'
+        eval body env'
       | Match_variant (case_list , _) , V_Construct (matched_c , proj) ->
         let ((_, var) , body) =
           List.find
@@ -358,44 +359,21 @@ and eval : Ast_typed.expression -> env -> value result
               String.equal matched_c c)
             case_list in
         let env' = Env.extend env (var, proj) in
-        eval body.expression env'
+        eval body env'
       | Match_bool cases , V_Ct (C_bool true) ->
-        eval cases.match_true.expression env
+        eval cases.match_true env
       | Match_bool cases , V_Ct (C_bool false) ->
-        eval cases.match_false.expression env
+        eval cases.match_false env
       | Match_option cases, V_Construct ("Some" , proj) ->
         let (var,body,_) = cases.match_some in
         let env' = Env.extend env (var,proj) in
-        eval body.expression env'
+        eval body env'
       | Match_option cases, V_Construct ("None" , V_Ct C_unit) ->
-        eval cases.match_none.expression env
+        eval cases.match_none env
       | _ -> simple_fail "not yet supported case"
         (* ((ctor,name),body) *)
     )
-    (**********************************************
-    This is not necessary after Ast simplification
-    ***********************************************)
-    | E_tuple el ->
-      let%bind lv = bind_mapi_list
-        (fun i (el:Ast_typed.annotated_expression) ->
-          let%bind el' = eval el.expression env in
-          ok (Label (string_of_int i), el'))
-        el in
-      ok @@ V_Record (LMap.of_list lv)
-    | E_tuple_accessor (tuple,i) -> (
-      let%bind record' = eval tuple.expression env in
-      match record' with
-      | V_Record recmap ->
-        let label = Label (string_of_int i) in
-        let%bind a = trace_option (simple_error "out of tuple range") @@
-          LMap.find_opt label recmap in
-        ok a
-      | _ -> simple_fail "trying to access a non-record"
-    )
-    (**********************************************
-    This is not necessary after Ast simplification
-    ***********************************************)
-    | E_look_up _ | E_loop _ | E_sequence _ | E_assign  _->
+    | E_look_up _ | E_loop _ ->
       let serr = Format.asprintf "Unsupported construct :\n %a\n" Ast_typed.PP.expression term in
       simple_fail serr
 
@@ -403,16 +381,16 @@ let dummy : Ast_typed.program -> string result =
   fun prg ->
     let%bind (res,_) = bind_fold_list
       (fun (pp,top_env) el ->
-        let (Ast_typed.Declaration_constant (named_exp, _, _)) = Location.unwrap el in
+        let (Ast_typed.Declaration_constant (exp_name, exp , _ , _)) = Location.unwrap el in
         let%bind v =
         (*TODO This TRY-CATCH is here until we properly implement effects*)
         try
-          eval named_exp.annotated_expression.expression top_env
+          eval exp top_env
         with Temporary_hack s -> ok @@ V_Failure s
         (*TODO This TRY-CATCH is here until we properly implement effects*)
         in
-        let pp' = pp^"\n val "^(Var.to_name named_exp.name)^" = "^(Ligo_interpreter.PP.pp_value v) in
-        let top_env' = Env.extend top_env (named_exp.name, v) in
+        let pp' = pp^"\n val "^(Var.to_name exp_name)^" = "^(Ligo_interpreter.PP.pp_value v) in
+        let top_env' = Env.extend top_env (exp_name, v) in
         ok @@ (pp',top_env')
       )
       ("",Env.empty_env) prg in
