@@ -9,7 +9,7 @@ Timestamps in LIGO, or in Michelson in general are available in smart contracts,
 
 ### Current time
 
-You can obtain the current time using the built-in syntax specific expression, please be aware that it's up to the baker to set the current timestamp value.
+You can obtain the current time using the built-in syntax specific expression, please be aware that it is up to the baker to set the current timestamp value.
 
 
 <!--DOCUSAURUS_CODE_TABS-->

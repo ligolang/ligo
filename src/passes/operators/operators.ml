@@ -66,7 +66,7 @@ module Simplify = struct
   module Pascaligo = struct
 
     let constants = function
-      | "get_force"       -> ok C_MAP_GET_FORCE
+      | "assert"          -> ok C_ASSERTION
       | "get_chain_id"    -> ok C_CHAIN_ID
       | "transaction"     -> ok C_CALL
       | "get_contract"    -> ok C_CONTRACT
@@ -87,6 +87,8 @@ module Simplify = struct
       | "bitwise_or"      -> ok C_OR
       | "bitwise_and"     -> ok C_AND
       | "bitwise_xor"     -> ok C_XOR
+      | "bitwise_lsl"     -> ok C_LSL
+      | "bitwise_lsr"     -> ok C_LSR
       | "string_concat"   -> ok C_CONCAT
       | "string_slice"    -> ok C_SLICE
       | "crypto_check"    -> ok C_CHECK_SIGNATURE
@@ -104,12 +106,13 @@ module Simplify = struct
       | "list_iter"       -> ok C_LIST_ITER
       | "list_fold"       -> ok C_LIST_FOLD
       | "list_map"        -> ok C_LIST_MAP
+      | "get_force"       -> ok C_MAP_FIND
       | "map_iter"        -> ok C_MAP_ITER
       | "map_map"         -> ok C_MAP_MAP
       | "map_fold"        -> ok C_MAP_FOLD
       | "map_remove"      -> ok C_MAP_REMOVE
       | "map_update"      -> ok C_MAP_UPDATE
-      | "map_get"         -> ok C_MAP_GET
+      | "map_get"         -> ok C_MAP_FIND_OPT
       | "map_mem"         -> ok C_MAP_MEM
       | "sha_256"         -> ok C_SHA256
       | "sha_512"         -> ok C_SHA512
@@ -163,7 +166,6 @@ module Simplify = struct
       | "Current.failwith"         -> ok C_FAILWITH
       | "failwith"                 -> ok C_FAILWITH
 
-      | "Crypto.hash"              -> ok C_HASH
       | "Crypto.blake2b"           -> ok C_BLAKE2b
       | "Crypto.sha256"            -> ok C_SHA256
       | "Crypto.sha512"            -> ok C_SHA512
@@ -179,6 +181,7 @@ module Simplify = struct
       | "Bytes.sub"                -> ok C_SLICE
 
       | "Set.mem"                  -> ok C_SET_MEM
+      | "Set.iter"                 -> ok C_SET_ITER
       | "Set.empty"                -> ok C_SET_EMPTY
       | "Set.literal"              -> ok C_SET_LITERAL
       | "Set.add"                  -> ok C_SET_ADD
@@ -210,6 +213,8 @@ module Simplify = struct
       | "Bitwise.lor"              -> ok C_OR
       | "Bitwise.land"             -> ok C_AND
       | "Bitwise.lxor"             -> ok C_XOR
+      | "Bitwise.shift_left"       -> ok C_LSL
+      | "Bitwise.shift_right"      -> ok C_LSR
 
       | "String.length"            -> ok C_SIZE
       | "String.size"              -> ok C_SIZE
@@ -268,8 +273,8 @@ module Typer = struct
     let type_error msg expected_type actual_type () =
       let message () =
         Format.asprintf "Expected an expression of type %a but got an expression of type %a"
-          Ast_typed.PP.type_value expected_type
-          Ast_typed.PP.type_value actual_type in
+          Ast_typed.PP.type_expression expected_type
+          Ast_typed.PP.type_expression actual_type in
       error (thunk msg) message
 
     open PP_helpers
@@ -281,8 +286,8 @@ module Typer = struct
     let typeclass_error msg f expected_types actual_types () =
       let message () =
         Format.asprintf "Expected arguments with one of the following combinations of types: %a but got this combination instead: %a"
-          (list_sep (print_f_args f Ast_typed.PP.type_value) (const " or ")) expected_types
-          (print_f_args f Ast_typed.PP.type_value) actual_types in
+          (list_sep (print_f_args f Ast_typed.PP.type_expression) (const " or ")) expected_types
+          (print_f_args f Ast_typed.PP.type_expression) actual_types in
       error (thunk msg) message
   end
   (*
@@ -324,53 +329,55 @@ module Typer = struct
     let tc_addargs  a b c = tc [a;b;c] [ (*TODO…*) ]
 
     let t_none         = forall "a" @@ fun a -> option a
-    let t_sub          = forall3_tc "a" "b" "c" @@ fun a b c -> [tc_subarg a b c] => a --> b --> c (* TYPECLASS *)
+
+    let t_sub          = forall3_tc "a" "b" "c" @@ fun a b c -> [tc_subarg a b c] => tuple2 a b --> c (* TYPECLASS *)
     let t_some         = forall "a" @@ fun a -> a --> option a
-    let t_map_remove   = forall2 "src" "dst" @@ fun src dst -> src --> map src dst --> map src dst
-    let t_map_add      = forall2 "src" "dst" @@ fun src dst -> src --> dst --> map src dst --> map src dst
-    let t_map_update   = forall2 "src" "dst" @@ fun src dst -> src --> option dst --> map src dst --> map src dst
-    let t_map_mem      = forall2 "src" "dst" @@ fun src dst -> src --> map src dst --> bool
-    let t_map_find     = forall2 "src" "dst" @@ fun src dst -> src --> map src dst --> dst
-    let t_map_find_opt = forall2 "src" "dst" @@ fun src dst -> src --> map src dst --> option dst
-    let t_map_fold     = forall3 "src" "dst" "acc" @@ fun src dst acc -> ( ( (src * dst) * acc ) --> acc ) --> map src dst --> acc --> acc
-    let t_map_map      = forall3 "k" "v" "result" @@ fun k v result -> ((k * v) --> result) --> map k v --> map k result
+    let t_map_remove   = forall2 "src" "dst" @@ fun src dst -> tuple2 src (map src dst) --> map src dst
+    let t_map_add      = forall2 "src" "dst" @@ fun src dst -> tuple3 src dst (map src dst) --> map src dst
+    let t_map_update   = forall2 "src" "dst" @@ fun src dst -> tuple3 src (option dst) (map src dst) --> map src dst
+    let t_map_mem      = forall2 "src" "dst" @@ fun src dst -> tuple2 src (map src dst) --> bool
+    let t_map_find     = forall2 "src" "dst" @@ fun src dst -> tuple2 src (map src dst) --> dst
+    let t_map_find_opt = forall2 "src" "dst" @@ fun src dst -> tuple2 src (map src dst) --> option dst
+    let t_map_fold     = forall3 "src" "dst" "acc" @@ fun src dst acc -> tuple3 ( ( (src * dst) * acc ) --> acc ) (map src dst) acc --> acc
+    let t_map_map      = forall3 "k" "v" "result" @@ fun k v result -> tuple2 ((k * v) --> result) (map k v) --> map k result
 
     (* TODO: the type of map_map_fold might be wrong, check it. *)
-    let t_map_map_fold = forall4 "k" "v" "acc" "dst" @@ fun k v acc dst -> ( ((k * v) * acc) --> acc * dst ) --> map k v --> (k * v) --> (map k dst * acc)
-    let t_map_iter     = forall2 "k" "v" @@ fun k v -> ( (k * v) --> unit ) --> map k v --> unit
-    let t_size         = forall_tc "c" @@ fun c -> [tc_sizearg c] => c --> nat (* TYPECLASS *)
-    let t_slice        = nat --> nat --> string --> string
-    let t_failwith     = string --> unit
-    let t_get_force    = forall2 "src" "dst" @@ fun src dst -> src --> map src dst --> dst
-    let t_int          = nat --> int
-    let t_bytes_pack   = forall_tc "a" @@ fun a -> [tc_packable a] => a --> bytes (* TYPECLASS *)
-    let t_bytes_unpack = forall_tc "a" @@ fun a -> [tc_packable a] => bytes --> a (* TYPECLASS *)
-    let t_hash256      = bytes --> bytes
-    let t_hash512      = bytes --> bytes
-    let t_blake2b      = bytes --> bytes
-    let t_hash_key     = key --> key_hash
-    let t_check_signature = key --> signature --> bytes --> bool
-    let t_sender       = address
-    let t_source       = address
-    let t_unit         = unit
-    let t_amount       = mutez
-    let t_address      = address
-    let t_now          = timestamp
-    let t_transaction  = forall "a" @@ fun a -> a --> mutez --> contract a --> operation
-    let t_get_contract = forall "a" @@ fun a -> contract a
-    let t_abs          = int --> nat
-    let t_cons         = forall "a" @@ fun a -> a --> list a --> list a
-    let t_assertion    = bool --> unit
-    let t_times        = forall3_tc "a" "b" "c" @@ fun a b c -> [tc_timargs a b c] => a --> b --> c (* TYPECLASS *)
-    let t_div          = forall3_tc "a" "b" "c" @@ fun a b c -> [tc_divargs a b c] => a --> b --> c (* TYPECLASS *)
-    let t_mod          = forall3_tc "a" "b" "c" @@ fun a b c -> [tc_modargs a b c] => a --> b --> c (* TYPECLASS *)
-    let t_add          = forall3_tc "a" "b" "c" @@ fun a b c -> [tc_addargs a b c] => a --> b --> c (* TYPECLASS *)
-    let t_set_mem      = forall "a" @@ fun a -> a --> set a --> bool
-    let t_set_add      = forall "a" @@ fun a -> a --> set a --> set a
-    let t_set_remove   = forall "a" @@ fun a -> a --> set a --> set a
-    let t_not          = bool --> bool
+    let t_map_map_fold = forall4 "k" "v" "acc" "dst" @@ fun k v acc dst -> tuple3 ( ((k * v) * acc) --> acc * dst ) (map k v) (k * v) --> (map k dst * acc)
+    let t_map_iter     = forall2 "k" "v" @@ fun k v -> tuple2 ( (k * v) --> unit ) (map k v) --> unit
+    let t_size         = forall_tc "c" @@ fun c -> [tc_sizearg c] => tuple1 c --> nat (* TYPECLASS *)
+    let t_slice        = tuple3 nat nat string --> string
+    let t_failwith     = tuple1 string --> unit
+    let t_get_force    = forall2 "src" "dst" @@ fun src dst -> tuple2 src (map src dst) --> dst
+    let t_int          = tuple1 nat --> int
+    let t_bytes_pack   = forall_tc "a" @@ fun a -> [tc_packable a] => tuple1 a --> bytes (* TYPECLASS *)
+    let t_bytes_unpack = forall_tc "a" @@ fun a -> [tc_packable a] => tuple1 bytes --> a (* TYPECLASS *)
+    let t_hash256      = tuple1 bytes --> bytes
+    let t_hash512      = tuple1 bytes --> bytes
+    let t_blake2b      = tuple1 bytes --> bytes
+    let t_hash_key     = tuple1 key --> key_hash
+    let t_check_signature = tuple3 key signature bytes --> bool
+    let t_chain_id     = tuple0 --> chain_id
+    let t_sender       = tuple0 --> address
+    let t_source       = tuple0 --> address
+    let t_unit         = tuple0 --> unit
+    let t_amount       = tuple0 --> mutez
+    let t_address      = tuple0 --> address
+    let t_now          = tuple0 --> timestamp
+    let t_transaction  = forall "a" @@ fun a -> tuple3 a mutez (contract a) --> operation
+    let t_get_contract = forall "a" @@ fun a -> tuple0 --> contract a
+    let t_abs          = tuple1 int --> nat
+    let t_cons         = forall "a" @@ fun a -> a --> tuple1 (list a) --> list a
+    let t_assertion    = tuple1 bool --> unit
+    let t_times        = forall3_tc "a" "b" "c" @@ fun a b c -> [tc_timargs a b c] => tuple2 a b --> c (* TYPECLASS *)
+    let t_div          = forall3_tc "a" "b" "c" @@ fun a b c -> [tc_divargs a b c] => tuple2 a b --> c (* TYPECLASS *)
+    let t_mod          = forall3_tc "a" "b" "c" @@ fun a b c -> [tc_modargs a b c] => tuple2 a b --> c (* TYPECLASS *)
+    let t_add          = forall3_tc "a" "b" "c" @@ fun a b c -> [tc_addargs a b c] => tuple2 a b --> c (* TYPECLASS *)
+    let t_set_mem      = forall "a" @@ fun a -> tuple2 a (set a) --> bool
+    let t_set_add      = forall "a" @@ fun a -> tuple2 a (set a) --> set a
+    let t_set_remove   = forall "a" @@ fun a -> tuple2 a (set a) --> set a
+    let t_not          = tuple1 bool --> bool
 
-    let constant_type : constant -> Typesystem.Core.type_value result = function
+    let constant_type : constant' -> Typesystem.Core.type_value result = function
       | C_INT                 -> ok @@ t_int ;
       | C_UNIT                -> ok @@ t_unit ;
       | C_NOW                 -> ok @@ t_now ;
@@ -396,6 +403,8 @@ module Typer = struct
       | C_AND                 -> ok @@ failwith "t_and" ;
       | C_OR                  -> ok @@ failwith "t_or" ;
       | C_XOR                 -> ok @@ failwith "t_xor" ;
+      | C_LSL                 -> ok @@ failwith "t_lsl" ;
+      | C_LSR                 -> ok @@ failwith "t_lsr" ;
       (* COMPARATOR *)
       | C_EQ                  -> ok @@ failwith "t_comparator EQ" ;
       | C_NEQ                 -> ok @@ failwith "t_comparator NEQ" ;
@@ -424,8 +433,6 @@ module Typer = struct
       | C_LIST_FOLD           -> ok @@ failwith "t_list_fold" ;
       | C_LIST_CONS           -> ok @@ failwith "t_list_cons" ;
       (* MAP *)
-      | C_MAP_GET             -> ok @@ failwith "t_map_get" ;
-      | C_MAP_GET_FORCE       -> ok @@ failwith "t_map_get_force" ;
       | C_MAP_ADD             -> ok @@ t_map_add ;
       | C_MAP_REMOVE          -> ok @@ t_map_remove ;
       | C_MAP_UPDATE          -> ok @@ t_map_update ;
@@ -442,7 +449,7 @@ module Typer = struct
       | C_BLAKE2b             -> ok @@ t_blake2b ;
       | C_HASH_KEY            -> ok @@ t_hash_key ;
       | C_CHECK_SIGNATURE     -> ok @@ t_check_signature ;
-      | C_CHAIN_ID            -> ok @@ failwith "t_chain_id" ;
+      | C_CHAIN_ID            -> ok @@ t_chain_id ;
       (*BLOCKCHAIN *)
       | C_CONTRACT            -> ok @@ t_get_contract ;
       | C_CONTRACT_ENTRYPOINT -> ok @@ failwith "t_get_entrypoint" ;
@@ -484,42 +491,42 @@ module Typer = struct
 
   let list_cons : typer = typer_2 "CONS" @@ fun hd tl ->
     let%bind tl' = get_t_list tl in
-    let%bind () = assert_type_value_eq (hd , tl') in
+    let%bind () = assert_type_expression_eq (hd , tl') in
     ok tl
 
   let map_remove : typer = typer_2 "MAP_REMOVE" @@ fun k m ->
     let%bind (src , _) = bind_map_or (get_t_map , get_t_big_map) m in
-    let%bind () = assert_type_value_eq (src , k) in
+    let%bind () = assert_type_expression_eq (src , k) in
     ok m
 
   let map_add : typer = typer_3 "MAP_ADD" @@ fun k v m ->
     let%bind (src, dst) = bind_map_or (get_t_map , get_t_big_map) m in
-    let%bind () = assert_type_value_eq (src, k) in
-    let%bind () = assert_type_value_eq (dst, v) in
+    let%bind () = assert_type_expression_eq (src, k) in
+    let%bind () = assert_type_expression_eq (dst, v) in
     ok m
 
   let map_update : typer = typer_3 "MAP_UPDATE" @@ fun k v m ->
     let%bind (src, dst) = bind_map_or (get_t_map , get_t_big_map) m in
-    let%bind () = assert_type_value_eq (src, k) in
+    let%bind () = assert_type_expression_eq (src, k) in
     let%bind v' = get_t_option v in
-    let%bind () = assert_type_value_eq (dst, v') in
+    let%bind () = assert_type_expression_eq (dst, v') in
     ok m
 
   let map_mem : typer = typer_2 "MAP_MEM" @@ fun k m ->
     let%bind (src, _dst) = bind_map_or (get_t_map , get_t_big_map) m in
-    let%bind () = assert_type_value_eq (src, k) in
+    let%bind () = assert_type_expression_eq (src, k) in
     ok @@ t_bool ()
 
   let map_find : typer = typer_2 "MAP_FIND" @@ fun k m ->
     let%bind (src, dst) =
       trace_strong (simple_error "MAP_FIND: not map or bigmap") @@
       bind_map_or (get_t_map , get_t_big_map) m in
-    let%bind () = assert_type_value_eq (src, k) in
+    let%bind () = assert_type_expression_eq (src, k) in
     ok @@ dst
 
   let map_find_opt : typer = typer_2 "MAP_FIND_OPT" @@ fun k m ->
     let%bind (src, dst) = bind_map_or (get_t_map , get_t_big_map) m in
-    let%bind () = assert_type_value_eq (src, k) in
+    let%bind () = assert_type_expression_eq (src, k) in
     ok @@ t_option dst ()
 
   let map_iter : typer = typer_2 "MAP_ITER" @@ fun f m ->
@@ -562,16 +569,6 @@ module Typer = struct
     let default = t_unit () in
     ok @@ Simple_utils.Option.unopt ~default opt
 
-  let map_get_force = typer_2 "MAP_GET_FORCE" @@ fun i m ->
-    let%bind (src, dst) = bind_map_or (get_t_map , get_t_big_map) m in
-    let%bind _ = assert_type_value_eq (src, i) in
-    ok dst
-
-  let map_get = typer_2 "MAP_GET" @@ fun i m ->
-    let%bind (src, dst) = bind_map_or (get_t_map , get_t_big_map) m in
-    let%bind _ = assert_type_value_eq (src, i) in
-    ok @@ t_option dst ()
-
   let int : typer = typer_1 "INT" @@ fun t ->
     let%bind () = assert_t_nat t in
     ok @@ t_int ()
@@ -606,17 +603,17 @@ module Typer = struct
     let%bind () = assert_t_bytes b in
     ok @@ t_bool ()
 
-  let sender = constant "SENDER" @@ t_address ()
+  let sender = constant' "SENDER" @@ t_address ()
 
-  let source = constant "SOURCE" @@ t_address ()
+  let source = constant' "SOURCE" @@ t_address ()
 
-  let unit = constant "UNIT" @@ t_unit ()
+  let unit = constant' "UNIT" @@ t_unit ()
 
-  let amount = constant "AMOUNT" @@ t_mutez ()
+  let amount = constant' "AMOUNT" @@ t_mutez ()
 
-  let balance = constant "BALANCE" @@ t_mutez ()
+  let balance = constant' "BALANCE" @@ t_mutez ()
 
-  let chain_id = constant "CHAIN_ID" @@ t_chain_id ()
+  let chain_id = constant' "CHAIN_ID" @@ t_chain_id ()
 
   let address = typer_1 "ADDRESS" @@ fun contract ->
     let%bind () = assert_t_contract contract in
@@ -629,12 +626,12 @@ module Typer = struct
     let%bind () = assert_t_key_hash key_hash in
     ok @@ t_contract (t_unit () ) ()
 
-  let now = constant "NOW" @@ t_timestamp ()
+  let now = constant' "NOW" @@ t_timestamp ()
 
   let transaction = typer_3 "CALL" @@ fun param amount contract ->
     let%bind () = assert_t_mutez amount in
     let%bind contract_param = get_t_contract contract in
-    let%bind () = assert_type_value_eq (param , contract_param) in
+    let%bind () = assert_type_expression_eq (param , contract_param) in
     ok @@ t_operation ()
 
   let originate = typer_6 "ORIGINATE" @@ fun manager delegate_opt spendable delegatable init_balance code ->
@@ -651,8 +648,8 @@ module Typer = struct
     ok @@ (t_pair (t_operation ()) (t_address ()) ())
 
   let get_contract = typer_1_opt "CONTRACT" @@ fun addr_tv tv_opt ->
-    if not (type_value_eq (addr_tv, t_address ()))
-    then fail @@ simple_error (Format.asprintf "get_contract expects an address, got %a" PP.type_value addr_tv)
+    if not (type_expression_eq (addr_tv, t_address ()))
+    then fail @@ simple_error (Format.asprintf "get_contract expects an address, got %a" PP.type_expression addr_tv)
     else
     let%bind tv =
       trace_option (simple_error "get_contract needs a type annotation") tv_opt in
@@ -662,8 +659,8 @@ module Typer = struct
     ok @@ t_contract tv' ()
 
   let get_contract_opt = typer_1_opt "CONTRACT OPT" @@ fun addr_tv tv_opt ->
-    if not (type_value_eq (addr_tv, t_address ()))
-    then fail @@ simple_error (Format.asprintf "get_contract_opt expects an address, got %a" PP.type_value addr_tv)
+    if not (type_expression_eq (addr_tv, t_address ()))
+    then fail @@ simple_error (Format.asprintf "get_contract_opt expects an address, got %a" PP.type_expression addr_tv)
     else
     let%bind tv =
       trace_option (simple_error "get_contract_opt needs a type annotation") tv_opt in
@@ -676,11 +673,11 @@ module Typer = struct
     ok @@ t_option (t_contract tv' ()) ()
 
   let get_entrypoint = typer_2_opt "CONTRACT_ENTRYPOINT" @@ fun entry_tv addr_tv tv_opt ->
-    if not (type_value_eq (entry_tv, t_string ()))
-    then fail @@ simple_error (Format.asprintf "get_entrypoint expects a string entrypoint label for first argument, got %a" PP.type_value entry_tv)
+    if not (type_expression_eq (entry_tv, t_string ()))
+    then fail @@ simple_error (Format.asprintf "get_entrypoint expects a string entrypoint label for first argument, got %a" PP.type_expression entry_tv)
     else
-    if not (type_value_eq (addr_tv, t_address ()))
-    then fail @@ simple_error (Format.asprintf "get_entrypoint expects an address for second argument, got %a" PP.type_value addr_tv)
+    if not (type_expression_eq (addr_tv, t_address ()))
+    then fail @@ simple_error (Format.asprintf "get_entrypoint expects an address for second argument, got %a" PP.type_expression addr_tv)
     else
     let%bind tv =
       trace_option (simple_error "get_entrypoint needs a type annotation") tv_opt in
@@ -690,11 +687,11 @@ module Typer = struct
     ok @@ t_contract tv' ()
 
   let get_entrypoint_opt = typer_2_opt "CONTRACT_ENTRYPOINT_OPT" @@ fun entry_tv addr_tv tv_opt ->
-    if not (type_value_eq (entry_tv, t_string ()))
-    then fail @@ simple_error (Format.asprintf "get_entrypoint_opt expects a string entrypoint label for first argument, got %a" PP.type_value entry_tv)
+    if not (type_expression_eq (entry_tv, t_string ()))
+    then fail @@ simple_error (Format.asprintf "get_entrypoint_opt expects a string entrypoint label for first argument, got %a" PP.type_expression entry_tv)
     else
-    if not (type_value_eq (addr_tv, t_address ()))
-    then fail @@ simple_error (Format.asprintf "get_entrypoint_opt expects an address for second argument, got %a" PP.type_value addr_tv)
+    if not (type_expression_eq (addr_tv, t_address ()))
+    then fail @@ simple_error (Format.asprintf "get_entrypoint_opt expects an address for second argument, got %a" PP.type_expression addr_tv)
     else
     let%bind tv =
       trace_option (simple_error "get_entrypoint_opt needs a type annotation") tv_opt in
@@ -845,8 +842,8 @@ module Typer = struct
     let%bind (prec , cur) = get_t_pair arg in
     let%bind key = get_t_list lst in
     let msg = Format.asprintf "%a vs %a"
-        Ast_typed.PP.type_value key
-        Ast_typed.PP.type_value arg
+        PP.type_expression key
+        PP.type_expression arg
     in
     trace (simple_error ("bad list fold:" ^ msg)) @@
     let%bind () = assert_eq_1 ~msg:"key cur" key cur in
@@ -859,8 +856,8 @@ module Typer = struct
     let%bind (prec , cur) = get_t_pair arg in
     let%bind key = get_t_set lst in
     let msg = Format.asprintf "%a vs %a"
-        Ast_typed.PP.type_value key
-        Ast_typed.PP.type_value arg
+        PP.type_expression key
+        PP.type_expression arg
     in
     trace (simple_error ("bad set fold:" ^ msg)) @@
     let%bind () = assert_eq_1 ~msg:"key cur" key cur in
@@ -873,10 +870,10 @@ module Typer = struct
     let%bind (prec , cur) = get_t_pair arg in
     let%bind (key , value) = get_t_map map in
     let msg = Format.asprintf "%a vs %a"
-        Ast_typed.PP.type_value key
-        Ast_typed.PP.type_value arg
+        PP.type_expression key
+        PP.type_expression arg
     in
-    trace (simple_error ("bad list fold:" ^ msg)) @@
+    trace (simple_error ("bad map fold:" ^ msg)) @@
     let%bind () = assert_eq_1 ~msg:"key cur" (t_pair key value ()) cur in
     let%bind () = assert_eq_1 ~msg:"prec res" prec res in
     let%bind () = assert_eq_1 ~msg:"res init" res init in
@@ -1006,6 +1003,8 @@ module Typer = struct
     | C_AND                 -> ok @@ and_ ;
     | C_OR                  -> ok @@ or_ ;
     | C_XOR                 -> ok @@ xor ;
+    | C_LSL                 -> ok @@ lsl_;
+    | C_LSR                 -> ok @@ lsr_;
     (* COMPARATOR *)
     | C_EQ                  -> ok @@ comparator "EQ" ;
     | C_NEQ                 -> ok @@ comparator "NEQ" ;
@@ -1034,8 +1033,6 @@ module Typer = struct
     | C_LIST_FOLD           -> ok @@ list_fold ;
     | C_LIST_CONS           -> ok @@ list_cons ;
     (* MAP *)
-    | C_MAP_GET             -> ok @@ map_get ;
-    | C_MAP_GET_FORCE       -> ok @@ map_get_force ;
     | C_MAP_ADD             -> ok @@ map_add ;
     | C_MAP_REMOVE          -> ok @@ map_remove ;
     | C_MAP_UPDATE          -> ok @@ map_update ;
@@ -1067,7 +1064,7 @@ module Typer = struct
     | C_SELF_ADDRESS        -> ok @@ self_address;
     | C_IMPLICIT_ACCOUNT    -> ok @@ implicit_account;
     | C_SET_DELEGATE        -> ok @@ set_delegate ;
-    | _                     -> simple_fail @@ Format.asprintf "Typer not implemented for consant %a" Stage_common.PP.constant c
+    | _                     -> simple_fail @@ Format.asprintf "Typer not implemented for consant %a" PP.constant c
 
 
 
@@ -1103,6 +1100,8 @@ module Compiler = struct
     | C_OR              -> ok @@ simple_binary @@ prim I_OR
     | C_AND             -> ok @@ simple_binary @@ prim I_AND
     | C_XOR             -> ok @@ simple_binary @@ prim I_XOR
+    | C_LSL             -> ok @@ simple_binary @@ prim I_LSL
+    | C_LSR             -> ok @@ simple_binary @@ prim I_LSR
     | C_NOT             -> ok @@ simple_unary @@ prim I_NOT
     | C_PAIR            -> ok @@ simple_binary @@ prim I_PAIR
     | C_CAR             -> ok @@ simple_unary @@ prim I_CAR
@@ -1115,9 +1114,7 @@ module Compiler = struct
     | C_GE              -> ok @@ simple_binary @@ seq [prim I_COMPARE ; prim I_GE]
     | C_UPDATE          -> ok @@ simple_ternary @@ prim I_UPDATE
     | C_SOME            -> ok @@ simple_unary  @@ prim I_SOME
-    | C_MAP_GET_FORCE   -> ok @@ simple_binary @@ seq [prim I_GET ; i_assert_some_msg (i_push_string "GET_FORCE")]
     | C_MAP_FIND        -> ok @@ simple_binary @@ seq [prim I_GET ; i_assert_some_msg (i_push_string "MAP FIND")]
-    | C_MAP_GET         -> ok @@ simple_binary @@ prim I_GET
     | C_MAP_MEM         -> ok @@ simple_binary @@ prim I_MEM
     | C_MAP_FIND_OPT    -> ok @@ simple_binary @@ prim I_GET
     | C_MAP_ADD         -> ok @@ simple_ternary @@ seq [dip (i_some) ; prim I_UPDATE]
@@ -1128,7 +1125,7 @@ module Compiler = struct
     | C_SIZE            -> ok @@ simple_unary @@ prim I_SIZE
     | C_FAILWITH        -> ok @@ simple_unary @@ prim I_FAILWITH
     | C_ASSERT_INFERRED -> ok @@ simple_binary @@ i_if (seq [i_failwith]) (seq [i_drop ; i_push_unit])
-    | C_ASSERTION       -> ok @@ simple_unary @@ i_if (seq [i_push_unit]) (seq [i_push_unit ; i_failwith])
+    | C_ASSERTION       -> ok @@ simple_unary @@ i_if (seq [i_push_unit]) (seq [i_push_string "failed assertion" ; i_failwith])
     | C_INT             -> ok @@ simple_unary @@ prim I_INT
     | C_ABS             -> ok @@ simple_unary @@ prim I_ABS
     | C_IS_NAT          -> ok @@ simple_unary @@ prim I_ISNAT
@@ -1157,7 +1154,6 @@ module Compiler = struct
     | C_CONCAT          -> ok @@ simple_binary @@ prim I_CONCAT
     | C_CHAIN_ID        -> ok @@ simple_constant @@ prim I_CHAIN_ID
     | _                 -> simple_fail @@ Format.asprintf "operator not implemented for %a" Stage_common.PP.constant c
-
 
   (*
     Some complex operators will need to be added in compiler/compiler_program.

@@ -7,7 +7,6 @@ let type_constraint : _ -> type_constraint_simpl -> unit = fun ppf ->
     let ct = match c_tag with
       | Solver.Core.C_arrow     -> "arrow"
       | Solver.Core.C_option    -> "option"
-      | Solver.Core.C_tuple     -> "tuple"
       | Solver.Core.C_record    -> failwith "record"
       | Solver.Core.C_variant   -> failwith "variant"
       | Solver.Core.C_map       -> "map"

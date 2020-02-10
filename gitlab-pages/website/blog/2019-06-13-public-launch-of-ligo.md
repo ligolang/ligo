@@ -8,7 +8,7 @@ author: Gabriel Alfour
 ---
 
 ## A Refresher: What is LIGO?
-LIGO is a statically typed high-level smart-contract language that compiles down to Michelson. It seeks to be easy to use, extensible and safe.
+LIGO is a statically typed high-level smart contract language that compiles down to Michelson. It seeks to be easy to use, extensible and safe.
 
 The core language is being developed by The Marigold Project. George Dupéron and Christian Rinderknecht of Nomadic Labs help on the core language, and tooling for LIGO is being developed by Stove Labs (Granary, docs and infrastructure) and Brice Aldrich (syntax highlighting). 
 
@@ -95,7 +95,7 @@ We are looking to develop a Super Type System that has the following features:
 The current version explicitly excludes non-essential features which can produce unexpected explosions in gas costs. To alleviate this constraint, we plan to integrate gas benchmarks on all top-level declarations with some fuzzing. This will allow developers and users to estimate the cost of their contracts in real time.
 
 ## Getting Started and Contact
-Come visit [our website](https://ligolang.org)! You can also join our [Discord](https://discord.gg/9rhYaEt), Riot (*#ligo-public:matrix.org*) or Telegram Chat (Ligo Public channel).
+Come visit [our website](https://ligolang.org)! You can also join our [Discord](https://discord.gg/9rhYaEt), Riot (*#ligo-public:matrix.org*) or [Telegram Chat](https://t.me/LigoLang).
 
 
 

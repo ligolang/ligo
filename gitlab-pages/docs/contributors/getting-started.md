@@ -23,9 +23,9 @@ The first issues will most likely be:
 >Tests are **really** important, we don’t have lots of them, and mostly regression ones. This can’t be stressed enough. Some features are missing not because we can’t add them, but because we don’t know as no tests tell us they are missing.
 
 ## How
-Issues will be added to Gitlab tagged with `On-boarding and Front-End` / `Middle-End` / `Back-End` / `Everything`. 
+Issues will be added to GitLab tagged with `On-boarding and Front-End` / `Middle-End` / `Back-End` / `Everything`. 
 
-If you try to tackle an issue and you have **any** problem, please tell us by creating a new Gitlab issue, contacting us on Riot, on Discord, or even by mail!  
+If you try to tackle an issue and you have **any** problem, please tell us by creating a new GitLab issue, contacting us on Riot, on Discord, or even by mail!  
 
 Problems might include:
 * Installing the repository or the tools needed to work on it

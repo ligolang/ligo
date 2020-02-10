@@ -5,6 +5,8 @@ cache/*
 Version.ml
 /_opam/
 /*.pp.ligo
+/*.pp.mligo
+/*.pp.religo
 **/.DS_Store
 .vscode/
 /ligo.install

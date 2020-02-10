@@ -33,7 +33,7 @@ Output of the `dry-run` is the return value of our entrypoint function, we can s
 
 ## Building a counter contract
 
-Our counter contract will store a single `int` as it's storage, and will accept an `action` variant in order to re-route our single `main` entrypoint into two entrypoints for `addition` and `subtraction`. 
+Our counter contract will store a single `int` in its storage, and will accept an `action` variant in order to re-route our single `main` entrypoint into two entrypoints for `addition` and `subtraction`. 
 
 <!--DOCUSAURUS_CODE_TABS-->
 <!--Pascaligo-->
@@ -167,7 +167,7 @@ ligo compile-storage src/counter.ligo main 5
 <!--END_DOCUSAURUS_CODE_TABS-->
 
 
-In our case the LIGO storage value maps 1:1 to it's Michelson representation, however this will not be the case once the parameter is of a more complex data type, like a record.
+In our case the LIGO storage value maps 1:1 to its Michelson representation, however this will not be the case once the parameter is of a more complex data type, like a record.
 
 ## Invoking a LIGO contract
 

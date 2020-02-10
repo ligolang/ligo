@@ -77,7 +77,7 @@ module.exports = props => {
           </ul>
         </div>
         <div id="preview">
-          <h1>A friendly smart-contract language for Tezos</h1>
+          <h1>A friendly smart contract language for Tezos</h1>
           <p>Michelson was never so easy</p>
           <CodeExamples MarkdownBlock={MarkdownBlock}></CodeExamples>
         </div>

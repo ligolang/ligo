@@ -1,15 +1,13 @@
 open Trace
 open Types
 
-include Stage_common.Misc
-
 module Errors = struct
   let different_kinds a b () =
     let title = (thunk "different kinds") in
     let message () = "" in
     let data = [
-      ("a" , fun () -> Format.asprintf "%a" PP.type_value a) ;
-      ("b" , fun () -> Format.asprintf "%a" PP.type_value b )
+      ("a" , fun () -> Format.asprintf "%a" PP.type_expression a) ;
+      ("b" , fun () -> Format.asprintf "%a" PP.type_expression b )
     ] in
     error ~data title message ()
 
@@ -17,16 +15,16 @@ module Errors = struct
     let title = (thunk "different type constructors") in
     let message () = "Expected these two constant type constructors to be the same, but they're different" in
     let data = [
-      ("a" , fun () -> Format.asprintf "%a" Stage_common.PP.type_constant a) ;
-      ("b" , fun () -> Format.asprintf "%a" Stage_common.PP.type_constant b )
+      ("a" , fun () -> Format.asprintf "%a" PP.type_constant a) ;
+      ("b" , fun () -> Format.asprintf "%a" PP.type_constant b )
     ] in
     error ~data title message ()
   let different_operators a b () =
     let title = (thunk "different type constructors") in
     let message () = "Expected these two n-ary type constructors to be the same, but they're different" in
     let data = [
-      ("a" , fun () -> Format.asprintf "%a" (Stage_common.PP.type_operator PP.type_value) a) ;
-      ("b" , fun () -> Format.asprintf "%a" (Stage_common.PP.type_operator PP.type_value) b)
+      ("a" , fun () -> Format.asprintf "%a" (PP.type_operator PP.type_expression) a) ;
+      ("b" , fun () -> Format.asprintf "%a" (PP.type_operator PP.type_expression) b)
     ] in
     error ~data title message ()
 
@@ -37,44 +35,64 @@ module Errors = struct
                        "Expected these two n-ary type constructors to be the same, but they have different numbers of arguments (both use the %s type constructor, but they have %d and %d arguments, respectively)"
                        (type_operator_name opa) lena lenb in
     let data = [
-      ("a" , fun () -> Format.asprintf "%a" (Stage_common.PP.type_operator PP.type_value) opa) ;
-      ("b" , fun () -> Format.asprintf "%a" (Stage_common.PP.type_operator PP.type_value) opb) ;
+      ("a" , fun () -> Format.asprintf "%a" (PP.type_operator PP.type_expression) opa) ;
+      ("b" , fun () -> Format.asprintf "%a" (PP.type_operator PP.type_expression) opb) ;
       ("op" , fun () -> type_operator_name opa) ;
       ("len_a" , fun () -> Format.asprintf "%d" lena) ;
       ("len_b" , fun () -> Format.asprintf "%d" lenb) ;
     ] in
     error ~data title message ()
 
-  let different_size_type name a b () =
-    let title () = name ^ " have different sizes" in
-    let message () = "Expected these two types to be the same, but they're different (both are " ^ name ^ ", but with a different number of arguments)" in
+  let different_size_type names a b () =
+    let title () = names ^ " have different sizes" in
+    let message () = "Expected these two types to be the same, but they're different (both are " ^ names ^ ", but with a different number of arguments)" in
     let data = [
-      ("a" , fun () -> Format.asprintf "%a" PP.type_value a) ;
-      ("b" , fun () -> Format.asprintf "%a" PP.type_value b )
+      ("a" , fun () -> Format.asprintf "%a" PP.type_expression a) ;
+      ("b" , fun () -> Format.asprintf "%a" PP.type_expression b)
     ] in
     error ~data title message ()
 
-  let different_props_in_record ka kb () =
-    let title () = "different keys in record" in
+  let different_props_in_record a b ra rb ka kb () =
+    let names () = if Stage_common.Helpers.is_tuple_lmap ra && Stage_common.Helpers.is_tuple_lmap rb then "tuples" else "records" in
+    let title () = "different keys in " ^ (names ()) in
     let message () = "" in
     let data = [
       ("key_a" , fun () -> Format.asprintf "%s" ka) ;
-      ("key_b" , fun () -> Format.asprintf "%s" kb )
+      ("key_b" , fun () -> Format.asprintf "%s" kb ) ;
+      ("a" , fun () -> Format.asprintf "%a" PP.type_expression a) ;
+      ("b" , fun () -> Format.asprintf "%a" PP.type_expression b ) ;
     ] in
     error ~data title message ()
+
+  let different_kind_record_tuple a b ra rb () =
+    let name_a () = if Stage_common.Helpers.is_tuple_lmap ra then "tuple" else "record" in
+    let name_b () = if Stage_common.Helpers.is_tuple_lmap rb then "tuple" else "record" in
+    let title () = "different keys in " ^ (name_a ()) ^ " and " ^ (name_b ()) in
+    let message () = "Expected these two types to be the same, but they're different (one is a " ^ (name_a ()) ^ " and the other is a " ^ (name_b ()) ^ ")" in
+    let data = [
+      ("a" , fun () -> Format.asprintf "%a" PP.type_expression a) ;
+      ("b" , fun () -> Format.asprintf "%a" PP.type_expression b ) ;
+    ] in
+    error ~data title message ()
+
 
   let _different_size_constants = different_size_type "type constructors"
 
   let different_size_sums = different_size_type "sums"
 
-  let different_size_records = different_size_type "records"
+  let different_size_records_tuples a b ra rb =
+    different_size_type
+      (if Stage_common.Helpers.is_tuple_lmap ra && Stage_common.Helpers.is_tuple_lmap rb
+       then "tuples"
+       else "records")
+      a b
 
   let different_types name a b () =
     let title () = name ^ " are different" in
     let message () = "Expected these two types to be the same, but they're different" in
     let data = [
-      ("a" , fun () -> Format.asprintf "%a" PP.type_value a) ;
-      ("b" , fun () -> Format.asprintf "%a" PP.type_value b )
+      ("a" , fun () -> Format.asprintf "%a" PP.type_expression a) ;
+      ("b" , fun () -> Format.asprintf "%a" PP.type_expression b )
     ] in
     error ~data title message ()
 
@@ -91,8 +109,8 @@ module Errors = struct
     let title () = name ^ " are different" in
     let message () = "" in
     let data = [
-      ("a" , fun () -> Format.asprintf "%a" PP.value a) ;
-      ("b" , fun () -> Format.asprintf "%a" PP.value b )
+      ("a" , fun () -> Format.asprintf "%a"  PP.expression a) ;
+      ("b" , fun () -> Format.asprintf "%a"  PP.expression b )
     ] in
     error ~data title message ()
 
@@ -109,8 +127,8 @@ module Errors = struct
     let title () = "values have different types: " ^ name in
     let message () = "" in
     let data = [
-      ("a" , fun () -> Format.asprintf "%a" PP.value a) ;
-      ("b" , fun () -> Format.asprintf "%a" PP.value b )
+      ("a" , fun () -> Format.asprintf "%a" PP.expression a) ;
+      ("b" , fun () -> Format.asprintf "%a" PP.expression b)
     ] in
     error ~data title message ()
 
@@ -127,8 +145,8 @@ module Errors = struct
     let title () = name ^ " are not comparable" in
     let message () = "" in
     let data = [
-      ("a" , fun () -> Format.asprintf "%a" PP.value a) ;
-      ("b" , fun () -> Format.asprintf "%a" PP.value b )
+      ("a" , fun () -> Format.asprintf "%a" PP.expression a) ;
+      ("b" , fun () -> Format.asprintf "%a" PP.expression b )
     ] in
     error ~data title message ()
 
@@ -136,8 +154,8 @@ module Errors = struct
     let title () = name in
     let message () = "" in
     let data = [
-      ("a" , fun () -> Format.asprintf "%a" PP.value a) ;
-      ("b" , fun () -> Format.asprintf "%a" PP.value b )
+      ("a" , fun () -> Format.asprintf "%a"  PP.expression a) ;
+      ("b" , fun () -> Format.asprintf "%a"  PP.expression b )
     ] in
     error ~data title message ()
 
@@ -177,49 +195,45 @@ module Free_variables = struct
   let empty : bindings = []
   let of_list : expression_variable list -> bindings = fun x -> x
 
-  let rec expression : bindings -> expression -> bindings = fun b e ->
-    let self = annotated_expression b in
-    match e with
+  let rec expression_content : bindings -> expression_content -> bindings = fun b ec ->
+    let self = expression b in
+    match ec with
     | E_lambda l -> lambda b l
     | E_literal _ -> empty
-    | E_constant (_ , lst) -> unions @@ List.map self lst
+    | E_constant {arguments;_} -> unions @@ List.map self arguments
     | E_variable name -> (
         match mem name b with
         | true -> empty
         | false -> singleton name
       )
-    | E_application (a, b) -> unions @@ List.map self [ a ; b ]
-    | E_tuple lst -> unions @@ List.map self lst
-    | E_constructor (_ , a) -> self a
+    | E_application {expr1;expr2} -> unions @@ List.map self [ expr1 ; expr2 ]
+    | E_constructor {element;_} -> self element
     | E_record m -> unions @@ List.map self @@ LMap.to_list m
-    | E_record_accessor (a, _) -> self a
-    | E_record_update (r,(_,e)) -> union (self r) @@ self e
-    | E_tuple_accessor (a, _) -> self a
+    | E_record_accessor {expr;_} -> self expr
+    | E_record_update {record; update;_} -> union (self record) @@ self update
     | E_list lst -> unions @@ List.map self lst
     | E_set lst -> unions @@ List.map self lst
     | (E_map m | E_big_map m) -> unions @@ List.map self @@ List.concat @@ List.map (fun (a, b) -> [ a ; b ]) m
     | E_look_up (a , b) -> unions @@ List.map self [ a ; b ]
-    | E_matching (a , cs) -> union (self a) (matching_expression b cs)
-    | E_sequence (a , b) -> unions @@ List.map self [ a ; b ]
-    | E_loop (expr , body) -> unions @@ List.map self [ expr ; body ]
-    | E_assign (_ , _ , expr) -> self expr
-    | E_let_in { binder; rhs; result; _ } ->
-      let b' = union (singleton binder) b in
+    | E_matching {matchee; cases;_} -> union (self matchee) (matching_expression b cases)
+    | E_loop {condition ; body} -> unions @@ List.map self [ condition ; body ]
+    | E_let_in { let_binder; rhs; let_result; _} ->
+      let b' = union (singleton let_binder) b in
       union
-        (annotated_expression b' result)
-        (annotated_expression b rhs)
+        (expression b' let_result)
+        (self rhs)
 
   and lambda : bindings -> lambda -> bindings = fun b l ->
     let b' = union (singleton l.binder) b in
-    annotated_expression b' l.body
+    expression b' l.result
 
-  and annotated_expression : bindings -> annotated_expression -> bindings = fun b ae ->
-    expression b ae.expression
+  and expression : bindings -> expression -> bindings = fun b e ->
+    expression_content b e.expression_content
 
-  and matching_variant_case : type a . (bindings -> a -> bindings) -> bindings -> ((constructor * expression_variable) * a) -> bindings  = fun f b ((_,n),c) ->
+  and matching_variant_case : type a . (bindings -> a -> bindings) -> bindings -> ((constructor' * expression_variable) * a) -> bindings  = fun f b ((_,n),c) ->
     f (union (singleton n) b) c
 
-  and matching : type a . (bindings -> a -> bindings) -> bindings -> (a,'var) matching -> bindings = fun f b m ->
+  and matching : type a . (bindings -> a -> bindings) -> bindings -> (a,'var) matching_content -> bindings = fun f b m ->
     match m with
     | Match_bool { match_true = t ; match_false = fa } -> union (f b t) (f b fa)
     | Match_list { match_nil = n ; match_cons = (hd, tl, c, _) } -> union (f b n) (f (union (of_list [hd ; tl]) b) c)
@@ -228,7 +242,7 @@ module Free_variables = struct
        f (union (of_list lst) b) a    
     | Match_variant (lst,_) -> unions @@ List.map (matching_variant_case f b) lst
 
-  and matching_expression = fun x -> matching annotated_expression x
+  and matching_expression = fun x -> matching expression x
 
 end
 
@@ -314,7 +328,7 @@ end
 open Errors
 
        
-let rec assert_type_value_eq (a, b: (type_value * type_value)) : unit result = match (a.type_value', b.type_value') with
+let rec assert_type_expression_eq (a, b: (type_expression * type_expression)) : unit result = match (a.type_content, b.type_content) with
   | T_constant ca, T_constant cb -> (
       trace_strong (different_constants ca cb)
       @@ Assert.assert_true (ca = cb)
@@ -328,16 +342,14 @@ let rec assert_type_value_eq (a, b: (type_value * type_value)) : unit result = m
       | TC_set la, TC_set lb -> ok @@ ([la], [lb])
       | TC_map (ka,va), TC_map (kb,vb)
       | TC_big_map (ka,va), TC_big_map (kb,vb) -> ok @@ ([ka;va] ,[kb;vb]) 
-      | TC_tuple lsta, TC_tuple lstb -> ok @@ (lsta , lstb) 
-      | TC_arrow (froma , toa) , TC_arrow (fromb , tob) -> ok @@ ([froma;toa] , [fromb;tob]) 
-      | (TC_option _ | TC_list _ | TC_contract _ | TC_set _ | TC_map _ | TC_big_map _ | TC_tuple _ | TC_arrow _),
-        (TC_option _ | TC_list _ | TC_contract _ | TC_set _ | TC_map _ | TC_big_map _ | TC_tuple _ | TC_arrow _) -> fail @@ different_operators opa opb
+      | (TC_option _ | TC_list _ | TC_contract _ | TC_set _ | TC_map _ | TC_big_map _ | TC_arrow _),
+        (TC_option _ | TC_list _ | TC_contract _ | TC_set _ | TC_map _ | TC_big_map _ | TC_arrow _ ) -> fail @@ different_operators opa opb
       in
       if List.length lsta <> List.length lstb then
         fail @@ different_operator_number_of_arguments opa opb (List.length lsta) (List.length lstb)
       else
         trace (different_types "arguments to type operators" a b)
-        @@ bind_list_iter (fun (a,b) -> assert_type_value_eq (a,b) )(List.combine lsta lstb)
+        @@ bind_list_iter (fun (a,b) -> assert_type_expression_eq (a,b) )(List.combine lsta lstb)
   )
   | T_operator _, _ -> fail @@ different_kinds a b
   | T_sum sa, T_sum sb -> (
@@ -347,7 +359,7 @@ let rec assert_type_value_eq (a, b: (type_value * type_value)) : unit result = m
         let%bind _ =
           Assert.assert_true ~msg:"different keys in sum types"
           @@ (ka = kb) in
-        assert_type_value_eq (va, vb)
+        assert_type_expression_eq (va, vb)
       in
       let%bind _ =
         trace_strong (different_size_sums a b)
@@ -356,36 +368,41 @@ let rec assert_type_value_eq (a, b: (type_value * type_value)) : unit result = m
       bind_list_iter aux (List.combine sa' sb')
     )
   | T_sum _, _ -> fail @@ different_kinds a b
+  | T_record ra, T_record rb
+       when Stage_common.Helpers.is_tuple_lmap ra <> Stage_common.Helpers.is_tuple_lmap rb -> (
+    fail @@ different_kind_record_tuple a b ra rb
+  )
   | T_record ra, T_record rb -> (
-      let ra' = LMap.to_kv_list ra in
-      let rb' = LMap.to_kv_list rb in
+      let sort_lmap r' = List.sort (fun (Label a,_) (Label b,_) -> String.compare a b) r' in
+      let ra' = sort_lmap @@ LMap.to_kv_list ra in
+      let rb' = sort_lmap @@ LMap.to_kv_list rb in
       let aux ((ka, va), (kb, vb)) =
         let%bind _ =
           trace (different_types "records" a b) @@
           let Label ka = ka in
           let Label kb = kb in
-          trace_strong (different_props_in_record ka kb) @@
+          trace_strong (different_props_in_record a b ra rb ka kb) @@
           Assert.assert_true (ka = kb) in
-        assert_type_value_eq (va, vb)
+        assert_type_expression_eq (va, vb)
       in
       let%bind _ =
-        trace_strong (different_size_records a b)
+        trace_strong (different_size_records_tuples a b ra rb)
         @@ Assert.assert_list_same_size ra' rb' in
       trace (different_types "record type" a b)
       @@ bind_list_iter aux (List.combine ra' rb')
 
     )
   | T_record _, _ -> fail @@ different_kinds a b
-  | T_arrow (param, result), T_arrow (param', result') ->
-      let%bind _ = assert_type_value_eq (param, param') in
-      let%bind _ = assert_type_value_eq (result, result') in
+  | T_arrow {type1;type2}, T_arrow {type1=type1';type2=type2'} ->
+      let%bind _ = assert_type_expression_eq (type1, type1') in
+      let%bind _ = assert_type_expression_eq (type2, type2') in
       ok ()
   | T_arrow _, _ -> fail @@ different_kinds a b
   | T_variable x, T_variable y -> let _ = (x = y) in failwith "TODO : we must check that the two types were bound at the same location (even if they have the same name), i.e. use something like De Bruijn indices or a propper graph encoding"
   | T_variable _, _ -> fail @@ different_kinds a b
 
 (* No information about what made it fail *)
-let type_value_eq ab = Trace.to_bool @@ assert_type_value_eq ab
+let type_expression_eq ab = Trace.to_bool @@ assert_type_expression_eq ab
 
 let assert_literal_eq (a, b : literal * literal) : unit result =
   match (a, b) with
@@ -410,6 +427,8 @@ let assert_literal_eq (a, b : literal * literal) : unit result =
   | Literal_bytes a, Literal_bytes b when a = b -> ok ()
   | Literal_bytes _, Literal_bytes _ -> fail @@ different_literals "different bytes" a b
   | Literal_bytes _, _ -> fail @@ different_literals_because_different_types "bytes vs non-bytes" a b
+  | Literal_void, Literal_void -> ok ()
+  | Literal_void, _ -> fail @@ different_literals_because_different_types "void vs non-void" a b
   | Literal_unit, Literal_unit -> ok ()
   | Literal_unit, _ -> fail @@ different_literals_because_different_types "unit vs non-unit" a b
   | Literal_address a, Literal_address b when a = b -> ok ()
@@ -431,15 +450,15 @@ let assert_literal_eq (a, b : literal * literal) : unit result =
   | Literal_operation _, _ -> fail @@ different_literals_because_different_types "operation vs non-operation" a b
 
 
-let rec assert_value_eq (a, b: (value*value)) : unit result =
+let rec assert_value_eq (a, b: (expression*expression)) : unit result =
   let error_content () =
-    Format.asprintf "\n%a vs %a" PP.value a PP.value b
+    Format.asprintf "\n%a vs %a" PP.expression a PP.expression b
   in
   trace (fun () -> error (thunk "not equal") error_content ()) @@
-  match (a.expression, b.expression) with
+  match (a.expression_content, b.expression_content) with
   | E_literal a, E_literal b ->
       assert_literal_eq (a, b)
-  | E_constant (ca, lsta), E_constant (cb, lstb) when ca = cb -> (
+  | E_constant {cons_name=ca;arguments=lsta}, E_constant {cons_name=cb;arguments=lstb} when ca = cb -> (
       let%bind lst =
         generic_try (different_size_values "constants with different number of elements" a b)
           (fun () -> List.combine lsta lstb) in
@@ -451,12 +470,12 @@ let rec assert_value_eq (a, b: (value*value)) : unit result =
   | E_constant _, _ ->
       let error_content () =
         Format.asprintf "%a vs %a"
-          PP.annotated_expression a
-          PP.annotated_expression b
+          PP.expression a
+          PP.expression b
       in
       fail @@ (fun () -> error (thunk "comparing constant with other stuff") error_content ())
 
-  | E_constructor (ca, a), E_constructor (cb, b) when ca = cb -> (
+  | E_constructor {constructor=ca;element=a}, E_constructor {constructor=cb;element=b} when ca = cb -> (
       let%bind _eq = assert_value_eq (a, b) in
       ok ()
     )
@@ -464,24 +483,13 @@ let rec assert_value_eq (a, b: (value*value)) : unit result =
       fail @@ different_values "constructors" a b
   | E_constructor _, _ ->
       fail @@ different_values_because_different_types "constructor vs. non-constructor" a b
-
-  | E_tuple lsta, E_tuple lstb -> (
-      let%bind lst =
-        generic_try (different_size_values "tuples with different number of elements" a b)
-          (fun () -> List.combine lsta lstb) in
-      let%bind _all = bind_list @@ List.map assert_value_eq lst in
-      ok ()
-    )
-  | E_tuple _, _ ->
-      fail @@ different_values_because_different_types "tuple vs. non-tuple" a b
-
   | E_record sma, E_record smb -> (
       let aux (Label k) a b =
         match a, b with
         | Some a, Some b -> Some (assert_value_eq (a, b))
         | _              -> Some (fail @@ missing_key_in_record_value k)
       in
-      let%bind _all = bind_lmap @@ LMap.merge aux sma smb in
+      let%bind _all = Stage_common.Helpers.bind_lmap @@ LMap.merge aux sma smb in
       ok ()
     )
   | E_record _, _ ->
@@ -522,30 +530,28 @@ let rec assert_value_eq (a, b: (value*value)) : unit result =
   | E_set _, _ ->
       fail @@ different_values_because_different_types "set vs. non-set" a b
   | (E_literal _, _) | (E_variable _, _) | (E_application _, _)
-  | (E_lambda _, _) | (E_let_in _, _) | (E_tuple_accessor _, _)
-  | (E_record_update _,_)
-  | (E_record_accessor _, _)
+  | (E_lambda _, _) | (E_let_in _, _)
+  | (E_record_accessor _, _) | (E_record_update _,_)
   | (E_look_up _, _) | (E_matching _, _)
-  | (E_assign _ , _)
-  | (E_sequence _, _) | (E_loop _, _)-> fail @@ error_uncomparable_values "can't compare sequences nor loops" a b
+  | (E_loop _, _)-> fail @@ error_uncomparable_values "can't compare sequences nor loops" a b
 
-let merge_annotation (a:type_value option) (b:type_value option) err : type_value result =
+let merge_annotation (a:type_expression option) (b:type_expression option) err : type_expression result =
   match a, b with
   | None, None -> fail @@ err
   | Some a, None -> ok a
   | None, Some b -> ok b
   | Some a, Some b ->
-      let%bind _ = assert_type_value_eq (a, b) in
-      match a.simplified, b.simplified with
+      let%bind _ = assert_type_expression_eq (a, b) in
+      match a.type_meta, b.type_meta with
       | _, None -> ok a
       | _, Some _ -> ok b
 
-let get_entry (lst : program) (name : string) : annotated_expression result =
+let get_entry (lst : program) (name : string) : expression result =
   trace_option (Errors.missing_entry_point name) @@
   let aux x =
-    let (Declaration_constant (an , _, _)) = Location.unwrap x in
-    if (an.name = Var.of_name name)
-    then Some an.annotated_expression
+    let (Declaration_constant (an , expr, _, _)) = Location.unwrap x in
+    if (an = Var.of_name name)
+    then Some expr
     else None
   in
   List.find_map aux lst
@@ -553,4 +559,4 @@ let get_entry (lst : program) (name : string) : annotated_expression result =
 let program_environment (program : program) : full_environment =
   let last_declaration = Location.unwrap List.(hd @@ rev program) in
   match last_declaration with
-  | Declaration_constant (_ , _, (_ , post_env)) -> post_env
+  | Declaration_constant (_ , _, _, post_env) -> post_env

@@ -1,0 +1,14 @@
+(library
+  (name ligo_interpreter)
+  (public_name ligo.ligo_interpreter)
+  (libraries
+    simple-utils
+    tezos-utils
+    ast_typed
+    stage_common
+  )
+  (preprocess
+    (pps ppx_let bisect_ppx --conditional)
+  )
+  (flags (:standard -open Simple_utils))
+)

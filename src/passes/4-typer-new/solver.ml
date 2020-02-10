@@ -9,13 +9,13 @@ module Wrap = struct
 
   module Errors = struct
 
-    let unknown_type_constructor (ctor : string) (te : T.type_value) () =
+    let unknown_type_constructor (ctor : string) (te : T.type_expression) () =
       let title = (thunk "unknown type constructor") in
       (* TODO: sanitize the "ctor" argument before displaying it. *)
       let message () = ctor in
       let data = [
         ("ctor" , fun () -> ctor) ;
-        ("expression" , fun () -> Format.asprintf "%a"  T.PP.type_value te) ;
+        ("expression" , fun () -> Format.asprintf "%a"  T.PP.type_expression te) ;
         (* ("location" , fun () -> Format.asprintf "%a" Location.pp te.location) *) (* TODO *)
       ] in
       error ~data title message ()
@@ -32,16 +32,17 @@ module Wrap = struct
   (*   let%bind state' = add_type state t in *)
   (*   return expr state' in *)
 
-  let rec type_expression_to_type_value : T.type_value -> O.type_value = fun te ->
-    match te.type_value' with
+  let rec type_expression_to_type_value : T.type_expression -> O.type_value = fun te ->
+    match te.type_content with
     | T_sum kvmap ->
       let () = failwith "fixme: don't use to_list, it drops the variant keys, rows have a differnt kind than argument lists for now!" in
       P_constant (C_variant, T.CMap.to_list @@ T.CMap.map type_expression_to_type_value kvmap)
     | T_record kvmap ->
       let () = failwith "fixme: don't use to_list, it drops the record keys, rows have a differnt kind than argument lists for now!" in
       P_constant (C_record, T.LMap.to_list @@ T.LMap.map type_expression_to_type_value kvmap)
-    | T_arrow (arg , ret) ->
-      P_constant (C_arrow, List.map type_expression_to_type_value [ arg ; ret ])
+    | T_arrow {type1;type2} ->
+      P_constant (C_arrow, List.map type_expression_to_type_value [ type1 ; type2 ])
+
     | T_variable (type_name) -> P_variable type_name
     | T_constant (type_name) ->
       let csttag = Core.(match type_name with
@@ -58,7 +59,8 @@ module Wrap = struct
           | TC_key       -> C_key
           | TC_signature -> C_signature
           | TC_operation -> C_operation
-          | TC_chain_id  -> C_unit    (* TODO : replace  with chain_id*)
+          | TC_chain_id  -> C_unit    (* TODO : replace  with chain_id *)
+          | TC_void      -> C_unit    (* TODO : replace with void *)
       )
       in
       P_constant (csttag, [])
@@ -68,25 +70,24 @@ module Wrap = struct
           | TC_set s               -> (C_set, [s])
           | TC_map ( k , v )       -> (C_map, [k;v])
           | TC_big_map ( k , v)    -> (C_big_map, [k;v])
+          | TC_arrow ( arg , ret ) -> (C_arrow, [ arg ; ret ])
           | TC_list l              -> (C_list, [l])
           | TC_contract c          -> (C_contract, [c])
-          | TC_arrow ( arg , ret ) -> (C_arrow, [ arg ; ret ])
-          | TC_tuple lst           -> (C_tuple, lst)
       )
       in
       P_constant (csttag, List.map type_expression_to_type_value args)
 
   let rec type_expression_to_type_value_copypasted : I.type_expression -> O.type_value = fun te ->
-    match te.type_expression' with
+    match te.type_content with
     | T_sum kvmap ->
       let () = failwith "fixme: don't use to_list, it drops the variant keys, rows have a differnt kind than argument lists for now!" in
       P_constant (C_variant, I.CMap.to_list @@ I.CMap.map type_expression_to_type_value_copypasted kvmap)
     | T_record kvmap ->
       let () = failwith "fixme: don't use to_list, it drops the record keys, rows have a differnt kind than argument lists for now!" in
       P_constant (C_record, I.LMap.to_list @@ I.LMap.map type_expression_to_type_value_copypasted kvmap)
-    | T_arrow (arg , ret) ->
-      P_constant (C_arrow, List.map type_expression_to_type_value_copypasted [ arg ; ret ])
-    | T_variable type_name -> P_variable type_name
+    | T_arrow {type1;type2} ->
+      P_constant (C_arrow, List.map type_expression_to_type_value_copypasted [ type1 ; type2 ])
+    | T_variable type_name -> P_variable (type_name) (* eird stuff*)
     | T_constant (type_name) ->
       let csttag = Core.(match type_name with
           | TC_unit   -> C_unit
@@ -104,7 +105,6 @@ module Wrap = struct
           | TC_big_map  ( k , v )  -> (C_big_map, [k;v])
           | TC_contract c          -> (C_contract, [c])
           | TC_arrow ( arg , ret ) -> (C_arrow, [ arg ; ret ])
-          | TC_tuple lst           -> (C_tuple, lst)
       )
       in
       P_constant (csttag, List.map type_expression_to_type_value_copypasted args)
@@ -113,12 +113,12 @@ module Wrap = struct
     let type_name = Core.fresh_type_variable () in
     [] , type_name
 
-  let variable : I.expression_variable -> T.type_value -> (constraints * T.type_variable) = fun _name expr ->
+  let variable : I.expression_variable -> T.type_expression -> (constraints * T.type_variable) = fun _name expr ->
     let pattern = type_expression_to_type_value expr in
     let type_name = Core.fresh_type_variable () in
     [C_equation (P_variable (type_name) , pattern)] , type_name
 
-  let literal : T.type_value -> (constraints * T.type_variable) = fun t ->
+  let literal : T.type_expression -> (constraints * T.type_variable) = fun t ->
     let pattern = type_expression_to_type_value t in
     let type_name = Core.fresh_type_variable () in
     [C_equation (P_variable (type_name) , pattern)] , type_name
@@ -135,9 +135,9 @@ module Wrap = struct
     [C_equation (P_variable (type_name) , pattern)] , type_name
    *)
 
-  let tuple : T.type_value list -> (constraints * T.type_variable) = fun tys ->
+  let tuple : T.type_expression list -> (constraints * T.type_variable) = fun tys ->
     let patterns = List.map type_expression_to_type_value tys in
-    let pattern = O.(P_constant (C_tuple , patterns)) in
+    let pattern = O.(P_constant (C_record , patterns)) in
     let type_name = Core.fresh_type_variable () in
     [C_equation (P_variable (type_name) , pattern)] , type_name
 
@@ -165,16 +165,13 @@ module Wrap = struct
   end
 
   (* TODO: I think we should take an I.expression for the base+label *)
-  let access_label ~(base : T.type_value) ~(label : O.accessor) : (constraints * T.type_variable) =
+  let access_label ~(base : T.type_expression) ~(label : O.accessor) : (constraints * T.type_variable) =
     let base' = type_expression_to_type_value base in
     let expr_type = Core.fresh_type_variable () in
     [O.C_access_label (base' , label , expr_type)] , expr_type
 
-  let access_int ~base ~index = access_label ~base ~label:(L_int index)
-  let access_string ~base ~property = access_label ~base ~label:(L_string property)
-
   let constructor
-    : T.type_value -> T.type_value -> T.type_value -> (constraints * T.type_variable)
+    : T.type_expression -> T.type_expression -> T.type_expression -> (constraints * T.type_variable)
     = fun t_arg c_arg sum ->
       let t_arg = type_expression_to_type_value t_arg in
       let c_arg = type_expression_to_type_value c_arg in
@@ -185,12 +182,12 @@ module Wrap = struct
         C_equation (t_arg , c_arg)
       ] , whole_expr
 
-  let record : T.type_value I.label_map -> (constraints * T.type_variable) = fun fields ->
+  let record : T.type_expression T.label_map -> (constraints * T.type_variable) = fun fields ->
     let record_type = type_expression_to_type_value (T.t_record fields ()) in
     let whole_expr = Core.fresh_type_variable () in
     [C_equation (P_variable whole_expr , record_type)] , whole_expr
 
-  let collection : O.constant_tag -> T.type_value list -> (constraints * T.type_variable) =
+  let collection : O.constant_tag -> T.type_expression list -> (constraints * T.type_variable) =
     fun ctor element_tys ->
       let elttype = O.P_variable (Core.fresh_type_variable ()) in
       let aux elt =
@@ -205,7 +202,7 @@ module Wrap = struct
   let list = collection O.C_list
   let set  = collection O.C_set
 
-  let map : (T.type_value * T.type_value) list -> (constraints * T.type_variable) =
+  let map : (T.type_expression * T.type_expression) list -> (constraints * T.type_variable) =
     fun kv_tys ->
       let k_type = O.P_variable (Core.fresh_type_variable ()) in
       let v_type = O.P_variable (Core.fresh_type_variable ()) in
@@ -222,7 +219,7 @@ module Wrap = struct
         C_equation (P_variable whole_expr , O.P_constant (C_map , [k_type ; v_type]))
       ] @ equations_k @ equations_v , whole_expr
 
-  let big_map : (T.type_value * T.type_value) list -> (constraints * T.type_variable) =
+  let big_map : (T.type_expression * T.type_expression) list -> (constraints * T.type_variable) =
     fun kv_tys ->
       let k_type = O.P_variable (Core.fresh_type_variable ()) in
       let v_type = O.P_variable (Core.fresh_type_variable ()) in
@@ -241,7 +238,7 @@ module Wrap = struct
         C_equation (P_variable whole_expr , O.P_constant (C_big_map , [k_type ; v_type]))
       ] @ equations_k @ equations_v , whole_expr
 
-  let application : T.type_value -> T.type_value -> (constraints * T.type_variable) =
+  let application : T.type_expression -> T.type_expression -> (constraints * T.type_variable) =
     fun f arg ->
       let whole_expr = Core.fresh_type_variable () in
       let f'   = type_expression_to_type_value f in
@@ -250,7 +247,7 @@ module Wrap = struct
         C_equation (f' , P_constant (C_arrow , [arg' ; P_variable whole_expr]))
       ] , whole_expr
 
-  let look_up : T.type_value -> T.type_value -> (constraints * T.type_variable) =
+  let look_up : T.type_expression -> T.type_expression -> (constraints * T.type_variable) =
     fun ds ind ->
       let ds'  = type_expression_to_type_value ds in
       let ind' = type_expression_to_type_value ind in
@@ -261,7 +258,7 @@ module Wrap = struct
         C_equation (P_variable whole_expr , P_constant (C_option , [P_variable v]))
       ] , whole_expr
 
-  let sequence : T.type_value -> T.type_value -> (constraints * T.type_variable) =
+  let sequence : T.type_expression -> T.type_expression -> (constraints * T.type_variable) =
     fun a b ->
       let a' = type_expression_to_type_value a in
       let b' = type_expression_to_type_value b in
@@ -271,7 +268,7 @@ module Wrap = struct
         C_equation (b' , P_variable whole_expr)
       ] , whole_expr
 
-  let loop : T.type_value -> T.type_value -> (constraints * T.type_variable) =
+  let loop : T.type_expression -> T.type_expression -> (constraints * T.type_variable) =
     fun expr body ->
       let expr' = type_expression_to_type_value expr in
       let body' = type_expression_to_type_value body in
@@ -282,7 +279,7 @@ module Wrap = struct
         C_equation (P_variable whole_expr , P_constant (C_unit , []))
       ] , whole_expr
 
-  let let_in : T.type_value -> T.type_value option -> T.type_value -> (constraints * T.type_variable) =
+  let let_in : T.type_expression -> T.type_expression option -> T.type_expression -> (constraints * T.type_variable) =
     fun rhs rhs_tv_opt result ->
       let rhs'        = type_expression_to_type_value rhs in
       let result'     = type_expression_to_type_value result in
@@ -294,7 +291,7 @@ module Wrap = struct
         C_equation (result' , P_variable whole_expr)
       ] @ rhs_tv_opt', whole_expr
 
-  let assign : T.type_value -> T.type_value -> (constraints * T.type_variable) =
+  let assign : T.type_expression -> T.type_expression -> (constraints * T.type_variable) =
     fun v e ->
       let v' = type_expression_to_type_value v in
       let e' = type_expression_to_type_value e in
@@ -304,7 +301,7 @@ module Wrap = struct
         C_equation (P_variable whole_expr , P_constant (C_unit , []))
       ] , whole_expr
 
-  let annotation : T.type_value -> T.type_value -> (constraints * T.type_variable) =
+  let annotation : T.type_expression -> T.type_expression -> (constraints * T.type_variable) =
     fun e annot ->
       let e' = type_expression_to_type_value e in
       let annot' = type_expression_to_type_value annot in
@@ -314,20 +311,20 @@ module Wrap = struct
         C_equation (e' , P_variable whole_expr)
       ] , whole_expr
 
-  let matching : T.type_value list -> (constraints * T.type_variable) =
+  let matching : T.type_expression list -> (constraints * T.type_variable) =
     fun es ->
       let whole_expr = Core.fresh_type_variable () in
-      let type_values = (List.map type_expression_to_type_value es) in
-      let cs = List.map (fun e -> O.C_equation (P_variable whole_expr , e)) type_values
+      let type_expressions = (List.map type_expression_to_type_value es) in
+      let cs = List.map (fun e -> O.C_equation (P_variable whole_expr , e)) type_expressions
       in cs, whole_expr
 
   let fresh_binder () =
     Core.fresh_type_variable ()
 
   let lambda
-    : T.type_value ->
-      T.type_value option ->
-      T.type_value option ->
+    : T.type_expression ->
+      T.type_expression option ->
+      T.type_expression option ->
       (constraints * T.type_variable) =
     fun fresh arg body ->
       let whole_expr = Core.fresh_type_variable () in
@@ -345,6 +342,16 @@ module Wrap = struct
                       P_constant (C_arrow , [P_variable unification_arg ;
                                              P_variable unification_body]))
         ] @ arg' @ body' , whole_expr
+
+  (* This is pretty much a wrapper for an n-ary function. *)
+  let constant : O.type_value -> T.type_expression list -> (constraints * T.type_variable) =
+    fun f args ->
+      let whole_expr = Core.fresh_type_variable () in
+      let args'      = List.map type_expression_to_type_value args in
+      let args_tuple = O.P_constant (C_record , args') in
+      O.[
+        C_equation (f , P_constant (C_arrow , [args_tuple ; P_variable whole_expr]))
+      ] , whole_expr
 
 end
 
@@ -431,8 +438,8 @@ and c_constructor_simpl = {
   tv_list : type_variable list;
 }
 (* copy-pasted from core.ml *)
-and c_const = (type_variable * type_value)
-and c_equation = (type_value * type_value)
+and c_const = (type_variable * type_expression)
+and c_equation = (type_expression * type_expression)
 and c_typeclass_simpl = {
   tc   : typeclass          ;
   args : type_variable list ;
@@ -727,6 +734,136 @@ let selector_break_ctor :  (type_constraint_simpl, output_break_ctor) selector =
   | SC_Poly        _                -> WasNotSelected (* TODO: ??? (beware: symmetry) *)
   | SC_Typeclass   _                -> WasNotSelected
 
+(* TODO: move this to a more appropriate place and/or auto-generate it. *)
+let compare_simple_c_constant = function
+  | C_arrow -> (function
+      (* N/A -> 1 *)
+      | C_arrow -> 0
+      | C_option | C_record | C_variant | C_map | C_big_map | C_list | C_set | C_unit | C_bool | C_string | C_nat | C_mutez | C_timestamp | C_int | C_address | C_bytes | C_key_hash | C_key | C_signature | C_operation | C_contract | C_chain_id -> -1)
+  | C_option -> (function
+      | C_arrow -> 1
+      | C_option -> 0
+      |  C_record | C_variant | C_map | C_big_map | C_list | C_set | C_unit | C_bool | C_string | C_nat | C_mutez | C_timestamp | C_int | C_address | C_bytes | C_key_hash | C_key | C_signature | C_operation | C_contract | C_chain_id -> -1)
+  | C_record -> (function
+      | C_arrow | C_option  -> 1
+      | C_record -> 0
+      | C_variant | C_map | C_big_map | C_list | C_set | C_unit | C_bool | C_string | C_nat | C_mutez | C_timestamp | C_int | C_address | C_bytes | C_key_hash | C_key | C_signature | C_operation | C_contract | C_chain_id -> -1)
+  | C_variant -> (function
+      | C_arrow | C_option  | C_record -> 1
+      | C_variant -> 0
+      | C_map | C_big_map | C_list | C_set | C_unit | C_bool | C_string | C_nat | C_mutez | C_timestamp | C_int | C_address | C_bytes | C_key_hash | C_key | C_signature | C_operation | C_contract | C_chain_id -> -1)
+  | C_map -> (function
+      | C_arrow | C_option  | C_record | C_variant -> 1
+      | C_map -> 0
+      | C_big_map | C_list | C_set | C_unit | C_bool | C_string | C_nat | C_mutez | C_timestamp | C_int | C_address | C_bytes | C_key_hash | C_key | C_signature | C_operation | C_contract | C_chain_id -> -1)
+  | C_big_map -> (function
+      | C_arrow | C_option  | C_record | C_variant | C_map -> 1
+      | C_big_map -> 0
+      | C_list | C_set | C_unit | C_bool | C_string | C_nat | C_mutez | C_timestamp | C_int | C_address | C_bytes | C_key_hash | C_key | C_signature | C_operation | C_contract | C_chain_id -> -1)
+  | C_list -> (function
+      | C_arrow | C_option  | C_record | C_variant | C_map | C_big_map -> 1
+      | C_list -> 0
+      | C_set | C_unit | C_bool | C_string | C_nat | C_mutez | C_timestamp | C_int | C_address | C_bytes | C_key_hash | C_key | C_signature | C_operation | C_contract | C_chain_id -> -1)
+  | C_set -> (function
+      | C_arrow | C_option | C_record | C_variant | C_map | C_big_map | C_list -> 1
+      | C_set -> 0
+      | C_unit | C_bool | C_string | C_nat | C_mutez | C_timestamp | C_int | C_address | C_bytes | C_key_hash | C_key | C_signature | C_operation | C_contract | C_chain_id -> -1)
+  | C_unit -> (function
+      | C_arrow | C_option | C_record | C_variant | C_map | C_big_map | C_list | C_set -> 1
+      | C_unit -> 0
+      | C_bool | C_string | C_nat | C_mutez | C_timestamp | C_int | C_address | C_bytes | C_key_hash | C_key | C_signature | C_operation | C_contract | C_chain_id -> -1)
+  | C_bool -> (function
+      | C_arrow | C_option | C_record | C_variant | C_map | C_big_map | C_list | C_set | C_unit -> 1
+      | C_bool -> 0
+      | C_string | C_nat | C_mutez | C_timestamp | C_int | C_address | C_bytes | C_key_hash | C_key | C_signature | C_operation | C_contract | C_chain_id -> -1)
+  | C_string -> (function
+      | C_arrow | C_option | C_record | C_variant | C_map | C_big_map | C_list | C_set | C_unit | C_bool -> 1
+      | C_string -> 0
+      | C_nat | C_mutez | C_timestamp | C_int | C_address | C_bytes | C_key_hash | C_key | C_signature | C_operation | C_contract | C_chain_id -> -1)
+  | C_nat -> (function
+      | C_arrow | C_option | C_record | C_variant | C_map | C_big_map | C_list | C_set | C_unit | C_bool | C_string -> 1
+      | C_nat -> 0
+      | C_mutez | C_timestamp | C_int | C_address | C_bytes | C_key_hash | C_key | C_signature | C_operation | C_contract | C_chain_id -> -1)
+  | C_mutez -> (function
+      | C_arrow | C_option | C_record | C_variant | C_map | C_big_map | C_list | C_set | C_unit | C_bool | C_string | C_nat -> 1
+      | C_mutez -> 0
+      | C_timestamp | C_int | C_address | C_bytes | C_key_hash | C_key | C_signature | C_operation | C_contract | C_chain_id -> -1)
+  | C_timestamp -> (function
+      | C_arrow | C_option | C_record | C_variant | C_map | C_big_map | C_list | C_set | C_unit | C_bool | C_string | C_nat | C_mutez -> 1
+      | C_timestamp -> 0
+      | C_int | C_address | C_bytes | C_key_hash | C_key | C_signature | C_operation | C_contract | C_chain_id -> -1)
+  | C_int -> (function
+      | C_arrow | C_option | C_record | C_variant | C_map | C_big_map | C_list | C_set | C_unit | C_bool | C_string | C_nat | C_mutez | C_timestamp -> 1
+      | C_int -> 0
+      | C_address | C_bytes | C_key_hash | C_key | C_signature | C_operation | C_contract | C_chain_id -> -1)
+  | C_address -> (function
+      | C_arrow | C_option | C_record | C_variant | C_map | C_big_map | C_list | C_set | C_unit | C_bool | C_string | C_nat | C_mutez | C_timestamp | C_int -> 1
+      | C_address -> 0
+      | C_bytes | C_key_hash | C_key | C_signature | C_operation | C_contract | C_chain_id -> -1)
+  | C_bytes -> (function
+      | C_arrow | C_option | C_record | C_variant | C_map | C_big_map | C_list | C_set | C_unit | C_bool | C_string | C_nat | C_mutez | C_timestamp | C_int | C_address -> 1
+      | C_bytes -> 0
+      | C_key_hash | C_key | C_signature | C_operation | C_contract | C_chain_id -> -1)
+  | C_key_hash -> (function
+      | C_arrow | C_option | C_record | C_variant | C_map | C_big_map | C_list | C_set | C_unit | C_bool | C_string | C_nat | C_mutez | C_timestamp | C_int | C_address | C_bytes -> 1
+      | C_key_hash -> 0
+      | C_key | C_signature | C_operation | C_contract | C_chain_id -> -1)
+  | C_key -> (function
+      | C_arrow | C_option | C_record | C_variant | C_map | C_big_map | C_list | C_set | C_unit | C_bool | C_string | C_nat | C_mutez | C_timestamp | C_int | C_address | C_bytes | C_key_hash -> 1
+      | C_key -> 0
+      | C_signature | C_operation | C_contract | C_chain_id -> -1)
+  | C_signature -> (function
+      | C_arrow | C_option | C_record | C_variant | C_map | C_big_map | C_list | C_set | C_unit | C_bool | C_string | C_nat | C_mutez | C_timestamp | C_int | C_address | C_bytes | C_key_hash | C_key -> 1
+      | C_signature -> 0
+      | C_operation | C_contract | C_chain_id -> -1)
+  | C_operation -> (function
+      | C_arrow | C_option | C_record | C_variant | C_map | C_big_map | C_list | C_set | C_unit | C_bool | C_string | C_nat | C_mutez | C_timestamp | C_int | C_address | C_bytes | C_key_hash | C_key | C_signature -> 1
+      | C_operation -> 0
+      | C_contract | C_chain_id -> -1)
+  | C_contract -> (function
+      | C_arrow | C_option | C_record | C_variant | C_map | C_big_map | C_list | C_set | C_unit | C_bool | C_string | C_nat | C_mutez | C_timestamp | C_int | C_address | C_bytes | C_key_hash | C_key | C_signature | C_operation -> 1
+      | C_contract -> 0
+      | C_chain_id -> -1)
+  | C_chain_id -> (function
+      | C_arrow | C_option | C_record | C_variant | C_map | C_big_map | C_list | C_set | C_unit | C_bool | C_string | C_nat | C_mutez | C_timestamp | C_int | C_address | C_bytes | C_key_hash | C_key | C_signature | C_operation | C_contract -> 1
+      | C_chain_id -> 0
+      (* N/A -> -1 *)
+    )
+
+(* Using a pretty-printer from the PP.ml module creates a dependency
+   loop, so the one that we need temporarily for debugging purposes
+   has been copied here. *)
+let debug_pp_constant : _ -> constant_tag -> unit = fun ppf c_tag ->
+    let ct = match c_tag with
+      | Core.C_arrow     -> "arrow"
+      | Core.C_option    -> "option"
+      | Core.C_record    -> failwith "record"
+      | Core.C_variant   -> failwith "variant"
+      | Core.C_map       -> "map"
+      | Core.C_big_map   -> "big_map"
+      | Core.C_list      -> "list"
+      | Core.C_set       -> "set"
+      | Core.C_unit      -> "unit"
+      | Core.C_bool      -> "bool"
+      | Core.C_string    -> "string"
+      | Core.C_nat       -> "nat"
+      | Core.C_mutez     -> "mutez"
+      | Core.C_timestamp -> "timestamp"
+      | Core.C_int       -> "int"
+      | Core.C_address   -> "address"
+      | Core.C_bytes     -> "bytes"
+      | Core.C_key_hash  -> "key_hash"
+      | Core.C_key       -> "key"
+      | Core.C_signature -> "signature"
+      | Core.C_operation -> "operation"
+      | Core.C_contract  -> "contract"
+      | Core.C_chain_id  -> "chain_id"
+    in
+    Format.fprintf ppf "%s" ct
+
+let debug_pp_c_constructor_simpl ppf { tv; c_tag; tv_list } =
+  Format.fprintf ppf "CTOR %a %a(%a)" Var.pp tv debug_pp_constant c_tag PP_helpers.(list_sep Var.pp (const " , ")) tv_list
+
 let propagator_break_ctor : output_break_ctor propagator =
   fun selected dbs ->
   let () = ignore (dbs) in (* this propagator doesn't need to use the dbs *)
@@ -737,8 +874,8 @@ let propagator_break_ctor : output_break_ctor propagator =
   (* a.tv = b.tv *)
   let eq1 = C_equation (P_variable a.tv, P_variable b.tv) in
   (* a.c_tag = b.c_tag *)
-  if a.c_tag <> b.c_tag then
-    failwith "type error: incompatible types, not same ctor"
+  if (compare_simple_c_constant a.c_tag b.c_tag) <> 0 then
+    failwith (Format.asprintf "type error: incompatible types, not same ctor %a vs. %a (compare returns %d)" debug_pp_c_constructor_simpl a debug_pp_c_constructor_simpl b (compare_simple_c_constant a.c_tag b.c_tag))
   else
     (* a.tv_list = b.tv_list *)
   if List.length a.tv_list <> List.length b.tv_list then
@@ -765,114 +902,17 @@ let rec compare_list f = function
   | [] -> (function [] -> 0 | _::_ -> -1) (* This follows the behaviour of Pervasives.compare for lists of different length *)
 let compare_type_variable a b =
   Var.compare a b
-let compare_label = function
-  | L_int a -> (function L_int b -> Int.compare a b | L_string _ -> -1)
-  | L_string a -> (function L_int _ -> 1 | L_string b -> String.compare a b)
-let compare_simple_c_constant = function
-  | C_arrow -> (function
-      (* N/A -> 1 *)
-      | C_arrow -> 0
-      | C_option | C_tuple | C_record | C_variant | C_map | C_big_map | C_list | C_set | C_unit | C_bool | C_string | C_nat | C_mutez | C_timestamp | C_int | C_address | C_bytes | C_key_hash | C_key | C_signature | C_operation | C_contract | C_chain_id -> -1)
-  | C_option -> (function
-      | C_arrow -> 1
-      | C_option -> 0
-      | C_tuple | C_record | C_variant | C_map | C_big_map | C_list | C_set | C_unit | C_bool | C_string | C_nat | C_mutez | C_timestamp | C_int | C_address | C_bytes | C_key_hash | C_key | C_signature | C_operation | C_contract | C_chain_id -> -1)
-  | C_tuple -> (function
-      | C_arrow | C_option -> 1
-      | C_tuple -> 0
-      | C_record | C_variant | C_map | C_big_map | C_list | C_set | C_unit | C_bool | C_string | C_nat | C_mutez | C_timestamp | C_int | C_address | C_bytes | C_key_hash | C_key | C_signature | C_operation | C_contract | C_chain_id -> -1)
-  | C_record -> (function
-      | C_arrow | C_option | C_tuple -> 1
-      | C_record -> 0
-      | C_variant | C_map | C_big_map | C_list | C_set | C_unit | C_bool | C_string | C_nat | C_mutez | C_timestamp | C_int | C_address | C_bytes | C_key_hash | C_key | C_signature | C_operation | C_contract | C_chain_id -> -1)
-  | C_variant -> (function
-      | C_arrow | C_option | C_tuple | C_record -> 1
-      | C_variant -> 0
-      | C_map | C_big_map | C_list | C_set | C_unit | C_bool | C_string | C_nat | C_mutez | C_timestamp | C_int | C_address | C_bytes | C_key_hash | C_key | C_signature | C_operation | C_contract | C_chain_id -> -1)
-  | C_map -> (function
-      | C_arrow | C_option | C_tuple | C_record | C_variant -> 1
-      | C_map -> 0
-      | C_big_map | C_list | C_set | C_unit | C_bool | C_string | C_nat | C_mutez | C_timestamp | C_int | C_address | C_bytes | C_key_hash | C_key | C_signature | C_operation | C_contract | C_chain_id -> -1)
-  | C_big_map -> (function
-      | C_arrow | C_option | C_tuple | C_record | C_variant | C_map -> 1
-      | C_big_map -> 0
-      | C_list | C_set | C_unit | C_bool | C_string | C_nat | C_mutez | C_timestamp | C_int | C_address | C_bytes | C_key_hash | C_key | C_signature | C_operation | C_contract | C_chain_id -> -1)
-  | C_list -> (function
-      | C_arrow | C_option | C_tuple | C_record | C_variant | C_map | C_big_map -> 1
-      | C_list -> 0
-      | C_set | C_unit | C_bool | C_string | C_nat | C_mutez | C_timestamp | C_int | C_address | C_bytes | C_key_hash | C_key | C_signature | C_operation | C_contract | C_chain_id -> -1)
-  | C_set -> (function
-      | C_arrow | C_option | C_tuple | C_record | C_variant | C_map | C_big_map | C_list -> 1
-      | C_set -> 0
-      | C_unit | C_bool | C_string | C_nat | C_mutez | C_timestamp | C_int | C_address | C_bytes | C_key_hash | C_key | C_signature | C_operation | C_contract | C_chain_id -> -1)
-  | C_unit -> (function
-      | C_arrow | C_option | C_tuple | C_record | C_variant | C_map | C_big_map | C_list | C_set -> 1
-      | C_unit -> 0
-      | C_bool | C_string | C_nat | C_mutez | C_timestamp | C_int | C_address | C_bytes | C_key_hash | C_key | C_signature | C_operation | C_contract | C_chain_id -> -1)
-  | C_bool -> (function
-      | C_arrow | C_option | C_tuple | C_record | C_variant | C_map | C_big_map | C_list | C_set | C_unit -> 1
-      | C_bool -> 0
-      | C_string | C_nat | C_mutez | C_timestamp | C_int | C_address | C_bytes | C_key_hash | C_key | C_signature | C_operation | C_contract | C_chain_id -> -1)
-  | C_string -> (function
-      | C_arrow | C_option | C_tuple | C_record | C_variant | C_map | C_big_map | C_list | C_set | C_unit | C_bool -> 1
-      | C_string -> 0
-      | C_nat | C_mutez | C_timestamp | C_int | C_address | C_bytes | C_key_hash | C_key | C_signature | C_operation | C_contract | C_chain_id -> -1)
-  | C_nat -> (function
-      | C_arrow | C_option | C_tuple | C_record | C_variant | C_map | C_big_map | C_list | C_set | C_unit | C_bool | C_string -> 1
-      | C_nat -> 0
-      | C_mutez | C_timestamp | C_int | C_address | C_bytes | C_key_hash | C_key | C_signature | C_operation | C_contract | C_chain_id -> -1)
-  | C_mutez -> (function
-      | C_arrow | C_option | C_tuple | C_record | C_variant | C_map | C_big_map | C_list | C_set | C_unit | C_bool | C_string | C_nat -> 1
-      | C_mutez -> 0
-      | C_timestamp | C_int | C_address | C_bytes | C_key_hash | C_key | C_signature | C_operation | C_contract | C_chain_id -> -1)
-  | C_timestamp -> (function
-      | C_arrow | C_option | C_tuple | C_record | C_variant | C_map | C_big_map | C_list | C_set | C_unit | C_bool | C_string | C_nat | C_mutez -> 1
-      | C_timestamp -> 0
-      | C_int | C_address | C_bytes | C_key_hash | C_key | C_signature | C_operation | C_contract | C_chain_id -> -1)
-  | C_int -> (function
-      | C_arrow | C_option | C_tuple | C_record | C_variant | C_map | C_big_map | C_list | C_set | C_unit | C_bool | C_string | C_nat | C_mutez | C_timestamp -> 1
-      | C_int -> 0
-      | C_address | C_bytes | C_key_hash | C_key | C_signature | C_operation | C_contract | C_chain_id -> -1)
-  | C_address -> (function
-      | C_arrow | C_option | C_tuple | C_record | C_variant | C_map | C_big_map | C_list | C_set | C_unit | C_bool | C_string | C_nat | C_mutez | C_timestamp | C_int -> 1
-      | C_address -> 0
-      | C_bytes | C_key_hash | C_key | C_signature | C_operation | C_contract | C_chain_id -> -1)
-  | C_bytes -> (function
-      | C_arrow | C_option | C_tuple | C_record | C_variant | C_map | C_big_map | C_list | C_set | C_unit | C_bool | C_string | C_nat | C_mutez | C_timestamp | C_int | C_address -> 1
-      | C_bytes -> 0
-      | C_key_hash | C_key | C_signature | C_operation | C_contract | C_chain_id -> -1)
-  | C_key_hash -> (function
-      | C_arrow | C_option | C_tuple | C_record | C_variant | C_map | C_big_map | C_list | C_set | C_unit | C_bool | C_string | C_nat | C_mutez | C_timestamp | C_int | C_address | C_bytes -> 1
-      | C_key_hash -> 0
-      | C_key | C_signature | C_operation | C_contract | C_chain_id -> -1)
-  | C_key -> (function
-      | C_arrow | C_option | C_tuple | C_record | C_variant | C_map | C_big_map | C_list | C_set | C_unit | C_bool | C_string | C_nat | C_mutez | C_timestamp | C_int | C_address | C_bytes | C_key_hash -> 1
-      | C_key -> 0
-      | C_signature | C_operation | C_contract | C_chain_id -> -1)
-  | C_signature -> (function
-      | C_arrow | C_option | C_tuple | C_record | C_variant | C_map | C_big_map | C_list | C_set | C_unit | C_bool | C_string | C_nat | C_mutez | C_timestamp | C_int | C_address | C_bytes | C_key_hash | C_key -> 1
-      | C_signature -> 0
-      | C_operation | C_contract | C_chain_id -> -1)
-  | C_operation -> (function
-      | C_arrow | C_option | C_tuple | C_record | C_variant | C_map | C_big_map | C_list | C_set | C_unit | C_bool | C_string | C_nat | C_mutez | C_timestamp | C_int | C_address | C_bytes | C_key_hash | C_key | C_signature -> 1
-      | C_operation -> 0
-      | C_contract | C_chain_id -> -1)
-  | C_contract -> (function
-      | C_arrow | C_option | C_tuple | C_record | C_variant | C_map | C_big_map | C_list | C_set | C_unit | C_bool | C_string | C_nat | C_mutez | C_timestamp | C_int | C_address | C_bytes | C_key_hash | C_key | C_signature | C_operation -> 1
-      | C_contract -> 0
-      | C_chain_id -> -1)
-  | C_chain_id -> (function
-      | C_arrow | C_option | C_tuple | C_record | C_variant | C_map | C_big_map | C_list | C_set | C_unit | C_bool | C_string | C_nat | C_mutez | C_timestamp | C_int | C_address | C_bytes | C_key_hash | C_key | C_signature | C_operation | C_contract -> 1
-      | C_chain_id -> 0
-      (* N/A -> -1 *)
-    )
-let rec compare_typeclass a b = compare_list (compare_list compare_type_value) a b
-and compare_type_value = function
+let compare_label (a:accessor) (b:accessor) = 
+  let Label a = a in
+  let Label b = b in
+  String.compare a b
+let rec compare_typeclass a b = compare_list (compare_list compare_type_expression) a b
+and compare_type_expression = function
   | P_forall { binder=a1; constraints=a2; body=a3 } -> (function
       | P_forall { binder=b1; constraints=b2; body=b3 } ->
         compare_type_variable a1 b1 <? fun () ->
           compare_list compare_type_constraint a2 b2  <? fun () ->
-            compare_type_value a3 b3
+            compare_type_expression a3 b3
       | P_variable _ -> -1
       | P_constant _ -> -1
       | P_apply _ -> -1)
@@ -884,33 +924,33 @@ and compare_type_value = function
   | P_constant (a1, a2) -> (function
       | P_forall _ -> 1
       | P_variable _ -> 1
-      | P_constant (b1, b2) -> compare_simple_c_constant a1 b1 <? fun () -> compare_list compare_type_value a2 b2
+      | P_constant (b1, b2) -> compare_simple_c_constant a1 b1 <? fun () -> compare_list compare_type_expression a2 b2
       | P_apply _ -> -1)
   | P_apply (a1, a2) -> (function
       | P_forall _ -> 1
       | P_variable _ -> 1
       | P_constant _ -> 1
-      | P_apply (b1, b2) -> compare_type_value a1 b1 <? fun () -> compare_type_value a2 b2)
+      | P_apply (b1, b2) -> compare_type_expression a1 b1 <? fun () -> compare_type_expression a2 b2)
 and compare_type_constraint = function
   | C_equation (a1, a2) -> (function
-      | C_equation (b1, b2) -> compare_type_value a1 b1 <? fun () -> compare_type_value a2 b2
+      | C_equation (b1, b2) -> compare_type_expression a1 b1 <? fun () -> compare_type_expression a2 b2
       | C_typeclass _ -> -1
       | C_access_label _ -> -1)
   | C_typeclass (a1, a2) -> (function
       | C_equation _ -> 1
-      | C_typeclass (b1, b2) -> compare_list compare_type_value a1 b1 <? fun () -> compare_typeclass a2 b2
+      | C_typeclass (b1, b2) -> compare_list compare_type_expression a1 b1 <? fun () -> compare_typeclass a2 b2
       | C_access_label _ -> -1)
   | C_access_label (a1, a2, a3) -> (function
       | C_equation _ -> 1
       | C_typeclass _ -> 1
-      | C_access_label (b1, b2, b3) -> compare_type_value a1 b1 <? fun () -> compare_label a2 b2  <? fun () -> compare_type_variable a3 b3)
+      | C_access_label (b1, b2, b3) -> compare_type_expression a1 b1 <? fun () -> compare_label a2 b2  <? fun () -> compare_type_variable a3 b3)
 let compare_type_constraint_list = compare_list compare_type_constraint
 let compare_p_forall
     { binder = a1; constraints = a2; body = a3 }
     { binder = b1; constraints = b2; body = b3 } =
   compare_type_variable a1 b1 <? fun () ->
     compare_type_constraint_list a2 b2 <? fun () ->
-      compare_type_value a3 b3
+      compare_type_expression a3 b3
 let compare_c_poly_simpl { tv = a1; forall = a2 } { tv = b1; forall = b2 } =
   compare_type_variable a1 b1 <? fun () ->
     compare_p_forall a2 b2
@@ -1063,7 +1103,7 @@ let rec select_and_propagate_all : _ -> type_constraint selector_input list -> s
  *   unification_vars : unionfind ;
  *
  *   (\* assigns a value to the representant in the unionfind *\)
- *   assignments : type_value TypeVariableMap.t ;
+ *   assignments : type_expression TypeVariableMap.t ;
  *
  *   (\* constraints related to a type variable *\)
  *   constraints : constraints TypeVariableMap.t ;
@@ -1104,7 +1144,7 @@ let initial_state : state = (* {
 let discard_state (_ : state) = ()
 
 (* let replace_var_in_state = fun (v : type_variable) (state : state) -> *)
-(*   let aux_tv : type_value -> _ = function *)
+(*   let aux_tv : type_expression -> _ = function *)
 (*     | P_forall    (w  , cs , tval) -> failwith "TODO" *)
 (*     | P_variable  (w)              -> *)
 (*       if w = v then *)

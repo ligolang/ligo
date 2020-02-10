@@ -35,7 +35,7 @@ val translate_literal : AST.literal -> value
 val transpile_environment_element_type : AST.environment_element -> type_value result
 val tree_of_sum : AST.type_value -> (type_name * AST.type_value) Append_tree.t result
 *)
-val transpile_annotated_expression : AST.annotated_expression -> expression result
+val transpile_annotated_expression : AST.expression -> expression result
 (*
 val transpile_lambda : AST.lambda -> expression result
 val transpile_declaration : environment -> AST.declaration -> toplevel_statement result
@@ -49,7 +49,7 @@ val translate_main : AST.lambda -> Location.t ->( anon_function * ( type_value *
 (* From an expression [expr], build the expression [fun () -> expr] *)
 val translate_entry : AST.program -> string -> ( anon_function * ( type_value * type_value )) result
 *)
-val extract_constructor : value -> ( string * AST.type_value ) Append_tree.t' -> (string * value * AST.type_value) result
-val extract_tuple : value -> AST.type_value Append_tree.t' -> (value * AST.type_value) list result
-val extract_record : value -> ( string * AST.type_value ) Append_tree.t' -> ( string * ( value * AST.type_value )) list result
-val untranspile : value -> AST.type_value -> AST.annotated_expression result
+val extract_constructor : value -> ( string * AST.type_expression ) Append_tree.t' -> (string * value * AST.type_expression) result
+val extract_tuple : value -> AST.type_expression Append_tree.t' -> (value * AST.type_expression) list result
+val extract_record : value -> ( string * AST.type_expression ) Append_tree.t' -> ( string * ( value * AST.type_expression)) list result
+val untranspile : value -> AST.type_expression -> AST.expression result

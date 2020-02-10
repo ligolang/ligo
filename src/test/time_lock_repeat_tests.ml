@@ -40,7 +40,7 @@ let mk_time st =
   | None -> simple_fail "bad timestamp notation"
 let to_sec t = Tezos_utils.Time.Protocol.to_seconds t
 let storage st interval execute =
-  e_ez_record [("next_use", e_timestamp (Int64.to_int @@ to_sec st)) ;
+  e_record_ez [("next_use", e_timestamp (Int64.to_int @@ to_sec st)) ;
                ("interval", e_int interval) ;
                ("execute", execute)]
 

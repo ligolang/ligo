@@ -47,8 +47,8 @@ const TEAM = [
 
 const COMMUNICATION_CHANNELS = [
   {
-    link: 'https://discord.gg/9rhYaEt',
-    icon: 'img/discord.svg',
+    link: 'https://t.me/LigoLang',
+    icon: 'img/telegram.svg',
     description: "We're hear to help. Ask us anything"
   },
   {

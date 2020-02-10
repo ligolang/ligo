@@ -18,7 +18,7 @@ module Expression = struct
     type_value = t ;
   }
 
-  let pair : t -> t -> t' = fun a b -> E_constant (C_PAIR , [ a ; b ])
+  let pair : t -> t -> t' = fun a b -> E_constant { cons_name = C_PAIR; arguments = [ a ; b ]}
 
 end
 
@@ -152,7 +152,7 @@ let get_t_contract t = match t with
   | _ -> fail @@ wrong_type "contract" t
 
 let get_t_operation t = match t with
-  | T_base Base_operation -> ok ()
+  | T_base TC_operation -> ok ()
   | _ -> fail @@ wrong_type "operation" t
 
 let get_operation (v:value) = match v with
@@ -160,9 +160,9 @@ let get_operation (v:value) = match v with
   | _ -> simple_fail "not an operation"
 
 
-let t_int : type_value = T_base Base_int
-let t_unit : type_value = T_base Base_unit
-let t_nat : type_value = T_base Base_nat
+let t_int : type_value = T_base TC_int
+let t_unit : type_value = T_base TC_unit
+let t_nat : type_value = T_base TC_nat
 
 let t_function x y : type_value = T_function ( x , y )
 let t_pair x y : type_value = T_pair ( x , y )

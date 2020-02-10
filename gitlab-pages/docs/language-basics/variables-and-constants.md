@@ -88,7 +88,7 @@ with a new value being bound in place of the old one.
 
 ```cameligo
 
-let add (a: int) (b: int) : int =
+let add (a,b: int * int): int =
   let c : int = a + b in c
 ```
 

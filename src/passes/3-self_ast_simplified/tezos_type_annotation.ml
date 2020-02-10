@@ -13,10 +13,10 @@ end
 open Errors
 
 let peephole_expression : expression -> expression result = fun e ->
-  let return expression = ok { e with expression } in
-  match e.expression with
-  | E_ascription (e' , t) as e -> (
-      match (e'.expression , t.type_expression') with
+  let return expression_content = ok { e with expression_content } in
+  match e.expression_content with
+  | E_ascription {anno_expr=e'; type_annotation=t} as e -> (
+      match (e'.expression_content , t.type_content) with
       | (E_literal (Literal_string s) , T_constant (TC_key_hash)) -> return @@ E_literal (Literal_key_hash s)
       | (E_literal (Literal_string s) , T_constant (TC_signature)) -> return @@ E_literal (Literal_signature s)
       | (E_literal (Literal_string s) , T_constant (TC_key)) -> return @@ E_literal (Literal_key s)
