@@ -25,8 +25,8 @@ dont-merge-to-master:
   # To run in sequence and save CPU usage, use stage: build_and_package_binaries
   stage: test
   script:
-    - $build_binary_script "$target_os_family" "$target_os" "$target_os_version" || (cat _build/log || true; find || true; tail -n +1 ~/.opam/log/* || true; false)
-    - $package_binary_script "$target_os_family" "$target_os" "$target_os_version" || (cat _build/log || true; find || true; tail -n +1 ~/.opam/log/* || true; false)
+    - $build_binary_script "$target_os_family" "$target_os" "$target_os_version"
+    - $package_binary_script "$target_os_family" "$target_os" "$target_os_version"
   artifacts:
     paths:
       - dist/package/**/*
@@ -46,12 +46,12 @@ dont-merge-to-master:
     - eval $(opam config env)
     - scripts/setup_switch.sh
     - eval $(opam config env)
-    - scripts/setup_repos.sh || (cat _build/log || true; find || true; tail -n +1 ~/.opam/log/* || true; false)
+    - scripts/setup_repos.sh
 
     # install deps for internal documentation
-    - scripts/install_vendors_deps.sh || (cat _build/log || true; find || true; tail -n +1 ~/.opam/log/* || true; false)
+    - scripts/install_vendors_deps.sh
     - opam install -y odoc
-    - scripts/build_ligo_local.sh || (cat _build/log || true; find || true; tail -n +1 ~/.opam/log/* || true; false)
+    - scripts/build_ligo_local.sh
 
     # build with odoc
     - dune build @doc
