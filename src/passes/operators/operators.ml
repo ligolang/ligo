@@ -327,6 +327,9 @@ module Typer = struct
     let tc_divargs  a b c = tc [a;b;c] [ (*TODO…*) ]
     let tc_modargs  a b c = tc [a;b;c] [ (*TODO…*) ]
     let tc_addargs  a b c = tc [a;b;c] [ (*TODO…*) ]
+    let tc_comparable a   = tc [a]     [ [nat] ; [int] ; [mutez] ; [timestamp] ]
+    let tc_concatable a   = tc [a]     [ [string] ; [bytes] ]
+    let tc_storable a     = tc [a]     [ [string] ; [bytes] ; (*Humm .. TODO ?*) ]
 
     let t_none         = forall "a" @@ fun a -> option a
 
@@ -355,18 +358,20 @@ module Typer = struct
     let t_hash512      = tuple1 bytes --> bytes
     let t_blake2b      = tuple1 bytes --> bytes
     let t_hash_key     = tuple1 key --> key_hash
+    let t_is_nat       = tuple1 int --> bool
     let t_check_signature = tuple3 key signature bytes --> bool
     let t_chain_id     = tuple0 --> chain_id
     let t_sender       = tuple0 --> address
     let t_source       = tuple0 --> address
     let t_unit         = tuple0 --> unit
     let t_amount       = tuple0 --> mutez
+    let t_balance      = tuple0 --> mutez
     let t_address      = tuple0 --> address
     let t_now          = tuple0 --> timestamp
     let t_transaction  = forall "a" @@ fun a -> tuple3 a mutez (contract a) --> operation
     let t_get_contract = forall "a" @@ fun a -> tuple0 --> contract a
     let t_abs          = tuple1 int --> nat
-    let t_cons         = forall "a" @@ fun a -> a --> tuple1 (list a) --> list a
+    let t_cons         = forall "a" @@ fun a -> tuple2 a (list a) --> list a
     let t_assertion    = tuple1 bool --> unit
     let t_times        = forall3_tc "a" "b" "c" @@ fun a b c -> [tc_timargs a b c] => tuple2 a b --> c (* TYPECLASS *)
     let t_div          = forall3_tc "a" "b" "c" @@ fun a b c -> [tc_divargs a b c] => tuple2 a b --> c (* TYPECLASS *)
@@ -377,21 +382,41 @@ module Typer = struct
     let t_set_remove   = forall "a" @@ fun a -> tuple2 a (set a) --> set a
     let t_not          = tuple1 bool --> bool
 
+    let t_continuation = forall "a" @@ fun a -> tuple2 bool a
+    let t_fold_while   = forall "a" @@ fun a -> tuple2 (a --> tuple2 bool a) a --> a
+    let t_neg          = tuple1 int --> int
+    let t_and          = tuple2 bool bool --> bool
+    let t_or           = tuple2 bool bool --> bool
+    let t_xor          = tuple2 bool bool --> bool
+    let t_lsl          = tuple2 nat nat --> nat
+    let t_lsr          = tuple2 nat nat --> nat
+    let t_comp         = forall_tc "a" @@ fun a -> [tc_comparable a] => tuple2 a a --> bool
+    let t_concat       = forall_tc "a" @@ fun a -> [tc_concatable a] => tuple2 a a --> a
+    let t_set_empty    = forall_tc "a" @@ fun a -> [tc_comparable a] => tuple0 --> set a
+    let t_set_iter     = forall_tc "a" @@ fun a -> [tc_comparable a] => tuple2 (a --> unit) (set a) --> unit
+    let t_set_fold     = forall2_tc "a" "b" @@ fun a b -> [tc_comparable b] => tuple3 (tuple2 a b --> a) (set b) b --> b
+    let t_list_iter    = forall "a" @@ fun a -> tuple2 (a --> unit) (list a) --> unit
+    let t_list_map     = forall "a" @@ fun a -> tuple2 (a --> a) (list a) --> (list a)
+    let t_list_fold    = forall2 "a" "b" @@ fun a b -> tuple3 (tuple2 a b --> a) (list b) a --> a
+    let t_self_address = tuple0 --> address
+    let t_implicit_account = forall_tc "a" @@ fun a -> [tc_storable a] => tuple1 key_hash --> contract a
+    let t_set_delegate = tuple1 (option key_hash) --> operation
+
     let constant_type : constant' -> Typesystem.Core.type_value result = function
       | C_INT                 -> ok @@ t_int ;
       | C_UNIT                -> ok @@ t_unit ;
       | C_NOW                 -> ok @@ t_now ;
-      | C_IS_NAT              -> ok @@ failwith "t_is_nat" ;
+      | C_IS_NAT              -> ok @@ t_is_nat ;
       | C_SOME                -> ok @@ t_some ;
       | C_NONE                -> ok @@ t_none ;
       | C_ASSERTION           -> ok @@ t_assertion ;
       | C_FAILWITH            -> ok @@ t_failwith ;
       (* LOOPS *)
-      | C_FOLD_WHILE          -> ok @@ failwith "t_fold_while" ;
-      | C_CONTINUE            -> ok @@ failwith "t_continue" ;
-      | C_STOP                -> ok @@ failwith "t_stop" ;
+      | C_FOLD_WHILE          -> ok @@ t_fold_while ;
+      | C_CONTINUE            -> ok @@ t_continuation ;
+      | C_STOP                -> ok @@ t_continuation ;
       (* MATH *)
-      | C_NEG                 -> ok @@ failwith "t_neg" ;
+      | C_NEG                 -> ok @@ t_neg ;
       | C_ABS                 -> ok @@ t_abs ;
       | C_ADD                 -> ok @@ t_add ;
       | C_SUB                 -> ok @@ t_sub ;
@@ -400,38 +425,38 @@ module Typer = struct
       | C_MOD                 -> ok @@ t_mod ;
       (* LOGIC *)
       | C_NOT                 -> ok @@ t_not ;
-      | C_AND                 -> ok @@ failwith "t_and" ;
-      | C_OR                  -> ok @@ failwith "t_or" ;
-      | C_XOR                 -> ok @@ failwith "t_xor" ;
-      | C_LSL                 -> ok @@ failwith "t_lsl" ;
-      | C_LSR                 -> ok @@ failwith "t_lsr" ;
+      | C_AND                 -> ok @@ t_and ;
+      | C_OR                  -> ok @@ t_or ;
+      | C_XOR                 -> ok @@ t_xor ;
+      | C_LSL                 -> ok @@ t_lsl ;
+      | C_LSR                 -> ok @@ t_lsr ;
       (* COMPARATOR *)
-      | C_EQ                  -> ok @@ failwith "t_comparator EQ" ;
-      | C_NEQ                 -> ok @@ failwith "t_comparator NEQ" ;
-      | C_LT                  -> ok @@ failwith "t_comparator LT" ;
-      | C_GT                  -> ok @@ failwith "t_comparator GT" ;
-      | C_LE                  -> ok @@ failwith "t_comparator LE" ;
-      | C_GE                  -> ok @@ failwith "t_comparator GE" ;
+      | C_EQ                  -> ok @@ t_comp ;
+      | C_NEQ                 -> ok @@ t_comp ;
+      | C_LT                  -> ok @@ t_comp ;
+      | C_GT                  -> ok @@ t_comp ;
+      | C_LE                  -> ok @@ t_comp ;
+      | C_GE                  -> ok @@ t_comp ;
       (* BYTES / STRING *)
       | C_SIZE                -> ok @@ t_size ;
-      | C_CONCAT              -> ok @@ failwith "t_concat" ;
+      | C_CONCAT              -> ok @@ t_concat ;
       | C_SLICE               -> ok @@ t_slice ;
       | C_BYTES_PACK          -> ok @@ t_bytes_pack ;
       | C_BYTES_UNPACK        -> ok @@ t_bytes_unpack ;
       | C_CONS                -> ok @@ t_cons ;
       (* SET  *)
-      | C_SET_EMPTY           -> ok @@ failwith "t_set_empty" ;
+      | C_SET_EMPTY           -> ok @@ t_set_empty ;
       | C_SET_ADD             -> ok @@ t_set_add ;
       | C_SET_REMOVE          -> ok @@ t_set_remove ;
-      | C_SET_ITER            -> ok @@ failwith "t_set_iter" ;
-      | C_SET_FOLD            -> ok @@ failwith "t_set_fold" ;
+      | C_SET_ITER            -> ok @@ t_set_iter ;
+      | C_SET_FOLD            -> ok @@ t_set_fold ;
       | C_SET_MEM             -> ok @@ t_set_mem ;
 
       (* LIST *)
-      | C_LIST_ITER           -> ok @@ failwith "t_list_iter" ;
-      | C_LIST_MAP            -> ok @@ failwith "t_list_map" ;
-      | C_LIST_FOLD           -> ok @@ failwith "t_list_fold" ;
-      | C_LIST_CONS           -> ok @@ failwith "t_list_cons" ;
+      | C_LIST_ITER           -> ok @@ t_list_iter ;
+      | C_LIST_MAP            -> ok @@ t_list_map ;
+      | C_LIST_FOLD           -> ok @@ t_list_fold ;
+
       (* MAP *)
       | C_MAP_ADD             -> ok @@ t_map_add ;
       | C_MAP_REMOVE          -> ok @@ t_map_remove ;
@@ -454,14 +479,14 @@ module Typer = struct
       | C_CONTRACT            -> ok @@ t_get_contract ;
       | C_CONTRACT_ENTRYPOINT -> ok @@ failwith "t_get_entrypoint" ;
       | C_AMOUNT              -> ok @@ t_amount ;
-      | C_BALANCE             -> ok @@ failwith "t_balance" ;
+      | C_BALANCE             -> ok @@ t_balance ;
       | C_CALL                -> ok @@ t_transaction ;
       | C_SENDER              -> ok @@ t_sender ;
       | C_SOURCE              -> ok @@ t_source ;
       | C_ADDRESS             -> ok @@ t_address ;
-      | C_SELF_ADDRESS        -> ok @@ failwith "t_self_address";
-      | C_IMPLICIT_ACCOUNT    -> ok @@ failwith "t_implicit_account";
-      | C_SET_DELEGATE        -> ok @@ failwith "t_set_delegate" ;
+      | C_SELF_ADDRESS        -> ok @@ t_self_address;
+      | C_IMPLICIT_ACCOUNT    -> ok @@ t_implicit_account;
+      | C_SET_DELEGATE        -> ok @@ t_set_delegate ;
       | c                     -> simple_fail @@ Format.asprintf "Typer not implemented for consant %a" Stage_common.PP.constant c
   end
 
@@ -488,11 +513,6 @@ module Typer = struct
       fail (simple_error "Typing substraction, bad parameters.")
 
   let some = typer_1 "SOME" @@ fun a -> ok @@ t_option a ()
-
-  let list_cons : typer = typer_2 "CONS" @@ fun hd tl ->
-    let%bind tl' = get_t_list tl in
-    let%bind () = assert_type_expression_eq (hd , tl') in
-    ok tl
 
   let map_remove : typer = typer_2 "MAP_REMOVE" @@ fun k m ->
     let%bind (src , _) = bind_map_or (get_t_map , get_t_big_map) m in
@@ -1031,7 +1051,6 @@ module Typer = struct
     | C_LIST_ITER           -> ok @@ list_iter ;
     | C_LIST_MAP            -> ok @@ list_map ;
     | C_LIST_FOLD           -> ok @@ list_fold ;
-    | C_LIST_CONS           -> ok @@ list_cons ;
     (* MAP *)
     | C_MAP_ADD             -> ok @@ map_add ;
     | C_MAP_REMOVE          -> ok @@ map_remove ;
