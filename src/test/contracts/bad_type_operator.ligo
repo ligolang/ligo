@@ -1,4 +1,9 @@
-type t is (nat * nat)
-type s is map(t)      
+type parameter is unit
 
-function main (const u : unit; const s : s) : (list(operation) * s) is ((nil : list(operation)), s)
+type binding is nat * nat
+type storage is map (binding)
+
+type return is list (operation) * storage
+
+function main (const param : parameter; const store : storage) : return is
+  ((nil : list (operation)), store)

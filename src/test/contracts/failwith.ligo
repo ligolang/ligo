@@ -1,37 +1,43 @@
-type param is
-| Zero of nat
-| Pos of nat
+type parameter is
+  Zero of nat
+| Pos  of nat
 
-function main (const p : param; const s : unit) : list(operation) * unit is
+type storage is unit
+
+type return is list (operation) * storage
+
+function main (const p : parameter; const s : storage) : return is
   block {
     case p of
-    | Zero (n) -> if n > 0n then failwith("fail") else skip
-    | Pos (n) -> if n > 0n then skip else failwith("fail")
+      Zero (n) -> if n > 0n then failwith ("fail") else skip
+    | Pos (n)  -> if n > 0n then skip else failwith ("fail")
     end
   }
-  with ((nil : list(operation)), s)
+  with ((nil : list (operation)), s)
 
 function foobar (const i : int) : int is
   block {
-    var p : param := Zero (42n) ;
-    if i > 0 then block {
-      i := i + 1 ;
-      if i > 10 then block {
-        i := 20 ;
-        failwith ("who knows") ;
-        i := 30 ;
-      } else skip
-    } else block {
-      case p of
-      | Zero (n) -> failwith ("wooo")
-      | Pos (n) -> skip
-      end
+    var p : parameter := Zero (42n);
+    if i > 0 then {
+      i := i + 1;
+      if i > 10 then {
+        i := 20;
+        failwith ("who knows");
+        i := 30 // Should be no-op
+      }
+      else skip
     }
-  } with case p of
-  | Zero (n) -> i
-  | Pos (n) -> (failwith ("waaaa") : int)
-  end
+    else
+      case p of
+        Zero (n) -> failwith ("wooo")
+      | Pos (n)  -> skip
+      end
+  } with
+      case p of
+        Zero (n) -> i
+      | Pos (n)  -> (failwith ("waaaa") : int)
+      end
 
-function failer(const p : int) : int is block {
-  if p = 1 then failwith("some_string") else skip ;
+function failer (const p : int) : int is block {
+  if p = 1 then failwith ("some_string") else skip
 } with p

@@ -22,6 +22,7 @@ echo "Installing dependencies.."
 if [ -n "`uname -a | grep -i arch`" ]
 then
     sudo pacman -Sy --noconfirm \
+        python \
         make \
         m4 \
         gcc \
@@ -34,6 +35,8 @@ fi
 if [ -n "`uname -a | grep -i ubuntu`" ]
 then
 sudo apt-get install -y make \
+     python3 \
+     make \
      m4 \
      gcc \
      patch \

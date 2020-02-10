@@ -1,7 +1,3 @@
-function f (const x : unit) : unit is
-  begin skip end with unit
+function f (const x : unit) : unit is Unit
 
-function main (const p : unit ; const s : unit) : unit is
-  begin
-    var y : unit := f(unit) ;
-  end with y
+function main (const p : unit ; const s : unit) : unit is f (Unit)
