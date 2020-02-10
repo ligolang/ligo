@@ -249,7 +249,7 @@ For example **code snippets** for the *Types* subsection of this doc, can be fou
 ### Exercises
 Solutions to exercises can be found e.g. here:  `gitlab-pages/docs/language-basics/exercises/types/**/solutions/**`
 
-### Running snippets / excercise solutions
+### Running snippets / exercise solutions
 In certain cases it makes sense to be able to run/evaluate the given snippet or a solution, usually there'll be an example command which you can use, such as:
 
 ```shell

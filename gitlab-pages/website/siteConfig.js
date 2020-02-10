@@ -4,7 +4,7 @@ let reasonHighlightJs = require('reason-highlightjs');
 
 const siteConfig = {
   title: 'LIGO', // Title for your website.
-  tagline: 'LIGO, the friendly Smart Contract Language for Tezos',
+  tagline: 'LIGO is a friendly smart contract language for Tezos',
   taglineSub: 'Michelson was never so easy',
   url: 'https://ligolang.org', // Your website URL
   baseUrl: '/', // Base URL for your project */
@@ -29,7 +29,7 @@ const siteConfig = {
       label: 'Tutorials'
     },
     { blog: true, label: 'Blog' },
-    // TODO: { href: "/odoc", label: "Api" },
+    // TODO: { href: "/odoc", label: "API" },
     // { doc: 'contributors/origin', label: 'Contribute' },
     { href: '/contact', label: 'Ask Questions' },
     { search: true }
@@ -40,12 +40,22 @@ const siteConfig = {
       { doc: 'intro/installation', label: 'Install' },
       { doc: 'api/cli-commands', label: 'CLI Commands' },
       { doc: 'contributors/origin', label: 'Contribute' },
-      { href: '/odoc', label: 'Api Documentation' }
+      { href: '/odoc', label: 'API Documentation' }
     ],
     community: [
       {
+        href: 'https://forum.tezosagora.org/tag/ligo',
+        label: 'Tezos Agora Forum',
+        blankTarget: true
+      },
+      {
         href: 'https://tezos.stackexchange.com/questions/tagged/ligo',
         label: 'Tezos Stack Exchange',
+        blankTarget: true
+      },
+      {
+        href: 'https://t.me/LigoLang',
+        label: 'Telegram',
         blankTarget: true
       },
       {
@@ -59,7 +69,7 @@ const siteConfig = {
         doc: 'tutorials/get-started/tezos-taco-shop-smart-contract',
         label: 'Tutorials'
       },
-      { href: repoUrl, label: 'Gitlab' }
+      { href: repoUrl, label: 'GitLab' }
     ]
   },
 

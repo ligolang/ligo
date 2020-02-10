@@ -180,7 +180,7 @@ ligo compile-storage src/counter.ligo main 5
 <!--END_DOCUSAURUS_CODE_TABS-->
 
 
-In our case the LIGO storage value maps 1:1 to it's Michelson representation, however this will not be the case once the parameter is of a more complex data type, like a record.
+In our case the LIGO storage value maps 1:1 to its Michelson representation, however this will not be the case once the parameter is of a more complex data type, like a record.
 
 ## Invoking a LIGO contract
 

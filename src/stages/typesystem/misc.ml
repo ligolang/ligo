@@ -9,7 +9,7 @@ module Substitution = struct
     module T = Ast_typed
     (* module TSMap = Trace.TMap(String) *)
 
-    type substs = variable:type_variable -> T.type_value' option (* this string is a type_name or type_variable I think *)
+    type substs = variable:type_variable -> T.type_content option (* this string is a type_name or type_variable I think *)
     let mk_substs ~v ~expr = (v , expr)
 
     type 'a w = substs:substs -> 'a -> 'a result
@@ -18,20 +18,19 @@ module Substitution = struct
     and s_environment_element_definition ~substs = function
       | T.ED_binder -> ok @@ T.ED_binder
       | T.ED_declaration (val_, free_variables) ->
-        let%bind val_ = s_annotated_expression ~substs  val_ in
+        let%bind val_ = s_expression ~substs  val_ in
         let%bind free_variables = bind_map_list (s_variable ~substs) free_variables in
         ok @@ T.ED_declaration (val_, free_variables)
     and s_environment : T.environment w = fun ~substs env ->
       bind_map_list (fun (variable, T.{ type_value; source_environment; definition }) ->
-          let%bind variable = s_variable ~substs variable in
-          let%bind type_value = s_type_value ~substs type_value in
+          let%bind type_value = s_type_expression ~substs type_value in
           let%bind source_environment = s_full_environment ~substs source_environment in
           let%bind definition = s_environment_element_definition ~substs definition in
           ok @@ (variable, T.{ type_value; source_environment; definition })) env
     and s_type_environment : T.type_environment w = fun ~substs tenv ->
       bind_map_list (fun (type_variable , type_value) ->
         let%bind type_variable = s_type_variable ~substs type_variable in
-        let%bind type_value = s_type_value ~substs type_value in
+        let%bind type_value = s_type_expression ~substs type_value in
         ok @@ (type_variable , type_value)) tenv
     and s_small_environment : T.small_environment w = fun ~substs (environment, type_environment) ->
       let%bind environment = s_environment ~substs environment in
@@ -58,11 +57,11 @@ module Substitution = struct
       let () = ignore @@ substs in
       ok l
     
-    and s_build_in : T.constant w = fun ~substs b ->
+    and s_build_in : T.constant' w = fun ~substs b ->
       let () = ignore @@ substs in
       ok b
 
-    and s_constructor : T.constructor w = fun ~substs c ->
+    and s_constructor : T.constructor' w = fun ~substs c ->
       let () = ignore @@ substs in
       ok c
 
@@ -71,10 +70,7 @@ module Substitution = struct
       let () = ignore @@ substs in
       ok @@ type_name
 
-    and s_type_value' : T.type_value' w = fun ~substs -> function
-        | T.T_operator (TC_tuple type_value_list) ->
-          let%bind type_value_list = bind_map_list (s_type_value ~substs) type_value_list in
-          ok @@ T.T_operator (TC_tuple type_value_list)
+    and s_type_content : T.type_content w = fun ~substs -> function
         | T.T_sum _ -> failwith "TODO: T_sum"
         | T.T_record _ -> failwith "TODO: T_record"
         | T.T_constant type_name ->
@@ -83,43 +79,46 @@ module Substitution = struct
         | T.T_variable variable ->
            begin
              match substs ~variable with
-             | Some expr -> s_type_value' ~substs expr (* TODO: is it the right thing to recursively examine this? We mustn't go into an infinite loop. *)
+             | Some expr -> s_type_content ~substs expr (* TODO: is it the right thing to recursively examine this? We mustn't go into an infinite loop. *)
              | None -> ok @@ T.T_variable variable
            end
         | T.T_operator type_name_and_args ->
-          let%bind type_name_and_args = T.Misc.bind_map_type_operator (s_type_value ~substs) type_name_and_args in
+          let%bind type_name_and_args = T.bind_map_type_operator (s_type_expression ~substs) type_name_and_args in
           ok @@ T.T_operator type_name_and_args
         | T.T_arrow _ ->
           let _TODO = substs in
           failwith "TODO: T_function"
 
-    and s_type_expression' : _ Ast_simplified.type_expression' w = fun ~substs -> function
+    and s_simpl_type_content : Ast_simplified.type_content w = fun ~substs -> function
       | Ast_simplified.T_sum _ -> failwith "TODO: subst: unimplemented case s_type_expression sum"
       | Ast_simplified.T_record _ -> failwith "TODO: subst: unimplemented case s_type_expression record"
-      | Ast_simplified.T_arrow (_, _) -> failwith "TODO: subst: unimplemented case s_type_expression arrow"
+      | Ast_simplified.T_arrow _ -> failwith "TODO: subst: unimplemented case s_type_expression arrow"
       | Ast_simplified.T_variable _ -> failwith "TODO: subst: unimplemented case s_type_expression variable"
       | Ast_simplified.T_operator op ->
          let%bind op =
-           Ast_simplified.Misc.bind_map_type_operator
-             (s_type_expression ~substs)
+           Ast_simplified.bind_map_type_operator
+             (s_simpl_type_expression ~substs)
              op in
          (* TODO: when we have generalized operators, we might need to subst the operator name itself? *)
          ok @@ Ast_simplified.T_operator op
       | Ast_simplified.T_constant constant ->
          ok @@ Ast_simplified.T_constant constant
 
-    and s_type_expression : Ast_simplified.type_expression w = fun ~substs {type_expression'} ->
-      let%bind type_expression' = s_type_expression' ~substs type_expression' in
-      ok @@ Ast_simplified.{type_expression'}
+    and s_simpl_type_expression : Ast_simplified.type_expression w = fun ~substs {type_content;type_meta} ->
+      let%bind type_content = s_simpl_type_content ~substs type_content in
+      ok @@ Ast_simplified.{type_content;type_meta}
 
-    and s_type_value : T.type_value w = fun ~substs { type_value'; simplified } ->
-      let%bind type_value' = s_type_value' ~substs type_value' in
-      let%bind simplified = bind_map_option (s_type_expression ~substs) simplified in
-      ok @@ T.{ type_value'; simplified }
+    and s_type_expression : T.type_expression w = fun ~substs { type_content; type_meta } ->
+      let%bind type_content = s_type_content ~substs type_content in
+      let%bind type_meta = bind_map_option (s_simpl_type_expression ~substs) type_meta in
+      ok @@ T.{ type_content; type_meta}
     and s_literal : T.literal w = fun ~substs -> function
       | T.Literal_unit ->
         let () = ignore @@ substs in
         ok @@ T.Literal_unit
+      | T.Literal_void ->
+        let () = ignore @@ substs in
+        ok @@ T.Literal_void
       | (T.Literal_bool _ as x)
       | (T.Literal_int _ as x)
       | (T.Literal_nat _ as x)
@@ -137,128 +136,104 @@ module Substitution = struct
     and s_matching_expr : T.matching_expr w = fun ~substs _ ->
       let _TODO = substs in
       failwith "TODO: subst: unimplemented case s_matching"
-    and s_named_type_value : T.named_type_value w = fun ~substs _ ->
-      let _TODO = substs in
-      failwith "TODO: subst: unimplemented case s_named_type_value"
-    and s_access_path  : T.access_path w = fun ~substs _ ->
+    and s_accessor  : T.accessor w = fun ~substs _ ->
       let _TODO = substs in
       failwith "TODO: subst: unimplemented case s_access_path"
 
-    and s_expression : T.expression w = fun ~(substs : substs) -> function
+    and s_expression_content : T.expression_content w = fun ~(substs : substs) -> function
       | T.E_literal         x ->
         let%bind x = s_literal ~substs x in
         ok @@ T.E_literal x
-      | T.E_constant        (var, vals) ->
-        let%bind var = s_build_in ~substs var in
-        let%bind vals = bind_map_list (s_annotated_expression ~substs) vals in
-        ok @@ T.E_constant (var, vals)
+      | T.E_constant   {cons_name;arguments} ->
+        let%bind cons_name = s_build_in ~substs cons_name in
+        let%bind arguments = bind_map_list (s_expression ~substs) arguments in
+        ok @@ T.E_constant {cons_name;arguments}
       | T.E_variable        tv ->
         let%bind tv = s_variable ~substs tv in
         ok @@ T.E_variable tv
-      | T.E_application     (val1 , val2) ->
-        let%bind val1 = s_annotated_expression ~substs val1 in
-        let%bind val2 = s_annotated_expression ~substs val2 in
-        ok @@ T.E_application (val1 , val2)
-      | T.E_lambda          { binder; body } ->
+      | T.E_application {expr1;expr2} ->
+        let%bind expr1 = s_expression ~substs expr1 in
+        let%bind expr2 = s_expression ~substs expr2 in
+        ok @@ T.E_application {expr1;expr2}
+      | T.E_lambda          { binder; result } ->
         let%bind binder = s_variable ~substs binder in
-        let%bind body = s_annotated_expression ~substs body in
-        ok @@ T.E_lambda { binder; body }
-      | T.E_let_in          { binder; rhs; result; inline } ->
-        let%bind binder = s_variable ~substs binder in
-        let%bind rhs = s_annotated_expression ~substs rhs in
-        let%bind result = s_annotated_expression ~substs result in
-        ok @@ T.E_let_in { binder; rhs; result; inline }
-      | T.E_tuple           vals ->
-        let%bind vals = bind_map_list (s_annotated_expression ~substs) vals in
-        ok @@ T.E_tuple vals
-      | T.E_tuple_accessor  (val_, i) ->
-        let%bind val_ = s_annotated_expression ~substs val_ in
-        let i = i in
-        ok @@ T.E_tuple_accessor (val_, i)
-      | T.E_constructor     (tvar, val_) ->
-        let%bind tvar = s_constructor ~substs tvar in
-        let%bind val_ = s_annotated_expression ~substs val_ in
-        ok @@ T.E_constructor (tvar, val_)
+        let%bind result = s_expression ~substs result in
+        ok @@ T.E_lambda { binder; result }
+      | T.E_let_in          { let_binder; rhs; let_result; inline } ->
+        let%bind let_binder = s_variable ~substs let_binder in
+        let%bind rhs = s_expression ~substs rhs in
+        let%bind let_result = s_expression ~substs let_result in
+        ok @@ T.E_let_in { let_binder; rhs; let_result; inline }
+      | T.E_constructor  {constructor;element} ->
+        let%bind constructor = s_constructor ~substs constructor in
+        let%bind element = s_expression ~substs element in
+        ok @@ T.E_constructor {constructor;element}
       | T.E_record          aemap ->
         let _TODO = aemap in
         failwith "TODO: subst in record"
         (* let%bind aemap = TSMap.bind_map_Map (fun ~k:key ~v:val_ ->
-         *     let key = s_type_variable ~substs key in
-         *     let val_ = s_annotated_expression ~substs val_ in
+         *     let key = s_type_variable ~v ~expr key in
+         *     let val_ = s_expression ~v ~expr val_ in
          *     ok @@ (key , val_)) aemap in
          * ok @@ T.E_record aemap *)
-      | T.E_record_accessor (val_, l) ->
-        let%bind val_ = s_annotated_expression ~substs val_ in
-        let l = l in            (* Nothing to substitute, this is a label, not a type *)
-        ok @@ T.E_record_accessor (val_, l)
-      | T.E_record_update (r, (l, e)) ->
-        let%bind r = s_annotated_expression ~substs r in
-        let%bind e = s_annotated_expression ~substs e in
-        ok @@ T.E_record_update (r, (l, e))
+      | T.E_record_accessor {expr=e;label} ->
+        let%bind expr = s_expression ~substs e in
+        let%bind label = s_label ~substs label in
+        ok @@ T.E_record_accessor {expr;label}
+      | T.E_record_update {record;path;update}->
+        let%bind record = s_expression ~substs record in
+        let%bind update = s_expression ~substs update in
+        ok @@ T.E_record_update {record;path;update}
       | T.E_map             val_val_list ->
         let%bind val_val_list = bind_map_list (fun (val1 , val2) ->
-            let%bind val1 = s_annotated_expression ~substs val1 in
-            let%bind val2 = s_annotated_expression ~substs val2 in
+            let%bind val1 = s_expression ~substs val1 in
+            let%bind val2 = s_expression ~substs val2 in
             ok @@ (val1 , val2)
           ) val_val_list in
         ok @@ T.E_map val_val_list
       | T.E_big_map         val_val_list ->
         let%bind val_val_list = bind_map_list (fun (val1 , val2) ->
-            let%bind val1 = s_annotated_expression ~substs val1 in
-            let%bind val2 = s_annotated_expression ~substs val2 in
+            let%bind val1 = s_expression ~substs val1 in
+            let%bind val2 = s_expression ~substs val2 in
             ok @@ (val1 , val2)
           ) val_val_list in
         ok @@ T.E_big_map val_val_list
       | T.E_list            vals ->
-        let%bind vals = bind_map_list (s_annotated_expression ~substs) vals in
+        let%bind vals = bind_map_list (s_expression ~substs) vals in
         ok @@ T.E_list vals
       | T.E_set             vals ->
-        let%bind vals = bind_map_list (s_annotated_expression ~substs) vals in
+        let%bind vals = bind_map_list (s_expression ~substs) vals in
         ok @@ T.E_set vals
       | T.E_look_up         (val1, val2) ->
-        let%bind val1 = s_annotated_expression ~substs val1 in
-        let%bind val2 = s_annotated_expression ~substs val2 in
+        let%bind val1 = s_expression ~substs val1 in
+        let%bind val2 = s_expression ~substs val2 in
         ok @@ T.E_look_up (val1 , val2)
-      | T.E_matching         (val_ , matching_expr) ->
-        let%bind val_ = s_annotated_expression ~substs val_ in
-        let%bind matching = s_matching_expr ~substs matching_expr in
-        ok @@ T.E_matching (val_ , matching)
-      | T.E_sequence        (val1, val2) ->
-        let%bind val1 = s_annotated_expression ~substs val1 in
-        let%bind val2 = s_annotated_expression ~substs val2 in
-        ok @@ T.E_sequence (val1 , val2)
-      | T.E_loop            (val1, val2) ->
-        let%bind val1 = s_annotated_expression ~substs val1 in
-        let%bind val2 = s_annotated_expression ~substs val2 in
-        ok @@ T.E_loop (val1 , val2)
-      | T.E_assign          (named_tval, access_path, val_) ->
-        let%bind named_tval = s_named_type_value ~substs named_tval in
-        let%bind access_path = s_access_path ~substs access_path in
-        let%bind val_ = s_annotated_expression ~substs val_ in
-        ok @@ T.E_assign (named_tval, access_path, val_)
+      | T.E_matching   {matchee;cases} ->
+        let%bind matchee = s_expression ~substs matchee in
+        let%bind cases = s_matching_expr ~substs cases in
+        ok @@ T.E_matching {matchee;cases}
+      | T.E_loop  {condition;body} ->
+        let%bind condition = s_expression ~substs condition in
+        let%bind body = s_expression ~substs body in
+        ok @@ T.E_loop {condition;body}
 
-    and s_annotated_expression : T.annotated_expression w = fun ~substs { expression; type_annotation; environment; location } ->
-      let%bind expression = s_expression ~substs expression in
-      let%bind type_annotation = s_type_value ~substs type_annotation in
+    and s_expression : T.expression w = fun ~(substs:substs) { expression_content; type_expression; environment; location } ->
+      let%bind expression_content = s_expression_content ~substs expression_content in
+      let%bind type_expr = s_type_expression ~substs type_expression in
       let%bind environment = s_full_environment ~substs environment in
       let location = location in
-      ok T.{ expression; type_annotation; environment; location }
-
-    and s_named_expression : T.named_expression w = fun ~substs { name; annotated_expression } ->
-      let name = name in (* Nothing to substitute, this is a variable name *)
-      let%bind annotated_expression = s_annotated_expression ~substs annotated_expression in
-      ok T.{ name; annotated_expression }
+      ok T.{ expression_content;type_expression=type_expr; environment; location }
 
     and s_declaration : T.declaration w = fun ~substs ->
       function
-        Ast_typed.Declaration_constant (e, inline, (env1, env2)) ->
-        let%bind e = s_named_expression ~substs e in
-        let%bind env1 = s_full_environment ~substs env1 in
-        let%bind env2 = s_full_environment ~substs env2 in
-        ok @@ Ast_typed.Declaration_constant (e, inline, (env1, env2))
+        Ast_typed.Declaration_constant (ev,e,i,env) ->
+        let%bind ev = s_variable ~substs ev in
+        let%bind e = s_expression ~substs e in
+        let%bind env = s_full_environment ~substs env in
+        ok @@ Ast_typed.Declaration_constant (ev, e, i, env)
 
-    and s_declaration_wrap : T.declaration Location.wrap w = fun ~substs d ->
-      Trace.bind_map_location (s_declaration ~substs) d
+    and s_declaration_wrap :T.declaration Location.wrap w = fun ~substs d ->
+      Trace.bind_map_location (s_declaration ~substs) d    
 
     (* Replace the type variable ~v with ~expr everywhere within the
        program ~p. TODO: issues with scoping/shadowing. *)

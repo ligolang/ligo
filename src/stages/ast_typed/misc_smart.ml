@@ -8,31 +8,31 @@ let program_to_main : program -> string -> lambda result = fun p s ->
   let%bind (main , input_type , _) =
     let pred = fun d ->
       match d with
-      | Declaration_constant (d , _, _) when d.name = Var.of_name s -> Some d.annotated_expression
+      | Declaration_constant (d , expr, _, _) when d = Var.of_name s -> Some expr
       | Declaration_constant _ -> None
     in
     let%bind main =
       trace_option (simple_error "no main with given name") @@
       List.find_map (Function.compose pred Location.unwrap) p in
     let%bind (input_ty , output_ty) =
-      match (get_type' @@ get_type_annotation main) with
-      | T_arrow (i , o) -> ok (i , o)
+      match (get_type' @@ get_type_expression main) with
+      | T_arrow {type1;type2} -> ok (type1 , type2)
       | _ -> simple_fail "program main isn't a function" in
     ok (main , input_ty , output_ty)
   in
   let env =
     let aux = fun _ d ->
       match d with
-      | Declaration_constant (_ , _, (_ , post_env)) -> post_env in
+      | Declaration_constant (_ , _, _, post_env) -> post_env in
     List.fold_left aux Environment.full_empty (List.map Location.unwrap p) in
   let binder = Var.of_name "@contract_input" in
-  let body =
+  let result =
     let input_expr = e_a_variable binder input_type env in
-    let main_expr = e_a_variable (Var.of_name s) (get_type_annotation main) env in
+    let main_expr = e_a_variable (Var.of_name s) (get_type_expression main) env in
     e_a_application main_expr input_expr env in
   ok {
     binder ;
-    body ;
+    result ;
   }
 
 module Captured_variables = struct
@@ -45,13 +45,13 @@ module Captured_variables = struct
   let empty : bindings = []
   let of_list : expression_variable list -> bindings = fun x -> x
 
-  let rec annotated_expression : bindings -> annotated_expression -> bindings result = fun b ae ->
-    let self = annotated_expression b in
-    match ae.expression with
+  let rec expression : bindings -> expression -> bindings result = fun b ae ->
+    let self = expression b in
+    match ae.expression_content with
     | E_lambda l -> ok @@ Free_variables.lambda empty l
     | E_literal _ -> ok empty
-    | E_constant (_ , lst) ->
-      let%bind lst' = bind_map_list self lst in
+    | E_constant {arguments;_} ->
+      let%bind lst' = bind_map_list self arguments in
       ok @@ unions lst'
     | E_variable name -> (
         let%bind env_element =
@@ -61,22 +61,18 @@ module Captured_variables = struct
         | ED_binder -> ok empty
         | ED_declaration (_ , _) -> simple_fail "todo"
       )
-    | E_application (a, b) ->
-      let%bind lst' = bind_map_list self [ a ; b ] in
+    | E_application {expr1;expr2} ->
+      let%bind lst' = bind_map_list self [ expr1 ; expr2 ] in
       ok @@ unions lst'
-    | E_tuple lst ->
-      let%bind lst' = bind_map_list self lst in
-      ok @@ unions lst'
-    | E_constructor (_ , a) -> self a
+    | E_constructor {element;_} -> self element
     | E_record m ->
       let%bind lst' = bind_map_list self @@ LMap.to_list m in
       ok @@ unions lst'
-    | E_record_accessor (a, _) -> self a
-    | E_record_update (r,(_,e)) -> 
-      let%bind r = self r in
-      let%bind e = self e in
+    | E_record_accessor {expr;_} -> self expr
+    | E_record_update {record;update;_} -> 
+      let%bind r = self record in
+      let%bind e = self update in
       ok @@ union r e
-    | E_tuple_accessor (a, _) -> self a
     | E_list lst ->
       let%bind lst' = bind_map_list self lst in
       ok @@ unions lst'
@@ -89,23 +85,21 @@ module Captured_variables = struct
     | E_look_up (a , b) ->
       let%bind lst' = bind_map_list self [ a ; b ] in
       ok @@ unions lst'
-    | E_matching (a , cs) ->
-      let%bind a' = self a in
-      let%bind cs' = matching_expression b cs in
+    | E_matching {matchee;cases;_} ->
+      let%bind a' = self matchee in
+      let%bind cs' = matching_expression b cases in
       ok @@ union a' cs'
-    | E_sequence (_ , b) -> self b
-    | E_loop (expr , body) ->
-      let%bind lst' = bind_map_list self [ expr ; body ] in
+    | E_loop {condition; body} ->
+      let%bind lst' = bind_map_list self [ condition ; body ] in
       ok @@ unions lst'
-    | E_assign (_ , _ , expr) -> self expr
     | E_let_in li ->
-      let b' = union (singleton li.binder) b in
-      annotated_expression b' li.result
+      let b' = union (singleton li.let_binder) b in
+      expression b' li.let_result
 
-  and matching_variant_case : type a . (bindings -> a -> bindings result) -> bindings -> ((constructor * expression_variable) * a) -> bindings result  = fun f b ((_,n),c) ->
+  and matching_variant_case : type a . (bindings -> a -> bindings result) -> bindings -> ((constructor' * expression_variable) * a) -> bindings result  = fun f b ((_,n),c) ->
     f (union (singleton n) b) c
 
-  and matching : type a . (bindings -> a -> bindings result) -> bindings -> (a, 'tv) matching -> bindings result = fun f b m ->
+  and matching : type a . (bindings -> a -> bindings result) -> bindings -> (a, 'tv) matching_content -> bindings result = fun f b m ->
     match m with
     | Match_bool { match_true = t ; match_false = fa } ->
       let%bind t' = f b t in
@@ -125,6 +119,6 @@ module Captured_variables = struct
       let%bind lst' = bind_map_list (matching_variant_case f b) lst in
       ok @@ unions lst'
 
-  and matching_expression = fun x -> matching annotated_expression x
+  and matching_expression = fun x -> matching expression x
 
 end

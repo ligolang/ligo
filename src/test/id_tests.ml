@@ -38,7 +38,7 @@ let buy_id () =
   let%bind program, _ = get_program () in
   let owner_addr = addr 5 in
   let owner_website = e_bytes_string "ligolang.org" in
-  let id_details_1 = e_ez_record [("owner", e_address owner_addr) ;
+  let id_details_1 = e_record_ez [("owner", e_address owner_addr) ;
                                   ("controller", e_address owner_addr) ;
                                   ("profile", owner_website)]
   in
@@ -52,7 +52,7 @@ let buy_id () =
       ~amount:(Memory_proto_alpha.Protocol.Alpha_context.Tez.one) ()
   in
   let new_website = e_bytes_string "ligolang.org" in
-  let id_details_2 = e_ez_record [("owner", e_address new_addr) ;
+  let id_details_2 = e_record_ez [("owner", e_address new_addr) ;
                                   ("controller", e_address new_addr) ;
                                   ("profile", new_website)]
   in
@@ -71,7 +71,7 @@ let buy_id_sender_addr () =
   let%bind program, _ = get_program () in
   let owner_addr = addr 5 in
   let owner_website = e_bytes_string "ligolang.org" in
-  let id_details_1 = e_ez_record [("owner", e_address owner_addr) ;
+  let id_details_1 = e_record_ez [("owner", e_address owner_addr) ;
                                   ("controller", e_address owner_addr) ;
                                   ("profile", owner_website)]
   in
@@ -85,7 +85,7 @@ let buy_id_sender_addr () =
       ~amount:(Memory_proto_alpha.Protocol.Alpha_context.Tez.one) ()
   in
   let new_website = e_bytes_string "ligolang.org" in
-  let id_details_2 = e_ez_record [("owner", e_address new_addr) ;
+  let id_details_2 = e_record_ez [("owner", e_address new_addr) ;
                                   ("controller", e_address new_addr) ;
                                   ("profile", new_website)]
   in
@@ -105,7 +105,7 @@ let buy_id_wrong_amount () =
   let%bind program, _ = get_program () in
   let owner_addr = addr 5 in
   let owner_website = e_bytes_string "ligolang.org" in
-  let id_details_1 = e_ez_record [("owner", e_address owner_addr) ;
+  let id_details_1 = e_record_ez [("owner", e_address owner_addr) ;
                                   ("controller", e_address owner_addr) ;
                                   ("profile", owner_website)]
   in
@@ -128,7 +128,7 @@ let update_details_owner () =
   let%bind program, _ = get_program () in
   let owner_addr = addr 5 in
   let owner_website = e_bytes_string "ligolang.org" in
-  let id_details_1 = e_ez_record [("owner", e_address owner_addr) ;
+  let id_details_1 = e_record_ez [("owner", e_address owner_addr) ;
                                   ("controller", e_address owner_addr) ;
                                   ("profile", owner_website)]
   in
@@ -139,11 +139,11 @@ let update_details_owner () =
       ()
   in
   let new_website = e_bytes_string "ligolang.org" in
-  let id_details_2 = e_ez_record [("owner", e_address new_addr) ;
+  let id_details_2 = e_record_ez [("owner", e_address new_addr) ;
                                   ("controller", e_address owner_addr) ;
                                   ("profile", new_website)]
   in
-  let id_details_2_diff = e_ez_record [("owner", e_address new_addr) ;
+  let id_details_2_diff = e_record_ez [("owner", e_address new_addr) ;
                                        ("controller", e_address new_addr) ;
                                        ("profile", new_website)] in
   let storage = e_tuple [(e_big_map [(e_int 0, id_details_1) ;
@@ -169,7 +169,7 @@ let update_details_controller () =
   let%bind program, _ = get_program () in
   let owner_addr = addr 5 in
   let owner_website = e_bytes_string "ligolang.org" in
-  let id_details_1 = e_ez_record [("owner", e_address owner_addr) ;
+  let id_details_1 = e_record_ez [("owner", e_address owner_addr) ;
                                   ("controller", e_address owner_addr) ;
                                   ("profile", owner_website)]
   in
@@ -180,11 +180,11 @@ let update_details_controller () =
       ()
   in
   let new_website = e_bytes_string "ligolang.org" in
-  let id_details_2 = e_ez_record [("owner", e_address owner_addr) ;
+  let id_details_2 = e_record_ez [("owner", e_address owner_addr) ;
                                   ("controller", e_address new_addr) ;
                                   ("profile", new_website)]
   in
-  let id_details_2_diff = e_ez_record [("owner", e_address owner_addr) ;
+  let id_details_2_diff = e_record_ez [("owner", e_address owner_addr) ;
                                        ("controller", e_address owner_addr) ;
                                        ("profile", new_website)] in
   let storage = e_tuple [(e_big_map [(e_int 0, id_details_1) ;
@@ -211,7 +211,7 @@ let update_details_nonexistent () =
   let%bind program, _ = get_program () in
   let owner_addr = addr 5 in
   let owner_website = e_bytes_string "ligolang.org" in
-  let id_details_1 = e_ez_record [("owner", e_address owner_addr) ;
+  let id_details_1 = e_record_ez [("owner", e_address owner_addr) ;
                                   ("controller", e_address owner_addr) ;
                                   ("profile", owner_website)]
   in
@@ -222,7 +222,7 @@ let update_details_nonexistent () =
       ()
   in
   let new_website = e_bytes_string "ligolang.org" in
-  let id_details_2 = e_ez_record [("owner", e_address new_addr) ;
+  let id_details_2 = e_record_ez [("owner", e_address new_addr) ;
                                   ("controller", e_address new_addr) ;
                                   ("profile", new_website)]
   in
@@ -245,7 +245,7 @@ let update_details_wrong_addr () =
   let%bind program, _ = get_program () in
   let owner_addr = addr 5 in
   let owner_website = e_bytes_string "ligolang.org" in
-  let id_details_1 = e_ez_record [("owner", e_address owner_addr) ;
+  let id_details_1 = e_record_ez [("owner", e_address owner_addr) ;
                                   ("controller", e_address owner_addr) ;
                                   ("profile", owner_website)]
   in
@@ -255,7 +255,7 @@ let update_details_wrong_addr () =
       ()
   in
   let new_website = e_bytes_string "ligolang.org" in
-  let id_details_2 = e_ez_record [("owner", e_address new_addr) ;
+  let id_details_2 = e_record_ez [("owner", e_address new_addr) ;
                                   ("controller", e_address new_addr) ;
                                   ("profile", new_website)]
   in
@@ -278,7 +278,7 @@ let update_details_unchanged () =
   let%bind program, _ = get_program () in
   let owner_addr = addr 5 in
   let owner_website = e_bytes_string "ligolang.org" in
-  let id_details_1 = e_ez_record [("owner", e_address owner_addr) ;
+  let id_details_1 = e_record_ez [("owner", e_address owner_addr) ;
                                   ("controller", e_address owner_addr) ;
                                   ("profile", owner_website)]
   in
@@ -289,7 +289,7 @@ let update_details_unchanged () =
       ()
   in
   let new_website = e_bytes_string "ligolang.org" in
-  let id_details_2 = e_ez_record [("owner", e_address new_addr) ;
+  let id_details_2 = e_record_ez [("owner", e_address new_addr) ;
                                   ("controller", e_address new_addr) ;
                                   ("profile", new_website)]
   in
@@ -310,7 +310,7 @@ let update_owner () =
   let%bind program, _ = get_program () in
   let owner_addr = addr 5 in
   let owner_website = e_bytes_string "ligolang.org" in
-  let id_details_1 = e_ez_record [("owner", e_address owner_addr) ;
+  let id_details_1 = e_record_ez [("owner", e_address owner_addr) ;
                                   ("controller", e_address owner_addr) ;
                                   ("profile", owner_website)]
   in
@@ -321,11 +321,11 @@ let update_owner () =
       ()
   in
   let new_website = e_bytes_string "ligolang.org" in
-  let id_details_2 = e_ez_record [("owner", e_address new_addr) ;
+  let id_details_2 = e_record_ez [("owner", e_address new_addr) ;
                                   ("controller", e_address new_addr) ;
                                   ("profile", new_website)]
   in
-  let id_details_2_diff = e_ez_record [("owner", e_address owner_addr) ;
+  let id_details_2_diff = e_record_ez [("owner", e_address owner_addr) ;
                                        ("controller", e_address new_addr) ;
                                        ("profile", new_website)] in
   let storage = e_tuple [(e_big_map [(e_int 0, id_details_1) ;
@@ -349,7 +349,7 @@ let update_owner_nonexistent () =
   let%bind program, _ = get_program () in
   let owner_addr = addr 5 in
   let owner_website = e_bytes_string "ligolang.org" in
-  let id_details_1 = e_ez_record [("owner", e_address owner_addr) ;
+  let id_details_1 = e_record_ez [("owner", e_address owner_addr) ;
                                   ("controller", e_address owner_addr) ;
                                   ("profile", owner_website)]
   in
@@ -360,7 +360,7 @@ let update_owner_nonexistent () =
       ()
   in
   let new_website = e_bytes_string "ligolang.org" in
-  let id_details_2 = e_ez_record [("owner", e_address new_addr) ;
+  let id_details_2 = e_record_ez [("owner", e_address new_addr) ;
                                   ("controller", e_address new_addr) ;
                                   ("profile", new_website)]
   in
@@ -380,7 +380,7 @@ let update_owner_wrong_addr () =
   let%bind program, _ = get_program () in
   let owner_addr = addr 5 in
   let owner_website = e_bytes_string "ligolang.org" in
-  let id_details_1 = e_ez_record [("owner", e_address owner_addr) ;
+  let id_details_1 = e_record_ez [("owner", e_address owner_addr) ;
                                   ("controller", e_address owner_addr) ;
                                   ("profile", owner_website)]
   in
@@ -391,7 +391,7 @@ let update_owner_wrong_addr () =
       ()
   in
   let new_website = e_bytes_string "ligolang.org" in
-  let id_details_2 = e_ez_record [("owner", e_address new_addr) ;
+  let id_details_2 = e_record_ez [("owner", e_address new_addr) ;
                                   ("controller", e_address new_addr) ;
                                   ("profile", new_website)]
   in
@@ -410,7 +410,7 @@ let skip () =
   let%bind program, _ = get_program () in
   let owner_addr = addr 5 in
   let owner_website = e_bytes_string "ligolang.org" in
-  let id_details_1 = e_ez_record [("owner", e_address owner_addr) ;
+  let id_details_1 = e_record_ez [("owner", e_address owner_addr) ;
                                   ("controller", e_address owner_addr) ;
                                   ("profile", owner_website)]
   in
@@ -420,7 +420,7 @@ let skip () =
       ~amount:(Memory_proto_alpha.Protocol.Alpha_context.Tez.one) ()
   in
   let new_website = e_bytes_string "ligolang.org" in
-  let id_details_2 = e_ez_record [("owner", e_address new_addr) ;
+  let id_details_2 = e_record_ez [("owner", e_address new_addr) ;
                                   ("controller", e_address new_addr) ;
                                   ("profile", new_website)]
   in
@@ -444,7 +444,7 @@ let skip_wrong_amount () =
   let%bind program, _ = get_program () in
   let owner_addr = addr 5 in
   let owner_website = e_bytes_string "ligolang.org" in
-  let id_details_1 = e_ez_record [("owner", e_address owner_addr) ;
+  let id_details_1 = e_record_ez [("owner", e_address owner_addr) ;
                                   ("controller", e_address owner_addr) ;
                                   ("profile", owner_website)]
   in
@@ -454,7 +454,7 @@ let skip_wrong_amount () =
       ~amount:(Memory_proto_alpha.Protocol.Alpha_context.Tez.fifty_cents) ()
   in
   let new_website = e_bytes_string "ligolang.org" in
-  let id_details_2 = e_ez_record [("owner", e_address new_addr) ;
+  let id_details_2 = e_record_ez [("owner", e_address new_addr) ;
                                   ("controller", e_address new_addr) ;
                                   ("profile", new_website)]
   in

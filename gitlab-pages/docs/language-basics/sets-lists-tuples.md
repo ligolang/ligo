@@ -644,7 +644,7 @@ with the map data structure.
 In PascaLIGO, the predefined functional iterator implementing the map
 operation over sets is called `set_map` and is used as follows:
 
-```pascaligo group=sets
+```pascaligo skip
 function increment (const i : int): int is i + 1
 
 // Creates a new set with all elements incremented by 1
@@ -656,24 +656,26 @@ const plus_one : set (int) = set_map (increment, larger_set)
 In CameLIGO, the predefined functional iterator implementing the map
 operation over sets is called `Set.map` and is used as follows:
 
-```cameligo group=sets
+```cameligo skip
 let increment (i : int) : int = i + 1
 
 // Creates a new set with all elements incremented by 1
 let plus_one : int set = Set.map increment larger_set
 ```
 
+
 <!--ReasonLIGO-->
 
 In ReasonLIGO, the predefined functional iterator implementing the map
 operation over sets is called `Set.map` and is used as follows:
 
-```reasonligo group=sets
+```reasonligo skip
 let increment = (i : int) : int => i + 1;
 
 // Creates a new set with all elements incremented by 1
 let plus_one : set (int) = Set.map (increment, larger_set);
 ```
+
 <!--END_DOCUSAURUS_CODE_TABS-->
 
 #### Fold Operation

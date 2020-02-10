@@ -27,7 +27,7 @@ end
 open Errors
 
 (* This does not makes sense to me *)
-let get_operator : constant -> type_value -> expression list -> predicate result = fun s ty lst ->
+let get_operator : constant' -> type_value -> expression list -> predicate result = fun s ty lst ->
   match Operators.Compiler.get_operators s with
   | Ok (x,_) -> ok x
   | Error _ -> (
@@ -114,7 +114,7 @@ let get_operator : constant -> type_value -> expression list -> predicate result
             i_drop ; (* drop the entrypoint... *)
             prim ~annot:[entry] ~children:[r_ty] I_CONTRACT ;
           ]
-      | x -> simple_fail (Format.asprintf "predicate \"%a\" doesn't exist" Stage_common.PP.constant x)
+      | x -> simple_fail (Format.asprintf "predicate \"%a\" doesn't exist" PP.constant x)
     )
 
 let rec translate_value (v:value) ty : michelson result = match v with
@@ -220,7 +220,7 @@ and translate_expression (expr:expression) (env:environment) : michelson result 
       b' ;
     ]
   )
-  | E_constant(str, lst) ->
+  | E_constant{cons_name=str;arguments= lst} ->
       let module L = Logger.Stateful() in
       let%bind pre_code =
         let aux code expr =
@@ -249,7 +249,7 @@ and translate_expression (expr:expression) (env:environment) : michelson result 
             pre_code ;
             f ;
           ]
-        | _ -> simple_fail (Format.asprintf "bad arity for %a"  Stage_common.PP.constant str)
+        | _ -> simple_fail (Format.asprintf "bad arity for %a" PP.constant str)
       in
       let error =
         let title () = "error compiling constant" in
@@ -347,7 +347,7 @@ and translate_expression (expr:expression) (env:environment) : michelson result 
         ]) in
       return code
     )
-  | E_iterator (name , (v , body) , expr) -> (
+  | E_iterator (name,(v , body) , expr) -> (
       let%bind expr' = translate_expression expr env in
       let%bind body' = translate_expression body (Environment.add v env) in
       match name with
@@ -367,7 +367,7 @@ and translate_expression (expr:expression) (env:environment) : michelson result 
           return code
         )
       | s -> (
-          let iter = Format.asprintf "iter %a" Stage_common.PP.constant s in
+          let iter = Format.asprintf "iter %a" PP.constant s in
           let error = error (thunk "bad iterator") (thunk iter) in
           fail error
         )
@@ -422,7 +422,7 @@ and translate_expression (expr:expression) (env:environment) : michelson result 
         i_push_unit ;
       ]
     )
-  | E_update (record, (path, expr)) -> (
+  | E_record_update (record, path, expr) -> (
     let%bind record' = translate_expression record env in
 
     let record_var = Var.fresh () in

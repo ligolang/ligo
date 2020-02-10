@@ -1,4 +1,4 @@
-# This script accepts three arguments, os family, os and it's version,
+# This script accepts three arguments, os family, os and its version,
 # which are subsequently used to fetch the respective docker
 # image from the ocaml/infrastructure project.
 #

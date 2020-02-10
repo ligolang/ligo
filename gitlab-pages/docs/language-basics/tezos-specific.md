@@ -52,8 +52,8 @@ let id_string = (p : string) : option (string) => {
 It is often desirable to hash a public key. In Michelson, certain data
 structures such as maps will not allow the use of the `key` type. Even
 if this were not the case, hashes are much smaller than keys, and
-storage on blockchains comes at a cost premium. You can hash keys an
-predefined function returning a value of type `key_hash`.
+storage on blockchains comes at a cost premium. You can hash keys with
+a predefined functions returning a value of type `key_hash`.
 
 <!--DOCUSAURUS_CODE_TABS-->
 

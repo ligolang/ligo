@@ -102,7 +102,7 @@ function Versions(props) {
           </table>
           <p>
             You can find past versions of this project on{' '}
-            <a href={repoUrl}>Gitlab</a>.
+            <a href={repoUrl}>GitLab</a>.
           </p>
         </div>
       </Container>

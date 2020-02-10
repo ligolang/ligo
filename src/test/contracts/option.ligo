@@ -9,5 +9,5 @@ function assign (var m : int) : foobar is
   block {
     var coco : foobar := None;
     coco := Some(m);
-    coco := None;
+    coco := (None : foobar); //temporary annotation added until type inference
   } with coco

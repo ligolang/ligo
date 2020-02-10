@@ -259,7 +259,7 @@ let interpret =
         let%bind failstring = Run.failwith_to_string fail_res in
         ok @@ Format.asprintf "%s" failstring
       | Success value' ->
-        let%bind simplified_output = Uncompile.uncompile_expression typed_exp.type_annotation value' in
+        let%bind simplified_output = Uncompile.uncompile_expression typed_exp.type_expression value' in
         ok @@ Format.asprintf "%a\n" Ast_simplified.PP.expression simplified_output
   in
   let term =
@@ -268,6 +268,19 @@ let interpret =
   let doc = "Subcommand: Interpret the expression in the context initialized by the provided source file." in
   (Term.ret term , Term.info ~doc cmdname)
 
+let temp_ligo_interpreter =
+  let f source_file syntax display_format =
+    toplevel ~display_format @@
+    let%bind simplified = Compile.Of_source.compile source_file (Syntax_name syntax) in
+    let%bind typed,_    = Compile.Of_simplified.compile simplified in
+    let%bind res = Compile.Of_typed.some_interpret typed in
+    ok @@ Format.asprintf "%s\n" res
+  in
+  let term =
+    Term.(const f $ source_file 0 $ syntax $ display_format ) in
+  let cmdname = "ligo-interpret" in
+  let doc = "Subcommand: (temporary / dev only) uses LIGO interpret." in
+  (Term.ret term , Term.info ~doc cmdname)
 
 let compile_storage =
   let f source_file entry_point expression syntax amount sender source predecessor_timestamp display_format michelson_format =
@@ -341,6 +354,7 @@ let run_function =
     let%bind typed_prg,state = Compile.Of_simplified.compile simplified_prg in
     let      env             = Ast_typed.program_environment typed_prg in
     let%bind mini_c_prg      = Compile.Of_typed.compile typed_prg in
+
 
     let%bind simplified_param = Compile.Of_source.compile_expression v_syntax parameter in
     let%bind app              = Compile.Of_simplified.apply entry_point simplified_param in
@@ -425,6 +439,7 @@ let list_declarations =
 
 let run ?argv () =
   Term.eval_choice ?argv main [
+    temp_ligo_interpreter ;
     compile_file ;
     measure_contract ;
     compile_parameter ;
