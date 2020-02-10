@@ -2,7 +2,7 @@
 set -x
 ocamllex.opt Escan.mll
 ocamllex.opt Preproc.mll
-menhir Eparser.mly
+menhir -la 1 Eparser.mly
 ocamlfind ocamlopt -strict-sequence -w +A-48-4 -c Etree.ml
 ocamlfind ocamlopt -strict-sequence -w +A-48-4 -c Error.ml
 ocamlfind ocamlopt -strict-sequence -w +A-48-4 -c Etree.ml
