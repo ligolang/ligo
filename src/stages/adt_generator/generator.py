@@ -1,34 +1,49 @@
 moduleName = "A"
+variant="_ _variant"
+record="_ _record"
+def poly(x): return x
 adts = [
-  # typename, variant?, fields_or_ctors
-  ("root", True, [
-      # ctor, builtin, type
-      ("A", False, "a"),
-      ("B", True, "int"),
+  # typename, kind, fields_or_ctors
+  ("root", variant, [
+      # ctor, builtin?, type
+      ("A", False, "rootA"),
+      ("B", False, "rootB"),
       ("C", True, "string"),
   ]),
-  ("a", False, [
+  ("a", record, [
+    # field, builtin?, type
     ("a1", False, "ta1"),
     ("a2", False, "ta2"),
   ]),
-  ("ta1", True, [
+  ("ta1", variant, [
       ("X", False, "root"),
       ("Y", False, "ta2"),
   ]),
-  ("ta2", True, [
+  ("ta2", variant, [
       ("Z", False, "ta2"),
       ("W", True, "unit"),
+  ]),
+  # polymorphic type
+  ("rootA", poly("list"),
+   [
+    # Position (0..n-1), builtin?, type argument
+    (0, False, "a")
+  ]),
+  ("rootB", poly("list"),
+   [
+    # Position (0..n-1), builtin?, type argument
+    (0, True, "int")
   ]),
 ]
 
 from collections import namedtuple
-adt = namedtuple('adt', ['name', 'newName', 'isVariant', 'ctorsOrFields'])
+adt = namedtuple('adt', ['name', 'newName', 'kind', 'ctorsOrFields'])
 ctorOrField = namedtuple('ctorOrField', ['name', 'newName', 'isBuiltin', 'type_', 'newType'])
 adts = [
   adt(
     name = name,
     newName = f"{name}'",
-    isVariant = isVariant,
+    kind = kind,
     ctorsOrFields = [
       ctorOrField(
         name = cf,
@@ -40,23 +55,32 @@ adts = [
       for (cf, isBuiltin, type_) in ctors
     ],
   )
-  for (name, isVariant, ctors) in adts
+  for (name, kind, ctors) in adts
 ]
 
+print("(* This is an auto-generated file. Do not edit. *)")
+
+print("")
 print("open %s" % moduleName)
 
 print("")
 for (index, t) in enumerate(adts):
   typeOrAnd = "type" if index == 0 else "and"
   print(f"{typeOrAnd} {t.newName} =")
-  if t.isVariant:
+  if t.kind == variant:
     for c in t.ctorsOrFields:
       print(f"  | {c.newName} of {c.newType}")
-  else:
+  elif t.kind == record:
     print("  {")
     for f in t.ctorsOrFields:
       print(f"    {f.newName} : {f.newType} ;")
     print("  }")
+  else:
+    print("  ", end='')
+    for a in t.ctorsOrFields:
+      print(f"{a.newType}", end=' ')
+    print(t.kind, end='')
+    print("")
 
 print("")
 print(f"type 'state continue_fold =")
@@ -107,10 +131,10 @@ print("let no_op : 'a fold_config = {")
 for t in adts:
   print(f"  {t.name} = (fun v state continue ->")
   print("    match v with")
-  if t.isVariant:
+  if t.kind == variant:
     for c in t.ctorsOrFields:
       print(f"    | {c.name} v -> let (v, state) = continue.{t.name}_{c.name} v state in ({c.newName} v, state)")
-  else:
+  elif t.kind == record:
     print("      {", end=' ')
     for f in t.ctorsOrFields:
       print(f"{f.name};", end=' ')
@@ -121,6 +145,10 @@ for t in adts:
     for f in t.ctorsOrFields:
       print(f"{f.newName};", end=' ')
     print("}, state)")
+  else:
+    print(f"      v -> fold_{t.kind} v state (", end=' ')
+    print(", ".join([f"continue.{t.name}_{f.name}" for f in t.ctorsOrFields]), end='')
+    print(" )")
   print("  );")
   print(f"  {t.name}_pre_state = (fun v state -> ignore v; state) ;")
   print(f"  {t.name}_post_state = (fun v new_v state -> ignore (v, new_v); state) ;")
