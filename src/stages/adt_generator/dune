@@ -16,3 +16,8 @@
   (libraries
   )
 )
+
+(alias
+  (name runtest)
+  (action (run ./adt_generator.exe))
+)
