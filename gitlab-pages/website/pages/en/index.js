@@ -6,14 +6,14 @@ const docUrl = require(`${process.cwd()}/core/UrlUtils`).docUrl;
 const FEATURES = [
   {
     image: 'img/strong-type-system.svg',
-    title: 'Strong Type System',
+    title: 'Strong, Static Type System',
     content: 'Write types, then code. Benefit from the safety of type systems.'
   },
   {
     image: 'img/syntax-agnostic.svg',
-    title: 'Syntax Agnostic',
+    title: 'Polyglot',
     content:
-      'Code in your language. Write PascaLIGO, CameLIGO, or add your own syntax.'
+      'Code in your language. Write PascaLIGO, CameLIGO, ReasonLIGO or add your own syntax.'
   },
   {
     image: 'img/easy-integration.svg',
@@ -77,7 +77,7 @@ module.exports = props => {
           </ul>
         </div>
         <div id="preview">
-          <h1>A friendly smart contract language for Tezos</h1>
+          <h1>A friendly Smart Contract Language for Tezos</h1>
           <p>Michelson was never so easy</p>
           <CodeExamples MarkdownBlock={MarkdownBlock}></CodeExamples>
         </div>

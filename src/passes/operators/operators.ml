@@ -1155,6 +1155,7 @@ module Compiler = struct
     | C_CHAIN_ID        -> ok @@ simple_constant @@ prim I_CHAIN_ID
     | _                 -> simple_fail @@ Format.asprintf "operator not implemented for %a" Stage_common.PP.constant c
 
+
   (*
     Some complex operators will need to be added in compiler/compiler_program.
     All operators whose compilations involve a type are found there.

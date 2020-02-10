@@ -3,20 +3,24 @@ id: first-contract
 title: First contract
 ---
 
-So far so good, we've learned enough of the LIGO language, we're confident enough to write out first smart contract.
+So far so good, we have learned enough of the LIGO language, we are
+confident enough to write out first smart contract.
 
-We'll be implementing a counter contract, let's go.
+We will be implementing a counter contract.
 
-## Dry-running a contract
+## Dry-running a Contract
 
-Testing a contract can be quite easy if we utilize LIGO's built-in dry run feature. Dry-run works by simulating the entrypoint execution, as if it were deployed on a real chain. You need to provide the following:
+Testing a contract can be quite easy if we utilize LIGO's built-in dry
+run feature. Dry-run works by simulating the access function
+execution, as if it were deployed on a real chain. You need to provide
+the following:
 
 - `file` - contract to run
 - `entrypoint` - name of the function to execute
-- `parameter` - parameter passed to the entrypoint (in a theoretical invocation operation)
+- `parameter` - parameter passed to the access function (in a theoretical invocation operation)
 - `storage` - a mock storage value, as if it were stored on a real chain
 
-Here's a full example:
+Here is a full example:
 
 <!--DOCUSAURUS_CODE_TABS-->
 <!--Pascaligo-->
@@ -29,25 +33,29 @@ ligo dry-run src/basic.ligo main Unit Unit
 ```
 <!--END_DOCUSAURUS_CODE_TABS-->
 
-Output of the `dry-run` is the return value of our entrypoint function, we can see the operations emited - in our case an empty list, and the new storage value being returned - which in our case is still `Unit`.
+Output of the `dry-run` is the return value of our access function, we
+can see the operations emited - in our case an empty list, and the new
+storage value being returned - which in our case is still `Unit`.
 
-## Building a counter contract
+## A Counter Contract
 
-Our counter contract will store a single `int` in its storage, and will accept an `action` variant in order to re-route our single `main` entrypoint into two entrypoints for `addition` and `subtraction`. 
+Our counter contract will store a single `int` as it's storage, and
+will accept an `action` variant in order to re-route our single `main`
+access function to two entrypoints for `addition` and `subtraction`.
 
 <!--DOCUSAURUS_CODE_TABS-->
 <!--Pascaligo-->
 ```
 type action is
-| Increment of int
+  Increment of int
 | Decrement of int
 
 function main (const p : action ; const s : int) : (list(operation) * int) is
-  block {skip} with ((nil : list(operation)),
-    case p of
+  ((nil : list(operation)),
+  (case p of
     | Increment (n) -> s + n
     | Decrement (n) -> s - n
-    end)
+   end))
 ```
 
 <!--CameLIGO-->
@@ -98,11 +106,13 @@ ligo dry-run src/counter.ligo main "Increment(5)" 5
 <!--END_DOCUSAURUS_CODE_TABS-->
 
 
-Yay, our contract's storage has been successfuly incremented to `10`.
+Our contract's storage has been successfuly incremented to `10`.
 
 ## Deploying and interacting with a contract on a live-chain
 
-In order to deploy the counter contract to a real Tezos network, we'd have to compile it first, this can be done with the help of the `compile-contract` CLI command:
+In order to deploy the counter contract to a real Tezos network, we'd
+have to compile it first, this can be done with the help of the
+`compile-contract` CLI command:
 
 <!--DOCUSAURUS_CODE_TABS-->
 <!--Pascaligo-->
@@ -156,7 +166,10 @@ Command above will output the following Michelson code:
 ```
 <!--END_DOCUSAURUS_CODE_TABS-->
 
-However in order to originate a Michelson contract on Tezos, we also need to provide the initial storage value, we can use `compile-storage` to compile the LIGO representation of the storage to Michelson.
+However in order to originate a Michelson contract on Tezos, we also
+need to provide the initial storage value, we can use
+`compile-storage` to compile the LIGO representation of the storage to
+Michelson.
 
 <!--DOCUSAURUS_CODE_TABS-->
 <!--Pascaligo-->
@@ -182,4 +195,5 @@ ligo compile-parameter src/counter.ligo main 'Increment(5)'
 <!--END_DOCUSAURUS_CODE_TABS-->
 
 
-Now we can use `(Right 5)` which is a Michelson value, to invoke our contract - e.g. via `tezos-client`
+Now we can use `(Right 5)` which is a Michelson value, to invoke our
+contract - e.g. via `tezos-client`
