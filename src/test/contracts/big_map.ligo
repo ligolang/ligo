@@ -1,36 +1,35 @@
-type storage_ is big_map(int, int) * unit
-type foo is big_map(int, int)
+type parameter is unit
+type storage is big_map (int, int) * unit
+type return is list (operation) * storage
 
-function main(const p : unit; const s : storage_) : list(operation) * storage_ is
+function main (const p : parameter; const s : storage) : return is
   block {
-    var toto : option (int) := Some(0);
+    var toto : option (int) := Some (0);
     toto := s.0[23];
-    s.0[2] := 444;
+    s.0[2] := 444
   }
   with ((nil: list(operation)), s)
 
-function set_ (var n : int ; var m : foo) : foo is block {
-  m[23] := n ;
+type foo is big_map (int, int)
+
+function set_ (var n : int; var m : foo) : foo is block {
+  m[23] := n
 } with m
 
 function rm (var m : foo) : foo is block {
-  remove 42 from map m;
+  remove 42 from map m
 } with m
 
-function gf (const m : foo) : int is begin skip end with get_force(23, m)
+function gf (const m : foo) : int is get_force (23, m)
 
-function get (const m : foo) : option(int) is begin skip end with m[42]
+function get (const m : foo) : option (int) is m[42]
 
-const empty_big_map : big_map(int,int) = big_map end
+const empty_big_map : big_map (int,int) = big_map []
 
-const big_map1 : big_map(int,int) = big_map
-  23 -> 0 ;
-  42 -> 0 ;
-end
+const big_map1 : big_map (int,int) = big_map [23 -> 0; 42 -> 0]
 
-function mutimaps (const m : foo ; const n : foo) : foo is block
-{
-  var bar : foo := m ;
-  bar[42] := 0 ;
-  n[42] := get_force(42, bar) ;
+function mutimaps (const m : foo; const n : foo) : foo is block {
+  var bar : foo := m;
+  bar[42] := 0;
+  n[42] := get_force (42, bar)
 } with n
