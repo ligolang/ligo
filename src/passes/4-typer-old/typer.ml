@@ -649,7 +649,6 @@ and type_expression' : environment -> ?tv_opt:O.type_expression -> I.expression 
           let wtype = Format.asprintf
             "Loops over collections expect lists, sets or maps, got type %a" O.PP.type_expression tv_col in 
           fail @@ simple_error wtype in 
-      let lname = lname in
       let e' = Environment.add_ez_binder lname input_type e in
       let%bind body = type_expression' ?tv_opt:(Some tv_out) e' result in
       let output_type = body.type_expression in
