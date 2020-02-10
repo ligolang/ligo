@@ -7,7 +7,7 @@
 (menhir
   (merge_into Parser)
   (modules ParToken Parser)
-  (flags -la 1 --table --strict --explain --external-tokens LexToken))
+  (flags --table --strict --external-tokens LexToken))
 
 ;; Build of the parser as a library
 
