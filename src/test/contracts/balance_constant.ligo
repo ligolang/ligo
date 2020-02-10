@@ -1,11 +1,12 @@
-(**
-
+(*
 This test makes sure that the balance is accessible in PascaLIGO.
-It's there to detect a regression of: https://gitlab.com/ligolang/ligo/issues/68
 
+It is meant to detect the regression detailled in the following issue: https://gitlab.com/ligolang/ligo/issues/68
 *)
 
+type parameter is unit
 type storage is tez
+type return is list (operation) * storage
 
-function main (const p : unit; const s: tez) : list(operation) * storage is
-  ((nil : list(operation)), balance)
+function main (const param : parameter; const store: storage) : return is
+  ((nil : list (operation)), balance)

@@ -1079,7 +1079,7 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; contract "bad_timestamp.ligo" ; "main" ] ;
   [%expect {|
-    ligo: in file "bad_timestamp.ligo", line 5, characters 29-43. Badly formatted timestamp "badtimestamp":  {"location":"in file \"bad_timestamp.ligo\", line 5, characters 29-43"}
+    ligo: in file "bad_timestamp.ligo", line 7, characters 30-44. Badly formatted timestamp "badtimestamp":  {"location":"in file \"bad_timestamp.ligo\", line 7, characters 30-44"}
 
 
      If you're not sure how to fix this error, you can

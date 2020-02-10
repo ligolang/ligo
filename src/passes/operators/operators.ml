@@ -32,7 +32,7 @@ module Simplify = struct
     - The left-hand-side is the reserved name in the given front-end.
     - The right-hand-side is the name that will be used in the AST.
   *)
-  let unit_expr = make_t @@ T_constant TC_unit 
+  let unit_expr = make_t @@ T_constant TC_unit
 
   let type_constants s =
   match s with
@@ -976,7 +976,7 @@ module Typer = struct
     let%bind elt = get_t_list tl in
     let%bind () = assert_eq_1 hd elt in
     ok tl
-  
+
   let constant_typers c : typer result = match c with
     | C_INT                 -> ok @@ int ;
     | C_UNIT                -> ok @@ unit ;
@@ -1153,9 +1153,7 @@ module Compiler = struct
     | C_BYTES_PACK      -> ok @@ simple_unary @@ prim I_PACK
     | C_CONCAT          -> ok @@ simple_binary @@ prim I_CONCAT
     | C_CHAIN_ID        -> ok @@ simple_constant @@ prim I_CHAIN_ID
-    | _                 -> simple_fail @@ Format.asprintf "operator not implemented for %a" PP.constant c
-
-  
+    | _                 -> simple_fail @@ Format.asprintf "operator not implemented for %a" Stage_common.PP.constant c
 
   (*
     Some complex operators will need to be added in compiler/compiler_program.
