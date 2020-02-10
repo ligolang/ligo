@@ -7,6 +7,7 @@ if [ $ID = arch ]
 then
     pacman -Sy
     sudo pacman -S --noconfirm \
+        python \
         libevdev \
         perl \
         pkg-config \
@@ -21,6 +22,7 @@ then
 else
     apt-get update -qq
     apt-get -y -qq install \
+        python3 \
         libev-dev \
         perl \
         pkg-config \
