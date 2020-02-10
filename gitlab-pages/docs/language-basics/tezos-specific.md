@@ -7,7 +7,7 @@ LIGO is a programming language for writing Tezos smart contracts. It
 would be a little odd if it did not have any Tezos specific
 functions. This page will tell you about them.
 
-## Pack and unpack
+## Pack and Unpack
 
 Michelson provides the `PACK` and `UNPACK` instructions for data
 serialization.  The instruction `PACK` converts Michelson data
@@ -59,11 +59,12 @@ predefined function returning a value of type `key_hash`.
 
 <!--PascaLIGO-->
 ```pascaligo group=b
-function check_hash_key (const kh1 : key_hash; const k2 : key) : bool * key_hash is block {
-  var ret : bool := False;
-  var kh2 : key_hash := crypto_hash_key (k2);
-  if kh1 = kh2 then ret := True else skip
-} with (ret, kh2)
+function check_hash_key (const kh1 : key_hash; const k2 : key) : bool * key_hash is
+  block {
+    var ret : bool := False;
+    var kh2 : key_hash := crypto_hash_key (k2);
+    if kh1 = kh2 then ret := True else skip
+  } with (ret, kh2)
 ```
 
 <!--CameLIGO-->
@@ -122,14 +123,14 @@ let check_signature =
 
 <!--END_DOCUSAURUS_CODE_TABS-->
 
-## Getting the contract's own address
+## Contract's Own Address
 
 Often you want to get the address of the contract being executed. You
 can do it with `self_address`.
 
 > ⚠️ Due to limitations in Michelson, `self_address` in a contract is
-> only allowed at the entry-point level (a.k.a top-level). Using it in
-> an auxiliaru function will cause an error.
+> only allowed at the entrypoint level, that is, at the
+> top-level. Using it in an embedded function will cause an error.
 
 <!--DOCUSAURUS_CODE_TABS-->
 

@@ -4,7 +4,7 @@ let reasonHighlightJs = require('reason-highlightjs');
 
 const siteConfig = {
   title: 'LIGO', // Title for your website.
-  tagline: 'LIGO is a friendly smart-contract language for Tezos',
+  tagline: 'LIGO, the friendly Smart Contract Language for Tezos',
   taglineSub: 'Michelson was never so easy',
   url: 'https://ligolang.org', // Your website URL
   baseUrl: '/', // Base URL for your project */
@@ -14,7 +14,7 @@ const siteConfig = {
 
   // Used for publishing and more
   projectName: 'ligo',
-  organizationName: 'marigold',
+  organizationName: 'TBN',
   // For top-level user or org sites, the organization is still the same.
   // e.g., for the https://JoelMarcey.github.io site, it would be set like...
   //   organizationName: 'JoelMarcey'
@@ -87,10 +87,11 @@ const siteConfig = {
           beginKeywords: '',
           keywords: {
             keyword:
-              'and begin block case const contains down else end fail for ' +
-              'from function if in is list map mod nil not of or patch ' +
-              'procedure record remove set skip step then to type var while with',
-            literal: 'true false unit int string some none bool nat list'
+            'and attributes begin big_map block case const contains else'
+              + ' end False for from function if in is list map mod nil'
+              + ' not of or patch record remove set skip then to True type'
+              + ' var while with',
+            literal: 'true false unit int string Some None bool nat list'
           },
           lexemes: '[a-zA-Z][a-zA-Z0-9_]*',
           contains: [

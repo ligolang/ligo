@@ -10,21 +10,18 @@ features it as well. Both the option type and the unit types are
 instances of a more general kind of types: *variant types* (sometimes
 called *sum types*).
 
-## The unit type
+## The unit Type
 
 The `unit` type in Michelson or LIGO is a predefined type that
 contains only one value that carries no information. It is used when
 no relevant information is required or produced. Here is how it used.
 
-> 💡 Units come in handy when we try pattern matching on custom
-> variants below.
-
 <!--DOCUSAURUS_CODE_TABS-->
-<!--Pascaligo-->
+<!--PascaLIGO-->
 
 In PascaLIGO, the unique value of the `unit` type is `Unit`.
 ```pascaligo group=a
-const n : unit = Unit
+const n : unit = Unit // Note the capital letter
 ```
 
 <!--CameLIGO-->
@@ -56,11 +53,11 @@ Here is how we define a coin as being either head or tail (and nothing
 else):
 
 <!--DOCUSAURUS_CODE_TABS-->
-<!--Pascaligo-->
+<!--PascaLIGO-->
 ```pascaligo group=b
 type coin is Head | Tail
-const head : coin = Head (Unit) // Unit needed because of a bug
-const tail : coin = Tail (Unit) // Unit needed because of a bug
+const head : coin = Head (Unit) // Unit needed for now.
+const tail : coin = Tail (Unit) // Unit needed for now.
 ```
 
 <!--CameLIGO-->
@@ -87,7 +84,7 @@ define different kinds of users of a system.
 
 <!--DOCUSAURUS_CODE_TABS-->
 
-<!--Pascaligo-->
+<!--PascaLIGO-->
 ```pascaligo group=c
 type id is nat
 
@@ -128,9 +125,6 @@ let g : user = Guest;
 
 <!--END_DOCUSAURUS_CODE_TABS-->
 
-Defining a variant can be extremely useful for building semantically
-appealing contracts. We will learn how to use variants for "logic
-purposes"' shortly.
 
 ## Optional values
 
@@ -143,7 +137,7 @@ meaningful value *of any type*. An example in arithmetic is the
 division operation:
 
 <!--DOCUSAURUS_CODE_TABS-->
-<!--Pascaligo-->
+<!--PascaLIGO-->
 ```pascaligo group=d
 function div (const a : nat; const b : nat) : option (nat) is
   if b = 0n then (None: option (nat)) else Some (a/b)
@@ -169,10 +163,10 @@ let div = ((a, b) : (nat, nat)) : option (nat) =>
 *Pattern matching* is similiar to the `switch` construct in
 Javascript, and can be used to route the program's control flow based
 on the value of a variant. Consider for example the definition of a
-function `flip` that flips a coin, as defined above.
+function `flip` that flips a coin.
 
 <!--DOCUSAURUS_CODE_TABS-->
-<!--Pascaligo-->
+<!--PascaLIGO-->
 ```pascaligo group=e
 type coin is Head | Tail
 

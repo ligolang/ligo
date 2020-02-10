@@ -9,7 +9,7 @@ The type of a boolean value is `bool`. Here is how to define a boolean
 value:
 
 <!--DOCUSAURUS_CODE_TABS-->
-<!--Pascaligo-->
+<!--PascaLIGO-->
 ```pascaligo group=a
 const a : bool = True   // Notice the capital letter
 const b : bool = False  // Same.
@@ -19,7 +19,6 @@ const b : bool = False  // Same.
 let a : bool = true
 let b : bool = false
 ```
-
 <!--ReasonLIGO-->
 ```reasonligo group=a
 let a : bool = true;
@@ -27,8 +26,7 @@ let b : bool = false;
 ```
 <!--END_DOCUSAURUS_CODE_TABS-->
 
-
-## Comparing two Values
+## Comparing Values
 
 In LIGO, only values of the same type can be compared. Moreover, not
 all values of the same type can be compared, only those with
@@ -42,7 +40,7 @@ function.
 ### Comparing Strings
 
 <!--DOCUSAURUS_CODE_TABS-->
-<!--Pascaligo-->
+<!--PascaLIGO-->
 ```pascaligo group=b
 const a : string = "Alice"
 const b : string = "Alice"
@@ -62,11 +60,10 @@ let c : bool = (a == b); // true
 ```
 <!--END_DOCUSAURUS_CODE_TABS-->
 
-
 ### Comparing numbers
 
 <!--DOCUSAURUS_CODE_TABS-->
-<!--Pascaligo-->
+<!--PascaLIGO-->
 ```pascaligo group=c
 const a : int  = 5
 const b : int  = 4
@@ -102,14 +99,13 @@ let h : bool = (a != b);
 ```
 <!--END_DOCUSAURUS_CODE_TABS-->
 
-
 ### Comparing tez
 
 > 💡 Comparing `tez` values is especially useful when dealing with an
 > amount sent in a transaction.
 
 <!--DOCUSAURUS_CODE_TABS-->
-<!--Pascaligo-->
+<!--PascaLIGO-->
 ```pascaligo group=d
 const a : tez  = 5mutez
 const b : tez  = 10mutez
@@ -136,7 +132,7 @@ Conditional logic enables forking the control flow depending on the
 state.
 
 <!--DOCUSAURUS_CODE_TABS-->
-<!--Pascaligo-->
+<!--PascaLIGO-->
 ```pascaligo group=e
 type magnitude is Small | Large // See variant types.
 
@@ -183,5 +179,4 @@ ligo run-function
 gitlab-pages/docs/language-basics/boolean-if-else/cond.religo compare 21n'
 # Outputs: Large
 ```
-
 <!--END_DOCUSAURUS_CODE_TABS-->

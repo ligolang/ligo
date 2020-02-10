@@ -1,20 +1,20 @@
 ---
 id: entrypoints-contracts
-title: Entrypoints to Contracts
+title: Access function and Entrypoints
 ---
 
-## Entrypoints
+## Access Functions
 
 A LIGO contract is made of a series of constant and function
 declarations. Only functions having a special type can be called when
-the contract is activated: they are called *entrypoints*. An
-entrypoint need to take two parameters, the *contract parameter* and
-the *on-chain storage*, and return a pair made of a *list of
-operations* and a (new) storage.
+the contract is activated: we called them *access functions*. An
+access function takes two parameters, the *contract parameter* and the
+*on-chain storage*, and returns a pair made of a *list of operations*
+and a (new) storage.
 
 When the contract is originated, the initial value of the storage is
-provided. When and entrypoint is later called, only the parameter is
-provided, but the type of an entrypoint contains both.
+provided. When an access function is later called, only the parameter
+is provided, but the type of an access function contains both.
 
 The type of the contract parameter and the storage are up to the
 contract designer, but the type for list operations is not. The return
@@ -23,7 +23,7 @@ has been defined elsewhere. (Note that you can use any type with any
 name for the storage.)
 
 <!--DOCUSAURUS_CODE_TABS-->
-<!--Pascaligo-->
+<!--PascaLIGO-->
 ```pascaligo skip
 type storage is ...  // Any name, any type
 type return is list (operation) * storage
@@ -42,9 +42,9 @@ type return = (list (operation), storage);
 ```
 <!--END_DOCUSAURUS_CODE_TABS-->
 
-The contract storage can only be modified by activating an
-entrypoint. It is important to understand what that means. What it
-does *not* mean is that some global variable holding the storage is
+The contract storage can only be modified by activating an access
+function. It is important to understand what that means. What it does
+*not* mean is that some global variable holding the storage is
 modified by the entrypoint. Instead, what it *does* mean is that,
 given the state of the storage *on-chain*, an entrypoint specifies how
 to create another state for it, depending on a parameter.
@@ -54,7 +54,7 @@ is updated by the parameter.
 
 <!--DOCUSAURUS_CODE_TABS-->
 
-<!--Pascaligo-->
+<!--PascaLIGO-->
 
 ```pascaligo group=a
 type storage is nat
@@ -82,20 +82,29 @@ let main = ((parameter, store): (nat, storage)) : return => {
 ```
 <!--END_DOCUSAURUS_CODE_TABS-->
 
-In LIGO, the design pattern for entrypoints consists in actually
-having exactly *one entrypoint*, like the `main` function in C. The
-parameter of the contract is then a variant type, and, depending on
-the constructors of that type, different functions in the contract are
-called. In other terms, the unique entrypoint dispatches the control
-flow depending on a *pattern matching* on the contract parameter.
+## Entrypoints
 
-In the following example, the storage contains a counter (of type
-`nat`) and a name (of type `string`). Depending on the parameter of
-the contract, either the counter or the name is updated.
+In LIGO, the design pattern is to have *one* access function that
+dispatches the control flow according to its parameter. Those
+functions called for those actions are called *entrypoints*.
+
+As an analogy, in the C programming language, the `main` function is
+the unique access function and any function called from it would be an
+entrypoint.
+
+The parameter of the contract is then a variant type, and, depending
+on the constructors of that type, different functions in the contract
+are called. In other terms, the unique access function dispatches the
+control flow depending on a *pattern matching* on the contract
+parameter.
+
+In the following example, the storage contains a counter of type `nat`
+and a name of type `string`. Depending on the parameter of the
+contract, either the counter or the name is updated.
 
 <!--DOCUSAURUS_CODE_TABS-->
 
-<!--Pascaligo-->
+<!--PascaLIGO-->
 ```pascaligo group=b
 type parameter is
   Entrypoint_A of nat
@@ -188,7 +197,7 @@ any transaction that sends more tez than `0mutez`, that is, no
 incoming tokens are accepted.
 
 <!--DOCUSAURUS_CODE_TABS-->
-<!--Pascaligo-->
+<!--PascaLIGO-->
 ```pascaligo group=c
 type parameter is unit
 type storage is unit
@@ -232,7 +241,7 @@ let deny = ((param, store): (parameter, storage)) : return => {
 This example shows how `sender` or `source` can be used to deny access to an entrypoint.
 
 <!--DOCUSAURUS_CODE_TABS-->
-<!--Pascaligo-->
+<!--PascaLIGO-->
 ```pascaligo group=c
 const owner : address = ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address);
 
@@ -287,7 +296,7 @@ counter contract.
 
 <!--DOCUSAURUS_CODE_TABS-->
 
-<!--Pascaligo-->
+<!--PascaLIGO-->
 ```pascaligo skip
 // counter.ligo
 type parameter is

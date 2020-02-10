@@ -3,47 +3,42 @@ id: functions
 title: Functions
 ---
 
-Writing code is fun as long as it does not get out of hand. To make
-sure our code does not turn into spaghetti, we can structure some
-logic into functions.
+LIGO features functions are the basic building block of contracts. For
+example, entrypoints are functions.
 
-## Blocks
+## Declaring Functions
+
+<!--DOCUSAURUS_CODE_TABS-->
+<!--PascaLIGO-->
+
+There are two ways in PascaLIGO to define functions: with or without a
+*block*.
+
+### Blocks
 
 In PascaLIGO, *blocks* enable the sequential composition of
 instructions into an isolated scope. Each block needs to include at
-least one instruction. If we need a placeholder, we use the
-instruction `skip` which leaves the state unchanged.  The rationale
-for `skip` instead of a truly empty block is that it prevents you from
-writing an empty block by mistake.
-
-<!--DOCUSAURUS_CODE_TABS-->
-<!--Pascaligo-->
+least one instruction.
 
 ```pascaligo skip
-// terse style
 block { a := a + 1 }
-// verbose style
-begin
-  a := a + 1
-end
 ```
-Blocks are more versatile than simply containing instructions:
-they can also include *declarations* of values, like so:
+
+If we need a placeholder, we use the instruction `skip` which leaves
+the state unchanged.  The rationale for `skip` instead of a truly
+empty block is that it prevents you from writing an empty block by
+mistake.
+
 ```pascaligo skip
-// terse style
-block { const a : int = 1 }
-// verbose style
-begin
-  const a : int = 1
-end
+block { skip }
 ```
 
-<!--END_DOCUSAURUS_CODE_TABS-->
+Blocks are more versatile than simply containing instructions: they
+can also include *declarations* of values, like so:
 
-## Defining a function
-
-<!--DOCUSAURUS_CODE_TABS-->
-<!--Pascaligo-->
+```pascaligo skip
+block { const a : int = 1 }
+```
 
 Functions in PascaLIGO are defined using the `function` keyword
 followed by their `name`, `parameters` and `return` type definitions.
@@ -60,15 +55,23 @@ function add (const a : int; const b : int) : int is
 
 The function body consists of two parts:
 
-- `block { <instructions and declarations> }` - logic of the function
-- `with <value>` - the value returned by the function
+- `block { <instructions and declarations> }` is the logic of the function;
+- `with <value>` is the value returned by the function.
 
-#### Blockless functions
+### Blockless functions
 
-Functions that can contain all of their logic into a single expression
-can be defined without a block.  Instead of a block, you put an
-expression, whose value is implicitly returned by the function, like
-so:
+Functions that can contain all of their logic into a single
+*expression* can be defined without the need of a block:
+
+```pascaligo
+function identity (const n : int) : int is block { skip } with n  // Bad! Empty block not needed!
+
+function identity (const n : int) : int is n  // Blockless
+```
+
+The value of the expression is implicitly returned by the
+function. Another example is as follows:
+
 ```pascaligo group=b
 function add (const a: int; const b : int) : int is a + b
 ```
@@ -134,10 +137,10 @@ ligo run-function gitlab-pages/docs/language-basics/src/functions/curry.mligo in
 
 The function body is a single expression, whose value is returned.
 
-<!--ReasonLIGO-->
-Functions in ReasonLIGO are defined using the `let` keyword, like
-other values. The difference is that a succession of parameters is
-provided after the value name, followed by the return type.
+<!--ReasonLIGO--> Functions in ReasonLIGO are defined using the `let`
+keyword, like other values. The difference is that a tuple of
+parameters is provided after the value name, with its type, then
+followed by the return type.
 
 Here is how you define a basic function that sums two integers:
 ```reasonligo group=b
@@ -163,7 +166,7 @@ a key in a record or a map.
 Here is how to define an anonymous function:
 
 <!--DOCUSAURUS_CODE_TABS-->
-<!--Pascaligo-->
+<!--PascaLIGO-->
 ```pascaligo group=c
 function increment (const b : int) : int is
    (function (const a : int) : int is a + 1) (b)
@@ -194,7 +197,7 @@ ligo evaluate-value gitlab-pages/docs/language-basics/src/functions/anon.mligo a
 <!--ReasonLIGO-->
 ```reasonligo group=c
 let increment = (b : int) : int => ((a : int) : int => a + 1)(b);
-let a : int = increment (1); // a = 2
+let a : int = increment (1); // a == 2
 ```
 
 You can check the value of `a` defined above using the LIGO compiler
@@ -212,7 +215,7 @@ the use case of having a list of integers and mapping the increment
 function to all its elements.
 
 <!--DOCUSAURUS_CODE_TABS-->
-<!--Pascaligo-->
+<!--PascaLIGO-->
 ```pascaligo group=c
 function incr_map (const l : list (int)) : list (int) is
   list_map (function (const i : int) : int is i + 1, l)
@@ -226,7 +229,7 @@ gitlab-pages/docs/language-basics/src/functions/incr_map.ligo incr_map
 # Outputs: [ 2 ; 3 ; 4 ]
 ```
 
-<!--Cameligo-->
+<!--CameLIGO-->
 ```cameligo group=c
 let incr_map (l : int list) : int list =
   List.map (fun (i : int) -> i + 1) l
@@ -240,7 +243,7 @@ gitlab-pages/docs/language-basics/src/functions/incr_map.mligo incr_map
 # Outputs: [ 2 ; 3 ; 4 ]
 ```
 
-<!--Reasonligo-->
+<!--ReasonLIGO-->
 ```reasonligo group=c
 let incr_map = (l : list (int)) : list (int) =>
   List.map ((i : int) => i + 1, l);

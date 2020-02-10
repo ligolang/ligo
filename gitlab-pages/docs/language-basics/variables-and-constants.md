@@ -13,7 +13,7 @@ declaration. When defining a constant you need to provide a `name`,
 `type` and a `value`:
 
 <!--DOCUSAURUS_CODE_TABS-->
-<!--Pascaligo-->
+<!--PascaLIGO-->
 ```pascaligo group=a
 const age : int = 25
 ```
@@ -53,14 +53,11 @@ ligo evaluate-value gitlab-pages/docs/language-basics/src/variables-and-constant
 ## Variables
 
 <!--DOCUSAURUS_CODE_TABS-->
-<!--Pascaligo-->
+<!--PascaLIGO-->
 
-Variables, unlike constants, are mutable. They cannot be declared in a
-*global scope*, but they can be declared and used within functions, or
-as function parameters.
-
-> 💡 Do not worry if you do not understand the function syntax yet. We
-> will get to it in upcoming sections of this documentation.
+Variables, unlike constants, are *mutable*. They cannot be declared in
+a *global scope*, but they can be declared and used within functions,
+or as function parameters.
 
 > ⚠️ Please be wary that mutation only works within the function scope
 > itself, values outside of the function scope will not be affected.
@@ -68,7 +65,7 @@ as function parameters.
 
 ```pascaligo group=b
 // The following is invalid: use `const` for global values instead.
-// var four : int = 4
+// var four : int := 4
 
 function add (const a : int; const b : int) : int is
   block {
@@ -90,11 +87,8 @@ ligo run-function gitlab-pages/docs/language-basics/src/variables-and-constants/
 <!--CameLIGO-->
 
 As expected in the pure subset of a functional language, CameLIGO only
-features constant values: once they are declared, the value cannot be
-changed (or "mutated").
-
-> 💡 Do not worry if you do not understand the function syntax yet. We
-> will get to it in upcoming sections of this documentation.
+features *constant values*: once they are declared, the value cannot
+be changed (or "mutated").
 
 ```cameligo group=c
 let add (a : int) (b : int) : int =
@@ -110,11 +104,8 @@ ligo run-function gitlab-pages/docs/language-basics/src/variables-and-constants/
 <!--ReasonLIGO-->
 
 As expected in the pure subset of a functional language, ReasonLIGO
-only features constant values: once they are declared, the value
+only features *constant values*: once they are declared, the value
 cannot be changed (or "mutated").
-
-> 💡 Do not worry if you do not understand the function syntax yet. We
-> will get to it in upcoming sections of this documentation.
 
 ```reasonligo group=c
 let add = ((a, b): (int, int)): int => {

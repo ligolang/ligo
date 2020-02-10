@@ -6,7 +6,7 @@ title: Strings
 Strings are defined using the built-in `string` type like this:
 
 <!--DOCUSAURUS_CODE_TABS-->
-<!--Pascaligo-->
+<!--PascaLIGO-->
 ```
 const a : string = "Hello Alice"
 ```
@@ -21,10 +21,10 @@ let a : string = "Hello Alice";
 <!--END_DOCUSAURUS_CODE_TABS-->
 
 
-## Concatenating strings
+## Concatenating Strings
 
 <!--DOCUSAURUS_CODE_TABS-->
-<!--Pascaligo-->
+<!--PascaLIGO-->
 Strings can be concatenated using the `^` operator.
 
 ```pascaligo
@@ -51,12 +51,12 @@ let full_greeting : string = greeting ++ " " ++ name;
 <!--END_DOCUSAURUS_CODE_TABS-->
 
 
-## Slicing strings
+## Slicing Strings
 
 Strings can be sliced using a built-in function:
 
 <!--DOCUSAURUS_CODE_TABS-->
-<!--Pascaligo-->
+<!--PascaLIGO-->
 ```pascaligo
 const name  : string = "Alice"
 const slice : string = string_slice (0n, 1n, name)
@@ -73,29 +73,27 @@ let slice : string = String.slice (0n, 1n, name);
 ```
 <!--END_DOCUSAURUS_CODE_TABS-->
 
-> ⚠️ Notice that the `offset` and slice `length` are natural numbers
-> (`nat`).
+> ⚠️ Notice that the offset and length of the slice are natural numbers.
 
-## Aquiring the length of a string
+## Length of Strings
 
 The length of a string can be found using a built-in function:
 
 <!--DOCUSAURUS_CODE_TABS-->
-<!--Pascaligo-->
+<!--PascaLIGO-->
 ```pascaligo
 const name : string = "Alice"
-// length = 5
-const length : nat = size (name)
+const length : nat = size (name)   // length = 5
 ```
 <!--CameLIGO-->
 ```cameligo
 let name : string = "Alice"
-let length : nat = String.size name
+let length : nat = String.size name  // length = 5
 ```
 
 <!--ReasonLIGO-->
 ```reasonligo
 let name : string = "Alice";
-let length : nat = String.size (name);
+let length : nat = String.size (name);  // length == 5
 ```
 <!--END_DOCUSAURUS_CODE_TABS-->

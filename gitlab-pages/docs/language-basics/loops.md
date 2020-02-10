@@ -7,36 +7,37 @@ title: Loops
 
 <!--DOCUSAURUS_CODE_TABS-->
 
-<!--Pascaligo-->
+<!--PascaLIGO-->
 
-General iteration in PascaLIGO takes the shape of "while" loops, which
-should be familiar to programmers of imperative languages. Those loops
-are of the form `while <condition> <block>`. Their associated block is
-repeatedly evaluated until the condition becomes true, or never
-evaluated if the condition is false at the start. The loop never
-terminates if the condition never becomes true. Because we are writing
-smart contracts on Tezos, when the condition of a "while" loops fails
-to become true, the execution will run out of gas and stop with a
-failure anyway.
+General iteration in PascaLIGO takes the shape of general loops, which
+should be familiar to programmers of imperative languages as "while
+loops". Those loops are of the form `while <condition> <block>`. Their
+associated block is repeatedly evaluated until the condition becomes
+true, or never evaluated if the condition is false at the start. The
+loop never terminates if the condition never becomes true. Because we
+are writing smart contracts on Tezos, when the condition of a "while"
+loops fails to become true, the execution will run out of gas and stop
+with a failure anyway.
 
 Here is how to compute the greatest common divisors of two natural
 number by means of Euclid's algorithm:
 
 ```pascaligo group=a
-function gcd (var x : nat; var y : nat) : nat is block {
-  if x < y then
-    block {
-      const z : nat = x;
-      x := y; y := z
+function gcd (var x : nat; var y : nat) : nat is
+  block {
+    if x < y then
+      block {
+        const z : nat = x;
+        x := y; y := z
+      }
+    else skip;
+    var r : nat := 0n;
+    while y =/= 0n block {
+      r := x mod y;
+      x := y;
+      y := r
     }
-  else skip;
-  var r : nat := 0n;
-  while y =/= 0n block {
-    r := x mod y;
-    x := y;
-    y := r
-  }
-} with x
+  } with x
 ```
 
 You can call the function `gcd` defined above using the LIGO compiler
@@ -64,6 +65,9 @@ to have a special type: if the type of the accumulator is `t`, then it
 must have the type `bool * t` (not simply `t`). It is the boolean
 value that denotes whether the stopping condition has been reached.
 
+Here is how to compute the greatest common divisors of two natural
+number by means of Euclid's algorithm:
+
 ```cameligo group=a
 let iter (x,y : nat * nat) : bool * (nat * nat) =
   if y = 0n then false, (x,y) else true, (y, x mod y)
@@ -86,7 +90,6 @@ let gcd (x,y : nat * nat) : nat =
   let x,y = Loop.fold_while iter (x,y)
   in x
 ```
-
 You can call the function `gcd` defined above using the LIGO compiler
 like so:
 ```shell
@@ -112,6 +115,9 @@ iterated function needs to have a special type: if the type of the
 accumulator is `t`, then it must have the type `bool * t` (not simply
 `t`). It is the boolean value that denotes whether the stopping
 condition has been reached.
+
+Here is how to compute the greatest common divisors of two natural
+number by means of Euclid's algorithm:
 
 ```reasonligo group=a
 let iter = ((x,y) : (nat, nat)) : (bool, (nat, nat)) =>
@@ -139,15 +145,15 @@ let gcd = ((x,y) : (nat, nat)) : nat => {
 ```
 <!--END_DOCUSAURUS_CODE_TABS-->
 
-## For Loops
+## Bounded Loops
 
-<!--DOCUSAURUS_CODE_TABS-->
-<!--Pascaligo-->
+In addition to general loops, PascaLIGO features a specialised kind of
+*loop to iterate over bounded intervals*. These loops are familiarly
+known as "for loops" and they have the form `for <variable assignment> to
+<upper bound> <block>`, which is familiar for programmers of
+imperative languages.
 
-To iterate over a range of integers you use a loop of the form `for
-<variable assignment> to <upper integer bound> <block>`, which is
-familiar for programmers of imperative languages. Note that, for the
-sake of generality, the bounds are of type `int`, not `nat`.
+Consider how to sum integers from `0` to `n`:
 
 ```pascaligo group=c
 function sum (var n : nat) : int is block {
@@ -158,6 +164,8 @@ function sum (var n : nat) : int is block {
 } with acc
 ```
 
+(Please do not use that function: there exists a closed form formula.)
+
 You can call the function `sum` defined above using the LIGO compiler
 like so:
 ```shell
@@ -165,11 +173,6 @@ ligo run-function
 gitlab-pages/docs/language-basics/src/loops/sum.ligo sum 7n
 # Outputs: 28
 ```
-<!--END_DOCUSAURUS_CODE_TABS-->
-
-<!--DOCUSAURUS_CODE_TABS-->
-
-<!--Pascaligo-->
 
 PascaLIGO "for" loops can also iterate through the contents of a
 collection, that is, a list, a set or a map. This is done with a loop
@@ -230,4 +233,3 @@ gitlab-pages/docs/language-basics/src/loops/collection.ligo sum_map
 'map ["1"->1; "2"->2; "3"->3]'
 # Outputs: ( "123", 6 )
 ```
-<!--END_DOCUSAURUS_CODE_TABS-->

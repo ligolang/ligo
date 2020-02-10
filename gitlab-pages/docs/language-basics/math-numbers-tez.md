@@ -18,8 +18,7 @@ adding a value of type `int` to a value of type `tez` is invalid. Note
 that adding an integer to a natural number produces an integer.
 
 <!--DOCUSAURUS_CODE_TABS-->
-<!--Pascaligo-->
-
+<!--PascaLIGO-->
 ```pascaligo group=a
 // int + int yields int
 const a : int = 5 + 10
@@ -50,7 +49,6 @@ const g : int = 1_000_000
 >```
 
 <!--CameLIGO-->
-
 ```cameligo group=a
 // int + int yields int
 let a : int = 5 + 10
@@ -81,7 +79,6 @@ let g : int = 1_000_000
 >```
 
 <!--ReasonLIGO-->
-
 ```reasonligo group=a
 // int + int yields int
 let a : int = 5 + 10;
@@ -99,7 +96,7 @@ let c : tez = 5mutez + 10mutez;
 let e : nat = 5n + 10n;
 
 // nat + int yields an int: invalid
-//let f : nat = 5n + 10;
+// let f : nat = 5n + 10;
 
 let g : int = 1_000_000;
 ```
@@ -109,7 +106,6 @@ let g : int = 1_000_000;
 >```reasonligo
 >let sum : tex = 100_000mutez;
 >```
-
 <!--END_DOCUSAURUS_CODE_TABS-->
 
 ## Subtraction
@@ -119,7 +115,7 @@ Subtraction looks as follows.
 > ⚠️ Even when subtracting two `nats`, the result is an `int`
 
 <!--DOCUSAURUS_CODE_TABS-->
-<!--Pascaligo-->
+<!--PascaLIGO-->
 ```pascaligo group=b
 const a : int = 5 - 10
 
@@ -166,7 +162,7 @@ let d : tez = 5mutez - 1mutez;
 You can multiply values of the same type, such as:
 
 <!--DOCUSAURUS_CODE_TABS-->
-<!--Pascaligo-->
+<!--PascaLIGO-->
 
 ```pascaligo group=c
 const a : int = 5 * 5
@@ -200,7 +196,7 @@ In LIGO you can divide `int`, `nat`, and `tez`. Here is how:
 > ⚠️ Division of two `tez` values results into a `nat`
 
 <!--DOCUSAURUS_CODE_TABS-->
-<!--Pascaligo-->
+<!--PascaLIGO-->
 ```pascaligo group=d
 const a : int = 10 / 3
 const b : nat = 10n / 3n
@@ -248,11 +244,11 @@ let b : nat = abs (1);
 
 <!--END_DOCUSAURUS_CODE_TABS-->
 
-## Check if a value is a `nat`
+## Checking a `nat`
 
-You can check if a value is a `nat` by using a syntax specific
-built-in function, which accepts an `int` and returns an optional
-`nat`: if `Some(nat)` then the provided integer was indeed a natural
+You can check if a value is a `nat` by using a predefined cast
+function which accepts an `int` and returns an optional `nat`: if the
+result is not `None`, then the provided integer was indeed a natural
 number, and not otherwise.
 
 <!--DOCUSAURUS_CODE_TABS-->

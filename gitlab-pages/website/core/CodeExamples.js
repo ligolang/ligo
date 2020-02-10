@@ -3,68 +3,83 @@ const React = require('react');
 const pre = '```';
 
 const PASCALIGO_EXAMPLE = `${pre}pascaligo
-// variant defining pseudo multi-entrypoint actions
-type action is
-| Increment of int
+type storage is int
+
+type parameter is
+  Increment of int
 | Decrement of int
+| Reset
 
-function add (const a : int ; const b : int) : int is a + b
+type return is list (operation) * storage
 
-function subtract (const a : int ; const b : int) : int is a - b
+// Two entrypoints
 
-// real entrypoint that re-routes the flow based on the action provided
-function main (const p : action ; const s : int) : (list(operation) * int) is 
-  ((nil : list(operation)),
-    case p of
-    | Increment (n) -> add (s, n)
-    | Decrement (n) -> subtract (s, n)
-    end)
+function add (const store : storage; const delta : int) : storage is store + delta
+function sub (const store : storage; const delta : int) : storage is store - delta
+
+(* Main access point that dispatches to the entrypoints according to
+   the smart contract parameter. *)
+
+function main (const action : parameter; const store : storage) : return is
+ ((nil : list (operation)),    // No operations
+  case action of
+    Increment (n) -> add (store, n)
+  | Decrement (n) -> sub (store, n)
+  | Reset         -> 0
+  end)
 ${pre}`;
 
 const CAMELIGO_EXAMPLE = `${pre}ocaml
 type storage = int
 
-(* variant defining pseudo multi-entrypoint actions *)
-
-type action =
-| Increment of int
+type parameter =
+  Increment of int
 | Decrement of int
+| Reset
 
-let add (a,b: int * int) : int = a + b
-let sub (a,b: int * int) : int = a - b
+type return = operation list * storage
 
-(* real entrypoint that re-routes the flow based on the action provided *)
+// Two entrypoints
 
-let main (p,s: action * storage) =
- let storage =
-   match p with
-   | Increment n -> add (s, n)
-   | Decrement n -> sub (s, n)
- in ([] : operation list), storage
+let add (store, delta : storage * int) : storage = store + delta
+let sub (store, delta : storage * int) : storage = store - delta
+
+(* Main access point that dispatches to the entrypoints according to
+   the smart contract parameter. *)
+
+let main (action, store : parameter * storage) : return =
+ ([] : operation list),    // No operations
+ (match action with
+   Increment (n) -> add (store, n)
+ | Decrement (n) -> sub (store, n)
+ | Reset         -> 0)
 ${pre}`;
 
 
 const REASONLIGO_EXAMPLE = `${pre}reasonligo
 type storage = int;
 
-/* variant defining pseudo multi-entrypoint actions */
+type parameter =
+  Increment (int)
+| Decrement (int)
+| Reset;
 
-type action =
-  | Increment(int)
-  | Decrement(int);
+type return = (list (operation), storage);
 
-let add = ((a,b): (int, int)): int => a + b;
-let sub = ((a,b): (int, int)): int => a - b;
+(* Two entrypoints *)
 
-/* real entrypoint that re-routes the flow based on the action provided */
+let add = ((store, delta) : (storage, int)) : storage => store + delta;
+let sub = ((store, delta) : (storage, int)) : storage => store - delta;
 
-let main = ((p,storage): (action, storage)) => {
-  let storage =
-    switch (p) {
-    | Increment(n) => add((storage, n))
-    | Decrement(n) => sub((storage, n))
-    };
-  ([]: list(operation), storage);
+(* Main access point that dispatches to the entrypoints according to
+   the smart contract parameter. *)
+
+let main = ((action, store) : (parameter, storage)) : return => {
+ (([] : list (operation)),    // No operations
+ (switch (action) {
+  | Increment (n) => add ((store, n))
+  | Decrement (n) => sub ((store, n))
+  | Reset         => 0}))
 };
 ${pre}`;
 
