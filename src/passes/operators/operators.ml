@@ -181,6 +181,7 @@ module Simplify = struct
       | "Bytes.sub"                -> ok C_SLICE
 
       | "Set.mem"                  -> ok C_SET_MEM
+      | "Set.iter"                 -> ok C_SET_ITER
       | "Set.empty"                -> ok C_SET_EMPTY
       | "Set.literal"              -> ok C_SET_LITERAL
       | "Set.add"                  -> ok C_SET_ADD

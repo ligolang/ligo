@@ -27,3 +27,5 @@ let assert_equal_contract_type : check_type -> string -> Ast_typed.program -> As
 
 let pretty_print ppf program =
   Ast_typed.PP.program ppf program
+
+let some_interpret = Interpreter.dummy
