@@ -9,6 +9,8 @@ let%expect_test _ =
     val lambda_call = 16 : int
     val higher_order1 = 5 : int
     val higher_order2 = 5 : int
+    val higher_order3 = 5 : int
+    val higher_order4 = 5 : int
     val concats = 0x7070 : bytes
     val record_concat = "ab" : string
     val record_patch = {  ; a = ("a" : string) ; b = ("c" : string) }

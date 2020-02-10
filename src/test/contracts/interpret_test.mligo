@@ -1,28 +1,35 @@
 let lambda_call =
   let a = 3 in
-  let foo: (int -> int) =
-    fun (i : int) -> i * i
-  in
+  let foo = fun (i : int) -> i * i in
   foo (a + 1)
 
 let higher_order1 =
   let a = 2 in
-  let foo: (int -> int -> int -> int) =
-    fun (i:int) (j:int) (k:int) -> a + i + j + 0
-  in
+  let foo = fun (i:int) (j:int) (k:int) ->
+    a + i + j + 0 in
   let bar = (foo 1 2) in
   bar 3
 
 let higher_order2 =
   let a = 2 in
-  let foo: (int -> int) =
-    fun (i:int) ->
+  let foo = fun (i:int) ->
       let b = 2 in
-      let bar : (int -> int) =
-        fun (i:int) -> i + a + b
+      let bar = fun (i:int) -> i + a + b
       in bar i
   in foo 1
 
+let higher_order3 =
+  let foo = fun (i:int) -> i + 1 in
+  let bar = fun (f:int->int) (i:int) -> (f i) + 1 in
+  let baz : (int -> int ) = bar foo in
+  baz 3
+
+let higher_order4 =
+  let a = 3 in
+  let foo = fun (i : int) -> a + i in
+  let bar: (int -> int) = fun (i : int) -> foo i in
+  bar 2
+  
 let concats =
   0x70 ^ 0x70
 
