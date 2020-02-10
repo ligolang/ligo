@@ -1,7 +1,7 @@
 (rule
-  (target fold.ml)
+  (target generated_fold.ml)
   (deps generator.py)
-  (action (with-stdout-to fold.ml (run python3 ./generator.py)))
+  (action (with-stdout-to generated_fold.ml (run python3 ./generator.py)))
 ;  (mode (promote (until-clean))) ; If this is uncommented, then "dune build -p ligo" can't find the file (but "dune build" can)
 )
 ; (library
