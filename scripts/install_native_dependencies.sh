@@ -1,5 +1,6 @@
 #!/bin/sh
 set -e
+set -x
 . /etc/os-release
 
 if [ $ID = arch ]
