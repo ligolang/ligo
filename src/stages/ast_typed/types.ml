@@ -26,11 +26,12 @@ and declaration =
   *)
 (* | Macro_declaration of macro_declaration *)
 
-and expression =
-  { expression_content: expression_content
-  ; location: Location.t
-  ; type_expression: type_expression
-  ; environment: full_environment }
+and expression = {
+    expression_content: expression_content ;
+    location: Location.t ;
+    type_expression: type_expression ;
+    environment: full_environment ;
+  }
 
 and expression_content =
   (* Base *)
@@ -56,63 +57,90 @@ and expression_content =
   | E_look_up of (expression * expression)
   (* Advanced *)
   | E_loop of loop
-  (*
-  | E_ascription of ascription
-  *)
+  (* | E_ascription of ascription *)
 
-and constant =
-  { cons_name: constant' (* this is at the end because it is huge *)
-  ; arguments: expression list }
-
+and constant = {
+    cons_name: constant' ;
+    arguments: expression list ;
+  }
 
 and application = {expr1: expression; expr2: expression}
 
-and lambda =
-  { binder: expression_variable 
- (* ; input_type: type_expression option
-  ; output_type: type_expression option *)
-  ; result: expression }
-
-and let_in =
-  { let_binder: expression_variable
-  ; rhs: expression
-  ; let_result: expression
-  ; inline : inline }
-
-and constructor = {constructor: constructor'; element: expression}
-
-and accessor = {expr: expression; label: label}
-
-and update = {record: expression; path: label ; update: expression}
-
-and loop = {condition: expression; body: expression}
-
-and matching_expr = (expression,type_expression) matching_content
-and matching =
-  { matchee: expression
-  ; cases: matching_expr
+and lambda =  {
+    binder: expression_variable ;
+    (* input_type: type_expression option ; *)
+    (* output_type: type_expression option ; *)
+    result: expression ;
   }
 
-and ascription = {anno_expr: expression; type_annotation: type_expression}
+and let_in = {
+    let_binder: expression_variable ;
+    rhs: expression ;
+    let_result: expression ;
+    inline : inline ;
+  }
+
+and constructor = {
+    constructor: constructor';
+    element: expression ;
+  }
+
+and accessor = {
+    expr: expression ;
+    label: label ;
+  }
+
+and update = {
+    record: expression ;
+    path: label ;
+    update: expression ;
+  }
+
+and loop = {
+    condition: expression ;
+    body: expression ;
+  }
+
+and matching_expr = (expression, type_expression) matching_content
+and matching = {
+    matchee: expression ;
+    cases: matching_expr ;
+  }
+
+and ascription = {
+    anno_expr: expression ;
+    type_annotation: type_expression ;
+  }
 
 
 and environment_element_definition =
   | ED_binder
-  | ED_declaration of (expression * free_variables)
+  | ED_declaration of environment_element_definition_declaration
+
+and environment_element_definition_declaration =
+  (expression * free_variables)
 
 and free_variables = expression_variable list
 
-and environment_element =
-  { type_value: type_expression
-  ; source_environment: full_environment
-  ; definition: environment_element_definition }
+and environment_element = {
+    type_value: type_expression ;
+    source_environment: full_environment ;
+    definition: environment_element_definition ;
+  }
 
-and environment = (expression_variable * environment_element) list
+and environment = environment_binding list
 
-and type_environment = (type_variable * type_expression) list
+and environment_binding =
+  (expression_variable * environment_element)
+
+and type_environment = type_environment_binding list
+
+and type_environment_binding =
+  (type_variable * type_expression)
 
 (* SUBST ??? *)
-and small_environment = environment * type_environment
+and small_environment =
+  (environment * type_environment)
 
 and full_environment = small_environment List.Ne.t
 
@@ -123,4 +151,4 @@ and texpr = type_expression
 and named_type_content = {
     type_name : type_variable;
     type_value : type_expression;
-}
+  }
