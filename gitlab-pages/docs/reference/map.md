@@ -3,6 +3,61 @@ id: map-reference
 title: Map
 ---
 
+## Defining A Map Type
+
+<!--DOCUSAURUS_CODE_TABS-->
+<!--Pascaligo-->
+```pascaligo
+type move is int * int
+type moveset is map(address, move)
+```
+
+<!--CameLIGO-->
+```cameligo
+type move = int * int
+type moveset = (address, move) map
+```
+
+<!--ReasonLIGO-->
+```reasonligo
+type move = (int, int);
+type moveset = map(address, move);
+```
+
+<!--END_DOCUSAURUS_CODE_TABS-->
+
+## Creating A Map
+
+<!--DOCUSAURUS_CODE_TABS-->
+<!--Pascaligo-->
+
+```pascaligo
+const moves: moveset = map
+    ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address) -> (1, 2);
+    ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address) -> (0, 3);
+end
+```
+
+<!--CameLIGO-->
+
+```cameligo
+let moves: moveset = Map.literal
+  [ (("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address), (1, 2)) ;
+    (("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address), (0, 3)) ;
+  ]
+```
+
+<!--ReasonLIGO-->
+
+```reasonligo
+let moves : moveset =
+  Map.literal([
+    ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address, (1, 2)),
+    ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address, (0, 3)),
+  ]);
+```
+<!--END_DOCUSAURUS_CODE_TABS-->
+
 ## Map.find_opt(k: a', m: (a',b') map) : b' option
 
 Retrieve the value associated with a particular key. This version returns an option
@@ -99,17 +154,20 @@ let updated_map: moveset = Map.update(("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": a
 
 <!--PascaLIGO-->
 ```pascaligo
-function patch_ (var m: foobar) : foobar is block {
-  patch m with map [0 -> 5; 1 -> 6; 2 -> 7]
+function set_ (var n : int ; var m : map(int, int)) : map(int, int) is block {
+  m[23] := n ;
 } with m
 ```
 
 <!--CameLIGO-->
 ```cameligo
-
+let add (n,m: int * (int, int) map) : foobar = Map.add 23 n m
 ```
 
 <!--ReasonLIGO-->
+```reasonligo
+let add = (n: int, m: map(int, int)) : foobar => Map.add(23, n, m);
+```
 
 <!--END_DOCUSAURUS_CODE_TABS-->
 
@@ -121,19 +179,19 @@ Remove a key and its associated value from the map.
 
 <!--PascaLIGO-->
 ```pascaligo
-function rm (var m : foobar) : foobar is block {
+function rm (var m : map(int, int)) : map(int, int) is block {
   remove 42 from map m
 } with m
 ```
 
 <!--CameLIGO-->
 ```cameligo
-let rm (m: foobar) : foobar = Map.remove 42 m
+let rm (m: (int, int) map) : (int, int) map = Map.remove 42 m
 ```
 
 <!--ReasonLIGO-->
 ```reasonligo
-let rm = (m: foobar): foobar => Map.remove(42, m);
+let rm = (m: map(int, int)): map(int, int) => Map.remove(42, m);
 ```
 
 <!--END_DOCUSAURUS_CODE_TABS-->
@@ -240,16 +298,16 @@ Test whether a particular key `k` exists in a given map `m`.
 
 <!--PascaLIGO-->
 ```pascaligo
-function mem (const k: int; const m: foobar) : bool is map_mem(k, m)
+function mem (const k: int; const m: map(int, int)) : bool is map_mem(k, m)
 ```
 <!--CameLIGO-->
 ```cameligo
-let mem (k,m: int * foobar) : bool = Map.mem k m
+let mem (k,m: int * (int, int) map) : bool = Map.mem k m
 ```
 
 <!--ReasonLIGO-->
 ```reasonligo
-let mem = (km: (int, foobar)): bool => Map.mem(km[0], km[1]);
+let mem = ((k,m): (int, map(int,int))): bool => Map.mem(k, m);
 ```
 
 <!--END_DOCUSAURUS_CODE_TABS-->
@@ -262,16 +320,16 @@ Create an empty map.
 
 <!--PascaLIGO-->
 ```pascaligo
-const empty_map : foobar = map end
+const empty_map : map(int, int) = map end
 ```
 <!--CameLIGO-->
 ```cameligo
-let empty_map : foobar = Map.empty
+let empty_map : (int, int) map = Map.empty
 ```
 
 <!--ReasonLIGO-->
 ```reasonligo
-let empty_map: foobar = Map.empty;
+let empty_map: map(int, int) = Map.empty;
 ```
 
 <!--END_DOCUSAURUS_CODE_TABS-->
@@ -319,16 +377,16 @@ Get the size of a given map `m`.
 
 <!--PascaLIGO-->
 ```pascaligo
-function size_ (const m : foobar) : nat is
+function size_ (const m : map(int, int)) : nat is
   block {skip} with (size(m))
 ```
 <!--CameLIGO-->
 ```cameligo
-let size_ (m: foobar) : nat = Map.size m
+let size_ (m: (int, int) map) : nat = Map.size m
 ```
 <!--ReasonLIGO-->
 ```reasonligo
-let size_ = (m: foobar): nat => Map.size(m);
+let size_ = (m: map(int, int)): nat => Map.size(m);
 ```
 
 <!--END_DOCUSAURUS_CODE_TABS-->

@@ -122,6 +122,7 @@ let md_files = [
   "/gitlab-pages/docs/advanced/timestamps-addresses.md";
   "/gitlab-pages/docs/api/cli-commands.md";
   "/gitlab-pages/docs/api/cheat-sheet.md";
+  "/gitlab-pages/docs/reference/map.md";
 ]
 
 let md_root = "../../gitlab-pages/docs/language-basics/"
