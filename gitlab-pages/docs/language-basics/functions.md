@@ -3,8 +3,8 @@ id: functions
 title: Functions
 ---
 
-LIGO features functions are the basic building block of contracts. For
-example, entrypoints are functions.
+LIGO functions are the basic building block of contracts. For example,
+entrypoints are functions.
 
 ## Declaring Functions
 
@@ -119,8 +119,8 @@ parameter, we should gather the arguments in a
 [tuple](language-basics/sets-lists-tuples.md) and pass the tuple in as
 a single parameter.
 
-Here is how you define a basic function that accepts two `ints` and
-returns an `int` as well:
+Here is how you define a basic function that accepts two integers and
+returns an integer as well:
 
 ```cameligo group=b
 let add (a, b : int * int) : int = a + b             // Uncurried
@@ -137,10 +137,11 @@ ligo run-function gitlab-pages/docs/language-basics/src/functions/curry.mligo in
 
 The function body is a single expression, whose value is returned.
 
-<!--ReasonLIGO--> Functions in ReasonLIGO are defined using the `let`
-keyword, like other values. The difference is that a tuple of
-parameters is provided after the value name, with its type, then
-followed by the return type.
+<!--ReasonLIGO-->
+
+Functions in ReasonLIGO are defined using the `let` keyword, like
+other values. The difference is that a tuple of parameters is provided
+after the value name, with its type, then followed by the return type.
 
 Here is how you define a basic function that sums two integers:
 ```reasonligo group=b
@@ -154,7 +155,19 @@ ligo run-function gitlab-pages/docs/language-basics/src/functions/blockless.reli
 # Outputs: 3
 ```
 
-The function body is a single expression, whose value is returned.
+As in CameLIGO and with blockless functions in PascaLIGO, the function
+body is a single expression, whose value is returned.
+
+If the body contains more than a single expression, you use block
+between braces:
+```reasonligo group=b
+let myFun = ((x, y) : (int, int)) : int => {
+  let doubleX = x + x;
+  let doubleY = y + y;
+  doubleX + doubleY
+};
+```
+
 <!--END_DOCUSAURUS_CODE_TABS-->
 
 ## Anonymous functions (a.k.a. lambdas)
@@ -170,7 +183,6 @@ Here is how to define an anonymous function:
 ```pascaligo group=c
 function increment (const b : int) : int is
    (function (const a : int) : int is a + 1) (b)
-
 const a : int = increment (1); // a = 2
 ```
 
@@ -196,7 +208,7 @@ ligo evaluate-value gitlab-pages/docs/language-basics/src/functions/anon.mligo a
 
 <!--ReasonLIGO-->
 ```reasonligo group=c
-let increment = (b : int) : int => ((a : int) : int => a + 1)(b);
+let increment = (b : int) : int => ((a : int) : int => a + 1) (b);
 let a : int = increment (1); // a == 2
 ```
 
@@ -256,6 +268,5 @@ gitlab-pages/docs/language-basics/src/functions/incr_map.religo incr_map
 "list [1;2;3]"
 # Outputs: [ 2 ; 3 ; 4 ]
 ```
-
 
 <!--END_DOCUSAURUS_CODE_TABS-->

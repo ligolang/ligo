@@ -18,9 +18,9 @@ is provided, but the type of an access function contains both.
 
 The type of the contract parameter and the storage are up to the
 contract designer, but the type for list operations is not. The return
-type of an entrypoint is as follows, assuming that the type `storage`
-has been defined elsewhere. (Note that you can use any type with any
-name for the storage.)
+type of an access function is as follows, assuming that the type
+`storage` has been defined elsewhere. (Note that you can use any type
+with any name for the storage.)
 
 <!--DOCUSAURUS_CODE_TABS-->
 <!--PascaLIGO-->
@@ -45,9 +45,10 @@ type return = (list (operation), storage);
 The contract storage can only be modified by activating an access
 function. It is important to understand what that means. What it does
 *not* mean is that some global variable holding the storage is
-modified by the entrypoint. Instead, what it *does* mean is that,
-given the state of the storage *on-chain*, an entrypoint specifies how
-to create another state for it, depending on a parameter.
+modified by the access function. Instead, what it *does* mean is that,
+given the state of the storage *on-chain*, an access function
+specifies how to create another state for it, depending on a
+parameter.
 
 Here is an example where the storage is a single natural number that
 is updated by the parameter.
@@ -57,28 +58,32 @@ is updated by the parameter.
 <!--PascaLIGO-->
 
 ```pascaligo group=a
+type parameter is nat
 type storage is nat
 type return is list (operation) * storage
 
-function save (const parameter : nat; const store : storage) : return is
-  ((nil : list (operation)), parameter)
+function save (const action : parameter; const store : storage) : return is
+  ((nil : list (operation)), store)
 ```
 
 <!--CameLIGO-->
 ```cameligo group=a
+type parameter = nat
 type storage = nat
+type return = operation list * storage
 
-let save (parameter, store: nat * storage) : return =
-  (([] : operation list), parameter)
+let save (action, store: parameter * storage) : return =
+  (([] : operation list), store)
 ```
 
 <!--ReasonLIGO-->
 ```reasonligo group=a
+type parameter = nat;
 type storage = nat;
+type return = (list (operation), storage);
 
-let main = ((parameter, store): (nat, storage)) : return => {
-  (([] : list (operation)), parameter);
-};
+let main = ((action, store): (parameter, storage)) : return =>
+  (([] : list (operation)), store);
 ```
 <!--END_DOCUSAURUS_CODE_TABS-->
 
@@ -107,8 +112,8 @@ contract, either the counter or the name is updated.
 <!--PascaLIGO-->
 ```pascaligo group=b
 type parameter is
-  Entrypoint_A of nat
-| Entrypoint_B of string
+  Action_A of nat
+| Action_B of string
 
 type storage is record [
   counter : nat;
@@ -117,24 +122,24 @@ type storage is record [
 
 type return is list (operation) * storage
 
-function handle_A (const n : nat; const store : storage) : return is
+function entry_A (const n : nat; const store : storage) : return is
   ((nil : list (operation)), store with record [counter = n])
 
-function handle_B (const s : string; const store : storage) : return is
+function entry_B (const s : string; const store : storage) : return is
   ((nil : list (operation)), store with record [name = s])
 
-function main (const param : parameter; const store : storage): return is
-  case param of
-    Entrypoint_A (n) -> handle_A (n, store)
-  | Entrypoint_B (s) -> handle_B (s, store)
+function access (const action : parameter; const store : storage): return is
+  case action of
+    Action_A (n) -> entry_A (n, store)
+  | Action_B (s) -> entry_B (s, store)
   end
 ```
 
 <!--CameLIGO-->
 ```cameligo group=b
 type parameter =
-  Entrypoint_A of nat
-| Entrypoint_B of string
+  Action_A of nat
+| Action_B of string
 
 type storage = {
   counter : nat;
@@ -143,23 +148,23 @@ type storage = {
 
 type return = operation list * storage
 
-let handle_A (n, store : nat * storage) : return =
+let entry_A (n, store : nat * storage) : return =
   ([] : operation list), {store with counter = n}
 
-let handle_B (s, store : string * storage) : return =
+let entry_B (s, store : string * storage) : return =
   ([] : operation list), {store with name = s}
 
-let main (param, store: parameter * storage) : return =
-  match param with
-    Entrypoint_A n -> handle_A (n, store)
-  | Entrypoint_B s -> handle_B (s, store)
+let access (action, store: parameter * storage) : return =
+  match action with
+    Action_A n -> entry_A (n, store)
+  | Action_B s -> entry_B (s, store)
 ```
 
 <!--ReasonLIGO-->
 ```reasonligo group=b
 type parameter =
-| Entrypoint_A (nat)
-| Entrypoint_B (string);
+| Action_A (nat)
+| Action_B (string);
 
 type storage = {
   counter : nat,
@@ -168,18 +173,17 @@ type storage = {
 
 type return = (list (operation), storage);
 
-let handle_A = ((n, store): (nat, storage)) : return => {
-  (([] : list (operation)), {...store, counter : n}); };
+let entry_A = ((n, store): (nat, storage)) : return =>
+  (([] : list (operation)), {...store, counter : n});
 
-let handle_B = ((s, store): (string, storage)) : return => {
-  (([] : list (operation)), {...store, name : s}); };
+let entry_B = ((s, store): (string, storage)) : return =>
+  (([] : list (operation)), {...store, name : s});
 
-let main = ((param, store): (parameter, storage)) : return => {
-  switch (param) {
-  | Entrypoint_A (n) => handle_A ((n, store))
-  | Entrypoint_B (s) => handle_B ((s, store))
-  }
-};
+let access = ((action, store): (parameter, storage)) : return =>
+  switch (action) {
+  | Action_A (n) => entry_A ((n, store))
+  | Action_B (s) => entry_B ((s, store))
+  };
 ```
 <!--END_DOCUSAURUS_CODE_TABS-->
 
@@ -203,7 +207,7 @@ type parameter is unit
 type storage is unit
 type return is list (operation) * storage
 
-function deny (const param : parameter; const store : storage) : return is
+function deny (const action : parameter; const store : storage) : return is
   if amount > 0mutez then
     (failwith ("This contract does not accept tokens.") : return)
   else ((nil : list (operation)), store)
@@ -215,7 +219,7 @@ type parameter = unit
 type storage = unit
 type return = operation list * storage
 
-let deny (param, store : parameter * storage) : return =
+let deny (action, store : parameter * storage) : return =
   if amount > 0mutez then
     (failwith "This contract does not accept tokens.": return)
   else (([] : operation list), store)
@@ -227,7 +231,7 @@ type parameter = unit;
 type storage = unit;
 type return = (list (operation), storage);
 
-let deny = ((param, store): (parameter, storage)) : return => {
+let deny = ((action, store): (parameter, storage)) : return => {
   if (amount > 0mutez) {
     (failwith("This contract does not accept tokens."): return); }
   else { (([] : list (operation)), store); };
@@ -245,7 +249,7 @@ This example shows how `sender` or `source` can be used to deny access to an ent
 ```pascaligo group=c
 const owner : address = ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address);
 
-function filter (const param : parameter; const store : storage) : return is
+function filter (const action : parameter; const store : storage) : return is
   if source =/= owner then (failwith ("Access denied.") : return)
   else ((nil : list(operation)), store)
 ```
@@ -254,7 +258,7 @@ function filter (const param : parameter; const store : storage) : return is
 ```cameligo group=c
 let owner : address = ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address)
 
-let filter (param, store: parameter * storage) : return =
+let filter (action, store: parameter * storage) : return =
   if source <> owner then (failwith "Access denied." : return)
   else (([] : operation list), store)
 ```
@@ -263,7 +267,7 @@ let filter (param, store: parameter * storage) : return =
 ```reasonligo group=c
 let owner : address = ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address);
 
-let main = ((param, store): (parameter, storage)) : storage => {
+let access = ((action, store): (parameter, storage)) : storage => {
   if (source != owner) { (failwith ("Access denied.") : return); }
   else { (([] : list (operation)), store); };
 };
@@ -289,10 +293,10 @@ emiting a transaction operation at the end of an entrypoint.
 > account (tz1, ...): all you have to do is use a unit value as the
 > parameter of the smart contract.
 
-In our case, we have a `counter.ligo` contract that accepts a
-parameter of type `action`, and we have a `proxy.ligo` contract that
-accepts the same parameter type, and forwards the call to the deployed
-counter contract.
+In our case, we have a `counter.ligo` contract that accepts an action
+of type `parameter`, and we have a `proxy.ligo` contract that accepts
+the same parameter type, and forwards the call to the deployed counter
+contract.
 
 <!--DOCUSAURUS_CODE_TABS-->
 
@@ -323,13 +327,13 @@ type return is list (operation) * storage
 
 const dest : address = ("KT19wgxcuXG9VH4Af5Tpm1vqEKdaMFpznXT3" : address)
 
-function proxy (const param : parameter; const store : storage): return is
+function proxy (const action : parameter; const store : storage): return is
   block {
     const counter : contract (parameter) = get_contract (dest);
     (* Reuse the parameter in the subsequent
        transaction or use another one, `mock_param`. *)
     const mock_param : parameter = Increment (5n);
-    const op : operation = transaction (param, 0mutez, counter);
+    const op : operation = transaction (action, 0mutez, counter);
     const ops : list (operation) = list [op]
   } with (ops, store)
 ```
@@ -338,7 +342,7 @@ function proxy (const param : parameter; const store : storage): return is
 ```cameligo skip
 // counter.mligo
 
-type paramater =
+type parameter =
   Increment of nat
 | Decrement of nat
 | Reset
@@ -360,12 +364,12 @@ type return = operation list * storage
 
 let dest : address = ("KT19wgxcuXG9VH4Af5Tpm1vqEKdaMFpznXT3" : address)
 
-let proxy (param, store : parameter * storage) : return =
+let proxy (action, store : parameter * storage) : return =
   let counter : parameter contract = Operation.get_contract dest in
   (* Reuse the parameter in the subsequent
      transaction or use another one, `mock_param`. *)
   let mock_param : parameter = Increment (5n) in
-  let op : operation = Operation.transaction param 0mutez counter
+  let op : operation = Operation.transaction action 0mutez counter
   in [op], store
 ```
 
@@ -395,12 +399,12 @@ type return = (list (operation), storage);
 
 let dest : address = ("KT19wgxcuXG9VH4Af5Tpm1vqEKdaMFpznXT3" : address);
 
-let proxy = ((param, store): (parameter, storage)) : return => {
+let proxy = ((action, store): (parameter, storage)) : return => {
   let counter : contract (parameter) = Operation.get_contract (dest);
   (* Reuse the parameter in the subsequent
      transaction or use another one, `mock_param`. *)
   let mock_param : parameter = Increment (5n);
-  let op : operation = Operation.transaction (param, 0mutez, counter);
+  let op : operation = Operation.transaction (action, 0mutez, counter);
   ([op], store)
 };
 ```

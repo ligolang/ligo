@@ -162,7 +162,7 @@ not worry if it is a little confusing at first; we will explain all
 the syntax in the upcoming sections of the documentation.
 
 <!--DOCUSAURUS_CODE_TABS-->
-<!--Pascaligo-->
+<!--PascaLIGO-->
 ```pascaligo group=a
 type storage is int
 
