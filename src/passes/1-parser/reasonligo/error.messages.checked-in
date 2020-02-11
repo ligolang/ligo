@@ -1,0 +1,4075 @@
+interactive_expr: C_None WILD
+##
+## Ends in an error in state: 170.
+##
+## call_expr_level -> call_expr_level_in . option(type_annotation_simple) [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LE GT GE EQEQ EOF COMMA CAT BOOL_OR BOOL_AND Attr ARROW ]
+##
+## The known suffix of the stack is as follows:
+## call_expr_level_in
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: C_Some WILD
+##
+## Ends in an error in state: 122.
+##
+## constr_expr -> C_Some . core_expr [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
+##
+## The known suffix of the stack is as follows:
+## C_Some
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: Constr DOT Ident WILD
+##
+## Ends in an error in state: 109.
+##
+## module_field -> Constr DOT Ident . [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE LBRACE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
+## projection -> Constr DOT Ident . selection [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE LBRACE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
+##
+## The known suffix of the stack is as follows:
+## Constr DOT Ident
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: Constr DOT WILD
+##
+## Ends in an error in state: 108.
+##
+## module_field -> Constr DOT . Ident [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE LBRACE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
+## projection -> Constr DOT . Ident selection [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE LBRACE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
+##
+## The known suffix of the stack is as follows:
+## Constr DOT
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: Constr WILD
+##
+## Ends in an error in state: 107.
+##
+## constr_expr -> Constr . core_expr [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
+## constr_expr -> Constr . [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
+## module_field -> Constr . DOT Ident [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
+## projection -> Constr . DOT Ident selection [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
+##
+## The known suffix of the stack is as follows:
+## Constr
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: Ident DOT Ident WILD
+##
+## Ends in an error in state: 102.
+##
+## selection -> DOT Ident . selection [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE LBRACE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
+## selection -> DOT Ident . [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE LBRACE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
+##
+## The known suffix of the stack is as follows:
+## DOT Ident
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: Ident DOT WILD
+##
+## Ends in an error in state: 101.
+##
+## selection -> DOT . Ident selection [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE LBRACE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
+## selection -> DOT . Ident [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE LBRACE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
+##
+## The known suffix of the stack is as follows:
+## DOT
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: Ident LBRACKET Int RBRACKET WILD
+##
+## Ends in an error in state: 100.
+##
+## selection -> LBRACKET Int RBRACKET . selection [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE LBRACE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
+## selection -> LBRACKET Int RBRACKET . [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE LBRACE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
+##
+## The known suffix of the stack is as follows:
+## LBRACKET Int RBRACKET
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: Ident LBRACKET Int WILD
+##
+## Ends in an error in state: 99.
+##
+## selection -> LBRACKET Int . RBRACKET selection [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE LBRACE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
+## selection -> LBRACKET Int . RBRACKET [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE LBRACE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
+##
+## The known suffix of the stack is as follows:
+## LBRACKET Int
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: Ident LBRACKET WILD
+##
+## Ends in an error in state: 98.
+##
+## selection -> LBRACKET . Int RBRACKET selection [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE LBRACE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
+## selection -> LBRACKET . Int RBRACKET [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE LBRACE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
+##
+## The known suffix of the stack is as follows:
+## LBRACKET
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: Ident WILD
+##
+## Ends in an error in state: 97.
+##
+## common_expr -> Ident . [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE LBRACE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
+## projection -> Ident . selection [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE LBRACE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
+##
+## The known suffix of the stack is as follows:
+## Ident
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: If LBRACE True VBAR
+##
+## Ends in an error in state: 226.
+##
+## parenthesized_expr -> LBRACE expr . RBRACE [ LBRACE ]
+##
+## The known suffix of the stack is as follows:
+## LBRACE expr
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 152, spurious reduction of production call_expr_level_in -> core_expr 
+## In state 170, spurious reduction of production option(type_annotation_simple) -> 
+## In state 171, spurious reduction of production call_expr_level -> call_expr_level_in option(type_annotation_simple) 
+## In state 172, spurious reduction of production unary_expr_level -> call_expr_level 
+## In state 125, spurious reduction of production mult_expr_level -> unary_expr_level 
+## In state 149, spurious reduction of production add_expr_level -> mult_expr_level 
+## In state 180, spurious reduction of production cat_expr_level -> add_expr_level 
+## In state 201, spurious reduction of production comp_expr_level -> cat_expr_level 
+## In state 208, spurious reduction of production conj_expr_level -> comp_expr_level 
+## In state 215, spurious reduction of production disj_expr_level -> conj_expr_level 
+## In state 162, spurious reduction of production base_expr(expr) -> disj_expr_level 
+## In state 219, spurious reduction of production base_cond__open(expr) -> base_expr(expr) 
+## In state 220, spurious reduction of production expr -> base_cond__open(expr) 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: If LBRACE WILD
+##
+## Ends in an error in state: 225.
+##
+## parenthesized_expr -> LBRACE . expr RBRACE [ LBRACE ]
+##
+## The known suffix of the stack is as follows:
+## LBRACE
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: If LPAR True RPAR LBRACE If LPAR Bytes RPAR LBRACE True ARROW Bytes VBAR
+##
+## Ends in an error in state: 402.
+##
+## if_then_else(closed_if) -> If parenthesized_expr LBRACE closed_if . option(SEMI) RBRACE Else LBRACE closed_if option(SEMI) RBRACE [ SEMI RBRACE ]
+##
+## The known suffix of the stack is as follows:
+## If parenthesized_expr LBRACE closed_if
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 152, spurious reduction of production call_expr_level_in -> core_expr 
+## In state 170, spurious reduction of production option(type_annotation_simple) -> 
+## In state 171, spurious reduction of production call_expr_level -> call_expr_level_in option(type_annotation_simple) 
+## In state 172, spurious reduction of production unary_expr_level -> call_expr_level 
+## In state 125, spurious reduction of production mult_expr_level -> unary_expr_level 
+## In state 149, spurious reduction of production add_expr_level -> mult_expr_level 
+## In state 180, spurious reduction of production cat_expr_level -> add_expr_level 
+## In state 201, spurious reduction of production comp_expr_level -> cat_expr_level 
+## In state 208, spurious reduction of production conj_expr_level -> comp_expr_level 
+## In state 215, spurious reduction of production disj_expr_level -> conj_expr_level 
+## In state 162, spurious reduction of production base_expr(expr) -> disj_expr_level 
+## In state 219, spurious reduction of production base_cond__open(expr) -> base_expr(expr) 
+## In state 220, spurious reduction of production expr -> base_cond__open(expr) 
+## In state 213, spurious reduction of production es6_func -> ARROW expr 
+## In state 221, spurious reduction of production fun_expr -> disj_expr_level es6_func 
+## In state 400, spurious reduction of production base_expr(closed_if) -> fun_expr 
+## In state 411, spurious reduction of production base_if_then_else__open(closed_if) -> base_expr(closed_if) 
+## In state 410, spurious reduction of production closed_if -> base_if_then_else__open(closed_if) 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: If LPAR True RPAR LBRACE If LPAR Bytes RPAR LBRACE True RBRACE Else LBRACE True ARROW Bytes VBAR
+##
+## Ends in an error in state: 407.
+##
+## if_then_else(closed_if) -> If parenthesized_expr LBRACE closed_if option(SEMI) RBRACE Else LBRACE closed_if . option(SEMI) RBRACE [ SEMI RBRACE ]
+##
+## The known suffix of the stack is as follows:
+## If parenthesized_expr LBRACE closed_if option(SEMI) RBRACE Else LBRACE closed_if
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 152, spurious reduction of production call_expr_level_in -> core_expr 
+## In state 170, spurious reduction of production option(type_annotation_simple) -> 
+## In state 171, spurious reduction of production call_expr_level -> call_expr_level_in option(type_annotation_simple) 
+## In state 172, spurious reduction of production unary_expr_level -> call_expr_level 
+## In state 125, spurious reduction of production mult_expr_level -> unary_expr_level 
+## In state 149, spurious reduction of production add_expr_level -> mult_expr_level 
+## In state 180, spurious reduction of production cat_expr_level -> add_expr_level 
+## In state 201, spurious reduction of production comp_expr_level -> cat_expr_level 
+## In state 208, spurious reduction of production conj_expr_level -> comp_expr_level 
+## In state 215, spurious reduction of production disj_expr_level -> conj_expr_level 
+## In state 162, spurious reduction of production base_expr(expr) -> disj_expr_level 
+## In state 219, spurious reduction of production base_cond__open(expr) -> base_expr(expr) 
+## In state 220, spurious reduction of production expr -> base_cond__open(expr) 
+## In state 213, spurious reduction of production es6_func -> ARROW expr 
+## In state 221, spurious reduction of production fun_expr -> disj_expr_level es6_func 
+## In state 400, spurious reduction of production base_expr(closed_if) -> fun_expr 
+## In state 411, spurious reduction of production base_if_then_else__open(closed_if) -> base_expr(closed_if) 
+## In state 410, spurious reduction of production closed_if -> base_if_then_else__open(closed_if) 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: If LPAR True RPAR LBRACE If LPAR Bytes RPAR LBRACE True RBRACE Else LBRACE True SEMI PLUS
+##
+## Ends in an error in state: 408.
+##
+## if_then_else(closed_if) -> If parenthesized_expr LBRACE closed_if option(SEMI) RBRACE Else LBRACE closed_if option(SEMI) . RBRACE [ SEMI RBRACE ]
+##
+## The known suffix of the stack is as follows:
+## If parenthesized_expr LBRACE closed_if option(SEMI) RBRACE Else LBRACE closed_if option(SEMI)
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: If LPAR True RPAR LBRACE If LPAR Bytes RPAR LBRACE True RBRACE Else LBRACE WILD
+##
+## Ends in an error in state: 406.
+##
+## if_then_else(closed_if) -> If parenthesized_expr LBRACE closed_if option(SEMI) RBRACE Else LBRACE . closed_if option(SEMI) RBRACE [ SEMI RBRACE ]
+##
+## The known suffix of the stack is as follows:
+## If parenthesized_expr LBRACE closed_if option(SEMI) RBRACE Else LBRACE
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: If LPAR True RPAR LBRACE If LPAR Bytes RPAR LBRACE True RBRACE Else WILD
+##
+## Ends in an error in state: 405.
+##
+## if_then_else(closed_if) -> If parenthesized_expr LBRACE closed_if option(SEMI) RBRACE Else . LBRACE closed_if option(SEMI) RBRACE [ SEMI RBRACE ]
+##
+## The known suffix of the stack is as follows:
+## If parenthesized_expr LBRACE closed_if option(SEMI) RBRACE Else
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: If LPAR True RPAR LBRACE If LPAR Bytes RPAR LBRACE True RBRACE WILD
+##
+## Ends in an error in state: 404.
+##
+## if_then_else(closed_if) -> If parenthesized_expr LBRACE closed_if option(SEMI) RBRACE . Else LBRACE closed_if option(SEMI) RBRACE [ SEMI RBRACE ]
+##
+## The known suffix of the stack is as follows:
+## If parenthesized_expr LBRACE closed_if option(SEMI) RBRACE
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: If LPAR True RPAR LBRACE If LPAR Bytes RPAR LBRACE True SEMI PLUS
+##
+## Ends in an error in state: 403.
+##
+## if_then_else(closed_if) -> If parenthesized_expr LBRACE closed_if option(SEMI) . RBRACE Else LBRACE closed_if option(SEMI) RBRACE [ SEMI RBRACE ]
+##
+## The known suffix of the stack is as follows:
+## If parenthesized_expr LBRACE closed_if option(SEMI)
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: If LPAR True RPAR LBRACE If LPAR Bytes RPAR LBRACE WILD
+##
+## Ends in an error in state: 348.
+##
+## if_then_else(closed_if) -> If parenthesized_expr LBRACE . closed_if option(SEMI) RBRACE Else LBRACE closed_if option(SEMI) RBRACE [ SEMI RBRACE ]
+##
+## The known suffix of the stack is as follows:
+## If parenthesized_expr LBRACE
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: If LPAR True RPAR LBRACE If LPAR Bytes RPAR WILD
+##
+## Ends in an error in state: 347.
+##
+## if_then_else(closed_if) -> If parenthesized_expr . LBRACE closed_if option(SEMI) RBRACE Else LBRACE closed_if option(SEMI) RBRACE [ SEMI RBRACE ]
+##
+## The known suffix of the stack is as follows:
+## If parenthesized_expr
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: If LPAR True RPAR LBRACE If WILD
+##
+## Ends in an error in state: 346.
+##
+## if_then_else(closed_if) -> If . parenthesized_expr LBRACE closed_if option(SEMI) RBRACE Else LBRACE closed_if option(SEMI) RBRACE [ SEMI RBRACE ]
+##
+## The known suffix of the stack is as follows:
+## If
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: If LPAR True RPAR LBRACE Switch True LBRACE VBAR VBAR
+##
+## Ends in an error in state: 273.
+##
+## case_clause(base_if_then_else) -> VBAR . pattern ARROW base_if_then_else option(SEMI) [ VBAR RBRACE ]
+##
+## The known suffix of the stack is as follows:
+## VBAR
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: If LPAR True RPAR LBRACE Switch True LBRACE VBAR WILD ARROW Bytes SEMI WILD
+##
+## Ends in an error in state: 431.
+##
+## nseq(case_clause(base_if_then_else)) -> case_clause(base_if_then_else) . seq(case_clause(base_if_then_else)) [ RBRACE ]
+##
+## The known suffix of the stack is as follows:
+## case_clause(base_if_then_else)
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: If LPAR True RPAR LBRACE Switch True LBRACE VBAR WILD ARROW Bytes VBAR Bytes ARROW Bytes SEMI WILD
+##
+## Ends in an error in state: 433.
+##
+## seq(case_clause(base_if_then_else)) -> case_clause(base_if_then_else) . seq(case_clause(base_if_then_else)) [ RBRACE ]
+##
+## The known suffix of the stack is as follows:
+## case_clause(base_if_then_else)
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: If LPAR True RPAR LBRACE Switch True LBRACE VBAR WILD ARROW If LPAR Bytes RPAR LBRACE True ARROW Bytes VBAR
+##
+## Ends in an error in state: 412.
+##
+## if_then_else(base_if_then_else) -> If parenthesized_expr LBRACE closed_if . option(SEMI) RBRACE Else LBRACE base_if_then_else option(SEMI) RBRACE [ VBAR SEMI RBRACE ]
+##
+## The known suffix of the stack is as follows:
+## If parenthesized_expr LBRACE closed_if
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 152, spurious reduction of production call_expr_level_in -> core_expr 
+## In state 170, spurious reduction of production option(type_annotation_simple) -> 
+## In state 171, spurious reduction of production call_expr_level -> call_expr_level_in option(type_annotation_simple) 
+## In state 172, spurious reduction of production unary_expr_level -> call_expr_level 
+## In state 125, spurious reduction of production mult_expr_level -> unary_expr_level 
+## In state 149, spurious reduction of production add_expr_level -> mult_expr_level 
+## In state 180, spurious reduction of production cat_expr_level -> add_expr_level 
+## In state 201, spurious reduction of production comp_expr_level -> cat_expr_level 
+## In state 208, spurious reduction of production conj_expr_level -> comp_expr_level 
+## In state 215, spurious reduction of production disj_expr_level -> conj_expr_level 
+## In state 162, spurious reduction of production base_expr(expr) -> disj_expr_level 
+## In state 219, spurious reduction of production base_cond__open(expr) -> base_expr(expr) 
+## In state 220, spurious reduction of production expr -> base_cond__open(expr) 
+## In state 213, spurious reduction of production es6_func -> ARROW expr 
+## In state 221, spurious reduction of production fun_expr -> disj_expr_level es6_func 
+## In state 400, spurious reduction of production base_expr(closed_if) -> fun_expr 
+## In state 411, spurious reduction of production base_if_then_else__open(closed_if) -> base_expr(closed_if) 
+## In state 410, spurious reduction of production closed_if -> base_if_then_else__open(closed_if) 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: If LPAR True RPAR LBRACE Switch True LBRACE VBAR WILD ARROW If LPAR Bytes RPAR LBRACE True RBRACE Else LBRACE True SEMI PLUS
+##
+## Ends in an error in state: 422.
+##
+## if_then_else(base_if_then_else) -> If parenthesized_expr LBRACE closed_if option(SEMI) RBRACE Else LBRACE base_if_then_else option(SEMI) . RBRACE [ VBAR SEMI RBRACE ]
+##
+## The known suffix of the stack is as follows:
+## If parenthesized_expr LBRACE closed_if option(SEMI) RBRACE Else LBRACE base_if_then_else option(SEMI)
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: If LPAR True RPAR LBRACE Switch True LBRACE VBAR WILD ARROW If LPAR Bytes RPAR LBRACE True RBRACE Else LBRACE True VBAR
+##
+## Ends in an error in state: 421.
+##
+## if_then_else(base_if_then_else) -> If parenthesized_expr LBRACE closed_if option(SEMI) RBRACE Else LBRACE base_if_then_else . option(SEMI) RBRACE [ VBAR SEMI RBRACE ]
+##
+## The known suffix of the stack is as follows:
+## If parenthesized_expr LBRACE closed_if option(SEMI) RBRACE Else LBRACE base_if_then_else
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 152, spurious reduction of production call_expr_level_in -> core_expr 
+## In state 170, spurious reduction of production option(type_annotation_simple) -> 
+## In state 171, spurious reduction of production call_expr_level -> call_expr_level_in option(type_annotation_simple) 
+## In state 172, spurious reduction of production unary_expr_level -> call_expr_level 
+## In state 125, spurious reduction of production mult_expr_level -> unary_expr_level 
+## In state 149, spurious reduction of production add_expr_level -> mult_expr_level 
+## In state 180, spurious reduction of production cat_expr_level -> add_expr_level 
+## In state 201, spurious reduction of production comp_expr_level -> cat_expr_level 
+## In state 208, spurious reduction of production conj_expr_level -> comp_expr_level 
+## In state 215, spurious reduction of production disj_expr_level -> conj_expr_level 
+## In state 419, spurious reduction of production base_expr(base_if_then_else) -> disj_expr_level 
+## In state 424, spurious reduction of production base_if_then_else__open(base_if_then_else) -> base_expr(base_if_then_else) 
+## In state 420, spurious reduction of production base_if_then_else -> base_if_then_else__open(base_if_then_else) 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: If LPAR True RPAR LBRACE Switch True LBRACE VBAR WILD ARROW If LPAR Bytes RPAR LBRACE True RBRACE Else LBRACE WILD
+##
+## Ends in an error in state: 416.
+##
+## if_then_else(base_if_then_else) -> If parenthesized_expr LBRACE closed_if option(SEMI) RBRACE Else LBRACE . base_if_then_else option(SEMI) RBRACE [ VBAR SEMI RBRACE ]
+##
+## The known suffix of the stack is as follows:
+## If parenthesized_expr LBRACE closed_if option(SEMI) RBRACE Else LBRACE
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: If LPAR True RPAR LBRACE Switch True LBRACE VBAR WILD ARROW If LPAR Bytes RPAR LBRACE True RBRACE Else WILD
+##
+## Ends in an error in state: 415.
+##
+## if_then_else(base_if_then_else) -> If parenthesized_expr LBRACE closed_if option(SEMI) RBRACE Else . LBRACE base_if_then_else option(SEMI) RBRACE [ VBAR SEMI RBRACE ]
+##
+## The known suffix of the stack is as follows:
+## If parenthesized_expr LBRACE closed_if option(SEMI) RBRACE Else
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: If LPAR True RPAR LBRACE Switch True LBRACE VBAR WILD ARROW If LPAR Bytes RPAR LBRACE True RBRACE WILD
+##
+## Ends in an error in state: 414.
+##
+## if_then_else(base_if_then_else) -> If parenthesized_expr LBRACE closed_if option(SEMI) RBRACE . Else LBRACE base_if_then_else option(SEMI) RBRACE [ VBAR SEMI RBRACE ]
+##
+## The known suffix of the stack is as follows:
+## If parenthesized_expr LBRACE closed_if option(SEMI) RBRACE
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: If LPAR True RPAR LBRACE Switch True LBRACE VBAR WILD ARROW If LPAR Bytes RPAR LBRACE True SEMI PLUS
+##
+## Ends in an error in state: 413.
+##
+## if_then_else(base_if_then_else) -> If parenthesized_expr LBRACE closed_if option(SEMI) . RBRACE Else LBRACE base_if_then_else option(SEMI) RBRACE [ VBAR SEMI RBRACE ]
+##
+## The known suffix of the stack is as follows:
+## If parenthesized_expr LBRACE closed_if option(SEMI)
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: If LPAR True RPAR LBRACE Switch True LBRACE VBAR WILD ARROW If LPAR Bytes RPAR LBRACE WILD
+##
+## Ends in an error in state: 345.
+##
+## if_then_else(base_if_then_else) -> If parenthesized_expr LBRACE . closed_if option(SEMI) RBRACE Else LBRACE base_if_then_else option(SEMI) RBRACE [ VBAR SEMI RBRACE ]
+##
+## The known suffix of the stack is as follows:
+## If parenthesized_expr LBRACE
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: If LPAR True RPAR LBRACE Switch True LBRACE VBAR WILD ARROW If LPAR Bytes RPAR WILD
+##
+## Ends in an error in state: 344.
+##
+## if_then_else(base_if_then_else) -> If parenthesized_expr . LBRACE closed_if option(SEMI) RBRACE Else LBRACE base_if_then_else option(SEMI) RBRACE [ VBAR SEMI RBRACE ]
+##
+## The known suffix of the stack is as follows:
+## If parenthesized_expr
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: If LPAR True RPAR LBRACE Switch True LBRACE VBAR WILD ARROW If WILD
+##
+## Ends in an error in state: 343.
+##
+## if_then_else(base_if_then_else) -> If . parenthesized_expr LBRACE closed_if option(SEMI) RBRACE Else LBRACE base_if_then_else option(SEMI) RBRACE [ VBAR SEMI RBRACE ]
+##
+## The known suffix of the stack is as follows:
+## If
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: If LPAR True RPAR LBRACE Switch True LBRACE VBAR WILD ARROW True ARROW Bytes Type
+##
+## Ends in an error in state: 425.
+##
+## case_clause(base_if_then_else) -> VBAR pattern ARROW base_if_then_else . option(SEMI) [ VBAR RBRACE ]
+##
+## The known suffix of the stack is as follows:
+## VBAR pattern ARROW base_if_then_else
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 152, spurious reduction of production call_expr_level_in -> core_expr 
+## In state 170, spurious reduction of production option(type_annotation_simple) -> 
+## In state 171, spurious reduction of production call_expr_level -> call_expr_level_in option(type_annotation_simple) 
+## In state 172, spurious reduction of production unary_expr_level -> call_expr_level 
+## In state 125, spurious reduction of production mult_expr_level -> unary_expr_level 
+## In state 149, spurious reduction of production add_expr_level -> mult_expr_level 
+## In state 180, spurious reduction of production cat_expr_level -> add_expr_level 
+## In state 201, spurious reduction of production comp_expr_level -> cat_expr_level 
+## In state 208, spurious reduction of production conj_expr_level -> comp_expr_level 
+## In state 215, spurious reduction of production disj_expr_level -> conj_expr_level 
+## In state 162, spurious reduction of production base_expr(expr) -> disj_expr_level 
+## In state 219, spurious reduction of production base_cond__open(expr) -> base_expr(expr) 
+## In state 220, spurious reduction of production expr -> base_cond__open(expr) 
+## In state 213, spurious reduction of production es6_func -> ARROW expr 
+## In state 221, spurious reduction of production fun_expr -> disj_expr_level es6_func 
+## In state 418, spurious reduction of production base_expr(base_if_then_else) -> fun_expr 
+## In state 424, spurious reduction of production base_if_then_else__open(base_if_then_else) -> base_expr(base_if_then_else) 
+## In state 420, spurious reduction of production base_if_then_else -> base_if_then_else__open(base_if_then_else) 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: If LPAR True RPAR LBRACE Switch True LBRACE VBAR WILD ARROW True Type
+##
+## Ends in an error in state: 419.
+##
+## base_expr(base_if_then_else) -> disj_expr_level . [ VBAR SEMI RBRACE ]
+## bin_op(disj_expr_level,BOOL_OR,conj_expr_level) -> disj_expr_level . BOOL_OR conj_expr_level [ VBAR SEMI RBRACE Or BOOL_OR ARROW ]
+## bin_op(disj_expr_level,Or,conj_expr_level) -> disj_expr_level . Or conj_expr_level [ VBAR SEMI RBRACE Or BOOL_OR ARROW ]
+## fun_expr -> disj_expr_level . es6_func [ VBAR SEMI RBRACE ]
+##
+## The known suffix of the stack is as follows:
+## disj_expr_level
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 152, spurious reduction of production call_expr_level_in -> core_expr 
+## In state 170, spurious reduction of production option(type_annotation_simple) -> 
+## In state 171, spurious reduction of production call_expr_level -> call_expr_level_in option(type_annotation_simple) 
+## In state 172, spurious reduction of production unary_expr_level -> call_expr_level 
+## In state 125, spurious reduction of production mult_expr_level -> unary_expr_level 
+## In state 149, spurious reduction of production add_expr_level -> mult_expr_level 
+## In state 180, spurious reduction of production cat_expr_level -> add_expr_level 
+## In state 201, spurious reduction of production comp_expr_level -> cat_expr_level 
+## In state 208, spurious reduction of production conj_expr_level -> comp_expr_level 
+## In state 215, spurious reduction of production disj_expr_level -> conj_expr_level 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: If LPAR True RPAR LBRACE Switch True LBRACE VBAR WILD ARROW WILD
+##
+## Ends in an error in state: 342.
+##
+## case_clause(base_if_then_else) -> VBAR pattern ARROW . base_if_then_else option(SEMI) [ VBAR RBRACE ]
+##
+## The known suffix of the stack is as follows:
+## VBAR pattern ARROW
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: If LPAR True RPAR LBRACE Switch True LBRACE VBAR WILD COMMA Bytes RPAR
+##
+## Ends in an error in state: 341.
+##
+## case_clause(base_if_then_else) -> VBAR pattern . ARROW base_if_then_else option(SEMI) [ VBAR RBRACE ]
+##
+## The known suffix of the stack is as follows:
+## VBAR pattern
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 327, spurious reduction of production nsepseq(sub_pattern,COMMA) -> sub_pattern 
+## In state 330, spurious reduction of production tuple(sub_pattern) -> sub_pattern COMMA nsepseq(sub_pattern,COMMA) 
+## In state 339, spurious reduction of production pattern -> tuple(sub_pattern) 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: If LPAR True RPAR LBRACE Switch True LBRACE WILD
+##
+## Ends in an error in state: 272.
+##
+## switch_expr(base_if_then_else) -> Switch switch_expr_ LBRACE . cases(base_if_then_else) RBRACE [ SEMI RBRACE ]
+##
+## The known suffix of the stack is as follows:
+## Switch switch_expr_ LBRACE
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: If LPAR True RPAR LBRACE Switch True WILD
+##
+## Ends in an error in state: 271.
+##
+## switch_expr(base_if_then_else) -> Switch switch_expr_ . LBRACE cases(base_if_then_else) RBRACE [ SEMI RBRACE ]
+##
+## The known suffix of the stack is as follows:
+## Switch switch_expr_
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: If LPAR True RPAR LBRACE Switch WILD
+##
+## Ends in an error in state: 230.
+##
+## switch_expr(base_if_then_else) -> Switch . switch_expr_ LBRACE cases(base_if_then_else) RBRACE [ SEMI RBRACE ]
+##
+## The known suffix of the stack is as follows:
+## Switch
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: If LPAR True RPAR LBRACE True ARROW Bytes VBAR
+##
+## Ends in an error in state: 439.
+##
+## if_then(expr_with_let_expr) -> If parenthesized_expr LBRACE closed_if . option(SEMI) RBRACE [ VBAR Type SEMI RPAR RBRACKET RBRACE Let EOF COMMA Attr ]
+## if_then_else(expr_with_let_expr) -> If parenthesized_expr LBRACE closed_if . option(SEMI) RBRACE Else LBRACE expr_with_let_expr option(SEMI) RBRACE [ VBAR Type SEMI RPAR RBRACKET RBRACE Let EOF COMMA Attr ]
+##
+## The known suffix of the stack is as follows:
+## If parenthesized_expr LBRACE closed_if
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 152, spurious reduction of production call_expr_level_in -> core_expr 
+## In state 170, spurious reduction of production option(type_annotation_simple) -> 
+## In state 171, spurious reduction of production call_expr_level -> call_expr_level_in option(type_annotation_simple) 
+## In state 172, spurious reduction of production unary_expr_level -> call_expr_level 
+## In state 125, spurious reduction of production mult_expr_level -> unary_expr_level 
+## In state 149, spurious reduction of production add_expr_level -> mult_expr_level 
+## In state 180, spurious reduction of production cat_expr_level -> add_expr_level 
+## In state 201, spurious reduction of production comp_expr_level -> cat_expr_level 
+## In state 208, spurious reduction of production conj_expr_level -> comp_expr_level 
+## In state 215, spurious reduction of production disj_expr_level -> conj_expr_level 
+## In state 162, spurious reduction of production base_expr(expr) -> disj_expr_level 
+## In state 219, spurious reduction of production base_cond__open(expr) -> base_expr(expr) 
+## In state 220, spurious reduction of production expr -> base_cond__open(expr) 
+## In state 213, spurious reduction of production es6_func -> ARROW expr 
+## In state 221, spurious reduction of production fun_expr -> disj_expr_level es6_func 
+## In state 400, spurious reduction of production base_expr(closed_if) -> fun_expr 
+## In state 411, spurious reduction of production base_if_then_else__open(closed_if) -> base_expr(closed_if) 
+## In state 410, spurious reduction of production closed_if -> base_if_then_else__open(closed_if) 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: If LPAR True RPAR LBRACE True RBRACE Else LBRACE True SEMI PLUS
+##
+## Ends in an error in state: 445.
+##
+## if_then_else(expr_with_let_expr) -> If parenthesized_expr LBRACE closed_if option(SEMI) RBRACE Else LBRACE expr_with_let_expr option(SEMI) . RBRACE [ VBAR Type SEMI RPAR RBRACKET RBRACE Let EOF COMMA Attr ]
+##
+## The known suffix of the stack is as follows:
+## If parenthesized_expr LBRACE closed_if option(SEMI) RBRACE Else LBRACE expr_with_let_expr option(SEMI)
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: If LPAR True RPAR LBRACE True RBRACE Else LBRACE True VBAR
+##
+## Ends in an error in state: 444.
+##
+## if_then_else(expr_with_let_expr) -> If parenthesized_expr LBRACE closed_if option(SEMI) RBRACE Else LBRACE expr_with_let_expr . option(SEMI) RBRACE [ VBAR Type SEMI RPAR RBRACKET RBRACE Let EOF COMMA Attr ]
+##
+## The known suffix of the stack is as follows:
+## If parenthesized_expr LBRACE closed_if option(SEMI) RBRACE Else LBRACE expr_with_let_expr
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 152, spurious reduction of production call_expr_level_in -> core_expr 
+## In state 170, spurious reduction of production option(type_annotation_simple) -> 
+## In state 171, spurious reduction of production call_expr_level -> call_expr_level_in option(type_annotation_simple) 
+## In state 172, spurious reduction of production unary_expr_level -> call_expr_level 
+## In state 125, spurious reduction of production mult_expr_level -> unary_expr_level 
+## In state 149, spurious reduction of production add_expr_level -> mult_expr_level 
+## In state 180, spurious reduction of production cat_expr_level -> add_expr_level 
+## In state 201, spurious reduction of production comp_expr_level -> cat_expr_level 
+## In state 208, spurious reduction of production conj_expr_level -> comp_expr_level 
+## In state 215, spurious reduction of production disj_expr_level -> conj_expr_level 
+## In state 162, spurious reduction of production base_expr(expr) -> disj_expr_level 
+## In state 219, spurious reduction of production base_cond__open(expr) -> base_expr(expr) 
+## In state 220, spurious reduction of production expr -> base_cond__open(expr) 
+## In state 397, spurious reduction of production expr_with_let_expr -> expr 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: If LPAR True RPAR LBRACE True RBRACE Else LBRACE WILD
+##
+## Ends in an error in state: 443.
+##
+## if_then_else(expr_with_let_expr) -> If parenthesized_expr LBRACE closed_if option(SEMI) RBRACE Else LBRACE . expr_with_let_expr option(SEMI) RBRACE [ VBAR Type SEMI RPAR RBRACKET RBRACE Let EOF COMMA Attr ]
+##
+## The known suffix of the stack is as follows:
+## If parenthesized_expr LBRACE closed_if option(SEMI) RBRACE Else LBRACE
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: If LPAR True RPAR LBRACE True RBRACE Else WILD
+##
+## Ends in an error in state: 442.
+##
+## if_then_else(expr_with_let_expr) -> If parenthesized_expr LBRACE closed_if option(SEMI) RBRACE Else . LBRACE expr_with_let_expr option(SEMI) RBRACE [ VBAR Type SEMI RPAR RBRACKET RBRACE Let EOF COMMA Attr ]
+##
+## The known suffix of the stack is as follows:
+## If parenthesized_expr LBRACE closed_if option(SEMI) RBRACE Else
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: If LPAR True RPAR LBRACE True RBRACE WILD
+##
+## Ends in an error in state: 441.
+##
+## if_then(expr_with_let_expr) -> If parenthesized_expr LBRACE closed_if option(SEMI) RBRACE . [ VBAR Type SEMI RPAR RBRACKET RBRACE Let EOF COMMA Attr ]
+## if_then_else(expr_with_let_expr) -> If parenthesized_expr LBRACE closed_if option(SEMI) RBRACE . Else LBRACE expr_with_let_expr option(SEMI) RBRACE [ VBAR Type SEMI RPAR RBRACKET RBRACE Let EOF COMMA Attr ]
+##
+## The known suffix of the stack is as follows:
+## If parenthesized_expr LBRACE closed_if option(SEMI) RBRACE
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: If LPAR True RPAR LBRACE True SEMI PLUS
+##
+## Ends in an error in state: 440.
+##
+## if_then(expr_with_let_expr) -> If parenthesized_expr LBRACE closed_if option(SEMI) . RBRACE [ VBAR Type SEMI RPAR RBRACKET RBRACE Let EOF COMMA Attr ]
+## if_then_else(expr_with_let_expr) -> If parenthesized_expr LBRACE closed_if option(SEMI) . RBRACE Else LBRACE expr_with_let_expr option(SEMI) RBRACE [ VBAR Type SEMI RPAR RBRACKET RBRACE Let EOF COMMA Attr ]
+##
+## The known suffix of the stack is as follows:
+## If parenthesized_expr LBRACE closed_if option(SEMI)
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: If LPAR True RPAR LBRACE True VBAR
+##
+## Ends in an error in state: 401.
+##
+## base_expr(closed_if) -> disj_expr_level . [ SEMI RBRACE ]
+## bin_op(disj_expr_level,BOOL_OR,conj_expr_level) -> disj_expr_level . BOOL_OR conj_expr_level [ SEMI RBRACE Or BOOL_OR ARROW ]
+## bin_op(disj_expr_level,Or,conj_expr_level) -> disj_expr_level . Or conj_expr_level [ SEMI RBRACE Or BOOL_OR ARROW ]
+## fun_expr -> disj_expr_level . es6_func [ SEMI RBRACE ]
+##
+## The known suffix of the stack is as follows:
+## disj_expr_level
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 152, spurious reduction of production call_expr_level_in -> core_expr 
+## In state 170, spurious reduction of production option(type_annotation_simple) -> 
+## In state 171, spurious reduction of production call_expr_level -> call_expr_level_in option(type_annotation_simple) 
+## In state 172, spurious reduction of production unary_expr_level -> call_expr_level 
+## In state 125, spurious reduction of production mult_expr_level -> unary_expr_level 
+## In state 149, spurious reduction of production add_expr_level -> mult_expr_level 
+## In state 180, spurious reduction of production cat_expr_level -> add_expr_level 
+## In state 201, spurious reduction of production comp_expr_level -> cat_expr_level 
+## In state 208, spurious reduction of production conj_expr_level -> comp_expr_level 
+## In state 215, spurious reduction of production disj_expr_level -> conj_expr_level 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: If LPAR True RPAR LBRACE WILD
+##
+## Ends in an error in state: 229.
+##
+## if_then(expr_with_let_expr) -> If parenthesized_expr LBRACE . closed_if option(SEMI) RBRACE [ VBAR Type SEMI RPAR RBRACKET RBRACE Let EOF COMMA Attr ]
+## if_then_else(expr_with_let_expr) -> If parenthesized_expr LBRACE . closed_if option(SEMI) RBRACE Else LBRACE expr_with_let_expr option(SEMI) RBRACE [ VBAR Type SEMI RPAR RBRACKET RBRACE Let EOF COMMA Attr ]
+##
+## The known suffix of the stack is as follows:
+## If parenthesized_expr LBRACE
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: If LPAR True RPAR WILD
+##
+## Ends in an error in state: 228.
+##
+## if_then(expr_with_let_expr) -> If parenthesized_expr . LBRACE closed_if option(SEMI) RBRACE [ VBAR Type SEMI RPAR RBRACKET RBRACE Let EOF COMMA Attr ]
+## if_then_else(expr_with_let_expr) -> If parenthesized_expr . LBRACE closed_if option(SEMI) RBRACE Else LBRACE expr_with_let_expr option(SEMI) RBRACE [ VBAR Type SEMI RPAR RBRACKET RBRACE Let EOF COMMA Attr ]
+##
+## The known suffix of the stack is as follows:
+## If parenthesized_expr
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: If LPAR True VBAR
+##
+## Ends in an error in state: 223.
+##
+## parenthesized_expr -> LPAR expr . RPAR [ LBRACE ]
+##
+## The known suffix of the stack is as follows:
+## LPAR expr
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 152, spurious reduction of production call_expr_level_in -> core_expr 
+## In state 170, spurious reduction of production option(type_annotation_simple) -> 
+## In state 171, spurious reduction of production call_expr_level -> call_expr_level_in option(type_annotation_simple) 
+## In state 172, spurious reduction of production unary_expr_level -> call_expr_level 
+## In state 125, spurious reduction of production mult_expr_level -> unary_expr_level 
+## In state 149, spurious reduction of production add_expr_level -> mult_expr_level 
+## In state 180, spurious reduction of production cat_expr_level -> add_expr_level 
+## In state 201, spurious reduction of production comp_expr_level -> cat_expr_level 
+## In state 208, spurious reduction of production conj_expr_level -> comp_expr_level 
+## In state 215, spurious reduction of production disj_expr_level -> conj_expr_level 
+## In state 162, spurious reduction of production base_expr(expr) -> disj_expr_level 
+## In state 219, spurious reduction of production base_cond__open(expr) -> base_expr(expr) 
+## In state 220, spurious reduction of production expr -> base_cond__open(expr) 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: If LPAR WILD
+##
+## Ends in an error in state: 96.
+##
+## parenthesized_expr -> LPAR . expr RPAR [ LBRACE ]
+##
+## The known suffix of the stack is as follows:
+## LPAR
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: If WILD
+##
+## Ends in an error in state: 95.
+##
+## if_then(expr_with_let_expr) -> If . parenthesized_expr LBRACE closed_if option(SEMI) RBRACE [ VBAR Type SEMI RPAR RBRACKET RBRACE Let EOF COMMA Attr ]
+## if_then_else(expr_with_let_expr) -> If . parenthesized_expr LBRACE closed_if option(SEMI) RBRACE Else LBRACE expr_with_let_expr option(SEMI) RBRACE [ VBAR Type SEMI RPAR RBRACKET RBRACE Let EOF COMMA Attr ]
+##
+## The known suffix of the stack is as follows:
+## If
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: LBRACE ELLIPSIS Constr DOT Ident WILD
+##
+## Ends in an error in state: 249.
+##
+## projection -> Constr DOT Ident . selection [ COMMA ]
+##
+## The known suffix of the stack is as follows:
+## Constr DOT Ident
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: LBRACE ELLIPSIS Constr DOT WILD
+##
+## Ends in an error in state: 248.
+##
+## projection -> Constr DOT . Ident selection [ COMMA ]
+##
+## The known suffix of the stack is as follows:
+## Constr DOT
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: LBRACE ELLIPSIS Constr WILD
+##
+## Ends in an error in state: 247.
+##
+## projection -> Constr . DOT Ident selection [ COMMA ]
+##
+## The known suffix of the stack is as follows:
+## Constr
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: LBRACE ELLIPSIS Ident COMMA Ident COLON Bytes VBAR
+##
+## Ends in an error in state: 264.
+##
+## nsepseq(field_path_assignment,COMMA) -> field_path_assignment . [ RBRACE ]
+## nsepseq(field_path_assignment,COMMA) -> field_path_assignment . COMMA nsepseq(field_path_assignment,COMMA) [ RBRACE ]
+## nseq(__anonymous_0(field_path_assignment,COMMA)) -> field_path_assignment . COMMA seq(__anonymous_0(field_path_assignment,COMMA)) [ RBRACE ]
+##
+## The known suffix of the stack is as follows:
+## field_path_assignment
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 152, spurious reduction of production call_expr_level_in -> core_expr 
+## In state 170, spurious reduction of production option(type_annotation_simple) -> 
+## In state 171, spurious reduction of production call_expr_level -> call_expr_level_in option(type_annotation_simple) 
+## In state 172, spurious reduction of production unary_expr_level -> call_expr_level 
+## In state 125, spurious reduction of production mult_expr_level -> unary_expr_level 
+## In state 149, spurious reduction of production add_expr_level -> mult_expr_level 
+## In state 180, spurious reduction of production cat_expr_level -> add_expr_level 
+## In state 201, spurious reduction of production comp_expr_level -> cat_expr_level 
+## In state 208, spurious reduction of production conj_expr_level -> comp_expr_level 
+## In state 215, spurious reduction of production disj_expr_level -> conj_expr_level 
+## In state 162, spurious reduction of production base_expr(expr) -> disj_expr_level 
+## In state 219, spurious reduction of production base_cond__open(expr) -> base_expr(expr) 
+## In state 220, spurious reduction of production expr -> base_cond__open(expr) 
+## In state 263, spurious reduction of production field_path_assignment -> nsepseq(field_name,DOT) COLON expr 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: LBRACE ELLIPSIS Ident COMMA Ident COLON WILD
+##
+## Ends in an error in state: 262.
+##
+## field_path_assignment -> nsepseq(field_name,DOT) COLON . expr [ RBRACE COMMA ]
+##
+## The known suffix of the stack is as follows:
+## nsepseq(field_name,DOT) COLON
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: LBRACE ELLIPSIS Ident COMMA Ident COMMA Ident COLON Bytes VBAR
+##
+## Ends in an error in state: 268.
+##
+## nsepseq(field_path_assignment,COMMA) -> field_path_assignment . [ RBRACE ]
+## nsepseq(field_path_assignment,COMMA) -> field_path_assignment . COMMA nsepseq(field_path_assignment,COMMA) [ RBRACE ]
+## seq(__anonymous_0(field_path_assignment,COMMA)) -> field_path_assignment . COMMA seq(__anonymous_0(field_path_assignment,COMMA)) [ RBRACE ]
+##
+## The known suffix of the stack is as follows:
+## field_path_assignment
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 152, spurious reduction of production call_expr_level_in -> core_expr 
+## In state 170, spurious reduction of production option(type_annotation_simple) -> 
+## In state 171, spurious reduction of production call_expr_level -> call_expr_level_in option(type_annotation_simple) 
+## In state 172, spurious reduction of production unary_expr_level -> call_expr_level 
+## In state 125, spurious reduction of production mult_expr_level -> unary_expr_level 
+## In state 149, spurious reduction of production add_expr_level -> mult_expr_level 
+## In state 180, spurious reduction of production cat_expr_level -> add_expr_level 
+## In state 201, spurious reduction of production comp_expr_level -> cat_expr_level 
+## In state 208, spurious reduction of production conj_expr_level -> comp_expr_level 
+## In state 215, spurious reduction of production disj_expr_level -> conj_expr_level 
+## In state 162, spurious reduction of production base_expr(expr) -> disj_expr_level 
+## In state 219, spurious reduction of production base_cond__open(expr) -> base_expr(expr) 
+## In state 220, spurious reduction of production expr -> base_cond__open(expr) 
+## In state 263, spurious reduction of production field_path_assignment -> nsepseq(field_name,DOT) COLON expr 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: LBRACE ELLIPSIS Ident COMMA Ident COMMA Ident COMMA WILD
+##
+## Ends in an error in state: 269.
+##
+## nsepseq(field_path_assignment,COMMA) -> field_path_assignment COMMA . nsepseq(field_path_assignment,COMMA) [ RBRACE ]
+## seq(__anonymous_0(field_path_assignment,COMMA)) -> field_path_assignment COMMA . seq(__anonymous_0(field_path_assignment,COMMA)) [ RBRACE ]
+##
+## The known suffix of the stack is as follows:
+## field_path_assignment COMMA
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: LBRACE ELLIPSIS Ident COMMA Ident COMMA WILD
+##
+## Ends in an error in state: 265.
+##
+## nsepseq(field_path_assignment,COMMA) -> field_path_assignment COMMA . nsepseq(field_path_assignment,COMMA) [ RBRACE ]
+## nseq(__anonymous_0(field_path_assignment,COMMA)) -> field_path_assignment COMMA . seq(__anonymous_0(field_path_assignment,COMMA)) [ RBRACE ]
+##
+## The known suffix of the stack is as follows:
+## field_path_assignment COMMA
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: LBRACE ELLIPSIS Ident COMMA Ident DOT Ident WILD
+##
+## Ends in an error in state: 255.
+##
+## nsepseq(field_name,DOT) -> Ident . [ COLON ]
+## nsepseq(field_name,DOT) -> Ident . DOT nsepseq(field_name,DOT) [ COLON ]
+##
+## The known suffix of the stack is as follows:
+## Ident
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: LBRACE ELLIPSIS Ident COMMA Ident DOT WILD
+##
+## Ends in an error in state: 254.
+##
+## nsepseq(field_name,DOT) -> Ident DOT . nsepseq(field_name,DOT) [ COLON ]
+##
+## The known suffix of the stack is as follows:
+## Ident DOT
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: LBRACE ELLIPSIS Ident COMMA Ident WILD
+##
+## Ends in an error in state: 253.
+##
+## field_path_assignment -> Ident . [ RBRACE COMMA ]
+## nsepseq(field_name,DOT) -> Ident . [ COLON ]
+## nsepseq(field_name,DOT) -> Ident . DOT nsepseq(field_name,DOT) [ COLON ]
+##
+## The known suffix of the stack is as follows:
+## Ident
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: LBRACE ELLIPSIS Ident COMMA WILD
+##
+## Ends in an error in state: 252.
+##
+## update_record -> LBRACE ELLIPSIS path COMMA . sep_or_term_list(field_path_assignment,COMMA) RBRACE [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE LBRACE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
+##
+## The known suffix of the stack is as follows:
+## LBRACE ELLIPSIS path COMMA
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: LBRACE ELLIPSIS Ident DOT Ident VBAR
+##
+## Ends in an error in state: 251.
+##
+## update_record -> LBRACE ELLIPSIS path . COMMA sep_or_term_list(field_path_assignment,COMMA) RBRACE [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE LBRACE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
+##
+## The known suffix of the stack is as follows:
+## LBRACE ELLIPSIS path
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 102, spurious reduction of production selection -> DOT Ident 
+## In state 105, spurious reduction of production projection -> Ident selection 
+## In state 250, spurious reduction of production path -> projection 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: LBRACE ELLIPSIS Ident WILD
+##
+## Ends in an error in state: 246.
+##
+## path -> Ident . [ COMMA ]
+## projection -> Ident . selection [ COMMA ]
+##
+## The known suffix of the stack is as follows:
+## Ident
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: LBRACE ELLIPSIS WILD
+##
+## Ends in an error in state: 245.
+##
+## update_record -> LBRACE ELLIPSIS . path COMMA sep_or_term_list(field_path_assignment,COMMA) RBRACE [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE LBRACE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
+##
+## The known suffix of the stack is as follows:
+## LBRACE ELLIPSIS
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: LBRACE Ident COLON Bytes VBAR
+##
+## Ends in an error in state: 462.
+##
+## sequence_or_record_in -> field_assignment . COMMA sep_or_term_list(field_assignment,COMMA) [ RBRACE ]
+##
+## The known suffix of the stack is as follows:
+## field_assignment
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 152, spurious reduction of production call_expr_level_in -> core_expr 
+## In state 170, spurious reduction of production option(type_annotation_simple) -> 
+## In state 171, spurious reduction of production call_expr_level -> call_expr_level_in option(type_annotation_simple) 
+## In state 172, spurious reduction of production unary_expr_level -> call_expr_level 
+## In state 125, spurious reduction of production mult_expr_level -> unary_expr_level 
+## In state 149, spurious reduction of production add_expr_level -> mult_expr_level 
+## In state 180, spurious reduction of production cat_expr_level -> add_expr_level 
+## In state 201, spurious reduction of production comp_expr_level -> cat_expr_level 
+## In state 208, spurious reduction of production conj_expr_level -> comp_expr_level 
+## In state 215, spurious reduction of production disj_expr_level -> conj_expr_level 
+## In state 162, spurious reduction of production base_expr(expr) -> disj_expr_level 
+## In state 219, spurious reduction of production base_cond__open(expr) -> base_expr(expr) 
+## In state 220, spurious reduction of production expr -> base_cond__open(expr) 
+## In state 459, spurious reduction of production field_assignment -> Ident COLON expr 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: LBRACE Ident COLON WILD
+##
+## Ends in an error in state: 458.
+##
+## field_assignment -> Ident COLON . expr [ RBRACE COMMA ]
+##
+## The known suffix of the stack is as follows:
+## Ident COLON
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: LBRACE Ident COMMA Ident COLON Bytes VBAR
+##
+## Ends in an error in state: 468.
+##
+## nsepseq(field_assignment,COMMA) -> field_assignment . [ RBRACE ]
+## nsepseq(field_assignment,COMMA) -> field_assignment . COMMA nsepseq(field_assignment,COMMA) [ RBRACE ]
+## nseq(__anonymous_0(field_assignment,COMMA)) -> field_assignment . COMMA seq(__anonymous_0(field_assignment,COMMA)) [ RBRACE ]
+##
+## The known suffix of the stack is as follows:
+## field_assignment
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 152, spurious reduction of production call_expr_level_in -> core_expr 
+## In state 170, spurious reduction of production option(type_annotation_simple) -> 
+## In state 171, spurious reduction of production call_expr_level -> call_expr_level_in option(type_annotation_simple) 
+## In state 172, spurious reduction of production unary_expr_level -> call_expr_level 
+## In state 125, spurious reduction of production mult_expr_level -> unary_expr_level 
+## In state 149, spurious reduction of production add_expr_level -> mult_expr_level 
+## In state 180, spurious reduction of production cat_expr_level -> add_expr_level 
+## In state 201, spurious reduction of production comp_expr_level -> cat_expr_level 
+## In state 208, spurious reduction of production conj_expr_level -> comp_expr_level 
+## In state 215, spurious reduction of production disj_expr_level -> conj_expr_level 
+## In state 162, spurious reduction of production base_expr(expr) -> disj_expr_level 
+## In state 219, spurious reduction of production base_cond__open(expr) -> base_expr(expr) 
+## In state 220, spurious reduction of production expr -> base_cond__open(expr) 
+## In state 459, spurious reduction of production field_assignment -> Ident COLON expr 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: LBRACE Ident COMMA Ident COMMA Ident COLON Bytes VBAR
+##
+## Ends in an error in state: 472.
+##
+## nsepseq(field_assignment,COMMA) -> field_assignment . [ RBRACE ]
+## nsepseq(field_assignment,COMMA) -> field_assignment . COMMA nsepseq(field_assignment,COMMA) [ RBRACE ]
+## seq(__anonymous_0(field_assignment,COMMA)) -> field_assignment . COMMA seq(__anonymous_0(field_assignment,COMMA)) [ RBRACE ]
+##
+## The known suffix of the stack is as follows:
+## field_assignment
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 152, spurious reduction of production call_expr_level_in -> core_expr 
+## In state 170, spurious reduction of production option(type_annotation_simple) -> 
+## In state 171, spurious reduction of production call_expr_level -> call_expr_level_in option(type_annotation_simple) 
+## In state 172, spurious reduction of production unary_expr_level -> call_expr_level 
+## In state 125, spurious reduction of production mult_expr_level -> unary_expr_level 
+## In state 149, spurious reduction of production add_expr_level -> mult_expr_level 
+## In state 180, spurious reduction of production cat_expr_level -> add_expr_level 
+## In state 201, spurious reduction of production comp_expr_level -> cat_expr_level 
+## In state 208, spurious reduction of production conj_expr_level -> comp_expr_level 
+## In state 215, spurious reduction of production disj_expr_level -> conj_expr_level 
+## In state 162, spurious reduction of production base_expr(expr) -> disj_expr_level 
+## In state 219, spurious reduction of production base_cond__open(expr) -> base_expr(expr) 
+## In state 220, spurious reduction of production expr -> base_cond__open(expr) 
+## In state 459, spurious reduction of production field_assignment -> Ident COLON expr 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: LBRACE Ident COMMA Ident COMMA Ident COMMA WILD
+##
+## Ends in an error in state: 473.
+##
+## nsepseq(field_assignment,COMMA) -> field_assignment COMMA . nsepseq(field_assignment,COMMA) [ RBRACE ]
+## seq(__anonymous_0(field_assignment,COMMA)) -> field_assignment COMMA . seq(__anonymous_0(field_assignment,COMMA)) [ RBRACE ]
+##
+## The known suffix of the stack is as follows:
+## field_assignment COMMA
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: LBRACE Ident COMMA Ident COMMA WILD
+##
+## Ends in an error in state: 469.
+##
+## nsepseq(field_assignment,COMMA) -> field_assignment COMMA . nsepseq(field_assignment,COMMA) [ RBRACE ]
+## nseq(__anonymous_0(field_assignment,COMMA)) -> field_assignment COMMA . seq(__anonymous_0(field_assignment,COMMA)) [ RBRACE ]
+##
+## The known suffix of the stack is as follows:
+## field_assignment COMMA
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: LBRACE Ident COMMA Ident WILD
+##
+## Ends in an error in state: 464.
+##
+## field_assignment -> Ident . [ RBRACE COMMA ]
+## field_assignment -> Ident . COLON expr [ RBRACE COMMA ]
+##
+## The known suffix of the stack is as follows:
+## Ident
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: LBRACE Ident COMMA WILD
+##
+## Ends in an error in state: 463.
+##
+## sequence_or_record_in -> field_assignment COMMA . sep_or_term_list(field_assignment,COMMA) [ RBRACE ]
+##
+## The known suffix of the stack is as follows:
+## field_assignment COMMA
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: LBRACE Ident WILD
+##
+## Ends in an error in state: 457.
+##
+## common_expr -> Ident . [ TIMES SLASH SEMI RBRACE PLUS Or NE Mod MINUS LT LPAR LE GT GE EQEQ COLON CAT BOOL_OR BOOL_AND ARROW ]
+## field_assignment -> Ident . [ COMMA ]
+## field_assignment -> Ident . COLON expr [ COMMA ]
+## projection -> Ident . selection [ TIMES SLASH SEMI RBRACE PLUS Or NE Mod MINUS LT LPAR LE GT GE EQEQ COLON CAT BOOL_OR BOOL_AND ARROW ]
+##
+## The known suffix of the stack is as follows:
+## Ident
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: LBRACE True SEMI True SEMI True SEMI WILD
+##
+## Ends in an error in state: 485.
+##
+## nsepseq(expr_with_let_expr,SEMI) -> expr_with_let_expr SEMI . nsepseq(expr_with_let_expr,SEMI) [ RBRACE ]
+## seq(__anonymous_0(expr_with_let_expr,SEMI)) -> expr_with_let_expr SEMI . seq(__anonymous_0(expr_with_let_expr,SEMI)) [ RBRACE ]
+##
+## The known suffix of the stack is as follows:
+## expr_with_let_expr SEMI
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: LBRACE True SEMI True SEMI True VBAR
+##
+## Ends in an error in state: 484.
+##
+## nsepseq(expr_with_let_expr,SEMI) -> expr_with_let_expr . [ RBRACE ]
+## nsepseq(expr_with_let_expr,SEMI) -> expr_with_let_expr . SEMI nsepseq(expr_with_let_expr,SEMI) [ RBRACE ]
+## seq(__anonymous_0(expr_with_let_expr,SEMI)) -> expr_with_let_expr . SEMI seq(__anonymous_0(expr_with_let_expr,SEMI)) [ RBRACE ]
+##
+## The known suffix of the stack is as follows:
+## expr_with_let_expr
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 152, spurious reduction of production call_expr_level_in -> core_expr 
+## In state 170, spurious reduction of production option(type_annotation_simple) -> 
+## In state 171, spurious reduction of production call_expr_level -> call_expr_level_in option(type_annotation_simple) 
+## In state 172, spurious reduction of production unary_expr_level -> call_expr_level 
+## In state 125, spurious reduction of production mult_expr_level -> unary_expr_level 
+## In state 149, spurious reduction of production add_expr_level -> mult_expr_level 
+## In state 180, spurious reduction of production cat_expr_level -> add_expr_level 
+## In state 201, spurious reduction of production comp_expr_level -> cat_expr_level 
+## In state 208, spurious reduction of production conj_expr_level -> comp_expr_level 
+## In state 215, spurious reduction of production disj_expr_level -> conj_expr_level 
+## In state 162, spurious reduction of production base_expr(expr) -> disj_expr_level 
+## In state 219, spurious reduction of production base_cond__open(expr) -> base_expr(expr) 
+## In state 220, spurious reduction of production expr -> base_cond__open(expr) 
+## In state 397, spurious reduction of production expr_with_let_expr -> expr 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: LBRACE True SEMI True SEMI WILD
+##
+## Ends in an error in state: 481.
+##
+## nsepseq(expr_with_let_expr,SEMI) -> expr_with_let_expr SEMI . nsepseq(expr_with_let_expr,SEMI) [ RBRACE ]
+## nseq(__anonymous_0(expr_with_let_expr,SEMI)) -> expr_with_let_expr SEMI . seq(__anonymous_0(expr_with_let_expr,SEMI)) [ RBRACE ]
+##
+## The known suffix of the stack is as follows:
+## expr_with_let_expr SEMI
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: LBRACE True SEMI True VBAR
+##
+## Ends in an error in state: 480.
+##
+## nsepseq(expr_with_let_expr,SEMI) -> expr_with_let_expr . [ RBRACE ]
+## nsepseq(expr_with_let_expr,SEMI) -> expr_with_let_expr . SEMI nsepseq(expr_with_let_expr,SEMI) [ RBRACE ]
+## nseq(__anonymous_0(expr_with_let_expr,SEMI)) -> expr_with_let_expr . SEMI seq(__anonymous_0(expr_with_let_expr,SEMI)) [ RBRACE ]
+##
+## The known suffix of the stack is as follows:
+## expr_with_let_expr
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 152, spurious reduction of production call_expr_level_in -> core_expr 
+## In state 170, spurious reduction of production option(type_annotation_simple) -> 
+## In state 171, spurious reduction of production call_expr_level -> call_expr_level_in option(type_annotation_simple) 
+## In state 172, spurious reduction of production unary_expr_level -> call_expr_level 
+## In state 125, spurious reduction of production mult_expr_level -> unary_expr_level 
+## In state 149, spurious reduction of production add_expr_level -> mult_expr_level 
+## In state 180, spurious reduction of production cat_expr_level -> add_expr_level 
+## In state 201, spurious reduction of production comp_expr_level -> cat_expr_level 
+## In state 208, spurious reduction of production conj_expr_level -> comp_expr_level 
+## In state 215, spurious reduction of production disj_expr_level -> conj_expr_level 
+## In state 162, spurious reduction of production base_expr(expr) -> disj_expr_level 
+## In state 219, spurious reduction of production base_cond__open(expr) -> base_expr(expr) 
+## In state 220, spurious reduction of production expr -> base_cond__open(expr) 
+## In state 397, spurious reduction of production expr_with_let_expr -> expr 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: LBRACE True SEMI WILD
+##
+## Ends in an error in state: 476.
+##
+## option(SEMI) -> SEMI . [ RBRACE ]
+## sequence_or_record_in -> expr_with_let_expr SEMI . sep_or_term_list(expr_with_let_expr,SEMI) [ RBRACE ]
+##
+## The known suffix of the stack is as follows:
+## expr_with_let_expr SEMI
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: LBRACE True VBAR
+##
+## Ends in an error in state: 475.
+##
+## sequence_or_record_in -> expr_with_let_expr . SEMI sep_or_term_list(expr_with_let_expr,SEMI) [ RBRACE ]
+## sequence_or_record_in -> expr_with_let_expr . option(SEMI) [ RBRACE ]
+##
+## The known suffix of the stack is as follows:
+## expr_with_let_expr
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 152, spurious reduction of production call_expr_level_in -> core_expr 
+## In state 170, spurious reduction of production option(type_annotation_simple) -> 
+## In state 171, spurious reduction of production call_expr_level -> call_expr_level_in option(type_annotation_simple) 
+## In state 172, spurious reduction of production unary_expr_level -> call_expr_level 
+## In state 125, spurious reduction of production mult_expr_level -> unary_expr_level 
+## In state 149, spurious reduction of production add_expr_level -> mult_expr_level 
+## In state 180, spurious reduction of production cat_expr_level -> add_expr_level 
+## In state 201, spurious reduction of production comp_expr_level -> cat_expr_level 
+## In state 208, spurious reduction of production conj_expr_level -> comp_expr_level 
+## In state 215, spurious reduction of production disj_expr_level -> conj_expr_level 
+## In state 162, spurious reduction of production base_expr(expr) -> disj_expr_level 
+## In state 219, spurious reduction of production base_cond__open(expr) -> base_expr(expr) 
+## In state 220, spurious reduction of production expr -> base_cond__open(expr) 
+## In state 397, spurious reduction of production expr_with_let_expr -> expr 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: LBRACE WILD
+##
+## Ends in an error in state: 92.
+##
+## sequence_or_record -> LBRACE . sequence_or_record_in RBRACE [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
+## update_record -> LBRACE . ELLIPSIS path COMMA sep_or_term_list(field_path_assignment,COMMA) RBRACE [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
+##
+## The known suffix of the stack is as follows:
+## LBRACE
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: LBRACKET True COMMA ELLIPSIS True VBAR
+##
+## Ends in an error in state: 494.
+##
+## list_or_spread -> LBRACKET expr COMMA ELLIPSIS expr . RBRACKET [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
+##
+## The known suffix of the stack is as follows:
+## LBRACKET expr COMMA ELLIPSIS expr
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 152, spurious reduction of production call_expr_level_in -> core_expr 
+## In state 170, spurious reduction of production option(type_annotation_simple) -> 
+## In state 171, spurious reduction of production call_expr_level -> call_expr_level_in option(type_annotation_simple) 
+## In state 172, spurious reduction of production unary_expr_level -> call_expr_level 
+## In state 125, spurious reduction of production mult_expr_level -> unary_expr_level 
+## In state 149, spurious reduction of production add_expr_level -> mult_expr_level 
+## In state 180, spurious reduction of production cat_expr_level -> add_expr_level 
+## In state 201, spurious reduction of production comp_expr_level -> cat_expr_level 
+## In state 208, spurious reduction of production conj_expr_level -> comp_expr_level 
+## In state 215, spurious reduction of production disj_expr_level -> conj_expr_level 
+## In state 162, spurious reduction of production base_expr(expr) -> disj_expr_level 
+## In state 219, spurious reduction of production base_cond__open(expr) -> base_expr(expr) 
+## In state 220, spurious reduction of production expr -> base_cond__open(expr) 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: LBRACKET True COMMA ELLIPSIS WILD
+##
+## Ends in an error in state: 493.
+##
+## list_or_spread -> LBRACKET expr COMMA ELLIPSIS . expr RBRACKET [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
+##
+## The known suffix of the stack is as follows:
+## LBRACKET expr COMMA ELLIPSIS
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: LBRACKET True COMMA True COMMA True COMMA WILD
+##
+## Ends in an error in state: 504.
+##
+## nsepseq(expr,COMMA) -> expr COMMA . nsepseq(expr,COMMA) [ RBRACKET ]
+## seq(__anonymous_0(expr,COMMA)) -> expr COMMA . seq(__anonymous_0(expr,COMMA)) [ RBRACKET ]
+##
+## The known suffix of the stack is as follows:
+## expr COMMA
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: LBRACKET True COMMA True COMMA True VBAR
+##
+## Ends in an error in state: 503.
+##
+## nsepseq(expr,COMMA) -> expr . [ RBRACKET ]
+## nsepseq(expr,COMMA) -> expr . COMMA nsepseq(expr,COMMA) [ RBRACKET ]
+## seq(__anonymous_0(expr,COMMA)) -> expr . COMMA seq(__anonymous_0(expr,COMMA)) [ RBRACKET ]
+##
+## The known suffix of the stack is as follows:
+## expr
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 152, spurious reduction of production call_expr_level_in -> core_expr 
+## In state 170, spurious reduction of production option(type_annotation_simple) -> 
+## In state 171, spurious reduction of production call_expr_level -> call_expr_level_in option(type_annotation_simple) 
+## In state 172, spurious reduction of production unary_expr_level -> call_expr_level 
+## In state 125, spurious reduction of production mult_expr_level -> unary_expr_level 
+## In state 149, spurious reduction of production add_expr_level -> mult_expr_level 
+## In state 180, spurious reduction of production cat_expr_level -> add_expr_level 
+## In state 201, spurious reduction of production comp_expr_level -> cat_expr_level 
+## In state 208, spurious reduction of production conj_expr_level -> comp_expr_level 
+## In state 215, spurious reduction of production disj_expr_level -> conj_expr_level 
+## In state 162, spurious reduction of production base_expr(expr) -> disj_expr_level 
+## In state 219, spurious reduction of production base_cond__open(expr) -> base_expr(expr) 
+## In state 220, spurious reduction of production expr -> base_cond__open(expr) 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: LBRACKET True COMMA True COMMA WILD
+##
+## Ends in an error in state: 501.
+##
+## nsepseq(expr,COMMA) -> expr COMMA . nsepseq(expr,COMMA) [ RBRACKET ]
+## nseq(__anonymous_0(expr,COMMA)) -> expr COMMA . seq(__anonymous_0(expr,COMMA)) [ RBRACKET ]
+##
+## The known suffix of the stack is as follows:
+## expr COMMA
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: LBRACKET True COMMA True VBAR
+##
+## Ends in an error in state: 500.
+##
+## nsepseq(expr,COMMA) -> expr . [ RBRACKET ]
+## nsepseq(expr,COMMA) -> expr . COMMA nsepseq(expr,COMMA) [ RBRACKET ]
+## nseq(__anonymous_0(expr,COMMA)) -> expr . COMMA seq(__anonymous_0(expr,COMMA)) [ RBRACKET ]
+##
+## The known suffix of the stack is as follows:
+## expr
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 152, spurious reduction of production call_expr_level_in -> core_expr 
+## In state 170, spurious reduction of production option(type_annotation_simple) -> 
+## In state 171, spurious reduction of production call_expr_level -> call_expr_level_in option(type_annotation_simple) 
+## In state 172, spurious reduction of production unary_expr_level -> call_expr_level 
+## In state 125, spurious reduction of production mult_expr_level -> unary_expr_level 
+## In state 149, spurious reduction of production add_expr_level -> mult_expr_level 
+## In state 180, spurious reduction of production cat_expr_level -> add_expr_level 
+## In state 201, spurious reduction of production comp_expr_level -> cat_expr_level 
+## In state 208, spurious reduction of production conj_expr_level -> comp_expr_level 
+## In state 215, spurious reduction of production disj_expr_level -> conj_expr_level 
+## In state 162, spurious reduction of production base_expr(expr) -> disj_expr_level 
+## In state 219, spurious reduction of production base_cond__open(expr) -> base_expr(expr) 
+## In state 220, spurious reduction of production expr -> base_cond__open(expr) 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: LBRACKET True COMMA WILD
+##
+## Ends in an error in state: 492.
+##
+## list_or_spread -> LBRACKET expr COMMA . sep_or_term_list(expr,COMMA) RBRACKET [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
+## list_or_spread -> LBRACKET expr COMMA . ELLIPSIS expr RBRACKET [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
+##
+## The known suffix of the stack is as follows:
+## LBRACKET expr COMMA
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: LBRACKET True VBAR
+##
+## Ends in an error in state: 491.
+##
+## list_or_spread -> LBRACKET expr . COMMA sep_or_term_list(expr,COMMA) RBRACKET [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
+## list_or_spread -> LBRACKET expr . COMMA ELLIPSIS expr RBRACKET [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
+## option(expr) -> expr . [ RBRACKET ]
+##
+## The known suffix of the stack is as follows:
+## LBRACKET expr
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 152, spurious reduction of production call_expr_level_in -> core_expr 
+## In state 170, spurious reduction of production option(type_annotation_simple) -> 
+## In state 171, spurious reduction of production call_expr_level -> call_expr_level_in option(type_annotation_simple) 
+## In state 172, spurious reduction of production unary_expr_level -> call_expr_level 
+## In state 125, spurious reduction of production mult_expr_level -> unary_expr_level 
+## In state 149, spurious reduction of production add_expr_level -> mult_expr_level 
+## In state 180, spurious reduction of production cat_expr_level -> add_expr_level 
+## In state 201, spurious reduction of production comp_expr_level -> cat_expr_level 
+## In state 208, spurious reduction of production conj_expr_level -> comp_expr_level 
+## In state 215, spurious reduction of production disj_expr_level -> conj_expr_level 
+## In state 162, spurious reduction of production base_expr(expr) -> disj_expr_level 
+## In state 219, spurious reduction of production base_cond__open(expr) -> base_expr(expr) 
+## In state 220, spurious reduction of production expr -> base_cond__open(expr) 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: LBRACKET WILD
+##
+## Ends in an error in state: 90.
+##
+## list_or_spread -> LBRACKET . expr COMMA sep_or_term_list(expr,COMMA) RBRACKET [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
+## list_or_spread -> LBRACKET . expr COMMA ELLIPSIS expr RBRACKET [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
+## list_or_spread -> LBRACKET . option(expr) RBRACKET [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
+##
+## The known suffix of the stack is as follows:
+## LBRACKET
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: LPAR True COMMA Bytes RPAR COLON Ident TIMES
+##
+## Ends in an error in state: 162.
+##
+## base_expr(expr) -> disj_expr_level . [ VBAR Type SEMI RPAR RBRACKET RBRACE Let EOF COMMA Attr ]
+## bin_op(disj_expr_level,BOOL_OR,conj_expr_level) -> disj_expr_level . BOOL_OR conj_expr_level [ VBAR Type SEMI RPAR RBRACKET RBRACE Or Let EOF COMMA BOOL_OR Attr ARROW ]
+## bin_op(disj_expr_level,Or,conj_expr_level) -> disj_expr_level . Or conj_expr_level [ VBAR Type SEMI RPAR RBRACKET RBRACE Or Let EOF COMMA BOOL_OR Attr ARROW ]
+## fun_expr -> disj_expr_level . es6_func [ VBAR Type SEMI RPAR RBRACKET RBRACE Let EOF COMMA Attr ]
+##
+## The known suffix of the stack is as follows:
+## disj_expr_level
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 130, spurious reduction of production option(type_expr_simple_args) -> 
+## In state 139, spurious reduction of production type_expr_simple -> Ident option(type_expr_simple_args) 
+## In state 146, spurious reduction of production type_annotation_simple -> COLON type_expr_simple 
+## In state 147, spurious reduction of production option(type_annotation_simple) -> type_annotation_simple 
+## In state 148, spurious reduction of production disj_expr_level -> par(tuple(disj_expr_level)) option(type_annotation_simple) 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: LPAR True COMMA Bytes RPAR WILD
+##
+## Ends in an error in state: 127.
+##
+## disj_expr_level -> par(tuple(disj_expr_level)) . option(type_annotation_simple) [ VBAR Type SEMI RPAR RBRACKET RBRACE Or Let EOF COMMA BOOL_OR Attr ARROW ]
+##
+## The known suffix of the stack is as follows:
+## par(tuple(disj_expr_level))
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: LPAR True COMMA True COMMA WILD
+##
+## Ends in an error in state: 455.
+##
+## nsepseq(disj_expr_level,COMMA) -> disj_expr_level COMMA . nsepseq(disj_expr_level,COMMA) [ RPAR ]
+##
+## The known suffix of the stack is as follows:
+## disj_expr_level COMMA
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: LPAR True COMMA True VBAR
+##
+## Ends in an error in state: 454.
+##
+## bin_op(disj_expr_level,BOOL_OR,conj_expr_level) -> disj_expr_level . BOOL_OR conj_expr_level [ RPAR Or COMMA BOOL_OR ]
+## bin_op(disj_expr_level,Or,conj_expr_level) -> disj_expr_level . Or conj_expr_level [ RPAR Or COMMA BOOL_OR ]
+## nsepseq(disj_expr_level,COMMA) -> disj_expr_level . [ RPAR ]
+## nsepseq(disj_expr_level,COMMA) -> disj_expr_level . COMMA nsepseq(disj_expr_level,COMMA) [ RPAR ]
+##
+## The known suffix of the stack is as follows:
+## disj_expr_level
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 152, spurious reduction of production call_expr_level_in -> core_expr 
+## In state 170, spurious reduction of production option(type_annotation_simple) -> 
+## In state 171, spurious reduction of production call_expr_level -> call_expr_level_in option(type_annotation_simple) 
+## In state 172, spurious reduction of production unary_expr_level -> call_expr_level 
+## In state 125, spurious reduction of production mult_expr_level -> unary_expr_level 
+## In state 149, spurious reduction of production add_expr_level -> mult_expr_level 
+## In state 180, spurious reduction of production cat_expr_level -> add_expr_level 
+## In state 201, spurious reduction of production comp_expr_level -> cat_expr_level 
+## In state 208, spurious reduction of production conj_expr_level -> comp_expr_level 
+## In state 215, spurious reduction of production disj_expr_level -> conj_expr_level 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: LPAR True COMMA WILD
+##
+## Ends in an error in state: 452.
+##
+## tuple(disj_expr_level) -> disj_expr_level COMMA . nsepseq(disj_expr_level,COMMA) [ RPAR ]
+##
+## The known suffix of the stack is as follows:
+## disj_expr_level COMMA
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: LPAR True VBAR
+##
+## Ends in an error in state: 451.
+##
+## base_expr(expr) -> disj_expr_level . [ RPAR ]
+## bin_op(disj_expr_level,BOOL_OR,conj_expr_level) -> disj_expr_level . BOOL_OR conj_expr_level [ RPAR Or COMMA BOOL_OR ARROW ]
+## bin_op(disj_expr_level,Or,conj_expr_level) -> disj_expr_level . Or conj_expr_level [ RPAR Or COMMA BOOL_OR ARROW ]
+## fun_expr -> disj_expr_level . es6_func [ RPAR ]
+## tuple(disj_expr_level) -> disj_expr_level . COMMA nsepseq(disj_expr_level,COMMA) [ RPAR ]
+##
+## The known suffix of the stack is as follows:
+## disj_expr_level
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 152, spurious reduction of production call_expr_level_in -> core_expr 
+## In state 170, spurious reduction of production option(type_annotation_simple) -> 
+## In state 171, spurious reduction of production call_expr_level -> call_expr_level_in option(type_annotation_simple) 
+## In state 172, spurious reduction of production unary_expr_level -> call_expr_level 
+## In state 125, spurious reduction of production mult_expr_level -> unary_expr_level 
+## In state 149, spurious reduction of production add_expr_level -> mult_expr_level 
+## In state 180, spurious reduction of production cat_expr_level -> add_expr_level 
+## In state 201, spurious reduction of production comp_expr_level -> cat_expr_level 
+## In state 208, spurious reduction of production conj_expr_level -> comp_expr_level 
+## In state 215, spurious reduction of production disj_expr_level -> conj_expr_level 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: LPAR WILD
+##
+## Ends in an error in state: 93.
+##
+## par(expr) -> LPAR . expr RPAR [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
+## par(tuple(disj_expr_level)) -> LPAR . tuple(disj_expr_level) RPAR [ VBAR Type SEMI RPAR RBRACKET RBRACE Or Let EOF COMMA COLON BOOL_OR Attr ARROW ]
+## unit -> LPAR . RPAR [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
+##
+## The known suffix of the stack is as follows:
+## LPAR
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: Let VBAR
+##
+## Ends in an error in state: 351.
+##
+## let_expr(expr_with_let_expr) -> seq(Attr) Let . let_binding SEMI expr_with_let_expr [ SEMI RBRACE EOF ]
+##
+## The known suffix of the stack is as follows:
+## seq(Attr) Let
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: Let WILD EQ Bytes SEMI WILD
+##
+## Ends in an error in state: 394.
+##
+## let_expr(expr_with_let_expr) -> seq(Attr) Let let_binding SEMI . expr_with_let_expr [ SEMI RBRACE EOF ]
+##
+## The known suffix of the stack is as follows:
+## seq(Attr) Let let_binding SEMI
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: Let WILD EQ Bytes VBAR
+##
+## Ends in an error in state: 393.
+##
+## let_expr(expr_with_let_expr) -> seq(Attr) Let let_binding . SEMI expr_with_let_expr [ SEMI RBRACE EOF ]
+##
+## The known suffix of the stack is as follows:
+## seq(Attr) Let let_binding
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 152, spurious reduction of production call_expr_level_in -> core_expr 
+## In state 170, spurious reduction of production option(type_annotation_simple) -> 
+## In state 171, spurious reduction of production call_expr_level -> call_expr_level_in option(type_annotation_simple) 
+## In state 172, spurious reduction of production unary_expr_level -> call_expr_level 
+## In state 125, spurious reduction of production mult_expr_level -> unary_expr_level 
+## In state 149, spurious reduction of production add_expr_level -> mult_expr_level 
+## In state 180, spurious reduction of production cat_expr_level -> add_expr_level 
+## In state 201, spurious reduction of production comp_expr_level -> cat_expr_level 
+## In state 208, spurious reduction of production conj_expr_level -> comp_expr_level 
+## In state 215, spurious reduction of production disj_expr_level -> conj_expr_level 
+## In state 162, spurious reduction of production base_expr(expr) -> disj_expr_level 
+## In state 219, spurious reduction of production base_cond__open(expr) -> base_expr(expr) 
+## In state 220, spurious reduction of production expr -> base_cond__open(expr) 
+## In state 526, spurious reduction of production let_binding -> WILD option(type_annotation) EQ expr 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: MINUS WILD
+##
+## Ends in an error in state: 91.
+##
+## unary_expr_level -> MINUS . call_expr_level [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LE GT GE EQEQ EOF COMMA CAT BOOL_OR BOOL_AND Attr ARROW ]
+##
+## The known suffix of the stack is as follows:
+## MINUS
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: NOT WILD
+##
+## Ends in an error in state: 89.
+##
+## unary_expr_level -> NOT . call_expr_level [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LE GT GE EQEQ EOF COMMA CAT BOOL_OR BOOL_AND Attr ARROW ]
+##
+## The known suffix of the stack is as follows:
+## NOT
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: Switch Constr WILD
+##
+## Ends in an error in state: 111.
+##
+## module_field -> Constr . DOT Ident [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LE LBRACE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
+## projection -> Constr . DOT Ident selection [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LE LBRACE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
+##
+## The known suffix of the stack is as follows:
+## Constr
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: Switch LBRACE WILD
+##
+## Ends in an error in state: 244.
+##
+## update_record -> LBRACE . ELLIPSIS path COMMA sep_or_term_list(field_path_assignment,COMMA) RBRACE [ LBRACE ]
+##
+## The known suffix of the stack is as follows:
+## LBRACE
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: Switch LBRACKET True SEMI True SEMI WILD
+##
+## Ends in an error in state: 242.
+##
+## nsepseq(expr,SEMI) -> expr SEMI . nsepseq(expr,SEMI) [ RBRACKET ]
+## seq(__anonymous_0(expr,SEMI)) -> expr SEMI . seq(__anonymous_0(expr,SEMI)) [ RBRACKET ]
+##
+## The known suffix of the stack is as follows:
+## expr SEMI
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: Switch LBRACKET True SEMI True VBAR
+##
+## Ends in an error in state: 241.
+##
+## nsepseq(expr,SEMI) -> expr . [ RBRACKET ]
+## nsepseq(expr,SEMI) -> expr . SEMI nsepseq(expr,SEMI) [ RBRACKET ]
+## seq(__anonymous_0(expr,SEMI)) -> expr . SEMI seq(__anonymous_0(expr,SEMI)) [ RBRACKET ]
+##
+## The known suffix of the stack is as follows:
+## expr
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 152, spurious reduction of production call_expr_level_in -> core_expr 
+## In state 170, spurious reduction of production option(type_annotation_simple) -> 
+## In state 171, spurious reduction of production call_expr_level -> call_expr_level_in option(type_annotation_simple) 
+## In state 172, spurious reduction of production unary_expr_level -> call_expr_level 
+## In state 125, spurious reduction of production mult_expr_level -> unary_expr_level 
+## In state 149, spurious reduction of production add_expr_level -> mult_expr_level 
+## In state 180, spurious reduction of production cat_expr_level -> add_expr_level 
+## In state 201, spurious reduction of production comp_expr_level -> cat_expr_level 
+## In state 208, spurious reduction of production conj_expr_level -> comp_expr_level 
+## In state 215, spurious reduction of production disj_expr_level -> conj_expr_level 
+## In state 162, spurious reduction of production base_expr(expr) -> disj_expr_level 
+## In state 219, spurious reduction of production base_cond__open(expr) -> base_expr(expr) 
+## In state 220, spurious reduction of production expr -> base_cond__open(expr) 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: Switch LBRACKET True SEMI WILD
+##
+## Ends in an error in state: 238.
+##
+## nsepseq(expr,SEMI) -> expr SEMI . nsepseq(expr,SEMI) [ RBRACKET ]
+## nseq(__anonymous_0(expr,SEMI)) -> expr SEMI . seq(__anonymous_0(expr,SEMI)) [ RBRACKET ]
+##
+## The known suffix of the stack is as follows:
+## expr SEMI
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: Switch LBRACKET True VBAR
+##
+## Ends in an error in state: 237.
+##
+## nsepseq(expr,SEMI) -> expr . [ RBRACKET ]
+## nsepseq(expr,SEMI) -> expr . SEMI nsepseq(expr,SEMI) [ RBRACKET ]
+## nseq(__anonymous_0(expr,SEMI)) -> expr . SEMI seq(__anonymous_0(expr,SEMI)) [ RBRACKET ]
+##
+## The known suffix of the stack is as follows:
+## expr
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 152, spurious reduction of production call_expr_level_in -> core_expr 
+## In state 170, spurious reduction of production option(type_annotation_simple) -> 
+## In state 171, spurious reduction of production call_expr_level -> call_expr_level_in option(type_annotation_simple) 
+## In state 172, spurious reduction of production unary_expr_level -> call_expr_level 
+## In state 125, spurious reduction of production mult_expr_level -> unary_expr_level 
+## In state 149, spurious reduction of production add_expr_level -> mult_expr_level 
+## In state 180, spurious reduction of production cat_expr_level -> add_expr_level 
+## In state 201, spurious reduction of production comp_expr_level -> cat_expr_level 
+## In state 208, spurious reduction of production conj_expr_level -> comp_expr_level 
+## In state 215, spurious reduction of production disj_expr_level -> conj_expr_level 
+## In state 162, spurious reduction of production base_expr(expr) -> disj_expr_level 
+## In state 219, spurious reduction of production base_cond__open(expr) -> base_expr(expr) 
+## In state 220, spurious reduction of production expr -> base_cond__open(expr) 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: Switch LBRACKET WILD
+##
+## Ends in an error in state: 231.
+##
+## list__(expr) -> LBRACKET . option(sep_or_term_list(expr,SEMI)) RBRACKET [ LBRACE ]
+##
+## The known suffix of the stack is as follows:
+## LBRACKET
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: Switch LPAR True VBAR
+##
+## Ends in an error in state: 449.
+##
+## par(expr) -> LPAR expr . RPAR [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE LBRACE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
+##
+## The known suffix of the stack is as follows:
+## LPAR expr
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 152, spurious reduction of production call_expr_level_in -> core_expr 
+## In state 170, spurious reduction of production option(type_annotation_simple) -> 
+## In state 171, spurious reduction of production call_expr_level -> call_expr_level_in option(type_annotation_simple) 
+## In state 172, spurious reduction of production unary_expr_level -> call_expr_level 
+## In state 125, spurious reduction of production mult_expr_level -> unary_expr_level 
+## In state 149, spurious reduction of production add_expr_level -> mult_expr_level 
+## In state 180, spurious reduction of production cat_expr_level -> add_expr_level 
+## In state 201, spurious reduction of production comp_expr_level -> cat_expr_level 
+## In state 208, spurious reduction of production conj_expr_level -> comp_expr_level 
+## In state 215, spurious reduction of production disj_expr_level -> conj_expr_level 
+## In state 162, spurious reduction of production base_expr(expr) -> disj_expr_level 
+## In state 219, spurious reduction of production base_cond__open(expr) -> base_expr(expr) 
+## In state 220, spurious reduction of production expr -> base_cond__open(expr) 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: Switch LPAR WILD
+##
+## Ends in an error in state: 87.
+##
+## par(expr) -> LPAR . expr RPAR [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE LBRACE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
+## unit -> LPAR . RPAR [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE LBRACE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
+##
+## The known suffix of the stack is as follows:
+## LPAR
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: Switch True LBRACE VBAR LBRACKET VBAR
+##
+## Ends in an error in state: 333.
+##
+## list__(sub_pattern) -> LBRACKET . option(sep_or_term_list(sub_pattern,SEMI)) RBRACKET [ COMMA ARROW ]
+## pattern -> LBRACKET . sub_pattern COMMA ELLIPSIS sub_pattern RBRACKET [ ARROW ]
+##
+## The known suffix of the stack is as follows:
+## LBRACKET
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: Switch True LBRACE VBAR LBRACKET WILD COMMA ELLIPSIS VBAR
+##
+## Ends in an error in state: 336.
+##
+## pattern -> LBRACKET sub_pattern COMMA ELLIPSIS . sub_pattern RBRACKET [ ARROW ]
+##
+## The known suffix of the stack is as follows:
+## LBRACKET sub_pattern COMMA ELLIPSIS
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: Switch True LBRACE VBAR LBRACKET WILD COMMA ELLIPSIS WILD WILD
+##
+## Ends in an error in state: 337.
+##
+## pattern -> LBRACKET sub_pattern COMMA ELLIPSIS sub_pattern . RBRACKET [ ARROW ]
+##
+## The known suffix of the stack is as follows:
+## LBRACKET sub_pattern COMMA ELLIPSIS sub_pattern
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: Switch True LBRACE VBAR LBRACKET WILD COMMA WILD
+##
+## Ends in an error in state: 335.
+##
+## pattern -> LBRACKET sub_pattern COMMA . ELLIPSIS sub_pattern RBRACKET [ ARROW ]
+##
+## The known suffix of the stack is as follows:
+## LBRACKET sub_pattern COMMA
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: Switch True LBRACE VBAR LBRACKET WILD WILD
+##
+## Ends in an error in state: 334.
+##
+## nsepseq(sub_pattern,SEMI) -> sub_pattern . [ RBRACKET ]
+## nsepseq(sub_pattern,SEMI) -> sub_pattern . SEMI nsepseq(sub_pattern,SEMI) [ RBRACKET ]
+## nseq(__anonymous_0(sub_pattern,SEMI)) -> sub_pattern . SEMI seq(__anonymous_0(sub_pattern,SEMI)) [ RBRACKET ]
+## pattern -> LBRACKET sub_pattern . COMMA ELLIPSIS sub_pattern RBRACKET [ ARROW ]
+##
+## The known suffix of the stack is as follows:
+## LBRACKET sub_pattern
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: Switch True LBRACE VBAR LPAR Bytes RPAR WILD
+##
+## Ends in an error in state: 340.
+##
+## tuple(sub_pattern) -> sub_pattern . COMMA nsepseq(sub_pattern,COMMA) [ ARROW ]
+##
+## The known suffix of the stack is as follows:
+## sub_pattern
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: Switch True LBRACE VBAR VBAR
+##
+## Ends in an error in state: 509.
+##
+## case_clause(base_cond) -> VBAR . pattern ARROW base_cond option(SEMI) [ VBAR RBRACE ]
+##
+## The known suffix of the stack is as follows:
+## VBAR
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: Switch True LBRACE VBAR WILD ARROW Bytes SEMI WILD
+##
+## Ends in an error in state: 522.
+##
+## nseq(case_clause(base_cond)) -> case_clause(base_cond) . seq(case_clause(base_cond)) [ RBRACE ]
+##
+## The known suffix of the stack is as follows:
+## case_clause(base_cond)
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: Switch True LBRACE VBAR WILD ARROW Bytes VBAR Bytes ARROW Bytes SEMI WILD
+##
+## Ends in an error in state: 524.
+##
+## seq(case_clause(base_cond)) -> case_clause(base_cond) . seq(case_clause(base_cond)) [ RBRACE ]
+##
+## The known suffix of the stack is as follows:
+## case_clause(base_cond)
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: Switch True LBRACE VBAR WILD ARROW True ARROW Bytes Type
+##
+## Ends in an error in state: 517.
+##
+## case_clause(base_cond) -> VBAR pattern ARROW base_cond . option(SEMI) [ VBAR RBRACE ]
+##
+## The known suffix of the stack is as follows:
+## VBAR pattern ARROW base_cond
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 152, spurious reduction of production call_expr_level_in -> core_expr 
+## In state 170, spurious reduction of production option(type_annotation_simple) -> 
+## In state 171, spurious reduction of production call_expr_level -> call_expr_level_in option(type_annotation_simple) 
+## In state 172, spurious reduction of production unary_expr_level -> call_expr_level 
+## In state 125, spurious reduction of production mult_expr_level -> unary_expr_level 
+## In state 149, spurious reduction of production add_expr_level -> mult_expr_level 
+## In state 180, spurious reduction of production cat_expr_level -> add_expr_level 
+## In state 201, spurious reduction of production comp_expr_level -> cat_expr_level 
+## In state 208, spurious reduction of production conj_expr_level -> comp_expr_level 
+## In state 215, spurious reduction of production disj_expr_level -> conj_expr_level 
+## In state 162, spurious reduction of production base_expr(expr) -> disj_expr_level 
+## In state 219, spurious reduction of production base_cond__open(expr) -> base_expr(expr) 
+## In state 220, spurious reduction of production expr -> base_cond__open(expr) 
+## In state 213, spurious reduction of production es6_func -> ARROW expr 
+## In state 221, spurious reduction of production fun_expr -> disj_expr_level es6_func 
+## In state 512, spurious reduction of production base_expr(base_cond) -> fun_expr 
+## In state 515, spurious reduction of production base_cond__open(base_cond) -> base_expr(base_cond) 
+## In state 516, spurious reduction of production base_cond -> base_cond__open(base_cond) 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: Switch True LBRACE VBAR WILD ARROW True Type
+##
+## Ends in an error in state: 513.
+##
+## base_expr(base_cond) -> disj_expr_level . [ VBAR SEMI RBRACE ]
+## bin_op(disj_expr_level,BOOL_OR,conj_expr_level) -> disj_expr_level . BOOL_OR conj_expr_level [ VBAR SEMI RBRACE Or BOOL_OR ARROW ]
+## bin_op(disj_expr_level,Or,conj_expr_level) -> disj_expr_level . Or conj_expr_level [ VBAR SEMI RBRACE Or BOOL_OR ARROW ]
+## fun_expr -> disj_expr_level . es6_func [ VBAR SEMI RBRACE ]
+##
+## The known suffix of the stack is as follows:
+## disj_expr_level
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 152, spurious reduction of production call_expr_level_in -> core_expr 
+## In state 170, spurious reduction of production option(type_annotation_simple) -> 
+## In state 171, spurious reduction of production call_expr_level -> call_expr_level_in option(type_annotation_simple) 
+## In state 172, spurious reduction of production unary_expr_level -> call_expr_level 
+## In state 125, spurious reduction of production mult_expr_level -> unary_expr_level 
+## In state 149, spurious reduction of production add_expr_level -> mult_expr_level 
+## In state 180, spurious reduction of production cat_expr_level -> add_expr_level 
+## In state 201, spurious reduction of production comp_expr_level -> cat_expr_level 
+## In state 208, spurious reduction of production conj_expr_level -> comp_expr_level 
+## In state 215, spurious reduction of production disj_expr_level -> conj_expr_level 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: Switch True LBRACE VBAR WILD ARROW WILD
+##
+## Ends in an error in state: 511.
+##
+## case_clause(base_cond) -> VBAR pattern ARROW . base_cond option(SEMI) [ VBAR RBRACE ]
+##
+## The known suffix of the stack is as follows:
+## VBAR pattern ARROW
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: Switch True LBRACE VBAR WILD COMMA Bytes RPAR
+##
+## Ends in an error in state: 510.
+##
+## case_clause(base_cond) -> VBAR pattern . ARROW base_cond option(SEMI) [ VBAR RBRACE ]
+##
+## The known suffix of the stack is as follows:
+## VBAR pattern
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 327, spurious reduction of production nsepseq(sub_pattern,COMMA) -> sub_pattern 
+## In state 330, spurious reduction of production tuple(sub_pattern) -> sub_pattern COMMA nsepseq(sub_pattern,COMMA) 
+## In state 339, spurious reduction of production pattern -> tuple(sub_pattern) 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: Switch True LBRACE VBAR WILD COMMA VBAR
+##
+## Ends in an error in state: 326.
+##
+## tuple(sub_pattern) -> sub_pattern COMMA . nsepseq(sub_pattern,COMMA) [ RPAR ARROW ]
+##
+## The known suffix of the stack is as follows:
+## sub_pattern COMMA
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: Switch True LBRACE VBAR WILD COMMA WILD COMMA VBAR
+##
+## Ends in an error in state: 328.
+##
+## nsepseq(sub_pattern,COMMA) -> sub_pattern COMMA . nsepseq(sub_pattern,COMMA) [ RPAR ARROW ]
+##
+## The known suffix of the stack is as follows:
+## sub_pattern COMMA
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: Switch True LBRACE VBAR WILD COMMA WILD WILD
+##
+## Ends in an error in state: 327.
+##
+## nsepseq(sub_pattern,COMMA) -> sub_pattern . [ RPAR ARROW ]
+## nsepseq(sub_pattern,COMMA) -> sub_pattern . COMMA nsepseq(sub_pattern,COMMA) [ RPAR ARROW ]
+##
+## The known suffix of the stack is as follows:
+## sub_pattern
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: Switch True LBRACE VBAR WILD WILD
+##
+## Ends in an error in state: 427.
+##
+## pattern -> core_pattern . [ ARROW ]
+## sub_pattern -> core_pattern . [ COMMA ]
+##
+## The known suffix of the stack is as follows:
+## core_pattern
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: Switch True LBRACE WILD
+##
+## Ends in an error in state: 508.
+##
+## switch_expr(base_cond) -> Switch switch_expr_ LBRACE . cases(base_cond) RBRACE [ VBAR Type SEMI RPAR RBRACKET RBRACE Let EOF COMMA Attr ]
+##
+## The known suffix of the stack is as follows:
+## Switch switch_expr_ LBRACE
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: Switch True WILD
+##
+## Ends in an error in state: 507.
+##
+## switch_expr(base_cond) -> Switch switch_expr_ . LBRACE cases(base_cond) RBRACE [ VBAR Type SEMI RPAR RBRACKET RBRACE Let EOF COMMA Attr ]
+##
+## The known suffix of the stack is as follows:
+## Switch switch_expr_
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: Switch WILD
+##
+## Ends in an error in state: 83.
+##
+## switch_expr(base_cond) -> Switch . switch_expr_ LBRACE cases(base_cond) RBRACE [ VBAR Type SEMI RPAR RBRACKET RBRACE Let EOF COMMA Attr ]
+##
+## The known suffix of the stack is as follows:
+## Switch
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: True ARROW WILD
+##
+## Ends in an error in state: 212.
+##
+## es6_func -> ARROW . expr [ VBAR Type SEMI RPAR RBRACKET RBRACE Let EOF COMMA Attr ]
+##
+## The known suffix of the stack is as follows:
+## ARROW
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: True BOOL_AND WILD
+##
+## Ends in an error in state: 166.
+##
+## bin_op(conj_expr_level,BOOL_AND,comp_expr_level) -> conj_expr_level BOOL_AND . comp_expr_level [ VBAR Type SEMI RPAR RBRACKET RBRACE Or Let EOF COMMA BOOL_OR BOOL_AND Attr ARROW ]
+##
+## The known suffix of the stack is as follows:
+## conj_expr_level BOOL_AND
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: True BOOL_OR WILD
+##
+## Ends in an error in state: 210.
+##
+## bin_op(disj_expr_level,BOOL_OR,conj_expr_level) -> disj_expr_level BOOL_OR . conj_expr_level [ VBAR Type SEMI RPAR RBRACKET RBRACE Or Let EOF COMMA BOOL_OR Attr ARROW ]
+##
+## The known suffix of the stack is as follows:
+## disj_expr_level BOOL_OR
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: True CAT WILD
+##
+## Ends in an error in state: 189.
+##
+## bin_op(add_expr_level,CAT,cat_expr_level) -> add_expr_level CAT . cat_expr_level [ VBAR Type SEMI RPAR RBRACKET RBRACE Or NE Let LT LE GT GE EQEQ EOF COMMA BOOL_OR BOOL_AND Attr ARROW ]
+##
+## The known suffix of the stack is as follows:
+## add_expr_level CAT
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: True COLON Ident LPAR Ident VBAR
+##
+## Ends in an error in state: 132.
+##
+## nsepseq(type_expr_simple,COMMA) -> type_expr_simple . [ RPAR ]
+## nsepseq(type_expr_simple,COMMA) -> type_expr_simple . COMMA nsepseq(type_expr_simple,COMMA) [ RPAR ]
+##
+## The known suffix of the stack is as follows:
+## type_expr_simple
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 130, spurious reduction of production option(type_expr_simple_args) -> 
+## In state 139, spurious reduction of production type_expr_simple -> Ident option(type_expr_simple_args) 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: True COLON Ident LPAR WILD
+##
+## Ends in an error in state: 131.
+##
+## par(nsepseq(type_expr_simple,COMMA)) -> LPAR . nsepseq(type_expr_simple,COMMA) RPAR [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LE GT GE EQEQ EOF COMMA CAT BOOL_OR BOOL_AND Attr ARROW ]
+##
+## The known suffix of the stack is as follows:
+## LPAR
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: True COLON Ident WILD
+##
+## Ends in an error in state: 130.
+##
+## type_expr_simple -> Ident . option(type_expr_simple_args) [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LE GT GE EQEQ EOF COMMA CAT BOOL_OR BOOL_AND Attr ARROW ]
+##
+## The known suffix of the stack is as follows:
+## Ident
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: True COLON LPAR Ident ARROW Ident VBAR
+##
+## Ends in an error in state: 142.
+##
+## type_expr_simple -> LPAR type_expr_simple ARROW type_expr_simple . RPAR [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LE GT GE EQEQ EOF COMMA CAT BOOL_OR BOOL_AND Attr ARROW ]
+##
+## The known suffix of the stack is as follows:
+## LPAR type_expr_simple ARROW type_expr_simple
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 130, spurious reduction of production option(type_expr_simple_args) -> 
+## In state 139, spurious reduction of production type_expr_simple -> Ident option(type_expr_simple_args) 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: True COLON LPAR Ident ARROW WILD
+##
+## Ends in an error in state: 141.
+##
+## type_expr_simple -> LPAR type_expr_simple ARROW . type_expr_simple RPAR [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LE GT GE EQEQ EOF COMMA CAT BOOL_OR BOOL_AND Attr ARROW ]
+##
+## The known suffix of the stack is as follows:
+## LPAR type_expr_simple ARROW
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: True COLON LPAR Ident COMMA WILD
+##
+## Ends in an error in state: 133.
+##
+## nsepseq(type_expr_simple,COMMA) -> type_expr_simple COMMA . nsepseq(type_expr_simple,COMMA) [ RPAR ]
+##
+## The known suffix of the stack is as follows:
+## type_expr_simple COMMA
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: True COLON LPAR Ident RPAR WILD
+##
+## Ends in an error in state: 149.
+##
+## add_expr_level -> mult_expr_level . [ VBAR Type SEMI RPAR RBRACKET RBRACE PLUS Or NE MINUS Let LT LE GT GE EQEQ EOF COMMA CAT BOOL_OR BOOL_AND Attr ARROW ]
+## bin_op(mult_expr_level,Mod,unary_expr_level) -> mult_expr_level . Mod unary_expr_level [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LE GT GE EQEQ EOF COMMA CAT BOOL_OR BOOL_AND Attr ARROW ]
+## bin_op(mult_expr_level,SLASH,unary_expr_level) -> mult_expr_level . SLASH unary_expr_level [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LE GT GE EQEQ EOF COMMA CAT BOOL_OR BOOL_AND Attr ARROW ]
+## bin_op(mult_expr_level,TIMES,unary_expr_level) -> mult_expr_level . TIMES unary_expr_level [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LE GT GE EQEQ EOF COMMA CAT BOOL_OR BOOL_AND Attr ARROW ]
+##
+## The known suffix of the stack is as follows:
+## mult_expr_level
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: True COLON LPAR Ident VBAR
+##
+## Ends in an error in state: 140.
+##
+## nsepseq(type_expr_simple,COMMA) -> type_expr_simple . [ RPAR ]
+## nsepseq(type_expr_simple,COMMA) -> type_expr_simple . COMMA nsepseq(type_expr_simple,COMMA) [ RPAR ]
+## type_expr_simple -> LPAR type_expr_simple . ARROW type_expr_simple RPAR [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LE GT GE EQEQ EOF COMMA CAT BOOL_OR BOOL_AND Attr ARROW ]
+##
+## The known suffix of the stack is as follows:
+## LPAR type_expr_simple
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 130, spurious reduction of production option(type_expr_simple_args) -> 
+## In state 139, spurious reduction of production type_expr_simple -> Ident option(type_expr_simple_args) 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: True COLON LPAR WILD
+##
+## Ends in an error in state: 129.
+##
+## type_expr_simple -> LPAR . nsepseq(type_expr_simple,COMMA) RPAR [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LE GT GE EQEQ EOF COMMA CAT BOOL_OR BOOL_AND Attr ARROW ]
+## type_expr_simple -> LPAR . type_expr_simple ARROW type_expr_simple RPAR [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LE GT GE EQEQ EOF COMMA CAT BOOL_OR BOOL_AND Attr ARROW ]
+##
+## The known suffix of the stack is as follows:
+## LPAR
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: True COLON WILD
+##
+## Ends in an error in state: 128.
+##
+## type_annotation_simple -> COLON . type_expr_simple [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LE GT GE EQEQ EOF COMMA CAT BOOL_OR BOOL_AND Attr ARROW ]
+##
+## The known suffix of the stack is as follows:
+## COLON
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: True EQEQ WILD
+##
+## Ends in an error in state: 199.
+##
+## bin_op(comp_expr_level,EQEQ,cat_expr_level) -> comp_expr_level EQEQ . cat_expr_level [ VBAR Type SEMI RPAR RBRACKET RBRACE Or NE Let LT LE GT GE EQEQ EOF COMMA BOOL_OR BOOL_AND Attr ARROW ]
+##
+## The known suffix of the stack is as follows:
+## comp_expr_level EQEQ
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: True GE WILD
+##
+## Ends in an error in state: 197.
+##
+## bin_op(comp_expr_level,GE,cat_expr_level) -> comp_expr_level GE . cat_expr_level [ VBAR Type SEMI RPAR RBRACKET RBRACE Or NE Let LT LE GT GE EQEQ EOF COMMA BOOL_OR BOOL_AND Attr ARROW ]
+##
+## The known suffix of the stack is as follows:
+## comp_expr_level GE
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: True GT WILD
+##
+## Ends in an error in state: 195.
+##
+## bin_op(comp_expr_level,GT,cat_expr_level) -> comp_expr_level GT . cat_expr_level [ VBAR Type SEMI RPAR RBRACKET RBRACE Or NE Let LT LE GT GE EQEQ EOF COMMA BOOL_OR BOOL_AND Attr ARROW ]
+##
+## The known suffix of the stack is as follows:
+## comp_expr_level GT
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: True LE WILD
+##
+## Ends in an error in state: 193.
+##
+## bin_op(comp_expr_level,LE,cat_expr_level) -> comp_expr_level LE . cat_expr_level [ VBAR Type SEMI RPAR RBRACKET RBRACE Or NE Let LT LE GT GE EQEQ EOF COMMA BOOL_OR BOOL_AND Attr ARROW ]
+##
+## The known suffix of the stack is as follows:
+## comp_expr_level LE
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: True LPAR True COMMA WILD
+##
+## Ends in an error in state: 160.
+##
+## nsepseq(expr,COMMA) -> expr COMMA . nsepseq(expr,COMMA) [ RPAR ]
+##
+## The known suffix of the stack is as follows:
+## expr COMMA
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: True LPAR True VBAR
+##
+## Ends in an error in state: 159.
+##
+## nsepseq(expr,COMMA) -> expr . [ RPAR ]
+## nsepseq(expr,COMMA) -> expr . COMMA nsepseq(expr,COMMA) [ RPAR ]
+##
+## The known suffix of the stack is as follows:
+## expr
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 152, spurious reduction of production call_expr_level_in -> core_expr 
+## In state 170, spurious reduction of production option(type_annotation_simple) -> 
+## In state 171, spurious reduction of production call_expr_level -> call_expr_level_in option(type_annotation_simple) 
+## In state 172, spurious reduction of production unary_expr_level -> call_expr_level 
+## In state 125, spurious reduction of production mult_expr_level -> unary_expr_level 
+## In state 149, spurious reduction of production add_expr_level -> mult_expr_level 
+## In state 180, spurious reduction of production cat_expr_level -> add_expr_level 
+## In state 201, spurious reduction of production comp_expr_level -> cat_expr_level 
+## In state 208, spurious reduction of production conj_expr_level -> comp_expr_level 
+## In state 215, spurious reduction of production disj_expr_level -> conj_expr_level 
+## In state 162, spurious reduction of production base_expr(expr) -> disj_expr_level 
+## In state 219, spurious reduction of production base_cond__open(expr) -> base_expr(expr) 
+## In state 220, spurious reduction of production expr -> base_cond__open(expr) 
+##
+
+Missing `)`.
+
+interactive_expr: True LPAR WILD
+##
+## Ends in an error in state: 153.
+##
+## call_expr -> core_expr LPAR . nsepseq(expr,COMMA) RPAR [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
+## unit -> LPAR . RPAR [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
+##
+## The known suffix of the stack is as follows:
+## core_expr LPAR
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: True LT WILD
+##
+## Ends in an error in state: 191.
+##
+## bin_op(comp_expr_level,LT,cat_expr_level) -> comp_expr_level LT . cat_expr_level [ VBAR Type SEMI RPAR RBRACKET RBRACE Or NE Let LT LE GT GE EQEQ EOF COMMA BOOL_OR BOOL_AND Attr ARROW ]
+##
+## The known suffix of the stack is as follows:
+## comp_expr_level LT
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: True MINUS True COLON LPAR Ident RPAR WILD
+##
+## Ends in an error in state: 188.
+##
+## bin_op(add_expr_level,MINUS,mult_expr_level) -> add_expr_level MINUS mult_expr_level . [ VBAR Type SEMI RPAR RBRACKET RBRACE PLUS Or NE MINUS Let LT LE GT GE EQEQ EOF COMMA CAT BOOL_OR BOOL_AND Attr ARROW ]
+## bin_op(mult_expr_level,Mod,unary_expr_level) -> mult_expr_level . Mod unary_expr_level [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LE GT GE EQEQ EOF COMMA CAT BOOL_OR BOOL_AND Attr ARROW ]
+## bin_op(mult_expr_level,SLASH,unary_expr_level) -> mult_expr_level . SLASH unary_expr_level [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LE GT GE EQEQ EOF COMMA CAT BOOL_OR BOOL_AND Attr ARROW ]
+## bin_op(mult_expr_level,TIMES,unary_expr_level) -> mult_expr_level . TIMES unary_expr_level [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LE GT GE EQEQ EOF COMMA CAT BOOL_OR BOOL_AND Attr ARROW ]
+##
+## The known suffix of the stack is as follows:
+## add_expr_level MINUS mult_expr_level
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: True MINUS WILD
+##
+## Ends in an error in state: 187.
+##
+## bin_op(add_expr_level,MINUS,mult_expr_level) -> add_expr_level MINUS . mult_expr_level [ VBAR Type SEMI RPAR RBRACKET RBRACE PLUS Or NE MINUS Let LT LE GT GE EQEQ EOF COMMA CAT BOOL_OR BOOL_AND Attr ARROW ]
+##
+## The known suffix of the stack is as follows:
+## add_expr_level MINUS
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: True Mod WILD
+##
+## Ends in an error in state: 185.
+##
+## bin_op(mult_expr_level,Mod,unary_expr_level) -> mult_expr_level Mod . unary_expr_level [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LE GT GE EQEQ EOF COMMA CAT BOOL_OR BOOL_AND Attr ARROW ]
+##
+## The known suffix of the stack is as follows:
+## mult_expr_level Mod
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: True NE WILD
+##
+## Ends in an error in state: 168.
+##
+## bin_op(comp_expr_level,NE,cat_expr_level) -> comp_expr_level NE . cat_expr_level [ VBAR Type SEMI RPAR RBRACKET RBRACE Or NE Let LT LE GT GE EQEQ EOF COMMA BOOL_OR BOOL_AND Attr ARROW ]
+##
+## The known suffix of the stack is as follows:
+## comp_expr_level NE
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: True Or WILD
+##
+## Ends in an error in state: 163.
+##
+## bin_op(disj_expr_level,Or,conj_expr_level) -> disj_expr_level Or . conj_expr_level [ VBAR Type SEMI RPAR RBRACKET RBRACE Or Let EOF COMMA BOOL_OR Attr ARROW ]
+##
+## The known suffix of the stack is as follows:
+## disj_expr_level Or
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: True PLUS True COLON LPAR Ident RPAR WILD
+##
+## Ends in an error in state: 182.
+##
+## bin_op(add_expr_level,PLUS,mult_expr_level) -> add_expr_level PLUS mult_expr_level . [ VBAR Type SEMI RPAR RBRACKET RBRACE PLUS Or NE MINUS Let LT LE GT GE EQEQ EOF COMMA CAT BOOL_OR BOOL_AND Attr ARROW ]
+## bin_op(mult_expr_level,Mod,unary_expr_level) -> mult_expr_level . Mod unary_expr_level [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LE GT GE EQEQ EOF COMMA CAT BOOL_OR BOOL_AND Attr ARROW ]
+## bin_op(mult_expr_level,SLASH,unary_expr_level) -> mult_expr_level . SLASH unary_expr_level [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LE GT GE EQEQ EOF COMMA CAT BOOL_OR BOOL_AND Attr ARROW ]
+## bin_op(mult_expr_level,TIMES,unary_expr_level) -> mult_expr_level . TIMES unary_expr_level [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LE GT GE EQEQ EOF COMMA CAT BOOL_OR BOOL_AND Attr ARROW ]
+##
+## The known suffix of the stack is as follows:
+## add_expr_level PLUS mult_expr_level
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: True PLUS WILD
+##
+## Ends in an error in state: 181.
+##
+## bin_op(add_expr_level,PLUS,mult_expr_level) -> add_expr_level PLUS . mult_expr_level [ VBAR Type SEMI RPAR RBRACKET RBRACE PLUS Or NE MINUS Let LT LE GT GE EQEQ EOF COMMA CAT BOOL_OR BOOL_AND Attr ARROW ]
+##
+## The known suffix of the stack is as follows:
+## add_expr_level PLUS
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: True SLASH WILD
+##
+## Ends in an error in state: 183.
+##
+## bin_op(mult_expr_level,SLASH,unary_expr_level) -> mult_expr_level SLASH . unary_expr_level [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LE GT GE EQEQ EOF COMMA CAT BOOL_OR BOOL_AND Attr ARROW ]
+##
+## The known suffix of the stack is as follows:
+## mult_expr_level SLASH
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: True TIMES WILD
+##
+## Ends in an error in state: 150.
+##
+## bin_op(mult_expr_level,TIMES,unary_expr_level) -> mult_expr_level TIMES . unary_expr_level [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LE GT GE EQEQ EOF COMMA CAT BOOL_OR BOOL_AND Attr ARROW ]
+##
+## The known suffix of the stack is as follows:
+## mult_expr_level TIMES
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: True VBAR
+##
+## Ends in an error in state: 537.
+##
+## interactive_expr -> expr_with_let_expr . EOF [ # ]
+##
+## The known suffix of the stack is as follows:
+## expr_with_let_expr
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 152, spurious reduction of production call_expr_level_in -> core_expr 
+## In state 170, spurious reduction of production option(type_annotation_simple) -> 
+## In state 171, spurious reduction of production call_expr_level -> call_expr_level_in option(type_annotation_simple) 
+## In state 172, spurious reduction of production unary_expr_level -> call_expr_level 
+## In state 125, spurious reduction of production mult_expr_level -> unary_expr_level 
+## In state 149, spurious reduction of production add_expr_level -> mult_expr_level 
+## In state 180, spurious reduction of production cat_expr_level -> add_expr_level 
+## In state 201, spurious reduction of production comp_expr_level -> cat_expr_level 
+## In state 208, spurious reduction of production conj_expr_level -> comp_expr_level 
+## In state 215, spurious reduction of production disj_expr_level -> conj_expr_level 
+## In state 162, spurious reduction of production base_expr(expr) -> disj_expr_level 
+## In state 219, spurious reduction of production base_cond__open(expr) -> base_expr(expr) 
+## In state 220, spurious reduction of production expr -> base_cond__open(expr) 
+## In state 397, spurious reduction of production expr_with_let_expr -> expr 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: True WILD
+##
+## Ends in an error in state: 152.
+##
+## call_expr -> core_expr . LPAR nsepseq(expr,COMMA) RPAR [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
+## call_expr -> core_expr . unit [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
+## call_expr_level_in -> core_expr . [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
+##
+## The known suffix of the stack is as follows:
+## core_expr
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: WILD
+##
+## Ends in an error in state: 535.
+##
+## interactive_expr' -> . interactive_expr [ # ]
+##
+## The known suffix of the stack is as follows:
+##
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: Attr WILD
+##
+## Ends in an error in state: 69.
+##
+## seq(Attr) -> Attr . seq(Attr) [ Let ]
+##
+## The known suffix of the stack is as follows:
+## Attr
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: Let Ident COLON Constr Type
+##
+## Ends in an error in state: 373.
+##
+## let_binding -> Ident option(type_annotation) . EQ expr [ Type SEMI Let EOF Attr ]
+##
+## The known suffix of the stack is as follows:
+## Ident option(type_annotation)
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 48, spurious reduction of production variant -> Constr 
+## In state 41, spurious reduction of production nsepseq(variant,VBAR) -> variant 
+## In state 52, spurious reduction of production sum_type -> nsepseq(variant,VBAR) 
+## In state 66, spurious reduction of production type_expr -> sum_type 
+## In state 78, spurious reduction of production type_annotation -> COLON type_expr 
+## In state 79, spurious reduction of production option(type_annotation) -> type_annotation 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: Let Ident EQ WILD
+##
+## Ends in an error in state: 374.
+##
+## let_binding -> Ident option(type_annotation) EQ . expr [ Type SEMI Let EOF Attr ]
+##
+## The known suffix of the stack is as follows:
+## Ident option(type_annotation) EQ
+##
+
+This is an incorrect let binding. 
+-
+Examples of correct let bindings: 
+let a: int = 4;
+let (a: int, b: int) = (1, 2);
+let func = (a: int, b: int) => a + b;
+
+contract: Let Ident WILD
+##
+## Ends in an error in state: 372.
+##
+## let_binding -> Ident . option(type_annotation) EQ expr [ Type SEMI Let EOF Attr ]
+## sub_irrefutable -> Ident . [ COMMA ]
+##
+## The known suffix of the stack is as follows:
+## Ident
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: Let LBRACE Ident EQ Bytes COMMA Ident EQ Bytes COMMA WILD
+##
+## Ends in an error in state: 309.
+##
+## nsepseq(field_pattern,COMMA) -> field_pattern COMMA . nsepseq(field_pattern,COMMA) [ RBRACE ]
+## seq(__anonymous_0(field_pattern,COMMA)) -> field_pattern COMMA . seq(__anonymous_0(field_pattern,COMMA)) [ RBRACE ]
+##
+## The known suffix of the stack is as follows:
+## field_pattern COMMA
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: Let LBRACE Ident EQ Bytes COMMA Ident EQ Bytes WILD
+##
+## Ends in an error in state: 308.
+##
+## nsepseq(field_pattern,COMMA) -> field_pattern . [ RBRACE ]
+## nsepseq(field_pattern,COMMA) -> field_pattern . COMMA nsepseq(field_pattern,COMMA) [ RBRACE ]
+## seq(__anonymous_0(field_pattern,COMMA)) -> field_pattern . COMMA seq(__anonymous_0(field_pattern,COMMA)) [ RBRACE ]
+##
+## The known suffix of the stack is as follows:
+## field_pattern
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: Let LBRACE Ident EQ Bytes COMMA WILD
+##
+## Ends in an error in state: 305.
+##
+## nsepseq(field_pattern,COMMA) -> field_pattern COMMA . nsepseq(field_pattern,COMMA) [ RBRACE ]
+## nseq(__anonymous_0(field_pattern,COMMA)) -> field_pattern COMMA . seq(__anonymous_0(field_pattern,COMMA)) [ RBRACE ]
+##
+## The known suffix of the stack is as follows:
+## field_pattern COMMA
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: Let LBRACE Ident EQ Bytes RBRACE COLON Constr Type
+##
+## Ends in an error in state: 386.
+##
+## let_binding -> record_pattern option(type_annotation) . EQ expr [ Type SEMI Let EOF Attr ]
+##
+## The known suffix of the stack is as follows:
+## record_pattern option(type_annotation)
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 48, spurious reduction of production variant -> Constr 
+## In state 41, spurious reduction of production nsepseq(variant,VBAR) -> variant 
+## In state 52, spurious reduction of production sum_type -> nsepseq(variant,VBAR) 
+## In state 66, spurious reduction of production type_expr -> sum_type 
+## In state 78, spurious reduction of production type_annotation -> COLON type_expr 
+## In state 79, spurious reduction of production option(type_annotation) -> type_annotation 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: Let LBRACE Ident EQ Bytes RBRACE EQ WILD
+##
+## Ends in an error in state: 387.
+##
+## let_binding -> record_pattern option(type_annotation) EQ . expr [ Type SEMI Let EOF Attr ]
+##
+## The known suffix of the stack is as follows:
+## record_pattern option(type_annotation) EQ
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: Let LBRACE Ident EQ Bytes RBRACE WILD
+##
+## Ends in an error in state: 385.
+##
+## let_binding -> record_pattern . option(type_annotation) EQ expr [ Type SEMI Let EOF Attr ]
+## sub_irrefutable -> record_pattern . [ COMMA ]
+##
+## The known suffix of the stack is as follows:
+## record_pattern
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: Let LBRACE Ident EQ Bytes WILD
+##
+## Ends in an error in state: 304.
+##
+## nsepseq(field_pattern,COMMA) -> field_pattern . [ RBRACE ]
+## nsepseq(field_pattern,COMMA) -> field_pattern . COMMA nsepseq(field_pattern,COMMA) [ RBRACE ]
+## nseq(__anonymous_0(field_pattern,COMMA)) -> field_pattern . COMMA seq(__anonymous_0(field_pattern,COMMA)) [ RBRACE ]
+##
+## The known suffix of the stack is as follows:
+## field_pattern
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: Let LBRACE Ident EQ VBAR
+##
+## Ends in an error in state: 282.
+##
+## field_pattern -> Ident EQ . sub_pattern [ RBRACE COMMA ]
+##
+## The known suffix of the stack is as follows:
+## Ident EQ
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: Let LBRACE Ident WILD
+##
+## Ends in an error in state: 281.
+##
+## field_pattern -> Ident . EQ sub_pattern [ RBRACE COMMA ]
+##
+## The known suffix of the stack is as follows:
+## Ident
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: Let LBRACE WILD
+##
+## Ends in an error in state: 280.
+##
+## record_pattern -> LBRACE . sep_or_term_list(field_pattern,COMMA) RBRACE [ SEMI RPAR RBRACKET RBRACE EQ COMMA COLON ARROW ]
+##
+## The known suffix of the stack is as follows:
+## LBRACE
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: Let LPAR C_Some VBAR
+##
+## Ends in an error in state: 287.
+##
+## constr_pattern -> C_Some . sub_pattern [ SEMI RPAR RBRACKET RBRACE COMMA ARROW ]
+##
+## The known suffix of the stack is as follows:
+## C_Some
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: Let LPAR Constr LBRACKET VBAR
+##
+## Ends in an error in state: 279.
+##
+## list__(sub_pattern) -> LBRACKET . option(sep_or_term_list(sub_pattern,SEMI)) RBRACKET [ SEMI RPAR RBRACKET RBRACE COMMA ARROW ]
+##
+## The known suffix of the stack is as follows:
+## LBRACKET
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: Let LPAR Constr LBRACKET WILD SEMI VBAR
+##
+## Ends in an error in state: 312.
+##
+## nsepseq(sub_pattern,SEMI) -> sub_pattern SEMI . nsepseq(sub_pattern,SEMI) [ RBRACKET ]
+## nseq(__anonymous_0(sub_pattern,SEMI)) -> sub_pattern SEMI . seq(__anonymous_0(sub_pattern,SEMI)) [ RBRACKET ]
+##
+## The known suffix of the stack is as follows:
+## sub_pattern SEMI
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: Let LPAR Constr LBRACKET WILD SEMI WILD SEMI VBAR
+##
+## Ends in an error in state: 314.
+##
+## nsepseq(sub_pattern,SEMI) -> sub_pattern SEMI . nsepseq(sub_pattern,SEMI) [ RBRACKET ]
+## seq(__anonymous_0(sub_pattern,SEMI)) -> sub_pattern SEMI . seq(__anonymous_0(sub_pattern,SEMI)) [ RBRACKET ]
+##
+## The known suffix of the stack is as follows:
+## sub_pattern SEMI
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: Let LPAR Constr LBRACKET WILD SEMI WILD WILD
+##
+## Ends in an error in state: 313.
+##
+## nsepseq(sub_pattern,SEMI) -> sub_pattern . [ RBRACKET ]
+## nsepseq(sub_pattern,SEMI) -> sub_pattern . SEMI nsepseq(sub_pattern,SEMI) [ RBRACKET ]
+## seq(__anonymous_0(sub_pattern,SEMI)) -> sub_pattern . SEMI seq(__anonymous_0(sub_pattern,SEMI)) [ RBRACKET ]
+##
+## The known suffix of the stack is as follows:
+## sub_pattern
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: Let LPAR Constr LBRACKET WILD WILD
+##
+## Ends in an error in state: 311.
+##
+## nsepseq(sub_pattern,SEMI) -> sub_pattern . [ RBRACKET ]
+## nsepseq(sub_pattern,SEMI) -> sub_pattern . SEMI nsepseq(sub_pattern,SEMI) [ RBRACKET ]
+## nseq(__anonymous_0(sub_pattern,SEMI)) -> sub_pattern . SEMI seq(__anonymous_0(sub_pattern,SEMI)) [ RBRACKET ]
+##
+## The known suffix of the stack is as follows:
+## sub_pattern
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: Let LPAR Constr LPAR VBAR
+##
+## Ends in an error in state: 278.
+##
+## par(ptuple) -> LPAR . ptuple RPAR [ SEMI RPAR RBRACKET RBRACE COMMA ARROW ]
+## par(sub_pattern) -> LPAR . sub_pattern RPAR [ SEMI RPAR RBRACKET RBRACE COMMA ARROW ]
+## unit -> LPAR . RPAR [ SEMI RPAR RBRACKET RBRACE COMMA ARROW ]
+##
+## The known suffix of the stack is as follows:
+## LPAR
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: Let LPAR Constr LPAR WILD COMMA Bytes ARROW
+##
+## Ends in an error in state: 331.
+##
+## par(ptuple) -> LPAR ptuple . RPAR [ SEMI RPAR RBRACKET RBRACE COMMA ARROW ]
+##
+## The known suffix of the stack is as follows:
+## LPAR ptuple
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 327, spurious reduction of production nsepseq(sub_pattern,COMMA) -> sub_pattern 
+## In state 330, spurious reduction of production tuple(sub_pattern) -> sub_pattern COMMA nsepseq(sub_pattern,COMMA) 
+## In state 323, spurious reduction of production ptuple -> tuple(sub_pattern) 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: Let LPAR Constr LPAR WILD WILD
+##
+## Ends in an error in state: 324.
+##
+## par(sub_pattern) -> LPAR sub_pattern . RPAR [ SEMI RPAR RBRACKET RBRACE COMMA ARROW ]
+## tuple(sub_pattern) -> sub_pattern . COMMA nsepseq(sub_pattern,COMMA) [ RPAR ]
+##
+## The known suffix of the stack is as follows:
+## LPAR sub_pattern
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: Let LPAR Constr SEMI
+##
+## Ends in an error in state: 370.
+##
+## par(closed_irrefutable) -> LPAR closed_irrefutable . RPAR [ RPAR EQ COMMA COLON ]
+##
+## The known suffix of the stack is as follows:
+## LPAR closed_irrefutable
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 286, spurious reduction of production constr_pattern -> Constr 
+## In state 369, spurious reduction of production closed_irrefutable -> constr_pattern 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: Let LPAR Constr VBAR
+##
+## Ends in an error in state: 286.
+##
+## constr_pattern -> Constr . sub_pattern [ SEMI RPAR RBRACKET RBRACE COMMA ARROW ]
+## constr_pattern -> Constr . [ SEMI RPAR RBRACKET RBRACE COMMA ARROW ]
+##
+## The known suffix of the stack is as follows:
+## Constr
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: Let LPAR RPAR COLON Constr Type
+##
+## Ends in an error in state: 377.
+##
+## let_binding -> unit option(type_annotation) . EQ expr [ Type SEMI Let EOF Attr ]
+##
+## The known suffix of the stack is as follows:
+## unit option(type_annotation)
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 48, spurious reduction of production variant -> Constr 
+## In state 41, spurious reduction of production nsepseq(variant,VBAR) -> variant 
+## In state 52, spurious reduction of production sum_type -> nsepseq(variant,VBAR) 
+## In state 66, spurious reduction of production type_expr -> sum_type 
+## In state 78, spurious reduction of production type_annotation -> COLON type_expr 
+## In state 79, spurious reduction of production option(type_annotation) -> type_annotation 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: Let LPAR RPAR EQ WILD
+##
+## Ends in an error in state: 378.
+##
+## let_binding -> unit option(type_annotation) EQ . expr [ Type SEMI Let EOF Attr ]
+##
+## The known suffix of the stack is as follows:
+## unit option(type_annotation) EQ
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: Let LPAR RPAR WILD
+##
+## Ends in an error in state: 376.
+##
+## let_binding -> unit . option(type_annotation) EQ expr [ Type SEMI Let EOF Attr ]
+## sub_irrefutable -> unit . [ COMMA ]
+##
+## The known suffix of the stack is as follows:
+## unit
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: Let LPAR VBAR
+##
+## Ends in an error in state: 352.
+##
+## par(closed_irrefutable) -> LPAR . closed_irrefutable RPAR [ RPAR EQ COMMA COLON ]
+## unit -> LPAR . RPAR [ RPAR EQ COMMA COLON ]
+##
+## The known suffix of the stack is as follows:
+## LPAR
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: Let LPAR WILD COLON WILD
+##
+## Ends in an error in state: 367.
+##
+## typed_pattern -> irrefutable COLON . type_expr [ RPAR ]
+##
+## The known suffix of the stack is as follows:
+## irrefutable COLON
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: Let LPAR WILD COMMA Ident EQ
+##
+## Ends in an error in state: 366.
+##
+## closed_irrefutable -> irrefutable . [ RPAR ]
+## typed_pattern -> irrefutable . COLON type_expr [ RPAR ]
+##
+## The known suffix of the stack is as follows:
+## irrefutable
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 360, spurious reduction of production nsepseq(sub_irrefutable,COMMA) -> sub_irrefutable 
+## In state 365, spurious reduction of production tuple(sub_irrefutable) -> sub_irrefutable COMMA nsepseq(sub_irrefutable,COMMA) 
+## In state 357, spurious reduction of production irrefutable -> tuple(sub_irrefutable) 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: Let LPAR WILD RPAR COLON Constr Type
+##
+## Ends in an error in state: 390.
+##
+## let_binding -> par(closed_irrefutable) option(type_annotation) . EQ expr [ Type SEMI Let EOF Attr ]
+##
+## The known suffix of the stack is as follows:
+## par(closed_irrefutable) option(type_annotation)
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 48, spurious reduction of production variant -> Constr 
+## In state 41, spurious reduction of production nsepseq(variant,VBAR) -> variant 
+## In state 52, spurious reduction of production sum_type -> nsepseq(variant,VBAR) 
+## In state 66, spurious reduction of production type_expr -> sum_type 
+## In state 78, spurious reduction of production type_annotation -> COLON type_expr 
+## In state 79, spurious reduction of production option(type_annotation) -> type_annotation 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: Let LPAR WILD RPAR EQ WILD
+##
+## Ends in an error in state: 391.
+##
+## let_binding -> par(closed_irrefutable) option(type_annotation) EQ . expr [ Type SEMI Let EOF Attr ]
+##
+## The known suffix of the stack is as follows:
+## par(closed_irrefutable) option(type_annotation) EQ
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: Let LPAR WILD RPAR WILD
+##
+## Ends in an error in state: 389.
+##
+## let_binding -> par(closed_irrefutable) . option(type_annotation) EQ expr [ Type SEMI Let EOF Attr ]
+## sub_irrefutable -> par(closed_irrefutable) . [ COMMA ]
+##
+## The known suffix of the stack is as follows:
+## par(closed_irrefutable)
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: Let LPAR WILD WILD
+##
+## Ends in an error in state: 358.
+##
+## irrefutable -> sub_irrefutable . [ RPAR COLON ]
+## tuple(sub_irrefutable) -> sub_irrefutable . COMMA nsepseq(sub_irrefutable,COMMA) [ RPAR COLON ]
+##
+## The known suffix of the stack is as follows:
+## sub_irrefutable
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: Let VBAR
+##
+## Ends in an error in state: 75.
+##
+## let_declaration -> seq(Attr) Let . let_binding [ Type SEMI Let EOF Attr ]
+##
+## The known suffix of the stack is as follows:
+## seq(Attr) Let
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: Let WILD COLON Ident Type
+##
+## Ends in an error in state: 80.
+##
+## let_binding -> WILD option(type_annotation) . EQ expr [ Type SEMI Let EOF Attr ]
+##
+## The known suffix of the stack is as follows:
+## WILD option(type_annotation)
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 8, spurious reduction of production core_type -> Ident 
+## In state 15, spurious reduction of production cartesian -> core_type 
+## In state 68, spurious reduction of production type_expr -> cartesian 
+## In state 78, spurious reduction of production type_annotation -> COLON type_expr 
+## In state 79, spurious reduction of production option(type_annotation) -> type_annotation 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: Let WILD COLON WILD
+##
+## Ends in an error in state: 77.
+##
+## type_annotation -> COLON . type_expr [ EQ ]
+##
+## The known suffix of the stack is as follows:
+## COLON
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: Let WILD COMMA Ident COLON Constr Type
+##
+## Ends in an error in state: 381.
+##
+## let_binding -> tuple(sub_irrefutable) option(type_annotation) . EQ expr [ Type SEMI Let EOF Attr ]
+##
+## The known suffix of the stack is as follows:
+## tuple(sub_irrefutable) option(type_annotation)
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 48, spurious reduction of production variant -> Constr 
+## In state 41, spurious reduction of production nsepseq(variant,VBAR) -> variant 
+## In state 52, spurious reduction of production sum_type -> nsepseq(variant,VBAR) 
+## In state 66, spurious reduction of production type_expr -> sum_type 
+## In state 78, spurious reduction of production type_annotation -> COLON type_expr 
+## In state 79, spurious reduction of production option(type_annotation) -> type_annotation 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: Let WILD COMMA Ident EQ WILD
+##
+## Ends in an error in state: 382.
+##
+## let_binding -> tuple(sub_irrefutable) option(type_annotation) EQ . expr [ Type SEMI Let EOF Attr ]
+##
+## The known suffix of the stack is as follows:
+## tuple(sub_irrefutable) option(type_annotation) EQ
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: Let WILD COMMA Ident RPAR
+##
+## Ends in an error in state: 380.
+##
+## let_binding -> tuple(sub_irrefutable) . option(type_annotation) EQ expr [ Type SEMI Let EOF Attr ]
+##
+## The known suffix of the stack is as follows:
+## tuple(sub_irrefutable)
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 360, spurious reduction of production nsepseq(sub_irrefutable,COMMA) -> sub_irrefutable 
+## In state 365, spurious reduction of production tuple(sub_irrefutable) -> sub_irrefutable COMMA nsepseq(sub_irrefutable,COMMA) 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: Let WILD COMMA VBAR
+##
+## Ends in an error in state: 359.
+##
+## tuple(sub_irrefutable) -> sub_irrefutable COMMA . nsepseq(sub_irrefutable,COMMA) [ RPAR EQ COLON ]
+##
+## The known suffix of the stack is as follows:
+## sub_irrefutable COMMA
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: Let WILD COMMA WILD COMMA VBAR
+##
+## Ends in an error in state: 361.
+##
+## nsepseq(sub_irrefutable,COMMA) -> sub_irrefutable COMMA . nsepseq(sub_irrefutable,COMMA) [ RPAR EQ COLON ]
+##
+## The known suffix of the stack is as follows:
+## sub_irrefutable COMMA
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: Let WILD COMMA WILD WILD
+##
+## Ends in an error in state: 360.
+##
+## nsepseq(sub_irrefutable,COMMA) -> sub_irrefutable . [ RPAR EQ COLON ]
+## nsepseq(sub_irrefutable,COMMA) -> sub_irrefutable . COMMA nsepseq(sub_irrefutable,COMMA) [ RPAR EQ COLON ]
+##
+## The known suffix of the stack is as follows:
+## sub_irrefutable
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: Let WILD EQ Bytes VBAR
+##
+## Ends in an error in state: 528.
+##
+## declaration -> let_declaration . option(SEMI) [ Type Let EOF Attr ]
+##
+## The known suffix of the stack is as follows:
+## let_declaration
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 152, spurious reduction of production call_expr_level_in -> core_expr 
+## In state 170, spurious reduction of production option(type_annotation_simple) -> 
+## In state 171, spurious reduction of production call_expr_level -> call_expr_level_in option(type_annotation_simple) 
+## In state 172, spurious reduction of production unary_expr_level -> call_expr_level 
+## In state 125, spurious reduction of production mult_expr_level -> unary_expr_level 
+## In state 149, spurious reduction of production add_expr_level -> mult_expr_level 
+## In state 180, spurious reduction of production cat_expr_level -> add_expr_level 
+## In state 201, spurious reduction of production comp_expr_level -> cat_expr_level 
+## In state 208, spurious reduction of production conj_expr_level -> comp_expr_level 
+## In state 215, spurious reduction of production disj_expr_level -> conj_expr_level 
+## In state 162, spurious reduction of production base_expr(expr) -> disj_expr_level 
+## In state 219, spurious reduction of production base_cond__open(expr) -> base_expr(expr) 
+## In state 220, spurious reduction of production expr -> base_cond__open(expr) 
+## In state 526, spurious reduction of production let_binding -> WILD option(type_annotation) EQ expr 
+## In state 527, spurious reduction of production let_declaration -> seq(Attr) Let let_binding 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: Let WILD EQ WILD
+##
+## Ends in an error in state: 81.
+##
+## let_binding -> WILD option(type_annotation) EQ . expr [ Type SEMI Let EOF Attr ]
+##
+## The known suffix of the stack is as follows:
+## WILD option(type_annotation) EQ
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: Let WILD WILD
+##
+## Ends in an error in state: 76.
+##
+## let_binding -> WILD . option(type_annotation) EQ expr [ Type SEMI Let EOF Attr ]
+## sub_irrefutable -> WILD . [ COMMA ]
+##
+## The known suffix of the stack is as follows:
+## WILD
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: Type Ident EQ Constr DOT WILD
+##
+## Ends in an error in state: 12.
+##
+## core_type -> Constr DOT . Ident [ Type SEMI RPAR RBRACE Let EQ EOF COMMA Attr ]
+##
+## The known suffix of the stack is as follows:
+## Constr DOT
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: Type Ident EQ Constr LPAR Ident RPAR WILD
+##
+## Ends in an error in state: 41.
+##
+## nsepseq(variant,VBAR) -> variant . [ Type SEMI RPAR RBRACE Let EQ EOF COMMA Attr ]
+## nsepseq(variant,VBAR) -> variant . VBAR nsepseq(variant,VBAR) [ Type SEMI RPAR RBRACE Let EQ EOF COMMA Attr ]
+##
+## The known suffix of the stack is as follows:
+## variant
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: Type Ident EQ Constr LPAR Ident Type
+##
+## Ends in an error in state: 39.
+##
+## variant -> Constr LPAR cartesian . RPAR [ VBAR Type SEMI RPAR RBRACE Let EQ EOF COMMA Attr ]
+##
+## The known suffix of the stack is as follows:
+## Constr LPAR cartesian
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 8, spurious reduction of production core_type -> Ident 
+## In state 15, spurious reduction of production cartesian -> core_type 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: Type Ident EQ Constr LPAR WILD
+##
+## Ends in an error in state: 6.
+##
+## variant -> Constr LPAR . cartesian RPAR [ VBAR Type SEMI RPAR RBRACE Let EQ EOF COMMA Attr ]
+##
+## The known suffix of the stack is as follows:
+## Constr LPAR
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: Type Ident EQ Constr RPAR
+##
+## Ends in an error in state: 71.
+##
+## declaration -> type_decl . option(SEMI) [ Type Let EOF Attr ]
+##
+## The known suffix of the stack is as follows:
+## type_decl
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 48, spurious reduction of production variant -> Constr 
+## In state 41, spurious reduction of production nsepseq(variant,VBAR) -> variant 
+## In state 52, spurious reduction of production sum_type -> nsepseq(variant,VBAR) 
+## In state 66, spurious reduction of production type_expr -> sum_type 
+## In state 65, spurious reduction of production type_decl -> Type Ident EQ type_expr 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: Type Ident EQ Constr SEMI WILD
+##
+## Ends in an error in state: 532.
+##
+## declarations -> declaration . [ EOF ]
+## declarations -> declaration . declarations [ EOF ]
+##
+## The known suffix of the stack is as follows:
+## declaration
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: Type Ident EQ Constr VBAR WILD
+##
+## Ends in an error in state: 42.
+##
+## nsepseq(variant,VBAR) -> variant VBAR . nsepseq(variant,VBAR) [ Type SEMI RPAR RBRACE Let EQ EOF COMMA Attr ]
+##
+## The known suffix of the stack is as follows:
+## variant VBAR
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: Type Ident EQ Constr WILD
+##
+## Ends in an error in state: 48.
+##
+## core_type -> Constr . DOT Ident [ Type SEMI RPAR RBRACE Let EQ EOF COMMA Attr ]
+## variant -> Constr . [ VBAR Type SEMI RPAR RBRACE Let EQ EOF COMMA Attr ]
+## variant -> Constr . LPAR cartesian RPAR [ VBAR Type SEMI RPAR RBRACE Let EQ EOF COMMA Attr ]
+##
+## The known suffix of the stack is as follows:
+## Constr
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: Type Ident EQ Ident ARROW WILD
+##
+## Ends in an error in state: 25.
+##
+## type_expr_func -> ARROW . cartesian [ Type SEMI RPAR Let EQ EOF COMMA Attr ]
+##
+## The known suffix of the stack is as follows:
+## ARROW
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: Type Ident EQ Ident LPAR Ident COMMA WILD
+##
+## Ends in an error in state: 23.
+##
+## nsepseq(core_type,COMMA) -> core_type COMMA . nsepseq(core_type,COMMA) [ RPAR ]
+##
+## The known suffix of the stack is as follows:
+## core_type COMMA
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: Type Ident EQ Ident LPAR Ident RBRACE
+##
+## Ends in an error in state: 22.
+##
+## nsepseq(core_type,COMMA) -> core_type . [ RPAR ]
+## nsepseq(core_type,COMMA) -> core_type . COMMA nsepseq(core_type,COMMA) [ RPAR ]
+##
+## The known suffix of the stack is as follows:
+## core_type
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 18, spurious reduction of production core_type -> Ident 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: Type Ident EQ Ident LPAR Ident WILD
+##
+## Ends in an error in state: 18.
+##
+## core_type -> Ident . [ RPAR RBRACE COMMA ]
+## core_type -> Ident . par(__anonymous_1) [ RPAR RBRACE COMMA ]
+##
+## The known suffix of the stack is as follows:
+## Ident
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: Type Ident EQ Ident LPAR LPAR Ident Type
+##
+## Ends in an error in state: 16.
+##
+## par(cartesian) -> LPAR cartesian . RPAR [ RPAR RBRACE COMMA ]
+##
+## The known suffix of the stack is as follows:
+## LPAR cartesian
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 8, spurious reduction of production core_type -> Ident 
+## In state 15, spurious reduction of production cartesian -> core_type 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: Type Ident EQ Ident LPAR LPAR WILD
+##
+## Ends in an error in state: 10.
+##
+## par(cartesian) -> LPAR . cartesian RPAR [ RPAR RBRACE COMMA ]
+##
+## The known suffix of the stack is as follows:
+## LPAR
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: Type Ident EQ Ident LPAR WILD
+##
+## Ends in an error in state: 9.
+##
+## par(__anonymous_1) -> LPAR . nsepseq(core_type,COMMA) RPAR [ Type SEMI RPAR RBRACE Let EQ EOF COMMA Attr ]
+##
+## The known suffix of the stack is as follows:
+## LPAR
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: Type Ident EQ Ident WILD
+##
+## Ends in an error in state: 8.
+##
+## cartesian -> Ident . type_expr_func [ Type SEMI RPAR Let EQ EOF COMMA Attr ]
+## core_type -> Ident . [ Type SEMI RPAR Let EQ EOF COMMA Attr ]
+## core_type -> Ident . par(__anonymous_1) [ Type SEMI RPAR Let EQ EOF COMMA Attr ]
+##
+## The known suffix of the stack is as follows:
+## Ident
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: Type Ident EQ LBRACE Ident COLON Constr Type
+##
+## Ends in an error in state: 58.
+##
+## nsepseq(field_decl,COMMA) -> field_decl . [ RBRACE ]
+## nsepseq(field_decl,COMMA) -> field_decl . COMMA nsepseq(field_decl,COMMA) [ RBRACE ]
+## nseq(__anonymous_0(field_decl,COMMA)) -> field_decl . COMMA seq(__anonymous_0(field_decl,COMMA)) [ RBRACE ]
+##
+## The known suffix of the stack is as follows:
+## field_decl
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 48, spurious reduction of production variant -> Constr 
+## In state 41, spurious reduction of production nsepseq(variant,VBAR) -> variant 
+## In state 52, spurious reduction of production sum_type -> nsepseq(variant,VBAR) 
+## In state 50, spurious reduction of production type_expr_field -> sum_type 
+## In state 49, spurious reduction of production field_decl -> Ident COLON type_expr_field 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: Type Ident EQ LBRACE Ident COLON WILD
+##
+## Ends in an error in state: 47.
+##
+## field_decl -> Ident COLON . type_expr_field [ RBRACE COMMA ]
+##
+## The known suffix of the stack is as follows:
+## Ident COLON
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: Type Ident EQ LBRACE Ident COMMA Ident COLON Constr Type
+##
+## Ends in an error in state: 62.
+##
+## nsepseq(field_decl,COMMA) -> field_decl . [ RBRACE ]
+## nsepseq(field_decl,COMMA) -> field_decl . COMMA nsepseq(field_decl,COMMA) [ RBRACE ]
+## seq(__anonymous_0(field_decl,COMMA)) -> field_decl . COMMA seq(__anonymous_0(field_decl,COMMA)) [ RBRACE ]
+##
+## The known suffix of the stack is as follows:
+## field_decl
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 48, spurious reduction of production variant -> Constr 
+## In state 41, spurious reduction of production nsepseq(variant,VBAR) -> variant 
+## In state 52, spurious reduction of production sum_type -> nsepseq(variant,VBAR) 
+## In state 50, spurious reduction of production type_expr_field -> sum_type 
+## In state 49, spurious reduction of production field_decl -> Ident COLON type_expr_field 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: Type Ident EQ LBRACE Ident COMMA Ident COMMA WILD
+##
+## Ends in an error in state: 63.
+##
+## nsepseq(field_decl,COMMA) -> field_decl COMMA . nsepseq(field_decl,COMMA) [ RBRACE ]
+## seq(__anonymous_0(field_decl,COMMA)) -> field_decl COMMA . seq(__anonymous_0(field_decl,COMMA)) [ RBRACE ]
+##
+## The known suffix of the stack is as follows:
+## field_decl COMMA
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: Type Ident EQ LBRACE Ident COMMA WILD
+##
+## Ends in an error in state: 59.
+##
+## nsepseq(field_decl,COMMA) -> field_decl COMMA . nsepseq(field_decl,COMMA) [ RBRACE ]
+## nseq(__anonymous_0(field_decl,COMMA)) -> field_decl COMMA . seq(__anonymous_0(field_decl,COMMA)) [ RBRACE ]
+##
+## The known suffix of the stack is as follows:
+## field_decl COMMA
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: Type Ident EQ LBRACE Ident WILD
+##
+## Ends in an error in state: 46.
+##
+## field_decl -> Ident . [ RBRACE COMMA ]
+## field_decl -> Ident . COLON type_expr_field [ RBRACE COMMA ]
+##
+## The known suffix of the stack is as follows:
+## Ident
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: Type Ident EQ LBRACE WILD
+##
+## Ends in an error in state: 45.
+##
+## record_type -> LBRACE . sep_or_term_list(field_decl,COMMA) RBRACE [ Type SEMI RPAR RBRACE Let EQ EOF COMMA Attr ]
+##
+## The known suffix of the stack is as follows:
+## LBRACE
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: Type Ident EQ LPAR Constr WILD
+##
+## Ends in an error in state: 11.
+##
+## core_type -> Constr . DOT Ident [ Type SEMI RPAR Let EQ EOF COMMA Attr ]
+##
+## The known suffix of the stack is as follows:
+## Constr
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: Type Ident EQ LPAR Ident COMMA Ident COMMA WILD
+##
+## Ends in an error in state: 37.
+##
+## nsepseq(cartesian,COMMA) -> cartesian COMMA . nsepseq(cartesian,COMMA) [ RPAR ]
+##
+## The known suffix of the stack is as follows:
+## cartesian COMMA
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: Type Ident EQ LPAR Ident COMMA Ident RPAR WILD
+##
+## Ends in an error in state: 33.
+##
+## cartesian -> LPAR cartesian COMMA nsepseq(cartesian,COMMA) RPAR . option(type_expr_func) [ Type SEMI RPAR Let EQ EOF COMMA Attr ]
+##
+## The known suffix of the stack is as follows:
+## LPAR cartesian COMMA nsepseq(cartesian,COMMA) RPAR
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: Type Ident EQ LPAR Ident COMMA Ident Type
+##
+## Ends in an error in state: 36.
+##
+## nsepseq(cartesian,COMMA) -> cartesian . [ RPAR ]
+## nsepseq(cartesian,COMMA) -> cartesian . COMMA nsepseq(cartesian,COMMA) [ RPAR ]
+##
+## The known suffix of the stack is as follows:
+## cartesian
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 8, spurious reduction of production core_type -> Ident 
+## In state 15, spurious reduction of production cartesian -> core_type 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: Type Ident EQ LPAR Ident COMMA WILD
+##
+## Ends in an error in state: 31.
+##
+## cartesian -> LPAR cartesian COMMA . nsepseq(cartesian,COMMA) RPAR option(type_expr_func) [ Type SEMI RPAR Let EQ EOF COMMA Attr ]
+##
+## The known suffix of the stack is as follows:
+## LPAR cartesian COMMA
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: Type Ident EQ LPAR Ident RPAR WILD
+##
+## Ends in an error in state: 29.
+##
+## cartesian -> LPAR cartesian RPAR . type_expr_func [ Type SEMI RPAR Let EQ EOF COMMA Attr ]
+## par(cartesian) -> LPAR cartesian RPAR . [ Type SEMI RPAR Let EQ EOF COMMA Attr ]
+##
+## The known suffix of the stack is as follows:
+## LPAR cartesian RPAR
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: Type Ident EQ LPAR Ident Type
+##
+## Ends in an error in state: 28.
+##
+## cartesian -> LPAR cartesian . RPAR type_expr_func [ Type SEMI RPAR Let EQ EOF COMMA Attr ]
+## cartesian -> LPAR cartesian . COMMA nsepseq(cartesian,COMMA) RPAR option(type_expr_func) [ Type SEMI RPAR Let EQ EOF COMMA Attr ]
+## par(cartesian) -> LPAR cartesian . RPAR [ Type SEMI RPAR Let EQ EOF COMMA Attr ]
+##
+## The known suffix of the stack is as follows:
+## LPAR cartesian
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 8, spurious reduction of production core_type -> Ident 
+## In state 15, spurious reduction of production cartesian -> core_type 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: Type Ident EQ LPAR WILD
+##
+## Ends in an error in state: 7.
+##
+## cartesian -> LPAR . cartesian RPAR type_expr_func [ Type SEMI RPAR Let EQ EOF COMMA Attr ]
+## cartesian -> LPAR . cartesian COMMA nsepseq(cartesian,COMMA) RPAR option(type_expr_func) [ Type SEMI RPAR Let EQ EOF COMMA Attr ]
+## par(cartesian) -> LPAR . cartesian RPAR [ Type SEMI RPAR Let EQ EOF COMMA Attr ]
+##
+## The known suffix of the stack is as follows:
+## LPAR
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: Type Ident EQ VBAR Constr WILD
+##
+## Ends in an error in state: 5.
+##
+## variant -> Constr . [ VBAR Type SEMI RPAR RBRACE Let EQ EOF COMMA Attr ]
+## variant -> Constr . LPAR cartesian RPAR [ VBAR Type SEMI RPAR RBRACE Let EQ EOF COMMA Attr ]
+##
+## The known suffix of the stack is as follows:
+## Constr
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: Type Ident EQ VBAR WILD
+##
+## Ends in an error in state: 4.
+##
+## sum_type -> VBAR . nsepseq(variant,VBAR) [ Type SEMI RPAR RBRACE Let EQ EOF COMMA Attr ]
+##
+## The known suffix of the stack is as follows:
+## VBAR
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: Type Ident EQ WILD
+##
+## Ends in an error in state: 3.
+##
+## type_decl -> Type Ident EQ . type_expr [ Type SEMI Let EOF Attr ]
+##
+## The known suffix of the stack is as follows:
+## Type Ident EQ
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: Type Ident WILD
+##
+## Ends in an error in state: 2.
+##
+## type_decl -> Type Ident . EQ type_expr [ Type SEMI Let EOF Attr ]
+##
+## The known suffix of the stack is as follows:
+## Type Ident
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: Type WILD
+##
+## Ends in an error in state: 1.
+##
+## type_decl -> Type . Ident EQ type_expr [ Type SEMI Let EOF Attr ]
+##
+## The known suffix of the stack is as follows:
+## Type
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: WILD
+##
+## Ends in an error in state: 0.
+##
+## contract' -> . contract [ # ]
+##
+## The known suffix of the stack is as follows:
+##
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+

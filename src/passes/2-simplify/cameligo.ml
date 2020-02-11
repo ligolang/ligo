@@ -194,13 +194,13 @@ let rec simpl_type_expression : Raw.type_expr -> type_expression result = fun te
       | Error _ -> ok @@ make_t @@ T_variable (Var.of_name v.value)
     )
   | TFun x -> (
-      let%bind (a , b) =
+      let%bind (type1 , type2) =
         let (a , _ , b) = x.value in
         let%bind a = simpl_type_expression a in
         let%bind b = simpl_type_expression b in
         ok (a , b)
       in
-      ok @@ make_t @@ T_arrow (a , b)
+      ok @@ make_t @@ T_arrow {type1;type2}
     )
   | TApp x -> (
       let (name, tuple) = x.value in
@@ -247,7 +247,7 @@ and simpl_list_type_expression (lst:Raw.type_expr list) : type_expression result
   | [hd] -> simpl_type_expression hd
   | lst ->
       let%bind lst = bind_map_list simpl_type_expression lst in
-      ok @@ make_t @@ T_operator (TC_tuple lst)
+      ok @@ t_tuple lst
 
 let rec simpl_expression :
   Raw.expr -> expr result = fun t ->
@@ -261,13 +261,13 @@ let rec simpl_expression :
     let path' =
       let aux (s:Raw.selection) =
         match s with
-          FieldName property -> Access_record property.value
-        | Component index -> Access_tuple (Z.to_int (snd index.value))
+          FieldName property -> property.value
+        | Component index -> Z.to_string (snd index.value)
       in
       List.map aux @@ npseq_to_list path in
-    return @@ e_accessor ~loc var path'
+    return @@ List.fold_left (e_accessor ~loc ) var path'
   in
-  let simpl_path : Raw.path -> string * Ast_simplified.access_path = fun p ->
+  let simpl_path : Raw.path -> string * label list = fun p ->
     match p with
     | Raw.Name v -> (v.value , [])
     | Raw.Path p -> (
@@ -277,8 +277,8 @@ let rec simpl_expression :
         let path' =
           let aux (s:Raw.selection) =
             match s with
-            | FieldName property -> Access_record property.value
-            | Component index -> Access_tuple (Z.to_int (snd index.value))
+            | FieldName property -> Label property.value
+            | Component index -> Label (Z.to_string (snd index.value))
           in
           List.map aux @@ npseq_to_list path in
         (var , path')
@@ -289,7 +289,9 @@ let rec simpl_expression :
     let (name, path) = simpl_path u.record in
     let record = match path with
     | [] -> e_variable (Var.of_name name)
-    | _ -> e_accessor (e_variable (Var.of_name name)) path in
+    | _ ->
+      let aux expr (Label l) = e_accessor expr l in
+      List.fold_left aux (e_variable (Var.of_name name)) path in 
     let updates = u.updates.value.ne_elements in
     let%bind updates' =
       let aux (f:Raw.field_path_assign Raw.reg) =
@@ -304,7 +306,7 @@ let rec simpl_expression :
         | [] -> failwith "error in parsing"
         | hd :: [] -> ok @@ e_update ~loc record hd expr
         | hd :: tl -> 
-          let%bind expr = (aux (e_accessor ~loc record [Access_record hd]) tl) in
+          let%bind expr = (aux (e_accessor ~loc record hd) tl) in
           ok @@ e_update ~loc record hd expr 
       in
       aux ur path in
@@ -352,19 +354,20 @@ let rec simpl_expression :
         match variables with
         | hd :: [] ->
           if (List.length prep_vars = 1)
-          then e_let_in hd inline rhs_b_expr body
-          else e_let_in hd inline (e_accessor rhs_b_expr [Access_tuple ((List.length prep_vars) - 1)]) body
+          then e_let_in hd false inline rhs_b_expr body
+          else e_let_in hd false inline (e_accessor rhs_b_expr (string_of_int ((List.length prep_vars) - 1))) body
         | hd :: tl ->
           e_let_in hd
+          false
           inline
-          (e_accessor rhs_b_expr [Access_tuple ((List.length prep_vars) - (List.length tl) - 1)])
+          (e_accessor rhs_b_expr (string_of_int ((List.length prep_vars) - (List.length tl) - 1)))
           (chain_let_in tl body)
         | [] -> body (* Precluded by corner case assertion above *)
       in
       if List.length prep_vars = 1
       then ok (chain_let_in prep_vars body)
       (* Bind the right hand side so we only evaluate it once *)
-      else ok (e_let_in (rhs_b, ty_opt) inline rhs' (chain_let_in prep_vars body))
+      else ok (e_let_in (rhs_b, ty_opt) false inline rhs' (chain_let_in prep_vars body))
 
       (* let f p1 ps... = rhs in body *)
       | (f, p1 :: ps) ->
@@ -413,8 +416,7 @@ let rec simpl_expression :
         @@ List.map (fun ((k : _ Raw.reg), v) -> let%bind v = simpl_expression v in ok (k.value, v))
         @@ List.map (fun (x:Raw.field_assign Raw.reg) -> (x.value.field_name, x.value.field_expr))
         @@ npseq_to_list r.ne_elements in
-      let map = SMap.of_list fields in
-      return @@ e_record ~loc map
+      return @@ e_record_ez ~loc fields
   | EProj p -> simpl_projection p
   | EUpdate u -> simpl_update u
   | EConstr (ESomeApp a) ->
@@ -501,7 +503,7 @@ let rec simpl_expression :
                   | Raw.PVar y ->
                     let var_name = Var.of_name y.value in
                     let%bind type_expr = simpl_type_expression x'.type_expr in
-                    return @@ e_let_in (var_name , Some type_expr) false e rhs
+                    return @@ e_let_in (var_name , Some type_expr) false false e rhs
                   | _ -> default_action ()
                 )
               | _ -> default_action ()
@@ -810,7 +812,7 @@ and simpl_declaration : Raw.declaration -> declaration Location.wrap list result
           ok @@ [loc x @@ (Declaration_constant (Var.of_name var.value , None , inline, rhs'))]
     )
 
-and simpl_cases : type a . (Raw.pattern * a) list -> (a, unit) matching result =
+and simpl_cases : type a . (Raw.pattern * a) list -> (a, unit) matching_content result =
   fun t ->
   let open Raw in
   let rec get_var (t:Raw.pattern) =
@@ -931,5 +933,5 @@ and simpl_cases : type a . (Raw.pattern * a) list -> (a, unit) matching result =
       in bind_or (as_option () , as_variant ())
 
 let simpl_program : Raw.ast -> program result = fun t ->
-  let%bind decls = bind_list (List.map simpl_declaration @@ nseq_to_list t.decl) in
+  let%bind decls = bind_map_list simpl_declaration @@ nseq_to_list t.decl in
   ok @@ List.concat @@ decls

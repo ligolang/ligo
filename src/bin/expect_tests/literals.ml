@@ -2,12 +2,12 @@ open Cli_expect
 
 let%expect_test _ =
   run_ligo_good ["interpret" ; "(\"edsigthTzJ8X7MPmNeEwybRAvdxS1pupqcM5Mk4uCuyZAe7uEk68YpuGDeViW8wSXMrCi5CwoNgqs8V2w8ayB5dMJzrYCHhD8C7\":signature)" ; "--syntax=pascaligo"] ;
-  [%expect {| signature edsigthTzJ8X7MPmNeEwybRAvdxS1pupqcM5Mk4uCuyZAe7uEk68YpuGDeViW8wSXMrCi5CwoNgqs8V2w8ayB5dMJzrYCHhD8C7 |}]
+  [%expect {| Signature edsigthTzJ8X7MPmNeEwybRAvdxS1pupqcM5Mk4uCuyZAe7uEk68YpuGDeViW8wSXMrCi5CwoNgqs8V2w8ayB5dMJzrYCHhD8C7 |}]
 
 let%expect_test _ =
   run_ligo_bad ["interpret" ; "(\"thisisnotasignature\":signature)" ; "--syntax=pascaligo"] ;
   [%expect {|
-    ligo: in file "", line 0, characters 1-32. Badly formatted literal: signature thisisnotasignature {"location":"in file \"\", line 0, characters 1-32"}
+    ligo: in file "", line 0, characters 1-32. Badly formatted literal: Signature thisisnotasignature {"location":"in file \"\", line 0, characters 1-32"}
 
 
      If you're not sure how to fix this error, you can

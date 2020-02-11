@@ -19,7 +19,7 @@ let self_in_lambdas : expression -> expression result =
     | E_closure {binder=_ ; body} ->
       let%bind _self_in_lambdas = Helpers.map_expression
         (fun e -> match e.content with
-        | E_constant (C_SELF_ADDRESS, _) as c -> fail (bad_self_address c)
+        | E_constant {cons_name=C_SELF_ADDRESS; _} as c -> fail (bad_self_address c)
         | _ -> ok e)
         body in
       ok e

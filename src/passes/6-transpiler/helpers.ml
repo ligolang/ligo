@@ -21,9 +21,9 @@ let map_of_kv_list lst =
   let open Map.String in
   List.fold_left (fun prev (k, v) -> add k v prev) empty lst
 
-let extract_constructor (v : value) (tree : _ Append_tree.t') : (string * value * AST.type_value) result =
+let extract_constructor (v : value) (tree : _ Append_tree.t') : (string * value * AST.type_expression) result =
   let open Append_tree in
-  let rec aux tv : (string * value * AST.type_value) result=
+  let rec aux tv : (string * value * AST.type_expression) result=
     match tv with
     | Leaf (Constructor k, t), v -> ok (k, v, t)
     | Node {a}, D_left v -> aux (a, v)
@@ -33,9 +33,9 @@ let extract_constructor (v : value) (tree : _ Append_tree.t') : (string * value 
   let%bind (s, v, t) = aux (tree, v) in
   ok (s, v, t)
 
-let extract_tuple (v : value) (tree : AST.type_value Append_tree.t') : ((value * AST.type_value) list) result =
+let extract_tuple (v : value) (tree : AST.type_expression Append_tree.t') : ((value * AST.type_expression) list) result =
   let open Append_tree in
-  let rec aux tv : ((value * AST.type_value) list) result =
+  let rec aux tv : ((value * AST.type_expression) list) result =
     match tv with
     | Leaf t, v -> ok @@ [v, t]
     | Node {a;b}, D_pair (va, vb) ->
@@ -48,7 +48,7 @@ let extract_tuple (v : value) (tree : AST.type_value Append_tree.t') : ((value *
 
 let extract_record (v : value) (tree : _ Append_tree.t') : (_ list) result =
   let open Append_tree in
-  let rec aux tv : ((AST.label * (value * AST.type_value)) list) result =
+  let rec aux tv : ((AST.label * (value * AST.type_expression)) list) result =
     match tv with
     | Leaf (s, t), v -> ok @@ [s, (v, t)]
     | Node {a;b}, D_pair (va, vb) ->

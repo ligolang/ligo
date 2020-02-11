@@ -159,8 +159,8 @@ declarations:
 | declaration declarations { Utils.nseq_cons $1 $2              }
 
 declaration:
-| type_decl ";"            { TypeDecl $1 }
-| let_declaration ";"      { Let      $1 }
+| type_decl ";"?           { TypeDecl $1 }
+| let_declaration ";"?     { Let      $1 }
 
 (* Type declarations *)
 
@@ -226,7 +226,7 @@ core_type:
    in TApp {region; value = constr,arg} }
 
 sum_type:
-  "|" nsepseq(variant,"|") {
+  ioption("|") nsepseq(variant,"|") {
     Scoping.check_variants (Utils.nsepseq_to_list $2);
     let region = nsepseq_to_region (fun x -> x.region) $2
     in TSum {region; value=$2} }
@@ -418,13 +418,13 @@ unit:
 (* Expressions *)
 
 interactive_expr:
-  expr EOF { $1 }
+  expr_with_let_expr EOF { $1 }
 
 expr:
   base_cond__open(expr) | switch_expr(base_cond) { $1 }
 
 base_cond__open(x):
-  base_expr(x) | conditional(x) { $1 }
+  base_expr(x) | conditional(expr_with_let_expr) { $1 }
 
 base_cond:
   base_cond__open(base_cond) { $1 }
@@ -567,7 +567,7 @@ fun_expr:
     in EFun {region; value=f} }
 
 base_expr(right_expr):
-  let_expr(right_expr) | disj_expr_level | fun_expr { $1 }
+  disj_expr_level | fun_expr { $1 }
 
 conditional(right_expr):
   if_then_else(right_expr) | if_then(right_expr) { $1 }
@@ -576,10 +576,10 @@ parenthesized_expr:
   "{" expr "}" | "(" expr ")" { $2 }
 
 if_then(right_expr):
-  "if" parenthesized_expr "{" closed_if "}" {
+  "if" parenthesized_expr "{" closed_if ";"? "}" {
     let the_unit = ghost, ghost in
     let ifnot    = EUnit {region=ghost; value=the_unit} in
-    let region   = cover $1 $5 in
+    let region   = cover $1 $6 in
     let value    = {kwd_if   = $1;
                     test     = $2;
                     kwd_then = $3;
@@ -589,8 +589,8 @@ if_then(right_expr):
     in ECond {region; value} }
 
 if_then_else(right_expr):
-  "if" parenthesized_expr "{" closed_if ";"  "}"
-  "else" "{" right_expr ";" "}" {
+  "if" parenthesized_expr "{" closed_if ";"?  "}"
+  "else" "{" right_expr ";"? "}" {
     let region = cover $1 $11 in
     let value  = {kwd_if   = $1;
                   test     = $2;
@@ -609,6 +609,7 @@ base_if_then_else:
 closed_if:
   base_if_then_else__open(closed_if)
 | switch_expr(base_if_then_else) { $1 }
+| let_expr(expr_with_let_expr) { $1 }
 
 switch_expr(right_expr):
   "switch" switch_expr_ "{" cases(right_expr) "}" {
@@ -896,8 +897,12 @@ update_record:
       rbrace = $6}
     in {region; value} }
 
+expr_with_let_expr:
+  expr { $1 }
+| let_expr(expr_with_let_expr) { $1 }
+
 sequence_or_record_in:
-  expr ";" sep_or_term_list(expr,";") {
+  expr_with_let_expr ";" sep_or_term_list(expr_with_let_expr,";") {
     let elts, _region = $3 in
     let s_elts = Utils.nsepseq_cons $1 $2 elts
     in PaSequence {s_elts; s_terminator=None}
@@ -907,7 +912,7 @@ sequence_or_record_in:
     let r_elts = Utils.nsepseq_cons $1 $2 elts
     in PaRecord {r_elts; r_terminator = None}
   }
-| expr ";"? { PaSingleExpr $1 }
+| expr_with_let_expr ";"? { PaSingleExpr $1 }
 
 sequence_or_record:
   "{" sequence_or_record_in "}" {

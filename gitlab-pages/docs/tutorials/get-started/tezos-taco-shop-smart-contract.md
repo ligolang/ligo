@@ -1,13 +1,13 @@
 ---
 id: tezos-taco-shop-smart-contract
-title: Taco shop smart-contract
+title: Taco shop smart contract
 ---
 
 <div>
 
-Meet **Pedro**, our *artisan taco chef* who has decided to open a Taco shop on the Tezos blockchain, using a smart-contract. He sells two different kinds of tacos, the **el clásico** and the **especial del chef**. 
+Meet **Pedro**, our *artisan taco chef* who has decided to open a Taco shop on the Tezos blockchain, using a smart contract. He sells two different kinds of tacos, the **el clásico** and the **especial del chef**. 
 
-To help Pedro open his dream taco shop, we'll implement a smart-contract, that will manage supply, pricing & sales of his tacos to the consumers.
+To help Pedro open his dream taco shop, we'll implement a smart contract, that will manage supply, pricing & sales of his tacos to the consumers.
 
 <br/>
 <img src="/img/tutorials/get-started/tezos-taco-shop-smart-contract/taco-stand.svg" width="50%" />
@@ -68,7 +68,7 @@ The best way to install the dockerized LIGO is as a **global executable** throug
 
 > From now on we'll get a bit more technical. If you run into something we have not covered yet - please try checking out the [LIGO cheat sheet](api/cheat-sheet.md) for some extra tips & tricks.
 
-To begin implementing our smart contract, we need an entry point. We'll call it `main` and it'll specify our contract's storage (`int`) and input parameter (`int`). Of course this is not the final storage/parameter of our contract, but it's something to get us started and test our LIGO installation as well.
+To begin implementing our smart contract, we need an entry point. We'll call it `main` and it'll specify our contract's storage (`int`) and input parameter (`int`). Of course this is not the final storage/parameter of our contract, but it is something to get us started and test our LIGO installation as well.
 
 ### `taco-shop.ligo`
 ```pascaligo group=a
@@ -138,7 +138,7 @@ end
 type taco_shop_storage is map(nat, taco_supply);
 ```
 
-Next step is to update the `main` entry point to include `taco_shop_storage` as its storage - while doing that let's set the `parameter` to `unit` as well to clear things up.
+Next step is to update the `main` entry point to include `taco_shop_storage` in its storage - while doing that let's set the `parameter` to `unit` as well to clear things up.
 
 **`taco-shop.ligo`**
 ```pascaligo group=b+
@@ -154,7 +154,7 @@ function main (const parameter: unit ; const taco_shop_storage : taco_shop_stora
 
 ### Populating our storage in a dry-run
 
-When dry-running a contract, it's crucial to provide a correct initial storage value - in our case the storage is type-checked as `taco_shop_storage`. Reflecting [Pedro's daily offer](tutorials/get-started/tezos-taco-shop-smart-contract.md#daily-offer), our storage's value will be defined as following:
+When dry-running a contract, it is crucial to provide a correct initial storage value - in our case the storage is type-checked as `taco_shop_storage`. Reflecting [Pedro's daily offer](tutorials/get-started/tezos-taco-shop-smart-contract.md#daily-offer), our storage's value will be defined as following:
 
 **Storage value**
 ```zsh

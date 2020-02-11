@@ -1,23 +1,20 @@
 // Test map type and related built-in functions in PascaLIGO
 
-type foobar is map(int, int)
+type foobar is map (int, int)
 
-const empty_map : foobar = map end
+const empty_map : foobar = map []
 
-const map1 : foobar = map
-  144 -> 23 ;
-  51 -> 23 ;
-  42 -> 23 ;
-  120 -> 23 ;
-  421 -> 23 ;
-end
-const map2 : foobar = map
-  23 -> 0 ;
-  42 -> 0 ;
-end
+const map1 : foobar = map [
+  144 -> 23;
+  51  -> 23;
+  42  -> 23;
+  120 -> 23;
+  421 -> 23]
 
-function set_ (var n : int ; var m : foobar) : foobar is block {
-  m[23] := n ;
+const map2 : foobar = map [23 -> 0; 42 -> 0]
+
+function set_ (var n : int; var m : foobar) : foobar is block {
+  m[23] := n
 } with m
 
 function add (var n : int ; var m : foobar) : foobar is set_(n,m)
@@ -26,50 +23,43 @@ function rm (var m : foobar) : foobar is block {
   remove 42 from map m
 } with m
 
-function patch_ (var m: foobar) : foobar is block {
+function patch_ (var m : foobar) : foobar is block {
   patch m with map [0 -> 5; 1 -> 6; 2 -> 7]
 } with m
 
-function patch_deep (var m: foobar * nat) : foobar * nat is
-  begin patch m.0 with map [1 -> 9]; end with m
+function patch_deep (var m : foobar * nat) : foobar * nat is
+  block { patch m.0 with map [1 -> 9] } with m
 
-function size_ (const m : foobar) : nat is
-  block {skip} with (size(m))
+function size_ (const m : foobar) : nat is size (m)
 
-function gf (const m : foobar) : int is begin skip end with get_force(23, m)
+function gf (const m : foobar) : int is get_force (23, m)
 
-function get (const m : foobar) : option(int) is
-  begin
-    skip
-  end with m[42]
+function get (const m : foobar) : option (int) is m[42]
 
-function get_ (const m : foobar) : option(int) is
-  begin
-    skip
-  end with map_get(42 , m)
+function get_ (const m : foobar) : option (int) is map_get (42, m)
 
-function mem (const k: int; const m: foobar) : bool is map_mem(k, m)
+function mem (const k: int; const m: foobar) : bool is map_mem (k, m)
 
 function iter_op (const m : foobar) : unit is
   block {
-    function aggregate (const i : int ; const j : int) : unit is block
-      { if (i=j) then skip else failwith("fail") } with unit ;
-    // map_iter(m , aggregate) ;
-  } with map_iter(aggregate, m) ;
+    function aggregate (const i : int; const j : int) : unit is block
+      { if i=j then skip else failwith ("fail") } with unit
+  } with map_iter (aggregate, m)
 
 function map_op (const m : foobar) : foobar is
   block {
-    function increment (const i : int ; const j : int) : int is block { skip } with j + 1 ;
-  } with map_map(increment, m) ;
+    function increment (const i : int; const j : int) : int is j+1
+  } with map_map (increment, m)
 
 function fold_op (const m : foobar) : int is
   block {
-    function aggregate (const i : int ; const j : (int * int)) : int is block { skip } with i + j.0 + j.1 ;
-  } with map_fold(aggregate, m , 10)
+    function aggregate (const i : int; const j : int * int) : int is
+      i + j.0 + j.1
+  } with map_fold(aggregate, m, 10)
 
 function deep_op (var m : foobar) : foobar is
   block {
-    var coco : (int*foobar) := (0, m);
-    remove 42 from map coco.1 ;
-    coco.1[32] := 16 ;
+    var coco : int * foobar := (0, m);
+    remove 42 from map coco.1;
+    coco.1[32] := 16
   } with coco.1

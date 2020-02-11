@@ -39,10 +39,10 @@ let forall3_tc a b c f =
   forall_tc c @@ fun c' ->
   f a' b' c'
 
-let (-->) arg ret = P_constant (C_arrow  , [arg; ret])
 let (=>) tc ty = (tc , ty)
+let (-->) arg ret = P_constant (C_arrow  , [arg; ret])
 let option t  = P_constant (C_option  , [t])
-let pair a b  = P_constant (C_tuple , [a; b])
+let pair a b  = P_constant (C_record , [a; b])
 let map  k v  = P_constant (C_map   , [k; v])
 let unit      = P_constant (C_unit    , [])
 let list   t  = P_constant (C_list    , [t])
@@ -54,6 +54,7 @@ let mutez     = P_constant (C_mutez  , [])
 let timestamp = P_constant (C_timestamp , [])
 let int       = P_constant (C_int     , [])
 let address   = P_constant (C_address , [])
+let chain_id  = P_constant (C_chain_id , [])
 let bytes     = P_constant (C_bytes   , [])
 let key       = P_constant (C_key     , [])
 let key_hash  = P_constant (C_key_hash  , [])
@@ -61,3 +62,9 @@ let signature = P_constant (C_signature , [])
 let operation = P_constant (C_operation , [])
 let contract t = P_constant (C_contract , [t])
 let ( * ) a b = pair a b
+
+(* These are used temporarily to de-curry functions that correspond to Michelson operators *)
+let tuple0       = P_constant (C_record , [])
+let tuple1 a     = P_constant (C_record , [a])
+let tuple2 a b   = P_constant (C_record , [a; b])
+let tuple3 a b c = P_constant (C_record , [a; b; c])
