@@ -60,13 +60,13 @@ let b : int = 5n + 10
 let c : tez = 5mutez + 10mutez
 
 // tez + int or tez + nat is invalid
-// const d : tez = 5mutez + 10n
+// let d : tez = 5mutez + 10n
 
 // two nats yield a nat
 let e : nat = 5n + 10n
 
 // nat + int yields an int: invalid
-// const f : nat = 5n + 10
+// let f : nat = 5n + 10
 
 let g : int = 1_000_000
 ```
@@ -136,7 +136,7 @@ let a : int = 5 - 10
 let b : int = 5n - 2n
 
 // Therefore the following is invalid
-// const c : nat = 5n - 2n
+// let c : nat = 5n - 2n
 
 let d : tez = 5mutez - 1mutez
 ```
@@ -167,15 +167,17 @@ You can multiply values of the same type, such as:
 ```pascaligo group=c
 const a : int = 5 * 5
 const b : nat = 5n * 5n
-// You can also multiply `nat` and `tez` in any order
-const c : tez = 5n * 5mutez;
+
+// You can also multiply `nat` and `tez`
+const c : tez = 5n * 5mutez
 ```
 
 <!--CameLIGO-->
 ```cameligo group=c
 let a : int = 5 * 5
 let b : nat = 5n * 5n
-// You can also multiply `nat` and `tez` in any order
+
+// You can also multiply `nat` and `tez`
 let c : tez = 5n * 5mutez
 ```
 
@@ -183,7 +185,8 @@ let c : tez = 5n * 5mutez
 ```reasonligo group=c
 let a : int = 5 * 5;
 let b : nat = 5n * 5n;
-// You can also multiply `nat` and `tez` in any order
+
+// You can also multiply `nat` and `tez`
 let c : tez = 5n * 5mutez;
 ```
 

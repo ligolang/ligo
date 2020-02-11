@@ -13,10 +13,10 @@ values, called *components*, can be retrieved by their index
 (position).  Probably the most common tuple is the *pair*. For
 example, if we were storing coordinates on a two dimensional grid we
 might use a pair `(x,y)` to store the coordinates `x` and `y`. There
-is a *specific order*, so `(y,x)` is not equal to `(x,y)`. The number
-of components is part of the type of a tuple, so, for example, we
-cannot add an extra component to a pair and obtain a triple of the
-same type, so, for instance, `(x,y)` has always a different type from
+is a *specific order*, so `(y,x)` is not equal to `(x,y)` in
+general. The number of components is part of the type of a tuple, so,
+for example, we cannot add an extra component to a pair and obtain a
+triple of the same type: `(x,y)` has always a different type from
 `(x,y,z)`, whereas `(y,x)` might have the same type as `(x,y)`.
 
 Like records, tuple components can be of arbitrary types.
@@ -68,10 +68,10 @@ position in their tuple, which cannot be done in OCaml.
 
 <!--PascaLIGO-->
 
-Tuple components are one-indexed like so:
+Tuple components are one-indexed and accessed like so:
 
 ```pascaligo group=tuple
-const first_name : string = full_name.1;
+const first_name : string = full_name.1
 ```
 
 <!--CameLIGO-->
@@ -84,7 +84,7 @@ let first_name : string = full_name.0
 
 <!--ReasonLIGO-->
 
-Tuple components are one-indexed like so:
+Tuple components are one-indexed and accessed like so:
 
 ```reasonligo group=tuple
 let first_name : string = full_name[1];
@@ -102,24 +102,27 @@ called the *head*, and the sub-list after the head is called the
 *tail*. For those familiar with algorithmic data structure, you can
 think of a list a *stack*, where the top is written on the left.
 
-> 💡 Lists are useful when returning operations from a smart
-> contract's entrypoint.
+> 💡 Lists are needed when returning operations from a smart
+> contract's access function.
 
 ### Defining Lists
 
 <!--DOCUSAURUS_CODE_TABS-->
 <!--PascaLIGO-->
 ```pascaligo group=lists
+const empty_list : list (int) = nil // Or list []
 const my_list : list (int) = list [1; 2; 2] // The head is 1
 ```
 
 <!--CameLIGO-->
 ```cameligo group=lists
+let empty_list : int list = []
 let my_list : int list = [1; 2; 2] // The head is 1
 ```
 
 <!--ReasonLIGO-->
 ```reasonligo group=lists
+let empty_list : list (int) = [];
 let my_list : list (int) = [1, 2, 2]; // The head is 1
 ```
 
@@ -127,7 +130,6 @@ let my_list : list (int) = [1, 2, 2]; // The head is 1
 
 
 ### Adding to Lists
-
 
 Lists can be augmented by adding an element before the head (or, in
 terms of stack, by *pushing an element on top*). This operation is
@@ -167,12 +169,6 @@ let larger_list : list (int) = [5, ...my_list]; // [5,1,2,2]
 ```
 <!--END_DOCUSAURUS_CODE_TABS-->
 
-> 💡 Lists can be iterated, folded or mapped to different values. You
-> can find additional examples
-> [here](https://gitlab.com/ligolang/ligo/tree/dev/src/test/contracts)
-> and other built-in operators
-> [here](https://gitlab.com/ligolang/ligo/blob/dev/src/passes/operators/operators.ml#L59)
-
 ### Functional Iteration over Lists
 
 A *functional iterator* is a function that traverses a data structure
@@ -180,16 +176,23 @@ and calls in turn a given function over the elements of that structure
 to compute some value. Another approach is possible in PascaLIGO:
 *loops* (see the relevant section).
 
-There are three kinds of functional iterations over LIGO maps: the
+There are three kinds of functional iterations over LIGO lists: the
 *iterated operation*, the *map operation* (not to be confused with the
 *map data structure*) and the *fold operation*.
 
-#### Iterated Operation
+> 💡 Lists can be iterated, folded or mapped to different values. You
+> can find additional examples
+> [here](https://gitlab.com/ligolang/ligo/tree/dev/src/test/contracts)
+> and other built-in operators
+> [here](https://gitlab.com/ligolang/ligo/blob/dev/src/passes/operators/operators.ml#L59)
 
-The first, the *iterated operation*, is an iteration over the map with
-no return value: its only use is to produce side-effects. This can be
-useful if for example you would like to check that each value inside
-of a map is within a certain range, and fail with an error otherwise.
+#### Iterated Operation over Lists
+
+The first, the *iterated operation*, is an iteration over the list
+with a unit return value. It is useful to enforce certain invariants
+on the element of a list, or fail. For example you might want to check
+that each value inside of a list is within a certain range, and fail
+otherwise.
 
 <!--DOCUSAURUS_CODE_TABS-->
 
@@ -244,7 +247,7 @@ let iter_op = (l : list (int)) : unit => {
 <!--END_DOCUSAURUS_CODE_TABS-->
 
 
-#### Map Operation
+#### Mapped Operation over Lists
 
 We may want to change all the elements of a given list by applying to
 them a function. This is called a *map operation*, not to be confused
@@ -254,8 +257,9 @@ with the map data structure.
 
 <!--PascaLIGO-->
 
-In PascaLIGO, the predefined functional iterator implementing the map
-operation over lists is called `list_map` and is used as follows:
+In PascaLIGO, the predefined functional iterator implementing the
+mapped operation over lists is called `list_map` and is used as
+follows:
 
 ```pascaligo group=lists
 function increment (const i : int): int is i + 1
@@ -264,10 +268,14 @@ function increment (const i : int): int is i + 1
 const plus_one : list (int) = list_map (increment, larger_list)
 ```
 
+> The mapped function must be pure, that is, it cannot mutate
+> variables.
+
 <!--CameLIGO-->
 
-In CameLIGO, the predefined functional iterator implementing the map
-operation over lists is called `List.map` and is used as follows:
+In CameLIGO, the predefined functional iterator implementing the
+mapped operation over lists is called `List.map` and is used as
+follows:
 
 ```cameligo group=lists
 let increment (i : int) : int = i + 1
@@ -278,8 +286,9 @@ let plus_one : int list = List.map increment larger_list
 
 <!--ReasonLIGO-->
 
-In ReasonLIGO, the predefined functional iterator implementing the map
-operation over lists is called `List.map` and is used as follows:
+In ReasonLIGO, the predefined functional iterator implementing the
+mapped operation over lists is called `List.map` and is used as
+follows:
 
 ```reasonligo group=lists
 let increment = (i : int) : int => i + 1;
@@ -290,9 +299,9 @@ let plus_one : list (int) = List.map (increment, larger_list);
 <!--END_DOCUSAURUS_CODE_TABS-->
 
 
-#### Fold Operation
+#### Folded Operation over Lists
 
-A *fold operation* is the most general of iterations. The folded
+A *folded operation* is the most general of iterations. The folded
 function takes two arguments: an *accumulator* and the structure
 *element* at hand, with which it then produces a new accumulator. This
 enables having a partial result that becomes complete when the
@@ -302,12 +311,12 @@ traversal of the data structure is over.
 
 <!--PascaLIGO-->
 
-In PascaLIGO, the predefined functional iterator implementing the fold
-operation over lists is called `list_fold` and is used as follows:
+In PascaLIGO, the predefined functional iterator implementing the
+folded operation over lists is called `list_fold` and is used as
+follows:
 
 ```pascaligo group=lists
 function sum (const acc : int; const i : int): int is acc + i
-
 const sum_of_elements : int = list_fold (sum, my_list, 0)
 ```
 
@@ -316,7 +325,7 @@ const sum_of_elements : int = list_fold (sum, my_list, 0)
 
 <!--CameLIGO-->
 
-In CameLIGO, the predefined functional iterator implementing the fold
+In CameLIGO, the predefined functional iterator implementing the folded
 operation over lists is called `List.fold` and is used as follows:
 
 ```cameligo group=lists
@@ -327,7 +336,8 @@ let sum_of_elements : int = List.fold sum my_list 0
 <!--ReasonLIGO-->
 
 In ReasonLIGO, the predefined functional iterator implementing the
-fold operation over lists is called `List.fold` and is used as follows:
+folded operation over lists is called `List.fold` and is used as
+follows:
 
 ```reasonligo group=lists
 let sum = ((result, i): (int, int)): int => result + i;
@@ -365,7 +375,7 @@ let my_set : int set = Set.empty
 
 <!--ReasonLIGO-->
 
-In CameLIGO, the empty set is denoted by the predefined value
+In ReasonLIGO, the empty set is denoted by the predefined value
 `Set.empty`.
 
 ```reasonligo group=sets
@@ -469,7 +479,7 @@ let contains_3 : bool = Set.mem (3, my_set);
 <!--END_DOCUSAURUS_CODE_TABS-->
 
 
-### Cardinal
+### Cardinal of Sets
 
 <!--DOCUSAURUS_CODE_TABS-->
 
@@ -509,7 +519,7 @@ let set_size : nat = Set.size (my_set);
 
 In PascaLIGO, there are two ways to update a set, that is to add or
 remove from it. Either we create a new set from the given one, or we
-modify it in-place. First, let us consider the former way
+modify it in-place. First, let us consider the former way:
 
 ```pascaligo group=sets
 const larger_set  : set (int) = set_add (4, my_set)
@@ -568,8 +578,8 @@ to compute some value. Another approach is possible in PascaLIGO:
 *loops* (see the relevant section).
 
 There are three kinds of functional iterations over LIGO maps: the
-*iterated operation*, the *map operation* (not to be confused with the
-*map data structure*) and the *fold operation*.
+*iterated operation*, the *mapped operation* (not to be confused with
+the *map data structure*) and the *folded operation*.
 
 #### Iterated Operation
 
@@ -631,18 +641,18 @@ let iter_op = (s : set (int)) : unit => {
 <!--END_DOCUSAURUS_CODE_TABS-->
 
 
-#### Map Operation
+#### Mapped Operation (NOT IMPLEMENTED YET)
 
 We may want to change all the elements of a given set by applying to
-them a function. This is called a *map operation*, not to be confused
-with the map data structure.
+them a function. This is called a *mapped operation*, not to be
+confused with the map data structure.
 
 <!--DOCUSAURUS_CODE_TABS-->
 
 <!--PascaLIGO-->
 
-In PascaLIGO, the predefined functional iterator implementing the map
-operation over sets is called `set_map` and is used as follows:
+In PascaLIGO, the predefined functional iterator implementing the
+mapped operation over sets is called `set_map` and is used as follows:
 
 ```pascaligo skip
 function increment (const i : int): int is i + 1
@@ -653,8 +663,8 @@ const plus_one : set (int) = set_map (increment, larger_set)
 
 <!--CameLIGO-->
 
-In CameLIGO, the predefined functional iterator implementing the map
-operation over sets is called `Set.map` and is used as follows:
+In CameLIGO, the predefined functional iterator implementing the
+mapped operation over sets is called `Set.map` and is used as follows:
 
 ```cameligo skip
 let increment (i : int) : int = i + 1
@@ -663,11 +673,10 @@ let increment (i : int) : int = i + 1
 let plus_one : int set = Set.map increment larger_set
 ```
 
-
 <!--ReasonLIGO-->
 
-In ReasonLIGO, the predefined functional iterator implementing the map
-operation over sets is called `Set.map` and is used as follows:
+In ReasonLIGO, the predefined functional iterator implementing the
+mapped operation over sets is called `Set.map` and is used as follows:
 
 ```reasonligo skip
 let increment = (i : int) : int => i + 1;
@@ -678,9 +687,9 @@ let plus_one : set (int) = Set.map (increment, larger_set);
 
 <!--END_DOCUSAURUS_CODE_TABS-->
 
-#### Fold Operation
+#### Folded Operation
 
-A *fold operation* is the most general of iterations. The folded
+A *folded operation* is the most general of iterations. The folded
 function takes two arguments: an *accumulator* and the structure
 *element* at hand, with which it then produces a new accumulator. This
 enables having a partial result that becomes complete when the
@@ -690,8 +699,9 @@ traversal of the data structure is over.
 
 <!--PascaLIGO-->
 
-In PascaLIGO, the predefined functional iterator implementing the fold
-operation over sets is called `set_fold` and is used as follows:
+In PascaLIGO, the predefined functional iterator implementing the
+folded operation over sets is called `set_fold` and is used as
+follows:
 
 ```pascaligo group=sets
 function sum (const acc : int; const i : int): int is acc + i

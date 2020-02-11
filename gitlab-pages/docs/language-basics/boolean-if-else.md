@@ -148,6 +148,29 @@ gitlab-pages/docs/language-basics/boolean-if-else/cond.ligo compare 21n'
 # Outputs: Large (Unit)
 ```
 
+When the branches of the conditional are not a single expression, as
+above, we need a block:
+
+```pascaligo skip
+if x < y then
+  block {
+    const z : nat = x;
+    x := y; y := z
+  }
+else skip;
+```
+
+As an exception to the rule, the blocks in a conditional branch do not
+need to be introduced by the keywor `block`, so, we could have written
+instead:
+```pascaligo skip
+if x < y then {
+  const z : nat = x;
+  x := y; y := z
+}
+else skip;
+```
+
 <!--CameLIGO-->
 ```cameligo group=e
 type magnitude = Small | Large // See variant types.
