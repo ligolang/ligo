@@ -1,5 +1,6 @@
 #!/bin/sh
 set -e
+set -x
 
 # Install local dependencies
 opam install -y --deps-only --with-test ./ligo.opam $(find vendors -name \*.opam)

@@ -106,7 +106,6 @@ and ascription = {
     type_annotation: type_expression ;
   }
 
-
 and environment_element_definition =
   | ED_binder
   | ED_declaration of environment_element_definition_declaration
