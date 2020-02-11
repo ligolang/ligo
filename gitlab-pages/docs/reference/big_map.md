@@ -3,6 +3,67 @@ id: big-map-reference
 title: Big Map
 ---
 
+## Defining A Big Map Type
+
+<!--DOCUSAURUS_CODE_TABS-->
+<!--Pascaligo-->
+```pascaligo
+type move is (int * int)
+type moveset is big_map (address, move)
+type foo is big_map (int, int)
+```
+
+<!--CameLIGO-->
+```cameligo
+type move = int * int
+type moveset = (address, move) big_map
+type foo = (int, int) big_map
+```
+
+<!--ReasonLIGO-->
+```reasonligo
+type move = (int, int);
+type moveset = big_map(address, move);
+type foo = big_map(int, int);
+```
+
+<!--END_DOCUSAURUS_CODE_TABS-->
+
+## Creating A Map
+
+<!--DOCUSAURUS_CODE_TABS-->
+<!--Pascaligo-->
+
+```pascaligo
+const moves: moveset =
+  big_map
+    ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address) -> (1,2);
+    ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address) -> (0,3);
+  end
+```
+
+<!--CameLIGO-->
+
+```cameligo
+let moves: moveset =
+  Big_map.literal [
+    (("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address), (1,2));
+    (("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address), (0,3));
+  ]
+```
+
+<!--ReasonLIGO-->
+
+```reasonligo
+let moves: moveset =
+  Big_map.literal ([
+    ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address, (1,2)),
+    ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address, (0,3)),
+  ]);
+```
+
+<!--END_DOCUSAURUS_CODE_TABS-->
+
 ## Big_map.find_opt(k: a', m: (a',b') big_map) : b' option
 
 Retrieve the value associated with a particular key. This version returns an option
@@ -95,6 +156,29 @@ let updated_map : moveset =
 <!--END_DOCUSAURUS_CODE_TABS-->
 
 ## Big_map.add(k: a', v: b', m: (a', b') big_map) : (a', b') big_map
+
+Add a key and its associated value to the big map.
+
+<!--DOCUSAURUS_CODE_TABS-->
+
+<!--PascaLIGO-->
+```pascaligo
+function set_ (var n : int ; var m : foo) : foo is block {
+  m[23] := n ;
+} with m
+```
+
+<!--CameLIGO-->
+```cameligo
+let add (n,m : int * foo) : foo = Big_map.add 23 n m
+```
+
+<!--ReasonLIGO-->
+```reasonligo
+let add = ((n,m): (int, foo)): foo => Big_map.add(23, n, m);
+```
+
+<!--END_DOCUSAURUS_CODE_TABS-->
 
 ## Big_map.remove(k: a', m: (a', b') big_map) : (a', b') big_map
 

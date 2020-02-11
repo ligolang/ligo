@@ -1074,6 +1074,11 @@ let big_map_ type_f path : unit result =
     expect_eq_n_pos_small program "set_" make_input make_expected
   in
   let%bind () =
+    let input = (e_pair (e_int 23) (ez [(42, 42)])) in
+    let expected = ez [(23, 23) ; (42, 42)] in
+    expect_eq program "add" input expected
+  in
+  let%bind () =
     let make_input = fun n -> ez [(23, n) ; (42, 4)] in
     let make_expected = fun _ -> e_some @@ e_int 4 in
     expect_eq_n program "get" make_input make_expected

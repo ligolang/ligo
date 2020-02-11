@@ -13,6 +13,8 @@ function set_ (var n : int ; var m : foo) : foo is block {
   m[23] := n ;
 } with m
 
+function add (var n : int ; var m : foo) : foo is set_(n,m)
+
 function rm (var m : foo) : foo is block {
   remove 42 from map m;
 } with m
