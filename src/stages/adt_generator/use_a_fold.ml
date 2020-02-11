@@ -4,7 +4,7 @@ open Fold
 (* TODO: how should we plug these into our test framework? *)
 
 let () =
-  let some_root : root = A [{ a1 = X (A [{ a1 = X (B [1;2;3]) ; a2 = W () ; }]) ; a2 = Z (W ()) ; }] in
+  let some_root : root = A { a1 = X (A { a1 = X (B 1) ; a2 = W () ; }) ; a2 = Z (W ()) ; } in
   let op = {
       no_op with
       a = fun the_a state continue_fold ->
@@ -23,7 +23,7 @@ let () =
     ()
 
 let () =
-  let some_root : root = A [{ a1 = X (A [{ a1 = X (B [1;2;3]) ; a2 = W () ; }]) ; a2 = Z (W ()) ; }] in
+  let some_root : root = A { a1 = X (A { a1 = X (B 1) ; a2 = W () ; }) ; a2 = Z (W ()) ; } in
   let op = { no_op with a_pre_state = fun _the_a state -> state + 1 } in
   let state = 0 in
   let (_, state) = fold_root op some_root state in
@@ -33,7 +33,7 @@ let () =
     ()
 
 let () =
-  let some_root : root = A [{ a1 = X (A [{ a1 = X (B [1;2;3]) ; a2 = W () ; }]) ; a2 = Z (W ()) ; }] in
+  let some_root : root = A { a1 = X (A { a1 = X (B 1) ; a2 = W () ; }) ; a2 = Z (W ()) ; } in
   let op = { no_op with a_post_state = fun _the_a _new_a state -> state + 1 } in
   let state = 0 in
   let (_, state) = fold_root op some_root state in
