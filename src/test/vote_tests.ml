@@ -18,7 +18,7 @@ let get_program =
 
 open Ast_simplified
 
-let init_storage name = ez_e_record [
+let init_storage name = e_record_ez [
     ("title" , e_string name) ;
     ("candidates" , e_map [
         (e_string "Yes" , e_int 0) ;
@@ -30,7 +30,7 @@ let init_storage name = ez_e_record [
   ]
 
 let init title beginning_time finish_time =
-  let init_action = ez_e_record [
+  let init_action = e_record_ez [
       ("title" , e_string title) ;
       ("beginning_time" , e_timestamp beginning_time) ;
       ("finish_time" , e_timestamp finish_time) ;

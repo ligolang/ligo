@@ -1,62 +1,66 @@
 // storage type
-type counter_t is nat
-type threshold_t is nat
-type authorized_keys_t is list(key)
-type id_t is string
 
-type storage_t is record
-  id : id_t ;
-  counter : counter_t ;
-  threshold : threshold_t ;
-  auth : authorized_keys_t ;
-end
+type counter is nat
+type threshold is nat
+type authorized_keys is list (key)
+type id is string
+
+type storage is
+  record [
+    id        : id;
+    counter   : counter;
+    threshold : threshold;
+    auth      : authorized_keys
+  ]
 
 // I/O types
-type message_t is (unit -> list(operation))
-type signatures_t is list(key_hash * signature)
-type check_message_pt is record
-  counter : counter_t ;
-  message : message_t ;
-  signatures : signatures_t ;
-end
 
-type contract_return_t is (list(operation) * storage_t)
+type message is unit -> list (operation)
 
-type entry_point_t is
-| CheckMessage of check_message_pt
+type signatures is list (key_hash * signature)
+
+type check_message_pt is
+  record [
+    counter    : counter;
+    message    : message;
+    signatures : signatures
+  ]
+
+type return is list (operation) * storage
+
+type parameter is CheckMessage of check_message_pt
 
 function check_message (const param : check_message_pt;
-                        const s : storage_t) : contract_return_t is block {
-  var message : message_t := param.message ;
+                        const s : storage) : return is block {
+  var message : message := param.message;
 
   if param.counter =/= s.counter then
     failwith ("Counters does not match")
-  else block {
+  else {
     const packed_payload : bytes =
-      bytes_pack((message , param.counter , s.id , get_chain_id));
-    var valid : nat := 0n ;
+      bytes_pack ((message, param.counter, s.id, get_chain_id));
+    var valid : nat := 0n;
 
-    var keys : authorized_keys_t := s.auth ;
+    var keys : authorized_keys := s.auth;
     for pkh_sig in list param.signatures block {
       case keys of
-      | nil -> skip
+        nil -> skip
       | key # tl -> block {
-        keys := tl ;
-        if pkh_sig.0 = crypto_hash_key(key) then
-          if crypto_check(key,pkh_sig.1,packed_payload) then valid := valid + 1n ;
-          else failwith ("Invalid signature")
-        else skip;
-      }
+          keys := tl;
+          if pkh_sig.0 = crypto_hash_key (key) then
+            if crypto_check (key, pkh_sig.1, packed_payload)
+            then valid := valid + 1n
+            else failwith ("Invalid signature")
+          else skip
+          }
       end
     };
 
     if valid < s.threshold then
       failwith ("Not enough signatures passed the check")
-    else s.counter := s.counter + 1n ;
+    else s.counter := s.counter + 1n
   }
-} with (message(unit), s)
+} with (message (unit), s)
 
-function main(const param : entry_point_t; const s : storage_t) : contract_return_t is 
-  case param of
-  | CheckMessage (p) -> check_message(p,s)
-end
+function main (const param : parameter; const s : storage) : return is
+  case param of CheckMessage (p) -> check_message (p,s) end

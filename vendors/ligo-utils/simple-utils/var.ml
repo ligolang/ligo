@@ -40,6 +40,11 @@ let to_name var =
   | None -> var.name
   | Some _ -> raise Tried_to_unfreshen_variable
 
+let show v =
+  match v.counter with
+  | None -> Format.sprintf "%s" v.name
+  | Some i -> Format.sprintf "%s#%d" v.name i
+
 let fresh ?name () =
   let name = Option.unopt ~default:"" name in
   let counter = incr global_counter ; Some !global_counter in

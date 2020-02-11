@@ -62,7 +62,7 @@ else
   #   &&     redirect the output of the wget download to the temporary file
   #   ) ||   clean up temporary file if any command in the previous block failed
 
-  wget "$url" -O - \
+  (wget "$url" -O - 2>/dev/null || echo "ERROR: wget $url failed.") \
   | sed -e "s/next/$version/g" \
   | sudo sh -c ' \
     ( \

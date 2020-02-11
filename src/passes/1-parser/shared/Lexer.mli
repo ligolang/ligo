@@ -136,7 +136,7 @@ module type S =
     val slide : token -> window -> window
 
     type instance = {
-      read     : ?log:logger -> Lexing.lexbuf -> token;
+      read     : log:logger -> Lexing.lexbuf -> token;
       buffer   : Lexing.lexbuf;
       get_win  : unit -> window;
       get_pos  : unit -> Pos.t;

@@ -1,5 +1,6 @@
 #!/bin/sh
 set -e
+set -x
 
 eval $(opam config env)
 dune build -p ligo

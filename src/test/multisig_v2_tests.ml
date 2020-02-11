@@ -35,7 +35,7 @@ let empty_message = e_lambda (Var.of_name "arguments")
   empty_op_list
 let empty_message2 = e_lambda (Var.of_name "arguments")
   (Some t_bytes) (Some (t_list t_operation))
- ( e_let_in ((Var.of_name "foo"),Some t_unit) false (e_unit ()) empty_op_list)
+ ( e_let_in ((Var.of_name "foo"),Some t_unit) false false (e_unit ()) empty_op_list)
 
 let send_param msg = e_constructor "Send" msg
 let withdraw_param = e_constructor "Withdraw" empty_message
@@ -55,7 +55,7 @@ let storage {state_hash ; threshold ; max_proposal ; max_msg_size ; id_counter_l
       addr_exp::auth_set , (addr_exp, e_nat ctr)::counter_st)
     ([],[])
     id_counter_list in
-  e_ez_record [
+  e_record_ez [
     ("state_hash"          , e_bytes_raw state_hash                                ) ;
     ("threshold"           , e_nat threshold                                       ) ;
     ("max_proposal"        , e_nat max_proposal                                    ) ;

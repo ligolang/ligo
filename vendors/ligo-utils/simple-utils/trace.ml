@@ -555,6 +555,7 @@ let bind_concat (l1:'a list result) (l2: 'a list result) =
   ok @@ (l1' @ l2')
 
 let bind_map_list f lst = bind_list (List.map f lst)
+let bind_mapi_list f lst = bind_list (List.mapi f lst)
 
 let rec bind_map_list_seq f lst = match lst with
   | [] -> ok []

@@ -30,3 +30,5 @@ val declaration : formatter -> assignment -> unit
 val tl_statement : formatter -> assignment * 'a -> unit
 *)
 val program : formatter -> program -> unit
+
+val constant : formatter -> constant' -> unit

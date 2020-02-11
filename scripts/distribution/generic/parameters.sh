@@ -1,11 +1,15 @@
-# This script accepts three arguments, os family, os and it's version,
+#!/bin/sh
+set -e
+set -x
+
+# This script accepts three arguments, os family, os and its version,
 # which are subsequently used to fetch the respective docker
 # image from the ocaml/infrastructure project.
 #
 # https://github.com/ocaml/infrastructure/wiki/Containers#selecting-linux-distributions
-target_os_family=$1
-target_os=$2
-target_os_version=$3
+target_os_family="$1"
+target_os="$2"
+target_os_version="$3"
 
 # Variables configured at the CI level
 dist="$LIGO_DIST_DIR"

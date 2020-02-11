@@ -35,6 +35,7 @@ open Ast_simplified
 let pack_payload (program:Ast_typed.program) (payload:expression) : bytes result =
   let%bind code =
     let env = Ast_typed.program_environment program in
+
     let%bind (typed,_) = Compile.Of_simplified.compile_expression
         ~env ~state:(Typer.Solver.initial_state) payload in
     let%bind mini_c = Compile.Of_typed.compile_expression typed in
@@ -81,6 +82,7 @@ open Ast_simplified.Combinators
 let typed_program_with_simplified_input_to_michelson
     (program: Ast_typed.program) (entry_point: string)
     (input: Ast_simplified.expression) : Compiler.compiled_expression result =
+  Printexc.record_backtrace true;
   let env = Ast_typed.program_environment program in
   let state = Typer.Solver.initial_state in
   let%bind app              = Compile.Of_simplified.apply entry_point input in
@@ -105,7 +107,6 @@ let expect ?options program entry_point input expecter =
     in
     trace run_error @@
     run_typed_program_with_simplified_input ?options program entry_point input in
-
   expecter result
 
 let expect_fail ?options program entry_point input =

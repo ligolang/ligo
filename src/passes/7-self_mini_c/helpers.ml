@@ -32,8 +32,8 @@ let rec fold_expression : 'a folder -> 'a -> expression -> 'a result = fun f ini
     ok init'
   )
   | E_literal _ -> ok init'
-  | E_constant (_, lst) -> (
-      let%bind res = bind_fold_list self init' lst in
+  | E_constant (c) -> (
+      let%bind res = bind_fold_list self init' c.arguments in
       ok res
   )
   | E_closure af -> (
@@ -84,7 +84,7 @@ let rec fold_expression : 'a folder -> 'a -> expression -> 'a result = fun f ini
       let%bind res = self init' exp in
       ok res
   )
-  | E_update (r, (_,e)) -> (
+  | E_record_update (r, _, e) -> (
       let%bind res = self init' r in
       let%bind res = self res e in
       ok res
@@ -102,9 +102,9 @@ let rec map_expression : mapper -> expression -> expression result = fun f e ->
   | E_make_empty_big_map _
   | E_make_empty_list _
   | E_make_empty_set _ as em -> return em
-  | E_constant (name, lst) -> (
-      let%bind lst' = bind_map_list self lst in
-      return @@ E_constant (name,lst')
+  | E_constant (c) -> (
+      let%bind lst = bind_map_list self c.arguments in
+      return @@ E_constant {cons_name = c.cons_name; arguments = lst}
   )
   | E_closure af -> (
       let%bind body = self af.body in
@@ -154,10 +154,10 @@ let rec map_expression : mapper -> expression -> expression result = fun f e ->
       let%bind exp' = self exp in
       return @@ E_assignment (s, lrl, exp')
   )
-  | E_update (r, (l,e)) -> (
+  | E_record_update (r, l, e) -> (
       let%bind r = self r in
       let%bind e = self e in
-      return @@ E_update(r,(l,e))
+      return @@ E_record_update(r, l, e)
   )
 
 let map_sub_level_expression : mapper -> expression -> expression result = fun f e ->
