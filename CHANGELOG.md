@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+## [9164206ef1fcf3e577820442b5afbad92d03ffa4] - 2020-02-09
+### Changed
+- Mutation of variables inside lambdas passed to list_iter do not have effect anymore. Side-effects used to survive iterations of list_iter via a quirk in the Michelson list_iter. Now, either use a list_fold and explicitly pass through the updated variables (e.g. storage) to the next iteration, or use a `for` loop which automatically detects mutations within the loop body and lifts the affected variables to a record that is passed from iteration to iteration.
+
 ## [Add crypto reference page to docs](https://gitlab.com/ligolang/ligo/-/merge_requests/370)
 ### Changed
 - Corrected typo in CameLIGO/ReasonLIGO front end where Crypto.blake2b was 'Crypto.black2b'
