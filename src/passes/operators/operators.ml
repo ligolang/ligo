@@ -382,7 +382,7 @@ module Typer = struct
     let t_set_remove   = forall "a" @@ fun a -> tuple2 a (set a) --> set a
     let t_not          = tuple1 bool --> bool
 
-    let t_continuation = forall "a" @@ fun a -> pair bool a
+    let t_continuation = forall "a" @@ fun a -> tuple2 bool a --> pair bool a
     let t_fold_while   = forall "a" @@ fun a -> tuple2 (a --> pair bool a) a --> a
     let t_neg          = tuple1 int --> int
     let t_and          = tuple2 bool bool --> bool
@@ -394,9 +394,11 @@ module Typer = struct
     let t_concat       = forall_tc "a" @@ fun a -> [tc_concatable a] => tuple2 a a --> a
     let t_set_empty    = forall_tc "a" @@ fun a -> [tc_comparable a] => tuple0 --> set a
     let t_set_iter     = forall_tc "a" @@ fun a -> [tc_comparable a] => tuple2 (a --> unit) (set a) --> unit
+    (* TODO: check that the implementation has this type *)
     let t_set_fold     = forall2_tc "a" "b" @@ fun a b -> [tc_comparable b] => tuple3 (pair a b --> a) (set b) a --> a
     let t_list_iter    = forall "a" @@ fun a -> tuple2 (a --> unit) (list a) --> unit
     let t_list_map     = forall "a" @@ fun a -> tuple2 (a --> a) (list a) --> (list a)
+    (* TODO: check that the implementation has this type *)
     let t_list_fold    = forall2 "a" "b" @@ fun a b -> tuple3 (pair a b --> a) (list b) a --> a
     let t_self_address = tuple0 --> address
     let t_implicit_account = forall_tc "a" @@ fun a -> [tc_storable a] => tuple1 key_hash --> contract a
