@@ -1,9 +1,8 @@
 (rule
-  (target generated_fold.ml)
+  (target fold.ml)
   (deps generator.py)
-  (action (with-stdout-to generated_fold.ml (run python3 ./generator.py)))
-;  (mode (promote (until-clean))) ; If this is uncommented, then "dune build -p ligo" can't find the file (but "dune build" can)
-)
+  (action (with-stdout-to fold.ml (run python3 ./generator.py)))
+  (mode (promote (until-clean))))
 ; (library
 ;   (name adt_generator)
 ;   (public_name ligo.adt_generator)
@@ -16,9 +15,4 @@
   (public_name ligo.adt_generator)
   (libraries
   )
-)
-
-(alias
-  (name runtest)
-  (action (run ./adt_generator.exe))
 )
