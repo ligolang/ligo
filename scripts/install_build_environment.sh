@@ -23,28 +23,32 @@ if [ -n "`uname -a | grep -i arch`" ]
 then
     sudo pacman -Sy --noconfirm \
         python \
+        python-pip \
         make \
         m4 \
         gcc \
         patch \
         bubblewrap \
         rsync \
-        curl 
+        curl
 fi
 
 if [ -n "`uname -a | grep -i ubuntu`" ]
 then
 sudo apt-get install -y make \
      python3 \
+     python3-pip \
      make \
      m4 \
      gcc \
      patch \
      bubblewrap \
      rsync \
-     curl 
+     curl
 fi
-    
+
+pip3 install future-fstrings
+
 if [ -n "`uname -a | grep -i ubuntu`" ]
 then
     echo "ubuntu"

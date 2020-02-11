@@ -4,4 +4,4 @@ Build & test with:
 
 Run with
 
-    python ./generator.py
+    python3 ./generator.py

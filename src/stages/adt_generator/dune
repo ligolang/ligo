@@ -1,8 +1,14 @@
 (rule
-  (target generated_fold.ml)
+  (target generator_fstrings.py)
   (deps generator.py)
-  (action (with-stdout-to generated_fold.ml (run python3 ./generator.py)))
-;  (mode (promote (until-clean))) ; If this is uncommented, then "dune build -p ligo" can't find the file (but "dune build" can)
+  (action (with-stdout-to generator_fstrings.py (run sh -c "if python3 -c 'f\"\"' 2>/dev/null; then :; else echo '# -*- coding: future_fstrings -*-'; fi; cat generator.py")))
+)
+
+(rule
+  (target generated_fold.ml)
+  (deps generator_fstrings.py)
+  (action (with-stdout-to generated_fold.ml (run python3 ./generator_fstrings.py)))
+  (mode (promote (until-clean)))
 )
 ; (library
 ;   (name adt_generator)

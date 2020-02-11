@@ -8,6 +8,7 @@ then
     pacman -Sy
     sudo pacman -S --noconfirm \
         python \
+        python-pip \
         libevdev \
         perl \
         pkg-config \
@@ -23,6 +24,7 @@ else
     apt-get update -qq
     apt-get -y -qq install \
         python3 \
+        python3-pip \
         libev-dev \
         perl \
         pkg-config \
@@ -34,3 +36,5 @@ else
         rsync \
         git
 fi
+
+pip3 install future-fstrings
