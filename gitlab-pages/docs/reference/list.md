@@ -30,7 +30,7 @@ let size_ = (s: list(int)): nat => List.size(s);
 
 Alias of `List.size`.
 
-## List.map(map_function: a' -> a', lst: a' list) : 'a list
+## List.map(map_function: a' -> b', lst: a' list) : 'b list
 
 Apply an operation defined by `map_function` to each element of a list and return
 a list of the modified elements.
@@ -38,7 +38,7 @@ a list of the modified elements.
 <!--DOCUSAURUS_CODE_TABS-->
 <!--Pascaligo-->
 ```pascaligo group=b
-function increment(const i: int): int is block { skip } with i + 1;
+function increment(const i: int): int is i + 1;
 // Creates a new list with elements incremented by 1
 const incremented_list: list(int) = list_map(increment, list 1; 2; 3; end );
 ```
