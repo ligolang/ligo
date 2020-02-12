@@ -154,8 +154,6 @@ module Simplify = struct
       | "time"                     -> ok C_NOW
       | "Current.amount"           -> ok C_AMOUNT
       | "amount"                   -> ok C_AMOUNT
-      | "Current.gas"              -> ok C_STEPS_TO_QUOTA
-      | "gas"                      -> ok C_STEPS_TO_QUOTA
       | "Current.sender"           -> ok C_SENDER
       | "Current.address"          -> ok C_ADDRESS
       | "Current.self_address"     -> ok C_SELF_ADDRESS
