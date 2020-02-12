@@ -39,6 +39,11 @@ let forall3_tc a b c f =
   forall_tc c @@ fun c' ->
   f a' b' c'
 
+let forall2_tc a b f =
+  forall    a @@ fun a' ->
+  forall_tc b @@ fun b' ->
+  f a' b'
+
 let (=>) tc ty = (tc , ty)
 let (-->) arg ret = P_constant (C_arrow  , [arg; ret])
 let option t  = P_constant (C_option  , [t])
