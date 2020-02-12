@@ -13,6 +13,8 @@ let main (p, s: param * storage) =
     | hd::tl -> s.0 + hd, tl
   in ([] : operation list), storage
 
+let size_ (s: int list) : nat = List.size s
+
 let fold_op (s: int list) : int =
   let aggregate = fun (t: int * int) -> t.0 + t.1
   in List.fold aggregate s 10

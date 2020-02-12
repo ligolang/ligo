@@ -17,6 +17,8 @@ let main2 = (p: param, storage) => {
 
 let main = (x: (param, storage)) => main2(x[0],x[1]);
 
+let size_ = (s: list(int)): nat => List.size(s);
+
 let fold_op = (s: list(int)): int => {
   let aggregate = (prec_cur: (int, int)) => prec_cur[0] + prec_cur[1];
   List.fold(aggregate, s, 10);
