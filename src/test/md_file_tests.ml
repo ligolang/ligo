@@ -126,6 +126,7 @@ let md_files = [
   "/gitlab-pages/docs/reference/set.md";
   "/gitlab-pages/docs/reference/big_map.md";
   "/gitlab-pages/docs/reference/string.md";
+  "/gitlab-pages/docs/reference/crypto.md";
 ]
 
 let md_root = "../../gitlab-pages/docs/language-basics/"
