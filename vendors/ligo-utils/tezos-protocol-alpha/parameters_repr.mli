@@ -24,55 +24,24 @@
 (*****************************************************************************)
 
 type bootstrap_account = {
-  public_key_hash : Signature.Public_key_hash.t ;
-  public_key : Signature.Public_key.t option ;
-  amount : Tez_repr.t ;
+  public_key_hash : Signature.Public_key_hash.t;
+  public_key : Signature.Public_key.t option;
+  amount : Tez_repr.t;
 }
 
 type bootstrap_contract = {
-  delegate : Signature.Public_key_hash.t ;
-  amount : Tez_repr.t ;
-  script : Script_repr.t ;
+  delegate : Signature.Public_key_hash.t;
+  amount : Tez_repr.t;
+  script : Script_repr.t;
 }
 
 type t = {
-  bootstrap_accounts : bootstrap_account list ;
-  bootstrap_contracts : bootstrap_contract list ;
-  commitments : Commitment_repr.t list ;
-  constants : Constants_repr.parametric ;
-  security_deposit_ramp_up_cycles : int option ;
-  no_reward_cycles : int option ;
+  bootstrap_accounts : bootstrap_account list;
+  bootstrap_contracts : bootstrap_contract list;
+  commitments : Commitment_repr.t list;
+  constants : Constants_repr.parametric;
+  security_deposit_ramp_up_cycles : int option;
+  no_reward_cycles : int option;
 }
 
-val encoding: t Data_encoding.t
-
-
-(* Only for migration from 004 to 005 *)
-
-module Proto_004 : sig
-  type parametric = {
-    preserved_cycles: int ;
-    blocks_per_cycle: int32 ;
-    blocks_per_commitment: int32 ;
-    blocks_per_roll_snapshot: int32 ;
-    blocks_per_voting_period: int32 ;
-    time_between_blocks: Period_repr.t list ;
-    endorsers_per_block: int ;
-    hard_gas_limit_per_operation: Z.t ;
-    hard_gas_limit_per_block: Z.t ;
-    proof_of_work_threshold: int64 ;
-    tokens_per_roll: Tez_repr.t ;
-    michelson_maximum_type_size: int;
-    seed_nonce_revelation_tip: Tez_repr.t ;
-    origination_size: int ;
-    block_security_deposit: Tez_repr.t ;
-    endorsement_security_deposit: Tez_repr.t ;
-    block_reward: Tez_repr.t ;
-    endorsement_reward: Tez_repr.t ;
-    cost_per_byte: Tez_repr.t ;
-    hard_storage_limit_per_operation: Z.t ;
-    test_chain_duration: int64 ;
-  }
-
-  val constants_encoding: parametric Data_encoding.t
-end
+val encoding : t Data_encoding.t
