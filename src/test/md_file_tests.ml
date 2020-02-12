@@ -123,6 +123,10 @@ let md_files = [
   "/gitlab-pages/docs/api/cli-commands.md";
   "/gitlab-pages/docs/api/cheat-sheet.md";
   "/gitlab-pages/docs/reference/list.md";
+  "/gitlab-pages/docs/reference/map.md";
+  "/gitlab-pages/docs/reference/set.md";
+  "/gitlab-pages/docs/reference/big_map.md";
+  "/gitlab-pages/docs/reference/string.md";
 ]
 
 let md_root = "../../gitlab-pages/docs/language-basics/"

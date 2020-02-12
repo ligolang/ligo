@@ -330,7 +330,7 @@ let storage_error err = fail (Storage_error err)
 (* Initialization *********************************************************)
 
 (* This key should always be populated for every version of the
-   protocol.  It's absence meaning that the context is empty. *)
+   protocol.  Its absence meaning that the context is empty. *)
 let version_key = ["version"]
 let version_value = "babylon_005"
 

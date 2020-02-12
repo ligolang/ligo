@@ -1,342 +1,745 @@
 ---
 id: sets-lists-tuples
-title: Sets, Lists, Tuples
+title: Tuples, Lists, Sets
 ---
 
-Apart from complex data types such as `maps` and `records`, ligo also
-exposes `sets`, `lists` and `tuples`.
+Apart from complex data types such as `maps` and `records`, LIGO also
+features `tuples`, `lists` and `sets`.
 
-> ⚠️ Make sure to pick the appropriate data type for your use case; it carries not only semantic but also gas related costs.
+## Tuples
 
-## Sets
+Tuples gather a given number of values in a specific order and those
+values, called *components*, can be retrieved by their index
+(position).  Probably the most common tuple is the *pair*. For
+example, if we were storing coordinates on a two dimensional grid we
+might use a pair `(x,y)` to store the coordinates `x` and `y`. There
+is a *specific order*, so `(y,x)` is not equal to `(x,y)` in
+general. The number of components is part of the type of a tuple, so,
+for example, we cannot add an extra component to a pair and obtain a
+triple of the same type: `(x,y)` has always a different type from
+`(x,y,z)`, whereas `(y,x)` might have the same type as `(x,y)`.
 
-Sets are similar to lists. The main difference is that elements of a
-`set` must be *unique*.
+Like records, tuple components can be of arbitrary types.
 
-### Defining a set
+### Defining Tuples
+
+Unlike [a record](language-basics/maps-records.md), tuple types do not
+have to be defined before they can be used. However below we will give
+them names by *type aliasing*.
 
 <!--DOCUSAURUS_CODE_TABS-->
+
 <!--Pascaligo-->
-```pascaligo group=a
-type int_set is set (int);
-const my_set : int_set = set 1; 2; 3 end
+
+```pascaligo group=tuple
+type full_name is string * string  // Alias
+
+const full_name : full_name = ("Alice", "Johnson")
 ```
 
 <!--CameLIGO-->
-```cameligo group=a
-type int_set = int set
-let my_set : int_set =
-  Set.add 3 (Set.add 2 (Set.add 1 (Set.empty: int set)))
+
+```cameligo group=tuple
+type full_name = string * string  // Alias
+
+let full_name : full_name = ("Alice", "Johnson") // Optional parentheses
 ```
 
 <!--ReasonLIGO-->
-```reasonligo group=a
-type int_set = set (int);
-let my_set : int_set =
-  Set.add (3, Set.add (2, Set.add (1, Set.empty: set (int))));
-```
 
-<!--END_DOCUSAURUS_CODE_TABS-->
+```reasonligo group=tuple
+type full_name = (string, string);  // Alias
 
-### Empty sets
-
-<!--DOCUSAURUS_CODE_TABS-->
-<!--Pascaligo-->
-```pascaligo group=a
-const my_set: int_set = set end
-const my_set_2: int_set = set_empty
-```
-<!--CameLIGO-->
-```cameligo group=a
-let my_set: int_set = (Set.empty: int set)
-```
-<!--ReasonLIGO-->
-```reasonligo group=a
-let my_set: int_set = (Set.empty: set (int));
-```
-<!--END_DOCUSAURUS_CODE_TABS-->
-
-### Checking if set contains an element
-
-<!--DOCUSAURUS_CODE_TABS-->
-<!--Pascaligo-->
-```pascaligo group=a
-const contains_three : bool = my_set contains 3
-// or alternatively
-const contains_three_fn: bool = set_mem (3, my_set);
-```
-
-<!--CameLIGO-->
-```cameligo group=a
-let contains_three: bool = Set.mem 3 my_set
-```
-<!--ReasonLIGO-->
-```reasonligo group=a
-let contains_three: bool = Set.mem(3, my_set);
+let full_name : full_name = ("Alice", "Johnson");
 ```
 
 <!--END_DOCUSAURUS_CODE_TABS-->
 
 
-### Obtaining the size of a set
+### Accessing Components
+
+Accessing the components of a tuple in OCaml is achieved by
+[pattern matching](language-basics/unit-option-pattern-matching.md). LIGO
+currently supports tuple patterns only in the parameters of functions,
+not in pattern matching. However, we can access components by their
+position in their tuple, which cannot be done in OCaml.
+
 <!--DOCUSAURUS_CODE_TABS-->
-<!--Pascaligo-->
-```pascaligo group=a
-const set_size: nat = size (my_set)
-```
 
-<!--CameLIGO-->
-```cameligo group=a
-let set_size: nat = Set.size my_set
-```
+<!--PascaLIGO-->
 
-<!--ReasonLIGO-->
-```reasonligo group=a
-let set_size: nat = Set.size (my_set);
-```
+Tuple components are one-indexed and accessed like so:
 
-<!--END_DOCUSAURUS_CODE_TABS-->
-
-
-### Modifying a set
-<!--DOCUSAURUS_CODE_TABS-->
-<!--Pascaligo-->
-```pascaligo group=a
-const larger_set: int_set = set_add(4, my_set);
-const smaller_set: int_set = set_remove(3, my_set);
+```pascaligo group=tuple
+const first_name : string = full_name.1
 ```
 
 <!--CameLIGO-->
 
-```cameligo group=a
-let larger_set: int_set = Set.add 4 my_set
-let smaller_set: int_set = Set.remove 3 my_set
+Tuple elements are zero-indexed and accessed like so:
+
+```cameligo group=tuple
+let first_name : string = full_name.0
 ```
 
 <!--ReasonLIGO-->
 
-```reasonligo group=a
-let larger_set: int_set = Set.add(4, my_set);
-let smaller_set: int_set = Set.remove(3, my_set);
+Tuple components are one-indexed and accessed like so:
+
+```reasonligo group=tuple
+let first_name : string = full_name[1];
 ```
 
-<!--END_DOCUSAURUS_CODE_TABS-->
-
-
-### Folding a set
-<!--DOCUSAURUS_CODE_TABS-->
-<!--Pascaligo-->
-```pascaligo group=a
-function sum(const result: int; const i: int): int is result + i;
-// Outputs 6
-const sum_of_a_set: int = set_fold(sum, my_set, 0);
-```
-
-<!--CameLIGO-->
-```cameligo group=a
-let sum (result, i: int * int) : int = result + i
-let sum_of_a_set: int = Set.fold sum my_set 0
-```
-
-<!--ReasonLIGO-->
-```reasonligo group=a
-let sum = (result_i: (int, int)): int => result_i[0] + result_i[1];
-let sum_of_a_set: int = Set.fold(sum, my_set, 0);
-```
 <!--END_DOCUSAURUS_CODE_TABS-->
 
 ## Lists
 
-Lists are similar to sets, but their elements don't need to be unique and they don't offer the same range of built-in functions.
+Lists are linear collections of elements of the same type. Linear
+means that, in order to reach an element in a list, we must visit all
+the elements before (sequential access). Elements can be repeated, as
+only their order in the collection matters. The first element is
+called the *head*, and the sub-list after the head is called the
+*tail*. For those familiar with algorithmic data structure, you can
+think of a list a *stack*, where the top is written on the left.
 
-> 💡 Lists are useful when returning operations from a smart contract's entrypoint.
+> 💡 Lists are needed when returning operations from a smart
+> contract's access function.
 
-### Defining a list
+### Defining Lists
 
 <!--DOCUSAURUS_CODE_TABS-->
-<!--Pascaligo-->
-```pascaligo group=b
-type int_list is list(int);
-const my_list: int_list = list
-    1;
-    2;
-    3;
-end
+<!--PascaLIGO-->
+```pascaligo group=lists
+const empty_list : list (int) = nil // Or list []
+const my_list : list (int) = list [1; 2; 2] // The head is 1
 ```
 
 <!--CameLIGO-->
-```cameligo group=b
-type int_list = int list
-let my_list: int_list = [1; 2; 3]
+```cameligo group=lists
+let empty_list : int list = []
+let my_list : int list = [1; 2; 2] // The head is 1
 ```
 
 <!--ReasonLIGO-->
-```reasonligo group=b
-type int_list = list(int);
-let my_list: int_list = [1, 2, 3];
+```reasonligo group=lists
+let empty_list : list (int) = [];
+let my_list : list (int) = [1, 2, 2]; // The head is 1
 ```
 
 <!--END_DOCUSAURUS_CODE_TABS-->
 
 
-### Appending an element to a list
+### Adding to Lists
+
+Lists can be augmented by adding an element before the head (or, in
+terms of stack, by *pushing an element on top*). This operation is
+usually called *consing* in functional languages.
 
 <!--DOCUSAURUS_CODE_TABS-->
-<!--Pascaligo-->
-```pascaligo group=b
-const larger_list: int_list = cons(4, my_list);
-const even_larger_list: int_list = 5 # larger_list;
+
+<!--PascaLIGO-->
+
+In PascaLIGO, the *cons operator* is infix and noted `#`. It is not
+symmetric: on the left lies the element to cons, and, on the right, a
+list on which to cons. (The symbol is helpfully asymmetric to remind
+you of that.)
+
+```pascaligo group=lists
+const larger_list : list (int) = 5 # my_list // [5;1;2;2]
 ```
 
 <!--CameLIGO-->
-```cameligo group=b
-let larger_list: int_list = 4 :: my_list
-(* CameLIGO doesn't have a List.cons *)
+
+In CameLIGO, the *cons operator* is infix and noted `::`. It is not
+symmetric: on the left lies the element to cons, and, on the right, a
+list on which to cons.
+
+```cameligo group=lists
+let larger_list : int list = 5 :: my_list // [5;1;2;2]
 ```
 
 <!--ReasonLIGO-->
-```reasonligo group=b
-let larger_list: int_list = [4, ...my_list];
-(* ReasonLIGO doesn't have a List.cons *)
+
+In ReasonLIGO, the *cons operator* is infix and noted `, ...`. It is
+not symmetric: on the left lies the element to cons, and, on the
+right, a list on which to cons.
+
+```reasonligo group=lists
+let larger_list : list (int) = [5, ...my_list]; // [5,1,2,2]
+```
+<!--END_DOCUSAURUS_CODE_TABS-->
+
+### Functional Iteration over Lists
+
+A *functional iterator* is a function that traverses a data structure
+and calls in turn a given function over the elements of that structure
+to compute some value. Another approach is possible in PascaLIGO:
+*loops* (see the relevant section).
+
+There are three kinds of functional iterations over LIGO lists: the
+*iterated operation*, the *map operation* (not to be confused with the
+*map data structure*) and the *fold operation*.
+
+> 💡 Lists can be iterated, folded or mapped to different values. You
+> can find additional examples
+> [here](https://gitlab.com/ligolang/ligo/tree/dev/src/test/contracts)
+> and other built-in operators
+> [here](https://gitlab.com/ligolang/ligo/blob/dev/src/passes/operators/operators.ml#L59)
+
+#### Iterated Operation over Lists
+
+The first, the *iterated operation*, is an iteration over the list
+with a unit return value. It is useful to enforce certain invariants
+on the element of a list, or fail. For example you might want to check
+that each value inside of a list is within a certain range, and fail
+otherwise.
+
+<!--DOCUSAURUS_CODE_TABS-->
+
+<!--PascaLIGO-->
+
+In PascaLIGO, the predefined functional iterator implementing the
+iterated operation over lists is called `list_iter`.
+
+In the following example, a list is iterated to check that all its
+elements (integers) are greater than `3`:
+
+```pascaligo group=lists
+function iter_op (const l : list (int)) : unit is
+  block {
+    function iterated (const i : int) : unit is
+      if i > 2 then Unit else (failwith ("Below range.") : unit)
+  } with list_iter (iterated, l)
+```
+
+> The iterated function must be pure, that is, it cannot mutate
+> variables.
+
+<!--CameLIGO-->
+
+In CameLIGO, the predefined functional iterator implementing the
+iterated operation over lists is called `List.iter`.
+
+In the following example, a list is iterated to check that all its
+elements (integers) are greater than `3`:
+
+```cameligo group=lists
+let iter_op (l : int list) : unit =
+  let predicate = fun (i : int) -> assert (i > 3)
+  in List.iter predicate l
+```
+
+<!--ReasonLIGO-->
+
+In ReasonLIGO, the predefined functional iterator implementing the
+iterated operation over lists is called `List.iter`.
+
+In the following example, a list is iterated to check that all its
+elements (integers) are greater than `3`:
+
+```reasonligo group=lists
+let iter_op = (l : list (int)) : unit => {
+  let predicate = (i : int) => assert (i > 3);
+  List.iter (predicate, l);
+};
 ```
 
 <!--END_DOCUSAURUS_CODE_TABS-->
 
-<br/>
-> 💡 Lists can be iterated, folded or mapped to different values. You can find additional examples [here](https://gitlab.com/ligolang/ligo/tree/dev/src/test/contracts) and other built-in operators [here](https://gitlab.com/ligolang/ligo/blob/dev/src/passes/operators/operators.ml#L59)
 
-### Mapping of a list
+#### Mapped Operation over Lists
+
+We may want to change all the elements of a given list by applying to
+them a function. This is called a *map operation*, not to be confused
+with the map data structure.
 
 <!--DOCUSAURUS_CODE_TABS-->
-<!--Pascaligo-->
-```pascaligo group=b
-function increment(const i: int): int is block { skip } with i + 1;
-// Creates a new list with elements incremented by 1
-const incremented_list: int_list = list_map(increment, even_larger_list);
+
+<!--PascaLIGO-->
+
+In PascaLIGO, the predefined functional iterator implementing the
+mapped operation over lists is called `list_map` and is used as
+follows:
+
+```pascaligo group=lists
+function increment (const i : int): int is i + 1
+
+// Creates a new list with all elements incremented by 1
+const plus_one : list (int) = list_map (increment, larger_list)
 ```
+
+> The mapped function must be pure, that is, it cannot mutate
+> variables.
 
 <!--CameLIGO-->
 
-```cameligo group=b
-let increment (i: int) : int = i + 1
-(* Creates a new list with elements incremented by 1 *)
-let incremented_list: int_list = List.map increment larger_list
-```
+In CameLIGO, the predefined functional iterator implementing the
+mapped operation over lists is called `List.map` and is used as
+follows:
 
+```cameligo group=lists
+let increment (i : int) : int = i + 1
+
+// Creates a new list with all elements incremented by 1
+let plus_one : int list = List.map increment larger_list
+```
 
 <!--ReasonLIGO-->
 
-```reasonligo group=b
-let increment = (i: int): int => i + 1;
-(* Creates a new list with elements incremented by 1 *)
-let incremented_list: int_list = List.map(increment, larger_list);
-```
+In ReasonLIGO, the predefined functional iterator implementing the
+mapped operation over lists is called `List.map` and is used as
+follows:
 
+```reasonligo group=lists
+let increment = (i : int) : int => i + 1;
+
+// Creates a new list with all elements incremented by 1
+let plus_one : list (int) = List.map (increment, larger_list);
+```
 <!--END_DOCUSAURUS_CODE_TABS-->
 
 
-### Folding of a list:
+#### Folded Operation over Lists
+
+A *folded operation* is the most general of iterations. The folded
+function takes two arguments: an *accumulator* and the structure
+*element* at hand, with which it then produces a new accumulator. This
+enables having a partial result that becomes complete when the
+traversal of the data structure is over.
+
 <!--DOCUSAURUS_CODE_TABS-->
-<!--Pascaligo-->
-```pascaligo group=b
-function sum(const result: int; const i: int): int is block { skip } with result + i;
-// Outputs 6
-const sum_of_a_list: int = list_fold(sum, my_list, 0);
+
+<!--PascaLIGO-->
+
+In PascaLIGO, the predefined functional iterator implementing the
+folded operation over lists is called `list_fold` and is used as
+follows:
+
+```pascaligo group=lists
+function sum (const acc : int; const i : int): int is acc + i
+const sum_of_elements : int = list_fold (sum, my_list, 0)
 ```
+
+> The folded function must be pure, that is, it cannot mutate
+> variables.
 
 <!--CameLIGO-->
 
-```cameligo group=b
-let sum (result, i: int * int) : int = result + i
-// Outputs 6
-let sum_of_a_list: int = List.fold sum my_list 0
+In CameLIGO, the predefined functional iterator implementing the folded
+operation over lists is called `List.fold` and is used as follows:
+
+```cameligo group=lists
+let sum (acc, i: int * int) : int = acc + i
+let sum_of_elements : int = List.fold sum my_list 0
 ```
 
 <!--ReasonLIGO-->
 
-```reasonligo group=b
+In ReasonLIGO, the predefined functional iterator implementing the
+folded operation over lists is called `List.fold` and is used as
+follows:
+
+```reasonligo group=lists
 let sum = ((result, i): (int, int)): int => result + i;
-(* Outputs 6 *)
-let sum_of_a_list: int = List.fold(sum, my_list, 0);
+let sum_of_elements : int = List.fold (sum, my_list, 0);
 ```
-
 <!--END_DOCUSAURUS_CODE_TABS-->
 
+## Sets
 
-## Tuples
+Sets are unordered collections of values of the same type, like lists
+are ordered collections. Like the mathematical sets and lists, sets
+can be empty and, if not, elements of sets in LIGO are *unique*,
+whereas they can be repeated in a list.
 
-Tuples are used to store related data that has a **specific order** and **defined
-length** without the need for named fields or a dedicated type identity. Probably
-the most common tuple is a pair of type `(a, b)`. For example, if we were storing
-coordinates on a two dimensional grid we might use a pair tuple of type `int * int`
-to store the coordinates x and y. There is a **specific order** because x and y must
-always stay in the same location within the tuple for the data to make sense. There is
-also a **defined length** because the tuple pair can only ever have two elements,
-if we added a third dimension `z` its type would be incompatible with that of the
-pair tuple.
-
-Like records, tuples can have members of arbitrary types in the same structure.
-
-### Defining a tuple
-
-Unlike [a record](language-basics/maps-records.md), tuple types do not have to be
-defined before they can be used. However below we will give them names for the
-sake of illustration.
+### Empty Sets
 
 <!--DOCUSAURUS_CODE_TABS-->
 
-<!--Pascaligo-->
-```pascaligo group=c
-type full_name is string * string;
-const full_name: full_name = ("Alice", "Johnson");
+<!--PascaLIGO-->
+
+In PascaLIGO, the notation for sets is similar to that for lists,
+except the keyword `set` is used before:
+
+```pascaligo group=sets
+const my_set : set (int) = set []
+```
+<!--CameLIGO-->
+
+In CameLIGO, the empty set is denoted by the predefined value
+`Set.empty`.
+
+```cameligo group=sets
+let my_set : int set = Set.empty
+```
+
+<!--ReasonLIGO-->
+
+In ReasonLIGO, the empty set is denoted by the predefined value
+`Set.empty`.
+
+```reasonligo group=sets
+let my_set : set (int) = Set.empty;
+```
+<!--END_DOCUSAURUS_CODE_TABS-->
+
+### Non-empty Sets
+
+<!--DOCUSAURUS_CODE_TABS-->
+
+<!--PascaLIGO-->
+
+In PascaLIGO, the notation for sets is similar to that for lists,
+except the keyword `set` is used before:
+
+```pascaligo group=sets
+const my_set : set (int) = set [3; 2; 2; 1]
+```
+You can check that `2` is not repeated in `my_set` by using the LIGO
+compiler like this (the output will sort the elements of the set, but
+that order is not significant for the compiler):
+```shell
+ligo evaluate-value
+gitlab-pages/docs/language-basics/src/sets-lists-tuples/sets.ligo my_set
+# Outputs: { 3 ; 2 ; 1 }
 ```
 
 <!--CameLIGO-->
-```cameligo group=c
-type full_name = string * string
-(* The parenthesis here are optional *)
-let full_name: full_name = ("Alice", "Johnson")
+
+In CameLIGO, there is no predefined syntactic construct for sets: you
+must build your set by adding to the empty set. (This is the way in
+OCaml.)
+
+```cameligo group=sets
+let my_set : int set =
+  Set.add 3 (Set.add 2 (Set.add 2 (Set.add 1 (Set.empty : int set))))
+```
+You can check that `2` is not repeated in `my_set` by using the LIGO
+compiler like this (the output will sort the elements of the set, but
+that order is not significant for the compiler):
+
+```shell
+ligo evaluate-value
+gitlab-pages/docs/language-basics/src/sets-lists-tuples/sets.mligo my_set
+# Outputs: { 3 ; 2 ; 1 }
 ```
 
 <!--ReasonLIGO-->
-```reasonligo group=c
-type full_name = (string, string);
-(* The parenthesis here are optional *)
-let full_name: full_name = ("Alice", "Johnson");
+
+In ReasonLIGO, there is no predefined syntactic construct for sets:
+you must build your set by adding to the empty set. (This is the way
+in OCaml.)
+
+```reasonligo group=sets
+let my_set : set (int) =
+  Set.add (3, Set.add (2, Set.add (2, Set.add (1, Set.empty : set (int)))));
+```
+
+You can check that `2` is not repeated in `my_set` by using the LIGO
+compiler like this (the output will sort the elements of the set, but
+that order is not significant for the compiler):
+
+```shell
+ligo evaluate-value
+gitlab-pages/docs/language-basics/src/sets-lists-tuples/sets.religo my_set
+# Outputs: { 3 ; 2 ; 1 }
+```
+<!--END_DOCUSAURUS_CODE_TABS-->
+
+### Set Membership
+
+<!--DOCUSAURUS_CODE_TABS-->
+
+<!--PascaLIGO-->
+
+PascaLIGO features a special keyword `contains` that operates like an
+infix operator checking membership in a set.
+
+```pascaligo group=sets
+const contains_3 : bool = my_set contains 3
+```
+
+<!--CameLIGO-->
+
+In CameLIGO, the predefined predicate `Set.mem` tests for membership
+in a set as follows:
+
+```cameligo group=sets
+let contains_3 : bool = Set.mem 3 my_set
+```
+
+<!--ReasonLIGO-->
+
+In ReasonLIGO, the predefined predicate `Set.mem` tests for membership
+in a set as follows:
+
+```reasonligo group=sets
+let contains_3 : bool = Set.mem (3, my_set);
+```
+<!--END_DOCUSAURUS_CODE_TABS-->
+
+
+### Cardinal of Sets
+
+<!--DOCUSAURUS_CODE_TABS-->
+
+<!--PascaLIGO-->
+
+In PascaLIGO, the predefined function `size` returns the number of
+elements in a given set as follows:
+
+```pascaligo group=sets
+const set_size : nat = size (my_set)
+```
+<!--CameLIGO-->
+
+In CameLIGO, the predefined function `Set.size` returns the number of
+elements in a given set as follows:
+
+```cameligo group=sets
+let set_size : nat = Set.size my_set
+```
+<!--ReasonLIGO-->
+
+In ReasonLIGO, the predefined function `Set.size` returns the number
+of elements in a given set as follows:
+
+```reasonligo group=sets
+let set_size : nat = Set.size (my_set);
 ```
 
 <!--END_DOCUSAURUS_CODE_TABS-->
 
 
-### Accessing an element in a tuple
-
-The traditional way to access the elements of a tuple in OCaml is through
-[a pattern match](language-basics/unit-option-pattern-matching.md). LIGO **does
-not** currently support tuple patterns in its syntaxes.
-
-However, it is possible to access LIGO tuples by their position.
+### Updating Sets
 
 <!--DOCUSAURUS_CODE_TABS-->
 
-<!--Pascaligo-->
+<!--PascaLIGO-->
 
-Tuple elements are one-indexed and accessed like so:
+In PascaLIGO, there are two ways to update a set, that is to add or
+remove from it. Either we create a new set from the given one, or we
+modify it in-place. First, let us consider the former way:
 
-```pascaligo group=c
-const first_name: string = full_name.1;
+```pascaligo group=sets
+const larger_set  : set (int) = set_add (4, my_set)
+
+const smaller_set : set (int) = set_remove (3, my_set)
 ```
 
-<!--Cameligo-->
+If we are in a block, we can use an instruction to modify the set
+bound to a given variable. This is called a *patch*. It is only
+possible to add elements by means of a patch, not remove any: it is
+the union of two sets.
 
-Tuple elements are zero-indexed and accessed like so:
+In the following example, the parameter set `s` of function `update`
+is augmented (as the `with s` shows) to include `4` and `7`, that is,
+this instruction is equivalent to perform the union of two sets, one
+that is modified in-place, and the other given as a literal
+(extensional definition).
 
-```cameligo group=c
-let first_name: string = full_name.0
+```pascaligo group=sets
+function update (var s : set (int)) : set (int) is block {
+  patch s with set [4; 7]
+} with s
+
+const new_set : set (int) = update (my_set)
+```
+
+<!--CameLIGO-->
+
+In CameLIGO, we update a given set by creating another one, with or
+without some elements.
+
+```cameligo group=sets
+let larger_set  : int set = Set.add 4 my_set
+
+let smaller_set : int set = Set.remove 3 my_set
 ```
 
 <!--ReasonLIGO-->
-```reasonligo group=c
-let first_name: string = full_name[1];
+
+In ReasonLIGO, we update a given set by creating another one, with or
+without some elements.
+
+```reasonligo group=sets
+let larger_set  : set (int) = Set.add (4, my_set);
+
+let smaller_set : set (int) = Set.remove (3, my_set);
+```
+<!--END_DOCUSAURUS_CODE_TABS-->
+
+
+### Functional Iteration over Sets
+
+A *functional iterator* is a function that traverses a data structure
+and calls in turn a given function over the elements of that structure
+to compute some value. Another approach is possible in PascaLIGO:
+*loops* (see the relevant section).
+
+There are three kinds of functional iterations over LIGO maps: the
+*iterated operation*, the *mapped operation* (not to be confused with
+the *map data structure*) and the *folded operation*.
+
+#### Iterated Operation
+
+The first, the *iterated operation*, is an iteration over the map with
+no return value: its only use is to produce side-effects. This can be
+useful if for example you would like to check that each value inside
+of a map is within a certain range, and fail with an error otherwise.
+
+<!--DOCUSAURUS_CODE_TABS-->
+
+<!--PascaLIGO-->
+
+In PascaLIGO, the predefined functional iterator implementing the
+iterated operation over sets is called `set_iter`.
+
+In the following example, a set is iterated to check that all its
+elements (integers) are greater than `3`:
+
+```pascaligo group=sets
+function iter_op (const s : set (int)) : unit is
+  block {
+    function iterated (const i : int) : unit is
+      if i > 2 then Unit else (failwith ("Below range.") : unit)
+  } with set_iter (iterated, s)
 ```
 
+> The iterated function must be pure, that is, it cannot mutate
+> variables.
+
+<!--CameLIGO-->
+
+In CameLIGO, the predefined functional iterator implementing the
+iterated operation over sets is called `Set.iter`.
+
+In the following example, a set is iterated to check that all its
+elements (integers) are greater than `3`:
+
+```cameligo group=sets
+let iter_op (s : int set) : unit =
+  let predicate = fun (i : int) -> assert (i > 3)
+  in Set.iter predicate s
+```
+
+<!--ReasonLIGO-->
+
+In ReasonLIGO, the predefined functional iterator implementing the
+iterated operation over sets is called `Set.iter`.
+
+In the following example, a set is iterated to check that all its
+elements (integers) are greater than `3`:
+
+```reasonligo group=sets
+let iter_op = (s : set (int)) : unit => {
+  let predicate = (i : int) => assert (i > 3);
+  Set.iter (predicate, s);
+};
+```
+
+<!--END_DOCUSAURUS_CODE_TABS-->
+
+
+#### Mapped Operation (NOT IMPLEMENTED YET)
+
+We may want to change all the elements of a given set by applying to
+them a function. This is called a *mapped operation*, not to be
+confused with the map data structure.
+
+<!--DOCUSAURUS_CODE_TABS-->
+
+<!--PascaLIGO-->
+
+In PascaLIGO, the predefined functional iterator implementing the
+mapped operation over sets is called `set_map` and is used as follows:
+
+```pascaligo skip
+function increment (const i : int): int is i + 1
+
+// Creates a new set with all elements incremented by 1
+const plus_one : set (int) = set_map (increment, larger_set)
+```
+
+<!--CameLIGO-->
+
+In CameLIGO, the predefined functional iterator implementing the
+mapped operation over sets is called `Set.map` and is used as follows:
+
+```cameligo skip
+let increment (i : int) : int = i + 1
+
+// Creates a new set with all elements incremented by 1
+let plus_one : int set = Set.map increment larger_set
+```
+
+<!--ReasonLIGO-->
+
+In ReasonLIGO, the predefined functional iterator implementing the
+mapped operation over sets is called `Set.map` and is used as follows:
+
+```reasonligo skip
+let increment = (i : int) : int => i + 1;
+
+// Creates a new set with all elements incremented by 1
+let plus_one : set (int) = Set.map (increment, larger_set);
+```
+
+<!--END_DOCUSAURUS_CODE_TABS-->
+
+#### Folded Operation
+
+A *folded operation* is the most general of iterations. The folded
+function takes two arguments: an *accumulator* and the structure
+*element* at hand, with which it then produces a new accumulator. This
+enables having a partial result that becomes complete when the
+traversal of the data structure is over.
+
+<!--DOCUSAURUS_CODE_TABS-->
+
+<!--PascaLIGO-->
+
+In PascaLIGO, the predefined functional iterator implementing the
+folded operation over sets is called `set_fold` and is used as
+follows:
+
+```pascaligo group=sets
+function sum (const acc : int; const i : int): int is acc + i
+
+const sum_of_elements : int = set_fold (sum, my_set, 0)
+```
+
+> The folded function must be pure, that is, it cannot mutate
+> variables.
+
+It is possible to use a *loop* over a set as well.
+
+```pascaligo group=sets
+function loop (const s : set (int)) : int is block {
+  var sum : int := 0;
+  for element in set s block {
+    sum := sum + element
+  }
+} with sum
+```
+
+<!--CameLIGO-->
+
+In CameLIGO, the predefined fold over sets is called `Set.fold`.
+
+```cameligo group=sets
+let sum (acc, i : int * int) : int = acc + i
+
+let sum_of_elements : int = Set.fold sum my_set 0
+```
+
+<!--ReasonLIGO-->
+
+In ReasonLIGO, the predefined fold over sets is called `Set.fold`.
+
+```reasonligo group=sets
+let sum = ((acc, i) : (int, int)) : int => acc + i;
+
+let sum_of_elements : int = Set.fold (sum, my_set, 0);
+```
 <!--END_DOCUSAURUS_CODE_TABS-->

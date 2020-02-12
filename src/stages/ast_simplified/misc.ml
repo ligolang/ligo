@@ -1,8 +1,7 @@
 open Trace
 open Types
 
-include Stage_common.Misc
-
+open Stage_common.Helpers
 module Errors = struct
   let different_literals_because_different_types name a b () =
     let title () = "literals have different types: " ^ name in
@@ -56,6 +55,8 @@ let assert_literal_eq (a, b : literal * literal) : unit result =
   | Literal_bytes a, Literal_bytes b when a = b -> ok ()
   | Literal_bytes _, Literal_bytes _ -> fail @@ different_literals "different bytess" a b
   | Literal_bytes _, _ -> fail @@ different_literals_because_different_types "bytes vs non-bytes" a b
+  | Literal_void, Literal_void -> ok ()
+  | Literal_void, _ -> fail @@ different_literals_because_different_types "void vs non-void" a b
   | Literal_unit, Literal_unit -> ok ()
   | Literal_unit, _ -> fail @@ different_literals_because_different_types "unit vs non-unit" a b
   | Literal_address a, Literal_address b when a = b -> ok ()
@@ -77,19 +78,20 @@ let assert_literal_eq (a, b : literal * literal) : unit result =
   | Literal_chain_id _, _ -> fail @@ different_literals_because_different_types "chain_id vs non-chain_id" a b
 
 let rec assert_value_eq (a, b: (expression * expression )) : unit result =
+  Format.printf "in assert_value_eq %a %a\n%!" PP.expression a PP.expression b;
   let error_content () =
     Format.asprintf "\n@[<v>- %a@;- %a]" PP.expression a PP.expression b
   in
   trace (fun () -> error (thunk "not equal") error_content ()) @@
-  match (a.expression , b.expression) with
+  match (a.expression_content , b.expression_content) with
   | E_literal a , E_literal b ->
       assert_literal_eq (a, b)
   | E_literal _ , _ ->
     simple_fail "comparing a literal with not a literal"
-  | E_constant (ca, lsta) , E_constant (cb, lstb) when ca = cb -> (
+  | E_constant (ca) , E_constant (cb) when ca.cons_name = cb.cons_name -> (
       let%bind lst =
         generic_try (simple_error "constants with different number of elements")
-          (fun () -> List.combine lsta lstb) in
+          (fun () -> List.combine ca.arguments cb.arguments) in
       let%bind _all = bind_list @@ List.map assert_value_eq lst in
       ok ()
     )
@@ -103,8 +105,8 @@ let rec assert_value_eq (a, b: (expression * expression )) : unit result =
       in
       fail @@ (fun () -> error (thunk "comparing constant with other expression") error_content ())
 
-  | E_constructor (ca, a), E_constructor (cb, b) when ca = cb -> (
-      let%bind _eq = assert_value_eq (a, b) in
+  | E_constructor (ca), E_constructor (cb) when ca.constructor = cb.constructor -> (
+      let%bind _eq = assert_value_eq (ca.element, cb.element) in
       ok ()
     )
   | E_constructor _, E_constructor _ ->
@@ -112,15 +114,6 @@ let rec assert_value_eq (a, b: (expression * expression )) : unit result =
   | E_constructor _, _ ->
       simple_fail "comparing constructor with other expression"
 
-  | E_tuple lsta, E_tuple lstb -> (
-      let%bind lst =
-        generic_try (simple_error "tuples with different number of elements")
-          (fun () -> List.combine lsta lstb) in
-      let%bind _all = bind_list @@ List.map assert_value_eq lst in
-      ok ()
-    )
-  | E_tuple _, _ ->
-      simple_fail "comparing tuple with other expression"
 
   | E_record sma, E_record smb -> (
       let aux _ a b =
@@ -134,17 +127,17 @@ let rec assert_value_eq (a, b: (expression * expression )) : unit result =
   | E_record _, _ ->
       simple_fail "comparing record with other expression"
   
-  | E_update ura, E_update urb ->
+  | E_record_update ura, E_record_update urb ->
     let _ = 
       generic_try (simple_error "Updating different record") @@ 
       fun () -> assert_value_eq (ura.record, urb.record) in
-    let aux ((Label a,expra),(Label b, exprb))=
-      assert (String.equal a b);
-      assert_value_eq (expra,exprb)
+    let aux (Label a,Label b) =
+      assert (String.equal a b)
     in
-    let%bind _all = aux (ura.update, urb.update) in
+    let () = aux (ura.path, urb.path) in
+    let%bind () = assert_value_eq (ura.update,urb.update) in
     ok ()
-  | E_update _, _ ->
+  | E_record_update _, _ ->
      simple_fail "comparing record update with other expression"
 
   | (E_map lsta, E_map lstb | E_big_map lsta, E_big_map lstb) -> (
@@ -185,13 +178,13 @@ let rec assert_value_eq (a, b: (expression * expression )) : unit result =
   | E_set _, _ ->
       simple_fail "comparing set with other expression"
 
-  | (E_ascription (a , _) ,  _b') -> assert_value_eq (a , b)
-  | (_a' , E_ascription (b , _)) -> assert_value_eq (a , b)
+  | (E_ascription a ,  _b') -> assert_value_eq (a.anno_expr , b)
+  | (_a' , E_ascription b) -> assert_value_eq (a , b.anno_expr)
   | (E_variable _, _) | (E_lambda _, _)
   | (E_application _, _) | (E_let_in _, _)
-  | (E_accessor _, _)
-  | (E_look_up _, _) | (E_matching _, _) | (E_sequence _, _)
-  | (E_loop _, _) | (E_assign _, _) | (E_skip, _) -> simple_fail "comparing not a value"
+  | (E_record_accessor _, _)
+  | (E_look_up _, _) | (E_matching _, _)
+  | (E_loop _, _) | (E_skip, _) -> simple_fail "comparing not a value"
 
 let is_value_eq (a , b) = to_bool @@ assert_value_eq (a , b)
 

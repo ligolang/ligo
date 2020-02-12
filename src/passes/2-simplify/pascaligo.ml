@@ -16,17 +16,17 @@ let pseq_to_list = function
 let get_value : 'a Raw.reg -> 'a = fun x -> x.value
 let is_compiler_generated name = String.contains (Var.to_name name) '#'
 
-let detect_local_declarations (for_body : expression) =
+let _detect_local_declarations (for_body : expression) =
   let%bind aux = Self_ast_simplified.fold_expression
     (fun (nlist, cur_loop : expression_variable list * bool) (ass_exp : expression) ->
-      if cur_loop then
-        match ass_exp.expression with
-        | E_let_in {binder;rhs = _;result = _} ->
-          let (name,_) = binder in
+      if cur_loop then 
+        match ass_exp.expression_content with
+        | E_let_in {let_binder;mut=false;rhs = _;let_result = _} ->
+          let (name,_) = let_binder in
           ok (name::nlist, cur_loop)
-        | E_constant (C_MAP_FOLD, _)
-        | E_constant (C_SET_FOLD, _)
-        | E_constant (C_LIST_FOLD, _) -> ok @@ (nlist, false)
+        | E_constant {cons_name=C_MAP_FOLD;arguments= _}
+        | E_constant {cons_name=C_SET_FOLD;arguments= _}
+        | E_constant {cons_name=C_LIST_FOLD;arguments= _} -> ok @@ (nlist, false)
         | _ -> ok (nlist, cur_loop)
       else
         ok @@ (nlist, cur_loop)
@@ -35,18 +35,15 @@ let detect_local_declarations (for_body : expression) =
     for_body in
   ok @@ fst aux
 
-let detect_free_variables (for_body : expression) (local_decl_names : expression_variable list) =
+let _detect_free_variables (for_body : expression) (local_decl_names : expression_variable list) =
   let%bind captured_names = Self_ast_simplified.fold_expression
     (fun (prev : expression_variable list) (ass_exp : expression) ->
-      match ass_exp.expression with
-      | E_assign ( name , _ , _ ) ->
-        if is_compiler_generated name then ok prev
-        else ok (name::prev)
-      | E_constant (n, [a;b])
+      match ass_exp.expression_content with
+      | E_constant {cons_name=n;arguments=[a;b]}
         when n=C_OR || n=C_AND || n=C_LT || n=C_GT ||
              n=C_LE || n=C_GE  || n=C_EQ || n=C_NEQ -> (
-          match (a.expression,b.expression) with
-          | E_variable na , E_variable nb ->
+          match (a.expression_content,b.expression_content) with
+          | E_variable na , E_variable nb -> 
             let ret = [] in
             let ret = if not (is_compiler_generated na) then
               na::ret else ret in
@@ -66,6 +63,92 @@ let detect_free_variables (for_body : expression) (local_decl_names : expression
   ok @@ SSet.elements
      @@ SSet.diff (SSet.of_list captured_names) (SSet.of_list local_decl_names)
 
+and repair_mutable_variable (for_body : expression) (element_names : expression_variable list) (env : expression_variable) =
+  let%bind captured_names = Self_ast_simplified.fold_map_expression
+    (* TODO : these should use Variables sets *)
+    (fun (decl_var,free_var : expression_variable list * expression_variable list) (ass_exp : expression) ->
+      match ass_exp.expression_content with
+        | E_let_in {let_binder;mut=false;rhs;let_result} ->
+          let (name,_) = let_binder in
+          ok (true,(name::decl_var, free_var),e_let_in let_binder false false rhs let_result)
+        | E_let_in {let_binder;mut=true; rhs;let_result} ->
+          let (name,_) = let_binder in
+          if List.mem name decl_var then 
+            ok (true,(decl_var, free_var), e_let_in let_binder false false rhs let_result)
+          else(
+            let free_var = if (List.mem name free_var) then free_var else name::free_var in
+            let expr = e_let_in (env,None) false false (e_update (e_variable env) (Var.show name) (e_variable name)) let_result in
+            ok (true,(decl_var, free_var), e_let_in let_binder false  false rhs expr)
+          )
+        | E_variable name ->
+          if List.mem name decl_var || List.mem name free_var || Var.equal name env then 
+            ok (true,(decl_var, free_var), e_variable name)
+          else
+            ok (true, (decl_var, name::free_var), e_variable name)
+        | E_constant {cons_name=C_MAP_FOLD;arguments= _}
+        | E_constant {cons_name=C_SET_FOLD;arguments= _}
+        | E_constant {cons_name=C_LIST_FOLD;arguments= _} 
+        | E_matching _ -> ok @@ (false, (decl_var,free_var),ass_exp)
+      | _ -> ok (true, (decl_var, free_var),ass_exp)
+    )
+      (element_names,[])
+      for_body in
+  ok @@ captured_names
+
+and repair_mutable_variable_for_collect (for_body : expression) (element_names : expression_variable list) (env : expression_variable) =
+  let%bind captured_names = Self_ast_simplified.fold_map_expression
+    (* TODO : these should use Variables sets *)
+    (fun (decl_var,free_var : expression_variable list * expression_variable list) (ass_exp : expression) ->
+      match ass_exp.expression_content with
+        | E_let_in {let_binder;mut=false;rhs;let_result} ->
+          let (name,_) = let_binder in
+          ok (true,(name::decl_var, free_var),e_let_in let_binder false false rhs let_result)
+        | E_let_in {let_binder;mut=true; rhs;let_result} ->
+          let (name,_) = let_binder in
+          if List.mem name decl_var then 
+            ok (true,(decl_var, free_var), e_let_in let_binder false false rhs let_result)
+          else(
+            let free_var = if (List.mem name free_var) then free_var else name::free_var in
+            let expr = e_let_in (env,None) false false (
+              e_update (e_variable env) ("0") 
+              (e_update (e_accessor (e_variable env) "0") (Var.show name) (e_variable name))
+              )
+              let_result in
+            ok (true,(decl_var, free_var), e_let_in let_binder false  false rhs expr)
+          )
+        | E_variable name ->
+          if List.mem name decl_var || List.mem name free_var || Var.equal name env then 
+            ok (true,(decl_var, free_var), e_variable name)
+          else
+            ok (true,(decl_var, name::free_var), e_variable name)
+        | E_constant {cons_name=C_MAP_FOLD;arguments= _}
+        | E_constant {cons_name=C_SET_FOLD;arguments= _}
+        | E_constant {cons_name=C_LIST_FOLD;arguments= _} 
+        | E_matching _ -> ok @@ (false,(decl_var,free_var),ass_exp)
+      | _ -> ok (true,(decl_var, free_var),ass_exp)
+    )
+      (element_names,[])
+      for_body in
+  ok @@ captured_names
+
+and store_mutable_variable (free_vars : expression_variable list) =
+  if (List.length free_vars == 0) then
+    e_unit ()
+  else
+    let aux var = (Var.show var, e_variable var) in
+    e_record_ez (List.map aux free_vars)
+ 
+and restore_mutable_variable (expr : expression) (free_vars : expression_variable list) (env :expression_variable) =
+  let aux (f:expression -> expression) (ev:expression_variable) =
+    ok @@ fun expr -> f (e_let_in (ev,None) true false (e_accessor (e_variable env) (Var.show ev)) expr)
+  in
+  let%bind ef = bind_fold_list aux (fun e -> e) free_vars in
+  ok @@ fun expr'_opt -> match expr'_opt with
+  | None -> ok @@ e_let_in (env,None) false false expr (ef (e_skip ()))
+  | Some expr' -> ok @@ e_let_in (env,None) false false expr (ef expr')
+ 
+
+
 module Errors = struct
   let unsupported_cst_constr p =
     let title () = "" in
@@ -77,18 +160,6 @@ module Errors = struct
        fun () -> Format.asprintf "%a" Location.pp_lift @@ pattern_loc)
     ] in
     error ~data title message
-
-  let corner_case ~loc message =
-    let title () = "\nCorner case" in
-    let content () = "We do not have a good error message for this case. \
-                      We are striving find ways to better report them and \
-                      find the use-cases that generate them. \
-                      Please report this to the developers.\n" in
-    let data = [
-      ("location" , fun () -> loc) ;
-      ("message" , fun () -> message) ;
-    ] in
-    error ~data title content
 
   let unknown_predefined_type name =
     let title () = "\nType constants" in
@@ -196,15 +267,16 @@ let r_split = Location.r_split
    [return_statement] is used for non-let-in statements.
  *)
 
-let return_let_in ?loc binder inline rhs = ok @@ fun expr'_opt ->
+let return_let_in ?loc binder mut inline rhs = ok @@ fun expr'_opt ->
   match expr'_opt with
-  | None -> fail @@ corner_case ~loc:__LOC__ "missing return"
-  | Some expr' -> ok @@ e_let_in ?loc binder inline rhs expr'
+  | None -> ok @@ e_let_in ?loc binder mut inline rhs (e_skip ())
+  | Some expr' -> ok @@ e_let_in ?loc binder mut inline rhs expr'
 
 let return_statement expr = ok @@ fun expr'_opt ->
   match expr'_opt with
   | None -> ok @@ expr
   | Some expr' -> ok @@ e_sequence expr expr'
+
 
 let rec simpl_type_expression (t:Raw.type_expr) : type_expression result =
   match t with
@@ -218,7 +290,7 @@ let rec simpl_type_expression (t:Raw.type_expr) : type_expression result =
       let%bind (a , b) =
         let (a , _ , b) = x.value in
         bind_map_pair simpl_type_expression (a , b) in
-      ok @@ make_t @@ T_arrow (a , b)
+      ok @@ make_t @@ T_arrow {type1=a;type2=b}
     )
   | TApp x ->
       let (name, tuple) = x.value in
@@ -268,7 +340,7 @@ and simpl_list_type_expression (lst:Raw.type_expr list) : type_expression result
   | [hd] -> simpl_type_expression hd
   | lst ->
       let%bind lst = bind_list @@ List.map simpl_type_expression lst in
-      ok @@ make_t @@ T_operator (TC_tuple lst)
+      ok @@ t_tuple lst
 
 let simpl_projection : Raw.projection Region.reg -> _ = fun p ->
   let (p' , loc) = r_split p in
@@ -279,11 +351,11 @@ let simpl_projection : Raw.projection Region.reg -> _ = fun p ->
   let path' =
     let aux (s:Raw.selection) =
       match s with
-      | FieldName property -> Access_record property.value
-      | Component index -> Access_tuple (Z.to_int (snd index.value))
+      | FieldName property -> property.value
+      | Component index -> (Z.to_string (snd index.value))
     in
     List.map aux @@ npseq_to_list path in
-  ok @@ e_accessor ~loc var path'
+  ok @@ List.fold_left (e_accessor ~loc) var path'
 
 
 let rec simpl_expression (t:Raw.expr) : expr result =
@@ -409,7 +481,11 @@ let rec simpl_expression (t:Raw.expr) : expr result =
       let%bind expr = simpl_expression c.test in
       let%bind match_true = simpl_expression c.ifso in
       let%bind match_false = simpl_expression c.ifnot in
-      return @@ e_matching expr ~loc (Match_bool {match_true; match_false})
+      let match_expr = e_matching expr ~loc (Match_bool {match_true; match_false}) in
+      let env = Var.fresh () in
+      let%bind (_, match_expr) = repair_mutable_variable match_expr [] env in
+      return @@ match_expr
+
   | ECase c -> (
       let (c , loc) = r_split c in
       let%bind e = simpl_expression c.expr in
@@ -422,7 +498,10 @@ let rec simpl_expression (t:Raw.expr) : expr result =
         @@ List.map get_value
         @@ npseq_to_list c.cases.value in
       let%bind cases = simpl_cases lst in
-      return @@ e_matching ~loc e cases
+      let match_expr = e_matching ~loc e cases in
+      let env = Var.fresh () in
+      let%bind (_, match_expr) = repair_mutable_variable match_expr [] env in
+      return @@ match_expr
     )
   | EMap (MapInj mi)  -> (
       let (mi , loc) = r_split mi in
@@ -471,7 +550,7 @@ and simpl_update = fun (u:Raw.update Region.reg) ->
   let (name, path) = simpl_path u.record in
   let record = match path with
   | [] -> e_variable (Var.of_name name)
-  | _ -> e_accessor (e_variable (Var.of_name name)) path in
+  | _ -> e_accessor_list (e_variable (Var.of_name name)) path in 
   let updates = u.updates.value.ne_elements in
   let%bind updates' =
     let aux (f:Raw.field_path_assign Raw.reg) =
@@ -486,7 +565,7 @@ and simpl_update = fun (u:Raw.update Region.reg) ->
       | [] -> failwith "error in parsing"
       | hd :: [] -> ok @@ e_update ~loc record hd expr
       | hd :: tl -> 
-        let%bind expr = (aux (e_accessor ~loc record [Access_record hd]) tl) in
+        let%bind expr = (aux (e_accessor ~loc record hd) tl) in
         ok @@ e_update ~loc record hd expr 
     in
     aux ur path in
@@ -584,7 +663,7 @@ and simpl_data_declaration : Raw.data_decl -> _ result =
       let name = x.name.value in
       let%bind t = simpl_type_expression x.var_type in
       let%bind expression = simpl_expression x.init in
-      return_let_in ~loc (Var.of_name name, Some t) false expression
+      return_let_in ~loc (Var.of_name name, Some t) false false expression
   | LocalConst x ->
       let (x , loc) = r_split x in
       let name = x.name.value in
@@ -596,7 +675,7 @@ and simpl_data_declaration : Raw.data_decl -> _ result =
         | Some {value; _} ->
            npseq_to_list value.ne_elements
            |> List.exists (fun Region.{value; _} -> value = "\"inline\"")
-      in return_let_in ~loc (Var.of_name name, Some t) inline expression
+      in return_let_in ~loc (Var.of_name name, Some t) false inline expression
   | LocalFun f  ->
       let (f , loc) = r_split f in
       let%bind (binder, expr) = simpl_fun_decl ~loc f in
@@ -606,22 +685,22 @@ and simpl_data_declaration : Raw.data_decl -> _ result =
         | Some {value; _} ->
            npseq_to_list value.ne_elements
            |> List.exists (fun Region.{value; _} -> value = "\"inline\"")
-      in return_let_in ~loc binder inline expr
+      in return_let_in ~loc binder false inline expr
 
 and simpl_param :
-      Raw.param_decl -> (expression_variable * type_expression) result =
+      Raw.param_decl -> (string * type_expression) result =
   fun t ->
   match t with
   | ParamConst c ->
       let c = c.value in
-      let type_name = Var.of_name c.var.value in
+      let param_name = c.var.value in
       let%bind type_expression = simpl_type_expression c.param_type in
-      ok (type_name , type_expression)
+      ok (param_name , type_expression)
   | ParamVar v ->
       let c = v.value in
-      let type_name = Var.of_name c.var.value in
+      let param_name = c.var.value in
       let%bind type_expression = simpl_type_expression c.param_type in
-      ok (type_name , type_expression)
+      ok (param_name , type_expression)
 
 and simpl_fun_decl :
       loc:_ -> Raw.fun_decl ->
@@ -652,10 +731,10 @@ and simpl_fun_decl :
        let%bind result =
          let aux prec cur = cur (Some prec) in
          bind_fold_right_list aux result body in
-       let expression : expression = e_lambda ~loc binder (Some input_type)
+       let expression : expression = e_lambda ~loc (Var.of_name binder) (Some input_type)
            (Some output_type) result in
        let type_annotation =
-         Some (make_t @@ T_arrow (input_type, output_type)) in
+         Some (make_t @@ T_arrow {type1=input_type;type2=output_type}) in
        ok ((Var.of_name fun_name.value, type_annotation), expression)
      )
    | lst -> (
@@ -667,11 +746,11 @@ and simpl_fun_decl :
          let type_expression = t_tuple (List.map snd params) in
          (arguments_name , type_expression) in
        let%bind tpl_declarations =
-         let aux = fun i x ->
+         let aux = fun i (param, type_expr) ->
            let expr =
-             e_accessor (e_variable arguments_name) [Access_tuple i] in
-           let type_variable = Some (snd x) in
-           let ass = return_let_in (fst x , type_variable) inline expr in
+             e_accessor (e_variable arguments_name) (string_of_int i) in
+           let type_variable = Some type_expr in
+           let ass = return_let_in (Var.of_name param , type_variable) false inline expr in
            ass
          in
          bind_list @@ List.mapi aux params in
@@ -683,8 +762,8 @@ and simpl_fun_decl :
          let aux prec cur = cur (Some prec) in
          bind_fold_right_list aux result body in
        let expression =
-         e_lambda ~loc binder (Some input_type) (Some output_type) result in
-       let type_annotation = Some (make_t @@ T_arrow (input_type, output_type)) in
+         e_lambda ~loc binder (Some (input_type)) (Some output_type) result in
+       let type_annotation = Some (make_t @@ T_arrow {type1=input_type; type2=output_type}) in
        ok ((Var.of_name fun_name.value, type_annotation), expression)
      )
   )
@@ -706,11 +785,10 @@ and simpl_fun_expression :
        let%bind result =
          let aux prec cur = cur (Some prec) in
          bind_fold_right_list aux result body in
-       let expression : expression = e_lambda ~loc binder (Some input_type)
+       let expression : expression = e_lambda ~loc (Var.of_name binder) (Some input_type)
            (Some output_type) result in
-       let type_annotation =
-         Some (make_t @@ T_arrow (input_type, output_type)) in
-       ok (type_annotation, expression)
+       let type_annotation = Some (make_t @@ T_arrow {type1=input_type;type2=output_type}) in
+       ok (type_annotation , expression)
      )
    | lst -> (
        let lst = npseq_to_list lst in
@@ -721,11 +799,10 @@ and simpl_fun_expression :
          let type_expression = t_tuple (List.map snd params) in
          (arguments_name , type_expression) in
        let%bind tpl_declarations =
-         let aux = fun i x ->
-           let expr =
-             e_accessor (e_variable arguments_name) [Access_tuple i] in
-           let type_variable = Some (snd x) in
-           let ass = return_let_in (fst x , type_variable) false expr in
+         let aux = fun i (param, param_type) ->
+           let expr = e_accessor (e_variable arguments_name) (string_of_int i) in
+           let type_variable = Some param_type in
+           let ass = return_let_in (Var.of_name param , type_variable) false false expr in
            ass
          in
          bind_list @@ List.mapi aux params in
@@ -738,8 +815,8 @@ and simpl_fun_expression :
          bind_fold_right_list aux result body in
        let expression =
          e_lambda ~loc binder (Some (input_type)) (Some output_type) result in
-       let type_annotation = Some (make_t @@ T_arrow (input_type, output_type)) in
-       ok (type_annotation, expression)
+       let type_annotation = Some (make_t @@ T_arrow {type1=input_type;type2=output_type}) in
+       ok (type_annotation , expression)
      )
   )
 
@@ -770,6 +847,35 @@ and simpl_statement_list statements =
       hook (simpl_data_declaration d :: acc) statements
   in bind_list @@ hook [] (List.rev statements)
 
+and get_case_variables (t:Raw.pattern) : expression_variable list result = 
+  match t with 
+    | PConstr PFalse _ 
+    | PConstr PTrue _ 
+    | PConstr PNone _ -> ok @@ [] 
+    | PConstr PSomeApp v -> (let (_,v) = v.value in get_case_variables (v.value.inside)) 
+    | PConstr PConstrApp v -> (
+      match v.value with
+      | constr, None -> ok @@ [ Var.of_name constr.value]
+      | constr, pat_opt ->
+        let%bind pat =
+          trace_option (unsupported_cst_constr t) @@
+          pat_opt in
+        let pat = npseq_to_list pat.value.inside in
+        let%bind var = bind_map_list get_case_variables pat in
+        ok @@ [Var.of_name constr.value ] @ (List.concat var)
+    )
+    | PList PNil _  -> ok @@ []
+    | PList PCons c -> (
+        match c.value with
+        | a, [(_, b)] ->
+            let%bind a = get_case_variables a in
+            let%bind b = get_case_variables b in
+            ok @@ a@b
+        | _ -> fail @@ unsupported_deep_list_patterns c
+    )
+    | PVar  v -> ok @@ [Var.of_name v.value] 
+    | p -> fail @@ unsupported_cst_constr p
+
 and simpl_single_instruction : Raw.instruction -> (_ -> expression result) result =
   fun t ->
   match t with
@@ -799,19 +905,14 @@ and simpl_single_instruction : Raw.instruction -> (_ -> expression result) resul
       return_statement @@ e_skip ~loc ()
     )
   | Loop (While l) ->
-      let l = l.value in
-      let%bind cond = simpl_expression l.cond in
-      let%bind body = simpl_block l.block.value in
-      let%bind body = body None in
-      return_statement @@ e_loop cond body
-  | Loop (For (ForInt fi)) ->
+      simpl_while_loop l.value
+  | Loop (For (ForInt fi)) -> (
       let%bind loop = simpl_for_int fi.value in
-      let%bind loop = loop None in
-      return_statement @@ loop
+      ok loop
+  )
   | Loop (For (ForCollect fc)) ->
       let%bind loop = simpl_for_collect fc.value in
-      let%bind loop = loop None in
-      return_statement @@ loop
+      ok loop
   | Cond c -> (
       let (c , loc) = r_split c in
       let%bind expr = simpl_expression c.test in
@@ -833,9 +934,22 @@ and simpl_single_instruction : Raw.instruction -> (_ -> expression result) resul
                 simpl_block value
             | ShortBlock {value; _} ->
                 simpl_statements @@ fst value.inside in
-      let%bind match_true = match_true None in
-      let%bind match_false = match_false None in
-      return_statement @@ e_matching expr ~loc (Match_bool {match_true; match_false})
+      let env = Var.fresh () in
+      
+      let%bind match_true' = match_true None in
+      let%bind match_false' = match_false None in
+      let%bind match_true  = match_true @@ Some (e_variable env) in
+      let%bind match_false = match_false @@ Some (e_variable env) in
+
+      let%bind ((_,free_vars_true), match_true) = repair_mutable_variable match_true [] env in
+      let%bind ((_,free_vars_false), match_false) = repair_mutable_variable match_false [] env in
+      let free_vars = free_vars_true @ free_vars_false in
+      if (List.length free_vars != 0) then 
+        let match_expr  = e_matching expr ~loc (Match_bool {match_true; match_false}) in
+        let return_expr = e_let_in (env,None) false false (store_mutable_variable free_vars) match_expr in
+        restore_mutable_variable return_expr free_vars env
+      else
+        return_statement @@ e_matching expr ~loc (Match_bool {match_true=match_true'; match_false=match_false'})
     )
   | Assign a -> (
       let (a , loc) = r_split a in
@@ -843,7 +957,8 @@ and simpl_single_instruction : Raw.instruction -> (_ -> expression result) resul
       match a.lhs with
         | Path path -> (
             let (name , path') = simpl_path path in
-            return_statement @@ e_assign ~loc name path' value_expr
+            let (let_binder, mut, rhs, inline) = e_assign_with_let ~loc name path' value_expr in
+            return_let_in let_binder mut inline rhs
           )
         | MapPath v -> (
             let v' = v.value in
@@ -856,14 +971,16 @@ and simpl_single_instruction : Raw.instruction -> (_ -> expression result) resul
             in
             let%bind key_expr = simpl_expression v'.index.value.inside in
             let expr' = e_map_add key_expr value_expr map in
-            return_statement @@ e_assign ~loc varname path expr'
+            let (let_binder, mut, rhs, inline) = e_assign_with_let ~loc varname path expr' in
+            return_let_in let_binder mut inline rhs  
           )
     )
   | CaseInstr c -> (
       let (c , loc) = r_split c in
       let%bind expr = simpl_expression c.expr in
-      let%bind cases =
-        let aux (x : Raw.if_clause Raw.case_clause Raw.reg) =
+      let env = Var.fresh () in
+      let%bind (fv,cases) =
+        let aux fv (x : Raw.if_clause Raw.case_clause Raw.reg) =
           let%bind case_clause =
             match x.value.rhs with
               ClauseInstr i ->
@@ -874,42 +991,43 @@ and simpl_single_instruction : Raw.instruction -> (_ -> expression result) resul
                     simpl_block value
                 | ShortBlock {value; _} ->
                   simpl_statements @@ fst value.inside in
-          let%bind case_clause = case_clause None in
-          ok (x.value.pattern, case_clause) in
-        bind_list
-        @@ List.map aux
-        @@ npseq_to_list c.cases.value in
-      let%bind m = simpl_cases cases in
-      return_statement @@ e_matching ~loc expr m
+          let%bind case_clause'= case_clause @@ None in
+          let%bind case_clause = case_clause @@ Some(e_variable env) in
+          let%bind case_vars   = get_case_variables x.value.pattern in
+          let%bind ((_,free_vars), case_clause) = repair_mutable_variable case_clause case_vars env in
+          ok (free_vars::fv,(x.value.pattern, case_clause, case_clause')) in
+        bind_fold_map_list aux [] (npseq_to_list c.cases.value) in
+      let free_vars = List.concat fv in
+      if (List.length free_vars == 0) then (
+        let cases = List.map (fun case -> let (a,_,b) = case in (a,b)) cases in
+        let%bind m = simpl_cases cases in
+        return_statement @@ e_matching ~loc expr m
+      ) else (
+        let cases = List.map (fun case -> let (a,b,_) = case in (a,b)) cases in
+        let%bind m = simpl_cases cases in
+        let match_expr = e_matching ~loc expr m in
+        let return_expr = e_let_in (env,None) false false (store_mutable_variable free_vars) match_expr in
+        restore_mutable_variable return_expr free_vars env
+      )
     )
   | RecordPatch r -> (
-      let r = r.value in
-      let (name , access_path) = simpl_path r.path in
-
-      let head, tail = r.record_inj.value.ne_elements in
-
-      let%bind tail' = bind_list
-        @@ List.map (fun (x: Raw.field_assign Region.reg) ->
-            let (x , loc) = r_split x in
-            let%bind e = simpl_expression x.field_expr
-            in ok (x.field_name.value, e , loc)
-          )
-        @@ List.map snd tail in
-
-      let%bind head' =
-        let (x , loc) = r_split head in
-        let%bind e = simpl_expression x.field_expr
-        in ok (x.field_name.value, e , loc) in
-
-      let%bind expr =
-        let aux = fun (access , v , loc) ->
-          e_assign ~loc name (access_path @ [Access_record access]) v in
-
-        let hd, tl = aux head', List.map aux tail' in
-        let aux acc cur = e_sequence acc cur in
-        ok @@ List.fold_left aux hd tl
+      let reg = r.region in
+      let (r,loc) = r_split r in
+      let aux (fa :Raw.field_assign Raw.reg) : Raw.field_path_assign Raw.reg=
+         {value = {field_path = (fa.value.field_name, []); equal=fa.value.equal; field_expr = fa.value.field_expr};
+         region = fa.region}
       in
-      return_statement @@ expr
+      let update : Raw.field_path_assign Raw.reg Raw.ne_injection Raw.reg = {
+        value = Raw.map_ne_injection aux r.record_inj.value;
+        region=r.record_inj.region
+        } in
+      let u : Raw.update = {record=r.path;kwd_with=r.kwd_with; updates=update} in
+      let%bind expr = simpl_update {value=u;region=reg} in
+      let (name , access_path) = simpl_path r.path in
+      let loc = Some loc in
+      let (binder, mut, rhs, inline) = e_assign_with_let ?loc name access_path expr in
+      return_let_in binder mut inline rhs
+
   )
   | MapPatch patch -> (
       let (map_p, loc) = r_split patch in
@@ -923,16 +1041,16 @@ and simpl_single_instruction : Raw.instruction -> (_ -> expression result) resul
             in ok @@ (key', value')
           )
         @@ npseq_to_list map_p.map_inj.value.ne_elements in
-      let expr =
-        match inj with
-        | [] -> e_skip ~loc ()
-        | _ :: _ ->
-          let assigns = List.fold_right
-              (fun (key, value) map -> (e_map_add key value map))
-              inj
-              (e_accessor ~loc (e_variable (Var.of_name name)) access_path)
-          in e_assign ~loc name access_path assigns
-      in return_statement @@ expr
+      match inj with
+      | [] -> return_statement @@ e_skip ~loc ()
+      | _ :: _ ->
+        let assigns = List.fold_right
+            (fun (key, value) map ->  (e_map_add key value map))
+            inj
+            (e_accessor_list ~loc (e_variable (Var.of_name name)) access_path)
+        in 
+        let (binder, mut, rhs, inline) = e_assign_with_let ~loc name access_path assigns in
+        return_let_in binder mut inline rhs
     )
   | SetPatch patch -> (
       let (setp, loc) = r_split patch in
@@ -941,15 +1059,14 @@ and simpl_single_instruction : Raw.instruction -> (_ -> expression result) resul
         bind_list @@
         List.map simpl_expression @@
         npseq_to_list setp.set_inj.value.ne_elements in
-      let expr =
-        match inj with
-        | [] -> e_skip ~loc ()
-        | _ :: _ ->
-          let assigns = List.fold_right
-            (fun hd s -> e_constant C_SET_ADD [hd ; s])
-            inj (e_accessor ~loc (e_variable (Var.of_name name)) access_path) in
-          e_assign ~loc name access_path assigns in
-      return_statement @@ expr
+      match inj with
+      | [] -> return_statement @@ e_skip ~loc ()
+      | _ :: _ ->
+        let assigns = List.fold_right
+          (fun hd s -> e_constant C_SET_ADD [hd ; s])
+          inj (e_accessor_list ~loc (e_variable (Var.of_name name)) access_path) in
+        let (binder, mut, rhs, inline) = e_assign_with_let ~loc name access_path assigns in
+        return_let_in binder mut inline rhs
     )
   | MapRemove r -> (
       let (v , loc) = r_split r in
@@ -963,7 +1080,8 @@ and simpl_single_instruction : Raw.instruction -> (_ -> expression result) resul
       in
       let%bind key' = simpl_expression key in
       let expr = e_constant ~loc C_MAP_REMOVE [key' ; map] in
-      return_statement @@ e_assign ~loc varname path expr
+      let (binder, mut, rhs, inline) = e_assign_with_let ~loc varname path expr in
+      return_let_in binder mut inline rhs
     )
   | SetRemove r -> (
       let (set_rm, loc) = r_split r in
@@ -976,10 +1094,11 @@ and simpl_single_instruction : Raw.instruction -> (_ -> expression result) resul
       in
       let%bind removed' = simpl_expression set_rm.element in
       let expr = e_constant ~loc C_SET_REMOVE [removed' ; set] in
-      return_statement @@ e_assign ~loc varname path expr
+      let (binder, mut, rhs, inline) = e_assign_with_let ~loc varname path expr in
+      return_let_in binder mut inline rhs
     )
 
-and simpl_path : Raw.path -> string * Ast_simplified.access_path = fun p ->
+and simpl_path : Raw.path -> string * string list = fun p ->
   match p with
   | Raw.Name v -> (v.value , [])
   | Raw.Path p -> (
@@ -989,14 +1108,14 @@ and simpl_path : Raw.path -> string * Ast_simplified.access_path = fun p ->
       let path' =
         let aux (s:Raw.selection) =
           match s with
-          | FieldName property -> Access_record property.value
-          | Component index -> Access_tuple (Z.to_int (snd index.value))
+          | FieldName property -> property.value
+          | Component index -> (Z.to_string (snd index.value))
         in
         List.map aux @@ npseq_to_list path in
       (var , path')
     )
 
-and simpl_cases : type a . (Raw.pattern * a) list -> (a, unit) matching result = fun t ->
+and simpl_cases : (Raw.pattern * expression) list -> matching_expr result = fun t ->
   let open Raw in
   let get_var (t:Raw.pattern) =
     match t with
@@ -1105,223 +1224,108 @@ and simpl_statements : Raw.statements -> (_ -> expression result) result =
 and simpl_block : Raw.block -> (_ -> expression result) result =
   fun t -> simpl_statements t.statements
 
+and simpl_while_loop : Raw.while_loop -> (_ -> expression result) result = fun wl ->
+  let env_rec = Var.fresh () in
+  let binder  = Var.fresh () in
+
+  let%bind cond = simpl_expression wl.cond in
+  let%bind for_body = simpl_block wl.block.value in
+
+  let ctrl = 
+    (e_variable binder)
+    in
+  let%bind for_body = for_body @@ Some( ctrl ) in
+  let%bind ((_,captured_name_list),for_body) = repair_mutable_variable for_body [] binder in
+
+  let aux name expr=
+    e_let_in (name,None) false false (e_accessor (e_variable binder) (Var.to_name name)) expr
+  in
+  let init_rec = store_mutable_variable @@ captured_name_list in
+  let restore = fun expr -> List.fold_right aux captured_name_list expr in
+  let continue_expr = e_constant C_CONTINUE [for_body] in
+  let stop_expr = e_constant C_STOP [e_variable binder] in
+  let aux_func = e_cond cond continue_expr (stop_expr) in
+  let aux_func = (restore (aux_func)) in
+  let aux_func = e_lambda binder None None @@ aux_func in
+  let loop = e_constant C_FOLD_WHILE [aux_func; e_variable env_rec] in
+  let return_expr = e_let_in (env_rec,None) false false init_rec (loop) in
+  restore_mutable_variable return_expr captured_name_list env_rec 
+
+
 and simpl_for_int : Raw.for_int -> (_ -> expression result) result = fun fi ->
-  (* cond part *)
-  let var = e_variable (Var.of_name fi.assign.value.name.value) in
+  let env_rec = Var.fresh () in
+  let binder  = Var.fresh () in
+  let name = fi.assign.value.name.value in
+  let it = Var.of_name name in
+  let var = e_variable it in
+  (*Make the cond and the step *)
   let%bind value = simpl_expression fi.assign.value.expr in
   let%bind bound = simpl_expression fi.bound in
-  let comp = e_annotation (e_constant C_LE [var ; bound]) t_bool
-  in
-  (* body part *)
-  let%bind body = simpl_block fi.block.value in
-  let%bind body = body None in
+  let cond = e_annotation (e_constant C_LE [var ; bound]) t_bool in
   let step = e_int 1 in
-  let ctrl = e_assign
-    fi.assign.value.name.value [] (e_constant C_ADD [ var ; step ]) in
-  let rec add_to_seq expr = match expr.expression with
-    | E_sequence (_,a) -> add_to_seq a
-    | _ -> e_sequence body ctrl in
-  let body' = add_to_seq body in
-  let loop = e_loop comp body' in
-  return_statement @@ e_let_in (Var.of_name fi.assign.value.name.value, Some t_int) false value loop
+  let ctrl = 
+    e_let_in (it,Some t_int) false false (e_constant C_ADD [ var ; step ]) 
+    (e_let_in (binder, None) false false (e_update (e_variable binder) name var)
+    (e_variable binder))
+    in
+  (* Modify the body loop*)
+  let%bind for_body = simpl_block fi.block.value in
+  let%bind for_body = for_body @@ Some( ctrl ) in
+  let%bind ((_,captured_name_list),for_body) = repair_mutable_variable for_body [it] binder in
 
-(** simpl_for_collect
-  For loops over collections, like
+  let aux name expr=
+    e_let_in (name,None) false false (e_accessor (e_variable binder) (Var.to_name name)) expr
+  in
 
-  ``` concrete syntax :
-  for x : int in set myset
-  begin
-    myint := myint + x ;
-    myst := myst ^ "to" ;
-  end
-  ```
+  (* restores the initial value of the free_var*)
+  let restore = fun expr -> List.fold_right aux captured_name_list expr in
 
-  are implemented using a MAP_FOLD, LIST_FOLD or SET_FOLD:
+  (*Prep the lambda for the fold*)
+  let continue_expr = e_constant C_CONTINUE [for_body] in
+  let stop_expr = e_constant C_STOP [e_variable binder] in
+  let aux_func = e_cond cond continue_expr (stop_expr) in
+  let aux_func = e_let_in (it,Some t_int) false false (e_accessor (e_variable binder) name) (restore (aux_func)) in
+  let aux_func = e_lambda binder None None @@ aux_func in
 
-  ``` pseudo Ast_simplified
-  let #COMPILER#folded_record = list_fold(  mylist ,
-                                  record st = st; acc = acc; end;
-                                  lamby = fun arguments -> (
-                                      let #COMPILER#acc = arguments.0 in
-                                      let #COMPILER#elt_x = arguments.1 in
-                                      #COMPILER#acc.myint := #COMPILER#acc.myint + #COMPILER#elt_x ;
-                                      #COMPILER#acc.myst  := #COMPILER#acc.myst ^ "to" ;
-                                      #COMPILER#acc
-                                  )
-                                ) in
-  {
-    myst  := #COMPILER#folded_record.myst ;
-    myint := #COMPILER#folded_record.myint ;
-  }
-  ```
+  (* Make the fold_while en precharge the vakye *)
+  let loop = e_constant C_FOLD_WHILE [aux_func; e_variable env_rec] in
+  let init_rec = store_mutable_variable @@ it::captured_name_list in
+  let return_expr = e_let_in (env_rec,None) false false init_rec (loop) in
+  let return_expr = e_let_in (it, Some t_int) false false value @@ return_expr in
+  restore_mutable_variable return_expr captured_name_list env_rec 
 
-  We are performing the following steps:
-    1) Simplifying the for body using ̀simpl_block`
-
-    2) Detect the free variables and build a list of their names
-       (myint and myst in the previous example)
-       Free variables are simply variables being assigned but not defined
-       locally.
-       Note:  In the case of a nested loops, assignements to a compiler
-              generated value (#COMPILER#acc) correspond to variables
-              that were already renamed in the inner loop.
-              e.g :
-              ```
-              #COMPILER#acc.myint := #COMPILER#acc.myint + #COMPILER#elt_x ;
-              #COMPILER#acc.myst  := #COMPILER#acc.myst ^ "to" ;
-              ```
-              They must not be considered as free variables
-
-    3) Build the initial record (later passed as 2nd argument of
-      `MAP/SET/LIST_FOLD`) capturing the environment using the
-      free variables list of (2)
-
-    4) In the filtered body of (1), replace occurences:
-        - free variable of name X as rhs ==> accessor `#COMPILER#acc.X`
-        - free variable of name X as lhs ==> accessor `#COMPILER#acc.X`
-       And, in the case of a map:
-            - references to the iterated key   ==> variable `#COMPILER#elt_K`
-            - references to the iterated value ==> variable `#COMPILER#elt_V`
-            in the case of a set/list:
-            - references to the iterated value ==> variable `#COMPILER#elt_X`
-       Note: In the case of an inner loop capturing variable from an outer loop
-             the free variable name can be `#COMPILER#acc.Y` and because we do not
-             capture the accumulator record in the inner loop, we do not want to
-             generate `#COMPILER#acc.#COMPILER#acc.Y` but `#COMPILER#acc.Y`
-
-    5) Append the return value to the body
-
-    6) Prepend the declaration of the lambda arguments to the body which
-       is a serie of `let .. in`'s
-       Note that the parameter of the lambda ̀arguments` is a tree of
-       tuple holding:
-        * In the case of `list` or ̀set`:
-          ( folding record , current list/set element ) as
-          ( #COMPILER#acc  , #COMPILER#elt_X          )
-        * In the case of `map`:
-          ( folding record , current map key ,   current map value   ) as
-          ( #COMPILER#acc  , #COMPILER#elt_K ,   #COMPILER#elt_V     )
-       Note: X , K and V above have to be replaced with their given name
-
-    7) Build the lambda using the final body of (6)
-
-    8) Build a sequence of assignments for all the captured variables
-       to their new value, namely an access to the folded record
-       (#COMPILER#folded_record)
-
-    9) Attach the sequence of 8 to the ̀let .. in` declaration
-       of #COMPILER#folded_record
-
-**)
 and simpl_for_collect : Raw.for_collect -> (_ -> expression result) result = fun fc ->
-  let elt_name = "#COMPILER#elt_"^fc.var.value in
-  let elt_v_name = match fc.bind_to with
-    | Some v -> "#COMPILER#elt_"^(snd v).value
-    | None -> "#COMPILER#elt_unused" in
-  let element_names = ok @@ match fc.bind_to with
+  let _elt_name = fc.var.value in
+  let binder = Var.of_name "arguments" in
+  let%bind element_names = ok @@ match fc.bind_to with
     | Some v -> [Var.of_name fc.var.value;Var.of_name (snd v).value]
     | None -> [Var.of_name fc.var.value] in
-  (* STEP 1 *)
+  
+  let env = Var.fresh () in
   let%bind for_body = simpl_block fc.block.value in
-  let%bind for_body = for_body None in
-  (* STEP 2 *)
-  let%bind local_decl_name_list = bind_concat (detect_local_declarations for_body) element_names in
-  let%bind captured_name_list = detect_free_variables for_body local_decl_name_list in
-  (* STEP 3 *)
-  let add_to_record (prev: expression SMap.t) (captured_name: string) =
-    SMap.add captured_name (e_variable (Var.of_name captured_name)) prev in
-  let init_record = e_record (List.fold_left add_to_record SMap.empty captured_name_list) in
-  (* STEP 4 *)
-  let replace exp =
-    match exp.expression with
-    (* replace references to fold accumulator as lhs *)
-    | E_assign ( name , path , expr ) -> (
-      if (List.mem name local_decl_name_list ) then
-        ok @@ exp
-      else
-      let name = Var.to_name name in
-        let path' = List.filter
-          ( fun el ->
-            match el with
-            | Access_record name -> not @@ is_compiler_generated (Var.of_name name)
-            | _ -> true )
-          ((Access_record name)::path) in
-        ok @@ e_assign "#COMPILER#acc" path' expr )
-    | E_variable name -> (
-      let name = Var.to_name name in
-      if (List.mem name captured_name_list) then
-        (* replace references to fold accumulator as rhs *)
-        ok @@ e_accessor (e_variable (Var.of_name "#COMPILER#acc")) [Access_record name] (* TODO fresh *)
-      else match fc.collection with
-      (* loop on map *)
-      | Map _ ->
-        let k' = e_variable (Var.of_name elt_name) in
-        if ( name = fc.var.value ) then
-          ok @@ k' (* replace references to the the key *)
-        else (
-          match fc.bind_to with
-          | Some (_,v) ->
-            let v' = e_variable (Var.of_name elt_v_name) in
-            if ( name = v.value ) then
-              ok @@ v' (* replace references to the the value *)
-            else ok @@ exp
-          | None -> ok @@ exp
-      )
-      (* loop on set or list *)
-      | (Set _ | List _) ->
-        if (name = fc.var.value ) then
-          (* replace references to the collection element *)
-          ok @@ (e_variable (Var.of_name elt_name))
-        else ok @@ exp
-    )
-    | _ -> ok @@ exp in
-  let%bind for_body = Self_ast_simplified.map_expression replace for_body in
-  (* STEP 5 *)
-  let rec add_return (expr : expression) = match expr.expression with
-    | E_sequence (a,b) -> e_sequence a (add_return b)
-    | _  -> (* TODO fresh *)
-       e_sequence expr (e_variable (Var.of_name "#COMPILER#acc")) in
-  let for_body = add_return for_body in
-  (* STEP 6 *)
-  let for_body =
-    let ( arg_access: Types.access_path -> expression ) =
-      e_accessor (e_variable (Var.of_name "arguments")) in (* TODO fresh *)
-    ( match fc.collection with
-      | Map _ ->
-        let acc          = arg_access [Access_tuple 0 ] in
-        let collec_elt_v = arg_access [Access_tuple 1 ; Access_tuple 0] in
-        let collec_elt_k = arg_access [Access_tuple 1 ; Access_tuple 1] in
-        e_let_in (Var.of_name "#COMPILER#acc", None) false acc @@ (* TODO fresh *)
-        e_let_in (Var.of_name elt_name, None) false collec_elt_v @@
-        e_let_in (Var.of_name elt_v_name, None) false collec_elt_k (for_body)
-      | _ ->
-        let acc        = arg_access [Access_tuple 0] in
-        let collec_elt = arg_access [Access_tuple 1] in
-        e_let_in (Var.of_name "#COMPILER#acc", None) false acc @@ (* TODO fresh *)
-        e_let_in (Var.of_name elt_name, None) false collec_elt (for_body)
-    ) in
-  (* STEP 7 *)
+  let%bind _for_body' = for_body None in
+  let%bind for_body = for_body @@ Some (e_accessor (e_variable binder) "0") in
+  let%bind ((_,free_vars), for_body) = repair_mutable_variable_for_collect for_body element_names binder in
+
+  let init_record = store_mutable_variable free_vars in
   let%bind collect = simpl_expression fc.expr in
-  let lambda = e_lambda (Var.of_name "arguments") None None for_body in
+  let aux name expr=
+    e_let_in (name,None) false false (e_accessor (e_accessor (e_variable binder) "0") (Var.to_name name)) expr
+  in
+  let restore = fun expr -> List.fold_right aux free_vars expr in
+  let restore = match fc.collection with
+    | Map _ -> (match fc.bind_to with 
+      | Some v -> fun expr -> restore (e_let_in (Var.of_name  fc.var.value, None) false false (e_accessor (e_accessor (e_variable binder) "1") "0") 
+                                    (e_let_in (Var.of_name (snd v).value, None) false false (e_accessor (e_accessor (e_variable binder) "1") "1") expr))
+      | None -> fun expr -> restore (e_let_in (Var.of_name  fc.var.value, None) false false (e_accessor (e_accessor (e_variable binder) "1") "0") expr) 
+    )
+    | _ -> fun expr -> restore (e_let_in (Var.of_name fc.var.value, None) false false (e_accessor (e_variable binder) "1") expr)
+  in
+  let lambda = e_lambda binder None None (restore for_body) in
   let op_name = match fc.collection with
    | Map _ -> C_MAP_FOLD | Set _ -> C_SET_FOLD | List _ -> C_LIST_FOLD in
   let fold = e_constant op_name [lambda; collect ; init_record] in
-  (* STEP 8 *)
-  let assign_back (prev : expression option) (captured_varname : string) : expression option =
-    let access = (* TODO fresh *)
-      e_accessor (e_variable (Var.of_name "#COMPILER#folded_record"))
-      [Access_record captured_varname] in
-    let assign = e_assign captured_varname [] access in
-    match prev with
-    | None -> Some assign
-    | Some p -> Some (e_sequence p assign) in
-  let reassign_sequence = List.fold_left assign_back None captured_name_list in
-  (* STEP 9 *)
-  let final_sequence = match reassign_sequence with
-    (* None case means that no variables were captured *)
-    | None -> e_skip ()
-    | Some seq -> e_let_in (Var.of_name "#COMPILER#folded_record", None) false fold seq in (* TODO fresh *)
-  return_statement @@ final_sequence
+  restore_mutable_variable fold free_vars env
 
 and simpl_declaration_list declarations :
   Ast_simplified.declaration Location.wrap list result =

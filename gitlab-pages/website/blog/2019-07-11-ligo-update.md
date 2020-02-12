@@ -7,7 +7,7 @@ author: Gabriel Alfour
 
 ---
 
-It's been a few weeks since our last update. Since then, we've onboarded new collaborators to both LIGO and Marigold, rewritten much of the codebase, and we've begun some exciting new projects. Let's tell you all about it!
+It has been a few weeks since our last update. Since then, we've onboarded new collaborators to both LIGO and Marigold, rewritten much of the codebase, and we've begun some exciting new projects. Let's tell you all about it!
 
 # LIGO
 
@@ -41,7 +41,7 @@ The most brittle part of our code base is about to become its strongest part. We
 
 Concretely:
 - Running LIGO-in-Browser will become much easier. Instead of having to dry-run it remotely or to rewrite a Michelson interpreter, we'll be able to **directly interpret** the LIGO program.
-- It will be possible to prove the properties of Smart-Contracts written in LIGO directly, instead of having to prove the Michelson they produce.
+- It will be possible to prove the properties of smart contracts written in LIGO directly, instead of having to prove the Michelson they produce.
 - Fewer tests will ned to be written and testing will instead focus mostly on the developer-facing layers of the compiler (i.e. syntax, typing), rather than on the actual compiling part.
 
 # Marigold
@@ -56,4 +56,4 @@ It is thus hard for newcomers (even CS researchers!) to dive into Plasma in a co
 
 # Contact
 
-If you have any question, feel free to visit [our website](ligolang.org) and to contact us :)
+If you have any question, feel free to visit [our website](https://ligolang.org) and to contact us :)

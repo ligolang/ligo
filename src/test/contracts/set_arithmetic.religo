@@ -1,5 +1,7 @@
 /* Test set operations in ReasonLIGO */
 
+let literal_op = (p: unit) : set(string) => Set.literal(["foo", "bar", "foobar"]);
+
 let add_op = (s: set(string)): set(string) => Set.add("foobar", s);
 
 let remove_op = (s: set(string)): set(string) => Set.remove("foobar", s);

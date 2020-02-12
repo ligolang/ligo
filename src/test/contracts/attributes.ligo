@@ -1,19 +1,19 @@
 const x : int = 1; attributes ["inline"]
 
 function foo (const a : int) : int is
-  begin
+  block {
     const test : int = 2 + a;
     attributes ["inline"];
-  end with test;
+  } with test;
 attributes ["inline"];
 
 const y : int = 1; attributes ["inline"; "other"]
 
 function bar (const b : int) : int is
-  begin
+  block {
     function test (const z : int) : int is
-      begin
+      block {
         const r : int = 2 + b + z
-      end with r;
+      } with r;
     attributes ["inline"; "foo"; "bar"]
-  end with test(b)
+  } with test (b)

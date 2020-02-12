@@ -1,1 +1,0 @@
-const a: string = string_concat("Hello ", "World");

@@ -1,11 +1,5 @@
-type myrec is record
-  foo : nat;
-  bar : string;
-end;
+type t is record [foo : nat; bar : string]
 
-const a : myrec = record
-  foo = 0n;
-  bar = "bar";
-end;
+const a : t = record [foo = 0n; bar = "bar"]
 
-const b : int = 2 ;
+const b : int = 2
