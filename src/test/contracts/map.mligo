@@ -11,6 +11,8 @@ let set_2 (n: int) (m: foobar) : foobar = Map.update 23 (Some n) m
 
 let set_ (t: int * foobar) : foobar = set_2 t.0 t.1
 
+let add (n,m: int * foobar) : foobar = Map.add 23 n m
+
 let rm (m: foobar) : foobar = Map.remove 42 m
 
 (* Dummy test so that we can add the same test for PascaLIGO *)
@@ -30,7 +32,7 @@ let gf (m: foobar) : int = Map.find 23 m
 let get (m: foobar) : int option = Map.find_opt 42 m
 let get_ (m: foobar) : int option = Map.find_opt 42 m
 
-let mem (km: int * foobar) : bool = Map.mem km.0 km.1
+let mem (k,m: int * foobar) : bool = Map.mem k m
 
 let iter_op (m : foobar) : unit =
   let assert_eq = fun (i: int * int) -> assert (i.0 = i.1)

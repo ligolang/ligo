@@ -10,6 +10,8 @@ let map2: foobar = Map.literal([(23, 0), (42, 0)]);
 
 let set_ = (n: int, m: foobar): foobar => Map.update(23, Some(n), m);
 
+let add = (n: int, m: foobar) : foobar => Map.add(23, n, m);
+
 let rm = (m: foobar): foobar => Map.remove(42, m);
 
 /* Dummy test so that we can add the same test for PascaLIGO */

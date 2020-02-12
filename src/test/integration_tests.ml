@@ -991,6 +991,11 @@ let map_ type_f path : unit result =
     expect_eq_n_pos_small program "set_" make_input make_expected
   in
   let%bind () =
+    let input = (e_pair (e_int 23) (ez [(42, 42)])) in
+    let expected = ez [(23, 23) ; (42, 42)] in
+    expect_eq program "add" input expected
+  in
+  let%bind () =
     let input = ez [(23, 23) ; (42, 42)] in
     let expected = ez [23, 23] in
     expect_eq program "rm" input expected
