@@ -241,7 +241,6 @@ and constant ppf : constant' -> unit = function
   | C_ADDRESS               -> fprintf ppf "ADDRESS"
   | C_SELF_ADDRESS          -> fprintf ppf "SELF_ADDRESS"
   | C_IMPLICIT_ACCOUNT      -> fprintf ppf "IMPLICIT_ACCOUNT"
-  | C_STEPS_TO_QUOTA        -> fprintf ppf "STEPS_TO_QUOTA"
   | C_SET_DELEGATE          -> fprintf ppf "SET_DELEGATE"
 
 let%expect_test _ =

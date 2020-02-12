@@ -288,4 +288,3 @@ and constant' =
   | C_SELF_ADDRESS
   | C_IMPLICIT_ACCOUNT
   | C_SET_DELEGATE
-  | C_STEPS_TO_QUOTA
