@@ -1205,6 +1205,30 @@ let condition_religo () : unit result =
     ] in
   ok ()
 
+let eq_bool_common program =
+  let%bind _ =
+    bind_map_list (fun ( a , b , expected ) ->
+        expect_eq program "main" (e_pair (e_bool a) (e_bool b)) (e_int expected))
+    [
+      ( false , false , 999 ) ;
+      ( false , true  , 1   ) ;
+      ( true  , false , 1   ) ;
+      ( true  , true  , 999 ) ;
+    ]
+  in
+  ok ()
+
+let eq_bool () : unit result =
+  let%bind program = type_file "./contracts/eq_bool.ligo" in
+  eq_bool_common program
+
+let eq_bool_mligo () : unit result =
+  let%bind program = mtype_file "./contracts/eq_bool.mligo" in
+  eq_bool_common program
+
+let eq_bool_religo () : unit result =
+  let%bind program = retype_file "./contracts/eq_bool.religo" in
+  eq_bool_common program
 
 let condition_simple () : unit result =
   let%bind program = type_file "./contracts/condition-simple.ligo" in
@@ -2272,6 +2296,9 @@ let main = test_suite "Integration (End to End)" [
     test "condition (ligo)" condition ;
     test "condition (mligo)" condition_mligo ;
     test "condition (religo)" condition_religo ;
+    test "eq bool (ligo)" eq_bool ;
+    test "eq bool (mligo)" eq_bool_mligo ;
+    test "eq bool (religo)" eq_bool_religo ;
     test "shadow" shadow ;
     test "annotation" annotation ;
     test "multiple parameters" multiple_parameters ;
