@@ -97,7 +97,7 @@ let alice_admin : bool = alice.is_admin
 
 <!--ReasonLIGO-->
 ```reasonligo group=a
-let alice_admin: bool = alice.is_admin;
+let alice_admin : bool = alice.is_admin;
 ```
 <!--END_DOCUSAURUS_CODE_TABS-->
 
@@ -110,9 +110,7 @@ modified.
 
 One way to understand the update of record values is the *functional
 update*. The idea is to have an *expression* whose value is the
-updated record. The shape of that expression is `<record variable>
-with <record value>`. The record variable is the record to update and
-the record value is the update itself.
+updated record.
 
 Let us consider defining a function that translates three-dimensional
 points on a plane.
@@ -120,6 +118,11 @@ points on a plane.
 <!--DOCUSAURUS_CODE_TABS-->
 
 <!--PascaLIGO-->
+
+In PascaLIGO, the shape of that expression is `<record variable> with
+<record value>`. The record variable is the record to update and the
+record value is the update itself.
+
 ```pascaligo group=b
 type point is record [x : int; y : int; z : int]
 type vector is record [dx : int; dy : int]
@@ -174,7 +177,7 @@ xy_translate "({x=2;y=3;z=1}, {dx=3;dy=4})"
 <!--ReasonLIGO-->
 
 The syntax for the functional updates of record in ReasonLIGO follows
-that of OCaml:
+that of ReasonML:
 
 ```reasonligo group=b
 type point = {x : int, y : int, z : int};
@@ -199,7 +202,7 @@ xy_translate "({x:2,y:3,z:1}, {dx:3,dy:4})"
 You have to understand that `p` has not been changed by the functional
 update: a nameless new version of it has been created and returned.
 
-### Imperative Updates
+### Record Patches
 
 Another way to understand what it means to update a record value is to
 make sure that any further reference to the value afterwards will
@@ -365,12 +368,13 @@ let moves : register =
 
 ### Accessing Map Bindings
 
-We can use the postfix `[]` operator to read the `move` value
-associated to a given key (`address` here) in the register. Here is an
-example:
-
 <!--DOCUSAURUS_CODE_TABS-->
 <!--PascaLIGO-->
+
+In PascaLIGO, we can use the postfix `[]` operator to read the `move`
+value associated to a given key (`address` here) in the register. Here
+is an example:
+
 ```pascaligo group=f
 const my_balance : option (move) =
   moves [("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" : address)]
@@ -480,10 +484,9 @@ We can update a binding in a map in ReasonLIGO by means of the
 `Map.update` built-in function:
 
 ```reasonligo group=f
-let assign = (m : register) : register => {
+let assign = (m : register) : register =>
   Map.update
-    (("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" : address), Some ((4,9)), m)
-};
+    (("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" : address), Some ((4,9)), m);
 ```
 
 > Notice the optional value `Some (4,9)` instead of `(4,9)`. If we had
@@ -521,9 +524,8 @@ let delete (key, moves : address * register) : register =
 In ReasonLIGO, we use the predefined function `Map.remove` as follows:
 
 ```reasonligo group=f
-let delete = ((key, moves) : (address, register)) : register => {
+let delete = ((key, moves) : (address, register)) : register =>
   Map.remove (key, moves);
-};
 ```
 
 <!--END_DOCUSAURUS_CODE_TABS-->
@@ -540,7 +542,7 @@ There are three kinds of functional iterations over LIGO maps: the
 *iterated operation*, the *map operation* (not to be confused with the
 *map data structure*) and the *fold operation*.
 
-#### Iterated Operation
+#### Iterated Operation over Maps
 
 The first, the *iterated operation*, is an iteration over the map with
 no return value: its only use is to produce side-effects. This can be
@@ -595,7 +597,7 @@ let iter_op = (m : register) : unit => {
 ```
 <!--END_DOCUSAURUS_CODE_TABS-->
 
-#### Map Operation
+#### Map Operations over Maps
 
 We may want to change all the bindings of a map by applying to them a
 function. This is called a *map operation*, not to be confused with
@@ -606,7 +608,7 @@ the map data structure.
 <!--PascaLIGO-->
 
 In PascaLIGO, the predefined functional iterator implementing the map
-operation over maps is called `map_map`and is used as follows:
+operation over maps is called `map_map` and is used as follows:
 
 ```pascaligo group=f
 function map_op (const m : register) : register is
@@ -643,9 +645,9 @@ let map_op = (m : register) : register => {
 ```
 <!--END_DOCUSAURUS_CODE_TABS-->
 
-#### Fold Operation
+#### Folded Operations over Maps
 
-A *fold operation* is the most general of iterations. The folded
+A *folded operation* is the most general of iterations. The folded
 function takes two arguments: an *accumulator* and the structure
 *element* at hand, with which it then produces a new accumulator. This
 enables having a partial result that becomes complete when the
@@ -655,14 +657,15 @@ traversal of the data structure is over.
 
 <!--PascaLIGO-->
 
-In PascaLIGO, the predefined functional iterator implementing the fold
-operation over maps is called `map_fold` and is used as follows:
+In PascaLIGO, the predefined functional iterator implementing the
+folded operation over maps is called `map_fold` and is used as
+follows:
 
 ```pascaligo group=f
 function fold_op (const m : register) : int is block {
-  function iterated (const j : int; const cur : address * move) : int is
+  function folded (const j : int; const cur : address * move) : int is
     j + cur.1.1
-  } with map_fold (iterated, m, 5)
+  } with map_fold (folded, m, 5)
 ```
 
 > The folded function must be pure, that is, it cannot mutate
@@ -670,24 +673,26 @@ function fold_op (const m : register) : int is block {
 
 <!--CameLIGO-->
 
-In CameLIGO, the predefined functional iterator implementing the fold
-operation over maps is called `Map.fold` and is used as follows:
+In CameLIGO, the predefined functional iterator implementing the
+folded operation over maps is called `Map.fold` and is used as
+follows:
 
 ```cameligo group=f
 let fold_op (m : register) : register =
-  let iterated = fun (i,j : int * (address * move)) -> i + j.1.1
-  in Map.fold iterated m 5
+  let folded = fun (i,j : int * (address * move)) -> i + j.1.1
+  in Map.fold folded m 5
 ```
 
 <!--ReasonLIGO-->
 
 In ReasonLIGO, the predefined functional iterator implementing the
-fold operation over maps is called `Map.fold` and is used as follows:
+folded operation over maps is called `Map.fold` and is used as
+follows:
 
 ```reasonligo group=f
 let fold_op = (m : register) : register => {
-  let iterated = ((i,j): (int, (address, move))) => i + j[1][1];
-  Map.fold (iterated, m, 5);
+  let folded = ((i,j): (int, (address, move))) => i + j[1][1];
+  Map.fold (folded, m, 5);
 };
 ```
 

@@ -69,7 +69,8 @@ or as function parameters.
 
 function add (const a : int; const b : int) : int is
   block {
-    var c : int := a + b
+    var c : int := a + 2*b;
+    c := c - b
   } with c
 ```
 

@@ -583,6 +583,11 @@ let set_arithmetic_mligo () : unit result =
   let%bind program = mtype_file "./contracts/set_arithmetic.mligo" in
   let%bind program_1 = type_file "./contracts/set_arithmetic-1.ligo" in
   let%bind () =
+    expect_eq program "literal_op"
+      (e_unit ())
+      (e_set [e_string "foo"; e_string "bar"; e_string "foobar"])
+  in
+  let%bind () =
     expect_eq program "size_op"
       (e_set [e_string "foo"; e_string "bar"; e_string "foobar"])
       (e_nat 3) in
@@ -612,6 +617,11 @@ let set_arithmetic_mligo () : unit result =
 let set_arithmetic_religo () : unit result =
   let%bind program = retype_file "./contracts/set_arithmetic.religo" in
   let%bind program_1 = type_file "./contracts/set_arithmetic-1.ligo" in
+  let%bind () =
+    expect_eq program "literal_op"
+      (e_unit ())
+      (e_set [e_string "foo"; e_string "bar"; e_string "foobar"])
+  in
   let%bind () =
     expect_eq program "size_op"
       (e_set [e_string "foo"; e_string "bar"; e_string "foobar"])
@@ -1083,6 +1093,11 @@ let big_map_ type_f path : unit result =
     in
     let make_expected = fun n -> ez [(23 , n) ; (42 , 0)] in
     expect_eq_n_pos_small program "set_" make_input make_expected
+  in
+  let%bind () =
+    let input = (e_pair (e_int 23) (ez [(42, 42)])) in
+    let expected = ez [(23, 23) ; (42, 42)] in
+    expect_eq program "add" input expected
   in
   let%bind () =
     let make_input = fun n -> ez [(23, n) ; (42, 4)] in

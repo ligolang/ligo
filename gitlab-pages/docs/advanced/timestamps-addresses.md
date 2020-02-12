@@ -33,10 +33,10 @@ let today : timestamp = Current.time;
 
 <!--END_DOCUSAURUS_CODE_TABS-->
 
-> When running code with ligo CLI, the option
+> When running code, the LIGO CLI option
 > `--predecessor-timestamp` allows you to control what `now` returns.
 
-### Timestamp Arithmetic
+### Timestamp Arithmetics
 
 In LIGO, timestamps can be added to integers, allowing you to set time
 constraints on your smart contracts. Consider the following scenarios.
@@ -124,9 +124,9 @@ let not_tomorrow : bool = (Current.time == in_24_hrs);
 
 ## Addresses
 
-The type `address` in LIGO denotes Tezos addresses (tz1, tz2, tz3,
+The `address` type in LIGO denotes Tezos addresses (tz1, tz2, tz3,
 KT1, ...). Currently, addresses are created by casting a string to the
-type `address`. Beware of failures if the address is invalid. Consider
+`address` type. Beware of failures if the address is invalid. Consider
 the following examples.
 
 <!--DOCUSAURUS_CODE_TABS-->

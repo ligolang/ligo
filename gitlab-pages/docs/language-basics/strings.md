@@ -27,7 +27,7 @@ let a : string = "Hello Alice";
 <!--PascaLIGO-->
 Strings can be concatenated using the `^` operator.
 
-```pascaligo
+```pascaligo group=a
 const name : string = "Alice"
 const greeting : string = "Hello"
 const full_greeting : string = greeting ^ " " ^ name
@@ -35,7 +35,7 @@ const full_greeting : string = greeting ^ " " ^ name
 <!--CameLIGO-->
 Strings can be concatenated using the `^` operator.
 
-```cameligo
+```cameligo group=a
 let name : string = "Alice"
 let greeting : string = "Hello"
 let full_greeting : string = greeting ^ " " ^ name
@@ -43,7 +43,7 @@ let full_greeting : string = greeting ^ " " ^ name
 <!--ReasonLIGO-->
 Strings can be concatenated using the `++` operator.
 
-```reasonligo
+```reasonligo group=a
 let name : string = "Alice";
 let greeting : string = "Hello";
 let full_greeting : string = greeting ++ " " ++ name;
@@ -57,17 +57,17 @@ Strings can be sliced using a built-in function:
 
 <!--DOCUSAURUS_CODE_TABS-->
 <!--PascaLIGO-->
-```pascaligo
+```pascaligo group=b
 const name  : string = "Alice"
 const slice : string = string_slice (0n, 1n, name)
 ```
 <!--CameLIGO-->
-```cameligo
+```cameligo group=b
 let name  : string = "Alice"
 let slice : string = String.slice 0n 1n name
 ```
 <!--ReasonLIGO-->
-```reasonligo
+```reasonligo group=b
 let name  : string = "Alice";
 let slice : string = String.slice (0n, 1n, name);
 ```
@@ -81,18 +81,18 @@ The length of a string can be found using a built-in function:
 
 <!--DOCUSAURUS_CODE_TABS-->
 <!--PascaLIGO-->
-```pascaligo
+```pascaligo group=c
 const name : string = "Alice"
 const length : nat = size (name)   // length = 5
 ```
 <!--CameLIGO-->
-```cameligo
+```cameligo group=c
 let name : string = "Alice"
 let length : nat = String.size name  // length = 5
 ```
 
 <!--ReasonLIGO-->
-```reasonligo
+```reasonligo group=c
 let name : string = "Alice";
 let length : nat = String.size (name);  // length == 5
 ```

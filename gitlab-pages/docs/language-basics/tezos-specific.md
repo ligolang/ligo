@@ -10,16 +10,15 @@ functions. This page will tell you about them.
 ## Pack and Unpack
 
 Michelson provides the `PACK` and `UNPACK` instructions for data
-serialization.  The instruction `PACK` converts Michelson data
-structures into a binary format, and `UNPACK` reverses that
-transformation. This functionality can be accessed from within LIGO.
+serialization.  The former converts Michelson data structures into a
+binary format, and the latter reverses that transformation. This
+functionality can be accessed from within LIGO.
 
 > ⚠️ `PACK` and `UNPACK` are Michelson instructions that are intended
 > to be used by people that really know what they are doing. There are
 > several risks and failure cases, such as unpacking a lambda from an
-> untrusted source, and most of which are beyond the scope of this
-> document. Do not use these functions without doing your homework
-> first.
+> untrusted source or casting the result to the wrong type. Do not use
+> the corresponding LIGO functions without doing your homework first.
 
 <!--DOCUSAURUS_CODE_TABS-->
 
@@ -27,7 +26,7 @@ transformation. This functionality can be accessed from within LIGO.
 ```pascaligo group=a
 function id_string (const p : string) : option (string) is block {
   const packed : bytes = bytes_pack (p)
-} with (bytes_unpack (packed): option (string))
+} with (bytes_unpack (packed) : option (string))
 ```
 
 <!--CameLIGO-->
@@ -77,7 +76,7 @@ let check_hash_key (kh1, k2 : key_hash * key) : bool * key_hash =
 <!--ReasonLIGO-->
 ```reasonligo group=b
 let check_hash_key = ((kh1, k2) : (key_hash, key)) : (bool, key_hash) => {
-  let kh2 : key_hash = Crypto.hash_key(k2);
+  let kh2 : key_hash = Crypto.hash_key (k2);
   if (kh1 == kh2) { (true, kh2); } else { (false, kh2); }
 };
 ```
@@ -116,9 +115,8 @@ let check_signature (pk, signed, msg : key * signature * bytes) : bool =
 <!--ReasonLIGO-->
 ```reasonligo group=c
 let check_signature =
-  ((pk, signed, msg) : (key, signature, bytes)) : bool => {
+  ((pk, signed, msg) : (key, signature, bytes)) : bool =>
   Crypto.check (pk, signed, msg);
-};
 ```
 
 <!--END_DOCUSAURUS_CODE_TABS-->
@@ -129,8 +127,8 @@ Often you want to get the address of the contract being executed. You
 can do it with `self_address`.
 
 > ⚠️ Due to limitations in Michelson, `self_address` in a contract is
-> only allowed at the entrypoint level, that is, at the
-> top-level. Using it in an embedded function will cause an error.
+> only allowed at the top-level. Using it in an embedded function will
+> cause an error.
 
 <!--DOCUSAURUS_CODE_TABS-->
 

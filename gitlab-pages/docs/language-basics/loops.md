@@ -20,16 +20,15 @@ loops fails to become true, the execution will run out of gas and stop
 with a failure anyway.
 
 Here is how to compute the greatest common divisors of two natural
-number by means of Euclid's algorithm:
+numbers by means of Euclid's algorithm:
 
 ```pascaligo group=a
 function gcd (var x : nat; var y : nat) : nat is
   block {
-    if x < y then
-      block {
-        const z : nat = x;
-        x := y; y := z
-      }
+    if x < y then {
+      const z : nat = x;
+      x := y; y := z
+    }
     else skip;
     var r : nat := 0n;
     while y =/= 0n block {
@@ -55,18 +54,19 @@ constant, therefore it makes no sense in CameLIGO to feature loops,
 which we understand as syntactic constructs where the state of a
 stopping condition is mutated, as with "while" loops in PascaLIGO.
 
-Instead, CameLIGO features a *fold operation* as a predefined function
-named `Loop.fold_while`. It takes an initial value of a certain type,
-called an *accumulator*, and repeatedly calls a given function, called
-*iterated function*, that takes that accumulator and returns the next
-value of the accumulator, until a condition is met and the fold stops
-with the final value of the accumulator. The iterated function needs
-to have a special type: if the type of the accumulator is `t`, then it
-must have the type `bool * t` (not simply `t`). It is the boolean
-value that denotes whether the stopping condition has been reached.
+Instead, CameLIGO implements a *folded operation* by means of a
+predefined function named `Loop.fold_while`. It takes an initial value
+of a certain type, called an *accumulator*, and repeatedly calls a
+given function, called *folded function*, that takes that
+accumulator and returns the next value of the accumulator, until a
+condition is met and the fold stops with the final value of the
+accumulator. The iterated function needs to have a special type: if
+the type of the accumulator is `t`, then it must have the type `bool *
+t` (not simply `t`). It is the boolean value that denotes whether the
+stopping condition has been reached.
 
 Here is how to compute the greatest common divisors of two natural
-number by means of Euclid's algorithm:
+numbers by means of Euclid's algorithm:
 
 ```cameligo group=a
 let iter (x,y : nat * nat) : bool * (nat * nat) =
@@ -117,7 +117,7 @@ accumulator is `t`, then it must have the type `bool * t` (not simply
 condition has been reached.
 
 Here is how to compute the greatest common divisors of two natural
-number by means of Euclid's algorithm:
+numbers by means of Euclid's algorithm:
 
 ```reasonligo group=a
 let iter = ((x,y) : (nat, nat)) : (bool, (nat, nat)) =>
@@ -149,11 +149,10 @@ let gcd = ((x,y) : (nat, nat)) : nat => {
 
 In addition to general loops, PascaLIGO features a specialised kind of
 *loop to iterate over bounded intervals*. These loops are familiarly
-known as "for loops" and they have the form `for <variable assignment> to
-<upper bound> <block>`, which is familiar for programmers of
-imperative languages.
+known as "for loops" and they have the form `for <variable assignment>
+to <upper bound> <block>`, as found in imperative languages.
 
-Consider how to sum integers from `0` to `n`:
+Consider how to sum the natural numbers up to `n`:
 
 ```pascaligo group=c
 function sum (var n : nat) : int is block {
@@ -177,7 +176,7 @@ gitlab-pages/docs/language-basics/src/loops/sum.ligo sum 7n
 PascaLIGO "for" loops can also iterate through the contents of a
 collection, that is, a list, a set or a map. This is done with a loop
 of the form `for <element var> in <collection type> <collection var>
-<block>`, where `<collection type` is any of the following keywords:
+<block>`, where `<collection type>` is any of the following keywords:
 `list`, `set` or `map`.
 
 Here is an example where the integers in a list are summed up.
@@ -202,7 +201,7 @@ gitlab-pages/docs/language-basics/src/loops/collection.ligo sum_list
 
 Here is an example where the integers in a set are summed up.
 
-```pascaligo=e
+```pascaligo group=d
 function sum_set (var s : set (int)) : int is block {
   var total : int := 0;
   for i in set s block {
@@ -222,8 +221,22 @@ gitlab-pages/docs/language-basics/src/loops/collection.ligo sum_set
 
 Loops over maps are actually loops over the bindings of the map, that
 is, a pair key-value noted `key -> value` (or any other
-variables). Give a map from strings to integers, here is how to sum
+variables). Given a map from strings to integers, here is how to sum
 all the integers and concatenate all the strings.
+
+Here is an example where the keys are concatenated and the values are
+summed up.
+
+```pascaligo group=d
+function sum_map (var m : map (string, int)) : string * int is block {
+  var string_total : string := "";
+  var int_total : int := 0;
+  for key -> value in map m block {
+    string_total := string_total ^ key;
+    int_total := int_total + value
+  }
+} with (string_total, int_total)
+```
 
 You can call the function `sum_map` defined above using the LIGO compiler
 like so:

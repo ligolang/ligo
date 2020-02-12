@@ -247,7 +247,6 @@ and constant' =
   | C_LIST_ITER
   | C_LIST_MAP
   | C_LIST_FOLD
-  | C_LIST_CONS
   (* Maps *)
   | C_MAP
   | C_MAP_EMPTY

@@ -1,6 +1,6 @@
-Build & test with:
+Build with:
 
-    dune build adt_generator.exe && ../../../_build/default/src/stages/adt_generator/adt_generator.exe
+    dune build adt_generator.a
 
 Run with
 
