@@ -8,9 +8,9 @@ license: "MIT"
 depends: [
   "tezos-tooling" { with-test }
   "ocamlfind" { build }
-  "dune" { build & >= "1.7" }
+  "dune" { >= "1.7" }
   "tezos-base"
-  "tezos-protocol-005-PsBabyM1"
+  "tezos-protocol-006-PsCARTHA"
   "tezos-protocol-compiler"
   "tezos-protocol-updater"
 ]
@@ -19,7 +19,7 @@ build: [
     "%{tezos-protocol-compiler:lib}%/replace"
     "%{tezos-protocol-compiler:lib}%/dune_protocol.template"
     "dune"
-    "005_PsBabyM1"
+    "006_PsCARTHA"
   ]
   ["dune" "build" "-p" name "-j" jobs]
   ["dune" "runtest" "-p" name "-j" jobs] {with-test}
