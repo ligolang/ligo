@@ -11,6 +11,7 @@ module Ty = struct
 
   open Script_typed_ir
 
+  let bool_k = Bool_key None
   let nat_k = Nat_key None
   let tez_k = Mutez_key None
   let int_k = Int_key None
@@ -62,7 +63,7 @@ module Ty = struct
     match tb with
     | TC_unit -> fail (not_comparable "unit")
     | TC_void -> fail (not_comparable "void")
-    | TC_bool -> fail (not_comparable "bool")
+    | TC_bool -> return bool_k
     | TC_nat -> return nat_k
     | TC_mutez -> return tez_k
     | TC_int -> return int_k
