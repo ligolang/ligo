@@ -150,6 +150,7 @@ const siteConfig = {
     indexName: 'ligolang',
     algoliaOptions: {} // Optional, if provided by Algolia
   },
+  docsSideNavCollapsible: true,
   gaTrackingId: 'UA-153751765-1',
   gaGtag: true
 };
