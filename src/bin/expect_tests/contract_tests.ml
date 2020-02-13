@@ -1130,3 +1130,10 @@ let%expect_test _ =
   run_ligo_good [ "compile-storage" ; contract "big_map.ligo" ; "main" ; "(big_map1,unit)" ] ;
   [%expect {|
     (Pair { Elt 23 0 ; Elt 42 0 } Unit) |}]
+
+let%expect_test _ =
+  run_ligo_good [ "compile-contract" ; contract "key_hash_comparable.ligo" ; "main" ] ;
+  [%expect {|
+    { parameter int ;
+      storage (pair (map %one key_hash nat) (big_map %two key_hash bool)) ;
+      code { DUP ; CDR ; NIL operation ; PAIR ; DIP { DROP } } } |}]

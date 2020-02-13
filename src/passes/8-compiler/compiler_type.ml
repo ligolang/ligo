@@ -16,7 +16,7 @@ module Ty = struct
   let tez_k = Mutez_key None
   let int_k = Int_key None
   let string_k = String_key None
-  let _key_hash_k = Key_hash_key None
+  let key_hash_k = Key_hash_key None
   let address_k = Address_key None
   let timestamp_k = Timestamp_key None
   let bytes_k = Bytes_key None
@@ -74,7 +74,7 @@ module Ty = struct
     | TC_operation -> fail (not_comparable "operation")
     | TC_signature -> fail (not_comparable "signature")
     | TC_key -> fail (not_comparable "key")
-    | TC_key_hash -> fail (not_comparable "key_hash")
+    | TC_key_hash -> return key_hash_k
     | TC_chain_id -> fail (not_comparable "chain_id")
 
   let comparable_type : type_value -> ex_comparable_ty result = fun tv ->
