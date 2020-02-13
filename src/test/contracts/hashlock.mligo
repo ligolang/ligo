@@ -22,8 +22,10 @@ type parameter =
 
 (* We use hash-commit so that a baker can't steal *)
 let commit ((p,s): unit * storage) : operation list * storage =
-  let salted: bytes = Bytes.concat s.hashed (Bytes.pack sender) in
-  let commit: commit = {date = Current.time + 86400; salted_hash = Crypto.sha256 salted;} in
+  let salted : bytes = Crypto.sha256 (Bytes.concat
+                                        s.hashed
+                                        (Bytes.pack sender)) in
+  let commit: commit = {date = Current.time + 86400; salted_hash = salted;} in
   let updated_map: commit_set = Big_map.update sender (Some commit) s.commits in
   let s = {hashed = s.hashed; unused = s.unused; commits = updated_map} in
   (([]: operation list), s)

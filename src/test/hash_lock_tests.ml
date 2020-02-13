@@ -56,7 +56,7 @@ let commit () =
   let%bind lock_time = mk_time "2000-01-02T00:10:11Z" in
   let test_hash_raw = sha_256_hash (Bytes.of_string "hello world") in
   let test_hash = e_bytes_raw test_hash_raw in
-  let%bind packed_sender = pack_payload program (e_bytes_string first_committer) in
+  let%bind packed_sender = pack_payload program (e_address first_committer) in
   let salted_hash = e_bytes_raw (sha_256_hash
                                    (Bytes.concat Bytes.empty [test_hash_raw;
                                                               packed_sender]))
@@ -72,7 +72,7 @@ let commit () =
   in
   let post_commits = e_big_map [((e_address first_committer), commit)]
   in
-  let post_storage = storage salted_hash true post_commits in
+  let post_storage = storage test_hash true post_commits in
   let options =
     Proto_alpha_utils.Memory_proto_alpha.make_options
       ~predecessor_timestamp
