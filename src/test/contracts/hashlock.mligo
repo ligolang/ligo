@@ -17,20 +17,20 @@ type reveal = {
 }
 
 type parameter =
-| Commit of unit
+| Commit of bytes
 | Reveal of reveal
 
 (* We use hash-commit so that a baker can't steal *)
-let commit ((p,s): unit * storage) : operation list * storage =
-  let salted : bytes = Crypto.sha256 (Bytes.concat
-                                        s.hashed
-                                        (Bytes.pack sender)) in
-  let commit: commit = {date = Current.time + 86400; salted_hash = salted;} in
+let commit ((p,s): bytes * storage) : operation list * storage =
+  let commit: commit = {date = Current.time + 86400; salted_hash = p;} in
   let updated_map: commit_set = Big_map.update sender (Some commit) s.commits in
   let s = {hashed = s.hashed; unused = s.unused; commits = updated_map} in
   (([]: operation list), s)
 
 let reveal ((p,s): reveal * storage) : operation list * storage =
+  if not s.unused
+  then (failwith "This contract has already been used.": operation list * storage)
+  else
   let commit: commit =
     match (Big_map.find_opt sender s.commits) with
     | Some c -> c
@@ -39,14 +39,18 @@ let reveal ((p,s): reveal * storage) : operation list * storage =
   if Current.time < commit.date
   then (failwith "It hasn't been 24 hours since your commit yet.": operation list * storage)
   else
-  let salted = Bytes.concat (Crypto.sha256 p.hashable) (Bytes.pack sender) in
-  if ((Crypto.sha256 salted) = commit.salted_hash) && s.unused
+  let salted = Crypto.sha256 (Bytes.concat p.hashable (Bytes.pack sender)) in
+  if (salted <> commit.salted_hash)
+  then (failwith "This reveal doesn't match your commitment.": operation list * storage)
+  else
+  if (s.hashed = Crypto.sha256 p.hashable) 
   then
     let s: storage = {hashed = s.hashed; unused = false; commits = s.commits} in
     ((p.message ()), s)
-  else (([]: operation list), s)
+  else (failwith "Your commitment did not match the storage hash.":
+          operation list * storage)
 
 let main ((p,s): parameter * storage) : operation list * storage =
   match p with
-  | Commit -> commit ((), s)
+  | Commit c -> commit (c, s)
   | Reveal r -> reveal (r, s)
