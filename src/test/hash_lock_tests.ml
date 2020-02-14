@@ -34,7 +34,7 @@ let mk_time st =
   | None -> simple_fail "bad timestamp notation"
 let to_sec t = Tezos_utils.Time.Protocol.to_seconds t
 let storage hashed used commits =
-  e_ez_record [("hashed", hashed);
+  e_record_ez [("hashed", hashed);
                ("unused", e_bool used);
                ("commits", commits)]
 
@@ -68,7 +68,7 @@ let commit () =
   in
   let init_storage = storage test_hash true pre_commits in
   let commit =
-    e_ez_record [("date", e_timestamp
+    e_record_ez [("date", e_timestamp
                     (Int64.to_int (to_sec lock_time)));
                  ("salted_hash", salted_hash)]
   in
@@ -88,7 +88,7 @@ let commit () =
 let reveal_no_commit () =
   let%bind program,_ = get_program () in
   let empty_message = empty_message in
-  let reveal = e_ez_record [("hashable", e_bytes_string "hello world");
+  let reveal = e_record_ez [("hashable", e_bytes_string "hello world");
                             ("message", empty_message)]
   in
   let test_hash_raw = sha_256_hash (Bytes.of_string "hello world") in
@@ -105,7 +105,7 @@ let reveal_no_commit () =
 let reveal_young_commit () =
   let%bind program,_ = get_program () in
   let empty_message = empty_message in
-  let reveal = e_ez_record [("hashable", e_bytes_string "hello world");
+  let reveal = e_record_ez [("hashable", e_bytes_string "hello world");
                             ("message", empty_message)]
   in
   let%bind predecessor_timestamp = mk_time "2000-01-01T00:10:10Z" in
@@ -117,7 +117,7 @@ let reveal_young_commit () =
                                    (Bytes.concat Bytes.empty [test_hash_raw;
                                                               packed_sender])) in
   let commit =
-    e_ez_record [("date", e_timestamp
+    e_record_ez [("date", e_timestamp
                     (Int64.to_int (to_sec lock_time)));
                  ("salted_hash", salted_hash)]
   in
@@ -138,7 +138,7 @@ let reveal_young_commit () =
 let reveal_breaks_commit () =
   let%bind program,_ = get_program () in
   let empty_message = empty_message in
-  let reveal = e_ez_record [("hashable", e_bytes_string "hello world");
+  let reveal = e_record_ez [("hashable", e_bytes_string "hello world");
                             ("message", empty_message)]
   in
   let%bind predecessor_timestamp = mk_time "2000-01-01T00:10:10Z" in
@@ -149,7 +149,7 @@ let reveal_breaks_commit () =
                                    (Bytes.concat Bytes.empty [Bytes.of_string "hello";
                                                               packed_sender])) in
   let commit =
-    e_ez_record [("date", e_timestamp
+    e_record_ez [("date", e_timestamp
                     (Int64.to_int (to_sec predecessor_timestamp)));
                  ("salted_hash", salted_hash)]
   in
@@ -170,7 +170,7 @@ let reveal_breaks_commit () =
 let reveal_wrong_commit () =
   let%bind program,_ = get_program () in
   let empty_message = empty_message in
-  let reveal = e_ez_record [("hashable", e_bytes_string "hello");
+  let reveal = e_record_ez [("hashable", e_bytes_string "hello");
                             ("message", empty_message)]
   in
   let%bind predecessor_timestamp = mk_time "2000-01-01T00:10:10Z" in
@@ -181,7 +181,7 @@ let reveal_wrong_commit () =
                                    (Bytes.concat Bytes.empty [Bytes.of_string "hello";
                                                               packed_sender])) in
   let commit =
-    e_ez_record [("date", e_timestamp
+    e_record_ez [("date", e_timestamp
                     (Int64.to_int (to_sec predecessor_timestamp)));
                  ("salted_hash", salted_hash)]
   in
@@ -202,7 +202,7 @@ let reveal_wrong_commit () =
 let reveal_no_reuse () = 
   let%bind program,_ = get_program () in
   let empty_message = empty_message in
-  let reveal = e_ez_record [("hashable", e_bytes_string "hello");
+  let reveal = e_record_ez [("hashable", e_bytes_string "hello");
                             ("message", empty_message)]
   in
   let%bind predecessor_timestamp = mk_time "2000-01-01T00:10:10Z" in
@@ -213,7 +213,7 @@ let reveal_no_reuse () =
                                    (Bytes.concat Bytes.empty [Bytes.of_string "hello";
                                                               packed_sender])) in
   let commit =
-    e_ez_record [("date", e_timestamp
+    e_record_ez [("date", e_timestamp
                     (Int64.to_int (to_sec predecessor_timestamp)));
                  ("salted_hash", salted_hash)]
   in
@@ -234,7 +234,7 @@ let reveal_no_reuse () =
 let reveal () =
   let%bind program,_ = get_program () in
   let empty_message = empty_message in
-  let reveal = e_ez_record [("hashable", e_bytes_string "hello world");
+  let reveal = e_record_ez [("hashable", e_bytes_string "hello world");
                             ("message", empty_message)]
   in
   let%bind predecessor_timestamp = mk_time "2000-01-01T00:10:10Z" in
@@ -245,7 +245,7 @@ let reveal () =
                                    (Bytes.concat Bytes.empty [Bytes.of_string "hello world";
                                                               packed_sender])) in
   let commit =
-    e_ez_record [("date", e_timestamp
+    e_record_ez [("date", e_timestamp
                     (Int64.to_int (to_sec predecessor_timestamp)));
                  ("salted_hash", salted_hash)]
   in
