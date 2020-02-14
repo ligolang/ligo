@@ -31,9 +31,9 @@ let rec replace : expression -> var_name -> var_name -> expression =
     let binder = replace_var binder in
     return @@ E_closure { binder ; body }
   | E_skip -> e
-  | E_constant (c, args) ->
-    let args = List.map replace args in
-    return @@ E_constant (c, args)
+  | E_constant (c) ->
+    let args = List.map replace c.arguments in
+    return @@ E_constant {cons_name = c.cons_name; arguments = args}
   | E_application (f, x) ->
     let (f, x) = Tuple.map2 replace (f, x) in
     return @@ E_application (f, x)
@@ -94,10 +94,10 @@ let rec replace : expression -> var_name -> var_name -> expression =
     let v = replace_var v in
     let e = replace e in
     return @@ E_assignment (v, path, e)
-  | E_update (r, updates) ->
+  | E_record_update (r, p, e) ->
     let r = replace r in
-    let updates = List.map (fun (p,e)-> (p, replace e)) updates in
-    return @@ E_update (r,updates)
+    let e = replace e in
+    return @@ E_record_update (r, p, e)
   | E_while (cond, body) ->
     let cond = replace cond in
     let body = replace body in
@@ -126,7 +126,7 @@ let rec subst_expression : body:expression -> x:var_name -> expr:expression -> e
   (* hack to avoid reimplementing subst_binder for 2-ary binder in E_if_cons:
      intuitively, we substitute in \hd tl. expr' as if it were \hd. \tl. expr *)
   let subst_binder2 y z expr' =
-    let dummy = T_base Base_unit in
+    let dummy = T_base TC_unit in
     let hack = { content = E_closure { binder = z ; body = expr' } ;
                  type_value = dummy } in
     match subst_binder y hack with
@@ -184,9 +184,9 @@ let rec subst_expression : body:expression -> x:var_name -> expr:expression -> e
   | E_make_empty_big_map _
   | E_make_empty_list _
   | E_make_empty_set _ as em -> return em
-  | E_constant (name, lst) -> (
-      let lst' = List.map self lst in
-      return @@ E_constant (name,lst')
+  | E_constant (c) -> (
+      let lst = List.map self c.arguments in
+      return @@ E_constant {cons_name = c.cons_name; arguments = lst }
   )
   | E_application farg -> (
       let farg' = Tuple.map2 self farg in
@@ -209,14 +209,14 @@ let rec subst_expression : body:expression -> x:var_name -> expr:expression -> e
       if Var.equal s x then raise Bad_argument ;
       return @@ E_assignment (s, lrl, exp')
   )
-  | E_update (r, updates) -> (
+  | E_record_update (r, p, e) -> (
     let r' = self r in
-    let updates' = List.map (fun (p,e) -> (p, self e)) updates in
-    return @@ E_update(r',updates')
+    let e' = self e in
+    return @@ E_record_update(r', p, e')
   )
 
 let%expect_test _ =
-  let dummy_type = T_base Base_unit in
+  let dummy_type = T_base TC_unit in
   let wrap e = { content = e ; type_value = dummy_type } in
 
   let show_subst ~body ~x ~expr =

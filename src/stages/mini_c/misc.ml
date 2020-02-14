@@ -41,7 +41,7 @@ module Free_variables = struct
     | E_literal v -> value b v
     | E_closure f -> lambda b f
     | E_skip -> empty
-    | E_constant (_, xs) -> unions @@ List.map self xs
+    | E_constant (c) -> unions @@ List.map self c.arguments
     | E_application (f, x) -> unions @@ [ self f ; self x ]
     | E_variable n -> var_name b n
     | E_make_empty_map _ -> empty
@@ -81,7 +81,7 @@ module Free_variables = struct
     | E_sequence (x, y) -> union (self x) (self y)
     (* NB different from ast_typed... *)
     | E_assignment (v, _, e) -> unions [ var_name b v ; self e ]
-    | E_update (e, updates) -> union (self e) (unions @@ List.map (fun (_,e) -> self e) updates)
+    | E_record_update (r, _,e) -> union (self r) (self e)
     | E_while (cond , body) -> union (self cond) (self body)
 
   and var_name : bindings -> var_name -> bindings = fun b n ->

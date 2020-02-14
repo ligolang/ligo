@@ -15,17 +15,16 @@
   (name parser_cameligo)
   (public_name ligo.parser.cameligo)
   (modules
-     Scoping AST cameligo Parser ParserLog LexToken)
+     Scoping AST cameligo Parser ParserLog LexToken ParErr)
   (libraries
      menhirLib
      parser_shared
      str
      simple-utils
-     tezos-utils
-     getopt)
+     tezos-utils)
   (preprocess
     (pps bisect_ppx --conditional))
-  (flags (:standard -open Simple_utils -open Parser_shared)))
+  (flags (:standard -open Parser_shared -open Simple_utils)))
 
 ;; Build of the unlexer (for covering the
 ;; error states of the LR automaton)
@@ -52,8 +51,7 @@
 (executable
   (name ParserMain)
   (libraries parser_cameligo)
-  (modules
-     ParErr ParserMain)
+  (modules ParserMain)
   (preprocess
     (pps bisect_ppx --conditional))
   (flags (:standard -open Simple_utils -open Parser_shared -open Parser_cameligo)))
@@ -71,3 +69,104 @@
   (targets all.mligo)
   (deps (:script_cover ../../../../vendors/ligo-utils/simple-utils/cover.sh) Parser.mly LexToken.mli ParToken.mly Parser.msg Unlexer.exe)
   (action (run %{script_cover} --lex-tokens=LexToken.mli --par-tokens=ParToken.mly --ext=mligo --unlexer=./Unlexer.exe --messages=Parser.msg --dir=. --concatenate Parser.mly )))
+
+;; Error messages
+
+;; Generate error messages from scratch
+; (rule
+;  (targets error.messages)
+;  (deps Parser.mly ParToken.mly error.messages.checked-in)
+;  (action
+;   (with-stdout-to %{targets} 
+;   (bash 
+;     "menhir \
+;       --unused-tokens \
+;       --list-errors  \
+;       --table  \
+;       --strict  \
+;       --external-tokens LexToken.mli  \
+;       --base Parser.mly  \
+;       ParToken.mly  \
+;       Parser.mly
+;     "
+;     )
+;  ))
+; )
+
+(rule
+ (targets error.messages)
+ (deps Parser.mly ParToken.mly error.messages.checked-in LexToken.mli)
+ (action
+  (with-stdout-to %{targets} 
+  (run 
+    menhir
+      --unused-tokens
+      --update-errors error.messages.checked-in 
+      --table
+      --strict
+      --external-tokens LexToken.mli
+      --base Parser.mly
+      ParToken.mly
+      Parser.mly
+    )
+ ))
+)
+
+(rule
+  (target error.messages.new)
+  (action
+    (with-stdout-to %{target} 
+      (run 
+        menhir
+          --unused-tokens
+          --list-errors
+          --table
+          --strict
+          --external-tokens LexToken.mli
+          --base Parser.mly
+          ParToken.mly
+          Parser.mly
+      )
+    )
+  )
+)
+
+(alias
+  (name runtest)
+  (deps error.messages error.messages.new)
+  (action
+    (run 
+      menhir
+        --unused-tokens
+        --table
+        --strict
+        --external-tokens LexToken.mli
+        --base Parser.mly
+        ParToken.mly
+        Parser.mly
+        --compare-errors error.messages.new
+        --compare-errors error.messages
+      )
+    )
+  )
+
+
+
+(rule
+ (targets ParErr.ml)
+ (deps Parser.mly ParToken.mly error.messages.checked-in LexToken.mli)
+ (action
+  (with-stdout-to %{targets} 
+  (run 
+    menhir
+      --unused-tokens
+      --table
+      --strict
+      --external-tokens LexToken.mli
+      --base Parser.mly
+      ParToken.mly
+      Parser.mly
+      --compile-errors error.messages.checked-in
+    )
+ ))
+)

@@ -158,16 +158,25 @@ module type S =
     val slide : token -> window -> window
 
     type instance = {
-      read     : ?log:logger -> Lexing.lexbuf -> token;
+      read     : log:logger -> Lexing.lexbuf -> token;
       buffer   : Lexing.lexbuf;
       get_win  : unit -> window;
       get_pos  : unit -> Pos.t;
       get_last : unit -> Region.t;
       get_file : unit -> file_path;
       close    : unit -> unit
-      }
+    }
 
-    val open_token_stream : file_path option -> instance
+    type input =
+      File    of file_path (* "-" means stdin *)
+    | Stdin
+    | String  of string
+    | Channel of in_channel
+    | Buffer  of Lexing.lexbuf
+
+    type open_err = File_opening of string
+
+    val open_token_stream : input -> (instance, open_err) Stdlib.result
 
     (* Error reporting *)
 
@@ -179,7 +188,7 @@ module type S =
 
     val format_error :
       ?offsets:bool -> [`Byte | `Point] ->
-      error Region.reg -> file:bool -> string
+      error Region.reg -> file:bool -> string Region.reg
   end
 
 (* The functorised interface
@@ -424,13 +433,14 @@ module Make (Token: TOKEN) : (S with module Token = Token) =
          Hint: Remove the leading minus sign.\n"
     | Broken_string ->
         "The string starting here is interrupted by a line break.\n\
-         Hint: Remove the break, close the string before or insert a backslash.\n"
+         Hint: Remove the break, close the string before or insert a \
+         backslash.\n"
     | Invalid_character_in_string ->
         "Invalid character in string.\n\
          Hint: Remove or replace the character.\n"
     | Reserved_name s ->
-        "Reserved name: " ^ s ^ ".\n\
-         Hint: Change the name.\n"
+        sprintf "Reserved name: \"%s\".\n\
+         Hint: Change the name.\n" s
     | Invalid_symbol ->
         "Invalid symbol.\n\
          Hint: Check the LIGO syntax you use.\n"
@@ -443,8 +453,9 @@ module Make (Token: TOKEN) : (S with module Token = Token) =
 
     let format_error ?(offsets=true) mode Region.{region; value} ~file =
       let msg = error_to_string value
-      and reg = region#to_string ~file ~offsets mode
-      in sprintf "Lexical error %s:\n%s" reg msg
+      and reg = region#to_string ~file ~offsets mode in
+      let value = sprintf "Lexical error %s:\n%s" reg msg
+      in Region.{value; region}
 
     let fail region value = raise (Error Region.{region; value})
 
@@ -515,15 +526,12 @@ module Make (Token: TOKEN) : (S with module Token = Token) =
       let region, lexeme, state = sync state buffer in
       let lexeme = Str.string_before lexeme (String.index lexeme 't') in
       match format_tz lexeme with
-      | Some tz -> (
-        match Token.mk_mutez (Z.to_string tz ^ "mutez") region with
-          Ok token ->
-          token, state
+        None -> assert false
+      | Some tz ->
+          match Token.mk_mutez (Z.to_string tz ^ "mutez") region with
+            Ok token -> token, state
         | Error Token.Non_canonical_zero ->
             fail region Non_canonical_zero
-        )
-      | None -> assert false
-
 
     let mk_ident state buffer =
       let region, lexeme, state = sync state buffer in
@@ -553,7 +561,6 @@ module Make (Token: TOKEN) : (S with module Token = Token) =
       let region, _, state = sync state buffer
       in Token.eof region, state
 
-
 (* END HEADER *)
 }
 
@@ -579,8 +586,9 @@ let byte_seq   = byte | byte (byte | '_')* byte
 let bytes      = "0x" (byte_seq? as seq)
 let esc        = "\\n" | "\\\"" | "\\\\" | "\\b"
                | "\\r" | "\\t" | "\\x" byte
-let pascaligo_sym = "=/=" | '#' | ":="
-let cameligo_sym = "<>" | "::" | "||" | "&&"
+
+let pascaligo_sym  = "=/=" | '#' | ":="
+let cameligo_sym   = "<>" | "::" | "||" | "&&"
 let reasonligo_sym = '!' | "=>" | "!=" | "==" | "++" | "..." | "||" | "&&"
 
 let symbol =
@@ -679,7 +687,7 @@ and scan state = parse
 
      Some special errors are recognised in the semantic actions of the
      following regular expressions. The first error is a minus sign
-     separated from the integer it applies by some markup (space or
+     separated from the integer it applies to by some markup (space or
      tabs). The second is a minus sign immediately followed by
      anything else than a natural number (matched above) or markup and
      a number (previous error). The third is the strange occurrence of
@@ -779,7 +787,7 @@ and scan_line thread state = parse
              and thread = push_string nl thread
              and state  = {state with pos = state.pos#new_line nl}
              in thread, state }
-| eof      { fail thread.opening Unterminated_comment }
+| eof      { thread, state }
 | _        { let     () = rollback lexbuf in
              let len    = thread.len in
              let thread,
@@ -815,17 +823,17 @@ and scan_utf8 thread state = parse
    context of a recognised lexeme (to enforce stylistic constraints or
    report special error patterns), we need to keep a hidden reference
    to a queue of recognised lexical units (that is, tokens and markup)
-   that acts as a mutable state between the calls to
-   [read_token]. When [read_token] is called, that queue is examined
-   first and, if it contains at least one token, that token is
-   returned; otherwise, the lexing buffer is scanned for at least one
-   more new token. That is the general principle: we put a high-level
-   buffer (our queue) on top of the low-level lexing buffer.
+   that acts as a mutable state between the calls to [read]. When
+   [read] is called, that queue is examined first and, if it contains
+   at least one token, that token is returned; otherwise, the lexing
+   buffer is scanned for at least one more new token. That is the
+   general principle: we put a high-level buffer (our queue) on top of
+   the low-level lexing buffer.
 
      One tricky and important detail is that we must make any parser
-   generated by Menhir (and calling [read_token]) believe that the
-   last region of the input source that was matched indeed corresponds
-   to the returned token, despite that many tokens and markup may have
+   generated by Menhir (and calling [read]) believe that the last
+   region of the input source that was matched indeed corresponds to
+   the returned token, despite that many tokens and markup may have
    been matched since it was actually read from the input. In other
    words, the parser requests a token that is taken from the
    high-level buffer, but the parser requests the source regions from
@@ -850,12 +858,12 @@ and scan_utf8 thread state = parse
    distinguish the first call to the function [scan], as the first
    scanning rule is actually [init] (which can handle the BOM), not
    [scan].
-*)
+ *)
 
 type logger = Markup.t list -> token -> unit
 
 type instance = {
-  read     : ?log:logger -> Lexing.lexbuf -> token;
+  read     : log:logger -> Lexing.lexbuf -> token;
   buffer   : Lexing.lexbuf;
   get_win  : unit -> window;
   get_pos  : unit -> Pos.t;
@@ -864,10 +872,20 @@ type instance = {
   close    : unit -> unit
 }
 
-let open_token_stream file_path_opt =
-  let  file_path = match file_path_opt with
-                     None | Some "-" -> ""
-                   | Some file_path  -> file_path in
+type input =
+  File    of file_path (* "-" means stdin *)
+| Stdin
+| String  of string
+| Channel of in_channel
+| Buffer  of Lexing.lexbuf
+
+type open_err = File_opening of string
+
+let open_token_stream input =
+  let file_path  = match input with
+                     File file_path ->
+                       if file_path = "-" then "" else file_path
+                   | _ -> "" in
   let        pos = Pos.min ~file:file_path in
   let    buf_reg = ref (pos#byte, pos#byte)
   and first_call = ref true
@@ -934,11 +952,11 @@ let open_token_stream file_path_opt =
             in fail region Missing_break
       | _ -> () in
 
-  let rec read_token ?(log=fun _ _ -> ()) buffer =
+  let rec read ~log buffer =
     match FQueue.deq !state.units with
       None ->
         scan buffer;
-        read_token ~log buffer
+        read ~log buffer
     | Some (units, (left_mark, token)) ->
         log left_mark token;
         state := {!state with units;
@@ -948,15 +966,33 @@ let open_token_stream file_path_opt =
         patch_buffer (Token.to_region token)#byte_pos buffer;
         token in
 
-  let      cin = match file_path_opt with
-                   None | Some "-" -> stdin
-                 | Some file_path  -> open_in file_path in
-  let   buffer = Lexing.from_channel cin in
-  let       () = match file_path_opt with
-                   None | Some "-" -> ()
-                 | Some file_path  -> reset ~file:file_path buffer
-  and close () = close_in cin in
-  {read = read_token; buffer; get_win; get_pos; get_last; get_file; close}
+  let buf_close_res =
+    match input with
+      File "" | File "-" | Stdin ->
+        Ok (Lexing.from_channel stdin, fun () -> close_in stdin)
+    | File path ->
+       (try
+          let chan = open_in path in
+          let close () = close_in chan in
+          Ok (Lexing.from_channel chan, close)
+        with
+          Sys_error msg -> Stdlib.Error (File_opening msg))
+    | String s ->
+        Ok (Lexing.from_string s, fun () -> ())
+    | Channel chan ->
+        let close () = close_in chan in
+        Ok (Lexing.from_channel chan, close)
+    | Buffer b -> Ok (b, fun () -> ()) in
+  match buf_close_res with
+    Ok (buffer, close) ->
+      let () =
+        match input with
+          File path when path <> "" -> reset ~file:path buffer
+        | _ -> () in
+      let instance = {
+        read; buffer; get_win; get_pos; get_last; get_file; close}
+      in Ok instance
+  | Error _ as e -> e
 
 end (* of functor [Make] in HEADER *)
 (* END TRAILER *)

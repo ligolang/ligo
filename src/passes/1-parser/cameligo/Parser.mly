@@ -90,7 +90,7 @@ tuple(item):
 
 (* Possibly empty semicolon-separated values between brackets *)
 
-list(item):
+list__(item):
   "[" sep_or_term_list(item,";")? "]" {
     let compound = Brackets ($1,$3)
     and region = cover $1 $3 in
@@ -182,7 +182,7 @@ sum_type:
 
 variant:
   "<constr>" { {$1 with value={constr=$1; arg=None}} }
-| "<constr>" "of" cartesian {
+| "<constr>" "of" fun_type {
     let region = cover $1.region (type_expr_to_region $3)
     and value  = {constr=$1; arg = Some ($2,$3)}
     in {region; value} }
@@ -217,6 +217,7 @@ let_declaration:
 
 let_binding:
   "<ident>" nseq(sub_irrefutable) type_annotation? "=" expr {
+    Scoping.check_reserved_name $1;
     let binders = Utils.nseq_cons (PVar $1) $2 in
     Utils.nseq_iter Scoping.check_pattern binders;
     {binders; lhs_type=$3; eq=$4; let_rhs=$5}
@@ -293,7 +294,7 @@ core_pattern:
 | "false"                                      {            PFalse $1 }
 | "true"                                       {             PTrue $1 }
 | par(ptuple)                                  {              PPar $1 }
-| list(tail)                                   { PList (PListComp $1) }
+| list__(tail)                                 { PList (PListComp $1) }
 | constr_pattern                               {           PConstr $1 }
 | record_pattern                               {           PRecord $1 }
 
@@ -584,7 +585,7 @@ core_expr:
 | unit                                {                      EUnit $1 }
 | "false"                             {  ELogic (BoolExpr (False $1)) }
 | "true"                              {  ELogic (BoolExpr (True  $1)) }
-| list(expr)                          {          EList (EListComp $1) }
+| list__(expr)                        {          EList (EListComp $1) }
 | sequence                            {                       ESeq $1 }
 | record_expr                         {                    ERecord $1 }
 | update_record                       {                    EUpdate $1 }
@@ -627,7 +628,7 @@ record_expr:
     in {region; value} }
 
 update_record:
-  "{" path "with" sep_or_term_list(field_assignment,";") "}" {
+  "{" path "with" sep_or_term_list(field_path_assignment,";") "}" {
     let region = cover $1 $5 in
     let ne_elements, terminator = $4 in
     let value = {
@@ -640,6 +641,14 @@ update_record:
                   region = cover $3 $5};
       rbrace   = $5}
     in {region; value} }
+
+field_path_assignment :
+  nsepseq(field_name,".") "=" expr {
+    let region = cover (nsepseq_to_region (fun x -> x.region) $1) (expr_to_region $3) in
+    let value  = {field_path = $1;
+                  assignment = $2;
+                  field_expr = $3}
+    in {region; value}}
 
 field_assignment:
   field_name "=" expr {

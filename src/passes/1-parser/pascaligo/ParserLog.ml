@@ -603,11 +603,18 @@ and print_field_assign state {value; _} =
   print_token state equal "=";
   print_expr  state field_expr
 
-and print_update_expr state {value; _} =
+and print_field_path_assign state {value; _} =
+  let {field_path; equal; field_expr} = value in
+  print_nsepseq state "field_path" print_var field_path;
+  print_token state equal "=";
+  print_expr  state field_expr
+  
+and print_update_expr state {value; _} = 
   let {record; kwd_with; updates} = value in
   print_path state record;
   print_token state kwd_with "with";
-  print_record_expr state updates
+  print_ne_injection state "updates field" print_field_path_assign updates
+
 
 and print_projection state {value; _} =
   let {struct_name; selector; field_path} = value in
@@ -1215,7 +1222,7 @@ and pp_projection state proj =
 
 and pp_update state update =
   pp_path state update.record;
-  pp_ne_injection pp_field_assign state update.updates.value
+  pp_ne_injection pp_field_path_assign state update.updates.value
 
 and pp_selection state = function
   FieldName name ->
@@ -1318,6 +1325,12 @@ and pp_record_patch state patch =
 and pp_field_assign state {value; _} =
   pp_node  state "<field assignment>";
   pp_ident (state#pad 2 0) value.field_name;
+  pp_expr  (state#pad 2 1) value.field_expr
+
+and pp_field_path_assign state {value; _} =
+  pp_node  state "<field path for update>";
+  let path = Utils.nsepseq_to_list value.field_path in
+  List.iter (pp_ident (state#pad 2 0)) path;
   pp_expr  (state#pad 2 1) value.field_expr
 
 and pp_map_patch state patch =

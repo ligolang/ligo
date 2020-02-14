@@ -1,205 +1,205 @@
 ---
 id: boolean-if-else
-title: Boolean, If, Else
+title: Booleans and Conditionals
 ---
 
-## Boolean
+## Booleans
 
-The type of a Boolean is `bool` and the possible values are `True` and `False`.
-
-Here's how to define a boolean:
+The type of a boolean value is `bool`. Here is how to define a boolean
+value:
 
 <!--DOCUSAURUS_CODE_TABS-->
-<!--Pascaligo-->
+<!--PascaLIGO-->
 ```pascaligo group=a
-const a: bool = True;
-const b: bool = False;
+const a : bool = True   // Notice the capital letter
+const b : bool = False  // Same.
 ```
 <!--CameLIGO-->
 ```cameligo group=a
-let a: bool = true
-let b: bool = false
+let a : bool = true
+let b : bool = false
 ```
-
 <!--ReasonLIGO-->
 ```reasonligo group=a
-let a: bool = true;
-let b: bool = false;
+let a : bool = true;
+let b : bool = false;
 ```
 <!--END_DOCUSAURUS_CODE_TABS-->
 
+## Comparing Values
 
-## Comparing two values
+In LIGO, only values of the same type can be compared. Moreover, not
+all values of the same type can be compared, only those with
+*comparable types*, which is a concept lifted from
+Michelson. Comparable types include, for instance, `int`, `nat`,
+`string`, `tez`, `timestamp`, `address`, etc. As an example of
+non-comparable types: maps, sets or lists are not comparable: if you
+wish to compare them, you will have to write your own comparison
+function.
 
-In LIGO, only values of the same type can be compared. We call these "comparable types." Comparable types include e.g. `int`, `nat`, `string`, `tez`, `timestamp`, `address`, ...
-
-### Comparing strings
+### Comparing Strings
 
 <!--DOCUSAURUS_CODE_TABS-->
-<!--Pascaligo-->
+<!--PascaLIGO-->
 ```pascaligo group=b
-const a: string = "Alice";
-const b: string = "Alice";
-// True
-const c: bool = (a = b);
+const a : string = "Alice"
+const b : string = "Alice"
+const c : bool = (a = b) // True
 ```
 <!--CameLIGO-->
 ```cameligo group=b
-let a: string = "Alice"
-let b: string = "Alice"
-// true
-let c: bool = (a = b)
+let a : string = "Alice"
+let b : string = "Alice"
+let c : bool = (a = b) // true
 ```
 <!--ReasonLIGO-->
 ```reasonligo group=b
-let a: string = "Alice";
-let b: string = "Alice";
-(* true *)
-let c: bool = (a == b);
+let a : string = "Alice";
+let b : string = "Alice";
+let c : bool = (a == b); // true
 ```
 <!--END_DOCUSAURUS_CODE_TABS-->
-
 
 ### Comparing numbers
 
 <!--DOCUSAURUS_CODE_TABS-->
-<!--Pascaligo-->
+<!--PascaLIGO-->
 ```pascaligo group=c
-const a: int = 5;
-const b: int = 4;
-const c: bool = (a = b);
-const d: bool = (a > b);
-const e: bool = (a < b);
-const f: bool = (a <= b);
-const g: bool = (a >= b);
-const h: bool = (a =/= b);
+const a : int  = 5
+const b : int  = 4
+const c : bool = (a = b)
+const d : bool = (a > b)
+const e : bool = (a < b)
+const f : bool = (a <= b)
+const g : bool = (a >= b)
+const h : bool = (a =/= b)
 ```
 <!--CameLIGO-->
 ```cameligo group=c
-let a: int = 5
-let b: int = 4
-let c: bool = (a = b)
-let d: bool = (a > b)
-let e: bool = (a < b)
-let f: bool = (a <= b)
-let g: bool = (a >= b)
-let h: bool = (a <> b)
+let a : int  = 5
+let b : int  = 4
+let c : bool = (a = b)
+let d : bool = (a > b)
+let e : bool = (a < b)
+let f : bool = (a <= b)
+let g : bool = (a >= b)
+let h : bool = (a <> b)
 ```
 
 <!--ReasonLIGO-->
 ```reasonligo group=c
-let a: int = 5;
-let b: int = 4;
-let c: bool = (a == b);
-let d: bool = (a > b);
-let e: bool = (a < b);
-let f: bool = (a <= b);
-let g: bool = (a >= b);
-let h: bool = (a != b);
+let a : int  = 5;
+let b : int  = 4;
+let c : bool = (a == b);
+let d : bool = (a > b);
+let e : bool = (a < b);
+let f : bool = (a <= b);
+let g : bool = (a >= b);
+let h : bool = (a != b);
 ```
 <!--END_DOCUSAURUS_CODE_TABS-->
-
 
 ### Comparing tez
 
-> 💡 Comparing `tez` values is especially useful when dealing with an `amount` sent in a transaction.
+> 💡 Comparing `tez` values is especially useful when dealing with an
+> amount sent in a transaction.
 
 <!--DOCUSAURUS_CODE_TABS-->
-<!--Pascaligo-->
+<!--PascaLIGO-->
 ```pascaligo group=d
-const a: tez = 5mutez;
-const b: tez = 10mutez;
-const c: bool = (a = b);
+const a : tez  = 5mutez
+const b : tez  = 10mutez
+const c : bool = (a = b) // False
 ```
 <!--CameLIGO-->
 ```cameligo group=d
-let a: tez = 5mutez
-let b: tez = 10mutez
-// false
-let c: bool = (a = b)
+let a : tez  = 5mutez
+let b : tez  = 10mutez
+let c : bool = (a = b) // false
 ```
 <!--ReasonLIGO-->
 ```reasonligo group=d
-let a: tez = 5mutez;
-let b: tez = 10mutez;
-(* false *)
-let c: bool = (a == b);
+let a : tez  = 5mutez;
+let b : tez  = 10mutez;
+let c : bool = (a == b); // false
 ```
 <!--END_DOCUSAURUS_CODE_TABS-->
 
 
-## Conditionals, if staments, and more
+## Conditionals
 
-Conditional logic is an important part of every real world program.
-
-### If/else statements
+Conditional logic enables forking the control flow depending on the
+state.
 
 <!--DOCUSAURUS_CODE_TABS-->
-<!--Pascaligo-->
+<!--PascaLIGO-->
 ```pascaligo group=e
-const min_age: nat = 16n;
+type magnitude is Small | Large // See variant types.
 
-(*
-    This function is really obnoxious, but it showcases
-    how the if statement and it's syntax can be used.
-
-    Normally, you'd use `with (age > min_age)` instead.
-*)
-function is_adult(const age: nat): bool is
-    block {
-        var is_adult: bool := False;
-        if (age > min_age) then begin
-            is_adult := True;
-        end else begin
-            is_adult := False;
-        end
-    } with is_adult
+function compare (const n : nat) : magnitude is
+  if n < 10n then Small (Unit) else Large (Unit) // Unit is needed for now.
 ```
 
-> You can run the function above with
-> ```
-> ligo run-function -s pascaligo src/if-else.ligo is_adult 21n
-> ```
+You can run the `compare` function defined above using the LIGO compiler
+like this:
+```shell
+ligo run-function
+gitlab-pages/docs/language-basics/boolean-if-else/cond.ligo compare 21n'
+# Outputs: Large (Unit)
+```
+
+When the branches of the conditional are not a single expression, as
+above, we need a block:
+
+```pascaligo skip
+if x < y then
+  block {
+    const z : nat = x;
+    x := y; y := z
+  }
+else skip;
+```
+
+As an exception to the rule, the blocks in a conditional branch do not
+need to be introduced by the keywor `block`, so, we could have written
+instead:
+```pascaligo skip
+if x < y then {
+  const z : nat = x;
+  x := y; y := z
+}
+else skip;
+```
 
 <!--CameLIGO-->
 ```cameligo group=e
-let min_age: nat = 16n
+type magnitude = Small | Large // See variant types.
 
-(**
-
-    This function is really obnoxious, but it showcases
-    how the if statement and it's syntax can be used.
-
-    Normally, you'd use `with (age > min_age)` instead.
-
-*)
-let is_adult (age: nat) : bool =
-  if (age > min_age) then true else false
+let compare (n : nat) : magnitude =
+  if n < 10n then Small else Large
 ```
+
+You can run the `compare` function defined above using the LIGO compiler
+like this:
+```shell
+ligo run-function
+gitlab-pages/docs/language-basics/boolean-if-else/cond.mligo compare 21n'
+# Outputs: Large
+```
+
 <!--ReasonLIGO-->
 ```reasonligo group=e
-let min_age: nat = 16n;
+type magnitude = | Small | Large; // See variant types.
 
-(**
-
-    This function is really obnoxious, but it showcases
-    how the if statement and it's syntax can be used.
-
-    Normally, you'd use `with (age > min_age)` instead.
-
-*)
-
-let is_adult = (age: nat): bool =>
-  if (age > min_age) {
-    true;
-  } else {
-    false;
-  };
+let compare = (n : nat) : magnitude =>
+  if (n < 10n) { Small; } else { Large; };
 ```
 
-> You can run the function above with
-> ```
-> ligo run-function -s reasonligo src/if-else.religo is_adult 21n
-> ```
-
+You can run the `compare` function defined above using the LIGO compiler
+like this:
+```shell
+ligo run-function
+gitlab-pages/docs/language-basics/boolean-if-else/cond.religo compare 21n'
+# Outputs: Large
+```
 <!--END_DOCUSAURUS_CODE_TABS-->

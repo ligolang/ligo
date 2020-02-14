@@ -1,7 +1,9 @@
-type storage_ is timestamp
+type parameter is unit
+type storage is timestamp
+type return is list (operation) * storage
 
-function main(const p : unit; const s : storage_) : list(operation) * storage_ is
+function main (const p : parameter; const s : storage) : return is
   block {
-    var toto : timestamp := ("badtimestamp" : timestamp);
+    var stamp : timestamp := ("badtimestamp" : timestamp)
   }
-  with ((nil: list(operation)), toto)
+  with ((nil: list(operation)), stamp)

@@ -577,7 +577,13 @@ and projection = {
 and update = {
   record : path;
   kwd_with : kwd_with;
-  updates : record reg;
+  updates : field_path_assign reg ne_injection reg
+}
+
+and field_path_assign = {
+  field_path  : (field_name, dot) nsepseq;
+  equal : equal;
+  field_expr : expr
 }
 
 and selection =
@@ -783,3 +789,6 @@ let rhs_to_region = expr_to_region
 let selection_to_region = function
   FieldName {region; _}
 | Component {region; _} -> region
+
+let map_ne_injection f ne_injection =
+  { ne_injection with ne_elements = nsepseq_map f ne_injection.ne_elements }

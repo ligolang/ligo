@@ -27,7 +27,7 @@ end
 open Errors
 
 (* This does not makes sense to me *)
-let get_operator : constant -> type_value -> expression list -> predicate result = fun s ty lst ->
+let get_operator : constant' -> type_value -> expression list -> predicate result = fun s ty lst ->
   match Operators.Compiler.get_operators s with
   | Ok (x,_) -> ok x
   | Error _ -> (
@@ -80,6 +80,12 @@ let get_operator : constant -> type_value -> expression list -> predicate result
             prim ~children:[r_ty] I_CONTRACT ;
             i_assert_some_msg (i_push_string "bad address for get_contract") ;
           ]
+      | C_CONTRACT_OPT -> 
+          let%bind tc = get_t_option ty in
+          let%bind r = get_t_contract tc in
+          let%bind r_ty = Compiler_type.type_ r in
+          ok @@ simple_unary @@ prim ~children:[r_ty] I_CONTRACT ;
+
       | C_CONTRACT_ENTRYPOINT ->
           let%bind r = get_t_contract ty in
           let%bind r_ty = Compiler_type.type_ r in
@@ -94,7 +100,21 @@ let get_operator : constant -> type_value -> expression list -> predicate result
             prim ~annot:[entry] ~children:[r_ty] I_CONTRACT ;
             i_assert_some_msg (i_push_string @@ Format.sprintf "bad address for get_entrypoint (%s)" entry) ;
           ]
-      | x -> simple_fail (Format.asprintf "predicate \"%a\" doesn't exist" Stage_common.PP.constant x)
+      | C_CONTRACT_ENTRYPOINT_OPT ->
+          let%bind tc = get_t_option ty in
+          let%bind r = get_t_contract tc in
+          let%bind r_ty = Compiler_type.type_ r in
+          let%bind entry = match lst with
+            | [ { content = E_literal (D_string entry); type_value = _ } ; _addr ] -> ok entry
+            | [ _entry ; _addr ] ->
+               fail @@ contract_entrypoint_must_be_literal ~loc:__LOC__
+            | _ ->
+               fail @@ corner_case ~loc:__LOC__ "mini_c . CONTRACT_ENTRYPOINT" in
+          ok @@ simple_binary @@ seq [
+            i_drop ; (* drop the entrypoint... *)
+            prim ~annot:[entry] ~children:[r_ty] I_CONTRACT ;
+          ]
+      | x -> simple_fail (Format.asprintf "predicate \"%a\" doesn't exist" PP.constant x)
     )
 
 let rec translate_value (v:value) ty : michelson result = match v with
@@ -200,7 +220,7 @@ and translate_expression (expr:expression) (env:environment) : michelson result 
       b' ;
     ]
   )
-  | E_constant(str, lst) ->
+  | E_constant{cons_name=str;arguments= lst} ->
       let module L = Logger.Stateful() in
       let%bind pre_code =
         let aux code expr =
@@ -229,7 +249,7 @@ and translate_expression (expr:expression) (env:environment) : michelson result 
             pre_code ;
             f ;
           ]
-        | _ -> simple_fail (Format.asprintf "bad arity for %a"  Stage_common.PP.constant str)
+        | _ -> simple_fail (Format.asprintf "bad arity for %a" PP.constant str)
       in
       let error =
         let title () = "error compiling constant" in
@@ -327,7 +347,7 @@ and translate_expression (expr:expression) (env:environment) : michelson result 
         ]) in
       return code
     )
-  | E_iterator (name , (v , body) , expr) -> (
+  | E_iterator (name,(v , body) , expr) -> (
       let%bind expr' = translate_expression expr env in
       let%bind body' = translate_expression body (Environment.add v env) in
       match name with
@@ -347,7 +367,7 @@ and translate_expression (expr:expression) (env:environment) : michelson result 
           return code
         )
       | s -> (
-          let iter = Format.asprintf "iter %a" Stage_common.PP.constant s in
+          let iter = Format.asprintf "iter %a" PP.constant s in
           let error = error (thunk "bad iterator") (thunk iter) in
           fail error
         )
@@ -402,32 +422,29 @@ and translate_expression (expr:expression) (env:environment) : michelson result 
         i_push_unit ;
       ]
     )
-  | E_update (record, updates) -> (
+  | E_record_update (record, path, expr) -> (
     let%bind record' = translate_expression record env in
-    let insts = [
-      i_comment "r_update: start, move the record on top # env";
-      record';] in 
-    let aux (init :t list) (update,expr) = 
-      let record_var = Var.fresh () in
-      let env' = Environment.add (record_var, record.type_value) env in
-      let%bind expr' = translate_expression expr env' in
-      let modify_code =
-        let aux acc step = match step with
-          | `Left -> seq [dip i_unpair ; acc ; i_pair]
-          | `Right -> seq [dip i_unpiar ; acc ; i_piar]
-        in
-        let init = dip i_drop in
-        List.fold_right' aux init update
+
+    let record_var = Var.fresh () in
+    let env' = Environment.add (record_var, record.type_value) env in
+    let%bind expr' = translate_expression expr env' in
+    let modify_code =
+      let aux acc step = match step with
+        | `Left -> seq [dip i_unpair ; acc ; i_pair]
+        | `Right -> seq [dip i_unpiar ; acc ; i_piar]
       in
-      ok @@ init @ [
-        expr';
-        i_comment "r_updates : compute rhs # rhs:env";
-        modify_code;
-        i_comment "r_update: modify code # record+rhs : env";
-        ]
+      let init = dip i_drop in
+      List.fold_right' aux init path
     in
-    let%bind insts = bind_fold_list aux insts updates in
-    return @@ seq insts
+    return @@ seq [
+      i_comment "r_update: start # env";
+      record';
+      i_comment "r_update: move the record on top # env";
+      expr';
+      i_comment "r_updates : compute rhs # rhs:env";
+      modify_code;
+      i_comment "r_update: modify code # record+rhs : env";
+      ]
 
   )
   | E_while (expr , block) -> (

@@ -141,22 +141,22 @@ type_decl:
     in {region; value} }
 
 type_expr:
-  sum_type | record_type | cartesian { $1 }
+  fun_type | sum_type | record_type { $1 }
 
-cartesian:
-  function_type { $1 }
-| function_type "*" nsepseq(function_type,"*") {
-    let value  = Utils.nsepseq_cons $1 $2 $3 in
-    let region = nsepseq_to_region type_expr_to_region value
-    in TProd {region; value} }
-
-function_type:
-  core_type { $1 }
-| core_type "->" function_type {
+fun_type:
+  cartesian { $1 }
+| cartesian "->" fun_type {
     let start  = type_expr_to_region $1
     and stop   = type_expr_to_region $3 in
     let region = cover start stop in
     TFun {region; value = $1,$2,$3} }
+
+cartesian:
+  core_type { $1 }
+| core_type "*" nsepseq(core_type,"*") {
+    let value  = Utils.nsepseq_cons $1 $2 $3 in
+    let region = nsepseq_to_region type_expr_to_region value
+    in TProd {region; value} }
 
 core_type:
   type_name      { TVar $1 }
@@ -201,7 +201,7 @@ sum_type:
 
 variant:
   "<constr>" { {$1 with value = {constr=$1; arg=None}} }
-| "<constr>" "of" cartesian {
+| "<constr>" "of" fun_type {
     let region = cover $1.region (type_expr_to_region $3)
     and value  = {constr=$1; arg = Some ($2,$3)}
     in {region; value} }
@@ -315,7 +315,7 @@ param_decl:
     in ParamConst {region; value} }
 
 param_type:
-  cartesian { $1 }
+  fun_type { $1 }
 
 block:
   "begin" sep_or_term_list(statement,";") "end" {
@@ -937,7 +937,7 @@ record_expr:
    in {region; value} }
 
 update_record:
-  path "with" ne_injection("record",field_assignment){
+  path "with" ne_injection("record",field_path_assignment){
     let region = cover (path_to_region $1) $3.region in
     let value = {
       record = $1;
@@ -950,6 +950,14 @@ field_assignment:
   field_name "=" expr {
     let region = cover $1.region (expr_to_region $3)
     and value  = {field_name = $1;
+                  equal      = $2;
+                  field_expr = $3}
+    in {region; value} }
+
+field_path_assignment:
+  nsepseq(field_name,".") "=" expr {
+    let region = cover (nsepseq_to_region (fun x -> x.region) $1) (expr_to_region $3)
+    and value  = {field_path = $1;
                   equal      = $2;
                   field_expr = $3}
     in {region; value} }

@@ -13,7 +13,6 @@ let e_a_empty_address s = e_a_address s Environment.full_empty
 let e_a_empty_pair a b = e_a_pair a b Environment.full_empty
 let e_a_empty_some s = e_a_some s Environment.full_empty
 let e_a_empty_none t = e_a_none t Environment.full_empty
-let e_a_empty_tuple lst = e_a_tuple lst Environment.full_empty
 let e_a_empty_record r = e_a_record r Environment.full_empty
 let e_a_empty_map lst k v = e_a_map lst k v Environment.full_empty
 let e_a_empty_list lst t = e_a_list lst t Environment.full_empty
@@ -24,5 +23,5 @@ open Environment
 
 let env_sum_type ?(env = full_empty)
     ?(type_name = Var.of_name "a_sum_type")
-    (lst : (constructor * type_value) list) =
+    (lst : (constructor' * type_expression) list) =
   add_type type_name (make_t_ez_sum lst) env

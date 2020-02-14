@@ -36,23 +36,14 @@ them. please report this to the developers." in
     ] in
     error ~data title content
 
-  let unknown_untranspile unknown_type value =
-    let title () = "untranspiling unknown value" in
-    let content () = Format.asprintf "can not untranspile %s" unknown_type in
-    let data = [
-      ("unknown_type" , fun () -> unknown_type) ;
-      ("value" , fun () -> Format.asprintf "%a" Mini_c.PP.value value) ;
-    ] in
-    error ~data title content
-
 end
 
 open Errors
 
-let rec untranspile (v : value) (t : AST.type_value) : AST.annotated_expression result =
+let rec untranspile (v : value) (t : AST.type_expression) : AST.expression result =
   let open! AST in
   let return e = ok (make_a_e_empty e t) in
-  match t.type_value' with
+  match t.type_content with
   | T_constant type_constant -> (
     match type_constant with
     | TC_unit -> (
@@ -104,6 +95,7 @@ let rec untranspile (v : value) (t : AST.type_value) : AST.annotated_expression 
         return (E_literal (Literal_bytes n))
       )
     | TC_address -> (
+
         let%bind n =
           trace_strong (wrong_mini_c_value "address" v) @@
           get_string v in
@@ -132,6 +124,12 @@ let rec untranspile (v : value) (t : AST.type_value) : AST.annotated_expression 
         trace_strong (wrong_mini_c_value "chain_id" v) @@
         get_string v in
       return (E_literal (Literal_chain_id n))
+    )
+    | TC_void -> (
+      let%bind () =
+        trace_strong (wrong_mini_c_value "void" v) @@
+        get_unit v in
+      return (E_literal (Literal_void))
     )
     |  TC_signature -> (
       let%bind n =
@@ -185,6 +183,12 @@ let rec untranspile (v : value) (t : AST.type_value) : AST.annotated_expression 
           bind_map_list aux lst in
         return (E_list lst')
       )
+    | TC_arrow _ -> (
+        let%bind n =
+          trace_strong (wrong_mini_c_value "lambda as string" v) @@
+          get_string v in
+        return (E_literal (Literal_string n))
+      )
     | TC_set ty -> (
         let%bind lst =
           trace_strong (wrong_mini_c_value "set" v) @@
@@ -207,17 +211,7 @@ let rec untranspile (v : value) (t : AST.type_value) : AST.annotated_expression 
         trace_strong (corner_case ~loc:__LOC__ "sum extract constructor") @@
         extract_constructor v node in
       let%bind sub = untranspile v tv in
-      return (E_constructor (Constructor name, sub))
-  | T_tuple lst ->
-      let%bind node = match Append_tree.of_list lst with
-        | Empty -> fail @@ corner_case ~loc:__LOC__ "empty tuple"
-        | Full t -> ok t in
-      let%bind tpl =
-        trace_strong (corner_case ~loc:__LOC__ "tuple extract") @@
-        extract_tuple v node in
-      let%bind tpl' = bind_list
-        @@ List.map (fun (x, y) -> untranspile x y) tpl in
-      return (E_tuple tpl')
+      return (E_constructor {constructor=Constructor name;element=sub})
   | T_record m ->
       let lst = kv_list_of_lmap m in
       let%bind node = match Append_tree.of_list lst with

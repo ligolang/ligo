@@ -158,10 +158,12 @@ let check_variants variants =
 let check_parameters params =
   let add acc = function
     ParamConst {value; _} ->
+      check_reserved_name value.var;
       if VarSet.mem value.var acc then
         raise (Error (Duplicate_parameter value.var))
       else VarSet.add value.var acc
   | ParamVar {value; _} ->
+      check_reserved_name value.var;
       if VarSet.mem value.var acc then
         raise (Error (Duplicate_parameter value.var))
       else VarSet.add value.var acc in

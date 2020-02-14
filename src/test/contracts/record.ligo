@@ -64,5 +64,5 @@ end
 
 function modify_inner (const r : double_record) : double_record is
   block {
-    r := r with record inner = r.inner with record b = 2048; end; end;
+    r := r with record inner.b = 2048; end;
   } with r

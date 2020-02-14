@@ -1,4 +1,4 @@
-(** Driver for the ReasonLIGO lexer *)
+(* Driver for the ReasonLIGO lexer *)
 
 module IO =
   struct
@@ -7,3 +7,8 @@ module IO =
   end
 
 module M = LexerUnit.Make (IO) (Lexer.Make (LexToken))
+
+let () =
+  match M.trace () with
+    Stdlib.Ok () -> ()
+  | Error Region.{value; _} -> Utils.highlight value

@@ -333,10 +333,15 @@ and update = {
   lbrace : lbrace;
   record : path;
   kwd_with : kwd_with;
-  updates : record reg;
+  updates : field_path_assign reg ne_injection reg;
   rbrace : rbrace;
 }
 
+and field_path_assign = {
+  field_path  : (field_name, dot) nsepseq;
+  assignment : equal;
+  field_expr : expr
+}
 and path =
   Name of variable
 | Path of projection reg
@@ -459,10 +464,10 @@ let expr_to_region = function
 | EList e -> list_expr_to_region e
 | EConstr e -> constr_expr_to_region e
 | EAnnot {region;_ } | ELetIn {region;_} | EFun {region;_}
-| ECond {region;_} | ETuple {region;_} | ECase {region;_}
-| ECall {region;_} | EVar {region; _} | EProj {region; _}
-| EUnit {region;_} | EPar {region;_} | EBytes {region; _}
-| ESeq {region; _} | ERecord {region; _} | EUpdate {region; _} -> region
+| ECond {region;_}   | ETuple {region;_} | ECase {region;_}
+| ECall {region;_}   | EVar {region; _}  | EProj {region; _}
+| EUnit {region;_}   | EPar {region;_}   | EBytes {region; _}
+| ESeq {region; _}   | ERecord {region; _} | EUpdate {region; _} -> region
 
 let selection_to_region = function
   FieldName f -> f.region

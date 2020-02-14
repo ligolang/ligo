@@ -4,6 +4,8 @@ let set2 = (n: int, m: foo): foo => Big_map.update(23, Some(n), m);
 
 let set_ = (x: (int, foo)): foo => set2(x[0], x[1]);
 
+let add = ((n,m): (int, foo)): foo => Big_map.add(23, n, m);
+
 let rm = (m: foo): foo => Big_map.remove(42, m);
 
 let gf = (m: foo): int => Big_map.find(23, m);

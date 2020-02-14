@@ -539,8 +539,8 @@ let bind_smap (s:_ X_map.String.t) =
   let aux k v prev =
     prev >>? fun prev' ->
     v >>? fun v' ->
-    ok @@ add k v' prev' in
-  fold aux s (ok empty)
+    ok @@ add k v' prev'
+  in fold aux s (ok empty)
 
 let bind_fold_smap f init (smap : _ X_map.String.t) =
   let aux k v prev =
@@ -555,14 +555,15 @@ let bind_concat (l1:'a list result) (l2: 'a list result) =
   ok @@ (l1' @ l2')
 
 let bind_map_list f lst = bind_list (List.map f lst)
+let bind_mapi_list f lst = bind_list (List.mapi f lst)
 
 let rec bind_map_list_seq f lst = match lst with
   | [] -> ok []
-  | hd :: tl -> (
+  | hd :: tl ->
       let%bind hd' = f hd in
       let%bind tl' = bind_map_list_seq f tl in
       ok (hd' :: tl')
-    )
+
 let bind_map_ne_list : _ -> 'a X_list.Ne.t -> 'b X_list.Ne.t result =
   fun f lst -> bind_ne_list (X_list.Ne.map f lst)
 let bind_iter_list : (_ -> unit result) -> _ list -> unit result =
@@ -575,11 +576,8 @@ let bind_location (x:_ Location.wrap) =
 let bind_map_location f x = bind_location (Location.map f x)
 
 let bind_fold_list f init lst =
-  let aux x y =
-    x >>? fun x ->
-    f x y
-  in
-  List.fold_left aux (ok init) lst
+  let aux x y = x >>? fun x -> f x y
+  in List.fold_left aux (ok init) lst
 
 module TMap(X : Map.OrderedType) = struct
   module MX = Map.Make(X)
@@ -587,8 +585,7 @@ module TMap(X : Map.OrderedType) = struct
     let aux k v x  =
       x >>? fun x ->
       f ~x ~k ~v
-    in
-    MX.fold aux map (ok init)
+    in MX.fold aux map (ok init)
 
   let bind_map_Map f map =
     let aux k v map'  =
@@ -596,33 +593,26 @@ module TMap(X : Map.OrderedType) = struct
       f ~k ~v >>? fun v' ->
       ok @@ MX.update k (function
           | None -> Some v'
-          | Some _ -> failwith "key collision, shouldn't happen in bind_map_Map")
+          | Some _ ->
+             failwith "Key collision: Should not happen in bind_map_Map")
         map'
-    in
-    MX.fold aux map (ok MX.empty)
+    in MX.fold aux map (ok MX.empty)
 end
 
 let bind_fold_pair f init (a,b) =
-  let aux x y =
-    x >>? fun x ->
-    f x y
-  in
-  List.fold_left aux (ok init) [a;b]
+  let aux x y = x >>? fun x -> f x y
+  in List.fold_left aux (ok init) [a;b]
 
 let bind_fold_triple f init (a,b,c) =
-  let aux x y =
-    x >>? fun x ->
-    f x y
-  in
-  List.fold_left aux (ok init) [a;b;c]
+  let aux x y = x >>? fun x -> f x y
+  in List.fold_left aux (ok init) [a;b;c]
 
-let bind_fold_map_list = fun f acc lst ->
-  let rec aux (acc , prev) f = function
-    | [] -> ok (acc , prev)
+let bind_fold_map_list f acc lst =
+  let rec aux (acc, prev) f = function
+    | [] -> ok (acc, prev)
     | hd :: tl ->
         f acc hd >>? fun (acc' , hd') ->
-        aux (acc' , hd' :: prev) f tl
-  in
+        aux (acc', hd'::prev) f tl in
   aux (acc , []) f lst >>? fun (acc' , lst') ->
   ok @@ (acc' , List.rev lst')
 
@@ -637,23 +627,18 @@ let bind_fold_map_right_list = fun f acc lst ->
   ok lst'
 
 let bind_fold_right_list f init lst =
-  let aux x y =
-    x >>? fun x ->
-    f x y
-  in
-  X_list.fold_right' aux (ok init) lst
+  let aux x y = x >>? fun x -> f x y
+  in X_list.fold_right' aux (ok init) lst
 
 let bind_find_map_list error f lst =
   let rec aux lst =
     match lst with
     | [] -> fail error
-    | hd :: tl -> (
+    | hd :: tl ->
         match f hd with
         | Error _ -> aux tl
         | o -> o
-      )
-  in
-  aux lst
+  in aux lst
 
 let bind_list_iter f lst =
   let aux () y = f y in
@@ -663,28 +648,29 @@ let bind_or (a, b) =
   match a with
   | Ok _ as o -> o
   | _ -> b
-let bind_map_or (fa , fb) c =
-  bind_or (fa c , fb c)
 
-let bind_lr (type a b) ((a : a result), (b:b result)) : [`Left of a | `Right of b] result =
+let bind_map_or (fa, fb) c = bind_or (fa c, fb c)
+
+let bind_lr (type a b) ((a : a result), (b:b result))
+    : [`Left of a | `Right of b] result =
   match (a, b) with
   | (Ok _ as o), _ -> map (fun x -> `Left x) o
   | _, (Ok _ as o) -> map (fun x -> `Right x) o
   | _, Error b -> Error b
 
-let bind_lr_lazy (type a b) ((a : a result), (b:unit -> b result)) : [`Left of a | `Right of b] result =
+let bind_lr_lazy (type a b) ((a : a result), (b:unit -> b result))
+    : [`Left of a | `Right of b] result =
   match a with
   | Ok _ as o -> map (fun x -> `Left x) o
-  | _ -> (
-      match b() with
-      | Ok _ as o -> map (fun x -> `Right x) o
-      | Error b -> Error b
-    )
+  | _ -> match b() with
+        | Ok _ as o -> map (fun x -> `Right x) o
+        | Error b -> Error b
 
 let bind_and (a, b) =
   a >>? fun a ->
   b >>? fun b ->
   ok (a, b)
+
 let bind_and3 (a, b, c) =
   a >>? fun a ->
   b >>? fun b ->
@@ -692,18 +678,18 @@ let bind_and3 (a, b, c) =
   ok (a, b, c)
 
 let bind_pair = bind_and
+
 let bind_map_pair f (a, b) =
   bind_pair (f a, f b)
-let bind_fold_map_pair f acc (a, b) =
-  f acc a >>? fun (acc' , a') ->
-  f acc' b >>? fun (acc'' , b') ->
-  ok (acc'' , (a' , b'))
-let bind_map_triple f (a, b, c) =
-  bind_and3 (f a, f b, f c)
 
-let bind_list_cons v lst =
-  lst >>? fun lst ->
-  ok (v::lst)
+let bind_fold_map_pair f acc (a, b) =
+  f acc a >>? fun (acc', a') ->
+  f acc' b >>? fun (acc'', b') ->
+  ok (acc'', (a', b'))
+
+let bind_map_triple f (a, b, c) = bind_and3 (f a, f b, f c)
+
+let bind_list_cons v lst = lst >>? fun lst -> ok (v::lst)
 
 let rec bind_chain : ('a -> 'a result) list -> 'a -> 'a result = fun fs x ->
   match fs with
@@ -716,29 +702,23 @@ let rec bind_chain : ('a -> 'a result) list -> 'a -> 'a result = fun fs x ->
 (**
    Wraps a call that might trigger an exception in a result.
 *)
-let generic_try err f =
-  try (
-    ok @@ f ()
-  ) with _ -> fail err
+let generic_try err f = try ok @@ f () with _ -> fail err
 
 (**
    Same, but with a handler that generates an error based on the exception,
    rather than a fixed error.
 *)
 let specific_try handler f =
-  try (
-    ok @@ f ()
-  ) with exn -> fail (handler exn)
+  try ok @@ f () with exn -> fail (handler exn)
 
 (**
    Same, but tailored to `Sys_error`s, found in `Sys` from `Pervasives`.
 *)
 let sys_try f =
   let handler = function
-    | Sys_error str -> error (thunk "Sys_error") (fun () -> str)
-    | exn -> raise exn
-  in
-  specific_try handler f
+    Sys_error str -> error (thunk "Sys_error") (fun () -> str)
+  | exn -> raise exn
+  in specific_try handler f
 
 (**
    Same, but for a given command.
@@ -746,53 +726,60 @@ let sys_try f =
 let sys_command command =
   sys_try (fun () -> Sys.command command) >>? function
   | 0 -> ok ()
-  | n -> fail (fun () -> error (thunk "Nonzero return code") (fun () -> (string_of_int n)) ())
+  | n -> fail (fun () -> error (thunk "Nonzero return code.")
+                           (fun () -> (string_of_int n)) ())
 
 (**
    Assertion module.
    Would make sense to move it outside Trace.
 *)
 module Assert = struct
-  let assert_fail ?(msg="didn't fail") = function
-    | Ok _ -> simple_fail msg
-    | _ -> ok ()
+  let assert_fail ?(msg="Did not fail.") = function
+    Ok _ -> simple_fail msg
+  |    _ -> ok ()
 
-  let assert_true ?(msg="not true") = function
-    | true -> ok ()
-    | false -> simple_fail msg
+  let assert_true ?(msg="Not true.") = function
+     true -> ok ()
+  | false -> simple_fail msg
 
   let assert_equal ?msg expected actual =
     assert_true ?msg (expected = actual)
 
   let assert_equal_string ?msg expected actual =
     let msg =
-      let default = Format.asprintf "Not equal string : expected \"%s\", got \"%s\"" expected actual in
-      X_option.unopt ~default msg in
-    assert_equal ~msg expected actual
+      let default =
+        Format.asprintf "Not equal string: Expected \"%s\", got \"%s\""
+                        expected actual
+      in X_option.unopt ~default msg
+    in assert_equal ~msg expected actual
 
   let assert_equal_int ?msg expected actual =
     let msg =
-      let default = Format.asprintf "Not equal int : expected %d, got %d" expected actual in
-      X_option.unopt ~default msg in
-    assert_equal ~msg expected actual
+      let default =
+        Format.asprintf "Not equal int : expected %d, got %d"
+                        expected actual
+      in X_option.unopt ~default msg
+    in assert_equal ~msg expected actual
 
   let assert_equal_bool ?msg expected actual =
     let msg =
-      let default = Format.asprintf "Not equal bool : expected %b, got %b" expected actual in
+      let default =
+        Format.asprintf "Not equal bool: expected %b, got %b"
+                        expected actual in
       X_option.unopt ~default msg in
     assert_equal ~msg expected actual
 
-  let assert_none ?(msg="not a none") opt = match opt with
+  let assert_none ?(msg="Not a None value.") opt = match opt with
     | None -> ok ()
     | _ -> simple_fail msg
 
-  let assert_list_size ?(msg="lst doesn't have the right size") lst n =
+  let assert_list_size ?(msg="Wrong list size.") lst n =
     assert_true ~msg List.(length lst = n)
 
-  let assert_list_empty ?(msg="lst isn't empty") lst =
+  let assert_list_empty ?(msg="Non-empty list.") lst =
     assert_true ~msg List.(length lst = 0)
 
-  let assert_list_same_size ?(msg="lists don't have same size") a b =
+  let assert_list_same_size ?(msg="Lists with different lengths.") a b =
     assert_true ~msg List.(length a = length b)
 
   let assert_list_size_2 ~msg = function

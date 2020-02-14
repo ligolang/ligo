@@ -10,10 +10,12 @@ let () =
     Typer_tests.main ;
     Coase_tests.main ;
     Vote_tests.main ;
+    Id_tests.main ;
     Multisig_tests.main ;
     Multisig_v2_tests.main ;
     Replaceable_id_tests.main ;
     Time_lock_tests.main ;
     Hash_lock_tests.main ;
+    Time_lock_repeat_tests.main ;
   ] ;
   ()
