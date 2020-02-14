@@ -16,7 +16,8 @@ export class CompileAction extends CancellableAction {
         const michelsonCode = await compileContract(
           editor.language,
           editor.code,
-          compileState.entrypoint
+          compileState.entrypoint,
+          compileState.michelsonFormat
         );
 
         if (this.isCancelled()) {

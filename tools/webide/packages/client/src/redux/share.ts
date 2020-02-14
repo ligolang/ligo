@@ -1,4 +1,8 @@
-import { ActionType as CompileActionType, ChangeEntrypointAction as ChangeCompileEntrypointAction } from './compile';
+import {
+  ActionType as CompileActionType,
+  ChangeEntrypointAction as ChangeCompileEntrypointAction,
+  ChangeMichelsonFormatAction,
+} from './compile';
 import {
   ActionType as DeployActionType,
   ChangeEntrypointAction as ChangeDeployEntrypointAction,
@@ -40,6 +44,7 @@ type Action =
   | ChangeCodeAction
   | ChangeLanguageAction
   | ChangeCompileEntrypointAction
+  | ChangeMichelsonFormatAction
   | ChangeDeployEntrypointAction
   | ChangeDeployStorageAction
   | UseTezBridgeAction
@@ -61,7 +66,6 @@ export default (state = DEFAULT_STATE, action: Action): ShareState => {
     case CompileActionType.ChangeEntrypoint:
     case DeployActionType.ChangeEntrypoint:
     case DeployActionType.ChangeStorage:
-    case DeployActionType.UseTezBridge:
     case DryRunActionType.ChangeEntrypoint:
     case DryRunActionType.ChangeParameters:
     case DryRunActionType.ChangeStorage:
