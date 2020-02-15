@@ -80,9 +80,9 @@ dont-merge-to-master:
       - public
 
 .docker: &docker
-  image: docker:19
+  image: docker:19.03.5
   services:
-    - docker:19-dind
+    - docker:19.03.5-dind
 
 
 .before_script: &before_script
