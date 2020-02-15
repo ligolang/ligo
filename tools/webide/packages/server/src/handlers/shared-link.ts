@@ -1,12 +1,12 @@
 import { Request, Response } from 'express';
 
 import { loadDefaultState } from '../load-state';
+import { logger } from '../logger';
 import latestSchema from '../schemas/share-latest';
 import { storage } from '../storage';
 import { FileNotFoundError } from '../storage/interface';
-import { logger } from '../logger';
 
-export function createSharedLinkHandler(
+export function sharedLinkHandler(
   appBundleDirectory: string,
   template: (state: string) => string
 ) {
