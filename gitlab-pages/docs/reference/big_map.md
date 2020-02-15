@@ -1,6 +1,6 @@
 ---
 id: big-map-reference
-title: Big Map
+title: Big Map — Scalable hashmap primitive
 ---
 
 ## Defining A Big Map Type

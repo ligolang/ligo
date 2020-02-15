@@ -1,6 +1,6 @@
 ---
 id: set-reference
-title: Set
+title: Set — Unordered unique collection of a type
 ---
 
 ## Defining a set
