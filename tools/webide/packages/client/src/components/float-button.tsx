@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
-import styled, { css } from 'styled-components';
+import React from 'react';
+import styled from 'styled-components';
+
+import { Tooltip } from './tooltip';
 
 const Container = styled.div`
   display: flex;
@@ -36,46 +38,16 @@ const Button = styled.a`
   }
 `;
 
-const Tooltip = styled.div<{ visible?: boolean }>`
-  position: absolute;
-  pointer-events: none;
-  z-index: 3;
-  white-space: nowrap;
-  transform: translateX(-6.5em);
-
-  font-size: var(--font_sub_size);
-  color: var(--tooltip_foreground);
-  background-color: var(--tooltip_background);
-  border-radius: 6px;
-  padding: 5px 10px;
-  opacity: 0;
-  transition: opacity 0.2s ease 0.2s;
-
-  ${props =>
-    props.visible &&
-    css`
-      opacity: 1;
-    `}
-`;
-
 export const FloatButtonComponent = (props: {
   tooltip: string;
   text: string;
   href: string;
   className?: string;
 }) => {
-  const [isTooltipShowing, setShowTooltip] = useState(false);
-
   return (
     <Container className={props.className}>
-      <Tooltip visible={isTooltipShowing}>{props.tooltip}</Tooltip>
-      <Button
-        onMouseOver={() => setShowTooltip(true)}
-        onMouseOut={() => setShowTooltip(false)}
-        href={props.href}
-        target="_blank"
-        rel="noopener noreferrer"
-      >
+      <Tooltip position="left">{props.tooltip}</Tooltip>
+      <Button href={props.href} target="_blank" rel="noopener noreferrer">
         {props.text}
       </Button>
     </Container>

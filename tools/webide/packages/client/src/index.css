@@ -50,6 +50,7 @@
 
   --tooltip_foreground: white;
   --tooltip_background: rgba(0, 0, 0, 0.75) /*#404040*/;
+  --label_foreground: rgba(153, 153, 153, 1);
 }
 
 body {
