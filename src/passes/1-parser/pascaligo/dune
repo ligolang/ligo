@@ -157,6 +157,7 @@
 
 (rule
  (targets ParErr.ml)
+ (mode promote-until-clean)
  (deps Parser.mly ParToken.mly error.messages.checked-in LexToken.mli)
  (action
   (with-stdout-to %{targets}
