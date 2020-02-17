@@ -17,25 +17,25 @@ module Substitution = struct
     let rec rec_yes = true
     and s_environment_element_definition ~substs = function
       | T.ED_binder -> ok @@ T.ED_binder
-      | T.ED_declaration (val_, free_variables) ->
-        let%bind val_ = s_expression ~substs  val_ in
+      | T.ED_declaration T.{expr ; free_variables} ->
+        let%bind expr = s_expression ~substs expr in
         let%bind free_variables = bind_map_list (s_variable ~substs) free_variables in
-        ok @@ T.ED_declaration (val_, free_variables)
+        ok @@ T.ED_declaration {expr ; free_variables}
     and s_environment : T.environment w = fun ~substs env ->
-      bind_map_list (fun (variable, T.{ type_value; source_environment; definition }) ->
+      bind_map_list (fun T.{expr_var=variable ; env_elt={ type_value; source_environment; definition }} ->
           let%bind type_value = s_type_expression ~substs type_value in
           let%bind source_environment = s_full_environment ~substs source_environment in
           let%bind definition = s_environment_element_definition ~substs definition in
-          ok @@ (variable, T.{ type_value; source_environment; definition })) env
+          ok @@ T.{expr_var=variable ; env_elt={ type_value; source_environment; definition }}) env
     and s_type_environment : T.type_environment w = fun ~substs tenv ->
-      bind_map_list (fun (type_variable , type_value) ->
+      bind_map_list (fun T.{type_variable ; type_} ->
         let%bind type_variable = s_type_variable ~substs type_variable in
-        let%bind type_value = s_type_expression ~substs type_value in
-        ok @@ (type_variable , type_value)) tenv
-    and s_small_environment : T.small_environment w = fun ~substs (environment, type_environment) ->
-      let%bind environment = s_environment ~substs environment in
+        let%bind type_ = s_type_expression ~substs type_ in
+        ok @@ T.{type_variable ; type_}) tenv
+    and s_small_environment : T.small_environment w = fun ~substs T.{expression_environment ; type_environment} ->
+      let%bind expression_environment = s_environment ~substs expression_environment in
       let%bind type_environment = s_type_environment ~substs type_environment in
-      ok @@ (environment, type_environment)
+      ok @@ T.{ expression_environment ; type_environment }
     and s_full_environment : T.full_environment w = fun ~substs (a , b) ->
       let%bind a = s_small_environment ~substs a in
       let%bind b = bind_map_list (s_small_environment ~substs) b in

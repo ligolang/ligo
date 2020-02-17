@@ -117,8 +117,10 @@ and environment_element_definition =
   | ED_binder
   | ED_declaration of environment_element_definition_declaration
 
-and environment_element_definition_declaration =
-  (expression * free_variables)
+and environment_element_definition_declaration = {
+    expr: expression ;
+    free_variables: free_variables ;
+  }
 
 and free_variables = expression_variable list
 
@@ -130,17 +132,23 @@ and environment_element = {
 
 and environment = environment_binding list
 
-and environment_binding =
-  (expression_variable * environment_element)
+and environment_binding = {
+    expr_var: expression_variable ;
+    env_elt: environment_element ;
+  }
 
 and type_environment = type_environment_binding list
 
-and type_environment_binding =
-  (type_variable * type_expression)
+and type_environment_binding = {
+    type_variable: type_variable ;
+    type_: type_expression ;
+}
 
 (* SUBST ??? *)
-and small_environment =
-  (environment * type_environment)
+and small_environment = {
+  expression_environment: environment ;
+  type_environment: type_environment ;
+}
 
 and full_environment = small_environment List.Ne.t
 

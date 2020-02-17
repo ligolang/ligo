@@ -59,7 +59,7 @@ module Captured_variables = struct
           Environment.get_opt name ae.environment in
         match env_element.definition with
         | ED_binder -> ok empty
-        | ED_declaration (_ , _) -> simple_fail "todo"
+        | ED_declaration {expr=_ ; free_variables=_} -> simple_fail "todo"
       )
     | E_application {expr1;expr2} ->
       let%bind lst' = bind_map_list self [ expr1 ; expr2 ] in
