@@ -7,6 +7,7 @@ import { Examples } from './components/examples';
 import { FloatButtonComponent } from './components/float-button';
 import { HeaderComponent } from './components/header';
 import { TabsPanelComponent } from './components/tabs-panel';
+import { TooltipContainer } from './components/tooltip';
 import configureStore from './configure-store';
 
 const store = configureStore();
@@ -48,6 +49,7 @@ const App: React.FC = () => {
           href="https://discord.gg/9rhYaEt"
         ></FloatButtonComponent>
       </FeedbackContainer>
+      <TooltipContainer></TooltipContainer>
     </Provider>
   );
 };

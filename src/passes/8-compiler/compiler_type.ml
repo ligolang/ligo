@@ -20,6 +20,7 @@ module Ty = struct
   let address_k = Address_key None
   let timestamp_k = Timestamp_key None
   let bytes_k = Bytes_key None
+  let pair_k a b = Pair_key ((a,None),(b,None),None)
   (* let timestamp_k = Timestamp_key None *)
 
   let unit = Unit_t None
@@ -77,12 +78,30 @@ module Ty = struct
     | TC_key_hash -> return key_hash_k
     | TC_chain_id -> fail (not_comparable "chain_id")
 
-  let comparable_type : type_value -> ex_comparable_ty result = fun tv ->
+  let comparable_leaf : type a. (a, _) comparable_struct -> (a , leaf) comparable_struct result =
+      fun a ->
+    match a with
+    | Pair_key _ -> fail (not_comparable "pair (use (a,(b,c)) instead of (a,b,c))")
+    | Int_key annot -> ok (Int_key annot)
+    | Nat_key annot -> ok (Nat_key annot)
+    | String_key annot -> ok (String_key annot)
+    | Bytes_key annot -> ok (Bytes_key annot)
+    | Mutez_key annot -> ok (Mutez_key annot)
+    | Bool_key annot -> ok (Bool_key annot)
+    | Key_hash_key annot -> ok (Key_hash_key annot)
+    | Timestamp_key annot -> ok (Timestamp_key annot)
+    | Address_key annot -> ok (Address_key annot)
+
+  let rec comparable_type : type_value -> ex_comparable_ty result = fun tv ->
     match tv with
     | T_base b -> comparable_type_base b
     | T_function _ -> fail (not_comparable "function")
     | T_or _ -> fail (not_comparable "or")
-    | T_pair _ -> fail (not_comparable "pair")
+    | T_pair ((_,a),(_,b)) ->
+      let%bind (Ex_comparable_ty a') = comparable_type a in
+      let%bind (Ex_comparable_ty b') = comparable_type b in
+      let%bind a'' = comparable_leaf a' in
+      ok @@ Ex_comparable_ty (pair_k a'' b')
     | T_map _ -> fail (not_comparable "map")
     | T_big_map _ -> fail (not_comparable "big_map")
     | T_list _ -> fail (not_comparable "list")

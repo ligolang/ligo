@@ -166,7 +166,7 @@ let literal ppf (l : literal) =
   | Literal_string s ->
       fprintf ppf "%S" s
   | Literal_bytes b ->
-      fprintf ppf "0x%s" @@ Bytes.to_string @@ Bytes.escaped b
+      fprintf ppf "0x%a" Hex.pp (Hex.of_bytes b)
   | Literal_address s ->
       fprintf ppf "@%S" s
   | Literal_operation _ ->

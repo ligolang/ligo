@@ -26,6 +26,7 @@
 type t = private
   | Implicit of Signature.Public_key_hash.t
   | Originated of Contract_hash.t
+
 type contract = t
 
 include Compare.S with type t := contract
@@ -33,9 +34,6 @@ include Compare.S with type t := contract
 (** {2 Implicit contracts} *)
 
 val implicit_contract : Signature.Public_key_hash.t -> contract
-
-(** Only for migration from proto_004  *)
-val originated_contract_004 : Contract_hash.t -> contract
 
 val is_implicit : contract -> Signature.Public_key_hash.t option
 
@@ -50,7 +48,8 @@ type origination_nonce
 
 val originated_contract : origination_nonce -> contract
 
-val originated_contracts : since: origination_nonce -> until: origination_nonce -> contract list
+val originated_contracts :
+  since:origination_nonce -> until:origination_nonce -> contract list
 
 val initial_origination_nonce : Operation_hash.t -> origination_nonce
 
@@ -58,18 +57,17 @@ val incr_origination_nonce : origination_nonce -> origination_nonce
 
 val is_originated : contract -> Contract_hash.t option
 
-
 (** {2 Human readable notation} *)
 
 type error += Invalid_contract_notation of string (* `Permanent *)
 
-val to_b58check: contract -> string
+val to_b58check : contract -> string
 
-val of_b58check: string -> contract tzresult
+val of_b58check : string -> contract tzresult
 
-val pp: Format.formatter -> contract -> unit
+val pp : Format.formatter -> contract -> unit
 
-val pp_short: Format.formatter -> contract -> unit
+val pp_short : Format.formatter -> contract -> unit
 
 (** {2 Serializers} *)
 

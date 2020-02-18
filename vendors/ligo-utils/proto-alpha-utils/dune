@@ -4,10 +4,10 @@
   (libraries
     tezos-error-monad
     tezos-stdlib-unix
-    tezos-protocol-005-PsBabyM1-parameters
+    tezos-protocol-006-PsCARTHA-parameters
     tezos-memory-proto-alpha
     simple-utils
     tezos-utils
   )
- (flags (:standard -open Simple_utils ))
+ (flags (:standard -open Simple_utils))
 )

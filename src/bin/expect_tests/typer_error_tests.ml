@@ -114,4 +114,25 @@ let%expect_test _ =
     * Visit our documentation: https://ligolang.org/docs/intro/what-and-why/
     * Ask a question on our Discord: https://discord.gg/9rhYaEt
     * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
-    * Check the changelog by running 'ligo changelog' |}] ;
+    * Check the changelog by running 'ligo changelog' |}]
+
+(* 
+  This test is here to ensure compatibility with comparable pairs introduced in carthage
+  note that only "comb pairs" are allowed to be compared (would be beter if any pair would be comparable ?)
+*)
+let%expect_test _ =
+  run_ligo_good [ "interpret" ; "Set.literal [ (1,(2,3)) ; (2,(3,4)) ]" ; "--syntax=cameligo" ] ;
+  [%expect {|
+    set[( 2 , ( 3 , 4 ) ) , ( 1 , ( 2 , 3 ) )] |}];
+
+  run_ligo_bad [ "interpret" ; "Set.literal [ (1,2,3) ; (2,3,4) ]" ; "--syntax=cameligo" ] ;
+  [%expect {|
+    ligo: not a comparable type: pair (use (a,(b,c)) instead of (a,b,c))
+
+     If you're not sure how to fix this error, you can
+     do one of the following:
+
+    * Visit our documentation: https://ligolang.org/docs/intro/what-and-why/
+    * Ask a question on our Discord: https://discord.gg/9rhYaEt
+    * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
+    * Check the changelog by running 'ligo changelog' |}];
