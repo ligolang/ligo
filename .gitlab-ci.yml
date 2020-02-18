@@ -112,6 +112,7 @@ local-dune-job:
   only:
     - merge_requests
     - dev
+    - /^.*-run-dev$/
 
 # Run a docker build without publishing to the registry
 build-current-docker-image:
@@ -136,10 +137,10 @@ build-and-publish-latest-docker-image:
     - sh scripts/build_docker_image.sh
     - sh scripts/test_cli.sh
     - echo ${LIGO_REGISTRY_PASSWORD} | docker login -u ${LIGO_REGISTRY_USER} --password-stdin
-    - docker push ${LIGO_REGISTRY_IMAGE_BUILD:-ligolang/ligo}:next
+    - docker push ${LIGO_REGISTRY_IMAGE_BUILD:-ligolang/ligo}:$(if "$CI_COMMIT_REF_NAME" = "dev" then echo next else echo next-attempt)
   rules:
     # Only deploy docker when from the dev branch AND on the canonical ligolang/ligo repository
-    - if: '$CI_COMMIT_REF_NAME == "dev" && $CI_PROJECT_PATH == "ligolang/ligo"'
+    - if: '$CI_COMMIT_REF_NAME =~ /^(dev|.*-run-dev)$/ && $CI_PROJECT_PATH == "ligolang/ligo"'
       when: always
 
 # It'd be a good idea to generate those jobs dynamically,
@@ -155,6 +156,7 @@ build-and-package-debian-9:
   <<: *build_binary
   only:
     - dev
+    - /^.*-run-dev$/
 
 build-and-package-debian-10:
   <<: *docker
@@ -171,6 +173,7 @@ build-and-package-debian-10:
   only:
     - merge_requests
     - dev
+    - /^.*-run-dev$/
 
 build-and-package-ubuntu-18-04:
   <<: *docker
@@ -183,6 +186,7 @@ build-and-package-ubuntu-18-04:
   <<: *build_binary
   only:
     - dev
+    - /^.*-run-dev$/
 
 build-and-package-ubuntu-19-04:
   <<: *docker
@@ -195,6 +199,7 @@ build-and-package-ubuntu-19-04:
   <<: *build_binary
   only:
     - dev
+    - /^.*-run-dev$/
 
 # Pages are deployed from dev, be careful not to override 'next'
 # in case something gets merged into 'dev' while releasing.
@@ -202,6 +207,12 @@ pages:
   <<: *website_build
   rules:
     - if: '$CI_COMMIT_REF_NAME == "dev" && $CI_PROJECT_PATH == "ligolang/ligo"'
+      when: always
+
+pages-attempt:
+  <<: *website_build
+  rules:
+    - if: '$CI_COMMIT_REF_NAME =~ /^.*-run-dev$/ && $CI_PROJECT_PATH == "ligolang/ligo"'
       when: always
 
 # WEBIDE jobs
@@ -264,4 +275,3 @@ deploy-handoff:
   rules:
     - if: '$CI_COMMIT_REF_NAME == "dev"'
       when: always
-
