@@ -28,7 +28,7 @@ and repair_mutable_variable (for_body : expression) (element_names : expression_
             ok (true,(decl_var, free_var), e_let_in let_binder false false rhs let_result)
           else(
             let free_var = if (List.mem name free_var) then free_var else name::free_var in
-            let expr = e_let_in (env,None) false false (e_update (e_variable env) (Var.show name) (e_variable name)) let_result in
+            let expr = e_let_in (env,None) false false (e_update (e_variable env) (Var.to_name name) (e_variable name)) let_result in
             ok (true,(decl_var, free_var), e_let_in let_binder false  false rhs expr)
           )
         | E_variable name ->
@@ -62,7 +62,7 @@ and repair_mutable_variable_for_collect (for_body : expression) (element_names :
             let free_var = if (List.mem name free_var) then free_var else name::free_var in
             let expr = e_let_in (env,None) false false (
               e_update (e_variable env) ("0") 
-              (e_update (e_accessor (e_variable env) "0") (Var.show name) (e_variable name))
+              (e_update (e_accessor (e_variable env) "0") (Var.to_name name) (e_variable name))
               )
               let_result in
             ok (true,(decl_var, free_var), e_let_in let_binder false  false rhs expr)
@@ -86,12 +86,12 @@ and store_mutable_variable (free_vars : expression_variable list) =
   if (List.length free_vars == 0) then
     e_unit ()
   else
-    let aux var = (Var.show var, e_variable var) in
+    let aux var = (Var.to_name var, e_variable var) in
     e_record_ez (List.map aux free_vars)
  
 and restore_mutable_variable (expr : expression) (free_vars : expression_variable list) (env :expression_variable) =
   let aux (f:expression -> expression) (ev:expression_variable) =
-    ok @@ fun expr -> f (e_let_in (ev,None) true false (e_accessor (e_variable env) (Var.show ev)) expr)
+    ok @@ fun expr -> f (e_let_in (ev,None) true false (e_accessor (e_variable env) (Var.to_name ev)) expr)
   in
   let%bind ef = bind_fold_list aux (fun e -> e) free_vars in
   ok @@ fun expr'_opt -> match expr'_opt with

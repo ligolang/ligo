@@ -31,7 +31,6 @@ val of_name : string -> 'a t
 
 (* TODO don't use this, this should not exist. *)
 val to_name : 'a t -> string
-val show : 'a t -> string
 
 (* Generate a variable, using a counter value from a _global_
    counter. If the name is not provided, it will be empty. *)
