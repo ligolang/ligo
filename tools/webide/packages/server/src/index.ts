@@ -9,9 +9,9 @@ import { dryRunHandler } from './handlers/dry-run';
 import { evaluateValueHandler } from './handlers/evaluate-value';
 import { runFunctionHandler } from './handlers/run-function';
 import { shareHandler } from './handlers/share';
-import { createSharedLinkHandler } from './handlers/shared-link';
+import { sharedLinkHandler } from './handlers/shared-link';
 import { loadDefaultState } from './load-state';
-import { loggerMiddleware, errorLoggerMiddleware } from './logger';
+import { errorLoggerMiddleware, loggerMiddleware } from './logger';
 
 var bodyParser = require('body-parser');
 var escape = require('escape-html');
@@ -47,7 +47,7 @@ app.use('^/$', async (_, res) =>
 app.use(express.static(appBundleDirectory));
 app.get(
   `/p/:hash([0-9a-zA-Z\-\_]+)`,
-  createSharedLinkHandler(appBundleDirectory, template)
+  sharedLinkHandler(appBundleDirectory, template)
 );
 app.post('/api/compile-contract', compileContractHandler);
 app.post('/api/compile-expression', compileExpressionHandler);

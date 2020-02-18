@@ -69,7 +69,11 @@ export const TabsPanelComponent = () => {
     <Container>
       <Header>
         {TABS.map(tab => (
-          <Tab id={tab.id} selected={selectedTab.index === tab.index}>
+          <Tab
+            key={tab.id}
+            id={tab.id}
+            selected={selectedTab.index === tab.index}
+          >
             <Label onClick={() => selectTab(tab)}>{tab.label}</Label>
           </Tab>
         ))}

@@ -8,6 +8,7 @@ import styled, { css } from 'styled-components';
 import { AppState } from '../redux/app';
 import { ChangeShareLinkAction, ShareState } from '../redux/share';
 import { share } from '../services/api';
+import { Tooltip } from './tooltip';
 
 const Container = styled.div`
   display: flex;
@@ -96,26 +97,6 @@ const Input = styled.input<{ visible?: boolean }>`
     `}
 `;
 
-const Tooltip = styled.div<{ visible?: boolean }>`
-  position: absolute;
-  pointer-events: none;
-  z-index: 3;
-  transform: translateY(2.5em);
-  font-size: var(--font_sub_size);
-  color: var(--tooltip_foreground);
-  background-color: var(--tooltip_background);
-  border-radius: 6px;
-  padding: 5px 10px;
-  opacity: 0;
-  transition: opacity 0.2s ease 0.2s;
-
-  ${props =>
-    props.visible &&
-    css`
-      opacity: 1;
-    `}
-`;
-
 const shareAction = () => {
   return async function(dispatch: Dispatch, getState: () => AppState) {
     try {
@@ -138,7 +119,6 @@ export const ShareComponent = () => {
     state => state.share.link
   );
   const [clicked, setClicked] = useState(false);
-  const [isTooltipShowing, setShowTooltip] = useState(false);
 
   const SHARE_TOOLTIP = 'Share code';
   const COPY_TOOLTIP = 'Copy link';
@@ -149,14 +129,12 @@ export const ShareComponent = () => {
     if (shareLink) {
       if (inputEl.current && copy(inputEl.current)) {
         setTooltipMessage(COPIED_TOOLTIP);
-        setShowTooltip(true);
       } else {
         setClicked(true);
         setTooltipMessage(COPY_TOOLTIP);
       }
     } else {
       setClicked(false);
-      setShowTooltip(false);
       setTooltipMessage(SHARE_TOOLTIP);
     }
   }, [shareLink]);
@@ -177,9 +155,7 @@ export const ShareComponent = () => {
           if (tooltipMessage === COPIED_TOOLTIP) {
             setTooltipMessage(COPY_TOOLTIP);
           }
-          setShowTooltip(true);
         }}
-        onMouseOut={() => setShowTooltip(false)}
         onClick={() => {
           if (!shareLink) {
             dispatch(shareAction());
@@ -193,7 +169,7 @@ export const ShareComponent = () => {
       >
         <Label visible={!clicked}>Share</Label>
         <Copy visible={clicked}></Copy>
-        <Tooltip visible={isTooltipShowing}>{tooltipMessage}</Tooltip>
+        <Tooltip>{tooltipMessage}</Tooltip>
       </Button>
     </Container>
   );

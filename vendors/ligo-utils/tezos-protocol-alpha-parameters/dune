@@ -1,22 +1,22 @@
 (library
- (name tezos_protocol_005_PsBabyM1_parameters)
- (public_name tezos-protocol-005-PsBabyM1-parameters)
+ (name tezos_protocol_006_PsCARTHA_parameters)
+ (public_name tezos-protocol-006-PsCARTHA-parameters)
  (modules :standard \ gen)
  (libraries tezos-base
             tezos-protocol-environment
-            tezos-protocol-005-PsBabyM1)
+            tezos-protocol-006-PsCARTHA)
  (flags (:standard -open Tezos_base__TzPervasives
-                   -open Tezos_protocol_005_PsBabyM1
+                   -open Tezos_protocol_006_PsCARTHA
                    -linkall))
 )
 
 (executable
  (name gen)
  (libraries tezos-base
-            tezos-protocol-005-PsBabyM1-parameters)
+            tezos-protocol-006-PsCARTHA-parameters)
  (modules gen)
  (flags (:standard -open Tezos_base__TzPervasives
-                   -open Tezos_protocol_005_PsBabyM1_parameters
+                   -open Tezos_protocol_006_PsCARTHA_parameters
                    -linkall)))
 
 (rule

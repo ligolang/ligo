@@ -30,7 +30,7 @@ export async function compileExpression(
 ) {
   const response = await axios.post('/api/compile-expression', {
     syntax,
-    expression,
+    expression: `${expression}`,
     format
   });
   return response.data;
@@ -64,14 +64,24 @@ export async function share({
   evaluateValue,
   evaluateFunction
 }: Partial<AppState>) {
-  const response = await axios.post('/api/share', {
+  const params = {
     editor,
     compile,
     dryRun,
     deploy,
     evaluateValue,
     evaluateFunction
-  });
+  };
+
+  // We don't want to store the following configuration
+  if (params.compile) {
+    delete params.compile.michelsonFormat;
+  }
+  if (params.deploy) {
+    delete params.deploy.useTezBridge;
+  }
+
+  const response = await axios.post('/api/share', params);
   return response.data;
 }
 

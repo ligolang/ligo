@@ -37,12 +37,30 @@ export async function loadDefaultState(appBundleDirectory: string) {
     );
     const defaultExample = JSON.parse(example);
 
-    defaultState.compile = defaultExample.compile;
-    defaultState.dryRun = defaultExample.dryRun;
-    defaultState.deploy = defaultExample.deploy;
-    defaultState.evaluateValue = defaultExample.evaluateValue;
-    defaultState.evaluateFunction = defaultExample.evaluateFunction;
-    defaultState.editor = defaultExample.editor;
+    defaultState.compile = {
+      ...defaultState.compile,
+      ...defaultExample.compile
+    };
+    defaultState.dryRun = {
+      ...defaultState.dryRun,
+      ...defaultExample.dryRun
+    };
+    defaultState.deploy = {
+      ...defaultState.deploy,
+      ...defaultExample.deploy
+    };
+    defaultState.evaluateValue = {
+      ...defaultState.evaluateValue,
+      ...defaultExample.evaluateValue
+    };
+    defaultState.evaluateFunction = {
+      ...defaultState.evaluateFunction,
+      ...defaultExample.evaluateFunction
+    };
+    defaultState.editor = {
+      ...defaultState.editor,
+      ...defaultExample.editor
+    };
     defaultState.examples.selected = defaultExample;
   }
 

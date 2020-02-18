@@ -18,7 +18,9 @@ export abstract class Migration {
       }
 
       throw new Error(
-        `Unable to migrate ${data}. Reached the end of the migration chain.`
+        `Unable to migrate ${JSON.stringify(
+          data
+        )}. Reached the end of the migration chain.`
       );
     }
     return value;
