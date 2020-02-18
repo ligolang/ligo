@@ -137,7 +137,7 @@ build-and-publish-latest-docker-image:
     - sh scripts/build_docker_image.sh
     - sh scripts/test_cli.sh
     - echo ${LIGO_REGISTRY_PASSWORD} | docker login -u ${LIGO_REGISTRY_USER} --password-stdin
-    - docker push ${LIGO_REGISTRY_IMAGE_BUILD:-ligolang/ligo}:$(if "$CI_COMMIT_REF_NAME" = "dev"; then echo next; else echo next-attempt; fi)
+    - docker push ${LIGO_REGISTRY_IMAGE_BUILD:-ligolang/ligo}:$(if test "$CI_COMMIT_REF_NAME" = "dev"; then echo next; else echo next-attempt; fi)
   rules:
     # Only deploy docker when from the dev branch AND on the canonical ligolang/ligo repository
     - if: '$CI_COMMIT_REF_NAME =~ /^(dev|.*-run-dev)$/ && $CI_PROJECT_PATH == "ligolang/ligo"'
