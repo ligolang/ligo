@@ -3,7 +3,6 @@ open Ast_simplified
 
 module Raw = Parser.Pascaligo.AST
 module SMap = Map.String
-module SSet = Set.Make (String)
 module ParserLog = Parser_pascaligo.ParserLog
 
 open Combinators
@@ -14,54 +13,6 @@ let pseq_to_list = function
   None -> []
 | Some lst -> npseq_to_list lst
 let get_value : 'a Raw.reg -> 'a = fun x -> x.value
-let is_compiler_generated name = String.contains (Var.to_name name) '#'
-
-let _detect_local_declarations (for_body : expression) =
-  let%bind aux = Self_ast_simplified.fold_expression
-    (fun (nlist, cur_loop : expression_variable list * bool) (ass_exp : expression) ->
-      if cur_loop then 
-        match ass_exp.expression_content with
-        | E_let_in {let_binder;mut=false;rhs = _;let_result = _} ->
-          let (name,_) = let_binder in
-          ok (name::nlist, cur_loop)
-        | E_constant {cons_name=C_MAP_FOLD;arguments= _}
-        | E_constant {cons_name=C_SET_FOLD;arguments= _}
-        | E_constant {cons_name=C_LIST_FOLD;arguments= _} -> ok @@ (nlist, false)
-        | _ -> ok (nlist, cur_loop)
-      else
-        ok @@ (nlist, cur_loop)
-    )
-    ([], true)
-    for_body in
-  ok @@ fst aux
-
-let _detect_free_variables (for_body : expression) (local_decl_names : expression_variable list) =
-  let%bind captured_names = Self_ast_simplified.fold_expression
-    (fun (prev : expression_variable list) (ass_exp : expression) ->
-      match ass_exp.expression_content with
-      | E_constant {cons_name=n;arguments=[a;b]}
-        when n=C_OR || n=C_AND || n=C_LT || n=C_GT ||
-             n=C_LE || n=C_GE  || n=C_EQ || n=C_NEQ -> (
-          match (a.expression_content,b.expression_content) with
-          | E_variable na , E_variable nb -> 
-            let ret = [] in
-            let ret = if not (is_compiler_generated na) then
-              na::ret else ret in
-            let ret = if not (is_compiler_generated nb) then
-              nb::ret else ret in
-            ok (ret@prev)
-          | E_variable n , _
-          | _            , E_variable n ->
-            if not (is_compiler_generated n) then
-            ok (n::prev) else ok prev
-          | _ -> ok prev)
-      | _ -> ok prev )
-    []
-    for_body in
-  let captured_names = List.map (fun (s) -> Var.to_name s) captured_names in
-  let local_decl_names = List.map (fun (s) -> Var.to_name s) local_decl_names in
-  ok @@ SSet.elements
-     @@ SSet.diff (SSet.of_list captured_names) (SSet.of_list local_decl_names)
 
 and repair_mutable_variable (for_body : expression) (element_names : expression_variable list) (env : expression_variable) =
   let%bind captured_names = Self_ast_simplified.fold_map_expression
