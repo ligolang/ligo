@@ -5,8 +5,8 @@ type return is list (operation) * storage
 function main (const p : parameter; const s : storage) : return is
   block {
     var toto : option (int) := Some (0);
-    toto := s.0[23];
-    s.0[2] := 444
+    toto := s.1[23];
+    s.1[2] := 444
   }
   with ((nil: list(operation)), s)
 

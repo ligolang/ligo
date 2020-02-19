@@ -84,10 +84,10 @@ let first_name : string = full_name.0
 
 <!--ReasonLIGO-->
 
-Tuple components are one-indexed and accessed like so:
+Tuple components are zero-indexed and accessed like so:
 
 ```reasonligo group=tuple
-let first_name : string = full_name[1];
+let first_name : string = full_name[0];
 ```
 
 <!--END_DOCUSAURUS_CODE_TABS-->

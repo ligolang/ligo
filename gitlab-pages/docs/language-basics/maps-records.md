@@ -614,7 +614,7 @@ operation over maps is called `map_map` and is used as follows:
 function map_op (const m : register) : register is
   block {
     function increment (const i : address; const j : move) : move is
-      (j.0, j.1 + 1);
+      (j.1, j.2 + 1);
   } with map_map (increment, m)
 ```
 
@@ -664,7 +664,7 @@ follows:
 ```pascaligo group=f
 function fold_op (const m : register) : int is block {
   function folded (const j : int; const cur : address * move) : int is
-    j + cur.1.1
+    j + cur.2.2
   } with map_fold (folded, m, 5)
 ```
 
