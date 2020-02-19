@@ -1126,3 +1126,8 @@ let%expect_test _ =
     { parameter int ;
       storage (pair (map %one key_hash nat) (big_map %two key_hash bool)) ;
       code { DUP ; CDR ; NIL operation ; PAIR ; DIP { DROP } } } |}]
+
+let%expect_test _ =
+  run_ligo_good [ "dry-run" ; contract "super-counter.mligo" ; "main" ; "test_param" ; "test_storage" ] ;
+  [%expect {|
+    ( list[] , 3 ) |}]

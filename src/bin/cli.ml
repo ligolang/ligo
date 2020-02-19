@@ -327,7 +327,7 @@ let dry_run =
     let%bind simplified        = Compile.Of_source.compile_contract_input storage input v_syntax in
     let%bind typed,_           = Compile.Of_simplified.compile_expression ~env ~state simplified in
     let%bind mini_c            = Compile.Of_typed.compile_expression typed in
-    let%bind compiled_params   = Compile.Of_mini_c.compile_expression mini_c in
+    let%bind compiled_params   = Compile.Of_mini_c.aggregate_and_compile_expression mini_c_prg mini_c in
     let%bind args_michelson    = Run.evaluate_expression compiled_params.expr compiled_params.expr_ty in
 
     let%bind options           = Run.make_dry_run_options {predecessor_timestamp ; amount ; sender ; source } in
