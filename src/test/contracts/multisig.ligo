@@ -47,8 +47,8 @@ function check_message (const param : check_message_pt;
         nil -> skip
       | key # tl -> block {
           keys := tl;
-          if pkh_sig.0 = crypto_hash_key (key) then
-            if crypto_check (key, pkh_sig.1, packed_payload)
+          if pkh_sig.1 = crypto_hash_key (key) then
+            if crypto_check (key, pkh_sig.2, packed_payload)
             then valid := valid + 1n
             else failwith ("Invalid signature")
           else skip

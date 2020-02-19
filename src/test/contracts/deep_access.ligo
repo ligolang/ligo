@@ -11,14 +11,14 @@ function main (const toto : unit) : int is
     var a : ppp :=
      (record [x = (0,1); y = (10,11)],
       record [x = (100,101); y = (110,111)]);
-    a.0.x.0 := 2;
-  } with a.0.x.0
+    a.1.x.1 := 2;
+  } with a.1.x.1
 
 
 function asymetric_tuple_access (const foo : unit) : int is
   block {
     var tuple : int * (int * (int * int)) := (0,(1,(2,3)))
-  } with tuple.0 + tuple.1.0 + tuple.1.1.0 + tuple.1.1.1
+  } with tuple.1 + tuple.2.1 + tuple.2.2.1 + tuple.2.2.2
 
 type nested_record_t is
   record [nesty : record [mymap : map (int,string)]]

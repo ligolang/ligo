@@ -30,6 +30,8 @@ val pattern_to_string :
   offsets:bool -> mode:[`Point|`Byte] -> AST.pattern -> string
 val instruction_to_string :
   offsets:bool -> mode:[`Point|`Byte] -> AST.instruction -> string
+val projection_to_string :
+  offsets:bool -> mode:[`Point|`Byte] -> AST.projection Region.reg -> string
 
 (** {1 Pretty-printing of AST nodes} *)
 

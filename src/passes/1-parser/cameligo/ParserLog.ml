@@ -591,6 +591,8 @@ let pattern_to_string ~offsets ~mode =
   to_string ~offsets ~mode print_pattern
 let expr_to_string ~offsets ~mode =
   to_string ~offsets ~mode print_expr
+let projection_to_string ~offsets ~mode =
+  to_string ~offsets ~mode print_projection
 
 (** {1 Pretty-printing the AST} *)
 
