@@ -21,6 +21,7 @@ val t_unit      : type_expression
 val t_address   : type_expression
 val t_key       : type_expression
 val t_key_hash  : type_expression
+val t_timestamp : type_expression
 val t_signature : type_expression
 (*
 val t_option    : type_expression -> type_expression
