@@ -20,9 +20,17 @@
       "advanced/include",
       "advanced/first-contract"
     ],
-    "API": [
+    "API & Reference": [
       "api/cli-commands",
-      "api/cheat-sheet"
+      "api/cheat-sheet",
+      "reference/big-map-reference",
+      "reference/bytes-reference",
+      "reference/crypto-reference",
+      "reference/current-reference",
+      "reference/list-reference",
+      "reference/map-reference",
+      "reference/set-reference",
+      "reference/string-reference"
     ]
   },
   "contributors-docs": {

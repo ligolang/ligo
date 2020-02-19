@@ -1,6 +1,6 @@
 ---
 id: list-reference
-title: List
+title: List — Ordered collection of a type
 ---
 
 ## List.size(lst: a' list) : nat

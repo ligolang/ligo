@@ -1,6 +1,6 @@
 ---
 id: bytes-reference
-title: Bytes
+title: Bytes — Manipulate bytes data
 ---
 
 ## Bytes.concat(b1: bytes, b2: bytes) : bytes

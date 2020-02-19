@@ -1,6 +1,6 @@
 ---
 id: map-reference
-title: Map
+title: Map — Hashmaps that it makes sense to iterate over
 ---
 
 ## Defining A Map Type

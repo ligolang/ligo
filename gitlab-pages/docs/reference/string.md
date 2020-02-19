@@ -1,6 +1,6 @@
 ---
 id: string-reference
-title: String
+title: String — Manipulate string data
 ---
 
 ## String.size(s: string) : nat
