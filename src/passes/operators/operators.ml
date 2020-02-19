@@ -148,6 +148,7 @@ module Simplify = struct
   module Cameligo = struct
     let constants = function
       | "assert"                   -> ok C_ASSERTION
+      | "chain_id"                 -> ok C_CHAIN_ID
       | "Current.balance"          -> ok C_BALANCE
       | "balance"                  -> ok C_BALANCE
       | "Current.time"             -> ok C_NOW
