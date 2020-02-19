@@ -10,10 +10,10 @@ let%expect_test _ =
   [%expect {| 1747 bytes |}] ;
 
   run_ligo_good [ "measure-contract" ; contract "multisig.ligo" ; "main" ] ;
-  [%expect {| 1358 bytes |}] ;
+  [%expect {| 1324 bytes |}] ;
 
   run_ligo_good [ "measure-contract" ; contract "multisig-v2.ligo" ; "main" ] ;
-  [%expect {| 3294 bytes |}] ;
+  [%expect {| 3231 bytes |}] ;
 
   run_ligo_good [ "measure-contract" ; contract "vote.mligo" ; "main" ] ;
   [%expect {| 642 bytes |}] ;
@@ -371,17 +371,16 @@ let%expect_test _ =
                                        SWAP ;
                                        DIP { DROP 2 } }
                                      { PUSH string "Invalid signature" ; FAILWITH } ;
-                                  DIP { DROP ; DUP } ;
-                                  SWAP ;
+                                  DIP 2 { DUP } ;
+                                  DIG 2 ;
                                   DIP { DUP } ;
                                   SWAP ;
-                                  DIP { DROP 2 } }
+                                  DIP { DROP 3 } }
                                 { DUP } ;
-                             DIP { DROP } ;
-                             DIP 3 { DUP } ;
-                             DIG 3 ;
-                             DIP 3 { DUP } ;
-                             DIG 3 ;
+                             DIP 4 { DUP } ;
+                             DIG 4 ;
+                             DIP 4 { DUP } ;
+                             DIG 4 ;
                              SWAP ;
                              CDR ;
                              SWAP ;
@@ -389,13 +388,12 @@ let%expect_test _ =
                              CAR ;
                              DIP { DUP } ;
                              PAIR ;
-                             DIP { DROP 3 } }
+                             DIP { DROP 4 } }
                            { DUP } ;
-                         DIP { DROP } ;
-                         DIP 4 { DUP } ;
-                         DIG 4 ;
                          DIP 5 { DUP } ;
                          DIG 5 ;
+                         DIP 6 { DUP } ;
+                         DIG 6 ;
                          CAR ;
                          DIP 2 { DUP } ;
                          DIG 2 ;
@@ -423,7 +421,7 @@ let%expect_test _ =
                          SWAP ;
                          PAIR ;
                          CAR ;
-                         DIP { DROP 6 } } ;
+                         DIP { DROP 7 } } ;
                   DIP 3 { DUP } ;
                   DIG 3 ;
                   DIP { DUP } ;
@@ -450,14 +448,12 @@ let%expect_test _ =
                        DIP { DUP } ;
                        SWAP ;
                        DIP { DROP 2 } } ;
-                  DIP { DROP } ;
-                  DIP 2 { DUP } ;
-                  DIG 2 ;
+                  DIP 3 { DUP } ;
+                  DIG 3 ;
                   CAR ;
                   DIP { DUP } ;
                   PAIR ;
-                  DIP { DROP 2 } } ;
-             DIP { DROP } ;
+                  DIP { DROP 3 } } ;
              DUP ;
              CAR ;
              CAR ;
@@ -465,7 +461,7 @@ let%expect_test _ =
              EXEC ;
              DIP { DUP ; CDR } ;
              PAIR ;
-             DIP { DROP 6 } } } |} ]
+             DIP { DROP 7 } } } |} ]
 
 let%expect_test _ =
   run_ligo_good [ "compile-contract" ; contract "multisig-v2.ligo" ; "main" ] ;
@@ -589,14 +585,13 @@ let%expect_test _ =
                               DIP { DUP } ;
                               SWAP ;
                               DIP { DROP 2 } } ;
-                         DIP { DROP } ;
-                         DIP 2 { DUP } ;
-                         DIG 2 ;
+                         DIP 3 { DUP } ;
+                         DIG 3 ;
                          CAR ;
                          DIP { DUP } ;
                          PAIR ;
-                         DIP 2 { DUP } ;
-                         DIG 2 ;
+                         DIP 3 { DUP } ;
+                         DIG 3 ;
                          PUSH bool True ;
                          SENDER ;
                          UPDATE ;
@@ -604,8 +599,7 @@ let%expect_test _ =
                          CDR ;
                          SWAP ;
                          PAIR ;
-                         DIP { DROP 2 } } ;
-                     DIP { DROP } ;
+                         DIP { DROP 3 } } ;
                      DUP ;
                      CAR ;
                      DIP { DUP } ;
@@ -624,11 +618,11 @@ let%expect_test _ =
                      GT ;
                      IF { PUSH string "Maximum number of proposal reached" ; FAILWITH }
                         { PUSH unit Unit } ;
-                     DIP 7 { DUP } ;
-                     DIG 7 ;
+                     DIP 8 { DUP } ;
+                     DIG 8 ;
                      DIP { DIP 3 { DUP } ; DIG 3 } ;
                      PAIR ;
-                     DIP { DIP 6 { DUP } ; DIG 6 ; NIL operation ; SWAP ; PAIR } ;
+                     DIP { DIP 7 { DUP } ; DIG 7 ; NIL operation ; SWAP ; PAIR } ;
                      PAIR ;
                      DIP { DIP 2 { DUP } ; DIG 2 } ;
                      PAIR ;
@@ -640,8 +634,8 @@ let%expect_test _ =
                      GE ;
                      IF { DIP 3 { DUP } ;
                           DIG 3 ;
-                          DIP 8 { DUP } ;
-                          DIG 8 ;
+                          DIP 9 { DUP } ;
+                          DIG 9 ;
                           DIP { DIP 4 { DUP } ; DIG 4 ; CAR ; CDR ; CDR ; NONE (set address) } ;
                           UPDATE ;
                           DIP { DUP ; CDR ; SWAP ; CAR ; DUP ; CAR ; SWAP ; CDR ; CAR } ;
@@ -654,7 +648,7 @@ let%expect_test _ =
                           CDR ;
                           CAR ;
                           CDR ;
-                          DIP { DIP 9 { DUP } ; DIG 9 } ;
+                          DIP { DIP 10 { DUP } ; DIG 10 } ;
                           EXEC ;
                           DIP { DUP } ;
                           SWAP ;
@@ -663,7 +657,7 @@ let%expect_test _ =
                           CDR ;
                           CAR ;
                           CDR ;
-                          DIP { DIP 10 { DUP } ; DIG 10 } ;
+                          DIP { DIP 11 { DUP } ; DIG 11 } ;
                           CONCAT ;
                           SHA256 ;
                           DIP { DUP ; CAR ; SWAP ; CDR ; DUP ; CDR ; SWAP ; CAR ; CAR } ;
@@ -724,11 +718,10 @@ let%expect_test _ =
                                       PAIR ;
                                       DIP { DROP } }
                                     { DUP } ;
-                                 DIP { DROP } ;
-                                 DIP 4 { DUP } ;
-                                 DIG 4 ;
                                  DIP 5 { DUP } ;
                                  DIG 5 ;
+                                 DIP 6 { DUP } ;
+                                 DIG 6 ;
                                  CAR ;
                                  DIP 2 { DUP } ;
                                  DIG 2 ;
@@ -736,7 +729,7 @@ let%expect_test _ =
                                  DIP { DROP ; CDR } ;
                                  PAIR ;
                                  CAR ;
-                                 DIP { DROP 5 } } ;
+                                 DIP { DROP 6 } } ;
                           DIP 4 { DUP } ;
                           DIG 4 ;
                           DIP 4 { DUP } ;
@@ -764,8 +757,8 @@ let%expect_test _ =
                         { DUP ;
                           DIP 4 { DUP } ;
                           DIG 4 ;
-                          DIP 9 { DUP } ;
-                          DIG 9 ;
+                          DIP 10 { DUP } ;
+                          DIG 10 ;
                           DIP { DIP 6 { DUP } ;
                                 DIG 6 ;
                                 SOME ;
@@ -780,14 +773,13 @@ let%expect_test _ =
                           SWAP ;
                           CAR ;
                           PAIR } ;
-                     DIP { DROP } ;
                      DUP ;
                      CAR ;
                      CDR ;
                      CDR ;
                      DIP { DUP ; CDR } ;
                      PAIR ;
-                     DIP { DROP 13 } } ;
+                     DIP { DROP 15 } } ;
                  DIP { DROP } }
                { DUP ;
                  DIP { DIP { DUP } ; SWAP } ;
@@ -848,16 +840,15 @@ let%expect_test _ =
                           SWAP ;
                           DIP { DROP 2 } }
                         { DUP } ;
-                     DIP { DROP } ;
                      DUP ;
-                     DIP 2 { DUP } ;
-                     DIG 2 ;
-                     DIP { DIP 5 { DUP } ; DIG 5 } ;
+                     DIP 3 { DUP } ;
+                     DIG 3 ;
+                     DIP { DIP 6 { DUP } ; DIG 6 } ;
                      PAIR ;
                      DIP { DUP } ;
                      PAIR ;
-                     DIP 3 { DUP } ;
-                     DIG 3 ;
+                     DIP 4 { DUP } ;
+                     DIG 4 ;
                      SIZE ;
                      PUSH nat 0 ;
                      SWAP ;
@@ -865,8 +856,8 @@ let%expect_test _ =
                      EQ ;
                      IF { DIP { DUP } ;
                           SWAP ;
-                          DIP 7 { DUP } ;
-                          DIG 7 ;
+                          DIP 8 { DUP } ;
+                          DIG 8 ;
                           DIP { DIP 2 { DUP } ; DIG 2 ; CAR ; CDR ; CDR ; NONE (set address) } ;
                           UPDATE ;
                           DIP { DUP ; CDR ; SWAP ; CAR ; DUP ; CAR ; SWAP ; CDR ; CAR } ;
@@ -884,10 +875,10 @@ let%expect_test _ =
                         { DUP ;
                           DIP 2 { DUP } ;
                           DIG 2 ;
-                          DIP 8 { DUP } ;
-                          DIG 8 ;
-                          DIP { DIP 5 { DUP } ;
-                                DIG 5 ;
+                          DIP 9 { DUP } ;
+                          DIG 9 ;
+                          DIP { DIP 6 { DUP } ;
+                                DIG 6 ;
                                 SOME ;
                                 DIP { DIP 3 { DUP } ; DIG 3 ; CAR ; CDR ; CDR } } ;
                           UPDATE ;
@@ -900,11 +891,10 @@ let%expect_test _ =
                           SWAP ;
                           CAR ;
                           PAIR } ;
-                     DIP { DROP } ;
-                     DIP 5 { DUP } ;
-                     DIG 5 ;
-                     DIP 2 { DUP } ;
-                     DIG 2 ;
+                     DIP 7 { DUP } ;
+                     DIG 7 ;
+                     DIP 3 { DUP } ;
+                     DIG 3 ;
                      SWAP ;
                      CAR ;
                      PAIR ;
@@ -936,13 +926,12 @@ let%expect_test _ =
                      SWAP ;
                      CAR ;
                      PAIR ;
-                     DIP { DROP 5 } } ;
-                 DIP { DROP } ;
+                     DIP { DROP 7 } } ;
                  DUP ;
                  CDR ;
                  NIL operation ;
                  PAIR ;
-                 DIP { DROP 5 } } ;
+                 DIP { DROP 6 } } ;
              DIP { DROP 2 } } } |} ]
 
 let%expect_test _ =

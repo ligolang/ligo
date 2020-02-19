@@ -235,7 +235,7 @@ module Ast_PP_type (PARAMETER : AST_PARAMETER_TYPE) = struct
       | TC_key_hash ->
           "key_hash"
       | TC_signature ->
-          "signatuer"
+          "signature"
       | TC_timestamp ->
           "timestamp"
       | TC_chain_id ->
