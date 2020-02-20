@@ -75,7 +75,7 @@ let make_dry_run_options (opts : dry_run_options) : options result =
       match Memory_proto_alpha.Protocol.Alpha_context.Timestamp.of_notation st with
         | Some t -> ok (Some t)
         | None -> simple_fail ("\""^st^"\" is a bad timestamp notation") in
-  ok @@ make_options ?predecessor_timestamp:predecessor_timestamp ~amount ?source:sender ?payer:source ()
+  ok @@ make_options ?predecessor_timestamp:predecessor_timestamp ~amount ?sender ?source ()
 
 let ex_value_ty_to_michelson (v : ex_typed_value) : Michelson.t result =
   let (Ex_typed_value (value , ty)) = v in

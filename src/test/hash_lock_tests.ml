@@ -78,7 +78,7 @@ let commit () =
   let options =
     Proto_alpha_utils.Memory_proto_alpha.make_options
       ~predecessor_timestamp
-      ~payer:first_contract
+      ~sender:first_contract
       ()
   in
   expect_eq ~options program "commit"
@@ -127,7 +127,7 @@ let reveal_young_commit () =
   let options =
     Proto_alpha_utils.Memory_proto_alpha.make_options
       ~predecessor_timestamp
-      ~payer:first_contract
+      ~sender:first_contract
       ()
   in
   expect_string_failwith ~options program "reveal"
@@ -159,7 +159,7 @@ let reveal_breaks_commit () =
   let options =
     Proto_alpha_utils.Memory_proto_alpha.make_options
       ~predecessor_timestamp
-      ~payer:first_contract
+      ~sender:first_contract
       ()
   in
   expect_string_failwith ~options program "reveal"
@@ -191,7 +191,7 @@ let reveal_wrong_commit () =
   let options =
     Proto_alpha_utils.Memory_proto_alpha.make_options
       ~predecessor_timestamp
-      ~payer:first_contract
+      ~sender:first_contract
       ()
   in
   expect_string_failwith ~options program "reveal"
@@ -223,7 +223,7 @@ let reveal_no_reuse () =
   let options =
     Proto_alpha_utils.Memory_proto_alpha.make_options
       ~predecessor_timestamp
-      ~payer:first_contract
+      ~sender:first_contract
       ()
   in
   expect_string_failwith ~options program "reveal"
@@ -256,7 +256,7 @@ let reveal () =
   let options =
     Proto_alpha_utils.Memory_proto_alpha.make_options
       ~predecessor_timestamp
-      ~payer:first_contract
+      ~sender:first_contract
       ()
   in
   expect_eq ~options program "reveal"

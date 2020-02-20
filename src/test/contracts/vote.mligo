@@ -35,7 +35,7 @@ let init (init_params_s : init_action * storage) =
 let vote (ps : string * storage) =
   let now = Current.time in
   (* let _ = assert (now >= ps.1.beginning_time && ps.1.finish_time > now) in *)
-  let addr = Current.source in
+  let addr = Current.sender in
   (* let _ = assert (not Set.mem addr ps.1.voters) in *)
   let x = Map.find ps.0 ps.1.candidates in
   (
