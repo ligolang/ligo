@@ -338,7 +338,7 @@ and transpile_annotated_expression (ae:AST.expression) : expression result =
                 trace_option (corner_case ~loc:__LOC__ "missing var") @@
                 AST.Environment.get_opt v f.environment in
               match elt.definition with
-              | ED_declaration (f , _) -> (
+              | ED_declaration { expr = f ; free_variables = _ } -> (
                   match f.expression_content with
                   | E_lambda l -> lambda_to_iterator_body f l
                   | _ -> fail @@ unsupported_iterator f.location
