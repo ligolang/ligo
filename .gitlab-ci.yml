@@ -121,7 +121,7 @@ build-current-docker-image:
     - build-and-package-debian-10
   <<: *docker
   script:
-    - sh scripts/build_docker_image.sh
+    - sh scripts/build_docker_image.sh next
     - sh scripts/test_cli.sh
   only:
     - merge_requests
@@ -134,7 +134,7 @@ build-and-publish-latest-docker-image:
   dependencies:
     - build-and-package-debian-10
   script:
-    - sh scripts/build_docker_image.sh
+    - sh scripts/build_docker_image.sh $(if test "$CI_COMMIT_REF_NAME" = "dev"; then echo next; else echo next-attempt; fi)
     - sh scripts/test_cli.sh
     - echo ${LIGO_REGISTRY_PASSWORD} | docker login -u ${LIGO_REGISTRY_USER} --password-stdin
     - docker push ${LIGO_REGISTRY_IMAGE_BUILD:-ligolang/ligo}:$(if test "$CI_COMMIT_REF_NAME" = "dev"; then echo next; else echo next-attempt; fi)
