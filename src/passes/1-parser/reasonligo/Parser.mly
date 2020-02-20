@@ -650,15 +650,16 @@ case_clause(right_expr):
     in {region; value} }
 
 let_expr(right_expr):
-  seq(Attr) "let" let_binding ";" right_expr {
+  seq(Attr) "let" ioption("rec") let_binding ";" right_expr {
     let attributes = $1 in
     let kwd_let = $2 in
-    let binding = $3 in
-    let kwd_in  = $4 in
-    let body    = $5 in
-    let stop    = expr_to_region $5 in
+    let kwd_rec = $3 in
+    let binding = $4 in
+    let kwd_in  = $5 in
+    let body    = $6 in
+    let stop    = expr_to_region $6 in
     let region  = cover $2 stop
-    and value   = {kwd_let; binding; kwd_in; body; attributes}
+    and value   = {kwd_let; kwd_rec; binding; kwd_in; body; attributes}
     in ELetIn {region; value} }
 
 disj_expr_level:

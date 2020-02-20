@@ -79,6 +79,7 @@ type t =
 | End   of Region.t
 | False of Region.t
 | Fun   of Region.t
+| Rec   of Region.t
 | If    of Region.t
 | In    of Region.t
 | Let   of Region.t
@@ -154,6 +155,7 @@ let proj_token = function
 | End region -> region, "End"
 | False region -> region, "False"
 | Fun region -> region, "Fun"
+| Rec region -> region, "Rec"
 | If region -> region, "If"
 | In region -> region, "In"
 | Let region -> region, "Let"
@@ -213,6 +215,7 @@ let to_lexeme = function
 | End _   -> "end"
 | False _ -> "false"
 | Fun _   -> "fun"
+| Rec _   -> "rec"
 | If _    -> "if"
 | In _    -> "in"
 | Let _   -> "let"

@@ -544,8 +544,9 @@ and print_case_clause state {value; _} =
   print_expr    state rhs
 
 and print_let_in state {value; _} =
-  let {kwd_let; binding; kwd_in; body; attributes} = value in
+  let {kwd_let; kwd_rec; binding; kwd_in; body; attributes} = value in
   print_token       state kwd_let "let";
+  print_token_opt   state kwd_rec "rec";
   print_let_binding state binding;
   print_attributes  state attributes;
   print_token       state kwd_in "in";

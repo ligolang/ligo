@@ -57,6 +57,7 @@
 %token <Region.t> False       "False"
 %token <Region.t> For         "for"
 %token <Region.t> Function    "function"
+%token <Region.t> Recursive   "recursive"
 %token <Region.t> From        "from"
 %token <Region.t> If          "if"
 %token <Region.t> In          "in"

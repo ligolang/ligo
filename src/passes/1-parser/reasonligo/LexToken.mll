@@ -80,6 +80,7 @@ type t =
 | False of Region.t
 | If of Region.t
 | Let of Region.t
+| Rec of Region.t
 | Switch of Region.t
 | Mod of Region.t
 | Or of Region.t
@@ -146,6 +147,7 @@ let proj_token = function
 | False region -> region, "False"
 | If region -> region, "If"
 | Let region -> region, "Let"
+| Rec region -> region, "Rec"
 | Switch region -> region, "Switch"
 | Mod region -> region, "Mod"
 | NOT region -> region, "!"
@@ -197,6 +199,7 @@ let to_lexeme = function
 | False _ -> "false"
 | If _ -> "if"
 | Let _ -> "let"
+| Rec _ -> "rec"
 | Mod _ -> "mod"
 | NOT _ -> "!"
 | Or _ -> "or"

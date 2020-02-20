@@ -630,6 +630,7 @@ and simpl_fun lamb' : expr result =
             in
             let let_in: Raw.let_in =
               {kwd_let= Region.ghost;
+               kwd_rec= None;
                binding= let_in_binding;
                kwd_in= Region.ghost;
                body= lamb.body;

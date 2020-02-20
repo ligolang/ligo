@@ -30,6 +30,7 @@ type kwd_else  = Region.t
 type kwd_end   = Region.t
 type kwd_false = Region.t
 type kwd_fun   = Region.t
+type kwd_rec   = Region.t
 type kwd_if    = Region.t
 type kwd_in    = Region.t
 type kwd_let   = Region.t
@@ -362,6 +363,7 @@ and 'a case_clause = {
 
 and let_in = {
   kwd_let    : kwd_let;
+  kwd_rec    : kwd_rec option;
   binding    : let_binding;
   kwd_in     : kwd_in;
   body       : expr;

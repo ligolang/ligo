@@ -218,8 +218,9 @@ and print_fun_decl state {value; _} =
   print_terminator state terminator;
 
 and print_fun_expr state {value; _} =
-  let {kwd_function; param; colon;
+  let {kwd_recursive; kwd_function; param; colon;
        ret_type; kwd_is; return} : fun_expr = value in
+  print_token_opt   state kwd_recursive "recursive";
   print_token       state kwd_function "function";
   print_parameters  state param;
   print_token       state colon ":";
