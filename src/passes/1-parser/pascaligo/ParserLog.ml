@@ -816,8 +816,6 @@ let pattern_to_string ~offsets ~mode =
   to_string ~offsets ~mode print_pattern
 let instruction_to_string ~offsets ~mode =
   to_string ~offsets ~mode print_instruction
-let projection_to_string ~offsets ~mode =
-  to_string ~offsets ~mode print_projection
 
 (** {1 Pretty-printing the AST} *)
 

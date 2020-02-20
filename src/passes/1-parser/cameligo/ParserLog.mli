@@ -17,7 +17,6 @@ val mk_state :
 val print_tokens  : state -> AST.t -> unit
 val print_pattern : state -> AST.pattern -> unit
 val print_expr    : state -> AST.expr -> unit
-val print_projection : state -> AST.projection Region.reg -> unit
 
 val tokens_to_string :
   offsets:bool -> mode:[`Point|`Byte] -> AST.t -> string
@@ -25,8 +24,6 @@ val pattern_to_string :
   offsets:bool -> mode:[`Point|`Byte] -> AST.pattern -> string
 val expr_to_string :
   offsets:bool -> mode:[`Point|`Byte] -> AST.expr -> string
-val projection_to_string :
-  offsets:bool -> mode:[`Point|`Byte] -> AST.projection Region.reg -> string
 
 (** {1 Pretty-printing of AST nodes} *)
 

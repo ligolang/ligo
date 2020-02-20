@@ -184,20 +184,6 @@ module Errors = struct
     ] in
     error ~data title message
 
-  let zero_index_access (p: _ Region.reg) =
-    let title () = "" in
-    let message () =
-      Format.asprintf "\n In PascaLigo, tuple indexes start at one \n" in
-    let pattern_loc = p.region in
-    let data = [
-      ("location",
-      fun () -> Format.asprintf "%a" Location.pp_lift @@ pattern_loc);
-      ("tuple",
-       fun () -> ParserLog.projection_to_string
-                ~offsets:true ~mode:`Point p)
-    ] in
-    error ~data title message
-
   (* Logging *)
 
   let simplifying_instruction t =
@@ -313,16 +299,13 @@ let simpl_projection : Raw.projection Region.reg -> _ = fun p ->
     let name = Var.of_name p'.struct_name.value in
     e_variable name in
   let path = p'.field_path in
-  let%bind path' =
+  let path' =
     let aux (s:Raw.selection) =
       match s with
-      | FieldName property -> ok property.value
-      | Component index -> 
-       let i:Z.t = Z.pred (snd index.value) in
-       if (Z.lt i Z.zero) then fail @@ zero_index_access p
-       else ok (Z.to_string i)
+      | FieldName property -> property.value
+      | Component index -> (Z.to_string (snd index.value))
     in
-    bind_map_list aux @@ npseq_to_list path in
+    List.map aux @@ npseq_to_list path in
   ok @@ List.fold_left (e_accessor ~loc) var path'
 
 
@@ -515,7 +498,7 @@ let rec simpl_expression (t:Raw.expr) : expr result =
 
 and simpl_update = fun (u:Raw.update Region.reg) ->
   let (u, loc) = r_split u in
-  let%bind (name, path) = simpl_path u.record in
+  let (name, path) = simpl_path u.record in
   let record = match path with
   | [] -> e_variable (Var.of_name name)
   | _ -> e_accessor_list (e_variable (Var.of_name name)) path in 
@@ -928,7 +911,7 @@ and simpl_single_instruction : Raw.instruction -> (_ -> expression result) resul
       let%bind value_expr = simpl_expression a.rhs in
       match a.lhs with
         | Path path -> (
-            let%bind (name , path') = simpl_path path in
+            let (name , path') = simpl_path path in
             let (let_binder, mut, rhs, inline) = e_assign_with_let ~loc name path' value_expr in
             return_let_in let_binder mut inline rhs
           )
@@ -937,7 +920,7 @@ and simpl_single_instruction : Raw.instruction -> (_ -> expression result) resul
             let%bind (varname,map,path) = match v'.path with
               | Name name -> ok (name.value , e_variable (Var.of_name name.value), [])
               | Path p ->
-                let%bind (name,p') = simpl_path v'.path in
+                let (name,p') = simpl_path v'.path in
                 let%bind accessor = simpl_projection p in
                 ok @@ (name , accessor , p')
             in
@@ -999,7 +982,7 @@ and simpl_single_instruction : Raw.instruction -> (_ -> expression result) resul
         } in
       let u : Raw.update = {record=r.path;kwd_with=r.kwd_with; updates=update} in
       let%bind expr = simpl_update {value=u;region=reg} in
-      let%bind (name , access_path) = simpl_path r.path in
+      let (name , access_path) = simpl_path r.path in
       let loc = Some loc in
       let (binder, mut, rhs, inline) = e_assign_with_let ?loc name access_path expr in
       return_let_in binder mut inline rhs
@@ -1007,7 +990,7 @@ and simpl_single_instruction : Raw.instruction -> (_ -> expression result) resul
   )
   | MapPatch patch -> (
       let (map_p, loc) = r_split patch in
-      let%bind (name, access_path) = simpl_path map_p.path in
+      let (name, access_path) = simpl_path map_p.path in
       let%bind inj = bind_list
           @@ List.map (fun (x:Raw.binding Region.reg) ->
             let x = x.value in
@@ -1030,7 +1013,7 @@ and simpl_single_instruction : Raw.instruction -> (_ -> expression result) resul
     )
   | SetPatch patch -> (
       let (setp, loc) = r_split patch in
-      let%bind (name , access_path) = simpl_path setp.path in
+      let (name , access_path) = simpl_path setp.path in
       let%bind inj =
         bind_list @@
         List.map simpl_expression @@
@@ -1050,7 +1033,7 @@ and simpl_single_instruction : Raw.instruction -> (_ -> expression result) resul
       let%bind (varname,map,path) = match v.map with
         | Name v -> ok (v.value , e_variable (Var.of_name v.value) , [])
         | Path p ->
-          let%bind (name,p') = simpl_path v.map in
+          let (name,p') = simpl_path v.map in
           let%bind accessor = simpl_projection p in
           ok @@ (name , accessor , p')
       in
@@ -1064,7 +1047,7 @@ and simpl_single_instruction : Raw.instruction -> (_ -> expression result) resul
       let%bind (varname, set, path) = match set_rm.set with
         | Name v -> ok (v.value, e_variable (Var.of_name v.value), [])
         | Path path ->
-          let%bind (name, p') = simpl_path set_rm.set in
+          let(name, p') = simpl_path set_rm.set in
           let%bind accessor = simpl_projection path in
           ok @@ (name, accessor, p')
       in
@@ -1074,25 +1057,21 @@ and simpl_single_instruction : Raw.instruction -> (_ -> expression result) resul
       return_let_in binder mut inline rhs
     )
 
-and simpl_path : Raw.path -> (string * string list) result = fun p ->
+and simpl_path : Raw.path -> string * string list = fun p ->
   match p with
-  | Raw.Name v -> ok (v.value , [])
+  | Raw.Name v -> (v.value , [])
   | Raw.Path p -> (
       let p' = p.value in
       let var = p'.struct_name.value in
       let path = p'.field_path in
-      let%bind path' =
+      let path' =
         let aux (s:Raw.selection) =
           match s with
-          | FieldName property -> ok property.value
-          | Component index -> 
-            let i:Z.t = Z.pred (snd index.value) in
-            if (Z.lt i Z.zero) then fail @@ zero_index_access p
-            else ok (Z.to_string i)
+          | FieldName property -> property.value
+          | Component index -> (Z.to_string (snd index.value))
         in
-        bind_map_list aux @@ npseq_to_list path
-      in
-      ok (var , path')
+        List.map aux @@ npseq_to_list path in
+      (var , path')
     )
 
 and simpl_cases : (Raw.pattern * expression) list -> matching_expr result = fun t ->
