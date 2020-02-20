@@ -8,4 +8,4 @@ function main(const p : parameter; const s : storage) : return is
 function main (const p : parameter; const s : storage) : return is
   block {
     const ret : return = main (p, s)
-  } with (ret.1, ret.2 + 1)
+  } with (ret.0, ret.1 + 1)

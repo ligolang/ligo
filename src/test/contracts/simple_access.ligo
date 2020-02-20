@@ -11,8 +11,8 @@ function main (const toto : tpi) : int is
     var a : tpi := toto;
     var b : rpi := record x = 0; y=1 ; end;
     var m : mpi := map "y" -> 1; end;
-    a.1 := 2;
-    b.x := a.1;
+    a.0 := 2;
+    b.x := a.0;
     m["x"] := b.x;
   end with
   case m["x"] of

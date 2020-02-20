@@ -28,7 +28,7 @@ function patch_ (var m : foobar) : foobar is block {
 } with m
 
 function patch_deep (var m : foobar * nat) : foobar * nat is
-  block { patch m.1 with map [1 -> 9] } with m
+  block { patch m.0 with map [1 -> 9] } with m
 
 function size_ (const m : foobar) : nat is size (m)
 
@@ -54,12 +54,12 @@ function map_op (const m : foobar) : foobar is
 function fold_op (const m : foobar) : int is
   block {
     function aggregate (const i : int; const j : int * int) : int is
-      i + j.1 + j.2
+      i + j.0 + j.1
   } with map_fold(aggregate, m, 10)
 
 function deep_op (var m : foobar) : foobar is
   block {
     var coco : int * foobar := (0, m);
-    remove 42 from map coco.2;
-    coco.2[32] := 16
-  } with coco.2
+    remove 42 from map coco.1;
+    coco.1[32] := 16
+  } with coco.1
