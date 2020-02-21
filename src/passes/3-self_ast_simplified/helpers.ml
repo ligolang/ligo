@@ -186,37 +186,8 @@ and map_type_expression : ty_exp_mapper -> type_expression -> type_expression re
     let%bind type1' = self type1 in
     let%bind type2' = self type2 in
     return @@ (T_arrow {type1=type1' ; type2=type2'})
-  | T_operator type_op ->
-    let%bind to' = map_type_operator f type_op in
-    return @@ (T_operator to')
+  | T_operator _
   | T_variable _ | T_constant _ -> ok te'
-
-and map_type_operator : ty_exp_mapper -> type_operator -> type_operator result = fun f te ->
-  match te with
-  | TC_contract e ->
-    let%bind e' = map_type_expression f e in
-    ok @@ TC_contract e'
-  | TC_option e ->
-    let%bind e' = map_type_expression f e in
-    ok @@ TC_option e'
-  | TC_list e ->
-    let%bind e' = map_type_expression f e in
-    ok @@ TC_list e'
-  | TC_set e -> 
-    let%bind e' = map_type_expression f e in
-    ok @@ TC_set e'
-  | TC_map (a , b) ->
-    let%bind a' = map_type_expression f a in
-    let%bind b' = map_type_expression f b in
-    ok @@ TC_map (a' , b')
-  | TC_big_map (a , b) ->
-    let%bind a' = map_type_expression f a in
-    let%bind b' = map_type_expression f b in
-    ok @@ TC_big_map (a' , b')
-  | TC_arrow (a , b) -> 
-    let%bind a' = map_type_expression f a in
-    let%bind b' = map_type_expression f b in
-    ok @@ TC_arrow (a' , b')
 
 and map_cases : exp_mapper -> matching_expr -> matching_expr result = fun f m ->
   match m with
