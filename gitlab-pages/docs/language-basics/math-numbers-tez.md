@@ -3,7 +3,28 @@ id: math-numbers-tez
 title: Math, Numbers & Tez
 ---
 
-LIGO offers three built-in numerical types: `int`, `nat` and `tez`.
+LIGO offers three built-in numerical types: `int`, `nat` and
+`tez`. Values of type `int` are integers; values of type `nat` are
+natural numbers (integral numbers greater than or equal to zero);
+values of type `tez` are units of measure of Tezos tokens.
+
+  * Integer literals are the same found in mainstream programming
+    languages, for example, `10`, `-6` and `0`, but there is only one
+    canonical zero: `0` (so, for instance, `-0` and `00` are invalid).
+
+  * Natural numbers are written as digits follwed by the suffix `n`,
+    like so: `12n`, `0n`, and the same restriction on zero as integers
+    applies: `0n` is the only way to specify the natural zero.
+
+  * Tezos tokens can be specified using literals of three kinds:
+      * units of millionth of `tez`, using the suffix `mutez` after a
+        natural literal, like `10000mutez` or `0mutez`;
+      * units of `tez`, using the suffix `tz` or `tez`, like `3tz` or
+        `3tez`;
+      * decimal amounts of `tz` or `tez`, like `12.3tz` or `12.4tez`.
+
+Note that large integral values can be expressed using underscores to
+separate groups of digits, like `1_000mutez` or `0.000_004tez`.
 
 ## Addition
 
@@ -27,7 +48,7 @@ const a : int = 5 + 10
 const b : int = 5n + 10
 
 // tez + tez yields tez
-const c : tez = 5mutez + 10mutez
+const c : tez = 5mutez + 0.000_010tez
 
 //tez + int or tez + nat is invalid
 // const d : tez = 5mutez + 10n
@@ -57,7 +78,7 @@ let a : int = 5 + 10
 let b : int = 5n + 10
 
 // tez + tez yields tez
-let c : tez = 5mutez + 10mutez
+let c : tez = 5mutez + 0.000_010tez
 
 // tez + int or tez + nat is invalid
 // let d : tez = 5mutez + 10n
@@ -87,7 +108,7 @@ let a : int = 5 + 10;
 let b : int = 5n + 10;
 
 // tez + tez yields tez
-let c : tez = 5mutez + 10mutez;
+let c : tez = 5mutez + 0.000_010tez;
 
 // tez + int or tez + nat is invalid:
 // let d : tez = 5mutez + 10n;

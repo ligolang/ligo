@@ -62,21 +62,19 @@ Accessing the components of a tuple in OCaml is achieved by
 [pattern matching](language-basics/unit-option-pattern-matching.md). LIGO
 currently supports tuple patterns only in the parameters of functions,
 not in pattern matching. However, we can access components by their
-position in their tuple, which cannot be done in OCaml.
+position in their tuple, which cannot be done in OCaml. *Tuple
+components are zero-indexed*, that is, the first component has index
+`0`.
 
 <!--DOCUSAURUS_CODE_TABS-->
 
 <!--PascaLIGO-->
 
-Tuple components are one-indexed and accessed like so:
-
 ```pascaligo group=tuple
-const first_name : string = full_name.1
+const first_name : string = full_name.0
 ```
 
 <!--CameLIGO-->
-
-Tuple elements are zero-indexed and accessed like so:
 
 ```cameligo group=tuple
 let first_name : string = full_name.0
@@ -84,10 +82,8 @@ let first_name : string = full_name.0
 
 <!--ReasonLIGO-->
 
-Tuple components are one-indexed and accessed like so:
-
 ```reasonligo group=tuple
-let first_name : string = full_name[1];
+let first_name : string = full_name[0];
 ```
 
 <!--END_DOCUSAURUS_CODE_TABS-->

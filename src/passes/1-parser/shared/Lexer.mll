@@ -499,7 +499,7 @@ module Make (Token: TOKEN) : (S with module Token = Token) =
       | Error Token.Non_canonical_zero ->
           fail region Non_canonical_zero
 
-    let mk_tz state buffer =
+    let mk_tez state buffer =
       let region, lexeme, state = sync state buffer in
       let lexeme = Str.string_before lexeme (String.index lexeme 't') in
       let lexeme = Z.mul (Z.of_int 1_000_000) (Z.of_string lexeme) in
@@ -508,7 +508,7 @@ module Make (Token: TOKEN) : (S with module Token = Token) =
       | Error Token.Non_canonical_zero ->
           fail region Non_canonical_zero
 
-    let format_tz s =
+    let format_tez s =
       match String.index s '.' with
         index ->
           let len         = String.length s in
@@ -522,10 +522,11 @@ module Make (Token: TOKEN) : (S with module Token = Token) =
           if Z.equal Z.one should_be_1 then Some (Q.num mutez) else None
       | exception Not_found -> assert false
 
-    let mk_tz_decimal state buffer =
+    let mk_tez_decimal state buffer =
       let region, lexeme, state = sync state buffer in
+      let lexeme = Str.(global_replace (regexp "_") "" lexeme) in
       let lexeme = Str.string_before lexeme (String.index lexeme 't') in
-      match format_tz lexeme with
+      match format_tez lexeme with
         None -> assert false
       | Some tz ->
           match Token.mk_mutez (Z.to_string tz ^ "mutez") region with
@@ -573,7 +574,7 @@ let nl         = ['\n' '\r'] | "\r\n"
 let blank      = ' ' | '\t'
 let digit      = ['0'-'9']
 let natural    = digit | digit (digit | '_')* digit
-let decimal    = digit+ '.' digit+
+let decimal    = natural '.' natural
 let small      = ['a'-'z']
 let capital    = ['A'-'Z']
 let letter     = small | capital
@@ -624,9 +625,9 @@ and scan state = parse
 | natural 'n'            { mk_nat          state lexbuf |> enqueue  }
 | natural "mutez"        { mk_mutez        state lexbuf |> enqueue  }
 | natural "tz"
-| natural "tez"          { mk_tz           state lexbuf |> enqueue  }
+| natural "tez"          { mk_tez           state lexbuf |> enqueue }
 | decimal "tz"
-| decimal "tez"          { mk_tz_decimal   state lexbuf |> enqueue  }
+| decimal "tez"          { mk_tez_decimal   state lexbuf |> enqueue }
 | natural                { mk_int          state lexbuf |> enqueue  }
 | symbol                 { mk_sym          state lexbuf |> enqueue  }
 | eof                    { mk_eof          state lexbuf |> enqueue  }
