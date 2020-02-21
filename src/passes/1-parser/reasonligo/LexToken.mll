@@ -235,6 +235,7 @@ let keywords = [
   (fun reg -> False  reg);
   (fun reg -> If     reg);
   (fun reg -> Let    reg);
+  (fun reg -> Rec    reg);
   (fun reg -> Switch reg);
   (fun reg -> Mod    reg);
   (fun reg -> Or     reg);
@@ -276,7 +277,6 @@ let reserved =
     |> add "of"
     |> add "open"
     |> add "private"
-    |> add "rec"
     |> add "sig"
     |> add "struct"
     |> add "then"
@@ -481,6 +481,7 @@ let is_kwd = function
 | False _
 | If _
 | Let _
+| Rec _
 | Switch _
 | Mod _
 | Or _

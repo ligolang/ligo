@@ -253,6 +253,7 @@ let keywords = [
   (fun reg -> End   reg);
   (fun reg -> False reg);
   (fun reg -> Fun   reg);
+  (fun reg -> Rec   reg);
   (fun reg -> If    reg);
   (fun reg -> In    reg);
   (fun reg -> Let   reg);
@@ -294,7 +295,6 @@ let reserved =
     |> add "object"
     |> add "open"
     |> add "private"
-    |> add "rec"
     |> add "sig"
     |> add "struct"
     |> add "to"
@@ -502,6 +502,7 @@ let is_kwd = function
   | End _
   | False _
   | Fun _
+  | Rec _
   | If _
   | In _
   | Let _

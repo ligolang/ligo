@@ -264,11 +264,12 @@ field_decl:
 (* Top-level non-recursive definitions *)
 
 let_declaration:
-  seq(Attr) "let" let_binding {
+  seq(Attr) "let" ioption("rec") let_binding {
     let attributes = $1 in
     let kwd_let    = $2 in
-    let binding    = $3 in
-    let value      = kwd_let, binding, attributes in
+    let kwd_rec    = $3 in
+    let binding    = $4 in
+    let value      = kwd_let, kwd_rec, binding, attributes in
     let stop       = expr_to_region binding.let_rhs in
     let region     = cover $2 stop
     in {region; value} }

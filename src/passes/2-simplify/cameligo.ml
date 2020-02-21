@@ -739,7 +739,7 @@ and simpl_declaration : Raw.declaration -> declaration Location.wrap list result
       let%bind type_expression = simpl_type_expression type_expr in
       ok @@ [loc x @@ Declaration_type (Var.of_name name.value , type_expression)]
   | Let x -> (
-      let (_, let_binding, attributes), _ = r_split x in
+      let (_, _rec, let_binding, attributes), _ = r_split x in
       let inline = List.exists (fun (a: Raw.attribute) -> a.value = "inline") attributes in
       let binding = let_binding in
       let {binders; lhs_type; let_rhs} = binding in
@@ -796,11 +796,11 @@ and simpl_declaration : Raw.declaration -> declaration Location.wrap list result
           in ok @@ decls
         | PPar {region = _ ; value = { lpar = _ ; inside = pt; rpar = _; } } ->
           (* Extract parenthetical multi-bind *)
-          let (wild, _, attributes) = fst @@ r_split x in
+          let (wild, _rec, _, attributes) = fst @@ r_split x in
           simpl_declaration
             (Let {
                 region = x.region;
-                value = (wild, {binders = (pt, []);
+                value = (wild, _rec, {binders = (pt, []);
                                 lhs_type = lhs_type;
                                 eq = Region.ghost ;
                                 let_rhs = let_rhs}, attributes)}

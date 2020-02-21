@@ -136,8 +136,9 @@ and print_attributes state attributes =
    ) attributes
 
 and print_statement state = function
-  Let {value=kwd_let, let_binding, attributes; _} ->
+  Let {value=kwd_let, kwd_rec, let_binding, attributes; _} ->
     print_token       state kwd_let "let";
+    print_token_opt   state kwd_rec "rec";
     print_let_binding state let_binding;
     print_attributes  state attributes
 | TypeDecl {value={kwd_type; name; eq; type_expr}; _} ->
@@ -617,9 +618,14 @@ let rec pp_ast state {decl; _} =
   List.iteri (List.length decls |> apply) decls
 
 and pp_declaration state = function
-  Let {value = (_, let_binding, attr); region} ->
+  Let {value = (_, kwd_rec, let_binding, attr); region} ->
     pp_loc_node    state "Let" region;
+    (match kwd_rec with
+    | None -> ()
+    | Some (_) -> pp_node (state#pad 0 0) "rec"
+    );
     pp_let_binding state let_binding attr;
+
 | TypeDecl {value; region} ->
     pp_loc_node  state "TypeDecl" region;
     pp_type_decl state value
@@ -855,14 +861,21 @@ and pp_fun_expr state node =
   in ()
 
 and pp_let_in state node =
-  let {binding; body; attributes; _} = node in
+  let {binding; body; attributes; kwd_rec; _} = node in
   let {binders; lhs_type; let_rhs; _} = binding in
   let fields = if lhs_type = None then 3 else 4 in
+  let fields = if kwd_rec = None then fields else fields+1 in
   let fields = if attributes = [] then fields else fields+1 in
+  let arity = 
+    match kwd_rec with
+      None -> 0
+    | Some (_) ->
+      let state = state#pad fields 0 in
+      pp_node state "rec"; 0 in
   let arity =
     let state = state#pad fields 0 in
     pp_node state "<binders>";
-    pp_binders state binders; 0 in
+    pp_binders state binders; arity in
   let arity =
     match lhs_type with
       None -> arity

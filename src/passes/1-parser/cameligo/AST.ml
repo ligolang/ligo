@@ -135,7 +135,7 @@ and ast = t
 and attributes = attribute list
 
 and declaration =
-  Let      of (kwd_let * let_binding * attributes) reg
+  Let      of (kwd_let * kwd_rec option * let_binding * attributes) reg
 | TypeDecl of type_decl reg
 
 (* Non-recursive values *)
