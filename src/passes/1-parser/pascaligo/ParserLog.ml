@@ -609,8 +609,8 @@ and print_field_path_assign state {value; _} =
   print_nsepseq state "field_path" print_var field_path;
   print_token state equal "=";
   print_expr  state field_expr
-  
-and print_update_expr state {value; _} = 
+
+and print_update_expr state {value; _} =
   let {record; kwd_with; updates} = value in
   print_path state record;
   print_token state kwd_with "with";
@@ -859,20 +859,26 @@ and pp_declaration state = function
 and pp_attr_decl state = pp_ne_injection pp_string state
 
 and pp_fun_decl state decl =
-  let arity = 5 in
+  let arity, start =
+    match decl.kwd_recursive with
+      None -> 5,0
+    | Some _ ->
+       let state = state#pad 6 0 in
+       let () = pp_node state "recursive"
+       in 6,1 in
   let () =
-    let state = state#pad arity 0 in
+    let state = state#pad arity start in
     pp_ident state decl.fun_name in
   let () =
-    let state = state#pad arity 1 in
+    let state = state#pad arity (start + 1) in
     pp_node state "<parameters>";
     pp_parameters state decl.param in
   let () =
-    let state = state#pad arity 2 in
+    let state = state#pad arity (start + 2) in
     pp_node state "<return type>";
     pp_type_expr (state#pad 1 0) decl.ret_type in
   let () =
-    let state = state#pad arity 3 in
+    let state = state#pad arity (start + 3) in
     pp_node state "<body>";
     let statements =
       match decl.block_with with
@@ -880,7 +886,7 @@ and pp_fun_decl state decl =
       | None -> Instr (Skip Region.ghost), [] in
     pp_statements state statements in
   let () =
-    let state = state#pad arity 4 in
+    let state = state#pad arity (start + 4) in
     pp_node state "<return>";
     pp_expr (state#pad 1 0) decl.return
   in ()

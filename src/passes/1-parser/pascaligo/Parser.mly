@@ -263,47 +263,13 @@ fun_expr:
 (* Function declarations *)
 
 open_fun_decl:
-  "function" fun_name parameters ":" type_expr "is"
-  block "with" expr {
-    Scoping.check_reserved_name $2;
-    let stop   = expr_to_region $9 in
-    let region = cover $1 stop
-    and value  = {kwd_recursive= None;
-                  kwd_function = $1;  
-                  fun_name     = $2;
-                  param        = $3;
-                  colon        = $4;
-                  ret_type     = $5;
-                  kwd_is       = $6;
-                  block_with   = Some ($7, $8);
-                  return       = $9;
-                  terminator   = None;
-                  attributes   = None}
-    in {region; value}
-  }
-| "function" fun_name parameters ":" type_expr "is" expr {
-    Scoping.check_reserved_name $2;
-    let stop   = expr_to_region $7 in
-    let region = cover $1 stop
-    and value  = {kwd_recursive= None;
-                  kwd_function = $1;
-                  fun_name     = $2;
-                  param        = $3;
-                  colon        = $4;
-                  ret_type     = $5;
-                  kwd_is       = $6;
-                  block_with   = None;
-                  return       = $7;
-                  terminator   = None;
-                  attributes   = None}
-    in {region; value} }
-| "recursive" "function" fun_name parameters ":" type_expr "is"
+  "recursive"? "function" fun_name parameters ":" type_expr "is"
   block "with" expr {
     Scoping.check_reserved_name $3;
     let stop   = expr_to_region $10 in
     let region = cover $2 stop
-    and value  = {kwd_recursive= Some($1);
-                  kwd_function = $2;  
+    and value  = {kwd_recursive= $1;
+                  kwd_function = $2;
                   fun_name     = $3;
                   param        = $4;
                   colon        = $5;
@@ -315,11 +281,11 @@ open_fun_decl:
                   attributes   = None}
     in {region; value}
   }
-| "recursive" "function" fun_name parameters ":" type_expr "is" expr {
+| "recursive"? "function" fun_name parameters ":" type_expr "is" expr {
     Scoping.check_reserved_name $3;
     let stop   = expr_to_region $8 in
     let region = cover $2 stop
-    and value  = {kwd_recursive= Some($1);
+    and value  = {kwd_recursive= $1;
                   kwd_function = $2;
                   fun_name     = $3;
                   param        = $4;

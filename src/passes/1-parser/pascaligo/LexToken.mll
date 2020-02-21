@@ -364,6 +364,7 @@ let keywords = [
   (fun reg -> Or         reg);
   (fun reg -> Patch      reg);
   (fun reg -> Record     reg);
+  (fun reg -> Recursive  reg);
   (fun reg -> Remove     reg);
   (fun reg -> Set        reg);
   (fun reg -> Skip       reg);
