@@ -76,18 +76,18 @@ screenshot below:
 <img src="/img/tutorials/get-started/tezos-taco-shop-smart-contract/install-ligo.png" />
 <div style="opacity: 0.7; text-align: center; font-size: 12px; margin-top:-24px;">Installing the <b>next</b> version of LIGO's CLI</div>
 
-## Implementing our first access function
+## Implementing our First `main` Function
 
 > From now on we will get a bit more technical. If you run into
 > something we have not covered yet - please try checking out the
 > [LIGO cheat sheet](api/cheat-sheet.md) for some extra tips & tricks.
 
-To begin implementing our smart contract, we need an *access
-function*, that is the first function being executed. We will call it
-`main` and it will specify our contract's storage (`int`) and input
-parameter (`int`). Of course this is not the final storage/parameter
-of our contract, but it is something to get us started and test our
-LIGO installation as well.
+To begin implementing our smart contract, we need a *main function*,
+that is the first function being executed. We will call it `main` and
+it will specify our contract's storage (`int`) and input parameter
+(`int`). Of course this is not the final storage/parameter of our
+contract, but it is something to get us started and test our LIGO
+installation as well.
 
 ### `taco-shop.ligo`
 ```pascaligo group=a
@@ -99,7 +99,7 @@ list (operation) * int is
 Let us break down the contract above to make sure we understand each
 bit of the LIGO syntax:
 
-- **`function main`** - definition of the access function, which takes
+- **`function main`** - definition of the main function, which takes
   a the parameter of the contract and the storage
 - **`(const parameter : int;  const contractStorage : int)`** -
   parameters passed to the function: the first is called `parameter`
@@ -129,11 +129,11 @@ also an `int`.
 
 The `dry-run` command requires a few parameters:
 - **contract** *(file path)*
-- **entrypoint** *(name of the access function in the contract)*
+- **entrypoint** *(name of the main function in the contract)*
 - **parameter** *(parameter to execute our contract with)*
 - **storage** *(starting storage before our contract's code is executed)*
 
-It outputs what is returned from our access function: in our case a
+It outputs what is returned from our main function: in our case a
 tuple containing an empty list (of operations to apply) and the new
 storage value, which, in our case, is the sum of the previous storage
 and the parameter we have used for the invocation.
@@ -176,7 +176,7 @@ type taco_supply is record [
 type taco_shop_storage is map (nat, taco_supply)
 ```
 
-Next step is to update the `main` access function to include
+Next step is to update the `main` function to include
 `taco_shop_storage` in its storage. In the meanwhile, let us set the
 `parameter` to `unit` as well to clear things up.
 
@@ -249,17 +249,15 @@ ligo dry-run taco-shop.ligo --syntax pascaligo main unit "map [
 ## Providing another Access Function for Buying Tacos
 
 Now that we have our stock well defined in form of storage, we can
-move on to the actual sales. We will replace the `main` access
-function with another, `buy_taco`, that takes a key `id` from our
-`taco_shop_storage` map. This will allow us to calculate pricing, and
-if the sale is successful, we will be able to reduce our stock because
-we have sold a taco!
+move on to the actual sales. The `main` function will take a key `id`
+from our `taco_shop_storage` map. This will allow us to calculate
+pricing, and if the sale is successful, we will be able to reduce our
+stock because we have sold a taco!
 
 ### Selling the Tacos for Free
 
 Let is start by customizing our contract a bit, we will:
 
-- rename the access function from `main` to `buy_taco`
 - rename `parameter` to `taco_kind_index`
 - change `taco_shop_storage` to a `var` instead of a `const`, because
   we will want to modify it
@@ -275,7 +273,7 @@ type taco_shop_storage is map (nat, taco_supply)
 
 type return is list (operation) * taco_shop_storage
 
-function buy_taco (const taco_kind_index : nat; var taco_shop_storage : taco_shop_storage) : return is
+function main (const taco_kind_index : nat; var taco_shop_storage : taco_shop_storage) : return is
   ((nil : list (operation)), taco_shop_storage)
 ```
 
@@ -303,7 +301,7 @@ type taco_shop_storage is map (nat, taco_supply)
 
 type return is list (operation) * taco_shop_storage
 
-function buy_taco (const taco_kind_index : nat; var taco_shop_storage : taco_shop_storage) : return is
+function main (const taco_kind_index : nat; var taco_shop_storage : taco_shop_storage) : return is
   block {
     // Retrieve the taco_kind from the contract's storage or fail
     const taco_kind : taco_supply =
@@ -352,7 +350,7 @@ type taco_shop_storage is map (nat, taco_supply)
 
 type return is list (operation) * taco_shop_storage
 
-function buy_taco (const taco_kind_index : nat ; var taco_shop_storage : taco_shop_storage) : return is
+function main (const taco_kind_index : nat ; var taco_shop_storage : taco_shop_storage) : return is
   block {
     // Retrieve the taco_kind from the contract's storage or fail
     const taco_kind : taco_supply =
@@ -381,7 +379,7 @@ In order to test the `amount` sent, we will use the `--amount` option
 of `dry-run`:
 
 ```zsh
-ligo dry-run taco-shop.ligo --syntax pascaligo --amount 1 buy_taco 1n "map [
+ligo dry-run taco-shop.ligo --syntax pascaligo --amount 1 main 1n "map [
     1n -> record [
             current_stock = 50n;
             max_price = 50tez

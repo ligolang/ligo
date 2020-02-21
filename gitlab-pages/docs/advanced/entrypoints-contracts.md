@@ -1,24 +1,24 @@
 ---
 id: entrypoints-contracts
-title: Access function and Entrypoints
+title: Main function and Entrypoints
 ---
 
 ## Access Functions
 
 A LIGO contract is made of a series of constant and function
 declarations. Only functions having a special type can be called when
-the contract is activated: we called them *access functions*. An
-access function takes two parameters, the *contract parameter* and the
+the contract is activated: we called them *main functions*. A main
+function takes two parameters, the *contract parameter* and the
 *on-chain storage*, and returns a pair made of a *list of operations*
 and a (new) storage.
 
 When the contract is originated, the initial value of the storage is
-provided. When an access function is later called, only the parameter
-is provided, but the type of an access function contains both.
+provided. When a main function is later called, only the parameter is
+provided, but the type of a main function contains both.
 
 The type of the contract parameter and the storage are up to the
 contract designer, but the type for list operations is not. The return
-type of an access function is as follows, assuming that the type
+type of a main function is as follows, assuming that the type
 `storage` has been defined elsewhere. (Note that you can use any type
 with any name for the storage.)
 
@@ -42,13 +42,12 @@ type return = (list (operation), storage);
 ```
 <!--END_DOCUSAURUS_CODE_TABS-->
 
-The contract storage can only be modified by activating an access
+The contract storage can only be modified by activating a main
 function. It is important to understand what that means. What it does
 *not* mean is that some global variable holding the storage is
-modified by the access function. Instead, what it *does* mean is that,
-given the state of the storage *on-chain*, an access function
-specifies how to create another state for it, depending on a
-parameter.
+modified by the main function. Instead, what it *does* mean is that,
+given the state of the storage *on-chain*, a main function specifies
+how to create another state for it, depending on a parameter.
 
 Here is an example where the storage is a single natural number that
 is updated by the parameter.
@@ -89,17 +88,18 @@ let main = ((action, store): (parameter, storage)) : return =>
 
 ## Entrypoints
 
-In LIGO, the design pattern is to have *one* access function that
-dispatches the control flow according to its parameter. Those
-functions called for those actions are called *entrypoints*.
+In LIGO, the design pattern is to have *one* main function called
+`main`, that dispatches the control flow according to its
+parameter. Those functions called for those actions are called
+*entrypoints*.
 
 As an analogy, in the C programming language, the `main` function is
-the unique access function and any function called from it would be an
+the unique main function and any function called from it would be an
 entrypoint.
 
 The parameter of the contract is then a variant type, and, depending
 on the constructors of that type, different functions in the contract
-are called. In other terms, the unique access function dispatches the
+are called. In other terms, the unique main function dispatches the
 control flow depending on a *pattern matching* on the contract
 parameter.
 
@@ -128,7 +128,7 @@ function entry_A (const n : nat; const store : storage) : return is
 function entry_B (const s : string; const store : storage) : return is
   ((nil : list (operation)), store with record [name = s])
 
-function access (const action : parameter; const store : storage): return is
+function main (const action : parameter; const store : storage): return is
   case action of
     Action_A (n) -> entry_A (n, store)
   | Action_B (s) -> entry_B (s, store)
@@ -154,7 +154,7 @@ let entry_A (n, store : nat * storage) : return =
 let entry_B (s, store : string * storage) : return =
   ([] : operation list), {store with name = s}
 
-let access (action, store: parameter * storage) : return =
+let main (action, store: parameter * storage) : return =
   match action with
     Action_A n -> entry_A (n, store)
   | Action_B s -> entry_B (s, store)
@@ -179,7 +179,7 @@ let entry_A = ((n, store): (nat, storage)) : return =>
 let entry_B = ((s, store): (string, storage)) : return =>
   (([] : list (operation)), {...store, name : s});
 
-let access = ((action, store): (parameter, storage)) : return =>
+let main = ((action, store): (parameter, storage)) : return =>
   switch (action) {
   | Action_A (n) => entry_A ((n, store))
   | Action_B (s) => entry_B ((s, store))
@@ -249,7 +249,7 @@ This example shows how `sender` or `source` can be used to deny access to an ent
 ```pascaligo group=c
 const owner : address = ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address);
 
-function filter (const action : parameter; const store : storage) : return is
+function main (const action : parameter; const store : storage) : return is
   if source =/= owner then (failwith ("Access denied.") : return)
   else ((nil : list(operation)), store)
 ```
@@ -258,7 +258,7 @@ function filter (const action : parameter; const store : storage) : return is
 ```cameligo group=c
 let owner : address = ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address)
 
-let filter (action, store: parameter * storage) : return =
+let main (action, store: parameter * storage) : return =
   if source <> owner then (failwith "Access denied." : return)
   else (([] : operation list), store)
 ```
@@ -267,7 +267,7 @@ let filter (action, store: parameter * storage) : return =
 ```reasonligo group=c
 let owner : address = ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address);
 
-let access = ((action, store): (parameter, storage)) : storage => {
+let main = ((action, store): (parameter, storage)) : storage => {
   if (source != owner) { (failwith ("Access denied.") : return); }
   else { (([] : list (operation)), store); };
 };

@@ -99,7 +99,7 @@ called the *head*, and the sub-list after the head is called the
 think of a list a *stack*, where the top is written on the left.
 
 > 💡 Lists are needed when returning operations from a smart
-> contract's access function.
+> contract's main function.
 
 ### Defining Lists
 

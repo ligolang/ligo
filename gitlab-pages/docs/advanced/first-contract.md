@@ -11,13 +11,14 @@ We will be implementing a counter contract.
 ## Dry-running a Contract
 
 Testing a contract can be quite easy if we utilize LIGO's built-in dry
-run feature. Dry-run works by simulating the access function
-execution, as if it were deployed on a real chain. You need to provide
-the following:
+run feature. Dry-run works by simulating the main function execution,
+as if it were deployed on a real chain. You need to provide the
+following:
 
 - `file` - contract to run
 - `entrypoint` - name of the function to execute
-- `parameter` - parameter passed to the access function (in a theoretical invocation operation)
+- `parameter` - parameter passed to the main function (in a
+  theoretical invocation operation)
 - `storage` - a mock storage value, as if it were stored on a real chain
 
 Here is a full example:
@@ -33,15 +34,15 @@ ligo dry-run src/basic.ligo main Unit Unit
 ```
 <!--END_DOCUSAURUS_CODE_TABS-->
 
-Output of the `dry-run` is the return value of our access function, we
-can see the operations emited - in our case an empty list, and the new
-storage value being returned - which in our case is still `Unit`.
+Output of the `dry-run` is the return value of our main function, we
+can see the operations emitted (in our case an empty list, and the new
+storage value being returned) which in our case is still `Unit`.
 
 ## A Counter Contract
 
 Our counter contract will store a single `int` as it's storage, and
 will accept an `action` variant in order to re-route our single `main`
-access function to two entrypoints for `addition` and `subtraction`.
+function to two entrypoints for `addition` and `subtraction`.
 
 <!--DOCUSAURUS_CODE_TABS-->
 <!--Pascaligo-->
