@@ -382,13 +382,27 @@ let rec opt_tail_fail : michelson -> michelson =
      let rec aux args =
        match args with
        | [] -> []
-       | arg :: _ when is_failing arg -> [arg]
-       | arg :: args -> arg :: aux args in
-     let args = aux args in
-     Seq (l, List.map opt_tail_fail args)
+       | arg :: args ->
+         let arg = opt_tail_fail arg in
+         if is_failing arg
+         then [arg]
+         else arg :: aux args in
+     Seq (l, aux args)
   | Prim (l, p, args, annot) ->
      Prim (l, p, List.map opt_tail_fail args, annot)
   | x -> x
+
+let%expect_test _ =
+  let seq args = Seq(-1, args) in
+  let prim p args = Prim(-1, p, args, []) in
+  let code = seq [ prim I_IF_LEFT [ seq [ prim I_FAILWITH [] ; prim I_DROP [] ]
+                                  ; seq [ prim I_FAILWITH [] ; prim I_DROP [] ]
+                                  ]
+                 ; prim I_DROP []
+                 ] in
+  let code = opt_tail_fail code in
+  Format.printf "%a" Tezos_utils.Michelson.pp code ;
+  [%expect {| { IF_LEFT { FAILWITH } { FAILWITH } } |}]
 
 let rec opt_combine_drops (x : michelson) : michelson =
   let rec combine : michelson list -> michelson list = function
