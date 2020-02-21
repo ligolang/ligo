@@ -1140,6 +1140,19 @@ let%expect_test _ =
       code { DUP ; CDR ; NIL operation ; PAIR ; DIP { DROP } } } |}]
 
 let%expect_test _ =
+  run_ligo_bad [ "compile-contract" ; bad_contract "long_sum_type_names.ligo" ; "main" ] ;
+  [%expect {|
+    ligo: Too long constructor 'Incrementttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttt': names length is limited to 32 (tezos limitation)
+
+     If you're not sure how to fix this error, you can
+     do one of the following:
+
+    * Visit our documentation: https://ligolang.org/docs/intro/what-and-why/
+    * Ask a question on our Discord: https://discord.gg/9rhYaEt
+    * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
+    * Check the changelog by running 'ligo changelog' |}]
+
+let%expect_test _ =
   run_ligo_good [ "dry-run" ; contract "super-counter.mligo" ; "main" ; "test_param" ; "test_storage" ] ;
   [%expect {|
     ( list[] , 3 ) |}]
