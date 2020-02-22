@@ -140,7 +140,7 @@ and the parameter we have used for the invocation.
 
 ```zsh
 # Contract: taco-shop.ligo
-# Entry point: main
+# Main function: main
 # Parameter: 4
 # Storage: 3
 ligo dry-run taco-shop.ligo --syntax pascaligo main 4 3
@@ -250,9 +250,10 @@ ligo dry-run taco-shop.ligo --syntax pascaligo main unit "map [
 
 Now that we have our stock well defined in form of storage, we can
 move on to the actual sales. The `main` function will take a key `id`
-from our `taco_shop_storage` map. This will allow us to calculate
-pricing, and if the sale is successful, we will be able to reduce our
-stock because we have sold a taco!
+from our `taco_shop_storage` map and will be renamed `buy_taco` for
+more readability. This will allow us to calculate pricing, and if the
+sale is successful, we will be able to reduce our stock because we
+have sold a taco!
 
 ### Selling the Tacos for Free
 
@@ -273,7 +274,7 @@ type taco_shop_storage is map (nat, taco_supply)
 
 type return is list (operation) * taco_shop_storage
 
-function main (const taco_kind_index : nat; var taco_shop_storage : taco_shop_storage) : return is
+function buy_taco (const taco_kind_index : nat; var taco_shop_storage : taco_shop_storage) : return is
   ((nil : list (operation)), taco_shop_storage)
 ```
 
@@ -301,7 +302,7 @@ type taco_shop_storage is map (nat, taco_supply)
 
 type return is list (operation) * taco_shop_storage
 
-function main (const taco_kind_index : nat; var taco_shop_storage : taco_shop_storage) : return is
+function buy_taco (const taco_kind_index : nat; var taco_shop_storage : taco_shop_storage) : return is
   block {
     // Retrieve the taco_kind from the contract's storage or fail
     const taco_kind : taco_supply =
@@ -350,7 +351,7 @@ type taco_shop_storage is map (nat, taco_supply)
 
 type return is list (operation) * taco_shop_storage
 
-function main (const taco_kind_index : nat ; var taco_shop_storage : taco_shop_storage) : return is
+function buy_taco (const taco_kind_index : nat ; var taco_shop_storage : taco_shop_storage) : return is
   block {
     // Retrieve the taco_kind from the contract's storage or fail
     const taco_kind : taco_supply =
@@ -379,7 +380,7 @@ In order to test the `amount` sent, we will use the `--amount` option
 of `dry-run`:
 
 ```zsh
-ligo dry-run taco-shop.ligo --syntax pascaligo --amount 1 main 1n "map [
+ligo dry-run taco-shop.ligo --syntax pascaligo --amount 1 buy_taco 1n "map [
     1n -> record [
             current_stock = 50n;
             max_price = 50tez
