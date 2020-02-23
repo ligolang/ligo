@@ -11,7 +11,7 @@ type return is list (operation) * taco_shop_storage
 const ownerAddress : address = "tz1TGu6TN5GSez2ndXXeDX6LgUDvLzPLqgYV"
 const donationAddress : address = "tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx"
 
-function main (const taco_kind_index : nat; var taco_shop_storage : taco_shop_storage) : return is
+function buy_taco (const taco_kind_index : nat; var taco_shop_storage : taco_shop_storage) : return is
   block {
     // Retrieve the taco_kind from the contract's storage or fail
     const taco_kind : taco_supply =

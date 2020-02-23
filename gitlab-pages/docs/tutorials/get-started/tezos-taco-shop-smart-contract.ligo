@@ -8,7 +8,7 @@ type taco_shop_storage is map (nat, taco_supply)
 
 type return is list (operation) * taco_shop_storage
 
-function main (const taco_kind_index : nat ; var taco_shop_storage : taco_shop_storage) : return is
+function buy_taco (const taco_kind_index : nat ; var taco_shop_storage : taco_shop_storage) : return is
   block {
     // Retrieve the taco_kind from the contract's storage or fail
     const taco_kind : taco_supply =
