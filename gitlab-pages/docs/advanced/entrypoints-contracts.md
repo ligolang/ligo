@@ -7,7 +7,7 @@ title: Main function and Entrypoints
 
 A LIGO contract is made of a series of constant and function
 declarations. Only functions having a special type can be called when
-the contract is activated: we called them *main functions*. A main
+the contract is activated: we call them *main functions*. A main
 function takes two parameters, the *contract parameter* and the
 *on-chain storage*, and returns a pair made of a *list of operations*
 and a (new) storage.
@@ -43,11 +43,9 @@ type return = (list (operation), storage);
 <!--END_DOCUSAURUS_CODE_TABS-->
 
 The contract storage can only be modified by activating a main
-function. It is important to understand what that means. What it does
-*not* mean is that some global variable holding the storage is
-modified by the main function. Instead, what it *does* mean is that,
-given the state of the storage *on-chain*, a main function specifies
-how to create another state for it, depending on a parameter.
+function: given the state of the storage *on-chain*, a main function
+specifies how to create another state for it, depending on the
+contract's parameter.
 
 Here is an example where the storage is a single natural number that
 is updated by the parameter.
