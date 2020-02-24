@@ -15,7 +15,7 @@ import {
   ChangeParametersAction as ChangeDryRunParametersAction,
   ChangeStorageAction as ChangeDryRunStorageAction,
 } from './dry-run';
-import { ActionType as EditorActionType, ChangeCodeAction, ChangeLanguageAction } from './editor';
+import { ActionType as EditorActionType, ChangeCodeAction, ChangeLanguageAction, ChangeTitleAction } from './editor';
 import {
   ActionType as EvaluateFunctionActionType,
   ChangeEntrypointAction as ChangeEvaluateFunctionEntrypointAction,
@@ -25,6 +25,7 @@ import {
   ActionType as EvaluateValueActionType,
   ChangeEntrypointAction as ChangeEvaluateValueEntrypointAction,
 } from './evaluate-value';
+import { ActionType as ExamplesActionType, ChangeSelectedAction as ChangeSelectedExampleAction } from './examples';
 
 export enum ActionType {
   ChangeShareLink = 'share-change-link'
@@ -41,6 +42,7 @@ export class ChangeShareLinkAction {
 
 type Action =
   | ChangeShareLinkAction
+  | ChangeTitleAction
   | ChangeCodeAction
   | ChangeLanguageAction
   | ChangeCompileEntrypointAction
@@ -53,7 +55,8 @@ type Action =
   | ChangeDryRunStorageAction
   | ChangeEvaluateFunctionEntrypointAction
   | ChangeEvaluateFunctionParametersAction
-  | ChangeEvaluateValueEntrypointAction;
+  | ChangeEvaluateValueEntrypointAction
+  | ChangeSelectedExampleAction;
 
 const DEFAULT_STATE: ShareState = {
   link: ''
@@ -61,6 +64,8 @@ const DEFAULT_STATE: ShareState = {
 
 export default (state = DEFAULT_STATE, action: Action): ShareState => {
   switch (action.type) {
+    case EditorActionType.ChangeTitle:
+    case ExamplesActionType.ChangeSelected:
     case EditorActionType.ChangeCode:
     case EditorActionType.ChangeLanguage:
     case CompileActionType.ChangeEntrypoint:

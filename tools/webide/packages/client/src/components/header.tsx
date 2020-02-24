@@ -6,9 +6,9 @@ const Container = styled.div`
   justify-content: space-between;
   align-items: center;
 
-  padding: 0.5em 1em;
+  padding: 0.2em 1em;
   font-family: 'DM Sans', 'Open Sans', sans-serif;
-  box-shadow: 0px 2px 3px 0px rgba(0, 0, 0, 0.3);
+  box-shadow: 0px 1px 1px 0px rgba(0, 0, 0, 0.3);
 `;
 
 const Group = styled.div`
