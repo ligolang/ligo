@@ -1,5 +1,5 @@
 (*_*
-  name: Reasonligo Contract
+  name: ReasonLIGO Contract
   language: reasonligo
   compile:
     entrypoint: main

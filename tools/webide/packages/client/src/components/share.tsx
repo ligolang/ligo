@@ -12,7 +12,7 @@ import { Tooltip } from './tooltip';
 
 const Container = styled.div`
   display: flex;
-  justify-content: flex-end;
+  justify-content: flex-start;
   align-items: center;
 `;
 
@@ -81,9 +81,9 @@ const Input = styled.input<{ visible?: boolean }>`
   opacity: 0;
   height: 2em;
   width: 2em;
-  transform: translateX(-0.3em);
+  transform: translateX(0.3em);
   border: none;
-  padding: 0 1em;
+  padding-left: 2em;
   font-size: 1em;
   color: white;
 

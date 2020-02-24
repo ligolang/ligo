@@ -1,5 +1,5 @@
 (*_*
-  name: Cameligo Contract
+  name: CameLIGO Contract
   language: cameligo
   compile:
     entrypoint: main

@@ -12,12 +12,12 @@ export const HGroup = styled.div`
 
 export const Label = styled.label`
   font-size: 1em;
-  color: rgba(153, 153, 153, 1);
+  color: var(--label_foreground);
 `;
 
 export const Input = styled.input`
   margin: 0.3em 0 0.7em 0;
-  background-color: #eff7ff;
+  background-color: var(--input_background);
   border-style: none;
   border-bottom: 5px solid #e1f1ff;
   padding: 0.5em;
@@ -33,7 +33,7 @@ export const Input = styled.input`
 export const Textarea = styled.textarea`
   resize: vertical;
   margin: 0.3em 0 0.7em 0;
-  background-color: #eff7ff;
+  background-color: var(--input_background);
   border-style: none;
   border-bottom: 5px solid #e1f1ff;
   padding: 0.5em;

@@ -24,7 +24,9 @@ export async function loadDefaultState(appBundleDirectory: string) {
     deploy: {},
     evaluateValue: {},
     evaluateFunction: {},
-    editor: {},
+    editor: {
+      title: ''
+    },
     examples: {
       selected: null,
       list: examplesList
@@ -59,9 +61,9 @@ export async function loadDefaultState(appBundleDirectory: string) {
     };
     defaultState.editor = {
       ...defaultState.editor,
-      ...defaultExample.editor
+      ...defaultExample.editor,
+      title: defaultExample.name
     };
-    defaultState.examples.selected = defaultExample;
   }
 
   return defaultState;

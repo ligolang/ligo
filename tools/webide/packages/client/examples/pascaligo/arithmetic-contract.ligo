@@ -1,5 +1,5 @@
 (*_*
-  name: Pascaligo Contract
+  name: PascaLIGO Contract
   language: pascaligo
   compile:
     entrypoint: main
