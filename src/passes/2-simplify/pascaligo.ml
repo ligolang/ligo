@@ -367,7 +367,8 @@ let rec simpl_expression (t:Raw.expr) : expr result =
   | EConstr (ConstrApp c) -> (
       let ((c, args) , loc) = r_split c in
       match args with
-        None -> simpl_tuple_expression []
+        None ->
+        return @@ e_constructor ~loc c.value (e_unit ())
       | Some args ->
           let args, args_loc = r_split args in
           let%bind arg =
