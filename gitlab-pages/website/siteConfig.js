@@ -4,7 +4,7 @@ let reasonHighlightJs = require('reason-highlightjs');
 
 const siteConfig = {
   title: 'LIGO', // Title for your website.
-  tagline: 'LIGO is a friendly smart-contract language for Tezos',
+  tagline: 'LIGO is a friendly smart contract language for Tezos',
   taglineSub: 'Michelson was never so easy',
   url: 'https://ligolang.org', // Your website URL
   baseUrl: '/', // Base URL for your project */
@@ -14,7 +14,7 @@ const siteConfig = {
 
   // Used for publishing and more
   projectName: 'ligo',
-  organizationName: 'marigold',
+  organizationName: 'TBN',
   // For top-level user or org sites, the organization is still the same.
   // e.g., for the https://JoelMarcey.github.io site, it would be set like...
   //   organizationName: 'JoelMarcey'
@@ -29,7 +29,7 @@ const siteConfig = {
       label: 'Tutorials'
     },
     { blog: true, label: 'Blog' },
-    // TODO: { href: "/odoc", label: "Api" },
+    // TODO: { href: "/odoc", label: "API" },
     // { doc: 'contributors/origin', label: 'Contribute' },
     { href: '/contact', label: 'Ask Questions' },
     { search: true }
@@ -40,12 +40,22 @@ const siteConfig = {
       { doc: 'intro/installation', label: 'Install' },
       { doc: 'api/cli-commands', label: 'CLI Commands' },
       { doc: 'contributors/origin', label: 'Contribute' },
-      { href: '/odoc', label: 'Api Documentation' }
+      { href: '/odoc', label: 'API Documentation' }
     ],
     community: [
       {
+        href: 'https://forum.tezosagora.org/tag/ligo',
+        label: 'Tezos Agora Forum',
+        blankTarget: true
+      },
+      {
         href: 'https://tezos.stackexchange.com/questions/tagged/ligo',
         label: 'Tezos Stack Exchange',
+        blankTarget: true
+      },
+      {
+        href: 'https://t.me/LigoLang',
+        label: 'Telegram',
         blankTarget: true
       },
       {
@@ -59,7 +69,7 @@ const siteConfig = {
         doc: 'tutorials/get-started/tezos-taco-shop-smart-contract',
         label: 'Tutorials'
       },
-      { href: repoUrl, label: 'Gitlab' }
+      { href: repoUrl, label: 'GitLab' }
     ]
   },
 
@@ -87,10 +97,11 @@ const siteConfig = {
           beginKeywords: '',
           keywords: {
             keyword:
-              'and begin block case const contains down else end fail for ' +
-              'from function if in is list map mod nil not of or patch ' +
-              'procedure record remove set skip step then to type var while with',
-            literal: 'true false unit int string some none bool nat list'
+            'and attributes begin big_map block case const contains else'
+              + ' end False for from function if in is list map mod nil'
+              + ' not of or patch record remove set skip then to True type'
+              + ' var while with',
+            literal: 'true false unit int string Some None bool nat list'
           },
           lexemes: '[a-zA-Z][a-zA-Z0-9_]*',
           contains: [
@@ -139,6 +150,7 @@ const siteConfig = {
     indexName: 'ligolang',
     algoliaOptions: {} // Optional, if provided by Algolia
   },
+  docsSideNavCollapsible: true,
   gaTrackingId: 'UA-153751765-1',
   gaGtag: true
 };

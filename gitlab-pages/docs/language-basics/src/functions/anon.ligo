@@ -1,3 +1,4 @@
-const increment : (int -> int) = (function (const i : int) : int is i + 1);
-// a = 2
-const a: int = increment(1);
+function increment (const b : int) : int is
+   (function (const a : int) : int is a + 1) (b)
+
+const a : int = increment (1); // a = 2

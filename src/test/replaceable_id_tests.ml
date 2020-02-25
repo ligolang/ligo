@@ -44,8 +44,8 @@ let change_addr_success () =
   let init_storage = storage 1 in
   let param = entry_change_addr 2 in
   let options =
-    let source = contract 1 in
-    Proto_alpha_utils.Memory_proto_alpha.make_options ~source () in
+    let sender = contract 1 in
+    Proto_alpha_utils.Memory_proto_alpha.make_options ~sender () in
   expect_eq ~options program "main"
     (e_pair param init_storage) (e_pair empty_op_list (storage 2))
 
@@ -54,8 +54,8 @@ let change_addr_fail () =
   let init_storage = storage 1 in
   let param = entry_change_addr 2 in
   let options =
-    let source = contract 3 in
-    Proto_alpha_utils.Memory_proto_alpha.make_options ~source () in
+    let sender = contract 3 in
+    Proto_alpha_utils.Memory_proto_alpha.make_options ~sender () in
   let exp_failwith = "Unauthorized sender" in
   expect_string_failwith ~options program "main"
     (e_pair param init_storage) exp_failwith
@@ -65,8 +65,8 @@ let pass_message_success () =
   let init_storage = storage 1 in
   let param = entry_pass_message in
   let options =
-    let source = contract 1 in
-    Proto_alpha_utils.Memory_proto_alpha.make_options ~source () in
+    let sender = contract 1 in
+    Proto_alpha_utils.Memory_proto_alpha.make_options ~sender () in
   expect_eq ~options program "main"
     (e_pair param init_storage) (e_pair empty_op_list init_storage)
 
@@ -75,8 +75,8 @@ let pass_message_fail () =
   let init_storage = storage 1 in
   let param = entry_pass_message in
   let options =
-    let source = contract 2 in
-    Proto_alpha_utils.Memory_proto_alpha.make_options ~source () in
+    let sender = contract 2 in
+    Proto_alpha_utils.Memory_proto_alpha.make_options ~sender () in
   let exp_failwith = "Unauthorized sender" in
   expect_string_failwith ~options program "main"
     (e_pair param init_storage) exp_failwith

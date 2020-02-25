@@ -1,8 +1,8 @@
 type foo = (int, int) big_map
 
-let set_2 (n : int) (m : foo) : foo = Big_map.update 23 (Some n) m
+let set_ (n, m: int * foo) : foo = Big_map.update 23 (Some n) m
 
-let set_ (t: int * foo) : foo = set_2 t.0 t.1
+let add (n,m : int * foo) : foo = Big_map.add 23 n m
 
 let rm (m : foo) : foo = Big_map.remove 42 m
 

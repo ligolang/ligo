@@ -3,104 +3,97 @@ id: strings
 title: Strings
 ---
 
-
-
 Strings are defined using the built-in `string` type like this:
 
 <!--DOCUSAURUS_CODE_TABS-->
-<!--Pascaligo-->
+<!--PascaLIGO-->
 ```
-const a: string = "Hello Alice";
+const a : string = "Hello Alice"
 ```
 <!--CameLIGO-->
 ```
-let a: string = "Hello Alice"
+let a : string = "Hello Alice"
 ```
 <!--ReasonLIGO-->
 ```reasonligo
-let a: string = "Hello Alice";
+let a : string = "Hello Alice";
 ```
 <!--END_DOCUSAURUS_CODE_TABS-->
 
 
-## Concatenating strings
+## Concatenating Strings
 
 <!--DOCUSAURUS_CODE_TABS-->
-<!--Pascaligo-->
+<!--PascaLIGO-->
 Strings can be concatenated using the `^` operator.
 
-```pascaligo
-const name: string = "Alice";
-const greeting: string = "Hello";
-// Hello Alice
-const full_greeting: string = greeting ^ " " ^ name;
-// Hello Alice! (alternatively)
-const full_greeting_exclamation: string = string_concat(full_greeting, "!");
+```pascaligo group=a
+const name : string = "Alice"
+const greeting : string = "Hello"
+const full_greeting : string = greeting ^ " " ^ name
 ```
 <!--CameLIGO-->
 Strings can be concatenated using the `^` operator.
 
-```cameligo
-let name: string = "Alice"
-let greeting: string = "Hello"
-let full_greeting: string = greeting ^ " " ^ name
+```cameligo group=a
+let name : string = "Alice"
+let greeting : string = "Hello"
+let full_greeting : string = greeting ^ " " ^ name
 ```
 <!--ReasonLIGO-->
 Strings can be concatenated using the `++` operator.
 
-```reasonligo
-let name: string = "Alice";
-let greeting: string = "Hello";
-let full_greeting: string = greeting ++ " " ++ name;
+```reasonligo group=a
+let name : string = "Alice";
+let greeting : string = "Hello";
+let full_greeting : string = greeting ++ " " ++ name;
 ```
 <!--END_DOCUSAURUS_CODE_TABS-->
 
 
-## Slicing strings
+## Slicing Strings
 
-Strings can be sliced using the syntax specific built-in built-in function:
+Strings can be sliced using a built-in function:
 
 <!--DOCUSAURUS_CODE_TABS-->
-<!--Pascaligo-->
-```pascaligo
-const name: string = "Alice";
-// slice = "A"
-const slice: string = string_slice(0n, 1n, name);
+<!--PascaLIGO-->
+```pascaligo group=b
+const name  : string = "Alice"
+const slice : string = string_slice (0n, 1n, name)
 ```
 <!--CameLIGO-->
-```cameligo
-let name: string = "Alice"
-let slice: string = String.slice 0n 1n name
+```cameligo group=b
+let name  : string = "Alice"
+let slice : string = String.slice 0n 1n name
 ```
 <!--ReasonLIGO-->
-```reasonligo
-let name: string = "Alice";
-let slice: string = String.slice(0n, 1n, name);
+```reasonligo group=b
+let name  : string = "Alice";
+let slice : string = String.slice (0n, 1n, name);
 ```
 <!--END_DOCUSAURUS_CODE_TABS-->
 
-> ⚠️ Notice that the `offset` and slice `length` are `nats`
+> ⚠️ Notice that the offset and length of the slice are natural numbers.
 
-## Aquiring the length of a string
+## Length of Strings
 
-The length of a string can be found using the syntax specific built-in function:
+The length of a string can be found using a built-in function:
 
 <!--DOCUSAURUS_CODE_TABS-->
-<!--Pascaligo-->
-```pascaligo
-const name: string = "Alice";
-// length = 5
-const length: nat = size(name);
+<!--PascaLIGO-->
+```pascaligo group=c
+const name : string = "Alice"
+const length : nat = size (name)   // length = 5
 ```
 <!--CameLIGO-->
-```cameligo
-let name: string = "Alice"
-let length: nat = String.size name
+```cameligo group=c
+let name : string = "Alice"
+let length : nat = String.size name  // length = 5
 ```
 
 <!--ReasonLIGO-->
-```reasonligo
-let name: string = "Alice";
-let length: nat = String.size(name);
+```reasonligo group=c
+let name : string = "Alice";
+let length : nat = String.size (name);  // length == 5
 ```
 <!--END_DOCUSAURUS_CODE_TABS-->

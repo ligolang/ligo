@@ -15,12 +15,12 @@ executable (see below). This manages the Docker bits for you.
 * Use the Docker image available at [Docker Hub](https://hub.docker.com/r/ligolang/ligo).
 This lets you run multiple versions and keep your installation(s) self contained, but requires more familiarity with Docker.
 
-Sources for the image can be found on [Gitlab](https://gitlab.com/ligolang/ligo/blob/master/docker/Dockerfile).
+Sources for the image can be found on [GitLab](https://gitlab.com/ligolang/ligo/blob/master/docker/Dockerfile).
 If this is your first time using Docker, you probably want to set up a global LIGO executable as shown below.
 
 ### Setting up a globally available `ligo` executable
 
-> You can install additional ligo versions by replacing `next` with the required version number
+> You can install additional ligo versions by replacing `next` with the desired version number
 
 Download the latest binaries here: https://gitlab.com/ligolang/ligo/pipelines/85536879/builds or get the latest pre-release:
 

@@ -41,7 +41,7 @@ let%expect_test _ =
 
   run_ligo_bad [ "compile-contract" ; "../../test/contracts/negative/error_typer_3.mligo" ; "main" ] ;
   [%expect {|
-    ligo: in file "error_typer_3.mligo", line 3, characters 34-53. different number of arguments to type constructors: Expected these two n-ary type constructors to be the same, but they have different numbers of arguments (both use the TC_tuple type constructor, but they have 3 and 2 arguments, respectively) {"a":"(TO_tuple[int , string , bool])","b":"(TO_tuple[int , string])","op":"TC_tuple","len_a":"3","len_b":"2"}
+    ligo: in file "error_typer_3.mligo", line 3, characters 34-53. tuples have different sizes: Expected these two types to be the same, but they're different (both are tuples, but with a different number of arguments) {"a":"( int * string * bool )","b":"( int * string )"}
 
 
      If you're not sure how to fix this error, you can
@@ -54,7 +54,7 @@ let%expect_test _ =
 
   run_ligo_bad [ "compile-contract" ; "../../test/contracts/negative/error_typer_4.mligo" ; "main" ] ;
   [%expect {|
-    ligo: in file "error_typer_4.mligo", line 4, characters 17-56. different keys in record:  {"key_a":"d","key_b":"c"}
+    ligo: in file "error_typer_4.mligo", line 4, characters 17-56. different keys in records:  {"key_a":"c","key_b":"b","a":"record[a -> int , c -> bool , d -> string]","b":"record[a -> int , b -> string , c -> bool]"}
 
 
      If you're not sure how to fix this error, you can
@@ -93,7 +93,7 @@ let%expect_test _ =
 
   run_ligo_bad [ "compile-contract" ; "../../test/contracts/negative/error_typer_7.mligo" ; "main" ] ;
   [%expect {|
-    ligo: in file "error_typer_7.mligo", line 4, characters 18-48. records have different sizes: Expected these two types to be the same, but they're different (both are records, but with a different number of arguments) {"a":"record[b -> string , a -> int]","b":"record[c -> bool , b -> string , a -> int]"}
+    ligo: in file "error_typer_7.mligo", line 4, characters 18-48. records have different sizes: Expected these two types to be the same, but they're different (both are records, but with a different number of arguments) {"a":"record[a -> int , b -> string]","b":"record[a -> int , b -> string , c -> bool]"}
 
 
      If you're not sure how to fix this error, you can
@@ -106,7 +106,7 @@ let%expect_test _ =
 
   run_ligo_bad [ "compile-contract" ; "../../test/contracts/negative/id.mligo" ; "main" ] ;
   [%expect {|
-    ligo: in file "id.mligo", line 45, characters 4-51. Expected a different type: Expected the type option but got the type record[profile -> bytes , owner -> address , controller -> address]
+    ligo: in file "id.mligo", line 45, characters 4-51. Expected a different type: Expected the type option but got the type record[controller -> address , owner -> address , profile -> bytes]
 
      If you're not sure how to fix this error, you can
      do one of the following:
@@ -114,4 +114,25 @@ let%expect_test _ =
     * Visit our documentation: https://ligolang.org/docs/intro/what-and-why/
     * Ask a question on our Discord: https://discord.gg/9rhYaEt
     * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
-    * Check the changelog by running 'ligo changelog' |}] ;
+    * Check the changelog by running 'ligo changelog' |}]
+
+(* 
+  This test is here to ensure compatibility with comparable pairs introduced in carthage
+  note that only "comb pairs" are allowed to be compared (would be beter if any pair would be comparable ?)
+*)
+let%expect_test _ =
+  run_ligo_good [ "interpret" ; "Set.literal [ (1,(2,3)) ; (2,(3,4)) ]" ; "--syntax=cameligo" ] ;
+  [%expect {|
+    set[( 2 , ( 3 , 4 ) ) , ( 1 , ( 2 , 3 ) )] |}];
+
+  run_ligo_bad [ "interpret" ; "Set.literal [ (1,2,3) ; (2,3,4) ]" ; "--syntax=cameligo" ] ;
+  [%expect {|
+    ligo: not a comparable type: pair (use (a,(b,c)) instead of (a,b,c))
+
+     If you're not sure how to fix this error, you can
+     do one of the following:
+
+    * Visit our documentation: https://ligolang.org/docs/intro/what-and-why/
+    * Ask a question on our Discord: https://discord.gg/9rhYaEt
+    * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
+    * Check the changelog by running 'ligo changelog' |}];

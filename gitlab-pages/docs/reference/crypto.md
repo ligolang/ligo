@@ -1,6 +1,6 @@
 ---
 id: crypto-reference
-title: Crypto
+title: Crypto — Cryptographic functions
 ---
 
 ## Crypto.blake2b(data: bytes): bytes

@@ -6,7 +6,8 @@
     tezos-utils
   )
   (preprocess
-    (pps ppx_let bisect_ppx --conditional)
+    (pps ppx_let bisect_ppx --conditional ppx_expect)
   )
+  (inline_tests)
   (flags (:standard -w +1..62-4-9-44-40-42-48-30@39@33 -open Simple_utils ))
 )

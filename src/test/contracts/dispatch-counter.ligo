@@ -1,16 +1,19 @@
-type action is
-| Increment of int
+type parameter is
+  Increment of int
 | Decrement of int
 
-function increment(const i : int ; const n : int) : int is
-  block { skip } with (i + n)
+type storage is int
 
-function decrement(const i : int ; const n : int) : int is
-  block { skip } with (i - n)
+type return is list (operation) * storage
 
-function main (const p : action ; const s : int) : (list(operation) * int) is
-  block {skip} with ((nil : list(operation)),
-    case p of
-    | Increment (n) -> increment (s, n)
-    | Decrement (n) -> decrement (s, n)
-    end)
+function increment (const i : int; const n : int) : int is i+n
+
+function decrement (const i : int; const n : int) : int is i-n
+
+const nop : list (operation) = nil
+
+function main (const action : parameter; const store : storage) : return is
+  case action of
+    Increment (n) -> (nop, increment (store, n))
+  | Decrement (n) -> (nop, decrement (store, n))
+  end

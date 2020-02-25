@@ -4,16 +4,15 @@ module Simplify : sig
  open Trace
 
   module Pascaligo : sig
-    val constants  : string -> constant result
+    val constants  : string -> constant' result
     val type_constants : string -> type_constant result
-    val type_operators : string -> type_expression type_operator result
+    val type_operators : string -> type_operator result
   end
 
-
   module Cameligo : sig
-    val constants  : string -> constant result
+    val constants  : string -> constant' result
     val type_constants : string -> type_constant result
-    val type_operators : string -> type_expression type_operator result
+    val type_operators : string -> type_operator result
   end
 
 end
@@ -94,7 +93,7 @@ module Typer : sig
       val t_set_add : Typesystem.Core.type_value
       val t_set_remove : Typesystem.Core.type_value
       val t_not : Typesystem.Core.type_value
-      val constant_type : constant -> Typesystem.Core.type_value Trace.result
+      val constant_type : constant' -> Typesystem.Core.type_value Trace.result
     end
 
   (*
@@ -171,7 +170,7 @@ module Typer : sig
   val concat : typer
   *)
   val cons : typer
-  val constant_typers : constant -> typer result
+  val constant_typers : constant' -> typer result
 
 end
 
@@ -191,7 +190,7 @@ module Compiler : sig
     | Tetrary of michelson
     | Pentary of michelson
     | Hexary of michelson
-  val get_operators : constant -> predicate result
+  val get_operators : constant' -> predicate result
   val simple_constant : t -> predicate
   val simple_unary : t -> predicate
   val simple_binary : t -> predicate

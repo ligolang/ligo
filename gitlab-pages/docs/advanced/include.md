@@ -3,13 +3,12 @@ id: include
 title: Including Other Contracts
 ---
 
-Lets say we have a contract that's getting a bit too big. If it has a modular
-structure, you might find it useful to use the `#include` statement to split the
-contract up over multiple files.
+Let us say that we have a contract that is getting a too large. If it
+has a modular structure, you might find it useful to use the
+`#include` statement to split the contract up over multiple files.
 
-
-You take the code that you want to include and put it in a separate file, for
-example `included.ligo`:
+You take the code that you want to include and put it in a separate
+file, for example `included.ligo`:
 
 <!--DOCUSAURUS_CODE_TABS-->
 
@@ -23,7 +22,6 @@ const foo : int = 144
 
 <!--CameLIGO-->
 ```cameligo
-
 // Demonstrate CameLIGO inclusion statements, see includer.mligo
 
 let foo : int = 144
@@ -31,7 +29,6 @@ let foo : int = 144
 
 <!--ReasonLIGO-->
 ```reasonligo
-
 // Demonstrate ReasonLIGO inclusion statements, see includer.religo
 
 let foo : int = 144;
@@ -46,7 +43,6 @@ And then you can include this code using the `#include` statement like so:
 
 <!--PascaLIGO-->
 ```pascaligo
-
 #include "included.ligo"
 
 const bar : int = foo
@@ -54,7 +50,6 @@ const bar : int = foo
 
 <!--CameLIGO-->
 ```cameligo
-
 #include "included.mligo"
 
 let bar : int = foo
@@ -62,7 +57,6 @@ let bar : int = foo
 
 <!--ReasonLIGO-->
 ```reasonligo
-
 #include "included.religo"
 
 let bar : int = foo;

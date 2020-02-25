@@ -3,13 +3,17 @@ variables:
   GIT_SUBMODULE_STRATEGY: recursive
   build_binary_script: "./scripts/distribution/generic/build.sh"
   package_binary_script: "./scripts/distribution/generic/package.sh"
+  LIGO_REGISTRY_IMAGE_BASE_NAME: "${CI_PROJECT_PATH}/${CI_PROJECT_NAME}"
+  WEBIDE_IMAGE_NAME: "registry.gitlab.com/${CI_PROJECT_PATH}/ligo_webide"
 
 stages:
   - test
   - build_and_package_binaries
   - build_docker
-  - build_and_deploy_docker
-  - build_and_deploy_website
+  - build_and_deploy
+  - ide-build
+  - ide-e2e-test
+  - ide-deploy
 
 # TODO provide sensible CI for master
 dont-merge-to-master:
@@ -30,7 +34,7 @@ dont-merge-to-master:
       - dist/package/**/*
 
 .website_build: &website_build
-  stage: build_and_deploy_website
+  stage: build_and_deploy
   image: node:8
   dependencies:
     - build-and-package-debian-9
@@ -38,6 +42,7 @@ dont-merge-to-master:
     - build-and-package-ubuntu-18-04
     - build-and-package-ubuntu-19-04
   before_script:
+    - export TERM=dumb
     - scripts/install_native_dependencies.sh
     - scripts/install_opam.sh # TODO: or scripts/install_build_environment.sh ?
     - export PATH="/usr/local/bin${PATH:+:}${PATH:-}"
@@ -75,15 +80,16 @@ dont-merge-to-master:
       - public
 
 .docker: &docker
-  image: docker:1.11
+  image: docker:19.03.5
   services:
-    - docker:dind
+    - docker:19.03.5-dind
 
 
 .before_script: &before_script
   before_script:
     # Install dependencies
     # rsync is needed by opam to sync a package installed from a local directory with the copy in ~/.opam
+    - export TERM=dumb
     - scripts/install_native_dependencies.sh
     - scripts/install_opam.sh # TODO: or scripts/install_build_environment.sh ?
     - export PATH="/usr/local/bin${PATH:+:}${PATH:-}"
@@ -106,6 +112,7 @@ local-dune-job:
   only:
     - merge_requests
     - dev
+    - /^.*-run-dev$/
 
 # Run a docker build without publishing to the registry
 build-current-docker-image:
@@ -114,7 +121,7 @@ build-current-docker-image:
     - build-and-package-debian-10
   <<: *docker
   script:
-    - sh scripts/build_docker_image.sh
+    - sh scripts/build_docker_image.sh next
     - sh scripts/test_cli.sh
   only:
     - merge_requests
@@ -122,17 +129,19 @@ build-current-docker-image:
 # When a MR/PR is merged to dev
 # take the previous build and publish it to Docker Hub
 build-and-publish-latest-docker-image:
-  stage: build_and_deploy_docker
+  stage: build_and_deploy
   <<: *docker
   dependencies:
     - build-and-package-debian-10
   script:
-    - sh scripts/build_docker_image.sh
+    - sh scripts/build_docker_image.sh $(if test "$CI_COMMIT_REF_NAME" = "dev"; then echo next; else echo next-attempt; fi)
     - sh scripts/test_cli.sh
-    - docker login -u $LIGO_REGISTRY_USER -p $LIGO_REGISTRY_PASSWORD
-    - docker push $LIGO_REGISTRY_IMAGE:next
-  only:
-    - dev
+    - echo ${LIGO_REGISTRY_PASSWORD} | docker login -u ${LIGO_REGISTRY_USER} --password-stdin
+    - docker push ${LIGO_REGISTRY_IMAGE_BUILD:-ligolang/ligo}:$(if test "$CI_COMMIT_REF_NAME" = "dev"; then echo next; else echo next-attempt; fi)
+  rules:
+    # Only deploy docker when from the dev branch AND on the canonical ligolang/ligo repository
+    - if: '$CI_COMMIT_REF_NAME =~ /^(dev|.*-run-dev)$/ && $CI_PROJECT_PATH == "ligolang/ligo"'
+      when: always
 
 # It'd be a good idea to generate those jobs dynamically,
 # based on desired targets
@@ -140,19 +149,20 @@ build-and-package-debian-9:
   <<: *docker
   # To run in sequence and save CPU usage, use stage: build_and_package_binaries
   stage: test
-  variables: 
+  variables:
     target_os_family: "debian"
     target_os: "debian"
     target_os_version: "9"
   <<: *build_binary
   only:
     - dev
+    - /^.*-run-dev$/
 
 build-and-package-debian-10:
   <<: *docker
   # To run in sequence and save CPU usage, use stage: build_and_package_binaries
   stage: test
-  variables: 
+  variables:
     target_os_family: "debian"
     target_os: "debian"
     target_os_version: "10"
@@ -163,34 +173,105 @@ build-and-package-debian-10:
   only:
     - merge_requests
     - dev
+    - /^.*-run-dev$/
 
 build-and-package-ubuntu-18-04:
   <<: *docker
   # To run in sequence and save CPU usage, use stage: build_and_package_binaries
   stage: test
-  variables: 
+  variables:
     target_os_family: "debian"
     target_os: "ubuntu"
     target_os_version: "18.04"
   <<: *build_binary
   only:
     - dev
+    - /^.*-run-dev$/
 
 build-and-package-ubuntu-19-04:
   <<: *docker
   # To run in sequence and save CPU usage, use stage: build_and_package_binaries
   stage: test
-  variables: 
+  variables:
     target_os_family: "debian"
     target_os: "ubuntu"
     target_os_version: "19.04"
   <<: *build_binary
   only:
     - dev
+    - /^.*-run-dev$/
 
 # Pages are deployed from dev, be careful not to override 'next'
 # in case something gets merged into 'dev' while releasing.
 pages:
   <<: *website_build
+  rules:
+    - if: '$CI_COMMIT_REF_NAME == "dev" && $CI_PROJECT_PATH == "ligolang/ligo"'
+      when: always
+
+pages-attempt:
+  <<: *website_build
+  rules:
+    - if: '$CI_COMMIT_REF_NAME =~ /^.*-run-dev$/ && $CI_PROJECT_PATH == "ligolang/ligo"'
+      when: always
+
+# WEBIDE jobs
+
+run-webide-unit-tests:
+  stage: test
+  image: node:12-alpine
+  script:
+    - cd tools/webide/packages/server
+    - npm ci
+    - npm run test
   only:
-    - dev
+    changes:
+      - tools/webide/**
+
+build-publish-ide-image:
+  stage: build_and_deploy
+  <<: *docker
+  script:
+    - ls -F
+    - find dist/
+    - find dist/package/ -name '*ligo_*deb'
+    - mv $(realpath dist/package/debian-10/*.deb) tools/webide/ligo_deb10.deb
+    - cd tools/webide
+    - echo "${CI_BUILD_TOKEN}" | docker login -u gitlab-ci-token --password-stdin registry.gitlab.com
+    - >
+      docker build
+      -t "${WEBIDE_IMAGE_NAME}:${CI_COMMIT_SHORT_SHA}"
+      --build-arg GIT_TAG="${CI_COMMIT_SHA}"
+      --build-arg GIT_COMMIT="${CI_COMMIT_SHORT_SHA}"
+      .
+    - docker push "${WEBIDE_IMAGE_NAME}:${CI_COMMIT_SHORT_SHA}"
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      when: always
+    - if: '$CI_COMMIT_REF_NAME == "dev"'
+      when: always
+
+run-webide-e2e-tests:
+  stage: ide-e2e-test
+  <<: *docker
+  image: tmaier/docker-compose
+  script:
+    - cd tools/webide/packages/e2e
+    - export WEBIDE_IMAGE="${WEBIDE_IMAGE_NAME}:${CI_COMMIT_SHORT_SHA}"
+    - docker-compose run e2e
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      when: always
+    - if: '$CI_COMMIT_REF_NAME == "dev"'
+      when: always
+
+deploy-handoff:
+  # Handoff deployment duties to private repo
+  stage: ide-deploy
+  variables:
+    IDE_DOCKER_IMAGE: "registry.gitlab.com/${CI_PROJECT_PATH}/ligo_webide"
+    LIGO_COMMIT_REF_NAME: "${CI_COMMIT_SHORT_SHA}"
+  trigger: ligolang/ligo-webide-deploy
+  rules:
+    - if: '$CI_COMMIT_REF_NAME == "dev"'
+      when: always

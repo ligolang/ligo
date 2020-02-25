@@ -8,13 +8,13 @@ val get_trace : expression_variable -> t -> element result
 val empty : environment
 val full_empty : t
 val add : expression_variable -> element -> t -> t
-val add_ez_binder : expression_variable -> type_value -> t -> t
-val add_ez_declaration : expression_variable -> annotated_expression -> t -> t
-val add_ez_ae : expression_variable -> annotated_expression -> t -> t
-val add_type : type_variable -> type_value -> t -> t
+val add_ez_binder : expression_variable -> type_expression -> t -> t
+val add_ez_declaration : expression_variable -> expression -> t -> t
+val add_ez_ae : expression_variable -> expression -> t -> t
+val add_type : type_variable -> type_expression -> t -> t
 val get_opt : expression_variable -> t -> element option
-val get_type_opt : type_variable -> t -> type_value option
-val get_constructor : constructor -> t -> (type_value * type_value) option
+val get_type_opt : type_variable -> t -> type_expression option
+val get_constructor : constructor' -> t -> (type_expression * type_expression) option
 
 module Small : sig
   type t = small_environment
@@ -28,16 +28,16 @@ module Small : sig
   val map_type_environment : ( type_environment -> type_environment ) -> t -> t
 
   val add : string -> element -> t -> t
-  val add_type : string -> type_value -> t -> t
+  val add_type : string -> type_expression -> t -> t
   val get_opt : string -> t -> element option
-  val get_type_opt : string -> t -> type_value option
+  val get_type_opt : string -> t -> type_expression option
   *)
 end
 (*
 
-val make_element : type_value -> full_environment -> environment_element_definition -> element
-val make_element_binder : type_value -> full_environment -> element
-val make_element_declaration : full_environment -> annotated_expression -> element
+val make_element : type_expression -> full_environment -> environment_element_definition -> element
+val make_element_binder : type_expression -> full_environment -> element
+val make_element_declaration : full_environment -> expression -> element
 *)
 
 
@@ -50,7 +50,7 @@ module PP : sig
 (*
   val environment_element : formatter -> ( string * environment_element ) -> unit
 
-  val type_environment_element : formatter -> ( string * type_value ) -> unit
+  val type_environment_element : formatter -> ( string * type_expression ) -> unit
 
   val environment : formatter -> environment -> unit
 

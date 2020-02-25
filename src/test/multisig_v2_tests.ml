@@ -35,7 +35,7 @@ let empty_message = e_lambda (Var.of_name "arguments")
   empty_op_list
 let empty_message2 = e_lambda (Var.of_name "arguments")
   (Some t_bytes) (Some (t_list t_operation))
- ( e_let_in ((Var.of_name "foo"),Some t_unit) false (e_unit ()) empty_op_list)
+ ( e_let_in ((Var.of_name "foo"),Some t_unit) false false (e_unit ()) empty_op_list)
 
 let send_param msg = e_constructor "Send" msg
 let withdraw_param = e_constructor "Withdraw" empty_message
@@ -55,7 +55,7 @@ let storage {state_hash ; threshold ; max_proposal ; max_msg_size ; id_counter_l
       addr_exp::auth_set , (addr_exp, e_nat ctr)::counter_st)
     ([],[])
     id_counter_list in
-  e_ez_record [
+  e_record_ez [
     ("state_hash"          , e_bytes_raw state_hash                                ) ;
     ("threshold"           , e_nat threshold                                       ) ;
     ("max_proposal"        , e_nat max_proposal                                    ) ;
@@ -73,8 +73,8 @@ let wrong_addr () =
     id_counter_list = [1,0 ; 2,0] ;
     msg_store_list = []
   } in
-  let source = contract 3 in
-  let options = Proto_alpha_utils.Memory_proto_alpha.make_options ~source () in
+  let sender = contract 3 in
+  let options = Proto_alpha_utils.Memory_proto_alpha.make_options ~sender () in
   let%bind () =
     let exp_failwith = "Unauthorized address" in
     expect_string_failwith ~options program "main"
@@ -89,8 +89,8 @@ let message_size_exceeded () =
     id_counter_list = [1,0] ;
     msg_store_list = []
   } in
-  let source = contract 1 in
-  let options = Proto_alpha_utils.Memory_proto_alpha.make_options ~source () in
+  let sender = contract 1 in
+  let options = Proto_alpha_utils.Memory_proto_alpha.make_options ~sender () in
   let%bind () =
     let exp_failwith = "Message size exceed maximum limit" in
     expect_string_failwith ~options program "main"
@@ -107,8 +107,8 @@ let maximum_number_of_proposal () =
     id_counter_list = [1,1] ;
     msg_store_list = [(bytes1, e_set [e_address@@ addr 1])]
   } in
-  let source = contract 1 in
-  let options = Proto_alpha_utils.Memory_proto_alpha.make_options ~source () in
+  let sender = contract 1 in
+  let options = Proto_alpha_utils.Memory_proto_alpha.make_options ~sender () in
   let%bind () =
     let exp_failwith = "Maximum number of proposal reached" in
     expect_string_failwith ~options program "main"
@@ -126,8 +126,8 @@ let send_already_accounted () =
     msg_store_list = [(bytes, e_set [e_address@@ addr 1])]
   } in
   let options =
-    let source = contract 1 in
-    Proto_alpha_utils.Memory_proto_alpha.make_options ~source () in
+    let sender = contract 1 in
+    Proto_alpha_utils.Memory_proto_alpha.make_options ~sender () in
   expect_eq ~options program "main"
     (e_pair (send_param empty_message) init_storage) (e_pair empty_op_list init_storage)
 
@@ -147,8 +147,8 @@ let send_never_accounted () =
     msg_store_list = [(bytes, e_set [e_address@@ addr 1])] ;
   } in
   let options =
-    let source = contract 1 in
-    Proto_alpha_utils.Memory_proto_alpha.make_options ~source () in
+    let sender = contract 1 in
+    Proto_alpha_utils.Memory_proto_alpha.make_options ~sender () in
   expect_eq ~options program "main"
     (e_pair (send_param empty_message) init_storage) (e_pair empty_op_list final_storage)
 
@@ -168,8 +168,8 @@ let withdraw_already_accounted_one () =
     id_counter_list = [1,0 ; 2,0] ;
     msg_store_list = [] } in
   let options =
-    let source = contract 1 in
-    Proto_alpha_utils.Memory_proto_alpha.make_options ~source () in
+    let sender = contract 1 in
+    Proto_alpha_utils.Memory_proto_alpha.make_options ~sender () in
   expect_eq ~options program "main"
     (e_pair param init_storage) (e_pair empty_op_list final_storage)
 
@@ -189,8 +189,8 @@ let withdraw_already_accounted_two () =
     id_counter_list = [1,0 ; 2,1] ;
     msg_store_list = [(bytes, e_set [e_address@@ addr 2])] } in
   let options =
-    let source = contract 1 in
-    Proto_alpha_utils.Memory_proto_alpha.make_options ~source () in
+    let sender = contract 1 in
+    Proto_alpha_utils.Memory_proto_alpha.make_options ~sender () in
   expect_eq ~options program "main"
     (e_pair param init_storage) (e_pair empty_op_list final_storage)
 
@@ -212,8 +212,8 @@ let counters_reset () =
     id_counter_list = [1,0 ; 2,0 ; 3,0] ;
     msg_store_list = [] } in
   let options =
-    let source = contract 3 in
-    Proto_alpha_utils.Memory_proto_alpha.make_options ~source () in
+    let sender = contract 3 in
+    Proto_alpha_utils.Memory_proto_alpha.make_options ~sender () in
   expect_eq ~options program "main"
     (e_pair param init_storage) (e_pair empty_op_list final_storage)
 
@@ -227,8 +227,8 @@ let withdraw_never_accounted () =
     msg_store_list = [] ;
   } in
   let options =
-    let source = contract 1 in
-    Proto_alpha_utils.Memory_proto_alpha.make_options ~source () in
+    let sender = contract 1 in
+    Proto_alpha_utils.Memory_proto_alpha.make_options ~sender () in
   expect_eq ~options program "main"
     (e_pair param init_storage) (e_pair empty_op_list init_storage)
 
@@ -243,8 +243,8 @@ let succeeded_storing () =
     msg_store_list = [(bytes, e_typed_set [] t_address)] ;
   } in
   let options =
-    let source = contract 1 in
-    Proto_alpha_utils.Memory_proto_alpha.make_options ~source () in
+    let sender = contract 1 in
+    Proto_alpha_utils.Memory_proto_alpha.make_options ~sender () in
   let%bind () = expect_eq_n_trace_aux ~options [1;2] program "main"
       (fun th ->
         let init_storage = storage (init_storage th) in
