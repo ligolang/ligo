@@ -10,6 +10,8 @@ interface ShareBody {
   editor: {
     language: string;
     code: string;
+    dirty: boolean;
+    title: string;
   };
   compile: {
     entrypoint: string;
@@ -39,7 +41,9 @@ const validateRequest = (body: any): { value: ShareBody; error: any } => {
       editor: joi
         .object({
           language: joi.string().required(),
-          code: joi.string().required()
+          code: joi.string().required(),
+          dirty: joi.boolean().optional(),
+          title: joi.string().allow('')
         })
         .required(),
       compile: joi.object({

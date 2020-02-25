@@ -8,6 +8,7 @@ import styled, { css } from 'styled-components';
 import { AppState } from '../redux/app';
 import { ChangeLanguageAction, EditorState } from '../redux/editor';
 import { Language } from '../redux/types';
+import { Tooltip } from './tooltip';
 
 const Container = styled.div`
   display: flex;
@@ -22,12 +23,17 @@ const Header = styled.div`
 
   flex: 1;
   display: flex;
-  align-items: center;
-  justify-content: space-between;
   height: 2em;
   padding: 0 0.5em;
 
   border: 1px solid var(--blue_trans1);
+`;
+
+const Label = styled.div`
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 `;
 
 const ArrowIcon = ({ rotate, ...props }: { rotate: boolean }) => (
@@ -140,8 +146,11 @@ export const SyntaxSelectComponent = () => {
         </List>
       </OutsideClickHandler>
       <Header id="syntax-select" onClick={() => open(true)}>
-        <span>{OPTIONS[language]}</span>
-        <Arrow rotate={opened}></Arrow>
+        <Label>
+          {OPTIONS[language]}
+          <Arrow rotate={opened}></Arrow>
+        </Label>
+        <Tooltip>Select syntax</Tooltip>
       </Header>
     </Container>
   );

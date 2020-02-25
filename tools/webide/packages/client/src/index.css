@@ -10,6 +10,8 @@
   --blue_opaque1: #dbeaff;
   --blue_trans2: rgba(14, 116, 255, 0.08); /* #eff7ff; */
 
+  --input_background: #eff7ff;
+
   --grey: #888;
 
   --box-shadow: 1px 3px 10px 0px rgba(153, 153, 153, 0.4); /* or #999999 */
@@ -46,7 +48,7 @@
   --font_ghost_weight: 700;
   --font_ghost_color: rgba(153, 153, 153, 0.5); /* or #CFCFCF */
 
-  --content_height: 85vh;
+  --content_height: 80vh;
 
   --tooltip_foreground: white;
   --tooltip_background: rgba(0, 0, 0, 0.75) /*#404040*/;

@@ -1,4 +1,4 @@
-import React, { createElement, useEffect, useRef, useState } from 'react';
+import React, { createElement, useCallback, useEffect, useRef, useState } from 'react';
 import { render } from 'react-dom';
 import styled from 'styled-components';
 
@@ -64,19 +64,22 @@ export const Tooltip = (props: { position?: Position; children: any }) => {
   const ref = useRef<HTMLDivElement>(null);
   const [isTooltipVisible, setTooltipVisible] = useState(false);
 
-  const renderTooltip = (visible: boolean, triggerRect: ClientRect) => {
-    const tooltip = createElement(
-      StyledTooltip,
-      {
-        visible,
-        x: calcX(triggerRect, props.position),
-        y: calcY(triggerRect, props.position)
-      },
-      props.children
-    );
+  const renderTooltip = useCallback(
+    (visible: boolean, triggerRect: ClientRect) => {
+      const tooltip = createElement(
+        StyledTooltip,
+        {
+          visible,
+          x: calcX(triggerRect, props.position),
+          y: calcY(triggerRect, props.position)
+        },
+        props.children
+      );
 
-    render(tooltip, document.getElementById(TOOLTIP_CONTAINER_ID));
-  };
+      render(tooltip, document.getElementById(TOOLTIP_CONTAINER_ID));
+    },
+    [props.position, props.children]
+  );
 
   useEffect(() => {
     if (ref.current) {
@@ -98,7 +101,7 @@ export const Tooltip = (props: { position?: Position; children: any }) => {
         };
       }
     }
-  });
+  }, [isTooltipVisible, renderTooltip]);
 
   return <div ref={ref}></div>;
 };

@@ -4,7 +4,8 @@ import { useDispatch, useStore } from 'react-redux';
 import styled from 'styled-components';
 
 import { AppState } from '../redux/app';
-import { ChangeCodeAction } from '../redux/editor';
+import { ChangeCodeAction, ChangeDirtyAction } from '../redux/editor';
+import { ClearSelectedAction } from '../redux/examples';
 
 const Container = styled.div`
   height: var(--content_height);
@@ -53,8 +54,14 @@ export const MonacoComponent = () => {
       }
     });
 
+    let shouldDispatchCodeChangedAction = true;
+
     const { dispose } = editor.onDidChangeModelContent(() => {
-      dispatch({ ...new ChangeCodeAction(editor.getValue()) });
+      if (shouldDispatchCodeChangedAction) {
+        dispatch({ ...new ChangeCodeAction(editor.getValue()) });
+        dispatch({ ...new ChangeDirtyAction(true) });
+        dispatch({ ...new ClearSelectedAction() });
+      }
     });
 
     cleanupFunc.push(dispose);
@@ -64,11 +71,13 @@ export const MonacoComponent = () => {
         const { editor: editorState }: AppState = store.getState();
 
         if (editorState.code !== editor.getValue()) {
+          shouldDispatchCodeChangedAction = false;
           editor.setValue(editorState.code);
+          shouldDispatchCodeChangedAction = true;
         }
 
         if (editorState.language !== model.getModeId()) {
-          if (editorState.language === 'reasonligo') { 
+          if (editorState.language === 'reasonligo') {
             monaco.editor.setModelLanguage(model, 'javascript');
           } else {
             monaco.editor.setModelLanguage(model, editorState.language);
