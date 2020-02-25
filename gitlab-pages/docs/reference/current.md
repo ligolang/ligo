@@ -11,17 +11,17 @@ Get the balance for the contract.
 
 <!--PascaLIGO-->
 ```pascaligo
-function main (const p : unit; const s: tez) : list(operation) * storage is
+function main (const p : unit; const s: tez) : list(operation) * tez is
   ((nil : list(operation)), balance)
 ```
 <!--CameLIGO-->
 ```cameligo
-let main (p, s : unit * storage) =
+let main (p, s : unit * tez) =
   ([] : operation list), balance
 ```
 <!--ReasonLIGO-->
 ```reasonligo
-let main = (p: unit, storage) => ([]: list(operation), balance);
+let main = ((p,s): (unit, tez)) => ([]: list(operation), balance);
 ```
 
 <!--END_DOCUSAURUS_CODE_TABS-->
@@ -293,25 +293,22 @@ Cause the contract to fail with an error message.
 
 <!--PascaLIGO-->
 ```pascaligo
-function main (const p : param; const s : unit) : list(operation) * unit is
+function main (const p : int; const s : unit) : list(operation) * unit is
   block {
-    case p of
-    | Zero (n) -> if n > 0n then failwith("fail") else skip
-    | Pos (n) -> if n > 0n then skip else failwith("fail")
-    end
+    if p > 10 then failwith("fail") else skip;
   }
   with ((nil : list(operation)), s)
 ```
 
 <!--CameLIGO-->
 ```cameligo
-let main (p: unit) storage =
+let main (p,s: unit * unit) =
   if true then failwith "This contract always fails" else ()
 ```
 
 <!--ReasonLIGO-->
 ```reasonligo
-let main = (p: unit, storage) =>
+let main = ((p,s): (unit, unit)) =>
   if (true) {
     failwith("This contract always fails");
   } else {
