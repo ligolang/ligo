@@ -40,9 +40,10 @@ let buy_id () =
                                   ("controller", e_address owner_addr) ;
                                   ("profile", owner_website)]
   in
-  let storage = e_tuple [(e_big_map [(e_int 0, id_details_1)]) ;
-                         e_int 1;
-                         e_tuple [e_mutez 1000000 ; e_mutez 1000000]]
+  let storage = e_record_ez [("identities", (e_big_map [(e_int 0, id_details_1)])) ;
+                             ("next_id", e_int 1) ;
+                             ("name_price", e_mutez 1000000) ;
+                             ("skip_price", e_mutez 1000000) ; ]
   in
   let new_addr = first_owner in
   let options = Proto_alpha_utils.Memory_proto_alpha.make_options
@@ -54,11 +55,15 @@ let buy_id () =
                                   ("controller", e_address new_addr) ;
                                   ("profile", new_website)]
   in
-  let param = e_pair owner_website (e_some (e_address new_addr)) in
-  let new_storage = e_tuple [(e_big_map [(e_int 0, id_details_1) ;
-                                         (e_int 1, id_details_2)]) ;
-                              e_int 2;
-                              e_tuple [e_mutez 1000000 ; e_mutez 1000000]]
+  let param = e_record_ez [("profile", owner_website) ;
+                           ("initial_controller", (e_some (e_address new_addr))) ;
+                          ] in
+  let new_storage = e_record_ez [("identities", (e_big_map
+                                                   [(e_int 0, id_details_1) ;
+                                                    (e_int 1, id_details_2)])) ;
+                                 ("next_id", e_int 2) ;
+                                 ("name_price", e_mutez 1000000) ;
+                                 ("skip_price", e_mutez 1000000) ; ]
   in
   let%bind () = expect_eq ~options (program, state) "buy" 
       (e_pair param storage) 
@@ -73,9 +78,10 @@ let buy_id_sender_addr () =
                                   ("controller", e_address owner_addr) ;
                                   ("profile", owner_website)]
   in
-  let storage = e_tuple [(e_big_map [(e_int 0, id_details_1)]) ;
-                         e_int 1;
-                         e_tuple [e_mutez 1000000 ; e_mutez 1000000]]
+  let storage = e_record_ez [("identities", (e_big_map [(e_int 0, id_details_1)])) ;
+                             ("next_id", e_int 1) ;
+                             ("name_price", e_mutez 1000000) ;
+                             ("skip_price", e_mutez 1000000) ; ]
   in
   let new_addr = first_owner in
   let options = Proto_alpha_utils.Memory_proto_alpha.make_options
@@ -87,11 +93,14 @@ let buy_id_sender_addr () =
                                   ("controller", e_address new_addr) ;
                                   ("profile", new_website)]
   in
-  let param = e_pair owner_website (e_typed_none (t_address ())) in
-  let new_storage = e_tuple [(e_big_map [(e_int 0, id_details_1) ;
-                                         (e_int 1, id_details_2)]) ;
-                              e_int 2;
-                              e_tuple [e_mutez 1000000 ; e_mutez 1000000]]
+  let param = e_record_ez [("profile", owner_website) ;
+                           ("initial_controller", (e_typed_none (t_address ())))] in
+  let new_storage = e_record_ez [("identities", (e_big_map
+                                                   [(e_int 0, id_details_1) ;
+                                                    (e_int 1, id_details_2)])) ;
+                                 ("next_id", e_int 2) ;
+                                 ("name_price", e_mutez 1000000) ;
+                                 ("skip_price", e_mutez 1000000) ; ]
   in
   let%bind () = expect_eq ~options (program, state) "buy" 
       (e_pair param storage) 
@@ -107,18 +116,20 @@ let buy_id_wrong_amount () =
                                   ("controller", e_address owner_addr) ;
                                   ("profile", owner_website)]
   in
-  let storage = e_tuple [(e_big_map [(e_int 0, id_details_1)]) ;
-                         e_int 1;
-                         e_tuple [e_mutez 1000000 ; e_mutez 1000000]]
+  let storage = e_record_ez [("identities", (e_big_map [(e_int 0, id_details_1)])) ;
+                             ("next_id", e_int 1) ;
+                             ("name_price", e_mutez 1000000) ;
+                             ("skip_price", e_mutez 1000000) ; ]
   in
   let new_addr = first_owner in
   let options = Proto_alpha_utils.Memory_proto_alpha.make_options
       ~sender:first_contract
       ~amount:(Memory_proto_alpha.Protocol.Alpha_context.Tez.fifty_cents) ()
   in
-  let param = e_pair owner_website (e_some (e_address new_addr)) in
+  let param = e_record_ez [("profile", owner_website) ;
+                           ("initial_controller", (e_some (e_address new_addr)))] in
   let%bind () = expect_string_failwith ~options (program, state) "buy" 
-      (e_pair param storage) 
+      (e_pair param storage)
       "Incorrect amount paid."
   in ok ()
 
@@ -133,7 +144,7 @@ let update_details_owner () =
   let new_addr = first_owner in
   let options = Proto_alpha_utils.Memory_proto_alpha.make_options
       ~sender:first_contract
-      ~amount:(Memory_proto_alpha.Protocol.Alpha_context.Tez.zero) 
+      ~amount:(Memory_proto_alpha.Protocol.Alpha_context.Tez.zero)
       ()
   in
   let new_website = e_bytes_string "ligolang.org" in
@@ -144,20 +155,24 @@ let update_details_owner () =
   let id_details_2_diff = e_record_ez [("owner", e_address new_addr) ;
                                        ("controller", e_address new_addr) ;
                                        ("profile", new_website)] in
-  let storage = e_tuple [(e_big_map [(e_int 0, id_details_1) ;
-                                     (e_int 1, id_details_2)]) ;
-                         e_int 2;
-                         e_tuple [e_mutez 1000000 ; e_mutez 1000000]]
+  let storage = e_record_ez [("identities", (e_big_map
+                                                   [(e_int 0, id_details_1) ;
+                                                    (e_int 1, id_details_2)])) ;
+                                 ("next_id", e_int 2) ;
+                                 ("name_price", e_mutez 1000000) ;
+                                 ("skip_price", e_mutez 1000000) ; ]
   in
-  let new_storage = e_tuple [(e_big_map [(e_int 0, id_details_1) ;
-                                         (e_int 1, id_details_2_diff)]) ;
-                             e_int 2;
-                             e_tuple [e_mutez 1000000 ; e_mutez 1000000]]
+  let new_storage = e_record_ez [("identities", (e_big_map
+                                                   [(e_int 0, id_details_1) ;
+                                                    (e_int 1, id_details_2_diff)])) ;
+                                 ("next_id", e_int 2) ;
+                                 ("name_price", e_mutez 1000000) ;
+                                 ("skip_price", e_mutez 1000000) ; ]
   in
   let details = e_bytes_string "ligolang.org" in
-  let param = e_tuple [e_int 1 ; 
-                       e_some details ;
-                       e_some (e_address new_addr)] in
+  let param = e_record_ez [("id", e_int 1) ;
+                       ("new_profile", e_some details) ;
+                       ("new_controller", e_some (e_address new_addr))] in
   let%bind () = expect_eq ~options (program, state) "update_details"
       (e_pair param storage)
       (e_pair (e_list []) new_storage)
@@ -185,20 +200,24 @@ let update_details_controller () =
   let id_details_2_diff = e_record_ez [("owner", e_address owner_addr) ;
                                        ("controller", e_address owner_addr) ;
                                        ("profile", new_website)] in
-  let storage = e_tuple [(e_big_map [(e_int 0, id_details_1) ;
-                                     (e_int 1, id_details_2)]) ;
-                         e_int 2;
-                         e_tuple [e_mutez 1000000 ; e_mutez 1000000]]
+  let storage = e_record_ez [("identities", (e_big_map
+                                               [(e_int 0, id_details_1) ;
+                                                (e_int 1, id_details_2)])) ;
+                             ("next_id", e_int 2) ;
+                             ("name_price", e_mutez 1000000) ;
+                             ("skip_price", e_mutez 1000000) ; ]
   in
-  let new_storage = e_tuple [(e_big_map [(e_int 0, id_details_1) ;
-                                         (e_int 1, id_details_2_diff)]) ;
-                             e_int 2;
-                             e_tuple [e_mutez 1000000 ; e_mutez 1000000]]
+  let new_storage = e_record_ez [("identities", (e_big_map
+                                                   [(e_int 0, id_details_1) ;
+                                                    (e_int 1, id_details_2_diff)])) ;
+                                 ("next_id", e_int 2) ;
+                                 ("name_price", e_mutez 1000000) ;
+                                 ("skip_price", e_mutez 1000000) ; ]
   in
   let details = e_bytes_string "ligolang.org" in
-  let param = e_tuple [e_int 1 ; 
-                       e_some details ;
-                       e_some (e_address owner_addr)] in
+  let param = e_record_ez [("id", e_int 1) ;
+                           ("new_profile", e_some details) ;
+                           ("new_controller", e_some (e_address owner_addr))] in
   let%bind () = expect_eq ~options (program, state) "update_details"
       (e_pair param storage)
       (e_pair (e_list []) new_storage)
@@ -224,15 +243,17 @@ let update_details_nonexistent () =
                                   ("controller", e_address new_addr) ;
                                   ("profile", new_website)]
   in
-  let storage = e_tuple [(e_big_map [(e_int 0, id_details_1) ;
-                                     (e_int 1, id_details_2)]) ;
-                         e_int 2;
-                         e_tuple [e_mutez 1000000 ; e_mutez 1000000]]
+  let storage = e_record_ez [("identities", (e_big_map
+                                                   [(e_int 0, id_details_1) ;
+                                                    (e_int 1, id_details_2)])) ;
+                                 ("next_id", e_int 2) ;
+                                 ("name_price", e_mutez 1000000) ;
+                                 ("skip_price", e_mutez 1000000) ; ]
   in
   let details = e_bytes_string "ligolang.org" in
-  let param = e_tuple [e_int 2 ; 
-                       e_some details ;
-                       e_some (e_address owner_addr)] in
+  let param = e_record_ez [("id", e_int 2) ;
+                           ("new_profile", e_some details) ;
+                           ("new_controller", e_some (e_address owner_addr))] in
   let%bind () = expect_string_failwith ~options (program, state) "update_details"
       (e_pair param storage)
       "This ID does not exist."
@@ -257,15 +278,17 @@ let update_details_wrong_addr () =
                                   ("controller", e_address new_addr) ;
                                   ("profile", new_website)]
   in
-  let storage = e_tuple [(e_big_map [(e_int 0, id_details_1) ;
-                                     (e_int 1, id_details_2)]) ;
-                         e_int 2;
-                         e_tuple [e_mutez 1000000 ; e_mutez 1000000]]
+  let storage = e_record_ez [("identities", (e_big_map
+                                                   [(e_int 0, id_details_1) ;
+                                                    (e_int 1, id_details_2)])) ;
+                                 ("next_id", e_int 2) ;
+                                 ("name_price", e_mutez 1000000) ;
+                                 ("skip_price", e_mutez 1000000) ; ]
   in
   let details = e_bytes_string "ligolang.org" in
-  let param = e_tuple [e_int 0 ; 
-                       e_some details ;
-                       e_some (e_address owner_addr)] in
+  let param = e_record_ez [("id", e_int 0) ;
+                           ("new_profile", e_some details) ;
+                           ("new_controller", e_some (e_address owner_addr))] in
   let%bind () = expect_string_failwith ~options (program, state) "update_details"
       (e_pair param storage)
       "You are not the owner or controller of this ID."
@@ -291,14 +314,16 @@ let update_details_unchanged () =
                                   ("controller", e_address new_addr) ;
                                   ("profile", new_website)]
   in
-  let storage = e_tuple [(e_big_map [(e_int 0, id_details_1) ;
-                                     (e_int 1, id_details_2)]) ;
-                         e_int 2;
-                         e_tuple [e_mutez 1000000 ; e_mutez 1000000]]
+  let storage = e_record_ez [("identities", (e_big_map
+                                               [(e_int 0, id_details_1) ;
+                                                (e_int 1, id_details_2)])) ;
+                             ("next_id", e_int 2) ;
+                             ("name_price", e_mutez 1000000) ;
+                             ("skip_price", e_mutez 1000000) ; ]
   in
-  let param = e_tuple [e_int 1 ; 
-                       e_typed_none (t_bytes ()) ;
-                       e_typed_none (t_address ())] in
+  let param = e_record_ez [("id", e_int 1) ;
+                           ("new_profile", e_typed_none (t_bytes ())) ;
+                           ("new_controller", e_typed_none (t_address ()))] in
   let%bind () = expect_eq ~options (program, state) "update_details"
       (e_pair param storage)
       (e_pair (e_list []) storage)
@@ -326,17 +351,22 @@ let update_owner () =
   let id_details_2_diff = e_record_ez [("owner", e_address owner_addr) ;
                                        ("controller", e_address new_addr) ;
                                        ("profile", new_website)] in
-  let storage = e_tuple [(e_big_map [(e_int 0, id_details_1) ;
-                                     (e_int 1, id_details_2)]) ;
-                         e_int 2;
-                         e_tuple [e_mutez 1000000 ; e_mutez 1000000]]
+  let storage = e_record_ez [("identities", (e_big_map
+                                               [(e_int 0, id_details_1) ;
+                                                (e_int 1, id_details_2)])) ;
+                             ("next_id", e_int 2) ;
+                             ("name_price", e_mutez 1000000) ;
+                             ("skip_price", e_mutez 1000000) ; ]
   in
-  let new_storage = e_tuple [(e_big_map [(e_int 0, id_details_1) ;
-                                         (e_int 1, id_details_2_diff)]) ;
-                             e_int 2;
-                             e_tuple [e_mutez 1000000 ; e_mutez 1000000]]
+  let new_storage = e_record_ez [("identities", (e_big_map
+                                               [(e_int 0, id_details_1) ;
+                                                (e_int 1, id_details_2_diff)])) ;
+                             ("next_id", e_int 2) ;
+                             ("name_price", e_mutez 1000000) ;
+                             ("skip_price", e_mutez 1000000) ; ]
   in
-  let param = e_pair (e_int 1) (e_address owner_addr) in
+  let param = e_record_ez [("id", e_int 1) ;
+                           ("new_owner", e_address owner_addr)] in
   let%bind () = expect_eq ~options (program, state) "update_owner"
       (e_pair param storage)
       (e_pair (e_list []) new_storage)
@@ -362,12 +392,15 @@ let update_owner_nonexistent () =
                                   ("controller", e_address new_addr) ;
                                   ("profile", new_website)]
   in
-  let storage = e_tuple [(e_big_map [(e_int 0, id_details_1) ;
-                                     (e_int 1, id_details_2)]) ;
-                         e_int 2;
-                         e_tuple [e_mutez 1000000 ; e_mutez 1000000]]
+  let storage = e_record_ez [("identities", (e_big_map
+                                               [(e_int 0, id_details_1) ;
+                                                (e_int 1, id_details_2)])) ;
+                             ("next_id", e_int 2) ;
+                             ("name_price", e_mutez 1000000) ;
+                             ("skip_price", e_mutez 1000000) ; ]
   in
-  let param = e_pair (e_int 2) (e_address new_addr) in
+  let param = e_record_ez [("id", e_int 2);
+                           ("new_owner", e_address new_addr)] in
   let%bind () = expect_string_failwith ~options (program, state) "update_owner"
       (e_pair param storage)
       "This ID does not exist."
@@ -393,12 +426,15 @@ let update_owner_wrong_addr () =
                                   ("controller", e_address new_addr) ;
                                   ("profile", new_website)]
   in
-  let storage = e_tuple [(e_big_map [(e_int 0, id_details_1) ;
-                                     (e_int 1, id_details_2)]) ;
-                         e_int 2;
-                         e_tuple [e_mutez 1000000 ; e_mutez 1000000]]
+  let storage = e_record_ez [("identities", (e_big_map
+                                               [(e_int 0, id_details_1) ;
+                                                (e_int 1, id_details_2)])) ;
+                             ("next_id", e_int 2) ;
+                             ("name_price", e_mutez 1000000) ;
+                             ("skip_price", e_mutez 1000000) ; ]
   in
-  let param = e_pair (e_int 0) (e_address new_addr) in
+  let param = e_record_ez [("id", e_int 0);
+                           ("new_owner", e_address new_addr)] in
   let%bind () = expect_string_failwith ~options (program, state) "update_owner"
       (e_pair param storage)
       "You are not the owner of this ID."
@@ -422,15 +458,19 @@ let skip () =
                                   ("controller", e_address new_addr) ;
                                   ("profile", new_website)]
   in
-  let storage = e_tuple [(e_big_map [(e_int 0, id_details_1) ;
-                                     (e_int 1, id_details_2)]) ;
-                         e_int 2;
-                         e_tuple [e_mutez 1000000 ; e_mutez 1000000]]
+  let storage = e_record_ez [("identities", (e_big_map
+                                               [(e_int 0, id_details_1) ;
+                                                (e_int 1, id_details_2)])) ;
+                             ("next_id", e_int 2) ;
+                             ("name_price", e_mutez 1000000) ;
+                             ("skip_price", e_mutez 1000000) ; ]
   in
-  let new_storage = e_tuple [(e_big_map [(e_int 0, id_details_1) ;
-                                         (e_int 1, id_details_2)]) ;
-                             e_int 3;
-                             e_tuple [e_mutez 1000000 ; e_mutez 1000000]]
+  let new_storage = e_record_ez [("identities", (e_big_map
+                                               [(e_int 0, id_details_1) ;
+                                                (e_int 1, id_details_2)])) ;
+                             ("next_id", e_int 3) ;
+                             ("name_price", e_mutez 1000000) ;
+                             ("skip_price", e_mutez 1000000) ; ]
   in
   let%bind () = expect_eq ~options (program, state) "skip"
       (e_pair (e_unit ()) storage)
@@ -456,10 +496,12 @@ let skip_wrong_amount () =
                                   ("controller", e_address new_addr) ;
                                   ("profile", new_website)]
   in
-  let storage = e_tuple [(e_big_map [(e_int 0, id_details_1) ;
-                                     (e_int 1, id_details_2)]) ;
-                         e_int 2;
-                         e_tuple [e_mutez 1000000 ; e_mutez 1000000]]
+  let storage = e_record_ez [("identities", (e_big_map
+                                               [(e_int 0, id_details_1) ;
+                                                (e_int 1, id_details_2)])) ;
+                             ("next_id", e_int 2) ;
+                             ("name_price", e_mutez 1000000) ;
+                             ("skip_price", e_mutez 1000000) ; ]
   in
   let%bind () = expect_string_failwith ~options (program, state) "skip"
       (e_pair (e_unit ()) storage)
