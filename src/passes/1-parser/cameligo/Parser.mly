@@ -593,9 +593,13 @@ core_expr:
 | par(expr ":" type_expr {$1,$2,$3})  {                     EAnnot $1 }
 
 module_field:
-  module_name "." field_name {
+  module_name "." module_fun {
     let region = cover $1.region $3.region in
     {region; value = $1.value ^ "." ^ $3.value} }
+
+module_fun:
+  field_name { $1 }
+| "or"       { {value="or";  region=$1} }
 
 projection:
   struct_name "." nsepseq(selection,".") {

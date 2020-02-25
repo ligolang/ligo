@@ -19,7 +19,7 @@ Let us first consider and example of record type declaration.
 <!--DOCUSAURUS_CODE_TABS-->
 
 <!--PascaLIGO-->
-```pascaligo group=a
+```pascaligo group=records1
 type user is
   record [
     id       : nat;
@@ -29,7 +29,7 @@ type user is
 ```
 
 <!--CameLIGO-->
-```cameligo group=a
+```cameligo group=records1
 type user = {
   id       : nat;
   is_admin : bool;
@@ -38,7 +38,7 @@ type user = {
 ```
 
 <!--ReasonLIGO-->
-```reasonligo group=a
+```reasonligo group=records1
 type user = {
   id       : nat,
   is_admin : bool,
@@ -51,7 +51,7 @@ And here is how a record value is defined:
 
 <!--DOCUSAURUS_CODE_TABS-->
 <!--PascaLIGO-->
-```pascaligo group=a
+```pascaligo group=records1
 const alice : user =
   record [
     id       = 1n;
@@ -61,7 +61,7 @@ const alice : user =
 ```
 
 <!--CameLIGO-->
-```cameligo group=a
+```cameligo group=records1
 let alice : user = {
   id       = 1n;
   is_admin = true;
@@ -70,7 +70,7 @@ let alice : user = {
 ```
 
 <!--ReasonLIGO-->
-```reasonligo group=a
+```reasonligo group=records1
 let alice : user = {
   id       : 1n,
   is_admin : true,
@@ -86,17 +86,17 @@ operator, like so:
 
 <!--DOCUSAURUS_CODE_TABS-->
 <!--PascaLIGO-->
-```pascaligo group=a
+```pascaligo group=records1
 const alice_admin : bool = alice.is_admin
 ```
 
 <!--CameLIGO-->
-```cameligo group=a
+```cameligo group=records1
 let alice_admin : bool = alice.is_admin
 ```
 
 <!--ReasonLIGO-->
-```reasonligo group=a
+```reasonligo group=records1
 let alice_admin : bool = alice.is_admin;
 ```
 <!--END_DOCUSAURUS_CODE_TABS-->
@@ -123,7 +123,7 @@ In PascaLIGO, the shape of that expression is `<record variable> with
 <record value>`. The record variable is the record to update and the
 record value is the update itself.
 
-```pascaligo group=b
+```pascaligo group=records2
 type point is record [x : int; y : int; z : int]
 type vector is record [dx : int; dy : int]
 
@@ -151,7 +151,7 @@ the blockless function.
 The syntax for the functional updates of record in CameLIGO follows
 that of OCaml:
 
-```cameligo group=b
+```cameligo group=records2
 type point = {x : int; y : int; z : int}
 type vector = {dx : int; dy : int}
 
@@ -179,7 +179,7 @@ xy_translate "({x=2;y=3;z=1}, {dx=3;dy=4})"
 The syntax for the functional updates of record in ReasonLIGO follows
 that of ReasonML:
 
-```reasonligo group=b
+```reasonligo group=records2
 type point = {x : int, y : int, z : int};
 type vector = {dx : int, dy : int};
 
@@ -216,7 +216,7 @@ name "patch").
 Let us consider defining a function that translates three-dimensional
 points on a plane.
 
-```pascaligo group=c
+```pascaligo group=records3
 type point is record [x : int; y : int; z : int]
 type vector is record [dx : int; dy : int]
 
@@ -242,7 +242,7 @@ Of course, we can actually translate the point with only one `patch`,
 as the previous example was meant to show that, after the first patch,
 the value of `p` indeed changed. So, a shorter version would be
 
-```pascaligo group=d
+```pascaligo group=records4
 type point is record [x : int; y : int; z : int]
 type vector is record [dx : int; dy : int]
 
@@ -267,7 +267,7 @@ Record patches can actually be simulated with functional updates. All
 we have to do is *declare a new record value with the same name as the
 one we want to update* and use a functional update, like so:
 
-```pascaligo group=e
+```pascaligo group=records5
 type point is record [x : int; y : int; z : int]
 type vector is record [dx : int; dy : int]
 
@@ -298,71 +298,98 @@ values of the same type. The former are called *key* and the latter
 is that the type of the keys must be *comparable*, in the Michelson
 sense.
 
+### Declaring a Map
+
 Here is how a custom map from addresses to a pair of integers is
 defined.
 
 <!--DOCUSAURUS_CODE_TABS-->
+
 <!--PascaLIGO-->
-```pascaligo group=f
+```pascaligo group=maps
 type move is int * int
 type register is map (address, move)
 ```
 
 <!--CameLIGO-->
-```cameligo group=f
+```cameligo group=maps
 type move = int * int
 type register = (address, move) map
 ```
 
 <!--ReasonLIGO-->
-```reasonligo group=f
+```reasonligo group=maps
 type move = (int, int);
 type register = map (address, move);
 ```
 <!--END_DOCUSAURUS_CODE_TABS-->
 
-And here is how a map value is defined:
+### Creating an Empty Map
+
+Here is how to create an empty map.
+
+<!--DOCUSAURUS_CODE_TABS-->
+
+<!--PascaLIGO-->
+```pascaligo group=maps
+const empty : register = map []
+```
+
+<!--CameLIGO-->
+```cameligo group=maps
+let empty : register = Map.empty
+```
+
+<!--ReasonLIGO-->
+```reasonligo group=maps
+let empty : register = Map.empty
+```
+<!--END_DOCUSAURUS_CODE_TABS-->
+
+### Creating a Non-empty Map
+
+And here is how to create a non-empty map value:
 
 <!--DOCUSAURUS_CODE_TABS-->
 <!--PascaLIGO-->
 
-```pascaligo group=f
+```pascaligo group=maps
 const moves : register =
   map [
     ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address) -> (1,2);
     ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" : address) -> (0,3)]
 ```
 
-> Notice the `->` between the key and its value and `;` to separate
-> individual map entries. The annotated value `("<string value>" :
-> address)` means that we cast a string into an address. Also, `map`
-> is a keyword.
+Notice the `->` between the key and its value and `;` to separate
+individual map entries. The annotated value `("<string value>" :
+address)` means that we cast a string into an address. Also, `map` is
+a keyword.
 
 <!--CameLIGO-->
-```cameligo group=f
+```cameligo group=maps
 let moves : register =
   Map.literal [
     (("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address), (1,2));
     (("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" : address), (0,3))]
 ```
 
-> The `Map.literal` predefined function builds a map from a list of
-> key-value pair tuples, `(<key>, <value>)`.  Note also the `;` to
-> separate individual map entries.  `("<string value>": address)`
-> means that we type-cast a string into an address.
+The `Map.literal` predefined function builds a map from a list of
+key-value pair tuples, `(<key>, <value>)`.  Note also the `;` to
+separate individual map entries.  `("<string value>": address)` means
+that we type-cast a string into an address. -->
 
 <!--ReasonLIGO-->
-```reasonligo group=f
+```reasonligo group=maps
 let moves : register =
   Map.literal ([
     ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address, (1,2)),
     ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" : address, (0,3))]);
 ```
 
-> The `Map.literal` predefined function builds a map from a list of
-> key-value pair tuples, `(<key>, <value>)`.  Note also the `;` to
-> separate individual map entries.  `("<string value>": address)`
-> means that we type-cast a string into an address.
+The `Map.literal` predefined function builds a map from a list of
+key-value pair tuples, `(<key>, <value>)`.  Note also the `;` to
+separate individual map entries.  `("<string value>": address)` means
+that we type-cast a string into an address. -->
 
 <!--END_DOCUSAURUS_CODE_TABS-->
 
@@ -375,19 +402,19 @@ In PascaLIGO, we can use the postfix `[]` operator to read the `move`
 value associated to a given key (`address` here) in the register. Here
 is an example:
 
-```pascaligo group=f
+```pascaligo group=maps
 const my_balance : option (move) =
   moves [("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" : address)]
 ```
 
 <!--CameLIGO-->
-```cameligo group=f
+```cameligo group=maps
 let my_balance : move option =
   Map.find_opt ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" : address) moves
 ```
 
 <!--ReasonLIGO-->
-```reasonligo group=f
+```reasonligo group=maps
 let my_balance : option (move) =
   Map.find_opt (("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" : address), moves);
 ```
@@ -400,7 +427,7 @@ the reader to account for a missing key in the map. This requires
 <!--DOCUSAURUS_CODE_TABS-->
 
 <!--PascaLIGO-->
-```pascaligo group=f
+```pascaligo group=maps
 function force_access (const key : address; const moves : register) : move is
   case moves[key] of
     Some (move) -> move
@@ -409,7 +436,7 @@ function force_access (const key : address; const moves : register) : move is
 ```
 
 <!--CameLIGO-->
-```cameligo group=f
+```cameligo group=maps
 let force_access (key, moves : address * register) : move =
   match Map.find_opt key moves with
     Some move -> move
@@ -417,7 +444,7 @@ let force_access (key, moves : address * register) : move =
 ```
 
 <!--ReasonLIGO-->
-```reasonligo group=f
+```reasonligo group=maps
 let force_access = ((key, moves) : (address, register)) : move => {
   switch (Map.find_opt (key, moves)) {
   | Some (move) => move
@@ -443,7 +470,7 @@ The values of a PascaLIGO map can be updated using the usual
 assignment syntax `<map variable>[<key>] := <new value>`. Let us
 consider an example.
 
-```pascaligo group=f
+```pascaligo group=maps
 function assign (var m : register) : register is
   block {
     m [("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address)] := (4,9)
@@ -453,7 +480,7 @@ function assign (var m : register) : register is
 If multiple bindings need to be updated, PascaLIGO offers a *patch
 instruction* for maps, similar to that for records.
 
-```pascaligo group=f
+```pascaligo group=maps
 function assignments (var m : register) : register is
   block {
     patch m with map [
@@ -463,35 +490,51 @@ function assignments (var m : register) : register is
   } with m
 ```
 
+See further for the removal of bindings.
+
 <!--CameLIGO-->
 
 We can update a binding in a map in CameLIGO by means of the
 `Map.update` built-in function:
 
-```cameligo group=f
+```cameligo group=maps
 let assign (m : register) : register =
   Map.update
     ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" : address) (Some (4,9)) m
 ```
 
-> Notice the optional value `Some (4,9)` instead of `(4,9)`. If we had
-> use `None` instead, that would have meant that the binding is
-> removed.
+Notice the optional value `Some (4,9)` instead of `(4,9)`. If we had
+use `None` instead, that would have meant that the binding is removed.
+
+As a particular case, we can only add a key and its associated value.
+
+```cameligo group=maps
+let add (m : register) : register =
+  Map.add
+    ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" : address) (4,9) m
+```
 
 <!--ReasonLIGO-->
 
 We can update a binding in a map in ReasonLIGO by means of the
 `Map.update` built-in function:
 
-```reasonligo group=f
+```reasonligo group=maps
 let assign = (m : register) : register =>
   Map.update
     (("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" : address), Some ((4,9)), m);
 ```
 
-> Notice the optional value `Some (4,9)` instead of `(4,9)`. If we had
-> use `None` instead, that would have meant that the binding is
-> removed.
+Notice the optional value `Some (4,9)` instead of `(4,9)`. If we had
+use `None` instead, that would have meant that the binding is removed.
+
+As a particular case, we can only add a key and its associated value.
+
+```reasonligo group=maps
+let add = (m : register) : register =>
+  Map.add
+    (("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" : address), (4,9), m);
+```
 
 <!--END_DOCUSAURUS_CODE_TABS-->
 
@@ -503,7 +546,7 @@ To remove a binding from a map, we need its key.
 
 In PascaLIGO, there is a special instruction to remove a binding from
 a map.
-```pascaligo group=f
+```pascaligo group=maps
 function delete (const key : address; var moves : register) : register is
   block {
     remove key from map moves
@@ -514,7 +557,7 @@ function delete (const key : address; var moves : register) : register is
 
 In CameLIGO, we use the predefined function `Map.remove` as follows:
 
-```cameligo group=f
+```cameligo group=maps
 let delete (key, moves : address * register) : register =
   Map.remove key moves
 ```
@@ -523,7 +566,7 @@ let delete (key, moves : address * register) : register =
 
 In ReasonLIGO, we use the predefined function `Map.remove` as follows:
 
-```reasonligo group=f
+```reasonligo group=maps
 let delete = ((key, moves) : (address, register)) : register =>
   Map.remove (key, moves);
 ```
@@ -549,34 +592,28 @@ no return value: its only use is to produce side-effects. This can be
 useful if for example you would like to check that each value inside
 of a map is within a certain range, and fail with an error otherwise.
 
+The predefined functional iterator implementing the iterated operation
+over maps is called `Map.iter`. In the following example, the register
+of moves is iterated to check that the start of each move is above
+`3`.
+
 <!--DOCUSAURUS_CODE_TABS-->
 
 <!--PascaLIGO-->
 
-In PascaLIGO, the predefined functional iterator implementing the
-iterated operation over maps is called `map_iter`. In the following
-example, the register of moves is iterated to check that the start of
-each move is above `3`.
-
-```pascaligo group=f
+```pascaligo group=maps
 function iter_op (const m : register) : unit is
   block {
     function iterated (const i : address; const j : move) : unit is
       if j.1 > 3 then Unit else (failwith ("Below range.") : unit)
-  } with map_iter (iterated, m)
+  } with Map.iter (iterated, m)
 ```
 
-> The iterated function must be pure, that is, it cannot mutate
-> variables.
+> Note that `map_iter` is *deprecated*.
 
 <!--CameLIGO-->
 
-In CameLIGO, the predefinded functional iterator implementing the
-iterated operation over maps is called `Map.iter`. In the following
-example, the register of moves is iterated to check that the start of
-each move is above `3`.
-
-```cameligo group=f
+```cameligo group=maps
 let iter_op (m : register) : unit =
   let predicate = fun (i,j : address * move) -> assert (j.0 > 3)
   in Map.iter predicate m
@@ -584,12 +621,7 @@ let iter_op (m : register) : unit =
 
 <!--ReasonLIGO-->
 
-In ReasonLIGO, the predefined functional iterator implementing the
-iterated operation over maps is called `Map.iter`. In the following
-example, the register of moves is iterated to check that the start of
-each move is above `3`.
-
-```reasonligo group=f
+```reasonligo group=maps
 let iter_op = (m : register) : unit => {
   let predicate = ((i,j) : (address, move)) => assert (j[0] > 3);
   Map.iter (predicate, m);
@@ -601,32 +633,28 @@ let iter_op = (m : register) : unit => {
 
 We may want to change all the bindings of a map by applying to them a
 function. This is called a *map operation*, not to be confused with
-the map data structure.
+the map data structure. The predefined functional iterator
+implementing the map operation over maps is called `Map.map`. In the
+following example, we add `1` to the ordinate of the moves in the
+register.
 
 <!--DOCUSAURUS_CODE_TABS-->
 
 <!--PascaLIGO-->
 
-In PascaLIGO, the predefined functional iterator implementing the map
-operation over maps is called `map_map` and is used as follows:
-
-```pascaligo group=f
+```pascaligo group=maps
 function map_op (const m : register) : register is
   block {
     function increment (const i : address; const j : move) : move is
-      (j.0, j.1 + 1);
-  } with map_map (increment, m)
+      (j.0, j.1 + 1)
+  } with Map.map (increment, m)
 ```
 
-> The mapped function must be pure, that is, it cannot mutate
-> variables.
+> Note that `map_map` is *deprecated*.
 
 <!--CameLIGO-->
 
-In CameLIGO, the predefined functional iterator implementing the map
-operation over maps is called `Map.map` and is used as follows:
-
-```cameligo group=f
+```cameligo group=maps
 let map_op (m : register) : register =
   let increment = fun (i,j : address * move) -> j.0, j.1 + 1
   in Map.map increment m
@@ -634,10 +662,7 @@ let map_op (m : register) : register =
 
 <!--ReasonLIGO-->
 
-In ReasonLIGO, the predefined functional iteratir implementing the map
-operation over maps is called `Map.map` and is used as follows:
-
-```reasonligo group=f
+```reasonligo group=maps
 let map_op = (m : register) : register => {
   let increment = ((i,j): (address, move)) => (j[0], j[1] + 1);
   Map.map (increment, m);
@@ -653,31 +678,26 @@ function takes two arguments: an *accumulator* and the structure
 enables having a partial result that becomes complete when the
 traversal of the data structure is over.
 
+The predefined functional iterator implementing the folded operation
+over maps is called `Map.fold` and is used as follows.
+
 <!--DOCUSAURUS_CODE_TABS-->
 
 <!--PascaLIGO-->
 
-In PascaLIGO, the predefined functional iterator implementing the
-folded operation over maps is called `map_fold` and is used as
-follows:
-
-```pascaligo group=f
-function fold_op (const m : register) : int is block {
-  function folded (const j : int; const cur : address * move) : int is
-    j + cur.1.1
-  } with map_fold (folded, m, 5)
+```pascaligo group=maps
+function fold_op (const m : register) : int is
+  block {
+    function folded (const i : int; const j : address * move) : int is
+      i + j.1.1
+  } with Map.fold (folded, m, 5)
 ```
 
-> The folded function must be pure, that is, it cannot mutate
-> variables.
+> Note that `map_fold` is *deprecated*.
 
 <!--CameLIGO-->
 
-In CameLIGO, the predefined functional iterator implementing the
-folded operation over maps is called `Map.fold` and is used as
-follows:
-
-```cameligo group=f
+```cameligo group=maps
 let fold_op (m : register) : register =
   let folded = fun (i,j : int * (address * move)) -> i + j.1.1
   in Map.fold folded m 5
@@ -685,11 +705,7 @@ let fold_op (m : register) : register =
 
 <!--ReasonLIGO-->
 
-In ReasonLIGO, the predefined functional iterator implementing the
-folded operation over maps is called `Map.fold` and is used as
-follows:
-
-```reasonligo group=f
+```reasonligo group=maps
 let fold_op = (m : register) : register => {
   let folded = ((i,j): (int, (address, move))) => i + j[1][1];
   Map.fold (folded, m, 5);
@@ -709,75 +725,102 @@ were it not for *big maps*. Big maps are a data structure offered by
 Michelson which handles the scaling concerns for us. In LIGO, the
 interface for big maps is analogous to the one used for ordinary maps.
 
+### Declaring a Map
+
 Here is how we define a big map:
 
 <!--DOCUSAURUS_CODE_TABS-->
 <!--PascaLIGO-->
-```pascaligo group=g
+```pascaligo group=big_maps
 type move is int * int
 
 type register is big_map (address, move)
 ```
 
 <!--CameLIGO-->
-```cameligo group=g
+```cameligo group=big_maps
 type move = int * int
 
 type register = (address, move) big_map
 ```
 
 <!--ReasonLIGO-->
-```reasonligo group=g
+```reasonligo group=big_maps
 type move = (int, int);
 
 type register = big_map (address, move);
 ```
 <!--END_DOCUSAURUS_CODE_TABS-->
 
-And here is how a map value is created:
+### Creating an Empty Big Map
+
+Here is how to create an empty big map.
+
+
+<!--DOCUSAURUS_CODE_TABS-->
+
+<!--PascaLIGO-->
+```pascaligo group=big_maps
+const empty : register = big_map []
+```
+
+<!--CameLIGO-->
+```cameligo group=big_maps
+let empty : register = Big_map.empty
+```
+
+<!--ReasonLIGO-->
+```reasonligo group=big_maps
+let empty : register = Big_map.empty
+```
+<!--END_DOCUSAURUS_CODE_TABS-->
+
+### Creating a Non-empty Map
+
+And here is how to create a non-empty map value:
 
 <!--DOCUSAURUS_CODE_TABS-->
 <!--PascaLIGO-->
 
-```pascaligo group=g
+```pascaligo group=big_maps
 const moves : register =
   big_map [
     ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address) -> (1,2);
     ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" : address) -> (0,3)]
 ```
 
-> Notice the right arrow `->` between the key and its value and the
-> semicolon separating individual map entries. The value annotation
-> `("<string value>" : address)` means that we cast a string into an
-> address.
+ Notice the right arrow `->` between the key and its value and the -->
+ semicolon separating individual map entries. The value annotation -->
+ `("<string value>" : address)` means that we cast a string into an -->
+ address. -->
 
 <!--CameLIGO-->
 
-```cameligo group=g
+```cameligo group=big_maps
 let moves : register =
   Big_map.literal [
     (("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address), (1,2));
     (("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" : address), (0,3))]
 ```
 
-> The predefind function `Big_map.literal` constructs a big map from a
-> list of key-value pairs `(<key>, <value>)`. Note also the semicolon
-> separating individual map entries.  The annotated value `("<string
-> value>" : address)` means that we cast a string into an address.
+The predefind function `Big_map.literal` constructs a big map from a
+list of key-value pairs `(<key>, <value>)`. Note also the semicolon
+separating individual map entries.  The annotated value `("<string>
+value>" : address)` means that we cast a string into an address.
 
 <!--ReasonLIGO-->
 
-```reasonligo group=g
+```reasonligo group=big_maps
 let moves : register =
   Big_map.literal ([
     ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address, (1,2)),
     ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" : address, (0,3))]);
 ```
 
-> The predefind function `Big_map.literal` constructs a big map from a
-> list of key-value pairs `(<key>, <value>)`. Note also the semicolon
-> separating individual map entries.  The annotated value `("<string
-> value>" : address)` means that we cast a string into an address.
+The predefind function `Big_map.literal` constructs a big map from a
+list of key-value pairs `(<key>, <value>)`. Note also the semicolon
+separating individual map entries.  The annotated value `("<string>
+value>" : address)` means that we cast a string into an address.
 
 
 <!--END_DOCUSAURUS_CODE_TABS-->
@@ -793,21 +836,21 @@ the value we read is an optional value (in our case, of type `option
 
 <!--PascaLIGO-->
 
-```pascaligo group=g
+```pascaligo group=big_maps
 const my_balance : option (move) =
   moves [("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" : address)]
 ```
 
 <!--CameLIGO-->
 
-```cameligo group=g
+```cameligo group=big_maps
 let my_balance : move option =
   Big_map.find_opt ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" : address) moves
 ```
 
 <!--ReasonLIGO-->
 
-```reasonligo group=g
+```reasonligo group=big_maps
 let my_balance : option (move) =
   Big_map.find_opt ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" : address, moves);
 ```
@@ -822,7 +865,7 @@ let my_balance : option (move) =
 The values of a PascaLIGO big map can be updated using the
 assignment syntax for ordinary maps
 
-```pascaligo group=g
+```pascaligo group=big_maps
 function add (var m : register) : register is
   block {
     m [("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address)] := (4,9)
@@ -836,7 +879,7 @@ const updated_map : register = add (moves)
 We can update a big map in CameLIGO using the `Big_map.update`
 built-in:
 
-```cameligo group=g
+```cameligo group=big_maps
 let updated_map : register =
   Big_map.update
     ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" : address) (Some (4,9)) moves
@@ -847,10 +890,10 @@ let updated_map : register =
 We can update a big map in ReasonLIGO using the `Big_map.update`
 built-in:
 
-```reasonligo group=g
+```reasonligo group=big_maps
 let updated_map : register =
   Big_map.update
-    (("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address), Some((4,9)), moves);
+    (("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address), Some ((4,9)), moves);
 ```
 
 <!--END_DOCUSAURUS_CODE_TABS-->
@@ -867,7 +910,7 @@ syntax.
 PascaLIGO features a special syntactic construct to remove bindings
 from maps, of the form `remove <key> from map <map>`. For example,
 
-```pascaligo group=g
+```pascaligo group=big_maps
 function rem (var m : register) : register is
   block {
     remove ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address) from map moves
@@ -881,7 +924,7 @@ const updated_map : register = rem (moves)
 In CameLIGO, the predefined function which removes a binding in a map
 is called `Map.remove` and is used as follows:
 
-```cameligo group=g
+```cameligo group=big_maps
 let updated_map : register =
   Map.remove ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address) moves
 ```
@@ -891,7 +934,7 @@ let updated_map : register =
 In ReasonLIGO, the predefined function which removes a binding in a map
 is called `Map.remove` and is used as follows:
 
-```reasonligo group=g
+```reasonligo group=big_maps
 let updated_map : register =
   Map.remove (("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address), moves)
 ```

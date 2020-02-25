@@ -26,3 +26,4 @@ Stubs/Parser_cameligo.ml
 ../cameligo/ParserLog.ml
 ../cameligo/Scoping.mli
 ../cameligo/Scoping.ml
+$HOME/git/ligo/_build/default/src/passes/1-parser/reasonligo/ParErr.ml

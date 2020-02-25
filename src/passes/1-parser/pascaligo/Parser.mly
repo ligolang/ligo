@@ -98,11 +98,12 @@ sepseq(X,Sep):
 
 (* Inlines *)
 
-%inline var         : "<ident>" { $1 }
-%inline type_name   : "<ident>" { $1 }
-%inline fun_name    : "<ident>" { $1 }
-%inline field_name  : "<ident>" { $1 }
-%inline struct_name : "<ident>" { $1 }
+%inline var         : "<ident>"  { $1 }
+%inline type_name   : "<ident>"  { $1 }
+%inline fun_name    : "<ident>"  { $1 }
+%inline field_name  : "<ident>"  { $1 }
+%inline struct_name : "<ident>"  { $1 }
+%inline module_name : "<constr>" { $1 }
 
 (* Main *)
 
@@ -829,7 +830,7 @@ core_expr:
   "<int>"                       { EArith (Int $1)              }
 | "<nat>"                       { EArith (Nat $1)              }
 | "<mutez>"                     { EArith (Mutez $1)            }
-| var                           { EVar $1                      }
+| "<ident>" | module_field      { EVar $1                      }
 | "<string>"                    { EString (String $1)          }
 | "<bytes>"                     { EBytes $1                    }
 | "False"                       { ELogic (BoolExpr (False $1)) }
@@ -902,13 +903,32 @@ path:
   var        { Name $1 }
 | projection { Path $1 }
 
+module_field:
+  module_name "." module_fun {
+    let region = cover $1.region $3.region in
+    {region; value = $1.value ^ "." ^ $3.value} }
+
+module_fun:
+  field_name { $1 }
+| "map"      { {value="map";    region=$1} }
+| "or"       { {value="or";     region=$1} }
+| "and"      { {value="and";    region=$1} }
+| "remove"   { {value="remove"; region=$1} }
+
 projection:
   struct_name "." nsepseq(selection,".") {
     let stop   = nsepseq_to_region selection_to_region $3 in
     let region = cover $1.region stop
-    and value  = {struct_name = $1;
-                  selector    = $2;
-                  field_path  = $3}
+    and value  = {struct_name=$1; selector=$2; field_path=$3}
+    in {region; value}
+  }
+| module_name "." field_name "." nsepseq(selection,".") {
+    let value       = $1.value ^ "." ^ $3.value in
+    let struct_name = {$1 with value} in
+    let start       = $1.region in
+    let stop        = nsepseq_to_region selection_to_region $5 in
+    let region      = cover start stop in
+    let value       = {struct_name; selector=$4; field_path=$5}
     in {region; value} }
 
 selection:
@@ -939,31 +959,26 @@ record_expr:
 update_record:
   path "with" ne_injection("record",field_path_assignment){
     let region = cover (path_to_region $1) $3.region in
-    let value = {
-      record = $1;
-      kwd_with = $2;
-      updates = $3}
+    let value  = {record=$1; kwd_with=$2; updates=$3}
     in {region; value} }
-
 
 field_assignment:
   field_name "=" expr {
     let region = cover $1.region (expr_to_region $3)
-    and value  = {field_name = $1;
-                  equal      = $2;
-                  field_expr = $3}
+    and value  = {field_name=$1; equal=$2; field_expr=$3}
     in {region; value} }
 
 field_path_assignment:
   nsepseq(field_name,".") "=" expr {
-    let region = cover (nsepseq_to_region (fun x -> x.region) $1) (expr_to_region $3)
-    and value  = {field_path = $1;
-                  equal      = $2;
-                  field_expr = $3}
+    let start  = nsepseq_to_region (fun x -> x.region) $1
+    and stop   = expr_to_region $3 in
+    let region = cover start stop
+    and value  = {field_path=$1; equal=$2; field_expr=$3}
     in {region; value} }
 
 fun_call:
-  fun_name arguments {
+  fun_name     arguments
+| module_field arguments {
     let region = cover $1.region $2.region
     in {region; value = (EVar $1),$2} }
 

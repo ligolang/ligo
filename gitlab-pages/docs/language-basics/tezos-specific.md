@@ -26,8 +26,10 @@ functionality can be accessed from within LIGO.
 ```pascaligo group=a
 function id_string (const p : string) : option (string) is block {
   const packed : bytes = bytes_pack (p)
-} with (bytes_unpack (packed) : option (string))
+} with (Bytes.unpack (packed) : option (string))
 ```
+
+> Note that `bytes_unpack` is *deprecated*.
 
 <!--CameLIGO-->
 ```cameligo group=a
@@ -103,8 +105,10 @@ function check_signature
     (const pk     : key;
      const signed : signature;
      const msg    : bytes) : bool
-  is crypto_check (pk, signed, msg)
+  is Crypto.check (pk, signed, msg)
 ```
+
+> Note that `crypto_check` is *deprecated*.
 
 <!--CameLIGO-->
 ```cameligo group=c
@@ -124,27 +128,29 @@ let check_signature =
 ## Contract's Own Address
 
 Often you want to get the address of the contract being executed. You
-can do it with `self_address`.
+can do it with `Tezos.self_address`.
 
-> ⚠️ Due to limitations in Michelson, `self_address` in a contract is
-> only allowed at the top-level. Using it in an embedded function will
-> cause an error.
+> Note that `self_address` is *deprecated*.
+
+> ⚠️ Due to limitations in Michelson, `Tezos.self_address` in a
+> contract is only allowed at the top-level. Using it in an embedded
+> function will cause an error.
 
 <!--DOCUSAURUS_CODE_TABS-->
 
 <!--PascaLIGO-->
 ```pascaligo group=d
-const current_addr : address = self_address
+const current_addr : address = Tezos.self_address
 ```
 
 <!--CameLIGO-->
 ```cameligo group=d
-let current_addr : address = Current.self_address
+let current_addr : address = Tezos.self_address
 ```
 
 <!--ReasonLIGO-->
 ```reasonligo group=d
-let current_addr : address = Current.self_address;
+let current_addr : address = Tezos.self_address;
 ```
 
 <!--END_DOCUSAURUS_CODE_TABS-->

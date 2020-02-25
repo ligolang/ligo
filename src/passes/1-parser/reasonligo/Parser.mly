@@ -24,22 +24,22 @@ type 'a sequence_or_record =
 
 let (<@) f g x = f (g x)
 
-(** 
-  Covert nsepseq to a chain of TFun's. 
-  
+(**
+  Covert nsepseq to a chain of TFun's.
+
   Necessary to handle cases like:
   `type foo = (int, int) => int;`
 *)
-let rec nsepseq_to_curry hd rest = 
-  match hd, rest with 
-  | hd, (sep, item) :: rest -> 
+let rec nsepseq_to_curry hd rest =
+  match hd, rest with
+  | hd, (sep, item) :: rest ->
     let start = type_expr_to_region hd in
     let stop = nsepseq_to_region type_expr_to_region (hd, rest) in
-    let region = cover start stop in 
+    let region = cover start stop in
     TFun {
-      value = hd, sep, (nsepseq_to_curry item rest); 
+      value = hd, sep, (nsepseq_to_curry item rest);
       region
-    } 
+    }
   | hd, [] -> hd
 
 (* END HEADER *)
@@ -178,34 +178,34 @@ type_expr:
   cartesian | sum_type | record_type { $1 }
 
 type_expr_func:
-  "=>" cartesian { 
+  "=>" cartesian {
     $1, $2
   }
 
 cartesian:
   core_type { $1 }
-| type_name type_expr_func { 
+| type_name type_expr_func {
   let (arrow, c) = $2 in
   let value = TVar $1, arrow, c in
   let region = cover $1.region (type_expr_to_region c) in
   TFun { region; value }
 }
-| "(" cartesian ")" type_expr_func { 
+| "(" cartesian ")" type_expr_func {
   let (arrow, c) = $4 in
   let value = $2, arrow, c in
   let region = cover $1 (type_expr_to_region c) in
   TFun { region; value }
 }
 | "(" cartesian "," nsepseq(cartesian,",") ")" type_expr_func? {
-    match $6 with 
-    | Some (arrow, c) -> 
+    match $6 with
+    | Some (arrow, c) ->
       let (hd, rest) = Utils.nsepseq_cons $2 $3 $4 in
-      let rest = rest @ [(arrow, c)] in          
+      let rest = rest @ [(arrow, c)] in
       nsepseq_to_curry hd rest
     | None ->
       let value  = Utils.nsepseq_cons $2 $3 $4 in
       let region = cover $1 $5 in
-      TProd {region; value} 
+      TProd {region; value}
   }
 
 core_type:
@@ -515,30 +515,30 @@ fun_expr:
           _
         }; _ }; region} ->
 
-        let expr_to_type = function 
+        let expr_to_type = function
         | EVar v -> TVar v
         | e -> let open! SyntaxError
             in raise (Error (WrongFunctionArguments e))
         in
         let type_expr = (
           match type_expr with
-          | TProd {value; _} -> 
+          | TProd {value; _} ->
             let (hd, rest) = value in
-            let rest = rest @ [(arrow, expr_to_type body)] in          
-            nsepseq_to_curry hd rest          
-          | e ->               
+            let rest = rest @ [(arrow, expr_to_type body)] in
+            nsepseq_to_curry hd rest
+          | e ->
             TFun {
               value = e, arrow, expr_to_type body;
               region = fun_region
-            }          
+            }
         )
-        in 
+        in
         PTyped {
           value = {
             pattern;
             colon;
             type_expr
-          }; 
+          };
           region;
         }, []
       | EPar {value = {inside =  fun_arg; _ }; _} ->
@@ -552,7 +552,7 @@ fun_expr:
           arg_to_pattern (fst fun_args), bindings
       | EUnit _ as e ->
           arg_to_pattern e, []
-      | EVar _ as e -> 
+      | EVar _ as e ->
           arg_to_pattern e, []
       | e -> let open! SyntaxError
             in raise (Error (WrongFunctionArguments e))
@@ -834,10 +834,13 @@ core_expr:
 | par(expr)           { EPar $1 }
 
 module_field:
-  module_name "." field_name {
-    let region = cover $1.region $3.region
-    and value  = $1.value ^ "." ^ $3.value
-    in {region; value} }
+  module_name "." module_fun {
+    let region = cover $1.region $3.region in
+    {region; value = $1.value ^ "." ^ $3.value} }
+
+module_fun:
+  field_name { $1 }
+| "or"       { {value="or";  region=$1} }
 
 selection:
   "[" "<int>" "]" selection {

@@ -42,59 +42,78 @@ storage value being returned) which in our case is still `Unit`.
 
 Our counter contract will store a single `int` as it's storage, and
 will accept an `action` variant in order to re-route our single `main`
-function to two entrypoints for `addition` and `subtraction`.
+function to two entrypoints for `add` (addition) and `sub`
+(subtraction).
 
 <!--DOCUSAURUS_CODE_TABS-->
 <!--Pascaligo-->
 ```
-type action is
+type parameter is
   Increment of int
 | Decrement of int
 
-function main (const p : action ; const s : int) : (list(operation) * int) is
+type storage is int
+
+type return is list (operation) * storage
+
+function add (const n : int; const store : storage) : storage is store + n
+function sub (const n : int; const store : storage) : storage is store - n
+
+function main (const action : parameter; const store : storage) : return is
   ((nil : list(operation)),
-  (case p of
-    | Increment (n) -> s + n
-    | Decrement (n) -> s - n
-   end))
+   case action of
+     Increment (n) -> add (n, store)
+   | Decrement (n) -> sub (n, store)
+   end)
 ```
 
 <!--CameLIGO-->
 ```cameligo
-type action =
-| Increment of int
+type parameter =
+  Increment of int
 | Decrement of int
 
-let main (p, s: action * int) : operation list * int =
-  let result =
-    match p with
-    | Increment n -> s + n
-    | Decrement n -> s - n
-  in
-  (([]: operation list), result)
+type storage = int
+
+type return = (operation) list * storage
+
+let add (n, store : int * storage) : storage = store + n
+let sub (n, store : int * storage) : storage = store - n
+
+let main (action, store : parameter * storage) : operation list * storage =
+  (([]: operation list),
+   (match action with
+      Increment n -> add (n, store)
+    | Decrement n -> sub (n, store)))
 ```
 
 <!--ReasonLIGO-->
 ```reasonligo
-type action =
-| Increment(int)
-| Decrement(int);
+type parameter =
+  Increment (int)
+| Decrement (int)
+;
 
-let main = (p_s: (action, int)) : (list(operation), int) => {
-  let p, s = p_s;
-  let result =
-    switch (p) {
-    | Increment(n) => s + n
-    | Decrement(n) => s - n
-    };
-  (([]: list(operation)), result);
-};
+type storage = int;
+
+type return = (list (operation), storage);
+
+let add = ((n, store) : (int, storage)) : storage => store + n;
+let sub = ((n, store) : (int, storage)) : storage => store - n;
+
+let main = ((action, store) : (parameter, storage)) : return =>
+  (([]: list (operation)),
+    (switch (action) {
+     | Increment (n) => add ((n, store))
+     | Decrement (n) => sub ((n, store))
+    }));
 ```
 
 <!--END_DOCUSAURUS_CODE_TABS-->
 
-To dry-run the counter contract, we will use the `main` entrypoint, provide a variant parameter of `Increment(5)` and an initial storage value of `5`.
-
+To dry-run the counter contract, we will provide the `main` function
+with a variant parameter of value `Increment (5)` and an initial
+storage value of `5`.
 
 <!--DOCUSAURUS_CODE_TABS-->
 <!--Pascaligo-->
@@ -131,39 +150,30 @@ Command above will output the following Michelson code:
 { parameter (or (int %decrement) (int %increment)) ;
   storage int ;
   code { DUP ;
-         CAR ;
-         DIP { DUP } ;
-         SWAP ;
          CDR ;
          DIP { DUP } ;
          SWAP ;
+         CAR ;
          IF_LEFT
            { DUP ;
-             DIP 2 { DUP } ;
-             DIG 2 ;
-             DIP { DUP } ;
+             DIP { DIP { DUP } ; SWAP } ;
+             PAIR ;
+             DUP ;
+             CDR ;
+             DIP { DUP ; CAR } ;
              SUB ;
-             SWAP ;
-             DROP ;
-             SWAP ;
-             DROP }
+             DIP { DROP 2 } }
            { DUP ;
-             DIP 2 { DUP } ;
-             DIG 2 ;
-             DIP { DUP } ;
+             DIP { DIP { DUP } ; SWAP } ;
+             PAIR ;
+             DUP ;
+             CDR ;
+             DIP { DUP ; CAR } ;
              ADD ;
-             SWAP ;
-             DROP ;
-             SWAP ;
-             DROP } ;
+             DIP { DROP 2 } } ;
          NIL operation ;
          PAIR ;
-         SWAP ;
-         DROP ;
-         SWAP ;
-         DROP ;
-         SWAP ;
-         DROP } }
+         DIP { DROP 2 } } }
 ```
 <!--END_DOCUSAURUS_CODE_TABS-->
 
@@ -180,12 +190,15 @@ ligo compile-storage src/counter.ligo main 5
 ```
 <!--END_DOCUSAURUS_CODE_TABS-->
 
-
-In our case the LIGO storage value maps 1:1 to its Michelson representation, however this will not be the case once the parameter is of a more complex data type, like a record.
+In our case the LIGO storage value maps 1:1 to its Michelson
+representation, however this will not be the case once the parameter
+is of a more complex data type, like a record.
 
 ## Invoking a LIGO contract
 
-Same rules apply for parameters, as apply for translating LIGO storage values to Michelson. We will need to use `compile-parameter` to compile our `action` variant into Michelson, here's how:
+Same rules apply for parameters, as apply for translating LIGO storage
+values to Michelson. We will need to use `compile-parameter` to
+compile our `action` variant into Michelson, here's how:
 
 <!--DOCUSAURUS_CODE_TABS-->
 <!--Pascaligo-->
@@ -195,6 +208,5 @@ ligo compile-parameter src/counter.ligo main 'Increment(5)'
 ```
 <!--END_DOCUSAURUS_CODE_TABS-->
 
-
 Now we can use `(Right 5)` which is a Michelson value, to invoke our
-contract - e.g. via `tezos-client`
+contract - e.g., via `tezos-client`
