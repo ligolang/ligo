@@ -23,7 +23,7 @@ const siteConfig = {
   headerLinks: [
     { href: 'https://ide.ligolang.org/', label: 'Try Online' },
     { doc: 'intro/installation', label: 'Install' },
-    { doc: 'intro/what-and-why', label: 'Docs' },
+    { doc: 'intro/introduction', label: 'Docs' },
     {
       doc: 'tutorials/get-started/tezos-taco-shop-smart-contract',
       label: 'Tutorials'

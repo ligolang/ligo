@@ -1,19 +1,19 @@
 ---
-id: what-and-why
+id: michelson-and-ligo
 title: Michelson and LIGO
 ---
 
-Before we get into what LIGO is and why LIGO needs to exist, let us
-take a look at what options the Tezos blockchain offers us out of the
-box. If you want to implement smart contracts natively on Tezos, you
-have to learn
-[Michelson](https://tezos.gitlab.io/whitedoc/michelson.html).
+Currently LIGO compiles to [Michelson](https://tezos.gitlab.io/whitedoc/michelson.html),
+the native smart contract language supported by Tezos. This page explains the
+relationship between LIGO and the underlying Michelson it compiles to. Understanding
+Michelson is not a requirement to use LIGO, but it does become important if you want
+to formally verify contracts using [Mi-Cho-Coq](https://gitlab.com/nomadic-labs/mi-cho-coq/)
+or tune the performance of contracts outputted by the LIGO compiler.
 
 **The rationale and design of Michelson**
 
-The language native to the Tezos blockchain for writing smart
-contracts is *Michelson*, a Domain-Specific Language (DSL) inspired by
-Lisp and Forth. This unusual lineage aims at satisfying unusual
+Michelson is a Domain-Specific Language (DSL) for writing Tezos smart contracts
+inspired by Lisp and Forth. This unusual lineage aims at satisfying unusual
 constraints, but entails some tensions in the design.
 
 First, to measure stepwise gas consumption, *Michelson is interpreted*.
@@ -135,124 +135,3 @@ We cannot run Javascript on the Tezos blockchain, but we can choose
 LIGO, which will abstract the stack management and allow us to create
 readable, type-safe, and efficient smart contracts.
 
-## LIGO for Programming Smart Contracts on Tezos
-
-Perhaps the most striking feature of LIGO is that it comes in
-different concrete syntaxes, and even different programming
-paradigms. In other words, LIGO is not defined by one syntax and one
-paradigm, like imperative versus functional.
-
-  - There is **PascaLIGO**, which is inspired by Pascal, hence is an
-    imperative language with lots of keywords, where values can be
-    locally mutated after they have been annotated with their types
-    (declaration).
-
-  - There is **CameLIGO**, which is inspired by the pure subset of
-    [OCaml](https://ocaml.org/), hence is a functional language with
-    few keywords, where values cannot be mutated, but still require
-    type annotations (unlike OCaml, whose compiler performs almost
-    full type inference).
-
-  - There is **ReasonLIGO**, which is inspired by the pure subset of
-    [ReasonML](https://reasonml.github.io/), which is based upon
-    OCaml.
-
-Let us decline the same LIGO contract in the three flavours above. Do
-not worry if it is a little confusing at first; we will explain all
-the syntax in the upcoming sections of the documentation.
-
-<!--DOCUSAURUS_CODE_TABS-->
-<!--PascaLIGO-->
-```pascaligo group=a
-type storage is int
-
-type parameter is
-  Increment of int
-| Decrement of int
-| Reset
-
-type return is list (operation) * storage
-
-function main (const action : parameter; const store : storage) : return is
- ((nil : list (operation)),
-  case action of
-    Increment (n) -> store + n
-  | Decrement (n) -> store - n
-  | Reset         -> 0
- end)
-```
-
-<!--CameLIGO-->
-```cameligo group=a
-type storage = int
-
-type parameter =
-  Increment of int
-| Decrement of int
-| Reset
-
-type return = operation list * storage
-
-let main (action, store : parameter * storage) : return =
-  ([] : operation list),
-  (match action with
-     Increment n -> store + n
-   | Decrement n -> store - n
-   | Reset       -> 0)
-```
-
-<!--ReasonLIGO-->
-```reasonligo group=a
-type storage = int;
-
-type parameter =
-  Increment (int)
-| Decrement (int)
-| Reset;
-
-type return = (list (operation), storage);
-
-let main = ((action, store): (parameter, storage)) : return => {
-  (([] : list (operation)),
-  (switch (action) {
-   | Increment (n) => store + n
-   | Decrement (n) => store - n
-   | Reset         => 0}));
-};
-```
-<!--END_DOCUSAURUS_CODE_TABS-->
-
-
-<!--
-> 💡 You can find the Michelson compilation output of the contract -->
-<!--above in **`ligo-counter.tz`** -->
-
-This LIGO contract behaves almost exactly* like the Michelson
-contract we saw first, and it accepts the following LIGO expressions:
-`Increment(n)`, `Decrement(n)` and `Reset`. Those serve as
-`entrypoint` identification, same as `%add` `%sub` or `%default` in
-the Michelson contract.
-
-**The Michelson contract also checks if the `AMOUNT` sent is `0`*
-
----
-
-## Runnable code snippets & exercises
-
-Some of the sections in this documentation will include runnable code snippets and exercises. Sources for those are available at
-the [LIGO Gitlab repository](https://gitlab.com/ligolang/ligo).
-
-### Snippets
-For example **code snippets** for the *Types* subsection of this doc, can be found here:
-`gitlab-pages/docs/language-basics/src/types/**`
-
-### Exercises
-Solutions to exercises can be found e.g. here:  `gitlab-pages/docs/language-basics/exercises/types/**/solutions/**`
-
-### Running snippets / exercise solutions
-In certain cases it makes sense to be able to run/evaluate the given snippet or a solution, usually there'll be an example command which you can use, such as:
-
-```shell
-ligo evaluate-value -s pascaligo gitlab-pages/docs/language-basics/src/variables-and-constants/const.ligo age
-# Outputs: 25
-```
