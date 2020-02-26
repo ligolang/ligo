@@ -395,7 +395,7 @@ module Simplify = struct
     (* Loop module *)
 
     | "Loop.fold_while" -> ok C_FOLD_WHILE
-    | "Loop.continue"   -> ok C_CONTINUE
+    | "Loop.resume"     -> ok C_CONTINUE
     | "continue"        -> ok C_CONTINUE (* Deprecated *)
     | "Loop.stop"       -> ok C_STOP
     | "stop"            -> ok C_STOP     (* Deprecated *)
@@ -404,7 +404,7 @@ module Simplify = struct
 
     | "assert" -> ok C_ASSERTION
 
-    | _                          -> simple_fail "Not a CameLIGO built-in."
+    | _ -> simple_fail "Not a CameLIGO built-in."
 
     let type_constants = type_constants
     let type_operators = type_operators
