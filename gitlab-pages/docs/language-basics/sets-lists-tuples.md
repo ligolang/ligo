@@ -124,7 +124,6 @@ let my_list : list (int) = [1, 2, 2]; // The head is 1
 
 <!--END_DOCUSAURUS_CODE_TABS-->
 
-
 ### Adding to Lists
 
 Lists can be augmented by adding an element before the head (or, in
@@ -176,15 +175,16 @@ There are three kinds of functional iterations over LIGO lists: the
 *iterated operation*, the *map operation* (not to be confused with the
 *map data structure*) and the *fold operation*.
 
-
 #### Iterated Operation over Lists
 
 The first, the *iterated operation*, is an iteration over the list
 with a unit return value. It is useful to enforce certain invariants
-on the element of a list, or fail. For example you might want to check
-that each value inside of a list is within a certain range, and fail
-otherwise. The predefined functional iterator implementing the
-iterated operation over lists is called `List.iter`.
+on the element of a list, or fail.
+
+For example you might want to check that each value inside of a list
+is within a certain range, and fail otherwise. The predefined
+functional iterator implementing the iterated operation over lists is
+called `List.iter`.
 
 In the following example, a list is iterated to check that all its
 elements (integers) are strictly greater than `3`.
@@ -305,7 +305,7 @@ let sum_of_elements : int = List.fold (sum, my_list, 0);
 Sets are unordered collections of values of the same type, like lists
 are ordered collections. Like the mathematical sets and lists, sets
 can be empty and, if not, elements of sets in LIGO are *unique*,
-whereas they can be repeated in a list.
+whereas they can be repeated in a *list*.
 
 ### Empty Sets
 
@@ -447,6 +447,9 @@ elements in a given set as follows.
 ```pascaligo group=sets
 const cardinal : nat = Set.size (my_set)
 ```
+
+> Note that `size` is *deprecated*.
+
 <!--CameLIGO-->
 
 ```cameligo group=sets
@@ -636,12 +639,9 @@ traversal of the data structure is over. The predefined fold over sets
 is called `Set.fold`.
 
 <!--DOCUSAURUS_CODE_TABS-->
-
 <!--PascaLIGO-->
-
 ```pascaligo group=sets
 function sum (const acc : int; const i : int): int is acc + i
-
 const sum_of_elements : int = Set.fold (sum, my_set, 0)
 ```
 
@@ -659,18 +659,14 @@ function loop (const s : set (int)) : int is block {
 ```
 
 <!--CameLIGO-->
-
 ```cameligo group=sets
 let sum (acc, i : int * int) : int = acc + i
-
 let sum_of_elements : int = Set.fold sum my_set 0
 ```
 
 <!--ReasonLIGO-->
-
 ```reasonligo group=sets
 let sum = ((acc, i) : (int, int)) : int => acc + i;
-
 let sum_of_elements : int = Set.fold (sum, my_set, 0);
 ```
 <!--END_DOCUSAURUS_CODE_TABS-->

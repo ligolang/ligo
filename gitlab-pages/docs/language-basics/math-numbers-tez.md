@@ -213,7 +213,7 @@ let c : tez = 5n * 5mutez;
 
 <!--END_DOCUSAURUS_CODE_TABS-->
 
-## Division
+## Euclidean Division
 
 In LIGO you can divide `int`, `nat`, and `tez`. Here is how:
 
@@ -243,6 +243,46 @@ let c : nat = 10mutez / 3mutez;
 
 <!--END_DOCUSAURUS_CODE_TABS-->
 
+LIGO also allows you to compute the remainder of the Euclidean
+division. In LIGO, it is a natural number.
+
+<!--DOCUSAURUS_CODE_TABS-->
+<!--PascaLIGO-->
+```pascaligo group=d
+const a : int = 120
+const b : int = 9
+const rem1 : nat = a mod b  // 3
+const c : nat = 120n
+const rem2 : nat = c mod b  // 3
+const d : nat = 9n
+const rem3 : nat = c mod d  // 3
+const rem4 : nat = a mod d  // 3
+```
+
+<!--CameLIGO-->
+```cameligo group=d
+let a : int = 120
+let b : int = 9
+let rem1 : nat = a mod b  // 3
+let c : nat = 120n
+let rem2 : nat = c mod b  // 3
+let d : nat = 9n
+let rem3 : nat = c mod d  // 3
+let rem4 : nat = a mod d  // 3
+```
+
+<!--ReasonLIGO-->
+```reasonligo group=d
+let a : int = 120;
+let b : int = 9;
+let rem1 : nat = a mod b;  // 3
+let c : nat = 120n;
+let rem2 : nat = c mod b;  // 3
+let d : nat = 9n;
+let rem3 : nat = c mod d;  // 3
+let rem4 : nat = a mod d;  // 3
+```
+
 ## From `int` to `nat` and back
 
 You can *cast* an `int` to a `nat` and vice versa. Here is how:
@@ -265,7 +305,6 @@ let b : nat = abs (1)
 let a : int = int (1n);
 let b : nat = abs (1);
 ```
-
 <!--END_DOCUSAURUS_CODE_TABS-->
 
 ## Checking a `nat`

@@ -458,8 +458,7 @@ let force_access = ((key, moves) : (address, register)) : move => {
 ### Updating a Map
 
 Given a map, we may want to add a new binding, remove one, or modify
-one by changing the value associated to an already existing key. We
-may even want to retain the key but not the associated value. All
+one by changing the value associated to an already existing key. All
 those operations are called *updates*.
 
 <!--DOCUSAURUS_CODE_TABS-->
@@ -733,21 +732,18 @@ Here is how we define a big map:
 <!--PascaLIGO-->
 ```pascaligo group=big_maps
 type move is int * int
-
 type register is big_map (address, move)
 ```
 
 <!--CameLIGO-->
 ```cameligo group=big_maps
 type move = int * int
-
 type register = (address, move) big_map
 ```
 
 <!--ReasonLIGO-->
 ```reasonligo group=big_maps
 type move = (int, int);
-
 type register = big_map (address, move);
 ```
 <!--END_DOCUSAURUS_CODE_TABS-->
@@ -789,10 +785,10 @@ const moves : register =
     ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" : address) -> (0,3)]
 ```
 
- Notice the right arrow `->` between the key and its value and the -->
- semicolon separating individual map entries. The value annotation -->
- `("<string value>" : address)` means that we cast a string into an -->
- address. -->
+Notice the right arrow `->` between the key and its value and the
+semicolon separating individual map entries. The value annotation
+`("<string value>" : address)` means that we cast a string into an
+address. -->
 
 <!--CameLIGO-->
 
