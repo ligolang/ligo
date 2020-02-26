@@ -1,9 +1,5 @@
-import { faPencilAlt } from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import React, { useEffect, useRef, useState } from 'react';
 import styled, { css } from 'styled-components';
-
-import { Tooltip } from './tooltip';
 
 const Container = styled.div`
   display: flex;
@@ -32,34 +28,27 @@ const Input = styled.input<{ visible?: boolean }>`
 `;
 
 const Label = styled.div<{ visible?: boolean }>`
+  display: flex;
+  align-items: center;
   color: var(--blue);
   opacity: 0;
-
-  ${props =>
-    props.visible &&
-    css`
-      opacity: 1;
-    `}
-`;
-
-const PencilIcon = ({ ...props }) => (
-  <FontAwesomeIcon {...props} icon={faPencilAlt} size="sm"></FontAwesomeIcon>
-);
-
-const Pencil = styled(PencilIcon)<{ visible: boolean }>`
-  margin-left: 10px;
-  cursor: pointer;
-  color: var(--label_foreground);
-  opacity: 0;
+  padding-left: 0.5em;
 
   :hover {
-    opacity: 1;
+    position: absolute;
+    background-color: white;
+    border-radius: var(--border_radius);
+    height: 2em;
+
+    border: none;
+    outline: none;
+    width: 15em;
   }
 
   ${props =>
     props.visible &&
     css`
-      opacity: 0.5;
+      opacity: 1;
     `}
 `;
 
@@ -102,20 +91,18 @@ export const EditableTitleComponent = (props: {
           }
         }}
       ></Input>
-      <Label visible={!showInput}>{newTitle ? newTitle : 'Untitled'}</Label>
-      <div>
-        <Pencil
-          visible={!showInput}
-          onClick={() => {
-            if (inputEl.current) {
-              inputEl.current.select();
-              inputEl.current.setSelectionRange(0, 99999);
-              setShowInput(true);
-            }
-          }}
-        ></Pencil>
-        <Tooltip>Rename</Tooltip>
-      </div>
+      <Label
+        visible={!showInput}
+        onClick={() => {
+          if (inputEl.current) {
+            inputEl.current.select();
+            inputEl.current.setSelectionRange(0, 99999);
+            setShowInput(true);
+          }
+        }}
+      >
+        {newTitle ? newTitle : 'Untitled'}
+      </Label>
     </Container>
   );
 };

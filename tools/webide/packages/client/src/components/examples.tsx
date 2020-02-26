@@ -19,7 +19,7 @@ const Container = styled.div`
 
 const MenuItem = styled.div<{ selected?: boolean }>`
   padding: ${verticalPadding} 0 ${verticalPadding} 1em;
-  height: 1.5em;
+  height: 1em;
   display: flex;
   align-items: center;
   cursor: pointer;

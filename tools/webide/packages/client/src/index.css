@@ -48,7 +48,7 @@
   --font_ghost_weight: 700;
   --font_ghost_color: rgba(153, 153, 153, 0.5); /* or #CFCFCF */
 
-  --content_height: 80vh;
+  --content_height: 85vh;
 
   --tooltip_foreground: white;
   --tooltip_background: rgba(0, 0, 0, 0.75) /*#404040*/;
