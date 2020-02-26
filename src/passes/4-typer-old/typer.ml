@@ -80,6 +80,15 @@ module Errors = struct
     ] in
     error ~data title message ()
 
+  let redundant_constructor (e:environment) (c:I.constructor') () =
+    let title = (thunk "redundant constructor") in
+    let message () = "" in
+    let data = [
+      ("constructor" , fun () -> Format.asprintf "%a" I.PP.constructor c);
+      ("environment" , fun () -> Format.asprintf "%a" Environment.PP.full_environment e) ;
+    ] in
+    error ~data title message ()
+
   let wrong_arity (n:string) (expected:int) (actual:int) (loc : Location.t) () =
     let title () = "wrong arity" in
     let message () = "" in
@@ -321,6 +330,9 @@ and evaluate_type (e:environment) (t:I.type_expression) : O.type_expression resu
       let aux k v prev =
         let%bind prev' = prev in
         let%bind v' = evaluate_type e v in
+        let%bind () = match Environment.get_constructor k e with
+          | Some _ -> fail (redundant_constructor e k)
+          | None -> ok () in
         ok @@ I.CMap.add k v' prev'
       in
       let%bind m = I.CMap.fold aux m (ok I.CMap.empty) in
