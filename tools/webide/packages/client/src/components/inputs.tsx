@@ -13,6 +13,7 @@ export const HGroup = styled.div`
 export const Label = styled.label`
   font-size: 1em;
   color: var(--label_foreground);
+  user-select: none;
 `;
 
 export const Input = styled.input`

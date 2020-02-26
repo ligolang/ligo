@@ -16,23 +16,20 @@ const Container = styled.div`
 const Header = styled.div`
   flex: 1;
   display: flex;
-  justify-content: flex-start;
-  align-items: center;
-
-  min-height: 2.5em;
-  border-bottom: 5px solid var(--blue_trans1);
-`;
-
-const Subheader = styled.div`
-  flex: 1;
-  display: flex;
   justify-content: space-between;
   align-items: center;
 
   background: var(--blue_trans1);
   border: 5px solid rgba(0, 0, 0, 0);
-  border-top: none;
   padding: 0 10px;
+`;
+
+const LeftActions = styled.div`
+  display: flex;
+`;
+
+const StyledEditableTitleComponent = styled(EditableTitleComponent)`
+  margin-left: 20px;
 `;
 
 export const EditorComponent = () => {
@@ -42,18 +39,18 @@ export const EditorComponent = () => {
   return (
     <Container>
       <Header>
-        <ShareComponent></ShareComponent>
-      </Header>
-      <Subheader>
-        <EditableTitleComponent
-          id="editor-title"
-          title={title}
-          onChanged={value => {
-            dispatch({ ...new ChangeTitleAction(value) });
-          }}
-        ></EditableTitleComponent>
+        <LeftActions>
+          <ShareComponent></ShareComponent>
+          <StyledEditableTitleComponent
+            id="editor-title"
+            title={title}
+            onChanged={value => {
+              dispatch({ ...new ChangeTitleAction(value) });
+            }}
+          ></StyledEditableTitleComponent>
+        </LeftActions>
         <SyntaxSelectComponent></SyntaxSelectComponent>
-      </Subheader>
+      </Header>
       <MonacoComponent></MonacoComponent>
     </Container>
   );
