@@ -4,7 +4,15 @@ title: Functions
 ---
 
 LIGO functions are the basic building block of contracts. For example,
-entrypoints are functions.
+entrypoints are functions and each smart contract needs a main
+function that dispatches control to the entrypoints (it is not already
+the default entrypoint).
+
+The semantics of function calls in LIGO is that of a *copy of the
+arguments but also of the environment*. In the case of PascaLIGO, this
+means that any mutation (assignment) on variables outside the scope of
+the function will be lost when the function returns, just as the
+mutations inside the functions will be.
 
 ## Declaring Functions
 
@@ -230,10 +238,14 @@ function to all its elements.
 <!--PascaLIGO-->
 ```pascaligo group=c
 function incr_map (const l : list (int)) : list (int) is
-  list_map (function (const i : int) : int is i + 1, l)
+  List.map (function (const i : int) : int is i + 1, l)
 ```
-You can call the function `incr_map` defined above using the LIGO compiler
-like so:
+
+> Note that `list_map` is *deprecated*.
+
+You can call the function `incr_map` defined above using the LIGO
+compiler like so:
+
 ```shell
 ligo run-function
 gitlab-pages/docs/language-basics/src/functions/incr_map.ligo incr_map

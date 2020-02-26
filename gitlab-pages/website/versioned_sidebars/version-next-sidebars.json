@@ -24,9 +24,17 @@
       "version-next-advanced/include",
       "version-next-advanced/first-contract"
     ],
-    "API": [
+    "API & Reference": [
       "version-next-api/cli-commands",
-      "version-next-api/cheat-sheet"
+      "version-next-api/cheat-sheet",
+      "version-next-reference/big-map-reference",
+      "version-next-reference/bytes-reference",
+      "version-next-reference/crypto-reference",
+      "version-next-reference/current-reference",
+      "version-next-reference/list-reference",
+      "version-next-reference/map-reference",
+      "version-next-reference/set-reference",
+      "version-next-reference/string-reference"
     ]
   },
   "version-next-contributors-docs": {

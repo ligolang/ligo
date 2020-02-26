@@ -238,12 +238,9 @@ let keywords = [
   (fun reg -> True   reg);
   (fun reg -> Type   reg)]
 
-(* See: http://caml.inria.fr/pub/docs/manual-ocaml/lex.html#sec86 and
-   https://github.com/facebook/reason/blob/master/src/reason-parser/reason_parser.mly *)
 let reserved =
   let open SSet in
   empty
-    |> add "and"
     |> add "as"
     |> add "asr"
     |> add "begin"

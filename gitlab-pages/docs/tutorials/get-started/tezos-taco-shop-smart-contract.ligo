@@ -1,23 +1,33 @@
-type taco_supply is record
+type taco_supply is
+  record [
     current_stock : nat;
-    max_price : tez;
-end
-type taco_shop_storage is map(nat, taco_supply);
+    max_price     : tez
+  ]
 
-function buy_taco (const taco_kind_index: nat ; var taco_shop_storage : taco_shop_storage) : (list(operation) * taco_shop_storage) is
-  begin
-    // Retrieve the taco_kind from the contract's storage
-    const taco_kind : taco_supply = get_force(taco_kind_index, taco_shop_storage);
-    
-    const current_purchase_price : tez = taco_kind.max_price / taco_kind.current_stock;
+type taco_shop_storage is map (nat, taco_supply)
+
+type return is list (operation) * taco_shop_storage
+
+function buy_taco (const taco_kind_index : nat ; var taco_shop_storage : taco_shop_storage) : return is
+  block {
+    // Retrieve the taco_kind from the contract's storage or fail
+    const taco_kind : taco_supply =
+      case taco_shop_storage[taco_kind_index] of
+        Some (kind) -> kind
+      | None -> (failwith ("Unknown kind of taco.") : taco_supply)
+      end;
+
+     const current_purchase_price : tez =
+       taco_kind.max_price / taco_kind.current_stock;
 
     if amount =/= current_purchase_price then
-      // we won't sell tacos if the amount isn't correct
-      fail("Sorry, the taco you're trying to purchase has a different price");
-    else
-      // Decrease the stock by 1n, because we've just sold one
-      taco_kind.current_stock := abs(taco_kind.current_stock - 1n);
+      // We won't sell tacos if the amount is not correct
+      failwith ("Sorry, the taco you are trying to purchase has a different price");
+    else skip;
+
+    // Decrease the stock by 1n, because we have just sold one
+    taco_kind.current_stock := abs (taco_kind.current_stock - 1n);
 
     // Update the storage with the refreshed taco_kind
-    taco_shop_storage[taco_kind_index] := taco_kind;
-  end with ((nil : list(operation)), taco_shop_storage)
+    taco_shop_storage[taco_kind_index] := taco_kind
+  } with ((nil : list (operation)), taco_shop_storage)

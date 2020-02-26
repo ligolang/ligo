@@ -60,7 +60,10 @@ a *global scope*, but they can be declared and used within functions,
 or as function parameters.
 
 > ⚠️ Please be wary that mutation only works within the function scope
-> itself, values outside of the function scope will not be affected.
+> itself, values outside of the function scope will not be
+> affected. In other words, when a function is called, its arguments
+> are copied, *as well as the environment*. Any side-effect to that
+> environment is therefore lost when the function returns.
 
 
 ```pascaligo group=b

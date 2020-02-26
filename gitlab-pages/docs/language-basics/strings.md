@@ -59,21 +59,27 @@ Strings can be sliced using a built-in function:
 <!--PascaLIGO-->
 ```pascaligo group=b
 const name  : string = "Alice"
-const slice : string = string_slice (0n, 1n, name)
+const slice : string = String.slice (0n, 1n, name)
 ```
+
+> Note that `string_slide` is *deprecated*.
+
 <!--CameLIGO-->
 ```cameligo group=b
 let name  : string = "Alice"
 let slice : string = String.slice 0n 1n name
 ```
+
 <!--ReasonLIGO-->
 ```reasonligo group=b
 let name  : string = "Alice";
 let slice : string = String.slice (0n, 1n, name);
 ```
+
 <!--END_DOCUSAURUS_CODE_TABS-->
 
-> ⚠️ Notice that the offset and length of the slice are natural numbers.
+> ⚠️ Notice that the offset and length of the slice are natural
+> numbers.
 
 ## Length of Strings
 
@@ -83,8 +89,11 @@ The length of a string can be found using a built-in function:
 <!--PascaLIGO-->
 ```pascaligo group=c
 const name : string = "Alice"
-const length : nat = size (name)   // length = 5
+const length : nat = String.length (name) // length = 5
 ```
+
+> Note that `size` is *deprecated*.
+
 <!--CameLIGO-->
 ```cameligo group=c
 let name : string = "Alice"

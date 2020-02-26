@@ -56,8 +56,8 @@ else):
 <!--PascaLIGO-->
 ```pascaligo group=b
 type coin is Head | Tail
-const head : coin = Head (Unit) // Unit needed for now.
-const tail : coin = Tail (Unit) // Unit needed for now.
+const head : coin = Head
+const tail : coin = Tail
 ```
 
 <!--CameLIGO-->
@@ -69,14 +69,16 @@ let tail : coin = Tail
 
 <!--ReasonLIGO-->
 ```reasonligo group=b
-type coin = | Head | Tail;
+type coin = Head | Tail;
 let head : coin = Head;
 let tail : coin = Tail;
 ```
 <!--END_DOCUSAURUS_CODE_TABS-->
 
 The names `Head` and `Tail` in the definition of the type `coin` are
-called *data constructors*, or *variants*.
+called *data constructors*, or *variants*. In this particular, they
+carry no information beyond their names, so they are called *constant
+constructors*.
 
 In general, it is interesting for variants to carry some information,
 and thus go beyond enumerated types. In the following, we show how to
@@ -94,7 +96,7 @@ type user is
 | Guest
 
 const u : user = Admin (1000n)
-const g : user = Guest (Unit) // Unit needed because of a bug
+const g : user = Guest
 ```
 
 <!--CameLIGO-->
@@ -125,6 +127,9 @@ let g : user = Guest;
 
 <!--END_DOCUSAURUS_CODE_TABS-->
 
+In LIGO, a constant constructor is equivalent to the same constructor
+taking an argument of type `unit`, so, for example, `Guest` is the
+same value as `Guest (unit)`.
 
 ## Optional values
 
@@ -172,8 +177,8 @@ type coin is Head | Tail
 
 function flip (const c : coin) : coin is
   case c of
-    Head -> Tail (Unit) // Unit needed because of a bug
-  | Tail -> Head (Unit) // Unit needed because of a bug
+    Head -> Tail
+  | Tail -> Head
   end
 ```
 
@@ -181,7 +186,7 @@ You can call the function `flip` by using the LIGO compiler like so:
 ```shell
 ligo run-function
 gitlab-pages/docs/language-basics/src/unit-option-pattern-matching/flip.ligo
-flip "(Head (Unit))"
+flip "Head"
 # Outputs: Tail(Unit)
 ```
 

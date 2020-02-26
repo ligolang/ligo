@@ -11,8 +11,8 @@ value:
 <!--DOCUSAURUS_CODE_TABS-->
 <!--PascaLIGO-->
 ```pascaligo group=a
-const a : bool = True   // Notice the capital letter
-const b : bool = False  // Same.
+const a : bool = True   // Also: true
+const b : bool = False  // Also: false
 ```
 <!--CameLIGO-->
 ```cameligo group=a
@@ -137,7 +137,7 @@ state.
 type magnitude is Small | Large // See variant types.
 
 function compare (const n : nat) : magnitude is
-  if n < 10n then Small (Unit) else Large (Unit) // Unit is needed for now.
+  if n < 10n then Small else Large
 ```
 
 You can run the `compare` function defined above using the LIGO compiler
@@ -145,7 +145,7 @@ like this:
 ```shell
 ligo run-function
 gitlab-pages/docs/language-basics/boolean-if-else/cond.ligo compare 21n'
-# Outputs: Large (Unit)
+# Outputs: Large(Unit)
 ```
 
 When the branches of the conditional are not a single expression, as
@@ -161,7 +161,7 @@ else skip;
 ```
 
 As an exception to the rule, the blocks in a conditional branch do not
-need to be introduced by the keywor `block`, so, we could have written
+need to be introduced by the keyword `block`, so we could have written
 instead:
 ```pascaligo skip
 if x < y then {
@@ -187,9 +187,15 @@ gitlab-pages/docs/language-basics/boolean-if-else/cond.mligo compare 21n'
 # Outputs: Large
 ```
 
+> Notice that, as in OCaml, in CameLIGO, if a conditional has a branch
+> `else ()`, that branch can be omitted. The resulting so-called
+> *dangling else* problem is parsed by associating any `else` to the
+> closest previous `then`.
+
+
 <!--ReasonLIGO-->
 ```reasonligo group=e
-type magnitude = | Small | Large; // See variant types.
+type magnitude = Small | Large; // See variant types.
 
 let compare = (n : nat) : magnitude =>
   if (n < 10n) { Small; } else { Large; };

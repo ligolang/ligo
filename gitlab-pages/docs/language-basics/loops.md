@@ -79,17 +79,22 @@ let gcd (x,y : nat * nat) : nat =
 ```
 
 To ease the writing and reading of the iterated functions (here,
-`iter`), two predefined functions are provided: `continue` and `stop`:
+`iter`), two predefined functions are provided: `Loop.resume` and
+`Loop.stop`:
 
 ```cameligo group=a
 let iter (x,y : nat * nat) : bool * (nat * nat) =
-  if y = 0n then stop (x,y) else continue (y, x mod y)
+  if y = 0n then Loop.stop (x,y) else Loop.resume (y, x mod y)
 
 let gcd (x,y : nat * nat) : nat =
   let x,y = if x < y then y,x else x,y in
   let x,y = Loop.fold_while iter (x,y)
   in x
 ```
+
+> Note that `stop` and `continue` (now `Loop.resume`) are
+> *deprecated*.
+
 You can call the function `gcd` defined above using the LIGO compiler
 like so:
 ```shell
@@ -131,11 +136,12 @@ let gcd = ((x,y) : (nat, nat)) : nat => {
 ```
 
 To ease the writing and reading of the iterated functions (here,
-`iter`), two predefined functions are provided: `continue` and `stop`:
+`iter`), two predefined functions are provided: `Loop.resume` and
+`Loop.stop`:
 
 ```reasonligo group=b
 let iter = ((x,y) : (nat, nat)) : (bool, (nat, nat)) =>
-  if (y == 0n) { stop ((x,y)); } else { continue ((y, x mod y)); };
+  if (y == 0n) { Loop.stop ((x,y)); } else { Loop.resume ((y, x mod y)); };
 
 let gcd = ((x,y) : (nat, nat)) : nat => {
   let (x,y) = if (x < y) { (y,x); } else { (x,y); };
@@ -143,6 +149,10 @@ let gcd = ((x,y) : (nat, nat)) : nat => {
   x
 };
 ```
+
+> Note that `stop` and `continue` (now `Loop.resume`) are
+> *deprecated*.
+
 <!--END_DOCUSAURUS_CODE_TABS-->
 
 ## Bounded Loops

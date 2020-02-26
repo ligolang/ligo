@@ -229,7 +229,7 @@ type return = operation list * storage
 
 let back (param, store : unit * storage) : return =
   let no_op : operation list = [] in
-  if Current.time > store.deadline then
+  if Tezos.now > store.deadline then
     (failwith "Deadline passed." : return) // Annotation
   else
     match Map.find_opt sender store.backers with
@@ -255,7 +255,7 @@ type return = (list (operation), storage);
 
 let back = ((param, store) : (unit, storage)) : return => {
   let no_op : list (operation) = [];
-  if (Current.time > store.deadline) {
+  if (Tezos.now > store.deadline) {
     (failwith ("Deadline passed.") : return); // Annotation
   }
   else {
