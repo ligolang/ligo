@@ -120,6 +120,7 @@ export class LigoCompiler {
     format: string
   ) {
     const { name, remove } = await this.createTemporaryFile(code);
+
     try {
       const result = await this.execPromise(this.ligoCmd, [
         'compile-contract',
@@ -146,6 +147,33 @@ export class LigoCompiler {
     ]);
 
     return result;
+  }
+
+  async compileStorage(
+    syntax: string,
+    code: string,
+    entrypoint: string,
+    format: string,
+    storage: string
+  ) {
+    const { name, remove } = await this.createTemporaryFile(code);
+
+    try {
+      const result = await this.execPromise(this.ligoCmd, [
+        'compile-storage',
+        '--michelson-format',
+        format,
+        '-s',
+        syntax,
+        name,
+        entrypoint,
+        storage
+      ]);
+
+      return result;
+    } finally {
+      remove();
+    }
   }
 
   async dryRun(

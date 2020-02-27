@@ -2,7 +2,7 @@ import { Tezos } from '@taquito/taquito';
 import { TezBridgeSigner } from '@taquito/tezbridge-signer';
 import { Dispatch } from 'redux';
 
-import { compileContract, compileExpression, deploy, getErrorMessage } from '../../services/api';
+import { compileContract, compileStorage, deploy, getErrorMessage } from '../../services/api';
 import { AppState } from '../app';
 import { MichelsonFormat } from '../compile';
 import { DoneLoadingAction, UpdateLoadingAction } from '../loading';
@@ -32,8 +32,10 @@ export class DeployAction extends CancellableAction {
     }
 
     dispatch({ ...new UpdateLoadingAction('Compiling storage...') });
-    const michelsonStorage = await compileExpression(
+    const michelsonStorage = await compileStorage(
       editorState.language,
+      editorState.code,
+      deployState.entrypoint,
       deployState.storage,
       MichelsonFormat.Json
     );
