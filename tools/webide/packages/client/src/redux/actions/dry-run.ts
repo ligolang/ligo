@@ -4,6 +4,7 @@ import { dryRun, getErrorMessage } from '../../services/api';
 import { AppState } from '../app';
 import { DoneLoadingAction, UpdateLoadingAction } from '../loading';
 import { ChangeOutputAction } from '../result';
+import { Command } from '../types';
 import { CancellableAction } from './cancellable';
 
 export class DryRunAction extends CancellableAction {
@@ -25,13 +26,16 @@ export class DryRunAction extends CancellableAction {
         if (this.isCancelled()) {
           return;
         }
-        dispatch({ ...new ChangeOutputAction(result.output) });
+        dispatch({ ...new ChangeOutputAction(result.output, Command.DryRun) });
       } catch (ex) {
         if (this.isCancelled()) {
           return;
         }
         dispatch({
-          ...new ChangeOutputAction(`Error: ${getErrorMessage(ex)}`)
+          ...new ChangeOutputAction(
+            `Error: ${getErrorMessage(ex)}`,
+            Command.DryRun
+          )
         });
       }
 

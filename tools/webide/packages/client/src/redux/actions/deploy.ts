@@ -7,6 +7,7 @@ import { AppState } from '../app';
 import { MichelsonFormat } from '../compile';
 import { DoneLoadingAction, UpdateLoadingAction } from '../loading';
 import { ChangeContractAction, ChangeOutputAction } from '../result';
+import { Command } from '../types';
 import { CancellableAction } from './cancellable';
 
 Tezos.setProvider({
@@ -85,13 +86,18 @@ export class DeployAction extends CancellableAction {
           return;
         }
 
-        dispatch({ ...new ChangeContractAction(contract.address) });
+        dispatch({
+          ...new ChangeContractAction(contract.address, Command.Deploy)
+        });
       } catch (ex) {
         if (this.isCancelled()) {
           return;
         }
         dispatch({
-          ...new ChangeOutputAction(`Error: ${getErrorMessage(ex)}`)
+          ...new ChangeOutputAction(
+            `Error: ${getErrorMessage(ex)}`,
+            Command.Deploy
+          )
         });
       }
 
