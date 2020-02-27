@@ -1,3 +1,10 @@
+#!/usr/bin/env python3
+import pprint
+
+
+
+
+
 moduleName = "A"
 variant="_ _variant"
 record="_ _record"
@@ -57,6 +64,8 @@ adts = [
   )
   for (name, kind, ctors) in adts
 ]
+
+# pprint.PrettyPrinter(compact=False, indent=4).pprint(adts)
 
 print("(* This is an auto-generated file. Do not edit. *)")
 
@@ -155,8 +164,8 @@ for t in adts:
   for c in t.ctorsOrFields:
     print(f"  {t.name}_{c.name} = (fun v state continue ->", end=' ')
     if c.isBuiltin:
-      print("ignore continue; (v, state)", end=' ')
+      print("ignore continue; (v, state)", end='')
     else:
-      print(f"continue.{c.type_} v state", end=' ')
+      print(f"continue.{c.type_} v state", end='')
     print(") ;")
 print("}")
