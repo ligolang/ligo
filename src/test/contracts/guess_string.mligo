@@ -1,20 +1,18 @@
 type storage = {
-  challenge : string;
+  challenge : string
 }
 
 type param = {
   new_challenge : string;
-  attempt       : string;
+  attempt       : string
 }
 
-let attempt (p: param) storage =
-  (* if p.attempt <> storage.challenge then failwith "Failed challenge" else *)
-  let contract : unit contract =
-    Operation.get_contract sender in
+type return = operation list * storage
+
+let attempt (p: param; store : storage) : return =
+  (* if p.attempt <> store.challenge then failwith "Failed challenge" else *)
+  let contract : unit contract = Operation.get_contract sender in
   let transfer : operation =
-    Operation.transaction (unit , contract , 10.00tz) in
-  (* TODO: no syntax for functional updates yet *)
-  (* let storage : storage = { storage with challenge = p.new_challenge } in *)
-  (* for now, rebuild the record by hand. *)
-  let storage : storage = { challenge = p.new_challenge }
-  in ([] : operation list), storage
+    Operation.transaction (unit, contract, 10.00tez) in
+  let store : storage = {challenge = p.new_challenge}
+  in ([] : operation list), store
