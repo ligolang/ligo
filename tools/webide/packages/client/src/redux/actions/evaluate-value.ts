@@ -4,6 +4,7 @@ import { evaluateValue, getErrorMessage } from '../../services/api';
 import { AppState } from '../app';
 import { DoneLoadingAction, UpdateLoadingAction } from '../loading';
 import { ChangeOutputAction } from '../result';
+import { Command } from '../types';
 import { CancellableAction } from './cancellable';
 
 export class EvaluateValueAction extends CancellableAction {
@@ -28,13 +29,18 @@ export class EvaluateValueAction extends CancellableAction {
           return;
         }
 
-        dispatch({ ...new ChangeOutputAction(result.code) });
+        dispatch({
+          ...new ChangeOutputAction(result.code, Command.EvaluateValue)
+        });
       } catch (ex) {
         if (this.isCancelled()) {
           return;
         }
         dispatch({
-          ...new ChangeOutputAction(`Error: ${getErrorMessage(ex)}`)
+          ...new ChangeOutputAction(
+            `Error: ${getErrorMessage(ex)}`,
+            Command.EvaluateValue
+          )
         });
       }
 
