@@ -4,9 +4,12 @@ type return is list (operation) * storage
 
 function cb (const a : address; const s : storage) : return is
   block {
-    const c : contract (unit) = get_entrypoint ("%cb", a)
-  }
-  with (list [transaction (unit, 0mutez, c)], s)
+    const c : contract (unit) =
+      case (Tezos.get_entrypoint_opt ("%cb", a) : option (contract (unit))) of
+        Some (contract) -> contract
+      | None -> (failwith ("cb: Entrypoint not found.") : contract (unit))
+      end
+  } with (list [Tezos.transaction (unit, 0tez, c)], s)
 
 
 function cbo (const a : address; const s : storage) : return is
@@ -14,6 +17,6 @@ function cbo (const a : address; const s : storage) : return is
     const c : contract (unit) =
       case (get_entrypoint_opt ("%cbo", a) : option (contract (unit))) of
         Some (c) -> c
-      | None -> (failwith ("entrypoint not found") : contract (unit))
+      | None -> (failwith ("cbo: Entrypoint not found.") : contract (unit))
       end
-  } with (list [transaction(unit, 0mutez, c)], s)
+  } with (list [Tezos.transaction (unit, 0tez, c)], s)

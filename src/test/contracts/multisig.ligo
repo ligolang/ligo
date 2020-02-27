@@ -38,7 +38,7 @@ function check_message (const param : check_message_pt;
     failwith ("Counters does not match")
   else {
     const packed_payload : bytes =
-      bytes_pack ((message, param.counter, s.id, get_chain_id));
+      Bytes.pack ((message, param.counter, s.id, Tezos.chain_id));
     var valid : nat := 0n;
 
     var keys : authorized_keys := s.auth;
@@ -47,12 +47,12 @@ function check_message (const param : check_message_pt;
         nil -> skip
       | key # tl -> block {
           keys := tl;
-          if pkh_sig.0 = crypto_hash_key (key) then
-            if crypto_check (key, pkh_sig.1, packed_payload)
+          if pkh_sig.0 = Crypto.hash_key (key) then
+            if Crypto.check (key, pkh_sig.1, packed_payload)
             then valid := valid + 1n
             else failwith ("Invalid signature")
           else skip
-          }
+        }
       end
     };
 

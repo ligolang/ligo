@@ -68,30 +68,30 @@ module Simplify = struct
     (* Tezos module (ex-Michelson) *)
 
     | "Tezos.chain_id"         -> ok C_CHAIN_ID
-    | "chain_id"                   -> ok C_CHAIN_ID            (* Deprecated *)
-    | "get_chain_id"               -> ok C_CHAIN_ID            (* Deprecated *)
+    | "chain_id"               -> ok C_CHAIN_ID            (* Deprecated *)
+    | "get_chain_id"           -> ok C_CHAIN_ID            (* Deprecated *)
     | "Tezos.balance"          -> ok C_BALANCE
-    | "balance"                    -> ok C_BALANCE             (* Deprecated *)
+    | "balance"                -> ok C_BALANCE             (* Deprecated *)
     | "Tezos.now"              -> ok C_NOW
-    | "now"                        -> ok C_NOW                 (* Deprecated *)
+    | "now"                    -> ok C_NOW                 (* Deprecated *)
     | "Tezos.amount"           -> ok C_AMOUNT
-    | "amount"                     -> ok C_AMOUNT              (* Deprecated *)
+    | "amount"                 -> ok C_AMOUNT              (* Deprecated *)
     | "Tezos.sender"           -> ok C_SENDER
-    | "sender"                     -> ok C_SENDER              (* Deprecated *)
+    | "sender"                 -> ok C_SENDER              (* Deprecated *)
     | "Tezos.address"          -> ok C_ADDRESS
-    | "address"                    -> ok C_ADDRESS             (* Deprecated *)
+    | "address"                -> ok C_ADDRESS             (* Deprecated *)
     | "Tezos.self_address"     -> ok C_SELF_ADDRESS
-    | "self_address"               -> ok C_SELF_ADDRESS        (* Deprecated *)
+    | "self_address"           -> ok C_SELF_ADDRESS        (* Deprecated *)
     | "Tezos.implicit_account" -> ok C_IMPLICIT_ACCOUNT
-    | "implicit_account"           -> ok C_IMPLICIT_ACCOUNT    (* Deprecated *)
+    | "implicit_account"       -> ok C_IMPLICIT_ACCOUNT    (* Deprecated *)
     | "Tezos.source"           -> ok C_SOURCE
-    | "source"                     -> ok C_SOURCE              (* Deprecated *)
+    | "source"                 -> ok C_SOURCE              (* Deprecated *)
     | "Tezos.failwith"         -> ok C_FAILWITH
-    | "failwith"                   -> ok C_FAILWITH
+    | "failwith"               -> ok C_FAILWITH
 
-    | "Tezos.transaction"  -> ok C_CALL
+    | "Tezos.transaction"      -> ok C_CALL
     | "transaction"            -> ok C_CALL                    (* Deprecated *)
-    | "Tezos.set_delegate" -> ok C_SET_DELEGATE
+    | "Tezos.set_delegate"     -> ok C_SET_DELEGATE
     | "set_delegate"           -> ok C_SET_DELEGATE            (* Deprecated *)
     | "get_contract"           -> ok C_CONTRACT                (* Deprecated *)
     | "Tezos.get_contract_opt" -> ok C_CONTRACT_OPT
@@ -144,7 +144,7 @@ module Simplify = struct
     | "Bytes.unpack" -> ok C_BYTES_UNPACK
     | "bytes_unpack" -> ok C_BYTES_UNPACK  (* Deprecated *)
     | "Bytes.length" -> ok C_SIZE
-    | "Bytes.size"   -> ok C_SIZE
+    | "Bytes.size"   -> ok C_SIZE          (* Deprecated *)
     | "bytes_concat" -> ok C_CONCAT        (* Deprecated *)
     | "Bytes.concat" -> ok C_CONCAT
     | "Bytes.slice"  -> ok C_SLICE
@@ -165,7 +165,8 @@ module Simplify = struct
 
     (* Set module *)
 
-    | "Set.size"    -> ok C_SIZE
+    | "Set.cardinal" -> ok C_SIZE
+    | "Set.size"    -> ok C_SIZE        (* Deprecated *)
     | "set_size"    -> ok C_SIZE        (* Deprecated *)
     | "set_empty"   -> ok C_SET_EMPTY   (* Deprecated *)
     | "Set.mem"     -> ok C_SET_MEM
@@ -339,14 +340,15 @@ module Simplify = struct
 
     (* Set module *)
 
-    | "Set.mem"     -> ok C_SET_MEM
-    | "Set.iter"    -> ok C_SET_ITER
-    | "Set.empty"   -> ok C_SET_EMPTY
-    | "Set.literal" -> ok C_SET_LITERAL
-    | "Set.add"     -> ok C_SET_ADD
-    | "Set.remove"  -> ok C_SET_REMOVE
-    | "Set.fold"    -> ok C_SET_FOLD
-    | "Set.size"    -> ok C_SIZE
+    | "Set.mem"      -> ok C_SET_MEM
+    | "Set.iter"     -> ok C_SET_ITER
+    | "Set.empty"    -> ok C_SET_EMPTY
+    | "Set.literal"  -> ok C_SET_LITERAL
+    | "Set.add"      -> ok C_SET_ADD
+    | "Set.remove"   -> ok C_SET_REMOVE
+    | "Set.fold"     -> ok C_SET_FOLD
+    | "Set.size"     -> ok C_SIZE (* Deprecated *)
+    | "Set.cardinal" -> ok C_SIZE
 
     (* Map module *)
 

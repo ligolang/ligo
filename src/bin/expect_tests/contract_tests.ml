@@ -7,7 +7,7 @@ let bad_contract basename =
 
 let%expect_test _ =
   run_ligo_good [ "measure-contract" ; contract "coase.ligo" ; "main" ] ;
-  [%expect {| 1747 bytes |}] ;
+  [%expect {| 1870 bytes |}] ;
 
   run_ligo_good [ "measure-contract" ; contract "multisig.ligo" ; "main" ] ;
   [%expect {| 1324 bytes |}] ;
@@ -86,7 +86,9 @@ let%expect_test _ =
                      SWAP ;
                      DIP { DUP ; CAR ; CAR } ;
                      GET ;
-                     IF_NONE { PUSH string "MAP FIND" ; FAILWITH } {} ;
+                     IF_NONE
+                       { PUSH string "buy_single: No card pattern." ; FAILWITH }
+                       { DUP ; DIP { DROP } } ;
                      DUP ;
                      CAR ;
                      DIP { DUP ; CDR ; PUSH nat 1 ; ADD } ;
@@ -159,7 +161,9 @@ let%expect_test _ =
                      SWAP ;
                      DIP { DUP ; CAR ; CDR } ;
                      GET ;
-                     IF_NONE { PUSH string "MAP FIND" ; FAILWITH } {} ;
+                     IF_NONE
+                       { PUSH string "sell_single: No card." ; FAILWITH }
+                       { DUP ; DIP { DROP } } ;
                      DUP ;
                      CAR ;
                      SENDER ;
@@ -173,7 +177,9 @@ let%expect_test _ =
                      CDR ;
                      DIP { DIP 2 { DUP } ; DIG 2 ; CAR ; CAR } ;
                      GET ;
-                     IF_NONE { PUSH string "MAP FIND" ; FAILWITH } {} ;
+                     IF_NONE
+                       { PUSH string "sell_single: No card pattern." ; FAILWITH }
+                       { DUP ; DIP { DROP } } ;
                      DUP ;
                      DIP { DUP } ;
                      SWAP ;
@@ -209,7 +215,9 @@ let%expect_test _ =
                      MUL ;
                      SENDER ;
                      CONTRACT unit ;
-                     IF_NONE { PUSH string "bad address for get_contract" ; FAILWITH } {} ;
+                     IF_NONE
+                       { PUSH string "sell_single: No contract." ; FAILWITH }
+                       { DUP ; DIP { DROP } } ;
                      DIP { DUP } ;
                      SWAP ;
                      DIP { DUP } ;
@@ -246,7 +254,9 @@ let%expect_test _ =
                  CAR ;
                  DIP { DUP } ;
                  GET ;
-                 IF_NONE { PUSH string "MAP FIND" ; FAILWITH } {} ;
+                 IF_NONE
+                   { PUSH string "transfer_single: No card." ; FAILWITH }
+                   { DUP ; DIP { DROP } } ;
                  DUP ;
                  CAR ;
                  SENDER ;
