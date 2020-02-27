@@ -42,8 +42,8 @@ let map_op (m : foobar) : foobar =
   let increment = fun (i: int * int) -> i.1 + 1
   in Map.map increment m
 
-let fold_op (m : foobar) : foobar =
-  let aggregate = fun (i: int * (int * int)) -> i.0 + i.1.0 + i.1.1
+let fold_op (m : foobar) : int =
+  let aggregate = fun (i,m: int * (int * int)) -> i + m.0 + m.1
   in Map.fold aggregate m 10
 
 let deep_op (m: foobar) : foobar =

@@ -697,7 +697,7 @@ function fold_op (const m : register) : int is
 <!--CameLIGO-->
 
 ```cameligo group=maps
-let fold_op (m : register) : register =
+let fold_op (m : register) : int =
   let folded = fun (i,j : int * (address * move)) -> i + j.1.1
   in Map.fold folded m 5
 ```
@@ -705,7 +705,7 @@ let fold_op (m : register) : register =
 <!--ReasonLIGO-->
 
 ```reasonligo group=maps
-let fold_op = (m : register) : register => {
+let fold_op = (m : register) : int => {
   let folded = ((i,j): (int, (address, move))) => i + j[1][1];
   Map.fold (folded, m, 5);
 };
