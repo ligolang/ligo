@@ -6,7 +6,7 @@ let x: list(int) = [];
 let y: list(int) = [3, 4, 5];
 let z: list(int) = [2, ...y];
 
-let main2 = (p: param, storage) => {
+let main2 = (p: param, storage : storage) => {
   let storage =
     switch (p) {
     | [] => storage

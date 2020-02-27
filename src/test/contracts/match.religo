@@ -4,9 +4,9 @@ type param =
   | Add(int)
   | Sub(int);
 
-let main2 = ((p: param), storage) => {
+let main2 = ((p: param), s: storage) => {
   let storage =
-    storage
+    s
     + (
       switch (p) {
       | Add(n) => n

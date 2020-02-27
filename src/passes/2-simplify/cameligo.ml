@@ -812,10 +812,8 @@ and simpl_declaration : Raw.declaration -> declaration Location.wrap list result
         ok (var , tl)
       in
       let%bind lhs_type' = bind_map_option (fun x -> simpl_type_expression (snd x)) lhs_type in
-      match args with
-      | [] ->
-          let%bind rhs' = simpl_expression let_rhs in
-          ok @@ [loc x @@ (Declaration_constant (Var.of_name var.value , lhs_type' , inline, rhs'))]
+      let let_rhs = match args with
+      | [] -> let_rhs
       | param1::others ->
           let fun_ = {
             kwd_fun = Region.ghost;
@@ -824,12 +822,18 @@ and simpl_declaration : Raw.declaration -> declaration Location.wrap list result
             arrow   = Region.ghost;
             body    = let_rhs
           } in
-          let rhs = Raw.EFun {region=Region.ghost ; value=fun_} in
-          let%bind rhs' = simpl_expression rhs in
-          let%bind ty = bind_map_list typed_pattern_to_typed_vars args in
-          let aux acc ty = Option.map (t_function (snd ty)) acc in
-          let func_type = List.fold_right' aux lhs_type' ty in
-          ok @@ [loc x @@ (Declaration_constant (Var.of_name var.value , func_type , inline, rhs'))]
+          Raw.EFun {region=Region.ghost ; value=fun_} 
+      in
+      let f_args = (match let_rhs with 
+      | Raw.EFun f -> nseq_to_list f.value.binders
+      | _ -> []
+      )
+      in
+      let%bind rhs' = simpl_expression let_rhs in
+      let%bind ty = bind_map_list typed_pattern_to_typed_vars f_args in
+      let aux acc ty = Option.map (t_function (snd ty)) acc in
+      let func_type = List.fold_right' aux lhs_type' ty in
+      ok @@ [loc x @@ (Declaration_constant (Var.of_name var.value , func_type , inline, rhs'))]
     )
 
 and simpl_cases : type a . (Raw.pattern * a) list -> (a, unit) matching_content result =
