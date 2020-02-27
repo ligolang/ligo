@@ -242,6 +242,7 @@ and constant ppf : constant' -> unit = function
   | C_SELF_ADDRESS          -> fprintf ppf "SELF_ADDRESS"
   | C_IMPLICIT_ACCOUNT      -> fprintf ppf "IMPLICIT_ACCOUNT"
   | C_SET_DELEGATE          -> fprintf ppf "SET_DELEGATE"
+  | C_CREATE_CONTRACT       -> fprintf ppf "CREATE_CONTRACT"
 
 let%expect_test _ =
   Format.printf "%a" value (D_bytes (Bytes.of_string "foo")) ;
