@@ -132,7 +132,7 @@ export const OutputTabComponent = (props: {
 
   return (
     <Container visible={props.selected}>
-      {output.length !== 0 && (
+      {!(loading.loading || output.length === 0) && (
         <OutputToolbarComponent
           onCopy={() => copyOutput(preRef.current)}
           onDownload={() => downloadOutput(preRef.current)}
