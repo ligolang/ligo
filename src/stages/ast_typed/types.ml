@@ -41,6 +41,7 @@ and expression_content =
   | E_application of application
   | E_lambda of lambda
   | E_let_in of let_in
+  | E_recursive of recursive
   (* Variant *)
   | E_constructor of constructor (* For user defined constructors *)
   | E_matching of matching
@@ -75,6 +76,12 @@ and let_in = {
     let_result: expression ;
     inline : inline ;
   }
+
+and recursive = {
+  fun_name : expression_variable;
+  fun_type : type_expression;
+  lambda : lambda;
+}
 
 and constructor = {
     constructor: constructor';

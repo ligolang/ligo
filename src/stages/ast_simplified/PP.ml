@@ -11,7 +11,9 @@ let expression_variable ppf (ev : expression_variable) : unit =
 
 
 let rec expression ppf (e : expression) =
-  match e.expression_content with
+  expression_content ppf e.expression_content
+and expression_content ppf (ec : expression_content) =
+  match ec with
   | E_literal l ->
       literal ppf l
   | E_variable n ->
@@ -40,16 +42,23 @@ let rec expression ppf (e : expression) =
   | E_look_up (ds, ind) ->
       fprintf ppf "(%a)[%a]" expression ds expression ind
   | E_lambda {binder; input_type; output_type; result} ->
-      fprintf ppf "lambda (%a:%a) : %a return %a" option_type_name binder
+      fprintf ppf "lambda (%a:%a) : %a return %a" 
+        expression_variable binder
         (PP_helpers.option type_expression)
         input_type
         (PP_helpers.option type_expression)
         output_type expression result
   | E_matching {matchee; cases; _} ->
-      fprintf ppf "match %a with %a" expression matchee (matching expression)
+      fprintf ppf "match %a with %a"
+        expression matchee (matching expression)
         cases
   | E_let_in { let_binder ; mut; rhs ; let_result; inline } ->    
-    fprintf ppf "let %a%a = %a%a in %a" option_mut mut option_type_name let_binder expression rhs option_inline inline expression let_result
+      fprintf ppf "let %a%a = %a%a in %a" option_mut mut option_type_name let_binder expression rhs option_inline inline expression let_result
+  | E_recursive { fun_name; fun_type; lambda} ->
+      fprintf ppf "rec (%a:%a => %a )" 
+        expression_variable fun_name 
+        type_expression fun_type
+        expression_content (E_lambda lambda)
   | E_skip ->
       fprintf ppf "skip"
   | E_ascription {anno_expr; type_annotation} ->

@@ -11,7 +11,10 @@ let expression_variable ppf (ev : expression_variable) : unit =
 
 
 let rec expression ppf (e : expression) =
-  match e.expression_content with
+  expression_content ppf e.expression_content
+
+and expression_content ppf (ec: expression_content) =
+  match ec with
   | E_literal l ->
       literal ppf l
   | E_variable n ->
@@ -47,6 +50,11 @@ let rec expression ppf (e : expression) =
   | E_let_in {let_binder; rhs; let_result; inline} ->
       fprintf ppf "let %a = %a%a in %a" expression_variable let_binder expression
         rhs option_inline inline expression let_result
+  | E_recursive { fun_name;fun_type; lambda} ->
+      fprintf ppf "rec (%a:%a => %a )" 
+        expression_variable fun_name 
+        type_expression fun_type
+        expression_content (E_lambda lambda)
 
 and assoc_expression ppf : expr * expr -> unit =
  fun (a, b) -> fprintf ppf "%a -> %a" expression a expression b

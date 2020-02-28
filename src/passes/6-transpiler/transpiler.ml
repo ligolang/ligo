@@ -379,6 +379,8 @@ and transpile_annotated_expression (ae:AST.expression) : expression result =
   | E_lambda l ->
     let%bind io = AST.get_t_function ae.type_expression in
     transpile_lambda l io
+  | E_recursive r ->
+    transpile_recursive r
   | E_list lst -> (
       let%bind t =
         trace_strong (corner_case ~loc:__LOC__ "not a list") @@
@@ -517,6 +519,10 @@ and transpile_lambda l (input_type , output_type) =
   let binder = binder in 
   let closure = E_closure { binder; body = result'} in
   ok @@ Combinators.Expression.make_tpl (closure , tv)
+
+and transpile_recursive {fun_name; fun_type; lambda} =
+  let closure = E_closure { binder=fun_name; body} in
+  ok @@ Combinators.Expression.make closure fun_type
 
 let transpile_declaration env (d:AST.declaration) : toplevel_statement result =
   match d with

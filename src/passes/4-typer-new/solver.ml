@@ -291,6 +291,14 @@ module Wrap = struct
         C_equation (result' , P_variable whole_expr)
       ] @ rhs_tv_opt', whole_expr
 
+  let recursive : T.type_expression -> (constraints * T.type_variable) =
+    fun fun_type ->
+      let fun_type = type_expression_to_type_value fun_type in
+      let whole_expr = Core.fresh_type_variable () in
+      O.[
+        C_equation (fun_type, P_variable whole_expr)
+        ], whole_expr
+
   let assign : T.type_expression -> T.type_expression -> (constraints * T.type_variable) =
     fun v e ->
       let v' = type_expression_to_type_value v in

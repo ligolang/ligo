@@ -797,26 +797,16 @@ and type_expression : environment -> Solver.state -> ?tv_opt:O.type_expression -
   (* | _ -> ( … ) *)
 
 
-  | E_lambda {
-      binder ;
-      input_type ;
-      output_type ;
-      result ;
-    } -> (
-      let%bind input_type' = bind_map_option (evaluate_type e) input_type in
-      let%bind output_type' = bind_map_option (evaluate_type e) output_type in
-
-      let fresh : O.type_expression = t_variable (Wrap.fresh_binder ()) () in
-      let binder = fst binder in 
-      let e' = Environment.add_ez_binder (binder) fresh e in
-
-      let%bind (result , state') = type_expression e' state result in
-      let () = Printf.printf "this does not make use of the typed body, this code sounds buggy." in
-      let wrapped = Wrap.lambda fresh input_type' output_type' in
-      return_wrapped
-        (E_lambda {binder = binder; result}) (* TODO: is the type of the entire lambda enough to access the input_type=fresh; ? *)
+  | E_lambda lambda -> 
+    let%bind (lambda,state',wrapped) = type_lambda e state lambda in
+    return_wrapped (E_lambda lambda) (* TODO: is the type of the entire lambda enough to access the input_type=fresh; ? *)
         state' wrapped
-    )
+  | E_recursive {fun_name;fun_type;lambda} ->
+    let%bind fun_type = evaluate_type e fun_type in
+    let e = Environment.add_ez_binder fun_name fun_type e in
+    let%bind (lambda,state,_) = type_lambda e state lambda in
+    let wrapped = Wrap.recursive fun_type in
+    return_wrapped (E_recursive {fun_name;fun_type;lambda}) state wrapped
 
   | E_constant {cons_name=name; arguments=lst} ->
     let () = ignore (name , lst) in
@@ -838,7 +828,22 @@ and type_expression : environment -> Solver.state -> ?tv_opt:O.type_expression -
         type_constant name tv_lst tv_opt ae.location in
       return (E_constant (name' , lst')) tv
     *)
+and type_lambda e state {
+      binder ;
+      input_type ;
+      output_type ;
+      result ;
+    } =
+      let%bind input_type' = bind_map_option (evaluate_type e) input_type in
+      let%bind output_type' = bind_map_option (evaluate_type e) output_type in
 
+      let fresh : O.type_expression = t_variable (Solver.Wrap.fresh_binder ()) () in
+      let e' = Environment.add_ez_binder (binder) fresh e in
+
+      let%bind (result , state') = type_expression e' state result in
+      let () = Printf.printf "this does not make use of the typed body, this code sounds buggy." in
+      let wrapped = Solver.Wrap.lambda fresh input_type' output_type' in
+      ok (({binder;result}:O.lambda),state',wrapped)
 (* Advanced *)
 
 and type_constant (name:I.constant') (lst:O.type_expression list) (tv_opt:O.type_expression option) : (O.constant' * O.type_expression) result =
@@ -1040,12 +1045,10 @@ let rec untype_expression (e:O.expression) : (I.expression) result =
       let%bind f' = untype_expression expr1 in
       let%bind arg' = untype_expression expr2 in
       return (e_application f' arg')
-  | E_lambda {binder; result} -> (
-      let%bind io = get_t_function e.type_expression in
-      let%bind (input_type , output_type) = bind_map_pair untype_type_value io in
-      let%bind result = untype_expression result in
-      return (e_lambda (binder) (Some input_type) (Some output_type) result)
-    )
+  | E_lambda lambda ->
+      let%bind lambda = untype_lambda e.type_expression lambda in
+      let {binder;input_type;output_type;result} = lambda in
+      return (e_lambda (binder) (input_type) (output_type) result)
   | E_constructor {constructor; element} ->
       let%bind p' = untype_expression element in
       let Constructor n = constructor in
@@ -1092,6 +1095,16 @@ let rec untype_expression (e:O.expression) : (I.expression) result =
     let%bind rhs = untype_expression rhs in
     let%bind result = untype_expression let_result in
     return (e_let_in (let_binder , (Some tv)) false inline rhs result)
+  | E_recursive {fun_name; fun_type; lambda} ->
+      let%bind lambda = untype_lambda fun_type lambda in
+      let%bind fun_type = untype_type_expression fun_type in
+      return @@ e_recursive fun_name fun_type lambda
+
+and untype_lambda ty {binder; result} : I.lambda result =
+      let%bind io = get_t_function ty in
+      let%bind (input_type , output_type) = bind_map_pair untype_type_value io in
+      let%bind result = untype_expression result in
+      ok ({binder;input_type = Some input_type; output_type = Some output_type; result}: I.lambda)
 
 (*
   Tranform a Ast_typed matching into an ast_simplified matching

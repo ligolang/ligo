@@ -106,6 +106,7 @@ val e_typed_big_map : ?loc:Location.t -> ( expression * expression ) list  -> ty
 val e_typed_set : ?loc:Location.t -> expression list -> type_expression -> expression
 
 val e_lambda : ?loc:Location.t -> expression_variable -> type_expression option -> type_expression option -> expression -> expression
+val e_recursive : ?loc:Location.t -> expression_variable -> type_expression -> lambda -> expression
 val e_record : ?loc:Location.t -> expr Map.String.t -> expression
 val e_update : ?loc:Location.t -> expression -> string -> expression -> expression
 val e_assign_with_let : ?loc:Location.t -> string -> string list -> expression -> ((expression_variable*type_expression option)*bool*expression*bool)

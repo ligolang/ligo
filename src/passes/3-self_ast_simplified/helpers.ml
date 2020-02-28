@@ -56,6 +56,9 @@ let rec fold_expression : 'a folder -> 'a -> expression -> 'a result = fun f ini
       let%bind res = self res let_result in
       ok res
     )
+  | E_recursive { lambda={result=e;_}; _} ->
+      let%bind res = self init' e in
+      ok res
 
 and fold_cases : 'a folder -> 'a -> matching_expr -> 'a result = fun f init m ->
   match m with
@@ -156,6 +159,10 @@ let rec map_expression : exp_mapper -> expression -> expression result = fun f e
       let%bind result = self result in
       return @@ E_lambda { binder ; input_type ; output_type ; result }
     )
+  | E_recursive { fun_name; fun_type; lambda} ->
+      let%bind result = self lambda.result in
+      let lambda = {lambda with result} in
+      return @@ E_recursive { fun_name; fun_type; lambda}
   | E_constant c -> (
       let%bind args = bind_map_list self c.arguments in
       return @@ E_constant {c with arguments=args}
@@ -295,6 +302,10 @@ let rec fold_map_expression : 'a fold_mapper -> 'a -> expression -> ('a * expres
       let%bind (res,result) = self init' result in
       ok ( res, return @@ E_lambda { binder ; input_type ; output_type ; result })
     )
+  | E_recursive { fun_name; fun_type; lambda} ->
+      let%bind (res, result) = self init' lambda.result in
+      let lambda = {lambda with result} in
+      ok ( res, return @@ E_recursive { fun_name; fun_type; lambda})
   | E_constant c -> (
       let%bind (res,args) = bind_fold_map_list self init' c.arguments in
       ok (res, return @@ E_constant {c with arguments=args})

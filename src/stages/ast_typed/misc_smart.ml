@@ -45,9 +45,11 @@ module Captured_variables = struct
   let empty : bindings = []
   let of_list : expression_variable list -> bindings = fun x -> x
 
-  let rec expression : bindings -> expression -> bindings result = fun b ae ->
+  let rec expression : bindings -> expression -> bindings result = fun b e ->
+    expression_content b e.environment e.expression_content
+  and expression_content : bindings -> full_environment -> expression_content -> bindings result = fun b env ec ->
     let self = expression b in
-    match ae.expression_content with
+    match ec with
     | E_lambda l -> ok @@ Free_variables.lambda empty l
     | E_literal _ -> ok empty
     | E_constant {arguments;_} ->
@@ -56,7 +58,7 @@ module Captured_variables = struct
     | E_variable name -> (
         let%bind env_element =
           trace_option (simple_error "missing var in env") @@
-          Environment.get_opt name ae.environment in
+          Environment.get_opt name env in
         match env_element.definition with
         | ED_binder -> ok empty
         | ED_declaration {expr=_ ; free_variables=_} -> simple_fail "todo"
@@ -92,6 +94,9 @@ module Captured_variables = struct
     | E_let_in li ->
       let b' = union (singleton li.let_binder) b in
       expression b' li.let_result
+    | E_recursive r -> 
+      let b' = union (singleton r.fun_name) b in
+      expression_content b' env @@ E_lambda r.lambda
 
   and matching_variant_case : type a . (bindings -> a -> bindings result) -> bindings -> ((constructor' * expression_variable) * a) -> bindings result  = fun f b ((_,n),c) ->
     f (union (singleton n) b) c
