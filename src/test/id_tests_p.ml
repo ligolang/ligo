@@ -474,7 +474,7 @@ let skip () =
                              ("name_price", e_mutez 1000000) ;
                              ("skip_price", e_mutez 1000000) ; ]
   in
-  let%bind () = expect_eq ~options program "skip"
+  let%bind () = expect_eq ~options program "skip_"
       (e_pair (e_unit ()) storage)
       (e_pair (e_list []) new_storage)
   in ok ()
@@ -505,12 +505,12 @@ let skip_wrong_amount () =
                              ("name_price", e_mutez 1000000) ;
                              ("skip_price", e_mutez 1000000) ; ]
   in
-  let%bind () = expect_string_failwith ~options program "skip"
+  let%bind () = expect_string_failwith ~options program "skip_"
       (e_pair (e_unit ()) storage)
       "Incorrect amount paid."
   in ok ()
 
-let main = test_suite "ID Layer" [
+let main = test_suite "ID Layer (PascaLIGO)" [
     test "buy"    buy_id ;
     test "buy (sender addr)" buy_id_sender_addr ;
     test "buy (wrong amount)" buy_id_wrong_amount ;

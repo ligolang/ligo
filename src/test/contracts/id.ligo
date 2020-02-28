@@ -77,9 +77,9 @@ function buy (const parameter : buy; const storage : storage) : list(operation) 
               controller = controller ;
               profile = profile ;
       ];
-    identities[new_id] := Some(new_id_details);
+    identities[new_id] := new_id_details;
   end with ((nil : list(operation)), record [
-                              identities = updated_identities;
+                              identities = identities;
                               next_id = new_id + 1;
                               name_price = storage.name_price;
                               skip_price = storage.skip_price;
@@ -94,22 +94,22 @@ function update_owner (const parameter : update_owner; const storage : storage) 
         failwith("Updating owner doesn't cost anything.");
       end
     else skip;
-    const id : int = parameter[id];
-    const new_owner : address = parameter[new_owner];
-    var identities : big_map (id, id_details) := storage[identities];
+    const id : int = parameter.id;
+    const new_owner : address = parameter.new_owner;
+    var identities : big_map (id, id_details) := storage.identities;
     const id_details : id_details =
       case identities[id] of
         Some(id_details) -> id_details
       | None -> (failwith("This ID does not exist."): id_details)
       end;
-    var is_allowed : bool := false;
-    if sender = id_details[owner]
-    then is_allowed := true
+    var is_allowed : bool := False;
+    if sender = id_details.owner
+    then is_allowed := True
     else failwith("You are not the owner of this ID.");
-    id_details[owner] := new_owner;
-    identities[id] := Some(id_details);
+    id_details.owner := new_owner;
+    identities[id] := id_details;
   end with ((nil: list(operation)), record [
-                                     identities = updated_identities;
+                                     identities = identities;
                                      next_id = storage.next_id;
                                      name_price = storage.name_price;
                                      skip_price = storage.skip_price;
@@ -121,52 +121,52 @@ function update_details (const parameter : update_details; const storage : stora
     if (amount =/= 0mutez)
     then failwith("Updating details doesn't cost anything.")
     else skip;
-    const id : int = parameter[id];
-    const new_profile : option(bytes) = parameter[new_profile];
-    const new_controller : option(address) = parameter[new_controller];
-    const identities : big_map (id, id_details) = storage[identities];
+    const id : int = parameter.id;
+    const new_profile : option(bytes) = parameter.new_profile;
+    const new_controller : option(address) = parameter.new_controller;
+    const identities : big_map (id, id_details) = storage.identities;
     const id_details: id_details =
       case identities[id] of
         Some(id_details) -> id_details
       | None -> (failwith("This ID does not exist."): id_details)
       end;
-    var is_allowed : bool := false;
-    if (sender = current_id_details[controller]) or (sender = current_id_details[owner])
-    then is_allowed := true
+    var is_allowed : bool := False;
+    if (sender = id_details.controller) or (sender = id_details.owner)
+    then is_allowed := True
     else failwith("You are not the owner or controller of this ID.");
-    const owner: address = id_details[owner];
+    const owner: address = id_details.owner;
     const profile: bytes =
       case new_profile of
-        None -> (* Default *) id_details[profile]
+        None -> (* Default *) id_details.profile
       | Some(new_profile) -> new_profile
       end;
     const controller: address =
     case new_controller of
-      None -> (* Default *) current_id_details[controller]
+      None -> (* Default *) id_details.controller
     | Some(new_controller) -> new_controller
     end;
-    id_details[owner] := owner;
-    id_details[controller] := controller;
-    id_details[profile] := profile;
-    identities[id] := Some(id_details);
+    id_details.owner := owner;
+    id_details.controller := controller;
+    id_details.profile := profile;
+    identities[id] := id_details;
   end with ((nil: list(operation)), record [
                                      identities = identities;
-                                     next_id = storage[next_id];
-                                     name_price = storage[name_price];
-                                     skip_price = storage[skip_price];
+                                     next_id = storage.next_id;
+                                     name_price = storage.name_price;
+                                     skip_price = storage.skip_price;
                                     ])
 
 (* Let someone skip the next identity so nobody has to take one that's undesirable *)
 function skip_ (const p: unit; const storage: storage) : list(operation) * storage is
   begin
-    if amount = storage[skip_price]
+    if amount = storage.skip_price
     then skip
     else failwith("Incorrect amount paid.");
   end with ((nil: list(operation)), record [
-                                     identities = storage[identities];
-                                     next_id = storage[next_id] + 1;
-                                     name_price = storage[name_price];
-                                     skip_price = storage[skip_price];
+                                     identities = storage.identities;
+                                     next_id = storage.next_id + 1;
+                                     name_price = storage.name_price;
+                                     skip_price = storage.skip_price;
                                    ])
 
 function main (const action : action; const storage : storage) : list(operation) * storage is
