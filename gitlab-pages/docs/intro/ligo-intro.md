@@ -5,7 +5,7 @@ title: Introduction To LIGO
 
 LIGO is a programming language for writing [Tezos](https://tezos.com/) smart contracts.
 
-If we had to describe the philosophy of LIGO in a few sentences, it would be this:
+The LIGO philosophy can be described in a few bullet points:
 
 1. Design a clean, simple language with no extraneous parts or additions.
 
@@ -19,7 +19,7 @@ easy to formally verify the compiled output using a project like [Mi-Cho-Coq](ht
 4. Stop waking up in the morning to find that your smart contract lost all its money
 to some [stupid exploit](https://www.wired.com/2016/06/50-million-hack-just-showed-dao-human/).
 
-We can elaborate on each:
+Lets expand on each:
 
 * **Clean and simple** — Programming languages for making video games or websites
 tend to prioritize accumulating a vast number of features, they're big languages for
