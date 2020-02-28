@@ -154,6 +154,15 @@ module Errors = struct
     ] in
     error ~data title message ()
 
+  let fvs_in_create_contract_lambda (e : I.expression) (case : Ast_typed.expression_variable) () =
+    let title = (thunk "No free variable allowed in this lambda") in
+    let message () = Format.asprintf "%a " Var.pp case in
+    let data = [
+      ("expression" , fun () -> Format.asprintf "%a" I.PP.expression e) ;
+      ("location" , fun () -> Format.asprintf "%a" Location.pp e.location)
+    ] in
+    error ~data title message ()
+
   let type_error_approximate ?(msg="") ~(expected: string) ~(actual: O.type_expression) ~(expression : I.expression) (loc:Location.t) () =
     let title = (thunk "type error") in
     let message () = msg in
@@ -696,6 +705,20 @@ and type_expression' : environment -> ?tv_opt:O.type_expression -> I.expression 
       let%bind (opname',tv) = type_constant opname tv_lst tv_opt in
       Format.printf "Typed constant : %a \n%!" O.PP.type_expression tv;
       return (E_constant {cons_name=opname';arguments=lst'}) tv
+  | E_constant {cons_name=C_CREATE_CONTRACT as cons_name;arguments} ->
+      let%bind lst' = bind_list @@ List.map (type_expression' e) arguments in
+      let%bind () = match lst' with
+        | { expression_content = O.E_lambda l ; _ } :: _ ->
+          let open Ast_typed.Misc in
+          let fvs = Free_variables.lambda [] l in
+          if List.length fvs = 0 then ok ()
+          else fail @@ fvs_in_create_contract_lambda ae (List.hd fvs)
+        | _ -> ok ()
+      in
+      let tv_lst = List.map get_type_expression lst' in
+      let%bind (name', tv) =
+        type_constant cons_name tv_lst tv_opt in
+      return (E_constant {cons_name=name';arguments=lst'}) tv
   | E_constant {cons_name;arguments} ->
       let%bind lst' = bind_list @@ List.map (type_expression' e) arguments in
       let tv_lst = List.map get_type_expression lst' in
