@@ -154,9 +154,18 @@ module Errors = struct
     ] in
     error ~data title message ()
 
-  let fvs_in_create_contract_lambda (e : I.expression) (case : Ast_typed.expression_variable) () =
+  let fvs_in_create_contract_lambda (e : I.expression) (fvar : Ast_typed.expression_variable) () =
     let title = (thunk "No free variable allowed in this lambda") in
-    let message () = Format.asprintf "%a " Var.pp case in
+    let message () = Format.asprintf "variable '%a'" Var.pp fvar in
+    let data = [
+      ("expression" , fun () -> Format.asprintf "%a" I.PP.expression e) ;
+      ("location" , fun () -> Format.asprintf "%a" Location.pp e.location)
+    ] in
+    error ~data title message ()
+
+  let create_contract_lambda (cst : I.constant') (e : I.expression) () =
+    let title () = Format.asprintf "%a first argument must be inlined" I.PP.constant cst in
+    let message () = Format.asprintf "contract code can be inlined using a lambda" in
     let data = [
       ("expression" , fun () -> Format.asprintf "%a" I.PP.expression e) ;
       ("location" , fun () -> Format.asprintf "%a" Location.pp e.location)
@@ -713,7 +722,7 @@ and type_expression' : environment -> ?tv_opt:O.type_expression -> I.expression 
           let fvs = Free_variables.lambda [] l in
           if List.length fvs = 0 then ok ()
           else fail @@ fvs_in_create_contract_lambda ae (List.hd fvs)
-        | _ -> ok ()
+        | _ -> fail @@ create_contract_lambda C_CREATE_CONTRACT ae
       in
       let tv_lst = List.map get_type_expression lst' in
       let%bind (name', tv) =
