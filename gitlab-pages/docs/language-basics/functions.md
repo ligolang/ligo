@@ -133,7 +133,7 @@ returns an integer as well:
 ```cameligo group=b
 let add (a, b : int * int) : int = a + b             // Uncurried
 let add_curry (a : int) (b : int) : int = add (a, b) // Curried
-let increment (b : int) : int = add_curry 1 b        // Partial application
+let increment : int -> int = add_curry 1             // Partial application
 ```
 
 You can run the `increment` function defined above using the LIGO
