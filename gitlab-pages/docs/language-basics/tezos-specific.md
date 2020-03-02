@@ -154,3 +154,42 @@ let current_addr : address = Tezos.self_address;
 ```
 
 <!--END_DOCUSAURUS_CODE_TABS-->
+
+## Origination of a contract
+
+`Tezos.create_contract` allows you to originate a contract given its code, delegate (if any), initial balance and initial storage.
+The return value is a pair of type `(operation * address)`.
+
+> ⚠️ Due to limitations in Michelson, `Tezos.create_contract` first argument
+> must be inlined and must not contain references to free variables
+
+<!--DOCUSAURUS_CODE_TABS-->
+
+<!--PascaLIGO-->
+```pascaligo group=e
+const origination : operation * address = Tezos.create_contract (
+  function (const p : nat; const s : string): list(operation) * string is ((nil : list(operation)), s),
+  (None : option(key_hash)),
+  3tz,
+  "initial_storage")
+```
+
+<!--CameLIGO-->
+```cameligo group=e
+let origination : operation * address = Tezos.create_contract
+  (fun (p, s : nat * string) -> (([] : operation list), s))
+  (None: key_hash option) 
+  3tz 
+  "initial_storage"
+```
+
+<!--ReasonLIGO-->
+```reasonligo group=e
+let origination : (operation, address) = Tezos.create_contract (
+  ((p, s) : (nat,string)) : (list(operation),string) => (([] : list(operation)), s),
+  None: option(key_hash),
+  3tz,
+  "initial_storage")
+```
+
+<!--END_DOCUSAURUS_CODE_TABS-->
