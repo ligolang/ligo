@@ -1,3 +1,3 @@
 let main (p : key_hash) =
-  let c : unit contract = Current.implicit_account p
-  in Current.address c
+  let c : unit contract = Tezos.implicit_account p
+  in Tezos.address c

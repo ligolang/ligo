@@ -4,7 +4,5 @@ type storage = unit;
    let main (p:unit) storage = (fun x -> ()) ()
    */
 
-let main2 = (z: unit, storage) =>
-  ((f: (unit => unit)) => f())((z: unit) => unit);
-
-let main = (x: (unit, storage)) => main2(x[0],x[1]);
+let main = ((a, s) : (unit, storage)) : (operation (list), storage) =>
+  ((f : (unit => unit)) => f ()) ((useless : unit) => unit);

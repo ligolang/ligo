@@ -61,7 +61,7 @@ let commit () =
   let salted_hash = e_bytes_raw (sha_256_hash
                                    (Bytes.concat Bytes.empty [test_hash_raw;
                                                               packed_sender]))
- 
+
   in
   let pre_commits = e_typed_big_map [] t_address (t_record_ez [("date", t_timestamp);
                                                               ("salted_hash", t_bytes)])
@@ -99,7 +99,7 @@ let reveal_no_commit () =
   let init_storage = storage test_hash true pre_commits in
   expect_string_failwith program "reveal"
     (e_pair reveal init_storage)
-    "You haven't made a commitment to hash against yet."
+    "You have not made a commitment to hash against yet."
 
 (* Test that the contract fails if our commit isn't 24 hours old yet *)
 let reveal_young_commit () =
@@ -132,7 +132,7 @@ let reveal_young_commit () =
   in
   expect_string_failwith ~options program "reveal"
     (e_pair reveal init_storage)
-    "It hasn't been 24 hours since your commit yet."
+    "It has not been 24 hours since your commit yet."
 
 (* Test that the contract fails if our reveal doesn't meet our commitment *)
 let reveal_breaks_commit () =
@@ -164,7 +164,7 @@ let reveal_breaks_commit () =
   in
   expect_string_failwith ~options program "reveal"
     (e_pair reveal init_storage)
-    "This reveal doesn't match your commitment."
+    "This reveal does not match your commitment."
 
 (* Test that the contract fails if we reveal the wrong bytes for the stored hash *)
 let reveal_wrong_commit () =
@@ -199,7 +199,7 @@ let reveal_wrong_commit () =
     "Your commitment did not match the storage hash."
 
 (* Test that the contract fails if we try to reuse it after unused flag changed *)
-let reveal_no_reuse () = 
+let reveal_no_reuse () =
   let%bind program,_ = get_program () in
   let empty_message = empty_message in
   let reveal = e_record_ez [("hashable", e_bytes_string "hello");

@@ -1,4 +1,4 @@
-(* Test whether closures retain values in CameLIGO *)
+(* Test whether closures capture variables in CameLIGO *)
 
 let test (k : int) : int =
   let j : int = k + 5 in

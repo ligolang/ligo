@@ -16,7 +16,7 @@ let%expect_test _ =
   [%expect {| 3231 bytes |}] ;
 
   run_ligo_good [ "measure-contract" ; contract "vote.mligo" ; "main" ] ;
-  [%expect {| 642 bytes |}] ;
+  [%expect {| 589 bytes |}] ;
 
   run_ligo_good [ "compile-parameter" ; contract "coase.ligo" ; "main" ; "Buy_single (record card_to_buy = 1n end)" ] ;
   [%expect {| (Left (Left 1)) |}] ;
@@ -948,39 +948,26 @@ let%expect_test _ =
   run_ligo_good [ "compile-contract" ; contract "vote.mligo" ; "main" ] ;
   [%expect {|
     { parameter
-        (or (pair %init
-               (pair (timestamp %beginning_time) (timestamp %finish_time))
-               (string %title))
-            (string %vote)) ;
+        (or (pair %reset (pair (timestamp %finish_time) (timestamp %start_time)) (string %title))
+            (or %vote (unit %nay) (unit %yea))) ;
       storage
-        (pair (pair (pair (timestamp %beginning_time) (map %candidates string int))
-                    (pair (timestamp %finish_time) (string %title)))
-              (set %voters address)) ;
+        (pair (pair (pair (timestamp %finish_time) (nat %nay))
+                    (pair (timestamp %start_time) (string %title)))
+              (pair (set %voters address) (nat %yea))) ;
       code { DUP ;
+             DUP ;
              CAR ;
              IF_LEFT
                { DUP ;
-                 DIP { DIP { DUP } ; SWAP ; CDR } ;
-                 PAIR ;
                  DUP ;
                  CAR ;
                  CAR ;
-                 CAR ;
-                 DIP { PUSH int 0 ;
-                       SOME ;
-                       DIP { PUSH int 0 ;
-                             SOME ;
-                             EMPTY_MAP string int ;
-                             SWAP ;
-                             PUSH string "Yes" ;
-                             UPDATE } ;
-                       PUSH string "No" ;
-                       UPDATE } ;
-                 PAIR ;
-                 DIP { DUP ; CAR ; CAR ; CDR ; DIP { DUP ; CAR ; CDR } ; PAIR } ;
-                 PAIR ;
-                 EMPTY_SET address ;
+                 PUSH nat 0 ;
                  SWAP ;
+                 PAIR ;
+                 DIP { DUP ; CAR ; CDR ; DIP { DUP ; CDR } ; PAIR } ;
+                 PAIR ;
+                 DIP { PUSH nat 0 ; EMPTY_SET address ; PAIR } ;
                  PAIR ;
                  NIL operation ;
                  PAIR ;
@@ -989,41 +976,56 @@ let%expect_test _ =
                  DIP { DIP { DUP } ; SWAP ; CDR } ;
                  PAIR ;
                  DUP ;
+                 CDR ;
+                 DIP { DUP } ;
+                 SWAP ;
                  CAR ;
-                 DIP { DUP ; CDR ; CAR ; CAR ; CDR } ;
-                 GET ;
-                 IF_NONE { PUSH string "MAP FIND" ; FAILWITH } {} ;
+                 IF_LEFT
+                   { DIP { DUP } ;
+                     SWAP ;
+                     DIP 2 { DUP } ;
+                     DIG 2 ;
+                     CAR ;
+                     CAR ;
+                     CDR ;
+                     PUSH nat 1 ;
+                     ADD ;
+                     DIP { DUP ; CDR ; SWAP ; CAR ; DUP ; CDR ; SWAP ; CAR ; CAR } ;
+                     SWAP ;
+                     PAIR ;
+                     PAIR ;
+                     PAIR ;
+                     DIP { DROP } }
+                   { DIP { DUP } ;
+                     SWAP ;
+                     DIP 2 { DUP } ;
+                     DIG 2 ;
+                     CDR ;
+                     CDR ;
+                     PUSH nat 1 ;
+                     ADD ;
+                     DIP { DUP ; CAR ; SWAP ; CDR ; CAR } ;
+                     SWAP ;
+                     PAIR ;
+                     SWAP ;
+                     PAIR ;
+                     DIP { DROP } } ;
+                 DUP ;
                  DIP { DUP } ;
                  SWAP ;
                  CDR ;
                  CAR ;
-                 CAR ;
-                 CAR ;
-                 DIP { DIP { DUP } ;
-                       SWAP ;
-                       CAR ;
-                       DIP { DUP ;
-                             PUSH int 1 ;
-                             ADD ;
-                             SOME ;
-                             DIP { DIP { DUP } ; SWAP ; CDR ; CAR ; CAR ; CDR } } ;
-                       UPDATE } ;
+                 PUSH bool True ;
+                 SENDER ;
+                 UPDATE ;
+                 DIP { DUP ; CAR ; SWAP ; CDR ; CDR } ;
                  PAIR ;
-                 DIP { DIP { DUP } ;
-                       SWAP ;
-                       CDR ;
-                       CAR ;
-                       CDR ;
-                       CAR ;
-                       DIP { DIP { DUP } ; SWAP ; CDR ; CAR ; CDR ; CDR } ;
-                       PAIR } ;
-                 PAIR ;
-                 DIP { DIP { DUP } ; SWAP ; CDR ; CDR ; PUSH bool True ; SENDER ; UPDATE } ;
+                 SWAP ;
                  PAIR ;
                  NIL operation ;
                  PAIR ;
-                 DIP { DROP 3 } } ;
-             DIP { DROP } } } |}]
+                 DIP { DROP 4 } } ;
+             DIP { DROP 2 } } } |}]
 
 let%expect_test _ =
     run_ligo_good [ "compile-contract" ; contract "implicit.mligo" ; "main" ] ;
@@ -1064,7 +1066,7 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; contract "bad_address_format.religo" ; "main" ] ;
   [%expect {|
-    ligo: in file "bad_address_format.religo", line 2, characters 25-47. Badly formatted literal: @"KT1badaddr" {"location":"in file \"bad_address_format.religo\", line 2, characters 25-47"}
+    ligo: in file "bad_address_format.religo", line 2, characters 26-48. Badly formatted literal: @"KT1badaddr" {"location":"in file \"bad_address_format.religo\", line 2, characters 26-48"}
 
 
      If you're not sure how to fix this error, you can

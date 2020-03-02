@@ -325,9 +325,9 @@ module Simplify = struct
     | "Bytes.pack"   -> ok C_BYTES_PACK
     | "Bytes.unpack" -> ok C_BYTES_UNPACK
     | "Bytes.length" -> ok C_SIZE
-    | "Bytes.size"   -> ok C_SIZE
+    | "Bytes.size"   -> ok C_SIZE       (* Deprecated *)
     | "Bytes.concat" -> ok C_CONCAT
-    | "Bytes.slice"  -> ok C_SLICE
+    | "Bytes.slice"  -> ok C_SLICE      (* Deprecated *)
     | "Bytes.sub"    -> ok C_SLICE
 
     (* List module *)

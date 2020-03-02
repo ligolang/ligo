@@ -1,1 +1,1 @@
-let main = (i: int): option(nat) => Michelson.is_nat(i);
+let main = (i : int): option (nat) => is_nat (i);

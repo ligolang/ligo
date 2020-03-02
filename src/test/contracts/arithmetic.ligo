@@ -1,5 +1,3 @@
-// Test PascaLIGO arithmetic operators
-
 function mod_op   (const n : int) : nat is n mod 42
 function plus_op  (const n : int) : int is n + 42
 function minus_op (const n : int) : int is n - 42

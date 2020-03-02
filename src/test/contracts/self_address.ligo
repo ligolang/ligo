@@ -1,1 +1,1 @@
-function main (const p : unit) : address is self_address
+function main (const p : unit) : address is Tezos.self_address
