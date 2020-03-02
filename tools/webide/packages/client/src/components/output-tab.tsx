@@ -7,6 +7,7 @@ import { AppState } from '../redux/app';
 import { CommandState } from '../redux/command';
 import { DoneLoadingAction, LoadingState } from '../redux/loading';
 import { ResultState } from '../redux/result';
+import { Command } from '../redux/types';
 import { OutputToolbarComponent } from './output-toolbar';
 
 const Container = styled.div<{ visible?: boolean }>`
@@ -43,7 +44,7 @@ const CancelButton = styled.div`
 
 const Output = styled.div`
   flex: 1;
-  padding: 0 0.5em 0.5em 0.5em;
+  padding: 0.5em;
   display: flex;
   overflow: scroll;
   /* This font size is used to calcuate spinner size */
@@ -81,20 +82,18 @@ function copyOutput(el: HTMLElement | null) {
   }
 }
 
-function downloadOutput(el: HTMLElement | null) {
-  if (el) {
-    const anchor = document.createElement('a');
-    anchor.setAttribute(
-      'href',
-      'data:text/plain;charset=utf-8,' + encodeURIComponent(el.innerHTML)
-    );
-    anchor.setAttribute('download', 'output.txt');
+function downloadOutput(output: string) {
+  const anchor = document.createElement('a');
+  anchor.setAttribute(
+    'href',
+    `data:text/plain;charset=utf-8,${encodeURIComponent(output)}`
+  );
+  anchor.setAttribute('download', 'output.txt');
 
-    anchor.style.display = 'none';
-    document.body.appendChild(anchor);
-    anchor.click();
-    document.body.removeChild(anchor);
-  }
+  anchor.style.display = 'none';
+  document.body.appendChild(anchor);
+  anchor.click();
+  document.body.removeChild(anchor);
 }
 
 export const OutputTabComponent = (props: {
@@ -106,6 +105,9 @@ export const OutputTabComponent = (props: {
   );
   const contract = useSelector<AppState, ResultState['contract']>(
     state => state.result.contract
+  );
+  const command = useSelector<AppState, ResultState['command']>(
+    state => state.result.command
   );
 
   const loading = useSelector<AppState, LoadingState>(state => state.loading);
@@ -132,10 +134,14 @@ export const OutputTabComponent = (props: {
 
   return (
     <Container visible={props.selected}>
-      {output.length !== 0 && (
+      {!(
+        loading.loading ||
+        output.length === 0 ||
+        command !== Command.Compile
+      ) && (
         <OutputToolbarComponent
           onCopy={() => copyOutput(preRef.current)}
-          onDownload={() => downloadOutput(preRef.current)}
+          onDownload={() => downloadOutput(output)}
         ></OutputToolbarComponent>
       )}
       <Output id="output" ref={outputRef}>

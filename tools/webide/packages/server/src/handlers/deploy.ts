@@ -40,10 +40,12 @@ export async function deployHandler(req: Request, res: Response) {
         'json'
       );
 
-      const michelsonStorage = await new LigoCompiler().compileExpression(
+      const michelsonStorage = await new LigoCompiler().compileStorage(
         body.syntax,
-        body.storage,
-        'json'
+        body.code,
+        body.entrypoint,
+        'json',
+        body.storage
       );
 
       await Tezos.importKey(await fetchRandomPrivateKey());
