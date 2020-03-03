@@ -224,9 +224,10 @@ run-webide-unit-tests:
     - cd tools/webide/packages/server
     - npm ci
     - npm run test
-  only:
-    changes:
+  rules:
+    - changes:
       - tools/webide/**
+      when: always
 
 build-publish-ide-image:
   stage: build_and_deploy
@@ -246,7 +247,8 @@ build-publish-ide-image:
       .
     - docker push "${WEBIDE_IMAGE_NAME}:${CI_COMMIT_SHORT_SHA}"
   rules:
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - changes:
+      - tools/webide/**
       when: always
     - if: '$CI_COMMIT_REF_NAME == "dev"'
       when: always
@@ -260,7 +262,8 @@ run-webide-e2e-tests:
     - export WEBIDE_IMAGE="${WEBIDE_IMAGE_NAME}:${CI_COMMIT_SHORT_SHA}"
     - docker-compose run e2e
   rules:
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - changes:
+      - tools/webide/**
       when: always
     - if: '$CI_COMMIT_REF_NAME == "dev"'
       when: always
