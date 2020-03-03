@@ -92,7 +92,7 @@ let md_files = [
   "/gitlab-pages/docs/tutorials/get-started/tezos-taco-shop-payout.md";
   "/gitlab-pages/docs/intro/installation.md";
   "/gitlab-pages/docs/intro/editor-support.md";
-  "/gitlab-pages/docs/intro/what-and-why.md";
+  "/gitlab-pages/docs/intro/ligo-intro.md";
   "/gitlab-pages/docs/language-basics/math-numbers-tez.md";
   "/gitlab-pages/docs/language-basics/functions.md";
   "/gitlab-pages/docs/language-basics/boolean-if-else.md";

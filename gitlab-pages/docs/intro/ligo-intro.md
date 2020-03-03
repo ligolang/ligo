@@ -7,11 +7,10 @@ LIGO is a programming language for writing [Tezos](https://tezos.com/) smart con
 
 The LIGO philosophy can be described in a few bullet points:
 
-1. Design a clean, simple language with no extraneous parts or additions.
+1. Design a clean, simple language with no unnecessary parts.
 
-2. Give that language multiple syntaxes borrowed from other languages so users don't
-have to clutter their brain with Yet Another Notation for the same programming
-concepts we've been using since the 1980's.
+2. Give that language multiple syntaxes borrowed from other languages. Ideally
+LIGO requires the user to learn almost no new syntax.
 
 3. Have that simple language encourage people to write simple code, so that it's
 easy to formally verify the compiled output using a project like [Mi-Cho-Coq](https://gitlab.com/nomadic-labs/mi-cho-coq/).
@@ -19,35 +18,23 @@ easy to formally verify the compiled output using a project like [Mi-Cho-Coq](ht
 4. Stop waking up in the morning to find that your smart contract lost all its money
 to some [stupid exploit](https://www.wired.com/2016/06/50-million-hack-just-showed-dao-human/).
 
-Lets expand on each:
+The current trend in language design is more, more, more, so this might seem
+counterintuitive. However most useful smart contracts can express their core
+functionality in under a thousand lines of code. The problem domain
+necessitates that you get as close as possible to the minimal code size and
+resource use. LIGO is a functional language designed to include the features
+you need, while avoiding patterns that make formal verification hard.
 
-* **Clean and simple** — Programming languages for making video games or websites
-tend to prioritize accumulating a vast number of features, they're big languages for
-making big projects. You use an army of mediocre programmers to write thousands
-and thousands of lines of code, and then accelerate development by including dozens
-or hundreds of unvetted dependencies; each of which provides an opportunity to
-introduce a security exploit or insert malicious code. That's fine for a game, but
-we don't think that's a very intelligent way to write a smart contract. Most useful
-smart contracts can express their core functionality in under a thousand lines of
-code, and the problem domain necessitates that you get as close as possible to
-the minimal code size and resource use. LIGO is a functional language designed
-to include the features you need, avoiding patterns that make formal verification
-hard.
-
-* **Multiple Syntaxes** — LIGO provides three syntaxes for users which express the
-same underlying language semantics. PascaLIGO is an imperative syntax based on
-[Pascal](https://en.wikipedia.org/wiki/Pascal_%28programming_language%29), CameLIGO
-is a syntax which closely mimics the look and feel of [OCaml](https://en.wikipedia.org/wiki/OCaml),
-and ReasonLIGO is based on Facebook's JavaScript-flavored [ReasonML](https://reasonml.github.io/) syntax.
-
-* **Simple Code & Formal Verification** — LIGO doesn't use an object oriented paradigm,
-currently code is organized using functions. While LIGO plans to have a module system
-in the future, it's not the intent that this be used to create npm style cathedrals
-of logical mystery meat. Once a contract is put on the blockchain, it's not possible
-to change it. A new version can be uploaded, but the original contract remains
-available. This makes formal verification of contract logic attractive. When the
-cost of bugs is extreme and patches aren't possible it pays to get things right
-the first time.
+For example LIGO doesn't use an object oriented paradigm, currently code is
+organized using functions. While LIGO plans to have a module system in the
+future, we don't want programs to have thousands of dependencies. Once a
+contract is put on the blockchain, it's not possible to change it. A new
+version can be uploaded, but the original contract remains available. Contracts
+tend to control money. In that environment it's not responsible to encourage
+users to incorporate lots of code from strangers. The immutability of contracts
+make formal verification of contract logic attractive. The eventual goal is
+to make it easy to compile a LIGO contract to a format that can be loaded into
+the [Coq proof assistant](https://coq.inria.fr/).
 
 ## LIGO for Programming Smart Contracts on Tezos
 
