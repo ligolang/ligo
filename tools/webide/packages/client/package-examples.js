@@ -98,20 +98,27 @@ async function main() {
     throw error;
   });
 
-  const EXAMPLES_DEST_DIR = join(process.cwd(), 'build', 'static', 'examples');
-  const EXAMPLES_DIR = join(process.cwd(), 'examples');
-  const EXAMPLES_GLOB = '**/*.ligo';
-  const EXAMPLES_LIST_FILE = 'list';
+  const EXAMPLES_DIR = process.env['EXAMPLES_DIR'] || join(process.cwd(), '../../../../src/test/examples');
 
+  // const EXAMPLES_GLOB = '**/*.ligo';
+  // const files = await findFiles(EXAMPLES_GLOB, EXAMPLES_DIR);
+
+  const CURATED_EXAMPLES = [
+    'cameligo/arithmetic-contract.ligo',
+    'pascaligo/arithmetic-contract.ligo',
+    'reasonligo/arithmetic-contract.ligo'
+  ];
+
+  const EXAMPLES_DEST_DIR = join(process.cwd(), 'build', 'static', 'examples');
   fs.mkdirSync(EXAMPLES_DEST_DIR, { recursive: true });
 
-  const files = await findFiles(EXAMPLES_GLOB, EXAMPLES_DIR);
   const examples = await processExamples(
     EXAMPLES_DIR,
-    files,
+    CURATED_EXAMPLES,
     EXAMPLES_DEST_DIR
   );
 
+  const EXAMPLES_LIST_FILE = 'list';
   await writeFile(join(EXAMPLES_DEST_DIR, EXAMPLES_LIST_FILE), examples);
 }
 
