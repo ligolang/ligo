@@ -1,13 +1,7 @@
 (rule
-  (target generator_fstrings.py)
-  (deps generator.py)
-  (action (with-stdout-to generator_fstrings.py (run sh -c "if python3 -c 'f\"\"' 2>/dev/null; then :; else echo '# -*- coding: future_fstrings -*-'; fi; cat generator.py")))
-)
-
-(rule
   (target generated_fold.ml)
-  (deps generator_fstrings.py)
-  (action (with-stdout-to generated_fold.ml (run python3 ./generator_fstrings.py)))
+  (deps generator.raku)
+  (action (with-stdout-to generated_fold.ml (run perl6 ./generator.raku amodule.ml)))
   (mode (promote (until-clean)))
 )
 ; (library
