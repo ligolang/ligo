@@ -698,21 +698,16 @@ and type_expression' : environment -> ?tv_opt:O.type_expression -> I.expression 
                         location = _ }) as _lambda ;
                     init_record ;
                 ]} -> 
-      Format.printf "typing foldwhile \n %!";
       let%bind v_initr = type_expression' e init_record in
       let tv_out = get_type_expression v_initr in
       let input_type  = tv_out in
       let e' = Environment.add_ez_binder lname input_type e in
-      Format.printf "typing foldwhile %a\n %a\n %!" Ast_typed.PP.type_expression tv_out I.PP.expression result;
       let%bind body = type_expression' e' result in
-      Format.printf "typing foldwhile %a\n %!" O.PP.expression body;
       let output_type = body.type_expression in
       let lambda' = make_a_e (E_lambda {binder = lname ; result=body}) (t_function input_type output_type ()) e' in
       let lst' = [lambda';v_initr] in
       let tv_lst = List.map get_type_expression lst' in
-      Format.printf "Typing constant : %a \n%!" (Ast_typed.PP.list_sep_d Ast_typed.PP.type_expression) tv_lst;
       let%bind (opname',tv) = type_constant opname tv_lst tv_opt in
-      Format.printf "Typed constant : %a \n%!" O.PP.type_expression tv;
       return (E_constant {cons_name=opname';arguments=lst'}) tv
   | E_constant {cons_name=C_CREATE_CONTRACT as cons_name;arguments} ->
       let%bind lst' = bind_list @@ List.map (type_expression' e) arguments in
