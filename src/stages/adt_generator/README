@@ -4,4 +4,4 @@ Build & test with:
 
 Run with
 
-    python3 ./generator.py
+    perl6 ./generator.raku amodule.ml

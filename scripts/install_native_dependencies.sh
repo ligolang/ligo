@@ -7,8 +7,7 @@ if [ $ID = arch ]
 then
     pacman -Sy
     sudo pacman -S --noconfirm \
-        python \
-        python-pip \
+        rakudo \
         libevdev \
         perl \
         pkg-config \
@@ -23,8 +22,7 @@ then
 else
     apt-get update -qq
     apt-get -y -qq install \
-        python3 \
-        python3-pip \
+        perl6 \
         libev-dev \
         perl \
         pkg-config \
@@ -36,5 +34,3 @@ else
         rsync \
         git
 fi
-
-pip3 install future-fstrings

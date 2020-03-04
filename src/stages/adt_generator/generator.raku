@@ -1,7 +1,6 @@
 #!/usr/bin/env perl6
-use strict;
-use v6;
 use v6.c;
+use strict;
 use worries;
 
 my $moduleName = @*ARGS[0].subst(/\.ml$/, '').samecase("A_");

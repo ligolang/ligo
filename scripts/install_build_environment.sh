@@ -22,8 +22,7 @@ echo "Installing dependencies.."
 if [ -n "`uname -a | grep -i arch`" ]
 then
     sudo pacman -Sy --noconfirm \
-        python \
-        python-pip \
+        rakudo \
         make \
         m4 \
         gcc \
@@ -36,8 +35,7 @@ fi
 if [ -n "`uname -a | grep -i ubuntu`" ]
 then
 sudo apt-get install -y make \
-     python3 \
-     python3-pip \
+     perl6 \
      make \
      m4 \
      gcc \
@@ -46,8 +44,6 @@ sudo apt-get install -y make \
      rsync \
      curl
 fi
-
-pip3 install future-fstrings
 
 if [ -n "`uname -a | grep -i ubuntu`" ]
 then
