@@ -35,7 +35,7 @@ dont-merge-to-master:
 
 .website_build: &website_build
   stage: build_and_deploy
-  image: node:8
+  image: node:12-alpine
   dependencies:
     - build-and-package-debian-9
     - build-and-package-debian-10
@@ -66,13 +66,11 @@ dont-merge-to-master:
     - cd gitlab-pages/website
     - npm install
   script:
-    - npm run version next
     - npm run build
     # move internal odoc documentation to the website folder
-    - mkdir -p build/ligo/
-    - mv ../../_build/default/_doc/_html/ build/ligo/odoc
+    - mv ../../_build/default/_doc/_html/ build/odoc
   after_script:
-    - cp -r gitlab-pages/website/build/ligo public
+    - cp -r gitlab-pages/website/build public
   artifacts:
     paths:
       - public
