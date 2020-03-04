@@ -24,23 +24,21 @@ type 'a sequence_or_record =
 
 let (<@) f g x = f (g x)
 
-(**
-  Covert nsepseq to a chain of TFun's.
+(*
+  Convert a nsepseq to a chain of TFun's.
 
   Necessary to handle cases like:
-  `type foo = (int, int) => int;`
+  [type foo = (int, int) => int;]
 *)
-let rec nsepseq_to_curry hd rest =
-  match hd, rest with
-  | hd, (sep, item) :: rest ->
-    let start = type_expr_to_region hd in
-    let stop = nsepseq_to_region type_expr_to_region (hd, rest) in
-    let region = cover start stop in
-    TFun {
-      value = hd, sep, (nsepseq_to_curry item rest);
-      region
-    }
-  | hd, [] -> hd
+
+let rec curry hd = function
+  (sep, item)::rest ->
+    let stop   = nsepseq_to_region type_expr_to_region (hd, rest)
+    and start  = type_expr_to_region hd in
+    let region = cover start stop
+    and value  = hd, sep, curry item rest
+    in TFun {value; region}
+| [] -> hd
 
 (* END HEADER *)
 %}
@@ -58,6 +56,7 @@ let rec nsepseq_to_curry hd rest =
    can be reduced to [expr -> Ident], but also to
    [field_assignment -> Ident].
 *)
+
 %nonassoc Ident
 %nonassoc COLON
 
@@ -175,42 +174,32 @@ type_decl:
     in {region; value} }
 
 type_expr:
-  cartesian | sum_type | record_type { $1 }
+  fun_type | sum_type | record_type { $1 }
 
-type_expr_func:
-  "=>" cartesian {
-    $1, $2
+fun_type:
+  type_name "=>" fun_type {
+    let region = cover $1.region (type_expr_to_region $3)
+    in TFun {region; value = TVar $1, $2, $3}
   }
+| "(" fun_type ")" "=>" fun_type {
+    let region = cover $1 (type_expr_to_region $5)
+    in TFun {region; value = $2,$4,$5}
+  }
+| "(" tuple(fun_type) ")" "=>" fun_type {
+    let hd, rest = $2 in curry hd (rest @ [($4,$5)])
+  }
+| "(" tuple(fun_type) ")" {
+    TProd {region = cover $1 $3; value = $2}
+  }
+| core_type { $1 }
 
-cartesian:
-  core_type { $1 }
-| type_name type_expr_func {
-  let (arrow, c) = $2 in
-  let value = TVar $1, arrow, c in
-  let region = cover $1.region (type_expr_to_region c) in
-  TFun { region; value }
-}
-| "(" cartesian ")" type_expr_func {
-  let (arrow, c) = $4 in
-  let value = $2, arrow, c in
-  let region = cover $1 (type_expr_to_region c) in
-  TFun { region; value }
-}
-| "(" cartesian "," nsepseq(cartesian,",") ")" type_expr_func? {
-    match $6 with
-    | Some (arrow, c) ->
-      let (hd, rest) = Utils.nsepseq_cons $2 $3 $4 in
-      let rest = rest @ [(arrow, c)] in
-      nsepseq_to_curry hd rest
-    | None ->
-      let value  = Utils.nsepseq_cons $2 $3 $4 in
-      let region = cover $1 $5 in
-      TProd {region; value}
-  }
+type_args:
+  tuple(fun_type) {     $1 }
+| fun_type        { $1, [] }
 
 core_type:
   type_name      { TVar $1 }
-| par(cartesian) { TPar $1 }
+| par(fun_type)  { TPar $1 }
 | module_name "." type_name {
     let module_name = $1.value in
     let type_name   = $3.value in
@@ -218,12 +207,9 @@ core_type:
     let region      = cover $1.region $3.region
     in TVar {region; value}
   }
-| type_name par(nsepseq(core_type,",") { $1 }) {
-   let constr, arg = $1, $2 in
-   let start       = constr.region
-   and stop        = arg.region in
-   let region      = cover start stop
-   in TApp {region; value = constr,arg} }
+| type_name par(type_args) {
+   let region = cover $1.region $2.region
+   in TApp {region; value = $1,$2} }
 
 sum_type:
   ioption("|") nsepseq(variant,"|") {
@@ -233,7 +219,7 @@ sum_type:
 
 variant:
   "<constr>" { {$1 with value={constr=$1; arg=None}} }
-| "<constr>" "(" cartesian ")" {
+| "<constr>" "(" fun_type ")" {
     let region = cover $1.region $4
     and value  = {constr=$1; arg = Some (ghost,$3)}
     in {region; value} }
@@ -272,9 +258,6 @@ let_declaration:
     let stop       = expr_to_region binding.let_rhs in
     let region     = cover $2 stop
     in {region; value} }
-
-es6_func:
-  "=>" expr { $1,$2 }
 
 let_binding:
   "<ident>" type_annotation? "=" expr {
@@ -451,13 +434,12 @@ type_expr_simple:
 type_annotation_simple:
   ":" type_expr_simple { $1,$2 }
 
-
 fun_expr:
-  disj_expr_level es6_func {
-    let arrow, body = $2 in
-    let kwd_fun     = ghost in
-    let start       = expr_to_region $1 in
-    let stop        = expr_to_region body in
+  disj_expr_level "=>" expr {
+    let arrow, body = $2, $3
+    and kwd_fun     = ghost in
+    let start       = expr_to_region $1
+    and stop        = expr_to_region body in
     let region      = cover start stop in
 
     let rec arg_to_pattern = function
@@ -524,8 +506,8 @@ fun_expr:
           match type_expr with
           | TProd {value; _} ->
             let (hd, rest) = value in
-            let rest = rest @ [(arrow, expr_to_type body)] in
-            nsepseq_to_curry hd rest
+            let rest = rest @ [(arrow, expr_to_type body)]
+            in curry hd rest
           | e ->
             TFun {
               value = e, arrow, expr_to_type body;
