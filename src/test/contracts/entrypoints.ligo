@@ -4,11 +4,7 @@ type return is list (operation) * storage
 
 function cb (const a : address; const s : storage) : return is
   block {
-    const c : contract (unit) =
-      case (Tezos.get_entrypoint_opt ("%cb", a) : option (contract (unit))) of
-        Some (contract) -> contract
-      | None -> (failwith ("cb: Entrypoint not found.") : contract (unit))
-      end
+    const c : contract (unit) = get_entrypoint ("%cb", a)
   } with (list [Tezos.transaction (unit, 0tez, c)], s)
 
 
