@@ -35,7 +35,7 @@ dont-merge-to-master:
 
 .website_build: &website_build
   stage: build_and_deploy
-  image: node:12-alpine
+  image: node:12
   dependencies:
     - build-and-package-debian-9
     - build-and-package-debian-10
