@@ -309,3 +309,86 @@ and fold_map_cases : 'a fold_mapper -> 'a -> matching_expr -> ('a * matching_exp
       let%bind (init,lst') = bind_fold_map_list aux init lst in
       ok @@ (init, Match_variant (lst', te))
     )  
+
+and fold_map_program : 'a fold_mapper -> 'a -> program -> ('a * program) result = fun m init p ->
+  let aux = fun (acc,acc_prg) (x : declaration Location.wrap) ->
+    match Location.unwrap x with
+    | Declaration_constant (v , e , i, env) -> (
+        let%bind (acc',e') = fold_map_expression m acc e in
+        let wrap_content = Declaration_constant (v , e' , i, env) in
+        ok (acc', List.append acc_prg [{x with wrap_content}])
+      )
+  in
+  bind_fold_list aux (init,[]) p
+
+module Errors = struct
+  let bad_contract_io entrypoint e () =
+    let title = thunk "badly typed contract" in
+    let message () = Format.asprintf "unexpected entrypoint type" in
+    let data = [
+      ("location" , fun () -> Format.asprintf "%a" Location.pp e.location);
+      ("entrypoint" , fun () -> entrypoint);
+      ("entrypoint_type" , fun () -> Format.asprintf "%a" Ast_typed.PP.type_expression e.type_expression)
+    ] in
+    error ~data title message ()
+
+  let expected_list_operation entrypoint got e () =
+    let title = thunk "bad return type" in
+    let message () = Format.asprintf "expected %a, got %a"
+      Ast_typed.PP.type_expression {got with type_content= T_operator (TC_list {got with type_content=T_constant TC_operation})}
+      Ast_typed.PP.type_expression got
+    in
+    let data = [
+      ("location" , fun () -> Format.asprintf "%a" Location.pp e.location);
+      ("entrypoint" , fun () -> entrypoint)
+    ] in
+    error ~data title message ()
+
+  let expected_same entrypoint t1 t2 e () =
+    let title = thunk "badly typed contract" in
+    let message () = Format.asprintf "expected {%a} and {%a} to be the same in the entrypoint type"
+      Ast_typed.PP.type_expression t1
+      Ast_typed.PP.type_expression t2
+    in
+    let data = [
+      ("location" , fun () -> Format.asprintf "%a" Location.pp e.location);
+      ("entrypoint" , fun () -> entrypoint);
+      ("entrypoint_type" , fun () -> Format.asprintf "%a" Ast_typed.PP.type_expression e.type_expression)
+    ] in
+    error ~data title message ()
+  
+end
+
+type contract_type = {
+  parameter : Ast_typed.type_expression ;
+  storage : Ast_typed.type_expression ;
+}
+
+let fetch_contract_type : string -> program -> contract_type result = fun main_fname program ->
+  let main_decl = List.rev @@ List.filter
+    (fun declt ->
+      let (Declaration_constant (v , _ , _ , _)) = Location.unwrap declt in
+      String.equal (Var.to_name v) main_fname
+    )
+    program
+  in
+  match main_decl with
+  | (hd::_) -> (
+    let (Declaration_constant (_,e,_,_)) = Location.unwrap hd in
+    match e.type_expression.type_content with
+    | T_arrow {type1 ; type2} -> (
+      match type1.type_content , type2.type_content with
+      | T_record tin , T_record tout when (is_tuple_lmap tin) && (is_tuple_lmap tout) ->
+        let%bind (parameter,storage) = Stage_common.Helpers.get_pair tin in
+        let%bind (listop,storage') = Stage_common.Helpers.get_pair tout in
+        let%bind () = trace_strong (Errors.expected_list_operation main_fname listop e) @@
+          Ast_typed.assert_t_list_operation listop in
+        let%bind () = trace_strong (Errors.expected_same main_fname storage storage' e) @@
+          Ast_typed.assert_type_expression_eq (storage,storage') in
+        (* TODO: on storage/parameter : assert_storable, assert_passable ? *)
+        ok { parameter ; storage }
+      |  _ -> fail @@ Errors.bad_contract_io main_fname e
+      )
+    | _ -> fail @@ Errors.bad_contract_io main_fname e
+  )
+  | [] -> simple_fail ("Entrypoint '"^main_fname^"' does not exist")

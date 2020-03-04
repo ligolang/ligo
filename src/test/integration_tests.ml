@@ -5,18 +5,18 @@ open Ast_simplified.Combinators
 
 let retype_file f =
   let%bind simplified  = Ligo.Compile.Of_source.compile f (Syntax_name "reasonligo") in
-  let%bind typed,state = Ligo.Compile.Of_simplified.compile simplified in
+  let%bind typed,state = Ligo.Compile.Of_simplified.compile Env simplified in
   let () = Typer.Solver.discard_state state in
   let () = Typer.Solver.discard_state state in
   ok typed
 let mtype_file f =
   let%bind simplified  = Ligo.Compile.Of_source.compile f (Syntax_name "cameligo") in
-  let%bind typed,state = Ligo.Compile.Of_simplified.compile simplified in
+  let%bind typed,state = Ligo.Compile.Of_simplified.compile Env simplified in
   let () = Typer.Solver.discard_state state in
   ok typed
 let type_file f =
   let%bind simplified  = Ligo.Compile.Of_source.compile f (Syntax_name "pascaligo") in
-  let%bind typed,state = Ligo.Compile.Of_simplified.compile simplified in
+  let%bind typed,state = Ligo.Compile.Of_simplified.compile Env simplified in
   let () = Typer.Solver.discard_state state in
   ok typed
 

@@ -16,3 +16,6 @@ val bind_map_cmap :
   'a Types.constructor_map ->
   ('b Types.constructor_map * 'c list, 'd) result
 val is_tuple_lmap : 'a Types.label_map -> bool
+val get_pair :
+           'a Types.label_map ->
+           (('a * 'a) * 'b list, unit -> Trace.error) result

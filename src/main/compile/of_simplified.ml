@@ -1,9 +1,15 @@
 open Trace
 
-let compile (program : Ast_simplified.program) : (Ast_typed.program * Typer.Solver.state) result =
+type form = 
+  | Contract of string
+  | Env
+
+let compile (cform: form) (program : Ast_simplified.program) : (Ast_typed.program * Typer.Solver.state) result =
   let%bind (prog_typed , state) = Typer.type_program program in
   let () = Typer.Solver.discard_state state in
-  let%bind prog_typed' = Self_ast_typed.all_program prog_typed in
+  let%bind prog_typed' = match cform with
+    | Contract entrypoint -> Self_ast_typed.all_contract entrypoint prog_typed
+    | Env -> ok prog_typed in
   ok @@ (prog_typed', state)
 
 let compile_expression ?(env = Ast_typed.Environment.full_empty) ~(state : Typer.Solver.state) (ae : Ast_simplified.expression)
