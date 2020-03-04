@@ -3,13 +3,16 @@ id: current-reference
 title: Tezos - Things relating to the current execution context
 ---
 
+import Syntax from '@theme/Syntax';
+
 # Tezos.balance
 
 Get the balance for the contract.
 
-<!--DOCUSAURUS_CODE_TABS-->
 
-<!--PascaLIGO-->
+
+<Syntax syntax="pascaligo">
+
 ```pascaligo
 function main (const p : unit; const s: tez) : list (operation) * tez is
   ((nil : list (operation)), Tezos.balance)
@@ -17,14 +20,18 @@ function main (const p : unit; const s: tez) : list (operation) * tez is
 
 > Note that `balance` and `Current.balance` are *deprecated*.
 
-<!--CameLIGO-->
+</Syntax>
+<Syntax syntax="cameligo">
+
 ```cameligo
 let main (p,s : unit * tez) = ([] : operation list), Tezos.balance
 ```
 
 > Note that `balance` and `Current.balance` are *deprecated*.
 
-<!--ReasonLIGO-->
+</Syntax>
+<Syntax syntax="reasonligo">
+
 ```reasonligo
 let main = ((p,s) : (unit, tez)) =>
   ([]: list (operation), Tezos.balance);
@@ -32,7 +39,8 @@ let main = ((p,s) : (unit, tez)) =>
 
 > Note that `balance` and `Current.balance` are *deprecated*.
 
-<!--END_DOCUSAURUS_CODE_TABS-->
+</Syntax>
+
 
 ## Tezos.now
 
@@ -45,8 +53,9 @@ smart contracts like this:
 ### Examples
 
 #### 24 hours from now
-<!--DOCUSAURUS_CODE_TABS-->
-<!--Pascaligo-->
+
+<Syntax syntax="pascaligo">
+
 ```pascaligo group=b
 const today: timestamp = Tezos.now;
 const one_day: int = 86_400;
@@ -57,7 +66,9 @@ const one_day_later: timestamp = some_date + one_day;
 
 > Note that `now` is *deprecated*.
 
-<!--CameLIGO-->
+</Syntax>
+<Syntax syntax="cameligo">
+
 ```cameligo group=b
 let today: timestamp = Tezos.now
 let one_day: int = 86_400
@@ -68,7 +79,9 @@ let one_day_later: timestamp = some_date + one_day
 
 > Note that `Current.time` is *deprecated*.
 
-<!--ReasonLIGO-->
+</Syntax>
+<Syntax syntax="reasonligo">
+
 ```reasonligo group=b
 let today: timestamp = Tezos.now;
 let one_day: int = 86_400;
@@ -79,12 +92,14 @@ let one_day_later: timestamp = some_date + one_day;
 
 > Note that `Current.time` is *deprecated*.
 
-<!--END_DOCUSAURUS_CODE_TABS-->
+</Syntax>
+
 
 #### 24 hours ago
 
-<!--DOCUSAURUS_CODE_TABS-->
-<!--Pascaligo-->
+
+<Syntax syntax="pascaligo">
+
 ```pascaligo group=c
 const today: timestamp = Tezos.now;
 const one_day: int = 86_400;
@@ -93,7 +108,9 @@ const in_24_hrs: timestamp = today - one_day;
 
 > Note that `now` is *deprecated*.
 
-<!--CameLIGO-->
+</Syntax>
+<Syntax syntax="cameligo">
+
 ```cameligo group=c
 let today: timestamp = Tezos.now
 let one_day: int = 86_400
@@ -102,7 +119,9 @@ let in_24_hrs: timestamp = today - one_day
 
 > Note that `Current.time` is *deprecated*.
 
-<!--ReasonLIGO-->
+</Syntax>
+<Syntax syntax="reasonligo">
+
 ```reasonligo group=c
 let today: timestamp = Tezos.now;
 let one_day: int = 86_400;
@@ -111,36 +130,43 @@ let in_24_hrs: timestamp = today - one_day;
 
 > Note that `Current.time` is *deprecated*.
 
-<!--END_DOCUSAURUS_CODE_TABS-->
+</Syntax>
+
 
 #### Comparing Timestamps
 
 You can also compare timestamps using the same comparison operators as
 for numbers
 
-<!--DOCUSAURUS_CODE_TABS-->
-<!--Pascaligo-->
+
+<Syntax syntax="pascaligo">
+
 ```pascaligo group=c
 const not_tommorow: bool = (Tezos.now = in_24_hrs)
 ```
 
 > Note that `now` is *deprecated*.
 
-<!--CameLIGO-->
+</Syntax>
+<Syntax syntax="cameligo">
+
 ```cameligo group=c
 let not_tomorrow: bool = (Tezos.now = in_24_hrs)
 ```
 
 > Note that `Current.time` is *deprecated*.
 
-<!--ReasonLIGO-->
+</Syntax>
+<Syntax syntax="reasonligo">
+
 ```reasonligo group=c
 let not_tomorrow: bool = (Tezos.now == in_24_hrs);
 ```
 
 > Note that `Current.time` is *deprecated*.
 
-<!--END_DOCUSAURUS_CODE_TABS-->
+</Syntax>
+
 
 
 ## Amount
@@ -148,9 +174,10 @@ let not_tomorrow: bool = (Tezos.now == in_24_hrs);
 Get the amount of tez provided by the sender to complete this
 transaction.
 
-<!--DOCUSAURUS_CODE_TABS-->
 
-<!--PascaLIGO-->
+
+<Syntax syntax="pascaligo">
+
 ```pascaligo
 function threshold (const p : unit) : int is
   if Tezos.amount = 100tz then 42 else 0
@@ -158,14 +185,18 @@ function threshold (const p : unit) : int is
 
 > Note that `amount` is *deprecated*.
 
-<!--CameLIGO-->
+</Syntax>
+<Syntax syntax="cameligo">
+
 ```cameligo
 let threshold (p : unit) : int = if Tezos.amount = 100tz then 42 else 0
 ```
 
 > Note that `Current.amount` is *deprecated*.
 
-<!--ReasonLIGO-->
+</Syntax>
+<Syntax syntax="reasonligo">
+
 ```reasonligo
 let threshold = (p : unit) : int =>
   if (Tezos.amount == 100tz) { 42; } else { 0; };
@@ -173,45 +204,53 @@ let threshold = (p : unit) : int =>
 
 > Note that `Current.amount` is *deprecated*.
 
-<!--END_DOCUSAURUS_CODE_TABS-->
+</Syntax>
+
 
 ## Sender
 
 Get the address that initiated the current transaction.
 
-<!--DOCUSAURUS_CODE_TABS-->
 
-<!--PascaLIGO-->
+
+<Syntax syntax="pascaligo">
+
 ```pascaligo
 function main (const p : unit) : address is Tezos.sender
 ```
 
 > Note that `sender` is *deprecated*.
 
-<!--CameLIGO-->
+</Syntax>
+<Syntax syntax="cameligo">
+
 ```cameligo
 let main (p: unit) : address = Tezos.sender
 ```
 
 > Note that `Current.sender` is *deprecated*.
 
-<!--ReasonLIGO-->
+</Syntax>
+<Syntax syntax="reasonligo">
+
 ```reasonligo
 let main = (p : unit) : address => Tezos.sender;
 ```
 
 > Note that `Current.sender` is *deprecated*.
 
-<!--END_DOCUSAURUS_CODE_TABS-->
+</Syntax>
+
 
 
 ## Address
 
 Get the address associated with a value of type `contract`.
 
-<!--DOCUSAURUS_CODE_TABS-->
 
-<!--PascaLIGO-->
+
+<Syntax syntax="pascaligo">
+
 ```pascaligo
 function main (const p : key_hash) : address is block {
   const c : contract (unit) = Tezos.implicit_account (p)
@@ -220,7 +259,9 @@ function main (const p : key_hash) : address is block {
 
 > Note that `implicit_account` and `address` are *deprecated*.
 
-<!--CameLIGO-->
+</Syntax>
+<Syntax syntax="cameligo">
+
 ```cameligo
 let main (p : key_hash) =
   let c : unit contract = Tezos.implicit_account p
@@ -230,7 +271,9 @@ let main (p : key_hash) =
 > Note that `Current.implicit_account` and `Current.address` are
 > *deprecated*.
 
-<!--ReasonLIGO-->
+</Syntax>
+<Syntax syntax="reasonligo">
+
 ```reasonligo
 let main = (p : key_hash) : address => {
   let c : contract (unit) = Tezos.implicit_account (p);
@@ -241,36 +284,43 @@ let main = (p : key_hash) : address => {
 > Note that `Current.implicit_account` and `Current.address` are
 > *deprecated*.
 
-<!--END_DOCUSAURUS_CODE_TABS-->
+</Syntax>
+
 
 ## Self Address
 
 Get the address of the currently running contract.
 
-<!--DOCUSAURUS_CODE_TABS-->
 
-<!--PascaLIGO-->
+
+<Syntax syntax="pascaligo">
+
 ```pascaligo
 function main (const p : unit) : address is Tezos.self_address
 ```
 
 > Note that `self_address` is *deprecated*.
 
-<!--CameLIGO-->
+</Syntax>
+<Syntax syntax="cameligo">
+
 ```cameligo
 let main (p : unit) : address = Tezos.self_address
 ```
 
 > Note that `Current.self_address` is *deprecated*.
 
-<!--ReasonLIGO-->
+</Syntax>
+<Syntax syntax="reasonligo">
+
 ```reasonligo
 let main = (p : unit) : address => Tezos.self_address;
 ```
 
 > Note that `Current.self_address` is *deprecated*.
 
-<!--END_DOCUSAURUS_CODE_TABS-->
+</Syntax>
+
 
 ## Implicit Account
 
@@ -278,9 +328,10 @@ Get the default contract associated with an on-chain key-pair. This
 contract does not execute code, instead it exists to receive tokens on
 behalf of a key's owner.
 
-<!--DOCUSAURUS_CODE_TABS-->
 
-<!--PascaLIGO-->
+
+<Syntax syntax="pascaligo">
+
 ```pascaligo
 function main (const kh: key_hash) : contract (unit) is
   Tezos.implicit_account (kh)
@@ -288,14 +339,18 @@ function main (const kh: key_hash) : contract (unit) is
 
 > Note that `implicit_account` is *deprecated*.
 
-<!--CameLIGO-->
+</Syntax>
+<Syntax syntax="cameligo">
+
 ```cameligo
 let main (kh : key_hash) : unit contract = Tezos.implicit_account kh
 ```
 
 > Note that `Current.implicit_account` is *deprecated*.
 
-<!--ReasonLIGO-->
+</Syntax>
+<Syntax syntax="reasonligo">
+
 ```reasonligo
 let main = (kh : key_hash): contract (unit) =>
   Tezos.implicit_account (kh);
@@ -303,7 +358,8 @@ let main = (kh : key_hash): contract (unit) =>
 
 > Note that `Current.implicit_account` is *deprecated*.
 
-<!--END_DOCUSAURUS_CODE_TABS-->
+</Syntax>
+
 
 ## Source
 
@@ -331,29 +387,36 @@ current transaction.
 >    tezos-client to transfer to whatever KT1 delegates they had, even
 >    if those KT1 were malicious scripts.
 
-<!--DOCUSAURUS_CODE_TABS-->
 
-<!--PascaLIGO-->
+
+<Syntax syntax="pascaligo">
+
 ```pascaligo
 function main (const p: unit) : address is Tezos.source
 ```
 
 > Note that `source` is *deprecated*.
 
-<!--CameLIGO-->
+</Syntax>
+<Syntax syntax="cameligo">
+
 ```cameligo
 let main (p : unit) : address = Tezos.source
 ```
 
 > Note that `Current.source` is *deprecated*.
 
-<!--ReasonLIGO-->
+</Syntax>
+<Syntax syntax="reasonligo">
+
 ```reasonligo
 let main = (p : unit) : address => Tezos.source;
 ```
 
 > Note that `Current.source` is *deprecated*.
-<!--END_DOCUSAURUS_CODE_TABS-->
+
+</Syntax>
+
 
 ## Failwith
 
@@ -362,9 +425,10 @@ Cause the contract to fail with an error message.
 > ⚠ Using this currently requires in general a type annotation on the
 > `failwith` call.
 
-<!--DOCUSAURUS_CODE_TABS-->
 
-<!--PascaLIGO-->
+
+<Syntax syntax="pascaligo">
+
 ```pascaligo
 function main (const p : int; const s : unit) : list (operation) * unit is
   block {
@@ -373,15 +437,20 @@ function main (const p : int; const s : unit) : list (operation) * unit is
   with ((nil : list (operation)), s)
 ```
 
-<!--CameLIGO-->
+</Syntax>
+<Syntax syntax="cameligo">
+
 ```cameligo
 let main (p,s : int * unit) = if p > 10 then failwith "Failure."
 ```
 
-<!--ReasonLIGO-->
+</Syntax>
+<Syntax syntax="reasonligo">
+
 ```reasonligo
 let main = ((p,s) : (int, unit)) =>
   if (p > 10) { failwith ("Failure."); };
 ```
 
-<!--END_DOCUSAURUS_CODE_TABS-->
+</Syntax>
+

@@ -8,15 +8,16 @@ services:
       - 35729:35729
     volumes:
       - ./docs:/app/docs
-      - ./website/blog:/app/website/blog
+      # - ./website/blog:/app/website/blog
       - ./website/core:/app/website/core
-      - ./website/i18n:/app/website/i18n
-      - ./website/pages:/app/website/pages
+      # - ./website/i18n:/app/website/i18n
+      - ./website/src:/app/website/src
       - ./website/static:/app/website/static
-      - ./website/versioned_sidebars:/app/website/versioned_sidebars
-      - ./website/versioned_docs:/app/website/versioned_docs
+      # - ./website/versioned_sidebars:/app/website/versioned_sidebars
+      # - ./website/versioned_docs:/app/website/versioned_docs
       - ./website/sidebars.json:/app/website/sidebars.json
-      - ./website/siteConfig.js:/app/website/siteConfig.js
+      - ./website/docusaurus.config.js:/app/website/docusaurus.config.js
       - ./website/versions.json:/app/website/versions.json
-      - ./website/node_modules/reason-highlightjs:/app/website/node_modules/reason-highlightjs
+      # - ./website/core/AlgoliaSearch.js:/app/website/core/AlgoliaSearch.js
+      
     working_dir: /app/website

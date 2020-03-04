@@ -15,7 +15,7 @@ people have spent at his shop when buying tacos.
 <br/>
 <img src="/img/tutorials/get-started/tezos-taco-shop-payout/get-money.svg" width="50%" />
 
-<div style="opacity: 0.7; text-align: center; font-size: 10px;">
+<div style={{ opacity: 0.7, textAlign: 'center', fontSize: '10px' }}>
 <div>Icons made by <a href="https://www.flaticon.com/authors/smashicons" title="Smashicons">Smashicons</a> from <a href="https://www.flaticon.com/"                 title="Flaticon">www.flaticon.com</a> is licensed by <a href="http://creativecommons.org/licenses/by/3.0/"                 title="Creative Commons BY 3.0" target="_blank">CC 3.0 BY</a></div>
 </div>
 
@@ -23,6 +23,7 @@ people have spent at his shop when buying tacos.
 ## Analyzing the Current Contract
 
 ### **`taco-shop.ligo`**
+
 ```pascaligo group=a
 type taco_supply is record [
   current_stock : nat;
@@ -128,6 +129,7 @@ const operations : list (operation) = list [payoutOperation];
 ## Finalizing the Contract
 
 ### **`taco-shop.ligo`**
+
 ```pascaligo group=b
 type taco_supply is record [
   current_stock : nat;
@@ -190,7 +192,7 @@ ligo dry-run taco-shop.ligo --syntax pascaligo --amount 1 buy_taco 1n "map [
 ```
 
 <img src="/img/tutorials/get-started/tezos-taco-shop-payout/dry-run-1.png" />
-<div style="opacity: 0.7; text-align: center; font-size: 12px; margin-top:-24px;">
+<div style={{ opacity: 0.7, textAlign: 'center', fontSize: '12px', marginTop: '-24px' }}>
 <b>Operation(...bytes)</b> included in the output
 </div>
 
