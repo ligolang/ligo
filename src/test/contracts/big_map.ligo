@@ -8,7 +8,7 @@ function main (const p : parameter; const s : storage) : return is
     toto := s.0[23];
     s.0[2] := 444
   }
-  with ((nil: list(operation)), s)
+  with ((nil : list (operation)), s)
 
 type foo is big_map (int, int)
 
@@ -16,13 +16,11 @@ function set_ (var n : int; var m : foo) : foo is block {
   m[23] := n
 } with m
 
-function add (var n : int ; var m : foo) : foo is set_(n,m)
+function add (var n : int ; var m : foo) : foo is set_ (n,m)
 
 function rm (var m : foo) : foo is block {
   remove 42 from map m
 } with m
-
-function gf (const m : foo) : int is get_force (23, m)
 
 function get (const m : foo) : option (int) is m[42]
 

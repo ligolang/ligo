@@ -1,22 +1,19 @@
 /* Test set operations in ReasonLIGO */
 
-let literal_op = (p: unit) : set(string) => Set.literal(["foo", "bar", "foobar"]);
+let literal_op = (p: unit) : set (string) =>
+  Set.literal (["foo", "bar", "foobar"]);
 
-let add_op = (s: set(string)): set(string) => Set.add("foobar", s);
+let add_op = (s: set (string)) : set (string) =>
+  Set.add ("foobar", s);
 
-let remove_op = (s: set(string)): set(string) => Set.remove("foobar", s);
+let remove_op = (s: set (string)) : set(string) =>
+  Set.remove ("foobar", s);
 
-let remove_deep = (s: (set(string), nat)): (set(string), nat) =>
-  Set.remove("foobar", s[0]);
+let remove_deep = (s: (set (string), nat)): (set (string), nat) =>
+  Set.remove ("foobar", s[0]);
 
-/*
- let patch_op (s: string set) : string set =
-   begin patch s with set ["foobar"]; end with s
+let mem_op = (s: set (string)) : bool =>
+  Set.mem ("foobar", s);
 
- let patch_op_deep (s: string set * nat) : string set * nat =
-   begin patch s[0] with set ["foobar"]; end with s
- */
-
-let mem_op = (s: set(string)): bool => Set.mem("foobar", s);
-
-let size_op = (s: set(string)): nat => Set.size(s);
+let size_op = (s: set (string)): nat =>
+  Set.cardinal (s);

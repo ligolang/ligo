@@ -1,1 +1,1 @@
-let main (p: unit) : address = Current.self_address 
+let main (p : unit) : address = Tezos.self_address

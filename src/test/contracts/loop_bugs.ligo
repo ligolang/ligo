@@ -1,6 +1,6 @@
 function shadowing_in_body (var nee : unit) : string is block {
   var st : string := "";
-  var list1 : list(string) := list "to"; "to" end;
+  var list1 : list (string) := list ["to"; "to"];
   for x in list list1 block {
     const x : string = "ta";
     st := st ^ x;
@@ -10,7 +10,7 @@ function shadowing_in_body (var nee : unit) : string is block {
 
 function shadowing_assigned_in_body (var nee : unit) : string is block {
   var st : string := "";
-  var list1 : list(string) := list "to"; "to" end;
+  var list1 : list (string) := list ["to"; "to"];
   for x in list list1 block {
     st := st ^ x;
     var st : string := "ta";
