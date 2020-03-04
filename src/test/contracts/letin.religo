@@ -1,9 +1,9 @@
 type storage = (int, int);
 
-let main2 = ((n : int), storage) => {
+let main2 = ((n : int), s: storage) => {
   let x: (int, int) = {
     let x: int = 7;
-    (x + n, storage[0] + storage[1]);
+    (x + n, s[0] + s[1]);
   };
   ([]: list(operation), x);
 };

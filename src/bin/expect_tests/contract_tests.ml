@@ -1149,7 +1149,7 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; bad_contract "create_contract_toplevel.mligo" ; "main" ] ;
   [%expect {|
-    ligo: in file "create_contract_toplevel.mligo", line 4, character 35 to line 8, character 8. No free variable allowed in this lambda: variable 'store' {"expression":"CREATE_CONTRACT(lambda (#P : ( nat * string ):Some(( nat * string ))) : None return let rhs#752 = #P in let p = rhs#752.0 in let s = rhs#752.1 in ( list[] : (TO_list(operation)) , store ) , NONE() : (TO_option(key_hash)) , 300000000mutez , \"un\")","location":"in file \"create_contract_toplevel.mligo\", line 4, character 35 to line 8, character 8"}
+    ligo: in file "create_contract_toplevel.mligo", line 4, character 35 to line 8, character 8. No free variable allowed in this lambda: variable 'store' {"expression":"CREATE_CONTRACT(lambda (#P : ( nat * string ):Some(( nat * string ))) : None return let rhs#756 = #P in let p = rhs#756.0 in let s = rhs#756.1 in ( list[] : (TO_list(operation)) , store ) , NONE() : (TO_option(key_hash)) , 300000000mutez , \"un\")","location":"in file \"create_contract_toplevel.mligo\", line 4, character 35 to line 8, character 8"}
 
 
      If you're not sure how to fix this error, you can
@@ -1162,7 +1162,7 @@ let%expect_test _ =
 
   run_ligo_bad [ "compile-contract" ; bad_contract "create_contract_var.mligo" ; "main" ] ;
   [%expect {|
-    ligo: in file "create_contract_var.mligo", line 6, character 35 to line 10, character 5. No free variable allowed in this lambda: variable 'a' {"expression":"CREATE_CONTRACT(lambda (#P : ( nat * int ):Some(( nat * int ))) : None return let rhs#755 = #P in let p = rhs#755.0 in let s = rhs#755.1 in ( list[] : (TO_list(operation)) , a ) , NONE() : (TO_option(key_hash)) , 300000000mutez , 1)","location":"in file \"create_contract_var.mligo\", line 6, character 35 to line 10, character 5"}
+    ligo: in file "create_contract_var.mligo", line 6, character 35 to line 10, character 5. No free variable allowed in this lambda: variable 'a' {"expression":"CREATE_CONTRACT(lambda (#P : ( nat * int ):Some(( nat * int ))) : None return let rhs#759 = #P in let p = rhs#759.0 in let s = rhs#759.1 in ( list[] : (TO_list(operation)) , a ) , NONE() : (TO_option(key_hash)) , 300000000mutez , 1)","location":"in file \"create_contract_var.mligo\", line 6, character 35 to line 10, character 5"}
 
 
      If you're not sure how to fix this error, you can
@@ -1175,7 +1175,7 @@ let%expect_test _ =
 
   run_ligo_bad [ "compile-contract" ; bad_contract "create_contract_no_inline.mligo" ; "main" ] ;
   [%expect {|
-    ligo: in file "create_contract_no_inline.mligo", line 9, characters 19-89. CREATE_CONTRACT first argument must be inlined: contract code can be inlined using a lambda {"expression":"CREATE_CONTRACT(dummy_contract , NONE() : (TO_option(key_hash)) , 300000000mutez , 1)","location":"in file \"create_contract_no_inline.mligo\", line 9, characters 19-89"}
+    ligo: unbound type variable:  {"variable":"return","in":"- E[foo -> int]\tT[] ]","did_you_mean":"no suggestion"}
 
 
      If you're not sure how to fix this error, you can

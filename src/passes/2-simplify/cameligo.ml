@@ -156,6 +156,14 @@ let rec pattern_to_var : Raw.pattern -> _ = fun p ->
   | Raw.PWild r -> ok @@ ({ region = r ; value = "_" } : Raw.variable)
   | _ -> fail @@ wrong_pattern "single var" p
 
+let rec tuple_pattern_to_vars : Raw.pattern -> _ = fun pattern ->
+  match pattern with
+  | Raw.PPar pp -> tuple_pattern_to_vars pp.value.inside
+  | Raw.PTuple pt -> bind_map_list pattern_to_var (npseq_to_list pt.value)
+  | Raw.PVar _ | Raw.PWild _-> bind_list [pattern_to_var pattern]
+  | other -> (fail @@ wrong_pattern "parenthetical, tuple, or variable" other)
+
+
 let rec pattern_to_typed_var : Raw.pattern -> _ = fun p ->
   match p with
   | Raw.PPar p -> pattern_to_typed_var p.value.inside
@@ -180,11 +188,21 @@ let rec tuple_pattern_to_typed_vars : Raw.pattern -> _ = fun pattern ->
   | Raw.PVar _ -> bind_list [pattern_to_typed_var pattern]
   | other -> (fail @@ wrong_pattern "parenthetical, tuple, or variable" other)
 
-let rec unpar_pattern : Raw.pattern -> Raw.pattern = function
+let rec typed_pattern_to_typed_vars : Raw.pattern -> _ = fun pattern ->
+  match pattern with
+  | Raw.PPar pp -> typed_pattern_to_typed_vars pp.value.inside
+  | Raw.PTyped pt ->
+     let (p,t) = pt.value.pattern,pt.value.type_expr in
+     let%bind p = tuple_pattern_to_vars p in 
+     let%bind t = simpl_type_expression t in
+     ok @@ (p,t)
+  | other -> (fail @@ wrong_pattern "parenthetical or type annotation" other)
+
+and unpar_pattern : Raw.pattern -> Raw.pattern = function
   | PPar p -> unpar_pattern p.value.inside
   | _ as p -> p
 
-let rec simpl_type_expression : Raw.type_expr -> type_expression result = fun te ->
+and simpl_type_expression : Raw.type_expr -> type_expression result = fun te ->
   trace (simple_info "simplifying this type expression...") @@
   match te with
     TPar x -> simpl_type_expression x.value.inside
@@ -793,12 +811,9 @@ and simpl_declaration : Raw.declaration -> declaration Location.wrap list result
         let%bind var = pattern_to_var hd in
         ok (var , tl)
       in
-      match args with
-      | [] ->
-          let%bind lhs_type' =
-            bind_map_option (fun (_,te) -> simpl_type_expression te) lhs_type in
-          let%bind rhs' = simpl_expression let_rhs in
-          ok @@ [loc x @@ (Declaration_constant (Var.of_name var.value , lhs_type' , inline, rhs'))]
+      let%bind lhs_type' = bind_map_option (fun x -> simpl_type_expression (snd x)) lhs_type in
+      let%bind let_rhs,lhs_type = match args with
+      | [] -> ok (let_rhs, lhs_type')
       | param1::others ->
           let fun_ = {
             kwd_fun = Region.ghost;
@@ -807,9 +822,13 @@ and simpl_declaration : Raw.declaration -> declaration Location.wrap list result
             arrow   = Region.ghost;
             body    = let_rhs
           } in
-          let rhs = Raw.EFun {region=Region.ghost ; value=fun_} in
-          let%bind rhs' = simpl_expression rhs in
-          ok @@ [loc x @@ (Declaration_constant (Var.of_name var.value , None , inline, rhs'))]
+          let f_args = nseq_to_list (param1,others) in
+          let%bind ty = bind_map_list typed_pattern_to_typed_vars f_args in
+          let aux acc ty = Option.map (t_function (snd ty)) acc in
+          ok (Raw.EFun {region=Region.ghost ; value=fun_},List.fold_right' aux lhs_type' ty)
+      in
+      let%bind rhs' = simpl_expression let_rhs in
+      ok @@ [loc x @@ (Declaration_constant (Var.of_name var.value , lhs_type , inline, rhs'))]
     )
 
 and simpl_cases : type a . (Raw.pattern * a) list -> (a, unit) matching_content result =
