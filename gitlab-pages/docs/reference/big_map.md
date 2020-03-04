@@ -3,6 +3,8 @@ id: big-map-reference
 title: Big Maps — Scalable Maps
 ---
 
+import Syntax from '@theme/Syntax';
+
 Ordinary maps are fine for contracts with a finite lifespan or a
 bounded number of users. For many contracts however, the intention is
 to have a map holding *many* entries, potentially millions of
@@ -14,52 +16,67 @@ interface for big maps is analogous to the one used for ordinary maps.
 
 # Declaring a Map
 
-<!--DOCUSAURUS_CODE_TABS-->
-<!--PascaLIGO-->
+
+<Syntax syntax="pascaligo">
+
 ```pascaligo group=big_maps
 type move is int * int
 type register is big_map (address, move)
 ```
 
-<!--CameLIGO-->
+</Syntax>
+<Syntax syntax="cameligo">
+
 ```cameligo group=big_maps
 type move = int * int
 type register = (address, move) big_map
 ```
 
-<!--ReasonLIGO-->
+</Syntax>
+<Syntax syntax="reasonligo">
+
 ```reasonligo group=big_maps
 type move = (int, int);
 type register = big_map (address, move);
 ```
-<!--END_DOCUSAURUS_CODE_TABS-->
+
+</Syntax>
+
 
 
 # Creating an Empty Big Map
 
-<!--DOCUSAURUS_CODE_TABS-->
 
-<!--PascaLIGO-->
+
+<Syntax syntax="pascaligo">
+
 ```pascaligo group=big_maps
 const empty : register = big_map []
 ```
 
-<!--CameLIGO-->
+</Syntax>
+<Syntax syntax="cameligo">
+
 ```cameligo group=big_maps
 let empty : register = Big_map.empty
 ```
 
-<!--ReasonLIGO-->
+</Syntax>
+<Syntax syntax="reasonligo">
+
 ```reasonligo group=big_maps
 let empty : register = Big_map.empty
 ```
-<!--END_DOCUSAURUS_CODE_TABS-->
+
+</Syntax>
+
 
 # Creating a Non-empty Map
 
-<!--DOCUSAURUS_CODE_TABS-->
 
-<!--PascaLIGO-->
+
+<Syntax syntax="pascaligo">
+
 ```pascaligo group=big_maps
 const moves : register =
   big_map [
@@ -67,7 +84,9 @@ const moves : register =
     ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" : address) -> (0,3)]
 ```
 
-<!--CameLIGO-->
+</Syntax>
+<Syntax syntax="cameligo">
+
 ```cameligo group=big_maps
 let moves : register =
   Big_map.literal [
@@ -75,42 +94,54 @@ let moves : register =
     (("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" : address), (0,3))]
 ```
 
-<!--ReasonLIGO-->
+</Syntax>
+<Syntax syntax="reasonligo">
+
 ```reasonligo group=big_maps
 let moves : register =
   Big_map.literal ([
     ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address, (1,2)),
     ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" : address, (0,3))]);
 ```
-<!--END_DOCUSAURUS_CODE_TABS-->
+
+</Syntax>
+
 
 # Accessing Values
 
-<!--DOCUSAURUS_CODE_TABS-->
-<!--PascaLIGO-->
+
+<Syntax syntax="pascaligo">
+
 ```pascaligo group=big_maps
 const my_balance : option (move) =
   moves [("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" : address)]
 ```
 
-<!--CameLIGO-->
+</Syntax>
+<Syntax syntax="cameligo">
+
 ```cameligo group=big_maps
 let my_balance : move option =
   Big_map.find_opt ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" : address) moves
 ```
 
-<!--ReasonLIGO-->
+</Syntax>
+<Syntax syntax="reasonligo">
+
 ```reasonligo group=big_maps
 let my_balance : option (move) =
   Big_map.find_opt ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" : address, moves);
 ```
-<!--END_DOCUSAURUS_CODE_TABS-->
+
+</Syntax>
+
 
 
 # Updating Big Maps
 
-<!--DOCUSAURUS_CODE_TABS-->
-<!--PascaLIGO-->
+
+<Syntax syntax="pascaligo">
+
 ```pascaligo group=big_maps
 function add (var m : register) : register is
   block {
@@ -120,26 +151,33 @@ function add (var m : register) : register is
 const updated_map : register = add (moves)
 ```
 
-<!--CameLIGO-->
+</Syntax>
+<Syntax syntax="cameligo">
+
 ```cameligo group=big_maps
 let updated_map : register =
   Big_map.update
     ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" : address) (Some (4,9)) moves
 ```
 
-<!--ReasonLIGO-->
+</Syntax>
+<Syntax syntax="reasonligo">
+
 ```reasonligo group=big_maps
 let updated_map : register =
   Big_map.update
     (("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address), Some ((4,9)), moves);
 ```
-<!--END_DOCUSAURUS_CODE_TABS-->
+
+</Syntax>
+
 
 # Removing Bindings
 
-<!--DOCUSAURUS_CODE_TABS-->
 
-<!--PascaLIGO-->
+
+<Syntax syntax="pascaligo">
+
 ```pascaligo group=big_maps
 function rem (var m : register) : register is
   block {
@@ -149,16 +187,21 @@ function rem (var m : register) : register is
 const updated_map : register = rem (moves)
 ```
 
-<!--CameLIGO-->
+</Syntax>
+<Syntax syntax="cameligo">
+
 ```cameligo group=big_maps
 let updated_map : register =
   Map.remove ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address) moves
 ```
 
-<!--ReasonLIGO-->
+</Syntax>
+<Syntax syntax="reasonligo">
+
 ```reasonligo group=big_maps
 let updated_map : register =
   Map.remove (("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address), moves)
 ```
 
-<!--END_DOCUSAURUS_CODE_TABS-->
+</Syntax>
+

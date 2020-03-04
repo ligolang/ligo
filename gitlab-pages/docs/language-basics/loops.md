@@ -3,11 +3,13 @@ id: loops
 title: Loops
 ---
 
+import Syntax from '@theme/Syntax';
+
 ## General Iteration
 
-<!--DOCUSAURUS_CODE_TABS-->
 
-<!--PascaLIGO-->
+
+<Syntax syntax="pascaligo">
 
 General iteration in PascaLIGO takes the shape of general loops, which
 should be familiar to programmers of imperative languages as "while
@@ -47,7 +49,8 @@ gitlab-pages/docs/language-basics/src/loops/gcd.ligo gcd '(2n*2n*3n*11n, 2n*2n*2
 # Outputs: +12
 ```
 
-<!--CameLIGO-->
+</Syntax>
+<Syntax syntax="cameligo">
 
 CameLIGO is a functional language where user-defined values are
 constant, therefore it makes no sense in CameLIGO to feature loops,
@@ -103,7 +106,8 @@ gitlab-pages/docs/language-basics/src/loops/gcd.mligo gcd (2n*2n*3n*11n, 2n*2n*2
 # Outputs: +12
 ```
 
-<!--ReasonLIGO-->
+</Syntax>
+<Syntax syntax="reasonligo">
 
 ReasonLIGO is a functional language where user-defined values are
 constant, therefore it makes no sense in ReasonLIGO to feature loops,
@@ -153,7 +157,8 @@ let gcd = ((x,y) : (nat, nat)) : nat => {
 > Note that `stop` and `continue` (now `Loop.resume`) are
 > *deprecated*.
 
-<!--END_DOCUSAURUS_CODE_TABS-->
+</Syntax>
+
 
 ## Bounded Loops
 
@@ -185,8 +190,8 @@ gitlab-pages/docs/language-basics/src/loops/sum.ligo sum 7n
 
 PascaLIGO "for" loops can also iterate through the contents of a
 collection, that is, a list, a set or a map. This is done with a loop
-of the form `for <element var> in <collection type> <collection var>
-<block>`, where `<collection type>` is any of the following keywords:
+of the form `for <element var> in <collection type> <collection var> <block>`, 
+where `<collection type>` is any of the following keywords:
 `list`, `set` or `map`.
 
 Here is an example where the integers in a list are summed up.
