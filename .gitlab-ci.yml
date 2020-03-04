@@ -62,11 +62,11 @@ dont-merge-to-master:
     # copy .deb packages into website
     - find dist -name \*.deb -exec sh -c 'cp {} gitlab-pages/website/static/deb/ligo_$(basename $(dirname {})).deb' \;
 
-    # npm
+    # yarn
     - cd gitlab-pages/website
-    - npm install
+    - yarn install
   script:
-    - npm run build
+    - yarn build
     # move internal odoc documentation to the website folder
     - mv ../../_build/default/_doc/_html/ build/odoc
   after_script:
