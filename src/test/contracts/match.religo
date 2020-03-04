@@ -12,7 +12,6 @@ let main = ((action, store): (parameter, storage)) => {
       (switch (action) {
       | Add (n) => n
       | Sub (n) => -n
-      }
-  );
-  (([]: list(operation)), store);
+      });
+  (([]: list (operation)), store);
 };

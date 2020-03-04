@@ -13,5 +13,5 @@ let main = ((action, store) : (parameter, storage)) => {
     | Increment (n) => add (store, n)
     | Decrement (n) => sub (store, n)
     };
-  (([]: list (operation)), store);
+  (([] : list (operation)), store);
 };

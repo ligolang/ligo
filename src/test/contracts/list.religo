@@ -8,9 +8,9 @@ let x : list (int) = [];
 let y : list (int) = [3, 4, 5];
 let z : list (int) = [2, ...y];
 
-let main = ((p,s) : (parameter, storage)) : return => {
+let main = ((action, s) : (parameter, storage)) : return => {
   let storage =
-    switch (p) {
+    switch (action) {
     | [] => s
     | [hd, ...tl] => (s[0] + hd, tl)
     };

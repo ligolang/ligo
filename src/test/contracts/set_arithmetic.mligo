@@ -9,7 +9,7 @@ let add_op (s : string set) : string set =
 let remove_op (s : string set) : string set =
    Set.remove "foobar" s
 
-let remove_deep (s : string set * nat) : string set * nat =
+let remove_deep (s : string set * nat) : string set =
   Set.remove "foobar" s.0
 
 (*

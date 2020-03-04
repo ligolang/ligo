@@ -1161,33 +1161,33 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; bad_contract "create_contract_toplevel.mligo" ; "main" ] ;
   [%expect {|
-    ligo: in file "create_contract_toplevel.mligo", line 4, character 35 to line 8, character 8. No free variable allowed in this lambda: variable 'store' {"expression":"CREATE_CONTRACT(lambda (#P : ( nat * string ):Some(( nat * string ))) : None return let rhs#804 = #P in let p = rhs#804.0 in let s = rhs#804.1 in ( list[] : (TO_list(operation)) , store ) , NONE() : (TO_option(key_hash)) , 300000000mutez , \"un\")","location":"in file \"create_contract_toplevel.mligo\", line 4, character 35 to line 8, character 8"}
+ligo: in file "create_contract_toplevel.mligo", line 4, character 35 to line 8, character 8. No free variable allowed in this lambda: variable 'store' {"expression":"CREATE_CONTRACT(lambda (#P : ( nat * string ):Some(( nat * string ))) : None return let rhs#808 = #P in let p = rhs#808.0 in let s = rhs#808.1 in ( list[] : (TO_list(operation)) , store ) , NONE() : (TO_option(key_hash)) , 300000000mutez , \"un\")","location":"in file \"create_contract_toplevel.mligo\", line 4, character 35 to line 8, character 8"}
 
 
-     If you're not sure how to fix this error, you can
-     do one of the following:
+ If you're not sure how to fix this error, you can
+ do one of the following:
 
-    * Visit our documentation: https://ligolang.org/docs/intro/what-and-why/
-    * Ask a question on our Discord: https://discord.gg/9rhYaEt
-    * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
-    * Check the changelog by running 'ligo changelog' |}] ;
+* Visit our documentation: https://ligolang.org/docs/intro/what-and-why/
+* Ask a question on our Discord: https://discord.gg/9rhYaEt
+* Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
+* Check the changelog by running 'ligo changelog' |}] ;
 
   run_ligo_bad [ "compile-contract" ; bad_contract "create_contract_var.mligo" ; "main" ] ;
   [%expect {|
-    ligo: in file "create_contract_var.mligo", line 6, character 35 to line 10, character 5. No free variable allowed in this lambda: variable 'a' {"expression":"CREATE_CONTRACT(lambda (#P : ( nat * int ):Some(( nat * int ))) : None return let rhs#807 = #P in let p = rhs#807.0 in let s = rhs#807.1 in ( list[] : (TO_list(operation)) , a ) , NONE() : (TO_option(key_hash)) , 300000000mutez , 1)","location":"in file \"create_contract_var.mligo\", line 6, character 35 to line 10, character 5"}
+ligo: in file "create_contract_var.mligo", line 6, character 35 to line 10, character 5. No free variable allowed in this lambda: variable 'a' {"expression":"CREATE_CONTRACT(lambda (#P : ( nat * int ):Some(( nat * int ))) : None return let rhs#811 = #P in let p = rhs#811.0 in let s = rhs#811.1 in ( list[] : (TO_list(operation)) , a ) , NONE() : (TO_option(key_hash)) , 300000000mutez , 1)","location":"in file \"create_contract_var.mligo\", line 6, character 35 to line 10, character 5"}
 
 
-     If you're not sure how to fix this error, you can
-     do one of the following:
+ If you're not sure how to fix this error, you can
+ do one of the following:
 
-    * Visit our documentation: https://ligolang.org/docs/intro/what-and-why/
-    * Ask a question on our Discord: https://discord.gg/9rhYaEt
-    * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
-    * Check the changelog by running 'ligo changelog' |}] ;
+* Visit our documentation: https://ligolang.org/docs/intro/what-and-why/
+* Ask a question on our Discord: https://discord.gg/9rhYaEt
+* Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
+* Check the changelog by running 'ligo changelog' |}] ;
 
   run_ligo_bad [ "compile-contract" ; bad_contract "create_contract_no_inline.mligo" ; "main" ] ;
   [%expect {|
-    ligo: in file "create_contract_no_inline.mligo", line 9, characters 19-89. CREATE_CONTRACT first argument must be inlined: contract code can be inlined using a lambda {"expression":"CREATE_CONTRACT(dummy_contract , NONE() : (TO_option(key_hash)) , 300000000mutez , 1)","location":"in file \"create_contract_no_inline.mligo\", line 9, characters 19-89"}
+    ligo: unbound type variable:  {"variable":"return","in":"- E[foo -> int]\tT[] ]","did_you_mean":"no suggestion"}
 
 
      If you're not sure how to fix this error, you can
