@@ -79,8 +79,6 @@ module Free_variables = struct
                expression (union (singleton v) b) body ;
              ]
     | E_sequence (x, y) -> union (self x) (self y)
-    (* NB different from ast_typed... *)
-    | E_assignment (v, _, e) -> unions [ var_name b v ; self e ]
     | E_record_update (r, _,e) -> union (self r) (self e)
     | E_while (cond , body) -> union (self cond) (self body)
 

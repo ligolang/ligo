@@ -403,42 +403,6 @@ and translate_expression (expr:expression) (env:environment) : michelson result 
         ] in
       ok code
     )
-  | E_assignment (name , lrs , expr) -> (
-      let%bind expr' = translate_expression expr env in
-      let%bind get_code = Compiler_environment.get env name in
-      let modify_code =
-        let aux acc step = match step with
-          | `Left -> seq [dip i_unpair ; acc ; i_pair]
-          | `Right -> seq [dip i_unpiar ; acc ; i_piar]
-        in
-        let init = dip i_drop in
-        List.fold_right' aux init lrs
-      in
-      let%bind set_code = Compiler_environment.set env name in
-      let error =
-        let title () = "michelson type-checking patch" in
-        let content () =
-          let aux ppf = function
-            | `Left -> Format.fprintf ppf "left"
-            | `Right -> Format.fprintf ppf "right" in
-          Format.asprintf "Sub path: %a\n"
-            PP_helpers.(list_sep aux (const " , ")) lrs
-        in
-        error title content in
-      trace error @@
-      return @@ seq [
-        i_comment "assign: start # env" ;
-        expr' ;
-        i_comment "assign: compute rhs # rhs : env" ;
-        dip get_code ;
-        i_comment "assign: get name # rhs : name : env" ;
-        modify_code ;
-        i_comment "assign: modify code # name+rhs : env" ;
-        set_code ;
-        i_comment "assign: set new # new_env" ;
-        i_push_unit ;
-      ]
-    )
   | E_record_update (record, path, expr) -> (
     let%bind record' = translate_expression record env in
 
