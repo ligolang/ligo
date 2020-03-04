@@ -109,6 +109,15 @@ async function main() {
   // const EXAMPLES_GLOB = '**/*.ligo';
   // const files = await findFiles(EXAMPLES_GLOB, EXAMPLES_DIR);
 
+  const CURATED_EXAMPLES = [
+    'pascaligo/arithmetic-contract.ligo',
+    'cameligo/arithmetic-contract.ligo',
+    'reasonligo/arithmetic-contract.ligo',
+    'pascaligo/id.ligo',
+    'cameligo/id.mligo',
+    'reasonligo/id.religo',
+  ];
+
   const EXAMPLES_DEST_DIR = join(process.cwd(), 'build', 'static', 'examples');
   fs.mkdirSync(EXAMPLES_DEST_DIR, { recursive: true });
 

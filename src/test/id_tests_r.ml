@@ -1,11 +1,10 @@
 open Trace
 open Test_helpers
-open Ast_simplified
+open Ast_imperative
 
 
-let mtype_file f =
-  let%bind simplified  = Ligo.Compile.Of_source.compile f (Syntax_name "reasonligo") in
-  let%bind typed,state = Ligo.Compile.Of_simplified.compile simplified in
+let retype_file f =
+  let%bind typed,state = Ligo.Compile.Utils.type_file f "reasonligo" Env in
   ok (typed,state)
 
 let get_program =
@@ -13,14 +12,13 @@ let get_program =
   fun () -> match !s with
     | Some s -> ok s
     | None -> (
-        let%bind program = mtype_file "./contracts/id.religo" in
+        let%bind program = retype_file "./contracts/id.religo" in
         s := Some program ;
         ok program
       )
 
 let compile_main () =
-  let%bind simplified      = Ligo.Compile.Of_source.compile "./contracts/id.religo" (Syntax_name "reasonligo") in
-  let%bind typed_prg,_ = Ligo.Compile.Of_simplified.compile simplified in
+  let%bind typed_prg,_     = get_program () in
   let%bind mini_c_prg      = Ligo.Compile.Of_typed.compile typed_prg in
   let%bind michelson_prg   = Ligo.Compile.Of_mini_c.aggregate_and_compile_contract mini_c_prg "main" in
   let%bind (_contract: Tezos_utils.Michelson.michelson) =
@@ -96,7 +94,7 @@ let buy_id_sender_addr () =
                                   ("profile", new_website)]
   in
   let param = e_record_ez [("profile", owner_website) ;
-                           ("initial_controller", (e_typed_none t_address))] in
+                           ("initial_controller", (e_typed_none (t_address ())))] in
   let new_storage = e_record_ez [("identities", (e_big_map
                                                    [(e_int 0, id_details_1) ;
                                                     (e_int 1, id_details_2)])) ;
@@ -324,8 +322,8 @@ let update_details_unchanged () =
                              ("skip_price", e_mutez 1000000) ; ]
   in
   let param = e_record_ez [("id", e_int 1) ;
-                           ("new_profile", e_typed_none t_bytes) ;
-                           ("new_controller", e_typed_none t_address)] in
+                           ("new_profile", e_typed_none (t_bytes ())) ;
+                           ("new_controller", e_typed_none (t_address ()))] in
   let%bind () = expect_eq ~options program "update_details"
       (e_pair param storage)
       (e_pair (e_list []) storage)

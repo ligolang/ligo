@@ -1,3 +1,22 @@
+(*_*
+  name: ID Contract (ReasonLIGO)
+  language: reasonligo
+  compile:
+    entrypoint: main
+  dryRun:
+    entrypoint: main
+    parameters: Increment 1
+    storage: 0
+  deploy:
+    entrypoint: main
+    storage: 0
+  evaluateValue:
+    entrypoint: ""
+  evaluateFunction:
+    entrypoint: add
+    parameters: 5, 6
+*_*)
+
 type id = int
 
 type id_details = {
@@ -28,8 +47,8 @@ type action =
 | Update_details(update_details)
 | Skip(unit)
 
-/* The prices kept in storage can be changed by bakers, though they should only be
-   adjusted down over time, not up. */
+(* The prices kept in storage can be changed by bakers, though they should only be
+   adjusted down over time, not up. *)
 type storage = {
   identities: big_map (id, id_details),
   next_id: int,
@@ -37,7 +56,7 @@ type storage = {
   skip_price: tez,
 }
 
-/** Preliminary thoughts on ids:
+(** Preliminary thoughts on ids:
 
 I very much like the simplicity of http://gurno.com/adam/mne/.
 5 three letter words means you have a 15 character identity, not actually more
@@ -50,7 +69,7 @@ something so people don't eat up the address space. 256 ^ 5 means you have a lot
 of address space, but if people troll by skipping a lot that could be eaten up.
 Should probably do some napkin calculations for how expensive skipping needs to
 be to deter people from doing it just to chew up address space.
-*/
+*)
 
 let buy = ((parameter, storage): (buy, storage)) : (list(operation), storage) => {
   let void: unit =
@@ -136,12 +155,12 @@ let update_details = ((parameter, storage): (update_details, storage)) :
   let owner: address = current_id_details.owner;
   let profile: bytes =
     switch (new_profile) {
-      | None => /* Default */ current_id_details.profile
+      | None => (* Default *) current_id_details.profile
       | Some(new_profile) => new_profile
     };
   let controller: address =
     switch (new_controller) {
-      | None => /* Default */ current_id_details.controller
+      | None => (* Default *) current_id_details.controller
       | Some new_controller => new_controller
     };
   let updated_id_details: id_details = {
@@ -159,7 +178,7 @@ let update_details = ((parameter, storage): (update_details, storage)) :
                           });
   };
 
-/* Let someone skip the next identity so nobody has to take one that's undesirable */
+(* Let someone skip the next identity so nobody has to take one that's undesirable *)
 let skip = ((p,storage): (unit, storage)) => {
   let void : unit =
     if (amount != storage.skip_price) {
