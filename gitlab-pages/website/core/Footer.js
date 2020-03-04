@@ -1,3 +1,5 @@
+// deprecated.
+
 const React = require('react');
 const docUrl = require(`${process.cwd()}/core/UrlUtils`).docUrl;
 

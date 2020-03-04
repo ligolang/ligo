@@ -88,7 +88,7 @@ module Simplify = struct
     | "source"                 -> ok C_SOURCE              (* Deprecated *)
     | "Tezos.failwith"         -> ok C_FAILWITH
     | "failwith"               -> ok C_FAILWITH
-
+    | "Tezos.create_contract"  -> ok C_CREATE_CONTRACT
     | "Tezos.transaction"      -> ok C_CALL
     | "transaction"            -> ok C_CALL                    (* Deprecated *)
     | "Tezos.set_delegate"     -> ok C_SET_DELEGATE
@@ -288,6 +288,7 @@ module Simplify = struct
     | "Operation.get_entrypoint"   -> ok C_CONTRACT_ENTRYPOINT (* Deprecated *)
     | "Tezos.get_entrypoint_opt"     -> ok C_CONTRACT_ENTRYPOINT_OPT
     | "Operation.get_entrypoint_opt" -> ok C_CONTRACT_ENTRYPOINT_OPT (* Deprecated *)
+    | "Tezos.create_contract"        -> ok C_CREATE_CONTRACT
 
     | "Michelson.is_nat" -> ok C_IS_NAT  (* Deprecated *)
     | "is_nat"           -> ok C_IS_NAT
@@ -802,18 +803,17 @@ module Typer = struct
     let%bind () = assert_type_expression_eq (param , contract_param) in
     ok @@ t_operation ()
 
-  let originate = typer_6 "ORIGINATE" @@ fun manager delegate_opt spendable delegatable init_balance code ->
-    let%bind () = assert_eq_1 manager (t_key_hash ()) in
-    let%bind () = assert_eq_1 delegate_opt (t_option (t_key_hash ()) ()) in
-    let%bind () = assert_eq_1 spendable (t_bool ()) in
-    let%bind () = assert_eq_1 delegatable (t_bool ()) in
-    let%bind () = assert_t_mutez init_balance in
-    let%bind (arg , res) = get_t_function code in
-    let%bind (_param , storage) = get_t_pair arg in
-    let%bind (storage' , op_lst) = get_t_pair res in
-    let%bind () = assert_eq_1 storage storage' in
-    let%bind () = assert_eq_1 op_lst (t_list (t_operation ()) ()) in
-    ok @@ (t_pair (t_operation ()) (t_address ()) ())
+  let create_contract = typer_4 "CREATE_CONTRACT" @@ fun f kh_opt amount init_storage  ->
+    let%bind (args , ret) = get_t_function f in
+    let%bind (_,s) = get_t_pair args in
+    let%bind (oplist,s') = get_t_pair ret in
+    let%bind () = assert_t_mutez amount in
+    let%bind (delegate) = get_t_option kh_opt in
+    let%bind () = assert_type_expression_eq (s,s') in
+    let%bind () = assert_type_expression_eq (s,init_storage) in
+    let%bind () = assert_t_list_operation oplist in
+    let%bind () = assert_t_key_hash delegate in
+    ok @@ t_pair (t_operation ()) (t_address ()) ()
 
   let get_contract = typer_1_opt "CONTRACT" @@ fun addr_tv tv_opt ->
     if not (type_expression_eq (addr_tv, t_address ()))
@@ -1231,6 +1231,7 @@ module Typer = struct
     | C_SELF_ADDRESS        -> ok @@ self_address;
     | C_IMPLICIT_ACCOUNT    -> ok @@ implicit_account;
     | C_SET_DELEGATE        -> ok @@ set_delegate ;
+    | C_CREATE_CONTRACT     -> ok @@ create_contract ;
     | _                     -> simple_fail @@ Format.asprintf "Typer not implemented for consant %a" PP.constant c
 
 

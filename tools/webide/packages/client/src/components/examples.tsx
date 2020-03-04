@@ -7,34 +7,18 @@ import { ChangeDirtyAction, EditorState } from '../redux/editor';
 import { ChangeSelectedAction, ExamplesState } from '../redux/examples';
 import { getExample } from '../services/api';
 
-const bgColor = 'transparent';
-const borderSize = '5px';
-const verticalPadding = '0.6em';
-
 const Container = styled.div`
   flex: 0.5;
   display: flex;
   flex-direction: column;
+  min-width: 0;
 `;
 
-const MenuItem = styled.div<{ selected?: boolean }>`
-  padding: ${verticalPadding} 0 ${verticalPadding} 1em;
-  height: 1em;
+const Header = styled.div`
+  min-height: 2.5em;
   display: flex;
   align-items: center;
-  cursor: pointer;
-  background-color: ${props =>
-    props.selected ? 'var(--blue_trans1)' : bgColor};
-  border-left: ${`${borderSize} solid ${bgColor}`};
-  border-left-color: ${props => (props.selected ? 'var(--blue)' : bgColor)};
-
-  :hover {
-    background-color: ${props =>
-      props.selected ? 'var(--blue_trans1)' : 'var(--blue_trans2)'};
-    border-left: ${`${borderSize} solid ${bgColor}`};
-    border-left-color: ${props =>
-      props.selected ? 'var(--blue)' : 'transparent'};
-  }
+  font-weight: 600;
 `;
 
 const MenuContainer = styled.div`
@@ -42,15 +26,22 @@ const MenuContainer = styled.div`
   flex-direction: column;
   overflow-y: auto;
   height: var(--content_height);
-  box-sizing: border-box;
+  font-size: 0.8em;
 `;
 
-const Header = styled.div`
-  min-height: 2.5em;
-  padding: 0 10px;
-  display: flex;
-  align-items: center;
-  font-weight: 600;
+const MenuItem = styled.span`
+  height: 1em;
+  padding: 0.6em;
+  cursor: pointer;
+  background-color: transparent;
+
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+
+  :hover {
+    background-color: var(--blue_trans2);
+  }
 `;
 
 export const Examples = () => {

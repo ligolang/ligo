@@ -140,7 +140,7 @@ module Typer : sig
   val now : typer
   val transaction : typer
   *)
-  val originate : typer
+  val create_contract : typer
   (*
   val get_contract : typer
   *)

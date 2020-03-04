@@ -3,93 +3,108 @@ id: crypto-reference
 title: Crypto — Cryptographic functions
 ---
 
+import Syntax from '@theme/Syntax';
+
 ## Crypto.blake2b(data: bytes): bytes
 
 Runs the [blake2b hash algorithm](https://en.wikipedia.org/wiki/BLAKE_(hash_function)#BLAKE2)
 over the given `bytes` data and returns a `bytes` representing the hash.
 
-<!--DOCUSAURUS_CODE_TABS-->
 
-<!--PascaLIGO-->
+
+<Syntax syntax="pascaligo">
 
 ```pascaligo
 function hasherman_blake (const s: bytes) : bytes is blake2b(s)
 ```
 
-<!--CameLIGO-->
+</Syntax>
+<Syntax syntax="cameligo">
 
 ```cameligo
 let hasherman_blake (s: bytes) : bytes = Crypto.blake2b s
 ```
 
-<!--ReasonLIGO-->
+</Syntax>
+<Syntax syntax="reasonligo">
 
 ```reasonligo
 let hasherman_blake = (s: bytes) => Crypto.blake2b(s);
 ```
 
-<!--END_DOCUSAURUS_CODE_TABS-->
+</Syntax>
+
 
 ## Crypto.sha256(data: bytes) : bytes
 
 Runs the [sha256 hash algorithm](https://en.wikipedia.org/wiki/SHA-2) over the given
 `bytes` data and returns a `bytes` representing the hash.
 
-<!--DOCUSAURUS_CODE_TABS-->
 
-<!--PascaLIGO-->
+
+<Syntax syntax="pascaligo">
+
 ```pascaligo
 function hasherman (const s : bytes) : bytes is
   begin skip end with sha_256(s)
 ```
 
-<!--CameLIGO-->
+</Syntax>
+<Syntax syntax="cameligo">
+
 ```cameligo
 let hasherman (s : bytes) : bytes =
    Crypto.sha256 s
 ```
 
-<!--ReasonLIGO-->
+</Syntax>
+<Syntax syntax="reasonligo">
+
 ```reasonligo
 let hasherman = (s: bytes): bytes => Crypto.sha256(s);
 ```
 
-<!--END_DOCUSAURUS_CODE_TABS-->
+</Syntax>
+
 
 ## Crypto.sha512(data: bytes) : bytes
 
 Runs the [sha512 hash algorithm](https://en.wikipedia.org/wiki/SHA-2) over the given
 `bytes` data and returns a `bytes` representing the hash.
 
-<!--DOCUSAURUS_CODE_TABS-->
 
-<!--PascaLIGO-->
+
+<Syntax syntax="pascaligo">
 
 ```pascaligo
 function hasherman512 (const s: bytes) : bytes is sha_512(s)
 ```
 
-<!--CameLIGO-->
+</Syntax>
+<Syntax syntax="cameligo">
 
 ```cameligo
 let hasherman512 (s: bytes) : bytes = Crypto.sha512 s
 ```
 
-<!--ReasonLIGO-->
+</Syntax>
+<Syntax syntax="reasonligo">
 
 ```reasonligo
 let hasherman512 = (s: bytes) => Crypto.sha512(s);
 ```
 
-<!--END_DOCUSAURUS_CODE_TABS-->
+</Syntax>
+
 
 ## Crypto.hash_key(k: key) : key_hash
 
 Hashes a key for easy comparison and storage.
 
-<!--DOCUSAURUS_CODE_TABS-->
 
-<!--PascaLIGO-->
+
+<Syntax syntax="pascaligo">
+
 ```pascaligo
 function check_hash_key (const kh1 : key_hash; const k2 : key) : bool * key_hash is block {
   var ret : bool := False ;
@@ -98,7 +113,9 @@ function check_hash_key (const kh1 : key_hash; const k2 : key) : bool * key_hash
 } with (ret, kh2)
 ```
 
-<!--CameLIGO-->
+</Syntax>
+<Syntax syntax="cameligo">
+
 ```cameligo
 let check_hash_key (kh1, k2: key_hash * key) : bool * key_hash =
   let kh2 : key_hash = Crypto.hash_key k2 in
@@ -107,7 +124,9 @@ let check_hash_key (kh1, k2: key_hash * key) : bool * key_hash =
   else (false, kh2)
 ```
 
-<!--ReasonLIGO-->
+</Syntax>
+<Syntax syntax="reasonligo">
+
 ```reasonligo
 let check_hash_key = ((kh1, k2): (key_hash, key)) : (bool, key_hash) => {
   let kh2 : key_hash = Crypto.hash_key(k2);
@@ -120,7 +139,8 @@ let check_hash_key = ((kh1, k2): (key_hash, key)) : (bool, key_hash) => {
 };
 ```
 
-<!--END_DOCUSAURUS_CODE_TABS-->
+</Syntax>
+
 
 ## Crypto.check(pk: key, signed: signature, data: bytes) : bool
 
@@ -128,9 +148,10 @@ Check that a message has been signed by a particular key.
 
 > ⚠️ There is no way to *generate* a signed message in LIGO. This is because that would require storing a private key on chain, at which point it isn't very private anymore.
 
-<!--DOCUSAURUS_CODE_TABS-->
 
-<!--PascaLIGO-->
+
+<Syntax syntax="pascaligo">
+
 ```pascaligo
 function check_signature
     (const pk: key;
@@ -139,17 +160,22 @@ function check_signature
   is crypto_check(pk, signed, msg)
 ```
 
-<!--CameLIGO-->
+</Syntax>
+<Syntax syntax="cameligo">
+
 ```cameligo
 let check_signature (pk, signed, msg: key * signature * bytes) : bool =
   Crypto.check pk signed msg
 ```
 
-<!--ReasonLIGO-->
+</Syntax>
+<Syntax syntax="reasonligo">
+
 ```reasonligo
 let check_signature = ((pk, signed, msg): (key, signature, bytes)) : bool => {
   Crypto.check(pk, signed, msg);
 };
 ```
 
-<!--END_DOCUSAURUS_CODE_TABS-->
+</Syntax>
+

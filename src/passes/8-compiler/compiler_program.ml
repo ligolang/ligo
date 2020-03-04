@@ -27,7 +27,7 @@ end
 open Errors
 
 (* This does not makes sense to me *)
-let get_operator : constant' -> type_value -> expression list -> predicate result = fun s ty lst ->
+let rec get_operator : constant' -> type_value -> expression list -> predicate result = fun s ty lst ->
   match Operators.Compiler.get_operators s with
   | Ok (x,_) -> ok x
   | Error _ -> (
@@ -114,10 +114,23 @@ let get_operator : constant' -> type_value -> expression list -> predicate resul
             i_drop ; (* drop the entrypoint... *)
             prim ~annot:[entry] ~children:[r_ty] I_CONTRACT ;
           ]
+      | C_CREATE_CONTRACT ->
+        let%bind ch = match lst with
+          | { content= E_closure {body;binder} ; type_value = T_function (T_pair ((_,p),(_,s)) as tin,_)} :: _ ->
+            let%bind closure = translate_function_body {body;binder} [] tin in
+            let%bind (p',s') = bind_map_pair Compiler_type.type_ (p,s) in
+            ok @@ contract p' s' closure
+          | _ -> fail @@ corner_case ~loc:__LOC__ "mini_c . CREATE_CONTRACT"
+        in
+        ok @@ simple_tetrary @@ seq [
+          i_drop ;
+          prim ~children:[ch] I_CREATE_CONTRACT ;
+          i_pair ;
+        ]
       | x -> simple_fail (Format.asprintf "predicate \"%a\" doesn't exist" PP.constant x)
     )
 
-let rec translate_value (v:value) ty : michelson result = match v with
+and translate_value (v:value) ty : michelson result = match v with
   | D_bool b -> ok @@ prim (if b then D_True else D_False)
   | D_int n -> ok @@ int (Z.of_int n)
   | D_nat n -> ok @@ int (Z.of_int n)
@@ -246,6 +259,10 @@ and translate_expression (expr:expression) (env:environment) : michelson result 
             f ;
           ]
         | Ternary f, 3 -> ok @@ seq [
+            pre_code ;
+            f ;
+          ]
+        | Tetrary f, 4 -> ok @@ seq [
             pre_code ;
             f ;
           ]

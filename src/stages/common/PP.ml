@@ -146,6 +146,7 @@ let constant ppf : constant' -> unit = function
   | C_SELF_ADDRESS          -> fprintf ppf "SELF_ADDRESS"
   | C_IMPLICIT_ACCOUNT      -> fprintf ppf "IMPLICIT_ACCOUNT"
   | C_SET_DELEGATE          -> fprintf ppf "SET_DELEGATE"
+  | C_CREATE_CONTRACT       -> fprintf ppf "CREATE_CONTRACT"
 
 let literal ppf (l : literal) =
   match l with

@@ -23,8 +23,8 @@ dont-merge-to-master:
   only:
     - master
 
-.build_binary: &build_binary
-  # To run in sequence and save CPU usage, use stage: build_and_package_binaries
+.build_binary:
+  &build_binary # To run in sequence and save CPU usage, use stage: build_and_package_binaries
   stage: test
   script:
     - $build_binary_script "$target_os_family" "$target_os" "$target_os_version"
@@ -71,8 +71,6 @@ dont-merge-to-master:
     # move internal odoc documentation to the website folder
     - mkdir -p build/ligo/
     - mv ../../_build/default/_doc/_html/ build/ligo/odoc
-    - pwd            # for debug
-    - ls build/ligo/ # for debug
   after_script:
     - cp -r gitlab-pages/website/build/ligo public
   artifacts:
@@ -83,7 +81,6 @@ dont-merge-to-master:
   image: docker:19.03.5
   services:
     - docker:19.03.5-dind
-
 
 .before_script: &before_script
   before_script:
@@ -224,9 +221,10 @@ run-webide-unit-tests:
     - cd tools/webide/packages/server
     - npm ci
     - npm run test
-  only:
-    changes:
+  rules:
+    - changes:
       - tools/webide/**
+      when: always
 
 build-publish-ide-image:
   stage: build_and_deploy
@@ -236,6 +234,7 @@ build-publish-ide-image:
     - find dist/
     - find dist/package/ -name '*ligo_*deb'
     - mv $(realpath dist/package/debian-10/*.deb) tools/webide/ligo_deb10.deb
+    - cp -r src/test/examples tools/webide/packages/client/examples
     - cd tools/webide
     - echo "${CI_BUILD_TOKEN}" | docker login -u gitlab-ci-token --password-stdin registry.gitlab.com
     - >
@@ -243,10 +242,12 @@ build-publish-ide-image:
       -t "${WEBIDE_IMAGE_NAME}:${CI_COMMIT_SHORT_SHA}"
       --build-arg GIT_TAG="${CI_COMMIT_SHA}"
       --build-arg GIT_COMMIT="${CI_COMMIT_SHORT_SHA}"
+      --build-arg EXAMPLES_DIR_SRC=packages/client/examples
       .
     - docker push "${WEBIDE_IMAGE_NAME}:${CI_COMMIT_SHORT_SHA}"
   rules:
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - changes:
+      - tools/webide/**
       when: always
     - if: '$CI_COMMIT_REF_NAME == "dev"'
       when: always
@@ -260,7 +261,8 @@ run-webide-e2e-tests:
     - export WEBIDE_IMAGE="${WEBIDE_IMAGE_NAME}:${CI_COMMIT_SHORT_SHA}"
     - docker-compose run e2e
   rules:
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - changes:
+      - tools/webide/**
       when: always
     - if: '$CI_COMMIT_REF_NAME == "dev"'
       when: always

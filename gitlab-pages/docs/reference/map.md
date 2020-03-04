@@ -3,6 +3,8 @@ id: map-reference
 title: Maps
 ---
 
+import Syntax from '@theme/Syntax';
+
 *Maps* are a data structure which associate values of the same type to
 values of the same type. The former are called *key* and the latter
 *values*. Together they make up a *binding*. An additional requirement
@@ -11,51 +13,66 @@ sense.
 
 # Declaring a Map
 
-<!--DOCUSAURUS_CODE_TABS-->
 
-<!--PascaLIGO-->
+
+<Syntax syntax="pascaligo">
+
 ```pascaligo group=maps
 type move is int * int
 type register is map (address, move)
 ```
 
-<!--CameLIGO-->
+</Syntax>
+<Syntax syntax="cameligo">
+
 ```cameligo group=maps
 type move = int * int
 type register = (address, move) map
 ```
 
-<!--ReasonLIGO-->
+</Syntax>
+<Syntax syntax="reasonligo">
+
 ```reasonligo group=maps
 type move = (int, int);
 type register = map (address, move);
 ```
-<!--END_DOCUSAURUS_CODE_TABS-->
+
+</Syntax>
+
 
 # Creating an Empty Map
 
-<!--DOCUSAURUS_CODE_TABS-->
 
-<!--PascaLIGO-->
+
+<Syntax syntax="pascaligo">
+
 ```pascaligo group=maps
 const empty : register = map []
 ```
 
-<!--CameLIGO-->
+</Syntax>
+<Syntax syntax="cameligo">
+
 ```cameligo group=maps
 let empty : register = Map.empty
 ```
 
-<!--ReasonLIGO-->
+</Syntax>
+<Syntax syntax="reasonligo">
+
 ```reasonligo group=maps
 let empty : register = Map.empty
 ```
-<!--END_DOCUSAURUS_CODE_TABS-->
+
+</Syntax>
+
 
 # Creating a Non-empty Map
 
-<!--DOCUSAURUS_CODE_TABS-->
-<!--PascaLIGO-->
+
+<Syntax syntax="pascaligo">
+
 ```pascaligo group=maps
 const moves : register =
   map [
@@ -63,7 +80,9 @@ const moves : register =
     ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" : address) -> (0,3)]
 ```
 
-<!--CameLIGO-->
+</Syntax>
+<Syntax syntax="cameligo">
+
 ```cameligo group=maps
 let moves : register =
   Map.literal [
@@ -71,44 +90,56 @@ let moves : register =
     (("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" : address), (0,3))]
 ```
 
-<!--ReasonLIGO-->
+</Syntax>
+<Syntax syntax="reasonligo">
+
 ```reasonligo group=maps
 let moves : register =
   Map.literal ([
     ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address, (1,2)),
     ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" : address, (0,3))]);
 ```
-<!--END_DOCUSAURUS_CODE_TABS-->
+
+</Syntax>
+
 
 # Accessing Map Bindings
 
-<!--DOCUSAURUS_CODE_TABS-->
-<!--PascaLIGO-->
+
+<Syntax syntax="pascaligo">
+
 ```pascaligo group=maps
 const my_balance : option (move) =
   moves [("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" : address)]
 ```
 
-<!--CameLIGO-->
+</Syntax>
+<Syntax syntax="cameligo">
+
 ```cameligo group=maps
 let my_balance : move option =
   Map.find_opt ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" : address) moves
 ```
 
-<!--ReasonLIGO-->
+</Syntax>
+<Syntax syntax="reasonligo">
+
 ```reasonligo group=maps
 let my_balance : option (move) =
   Map.find_opt (("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" : address), moves);
 ```
-<!--END_DOCUSAURUS_CODE_TABS-->
+
+</Syntax>
+
 
 Notice how the value we read is an optional value: this is to force
 the reader to account for a missing key in the map. This requires
 *pattern matching*.
 
-<!--DOCUSAURUS_CODE_TABS-->
 
-<!--PascaLIGO-->
+
+<Syntax syntax="pascaligo">
+
 ```pascaligo group=maps
 function force_access (const key : address; const moves : register) : move is
   case moves[key] of
@@ -117,7 +148,9 @@ function force_access (const key : address; const moves : register) : move is
   end
 ```
 
-<!--CameLIGO-->
+</Syntax>
+<Syntax syntax="cameligo">
+
 ```cameligo group=maps
 let force_access (key, moves : address * register) : move =
   match Map.find_opt key moves with
@@ -125,7 +158,9 @@ let force_access (key, moves : address * register) : move =
   | None -> (failwith "No move." : move)
 ```
 
-<!--ReasonLIGO-->
+</Syntax>
+<Syntax syntax="reasonligo">
+
 ```reasonligo group=maps
 let force_access = ((key, moves) : (address, register)) : move => {
   switch (Map.find_opt (key, moves)) {
@@ -134,7 +169,9 @@ let force_access = ((key, moves) : (address, register)) : move => {
   }
 };
 ```
-<!--END_DOCUSAURUS_CODE_TABS-->
+
+</Syntax>
+
 
 # Updating a Map
 
@@ -142,8 +179,9 @@ Given a map, we may want to add a new binding, remove one, or modify
 one by changing the value associated to an already existing key. All
 those operations are called *updates*.
 
-<!--DOCUSAURUS_CODE_TABS-->
-<!--PascaLIGO-->
+
+<Syntax syntax="pascaligo">
+
 ```pascaligo group=maps
 function assign (var m : register) : register is
   block {
@@ -164,7 +202,9 @@ function assignments (var m : register) : register is
   } with m
 ```
 
-<!--CameLIGO-->
+</Syntax>
+<Syntax syntax="cameligo">
+
 ```cameligo group=maps
 let assign (m : register) : register =
   Map.update
@@ -181,7 +221,9 @@ let add (m : register) : register =
     ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" : address) (4,9) m
 ```
 
-<!--ReasonLIGO-->
+</Syntax>
+<Syntax syntax="reasonligo">
+
 ```reasonligo group=maps
 let assign = (m : register) : register =>
   Map.update
@@ -199,13 +241,15 @@ let add = (m : register) : register =>
     (("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" : address), (4,9), m);
 ```
 
-<!--END_DOCUSAURUS_CODE_TABS-->
+</Syntax>
+
 
 To remove a binding from a map, we need its key.
 
-<!--DOCUSAURUS_CODE_TABS-->
 
-<!--PascaLIGO-->
+
+<Syntax syntax="pascaligo">
+
 ```pascaligo group=maps
 function delete (const key : address; var moves : register) : register is
   block {
@@ -213,19 +257,24 @@ function delete (const key : address; var moves : register) : register is
   } with moves
 ```
 
-<!--CameLIGO-->
+</Syntax>
+<Syntax syntax="cameligo">
+
 ```cameligo group=maps
 let delete (key, moves : address * register) : register =
   Map.remove key moves
 ```
 
-<!--ReasonLIGO-->
+</Syntax>
+<Syntax syntax="reasonligo">
+
 ```reasonligo group=maps
 let delete = ((key, moves) : (address, register)) : register =>
   Map.remove (key, moves);
 ```
 
-<!--END_DOCUSAURUS_CODE_TABS-->
+</Syntax>
+
 
 
 # Functional Iteration over Maps
@@ -246,9 +295,9 @@ no return value: its only use is to produce side-effects. This can be
 useful if for example you would like to check that each value inside
 of a map is within a certain range, and fail with an error otherwise.
 
-<!--DOCUSAURUS_CODE_TABS-->
 
-<!--PascaLIGO-->
+
+<Syntax syntax="pascaligo">
 
 ```pascaligo group=maps
 function iter_op (const m : register) : unit is
@@ -260,7 +309,8 @@ function iter_op (const m : register) : unit is
 
 > Note that `map_iter` is *deprecated*.
 
-<!--CameLIGO-->
+</Syntax>
+<Syntax syntax="cameligo">
 
 ```cameligo group=maps
 let iter_op (m : register) : unit =
@@ -268,7 +318,8 @@ let iter_op (m : register) : unit =
   in Map.iter predicate m
 ```
 
-<!--ReasonLIGO-->
+</Syntax>
+<Syntax syntax="reasonligo">
 
 ```reasonligo group=maps
 let iter_op = (m : register) : unit => {
@@ -276,7 +327,9 @@ let iter_op = (m : register) : unit => {
   Map.iter (predicate, m);
 };
 ```
-<!--END_DOCUSAURUS_CODE_TABS-->
+
+</Syntax>
+
 
 ## Map Operations over Maps
 
@@ -285,9 +338,9 @@ function. This is called a *map operation*, not to be confused with
 the map data structure. The predefined functional iterator
 implementing the map operation over maps is called `Map.map`.
 
-<!--DOCUSAURUS_CODE_TABS-->
 
-<!--PascaLIGO-->
+
+<Syntax syntax="pascaligo">
 
 ```pascaligo group=maps
 function map_op (const m : register) : register is
@@ -299,7 +352,8 @@ function map_op (const m : register) : register is
 
 > Note that `map_map` is *deprecated*.
 
-<!--CameLIGO-->
+</Syntax>
+<Syntax syntax="cameligo">
 
 ```cameligo group=maps
 let map_op (m : register) : register =
@@ -307,7 +361,8 @@ let map_op (m : register) : register =
   in Map.map increment m
 ```
 
-<!--ReasonLIGO-->
+</Syntax>
+<Syntax syntax="reasonligo">
 
 ```reasonligo group=maps
 let map_op = (m : register) : register => {
@@ -315,7 +370,9 @@ let map_op = (m : register) : register => {
   Map.map (increment, m);
 };
 ```
-<!--END_DOCUSAURUS_CODE_TABS-->
+
+</Syntax>
+
 
 ## Folded Operations over Maps
 
@@ -325,9 +382,9 @@ function takes two arguments: an *accumulator* and the structure
 enables having a partial result that becomes complete when the
 traversal of the data structure is over.
 
-<!--DOCUSAURUS_CODE_TABS-->
 
-<!--PascaLIGO-->
+
+<Syntax syntax="pascaligo">
 
 ```pascaligo group=maps
 function fold_op (const m : register) : int is
@@ -339,14 +396,18 @@ function fold_op (const m : register) : int is
 
 > Note that `map_fold` is *deprecated*.
 
-<!--CameLIGO-->
+</Syntax>
+<Syntax syntax="cameligo">
+
 ```cameligo group=maps
 let fold_op (m : register) : register =
   let folded = fun (i,j : int * (address * move)) -> i + j.1.1
   in Map.fold folded m 5
 ```
 
-<!--ReasonLIGO-->
+</Syntax>
+<Syntax syntax="reasonligo">
+
 ```reasonligo group=maps
 let fold_op = (m : register) : register => {
   let folded = ((i,j): (int, (address, move))) => i + j[1][1];
@@ -354,4 +415,5 @@ let fold_op = (m : register) : register => {
 };
 ```
 
-<!--END_DOCUSAURUS_CODE_TABS-->
+</Syntax>
+
