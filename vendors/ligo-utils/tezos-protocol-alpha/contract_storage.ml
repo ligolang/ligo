@@ -23,6 +23,8 @@
 (*                                                                           *)
 (*****************************************************************************)
 
+let set_balance = Storage.Contract.Balance.set
+
 type error +=
   | Balance_too_low of Contract_repr.contract * Tez_repr.t * Tez_repr.t
   | (* `Temporary *)

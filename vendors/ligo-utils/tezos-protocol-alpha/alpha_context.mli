@@ -706,6 +706,9 @@ module Contract : sig
   include BASIC_DATA
 
   type contract = t
+  
+  val set_balance : context ->
+    contract -> Tez.t -> context tzresult Lwt.t
 
   val rpc_arg : contract RPC_arg.arg
 
