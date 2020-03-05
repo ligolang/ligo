@@ -1111,7 +1111,8 @@ type typecheck_res =
 
 let typecheck_contract contract =
   let contract' = Tezos_micheline.Micheline.strip_locations contract in
-  Script_ir_translator.typecheck_code dummy_environment.tezos_context contract' >>= fun x ->
+  let ctxt = Raw_context.set_gas_unlimited dummy_environment.tezos_context in
+  Script_ir_translator.typecheck_code ctxt contract' >>= fun x ->
   match x with
   | Ok _res -> return Type_checked
   | Error (Script_tc_errors.Ill_formed_type (Some "parameter", _code, _)::_) -> return Err_parameter
