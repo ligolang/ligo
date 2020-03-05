@@ -1786,24 +1786,33 @@ let religo_let_multiple () : unit result =
   in
   ok ()
 
+
+let balance_test_options () =
+  let%bind balance = trace_option (simple_error "could not convert balance") @@
+    Memory_proto_alpha.Protocol.Alpha_context.Tez.of_string "4000000" in
+  ok @@ Proto_alpha_utils.Memory_proto_alpha.make_options ~balance ()
+
 let balance_constant () : unit result =
   let%bind program = type_file "./contracts/balance_constant.ligo" in
   let input = e_tuple [e_unit () ; e_mutez 0]  in
   let expected = e_tuple [e_list []; e_mutez 4000000000000] in
-  expect_eq program "main" input expected
+  let%bind options = balance_test_options () in
+  expect_eq ~options program "main" input expected
 
 
 let balance_constant_mligo () : unit result =
   let%bind program = mtype_file "./contracts/balance_constant.mligo" in
   let input = e_tuple [e_unit () ; e_mutez 0]  in
   let expected = e_tuple [e_list []; e_mutez 4000000000000] in
-  expect_eq program "main" input expected
+  let%bind options = balance_test_options () in
+  expect_eq ~options program "main" input expected
 
 let balance_constant_religo () : unit result =
   let%bind program = retype_file "./contracts/balance_constant.religo" in
   let input = e_tuple [e_unit () ; e_mutez 0]  in
   let expected = e_tuple [e_list []; e_mutez 4000000000000] in
-  expect_eq program "main" input expected
+  let%bind options = balance_test_options () in
+  expect_eq ~options program "main" input expected
 
 let amount () : unit result =
   let%bind program = type_file "./contracts/amount.ligo" in
