@@ -1,8 +1,12 @@
-const React = require('react');
+import React from 'react';
+import Highlight, { defaultProps } from "prism-react-renderer";
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+import useThemeContext from '@theme/hooks/useThemeContext';
+import defaultTheme from 'prism-react-renderer/themes/palenight';
+import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 
-const pre = '```';
-
-const PASCALIGO_EXAMPLE = `${pre}pascaligo
+const PASCALIGO_EXAMPLE = `
 type storage is int
 
 type parameter is
@@ -14,8 +18,11 @@ type return is list (operation) * storage
 
 // Two entrypoints
 
-function add (const store : storage; const delta : int) : storage is store + delta
-function sub (const store : storage; const delta : int) : storage is store - delta
+function add (const store : storage; const delta : int) : storage is 
+  store + delta
+
+function sub (const store : storage; const delta : int) : storage is 
+  store - delta
 
 (* Main access point that dispatches to the entrypoints according to
    the smart contract parameter. *)
@@ -27,9 +34,9 @@ function main (const action : parameter; const store : storage) : return is
   | Decrement (n) -> sub (store, n)
   | Reset         -> 0
   end)
-${pre}`;
+`;
 
-const CAMELIGO_EXAMPLE = `${pre}ocaml
+const CAMELIGO_EXAMPLE = `
 type storage = int
 
 type parameter =
@@ -53,10 +60,10 @@ let main (action, store : parameter * storage) : return =
    Increment (n) -> add (store, n)
  | Decrement (n) -> sub (store, n)
  | Reset         -> 0)
-${pre}`;
+`;
 
 
-const REASONLIGO_EXAMPLE = `${pre}reasonligo
+const REASONLIGO_EXAMPLE = `
 type storage = int;
 
 type parameter =
@@ -81,40 +88,82 @@ let main = ((action, store) : (parameter, storage)) : return => {
   | Decrement (n) => sub ((store, n))
   | Reset         => 0}))
 };
-${pre}`;
+`;
 
 
-module.exports = props => {
-  const MarkdownBlock = props.MarkdownBlock;
+function CodeExamples (props) {
+  const {
+    siteConfig: {
+      themeConfig: {prism = {}},
+    },
+  } = useDocusaurusContext();
+  const {isDarkTheme} = useThemeContext();
+  const lightModeTheme = prism.theme || defaultTheme;
+  const darkModeTheme = prism.darkTheme || lightModeTheme;
+  const prismTheme = isDarkTheme ? darkModeTheme : lightModeTheme;
 
   return (
-    <div className="tabs">
-      <div className="nav-tabs">
-        <div
-          className="nav-link active"
-          data-group="examples"
-          data-tab="pascaligo"
-        >
-          PascaLIGO
-        </div>
-        <div className="nav-link" data-group="examples" data-tab="cameligo">
-          CameLIGO
-        </div>
-        <div className="nav-link" data-group="examples" data-tab="reasonligo">
-          ReasonLIGO
-        </div>
-      </div>
-      <div className="tab-content">
-        <div id="pascaligo" className="tab-pane active" data-group="examples">
-          <MarkdownBlock>{PASCALIGO_EXAMPLE}</MarkdownBlock>
-        </div>
-        <div id="cameligo" className="tab-pane" data-group="examples">
-          <MarkdownBlock>{CAMELIGO_EXAMPLE}</MarkdownBlock>
-        </div>
-        <div id="reasonligo" className="tab-pane" data-group="examples">
-          <MarkdownBlock>{REASONLIGO_EXAMPLE}</MarkdownBlock>
-        </div>
-      </div>
-    </div>
+   
+<Tabs
+  defaultValue="pascaligo"
+  values={[
+    { label: 'PascaLIGO', value: 'pascaligo', },
+    { label: 'CameLIGO', value: 'cameligo', },
+    { label: 'ReasonLIGO', value: 'reasonligo', },
+  ]
+}>
+        <TabItem value="pascaligo">
+          <Highlight {...defaultProps} language="pascaligo" code={PASCALIGO_EXAMPLE} theme={prismTheme}>
+            {({ className, style, tokens, getLineProps, getTokenProps }) => (
+              <pre className={className} style={style}>
+                {tokens.map((line, i) => (
+                  <div {...getLineProps({ line, key: i })}>
+                    {line.map((token, key) => (
+                      <span {...getTokenProps({ token, key })} />
+                    ))}
+                  </div>
+                ))}
+              </pre>
+            )}
+          </Highlight>
+        </TabItem>
+        <TabItem value="cameligo">
+
+          <Highlight {...defaultProps} language="cameligo" code={CAMELIGO_EXAMPLE} theme={prismTheme}>
+            {({ className, style, tokens, getLineProps, getTokenProps }) => (
+              <pre className={className} style={style}>
+                {tokens.map((line, i) => (
+                  <div {...getLineProps({ line, key: i })}>
+                    {line.map((token, key) => (
+                      <span {...getTokenProps({ token, key })} />
+                    ))}
+                  </div>
+                ))}
+              </pre>
+            )}
+          </Highlight>
+        </TabItem>
+        <TabItem value="reasonligo">
+
+        <Highlight {...defaultProps} language="reasonligo" code={REASONLIGO_EXAMPLE} theme={prismTheme}>
+            {({ className, style, tokens, getLineProps, getTokenProps }) => (
+              <pre className={className} style={style}>
+                {tokens.map((line, i) => (
+                  <div {...getLineProps({ line, key: i })}>
+                    {line.map((token, key) => (
+                      <span {...getTokenProps({ token, key })} />
+                    ))}
+                  </div>
+                ))}
+              </pre>
+            )}
+          </Highlight>
+        </TabItem>
+
+
+
+  </Tabs>
   );
 };
+
+export default CodeExamples

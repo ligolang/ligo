@@ -68,30 +68,30 @@ module Simplify = struct
     (* Tezos module (ex-Michelson) *)
 
     | "Tezos.chain_id"         -> ok C_CHAIN_ID
-    | "chain_id"                   -> ok C_CHAIN_ID            (* Deprecated *)
-    | "get_chain_id"               -> ok C_CHAIN_ID            (* Deprecated *)
+    | "chain_id"               -> ok C_CHAIN_ID            (* Deprecated *)
+    | "get_chain_id"           -> ok C_CHAIN_ID            (* Deprecated *)
     | "Tezos.balance"          -> ok C_BALANCE
-    | "balance"                    -> ok C_BALANCE             (* Deprecated *)
+    | "balance"                -> ok C_BALANCE             (* Deprecated *)
     | "Tezos.now"              -> ok C_NOW
-    | "now"                        -> ok C_NOW                 (* Deprecated *)
+    | "now"                    -> ok C_NOW                 (* Deprecated *)
     | "Tezos.amount"           -> ok C_AMOUNT
-    | "amount"                     -> ok C_AMOUNT              (* Deprecated *)
+    | "amount"                 -> ok C_AMOUNT              (* Deprecated *)
     | "Tezos.sender"           -> ok C_SENDER
-    | "sender"                     -> ok C_SENDER              (* Deprecated *)
+    | "sender"                 -> ok C_SENDER              (* Deprecated *)
     | "Tezos.address"          -> ok C_ADDRESS
-    | "address"                    -> ok C_ADDRESS             (* Deprecated *)
+    | "address"                -> ok C_ADDRESS             (* Deprecated *)
     | "Tezos.self_address"     -> ok C_SELF_ADDRESS
-    | "self_address"               -> ok C_SELF_ADDRESS        (* Deprecated *)
+    | "self_address"           -> ok C_SELF_ADDRESS        (* Deprecated *)
     | "Tezos.implicit_account" -> ok C_IMPLICIT_ACCOUNT
-    | "implicit_account"           -> ok C_IMPLICIT_ACCOUNT    (* Deprecated *)
+    | "implicit_account"       -> ok C_IMPLICIT_ACCOUNT    (* Deprecated *)
     | "Tezos.source"           -> ok C_SOURCE
-    | "source"                     -> ok C_SOURCE              (* Deprecated *)
+    | "source"                 -> ok C_SOURCE              (* Deprecated *)
     | "Tezos.failwith"         -> ok C_FAILWITH
-    | "failwith"                   -> ok C_FAILWITH
-
-    | "Tezos.transaction"  -> ok C_CALL
+    | "failwith"               -> ok C_FAILWITH
+    | "Tezos.create_contract"  -> ok C_CREATE_CONTRACT
+    | "Tezos.transaction"      -> ok C_CALL
     | "transaction"            -> ok C_CALL                    (* Deprecated *)
-    | "Tezos.set_delegate" -> ok C_SET_DELEGATE
+    | "Tezos.set_delegate"     -> ok C_SET_DELEGATE
     | "set_delegate"           -> ok C_SET_DELEGATE            (* Deprecated *)
     | "get_contract"           -> ok C_CONTRACT                (* Deprecated *)
     | "Tezos.get_contract_opt" -> ok C_CONTRACT_OPT
@@ -144,7 +144,7 @@ module Simplify = struct
     | "Bytes.unpack" -> ok C_BYTES_UNPACK
     | "bytes_unpack" -> ok C_BYTES_UNPACK  (* Deprecated *)
     | "Bytes.length" -> ok C_SIZE
-    | "Bytes.size"   -> ok C_SIZE
+    | "Bytes.size"   -> ok C_SIZE          (* Deprecated *)
     | "bytes_concat" -> ok C_CONCAT        (* Deprecated *)
     | "Bytes.concat" -> ok C_CONCAT
     | "Bytes.slice"  -> ok C_SLICE
@@ -165,7 +165,8 @@ module Simplify = struct
 
     (* Set module *)
 
-    | "Set.size"    -> ok C_SIZE
+    | "Set.cardinal" -> ok C_SIZE
+    | "Set.size"    -> ok C_SIZE        (* Deprecated *)
     | "set_size"    -> ok C_SIZE        (* Deprecated *)
     | "set_empty"   -> ok C_SET_EMPTY   (* Deprecated *)
     | "Set.mem"     -> ok C_SET_MEM
@@ -287,6 +288,7 @@ module Simplify = struct
     | "Operation.get_entrypoint"   -> ok C_CONTRACT_ENTRYPOINT (* Deprecated *)
     | "Tezos.get_entrypoint_opt"     -> ok C_CONTRACT_ENTRYPOINT_OPT
     | "Operation.get_entrypoint_opt" -> ok C_CONTRACT_ENTRYPOINT_OPT (* Deprecated *)
+    | "Tezos.create_contract"        -> ok C_CREATE_CONTRACT
 
     | "Michelson.is_nat" -> ok C_IS_NAT  (* Deprecated *)
     | "is_nat"           -> ok C_IS_NAT
@@ -324,9 +326,9 @@ module Simplify = struct
     | "Bytes.pack"   -> ok C_BYTES_PACK
     | "Bytes.unpack" -> ok C_BYTES_UNPACK
     | "Bytes.length" -> ok C_SIZE
-    | "Bytes.size"   -> ok C_SIZE
+    | "Bytes.size"   -> ok C_SIZE       (* Deprecated *)
     | "Bytes.concat" -> ok C_CONCAT
-    | "Bytes.slice"  -> ok C_SLICE
+    | "Bytes.slice"  -> ok C_SLICE      (* Deprecated *)
     | "Bytes.sub"    -> ok C_SLICE
 
     (* List module *)
@@ -339,14 +341,15 @@ module Simplify = struct
 
     (* Set module *)
 
-    | "Set.mem"     -> ok C_SET_MEM
-    | "Set.iter"    -> ok C_SET_ITER
-    | "Set.empty"   -> ok C_SET_EMPTY
-    | "Set.literal" -> ok C_SET_LITERAL
-    | "Set.add"     -> ok C_SET_ADD
-    | "Set.remove"  -> ok C_SET_REMOVE
-    | "Set.fold"    -> ok C_SET_FOLD
-    | "Set.size"    -> ok C_SIZE
+    | "Set.mem"      -> ok C_SET_MEM
+    | "Set.iter"     -> ok C_SET_ITER
+    | "Set.empty"    -> ok C_SET_EMPTY
+    | "Set.literal"  -> ok C_SET_LITERAL
+    | "Set.add"      -> ok C_SET_ADD
+    | "Set.remove"   -> ok C_SET_REMOVE
+    | "Set.fold"     -> ok C_SET_FOLD
+    | "Set.size"     -> ok C_SIZE (* Deprecated *)
+    | "Set.cardinal" -> ok C_SIZE
 
     (* Map module *)
 
@@ -800,18 +803,17 @@ module Typer = struct
     let%bind () = assert_type_expression_eq (param , contract_param) in
     ok @@ t_operation ()
 
-  let originate = typer_6 "ORIGINATE" @@ fun manager delegate_opt spendable delegatable init_balance code ->
-    let%bind () = assert_eq_1 manager (t_key_hash ()) in
-    let%bind () = assert_eq_1 delegate_opt (t_option (t_key_hash ()) ()) in
-    let%bind () = assert_eq_1 spendable (t_bool ()) in
-    let%bind () = assert_eq_1 delegatable (t_bool ()) in
-    let%bind () = assert_t_mutez init_balance in
-    let%bind (arg , res) = get_t_function code in
-    let%bind (_param , storage) = get_t_pair arg in
-    let%bind (storage' , op_lst) = get_t_pair res in
-    let%bind () = assert_eq_1 storage storage' in
-    let%bind () = assert_eq_1 op_lst (t_list (t_operation ()) ()) in
-    ok @@ (t_pair (t_operation ()) (t_address ()) ())
+  let create_contract = typer_4 "CREATE_CONTRACT" @@ fun f kh_opt amount init_storage  ->
+    let%bind (args , ret) = get_t_function f in
+    let%bind (_,s) = get_t_pair args in
+    let%bind (oplist,s') = get_t_pair ret in
+    let%bind () = assert_t_mutez amount in
+    let%bind (delegate) = get_t_option kh_opt in
+    let%bind () = assert_type_expression_eq (s,s') in
+    let%bind () = assert_type_expression_eq (s,init_storage) in
+    let%bind () = assert_t_list_operation oplist in
+    let%bind () = assert_t_key_hash delegate in
+    ok @@ t_pair (t_operation ()) (t_address ()) ()
 
   let get_contract = typer_1_opt "CONTRACT" @@ fun addr_tv tv_opt ->
     if not (type_expression_eq (addr_tv, t_address ()))
@@ -1229,6 +1231,7 @@ module Typer = struct
     | C_SELF_ADDRESS        -> ok @@ self_address;
     | C_IMPLICIT_ACCOUNT    -> ok @@ implicit_account;
     | C_SET_DELEGATE        -> ok @@ set_delegate ;
+    | C_CREATE_CONTRACT     -> ok @@ create_contract ;
     | _                     -> simple_fail @@ Format.asprintf "Typer not implemented for consant %a" PP.constant c
 
 

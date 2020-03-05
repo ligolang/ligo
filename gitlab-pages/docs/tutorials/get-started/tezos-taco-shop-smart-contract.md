@@ -16,7 +16,7 @@ consumers.
 
 <br/>
 <img src="/img/tutorials/get-started/tezos-taco-shop-smart-contract/taco-stand.svg" width="50%" />
-<div style="opacity: 0.7; text-align: center; font-size: 10px;">Made by <a href="https://www.flaticon.com/authors/smashicons" title="Smashicons">Smashicons</a> from <a href="https://www.flaticon.com/" 			    title="Flaticon">www.flaticon.com</a> is licensed by <a href="http://creativecommons.org/licenses/by/3.0/" 			    title="Creative Commons BY 3.0" target="_blank">CC 3.0 BY</a></div>
+<div style={{ opacity: 0.7, textAlign: 'center', fontSize: '10px' }}>Made by <a href="https://www.flaticon.com/authors/smashicons" title="Smashicons">Smashicons</a> from <a href="https://www.flaticon.com/" 			    title="Flaticon">www.flaticon.com</a> is licensed by <a href="http://creativecommons.org/licenses/by/3.0/" 			    title="Creative Commons BY 3.0" target="_blank">CC 3.0 BY</a></div>
 </div>
 
 ---
@@ -74,7 +74,7 @@ executable** through the installation script, as shown in the
 screenshot below:
 
 <img src="/img/tutorials/get-started/tezos-taco-shop-smart-contract/install-ligo.png" />
-<div style="opacity: 0.7; text-align: center; font-size: 12px; margin-top:-24px;">Installing the <b>next</b> version of LIGO's CLI</div>
+<div style={{ opacity: 0.7, textAlign: 'center', fontSize: '12px', marginTop: '-24px' }}>Installing the <b>next</b> version of LIGO's CLI</div>
 
 ## Implementing our First `main` Function
 
@@ -90,6 +90,7 @@ contract, but it is something to get us started and test our LIGO
 installation as well.
 
 ### `taco-shop.ligo`
+
 ```pascaligo group=a
 function main (const parameter : int; const contractStorage : int) :
 list (operation) * int is
@@ -150,7 +151,7 @@ ligo dry-run taco-shop.ligo --syntax pascaligo main 4 3
 ```
 
 <img src="/img/tutorials/get-started/tezos-taco-shop-smart-contract/dry-run-1.png" />
-<div style="opacity: 0.7; text-align: center; font-size: 12px; margin-top:-24px;">Simulating contract execution with the CLI</div>
+<div style={{ opacity: 0.7, textAlign: 'center', fontSize: '12px', marginTop: '-24px' }}>Simulating contract execution with the CLI</div>
 
 <br/>
 
@@ -167,6 +168,7 @@ fields. Additionally, we will want to combine our `taco_supply` type
 into a map, consisting of the entire offer of Pedro's shop.
 
 **Taco shop's storage**
+
 ```pascaligo group=b
 type taco_supply is record [
   current_stock : nat;
@@ -181,6 +183,7 @@ Next step is to update the `main` function to include
 `parameter` to `unit` as well to clear things up.
 
 **`taco-shop.ligo`**
+
 ```pascaligo group=b+
 type taco_supply is record [
   current_stock : nat;
@@ -204,6 +207,7 @@ initial storage value.  In our case the storage is type-checked as
 our storage's value will be defined as follows:
 
 **Storage value**
+
 ```zsh
 map [
   1n -> record [
@@ -221,6 +225,7 @@ map [
 > by their keys `1n` and `2n`.
 
 **Dry run command with a multi-line storage value**
+
 ```zsh
 ligo dry-run taco-shop.ligo --syntax pascaligo main unit "map [
     1n -> record [
@@ -235,7 +240,7 @@ ligo dry-run taco-shop.ligo --syntax pascaligo main unit "map [
 ```
 
 <img src="/img/tutorials/get-started/tezos-taco-shop-smart-contract/dry-run-2.png" />
-<div style="opacity: 0.7; text-align: center; font-size: 12px; margin-top:-24px;">Dry-run with a complex storage value</div>
+<div style={{ opacity: 0.7, textAlign: 'center', fontSize: '12px', marginTop: '-24px' }}>Dry-run with a complex storage value</div>
 
 <br/>
 
@@ -264,6 +269,7 @@ Let is start by customizing our contract a bit, we will:
   we will want to modify it
 
 **`taco-shop.ligo`**
+
 ```pascaligo group=c
 type taco_supply is record [
     current_stock : nat;
@@ -320,7 +326,7 @@ function buy_taco (const taco_kind_index : nat; var taco_shop_storage : taco_sho
 ```
 
 <img src="/img/tutorials/get-started/tezos-taco-shop-smart-contract/dry-run-3.png" />
-<div style="opacity: 0.7; text-align: center; font-size: 12px; margin-top:-24px;">Stock decreases after selling a taco</div>
+<div style={{ opacity: 0.7, textAlign: 'center', fontSize: '12px', marginTop: '-24px' }}>Stock decreases after selling a taco</div>
 
 <br/>
 
@@ -341,6 +347,7 @@ To make sure we get paid, we will:
     the payment accepted
 
 **`taco-shop.ligo`**
+
 ```pascaligo group=e
 type taco_supply is record [
   current_stock : nat;
@@ -394,14 +401,14 @@ ligo dry-run taco-shop.ligo --syntax pascaligo --amount 1 buy_taco 1n "map [
 
 ** Purchasing a Taco with 1tez **
 <img src="/img/tutorials/get-started/tezos-taco-shop-smart-contract/dry-run-4.png" />
-<div style="opacity: 0.7; text-align: center; font-size: 12px; margin-top:-24px;">Stock decreases after selling a taco, if the right amount of tezzies is provided</div>
+<div style={{ opacity: 0.7, textAlign: 'center', fontSize: '12px', marginTop: '-24px' }}>Stock decreases after selling a taco, if the right amount of tezzies is provided</div>
 
 <br/>
 
 **Attempting to Purchase a Taco with 0.7tez**
 <img src="/img/tutorials/get-started/tezos-taco-shop-smart-contract/dry-run-5.png" />
-<div style="opacity: 0.7; text-align: center; font-size: 12px;
-margin-top:-24px;">Stock does not decrease after a purchase attempt
+<div style={{ opacity: 0.7, textAlign: 'center', fontSize: '12px',
+marginTop: '-24px' }}>Stock does not decrease after a purchase attempt
 with an insufficient payment.</div>
 
 <br/>
@@ -416,11 +423,13 @@ If you would like to accept tips in your contract, simply change the
 following line, depending on your preference.
 
 **Without tips**
+
 ```pascaligo skip
 if amount =/= current_purchase_price then
 ```
 
 **With tips**
+
 ```pascaligo skip
 if amount >= current_purchase_price then
 ```

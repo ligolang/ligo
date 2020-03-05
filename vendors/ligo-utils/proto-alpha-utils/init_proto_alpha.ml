@@ -200,7 +200,7 @@ type environment = {
 let init_environment () =
   Context_init.main 10 >>=? fun (tezos_context, accounts, contracts) ->
   let accounts = List.map fst accounts in
-  let tezos_context = Alpha_context.Gas.set_limit tezos_context @@ Z.of_int 350000 in
+  let tezos_context = Alpha_context.Gas.set_limit tezos_context @@ Z.of_int 800000 in
   let identities =
     List.map (fun ((a:Context_init.account), c) -> {
                   public_key = a.pk ;

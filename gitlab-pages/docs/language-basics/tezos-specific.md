@@ -3,6 +3,8 @@ id: tezos-specific
 title: Tezos Domain-Specific Operations
 ---
 
+import Syntax from '@theme/Syntax';
+
 LIGO is a programming language for writing Tezos smart contracts. It
 would be a little odd if it did not have any Tezos specific
 functions. This page will tell you about them.
@@ -20,9 +22,10 @@ functionality can be accessed from within LIGO.
 > untrusted source or casting the result to the wrong type. Do not use
 > the corresponding LIGO functions without doing your homework first.
 
-<!--DOCUSAURUS_CODE_TABS-->
 
-<!--PascaLIGO-->
+
+<Syntax syntax="pascaligo">
+
 ```pascaligo group=a
 function id_string (const p : string) : option (string) is block {
   const packed : bytes = bytes_pack (p)
@@ -31,14 +34,18 @@ function id_string (const p : string) : option (string) is block {
 
 > Note that `bytes_unpack` is *deprecated*.
 
-<!--CameLIGO-->
+</Syntax>
+<Syntax syntax="cameligo">
+
 ```cameligo group=a
 let id_string (p : string) : string option =
   let packed: bytes = Bytes.pack p in
   (Bytes.unpack packed : string option)
 ```
 
-<!--ReasonLIGO-->
+</Syntax>
+<Syntax syntax="reasonligo">
+
 ```reasonligo group=a
 let id_string = (p : string) : option (string) => {
   let packed : bytes = Bytes.pack (p);
@@ -46,7 +53,8 @@ let id_string = (p : string) : option (string) => {
 };
 ```
 
-<!--END_DOCUSAURUS_CODE_TABS-->
+</Syntax>
+
 
 ## Hashing Keys
 
@@ -56,9 +64,10 @@ if this were not the case, hashes are much smaller than keys, and
 storage on blockchains comes at a cost premium. You can hash keys with
 a predefined functions returning a value of type `key_hash`.
 
-<!--DOCUSAURUS_CODE_TABS-->
 
-<!--PascaLIGO-->
+
+<Syntax syntax="pascaligo">
+
 ```pascaligo group=b
 function check_hash_key (const kh1 : key_hash; const k2 : key) : bool * key_hash is
   block {
@@ -68,14 +77,18 @@ function check_hash_key (const kh1 : key_hash; const k2 : key) : bool * key_hash
   } with (ret, kh2)
 ```
 
-<!--CameLIGO-->
+</Syntax>
+<Syntax syntax="cameligo">
+
 ```cameligo group=b
 let check_hash_key (kh1, k2 : key_hash * key) : bool * key_hash =
   let kh2 : key_hash = Crypto.hash_key k2 in
   if kh1 = kh2 then true, kh2 else false, kh2
 ```
 
-<!--ReasonLIGO-->
+</Syntax>
+<Syntax syntax="reasonligo">
+
 ```reasonligo group=b
 let check_hash_key = ((kh1, k2) : (key_hash, key)) : (bool, key_hash) => {
   let kh2 : key_hash = Crypto.hash_key (k2);
@@ -83,7 +96,8 @@ let check_hash_key = ((kh1, k2) : (key_hash, key)) : (bool, key_hash) => {
 };
 ```
 
-<!--END_DOCUSAURUS_CODE_TABS-->
+</Syntax>
+
 
 ## Checking Signatures
 
@@ -97,9 +111,10 @@ asynchronously. You can do this in LIGO using the `key` and
 > because that would require storing a private key on chain, at which
 > point it is not... private anymore.
 
-<!--DOCUSAURUS_CODE_TABS-->
 
-<!--PascaLIGO-->
+
+<Syntax syntax="pascaligo">
+
 ```pascaligo group=c
 function check_signature
     (const pk     : key;
@@ -110,20 +125,25 @@ function check_signature
 
 > Note that `crypto_check` is *deprecated*.
 
-<!--CameLIGO-->
+</Syntax>
+<Syntax syntax="cameligo">
+
 ```cameligo group=c
 let check_signature (pk, signed, msg : key * signature * bytes) : bool =
   Crypto.check pk signed msg
 ```
 
-<!--ReasonLIGO-->
+</Syntax>
+<Syntax syntax="reasonligo">
+
 ```reasonligo group=c
 let check_signature =
   ((pk, signed, msg) : (key, signature, bytes)) : bool =>
   Crypto.check (pk, signed, msg);
 ```
 
-<!--END_DOCUSAURUS_CODE_TABS-->
+</Syntax>
+
 
 ## Contract's Own Address
 
@@ -136,21 +156,69 @@ can do it with `Tezos.self_address`.
 > contract is only allowed at the top-level. Using it in an embedded
 > function will cause an error.
 
-<!--DOCUSAURUS_CODE_TABS-->
 
-<!--PascaLIGO-->
+
+<Syntax syntax="pascaligo">
+
 ```pascaligo group=d
 const current_addr : address = Tezos.self_address
 ```
 
-<!--CameLIGO-->
+</Syntax>
+<Syntax syntax="cameligo">
+
 ```cameligo group=d
 let current_addr : address = Tezos.self_address
 ```
 
-<!--ReasonLIGO-->
+</Syntax>
+<Syntax syntax="reasonligo">
+
 ```reasonligo group=d
 let current_addr : address = Tezos.self_address;
 ```
 
-<!--END_DOCUSAURUS_CODE_TABS-->
+</Syntax>
+
+## Origination of a contract
+
+`Tezos.create_contract` allows you to originate a contract given its code, delegate (if any), initial balance and initial storage.
+The return value is a pair of type `(operation * address)`.
+
+> ⚠️ Due to limitations in Michelson, `Tezos.create_contract` first argument
+> must be inlined and must not contain references to free variables
+
+<Syntax syntax="pascaligo">
+
+```pascaligo group=e
+const origination : operation * address = Tezos.create_contract (
+  function (const p : nat; const s : string): list(operation) * string is ((nil : list(operation)), s),
+  (None : option(key_hash)),
+  3tz,
+  "initial_storage")
+```
+
+</Syntax>
+<Syntax syntax="cameligo">
+
+```cameligo group=e
+let origination : operation * address = Tezos.create_contract
+  (fun (p, s : nat * string) -> (([] : operation list), s))
+  (None: key_hash option) 
+  3tz 
+  "initial_storage"
+```
+
+</Syntax>
+<Syntax syntax="reasonligo">
+
+```reasonligo group=e
+let origination : (operation, address) = Tezos.create_contract (
+  ((p, s) : (nat,string)) : (list(operation),string) => (([] : list(operation)), s),
+  None: option(key_hash),
+  3tz,
+  "initial_storage")
+```
+
+</Syntax>
+

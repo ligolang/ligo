@@ -10,8 +10,12 @@ function get_top (const h : heap) : heap_elt is get_force (1n, h)
 function pop_switch (const h : heap) : heap is
   block {
    const result : heap_elt = get_top (h);
-   const s : nat = size (h);
-   const last : heap_elt = get_force (s, h);
+   const s : nat = Map.size (h);
+   const last : heap_elt =
+     case h[s] of
+       Some (e) -> e
+     | None -> (failwith ("No element.") : heap_elt)
+     end;
    remove 1n from map h;
    h[1n] := last
   } with h
@@ -19,8 +23,12 @@ function pop_switch (const h : heap) : heap is
 function pop_ (const h : heap) : nat is
   block {
     const result : heap_elt = get_top (h);
-    const s : nat = size (h);
-    var current : heap_elt := get_force (s, h);
+    const s : nat = Map.size (h);
+    var current : heap_elt :=
+      case h[s] of
+        Some (e) -> e
+      | None -> (failwith ("No element.") : heap_elt)
+      end;
     const i : nat = 1n;
     const left : nat = 2n * i;
     const right : nat = left + 1n;

@@ -1,19 +1,17 @@
 type storage = int;
 
-type param =
-  | Add(int)
-  | Sub(int);
+type parameter =
+| Add (int)
+| Sub (int);
 
-let main2 = ((p: param), storage) => {
-  let storage =
-    storage
-    + (
-      switch (p) {
-      | Add(n) => n
-      | Sub(n) => 0 - n
-      }
-  );
-  (([]: list(operation)), storage);
+type return = (list (operation), storage);
+
+let main = ((action, store): (parameter, storage)) => {
+  let store =
+    store +
+      (switch (action) {
+      | Add (n) => n
+      | Sub (n) => -n
+      });
+  (([]: list (operation)), store);
 };
-
-let main = (x: (param, storage)) => main2(x[0],x[1]);

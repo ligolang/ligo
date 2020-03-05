@@ -1,1 +1,1 @@
-let main (kh: key_hash) : unit contract = Current.implicit_account kh
+let main (kh : key_hash) : unit contract = Tezos.implicit_account kh

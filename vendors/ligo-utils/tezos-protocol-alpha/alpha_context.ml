@@ -158,7 +158,9 @@ module Contract = struct
   let init_origination_nonce = Raw_context.init_origination_nonce
 
   let unset_origination_nonce = Raw_context.unset_origination_nonce
+  let set_balance = Contract_storage.set_balance
 end
+
 
 module Big_map = struct
   type id = Z.t

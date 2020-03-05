@@ -17,17 +17,17 @@ const bl : foobar = list [144; 51; 42; 120; 421]
 function fold_op (const s : list (int)) : int is
   block {
     function aggregate (const prec: int; const cur: int) : int is prec+cur
-  } with list_fold (aggregate, s, 10)
+  } with List.fold (aggregate, s, 10)
 
 function iter_op (const s : list (int)) : int is
   block {
     var r : int := 0;
     function aggregate (const i : int) : unit is
       block { r := r + i } with unit;
-    list_iter (aggregate, s)
+    List.iter (aggregate, s)
   } with r
 
 function map_op (const s : list (int)) : list (int) is
   block {
     function increment (const i : int) : int is i+1
-  } with list_map (increment, s)
+  } with List.map (increment, s)

@@ -3,6 +3,8 @@ id: timestamps-addresses
 title: Timestamps, Addresses
 ---
 
+import Syntax from '@theme/Syntax';
+
 ## Timestamps
 
 LIGO features timestamps, as Michelson does, while bakers baking the
@@ -15,29 +17,35 @@ You can obtain the current time using the built-in syntax specific
 expression, please be aware that it is up to the baker to set the
 current timestamp value.
 
-<!--DOCUSAURUS_CODE_TABS-->
-<!--PascaLIGO-->
+
+<Syntax syntax="pascaligo">
+
 ```pascaligo group=a
 const today : timestamp = Tezos.now
 ```
 
 > Note that `now` is *deprecated*.
 
-<!--CameLIGO-->
+</Syntax>
+<Syntax syntax="cameligo">
+
 ```cameligo group=a
 let today : timestamp = Tezos.now
 ```
 
 > Note that `Current.time` is *deprecated*.
 
-<!--ReasonLIGO-->
+</Syntax>
+<Syntax syntax="reasonligo">
+
 ```reasonligo group=a
 let today : timestamp = Tezos.now;
 ```
 
 > Note that `Current.time` is *deprecated*.
 
-<!--END_DOCUSAURUS_CODE_TABS-->
+</Syntax>
+
 
 > When running code, the LIGO CLI option `--predecessor-timestamp`
 > allows you to control what `Tezos.now` returns.
@@ -49,8 +57,9 @@ constraints on your smart contracts. Consider the following scenarios.
 
 #### In 24 hours
 
-<!--DOCUSAURUS_CODE_TABS-->
-<!--PascaLIGO-->
+
+<Syntax syntax="pascaligo">
+
 ```pascaligo group=b
 const today : timestamp = Tezos.now
 const one_day : int = 86400
@@ -61,7 +70,9 @@ const one_day_later : timestamp = some_date + one_day
 
 > Note that `now` is *deprecated*.
 
-<!--CameLIGO-->
+</Syntax>
+<Syntax syntax="cameligo">
+
 ```cameligo group=b
 let today : timestamp = Tezos.now
 let one_day : int = 86400
@@ -72,7 +83,9 @@ let one_day_later : timestamp = some_date + one_day
 
 > Note that `Current.time` is *deprecated*.
 
-<!--ReasonLIGO-->
+</Syntax>
+<Syntax syntax="reasonligo">
+
 ```reasonligo group=b
 let today : timestamp = Tezos.now;
 let one_day : int = 86400;
@@ -83,12 +96,14 @@ let one_day_later : timestamp = some_date + one_day;
 
 > Note that `Current.time` is *deprecated*.
 
-<!--END_DOCUSAURUS_CODE_TABS-->
+</Syntax>
+
 
 #### 24 hours Ago
 
-<!--DOCUSAURUS_CODE_TABS-->
-<!--PascaLIGO-->
+
+<Syntax syntax="pascaligo">
+
 ```pascaligo group=c
 const today : timestamp = Tezos.now
 const one_day : int = 86400
@@ -97,7 +112,9 @@ const in_24_hrs : timestamp = today - one_day
 
 > Note that `now` is *deprecated*.
 
-<!--CameLIGO-->
+</Syntax>
+<Syntax syntax="cameligo">
+
 ```cameligo group=c
 let today : timestamp = Tezos.now
 let one_day : int = 86400
@@ -106,7 +123,9 @@ let in_24_hrs : timestamp = today - one_day
 
 > Note that `Current.time` is *deprecated*.
 
-<!--ReasonLIGO-->
+</Syntax>
+<Syntax syntax="reasonligo">
+
 ```reasonligo group=c
 let today : timestamp = Tezos.now;
 let one_day : int = 86400;
@@ -115,38 +134,43 @@ let in_24_hrs : timestamp = today - one_day;
 
 > Note that `Current.time` is *deprecated*.
 
+</Syntax>
 
-<!--END_DOCUSAURUS_CODE_TABS-->
 
 ### Comparing Timestamps
 
 You can compare timestamps using the same comparison operators
 applying to numbers.
 
-<!--DOCUSAURUS_CODE_TABS-->
-<!--PascaLIGO-->
+
+<Syntax syntax="pascaligo">
+
 ```pascaligo group=c
 const not_tommorow : bool = (Tezos.now = in_24_hrs)
 ```
 
 > Note that `now` is *deprecated*.
 
-<!--CameLIGO-->
+</Syntax>
+<Syntax syntax="cameligo">
+
 ```cameligo group=c
 let not_tomorrow : bool = (Tezos.now = in_24_hrs)
 ```
 
 > Note that `Current.time` is *deprecated*.
 
-<!--ReasonLIGO-->
+</Syntax>
+<Syntax syntax="reasonligo">
+
 ```reasonligo group=c
 let not_tomorrow : bool = (Tezos.now == in_24_hrs);
 ```
 
 > Note that `Current.time` is *deprecated*.
 
+</Syntax>
 
-<!--END_DOCUSAURUS_CODE_TABS-->
 
 ## Addresses
 
@@ -155,26 +179,32 @@ KT1, ...). Currently, addresses are created by casting a string to the
 `address` type. Beware of failures if the address is invalid. Consider
 the following examples.
 
-<!--DOCUSAURUS_CODE_TABS-->
-<!--PascaLIGO-->
+
+<Syntax syntax="pascaligo">
+
 ```pascaligo group=d
 const my_account : address =
   ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address)
 ```
 
-<!--CameLIGO-->
+</Syntax>
+<Syntax syntax="cameligo">
+
 ```cameligo group=d
 let my_account : address =
   ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address)
 ```
 
-<!--ReasonLIGO-->
+</Syntax>
+<Syntax syntax="reasonligo">
+
 ```reasonligo group=d
 let my_account : address =
   ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address);
 ```
 
-<!--END_DOCUSAURUS_CODE_TABS-->
+</Syntax>
+
 
 ## Signatures
 
@@ -184,26 +214,35 @@ failure if the signature is invalid.
 
 Here is how you can define a signature:
 
-<!--DOCUSAURUS_CODE_TABS-->
-<!--PascaLIGO-->
+
+<Syntax syntax="pascaligo">
+
 ```pascaligo group=e
 const my_sig : signature =
   ("edsigthTzJ8X7MPmNeEwybRAvdxS1pupqcM5Mk4uCuyZAe7uEk68YpuGDeViW8wSXMrCi5CwoNgqs8V2w8ayB5dMJzrYCHhD8C7" :
   signature)
 ```
-<!--CameLIGO-->
+
+</Syntax>
+<Syntax syntax="cameligo">
+
 ```cameligo group=e
 let my_sig : signature =
    ("edsigthTzJ8X7MPmNeEwybRAvdxS1pupqcM5Mk4uCuyZAe7uEk68YpuGDeViW8wSXMrCi5CwoNgqs8V2w8ayB5dMJzrYCHhD8C7" :
    signature)
 ```
-<!--ReasonLIGO-->
+
+</Syntax>
+<Syntax syntax="reasonligo">
+
 ```reasonligo group=e
 let my_sig : signature =
 ("edsigthTzJ8X7MPmNeEwybRAvdxS1pupqcM5Mk4uCuyZAe7uEk68YpuGDeViW8wSXMrCi5CwoNgqs8V2w8ayB5dMJzrYCHhD8C7" :
 signature);
 ```
-<!--END_DOCUSAURUS_CODE_TABS-->
+
+</Syntax>
+
 
 ## Keys
 
@@ -213,20 +252,29 @@ failure if the key is invalid.
 
 Here is how you can define a key.
 
-<!--DOCUSAURUS_CODE_TABS-->
-<!--PascaLIGO-->
+
+<Syntax syntax="pascaligo">
+
 ```pascaligo group=f
 const my_key : key =
 ("edpkuBknW28nW72KG6RoHtYW7p12T6GKc7nAbwYX5m8Wd9sDVC9yav" : key)
 ```
-<!--CameLIGO-->
+
+</Syntax>
+<Syntax syntax="cameligo">
+
 ```cameligo group=f
 let my_key : key =
   ("edpkuBknW28nW72KG6RoHtYW7p12T6GKc7nAbwYX5m8Wd9sDVC9yav" : key)
 ```
-<!--ReasonLIGO-->
+
+</Syntax>
+<Syntax syntax="reasonligo">
+
 ```reasonligo group=f
 let my_key : key =
   ("edpkuBknW28nW72KG6RoHtYW7p12T6GKc7nAbwYX5m8Wd9sDVC9yav" : key);
 ```
-<!--END_DOCUSAURUS_CODE_TABS-->
+
+</Syntax>
+
