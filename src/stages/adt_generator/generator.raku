@@ -178,7 +178,7 @@ say '    }';
 say "";
 say "  type adt = node list";
 say "  type node_info = unit -> adt * node";
-say "  type ctor_or_field_info = unit -> adt * node";
+say "  type ctor_or_field_info = unit -> adt * node * ctor_or_field";
 say "end";
 
 
@@ -203,6 +203,36 @@ for $adts.list -> $t
   } }
 say '  }';
 
+for $adts.list -> $t
+{ for $t<ctorsOrFields>.list -> $c
+  { say "(* info for field or ctor $t<name>.$c<name> *)";
+    say "let info_$t<name>_$c<name> : Adt_info.ctor_or_field = \{";
+    say "  name = \"$c<name>\";";
+    say "  isBuiltin = {$c<isBuiltin> ?? 'true' !! 'false'};";
+    say "  type_ = \"$c<type>\";";
+    say '}';
+    say ""; }
+  say "(* info for node $t<name> *)";
+  say "let info_$t<name> : Adt_info.node = \{";
+  my $kind = do given $t<kind> {
+    when $record { "Record" }
+    when $variant { "Variant" }
+    default { "Poly \"$_\"" }
+  };
+  say "  kind = $kind;";
+  say "  name = \"$t<name>\";";
+  print "  ctors_or_fields = [ ";
+  for $t<ctorsOrFields>.list -> $c { print "info_$t<name>_$c<name> ; "; }
+  say "];";
+  say '}';
+  say ""; }
+
+say "(* info for adt $moduleName *)";
+print "let whole_adt_info : Adt_info.adt = [ ";
+for $adts.list -> $t
+{ print "info_$t<name> ; "; }
+say "]";
+
 say "";
 say '(* Curries the "visitor" argument to the folds (non-customizable traversal functions). *)';
 say "let rec mk_continue_fold : type state . state fold_config -> state continue_fold = fun visitor ->";
@@ -211,21 +241,21 @@ for $adts.list -> $t
 { say "    $t<name> = fold_$t<name> visitor ;";
   for $t<ctorsOrFields>.list -> $c
   { say "    $t<name>_$c<name> = fold_$t<name>_$c<name> visitor ;"; } }
-say '}';
+say '  }';
 say "";
 
 for $adts.list -> $t
 { say "and fold_$t<name> : type state . state fold_config -> $t<name> -> state -> ($t<newName> * state) = fun visitor x state ->";
   say "  let continue_fold : state continue_fold = mk_continue_fold visitor in";
-  say "  let state = visitor.$t<name>_pre_state x (fun () -> failwith \"todo\") state in";
-  say "  let (new_x, state) = visitor.$t<name> x (fun () -> failwith \"todo\") state continue_fold in";
-  say "  let state = visitor.$t<name>_post_state x new_x (fun () -> failwith \"todo\") state in";
+  say "  let state = visitor.$t<name>_pre_state x (fun () -> whole_adt_info, info_$t<name>) state in";
+  say "  let (new_x, state) = visitor.$t<name> x (fun () -> whole_adt_info, info_$t<name>) state continue_fold in";
+  say "  let state = visitor.$t<name>_post_state x new_x (fun () -> whole_adt_info, info_$t<name>) state in";
   say "  (new_x, state)";
   say "";
   for $t<ctorsOrFields>.list -> $c
   { say "and fold_$t<name>_$c<name> : type state . state fold_config -> $c<type> -> state -> ($c<newType> * state) = fun visitor x state ->";
     say "  let continue_fold : state continue_fold = mk_continue_fold visitor in";
-    say "  visitor.$t<name>_$c<name> x (fun () -> failwith \"todo\") state continue_fold";
+    say "  visitor.$t<name>_$c<name> x (fun () -> whole_adt_info, info_$t<name>, info_$t<name>_$c<name>) state continue_fold";
     say ""; } }
 
 say "let no_op : 'a fold_config = \{";
