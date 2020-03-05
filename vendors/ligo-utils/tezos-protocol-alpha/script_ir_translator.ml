@@ -5325,8 +5325,6 @@ let typecheck_code :
          })
       ctxt
       ~legacy
-      ~type_logger:(fun loc bef aft ->
-        type_map := (loc, (bef, aft)) :: !type_map)
       (arg_type_full, None)
       ret_type_full
       code_field
