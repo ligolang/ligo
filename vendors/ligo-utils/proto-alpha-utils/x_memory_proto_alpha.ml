@@ -1107,6 +1107,7 @@ let unparse_ty_michelson ty =
 type typecheck_res =
   | Type_checked
   | Err_parameter | Err_storage | Err_contract
+  | Err_gas
   | Err_unknown
 
 let typecheck_contract contract =
@@ -1116,6 +1117,7 @@ let typecheck_contract contract =
   | Ok _res -> return Type_checked
   | Error (Script_tc_errors.Ill_formed_type (Some "parameter", _code, _)::_) -> return Err_parameter
   | Error (Script_tc_errors.Ill_formed_type (Some "storage", _code, _)::_) -> return Err_storage
+  | Error (Script_tc_errors.Ill_typed_contract _ :: Script_tc_errors.Cannot_serialize_error :: []) -> return @@ Err_gas
   | Error (Script_tc_errors.Ill_typed_contract (_code, _)::_) -> return @@ Err_contract
   | Error _ -> return Err_unknown
 
