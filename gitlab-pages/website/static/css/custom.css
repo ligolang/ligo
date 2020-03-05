@@ -582,7 +582,6 @@ a:hover {
 }
 
 #homePage #intro #preview  {
-  min-width: 700px;
   min-height: 450px;
   max-width: 400px
 }
@@ -896,6 +895,9 @@ a:hover {
   .nav-footer .sitemap {
     max-width: 1400px;
   }
+  #homePage #intro #preview  {
+    min-width: 700px;
+  }
 }
 
 @media (min-width: 1500px) {
@@ -919,7 +921,7 @@ a:hover {
 
   #homePage #intro #preview {
     order: 1;
-    width: 100%;
+    min-width: 100%;
   }
 
   #homePage #intro #preview .hljs {
