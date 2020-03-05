@@ -1107,16 +1107,17 @@ let unparse_ty_michelson ty =
 type typecheck_res =
   | Type_checked
   | Err_parameter | Err_storage | Err_contract
+  | Err_gas
   | Err_unknown
 
 let typecheck_contract contract =
   let contract' = Tezos_micheline.Micheline.strip_locations contract in
-  let ctxt = Raw_context.set_gas_unlimited dummy_environment.tezos_context in
-  Script_ir_translator.typecheck_code ctxt contract' >>= fun x ->
+  Script_ir_translator.typecheck_code dummy_environment.tezos_context contract' >>= fun x ->
   match x with
   | Ok _res -> return Type_checked
   | Error (Script_tc_errors.Ill_formed_type (Some "parameter", _code, _)::_) -> return Err_parameter
   | Error (Script_tc_errors.Ill_formed_type (Some "storage", _code, _)::_) -> return Err_storage
+  | Error (Script_tc_errors.Ill_typed_contract _ :: Script_tc_errors.Cannot_serialize_error :: []) -> return @@ Err_gas
   | Error (Script_tc_errors.Ill_typed_contract (_code, _)::_) -> return @@ Err_contract
   | Error _ -> return Err_unknown
 
