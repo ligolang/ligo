@@ -792,7 +792,8 @@ module Typer = struct
   let self_address = typer_0 "SELF_ADDRESS" @@ fun _ ->
     ok @@ t_address ()
 
-  let self = typer_0 "SELF" @@ fun tv_opt ->
+  let self = typer_1_opt "SELF" @@ fun entrypoint_as_string tv_opt ->
+    let%bind () = assert_t_string entrypoint_as_string in
     match tv_opt with
     | None -> simple_fail "untyped SELF"
     | Some t -> ok @@ t
@@ -1310,7 +1311,6 @@ module Compiler = struct
     | C_AMOUNT          -> ok @@ simple_constant @@ prim I_AMOUNT
     | C_ADDRESS         -> ok @@ simple_unary @@ prim I_ADDRESS
     | C_SELF_ADDRESS    -> ok @@ simple_constant @@ seq [prim I_SELF; prim I_ADDRESS]
-    | C_SELF            -> ok @@ simple_constant @@ seq [prim I_SELF]
     | C_IMPLICIT_ACCOUNT -> ok @@ simple_unary @@ prim I_IMPLICIT_ACCOUNT
     | C_SET_DELEGATE    -> ok @@ simple_unary @@ prim I_SET_DELEGATE
     | C_NOW             -> ok @@ simple_constant @@ prim I_NOW
