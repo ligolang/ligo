@@ -4,59 +4,46 @@ title: Introduction To LIGO
 ---
 
 LIGO is a programming language for writing [Tezos](https://tezos.com/) smart contracts.
+Smart contracts are a unique domain with extreme resource constraints and even
+more extreme security risks. Unlike desktop, mobile, or web
+application development smart contracts cannot rely on cheap CPU time and memory.
+All resources used by contracts are expensive, and tracked as 'gas costs'. Smart
+contracts often directly control money or assets, which if stolen could rack up to
+a large financial loss to the contracts controllers and users. Tezos smart contracts
+live on the blockchain forever, if there's a bug in them they can't be patched or
+amended. Naturally under these conditions it's not possible to develop smart contracts
+the way we're used to developing user facing applications.
 
-The LIGO philosophy can be described in a few bullet points:
+LIGO is designed with these problems in mind. The design philosophy can be
+described in a few bullet points:
 
-1. Design a clean, simple language with no unnecessary parts.
+1. Make a clean, simple language with no unnecessary parts.
 
-2. Give that language multiple syntaxes borrowed from other languages. Ideally
-LIGO requires the user to learn almost no new syntax.
+2. Offer multiple familiar syntaxes so users can get up and running quickly.
 
-3. Have that simple language encourage people to write simple code, so that it's
-easy to formally verify the compiled output using a project like [Mi-Cho-Coq](https://gitlab.com/nomadic-labs/mi-cho-coq/).
+3. Encourage people to write simple code, so that it's easy to formally verify the
+compiled output using a project like [Mi-Cho-Coq](https://gitlab.com/nomadic-labs/mi-cho-coq/).
 
-4. Stop waking up in the morning to find that your smart contract lost all its money
-to some [stupid exploit](https://www.wired.com/2016/06/50-million-hack-just-showed-dao-human/).
+4. Significantly reduce the risk that your smart contract will lose its balance to an [avoidable exploit](https://www.wired.com/2016/06/50-million-hack-just-showed-dao-human/).
 
-The current trend in language design is more, more, more, so this might seem
-counterintuitive. However most useful smart contracts can express their core
-functionality in under a thousand lines of code. The problem domain
-necessitates that you get as close as possible to the minimal code size and
-resource use. LIGO is a functional language designed to include the features
-you need, while avoiding patterns that make formal verification hard.
+LIGO is a functional language designed to include the features you need, while
+avoiding patterns that make formal verification hard. Most useful smart contracts
+can express their core functionality in under a thousand lines of code. This makes
+them a good target for formal methods, and what can't be easily proven can at least
+be extensively tested. The simplicity of LIGO also keeps its compiled output
+unbloated. Our hope is to have a simple, strongly typed language with a low footprint.
 
-For example LIGO doesn't use an object oriented paradigm, currently code is
-organized using functions. While LIGO plans to have a module system in the
-future, we don't want programs to have thousands of dependencies. Once a
-contract is put on the blockchain, it's not possible to change it. A new
-version can be uploaded, but the original contract remains available. Contracts
-tend to control money. In that environment it's not responsible to encourage
-users to incorporate lots of code from strangers. The immutability of contracts
-make formal verification of contract logic attractive. The eventual goal is
-to make it easy to compile a LIGO contract to a format that can be loaded into
-the [Coq proof assistant](https://coq.inria.fr/).
+LIGO currently offers three syntaxes:
 
-## LIGO for Programming Smart Contracts on Tezos
+  - **PascaLIGO**, a syntax inspired by Pascal which provides an
+    imperative developer experience.
 
-Perhaps the most striking feature of LIGO is that it comes in
-different concrete syntaxes, and even different programming
-paradigms. In other words, LIGO is not defined by one syntax and one
-paradigm, like imperative versus functional.
+  - **CameLIGO**, an [OCaml]((https://ocaml.org/)) inspired
+    syntax that allows you to write in a functional style.
 
-  - There is **PascaLIGO**, which is inspired by Pascal, hence is an
-    imperative language with lots of keywords, where values can be
-    locally mutated after they have been annotated with their types
-    (declaration).
-
-  - There is **CameLIGO**, which is inspired by the pure subset of
-    [OCaml](https://ocaml.org/), hence is a functional language with
-    few keywords, where values cannot be mutated, but still require
-    type annotations (unlike OCaml, whose compiler performs almost
-    full type inference).
-
-  - There is **ReasonLIGO**, which is inspired by the pure subset of
-    [ReasonML](https://reasonml.github.io/), which is based upon
-    OCaml.
+  - **ReasonLIGO**, an [ReasonML]((https://reasonml.github.io/)) inspired syntax
+    that builds on the strong points of OCaml. It aims to be familiar for those
+    coming from JavaScript.
 
 Let's define some LIGO contract in the three flavours above. Do
 not worry if it is a little confusing at first; we will explain all
