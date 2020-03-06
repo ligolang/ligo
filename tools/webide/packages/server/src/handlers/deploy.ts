@@ -13,7 +13,7 @@ interface DeployBody {
   storage: string;
 }
 
-Tezos.setProvider({ rpc: 'https://api.tez.ie/rpc/babylonnet' });
+Tezos.setProvider({ rpc: 'https://api.tez.ie/rpc/carthagenet' });
 
 const validateRequest = (body: any): { value: DeployBody; error: any } => {
   return joi
