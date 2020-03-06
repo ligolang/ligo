@@ -521,8 +521,118 @@ and transpile_lambda l (input_type , output_type) =
   ok @@ Combinators.Expression.make_tpl (closure , tv)
 
 and transpile_recursive {fun_name; fun_type; lambda} =
-  let closure = E_closure { binder=fun_name; body} in
-  ok @@ Combinators.Expression.make closure fun_type
+  let rec map_lambda : AST.expression_variable -> type_value -> AST.expression -> expression result = fun fun_name loop_type e ->
+    match e.expression_content with 
+      E_lambda {binder;result} -> 
+        let%bind body = map_lambda fun_name loop_type result in
+        ok @@ Expression.make (E_closure {binder;body}) loop_type|
+      _  -> replace_callback fun_name loop_type e
+
+  and replace_callback : AST.expression_variable -> type_value -> AST.expression -> expression result = fun fun_name loop_type e ->
+    match e.expression_content with
+      E_let_in li ->
+        let%bind let_result = replace_callback fun_name loop_type li.let_result in
+        let%bind rhs = transpile_annotated_expression li.rhs in
+        let%bind ty  = transpile_type e.type_expression in
+        ok @@ e_let_in li.let_binder ty li.inline rhs let_result |
+      E_matching m -> 
+        let%bind ty = transpile_type e.type_expression in
+        matching fun_name loop_type m ty |
+      E_application {expr1;expr2} -> (
+        match expr1.expression_content with
+        E_variable name when Var.equal fun_name name -> 
+          let%bind expr = transpile_annotated_expression expr2 in
+          ok @@ Expression.make (E_constant {cons_name=C_LOOP_CONTINUE;arguments=[expr]}) loop_type |
+        _ -> 
+          let%bind expr = transpile_annotated_expression e in
+          ok @@ Expression.make (E_constant {cons_name=C_LOOP_STOP;arguments=[expr]}) loop_type
+      ) |
+      _ -> 
+        let%bind expr = transpile_annotated_expression e in
+        ok @@ Expression.make (E_constant {cons_name=C_LOOP_STOP;arguments=[expr]}) loop_type
+  and matching : AST.expression_variable -> type_value -> AST.matching -> type_value -> expression result = fun fun_name loop_type m ty ->
+    let return ret = ok @@ Expression.make ret @@ ty in
+    let%bind expr = transpile_annotated_expression m.matchee in
+    match m.cases with
+      Match_bool {match_true; match_false} -> 
+          let%bind (t , f) = bind_map_pair (replace_callback fun_name loop_type) (match_true, match_false) in
+          return @@ E_if_bool (expr, t, f)
+      | Match_option { match_none; match_some = (name, s, tv) } ->
+          let%bind n = replace_callback fun_name loop_type match_none in
+          let%bind (tv' , s') =
+            let%bind tv' = transpile_type tv in
+            let%bind s' = replace_callback fun_name loop_type s in
+            ok (tv' , s')
+          in
+          return @@ E_if_none (expr , n , ((name , tv') , s'))
+      | Match_list {
+          match_nil ;
+          match_cons = ((hd_name) , (tl_name), match_cons, ty) ;
+        } -> (
+          let%bind nil = replace_callback fun_name loop_type match_nil in
+          let%bind cons =
+            let%bind ty' = transpile_type ty in
+            let%bind match_cons' = replace_callback fun_name loop_type match_cons in
+            ok (((hd_name , ty') , (tl_name , ty')) , match_cons')
+          in
+          return @@ E_if_cons (expr , nil , cons)
+        )
+      | Match_variant (lst , variant) -> (
+          let%bind tree =
+            trace_strong (corner_case ~loc:__LOC__ "getting lr tree") @@
+            tree_of_sum variant in
+          let%bind tree' = match tree with
+            | Empty -> fail (corner_case ~loc:__LOC__ "match empty variant")
+            | Full x -> ok x in
+          let%bind tree'' =
+            let rec aux t =
+              match (t : _ Append_tree.t') with
+              | Leaf (name , tv) ->
+                  let%bind tv' = transpile_type tv in
+                  ok (`Leaf name , tv')
+              | Node {a ; b} ->
+                  let%bind a' = aux a in
+                  let%bind b' = aux b in
+                  let tv' = Mini_c.t_union (None, snd a') (None, snd b') in
+                  ok (`Node (a' , b') , tv')
+            in aux tree'
+          in
+          let rec aux top t =
+            match t with
+            | ((`Leaf constructor_name) , tv) -> (
+                let%bind ((_ , name) , body) =
+                  trace_option (corner_case ~loc:__LOC__ "missing match clause") @@
+                  List.find_opt (fun ((constructor_name' , _) , _) -> constructor_name' = constructor_name) lst in
+                let%bind body' = replace_callback fun_name loop_type body in
+                return @@ E_let_in ((name , tv) , false , top , body')
+              )
+            | ((`Node (a , b)) , tv) ->
+                let%bind a' =
+                  let%bind a_ty = get_t_left tv in
+                  let left_var = Var.fresh ~name:"left" () in
+                  let%bind e = aux (((Expression.make (E_variable left_var) a_ty))) a in
+                  ok ((left_var , a_ty) , e)
+                in
+                let%bind b' =
+                  let%bind b_ty = get_t_right tv in
+                  let right_var = Var.fresh ~name:"right" () in
+                  let%bind e = aux (((Expression.make (E_variable right_var) b_ty))) b in
+                  ok ((right_var , b_ty) , e)
+                in
+                return @@ E_if_left (top , a' , b')
+          in
+          trace_strong (corner_case ~loc:__LOC__ "building constructor") @@
+          aux expr tree''
+       )
+      | AST.Match_tuple _ -> failwith "match_tuple not supported"
+  in
+  let%bind fun_type = transpile_type fun_type in
+  let%bind (input_type,output_type) = get_t_function fun_type in
+  let loop_type = t_union (None, input_type) (None, output_type) in
+  let%bind body = map_lambda fun_name loop_type lambda.result in
+  let expr = Expression.make_tpl (E_variable fun_name, input_type) in
+  let body = Expression.make (E_iterator (C_LOOP_LEFT, ((lambda.binder, loop_type),body), expr)) output_type in
+  ok @@ Expression.make (E_closure {binder=fun_name;body}) fun_type
 
 let transpile_declaration env (d:AST.declaration) : toplevel_statement result =
   match d with

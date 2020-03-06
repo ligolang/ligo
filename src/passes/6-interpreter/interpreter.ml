@@ -80,8 +80,8 @@ let rec apply_operator : Ast_typed.constant' -> value list -> value result =
     | ( C_IS_NAT , [ V_Ct (C_int a')    ] ) ->
       if a' > 0 then return_some @@ V_Ct (C_nat a')
       else return_none ()
-    | ( C_CONTINUE  , [ v ] ) -> ok @@ v_pair (v_bool true  , v)
-    | ( C_STOP      , [ v ] ) -> ok @@ v_pair (v_bool false , v)
+    | ( C_FOLD_CONTINUE  , [ v ] ) -> ok @@ v_pair (v_bool true  , v)
+    | ( C_FOLD_STOP      , [ v ] ) -> ok @@ v_pair (v_bool false , v)
     | ( C_ASSERTION , [ v ] ) ->
       let%bind pass = is_true v in
       if pass then return_ct @@ C_unit

@@ -70,6 +70,17 @@ module Errors = struct
        fun () -> Format.asprintf "%a" Location.pp_lift @@ param_loc)]
     in error ~data title message
 
+  let untyped_recursive_function var =
+    let title () = "" in
+    let message () =
+      Format.asprintf "\nUntyped recursive function \
+                       are not supported yet.\n" in
+    let param_loc = var.Region.region in
+    let data = [
+      ("location",
+       fun () -> Format.asprintf "%a" Location.pp_lift @@ param_loc)]
+    in error ~data title message
+
   let unsupported_tuple_pattern p =
     let title () = "" in
     let message () =
@@ -739,12 +750,11 @@ and simpl_declaration : Raw.declaration -> declaration Location.wrap list result
       let%bind type_expression = simpl_type_expression type_expr in
       ok @@ [loc x @@ Declaration_type (Var.of_name name.value , type_expression)]
   | Let x -> (
-      let (_, _rec, let_binding, attributes), _ = r_split x in
+      let (_, recursive, let_binding, attributes), _ = r_split x in
       let inline = List.exists (fun (a: Raw.attribute) -> a.value = "inline") attributes in
       let binding = let_binding in
       let {binders; lhs_type; let_rhs} = binding in
-      let%bind (hd, _) =
-        let (hd, tl) = binders in ok (hd, tl) in
+      let (hd, _) = binders in
         match hd with
         | PTuple pt ->
           let process_variable (var_pair: pattern * Raw.expr) :
@@ -840,6 +850,18 @@ and simpl_declaration : Raw.declaration -> declaration Location.wrap list result
         | _ -> ok None
         )
       | Some t -> ok @@ Some t
+      in
+      let binder = Var.of_name var.value in
+      let%bind rhs' = match recursive with 
+        None -> ok @@ rhs' 
+        | Some _ -> match rhs'.expression_content with 
+          E_lambda lambda ->
+            (match lhs_type with 
+              None -> fail @@ untyped_recursive_function var 
+              | Some (lhs_type) -> 
+              let expression_content = E_recursive {fun_name=binder;fun_type=lhs_type;lambda} in
+              ok @@ {rhs' with expression_content})
+          | _ -> ok @@ rhs'
       in
       ok @@ [loc x @@ (Declaration_constant (Var.of_name var.value , lhs_type , inline, rhs'))]
     )

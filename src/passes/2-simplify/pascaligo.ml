@@ -1202,8 +1202,8 @@ and simpl_while_loop : Raw.while_loop -> (_ -> expression result) result = fun w
   in
   let init_rec = e_tuple [store_mutable_variable @@ captured_name_list] in
   let restore = fun expr -> List.fold_right aux captured_name_list expr in
-  let continue_expr = e_constant C_CONTINUE [for_body] in
-  let stop_expr = e_constant C_STOP [e_variable binder] in
+  let continue_expr = e_constant C_FOLD_CONTINUE [for_body] in
+  let stop_expr = e_constant C_FOLD_STOP [e_variable binder] in
   let aux_func = 
     e_lambda binder None None @@ 
     restore @@
@@ -1247,8 +1247,8 @@ and simpl_for_int : Raw.for_int -> (_ -> expression result) result = fun fi ->
   let restore = fun expr -> List.fold_right aux captured_name_list expr in
 
   (*Prep the lambda for the fold*)
-  let continue_expr = e_constant C_CONTINUE [restore(for_body)] in
-  let stop_expr = e_constant C_STOP [e_variable binder] in
+  let continue_expr = e_constant C_FOLD_CONTINUE [restore(for_body)] in
+  let stop_expr = e_constant C_FOLD_STOP [e_variable binder] in
   let aux_func = e_lambda binder None None @@ 
                  e_let_in (it,Some t_int) false false (e_accessor (e_variable binder) "1") @@
                  e_cond cond continue_expr (stop_expr) in

@@ -149,8 +149,11 @@ and constant ppf : constant' -> unit = function
   (* Loops *)
   | C_FOLD                  -> fprintf ppf "FOLD"
   | C_FOLD_WHILE            -> fprintf ppf "FOLD_WHILE"
-  | C_CONTINUE              -> fprintf ppf "CONTINUE"
-  | C_STOP                  -> fprintf ppf "STOP"
+  | C_FOLD_CONTINUE         -> fprintf ppf "CONTINUE"
+  | C_FOLD_STOP             -> fprintf ppf "STOP"
+  | C_LOOP_LEFT             -> fprintf ppf "LOOP_LEFT"
+  | C_LOOP_CONTINUE         -> fprintf ppf "LOOP_CONTINUE"
+  | C_LOOP_STOP             -> fprintf ppf "LOOP_STOP"
   | C_ITER                  -> fprintf ppf "ITER"
   (* MATH *)
   | C_NEG                   -> fprintf ppf "NEG"
