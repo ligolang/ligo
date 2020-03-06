@@ -20,7 +20,7 @@ export const EvaluateFunctionPaneComponent = () => {
   return (
     <Container>
       <Group>
-        <Label htmlFor="entrypoint">Entrypoint</Label>
+        <Label htmlFor="entrypoint">Function name</Label>
         <Input
           id="entrypoint"
           value={entrypoint}

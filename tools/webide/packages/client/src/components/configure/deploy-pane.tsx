@@ -5,7 +5,7 @@ import styled from 'styled-components';
 import { AppState } from '../../redux/app';
 import { ChangeEntrypointAction, ChangeStorageAction, DeployState, UseTezBridgeAction } from '../../redux/deploy';
 import { CheckboxComponent } from '../form/checkbox';
-import { Group, HGroup, Input, Label, Textarea } from '../form/inputs';
+import { AccessFunctionLabel, Group, HGroup, Input, Label, Textarea } from '../form/inputs';
 
 const Container = styled.div``;
 
@@ -33,7 +33,7 @@ export const DeployPaneComponent = () => {
   return (
     <Container>
       <Group>
-        <Label htmlFor="entrypoint">Entrypoint</Label>
+        <AccessFunctionLabel htmlFor="entrypoint"></AccessFunctionLabel>
         <Input
           id="entrypoint"
           value={entrypoint}

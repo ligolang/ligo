@@ -4,7 +4,7 @@ import styled from 'styled-components';
 
 import { AppState } from '../../redux/app';
 import { ChangeEntrypointAction, ChangeParametersAction, ChangeStorageAction, DryRunState } from '../../redux/dry-run';
-import { Group, Input, Label, Textarea } from '../form/inputs';
+import { AccessFunctionLabel, Group, Input, Label, Textarea } from '../form/inputs';
 
 const Container = styled.div``;
 
@@ -23,7 +23,7 @@ export const DryRunPaneComponent = () => {
   return (
     <Container>
       <Group>
-        <Label htmlFor="entrypoint">Entrypoint</Label>
+        <AccessFunctionLabel htmlFor="entrypoint"></AccessFunctionLabel>
         <Input
           id="entrypoint"
           value={entrypoint}
