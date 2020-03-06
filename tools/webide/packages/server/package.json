@@ -7,7 +7,7 @@
     "prestart": "cd ../client && npm run build",
     "start": "nodemon -r @ts-tools/node/r -r tsconfig-paths/register ./src/index.ts",
     "build": "tsc",
-    "test": "jest"
+    "test": "export DATA_DIR=/tmp && jest"
   },
   "devDependencies": {
     "@ts-tools/node": "^1.0.0",

@@ -11,6 +11,7 @@ stages:
   - build_and_package_binaries
   - build_docker
   - build_and_deploy
+  - ide-unit-test
   - ide-build
   - ide-e2e-test
   - ide-deploy
@@ -23,9 +24,8 @@ dont-merge-to-master:
   only:
     - master
 
-.build_binary:
-  &build_binary # To run in sequence and save CPU usage, use stage: build_and_package_binaries
-  stage: test
+.build_binary: &build_binary
+  stage: test # To run in sequence and save CPU usage, use stage: build_and_package_binaries
   script:
     - $build_binary_script "$target_os_family" "$target_os" "$target_os_version"
     - $package_binary_script "$target_os_family" "$target_os" "$target_os_version"
@@ -213,15 +213,20 @@ pages-attempt:
 # WEBIDE jobs
 
 run-webide-unit-tests:
-  stage: test
-  image: node:12-alpine
+  stage: ide-unit-test
+  dependencies:
+    - build-and-package-debian-10
+  image: node:12-buster
   script:
+    - mv $(realpath dist/package/debian-10/*.deb) ligo_deb10.deb
+    - apt-get update && apt-get -y install libev-dev perl pkg-config libgmp-dev libhidapi-dev m4 libcap-dev bubblewrap rsync
+    - dpkg -i ligo_deb10.deb
     - cd tools/webide/packages/server
     - npm ci
-    - npm run test
+    - export LIGO_CMD=/bin/ligo && npm run test
   rules:
     - changes:
-      - tools/webide/**
+        - tools/webide/**
       when: always
 
 build-publish-ide-image:
@@ -245,7 +250,7 @@ build-publish-ide-image:
     - docker push "${WEBIDE_IMAGE_NAME}:${CI_COMMIT_SHORT_SHA}"
   rules:
     - changes:
-      - tools/webide/**
+        - tools/webide/**
       when: always
     - if: '$CI_COMMIT_REF_NAME == "dev"'
       when: always
@@ -260,7 +265,7 @@ run-webide-e2e-tests:
     - docker-compose run e2e
   rules:
     - changes:
-      - tools/webide/**
+        - tools/webide/**
       when: always
     - if: '$CI_COMMIT_REF_NAME == "dev"'
       when: always
