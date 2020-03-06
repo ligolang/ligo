@@ -2,7 +2,11 @@
 
 ## [Unreleased]
 
-## [Add crypto reference page to docs](https://gitlab.com/ligolang/ligo/-/merge_requests/459)
+## [Support for self] (https://gitlab.com/ligolang/ligo/-/merge_requests/453)
+### Added
+- support for `Tezos.self(%Entrypoint)`
+
+## [Support for create_contract](https://gitlab.com/ligolang/ligo/-/merge_requests/459)
 ### Added
 - support for `Tezos.create_contract` origination
 
