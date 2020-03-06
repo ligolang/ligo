@@ -57,7 +57,10 @@ export class DeployAction extends CancellableAction {
     }
 
     dispatch({ ...new UpdateLoadingAction('Deploying to babylon network...') });
-    return await op.contract();
+    return {
+      address: (await op.contract()).address,
+      storage: michelsonStorage
+    };
   }
 
   async deployOnServerSide(dispatch: Dispatch, getState: () => AppState) {
@@ -89,10 +92,16 @@ export class DeployAction extends CancellableAction {
         dispatch({
           ...new ChangeContractAction(contract.address, Command.Deploy)
         });
+        dispatch({
+          ...new ChangeOutputAction(contract.storage, Command.Deploy)
+        });
       } catch (ex) {
         if (this.isCancelled()) {
           return;
         }
+        dispatch({
+          ...new ChangeContractAction('', Command.Deploy)
+        });
         dispatch({
           ...new ChangeOutputAction(
             `Error: ${getErrorMessage(ex)}`,

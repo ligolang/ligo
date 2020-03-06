@@ -2,10 +2,10 @@ import React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import styled from 'styled-components';
 
-import { AppState } from '../redux/app';
-import { ChangeEntrypointAction, ChangeMichelsonFormatAction, CompileState, MichelsonFormat } from '../redux/compile';
-import { CheckboxComponent } from './checkbox';
-import { Group, HGroup, Input, Label } from './inputs';
+import { AppState } from '../../redux/app';
+import { ChangeEntrypointAction, ChangeMichelsonFormatAction, CompileState, MichelsonFormat } from '../../redux/compile';
+import { CheckboxComponent } from '../form/checkbox';
+import { Group, HGroup, Input, Label } from '../form/inputs';
 
 const Container = styled.div``;
 
