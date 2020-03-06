@@ -1,5 +1,7 @@
 (* Driver for the CameLIGO lexer *)
 
+module Region = Simple_utils.Region
+
 module IO =
   struct
     let ext = ".mligo"

@@ -3,28 +3,39 @@ id: boolean-if-else
 title: Booleans and Conditionals
 ---
 
+import Syntax from '@theme/Syntax';
+
 ## Booleans
 
 The type of a boolean value is `bool`. Here is how to define a boolean
 value:
 
-<!--DOCUSAURUS_CODE_TABS-->
-<!--PascaLIGO-->
+
+<Syntax syntax="pascaligo">
+
 ```pascaligo group=a
-const a : bool = True   // Notice the capital letter
-const b : bool = False  // Same.
+const a : bool = True   // Also: true
+const b : bool = False  // Also: false
 ```
-<!--CameLIGO-->
+
+</Syntax>
+<Syntax syntax="cameligo">
+
 ```cameligo group=a
 let a : bool = true
 let b : bool = false
 ```
-<!--ReasonLIGO-->
+
+</Syntax>
+<Syntax syntax="reasonligo">
+
 ```reasonligo group=a
 let a : bool = true;
 let b : bool = false;
 ```
-<!--END_DOCUSAURUS_CODE_TABS-->
+
+</Syntax>
+
 
 ## Comparing Values
 
@@ -39,31 +50,41 @@ function.
 
 ### Comparing Strings
 
-<!--DOCUSAURUS_CODE_TABS-->
-<!--PascaLIGO-->
+
+<Syntax syntax="pascaligo">
+
 ```pascaligo group=b
 const a : string = "Alice"
 const b : string = "Alice"
 const c : bool = (a = b) // True
 ```
-<!--CameLIGO-->
+
+</Syntax>
+<Syntax syntax="cameligo">
+
 ```cameligo group=b
 let a : string = "Alice"
 let b : string = "Alice"
 let c : bool = (a = b) // true
 ```
-<!--ReasonLIGO-->
+
+</Syntax>
+<Syntax syntax="reasonligo">
+
 ```reasonligo group=b
 let a : string = "Alice";
 let b : string = "Alice";
 let c : bool = (a == b); // true
 ```
-<!--END_DOCUSAURUS_CODE_TABS-->
+
+</Syntax>
+
 
 ### Comparing numbers
 
-<!--DOCUSAURUS_CODE_TABS-->
-<!--PascaLIGO-->
+
+<Syntax syntax="pascaligo">
+
 ```pascaligo group=c
 const a : int  = 5
 const b : int  = 4
@@ -74,7 +95,10 @@ const f : bool = (a <= b)
 const g : bool = (a >= b)
 const h : bool = (a =/= b)
 ```
-<!--CameLIGO-->
+
+</Syntax>
+<Syntax syntax="cameligo">
+
 ```cameligo group=c
 let a : int  = 5
 let b : int  = 4
@@ -86,7 +110,9 @@ let g : bool = (a >= b)
 let h : bool = (a <> b)
 ```
 
-<!--ReasonLIGO-->
+</Syntax>
+<Syntax syntax="reasonligo">
+
 ```reasonligo group=c
 let a : int  = 5;
 let b : int  = 4;
@@ -97,33 +123,43 @@ let f : bool = (a <= b);
 let g : bool = (a >= b);
 let h : bool = (a != b);
 ```
-<!--END_DOCUSAURUS_CODE_TABS-->
+
+</Syntax>
+
 
 ### Comparing tez
 
 > 💡 Comparing `tez` values is especially useful when dealing with an
 > amount sent in a transaction.
 
-<!--DOCUSAURUS_CODE_TABS-->
-<!--PascaLIGO-->
+
+<Syntax syntax="pascaligo">
+
 ```pascaligo group=d
 const a : tez  = 5mutez
 const b : tez  = 10mutez
 const c : bool = (a = b) // False
 ```
-<!--CameLIGO-->
+
+</Syntax>
+<Syntax syntax="cameligo">
+
 ```cameligo group=d
 let a : tez  = 5mutez
 let b : tez  = 10mutez
 let c : bool = (a = b) // false
 ```
-<!--ReasonLIGO-->
+
+</Syntax>
+<Syntax syntax="reasonligo">
 ```reasonligo group=d
 let a : tez  = 5mutez;
 let b : tez  = 10mutez;
 let c : bool = (a == b); // false
 ```
-<!--END_DOCUSAURUS_CODE_TABS-->
+
+</Syntax>
+
 
 
 ## Conditionals
@@ -131,13 +167,14 @@ let c : bool = (a == b); // false
 Conditional logic enables forking the control flow depending on the
 state.
 
-<!--DOCUSAURUS_CODE_TABS-->
-<!--PascaLIGO-->
+
+<Syntax syntax="pascaligo">
+
 ```pascaligo group=e
 type magnitude is Small | Large // See variant types.
 
 function compare (const n : nat) : magnitude is
-  if n < 10n then Small (Unit) else Large (Unit) // Unit is needed for now.
+  if n < 10n then Small else Large
 ```
 
 You can run the `compare` function defined above using the LIGO compiler
@@ -145,7 +182,7 @@ like this:
 ```shell
 ligo run-function
 gitlab-pages/docs/language-basics/boolean-if-else/cond.ligo compare 21n'
-# Outputs: Large (Unit)
+# Outputs: Large(Unit)
 ```
 
 When the branches of the conditional are not a single expression, as
@@ -161,7 +198,7 @@ else skip;
 ```
 
 As an exception to the rule, the blocks in a conditional branch do not
-need to be introduced by the keywor `block`, so, we could have written
+need to be introduced by the keyword `block`, so we could have written
 instead:
 ```pascaligo skip
 if x < y then {
@@ -171,7 +208,9 @@ if x < y then {
 else skip;
 ```
 
-<!--CameLIGO-->
+</Syntax>
+<Syntax syntax="cameligo">
+
 ```cameligo group=e
 type magnitude = Small | Large // See variant types.
 
@@ -187,9 +226,16 @@ gitlab-pages/docs/language-basics/boolean-if-else/cond.mligo compare 21n'
 # Outputs: Large
 ```
 
-<!--ReasonLIGO-->
+> Notice that, as in OCaml, in CameLIGO, if a conditional has a branch
+> `else ()`, that branch can be omitted. The resulting so-called
+> *dangling else* problem is parsed by associating any `else` to the
+> closest previous `then`.
+
+</Syntax>
+<Syntax syntax="reasonligo">
+
 ```reasonligo group=e
-type magnitude = | Small | Large; // See variant types.
+type magnitude = Small | Large; // See variant types.
 
 let compare = (n : nat) : magnitude =>
   if (n < 10n) { Small; } else { Large; };
@@ -202,4 +248,6 @@ ligo run-function
 gitlab-pages/docs/language-basics/boolean-if-else/cond.religo compare 21n'
 # Outputs: Large
 ```
-<!--END_DOCUSAURUS_CODE_TABS-->
+
+</Syntax>
+

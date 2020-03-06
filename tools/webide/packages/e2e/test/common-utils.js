@@ -79,6 +79,19 @@ exports.verifyAllExamples = async (action, done) => {
   done();
 };
 
+exports.verifyWithParameter = async (command, parameter, value, action, done) => {
+  await page.click('#command-select');
+  await page.click(`#${command}`);
+
+  await page.click(`#${parameter}`);
+  await exports.clearText(page.keyboard);
+  await page.keyboard.type(value);
+
+  expect(await action()).toEqual(`Error: "${parameter}" is not allowed to be empty`);
+
+  done();
+}
+
 exports.verifyWithBlankParameter = async (command, parameter, action, done) => {
   await page.click('#command-select');
   await page.click(`#${command}`);

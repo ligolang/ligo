@@ -1,319 +1,456 @@
 ---
 id: current-reference
-title: Current - Things relating to the current execution context
+title: Tezos - Things relating to the current execution context
 ---
 
-## Current.balance() : tez
+import Syntax from '@theme/Syntax';
+
+# Tezos.balance
 
 Get the balance for the contract.
 
-<!--DOCUSAURUS_CODE_TABS-->
 
-<!--PascaLIGO-->
+
+<Syntax syntax="pascaligo">
+
 ```pascaligo
-function main (const p : unit; const s: tez) : list(operation) * tez is
-  ((nil : list(operation)), balance)
+function main (const p : unit; const s: tez) : list (operation) * tez is
+  ((nil : list (operation)), Tezos.balance)
 ```
-<!--CameLIGO-->
+
+> Note that `balance` and `Current.balance` are *deprecated*.
+
+</Syntax>
+<Syntax syntax="cameligo">
+
 ```cameligo
-let main (p, s : unit * tez) =
-  ([] : operation list), balance
+let main (p,s : unit * tez) = ([] : operation list), Tezos.balance
 ```
-<!--ReasonLIGO-->
+
+> Note that `balance` and `Current.balance` are *deprecated*.
+
+</Syntax>
+<Syntax syntax="reasonligo">
+
 ```reasonligo
-let main = ((p,s): (unit, tez)) => ([]: list(operation), balance);
+let main = ((p,s) : (unit, tez)) =>
+  ([]: list (operation), Tezos.balance);
 ```
 
-<!--END_DOCUSAURUS_CODE_TABS-->
+> Note that `balance` and `Current.balance` are *deprecated*.
 
-## Current.time() : timestamp
+</Syntax>
 
-Returns the current time as a [unix timestamp](https://en.wikipedia.org/wiki/Unix_time). 
 
-In LIGO, timestamps are type compatible in operations with `int`(s). This lets you set e.g. time constraints for your smart contracts like this:
+## Tezos.now
+
+Returns the current time as a [unix timestamp](https://en.wikipedia.org/wiki/Unix_time).
+
+In LIGO, timestamps are type compatible in operations with
+integers. This lets you set for instance time constraints for your
+smart contracts like this:
 
 ### Examples
 
 #### 24 hours from now
-<!--DOCUSAURUS_CODE_TABS-->
-<!--Pascaligo-->
+
+<Syntax syntax="pascaligo">
+
 ```pascaligo group=b
-const today: timestamp = now;
-const one_day: int = 86400;
+const today: timestamp = Tezos.now;
+const one_day: int = 86_400;
 const in_24_hrs: timestamp = today + one_day;
 const some_date: timestamp = ("2000-01-01T10:10:10Z" : timestamp);
 const one_day_later: timestamp = some_date + one_day;
 ```
 
-<!--CameLIGO-->
+> Note that `now` is *deprecated*.
+
+</Syntax>
+<Syntax syntax="cameligo">
+
 ```cameligo group=b
-let today: timestamp = Current.time
-let one_day: int = 86400
+let today: timestamp = Tezos.now
+let one_day: int = 86_400
 let in_24_hrs: timestamp = today + one_day
 let some_date: timestamp = ("2000-01-01t10:10:10Z" : timestamp)
 let one_day_later: timestamp = some_date + one_day
 ```
 
-<!--ReasonLIGO-->
+> Note that `Current.time` is *deprecated*.
+
+</Syntax>
+<Syntax syntax="reasonligo">
+
 ```reasonligo group=b
-let today: timestamp = Current.time;
-let one_day: int = 86400;
+let today: timestamp = Tezos.now;
+let one_day: int = 86_400;
 let in_24_hrs: timestamp = today + one_day;
 let some_date: timestamp = ("2000-01-01t10:10:10Z" : timestamp);
 let one_day_later: timestamp = some_date + one_day;
 ```
 
-<!--END_DOCUSAURUS_CODE_TABS-->
+> Note that `Current.time` is *deprecated*.
+
+</Syntax>
+
 
 #### 24 hours ago
-<!--DOCUSAURUS_CODE_TABS-->
-<!--Pascaligo-->
+
+
+<Syntax syntax="pascaligo">
+
 ```pascaligo group=c
-const today: timestamp = now;
-const one_day: int = 86400;
+const today: timestamp = Tezos.now;
+const one_day: int = 86_400;
 const in_24_hrs: timestamp = today - one_day;
 ```
 
-<!--CameLIGO-->
+> Note that `now` is *deprecated*.
+
+</Syntax>
+<Syntax syntax="cameligo">
+
 ```cameligo group=c
-let today: timestamp = Current.time
-let one_day: int = 86400
+let today: timestamp = Tezos.now
+let one_day: int = 86_400
 let in_24_hrs: timestamp = today - one_day
 ```
 
-<!--ReasonLIGO-->
+> Note that `Current.time` is *deprecated*.
+
+</Syntax>
+<Syntax syntax="reasonligo">
+
 ```reasonligo group=c
-let today: timestamp = Current.time;
-let one_day: int = 86400;
+let today: timestamp = Tezos.now;
+let one_day: int = 86_400;
 let in_24_hrs: timestamp = today - one_day;
 ```
 
-<!--END_DOCUSAURUS_CODE_TABS-->
+> Note that `Current.time` is *deprecated*.
 
-#### Comparing timestamps
+</Syntax>
 
-You can also compare timestamps using the same comparison operators as for numbers:
 
-<!--DOCUSAURUS_CODE_TABS-->
-<!--Pascaligo-->
+#### Comparing Timestamps
+
+You can also compare timestamps using the same comparison operators as
+for numbers
+
+
+<Syntax syntax="pascaligo">
+
 ```pascaligo group=c
-const not_tommorow: bool = (now = in_24_hrs)
+const not_tommorow: bool = (Tezos.now = in_24_hrs)
 ```
 
-<!--CameLIGO-->
+> Note that `now` is *deprecated*.
+
+</Syntax>
+<Syntax syntax="cameligo">
+
 ```cameligo group=c
-let not_tomorrow: bool = (Current.time = in_24_hrs)
+let not_tomorrow: bool = (Tezos.now = in_24_hrs)
 ```
 
-<!--ReasonLIGO-->
+> Note that `Current.time` is *deprecated*.
+
+</Syntax>
+<Syntax syntax="reasonligo">
+
 ```reasonligo group=c
-let not_tomorrow: bool = (Current.time == in_24_hrs);
+let not_tomorrow: bool = (Tezos.now == in_24_hrs);
 ```
 
-<!--END_DOCUSAURUS_CODE_TABS-->
+> Note that `Current.time` is *deprecated*.
+
+</Syntax>
 
 
-## Current.amount() : tez
 
-Get the amount of tez provided by the sender to complete this transaction.
+## Amount
 
-<!--DOCUSAURUS_CODE_TABS-->
+Get the amount of tez provided by the sender to complete this
+transaction.
 
-<!--PascaLIGO-->
+
+
+<Syntax syntax="pascaligo">
+
 ```pascaligo
-function check (const p: unit) : int is
-  begin
-    var result : int := 0;
-    if amount = 100tz then
-      result := 42
-    else
-      result := 0
-  end with result
+function threshold (const p : unit) : int is
+  if Tezos.amount = 100tz then 42 else 0
 ```
 
-<!--CameLIGO-->
+> Note that `amount` is *deprecated*.
+
+</Syntax>
+<Syntax syntax="cameligo">
+
 ```cameligo
-let check_ (p: unit) : int = if Current.amount = 100tz then 42 else 0
+let threshold (p : unit) : int = if Tezos.amount = 100tz then 42 else 0
 ```
 
-<!--ReasonLIGO-->
+> Note that `Current.amount` is *deprecated*.
+
+</Syntax>
+<Syntax syntax="reasonligo">
+
 ```reasonligo
-let check_ = (p: unit) : int =>
-  if (Current.amount == 100tz) {
-    42;
-  }
-  else {
-    0;
-  };
+let threshold = (p : unit) : int =>
+  if (Tezos.amount == 100tz) { 42; } else { 0; };
 ```
 
-<!--END_DOCUSAURUS_CODE_TABS-->
+> Note that `Current.amount` is *deprecated*.
 
-## Current.sender() : address
+</Syntax>
+
+
+## Sender
 
 Get the address that initiated the current transaction.
 
-<!--DOCUSAURUS_CODE_TABS-->
 
-<!--PascaLIGO-->
+
+<Syntax syntax="pascaligo">
+
 ```pascaligo
-function main (const p: unit) : address is sender
+function main (const p : unit) : address is Tezos.sender
 ```
 
-<!--CameLIGO-->
+> Note that `sender` is *deprecated*.
+
+</Syntax>
+<Syntax syntax="cameligo">
+
 ```cameligo
-let main (p: unit) : address = Current.sender
+let main (p: unit) : address = Tezos.sender
 ```
 
-<!--ReasonLIGO-->
+> Note that `Current.sender` is *deprecated*.
+
+</Syntax>
+<Syntax syntax="reasonligo">
+
 ```reasonligo
-let main = (p: unit) : address => Current.sender;
+let main = (p : unit) : address => Tezos.sender;
 ```
 
-<!--END_DOCUSAURUS_CODE_TABS-->
+> Note that `Current.sender` is *deprecated*.
 
-## Current.address(c: a' contract) : address
+</Syntax>
 
-Get the address associated with a `contract`.
 
-<!--DOCUSAURUS_CODE_TABS-->
 
-<!--PascaLIGO-->
+## Address
+
+Get the address associated with a value of type `contract`.
+
+
+
+<Syntax syntax="pascaligo">
+
 ```pascaligo
 function main (const p : key_hash) : address is block {
-  const c : contract(unit) = implicit_account(p) ;
-} with address(c)
+  const c : contract (unit) = Tezos.implicit_account (p)
+} with Tezos.address(c)
 ```
 
-<!--CameLIGO-->
+> Note that `implicit_account` and `address` are *deprecated*.
+
+</Syntax>
+<Syntax syntax="cameligo">
+
 ```cameligo
 let main (p : key_hash) =
-  let c : unit contract = Current.implicit_account p in 
-  Current.address c
+  let c : unit contract = Tezos.implicit_account p
+  in Tezos.address c
 ```
 
-<!--ReasonLIGO-->
+> Note that `Current.implicit_account` and `Current.address` are
+> *deprecated*.
+
+</Syntax>
+<Syntax syntax="reasonligo">
+
 ```reasonligo
 let main = (p : key_hash) : address => {
-  let c : contract(unit) = Current.implicit_account(p) ;
-  Current.address(c) ;
+  let c : contract (unit) = Tezos.implicit_account (p);
+  Tezos.address (c);
 };
 ```
 
-<!--END_DOCUSAURUS_CODE_TABS-->
+> Note that `Current.implicit_account` and `Current.address` are
+> *deprecated*.
 
-## Current.self_address() : address
+</Syntax>
+
+
+## Self Address
 
 Get the address of the currently running contract.
 
-<!--DOCUSAURUS_CODE_TABS-->
 
-<!--PascaLIGO-->
+
+<Syntax syntax="pascaligo">
+
 ```pascaligo
-function main (const p: unit) : address is self_address
+function main (const p : unit) : address is Tezos.self_address
 ```
 
-<!--CameLIGO-->
+> Note that `self_address` is *deprecated*.
+
+</Syntax>
+<Syntax syntax="cameligo">
+
 ```cameligo
-let main (p: unit) : address = Current.self_address 
+let main (p : unit) : address = Tezos.self_address
 ```
 
-<!--ReasonLIGO-->
+> Note that `Current.self_address` is *deprecated*.
+
+</Syntax>
+<Syntax syntax="reasonligo">
+
 ```reasonligo
-let main = (p: unit): address => Current.self_address;
+let main = (p : unit) : address => Tezos.self_address;
 ```
 
-<!--END_DOCUSAURUS_CODE_TABS-->
+> Note that `Current.self_address` is *deprecated*.
 
-## Current.implicit_account(p: key_hash) : a' contract
+</Syntax>
 
-Get the default contract associated with an on-chain keypair. This contract
-doesn't execute code, instead it exists to receive money on behalf of a keys
-owner.
 
-<!--DOCUSAURUS_CODE_TABS-->
+## Implicit Account
 
-<!--PascaLIGO-->
+Get the default contract associated with an on-chain key-pair. This
+contract does not execute code, instead it exists to receive tokens on
+behalf of a key's owner.
+
+
+
+<Syntax syntax="pascaligo">
+
 ```pascaligo
-function main (const kh: key_hash) : contract(unit) is implicit_account(kh)
+function main (const kh: key_hash) : contract (unit) is
+  Tezos.implicit_account (kh)
 ```
 
-<!--CameLIGO-->
+> Note that `implicit_account` is *deprecated*.
+
+</Syntax>
+<Syntax syntax="cameligo">
+
 ```cameligo
-let main (kh: key_hash) : unit contract = Current.implicit_account kh
+let main (kh : key_hash) : unit contract = Tezos.implicit_account kh
 ```
 
-<!--ReasonLIGO-->
+> Note that `Current.implicit_account` is *deprecated*.
+
+</Syntax>
+<Syntax syntax="reasonligo">
+
 ```reasonligo
-let main = (kh: key_hash): contract(unit) => Current.implicit_account(kh);
+let main = (kh : key_hash): contract (unit) =>
+  Tezos.implicit_account (kh);
 ```
 
-<!--END_DOCUSAURUS_CODE_TABS-->
+> Note that `Current.implicit_account` is *deprecated*.
 
-## Current.source() : address
+</Syntax>
 
-Get the _originator_ of the current transaction. That is, if a chain of transactions
-led to the current execution get the address that began the chain. Not to be confused
-with `Current.sender`, which gives the address of the contract or user which directly
-caused the current transaction.
 
-> ⚠️
-> There are a few caveats you should keep in mind before using `SOURCE` over `SENDER`:
+## Source
+
+Get the _originator_ (address) of the current transaction. That is, if
+a chain of transactions led to the current execution get the address
+that began the chain. Not to be confused with `Tezos.sender`, which
+gives the address of the contract or user which directly caused the
+current transaction.
+
+> ⚠️ There are a few caveats you should keep in mind before using
+> `Tezos.source` over `Tezos.sender`:
 >
-> 1. SOURCE will never be a contract, so if you want to allow contracts (multisigs etc) to operate your contract, you need to use SENDER
-> 2. https://vessenes.com/tx-origin-and-ethereum-oh-my/ -- in general it is somewhat unsafe to assume that SOURCE understands everything that's going to happen in a transaction. If SOURCE transfers to a malicious (or sufficiently attackable) contract, that contract might potentially transfer to yours, without SOURCE's consent. So if you are using SOURCE for authentication, you risk being confused. A good historical example of this is bakers paying out delegation rewards. Naive bakers did (and probably still do) just use tezos-client to transfer to whatever KT1 delegates they had, even if those KT1 were malicious scripts.
+> 1. `Tezos.source` will never be a contract, so if you want to allow
+>    contracts (multisigs etc) to operate your contract, you need to
+>    use `Tezos.sender`
+> 2. https://vessenes.com/tx-origin-and-ethereum-oh-my/ -- in general
+>    it is somewhat unsafe to assume that `Tezos.source` understands
+>    everything that is going to happen in a transaction. If
+>    `Tezos.source` transfers to a malicious (or sufficiently
+>    attackable) contract, that contract might potentially transfer to
+>    yours, without `Tezos.source`'s consent. So if you are using
+>    `Tezos.source` for authentication, you risk being confused. A
+>    good historical example of this is bakers paying out delegation
+>    rewards. Naive bakers did (and probably still do) just use
+>    tezos-client to transfer to whatever KT1 delegates they had, even
+>    if those KT1 were malicious scripts.
 
-<!--DOCUSAURUS_CODE_TABS-->
 
-<!--PascaLIGO-->
+
+<Syntax syntax="pascaligo">
+
 ```pascaligo
-function main (const p: unit) : address is source
+function main (const p: unit) : address is Tezos.source
 ```
 
-<!--CameLIGO-->
+> Note that `source` is *deprecated*.
+
+</Syntax>
+<Syntax syntax="cameligo">
+
 ```cameligo
-let main (p: unit) : address = Current.source
+let main (p : unit) : address = Tezos.source
 ```
 
-<!--ReasonLIGO-->
+> Note that `Current.source` is *deprecated*.
+
+</Syntax>
+<Syntax syntax="reasonligo">
+
 ```reasonligo
-let main = (p: unit) : address => Current.source;
+let main = (p : unit) : address => Tezos.source;
 ```
 
-<!--END_DOCUSAURUS_CODE_TABS-->
+> Note that `Current.source` is *deprecated*.
 
-## Current.failwith(error_message: string) : a'
+</Syntax>
+
+
+## Failwith
 
 Cause the contract to fail with an error message.
 
-> ⚠ Using this currently requires a type annotation on the failwith to unify it
-> with the type of whatever other code branch it's on.
+> ⚠ Using this currently requires in general a type annotation on the
+> `failwith` call.
 
-<!--DOCUSAURUS_CODE_TABS-->
 
-<!--PascaLIGO-->
+
+<Syntax syntax="pascaligo">
+
 ```pascaligo
-function main (const p : int; const s : unit) : list(operation) * unit is
+function main (const p : int; const s : unit) : list (operation) * unit is
   block {
-    if p > 10 then failwith("fail") else skip;
+    if p > 10 then failwith ("Failure.") else skip
   }
-  with ((nil : list(operation)), s)
+  with ((nil : list (operation)), s)
 ```
 
-<!--CameLIGO-->
+</Syntax>
+<Syntax syntax="cameligo">
+
 ```cameligo
-let main (p,s: unit * unit) =
-  if true then failwith "This contract always fails" else ()
+let main (p,s : int * unit) = if p > 10 then failwith "Failure."
 ```
 
-<!--ReasonLIGO-->
+</Syntax>
+<Syntax syntax="reasonligo">
+
 ```reasonligo
-let main = ((p,s): (unit, unit)) =>
-  if (true) {
-    failwith("This contract always fails");
-  } else {
-    ();
-  };
+let main = ((p,s) : (int, unit)) =>
+  if (p > 10) { failwith ("Failure."); };
 ```
 
-<!--END_DOCUSAURUS_CODE_TABS-->
+</Syntax>
+

@@ -1,17 +1,17 @@
 // Test set iteration in PascaLIGO
 
-function iter_op (const s : set(int)) : int is
-  begin
-    var r : int := 0 ;
-    function aggregate (const i : int) : unit is
-      begin
-        r := r + i ;
-      end with unit ;
-    set_iter(aggregate, s) ;
-  end with r
-
-function fold_op (const s : set(int)) : int is
+function iter_op (const s : set (int)) : int is
   block {
-    function aggregate (const i : int ; const j : int) : int is
+    var r : int := 0;
+    function aggregate (const i : int) : unit is
+      block {
+        r := r + i
+      } with unit;
+    set_iter (aggregate, s)
+  } with r // ALWAYS RETURNS 0
+
+function fold_op (const s : set (int)) : int is
+  block {
+    function aggregate (const i : int; const j : int) : int is
       i + j
-  } with set_fold(aggregate, s , 15)
+  } with set_fold (aggregate, s, 15)

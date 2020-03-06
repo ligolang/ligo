@@ -1,16 +1,20 @@
 FROM node:12-alpine as builder
 
+ARG EXAMPLES_DIR_SRC
+ARG EXAMPLES_DIR_DEST=packages/client/examples
+
 WORKDIR /app
 
 COPY package.json package.json
 COPY yarn.lock yarn.lock
+COPY tsconfig.json tsconfig.json
 COPY packages/client packages/client
 COPY packages/server packages/server
+COPY $EXAMPLES_DIR_SRC $EXAMPLES_DIR_DEST
+
+ENV EXAMPLES_DIR=/app/$EXAMPLES_DIR_DEST
 
 RUN yarn install
-
-COPY tsconfig.json tsconfig.json
-
 RUN yarn workspaces run build
 
 FROM node:12-buster

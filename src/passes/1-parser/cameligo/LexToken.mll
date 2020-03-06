@@ -266,7 +266,6 @@ let keywords = [
 let reserved =
   let open SSet in
   empty
-    |> add "and"
     |> add "as"
     |> add "asr"
     |> add "class"

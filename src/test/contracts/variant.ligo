@@ -1,5 +1,5 @@
 type foobar is
-| Foo of int
+  Foo of int
 | Bar of bool
 | Kee of nat
 

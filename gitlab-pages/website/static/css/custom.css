@@ -1,5 +1,28 @@
+@import url('/fonts/inter.css');
+
 :root {
-  --primary-brand-color: #0e74ff;
+  --ifm-color-primary: #0e74ff;
+  --ifm-color-primary-dark: rgb(33, 175, 144);
+  --ifm-color-primary-darker: rgb(31, 165, 136);
+  --ifm-color-primary-darkest: rgb(26, 136, 112);
+  --ifm-color-primary-light: rgb(70, 203, 174);
+  --ifm-color-primary-lighter: rgb(102, 212, 189);
+  --ifm-color-primary-lightest: #92e0d0;
+  --blockquote-color: #efefef;
+  --ifm-code-font-size: .9rem;
+  
+
+  /* header */
+  --ifm-navbar-link-hover-color: #0e74ff;
+
+  /* footer */
+  --ifm-footer-title-color: #fff;
+  --ifm-footer-background-color: #0d0f33;
+  --ifm-footer-link-hover-color: hsla(0,0%,100%,.6);
+  --ifm-footer-color: #fff;
+}
+
+:root {
   --secondary-brand-color: #fc683a;
   --blue: #3aa0ff;
   --lighter-blue: #e1f1ff;
@@ -24,12 +47,19 @@
   --padding-level-6: 100px;
 }
 
+html[data-theme='dark'] {
+  --color-primary-text: white;
+  --blockquote-color: var(--ifm-navbar-background-color);
+}
+
 html {
   font-size: 16px;
 }
 
 body {
   font-family: 'Open Sans', sans-serif;
+  font-family: 'Inter var',SF Pro Text,Roboto,-apple-system,BlinkMacSystemFont,Helvetica Neue,Arial,sans-serif;
+  font-weight: 400;
   font-size: 1rem;
   color: var(--color-primary-text);
   margin: 0 auto;
@@ -39,8 +69,8 @@ body {
  * Docusaurus overrides
  */
 code {
-  font-family: 'Source Code Pro', monospace;
-  background: var(--light-blue);
+  /* font-family: 'Source Code Pro', monospace; */
+  font-family: Menlo,Roboto Mono,SFMono-Regular,Segoe UI,Courier,monospace;
   margin-left: 2px;
   margin-right: 2px;
   border-radius: 2px;
@@ -66,7 +96,6 @@ h1 {
 }
 
 h2 {
-  font-size: 2.25rem;
   margin-bottom: 0.5rem;
   margin-top: 1.5rem;
 }
@@ -182,7 +211,7 @@ p {
 .navigationSlider .slidingNav ul li.siteNavItemActive > a,
 .navigationSlider .slidingNav ul li.siteNavGroupActive > a {
   background-color: white;
-  color: var(--primary-brand-color) !important;
+  color: var(--ifm-color-primary) !important;
 }
 
 .navSearchWrapper:before {
@@ -249,20 +278,19 @@ p {
 }
 
 blockquote {
-  background-color: #efefef;
+  background-color: var(--blockquote-color);
   border-left: 5px solid var(--color-primary-text);
   color: var(--color-primary-text);
   border-radius: 2px;
 }
 
 blockquote code {
-  opacity: 1;
-  background: var(--light-blue);
+  opacity: 1;  
 }
 
 a,
 a:hover {
-  color: var(--primary-brand-color);
+  color: var(--ifm-color-primary);
 }
 
 .docMainWrapper a:hover {
@@ -333,7 +361,7 @@ a:hover {
 }
 
 .navListItemActive a {
-  color: var(--primary-brand-color) !important;
+  color: var(--ifm-color-primary) !important;
 }
 
 .onPageNav > .toc-headings {
@@ -366,7 +394,7 @@ a:hover {
 .button:hover {
   border-radius: 36px;
   padding: 10px 20px;
-  background-color: var(--primary-brand-color);
+  background-color: var(--ifm-color-primary);
   min-width: 130px;
   color: var(--color-white);
 }
@@ -469,7 +497,7 @@ a:hover {
 }
 
 .primary {
-  color: var(--primary-brand-color);
+  color: var(--ifm-color-primary);
 }
 
 .secondary {
@@ -509,8 +537,11 @@ a:hover {
 #homePage #intro {
   display: flex;
   justify-content: space-between;
-  align-items: center;
   width: 100%;
+}
+
+#callToAction {
+  margin-top: 300px;
 }
 
 #homePage #intro #callToAction ul {
@@ -536,8 +567,8 @@ a:hover {
 }
 
 #homePage #intro #callToAction ul li.primary:hover {
-  background-color: var(--primary-brand-color);
-  border-left: 4px solid var(--primary-brand-color);
+  background-color: var(--ifm-color-primary);
+  border-left: 4px solid var(--ifm-color-primary);
 }
 
 #homePage #intro #callToAction ul li.secondary:hover {
@@ -547,11 +578,12 @@ a:hover {
 
 #homePage #intro #callToAction ul li a {
   color: inherit;
+  text-decoration: none;
 }
 
-#homePage #intro #preview .hljs {
-  min-width: 700px;
+#homePage #intro #preview  {
   min-height: 450px;
+  max-width: 400px
 }
 
 #homePage #intro #preview p {
@@ -559,13 +591,14 @@ a:hover {
   font-size: 1.5em;
 }
 
-#homePage #features {
+#features {
   margin: 100px auto;
   display: flex;
   justify-content: space-between;
+  flex: 1;
 }
 
-#homePage #features .feature {
+#features .feature {
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -573,46 +606,47 @@ a:hover {
   text-align: center;
 }
 
-#homePage #features .feature p {
+#features .feature p {
   text-align: center;
-  font-size: 1.25em;
+  font-size: 1.25rem;
 }
 
-#homePage #partners {
-  background-color: var(--primary-brand-color);
+#partners {  
+  background-color: var(--ifm-color-primary);
   color: white;
-  font-size: 2.8125em;
+  font-size: 2.8rem;
   font-weight: bold;
   padding: 50px 0;
   margin-top: auto;
+  flex: 1;
 }
 
-#homePage #partners .wrapper {
+#partners .wrapper {
   display: flex;
   justify-content: space-between;
   align-items: center;
   width: 100%;
 }
 
-#homePage #partners #heading {
+#partners #heading {
   word-wrap: break-word;
   width: 200px;
   line-height: 1em;
 }
 
-#homePage #partners #list {
+#partners #list {
   display: flex;
 }
 
-#homePage #partners a {
+#partners a {
   line-height: 0;
 }
 
-#homePage #partners a + a {
+#partners a + a {
   margin-left: 50px;
 }
 
-#homePage #partners img {
+#partners img {
   height: 80px;
 }
 
@@ -849,12 +883,20 @@ a:hover {
 }
 
 @media (min-width: 1024px) {
+  .row .col { 
+    padding-left: 3rem;
+    padding-right: 3rem;
+  }
+
   .nav-footer .footer-wrapper {
     max-width: 1400px;
   }
 
   .nav-footer .sitemap {
     max-width: 1400px;
+  }
+  #homePage #intro #preview  {
+    min-width: 700px;
   }
 }
 
@@ -879,7 +921,7 @@ a:hover {
 
   #homePage #intro #preview {
     order: 1;
-    width: 100%;
+    min-width: 100%;
   }
 
   #homePage #intro #preview .hljs {
@@ -904,20 +946,20 @@ a:hover {
     margin-top: 0;
   }
 
-  #homePage #partners #heading {
+  #partners #heading {
     text-align: center;
     word-wrap: normal;
     width: auto;
     margin-bottom: 50px;
   }
 
-  #homePage #partners #list {
+  #partners #list {
     display: flex;
     flex-direction: column;
     justify-content: center;
   }
 
-  #homePage #partners a + a {
+  #partners a + a {
     margin: 25px auto;
   }
 }
@@ -962,3 +1004,6 @@ a:hover {
   color: #a31515;
 }
 
+.badge {
+  display: none;
+}

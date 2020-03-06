@@ -36,6 +36,23 @@ export async function compileExpression(
   return response.data;
 }
 
+export async function compileStorage(
+  syntax: Language,
+  code: string,
+  entrypoint: string,
+  storage: string,
+  format?: string
+) {
+  const response = await axios.post('/api/compile-storage', {
+    syntax,
+    code,
+    entrypoint,
+    storage,
+    format
+  });
+  return response.data;
+}
+
 export async function dryRun(
   syntax: Language,
   code: string,

@@ -7,7 +7,7 @@ let bad_contract basename =
 
 let%expect_test _ =
   run_ligo_good [ "measure-contract" ; contract "coase.ligo" ; "main" ] ;
-  [%expect {| 1747 bytes |}] ;
+  [%expect {| 1870 bytes |}] ;
 
   run_ligo_good [ "measure-contract" ; contract "multisig.ligo" ; "main" ] ;
   [%expect {| 1324 bytes |}] ;
@@ -16,7 +16,7 @@ let%expect_test _ =
   [%expect {| 3231 bytes |}] ;
 
   run_ligo_good [ "measure-contract" ; contract "vote.mligo" ; "main" ] ;
-  [%expect {| 642 bytes |}] ;
+  [%expect {| 589 bytes |}] ;
 
   run_ligo_good [ "compile-parameter" ; contract "coase.ligo" ; "main" ; "Buy_single (record card_to_buy = 1n end)" ] ;
   [%expect {| (Left (Left 1)) |}] ;
@@ -86,7 +86,9 @@ let%expect_test _ =
                      SWAP ;
                      DIP { DUP ; CAR ; CAR } ;
                      GET ;
-                     IF_NONE { PUSH string "MAP FIND" ; FAILWITH } {} ;
+                     IF_NONE
+                       { PUSH string "buy_single: No card pattern." ; FAILWITH }
+                       { DUP ; DIP { DROP } } ;
                      DUP ;
                      CAR ;
                      DIP { DUP ; CDR ; PUSH nat 1 ; ADD } ;
@@ -159,7 +161,9 @@ let%expect_test _ =
                      SWAP ;
                      DIP { DUP ; CAR ; CDR } ;
                      GET ;
-                     IF_NONE { PUSH string "MAP FIND" ; FAILWITH } {} ;
+                     IF_NONE
+                       { PUSH string "sell_single: No card." ; FAILWITH }
+                       { DUP ; DIP { DROP } } ;
                      DUP ;
                      CAR ;
                      SENDER ;
@@ -173,7 +177,9 @@ let%expect_test _ =
                      CDR ;
                      DIP { DIP 2 { DUP } ; DIG 2 ; CAR ; CAR } ;
                      GET ;
-                     IF_NONE { PUSH string "MAP FIND" ; FAILWITH } {} ;
+                     IF_NONE
+                       { PUSH string "sell_single: No card pattern." ; FAILWITH }
+                       { DUP ; DIP { DROP } } ;
                      DUP ;
                      DIP { DUP } ;
                      SWAP ;
@@ -209,7 +215,9 @@ let%expect_test _ =
                      MUL ;
                      SENDER ;
                      CONTRACT unit ;
-                     IF_NONE { PUSH string "bad address for get_contract" ; FAILWITH } {} ;
+                     IF_NONE
+                       { PUSH string "sell_single: No contract." ; FAILWITH }
+                       { DUP ; DIP { DROP } } ;
                      DIP { DUP } ;
                      SWAP ;
                      DIP { DUP } ;
@@ -246,7 +254,9 @@ let%expect_test _ =
                  CAR ;
                  DIP { DUP } ;
                  GET ;
-                 IF_NONE { PUSH string "MAP FIND" ; FAILWITH } {} ;
+                 IF_NONE
+                   { PUSH string "transfer_single: No card." ; FAILWITH }
+                   { DUP ; DIP { DROP } } ;
                  DUP ;
                  CAR ;
                  SENDER ;
@@ -938,39 +948,26 @@ let%expect_test _ =
   run_ligo_good [ "compile-contract" ; contract "vote.mligo" ; "main" ] ;
   [%expect {|
     { parameter
-        (or (pair %init
-               (pair (timestamp %beginning_time) (timestamp %finish_time))
-               (string %title))
-            (string %vote)) ;
+        (or (pair %reset (pair (timestamp %finish_time) (timestamp %start_time)) (string %title))
+            (or %vote (unit %nay) (unit %yea))) ;
       storage
-        (pair (pair (pair (timestamp %beginning_time) (map %candidates string int))
-                    (pair (timestamp %finish_time) (string %title)))
-              (set %voters address)) ;
+        (pair (pair (pair (timestamp %finish_time) (nat %nay))
+                    (pair (timestamp %start_time) (string %title)))
+              (pair (set %voters address) (nat %yea))) ;
       code { DUP ;
+             DUP ;
              CAR ;
              IF_LEFT
                { DUP ;
-                 DIP { DIP { DUP } ; SWAP ; CDR } ;
-                 PAIR ;
                  DUP ;
                  CAR ;
                  CAR ;
-                 CAR ;
-                 DIP { PUSH int 0 ;
-                       SOME ;
-                       DIP { PUSH int 0 ;
-                             SOME ;
-                             EMPTY_MAP string int ;
-                             SWAP ;
-                             PUSH string "Yes" ;
-                             UPDATE } ;
-                       PUSH string "No" ;
-                       UPDATE } ;
-                 PAIR ;
-                 DIP { DUP ; CAR ; CAR ; CDR ; DIP { DUP ; CAR ; CDR } ; PAIR } ;
-                 PAIR ;
-                 EMPTY_SET address ;
+                 PUSH nat 0 ;
                  SWAP ;
+                 PAIR ;
+                 DIP { DUP ; CAR ; CDR ; DIP { DUP ; CDR } ; PAIR } ;
+                 PAIR ;
+                 DIP { PUSH nat 0 ; EMPTY_SET address ; PAIR } ;
                  PAIR ;
                  NIL operation ;
                  PAIR ;
@@ -979,41 +976,56 @@ let%expect_test _ =
                  DIP { DIP { DUP } ; SWAP ; CDR } ;
                  PAIR ;
                  DUP ;
+                 CDR ;
+                 DIP { DUP } ;
+                 SWAP ;
                  CAR ;
-                 DIP { DUP ; CDR ; CAR ; CAR ; CDR } ;
-                 GET ;
-                 IF_NONE { PUSH string "MAP FIND" ; FAILWITH } {} ;
+                 IF_LEFT
+                   { DIP { DUP } ;
+                     SWAP ;
+                     DIP 2 { DUP } ;
+                     DIG 2 ;
+                     CAR ;
+                     CAR ;
+                     CDR ;
+                     PUSH nat 1 ;
+                     ADD ;
+                     DIP { DUP ; CDR ; SWAP ; CAR ; DUP ; CDR ; SWAP ; CAR ; CAR } ;
+                     SWAP ;
+                     PAIR ;
+                     PAIR ;
+                     PAIR ;
+                     DIP { DROP } }
+                   { DIP { DUP } ;
+                     SWAP ;
+                     DIP 2 { DUP } ;
+                     DIG 2 ;
+                     CDR ;
+                     CDR ;
+                     PUSH nat 1 ;
+                     ADD ;
+                     DIP { DUP ; CAR ; SWAP ; CDR ; CAR } ;
+                     SWAP ;
+                     PAIR ;
+                     SWAP ;
+                     PAIR ;
+                     DIP { DROP } } ;
+                 DUP ;
                  DIP { DUP } ;
                  SWAP ;
                  CDR ;
                  CAR ;
-                 CAR ;
-                 CAR ;
-                 DIP { DIP { DUP } ;
-                       SWAP ;
-                       CAR ;
-                       DIP { DUP ;
-                             PUSH int 1 ;
-                             ADD ;
-                             SOME ;
-                             DIP { DIP { DUP } ; SWAP ; CDR ; CAR ; CAR ; CDR } } ;
-                       UPDATE } ;
+                 PUSH bool True ;
+                 SENDER ;
+                 UPDATE ;
+                 DIP { DUP ; CAR ; SWAP ; CDR ; CDR } ;
                  PAIR ;
-                 DIP { DIP { DUP } ;
-                       SWAP ;
-                       CDR ;
-                       CAR ;
-                       CDR ;
-                       CAR ;
-                       DIP { DIP { DUP } ; SWAP ; CDR ; CAR ; CDR ; CDR } ;
-                       PAIR } ;
-                 PAIR ;
-                 DIP { DIP { DUP } ; SWAP ; CDR ; CDR ; PUSH bool True ; SENDER ; UPDATE } ;
+                 SWAP ;
                  PAIR ;
                  NIL operation ;
                  PAIR ;
-                 DIP { DROP 3 } } ;
-             DIP { DROP } } } |}]
+                 DIP { DROP 4 } } ;
+             DIP { DROP 2 } } } |}]
 
 let%expect_test _ =
     run_ligo_good [ "compile-contract" ; contract "implicit.mligo" ; "main" ] ;
@@ -1054,7 +1066,7 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; contract "bad_address_format.religo" ; "main" ] ;
   [%expect {|
-    ligo: in file "bad_address_format.religo", line 2, characters 25-47. Badly formatted literal: @"KT1badaddr" {"location":"in file \"bad_address_format.religo\", line 2, characters 25-47"}
+    ligo: in file "bad_address_format.religo", line 2, characters 26-48. Badly formatted literal: @"KT1badaddr" {"location":"in file \"bad_address_format.religo\", line 2, characters 26-48"}
 
 
      If you're not sure how to fix this error, you can
@@ -1131,3 +1143,78 @@ let%expect_test _ =
   run_ligo_good [ "dry-run" ; contract "super-counter.mligo" ; "main" ; "test_param" ; "test_storage" ] ;
   [%expect {|
     ( list[] , 3 ) |}]
+
+let%expect_test _ =
+  run_ligo_bad [ "compile-contract" ; bad_contract "redundant_constructors.mligo" ; "main" ] ;
+  [%expect {|
+    ligo: redundant constructor:  {"constructor":"Add","environment":"- E[]\tT[union_a -> sum[Add -> int , Remove -> int]] ]"}
+
+
+     If you're not sure how to fix this error, you can
+     do one of the following:
+
+    * Visit our documentation: https://ligolang.org/docs/intro/what-and-why/
+    * Ask a question on our Discord: https://discord.gg/9rhYaEt
+    * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
+    * Check the changelog by running 'ligo changelog' |}]
+
+let%expect_test _ =
+  run_ligo_bad [ "compile-contract" ; bad_contract "create_contract_toplevel.mligo" ; "main" ] ;
+  [%expect {|
+ligo: in file "create_contract_toplevel.mligo", line 4, character 35 to line 8, character 8. No free variable allowed in this lambda: variable 'store' {"expression":"CREATE_CONTRACT(lambda (#P : ( nat * string ):Some(( nat * string ))) : None return let rhs#808 = #P in let p = rhs#808.0 in let s = rhs#808.1 in ( list[] : (TO_list(operation)) , store ) , NONE() : (TO_option(key_hash)) , 300000000mutez , \"un\")","location":"in file \"create_contract_toplevel.mligo\", line 4, character 35 to line 8, character 8"}
+
+
+ If you're not sure how to fix this error, you can
+ do one of the following:
+
+* Visit our documentation: https://ligolang.org/docs/intro/what-and-why/
+* Ask a question on our Discord: https://discord.gg/9rhYaEt
+* Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
+* Check the changelog by running 'ligo changelog' |}] ;
+
+  run_ligo_bad [ "compile-contract" ; bad_contract "create_contract_var.mligo" ; "main" ] ;
+  [%expect {|
+ligo: in file "create_contract_var.mligo", line 6, character 35 to line 10, character 5. No free variable allowed in this lambda: variable 'a' {"expression":"CREATE_CONTRACT(lambda (#P : ( nat * int ):Some(( nat * int ))) : None return let rhs#811 = #P in let p = rhs#811.0 in let s = rhs#811.1 in ( list[] : (TO_list(operation)) , a ) , NONE() : (TO_option(key_hash)) , 300000000mutez , 1)","location":"in file \"create_contract_var.mligo\", line 6, character 35 to line 10, character 5"}
+
+
+ If you're not sure how to fix this error, you can
+ do one of the following:
+
+* Visit our documentation: https://ligolang.org/docs/intro/what-and-why/
+* Ask a question on our Discord: https://discord.gg/9rhYaEt
+* Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
+* Check the changelog by running 'ligo changelog' |}] ;
+
+  run_ligo_bad [ "compile-contract" ; bad_contract "create_contract_no_inline.mligo" ; "main" ] ;
+  [%expect {|
+    ligo: unbound type variable:  {"variable":"return","in":"- E[foo -> int]\tT[] ]","did_you_mean":"no suggestion"}
+
+
+     If you're not sure how to fix this error, you can
+     do one of the following:
+
+    * Visit our documentation: https://ligolang.org/docs/intro/what-and-why/
+    * Ask a question on our Discord: https://discord.gg/9rhYaEt
+    * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
+    * Check the changelog by running 'ligo changelog' |}] ;
+
+  run_ligo_good [ "compile-contract" ; contract "create_contract.mligo" ; "main" ] ;
+  [%expect {|
+    { parameter string ;
+      storage string ;
+      code { PUSH string "un" ;
+             PUSH mutez 300000000 ;
+             NONE key_hash ;
+             CREATE_CONTRACT
+               { parameter nat ;
+                 storage string ;
+                 code { PUSH string "one" ; NIL operation ; PAIR ; DIP { DROP } } } ;
+             PAIR ;
+             DUP ;
+             CAR ;
+             NIL operation ;
+             SWAP ;
+             CONS ;
+             DIP { DIP { DUP } ; SWAP ; CDR } ;
+             PAIR ;
+             DIP { DROP 2 } } } |}]

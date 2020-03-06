@@ -1,268 +1,207 @@
 ---
 id: big-map-reference
-title: Big Map — Scalable hashmap primitive
+title: Big Maps — Scalable Maps
 ---
 
-## Defining A Big Map Type
+import Syntax from '@theme/Syntax';
 
-<!--DOCUSAURUS_CODE_TABS-->
-<!--Pascaligo-->
-```pascaligo
-type move is (int * int)
-type moveset is big_map (address, move)
-type foo is big_map (int, int)
+Ordinary maps are fine for contracts with a finite lifespan or a
+bounded number of users. For many contracts however, the intention is
+to have a map holding *many* entries, potentially millions of
+them. The cost of loading those entries into the environment each time
+a user executes the contract would eventually become too expensive
+were it not for *big maps*. Big maps are a data structure offered by
+Michelson which handles the scaling concerns for us. In LIGO, the
+interface for big maps is analogous to the one used for ordinary maps.
+
+# Declaring a Map
+
+
+<Syntax syntax="pascaligo">
+
+```pascaligo group=big_maps
+type move is int * int
+type register is big_map (address, move)
 ```
 
-<!--CameLIGO-->
-```cameligo
+</Syntax>
+<Syntax syntax="cameligo">
+
+```cameligo group=big_maps
 type move = int * int
-type moveset = (address, move) big_map
-type foo = (int, int) big_map
+type register = (address, move) big_map
 ```
 
-<!--ReasonLIGO-->
-```reasonligo
+</Syntax>
+<Syntax syntax="reasonligo">
+
+```reasonligo group=big_maps
 type move = (int, int);
-type moveset = big_map(address, move);
-type foo = big_map(int, int);
+type register = big_map (address, move);
 ```
 
-<!--END_DOCUSAURUS_CODE_TABS-->
+</Syntax>
 
-## Creating A Map
 
-<!--DOCUSAURUS_CODE_TABS-->
-<!--Pascaligo-->
 
-```pascaligo
-const moves: moveset =
-  big_map
-    ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address) -> (1,2);
-    ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address) -> (0,3);
-  end
+# Creating an Empty Big Map
+
+
+
+<Syntax syntax="pascaligo">
+
+```pascaligo group=big_maps
+const empty : register = big_map []
 ```
 
-<!--CameLIGO-->
+</Syntax>
+<Syntax syntax="cameligo">
 
-```cameligo
-let moves: moveset =
+```cameligo group=big_maps
+let empty : register = Big_map.empty
+```
+
+</Syntax>
+<Syntax syntax="reasonligo">
+
+```reasonligo group=big_maps
+let empty : register = Big_map.empty
+```
+
+</Syntax>
+
+
+# Creating a Non-empty Map
+
+
+
+<Syntax syntax="pascaligo">
+
+```pascaligo group=big_maps
+const moves : register =
+  big_map [
+    ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address) -> (1,2);
+    ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" : address) -> (0,3)]
+```
+
+</Syntax>
+<Syntax syntax="cameligo">
+
+```cameligo group=big_maps
+let moves : register =
   Big_map.literal [
-    (("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address), (1,2));
-    (("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address), (0,3));
-  ]
+    (("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address), (1,2));
+    (("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" : address), (0,3))]
 ```
 
-<!--ReasonLIGO-->
+</Syntax>
+<Syntax syntax="reasonligo">
 
-```reasonligo
-let moves: moveset =
+```reasonligo group=big_maps
+let moves : register =
   Big_map.literal ([
-    ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address, (1,2)),
-    ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address, (0,3)),
-  ]);
+    ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address, (1,2)),
+    ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" : address, (0,3))]);
 ```
 
-<!--END_DOCUSAURUS_CODE_TABS-->
+</Syntax>
 
-## Big_map.find_opt(k: a', m: (a',b') big_map) : b' option
 
-Retrieve the value associated with a particular key. This version returns an option
-which can either shift logic in response to a missing value or throw an error.
+# Accessing Values
 
-<!--DOCUSAURUS_CODE_TABS-->
-<!--Pascaligo-->
-```pascaligo
-const my_balance : option(move) =
-  moves [("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address)]
+
+<Syntax syntax="pascaligo">
+
+```pascaligo group=big_maps
+const my_balance : option (move) =
+  moves [("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" : address)]
 ```
 
-<!--CameLIGO-->
+</Syntax>
+<Syntax syntax="cameligo">
 
-```cameligo
+```cameligo group=big_maps
 let my_balance : move option =
-  Big_map.find_opt ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address) moves
+  Big_map.find_opt ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" : address) moves
 ```
 
-<!--ReasonLIGO-->
+</Syntax>
+<Syntax syntax="reasonligo">
 
-```reasonligo
-let my_balance : option(move) =
-  Big_map.find_opt("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address, moves);
-```
-<!--END_DOCUSAURUS_CODE_TABS-->
-
-## Big_map.find(k: a', m: (a', b') big_map) : b'
-
-Forcefully retrieve the value associated with a particular key. If that value
-doesn't exist, this function throws an error.
-
-<!--DOCUSAURUS_CODE_TABS-->
-<!--Pascaligo-->
-```pascaligo
-const my_balance : move =
-  get_force (("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address), moves);
+```reasonligo group=big_maps
+let my_balance : option (move) =
+  Big_map.find_opt ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" : address, moves);
 ```
 
-<!--CameLIGO-->
+</Syntax>
 
-```cameligo
-let my_balance : move =
-  Big_map.find ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address) moves
-```
 
-<!--ReasonLIGO-->
 
-```reasonligo
-let my_balance : move =
-  Big_map.find ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address, moves);
-```
+# Updating Big Maps
 
-<!--END_DOCUSAURUS_CODE_TABS-->
 
-## Big_map.update(k: a', v: b', m: (a', b') big_map) : (a', b') big_map
+<Syntax syntax="pascaligo">
 
-Change the value associated with a particular key, if that value doesn't already
-exist add it.
-
-<!--DOCUSAURUS_CODE_TABS-->
-
-<!--Pascaligo-->
-
-The values of a PascaLIGO big map can be updated using the ordinary
-assignment syntax:
-
-```pascaligo
-
-function set_ (var m : moveset) : moveset is
+```pascaligo group=big_maps
+function add (var m : register) : register is
   block {
-    m [("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address)] := (4,9);
+    m [("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address)] := (4,9)
   } with m
+
+const updated_map : register = add (moves)
 ```
 
-<!--Cameligo-->
+</Syntax>
+<Syntax syntax="cameligo">
 
-```cameligo
-let updated_map : moveset =
-  Big_map.update ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address) (Some (4,9)) moves
+```cameligo group=big_maps
+let updated_map : register =
+  Big_map.update
+    ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" : address) (Some (4,9)) moves
 ```
 
-<!--Reasonligo-->
+</Syntax>
+<Syntax syntax="reasonligo">
 
-```reasonligo
-let updated_map : moveset =
-  Big_map.update(("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address), Some((4,9)), moves);
+```reasonligo group=big_maps
+let updated_map : register =
+  Big_map.update
+    (("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address), Some ((4,9)), moves);
 ```
 
-<!--END_DOCUSAURUS_CODE_TABS-->
+</Syntax>
 
-## Big_map.add(k: a', v: b', m: (a', b') big_map) : (a', b') big_map
 
-Add a key and its associated value to the big map.
+# Removing Bindings
 
-<!--DOCUSAURUS_CODE_TABS-->
 
-<!--PascaLIGO-->
-```pascaligo
-function set_ (var n : int ; var m : foo) : foo is block {
-  m[23] := n ;
-} with m
+
+<Syntax syntax="pascaligo">
+
+```pascaligo group=big_maps
+function rem (var m : register) : register is
+  block {
+    remove ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address) from map moves
+  } with m
+
+const updated_map : register = rem (moves)
 ```
 
-<!--CameLIGO-->
-```cameligo
-let add (n,m : int * foo) : foo = Big_map.add 23 n m
+</Syntax>
+<Syntax syntax="cameligo">
+
+```cameligo group=big_maps
+let updated_map : register =
+  Map.remove ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address) moves
 ```
 
-<!--ReasonLIGO-->
-```reasonligo
-let add = ((n,m): (int, foo)): foo => Big_map.add(23, n, m);
+</Syntax>
+<Syntax syntax="reasonligo">
+
+```reasonligo group=big_maps
+let updated_map : register =
+  Map.remove (("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address), moves)
 ```
 
-<!--END_DOCUSAURUS_CODE_TABS-->
-
-## Big_map.remove(k: a', m: (a', b') big_map) : (a', b') big_map
-
-Remove a key and its associated value from the big map.
-
-<!--DOCUSAURUS_CODE_TABS-->
-
-<!--PascaLIGO-->
-```pascaligo
-function rm (var m : foo) : foo is block {
-  remove 42 from map m;
-} with m
-```
-
-<!--CameLIGO-->
-```cameligo
-let rm (m : foo) : foo = Big_map.remove 42 m
-```
-
-<!--ReasonLIGO-->
-```reasonligo
-let rm = (m: foo): foo => Big_map.remove(42, m);
-```
-
-<!--END_DOCUSAURUS_CODE_TABS-->
-
-## Big_map.literal(key_value_pair_list: (a', b') list) : (a', b') big_map
-
-Constructs a big map from a list of key-value pair tuples.
-
-<!--DOCUSAURUS_CODE_TABS-->
-<!--Pascaligo-->
-
-```pascaligo
-const moves: moveset =
-  big_map
-    ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address) -> (1,2);
-    ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address) -> (0,3);
-  end
-```
-
-<!--CameLIGO-->
-
-```cameligo
-let moves: moveset =
-  Big_map.literal [
-    (("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address), (1,2));
-    (("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address), (0,3));
-  ]
-```
-
-<!--ReasonLIGO-->
-
-```reasonligo
-let moves: moveset =
-  Big_map.literal ([
-    ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address, (1,2)),
-    ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address, (0,3)),
-  ]);
-```
-
-<!--END_DOCUSAURUS_CODE_TABS-->
-
-
-## Big_map.empty() : (a', b') big_map
-
-Create an empty big map.
-
-<!--DOCUSAURUS_CODE_TABS-->
-
-<!--PascaLIGO-->
-```pascaligo
-const empty_big_map : big_map(int,int) = big_map end
-```
-
-<!--CameLIGO-->
-```cameligo
-let empty_map : foo = Big_map.empty
-```
-
-<!--ReasonLIGO-->
-```reasonligo
-let empty_map: foo = Big_map.empty;
-```
-
-<!--END_DOCUSAURUS_CODE_TABS-->
+</Syntax>
 

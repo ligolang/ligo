@@ -3,11 +3,13 @@ id: loops
 title: Loops
 ---
 
+import Syntax from '@theme/Syntax';
+
 ## General Iteration
 
-<!--DOCUSAURUS_CODE_TABS-->
 
-<!--PascaLIGO-->
+
+<Syntax syntax="pascaligo">
 
 General iteration in PascaLIGO takes the shape of general loops, which
 should be familiar to programmers of imperative languages as "while
@@ -47,7 +49,8 @@ gitlab-pages/docs/language-basics/src/loops/gcd.ligo gcd '(2n*2n*3n*11n, 2n*2n*2
 # Outputs: +12
 ```
 
-<!--CameLIGO-->
+</Syntax>
+<Syntax syntax="cameligo">
 
 CameLIGO is a functional language where user-defined values are
 constant, therefore it makes no sense in CameLIGO to feature loops,
@@ -79,17 +82,22 @@ let gcd (x,y : nat * nat) : nat =
 ```
 
 To ease the writing and reading of the iterated functions (here,
-`iter`), two predefined functions are provided: `continue` and `stop`:
+`iter`), two predefined functions are provided: `Loop.resume` and
+`Loop.stop`:
 
 ```cameligo group=a
 let iter (x,y : nat * nat) : bool * (nat * nat) =
-  if y = 0n then stop (x,y) else continue (y, x mod y)
+  if y = 0n then Loop.stop (x,y) else Loop.resume (y, x mod y)
 
 let gcd (x,y : nat * nat) : nat =
   let x,y = if x < y then y,x else x,y in
   let x,y = Loop.fold_while iter (x,y)
   in x
 ```
+
+> Note that `stop` and `continue` (now `Loop.resume`) are
+> *deprecated*.
+
 You can call the function `gcd` defined above using the LIGO compiler
 like so:
 ```shell
@@ -98,7 +106,8 @@ gitlab-pages/docs/language-basics/src/loops/gcd.mligo gcd (2n*2n*3n*11n, 2n*2n*2
 # Outputs: +12
 ```
 
-<!--ReasonLIGO-->
+</Syntax>
+<Syntax syntax="reasonligo">
 
 ReasonLIGO is a functional language where user-defined values are
 constant, therefore it makes no sense in ReasonLIGO to feature loops,
@@ -131,11 +140,12 @@ let gcd = ((x,y) : (nat, nat)) : nat => {
 ```
 
 To ease the writing and reading of the iterated functions (here,
-`iter`), two predefined functions are provided: `continue` and `stop`:
+`iter`), two predefined functions are provided: `Loop.resume` and
+`Loop.stop`:
 
 ```reasonligo group=b
 let iter = ((x,y) : (nat, nat)) : (bool, (nat, nat)) =>
-  if (y == 0n) { stop ((x,y)); } else { continue ((y, x mod y)); };
+  if (y == 0n) { Loop.stop ((x,y)); } else { Loop.resume ((y, x mod y)); };
 
 let gcd = ((x,y) : (nat, nat)) : nat => {
   let (x,y) = if (x < y) { (y,x); } else { (x,y); };
@@ -143,7 +153,12 @@ let gcd = ((x,y) : (nat, nat)) : nat => {
   x
 };
 ```
-<!--END_DOCUSAURUS_CODE_TABS-->
+
+> Note that `stop` and `continue` (now `Loop.resume`) are
+> *deprecated*.
+
+</Syntax>
+
 
 ## Bounded Loops
 
@@ -175,8 +190,8 @@ gitlab-pages/docs/language-basics/src/loops/sum.ligo sum 7n
 
 PascaLIGO "for" loops can also iterate through the contents of a
 collection, that is, a list, a set or a map. This is done with a loop
-of the form `for <element var> in <collection type> <collection var>
-<block>`, where `<collection type>` is any of the following keywords:
+of the form `for <element var> in <collection type> <collection var> <block>`, 
+where `<collection type>` is any of the following keywords:
 `list`, `set` or `map`.
 
 Here is an example where the integers in a list are summed up.

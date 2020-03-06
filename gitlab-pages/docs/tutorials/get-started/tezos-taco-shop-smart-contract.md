@@ -1,112 +1,147 @@
 ---
 id: tezos-taco-shop-smart-contract
-title: Taco shop smart contract
+title: The Taco Shop Smart Contract
 ---
 
 <div>
 
-Meet **Pedro**, our *artisan taco chef* who has decided to open a Taco shop on the Tezos blockchain, using a smart contract. He sells two different kinds of tacos, the **el clásico** and the **especial del chef**. 
+Meet **Pedro**, our *artisan taco chef*, who has decided to open a
+Taco shop on the Tezos blockchain, using a smart contract. He sells
+two different kinds of tacos: **el Clásico** and the **Especial
+del Chef**.
 
-To help Pedro open his dream taco shop, we'll implement a smart contract, that will manage supply, pricing & sales of his tacos to the consumers.
+To help Pedro open his dream taco shop, we will implement a smart
+contract that will manage supply, pricing & sales of his tacos to the
+consumers.
 
 <br/>
 <img src="/img/tutorials/get-started/tezos-taco-shop-smart-contract/taco-stand.svg" width="50%" />
-<div style="opacity: 0.7; text-align: center; font-size: 10px;">Made by <a href="https://www.flaticon.com/authors/smashicons" title="Smashicons">Smashicons</a> from <a href="https://www.flaticon.com/" 			    title="Flaticon">www.flaticon.com</a> is licensed by <a href="http://creativecommons.org/licenses/by/3.0/" 			    title="Creative Commons BY 3.0" target="_blank">CC 3.0 BY</a></div>
+<div style={{ opacity: 0.7, textAlign: 'center', fontSize: '10px' }}>Made by <a href="https://www.flaticon.com/authors/smashicons" title="Smashicons">Smashicons</a> from <a href="https://www.flaticon.com/" 			    title="Flaticon">www.flaticon.com</a> is licensed by <a href="http://creativecommons.org/licenses/by/3.0/" 			    title="Creative Commons BY 3.0" target="_blank">CC 3.0 BY</a></div>
 </div>
 
 ---
 
 ## Pricing
 
-Pedro's tacos are a rare delicacy, so their **price goes up**, as the **stock for the day begins to deplete**.
+Pedro's tacos are a rare delicacy, so their **price goes up** as the
+**stock for the day begins to deplete**.
 
-Each taco kind, has its own `max_price` that it sells for, and a finite supply for the current sales lifecycle.
+Each taco kind, has its own `max_price` that it sells for, and a
+finite supply for the current sales lifecycle.
 
-> For the sake of simplicity, we won't implement replenishing of the supply after it runs out.
+> For the sake of simplicity, we will not implement the replenishing
+> of the supply after it has run out.
 
-### Daily offer
+### Daily Offer
 
 |**kind** |id |**available_stock**| **max_price**|
 |---|---|---|---|
-|el clásico | `1n` | `50n` | `50000000mutez` |
-|especial del chef | `2n` | `20n` | `75000000mutez` |
+|Clásico | `1n` | `50n` | `50tez` |
+|Especial del Chef | `2n` | `20n` | `75tez` |
 
-### Calculating the current purchase price
+### Calculating the Current Purchase Price
 
-Current purchase price is calculated with the following equation:
+The current purchase price is calculated with the following formula:
 
 ```pascaligo skip
 current_purchase_price = max_price / available_stock
 ```
 
-#### El clásico
+#### El Clásico
 |**available_stock**|**max_price**|**current_purchase_price**|
 |---|---|---|
-| `50n` | `50000000mutez` | `1tz`|
-| `20n` | `50000000mutez` | `2.5tz` |
-| `5n` | `50000000mutez` | `10tz` |
+| `50n` | `50tez` | `1tez`|
+| `20n` | `50tez` | `2.5tez` |
+| `5n` | `50tez` | `10tez` |
 
 #### Especial del chef
 |**available_stock**|**max_price**|**current_purchase_price**|
 |---|---|---|
-| `20n` | `75000000mutez` | `3.75tz` |
-| `10n` | `75000000mutez` | `7.5tz`|
-| `5n` | `75000000mutez` | `15tz` |
+| `20n` | `75tez` | `3.75tez` |
+| `10n` | `75tez` | `7.5tez`|
+| `5n` | `75tez` | `15tez` |
 
 ---
 
 ## Installing LIGO
 
-In this tutorial, we'll use LIGO's dockerized version for the sake of simplicity. You can find the installation instructions [here](intro/installation.md#dockerized-installation-recommended).
+In this tutorial, we will use LIGO's dockerized version, for the sake
+of simplicity. You can find the installation instructions
+[here](intro/installation.md#dockerized-installation-recommended).
 
-The best way to install the dockerized LIGO is as a **global executable** through the installation script, as shown in the screenshot below:
+The best way to install the dockerized LIGO is as a **global
+executable** through the installation script, as shown in the
+screenshot below:
 
 <img src="/img/tutorials/get-started/tezos-taco-shop-smart-contract/install-ligo.png" />
-<div style="opacity: 0.7; text-align: center; font-size: 12px; margin-top:-24px;">Installing the <b>next</b> version of LIGO's CLI</div>
+<div style={{ opacity: 0.7, textAlign: 'center', fontSize: '12px', marginTop: '-24px' }}>Installing the <b>next</b> version of LIGO's CLI</div>
 
-## Implementing our first entry point
+## Implementing our First `main` Function
 
-> From now on we'll get a bit more technical. If you run into something we have not covered yet - please try checking out the [LIGO cheat sheet](api/cheat-sheet.md) for some extra tips & tricks.
+> From now on we will get a bit more technical. If you run into
+> something we have not covered yet - please try checking out the
+> [LIGO cheat sheet](api/cheat-sheet.md) for some extra tips & tricks.
 
-To begin implementing our smart contract, we need an entry point. We'll call it `main` and it'll specify our contract's storage (`int`) and input parameter (`int`). Of course this is not the final storage/parameter of our contract, but it is something to get us started and test our LIGO installation as well.
+To begin implementing our smart contract, we need a *main function*,
+that is the first function being executed. We will call it `main` and
+it will specify our contract's storage (`int`) and input parameter
+(`int`). Of course this is not the final storage/parameter of our
+contract, but it is something to get us started and test our LIGO
+installation as well.
 
 ### `taco-shop.ligo`
+
 ```pascaligo group=a
-function main (const parameter: int; const contractStorage: int) : (list(operation) * int) is
-  block {skip} with ((nil : list(operation)), contractStorage + parameter)
+function main (const parameter : int; const contractStorage : int) :
+list (operation) * int is
+  ((nil : list (operation)), contractStorage + parameter)
 ```
 
-Let's break down the contract above to make sure we understand each bit of the LIGO syntax:
+Let us break down the contract above to make sure we understand each
+bit of the LIGO syntax:
 
-- **`function main`** - definition of a function that serves as an entry point
-- **`(const parameter : int;  const contractStorage : int)`** - parameters passed to the function
-  - **`const parameter : int`** - parameter provided by a transaction that invokes our contract
-  - **`const contractStorage : int`** - definition of our storage (`int`)
-- **`(list(operation) * int)`** - return type of our function, in our case a touple with a list of operations, and an int
-- **`block {skip}`** - our function has no body, so we instruct LIGO to `skip` it
-- **`with ((nil : list(operation)), contractStorage + parameter)`** - essentially a return statement
-  - **`(nil : list(operation))`**  - a `nil` value annotated as a list of operations, because that's required by our return type specified above
-  - **`contractStorage + parameter`** - a new storage value for our contract, sum of previous storage and a transaction parameter
-### Running LIGO for the first time
+- **`function main`** - definition of the main function, which takes
+  a the parameter of the contract and the storage
+- **`(const parameter : int;  const contractStorage : int)`** -
+  parameters passed to the function: the first is called `parameter`
+  because it denotes the parameter of a specific invocation of the
+  contract, the second is the storage
+- **`(list (operation) * int)`** - return type of our function, in our
+  case a tuple with a list of operations, and an `int` (new value for
+  the storage after a succesful run of the contract)
+- **`((nil : list (operation)), contractStorage + parameter)`** -
+  essentially a return statement
+- **`(nil : list (operation))`**  - a `nil` value annotated as a list
+  of operations, because that is required by our return type specified
+  above
+  - **`contractStorage + parameter`** - a new storage value for our
+  contract, sum of previous storage and a transaction parameter
 
-To test that we've installed LIGO correctly, and that `taco-shop.ligo` is a valid contract, we'll dry-run it.
+### Running LIGO for the First Time
 
-> Dry-running is a simulated execution of the smart contract, based on a mock storage value and a parameter.
+To test that we have installed LIGO correctly, and that
+`taco-shop.ligo` is a valid contract, we will dry-run it.
 
-Our contract has a storage of `int` and accepts a parameter that is also an `int`. 
+> Dry-running is a simulated execution of the smart contract, based on
+> a mock storage value and a parameter.
+
+Our contract has a storage of `int` and accepts a parameter that is
+also an `int`.
 
 The `dry-run` command requires a few parameters:
 - **contract** *(file path)*
-- **entrypoint** *(name of the entrypoint function in the contract)*
+- **entrypoint** *(name of the main function in the contract)*
 - **parameter** *(parameter to execute our contract with)*
 - **storage** *(starting storage before our contract's code is executed)*
 
-
-And outputs what's returned from our entrypoint - in our case a touple containing an empty list (of operations to apply) and the new storage value - which in our case is the sum of the previous storage and the parameter we've used.
+It outputs what is returned from our main function: in our case a
+tuple containing an empty list (of operations to apply) and the new
+storage value, which, in our case, is the sum of the previous storage
+and the parameter we have used for the invocation.
 
 ```zsh
 # Contract: taco-shop.ligo
-# Entry point: main
+# Main function: main
 # Parameter: 4
 # Storage: 3
 ligo dry-run taco-shop.ligo --syntax pascaligo main 4 3
@@ -116,7 +151,7 @@ ligo dry-run taco-shop.ligo --syntax pascaligo main 4 3
 ```
 
 <img src="/img/tutorials/get-started/tezos-taco-shop-smart-contract/dry-run-1.png" />
-<div style="opacity: 0.7; text-align: center; font-size: 12px; margin-top:-24px;">Simulating contract execution with the CLI</div>
+<div style={{ opacity: 0.7, textAlign: 'center', fontSize: '12px', marginTop: '-24px' }}>Simulating contract execution with the CLI</div>
 
 <br/>
 
@@ -124,197 +159,257 @@ ligo dry-run taco-shop.ligo --syntax pascaligo main 4 3
 
 ---
 
-## Designing Taco shop's contract storage
+## Designing the Taco Shop's Contract Storage
 
-We know that Pedro's Taco Shop serves two kinds of tacos, so we'll need to manage stock individually, per kind. Let's define a type, that will keep the `stock` & `max_price` per kind - in a record with two fields. Additionally, we'll want to combine our `taco_supply` type into a map, consisting of the entire offer of Pedro's shop.
+We know that Pedro's Taco Shop serves two kinds of tacos, so we will
+need to manage stock individually, per kind. Let us define a type,
+that will keep the `stock` & `max_price` per kind in a record with two
+fields. Additionally, we will want to combine our `taco_supply` type
+into a map, consisting of the entire offer of Pedro's shop.
 
 **Taco shop's storage**
-```pascaligo group=b
-type taco_supply is record
-    current_stock : nat;
-    max_price : tez;
-end
 
-type taco_shop_storage is map(nat, taco_supply);
+```pascaligo group=b
+type taco_supply is record [
+  current_stock : nat;
+  max_price     : tez
+]
+
+type taco_shop_storage is map (nat, taco_supply)
 ```
 
-Next step is to update the `main` entry point to include `taco_shop_storage` in its storage - while doing that let's set the `parameter` to `unit` as well to clear things up.
+Next step is to update the `main` function to include
+`taco_shop_storage` in its storage. In the meanwhile, let us set the
+`parameter` to `unit` as well to clear things up.
 
 **`taco-shop.ligo`**
-```pascaligo group=b+
-type taco_supply is record
-    current_stock : nat;
-    max_price : tez;
-end
-type taco_shop_storage is map(nat, taco_supply);
 
-function main (const parameter: unit ; const taco_shop_storage : taco_shop_storage) : (list(operation) * taco_shop_storage) is
-  block {skip} with ((nil : list(operation)), taco_shop_storage)
+```pascaligo group=b+
+type taco_supply is record [
+  current_stock : nat;
+  max_price     : tez
+]
+
+type taco_shop_storage is map (nat, taco_supply)
+
+type return is list (operation) * taco_shop_storage
+
+function main (const parameter : unit; const taco_shop_storage :  taco_shop_storage) : return is
+  ((nil : list (operation)), taco_shop_storage)
 ```
 
-### Populating our storage in a dry-run
+### Populating our Storage in a dry-run
 
-When dry-running a contract, it is crucial to provide a correct initial storage value - in our case the storage is type-checked as `taco_shop_storage`. Reflecting [Pedro's daily offer](tutorials/get-started/tezos-taco-shop-smart-contract.md#daily-offer), our storage's value will be defined as following:
+When dry-running a contract, it is crucial to provide a correct
+initial storage value.  In our case the storage is type-checked as
+`taco_shop_storage`. Reflecting
+[Pedro's daily offer](tutorials/get-started/tezos-taco-shop-smart-contract.md#daily-offer),
+our storage's value will be defined as follows:
 
 **Storage value**
+
 ```zsh
-map
-    1n -> record
-        current_stock = 50n;
-        max_price = 50000000mutez;
-    end;
-    2n -> record
-        current_stock = 20n;
-        max_price = 75000000mutez;
-    end;
-end
+map [
+  1n -> record [
+          current_stock = 50n;
+          max_price = 50tez
+        ];
+  2n -> record [
+          current_stock = 20n;
+          max_price = 75tez
+        ]
+]
 ```
 
-> Storage value is a map, with two items in it, both items are records identified by natural numbers `1n` & `2n`.
+> The storage value is a map with two bindings (entries) distinguished
+> by their keys `1n` and `2n`.
 
 **Dry run command with a multi-line storage value**
+
 ```zsh
-ligo dry-run taco-shop.ligo --syntax pascaligo main unit "map
-    1n -> record
-        current_stock = 50n;
-        max_price = 50000000mutez;
-    end;
-    2n -> record
-        current_stock = 20n;
-        max_price = 75000000mutez;
-    end;
-end"
+ligo dry-run taco-shop.ligo --syntax pascaligo main unit "map [
+    1n -> record [
+            current_stock = 50n;
+            max_price = 50tez
+          ];
+    2n -> record [
+            current_stock = 20n;
+            max_price = 75tez
+          ]
+]"
 ```
 
 <img src="/img/tutorials/get-started/tezos-taco-shop-smart-contract/dry-run-2.png" />
-<div style="opacity: 0.7; text-align: center; font-size: 12px; margin-top:-24px;">Dry-run with a complex storage value</div>
+<div style={{ opacity: 0.7, textAlign: 'center', fontSize: '12px', marginTop: '-24px' }}>Dry-run with a complex storage value</div>
 
 <br/>
 
-*If everything went as expected, the `dry-run` command will return an empty list of operations and the contract's current storage, which is the map of products we've defined based on the daily offer of Pedro's taco shop.*
+*If everything went as expected, the `dry-run` command will return an
+ empty list of operations and the contract's current storage, which is
+ the map of the products we have defined based on the daily offer of
+ Pedro's taco shop.*
 
 ---
 
-## Providing an entrypoint for buying tacos
+## Providing another Access Function for Buying Tacos
 
-Now that we have our stock well defined in form of storage, we can move on to the actual sales. We'll replace the `main` entrypoint with `buy_taco`, that takes an `id` - effectively a key from our `taco_shop_storage` map. This will allow us to calculate pricing, and if the sale is successful - then we can reduce our stock - because we have sold a taco!
+Now that we have our stock well defined in form of storage, we can
+move on to the actual sales. The `main` function will take a key `id`
+from our `taco_shop_storage` map and will be renamed `buy_taco` for
+more readability. This will allow us to calculate pricing, and if the
+sale is successful, we will be able to reduce our stock because we
+have sold a taco!
 
-### Selling the tacos for free
+### Selling the Tacos for Free
 
-Let's start by customizing our contract a bit, we will:
+Let is start by customizing our contract a bit, we will:
 
-- rename the entrypoint from `main` to `buy_taco`
 - rename `parameter` to `taco_kind_index`
-- change `taco_shop_storage` to a `var` instead of a `const`, because we'll want to modify it
+- change `taco_shop_storage` to a `var` instead of a `const`, because
+  we will want to modify it
 
 **`taco-shop.ligo`**
+
 ```pascaligo group=c
-type taco_supply is record
+type taco_supply is record [
     current_stock : nat;
-    max_price : tez;
-end
-type taco_shop_storage is map(nat, taco_supply);
+    max_price : tez
+]
 
+type taco_shop_storage is map (nat, taco_supply)
 
-function buy_taco (const taco_kind_index: nat ; var taco_shop_storage : taco_shop_storage) : (list(operation) * taco_shop_storage) is
-  block { skip } with ((nil : list(operation)), taco_shop_storage)
+type return is list (operation) * taco_shop_storage
+
+function buy_taco (const taco_kind_index : nat; var taco_shop_storage : taco_shop_storage) : return is
+  ((nil : list (operation)), taco_shop_storage)
 ```
 
-#### Decreasing `current_stock` when a taco is sold
+#### Decreasing `current_stock` when a Taco is Sold
 
-In order to decrease the stock in our contract's storage for a specific taco kind, a few things needs to happen:
+In order to decrease the stock in our contract's storage for a
+specific taco kind, a few things needs to happen:
 
-- retrieve the `taco_kind` from our storage, based on the `taco_kind_index` provided
-- subtract the `taco_kind.current_stock` by `1n`
-  - we can find the absolute (`nat`) value of the subtraction above by using `abs`, otherwise we'd be left with an `int`
-- update the storage, and return it
+- retrieve the `taco_kind` from our storage, based on the
+  `taco_kind_index` provided;
+- subtract the `taco_kind.current_stock` by `1n`;
+- we can find the absolute value of the subtraction above by
+  calling `abs` (otherwise we would be left with an `int`);
+- update the storage, and return it.
 
 **`taco-shop.ligo`**
 
 ```pascaligo group=d
-type taco_supply is record
-    current_stock : nat;
-    max_price : tez;
-end
-type taco_shop_storage is map(nat, taco_supply);
+type taco_supply is record [
+  current_stock : nat;
+  max_price : tez
+]
 
-function buy_taco (const taco_kind_index: nat ; var taco_shop_storage : taco_shop_storage) : (list(operation) * taco_shop_storage) is
-  begin
-    // Retrieve the taco_kind from the contract's storage
-    const taco_kind : taco_supply = get_force(taco_kind_index, taco_shop_storage);
-    // Decrease the stock by 1n, because we've just sold one
-    taco_kind.current_stock := abs(taco_kind.current_stock - 1n);
+type taco_shop_storage is map (nat, taco_supply)
+
+type return is list (operation) * taco_shop_storage
+
+function buy_taco (const taco_kind_index : nat; var taco_shop_storage : taco_shop_storage) : return is
+  block {
+    // Retrieve the taco_kind from the contract's storage or fail
+    const taco_kind : taco_supply =
+      case taco_shop_storage[taco_kind_index] of
+        Some (kind) -> kind
+      | None -> (failwith ("Unknown kind of taco.") : taco_supply)
+      end;
+
+    // Decrease the stock by 1n, because we have just sold one
+    taco_kind.current_stock := abs (taco_kind.current_stock - 1n);
+
     // Update the storage with the refreshed taco_kind
-    taco_shop_storage[taco_kind_index] := taco_kind;
-  end with ((nil : list(operation)), taco_shop_storage)
+    taco_shop_storage[taco_kind_index] := taco_kind
+  } with ((nil : list (operation)), taco_shop_storage)
 ```
 
 <img src="/img/tutorials/get-started/tezos-taco-shop-smart-contract/dry-run-3.png" />
-<div style="opacity: 0.7; text-align: center; font-size: 12px; margin-top:-24px;">Stock decreases after selling a taco</div>
+<div style={{ opacity: 0.7, textAlign: 'center', fontSize: '12px', marginTop: '-24px' }}>Stock decreases after selling a taco</div>
 
 <br/>
 
-### Making sure we get paid for our tacos
+### Making Sure We Get Paid for Our Tacos
 
-In order to make Pedro's taco shop profitable, he needs to stop giving away tacos for free. When a contract is invoked via a transaction, an amount of tezzies to be sent can be specified as well. This amount is accessible within LIGO as `amount`.
+In order to make Pedro's taco shop profitable, he needs to stop giving
+away tacos for free. When a contract is invoked via a transaction, an
+amount of tezzies to be sent can be specified as well. This amount is
+accessible within LIGO as `amount`.
 
 To make sure we get paid, we will:
 
-- calculate a `current_purchase_price` based on the [equation specified earlier](tutorials/get-started/tezos-taco-shop-smart-contract.md#calculating-the-current-purchase-price)
-- check if the sent `amount` matches the `current_purchase_price`
-  - if not, then our contract will `fail` and stop executing
-  - if yes, stock for the given `taco_kind` will be decreased and the payment accepted
+- calculate a `current_purchase_price` based on the
+  [equation specified earlier](tutorials/get-started/tezos-taco-shop-smart-contract.md#calculating-the-current-purchase-price)
+- check if the sent `amount` matches the `current_purchase_price`:
+  - if not, then our contract will fail (`failwith`)
+  - otherwise, stock for the given `taco_kind` will be decreased and
+    the payment accepted
 
 **`taco-shop.ligo`**
-```pascaligo group=e
-type taco_supply is record
-    current_stock : nat;
-    max_price : tez;
-end
-type taco_shop_storage is map(nat, taco_supply);
 
-function buy_taco (const taco_kind_index: nat ; var taco_shop_storage : taco_shop_storage) : (list(operation) * taco_shop_storage) is
-  begin
-    // Retrieve the taco_kind from the contract's storage
-    const taco_kind : taco_supply = get_force(taco_kind_index, taco_shop_storage);
-    
-    const current_purchase_price : tez = taco_kind.max_price / taco_kind.current_stock;
+```pascaligo group=e
+type taco_supply is record [
+  current_stock : nat;
+  max_price     : tez
+]
+
+type taco_shop_storage is map (nat, taco_supply)
+
+type return is list (operation) * taco_shop_storage
+
+function buy_taco (const taco_kind_index : nat ; var taco_shop_storage : taco_shop_storage) : return is
+  block {
+    // Retrieve the taco_kind from the contract's storage or fail
+    const taco_kind : taco_supply =
+      case taco_shop_storage[taco_kind_index] of
+        Some (kind) -> kind
+      | None -> (failwith ("Unknown kind of taco.") : taco_supply)
+      end;
+
+     const current_purchase_price : tez =
+       taco_kind.max_price / taco_kind.current_stock;
 
     if amount =/= current_purchase_price then
-      // we won't sell tacos if the amount isn't correct
-      failwith("Sorry, the taco you're trying to purchase has a different price");
-    else
-      // Decrease the stock by 1n, because we've just sold one
-      taco_kind.current_stock := abs(taco_kind.current_stock - 1n);
+      // We won't sell tacos if the amount is not correct
+      failwith ("Sorry, the taco you are trying to purchase has a different price");
+    else skip;
+
+    // Decrease the stock by 1n, because we have just sold one
+    taco_kind.current_stock := abs (taco_kind.current_stock - 1n);
 
     // Update the storage with the refreshed taco_kind
-    taco_shop_storage[taco_kind_index] := taco_kind;
-  end with ((nil : list(operation)), taco_shop_storage)
+    taco_shop_storage[taco_kind_index] := taco_kind
+  } with ((nil : list (operation)), taco_shop_storage)
 ```
 
-In order to test the `amount` sent, we'll use the `--amount` option of `dry-run`:
+In order to test the `amount` sent, we will use the `--amount` option
+of `dry-run`:
 
 ```zsh
-ligo dry-run taco-shop.ligo --syntax pascaligo --amount 1 buy_taco 1n "map
-    1n -> record
-        current_stock = 50n;
-        max_price = 50000000mutez;
-    end;
-    2n -> record
-        current_stock = 20n;
-        max_price = 75000000mutez;
-    end;
-end"
+ligo dry-run taco-shop.ligo --syntax pascaligo --amount 1 buy_taco 1n "map [
+    1n -> record [
+            current_stock = 50n;
+            max_price = 50tez
+          ];
+    2n -> record [
+            current_stock = 20n;
+            max_price = 75tez
+          ]
+]"
 ```
-**Purchasing a taco with 1.0tz**
+
+** Purchasing a Taco with 1tez **
 <img src="/img/tutorials/get-started/tezos-taco-shop-smart-contract/dry-run-4.png" />
-<div style="opacity: 0.7; text-align: center; font-size: 12px; margin-top:-24px;">Stock decreases after selling a taco, if the right amount of tezzies is provided</div>
+<div style={{ opacity: 0.7, textAlign: 'center', fontSize: '12px', marginTop: '-24px' }}>Stock decreases after selling a taco, if the right amount of tezzies is provided</div>
 
 <br/>
 
-**Attempting to purchase a taco with 0.7tz**
+**Attempting to Purchase a Taco with 0.7tez**
 <img src="/img/tutorials/get-started/tezos-taco-shop-smart-contract/dry-run-5.png" />
-<div style="opacity: 0.7; text-align: center; font-size: 12px; margin-top:-24px;">Stock does not decrease after a purchase attempt with a lower than required amount.</div>
+<div style={{ opacity: 0.7, textAlign: 'center', fontSize: '12px',
+marginTop: '-24px' }}>Stock does not decrease after a purchase attempt
+with an insufficient payment.</div>
 
 <br/>
 
@@ -322,16 +417,19 @@ end"
 
 ---
 
-## 💰 Bonus: *Accepting tips above the taco purchase price*
+## 💰 Bonus: *Accepting Tips above the Taco Purchase Price*
 
-If you'd like to accept tips in your contract as well, simply change the following line, depending on your preference.
+If you would like to accept tips in your contract, simply change the
+following line, depending on your preference.
 
 **Without tips**
+
 ```pascaligo skip
 if amount =/= current_purchase_price then
 ```
 
 **With tips**
+
 ```pascaligo skip
 if amount >= current_purchase_price then
 ```

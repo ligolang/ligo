@@ -4,6 +4,7 @@ import { compileContract, getErrorMessage } from '../../services/api';
 import { AppState } from '../app';
 import { DoneLoadingAction, UpdateLoadingAction } from '../loading';
 import { ChangeOutputAction } from '../result';
+import { Command } from '../types';
 import { CancellableAction } from './cancellable';
 
 export class CompileAction extends CancellableAction {
@@ -24,13 +25,18 @@ export class CompileAction extends CancellableAction {
           return;
         }
 
-        dispatch({ ...new ChangeOutputAction(michelsonCode.result) });
+        dispatch({
+          ...new ChangeOutputAction(michelsonCode.result, Command.Compile)
+        });
       } catch (ex) {
         if (this.isCancelled()) {
           return;
         }
         dispatch({
-          ...new ChangeOutputAction(`Error: ${getErrorMessage(ex)}`)
+          ...new ChangeOutputAction(
+            `Error: ${getErrorMessage(ex)}`,
+            Command.Compile
+          )
         });
       }
 

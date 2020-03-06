@@ -3,7 +3,30 @@ id: math-numbers-tez
 title: Math, Numbers & Tez
 ---
 
-LIGO offers three built-in numerical types: `int`, `nat` and `tez`.
+import Syntax from '@theme/Syntax';
+
+LIGO offers three built-in numerical types: `int`, `nat` and
+`tez`. Values of type `int` are integers; values of type `nat` are
+natural numbers (integral numbers greater than or equal to zero);
+values of type `tez` are units of measure of Tezos tokens.
+
+  * Integer literals are the same found in mainstream programming
+    languages, for example, `10`, `-6` and `0`, but there is only one
+    canonical zero: `0` (so, for instance, `-0` and `00` are invalid).
+
+  * Natural numbers are written as digits follwed by the suffix `n`,
+    like so: `12n`, `0n`, and the same restriction on zero as integers
+    applies: `0n` is the only way to specify the natural zero.
+
+  * Tezos tokens can be specified using literals of three kinds:
+      * units of millionth of `tez`, using the suffix `mutez` after a
+        natural literal, like `10000mutez` or `0mutez`;
+      * units of `tez`, using the suffix `tz` or `tez`, like `3tz` or
+        `3tez`;
+      * decimal amounts of `tz` or `tez`, like `12.3tz` or `12.4tez`.
+
+Note that large integral values can be expressed using underscores to
+separate groups of digits, like `1_000mutez` or `0.000_004tez`.
 
 ## Addition
 
@@ -17,8 +40,9 @@ remain in comments as they would otherwise not compile, for example,
 adding a value of type `int` to a value of type `tez` is invalid. Note
 that adding an integer to a natural number produces an integer.
 
-<!--DOCUSAURUS_CODE_TABS-->
-<!--PascaLIGO-->
+
+<Syntax syntax="pascaligo">
+
 ```pascaligo group=a
 // int + int yields int
 const a : int = 5 + 10
@@ -27,7 +51,7 @@ const a : int = 5 + 10
 const b : int = 5n + 10
 
 // tez + tez yields tez
-const c : tez = 5mutez + 10mutez
+const c : tez = 5mutez + 0.000_010tez
 
 //tez + int or tez + nat is invalid
 // const d : tez = 5mutez + 10n
@@ -48,7 +72,9 @@ const g : int = 1_000_000
 > const sum : tez = 100_000mutez
 >```
 
-<!--CameLIGO-->
+</Syntax>
+<Syntax syntax="cameligo">
+
 ```cameligo group=a
 // int + int yields int
 let a : int = 5 + 10
@@ -57,7 +83,7 @@ let a : int = 5 + 10
 let b : int = 5n + 10
 
 // tez + tez yields tez
-let c : tez = 5mutez + 10mutez
+let c : tez = 5mutez + 0.000_010tez
 
 // tez + int or tez + nat is invalid
 // let d : tez = 5mutez + 10n
@@ -78,7 +104,9 @@ let g : int = 1_000_000
 >let sum : tez = 100_000mutez
 >```
 
-<!--ReasonLIGO-->
+</Syntax>
+<Syntax syntax="reasonligo">
+
 ```reasonligo group=a
 // int + int yields int
 let a : int = 5 + 10;
@@ -87,7 +115,7 @@ let a : int = 5 + 10;
 let b : int = 5n + 10;
 
 // tez + tez yields tez
-let c : tez = 5mutez + 10mutez;
+let c : tez = 5mutez + 0.000_010tez;
 
 // tez + int or tez + nat is invalid:
 // let d : tez = 5mutez + 10n;
@@ -106,7 +134,9 @@ let g : int = 1_000_000;
 >```reasonligo
 >let sum : tex = 100_000mutez;
 >```
-<!--END_DOCUSAURUS_CODE_TABS-->
+
+</Syntax>
+
 
 ## Subtraction
 
@@ -114,8 +144,9 @@ Subtraction looks as follows.
 
 > ⚠️ Even when subtracting two `nats`, the result is an `int`
 
-<!--DOCUSAURUS_CODE_TABS-->
-<!--PascaLIGO-->
+
+<Syntax syntax="pascaligo">
+
 ```pascaligo group=b
 const a : int = 5 - 10
 
@@ -128,7 +159,9 @@ const b : int = 5n - 2n
 const d : tez = 5mutez - 1mutez
 ```
 
-<!--CameLIGO-->
+</Syntax>
+<Syntax syntax="cameligo">
+
 ```cameligo group=b
 let a : int = 5 - 10
 
@@ -141,7 +174,9 @@ let b : int = 5n - 2n
 let d : tez = 5mutez - 1mutez
 ```
 
-<!--ReasonLIGO-->
+</Syntax>
+<Syntax syntax="reasonligo">
+
 ```reasonligo group=b
 let a : int = 5 - 10;
 
@@ -154,15 +189,16 @@ let b : int = 5n - 2n;
 let d : tez = 5mutez - 1mutez;
 ```
 
-<!--END_DOCUSAURUS_CODE_TABS-->
+</Syntax>
+
 
 
 ## Multiplication
 
 You can multiply values of the same type, such as:
 
-<!--DOCUSAURUS_CODE_TABS-->
-<!--PascaLIGO-->
+
+<Syntax syntax="pascaligo">
 
 ```pascaligo group=c
 const a : int = 5 * 5
@@ -172,7 +208,9 @@ const b : nat = 5n * 5n
 const c : tez = 5n * 5mutez
 ```
 
-<!--CameLIGO-->
+</Syntax>
+<Syntax syntax="cameligo">
+
 ```cameligo group=c
 let a : int = 5 * 5
 let b : nat = 5n * 5n
@@ -181,7 +219,9 @@ let b : nat = 5n * 5n
 let c : tez = 5n * 5mutez
 ```
 
-<!--ReasonLIGO-->
+</Syntax>
+<Syntax syntax="reasonligo">
+
 ```reasonligo group=c
 let a : int = 5 * 5;
 let b : nat = 5n * 5n;
@@ -190,62 +230,123 @@ let b : nat = 5n * 5n;
 let c : tez = 5n * 5mutez;
 ```
 
-<!--END_DOCUSAURUS_CODE_TABS-->
+</Syntax>
 
-## Division
+
+## Euclidean Division
 
 In LIGO you can divide `int`, `nat`, and `tez`. Here is how:
 
 > ⚠️ Division of two `tez` values results into a `nat`
 
-<!--DOCUSAURUS_CODE_TABS-->
-<!--PascaLIGO-->
+
+<Syntax syntax="pascaligo">
+
 ```pascaligo group=d
 const a : int = 10 / 3
 const b : nat = 10n / 3n
 const c : nat = 10mutez / 3mutez
 ```
 
-<!--CameLIGO-->
+</Syntax>
+<Syntax syntax="cameligo">
+
 ```cameligo group=d
 let a : int = 10 / 3
 let b : nat = 10n / 3n
 let c : nat = 10mutez / 3mutez
 ```
 
-<!--ReasonLIGO-->
+</Syntax>
+<Syntax syntax="reasonligo">
+
 ```reasonligo group=d
 let a : int = 10 / 3;
 let b : nat = 10n / 3n;
 let c : nat = 10mutez / 3mutez;
 ```
 
-<!--END_DOCUSAURUS_CODE_TABS-->
+</Syntax>
+
+
+LIGO also allows you to compute the remainder of the Euclidean
+division. In LIGO, it is a natural number.
+
+
+<Syntax syntax="pascaligo">
+
+```pascaligo group=d
+const a : int = 120
+const b : int = 9
+const rem1 : nat = a mod b  // 3
+const c : nat = 120n
+const rem2 : nat = c mod b  // 3
+const d : nat = 9n
+const rem3 : nat = c mod d  // 3
+const rem4 : nat = a mod d  // 3
+```
+
+</Syntax>
+<Syntax syntax="cameligo">
+
+```cameligo group=d
+let a : int = 120
+let b : int = 9
+let rem1 : nat = a mod b  // 3
+let c : nat = 120n
+let rem2 : nat = c mod b  // 3
+let d : nat = 9n
+let rem3 : nat = c mod d  // 3
+let rem4 : nat = a mod d  // 3
+```
+
+</Syntax>
+<Syntax syntax="reasonligo">
+
+```reasonligo group=d
+let a : int = 120;
+let b : int = 9;
+let rem1 : nat = a mod b;  // 3
+let c : nat = 120n;
+let rem2 : nat = c mod b;  // 3
+let d : nat = 9n;
+let rem3 : nat = c mod d;  // 3
+let rem4 : nat = a mod d;  // 3
+```
+
+</Syntax>
+
 
 ## From `int` to `nat` and back
 
 You can *cast* an `int` to a `nat` and vice versa. Here is how:
 
-<!--DOCUSAURUS_CODE_TABS-->
-<!--PascaLIGO-->
+
+<Syntax syntax="pascaligo">
+
 ```pascaligo group=e
 const a : int = int (1n)
 const b : nat = abs (1)
 ```
 
-<!--CameLIGO-->
+</Syntax>
+<Syntax syntax="cameligo">
+
 ```cameligo group=e
 let a : int = int (1n)
 let b : nat = abs (1)
 ```
 
-<!--ReasonLIGO-->
+</Syntax>
+<Syntax syntax="reasonligo">
+
 ```reasonligo group=e
 let a : int = int (1n);
 let b : nat = abs (1);
 ```
 
-<!--END_DOCUSAURUS_CODE_TABS-->
+</Syntax>
+
 
 ## Checking a `nat`
 
@@ -254,20 +355,26 @@ function which accepts an `int` and returns an optional `nat`: if the
 result is not `None`, then the provided integer was indeed a natural
 number, and not otherwise.
 
-<!--DOCUSAURUS_CODE_TABS-->
-<!--PascaLIGO-->
+
+<Syntax syntax="pascaligo">
+
 ```pascaligo group=e
 const is_a_nat : option (nat) = is_nat (1)
 ```
 
-<!--CameLIGO-->
+</Syntax>
+<Syntax syntax="cameligo">
+
 ```cameligo group=e
 let is_a_nat : nat option = Michelson.is_nat (1)
 ```
 
-<!--ReasonLIGO-->
+</Syntax>
+<Syntax syntax="reasonligo">
+
 ```reasonligo group=e
 let is_a_nat : option (nat) = Michelson.is_nat (1);
 ```
 
-<!--END_DOCUSAURUS_CODE_TABS-->
+</Syntax>
+

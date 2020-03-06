@@ -1,22 +1,22 @@
+type parameter = unit
+
 type storage = {
-  next_use: timestamp;
-  interval: int;
-  execute: unit -> operation list;
+  next_use : timestamp;
+  interval : int;
+  execute  : unit -> operation list
 }
 
-let main (p,s: unit * storage) : operation list * storage =
-  (* Multiple calls to Current.time give different values *)
-  let now: timestamp = Current.time in
-  if now > s.next_use
+type return = operation list * storage
+
+let main (action, store : parameter * storage) : return =
+  (* Multiple evaluations of Tezos.now give different values *)
+  let my_now : timestamp = Tezos.now in
+  if my_now > store.next_use
   then
-    let s: storage = {
-                      next_use = now + s.interval;
-                      interval = s.interval;
-                      execute = s.execute;
-                      }
-    in
-    (s.execute (), s)
+    let store : storage =
+      {store with next_use = my_now + store.interval}
+    in store.execute (), store
   else
     (* TODO: Add the time until next use to this message *)
-    (failwith "You have to wait before you can execute this contract again.":
-       operation list * storage)
+    (failwith "You have to wait before you can execute this contract again."
+     : return)

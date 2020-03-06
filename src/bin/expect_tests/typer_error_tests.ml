@@ -1,6 +1,45 @@
 open Cli_expect
 
 let%expect_test _ =
+  run_ligo_bad [ "compile-contract" ; "../../test/contracts/negative/error_function_annotation_1.mligo"; "main"];
+  [%expect {|
+    ligo: in file "", line 0, characters 0-0. different type constructors: Expected these two constant type constructors to be the same, but they're different {"a":"unit","b":"int"}
+
+
+     If you're not sure how to fix this error, you can
+     do one of the following:
+
+    * Visit our documentation: https://ligolang.org/docs/intro/what-and-why/
+    * Ask a question on our Discord: https://discord.gg/9rhYaEt
+    * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
+    * Check the changelog by running 'ligo changelog' |}];
+
+  run_ligo_bad [ "compile-contract" ; "../../test/contracts/negative/error_function_annotation_2.mligo"; "f"];
+  [%expect {|
+    ligo: in file "error_function_annotation_2.mligo", line 1, characters 14-43. different kinds:  {"a":"int","b":"( int * int ) -> int"}
+
+
+     If you're not sure how to fix this error, you can
+     do one of the following:
+
+    * Visit our documentation: https://ligolang.org/docs/intro/what-and-why/
+    * Ask a question on our Discord: https://discord.gg/9rhYaEt
+    * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
+    * Check the changelog by running 'ligo changelog' |}];
+
+  run_ligo_bad [ "compile-contract" ; "../../test/contracts/negative/error_function_annotation_3.mligo"; "f"];
+  [%expect {|
+    ligo: in file "", line 0, characters 0-0. different kinds:  {"a":"( (TO_list(operation)) * sum[Add -> int , Sub -> int] )","b":"sum[Add -> int , Sub -> int]"}
+
+
+     If you're not sure how to fix this error, you can
+     do one of the following:
+
+    * Visit our documentation: https://ligolang.org/docs/intro/what-and-why/
+    * Ask a question on our Discord: https://discord.gg/9rhYaEt
+    * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
+    * Check the changelog by running 'ligo changelog' |}];
+
   run_ligo_bad [ "compile-contract" ; "../../test/contracts/negative/error_type.ligo" ; "main" ] ;
   [%expect {|
     ligo: in file "error_type.ligo", line 3, characters 18-28. Adding modulo with wrong types: Expected arguments with one of the following combinations of types: add(nat , nat) or add(int , int) or add(mutez , mutez) or add(nat , int) or add(int , nat) or add(timestamp , int) or add(int , timestamp) but got this combination instead: add(int , string)

@@ -3,6 +3,9 @@ id: introduction
 title: Introduction To LIGO
 ---
 
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
 LIGO is a programming language for writing [Tezos](https://tezos.com/) smart contracts.
 Smart contracts are a unique domain with extreme resource constraints and even
 more extreme security risks. Unlike desktop, mobile, or web
@@ -49,8 +52,17 @@ Let's define some LIGO contract in the three flavours above. Do
 not worry if it is a little confusing at first; we will explain all
 the syntax in the upcoming sections of the documentation.
 
-<!--DOCUSAURUS_CODE_TABS-->
-<!--PascaLIGO-->
+
+<Tabs
+  defaultValue="pascaligo"
+  values={[
+    { label: 'PascaLIGO', value: 'pascaligo', },
+    { label: 'CameLIGO', value: 'cameligo', },
+    { label: 'ReasonLIGO', value: 'reasonligo', },
+  ]
+}>
+<TabItem value="pascaligo">
+
 ```pascaligo group=a
 type storage is int
 
@@ -70,7 +82,9 @@ function main (const action : parameter; const store : storage) : return is
  end)
 ```
 
-<!--CameLIGO-->
+</TabItem>
+<TabItem value="cameligo">
+
 ```cameligo group=a
 type storage = int
 
@@ -89,7 +103,9 @@ let main (action, store : parameter * storage) : return =
    | Reset       -> 0)
 ```
 
-<!--ReasonLIGO-->
+</TabItem>
+<TabItem value="reasonligo">
+
 ```reasonligo group=a
 type storage = int;
 
@@ -108,7 +124,9 @@ let main = ((action, store): (parameter, storage)) : return => {
    | Reset         => 0}));
 };
 ```
-<!--END_DOCUSAURUS_CODE_TABS-->
+
+</TabItem>
+</Tabs>
 
 This LIGO contract accepts the following LIGO expressions:
 `Increment(n)`, `Decrement(n)` and `Reset`. Those serve as

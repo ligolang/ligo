@@ -226,7 +226,12 @@ let%expect_test _ =
 
     OPTIONS
            --amount=AMOUNT (absent=0)
-               AMOUNT is the amount the Michelson interpreter will use.
+               AMOUNT is the amount the Michelson interpreter will use for the
+               transaction.
+
+           --balance=BALANCE (absent=0)
+               BALANCE is the balance the Michelson interpreter will use for the
+               contract balance.
 
            --format=DISPLAY_FORMAT, --display-format=DISPLAY_FORMAT
            (absent=human-readable)
@@ -292,7 +297,12 @@ let%expect_test _ =
 
     OPTIONS
            --amount=AMOUNT (absent=0)
-               AMOUNT is the amount the Michelson interpreter will use.
+               AMOUNT is the amount the Michelson interpreter will use for the
+               transaction.
+
+           --balance=BALANCE (absent=0)
+               BALANCE is the balance the Michelson interpreter will use for the
+               contract balance.
 
            --format=DISPLAY_FORMAT, --display-format=DISPLAY_FORMAT
            (absent=human-readable)
@@ -359,7 +369,12 @@ let%expect_test _ =
 
     OPTIONS
            --amount=AMOUNT (absent=0)
-               AMOUNT is the amount the Michelson interpreter will use.
+               AMOUNT is the amount the Michelson interpreter will use for the
+               transaction.
+
+           --balance=BALANCE (absent=0)
+               BALANCE is the balance the Michelson interpreter will use for the
+               contract balance.
 
            --format=DISPLAY_FORMAT, --display-format=DISPLAY_FORMAT
            (absent=human-readable)
@@ -418,7 +433,12 @@ let%expect_test _ =
 
     OPTIONS
            --amount=AMOUNT (absent=0)
-               AMOUNT is the amount the Michelson interpreter will use.
+               AMOUNT is the amount the Michelson interpreter will use for the
+               transaction.
+
+           --balance=BALANCE (absent=0)
+               BALANCE is the balance the Michelson interpreter will use for the
+               contract balance.
 
            --format=DISPLAY_FORMAT, --display-format=DISPLAY_FORMAT
            (absent=human-readable)
@@ -472,7 +492,12 @@ let%expect_test _ =
 
     OPTIONS
            --amount=AMOUNT (absent=0)
-               AMOUNT is the amount the Michelson interpreter will use.
+               AMOUNT is the amount the Michelson interpreter will use for the
+               transaction.
+
+           --balance=BALANCE (absent=0)
+               BALANCE is the balance the Michelson interpreter will use for the
+               contract balance.
 
            --format=DISPLAY_FORMAT, --display-format=DISPLAY_FORMAT
            (absent=human-readable)

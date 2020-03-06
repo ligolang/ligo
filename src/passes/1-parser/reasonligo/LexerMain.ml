@@ -1,5 +1,7 @@
 (* Driver for the ReasonLIGO lexer *)
 
+module Region = Simple_utils.Region
+
 module IO =
   struct
     let ext = ".religo"

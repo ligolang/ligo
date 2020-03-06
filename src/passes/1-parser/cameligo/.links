@@ -20,3 +20,4 @@ $HOME/git/ligo/vendors/ligo-utils/simple-utils/region.ml
 ../shared/LexerUnit.ml
 ../shared/ParserUnit.ml
 Stubs/Simple_utils.ml
+$HOME/git/ligo/_build/default/src/passes/1-parser/cameligo/ParErr.ml

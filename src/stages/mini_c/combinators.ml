@@ -152,7 +152,7 @@ let get_t_contract t = match t with
   | _ -> fail @@ wrong_type "contract" t
 
 let get_t_operation t = match t with
-  | T_base TC_operation -> ok ()
+  | T_base TC_operation -> ok t
   | _ -> fail @@ wrong_type "operation" t
 
 let get_operation (v:value) = match v with

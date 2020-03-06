@@ -3,6 +3,9 @@ id: unit-option-pattern-matching
 title: Unit, Option, Pattern matching
 ---
 
+import Syntax from '@theme/Syntax';
+
+
 Optionals are a pervasive programing pattern in OCaml. Since Michelson
 and LIGO are both inspired by OCaml, *optional types* are available in
 LIGO as well. Similarly, OCaml features a *unit* type, and LIGO
@@ -16,15 +19,16 @@ The `unit` type in Michelson or LIGO is a predefined type that
 contains only one value that carries no information. It is used when
 no relevant information is required or produced. Here is how it used.
 
-<!--DOCUSAURUS_CODE_TABS-->
-<!--PascaLIGO-->
+
+<Syntax syntax="pascaligo">
 
 In PascaLIGO, the unique value of the `unit` type is `Unit`.
 ```pascaligo group=a
 const n : unit = Unit // Note the capital letter
 ```
 
-<!--CameLIGO-->
+</Syntax>
+<Syntax syntax="cameligo">
 
 In CameLIGO, the unique value of the `unit` type is `()`, following
 the OCaml convention.
@@ -32,7 +36,8 @@ the OCaml convention.
 let n : unit = ()
 ```
 
-<!--ReasonLIGO-->
+</Syntax>
+<Syntax syntax="reasonligo">
 
 In ReasonLIGO, the unique value of the `unit` type is `()`, following
 the OCaml convention.
@@ -40,7 +45,8 @@ the OCaml convention.
 let n : unit = ();
 ```
 
-<!--END_DOCUSAURUS_CODE_TABS-->
+</Syntax>
+
 
 ## Variant types
 
@@ -52,39 +58,49 @@ the enumerated types found in Java, C++, JavaScript etc.
 Here is how we define a coin as being either head or tail (and nothing
 else):
 
-<!--DOCUSAURUS_CODE_TABS-->
-<!--PascaLIGO-->
+
+<Syntax syntax="pascaligo">
+
 ```pascaligo group=b
 type coin is Head | Tail
-const head : coin = Head (Unit) // Unit needed for now.
-const tail : coin = Tail (Unit) // Unit needed for now.
+const head : coin = Head
+const tail : coin = Tail
 ```
 
-<!--CameLIGO-->
+</Syntax>
+<Syntax syntax="cameligo">
+
 ```cameligo group=b
 type coin = Head | Tail
 let head : coin = Head
 let tail : coin = Tail
 ```
 
-<!--ReasonLIGO-->
+</Syntax>
+<Syntax syntax="reasonligo">
+
 ```reasonligo group=b
-type coin = | Head | Tail;
+type coin = Head | Tail;
 let head : coin = Head;
 let tail : coin = Tail;
 ```
-<!--END_DOCUSAURUS_CODE_TABS-->
+
+</Syntax>
+
 
 The names `Head` and `Tail` in the definition of the type `coin` are
-called *data constructors*, or *variants*.
+called *data constructors*, or *variants*. In this particular, they
+carry no information beyond their names, so they are called *constant
+constructors*.
 
 In general, it is interesting for variants to carry some information,
 and thus go beyond enumerated types. In the following, we show how to
 define different kinds of users of a system.
 
-<!--DOCUSAURUS_CODE_TABS-->
 
-<!--PascaLIGO-->
+
+<Syntax syntax="pascaligo">
+
 ```pascaligo group=c
 type id is nat
 
@@ -94,10 +110,12 @@ type user is
 | Guest
 
 const u : user = Admin (1000n)
-const g : user = Guest (Unit) // Unit needed because of a bug
+const g : user = Guest
 ```
 
-<!--CameLIGO-->
+</Syntax>
+<Syntax syntax="cameligo">
+
 ```cameligo group=c
 type id = nat
 
@@ -110,7 +128,9 @@ let u : user = Admin 1000n
 let g : user = Guest
 ```
 
-<!--ReasonLIGO-->
+</Syntax>
+<Syntax syntax="reasonligo">
+
 ```reasonligo group=c
 type id = nat;
 
@@ -123,8 +143,12 @@ let u : user = Admin (1000n);
 let g : user = Guest;
 ```
 
-<!--END_DOCUSAURUS_CODE_TABS-->
+</Syntax>
 
+
+In LIGO, a constant constructor is equivalent to the same constructor
+taking an argument of type `unit`, so, for example, `Guest` is the
+same value as `Guest (unit)`.
 
 ## Optional values
 
@@ -136,26 +160,32 @@ type would be `None`, otherwise `Some (v)`, where `v` is some
 meaningful value *of any type*. An example in arithmetic is the
 division operation:
 
-<!--DOCUSAURUS_CODE_TABS-->
-<!--PascaLIGO-->
+
+<Syntax syntax="pascaligo">
+
 ```pascaligo group=d
 function div (const a : nat; const b : nat) : option (nat) is
   if b = 0n then (None: option (nat)) else Some (a/b)
 ```
 
-<!--CameLIGO-->
+</Syntax>
+<Syntax syntax="cameligo">
+
 ```cameligo group=d
 let div (a, b : nat * nat) : nat option =
   if b = 0n then (None: nat option) else Some (a/b)
 ```
 
-<!--ReasonLIGO-->
+</Syntax>
+<Syntax syntax="reasonligo">
+
 ```reasonligo group=d
 let div = ((a, b) : (nat, nat)) : option (nat) =>
   if (b == 0n) { (None: option (nat)); } else { Some (a/b); };
 ```
 
-<!--END_DOCUSAURUS_CODE_TABS-->
+</Syntax>
+
 
 
 ## Pattern matching
@@ -165,15 +195,16 @@ Javascript, and can be used to route the program's control flow based
 on the value of a variant. Consider for example the definition of a
 function `flip` that flips a coin.
 
-<!--DOCUSAURUS_CODE_TABS-->
-<!--PascaLIGO-->
+
+<Syntax syntax="pascaligo">
+
 ```pascaligo group=e
 type coin is Head | Tail
 
 function flip (const c : coin) : coin is
   case c of
-    Head -> Tail (Unit) // Unit needed because of a bug
-  | Tail -> Head (Unit) // Unit needed because of a bug
+    Head -> Tail
+  | Tail -> Head
   end
 ```
 
@@ -181,11 +212,13 @@ You can call the function `flip` by using the LIGO compiler like so:
 ```shell
 ligo run-function
 gitlab-pages/docs/language-basics/src/unit-option-pattern-matching/flip.ligo
-flip "(Head (Unit))"
+flip "Head"
 # Outputs: Tail(Unit)
 ```
 
-<!--CameLIGO-->
+</Syntax>
+<Syntax syntax="cameligo">
+
 ```cameligo group=e
 type coin = Head | Tail
 
@@ -203,7 +236,9 @@ flip Head
 # Outputs: Tail(Unit)
 ```
 
-<!--ReasonLIGO-->
+</Syntax>
+<Syntax syntax="reasonligo">
+
 ```reasonligo group=e
 type coin = | Head | Tail;
 
@@ -222,4 +257,5 @@ flip Head
 # Outputs: Tail(Unit)
 ```
 
-<!--END_DOCUSAURUS_CODE_TABS-->
+</Syntax>
+

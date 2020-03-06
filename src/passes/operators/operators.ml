@@ -35,8 +35,8 @@ module Simplify = struct
   let unit_expr = make_t @@ T_constant TC_unit
 
   let type_constants s =
-  match s with
-    | "chain_id"  -> ok TC_chain_id
+    match s with
+      "chain_id"  -> ok TC_chain_id
     | "unit"      -> ok TC_unit
     | "string"    -> ok TC_string
     | "bytes"     -> ok TC_bytes
@@ -50,95 +50,197 @@ module Simplify = struct
     | "key_hash"  -> ok TC_key_hash
     | "signature" -> ok TC_signature
     | "timestamp" -> ok TC_timestamp
-    | _           -> simple_fail @@ "Not a type_constant " ^ s
+    | _           -> simple_fail @@ "Not a built-in type (" ^ s ^ ")."
 
   let type_operators s =
-  match s with
-    | "list"      -> ok @@ TC_list unit_expr
+    match s with
+      "list"      -> ok @@ TC_list unit_expr
     | "option"    -> ok @@ TC_option unit_expr
     | "set"       -> ok @@ TC_set unit_expr
     | "map"       -> ok @@ TC_map (unit_expr,unit_expr)
     | "big_map"   -> ok @@ TC_big_map (unit_expr,unit_expr)
     | "contract"  -> ok @@ TC_contract unit_expr
-    | _           -> simple_fail @@ "Not a typ_operator " ^ s
+    | _           -> simple_fail @@ "Not a built-in type (" ^ s ^ ")."
 
 
   module Pascaligo = struct
-
     let constants = function
-      | "assert"          -> ok C_ASSERTION
-      | "get_chain_id"    -> ok C_CHAIN_ID
-      | "transaction"     -> ok C_CALL
-      | "get_contract"    -> ok C_CONTRACT
-      | "get_contract_opt"-> ok C_CONTRACT_OPT
-      | "get_entrypoint"  -> ok C_CONTRACT_ENTRYPOINT
-      | "get_entrypoint_opt" -> ok C_CONTRACT_ENTRYPOINT_OPT
-      | "size"            -> ok C_SIZE
-      | "int"             -> ok C_INT
-      | "abs"             -> ok C_ABS
-      | "is_nat"          -> ok C_IS_NAT
-      | "amount"          -> ok C_AMOUNT
-      | "balance"         -> ok C_BALANCE
-      | "now"             -> ok C_NOW
-      | "unit"            -> ok C_UNIT
-      | "source"          -> ok C_SOURCE
-      | "sender"          -> ok C_SENDER
-      | "failwith"        -> ok C_FAILWITH
-      | "bitwise_or"      -> ok C_OR
-      | "bitwise_and"     -> ok C_AND
-      | "bitwise_xor"     -> ok C_XOR
-      | "bitwise_lsl"     -> ok C_LSL
-      | "bitwise_lsr"     -> ok C_LSR
-      | "string_concat"   -> ok C_CONCAT
-      | "string_slice"    -> ok C_SLICE
-      | "crypto_check"    -> ok C_CHECK_SIGNATURE
-      | "crypto_hash_key" -> ok C_HASH_KEY
-      | "bytes_concat"    -> ok C_CONCAT
-      | "bytes_slice"     -> ok C_SLICE
-      | "bytes_pack"      -> ok C_BYTES_PACK
-      | "bytes_unpack"    -> ok C_BYTES_UNPACK
-      | "set_empty"       -> ok C_SET_EMPTY
-      | "set_mem"         -> ok C_SET_MEM
-      | "set_add"         -> ok C_SET_ADD
-      | "set_remove"      -> ok C_SET_REMOVE
-      | "set_iter"        -> ok C_SET_ITER
-      | "set_fold"        -> ok C_SET_FOLD
-      | "list_iter"       -> ok C_LIST_ITER
-      | "list_fold"       -> ok C_LIST_FOLD
-      | "list_map"        -> ok C_LIST_MAP
-      | "get_force"       -> ok C_MAP_FIND
-      | "map_iter"        -> ok C_MAP_ITER
-      | "map_map"         -> ok C_MAP_MAP
-      | "map_fold"        -> ok C_MAP_FOLD
-      | "map_remove"      -> ok C_MAP_REMOVE
-      | "map_update"      -> ok C_MAP_UPDATE
-      | "map_get"         -> ok C_MAP_FIND_OPT
-      | "map_mem"         -> ok C_MAP_MEM
-      | "sha_256"         -> ok C_SHA256
-      | "sha_512"         -> ok C_SHA512
-      | "blake2b"         -> ok C_BLAKE2b
-      | "cons"            -> ok C_CONS
-      | "EQ"              -> ok C_EQ
-      | "NEQ"             -> ok C_NEQ
-      | "NEG"             -> ok C_NEG
-      | "ADD"             -> ok C_ADD
-      | "SUB"             -> ok C_SUB
-      | "TIMES"           -> ok C_MUL
-      | "DIV"             -> ok C_DIV
-      | "MOD"             -> ok C_MOD
-      | "NOT"             -> ok C_NOT
-      | "AND"             -> ok C_AND
-      | "OR"              -> ok C_OR
-      | "GT"              -> ok C_GT
-      | "GE"              -> ok C_GE
-      | "LT"              -> ok C_LT
-      | "LE"              -> ok C_LE
-      | "CONS"            -> ok C_CONS
-      | "address"         -> ok C_ADDRESS
-      | "self_address"    -> ok C_SELF_ADDRESS
-      | "implicit_account"-> ok C_IMPLICIT_ACCOUNT
-      | "set_delegate"    -> ok C_SET_DELEGATE
-      | _                 -> simple_fail "Not a PascaLIGO constant"
+    (* Tezos module (ex-Michelson) *)
+
+    | "Tezos.chain_id"         -> ok C_CHAIN_ID
+    | "chain_id"               -> ok C_CHAIN_ID            (* Deprecated *)
+    | "get_chain_id"           -> ok C_CHAIN_ID            (* Deprecated *)
+    | "Tezos.balance"          -> ok C_BALANCE
+    | "balance"                -> ok C_BALANCE             (* Deprecated *)
+    | "Tezos.now"              -> ok C_NOW
+    | "now"                    -> ok C_NOW                 (* Deprecated *)
+    | "Tezos.amount"           -> ok C_AMOUNT
+    | "amount"                 -> ok C_AMOUNT              (* Deprecated *)
+    | "Tezos.sender"           -> ok C_SENDER
+    | "sender"                 -> ok C_SENDER              (* Deprecated *)
+    | "Tezos.address"          -> ok C_ADDRESS
+    | "address"                -> ok C_ADDRESS             (* Deprecated *)
+    | "Tezos.self_address"     -> ok C_SELF_ADDRESS
+    | "self_address"           -> ok C_SELF_ADDRESS        (* Deprecated *)
+    | "Tezos.implicit_account" -> ok C_IMPLICIT_ACCOUNT
+    | "implicit_account"       -> ok C_IMPLICIT_ACCOUNT    (* Deprecated *)
+    | "Tezos.source"           -> ok C_SOURCE
+    | "source"                 -> ok C_SOURCE              (* Deprecated *)
+    | "Tezos.failwith"         -> ok C_FAILWITH
+    | "failwith"               -> ok C_FAILWITH
+    | "Tezos.create_contract"  -> ok C_CREATE_CONTRACT
+    | "Tezos.transaction"      -> ok C_CALL
+    | "transaction"            -> ok C_CALL                    (* Deprecated *)
+    | "Tezos.set_delegate"     -> ok C_SET_DELEGATE
+    | "set_delegate"           -> ok C_SET_DELEGATE            (* Deprecated *)
+    | "get_contract"           -> ok C_CONTRACT                (* Deprecated *)
+    | "Tezos.get_contract_opt" -> ok C_CONTRACT_OPT
+    | "get_contract_opt"       -> ok C_CONTRACT_OPT            (* Deprecated *)
+    | "get_entrypoint"         -> ok C_CONTRACT_ENTRYPOINT     (* Deprecated *)
+    | "Tezos.get_entrypoint_opt" -> ok C_CONTRACT_ENTRYPOINT_OPT
+    | "get_entrypoint_opt"     -> ok C_CONTRACT_ENTRYPOINT_OPT (* Deprecated *)
+
+    | "Michelson.is_nat" -> ok C_IS_NAT  (* Deprecated *)
+    | "is_nat"           -> ok C_IS_NAT
+    | "int"              -> ok C_INT
+    | "abs"              -> ok C_ABS
+    | "unit"             -> ok C_UNIT
+
+    | "NEG"              -> ok C_NEG
+    | "ADD"              -> ok C_ADD
+    | "SUB"              -> ok C_SUB
+    | "TIMES"            -> ok C_MUL
+    | "DIV"              -> ok C_DIV
+    | "MOD"              -> ok C_MOD
+    | "EQ"               -> ok C_EQ
+    | "NOT"              -> ok C_NOT
+    | "AND"              -> ok C_AND
+    | "OR"               -> ok C_OR
+    | "GT"               -> ok C_GT
+    | "GE"               -> ok C_GE
+    | "LT"               -> ok C_LT
+    | "LE"               -> ok C_LE
+    | "CONS"             -> ok C_CONS
+    | "cons"             -> ok C_CONS (* Deprecated *)
+    | "NEQ"              -> ok C_NEQ
+
+    (* Crypto module *)
+
+    | "Crypto.check"    -> ok C_CHECK_SIGNATURE
+    | "crypto_check"    -> ok C_CHECK_SIGNATURE       (* Deprecated *)
+    | "Crypto.hash_key" -> ok C_HASH_KEY
+    | "crypto_hash_key" -> ok C_HASH_KEY              (* Deprecated *)
+    | "Crypto.blake2b"  -> ok C_BLAKE2b
+    | "blake2b"         -> ok C_BLAKE2b               (* Deprecated *)
+    | "Crypto.sha256"   -> ok C_SHA256
+    | "sha_256"         -> ok C_SHA256                (* Deprecated *)
+    | "Crypto.sha512"   -> ok C_SHA512
+    | "sha_512"         -> ok C_SHA512                (* Deprecated *)
+
+    (* Bytes module *)
+
+    | "Bytes.pack"   -> ok C_BYTES_PACK
+    | "bytes_pack"   -> ok C_BYTES_PACK    (* Deprecated *)
+    | "Bytes.unpack" -> ok C_BYTES_UNPACK
+    | "bytes_unpack" -> ok C_BYTES_UNPACK  (* Deprecated *)
+    | "Bytes.length" -> ok C_SIZE
+    | "Bytes.size"   -> ok C_SIZE          (* Deprecated *)
+    | "bytes_concat" -> ok C_CONCAT        (* Deprecated *)
+    | "Bytes.concat" -> ok C_CONCAT
+    | "Bytes.slice"  -> ok C_SLICE
+    | "bytes_slice"  -> ok C_SLICE         (* Deprecated *)
+    | "Bytes.sub"    -> ok C_SLICE
+
+    (* List module *)
+
+    | "List.length" -> ok C_SIZE
+    | "List.size"   -> ok C_SIZE
+    | "list_size"   -> ok C_SIZE       (* Deprecated *)
+    | "List.iter"   -> ok C_LIST_ITER
+    | "list_iter"   -> ok C_LIST_ITER  (* Deprecated *)
+    | "List.map"    -> ok C_LIST_MAP
+    | "list_map"    -> ok C_LIST_MAP   (* Deprecated *)
+    | "List.fold"   -> ok C_LIST_FOLD
+    | "list_fold"   -> ok C_LIST_FOLD  (* Deprecated *)
+
+    (* Set module *)
+
+    | "Set.cardinal" -> ok C_SIZE
+    | "Set.size"    -> ok C_SIZE        (* Deprecated *)
+    | "set_size"    -> ok C_SIZE        (* Deprecated *)
+    | "set_empty"   -> ok C_SET_EMPTY   (* Deprecated *)
+    | "Set.mem"     -> ok C_SET_MEM
+    | "set_mem"     -> ok C_SET_MEM     (* Deprecated *)
+    | "Set.add"     -> ok C_SET_ADD
+    | "set_add"     -> ok C_SET_ADD     (* Deprecated *)
+    | "Set.remove"  -> ok C_SET_REMOVE
+    | "set_remove"  -> ok C_SET_REMOVE  (* Deprecated *)
+    | "Set.iter"    -> ok C_SET_ITER
+    | "set_iter"    -> ok C_SET_ITER    (* Deprecated *)
+    | "Set.fold"    -> ok C_SET_FOLD
+    | "set_fold"    -> ok C_SET_FOLD    (* Deprecated *)
+
+    (* Map module *)
+
+    | "get_force"    -> ok C_MAP_FIND      (* Deprecated *)
+    | "map_get"      -> ok C_MAP_FIND_OPT  (* Deprecated *)
+    | "Map.find_opt" -> ok C_MAP_FIND_OPT
+    | "Map.update"   -> ok C_MAP_UPDATE
+    | "map_update"   -> ok C_MAP_UPDATE    (* Deprecated *)
+    | "map_remove"   -> ok C_MAP_REMOVE    (* Deprecated *)
+    | "Map.iter"     -> ok C_MAP_ITER
+    | "map_iter"     -> ok C_MAP_ITER      (* Deprecated *)
+    | "Map.map"      -> ok C_MAP_MAP
+    | "map_map"      -> ok C_MAP_MAP       (* Deprecated *)
+    | "Map.fold"     -> ok C_MAP_FOLD
+    | "map_fold"     -> ok C_MAP_FOLD      (* Deprecated *)
+    | "Map.mem"      -> ok C_MAP_MEM
+    | "map_mem"      -> ok C_MAP_MEM       (* Deprecated *)
+    | "Map.size"     -> ok C_SIZE
+    | "map_size"     -> ok C_SIZE          (* Deprecated *)
+
+    (* Big_map module *)
+
+    | "Big_map.find_opt" -> ok C_MAP_FIND_OPT
+    | "Big_map.update"   -> ok C_MAP_UPDATE
+    | "Big_map.literal"  -> ok C_BIG_MAP_LITERAL
+    | "Big_map.empty"    -> ok C_BIG_MAP_EMPTY
+    | "Big_map.size"     -> ok C_SIZE
+    | "Big_map.mem"      -> ok C_MAP_MEM
+    | "Big_map.iter"     -> ok C_MAP_ITER
+    | "Big_map.map"      -> ok C_MAP_MAP
+    | "Big_map.fold"     -> ok C_MAP_FOLD
+    | "Big_map.remove"   -> ok C_MAP_REMOVE
+
+    (* Bitwise module *)
+
+    | "Bitwise.or"          -> ok C_OR
+    | "bitwise_or"          -> ok C_OR      (* Deprecated *)
+    | "Bitwise.and"         -> ok C_AND
+    | "bitwise_and"         -> ok C_AND     (* Deprecated *)
+    | "Bitwise.xor"         -> ok C_XOR
+    | "bitwise_xor"         -> ok C_XOR     (* Deprecated *)
+    | "Bitwise.shift_left"  -> ok C_LSL
+    | "bitwise_lsl"         -> ok C_LSL     (* Deprecated *)
+    | "Bitwise.shift_right" -> ok C_LSR
+    | "bitwise_lsr"         -> ok C_LSR     (* Deprecated *)
+
+    (* String module *)
+
+    | "String.length"   -> ok C_SIZE
+    | "String.size"     -> ok C_SIZE
+    | "String.slice"    -> ok C_SLICE
+    | "string_slice"    -> ok C_SLICE    (* Deprecated *)
+    | "String.sub"      -> ok C_SLICE
+    | "String.concat"   -> ok C_CONCAT
+    | "string_concat"   -> ok C_CONCAT   (* Deprecated *)
+
+    (* Others *)
+
+    | "assert"          -> ok C_ASSERTION
+    | "size"            -> ok C_SIZE (* Deprecated *)
+
+    | _                 -> simple_fail "Not a PascaLIGO built-in."
 
     let type_constants = type_constants
     let type_operators = type_operators
@@ -147,119 +249,165 @@ module Simplify = struct
 
   module Cameligo = struct
     let constants = function
-      | "assert"                   -> ok C_ASSERTION
-      | "chain_id"                 -> ok C_CHAIN_ID
-      | "Current.balance"          -> ok C_BALANCE
-      | "balance"                  -> ok C_BALANCE
-      | "Current.time"             -> ok C_NOW
-      | "time"                     -> ok C_NOW
-      | "Current.amount"           -> ok C_AMOUNT
-      | "amount"                   -> ok C_AMOUNT
-      | "Current.sender"           -> ok C_SENDER
-      | "Current.address"          -> ok C_ADDRESS
-      | "Current.self_address"     -> ok C_SELF_ADDRESS
-      | "Current.implicit_account" -> ok C_IMPLICIT_ACCOUNT
-      | "sender"                   -> ok C_SENDER
-      | "Current.source"           -> ok C_SOURCE
-      | "source"                   -> ok C_SOURCE
-      | "Current.failwith"         -> ok C_FAILWITH
-      | "failwith"                 -> ok C_FAILWITH
+    (* Tezos (ex-Michelson, ex-Current, ex-Operation) *)
 
-      | "Crypto.blake2b"           -> ok C_BLAKE2b
-      | "Crypto.sha256"            -> ok C_SHA256
-      | "Crypto.sha512"            -> ok C_SHA512
-      | "Crypto.hash_key"          -> ok C_HASH_KEY
-      | "Crypto.check"             -> ok C_CHECK_SIGNATURE
+    | "Tezos.chain_id"             -> ok C_CHAIN_ID
+    | "chain_id"                   -> ok C_CHAIN_ID            (* Deprecated *)
+    | "Tezos.balance"              -> ok C_BALANCE
+    | "Current.balance"            -> ok C_BALANCE             (* Deprecated *)
+    | "balance"                    -> ok C_BALANCE             (* Deprecated *)
+    | "Tezos.now"                  -> ok C_NOW
+    | "Current.time"               -> ok C_NOW                 (* Deprecated *)
+    | "time"                       -> ok C_NOW                 (* Deprecated *)
+    | "Tezos.amount"               -> ok C_AMOUNT
+    | "Current.amount"             -> ok C_AMOUNT              (* Deprecated *)
+    | "amount"                     -> ok C_AMOUNT              (* Deprecated *)
+    | "Tezos.sender"               -> ok C_SENDER
+    | "Current.sender"             -> ok C_SENDER              (* Deprecated *)
+    | "sender"                     -> ok C_SENDER              (* Deprecated *)
+    | "Tezos.address"              -> ok C_ADDRESS
+    | "Current.address"            -> ok C_ADDRESS             (* Deprecated *)
+    | "Tezos.self_address"         -> ok C_SELF_ADDRESS
+    | "Current.self_address"       -> ok C_SELF_ADDRESS        (* Deprecated *)
+    | "Tezos.implicit_account"     -> ok C_IMPLICIT_ACCOUNT
+    | "Current.implicit_account"   -> ok C_IMPLICIT_ACCOUNT    (* Deprecated *)
+    | "Tezos.source"               -> ok C_SOURCE
+    | "Current.source"             -> ok C_SOURCE              (* Deprecated *)
+    | "source"                     -> ok C_SOURCE              (* Deprecated *)
+    | "Tezos.failwith"             -> ok C_FAILWITH
+    | "Current.failwith"           -> ok C_FAILWITH            (* Deprecated *)
+    | "failwith"                   -> ok C_FAILWITH
 
-      | "Bytes.pack"               -> ok C_BYTES_PACK
-      | "Bytes.unpack"             -> ok C_BYTES_UNPACK
-      | "Bytes.length"             -> ok C_SIZE
-      | "Bytes.size"               -> ok C_SIZE
-      | "Bytes.concat"             -> ok C_CONCAT
-      | "Bytes.slice"              -> ok C_SLICE
-      | "Bytes.sub"                -> ok C_SLICE
+    | "Tezos.transaction"            -> ok C_CALL
+    | "Operation.transaction"        -> ok C_CALL              (* Deprecated *)
+    | "Tezos.set_delegate"           -> ok C_SET_DELEGATE      (* Deprecated *)
+    | "Operation.set_delegate"       -> ok C_SET_DELEGATE      (* Deprecated *)
+    | "Operation.get_contract"       -> ok C_CONTRACT          (* Deprecated *)
+    | "Tezos.get_contract_opt"       -> ok C_CONTRACT_OPT
+    | "Operation.get_contract_opt"   -> ok C_CONTRACT_OPT      (* Deprecated *)
+    | "Operation.get_entrypoint"   -> ok C_CONTRACT_ENTRYPOINT (* Deprecated *)
+    | "Tezos.get_entrypoint_opt"     -> ok C_CONTRACT_ENTRYPOINT_OPT
+    | "Operation.get_entrypoint_opt" -> ok C_CONTRACT_ENTRYPOINT_OPT (* Deprecated *)
+    | "Tezos.create_contract"        -> ok C_CREATE_CONTRACT
 
-      | "Set.mem"                  -> ok C_SET_MEM
-      | "Set.iter"                 -> ok C_SET_ITER
-      | "Set.empty"                -> ok C_SET_EMPTY
-      | "Set.literal"              -> ok C_SET_LITERAL
-      | "Set.add"                  -> ok C_SET_ADD
-      | "Set.remove"               -> ok C_SET_REMOVE
-      | "Set.fold"                 -> ok C_SET_FOLD
-      | "Set.size"                 -> ok C_SIZE
+    | "Michelson.is_nat" -> ok C_IS_NAT  (* Deprecated *)
+    | "is_nat"           -> ok C_IS_NAT
+    | "int"              -> ok C_INT
+    | "abs"              -> ok C_ABS
+    | "unit"             -> ok C_UNIT
 
-      | "Map.find_opt"             -> ok C_MAP_FIND_OPT
-      | "Map.find"                 -> ok C_MAP_FIND
-      | "Map.update"               -> ok C_MAP_UPDATE
-      | "Map.add"                  -> ok C_MAP_ADD
-      | "Map.remove"               -> ok C_MAP_REMOVE
-      | "Map.iter"                 -> ok C_MAP_ITER
-      | "Map.map"                  -> ok C_MAP_MAP
-      | "Map.fold"                 -> ok C_MAP_FOLD
-      | "Map.mem"                  -> ok C_MAP_MEM
-      | "Map.empty"                -> ok C_MAP_EMPTY
-      | "Map.literal"              -> ok C_MAP_LITERAL
-      | "Map.size"                 -> ok C_SIZE
+    | "NEG"              -> ok C_NEG
+    | "ADD"              -> ok C_ADD
+    | "SUB"              -> ok C_SUB
+    | "TIMES"            -> ok C_MUL
+    | "DIV"              -> ok C_DIV
+    | "MOD"              -> ok C_MOD
+    | "EQ"               -> ok C_EQ
+    | "NOT"              -> ok C_NOT
+    | "AND"              -> ok C_AND
+    | "OR"               -> ok C_OR
+    | "GT"               -> ok C_GT
+    | "GE"               -> ok C_GE
+    | "LT"               -> ok C_LT
+    | "LE"               -> ok C_LE
+    | "CONS"             -> ok C_CONS
+    | "NEQ"              -> ok C_NEQ
 
-      | "Big_map.find_opt"         -> ok C_MAP_FIND_OPT
-      | "Big_map.find"             -> ok C_MAP_FIND
-      | "Big_map.update"           -> ok C_MAP_UPDATE
-      | "Big_map.add"              -> ok C_MAP_ADD
-      | "Big_map.remove"           -> ok C_MAP_REMOVE
-      | "Big_map.literal"          -> ok C_BIG_MAP_LITERAL
-      | "Big_map.empty"            -> ok C_BIG_MAP_EMPTY
+    (* Crypto module *)
 
-      | "Bitwise.lor"              -> ok C_OR
-      | "Bitwise.land"             -> ok C_AND
-      | "Bitwise.lxor"             -> ok C_XOR
-      | "Bitwise.shift_left"       -> ok C_LSL
-      | "Bitwise.shift_right"      -> ok C_LSR
+    | "Crypto.check"    -> ok C_CHECK_SIGNATURE
+    | "Crypto.hash_key" -> ok C_HASH_KEY
+    | "Crypto.blake2b"  -> ok C_BLAKE2b
+    | "Crypto.sha256"   -> ok C_SHA256
+    | "Crypto.sha512"   -> ok C_SHA512
 
-      | "String.length"            -> ok C_SIZE
-      | "String.size"              -> ok C_SIZE
-      | "String.slice"             -> ok C_SLICE
-      | "String.sub"               -> ok C_SLICE
-      | "String.concat"            -> ok C_CONCAT
+    (* Bytes module *)
 
-      | "List.length"              -> ok C_SIZE
-      | "List.size"                -> ok C_SIZE
-      | "List.iter"                -> ok C_LIST_ITER
-      | "List.map"                 -> ok C_LIST_MAP
-      | "List.fold"                -> ok C_LIST_FOLD
+    | "Bytes.pack"   -> ok C_BYTES_PACK
+    | "Bytes.unpack" -> ok C_BYTES_UNPACK
+    | "Bytes.length" -> ok C_SIZE
+    | "Bytes.size"   -> ok C_SIZE       (* Deprecated *)
+    | "Bytes.concat" -> ok C_CONCAT
+    | "Bytes.slice"  -> ok C_SLICE      (* Deprecated *)
+    | "Bytes.sub"    -> ok C_SLICE
 
-      | "Loop.fold_while"          -> ok C_FOLD_WHILE
-      | "continue"                 -> ok C_CONTINUE
-      | "stop"                     -> ok C_STOP
+    (* List module *)
 
-      | "Operation.transaction"    -> ok C_CALL
-      | "Operation.set_delegate"   -> ok C_SET_DELEGATE
-      | "Operation.get_contract"   -> ok C_CONTRACT
-      | "Operation.get_contract_opt" -> ok C_CONTRACT_OPT
-      | "Operation.get_entrypoint" -> ok C_CONTRACT_ENTRYPOINT
-      | "Operation.get_entrypoint_opt" -> ok C_CONTRACT_ENTRYPOINT_OPT
-      | "int"                      -> ok C_INT
-      | "abs"                      -> ok C_ABS
-      | "unit"                     -> ok C_UNIT
+    | "List.length" -> ok C_SIZE
+    | "List.size"   -> ok C_SIZE
+    | "List.iter"   -> ok C_LIST_ITER
+    | "List.map"    -> ok C_LIST_MAP
+    | "List.fold"   -> ok C_LIST_FOLD
 
-      | "NEG"                      -> ok C_NEG
-      | "ADD"                      -> ok C_ADD
-      | "SUB"                      -> ok C_SUB
-      | "TIMES"                    -> ok C_MUL
-      | "DIV"                      -> ok C_DIV
-      | "MOD"                      -> ok C_MOD
-      | "EQ"                       -> ok C_EQ
-      | "NOT"                      -> ok C_NOT
-      | "AND"                      -> ok C_AND
-      | "OR"                       -> ok C_OR
-      | "GT"                       -> ok C_GT
-      | "GE"                       -> ok C_GE
-      | "LT"                       -> ok C_LT
-      | "LE"                       -> ok C_LE
-      | "CONS"                     -> ok C_CONS
-      | "NEQ"                      -> ok C_NEQ
+    (* Set module *)
 
-      | "Michelson.is_nat"         -> ok C_IS_NAT
-      | _                          -> simple_fail "Not a constant"
+    | "Set.mem"      -> ok C_SET_MEM
+    | "Set.iter"     -> ok C_SET_ITER
+    | "Set.empty"    -> ok C_SET_EMPTY
+    | "Set.literal"  -> ok C_SET_LITERAL
+    | "Set.add"      -> ok C_SET_ADD
+    | "Set.remove"   -> ok C_SET_REMOVE
+    | "Set.fold"     -> ok C_SET_FOLD
+    | "Set.size"     -> ok C_SIZE (* Deprecated *)
+    | "Set.cardinal" -> ok C_SIZE
+
+    (* Map module *)
+
+    | "Map.find_opt" -> ok C_MAP_FIND_OPT
+    | "Map.find"     -> ok C_MAP_FIND     (* Deprecated *)
+    | "Map.update"   -> ok C_MAP_UPDATE
+    | "Map.add"      -> ok C_MAP_ADD
+    | "Map.remove"   -> ok C_MAP_REMOVE
+    | "Map.iter"     -> ok C_MAP_ITER
+    | "Map.map"      -> ok C_MAP_MAP
+    | "Map.fold"     -> ok C_MAP_FOLD
+    | "Map.mem"      -> ok C_MAP_MEM
+    | "Map.empty"    -> ok C_MAP_EMPTY
+    | "Map.literal"  -> ok C_MAP_LITERAL
+    | "Map.size"     -> ok C_SIZE
+
+    (* Big_map module *)
+
+    | "Big_map.find_opt" -> ok C_MAP_FIND_OPT
+    | "Big_map.find"     -> ok C_MAP_FIND
+    | "Big_map.update"   -> ok C_MAP_UPDATE
+    | "Big_map.add"      -> ok C_MAP_ADD
+    | "Big_map.remove"   -> ok C_MAP_REMOVE
+    | "Big_map.literal"  -> ok C_BIG_MAP_LITERAL
+    | "Big_map.empty"    -> ok C_BIG_MAP_EMPTY
+
+    (* Bitwise module *)
+
+    | "Bitwise.or"          -> ok C_OR
+    | "Bitwise.lor"         -> ok C_OR  (* Deprecated *)
+    | "Bitwise.and"         -> ok C_AND
+    | "Bitwise.land"        -> ok C_AND (* Deprecated *)
+    | "Bitwise.xor"         -> ok C_XOR
+    | "Bitwise.lxor"        -> ok C_XOR (* Deprecated *)
+    | "Bitwise.shift_left"  -> ok C_LSL
+    | "Bitwise.shift_right" -> ok C_LSR
+
+    (* String module *)
+
+    | "String.length" -> ok C_SIZE
+    | "String.size"   -> ok C_SIZE
+    | "String.slice"  -> ok C_SLICE
+    | "String.sub"    -> ok C_SLICE
+    | "String.concat" -> ok C_CONCAT
+
+    (* Loop module *)
+
+    | "Loop.fold_while" -> ok C_FOLD_WHILE
+    | "Loop.resume"     -> ok C_CONTINUE
+    | "continue"        -> ok C_CONTINUE (* Deprecated *)
+    | "Loop.stop"       -> ok C_STOP
+    | "stop"            -> ok C_STOP     (* Deprecated *)
+
+    (* Others *)
+
+    | "assert" -> ok C_ASSERTION
+
+    | _ -> simple_fail "Not a CameLIGO built-in."
 
     let type_constants = type_constants
     let type_operators = type_operators
@@ -655,18 +803,17 @@ module Typer = struct
     let%bind () = assert_type_expression_eq (param , contract_param) in
     ok @@ t_operation ()
 
-  let originate = typer_6 "ORIGINATE" @@ fun manager delegate_opt spendable delegatable init_balance code ->
-    let%bind () = assert_eq_1 manager (t_key_hash ()) in
-    let%bind () = assert_eq_1 delegate_opt (t_option (t_key_hash ()) ()) in
-    let%bind () = assert_eq_1 spendable (t_bool ()) in
-    let%bind () = assert_eq_1 delegatable (t_bool ()) in
-    let%bind () = assert_t_mutez init_balance in
-    let%bind (arg , res) = get_t_function code in
-    let%bind (_param , storage) = get_t_pair arg in
-    let%bind (storage' , op_lst) = get_t_pair res in
-    let%bind () = assert_eq_1 storage storage' in
-    let%bind () = assert_eq_1 op_lst (t_list (t_operation ()) ()) in
-    ok @@ (t_pair (t_operation ()) (t_address ()) ())
+  let create_contract = typer_4 "CREATE_CONTRACT" @@ fun f kh_opt amount init_storage  ->
+    let%bind (args , ret) = get_t_function f in
+    let%bind (_,s) = get_t_pair args in
+    let%bind (oplist,s') = get_t_pair ret in
+    let%bind () = assert_t_mutez amount in
+    let%bind (delegate) = get_t_option kh_opt in
+    let%bind () = assert_type_expression_eq (s,s') in
+    let%bind () = assert_type_expression_eq (s,init_storage) in
+    let%bind () = assert_t_list_operation oplist in
+    let%bind () = assert_t_key_hash delegate in
+    ok @@ t_pair (t_operation ()) (t_address ()) ()
 
   let get_contract = typer_1_opt "CONTRACT" @@ fun addr_tv tv_opt ->
     if not (type_expression_eq (addr_tv, t_address ()))
@@ -821,19 +968,19 @@ module Typer = struct
     let%bind key = get_t_set set in
     if eq_1 elt key
     then ok @@ t_bool ()
-    else fail @@ Operator_errors.type_error "Set_mem: elt and set don't match" elt key ()
+    else fail @@ Operator_errors.type_error "Set.mem: elt and set don't match" elt key ()
 
   let set_add = typer_2 "SET_ADD" @@ fun elt set ->
     let%bind key = get_t_set set in
     if eq_1 elt key
     then ok set
-    else fail @@ Operator_errors.type_error "Set_add: elt and set don't match" elt key ()
+    else fail @@ Operator_errors.type_error "Set.add: elt and set don't match" elt key ()
 
   let set_remove = typer_2 "SET_REMOVE" @@ fun elt set ->
     let%bind key = get_t_set set in
     if eq_1 elt key
     then ok set
-    else fail @@ Operator_errors.type_error "Set_remove: elt and set don't match" key elt ()
+    else fail @@ Operator_errors.type_error "Set.remove: elt and set don't match" key elt ()
 
   let set_iter = typer_2 "SET_ITER" @@ fun body set ->
     let%bind (arg , res) = get_t_function body in
@@ -1084,6 +1231,7 @@ module Typer = struct
     | C_SELF_ADDRESS        -> ok @@ self_address;
     | C_IMPLICIT_ACCOUNT    -> ok @@ implicit_account;
     | C_SET_DELEGATE        -> ok @@ set_delegate ;
+    | C_CREATE_CONTRACT     -> ok @@ create_contract ;
     | _                     -> simple_fail @@ Format.asprintf "Typer not implemented for consant %a" PP.constant c
 
 
