@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import OutsideClickHandler from 'react-outside-click-handler';
 import styled, { css } from 'styled-components';
 
-import { Command } from '../redux/types';
+import { Command } from '../../redux/types';
 
 const Container = styled.div`
   flex: 2;

@@ -57,13 +57,13 @@ export async function deployHandler(req: Request, res: Response) {
 
       const contract = await op.contract();
 
-      res.send({ ...contract });
+      res.send({ address: contract.address, storage: michelsonStorage });
     } catch (ex) {
       if (ex instanceof CompilerError) {
         res.status(400).json({ error: ex.message });
       } else {
         logger.error(ex);
-        res.sendStatus(500);
+        res.status(500).json({ error: ex.message });
       }
     }
   }

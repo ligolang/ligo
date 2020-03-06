@@ -2,10 +2,10 @@ import React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import styled from 'styled-components';
 
-import { AppState } from '../redux/app';
-import { ChangeEntrypointAction, ChangeStorageAction, DeployState, UseTezBridgeAction } from '../redux/deploy';
-import { CheckboxComponent } from './checkbox';
-import { Group, HGroup, Input, Label, Textarea } from './inputs';
+import { AppState } from '../../redux/app';
+import { ChangeEntrypointAction, ChangeStorageAction, DeployState, UseTezBridgeAction } from '../../redux/deploy';
+import { CheckboxComponent } from '../form/checkbox';
+import { Group, HGroup, Input, Label, Textarea } from '../form/inputs';
 
 const Container = styled.div``;
 
