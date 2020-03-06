@@ -1,4 +1,15 @@
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+# Quick Start
+
+```sh
+yarn start
+open http://localhost:3000
+```
+
+Note: Some features such as compiler commands and examples will be unavailable. In order to have these features you have to start the server. See README under `../packages/server` for details.
+
+# Dependency on Examples
+
+Examples that are displayed in the Web IDE are curated from `/src/test/examples` folder and packaged during the build of the client. To add a new example to the Web IDE, first add the example file to `/src/test/examples` folder; it may live under any level of subdirectories. Then, add the path to the example to the `CURATED_EXAMPLES` array in the `packages/client/package-examples.js` script. The path has to be relative to `/src/test/examples`.
 
 ## Available Scripts
 
