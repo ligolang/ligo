@@ -321,6 +321,37 @@ let main = (p : unit) : address => Tezos.self_address;
 
 </Syntax>
 
+## Self
+
+Typecast the currently running contract with an entrypoint annotation.
+If your are using entrypoints: use "%Bar" for constructor Bar
+If you are not using entrypoints: use "%Default"
+
+<Syntax syntax="pascaligo">
+
+```pascaligo
+function main (const p : unit) : contract(unit) is block {
+  const c : contract(unit) = Tezos.self("%Default") ;
+} with c
+```
+
+</Syntax>
+<Syntax syntax="cameligo">
+
+```cameligo
+let main (p : unit) : unit contract =
+  (Tezos.self("%Default") : unit contract)
+```
+
+</Syntax>
+<Syntax syntax="reasonligo">
+
+```reasonligo
+let main = (p: unit) : contract(unit) =>
+  (Tezos.self("%Default") : contract(unit));
+```
+
+</Syntax>
 
 ## Implicit Account
 
