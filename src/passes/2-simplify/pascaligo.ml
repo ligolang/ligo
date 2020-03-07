@@ -184,6 +184,17 @@ module Errors = struct
     ] in
     error ~data title message
 
+  let _untyped_recursive_function var =
+    let title () = "" in
+    let message () =
+      Format.asprintf "\nUntyped recursive function \
+                       are not supported yet.\n" in
+    let param_loc = var.Region.region in
+    let data = [
+      ("location",
+       fun () -> Format.asprintf "%a" Location.pp_lift @@ param_loc)]
+    in error ~data title message
+
   (* Logging *)
 
   let simplifying_instruction t =
@@ -659,7 +670,7 @@ and simpl_fun_decl :
       ((expression_variable * type_expression option) * expression) result =
   fun ~loc x ->
   let open! Raw in
-  let {fun_name; param; ret_type; block_with;
+  let {kwd_recursive;fun_name; param; ret_type; block_with;
        return; attributes} : fun_decl = x in
   let inline =
     match attributes with
@@ -683,11 +694,17 @@ and simpl_fun_decl :
        let%bind result =
          let aux prec cur = cur (Some prec) in
          bind_fold_right_list aux result body in
-       let expression : expression = e_lambda ~loc (Var.of_name binder) (Some input_type)
-           (Some output_type) result in
-       let type_annotation =
-         Some (make_t @@ T_arrow {type1=input_type;type2=output_type}) in
-       ok ((Var.of_name fun_name.value, type_annotation), expression)
+      let binder = Var.of_name binder in
+      let fun_name = Var.of_name fun_name.value in
+      let fun_type = t_function input_type output_type in
+      let expression : expression = 
+        e_lambda ~loc binder (Some input_type)(Some output_type) result in
+      let%bind expression = match kwd_recursive with
+        None -> ok @@ expression |
+        Some _ -> ok @@ e_recursive ~loc fun_name fun_type 
+        @@ {binder;input_type=Some input_type; output_type= Some output_type; result}
+      in
+       ok ((fun_name, Some fun_type), expression)
      )
    | lst -> (
        let lst = npseq_to_list lst in
@@ -713,10 +730,16 @@ and simpl_fun_decl :
        let%bind result =
          let aux prec cur = cur (Some prec) in
          bind_fold_right_list aux result body in
-       let expression =
-         e_lambda ~loc binder (Some (input_type)) (Some output_type) result in
-       let type_annotation = Some (make_t @@ T_arrow {type1=input_type; type2=output_type}) in
-       ok ((Var.of_name fun_name.value, type_annotation), expression)
+      let fun_name = Var.of_name fun_name.value in
+      let fun_type = t_function input_type output_type in
+      let expression : expression = 
+        e_lambda ~loc binder (Some input_type)(Some output_type) result in
+      let%bind expression = match kwd_recursive with
+        None -> ok @@ expression |
+        Some _ -> ok @@ e_recursive ~loc fun_name fun_type 
+        @@ {binder;input_type=Some input_type; output_type= Some output_type; result}
+      in
+       ok ((fun_name, Some fun_type), expression)
      )
   )
 
@@ -724,23 +747,29 @@ and simpl_fun_expression :
   loc:_ -> Raw.fun_expr -> (type_expression option * expression) result =
   fun ~loc x ->
   let open! Raw in
-  let {param;ret_type;return;_} : fun_expr = x in
+  let {kwd_recursive;param;ret_type;return} : fun_expr = x in
   let statements = [] in
   (match param.value.inside with
-     a, [] -> (
-       let%bind input = simpl_param a in
-       let (binder , input_type) = input in
-       let%bind instructions = simpl_statement_list statements in
-       let%bind result = simpl_expression return in
-       let%bind output_type = simpl_type_expression ret_type in
-       let body = instructions in
-       let%bind result =
-         let aux prec cur = cur (Some prec) in
-         bind_fold_right_list aux result body in
-       let expression : expression = e_lambda ~loc (Var.of_name binder) (Some input_type)
-           (Some output_type) result in
-       let type_annotation = Some (make_t @@ T_arrow {type1=input_type;type2=output_type}) in
-       ok (type_annotation , expression)
+    a, [] -> (
+      let%bind input = simpl_param a in
+      let (binder , input_type) = input in
+      let%bind instructions = simpl_statement_list statements in
+      let%bind result = simpl_expression return in
+      let%bind output_type = simpl_type_expression ret_type in
+      let body = instructions in
+      let%bind result =
+        let aux prec cur = cur (Some prec) in
+        bind_fold_right_list aux result body in
+      let binder = Var.of_name binder in
+      let fun_type = t_function input_type output_type in
+      let expression : expression = 
+        e_lambda ~loc binder (Some input_type)(Some output_type) result in
+      let%bind expression = match kwd_recursive with
+        None -> ok @@ expression |
+        Some _ -> ok @@ e_recursive ~loc binder fun_type 
+        @@ {binder;input_type=Some input_type; output_type= Some output_type; result}
+      in
+      ok (Some fun_type , expression)
      )
    | lst -> (
        let lst = npseq_to_list lst in
@@ -765,10 +794,15 @@ and simpl_fun_expression :
        let%bind result =
          let aux prec cur = cur (Some prec) in
          bind_fold_right_list aux result body in
-       let expression =
-         e_lambda ~loc binder (Some (input_type)) (Some output_type) result in
-       let type_annotation = Some (make_t @@ T_arrow {type1=input_type;type2=output_type}) in
-       ok (type_annotation , expression)
+      let fun_type = t_function input_type output_type in
+      let expression : expression = 
+        e_lambda ~loc binder (Some input_type)(Some output_type) result in
+      let%bind expression = match kwd_recursive with
+        None -> ok @@ expression |
+        Some _ -> ok @@ e_recursive ~loc binder fun_type 
+        @@ {binder;input_type=Some input_type; output_type= Some output_type; result}
+      in
+      ok (Some fun_type , expression)
      )
   )
 

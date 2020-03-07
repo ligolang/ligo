@@ -2428,7 +2428,7 @@ let main = test_suite "Integration (End to End)" [
     test "failwith ligo" failwith_ligo ;
     test "failwith mligo" failwith_mligo ;
     test "assert mligo" assert_mligo ;
-    (* test "recursion (ligo)" recursion_ligo ; *)
+    test "recursion (ligo)" recursion_ligo ;
     test "recursion (mligo)" recursion_mligo ;
     test "recursion (religo)" recursion_religo ;
     (* test "guess string mligo" guess_string_mligo ; WIP? *)
