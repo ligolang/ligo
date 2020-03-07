@@ -558,9 +558,13 @@ fun_expr:
             in raise (Error (WrongFunctionArguments e))
     in
     let binders = fun_args_to_pattern $1 in
+    let lhs_type = match $1 with 
+      EAnnot {value = {inside = _ , _, t; _}; region = r} -> Some (r,t)
+      | _ -> None
+    in
     let f = {kwd_fun;
              binders;
-             lhs_type=None;
+             lhs_type;
              arrow;
              body
             }

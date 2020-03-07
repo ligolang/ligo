@@ -176,11 +176,6 @@ let rec pattern_to_typed_var : Raw.pattern -> _ = fun p ->
   | Raw.PWild r -> ok (({ region = r ; value = "_" } : Raw.variable) , None)
   | _ -> fail @@ wrong_pattern "single typed variable" p
 
-let rec expr_to_typed_expr : Raw.expr -> _ = function
-  EPar e -> expr_to_typed_expr e.value.inside
-| EAnnot {value={inside=e,_,t; _}; _} -> ok (e, Some t)
-| e -> ok (e , None)
-
 let rec tuple_pattern_to_typed_vars : Raw.pattern -> _ = fun pattern ->
   match pattern with
   | Raw.PPar pp -> tuple_pattern_to_typed_vars pp.value.inside
@@ -646,9 +641,8 @@ and simpl_fun lamb' : expr result =
        | _ ->  ok lamb.body)
     | _ ->  ok lamb.body
   in
-  let%bind (body , body_type) = expr_to_typed_expr body in
   let%bind output_type =
-    bind_map_option simpl_type_expression body_type in
+    bind_map_option (fun x -> simpl_type_expression @@ snd x) lamb.lhs_type in
   let%bind body = simpl_expression body in
   let rec layer_arguments (arguments: (Raw.variable * type_expression) list) =
     match arguments with
@@ -811,9 +805,8 @@ and simpl_declaration : Raw.declaration -> declaration Location.wrap list result
         let%bind var = pattern_to_var hd in
         ok (var , tl)
       in
-      let%bind lhs_type' = bind_map_option (fun x -> simpl_type_expression (snd x)) lhs_type in
-      let%bind let_rhs,lhs_type = match args with
-      | [] -> ok (let_rhs, lhs_type')
+      let%bind let_rhs = match args with
+      | [] -> ok (let_rhs)
       | param1::others ->
           let fun_ = {
             kwd_fun = Region.ghost;
@@ -822,12 +815,18 @@ and simpl_declaration : Raw.declaration -> declaration Location.wrap list result
             arrow   = Region.ghost;
             body    = let_rhs
           } in
-          let f_args = nseq_to_list (param1,others) in
-          let%bind ty = bind_map_list typed_pattern_to_typed_vars f_args in
-          let aux acc ty = Option.map (t_function (snd ty)) acc in
-          ok (Raw.EFun {region=Region.ghost ; value=fun_},List.fold_right' aux lhs_type' ty)
+          ok (Raw.EFun {region=Region.ghost ; value=fun_})
       in
       let%bind rhs' = simpl_expression let_rhs in
+      let%bind lhs_type = match let_rhs with
+        | Raw.EFun {value={binders;lhs_type};_} -> 
+          let f_args = nseq_to_list (binders) in
+          let%bind ty = bind_map_list typed_pattern_to_typed_vars f_args in
+          let aux acc ty = Option.map (t_function (snd ty)) acc in
+          let%bind lhs_type' = bind_map_option (fun x -> simpl_type_expression (snd x)) lhs_type in
+          ok @@ List.fold_right' aux lhs_type' ty
+        | _ -> bind_map_option (fun x -> simpl_type_expression (snd x)) lhs_type
+      in
       ok @@ [loc x @@ (Declaration_constant (Var.of_name var.value , lhs_type , inline, rhs'))]
     )
 
