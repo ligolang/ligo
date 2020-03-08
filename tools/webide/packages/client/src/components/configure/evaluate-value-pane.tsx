@@ -17,7 +17,7 @@ export const EvaluateValuePaneComponent = () => {
   return (
     <Container>
       <Group>
-        <Label htmlFor="entrypoint">Entrypoint</Label>
+        <Label htmlFor="entrypoint">Expression</Label>
         <Input
           id="entrypoint"
           value={entrypoint}
