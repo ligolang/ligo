@@ -39,15 +39,14 @@ export const DeployOutputPane = () => {
       <Output id="output">
         {contract && (
           <div>
-            The contract was successfully deployed to the babylonnet test
-            network.
+            The contract was successfully deployed to the carthage test network.
             <br />
             <br />
             View your new contract using{' '}
             <a
               target="_blank"
               rel="noopener noreferrer"
-              href={`https://better-call.dev/babylon/${contract}`}
+              href={`https://better-call.dev/carthage/${contract}`}
             >
               Better Call Dev
             </a>
