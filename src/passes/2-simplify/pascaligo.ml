@@ -1263,11 +1263,12 @@ and simpl_for_int : Raw.for_int -> (_ -> expression result) result = fun fi ->
   let%bind bound = simpl_expression fi.bound in
   let cond = e_annotation (e_constant C_LE [var ; bound]) t_bool in
   let step = e_int 1 in
+  let continue_expr = e_constant C_FOLD_CONTINUE [(e_variable binder)] in
   let ctrl = 
-    e_let_in (it,Some t_int) false false (e_constant C_ADD [ var ; step ]) 
-    (e_let_in (binder, None) false false (e_update (e_variable binder) "1" var)
-    (e_variable binder))
-    in
+    e_let_in (it,Some t_int) false false (e_constant C_ADD [ var ; step ]) @@
+    e_let_in (binder, None) false false (e_update (e_variable binder) "1" var)@@
+    continue_expr
+  in
   (* Modify the body loop*)
   let%bind for_body = simpl_block fi.block.value in
   let%bind for_body = for_body @@ Some ctrl in
@@ -1281,11 +1282,10 @@ and simpl_for_int : Raw.for_int -> (_ -> expression result) result = fun fi ->
   let restore = fun expr -> List.fold_right aux captured_name_list expr in
 
   (*Prep the lambda for the fold*)
-  let continue_expr = e_constant C_FOLD_CONTINUE [restore(for_body)] in
   let stop_expr = e_constant C_FOLD_STOP [e_variable binder] in
   let aux_func = e_lambda binder None None @@ 
                  e_let_in (it,Some t_int) false false (e_accessor (e_variable binder) "1") @@
-                 e_cond cond continue_expr (stop_expr) in
+                 e_cond cond (restore for_body) (stop_expr) in
 
   (* Make the fold_while en precharge the vakye *)
   let loop = e_constant C_FOLD_WHILE [aux_func; e_variable env_rec] in

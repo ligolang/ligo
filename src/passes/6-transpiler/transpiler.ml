@@ -101,6 +101,15 @@ them. please report this to the developers." in
       ("value" , fun () -> Format.asprintf "%a" Mini_c.PP.value value) ;
     ] in
     error ~data title content
+  
+  let unsupported_recursive_function expression_variable =
+    let title () = "unsupported recursive function yet" in
+    let content () = "only fuction with one variable are supported" in
+    let data = [
+      ("value" , fun () -> Format.asprintf "%a" AST.PP.expression_variable expression_variable) ;
+    ] in
+    error ~data title content
+
 
 end
 open Errors
@@ -521,12 +530,14 @@ and transpile_lambda l (input_type , output_type) =
   ok @@ Combinators.Expression.make_tpl (closure , tv)
 
 and transpile_recursive {fun_name; fun_type; lambda} =
-  let rec map_lambda : AST.expression_variable -> type_value -> AST.expression -> expression result = fun fun_name loop_type e ->
+  let rec map_lambda : AST.expression_variable -> type_value -> AST.expression -> (expression * expression_variable list) result = fun fun_name loop_type e ->
     match e.expression_content with 
       E_lambda {binder;result} -> 
-        let%bind body = map_lambda fun_name loop_type result in
-        ok @@ Expression.make (E_closure {binder;body}) loop_type|
-      _  -> replace_callback fun_name loop_type e
+        let%bind (body,l) = map_lambda fun_name loop_type result in
+        ok @@ (Expression.make (E_closure {binder;body}) loop_type, binder::l)
+      | _  -> 
+        let%bind res = replace_callback fun_name loop_type e in
+        ok @@ (res, [])
 
   and replace_callback : AST.expression_variable -> type_value -> AST.expression -> expression result = fun fun_name loop_type e ->
     match e.expression_content with
@@ -629,10 +640,13 @@ and transpile_recursive {fun_name; fun_type; lambda} =
   let%bind fun_type = transpile_type fun_type in
   let%bind (input_type,output_type) = get_t_function fun_type in
   let loop_type = t_union (None, input_type) (None, output_type) in
-  let%bind body = map_lambda fun_name loop_type lambda.result in
-  let expr = Expression.make_tpl (E_variable fun_name, input_type) in
+  let%bind (body,binder) = map_lambda fun_name loop_type lambda.result in
+  let binder = lambda.binder::binder in
+  List.iter (Format.printf "inder %a\n%!" Var.pp) binder ;
+  let%bind binder = match binder with hd::[] -> ok @@ hd | _ -> fail @@ unsupported_recursive_function fun_name in
+  let expr = Expression.make_tpl (E_variable binder, input_type) in
   let body = Expression.make (E_iterator (C_LOOP_LEFT, ((lambda.binder, loop_type),body), expr)) output_type in
-  ok @@ Expression.make (E_closure {binder=fun_name;body}) fun_type
+  ok @@ Expression.make (E_closure {binder;body}) fun_type
 
 let transpile_declaration env (d:AST.declaration) : toplevel_statement result =
   match d with

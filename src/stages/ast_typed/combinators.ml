@@ -168,6 +168,17 @@ let get_t_function (t:type_expression) : (type_expression * type_expression) res
   | T_arrow {type1;type2} -> ok (type1,type2)
   | _ -> simple_fail "not a function"
 
+let get_t_function_full (t:type_expression) : (type_expression * type_expression) result =
+  let%bind _ = get_t_function t in
+  let rec aux n t = match t.type_content with 
+    | T_arrow {type1;type2} -> 
+      let (l, o) = aux (n+1) type2 in
+      ((Label (string_of_int n),type1)::l,o)
+    | _ -> ([],t)
+  in
+  let (input,output) = aux 0 t in
+  ok @@ (t_record (LMap.of_list input) (),output) 
+
 let get_t_sum (t:type_expression) : type_expression constructor_map result = match t.type_content with
   | T_sum m -> ok m
   | _ -> fail @@ Errors.not_a_x_type "sum" t ()

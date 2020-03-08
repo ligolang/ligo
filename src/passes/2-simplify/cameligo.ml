@@ -345,7 +345,7 @@ let rec simpl_expression :
   trace (simplifying_expr t) @@
   match t with
     Raw.ELetIn e ->
-      let Raw.{binding; body; attributes; _} = e.value in
+      let Raw.{kwd_rec; binding; body; attributes; _} = e.value in
       let inline = List.exists (fun (a: Raw.attribute) -> a.value = "inline") attributes in
       let Raw.{binders; lhs_type; let_rhs; _} = binding in
       begin match binders with
@@ -393,10 +393,50 @@ let rec simpl_expression :
           (chain_let_in tl body)
         | [] -> body (* Precluded by corner case assertion above *)
       in
-      if List.length prep_vars = 1
-      then ok (chain_let_in prep_vars body)
-      (* Bind the right hand side so we only evaluate it once *)
-      else ok (e_let_in (rhs_b, ty_opt) false inline rhs' (chain_let_in prep_vars body))
+      let%bind ty_opt = match ty_opt with 
+      | None -> (match let_rhs with 
+        | EFun {value={binders;lhs_type}} -> 
+          let f_args = nseq_to_list (binders) in
+          let%bind lhs_type' = bind_map_option (fun x -> simpl_type_expression (snd x)) lhs_type in
+          let%bind ty = bind_map_list typed_pattern_to_typed_vars f_args in
+          let aux acc ty = Option.map (t_function (snd ty)) acc in
+          ok @@ (List.fold_right' aux lhs_type' ty)
+        | _ -> ok None
+        )
+      | Some t -> ok @@ Some t
+      in
+      let%bind ret_expr = if List.length prep_vars = 1
+        then ok (chain_let_in prep_vars body)
+        (* Bind the right hand side so we only evaluate it once *)
+        else ok (e_let_in (rhs_b, ty_opt) false inline rhs' (chain_let_in prep_vars body))
+      in
+      let%bind ret_expr = match kwd_rec with 
+        | None -> ok @@ ret_expr
+        | Some _ -> 
+          match ret_expr.expression_content with 
+            | E_let_in li -> (
+              let%bind lambda = 
+                let rec aux rhs = match rhs.expression_content with
+                  | E_lambda l -> ok @@ l
+                  | E_ascription a -> aux a.anno_expr
+                  | _ -> fail @@ corner_case "recursive only supported for lambda"
+                in
+                aux rhs'
+              in
+              let fun_name = fst @@ List.hd prep_vars in
+              let%bind fun_type = match ty_opt with 
+                | Some t -> ok @@ t
+                | None -> match rhs'.expression_content with 
+                      | E_ascription a -> ok a.type_annotation
+                      | _ -> fail @@ untyped_recursive_function e
+              in
+              let expression_content = E_recursive {fun_name;fun_type;lambda} in
+              let expression_content = E_let_in {li with rhs = {li.rhs with  expression_content}} in
+              ok @@ {ret_expr with expression_content}
+          )
+          | _ -> fail @@ corner_case "impossible"
+      in
+      ok ret_expr
 
       (* let f p1 ps... = rhs in body *)
       | (f, p1 :: ps) ->
@@ -670,7 +710,8 @@ and simpl_fun lamb' : expr result =
       e_lambda ~loc (binder) (Some input_type) output_type (layer_arguments tl)
     | [] -> body
   in
-  return @@ layer_arguments params'
+  let ret_lamb = layer_arguments params' in
+  return @@ ret_lamb
 
 
 and simpl_logic_expression ?te_annot (t:Raw.logic_expr) : expr result =
