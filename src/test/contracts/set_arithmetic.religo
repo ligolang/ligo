@@ -6,10 +6,10 @@ let literal_op = (p: unit) : set (string) =>
 let add_op = (s: set (string)) : set (string) =>
   Set.add ("foobar", s);
 
-let remove_op = (s: set (string)) : set(string) =>
+let remove_op = (s: set (string)) : set (string) =>
   Set.remove ("foobar", s);
 
-let remove_deep = (s: (set (string), nat)): (set (string), nat) =>
+let remove_deep = (s: (set (string), nat)): set (string) =>
   Set.remove ("foobar", s[0]);
 
 let mem_op = (s: set (string)) : bool =>
