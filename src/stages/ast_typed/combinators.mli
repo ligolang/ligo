@@ -91,6 +91,7 @@ val is_t_bytes  : type_expression -> bool
 val is_t_int    : type_expression -> bool
 
 val assert_t_bytes : type_expression -> unit result
+val assert_t_string : type_expression -> unit result
 (*
 val assert_t_operation : type_expression -> unit result
 *)

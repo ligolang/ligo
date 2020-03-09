@@ -7,7 +7,7 @@ let refile = "./contracts/multisig.religo"
 
 let type_file f s =
   let%bind simplified  = Ligo.Compile.Of_source.compile f (Syntax_name s) in
-  let%bind typed,state = Ligo.Compile.Of_simplified.compile simplified in
+  let%bind typed,state = Ligo.Compile.Of_simplified.compile (Contract "main") simplified in
   ok @@ (typed,state)
 
 let get_program f st =

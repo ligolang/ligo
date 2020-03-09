@@ -2,11 +2,11 @@ import React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import styled from 'styled-components';
 
-import { AppState } from '../redux/app';
-import { ChangeTitleAction } from '../redux/editor';
+import { AppState } from '../../redux/app';
+import { ChangeTitleAction } from '../../redux/editor';
+import { ShareComponent } from '../share';
 import { EditableTitleComponent } from './editable-title';
 import { MonacoComponent } from './monaco';
-import { ShareComponent } from './share';
 import { SyntaxSelectComponent } from './syntax-select';
 
 const Container = styled.div`

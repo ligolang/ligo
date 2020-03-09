@@ -11,7 +11,7 @@ import { Command } from '../types';
 import { CancellableAction } from './cancellable';
 
 Tezos.setProvider({
-  rpc: 'https://api.tez.ie/rpc/babylonnet',
+  rpc: 'https://api.tez.ie/rpc/carthagenet',
   signer: new TezBridgeSigner()
 });
 
@@ -56,12 +56,19 @@ export class DeployAction extends CancellableAction {
       return;
     }
 
-    dispatch({ ...new UpdateLoadingAction('Deploying to babylon network...') });
-    return await op.contract();
+    dispatch({
+      ...new UpdateLoadingAction('Deploying to carthage network...')
+    });
+    return {
+      address: (await op.contract()).address,
+      storage: michelsonStorage
+    };
   }
 
   async deployOnServerSide(dispatch: Dispatch, getState: () => AppState) {
-    dispatch({ ...new UpdateLoadingAction('Deploying to babylon network...') });
+    dispatch({
+      ...new UpdateLoadingAction('Deploying to carthage network...')
+    });
 
     const { editor: editorState, deploy: deployState } = getState();
 
@@ -89,10 +96,16 @@ export class DeployAction extends CancellableAction {
         dispatch({
           ...new ChangeContractAction(contract.address, Command.Deploy)
         });
+        dispatch({
+          ...new ChangeOutputAction(contract.storage, Command.Deploy)
+        });
       } catch (ex) {
         if (this.isCancelled()) {
           return;
         }
+        dispatch({
+          ...new ChangeContractAction('', Command.Deploy)
+        });
         dispatch({
           ...new ChangeOutputAction(
             `Error: ${getErrorMessage(ex)}`,

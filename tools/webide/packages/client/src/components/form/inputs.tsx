@@ -1,3 +1,4 @@
+import React from 'react';
 import styled from 'styled-components';
 
 export const Group = styled.div`
@@ -15,6 +16,21 @@ export const Label = styled.label`
   color: var(--label_foreground);
   user-select: none;
 `;
+
+export const Hint = styled.span`
+  font-style: italic;
+  font-size: 0.8em;
+`;
+
+export const AccessFunctionLabel = (props: any) => {
+  return (
+    <Label {...props}>
+      Access Function
+      <br />
+      <Hint>The function name from where your contract will start</Hint>
+    </Label>
+  );
+};
 
 export const Input = styled.input`
   margin: 0.3em 0 0.7em 0;

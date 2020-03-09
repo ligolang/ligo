@@ -1218,3 +1218,117 @@ ligo: in file "create_contract_var.mligo", line 6, character 35 to line 10, char
              DIP { DIP { DUP } ; SWAP ; CDR } ;
              PAIR ;
              DIP { DROP 2 } } } |}]
+
+let%expect_test _ =
+  run_ligo_bad [ "compile-contract" ; bad_contract "self_type_annotation.ligo" ; "main" ] ;
+  [%expect {|
+    ligo: in file "self_type_annotation.ligo", line 8, characters 41-64. bad self type: expected (TO_Contract (int)) but got (TO_Contract (nat)) {"location":"in file \"self_type_annotation.ligo\", line 8, characters 41-64"}
+
+
+     If you're not sure how to fix this error, you can
+     do one of the following:
+
+    * Visit our documentation: https://ligolang.org/docs/intro/what-and-why/
+    * Ask a question on our Discord: https://discord.gg/9rhYaEt
+    * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
+    * Check the changelog by running 'ligo changelog' |}] ;
+
+  run_ligo_good [ "compile-contract" ; contract "self_type_annotation.ligo" ; "main" ] ;
+  [%expect {|
+    { parameter nat ;
+      storage int ;
+      code { DUP ;
+             SELF %default ;
+             SWAP ;
+             CDR ;
+             NIL operation ;
+             PAIR ;
+             DIP { DROP 2 } } } |}]
+
+let%expect_test _ =
+  run_ligo_bad [ "compile-contract" ; bad_contract "bad_contract.mligo" ; "main" ] ;
+  [%expect {|
+    ligo: in file "", line 0, characters 0-0. badly typed contract: unexpected entrypoint type {"location":"in file \"\", line 0, characters 0-0","entrypoint":"main","entrypoint_type":"( nat * int ) -> int"}
+
+
+     If you're not sure how to fix this error, you can
+     do one of the following:
+
+    * Visit our documentation: https://ligolang.org/docs/intro/what-and-why/
+    * Ask a question on our Discord: https://discord.gg/9rhYaEt
+    * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
+    * Check the changelog by running 'ligo changelog' |}] ;
+
+  run_ligo_bad [ "compile-contract" ; bad_contract "bad_contract2.mligo" ; "main" ] ;
+  [%expect {|
+    ligo: in file "", line 0, characters 0-0. bad return type: expected (TO_list(operation)), got string {"location":"in file \"\", line 0, characters 0-0","entrypoint":"main"}
+
+
+     If you're not sure how to fix this error, you can
+     do one of the following:
+
+    * Visit our documentation: https://ligolang.org/docs/intro/what-and-why/
+    * Ask a question on our Discord: https://discord.gg/9rhYaEt
+    * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
+    * Check the changelog by running 'ligo changelog' |}] ;
+
+  run_ligo_bad [ "compile-contract" ; bad_contract "bad_contract3.mligo" ; "main" ] ;
+  [%expect {|
+    ligo: in file "", line 0, characters 0-0. badly typed contract: expected {int} and {string} to be the same in the entrypoint type {"location":"in file \"\", line 0, characters 0-0","entrypoint":"main","entrypoint_type":"( nat * int ) -> ( (TO_list(operation)) * string )"}
+
+
+     If you're not sure how to fix this error, you can
+     do one of the following:
+
+    * Visit our documentation: https://ligolang.org/docs/intro/what-and-why/
+    * Ask a question on our Discord: https://discord.gg/9rhYaEt
+    * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
+    * Check the changelog by running 'ligo changelog' |}]
+
+let%expect_test _ =
+  run_ligo_good [ "compile-contract" ; contract "self_with_entrypoint.ligo" ; "main" ] ;
+  [%expect {|
+    { parameter (or (unit %default) (int %toto)) ;
+      storage nat ;
+      code { SELF %toto ;
+             DUP ;
+             PUSH mutez 300000000 ;
+             PUSH int 2 ;
+             TRANSFER_TOKENS ;
+             DUP ;
+             NIL operation ;
+             SWAP ;
+             CONS ;
+             DIP { DIP 2 { DUP } ; DIG 2 ; CDR } ;
+             PAIR ;
+             DIP { DROP 3 } } } |}] ;
+
+  run_ligo_good [ "compile-contract" ; contract "self_without_entrypoint.ligo" ; "main" ] ;
+  [%expect {|
+    { parameter int ;
+      storage nat ;
+      code { SELF %default ;
+             DUP ;
+             PUSH mutez 300000000 ;
+             PUSH int 2 ;
+             TRANSFER_TOKENS ;
+             DUP ;
+             NIL operation ;
+             SWAP ;
+             CONS ;
+             DIP { DIP 2 { DUP } ; DIG 2 ; CDR } ;
+             PAIR ;
+             DIP { DROP 3 } } } |}] ;
+
+  run_ligo_bad [ "compile-contract" ; bad_contract "self_bad_entrypoint_format.ligo" ; "main" ] ;
+  [%expect {|
+    ligo: in file "self_bad_entrypoint_format.ligo", line 8, characters 52-58. bad entrypoint format: entrypoint "Toto" is badly formatted. We expect "%bar" for entrypoint Bar and "%default" when no entrypoint used {"location":"in file \"self_bad_entrypoint_format.ligo\", line 8, characters 52-58"}
+
+
+     If you're not sure how to fix this error, you can
+     do one of the following:
+
+    * Visit our documentation: https://ligolang.org/docs/intro/what-and-why/
+    * Ask a question on our Discord: https://discord.gg/9rhYaEt
+    * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
+    * Check the changelog by running 'ligo changelog' |}]

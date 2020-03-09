@@ -3,9 +3,9 @@ import React, { useEffect, useRef } from 'react';
 import { useDispatch, useStore } from 'react-redux';
 import styled from 'styled-components';
 
-import { AppState } from '../redux/app';
-import { ChangeCodeAction, ChangeDirtyAction } from '../redux/editor';
-import { ClearSelectedAction } from '../redux/examples';
+import { AppState } from '../../redux/app';
+import { ChangeCodeAction, ChangeDirtyAction } from '../../redux/editor';
+import { ClearSelectedAction } from '../../redux/examples';
 
 const Container = styled.div`
   height: var(--content_height);
