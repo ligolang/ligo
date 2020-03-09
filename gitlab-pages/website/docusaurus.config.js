@@ -99,7 +99,6 @@ const siteConfig = {
   },*/
 
   // Add custom scripts here that would be placed in <script> tags.
-  scripts: ['https://buttons.github.io/buttons.js'],
 
   // On page navigation for the current documentation page.
   // No .html extensions for paths.
@@ -113,10 +112,11 @@ const siteConfig = {
   // You may provide arbitrary config keys to be used as needed by your
   // template. For example, if you need your repo's URL...
   // repoUrl: repoUrl,
-  stylesheets: [
-    'https://fonts.googleapis.com/css?family=DM+Sans:400,400i,500,500i,700,700i|Open+Sans:300,300i,400,600|Source+Code+Pro&display=swap'
+  plugins: [
+    '@ligo/syntax', {
+
+    }
   ],
-  
   
   presets: [
     [

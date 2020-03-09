@@ -15,7 +15,7 @@ import isInternalUrl from '@docusaurus/utils'; // eslint-disable-line import/no-
 
 import styles from './styles.module.css';
 
-import SyntaxSwitch from '../Syntax/SyntaxSwitch';
+import SyntaxSwitch from '@theme/Syntax/SyntaxSwitch';
 
 
 const MOBILE_TOGGLE_SIZE = 24;
