@@ -40,6 +40,19 @@ let%expect_test _ =
     * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
     * Check the changelog by running 'ligo changelog' |}];
 
+  run_ligo_bad [ "compile-contract" ; "../../test/contracts/negative/error_no_tail_recursive_function.mligo"; "f"];
+  [%expect {|
+    ligo: in file "error_no_tail_recursive_function.mligo", line 2, characters 14-21. Recursive call is only allowed as the last operation:  {"function":"unvalid","location":"in file \"error_no_tail_recursive_function.mligo\", line 2, characters 14-21"}
+
+
+     If you're not sure how to fix this error, you can
+     do one of the following:
+
+    * Visit our documentation: https://ligolang.org/docs/intro/what-and-why/
+    * Ask a question on our Discord: https://discord.gg/9rhYaEt
+    * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
+    * Check the changelog by running 'ligo changelog' |}];
+
   run_ligo_bad [ "compile-contract" ; "../../test/contracts/negative/error_type.ligo" ; "main" ] ;
   [%expect {|
     ligo: in file "error_type.ligo", line 3, characters 18-28. Adding modulo with wrong types: Expected arguments with one of the following combinations of types: add(nat , nat) or add(int , int) or add(mutez , mutez) or add(nat , int) or add(int , nat) or add(timestamp , int) or add(int , timestamp) but got this combination instead: add(int , string)
