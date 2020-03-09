@@ -2084,6 +2084,7 @@ let check_signature_mligo () : unit result =
                             e_bytes_string "hello world"] in
   let make_expected = e_bool true in
   let%bind () = expect_eq program "check_signature" make_input make_expected in
+  let%bind () = expect_eq_evaluate program "example" (e_bool true) in
   ok ()
 
 let check_signature_religo () : unit result =
