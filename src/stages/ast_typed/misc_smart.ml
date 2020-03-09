@@ -89,9 +89,6 @@ module Captured_variables = struct
       let%bind a' = self matchee in
       let%bind cs' = matching_expression b cases in
       ok @@ union a' cs'
-    | E_loop {condition; body} ->
-      let%bind lst' = bind_map_list self [ condition ; body ] in
-      ok @@ unions lst'
     | E_let_in li ->
       let b' = union (singleton li.let_binder) b in
       expression b' li.let_result

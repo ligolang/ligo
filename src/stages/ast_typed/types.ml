@@ -55,14 +55,10 @@ and expression_content =
   | E_list of expression list
   | E_set of expression list
   | E_look_up of (expression * expression)
-  (* Advanced *)
-  | E_loop of loop
-  (* | E_ascription of ascription *)
 
-and constant = {
-    cons_name: constant' ;
-    arguments: expression list ;
-  }
+and constant =
+  { cons_name: constant'
+  ; arguments: expression list }
 
 and application = {expr1: expression; expr2: expression}
 
@@ -96,15 +92,10 @@ and update = {
     update: expression ;
   }
 
-and loop = {
-    condition: expression ;
-    body: expression ;
-  }
-
-and matching_expr = (expression, type_expression) matching_content
-and matching = {
-    matchee: expression ;
-    cases: matching_expr ;
+and matching_expr = (expression,type_expression) matching_content
+and matching =
+  { matchee: expression
+  ; cases: matching_expr
   }
 
 and ascription = {

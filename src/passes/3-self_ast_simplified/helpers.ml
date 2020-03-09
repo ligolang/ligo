@@ -19,10 +19,6 @@ let rec fold_expression : 'a folder -> 'a -> expression -> 'a result = fun f ini
   | E_look_up ab ->
       let%bind res = bind_fold_pair self init' ab in
       ok res
-  | E_loop {condition;body} ->
-      let ab = (condition,body) in 
-      let%bind res = bind_fold_pair self init' ab in
-      ok res
   | E_application {expr1;expr2} -> (
       let ab = (expr1,expr2) in
       let%bind res = bind_fold_pair self init' ab in
@@ -115,11 +111,6 @@ let rec map_expression : mapper -> expression -> expression result = fun f e ->
   | E_look_up ab -> (
       let%bind ab' = bind_map_pair self ab in
       return @@ E_look_up ab'
-    )
-  | E_loop {condition;body} -> (
-      let ab = (condition,body) in
-      let%bind (a,b) = bind_map_pair self ab in
-      return @@ E_loop {condition = a; body = b}
     )
   | E_ascription ascr -> (
       let%bind e' = self ascr.anno_expr in
@@ -236,11 +227,6 @@ let rec fold_map_expression : 'a fold_mapper -> 'a -> expression -> ('a * expres
   | E_look_up ab -> (
       let%bind (res, ab') = bind_fold_map_pair self init' ab in
       ok (res, return @@ E_look_up ab')
-    )
-  | E_loop {condition;body} -> (
-      let ab = (condition,body) in
-      let%bind (res,(a,b)) = bind_fold_map_pair self init' ab in
-      ok (res, return @@ E_loop {condition = a; body = b})
     )
   | E_ascription ascr -> (
       let%bind (res,e') = self init' ascr.anno_expr in

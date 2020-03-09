@@ -83,7 +83,6 @@ val e_accessor : ?loc:Location.t -> expression -> string -> expression
 val e_accessor_list : ?loc:Location.t -> expression -> string list -> expression
 val e_variable : ?loc:Location.t -> expression_variable -> expression
 val e_skip : ?loc:Location.t -> unit -> expression
-val e_loop : ?loc:Location.t -> expression -> expression -> expression
 val e_sequence : ?loc:Location.t -> expression -> expression -> expression
 val e_cond: ?loc:Location.t -> expression -> expression -> expression -> expression
 val e_let_in : ?loc:Location.t -> ( expression_variable * type_expression option ) -> bool -> bool -> expression -> expression -> expression
