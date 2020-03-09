@@ -324,8 +324,8 @@ let main = (p : unit) : address => Tezos.self_address;
 ## Self
 
 Typecast the currently running contract with an entrypoint annotation.
-If your are using entrypoints: use "%Bar" for constructor Bar
-If you are not using entrypoints: use "%Default"
+If your are using entrypoints: use "%bar" for constructor Bar
+If you are not using entrypoints: use "%default"
 
 <Syntax syntax="pascaligo">
 

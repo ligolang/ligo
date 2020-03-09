@@ -1322,7 +1322,7 @@ let%expect_test _ =
 
   run_ligo_bad [ "compile-contract" ; bad_contract "self_bad_entrypoint_format.ligo" ; "main" ] ;
   [%expect {|
-    ligo: in file "self_bad_entrypoint_format.ligo", line 8, characters 52-58. bad entrypoint format: entrypoint "Toto" is badly formatted. We expect "%Bar" for entrypoint Bar and "%Default" when no entrypoint used {"location":"in file \"self_bad_entrypoint_format.ligo\", line 8, characters 52-58","hint":"try %Toto"}
+    ligo: in file "self_bad_entrypoint_format.ligo", line 8, characters 52-58. bad entrypoint format: entrypoint "Toto" is badly formatted. We expect "%bar" for entrypoint Bar and "%default" when no entrypoint used {"location":"in file \"self_bad_entrypoint_format.ligo\", line 8, characters 52-58"}
 
 
      If you're not sure how to fix this error, you can
