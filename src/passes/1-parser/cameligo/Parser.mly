@@ -203,7 +203,7 @@ field_decl:
     and value  = {field_name=$1; colon=$2; field_type=$3}
     in {region; value} }
 
-(* Top-level non-recursive definitions *)
+(* Top-level non-eecursive definitions *)
 
 let_declaration:
   "let" ioption("rec") let_binding seq(Attr) {

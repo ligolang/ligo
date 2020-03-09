@@ -237,21 +237,10 @@ field_decl:
 
 
 fun_expr:
-  | "function" parameters ":" type_expr "is" expr {
-    let stop   = expr_to_region $6 in
-    let region = cover $1 stop
-    and value  = {kwd_recursive= None;
-                  kwd_function = $1;
-                  param        = $2;
-                  colon        = $3;
-                  ret_type     = $4;
-                  kwd_is       = $5;
-                  return       = $6}
-    in {region; value} }
-  | "recursive" "function" parameters ":" type_expr "is" expr {
+  | ioption ("recursive") "function" parameters ":" type_expr "is" expr {
     let stop   = expr_to_region $7 in
     let region = cover $2 stop
-    and value  = {kwd_recursive= Some($1);
+    and value  = {kwd_recursive= $1;
                   kwd_function = $2;
                   param        = $3;
                   colon        = $4;
@@ -263,7 +252,7 @@ fun_expr:
 (* Function declarations *)
 
 open_fun_decl:
-  "recursive"? "function" fun_name parameters ":" type_expr "is"
+  ioption ("recursive") "function" fun_name parameters ":" type_expr "is"
   block "with" expr {
     Scoping.check_reserved_name $3;
     let stop   = expr_to_region $10 in
@@ -281,7 +270,7 @@ open_fun_decl:
                   attributes   = None}
     in {region; value}
   }
-| "recursive"? "function" fun_name parameters ":" type_expr "is" expr {
+| ioption ("recursive") "function" fun_name parameters ":" type_expr "is" expr {
     Scoping.check_reserved_name $3;
     let stop   = expr_to_region $8 in
     let region = cover $2 stop

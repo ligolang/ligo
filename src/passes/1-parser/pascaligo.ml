@@ -50,7 +50,7 @@ module Errors =
            fun () -> Format.asprintf "%a" Location.pp_lift @@ loc)] *)
 
     let generic message =
-      let title () = ""
+      let title () = "scofzpfj%!"
       and message () = message.Region.value
       in Trace.error ~data:[] title message
   end
@@ -182,10 +182,14 @@ let parse_expression (s: string) =
       let ext = PreIO.ext
       let options = PreIO.pre_options ~input:None ~expr:true
     end in
+  Format.printf "coucou : %s\n%!" s;
   let module Unit = PreUnit (IO) in
   match Lexer.(open_token_stream @@ String s) with
     Ok instance ->
       let thunk () = Unit.apply instance Unit.parse_expr
-      in parse (module IO) thunk
+      in 
+  Format.printf "ok\n%!";
+      parse (module IO) thunk
   | Stdlib.Error (Lexer.File_opening msg) ->
+  Format.printf "fail\n%!";
       Trace.fail @@ Errors.generic @@ Region.wrap_ghost msg
