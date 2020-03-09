@@ -66,7 +66,6 @@ module Simplify = struct
   module Pascaligo = struct
     let constants = function
     (* Tezos module (ex-Michelson) *)
-
     | "Tezos.chain_id"         -> ok C_CHAIN_ID
     | "chain_id"               -> ok C_CHAIN_ID            (* Deprecated *)
     | "get_chain_id"           -> ok C_CHAIN_ID            (* Deprecated *)
@@ -79,7 +78,8 @@ module Simplify = struct
     | "Tezos.sender"           -> ok C_SENDER
     | "sender"                 -> ok C_SENDER              (* Deprecated *)
     | "Tezos.address"          -> ok C_ADDRESS
-    | "address"                -> ok C_ADDRESS             (* Deprecated *)
+    | "address"                    -> ok C_ADDRESS             (* Deprecated *)
+    | "Tezos.self"             -> ok C_SELF
     | "Tezos.self_address"     -> ok C_SELF_ADDRESS
     | "self_address"           -> ok C_SELF_ADDRESS        (* Deprecated *)
     | "Tezos.implicit_account" -> ok C_IMPLICIT_ACCOUNT
@@ -267,6 +267,7 @@ module Simplify = struct
     | "sender"                     -> ok C_SENDER              (* Deprecated *)
     | "Tezos.address"              -> ok C_ADDRESS
     | "Current.address"            -> ok C_ADDRESS             (* Deprecated *)
+    | "Tezos.self"                 -> ok C_SELF
     | "Tezos.self_address"         -> ok C_SELF_ADDRESS
     | "Current.self_address"       -> ok C_SELF_ADDRESS        (* Deprecated *)
     | "Tezos.implicit_account"     -> ok C_IMPLICIT_ACCOUNT
@@ -791,6 +792,12 @@ module Typer = struct
   let self_address = typer_0 "SELF_ADDRESS" @@ fun _ ->
     ok @@ t_address ()
 
+  let self = typer_1_opt "SELF" @@ fun entrypoint_as_string tv_opt ->
+    let%bind () = assert_t_string entrypoint_as_string in
+    match tv_opt with
+    | None -> simple_fail "untyped SELF"
+    | Some t -> ok @@ t
+
   let implicit_account = typer_1 "IMPLICIT_ACCOUNT" @@ fun key_hash ->
     let%bind () = assert_t_key_hash key_hash in
     ok @@ t_contract (t_unit () ) ()
@@ -1228,6 +1235,7 @@ module Typer = struct
     | C_SENDER              -> ok @@ sender ;
     | C_SOURCE              -> ok @@ source ;
     | C_ADDRESS             -> ok @@ address ;
+    | C_SELF                -> ok @@ self;
     | C_SELF_ADDRESS        -> ok @@ self_address;
     | C_IMPLICIT_ACCOUNT    -> ok @@ implicit_account;
     | C_SET_DELEGATE        -> ok @@ set_delegate ;

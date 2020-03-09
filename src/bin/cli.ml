@@ -134,7 +134,7 @@ let compile_file =
   let f source_file entry_point syntax display_format michelson_format =
     toplevel ~display_format @@
     let%bind simplified = Compile.Of_source.compile source_file (Syntax_name syntax) in
-    let%bind typed,_    = Compile.Of_simplified.compile simplified in
+    let%bind typed,_    = Compile.Of_simplified.compile (Contract entry_point) simplified in
     let%bind mini_c     = Compile.Of_typed.compile typed in
     let%bind michelson  = Compile.Of_mini_c.aggregate_and_compile_contract mini_c entry_point in
     let%bind contract   = Compile.Of_michelson.build_contract michelson in
@@ -174,7 +174,7 @@ let print_typed_ast =
   let f source_file syntax display_format  = (
     toplevel ~display_format @@
     let%bind simplified = Compile.Of_source.compile source_file (Syntax_name syntax) in
-    let%bind typed,_    = Compile.Of_simplified.compile simplified in
+    let%bind typed,_    = Compile.Of_simplified.compile Env simplified in
     ok @@ Format.asprintf "%a\n" Compile.Of_typed.pretty_print typed
   )
   in
@@ -187,7 +187,7 @@ let print_mini_c =
   let f source_file syntax display_format  = (
     toplevel ~display_format @@
     let%bind simplified = Compile.Of_source.compile source_file (Syntax_name syntax) in
-    let%bind typed,_    = Compile.Of_simplified.compile simplified in
+    let%bind typed,_    = Compile.Of_simplified.compile Env simplified in
     let%bind mini_c     = Compile.Of_typed.compile typed in
     ok @@ Format.asprintf "%a\n" Compile.Of_mini_c.pretty_print mini_c
   )
@@ -201,7 +201,7 @@ let measure_contract =
   let f source_file entry_point syntax display_format  =
     toplevel ~display_format @@
     let%bind simplified = Compile.Of_source.compile source_file (Syntax_name syntax) in
-    let%bind typed,_    = Compile.Of_simplified.compile simplified in
+    let%bind typed,_    = Compile.Of_simplified.compile (Contract entry_point) simplified in
     let%bind mini_c     = Compile.Of_typed.compile typed in
     let%bind michelson  = Compile.Of_mini_c.aggregate_and_compile_contract mini_c entry_point in
     let%bind contract   = Compile.Of_michelson.build_contract michelson in
@@ -218,7 +218,7 @@ let compile_parameter =
   let f source_file entry_point expression syntax amount balance sender source predecessor_timestamp display_format michelson_format =
     toplevel ~display_format @@
     let%bind simplified      = Compile.Of_source.compile source_file (Syntax_name syntax) in
-    let%bind typed_prg,state = Compile.Of_simplified.compile simplified in
+    let%bind typed_prg,state = Compile.Of_simplified.compile (Contract entry_point) simplified in
     let%bind mini_c_prg      = Compile.Of_typed.compile typed_prg in
     let%bind michelson_prg   = Compile.Of_mini_c.aggregate_and_compile_contract mini_c_prg entry_point in
     let      env             = Ast_typed.program_environment typed_prg in
@@ -249,7 +249,7 @@ let interpret =
     let%bind (decl_list,state,env) = match init_file with
       | Some init_file ->
         let%bind simplified      = Compile.Of_source.compile init_file (Syntax_name syntax) in
-        let%bind typed_prg,state = Compile.Of_simplified.compile simplified in
+        let%bind typed_prg,state = Compile.Of_simplified.compile Env simplified in
         let%bind mini_c_prg      = Compile.Of_typed.compile typed_prg in
         let      env             = Ast_typed.program_environment typed_prg in
         ok (mini_c_prg,state,env)
@@ -280,7 +280,7 @@ let temp_ligo_interpreter =
   let f source_file syntax display_format =
     toplevel ~display_format @@
     let%bind simplified = Compile.Of_source.compile source_file (Syntax_name syntax) in
-    let%bind typed,_    = Compile.Of_simplified.compile simplified in
+    let%bind typed,_    = Compile.Of_simplified.compile Env simplified in
     let%bind res = Compile.Of_typed.some_interpret typed in
     ok @@ Format.asprintf "%s\n" res
   in
@@ -294,7 +294,7 @@ let compile_storage =
   let f source_file entry_point expression syntax amount balance sender source predecessor_timestamp display_format michelson_format =
     toplevel ~display_format @@
     let%bind simplified      = Compile.Of_source.compile source_file (Syntax_name syntax) in
-    let%bind typed_prg,state = Compile.Of_simplified.compile simplified in
+    let%bind typed_prg,state = Compile.Of_simplified.compile (Contract entry_point) simplified in
     let%bind mini_c_prg      = Compile.Of_typed.compile typed_prg in
     let%bind michelson_prg   = Compile.Of_mini_c.aggregate_and_compile_contract mini_c_prg entry_point in
     let      env             = Ast_typed.program_environment typed_prg in
@@ -323,7 +323,7 @@ let dry_run =
   let f source_file entry_point storage input amount balance sender source predecessor_timestamp syntax display_format =
     toplevel ~display_format @@
     let%bind simplified      = Compile.Of_source.compile source_file (Syntax_name syntax) in
-    let%bind typed_prg,state = Compile.Of_simplified.compile simplified in
+    let%bind typed_prg,state = Compile.Of_simplified.compile (Contract entry_point) simplified in
     let      env             = Ast_typed.program_environment typed_prg in
     let%bind mini_c_prg      = Compile.Of_typed.compile typed_prg in
     let%bind michelson_prg   = Compile.Of_mini_c.aggregate_and_compile_contract mini_c_prg entry_point in
@@ -359,7 +359,7 @@ let run_function =
     toplevel ~display_format @@
     let%bind v_syntax        = Helpers.syntax_to_variant (Syntax_name syntax) (Some source_file) in
     let%bind simplified_prg  = Compile.Of_source.compile source_file (Syntax_name syntax) in
-    let%bind typed_prg,state = Compile.Of_simplified.compile simplified_prg in
+    let%bind typed_prg,state = Compile.Of_simplified.compile Env simplified_prg in
     let      env             = Ast_typed.program_environment typed_prg in
     let%bind mini_c_prg      = Compile.Of_typed.compile typed_prg in
 
@@ -390,7 +390,7 @@ let evaluate_value =
   let f source_file entry_point amount balance sender source predecessor_timestamp syntax display_format =
     toplevel ~display_format @@
     let%bind simplified        = Compile.Of_source.compile source_file (Syntax_name syntax) in
-    let%bind typed_prg,_       = Compile.Of_simplified.compile simplified in
+    let%bind typed_prg,_       = Compile.Of_simplified.compile Env simplified in
     let%bind mini_c            = Compile.Of_typed.compile typed_prg in
     let%bind (exp,_)           = Mini_c.get_entry mini_c entry_point in
     let%bind compiled          = Compile.Of_mini_c.aggregate_and_compile_expression mini_c exp in

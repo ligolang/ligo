@@ -9,6 +9,7 @@
     interpreter
     ast_simplified
     self_ast_simplified
+    self_ast_typed
     typer_new
     typer
     ast_typed
