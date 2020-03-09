@@ -642,7 +642,6 @@ and transpile_recursive {fun_name; fun_type; lambda} =
   let loop_type = t_union (None, input_type) (None, output_type) in
   let%bind (body,binder) = map_lambda fun_name loop_type lambda.result in
   let binder = lambda.binder::binder in
-  List.iter (Format.printf "inder %a\n%!" Var.pp) binder ;
   let%bind binder = match binder with hd::[] -> ok @@ hd | _ -> fail @@ unsupported_recursive_function fun_name in
   let expr = Expression.make_tpl (E_variable binder, input_type) in
   let body = Expression.make (E_iterator (C_LOOP_LEFT, ((lambda.binder, loop_type),body), expr)) output_type in

@@ -13,7 +13,6 @@ let reasonligo_sdata = {
   parser = Parser.Reasonligo.parse_expression }
 
 let get_exp_as_string filename =
-  Format.printf "Get file\n%!";
   let lines = ref [] in
   let chan = open_in filename in
   try
@@ -22,17 +21,11 @@ let get_exp_as_string filename =
     done; !lines
   with End_of_file ->
     close_in chan;
-  Format.printf "End file\n%!";
     List.rev !lines ;;
 
 let assert_syntax_error sdata () =
-  Format.printf "ASsert\n%!";
-  let n = ref 0 in
   let%bind _l = bind_iter_list
-    (fun entry -> 
-      n := !n+1;
-      Format.printf "Line %d : %s\n%!" !n entry;
-      Assert.assert_fail @@ sdata.parser entry)
+    (fun entry -> Assert.assert_fail @@ sdata.parser entry)
     (get_exp_as_string sdata.erroneous_source_file) in
   ok ()
 

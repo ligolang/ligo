@@ -847,11 +847,11 @@ and simpl_declaration : Raw.declaration -> declaration Location.wrap list result
           in ok @@ decls
         | PPar {region = _ ; value = { lpar = _ ; inside = pt; rpar = _; } } ->
           (* Extract parenthetical multi-bind *)
-          let (wild, _rec, _, attributes) = fst @@ r_split x in
+          let (wild, recursive, _, attributes) = fst @@ r_split x in
           simpl_declaration
             (Let {
                 region = x.region;
-                value = (wild, _rec, {binders = (pt, []);
+                value = (wild, recursive, {binders = (pt, []);
                                 lhs_type = lhs_type;
                                 eq = Region.ghost ;
                                 let_rhs = let_rhs}, attributes)}
