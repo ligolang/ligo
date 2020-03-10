@@ -1495,24 +1495,43 @@ let assert_religo () : unit result =
 
 let recursion_ligo () : unit result =
   let%bind program = type_file "./contracts/recursion.ligo" in
-  let make_input = e_pair (e_int 10) (e_int 0) in
-  let make_expected = e_int 55 in
-  let%bind _ = expect_eq program "fibo" make_input make_expected in
-  ok ()
+  let%bind _ =
+    let make_input = e_pair (e_int 10) (e_int 0) in
+    let make_expected = e_int 55 in
+    expect_eq program "sum" make_input make_expected 
+  in
+  let%bind _ =
+    let make_input = e_tuple [(e_int 10); (e_int 1); (e_int 1)] in
+    let make_expected = e_int 89 in
+    expect_eq program "fibo" make_input make_expected
+  in ok ()
+  
 
 let recursion_mligo () : unit result =
   let%bind program = mtype_file "./contracts/recursion.mligo" in
-  let make_input = e_pair (e_int 10) (e_int 0) in
-  let make_expected = e_int 55 in
-  let%bind _ = expect_eq program "fibo" make_input make_expected in
-  ok ()
+  let%bind _ =
+    let make_input = e_pair (e_int 10) (e_int 0) in
+    let make_expected = e_int 55 in
+    expect_eq program "sum" make_input make_expected 
+  in
+  let%bind _ =
+    let make_input = e_tuple [(e_int 10); (e_int 1); (e_int 1)] in
+    let make_expected = e_int 89 in
+    expect_eq program "fibo" make_input make_expected
+  in ok ()
 
 let recursion_religo () : unit result =
   let%bind program = retype_file "./contracts/recursion.religo" in
-  let make_input = e_pair (e_int 10) (e_int 0) in
-  let make_expected = e_int 55 in
-  let%bind _ = expect_eq program "fibo" make_input make_expected in
-  ok ()
+  let%bind _ =
+    let make_input = e_pair (e_int 10) (e_int 0) in
+    let make_expected = e_int 55 in
+    expect_eq program "sum" make_input make_expected 
+  in
+  let%bind _ =
+    let make_input = e_tuple [(e_int 10); (e_int 1); (e_int 1)] in
+    let make_expected = e_int 89 in
+    expect_eq program "fibo" make_input make_expected
+  in ok ()
 
 let guess_string_mligo () : unit result =
   let%bind program = type_file "./contracts/guess_string.mligo" in

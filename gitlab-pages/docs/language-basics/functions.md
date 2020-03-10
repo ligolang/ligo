@@ -299,3 +299,43 @@ gitlab-pages/docs/language-basics/src/functions/incr_map.religo incr_map
 
 </Syntax>
 
+## Recursive function
+
+LIGO function are not recursive by default, the user need to indicate that the function is recursive.
+
+At the moment, recursive function are limited to one (possibly tupled) parameter and recursion is
+limited to tail recursion (i.e the recursive call should be the last expression of the function)
+
+<Syntax syntax="pascaligo">
+In PascaLigo recursive funciton are defined using the "recursive" keyword
+
+```pascaligo group=d
+recursive function sum (const n : int; const acc: int) : int is
+  if n<1 then acc else sum(n-1,acc+n)
+
+recursive function fibo (const n: int; const n_1: int; const n_0 :int) : int is
+  if n<2 then n_1 else fibo(n-1,n_1+n_0,n_1)
+```
+</Syntax>
+<Syntax syntax="cameligo">
+In CameLigo recursive funciton are defined using the "rec" keyword
+
+```cameligo group=d
+let rec sum ((n,acc):int * int) : int =
+    if (n < 1) then acc else sum (n-1, acc+n)
+ 
+let rec fibo ((n,n_1,n_0):int*int*int) : int = 
+    if (n < 2) then n_1 else fibo (n-1, n_1 + n_0, n_1)
+```
+</Syntax>
+<Syntax syntax="reasonligo">
+In ReasonLigo recursive funciton are defined using the "rec" keyword
+
+```reasonligo group=d
+let rec sum = ((n, acc) : (int,int)): int =>
+    if (n < 1) {acc;} else {sum ((n-1,acc+n));};
+
+let rec fibo = ((n, n_1, n_0) : (int,int,int)): int =>
+    if (n < 2) {n_1;} else {fibo ((n-1,n_1+n_0,n_1));};
+```
+</Syntax>
