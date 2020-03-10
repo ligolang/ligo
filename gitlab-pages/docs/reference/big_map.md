@@ -79,7 +79,7 @@ const empty : register = Big_map.empty
 Alternatively, you can also create an empty big_map using:
 
 ```pascaligo group=big_map
-const empty : register = big_map []
+const empty_alternative : register = big_map []
 ```
 
 </Syntax>
@@ -115,18 +115,18 @@ Create a non-empty big_map.
 
 ```pascaligo group=big_map
 const moves : register =
-  Big_map.literal ([
-    ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address) -> (1,2);
-    ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" : address) -> (0,3)])
+  Big_map.literal (list [
+    (("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address), (1,2));
+    (("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" : address), (0,3))]);
 ```
 
 Alternative way of creating an empty big_map:
 
 ```pascaligo group=big_map
-const moves : register =
+const moves_alternative : register =
   big_map [
     ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address) -> (1,2);
-    ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" : address) -> (0,3)]
+    ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" : address) -> (0,3)];
 ```
 
 </Syntax>
@@ -171,14 +171,14 @@ Because the key may be missing in the big map, the result is an
 
 ```pascaligo group=big_map
 const my_balance : option (move) =
-  Big_map.find_opt ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" : address, moves)
+  Big_map.find_opt (("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" : address), moves)
 ```
 
 Alternatively:
 
 ```pascaligo group=big_map
-const my_balance : option (move) =
-  moves [("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" : address)]
+const my_balance_alternative : option (move) =
+  moves [("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" : address)];
 ```
 
 </Syntax>
@@ -214,13 +214,18 @@ Note: when `None` is used as a value, the value is removed from the big_map.
 <Syntax syntax="pascaligo">
 
 ```pascaligo group=big_map
-  Big_map.update(("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address), m, (4,9));
+  const updated_big_map : register = Big_map.update(("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address), Some (4,9), moves);
 ```
 
 Alternatively:
 
 ```pascaligo group=big_map
-  m [("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address)] := (4,9)
+
+function update (var m : register) : register is
+  block {
+    m [("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address)] := (4,9);
+  } with m
+  
 ```
 
 If multiple bindings need to be updated, PascaLIGO offers a *patch
@@ -271,7 +276,7 @@ let add: ('key, 'value, big_map('key, 'value)) => big_map('key, 'value)
 <Syntax syntax="pascaligo">
 
 ```pascaligo group=big_map
-Big_map.add (("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" : address), (4, 9), m)
+const added_item : register = Big_map.add (("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" : address), (4, 9), moves)
 ```
 
 </Syntax>
@@ -308,7 +313,7 @@ let remove: (key, big_map ('key, 'value)) => big_map ('key, 'value)
 <Syntax syntax="pascaligo">
 
 ```pascaligo group=big_map
-  const_updated_map : register = 
+  const updated_map : register = 
     Big_map.remove (("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address), moves)
 ```
 
