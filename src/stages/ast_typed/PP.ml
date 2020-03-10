@@ -44,8 +44,6 @@ let rec expression ppf (e : expression) =
         expression result
   | E_matching {matchee; cases;} ->
       fprintf ppf "match %a with %a" expression matchee (matching expression) cases
-  | E_loop l ->
-      fprintf ppf "while %a do %a" expression l.condition expression l.body
   | E_let_in {let_binder; rhs; let_result; inline} ->
       fprintf ppf "let %a = %a%a in %a" expression_variable let_binder expression
         rhs option_inline inline expression let_result

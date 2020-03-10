@@ -212,10 +212,6 @@ module Substitution = struct
         let%bind matchee = s_expression ~substs matchee in
         let%bind cases = s_matching_expr ~substs cases in
         ok @@ T.E_matching {matchee;cases}
-      | T.E_loop  {condition;body} ->
-        let%bind condition = s_expression ~substs condition in
-        let%bind body = s_expression ~substs body in
-        ok @@ T.E_loop {condition;body}
 
     and s_expression : T.expression w = fun ~(substs:substs) { expression_content; type_expression; environment; location } ->
       let%bind expression_content = s_expression_content ~substs expression_content in

@@ -51,7 +51,6 @@ and expression_content =
   | E_set of expression list
   | E_look_up of (expression * expression)
   (* Advanced *)
-  | E_loop of loop
   | E_ascription of ascription
 
 and constant =
@@ -78,8 +77,6 @@ and constructor = {constructor: constructor'; element: expression}
 and accessor = {expr: expression; label: label}
 
 and update = {record: expression; path: label ; update: expression}
-
-and loop = {condition: expression; body: expression}
 
 and matching_expr = (expr,unit) matching_content
 and matching =

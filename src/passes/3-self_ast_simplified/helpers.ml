@@ -19,10 +19,6 @@ let rec fold_expression : 'a folder -> 'a -> expression -> 'a result = fun f ini
   | E_look_up ab ->
       let%bind res = bind_fold_pair self init' ab in
       ok res
-  | E_loop {condition;body} ->
-      let ab = (condition,body) in 
-      let%bind res = bind_fold_pair self init' ab in
-      ok res
   | E_application {expr1;expr2} -> (
       let ab = (expr1,expr2) in
       let%bind res = bind_fold_pair self init' ab in
@@ -90,8 +86,12 @@ and fold_cases : 'a folder -> 'a -> matching_expr -> 'a result = fun f init m ->
       ok res
     )
 
-type mapper = expression -> expression result
-let rec map_expression : mapper -> expression -> expression result = fun f e ->
+type exp_mapper = expression -> expression result
+type ty_exp_mapper = type_expression -> type_expression result
+type abs_mapper =
+  | Expression of exp_mapper
+  | Type_expression of ty_exp_mapper 
+let rec map_expression : exp_mapper -> expression -> expression result = fun f e ->
   let self = map_expression f in
   let%bind e' = f e in
   let return expression_content = ok { e' with expression_content } in
@@ -115,11 +115,6 @@ let rec map_expression : mapper -> expression -> expression result = fun f e ->
   | E_look_up ab -> (
       let%bind ab' = bind_map_pair self ab in
       return @@ E_look_up ab'
-    )
-  | E_loop {condition;body} -> (
-      let ab = (condition,body) in
-      let%bind (a,b) = bind_map_pair self ab in
-      return @@ E_loop {condition = a; body = b}
     )
   | E_ascription ascr -> (
       let%bind e' = self ascr.anno_expr in
@@ -167,8 +162,25 @@ let rec map_expression : mapper -> expression -> expression result = fun f e ->
     )
   | E_literal _ | E_variable _ | E_skip as e' -> return e'
 
+and map_type_expression : ty_exp_mapper -> type_expression -> type_expression result = fun f te ->
+  let self = map_type_expression f in
+  let%bind te' = f te in
+  let return type_content = ok { te' with type_content } in
+  match te'.type_content with
+  | T_sum temap ->
+    let%bind temap' = bind_map_cmap self temap in
+    return @@ (T_sum temap')
+  | T_record temap ->
+    let%bind temap' = bind_map_lmap self temap in
+    return @@ (T_record temap')
+  | T_arrow {type1 ; type2} ->
+    let%bind type1' = self type1 in
+    let%bind type2' = self type2 in
+    return @@ (T_arrow {type1=type1' ; type2=type2'})
+  | T_operator _
+  | T_variable _ | T_constant _ -> ok te'
 
-and map_cases : mapper -> matching_expr -> matching_expr result = fun f m ->
+and map_cases : exp_mapper -> matching_expr -> matching_expr result = fun f m ->
   match m with
   | Match_bool { match_true ; match_false } -> (
       let%bind match_true = map_expression f match_true in
@@ -198,14 +210,19 @@ and map_cases : mapper -> matching_expr -> matching_expr result = fun f m ->
       ok @@ Match_variant (lst', ())
     )
 
-and map_program : mapper -> program -> program result = fun m p ->
+and map_program : abs_mapper -> program -> program result = fun m p ->
   let aux = fun (x : declaration) ->
-    match x with
-    | Declaration_constant (t , o , i, e) -> (
-        let%bind e' = map_expression m e in
+    match x,m with
+    | (Declaration_constant (t , o , i, e), Expression m') -> (
+        let%bind e' = map_expression m' e in
         ok (Declaration_constant (t , o , i, e'))
       )
-    | Declaration_type _ -> ok x
+    | (Declaration_type (tv,te), Type_expression m') -> (
+        let%bind te' = map_type_expression m' te in
+        ok (Declaration_type (tv, te'))
+      )
+    | decl,_ -> ok decl
+  (* | Declaration_type of (type_variable * type_expression) *)
   in
   bind_map_list (bind_map_location aux) p
 
@@ -236,11 +253,6 @@ let rec fold_map_expression : 'a fold_mapper -> 'a -> expression -> ('a * expres
   | E_look_up ab -> (
       let%bind (res, ab') = bind_fold_map_pair self init' ab in
       ok (res, return @@ E_look_up ab')
-    )
-  | E_loop {condition;body} -> (
-      let ab = (condition,body) in
-      let%bind (res,(a,b)) = bind_fold_map_pair self init' ab in
-      ok (res, return @@ E_loop {condition = a; body = b})
     )
   | E_ascription ascr -> (
       let%bind (res,e') = self init' ascr.anno_expr in

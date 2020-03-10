@@ -205,14 +205,6 @@ module Errors = struct
     ] in
     error ~data title message ()
 
-  let not_supported_yet_untranspile (message : string) (ae : O.expression) () =
-    let title = (thunk "not suported yet") in
-    let message () = message in
-    let data = [
-      ("expression" , fun () -> Format.asprintf "%a"  O.PP.expression ae)
-    ] in
-    error ~data title message ()
-
 end
 open Errors
 
@@ -774,28 +766,6 @@ and type_expression' : environment -> ?tv_opt:O.type_expression -> I.expression 
         tv_opt in
       return (O.E_matching {matchee=ex'; cases=m'}) tv
     )
-  | E_loop {condition; body} ->
-    let%bind expr' = type_expression' e condition in
-    let%bind body' = type_expression' e body in
-    let t_expr' = get_type_expression expr' in
-    let%bind () =
-      trace_strong (type_error
-                      ~msg:"while condition isn't of type bool"
-                      ~expected:(O.t_bool ())
-                      ~actual:t_expr'
-                      ~expression:condition
-                      expr'.location) @@
-      Ast_typed.assert_type_expression_eq (t_bool () , t_expr') in
-    let t_body' = get_type_expression body' in
-    let%bind () =
-      trace_strong (type_error
-                     ~msg:"while body isn't of unit type"
-                     ~expected:(O.t_unit ())
-                     ~actual:t_body'
-                     ~expression:body
-                     body'.location) @@
-      Ast_typed.assert_type_expression_eq (t_unit () , t_body') in
-    return (O.E_loop {condition=expr'; body=body'}) (t_unit ())
   | E_let_in {let_binder ; rhs ; let_result; inline} ->
     let%bind rhs_tv_opt = bind_map_option (evaluate_type e) (snd let_binder) in
     let%bind rhs = type_expression' ?tv_opt:rhs_tv_opt e rhs in
@@ -909,7 +879,6 @@ let rec untype_expression (e:O.expression) : (I.expression) result =
       let%bind ae' = untype_expression matchee in
       let%bind m' = untype_matching untype_expression cases in
       return (e_matching ae' m')
-  | E_loop _-> fail @@ not_supported_yet_untranspile "not possible to untranspile statements yet" e
   | E_let_in {let_binder;rhs;let_result; inline} ->
       let%bind tv = untype_type_expression rhs.type_expression in
       let%bind rhs = untype_expression rhs in

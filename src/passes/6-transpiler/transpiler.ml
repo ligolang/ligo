@@ -431,11 +431,6 @@ and transpile_annotated_expression (ae:AST.expression) : expression result =
       let%bind (ds', i') = bind_map_pair f dsi in
       return @@ E_constant {cons_name=C_MAP_FIND_OPT;arguments=[i' ; ds']}
     )
-  | E_loop {condition; body} -> (
-      let%bind expr' = transpile_annotated_expression condition in
-      let%bind body' = transpile_annotated_expression body in
-      return @@ E_while (expr' , body')
-    )
   | E_matching {matchee=expr; cases=m} -> (
       let%bind expr' = transpile_annotated_expression expr in
       match m with
