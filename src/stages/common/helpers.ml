@@ -28,6 +28,8 @@ let bind_fold_lmap f init (lmap:_ LMap.t) =
 
 let bind_map_lmap f map = bind_lmap (LMap.map f map)
 let bind_map_cmap f map = bind_cmap (CMap.map f map)
+let bind_map_lmapi f map = bind_lmap (LMap.mapi f map)
+let bind_map_cmapi f map = bind_cmap (CMap.mapi f map)
 
 let range i j =
   let rec aux i j acc = if i >= j then acc else aux i (j-1) (j-1 :: acc) in
@@ -38,3 +40,9 @@ let label_range i j =
 
 let is_tuple_lmap m =
   List.for_all (fun i -> LMap.mem i m) @@ (label_range 0 (LMap.cardinal m))
+
+let get_pair m =
+  let open Trace in
+  match (LMap.find_opt (Label "0") m , LMap.find_opt (Label "1") m) with
+  | Some e1, Some e2 -> ok (e1,e2)
+  | _ -> simple_fail "not a pair"

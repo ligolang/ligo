@@ -20,8 +20,6 @@ let patch_op_deep (s: string set * nat) : string set * nat =
   begin patch s.0 with set ["foobar"]; end with s
 *)
 
-let mem_op (s : string set) : bool =
-   Set.mem "foobar" s
+let mem_op (s : string set) : bool = Set.mem "foobar" s
 
-let size_op (s: string set) : nat =
-  Set.size s
+let size_op (s: string set) : nat = Set.cardinal s

@@ -23,6 +23,9 @@
 (*                                                                           *)
 (*****************************************************************************)
 
+val set_balance : Raw_context.t ->
+Contract_repr.t -> Tez_repr.t -> Raw_context.t tzresult Lwt.t
+
 type error +=
   | Balance_too_low of Contract_repr.contract * Tez_repr.t * Tez_repr.t
   | (* `Temporary *)

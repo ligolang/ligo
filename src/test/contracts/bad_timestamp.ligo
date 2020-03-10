@@ -6,4 +6,4 @@ function main (const p : parameter; const s : storage) : return is
   block {
     var stamp : timestamp := ("badtimestamp" : timestamp)
   }
-  with ((nil: list(operation)), stamp)
+  with ((nil : list (operation)), stamp)

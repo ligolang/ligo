@@ -1,1 +1,1 @@
-let main (i: int) : nat option = Michelson.is_nat i
+let main (i : int) : nat option = is_nat i

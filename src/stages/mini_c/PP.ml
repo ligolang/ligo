@@ -104,8 +104,6 @@ and expression' ppf (e:expression') = match e with
   | E_fold (((name , _) , body) , collection , initial) ->
       fprintf ppf "fold %a on %a with %a do ( %a )" expression collection expression initial Var.pp name expression body
 
-  | E_assignment (r , path , e) ->
-      fprintf ppf "%a.%a := %a" Var.pp r (list_sep lr (const ".")) path expression e
   | E_record_update (r, path,update) ->
       fprintf ppf "%a with { %a = %a }" expression r (list_sep lr (const ".")) path expression update
   | E_while (e , b) ->
@@ -239,6 +237,7 @@ and constant ppf : constant' -> unit = function
   | C_SOURCE                -> fprintf ppf "SOURCE"
   | C_SENDER                -> fprintf ppf "SENDER"
   | C_ADDRESS               -> fprintf ppf "ADDRESS"
+  | C_SELF                  -> fprintf ppf "SELF"
   | C_SELF_ADDRESS          -> fprintf ppf "SELF_ADDRESS"
   | C_IMPLICIT_ACCOUNT      -> fprintf ppf "IMPLICIT_ACCOUNT"
   | C_SET_DELEGATE          -> fprintf ppf "SET_DELEGATE"

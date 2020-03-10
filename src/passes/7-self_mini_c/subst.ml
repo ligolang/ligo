@@ -90,10 +90,6 @@ let rec replace : expression -> var_name -> var_name -> expression =
     let e1 = replace e1 in
     let e2 = replace e2 in
     return @@ E_sequence (e1, e2)
-  | E_assignment (v, path, e) ->
-    let v = replace_var v in
-    let e = replace e in
-    return @@ E_assignment (v, path, e)
   | E_record_update (r, p, e) ->
     let r = replace r in
     let e = replace e in
@@ -107,7 +103,6 @@ let rec replace : expression -> var_name -> var_name -> expression =
    Computes `body[x := expr]`.
    This raises Bad_argument in the case of assignments with a name clash. (`x <- 42[x := 23]` makes no sense.)
 **)
-exception Bad_argument
 let rec subst_expression : body:expression -> x:var_name -> expr:expression -> expression =
   fun ~body ~x ~expr ->
   let self body = subst_expression ~body ~x ~expr in
@@ -203,11 +198,6 @@ let rec subst_expression : body:expression -> x:var_name -> expr:expression -> e
   | E_sequence ab -> (
       let ab' = Tuple.map2 self ab in
       return @@ E_sequence ab'
-  )
-  | E_assignment (s, lrl, exp) -> (
-      let exp' = self exp in
-      if Var.equal s x then raise Bad_argument ;
-      return @@ E_assignment (s, lrl, exp')
   )
   | E_record_update (r, p, e) -> (
     let r' = self r in

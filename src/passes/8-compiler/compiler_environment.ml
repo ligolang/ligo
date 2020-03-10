@@ -35,29 +35,6 @@ let get : environment -> expression_variable -> michelson result = fun e s ->
 
   ok code
 
-let set : environment -> expression_variable -> michelson result = fun e n ->
-  let%bind (_ , position) =
-    generic_try (simple_error "Environment.set") @@
-    (fun () -> Environment.get_i n e) in
-  let rec aux_bubble = fun n ->
-    match n with
-    | 0 -> dip i_drop
-    | n -> seq [
-        i_swap ;
-        dip (aux_bubble (n - 1)) ;
-      ]
-  in
-  let aux_dug = fun n -> seq [
-      dipn (n + 1) i_drop ;
-      i_dug n ;
-    ] in
-  let code =
-    if position < 2
-    then aux_bubble position
-    else aux_dug position in
-
-  ok code
-
 let pack_closure : environment -> selector -> michelson result = fun e lst ->
   let%bind () = Assert.assert_true (e <> []) in
 

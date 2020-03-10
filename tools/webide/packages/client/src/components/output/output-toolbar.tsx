@@ -4,10 +4,10 @@ import React from 'react';
 import { useSelector } from 'react-redux';
 import styled from 'styled-components';
 
-import { AppState } from '../redux/app';
-import { ResultState } from '../redux/result';
-import { Item, Toolbar } from './toolbar';
-import { Tooltip } from './tooltip';
+import { AppState } from '../../redux/app';
+import { ResultState } from '../../redux/result';
+import { Item, Toolbar } from '../toolbar';
+import { Tooltip } from '../tooltip';
 
 const Divider = styled.div`
   display: block;

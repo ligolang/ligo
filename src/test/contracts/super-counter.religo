@@ -1,12 +1,16 @@
-type action =
-  | Increment(int)
-  | Decrement(int);
+type parameter =
+  Increment (int)
+| Decrement (int);
 
-let main = (p: action, s: int): (list(operation), int) => {
-  let storage =
-    switch (p) {
-    | Increment(n) => s + n
-    | Decrement(n) => s - n
+type storage = int;
+
+type return = (list (operation), storage);
+
+let main = ((action, store): (parameter, storage) : return => {
+  let store =
+    switch (action) {
+    | Increment (n) => store + n
+    | Decrement (n) => store - n
     };
-  ([]: list(operation), storage);
+  ([] : list (operation), store);
 };

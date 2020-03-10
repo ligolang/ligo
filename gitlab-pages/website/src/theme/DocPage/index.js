@@ -59,7 +59,10 @@ function DocPage(props) {
                 sidebar={sidebar}
                 sidebarCollapsible={sidebarCollapsible}
                 syntax={syntax}
-                onSyntaxChange={l => setSyntax(l)}
+                onSyntaxChange={l => {
+                  localStorage.setItem('syntax', l);
+                  setSyntax(l)
+                }}
               />
             </div>
           )}

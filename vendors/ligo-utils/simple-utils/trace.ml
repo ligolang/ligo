@@ -699,6 +699,16 @@ let rec bind_chain : ('a -> 'a result) list -> 'a -> 'a result = fun fs x ->
       bind aux (ok x)
     )
 
+let rec bind_chain_ignore_acc : ('a -> ('b * 'a) result) list -> 'a -> 'a result = fun fs x ->
+  match fs with
+  | [] -> ok x
+  | hd :: tl -> (
+      let aux : 'a -> 'a result = fun x ->
+        hd x >>? fun (_,aa) ->
+        bind (bind_chain_ignore_acc tl) (ok aa) in
+      bind aux (ok x)
+    )
+
 (**
    Wraps a call that might trigger an exception in a result.
 *)

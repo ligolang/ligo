@@ -285,6 +285,7 @@ and constant' =
   | C_SOURCE
   | C_SENDER
   | C_ADDRESS
+  | C_SELF
   | C_SELF_ADDRESS
   | C_IMPLICIT_ACCOUNT
   | C_SET_DELEGATE

@@ -37,22 +37,22 @@ function send (const param : send_pt; const s : storage) : return is
   block {
     // check sender against the authorized addresses
 
-    if not set_mem (sender, s.authorized_addresses)
+    if not Set.mem (Tezos.sender, s.authorized_addresses)
     then failwith("Unauthorized address")
     else skip;
 
     // check message size against the stored limit
 
     var message : message := param;
-    const packed_msg : bytes = bytes_pack (message);
-    if size (packed_msg) > s.max_message_size
+    const packed_msg : bytes = Bytes.pack (message);
+    if Bytes.length (packed_msg) > s.max_message_size
     then failwith ("Message size exceed maximum limit")
     else skip;
 
     (* compute the new set of addresses associated with the message and
        update counters *)
 
-    var new_store : addr_set := set_empty;
+    var new_store : addr_set := set [];
 
     case map_get (packed_msg, s.message_store) of
       Some (voters) ->
@@ -60,26 +60,25 @@ function send (const param : send_pt; const s : storage) : return is
           (* The message is already stored.
              Increment the counter only if the sender is not already
              associated with the message. *)
-          if set_mem (sender, voters)
+          if Set.mem (Tezos.sender, voters)
           then skip
-          else s.proposal_counters[sender] :=
-                 get_force (sender, s.proposal_counters) + 1n;
-
-          new_store := set_add(sender,voters)
+          else s.proposal_counters[Tezos.sender] :=
+                 get_force (Tezos.sender, s.proposal_counters) + 1n;
+                 new_store := Set.add (Tezos.sender,voters)
         }
     | None ->
         block {
           // the message has never been received before
           s.proposal_counters[sender] :=
-             get_force (sender, s.proposal_counters) + 1n;
-             new_store := set [sender]
+             get_force (Tezos.sender, s.proposal_counters) + 1n;
+             new_store := set [Tezos.sender]
         }
     end;
 
     // check sender counters against the maximum number of proposal
 
     var sender_proposal_counter : nat :=
-      get_force (sender, s.proposal_counters);
+      get_force (Tezos.sender, s.proposal_counters);
 
     if sender_proposal_counter > s.max_proposal
     then failwith ("Maximum number of proposal reached")
@@ -89,14 +88,14 @@ function send (const param : send_pt; const s : storage) : return is
 
     var ret_ops : list (operation) := nil;
 
-    if size (new_store) >= s.threshold then {
+    if Set.cardinal (new_store) >= s.threshold then {
       remove packed_msg from map s.message_store;
       ret_ops := message (s.state_hash);
       // update the state hash
-      s.state_hash := sha_256 (bytes_concat (s.state_hash, packed_msg));
+      s.state_hash := Crypto.sha256 (Bytes.concat (s.state_hash, packed_msg));
       // decrement the counters
       for addr -> ctr in map s.proposal_counters block {
-        if set_mem(addr,new_store) then
+        if Set.mem (addr, new_store) then
           s.proposal_counters[addr] := abs (ctr - 1n)
         else skip
       }
@@ -106,26 +105,26 @@ function send (const param : send_pt; const s : storage) : return is
 function withdraw (const param : withdraw_pt; const s : storage) : return is
   block {
     var message : message := param;
-    const packed_msg : bytes = bytes_pack (message);
+    const packed_msg : bytes = Bytes.pack (message);
 
-    case map_get(packed_msg, s.message_store) of
+    case s.message_store[packed_msg] of
       Some (voters) ->
         block {
           // The message is stored
-          const new_set : addr_set = set_remove (sender, voters);
+          const new_set : addr_set = Set.remove (Tezos.sender, voters);
 
           (* Decrement the counter only if the sender was already
              associated with the message *)
 
-          if size (voters) =/= size (new_set)
-          then s.proposal_counters[sender] :=
-                 abs (get_force (sender, s.proposal_counters) - 1n)
-          else skip ;
+          if Set.cardinal (voters) =/= Set.cardinal (new_set)
+          then s.proposal_counters[Tezos.sender] :=
+                 abs (get_force (Tezos.sender, s.proposal_counters) - 1n)
+          else skip;
 
           (* If the message is left without any associated addresses,
              remove the corresponding message_store field *)
 
-          if size (new_set) = 0n
+          if Set.cardinal (new_set) = 0n
           then remove packed_msg from map s.message_store
           else s.message_store[packed_msg] := new_set
         }

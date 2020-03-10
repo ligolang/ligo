@@ -9,4 +9,4 @@ type storage is tez
 type return is list (operation) * storage
 
 function main (const param : parameter; const store: storage) : return is
-  ((nil : list (operation)), balance)
+  ((nil : list (operation)), Tezos.balance)

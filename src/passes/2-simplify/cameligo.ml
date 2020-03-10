@@ -828,6 +828,18 @@ and simpl_declaration : Raw.declaration -> declaration Location.wrap list result
           ok (Raw.EFun {region=Region.ghost ; value=fun_},List.fold_right' aux lhs_type' ty)
       in
       let%bind rhs' = simpl_expression let_rhs in
+      let%bind lhs_type = match lhs_type with 
+      | None -> (match let_rhs with 
+        | EFun {value={binders;lhs_type}} -> 
+          let f_args = nseq_to_list (binders) in
+          let%bind lhs_type' = bind_map_option (fun x -> simpl_type_expression (snd x)) lhs_type in
+          let%bind ty = bind_map_list typed_pattern_to_typed_vars f_args in
+          let aux acc ty = Option.map (t_function (snd ty)) acc in
+          ok @@ (List.fold_right' aux lhs_type' ty)
+        | _ -> ok None
+        )
+      | Some t -> ok @@ Some t
+      in
       ok @@ [loc x @@ (Declaration_constant (Var.of_name var.value , lhs_type , inline, rhs'))]
     )
 

@@ -153,7 +153,7 @@ const siteConfig = {
       links: [
         { href: 'https://ide.ligolang.org/', label: 'Try Online' },
         { to: 'docs/intro/installation', label: 'Install' },
-        { to: 'docs/intro/what-and-why', label: 'Docs' },
+        { to: 'docs/intro/introduction', label: 'Docs' },
         {
           to: 'docs/tutorials/get-started/tezos-taco-shop-smart-contract',
           label: 'Tutorials'

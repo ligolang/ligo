@@ -1,4 +1,4 @@
-let sum (p: int * int) : int =
+let sum (p : int * int) : int =
   let i, result = p in i + result
 
 let sum2 (p: string * string * string * string) : string =

@@ -5,10 +5,10 @@ import OutsideClickHandler from 'react-outside-click-handler';
 import { useDispatch, useSelector } from 'react-redux';
 import styled, { css } from 'styled-components';
 
-import { AppState } from '../redux/app';
-import { ChangeLanguageAction, EditorState } from '../redux/editor';
-import { Language } from '../redux/types';
-import { Tooltip } from './tooltip';
+import { AppState } from '../../redux/app';
+import { ChangeLanguageAction, EditorState } from '../../redux/editor';
+import { Language } from '../../redux/types';
+import { Tooltip } from '../tooltip';
 
 const Container = styled.div`
   display: flex;

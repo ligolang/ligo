@@ -1,19 +1,17 @@
 type storage = int
 
-(* variant defining pseudo multi-entrypoint actions *)
-
-type action =
+type parameter =
   Increment of int
 | Decrement of int
 
-let add (a: int) (b: int) : int = a + b
-let sub (a: int) (b: int) : int = a - b
+type return = operation list * storage
 
-(* real entrypoint that re-routes the flow based on the action provided *)
+let add (a : int) (b : int) : int = a + b
+let sub (a : int) (b : int) : int = a - b
 
-let main (p, s: action * storage) =
-  let storage =
-    match p  with
-      Increment n -> add s n
-    | Decrement n -> sub s n
-  in ([] : operation list), storage
+let main (action, store : parameter * storage) : return =
+  let store =
+    match action  with
+      Increment n -> add store n
+    | Decrement n -> sub store n
+  in ([] : operation list), store

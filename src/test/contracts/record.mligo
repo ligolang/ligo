@@ -1,24 +1,10 @@
-type foobar = {
- foo : int ;
- bar : int ;
-}
+type foobar = {foo : int; bar : int}
 
-let fb : foobar = {
-  foo = 0 ;
-  bar = 0 ;
-}
+let fb : foobar = {foo=0; bar=0}
 
-type abc = {
-  a : int ;
-  b : int ;
-  c : int
-}
+type abc = {a : int; b : int; c : int}
 
-let abc : abc = {
-  a = 42 ;
-  b = 142 ;
-  c = 242
-}
+let abc : abc = {a=42; b=142; c=242}
 
 let a : int = abc.a
 let b : int = abc.b
@@ -28,26 +14,25 @@ let projection (r : foobar) : int = r.foo + r.bar
 
 let modify (r : foobar) : foobar = {foo = 256; bar = r.bar}
 
-let modify_abc (r : abc) : abc = let c = 42 in {r with b = 2048; c = c}
+let modify_abc (r : abc) : abc = let c = 42 in {r with b=2048; c=c}
 
 type big_record = {
-     a : int ;
-     b : int ;
-     c : int ;
-     d : int ;
-     e : int ;
+  a : int;
+  b : int;
+  c : int;
+  d : int;
+  e : int
 }
 
 let br : big_record = {
-  a = 23 ;
-  b = 23 ;
-  c = 23 ;
-  d = 23 ;
-  e = 23 ;
+  a = 23;
+  b = 23;
+  c = 23;
+  d = 23;
+  e = 23
 }
 
-type double_record = {
-  inner : abc;
-}
+type double_record = {inner : abc}
 
-let modify_inner (r : double_record) : double_record = {r with inner.b = 2048 }
+let modify_inner (r : double_record) : double_record =
+  {r with inner.b = 2048}

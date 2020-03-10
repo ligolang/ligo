@@ -159,14 +159,6 @@ module Errors = struct
     ] in
     error ~data title message ()
 
-  let not_supported_yet_untranspile (message : string) (ae : O.expression) () =
-    let title = (thunk "not supported yet") in
-    let message () = message in
-    let data = [
-      ("expression" , fun () -> Format.asprintf "%a"  O.PP.expression ae)
-    ] in
-    error ~data title message ()
-
 end
 
 open Errors
@@ -734,11 +726,6 @@ and type_expression : environment -> Solver.state -> ?tv_opt:O.type_expression -
    *       tv_opt in
    *     return (O.E_matching (ex', m')) tv
    *   ) *)
-  | E_loop {condition; body} ->
-    let%bind (expr' , state') = type_expression e state condition in
-    let%bind (body' , state'') = type_expression e state' body in
-    let wrapped = Wrap.loop expr'.type_expression body'.type_expression in
-    return_wrapped (O.E_loop {condition=expr';body=body'}) state'' wrapped
   | E_let_in {let_binder ; rhs ; let_result; inline} ->
     let%bind rhs_tv_opt = bind_map_option (evaluate_type e) (snd let_binder) in
     (* TODO: the binder annotation should just be an annotation node *)
@@ -1100,7 +1087,6 @@ let rec untype_expression (e:O.expression) : (I.expression) result =
   (* | E_failwith ae ->
    *   let%bind ae' = untype_expression ae in
    *   return (e_failwith ae') *)
-  | E_loop _ -> fail @@ not_supported_yet_untranspile "not possible to untranspile statements yet" e
   | E_let_in {let_binder; rhs;let_result; inline} ->
     let%bind tv = untype_type_value rhs.type_expression in
     let%bind rhs = untype_expression rhs in

@@ -371,7 +371,7 @@ and eval : Ast_typed.expression -> env -> value result
       | _ -> simple_fail "not yet supported case"
         (* ((ctor,name),body) *)
     )
-    | E_look_up _ | E_loop _ ->
+    | E_look_up _ ->
       let serr = Format.asprintf "Unsupported construct :\n %a\n" Ast_typed.PP.expression term in
       simple_fail serr
 

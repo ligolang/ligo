@@ -23,6 +23,9 @@ module Errors = struct
       let code = Format.asprintf "%a" Michelson.pp c in
       "bad contract type\n"^code in
     error title_type_check_msg message
+  let ran_out_of_gas () =
+    let message () = "Ran out of gas!" in
+    error title_type_check_msg message
   let unknown () =
     let message () =
       "unknown error" in
@@ -47,6 +50,7 @@ let build_contract : Compiler.compiled_expression -> Michelson.michelson result 
   | Err_parameter -> fail @@ Errors.bad_parameter contract ()
   | Err_storage   -> fail @@ Errors.bad_storage contract ()
   | Err_contract  -> fail @@ Errors.bad_contract contract ()
+  | Err_gas       -> fail @@ Errors.ran_out_of_gas ()
   | Err_unknown   -> fail @@ Errors.unknown ()
 
 type check_type = Check_parameter | Check_storage

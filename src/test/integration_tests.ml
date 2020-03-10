@@ -5,18 +5,18 @@ open Ast_simplified.Combinators
 
 let retype_file f =
   let%bind simplified  = Ligo.Compile.Of_source.compile f (Syntax_name "reasonligo") in
-  let%bind typed,state = Ligo.Compile.Of_simplified.compile simplified in
+  let%bind typed,state = Ligo.Compile.Of_simplified.compile Env simplified in
   let () = Typer.Solver.discard_state state in
   let () = Typer.Solver.discard_state state in
   ok typed
 let mtype_file f =
   let%bind simplified  = Ligo.Compile.Of_source.compile f (Syntax_name "cameligo") in
-  let%bind typed,state = Ligo.Compile.Of_simplified.compile simplified in
+  let%bind typed,state = Ligo.Compile.Of_simplified.compile Env simplified in
   let () = Typer.Solver.discard_state state in
   ok typed
 let type_file f =
   let%bind simplified  = Ligo.Compile.Of_source.compile f (Syntax_name "pascaligo") in
-  let%bind typed,state = Ligo.Compile.Of_simplified.compile simplified in
+  let%bind typed,state = Ligo.Compile.Of_simplified.compile Env simplified in
   let () = Typer.Solver.discard_state state in
   ok typed
 
@@ -1021,18 +1021,8 @@ let map_ type_f path : unit result =
   in
   let%bind () =
     let make_input = fun n -> ez [(23, n) ; (42, 4)] in
-    let make_expected = e_int in
-    expect_eq_n program "gf" make_input make_expected
-  in
-  let%bind () =
-    let make_input = fun n -> ez [(23, n) ; (42, 4)] in
     let make_expected = fun _ -> e_some @@ e_int 4 in
     expect_eq_n program "get" make_input make_expected
-  in
-  let%bind () =
-    let make_input = fun n -> ez [(23, n) ; (42, 4)] in
-    let make_expected = fun _ -> e_some @@ e_int 4 in
-    expect_eq_n program "get_" make_input make_expected
   in
   let%bind () =
     let input_map = ez [(23, 10) ; (42, 4)] in
@@ -1080,11 +1070,6 @@ let big_map_ type_f path : unit result =
     let open Ast_simplified.Combinators in
     let lst' = List.map (fun (x, y) -> e_int x, e_int y) lst in
     (e_typed_big_map lst' t_int t_int)
-  in
-  let%bind () =
-    let make_input = fun n -> ez [(23, n) ; (42, 4)] in
-    let make_expected = e_int in
-    expect_eq_n program "gf" make_input make_expected
   in
   let%bind () =
     let make_input = fun n ->
@@ -1801,24 +1786,33 @@ let religo_let_multiple () : unit result =
   in
   ok ()
 
+
+let balance_test_options () =
+  let%bind balance = trace_option (simple_error "could not convert balance") @@
+    Memory_proto_alpha.Protocol.Alpha_context.Tez.of_string "4000000" in
+  ok @@ Proto_alpha_utils.Memory_proto_alpha.make_options ~balance ()
+
 let balance_constant () : unit result =
   let%bind program = type_file "./contracts/balance_constant.ligo" in
   let input = e_tuple [e_unit () ; e_mutez 0]  in
   let expected = e_tuple [e_list []; e_mutez 4000000000000] in
-  expect_eq program "main" input expected
+  let%bind options = balance_test_options () in
+  expect_eq ~options program "main" input expected
 
 
 let balance_constant_mligo () : unit result =
   let%bind program = mtype_file "./contracts/balance_constant.mligo" in
   let input = e_tuple [e_unit () ; e_mutez 0]  in
   let expected = e_tuple [e_list []; e_mutez 4000000000000] in
-  expect_eq program "main" input expected
+  let%bind options = balance_test_options () in
+  expect_eq ~options program "main" input expected
 
 let balance_constant_religo () : unit result =
   let%bind program = retype_file "./contracts/balance_constant.religo" in
   let input = e_tuple [e_unit () ; e_mutez 0]  in
   let expected = e_tuple [e_list []; e_mutez 4000000000000] in
-  expect_eq program "main" input expected
+  let%bind options = balance_test_options () in
+  expect_eq ~options program "main" input expected
 
 let amount () : unit result =
   let%bind program = type_file "./contracts/amount.ligo" in
@@ -2090,6 +2084,7 @@ let check_signature_mligo () : unit result =
                             e_bytes_string "hello world"] in
   let make_expected = e_bool true in
   let%bind () = expect_eq program "check_signature" make_input make_expected in
+  let%bind () = expect_eq_evaluate program "example" (e_bool true) in
   ok ()
 
 let check_signature_religo () : unit result =
@@ -2241,51 +2236,51 @@ let empty_case_religo () : unit result =
   in
   ok ()
 
-let tuple_type_mligo () : unit result = 
+let tuple_type_mligo () : unit result =
   let%bind program = mtype_file "./contracts/tuple_type.mligo" in
-  let%bind () = 
-    let input _ = e_int 0 in 
+  let%bind () =
+    let input _ = e_int 0 in
     let expected _ = e_int 8 in
     expect_eq_n program "test1" input expected
   in
-  let%bind () = 
-    let input _ = e_int 0 in 
+  let%bind () =
+    let input _ = e_int 0 in
     let expected _ = e_int 12 in
     expect_eq_n program "test2" input expected
   in
   ok ()
 
-let tuple_type_religo () : unit result = 
+let tuple_type_religo () : unit result =
   let%bind program = retype_file "./contracts/tuple_type.religo" in
-  let%bind () = 
-    let input _ = e_int 0 in 
+  let%bind () =
+    let input _ = e_int 0 in
     let expected _ = e_int 8 in
     expect_eq_n program "arguments_test" input expected
   in
-  let%bind () = 
-    let input _ = e_int 0 in 
+  let%bind () =
+    let input _ = e_int 0 in
     let expected _ = e_int 8 in
     expect_eq_n program "tuple_test" input expected
   in
-  let%bind () = 
-    let input _ = e_int 0 in 
+  let%bind () =
+    let input _ = e_int 0 in
     let expected _ = e_int 8 in
     expect_eq_n program "arguments_test_inline" input expected
   in
-  let%bind () = 
-    let input _ = e_int 0 in 
+  let%bind () =
+    let input _ = e_int 0 in
     let expected _ = e_int 8 in
     expect_eq_n program "tuple_test_inline" input expected
   in
   ok ()
 
-let no_semicolon_religo () : unit result = 
+let no_semicolon_religo () : unit result =
   let%bind program = retype_file "./contracts/no_semicolon.religo" in
-  let%bind () = 
-    let input _ = e_int 2 in 
+  let%bind () =
+    let input _ = e_int 2 in
     let expected _ = e_int 3 in
     expect_eq_n program "a" input expected
-  in 
+  in
   ok ()
 
 let loop_bugs_ligo () : unit result =

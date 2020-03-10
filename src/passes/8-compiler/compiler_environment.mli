@@ -8,7 +8,6 @@ module Stack = Meta_michelson.Stack
 *)
 val empty: environment
 val get : environment -> expression_variable -> michelson result
-val set : environment -> expression_variable -> michelson result
 
 val pack_closure : environment -> selector -> michelson result
 val unpack_closure : environment -> michelson result

@@ -21,9 +21,12 @@ function asymetric_tuple_access (const foo : unit) : int is
   } with tuple.0 + tuple.1.0 + tuple.1.1.0 + tuple.1.1.1
 
 type nested_record_t is
-  record [nesty : record [mymap : map (int,string)]]
+  record [nesty : record [mymap : map (int, string)]]
 
 function nested_record (var nee : nested_record_t) : string is
   block {
     nee.nesty.mymap[1] := "one"
-  } with get_force (1, nee.nesty.mymap)
+  } with case nee.nesty.mymap[1] of
+           Some (s) -> s
+         | None -> (failwith ("Should not happen.") : string)
+         end

@@ -4,7 +4,7 @@ open Ast_simplified
 
 let type_file f =
   let%bind simplified  = Ligo.Compile.Of_source.compile f (Syntax_name "cameligo") in
-  let%bind typed,state = Ligo.Compile.Of_simplified.compile simplified in
+  let%bind typed,state = Ligo.Compile.Of_simplified.compile (Contract "main") simplified in
   ok @@ (typed,state)
 
 let get_program =
@@ -17,9 +17,9 @@ let get_program =
         ok program
       )
 
-let compile_main () = 
+let compile_main () =
   let%bind simplified      = Ligo.Compile.Of_source.compile "./contracts/timelock_repeat.mligo" (Syntax_name "cameligo") in
-  let%bind typed_prg,_ = Ligo.Compile.Of_simplified.compile simplified in
+  let%bind typed_prg,_ = Ligo.Compile.Of_simplified.compile (Contract "main") simplified in
   let%bind mini_c_prg      = Ligo.Compile.Of_typed.compile typed_prg in
   let%bind michelson_prg   = Ligo.Compile.Of_mini_c.aggregate_and_compile_contract mini_c_prg "main" in
   let%bind (_contract: Tezos_utils.Michelson.michelson) =
@@ -63,7 +63,7 @@ let interval_advance () =
   let%bind predecessor_timestamp = mk_time "2000-01-01T10:10:10Z" in
   let%bind lock_time = mk_time "2000-01-01T00:10:10Z" in
   let init_storage = storage lock_time 86400 empty_message in
-  (* It takes a second for Current.now to be called, awful hack *)
+  (* It takes a second for Tezos.now to be called, awful hack *)
   let%bind new_timestamp = mk_time "2000-01-02T10:10:11Z" in
   let new_storage_fake = storage new_timestamp 86400 fake_uncompiled_empty_message in
   let options =

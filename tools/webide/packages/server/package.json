@@ -7,7 +7,7 @@
     "prestart": "cd ../client && npm run build",
     "start": "nodemon -r @ts-tools/node/r -r tsconfig-paths/register ./src/index.ts",
     "build": "tsc",
-    "test": "jest"
+    "test": "export DATA_DIR=/tmp && jest"
   },
   "devDependencies": {
     "@ts-tools/node": "^1.0.0",
@@ -31,7 +31,7 @@
   "dependencies": {
     "@google-cloud/storage": "^4.0.0",
     "@hapi/joi": "^16.1.7",
-    "@taquito/taquito": "^5.1.0-beta.1",
+    "@taquito/taquito": "^6.1.0-beta.0",
     "@types/node-fetch": "^2.5.4",
     "body-parser": "^1.19.0",
     "escape-html": "^1.0.3",

@@ -34,12 +34,12 @@ let q = {
     },
 };
 
-/* 
+/*
 Not supported yet by parser:
 
 let r = {
   a: 1
-}; 
+};
 */
 
 let s = {

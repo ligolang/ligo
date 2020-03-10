@@ -2,9 +2,9 @@ import React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import styled from 'styled-components';
 
-import { AppState } from '../redux/app';
-import { ChangeEntrypointAction, ChangeParametersAction, EvaluateFunctionState } from '../redux/evaluate-function';
-import { Group, Input, Label, Textarea } from './inputs';
+import { AppState } from '../../redux/app';
+import { ChangeEntrypointAction, ChangeParametersAction, EvaluateFunctionState } from '../../redux/evaluate-function';
+import { Group, Input, Label, Textarea } from '../form/inputs';
 
 const Container = styled.div``;
 
@@ -20,7 +20,7 @@ export const EvaluateFunctionPaneComponent = () => {
   return (
     <Container>
       <Group>
-        <Label htmlFor="entrypoint">Entrypoint</Label>
+        <Label htmlFor="entrypoint">Function name</Label>
         <Input
           id="entrypoint"
           value={entrypoint}

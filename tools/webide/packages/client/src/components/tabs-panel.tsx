@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import styled, { css } from 'styled-components';
 
-import { ConfigureTabComponent } from './configure-tab';
-import { OutputTabComponent } from './output-tab';
+import { ConfigureTabComponent } from './configure/configure-tab';
+import { OutputTab } from './output/output-tab';
 
 const Container = styled.div`
   flex: 1;
@@ -86,12 +86,12 @@ export const TabsPanelComponent = () => {
             selectTab(TABS[1]);
           }}
         ></ConfigureTabComponent>
-        <OutputTabComponent
+        <OutputTab
           selected={selectedTab.index === 1}
           onCancel={() => {
             selectTab(TABS[0]);
           }}
-        ></OutputTabComponent>
+        ></OutputTab>
       </Content>
     </Container>
   );

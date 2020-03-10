@@ -30,32 +30,28 @@ function patch_ (var m : foobar) : foobar is block {
 function patch_deep (var m : foobar * nat) : foobar * nat is
   block { patch m.0 with map [1 -> 9] } with m
 
-function size_ (const m : foobar) : nat is size (m)
-
-function gf (const m : foobar) : int is get_force (23, m)
+function size_ (const m : foobar) : nat is Map.size (m)
 
 function get (const m : foobar) : option (int) is m[42]
 
-function get_ (const m : foobar) : option (int) is map_get (42, m)
-
-function mem (const k: int; const m: foobar) : bool is map_mem (k, m)
+function mem (const k: int; const m: foobar) : bool is Map.mem (k, m)
 
 function iter_op (const m : foobar) : unit is
   block {
     function aggregate (const i : int; const j : int) : unit is block
       { if i=j then skip else failwith ("fail") } with unit
-  } with map_iter (aggregate, m)
+  } with Map.iter (aggregate, m)
 
 function map_op (const m : foobar) : foobar is
   block {
     function increment (const i : int; const j : int) : int is j+1
-  } with map_map (increment, m)
+  } with Map.map (increment, m)
 
 function fold_op (const m : foobar) : int is
   block {
     function aggregate (const i : int; const j : int * int) : int is
       i + j.0 + j.1
-  } with map_fold(aggregate, m, 10)
+  } with Map.fold (aggregate, m, 10)
 
 function deep_op (var m : foobar) : foobar is
   block {

@@ -122,7 +122,6 @@ let e_accessor ?loc a b = location_wrap ?loc @@ E_record_accessor {expr = a; lab
 let e_accessor_list ?loc a b  = List.fold_left (fun a b -> e_accessor ?loc a b) a b
 let e_variable ?loc v = location_wrap ?loc @@ E_variable v
 let e_skip ?loc () = location_wrap ?loc @@ E_skip
-let e_loop ?loc condition body = location_wrap ?loc @@ E_loop {condition; body}
 let e_let_in ?loc (binder, ascr) mut inline rhs let_result = 
   location_wrap ?loc @@ E_let_in { let_binder = (binder, ascr) ; mut; rhs ; let_result; inline }
 let e_annotation ?loc anno_expr ty = location_wrap ?loc @@ E_ascription {anno_expr; type_annotation = ty}

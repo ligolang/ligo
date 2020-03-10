@@ -233,6 +233,10 @@ let assert_t_bytes = fun t ->
   let%bind _ = get_t_bytes t in
   ok ()
 
+let assert_t_string = fun t ->
+  let%bind _ = get_t_string t in
+  ok ()
+
 let assert_t_operation (t:type_expression) : unit result =
   match t.type_content with
   | T_constant (TC_operation) -> ok ()

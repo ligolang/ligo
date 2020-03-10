@@ -1,13 +1,5 @@
-function foo (const input : int) : int is begin
-   skip
-end with (input + 23)
+function foo (const input : int) : int is input + 23
 
-function bar (const input : int) : int is begin
-   skip
-end with (input + 51)
+function bar (const input : int) : int is input + 51
 
-
-function main (const i : int) : int is
-  begin
-    skip
-  end with foo (i) + bar (i)
+function main (const i : int) : int is foo (i) + bar (i)

@@ -18,7 +18,7 @@ describe('Deploy contract', () => {
   beforeEach(async () => await page.goto(API_HOST));
 
   it('should deploy', async done => {
-    expect(await deploy()).toContain('The contract was successfully deployed to the babylonnet test network.');
+    expect(await deploy()).toContain('The contract was successfully deployed to the carthage test network.');
 
     done();
   });

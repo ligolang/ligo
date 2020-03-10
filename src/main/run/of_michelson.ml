@@ -31,6 +31,7 @@ type run_res =
 
 type dry_run_options =
   { amount : string ;
+    balance : string ;
     predecessor_timestamp : string option ;
     sender : string option ;
     source : string option }
@@ -47,6 +48,9 @@ let make_dry_run_options (opts : dry_run_options) : options result =
   let open Proto_alpha_utils.Trace in
   let open Proto_alpha_utils.Memory_proto_alpha in
   let open Protocol.Alpha_context in
+  let%bind balance = match Tez.of_string opts.balance with
+    | None -> simple_fail "invalid amount"
+    | Some balance -> ok balance in
   let%bind amount = match Tez.of_string opts.amount with
     | None -> simple_fail "invalid amount"
     | Some amount -> ok amount in
@@ -75,7 +79,7 @@ let make_dry_run_options (opts : dry_run_options) : options result =
       match Memory_proto_alpha.Protocol.Alpha_context.Timestamp.of_notation st with
         | Some t -> ok (Some t)
         | None -> simple_fail ("\""^st^"\" is a bad timestamp notation") in
-  ok @@ make_options ?predecessor_timestamp:predecessor_timestamp ~amount ?sender ?source ()
+  ok @@ make_options ?predecessor_timestamp:predecessor_timestamp ~amount ~balance ?sender ?source ()
 
 let ex_value_ty_to_michelson (v : ex_typed_value) : Michelson.t result =
   let (Ex_typed_value (value , ty)) = v in

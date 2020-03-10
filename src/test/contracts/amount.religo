@@ -1,7 +1,2 @@
-let check_ = (p: unit) : int =>
-  if (Current.amount == 100tz) {
-    42;
-  }
-  else {
-    0;
-  };
+let check_ = (p : unit) : int =>
+  if (Tezos.amount == 100tez) { 42; } else { 0; };

@@ -11,7 +11,7 @@ In the project directory, you can run:
 
 ## `yarn start`
 
-Runs the server in development mode. This will also start the client.
+Runs the server in development mode. This will also build and server the client.
 
 ## `yarn test`
 

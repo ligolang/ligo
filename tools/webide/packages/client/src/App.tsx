@@ -2,7 +2,7 @@ import React from 'react';
 import { Provider } from 'react-redux';
 import styled from 'styled-components';
 
-import { EditorComponent } from './components/editor';
+import { EditorComponent } from './components/editor/editor';
 import { Examples } from './components/examples';
 import { FloatButtonComponent } from './components/float-button';
 import { HeaderComponent } from './components/header';

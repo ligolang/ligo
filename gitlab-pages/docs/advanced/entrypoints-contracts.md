@@ -310,7 +310,7 @@ let main (action, store: parameter * storage) : return =
 ```reasonligo group=c
 let owner : address = ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address);
 
-let main = ((action, store) : (parameter, storage)) : storage => {
+let main = ((action, store) : (parameter, storage)) : return => {
   if (Tezos.source != owner) { (failwith ("Access denied.") : return); }
   else { (([] : list (operation)), store); };
 };
@@ -478,4 +478,3 @@ let proxy = ((action, store): (parameter, storage)) : return => {
 > *deprecated*.
 
 </Syntax>
-

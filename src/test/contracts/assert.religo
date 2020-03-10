@@ -1,4 +1,4 @@
-let main = (p: bool, s: unit) => {
-  let u: unit = assert(p);
-  ([]: list(operation), s);
+let main = (p, s : bool, unit) => {
+  let u : unit = assert (p);
+  ([]: list (operation), s);
 };

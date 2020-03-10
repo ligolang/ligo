@@ -1071,10 +1071,18 @@ let make_options
     ?(self = (List.nth dummy_environment.identities 0).implicit_contract)
     ?(source = (List.nth dummy_environment.identities 1).implicit_contract)
     ?(amount = Alpha_context.Tez.one)
+    ?(balance = Alpha_context.Tez.zero)
     ?(chain_id = Environment.Chain_id.zero)
     ()
   =
   let tezos_context = { tezos_context with predecessor_timestamp } in
+  let tezos_context_error =
+    Trace.trace_alpha_tzresult_lwt (Trace.simple_error "lol") @@
+    Alpha_context.Contract.set_balance tezos_context self balance
+  in
+  let tezos_context = match tezos_context_error with
+    | Ok (a,_) -> a
+    | Error _ -> tezos_context in
   {
     tezos_context ;
     (* yep *)
@@ -1107,6 +1115,7 @@ let unparse_ty_michelson ty =
 type typecheck_res =
   | Type_checked
   | Err_parameter | Err_storage | Err_contract
+  | Err_gas
   | Err_unknown
 
 let typecheck_contract contract =
@@ -1116,6 +1125,7 @@ let typecheck_contract contract =
   | Ok _res -> return Type_checked
   | Error (Script_tc_errors.Ill_formed_type (Some "parameter", _code, _)::_) -> return Err_parameter
   | Error (Script_tc_errors.Ill_formed_type (Some "storage", _code, _)::_) -> return Err_storage
+  | Error (Script_tc_errors.Ill_typed_contract _ :: Script_tc_errors.Cannot_serialize_error :: []) -> return @@ Err_gas
   | Error (Script_tc_errors.Ill_typed_contract (_code, _)::_) -> return @@ Err_contract
   | Error _ -> return Err_unknown
 
