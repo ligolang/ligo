@@ -136,11 +136,7 @@ module Simplify = struct
     | "Big_map.update"   -> ok C_MAP_UPDATE
     | "Big_map.literal"  -> ok C_BIG_MAP_LITERAL
     | "Big_map.empty"    -> ok C_BIG_MAP_EMPTY
-    | "Big_map.size"     -> ok C_SIZE
     | "Big_map.mem"      -> ok C_MAP_MEM
-    | "Big_map.iter"     -> ok C_MAP_ITER
-    | "Big_map.map"      -> ok C_MAP_MAP
-    | "Big_map.fold"     -> ok C_MAP_FOLD
     | "Big_map.remove"   -> ok C_MAP_REMOVE
     | "Big_map.add"      -> ok C_MAP_ADD
 
