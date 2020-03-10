@@ -2630,7 +2630,7 @@ interactive_expr: True LPAR True VBAR
 ## In state 222, spurious reduction of production expr -> base_cond__open(expr) 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Missing `)`.
 
 interactive_expr: True LPAR WILD
 ##
@@ -2873,7 +2873,12 @@ contract: Let Ident EQ WILD
 ## Ident option(type_annotation) EQ
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+This is an incorrect let binding. 
+-
+Examples of correct let bindings: 
+let a: int = 4;
+let (a: int, b: int) = (1, 2);
+let func = (a: int, b: int) => a + b;
 
 contract: Let Ident WILD
 ##
