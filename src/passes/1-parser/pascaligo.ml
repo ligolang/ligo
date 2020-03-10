@@ -50,7 +50,7 @@ module Errors =
            fun () -> Format.asprintf "%a" Location.pp_lift @@ loc)] *)
 
     let generic message =
-      let title () = "scofzpfj%!"
+      let title () = ""
       and message () = message.Region.value
       in Trace.error ~data:[] title message
   end
