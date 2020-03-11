@@ -73,7 +73,7 @@ module Errors = struct
   let untyped_recursive_function var =
     let title () = "" in
     let message () =
-      Format.asprintf "\nUntyped recursive function \
+      Format.asprintf "\nUntyped recursive functions \
                        are not supported yet.\n" in
     let param_loc = var.Region.region in
     let data = [
