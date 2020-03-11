@@ -307,7 +307,7 @@ At the moment, recursive function are limited to one (possibly tupled) parameter
 limited to tail recursion (i.e the recursive call should be the last expression of the function)
 
 <Syntax syntax="pascaligo">
-In PascaLigo recursive functions are defined using the "recursive" keyword
+In PascaLigo recursive functions are defined using the `recursive` keyword
 
 ```pascaligo group=d
 recursive function sum (const n : int; const acc: int) : int is
@@ -318,7 +318,7 @@ recursive function fibo (const n: int; const n_1: int; const n_0 :int) : int is
 ```
 </Syntax>
 <Syntax syntax="cameligo">
-In CameLigo recursive functions are defined using the "rec" keyword
+In CameLigo recursive functions are defined using the `rec` keyword
 
 ```cameligo group=d
 let rec sum ((n,acc):int * int) : int =
@@ -329,7 +329,7 @@ let rec fibo ((n,n_1,n_0):int*int*int) : int =
 ```
 </Syntax>
 <Syntax syntax="reasonligo">
-In ReasonLigo recursive functions are defined using the "rec" keyword
+In ReasonLigo recursive functions are defined using the `rec` keyword
 
 ```reasonligo group=d
 let rec sum = ((n, acc) : (int,int)): int =>

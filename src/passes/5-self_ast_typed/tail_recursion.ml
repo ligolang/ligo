@@ -3,7 +3,7 @@ open Trace
 
 module Errors = struct
   let recursive_call_is_only_allowed_as_the_last_operation name loc () =
-    let title = (thunk ("Recursive call is only allowed as the last operation")) in
+    let title = (thunk ("Recursion must be achieved through tail-calls only")) in
     let message () = "" in
     let data = [
       ("function" , fun () -> Format.asprintf "%a" PP.expression_variable name);
