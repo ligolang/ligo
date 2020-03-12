@@ -272,25 +272,23 @@ and eval : Ast_typed.expression -> env -> value result
     match term.expression_content with
     | E_application ({expr1 = f; expr2 = args}) -> (
       let%bind f' = eval f env in
+      let%bind args' = eval args env in
       match f' with
       | V_Func_val (arg_names, body, f_env) ->
-        let%bind args' = eval args env in
         let f_env' = Env.extend f_env (arg_names, args') in
         eval body f_env'
-      | V_Func_rec (_fun_name,_fun_type,lambda, _env) ->
-        let%bind args' = eval args env in
-        let f_env' = Env.extend env (lambda.binder,args') in
-        eval lambda.result f_env'
+      | V_Func_rec (fun_name, arg_names, body, f_env) ->
+        let f_env' = Env.extend f_env (arg_names, args') in
+        let f_env'' = Env.extend f_env' (fun_name, f') in
+        eval body f_env''
       | _ -> simple_fail "trying to apply on something that is not a function"
     )
     | E_lambda {binder; result;} ->
       ok @@ V_Func_val (binder,result,env)
-    | E_recursive {fun_name; fun_type;lambda} ->
-      let env' = Env.extend env (fun_name, V_Func_rec(fun_name,fun_type,lambda,env)) in
-      ok @@ V_Func_rec (fun_name,fun_type,lambda,env')
-    | E_let_in { let_binder; rhs; let_result; _} ->
+    | E_let_in {let_binder ; rhs; let_result} -> (
       let%bind rhs' = eval rhs env in
       eval let_result (Env.extend env (let_binder,rhs'))
+    )
     | E_map kvlist | E_big_map kvlist ->
       let%bind kvlist' = bind_map_list
         (fun kv -> bind_map_pair (fun (el:Ast_typed.expression) -> eval el env) kv)
@@ -378,6 +376,8 @@ and eval : Ast_typed.expression -> env -> value result
       | _ -> simple_fail "not yet supported case"
         (* ((ctor,name),body) *)
     )
+    | E_recursive {fun_name; fun_type=_; lambda} ->
+      ok @@ V_Func_rec (fun_name, lambda.binder, lambda.result, env)
     | E_look_up _ ->
       let serr = Format.asprintf "Unsupported construct :\n %a\n" Ast_typed.PP.expression term in
       simple_fail serr
