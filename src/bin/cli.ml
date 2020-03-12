@@ -140,7 +140,9 @@ module Run = Ligo.Run.Of_michelson
 let compile_file =
   let f source_file entry_point syntax display_format disable_typecheck michelson_format =
     toplevel ~display_format @@
-    let%bind simplified = Compile.Of_source.compile source_file (Syntax_name syntax) in
+    let%bind abstracted = Compile.Of_source.compile source_file (Syntax_name syntax) in
+    let%bind complexed  = Compile.Of_abstracted.compile abstracted in
+    let%bind simplified = Compile.Of_complex.compile complexed in
     let%bind typed,_    = Compile.Of_simplified.compile (Contract entry_point) simplified in
     let%bind mini_c     = Compile.Of_typed.compile typed in
     let%bind michelson  = Compile.Of_mini_c.aggregate_and_compile_contract mini_c entry_point in
@@ -168,7 +170,9 @@ let print_cst =
 let print_ast =
   let f source_file syntax display_format  = (
     toplevel ~display_format @@
-    let%bind simplified = Compile.Of_source.compile source_file (Syntax_name syntax) in
+    let%bind abstracted = Compile.Of_source.compile source_file (Syntax_name syntax) in
+    let%bind complex    = Compile.Of_abstracted.compile abstracted in
+    let%bind simplified = Compile.Of_complex.compile complex in
     ok @@ Format.asprintf "%a\n" Compile.Of_simplified.pretty_print simplified
   )
   in
@@ -180,7 +184,9 @@ let print_ast =
 let print_typed_ast =
   let f source_file syntax display_format  = (
     toplevel ~display_format @@
-    let%bind simplified = Compile.Of_source.compile source_file (Syntax_name syntax) in
+    let%bind abstracted = Compile.Of_source.compile source_file (Syntax_name syntax) in
+    let%bind complex    = Compile.Of_abstracted.compile abstracted in
+    let%bind simplified = Compile.Of_complex.compile complex in
     let%bind typed,_    = Compile.Of_simplified.compile Env simplified in
     ok @@ Format.asprintf "%a\n" Compile.Of_typed.pretty_print typed
   )
@@ -193,7 +199,9 @@ let print_typed_ast =
 let print_mini_c =
   let f source_file syntax display_format  = (
     toplevel ~display_format @@
-    let%bind simplified = Compile.Of_source.compile source_file (Syntax_name syntax) in
+    let%bind abstracted = Compile.Of_source.compile source_file (Syntax_name syntax) in
+    let%bind complex    = Compile.Of_abstracted.compile abstracted in
+    let%bind simplified = Compile.Of_complex.compile complex in
     let%bind typed,_    = Compile.Of_simplified.compile Env simplified in
     let%bind mini_c     = Compile.Of_typed.compile typed in
     ok @@ Format.asprintf "%a\n" Compile.Of_mini_c.pretty_print mini_c
@@ -207,7 +215,9 @@ let print_mini_c =
 let measure_contract =
   let f source_file entry_point syntax display_format  =
     toplevel ~display_format @@
-    let%bind simplified = Compile.Of_source.compile source_file (Syntax_name syntax) in
+    let%bind abstracted = Compile.Of_source.compile source_file (Syntax_name syntax) in
+    let%bind complex    = Compile.Of_abstracted.compile abstracted in
+    let%bind simplified = Compile.Of_complex.compile complex in
     let%bind typed,_    = Compile.Of_simplified.compile (Contract entry_point) simplified in
     let%bind mini_c     = Compile.Of_typed.compile typed in
     let%bind michelson  = Compile.Of_mini_c.aggregate_and_compile_contract mini_c entry_point in
@@ -224,7 +234,9 @@ let measure_contract =
 let compile_parameter =
   let f source_file entry_point expression syntax amount balance sender source predecessor_timestamp display_format michelson_format =
     toplevel ~display_format @@
-    let%bind simplified      = Compile.Of_source.compile source_file (Syntax_name syntax) in
+    let%bind abstracted     = Compile.Of_source.compile source_file (Syntax_name syntax) in
+    let%bind complex    = Compile.Of_abstracted.compile abstracted in
+    let%bind simplified = Compile.Of_complex.compile complex in
     let%bind typed_prg,state = Compile.Of_simplified.compile (Contract entry_point) simplified in
     let%bind mini_c_prg      = Compile.Of_typed.compile typed_prg in
     let%bind michelson_prg   = Compile.Of_mini_c.aggregate_and_compile_contract mini_c_prg entry_point in
@@ -234,7 +246,9 @@ let compile_parameter =
       Compile.Of_michelson.build_contract michelson_prg in
 
     let%bind v_syntax         = Helpers.syntax_to_variant (Syntax_name syntax) (Some source_file) in
-    let%bind simplified_param = Compile.Of_source.compile_expression v_syntax expression in
+    let%bind abstracted_param = Compile.Of_source.compile_expression v_syntax expression in
+    let%bind complex_param    = Compile.Of_abstracted.compile_expression abstracted_param in
+    let%bind simplified_param = Compile.Of_complex.compile_expression complex_param in
     let%bind (typed_param,_)  = Compile.Of_simplified.compile_expression ~env ~state simplified_param in
     let%bind mini_c_param     = Compile.Of_typed.compile_expression typed_param in
     let%bind compiled_param   = Compile.Of_mini_c.aggregate_and_compile_expression mini_c_prg mini_c_param in
@@ -255,7 +269,9 @@ let interpret =
     toplevel ~display_format @@
     let%bind (decl_list,state,env) = match init_file with
       | Some init_file ->
-        let%bind simplified      = Compile.Of_source.compile init_file (Syntax_name syntax) in
+        let%bind abstracted      = Compile.Of_source.compile init_file (Syntax_name syntax) in
+        let%bind complex    = Compile.Of_abstracted.compile abstracted in
+        let%bind simplified = Compile.Of_complex.compile complex in
         let%bind typed_prg,state = Compile.Of_simplified.compile Env simplified in
         let%bind mini_c_prg      = Compile.Of_typed.compile typed_prg in
         let      env             = Ast_typed.program_environment typed_prg in
@@ -263,7 +279,9 @@ let interpret =
       | None -> ok ([],Typer.Solver.initial_state,Ast_typed.Environment.full_empty) in
 
     let%bind v_syntax       = Helpers.syntax_to_variant (Syntax_name syntax) init_file in
-    let%bind simplified_exp = Compile.Of_source.compile_expression v_syntax expression in
+    let%bind abstracted_exp = Compile.Of_source.compile_expression v_syntax expression in
+    let%bind complex_exp    = Compile.Of_abstracted.compile_expression abstracted_exp in
+    let%bind simplified_exp = Compile.Of_complex.compile_expression complex_exp in
     let%bind (typed_exp,_)  = Compile.Of_simplified.compile_expression ~env ~state simplified_exp in
     let%bind mini_c_exp     = Compile.Of_typed.compile_expression typed_exp in
     let%bind compiled_exp   = Compile.Of_mini_c.aggregate_and_compile_expression decl_list mini_c_exp in
@@ -286,7 +304,9 @@ let interpret =
 let temp_ligo_interpreter =
   let f source_file syntax display_format =
     toplevel ~display_format @@
-    let%bind simplified = Compile.Of_source.compile source_file (Syntax_name syntax) in
+    let%bind abstracted = Compile.Of_source.compile source_file (Syntax_name syntax) in
+    let%bind complex    = Compile.Of_abstracted.compile abstracted in
+    let%bind simplified = Compile.Of_complex.compile complex in
     let%bind typed,_    = Compile.Of_simplified.compile Env simplified in
     let%bind res = Compile.Of_typed.some_interpret typed in
     ok @@ Format.asprintf "%s\n" res
@@ -300,7 +320,9 @@ let temp_ligo_interpreter =
 let compile_storage =
   let f source_file entry_point expression syntax amount balance sender source predecessor_timestamp display_format michelson_format =
     toplevel ~display_format @@
-    let%bind simplified      = Compile.Of_source.compile source_file (Syntax_name syntax) in
+    let%bind abstracted      = Compile.Of_source.compile source_file (Syntax_name syntax) in
+    let%bind complex         = Compile.Of_abstracted.compile abstracted in
+    let%bind simplified      = Compile.Of_complex.compile complex in
     let%bind typed_prg,state = Compile.Of_simplified.compile (Contract entry_point) simplified in
     let%bind mini_c_prg      = Compile.Of_typed.compile typed_prg in
     let%bind michelson_prg   = Compile.Of_mini_c.aggregate_and_compile_contract mini_c_prg entry_point in
@@ -310,7 +332,9 @@ let compile_storage =
       Compile.Of_michelson.build_contract michelson_prg in
 
     let%bind v_syntax         = Helpers.syntax_to_variant (Syntax_name syntax) (Some source_file) in
-    let%bind simplified_param = Compile.Of_source.compile_expression v_syntax expression in
+    let%bind abstracted_param = Compile.Of_source.compile_expression v_syntax expression in
+    let%bind complex_param    = Compile.Of_abstracted.compile_expression abstracted_param in
+    let%bind simplified_param = Compile.Of_complex.compile_expression complex_param in
     let%bind (typed_param,_)  = Compile.Of_simplified.compile_expression ~env ~state simplified_param in
     let%bind mini_c_param     = Compile.Of_typed.compile_expression typed_param in
     let%bind compiled_param   = Compile.Of_mini_c.aggregate_and_compile_expression mini_c_prg mini_c_param in
@@ -329,7 +353,9 @@ let compile_storage =
 let dry_run =
   let f source_file entry_point storage input amount balance sender source predecessor_timestamp syntax display_format =
     toplevel ~display_format @@
-    let%bind simplified      = Compile.Of_source.compile source_file (Syntax_name syntax) in
+    let%bind abstracted      = Compile.Of_source.compile source_file (Syntax_name syntax) in
+    let%bind complex         = Compile.Of_abstracted.compile abstracted in
+    let%bind simplified      = Compile.Of_complex.compile complex in
     let%bind typed_prg,state = Compile.Of_simplified.compile (Contract entry_point) simplified in
     let      env             = Ast_typed.program_environment typed_prg in
     let%bind mini_c_prg      = Compile.Of_typed.compile typed_prg in
@@ -339,7 +365,9 @@ let dry_run =
       Compile.Of_michelson.build_contract michelson_prg in
 
     let%bind v_syntax          = Helpers.syntax_to_variant (Syntax_name syntax) (Some source_file) in
-    let%bind simplified        = Compile.Of_source.compile_contract_input storage input v_syntax in
+    let%bind abstracted        = Compile.Of_source.compile_contract_input storage input v_syntax in
+    let%bind complex           = Compile.Of_abstracted.compile_expression abstracted in
+    let%bind simplified        = Compile.Of_complex.compile_expression complex in
     let%bind typed,_           = Compile.Of_simplified.compile_expression ~env ~state simplified in
     let%bind mini_c            = Compile.Of_typed.compile_expression typed in
     let%bind compiled_params   = Compile.Of_mini_c.aggregate_and_compile_expression mini_c_prg mini_c in
@@ -365,13 +393,17 @@ let run_function =
   let f source_file entry_point parameter amount balance sender source predecessor_timestamp syntax display_format =
     toplevel ~display_format @@
     let%bind v_syntax        = Helpers.syntax_to_variant (Syntax_name syntax) (Some source_file) in
-    let%bind simplified_prg  = Compile.Of_source.compile source_file (Syntax_name syntax) in
+    let%bind abstracted_prg  = Compile.Of_source.compile source_file (Syntax_name syntax) in
+    let%bind complex_prg     = Compile.Of_abstracted.compile abstracted_prg in
+    let%bind simplified_prg  = Compile.Of_complex.compile complex_prg in
     let%bind typed_prg,state = Compile.Of_simplified.compile Env simplified_prg in
     let      env             = Ast_typed.program_environment typed_prg in
     let%bind mini_c_prg      = Compile.Of_typed.compile typed_prg in
 
 
-    let%bind simplified_param = Compile.Of_source.compile_expression v_syntax parameter in
+    let%bind abstracted_param = Compile.Of_source.compile_expression v_syntax parameter in
+    let%bind complex_param    = Compile.Of_abstracted.compile_expression abstracted_param in
+    let%bind simplified_param = Compile.Of_complex.compile_expression complex_param in
     let%bind app              = Compile.Of_simplified.apply entry_point simplified_param in
     let%bind (typed_app,_)    = Compile.Of_simplified.compile_expression ~env ~state app in
     let%bind compiled_applied = Compile.Of_typed.compile_expression typed_app in
@@ -396,7 +428,9 @@ let run_function =
 let evaluate_value =
   let f source_file entry_point amount balance sender source predecessor_timestamp syntax display_format =
     toplevel ~display_format @@
-    let%bind simplified        = Compile.Of_source.compile source_file (Syntax_name syntax) in
+    let%bind abstracted        = Compile.Of_source.compile source_file (Syntax_name syntax) in
+    let%bind complex           = Compile.Of_abstracted.compile abstracted in
+    let%bind simplified        = Compile.Of_complex.compile complex in
     let%bind typed_prg,_       = Compile.Of_simplified.compile Env simplified in
     let%bind mini_c            = Compile.Of_typed.compile typed_prg in
     let%bind (exp,_)           = Mini_c.get_entry mini_c entry_point in
@@ -418,7 +452,9 @@ let compile_expression =
     let%bind v_syntax = Helpers.syntax_to_variant (Syntax_name syntax) (None) in
     let      env      = Ast_typed.Environment.full_empty in
     let      state    = Typer.Solver.initial_state in
-    let%bind simplified    = Compile.Of_source.compile_expression v_syntax expression in
+    let%bind abstracted    = Compile.Of_source.compile_expression v_syntax expression in
+    let%bind complex       = Compile.Of_abstracted.compile_expression abstracted in
+    let%bind simplified    = Compile.Of_complex.compile_expression complex in
     let%bind (typed_exp,_) = Compile.Of_simplified.compile_expression ~env ~state simplified in
     let%bind mini_c_exp    = Compile.Of_typed.compile_expression typed_exp in
     let%bind compiled_exp  = Compile.Of_mini_c.compile_expression mini_c_exp in
@@ -442,7 +478,9 @@ let dump_changelog =
 let list_declarations =
   let f source_file syntax =
     toplevel ~display_format:(`Human_readable) @@
-    let%bind simplified_prg  = Compile.Of_source.compile source_file (Syntax_name syntax) in
+    let%bind abstracted_prg  = Compile.Of_source.compile source_file (Syntax_name syntax) in
+    let%bind complex_prg     = Compile.Of_abstracted.compile abstracted_prg in
+    let%bind simplified_prg  = Compile.Of_complex.compile complex_prg in
     let json_decl = List.map (fun decl -> `String decl) @@ Compile.Of_simplified.list_declarations simplified_prg in
     ok @@ J.to_string @@ `Assoc [ ("source_file", `String source_file) ; ("declarations", `List json_decl) ]
   in

@@ -9,9 +9,9 @@ open Trace
   a new constructor at all those places.
 *)
 
-module Simplify = struct
+module Abstracter = struct
 
-  open Ast_simplified
+  open Ast_imperative
   (*
     Each front-end has its owns constants.
 

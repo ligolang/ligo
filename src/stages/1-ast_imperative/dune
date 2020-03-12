@@ -1,15 +1,10 @@
 (library
-  (name operators)
-  (public_name ligo.operators)
+  (name ast_imperative)
+  (public_name ligo.ast_impretative)
   (libraries
     simple-utils
     tezos-utils
-    ast_imperative
-    ast_complex
-    ast_simplified
-    ast_typed
-    typesystem
-    mini_c
+    stage_common
   )
   (preprocess
     (pps ppx_let bisect_ppx --conditional)

@@ -13,9 +13,9 @@ let compile (cform: form) (program : Ast_simplified.program) : (Ast_typed.progra
     | Env -> ok applied in
   ok @@ (applied', state)
 
-let compile_expression ?(env = Ast_typed.Environment.full_empty) ~(state : Typer.Solver.state) (ae : Ast_simplified.expression)
+let compile_expression ?(env = Ast_typed.Environment.full_empty) ~(state : Typer.Solver.state) (e : Ast_simplified.expression)
     : (Ast_typed.expression * Typer.Solver.state) result =
-  let%bind (ae_typed,state) = Typer.type_expression_subst env state ae in
+  let%bind (ae_typed,state) = Typer.type_expression_subst env state e in
   let () = Typer.Solver.discard_state state in
   let%bind ae_typed' = Self_ast_typed.all_expression ae_typed in
   ok @@ (ae_typed',state)
