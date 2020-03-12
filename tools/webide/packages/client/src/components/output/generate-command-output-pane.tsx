@@ -17,14 +17,14 @@ const Output = styled.div`
   flex: 1;
   padding: 0.5em;
   display: flex;
-  overflow: scroll;
+  overflow: auto;
 `;
 
 const Pre = styled.pre`
   margin: 0;
 `;
 
-export const CompileOutputPane = () => {
+export const GenerateCommandOutputPane = () => {
   const output = useSelector<AppState, ResultState['output']>(
     state => state.result.output
   );
@@ -34,7 +34,6 @@ export const CompileOutputPane = () => {
   return (
     <Container>
       <OutputToolbarComponent
-        showTryMichelson={true}
         onCopy={() => copyOutput(preRef.current)}
         onDownload={() => downloadOutput(output)}
       ></OutputToolbarComponent>

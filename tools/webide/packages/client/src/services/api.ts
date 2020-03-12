@@ -43,6 +43,9 @@ export async function compileStorage(
   storage: string,
   format?: string
 ) {
+  // For whatever reason, storage set by examples is not treated as a string. So we convert it here.
+  storage = `${storage}`;
+
   const response = await axios.post('/api/compile-storage', {
     syntax,
     code,

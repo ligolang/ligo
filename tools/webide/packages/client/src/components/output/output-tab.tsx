@@ -8,6 +8,7 @@ import { ResultState } from '../../redux/result';
 import { Command } from '../../redux/types';
 import { CompileOutputPane } from './compile-output-pane';
 import { DeployOutputPane } from './deploy-output-pane';
+import { GenerateCommandOutputPane } from './generate-command-output-pane';
 import { Loading } from './loading';
 import { OutputPane } from './output-pane';
 
@@ -41,14 +42,21 @@ export const OutputTab = (props: {
   const loading = useSelector<AppState, LoadingState['loading']>(
     state => state.loading.loading
   );
+  const output = useSelector<AppState, ResultState['output']>(
+    state => state.result.output
+  );
 
   const renderResult = () => {
     if (loading) {
       return <Loading onCancel={props.onCancel}></Loading>;
+    } else if (!output) {
+      return <></>;
     } else if (command === Command.Compile) {
       return <CompileOutputPane></CompileOutputPane>;
     } else if (command === Command.Deploy) {
       return <DeployOutputPane></DeployOutputPane>;
+    } else if (command === Command.GenerateCommand) {
+      return <GenerateCommandOutputPane></GenerateCommandOutputPane>;
     }
 
     return <OutputPane></OutputPane>;

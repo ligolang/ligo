@@ -3,7 +3,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import React, { useState } from 'react';
 import styled, { css } from 'styled-components';
 
-const Container = styled.div<{ checked: boolean }>`
+const Container = styled.div`
   display: flex;
   justify-content: center;
   align-items: center;
@@ -44,7 +44,6 @@ export const CheckboxComponent = (props: {
   return (
     <Container
       className={props.className}
-      checked={isChecked}
       onClick={() => {
         const newState = !isChecked;
 
