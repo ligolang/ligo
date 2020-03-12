@@ -1,0 +1,112 @@
+import { Tezos } from '@taquito/taquito';
+import { Dispatch } from 'redux';
+import slugify from 'slugify';
+
+import { compileContract, compileStorage, getErrorMessage } from '../../services/api';
+import { AppState } from '../app';
+import { MichelsonFormat } from '../compile';
+import { DoneLoadingAction, UpdateLoadingAction } from '../loading';
+import { ChangeOutputAction } from '../result';
+import { Command } from '../types';
+import { CancellableAction } from './cancellable';
+
+const URL = 'https://api.tez.ie/keys/carthagenet/';
+const AUTHORIZATION_HEADER = 'Bearer ligo-ide';
+
+export async function fetchRandomPrivateKey(): Promise<string> {
+  const response = await fetch(URL, {
+    method: 'POST',
+    headers: { Authorization: AUTHORIZATION_HEADER }
+  });
+
+  return response.text();
+}
+
+export class GenerateCommandAction extends CancellableAction {
+  getAction() {
+    return async (dispatch: Dispatch, getState: () => AppState) => {
+      dispatch({ ...new UpdateLoadingAction('Compiling contract...') });
+
+      try {
+        const { editor, generateCommand } = getState();
+
+        const michelsonCodeJson = await compileContract(
+          editor.language,
+          editor.code,
+          generateCommand.entrypoint,
+          MichelsonFormat.Json
+        );
+
+        const michelsonCode = await compileContract(
+          editor.language,
+          editor.code,
+          generateCommand.entrypoint
+        );
+
+        if (this.isCancelled()) {
+          return;
+        }
+
+        dispatch({ ...new UpdateLoadingAction('Compiling storage...') });
+        const michelsonStorageJson = await compileStorage(
+          editor.language,
+          editor.code,
+          generateCommand.entrypoint,
+          generateCommand.storage,
+          MichelsonFormat.Json
+        );
+
+        const michelsonStorage = await compileStorage(
+          editor.language,
+          editor.code,
+          generateCommand.entrypoint,
+          generateCommand.storage
+        );
+
+        if (this.isCancelled()) {
+          return;
+        }
+
+        dispatch({ ...new UpdateLoadingAction('Estimating burn cap...') });
+
+        await Tezos.importKey(await fetchRandomPrivateKey());
+
+        const estimate = await Tezos.estimate.originate({
+          code: JSON.parse(michelsonCodeJson.result),
+          init: JSON.parse(michelsonStorageJson.result)
+        });
+
+        if (this.isCancelled()) {
+          return;
+        }
+
+        const title = slugify(editor.title).toLowerCase() || 'untitled';
+        const output = `tezos-client \\
+  ${generateCommand.command} \\
+  contract \\
+  ${title} \\
+  transferring 0 \\
+  from $YOUR_SOURCE_ACCOUNT \\
+  running '${michelsonCode.result.trim()}' \\
+  --init '${michelsonStorage.result.trim()}' \\
+  --burn-cap ${estimate.burnFeeMutez / 1000000}`;
+
+        dispatch({
+          ...new ChangeOutputAction(output, Command.GenerateCommand)
+        });
+      } catch (ex) {
+        if (this.isCancelled()) {
+          return;
+        }
+        dispatch({
+          ...new ChangeOutputAction(
+            `Error: ${getErrorMessage(ex)}`,
+            Command.GenerateCommand
+          )
+        });
+      }
+
+      dispatch({ ...new DoneLoadingAction() });
+    };
+  }
+}

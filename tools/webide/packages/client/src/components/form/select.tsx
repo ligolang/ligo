@@ -1,17 +1,13 @@
 import { faCaretDown } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import React, { useState } from 'react';
+import React, { FunctionComponentElement, useState } from 'react';
 import OutsideClickHandler from 'react-outside-click-handler';
 import styled, { css } from 'styled-components';
 
-import { Command } from '../../redux/types';
-
 const Container = styled.div`
-  flex: 2;
   display: flex;
   position: relative;
   min-width: 8em;
-  z-index: 2;
 `;
 
 const Header = styled.div`
@@ -20,8 +16,8 @@ const Header = styled.div`
 
   flex: 1;
   display: flex;
-  align-items: center;
   justify-content: space-between;
+  align-items: center;
   min-height: 2em;
   padding: 0 0.5em;
 
@@ -33,6 +29,7 @@ const ArrowIcon = ({ rotate, ...props }: { rotate: boolean }) => (
 );
 
 const Arrow = styled(ArrowIcon)`
+  z-index: 1;
   pointer-events: none;
   color: var(--blue_trans1);
   transition: transform 0.15s ease-in;
@@ -45,6 +42,7 @@ const Arrow = styled(ArrowIcon)`
 `;
 
 const List = styled.ul`
+  z-index: 1;
   position: absolute;
   list-style-type: none;
   background-color: white;
@@ -66,7 +64,7 @@ const List = styled.ul`
     `}
 `;
 
-const Option = styled.li`
+const OptionContainer = styled.li`
   cursor: pointer;
   user-select: none;
 
@@ -90,56 +88,73 @@ const Option = styled.li`
   }
 `;
 
-export const CommandSelectComponent = (props: {
-  selected: Command;
-  onChange?: (value: Command) => void;
-}) => {
-  const OPTIONS = {
-    [Command.Compile]: 'Compile',
-    [Command.Deploy]: 'Deploy',
-    [Command.DryRun]: 'Dry Run',
-    [Command.EvaluateFunction]: 'Evaluate Function',
-    [Command.EvaluateValue]: 'Evaluate Value'
-  };
+interface OptionProps {
+  value: string;
+  children: string;
+}
 
-  const moveOptionToTop = (option: Command) => {
-    return Object.keys(OPTIONS).reduce((list, entry) => {
-      if (entry === option) {
+type OptionElement = FunctionComponentElement<OptionProps>;
+
+export const Option = (props: OptionProps) => {
+  // This is an empty component. It's used as a way to get option information into its parent. It is not inserted into the DOM.
+  return <></>;
+};
+
+export const Select = (props: {
+  id: string;
+  value: any;
+  children: OptionElement[] | OptionElement;
+  onChange?: (value: any) => void;
+  className?: string;
+}) => {
+  const [isOpen, setOpen] = useState(false);
+
+  const options = Array.isArray(props.children)
+    ? props.children
+    : [props.children];
+
+  const labelLookup = new Map(
+    options.map(
+      child => [child.props.value, child.props.children] as [string, string]
+    )
+  );
+
+  const moveOptionToTop = (value: string) => {
+    return options.reduce((list, entry) => {
+      if (entry.props.value === value) {
         list.unshift(entry);
       } else {
-        list.push(entry as Command);
+        list.push(entry);
       }
       return list;
-    }, [] as Command[]);
+    }, [] as OptionElement[]);
   };
 
-  const [opened, open] = useState(false);
-
-  const selectOption = (option: Command) => {
-    if (props.selected !== option && props.onChange) {
-      props.onChange(option);
+  const selectOption = (option: OptionElement) => {
+    if (props.value !== option.props.value && props.onChange) {
+      props.onChange(option.props.value);
     }
-    open(false);
+    setOpen(false);
   };
 
   return (
-    <Container>
-      <OutsideClickHandler onOutsideClick={() => open(false)}>
-        <List visible={opened}>
-          {moveOptionToTop(props.selected).map(option => (
-            <Option
-              id={option}
-              key={option}
+    <Container className={props.className}>
+      <OutsideClickHandler onOutsideClick={() => setOpen(false)}>
+        <List visible={isOpen}>
+          {moveOptionToTop(props.value).map((option: OptionElement) => (
+            <OptionContainer
+              id={option.props.value}
+              key={option.props.value}
               onClick={() => selectOption(option)}
             >
-              <span>{OPTIONS[option]}</span>
-            </Option>
+              <span>{option.props.children}</span>
+            </OptionContainer>
           ))}
         </List>
       </OutsideClickHandler>
-      <Header id="command-select" onClick={() => open(true)}>
-        <span>{OPTIONS[props.selected]}</span>
-        <Arrow rotate={opened}></Arrow>
+      <Header id={props.id} onClick={() => setOpen(true)}>
+        <span>{labelLookup.get(props.value)}</span>
+        <Arrow rotate={isOpen}></Arrow>
       </Header>
     </Container>
   );

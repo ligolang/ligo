@@ -7,15 +7,17 @@ import { DeployAction } from '../../redux/actions/deploy';
 import { DryRunAction } from '../../redux/actions/dry-run';
 import { EvaluateFunctionAction } from '../../redux/actions/evaluate-function';
 import { EvaluateValueAction } from '../../redux/actions/evaluate-value';
+import { GenerateCommandAction } from '../../redux/actions/generate-command';
 import { AppState } from '../../redux/app';
 import { ChangeDispatchedAction, ChangeSelectedAction, CommandState } from '../../redux/command';
 import { Command } from '../../redux/types';
-import { CommandSelectComponent } from './command-select';
+import { Option, Select } from '../form/select';
 import { CompilePaneComponent } from './compile-pane';
 import { DeployPaneComponent } from './deploy-pane';
 import { DryRunPaneComponent } from './dry-run-pane';
 import { EvaluateFunctionPaneComponent } from './evaluate-function-pane';
 import { EvaluateValuePaneComponent } from './evaluate-value-pane';
+import { GenerateCommandPaneComponent } from './generate-command-pane';
 
 const Container = styled.div<{ visible?: boolean }>`
   position: absolute;
@@ -58,8 +60,8 @@ const RunButton = styled.div`
   background-color: var(--orange);
 `;
 
-const CommandPaneContainer = styled.div`
-  padding-top: 1em;
+const SelectCommand = styled(Select)`
+  flex: 2;
 `;
 
 function createAction(command: Command) {
@@ -74,6 +76,8 @@ function createAction(command: Command) {
       return new EvaluateValueAction();
     case Command.EvaluateFunction:
       return new EvaluateFunctionAction();
+    case Command.GenerateCommand:
+      return new GenerateCommandAction();
     default:
       throw new Error('Unsupported command');
   }
@@ -97,12 +101,20 @@ export const ConfigureTabComponent = (props: {
   return (
     <Container visible={props.selected}>
       <CommonActionsGroup>
-        <CommandSelectComponent
-          selected={command}
+        <SelectCommand
+          id="command-select"
+          value={command}
           onChange={command => {
             dispatch({ ...new ChangeSelectedAction(command) });
           }}
-        ></CommandSelectComponent>
+        >
+          <Option value={Command.Compile}>Compile</Option>
+          <Option value={Command.Deploy}>Deploy</Option>
+          <Option value={Command.DryRun}>Dry Run</Option>
+          <Option value={Command.EvaluateFunction}>Evaluate Function</Option>
+          <Option value={Command.EvaluateValue}>Evaluate Value</Option>
+          <Option value={Command.GenerateCommand}>Generate Command</Option>
+        </SelectCommand>
         <RunButton
           id="run"
           onClick={() => {
@@ -120,23 +132,24 @@ export const ConfigureTabComponent = (props: {
           Run
         </RunButton>
       </CommonActionsGroup>
-      <CommandPaneContainer>
-        {(command === Command.Compile && (
-          <CompilePaneComponent></CompilePaneComponent>
+      {(command === Command.Compile && (
+        <CompilePaneComponent></CompilePaneComponent>
+      )) ||
+        (command === Command.DryRun && (
+          <DryRunPaneComponent></DryRunPaneComponent>
         )) ||
-          (command === Command.DryRun && (
-            <DryRunPaneComponent></DryRunPaneComponent>
-          )) ||
-          (command === Command.Deploy && (
-            <DeployPaneComponent></DeployPaneComponent>
-          )) ||
-          (command === Command.EvaluateFunction && (
-            <EvaluateFunctionPaneComponent></EvaluateFunctionPaneComponent>
-          )) ||
-          (command === Command.EvaluateValue && (
-            <EvaluateValuePaneComponent></EvaluateValuePaneComponent>
-          ))}
-      </CommandPaneContainer>
+        (command === Command.Deploy && (
+          <DeployPaneComponent></DeployPaneComponent>
+        )) ||
+        (command === Command.EvaluateFunction && (
+          <EvaluateFunctionPaneComponent></EvaluateFunctionPaneComponent>
+        )) ||
+        (command === Command.EvaluateValue && (
+          <EvaluateValuePaneComponent></EvaluateValuePaneComponent>
+        )) ||
+        (command === Command.GenerateCommand && (
+          <GenerateCommandPaneComponent></GenerateCommandPaneComponent>
+        ))}
     </Container>
   );
 };

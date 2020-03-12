@@ -9,5 +9,14 @@ export enum Command {
   DryRun = 'dry-run',
   EvaluateValue = 'evaluate-value',
   EvaluateFunction = 'evaluate-function',
-  Deploy = 'deploy'
+  Deploy = 'deploy',
+  GenerateCommand = 'generate-command'
+}
+
+export enum Tool {
+  TezosClient = 'tezos-client'
+}
+
+export enum ToolCommand {
+  Originate = 'originate'
 }

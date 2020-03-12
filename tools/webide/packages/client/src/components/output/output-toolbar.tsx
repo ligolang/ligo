@@ -24,6 +24,7 @@ const Link = styled.a`
 `;
 
 export const OutputToolbarComponent = (props: {
+  showTryMichelson?: boolean;
   onCopy?: () => void;
   onDownload?: () => void;
 }) => {
@@ -41,18 +42,20 @@ export const OutputToolbarComponent = (props: {
         <FontAwesomeIcon icon={faDownload}></FontAwesomeIcon>
         <Tooltip>Download</Tooltip>
       </Item>
-      <Divider></Divider>
-      <Item>
-        <Link
-          target="_blank"
-          rel="noopener noreferrer"
-          href={`https://try-michelson.tzalpha.net/?source=${encodeURIComponent(
-            output
-          )}`}
-        >
-          View in Try-Michelson IDE
-        </Link>
-      </Item>
+      {props.showTryMichelson && <Divider></Divider>}
+      {props.showTryMichelson && (
+        <Item>
+          <Link
+            target="_blank"
+            rel="noopener noreferrer"
+            href={`https://try-michelson.tzalpha.net/?source=${encodeURIComponent(
+              output
+            )}`}
+          >
+            View in Try-Michelson IDE
+          </Link>
+        </Item>
+      )}
     </Toolbar>
   );
 };
