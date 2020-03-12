@@ -87,6 +87,7 @@ type t =
 | For        of Region.t  (* "for"        *)
 | From       of Region.t  (* "from"       *)
 | Function   of Region.t  (* "function"   *)
+| Recursive  of Region.t  (* "recursive"  *)
 | If         of Region.t  (* "if"         *)
 | In         of Region.t  (* "in"         *)
 | Is         of Region.t  (* "is"         *)
@@ -199,6 +200,7 @@ let proj_token = function
 | For        region -> region, "For"
 | From       region -> region, "From"
 | Function   region -> region, "Function"
+| Recursive  region -> region, "Recursive"
 | If         region -> region, "If"
 | In         region -> region, "In"
 | Is         region -> region, "Is"
@@ -289,6 +291,7 @@ let to_lexeme = function
 | For        _ -> "for"
 | From       _ -> "from"
 | Function   _ -> "function"
+| Recursive  _ -> "recursive"
 | If         _ -> "if"
 | In         _ -> "in"
 | Is         _ -> "is"
@@ -361,6 +364,7 @@ let keywords = [
   (fun reg -> Or         reg);
   (fun reg -> Patch      reg);
   (fun reg -> Record     reg);
+  (fun reg -> Recursive  reg);
   (fun reg -> Remove     reg);
   (fun reg -> Set        reg);
   (fun reg -> Skip       reg);

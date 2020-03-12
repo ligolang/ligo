@@ -89,6 +89,7 @@ type t =
 | For        of Region.t  (* "for"        *)
 | From       of Region.t  (* "from"       *)
 | Function   of Region.t  (* "function"   *)
+| Recursive  of Region.t  (* "recursive"  *)
 | If         of Region.t  (* "if"         *)
 | In         of Region.t  (* "in"         *)
 | Is         of Region.t  (* "is"         *)

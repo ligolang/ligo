@@ -613,45 +613,12 @@ and type_expression' : environment -> ?tv_opt:O.type_expression -> I.expression 
         ok (t_big_map key_type value_type ())
       in
       return (E_big_map lst') tv
-  | E_lambda {
-      binder ;
-      input_type ;
-      output_type ;
-      result ;
-    } -> (
-      let%bind input_type =
-        let%bind input_type =
-          (* Hack to take care of let_in introduced by `simplify/cameligo.ml` in ECase's hack *)
-          let default_action e () = fail @@ (needs_annotation e "the returned value") in
-          match input_type with
-          | Some ty -> ok ty
-          | None -> (
-              match result.expression_content with
-              | I.E_let_in li -> (
-                  match li.rhs.expression_content with
-                  | I.E_variable name when name = (fst binder) -> (
-                      match snd li.let_binder with
-                      | Some ty -> ok ty
-                      | None -> default_action li.rhs ()
-                    )
-                  | _ -> default_action li.rhs ()
-                )
-              | _ -> default_action result ()
-            )
-        in
-        evaluate_type e input_type in
-      let%bind output_type =
-        bind_map_option (evaluate_type e) output_type
-      in
-      let binder = fst binder in
-      let e' = Environment.add_ez_binder binder input_type e in
-      let%bind body = type_expression' ?tv_opt:output_type e' result in
-      let output_type = body.type_expression in
-      return (E_lambda {binder; result=body}) (t_function input_type output_type ())
-    )
+  | E_lambda lambda -> 
+   let%bind (lambda, lambda_type) = type_lambda e lambda in
+   return (E_lambda lambda ) lambda_type
   | E_constant {cons_name=( C_LIST_FOLD | C_MAP_FOLD | C_SET_FOLD) as opname ;
                 arguments=[
-                    ( { expression_content = (I.E_lambda { binder = (lname, None) ;
+                    ( { expression_content = (I.E_lambda { binder = lname ;
                                                    input_type = None ; 
                                                    output_type = None ; 
                                                    result }) ;
@@ -683,7 +650,7 @@ and type_expression' : environment -> ?tv_opt:O.type_expression -> I.expression 
       return (E_constant {cons_name=opname';arguments=lst'}) tv
   | E_constant {cons_name=C_FOLD_WHILE as opname;
                 arguments = [
-                    ( { expression_content = (I.E_lambda { binder = (lname, None) ;
+                    ( { expression_content = (I.E_lambda { binder = lname ;
                                                    input_type = None ; 
                                                    output_type = None ; 
                                                    result }) ;
@@ -773,6 +740,11 @@ and type_expression' : environment -> ?tv_opt:O.type_expression -> I.expression 
     let e' = Environment.add_ez_declaration (let_binder) rhs e in
     let%bind let_result = type_expression' e' let_result in
     return (E_let_in {let_binder; rhs; let_result; inline}) let_result.type_expression
+  | E_recursive {fun_name; fun_type; lambda} ->
+    let%bind fun_type = evaluate_type e fun_type in
+    let e' = Environment.add_ez_binder fun_name fun_type e in
+    let%bind (lambda,_) = type_lambda e' lambda in
+    return (E_recursive {fun_name;fun_type;lambda}) fun_type
   | E_ascription {anno_expr; type_annotation} ->
     let%bind tv = evaluate_type e type_annotation in
     let%bind expr' = type_expression' ~tv_opt:tv e anno_expr in
@@ -787,6 +759,42 @@ and type_expression' : environment -> ?tv_opt:O.type_expression -> I.expression 
       | None -> ok ()
       | Some tv' -> O.assert_type_expression_eq (tv' , type_annotation) in
     ok {expr' with type_expression=type_annotation}
+
+and type_lambda e {
+      binder ;
+      input_type ;
+      output_type ;
+      result ;
+    } = 
+      let%bind input_type =
+        let%bind input_type =
+          (* Hack to take care of let_in introduced by `simplify/cameligo.ml` in ECase's hack *)
+          let default_action e () = fail @@ (needs_annotation e "the returned value") in
+          match input_type with
+          | Some ty -> ok ty
+          | None -> (
+              match result.expression_content with
+              | I.E_let_in li -> (
+                  match li.rhs.expression_content with
+                  | I.E_variable name when name = (binder) -> (
+                      match snd li.let_binder with
+                      | Some ty -> ok ty
+                      | None -> default_action li.rhs ()
+                    )
+                  | _ -> default_action li.rhs ()
+                )
+              | _ -> default_action result ()
+            )
+        in
+        evaluate_type e input_type in
+      let%bind output_type =
+        bind_map_option (evaluate_type e) output_type
+      in
+      let e' = Environment.add_ez_binder binder input_type e in
+      let%bind body = type_expression' ?tv_opt:output_type e' result in
+      let output_type = body.type_expression in
+      ok (({binder; result=body}:O.lambda),(t_function input_type output_type ()))
+
 
 
 and type_constant (name:I.constant') (lst:O.type_expression list) (tv_opt:O.type_expression option) : (O.constant' * O.type_expression) result =
@@ -820,9 +828,11 @@ let untype_literal (l:O.literal) : I.literal result =
   | Literal_operation s -> ok (Literal_operation s)
 
 let rec untype_expression (e:O.expression) : (I.expression) result =
+  untype_expression_content e.type_expression e.expression_content
+  and untype_expression_content ty (ec:O.expression_content) : (I.expression) result =
   let open I in
   let return e = ok e in
-  match e.expression_content with
+  match ec with
   | E_literal l ->
       let%bind l = untype_literal l in
       return (e_literal l)
@@ -836,7 +846,7 @@ let rec untype_expression (e:O.expression) : (I.expression) result =
       let%bind arg' = untype_expression expr2 in
       return (e_application f' arg')
   | E_lambda {binder ; result} -> (
-      let%bind io = get_t_function e.type_expression in
+      let%bind io = get_t_function ty in
       let%bind (input_type , output_type) = bind_map_pair untype_type_expression io in
       let%bind result = untype_expression result in
       return (e_lambda (binder) (Some input_type) (Some output_type) result)
@@ -883,7 +893,12 @@ let rec untype_expression (e:O.expression) : (I.expression) result =
       let%bind tv = untype_type_expression rhs.type_expression in
       let%bind rhs = untype_expression rhs in
       let%bind result = untype_expression let_result in
-      return (I.e_let_in (let_binder , (Some tv)) false inline rhs result)
+      return (e_let_in (let_binder , (Some tv)) false inline rhs result)
+  | E_recursive {fun_name;fun_type; lambda} ->
+      let%bind fun_type = untype_type_expression fun_type in
+      let%bind unty_expr= untype_expression_content ty @@ E_lambda lambda in
+      let lambda = match unty_expr.expression_content with I.E_lambda l -> l | _ -> failwith "impossible case" in
+      return @@ e_recursive fun_name fun_type lambda
 
 and untype_matching : (O.expression -> I.expression result) -> O.matching_expr -> I.matching_expr result = fun f m ->
   let open I in

@@ -659,7 +659,7 @@ and simpl_fun_decl :
       ((expression_variable * type_expression option) * expression) result =
   fun ~loc x ->
   let open! Raw in
-  let {fun_name; param; ret_type; block_with;
+  let {kwd_recursive;fun_name; param; ret_type; block_with;
        return; attributes} : fun_decl = x in
   let inline =
     match attributes with
@@ -683,11 +683,17 @@ and simpl_fun_decl :
        let%bind result =
          let aux prec cur = cur (Some prec) in
          bind_fold_right_list aux result body in
-       let expression : expression = e_lambda ~loc (Var.of_name binder) (Some input_type)
-           (Some output_type) result in
-       let type_annotation =
-         Some (make_t @@ T_arrow {type1=input_type;type2=output_type}) in
-       ok ((Var.of_name fun_name.value, type_annotation), expression)
+      let binder = Var.of_name binder in
+      let fun_name = Var.of_name fun_name.value in
+      let fun_type = t_function input_type output_type in
+      let expression : expression = 
+        e_lambda ~loc binder (Some input_type)(Some output_type) result in
+      let%bind expression = match kwd_recursive with
+        None -> ok @@ expression |
+        Some _ -> ok @@ e_recursive ~loc fun_name fun_type 
+        @@ {binder;input_type=Some input_type; output_type= Some output_type; result}
+      in
+       ok ((fun_name, Some fun_type), expression)
      )
    | lst -> (
        let lst = npseq_to_list lst in
@@ -713,10 +719,16 @@ and simpl_fun_decl :
        let%bind result =
          let aux prec cur = cur (Some prec) in
          bind_fold_right_list aux result body in
-       let expression =
-         e_lambda ~loc binder (Some (input_type)) (Some output_type) result in
-       let type_annotation = Some (make_t @@ T_arrow {type1=input_type; type2=output_type}) in
-       ok ((Var.of_name fun_name.value, type_annotation), expression)
+      let fun_name = Var.of_name fun_name.value in
+      let fun_type = t_function input_type output_type in
+      let expression : expression = 
+        e_lambda ~loc binder (Some input_type)(Some output_type) result in
+      let%bind expression = match kwd_recursive with
+        None -> ok @@ expression |
+        Some _ -> ok @@ e_recursive ~loc fun_name fun_type 
+        @@ {binder;input_type=Some input_type; output_type= Some output_type; result}
+      in
+       ok ((fun_name, Some fun_type), expression)
      )
   )
 
@@ -724,24 +736,28 @@ and simpl_fun_expression :
   loc:_ -> Raw.fun_expr -> (type_expression option * expression) result =
   fun ~loc x ->
   let open! Raw in
-  let {param;ret_type;return;_} : fun_expr = x in
+  let {kwd_recursive;param;ret_type;return} : fun_expr = x in
   let statements = [] in
   (match param.value.inside with
-     a, [] -> (
-       let%bind input = simpl_param a in
-       let (binder , input_type) = input in
-       let%bind instructions = simpl_statement_list statements in
-       let%bind result = simpl_expression return in
-       let%bind output_type = simpl_type_expression ret_type in
-       let body = instructions in
-       let%bind result =
-         let aux prec cur = cur (Some prec) in
-         bind_fold_right_list aux result body in
-       let expression : expression = e_lambda ~loc (Var.of_name binder) (Some input_type)
-           (Some output_type) result in
-       let type_annotation = Some (make_t @@ T_arrow {type1=input_type;type2=output_type}) in
-       ok (type_annotation , expression)
-     )
+    a, [] -> (
+        let%bind input = simpl_param a in
+        let (binder , input_type) = input in
+        let%bind instructions = simpl_statement_list statements in
+        let%bind result = simpl_expression return in
+        let%bind output_type = simpl_type_expression ret_type in
+        let body = instructions in
+        let%bind result =
+          let aux prec cur = cur (Some prec) in
+          bind_fold_right_list aux result body in
+        let binder = Var.of_name binder in
+        let fun_type = t_function input_type output_type in
+        let expression = match kwd_recursive with
+          | None -> e_lambda ~loc binder (Some input_type)(Some output_type) result
+          | Some _ -> e_recursive ~loc binder fun_type 
+          @@ {binder;input_type=Some input_type; output_type= Some output_type; result}
+        in
+        ok (Some fun_type , expression)
+      )
    | lst -> (
        let lst = npseq_to_list lst in
        (* TODO wrong, should be fresh? *)
@@ -765,10 +781,13 @@ and simpl_fun_expression :
        let%bind result =
          let aux prec cur = cur (Some prec) in
          bind_fold_right_list aux result body in
-       let expression =
-         e_lambda ~loc binder (Some (input_type)) (Some output_type) result in
-       let type_annotation = Some (make_t @@ T_arrow {type1=input_type;type2=output_type}) in
-       ok (type_annotation , expression)
+      let fun_type = t_function input_type output_type in
+      let expression = match kwd_recursive with
+        | None -> e_lambda ~loc binder (Some input_type)(Some output_type) result
+        | Some _ -> e_recursive ~loc binder fun_type 
+        @@ {binder;input_type=Some input_type; output_type= Some output_type; result}
+      in
+      ok (Some fun_type , expression)
      )
   )
 
@@ -1202,8 +1221,8 @@ and simpl_while_loop : Raw.while_loop -> (_ -> expression result) result = fun w
   in
   let init_rec = e_tuple [store_mutable_variable @@ captured_name_list] in
   let restore = fun expr -> List.fold_right aux captured_name_list expr in
-  let continue_expr = e_constant C_CONTINUE [for_body] in
-  let stop_expr = e_constant C_STOP [e_variable binder] in
+  let continue_expr = e_constant C_FOLD_CONTINUE [for_body] in
+  let stop_expr = e_constant C_FOLD_STOP [e_variable binder] in
   let aux_func = 
     e_lambda binder None None @@ 
     restore @@
@@ -1229,11 +1248,12 @@ and simpl_for_int : Raw.for_int -> (_ -> expression result) result = fun fi ->
   let%bind bound = simpl_expression fi.bound in
   let cond = e_annotation (e_constant C_LE [var ; bound]) t_bool in
   let step = e_int 1 in
+  let continue_expr = e_constant C_FOLD_CONTINUE [(e_variable binder)] in
   let ctrl = 
-    e_let_in (it,Some t_int) false false (e_constant C_ADD [ var ; step ]) 
-    (e_let_in (binder, None) false false (e_update (e_variable binder) "1" var)
-    (e_variable binder))
-    in
+    e_let_in (it,Some t_int) false false (e_constant C_ADD [ var ; step ]) @@
+    e_let_in (binder, None) false false (e_update (e_variable binder) "1" var)@@
+    continue_expr
+  in
   (* Modify the body loop*)
   let%bind for_body = simpl_block fi.block.value in
   let%bind for_body = for_body @@ Some ctrl in
@@ -1247,11 +1267,10 @@ and simpl_for_int : Raw.for_int -> (_ -> expression result) result = fun fi ->
   let restore = fun expr -> List.fold_right aux captured_name_list expr in
 
   (*Prep the lambda for the fold*)
-  let continue_expr = e_constant C_CONTINUE [restore(for_body)] in
-  let stop_expr = e_constant C_STOP [e_variable binder] in
+  let stop_expr = e_constant C_FOLD_STOP [e_variable binder] in
   let aux_func = e_lambda binder None None @@ 
                  e_let_in (it,Some t_int) false false (e_accessor (e_variable binder) "1") @@
-                 e_cond cond continue_expr (stop_expr) in
+                 e_cond cond (restore for_body) (stop_expr) in
 
   (* Make the fold_while en precharge the vakye *)
   let loop = e_constant C_FOLD_WHILE [aux_func; e_variable env_rec] in

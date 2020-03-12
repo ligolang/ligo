@@ -35,6 +35,7 @@ and expression_content =
   | E_application of application
   | E_lambda of lambda
   | E_let_in of let_in
+  | E_recursive of recursive
   | E_skip
   (* Variant *)
   | E_constructor of constructor (* For user defined constructors *)
@@ -60,7 +61,7 @@ and constant =
 and application = {expr1: expression; expr2: expression}
 
 and lambda =
-  { binder: expression_variable * type_expression option
+  { binder: expression_variable 
   ; input_type: type_expression option
   ; output_type: type_expression option
   ; result: expression }
@@ -71,6 +72,12 @@ and let_in =
   ; rhs: expression
   ; let_result: expression
   ; inline: bool }
+
+and recursive = {
+  fun_name :  expression_variable;
+  fun_type : type_expression;
+  lambda : lambda;
+}
 
 and constructor = {constructor: constructor'; element: expression}
 

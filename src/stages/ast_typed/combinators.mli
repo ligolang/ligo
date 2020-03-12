@@ -62,6 +62,7 @@ val get_t_key_hash : type_expression -> unit result
 val get_t_tuple : type_expression -> type_expression list result
 val get_t_pair : type_expression -> ( type_expression * type_expression ) result
 val get_t_function : type_expression -> ( type_expression * type_expression ) result
+val get_t_function_full : type_expression -> ( type_expression * type_expression ) result
 val get_t_sum : type_expression -> type_expression constructor_map result
 val get_t_record : type_expression -> type_expression label_map result
 val get_t_map : type_expression -> ( type_expression * type_expression ) result

@@ -70,6 +70,17 @@ module Errors = struct
        fun () -> Format.asprintf "%a" Location.pp_lift @@ param_loc)]
     in error ~data title message
 
+  let untyped_recursive_function var =
+    let title () = "" in
+    let message () =
+      Format.asprintf "\nUntyped recursive functions \
+                       are not supported yet.\n" in
+    let param_loc = var.Region.region in
+    let data = [
+      ("location",
+       fun () -> Format.asprintf "%a" Location.pp_lift @@ param_loc)]
+    in error ~data title message
+
   let unsupported_tuple_pattern p =
     let title () = "" in
     let message () =
@@ -334,7 +345,7 @@ let rec simpl_expression :
   trace (simplifying_expr t) @@
   match t with
     Raw.ELetIn e ->
-      let Raw.{binding; body; attributes; _} = e.value in
+      let Raw.{kwd_rec; binding; body; attributes; _} = e.value in
       let inline = List.exists (fun (a: Raw.attribute) -> a.value = "inline") attributes in
       let Raw.{binders; lhs_type; let_rhs; _} = binding in
       begin match binders with
@@ -382,10 +393,50 @@ let rec simpl_expression :
           (chain_let_in tl body)
         | [] -> body (* Precluded by corner case assertion above *)
       in
-      if List.length prep_vars = 1
-      then ok (chain_let_in prep_vars body)
-      (* Bind the right hand side so we only evaluate it once *)
-      else ok (e_let_in (rhs_b, ty_opt) false inline rhs' (chain_let_in prep_vars body))
+      let%bind ty_opt = match ty_opt with 
+      | None -> (match let_rhs with 
+        | EFun {value={binders;lhs_type}} -> 
+          let f_args = nseq_to_list (binders) in
+          let%bind lhs_type' = bind_map_option (fun x -> simpl_type_expression (snd x)) lhs_type in
+          let%bind ty = bind_map_list typed_pattern_to_typed_vars f_args in
+          let aux acc ty = Option.map (t_function (snd ty)) acc in
+          ok @@ (List.fold_right' aux lhs_type' ty)
+        | _ -> ok None
+        )
+      | Some t -> ok @@ Some t
+      in
+      let%bind ret_expr = if List.length prep_vars = 1
+        then ok (chain_let_in prep_vars body)
+        (* Bind the right hand side so we only evaluate it once *)
+        else ok (e_let_in (rhs_b, ty_opt) false inline rhs' (chain_let_in prep_vars body))
+      in
+      let%bind ret_expr = match kwd_rec with 
+        | None -> ok @@ ret_expr
+        | Some _ -> 
+          match ret_expr.expression_content with 
+            | E_let_in li -> (
+              let%bind lambda = 
+                let rec aux rhs = match rhs.expression_content with
+                  | E_lambda l -> ok @@ l
+                  | E_ascription a -> aux a.anno_expr
+                  | _ -> fail @@ corner_case "recursive only supported for lambda"
+                in
+                aux rhs'
+              in
+              let fun_name = fst @@ List.hd prep_vars in
+              let%bind fun_type = match ty_opt with 
+                | Some t -> ok @@ t
+                | None -> match rhs'.expression_content with 
+                      | E_ascription a -> ok a.type_annotation
+                      | _ -> fail @@ untyped_recursive_function e
+              in
+              let expression_content = E_recursive {fun_name;fun_type;lambda} in
+              let expression_content = E_let_in {li with rhs = {li.rhs with  expression_content}} in
+              ok @@ {ret_expr with expression_content}
+          )
+          | _ -> fail @@ corner_case "impossible"
+      in
+      ok ret_expr
 
       (* let f p1 ps... = rhs in body *)
       | (f, p1 :: ps) ->
@@ -630,6 +681,7 @@ and simpl_fun lamb' : expr result =
             in
             let let_in: Raw.let_in =
               {kwd_let= Region.ghost;
+               kwd_rec= None;
                binding= let_in_binding;
                kwd_in= Region.ghost;
                body= lamb.body;
@@ -658,7 +710,8 @@ and simpl_fun lamb' : expr result =
       e_lambda ~loc (binder) (Some input_type) output_type (layer_arguments tl)
     | [] -> body
   in
-  return @@ layer_arguments params'
+  let ret_lamb = layer_arguments params' in
+  return @@ ret_lamb
 
 
 and simpl_logic_expression ?te_annot (t:Raw.logic_expr) : expr result =
@@ -738,12 +791,11 @@ and simpl_declaration : Raw.declaration -> declaration Location.wrap list result
       let%bind type_expression = simpl_type_expression type_expr in
       ok @@ [loc x @@ Declaration_type (Var.of_name name.value , type_expression)]
   | Let x -> (
-      let (_, let_binding, attributes), _ = r_split x in
+      let (_, recursive, let_binding, attributes), _ = r_split x in
       let inline = List.exists (fun (a: Raw.attribute) -> a.value = "inline") attributes in
       let binding = let_binding in
       let {binders; lhs_type; let_rhs} = binding in
-      let%bind (hd, _) =
-        let (hd, tl) = binders in ok (hd, tl) in
+      let (hd, _) = binders in
         match hd with
         | PTuple pt ->
           let process_variable (var_pair: pattern * Raw.expr) :
@@ -795,11 +847,11 @@ and simpl_declaration : Raw.declaration -> declaration Location.wrap list result
           in ok @@ decls
         | PPar {region = _ ; value = { lpar = _ ; inside = pt; rpar = _; } } ->
           (* Extract parenthetical multi-bind *)
-          let (wild, _, attributes) = fst @@ r_split x in
+          let (wild, recursive, _, attributes) = fst @@ r_split x in
           simpl_declaration
             (Let {
                 region = x.region;
-                value = (wild, {binders = (pt, []);
+                value = (wild, recursive, {binders = (pt, []);
                                 lhs_type = lhs_type;
                                 eq = Region.ghost ;
                                 let_rhs = let_rhs}, attributes)}
@@ -839,6 +891,18 @@ and simpl_declaration : Raw.declaration -> declaration Location.wrap list result
         | _ -> ok None
         )
       | Some t -> ok @@ Some t
+      in
+      let binder = Var.of_name var.value in
+      let%bind rhs' = match recursive with 
+        None -> ok @@ rhs' 
+        | Some _ -> match rhs'.expression_content with 
+          E_lambda lambda ->
+            (match lhs_type with 
+              None -> fail @@ untyped_recursive_function var 
+              | Some (lhs_type) -> 
+              let expression_content = E_recursive {fun_name=binder;fun_type=lhs_type;lambda} in
+              ok @@ {rhs' with expression_content})
+          | _ -> ok @@ rhs'
       in
       ok @@ [loc x @@ (Declaration_constant (Var.of_name var.value , lhs_type , inline, rhs'))]
     )

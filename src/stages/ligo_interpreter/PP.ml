@@ -19,6 +19,7 @@ let rec pp_value : value -> string = function
       recmap "" in
     Format.asprintf "{ %s }" content
   | V_Func_val _ -> Format.asprintf "<fun>"
+  | V_Func_rec _ -> Format.asprintf "<rec fun>"
   | V_Construct (name,v) -> Format.asprintf "%s(%s)" name (pp_value v)
   | V_List vl ->
     Format.asprintf "[%s]" @@

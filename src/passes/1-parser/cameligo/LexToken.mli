@@ -95,6 +95,7 @@ type t =
 | End   of Region.t
 | False of Region.t
 | Fun   of Region.t
+| Rec   of Region.t
 | If    of Region.t
 | In    of Region.t
 | Let   of Region.t

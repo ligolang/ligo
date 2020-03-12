@@ -178,11 +178,12 @@ let e_lambda ?loc (binder : expression_variable)
     (result : expression)
   : expression =
   location_wrap ?loc @@ E_lambda {
-    binder = (binder , input_type) ;
+    binder = binder;
     input_type = input_type ;
     output_type = output_type ;
     result ;
   }
+let e_recursive ?loc fun_name fun_type lambda = location_wrap ?loc @@ E_recursive {fun_name; fun_type; lambda}
 
 
 let e_assign_with_let ?loc var access_path expr = 

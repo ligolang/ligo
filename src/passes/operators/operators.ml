@@ -349,11 +349,11 @@ module Simplify = struct
 
     (* Loop module *)
 
-    | "Loop.fold_while" -> ok C_FOLD_WHILE
-    | "Loop.resume"     -> ok C_CONTINUE
-    | "continue"        -> ok C_CONTINUE (* Deprecated *)
-    | "Loop.stop"       -> ok C_STOP
-    | "stop"            -> ok C_STOP     (* Deprecated *)
+    | "Loop.fold_while" -> ok C_FOLD_WHILE    (* Deprecated *)
+    | "Loop.resume"     -> ok C_FOLD_CONTINUE
+    | "continue"        -> ok C_FOLD_CONTINUE (* Deprecated *)
+    | "Loop.stop"       -> ok C_FOLD_STOP
+    | "stop"            -> ok C_FOLD_STOP     (* Deprecated *)
 
     (* Others *)
 
@@ -515,8 +515,8 @@ module Typer = struct
       | C_FAILWITH            -> ok @@ t_failwith ;
       (* LOOPS *)
       | C_FOLD_WHILE          -> ok @@ t_fold_while ;
-      | C_CONTINUE            -> ok @@ t_continuation ;
-      | C_STOP                -> ok @@ t_continuation ;
+      | C_FOLD_CONTINUE       -> ok @@ t_continuation ;
+      | C_FOLD_STOP           -> ok @@ t_continuation ;
       (* MATH *)
       | C_NEG                 -> ok @@ t_neg ;
       | C_ABS                 -> ok @@ t_abs ;
@@ -1115,8 +1115,8 @@ module Typer = struct
     | C_FAILWITH            -> ok @@ failwith_ ;
     (* LOOPS *)
     | C_FOLD_WHILE          -> ok @@ fold_while ;
-    | C_CONTINUE            -> ok @@ continue ;
-    | C_STOP                -> ok @@ stop ;
+    | C_FOLD_CONTINUE       -> ok @@ continue ;
+    | C_FOLD_STOP           -> ok @@ stop ;
      (* MATH *)
     | C_NEG                 -> ok @@ neg ;
     | C_ABS                 -> ok @@ abs ;
@@ -1248,8 +1248,8 @@ module Compiler = struct
     | C_MAP_ADD         -> ok @@ simple_ternary @@ seq [dip (i_some) ; prim I_UPDATE]
     | C_MAP_UPDATE      -> ok @@ simple_ternary @@ prim I_UPDATE
     | C_FOLD_WHILE      -> ok @@ simple_binary @@ seq [i_swap ; (i_push (prim T_bool) (prim D_True));prim ~children:[seq [dip i_dup; i_exec; i_unpair]] I_LOOP ;i_swap ; i_drop]
-    | C_CONTINUE        -> ok @@ simple_unary @@ seq [(i_push (prim T_bool) (prim D_True)); i_pair]
-    | C_STOP            -> ok @@ simple_unary @@ seq [(i_push (prim T_bool) (prim D_False)); i_pair]
+    | C_FOLD_CONTINUE   -> ok @@ simple_unary @@ seq [(i_push (prim T_bool) (prim D_True)); i_pair]
+    | C_FOLD_STOP       -> ok @@ simple_unary @@ seq [(i_push (prim T_bool) (prim D_False)); i_pair]
     | C_SIZE            -> ok @@ simple_unary @@ prim I_SIZE
     | C_FAILWITH        -> ok @@ simple_unary @@ prim I_FAILWITH
     | C_ASSERT_INFERRED -> ok @@ simple_binary @@ i_if (seq [i_failwith]) (seq [i_drop ; i_push_unit])

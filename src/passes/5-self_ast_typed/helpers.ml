@@ -25,6 +25,7 @@ let rec fold_expression : 'a folder -> 'a -> expression -> 'a result = fun f ini
       ok res
     )
   | E_lambda { binder = _ ; result = e }
+  | E_recursive {lambda= {result=e}}
   | E_constructor {element=e} -> (
       let%bind res = self init' e in
       ok res
@@ -148,6 +149,10 @@ let rec map_expression : mapper -> expression -> expression result = fun f e ->
       let%bind result = self result in
       return @@ E_lambda { binder ; result }
     )
+  | E_recursive { fun_name; fun_type; lambda = {binder;result}} -> (
+      let%bind result = self result in
+      return @@ E_recursive { fun_name; fun_type; lambda = {binder;result}}
+    )
   | E_constant c -> (
       let%bind args = bind_map_list self c.arguments in
       return @@ E_constant {c with arguments=args}
@@ -172,9 +177,9 @@ and map_cases : mapper -> matching_expr -> matching_expr result = fun f m ->
       let%bind some = map_expression f some in
       ok @@ Match_option { match_none ; match_some = (name , some, te) }
     )
-  | Match_tuple ((names , e), _) -> (
+  | Match_tuple ((names , e), te) -> (
       let%bind e' = map_expression f e in
-      ok @@ Match_tuple ((names , e'), [])
+      ok @@ Match_tuple ((names , e'), te)
     )
   | Match_variant (lst, te) -> (
       let aux ((a , b) , e) =
@@ -188,9 +193,9 @@ and map_cases : mapper -> matching_expr -> matching_expr result = fun f m ->
 and map_program : mapper -> program -> program result = fun m p ->
   let aux = fun (x : declaration) ->
     match x with
-    | Declaration_constant (v , e , i, env) -> (
+    | Declaration_constant (n , e , i, env) -> (
         let%bind e' = map_expression m e in
-        ok (Declaration_constant (v , e' , i, env))
+        ok (Declaration_constant (n , e' , i, env))
       )
   in
   bind_map_list (bind_map_location aux) p
@@ -260,6 +265,10 @@ let rec fold_map_expression : 'a fold_mapper -> 'a -> expression -> ('a * expres
       let%bind (res,result) = self init' result in
       ok ( res, return @@ E_lambda { binder ; result })
     )
+  | E_recursive { fun_name; fun_type; lambda={binder;result}} -> (
+      let%bind (res,result) = self init' result in
+      ok (res, return @@ E_recursive {fun_name; fun_type; lambda={binder;result}})
+    )
   | E_constant c -> (
       let%bind (res,args) = bind_fold_map_list self init' c.arguments in
       ok (res, return @@ E_constant {c with arguments=args})
@@ -283,9 +292,9 @@ and fold_map_cases : 'a fold_mapper -> 'a -> matching_expr -> ('a * matching_exp
       let%bind (init, some) = fold_map_expression f init some in
       ok @@ (init, Match_option { match_none ; match_some = (name , some, te) })
     )
-  | Match_tuple ((names , e), _) -> (
+  | Match_tuple ((names , e), te) -> (
       let%bind (init, e') = fold_map_expression f init e in
-      ok @@ (init, Match_tuple ((names , e'), []))
+      ok @@ (init, Match_tuple ((names , e'), te))
     )
   | Match_variant (lst, te) -> (
       let aux init ((a , b) , e) =

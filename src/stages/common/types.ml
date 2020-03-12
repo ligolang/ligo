@@ -197,8 +197,11 @@ and constant' =
   (* Loops *)
   | C_ITER
   | C_FOLD_WHILE
-  | C_CONTINUE
-  | C_STOP
+  | C_FOLD_CONTINUE
+  | C_FOLD_STOP
+  | C_LOOP_LEFT
+  | C_LOOP_CONTINUE
+  | C_LOOP_STOP
   | C_FOLD
   (* MATH *)
   | C_NEG

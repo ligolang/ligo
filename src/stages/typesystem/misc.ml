@@ -164,6 +164,12 @@ module Substitution = struct
         let%bind rhs = s_expression ~substs rhs in
         let%bind let_result = s_expression ~substs let_result in
         ok @@ T.E_let_in { let_binder; rhs; let_result; inline }
+      | T.E_recursive { fun_name; fun_type; lambda} ->
+        let%bind fun_name = s_variable ~substs fun_name in
+        let%bind fun_type = s_type_expression ~substs fun_type in
+        let%bind sec = s_expression_content ~substs (T.E_lambda lambda) in
+        let lambda = match sec with E_lambda l -> l | _ -> failwith "impossible case" in
+        ok @@ T.E_recursive { fun_name; fun_type; lambda}
       | T.E_constructor  {constructor;element} ->
         let%bind constructor = s_constructor ~substs constructor in
         let%bind element = s_expression ~substs element in

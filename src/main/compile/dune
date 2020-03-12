@@ -9,10 +9,10 @@
     interpreter
     ast_simplified
     self_ast_simplified
-    self_ast_typed
     typer_new
     typer
     ast_typed
+    self_ast_typed
     transpiler
     mini_c
     self_mini_c

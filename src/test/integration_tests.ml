@@ -1493,6 +1493,46 @@ let assert_religo () : unit result =
   let%bind _ = expect_eq program "main" (make_input true) make_expected in
   ok ()
 
+let recursion_ligo () : unit result =
+  let%bind program = type_file "./contracts/recursion.ligo" in
+  let%bind _ =
+    let make_input = e_pair (e_int 10) (e_int 0) in
+    let make_expected = e_int 55 in
+    expect_eq program "sum" make_input make_expected 
+  in
+  let%bind _ =
+    let make_input = e_tuple [(e_int 10); (e_int 1); (e_int 1)] in
+    let make_expected = e_int 89 in
+    expect_eq program "fibo" make_input make_expected
+  in ok ()
+  
+
+let recursion_mligo () : unit result =
+  let%bind program = mtype_file "./contracts/recursion.mligo" in
+  let%bind _ =
+    let make_input = e_pair (e_int 10) (e_int 0) in
+    let make_expected = e_int 55 in
+    expect_eq program "sum" make_input make_expected 
+  in
+  let%bind _ =
+    let make_input = e_tuple [(e_int 10); (e_int 1); (e_int 1)] in
+    let make_expected = e_int 89 in
+    expect_eq program "fibo" make_input make_expected
+  in ok ()
+
+let recursion_religo () : unit result =
+  let%bind program = retype_file "./contracts/recursion.religo" in
+  let%bind _ =
+    let make_input = e_pair (e_int 10) (e_int 0) in
+    let make_expected = e_int 55 in
+    expect_eq program "sum" make_input make_expected 
+  in
+  let%bind _ =
+    let make_input = e_tuple [(e_int 10); (e_int 1); (e_int 1)] in
+    let make_expected = e_int 89 in
+    expect_eq program "fibo" make_input make_expected
+  in ok ()
+
 let guess_string_mligo () : unit result =
   let%bind program = type_file "./contracts/guess_string.mligo" in
   let make_input = fun n -> e_pair (e_int n) (e_int 42) in
@@ -2407,6 +2447,9 @@ let main = test_suite "Integration (End to End)" [
     test "failwith ligo" failwith_ligo ;
     test "failwith mligo" failwith_mligo ;
     test "assert mligo" assert_mligo ;
+    test "recursion (ligo)" recursion_ligo ;
+    test "recursion (mligo)" recursion_mligo ;
+    test "recursion (religo)" recursion_religo ;
     (* test "guess string mligo" guess_string_mligo ; WIP? *)
     test "lambda mligo" lambda_mligo ;
     test "lambda religo" lambda_religo ;

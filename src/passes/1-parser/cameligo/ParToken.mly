@@ -59,6 +59,7 @@
 %token <Region.t> End   "end"
 %token <Region.t> False "false"
 %token <Region.t> Fun   "fun"
+%token <Region.t> Rec   "rec"
 %token <Region.t> If    "if"
 %token <Region.t> In    "in"
 %token <Region.t> Let   "let"
