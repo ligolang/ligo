@@ -6,7 +6,9 @@ let mfile = "./contracts/multisig.mligo"
 let refile = "./contracts/multisig.religo"
 
 let type_file f s =
-  let%bind simplified  = Ligo.Compile.Of_source.compile f (Syntax_name s) in
+  let%bind abstracted  = Ligo.Compile.Of_source.compile f (Syntax_name s) in
+  let%bind complex     = Ligo.Compile.Of_abstracted.compile abstracted in
+  let%bind simplified  = Ligo.Compile.Of_complex.compile complex in
   let%bind typed,state = Ligo.Compile.Of_simplified.compile (Contract "main") simplified in
   ok @@ (typed,state)
 
@@ -175,12 +177,12 @@ let main = test_suite "Multisig" [
     test "valid_2_of_3 (mligo)"          (valid_2_of_3       mfile "cameligo");
     test "invalid_3_of_3 (mligo)"        (invalid_3_of_3     mfile "cameligo");
     test "not_enough_2_of_3 (mligo)"     (not_enough_2_of_3  mfile "cameligo");
-    test "compile (religo)"              (compile_main refile "reasonligo");
+    test "compile (religo)"              (compile_main       refile "reasonligo");
     test "unmatching_counter (religo)"   (unmatching_counter refile "reasonligo");
-    test "valid_1_of_1 (religo)"         (valid_1_of_1 refile "reasonligo");
-    test "invalid_1_of_1 (religo)"       (invalid_1_of_1 refile "reasonligo");
-    test "not_enough_signature (religo)" (not_enough_1_of_2 refile "reasonligo");
-    test "valid_2_of_3 (religo)"         (valid_2_of_3 refile "reasonligo");
-    test "invalid_3_of_3 (religo)"       (invalid_3_of_3 refile "reasonligo");
-    test "not_enough_2_of_3 (religo)"    (not_enough_2_of_3 refile "reasonligo");
+    test "valid_1_of_1 (religo)"         (valid_1_of_1       refile "reasonligo");
+    test "invalid_1_of_1 (religo)"       (invalid_1_of_1     refile "reasonligo");
+    test "not_enough_signature (religo)" (not_enough_1_of_2  refile "reasonligo");
+    test "valid_2_of_3 (religo)"         (valid_2_of_3       refile "reasonligo");
+    test "invalid_3_of_3 (religo)"       (invalid_3_of_3     refile "reasonligo");
+    test "not_enough_2_of_3 (religo)"    (not_enough_2_of_3  refile "reasonligo");
   ]

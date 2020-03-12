@@ -2,7 +2,9 @@ open Trace
 open Test_helpers
 
 let type_file f = 
-  let%bind simplified  = Ligo.Compile.Of_source.compile f (Syntax_name "pascaligo") in
+  let%bind abstracted  = Ligo.Compile.Of_source.compile f (Syntax_name "pascaligo") in
+  let%bind complex     = Ligo.Compile.Of_abstracted.compile abstracted in
+  let%bind simplified  = Ligo.Compile.Of_complex.compile complex in
   let%bind typed,state = Ligo.Compile.Of_simplified.compile (Contract "main") simplified in
   ok @@ (typed,state)
 
@@ -17,10 +19,9 @@ let get_program =
       )
 
 let compile_main () = 
-  let%bind simplified      = Ligo.Compile.Of_source.compile "./contracts/multisig-v2.ligo" (Syntax_name "pascaligo") in
-  let%bind typed_prg,_ = Ligo.Compile.Of_simplified.compile (Contract "main") simplified in
-  let%bind mini_c_prg      = Ligo.Compile.Of_typed.compile typed_prg in
-  let%bind michelson_prg   = Ligo.Compile.Of_mini_c.aggregate_and_compile_contract mini_c_prg "main" in
+  let%bind typed_prg,_   = get_program () in 
+  let%bind mini_c_prg    = Ligo.Compile.Of_typed.compile typed_prg in
+  let%bind michelson_prg = Ligo.Compile.Of_mini_c.aggregate_and_compile_contract mini_c_prg "main" in
   let%bind (_contract: Tezos_utils.Michelson.michelson) =
     (* fails if the given entry point is not a valid contract *)
     Ligo.Compile.Of_michelson.build_contract michelson_prg in
@@ -35,7 +36,7 @@ let empty_message = e_lambda (Var.of_name "arguments")
   empty_op_list
 let empty_message2 = e_lambda (Var.of_name "arguments")
   (Some t_bytes) (Some (t_list t_operation))
- ( e_let_in ((Var.of_name "foo"),Some t_unit) false false (e_unit ()) empty_op_list)
+ ( e_let_in ((Var.of_name "foo"),Some t_unit) false (e_unit ()) empty_op_list)
 
 let send_param msg = e_constructor "Send" msg
 let withdraw_param = e_constructor "Withdraw" empty_message

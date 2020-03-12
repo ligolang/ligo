@@ -68,7 +68,9 @@ let compile_groups _filename grp_list =
     (fun ((s,grp),contents) ->
       trace (failed_to_compile_md_file _filename (s,grp,contents)) @@
       let%bind v_syntax   = Compile.Helpers.syntax_to_variant (Syntax_name s) None in
-      let%bind simplified = Compile.Of_source.compile_string contents v_syntax in
+      let%bind abstracted = Compile.Of_source.compile_string contents v_syntax in
+      let%bind complex    = Ligo.Compile.Of_abstracted.compile abstracted in
+      let%bind simplified = Ligo.Compile.Of_complex.compile complex in
       let%bind typed,_    = Compile.Of_simplified.compile Env simplified in
       let%bind mini_c     = Compile.Of_typed.compile typed in
       bind_map_list
