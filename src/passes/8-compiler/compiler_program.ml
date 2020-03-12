@@ -59,13 +59,12 @@ let rec get_operator : constant' -> type_value -> expression list -> predicate r
       | C_LOOP_CONTINUE -> (
           let%bind (_,ty) = get_t_or ty in
           let%bind m_ty = Compiler_type.type_ ty in
-          let m_ty' = t_pair t_unit m_ty in
-          ok @@ simple_unary @@ prim ~children:[m_ty'] I_LEFT
+          ok @@ simple_unary @@ prim ~children:[m_ty] I_LEFT
       )
       | C_LOOP_STOP -> (
           let%bind (ty, _) = get_t_or ty in
           let%bind m_ty = Compiler_type.type_ ty in
-          ok @@ simple_unary @@ seq [ i_push_unit; i_pair; prim ~children:[m_ty] I_RIGHT]
+          ok @@ simple_unary @@ prim ~children:[m_ty] I_RIGHT
       )
       | C_SET_EMPTY -> (
           let%bind ty' = Mini_c.get_t_set ty in
@@ -410,12 +409,10 @@ and translate_expression (expr:expression) (env:environment) : michelson result 
       | C_LOOP_LEFT -> (
           let%bind (_, ty) = get_t_or (snd v) in
           let%bind m_ty = Compiler_type.type_ ty in
-          let m_ty' = t_pair t_unit m_ty in
           let%bind code = ok (seq [
               expr' ;
-              prim ~children:[m_ty'] I_LEFT;
+              prim ~children:[m_ty] I_LEFT;
               i_loop_left body';
-              prim I_CDR
             ]) in
           return code
         )

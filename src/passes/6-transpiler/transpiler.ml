@@ -536,22 +536,23 @@ and transpile_recursive {fun_name; fun_type; lambda} =
         let%bind (body,l) = map_lambda fun_name loop_type result in
         ok @@ (Expression.make (E_closure {binder;body}) loop_type, binder::l)
       | _  -> 
-        let%bind res = replace_callback fun_name loop_type e in
+        let%bind res = replace_callback fun_name loop_type false e in
         ok @@ (res, [])
 
-  and replace_callback : AST.expression_variable -> type_value -> AST.expression -> expression result = fun fun_name loop_type e ->
+  and replace_callback : AST.expression_variable -> type_value -> bool -> AST.expression -> expression result = fun fun_name loop_type shadowed e ->
     match e.expression_content with
-      E_let_in li ->
-        let%bind let_result = replace_callback fun_name loop_type li.let_result in
+      E_let_in li -> 
+        let shadowed = shadowed || Var.equal li.let_binder fun_name in 
+        let%bind let_result = replace_callback fun_name loop_type shadowed li.let_result in
         let%bind rhs = transpile_annotated_expression li.rhs in
         let%bind ty  = transpile_type e.type_expression in
         ok @@ e_let_in li.let_binder ty li.inline rhs let_result |
       E_matching m -> 
         let%bind ty = transpile_type e.type_expression in
-        matching fun_name loop_type m ty |
+        matching fun_name loop_type shadowed m ty |
       E_application {expr1;expr2} -> (
-        match expr1.expression_content with
-        E_variable name when Var.equal fun_name name -> 
+        match expr1.expression_content,shadowed with
+        E_variable name, false when Var.equal fun_name name -> 
           let%bind expr = transpile_annotated_expression expr2 in
           ok @@ Expression.make (E_constant {cons_name=C_LOOP_CONTINUE;arguments=[expr]}) loop_type |
         _ -> 
@@ -561,18 +562,18 @@ and transpile_recursive {fun_name; fun_type; lambda} =
       _ -> 
         let%bind expr = transpile_annotated_expression e in
         ok @@ Expression.make (E_constant {cons_name=C_LOOP_STOP;arguments=[expr]}) loop_type
-  and matching : AST.expression_variable -> type_value -> AST.matching -> type_value -> expression result = fun fun_name loop_type m ty ->
+  and matching : AST.expression_variable -> type_value -> bool -> AST.matching -> type_value -> expression result = fun fun_name loop_type shadowed m ty ->
     let return ret = ok @@ Expression.make ret @@ ty in
     let%bind expr = transpile_annotated_expression m.matchee in
     match m.cases with
       Match_bool {match_true; match_false} -> 
-          let%bind (t , f) = bind_map_pair (replace_callback fun_name loop_type) (match_true, match_false) in
+          let%bind (t , f) = bind_map_pair (replace_callback fun_name loop_type shadowed) (match_true, match_false) in
           return @@ E_if_bool (expr, t, f)
       | Match_option { match_none; match_some = (name, s, tv) } ->
-          let%bind n = replace_callback fun_name loop_type match_none in
+          let%bind n = replace_callback fun_name loop_type shadowed match_none in
           let%bind (tv' , s') =
             let%bind tv' = transpile_type tv in
-            let%bind s' = replace_callback fun_name loop_type s in
+            let%bind s' = replace_callback fun_name loop_type shadowed s in
             ok (tv' , s')
           in
           return @@ E_if_none (expr , n , ((name , tv') , s'))
@@ -580,10 +581,10 @@ and transpile_recursive {fun_name; fun_type; lambda} =
           match_nil ;
           match_cons = ((hd_name) , (tl_name), match_cons, ty) ;
         } -> (
-          let%bind nil = replace_callback fun_name loop_type match_nil in
+          let%bind nil = replace_callback fun_name loop_type shadowed match_nil in
           let%bind cons =
             let%bind ty' = transpile_type ty in
-            let%bind match_cons' = replace_callback fun_name loop_type match_cons in
+            let%bind match_cons' = replace_callback fun_name loop_type shadowed match_cons in
             ok (((hd_name , ty') , (tl_name , ty')) , match_cons')
           in
           return @@ E_if_cons (expr , nil , cons)
@@ -614,7 +615,7 @@ and transpile_recursive {fun_name; fun_type; lambda} =
                 let%bind ((_ , name) , body) =
                   trace_option (corner_case ~loc:__LOC__ "missing match clause") @@
                   List.find_opt (fun ((constructor_name' , _) , _) -> constructor_name' = constructor_name) lst in
-                let%bind body' = replace_callback fun_name loop_type body in
+                let%bind body' = replace_callback fun_name loop_type shadowed body in
                 return @@ E_let_in ((name , tv) , false , top , body')
               )
             | ((`Node (a , b)) , tv) ->

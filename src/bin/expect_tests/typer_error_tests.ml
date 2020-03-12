@@ -42,7 +42,7 @@ let%expect_test _ =
 
   run_ligo_bad [ "compile-contract" ; "../../test/contracts/negative/error_no_tail_recursive_function.mligo"; "f"];
   [%expect {|
-    ligo: in file "error_no_tail_recursive_function.mligo", line 2, characters 14-21. Recursive call is only allowed as the last operation:  {"function":"unvalid","location":"in file \"error_no_tail_recursive_function.mligo\", line 2, characters 14-21"}
+    ligo: in file "error_no_tail_recursive_function.mligo", line 2, characters 14-21. Recursion must be achieved through tail-calls only:  {"function":"unvalid","location":"in file \"error_no_tail_recursive_function.mligo\", line 2, characters 14-21"}
 
 
      If you're not sure how to fix this error, you can

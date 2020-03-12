@@ -277,10 +277,17 @@ and eval : Ast_typed.expression -> env -> value result
         let%bind args' = eval args env in
         let f_env' = Env.extend f_env (arg_names, args') in
         eval body f_env'
+      | V_Func_rec (_fun_name,_fun_type,lambda, _env) ->
+        let%bind args' = eval args env in
+        let f_env' = Env.extend env (lambda.binder,args') in
+        eval lambda.result f_env'
       | _ -> simple_fail "trying to apply on something that is not a function"
     )
-    | E_lambda { binder; result;} ->
+    | E_lambda {binder; result;} ->
       ok @@ V_Func_val (binder,result,env)
+    | E_recursive {fun_name; fun_type;lambda} ->
+      let env' = Env.extend env (fun_name, V_Func_rec(fun_name,fun_type,lambda,env)) in
+      ok @@ V_Func_rec (fun_name,fun_type,lambda,env')
     | E_let_in { let_binder; rhs; let_result; _} ->
       let%bind rhs' = eval rhs env in
       eval let_result (Env.extend env (let_binder,rhs'))
@@ -371,7 +378,7 @@ and eval : Ast_typed.expression -> env -> value result
       | _ -> simple_fail "not yet supported case"
         (* ((ctor,name),body) *)
     )
-    | E_look_up _ | E_recursive _ ->
+    | E_look_up _ ->
       let serr = Format.asprintf "Unsupported construct :\n %a\n" Ast_typed.PP.expression term in
       simple_fail serr
 

@@ -232,3 +232,10 @@ let set_mem =
   Set.mem 1 s,
   Set.mem 4 s,
   Set.mem 1 (Set.empty : int set)
+
+let recursion =
+  let rec sum : int*int -> int = fun ((n,res):int*int) ->
+    let i = 1 in
+    if (n<1) then res else sum (n-i,res+n)
+  in
+  sum (10,0)
