@@ -94,6 +94,13 @@ let source =
     info ~docv ~doc ["source"] in
   value @@ opt (some string) None info
 
+let disable_michelson_typechecking =
+  let open Arg in
+  let info =
+    let doc = "disable Michelson typecking, this might produce ill-typed Michelson code." in
+    info ~doc ["disable-michelson-typechecking"] in
+  value @@ flag info
+
 let predecessor_timestamp =
   let open Arg in
   let info =
@@ -131,17 +138,17 @@ module Uncompile = Ligo.Uncompile
 module Run = Ligo.Run.Of_michelson
 
 let compile_file =
-  let f source_file entry_point syntax display_format michelson_format =
+  let f source_file entry_point syntax display_format disable_typecheck michelson_format =
     toplevel ~display_format @@
     let%bind simplified = Compile.Of_source.compile source_file (Syntax_name syntax) in
     let%bind typed,_    = Compile.Of_simplified.compile (Contract entry_point) simplified in
     let%bind mini_c     = Compile.Of_typed.compile typed in
     let%bind michelson  = Compile.Of_mini_c.aggregate_and_compile_contract mini_c entry_point in
-    let%bind contract   = Compile.Of_michelson.build_contract michelson in
+    let%bind contract   = Compile.Of_michelson.build_contract ~disable_typecheck michelson in
     ok @@ Format.asprintf "%a\n" (Main.Display.michelson_pp michelson_format) contract
   in
   let term =
-    Term.(const f $ source_file 0 $ entry_point 1 $ syntax $ display_format $ michelson_code_format) in
+    Term.(const f $ source_file 0 $ entry_point 1 $ syntax $ display_format $ disable_michelson_typechecking $ michelson_code_format) in
   let cmdname = "compile-contract" in
   let doc = "Subcommand: Compile a contract." in
   (Term.ret term , Term.info ~doc cmdname)
