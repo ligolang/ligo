@@ -16,3 +16,5 @@ function Syntax(props) {
 }
 
 export default Syntax
+
+export { SyntaxContext }

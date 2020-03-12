@@ -2,7 +2,7 @@ import React from 'react';
 
 import styles from './styles.module.css';
 
-function SyntaxSwitch (props) {   
+function SyntaxSwitch (props) {
     return (
         <select className={styles.syntaxSwitch}  defaultValue={props.syntax} onChange={e => props.onSyntaxChange(e.target.value)}>
             <option value="pascaligo">PascaLIGO</option>
