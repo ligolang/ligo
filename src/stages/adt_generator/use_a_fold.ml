@@ -54,15 +54,15 @@ let () =
   let op = {
       generic = (fun info state ->
         assert_nostate state;
-        match info () with
-        | (_, Adt_info.Record { name=_; fields }) ->
-           false, "{ " ^ String.concat " ; " (List.map (fun (fld : 'x Adt_info.ctor_or_field_continue) -> fld.name ^ " = " ^ snd (fld.continue nostate)) fields) ^ " }"
-        | (_, Adt_info.Variant { name=_; constructor={ name; isBuiltin=_; type_=_; continue }; variant=_ }) ->
-           (match continue nostate with
+        match info.node_instance.instance_kind with
+        | RecordInstance { fields } ->
+           false, "{ " ^ String.concat " ; " (List.map (fun (fld : 'x Adt_info.ctor_or_field_instance) -> fld.cf.name ^ " = " ^ snd (fld.cf_continue nostate)) fields) ^ " }"
+        | VariantInstance { constructor={ cf = { name; is_builtin=_; type_=_ }; cf_continue }; variant=_ } ->
+           (match cf_continue nostate with
             | true,  arg -> true, name ^ " (" ^ arg ^ ")"
             | false, arg -> true, name ^ " "  ^ arg)
-        | (_, Adt_info.Poly { name=_; type_=_; arguments=_; continue }) ->
-           (continue nostate)
+        | PolyInstance { poly=_; arguments=_; poly_continue } ->
+           (poly_continue nostate)
       );
       string = (fun _visitor str state -> assert_nostate state; false , "\"" ^ str ^ "\"") ;
       unit = (fun _visitor () state -> assert_nostate state; false , "()") ;
