@@ -1,6 +1,6 @@
 (library
-  (name ast_complex)
-  (public_name ligo.ast_complex)
+  (name ast_sugar)
+  (public_name ligo.ast_sugar)
   (libraries
     simple-utils
     tezos-utils

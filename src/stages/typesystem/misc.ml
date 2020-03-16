@@ -89,24 +89,24 @@ module Substitution = struct
           let _TODO = substs in
           failwith "TODO: T_function"
 
-    and s_abstr_type_content : Ast_simplified.type_content w = fun ~substs -> function
-      | Ast_simplified.T_sum _ -> failwith "TODO: subst: unimplemented case s_type_expression sum"
-      | Ast_simplified.T_record _ -> failwith "TODO: subst: unimplemented case s_type_expression record"
-      | Ast_simplified.T_arrow _ -> failwith "TODO: subst: unimplemented case s_type_expression arrow"
-      | Ast_simplified.T_variable _ -> failwith "TODO: subst: unimplemented case s_type_expression variable"
-      | Ast_simplified.T_operator op ->
+    and s_abstr_type_content : Ast_core.type_content w = fun ~substs -> function
+      | Ast_core.T_sum _ -> failwith "TODO: subst: unimplemented case s_type_expression sum"
+      | Ast_core.T_record _ -> failwith "TODO: subst: unimplemented case s_type_expression record"
+      | Ast_core.T_arrow _ -> failwith "TODO: subst: unimplemented case s_type_expression arrow"
+      | Ast_core.T_variable _ -> failwith "TODO: subst: unimplemented case s_type_expression variable"
+      | Ast_core.T_operator op ->
          let%bind op =
-           Ast_simplified.bind_map_type_operator
+           Ast_core.bind_map_type_operator
              (s_abstr_type_expression ~substs)
              op in
          (* TODO: when we have generalized operators, we might need to subst the operator name itself? *)
-         ok @@ Ast_simplified.T_operator op
-      | Ast_simplified.T_constant constant ->
-         ok @@ Ast_simplified.T_constant constant
+         ok @@ Ast_core.T_operator op
+      | Ast_core.T_constant constant ->
+         ok @@ Ast_core.T_constant constant
 
-    and s_abstr_type_expression : Ast_simplified.type_expression w = fun ~substs {type_content;type_meta} ->
+    and s_abstr_type_expression : Ast_core.type_expression w = fun ~substs {type_content;type_meta} ->
       let%bind type_content = s_abstr_type_content ~substs type_content in
-      ok @@ Ast_simplified.{type_content;type_meta}
+      ok @@ Ast_core.{type_content;type_meta}
 
     and s_type_expression : T.type_expression w = fun ~substs { type_content; type_meta } ->
       let%bind type_content = s_type_content ~substs type_content in

@@ -8,7 +8,7 @@
     abstracter
     self_ast_imperative
     simplifier
-    ast_simplified
+    ast_core
     typer_new
     typer
     ast_typed

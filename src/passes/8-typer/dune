@@ -4,7 +4,7 @@
   (libraries
     simple-utils
     tezos-utils
-    ast_simplified
+    ast_core
     ast_typed
     typer_old
     typer_new

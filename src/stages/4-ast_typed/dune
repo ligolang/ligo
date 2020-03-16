@@ -4,7 +4,7 @@
   (libraries
     simple-utils
     tezos-utils
-    ast_simplified ; Is that a good idea?
+    ast_core ; Is that a good idea?
     stage_common
   )
   (preprocess

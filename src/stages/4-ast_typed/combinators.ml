@@ -23,7 +23,7 @@ module Errors = struct
     error (thunk "No declaration with the given name") message
 end
 
-let make_t type_content simplified = { type_content ; type_meta=simplified }
+let make_t type_content core = { type_content ; type_meta=core }
 let make_a_e ?(location = Location.generated) expression_content type_expression environment = {
   expression_content ;
   type_expression ;

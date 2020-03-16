@@ -1,6 +1,6 @@
 open Trace
 
-module I = Ast_simplified
+module I = Ast_core
 module O = Ast_typed
 open O.Combinators
 
@@ -872,7 +872,7 @@ let untype_type_value (t:O.type_expression) : (I.type_expression) result =
 (* TODO: we ended up with two versions of type_program… ??? *)
 
 (*
-Apply type_declaration on all the node of the AST_simplified from the root p
+Apply type_declaration on all the node of the AST_core from the root p
 *)
 let type_program_returns_state ((env, state, p) : environment * Solver.state * I.program) : (environment * Solver.state * O.program) result =
   let aux ((e : environment), (s : Solver.state) , (ds : O.declaration Location.wrap list)) (d:I.declaration Location.wrap) =
@@ -950,10 +950,10 @@ let type_program' : I.program -> O.program result = fun p ->
   ok p'
 
 (*
-  Tranform a Ast_typed type_expression into an ast_simplified type_expression
+  Tranform a Ast_typed type_expression into an ast_core type_expression
 *)
 let rec untype_type_expression (t:O.type_expression) : (I.type_expression) result =
-  (* TODO: or should we use t.simplified if present? *)
+  (* TODO: or should we use t.core if present? *)
   let%bind t = match t.type_content with
   | O.T_sum x ->
     let%bind x' = Stage_common.Helpers.bind_map_cmap untype_type_expression x in
@@ -999,13 +999,13 @@ let rec untype_type_expression (t:O.type_expression) : (I.type_expression) resul
     in
   ok @@ I.make_t t
 
-(* match t.simplified with *)
+(* match t.core with *)
 (* | Some s -> ok s *)
 (* | _ -> fail @@ internal_assertion_failure "trying to untype generated type" *)
 
 
 (*
-  Tranform a Ast_typed literal into an ast_simplified literal
+  Tranform a Ast_typed literal into an ast_core literal
 *)
 let untype_literal (l:O.literal) : I.literal result =
   let open I in
@@ -1027,7 +1027,7 @@ let untype_literal (l:O.literal) : I.literal result =
   | Literal_operation s -> ok (Literal_operation s)
 
 (*
-  Tranform a Ast_typed expression into an ast_simplified matching
+  Tranform a Ast_typed expression into an ast_core matching
 *)
 let rec untype_expression (e:O.expression) : (I.expression) result =
   let open I in
@@ -1107,7 +1107,7 @@ and untype_lambda ty {binder; result} : I.lambda result =
       ok ({binder;input_type = Some input_type; output_type = Some output_type; result}: I.lambda)
 
 (*
-  Tranform a Ast_typed matching into an ast_simplified matching
+  Tranform a Ast_typed matching into an ast_core matching
 *)
 and untype_matching : (O.expression -> I.expression result) -> O.matching_expr -> I.matching_expr result = fun f m ->
   let open I in

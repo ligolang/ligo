@@ -1,13 +1,10 @@
 open Trace
 open Test_helpers
-open Ast_simplified
+open Ast_core
 
 
 let retype_file f =
-  let%bind abstracted  = Ligo.Compile.Of_source.compile f (Syntax_name "reasonligo") in
-  let%bind complex     = Ligo.Compile.Of_abstracted.compile abstracted in
-  let%bind simplified  = Ligo.Compile.Of_complex.compile complex in
-  let%bind typed,state = Ligo.Compile.Of_simplified.compile Env simplified in
+  let%bind typed,state = Ligo.Compile.Utils.type_file f "reasonligo" Env in
   ok (typed,state)
 
 let get_program =

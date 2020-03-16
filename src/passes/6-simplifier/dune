@@ -3,8 +3,8 @@
   (public_name ligo.simplifier)
   (libraries
     simple-utils
-    ast_complex
-    ast_simplified
+    ast_sugar
+    ast_core
     proto-alpha-utils
   )
   (preprocess

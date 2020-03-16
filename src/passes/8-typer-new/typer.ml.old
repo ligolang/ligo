@@ -1,6 +1,6 @@
 open Trace
 
-module I = Ast_simplified
+module I = Ast_core
 module O = Ast_typed
 open O.Combinators
 
@@ -736,7 +736,7 @@ and type_constant (name:string) (lst:O.type_expression list) (tv_opt:O.type_expr
   typer lst tv_opt
 
 let untype_type_expression (t:O.type_expression) : (I.type_expression) result =
-  match t.simplified with
+  match t.core with
   | Some s -> ok s
   | _ -> fail @@ internal_assertion_failure "trying to untype generated type"
 

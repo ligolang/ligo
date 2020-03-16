@@ -4,7 +4,7 @@
   (libraries
     simple-utils
     ast_imperative
-    ast_complex
+    ast_sugar
     proto-alpha-utils
   )
   (preprocess

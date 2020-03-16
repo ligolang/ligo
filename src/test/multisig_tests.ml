@@ -6,10 +6,7 @@ let mfile = "./contracts/multisig.mligo"
 let refile = "./contracts/multisig.religo"
 
 let type_file f s =
-  let%bind abstracted  = Ligo.Compile.Of_source.compile f (Syntax_name s) in
-  let%bind complex     = Ligo.Compile.Of_abstracted.compile abstracted in
-  let%bind simplified  = Ligo.Compile.Of_complex.compile complex in
-  let%bind typed,state = Ligo.Compile.Of_simplified.compile (Contract "main") simplified in
+  let%bind typed,state = Ligo.Compile.Utils.type_file f s (Contract "main") in
   ok @@ (typed,state)
 
 let get_program f st =
@@ -31,7 +28,7 @@ let compile_main f s () =
     Ligo.Compile.Of_michelson.build_contract michelson_prg in
   ok ()
 
-open Ast_simplified
+open Ast_core
 
 let init_storage threshold counter pkeys =
   let keys = List.map

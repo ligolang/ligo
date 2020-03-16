@@ -17,7 +17,7 @@ module Abstracter = struct
 
     Constants are special names that have their own case in the AST. E_constant
     for regular constants, and T_constant for type constants. Both types are
-    defined in `Ast_simplified/types.ml`.
+    defined in `Ast_core/types.ml`.
     For instance, "2 + 2" in Pascaligo is translated to `E_constant ("ADD" , [
       E_literal (Literal_int 2) ;
       E_literal (Literal_int 2) ;

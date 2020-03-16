@@ -4,10 +4,7 @@ open Trace
 open Test_helpers
 
 let type_file f =
-  let%bind abstracted  = Ligo.Compile.Of_source.compile f (Syntax_name "pascaligo") in
-  let%bind complex     = Ligo.Compile.Of_abstracted.compile abstracted in
-  let%bind simplified  = Ligo.Compile.Of_complex.compile complex in
-  let%bind typed,state = Ligo.Compile.Of_simplified.compile (Contract "main") simplified in
+  let%bind typed,state = Ligo.Compile.Utils.type_file f "pascaligo" (Contract "main") in
   ok @@ (typed,state)
 
 let get_program =
@@ -30,7 +27,7 @@ let compile_main () =
     Ligo.Compile.Of_michelson.build_contract michelson_prg in
   ok ()
 
-open Ast_simplified
+open Ast_core
 
 let card owner =
   e_record_ez [
@@ -231,7 +228,7 @@ let sell () =
       let expected_storage =
         let cards = List.hds @@ cards_ez first_owner n in
         basic 99 1000 cards (2 * n) in
-      Ast_simplified.Misc.assert_value_eq (expected_storage , storage)
+      Ast_core.Misc.assert_value_eq (expected_storage , storage)
     in
     let%bind () =
       let amount = Memory_proto_alpha.Protocol.Alpha_context.Tez.zero in

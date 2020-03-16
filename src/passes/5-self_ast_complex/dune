@@ -1,9 +1,9 @@
 (library
-  (name self_ast_complex)
-  (public_name ligo.self_ast_complex)
+  (name self_ast_sugar)
+  (public_name ligo.self_ast_sugar)
   (libraries
     simple-utils
-    ast_complex
+    ast_sugar
     proto-alpha-utils
   )
   (preprocess

@@ -3,7 +3,7 @@ open Trace
 module Core = Typesystem.Core
 
 module Wrap = struct
-  module I = Ast_simplified
+  module I = Ast_core
   module T = Ast_typed
   module O = Core
 

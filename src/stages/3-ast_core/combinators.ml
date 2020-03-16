@@ -123,7 +123,7 @@ let e_accessor_list ?loc a b  = List.fold_left (fun a b -> e_accessor ?loc a b) 
 let e_variable ?loc v = make_expr ?loc @@ E_variable v
 let e_skip ?loc () = make_expr ?loc @@ E_skip
 let e_let_in ?loc (binder, ascr) inline rhs let_result = 
-  make_expr ?loc @@ E_let_in { let_binder = (binder, ascr) ; rhs ; let_result; inline }
+  make_expr ?loc @@ E_let_in { let_binder = (binder,ascr) ; rhs ; let_result; inline }
 let e_annotation ?loc anno_expr ty = make_expr ?loc @@ E_ascription {anno_expr; type_annotation = ty}
 let e_application ?loc a b = make_expr ?loc @@ E_application {expr1=a ; expr2=b}
 let e_binop ?loc name a b  = make_expr ?loc @@ E_constant {cons_name = name ; arguments = [a ; b]}
@@ -237,7 +237,7 @@ let tuple_of_record (m: _ LMap.t) =
 let get_e_tuple = fun t ->
   match t with
   | E_record r -> ok @@ tuple_of_record r
-  | _ -> simple_fail "ast_simplified: get_e_tuple: not a tuple"
+  | _ -> simple_fail "ast_core: get_e_tuple: not a tuple"
 
 (* Same as get_e_pair *)
 let extract_pair : expression -> (expression * expression) result = fun e ->

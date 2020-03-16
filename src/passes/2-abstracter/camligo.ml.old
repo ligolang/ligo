@@ -1,7 +1,7 @@
 open Trace
 open Function
 module I = Parser.Cameligo.Ast
-module O = Ast_simplified
+module O = Ast_core
 open O.Combinators
 
 let unwrap : type a . a Location.wrap -> a = Location.unwrap

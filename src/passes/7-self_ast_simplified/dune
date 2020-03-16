@@ -1,9 +1,9 @@
 (library
-  (name self_ast_simplified)
-  (public_name ligo.self_ast_simplified)
+  (name self_ast_core)
+  (public_name ligo.self_ast_core)
   (libraries
     simple-utils
-    ast_simplified
+    ast_core
     proto-alpha-utils
   )
   (preprocess

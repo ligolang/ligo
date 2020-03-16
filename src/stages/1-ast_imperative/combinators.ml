@@ -237,7 +237,7 @@ let tuple_of_record (m: _ LMap.t) =
 let get_e_tuple = fun t ->
   match t with
   | E_record r -> ok @@ tuple_of_record r
-  | _ -> simple_fail "ast_simplified: get_e_tuple: not a tuple"
+  | _ -> simple_fail "ast_core: get_e_tuple: not a tuple"
 
 (* Same as get_e_pair *)
 let extract_pair : expression -> (expression * expression) result = fun e ->

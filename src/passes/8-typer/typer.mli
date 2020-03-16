@@ -2,7 +2,7 @@ val use_new_typer : bool
 
 open Trace
 
-module I = Ast_simplified
+module I = Ast_core
 module O = Ast_typed
 
 module Environment = O.Environment

@@ -1,15 +1,15 @@
 open Trace
-open Ast_complex
+open Ast_sugar
 open Simplifier
 
 type form = 
   | Contract of string
   | Env
 
-let compile (program : program) : Ast_simplified.program result =
+let compile (program : program) : Ast_core.program result =
   simplify_program program
 
-let compile_expression (e : expression) : Ast_simplified.expression result =
+let compile_expression (e : expression) : Ast_core.expression result =
   simplify_expression e
 
 let pretty_print formatter (program : program) = 

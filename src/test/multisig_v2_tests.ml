@@ -2,10 +2,7 @@ open Trace
 open Test_helpers
 
 let type_file f = 
-  let%bind abstracted  = Ligo.Compile.Of_source.compile f (Syntax_name "pascaligo") in
-  let%bind complex     = Ligo.Compile.Of_abstracted.compile abstracted in
-  let%bind simplified  = Ligo.Compile.Of_complex.compile complex in
-  let%bind typed,state = Ligo.Compile.Of_simplified.compile (Contract "main") simplified in
+  let%bind typed,state = Ligo.Compile.Utils.type_file f "pascaligo" (Contract "main") in
   ok @@ (typed,state)
 
 let get_program =
@@ -27,7 +24,7 @@ let compile_main () =
     Ligo.Compile.Of_michelson.build_contract michelson_prg in
   ok ()
 
-open Ast_simplified
+open Ast_core
 
 let empty_op_list = 
   (e_typed_list [] t_operation)

@@ -2,15 +2,15 @@
 
 module Location = Simple_utils.Location
 
-module Ast_complex_parameter = struct
+module Ast_core_parameter = struct
   type type_meta = unit
 end
 
 include Stage_common.Types
 
-(*include Ast_generic_type(Ast_simplified_parameter)
+(*include Ast_generic_type(Ast_core_parameter)
 *)
-include Ast_generic_type (Ast_complex_parameter)
+include Ast_generic_type (Ast_core_parameter)
 
 type inline = bool 
 type program = declaration Location.wrap list

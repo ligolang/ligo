@@ -8,7 +8,7 @@ end
 
 include Stage_common.Types
 
-(*include Ast_generic_type(Ast_simplified_parameter)
+(*include Ast_generic_type(Ast_core_parameter)
 *)
 include Ast_generic_type (Ast_imperative_parameter)
 

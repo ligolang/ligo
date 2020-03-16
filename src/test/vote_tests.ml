@@ -2,10 +2,7 @@ open Trace
 open Test_helpers
 
 let type_file f =
-  let%bind abstracted  = Ligo.Compile.Of_source.compile f (Syntax_name "cameligo") in
-  let%bind complex     = Ligo.Compile.Of_abstracted.compile abstracted in
-  let%bind simplified  = Ligo.Compile.Of_complex.compile complex in
-  let%bind typed,state = Ligo.Compile.Of_simplified.compile (Contract "main") simplified in
+  let%bind typed,state = Ligo.Compile.Utils.type_file f "cameligo" (Contract "main") in
   ok @@ (typed,state)
 
 let get_program =
@@ -18,7 +15,7 @@ let get_program =
         ok (program , state)
       )
 
-open Ast_simplified
+open Ast_core
 
 let init_storage name = e_record_ez [
     ("title" , e_string name) ;
@@ -41,14 +38,14 @@ let yea = e_constructor "Vote" (e_constructor "Yea" (e_unit ()))
 let init_vote () =
   let%bind (program , _) = get_program () in
   let%bind result =
-    Test_helpers.run_typed_program_with_simplified_input
+    Test_helpers.run_typed_program_with_core_input
       program "main" (e_pair yea (init_storage "basic")) in
   let%bind (_, storage) = extract_pair result in
   let%bind storage' = extract_record storage in
 (*  let votes = List.assoc (Label "voters") storage' in
   let%bind votes' = extract_map votes in *)
   let yea = List.assoc (Label "yea") storage' in
-  let%bind () = Ast_simplified.Misc.assert_value_eq (yea, e_nat 1) in
+  let%bind () = Ast_core.Misc.assert_value_eq (yea, e_nat 1) in
   ok ()
 
 let main = test_suite "Vote" [

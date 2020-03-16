@@ -1,6 +1,6 @@
 [@@@warning "-30"]
 
-module S = Ast_simplified
+module S = Ast_core
 include Stage_common.Types
 
 module Ast_typed_type_parameter = struct

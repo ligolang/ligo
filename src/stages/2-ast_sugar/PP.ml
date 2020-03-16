@@ -4,7 +4,7 @@ open Format
 open PP_helpers
 
 include Stage_common.PP
-include Ast_PP_type(Ast_simplified_parameter)
+include Ast_PP_type(Ast_sugar_parameter)
 
 let expression_variable ppf (ev : expression_variable) : unit =
   fprintf ppf "%a" Var.pp ev
@@ -42,7 +42,7 @@ and expression_content ppf (ec : expression_content) =
   | E_look_up (ds, ind) ->
       fprintf ppf "(%a)[%a]" expression ds expression ind
   | E_lambda {binder; input_type; output_type; result} ->
-      fprintf ppf "lambda (%a:%a) : %a return %a"
+      fprintf ppf "lambda (%a:%a) : %a return %a" 
         expression_variable binder
         (PP_helpers.option type_expression)
         input_type
@@ -56,7 +56,7 @@ and expression_content ppf (ec : expression_content) =
   | E_matching {matchee; cases; _} ->
       fprintf ppf "match %a with %a" expression matchee (matching expression)
         cases
-  | E_let_in { let_binder ;rhs ; let_result; inline } ->    
+  | E_let_in { let_binder ; rhs ; let_result; inline } ->    
     fprintf ppf "let %a = %a%a in %a" option_type_name let_binder expression rhs option_inline inline expression let_result
   | E_skip ->
       fprintf ppf "skip"

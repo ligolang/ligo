@@ -1,5 +1,5 @@
 module I = Ast_imperative
-module O = Ast_complex
+module O = Ast_sugar
 open Trace
 
 let rec idle_type_expression : I.type_expression -> O.type_expression result =

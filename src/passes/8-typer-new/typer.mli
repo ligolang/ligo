@@ -1,6 +1,6 @@
 open Trace
 
-module I = Ast_simplified
+module I = Ast_core
 module O = Ast_typed
 
 module Environment = O.Environment
