@@ -39,8 +39,6 @@ and expression_content ppf (ec : expression_content) =
       fprintf ppf "list[%a]" (list_sep_d expression) lst
   | E_set lst ->
       fprintf ppf "set[%a]" (list_sep_d expression) lst
-  | E_look_up (ds, ind) ->
-      fprintf ppf "(%a)[%a]" expression ds expression ind
   | E_lambda {binder; input_type; output_type; result} ->
       fprintf ppf "lambda (%a:%a) : %a return %a"
         expression_variable binder

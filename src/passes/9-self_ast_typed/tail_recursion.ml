@@ -67,10 +67,6 @@ let rec check_recursive_call : expression_variable -> bool -> expression -> unit
   | E_list el | E_set el ->
     let%bind _ = bind_map_list (check_recursive_call n false) el in
     ok ()
-  | E_look_up (e1,e2) ->
-    let%bind _ = check_recursive_call n false e1 in
-    let%bind _ = check_recursive_call n false e2 in
-    ok ()
 
 and check_recursive_call_in_matching = fun n final_path c ->
   match c with

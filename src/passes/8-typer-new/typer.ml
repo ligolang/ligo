@@ -685,17 +685,6 @@ and type_expression : environment -> Solver.state -> ?tv_opt:O.type_expression -
     let wrapped = Wrap.application f'.type_expression args.type_expression in
     return_wrapped (E_application {lamb=f';args}) state'' wrapped
 
-  (* | E_look_up dsi ->
-   *   let%bind (ds, ind) = bind_map_pair (type_expression e) dsi in
-   *   let%bind (src, dst) = bind_map_or (get_t_map , get_t_big_map) ds.type_annotation in
-   *   let%bind _ = O.assert_type_value_eq (ind.type_annotation, src) in
-   *   return (E_look_up (ds , ind)) (t_option dst ()) *)
-
-  | E_look_up dsi ->
-    let aux' state' elt = type_expression e state' elt >>? swap in
-    let%bind (state'' , (ds , ind)) = bind_fold_map_pair aux' state dsi in
-    let wrapped = Wrap.look_up ds.type_expression ind.type_expression in
-    return_wrapped (E_look_up (ds , ind)) state'' wrapped
 
   (* Advanced *)
   (* | E_matching (ex, m) -> (
@@ -1076,9 +1065,6 @@ let rec untype_expression (e:O.expression) : (I.expression) result =
   | E_set lst ->
     let%bind lst' = bind_map_list untype_expression lst in
     return (e_set lst')
-  | E_look_up dsi ->
-    let%bind (a , b) = bind_map_pair untype_expression dsi in
-    return (e_look_up a b)
   | E_matching {matchee;cases} ->
     let%bind ae' = untype_expression matchee in
     let%bind m' = untype_matching untype_expression cases in

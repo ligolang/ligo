@@ -55,7 +55,6 @@ and expression_content =
   | E_big_map of (expression * expression) list (*move to operator *)
   | E_list of expression list
   | E_set of expression list
-  | E_look_up of (expression * expression)
 
 and constant =
   { cons_name: constant'

@@ -234,7 +234,6 @@ and tree_of_sum : AST.type_expression -> (AST.constructor' * AST.type_expression
 and transpile_annotated_expression (ae:AST.expression) : expression result =
   let%bind tv = transpile_type ae.type_expression in
   let return ?(tv = tv) expr = ok @@ Combinators.Expression.make_tpl (expr, tv) in
-  let f = transpile_annotated_expression in
   let info =
     let title () = "translating expression" in
     let content () = Format.asprintf "%a" Location.pp ae.location in
@@ -438,10 +437,6 @@ and transpile_annotated_expression (ae:AST.expression) : expression result =
       in
       let init = return @@ E_make_empty_big_map (src, dst) in
       List.fold_left aux init m
-    )
-  | E_look_up dsi -> (
-      let%bind (ds', i') = bind_map_pair f dsi in
-      return @@ E_constant {cons_name=C_MAP_FIND_OPT;arguments=[i' ; ds']}
     )
   | E_matching {matchee=expr; cases=m} -> (
       let%bind expr' = transpile_annotated_expression expr in

@@ -378,9 +378,6 @@ and eval : Ast_typed.expression -> env -> value result
     )
     | E_recursive {fun_name; fun_type=_; lambda} ->
       ok @@ V_Func_rec (fun_name, lambda.binder, lambda.result, env)
-    | E_look_up _ ->
-      let serr = Format.asprintf "Unsupported construct :\n %a\n" Ast_typed.PP.expression term in
-      simple_fail serr
 
 let dummy : Ast_typed.program -> string result =
   fun prg ->

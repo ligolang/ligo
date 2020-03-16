@@ -89,7 +89,6 @@ val e_annotation : ?loc:Location.t -> expression -> type_expression -> expressio
 val e_application : ?loc:Location.t -> expression -> expression -> expression
 val e_binop    : ?loc:Location.t -> constant' -> expression -> expression -> expression
 val e_constant : ?loc:Location.t -> constant' -> expression list -> expression
-val e_look_up : ?loc:Location.t -> expression -> expression -> expression
 val ez_match_variant : ((string * string ) * 'a ) list -> ('a,unit) matching_content
 val e_matching_variant : ?loc:Location.t -> expression -> ((string * string) * expression) list -> expression
 

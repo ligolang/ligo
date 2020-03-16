@@ -703,11 +703,6 @@ and type_expression' : environment -> ?tv_opt:O.type_expression -> I.expression 
             lamb'.location
       in
       return (E_application {lamb=lamb'; args=args'}) tv
-  | E_look_up dsi ->
-      let%bind (ds, ind) = bind_map_pair (type_expression' e) dsi in
-      let%bind (src, dst) = bind_map_or (get_t_map , get_t_big_map) ds.type_expression in
-      let%bind _ = O.assert_type_expression_eq (ind.type_expression, src) in
-      return (E_look_up (ds , ind)) (t_option dst ())
   (* Advanced *)
   | E_matching {matchee;cases} -> (
       let%bind ex' = type_expression' e matchee in
@@ -882,9 +877,6 @@ let rec untype_expression (e:O.expression) : (I.expression) result =
   | E_set lst ->
       let%bind lst' = bind_map_list untype_expression lst in
       return (e_set lst')
-  | E_look_up dsi ->
-      let%bind (a , b) = bind_map_pair untype_expression dsi in
-      return (e_look_up a b)
   | E_matching {matchee;cases} ->
       let%bind ae' = untype_expression matchee in
       let%bind m' = untype_matching untype_expression cases in

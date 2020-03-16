@@ -127,7 +127,6 @@ let e_annotation ?loc anno_expr ty = make_expr ?loc @@ E_ascription {anno_expr; 
 let e_application ?loc a b = make_expr ?loc @@ E_application {lamb=a ; args=b}
 let e_binop ?loc name a b  = make_expr ?loc @@ E_constant {cons_name = name ; arguments = [a ; b]}
 let e_constant ?loc name lst = make_expr ?loc @@ E_constant {cons_name=name ; arguments = lst}
-let e_look_up ?loc x y = make_expr ?loc @@ E_look_up (x , y)
 let e_cond ?loc expr match_true match_false = e_matching expr ?loc (Match_bool {match_true; match_false})
 (*
 let e_assign ?loc a b c = location_wrap ?loc @@ E_assign (Var.of_name a , b , c) (* TODO handlethat*)

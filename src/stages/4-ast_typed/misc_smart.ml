@@ -84,9 +84,6 @@ module Captured_variables = struct
     | (E_map m | E_big_map m) ->
       let%bind lst' = bind_map_list self @@ List.concat @@ List.map (fun (a, b) -> [ a ; b ]) m in
       ok @@ unions lst'
-    | E_look_up (a , b) ->
-      let%bind lst' = bind_map_list self [ a ; b ] in
-      ok @@ unions lst'
     | E_matching {matchee;cases;_} ->
       let%bind a' = self matchee in
       let%bind cs' = matching_expression b cases in

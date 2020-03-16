@@ -214,7 +214,6 @@ module Free_variables = struct
     | E_list lst -> unions @@ List.map self lst
     | E_set lst -> unions @@ List.map self lst
     | (E_map m | E_big_map m) -> unions @@ List.map self @@ List.concat @@ List.map (fun (a, b) -> [ a ; b ]) m
-    | E_look_up (a , b) -> unions @@ List.map self [ a ; b ]
     | E_matching {matchee; cases;_} -> union (self matchee) (matching_expression b cases)
     | E_let_in { let_binder; rhs; let_result; _} ->
       let b' = union (singleton let_binder) b in
@@ -534,7 +533,7 @@ let rec assert_value_eq (a, b: (expression*expression)) : unit result =
   | (E_literal _, _) | (E_variable _, _) | (E_application _, _)
   | (E_lambda _, _) | (E_let_in _, _) | (E_recursive _, _)
   | (E_record_accessor _, _) | (E_record_update _,_)
-  | (E_look_up _, _) | (E_matching _, _)
+  | (E_matching _, _)
   -> fail @@ error_uncomparable_values "can't compare sequences nor loops" a b
 
 let merge_annotation (a:type_expression option) (b:type_expression option) err : type_expression result =

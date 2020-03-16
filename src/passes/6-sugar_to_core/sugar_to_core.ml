@@ -127,8 +127,8 @@ let rec compile_expression : I.expression -> O.expression result =
       let%bind set = bind_map_list compile_expression set in
       return @@ O.E_set set 
     | I.E_look_up look_up ->
-      let%bind look_up = bind_map_pair compile_expression look_up in
-      return @@ O.E_look_up look_up
+      let%bind (path, index) = bind_map_pair compile_expression look_up in
+      return @@ O.E_constant {cons_name=C_MAP_FIND_OPT;arguments=[index;path]}
     | I.E_ascription {anno_expr; type_annotation} ->
       let%bind anno_expr = compile_expression anno_expr in
       let%bind type_annotation = idle_type_expression type_annotation in

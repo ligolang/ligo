@@ -16,9 +16,6 @@ let rec fold_expression : 'a folder -> 'a -> expression -> 'a result = fun f ini
     let%bind res = bind_fold_list (bind_fold_pair self) init' lst in
     ok res
   )
-  | E_look_up ab ->
-      let%bind res = bind_fold_pair self init' ab in
-      ok res
   | E_application {lamb; args} -> (
       let ab = (lamb, args) in
       let%bind res = bind_fold_pair self init' ab in
@@ -109,10 +106,6 @@ let rec map_expression : mapper -> expression -> expression result = fun f e ->
     let%bind lst' = bind_map_list (bind_map_pair self) lst in
     return @@ E_big_map lst'
   )
-  | E_look_up ab -> (
-      let%bind ab' = bind_map_pair self ab in
-      return @@ E_look_up ab'
-    )
   | E_matching {matchee=e;cases} -> (
       let%bind e' = self e in
       let%bind cases' = map_cases f cases in
@@ -224,10 +217,6 @@ let rec fold_map_expression : 'a fold_mapper -> 'a -> expression -> ('a * expres
     let%bind (res, lst') = bind_fold_map_list (bind_fold_map_pair self) init' lst in
     ok (res, return @@ E_big_map lst')
   )
-  | E_look_up ab -> (
-      let%bind (res, ab') = bind_fold_map_pair self init' ab in
-      ok (res, return @@ E_look_up ab')
-    )
   | E_matching {matchee=e;cases} -> (
       let%bind (res, e') = self init' e in
       let%bind (res,cases') = fold_map_cases f res cases in
