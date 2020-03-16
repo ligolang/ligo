@@ -12,12 +12,9 @@ A lazily deserialized map that's intended to store large amounts of data.
 
 The gast costs of deserialized maps are higher than standard maps as data is lazily deserialized.
 
-
 <SyntaxTitle syntax="pascaligo">
 type big_map (key, value)
 </SyntaxTitle>
-
-
 <SyntaxTitle syntax="cameligo">
 type ('key, 'value) big_map
 </SyntaxTitle>
