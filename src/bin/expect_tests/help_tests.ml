@@ -176,6 +176,10 @@ let%expect_test _ =
                SOURCE_FILE is the path to the smart contract file.
 
     OPTIONS
+           --disable-michelson-typechecking
+               disable Michelson typecking, this might produce ill-typed
+               Michelson code.
+
            --format=DISPLAY_FORMAT, --display-format=DISPLAY_FORMAT
            (absent=human-readable)
                DISPLAY_FORMAT is the format that will be used by the CLI.
