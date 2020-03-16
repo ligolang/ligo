@@ -949,6 +949,11 @@ module Typer = struct
     then ok (t_unit ())
     else fail @@ Operator_errors.type_error "bad set iter" key arg ()
 
+  let list_empty = typer_0 "LIST_EMPTY" @@ fun tv_opt ->
+    match tv_opt with
+    | None -> simple_fail "untyped LIST_EMPTY"
+    | Some t -> ok t
+
   let list_iter = typer_2 "LIST_ITER" @@ fun body lst ->
     let%bind (arg , res) = get_t_function body in
     let%bind () = Assert.assert_true (eq_1 res (t_unit ())) in
@@ -1145,7 +1150,6 @@ module Typer = struct
     | C_SLICE               -> ok @@ slice ;
     | C_BYTES_PACK          -> ok @@ bytes_pack ;
     | C_BYTES_UNPACK        -> ok @@ bytes_unpack ;
-    | C_CONS                -> ok @@ cons ;
     (* SET  *)
     | C_SET_EMPTY           -> ok @@ set_empty ;
     | C_SET_ADD             -> ok @@ set_add ;
@@ -1155,6 +1159,8 @@ module Typer = struct
     | C_SET_MEM             -> ok @@ set_mem ;
 
     (* LIST *)
+    | C_CONS                -> ok @@ cons ;
+    | C_LIST_EMPTY          -> ok @@ list_empty ;
     | C_LIST_ITER           -> ok @@ list_iter ;
     | C_LIST_MAP            -> ok @@ list_map ;
     | C_LIST_FOLD           -> ok @@ list_fold ;

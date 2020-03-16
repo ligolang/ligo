@@ -296,7 +296,6 @@ let e_lambda l : expression_content = E_lambda l
 let e_pair a b : expression_content = ez_e_record [(Label "0",a);(Label "1", b)]
 let e_application lamb args : expression_content = E_application {lamb;args}
 let e_variable v : expression_content = E_variable v
-let e_list lst : expression_content = E_list lst
 let e_let_in let_binder inline rhs let_result = E_let_in { let_binder ; rhs ; let_result; inline }
 
 let e_a_unit = make_a_e (e_unit ()) (t_unit ())
@@ -315,7 +314,6 @@ let e_a_application a b = make_a_e (e_application a b) (get_type_expression b)
 let e_a_variable v ty = make_a_e (e_variable v) ty
 let ez_e_a_record r = make_a_e (ez_e_record r) (ez_t_record (List.map (fun (x, y) -> x, y.type_expression) r) ())
 let e_a_map lst k v = make_a_e (e_map lst) (t_map k v ())
-let e_a_list lst t = make_a_e (e_list lst) (t_list t ())
 let e_a_let_in binder expr body attributes = make_a_e (e_let_in binder expr body attributes) (get_type_expression body)
 
 

@@ -121,11 +121,19 @@ let rec compile_expression : I.expression -> O.expression result =
       in
       return @@ O.E_big_map big_map
     | I.E_list lst ->
-      let%bind lst = bind_map_list compile_expression lst in
-      return @@ O.E_list lst
-    | I.E_set set ->
-      let%bind set = bind_map_list compile_expression set in
-      return @@ O.E_set set 
+      let%bind lst' = bind_map_list (compile_expression) lst in
+      let aux = fun prev cur ->
+        return @@ E_constant {cons_name=C_CONS;arguments=[cur ; prev]} in
+      let%bind init  = return @@ E_constant {cons_name=C_LIST_EMPTY;arguments=[]} in
+      bind_fold_right_list aux init lst'
+    | I.E_set set -> (
+      let%bind lst' = bind_map_list (compile_expression) set in
+      let lst' = List.sort_uniq compare lst' in
+      let aux = fun prev cur ->
+        return @@ E_constant {cons_name=C_SET_ADD;arguments=[cur ; prev]} in
+      let%bind init = return @@ E_constant {cons_name=C_SET_EMPTY;arguments=[]} in
+      bind_fold_list aux init lst'
+      )
     | I.E_look_up look_up ->
       let%bind (path, index) = bind_map_pair compile_expression look_up in
       return @@ O.E_constant {cons_name=C_MAP_FIND_OPT;arguments=[index;path]}
@@ -313,15 +321,6 @@ let rec uncompile_expression : O.expression -> I.expression result =
     ) big_map
     in
     return @@ I.E_big_map big_map
-  | O.E_list lst ->
-    let%bind lst = bind_map_list uncompile_expression lst in
-    return @@ I.E_list lst
-  | O.E_set set ->
-    let%bind set = bind_map_list uncompile_expression set in
-    return @@ I.E_set set 
-  | O.E_look_up look_up ->
-    let%bind look_up = bind_map_pair uncompile_expression look_up in
-    return @@ I.E_look_up look_up
   | O.E_ascription {anno_expr; type_annotation} ->
     let%bind anno_expr = uncompile_expression anno_expr in
     let%bind type_annotation = uncompile_type_expression type_annotation in

@@ -204,12 +204,6 @@ module Substitution = struct
             ok @@ (val1 , val2)
           ) val_val_list in
         ok @@ T.E_big_map val_val_list
-      | T.E_list            vals ->
-        let%bind vals = bind_map_list (s_expression ~substs) vals in
-        ok @@ T.E_list vals
-      | T.E_set             vals ->
-        let%bind vals = bind_map_list (s_expression ~substs) vals in
-        ok @@ T.E_set vals
       | T.E_matching   {matchee;cases} ->
         let%bind matchee = s_expression ~substs matchee in
         let%bind cases = s_matching_expr ~substs cases in

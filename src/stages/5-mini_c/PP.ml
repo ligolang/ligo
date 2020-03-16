@@ -88,8 +88,6 @@ and expression' ppf (e:expression') = match e with
   | E_literal v -> fprintf ppf "L(%a)" value v
   | E_make_empty_map _ -> fprintf ppf "map[]"
   | E_make_empty_big_map _ -> fprintf ppf "big_map[]"
-  | E_make_empty_list _ -> fprintf ppf "list[]"
-  | E_make_empty_set _ -> fprintf ppf "set[]"
   | E_make_none _ -> fprintf ppf "none"
   | E_if_bool (c, a, b) -> fprintf ppf "%a ? %a : %a" expression c expression a expression b
   | E_if_none (c, n, ((name, _) , s)) -> fprintf ppf "%a ?? %a : %a -> %a" expression c expression n Var.pp name expression s
@@ -199,6 +197,8 @@ and constant ppf : constant' -> unit = function
   | C_SET_FOLD              -> fprintf ppf "SET_FOLD"
   | C_SET_MEM               -> fprintf ppf "SET_MEM"
   (* List *)
+  | C_LIST_EMPTY            -> fprintf ppf "LIST_EMPTY"
+  | C_LIST_LITERAL          -> fprintf ppf "LIST_LITERAL"
   | C_LIST_ITER             -> fprintf ppf "LIST_ITER"
   | C_LIST_MAP              -> fprintf ppf "LIST_MAP"
   | C_LIST_FOLD             -> fprintf ppf "LIST_FOLD"

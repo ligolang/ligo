@@ -66,10 +66,15 @@ let rec get_operator : constant' -> type_value -> expression list -> predicate r
           let%bind m_ty = Compiler_type.type_ ty in
           ok @@ simple_unary @@ prim ~children:[m_ty] I_RIGHT
       )
+      | C_LIST_EMPTY -> (
+          let%bind ty' = Mini_c.get_t_list ty in
+          let%bind m_ty = Compiler_type.type_ ty' in
+          ok @@ simple_constant @@ i_nil m_ty
+        )
       | C_SET_EMPTY -> (
           let%bind ty' = Mini_c.get_t_set ty in
           let%bind m_ty = Compiler_type.type_ ty' in
-          ok @@ simple_constant @@ prim ~children:[m_ty] I_EMPTY_SET
+          ok @@ simple_constant @@ i_empty_set m_ty
         )
       | C_BYTES_UNPACK -> (
           let%bind ty' = Mini_c.get_t_option ty in
@@ -303,12 +308,6 @@ and translate_expression (expr:expression) (env:environment) : michelson result 
   | E_make_empty_big_map sd ->
       let%bind (src, dst) = bind_map_pair Compiler_type.type_ sd in
       return @@ i_empty_big_map src dst
-  | E_make_empty_list t ->
-      let%bind t' = Compiler_type.type_ t in
-      return @@ i_nil t'
-  | E_make_empty_set t ->
-      let%bind t' = Compiler_type.type_ t in
-      return @@ i_empty_set t'
   | E_make_none o ->
       let%bind o' = Compiler_type.type_ o in
       return @@ i_none o'

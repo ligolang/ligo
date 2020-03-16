@@ -390,26 +390,6 @@ and transpile_annotated_expression (ae:AST.expression) : expression result =
     transpile_lambda l io
   | E_recursive r ->
     transpile_recursive r
-  | E_list lst -> (
-      let%bind t =
-        trace_strong (corner_case ~loc:__LOC__ "not a list") @@
-        get_t_list tv in
-      let%bind lst' = bind_map_list (transpile_annotated_expression) lst in
-      let aux : expression -> expression -> expression result = fun prev cur ->
-        return @@ E_constant {cons_name=C_CONS;arguments=[cur ; prev]} in
-      let%bind (init : expression) = return @@ E_make_empty_list t in
-      bind_fold_right_list aux init lst'
-    )
-  | E_set lst -> (
-      let%bind t =
-        trace_strong (corner_case ~loc:__LOC__ "not a set") @@
-        get_t_set tv in
-      let%bind lst' = bind_map_list (transpile_annotated_expression) lst in
-      let aux : expression -> expression -> expression result = fun prev cur ->
-        return @@ E_constant {cons_name=C_SET_ADD;arguments=[cur ; prev]} in
-      let%bind (init : expression) = return @@ E_make_empty_set t in
-      bind_fold_list aux init lst'
-    )
   | E_map m -> (
       let%bind (src, dst) =
         trace_strong (corner_case ~loc:__LOC__ "not a map") @@

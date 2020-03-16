@@ -49,8 +49,6 @@ let rec is_pure : expression -> bool = fun e ->
   | E_variable _
   | E_make_empty_map _
   | E_make_empty_big_map _
-  | E_make_empty_list _
-  | E_make_empty_set _
   | E_make_none _
     -> true
 

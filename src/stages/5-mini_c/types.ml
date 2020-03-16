@@ -61,8 +61,6 @@ and expression' =
   | E_variable of var_name
   | E_make_empty_map of (type_value * type_value)
   | E_make_empty_big_map of (type_value * type_value)
-  | E_make_empty_list of type_value
-  | E_make_empty_set of type_value
   | E_make_none of type_value
   | E_iterator of constant' * ((var_name * type_value) * expression) * expression
   | E_fold of (((var_name * type_value) * expression) * expression * expression)

@@ -47,8 +47,6 @@ and expression_content =
   (* TODO : move to constant*)
   | E_map of (expression * expression) list (*move to operator *)
   | E_big_map of (expression * expression) list (*move to operator *)
-  | E_list of expression list
-  | E_set of expression list
   (* Advanced *)
   | E_ascription of ascription
 

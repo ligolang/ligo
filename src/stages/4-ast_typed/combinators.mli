@@ -128,7 +128,6 @@ val e_lambda : lambda -> expression_content
 val e_pair : expression -> expression -> expression_content
 val e_application : expression -> expr -> expression_content
 val e_variable : expression_variable -> expression_content
-val e_list : expression list -> expression_content
 val e_let_in : expression_variable -> inline -> expression -> expression -> expression_content
 
 val e_a_unit : full_environment -> expression
@@ -147,7 +146,6 @@ val e_a_application : expression -> expression -> full_environment -> expression
 val e_a_variable : expression_variable -> type_expression -> full_environment -> expression
 val ez_e_a_record : ( label * expression ) list -> full_environment -> expression
 val e_a_map : ( expression * expression ) list -> type_expression -> type_expression -> full_environment -> expression
-val e_a_list : expression list -> type_expression -> full_environment -> expression
 val e_a_let_in : expression_variable -> bool -> expression -> expression -> full_environment -> expression
 
 val get_a_int : expression -> int result

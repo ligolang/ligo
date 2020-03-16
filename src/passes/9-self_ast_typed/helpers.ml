@@ -8,7 +8,7 @@ let rec fold_expression : 'a folder -> 'a -> expression -> 'a result = fun f ini
   let%bind init' = f init e in
   match e.expression_content with
   | E_literal _ | E_variable _ -> ok init'
-  | E_list lst | E_set lst | E_constant {arguments=lst} -> (
+  | E_constant {arguments=lst} -> (
     let%bind res = bind_fold_list self init' lst in
     ok res
   )
@@ -90,14 +90,6 @@ let rec map_expression : mapper -> expression -> expression result = fun f e ->
   let%bind e' = f e in
   let return expression_content = ok { e' with expression_content } in
   match e'.expression_content with
-  | E_list lst -> (
-    let%bind lst' = bind_map_list self lst in
-    return @@ E_list lst'
-  )
-  | E_set lst -> (
-    let%bind lst' = bind_map_list self lst in
-    return @@ E_set lst'
-  )
   | E_map lst -> (
     let%bind lst' = bind_map_list (bind_map_pair self) lst in
     return @@ E_map lst'
@@ -201,14 +193,6 @@ let rec fold_map_expression : 'a fold_mapper -> 'a -> expression -> ('a * expres
   else
   let return expression_content = { e' with expression_content } in
   match e'.expression_content with
-  | E_list lst -> (
-    let%bind (res, lst') = bind_fold_map_list self init' lst in
-    ok (res, return @@ E_list lst')
-  )
-  | E_set lst -> (
-    let%bind (res, lst') = bind_fold_map_list self init' lst in
-    ok (res, return @@ E_set lst')
-  )
   | E_map lst -> (
     let%bind (res, lst') = bind_fold_map_list (bind_fold_map_pair self) init' lst in
     ok (res, return @@ E_map lst')

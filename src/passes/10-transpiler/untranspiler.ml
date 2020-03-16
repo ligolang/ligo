@@ -181,7 +181,10 @@ let rec untranspile (v : value) (t : AST.type_expression) : AST.expression resul
         let%bind lst' =
           let aux = fun e -> untranspile e ty in
           bind_map_list aux lst in
-        return (E_list lst')
+        let aux = fun prev cur ->
+          return @@ E_constant {cons_name=C_CONS;arguments=[cur ; prev]} in
+        let%bind init  = return @@ E_constant {cons_name=C_LIST_EMPTY;arguments=[]} in
+        bind_fold_right_list aux init lst'
       )
     | TC_arrow _ -> (
         let%bind n =
@@ -196,7 +199,11 @@ let rec untranspile (v : value) (t : AST.type_expression) : AST.expression resul
         let%bind lst' =
           let aux = fun e -> untranspile e ty in
           bind_map_list aux lst in
-        return (E_set lst')
+        let lst' = List.sort_uniq compare lst' in
+        let aux = fun prev cur ->
+          return @@ E_constant {cons_name=C_SET_ADD;arguments=[cur ; prev]} in
+        let%bind init = return @@ E_constant {cons_name=C_SET_EMPTY;arguments=[]} in
+        bind_fold_list aux init lst'
       )
     | TC_contract _ ->
       fail @@ bad_untranspile "contract" v

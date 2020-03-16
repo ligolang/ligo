@@ -35,10 +35,6 @@ and expression_content ppf (ec : expression_content) =
       fprintf ppf "map[%a]" (list_sep_d assoc_expression) m
   | E_big_map m ->
       fprintf ppf "big_map[%a]" (list_sep_d assoc_expression) m
-  | E_list lst ->
-      fprintf ppf "list[%a]" (list_sep_d expression) lst
-  | E_set lst ->
-      fprintf ppf "set[%a]" (list_sep_d expression) lst
   | E_lambda {binder; input_type; output_type; result} ->
       fprintf ppf "lambda (%a:%a) : %a return %a"
         expression_variable binder

@@ -168,8 +168,9 @@ let e_typed_none ?loc t_opt =
   let type_annotation = t_option t_opt in
   e_annotation ?loc (e_none ?loc ()) type_annotation
 
-let e_typed_list ?loc lst t =
-  e_annotation ?loc (e_list lst) (t_list t)
+let e_typed_list ?loc lst t = e_annotation ?loc (e_list lst) (t_list t)
+let e_typed_list_literal ?loc lst t =
+  e_annotation ?loc (e_constant C_LIST_LITERAL lst) (t_list t)
 
 let e_typed_map ?loc lst k v = e_annotation ?loc (e_map lst) (t_map k v)
 let e_typed_big_map ?loc lst k v = e_annotation ?loc (e_big_map lst) (t_big_map k v)

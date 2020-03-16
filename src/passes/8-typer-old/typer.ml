@@ -511,48 +511,6 @@ and type_expression' : environment -> ?tv_opt:O.type_expression -> I.expression 
     let%bind () = O.assert_type_expression_eq (tv, get_type_expression update) in
     return (E_record_update {record; path; update}) wrapped
   (* Data-structure *)
-  | E_list lst ->
-      let%bind lst' = bind_map_list (type_expression' e) lst in
-      let%bind tv =
-        let aux opt c =
-          match opt with
-          | None -> ok (Some c)
-          | Some c' ->
-              let%bind _eq = Ast_typed.assert_type_expression_eq (c, c') in
-              ok (Some c') in
-        let%bind init = match tv_opt with
-          | None -> ok None
-          | Some ty ->
-              let%bind ty' = get_t_list ty in
-              ok (Some ty') in
-        let%bind ty =
-          let%bind opt = bind_fold_list aux init
-          @@ List.map get_type_expression lst' in
-          trace_option (needs_annotation ae "empty list") opt in
-        ok (t_list ty ())
-      in
-      return (E_list lst') tv
-  | E_set lst ->
-      let%bind lst' = bind_map_list (type_expression' e) lst in
-      let%bind tv =
-        let aux opt c =
-          match opt with
-          | None -> ok (Some c)
-          | Some c' ->
-              let%bind _eq = Ast_typed.assert_type_expression_eq (c, c') in
-              ok (Some c') in
-        let%bind init = match tv_opt with
-          | None -> ok None
-          | Some ty ->
-              let%bind ty' = get_t_set ty in
-              ok (Some ty') in
-        let%bind ty =
-          let%bind opt = bind_fold_list aux init
-          @@ List.map get_type_expression lst' in
-          trace_option (needs_annotation ae "empty set") opt in
-        ok (t_set ty ())
-      in
-      return (E_set lst') tv
   | E_map lst ->
       let%bind lst' = bind_map_list (bind_map_pair (type_expression' e)) lst in
       let%bind tv =
@@ -682,6 +640,21 @@ and type_expression' : environment -> ?tv_opt:O.type_expression -> I.expression 
       let%bind (name', tv) =
         type_constant cons_name tv_lst tv_opt in
       return (E_constant {cons_name=name';arguments=lst'}) tv
+  | E_constant {cons_name=C_SET_ADD|C_CONS as cst;arguments=[key;set]} ->
+      let%bind key' =  type_expression' e key in
+      let tv_key = get_type_expression key' in
+      let tv = match tv_opt with 
+          Some (tv) -> tv 
+        | None -> match cst with 
+            C_SET_ADD -> t_set tv_key ()
+          | C_CONS -> t_list tv_key ()
+          | _ -> failwith "impossible"
+      in
+      let%bind set' =  type_expression' e ~tv_opt:tv set in
+      let tv_set = get_type_expression set' in 
+      let tv_lst = [tv_key;tv_set] in
+      let%bind (name', tv) = type_constant cst tv_lst tv_opt in
+      return (E_constant {cons_name=name';arguments=[key';set']}) tv
   | E_constant {cons_name;arguments} ->
       let%bind lst' = bind_list @@ List.map (type_expression' e) arguments in
       let tv_lst = List.map get_type_expression lst' in
@@ -871,12 +844,6 @@ let rec untype_expression (e:O.expression) : (I.expression) result =
   | E_big_map m ->
       let%bind m' = bind_map_list (bind_map_pair untype_expression) m in
       return (e_big_map m')
-  | E_list lst ->
-      let%bind lst' = bind_map_list untype_expression lst in
-      return (e_list lst')
-  | E_set lst ->
-      let%bind lst' = bind_map_list untype_expression lst in
-      return (e_set lst')
   | E_matching {matchee;cases} ->
       let%bind ae' = untype_expression matchee in
       let%bind m' = untype_matching untype_expression cases in

@@ -74,8 +74,6 @@ val e_none : ?loc:Location.t -> unit -> expression
 val e_string_cat : ?loc:Location.t -> expression -> expression -> expression
 val e_map_add : ?loc:Location.t -> expression -> expression ->  expression -> expression
 val e_map : ?loc:Location.t -> ( expression * expression ) list -> expression
-val e_set : ?loc:Location.t -> expression list -> expression
-val e_list : ?loc:Location.t -> expression list -> expression
 val e_pair : ?loc:Location.t -> expression -> expression -> expression
 val e_constructor : ?loc:Location.t -> string -> expression -> expression
 val e_matching : ?loc:Location.t -> expression -> matching_expr -> expression
@@ -96,12 +94,8 @@ val make_option_typed : ?loc:Location.t -> expression -> type_expression option 
 
 val e_typed_none : ?loc:Location.t -> type_expression -> expression
 
-val e_typed_list : ?loc:Location.t -> expression list -> type_expression -> expression
-
 val e_typed_map : ?loc:Location.t -> ( expression * expression ) list  -> type_expression -> type_expression -> expression
 val e_typed_big_map : ?loc:Location.t -> ( expression * expression ) list  -> type_expression -> type_expression -> expression
-
-val e_typed_set : ?loc:Location.t -> expression list -> type_expression -> expression
 
 val e_lambda : ?loc:Location.t -> expression_variable -> type_expression option -> type_expression option -> expression -> expression
 val e_recursive : ?loc:Location.t -> expression_variable -> type_expression -> lambda -> expression
@@ -124,8 +118,6 @@ val get_e_failwith : expression -> expression result
 val is_e_failwith : expression -> bool
 *)
 val extract_pair : expression -> ( expression * expression ) result 
-
-val extract_list : expression -> (expression list) result
 
 val extract_record : expression -> (label * expression) list result
 

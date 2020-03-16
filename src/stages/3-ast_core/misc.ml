@@ -88,6 +88,19 @@ let rec assert_value_eq (a, b: (expression * expression )) : unit result =
       assert_literal_eq (a, b)
   | E_literal _ , _ ->
     simple_fail "comparing a literal with not a literal"
+  | E_constant {cons_name=C_SET_LITERAL;arguments=lsta},
+    E_constant {cons_name=C_SET_LITERAL;arguments=lstb} -> (
+      let lsta' = List.sort (compare) lsta in
+      let lstb' = List.sort (compare) lstb in
+      let%bind lst =
+        generic_try (simple_error "set of different lengths")
+          (fun () -> List.combine lsta' lstb') in
+      let%bind _all = bind_map_list assert_value_eq lst in
+      ok ()
+    )
+  | E_constant {cons_name=C_SET_LITERAL;_}, _ ->
+      simple_fail "comparing set with other expression"
+
   | E_constant (ca) , E_constant (cb) when ca.cons_name = cb.cons_name -> (
       let%bind lst =
         generic_try (simple_error "constants with different number of elements")
@@ -155,28 +168,6 @@ let rec assert_value_eq (a, b: (expression * expression )) : unit result =
     )
   | (E_map _ | E_big_map _), _ ->
       simple_fail "comparing map with other expression"
-
-  | E_list lsta, E_list lstb -> (
-      let%bind lst =
-        generic_try (simple_error "list of different lengths")
-          (fun () -> List.combine lsta lstb) in
-      let%bind _all = bind_map_list assert_value_eq lst in
-      ok ()
-    )
-  | E_list _, _ ->
-      simple_fail "comparing list with other expression"
-
-  | E_set lsta, E_set lstb -> (
-      let lsta' = List.sort (compare) lsta in
-      let lstb' = List.sort (compare) lstb in
-      let%bind lst =
-        generic_try (simple_error "set of different lengths")
-          (fun () -> List.combine lsta' lstb') in
-      let%bind _all = bind_map_list assert_value_eq lst in
-      ok ()
-    )
-  | E_set _, _ ->
-      simple_fail "comparing set with other expression"
 
   | (E_ascription a ,  _b') -> assert_value_eq (a.anno_expr , b)
   | (_a' , E_ascription b) -> assert_value_eq (a , b.anno_expr)

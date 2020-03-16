@@ -247,6 +247,8 @@ and constant' =
   | C_SET_FOLD
   | C_SET_MEM
   (* List *)
+  | C_LIST_EMPTY
+  | C_LIST_LITERAL
   | C_LIST_ITER
   | C_LIST_MAP
   | C_LIST_FOLD

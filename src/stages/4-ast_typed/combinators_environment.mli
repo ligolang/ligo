@@ -14,7 +14,6 @@ val e_a_empty_some : expression -> expression
 val e_a_empty_none : type_expression -> expression
 val e_a_empty_record : expression label_map -> expression
 val e_a_empty_map : (expression * expression ) list -> type_expression -> type_expression -> expression
-val e_a_empty_list : expression list -> type_expression -> expression
 val ez_e_a_empty_record : ( label * expression ) list -> expression
 val e_a_empty_lambda : lambda -> type_expression -> type_expression -> expression
 

@@ -105,6 +105,8 @@ let constant ppf : constant' -> unit = function
   | C_SET_FOLD              -> fprintf ppf "SET_FOLD"
   | C_SET_MEM               -> fprintf ppf "SET_MEM"
   (* List *)
+  | C_LIST_EMPTY            -> fprintf ppf "LIST_EMPTY"
+  | C_LIST_LITERAL          -> fprintf ppf "LIST_LITERAL"
   | C_LIST_ITER             -> fprintf ppf "LIST_ITER"
   | C_LIST_MAP              -> fprintf ppf "LIST_MAP"
   | C_LIST_FOLD             -> fprintf ppf "LIST_FOLD"

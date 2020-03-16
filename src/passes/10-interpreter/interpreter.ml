@@ -119,6 +119,7 @@ let rec apply_operator : Ast_typed.constant' -> value list -> value result =
     | ( C_OR     , [ V_Ct (C_bool a'  ) ; V_Ct (C_bool b'  ) ] ) -> return_ct @@ C_bool   (a' || b')
     | ( C_AND    , [ V_Ct (C_bool a'  ) ; V_Ct (C_bool b'  ) ] ) -> return_ct @@ C_bool   (a' && b')
     | ( C_XOR    , [ V_Ct (C_bool a'  ) ; V_Ct (C_bool b'  ) ] ) -> return_ct @@ C_bool   ( (a' || b') && (not (a' && b')) ) 
+    | ( C_LIST_EMPTY, []) -> ok @@ V_List ([])
     | ( C_LIST_MAP , [ V_Func_val (arg_name, body, env) ; V_List (elts) ] ) ->
       let%bind elts' = bind_map_list
         (fun elt ->
@@ -188,6 +189,7 @@ let rec apply_operator : Ast_typed.constant' -> value list -> value result =
       | "None" -> ok @@ V_Map (List.remove_assoc k kvs)
       | _ -> simple_fail "update without an option"
     )
+    | ( C_SET_EMPTY, []) -> ok @@ V_Set ([])
     | ( C_SET_ADD , [ v ; V_Set l ] ) -> ok @@ V_Set (List.sort_uniq compare (v::l))
     | ( C_SET_FOLD , [ V_Func_val (arg_name, body, env) ; V_Set elts ; init ] ) ->
       bind_fold_list
@@ -294,17 +296,6 @@ and eval : Ast_typed.expression -> env -> value result
         (fun kv -> bind_map_pair (fun (el:Ast_typed.expression) -> eval el env) kv)
         kvlist in
       ok @@ V_Map kvlist'
-    | E_list expl ->
-      let%bind expl' = bind_map_list
-        (fun (exp:Ast_typed.expression) -> eval exp env)
-        expl in
-      ok @@ V_List expl'
-    | E_set expl ->
-      let%bind expl' = bind_map_list
-        (fun (exp:Ast_typed.expression) -> eval exp env)
-        (List.sort_uniq compare expl)
-      in
-      ok @@ V_Set expl'
     | E_literal l ->
       eval_literal l
     | E_variable var ->

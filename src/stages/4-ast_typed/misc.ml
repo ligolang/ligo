@@ -211,8 +211,6 @@ module Free_variables = struct
     | E_record m -> unions @@ List.map self @@ LMap.to_list m
     | E_record_accessor {record;_} -> self record
     | E_record_update {record; update;_} -> union (self record) @@ self update
-    | E_list lst -> unions @@ List.map self lst
-    | E_set lst -> unions @@ List.map self lst
     | (E_map m | E_big_map m) -> unions @@ List.map self @@ List.concat @@ List.map (fun (a, b) -> [ a ; b ]) m
     | E_matching {matchee; cases;_} -> union (self matchee) (matching_expression b cases)
     | E_let_in { let_binder; rhs; let_result; _} ->
@@ -512,24 +510,6 @@ let rec assert_value_eq (a, b: (expression*expression)) : unit result =
   | (E_map _ | E_big_map _), _ ->
       fail @@ different_values_because_different_types "map vs. non-map" a b
 
-  | E_list lsta, E_list lstb -> (
-      let%bind lst =
-        generic_try (different_size_values "lists of different lengths" a b)
-          (fun () -> List.combine lsta lstb) in
-      let%bind _all = bind_map_list assert_value_eq lst in
-      ok ()
-    )
-  | E_list _, _ ->
-      fail @@ different_values_because_different_types "list vs. non-list" a b
-  | E_set lsta, E_set lstb -> (
-      let%bind lst =
-        generic_try (different_size_values "sets of different lengths" a b)
-          (fun () -> List.combine lsta lstb) in
-      let%bind _all = bind_map_list assert_value_eq lst in
-      ok ()
-    )
-  | E_set _, _ ->
-      fail @@ different_values_because_different_types "set vs. non-set" a b
   | (E_literal _, _) | (E_variable _, _) | (E_application _, _)
   | (E_lambda _, _) | (E_let_in _, _) | (E_recursive _, _)
   | (E_record_accessor _, _) | (E_record_update _,_)

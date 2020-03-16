@@ -578,17 +578,6 @@ and type_expression : environment -> Solver.state -> ?tv_opt:O.type_expression -
     return (E_map lst') tv
 *)
 
-  | E_list lst ->
-    let%bind (state', lst') =
-      bind_fold_map_list (fun state' elt -> type_expression e state' elt >>? swap) state lst in
-    let wrapped = Wrap.list (List.map (fun x -> O.(x.type_expression)) lst') in
-    return_wrapped (E_list lst') state' wrapped
-  | E_set set ->
-    let aux = fun state' elt -> type_expression e state' elt >>? swap in
-    let%bind (state', set') =
-      bind_fold_map_list aux state set in
-    let wrapped = Wrap.set (List.map (fun x -> O.(x.type_expression)) set') in
-    return_wrapped (E_set set') state' wrapped
   | E_map map ->
     let aux' state' elt = type_expression e state' elt >>? swap in
     let aux = fun state' elt -> bind_fold_map_pair aux' state' elt in
@@ -1059,12 +1048,6 @@ let rec untype_expression (e:O.expression) : (I.expression) result =
   | E_big_map m ->
     let%bind m' = bind_map_list (bind_map_pair untype_expression) m in
     return (e_big_map m')
-  | E_list lst ->
-    let%bind lst' = bind_map_list untype_expression lst in
-    return (e_list lst')
-  | E_set lst ->
-    let%bind lst' = bind_map_list untype_expression lst in
-    return (e_set lst')
   | E_matching {matchee;cases} ->
     let%bind ae' = untype_expression matchee in
     let%bind m' = untype_matching untype_expression cases in
