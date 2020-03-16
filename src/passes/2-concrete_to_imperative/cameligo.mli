@@ -45,18 +45,18 @@ val pattern_to_var : Raw.pattern -> Raw.variable result
 val pattern_to_typed_var : Raw.pattern -> ( Raw.variable * Raw.type_expr option ) result
 val expr_to_typed_expr : Raw.expr -> ( Raw.expr * Raw.type_expr option ) result
 val patterns_to_var : Raw.pattern list -> Raw.variable result
-val abstr_type_expression : Raw.type_expr -> type_expression result
-val abstr_list_type_expression : Raw.type_expr list -> type_expression result
+val compile_type_expression : Raw.type_expr -> type_expression result
+val compile_list_type_expression : Raw.type_expr list -> type_expression result
 *)
-val abstr_expression : Raw.expr -> expr result
+val compile_expression : Raw.expr -> expr result
 (*
-val abstr_fun : Raw.fun_expr Raw.reg -> expr result 
-val abstr_logic_expression : ?te_annot:type_expression -> Raw.logic_expr -> expr result
-val abstr_list_expression : Raw.list_expr -> expression result
-val abstr_binop : string -> Raw.wild Raw.bin_op Region.reg -> expression result 
-val abstr_unop : string -> Raw.wild Raw.un_op Region.reg -> expression result
-val abstr_tuple_expression : ?loc:Location.t -> Raw.expr list -> expression result
-val abstr_declaration : Raw.declaration -> declaration Location.wrap result
-val abstr_cases : (Raw.pattern * 'a) list -> 'a matching result
+val compile_fun : Raw.fun_expr Raw.reg -> expr result 
+val compile_logic_expression : ?te_annot:type_expression -> Raw.logic_expr -> expr result
+val compile_list_expression : Raw.list_expr -> expression result
+val compile_binop : string -> Raw.wild Raw.bin_op Region.reg -> expression result 
+val compile_unop : string -> Raw.wild Raw.un_op Region.reg -> expression result
+val compile_tuple_expression : ?loc:Location.t -> Raw.expr list -> expression result
+val compile_declaration : Raw.declaration -> declaration Location.wrap result
+val compile_cases : (Raw.pattern * 'a) list -> 'a matching result
 *)
-val abstr_program : Raw.ast -> program result
+val compile_program : Raw.ast -> program result

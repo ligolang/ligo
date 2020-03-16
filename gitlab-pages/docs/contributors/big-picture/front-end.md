@@ -10,6 +10,6 @@ Its files are in `parser/parser_name`.
 ## Concrete Syntax Tree
 The CST is the aforementioned structured representation of the program. Is is structurally very close to the source code, and is mostly an intermediary there because manipulating string is not practical.
 Its files are in `parser/parser_name`.
-## Simplifier
-A Simplifier is a function that takes a CST and outputs the corresponding Common AST. This is the actual bridge between a given syntax and LIGO.
+## Sugar_to_core
+A Sugar_to_core is a function that takes a CST and outputs the corresponding Common AST. This is the actual bridge between a given syntax and LIGO.
 Its files are in `simplify/parser_name`.

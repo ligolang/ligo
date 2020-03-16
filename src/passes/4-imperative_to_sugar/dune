@@ -1,10 +1,10 @@
 (library
-  (name simplifier)
-  (public_name ligo.simplifier)
+  (name imperative_to_sugar)
+  (public_name ligo.imperative_to_sugar)
   (libraries
     simple-utils
+    ast_imperative
     ast_sugar
-    ast_core
     proto-alpha-utils
   )
   (preprocess

@@ -199,7 +199,7 @@ module Errors = struct
 end
 
 open Errors
-open Operators.Abstracter.Pascaligo
+open Operators.Concrete_to_imperative.Pascaligo
 
 let r_split = Location.r_split
 
@@ -229,9 +229,9 @@ let return_statement expr = ok @@ fun expr'_opt ->
   | Some expr' -> ok @@ e_sequence expr expr'
 
 
-let rec abstr_type_expression (t:Raw.type_expr) : type_expression result =
+let rec compile_type_expression (t:Raw.type_expr) : type_expression result =
   match t with
-    TPar x -> abstr_type_expression x.value.inside
+    TPar x -> compile_type_expression x.value.inside
   | TVar v -> (
       match type_constants v.value with
       | Ok (s,_) -> ok @@ make_t @@ T_constant s
@@ -240,25 +240,25 @@ let rec abstr_type_expression (t:Raw.type_expr) : type_expression result =
   | TFun x -> (
       let%bind (a , b) =
         let (a , _ , b) = x.value in
-        bind_map_pair abstr_type_expression (a , b) in
+        bind_map_pair compile_type_expression (a , b) in
       ok @@ make_t @@ T_arrow {type1=a;type2=b}
     )
   | TApp x ->
       let (name, tuple) = x.value in
       let lst = npseq_to_list tuple.value.inside in
       let%bind lst =
-        bind_list @@ List.map abstr_type_expression lst in (** TODO: fix constant and operator*)
+        bind_list @@ List.map compile_type_expression lst in (** TODO: fix constant and operator*)
       let%bind cst =
         trace (unknown_predefined_type name) @@
         type_operators name.value in
       t_operator cst lst
   | TProd p ->
-      let%bind tpl = abstr_list_type_expression
+      let%bind tpl = compile_list_type_expression
     @@ npseq_to_list p.value in
       ok tpl
   | TRecord r ->
       let aux = fun (x, y) ->
-        let%bind y = abstr_type_expression y in
+        let%bind y = compile_type_expression y in
         ok (x, y)
       in
       let apply =
@@ -276,7 +276,7 @@ let rec abstr_type_expression (t:Raw.type_expr) : type_expression result =
             None -> []
           | Some (_, TProd product) -> npseq_to_list product.value
           | Some (_, t_expr) -> [t_expr] in
-        let%bind te = abstr_list_type_expression @@ args in
+        let%bind te = compile_list_type_expression @@ args in
         ok (v.value.constr.value, te)
       in
       let%bind lst = bind_list
@@ -285,15 +285,15 @@ let rec abstr_type_expression (t:Raw.type_expr) : type_expression result =
       let m = List.fold_left (fun m (x, y) -> CMap.add (Constructor x) y m) CMap.empty lst in
       ok @@ make_t @@ T_sum m
 
-and abstr_list_type_expression (lst:Raw.type_expr list) : type_expression result =
+and compile_list_type_expression (lst:Raw.type_expr list) : type_expression result =
   match lst with
   | [] -> ok @@ t_unit
-  | [hd] -> abstr_type_expression hd
+  | [hd] -> compile_type_expression hd
   | lst ->
-      let%bind lst = bind_list @@ List.map abstr_type_expression lst in
+      let%bind lst = bind_list @@ List.map compile_type_expression lst in
       ok @@ t_tuple lst
 
-let abstr_projection : Raw.projection Region.reg -> _ = fun p ->
+let compile_projection : Raw.projection Region.reg -> _ = fun p ->
   let (p' , loc) = r_split p in
   let var =
     let name = Var.of_name p'.struct_name.value in
@@ -309,13 +309,13 @@ let abstr_projection : Raw.projection Region.reg -> _ = fun p ->
   ok @@ List.fold_left (e_accessor ~loc) var path'
 
 
-let rec abstr_expression (t:Raw.expr) : expr result =
+let rec compile_expression (t:Raw.expr) : expr result =
   let return x = ok x in
   match t with
   | EAnnot a -> (
       let ((expr , type_expr) , loc) = r_split a in
-      let%bind expr' = abstr_expression expr in
-      let%bind type_expr' = abstr_type_expression type_expr in
+      let%bind expr' = compile_expression expr in
+      let%bind type_expr' = compile_type_expression type_expr in
       return @@ e_annotation ~loc expr' type_expr'
     )
   | EVar c -> (
@@ -333,19 +333,19 @@ let rec abstr_expression (t:Raw.expr) : expr result =
         let (f_name , f_loc) = r_split name in
         match constants f_name with
         | Error _ ->
-           let%bind arg = abstr_tuple_expression ~loc:args_loc args' in
+           let%bind arg = compile_tuple_expression ~loc:args_loc args' in
            return @@ e_application ~loc (e_variable ~loc:f_loc (Var.of_name f_name)) arg
         | Ok (s,_) ->
-           let%bind lst = bind_map_list abstr_expression args' in
+           let%bind lst = bind_map_list compile_expression args' in
            return @@ e_constant ~loc s lst
       )
       | f -> (
-        let%bind f' = abstr_expression f in
-        let%bind arg = abstr_tuple_expression ~loc:args_loc args' in
+        let%bind f' = compile_expression f in
+        let%bind arg = compile_tuple_expression ~loc:args_loc args' in
         return @@ e_application ~loc f' arg
       )
     )
-  | EPar x -> abstr_expression x.value.inside
+  | EPar x -> compile_expression x.value.inside
   | EUnit reg ->
     let loc = Location.lift reg in
     return @@ e_literal ~loc Literal_unit
@@ -354,16 +354,16 @@ let rec abstr_expression (t:Raw.expr) : expr result =
     return @@ e_literal ~loc (Literal_bytes (Hex.to_bytes @@ snd x'))
   | ETuple tpl ->
       let (tpl' , loc) = r_split tpl in
-      abstr_tuple_expression ~loc @@ npseq_to_list tpl'.inside
+      compile_tuple_expression ~loc @@ npseq_to_list tpl'.inside
   | ERecord r ->
       let%bind fields = bind_list
-        @@ List.map (fun ((k : _ Raw.reg), v) -> let%bind v = abstr_expression v in ok (k.value, v))
+        @@ List.map (fun ((k : _ Raw.reg), v) -> let%bind v = compile_expression v in ok (k.value, v))
         @@ List.map (fun (x:Raw.field_assign Raw.reg) -> (x.value.field_name, x.value.field_expr))
         @@ npseq_to_list r.value.ne_elements in
       let aux prev (k, v) = SMap.add k v prev in
       return @@ e_record (List.fold_left aux SMap.empty fields)
-  | EProj p -> abstr_projection p
-  | EUpdate u -> abstr_update u
+  | EProj p -> compile_projection p
+  | EUpdate u -> compile_update u
   | EConstr (ConstrApp c) -> (
       let ((c, args) , loc) = r_split c in
       match args with
@@ -372,7 +372,7 @@ let rec abstr_expression (t:Raw.expr) : expr result =
       | Some args ->
           let args, args_loc = r_split args in
           let%bind arg =
-            abstr_tuple_expression ~loc:args_loc
+            compile_tuple_expression ~loc:args_loc
             @@ npseq_to_list args.inside in
           return @@ e_constructor ~loc c.value arg
     )
@@ -380,7 +380,7 @@ let rec abstr_expression (t:Raw.expr) : expr result =
       let ((_, args) , loc) = r_split a in
       let (args , args_loc) = r_split args in
       let%bind arg =
-        abstr_tuple_expression ~loc:args_loc
+        compile_tuple_expression ~loc:args_loc
         @@ npseq_to_list args.inside in
       return @@ e_constant ~loc C_SOME [arg]
   | EConstr (NoneExpr reg) -> (
@@ -388,15 +388,15 @@ let rec abstr_expression (t:Raw.expr) : expr result =
       return @@ e_none ~loc ()
     )
   | EArith (Add c) ->
-      abstr_binop "ADD" c
+      compile_binop "ADD" c
   | EArith (Sub c) ->
-      abstr_binop "SUB" c
+      compile_binop "SUB" c
   | EArith (Mult c) ->
-      abstr_binop "TIMES" c
+      compile_binop "TIMES" c
   | EArith (Div c) ->
-      abstr_binop "DIV" c
+      compile_binop "DIV" c
   | EArith (Mod c) ->
-      abstr_binop "MOD" c
+      compile_binop "MOD" c
   | EArith (Int n) -> (
       let (n , loc) = r_split n in
       let n = Z.to_int @@ snd n in
@@ -412,7 +412,7 @@ let rec abstr_expression (t:Raw.expr) : expr result =
     let n = Z.to_int @@ snd @@ n in
     return @@ e_literal ~loc (Literal_mutez n)
   )
-  | EArith (Neg e) -> abstr_unop "NEG" e
+  | EArith (Neg e) -> compile_unop "NEG" e
   | EString (String s) ->
     let (s , loc) = r_split s in
       let s' =
@@ -422,17 +422,17 @@ let rec abstr_expression (t:Raw.expr) : expr result =
       return @@ e_literal ~loc (Literal_string s')
   | EString (Cat bo) ->
     let (bo , loc) = r_split bo in
-    let%bind sl = abstr_expression bo.arg1 in
-    let%bind sr = abstr_expression bo.arg2 in
+    let%bind sl = compile_expression bo.arg1 in
+    let%bind sr = compile_expression bo.arg2 in
     return @@ e_string_cat ~loc sl sr
-  | ELogic l -> abstr_logic_expression l
-  | EList l -> abstr_list_expression l
-  | ESet s -> abstr_set_expression s
+  | ELogic l -> compile_logic_expression l
+  | EList l -> compile_list_expression l
+  | ESet s -> compile_set_expression s
   | ECond c ->
       let (c , loc) = r_split c in
-      let%bind expr = abstr_expression c.test in
-      let%bind match_true = abstr_expression c.ifso in
-      let%bind match_false = abstr_expression c.ifnot in
+      let%bind expr = compile_expression c.test in
+      let%bind match_true = compile_expression c.ifso in
+      let%bind match_false = compile_expression c.ifnot in
       let match_expr = e_matching expr ~loc (Match_bool {match_true; match_false}) in
       let env = Var.fresh () in
       let%bind (_, match_expr) = repair_mutable_variable_in_matching match_expr [] env in
@@ -440,16 +440,16 @@ let rec abstr_expression (t:Raw.expr) : expr result =
 
   | ECase c -> (
       let (c , loc) = r_split c in
-      let%bind e = abstr_expression c.expr in
+      let%bind e = compile_expression c.expr in
       let%bind lst =
         let aux (x : Raw.expr Raw.case_clause) =
-          let%bind expr = abstr_expression x.rhs in
+          let%bind expr = compile_expression x.rhs in
           ok (x.pattern, expr) in
         bind_list
         @@ List.map aux
         @@ List.map get_value
         @@ npseq_to_list c.cases.value in
-      let%bind cases = abstr_cases lst in
+      let%bind cases = compile_cases lst in
       let match_expr = e_matching ~loc e cases in
       let env = Var.fresh () in
       let%bind (_, match_expr) = repair_mutable_variable_in_matching match_expr [] env in
@@ -461,8 +461,8 @@ let rec abstr_expression (t:Raw.expr) : expr result =
         let lst = List.map get_value @@ pseq_to_list mi.elements in
         let aux : Raw.binding -> (expression * expression) result =
           fun b ->
-            let%bind src = abstr_expression b.source in
-            let%bind dst = abstr_expression b.image in
+            let%bind src = compile_expression b.source in
+            let%bind dst = compile_expression b.image in
             ok (src, dst) in
         bind_map_list aux lst in
       return @@ e_map ~loc lst
@@ -473,8 +473,8 @@ let rec abstr_expression (t:Raw.expr) : expr result =
         let lst = List.map get_value @@ pseq_to_list mi.elements in
         let aux : Raw.binding -> (expression * expression) result =
           fun b ->
-            let%bind src = abstr_expression b.source in
-            let%bind dst = abstr_expression b.image in
+            let%bind src = compile_expression b.source in
+            let%bind dst = compile_expression b.image in
             ok (src, dst) in
         bind_map_list aux lst in
       return @@ e_big_map ~loc lst
@@ -486,20 +486,20 @@ let rec abstr_expression (t:Raw.expr) : expr result =
             let (v , loc) = r_split v in
             return @@ e_variable ~loc (Var.of_name v)
           )
-        | Path p -> abstr_projection p
+        | Path p -> compile_projection p
       in
-      let%bind index = abstr_expression lu.index.value.inside in
+      let%bind index = compile_expression lu.index.value.inside in
       return @@ e_look_up ~loc path index
     )
   | EFun f ->
     let (f , loc) = r_split f in
-    let%bind (_ty_opt, f') = abstr_fun_expression ~loc f
+    let%bind (_ty_opt, f') = compile_fun_expression ~loc f
     in return @@ f'
 
 
-and abstr_update = fun (u:Raw.update Region.reg) ->
+and compile_update = fun (u:Raw.update Region.reg) ->
   let (u, loc) = r_split u in
-  let (name, path) = abstr_path u.record in
+  let (name, path) = compile_path u.record in
   let record = match path with
   | [] -> e_variable (Var.of_name name)
   | _ -> e_accessor_list (e_variable (Var.of_name name)) path in 
@@ -507,7 +507,7 @@ and abstr_update = fun (u:Raw.update Region.reg) ->
   let%bind updates' =
     let aux (f:Raw.field_path_assign Raw.reg) =
       let (f,_) = r_split f in
-      let%bind expr = abstr_expression f.field_expr in
+      let%bind expr = compile_expression f.field_expr in
         ok ( List.map (fun (x: _ Raw.reg) -> x.value) (npseq_to_list f.field_path), expr)
     in
     bind_map_list aux @@ npseq_to_list updates
@@ -523,7 +523,7 @@ and abstr_update = fun (u:Raw.update Region.reg) ->
     aux ur path in
   bind_fold_list aux record updates'
 
-and abstr_logic_expression (t:Raw.logic_expr) : expression result =
+and compile_logic_expression (t:Raw.logic_expr) : expression result =
   let return x = ok x in
   match t with
   | BoolExpr (False reg) -> (
@@ -535,92 +535,92 @@ and abstr_logic_expression (t:Raw.logic_expr) : expression result =
       return @@ e_literal ~loc (Literal_bool true)
     )
   | BoolExpr (Or b) ->
-      abstr_binop "OR" b
+      compile_binop "OR" b
   | BoolExpr (And b) ->
-      abstr_binop "AND" b
+      compile_binop "AND" b
   | BoolExpr (Not b) ->
-      abstr_unop "NOT" b
+      compile_unop "NOT" b
   | CompExpr (Lt c) ->
-      abstr_binop "LT" c
+      compile_binop "LT" c
   | CompExpr (Gt c) ->
-      abstr_binop "GT" c
+      compile_binop "GT" c
   | CompExpr (Leq c) ->
-      abstr_binop "LE" c
+      compile_binop "LE" c
   | CompExpr (Geq c) ->
-      abstr_binop "GE" c
+      compile_binop "GE" c
   | CompExpr (Equal c) ->
-      abstr_binop "EQ" c
+      compile_binop "EQ" c
   | CompExpr (Neq c) ->
-      abstr_binop "NEQ" c
+      compile_binop "NEQ" c
 
-and abstr_list_expression (t:Raw.list_expr) : expression result =
+and compile_list_expression (t:Raw.list_expr) : expression result =
   let return x = ok x in
   match t with
     ECons c ->
-      abstr_binop "CONS" c
+      compile_binop "CONS" c
   | EListComp lst ->
       let (lst , loc) = r_split lst in
       let%bind lst' =
-        bind_map_list abstr_expression @@
+        bind_map_list compile_expression @@
         pseq_to_list lst.elements in
       return @@ e_list ~loc lst'
   | ENil reg ->
       let loc = Location.lift reg in
       return @@ e_list ~loc []
 
-and abstr_set_expression (t:Raw.set_expr) : expression result =
+and compile_set_expression (t:Raw.set_expr) : expression result =
   match t with
   | SetMem x -> (
     let (x' , loc) = r_split x in
-    let%bind set' = abstr_expression x'.set in
-    let%bind element' = abstr_expression x'.element in
+    let%bind set' = compile_expression x'.set in
+    let%bind element' = compile_expression x'.element in
     ok @@ e_constant ~loc C_SET_MEM [ element' ; set' ]
   )
   | SetInj x -> (
     let (x' , loc) = r_split x in
     let elements = pseq_to_list x'.elements in
-    let%bind elements' = bind_map_list abstr_expression elements in
+    let%bind elements' = bind_map_list compile_expression elements in
     ok @@ e_set ~loc elements'
   )
 
-and abstr_binop (name:string) (t:_ Raw.bin_op Region.reg) : expression result =
+and compile_binop (name:string) (t:_ Raw.bin_op Region.reg) : expression result =
   let return x = ok x in
   let (t , loc) = r_split t in
-  let%bind a = abstr_expression t.arg1 in
-  let%bind b = abstr_expression t.arg2 in
+  let%bind a = compile_expression t.arg1 in
+  let%bind b = compile_expression t.arg2 in
   let%bind name = constants name in
   return @@ e_constant ~loc name [ a ; b ]
 
-and abstr_unop (name:string) (t:_ Raw.un_op Region.reg) : expression result =
+and compile_unop (name:string) (t:_ Raw.un_op Region.reg) : expression result =
   let return x = ok x in
   let (t , loc) = r_split t in
-  let%bind a = abstr_expression t.arg in
+  let%bind a = compile_expression t.arg in
   let%bind name = constants name in
   return @@ e_constant ~loc name [ a ]
 
-and abstr_tuple_expression ?loc (lst:Raw.expr list) : expression result =
+and compile_tuple_expression ?loc (lst:Raw.expr list) : expression result =
   let return x = ok x in
   match lst with
   | [] -> return @@ e_literal Literal_unit
-  | [hd] -> abstr_expression hd
+  | [hd] -> compile_expression hd
   | lst ->
-      let%bind lst = bind_list @@ List.map abstr_expression lst
+      let%bind lst = bind_list @@ List.map compile_expression lst
       in return @@ e_tuple ?loc lst
 
-and abstr_data_declaration : Raw.data_decl -> _ result =
+and compile_data_declaration : Raw.data_decl -> _ result =
   fun t ->
   match t with
   | LocalVar x ->
       let (x , loc) = r_split x in
       let name = x.name.value in
-      let%bind t = abstr_type_expression x.var_type in
-      let%bind expression = abstr_expression x.init in
+      let%bind t = compile_type_expression x.var_type in
+      let%bind expression = compile_expression x.init in
       return_let_in ~loc (Var.of_name name, Some t) false false expression
   | LocalConst x ->
       let (x , loc) = r_split x in
       let name = x.name.value in
-      let%bind t = abstr_type_expression x.const_type in
-      let%bind expression = abstr_expression x.init in
+      let%bind t = compile_type_expression x.const_type in
+      let%bind expression = compile_expression x.init in
       let inline =
         match x.attributes with
           None -> false
@@ -630,7 +630,7 @@ and abstr_data_declaration : Raw.data_decl -> _ result =
       in return_let_in ~loc (Var.of_name name, Some t) false inline expression
   | LocalFun f  ->
       let (f , loc) = r_split f in
-      let%bind (binder, expr) = abstr_fun_decl ~loc f in
+      let%bind (binder, expr) = compile_fun_decl ~loc f in
       let inline =
         match f.attributes with
           None -> false
@@ -639,22 +639,22 @@ and abstr_data_declaration : Raw.data_decl -> _ result =
            |> List.exists (fun Region.{value; _} -> value = "\"inline\"")
       in return_let_in ~loc binder false inline expr
 
-and abstr_param :
+and compile_param :
       Raw.param_decl -> (string * type_expression) result =
   fun t ->
   match t with
   | ParamConst c ->
       let c = c.value in
       let param_name = c.var.value in
-      let%bind type_expression = abstr_type_expression c.param_type in
+      let%bind type_expression = compile_type_expression c.param_type in
       ok (param_name , type_expression)
   | ParamVar v ->
       let c = v.value in
       let param_name = c.var.value in
-      let%bind type_expression = abstr_type_expression c.param_type in
+      let%bind type_expression = compile_type_expression c.param_type in
       ok (param_name , type_expression)
 
-and abstr_fun_decl :
+and compile_fun_decl :
       loc:_ -> Raw.fun_decl ->
       ((expression_variable * type_expression option) * expression) result =
   fun ~loc x ->
@@ -674,11 +674,11 @@ and abstr_fun_decl :
   in
   (match param.value.inside with
      a, [] -> (
-       let%bind input = abstr_param a in
+       let%bind input = compile_param a in
        let (binder , input_type) = input in
-       let%bind instructions = abstr_statement_list statements in
-       let%bind result = abstr_expression return in
-       let%bind output_type = abstr_type_expression ret_type in
+       let%bind instructions = compile_statement_list statements in
+       let%bind result = compile_expression return in
+       let%bind output_type = compile_type_expression ret_type in
        let body = instructions in
        let%bind result =
          let aux prec cur = cur (Some prec) in
@@ -699,7 +699,7 @@ and abstr_fun_decl :
        let lst = npseq_to_list lst in
        (* TODO wrong, should be fresh? *)
        let arguments_name = Var.of_name "arguments" in
-       let%bind params = bind_map_list abstr_param lst in
+       let%bind params = bind_map_list compile_param lst in
        let (binder , input_type) =
          let type_expression = t_tuple (List.map snd params) in
          (arguments_name , type_expression) in
@@ -712,9 +712,9 @@ and abstr_fun_decl :
            ass
          in
          bind_list @@ List.mapi aux params in
-       let%bind instructions = abstr_statement_list statements in
-       let%bind result = abstr_expression return in
-       let%bind output_type = abstr_type_expression ret_type in
+       let%bind instructions = compile_statement_list statements in
+       let%bind result = compile_expression return in
+       let%bind output_type = compile_type_expression ret_type in
        let body = tpl_declarations @ instructions in
        let%bind result =
          let aux prec cur = cur (Some prec) in
@@ -732,7 +732,7 @@ and abstr_fun_decl :
      )
   )
 
-and abstr_fun_expression :
+and compile_fun_expression :
   loc:_ -> Raw.fun_expr -> (type_expression option * expression) result =
   fun ~loc x ->
   let open! Raw in
@@ -740,11 +740,11 @@ and abstr_fun_expression :
   let statements = [] in
   (match param.value.inside with
     a, [] -> (
-        let%bind input = abstr_param a in
+        let%bind input = compile_param a in
         let (binder , input_type) = input in
-        let%bind instructions = abstr_statement_list statements in
-        let%bind result = abstr_expression return in
-        let%bind output_type = abstr_type_expression ret_type in
+        let%bind instructions = compile_statement_list statements in
+        let%bind result = compile_expression return in
+        let%bind output_type = compile_type_expression ret_type in
 
         let body = instructions in
         let%bind result =
@@ -763,7 +763,7 @@ and abstr_fun_expression :
        let lst = npseq_to_list lst in
        (* TODO wrong, should be fresh? *)
        let arguments_name = Var.of_name "arguments" in
-       let%bind params = bind_map_list abstr_param lst in
+       let%bind params = bind_map_list compile_param lst in
        let (binder , input_type) =
          let type_expression = t_tuple (List.map snd params) in
          (arguments_name , type_expression) in
@@ -775,9 +775,9 @@ and abstr_fun_expression :
            ass
          in
          bind_list @@ List.mapi aux params in
-       let%bind instructions = abstr_statement_list statements in
-       let%bind result = abstr_expression return in
-       let%bind output_type = abstr_type_expression ret_type in
+       let%bind instructions = compile_statement_list statements in
+       let%bind result = compile_expression return in
+       let%bind output_type = compile_type_expression ret_type in
        let body = tpl_declarations @ instructions in
        let%bind result =
          let aux prec cur = cur (Some prec) in
@@ -792,7 +792,7 @@ and abstr_fun_expression :
      )
   )
 
-and abstr_statement_list statements =
+and compile_statement_list statements =
   let open Raw in
   let rec hook acc = function
     [] -> acc
@@ -814,9 +814,9 @@ and abstr_statement_list statements =
       (* Detached attributes are erased. TODO: Warning. *)
       hook acc statements
   | Instr i :: statements ->
-      hook (abstr_instruction i :: acc) statements
+      hook (compile_instruction i :: acc) statements
   | Data d :: statements ->
-      hook (abstr_data_declaration d :: acc) statements
+      hook (compile_data_declaration d :: acc) statements
   in bind_list @@ hook [] (List.rev statements)
 
 and get_case_variables (t:Raw.pattern) : expression_variable list result = 
@@ -848,7 +848,7 @@ and get_case_variables (t:Raw.pattern) : expression_variable list result =
     | PVar  v -> ok @@ [Var.of_name v.value] 
     | p -> fail @@ unsupported_cst_constr p
 
-and abstr_single_instruction : Raw.instruction -> (_ -> expression result) result =
+and compile_single_instruction : Raw.instruction -> (_ -> expression result) result =
   fun t ->
   match t with
   | ProcCall x -> (
@@ -860,15 +860,15 @@ and abstr_single_instruction : Raw.instruction -> (_ -> expression result) resul
       let (f_name , f_loc) = r_split name in
       match constants f_name with
       | Error _  ->
-         let%bind arg = abstr_tuple_expression ~loc:args_loc args' in
+         let%bind arg = compile_tuple_expression ~loc:args_loc args' in
          return_statement @@ e_application ~loc (e_variable ~loc:f_loc (Var.of_name f_name)) arg
       | Ok (s,_) ->
-         let%bind lst = bind_map_list abstr_expression args' in
+         let%bind lst = bind_map_list compile_expression args' in
          return_statement @@ e_constant ~loc s lst
     )
     | f -> (
-      let%bind f' = abstr_expression f in
-      let%bind arg = abstr_tuple_expression ~loc:args_loc args' in
+      let%bind f' = compile_expression f in
+      let%bind arg = compile_tuple_expression ~loc:args_loc args' in
       return_statement @@ e_application ~loc f' arg
     )
   )
@@ -877,35 +877,35 @@ and abstr_single_instruction : Raw.instruction -> (_ -> expression result) resul
       return_statement @@ e_skip ~loc ()
     )
   | Loop (While l) ->
-      abstr_while_loop l.value
+      compile_while_loop l.value
   | Loop (For (ForInt fi)) -> (
-      let%bind loop = abstr_for_int fi.value in
+      let%bind loop = compile_for_int fi.value in
       ok loop
   )
   | Loop (For (ForCollect fc)) ->
-      let%bind loop = abstr_for_collect fc.value in
+      let%bind loop = compile_for_collect fc.value in
       ok loop
   | Cond c -> (
       let (c , loc) = r_split c in
-      let%bind expr = abstr_expression c.test in
+      let%bind expr = compile_expression c.test in
       let%bind match_true = match c.ifso with
           ClauseInstr i ->
-            abstr_single_instruction i
+            compile_single_instruction i
         | ClauseBlock b ->
             match b with
               LongBlock {value; _} ->
-                abstr_block value
+                compile_block value
             | ShortBlock {value; _} ->
-                abstr_statements @@ fst value.inside in
+                compile_statements @@ fst value.inside in
       let%bind match_false = match c.ifnot with
           ClauseInstr i ->
-            abstr_single_instruction i
+            compile_single_instruction i
         | ClauseBlock b ->
             match b with
               LongBlock {value; _} ->
-                abstr_block value
+                compile_block value
             | ShortBlock {value; _} ->
-                abstr_statements @@ fst value.inside in
+                compile_statements @@ fst value.inside in
       let env = Var.fresh () in
       
       let%bind match_true' = match_true None in
@@ -929,10 +929,10 @@ and abstr_single_instruction : Raw.instruction -> (_ -> expression result) resul
     )
   | Assign a -> (
       let (a , loc) = r_split a in
-      let%bind value_expr = abstr_expression a.rhs in
+      let%bind value_expr = compile_expression a.rhs in
       match a.lhs with
         | Path path -> (
-            let (name , path') = abstr_path path in
+            let (name , path') = compile_path path in
             let (let_binder, mut, rhs, inline) = e_assign_with_let ~loc name path' value_expr in
             return_let_in let_binder mut inline rhs
           )
@@ -941,11 +941,11 @@ and abstr_single_instruction : Raw.instruction -> (_ -> expression result) resul
             let%bind (varname,map,path) = match v'.path with
               | Name name -> ok (name.value , e_variable (Var.of_name name.value), [])
               | Path p ->
-                let (name,p') = abstr_path v'.path in
-                let%bind accessor = abstr_projection p in
+                let (name,p') = compile_path v'.path in
+                let%bind accessor = compile_projection p in
                 ok @@ (name , accessor , p')
             in
-            let%bind key_expr = abstr_expression v'.index.value.inside in
+            let%bind key_expr = compile_expression v'.index.value.inside in
             let expr' = e_map_add key_expr value_expr map in
             let (let_binder, mut, rhs, inline) = e_assign_with_let ~loc varname path expr' in
             return_let_in let_binder mut inline rhs  
@@ -953,20 +953,20 @@ and abstr_single_instruction : Raw.instruction -> (_ -> expression result) resul
     )
   | CaseInstr c -> (
       let (c , loc) = r_split c in
-      let%bind expr = abstr_expression c.expr in
+      let%bind expr = compile_expression c.expr in
       let env = Var.fresh () in
       let%bind (fv,cases) =
         let aux fv (x : Raw.if_clause Raw.case_clause Raw.reg) =
           let%bind case_clause =
             match x.value.rhs with
               ClauseInstr i ->
-                abstr_single_instruction i
+                compile_single_instruction i
             | ClauseBlock b ->
                 match b with
                   LongBlock {value; _} ->
-                    abstr_block value
+                    compile_block value
                 | ShortBlock {value; _} ->
-                  abstr_statements @@ fst value.inside in
+                  compile_statements @@ fst value.inside in
           let%bind case_clause'= case_clause @@ None in
           let%bind case_clause = case_clause @@ Some(e_variable env) in
           let%bind case_vars   = get_case_variables x.value.pattern in
@@ -976,11 +976,11 @@ and abstr_single_instruction : Raw.instruction -> (_ -> expression result) resul
       let free_vars = List.concat fv in
       if (List.length free_vars == 0) then (
         let cases = List.map (fun case -> let (a,_,b) = case in (a,b)) cases in
-        let%bind m = abstr_cases cases in
+        let%bind m = compile_cases cases in
         return_statement @@ e_matching ~loc expr m
       ) else (
         let cases = List.map (fun case -> let (a,b,_) = case in (a,b)) cases in
-        let%bind m = abstr_cases cases in
+        let%bind m = compile_cases cases in
         let match_expr = e_matching ~loc expr m in
         let return_expr = fun expr ->
           e_let_in (env,None) false false (store_mutable_variable free_vars) @@
@@ -1002,8 +1002,8 @@ and abstr_single_instruction : Raw.instruction -> (_ -> expression result) resul
         region=r.record_inj.region
         } in
       let u : Raw.update = {record=r.path;kwd_with=r.kwd_with; updates=update} in
-      let%bind expr = abstr_update {value=u;region=reg} in
-      let (name , access_path) = abstr_path r.path in
+      let%bind expr = compile_update {value=u;region=reg} in
+      let (name , access_path) = compile_path r.path in
       let loc = Some loc in
       let (binder, mut, rhs, inline) = e_assign_with_let ?loc name access_path expr in
       return_let_in binder mut inline rhs
@@ -1011,13 +1011,13 @@ and abstr_single_instruction : Raw.instruction -> (_ -> expression result) resul
   )
   | MapPatch patch -> (
       let (map_p, loc) = r_split patch in
-      let (name, access_path) = abstr_path map_p.path in
+      let (name, access_path) = compile_path map_p.path in
       let%bind inj = bind_list
           @@ List.map (fun (x:Raw.binding Region.reg) ->
             let x = x.value in
             let (key, value) = x.source, x.image in
-            let%bind key' = abstr_expression key in
-            let%bind value' = abstr_expression value
+            let%bind key' = compile_expression key in
+            let%bind value' = compile_expression value
             in ok @@ (key', value')
           )
         @@ npseq_to_list map_p.map_inj.value.ne_elements in
@@ -1034,10 +1034,10 @@ and abstr_single_instruction : Raw.instruction -> (_ -> expression result) resul
     )
   | SetPatch patch -> (
       let (setp, loc) = r_split patch in
-      let (name , access_path) = abstr_path setp.path in
+      let (name , access_path) = compile_path setp.path in
       let%bind inj =
         bind_list @@
-        List.map abstr_expression @@
+        List.map compile_expression @@
         npseq_to_list setp.set_inj.value.ne_elements in
       match inj with
       | [] -> return_statement @@ e_skip ~loc ()
@@ -1054,11 +1054,11 @@ and abstr_single_instruction : Raw.instruction -> (_ -> expression result) resul
       let%bind (varname,map,path) = match v.map with
         | Name v -> ok (v.value , e_variable (Var.of_name v.value) , [])
         | Path p ->
-          let (name,p') = abstr_path v.map in
-          let%bind accessor = abstr_projection p in
+          let (name,p') = compile_path v.map in
+          let%bind accessor = compile_projection p in
           ok @@ (name , accessor , p')
       in
-      let%bind key' = abstr_expression key in
+      let%bind key' = compile_expression key in
       let expr = e_constant ~loc C_MAP_REMOVE [key' ; map] in
       let (binder, mut, rhs, inline) = e_assign_with_let ~loc varname path expr in
       return_let_in binder mut inline rhs
@@ -1068,17 +1068,17 @@ and abstr_single_instruction : Raw.instruction -> (_ -> expression result) resul
       let%bind (varname, set, path) = match set_rm.set with
         | Name v -> ok (v.value, e_variable (Var.of_name v.value), [])
         | Path path ->
-          let(name, p') = abstr_path set_rm.set in
-          let%bind accessor = abstr_projection path in
+          let(name, p') = compile_path set_rm.set in
+          let%bind accessor = compile_projection path in
           ok @@ (name, accessor, p')
       in
-      let%bind removed' = abstr_expression set_rm.element in
+      let%bind removed' = compile_expression set_rm.element in
       let expr = e_constant ~loc C_SET_REMOVE [removed' ; set] in
       let (binder, mut, rhs, inline) = e_assign_with_let ~loc varname path expr in
       return_let_in binder mut inline rhs
     )
 
-and abstr_path : Raw.path -> string * string list = fun p ->
+and compile_path : Raw.path -> string * string list = fun p ->
   match p with
   | Raw.Name v -> (v.value , [])
   | Raw.Path p -> (
@@ -1095,7 +1095,7 @@ and abstr_path : Raw.path -> string * string list = fun p ->
       (var , path')
     )
 
-and abstr_cases : (Raw.pattern * expression) list -> matching_expr result = fun t ->
+and compile_cases : (Raw.pattern * expression) list -> matching_expr result = fun t ->
   let open Raw in
   let get_var (t:Raw.pattern) =
     match t with
@@ -1186,13 +1186,13 @@ and abstr_cases : (Raw.pattern * expression) list -> matching_expr result = fun 
         bind_map_list aux lst in
       ok @@ ez_match_variant constrs
 
-and abstr_instruction : Raw.instruction -> (_ -> expression result) result =
-  fun t -> trace (abstracting_instruction t) @@ abstr_single_instruction t
+and compile_instruction : Raw.instruction -> (_ -> expression result) result =
+  fun t -> trace (abstracting_instruction t) @@ compile_single_instruction t
 
-and abstr_statements : Raw.statements -> (_ -> expression result) result =
+and compile_statements : Raw.statements -> (_ -> expression result) result =
   fun statements ->
     let lst = npseq_to_list statements in
-    let%bind fs = abstr_statement_list lst in
+    let%bind fs = compile_statement_list lst in
     let aux : _ -> (expression option -> expression result) -> _ =
       fun prec cur ->
         let%bind res = cur prec
@@ -1201,19 +1201,19 @@ and abstr_statements : Raw.statements -> (_ -> expression result) result =
            let%bind ret = bind_fold_right_list aux expr' fs in
            ok @@ Option.unopt_exn ret
 
-and abstr_block : Raw.block -> (_ -> expression result) result =
-  fun t -> abstr_statements t.statements
+and compile_block : Raw.block -> (_ -> expression result) result =
+  fun t -> compile_statements t.statements
 
-and abstr_while_loop : Raw.while_loop -> (_ -> expression result) result = fun wl ->
+and compile_while_loop : Raw.while_loop -> (_ -> expression result) result = fun wl ->
   let env_rec = Var.fresh () in
   let binder  = Var.fresh () in
 
-  let%bind cond = abstr_expression wl.cond in
+  let%bind cond = compile_expression wl.cond in
   let ctrl = 
     (e_variable binder)
   in
 
-  let%bind for_body = abstr_block wl.block.value in
+  let%bind for_body = compile_block wl.block.value in
   let%bind for_body = for_body @@ Some( ctrl ) in
   let%bind ((_,captured_name_list),for_body) = repair_mutable_variable_in_loops for_body [] binder in
 
@@ -1238,15 +1238,15 @@ and abstr_while_loop : Raw.while_loop -> (_ -> expression result) result = fun w
   restore_mutable_variable return_expr captured_name_list env_rec 
 
 
-and abstr_for_int : Raw.for_int -> (_ -> expression result) result = fun fi ->
+and compile_for_int : Raw.for_int -> (_ -> expression result) result = fun fi ->
   let env_rec = Var.fresh () in
   let binder  = Var.fresh () in
   let name = fi.assign.value.name.value in
   let it = Var.of_name name in
   let var = e_variable it in
   (*Make the cond and the step *)
-  let%bind value = abstr_expression fi.assign.value.expr in
-  let%bind bound = abstr_expression fi.bound in
+  let%bind value = compile_expression fi.assign.value.expr in
+  let%bind bound = compile_expression fi.bound in
   let cond = e_annotation (e_constant C_LE [var ; bound]) t_bool in
   let step = e_int 1 in
   let continue_expr = e_constant C_FOLD_CONTINUE [(e_variable binder)] in
@@ -1256,7 +1256,7 @@ and abstr_for_int : Raw.for_int -> (_ -> expression result) result = fun fi ->
     continue_expr
   in
   (* Modify the body loop*)
-  let%bind for_body = abstr_block fi.block.value in
+  let%bind for_body = compile_block fi.block.value in
   let%bind for_body = for_body @@ Some ctrl in
   let%bind ((_,captured_name_list),for_body) = repair_mutable_variable_in_loops for_body [it] binder in
 
@@ -1286,19 +1286,19 @@ and abstr_for_int : Raw.for_int -> (_ -> expression result) result = fun fi ->
   in
   restore_mutable_variable return_expr captured_name_list env_rec 
 
-and abstr_for_collect : Raw.for_collect -> (_ -> expression result) result = fun fc ->
+and compile_for_collect : Raw.for_collect -> (_ -> expression result) result = fun fc ->
   let binder = Var.of_name "arguments" in
   let%bind element_names = ok @@ match fc.bind_to with
     | Some v -> [Var.of_name fc.var.value;Var.of_name (snd v).value]
     | None -> [Var.of_name fc.var.value] in
   
   let env = Var.fresh () in
-  let%bind for_body = abstr_block fc.block.value in
+  let%bind for_body = compile_block fc.block.value in
   let%bind for_body = for_body @@ Some (e_accessor (e_variable binder) "0") in
   let%bind ((_,free_vars), for_body) = repair_mutable_variable_in_loops for_body element_names binder in
 
   let init_record = store_mutable_variable free_vars in
-  let%bind collect = abstr_expression fc.expr in
+  let%bind collect = compile_expression fc.expr in
   let aux name expr=
     e_let_in (name,None) false false (e_accessor (e_accessor (e_variable binder) "0") (Var.to_name name)) expr
   in
@@ -1320,7 +1320,7 @@ and abstr_for_collect : Raw.for_collect -> (_ -> expression result) result = fun
   in
   restore_mutable_variable fold free_vars env
 
-and abstr_declaration_list declarations : declaration Location.wrap list result =
+and compile_declaration_list declarations : declaration Location.wrap list result =
   let open Raw in
   let rec hook acc = function
     [] -> acc
@@ -1344,16 +1344,16 @@ and abstr_declaration_list declarations : declaration Location.wrap list result 
   | TypeDecl decl :: declarations ->
       let decl, loc = r_split decl in
       let {name; type_expr} : Raw.type_decl = decl in
-      let%bind type_expression = abstr_type_expression type_expr in
+      let%bind type_expression = compile_type_expression type_expr in
       let new_decl =
         Declaration_type (Var.of_name name.value, type_expression) in
       let res = Location.wrap ~loc new_decl in
       hook (bind_list_cons res acc) declarations
   | ConstDecl decl :: declarations ->
-      let abstr_const_decl =
+      let compile_const_decl =
         fun {name;const_type; init; attributes} ->
-          let%bind expression = abstr_expression init in
-          let%bind t = abstr_type_expression const_type in
+          let%bind expression = compile_expression init in
+          let%bind t = compile_type_expression const_type in
           let type_annotation = Some t in
           let inline =
             match attributes with
@@ -1366,11 +1366,11 @@ and abstr_declaration_list declarations : declaration Location.wrap list result 
               (Var.of_name name.value, type_annotation, inline, expression)
           in ok new_decl in
       let%bind res =
-        bind_map_location abstr_const_decl (Location.lift_region decl)
+        bind_map_location compile_const_decl (Location.lift_region decl)
       in hook (bind_list_cons res acc) declarations
   | FunDecl fun_decl :: declarations ->
       let decl, loc = r_split fun_decl in
-      let%bind ((name, ty_opt), expr) = abstr_fun_decl ~loc decl in
+      let%bind ((name, ty_opt), expr) = compile_fun_decl ~loc decl in
       let inline =
         match fun_decl.value.attributes with
           None -> false
@@ -1383,5 +1383,5 @@ and abstr_declaration_list declarations : declaration Location.wrap list result 
       hook (bind_list_cons res acc) declarations
   in hook (ok @@ []) (List.rev declarations)
 
-let abstr_program : Raw.ast -> program result =
-  fun t -> abstr_declaration_list @@ nseq_to_list t.decl
+let compile_program : Raw.ast -> program result =
+  fun t -> compile_declaration_list @@ nseq_to_list t.decl

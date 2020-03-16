@@ -1,16 +1,16 @@
 open Trace
 open Ast_imperative
-open Instruction_remover
+open Imperative_to_sugar
 
 type form = 
   | Contract of string
   | Env
 
 let compile (program : program) : Ast_sugar.program result =
-  remove_instruction_in_program program
+  compile_program program
 
 let compile_expression (e : expression) : Ast_sugar.expression result =
-  remove_instruction_in_expression e
+  compile_expression e
 
 let pretty_print formatter (program : program) = 
   PP.program formatter program

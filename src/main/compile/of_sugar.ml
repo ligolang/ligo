@@ -1,16 +1,16 @@
 open Trace
 open Ast_sugar
-open Simplifier
+open Sugar_to_core
 
 type form = 
   | Contract of string
   | Env
 
 let compile (program : program) : Ast_core.program result =
-  simplify_program program
+  compile_program program
 
 let compile_expression (e : expression) : Ast_core.expression result =
-  simplify_expression e
+  compile_expression e
 
 let pretty_print formatter (program : program) = 
   PP.program formatter program

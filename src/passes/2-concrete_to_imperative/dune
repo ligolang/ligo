@@ -1,6 +1,6 @@
 (library
-  (name abstracter)
-  (public_name ligo.abstracter)
+  (name concrete_to_imperative)
+  (public_name ligo.concrete_to_imperative)
   (libraries
     simple-utils
     tezos-utils
@@ -8,7 +8,7 @@
     ast_imperative
     self_ast_imperative
     operators)
-  (modules cameligo pascaligo abstracter)
+  (modules cameligo pascaligo concrete_to_imperative)
   (preprocess
     (pps
       ppx_let

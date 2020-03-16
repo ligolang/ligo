@@ -9,7 +9,7 @@ open Trace
   a new constructor at all those places.
 *)
 
-module Abstracter = struct
+module Concrete_to_imperative = struct
 
   open Ast_imperative
   (*

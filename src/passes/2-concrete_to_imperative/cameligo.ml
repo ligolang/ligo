@@ -156,7 +156,7 @@ end
 
 open Errors
 
-open Operators.Abstracter.Cameligo
+open Operators.Concrete_to_imperative.Cameligo
 
 let r_split = Location.r_split
 
@@ -205,7 +205,7 @@ let rec typed_pattern_to_typed_vars : Raw.pattern -> _ = fun pattern ->
   | Raw.PTyped pt ->
      let (p,t) = pt.value.pattern,pt.value.type_expr in
      let%bind p = tuple_pattern_to_vars p in 
-     let%bind t = abstr_type_expression t in
+     let%bind t = compile_type_expression t in
      ok @@ (p,t)
   | other -> (fail @@ wrong_pattern "parenthetical or type annotation" other)
 
@@ -213,10 +213,10 @@ and unpar_pattern : Raw.pattern -> Raw.pattern = function
   | PPar p -> unpar_pattern p.value.inside
   | _ as p -> p
 
-and abstr_type_expression : Raw.type_expr -> type_expression result = fun te ->
+and compile_type_expression : Raw.type_expr -> type_expression result = fun te ->
   trace (simple_info "abstracting this type expression...") @@
   match te with
-    TPar x -> abstr_type_expression x.value.inside
+    TPar x -> compile_type_expression x.value.inside
   | TVar v -> (
       match type_constants v.value with
       | Ok (s,_) -> ok @@ make_t @@ T_constant s
@@ -225,8 +225,8 @@ and abstr_type_expression : Raw.type_expr -> type_expression result = fun te ->
   | TFun x -> (
       let%bind (type1 , type2) =
         let (a , _ , b) = x.value in
-        let%bind a = abstr_type_expression a in
-        let%bind b = abstr_type_expression b in
+        let%bind a = compile_type_expression a in
+        let%bind b = compile_type_expression b in
         ok (a , b)
       in
       ok @@ make_t @@ T_arrow {type1;type2}
@@ -234,18 +234,18 @@ and abstr_type_expression : Raw.type_expr -> type_expression result = fun te ->
   | TApp x -> (
       let (name, tuple) = x.value in
       let lst = npseq_to_list tuple.value.inside in
-      let%bind lst' = bind_map_list abstr_type_expression lst in
+      let%bind lst' = bind_map_list compile_type_expression lst in
       let%bind cst =
         trace (unknown_predefined_type name) @@
         type_operators name.value in
       t_operator cst lst'
     )
   | TProd p -> (
-      let%bind tpl = abstr_list_type_expression  @@ npseq_to_list p.value in
+      let%bind tpl = compile_list_type_expression  @@ npseq_to_list p.value in
       ok tpl
     )
   | TRecord r ->
-      let aux = fun (x, y) -> let%bind y = abstr_type_expression y in ok (x, y) in
+      let aux = fun (x, y) -> let%bind y = compile_type_expression y in ok (x, y) in
       let apply (x:Raw.field_decl Raw.reg) =
         (x.value.field_name.value, x.value.field_type) in
       let%bind lst =
@@ -262,7 +262,7 @@ and abstr_type_expression : Raw.type_expr -> type_expression result = fun te ->
             None -> []
           | Some (_, TProd product) -> npseq_to_list product.value
           | Some (_, t_expr) -> [t_expr] in
-        let%bind te = abstr_list_type_expression @@ args in
+        let%bind te = compile_list_type_expression @@ args in
         ok (v.value.constr.value, te) in
       let%bind lst = bind_list
         @@ List.map aux
@@ -270,18 +270,18 @@ and abstr_type_expression : Raw.type_expr -> type_expression result = fun te ->
       let m = List.fold_left (fun m (x, y) -> CMap.add (Constructor x) y m) CMap.empty lst in
       ok @@ make_t @@ T_sum m
 
-and abstr_list_type_expression (lst:Raw.type_expr list) : type_expression result =
+and compile_list_type_expression (lst:Raw.type_expr list) : type_expression result =
   match lst with
   | [] -> ok @@ t_unit
-  | [hd] -> abstr_type_expression hd
+  | [hd] -> compile_type_expression hd
   | lst ->
-      let%bind lst = bind_map_list abstr_type_expression lst in
+      let%bind lst = bind_map_list compile_type_expression lst in
       ok @@ t_tuple lst
 
-let rec abstr_expression :
+let rec compile_expression :
   Raw.expr -> expr result = fun t ->
   let return x = ok x in
-  let abstr_projection = fun (p:Raw.projection Region.reg) ->
+  let compile_projection = fun (p:Raw.projection Region.reg) ->
     let (p , loc) = r_split p in
     let var =
       let name = Var.of_name p.struct_name.value in
@@ -296,7 +296,7 @@ let rec abstr_expression :
       List.map aux @@ npseq_to_list path in
     return @@ List.fold_left (e_accessor ~loc ) var path'
   in
-  let abstr_path : Raw.path -> string * label list = fun p ->
+  let compile_path : Raw.path -> string * label list = fun p ->
     match p with
     | Raw.Name v -> (v.value , [])
     | Raw.Path p -> (
@@ -313,9 +313,9 @@ let rec abstr_expression :
         (var , path')
       )
   in
-  let abstr_update = fun (u:Raw.update Region.reg) ->
+  let compile_update = fun (u:Raw.update Region.reg) ->
     let (u, loc) = r_split u in
-    let (name, path) = abstr_path u.record in
+    let (name, path) = compile_path u.record in
     let record = match path with
     | [] -> e_variable (Var.of_name name)
     | _ ->
@@ -325,7 +325,7 @@ let rec abstr_expression :
     let%bind updates' =
       let aux (f:Raw.field_path_assign Raw.reg) =
         let (f,_) = r_split f in
-        let%bind expr = abstr_expression f.field_expr in
+        let%bind expr = compile_expression f.field_expr in
         ok ( List.map (fun (x: _ Raw.reg) -> x.value) (npseq_to_list f.field_path), expr)
       in
       bind_map_list aux @@ npseq_to_list updates
@@ -352,20 +352,20 @@ let rec abstr_expression :
       | (p, []) ->
       let%bind variables = tuple_pattern_to_typed_vars p in
       let%bind ty_opt =
-        bind_map_option (fun (_,te) -> abstr_type_expression te) lhs_type in
-      let%bind rhs = abstr_expression let_rhs in
+        bind_map_option (fun (_,te) -> compile_type_expression te) lhs_type in
+      let%bind rhs = compile_expression let_rhs in
       let rhs_b = Var.fresh ~name: "rhs" () in
       let rhs',rhs_b_expr =
         match ty_opt with
           None -> rhs, e_variable rhs_b
         | Some ty -> (e_annotation rhs ty), e_annotation (e_variable rhs_b) ty in
-      let%bind body = abstr_expression body in
+      let%bind body = compile_expression body in
       let prepare_variable (ty_var: Raw.variable * Raw.type_expr option) =
         let variable, ty_opt = ty_var in
         let var_expr = Var.of_name variable.value in
         let%bind ty_expr_opt =
           match ty_opt with
-          | Some ty -> bind_map_option abstr_type_expression (Some ty)
+          | Some ty -> bind_map_option compile_type_expression (Some ty)
           | None -> ok None
         in ok (var_expr, ty_expr_opt)
       in
@@ -397,7 +397,7 @@ let rec abstr_expression :
       | None -> (match let_rhs with 
         | EFun {value={binders;lhs_type}} -> 
           let f_args = nseq_to_list (binders) in
-          let%bind lhs_type' = bind_map_option (fun x -> abstr_type_expression (snd x)) lhs_type in
+          let%bind lhs_type' = bind_map_option (fun x -> compile_type_expression (snd x)) lhs_type in
           let%bind ty = bind_map_list typed_pattern_to_typed_vars f_args in
           let aux acc ty = Option.map (t_function (snd ty)) acc in
           ok @@ (List.fold_right' aux lhs_type' ty)
@@ -444,8 +444,8 @@ let rec abstr_expression :
       end
   | Raw.EAnnot a ->
       let Raw.{inside=expr, _, type_expr; _}, loc = r_split a in
-      let%bind expr' = abstr_expression expr in
-      let%bind type_expr' = abstr_type_expression type_expr in
+      let%bind expr' = compile_expression expr in
+      let%bind type_expr' = compile_type_expression type_expr in
       return @@ e_annotation ~loc expr' type_expr'
   | EVar c ->
       let (c',loc) = r_split c in
@@ -454,7 +454,7 @@ let rec abstr_expression :
        | Ok (s,_) -> return @@ e_constant s [])
   | ECall x -> (
       let ((e1 , e2) , loc) = r_split x in
-      let%bind args = bind_map_list abstr_expression (nseq_to_list e2) in
+      let%bind args = bind_map_list compile_expression (nseq_to_list e2) in
       let rec chain_application (f: expression) (args: expression list) =
         match args with
         | hd :: tl ->  chain_application (e_application ~loc f hd) tl
@@ -468,29 +468,29 @@ let rec abstr_expression :
           | Ok (s, _) -> return @@ e_constant ~loc s args
               )
       | e1 ->
-          let%bind e1' = abstr_expression e1 in
+          let%bind e1' = compile_expression e1 in
           return @@ chain_application e1' args
   )
-  | EPar x -> abstr_expression x.value.inside
+  | EPar x -> compile_expression x.value.inside
   | EUnit reg ->
       let (_ , loc) = r_split reg in
       return @@ e_literal ~loc Literal_unit
   | EBytes x ->
       let (x , loc) = r_split x in
       return @@ e_literal ~loc (Literal_bytes (Hex.to_bytes @@ snd x))
-  | ETuple tpl -> abstr_tuple_expression @@ (npseq_to_list tpl.value)
+  | ETuple tpl -> compile_tuple_expression @@ (npseq_to_list tpl.value)
   | ERecord r ->
       let (r , loc) = r_split r in
       let%bind fields = bind_list
-        @@ List.map (fun ((k : _ Raw.reg), v) -> let%bind v = abstr_expression v in ok (k.value, v))
+        @@ List.map (fun ((k : _ Raw.reg), v) -> let%bind v = compile_expression v in ok (k.value, v))
         @@ List.map (fun (x:Raw.field_assign Raw.reg) -> (x.value.field_name, x.value.field_expr))
         @@ npseq_to_list r.ne_elements in
       return @@ e_record_ez ~loc fields
-  | EProj p -> abstr_projection p
-  | EUpdate u -> abstr_update u
+  | EProj p -> compile_projection p
+  | EUpdate u -> compile_update u
   | EConstr (ESomeApp a) ->
       let (_, args), loc = r_split a in
-      let%bind arg = abstr_expression args in
+      let%bind arg = compile_expression args in
       return @@ e_constant ~loc C_SOME [arg]
   | EConstr (ENone reg) ->
       let loc = Location.lift reg in
@@ -502,18 +502,18 @@ let rec abstr_expression :
         match args with
           None -> []
         | Some arg -> [arg] in
-      let%bind arg = abstr_tuple_expression @@ args
+      let%bind arg = compile_tuple_expression @@ args
       in return @@ e_constructor ~loc c_name arg
   | EArith (Add c) ->
-      abstr_binop "ADD" c
+      compile_binop "ADD" c
   | EArith (Sub c) ->
-      abstr_binop "SUB" c
+      compile_binop "SUB" c
   | EArith (Mult c) ->
-      abstr_binop "TIMES" c
+      compile_binop "TIMES" c
   | EArith (Div c) ->
-      abstr_binop "DIV" c
+      compile_binop "DIV" c
   | EArith (Mod c) ->
-      abstr_binop "MOD" c
+      compile_binop "MOD" c
   | EArith (Int n) -> (
       let (n , loc) = r_split n in
       let n = Z.to_int @@ snd @@ n in
@@ -529,7 +529,7 @@ let rec abstr_expression :
       let n = Z.to_int @@ snd @@ n in
       return @@ e_literal ~loc (Literal_mutez n)
     )
-  | EArith (Neg e) -> abstr_unop "NEG" e
+  | EArith (Neg e) -> compile_unop "NEG" e
   | EString (String s) -> (
       let (s , loc) = r_split s in
       let s' =
@@ -540,24 +540,24 @@ let rec abstr_expression :
     )
   | EString (Cat c) ->
     let (c, loc) = r_split c in
-    let%bind string_left = abstr_expression c.arg1 in
-    let%bind string_right = abstr_expression c.arg2 in
+    let%bind string_left = compile_expression c.arg1 in
+    let%bind string_right = compile_expression c.arg2 in
     return @@ e_string_cat ~loc string_left string_right
-  | ELogic l -> abstr_logic_expression l
-  | EList l -> abstr_list_expression l
+  | ELogic l -> compile_logic_expression l
+  | EList l -> compile_list_expression l
   | ECase c -> (
       let (c , loc) = r_split c in
-      let%bind e = abstr_expression c.expr in
+      let%bind e = compile_expression c.expr in
       let%bind lst =
         let aux (x : Raw.expr Raw.case_clause) =
-          let%bind expr = abstr_expression x.rhs in
+          let%bind expr = compile_expression x.rhs in
           ok (x.pattern, expr) in
         bind_list
         @@ List.map aux
         @@ List.map get_value
         @@ npseq_to_list c.cases.value in
       let default_action () =
-        let%bind cases = abstr_cases lst in
+        let%bind cases = compile_cases lst in
         return @@ e_matching ~loc e  cases in
       (* Hack to take care of patterns introduced by `parser/cameligo/Parser.mly` in "norm_fun_expr". TODO: Still needed? *)
       match lst with
@@ -571,7 +571,7 @@ let rec abstr_expression :
                   match x'.pattern with
                   | Raw.PVar y ->
                     let var_name = Var.of_name y.value in
-                    let%bind type_expr = abstr_type_expression x'.type_expr in
+                    let%bind type_expr = compile_type_expression x'.type_expr in
                     return @@ e_let_in (var_name , Some type_expr) false false e rhs
                   | _ -> default_action ()
                 )
@@ -581,29 +581,29 @@ let rec abstr_expression :
         )
       | _ -> default_action ()
     )
-  | EFun lamb -> abstr_fun lamb
+  | EFun lamb -> compile_fun lamb
   | ESeq s -> (
       let (s , loc) = r_split s in
       let items : Raw.expr list = pseq_to_list s.elements in
       (match items with
          [] -> return @@ e_skip ~loc ()
        | expr::more ->
-          let expr' = abstr_expression expr in
+          let expr' = compile_expression expr in
           let apply (e1: Raw.expr) (e2: expression Trace.result) =
-            let%bind a = abstr_expression e1 in
+            let%bind a = compile_expression e1 in
             let%bind e2' = e2 in
             return @@ e_sequence a e2'
           in List.fold_right apply more expr')
     )
   | ECond c -> (
       let (c , loc) = r_split c in
-      let%bind expr = abstr_expression c.test in
-      let%bind match_true = abstr_expression c.ifso in
-      let%bind match_false = abstr_expression c.ifnot in
+      let%bind expr = compile_expression c.test in
+      let%bind match_true = compile_expression c.ifso in
+      let%bind match_false = compile_expression c.ifnot in
       return @@ e_matching ~loc expr (Match_bool {match_true; match_false})
     )
 
-and abstr_fun lamb' : expr result =
+and compile_fun lamb' : expr result =
   let return x = ok x in
   let (lamb , loc) = r_split lamb' in
   let%bind params' =
@@ -649,7 +649,7 @@ and abstr_fun lamb' : expr result =
       | _ , None ->
           fail @@ untyped_fun_param var
       | _ , Some ty -> (
-        let%bind ty' = abstr_type_expression ty in
+        let%bind ty' = compile_type_expression ty in
         ok (var , ty')
       )
     in
@@ -700,8 +700,8 @@ and abstr_fun lamb' : expr result =
   in
   let%bind (body , body_type) = expr_to_typed_expr body in
   let%bind output_type =
-    bind_map_option abstr_type_expression body_type in
-  let%bind body = abstr_expression body in
+    bind_map_option compile_type_expression body_type in
+  let%bind body = compile_expression body in
   let rec layer_arguments (arguments: (Raw.variable * type_expression) list) =
     match arguments with
     | hd :: tl ->
@@ -714,7 +714,7 @@ and abstr_fun lamb' : expr result =
   return @@ ret_lamb
 
 
-and abstr_logic_expression ?te_annot (t:Raw.logic_expr) : expr result =
+and compile_logic_expression ?te_annot (t:Raw.logic_expr) : expr result =
   let return x = ok @@ make_option_typed x te_annot in
   match t with
   | BoolExpr (False reg) -> (
@@ -726,61 +726,61 @@ and abstr_logic_expression ?te_annot (t:Raw.logic_expr) : expr result =
       return @@ e_literal ~loc (Literal_bool true)
     )
   | BoolExpr (Or b) ->
-      abstr_binop "OR" b
+      compile_binop "OR" b
   | BoolExpr (And b) ->
-      abstr_binop "AND" b
+      compile_binop "AND" b
   | BoolExpr (Not b) ->
-      abstr_unop "NOT" b
+      compile_unop "NOT" b
   | CompExpr (Lt c) ->
-      abstr_binop "LT" c
+      compile_binop "LT" c
   | CompExpr (Gt c) ->
-      abstr_binop "GT" c
+      compile_binop "GT" c
   | CompExpr (Leq c) ->
-      abstr_binop "LE" c
+      compile_binop "LE" c
   | CompExpr (Geq c) ->
-      abstr_binop "GE" c
+      compile_binop "GE" c
   | CompExpr (Equal c) ->
-      abstr_binop "EQ" c
+      compile_binop "EQ" c
   | CompExpr (Neq c) ->
-      abstr_binop "NEQ" c
+      compile_binop "NEQ" c
 
-and abstr_list_expression (t:Raw.list_expr) : expression result =
+and compile_list_expression (t:Raw.list_expr) : expression result =
   let return x = ok @@ x in
   match t with
-    ECons c -> abstr_binop "CONS" c
+    ECons c -> compile_binop "CONS" c
   | EListComp lst -> (
       let (lst , loc) = r_split lst in
       let%bind lst' =
-        bind_map_list abstr_expression @@
+        bind_map_list compile_expression @@
         pseq_to_list lst.elements in
       return @@ e_list ~loc lst'
     )
 
-and abstr_binop (name:string) (t:_ Raw.bin_op Region.reg) : expression result =
+and compile_binop (name:string) (t:_ Raw.bin_op Region.reg) : expression result =
   let return x = ok @@ x in
   let (args , loc) = r_split t in
-  let%bind a = abstr_expression args.arg1 in
-  let%bind b = abstr_expression args.arg2 in
+  let%bind a = compile_expression args.arg1 in
+  let%bind b = compile_expression args.arg2 in
   let%bind name = constants name in
   return @@ e_constant ~loc name [ a ; b ]
 
-and abstr_unop (name:string) (t:_ Raw.un_op Region.reg) : expression result =
+and compile_unop (name:string) (t:_ Raw.un_op Region.reg) : expression result =
   let return x = ok @@ x in
   let (t , loc) = r_split t in
-  let%bind a = abstr_expression t.arg in
+  let%bind a = compile_expression t.arg in
   let%bind name = constants name in
   return @@ e_constant ~loc name [ a ]
 
-and abstr_tuple_expression ?loc (lst:Raw.expr list) : expression result =
+and compile_tuple_expression ?loc (lst:Raw.expr list) : expression result =
   let return x = ok @@ x in
   match lst with
   | [] -> return @@ e_literal ?loc Literal_unit
-  | [hd] -> abstr_expression hd
+  | [hd] -> compile_expression hd
   | lst ->
-      let%bind lst = bind_list @@ List.map abstr_expression lst in
+      let%bind lst = bind_list @@ List.map compile_expression lst in
       return @@ e_tuple ?loc lst
 
-and abstr_declaration : Raw.declaration -> declaration Location.wrap list result =
+and compile_declaration : Raw.declaration -> declaration Location.wrap list result =
   fun t ->
   let open! Raw in
   let loc : 'a . 'a Raw.reg -> _ -> _ =
@@ -788,7 +788,7 @@ and abstr_declaration : Raw.declaration -> declaration Location.wrap list result
   match t with
   | TypeDecl x ->
       let {name;type_expr} : Raw.type_decl = x.value in
-      let%bind type_expression = abstr_type_expression type_expr in
+      let%bind type_expression = compile_type_expression type_expr in
       ok @@ [loc x @@ Declaration_type (Var.of_name name.value , type_expression)]
   | Let x -> (
       let (_, recursive, let_binding, attributes), _ = r_split x in
@@ -803,11 +803,11 @@ and abstr_declaration : Raw.declaration -> declaration Location.wrap list result
             let%bind (v, v_type) = pattern_to_typed_var par_var in
             let%bind v_type_expression =
               match v_type with
-              | Some v_type -> ok (to_option (abstr_type_expression v_type))
+              | Some v_type -> ok (to_option (compile_type_expression v_type))
               | None -> ok None
             in
-            let%bind abstr_rhs_expr = abstr_expression rhs_expr in
-              ok @@ loc x @@ Declaration_constant (Var.of_name v.value, v_type_expression, inline, abstr_rhs_expr) )
+            let%bind compile_rhs_expr = compile_expression rhs_expr in
+              ok @@ loc x @@ Declaration_constant (Var.of_name v.value, v_type_expression, inline, compile_rhs_expr) )
           in let%bind variables = ok @@ npseq_to_list pt.value
           in let%bind expr_bind_lst =
                match let_rhs with
@@ -847,7 +847,7 @@ and abstr_declaration : Raw.declaration -> declaration Location.wrap list result
         | PPar {region = _ ; value = { lpar = _ ; inside = pt; rpar = _; } } ->
           (* Extract parenthetical multi-bind *)
           let (wild, recursive, _, attributes) = fst @@ r_split x in
-          abstr_declaration
+          compile_declaration
             (Let {
                 region = x.region;
                 value = (wild, recursive, {binders = (pt, []);
@@ -862,7 +862,7 @@ and abstr_declaration : Raw.declaration -> declaration Location.wrap list result
         let%bind var = pattern_to_var hd in
         ok (var , tl)
       in
-      let%bind lhs_type' = bind_map_option (fun x -> abstr_type_expression (snd x)) lhs_type in
+      let%bind lhs_type' = bind_map_option (fun x -> compile_type_expression (snd x)) lhs_type in
       let%bind let_rhs,lhs_type = match args with
       | [] -> ok (let_rhs, lhs_type')
       | param1::others ->
@@ -878,12 +878,12 @@ and abstr_declaration : Raw.declaration -> declaration Location.wrap list result
           let aux acc ty = Option.map (t_function (snd ty)) acc in
           ok (Raw.EFun {region=Region.ghost ; value=fun_},List.fold_right' aux lhs_type' ty)
       in
-      let%bind rhs' = abstr_expression let_rhs in
+      let%bind rhs' = compile_expression let_rhs in
       let%bind lhs_type = match lhs_type with 
       | None -> (match let_rhs with 
         | EFun {value={binders;lhs_type}} -> 
           let f_args = nseq_to_list (binders) in
-          let%bind lhs_type' = bind_map_option (fun x -> abstr_type_expression (snd x)) lhs_type in
+          let%bind lhs_type' = bind_map_option (fun x -> compile_type_expression (snd x)) lhs_type in
           let%bind ty = bind_map_list typed_pattern_to_typed_vars f_args in
           let aux acc ty = Option.map (t_function (snd ty)) acc in
           ok @@ (List.fold_right' aux lhs_type' ty)
@@ -906,7 +906,7 @@ and abstr_declaration : Raw.declaration -> declaration Location.wrap list result
       ok @@ [loc x @@ (Declaration_constant (Var.of_name var.value , lhs_type , inline, rhs'))]
     )
 
-and abstr_cases : type a . (Raw.pattern * a) list -> (a, unit) matching_content result =
+and compile_cases : type a . (Raw.pattern * a) list -> (a, unit) matching_content result =
   fun t ->
   let open Raw in
   let rec get_var (t:Raw.pattern) =
@@ -1026,6 +1026,6 @@ and abstr_cases : type a . (Raw.pattern * a) list -> (a, unit) matching_content 
         | _ -> simple_fail "bad option pattern"
       in bind_or (as_option () , as_variant ())
 
-let abstr_program : Raw.ast -> program result = fun t ->
-  let%bind decls = bind_map_list abstr_declaration @@ nseq_to_list t.decl in
+let compile_program : Raw.ast -> program result = fun t ->
+  let%bind decls = bind_map_list compile_declaration @@ nseq_to_list t.decl in
   ok @@ List.concat @@ decls

@@ -5,9 +5,9 @@
     simple-utils
     tezos-utils
     parser
-    abstracter
+    concrete_to_imperative
     self_ast_imperative
-    simplifier
+    sugar_to_core
     ast_core
     typer_new
     typer

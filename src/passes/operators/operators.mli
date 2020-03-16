@@ -1,5 +1,5 @@
 
-module Abstracter : sig
+module Concrete_to_imperative : sig
  open Ast_imperative
  open Trace
 
