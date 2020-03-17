@@ -959,12 +959,23 @@ The values of a PascaLIGO big map can be updated using the
 assignment syntax for ordinary maps
 
 ```pascaligo group=big_maps
-function add (var m : register) : register is
+function assign (var m : register) : register is
   block {
     m [("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address)] := (4,9)
   } with m
+```
 
-const updated_map : register = add (moves)
+If multiple bindings need to be updated, PascaLIGO offers a *patch
+instruction* for maps, similar to that for records.
+
+```pascaligo group=big_maps
+function assignments (var m : register) : register is
+  block {
+    patch m with map [
+      ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" : address) -> (4,9);
+      ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address) -> (1,2)
+    ]
+  } with m
 ```
 
 </Syntax>
