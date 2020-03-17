@@ -2,7 +2,7 @@ open Trace
 open Types
 open Combinators
 open Misc
-open Stage_common.Types
+(* open Stage_common.Types *)
 
 let program_to_main : program -> string -> lambda result = fun p s ->
   let%bind (main , input_type , _) =

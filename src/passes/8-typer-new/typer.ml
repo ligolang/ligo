@@ -461,6 +461,7 @@ and type_expression : environment -> Solver.state -> ?tv_opt:O.type_expression -
    *   ) *)
   | E_record_accessor {record;path} -> (
       let%bind (base' , state') = type_expression e state record in
+      let path = convert_label path in
       let wrapped = Wrap.access_label ~base:base'.type_expression ~label:path in
       return_wrapped (E_record_accessor {record=base';path}) state' wrapped
     )
