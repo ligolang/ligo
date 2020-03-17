@@ -1,11 +1,58 @@
 ---
 id: crypto-reference
-title: Crypto — Cryptographic functions
+title: Crypto
+description: Cryptographic operations
+hide_table_of_contents: true
 ---
 
 import Syntax from '@theme/Syntax';
+import SyntaxTitle from '@theme/SyntaxTitle';
 
-## Crypto.blake2b(data: bytes): bytes
+<SyntaxTitle syntax="pascaligo">
+type key
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+type key
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+type key
+</SyntaxTitle>
+
+A public cryptographic key.
+
+<SyntaxTitle syntax="pascaligo">
+type key_hash
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+type key_hash
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+type key_hash
+</SyntaxTitle>
+
+The hash of a public cryptographic key.
+
+<SyntaxTitle syntax="pascaligo">
+type signature
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+type signature
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+type signature
+</SyntaxTitle>
+
+A cryptographic signature.
+
+<SyntaxTitle syntax="pascaligo">
+function blake2b : bytes -> bytes
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val blake2b : bytes -> bytes
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let blake2b: bytes => bytes
+</SyntaxTitle>
 
 Runs the [blake2b hash algorithm](https://en.wikipedia.org/wiki/BLAKE_(hash_function)#BLAKE2)
 over the given `bytes` data and returns a `bytes` representing the hash.
@@ -15,8 +62,10 @@ over the given `bytes` data and returns a `bytes` representing the hash.
 <Syntax syntax="pascaligo">
 
 ```pascaligo
-function hasherman_blake (const s: bytes) : bytes is blake2b(s)
+function hasherman_blake (const s: bytes) : bytes is Crypto.blake2b(s)
 ```
+
+> Note that `blake2b` is *deprecated*. Please use `Crypto.blake2b`.
 
 </Syntax>
 <Syntax syntax="cameligo">
@@ -24,6 +73,8 @@ function hasherman_blake (const s: bytes) : bytes is blake2b(s)
 ```cameligo
 let hasherman_blake (s: bytes) : bytes = Crypto.blake2b s
 ```
+
+
 
 </Syntax>
 <Syntax syntax="reasonligo">
@@ -34,8 +85,15 @@ let hasherman_blake = (s: bytes) => Crypto.blake2b(s);
 
 </Syntax>
 
-
-## Crypto.sha256(data: bytes) : bytes
+<SyntaxTitle syntax="pascaligo">
+function sha256 : bytes -> bytes
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val sha256 : bytes -> bytes
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let sha256: bytes => bytes
+</SyntaxTitle>
 
 Runs the [sha256 hash algorithm](https://en.wikipedia.org/wiki/SHA-2) over the given
 `bytes` data and returns a `bytes` representing the hash.
@@ -45,9 +103,10 @@ Runs the [sha256 hash algorithm](https://en.wikipedia.org/wiki/SHA-2) over the g
 <Syntax syntax="pascaligo">
 
 ```pascaligo
-function hasherman (const s : bytes) : bytes is
-  begin skip end with sha_256(s)
+function hasherman (const s : bytes) : bytes is Crypto.sha256(s)
 ```
+
+> Note that `sha_256` is *deprecated*. Please use `Crypto.sha256`.
 
 </Syntax>
 <Syntax syntax="cameligo">
@@ -66,8 +125,15 @@ let hasherman = (s: bytes): bytes => Crypto.sha256(s);
 
 </Syntax>
 
-
-## Crypto.sha512(data: bytes) : bytes
+<SyntaxTitle syntax="pascaligo">
+function sha512 : bytes -> bytes
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val sha512 : bytes -> bytes
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let sha512: bytes => bytes
+</SyntaxTitle>
 
 Runs the [sha512 hash algorithm](https://en.wikipedia.org/wiki/SHA-2) over the given
 `bytes` data and returns a `bytes` representing the hash.
@@ -77,8 +143,10 @@ Runs the [sha512 hash algorithm](https://en.wikipedia.org/wiki/SHA-2) over the g
 <Syntax syntax="pascaligo">
 
 ```pascaligo
-function hasherman512 (const s: bytes) : bytes is sha_512(s)
+function hasherman512 (const s: bytes) : bytes is Crypto.sha512(s)
 ```
+
+> Note that `sha_512` is *deprecated*.  Please use `Crypto.sha512`.
 
 </Syntax>
 <Syntax syntax="cameligo">
@@ -96,8 +164,15 @@ let hasherman512 = (s: bytes) => Crypto.sha512(s);
 
 </Syntax>
 
-
-## Crypto.hash_key(k: key) : key_hash
+<SyntaxTitle syntax="pascaligo">
+function hash_key : key -> key_hash
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val hash_key : key -> key_hash
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let hash_key: key => key_hash
+</SyntaxTitle>
 
 Hashes a key for easy comparison and storage.
 
@@ -108,10 +183,12 @@ Hashes a key for easy comparison and storage.
 ```pascaligo
 function check_hash_key (const kh1 : key_hash; const k2 : key) : bool * key_hash is block {
   var ret : bool := False ;
-  var kh2 : key_hash := crypto_hash_key(k2) ;
+  var kh2 : key_hash := Crypto.hash_key(k2) ;
   if kh1 = kh2 then ret := True else skip; 
 } with (ret, kh2)
 ```
+
+> Note that `hash_key` is *deprecated*. Please use `Crypto.hash_key`.
 
 </Syntax>
 <Syntax syntax="cameligo">
@@ -141,8 +218,15 @@ let check_hash_key = ((kh1, k2): (key_hash, key)) : (bool, key_hash) => {
 
 </Syntax>
 
-
-## Crypto.check(pk: key, signed: signature, data: bytes) : bool
+<SyntaxTitle syntax="pascaligo">
+function check : key -> signature -> bytes -> bool
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val check : key -> signature -> bytes -> bool
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let check: (key, signature, bytes) => bool
+</SyntaxTitle>
 
 Check that a message has been signed by a particular key.
 
@@ -157,8 +241,10 @@ function check_signature
     (const pk: key;
      const signed: signature;
      const msg: bytes) : bool
-  is crypto_check(pk, signed, msg)
+  is Crypto.check(pk, signed, msg)
 ```
+
+> Note that `crypto_check` is *deprecated*. Please use `Crypto.check`.
 
 </Syntax>
 <Syntax syntax="cameligo">

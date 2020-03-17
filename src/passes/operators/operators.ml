@@ -151,8 +151,8 @@ module Simplify = struct
     (* String module *)
 
     | "String.length"   -> ok C_SIZE
-    | "String.size"     -> ok C_SIZE
-    | "String.slice"    -> ok C_SLICE
+    | "String.size"     -> ok C_SIZE  (* Deprecated *)
+    | "String.slice"    -> ok C_SLICE (* Deprecated *)
     | "String.sub"      -> ok C_SLICE
     | "String.concat"   -> ok C_CONCAT
 

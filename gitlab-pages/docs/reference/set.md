@@ -1,19 +1,44 @@
 ---
 id: set-reference
-title: Sets — Unordered unique collection of a type
+title: Set
+description: Set operations
+hide_table_of_contents: true
 ---
 
 import Syntax from '@theme/Syntax';
+import SyntaxTitle from '@theme/SyntaxTitle';
 
-Sets are unordered collections of values of the same type, like lists
-are ordered collections. Like the mathematical sets and lists, sets
-can be empty and, if not, elements of sets in LIGO are *unique*,
-whereas they can be repeated in a *list*.
+Sets are unordered collections of unique values of the same type.
 
-# Empty Sets
+<SyntaxTitle syntax="pascaligo">
+type set ('value)
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+type 'value set
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+type set('value)
+</SyntaxTitle>
 
+<SyntaxTitle syntax="pascaligo">
+function empty : set('value)
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val empty : 'value set
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let empty: set('value)
+</SyntaxTitle>
+
+Create an empty set.
 
 <Syntax syntax="pascaligo">
+
+```pascaligo group=sets
+const my_set : set (int) = Set.empty
+```
+
+Alternative syntax:
 
 ```pascaligo group=sets
 const my_set : set (int) = set []
@@ -35,11 +60,25 @@ let my_set : set (int) = Set.empty;
 
 </Syntax>
 
+<SyntaxTitle syntax="pascaligo">
+function literal : list('value) -> set('value)
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val literal : 'value list -> 'value set
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let literal: list('value) => set('value)
+</SyntaxTitle>
 
-# Non-empty Sets
-
+Create a non-empty set.
 
 <Syntax syntax="pascaligo">
+
+```pascaligo group=sets
+const my_set : set (int) = Set.literal (list [3; 2; 2; 1])
+```
+
+Or use the following syntax sugar:
 
 ```pascaligo group=sets
 const my_set : set (int) = set [3; 2; 2; 1]
@@ -50,7 +89,7 @@ const my_set : set (int) = set [3; 2; 2; 1]
 
 ```cameligo group=sets
 let my_set : int set =
-  Set.add 3 (Set.add 2 (Set.add 2 (Set.add 1 (Set.empty : int set))))
+  Set.literal [3; 2; 2; 1]
 ```
 
 </Syntax>
@@ -58,19 +97,33 @@ let my_set : int set =
 
 ```reasonligo group=sets
 let my_set : set (int) =
-  Set.add (3, Set.add (2, Set.add (2, Set.add (1, Set.empty : set (int)))));
+  Set.literal ([3, 2, 2, 1]);
 ```
 
 </Syntax>
 
+<SyntaxTitle syntax="pascaligo">
+function mem : 'value -> set('value) -> 'bool
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val mem : 'value -> 'value set -> bool
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let mem: ('value, set('value)) => bool
+</SyntaxTitle>
 
-# Set Membership
-
+Checks if a value exists in the set.
 
 <Syntax syntax="pascaligo">
 
 ```pascaligo group=sets
-const contains_3 : bool = my_set contains 3
+const contains_3 : bool = Set.mem(3, my_set)
+```
+
+Or:
+
+```pascaligo group=sets
+const contains_3_alt : bool = my_set contains 3
 ```
 
 </Syntax>
@@ -89,12 +142,17 @@ let contains_3 : bool = Set.mem (3, my_set);
 
 </Syntax>
 
+<SyntaxTitle syntax="pascaligo">
+function cardinal : set('value) -> nat
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val cardinal : 'value set -> nat
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let cardinal: set('value) => nat
+</SyntaxTitle>
 
-# Cardinal of Sets
-
-The predefined function `Set.size` returns the number of
-elements in a given set as follows.
-
+Number of elements in a set.
 
 <Syntax syntax="pascaligo">
 
@@ -102,7 +160,7 @@ elements in a given set as follows.
 const cardinal : nat = Set.size (my_set)
 ```
 
-> Note that `size` is *deprecated*.
+> Note that `size` is *deprecated*. Please use `Set.size`
 
 </Syntax>
 <Syntax syntax="cameligo">
@@ -120,72 +178,41 @@ let cardinal : nat = Set.size (my_set);
 
 </Syntax>
 
+<SyntaxTitle syntax="pascaligo">
+function add : 'value -> set('value) -> set('value)
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val add : 'value -> 'value set -> 'value set
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let add: ('value, set('value)) => set('value)
+</SyntaxTitle>
 
-# Updating Sets
+Add a value to a set.
 
-There are two ways to update a set, that is to add or remove from it.
+<SyntaxTitle syntax="pascaligo">
+function remove : 'value -> set('value) -> set('value)
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val remove : 'value -> 'value set -> 'value set
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let remove: ('value, set('value)) => set('value)
+</SyntaxTitle>
 
+Remove a value from a set.
 
-<Syntax syntax="pascaligo">
+<SyntaxTitle syntax="pascaligo">
+function iter : ('a -> unit) -> set('a) -> unit
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val iter : ('a -> unit) -> 'a set -> unit
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let iter: (('a => unit), set('a)) => unit
+</SyntaxTitle>
 
-In PascaLIGO, either we create a new set from the given one, or we
-modify it in-place. First, let us consider the former way:
-```pascaligo group=sets
-const larger_set  : set (int) = Set.add (4, my_set)
-const smaller_set : set (int) = Set.remove (3, my_set)
-```
-
-> Note that `set_add` and `set_remove` are *deprecated*.
-
-If we are in a block, we can use an instruction to modify the set
-bound to a given variable. This is called a *patch*. It is only
-possible to add elements by means of a patch, not remove any: it is
-the union of two sets.
-
-```pascaligo group=sets
-function update (var s : set (int)) : set (int) is block {
-  patch s with set [4; 7]
-} with s
-
-const new_set : set (int) = update (my_set)
-```
-
-</Syntax>
-<Syntax syntax="cameligo">
-
-```cameligo group=sets
-let larger_set  : int set = Set.add 4 my_set
-let smaller_set : int set = Set.remove 3 my_set
-```
-
-</Syntax>
-<Syntax syntax="reasonligo">
-
-```reasonligo group=sets
-let larger_set  : set (int) = Set.add (4, my_set);
-let smaller_set : set (int) = Set.remove (3, my_set);
-```
-
-</Syntax>
-
-
-# Functional Iteration over Sets
-
-A *functional iterator* is a function that traverses a data structure
-and calls in turn a given function over the elements of that structure
-to compute some value. Another approach is possible in PascaLIGO:
-*loops* (see the relevant section).
-
-There are three kinds of functional iterations over LIGO maps: the
-*iterated operation*, the *mapped operation* (not to be confused with
-the *map data structure*) and the *folded operation*.
-
-## Iterated Operation
-
-The first, the *iterated operation*, is an iteration over the map with
-no return value: its only use is to produce side-effects. This can be
-useful if for example you would like to check that each value inside
-of a map is within a certain range, and fail with an error otherwise.
+Iterate over values in a set.
 
 
 <Syntax syntax="pascaligo">
@@ -221,15 +248,17 @@ let iter_op = (s : set (int)) : unit => {
 
 </Syntax>
 
+<SyntaxTitle syntax="pascaligo">
+function fold : (('accumulator -> 'item -> 'accumulator) -> set ('item) -> 'accumulator) -> 'accumulator
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val fold : ('accumulator -> 'item -> 'accumulator) -> 'set list -> 'accumulator -> 'accumulator
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let fold: ((('accumulator, 'item) => 'accumulator), set('item), 'accumulator) => 'accumulator
+</SyntaxTitle>
 
-## Folded Operation
-
-A *folded operation* is the most general of iterations. The folded
-function takes two arguments: an *accumulator* and the structure
-*element* at hand, with which it then produces a new accumulator. This
-enables having a partial result that becomes complete when the
-traversal of the data structure is over.
-
+[Fold over values in a set](../language-basics/sets-lists-tuples#folded-operation)
 
 
 <Syntax syntax="pascaligo">
@@ -240,17 +269,6 @@ const sum_of_elements : int = Set.fold (sum, my_set, 0)
 ```
 
 > Note that `set_fold` is *deprecated*.
-
-It is possible to use a *loop* over a set as well.
-
-```pascaligo group=sets
-function loop (const s : set (int)) : int is block {
-  var sum : int := 0;
-  for element in set s block {
-    sum := sum + element
-  }
-} with sum
-```
 
 </Syntax>
 <Syntax syntax="cameligo">
@@ -269,4 +287,3 @@ let sum_of_elements : int = Set.fold (sum, my_set, 0);
 ```
 
 </Syntax>
-
