@@ -28,7 +28,7 @@ let compile_main f s () =
     Ligo.Compile.Of_michelson.build_contract michelson_prg in
   ok ()
 
-open Ast_core
+open Ast_imperative
 
 let init_storage threshold counter pkeys =
   let keys = List.map

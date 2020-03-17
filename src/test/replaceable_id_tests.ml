@@ -23,7 +23,8 @@ let compile_main () =
     (* fails if the given entry point is not a valid contract *)
     Ligo.Compile.Of_michelson.build_contract michelson_prg in
   ok ()
-open Ast_core
+
+open Ast_imperative
 
 let empty_op_list = 
   (e_typed_list [] t_operation)

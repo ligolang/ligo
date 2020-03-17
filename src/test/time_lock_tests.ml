@@ -24,7 +24,8 @@ let compile_main () =
     Ligo.Compile.Of_michelson.build_contract michelson_prg in
   ok ()
 
-open Ast_core
+open Ast_imperative
+
 let empty_op_list =
   (e_typed_list [] t_operation)
 let empty_message = e_lambda (Var.of_name "arguments")

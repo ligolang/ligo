@@ -1,7 +1,7 @@
 open Trace
 open Test_helpers
 
-open Ast_core.Combinators
+open Ast_imperative.Combinators
 
 let retype_file f =
   let%bind typed,state = Ligo.Compile.Utils.type_file f "reasonligo" Env in
@@ -424,9 +424,9 @@ let bytes_arithmetic () : unit result =
   let%bind () = expect_eq program "slice_op" tata at in
   let%bind () = expect_fail program "slice_op" foo in
   let%bind () = expect_fail program "slice_op" ba in
-  let%bind b1 = Test_helpers.run_typed_program_with_core_input program "hasherman" foo in
-  let%bind () = expect_eq program "hasherman" foo b1 in
-  let%bind b3 = Test_helpers.run_typed_program_with_core_input program "hasherman" foototo in
+  let%bind b1 = Test_helpers.run_typed_program_with_imperative_input program "hasherman" foo in
+  let%bind () = expect_eq_core program "hasherman" foo b1 in
+  let%bind b3 = Test_helpers.run_typed_program_with_imperative_input program "hasherman" foototo in
   let%bind () = Assert.assert_fail @@ Ast_core.Misc.assert_value_eq (b3 , b1) in
   ok ()
 
@@ -434,13 +434,13 @@ let crypto () : unit result =
   let%bind program = type_file "./contracts/crypto.ligo" in
   let%bind foo = e_bytes_hex "0f00" in
   let%bind foototo = e_bytes_hex "0f007070" in
-  let%bind b1 = Test_helpers.run_typed_program_with_core_input program "hasherman512" foo in
-  let%bind () = expect_eq program "hasherman512" foo b1 in
-  let%bind b2 = Test_helpers.run_typed_program_with_core_input program "hasherman512" foototo in
+  let%bind b1 = Test_helpers.run_typed_program_with_imperative_input program "hasherman512" foo in
+  let%bind () = expect_eq_core program "hasherman512" foo b1 in
+  let%bind b2 = Test_helpers.run_typed_program_with_imperative_input program "hasherman512" foototo in
   let%bind () = Assert.assert_fail @@ Ast_core.Misc.assert_value_eq (b2 , b1) in
-  let%bind b4 = Test_helpers.run_typed_program_with_core_input program "hasherman_blake" foo in
-  let%bind () = expect_eq program "hasherman_blake" foo b4 in
-  let%bind b5 = Test_helpers.run_typed_program_with_core_input program "hasherman_blake" foototo in
+  let%bind b4 = Test_helpers.run_typed_program_with_imperative_input program "hasherman_blake" foo in
+  let%bind () = expect_eq_core program "hasherman_blake" foo b4 in
+  let%bind b5 = Test_helpers.run_typed_program_with_imperative_input program "hasherman_blake" foototo in
   let%bind () = Assert.assert_fail @@ Ast_core.Misc.assert_value_eq (b5 , b4) in
   ok ()
 
@@ -448,13 +448,13 @@ let crypto_mligo () : unit result =
   let%bind program = mtype_file "./contracts/crypto.mligo" in
   let%bind foo = e_bytes_hex "0f00" in
   let%bind foototo = e_bytes_hex "0f007070" in
-  let%bind b1 = Test_helpers.run_typed_program_with_core_input program "hasherman512" foo in
-  let%bind () = expect_eq program "hasherman512" foo b1 in
-  let%bind b2 = Test_helpers.run_typed_program_with_core_input program "hasherman512" foototo in
+  let%bind b1 = Test_helpers.run_typed_program_with_imperative_input program "hasherman512" foo in
+  let%bind () = expect_eq_core program "hasherman512" foo b1 in
+  let%bind b2 = Test_helpers.run_typed_program_with_imperative_input program "hasherman512" foototo in
   let%bind () = Assert.assert_fail @@ Ast_core.Misc.assert_value_eq (b2 , b1) in
-  let%bind b4 = Test_helpers.run_typed_program_with_core_input program "hasherman_blake" foo in
-  let%bind () = expect_eq program "hasherman_blake" foo b4 in
-  let%bind b5 = Test_helpers.run_typed_program_with_core_input program "hasherman_blake" foototo in
+  let%bind b4 = Test_helpers.run_typed_program_with_imperative_input program "hasherman_blake" foo in
+  let%bind () = expect_eq_core program "hasherman_blake" foo b4 in
+  let%bind b5 = Test_helpers.run_typed_program_with_imperative_input program "hasherman_blake" foototo in
   let%bind () = Assert.assert_fail @@ Ast_core.Misc.assert_value_eq (b5 , b4) in
   ok ()
 
@@ -462,13 +462,13 @@ let crypto_religo () : unit result =
   let%bind program = retype_file "./contracts/crypto.religo" in
   let%bind foo = e_bytes_hex "0f00" in
   let%bind foototo = e_bytes_hex "0f007070" in
-  let%bind b1 = Test_helpers.run_typed_program_with_core_input program "hasherman512" foo in
-  let%bind () = expect_eq program "hasherman512" foo b1 in
-  let%bind b2 = Test_helpers.run_typed_program_with_core_input program "hasherman512" foototo in
+  let%bind b1 = Test_helpers.run_typed_program_with_imperative_input program "hasherman512" foo in
+  let%bind () = expect_eq_core program "hasherman512" foo b1 in
+  let%bind b2 = Test_helpers.run_typed_program_with_imperative_input program "hasherman512" foototo in
   let%bind () = Assert.assert_fail @@ Ast_core.Misc.assert_value_eq (b2 , b1) in
-  let%bind b4 = Test_helpers.run_typed_program_with_core_input program "hasherman_blake" foo in
-  let%bind () = expect_eq program "hasherman_blake" foo b4 in
-  let%bind b5 = Test_helpers.run_typed_program_with_core_input program "hasherman_blake" foototo in
+  let%bind b4 = Test_helpers.run_typed_program_with_imperative_input program "hasherman_blake" foo in
+  let%bind () = expect_eq_core program "hasherman_blake" foo b4 in
+  let%bind b5 = Test_helpers.run_typed_program_with_imperative_input program "hasherman_blake" foototo in
   let%bind () = Assert.assert_fail @@ Ast_core.Misc.assert_value_eq (b5 , b4) in
   ok ()
 
@@ -486,9 +486,9 @@ let bytes_arithmetic_mligo () : unit result =
   let%bind () = expect_eq program "slice_op" tata at in
   let%bind () = expect_fail program "slice_op" foo in
   let%bind () = expect_fail program "slice_op" ba in
-  let%bind b1 = Test_helpers.run_typed_program_with_core_input program "hasherman" foo in
-  let%bind () = expect_eq program "hasherman" foo b1 in
-  let%bind b3 = Test_helpers.run_typed_program_with_core_input program "hasherman" foototo in
+  let%bind b1 = Test_helpers.run_typed_program_with_imperative_input program "hasherman" foo in
+  let%bind () = expect_eq_core program "hasherman" foo b1 in
+  let%bind b3 = Test_helpers.run_typed_program_with_imperative_input program "hasherman" foototo in
   let%bind () = Assert.assert_fail @@ Ast_core.Misc.assert_value_eq (b3 , b1) in
   ok ()
 
@@ -506,9 +506,9 @@ let bytes_arithmetic_religo () : unit result =
   let%bind () = expect_eq program "slice_op" tata at in
   let%bind () = expect_fail program "slice_op" foo in
   let%bind () = expect_fail program "slice_op" ba in
-  let%bind b1 = Test_helpers.run_typed_program_with_core_input program"hasherman" foo in
-  let%bind () = expect_eq program "hasherman" foo b1 in
-  let%bind b3 = Test_helpers.run_typed_program_with_core_input program "hasherman" foototo in
+  let%bind b1 = Test_helpers.run_typed_program_with_imperative_input program"hasherman" foo in
+  let%bind () = expect_eq_core program "hasherman" foo b1 in
+  let%bind b3 = Test_helpers.run_typed_program_with_imperative_input program "hasherman" foototo in
   let%bind () = Assert.assert_fail @@ Ast_core.Misc.assert_value_eq (b3 , b1) in
   ok ()
 
@@ -974,7 +974,6 @@ let reoption () : unit result =
 let map_ type_f path : unit result =
   let%bind program = type_f path in
   let ez lst =
-    let open Ast_core.Combinators in
     let lst' = List.map (fun (x, y) -> e_int x, e_int y) lst in
     e_typed_map lst' t_int t_int
   in
@@ -1063,7 +1062,6 @@ let map_ type_f path : unit result =
 let big_map_ type_f path : unit result =
   let%bind program = type_f path in
   let ez lst =
-    let open Ast_core.Combinators in
     let lst' = List.map (fun (x, y) -> e_int x, e_int y) lst in
     (e_typed_big_map lst' t_int t_int)
   in
@@ -1276,7 +1274,6 @@ let loop () : unit result =
     expect_eq program "inner_capture_in_conditional_block"  input expected in
   let%bind () =
     let ez lst =
-      let open Ast_core.Combinators in
       let lst' = List.map (fun (x, y) -> e_string x, e_int y) lst in
         e_typed_map lst' t_string t_int
     in
@@ -2032,11 +2029,11 @@ let get_contract_ligo () : unit result =
   let%bind () =
     let make_input = fun _n -> e_unit () in
     let make_expected : int -> Ast_core.expression -> unit result = fun _n result ->
-      let%bind (ops , storage) = get_e_pair result.expression_content in
+      let%bind (ops , storage) = Ast_core.get_e_pair result.expression_content in
       let%bind () =
-        let%bind lst = get_e_list ops.expression_content in
+        let%bind lst = Ast_core.get_e_list ops.expression_content in
         Assert.assert_list_size lst 1 in
-      let expected_storage = e_unit () in
+      let expected_storage = Ast_core.e_unit () in
       Ast_core.Misc.assert_value_eq (expected_storage , storage)
       in
     let%bind () =

@@ -27,7 +27,7 @@ let compile_main () =
     Ligo.Compile.Of_michelson.build_contract michelson_prg in
   ok ()
 
-open Ast_core
+open Ast_imperative
 
 let card owner =
   e_record_ez [
@@ -220,14 +220,15 @@ let sell () =
       let storage = basic 100 1000 cards (2 * n) in
       e_pair sell_action storage
     in
-    let make_expecter : int -> expression -> unit result = fun n result ->
-      let%bind (ops , storage) = get_e_pair result.expression_content in
+    let make_expecter : int -> Ast_core.expression -> unit result = fun n result ->
+      let%bind (ops , storage) = Ast_core.get_e_pair result.expression_content in
       let%bind () =
-        let%bind lst = get_e_list ops.expression_content in
+        let%bind lst = Ast_core.get_e_list ops.expression_content in
         Assert.assert_list_size lst 1 in
       let expected_storage =
         let cards = List.hds @@ cards_ez first_owner n in
         basic 99 1000 cards (2 * n) in
+      let%bind expected_storage = Test_helpers.expression_to_core expected_storage in
       Ast_core.Misc.assert_value_eq (expected_storage , storage)
     in
     let%bind () =

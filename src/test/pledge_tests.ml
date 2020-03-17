@@ -1,7 +1,6 @@
 open Trace
 open Test_helpers
-open Ast_core
-
+open Ast_imperative
 
 let retype_file f =
   let%bind typed,state = Ligo.Compile.Utils.type_file f "reasonligo" Env in

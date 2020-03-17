@@ -24,7 +24,7 @@ let compile_main () =
     Ligo.Compile.Of_michelson.build_contract michelson_prg in
   ok ()
 
-open Ast_core
+open Ast_imperative
 
 let empty_op_list = 
   (e_typed_list [] t_operation)
@@ -33,7 +33,7 @@ let empty_message = e_lambda (Var.of_name "arguments")
   empty_op_list
 let empty_message2 = e_lambda (Var.of_name "arguments")
   (Some t_bytes) (Some (t_list t_operation))
- ( e_let_in ((Var.of_name "foo"),Some t_unit) false (e_unit ()) empty_op_list)
+ ( e_let_in ((Var.of_name "foo"),Some t_unit) false false (e_unit ()) empty_op_list)
 
 let send_param msg = e_constructor "Send" msg
 let withdraw_param = e_constructor "Withdraw" empty_message

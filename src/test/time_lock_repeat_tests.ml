@@ -1,6 +1,6 @@
 open Trace
 open Test_helpers
-open Ast_core
+open Ast_imperative
 
 let type_file f =
   let%bind typed,state = Ligo.Compile.Utils.type_file f "cameligo" (Contract "main") in

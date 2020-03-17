@@ -1,6 +1,6 @@
 open Trace
 open Test_helpers
-open Ast_core
+open Ast_imperative
 
 
 let mtype_file f =
