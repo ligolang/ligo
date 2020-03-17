@@ -1,20 +1,42 @@
 ---
 id: bytes-reference
-title: Bytes — Manipulate bytes data
+title: Bytes
+description: Operations on bytes
+hide_table_of_contents: true
 ---
 
 import Syntax from '@theme/Syntax';
+import SyntaxTitle from '@theme/SyntaxTitle';
 
-## Bytes.concat(b1: bytes, b2: bytes) : bytes
+<SyntaxTitle syntax="pascaligo">
+type bytes
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+type bytes
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+type bytes
+</SyntaxTitle>
+
+<SyntaxTitle syntax="pascaligo">
+function concat : bytes -> bytes -> bytes
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val concat : bytes -> bytes -> bytes
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let concat: (bytes, bytes) => bytes
+</SyntaxTitle>
 
 Concatenate together two `bytes` arguments and return the result.
 
 <Syntax syntax="pascaligo">
 
 ```pascaligo
-function concat_op (const s : bytes) : bytes is
-  begin skip end with bytes_concat(s , 0x7070)
+function concat_op (const s : bytes) : bytes is Bytes.concat(s , 0x7070)
 ```
+
+> Note that `bytes_concat` is *deprecated*. 
 
 </Syntax>
 <Syntax syntax="cameligo">
@@ -33,41 +55,58 @@ let concat_op = (s: bytes): bytes => Bytes.concat(s, 0x7070);
 
 </Syntax>
 
-## Bytes.slice(pos1: nat, pos2: nat, data: bytes) : bytes
+<SyntaxTitle syntax="pascaligo">
+function sub : nat -> nat -> bytes -> bytes
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val sub : nat -> nat -> bytes -> bytes
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let sub : (nat, nat, bytes) => bytes
+</SyntaxTitle>
 
 Extract the bytes between `pos1` and `pos2`. **Positions are zero indexed and
 inclusive**. For example if you gave the input "ff7a7aff" to the following:
 
-
-
 <Syntax syntax="pascaligo">
 
 ```pascaligo
-function slice_op (const s : bytes) : bytes is
-  begin skip end with bytes_slice(1n , 2n , s)
+function slice_op (const s : bytes) : bytes is Bytes.sub(1n , 2n , s)
 ```
+
+> Note that `bytes_slice` is *deprecated*.
 
 </Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo
-let slice_op (s : bytes) : bytes =
-   Bytes.slice 1n 2n s
+let slice_op (s : bytes) : bytes = Bytes.sub 1n 2n s
 ```
+
+> Note that `Bytes.slice` is *deprecated*.
 
 </Syntax>
 <Syntax syntax="reasonligo">
 
 ```
-let slice_op = (s: bytes): bytes => Bytes.slice(1n, 2n, s);
+let slice_op = (s: bytes): bytes => Bytes.sub(1n, 2n, s);
 ```
+
+> Note that `Bytes.slice` is *deprecated*.
 
 </Syntax>
 
-
 It would return "7a7a" rather than "ff7a" or "ff" or "7a".
 
-## Bytes.pack(data: a') : bytes
+<SyntaxTitle syntax="pascaligo">
+function pack : 'a -> bytes
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val pack : 'a -> bytes
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let pack : 'a => bytes
+</SyntaxTitle>
 
 Converts Michelson data structures to a binary format for serialization.
 
@@ -105,10 +144,19 @@ let id_string = (p: string) : option(string) => {
 </Syntax>
 
 
-## Bytes.unpack(packed: bytes) : a'
+<SyntaxTitle syntax="pascaligo">
+function unpack : bytes -> option 'a
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val unpack : bytes -> 'a option
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let unpack: bytes => option('a)
+</SyntaxTitle>
 
-Reverses the result of using `unpack` on data, going from Michelson's binary
-serialization format to the `option` type annotated on the call.
+Reverses the result of using `pack` on data. 
+
+As the conversion might fail an option type is returned.
 
 > ⚠️ `PACK` and `UNPACK` are features of Michelson that are intended to be used by people that really know what they're doing. There are several failure cases (such as `UNPACK`ing a lambda from an untrusted source), most of which are beyond the scope of this document. Don't use these functions without doing your homework first.
 
@@ -143,3 +191,12 @@ let id_string = (p: string) : option(string) => {
 
 </Syntax>
 
+<SyntaxTitle syntax="pascaligo">
+function length : bytes -> nat
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val length : bytes -> nat
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let length: bytes => nat
+</SyntaxTitle>

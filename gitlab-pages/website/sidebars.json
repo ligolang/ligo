@@ -21,17 +21,20 @@
       "advanced/first-contract",
       "advanced/michelson-and-ligo"
     ],
-    "API & Reference": [
+    "Reference": [
       "api/cli-commands",
-      "api/cheat-sheet",
+      "api/cheat-sheet"
+    ],
+    "API":[
       "reference/big-map-reference",
+      "reference/bitwise-reference",
       "reference/bytes-reference",
-      "reference/crypto-reference",
-      "reference/current-reference",
+      "reference/crypto-reference",      
       "reference/list-reference",
       "reference/map-reference",
       "reference/set-reference",
-      "reference/string-reference"
+      "reference/string-reference",
+      "reference/current-reference"
     ]
   },
   "contributors-docs": {
