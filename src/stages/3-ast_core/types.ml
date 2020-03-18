@@ -57,7 +57,10 @@ and constant =
   { cons_name: constant' (* this is at the end because it is huge *)
   ; arguments: expression list }
 
-and application = {expr1: expression; expr2: expression}
+and application = {
+  lamb: expression ; 
+  args: expression ;
+  }
 
 and lambda =
   { binder: expression_variable

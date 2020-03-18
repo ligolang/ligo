@@ -270,7 +270,7 @@ and eval_literal : Ast_typed.literal -> value result = function
 and eval : Ast_typed.expression -> env -> value result
   = fun term env ->
     match term.expression_content with
-    | E_application ({expr1 = f; expr2 = args}) -> (
+    | E_application ({lamb = f; args}) -> (
       let%bind f' = eval f env in
       let%bind args' = eval args env in
       match f' with

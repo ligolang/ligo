@@ -36,7 +36,6 @@ and expression_content =
   | E_lambda of lambda
   | E_recursive of recursive
   | E_let_in of let_in
-  | E_skip
   (* Variant *)
   | E_constructor of constructor (* For user defined constructors *)
   | E_matching of matching
@@ -44,21 +43,26 @@ and expression_content =
   | E_record of expression label_map
   | E_record_accessor of accessor
   | E_record_update of update
+  (* Advanced *)
+  | E_ascription of ascription
+  (* Sugar *)
+  | E_sequence of sequence
+  | E_skip
   (* Data Structures *)
-  (* TODO : move to constant*)
-  | E_map of (expression * expression) list (*move to operator *)
-  | E_big_map of (expression * expression) list (*move to operator *)
+  | E_map of (expression * expression) list 
+  | E_big_map of (expression * expression) list
   | E_list of expression list
   | E_set of expression list
   | E_look_up of (expression * expression)
-  (* Advanced *)
-  | E_ascription of ascription
 
 and constant =
   { cons_name: constant' (* this is at the end because it is huge *)
   ; arguments: expression list }
 
-and application = {expr1: expression; expr2: expression}
+and application = {
+  lamb: expression ; 
+  args: expression ;
+  }
 
 and lambda =
   { binder: expression_variable
@@ -92,6 +96,10 @@ and matching =
   }
 
 and ascription = {anno_expr: expression; type_annotation: type_expression}
+and sequence = {
+  expr1: expression ;
+  expr2: expression ;
+  }
 
 and environment_element_definition =
   | ED_binder

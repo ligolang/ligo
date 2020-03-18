@@ -68,10 +68,10 @@ let rec compile_expression : I.expression -> O.expression result =
       let%bind arguments = bind_map_list compile_expression arguments in
       return @@ O.E_constant {cons_name;arguments}
     | I.E_variable name     -> return @@ O.E_variable name
-    | I.E_application {expr1;expr2} -> 
-      let%bind expr1 = compile_expression expr1 in
-      let%bind expr2 = compile_expression expr2 in
-      return @@ O.E_application {expr1; expr2}
+    | I.E_application {lamb;args} -> 
+      let%bind lamb = compile_expression lamb in
+      let%bind args = compile_expression args in
+      return @@ O.E_application {lamb; args}
     | I.E_lambda lambda ->
       let%bind lambda = compile_lambda lambda in
       return @@ O.E_lambda lambda
@@ -85,7 +85,6 @@ let rec compile_expression : I.expression -> O.expression result =
       let%bind rhs = compile_expression rhs in
       let%bind let_result = compile_expression let_result in
       return @@ O.E_let_in {let_binder=(binder,ty_opt);inline;rhs;let_result}
-    | I.E_skip -> ok @@ O.e_unit ~loc:e.location ()
     | I.E_constructor {constructor;element} ->
       let%bind element = compile_expression element in
       return @@ O.E_constructor {constructor;element}
@@ -134,6 +133,11 @@ let rec compile_expression : I.expression -> O.expression result =
       let%bind anno_expr = compile_expression anno_expr in
       let%bind type_annotation = idle_type_expression type_annotation in
       return @@ O.E_ascription {anno_expr; type_annotation}
+    | I.E_sequence {expr1; expr2} ->
+      let%bind expr1 = compile_expression expr1 in
+      let%bind expr2 = compile_expression expr2 in
+      return @@ O.E_let_in {let_binder=(Var.of_name "_", Some O.t_unit); rhs=expr1;let_result=expr2; inline=false}
+    | I.E_skip -> ok @@ O.e_unit ~loc:e.location ()
 
 and compile_lambda : I.lambda -> O.lambda result =
   fun {binder;input_type;output_type;result}->
@@ -253,10 +257,10 @@ let rec uncompile_expression : O.expression -> I.expression result =
     let%bind arguments = bind_map_list uncompile_expression arguments in
     return @@ I.E_constant {cons_name;arguments}
   | O.E_variable name     -> return @@ I.E_variable name
-  | O.E_application {expr1;expr2} -> 
-    let%bind expr1 = uncompile_expression expr1 in
-    let%bind expr2 = uncompile_expression expr2 in
-    return @@ I.E_application {expr1; expr2}
+  | O.E_application {lamb; args} -> 
+    let%bind lamb = uncompile_expression lamb in
+    let%bind args = uncompile_expression args in
+    return @@ I.E_application {lamb; args}
   | O.E_lambda lambda ->
     let%bind lambda = uncompile_lambda lambda in
     return @@ I.E_lambda lambda
@@ -264,6 +268,10 @@ let rec uncompile_expression : O.expression -> I.expression result =
     let%bind fun_type = uncompile_type_expression fun_type in
     let%bind lambda = uncompile_lambda lambda in
     return @@ I.E_recursive {fun_name;fun_type;lambda}
+  | O.E_let_in {let_binder;inline=false;rhs=expr1;let_result=expr2} when let_binder = (Var.of_name "_", Some O.t_unit) ->
+    let%bind expr1 = uncompile_expression expr1 in
+    let%bind expr2 = uncompile_expression expr2 in
+    return @@ I.E_sequence {expr1;expr2}
   | O.E_let_in {let_binder;inline;rhs;let_result} ->
     let (binder,ty_opt) = let_binder in
     let%bind ty_opt = bind_map_option uncompile_type_expression ty_opt in

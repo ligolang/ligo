@@ -151,10 +151,10 @@ module Substitution = struct
       | T.E_variable        tv ->
         let%bind tv = s_variable ~substs tv in
         ok @@ T.E_variable tv
-      | T.E_application {expr1;expr2} ->
-        let%bind expr1 = s_expression ~substs expr1 in
-        let%bind expr2 = s_expression ~substs expr2 in
-        ok @@ T.E_application {expr1;expr2}
+      | T.E_application {lamb;args} ->
+        let%bind lamb = s_expression ~substs lamb in
+        let%bind args = s_expression ~substs args in
+        ok @@ T.E_application {lamb;args}
       | T.E_lambda          { binder; result } ->
         let%bind binder = s_variable ~substs binder in
         let%bind result = s_expression ~substs result in

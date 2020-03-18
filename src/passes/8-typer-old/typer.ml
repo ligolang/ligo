@@ -688,21 +688,21 @@ and type_expression' : environment -> ?tv_opt:O.type_expression -> I.expression 
       let%bind (name', tv) =
         type_constant cons_name tv_lst tv_opt in
       return (E_constant {cons_name=name';arguments=lst'}) tv
-  | E_application {expr1;expr2} ->
-      let%bind expr1' = type_expression' e expr1 in
-      let%bind expr2 = type_expression' e expr2 in
-      let%bind tv = match expr1'.type_expression.type_content with
+  | E_application {lamb; args} ->
+      let%bind lamb' = type_expression' e lamb in
+      let%bind args' = type_expression' e args in
+      let%bind tv = match lamb'.type_expression.type_content with
         | T_arrow {type1;type2} ->
-            let%bind _ = O.assert_type_expression_eq (type1, expr2.type_expression) in
+            let%bind _ = O.assert_type_expression_eq (type1, args'.type_expression) in
             ok type2
         | _ ->
           fail @@ type_error_approximate
             ~expected:"should be a function type"
-            ~expression:expr1
-            ~actual:expr1'.type_expression
-            expr1'.location
+            ~expression:lamb
+            ~actual:lamb'.type_expression
+            lamb'.location
       in
-      return (E_application {expr1=expr1';expr2}) tv
+      return (E_application {lamb=lamb'; args=args'}) tv
   | E_look_up dsi ->
       let%bind (ds, ind) = bind_map_pair (type_expression' e) dsi in
       let%bind (src, dst) = bind_map_or (get_t_map , get_t_big_map) ds.type_expression in
@@ -841,9 +841,9 @@ let rec untype_expression (e:O.expression) : (I.expression) result =
       return (e_constant cons_name lst')
   | E_variable n ->
       return (e_variable (n))
-  | E_application {expr1;expr2} ->
-      let%bind f' = untype_expression expr1 in
-      let%bind arg' = untype_expression expr2 in
+  | E_application {lamb;args} ->
+      let%bind f' = untype_expression lamb in
+      let%bind arg' = untype_expression args in
       return (e_application f' arg')
   | E_lambda {binder ; result} -> (
       let%bind io = get_t_function ty in

@@ -24,9 +24,9 @@ let rec check_recursive_call : expression_variable -> bool -> expression -> unit
     Assert.assert_true (final_path || n <> v) in
     ok ()
     )
-  | E_application {expr1;expr2} ->
-    let%bind _ = check_recursive_call n final_path expr1 in
-    let%bind _ = check_recursive_call n false expr2 in
+  | E_application {lamb;args} ->
+    let%bind _ = check_recursive_call n final_path lamb in
+    let%bind _ = check_recursive_call n false args in
     ok ()
   | E_lambda {result;_} ->
     let%bind _ = check_recursive_call n final_path result in

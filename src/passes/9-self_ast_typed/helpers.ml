@@ -19,8 +19,8 @@ let rec fold_expression : 'a folder -> 'a -> expression -> 'a result = fun f ini
   | E_look_up ab ->
       let%bind res = bind_fold_pair self init' ab in
       ok res
-  | E_application {expr1;expr2} -> (
-      let ab = (expr1,expr2) in
+  | E_application {lamb; args} -> (
+      let ab = (lamb, args) in
       let%bind res = bind_fold_pair self init' ab in
       ok res
     )
@@ -135,10 +135,10 @@ let rec map_expression : mapper -> expression -> expression result = fun f e ->
       let%bind e' = self c.element in
       return @@ E_constructor {c with element = e'}
   )
-  | E_application {expr1;expr2} -> (
-      let ab = (expr1,expr2) in
+  | E_application {lamb; args} -> (
+      let ab = (lamb, args) in
       let%bind (a,b) = bind_map_pair self ab in
-      return @@ E_application {expr1=a;expr2=b}
+      return @@ E_application {lamb=a;args=b}
     )
   | E_let_in { let_binder ; rhs ; let_result; inline } -> (
       let%bind rhs = self rhs in
@@ -251,10 +251,10 @@ let rec fold_map_expression : 'a fold_mapper -> 'a -> expression -> ('a * expres
       let%bind (res,e') = self init' c.element in
       ok (res, return @@ E_constructor {c with element = e'})
   )
-  | E_application {expr1;expr2} -> (
-      let ab = (expr1,expr2) in
+  | E_application {lamb;args} -> (
+      let ab = (lamb, args) in
       let%bind (res,(a,b)) = bind_fold_map_pair self init' ab in
-      ok (res, return @@ E_application {expr1=a;expr2=b})
+      ok (res, return @@ E_application {lamb=a;args=b})
     )
   | E_let_in { let_binder ; rhs ; let_result; inline } -> (
       let%bind (res,rhs) = self init' rhs in

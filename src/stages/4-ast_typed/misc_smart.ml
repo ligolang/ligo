@@ -63,8 +63,8 @@ module Captured_variables = struct
         | ED_binder -> ok empty
         | ED_declaration {expr=_ ; free_variables=_} -> simple_fail "todo"
       )
-    | E_application {expr1;expr2} ->
-      let%bind lst' = bind_map_list self [ expr1 ; expr2 ] in
+    | E_application {lamb;args} ->
+      let%bind lst' = bind_map_list self [ lamb ; args ] in
       ok @@ unions lst'
     | E_constructor {element;_} -> self element
     | E_record m ->

@@ -26,7 +26,7 @@ let apply (entry_point : string) (param : Ast_core.expression) : Ast_core.expres
     { expression_content = Ast_core.E_variable name ;
       location = Virtual "generated entry-point variable" } in
   let applied : Ast_core.expression = 
-    { expression_content = Ast_core.E_application {expr1=entry_point_var; expr2=param} ;
+    { expression_content = Ast_core.E_application {lamb=entry_point_var; args=param} ;
       location = Virtual "generated application" } in
   ok applied
 

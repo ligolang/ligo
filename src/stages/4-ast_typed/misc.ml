@@ -206,7 +206,7 @@ module Free_variables = struct
         | true -> empty
         | false -> singleton name
       )
-    | E_application {expr1;expr2} -> unions @@ List.map self [ expr1 ; expr2 ]
+    | E_application {lamb;args} -> unions @@ List.map self [ lamb ; args ]
     | E_constructor {element;_} -> self element
     | E_record m -> unions @@ List.map self @@ LMap.to_list m
     | E_record_accessor {expr;_} -> self expr

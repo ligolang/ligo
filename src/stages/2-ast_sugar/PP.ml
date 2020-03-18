@@ -18,8 +18,8 @@ and expression_content ppf (ec : expression_content) =
       literal ppf l
   | E_variable n ->
       fprintf ppf "%a" expression_variable n
-  | E_application app ->
-      fprintf ppf "(%a)@(%a)" expression app.expr1 expression app.expr2
+  | E_application {lamb;args} ->
+      fprintf ppf "(%a)@(%a)" expression lamb expression args
   | E_constructor c ->
       fprintf ppf "%a(%a)" constructor c.constructor expression c.element
   | E_constant c ->
@@ -58,11 +58,12 @@ and expression_content ppf (ec : expression_content) =
         cases
   | E_let_in { let_binder ; rhs ; let_result; inline } ->    
     fprintf ppf "let %a = %a%a in %a" option_type_name let_binder expression rhs option_inline inline expression let_result
+  | E_sequence {expr1;expr2} ->
+      fprintf ppf "%a;\n%a" expression expr1 expression expr2
+  | E_ascription {anno_expr; type_annotation} ->
+      fprintf ppf "%a : %a" expression anno_expr type_expression type_annotation
   | E_skip ->
       fprintf ppf "skip"
-  | E_ascription {anno_expr; type_annotation} ->
-      fprintf ppf "%a : %a" expression anno_expr type_expression
-        type_annotation
 
 and option_type_name ppf
     ((n, ty_opt) : expression_variable * type_expression option) =

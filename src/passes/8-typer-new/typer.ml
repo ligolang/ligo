@@ -679,11 +679,11 @@ and type_expression : environment -> Solver.state -> ?tv_opt:O.type_expression -
    *   let%bind (name', tv) =
    *     type_constant name tv_lst tv_opt ae.location in
    *   return (E_constant (name' , lst')) tv *)
-  | E_application {expr1;expr2} ->
-    let%bind (f' , state') = type_expression e state expr1 in
-    let%bind (arg , state'') = type_expression e state' expr2 in
-    let wrapped = Wrap.application f'.type_expression arg.type_expression in
-    return_wrapped (E_application {expr1=f';expr2=arg}) state'' wrapped
+  | E_application {lamb;args} ->
+    let%bind (f' , state') = type_expression e state lamb in
+    let%bind (args , state'') = type_expression e state' args in
+    let wrapped = Wrap.application f'.type_expression args.type_expression in
+    return_wrapped (E_application {lamb=f';args}) state'' wrapped
 
   (* | E_look_up dsi ->
    *   let%bind (ds, ind) = bind_map_pair (type_expression e) dsi in
@@ -1037,9 +1037,9 @@ let rec untype_expression (e:O.expression) : (I.expression) result =
       return (e_constant cons_name lst')
   | E_variable (n) ->
     return (e_variable (n))
-  | E_application {expr1;expr2} ->
-      let%bind f' = untype_expression expr1 in
-      let%bind arg' = untype_expression expr2 in
+  | E_application {lamb;args} ->
+      let%bind f' = untype_expression lamb in
+      let%bind arg' = untype_expression args in
       return (e_application f' arg')
   | E_lambda lambda ->
       let%bind lambda = untype_lambda e.type_expression lambda in

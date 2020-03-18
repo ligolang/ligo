@@ -18,8 +18,8 @@ and expression_content ppf (ec : expression_content) =
       literal ppf l
   | E_variable n ->
       fprintf ppf "%a" expression_variable n
-  | E_application app ->
-      fprintf ppf "(%a)@(%a)" expression app.expr1 expression app.expr2
+  | E_application {lamb;args} ->
+      fprintf ppf "(%a)@(%a)" expression lamb expression args
   | E_constructor c ->
       fprintf ppf "%a(%a)" constructor c.constructor expression c.element
   | E_constant c ->

@@ -253,9 +253,9 @@ and transpile_annotated_expression (ae:AST.expression) : expression result =
       let%bind tv = transpile_environment_element_type ele in
       return ~tv @@ E_variable (name)
     )
-  | E_application {expr1;expr2} ->
-      let%bind a = transpile_annotated_expression expr1 in
-      let%bind b = transpile_annotated_expression expr2 in
+  | E_application {lamb; args} ->
+      let%bind a = transpile_annotated_expression lamb in
+      let%bind b = transpile_annotated_expression args in
       return @@ E_application (a, b)
   | E_constructor {constructor;element} -> (
       let%bind param' = transpile_annotated_expression element in
@@ -550,10 +550,10 @@ and transpile_recursive {fun_name; fun_type; lambda} =
       E_matching m -> 
         let%bind ty = transpile_type e.type_expression in
         matching fun_name loop_type shadowed m ty |
-      E_application {expr1;expr2} -> (
-        match expr1.expression_content,shadowed with
+      E_application {lamb;args} -> (
+        match lamb.expression_content,shadowed with
         E_variable name, false when Var.equal fun_name name -> 
-          let%bind expr = transpile_annotated_expression expr2 in
+          let%bind expr = transpile_annotated_expression args in
           ok @@ Expression.make (E_constant {cons_name=C_LOOP_CONTINUE;arguments=[expr]}) loop_type |
         _ -> 
           let%bind expr = transpile_annotated_expression e in
