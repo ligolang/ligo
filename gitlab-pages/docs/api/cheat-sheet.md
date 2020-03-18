@@ -11,22 +11,153 @@ import Syntax from '@theme/Syntax';
 Note that this table is not compiled before production and currently needs to be managed manually.
 -->
 
+<div style={{display:'grid', gridTemplateColumns: '30% 70%' }}>
+<div>Primitive</div>
+<div>Example</div>
+<div>Strings</div>
+<div>
+
+```pascaligo
+const name: string = "Tezos";
+```
+
+</div>
+<div>
+Characters
+</div>
+<div>
+
+```pascaligo
+const t: string = "t";
+```
+
+</div>
+<div>
+Integers
+</div>
+<div>
+
+```pascaligo
+const i: int = 42;
+```
+
+</div>
+<div>
+Natural numbers
+</div>
+<div>
+
+```pascaligo
+const n: int = 7n;
+```
+
+</div>
+<div>
+Unit
+</div>
+<div>
+
+```pascaligo
+const u: unit = unit;
+```
+
+</div>
+<div>
+Boolean
+</div>
+<div>
+
+```pascaligo
+const hasDriversLicense: bool = False;
+const adult: bool = True;
+```
+
+</div>
+<div>
+Boolean Logic
+</div>
+<div>
+
+```pascaligo
+const booleanLogic: bool = (not True) == False == (False and True) == (False or False);
+```
+
+</div>
+<div>
+Mutez (micro tez)
+</div>
+<div>
+
+```pascaligo
+const tez: mutez = 42mutez;
+```
+
+</div>
+<div>
+Address
+</div>
+<div>
+
+```pascaligo
+const tz1address: address = ""tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx";
+const kt1address: address = ""KT1JepfBfMSqkQyf9B1ndvURghGsSB8YCLMD";
+```
+
+</div>
+<div>
+Addition
+</div>
+<div>
+
+```pascaligo
+const add_int: int = 3 + 4;
+const add_nat: nat = 3n + 4n;
+```
+
+</div>
+<div>
+Multiplication & Division
+</div>
+<div>
+
+```pascaligo
+const mul_int: int = 3 + 4;
+const mul_nat: nat = 3n + 4n;
+
+const div_int: int = 10 / 5;
+const div_nat: nat = 10n / 5n;
+```
+
+</div>
+<div>
+Modulo
+</div>
+<div>
+
+```pascaligo
+const mod: int = 10 mod 3;
+```
+
+</div>
+<div>
+Tuples
+</div>
+<div>
+
+```pascaligo
+const mod: int = 10 mod 3;
+```
+
+</div>
+</div>
+
 
 <Syntax syntax="pascaligo">
 
+
+
 |Primitive   	|Example|
 |---	|---|
-|Strings | `"Tezos"`|
-|Characters | `"t"`|
-|Integers | `42`, `7`|
-|Natural numbers | `42n`, `7n`|
-|Unit| `unit`|
-|Boolean|<pre><code>const hasDriversLicense: bool = False;<br/>const adult: bool = True;</code></pre> |
-|Boolean Logic|<pre><code>(not True) == False == (False and True) == (False or False)</code></pre>|
-|Mutez (micro tez)| `42mutez`, `7mutez` |
-|Address | `"tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx"`, `"KT1JepfBfMSqkQyf9B1ndvURghGsSB8YCLMD"`|
-|Addition |`3 + 4`, `3n + 4n`|
-|Multiplication & Division| `3 * 4`, `3n * 4n`, `10 / 5`, `10n / 5n`|
 |Modulo| `10 mod 3`|
 |Tuples| <pre><code>type name is (string * string);<br/>const winner: name = ("John", "Doe");<br/>const firstName: string = winner.0;<br/>const lastName: string = winner.1;</code></pre>|
 |Types|`type age is int`, `type name is string`  |
