@@ -299,6 +299,41 @@ gitlab-pages/docs/language-basics/src/functions/incr_map.religo incr_map
 
 </Syntax>
 
+
+## Nested functions (also known as closures)
+It's possible to place functions inside other functions. These functions
+have access to variables in the same scope. 
+
+<Syntax syntax="pascaligo">
+
+```pascaligo
+function closure_example (const i : int) : int is
+  block {
+    function closure (const j : int) : int is i + j
+  } with closure (i)
+```
+
+</Syntax>
+<Syntax syntax="cameligo">
+
+```cameligo
+let closure_example (i : int) : int =
+  let closure : int -> int = fun (j : int) -> i + j in
+  closure i
+```
+
+</Syntax>
+<Syntax syntax="reasonligo">
+
+```reasonligo
+let closure_example = (i : int) : int => {
+  let closure = (j: int): int => i + j;
+  closure(i);
+};
+```
+
+</Syntax>
+
 ## Recursive function
 
 LIGO functions are not recursive by default, the user need to indicate that the function is recursive.
