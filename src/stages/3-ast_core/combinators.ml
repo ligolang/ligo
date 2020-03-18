@@ -121,7 +121,6 @@ let e_matching_bool ?loc a b c : expression = e_matching ?loc a (Match_bool {mat
 let e_accessor ?loc a b = make_expr ?loc @@ E_record_accessor {expr = a; label= Label b}
 let e_accessor_list ?loc a b  = List.fold_left (fun a b -> e_accessor ?loc a b) a b
 let e_variable ?loc v = make_expr ?loc @@ E_variable v
-let e_skip ?loc () = make_expr ?loc @@ E_skip
 let e_let_in ?loc (binder, ascr) inline rhs let_result = 
   make_expr ?loc @@ E_let_in { let_binder = (binder,ascr) ; rhs ; let_result; inline }
 let e_annotation ?loc anno_expr ty = make_expr ?loc @@ E_ascription {anno_expr; type_annotation = ty}

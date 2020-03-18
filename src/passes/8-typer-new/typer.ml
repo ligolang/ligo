@@ -446,10 +446,6 @@ and type_expression : environment -> Solver.state -> ?tv_opt:O.type_expression -
   | E_literal (Literal_void) -> (
       failwith "TODO: missing implementation for literal void"
     )
-  | E_skip -> (
-    (* E_skip just returns unit *)
-    return_wrapped (e_unit ()) state @@ Wrap.literal (t_unit ())
-    )
   (* | E_literal (Literal_string s) -> (
    *     L.log (Format.asprintf "literal_string option type: %a" PP_helpers.(option O.PP.type_expression) tv_opt) ;
    *     match Option.map Ast_typed.get_type' tv_opt with

@@ -85,7 +85,7 @@ let rec compile_expression : I.expression -> O.expression result =
       let%bind rhs = compile_expression rhs in
       let%bind let_result = compile_expression let_result in
       return @@ O.E_let_in {let_binder=(binder,ty_opt);inline;rhs;let_result}
-    | I.E_skip -> return @@ O.E_skip
+    | I.E_skip -> ok @@ O.e_unit ~loc:e.location ()
     | I.E_constructor {constructor;element} ->
       let%bind element = compile_expression element in
       return @@ O.E_constructor {constructor;element}
@@ -270,7 +270,6 @@ let rec uncompile_expression : O.expression -> I.expression result =
     let%bind rhs = uncompile_expression rhs in
     let%bind let_result = uncompile_expression let_result in
     return @@ I.E_let_in {let_binder=(binder,ty_opt);inline;rhs;let_result}
-  | O.E_skip -> return @@ I.E_skip
   | O.E_constructor {constructor;element} ->
     let%bind element = uncompile_expression element in
     return @@ I.E_constructor {constructor;element}

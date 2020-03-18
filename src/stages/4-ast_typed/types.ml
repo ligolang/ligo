@@ -40,8 +40,8 @@ and expression_content =
   | E_variable of expression_variable
   | E_application of application
   | E_lambda of lambda
-  | E_let_in of let_in
   | E_recursive of recursive
+  | E_let_in of let_in
   (* Variant *)
   | E_constructor of constructor (* For user defined constructors *)
   | E_matching of matching

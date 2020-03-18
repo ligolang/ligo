@@ -58,8 +58,6 @@ and expression_content ppf (ec : expression_content) =
         cases
   | E_let_in { let_binder ;rhs ; let_result; inline } ->    
     fprintf ppf "let %a = %a%a in %a" option_type_name let_binder expression rhs option_inline inline expression let_result
-  | E_skip ->
-      fprintf ppf "skip"
   | E_ascription {anno_expr; type_annotation} ->
       fprintf ppf "%a : %a" expression anno_expr type_expression
         type_annotation

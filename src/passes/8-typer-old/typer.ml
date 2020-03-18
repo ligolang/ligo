@@ -423,7 +423,7 @@ and type_expression' : environment -> ?tv_opt:O.type_expression -> I.expression 
       return (E_variable name) tv'.type_value
   | E_literal (Literal_bool b) ->
       return (E_literal (Literal_bool b)) (t_bool ())
-  | E_literal Literal_unit | E_skip ->
+  | E_literal Literal_unit ->
       return (E_literal (Literal_unit)) (t_unit ())
   | E_literal Literal_void -> return (E_literal (Literal_void)) (t_unit ()) (* TODO : IS this really a t_unit ?*)
   | E_literal (Literal_string s) ->

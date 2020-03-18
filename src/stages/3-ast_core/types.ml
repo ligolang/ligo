@@ -36,7 +36,6 @@ and expression_content =
   | E_lambda of lambda
   | E_recursive of recursive
   | E_let_in of let_in
-  | E_skip
   (* Variant *)
   | E_constructor of constructor (* For user defined constructors *)
   | E_matching of matching
