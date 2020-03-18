@@ -1,10 +1,10 @@
 open Trace
-open Ast_simplified
+open Ast_core
 open Test_helpers
 
 module Typed = Ast_typed
 module Typer = Typer
-module Simplified = Ast_simplified
+module Simplified = Ast_core
 
 let int () : unit result =
   let open Combinators in
@@ -72,7 +72,7 @@ end
 (* TODO: deep types (e.g. record of record)
    TODO: negative tests (expected type error) *)
 
-let main = test_suite "Typer (from simplified AST)" [
+let main = test_suite "Typer (from core AST)" [
     test "int" int ;
     test "unit"        TestExpressions.unit ;
     test "int2"        TestExpressions.int ;

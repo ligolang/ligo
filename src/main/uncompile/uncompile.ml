@@ -10,7 +10,8 @@ let uncompile_value func_or_expr program entry ex_ty_value =
       ok output_type in
   let%bind mini_c = Compiler.Uncompiler.translate_value ex_ty_value in
   let%bind typed = Transpiler.untranspile mini_c output_type in
-  Typer.untype_expression typed
+  let%bind core  = Typer.untype_expression typed in
+  ok @@ core
 
 let uncompile_typed_program_entry_expression_result program entry ex_ty_value =
   uncompile_value Expression program entry ex_ty_value

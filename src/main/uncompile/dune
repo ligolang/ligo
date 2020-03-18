@@ -4,6 +4,8 @@
   (libraries
     simple-utils
     compiler
+    imperative_to_sugar
+    sugar_to_core
     typer_new
     typer
     ast_typed
