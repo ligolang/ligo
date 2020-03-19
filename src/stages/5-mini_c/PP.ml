@@ -86,8 +86,6 @@ and expression' ppf (e:expression') = match e with
 
   | E_constant c -> fprintf ppf "%a %a" constant c.cons_name (pp_print_list ~pp_sep:space_sep expression) c.arguments
   | E_literal v -> fprintf ppf "L(%a)" value v
-  | E_make_empty_map _ -> fprintf ppf "map[]"
-  | E_make_empty_big_map _ -> fprintf ppf "big_map[]"
   | E_make_none _ -> fprintf ppf "none"
   | E_if_bool (c, a, b) -> fprintf ppf "%a ? %a : %a" expression c expression a expression b
   | E_if_none (c, n, ((name, _) , s)) -> fprintf ppf "%a ?? %a : %a -> %a" expression c expression n Var.pp name expression s
@@ -219,6 +217,7 @@ and constant ppf : constant' -> unit = function
   | C_MAP_FIND_OPT          -> fprintf ppf "MAP_FIND_OP"
   (* Big Maps *)
   | C_BIG_MAP               -> fprintf ppf "BIG_MAP"
+  | C_BIG_MAP_ADD           -> fprintf ppf "BIG_MAP_ADD"
   | C_BIG_MAP_EMPTY         -> fprintf ppf "BIG_MAP_EMPTY"
   | C_BIG_MAP_LITERAL       -> fprintf ppf "BIG_MAP_LITERAL"
   (* Crypto *)

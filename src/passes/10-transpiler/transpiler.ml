@@ -390,34 +390,6 @@ and transpile_annotated_expression (ae:AST.expression) : expression result =
     transpile_lambda l io
   | E_recursive r ->
     transpile_recursive r
-  | E_map m -> (
-      let%bind (src, dst) =
-        trace_strong (corner_case ~loc:__LOC__ "not a map") @@
-        Mini_c.Combinators.get_t_map tv in
-      let aux : expression result -> (AST.expression * AST.expression) -> expression result = fun prev (k, v) ->
-        let%bind prev' = prev in
-        let%bind (k', v') =
-          let v' = e_a_some v ae.environment in
-          bind_map_pair (transpile_annotated_expression) (k , v') in
-        return @@ E_constant {cons_name=C_UPDATE;arguments=[k' ; v' ; prev']}
-      in
-      let init = return @@ E_make_empty_map (src, dst) in
-      List.fold_left aux init m
-    )
-  | E_big_map m -> (
-      let%bind (src, dst) =
-        trace_strong (corner_case ~loc:__LOC__ "not a map") @@
-        Mini_c.Combinators.get_t_big_map tv in
-      let aux : expression result -> (AST.expression * AST.expression) -> expression result = fun prev (k, v) ->
-        let%bind prev' = prev in
-        let%bind (k', v') =
-          let v' = e_a_some v ae.environment in
-          bind_map_pair (transpile_annotated_expression) (k , v') in
-        return @@ E_constant {cons_name=C_UPDATE;arguments=[k' ; v' ; prev']}
-      in
-      let init = return @@ E_make_empty_big_map (src, dst) in
-      List.fold_left aux init m
-    )
   | E_matching {matchee=expr; cases=m} -> (
       let%bind expr' = transpile_annotated_expression expr in
       match m with

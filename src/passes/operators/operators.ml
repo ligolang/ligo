@@ -621,6 +621,11 @@ module Typer = struct
     let%bind () = assert_type_expression_eq (src , k) in
     ok m
 
+  let map_empty = typer_0 "MAP_EMPTY" @@ fun tv_opt ->
+    match tv_opt with
+    | None -> simple_fail "untyped MAP_EMPTY"
+    | Some t -> ok t
+
   let map_add : typer = typer_3 "MAP_ADD" @@ fun k v m ->
     let%bind (src, dst) = bind_map_or (get_t_map , get_t_big_map) m in
     let%bind () = assert_type_expression_eq (src, k) in
@@ -1165,6 +1170,7 @@ module Typer = struct
     | C_LIST_MAP            -> ok @@ list_map ;
     | C_LIST_FOLD           -> ok @@ list_fold ;
     (* MAP *)
+    | C_MAP_EMPTY           -> ok @@ map_empty ;
     | C_MAP_ADD             -> ok @@ map_add ;
     | C_MAP_REMOVE          -> ok @@ map_remove ;
     | C_MAP_UPDATE          -> ok @@ map_update ;

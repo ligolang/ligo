@@ -40,8 +40,6 @@ let rec replace : expression -> var_name -> var_name -> expression =
   | E_variable z ->
     let z = replace_var z in
     return @@ E_variable z
-  | E_make_empty_map _ -> e
-  | E_make_empty_big_map _ -> e
   | E_make_none _ -> e
   | E_iterator (name, ((v, tv), body), expr) ->
     let body = replace body in
@@ -173,8 +171,7 @@ let rec subst_expression : body:expression -> x:var_name -> expr:expression -> e
   )
   (* All that follows is boilerplate *)
   | E_literal _ | E_skip | E_make_none _
-  | E_make_empty_map (_,_)
-  | E_make_empty_big_map _ as em -> return em
+    as em -> return em
   | E_constant (c) -> (
       let lst = List.map self c.arguments in
       return @@ E_constant {cons_name = c.cons_name; arguments = lst }

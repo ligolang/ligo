@@ -56,14 +56,6 @@ let rec check_recursive_call : expression_variable -> bool -> expression -> unit
     let%bind _ = check_recursive_call n false record in
     let%bind _ = check_recursive_call n false update in
     ok ()
-  | E_map eel | E_big_map eel->
-    let aux (e1,e2) = 
-      let%bind _ = check_recursive_call n false e1 in
-      let%bind _ = check_recursive_call n false e2 in
-      ok ()
-    in
-    let%bind _ = bind_map_list aux eel in
-    ok ()
 
 and check_recursive_call_in_matching = fun n final_path c ->
   match c with

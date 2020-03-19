@@ -109,7 +109,6 @@ val ez_e_record : ( string * expression ) list -> expression
 *)
 val e_some : expression -> expression_content
 val e_none : unit -> expression_content
-val e_map : ( expression * expression ) list -> expression_content
 val e_unit : unit -> expression_content
 val e_int : int -> expression_content
 val e_nat : int -> expression_content
@@ -145,7 +144,6 @@ val e_a_record : expression label_map -> full_environment -> expression
 val e_a_application : expression -> expression -> full_environment -> expression
 val e_a_variable : expression_variable -> type_expression -> full_environment -> expression
 val ez_e_a_record : ( label * expression ) list -> full_environment -> expression
-val e_a_map : ( expression * expression ) list -> type_expression -> type_expression -> full_environment -> expression
 val e_a_let_in : expression_variable -> bool -> expression -> expression -> full_environment -> expression
 
 val get_a_int : expression -> int result

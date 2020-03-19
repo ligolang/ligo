@@ -12,10 +12,6 @@ let rec fold_expression : 'a folder -> 'a -> expression -> 'a result = fun f ini
     let%bind res = bind_fold_list self init' lst in
     ok res
   )
-  | E_map lst | E_big_map lst -> (
-    let%bind res = bind_fold_list (bind_fold_pair self) init' lst in
-    ok res
-  )
   | E_application {lamb; args} -> (
       let ab = (lamb, args) in
       let%bind res = bind_fold_pair self init' ab in
@@ -90,14 +86,6 @@ let rec map_expression : mapper -> expression -> expression result = fun f e ->
   let%bind e' = f e in
   let return expression_content = ok { e' with expression_content } in
   match e'.expression_content with
-  | E_map lst -> (
-    let%bind lst' = bind_map_list (bind_map_pair self) lst in
-    return @@ E_map lst'
-  )
-  | E_big_map lst -> (
-    let%bind lst' = bind_map_list (bind_map_pair self) lst in
-    return @@ E_big_map lst'
-  )
   | E_matching {matchee=e;cases} -> (
       let%bind e' = self e in
       let%bind cases' = map_cases f cases in
@@ -193,14 +181,6 @@ let rec fold_map_expression : 'a fold_mapper -> 'a -> expression -> ('a * expres
   else
   let return expression_content = { e' with expression_content } in
   match e'.expression_content with
-  | E_map lst -> (
-    let%bind (res, lst') = bind_fold_map_list (bind_fold_map_pair self) init' lst in
-    ok (res, return @@ E_map lst')
-  )
-  | E_big_map lst -> (
-    let%bind (res, lst') = bind_fold_map_list (bind_fold_map_pair self) init' lst in
-    ok (res, return @@ E_big_map lst')
-  )
   | E_matching {matchee=e;cases} -> (
       let%bind (res, e') = self init' e in
       let%bind (res,cases') = fold_map_cases f res cases in

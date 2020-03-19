@@ -151,28 +151,38 @@ let rec untranspile (v : value) (t : AST.type_expression) : AST.expression resul
             ok (e_a_empty_some s')
       )
     | TC_map (k_ty,v_ty)-> (
-        let%bind lst =
+        let%bind map =
           trace_strong (wrong_mini_c_value "map" v) @@
           get_map v in
-        let%bind lst' =
+        let%bind map' =
           let aux = fun (k, v) ->
             let%bind k' = untranspile k k_ty in
             let%bind v' = untranspile v v_ty in
             ok (k', v') in
-          bind_map_list aux lst in
-        return (E_map lst')
+          bind_map_list aux map in
+        let aux = fun prev (k, v) ->
+          let (k', v') = (k , v ) in
+          return @@ E_constant {cons_name=C_MAP_ADD;arguments=[k' ; v' ; prev]}
+        in
+        let%bind init = return @@ E_constant {cons_name=C_MAP_EMPTY;arguments=[]} in
+        bind_fold_list aux init map'
       )
     | TC_big_map (k_ty, v_ty) -> (
-        let%bind lst =
+        let%bind map =
           trace_strong (wrong_mini_c_value "big_map" v) @@
           get_big_map v in
-        let%bind lst' =
+        let%bind map' =
           let aux = fun (k, v) ->
             let%bind k' = untranspile k k_ty in
             let%bind v' = untranspile v v_ty in
             ok (k', v') in
-          bind_map_list aux lst in
-        return (E_big_map lst')
+          bind_map_list aux map in
+        let map' = List.sort_uniq compare map' in
+        let aux = fun prev (k, v) ->
+          return @@ E_constant {cons_name=C_MAP_ADD;arguments=[k ; v ; prev]}
+        in
+        let%bind init = return @@ E_constant {cons_name=C_MAP_EMPTY;arguments=[]} in
+        bind_fold_list aux init map'
       )
     | TC_list ty -> (
         let%bind lst =

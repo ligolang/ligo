@@ -511,66 +511,6 @@ and type_expression' : environment -> ?tv_opt:O.type_expression -> I.expression 
     let%bind () = O.assert_type_expression_eq (tv, get_type_expression update) in
     return (E_record_update {record; path; update}) wrapped
   (* Data-structure *)
-  | E_map lst ->
-      let%bind lst' = bind_map_list (bind_map_pair (type_expression' e)) lst in
-      let%bind tv =
-        let aux opt c =
-          match opt with
-          | None -> ok (Some c)
-          | Some c' ->
-              let%bind _eq = Ast_typed.assert_type_expression_eq (c, c') in
-              ok (Some c') in
-        let%bind key_type =
-          let%bind sub =
-            bind_fold_list aux None
-            @@ List.map get_type_expression
-            @@ List.map fst lst' in
-          let%bind annot = bind_map_option get_t_map_key tv_opt in
-          trace (simple_info "empty map expression without a type annotation") @@
-          O.merge_annotation annot sub (needs_annotation ae "this map literal")
-        in
-        let%bind value_type =
-          let%bind sub =
-            bind_fold_list aux None
-            @@ List.map get_type_expression
-            @@ List.map snd lst' in
-          let%bind annot = bind_map_option get_t_map_value tv_opt in
-          trace (simple_info "empty map expression without a type annotation") @@
-          O.merge_annotation annot sub (needs_annotation ae "this map literal")
-        in
-        ok (t_map key_type value_type ())
-      in
-      return (E_map lst') tv
-  | E_big_map lst ->
-      let%bind lst' = bind_map_list (bind_map_pair (type_expression' e)) lst in
-      let%bind tv =
-        let aux opt c =
-          match opt with
-          | None -> ok (Some c)
-          | Some c' ->
-              let%bind _eq = Ast_typed.assert_type_expression_eq (c, c') in
-              ok (Some c') in
-        let%bind key_type =
-          let%bind sub =
-            bind_fold_list aux None
-            @@ List.map get_type_expression
-            @@ List.map fst lst' in
-          let%bind annot = bind_map_option get_t_big_map_key tv_opt in
-          trace (simple_info "empty map expression without a type annotation") @@
-          O.merge_annotation annot sub (needs_annotation ae "this map literal")
-        in
-        let%bind value_type =
-          let%bind sub =
-            bind_fold_list aux None
-            @@ List.map get_type_expression
-            @@ List.map snd lst' in
-          let%bind annot = bind_map_option get_t_big_map_value tv_opt in
-          trace (simple_info "empty map expression without a type annotation") @@
-          O.merge_annotation annot sub (needs_annotation ae "this map literal")
-        in
-        ok (t_big_map key_type value_type ())
-      in
-      return (E_big_map lst') tv
   | E_lambda lambda -> 
    let%bind (lambda, lambda_type) = type_lambda e lambda in
    return (E_lambda lambda ) lambda_type
@@ -655,6 +595,34 @@ and type_expression' : environment -> ?tv_opt:O.type_expression -> I.expression 
       let tv_lst = [tv_key;tv_set] in
       let%bind (name', tv) = type_constant cst tv_lst tv_opt in
       return (E_constant {cons_name=name';arguments=[key';set']}) tv
+  | E_constant {cons_name=C_MAP_ADD as cst; arguments=[key;value;map]} ->
+      let%bind key' = type_expression' e key in
+      let%bind val' = type_expression' e value in
+      let tv_key = get_type_expression key' in
+      let tv_val = get_type_expression val' in
+      let tv = match tv_opt with 
+          Some (tv) -> tv 
+        | None -> t_map tv_key tv_val ()
+      in
+      let%bind map' =  type_expression' e ~tv_opt:tv map in
+      let tv_map = get_type_expression map' in 
+      let tv_lst = [tv_key;tv_val;tv_map] in
+      let%bind (name', tv) = type_constant cst tv_lst tv_opt in
+      return (E_constant {cons_name=name';arguments=[key';val';map']}) tv
+  | E_constant {cons_name=C_BIG_MAP_ADD as cst; arguments=[key;value;map]} ->
+      let%bind key' = type_expression' e key in
+      let%bind val' = type_expression' e value in
+      let tv_key = get_type_expression key' in
+      let tv_val = get_type_expression val' in
+      let tv = match tv_opt with 
+          Some (tv) -> tv 
+        | None -> t_big_map tv_key tv_val ()
+      in
+      let%bind map' =  type_expression' e ~tv_opt:tv map in
+      let tv_map = get_type_expression map' in 
+      let tv_lst = [tv_key;tv_val;tv_map] in
+      let%bind (name', tv) = type_constant cst tv_lst tv_opt in
+      return (E_constant {cons_name=name';arguments=[key';val';map']}) tv
   | E_constant {cons_name;arguments} ->
       let%bind lst' = bind_list @@ List.map (type_expression' e) arguments in
       let tv_lst = List.map get_type_expression lst' in
@@ -838,12 +806,6 @@ let rec untype_expression (e:O.expression) : (I.expression) result =
     let%bind e = untype_expression e in 
     let Label l = l in
     return (e_update r' l e)
-  | E_map m ->
-      let%bind m' = bind_map_list (bind_map_pair untype_expression) m in
-      return (e_map m')
-  | E_big_map m ->
-      let%bind m' = bind_map_list (bind_map_pair untype_expression) m in
-      return (e_big_map m')
   | E_matching {matchee;cases} ->
       let%bind ae' = untype_expression matchee in
       let%bind m' = untype_matching untype_expression cases in

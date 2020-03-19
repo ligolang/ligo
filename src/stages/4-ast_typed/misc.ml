@@ -211,7 +211,6 @@ module Free_variables = struct
     | E_record m -> unions @@ List.map self @@ LMap.to_list m
     | E_record_accessor {record;_} -> self record
     | E_record_update {record; update;_} -> union (self record) @@ self update
-    | (E_map m | E_big_map m) -> unions @@ List.map self @@ List.concat @@ List.map (fun (a, b) -> [ a ; b ]) m
     | E_matching {matchee; cases;_} -> union (self matchee) (matching_expression b cases)
     | E_let_in { let_binder; rhs; let_result; _} ->
       let b' = union (singleton let_binder) b in
@@ -493,22 +492,6 @@ let rec assert_value_eq (a, b: (expression*expression)) : unit result =
     )
   | E_record _, _ ->
       fail @@ (different_values_because_different_types "record vs. non-record" a b)
-
-  | (E_map lsta, E_map lstb | E_big_map lsta, E_big_map lstb) -> (
-      let%bind lst = generic_try (different_size_values "maps of different lengths" a b)
-          (fun () ->
-             let lsta' = List.sort compare lsta in
-             let lstb' = List.sort compare lstb in
-             List.combine lsta' lstb') in
-      let aux = fun ((ka, va), (kb, vb)) ->
-        let%bind _ = assert_value_eq (ka, kb) in
-        let%bind _ = assert_value_eq (va, vb) in
-        ok () in
-      let%bind _all = bind_map_list aux lst in
-      ok ()
-    )
-  | (E_map _ | E_big_map _), _ ->
-      fail @@ different_values_because_different_types "map vs. non-map" a b
 
   | (E_literal _, _) | (E_variable _, _) | (E_application _, _)
   | (E_lambda _, _) | (E_let_in _, _) | (E_recursive _, _)

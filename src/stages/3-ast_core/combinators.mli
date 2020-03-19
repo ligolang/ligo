@@ -65,7 +65,6 @@ val e'_bytes : string -> expression_content result
 val e_bytes_hex : ?loc:Location.t -> string -> expression result
 val e_bytes_raw : ?loc:Location.t -> bytes -> expression
 val e_bytes_string : ?loc:Location.t -> string -> expression
-val e_big_map : ?loc:Location.t -> ( expr * expr ) list -> expression
 
 val e_record_ez  : ?loc:Location.t -> ( string * expr ) list -> expression
 val e_tuple : ?loc:Location.t -> expression list -> expression
@@ -73,7 +72,6 @@ val e_some : ?loc:Location.t -> expression -> expression
 val e_none : ?loc:Location.t -> unit -> expression
 val e_string_cat : ?loc:Location.t -> expression -> expression -> expression
 val e_map_add : ?loc:Location.t -> expression -> expression ->  expression -> expression
-val e_map : ?loc:Location.t -> ( expression * expression ) list -> expression
 val e_pair : ?loc:Location.t -> expression -> expression -> expression
 val e_constructor : ?loc:Location.t -> string -> expression -> expression
 val e_matching : ?loc:Location.t -> expression -> matching_expr -> expression
@@ -93,9 +91,6 @@ val e_matching_variant : ?loc:Location.t -> expression -> ((string * string) * e
 val make_option_typed : ?loc:Location.t -> expression -> type_expression option -> expression
 
 val e_typed_none : ?loc:Location.t -> type_expression -> expression
-
-val e_typed_map : ?loc:Location.t -> ( expression * expression ) list  -> type_expression -> type_expression -> expression
-val e_typed_big_map : ?loc:Location.t -> ( expression * expression ) list  -> type_expression -> type_expression -> expression
 
 val e_lambda : ?loc:Location.t -> expression_variable -> type_expression option -> type_expression option -> expression -> expression
 val e_recursive : ?loc:Location.t -> expression_variable -> type_expression -> lambda -> expression

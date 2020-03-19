@@ -44,8 +44,6 @@ module Free_variables = struct
     | E_constant (c) -> unions @@ List.map self c.arguments
     | E_application (f, x) -> unions @@ [ self f ; self x ]
     | E_variable n -> var_name b n
-    | E_make_empty_map _ -> empty
-    | E_make_empty_big_map _ -> empty
     | E_make_none _ -> empty
     | E_iterator (_, ((v, _), body), expr) ->
       unions [ expression (union (singleton v) b) body ;

@@ -269,6 +269,7 @@ and constant' =
   | C_MAP_FIND_OPT
   (* Big Maps *)
   | C_BIG_MAP
+  | C_BIG_MAP_ADD
   | C_BIG_MAP_EMPTY
   | C_BIG_MAP_LITERAL
   (* Crypto *)

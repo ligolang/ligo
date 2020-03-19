@@ -276,8 +276,6 @@ let ez_e_record (lst : (label * expression) list) : expression_content =
 let e_some s : expression_content = E_constant {cons_name=C_SOME;arguments=[s]}
 let e_none (): expression_content = E_constant {cons_name=C_NONE; arguments=[]}
 
-let e_map lst : expression_content = E_map lst
-
 let e_unit () : expression_content =     E_literal (Literal_unit)
 let e_int n : expression_content = E_literal (Literal_int n)
 let e_nat n : expression_content = E_literal (Literal_nat n)
@@ -313,7 +311,6 @@ let e_a_record r = make_a_e (e_record r) (t_record (LMap.map get_type_expression
 let e_a_application a b = make_a_e (e_application a b) (get_type_expression b)
 let e_a_variable v ty = make_a_e (e_variable v) ty
 let ez_e_a_record r = make_a_e (ez_e_record r) (ez_t_record (List.map (fun (x, y) -> x, y.type_expression) r) ())
-let e_a_map lst k v = make_a_e (e_map lst) (t_map k v ())
 let e_a_let_in binder expr body attributes = make_a_e (e_let_in binder expr body attributes) (get_type_expression body)
 
 

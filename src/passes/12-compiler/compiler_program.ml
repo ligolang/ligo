@@ -76,6 +76,16 @@ let rec get_operator : constant' -> type_value -> expression list -> predicate r
           let%bind m_ty = Compiler_type.type_ ty' in
           ok @@ simple_constant @@ i_empty_set m_ty
         )
+      | C_MAP_EMPTY -> (
+          let%bind sd = Mini_c.get_t_map ty in
+          let%bind (src, dst) = bind_map_pair Compiler_type.type_ sd in
+          ok @@ simple_constant @@ i_empty_map src dst
+        )
+      | C_BIG_MAP_EMPTY -> (
+          let%bind sd = Mini_c.get_t_big_map ty in
+          let%bind (src, dst) = bind_map_pair Compiler_type.type_ sd in
+          ok @@ simple_constant @@ i_empty_big_map src dst
+        )
       | C_BYTES_UNPACK -> (
           let%bind ty' = Mini_c.get_t_option ty in
           let%bind m_ty = Compiler_type.type_ ty' in
@@ -302,12 +312,6 @@ and translate_expression (expr:expression) (env:environment) : michelson result 
         error title content in
       trace error @@
       return code
-  | E_make_empty_map sd ->
-      let%bind (src, dst) = bind_map_pair Compiler_type.type_ sd in
-      return @@ i_empty_map src dst
-  | E_make_empty_big_map sd ->
-      let%bind (src, dst) = bind_map_pair Compiler_type.type_ sd in
-      return @@ i_empty_big_map src dst
   | E_make_none o ->
       let%bind o' = Compiler_type.type_ o in
       return @@ i_none o'

@@ -291,11 +291,6 @@ and eval : Ast_typed.expression -> env -> value result
       let%bind rhs' = eval rhs env in
       eval let_result (Env.extend env (let_binder,rhs'))
     )
-    | E_map kvlist | E_big_map kvlist ->
-      let%bind kvlist' = bind_map_list
-        (fun kv -> bind_map_pair (fun (el:Ast_typed.expression) -> eval el env) kv)
-        kvlist in
-      ok @@ V_Map kvlist'
     | E_literal l ->
       eval_literal l
     | E_variable var ->

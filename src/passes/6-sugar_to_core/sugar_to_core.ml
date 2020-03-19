@@ -108,18 +108,24 @@ let rec compile_expression : I.expression -> O.expression result =
       let%bind record = compile_expression record in
       let%bind update = compile_expression update in
       return @@ O.E_record_update {record;path;update}
-    | I.E_map map ->
-      let%bind map = bind_map_list (
-        bind_map_pair compile_expression
-      ) map
+    | I.E_map map -> (
+      let map = List.sort_uniq compare map in
+      let aux = fun prev (k, v) ->
+        let%bind (k', v') = bind_map_pair (compile_expression) (k, v) in
+        return @@ E_constant {cons_name=C_MAP_ADD;arguments=[k' ; v' ; prev]}
       in
-      return @@ O.E_map map
-    | I.E_big_map big_map ->
-      let%bind big_map = bind_map_list (
-        bind_map_pair compile_expression
-      ) big_map
+      let%bind init = return @@ E_constant {cons_name=C_MAP_EMPTY;arguments=[]} in
+      bind_fold_list aux init map
+    )
+    | I.E_big_map big_map -> (
+      let map = List.sort_uniq compare big_map in
+      let aux = fun prev (k, v) ->
+        let%bind (k', v') = bind_map_pair (compile_expression) (k, v) in
+        return @@ E_constant {cons_name=C_BIG_MAP_ADD;arguments=[k' ; v' ; prev]}
       in
-      return @@ O.E_big_map big_map
+      let%bind init = return @@ E_constant {cons_name=C_BIG_MAP_EMPTY;arguments=[]} in
+      bind_fold_list aux init map
+    )
     | I.E_list lst ->
       let%bind lst' = bind_map_list (compile_expression) lst in
       let aux = fun prev cur ->
@@ -309,18 +315,6 @@ let rec uncompile_expression : O.expression -> I.expression result =
     let%bind record = uncompile_expression record in
     let%bind update = uncompile_expression update in
     return @@ I.E_record_update {record;path;update}
-  | O.E_map map ->
-    let%bind map = bind_map_list (
-      bind_map_pair uncompile_expression
-    ) map
-    in
-    return @@ I.E_map map
-  | O.E_big_map big_map ->
-    let%bind big_map = bind_map_list (
-      bind_map_pair uncompile_expression
-    ) big_map
-    in
-    return @@ I.E_big_map big_map
   | O.E_ascription {anno_expr; type_annotation} ->
     let%bind anno_expr = uncompile_expression anno_expr in
     let%bind type_annotation = uncompile_type_expression type_annotation in

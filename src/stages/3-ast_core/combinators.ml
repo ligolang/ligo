@@ -107,12 +107,10 @@ let e_bytes_raw ?loc (b: bytes) : expression =
   make_expr ?loc @@ E_literal (Literal_bytes b)
 let e_bytes_string ?loc (s: string) : expression =
   make_expr ?loc @@ E_literal (Literal_bytes (Hex.to_bytes (Hex.of_string s)))
-let e_big_map ?loc lst : expression = make_expr ?loc @@ E_big_map lst
 let e_some ?loc s  : expression = make_expr ?loc @@ E_constant {cons_name = C_SOME; arguments = [s]}
 let e_none ?loc () : expression = make_expr ?loc @@ E_constant {cons_name = C_NONE; arguments = []}
 let e_string_cat ?loc sl sr : expression = make_expr ?loc @@ E_constant {cons_name = C_CONCAT; arguments = [sl ; sr ]}
 let e_map_add ?loc k v old  : expression = make_expr ?loc @@ E_constant {cons_name = C_MAP_ADD; arguments = [k ; v ; old]}
-let e_map ?loc lst : expression = make_expr ?loc @@ E_map lst
 let e_constructor ?loc s a : expression = make_expr ?loc @@ E_constructor { constructor = Constructor s; element = a}
 let e_matching ?loc a b : expression = make_expr ?loc @@ E_matching {matchee=a;cases=b}
 let e_matching_bool ?loc a b c : expression = e_matching ?loc a (Match_bool {match_true = b ; match_false = c})
@@ -157,10 +155,6 @@ let make_option_typed ?loc e t_opt =
 let e_typed_none ?loc t_opt =
   let type_annotation = t_option t_opt in
   e_annotation ?loc (e_none ?loc ()) type_annotation
-
-let e_typed_map ?loc lst k v = e_annotation ?loc (e_map lst) (t_map k v)
-let e_typed_big_map ?loc lst k v = e_annotation ?loc (e_big_map lst) (t_big_map k v)
-
 
 let e_lambda ?loc (binder : expression_variable)
     (input_type : type_expression option)
@@ -255,6 +249,12 @@ let extract_record : expression -> (label * expression) list result = fun e ->
   | _ -> fail @@ bad_kind "record" e.location
 
 let extract_map : expression -> (expression * expression) list result = fun e ->
-  match e.expression_content with
-  | E_map lst -> ok lst
-  | _ -> fail @@ bad_kind "map" e.location
+  let rec aux e =
+    match e.expression_content with
+      E_constant {cons_name=C_UPDATE; arguments=[k;v;map]} -> 
+        let%bind map = aux map in
+        ok @@ (k,v)::map 
+    | E_constant {cons_name=C_MAP_EMPTY; arguments=[]} -> ok @@ []
+    | _ -> fail @@ bad_kind "map" e.location
+  in
+  aux e

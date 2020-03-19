@@ -190,20 +190,6 @@ module Substitution = struct
         let%bind record = s_expression ~substs record in
         let%bind update = s_expression ~substs update in
         ok @@ T.E_record_update {record;path;update}
-      | T.E_map             val_val_list ->
-        let%bind val_val_list = bind_map_list (fun (val1 , val2) ->
-            let%bind val1 = s_expression ~substs val1 in
-            let%bind val2 = s_expression ~substs val2 in
-            ok @@ (val1 , val2)
-          ) val_val_list in
-        ok @@ T.E_map val_val_list
-      | T.E_big_map         val_val_list ->
-        let%bind val_val_list = bind_map_list (fun (val1 , val2) ->
-            let%bind val1 = s_expression ~substs val1 in
-            let%bind val2 = s_expression ~substs val2 in
-            ok @@ (val1 , val2)
-          ) val_val_list in
-        ok @@ T.E_big_map val_val_list
       | T.E_matching   {matchee;cases} ->
         let%bind matchee = s_expression ~substs matchee in
         let%bind cases = s_matching_expr ~substs cases in
