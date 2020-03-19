@@ -7,65 +7,61 @@ import Syntax from '@theme/Syntax';
 
 <div className="cheatsheet">
 
-<!--
-Note that this table is not compiled before production and currently needs to be managed manually.
--->
+<Syntax syntax="pascaligo">
 
-<div style={{display:'grid', gridTemplateColumns: '30% 70%' }}>
-<div>Primitive</div>
-<div>Example</div>
-<div>Strings</div>
-<div>
+<div className="codeTable">
+<div className="primitive">Strings</div>
+<div className="example">
 
 ```pascaligo
 const name: string = "Tezos";
 ```
 
 </div>
-<div>
+<div className="primitive">
 Characters
 </div>
-<div>
+<div className="example">
 
 ```pascaligo
 const t: string = "t";
 ```
 
 </div>
-<div>
+<div className="primitive">
 Integers
 </div>
-<div>
+<div className="example">
 
 ```pascaligo
 const i: int = 42;
 ```
 
 </div>
-<div>
+<div className="primitive">
 Natural numbers
 </div>
-<div>
+<div className="example">
 
 ```pascaligo
-const n: int = 7n;
+const n: nat = 7n;
 ```
 
 </div>
-<div>
+<div className="primitive">
 Unit
 </div>
-<div>
+<div className="example">
 
 ```pascaligo
 const u: unit = unit;
 ```
 
 </div>
-<div>
+<div className="primitive">
 Boolean
 </div>
-<div>
+<div className="example">
 
 ```pascaligo
 const hasDriversLicense: bool = False;
@@ -73,41 +69,47 @@ const adult: bool = True;
 ```
 
 </div>
-<div>
+<div className="primitive">
 Boolean Logic
 </div>
-<div>
+<div className="example">
 
 ```pascaligo
-const booleanLogic: bool = (not True) == False == (False and True) == (False or False);
+const booleanLogic: bool = 
+    (not True) = 
+    False = 
+    (False and True) = 
+    (False or False);
 ```
 
 </div>
-<div>
+<div className="primitive">
 Mutez (micro tez)
 </div>
-<div>
+<div className="example">
 
 ```pascaligo
-const tez: mutez = 42mutez;
+const tez: tez = 42tez;
 ```
 
 </div>
-<div>
+<div className="primitive">
 Address
 </div>
-<div>
+<div className="example">
 
 ```pascaligo
-const tz1address: address = ""tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx";
-const kt1address: address = ""KT1JepfBfMSqkQyf9B1ndvURghGsSB8YCLMD";
+const tz1address: address = 
+  ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address);
+const kt1address: address = 
+  ("KT1JepfBfMSqkQyf9B1ndvURghGsSB8YCLMD": address);
 ```
 
 </div>
-<div>
+<div className="primitive">
 Addition
 </div>
-<div>
+<div className="example">
 
 ```pascaligo
 const add_int: int = 3 + 4;
@@ -115,10 +117,10 @@ const add_nat: nat = 3n + 4n;
 ```
 
 </div>
-<div>
+<div className="primitive">
 Multiplication & Division
 </div>
-<div>
+<div className="example">
 
 ```pascaligo
 const mul_int: int = 3 + 4;
@@ -129,122 +131,947 @@ const div_nat: nat = 10n / 5n;
 ```
 
 </div>
-<div>
+<div className="primitive">
 Modulo
 </div>
-<div>
+<div className="example">
 
 ```pascaligo
-const mod: int = 10 mod 3;
+const mod_nat: nat = 10 mod 3;
 ```
 
 </div>
-<div>
+<div className="primitive">
 Tuples
 </div>
-<div>
+<div className="example">
 
 ```pascaligo
-const mod: int = 10 mod 3;
+type name is (string * string);
+
+const winner: name = ("John", "Doe");
+
+const firstName: string = winner.0;
+const lastName: string = winner.1;
+```
+
+</div>
+<div className="primitive">
+Types
+</div>
+<div className="example">
+
+```pascaligo
+type age is int;
+type name is string
+```
+
+</div>
+<div className="primitive">
+Includes
+</div>
+<div className="example">
+
+```#include "library.ligo"```
+
+</div>
+<div className="primitive">
+Functions (short form)
+</div>
+<div className="example">
+
+```pascaligo
+function add (const a : int ; const b : int) : int is
+  a + b
+```
+
+</div>
+<div className="primitive">
+Functions (long form)
+</div>
+<div className="example">
+
+```pascaligo
+function add (const a : int ; const b : int) : int is
+  block {
+    const result: int = a + b;
+  } with result
+```
+
+</div>
+<div className="primitive">
+If Statement
+</div>
+<div className="example">
+
+```pascaligo
+function if_statement (const age : int) : int is
+  block {
+    var id: int := -1;
+    if age < 16 then {
+        failwith ("Too young to drive");
+    } else {
+        id := 1;
+    }
+  } with id
+```
+
+</div>
+<div className="primitive">
+Options
+</div>
+<div className="example">
+
+```pascaligo
+type middleName is option(string);
+const middleName : middleName = Some("Foo");
+const middleName : middleName = None;
+```
+
+</div>
+<div className="primitive">
+Assignment
+</div>
+<div className="example">
+
+```pascaligo
+const age: int = 5;
+```
+
+</div>
+<div className="primitive">
+Assignment on an existing variable 
+</div>
+<div className="example">
+
+:::caution
+This feature is not supported at the top-level scope, you can use it e.g. within functions. Works for Records and Maps as well.
+:::
+
+```pascaligo
+function assignment_existing (const age : int) : int is
+  block {
+    var x : int := 2;
+    x := 3;
+  } with x
+```
+
+</div>
+<div className="primitive">
+Type Annotations
+</div>
+<div className="example">
+
+```pascaligo
+const someAddress: address = 
+  ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address);
+```
+
+</div>
+<div className="primitive">
+Variants
+</div>
+<div className="example">
+
+```pascaligo group=variants
+type action is 
+| Increment of int
+| Decrement of int;
+```
+
+</div>
+<div className="primitive">
+Variant *(pattern)* matching
+</div>
+<div className="example">
+
+```pascaligo group=variants
+function main 
+  (const action : action; const input : int) : int is
+  (case action of
+    Increment (n) -> input + 1
+  | Decrement (n) -> input - 1
+  end)
+```
+
+</div>
+<div className="primitive">
+Records
+</div>
+<div className="example">
+
+```pascaligo
+type person is record
+  age: int;
+  name: string;
+end
+
+const john : person = record
+  age = 18;
+  name = "john doe";
+end
+
+const name: string = john.name;
+```
+
+</div>
+<div className="primitive">
+Maps
+</div>
+<div className="example">
+
+```pascaligo
+type prices is map(nat, tez);
+
+const prices: prices = map
+    10n -> 60mutez;
+    50n -> 30mutez;
+    100n -> 10mutez;
+end
+
+const price: option(tez) = prices[50n];
+
+function mutate (const u: unit) : unit is block {
+    prices[200n] := 10mutez;
+} with unit;
+```
+
+</div>
+<div className="primitive">
+Contracts & Accounts
+</div>
+<div className="example">
+
+```pascaligo group=tezos_specific
+const destinationAddress: address = 
+  ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address);
+
+const contract : contract (unit) = ( 
+  case (Tezos.get_contract_opt (Tezos.sender) : option(contract(unit))) of
+     Some (contract) -> contract
+   | None -> 
+     (failwith ("No contract.") 
+       : contract (unit))
+  end);
+
+```
+
+</div>
+<div className="primitive">
+Transactions
+</div>
+<div className="example">
+
+```pascaligo group=tezos_specific
+
+const payment: operation = 
+  Tezos.transaction(unit, 100mutez, contract);
+
+```
+
+</div>
+<div className="primitive">
+Exception/Failure
+</div>
+<div className="example">
+
+```pascaligo
+function fail (const u: unit) : unit is
+  failwith("a failure message")
 ```
 
 </div>
 </div>
-
-
-<Syntax syntax="pascaligo">
-
-
-
-|Primitive   	|Example|
-|---	|---|
-|Modulo| `10 mod 3`|
-|Tuples| <pre><code>type name is (string * string);<br/>const winner: name = ("John", "Doe");<br/>const firstName: string = winner.0;<br/>const lastName: string = winner.1;</code></pre>|
-|Types|`type age is int`, `type name is string`  |
-|Includes|```#include "library.ligo"```|
-|Functions (short form)|<pre><code>function add (const a : int ; const b : int) : int is<br/>&nbsp;&nbsp;block { skip } with a + b</code></pre>|
-|Functions (long form)|<pre><code>function add (const a : int ; const b : int) : int is<br/>&nbsp;&nbsp;block { <br/>&nbsp;&nbsp;&nbsp;&nbsp;const result: int = a + b;<br/>&nbsp;&nbsp;} with result</code></pre>|
-| If Statement | <pre><code>if age < 16 <br/>then failwith ("Too young to drive."); <br/>else const new_id: int = prev_id + 1;</code></pre>|
-|Options|<pre><code>type middleName is option(string);<br/>const middleName : middleName = Some("Foo");<br/>const middleName : middleName = None;</code></pre>|
-|Assignment| ```const age: int = 5;```|
-|Assignment on an existing variable <br/>*⚠️ This feature is not supported at the top-level scope, you can use it e.g. within functions. Works for Records and Maps as well.*| ```age := 18;```, ```p.age := 21``` |
-|Type Annotations| ```("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address)```|
-|Variants|<pre><code>type action is<br/>&#124; Increment of int<br/>&#124; Decrement of int</code></pre>|
-|Variant *(pattern)* matching|<pre><code>const a: action = Increment(5);<br/>case a of<br/>&#124; Increment(n) -> n + 1<br/>&#124; Decrement(n) -> n - 1<br/>end</code></pre>|
-|Records|<pre><code>type person is record<br/>&nbsp;&nbsp;age: int ;<br/>&nbsp;&nbsp;name: string ;<br/>end<br/><br/>const john : person = record<br/>&nbsp;&nbsp;age = 18;<br/>&nbsp;&nbsp;name = "John Doe";<br/>end<br/><br/>const name: string = john.name;</code></pre>|
-|Maps|<pre><code>type prices is map(nat, tez);<br/><br/>const prices : prices = map<br/>&nbsp;&nbsp;10n -> 60mutez;<br/>&nbsp;&nbsp;50n -> 30mutez;<br/>&nbsp;&nbsp;100n -> 10mutez;<br/>end<br/><br/>const price: option(tez) = prices[50n];<br/><br/>prices[200n] := 5mutez;</code></pre>|
-|Contracts & Accounts|<pre><code>const destinationAddress : address = "tz1...";<br/>const contract : contract(unit) = get_contract(destinationAddress);</code></pre>|
-|Transactions|<pre><code>const payment : operation = transaction(unit, amount, receiver);</code></pre>|
-|Exception/Failure|`failwith ("Your descriptive error message for the user goes here.")`|
 
 </Syntax>
 <Syntax syntax="cameligo">
 
-|Primitive   	|Example|
-|---	|---|
-|Strings | `"Tezos"`|
-|Characters | `"t"`|
-|Integers | `42`, `7`|
-|Natural numbers | `42n`, `7n`|
-|Unit| `unit`|
-|Boolean|<pre><code>let has_drivers_license: bool = false<br/>let adult: bool = true</code></pre> |
-|Boolean Logic|<pre><code>(not true) = false = (false && true) = (false &#124;&#124; false)</code></pre>|
-|Mutez (micro tez)| `42mutez`, `7mutez` |
-|Address | `("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address)`, `("KT1JepfBfMSqkQyf9B1ndvURghGsSB8YCLMD": address)`|
-|Addition |`3 + 4`, `3n + 4n`|
-|Multiplication & Division| `3 * 4`, `3n * 4n`, `10 / 5`, `10n / 5n`|
-|Modulo| `10 mod 3`|
-|Tuples| <pre><code>type name = (string * string)<br/>let winner: name = "John", "Doe"<br/>let first_name: string = winner.0<br/>let last_name: string = winner.1</code></pre>|
-|Types|`type age = int`, `type name = string`  |
-|Includes|```#include "library.mligo"```|
-|Functions |<pre><code>let add (a : int) (b : int) : int = a + b </code></pre>|
-| If Statement | <pre><code>let new_id: int = if age < 16 <br/> then failwith ("Too young to drive.") <br/> else prev_id + 1</code></pre>|
-|Options|<pre><code>type middle_name = string option<br/>let middle_name : middle_name = Some "Foo"<br/>let middle_name : middle_name = None</code></pre>|
-|Variable Binding | ```let age: int = 5```|
-|Type Annotations| ```("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address)```|
-|Variants|<pre><code>type action =<br/>&#124; Increment of int<br/>&#124; Decrement of int</code></pre>|
-|Variant *(pattern)* matching|<pre><code>let a: action = Increment 5<br/>match a with<br/>&#124; Increment n -> n + 1<br/>&#124; Decrement n -> n - 1<br/></code></pre>|
-|Records|<pre><code>type person = {<br/>&nbsp;&nbsp;age: int ;<br/>&nbsp;&nbsp;name: string ;<br/>}<br/><br/>let john : person = {<br/>&nbsp;&nbsp;age = 18;<br/>&nbsp;&nbsp;name = "John Doe";<br/>}<br/><br/>let name: string = john.name</code></pre>|
-|Maps|<pre><code>type prices = (nat, tez) map<br/><br/>let prices : prices = Map.literal [<br/>&nbsp;&nbsp;(10n, 60mutez);<br/>&nbsp;&nbsp;(50n, 30mutez);<br/>&nbsp;&nbsp;(100n, 10mutez)<br/>]<br/><br/>let price: tez option = Map.find_opt 50n prices<br/><br/>let prices: prices = Map.update 200n (Some 5mutez) prices</code></pre>|
-|Contracts & Accounts|<pre><code>let destination_address : address = "tz1..."<br/>let contract : unit contract = <br/> Tezos.get_contract destination_address</code></pre>|
-|Transactions|<pre><code>let payment : operation = <br/> Tezos.transaction unit amount receiver</code></pre>|
-|Exception/Failure|`failwith ("Your descriptive error message for the user goes here.")`|
+<div className="codeTable">
+<div className="primitive">Strings</div>
+<div className="example">
+
+```cameligo
+let name: string = "Tezos"
+```
+
+</div>
+<div className="primitive">
+Characters
+</div>
+<div className="example">
+
+```cameligo
+let t: string = "t"
+```
+
+</div>
+<div className="primitive">
+Integers
+</div>
+<div className="example">
+
+```cameligo
+let i: int = 42
+```
+
+</div>
+<div className="primitive">
+Natural numbers
+</div>
+<div className="example">
+
+```cameligo
+let n: nat = 7n
+```
+
+</div>
+<div className="primitive">
+Unit
+</div>
+<div className="example">
+
+```cameligo
+let u: unit = unit
+```
+
+</div>
+<div className="primitive">
+Boolean
+</div>
+<div className="example">
+
+```cameligo
+let has_drivers_license: bool = false
+let adult: bool = true
+```
+
+</div>
+<div className="primitive">
+Boolean Logic
+</div>
+<div className="example">
+
+```cameligo
+let booleanLogic: bool = 
+    (not true) = 
+    false = 
+    (false && true) = 
+    (false || false)
+```
+
+</div>
+<div className="primitive">
+Mutez (micro tez)
+</div>
+<div className="example">
+
+```cameligo
+let tez: tez = 42tez
+let tez: tez = 7mutez
+```
+
+</div>
+<div className="primitive">
+Address
+</div>
+<div className="example">
+
+```cameligo
+let tz1address: address = 
+  ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address)
+let kt1address: address = 
+  ("KT1JepfBfMSqkQyf9B1ndvURghGsSB8YCLMD": address)
+```
+
+</div>
+<div className="primitive">
+Addition
+</div>
+<div className="example">
+
+```cameligo
+let add_int: int = 3 + 4
+let add_nat: nat = 3n + 4n
+```
+
+</div>
+<div className="primitive">
+Multiplication & Division
+</div>
+<div className="example">
+
+```cameligo
+let mul_int: int = 3 + 4
+let mul_nat: nat = 3n + 4n
+
+let div_int: int = 10 / 5
+let div_nat: nat = 10n / 5n
+```
+
+</div>
+<div className="primitive">
+Modulo
+</div>
+<div className="example">
+
+```cameligo
+let mod_nat: nat = 10 mod 3
+```
+
+</div>
+<div className="primitive">
+Tuples
+</div>
+<div className="example">
+
+```cameligo
+type name = (string * string)
+
+let winner: name = "John", "Doe"
+
+let firstName: string = winner.0
+let lastName: string = winner.1
+```
+
+</div>
+<div className="primitive">
+Types
+</div>
+<div className="example">
+
+```cameligo
+type age = int
+type name = string
+```
+
+</div>
+<div className="primitive">
+Includes
+</div>
+<div className="example">
+
+```#include "library.mligo"```
+
+</div>
+<div className="primitive">
+Functions
+</div>
+<div className="example">
+
+```cameligo
+let add (a : int) (b : int) : int =
+  a + b
+```
+
+</div>
+
+<div className="primitive">
+If Statement
+</div>
+<div className="example">
+
+```cameligo
+let if_statement (age : int) : int =
+  if age < 16 then 
+    (failwith ("Too young to drive"): int)
+  else
+    1
+```
+
+</div>
+<div className="primitive">
+Options
+</div>
+<div className="example">
+
+```cameligo
+type middle_name = string option
+let middle_name : middle_name = Some "Foo"
+let middle_name : middle_name = None
+```
+
+</div>
+<div className="primitive">
+Variable Binding
+</div>
+<div className="example">
+
+```cameligo
+let age: int = 5
+```
+
+</div>
+<div className="primitive">
+Type Annotations
+</div>
+<div className="example">
+
+```cameligo
+let someAddress: address = 
+  ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address)
+```
+
+</div>
+<div className="primitive">
+Variants
+</div>
+<div className="example">
+
+```cameligo group=variants
+type action = 
+| Increment of int
+| Decrement of int
+```
+
+</div>
+<div className="primitive">
+Variant *(pattern)* matching
+</div>
+<div className="example">
+
+```cameligo group=variants
+let a: action = Increment 5
+let result: int = match a with
+| Increment n -> n + 1
+| Decrement n -> n - 1
+```
+
+</div>
+<div className="primitive">
+Records
+</div>
+<div className="example">
+
+```cameligo
+type person = {
+  age: int;
+  name: string;
+}
+
+let john : person = {
+  age = 18;
+  name = "john doe";
+}
+
+let name: string = john.name
+```
+
+</div>
+<div className="primitive">
+Maps
+</div>
+<div className="example">
+
+```cameligo
+type prices = (nat, tez) map
+
+let prices: prices = Map.literal [
+  (10n, 60mutez);
+  (50n, 30mutez);
+  (100n, 10mutez);
+]
+
+let price: tez option = Map.find_opt 50n prices
+
+let prices : prices = Map.update 200n (Some 5mutez) prices
+```
+
+</div>
+<div className="primitive">
+Contracts & Accounts
+</div>
+<div className="example">
+
+```cameligo group=tezos_specific
+let destinationAddress: address = 
+  ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address)
+
+let contract : unit contract = 
+  match (Tezos.get_contract_opt Tezos.sender : unit contract option) with
+    Some contract -> contract
+    | None -> (failwith "no contract" : unit contract)
+```
+
+</div>
+<div className="primitive">
+Transactions
+</div>
+<div className="example">
+
+```cameligo group=tezos_specific
+
+let payment: operation = 
+  Tezos.transaction unit 100mutez contract
+
+```
+
+</div>
+<div className="primitive">
+Exception/Failure
+</div>
+<div className="example">
+
+```cameligo
+let fail (u: unit) : unit =
+  failwith "a failure message"
+```
+
+</div>
+</div>
 
 </Syntax>
 <Syntax syntax="reasonligo">
 
-|Primitive   	|Example|
-|---	|---|
-|Strings | `"Tezos"`|
-|Characters | `"t"`|
-|Integers | `42`, `7`|
-|Natural numbers | `42n`, `7n`|
-|Unit| `unit`|
-|Boolean|<pre><code>let has_drivers_license: bool = false;<br/>let adult: bool = true;</code></pre> |
-|Boolean Logic|<pre><code>(not true) = false = (false && true) = (false &#124;&#124; false)</code></pre>|
-|Mutez (micro tez)| `42mutez`, `7mutez` |
-|Address | `("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address)`, `("KT1JepfBfMSqkQyf9B1ndvURghGsSB8YCLMD": address)`|
-|Addition |`3 + 4`, `3n + 4n`|
-|Multiplication & Division| `3 * 4`, `3n * 4n`, `10 / 5`, `10n / 5n`|
-|Modulo| `10 mod 3`|
-|Tuples| <pre><code>type name = (string, string);<br/>let winner: name = ("John", "Doe");<br/>let first_name: string = winner[0];<br/>let last_name: string = winner[1];</code></pre>|
-|Types|`type age = int;`, `type name = string;`  |
-|Includes|```#include "library.mligo"```|
-|Functions |<pre><code>let add = (a: int, b: int) : int => a + b; </code></pre>|
-| If Statement | <pre><code>let new_id: int = if (age < 16) {<br/>  failwith ("Too young to drive."); <br/> } else { prev_id + 1; }</code></pre>|
-|Options|<pre><code>type middle_name = option(string);<br/>let middle_name : middle_name = Some("Foo");<br/>let middle_name : middle_name = None;</code></pre>|
-|Variable Binding | ```let age: int = 5;```|
-|Type Annotations| ```("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address)```|
-|Variants|<pre><code>type action =<br/>&#124; Increment(int)<br/>&#124; Decrement(int);</code></pre>|
-|Variant *(pattern)* matching|<pre><code>let a: action = Increment(5);<br/>switch(a) {<br/>&#124; Increment(n) => n + 1<br/>&#124; Decrement(n) => n - 1;<br/> } <br/></code></pre>|
-|Records|<pre><code>type person = {<br/>&nbsp;&nbsp;age: int,<br/>&nbsp;&nbsp;name: string<br/>}<br/><br/>let john : person = {<br/>&nbsp;&nbsp;age: 18,<br/>&nbsp;&nbsp;name: "John Doe"<br/>};<br/><br/>let name: string = john.name;</code></pre>|
-|Maps|<pre><code>type prices = map(nat, tez);<br/><br/>let prices : prices = Map.literal([<br/>&nbsp;&nbsp;(10n, 60mutez),<br/>&nbsp;&nbsp;(50n, 30mutez),<br/>&nbsp;&nbsp;(100n, 10mutez)<br/>]);<br/><br/>let price: option(tez) = Map.find_opt(50n, prices);<br/><br/>let prices: prices = Map.update(200n, Some (5mutez), prices);</code></pre>|
-|Contracts & Accounts|<pre><code>let destination_address : address = "tz1...";<br/>let contract : contract(unit) = <br/> Tezos.get_contract(destination_address);</code></pre>|
-|Transactions|<pre><code>let payment : operation = <br/> Tezos.transaction (unit, amount, receiver);</code></pre>|
-|Exception/Failure|`failwith ("Your descriptive error message for the user goes here.");`|
+<div className="codeTable">
+<div className="primitive">Strings</div>
+<div className="example">
+
+```reasonligo
+let name: string = "Tezos"
+```
+
+</div>
+<div className="primitive">
+Characters
+</div>
+<div className="example">
+
+```reasonligo
+let t: string = "t"
+```
+
+</div>
+<div className="primitive">
+Integers
+</div>
+<div className="example">
+
+```reasonligo
+let i: int = 42
+```
+
+</div>
+<div className="primitive">
+Natural numbers
+</div>
+<div className="example">
+
+```reasonligo
+let n: nat = 7n
+```
+
+</div>
+<div className="primitive">
+Unit
+</div>
+<div className="example">
+
+```reasonligo
+let u: unit = unit
+```
+
+</div>
+<div className="primitive">
+Boolean
+</div>
+<div className="example">
+
+```reasonligo
+let has_drivers_license: bool = false
+let adult: bool = true
+```
+
+</div>
+<div className="primitive">
+Boolean Logic
+</div>
+<div className="example">
+
+```reasonligo
+let booleanLogic: bool = 
+    (!true) ==
+    false == 
+    (false && true) ==
+    (false || false)
+```
+
+</div>
+<div className="primitive">
+Mutez (micro tez)
+</div>
+<div className="example">
+
+```reasonligo
+let tez: tez = 42tez
+let tez: tez = 7mutez
+```
+
+</div>
+<div className="primitive">
+Address
+</div>
+<div className="example">
+
+```reasonligo
+let tz1address: address = 
+  ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address)
+let kt1address: address = 
+  ("KT1JepfBfMSqkQyf9B1ndvURghGsSB8YCLMD": address)
+```
+
+</div>
+<div className="primitive">
+Addition
+</div>
+<div className="example">
+
+```reasonligo
+let add_int: int = 3 + 4
+let add_nat: nat = 3n + 4n
+```
+
+</div>
+<div className="primitive">
+Multiplication & Division
+</div>
+<div className="example">
+
+```reasonligo
+let mul_int: int = 3 + 4
+let mul_nat: nat = 3n + 4n
+
+let div_int: int = 10 / 5
+let div_nat: nat = 10n / 5n
+```
+
+</div>
+<div className="primitive">
+Modulo
+</div>
+<div className="example">
+
+```reasonligo
+let mod_nat: nat = 10 mod 3
+```
+
+</div>
+<div className="primitive">
+Tuples
+</div>
+<div className="example">
+
+```reasonligo
+type name = (string, string)
+
+let winner: name = ("John", "Doe")
+
+let firstName: string = winner[0]
+let lastName: string = winner[1]
+```
+
+</div>
+<div className="primitive">
+Types
+</div>
+<div className="example">
+
+```reasonligo
+type age = int
+type name = string
+```
+
+</div>
+<div className="primitive">
+Includes
+</div>
+<div className="example">
+
+```#include "library.religo"```
+
+</div>
+<div className="primitive">
+Functions (short form)
+</div>
+<div className="example">
+
+```reasonligo
+let add = (a: int, b: int): int =>
+  a + b
+```
+
+</div>
+<div className="primitive">
+Functions (long form)
+</div>
+<div className="example">
+
+```reasonligo
+let add = (a: int, b: int): int => {
+  let c = a;
+  let d = b;
+  c + d
+};
+```
+
+</div>
+<div className="primitive">
+If Statement
+</div>
+<div className="example">
+
+```reasonligo
+let if_statement = (age : int) : int =>
+  if (age < 16) { 
+    (failwith ("Too young to drive"): int)
+  } else {
+    1
+  }
+```
+
+</div>
+<div className="primitive">
+Options
+</div>
+<div className="example">
+
+```reasonligo
+type middle_name = option(string);
+let middle_name : middle_name = Some ("Foo");
+let middle_name : middle_name = None;
+```
+
+</div>
+<div className="primitive">
+Variable Binding
+</div>
+<div className="example">
+
+```reasonligo
+let age: int = 5
+```
+
+</div>
+<div className="primitive">
+Type Annotations
+</div>
+<div className="example">
+
+```reasonligo
+let someAddress: address = 
+  ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address)
+```
+
+</div>
+<div className="primitive">
+Variants
+</div>
+<div className="example">
+
+```reasonligo group=variants
+type action = 
+| Increment (int)
+| Decrement (int)
+```
+
+</div>
+<div className="primitive">
+Variant *(pattern)* matching
+</div>
+<div className="example">
+
+```reasonligo group=variants
+let a: action = Increment(5)
+let result: int = switch (a) {
+| Increment(n) => n + 1
+| Decrement(n) => n - 1
+}
+```
+
+</div>
+<div className="primitive">
+Records
+</div>
+<div className="example">
+
+```reasonligo
+type person = {
+  age: int,
+  name: string
+}
+
+let john : person = {
+  age: 18,
+  name: "john doe"
+}
+
+let name: string = john.name
+```
+
+</div>
+<div className="primitive">
+Maps
+</div>
+<div className="example">
+
+```reasonligo
+type prices = map (nat, tez)
+
+let prices: prices = Map.literal ([
+  (10n, 60mutez),
+  (50n, 30mutez),
+  (100n, 10mutez),
+])
+
+let price: option(tez) = Map.find_opt(50n, prices)
+
+let prices : prices = Map.update(200n, (Some 5mutez), prices)
+```
+
+</div>
+<div className="primitive">
+Contracts & Accounts
+</div>
+<div className="example">
+
+```reasonligo group=tezos_specific
+let destinationAddress: address = 
+  ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address)
+
+let contract : contract(unit) = 
+  switch (Tezos.get_contract_opt(Tezos.sender) : option(contract(unit))) {
+    | Some(contract) => contract
+    | None => (failwith("no contract") : contract(unit))
+  }
+```
+
+</div>
+<div className="primitive">
+Transactions
+</div>
+<div className="example">
+
+```reasonligo group=tezos_specific
+
+let payment: operation = 
+  Tezos.transaction(unit, 100mutez, contract);
+
+```
+
+</div>
+<div className="primitive">
+Exception/Failure
+</div>
+<div className="example">
+
+```reasonligo
+let fail = (u: unit) : unit =>
+  failwith("a failure message")
+```
+
+</div>
+</div>
 
 </Syntax>
-
 
 
 </div>
