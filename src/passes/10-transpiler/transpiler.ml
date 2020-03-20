@@ -487,9 +487,11 @@ and transpile_annotated_expression (ae:AST.expression) : expression result =
         let res' = res @ p' in
         match (up:AST.expression).expression_content with
         | AST.E_record_update {record=record'; path=path'; update=update'} -> (
-          match record.expression_content with 
-            | AST.E_record_accessor {record;path} when record = r && path = p -> 
-              aux res' (record',path',update')
+          match record'.expression_content with 
+            | AST.E_record_accessor {record;path} ->
+              if (AST.Misc.expression_eq record r && path = p) then 
+                aux res' (record',path',update')
+              else ok @@ (up,res')
             | _ -> ok @@ (up,res')
         )
         | _ -> ok @@ (up,res')
