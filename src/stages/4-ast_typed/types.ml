@@ -1,24 +1,8 @@
 [@@@warning "-30"]
 
-module S = Ast_core
+include Types_utils
 
-(* include Stage_common.Types *)
-type expression_
-and expression_variable = expression_ Var.t
-type type_
-and type_variable = type_ Var.t
-
-
-type constructor' = Constructor of string
-type label = Label of string
-
-module CMap = Map.Make( struct type t = constructor' let compare (Constructor a) (Constructor b) = compare a b end)
-module LMap = Map.Make( struct type t = label let compare (Label a) (Label b) = String.compare a b end)
-
-type 'a label_map = 'a LMap.t
-type 'a constructor_map = 'a CMap.t
-
-  and type_constant =
+type type_constant =
     | TC_unit
     | TC_string
     | TC_bytes
@@ -34,126 +18,36 @@ type 'a constructor_map = 'a CMap.t
     | TC_signature
     | TC_timestamp
     | TC_void
-module type AST_PARAMETER_TYPE = sig
-  type type_meta
-end
 
-module Ast_generic_type (PARAMETER : AST_PARAMETER_TYPE) = struct
-  open PARAMETER
+type type_content =
+  | T_sum of type_expression constructor_map
+  | T_record of type_expression label_map
+  | T_arrow of arrow
+  | T_variable of type_variable
+  | T_constant of type_constant
+  | T_operator of type_operator
 
-  type type_content =
-    | T_sum of type_expression constructor_map
-    | T_record of type_expression label_map
-    | T_arrow of arrow
-    | T_variable of type_variable
-    | T_constant of type_constant
-    | T_operator of type_operator
+and arrow = {
+    type1: type_expression;
+    type2: type_expression
+  }
 
-  and arrow = {type1: type_expression; type2: type_expression}
-
-  and type_operator =
-    | TC_contract of type_expression
-    | TC_option of type_expression
-    | TC_list of type_expression
-    | TC_set of type_expression
-    | TC_map of type_expression * type_expression
-    | TC_big_map of type_expression * type_expression
-    | TC_michelson_or of type_expression * type_expression
-    | TC_arrow of type_expression * type_expression
+and type_operator =
+  | TC_contract of type_expression
+  | TC_option of type_expression
+  | TC_list of type_expression
+  | TC_set of type_expression
+  | TC_map of type_expression * type_expression
+  | TC_big_map of type_expression * type_expression
+  | TC_map_or_big_map of type_expression * type_expression
+  | TC_michelson_or of type_expression * type_expression
+  | TC_arrow of type_expression * type_expression
 
 
-  and type_expression = {type_content: type_content; type_meta: type_meta}
-
-  open Trace
-  let map_type_operator f = function
-      TC_contract x -> TC_contract (f x)
-    | TC_option x -> TC_option (f x)
-    | TC_list x -> TC_list (f x)
-    | TC_set x -> TC_set (f x)
-    | TC_map (x , y) -> TC_map (f x , f y)
-    | TC_big_map (x , y)-> TC_big_map (f x , f y)
-    | TC_arrow (x, y) -> TC_arrow (f x, f y)
-
-  let bind_map_type_operator f = function
-      TC_contract x -> let%bind x = f x in ok @@ TC_contract x
-    | TC_option x -> let%bind x = f x in ok @@ TC_option x
-    | TC_list x -> let%bind x = f x in ok @@ TC_list x
-    | TC_set x -> let%bind x = f x in ok @@ TC_set x
-    | TC_map (x , y) -> let%bind x = f x in let%bind y = f y in ok @@ TC_map (x , y)
-    | TC_big_map (x , y)-> let%bind x = f x in let%bind y = f y in ok @@ TC_big_map (x , y)
-    | TC_arrow (x , y)-> let%bind x = f x in let%bind y = f y in ok @@ TC_arrow (x , y)
-
-  let type_operator_name = function
-        TC_contract _ -> "TC_contract"
-      | TC_option   _ -> "TC_option"
-      | TC_list     _ -> "TC_list"
-      | TC_set      _ -> "TC_set"
-      | TC_map      _ -> "TC_map"
-      | TC_big_map  _ -> "TC_big_map"
-      | TC_arrow    _ -> "TC_arrow"
-
-  let type_expression'_of_string = function
-    | "TC_contract" , [x]     -> ok @@ T_operator(TC_contract x)
-    | "TC_option"   , [x]     -> ok @@ T_operator(TC_option x)
-    | "TC_list"     , [x]     -> ok @@ T_operator(TC_list x)
-    | "TC_set"      , [x]     -> ok @@ T_operator(TC_set x)
-    | "TC_map"      , [x ; y] -> ok @@ T_operator(TC_map (x , y))
-    | "TC_big_map"  , [x ; y] -> ok @@ T_operator(TC_big_map (x, y))
-    | ("TC_contract" | "TC_option" | "TC_list" | "TC_set" | "TC_map" | "TC_big_map"), _ ->
-      failwith "internal error: wrong number of arguments for type operator"
-
-    | "TC_unit"      , [] -> ok @@ T_constant(TC_unit)
-    | "TC_string"    , [] -> ok @@ T_constant(TC_string)
-    | "TC_bytes"     , [] -> ok @@ T_constant(TC_bytes)
-    | "TC_nat"       , [] -> ok @@ T_constant(TC_nat)
-    | "TC_int"       , [] -> ok @@ T_constant(TC_int)
-    | "TC_mutez"     , [] -> ok @@ T_constant(TC_mutez)
-    | "TC_bool"      , [] -> ok @@ T_constant(TC_bool)
-    | "TC_operation" , [] -> ok @@ T_constant(TC_operation)
-    | "TC_address"   , [] -> ok @@ T_constant(TC_address)
-    | "TC_key"       , [] -> ok @@ T_constant(TC_key)
-    | "TC_key_hash"  , [] -> ok @@ T_constant(TC_key_hash)
-    | "TC_chain_id"  , [] -> ok @@ T_constant(TC_chain_id)
-    | "TC_signature" , [] -> ok @@ T_constant(TC_signature)
-    | "TC_timestamp" , [] -> ok @@ T_constant(TC_timestamp)
-    | _,               [] ->
-      failwith "internal error: wrong number of arguments for type constant"
-    | _                       ->
-      failwith "internal error: unknown type operator"
-
-  let string_of_type_operator = function
-    | TC_contract  x       -> "TC_contract" , [x]
-    | TC_option    x       -> "TC_option"   , [x]
-    | TC_list      x       -> "TC_list"     , [x]
-    | TC_set       x       -> "TC_set"      , [x]
-    | TC_map       (x , y) -> "TC_map"      , [x ; y]
-    | TC_big_map   (x , y) -> "TC_big_map"  , [x ; y]
-    | TC_arrow     (x , y) -> "TC_arrow"    , [x ; y]
-
-  let string_of_type_constant = function
-    | TC_unit      -> "TC_unit", []
-    | TC_string    -> "TC_string", []
-    | TC_bytes     -> "TC_bytes", []
-    | TC_nat       -> "TC_nat", []
-    | TC_int       -> "TC_int", []
-    | TC_mutez     -> "TC_mutez", []
-    | TC_bool      -> "TC_bool", []
-    | TC_operation -> "TC_operation", []
-    | TC_address   -> "TC_address", []
-    | TC_key       -> "TC_key", []
-    | TC_key_hash  -> "TC_key_hash", []
-    | TC_chain_id  -> "TC_chain_id", []
-    | TC_signature -> "TC_signature", []
-    | TC_timestamp -> "TC_timestamp", []
-    | TC_void      -> "TC_void", []
-
-  let string_of_type_expression' = function
-    | T_operator o -> string_of_type_operator o
-    | T_constant c -> string_of_type_constant c
-    | T_sum _ | T_record _ | T_arrow _ | T_variable _ ->
-      failwith "not a type operator or constant"
-
-end
+and type_expression = {
+    type_content: type_content;
+    type_meta: type_meta
+  }
 
 type literal =
   | Literal_unit
@@ -170,23 +64,33 @@ type literal =
   | Literal_key_hash of string
   | Literal_chain_id of string
   | Literal_void
-  | Literal_operation of
-      Memory_proto_alpha.Protocol.Alpha_context.packed_internal_operation
-and ('a,'tv) matching_content =
-  | Match_bool of {
-      match_true : 'a ;
-      match_false : 'a ;
-    }
-  | Match_list of {
-      match_nil : 'a ;
-      match_cons : expression_variable * expression_variable * 'a * 'tv;
-    }
-  | Match_option of {
-      match_none : 'a ;
-      match_some : expression_variable * 'a * 'tv;
-    }
-  | Match_tuple of (expression_variable list * 'a) * 'tv list
-  | Match_variant of ((constructor' * expression_variable) * 'a) list * 'tv
+  | Literal_operation of Memory_proto_alpha.Protocol.Alpha_context.packed_internal_operation
+
+type matching_content_bool = {
+    match_true : expression ;
+    match_false : expression ;
+  }
+
+and matching_content_list = {
+    match_nil : expression ;
+    match_cons : expression_variable * expression_variable * expression * type_expression;
+  }
+
+and matching_content_option = {
+    match_none : expression ;
+    match_some : expression_variable * expression * type_expression;
+  }
+
+and matching_content_tuple = (expression_variable list * expression) * type_expression list
+
+and matching_content_variant = ((constructor' * expression_variable) * expression) list * type_expression
+
+and matching_content =
+  | Match_bool    of matching_content_bool
+  | Match_list    of matching_content_list
+  | Match_option  of matching_content_option
+  | Match_tuple   of matching_content_tuple
+  | Match_variant of matching_content_variant
 
 and constant' =
   | C_INT
@@ -254,6 +158,8 @@ and constant' =
   | C_SET_FOLD
   | C_SET_MEM
   (* List *)
+  | C_LIST_EMPTY
+  | C_LIST_LITERAL
   | C_LIST_ITER
   | C_LIST_MAP
   | C_LIST_FOLD
@@ -301,15 +207,7 @@ and constant' =
   | C_SET_DELEGATE
   | C_CREATE_CONTRACT
 
-(* end include Stage_common.Types *)
-
-module Ast_typed_type_parameter = struct
-  type type_meta = S.type_expression option
-end
-
-include Ast_generic_type (Ast_typed_type_parameter)
-
-type program = declaration Location.wrap list
+and program = declaration Location.wrap list
 
 and inline = bool
 
@@ -395,7 +293,7 @@ and record_update = {
     update: expression ;
   }
 
-and matching_expr = (expression,type_expression) matching_content
+and matching_expr = matching_content
 and matching =
   { matchee: expression
   ; cases: matching_expr

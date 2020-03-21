@@ -1,6 +1,6 @@
 (rule
   (target generated_fold.ml)
-  (deps generator.raku)
+  (deps generator.raku amodule.ml)
   (action (with-stdout-to generated_fold.ml (run perl6 ./generator.raku amodule.ml)))
 ;  (mode (promote (until-clean)))
 )

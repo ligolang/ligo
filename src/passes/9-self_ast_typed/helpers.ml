@@ -1,6 +1,6 @@
 open Ast_typed
 open Trace
-open Stage_common.Helpers
+open Ast_typed.Helpers
 
 type 'a folder = 'a -> expression -> 'a result
 let rec fold_expression : 'a folder -> 'a -> expression -> 'a result = fun f init e ->
@@ -327,8 +327,8 @@ let fetch_contract_type : string -> program -> contract_type result = fun main_f
     | T_arrow {type1 ; type2} -> (
       match type1.type_content , type2.type_content with
       | T_record tin , T_record tout when (is_tuple_lmap tin) && (is_tuple_lmap tout) ->
-        let%bind (parameter,storage) = Stage_common.Helpers.get_pair tin in
-        let%bind (listop,storage') = Stage_common.Helpers.get_pair tout in
+        let%bind (parameter,storage) = Ast_typed.Helpers.get_pair tin in
+        let%bind (listop,storage') = Ast_typed.Helpers.get_pair tout in
         let%bind () = trace_strong (Errors.expected_list_operation main_fname listop e) @@
           Ast_typed.assert_t_list_operation listop in
         let%bind () = trace_strong (Errors.expected_same main_fname storage storage' e) @@

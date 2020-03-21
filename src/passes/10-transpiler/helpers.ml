@@ -3,7 +3,9 @@ module Append_tree = Tree.Append
 
 open Trace
 open Mini_c
-open Stage_common.Types (*Todo : to remove *)
+(* open Stage_common.Types (\*Todo : to remove *\) *)
+module LMap = AST.Types.LMap
+module CMap = AST.Types.CMap
 
 let list_of_lmap    m = List.rev @@ LMap.fold (fun _ v prev -> v :: prev) m []
 let kv_list_of_lmap m = List.rev @@ LMap.fold (fun k v prev -> (k, v) :: prev) m []
@@ -25,7 +27,7 @@ let extract_constructor (v : value) (tree : _ Append_tree.t') : (string * value 
   let open Append_tree in
   let rec aux tv : (string * value * AST.type_expression) result=
     match tv with
-    | Leaf (Constructor k, t), v -> ok (k, v, t)
+    | Leaf (Ast_typed.Constructor k, t), v -> ok (k, v, t)
     | Node {a}, D_left v -> aux (a, v)
     | Node {b}, D_right v -> aux (b, v)
     | _ -> fail @@ internal_assertion_failure "bad constructor path"

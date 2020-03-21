@@ -56,7 +56,7 @@ module TestExpressions = struct
 
   let constructor () : unit result =
     let variant_foo_bar =
-      O.[(Constructor "foo", t_int ()); (Constructor "bar", t_string ())]
+      O.[(Typed.Constructor "foo", t_int ()); (Constructor "bar", t_string ())]
     in test_expression
       ~env:(E.env_sum_type variant_foo_bar)
       I.(e_constructor "foo" (e_int 32))

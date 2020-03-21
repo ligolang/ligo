@@ -1,5 +1,6 @@
 open Trace
 open Types
+open Helpers
 
 module Errors = struct
   let different_kinds a b () =
@@ -53,7 +54,7 @@ module Errors = struct
     error ~data title message ()
 
   let different_props_in_record a b ra rb ka kb () =
-    let names () = if Stage_common.Helpers.is_tuple_lmap ra && Stage_common.Helpers.is_tuple_lmap rb then "tuples" else "records" in
+    let names () = if Helpers.is_tuple_lmap ra && Helpers.is_tuple_lmap rb then "tuples" else "records" in
     let title () = "different keys in " ^ (names ()) in
     let message () = "" in
     let data = [
@@ -65,8 +66,8 @@ module Errors = struct
     error ~data title message ()
 
   let different_kind_record_tuple a b ra rb () =
-    let name_a () = if Stage_common.Helpers.is_tuple_lmap ra then "tuple" else "record" in
-    let name_b () = if Stage_common.Helpers.is_tuple_lmap rb then "tuple" else "record" in
+    let name_a () = if Helpers.is_tuple_lmap ra then "tuple" else "record" in
+    let name_b () = if Helpers.is_tuple_lmap rb then "tuple" else "record" in
     let title () = "different keys in " ^ (name_a ()) ^ " and " ^ (name_b ()) in
     let message () = "Expected these two types to be the same, but they're different (one is a " ^ (name_a ()) ^ " and the other is a " ^ (name_b ()) ^ ")" in
     let data = [
@@ -82,7 +83,7 @@ module Errors = struct
 
   let different_size_records_tuples a b ra rb =
     different_size_type
-      (if Stage_common.Helpers.is_tuple_lmap ra && Stage_common.Helpers.is_tuple_lmap rb
+      (if Helpers.is_tuple_lmap ra && Helpers.is_tuple_lmap rb
        then "tuples"
        else "records")
       a b
@@ -231,7 +232,7 @@ module Free_variables = struct
   and matching_variant_case : type a . (bindings -> a -> bindings) -> bindings -> ((constructor' * expression_variable) * a) -> bindings  = fun f b ((_,n),c) ->
     f (union (singleton n) b) c
 
-  and matching : type a . (bindings -> a -> bindings) -> bindings -> (a,'var) matching_content -> bindings = fun f b m ->
+  and matching : (bindings -> expression -> bindings) -> bindings -> matching_content -> bindings = fun f b m ->
     match m with
     | Match_bool { match_true = t ; match_false = fa } -> union (f b t) (f b fa)
     | Match_list { match_nil = n ; match_cons = (hd, tl, c, _) } -> union (f b n) (f (union (of_list [hd ; tl]) b) c)
@@ -369,7 +370,7 @@ let rec assert_type_expression_eq (a, b: (type_expression * type_expression)) : 
     )
   | T_sum _, _ -> fail @@ different_kinds a b
   | T_record ra, T_record rb
-       when Stage_common.Helpers.is_tuple_lmap ra <> Stage_common.Helpers.is_tuple_lmap rb -> (
+       when Helpers.is_tuple_lmap ra <> Helpers.is_tuple_lmap rb -> (
     fail @@ different_kind_record_tuple a b ra rb
   )
   | T_record ra, T_record rb -> (
@@ -489,7 +490,7 @@ let rec assert_value_eq (a, b: (expression*expression)) : unit result =
         | Some a, Some b -> Some (assert_value_eq (a, b))
         | _              -> Some (fail @@ missing_key_in_record_value k)
       in
-      let%bind _all = Stage_common.Helpers.bind_lmap @@ LMap.merge aux sma smb in
+      let%bind _all = Helpers.bind_lmap @@ LMap.merge aux sma smb in
       ok ()
     )
   | E_record _, _ ->

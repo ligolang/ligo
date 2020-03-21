@@ -114,6 +114,121 @@ them. please report this to the developers." in
 end
 open Errors
 
+let transpile_constant' : AST.constant' -> constant' = function
+  | C_INT -> C_INT
+  | C_UNIT -> C_UNIT
+  | C_NIL -> C_NIL
+  | C_NOW -> C_NOW
+  | C_IS_NAT -> C_IS_NAT
+  | C_SOME -> C_SOME
+  | C_NONE -> C_NONE
+  | C_ASSERTION -> C_ASSERTION
+  | C_ASSERT_INFERRED -> C_ASSERT_INFERRED
+  | C_FAILWITH -> C_FAILWITH
+  | C_UPDATE -> C_UPDATE
+  (* Loops *)
+  | C_ITER -> C_ITER
+  | C_FOLD_WHILE -> C_FOLD_WHILE
+  | C_FOLD_CONTINUE -> C_FOLD_CONTINUE
+  | C_FOLD_STOP -> C_FOLD_STOP
+  | C_LOOP_LEFT -> C_LOOP_LEFT
+  | C_LOOP_CONTINUE -> C_LOOP_CONTINUE
+  | C_LOOP_STOP -> C_LOOP_STOP
+  | C_FOLD -> C_FOLD
+  (* MATH *)
+  | C_NEG -> C_NEG
+  | C_ABS -> C_ABS
+  | C_ADD -> C_ADD
+  | C_SUB -> C_SUB
+  | C_MUL -> C_MUL
+  | C_EDIV -> C_EDIV
+  | C_DIV -> C_DIV
+  | C_MOD -> C_MOD
+  (* LOGIC *)
+  | C_NOT -> C_NOT
+  | C_AND -> C_AND
+  | C_OR -> C_OR
+  | C_XOR -> C_XOR
+  | C_LSL -> C_LSL
+  | C_LSR -> C_LSR
+  (* COMPARATOR *)
+  | C_EQ -> C_EQ
+  | C_NEQ -> C_NEQ
+  | C_LT -> C_LT
+  | C_GT -> C_GT
+  | C_LE -> C_LE
+  | C_GE -> C_GE
+  (* Bytes/ String *)
+  | C_SIZE -> C_SIZE
+  | C_CONCAT -> C_CONCAT
+  | C_SLICE -> C_SLICE
+  | C_BYTES_PACK -> C_BYTES_PACK
+  | C_BYTES_UNPACK -> C_BYTES_UNPACK
+  | C_CONS -> C_CONS
+  (* Pair *)
+  | C_PAIR -> C_PAIR
+  | C_CAR -> C_CAR
+  | C_CDR -> C_CDR
+  | C_LEFT -> C_LEFT
+  | C_RIGHT -> C_RIGHT
+  (* Set *)
+  | C_SET_EMPTY -> C_SET_EMPTY
+  | C_SET_LITERAL -> C_SET_LITERAL
+  | C_SET_ADD -> C_SET_ADD
+  | C_SET_REMOVE -> C_SET_REMOVE
+  | C_SET_ITER -> C_SET_ITER
+  | C_SET_FOLD -> C_SET_FOLD
+  | C_SET_MEM -> C_SET_MEM
+  (* List *)
+  | C_LIST_EMPTY -> C_LIST_EMPTY
+  | C_LIST_LITERAL -> C_LIST_LITERAL
+  | C_LIST_ITER -> C_LIST_ITER
+  | C_LIST_MAP -> C_LIST_MAP
+  | C_LIST_FOLD -> C_LIST_FOLD
+  (* Maps *)
+  | C_MAP -> C_MAP
+  | C_MAP_EMPTY -> C_MAP_EMPTY
+  | C_MAP_LITERAL -> C_MAP_LITERAL
+  | C_MAP_GET -> C_MAP_GET
+  | C_MAP_GET_FORCE -> C_MAP_GET_FORCE
+  | C_MAP_ADD -> C_MAP_ADD
+  | C_MAP_REMOVE -> C_MAP_REMOVE
+  | C_MAP_UPDATE -> C_MAP_UPDATE
+  | C_MAP_ITER -> C_MAP_ITER
+  | C_MAP_MAP -> C_MAP_MAP
+  | C_MAP_FOLD -> C_MAP_FOLD
+  | C_MAP_MEM -> C_MAP_MEM
+  | C_MAP_FIND -> C_MAP_FIND
+  | C_MAP_FIND_OPT -> C_MAP_FIND_OPT
+  (* Big Maps *)
+  | C_BIG_MAP -> C_BIG_MAP
+  | C_BIG_MAP_EMPTY -> C_BIG_MAP_EMPTY
+  | C_BIG_MAP_LITERAL -> C_BIG_MAP_LITERAL
+  (* Crypto *)
+  | C_SHA256 -> C_SHA256
+  | C_SHA512 -> C_SHA512
+  | C_BLAKE2b -> C_BLAKE2b
+  | C_HASH -> C_HASH
+  | C_HASH_KEY -> C_HASH_KEY
+  | C_CHECK_SIGNATURE -> C_CHECK_SIGNATURE
+  | C_CHAIN_ID -> C_CHAIN_ID
+  (* Blockchain *)
+  | C_CALL -> C_CALL
+  | C_CONTRACT -> C_CONTRACT
+  | C_CONTRACT_OPT -> C_CONTRACT_OPT
+  | C_CONTRACT_ENTRYPOINT -> C_CONTRACT_ENTRYPOINT
+  | C_CONTRACT_ENTRYPOINT_OPT -> C_CONTRACT_ENTRYPOINT_OPT
+  | C_AMOUNT -> C_AMOUNT
+  | C_BALANCE -> C_BALANCE
+  | C_SOURCE -> C_SOURCE
+  | C_SENDER -> C_SENDER
+  | C_ADDRESS -> C_ADDRESS
+  | C_SELF -> C_SELF
+  | C_SELF_ADDRESS -> C_SELF_ADDRESS
+  | C_IMPLICIT_ACCOUNT -> C_IMPLICIT_ACCOUNT
+  | C_SET_DELEGATE -> C_SET_DELEGATE
+  | C_CREATE_CONTRACT -> C_CREATE_CONTRACT
+
 let rec transpile_type (t:AST.type_expression) : type_value result =
   match t.type_content with
   | T_variable (name) -> fail @@ no_type_variable @@ name
@@ -170,20 +285,20 @@ let rec transpile_type (t:AST.type_expression) : type_value result =
         ok (None, T_or (a, b))
       in
       let%bind m' = Append_tree.fold_ne
-                      (fun (Stage_common.Types.Constructor ann, a) ->
+                      (fun (Ast_typed.Types.Constructor ann, a) ->
                         let%bind a = transpile_type a in
                         ok (Some (String.uncapitalize_ascii ann), a))
                       aux node in
       ok @@ snd m'
   | T_record m ->
-      let node = Append_tree.of_list @@ Stage_common.Helpers.kv_list_of_record_or_tuple m in
+      let node = Append_tree.of_list @@ Ast_typed.Helpers.kv_list_of_record_or_tuple m in
       let aux a b : type_value annotated result =
         let%bind a = a in
         let%bind b = b in
         ok (None, T_pair (a, b))
       in
       let%bind m' = Append_tree.fold_ne
-                      (fun (Stage_common.Types.Label ann, a) ->
+                      (fun (Ast_typed.Types.Label ann, a) ->
                         let%bind a = transpile_type a in
                         ok (Some ann, a))
                       aux node in
@@ -195,7 +310,7 @@ let rec transpile_type (t:AST.type_expression) : type_value result =
     )
 
 let record_access_to_lr : type_value -> type_value AST.label_map -> AST.label -> (type_value * [`Left | `Right]) list result = fun ty tym ind ->
-  let tys = Stage_common.Helpers.kv_list_of_record_or_tuple tym in
+  let tys = Ast_typed.Helpers.kv_list_of_record_or_tuple tym in
   let node_tv = Append_tree.of_list tys in
   let%bind path =
     let aux (i , _) = i = ind  in
@@ -295,7 +410,7 @@ and transpile_annotated_expression (ae:AST.expression) : expression result =
     )
   | E_record m -> (
     (*list_of_lmap to record_to_list*)
-      let node = Append_tree.of_list @@ Stage_common.Helpers.list_of_record_or_tuple m in
+      let node = Append_tree.of_list @@ Ast_typed.Helpers.list_of_record_or_tuple m in
       let aux a b : expression result =
         let%bind a = a in
         let%bind b = b in
@@ -312,7 +427,7 @@ and transpile_annotated_expression (ae:AST.expression) : expression result =
       let%bind ty_lmap =
         trace_strong (corner_case ~loc:__LOC__ "not a record") @@
         get_t_record (get_type_expression record) in
-      let%bind ty'_lmap = Stage_common.Helpers.bind_map_lmap transpile_type ty_lmap in
+      let%bind ty'_lmap = Ast_typed.Helpers.bind_map_lmap transpile_type ty_lmap in
       let%bind path =
         trace_strong (corner_case ~loc:__LOC__ "record access") @@
         record_access_to_lr ty' ty'_lmap path in
@@ -329,7 +444,7 @@ and transpile_annotated_expression (ae:AST.expression) : expression result =
       let%bind ty_lmap =
         trace_strong (corner_case ~loc:__LOC__ "not a record") @@
         get_t_record (get_type_expression record) in
-      let%bind ty'_lmap = Stage_common.Helpers.bind_map_lmap transpile_type ty_lmap in
+      let%bind ty'_lmap = Ast_typed.Helpers.bind_map_lmap transpile_type ty_lmap in
       let%bind path = 
         trace_strong (corner_case ~loc:__LOC__ "record access") @@
         record_access_to_lr ty' ty'_lmap path in
@@ -388,7 +503,7 @@ and transpile_annotated_expression (ae:AST.expression) : expression result =
       | (C_MAP_FOLD , lst) -> fold lst
       | _ -> (
           let%bind lst' = bind_map_list (transpile_annotated_expression) lst in
-          return @@ E_constant {cons_name=name;arguments=lst'}
+          return @@ E_constant {cons_name=transpile_constant' name;arguments=lst'}
         )
     )
   | E_lambda l ->

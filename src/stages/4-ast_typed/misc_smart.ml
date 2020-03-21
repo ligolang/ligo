@@ -89,7 +89,7 @@ module Captured_variables = struct
   and matching_variant_case : type a . (bindings -> a -> bindings result) -> bindings -> ((constructor' * expression_variable) * a) -> bindings result  = fun f b ((_,n),c) ->
     f (union (singleton n) b) c
 
-  and matching : type a . (bindings -> a -> bindings result) -> bindings -> (a, 'tv) matching_content -> bindings result = fun f b m ->
+  and matching : (bindings -> expression -> bindings result) -> bindings -> matching_content -> bindings result = fun f b m ->
     match m with
     | Match_bool { match_true = t ; match_false = fa } ->
       let%bind t' = f b t in

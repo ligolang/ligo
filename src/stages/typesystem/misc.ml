@@ -83,7 +83,7 @@ module Substitution = struct
              | None -> ok @@ T.T_variable variable
            end
         | T.T_operator type_name_and_args ->
-          let%bind type_name_and_args = T.bind_map_type_operator (s_type_expression ~substs) type_name_and_args in
+          let%bind type_name_and_args = T.Helpers.bind_map_type_operator (s_type_expression ~substs) type_name_and_args in
           ok @@ T.T_operator type_name_and_args
         | T.T_arrow _ ->
           let _TODO = substs in

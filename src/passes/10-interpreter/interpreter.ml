@@ -1,7 +1,7 @@
 open Trace
 open Ligo_interpreter.Types
 open Ligo_interpreter.Combinators
-include Stage_common.Types
+include Ast_typed.Types
 
 module Env = Ligo_interpreter.Environment
 
@@ -210,7 +210,7 @@ let rec apply_operator : Ast_typed.constant' -> value list -> value result =
     | ( C_SET_MEM    , [ v ; V_Set (elts) ] ) -> ok @@ v_bool (List.mem v elts)
     | ( C_SET_REMOVE , [ v ; V_Set (elts) ] ) -> ok @@ V_Set (List.filter (fun el -> not (el = v)) elts)
     | _ ->
-      let () = Format.printf "%a\n" Stage_common.PP.constant c in
+      let () = Format.printf "%a\n" Ast_typed.PP.constant c in
       let () = List.iter ( fun e -> Format.printf "%s\n" (Ligo_interpreter.PP.pp_value e)) operands in
       simple_fail "Unsupported constant op"
   )
@@ -345,7 +345,7 @@ and eval : Ast_typed.expression -> env -> value result
         let ((_, var) , body) =
           List.find
             (fun case ->
-              let (Constructor c , _) = fst case in
+              let (Ast_typed.Constructor c , _) = fst case in
               String.equal matched_c c)
             case_list in
         let env' = Env.extend env (var, proj) in
