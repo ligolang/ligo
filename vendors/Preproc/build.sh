@@ -3,6 +3,8 @@ set -x
 ocamllex.opt Escan.mll
 ocamllex.opt Preproc.mll
 menhir -la 1 Eparser.mly
+ocamlfind ocamlopt -strict-sequence -w +A-48-4 -c EvalOpt.mli
+ocamlfind ocamlopt -strict-sequence -w +A-48-4 -c EvalOpt.ml
 ocamlfind ocamlopt -strict-sequence -w +A-48-4 -c Etree.ml
 ocamlfind ocamlopt -strict-sequence -w +A-48-4 -c Error.ml
 ocamlfind ocamlopt -strict-sequence -w +A-48-4 -c Etree.ml
@@ -17,7 +19,7 @@ ocamlfind ocamlopt -strict-sequence -w +A-48-4 -c Escan.ml
 ocamlfind ocamlopt -strict-sequence -w +A-48-4 -c Preproc.ml
 ocamlfind ocamlopt -strict-sequence -w +A-48-4 -c EMain.ml
 ocamlfind ocamlopt -strict-sequence -w +A-48-4 -c EMain.ml
-ocamlfind ocamlopt -o EMain.opt Etree.cmx Eparser.cmx Error.cmx Escan.cmx Preproc.cmx EMain.cmx
+ocamlfind ocamlopt -o EMain.opt EvalOpt.cmx Etree.cmx Eparser.cmx Error.cmx Escan.cmx Preproc.cmx EMain.cmx
 ocamlfind ocamlopt -strict-sequence -w +A-48-4 -c ProcMain.ml
 ocamlfind ocamlopt -strict-sequence -w +A-48-4 -c ProcMain.ml
-ocamlfind ocamlopt -o ProcMain.opt Etree.cmx Eparser.cmx Error.cmx Escan.cmx Preproc.cmx ProcMain.cmx
+ocamlfind ocamlopt -o ProcMain.opt EvalOpt.cmx Etree.cmx Eparser.cmx Error.cmx Escan.cmx Preproc.cmx ProcMain.cmx

@@ -1,13 +1,16 @@
-(ocamllex Escan Preproc)
+(ocamllex E_Lexer Preproc)
 
 (menhir
-  (modules Eparser))
+  (modules E_Parser))
 
 (library
   (name PreProc)
-;  (public_name ligo.preproc)
+  (public_name ligo.preproc)
+  (libraries
+     getopt
+     simple-utils)
   (wrapped false)
-  (modules Eparser Error Escan Etree Preproc))
+  (modules E_Parser E_Lexer E_AST Preproc))
 
 (test
   (modules ProcMain)
@@ -15,6 +18,6 @@
   (name ProcMain))
 
 (test
-  (modules EMain)
+  (modules E_Main)
   (libraries PreProc)
-  (name EMain))
+  (name E_Main))
