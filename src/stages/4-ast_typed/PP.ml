@@ -281,8 +281,8 @@ and expression_content ppf (ec: expression_content) =
         type_expression fun_type
         expression_content (E_lambda lambda)
 
-and assoc_expression ppf : expr * expr -> unit =
- fun (a, b) -> fprintf ppf "%a -> %a" expression a expression b
+and assoc_expression ppf : map_kv -> unit =
+ fun {k ; v} -> fprintf ppf "%a -> %a" expression k expression v
 
 and single_record_patch ppf ((p, expr) : label * expr) =
   fprintf ppf "%a <- %a" label p expression expr
@@ -294,15 +294,15 @@ and option_inline ppf inline =
   else
     fprintf ppf ""
 
-and matching_variant_case : type a . (_ -> a -> unit) -> _ -> (constructor' * expression_variable) * a -> unit =
-  fun f ppf ((c,n),a) ->
-  fprintf ppf "| %a %a -> %a" constructor c expression_variable n f a
+and matching_variant_case : (_ -> expression -> unit) -> _ -> matching_content_case -> unit =
+  fun f ppf {constructor=c; pattern; body} ->
+  fprintf ppf "| %a %a -> %a" constructor c expression_variable pattern f body
 
 and matching : (formatter -> expression -> unit) -> _ -> matching_content -> unit = fun f ppf m -> match m with
-  | Match_tuple ((lst, b),_) ->
-      fprintf ppf "let (%a) = %a" (list_sep_d expression_variable) lst f b
-  | Match_variant (lst, _) ->
-      fprintf ppf "%a" (list_sep (matching_variant_case f) (tag "@.")) lst
+  | Match_tuple {vars; body; tvs=_} ->
+      fprintf ppf "let (%a) = %a" (list_sep_d expression_variable) vars f body
+  | Match_variant {cases ; tv=_} ->
+      fprintf ppf "%a" (list_sep (matching_variant_case f) (tag "@.")) cases
   | Match_bool {match_true ; match_false} ->
       fprintf ppf "| True -> %a @.| False -> %a" f match_true f match_false
   | Match_list {match_nil ; match_cons = {hd; tl; body; tv=_}} -> 
@@ -312,8 +312,8 @@ and matching : (formatter -> expression -> unit) -> _ -> matching_content -> uni
 
 let declaration ppf (d : declaration) =
   match d with
-  | Declaration_constant (name, expr, inline,_) ->
-      fprintf ppf "const %a = %a%a" expression_variable name expression expr option_inline inline
+  | Declaration_constant {binder; expr; inline; post_env=_} ->
+      fprintf ppf "const %a = %a%a" expression_variable binder expression expr option_inline inline
 
 let program ppf (p : program) =
   fprintf ppf "@[<v>%a@]"

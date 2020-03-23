@@ -104,9 +104,21 @@ and matching_content_option = {
     match_some : matching_content_some ;
   }
 
-and matching_content_tuple = (expression_variable list * expression) * type_expression list
+and matching_content_tuple = {
+    vars : expression_variable list ;
+    body : expression ;
+    tvs : type_expression list ;
+  }
 
-and matching_content_variant = ((constructor' * expression_variable) * expression) list * type_expression
+and matching_content_case = {
+    constructor : constructor' ;
+    pattern : expression_variable ;
+    body : expression ;
+  }
+and matching_content_variant = {
+    cases: matching_content_case list;
+    tv: type_expression;
+  }
 
 and matching_content =
   | Match_bool    of matching_content_bool
@@ -234,13 +246,20 @@ and program = declaration Location.wrap list
 
 and inline = bool
 
+and declaration_constant = {
+    binder : expression_variable ;
+    expr : expression ;
+    inline : inline ;
+    post_env : full_environment ;
+  }
+
 and declaration =
   (* A Declaration_constant is described by
    *   a name + a type-annotated expression
    *   a boolean indicating whether it should be inlined
    *   the environment before the declaration (the original environment)
    *   the environment after the declaration (i.e. with that new declaration added to the original environment). *)
-  | Declaration_constant of (expression_variable * expression * inline * full_environment)
+  | Declaration_constant of declaration_constant
   (*
   | Declaration_type of (type_variable * type_expression)
   | Declaration_constant of (named_expression * (full_environment * full_environment))
@@ -253,6 +272,17 @@ and expression = {
     type_expression: type_expression ;
     environment: full_environment ;
   }
+
+and map_kv = {
+    k : expression ;
+    v : expression ;
+  }
+
+and look_up = {
+    ds : expression;
+    ind : expression;
+  }
+
 
 and expression_content =
   (* Base *)
@@ -276,7 +306,7 @@ and constant =
   ; arguments: expression list }
 
 and application = {
-  lamb: expression ; 
+  lamb: expression ;
   args: expression ;
   }
 

@@ -537,10 +537,10 @@ and transpile_annotated_expression (ae:AST.expression) : expression result =
           in
           return @@ E_if_cons (expr' , nil , cons)
         )
-      | Match_variant (lst , variant) -> (
+      | Match_variant {cases ; tv} -> (
           let%bind tree =
             trace_strong (corner_case ~loc:__LOC__ "getting lr tree") @@
-            tree_of_sum variant in
+            tree_of_sum tv in
           let%bind tree' = match tree with
             | Empty -> fail (corner_case ~loc:__LOC__ "match empty variant")
             | Full x -> ok x in
@@ -560,12 +560,14 @@ and transpile_annotated_expression (ae:AST.expression) : expression result =
 
           let rec aux top t =
             match t with
-            | ((`Leaf constructor_name) , tv) -> (
-                let%bind ((_ , name) , body) =
+            | ((`Leaf (AST.Constructor constructor_name)) , tv) -> (
+                let%bind {constructor=_ ; pattern ; body} =
                   trace_option (corner_case ~loc:__LOC__ "missing match clause") @@
-                  List.find_opt (fun ((constructor_name' , _) , _) -> constructor_name' = constructor_name) lst in
+                    let aux ({constructor = Constructor c ; pattern=_ ; body=_} : AST.matching_content_case) =
+                      (c = constructor_name) in
+                  List.find_opt aux cases in
                 let%bind body' = transpile_annotated_expression body in
-                return @@ E_let_in ((name , tv) , false , top , body')
+                return @@ E_let_in ((pattern , tv) , false , top , body')
               )
             | ((`Node (a , b)) , tv) ->
                 let%bind a' =
@@ -658,10 +660,10 @@ and transpile_recursive {fun_name; fun_type; lambda} =
           in
           return @@ E_if_cons (expr , nil , cons)
         )
-      | Match_variant (lst , variant) -> (
+      | Match_variant {cases;tv} -> (
           let%bind tree =
             trace_strong (corner_case ~loc:__LOC__ "getting lr tree") @@
-            tree_of_sum variant in
+            tree_of_sum tv in
           let%bind tree' = match tree with
             | Empty -> fail (corner_case ~loc:__LOC__ "match empty variant")
             | Full x -> ok x in
@@ -680,12 +682,14 @@ and transpile_recursive {fun_name; fun_type; lambda} =
           in
           let rec aux top t =
             match t with
-            | ((`Leaf constructor_name) , tv) -> (
-                let%bind ((_ , name) , body) =
+            | ((`Leaf (AST.Constructor constructor_name)) , tv) -> (
+                let%bind {constructor=_ ; pattern ; body} =
                   trace_option (corner_case ~loc:__LOC__ "missing match clause") @@
-                  List.find_opt (fun ((constructor_name' , _) , _) -> constructor_name' = constructor_name) lst in
+                    let aux ({constructor = Constructor c ; pattern=_ ; body=_} : AST.matching_content_case) =
+                      (c = constructor_name) in
+                  List.find_opt aux cases in
                 let%bind body' = replace_callback fun_name loop_type shadowed body in
-                return @@ E_let_in ((name , tv) , false , top , body')
+                return @@ E_let_in ((pattern , tv) , false , top , body')
               )
             | ((`Node (a , b)) , tv) ->
                 let%bind a' =
@@ -719,12 +723,11 @@ and transpile_recursive {fun_name; fun_type; lambda} =
 
 let transpile_declaration env (d:AST.declaration) : toplevel_statement result =
   match d with
-  | Declaration_constant (name,expression, inline, _) ->
-      let name = name in
-      let%bind expression = transpile_annotated_expression expression in
+  | Declaration_constant { binder ; expr ; inline ; post_env=_ } ->
+      let%bind expression = transpile_annotated_expression expr in
       let tv = Combinators.Expression.get_type expression in
-      let env' = Environment.add (name, tv) env in
-      ok @@ ((name, inline, expression), environment_wrap env env')
+      let env' = Environment.add (binder, tv) env in
+      ok @@ ((binder, inline, expression), environment_wrap env env')
 
 let transpile_program (lst : AST.program) : program result =
   let aux (prev:(toplevel_statement list * Environment.t) result) cur =

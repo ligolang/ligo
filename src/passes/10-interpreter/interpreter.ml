@@ -341,14 +341,13 @@ and eval : Ast_typed.expression -> env -> value result
         let {hd;tl;body;tv=_} = cases.match_cons in
         let env' = Env.extend (Env.extend env (hd,head)) (tl, V_List tail) in
         eval body env'
-      | Match_variant (case_list , _) , V_Construct (matched_c , proj) ->
-        let ((_, var) , body) =
+      | Match_variant {cases ; tv=_} , V_Construct (matched_c , proj) ->
+        let {constructor=_ ; pattern ; body} =
           List.find
-            (fun case ->
-              let (Ast_typed.Constructor c , _) = fst case in
+            (fun {constructor = (Constructor c) ; pattern=_ ; body=_} ->
               String.equal matched_c c)
-            case_list in
-        let env' = Env.extend env (var, proj) in
+            cases in
+        let env' = Env.extend env (pattern, proj) in
         eval body env'
       | Match_bool cases , V_Ct (C_bool true) ->
         eval cases.match_true env
@@ -370,16 +369,16 @@ let dummy : Ast_typed.program -> string result =
   fun prg ->
     let%bind (res,_) = bind_fold_list
       (fun (pp,top_env) el ->
-        let (Ast_typed.Declaration_constant (exp_name, exp , _ , _)) = Location.unwrap el in
+        let (Ast_typed.Declaration_constant {binder; expr ; inline=_ ; _}) = Location.unwrap el in
         let%bind v =
         (*TODO This TRY-CATCH is here until we properly implement effects*)
         try
-          eval exp top_env
+          eval expr top_env
         with Temporary_hack s -> ok @@ V_Failure s
         (*TODO This TRY-CATCH is here until we properly implement effects*)
         in
-        let pp' = pp^"\n val "^(Var.to_name exp_name)^" = "^(Ligo_interpreter.PP.pp_value v) in
-        let top_env' = Env.extend top_env (exp_name, v) in
+        let pp' = pp^"\n val "^(Var.to_name binder)^" = "^(Ligo_interpreter.PP.pp_value v) in
+        let top_env' = Env.extend top_env (binder, v) in
         ok @@ (pp',top_env')
       )
       ("",Env.empty_env) prg in

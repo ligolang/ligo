@@ -156,14 +156,13 @@ let rec untranspile (v : value) (t : AST.type_expression) : AST.expression resul
           get_map v in
         let%bind map' =
           let aux = fun (k, v) ->
-            let%bind k' = untranspile k k_ty in
-            let%bind v' = untranspile v v_ty in
-            ok (k', v') in
+            let%bind k = untranspile k k_ty in
+            let%bind v = untranspile v v_ty in
+            ok ({k; v} : AST.map_kv) in
           bind_map_list aux map in
         let map' = List.sort_uniq compare map' in
-        let aux = fun prev (k, v) ->
-          let (k', v') = (k , v ) in
-          return @@ E_constant {cons_name=C_MAP_ADD;arguments=[k' ; v' ; prev]}
+        let aux = fun prev ({ k ; v } : AST.map_kv) ->
+          return @@ E_constant {cons_name=C_MAP_ADD;arguments=[k ; v ; prev]}
         in
         let%bind init = return @@ E_constant {cons_name=C_MAP_EMPTY;arguments=[]} in
         bind_fold_right_list aux init map'
@@ -174,12 +173,12 @@ let rec untranspile (v : value) (t : AST.type_expression) : AST.expression resul
           get_big_map v in
         let%bind big_map' =
           let aux = fun (k, v) ->
-            let%bind k' = untranspile k k_ty in
-            let%bind v' = untranspile v v_ty in
-            ok (k', v') in
+            let%bind k = untranspile k k_ty in
+            let%bind v = untranspile v v_ty in
+            ok ({k; v} : AST.map_kv) in
           bind_map_list aux big_map in
         let big_map' = List.sort_uniq compare big_map' in
-        let aux = fun prev (k, v) ->
+        let aux = fun prev ({ k ; v } : AST.map_kv) ->
           return @@ E_constant {cons_name=C_MAP_ADD;arguments=[k ; v ; prev]}
         in
         let%bind init = return @@ E_constant {cons_name=C_BIG_MAP_EMPTY;arguments=[]} in

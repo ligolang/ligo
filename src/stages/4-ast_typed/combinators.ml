@@ -341,7 +341,7 @@ let get_a_record_accessor = fun t ->
 let get_declaration_by_name : program -> string -> declaration result = fun p name ->
   let aux : declaration -> bool = fun declaration ->
     match declaration with
-    | Declaration_constant (d, _, _, _) -> d = Var.of_name name
+    | Declaration_constant { binder ; expr=_ ; inline=_ ; post_env=_ } -> binder = Var.of_name name
   in
   trace_option (Errors.declaration_not_found name ()) @@
   List.find_opt aux @@ List.map Location.unwrap p

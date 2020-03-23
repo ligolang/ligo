@@ -455,16 +455,16 @@ let rec type_declaration env state : I.declaration -> (environment * Solver.stat
     let%bind tv = evaluate_type env type_expression in
     let env' = Environment.add_type (type_name) tv env in
     ok (env', state , None)
-  | Declaration_constant (name , tv_opt , inline, expression) -> (
+  | Declaration_constant (binder , tv_opt , inline, expression) -> (
     (*
       Determine the type of the expression and add it to the environment
     *)
       let%bind tv'_opt = bind_map_option (evaluate_type env) tv_opt in
-      let%bind (ae' , state') =
-        trace (constant_declaration_error name expression tv'_opt) @@
+      let%bind (expr , state') =
+        trace (constant_declaration_error binder expression tv'_opt) @@
         type_expression env state expression in
-      let env' = Environment.add_ez_ae name ae' env in
-      ok (env', state' , Some (O.Declaration_constant (name, ae', inline, env') ))
+      let post_env = Environment.add_ez_ae binder expr env in
+      ok (post_env, state' , Some (O.Declaration_constant { binder ; expr ; inline ; post_env} ))
     )
 
 and type_match : environment -> Solver.state -> O.type_expression -> I.matching_expr -> I.expression -> Location.t -> (O.matching_expr * Solver.state) result =
@@ -495,17 +495,17 @@ and type_match : environment -> Solver.state -> O.type_expression -> I.matching_
       let e' = Environment.add_ez_binder tl t e' in
       let%bind (body , state'') = type_expression e' state' b in
       ok (O.Match_list {match_nil ; match_cons = {hd; tl; body;tv=t}} , state'')
-    | Match_tuple ((lst, b),_) ->
-      let%bind t_tuple =
+    | Match_tuple ((vars, b),_) ->
+      let%bind tvs =
         trace_strong (match_error ~expected:i ~actual:t loc)
         @@ get_t_tuple t in
       let%bind lst' =
-        generic_try (match_tuple_wrong_arity t_tuple lst loc)
-        @@ (fun () -> List.combine lst t_tuple) in
+        generic_try (match_tuple_wrong_arity tvs vars loc)
+        @@ (fun () -> List.combine vars tvs) in
       let aux prev (name, tv) = Environment.add_ez_binder name tv prev in
       let e' = List.fold_left aux e lst' in
-      let%bind (b' , state') = type_expression e' state b in
-      ok (O.Match_tuple ((lst, b'), t_tuple) , state')
+      let%bind (body , state') = type_expression e' state b in
+      ok (O.Match_tuple {vars ; body ; tvs} , state')
     | Match_variant (lst,_) ->
       let%bind variant_opt =
         let aux acc ((constructor_name , _) , _) =
@@ -548,17 +548,18 @@ and type_match : environment -> Solver.state -> O.type_expression -> I.matching_
           Assert.assert_true List.(length variant_cases = length match_cases) in
         ok ()
       in
-      let%bind (state'' , lst') =
-        let aux state ((constructor_name , name) , b) =
+      let%bind (state'' , cases) =
+        let aux state ((constructor_name , pattern) , b) =
           let%bind (constructor , _) =
             trace_option (unbound_constructor e constructor_name loc) @@
             Environment.get_constructor constructor_name e in
-          let e' = Environment.add_ez_binder name constructor e in
-          let%bind (b' , state') = type_expression e' state b in
-          ok (state' , ((convert_constructor' constructor_name , name) , b'))
+          let e' = Environment.add_ez_binder pattern constructor e in
+          let%bind (body , state') = type_expression e' state b in
+          let constructor = convert_constructor' constructor_name in
+          ok (state' , ({constructor ; pattern ; body = body} : O.matching_content_case))
         in
         bind_fold_map_list aux state lst in
-      ok (O.Match_variant (lst' , variant) , state'')
+      ok (O.Match_variant {cases ; tv=variant } , state'')
 
 (*
   Recursively search the type_expression and return a result containing the
@@ -781,6 +782,7 @@ and type_expression : environment -> Solver.state -> ?tv_opt:O.type_expression -
     return_wrapped (E_record_update {record; path; update}) state (Wrap.record wrapped)
   (* Data-structure *)
 
+
   (* | E_lambda {
    *     binder ;
    *     input_type ;
@@ -828,7 +830,6 @@ and type_expression : environment -> Solver.state -> ?tv_opt:O.type_expression -
     let%bind (args , state'') = type_expression e state' args in
     let wrapped = Wrap.application f'.type_expression args.type_expression in
     return_wrapped (E_application {lamb=f';args}) state'' wrapped
-
 
   (* Advanced *)
   (* | E_matching (ex, m) -> (
@@ -884,8 +885,8 @@ and type_expression : environment -> Solver.state -> ?tv_opt:O.type_expression -
           | Match_bool { match_true ; match_false } -> [ match_true ; match_false ]
           | Match_list { match_nil ; match_cons = { hd=_ ; tl=_ ; body ; tv=_} } -> [ match_nil ; body ]
           | Match_option { match_none ; match_some = {opt=_; body; tv=_} } -> [ match_none ; body ]
-          | Match_tuple ((_ , match_tuple), _) -> [ match_tuple ]
-          | Match_variant (lst , _) -> List.map snd lst in
+          | Match_tuple { vars=_ ; body ; tvs=_ } -> [ body ]
+          | Match_variant { cases ; tv=_ } -> List.map (fun ({constructor=_; pattern=_; body} : O.matching_content_case) -> body) cases in
         List.map get_type_expression @@ aux m' in
       let%bind () = match tvs with
           [] -> fail @@ match_empty_variant cases ae.location
@@ -1244,9 +1245,9 @@ and untype_matching : (O.expression -> I.expression result) -> O.matching_expr -
       let%bind match_true = f match_true in
       let%bind match_false = f match_false in
       ok @@ Match_bool {match_true ; match_false}
-  | Match_tuple ((lst, b),_) ->
-      let%bind b = f b in
-      ok @@ I.Match_tuple ((lst, b),[])
+  | Match_tuple { vars ; body ; tvs=_ } ->
+      let%bind b = f body in
+      ok @@ I.Match_tuple ((vars, b),[])
   | Match_option {match_none ; match_some = {opt; body;tv=_}} ->
       let%bind match_none = f match_none in
       let%bind some = f body in
@@ -1257,9 +1258,9 @@ and untype_matching : (O.expression -> I.expression result) -> O.matching_expr -
       let%bind cons = f body in
       let match_cons = hd , tl , cons, () in
       ok @@ Match_list {match_nil ; match_cons}
-  | Match_variant (lst , _) ->
-      let aux ((a,b),c) =
-        let%bind c' = f c in
-        ok ((unconvert_constructor' a,b),c') in
-      let%bind lst' = bind_map_list aux lst in
+  | Match_variant { cases ; tv=_ } ->
+      let aux ({constructor;pattern;body} : O.matching_content_case) =
+        let%bind body = f body in
+        ok ((unconvert_constructor' constructor,pattern),body) in
+      let%bind lst' = bind_map_list aux cases in
       ok @@ Match_variant (lst',())
