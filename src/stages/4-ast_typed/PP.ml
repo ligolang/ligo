@@ -305,10 +305,10 @@ and matching : (formatter -> expression -> unit) -> _ -> matching_content -> uni
       fprintf ppf "%a" (list_sep (matching_variant_case f) (tag "@.")) lst
   | Match_bool {match_true ; match_false} ->
       fprintf ppf "| True -> %a @.| False -> %a" f match_true f match_false
-  | Match_list {match_nil ; match_cons = (hd_name, tl_name, match_cons, _)} ->
-      fprintf ppf "| Nil -> %a @.| %a :: %a -> %a" f match_nil expression_variable hd_name expression_variable tl_name f match_cons
-  | Match_option {match_none ; match_some = (some, match_some, _)} ->
-      fprintf ppf "| None -> %a @.| Some %a -> %a" f match_none expression_variable some f match_some
+  | Match_list {match_nil ; match_cons = {hd; tl; body; tv=_}} -> 
+      fprintf ppf "| Nil -> %a @.| %a :: %a -> %a" f match_nil expression_variable hd expression_variable tl f body
+  | Match_option {match_none ; match_some = {opt; body; tv=_}} ->
+      fprintf ppf "| None -> %a @.| Some %a -> %a" f match_none expression_variable opt f body
 
 let declaration ppf (d : declaration) =
   match d with

@@ -95,13 +95,13 @@ module Captured_variables = struct
       let%bind t' = f b t in
       let%bind fa' = f b fa in
       ok @@ union t' fa'
-    | Match_list { match_nil = n ; match_cons = (hd, tl, c, _) } ->
+    | Match_list { match_nil = n ; match_cons = {hd; tl; body; tv=_} } ->
       let%bind n' = f b n in
-      let%bind c' = f (union (of_list [hd ; tl]) b) c in
+      let%bind c' = f (union (of_list [hd ; tl]) b) body in
       ok @@ union n' c'
-    | Match_option { match_none = n ; match_some = (opt, s, _) } ->
+    | Match_option { match_none = n ; match_some = {opt; body; tv=_} } ->
       let%bind n' = f b n in
-      let%bind s' = f (union (singleton opt) b) s in
+      let%bind s' = f (union (singleton opt) b) body in
       ok @@ union n' s'
     | Match_tuple ((lst , a),_) ->
       f (union (of_list lst) b) a

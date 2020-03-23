@@ -81,14 +81,27 @@ type matching_content_bool = {
     match_false : expression ;
   }
 
+and matching_content_cons = {
+    hd : expression_variable;
+    tl : expression_variable;
+    body : expression;
+    tv : type_expression;
+  }
+
 and matching_content_list = {
     match_nil : expression ;
-    match_cons : expression_variable * expression_variable * expression * type_expression;
+    match_cons : matching_content_cons;
+  }
+
+and matching_content_some = {
+    opt  : expression_variable ;
+    body : expression ;
+    tv   : type_expression ;
   }
 
 and matching_content_option = {
     match_none : expression ;
-    match_some : expression_variable * expression * type_expression;
+    match_some : matching_content_some ;
   }
 
 and matching_content_tuple = (expression_variable list * expression) * type_expression list

@@ -338,8 +338,8 @@ and eval : Ast_typed.expression -> env -> value result
       | Match_list cases , V_List [] ->
         eval cases.match_nil env
       | Match_list cases , V_List (head::tail) ->
-        let (head_var,tail_var,body,_) = cases.match_cons in
-        let env' = Env.extend (Env.extend env (head_var,head)) (tail_var, V_List tail) in
+        let {hd;tl;body;tv=_} = cases.match_cons in
+        let env' = Env.extend (Env.extend env (hd,head)) (tl, V_List tail) in
         eval body env'
       | Match_variant (case_list , _) , V_Construct (matched_c , proj) ->
         let ((_, var) , body) =
@@ -355,8 +355,8 @@ and eval : Ast_typed.expression -> env -> value result
       | Match_bool cases , V_Ct (C_bool false) ->
         eval cases.match_false env
       | Match_option cases, V_Construct ("Some" , proj) ->
-        let (var,body,_) = cases.match_some in
-        let env' = Env.extend env (var,proj) in
+        let {opt;body;tv=_} = cases.match_some in
+        let env' = Env.extend env (opt,proj) in
         eval body env'
       | Match_option cases, V_Construct ("None" , V_Ct C_unit) ->
         eval cases.match_none env

@@ -517,23 +517,23 @@ and transpile_annotated_expression (ae:AST.expression) : expression result =
       | Match_bool {match_true ; match_false} ->
           let%bind (t , f) = bind_map_pair (transpile_annotated_expression) (match_true, match_false) in
           return @@ E_if_bool (expr', t, f)
-      | Match_option { match_none; match_some = (name, s, tv) } ->
+      | Match_option { match_none; match_some = {opt; body; tv} } ->
           let%bind n = transpile_annotated_expression match_none in
           let%bind (tv' , s') =
             let%bind tv' = transpile_type tv in
-            let%bind s' = transpile_annotated_expression s in
+            let%bind s' = transpile_annotated_expression body in
             ok (tv' , s')
           in
-          return @@ E_if_none (expr' , n , ((name , tv') , s'))
+          return @@ E_if_none (expr' , n , ((opt , tv') , s'))
       | Match_list {
           match_nil ;
-          match_cons = ((hd_name) , (tl_name), match_cons, ty) ;
+          match_cons = {hd; tl; body; tv} ;
         } -> (
           let%bind nil = transpile_annotated_expression match_nil in
           let%bind cons =
-            let%bind ty' = transpile_type ty in
-            let%bind match_cons' = transpile_annotated_expression match_cons in
-            ok (((hd_name , ty') , (tl_name , ty')) , match_cons')
+            let%bind ty' = transpile_type tv in
+            let%bind match_cons' = transpile_annotated_expression body in
+            ok (((hd , ty') , (tl , ty')) , match_cons')
           in
           return @@ E_if_cons (expr' , nil , cons)
         )
@@ -638,23 +638,23 @@ and transpile_recursive {fun_name; fun_type; lambda} =
       Match_bool {match_true; match_false} -> 
           let%bind (t , f) = bind_map_pair (replace_callback fun_name loop_type shadowed) (match_true, match_false) in
           return @@ E_if_bool (expr, t, f)
-      | Match_option { match_none; match_some = (name, s, tv) } ->
+      | Match_option { match_none; match_some = {opt; body; tv} } ->
           let%bind n = replace_callback fun_name loop_type shadowed match_none in
           let%bind (tv' , s') =
             let%bind tv' = transpile_type tv in
-            let%bind s' = replace_callback fun_name loop_type shadowed s in
+            let%bind s' = replace_callback fun_name loop_type shadowed body in
             ok (tv' , s')
           in
-          return @@ E_if_none (expr , n , ((name , tv') , s'))
+          return @@ E_if_none (expr , n , ((opt , tv') , s'))
       | Match_list {
           match_nil ;
-          match_cons = ((hd_name) , (tl_name), match_cons, ty) ;
+          match_cons = { hd ; tl ; body ; tv } ;
         } -> (
           let%bind nil = replace_callback fun_name loop_type shadowed match_nil in
           let%bind cons =
-            let%bind ty' = transpile_type ty in
-            let%bind match_cons' = replace_callback fun_name loop_type shadowed match_cons in
-            ok (((hd_name , ty') , (tl_name , ty')) , match_cons')
+            let%bind ty' = transpile_type tv in
+            let%bind match_cons' = replace_callback fun_name loop_type shadowed body in
+            ok (((hd , ty') , (tl , ty')) , match_cons')
           in
           return @@ E_if_cons (expr , nil , cons)
         )

@@ -58,14 +58,14 @@ and fold_cases : 'a folder -> 'a -> matching_expr -> 'a result = fun f init m ->
       let%bind res = fold_expression f res match_false in
       ok res
     )
-  | Match_list { match_nil ; match_cons = (_ , _ , cons, _) } -> (
+  | Match_list { match_nil ; match_cons = {hd=_; tl=_ ; body; tv=_} } -> (
       let%bind res = fold_expression f init match_nil in
-      let%bind res = fold_expression f res cons in
+      let%bind res = fold_expression f res body in
       ok res
     )
-  | Match_option { match_none ; match_some = (_ , some, _) } -> (
+  | Match_option { match_none ; match_some = {opt=_; body; tv=_} } -> (
       let%bind res = fold_expression f init match_none in
-      let%bind res = fold_expression f res some in
+      let%bind res = fold_expression f res body in
       ok res
     )
   | Match_tuple ((_ , e), _) -> (
@@ -139,16 +139,16 @@ and map_cases : mapper -> matching_expr -> matching_expr result = fun f m ->
       let%bind match_true = map_expression f match_true in
       let%bind match_false = map_expression f match_false in
       ok @@ Match_bool { match_true ; match_false }
-    )
-  | Match_list { match_nil ; match_cons = (hd , tl , cons, te) } -> (
+    ) 
+  | Match_list { match_nil ; match_cons = {hd ; tl ; body ; tv} } -> (
       let%bind match_nil = map_expression f match_nil in
-      let%bind cons = map_expression f cons in
-      ok @@ Match_list { match_nil ; match_cons = (hd , tl , cons, te) }
+      let%bind body = map_expression f body in
+      ok @@ Match_list { match_nil ; match_cons = {hd ; tl ; body; tv} }
     )
-  | Match_option { match_none ; match_some = (name , some, te) } -> (
+  | Match_option { match_none ; match_some = {opt ; body ; tv } } -> (
       let%bind match_none = map_expression f match_none in
-      let%bind some = map_expression f some in
-      ok @@ Match_option { match_none ; match_some = (name , some, te) }
+      let%bind body = map_expression f body in
+      ok @@ Match_option { match_none ; match_some = { opt ; body ; tv } }
     )
   | Match_tuple ((names , e), te) -> (
       let%bind e' = map_expression f e in
@@ -235,15 +235,15 @@ and fold_map_cases : 'a fold_mapper -> 'a -> matching_expr -> ('a * matching_exp
       let%bind (init, match_false) = fold_map_expression f init match_false in
       ok @@ (init, Match_bool { match_true ; match_false })
     )
-  | Match_list { match_nil ; match_cons = (hd , tl , cons, te) } -> (
+  | Match_list { match_nil ; match_cons = { hd ; tl ; body ; tv } } -> (
       let%bind (init, match_nil) = fold_map_expression f init match_nil in
-      let%bind (init, cons) = fold_map_expression f init cons in
-      ok @@ (init, Match_list { match_nil ; match_cons = (hd , tl , cons, te) })
+      let%bind (init, body) = fold_map_expression f init body in
+      ok @@ (init, Match_list { match_nil ; match_cons = { hd ; tl ; body ; tv } })
     )
-  | Match_option { match_none ; match_some = (name , some, te) } -> (
+  | Match_option { match_none ; match_some = { opt ; body ; tv } } -> (
       let%bind (init, match_none) = fold_map_expression f init match_none in
-      let%bind (init, some) = fold_map_expression f init some in
-      ok @@ (init, Match_option { match_none ; match_some = (name , some, te) })
+      let%bind (init, body) = fold_map_expression f init body in
+      ok @@ (init, Match_option { match_none ; match_some = { opt ; body ; tv } })
     )
   | Match_tuple ((names , e), te) -> (
       let%bind (init, e') = fold_map_expression f init e in

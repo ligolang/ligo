@@ -505,14 +505,14 @@ and type_match : (environment -> I.expression -> O.expression result) -> environ
       let%bind match_false = f e match_false in
       ok (O.Match_bool {match_true ; match_false})
   | Match_option {match_none ; match_some} ->
-      let%bind t_opt =
+      let%bind tv =
         trace_strong (match_error ~expected:i ~actual:t loc)
         @@ get_t_option t in
       let%bind match_none = f e match_none in
-      let (n, b,_) = match_some in
-      let e' = Environment.add_ez_binder n t_opt e in
-      let%bind b' = f e' b in
-      ok (O.Match_option {match_none ; match_some = (n, b', t_opt)})
+      let (opt, b,_) = match_some in
+      let e' = Environment.add_ez_binder opt tv e in
+      let%bind body = f e' b in
+      ok (O.Match_option {match_none ; match_some = {opt; body; tv}})
   | Match_list {match_nil ; match_cons} ->
       let%bind t_elt =
         trace_strong (match_error ~expected:i ~actual:t loc)
@@ -521,8 +521,8 @@ and type_match : (environment -> I.expression -> O.expression result) -> environ
       let (hd, tl, b,_) = match_cons in
       let e' = Environment.add_ez_binder hd t_elt e in
       let e' = Environment.add_ez_binder tl t e' in
-      let%bind b' = f e' b in
-      ok (O.Match_list {match_nil ; match_cons = (hd, tl, b', t_elt)})
+      let%bind body = f e' b in
+      ok (O.Match_list {match_nil ; match_cons = {hd; tl; body; tv=t_elt}})
   | Match_tuple ((lst, b),_) ->
       let%bind t_tuple =
         trace_strong (match_error ~expected:i ~actual:t loc)
@@ -919,8 +919,8 @@ and type_expression' : environment -> ?tv_opt:O.type_expression -> I.expression 
         let aux (cur:O.matching_expr) =
           match cur with
           | Match_bool { match_true ; match_false } -> [ match_true ; match_false ]
-          | Match_list { match_nil ; match_cons = (_ , _ , match_cons, _) } -> [ match_nil ; match_cons ]
-          | Match_option { match_none ; match_some = (_ , match_some, _) } -> [ match_none ; match_some ]
+          | Match_list { match_nil ; match_cons = {hd=_ ; tl=_ ; body ; tv=_} } -> [ match_nil ; body ]
+          | Match_option { match_none ; match_some = {opt=_ ; body ; tv=_ } } -> [ match_none ; body ]
           | Match_tuple ((_ , match_tuple), _) -> [ match_tuple ]
           | Match_variant (lst , _) -> List.map snd lst in
         List.map get_type_expression @@ aux m' in
@@ -1096,15 +1096,15 @@ and untype_matching : (O.expression -> I.expression result) -> O.matching_expr -
   | Match_tuple ((lst, b),_) ->
       let%bind b = f b in
       ok @@ I.Match_tuple ((lst, b),[])
-  | Match_option {match_none ; match_some = (v, some,_)} ->
+  | Match_option {match_none ; match_some = {opt; body ; tv=_}} ->
       let%bind match_none = f match_none in
-      let%bind some = f some in
-      let match_some = v, some, () in
+      let%bind some = f body in
+      let match_some = opt, some, () in
       ok @@ Match_option {match_none ; match_some}
-  | Match_list {match_nil ; match_cons = (hd_name, tl_name, cons,_)} ->
+  | Match_list {match_nil ; match_cons = {hd ; tl ; body ; tv=_}} ->
       let%bind match_nil = f match_nil in
-      let%bind cons = f cons in
-      let match_cons = hd_name , tl_name , cons, () in
+      let%bind cons = f body in
+      let match_cons = hd , tl , cons, () in
       ok @@ Match_list {match_nil ; match_cons}
   | Match_variant (lst , _) ->
       let aux ((a,b),c) =
