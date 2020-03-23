@@ -383,11 +383,10 @@ let rec compile_expression :
         match variables with
         | hd :: [] ->
           if (List.length prep_vars = 1)
-          then e_let_in hd false inline rhs_b_expr body
-          else e_let_in hd false inline (e_accessor rhs_b_expr (string_of_int ((List.length prep_vars) - 1))) body
+          then e_let_in hd inline rhs_b_expr body
+          else e_let_in hd inline (e_accessor rhs_b_expr (string_of_int ((List.length prep_vars) - 1))) body
         | hd :: tl ->
           e_let_in hd
-          false
           inline
           (e_accessor rhs_b_expr (string_of_int ((List.length prep_vars) - (List.length tl) - 1)))
           (chain_let_in tl body)
@@ -408,7 +407,7 @@ let rec compile_expression :
       let%bind ret_expr = if List.length prep_vars = 1
         then ok (chain_let_in prep_vars body)
         (* Bind the right hand side so we only evaluate it once *)
-        else ok (e_let_in (rhs_b, ty_opt) false inline rhs' (chain_let_in prep_vars body))
+        else ok (e_let_in (rhs_b, ty_opt) inline rhs' (chain_let_in prep_vars body))
       in
       let%bind ret_expr = match kwd_rec with 
         | None -> ok @@ ret_expr
@@ -572,7 +571,7 @@ let rec compile_expression :
                   | Raw.PVar y ->
                     let var_name = Var.of_name y.value in
                     let%bind type_expr = compile_type_expression x'.type_expr in
-                    return @@ e_let_in (var_name , Some type_expr) false false e rhs
+                    return @@ e_let_in (var_name , Some type_expr) false e rhs
                   | _ -> default_action ()
                 )
               | _ -> default_action ()

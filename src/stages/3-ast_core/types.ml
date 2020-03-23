@@ -82,7 +82,7 @@ and let_in =
 
 and constructor = {constructor: constructor'; element: expression}
 
-and accessor = {expr: expression; label: label}
+and accessor = {record: expression; label: label}
 
 and update = {record: expression; path: label ; update: expression}
 

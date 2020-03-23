@@ -47,8 +47,8 @@ let rec fold_expression : 'a folder -> 'a -> expression -> 'a result = fun f ini
     let%bind res = fold_expression self res update in
     ok res 
   )
-  | E_record_accessor {expr} -> (
-     let%bind res = self init' expr in
+  | E_record_accessor {record} -> (
+     let%bind res = self init' record in
      ok res
     )
   | E_let_in { let_binder = _ ; rhs ; let_result } -> (
@@ -134,8 +134,8 @@ let rec map_expression : exp_mapper -> expression -> expression result = fun f e
       return @@ E_matching {matchee=e';cases=cases'}
     )
   | E_record_accessor acc -> (
-      let%bind e' = self acc.expr in
-      return @@ E_record_accessor {acc with expr = e'}
+      let%bind e' = self acc.record in
+      return @@ E_record_accessor {acc with record = e'}
     )
   | E_record m -> (
     let%bind m' = bind_map_lmap self m in
@@ -280,8 +280,8 @@ let rec fold_map_expression : 'a fold_mapper -> 'a -> expression -> ('a * expres
       ok (res, return @@ E_matching {matchee=e';cases=cases'})
     )
   | E_record_accessor acc -> (
-      let%bind (res, e') = self init' acc.expr in
-      ok (res, return @@ E_record_accessor {acc with expr = e'})
+      let%bind (res, e') = self init' acc.record in
+      ok (res, return @@ E_record_accessor {acc with record = e'})
     )
   | E_record m -> (
     let%bind (res, lst') = bind_fold_map_list (fun res (k,e) -> let%bind (res,e) = self res e in ok (res,(k,e))) init' (LMap.to_kv_list m) in

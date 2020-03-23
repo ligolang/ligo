@@ -70,7 +70,7 @@ module Captured_variables = struct
     | E_record m ->
       let%bind lst' = bind_map_list self @@ LMap.to_list m in
       ok @@ unions lst'
-    | E_record_accessor {expr;_} -> self expr
+    | E_record_accessor {record;_} -> self record
     | E_record_update {record;update;_} -> 
       let%bind r = self record in
       let%bind e = self update in

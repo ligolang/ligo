@@ -107,33 +107,27 @@ let e_bytes_raw ?loc (b: bytes) : expression =
   make_expr ?loc @@ E_literal (Literal_bytes b)
 let e_bytes_string ?loc (s: string) : expression =
   make_expr ?loc @@ E_literal (Literal_bytes (Hex.to_bytes (Hex.of_string s)))
-let e_big_map ?loc lst : expression = make_expr ?loc @@ E_big_map lst
 let e_some ?loc s  : expression = make_expr ?loc @@ E_constant {cons_name = C_SOME; arguments = [s]}
 let e_none ?loc () : expression = make_expr ?loc @@ E_constant {cons_name = C_NONE; arguments = []}
-let e_string_cat ?loc sl sr : expression = make_expr ?loc @@ E_constant {cons_name = C_CONCAT; arguments = [sl ; sr ]}
-let e_map_add ?loc k v old  : expression = make_expr ?loc @@ E_constant {cons_name = C_MAP_ADD; arguments = [k ; v ; old]}
-let e_map ?loc lst : expression = make_expr ?loc @@ E_map lst
-let e_set ?loc lst : expression = make_expr ?loc @@ E_set lst
-let e_list ?loc lst : expression = make_expr ?loc @@ E_list lst
 let e_constructor ?loc s a : expression = make_expr ?loc @@ E_constructor { constructor = Constructor s; element = a}
 let e_matching ?loc a b : expression = make_expr ?loc @@ E_matching {matchee=a;cases=b}
 let e_matching_bool ?loc a b c : expression = e_matching ?loc a (Match_bool {match_true = b ; match_false = c})
-let e_accessor ?loc a b = make_expr ?loc @@ E_record_accessor {expr = a; label= Label b}
-let e_accessor_list ?loc a b  = List.fold_left (fun a b -> e_accessor ?loc a b) a b
 let e_variable ?loc v = make_expr ?loc @@ E_variable v
-let e_skip ?loc () = make_expr ?loc @@ E_skip
 let e_let_in ?loc (binder, ascr) mut inline rhs let_result = 
   make_expr ?loc @@ E_let_in { let_binder = (binder, ascr) ; rhs ; let_result; inline; mut }
-let e_annotation ?loc anno_expr ty = make_expr ?loc @@ E_ascription {anno_expr; type_annotation = ty}
 let e_application ?loc a b = make_expr ?loc @@ E_application {lamb=a ; args=b}
-let e_binop ?loc name a b  = make_expr ?loc @@ E_constant {cons_name = name ; arguments = [a ; b]}
 let e_constant ?loc name lst = make_expr ?loc @@ E_constant {cons_name=name ; arguments = lst}
-let e_look_up ?loc x y = make_expr ?loc @@ E_look_up (x , y)
+
+let e_annotation ?loc anno_expr ty = make_expr ?loc @@ E_ascription {anno_expr; type_annotation = ty}
+
 let e_sequence ?loc expr1 expr2 = make_expr ?loc @@ E_sequence {expr1; expr2}
-let e_cond ?loc expr match_true match_false = e_matching expr ?loc (Match_bool {match_true; match_false})
-(*
-let e_assign ?loc a b c = location_wrap ?loc @@ E_assign (Var.of_name a , b , c) (* TODO handlethat*)
-*)
+let e_skip ?loc () = make_expr ?loc @@ E_skip
+
+let e_list ?loc lst : expression = make_expr ?loc @@ E_list lst
+let e_set ?loc lst : expression = make_expr ?loc @@ E_set lst
+let e_map ?loc lst : expression = make_expr ?loc @@ E_map lst
+let e_big_map ?loc lst : expression = make_expr ?loc @@ E_big_map lst
+
 let ez_match_variant (lst : ((string * string) * 'a) list) =
   let lst = List.map (fun ((c,n),a) -> ((Constructor c, Var.of_name n), a) ) lst in
   Match_variant (lst,())
@@ -145,19 +139,20 @@ let e_record_ez ?loc (lst : (string * expr) list) : expression =
 let e_record ?loc map =
   let lst = Map.String.to_kv_list map in
   e_record_ez ?loc lst 
+let e_record_accessor ?loc a b = make_expr ?loc @@ E_record_accessor {record = a; label= Label b}
 
-let e_update ?loc record path update = 
+let e_record_update ?loc record path update = 
   let path = Label path in
   make_expr ?loc @@ E_record_update {record; path; update}
-
-let e_tuple ?loc lst : expression = e_record_ez ?loc (tuple_to_record lst)
-let e_pair ?loc a b  : expression = e_tuple ?loc [a;b]
 
 let make_option_typed ?loc e t_opt =
   match t_opt with
   | None -> e
   | Some t -> e_annotation ?loc e t
 
+let e_cond ?loc expr match_true match_false = e_matching expr ?loc (Match_bool {match_true; match_false})
+let e_tuple ?loc lst : expression = e_record_ez ?loc (tuple_to_record lst)
+let e_pair ?loc a b  : expression = e_tuple ?loc [a;b]
 
 let e_typed_none ?loc t_opt =
   let type_annotation = t_option t_opt in
@@ -185,25 +180,9 @@ let e_lambda ?loc (binder : expression_variable)
   }
 let e_recursive ?loc fun_name fun_type lambda = make_expr ?loc @@ E_recursive {fun_name; fun_type; lambda}
 
-
-let e_assign_with_let ?loc var access_path expr = 
-  let var = Var.of_name (var) in
-  match access_path with 
-  | [] -> (var, None), true, expr, false
-
-  | lst -> 
-    let rec aux path record= match path with 
-    | [] -> failwith "acces_path cannot be empty"
-    | [e] -> e_update ?loc record e expr
-    | elem::tail -> 
-      let next_record = e_accessor record elem in
-      e_update ?loc record elem (aux tail next_record )
-    in 
-    (var, None), true, (aux lst (e_variable var)), false
-
 let get_e_accessor = fun t ->
   match t with
-  | E_record_accessor {expr; label} -> ok (expr , label)
+  | E_record_accessor {record; label} -> ok (record , label)
   | _ -> simple_fail "not an accessor"
 
 let assert_e_accessor = fun t ->

@@ -301,11 +301,12 @@ and transpile_annotated_expression (ae:AST.expression) : expression result =
       trace_strong (corner_case ~loc:__LOC__ "record build") @@
       Append_tree.fold_ne (transpile_annotated_expression) aux node
     )
-  | E_record_accessor {expr; label} ->
-      let%bind ty' = transpile_type (get_type_expression expr) in
+  | E_record_accessor {record; label} ->
+      let ty  = get_type_expression record in
+      let%bind ty' = transpile_type ty in
       let%bind ty_lmap =
         trace_strong (corner_case ~loc:__LOC__ "not a record") @@
-        get_t_record (get_type_expression expr) in
+        get_t_record ty in
       let%bind ty'_lmap = Stage_common.Helpers.bind_map_lmap transpile_type ty_lmap in
       let%bind path =
         trace_strong (corner_case ~loc:__LOC__ "record access") @@
@@ -315,7 +316,7 @@ and transpile_annotated_expression (ae:AST.expression) : expression result =
           | `Left  -> C_CAR
           | `Right -> C_CDR in
         Combinators.Expression.make_tpl (E_constant {cons_name=c;arguments=[pred]} , ty) in
-      let%bind record' = transpile_annotated_expression expr in
+      let%bind record' = transpile_annotated_expression record in
       let expr = List.fold_left aux record' path in
       ok expr
   | E_record_update {record; path; update} -> 

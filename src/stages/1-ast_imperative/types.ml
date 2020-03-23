@@ -55,6 +55,7 @@ and expression_content =
   | E_set of expression list
   | E_look_up of (expression * expression)
   (* Imperative *)
+  | E_assign of assign
   | E_for of for_
   | E_for_each of for_each
   | E_while of while_loop
@@ -82,14 +83,13 @@ and recursive = {
 
 and let_in =
   { let_binder: expression_variable * type_expression option
-  ; mut: bool
   ; rhs: expression
   ; let_result: expression
   ; inline: bool }
 
 and constructor = {constructor: constructor'; element: expression}
 
-and accessor = {expr: expression; label: label}
+and accessor = {record: expression; label: label}
 
 and update = {record: expression; path: label ; update: expression}
 
@@ -104,6 +104,17 @@ and sequence = {
   expr1: expression ;
   expr2: expression ;
   }
+
+and assign = {
+  variable : expression_variable;
+  access_path : access list;
+  expression : expression;
+}
+
+and access =
+  | Access_tuple of int
+  | Access_record of string
+  | Access_map of expr
 
 and for_ = {
   binder : expression_variable;

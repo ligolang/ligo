@@ -316,8 +316,8 @@ and eval : Ast_typed.expression -> env -> value result
           ok (label,v'))
         (LMap.to_kv_list recmap) in
       ok @@ V_Record (LMap.of_list lv')
-    | E_record_accessor { expr ; label} -> (
-      let%bind record' = eval expr env in
+    | E_record_accessor { record ; label} -> (
+      let%bind record' = eval record env in
       match record' with
       | V_Record recmap ->
         let%bind a = trace_option (simple_error "unknown record field") @@

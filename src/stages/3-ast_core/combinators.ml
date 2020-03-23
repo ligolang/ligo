@@ -118,7 +118,7 @@ let e_list ?loc lst : expression = make_expr ?loc @@ E_list lst
 let e_constructor ?loc s a : expression = make_expr ?loc @@ E_constructor { constructor = Constructor s; element = a}
 let e_matching ?loc a b : expression = make_expr ?loc @@ E_matching {matchee=a;cases=b}
 let e_matching_bool ?loc a b c : expression = e_matching ?loc a (Match_bool {match_true = b ; match_false = c})
-let e_accessor ?loc a b = make_expr ?loc @@ E_record_accessor {expr = a; label= Label b}
+let e_accessor ?loc a b = make_expr ?loc @@ E_record_accessor {record = a; label= Label b}
 let e_accessor_list ?loc a b  = List.fold_left (fun a b -> e_accessor ?loc a b) a b
 let e_variable ?loc v = make_expr ?loc @@ E_variable v
 let e_let_in ?loc (binder, ascr) inline rhs let_result = 
@@ -201,7 +201,7 @@ let e_assign_with_let ?loc var access_path expr =
 
 let get_e_accessor = fun t ->
   match t with
-  | E_record_accessor {expr; label} -> ok (expr , label)
+  | E_record_accessor {record; label} -> ok (record , label)
   | _ -> simple_fail "not an accessor"
 
 let assert_e_accessor = fun t ->

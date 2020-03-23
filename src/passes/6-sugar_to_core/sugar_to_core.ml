@@ -101,9 +101,9 @@ let rec compile_expression : I.expression -> O.expression result =
         ) record
       in
       return @@ O.E_record (O.LMap.of_list record)
-    | I.E_record_accessor {expr;label} ->
-      let%bind expr = compile_expression expr in
-      return @@ O.E_record_accessor {expr;label}
+    | I.E_record_accessor {record;label} ->
+      let%bind record = compile_expression record in
+      return @@ O.E_record_accessor {record;label}
     | I.E_record_update {record;path;update} ->
       let%bind record = compile_expression record in
       let%bind update = compile_expression update in
@@ -294,9 +294,9 @@ let rec uncompile_expression : O.expression -> I.expression result =
       ) record
     in
     return @@ I.E_record (O.LMap.of_list record)
-  | O.E_record_accessor {expr;label} ->
-    let%bind expr = uncompile_expression expr in
-    return @@ I.E_record_accessor {expr;label}
+  | O.E_record_accessor {record;label} ->
+    let%bind record = uncompile_expression record in
+    return @@ I.E_record_accessor {record;label}
   | O.E_record_update {record;path;update} ->
     let%bind record = uncompile_expression record in
     let%bind update = uncompile_expression update in

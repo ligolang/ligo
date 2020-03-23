@@ -27,8 +27,8 @@ and expression_content ppf (ec : expression_content) =
         c.arguments
   | E_record m ->
       fprintf ppf "%a" (tuple_or_record_sep_expr expression) m
-  | E_record_accessor ra ->
-      fprintf ppf "%a.%a" expression ra.expr label ra.label
+  | E_record_accessor {record; label=l}->
+      fprintf ppf "%a.%a" expression record label l
   | E_record_update {record; path; update} ->
       fprintf ppf "{ %a with { %a = %a } }" expression record label path expression update
   | E_map m ->
@@ -57,15 +57,20 @@ and expression_content ppf (ec : expression_content) =
         expression_variable fun_name 
         type_expression fun_type
         expression_content (E_lambda lambda)
-  | E_let_in { let_binder ; mut; rhs ; let_result; inline } ->    
-      fprintf ppf "let %a%a = %a%a in %a" option_mut mut option_type_name let_binder expression rhs option_inline inline expression let_result
+  | E_let_in { let_binder ; rhs ; let_result; inline } ->    
+      fprintf ppf "let %a = %a%a in %a" option_type_name let_binder expression rhs option_inline inline expression let_result
   | E_ascription {anno_expr; type_annotation} ->
       fprintf ppf "%a : %a" expression anno_expr type_expression
         type_annotation
   | E_sequence {expr1;expr2} ->
-      fprintf ppf "%a;\n%a" expression expr1 expression expr2
+      fprintf ppf "{ %a; @. %a}" expression expr1 expression expr2
   | E_skip ->
       fprintf ppf "skip"
+  | E_assign {variable; access_path; expression=e} ->
+      fprintf ppf "%a%a := %a" 
+        expression_variable variable
+        (list_sep (fun ppf a -> fprintf ppf ".%a" accessor a) (fun ppf () -> fprintf ppf "")) access_path
+        expression e
   | E_for {binder; start; final; increment; body} ->
       fprintf ppf "for %a from %a to %a by %a do %a" 
         expression_variable binder
@@ -83,6 +88,12 @@ and expression_content ppf (ec : expression_content) =
         expression condition
         expression body
     
+and accessor ppf a =
+  match a with
+    | Access_tuple i  -> fprintf ppf "%d" i
+    | Access_record s -> fprintf ppf "%s" s
+    | Access_map e    -> fprintf ppf "%a" expression e
+
 and option_map ppf (k,v_opt) =
   match v_opt with
   | None -> fprintf ppf "%a" expression_variable k

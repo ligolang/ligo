@@ -49,8 +49,8 @@ let rec check_recursive_call : expression_variable -> bool -> expression -> unit
     let es = LMap.to_list elm in
     let%bind _ = bind_map_list (check_recursive_call n false) es in
     ok ()
-  | E_record_accessor {expr;_} ->
-    let%bind _ = check_recursive_call n false expr in
+  | E_record_accessor {record;_} ->
+    let%bind _ = check_recursive_call n false record in
     ok ()
   | E_record_update {record;update;_} ->
     let%bind _ = check_recursive_call n false record in

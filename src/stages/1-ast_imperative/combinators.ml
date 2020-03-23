@@ -118,12 +118,12 @@ let e_list ?loc lst : expression = make_expr ?loc @@ E_list lst
 let e_constructor ?loc s a : expression = make_expr ?loc @@ E_constructor { constructor = Constructor s; element = a}
 let e_matching ?loc a b : expression = make_expr ?loc @@ E_matching {matchee=a;cases=b}
 let e_matching_bool ?loc a b c : expression = e_matching ?loc a (Match_bool {match_true = b ; match_false = c})
-let e_accessor ?loc a b = make_expr ?loc @@ E_record_accessor {expr = a; label= Label b}
+let e_accessor ?loc a b = make_expr ?loc @@ E_record_accessor {record = a; label= Label b}
 let e_accessor_list ?loc a b  = List.fold_left (fun a b -> e_accessor ?loc a b) a b
 let e_variable ?loc v = make_expr ?loc @@ E_variable v
 let e_skip ?loc () = make_expr ?loc @@ E_skip
-let e_let_in ?loc (binder, ascr) mut inline rhs let_result = 
-  make_expr ?loc @@ E_let_in { let_binder = (binder, ascr) ; mut; rhs ; let_result; inline }
+let e_let_in ?loc (binder, ascr) inline rhs let_result = 
+  make_expr ?loc @@ E_let_in { let_binder = (binder, ascr) ; rhs ; let_result; inline }
 let e_annotation ?loc anno_expr ty = make_expr ?loc @@ E_ascription {anno_expr; type_annotation = ty}
 let e_application ?loc a b = make_expr ?loc @@ E_application {lamb=a ; args=b}
 let e_binop ?loc name a b  = make_expr ?loc @@ E_constant {cons_name = name ; arguments = [a ; b]}
@@ -191,24 +191,16 @@ let e_lambda ?loc (binder : expression_variable)
 let e_recursive ?loc fun_name fun_type lambda = make_expr ?loc @@ E_recursive {fun_name; fun_type; lambda}
 
 
-let e_assign_with_let ?loc var access_path expr = 
-  let var = Var.of_name (var) in
-  match access_path with 
-  | [] -> (var, None), true, expr, false
-
-  | lst -> 
-    let rec aux path record= match path with 
-    | [] -> failwith "acces_path cannot be empty"
-    | [e] -> e_update ?loc record e expr
-    | elem::tail -> 
-      let next_record = e_accessor record elem in
-      e_update ?loc record elem (aux tail next_record )
-    in 
-    (var, None), true, (aux lst (e_variable var)), false
+let e_assign ?loc variable access_path expression =
+  make_expr ?loc @@ E_assign {variable;access_path;expression} 
+let e_ez_assign ?loc variable access_path expression = 
+  let variable = Var.of_name variable in
+  let access_path = List.map (fun s -> Access_record s) access_path in
+  e_assign ?loc variable access_path expression 
 
 let get_e_accessor = fun t ->
   match t with
-  | E_record_accessor {expr; label} -> ok (expr , label)
+  | E_record_accessor {record; label} -> ok (record , label)
   | _ -> simple_fail "not an accessor"
 
 let assert_e_accessor = fun t ->

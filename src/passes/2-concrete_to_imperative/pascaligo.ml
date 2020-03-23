@@ -14,8 +14,6 @@ let pseq_to_list = function
 | Some lst -> npseq_to_list lst
 let get_value : 'a Raw.reg -> 'a = fun x -> x.value
 
-
-
 module Errors = struct
   let unsupported_cst_constr p =
     let title () = "" in
@@ -134,10 +132,10 @@ let r_split = Location.r_split
    [return_statement] is used for non-let-in statements.
  *)
 
-let return_let_in ?loc binder mut inline rhs = ok @@ fun expr'_opt ->
+let return_let_in ?loc binder inline rhs = ok @@ fun expr'_opt ->
   match expr'_opt with
-  | None -> ok @@ e_let_in ?loc binder mut inline rhs (e_skip ())
-  | Some expr' -> ok @@ e_let_in ?loc binder mut inline rhs expr'
+  | None -> ok @@ e_let_in ?loc binder inline rhs (e_skip ())
+  | Some expr' -> ok @@ e_let_in ?loc binder inline rhs expr'
 
 let return_statement expr = ok @@ fun expr'_opt ->
   match expr'_opt with
@@ -525,7 +523,7 @@ and compile_data_declaration : Raw.data_decl -> _ result =
       let name = x.name.value in
       let%bind t = compile_type_expression x.var_type in
       let%bind expression = compile_expression x.init in
-      return_let_in ~loc (Var.of_name name, Some t) false false expression
+      return_let_in ~loc (Var.of_name name, Some t) false expression
   | LocalConst x ->
       let (x , loc) = r_split x in
       let name = x.name.value in
@@ -537,7 +535,7 @@ and compile_data_declaration : Raw.data_decl -> _ result =
         | Some {value; _} ->
            npseq_to_list value.ne_elements
            |> List.exists (fun Region.{value; _} -> value = "\"inline\"")
-      in return_let_in ~loc (Var.of_name name, Some t) false inline expression
+      in return_let_in ~loc (Var.of_name name, Some t) inline expression
   | LocalFun f  ->
       let (f , loc) = r_split f in
       let%bind (binder, expr) = compile_fun_decl ~loc f in
@@ -547,7 +545,7 @@ and compile_data_declaration : Raw.data_decl -> _ result =
         | Some {value; _} ->
            npseq_to_list value.ne_elements
            |> List.exists (fun Region.{value; _} -> value = "\"inline\"")
-      in return_let_in ~loc binder false inline expr
+      in return_let_in ~loc binder inline expr
 
 and compile_param :
       Raw.param_decl -> (string * type_expression) result =
@@ -618,7 +616,7 @@ and compile_fun_decl :
            let expr =
              e_accessor (e_variable arguments_name) (string_of_int i) in
            let type_variable = Some type_expr in
-           let ass = return_let_in (Var.of_name param , type_variable) false inline expr in
+           let ass = return_let_in (Var.of_name param , type_variable) inline expr in
            ass
          in
          bind_list @@ List.mapi aux params in
@@ -681,7 +679,7 @@ and compile_fun_expression :
          let aux = fun i (param, param_type) ->
            let expr = e_accessor (e_variable arguments_name) (string_of_int i) in
            let type_variable = Some param_type in
-           let ass = return_let_in (Var.of_name param , type_variable) false false expr in
+           let ass = return_let_in (Var.of_name param , type_variable) false expr in
            ass
          in
          bind_list @@ List.mapi aux params in
@@ -817,8 +815,7 @@ and compile_single_instruction : Raw.instruction -> (_ -> expression result) res
       match a.lhs with
         | Path path -> (
             let (name , path') = compile_path path in
-            let (let_binder, mut, rhs, inline) = e_assign_with_let ~loc name path' value_expr in
-            return_let_in let_binder mut inline rhs
+            return_statement @@ e_ez_assign ~loc name path' value_expr
           )
         | MapPath v -> (
             let v' = v.value in
@@ -831,8 +828,7 @@ and compile_single_instruction : Raw.instruction -> (_ -> expression result) res
             in
             let%bind key_expr = compile_expression v'.index.value.inside in
             let expr' = e_map_add key_expr value_expr map in
-            let (let_binder, mut, rhs, inline) = e_assign_with_let ~loc varname path expr' in
-            return_let_in let_binder mut inline rhs  
+            return_statement @@ e_ez_assign ~loc varname path expr'
           )
     )
   | CaseInstr c -> (
@@ -872,9 +868,7 @@ and compile_single_instruction : Raw.instruction -> (_ -> expression result) res
       let u : Raw.update = {record=r.path;kwd_with=r.kwd_with; updates=update} in
       let%bind expr = compile_update {value=u;region=reg} in
       let (name , access_path) = compile_path r.path in
-      let loc = Some loc in
-      let (binder, mut, rhs, inline) = e_assign_with_let ?loc name access_path expr in
-      return_let_in binder mut inline rhs
+       return_statement @@ e_ez_assign ~loc name access_path expr
 
   )
   | MapPatch patch -> (
@@ -897,8 +891,7 @@ and compile_single_instruction : Raw.instruction -> (_ -> expression result) res
             inj
             (e_accessor_list ~loc (e_variable (Var.of_name name)) access_path)
         in 
-        let (binder, mut, rhs, inline) = e_assign_with_let ~loc name access_path assigns in
-        return_let_in binder mut inline rhs
+       return_statement @@ e_ez_assign ~loc name access_path assigns
     )
   | SetPatch patch -> (
       let (setp, loc) = r_split patch in
@@ -913,8 +906,7 @@ and compile_single_instruction : Raw.instruction -> (_ -> expression result) res
         let assigns = List.fold_right
           (fun hd s -> e_constant C_SET_ADD [hd ; s])
           inj (e_accessor_list ~loc (e_variable (Var.of_name name)) access_path) in
-        let (binder, mut, rhs, inline) = e_assign_with_let ~loc name access_path assigns in
-        return_let_in binder mut inline rhs
+       return_statement @@ e_ez_assign ~loc name access_path assigns
     )
   | MapRemove r -> (
       let (v , loc) = r_split r in
@@ -928,8 +920,7 @@ and compile_single_instruction : Raw.instruction -> (_ -> expression result) res
       in
       let%bind key' = compile_expression key in
       let expr = e_constant ~loc C_MAP_REMOVE [key' ; map] in
-      let (binder, mut, rhs, inline) = e_assign_with_let ~loc varname path expr in
-      return_let_in binder mut inline rhs
+       return_statement @@ e_ez_assign ~loc varname path expr
     )
   | SetRemove r -> (
       let (set_rm, loc) = r_split r in
@@ -942,8 +933,7 @@ and compile_single_instruction : Raw.instruction -> (_ -> expression result) res
       in
       let%bind removed' = compile_expression set_rm.element in
       let expr = e_constant ~loc C_SET_REMOVE [removed' ; set] in
-      let (binder, mut, rhs, inline) = e_assign_with_let ~loc varname path expr in
-      return_let_in binder mut inline rhs
+       return_statement @@ e_ez_assign ~loc varname path expr
     )
 
 and compile_path : Raw.path -> string * string list = fun p ->

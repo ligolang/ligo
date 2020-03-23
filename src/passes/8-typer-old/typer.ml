@@ -450,8 +450,8 @@ and type_expression' : environment -> ?tv_opt:O.type_expression -> I.expression 
       return (e_address s) (t_address ())
   | E_literal (Literal_operation op) ->
       return (e_operation op) (t_operation ())
-  | E_record_accessor {expr;label} ->
-      let%bind e' = type_expression' e expr in
+  | E_record_accessor {record;label} ->
+      let%bind e' = type_expression' e record in
       let aux (prev:O.expression) (a:I.label) : O.expression result =
             let property = a in
             let%bind r_tv = get_t_record prev.type_expression in
@@ -459,7 +459,7 @@ and type_expression' : environment -> ?tv_opt:O.type_expression -> I.expression 
               generic_try (bad_record_access property ae prev.type_expression ae.location)
               @@ (fun () -> I.LMap.find property r_tv) in
             let location = ae.location in
-            ok @@ make_a_e ~location (E_record_accessor {expr=prev; label=property}) tv e
+            ok @@ make_a_e ~location (E_record_accessor {record=prev; label=property}) tv e
       in
       let%bind ae =
       trace (simple_info "accessing") @@ aux e' label in
@@ -861,8 +861,8 @@ let rec untype_expression (e:O.expression) : (I.expression) result =
     let%bind r' = bind_smap
       @@ Map.String.map untype_expression r in
     return (e_record r')
-  | E_record_accessor {expr; label} ->
-      let%bind r' = untype_expression expr in
+  | E_record_accessor {record; label} ->
+      let%bind r' = untype_expression record in
       let Label s = label in
       return (e_accessor r' s)
   | E_record_update {record=r; path=l; update=e} ->
