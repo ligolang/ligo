@@ -27,22 +27,19 @@ let string_of_token = function
 
 (* Errors *)
 
-module Error =
-  struct
-    type t = Invalid_character of char
+type error = Invalid_character of char
 
-    let to_string = function
-      Invalid_character c ->
-        sprintf "Invalid character '%c' (%d).\n" c (Char.code c)
+let error_to_string = function
+    Invalid_character c ->
+      sprintf "Invalid character '%c' (%d).\n" c (Char.code c)
 
-    let format ?(offsets=true) Region.{region; value} ~file =
-      let msg   = to_string value
-      and reg   = region#to_string ~file ~offsets `Byte in
-      let value = sprintf "Preprocessing error %s:\n%s" reg msg
-      in Region.{value; region}
-  end
+let format ?(offsets=true) Region.{region; value} ~file =
+  let msg   = error_to_string value
+  and reg   = region#to_string ~file ~offsets `Byte in
+  let value = sprintf "Preprocessing error %s:\n%s" reg msg
+  in Region.{value; region}
 
-exception Error of Error.t Region.reg
+exception Error of error Region.reg
 
 let mk_reg buffer =
   let start  = Lexing.lexeme_start_p buffer |> Pos.from_byte
@@ -95,7 +92,7 @@ rule scan = parse
 | "!="        { NEQ       }
 | "!"         { NOT       }
 | "//"        { inline_com lexbuf }
-| _ as c      { fail (Error.Invalid_character c) lexbuf }
+| _ as c      { fail (Invalid_character c) lexbuf }
 
 and inline_com = parse
   newline { Lexing.new_line lexbuf; EOL }

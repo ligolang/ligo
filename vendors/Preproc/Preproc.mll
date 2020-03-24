@@ -22,16 +22,6 @@ let sprintf = Printf.sprintf
   | char::l -> Bytes.set bytes i char; fill (i-1) l
   in fill (len-1) p |> Bytes.to_string
 
-(* The call [explode s a] is the list made by pushing the characters
-   in the string [s] on top of [a], in reverse order. For example,
-   [explode "ba" ['c';'d'] = ['a'; 'b'; 'c'; 'd']]. *)
-
-let explode s acc =
-  let rec push = function
-    0 -> acc
-  | i -> s.[i-1] :: push (i-1)
-in push (String.length s)
-
 (* The type [mode] defines the two scanning modes of the preprocessor:
    either we copy the current characters or we skip them. *)
 
@@ -88,109 +78,106 @@ type state = {
 
 (* ERRORS *)
 
-module Error =
-  struct
-    type t =
-      Invalid_directive of string
-    | Directive_inside_line
-    | Missing_endif
-    | Invalid_line_indicator of string
-    | No_line_indicator
-    | End_line_indicator
-    | Newline_in_string
-    | Open_comment
-    | Open_string
-    | Dangling_endif
-    | Open_region_in_conditional
-    | Dangling_endregion
-    | Conditional_in_region
-    | If_follows_elif
-    | Else_follows_else
-    | Dangling_else
-    | Elif_follows_else
-    | Dangling_elif
-    | Reserved_symbol of string
-    | Multiply_defined_symbol of string
-    | Error_directive of string
-    | Parse_error
-    | No_line_comment_or_blank
-    | Invalid_symbol
+type error =
+  Invalid_directive of string
+| Directive_inside_line
+| Missing_endif
+| Invalid_line_indicator of string
+| No_line_indicator
+| End_line_indicator
+| Newline_in_string
+| Open_comment
+| Open_string
+| Dangling_endif
+| Open_region_in_conditional
+| Dangling_endregion
+| Conditional_in_region
+| If_follows_elif
+| Else_follows_else
+| Dangling_else
+| Elif_follows_else
+| Dangling_elif
+| Reserved_symbol of string
+| Multiply_defined_symbol of string
+| Error_directive of string
+| Parse_error
+| No_line_comment_or_blank
+| Invalid_symbol
 
-    let to_string = function
-      Invalid_directive name ->
-        sprintf "Invalid directive \"%s\"." name
-    | Directive_inside_line ->
-        sprintf "Directive inside a line."
-    | Missing_endif ->
-        sprintf "Missing #endif directive."
-    | Invalid_line_indicator id ->
-        sprintf "Invalid line indicator \"%s\".\n\
-                 Hint: Try \"default\" or \"hidden\"." id
-    | No_line_indicator ->
-        sprintf "Missing line indicator."
-    | End_line_indicator ->
-        sprintf "Invalid ending of numerical line indicator.\n\
-                 Hint: Try a string, end of line, or a line comment."
-    | Newline_in_string ->
-        sprintf "Invalid newline character in string."
-    | Open_comment ->
-        sprintf "Unterminated comment."
-    | Open_string ->
-        sprintf "Unterminated string.\n\
-                 Hint: Close with double quotes."
-    | Dangling_endif ->
-        sprintf "Dangling #endif directive.\n\
-                 Hint: Remove it or add a #if before."
-    | Open_region_in_conditional ->
-        sprintf "Unterminated of #region in conditional.\n\
-                 Hint: Close with #endregion before #endif."
-    | Dangling_endregion ->
-        sprintf "Dangling #endregion directive.\n\
-                 Hint: Remove it or use #region before."
-    | Conditional_in_region ->
-        sprintf "Conditional in region.\n\
-                 Hint: Remove the conditional or the region."
-    | If_follows_elif ->
-        sprintf "Directive #if found in a clause #elif."
-    | Else_follows_else ->
-        sprintf "Directive #else found in a clause #else."
-    | Dangling_else ->
-        sprintf "Directive #else without #if."
-    | Elif_follows_else ->
-        sprintf "Directive #elif found in a clause #else."
-    | Dangling_elif ->
-        sprintf "Dangling #elif directive.\n\
-                 Hint: Remove it or add a #if before."
-    | Reserved_symbol sym ->
-        sprintf "Reserved symbol \"%s\".\n\
-                 Hint: Use another symbol." sym
-    | Multiply_defined_symbol sym ->
-        sprintf "Multiply-defined symbol \"%s\".\n\
-                 Hint: Change the name or remove one definition." sym
-    | Error_directive msg ->
-        msg
-    | Parse_error ->
-        "Parse error in expression."
-    | No_line_comment_or_blank ->
-        "Line comment or whitespace expected."
-    | Invalid_symbol ->
-        "Expected a symbol (identifier)."
+let error_to_string = function
+  Invalid_directive name ->
+    sprintf "Invalid directive \"%s\"." name
+| Directive_inside_line ->
+    sprintf "Directive inside a line."
+| Missing_endif ->
+    sprintf "Missing #endif directive."
+| Invalid_line_indicator id ->
+    sprintf "Invalid line indicator \"%s\".\n\
+             Hint: Try \"default\" or \"hidden\"." id
+| No_line_indicator ->
+    sprintf "Missing line indicator."
+| End_line_indicator ->
+    sprintf "Invalid ending of numerical line indicator.\n\
+             Hint: Try a string, end of line, or a line comment."
+| Newline_in_string ->
+    sprintf "Invalid newline character in string."
+| Open_comment ->
+    sprintf "Unterminated comment."
+| Open_string ->
+    sprintf "Unterminated string.\n\
+             Hint: Close with double quotes."
+| Dangling_endif ->
+    sprintf "Dangling #endif directive.\n\
+             Hint: Remove it or add a #if before."
+| Open_region_in_conditional ->
+    sprintf "Unterminated of #region in conditional.\n\
+             Hint: Close with #endregion before #endif."
+| Dangling_endregion ->
+    sprintf "Dangling #endregion directive.\n\
+             Hint: Remove it or use #region before."
+| Conditional_in_region ->
+    sprintf "Conditional in region.\n\
+             Hint: Remove the conditional or the region."
+| If_follows_elif ->
+    sprintf "Directive #if found in a clause #elif."
+| Else_follows_else ->
+    sprintf "Directive #else found in a clause #else."
+| Dangling_else ->
+    sprintf "Directive #else without #if."
+| Elif_follows_else ->
+    sprintf "Directive #elif found in a clause #else."
+| Dangling_elif ->
+    sprintf "Dangling #elif directive.\n\
+             Hint: Remove it or add a #if before."
+| Reserved_symbol sym ->
+    sprintf "Reserved symbol \"%s\".\n\
+             Hint: Use another symbol." sym
+| Multiply_defined_symbol sym ->
+    sprintf "Multiply-defined symbol \"%s\".\n\
+             Hint: Change the name or remove one definition." sym
+| Error_directive msg ->
+    msg
+| Parse_error ->
+    "Parse error in expression."
+| No_line_comment_or_blank ->
+    "Line comment or whitespace expected."
+| Invalid_symbol ->
+    "Expected a symbol (identifier)."
 
-    let format ?(offsets=true) Region.{region; value} ~file =
-      let msg   = to_string value
-      and reg   = region#to_string ~file ~offsets `Byte in
-      let value = sprintf "Preprocessing error %s:\n%s" reg msg
-      in Region.{value; region}
-end
+let format ?(offsets=true) Region.{region; value} ~file =
+  let msg   = error_to_string value
+  and reg   = region#to_string ~file ~offsets `Byte in
+  let value = sprintf "Preprocessing error %s:\n%s" reg msg
+  in Region.{value; region}
 
-exception Error of state * Error.t Region.reg
+exception Error of Buffer.t * error Region.reg
 
 let mk_reg buffer =
   let start  = Lexing.lexeme_start_p buffer |> Pos.from_byte
   and stop   = Lexing.lexeme_end_p buffer |> Pos.from_byte
   in Region.make ~start ~stop
 
-let stop value state region = raise (Error (state, Region.{region; value}))
+let stop value state region = raise (Error (state.out, Region.{region; value}))
 let fail error state buffer = stop error state (mk_reg buffer)
 
 (* The function [reduce_cond] is called when a #endif directive is
@@ -198,9 +185,9 @@ let fail error state buffer = stop error state (mk_reg buffer)
 
 let reduce_cond state region =
   let rec reduce = function
-                [] -> stop Error.Dangling_endif state region
+                [] -> stop Dangling_endif state region
   | If mode::trace -> trace, mode
-  |      Region::_ -> stop Error.Open_region_in_conditional state region
+  |      Region::_ -> stop Open_region_in_conditional state region
   |       _::trace -> reduce trace
   in reduce state.trace
 
@@ -209,9 +196,9 @@ let reduce_cond state region =
 
 let reduce_reg state region =
   match state.trace with
-               [] -> stop Error.Dangling_endregion state region
+               [] -> stop Dangling_endregion state region
   | Region::trace -> trace
-  |             _ -> stop Error.Conditional_in_region state region
+  |             _ -> stop Conditional_in_region state region
 
 (* The function [extend] is called when encountering conditional
    directives #if, #else and #elif. As its name suggests, it extends
@@ -220,11 +207,11 @@ let reduce_reg state region =
 
 let extend cond state region =
   match cond, state.trace with
-    If _, Elif _::_ -> stop Error.If_follows_elif state region
-  | Else,   Else::_ -> stop Error.Else_follows_else state region
-  | Else,        [] -> stop Error.Dangling_else state region
-  | Elif _, Else::_ -> stop Error.Elif_follows_else state region
-  | Elif _,      [] -> stop Error.Dangling_elif state region
+    If _, Elif _::_ -> stop If_follows_elif state region
+  | Else,   Else::_ -> stop Else_follows_else state region
+  | Else,        [] -> stop Dangling_else state region
+  | Elif _, Else::_ -> stop Elif_follows_else state region
+  | Elif _,      [] -> stop Dangling_elif state region
   |     hd,     tl  -> hd::tl
 
 (* The function [last_mode] seeks the last mode as recorded in the
@@ -272,8 +259,8 @@ let expr state buffer : mode =
     try E_Parser.expr E_Lexer.scan buffer with
       E_Parser.Error ->
         let region = mk_reg buffer in
-        let value  = Error.Parse_error
-        in raise (Error (state, Region.{value; region})) in
+        let value  = Parse_error
+        in raise (Error (state.out, Region.{value; region})) in
   let () = print state "\n" in
   if eval state.env ast then Copy else Skip
 
@@ -428,9 +415,9 @@ rule scan state = parse
           |   Inline -> copy state lexbuf; scan state lexbuf }
 | directive {
     if   not (List.mem id directives)
-    then fail (Error.Invalid_directive id) state lexbuf;
+    then fail (Invalid_directive id) state lexbuf;
     if   state.offset = Inline
-    then fail Error.Directive_inside_line state lexbuf;
+    then fail Directive_inside_line state lexbuf;
     let region = mk_reg lexbuf in
     match id with
       "include" ->
@@ -473,9 +460,9 @@ rule scan state = parse
     | "define" ->
         let id, region = variable state lexbuf in
         if id="true" || id="false"
-        then stop (Error.Reserved_symbol id) state region;
+        then stop (Reserved_symbol id) state region;
         if Env.mem id state.env
-        then stop (Error.Multiply_defined_symbol id) state region;
+        then stop (Multiply_defined_symbol id) state region;
         let state = {state with env = Env.add id state.env;
                                 offset = Prefix 0}
         in scan state lexbuf
@@ -485,7 +472,7 @@ rule scan state = parse
                                 offset = Prefix 0}
         in scan state lexbuf
     | "error" ->
-        stop (Error.Error_directive (message [] lexbuf)) state region
+        stop (Error_directive (message [] lexbuf)) state region
 (*
     | "warning" ->
         let start_p, end_p = region in
@@ -523,7 +510,7 @@ rule scan state = parse
   }
 | eof   { match state.trace with
             [] -> expand_offset state; state
-          |  _ -> fail Error.Missing_endif state lexbuf }
+          |  _ -> fail Missing_endif state lexbuf }
 | '"'   { if state.mode = Copy then
             begin
               expand_offset state;
@@ -560,7 +547,7 @@ and variable state = parse
 
 and symbol state = parse
   ident as id { id, mk_reg lexbuf                      }
-| _           { fail Error.Invalid_symbol state lexbuf }
+| _           { fail Invalid_symbol state lexbuf }
 
 
 (* Line indicator (#line) *)
@@ -574,8 +561,8 @@ and line_indicator state = parse
     match id with
       "default" | "hidden" ->
         print state (id ^ message [] lexbuf)
-    | _ -> fail (Error.Invalid_line_indicator id) state lexbuf }
-| _ { fail Error.No_line_indicator state lexbuf }
+    | _ -> fail (Invalid_line_indicator id) state lexbuf }
+| _ { fail No_line_indicator state lexbuf }
 
 and end_indicator state = parse
   blank+ { copy state lexbuf; end_indicator state lexbuf  }
@@ -586,7 +573,7 @@ and end_indicator state = parse
 | '"'    { copy state lexbuf;
            in_string (mk_reg lexbuf) state lexbuf;
            opt_line_com state lexbuf                      }
-| _      { fail Error.End_line_indicator state lexbuf     }
+| _      { fail End_line_indicator state lexbuf     }
 
 and opt_line_com state = parse
   nl     { proc_nl state lexbuf                         }
@@ -600,7 +587,7 @@ and skip_line state = parse
   nl     { proc_nl state lexbuf                             }
 | blank+ { skip_line state lexbuf                           }
 | "//"   { in_line_com {state with mode=Skip} lexbuf        }
-| _      { fail Error.No_line_comment_or_blank state lexbuf }
+| _      { fail No_line_comment_or_blank state lexbuf }
 | eof    { ()                                               }
 
 and message acc = parse
@@ -620,7 +607,7 @@ and in_line_com state = parse
 and in_block_com opening state = parse
   nl   { proc_nl state lexbuf; in_block_com opening state lexbuf }
 | "*/" { copy state lexbuf                                       }
-| eof  { stop Error.Open_comment state opening                   }
+| eof  { stop Open_comment state opening                   }
 | _    { copy state lexbuf; in_block_com opening state lexbuf    }
 
 (* Include a file *)
@@ -637,8 +624,8 @@ and scan_inclusion state = parse
 
 and in_inclusion opening acc len state = parse
   '"'    { mk_str len acc                                     }
-| nl     { fail Error.Newline_in_string state lexbuf          }
-| eof    { stop Error.Open_string state opening               }
+| nl     { fail Newline_in_string state lexbuf          }
+| eof    { stop Open_string state opening               }
 | _ as c { in_inclusion opening (c::acc) (len+1) state lexbuf }
 
 (* Strings *)
@@ -646,8 +633,8 @@ and in_inclusion opening acc len state = parse
 and in_string opening state = parse
   "\\\"" { copy state lexbuf; in_string opening state lexbuf  }
 | '"'    { copy state lexbuf                                  }
-| nl     { fail Error.Newline_in_string state lexbuf          }
-| eof    { stop Error.Open_string state opening               }
+| nl     { fail Newline_in_string state lexbuf          }
+| eof    { stop Open_string state opening               }
 | _      { copy state lexbuf; in_string opening state lexbuf  }
 
 

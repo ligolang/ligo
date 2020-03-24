@@ -5,7 +5,7 @@ let highlight msg = Printf.eprintf "\027[31m%s\027[0m%!" msg
 let options = EvalOpt.read ();;
 
 match open_in options#input with
-  exception Sys_error msg -> prerr_endline msg
+  exception Sys_error msg -> highlight msg
 | cin ->
     let buffer = Lexing.from_channel cin in
     let open Lexing in
@@ -20,15 +20,15 @@ match open_in options#input with
       with
         E_Lexer.Error error ->
           let formatted =
-            E_Lexer.Error.format
+            E_Lexer.format
               ~offsets:options#offsets ~file:true error
           in highlight formatted.Region.value
       | E_Parser.Error ->
           let region = Preproc.mk_reg buffer
-          and value  = Preproc.Error.Parse_error in
+          and value  = Preproc.Parse_error in
           let error  = Region.{value; region} in
           let formatted =
-            Preproc.Error.format ~offsets:options#offsets
-                                 ~file:true error
+            Preproc.format ~offsets:options#offsets
+                           ~file:true error
           in highlight formatted.Region.value
     in close_in cin
