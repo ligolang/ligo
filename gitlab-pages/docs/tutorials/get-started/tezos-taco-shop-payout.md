@@ -169,7 +169,7 @@ function buy_taco (const taco_kind_index : nat ; var taco_shop_storage : taco_sh
     const receiver : contract(unit) = get_contract (ownerAddress);
     const payoutOperation : operation = transaction (unit, amount, receiver);
     const operations : list(operation) = list [payoutOperation]
-  } with ((nil : list (operation)), taco_shop_storage)
+  } with ((operations : list (operation)), taco_shop_storage)
 ```
 
 ### Dry-run the Contract
