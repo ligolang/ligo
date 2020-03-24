@@ -6,6 +6,7 @@ let all_passes = [
 
 let contract_passes = [
   Contract_passes.self_typing ;
+  No_nested_big_map.self_typing ;
 ]
 
 let all_program =
