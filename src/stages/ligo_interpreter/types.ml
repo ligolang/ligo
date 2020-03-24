@@ -31,6 +31,7 @@ and constant_val =
 
 and value =
   | V_Func_val of (expression_variable * Ast_typed.expression * env)
+  | V_Func_rec of (expression_variable * expression_variable * Ast_typed.expression * env)
   | V_Ct of constant_val
   | V_List of value list
   | V_Record of value label_map

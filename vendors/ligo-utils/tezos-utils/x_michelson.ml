@@ -78,6 +78,8 @@ let i_dug n : michelson = prim ~children:[Int (0 , Z.of_int n)] I_DUG
 let i_unpair = seq [i_dup ; i_car ; dip i_cdr]
 let i_unpiar = seq [i_dup ; i_cdr ; dip i_car]
 
+let i_loop_left body = prim ~children:[seq[body; dip i_drop]] I_LOOP_LEFT
+
 let rec strip_annots : michelson -> michelson = function
   | Seq(l, s) -> Seq(l, List.map strip_annots s)
   | Prim (l, p, lst, _) -> Prim (l, p, List.map strip_annots lst, [])

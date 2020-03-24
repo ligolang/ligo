@@ -237,49 +237,52 @@ field_decl:
 
 
 fun_expr:
-  "function" parameters ":" type_expr "is" expr {
-    let stop   = expr_to_region $6 in
-    let region = cover $1 stop
-    and value  = {kwd_function = $1;
-                  param        = $2;
-                  colon        = $3;
-                  ret_type     = $4;
-                  kwd_is       = $5;
-                  return       = $6}
+  | ioption ("recursive") "function" parameters ":" type_expr "is" expr {
+    let stop   = expr_to_region $7 in
+    let region = cover $2 stop
+    and value  = {kwd_recursive= $1;
+                  kwd_function = $2;
+                  param        = $3;
+                  colon        = $4;
+                  ret_type     = $5;
+                  kwd_is       = $6;
+                  return       = $7}
     in {region; value} }
 
 (* Function declarations *)
 
 open_fun_decl:
-  "function" fun_name parameters ":" type_expr "is"
+  ioption ("recursive") "function" fun_name parameters ":" type_expr "is"
   block "with" expr {
-    Scoping.check_reserved_name $2;
-    let stop   = expr_to_region $9 in
-    let region = cover $1 stop
-    and value  = {kwd_function = $1;
-                  fun_name     = $2;
-                  param        = $3;
-                  colon        = $4;
-                  ret_type     = $5;
-                  kwd_is       = $6;
-                  block_with   = Some ($7, $8);
-                  return       = $9;
+    Scoping.check_reserved_name $3;
+    let stop   = expr_to_region $10 in
+    let region = cover $2 stop
+    and value  = {kwd_recursive= $1;
+                  kwd_function = $2;
+                  fun_name     = $3;
+                  param        = $4;
+                  colon        = $5;
+                  ret_type     = $6;
+                  kwd_is       = $7;
+                  block_with   = Some ($8, $9);
+                  return       = $10;
                   terminator   = None;
                   attributes   = None}
     in {region; value}
   }
-| "function" fun_name parameters ":" type_expr "is" expr {
-    Scoping.check_reserved_name $2;
-    let stop   = expr_to_region $7 in
-    let region = cover $1 stop
-    and value  = {kwd_function = $1;
-                  fun_name     = $2;
-                  param        = $3;
-                  colon        = $4;
-                  ret_type     = $5;
-                  kwd_is       = $6;
+| ioption ("recursive") "function" fun_name parameters ":" type_expr "is" expr {
+    Scoping.check_reserved_name $3;
+    let stop   = expr_to_region $8 in
+    let region = cover $2 stop
+    and value  = {kwd_recursive= $1;
+                  kwd_function = $2;
+                  fun_name     = $3;
+                  param        = $4;
+                  colon        = $5;
+                  ret_type     = $6;
+                  kwd_is       = $7;
                   block_with   = None;
-                  return       = $7;
+                  return       = $8;
                   terminator   = None;
                   attributes   = None}
     in {region; value} }

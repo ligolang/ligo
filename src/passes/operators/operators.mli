@@ -1,6 +1,6 @@
 
-module Simplify : sig
- open Ast_simplified
+module Concrete_to_imperative : sig
+ open Ast_imperative
  open Trace
 
   module Pascaligo : sig

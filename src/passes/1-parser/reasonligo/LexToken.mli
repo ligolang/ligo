@@ -95,6 +95,7 @@ type t =
 | False of Region.t
 | If of Region.t
 | Let of Region.t
+| Rec of Region.t
 | Switch of Region.t
 | Mod of Region.t
 | Or of Region.t

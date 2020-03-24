@@ -5,14 +5,20 @@
     simple-utils
     tezos-utils
     parser
-    simplify
-    interpreter
-    ast_simplified
-    self_ast_simplified
-    self_ast_typed
+    concrete_to_imperative
+    ast_imperative
+    self_ast_imperative
+    imperative_to_sugar
+    ast_sugar
+    self_ast_sugar
+    sugar_to_core
+    ast_core
+    self_ast_core
     typer_new
     typer
     ast_typed
+    self_ast_typed
+    interpreter
     transpiler
     mini_c
     self_mini_c

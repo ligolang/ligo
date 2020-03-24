@@ -32,8 +32,8 @@ module Errors = struct
     error title_type_check_msg message
 end
 
-let build_contract : Compiler.compiled_expression -> Michelson.michelson result =
-  fun compiled ->
+let build_contract : ?disable_typecheck:bool -> Compiler.compiled_expression -> Michelson.michelson result =
+  fun ?(disable_typecheck= false) compiled ->
   let%bind ((Ex_ty _param_ty),(Ex_ty _storage_ty)) = Self_michelson.fetch_contract_inputs compiled.expr_ty in
   let%bind param_michelson =
     Trace.trace_tzresult_lwt (simple_error "Could not unparse parameter") @@
@@ -42,16 +42,19 @@ let build_contract : Compiler.compiled_expression -> Michelson.michelson result 
     Trace.trace_tzresult_lwt (simple_error "Could not unparse storage") @@
     Proto_alpha_utils.Memory_proto_alpha.unparse_ty_michelson _storage_ty in
   let contract = Michelson.contract param_michelson storage_michelson compiled.expr in
-  let%bind res =
-    Trace.trace_tzresult_lwt (simple_error "Could not typecheck the code") @@
-    Proto_alpha_utils.Memory_proto_alpha.typecheck_contract contract in
-  match res with
-  | Type_checked  -> ok contract
-  | Err_parameter -> fail @@ Errors.bad_parameter contract ()
-  | Err_storage   -> fail @@ Errors.bad_storage contract ()
-  | Err_contract  -> fail @@ Errors.bad_contract contract ()
-  | Err_gas       -> fail @@ Errors.ran_out_of_gas ()
-  | Err_unknown   -> fail @@ Errors.unknown ()
+  if disable_typecheck then
+    ok contract
+  else
+    let%bind res =
+      Trace.trace_tzresult_lwt (simple_error "Could not typecheck the code") @@
+      Proto_alpha_utils.Memory_proto_alpha.typecheck_contract contract in
+    match res with
+    | Type_checked  -> ok contract
+    | Err_parameter -> fail @@ Errors.bad_parameter contract ()
+    | Err_storage   -> fail @@ Errors.bad_storage contract ()
+    | Err_contract  -> fail @@ Errors.bad_contract contract ()
+    | Err_gas       -> fail @@ Errors.ran_out_of_gas ()
+    | Err_unknown   -> fail @@ Errors.unknown ()
 
 type check_type = Check_parameter | Check_storage
 let assert_equal_contract_type : check_type -> Compiler.compiled_expression -> Compiler.compiled_expression -> unit result =

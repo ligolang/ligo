@@ -37,6 +37,7 @@ type kwd_end        = Region.t
 type kwd_for        = Region.t
 type kwd_from       = Region.t
 type kwd_function   = Region.t
+type kwd_recursive  = Region.t
 type kwd_if         = Region.t
 type kwd_in         = Region.t
 type kwd_is         = Region.t
@@ -201,6 +202,7 @@ and type_tuple = (type_expr, comma) nsepseq par reg
 (* Function and procedure declarations *)
 
 and fun_expr = {
+  kwd_recursive: kwd_recursive option;
   kwd_function : kwd_function;
   param        : parameters;
   colon        : colon;
@@ -210,6 +212,7 @@ and fun_expr = {
 }
 
 and fun_decl = {
+  kwd_recursive: kwd_recursive option;
   kwd_function : kwd_function;
   fun_name     : variable;
   param        : parameters;

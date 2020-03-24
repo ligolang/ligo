@@ -8,6 +8,7 @@ import editor, { EditorState } from './editor';
 import evaluateFunction, { EvaluateFunctionState } from './evaluate-function';
 import evaluateValue, { EvaluateValueState } from './evaluate-value';
 import examples, { ExamplesState } from './examples';
+import generateCommand, { GenerateCommandState } from './generate-command';
 import loading, { LoadingState } from './loading';
 import result, { ResultState } from './result';
 import share, { ShareState } from './share';
@@ -20,6 +21,7 @@ export interface AppState {
   deploy: DeployState;
   evaluateFunction: EvaluateFunctionState;
   evaluateValue: EvaluateValueState;
+  generateCommand: GenerateCommandState;
   result: ResultState;
   command: CommandState;
   examples: ExamplesState;
@@ -34,6 +36,7 @@ export default combineReducers({
   deploy,
   evaluateFunction,
   evaluateValue,
+  generateCommand,
   result,
   command,
   examples,

@@ -4,6 +4,7 @@ import { dirname, join } from 'path';
 
 import { compileContractHandler } from './handlers/compile-contract';
 import { compileExpressionHandler } from './handlers/compile-expression';
+import { compileStorageHandler } from './handlers/compile-storage';
 import { deployHandler } from './handlers/deploy';
 import { dryRunHandler } from './handlers/dry-run';
 import { evaluateValueHandler } from './handlers/evaluate-value';
@@ -51,6 +52,7 @@ app.get(
 );
 app.post('/api/compile-contract', compileContractHandler);
 app.post('/api/compile-expression', compileExpressionHandler);
+app.post('/api/compile-storage', compileStorageHandler);
 app.post('/api/dry-run', dryRunHandler);
 app.post('/api/share', shareHandler);
 app.post('/api/evaluate-value', evaluateValueHandler);

@@ -1,11 +1,9 @@
 open Trace
 open Test_helpers
-open Ast_simplified
-
+open Ast_imperative
 
 let retype_file f =
-  let%bind simplified  = Ligo.Compile.Of_source.compile f (Syntax_name "reasonligo") in
-  let%bind typed,state = Ligo.Compile.Of_simplified.compile Env simplified in
+  let%bind typed,state = Ligo.Compile.Utils.type_file f "reasonligo" Env in
   ok (typed,state)
 
 let get_program =
@@ -19,10 +17,9 @@ let get_program =
       )
 
 let compile_main () =
-  let%bind simplified      = Ligo.Compile.Of_source.compile "./contracts/pledge.religo" (Syntax_name "reasonligo") in
-  let%bind typed_prg,_ = Ligo.Compile.Of_simplified.compile Env simplified in
-  let%bind mini_c_prg      = Ligo.Compile.Of_typed.compile typed_prg in
-  let%bind michelson_prg   = Ligo.Compile.Of_mini_c.aggregate_and_compile_contract mini_c_prg "main" in
+  let%bind typed_prg,_    = get_program () in
+  let%bind mini_c_prg     = Ligo.Compile.Of_typed.compile typed_prg in
+  let%bind michelson_prg  = Ligo.Compile.Of_mini_c.aggregate_and_compile_contract mini_c_prg "main" in
   let%bind (_contract: Tezos_utils.Michelson.michelson) =
     (* fails if the given entry point is not a valid contract *)
     Ligo.Compile.Of_michelson.build_contract michelson_prg in

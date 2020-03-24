@@ -59,6 +59,7 @@
 %token <Region.t> False  "false"
 %token <Region.t> If     "if"
 %token <Region.t> Let    "let"
+%token <Region.t> Rec    "rec"
 %token <Region.t> Switch "switch"
 %token <Region.t> Mod    "mod"
 %token <Region.t> Or     "or"

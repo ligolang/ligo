@@ -89,28 +89,28 @@ module Substitution = struct
           let _TODO = substs in
           failwith "TODO: T_function"
 
-    and s_simpl_type_content : Ast_simplified.type_content w = fun ~substs -> function
-      | Ast_simplified.T_sum _ -> failwith "TODO: subst: unimplemented case s_type_expression sum"
-      | Ast_simplified.T_record _ -> failwith "TODO: subst: unimplemented case s_type_expression record"
-      | Ast_simplified.T_arrow _ -> failwith "TODO: subst: unimplemented case s_type_expression arrow"
-      | Ast_simplified.T_variable _ -> failwith "TODO: subst: unimplemented case s_type_expression variable"
-      | Ast_simplified.T_operator op ->
+    and s_abstr_type_content : Ast_core.type_content w = fun ~substs -> function
+      | Ast_core.T_sum _ -> failwith "TODO: subst: unimplemented case s_type_expression sum"
+      | Ast_core.T_record _ -> failwith "TODO: subst: unimplemented case s_type_expression record"
+      | Ast_core.T_arrow _ -> failwith "TODO: subst: unimplemented case s_type_expression arrow"
+      | Ast_core.T_variable _ -> failwith "TODO: subst: unimplemented case s_type_expression variable"
+      | Ast_core.T_operator op ->
          let%bind op =
-           Ast_simplified.bind_map_type_operator
-             (s_simpl_type_expression ~substs)
+           Ast_core.bind_map_type_operator
+             (s_abstr_type_expression ~substs)
              op in
          (* TODO: when we have generalized operators, we might need to subst the operator name itself? *)
-         ok @@ Ast_simplified.T_operator op
-      | Ast_simplified.T_constant constant ->
-         ok @@ Ast_simplified.T_constant constant
+         ok @@ Ast_core.T_operator op
+      | Ast_core.T_constant constant ->
+         ok @@ Ast_core.T_constant constant
 
-    and s_simpl_type_expression : Ast_simplified.type_expression w = fun ~substs {type_content;type_meta} ->
-      let%bind type_content = s_simpl_type_content ~substs type_content in
-      ok @@ Ast_simplified.{type_content;type_meta}
+    and s_abstr_type_expression : Ast_core.type_expression w = fun ~substs {type_content;type_meta} ->
+      let%bind type_content = s_abstr_type_content ~substs type_content in
+      ok @@ Ast_core.{type_content;type_meta}
 
     and s_type_expression : T.type_expression w = fun ~substs { type_content; type_meta } ->
       let%bind type_content = s_type_content ~substs type_content in
-      let%bind type_meta = bind_map_option (s_simpl_type_expression ~substs) type_meta in
+      let%bind type_meta = bind_map_option (s_abstr_type_expression ~substs) type_meta in
       ok @@ T.{ type_content; type_meta}
     and s_literal : T.literal w = fun ~substs -> function
       | T.Literal_unit ->
@@ -151,10 +151,10 @@ module Substitution = struct
       | T.E_variable        tv ->
         let%bind tv = s_variable ~substs tv in
         ok @@ T.E_variable tv
-      | T.E_application {expr1;expr2} ->
-        let%bind expr1 = s_expression ~substs expr1 in
-        let%bind expr2 = s_expression ~substs expr2 in
-        ok @@ T.E_application {expr1;expr2}
+      | T.E_application {lamb;args} ->
+        let%bind lamb = s_expression ~substs lamb in
+        let%bind args = s_expression ~substs args in
+        ok @@ T.E_application {lamb;args}
       | T.E_lambda          { binder; result } ->
         let%bind binder = s_variable ~substs binder in
         let%bind result = s_expression ~substs result in
@@ -164,6 +164,12 @@ module Substitution = struct
         let%bind rhs = s_expression ~substs rhs in
         let%bind let_result = s_expression ~substs let_result in
         ok @@ T.E_let_in { let_binder; rhs; let_result; inline }
+      | T.E_recursive { fun_name; fun_type; lambda} ->
+        let%bind fun_name = s_variable ~substs fun_name in
+        let%bind fun_type = s_type_expression ~substs fun_type in
+        let%bind sec = s_expression_content ~substs (T.E_lambda lambda) in
+        let lambda = match sec with E_lambda l -> l | _ -> failwith "impossible case" in
+        ok @@ T.E_recursive { fun_name; fun_type; lambda}
       | T.E_constructor  {constructor;element} ->
         let%bind constructor = s_constructor ~substs constructor in
         let%bind element = s_expression ~substs element in

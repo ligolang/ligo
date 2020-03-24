@@ -2,8 +2,7 @@ open Trace
 open Test_helpers
 
 let type_file f = 
-  let%bind simplified  = Ligo.Compile.Of_source.compile f (Syntax_name "pascaligo") in
-  let%bind typed,state = Ligo.Compile.Of_simplified.compile (Contract "main") simplified in
+  let%bind typed,state = Ligo.Compile.Utils.type_file f "pascaligo" (Contract "main") in
   ok @@ (typed,state)
 
 let get_program =
@@ -17,15 +16,15 @@ let get_program =
       )
 
 let compile_main () = 
-  let%bind simplified      = Ligo.Compile.Of_source.compile "./contracts/replaceable_id.ligo" (Syntax_name "pascaligo") in
-  let%bind typed_prg,_ = Ligo.Compile.Of_simplified.compile (Contract "main") simplified in
+  let%bind typed_prg,_     = get_program () in 
   let%bind mini_c_prg      = Ligo.Compile.Of_typed.compile typed_prg in
   let%bind michelson_prg   = Ligo.Compile.Of_mini_c.aggregate_and_compile_contract mini_c_prg "main" in
   let%bind (_contract: Tezos_utils.Michelson.michelson) =
     (* fails if the given entry point is not a valid contract *)
     Ligo.Compile.Of_michelson.build_contract michelson_prg in
   ok ()
-open Ast_simplified
+
+open Ast_imperative
 
 let empty_op_list = 
   (e_typed_list [] t_operation)

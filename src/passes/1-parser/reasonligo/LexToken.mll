@@ -80,6 +80,7 @@ type t =
 | False of Region.t
 | If of Region.t
 | Let of Region.t
+| Rec of Region.t
 | Switch of Region.t
 | Mod of Region.t
 | Or of Region.t
@@ -146,6 +147,7 @@ let proj_token = function
 | False region -> region, "False"
 | If region -> region, "If"
 | Let region -> region, "Let"
+| Rec region -> region, "Rec"
 | Switch region -> region, "Switch"
 | Mod region -> region, "Mod"
 | NOT region -> region, "!"
@@ -197,6 +199,7 @@ let to_lexeme = function
 | False _ -> "false"
 | If _ -> "if"
 | Let _ -> "let"
+| Rec _ -> "rec"
 | Mod _ -> "mod"
 | NOT _ -> "!"
 | Or _ -> "or"
@@ -232,6 +235,7 @@ let keywords = [
   (fun reg -> False  reg);
   (fun reg -> If     reg);
   (fun reg -> Let    reg);
+  (fun reg -> Rec    reg);
   (fun reg -> Switch reg);
   (fun reg -> Mod    reg);
   (fun reg -> Or     reg);
@@ -273,7 +277,6 @@ let reserved =
     |> add "of"
     |> add "open"
     |> add "private"
-    |> add "rec"
     |> add "sig"
     |> add "struct"
     |> add "then"
@@ -478,6 +481,7 @@ let is_kwd = function
 | False _
 | If _
 | Let _
+| Rec _
 | Switch _
 | Mod _
 | Or _

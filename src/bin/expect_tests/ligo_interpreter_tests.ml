@@ -53,4 +53,7 @@ let%expect_test _ =
     val s = { ; 1 : int ; 2 : int ; 3 : int}
     val set_add = {  ; 0 = ({ ; 1 : int ; 2 : int ; 3 : int}) ; 1 = ({ ; 1 : int ; 2 : int ; 3 : int ; 4 : int}) ; 2 = ({ ; 1 : int}) }
     val set_iter_fail = "set_iter_fail" : failure
-    val set_mem = {  ; 0 = (true) ; 1 = (false) ; 2 = (false) } |}] ;
+    val set_mem = {  ; 0 = (true) ; 1 = (false) ; 2 = (false) }
+    val recursion_let_rec_in = 55 : int
+    val sum_rec = <rec fun>
+    val top_level_recursion = 55 : int |}] ;

@@ -57,45 +57,21 @@ constant, therefore it makes no sense in CameLIGO to feature loops,
 which we understand as syntactic constructs where the state of a
 stopping condition is mutated, as with "while" loops in PascaLIGO.
 
-Instead, CameLIGO implements a *folded operation* by means of a
-predefined function named `Loop.fold_while`. It takes an initial value
-of a certain type, called an *accumulator*, and repeatedly calls a
-given function, called *folded function*, that takes that
-accumulator and returns the next value of the accumulator, until a
-condition is met and the fold stops with the final value of the
-accumulator. The iterated function needs to have a special type: if
-the type of the accumulator is `t`, then it must have the type `bool *
-t` (not simply `t`). It is the boolean value that denotes whether the
-stopping condition has been reached.
+Instead, CameLIGO loops are written by means of a tail recursive function
 
 Here is how to compute the greatest common divisors of two natural
 numbers by means of Euclid's algorithm:
 
 ```cameligo group=a
-let iter (x,y : nat * nat) : bool * (nat * nat) =
-  if y = 0n then false, (x,y) else true, (y, x mod y)
+let rec iter (x,y : nat * nat) : nat =
+  if y = 0n then x else iter (y, x mod y)
 
 let gcd (x,y : nat * nat) : nat =
   let x,y = if x < y then y,x else x,y in
-  let x,y = Loop.fold_while iter (x,y)
-  in x
+  iter (x,y)
 ```
 
-To ease the writing and reading of the iterated functions (here,
-`iter`), two predefined functions are provided: `Loop.resume` and
-`Loop.stop`:
-
-```cameligo group=a
-let iter (x,y : nat * nat) : bool * (nat * nat) =
-  if y = 0n then Loop.stop (x,y) else Loop.resume (y, x mod y)
-
-let gcd (x,y : nat * nat) : nat =
-  let x,y = if x < y then y,x else x,y in
-  let x,y = Loop.fold_while iter (x,y)
-  in x
-```
-
-> Note that `stop` and `continue` (now `Loop.resume`) are
+> Note that `fold_while`, `stop` and `continue` (now `Loop.resume`) are
 > *deprecated*.
 
 You can call the function `gcd` defined above using the LIGO compiler
@@ -114,47 +90,22 @@ constant, therefore it makes no sense in ReasonLIGO to feature loops,
 which we understand as syntactic constructs where the state of a
 stopping condition is mutated, as with "while" loops in PascaLIGO.
 
-Instead, ReasonLIGO features a *fold operation* as a predefined
-function named `Loop.fold_while`. It takes an initial value of a
-certain type, called an *accumulator*, and repeatedly calls a given
-function, called *iterated function*, that takes that accumulator and
-returns the next value of the accumulator, until a condition is met
-and the fold stops with the final value of the accumulator. The
-iterated function needs to have a special type: if the type of the
-accumulator is `t`, then it must have the type `bool * t` (not simply
-`t`). It is the boolean value that denotes whether the stopping
-condition has been reached.
+Instead, ReasonLIGO loops are written by means of tail recursive functions
 
 Here is how to compute the greatest common divisors of two natural
 numbers by means of Euclid's algorithm:
 
 ```reasonligo group=a
-let iter = ((x,y) : (nat, nat)) : (bool, (nat, nat)) =>
-  if (y == 0n) { (false, (x,y)); } else { (true, (y, x mod y)); };
+let rec iter = ((x,y) : (nat, nat)) : nat =>
+  if (y == 0n) { x; } else { iter ((y, x mod y)); };
 
 let gcd = ((x,y) : (nat, nat)) : nat => {
   let (x,y) = if (x < y) { (y,x); } else { (x,y); };
-  let (x,y) = Loop.fold_while (iter, (x,y));
-  x
+  iter ((x,y))
 };
 ```
 
-To ease the writing and reading of the iterated functions (here,
-`iter`), two predefined functions are provided: `Loop.resume` and
-`Loop.stop`:
-
-```reasonligo group=b
-let iter = ((x,y) : (nat, nat)) : (bool, (nat, nat)) =>
-  if (y == 0n) { Loop.stop ((x,y)); } else { Loop.resume ((y, x mod y)); };
-
-let gcd = ((x,y) : (nat, nat)) : nat => {
-  let (x,y) = if (x < y) { (y,x); } else { (x,y); };
-  let (x,y) = Loop.fold_while (iter, (x,y));
-  x
-};
-```
-
-> Note that `stop` and `continue` (now `Loop.resume`) are
+> Note that `fold_while`, `stop` and `continue` (now `Loop.resume`) are
 > *deprecated*.
 
 </Syntax>
