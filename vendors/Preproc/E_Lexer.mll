@@ -1,7 +1,7 @@
 (* Auxiliary scanner for boolean expressions of the C# preprocessor *)
 
 {
-(* START HEADER *)
+(* START OF HEADER *)
 
 module Region = Simple_utils.Region
 module Pos = Simple_utils.Pos
@@ -52,7 +52,7 @@ let mk_reg buffer =
 let stop value region = raise (Error Region.{region; value})
 let fail error buffer = stop error (mk_reg buffer)
 
-(* END HEADER *)
+(* END OF HEADER *)
 }
 
 (* Regular expressions for literals *)
@@ -103,6 +103,6 @@ and inline_com = parse
 | _       { inline_com lexbuf }
 
 {
-  (* START TRAILER *)
-  (* END TRAILER *)
+  (* START OF TRAILER *)
+  (* END OF TRAILER *)
 }

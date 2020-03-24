@@ -1,7 +1,7 @@
 (* Simple preprocessor based on C#, to be processed by [ocamllex]. *)
 
 {
-(* START HEADER *)
+(* START OF HEADER *)
 
 module Region = Simple_utils.Region
 (*module Pos = Simple_utils.Pos*)
@@ -32,6 +32,60 @@ let explode s acc =
   | i -> s.[i-1] :: push (i-1)
 in push (String.length s)
 
+(* The type [mode] defines the two scanning modes of the preprocessor:
+   either we copy the current characters or we skip them. *)
+
+type mode = Copy | Skip
+
+(* Trace of directives
+
+   We keep track of directives #if, #elif, #else, #region and #endregion.
+*)
+
+type cond  = If of mode | Elif of mode | Else | Region
+type trace = cond list
+
+(* Line offsets
+
+   The value [Inline] of type [offset] means that the current location
+   cannot be reached from the start of the line with only white
+   space. The same holds for the special value [Prefix 0]. Values of
+   the form [Prefix n] mean that the current location can be reached
+   from the start of the line with [n] white spaces (padding). These
+   distinctions are needed because preprocessor directives cannot
+   occur inside lines.
+*)
+
+type offset = Prefix of int | Inline
+
+(* Environments *)
+
+module Env = Set.Make (String)
+
+let rec eval env =
+  let open E_AST
+in function
+   Or (e1,e2) -> eval env e1 || eval env e2
+| And (e1,e2) -> eval env e1 && eval env e2
+|  Eq (e1,e2) -> eval env e1 = eval env e2
+| Neq (e1,e2) -> eval env e1 != eval env e2
+|       Not e -> not (eval env e)
+|        True -> true
+|       False -> false
+|    Ident id -> Env.mem id env
+
+(* The type [state] groups the information that needs to be threaded
+   along the scanning functions. *)
+
+type state = {
+  env    : Env.t;
+  mode   : mode;
+  offset : offset;
+  trace  : trace;
+  out    : Buffer.t;
+  incl   : in_channel list
+}
+
 (* ERRORS *)
 
 module Error =
@@ -44,10 +98,10 @@ module Error =
     | No_line_indicator
     | End_line_indicator
     | Newline_in_string
-    | Unterminated_comment
-    | Unterminated_string
+    | Open_comment
+    | Open_string
     | Dangling_endif
-    | Unterminated_region_in_conditional
+    | Open_region_in_conditional
     | Dangling_endregion
     | Conditional_in_region
     | If_follows_elif
@@ -60,6 +114,7 @@ module Error =
     | Error_directive of string
     | Parse_error
     | No_line_comment_or_blank
+    | Invalid_symbol
 
     let to_string = function
       Invalid_directive name ->
@@ -78,15 +133,15 @@ module Error =
                  Hint: Try a string, end of line, or a line comment.\n"
     | Newline_in_string ->
         sprintf "Invalid newline character in string.\n"
-    | Unterminated_comment ->
+    | Open_comment ->
         sprintf "Unterminated comment.\n"
-    | Unterminated_string ->
+    | Open_string ->
         sprintf "Unterminated string.\n\
                  Hint: Close with double quotes.\n"
     | Dangling_endif ->
         sprintf "Dangling #endif directive.\n\
                  Hint: Remove it or add a #if before.\n"
-    | Unterminated_region_in_conditional ->
+    | Open_region_in_conditional ->
         sprintf "Unterminated of #region in conditional.\n\
                  Hint: Close with #endregion before #endif.\n"
     | Dangling_endregion ->
@@ -118,6 +173,8 @@ module Error =
         "Parse error in expression.\n"
     | No_line_comment_or_blank ->
         "Line comment or whitespace expected.\n"
+    | Invalid_symbol ->
+        "Expected a symbol (identifier).\n"
 
     let format ?(offsets=true) Region.{region; value} ~file =
       let msg   = to_string value
@@ -126,63 +183,49 @@ module Error =
       in Region.{value; region}
 end
 
-exception Error of Error.t Region.reg
+exception Error of state * Error.t Region.reg
 
 let mk_reg buffer =
   let start  = Lexing.lexeme_start_p buffer |> Pos.from_byte
   and stop   = Lexing.lexeme_end_p buffer |> Pos.from_byte
   in Region.make ~start ~stop
 
-let stop value region = raise (Error Region.{region; value})
-let fail error buffer = stop error (mk_reg buffer)
-
-(* LEXING ENGINE *)
-
-(* C# PREPROCESSOR DIRECTIVES *)
-
-(* The type [mode] defines the two scanning modes of the preprocessor:
-   either we copy the current characters or we skip them. *)
-
-type mode = Copy | Skip
-
-(* Trace of directives
-
-   We keep track of directives #if, #elif, #else, #region and #endregion.
-*)
-
-type cond  = If of mode | Elif of mode | Else | Region
-type trace = cond list
+let stop value state region = raise (Error (state, Region.{region; value}))
+let fail error state buffer = stop error state (mk_reg buffer)
 
 (* The function [reduce_cond] is called when a #endif directive is
    found, and the trace (see type [trace] above) needs updating. *)
 
-let rec reduce_cond reg = function
-              [] -> stop Error.Dangling_endif reg
-| If mode::trace -> trace, mode
-|      Region::_ -> stop Error.Unterminated_region_in_conditional reg
-|       _::trace -> reduce_cond reg trace
+let reduce_cond state region =
+  let rec reduce = function
+                [] -> stop Error.Dangling_endif state region
+  | If mode::trace -> trace, mode
+  |      Region::_ -> stop Error.Open_region_in_conditional state region
+  |       _::trace -> reduce trace
+  in reduce state.trace
 
 (* The function [reduce_reg] is called when a #endregion directive is
    read, and the trace needs updating. *)
 
-let reduce_reg reg = function
-             [] -> stop Error.Dangling_endregion reg
-| Region::trace -> trace
-|             _ -> stop Error.Conditional_in_region reg
+let reduce_reg state region =
+  match state.trace with
+               [] -> stop Error.Dangling_endregion state region
+  | Region::trace -> trace
+  |             _ -> stop Error.Conditional_in_region state region
 
 (* The function [extend] is called when encountering conditional
    directives #if, #else and #elif. As its name suggests, it extends
    the current trace with the current conditional directive, whilst
    performing some validity checks. *)
 
-let extend reg cond trace =
-  match cond, trace with
-    If _, Elif _::_ -> stop Error.If_follows_elif reg
-  | Else,   Else::_ -> stop Error.Else_follows_else reg
-  | Else,        [] -> stop Error.Dangling_else reg
-  | Elif _, Else::_ -> stop Error.Elif_follows_else reg
-  | Elif _,      [] -> stop Error.Dangling_elif reg
-  |               _ -> cond::trace
+let extend cond state region =
+  match cond, state.trace with
+    If _, Elif _::_ -> stop Error.If_follows_elif state region
+  | Else,   Else::_ -> stop Error.Else_follows_else state region
+  | Else,        [] -> stop Error.Dangling_else state region
+  | Elif _, Else::_ -> stop Error.Elif_follows_else state region
+  | Elif _,      [] -> stop Error.Dangling_elif state region
+  |     hd,     tl  -> hd::tl
 
 (* The function [last_mode] seeks the last mode as recorded in the
    trace (see type [trace] above). *)
@@ -191,74 +234,6 @@ let rec last_mode = function
                         [] -> assert false
 | (If mode | Elif mode)::_ -> mode
 |                 _::trace -> last_mode trace
-
-(* Line offsets
-
-   The value [Inline] of type [offset] means that the current location
-   cannot be reached from the start of the line with only white
-   space. The same holds for the special value [Prefix 0]. Values of
-   the form [Prefix n] mean that the current location can be reached
-   from the start of the line with [n] white spaces (padding). These
-   distinctions are needed because preprocessor directives cannot
-   occur inside lines.
-*)
-
-type offset = Prefix of int | Inline
-
-(* Directives *)
-
-let directives = [
-  "if"; "else"; "elif"; "endif"; "define"; "undef";
-  "error"; (*"warning";*) "line"; "region"; "endregion";
-  "include"]
-
-(* Environments *)
-
-module Env = Set.Make (String)
-
-let rec eval env =
-  let open E_AST
-in function
-   Or (e1,e2) -> eval env e1 || eval env e2
-| And (e1,e2) -> eval env e1 && eval env e2
-|  Eq (e1,e2) -> eval env e1 = eval env e2
-| Neq (e1,e2) -> eval env e1 != eval env e2
-|       Not e -> not (eval env e)
-|        True -> true
-|       False -> false
-|    Ident id -> Env.mem id env
-
-(* The type [state] groups the information that needs to be threaded
-   along the scanning functions. *)
-
-type state = {
-  env    : Env.t;
-  mode   : mode;
-  offset : offset;
-  trace  : trace;
-  out    : Buffer.t;
-  incl   : in_channel list
-}
-
-(* Evaluating a preprocessor expression
-
-   The evaluation of conditional directives may involve symbols whose
-   value may be defined using #define directives, or undefined by
-   means of #undef. Therefore, we need to evaluate conditional
-   expressions in an environment made of a set of defined symbols.
-
-   Note that we rely on an external lexer and parser for the
-   conditional expressions. See modules [E_Lexer] and [E_Parser].
-*)
-
-let expr state buffer =
-  let ast =
-    try E_Parser.expr E_Lexer.scan buffer with
-      E_Parser.Error ->
-        let region = mk_reg buffer in
-        let value  = Error.Parse_error
-        in raise (Error Region.{value; region})
-  in if eval state.env ast then Copy else Skip
 
 (* PRINTING *)
 
@@ -281,6 +256,34 @@ let expand_offset state =
     Prefix 0 | Inline -> ()
   | Prefix n -> print state (String.make n ' ')
 
+(* Evaluating a preprocessor expression
+
+   The evaluation of conditional directives may involve symbols whose
+   value may be defined using #define directives, or undefined by
+   means of #undef. Therefore, we need to evaluate conditional
+   expressions in an environment made of a set of defined symbols.
+
+   Note that we rely on an external lexer and parser for the
+   conditional expressions. See modules [E_Lexer] and [E_Parser].
+*)
+
+let expr state buffer : mode =
+  let ast =
+    try E_Parser.expr E_Lexer.scan buffer with
+      E_Parser.Error ->
+        let region = mk_reg buffer in
+        let value  = Error.Parse_error
+        in raise (Error (state, Region.{value; region})) in
+  let () = print state "\n" in
+  if eval state.env ast then Copy else Skip
+
+(* DIRECTIVES *)
+
+let directives = [
+  "if"; "else"; "elif"; "endif"; "define"; "undef";
+  "error"; (*"warning";*) "line"; "region"; "endregion";
+  "include"]
+
 (* END OF HEADER *)
 }
 
@@ -290,12 +293,11 @@ let nl        = '\n' | '\r' | "\r\n"
 let blank     = ' ' | '\t'
 let digit     = ['0'-'9']
 let natural   = digit | digit (digit | '_')* digit
-let decimal   = digit+ '.' digit+
 let small     = ['a'-'z']
 let capital   = ['A'-'Z']
 let letter    = small | capital
-let ident     = small (letter | '_' | digit)*
-let directive = '#' (blank* as space) (ident as id)
+let ident     = letter (letter | '_' | digit)*
+let directive = '#' (blank* as space) (small+ as id)
 
 (* Rules *)
 
@@ -426,16 +428,16 @@ rule scan state = parse
           |   Inline -> copy state lexbuf; scan state lexbuf }
 | directive {
     if   not (List.mem id directives)
-    then fail (Error.Invalid_directive id) lexbuf;
+    then fail (Error.Invalid_directive id) state lexbuf;
     if   state.offset = Inline
-    then fail Error.Directive_inside_line lexbuf;
-    let reg = mk_reg lexbuf in
+    then fail Error.Directive_inside_line state lexbuf;
+    let region = mk_reg lexbuf in
     match id with
       "include" ->
         let line = Lexing.(lexbuf.lex_curr_p.pos_lnum)
         and file = Lexing.(lexbuf.lex_curr_p.pos_fname)
                    |> Filename.basename
-        and incl_file = scan_inclusion lexbuf in
+        and incl_file = scan_inclusion state lexbuf in
         print state (sprintf "# 1 \"%s\" 1\n" incl_file);
         let incl_chan = open_in incl_file in
         let state = {state with incl = incl_chan::state.incl} in
@@ -445,7 +447,7 @@ rule scan state = parse
     | "if" ->
         let mode  = expr state lexbuf in
         let mode  = if state.mode = Copy then mode else Skip in
-        let trace = extend reg (If state.mode) state.trace in
+        let trace = extend (If state.mode) state region in
         let state = {state with mode; offset = Prefix 0; trace}
         in scan state lexbuf
     | "else" ->
@@ -453,27 +455,27 @@ rule scan state = parse
         let mode = match state.mode with
                      Copy -> Skip
                    | Skip -> last_mode state.trace in
-        let trace = extend reg Else state.trace
+        let trace = extend Else state region
         in scan {state with mode; offset = Prefix 0; trace} lexbuf
     | "elif" ->
         let mode = expr state lexbuf in
         let trace, mode =
           match state.mode with
-            Copy -> extend reg (Elif Skip) state.trace, Skip
+            Copy -> extend (Elif Skip) state region, Skip
           | Skip -> let old_mode = last_mode state.trace
-                    in extend reg (Elif old_mode) state.trace,
+                    in extend (Elif old_mode) state region,
                        if old_mode = Copy then mode else Skip
         in scan {state with mode; offset = Prefix 0; trace} lexbuf
     | "endif" ->
         let () = skip_line state lexbuf in
-        let trace, mode = reduce_cond reg state.trace
+        let trace, mode = reduce_cond state region
         in scan {state with mode; offset = Prefix 0; trace} lexbuf
     | "define" ->
-        let id, reg = variable state lexbuf in
+        let id, region = variable state lexbuf in
         if id="true" || id="false"
-        then stop (Error.Reserved_symbol id) reg;
+        then stop (Error.Reserved_symbol id) state region;
         if Env.mem id state.env
-        then stop (Error.Multiply_defined_symbol id) reg;
+        then stop (Error.Multiply_defined_symbol id) state region;
         let state = {state with env = Env.add id state.env;
                                 offset = Prefix 0}
         in scan state lexbuf
@@ -483,10 +485,10 @@ rule scan state = parse
                                 offset = Prefix 0}
         in scan state lexbuf
     | "error" ->
-        stop (Error.Error_directive (message [] lexbuf)) reg
+        stop (Error.Error_directive (message [] lexbuf)) state region
 (*
     | "warning" ->
-        let start_p, end_p = reg in
+        let start_p, end_p = region in
         let msg = message [] lexbuf in
         let open Lexing
         in prerr_endline
@@ -510,7 +512,7 @@ rule scan state = parse
            print state ("#" ^ space ^ "endregion" ^ msg ^ "\n");
            let state =
              {state with offset = Prefix 0;
-                         trace  = reduce_reg reg state.trace}
+                         trace  = reduce_reg state region}
            in scan state lexbuf
     | "line" ->
         expand_offset state;
@@ -521,7 +523,7 @@ rule scan state = parse
   }
 | eof   { match state.trace with
             [] -> expand_offset state; state
-          |  _ -> fail Error.Missing_endif lexbuf }
+          |  _ -> fail Error.Missing_endif state lexbuf }
 | '"'   { if state.mode = Copy then
             begin
               expand_offset state;
@@ -553,11 +555,13 @@ rule scan state = parse
 (* Support for #define and #undef *)
 
 and variable state = parse
-  blank* { let id = __ident lexbuf
+  blank+ { let id = symbol state lexbuf
            in skip_line state lexbuf; id }
 
-and __ident = parse
-  ident as id { id, mk_reg lexbuf }
+and symbol state = parse
+  ident as id { id, mk_reg lexbuf                      }
+| _           { fail Error.Invalid_symbol state lexbuf }
+
 
 (* Line indicator (#line) *)
 
@@ -565,24 +569,24 @@ and line_ind state = parse
   blank* { copy state lexbuf; line_indicator state lexbuf }
 
 and line_indicator state = parse
-  decimal  { copy state lexbuf; end_indicator state lexbuf }
-| nl | eof { fail Error.No_line_indicator lexbuf     }
+  natural  { copy state lexbuf; end_indicator state lexbuf }
 | ident as id {
     match id with
       "default" | "hidden" ->
         print state (id ^ message [] lexbuf)
-    | _ -> fail (Error.Invalid_line_indicator id) lexbuf }
+    | _ -> fail (Error.Invalid_line_indicator id) state lexbuf }
+| _ { fail Error.No_line_indicator state lexbuf }
 
 and end_indicator state = parse
   blank+ { copy state lexbuf; end_indicator state lexbuf  }
-| nl     { copy state lexbuf; proc_nl state lexbuf        }
+| nl     { proc_nl state lexbuf                           }
 | eof    { copy state lexbuf                              }
 | "//"   { copy state lexbuf;
            print state (message [] lexbuf ^ "\n")         }
 | '"'    { copy state lexbuf;
            in_string (mk_reg lexbuf) state lexbuf;
            opt_line_com state lexbuf                      }
-| _      { fail Error.End_line_indicator lexbuf           }
+| _      { fail Error.End_line_indicator state lexbuf     }
 
 and opt_line_com state = parse
   nl     { proc_nl state lexbuf                         }
@@ -593,10 +597,11 @@ and opt_line_com state = parse
 (* New lines and verbatim sequence of characters *)
 
 and skip_line state = parse
-  nl     { proc_nl state lexbuf                       }
-| blank+ { skip_line state lexbuf                     }
-| "//"   { in_line_com {state with mode=Skip} lexbuf  }
-| _      { fail Error.No_line_comment_or_blank lexbuf }
+  nl     { proc_nl state lexbuf                             }
+| blank+ { skip_line state lexbuf                           }
+| "//"   { in_line_com {state with mode=Skip} lexbuf        }
+| _      { fail Error.No_line_comment_or_blank state lexbuf }
+| eof    { ()                                               }
 
 and message acc = parse
   nl     { Lexing.new_line lexbuf;
@@ -615,7 +620,7 @@ and in_line_com state = parse
 and in_block_com opening state = parse
   nl   { proc_nl state lexbuf; in_block_com opening state lexbuf }
 | "*/" { copy state lexbuf                                       }
-| eof  { stop Error.Unterminated_comment opening                 }
+| eof  { stop Error.Open_comment state opening                   }
 | _    { copy state lexbuf; in_block_com opening state lexbuf    }
 
 (* Include a file *)
@@ -626,32 +631,34 @@ and cat state = parse
 
 (* Included filename *)
 
-and scan_inclusion = parse
-  blank+ { scan_inclusion lexbuf                    }
-| '"'    { in_inclusion (mk_reg lexbuf) [] 0 lexbuf }
+and scan_inclusion state = parse
+  blank+ { scan_inclusion state lexbuf                    }
+| '"'    { in_inclusion (mk_reg lexbuf) [] 0 state lexbuf }
 
-and in_inclusion opening acc len = parse
-  '"'    { mk_str len acc                               }
-| nl     { fail Error.Newline_in_string lexbuf          }
-| eof    { stop Error.Unterminated_string opening       }
-| _ as c { in_inclusion opening (c::acc) (len+1) lexbuf }
+and in_inclusion opening acc len state = parse
+  '"'    { mk_str len acc                                     }
+| nl     { fail Error.Newline_in_string state lexbuf          }
+| eof    { stop Error.Open_string state opening               }
+| _ as c { in_inclusion opening (c::acc) (len+1) state lexbuf }
 
 (* Strings *)
 
 and in_string opening state = parse
   "\\\"" { copy state lexbuf; in_string opening state lexbuf  }
 | '"'    { copy state lexbuf                                  }
-| nl     { fail Error.Newline_in_string lexbuf                }
-| eof    { stop Error.Unterminated_string opening             }
+| nl     { fail Error.Newline_in_string state lexbuf          }
+| eof    { stop Error.Open_string state opening               }
 | _      { copy state lexbuf; in_string opening state lexbuf  }
 
 
 {
-(* The function [lex] is a wrapper of [scan], which also checks that
-   the trace is empty at the end.  Note that we discard the
-   environment at the end. *)
+  (* START OF TRAILER *)
 
-let lex buffer =
+(* The function [lex] is a wrapper of [scan], which also checks that
+   the trace is empty at the end.  Note that we discard the state at
+   the end. *)
+
+let lex buffer : Buffer.t =
   let state = {
     env    = Env.empty;
     mode   = Copy;
@@ -660,30 +667,9 @@ let lex buffer =
     out    = Buffer.create 80;
     incl   = []
   } in
-  let state = scan state buffer
-in ()
+  let state = scan state buffer in
+  let () = List.iter close_in state.incl
+in state.out
 
-(* Exported definitions *)
-(*
-let trace options : unit =
-  match open_in options#input with
-    cin ->
-      let open Lexing in
-      let buffer = from_channel cin in
-      let pos_fname = Filename.basename options#input in
-      let () = buffer.lex_curr_p <- {buffer.lex_curr_p with pos_fname}
-      in (try lex buffer with
-            Error err ->
-              let msg =
-                Error.format ~offsets:options#offsets err ~file:options#input
-              in prerr_endline msg
-          | E_Lexer.Error err ->
-              let msg =
-                E_Lexer.Error.format ~offsets:options#offsets
-                                     err ~file:options#input
-              in prerr_endline msg
-          | Sys_error msg -> prerr_endline msg);
-         close_in cin
-  | exception Sys_error msg -> prerr_endline msg
- *)
+(* END OF TRAILER *)
 }
