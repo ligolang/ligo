@@ -60,6 +60,8 @@ type register = big_map(address, move);
 
 </Syntax>
 
+Be aware that a `big_map` cannot appear inside another `big_map`.
+
 <SyntaxTitle syntax="pascaligo">
 function empty : big_map ('key, 'value)
 </SyntaxTitle>
