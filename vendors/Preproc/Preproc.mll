@@ -118,63 +118,63 @@ module Error =
 
     let to_string = function
       Invalid_directive name ->
-        sprintf "Invalid directive \"%s\".\n" name
+        sprintf "Invalid directive \"%s\"." name
     | Directive_inside_line ->
-        sprintf "Directive inside a line.\n"
+        sprintf "Directive inside a line."
     | Missing_endif ->
-        sprintf "Missing #endif directive.\n"
+        sprintf "Missing #endif directive."
     | Invalid_line_indicator id ->
         sprintf "Invalid line indicator \"%s\".\n\
-                 Hint: Try \"default\" or \"hidden\".\n" id
+                 Hint: Try \"default\" or \"hidden\"." id
     | No_line_indicator ->
-        sprintf "Missing line indicator.\n"
+        sprintf "Missing line indicator."
     | End_line_indicator ->
         sprintf "Invalid ending of numerical line indicator.\n\
-                 Hint: Try a string, end of line, or a line comment.\n"
+                 Hint: Try a string, end of line, or a line comment."
     | Newline_in_string ->
-        sprintf "Invalid newline character in string.\n"
+        sprintf "Invalid newline character in string."
     | Open_comment ->
-        sprintf "Unterminated comment.\n"
+        sprintf "Unterminated comment."
     | Open_string ->
         sprintf "Unterminated string.\n\
-                 Hint: Close with double quotes.\n"
+                 Hint: Close with double quotes."
     | Dangling_endif ->
         sprintf "Dangling #endif directive.\n\
-                 Hint: Remove it or add a #if before.\n"
+                 Hint: Remove it or add a #if before."
     | Open_region_in_conditional ->
         sprintf "Unterminated of #region in conditional.\n\
-                 Hint: Close with #endregion before #endif.\n"
+                 Hint: Close with #endregion before #endif."
     | Dangling_endregion ->
         sprintf "Dangling #endregion directive.\n\
-                 Hint: Remove it or use #region before.\n"
+                 Hint: Remove it or use #region before."
     | Conditional_in_region ->
         sprintf "Conditional in region.\n\
-                 Hint: Remove the conditional or the region.\n"
+                 Hint: Remove the conditional or the region."
     | If_follows_elif ->
-        sprintf "Directive #if found in a clause #elif.\n"
+        sprintf "Directive #if found in a clause #elif."
     | Else_follows_else ->
-        sprintf "Directive #else found in a clause #else.\n"
+        sprintf "Directive #else found in a clause #else."
     | Dangling_else ->
-        sprintf "Directive #else without #if.\n"
+        sprintf "Directive #else without #if."
     | Elif_follows_else ->
-        sprintf "Directive #elif found in a clause #else.\n"
+        sprintf "Directive #elif found in a clause #else."
     | Dangling_elif ->
         sprintf "Dangling #elif directive.\n\
-                 Hint: Remove it or add a #if before.\n"
+                 Hint: Remove it or add a #if before."
     | Reserved_symbol sym ->
         sprintf "Reserved symbol \"%s\".\n\
-                 Hint: Use another symbol.\n" sym
+                 Hint: Use another symbol." sym
     | Multiply_defined_symbol sym ->
         sprintf "Multiply-defined symbol \"%s\".\n\
-                 Hint: Change the name or remove one definition.\n" sym
+                 Hint: Change the name or remove one definition." sym
     | Error_directive msg ->
-        msg ^ "\n"
+        msg
     | Parse_error ->
-        "Parse error in expression.\n"
+        "Parse error in expression."
     | No_line_comment_or_blank ->
-        "Line comment or whitespace expected.\n"
+        "Line comment or whitespace expected."
     | Invalid_symbol ->
-        "Expected a symbol (identifier).\n"
+        "Expected a symbol (identifier)."
 
     let format ?(offsets=true) Region.{region; value} ~file =
       let msg   = to_string value
