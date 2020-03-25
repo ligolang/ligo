@@ -624,7 +624,16 @@ module Typer = struct
   let map_empty = typer_0 "MAP_EMPTY" @@ fun tv_opt ->
     match tv_opt with
     | None -> simple_fail "untyped MAP_EMPTY"
-    | Some t -> ok t
+    | Some t -> 
+      let%bind (src, dst) = get_t_map t in
+      ok @@ t_map src dst ()
+
+  let big_map_empty = typer_0 "BIG_MAP_EMPTY" @@ fun tv_opt ->
+    match tv_opt with
+    | None -> simple_fail "untyped BIG_MAP_EMPTY"
+    | Some t -> 
+      let%bind (src, dst) = get_t_big_map t in
+      ok @@ t_big_map src dst ()
 
   let map_add : typer = typer_3 "MAP_ADD" @@ fun k v m ->
     let%bind (src, dst) = bind_map_or (get_t_map , get_t_big_map) m in
@@ -1171,6 +1180,7 @@ module Typer = struct
     | C_LIST_FOLD           -> ok @@ list_fold ;
     (* MAP *)
     | C_MAP_EMPTY           -> ok @@ map_empty ;
+    | C_BIG_MAP_EMPTY       -> ok @@ big_map_empty ;
     | C_MAP_ADD             -> ok @@ map_add ;
     | C_MAP_REMOVE          -> ok @@ map_remove ;
     | C_MAP_UPDATE          -> ok @@ map_update ;

@@ -345,6 +345,10 @@ and evaluate_type (e:environment) (t:I.type_expression) : O.type_expression resu
             let%bind k = evaluate_type e k in 
             let%bind v = evaluate_type e v in 
             ok @@ O.TC_big_map (k,v) 
+        | TC_map_or_big_map (k,v) ->
+            let%bind k = evaluate_type e k in 
+            let%bind v = evaluate_type e v in 
+            ok @@ O.TC_map_or_big_map (k,v) 
         | TC_contract c ->
             let%bind c = evaluate_type e c in
             ok @@ O.TC_contract c
@@ -837,6 +841,10 @@ let rec untype_type_expression (t:O.type_expression) : (I.type_expression) resul
          let%bind k = untype_type_expression k in
          let%bind v = untype_type_expression v in
          ok @@ I.TC_big_map (k,v)
+      | O.TC_map_or_big_map (k,v) ->     
+         let%bind k = untype_type_expression k in
+         let%bind v = untype_type_expression v in
+         ok @@ I.TC_map_or_big_map (k,v)
       | O.TC_arrow ( arg , ret ) ->
          let%bind arg' = untype_type_expression arg in
          let%bind ret' = untype_type_expression ret in

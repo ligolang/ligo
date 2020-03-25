@@ -31,6 +31,7 @@ val ez_t_record : ( label * type_expression ) list -> ?s:S.type_expression -> un
 
 val t_map : type_expression -> type_expression -> ?s:S.type_expression -> unit -> type_expression
 val t_big_map : type_expression -> type_expression -> ?s:S.type_expression -> unit -> type_expression
+val t_map_or_big_map : type_expression -> type_expression -> ?s:S.type_expression -> unit -> type_expression
 val t_sum : type_expression constructor_map -> ?s:S.type_expression -> unit -> type_expression
 val make_t_ez_sum : ( constructor' * type_expression ) list -> type_expression
 val t_function : type_expression -> type_expression -> ?s:S.type_expression -> unit -> type_expression

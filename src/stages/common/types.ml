@@ -53,6 +53,7 @@ module Ast_generic_type (PARAMETER : AST_PARAMETER_TYPE) = struct
     | TC_set of type_expression
     | TC_map of type_expression * type_expression
     | TC_big_map of type_expression * type_expression
+    | TC_map_or_big_map of type_expression * type_expression
     | TC_arrow of type_expression * type_expression
 
 
@@ -66,6 +67,7 @@ module Ast_generic_type (PARAMETER : AST_PARAMETER_TYPE) = struct
     | TC_set x -> TC_set (f x)
     | TC_map (x , y) -> TC_map (f x , f y)
     | TC_big_map (x , y)-> TC_big_map (f x , f y)
+    | TC_map_or_big_map (x , y)-> TC_map_or_big_map (f x , f y)
     | TC_arrow (x, y) -> TC_arrow (f x, f y)
 
   let bind_map_type_operator f = function
@@ -75,6 +77,7 @@ module Ast_generic_type (PARAMETER : AST_PARAMETER_TYPE) = struct
     | TC_set x -> let%bind x = f x in ok @@ TC_set x
     | TC_map (x , y) -> let%bind x = f x in let%bind y = f y in ok @@ TC_map (x , y)
     | TC_big_map (x , y)-> let%bind x = f x in let%bind y = f y in ok @@ TC_big_map (x , y)
+    | TC_map_or_big_map (x , y)-> let%bind x = f x in let%bind y = f y in ok @@ TC_map_or_big_map (x , y)
     | TC_arrow (x , y)-> let%bind x = f x in let%bind y = f y in ok @@ TC_arrow (x , y)
 
   let type_operator_name = function
@@ -84,6 +87,7 @@ module Ast_generic_type (PARAMETER : AST_PARAMETER_TYPE) = struct
       | TC_set      _ -> "TC_set"
       | TC_map      _ -> "TC_map"
       | TC_big_map  _ -> "TC_big_map"
+      | TC_map_or_big_map _ -> "TC_map_or_big_map"
       | TC_arrow    _ -> "TC_arrow"
 
   let type_expression'_of_string = function
@@ -122,6 +126,7 @@ module Ast_generic_type (PARAMETER : AST_PARAMETER_TYPE) = struct
     | TC_set       x       -> "TC_set"      , [x]
     | TC_map       (x , y) -> "TC_map"      , [x ; y]
     | TC_big_map   (x , y) -> "TC_big_map"  , [x ; y]
+    | TC_map_or_big_map   (x , y) -> "TC_map_or_big_map"  , [x ; y]
     | TC_arrow     (x , y) -> "TC_arrow"    , [x ; y]
 
   let string_of_type_constant = function
@@ -269,7 +274,6 @@ and constant' =
   | C_MAP_FIND_OPT
   (* Big Maps *)
   | C_BIG_MAP
-  | C_BIG_MAP_ADD
   | C_BIG_MAP_EMPTY
   | C_BIG_MAP_LITERAL
   (* Crypto *)

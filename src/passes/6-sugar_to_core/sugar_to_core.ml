@@ -55,6 +55,9 @@ and idle_type_operator : I.type_operator -> O.type_operator result =
     | TC_big_map (k,v) ->
       let%bind (k,v) = bind_map_pair idle_type_expression (k,v) in
       ok @@ O.TC_big_map (k,v)
+    | TC_map_or_big_map (k,v) ->
+      let%bind (k,v) = bind_map_pair idle_type_expression (k,v) in
+      ok @@ O.TC_map_or_big_map (k,v)
     | TC_arrow (i,o) ->
       let%bind (i,o) = bind_map_pair idle_type_expression (i,o) in
       ok @@ O.TC_arrow (i,o)
@@ -115,16 +118,16 @@ let rec compile_expression : I.expression -> O.expression result =
         return @@ E_constant {cons_name=C_MAP_ADD;arguments=[k' ; v' ; prev]}
       in
       let%bind init = return @@ E_constant {cons_name=C_MAP_EMPTY;arguments=[]} in
-      bind_fold_list aux init map
+      bind_fold_right_list aux init map
     )
     | I.E_big_map big_map -> (
-      let map = List.sort_uniq compare big_map in
+      let big_map = List.sort_uniq compare big_map in
       let aux = fun prev (k, v) ->
         let%bind (k', v') = bind_map_pair (compile_expression) (k, v) in
-        return @@ E_constant {cons_name=C_BIG_MAP_ADD;arguments=[k' ; v' ; prev]}
+        return @@ E_constant {cons_name=C_MAP_ADD;arguments=[k' ; v' ; prev]}
       in
       let%bind init = return @@ E_constant {cons_name=C_BIG_MAP_EMPTY;arguments=[]} in
-      bind_fold_list aux init map
+      bind_fold_right_list aux init big_map
     )
     | I.E_list lst ->
       let%bind lst' = bind_map_list (compile_expression) lst in
@@ -258,6 +261,9 @@ and uncompile_type_operator : O.type_operator -> I.type_operator result =
     | TC_big_map (k,v) ->
       let%bind (k,v) = bind_map_pair uncompile_type_expression (k,v) in
       ok @@ I.TC_big_map (k,v)
+    | TC_map_or_big_map (k,v) ->
+      let%bind (k,v) = bind_map_pair uncompile_type_expression (k,v) in
+      ok @@ I.TC_map_or_big_map (k,v)
     | TC_arrow (i,o) ->
       let%bind (i,o) = bind_map_pair uncompile_type_expression (i,o) in
       ok @@ I.TC_arrow (i,o)

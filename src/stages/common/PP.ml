@@ -127,7 +127,6 @@ let constant ppf : constant' -> unit = function
   | C_MAP_FIND_OPT          -> fprintf ppf "MAP_FIND_OP"
   (* Big Maps *)
   | C_BIG_MAP               -> fprintf ppf "BIG_MAP"
-  | C_BIG_MAP_ADD           -> fprintf ppf "BIG_MAP_ADD"
   | C_BIG_MAP_EMPTY         -> fprintf ppf "BIG_MAP_EMPTY"
   | C_BIG_MAP_LITERAL       -> fprintf ppf "BIG_MAP_LITERAL"
   (* Crypto *)
@@ -266,6 +265,7 @@ module Ast_PP_type (PARAMETER : AST_PARAMETER_TYPE) = struct
       | TC_set te -> Format.asprintf "set(%a)" f te
       | TC_map (k, v) -> Format.asprintf "Map (%a,%a)" f k f v
       | TC_big_map (k, v) -> Format.asprintf "Big Map (%a,%a)" f k f v
+      | TC_map_or_big_map (k, v) -> Format.asprintf "Map Or Big Map (%a,%a)" f k f v
       | TC_arrow (k, v) -> Format.asprintf "arrow (%a,%a)" f k f v
       | TC_contract te  -> Format.asprintf "Contract (%a)" f te
     in

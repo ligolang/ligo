@@ -381,6 +381,10 @@ and evaluate_type (e:environment) (t:I.type_expression) : O.type_expression resu
             let%bind k = evaluate_type e k in 
             let%bind v = evaluate_type e v in 
             ok @@ O.TC_big_map (k,v) 
+        | TC_map_or_big_map (k,v) ->
+            let%bind k = evaluate_type e k in 
+            let%bind v = evaluate_type e v in 
+            ok @@ O.TC_map_or_big_map (k,v) 
         | TC_arrow ( arg , ret ) ->
             let%bind arg' = evaluate_type e arg in
             let%bind ret' = evaluate_type e ret in
@@ -602,21 +606,7 @@ and type_expression' : environment -> ?tv_opt:O.type_expression -> I.expression 
       let tv_val = get_type_expression val' in
       let tv = match tv_opt with 
           Some (tv) -> tv 
-        | None -> t_map tv_key tv_val ()
-      in
-      let%bind map' =  type_expression' e ~tv_opt:tv map in
-      let tv_map = get_type_expression map' in 
-      let tv_lst = [tv_key;tv_val;tv_map] in
-      let%bind (name', tv) = type_constant cst tv_lst tv_opt in
-      return (E_constant {cons_name=name';arguments=[key';val';map']}) tv
-  | E_constant {cons_name=C_BIG_MAP_ADD as cst; arguments=[key;value;map]} ->
-      let%bind key' = type_expression' e key in
-      let%bind val' = type_expression' e value in
-      let tv_key = get_type_expression key' in
-      let tv_val = get_type_expression val' in
-      let tv = match tv_opt with 
-          Some (tv) -> tv 
-        | None -> t_big_map tv_key tv_val ()
+        | None -> t_map_or_big_map tv_key tv_val ()
       in
       let%bind map' =  type_expression' e ~tv_opt:tv map in
       let tv_map = get_type_expression map' in 

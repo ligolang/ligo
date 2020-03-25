@@ -171,6 +171,7 @@ let rec apply_operator : Ast_typed.constant' -> value list -> value result =
           eval body env'
         )
         init elts
+    | ( C_MAP_EMPTY , []) -> ok @@ V_Map ([])
     | ( C_MAP_FOLD , [ V_Func_val (arg_name, body, env) ; V_Map kvs ; init ] ) ->
       bind_fold_list
         (fun prev kv ->
