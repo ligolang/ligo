@@ -123,6 +123,9 @@ let rec compile_type_expression : I.type_expression -> O.type_expression result 
         ) record
       in
       return @@ O.T_record (O.LMap.of_list record)
+    | I.T_tuple tuple ->
+      let%bind tuple = bind_map_list compile_type_expression tuple in
+      return @@ O.T_tuple tuple
     | I.T_arrow {type1;type2} ->
       let%bind type1 = compile_type_expression type1 in
       let%bind type2 = compile_type_expression type2 in
@@ -154,9 +157,6 @@ and compile_type_operator : I.type_operator -> O.type_operator result =
     | TC_big_map (k,v) ->
       let%bind (k,v) = bind_map_pair compile_type_expression (k,v) in
       ok @@ O.TC_big_map (k,v)
-    | TC_map_or_big_map (k,v) ->
-      let%bind (k,v) = bind_map_pair compile_type_expression (k,v) in
-      ok @@ O.TC_map_or_big_map (k,v)
     | TC_arrow (i,o) ->
       let%bind (i,o) = bind_map_pair compile_type_expression (i,o) in
       ok @@ O.TC_arrow (i,o)
@@ -202,9 +202,9 @@ let rec compile_expression : I.expression -> O.expression result =
         ) record
       in
       return @@ O.E_record (O.LMap.of_list record)
-    | I.E_record_accessor {record;label} ->
+    | I.E_record_accessor {record;path} ->
       let%bind record = compile_expression record in
-      return @@ O.E_record_accessor {record;label}
+      return @@ O.E_record_accessor {record;path}
     | I.E_record_update {record;path;update} ->
       let%bind record = compile_expression record in
       let%bind update = compile_expression update in
@@ -239,6 +239,16 @@ let rec compile_expression : I.expression -> O.expression result =
       let%bind expr2 = compile_expression expr2 in
       ok @@ add_to_end expr1 expr2 
     | I.E_skip -> return @@ O.E_skip
+    | I.E_tuple tuple ->
+      let%bind tuple = bind_map_list compile_expression tuple in
+      return @@ O.E_tuple (tuple)
+    | I.E_tuple_accessor {tuple;path} ->
+      let%bind tuple = compile_expression tuple in
+      return @@ O.E_tuple_accessor {tuple;path}
+    | I.E_tuple_update {tuple;path;update} ->
+      let%bind tuple = compile_expression tuple in
+      let%bind update = compile_expression update in
+      return @@ O.E_tuple_update {tuple;path;update}
     | I.E_assign ass ->
       let%bind content =  compile_assign ass @@ O.e_skip () in
       return @@ content
@@ -281,7 +291,6 @@ and compile_assign {variable; access_path; expression} expr =
   let%bind expression = compile_expression expression in
   let%bind rhs = rhs @@ expression in
   ok @@ O.E_let_in {let_binder=(variable,None); mut=true; rhs; let_result=expr;inline = false}
-
 
 and compile_lambda : I.lambda -> O.lambda result =
   fun {binder;input_type;output_type;result}->
@@ -541,6 +550,9 @@ let rec uncompile_type_expression : O.type_expression -> I.type_expression resul
         ) record
       in
       return @@ I.T_record (O.LMap.of_list record)
+    | O.T_tuple tuple ->
+      let%bind tuple = bind_map_list uncompile_type_expression tuple in
+      return @@ I.T_tuple tuple
     | O.T_arrow {type1;type2} ->
       let%bind type1 = uncompile_type_expression type1 in
       let%bind type2 = uncompile_type_expression type2 in
@@ -572,9 +584,6 @@ and uncompile_type_operator : O.type_operator -> I.type_operator result =
     | TC_big_map (k,v) ->
       let%bind (k,v) = bind_map_pair uncompile_type_expression (k,v) in
       ok @@ I.TC_big_map (k,v)
-    | TC_map_or_big_map (k,v) ->
-      let%bind (k,v) = bind_map_pair uncompile_type_expression (k,v) in
-      ok @@ I.TC_map_or_big_map (k,v)
     | TC_arrow (i,o) ->
       let%bind (i,o) = bind_map_pair uncompile_type_expression (i,o) in
       ok @@ I.TC_arrow (i,o)
@@ -621,13 +630,23 @@ let rec uncompile_expression : O.expression -> I.expression result =
       ) record
     in
     return @@ I.E_record (O.LMap.of_list record)
-  | O.E_record_accessor {record;label} ->
+  | O.E_record_accessor {record;path} ->
     let%bind record = uncompile_expression record in
-    return @@ I.E_record_accessor {record;label}
+    return @@ I.E_record_accessor {record;path}
   | O.E_record_update {record;path;update} ->
     let%bind record = uncompile_expression record in
     let%bind update = uncompile_expression update in
     return @@ I.E_record_update {record;path;update}
+  | O.E_tuple tuple ->
+    let%bind tuple = bind_map_list uncompile_expression tuple in
+    return @@ I.E_tuple tuple
+  | O.E_tuple_accessor {tuple;path} ->
+    let%bind tuple = uncompile_expression tuple in
+    return @@ I.E_tuple_accessor {tuple;path}
+  | O.E_tuple_update {tuple;path;update} ->
+    let%bind tuple  = uncompile_expression tuple in
+    let%bind update = uncompile_expression update in
+    return @@ I.E_tuple_update {tuple;path;update}
   | O.E_map map ->
     let%bind map = bind_map_list (
       bind_map_pair uncompile_expression

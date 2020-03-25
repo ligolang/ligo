@@ -876,8 +876,13 @@ let tuple () : unit result  =
     expect_eq_n program "modify_abc" make_input make_expected
   in
   let%bind () =
-    let expected = ez [23 ; 23 ; 23 ; 23 ; 23] in
+    let expected = ez [0 ; 1 ; 2 ; 3 ; 4; 5; 6; 7; 8; 9; 10; 11] in
     expect_eq_evaluate program "br" expected
+  in
+  let%bind () =
+    let make_input = fun n -> ez [n; n; n; n; n; n; n; n; n; n; n; n] in
+    let make_expected = fun n -> ez [n; n; n; n; n; n; n; n; n; n; n; 2048] in
+    expect_eq_n program "update" make_input make_expected
   in
   ok ()
 

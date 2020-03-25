@@ -4,11 +4,45 @@ open Format
 open PP_helpers
 
 include Stage_common.PP
-include Ast_PP_type(Ast_imperative_parameter)
 
 let expression_variable ppf (ev : expression_variable) : unit =
   fprintf ppf "%a" Var.pp ev
 
+let rec type_expression' :
+        (formatter -> type_expression -> unit)
+    -> formatter
+    -> type_expression
+    -> unit =
+  fun f ppf te ->
+  match te.type_content with
+  | T_sum m -> fprintf ppf "sum[%a]" (cmap_sep_d f) m
+  | T_record m -> fprintf ppf "%a" (tuple_or_record_sep_type f) m
+  | T_tuple t -> fprintf ppf "%a" (list_sep_d f) t
+  | T_arrow a -> fprintf ppf "%a -> %a" f a.type1 f a.type2
+  | T_variable tv -> type_variable ppf tv
+  | T_constant tc -> type_constant ppf tc
+  | T_operator to_ -> type_operator f ppf to_
+
+and type_expression ppf (te : type_expression) : unit =
+  type_expression' type_expression ppf te
+
+and type_operator :
+        (formatter -> type_expression -> unit)
+    -> formatter
+    -> type_operator
+    -> unit =
+  fun f ppf to_ ->
+  let s =
+    match to_ with
+    | TC_option te -> Format.asprintf "option(%a)" f te
+    | TC_list te -> Format.asprintf "list(%a)" f te
+    | TC_set te -> Format.asprintf "set(%a)" f te
+    | TC_map (k, v) -> Format.asprintf "Map (%a,%a)" f k f v
+    | TC_big_map (k, v) -> Format.asprintf "Big Map (%a,%a)" f k f v
+    | TC_arrow (k, v) -> Format.asprintf "arrow (%a,%a)" f k f v
+    | TC_contract te  -> Format.asprintf "Contract (%a)" f te
+  in
+  fprintf ppf "(TO_%s)" s
 
 let rec expression ppf (e : expression) =
   expression_content ppf e.expression_content
@@ -27,8 +61,8 @@ and expression_content ppf (ec : expression_content) =
         c.arguments
   | E_record m ->
       fprintf ppf "%a" (tuple_or_record_sep_expr expression) m
-  | E_record_accessor {record; label=l}->
-      fprintf ppf "%a.%a" expression record label l
+  | E_record_accessor ra ->
+      fprintf ppf "%a.%a" expression ra.record label ra.path
   | E_record_update {record; path; update} ->
       fprintf ppf "{ %a with { %a = %a } }" expression record label path expression update
   | E_map m ->
@@ -66,6 +100,12 @@ and expression_content ppf (ec : expression_content) =
       fprintf ppf "{ %a; @. %a}" expression expr1 expression expr2
   | E_skip ->
       fprintf ppf "skip"
+  | E_tuple t ->
+      fprintf ppf "%a" (list_sep_d expression) t
+  | E_tuple_accessor ta ->
+      fprintf ppf "%a.%d" expression ta.tuple ta.path
+  | E_tuple_update {tuple; path; update} ->
+      fprintf ppf "{ %a with { %d = %a } }" expression tuple path expression update
   | E_assign {variable; access_path; expression=e} ->
       fprintf ppf "%a%a := %a" 
         expression_variable variable

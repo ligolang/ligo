@@ -136,7 +136,7 @@ module Substitution = struct
     and s_matching_expr : T.matching_expr w = fun ~substs _ ->
       let _TODO = substs in
       failwith "TODO: subst: unimplemented case s_matching"
-    and s_accessor  : T.accessor w = fun ~substs _ ->
+    and s_accessor  : T.record_accessor w = fun ~substs _ ->
       let _TODO = substs in
       failwith "TODO: subst: unimplemented case s_access_path"
 
@@ -182,10 +182,10 @@ module Substitution = struct
          *     let val_ = s_expression ~v ~expr val_ in
          *     ok @@ (key , val_)) aemap in
          * ok @@ T.E_record aemap *)
-      | T.E_record_accessor {record=e;label} ->
+      | T.E_record_accessor {record=e;path} ->
         let%bind record = s_expression ~substs e in
-        let%bind label = s_label ~substs label in
-        ok @@ T.E_record_accessor {record;label}
+        let%bind path = s_label ~substs path in
+        ok @@ T.E_record_accessor {record;path}
       | T.E_record_update {record;path;update}->
         let%bind record = s_expression ~substs record in
         let%bind update = s_expression ~substs update in

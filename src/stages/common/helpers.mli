@@ -1,3 +1,5 @@
+open Types
+
 val bind_lmap :
   ('a * 'b list, 'c) result Types.label_map ->
   ('a Types.label_map * 'b list, 'c) result
@@ -19,6 +21,9 @@ val is_tuple_lmap : 'a Types.label_map -> bool
 val get_pair :
            'a Types.label_map ->
            (('a * 'a) * 'b list, unit -> Trace.error) result
+val tuple_of_record : 'a LMap.t -> (label * 'a) list
+val list_of_record_or_tuple : 'a LMap.t -> 'a list
+val kv_list_of_record_or_tuple : 'a LMap.t -> (label * 'a) list
 
 
 

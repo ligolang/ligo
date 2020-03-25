@@ -29,7 +29,7 @@ and expression_content ppf (ec: expression_content) =
   | E_record m ->
       fprintf ppf "%a" (tuple_or_record_sep_expr expression) m
   | E_record_accessor ra ->
-      fprintf ppf "%a.%a" expression ra.record label ra.label
+      fprintf ppf "%a.%a" expression ra.record label ra.path
   | E_record_update {record; path; update} ->
       fprintf ppf "{ %a with { %a = %a } }" expression record label path expression update
   | E_lambda {binder; result} ->

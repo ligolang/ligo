@@ -303,12 +303,12 @@ and eval : Ast_typed.expression -> env -> value result
           ok (label,v'))
         (LMap.to_kv_list recmap) in
       ok @@ V_Record (LMap.of_list lv')
-    | E_record_accessor { record ; label} -> (
+    | E_record_accessor { record ; path} -> (
       let%bind record' = eval record env in
       match record' with
       | V_Record recmap ->
         let%bind a = trace_option (simple_error "unknown record field") @@
-          LMap.find_opt label recmap in
+          LMap.find_opt path recmap in
         ok a
       | _ -> simple_fail "trying to access a non-record"
     )

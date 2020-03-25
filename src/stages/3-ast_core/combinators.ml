@@ -114,8 +114,8 @@ let e_map_add ?loc k v old  : expression = make_expr ?loc @@ E_constant {cons_na
 let e_constructor ?loc s a : expression = make_expr ?loc @@ E_constructor { constructor = Constructor s; element = a}
 let e_matching ?loc a b : expression = make_expr ?loc @@ E_matching {matchee=a;cases=b}
 let e_matching_bool ?loc a b c : expression = e_matching ?loc a (Match_bool {match_true = b ; match_false = c})
-let e_accessor ?loc a b = make_expr ?loc @@ E_record_accessor {record = a; label= Label b}
-let e_accessor_list ?loc a b  = List.fold_left (fun a b -> e_accessor ?loc a b) a b
+let e_record_accessor ?loc a b = make_expr ?loc @@ E_record_accessor {record = a; path = Label b}
+let e_record_accessor_list ?loc a b  = List.fold_left (fun a b -> e_record_accessor ?loc a b) a b
 let e_variable ?loc v = make_expr ?loc @@ E_variable v
 let e_let_in ?loc (binder, ascr) inline rhs let_result = 
   make_expr ?loc @@ E_let_in { let_binder = (binder,ascr) ; rhs ; let_result; inline }
@@ -139,7 +139,7 @@ let e_record ?loc map =
   let lst = Map.String.to_kv_list map in
   e_record_ez ?loc lst 
 
-let e_update ?loc record path update = 
+let e_record_update ?loc record path update = 
   let path = Label path in
   make_expr ?loc @@ E_record_update {record; path; update}
 
@@ -178,20 +178,20 @@ let e_assign_with_let ?loc var access_path expr =
   | lst -> 
     let rec aux path record= match path with 
     | [] -> failwith "acces_path cannot be empty"
-    | [e] -> e_update ?loc record e expr
+    | [e] -> e_record_update ?loc record e expr
     | elem::tail -> 
-      let next_record = e_accessor record elem in
-      e_update ?loc record elem (aux tail next_record )
+      let next_record = e_record_accessor record elem in
+      e_record_update ?loc record elem (aux tail next_record )
     in 
     (var, None), true, (aux lst (e_variable var)), false
 
-let get_e_accessor = fun t ->
+let get_e_record_accessor = fun t ->
   match t with
-  | E_record_accessor {record; label} -> ok (record , label)
+  | E_record_accessor {record; path} -> ok (record, path)
   | _ -> simple_fail "not an accessor"
 
-let assert_e_accessor = fun t ->
-  let%bind _ = get_e_accessor t in
+let assert_e_record_accessor = fun t ->
+  let%bind _ = get_e_record_accessor t in
   ok ()
 
 let get_e_pair = fun t ->
@@ -218,16 +218,9 @@ let get_e_list = fun t ->
   in
   aux t
 
-let tuple_of_record (m: _ LMap.t) =
-  let aux i = 
-    let opt = LMap.find_opt (Label (string_of_int i)) m in
-    Option.bind (fun opt -> Some (opt,i+1)) opt
-  in
-  Base.Sequence.to_list @@ Base.Sequence.unfold ~init:0 ~f:aux
-
 let get_e_tuple = fun t ->
   match t with
-  | E_record r -> ok @@ tuple_of_record r
+  | E_record r -> ok @@ List.map snd @@ Stage_common.Helpers.tuple_of_record r
   | _ -> simple_fail "ast_core: get_e_tuple: not a tuple"
 
 (* Same as get_e_pair *)
