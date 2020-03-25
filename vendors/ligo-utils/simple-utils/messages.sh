@@ -7,7 +7,7 @@
 # specifications are located, in accordance with the convention of the
 # LIGO compiler source code.
 
-#set -x
+# set -x
 
 # ====================================================================
 # General Settings and wrappers

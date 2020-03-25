@@ -15,6 +15,8 @@ target_os_version="$3"
 dist="$LIGO_DIST_DIR"
 version="$(echo $CI_JOB_ID)-$(echo $CI_COMMIT_SHORT_SHA)"
 ci_job_id="$CI_JOB_ID"
+ci_commit_sha="$CI_COMMIT_SHA"
+commit_date="$COMMIT_DATE"
 
 # Image names for building & packaging
 target="$target_os-$target_os_version"

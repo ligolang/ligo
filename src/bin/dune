@@ -18,7 +18,7 @@
  (action (with-stdout-to
           version.ml
           (run "sh" "-c"
-               "printf 'let hash = \"%s\"\nlet commit_date = \"%s\"\nlet job_id = \"%s\"\n' \"$(git rev-parse HEAD)\" \"$(git show --no-patch --format=%ci)\" \"${CI_JOB_ID}\""))))
+               "printf 'let version = \"Rolling Release\nCommit SHA1: %s\nCommit Date: %s\"' \"${CI_COMMIT_SHA}\" \"${COMMIT_DATE}\""))))
 
 (executable
   (name runligo)

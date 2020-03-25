@@ -52,6 +52,8 @@ exports.API_ROOT = `${exports.API_HOST}/api`;
 exports.fetchExamples = async () => (await fetch(`${exports.API_HOST}/static/examples/list`)).json();
 
 exports.runCommandAndGetOutputFor = async (command, endpoint) => {
+  page.on('console', msg => console.log('PAGE LOG:', msg.text()));
+
   await page.click('#configure-tab');
   await exports.sleep(1000);
 

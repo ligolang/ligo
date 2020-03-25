@@ -2,12 +2,7 @@ open Cmdliner
 open Trace
 open Cli_helpers
 
-let version =
-  Format.asprintf
-    "Rolling release\nHash: %s\nDate: %s\nCI job id: %s"
-    Version.hash
-    Version.commit_date
-    Version.job_id
+let version = Version.version
 
 let main =
   let man =
