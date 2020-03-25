@@ -33,6 +33,7 @@ type error =
 | Parse_error
 | No_line_comment_or_blank
 | Invalid_symbol
+| File_not_found of string
 
 val format :
   ?offsets:bool -> error Region.reg -> file:bool -> string Region.reg
@@ -41,7 +42,7 @@ val format :
 
 exception Error of Buffer.t * error Region.reg
 
-val lex : Lexing.lexbuf -> Buffer.t
+val lex : EvalOpt.options -> Lexing.lexbuf -> Buffer.t
 
 (* Evaluation of boolean expressions *)
 

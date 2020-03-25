@@ -73,7 +73,8 @@ type state = {
   offset : offset;
   trace  : trace;
   out    : Buffer.t;
-  incl   : in_channel list
+  incl   : in_channel list;
+  opt    : EvalOpt.options
 }
 
 (* ERRORS *)
@@ -103,6 +104,7 @@ type error =
 | Parse_error
 | No_line_comment_or_blank
 | Invalid_symbol
+| File_not_found of string
 
 let error_to_string = function
   Invalid_directive name ->
@@ -163,6 +165,8 @@ let error_to_string = function
     "Line comment or whitespace expected."
 | Invalid_symbol ->
     "Expected a symbol (identifier)."
+| File_not_found name ->
+    sprintf "File \"%s\" to include not found." name
 
 let format ?(offsets=true) Region.{region; value} ~file =
   let msg   = error_to_string value
@@ -186,18 +190,18 @@ let fail error state buffer = stop error state (mk_reg buffer)
 let reduce_cond state region =
   let rec reduce = function
                 [] -> stop Dangling_endif state region
-  | If mode::trace -> trace, mode
+  | If mode::trace -> {state with mode; trace; offset = Prefix 0}
   |      Region::_ -> stop Open_region_in_conditional state region
   |       _::trace -> reduce trace
   in reduce state.trace
 
-(* The function [reduce_reg] is called when a #endregion directive is
+(* The function [reduce_region] is called when a #endregion directive is
    read, and the trace needs updating. *)
 
-let reduce_reg state region =
+let reduce_region state region =
   match state.trace with
                [] -> stop Dangling_endregion state region
-  | Region::trace -> trace
+  | Region::trace -> {state with trace; offset = Prefix 0}
   |             _ -> stop Conditional_in_region state region
 
 (* The function [extend] is called when encountering conditional
@@ -221,6 +225,22 @@ let rec last_mode = function
                         [] -> assert false
 | (If mode | Elif mode)::_ -> mode
 |                 _::trace -> last_mode trace
+
+(* Finding a file to #include *)
+
+let rec find base = function
+         [] -> None
+| dir::dirs ->
+    let path = dir ^ Filename.dir_sep ^ base in
+    try Some (open_in path) with
+      Sys_error _ -> find base dirs
+
+let find dir file libs : in_channel option =
+  let path = dir ^ Filename.dir_sep ^ file in
+  try Some (open_in path) with
+    Sys_error _ ->
+      let base = Filename.basename file in
+      if base = file then find file libs else None
 
 (* PRINTING *)
 
@@ -267,9 +287,9 @@ let expr state buffer : mode =
 (* DIRECTIVES *)
 
 let directives = [
-  "if"; "else"; "elif"; "endif"; "define"; "undef";
-  "error"; (*"warning";*) "line"; "region"; "endregion";
-  "include"]
+  "define"; "elif"; "else"; "endif"; "endregion"; "error";
+  "if"; "include"; "line"; "region"; "undef" (* "warning" *)
+]
 
 (* END OF HEADER *)
 }
@@ -303,10 +323,10 @@ let directive = '#' (blank* as space) (small+ as id)
    directives read so far.
 
    The first call is [scan {env=Env.empty; mode=Copy; offset = Prefix
-   0; trace=[]}], meaning that we start with an empty environment,
-   that copying the input is enabled by default, and that we are at
-   the start of a line and no previous conditional directives have
-   been read yet.
+   0; trace=[]; incl=[]; opt}], meaning that we start with an empty
+   environment, that copying the input is enabled by default, and that
+   we are at the start of a line and no previous conditional
+   directives have been read yet. The field [opt] is the CLI options.
 
    When an "#if" is matched, the trace is extended by the call [extend
    lexbuf (If mode) trace], during the evaluation of which the
@@ -405,7 +425,7 @@ let directive = '#' (blank* as space) (small+ as id)
    Important note: Comments and strings are recognised as such only in
    copy mode, which is a different behaviour from the preprocessor of
    GNU GCC, which always does.
- *)
+*)
 
 rule scan state = parse
   nl    { proc_nl state lexbuf;
@@ -422,14 +442,18 @@ rule scan state = parse
     match id with
       "include" ->
         let line = Lexing.(lexbuf.lex_curr_p.pos_lnum)
-        and file = Lexing.(lexbuf.lex_curr_p.pos_fname)
-                   |> Filename.basename
-        and incl_file = scan_inclusion state lexbuf in
+        and file = Lexing.(lexbuf.lex_curr_p.pos_fname) in
+        let base = Filename.basename file
+        and dir  = Filename.dirname file
+        and reg, incl_file = scan_inclusion state lexbuf in
         print state (sprintf "# 1 \"%s\" 1\n" incl_file);
-        let incl_chan = open_in incl_file in
+        let incl_chan =
+          match find dir incl_file state.opt#libs with
+            Some channel -> channel
+          | None -> stop (File_not_found incl_file) state reg in
         let state = {state with incl = incl_chan::state.incl} in
         cat state (Lexing.from_channel incl_chan);
-        print state (sprintf "# %i \"%s\" 2\n" (line+1) file);
+        print state (sprintf "# %i \"%s\" 2" (line+1) base);
         scan state lexbuf
     | "if" ->
         let mode  = expr state lexbuf in
@@ -454,9 +478,8 @@ rule scan state = parse
                        if old_mode = Copy then mode else Skip
         in scan {state with mode; offset = Prefix 0; trace} lexbuf
     | "endif" ->
-        let () = skip_line state lexbuf in
-        let trace, mode = reduce_cond state region
-        in scan {state with mode; offset = Prefix 0; trace} lexbuf
+        skip_line state lexbuf;
+        scan (reduce_cond state region) lexbuf
     | "define" ->
         let id, region = variable state lexbuf in
         if id="true" || id="false"
@@ -497,10 +520,7 @@ rule scan state = parse
         let msg = message [] lexbuf
         in expand_offset state;
            print state ("#" ^ space ^ "endregion" ^ msg ^ "\n");
-           let state =
-             {state with offset = Prefix 0;
-                         trace  = reduce_reg state region}
-           in scan state lexbuf
+           scan (reduce_region state region) lexbuf
     | "line" ->
         expand_offset state;
         print state ("#" ^ space ^ "line");
@@ -529,7 +549,17 @@ rule scan state = parse
             begin
               expand_offset state;
               copy state lexbuf;
-              in_block_com (mk_reg lexbuf) state lexbuf
+              if state.opt#lang = EvalOpt.ReasonLIGO then
+                reasonLIGO_com (mk_reg lexbuf) state lexbuf
+            end;
+          scan {state with offset=Inline} lexbuf }
+| "(*"  { if state.mode = Copy then
+            begin
+              expand_offset state;
+              copy state lexbuf;
+              if state.opt#lang = EvalOpt.CameLIGO
+               || state.opt#lang = EvalOpt.PascaLIGO then
+                cameLIGO_com (mk_reg lexbuf) state lexbuf
             end;
           scan {state with offset=Inline} lexbuf }
 | _     { if state.mode = Copy then
@@ -546,7 +576,7 @@ and variable state = parse
            in skip_line state lexbuf; id }
 
 and symbol state = parse
-  ident as id { id, mk_reg lexbuf                      }
+  ident as id { id, mk_reg lexbuf                }
 | _           { fail Invalid_symbol state lexbuf }
 
 
@@ -561,19 +591,19 @@ and line_indicator state = parse
     match id with
       "default" | "hidden" ->
         print state (id ^ message [] lexbuf)
-    | _ -> fail (Invalid_line_indicator id) state lexbuf }
-| _ { fail No_line_indicator state lexbuf }
+    | _ -> fail (Invalid_line_indicator id) state lexbuf   }
+| _ { fail No_line_indicator state lexbuf                  }
 
 and end_indicator state = parse
-  blank+ { copy state lexbuf; end_indicator state lexbuf  }
-| nl     { proc_nl state lexbuf                           }
-| eof    { copy state lexbuf                              }
+  blank+ { copy state lexbuf; end_indicator state lexbuf }
+| nl     { proc_nl state lexbuf                          }
+| eof    { copy state lexbuf                             }
 | "//"   { copy state lexbuf;
-           print state (message [] lexbuf ^ "\n")         }
+           print state (message [] lexbuf ^ "\n")        }
 | '"'    { copy state lexbuf;
            in_string (mk_reg lexbuf) state lexbuf;
-           opt_line_com state lexbuf                      }
-| _      { fail End_line_indicator state lexbuf     }
+           opt_line_com state lexbuf                     }
+| _      { fail End_line_indicator state lexbuf          }
 
 and opt_line_com state = parse
   nl     { proc_nl state lexbuf                         }
@@ -584,11 +614,11 @@ and opt_line_com state = parse
 (* New lines and verbatim sequence of characters *)
 
 and skip_line state = parse
-  nl     { proc_nl state lexbuf                             }
-| blank+ { skip_line state lexbuf                           }
-| "//"   { in_line_com {state with mode=Skip} lexbuf        }
+  nl     { proc_nl state lexbuf                       }
+| blank+ { skip_line state lexbuf                     }
+| "//"   { in_line_com {state with mode=Skip} lexbuf  }
 | _      { fail No_line_comment_or_blank state lexbuf }
-| eof    { ()                                               }
+| eof    { ()                                         }
 
 and message acc = parse
   nl     { Lexing.new_line lexbuf;
@@ -604,11 +634,17 @@ and in_line_com state = parse
 | _   { if state.mode = Copy then copy state lexbuf;
         in_line_com state lexbuf                     }
 
-and in_block_com opening state = parse
-  nl   { proc_nl state lexbuf; in_block_com opening state lexbuf }
+and reasonLIGO_com opening state = parse
+  nl   { proc_nl state lexbuf; reasonLIGO_com opening state lexbuf }
 | "*/" { copy state lexbuf                                       }
-| eof  { stop Open_comment state opening                   }
-| _    { copy state lexbuf; in_block_com opening state lexbuf    }
+| eof  { stop Open_comment state opening                         }
+| _    { copy state lexbuf; reasonLIGO_com opening state lexbuf    }
+
+and cameLIGO_com opening state = parse
+  nl   { proc_nl state lexbuf; cameLIGO_com opening state lexbuf }
+| "*)" { copy state lexbuf                                       }
+| eof  { stop Open_comment state opening                         }
+| _    { copy state lexbuf; cameLIGO_com opening state lexbuf    }
 
 (* Include a file *)
 
@@ -623,19 +659,21 @@ and scan_inclusion state = parse
 | '"'    { in_inclusion (mk_reg lexbuf) [] 0 state lexbuf }
 
 and in_inclusion opening acc len state = parse
-  '"'    { mk_str len acc                                     }
-| nl     { fail Newline_in_string state lexbuf          }
-| eof    { stop Open_string state opening               }
+  '"'    { let closing = mk_reg lexbuf
+           in Region.cover opening closing,
+              mk_str len acc                                  }
+| nl     { fail Newline_in_string state lexbuf                }
+| eof    { stop Open_string state opening                     }
 | _ as c { in_inclusion opening (c::acc) (len+1) state lexbuf }
 
 (* Strings *)
 
 and in_string opening state = parse
-  "\\\"" { copy state lexbuf; in_string opening state lexbuf  }
-| '"'    { copy state lexbuf                                  }
-| nl     { fail Newline_in_string state lexbuf          }
-| eof    { stop Open_string state opening               }
-| _      { copy state lexbuf; in_string opening state lexbuf  }
+  "\\\"" { copy state lexbuf; in_string opening state lexbuf }
+| '"'    { copy state lexbuf                                 }
+| nl     { fail Newline_in_string state lexbuf               }
+| eof    { stop Open_string state opening                    }
+| _      { copy state lexbuf; in_string opening state lexbuf }
 
 
 {
@@ -645,14 +683,15 @@ and in_string opening state = parse
    the trace is empty at the end.  Note that we discard the state at
    the end. *)
 
-let lex buffer : Buffer.t =
+let lex opt buffer : Buffer.t =
   let state = {
     env    = Env.empty;
     mode   = Copy;
     offset = Prefix 0;
     trace  = [];
     out    = Buffer.create 80;
-    incl   = []
+    incl   = [];
+    opt
   } in
   let state = scan state buffer in
   let () = List.iter close_in state.incl

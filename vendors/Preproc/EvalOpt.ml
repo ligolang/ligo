@@ -41,7 +41,7 @@ let help () =
   printf "Usage: %s [<option> ...] <input>\n" file;
   printf "where <input> is the source file,\n";
   print "and each <option> (if any) is one of the following:";
-  print "  -I <paths>             Library paths (colon-separated)";
+  print "  -I <paths>             Inclusion paths (colon-separated)";
   print "             --columns   Columns for source locations";
   print "  -h,        --help      This help";
   exit 0
