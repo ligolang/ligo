@@ -230,6 +230,106 @@ xy_translate "({x:2,y:3,z:1}, {dx:3,dy:4})"
 You have to understand that `p` has not been changed by the functional
 update: a nameless new version of it has been created and returned.
 
+#### Nested updates
+
+A unique feature of LIGO is the ability to perform nested updates on records.
+
+For example if you have the following record structure:
+
+<Syntax syntax="pascaligo">
+
+```pascaligo
+type color is 
+| Blue 
+| Green
+
+type preferences is record [
+  color : color; 
+  other : int;
+]
+
+type account is record [
+  id : int; 
+  preferences : preferences;
+]
+```
+
+</Syntax>
+<Syntax syntax="cameligo">
+
+```cameligo
+type color = 
+  Blue 
+| Green
+
+type preferences = {
+  color : color;
+  other : int;
+}
+
+type account = {
+  id: int;
+  preferences: preferences;
+}
+```
+
+</Syntax>
+<Syntax syntax="reasonligo">
+
+```reasonligo
+type color = 
+  Blue 
+| Green;
+
+type preferences = {
+  color : color,
+  other : int
+}
+
+type account = {
+  id : int, 
+  preferences : preferences
+}
+```
+
+</Syntax>
+
+You can update the nested record with the following code:
+
+<Syntax syntax="pascaligo">
+
+```pascaligo
+
+function change_color_preference (const account : account; const color : color ) : account is 
+  block {
+      account := account with record [preferences.color = color] 
+  } with account
+  
+```
+
+</Syntax>
+<Syntax syntax="cameligo">
+
+```cameligo
+let change_color_preference (account : account) (color : color) : account = 
+  { account with preferences.color = color }
+```
+
+</Syntax>
+<Syntax syntax="reasonligo">
+
+```reasonligo
+let change_color_preference = (account : account, color : color): account => 
+  { ...account, preferences.color: color };
+```
+
+</Syntax>
+
+Note that all the records in the path will get updated. In this example that's
+`account` and `preferences`.
+
+<Syntax syntax="pascaligo">
+
 ### Record Patches
 
 Another way to understand what it means to update a record value is to
@@ -317,6 +417,8 @@ xy_translate "(record [x=2;y=3;z=1], record [dx=3;dy=4])"
 ```
 
 The hiding of a variable by another (here `p`) is called `shadowing`.
+
+</Syntax>
 
 ## Maps
 
