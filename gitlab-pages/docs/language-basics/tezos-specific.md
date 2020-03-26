@@ -11,10 +11,11 @@ functions. This page will tell you about them.
 
 ## Pack and Unpack
 
-Michelson provides the `PACK` and `UNPACK` instructions for data
-serialization.  The former converts Michelson data structures into a
-binary format, and the latter reverses that transformation. This
-functionality can be accessed from within LIGO.
+As Michelson provides the `PACK` and `UNPACK` instructions for data
+serialization, so does LIGO with `Bytes.pack` and `Bytes.unpack`.  The
+former serializes Michelson data structures into a binary format, and
+the latter reverses that transformation. Unpacking may fail, so the
+return type of `Byte.unpack` is an option that needs to be annotated.
 
 > ⚠️ `PACK` and `UNPACK` are Michelson instructions that are intended
 > to be used by people that really know what they are doing. There are
@@ -28,11 +29,11 @@ functionality can be accessed from within LIGO.
 
 ```pascaligo group=a
 function id_string (const p : string) : option (string) is block {
-  const packed : bytes = bytes_pack (p)
+  const packed : bytes = Bytes.pack (p)
 } with (Bytes.unpack (packed) : option (string))
 ```
 
-> Note that `bytes_unpack` is *deprecated*.
+> Note that `bytes_pack` and `bytes_unpack` are *deprecated*.
 
 </Syntax>
 <Syntax syntax="cameligo">
@@ -72,18 +73,21 @@ a predefined functions returning a value of type `key_hash`.
 function check_hash_key (const kh1 : key_hash; const k2 : key) : bool * key_hash is
   block {
     var ret : bool := False;
-    var kh2 : key_hash := crypto_hash_key (k2);
+    var kh2 : key_hash := Crypto.hash_key (k2);
     if kh1 = kh2 then ret := True else skip
   } with (ret, kh2)
 ```
+
+> Note that `hash_key` is *deprecated*. Please use `Crypto.hash_key`.
+
 
 </Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo group=b
 let check_hash_key (kh1, k2 : key_hash * key) : bool * key_hash =
-  let kh2 : key_hash = Crypto.hash_key k2 in
-  if kh1 = kh2 then true, kh2 else false, kh2
+  let kh2 : key_hash = Crypto.hash_key k2 in 
+  (kh1 = kh2), kh2
 ```
 
 </Syntax>
@@ -92,7 +96,7 @@ let check_hash_key (kh1, k2 : key_hash * key) : bool * key_hash =
 ```reasonligo group=b
 let check_hash_key = ((kh1, k2) : (key_hash, key)) : (bool, key_hash) => {
   let kh2 : key_hash = Crypto.hash_key (k2);
-  if (kh1 == kh2) { (true, kh2); } else { (false, kh2); }
+  ((kh1 == kh2), kh2);
 };
 ```
 

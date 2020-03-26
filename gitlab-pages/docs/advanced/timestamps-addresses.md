@@ -11,12 +11,12 @@ LIGO features timestamps, as Michelson does, while bakers baking the
 block (including the transaction in a block) are responsible for
 providing the given current timestamp for the contract.
 
-### Current Time
+### Starting time of the current block
 
-You can obtain the current time using the built-in syntax specific
-expression, please be aware that it is up to the baker to set the
+You can obtain the starting time of the current block using the 
+built-in `Tezos.now`. This timestamp does not change during the execution 
+of the contract. Please be aware that it is up to the baker to set the
 current timestamp value.
-
 
 <Syntax syntax="pascaligo">
 
@@ -62,20 +62,20 @@ constraints on your smart contracts. Consider the following scenarios.
 
 ```pascaligo group=b
 const today : timestamp = Tezos.now
-const one_day : int = 86400
+const one_day : int = 86_400
 const in_24_hrs : timestamp = today + one_day
 const some_date : timestamp = ("2000-01-01T10:10:10Z" : timestamp)
 const one_day_later : timestamp = some_date + one_day
 ```
 
-> Note that `now` is *deprecated*.
+> Note that `now` is *deprecated*. Please use `Tezos.now`.
 
 </Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo group=b
 let today : timestamp = Tezos.now
-let one_day : int = 86400
+let one_day : int = 86_400
 let in_24_hrs : timestamp = today + one_day
 let some_date : timestamp = ("2000-01-01t10:10:10Z" : timestamp)
 let one_day_later : timestamp = some_date + one_day
@@ -88,7 +88,7 @@ let one_day_later : timestamp = some_date + one_day
 
 ```reasonligo group=b
 let today : timestamp = Tezos.now;
-let one_day : int = 86400;
+let one_day : int = 86_400;
 let in_24_hrs : timestamp = today + one_day;
 let some_date : timestamp = ("2000-01-01t10:10:10Z" : timestamp);
 let one_day_later : timestamp = some_date + one_day;
@@ -110,7 +110,7 @@ const one_day : int = 86400
 const in_24_hrs : timestamp = today - one_day
 ```
 
-> Note that `now` is *deprecated*.
+> Note that `now` is *deprecated*. Please use `Tezos.now`.
 
 </Syntax>
 <Syntax syntax="cameligo">
@@ -149,7 +149,7 @@ applying to numbers.
 const not_tommorow : bool = (Tezos.now = in_24_hrs)
 ```
 
-> Note that `now` is *deprecated*.
+> Note that `now` is *deprecated*. Please use `Tezos.now`.
 
 </Syntax>
 <Syntax syntax="cameligo">
