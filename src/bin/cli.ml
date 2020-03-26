@@ -167,8 +167,8 @@ let print_cst =
 let print_ast =
   let f source_file syntax display_format  = (
     toplevel ~display_format @@
-    let%bind core = Compile.Utils.to_core source_file syntax in
-    ok @@ Format.asprintf "%a\n" Compile.Of_core.pretty_print core
+    let%bind imperative = Compile.Utils.to_imperatve source_file syntax in
+    ok @@ Format.asprintf "%a\n" Compile.Of_imperative.pretty_print imperative
   )
   in
   let term = Term.(const f $ source_file 0 $ syntax $ display_format) in
@@ -176,7 +176,31 @@ let print_ast =
   let doc = "Subcommand: Print the AST.\n Warning: Intended for development of LIGO and can break at any time." in
   (Term.ret term, Term.info ~doc cmdname)
 
-let print_typed_ast =
+let print_ast_sugar =
+  let f source_file syntax display_format  = (
+    toplevel ~display_format @@
+    let%bind sugar = Compile.Utils.to_sugar source_file syntax in
+    ok @@ Format.asprintf "%a\n" Compile.Of_sugar.pretty_print sugar
+  )
+  in
+  let term = Term.(const f $ source_file 0 $ syntax $ display_format) in
+  let cmdname = "print-ast-sugar" in
+  let doc = "Subcommand: Print the AST.\n Warning: Intended for development of LIGO and can break at any time." in
+  (Term.ret term, Term.info ~doc cmdname)
+
+let print_ast_core =
+  let f source_file syntax display_format  = (
+    toplevel ~display_format @@
+    let%bind core = Compile.Utils.to_core source_file syntax in
+    ok @@ Format.asprintf "%a\n" Compile.Of_core.pretty_print core
+  )
+  in
+  let term = Term.(const f $ source_file 0 $ syntax $ display_format) in
+  let cmdname = "print-ast-core" in
+  let doc = "Subcommand: Print the AST.\n Warning: Intended for development of LIGO and can break at any time." in
+  (Term.ret term, Term.info ~doc cmdname)
+
+let print_ast_typed =
   let f source_file syntax display_format  = (
     toplevel ~display_format @@
     let%bind typed,_    = Compile.Utils.type_file source_file syntax Env in
@@ -184,7 +208,7 @@ let print_typed_ast =
   )
   in
   let term = Term.(const f $ source_file 0 $ syntax $ display_format) in
-  let cmdname = "print-typed-ast" in
+  let cmdname = "print-ast-typed" in
   let doc = "Subcommand: Print the typed AST.\n Warning: Intended for development of LIGO and can break at any time." in
   (Term.ret term, Term.info ~doc cmdname)
 
@@ -441,7 +465,9 @@ let run ?argv () =
     dump_changelog ;
     print_cst ;
     print_ast ;
-    print_typed_ast ;
+    print_ast_sugar ;
+    print_ast_core ;
+    print_ast_typed ;
     print_mini_c ;
     list_declarations ;
   ]

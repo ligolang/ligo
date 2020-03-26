@@ -989,21 +989,43 @@ a:hover {
   }
 }
 
-
-/* ReasonLIGO specific syntax highlighting */
-.language-reasonligo .hljs-operator {
-  color: #a626a4;
-}
-.language-reasonligo .hljs-character {
-  color: #50a14f;
-}
-.language-reasonligo .hljs-module-identifier {
-  color: #00f;
-}
-.language-reasonligo .hljs-constructor {
-  color: #a31515;
-}
-
 .badge {
   display: none;
 }
+
+.codeTable {
+  display: grid; 
+  grid-template-columns: 30% 70%;
+  align-items: center;
+}
+
+.codeTable > .primitive {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: right;
+  text-align: right;
+  align-items: center;
+  font-weight: bold;
+  padding-right: 1rem;
+}
+
+
+.codeTable >  div:nth-child(4n+1) {
+  background-color: var(--ifm-table-stripe-background);
+}
+
+.codeTable >  div:nth-child(4n+2) {
+  background-color: var(--ifm-table-stripe-background);
+}
+
+
+.codeTable > .example {
+  padding-top: var(--ifm-leading);  
+}
+
+.codeTable > .example pre,
+.codeTable > .example .codeBlockLines_src-theme-CodeBlock- {
+  background-color: transparent;
+}
+
