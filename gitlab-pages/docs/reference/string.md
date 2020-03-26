@@ -73,8 +73,8 @@ val sub : nat -> nat -> string -> string
 let sub: (nat, nat, string) => string
 </SyntaxTitle>
 
-Get the substring of `s` between `pos1` inclusive and `pos2` inclusive. For example
-the string "tata" given to the function below would return "at".
+Extract a substring from a string based on the given offset and length. For 
+example the string "abcd" given to the function below would return "bc".
 
 
 <Syntax syntax="pascaligo">
