@@ -57,6 +57,18 @@ let%expect_test _ =
                Subcommand: Print the AST. Warning: Intended for development of
                LIGO and can break at any time.
 
+           print-ast-core
+               Subcommand: Print the AST. Warning: Intended for development of
+               LIGO and can break at any time.
+
+           print-ast-sugar
+               Subcommand: Print the AST. Warning: Intended for development of
+               LIGO and can break at any time.
+
+           print-ast-typed
+               Subcommand: Print the typed AST. Warning: Intended for development
+               of LIGO and can break at any time.
+
            print-cst
                Subcommand: Print the CST. Warning: Intended for development of
                LIGO and can break at any time.
@@ -64,10 +76,6 @@ let%expect_test _ =
            print-mini-c
                Subcommand: Print Mini-C. Warning: Intended for development of
                LIGO and can break at any time.
-
-           print-typed-ast
-               Subcommand: Print the typed AST. Warning: Intended for development
-               of LIGO and can break at any time.
 
            run-function
                Subcommand: Run a function with the given parameter.
@@ -136,6 +144,18 @@ let%expect_test _ =
                Subcommand: Print the AST. Warning: Intended for development of
                LIGO and can break at any time.
 
+           print-ast-core
+               Subcommand: Print the AST. Warning: Intended for development of
+               LIGO and can break at any time.
+
+           print-ast-sugar
+               Subcommand: Print the AST. Warning: Intended for development of
+               LIGO and can break at any time.
+
+           print-ast-typed
+               Subcommand: Print the typed AST. Warning: Intended for development
+               of LIGO and can break at any time.
+
            print-cst
                Subcommand: Print the CST. Warning: Intended for development of
                LIGO and can break at any time.
@@ -143,10 +163,6 @@ let%expect_test _ =
            print-mini-c
                Subcommand: Print Mini-C. Warning: Intended for development of
                LIGO and can break at any time.
-
-           print-typed-ast
-               Subcommand: Print the typed AST. Warning: Intended for development
-               of LIGO and can break at any time.
 
            run-function
                Subcommand: Run a function with the given parameter.

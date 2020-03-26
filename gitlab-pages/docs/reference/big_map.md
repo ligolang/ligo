@@ -8,12 +8,16 @@ hide_table_of_contents: true
 import Syntax from '@theme/Syntax';
 import SyntaxTitle from '@theme/SyntaxTitle';
 
-A lazily deserialized map that's intended to store large amounts of data.
+A lazily deserialized map that's intended to store large amounts of data. 
+Lazily means that storage is read or written per key on demand. Therefore 
+there are no `map`, `fold`, and `iter` operations as in 
+[Map](./map-reference).
 
-The gast costs of deserialized maps are higher than standard maps as data is lazily deserialized.
+The gast costs of big maps are higher than standard maps as data is lazily 
+deserialized.
 
 <SyntaxTitle syntax="pascaligo">
-type big_map (key, value)
+type big_map ('key, 'value)
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 type ('key, 'value) big_map
@@ -45,24 +49,27 @@ type register = (address, move) big_map
 
 </Syntax>
 <Syntax syntax="reasonligo">
+
 The type of a big map from values of type `key` to
-values of type `value` is `big_map (key, value)`.
+values of type `value` is `big_map(key, value)`.
 
 ```reasonligo group=big_map
 type move = (int, int);
-type register = big_map (address, move);
+type register = big_map(address, move);
 ```
 
 </Syntax>
 
+Be aware that a `big_map` cannot appear inside another `big_map`.
+
 <SyntaxTitle syntax="pascaligo">
-function empty : big_map (key, value)
+function empty : big_map ('key, 'value)
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val empty : ('key, 'value) big_map
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
-let empty: big_map ('key, 'value)
+let empty: big_map('key, 'value)
 </SyntaxTitle>
 
 Create an empty big_map.
@@ -90,14 +97,14 @@ let empty : register = Big_map.empty
 <Syntax syntax="reasonligo">
 
 ```reasonligo group=big_map
-let empty : register = Big_map.empty
+let empty: register = Big_map.empty
 ```
 
 </Syntax>
 
 
 <SyntaxTitle syntax="pascaligo">
-function literal : list (key * value) -> big_map (key, value) 
+function literal : list ('key * 'value) -> big_map ('key, 'value) 
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val literal : ('key * 'value) list -> ('key, 'value) big_map
@@ -140,7 +147,7 @@ let moves : register =
 <Syntax syntax="reasonligo">
 
 ```reasonligo group=big_map
-let moves : register =
+let moves: register =
   Big_map.literal ([
     ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address, (1,2)),
     ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" : address, (0,3))]);
@@ -149,13 +156,13 @@ let moves : register =
 </Syntax>
 
 <SyntaxTitle syntax="pascaligo">
-function find_opt : key -> big_map (key, value) -> option value
+function find_opt : 'key -> big_map ('key, 'value) -> option 'value
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val find_opt : 'key -> ('key, 'value) big_map -> 'value option
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
-let find_opt : ('key, big_map ('key, 'value)) => option ('value)
+let find_opt: ('key, big_map ('key, 'value)) => option ('value)
 </SyntaxTitle>
 
 Retrieve a value from a big map with the given key. 
@@ -190,20 +197,20 @@ let my_balance : move option =
 <Syntax syntax="reasonligo">
 
 ```reasonligo group=big_map
-let my_balance : option (move) =
-  Big_map.find_opt ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" : address, moves);
+let my_balance: option (move) =
+  Big_map.find_opt("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address, moves);
 ```
 
 </Syntax>
 
 <SyntaxTitle syntax="pascaligo">
-function update : key -> option value -> big_map (key, value) -> big_map (key, value)
+function update : 'key -> option 'value -> big_map ('key, 'value) -> big_map ('key, 'value)
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val update: 'key -> 'value option -> ('key, 'value) big_map -> ('key, 'value) big_map
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
-let update: ('key, option('value), big_map ('key, 'value)) => big_map ('key, 'value)
+let update: ('key, option('value), big_map('key, 'value)) => big_map('key, 'value)
 </SyntaxTitle>
 
 Note: when `None` is used as a value, the value is removed from the big_map.
@@ -254,15 +261,15 @@ let updated_map : register =
 <Syntax syntax="reasonligo">
 
 ```reasonligo group=big_map
-let updated_map : register =
+let updated_map: register =
   Big_map.update
-    (("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address), Some ((4,9)), moves);
+    (("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address), Some((4,9)), moves);
 ```
 
 </Syntax>
 
 <SyntaxTitle syntax="pascaligo">
-function add : key -> value -> big_map (key, value) -> big_map (key, value)
+function add : 'key -> 'value -> big_map ('key, 'value) -> big_map ('key, 'value)
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val add : 'key -> 'value -> ('key, 'value) big_map  -> ('key, 'value) big_map
@@ -291,20 +298,20 @@ let add (m : register) : register =
 ```reasonligo group=big_map
 let add = (m: register): register =>
   Big_map.add
-    (("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" : address), (4,9), m);
+    (("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address), (4,9), m);
 ```
 
 </Syntax>
 
 
 <SyntaxTitle syntax="pascaligo">
-function remove: key -> big_map (key, value) -> big_map (key, value)
+function remove: 'key -> big_map ('key, 'value) -> big_map ('key, 'value)
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val remove: 'key -> ('key, 'value) big_map -> ('key, 'value) big_map
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
-let remove: (key, big_map ('key, 'value)) => big_map ('key, 'value)
+let remove: ('key, big_map('key, 'value)) => big_map('key, 'value)
 </SyntaxTitle>
 
 <Syntax syntax="pascaligo">
@@ -339,8 +346,8 @@ let updated_map : register =
 <Syntax syntax="reasonligo">
 
 ```reasonligo group=big_map
-let updated_map : register =
-  Big_map.remove (("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address), moves)
+let updated_map: register =
+  Big_map.remove(("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address), moves)
 ```
 
 </Syntax>

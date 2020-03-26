@@ -4,8 +4,7 @@ open Trace
 open Test_helpers
 
 let type_file f =
-  let%bind simplified  = Ligo.Compile.Of_source.compile f (Syntax_name "pascaligo") in
-  let%bind typed,state = Ligo.Compile.Of_simplified.compile (Contract "main") simplified in
+  let%bind typed,state = Ligo.Compile.Utils.type_file f "pascaligo" (Contract "main") in
   ok @@ (typed,state)
 
 let get_program =
@@ -20,16 +19,15 @@ let get_program =
       )
 
 let compile_main () = 
-  let%bind simplified      = Ligo.Compile.Of_source.compile "./contracts/coase.ligo" (Syntax_name "pascaligo") in
-  let%bind typed_prg,_     = Ligo.Compile.Of_simplified.compile (Contract "main") simplified in
-  let%bind mini_c_prg      = Ligo.Compile.Of_typed.compile typed_prg in
-  let%bind michelson_prg   = Ligo.Compile.Of_mini_c.aggregate_and_compile_contract mini_c_prg "main" in
+  let%bind typed_prg      = get_program () in
+  let%bind mini_c_prg     = Ligo.Compile.Of_typed.compile typed_prg in
+  let%bind michelson_prg  = Ligo.Compile.Of_mini_c.aggregate_and_compile_contract mini_c_prg "main" in
   let%bind (_contract: Tezos_utils.Michelson.michelson) =
     (* fails if the given entry point is not a valid contract *)
     Ligo.Compile.Of_michelson.build_contract michelson_prg in
   ok ()
 
-open Ast_simplified
+open Ast_imperative
 
 let card owner =
   e_record_ez [
@@ -222,15 +220,16 @@ let sell () =
       let storage = basic 100 1000 cards (2 * n) in
       e_pair sell_action storage
     in
-    let make_expecter : int -> expression -> unit result = fun n result ->
-      let%bind (ops , storage) = get_e_pair result.expression_content in
+    let make_expecter : int -> Ast_core.expression -> unit result = fun n result ->
+      let%bind (ops , storage) = Ast_core.get_e_pair result.expression_content in
       let%bind () =
-        let%bind lst = get_e_list ops.expression_content in
+        let%bind lst = Ast_core.get_e_list ops.expression_content in
         Assert.assert_list_size lst 1 in
       let expected_storage =
         let cards = List.hds @@ cards_ez first_owner n in
         basic 99 1000 cards (2 * n) in
-      Ast_simplified.Misc.assert_value_eq (expected_storage , storage)
+      let%bind expected_storage = Test_helpers.expression_to_core expected_storage in
+      Ast_core.Misc.assert_value_eq (expected_storage , storage)
     in
     let%bind () =
       let amount = Memory_proto_alpha.Protocol.Alpha_context.Tez.zero in

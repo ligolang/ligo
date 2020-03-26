@@ -23,55 +23,55 @@ let parsify_pascaligo source =
   let%bind raw =
     trace (simple_error "parsing") @@
     Parser.Pascaligo.parse_file source in
-  let%bind simplified =
-    trace (simple_error "simplifying") @@
-      Simplify.Pascaligo.simpl_program raw
-  in ok simplified
+  let%bind imperative =
+    trace (simple_error "abstracting") @@
+      Concrete_to_imperative.Pascaligo.compile_program raw
+  in ok imperative
 
 let parsify_expression_pascaligo source =
   let%bind raw =
     trace (simple_error "parsing expression") @@
     Parser.Pascaligo.parse_expression source in
-  let%bind simplified =
-    trace (simple_error "simplifying expression") @@
-    Simplify.Pascaligo.simpl_expression raw
-  in ok simplified
+  let%bind imperative =
+    trace (simple_error "abstracting expression") @@
+    Concrete_to_imperative.Pascaligo.compile_expression raw
+  in ok imperative
 
 let parsify_cameligo source =
   let%bind raw =
     trace (simple_error "parsing") @@
     Parser.Cameligo.parse_file source in
-  let%bind simplified =
-    trace (simple_error "simplifying") @@
-    Simplify.Cameligo.simpl_program raw
-  in ok simplified
+  let%bind imperative =
+    trace (simple_error "abstracting") @@
+    Concrete_to_imperative.Cameligo.compile_program raw
+  in ok imperative
 
 let parsify_expression_cameligo source =
   let%bind raw =
     trace (simple_error "parsing expression") @@
     Parser.Cameligo.parse_expression source in
-  let%bind simplified =
-    trace (simple_error "simplifying expression") @@
-    Simplify.Cameligo.simpl_expression raw
-  in ok simplified
+  let%bind imperative =
+    trace (simple_error "abstracting expression") @@
+    Concrete_to_imperative.Cameligo.compile_expression raw
+  in ok imperative
 
 let parsify_reasonligo source =
   let%bind raw =
     trace (simple_error "parsing") @@
     Parser.Reasonligo.parse_file source in
-  let%bind simplified =
-    trace (simple_error "simplifying") @@
-    Simplify.Cameligo.simpl_program raw
-  in ok simplified
+  let%bind imperative =
+    trace (simple_error "abstracting") @@
+    Concrete_to_imperative.Cameligo.compile_program raw
+  in ok imperative
 
 let parsify_expression_reasonligo source =
   let%bind raw =
     trace (simple_error "parsing expression") @@
     Parser.Reasonligo.parse_expression source in
-  let%bind simplified =
-    trace (simple_error "simplifying expression") @@
-    Simplify.Cameligo.simpl_expression raw
-  in ok simplified
+  let%bind imperative =
+    trace (simple_error "abstracting expression") @@
+    Concrete_to_imperative.Cameligo.compile_expression raw
+  in ok imperative
 
 let parsify syntax source =
   let%bind parsify =
@@ -80,7 +80,7 @@ let parsify syntax source =
     | CameLIGO   -> ok parsify_cameligo
     | ReasonLIGO -> ok parsify_reasonligo in
   let%bind parsified = parsify source in
-  let%bind applied = Self_ast_simplified.all_program parsified
+  let%bind applied = Self_ast_imperative.all_program parsified
   in ok applied
 
 let parsify_expression syntax source =
@@ -89,35 +89,35 @@ let parsify_expression syntax source =
   | CameLIGO   -> ok parsify_expression_cameligo
   | ReasonLIGO -> ok parsify_expression_reasonligo in
   let%bind parsified = parsify source in
-  let%bind applied = Self_ast_simplified.all_expression parsified
+  let%bind applied = Self_ast_imperative.all_expression parsified
   in ok applied
 
 let parsify_string_reasonligo source =
   let%bind raw =
     trace (simple_error "parsing") @@
     Parser.Reasonligo.parse_string source in
-  let%bind simplified =
-    trace (simple_error "simplifying") @@
-    Simplify.Cameligo.simpl_program raw
-  in ok simplified
+  let%bind imperative =
+    trace (simple_error "abstracting") @@
+    Concrete_to_imperative.Cameligo.compile_program raw
+  in ok imperative
 
 let parsify_string_pascaligo source =
   let%bind raw =
     trace (simple_error "parsing") @@
     Parser.Pascaligo.parse_string source in
-  let%bind simplified =
-    trace (simple_error "simplifying") @@
-    Simplify.Pascaligo.simpl_program raw
-  in ok simplified
+  let%bind imperative =
+    trace (simple_error "abstracting") @@
+    Concrete_to_imperative.Pascaligo.compile_program raw
+  in ok imperative
 
 let parsify_string_cameligo source =
   let%bind raw =
     trace (simple_error "parsing") @@
     Parser.Cameligo.parse_string source in
-  let%bind simplified =
-    trace (simple_error "simplifying") @@
-    Simplify.Cameligo.simpl_program raw
-  in ok simplified
+  let%bind imperative =
+    trace (simple_error "abstracting") @@
+    Concrete_to_imperative.Cameligo.compile_program raw
+  in ok imperative
 
 let parsify_string syntax source =
   let%bind parsify =
@@ -126,7 +126,7 @@ let parsify_string syntax source =
     | CameLIGO   -> ok parsify_string_cameligo
     | ReasonLIGO -> ok parsify_string_reasonligo in
   let%bind parsified = parsify source in
-  let%bind applied = Self_ast_simplified.all_program parsified
+  let%bind applied = Self_ast_imperative.all_program parsified
   in ok applied
 
 let pretty_print_pascaligo source =
