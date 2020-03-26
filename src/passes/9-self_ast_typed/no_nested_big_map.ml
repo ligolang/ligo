@@ -18,7 +18,7 @@ let rec check_no_nested_bigmap is_in_bigmap e =
   | T_operator (TC_big_map (_, _)) when is_in_bigmap  -> 
     fail @@ Errors.no_nested_bigmap
   | T_operator (TC_big_map (key, value)) -> 
-    let%bind _ = check_no_nested_bigmap true key in
+    let%bind _ = check_no_nested_bigmap false key in
     let%bind _ = check_no_nested_bigmap true value in
     ok ()
   | T_operator (TC_contract t)
@@ -27,10 +27,13 @@ let rec check_no_nested_bigmap is_in_bigmap e =
   | T_operator (TC_set t) ->
     let%bind _ = check_no_nested_bigmap is_in_bigmap t in
     ok ()
-  | T_operator (TC_map (a, b))
-  | T_operator (TC_arrow (a, b)) -> 
+  | T_operator (TC_map (a, b)) ->
     let%bind _ = check_no_nested_bigmap is_in_bigmap a in
     let%bind _ = check_no_nested_bigmap is_in_bigmap b in
+    ok ()
+  | T_operator (TC_arrow (a, b)) -> 
+    let%bind _ = check_no_nested_bigmap false a in
+    let%bind _ = check_no_nested_bigmap false b in
     ok ()
   | T_sum s -> 
     let es = CMap.to_list s in
@@ -41,8 +44,8 @@ let rec check_no_nested_bigmap is_in_bigmap e =
     let%bind _ = bind_map_list (fun l -> check_no_nested_bigmap is_in_bigmap l) es in
     ok ()
   | T_arrow { type1; type2 } -> 
-    let%bind _ = check_no_nested_bigmap is_in_bigmap type1 in
-    let%bind _ = check_no_nested_bigmap is_in_bigmap type2 in
+    let%bind _ = check_no_nested_bigmap false type1 in    
+    let%bind _ = check_no_nested_bigmap false type2 in
     ok ()
   | T_variable _
   | T_constant _ -> 
