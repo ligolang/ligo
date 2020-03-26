@@ -465,8 +465,16 @@ rule scan state = parse
           match find dir incl_file state.opt#libs with
             Some channel -> channel
           | None -> stop (File_not_found incl_file) state reg in
+        let incl_buf = Lexing.from_channel incl_chan in
+        let () =
+          let open Lexing in
+          incl_buf.lex_curr_p <-
+            {incl_buf.lex_curr_p with pos_fname = incl_file} in
         let state = {state with incl = incl_chan::state.incl} in
-        cat state (Lexing.from_channel incl_chan); (* TODO *)
+        let state' =
+          {state with env=Env.empty; mode=Copy; trace=[]} in
+        let state' = scan state' incl_buf in
+        let state = {state with incl = state'.incl} in
         print state (sprintf "# %i \"%s\" 2" (line+1) base);
         scan state lexbuf
     | "if" ->
