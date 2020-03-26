@@ -4,19 +4,23 @@
 
 type language = PascaLIGO | CameLIGO | ReasonLIGO
 
+module SSet = Set.Make (String)
+
 type options = <
   input   : string;
   libs    : string list;
   lang    : language;
-  offsets : bool
+  offsets : bool;
+  verbose : SSet.t
 >
 
-let make ~input ~libs ~lang ~offsets =
+let make ~input ~libs ~lang ~offsets ~verbose =
   object
     method input   = input
     method libs    = libs
     method lang    = lang
     method offsets = offsets
+    method verbose = verbose
   end
 
 (* Auxiliary functions and modules *)
@@ -42,8 +46,9 @@ let help () =
   printf "where <input> is the source file,\n";
   print "and each <option> (if any) is one of the following:";
   print "  -I <paths>             Inclusion paths (colon-separated)";
-  print "             --columns   Columns for source locations";
-  print "  -h,        --help      This help";
+  print "      --columns          Columns for source locations";
+  print "      --verbose=<stages> preproc";
+  print "  -h, --help             This help";
   exit 0
 
 (* Specifying the command-line options a la GNU *)
@@ -52,16 +57,23 @@ let input    = ref None
 and libs     = ref []
 and lang     = ref None
 and columns  = ref false
+and verbose  = ref SSet.empty
+and verb_str = ref ""
 
 let split_at_colon = Str.(split (regexp ":"))
 
 let add_path p = libs := !libs @ split_at_colon p
 
+let add_verbose d =
+  verbose := List.fold_left (fun x y -> SSet.add y x)
+                            !verbose
+                            (split_at_colon d)
 let specs =
   let open!Getopt in [
     'I',     nolong,    None, Some add_path;
     'h',     "help",    Some help, None;
-    noshort, "columns", set columns true, None
+    noshort, "columns", set columns true, None;
+    noshort, "verbose", None, Some add_verbose
   ]
 
 (* Handler of anonymous arguments *)
@@ -84,6 +96,8 @@ let check () =
 
   and offsets = not !columns
 
+  and verbose = !verbose
+
   and lang =
     match !lang with
       Some lang -> lang
@@ -94,12 +108,16 @@ let check () =
       Some file -> file
     | None -> abort "Missing input file."
 
- in make ~input ~libs ~lang ~offsets
+ in make ~input ~libs ~lang ~offsets ~verbose
 
 (* Parsing the command-line options *)
 
 let read () =
   try
     Getopt.parse_cmdline specs anonymous;
+    (verb_str :=
+       let apply e a =
+         if a = "" then e else sprintf "%s, %s" e a
+       in SSet.fold apply !verbose "");
     check ()
   with Getopt.Error msg -> abort msg

@@ -31,7 +31,7 @@ type error = Invalid_character of char
 
 let error_to_string = function
     Invalid_character c ->
-      sprintf "Invalid character '%c' (%d).\n" c (Char.code c)
+      sprintf "Invalid character '%c' (%d)." c (Char.code c)
 
 let format ?(offsets=true) Region.{region; value} ~file =
   let msg   = error_to_string value

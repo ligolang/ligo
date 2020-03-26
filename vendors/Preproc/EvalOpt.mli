@@ -4,11 +4,14 @@
 
 type language = PascaLIGO | CameLIGO | ReasonLIGO
 
+module SSet : Set.S with type elt = string
+
 type options = <
   input   : string;
   libs    : string list;
   lang    : language;
-  offsets : bool
+  offsets : bool;
+  verbose : SSet.t
 >
 
 val make :
@@ -16,6 +19,7 @@ val make :
   libs:string list ->
   lang:language ->
   offsets:bool ->
+  verbose:SSet.t ->
   options
 
 (* Parsing the command-line options on stdin. The first parameter is

@@ -105,6 +105,7 @@ type error =
 | No_line_comment_or_blank
 | Invalid_symbol
 | File_not_found of string
+| Invalid_character of char
 
 let error_to_string = function
   Invalid_directive name ->
@@ -167,6 +168,8 @@ let error_to_string = function
     "Expected a symbol (identifier)."
 | File_not_found name ->
     sprintf "File \"%s\" to include not found." name
+| Invalid_character c ->
+    E_Lexer.error_to_string (E_Lexer.Invalid_character c)
 
 let format ?(offsets=true) Region.{region; value} ~file =
   let msg   = error_to_string value
@@ -174,14 +177,20 @@ let format ?(offsets=true) Region.{region; value} ~file =
   let value = sprintf "Preprocessing error %s:\n%s" reg msg
   in Region.{value; region}
 
-exception Error of Buffer.t * error Region.reg
+exception Error of (Buffer.t * error Region.reg)
 
 let mk_reg buffer =
   let start  = Lexing.lexeme_start_p buffer |> Pos.from_byte
   and stop   = Lexing.lexeme_end_p buffer |> Pos.from_byte
   in Region.make ~start ~stop
 
-let stop value state region = raise (Error (state.out, Region.{region; value}))
+(* IMPORTANT : Make sure the function [stop] remains the only one
+   raising [Error]. *)
+
+let stop value state region =
+  List.iter close_in state.incl;
+  raise (Error (state.out, Region.{region; value}))
+
 let fail error state buffer = stop error state (mk_reg buffer)
 
 (* The function [reduce_cond] is called when a #endif directive is
@@ -277,10 +286,12 @@ let expand_offset state =
 let expr state buffer : mode =
   let ast =
     try E_Parser.expr E_Lexer.scan buffer with
-      E_Parser.Error ->
-        let region = mk_reg buffer in
-        let value  = Parse_error
-        in raise (Error (state.out, Region.{value; region})) in
+      E_Lexer.Error Region.{value; region} ->
+        (match value with
+           E_Lexer.Invalid_character c ->
+             stop (Invalid_character c) state region)
+    | E_Parser.Error ->
+        fail Parse_error state buffer in
   let () = print state "\n" in
   if eval state.env ast then Copy else Skip
 
@@ -431,8 +442,11 @@ rule scan state = parse
   nl    { proc_nl state lexbuf;
           scan {state with offset = Prefix 0} lexbuf }
 | blank { match state.offset with
-            Prefix n -> scan {state with offset = Prefix (n+1)} lexbuf
-          |   Inline -> copy state lexbuf; scan state lexbuf }
+            Prefix n ->
+              scan {state with offset = Prefix (n+1)} lexbuf
+          | Inline ->
+              if state.mode = Copy then copy state lexbuf;
+              scan state lexbuf }
 | directive {
     if   not (List.mem id directives)
     then fail (Invalid_directive id) state lexbuf;
@@ -452,7 +466,7 @@ rule scan state = parse
             Some channel -> channel
           | None -> stop (File_not_found incl_file) state reg in
         let state = {state with incl = incl_chan::state.incl} in
-        cat state (Lexing.from_channel incl_chan);
+        cat state (Lexing.from_channel incl_chan); (* TODO *)
         print state (sprintf "# %i \"%s\" 2" (line+1) base);
         scan state lexbuf
     | "if" ->
@@ -496,19 +510,6 @@ rule scan state = parse
         in scan state lexbuf
     | "error" ->
         stop (Error_directive (message [] lexbuf)) state region
-(*
-    | "warning" ->
-        let start_p, end_p = region in
-        let msg = message [] lexbuf in
-        let open Lexing
-        in prerr_endline
-             ("Warning at line " ^ string_of_int start_p.pos_lnum
-             ^ ", char "
-             ^ string_of_int (start_p.pos_cnum - start_p.pos_bol)
-             ^ "--" ^ string_of_int (end_p.pos_cnum - end_p.pos_bol)
-             ^ ":\n" ^ msg);
-           scan env mode (Prefix 0) trace lexbuf
- *)
     | "region" ->
         let msg = message [] lexbuf
         in expand_offset state;
@@ -526,6 +527,19 @@ rule scan state = parse
         print state ("#" ^ space ^ "line");
         line_ind state lexbuf;
         scan {state with offset = Prefix 0} lexbuf
+(*
+    | "warning" ->
+        let start_p, end_p = region in
+        let msg = message [] lexbuf in
+        let open Lexing
+        in prerr_endline
+             ("Warning at line " ^ string_of_int start_p.pos_lnum
+             ^ ", char "
+             ^ string_of_int (start_p.pos_cnum - start_p.pos_bol)
+             ^ "--" ^ string_of_int (end_p.pos_cnum - end_p.pos_bol)
+             ^ ":\n" ^ msg);
+           scan env mode (Prefix 0) trace lexbuf
+ *)
     | _ -> assert false
   }
 | eof   { match state.trace with
@@ -636,8 +650,8 @@ and in_line_com state = parse
 
 and reasonLIGO_com opening state = parse
   nl   { proc_nl state lexbuf; reasonLIGO_com opening state lexbuf }
-| "*/" { copy state lexbuf                                       }
-| eof  { stop Open_comment state opening                         }
+| "*/" { copy state lexbuf                                         }
+| eof  { stop Open_comment state opening                           }
 | _    { copy state lexbuf; reasonLIGO_com opening state lexbuf    }
 
 and cameLIGO_com opening state = parse
@@ -683,7 +697,7 @@ and in_string opening state = parse
    the trace is empty at the end.  Note that we discard the state at
    the end. *)
 
-let lex opt buffer : Buffer.t =
+let lex opt buffer =
   let state = {
     env    = Env.empty;
     mode   = Copy;
@@ -693,9 +707,10 @@ let lex opt buffer : Buffer.t =
     incl   = [];
     opt
   } in
-  let state = scan state buffer in
-  let () = List.iter close_in state.incl
-in state.out
+  match scan state buffer with
+    state -> List.iter close_in state.incl;
+             Stdlib.Ok state.out
+  | exception Error e -> Stdlib.Error e
 
 (* END OF TRAILER *)
 }

@@ -13,15 +13,12 @@ match open_in options#input with
       buffer.lex_curr_p <-
         {buffer.lex_curr_p with pos_fname = options#input} in
     match Preproc.lex options buffer with
-      pp -> print_string (Buffer.contents pp)
-    | exception E_Lexer.Error err ->
-        let formatted =
-          E_Lexer.format ~offsets:options#offsets ~file:true err
-        in highlight formatted.Region.value
-    | exception Preproc.Error (_out, err) ->
+      Stdlib.Ok pp_buffer -> print_string (Buffer.contents pp_buffer)
+    | Stdlib.Error (pp_buffer, err) ->
         let formatted =
           Preproc.format ~offsets:options#offsets ~file:true err in
         begin
-(*          print_string (Buffer.contents out);*)
+          if EvalOpt.SSet.mem "preproc" options#verbose then
+            Printf.printf "%s\n%!" (Buffer.contents pp_buffer);
           highlight formatted.Region.value
         end

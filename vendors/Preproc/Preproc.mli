@@ -34,15 +34,17 @@ type error =
 | No_line_comment_or_blank
 | Invalid_symbol
 | File_not_found of string
+| Invalid_character of char
 
 val format :
   ?offsets:bool -> error Region.reg -> file:bool -> string Region.reg
 
-(* Preprocessing a lexing buffer (might raise [Error]). *)
+(* Preprocessing a lexing buffer *)
 
-exception Error of Buffer.t * error Region.reg
-
-val lex : EvalOpt.options -> Lexing.lexbuf -> Buffer.t
+val lex :
+  EvalOpt.options ->
+  Lexing.lexbuf ->
+  (Buffer.t, Buffer.t * error Region.reg) Stdlib.result
 
 (* Evaluation of boolean expressions *)
 

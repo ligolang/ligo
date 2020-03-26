@@ -10,6 +10,8 @@ val string_of_token : E_Parser.token -> string
 
 type error = Invalid_character of char
 
+val error_to_string : error -> string
+
 val format :
   ?offsets:bool -> error Region.reg -> file:bool -> string Region.reg
 
