@@ -445,8 +445,12 @@ fun_expr:
 
     let rec arg_to_pattern = function
       EVar v ->
-        Scoping.check_reserved_name v;
-        PVar v
+        if v.value = "_" then 
+          PWild v.region
+        else (
+          Scoping.check_reserved_name v;
+          PVar v
+        )
     | EAnnot {region; value = {inside = EVar v, colon, typ; _}} ->
         Scoping.check_reserved_name v;
         let value = {pattern = PVar v; colon; type_expr = typ}
@@ -778,6 +782,7 @@ common_expr:
 | "<nat>"                             {               EArith (Nat $1) }
 | "<bytes>"                           {                     EBytes $1 }
 | "<ident>" | module_field            {                       EVar $1 }
+| "_"                                 {   EVar {value = "_"; region = $1} }
 | projection                          {                      EProj $1 }
 | update_record                       {                    EUpdate $1 }
 | "<string>"                          {           EString (String $1) }

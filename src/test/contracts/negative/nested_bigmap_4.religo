@@ -3,7 +3,7 @@ type storage = map (int, big_map (nat, big_map (int, string)));
 
 type return = (list (operation), storage);
 
-let main = ((ignore, store): (unit, storage)): return  => {
+let main = ((_, store): (unit, storage)): return  => {
     ([]: list(operation), store)
 };
   
