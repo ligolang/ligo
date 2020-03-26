@@ -6,7 +6,7 @@ let all_expression_mapper = [
   Literals.peephole_expression ;
 ]
 let all_type_expression_mapper = [
-  Entrypoints_lenght_limit.peephole_type_expression ;
+  Entrypoints_length_limit.peephole_type_expression ;
 ]
 
 let all_exp = List.map (fun el -> Helpers.Expression el) all_expression_mapper

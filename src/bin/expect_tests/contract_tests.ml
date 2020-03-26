@@ -1344,4 +1344,56 @@ let%expect_test _ =
     * Visit our documentation: https://ligolang.org/docs/intro/what-and-why/
     * Ask a question on our Discord: https://discord.gg/9rhYaEt
     * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
+    * Check the changelog by running 'ligo changelog' |}];
+
+  run_ligo_bad ["compile-contract"; bad_contract "nested_bigmap_1.religo"; "main"];
+  [%expect {|
+    ligo: It looks like you have nested a big map inside another big map. This is not supported. :  {}
+
+
+     If you're not sure how to fix this error, you can
+     do one of the following:
+
+    * Visit our documentation: https://ligolang.org/docs/intro/what-and-why/
+    * Ask a question on our Discord: https://discord.gg/9rhYaEt
+    * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
+    * Check the changelog by running 'ligo changelog' |}];
+
+  run_ligo_bad ["compile-contract"; bad_contract "nested_bigmap_2.religo"; "main"];
+  [%expect {|
+    ligo: It looks like you have nested a big map inside another big map. This is not supported. :  {}
+
+
+     If you're not sure how to fix this error, you can
+     do one of the following:
+
+    * Visit our documentation: https://ligolang.org/docs/intro/what-and-why/
+    * Ask a question on our Discord: https://discord.gg/9rhYaEt
+    * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
+    * Check the changelog by running 'ligo changelog' |}];
+  
+  run_ligo_bad ["compile-contract"; bad_contract "nested_bigmap_3.religo"; "main"];
+  [%expect {|
+    ligo: It looks like you have nested a big map inside another big map. This is not supported. :  {}
+
+
+     If you're not sure how to fix this error, you can
+     do one of the following:
+
+    * Visit our documentation: https://ligolang.org/docs/intro/what-and-why/
+    * Ask a question on our Discord: https://discord.gg/9rhYaEt
+    * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
+    * Check the changelog by running 'ligo changelog' |}];
+
+  run_ligo_bad ["compile-contract"; bad_contract "nested_bigmap_4.religo"; "main"];
+  [%expect {|
+    ligo: It looks like you have nested a big map inside another big map. This is not supported. :  {}
+
+
+     If you're not sure how to fix this error, you can
+     do one of the following:
+
+    * Visit our documentation: https://ligolang.org/docs/intro/what-and-why/
+    * Ask a question on our Discord: https://discord.gg/9rhYaEt
+    * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
     * Check the changelog by running 'ligo changelog' |}]
