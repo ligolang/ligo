@@ -19,9 +19,12 @@ type type_constant =
     | TC_timestamp
     | TC_void
 
-type type_content =
-  | T_sum of type_expression constructor_map
-  | T_record of type_expression label_map
+type te_cmap = type_expression constructor_map
+and te_lmap = type_expression label_map
+
+and type_content =
+  | T_sum of te_cmap
+  | T_record of te_lmap
   | T_arrow of arrow
   | T_variable of type_variable
   | T_constant of type_constant
@@ -29,7 +32,7 @@ type type_content =
 
 and arrow = {
     type1: type_expression;
-    type2: type_expression
+    type2: type_expression;
   }
 
 and type_map_args = {
@@ -56,7 +59,7 @@ and type_operator =
 
 and type_expression = {
     type_content: type_content;
-    type_meta: type_meta
+    type_meta: type_meta;
   }
 
 type literal =
@@ -74,7 +77,7 @@ type literal =
   | Literal_key_hash of string
   | Literal_chain_id of string
   | Literal_void
-  | Literal_operation of Memory_proto_alpha.Protocol.Alpha_context.packed_internal_operation
+  | Literal_operation of packed_internal_operation
 
 type matching_content_bool = {
     match_true : expression ;
@@ -104,10 +107,13 @@ and matching_content_option = {
     match_some : matching_content_some ;
   }
 
+and expression_variable_list = expression_variable list
+and type_expression_list = type_expression list
+
 and matching_content_tuple = {
-    vars : expression_variable list ;
+    vars : expression_variable_list ;
     body : expression ;
-    tvs : type_expression list ;
+    tvs : type_expression_list ;
   }
 
 and matching_content_case = {
@@ -115,12 +121,15 @@ and matching_content_case = {
     pattern : expression_variable ;
     body : expression ;
   }
+
+and matching_content_case_list = matching_content_case list
+
 and matching_content_variant = {
-    cases: matching_content_case list;
+    cases: matching_content_case_list;
     tv: type_expression;
   }
 
-and matching_content =
+and matching_expr =
   | Match_bool    of matching_content_bool
   | Match_list    of matching_content_list
   | Match_option  of matching_content_option
@@ -242,14 +251,14 @@ and constant' =
   | C_SET_DELEGATE
   | C_CREATE_CONTRACT
 
-and program = declaration Location.wrap list
+and declaration_loc = declaration location_wrap
 
-and inline = bool
+and program = declaration_loc list
 
 and declaration_constant = {
     binder : expression_variable ;
     expr : expression ;
-    inline : inline ;
+    inline : bool ;
     post_env : full_environment ;
   }
 
@@ -268,7 +277,7 @@ and declaration =
 
 and expression = {
     expression_content: expression_content ;
-    location: Location.t ;
+    location: location ;
     type_expression: type_expression ;
     environment: full_environment ;
   }
@@ -283,6 +292,9 @@ and look_up = {
     ind : expression;
   }
 
+and expression_label_map = expression label_map
+and map_kv_list = map_kv list
+and expression_list = expression list
 
 and expression_content =
   (* Base *)
@@ -297,13 +309,14 @@ and expression_content =
   | E_constructor of constructor (* For user defined constructors *)
   | E_matching of matching
   (* Record *)
-  | E_record of expression label_map
+  | E_record of expression_label_map
   | E_record_accessor of record_accessor
   | E_record_update   of record_update
 
-and constant =
-  { cons_name: constant'
-  ; arguments: expression list }
+and constant = {
+    cons_name: constant' ;
+    arguments: expression_list ;
+  }
 
 and application = {
   lamb: expression ;
@@ -321,7 +334,7 @@ and let_in = {
     let_binder: expression_variable ;
     rhs: expression ;
     let_result: expression ;
-    inline : inline ;
+    inline : bool ;
   }
 
 and recursive = {
@@ -346,10 +359,9 @@ and record_update = {
     update: expression ;
   }
 
-and matching_expr = matching_content
-and matching =
-  { matchee: expression
-  ; cases: matching_expr
+and matching = {
+    matchee: expression ;
+    cases: matching_expr ;
   }
 
 and ascription = {
@@ -394,13 +406,10 @@ and small_environment = {
   type_environment: type_environment ;
 }
 
-and full_environment = small_environment List.Ne.t
-
-and expr = expression
-
-and texpr = type_expression
+and full_environment = small_environment list_ne
 
 and named_type_content = {
     type_name : type_variable;
     type_value : type_expression;
   }
+

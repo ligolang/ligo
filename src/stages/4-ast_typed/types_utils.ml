@@ -21,3 +21,22 @@ module LMap = Map.Make( struct type t = label let compare (Label a) (Label b) = 
 type 'a label_map = 'a LMap.t
 type 'a constructor_map = 'a CMap.t
 type type_meta = S.type_expression option
+
+type 'a location_wrap = 'a Location.wrap
+type 'a list_ne = 'a List.Ne.t
+type packed_internal_operation = Memory_proto_alpha.Protocol.Alpha_context.packed_internal_operation
+type location = Location.t
+type inline = bool
+
+let fold_map__constructor_map : 'a . 'a constructor_map -> 'state -> ('a -> 'state -> 'new_a * 'state) -> 'new_a constructor_map * 'state = fun _ _ _ -> failwith "TODO fold_map__constructor_map"
+
+let fold_map__label_map : 'a . 'a label_map -> 'state -> ('a -> 'state -> 'new_a * 'state) -> 'new_a label_map * 'state = fun _ _ _ -> failwith "TODO fold_map__label_map"
+
+let fold_map__list : 'a . 'a list -> 'state -> ('a -> 'state -> 'new_a * 'state) -> 'new_a list * 'state = fun l state f ->
+  let aux (state, l) element = let (new_element, state) = f element state in (state, new_element::l) in
+  let (state, l) = List.fold_left aux (state, []) l in
+  (l, state)
+
+let fold_map__location_wrap : 'a . 'a location_wrap -> 'state -> ('a -> 'state -> 'new_a * 'state) -> 'new_a location_wrap * 'state = fun _ _ _ -> failwith "TODO fold_map__location_wrap"
+
+let fold_map__list_ne : 'a . 'a list_ne -> 'state -> ('a -> 'state -> 'new_a * 'state) -> 'new_a list_ne * 'state = fun _ _ _ -> failwith "TODO fold_map__location_wrap"

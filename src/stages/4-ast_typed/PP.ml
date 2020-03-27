@@ -284,7 +284,7 @@ and expression_content ppf (ec: expression_content) =
 and assoc_expression ppf : map_kv -> unit =
  fun {k ; v} -> fprintf ppf "%a -> %a" expression k expression v
 
-and single_record_patch ppf ((p, expr) : label * expr) =
+and single_record_patch ppf ((p, expr) : label * expression) =
   fprintf ppf "%a <- %a" label p expression expr
 
 
@@ -298,7 +298,7 @@ and matching_variant_case : (_ -> expression -> unit) -> _ -> matching_content_c
   fun f ppf {constructor=c; pattern; body} ->
   fprintf ppf "| %a %a -> %a" constructor c expression_variable pattern f body
 
-and matching : (formatter -> expression -> unit) -> _ -> matching_content -> unit = fun f ppf m -> match m with
+and matching : (formatter -> expression -> unit) -> _ -> matching_expr -> unit = fun f ppf m -> match m with
   | Match_tuple {vars; body; tvs=_} ->
       fprintf ppf "let (%a) = %a" (list_sep_d expression_variable) vars f body
   | Match_variant {cases ; tv=_} ->

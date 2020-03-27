@@ -880,7 +880,7 @@ and type_expression : environment -> Solver.state -> ?tv_opt:O.type_expression -
       let%bind (ex' , state') = type_expression e state matchee in
       let%bind (m' , state'') = type_match e state' ex'.type_expression cases ae ae.location in
       let tvs =
-        let aux (cur : O.matching_content) =
+        let aux (cur : O.matching_expr) =
           match cur with
           | Match_bool { match_true ; match_false } -> [ match_true ; match_false ]
           | Match_list { match_nil ; match_cons = { hd=_ ; tl=_ ; body ; tv=_} } -> [ match_nil ; body ]

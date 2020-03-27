@@ -8,15 +8,12 @@ let () =
   let op = {
       no_op with
       a = fun the_a (*_info*) state continue_fold ->
-          let (a1' , state') = continue_fold.ta1 the_a.a1 state in
-          let (a2' , state'') = continue_fold.ta2 the_a.a2 state' in
-          ({
-              a1' = a1' ;
-              a2' = a2' ;
-            }, state'' + 1)
+          let (a1__' , state') = continue_fold.ta1 the_a.a1 state in
+          let (a2__' , state'') = continue_fold.ta2 the_a.a2 state' in
+          ({ a1__' ; a2__' }, state'' + 1)
     } in
   let state = 0 in
-  let (_, state) = fold_map_root op some_root state in
+  let (_, state) = fold_map__root op some_root state in
   if state != 2 then
     failwith (Printf.sprintf "Test failed: expected folder to count 2 nodes, but it counted %d nodes" state)
   else
@@ -24,9 +21,9 @@ let () =
 
 let () =
   let some_root : root = A [{ a1 = X (A [{ a1 = X (B [1;2;3]) ; a2 = W () ; }]) ; a2 = Z (W ()) ; }] in
-  let op = { no_op with a_pre_state = fun _the_a (*_info*) state -> state + 1 } in
+  let op = { no_op with a__pre_state = fun _the_a (*_info*) state -> state + 1 } in
   let state = 0 in
-  let (_, state) = fold_map_root op some_root state in
+  let (_, state) = fold_map__root op some_root state in
   if state != 2 then
     failwith (Printf.sprintf "Test failed: expected folder to count 2 nodes, but it counted %d nodes" state)
   else
@@ -34,9 +31,9 @@ let () =
 
 let () =
   let some_root : root = A [{ a1 = X (A [{ a1 = X (B [1;2;3]) ; a2 = W () ; }]) ; a2 = Z (W ()) ; }] in
-  let op = { no_op with a_post_state = fun _the_a _new_a (*_info*) state -> state + 1 } in
+  let op = { no_op with a__post_state = fun _the_a _new_a (*_info*) state -> state + 1 } in
   let state = 0 in
-  let (_, state) = fold_map_root op some_root state in
+  let (_, state) = fold_map__root op some_root state in
   if state != 2 then
     failwith (Printf.sprintf "Test failed: expected folder to count 2 nodes, but it counted %d nodes" state)
   else
@@ -75,7 +72,7 @@ let () =
        *     (_, _, { name=_; isBuiltin=_; type_=_; continue }) -> state ^ "ctor_or_field [" ^ (continue "") ^ "]"
        * ); *)
     } in
-  let (_ , state) = fold_root op some_root nostate in
+  let (_ , state) = fold__root op some_root nostate in
   let expected = "A [ { a1 = X (A [ { a1 = X (B [ 1 ; 2 ; 3 ]) ; a2 = W () } ]) ; a2 = Z (W ()) } ]" in
   if String.equal state expected; then
     ()

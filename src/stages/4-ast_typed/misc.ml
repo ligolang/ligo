@@ -232,7 +232,7 @@ module Free_variables = struct
   and matching_variant_case : (bindings -> expression -> bindings) -> bindings -> matching_content_case -> bindings  = fun f b { constructor=_ ; pattern ; body } ->
     f (union (singleton pattern) b) body
 
-  and matching : (bindings -> expression -> bindings) -> bindings -> matching_content -> bindings = fun f b m ->
+  and matching : (bindings -> expression -> bindings) -> bindings -> matching_expr -> bindings = fun f b m ->
     match m with
     | Match_bool { match_true = t ; match_false = fa } -> union (f b t) (f b fa)
     | Match_list { match_nil = n ; match_cons = {hd; tl; body; tv=_} } -> union (f b n) (f (union (of_list [hd ; tl]) b) body)
