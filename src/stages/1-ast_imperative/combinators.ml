@@ -130,6 +130,11 @@ let e_binop ?loc name a b  = make_expr ?loc @@ E_constant {cons_name = name ; ar
 let e_constant ?loc name lst = make_expr ?loc @@ E_constant {cons_name=name ; arguments = lst}
 let e_look_up ?loc x y = make_expr ?loc @@ E_look_up (x , y)
 let e_sequence ?loc expr1 expr2 = make_expr ?loc @@ E_sequence {expr1; expr2}
+
+let e_while ?loc condition body = make_expr ?loc @@ E_while {condition; body}
+let e_for ?loc binder start final increment body = make_expr ?loc @@ E_for {binder;start;final;increment;body}
+let e_for_each ?loc binder collection collection_type body = make_expr ?loc @@ E_for_each {binder;collection;collection_type;body}
+
 let e_cond ?loc expr match_true match_false = e_matching expr ?loc (Match_bool {match_true; match_false})
 (*
 let e_assign ?loc a b c = location_wrap ?loc @@ E_assign (Var.of_name a , b , c) (* TODO handlethat*)

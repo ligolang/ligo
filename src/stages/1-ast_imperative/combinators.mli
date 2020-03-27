@@ -115,6 +115,9 @@ val e_assign_with_let : ?loc:Location.t -> string -> string list -> expression -
 (*
 val get_e_accessor : expression' -> ( expression * access_path ) result
 *)
+val e_while  : ?loc:Location.t -> expression -> expression -> expression
+val e_for     : ?loc:Location.t -> expression_variable -> expression -> expression -> expression -> expression -> expression
+val e_for_each : ?loc:Location.t -> expression_variable * expression_variable option -> expression -> collect_type -> expression -> expression
 
 val assert_e_accessor : expression_content -> unit result
 

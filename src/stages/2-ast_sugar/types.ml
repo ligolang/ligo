@@ -76,11 +76,13 @@ and recursive = {
   lambda : lambda;
 }
 
-and let_in =
-  { let_binder: expression_variable * type_expression option
-  ; rhs: expression
-  ; let_result: expression
-  ; inline: bool }
+and let_in = { 
+  let_binder: expression_variable * type_expression option ;
+  rhs: expression ;
+  let_result: expression ;
+  inline: bool ;
+  mut: bool;
+  }
 
 and constructor = {constructor: constructor'; element: expression}
 
