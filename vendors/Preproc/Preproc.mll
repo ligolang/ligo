@@ -65,7 +65,20 @@ in function
 |    Ident id -> Env.mem id env
 
 (* The type [state] groups the information that needs to be threaded
-   along the scanning functions. *)
+   along the scanning functions:
+     * the field [env] records the symbols defined;
+     * the field [mode] informs whether the preprocessor is in copying or
+       skipping mode;
+     * the field [offset] tells whether the current location can be
+       reached from the start of the line with only white space;
+     * the field [trace] is a stack of previous, still active conditional
+       directives;
+     * the field [out] keeps the output buffer;
+     * the field [incl] is a list of opened input channels (#include);
+     * the field [opt] holds the CLI options;
+     * the field [dir] is the file system's path to the the current input
+       file.
+*)
 
 type state = {
   env    : Env.t;
@@ -74,8 +87,17 @@ type state = {
   trace  : trace;
   out    : Buffer.t;
   incl   : in_channel list;
-  opt    : EvalOpt.options
+  opt    : EvalOpt.options;
+  dir    : string list
 }
+
+(* Directories *)
+
+let push_dir dir state =
+  if dir = "." then state else {state with dir = dir :: state.dir}
+
+let mk_path state =
+  String.concat Filename.dir_sep (List.rev state.dir)
 
 (* ERRORS *)
 
@@ -240,13 +262,17 @@ let rec last_mode = function
 let rec find base = function
          [] -> None
 | dir::dirs ->
-    let path = dir ^ Filename.dir_sep ^ base in
-    try Some (open_in path) with
+    let path =
+      if dir = "." || dir = "" then base
+      else dir ^ Filename.dir_sep ^ base in
+    try Some (path, open_in path) with
       Sys_error _ -> find base dirs
 
-let find dir file libs : in_channel option =
-  let path = dir ^ Filename.dir_sep ^ file in
-  try Some (open_in path) with
+let find dir file libs =
+  let path =
+    if dir = "." || dir = "" then file
+    else dir ^ Filename.dir_sep ^ file in
+  try Some (path, open_in path) with
     Sys_error _ ->
       let base = Filename.basename file in
       if base = file then find file libs else None
@@ -439,7 +465,7 @@ let directive = '#' (blank* as space) (small+ as id)
 *)
 
 rule scan state = parse
-  nl    { proc_nl state lexbuf;
+  nl    { expand_offset state; proc_nl state lexbuf;
           scan {state with offset = Prefix 0} lexbuf }
 | blank { match state.offset with
             Prefix n ->
@@ -458,24 +484,30 @@ rule scan state = parse
         let line = Lexing.(lexbuf.lex_curr_p.pos_lnum)
         and file = Lexing.(lexbuf.lex_curr_p.pos_fname) in
         let base = Filename.basename file
-        and dir  = Filename.dirname file
+        (*        and dir  = Filename.dirname file*)
         and reg, incl_file = scan_inclusion state lexbuf in
-        print state (sprintf "# 1 \"%s\" 1\n" incl_file);
-        let incl_chan =
-          match find dir incl_file state.opt#libs with
-            Some channel -> channel
+        let incl_dir = Filename.dirname incl_file in
+        let path = mk_path state in
+        let incl_path, incl_chan =
+          match find path incl_file state.opt#libs with
+            Some p -> p
           | None -> stop (File_not_found incl_file) state reg in
         let incl_buf = Lexing.from_channel incl_chan in
         let () =
           let open Lexing in
           incl_buf.lex_curr_p <-
             {incl_buf.lex_curr_p with pos_fname = incl_file} in
-        let state = {state with incl = incl_chan::state.incl} in
+        let state  = {state with incl = incl_chan::state.incl} in
         let state' =
           {state with env=Env.empty; mode=Copy; trace=[]} in
+        let state' = push_dir incl_dir state' in
+        print state (sprintf "\n# 1 \"%s\" 1\n" incl_path);
         let state' = scan state' incl_buf in
-        let state = {state with incl = state'.incl} in
-        print state (sprintf "# %i \"%s\" 2" (line+1) base);
+        let state  = {state with incl = state'.incl} in
+        let path =
+          if path = "" then base
+          else path ^ Filename.dir_sep ^ base in
+        print state (sprintf "\n# %i \"%s\" 2" (line+1) path);
         scan state lexbuf
     | "if" ->
         let mode  = expr state lexbuf in
@@ -668,12 +700,6 @@ and cameLIGO_com opening state = parse
 | eof  { stop Open_comment state opening                         }
 | _    { copy state lexbuf; cameLIGO_com opening state lexbuf    }
 
-(* Include a file *)
-
-and cat state = parse
-  eof { ()                                  }
-| _   { copy state lexbuf; cat state lexbuf }
-
 (* Included filename *)
 
 and scan_inclusion state = parse
@@ -713,7 +739,8 @@ let lex opt buffer =
     trace  = [];
     out    = Buffer.create 80;
     incl   = [];
-    opt
+    opt;
+    dir    = []
   } in
   match scan state buffer with
     state -> List.iter close_in state.incl;

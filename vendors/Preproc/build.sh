@@ -1,25 +1,22 @@
 #!/bin/sh
 set -x
-ocamllex.opt Escan.mll
+ocamllex.opt E_Lexer.mll
 ocamllex.opt Preproc.mll
-menhir -la 1 Eparser.mly
-ocamlfind ocamlopt -strict-sequence -w +A-48-4 -c EvalOpt.mli
-ocamlfind ocamlopt -strict-sequence -w +A-48-4 -c EvalOpt.ml
-ocamlfind ocamlopt -strict-sequence -w +A-48-4 -c Etree.ml
-ocamlfind ocamlopt -strict-sequence -w +A-48-4 -c Error.ml
-ocamlfind ocamlopt -strict-sequence -w +A-48-4 -c Etree.ml
-ocamlfind ocamlopt -strict-sequence -w +A-48-4 -c Error.ml
-ocamlfind ocamlc -strict-sequence -w +A-48-4 -c Eparser.mli
-camlcmd="ocamlfind ocamlc -I _i686 -strict-sequence -w +A-48-4   "
-menhir --infer --ocamlc="$camlcmd" Eparser.mly
-ocamlfind ocamlopt -strict-sequence -w +A-48-4 -c Escan.ml
-ocamlfind ocamlopt -strict-sequence -w +A-48-4 -c Eparser.ml
-ocamlfind ocamlopt -strict-sequence -w +A-48-4 -c Preproc.ml
-ocamlfind ocamlopt -strict-sequence -w +A-48-4 -c Escan.ml
-ocamlfind ocamlopt -strict-sequence -w +A-48-4 -c Preproc.ml
-ocamlfind ocamlopt -strict-sequence -w +A-48-4 -c EMain.ml
-ocamlfind ocamlopt -strict-sequence -w +A-48-4 -c EMain.ml
-ocamlfind ocamlopt -o EMain.opt EvalOpt.cmx Etree.cmx Eparser.cmx Error.cmx Escan.cmx Preproc.cmx EMain.cmx
-ocamlfind ocamlopt -strict-sequence -w +A-48-4 -c ProcMain.ml
-ocamlfind ocamlopt -strict-sequence -w +A-48-4 -c ProcMain.ml
-ocamlfind ocamlopt -o ProcMain.opt EvalOpt.cmx Etree.cmx Eparser.cmx Error.cmx Escan.cmx Preproc.cmx ProcMain.cmx
+menhir -la 1 E_Parser.mly
+ocamlfind ocamlc -strict-sequence -w +A-48-4 -c EvalOpt.mli
+ocamlfind ocamlc -strict-sequence -w +A-48-4 -c E_AST.ml
+ocamlfind ocamlc -strict-sequence -w +A-48-4 -c E_Parser.mli
+ocamlfind ocamlc -strict-sequence -w +A-48-4 -package simple-utils -c E_Lexer.mli
+ocamlfind ocamlc -strict-sequence -w +A-48-4 -package simple-utils -c E_LexerMain.ml
+camlcmd="ocamlfind ocamlc -I _x86_64 -strict-sequence -w +A-48-4   "
+ocamlfind ocamlc -strict-sequence -w +A-48-4 -package getopt,str -c EvalOpt.ml
+ocamlfind ocamlc -strict-sequence -w +A-48-4 -package simple-utils -c E_Lexer.ml
+menhir --infer --ocamlc="$camlcmd" E_Parser.mly
+ocamlfind ocamlc -strict-sequence -w +A-48-4 -c E_Parser.ml
+ocamlfind ocamlc -package getopt,simple-utils,str -linkpkg -o E_LexerMain.byte E_AST.cmo E_Parser.cmo E_Lexer.cmo EvalOpt.cmo E_LexerMain.cmo
+ocamlfind ocamlc -strict-sequence -w +A-48-4 -package simple-utils -c Preproc.mli
+ocamlfind ocamlc -strict-sequence -w +A-48-4 -package simple-utils -c PreprocMain.ml
+ocamlfind ocamlc -strict-sequence -w +A-48-4 -package simple-utils -c Preproc.ml
+ocamlfind ocamlc -package getopt,simple-utils,str -linkpkg -o PreprocMain.byte EvalOpt.cmo E_AST.cmo E_Parser.cmo E_Lexer.cmo Preproc.cmo PreprocMain.cmo
+ocamlfind ocamlc -strict-sequence -w +A-48-4 -package simple-utils -c E_ParserMain.ml
+ocamlfind ocamlc -package getopt,simple-utils,str -linkpkg -o E_ParserMain.byte E_AST.cmo E_Parser.cmo E_Lexer.cmo EvalOpt.cmo Preproc.cmo E_ParserMain.cmo
