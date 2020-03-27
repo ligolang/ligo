@@ -140,7 +140,7 @@ for $statements -> $statement {
   say "$statement"
 }
 say "open $moduleName";
-say "module Adt_info = Generic.Adt_info";
+say "module Adt_info = Adt_generator.Generic.Adt_info";
 
 say "";
 for $adts.kv -> $index, $t {
