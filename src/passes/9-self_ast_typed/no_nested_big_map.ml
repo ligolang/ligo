@@ -39,6 +39,10 @@ let rec check_no_nested_bigmap is_in_bigmap e =
     let%bind _ = check_no_nested_bigmap false a in
     let%bind _ = check_no_nested_bigmap false b in
     ok ()
+  | T_operator (TC_michelson_or (a, b)) -> 
+    let%bind _ = check_no_nested_bigmap false a in
+    let%bind _ = check_no_nested_bigmap false b in
+    ok ()
   | T_sum s -> 
     let es = CMap.to_list s in
     let%bind _ = bind_map_list (fun l -> check_no_nested_bigmap is_in_bigmap l) es in

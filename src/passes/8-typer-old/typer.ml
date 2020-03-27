@@ -385,6 +385,10 @@ and evaluate_type (e:environment) (t:I.type_expression) : O.type_expression resu
             let%bind k = evaluate_type e k in 
             let%bind v = evaluate_type e v in 
             ok @@ O.TC_map_or_big_map (k,v) 
+        | TC_michelson_or (l,r) ->
+            let%bind l = evaluate_type e l in 
+            let%bind r = evaluate_type e r in 
+            ok @@ O.TC_michelson_or (l,r) 
         | TC_arrow ( arg , ret ) ->
             let%bind arg' = evaluate_type e arg in
             let%bind ret' = evaluate_type e ret in
