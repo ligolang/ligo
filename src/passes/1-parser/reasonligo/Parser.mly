@@ -444,11 +444,11 @@ fun_expr:
     let region      = cover start stop in
 
     let rec arg_to_pattern = function
-      EVar v ->
-        if v.value = "_" then 
+      EVar v ->        
+        if v.value = "_" then
           PWild v.region
         else (
-          Scoping.check_reserved_name v;
+          Scoping.check_reserved_name v;          
           PVar v
         )
     | EAnnot {region; value = {inside = EVar v, colon, typ; _}} ->
@@ -652,6 +652,19 @@ let_expr(right_expr):
 disj_expr_level:
   disj_expr
 | conj_expr_level { $1 }
+| "_" type_annotation_simple { 
+  let (colon, type_expr) = $2 in
+  EAnnot {
+    value = {
+      inside = (
+        EVar { value = "_"; region = $1 }, colon, type_expr
+      );
+      lpar = Region.ghost;
+      rpar = Region.ghost;
+    };
+    region = Region.ghost;
+  }  
+}
 | par(tuple(disj_expr_level)) type_annotation_simple? {
     let region = $1.region in
     let tuple  = ETuple {value=$1.value.inside; region} in
@@ -782,7 +795,6 @@ common_expr:
 | "<nat>"                             {               EArith (Nat $1) }
 | "<bytes>"                           {                     EBytes $1 }
 | "<ident>" | module_field            {                       EVar $1 }
-| "_"                                 {   EVar {value = "_"; region = $1} }
 | projection                          {                      EProj $1 }
 | update_record                       {                    EUpdate $1 }
 | "<string>"                          {           EString (String $1) }
