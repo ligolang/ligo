@@ -251,10 +251,10 @@ let extract_record : expression -> (label * expression) list result = fun e ->
 let extract_map : expression -> (expression * expression) list result = fun e ->
   let rec aux e =
     match e.expression_content with
-      E_constant {cons_name=C_UPDATE; arguments=[k;v;map]} -> 
+      E_constant {cons_name=C_UPDATE|C_MAP_ADD; arguments=[k;v;map]} -> 
         let%bind map = aux map in
         ok @@ (k,v)::map 
-    | E_constant {cons_name=C_MAP_EMPTY; arguments=[]} -> ok @@ []
+    | E_constant {cons_name=C_MAP_EMPTY|C_BIG_MAP_EMPTY; arguments=[]} -> ok @@ []
     | _ -> fail @@ bad_kind "map" e.location
   in
   aux e

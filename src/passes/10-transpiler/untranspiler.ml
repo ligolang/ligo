@@ -185,7 +185,7 @@ let rec untranspile (v : value) (t : AST.type_expression) : AST.expression resul
         let%bind init = return @@ E_constant {cons_name=C_BIG_MAP_EMPTY;arguments=[]} in
         bind_fold_right_list aux init big_map'
       )
-    | TC_map_or_big_map (_, _) -> fail @@ corner_case ~loc:"untranspiler" "should not be present in mini-c"
+    | TC_map_or_big_map (_, _) -> fail @@ corner_case ~loc:"untranspiler" "TC_map_or_big_map t should not be present in mini-c"
     | TC_list ty -> (
         let%bind lst =
           trace_strong (wrong_mini_c_value "list" v) @@

@@ -13,7 +13,7 @@ let%expect_test _ =
   [%expect {| 1294 bytes |}] ;
 
   run_ligo_good [ "measure-contract" ; contract "multisig-v2.ligo" ; "main" ] ;
-  [%expect {| 3268 bytes |}] ;
+  [%expect {| 2974 bytes |}] ;
 
   run_ligo_good [ "measure-contract" ; contract "vote.mligo" ; "main" ] ;
   [%expect {| 589 bytes |}] ;
@@ -627,12 +627,7 @@ let%expect_test _ =
                      IF { PUSH string "Maximum number of proposal reached" ; FAILWITH }
                         { PUSH unit Unit } ;
                      NIL operation ;
-                     DIP 10 { DUP } ;
-                     DIG 10 ;
-                     DIP { DIP 4 { DUP } ; DIG 4 } ;
-                     PAIR ;
-                     DIP { DIP 9 { DUP } ; DIG 9 ; DIP { DUP } ; PAIR } ;
-                     PAIR ;
+                     DUP ;
                      DIP { DIP 3 { DUP } ; DIG 3 } ;
                      PAIR ;
                      DIP 5 { DUP } ;
@@ -691,12 +686,8 @@ let%expect_test _ =
                                  DIP { DUP } ;
                                  SWAP ;
                                  DIP { DUP } ;
-                                 PAIR ;
-                                 DIP { DIP 2 { DUP } ; DIG 2 } ;
-                                 PAIR ;
-                                 DIP 2 { DUP } ;
-                                 DIG 2 ;
-                                 DIP { DIP 13 { DUP } ; DIG 13 } ;
+                                 SWAP ;
+                                 DIP { DIP 12 { DUP } ; DIG 12 } ;
                                  MEM ;
                                  IF { DIP 2 { DUP } ;
                                       DIG 2 ;
@@ -1126,7 +1117,7 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; bad_contract "create_contract_toplevel.mligo" ; "main" ] ;
   [%expect {|
-ligo: in file "create_contract_toplevel.mligo", line 4, character 35 to line 8, character 8. No free variable allowed in this lambda: variable 'store' {"expression":"CREATE_CONTRACT(lambda (#P:Some(( nat * string ))) : None return let rhs#654 = #P in let p = rhs#654.0 in let s = rhs#654.1 in ( LIST_EMPTY() : (TO_list(operation)) , store ) , NONE() : (TO_option(key_hash)) , 300000000mutez , \"un\")","location":"in file \"create_contract_toplevel.mligo\", line 4, character 35 to line 8, character 8"}
+ligo: in file "create_contract_toplevel.mligo", line 4, character 35 to line 8, character 8. No free variable allowed in this lambda: variable 'store' {"expression":"CREATE_CONTRACT(lambda (#P:Some(( nat * string ))) : None return let rhs#702 = #P in let p = rhs#702.0 in let s = rhs#702.1 in ( LIST_EMPTY() : (TO_list(operation)) , store ) , NONE() : (TO_option(key_hash)) , 300000000mutez , \"un\")","location":"in file \"create_contract_toplevel.mligo\", line 4, character 35 to line 8, character 8"}
 
 
  If you're not sure how to fix this error, you can
@@ -1139,7 +1130,7 @@ ligo: in file "create_contract_toplevel.mligo", line 4, character 35 to line 8, 
 
   run_ligo_bad [ "compile-contract" ; bad_contract "create_contract_var.mligo" ; "main" ] ;
   [%expect {|
-ligo: in file "create_contract_var.mligo", line 6, character 35 to line 10, character 5. No free variable allowed in this lambda: variable 'a' {"expression":"CREATE_CONTRACT(lambda (#P:Some(( nat * int ))) : None return let rhs#657 = #P in let p = rhs#657.0 in let s = rhs#657.1 in ( LIST_EMPTY() : (TO_list(operation)) , a ) , NONE() : (TO_option(key_hash)) , 300000000mutez , 1)","location":"in file \"create_contract_var.mligo\", line 6, character 35 to line 10, character 5"}
+ligo: in file "create_contract_var.mligo", line 6, character 35 to line 10, character 5. No free variable allowed in this lambda: variable 'a' {"expression":"CREATE_CONTRACT(lambda (#P:Some(( nat * int ))) : None return let rhs#705 = #P in let p = rhs#705.0 in let s = rhs#705.1 in ( LIST_EMPTY() : (TO_list(operation)) , a ) , NONE() : (TO_option(key_hash)) , 300000000mutez , 1)","location":"in file \"create_contract_var.mligo\", line 6, character 35 to line 10, character 5"}
 
 
  If you're not sure how to fix this error, you can

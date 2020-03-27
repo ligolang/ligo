@@ -588,11 +588,11 @@ and type_expression' : environment -> ?tv_opt:O.type_expression -> I.expression 
       let%bind key' =  type_expression' e key in
       let tv_key = get_type_expression key' in
       let tv = match tv_opt with 
-          Some (tv) -> tv 
+          Some tv -> tv 
         | None -> match cst with 
             C_SET_ADD -> t_set tv_key ()
           | C_CONS -> t_list tv_key ()
-          | _ -> failwith "impossible"
+          | _ -> failwith "Only C_SET_ADD and C_CONS are possible because those were the two cases matched above"
       in
       let%bind set' =  type_expression' e ~tv_opt:tv set in
       let tv_set = get_type_expression set' in 
@@ -605,7 +605,7 @@ and type_expression' : environment -> ?tv_opt:O.type_expression -> I.expression 
       let tv_key = get_type_expression key' in
       let tv_val = get_type_expression val' in
       let tv = match tv_opt with 
-          Some (tv) -> tv 
+          Some tv -> tv 
         | None -> t_map_or_big_map tv_key tv_val ()
       in
       let%bind map' =  type_expression' e ~tv_opt:tv map in
