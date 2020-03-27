@@ -28,15 +28,32 @@ type packed_internal_operation = Memory_proto_alpha.Protocol.Alpha_context.packe
 type location = Location.t
 type inline = bool
 
-let fold_map__constructor_map : 'a . 'a constructor_map -> 'state -> ('a -> 'state -> 'new_a * 'state) -> 'new_a constructor_map * 'state = fun _ _ _ -> failwith "TODO fold_map__constructor_map"
+let fold_map__constructor_map : type a new_a state . a constructor_map -> state -> (a -> state -> new_a * state) -> new_a constructor_map * state =
+  fun m state f ->
+  let aux k v (state , m) = let (new_v , state) = f v state in (state , CMap.add k new_v m) in
+  let (state , m) = CMap.fold aux m (state, CMap.empty) in
+  (m , state)
 
-let fold_map__label_map : 'a . 'a label_map -> 'state -> ('a -> 'state -> 'new_a * 'state) -> 'new_a label_map * 'state = fun _ _ _ -> failwith "TODO fold_map__label_map"
+let fold_map__label_map : 'a . 'a label_map -> 'state -> ('a -> 'state -> 'new_a * 'state) -> 'new_a label_map * 'state =
+  fun m state f ->
+  let aux k v (state , m) = let (new_v , state) = f v state in (state , LMap.add k new_v m) in
+  let (state , m) = LMap.fold aux m (state, LMap.empty) in
+  (m , state)
 
-let fold_map__list : 'a . 'a list -> 'state -> ('a -> 'state -> 'new_a * 'state) -> 'new_a list * 'state = fun l state f ->
-  let aux (state, l) element = let (new_element, state) = f element state in (state, new_element::l) in
-  let (state, l) = List.fold_left aux (state, []) l in
-  (l, state)
+let fold_map__list : 'a . 'a list -> 'state -> ('a -> 'state -> 'new_a * 'state) -> 'new_a list * 'state =
+  fun l state f ->
+  let aux (state , l) element = let (new_element , state) = f element state in (state , new_element :: l) in
+  let (state , l) = List.fold_left aux (state , []) l in
+  (l , state)
 
-let fold_map__location_wrap : 'a . 'a location_wrap -> 'state -> ('a -> 'state -> 'new_a * 'state) -> 'new_a location_wrap * 'state = fun _ _ _ -> failwith "TODO fold_map__location_wrap"
+let fold_map__location_wrap : 'a . 'a location_wrap -> 'state -> ('a -> 'state -> 'new_a * 'state) -> 'new_a location_wrap * 'state =
+  fun { wrap_content ; location } state f ->
+  let (state , wrap_content) = f wrap_content state in
+  ({ wrap_content ; location }, state)
 
-let fold_map__list_ne : 'a . 'a list_ne -> 'state -> ('a -> 'state -> 'new_a * 'state) -> 'new_a list_ne * 'state = fun _ _ _ -> failwith "TODO fold_map__location_wrap"
+let fold_map__list_ne : 'a . 'a list_ne -> 'state -> ('a -> 'state -> 'new_a * 'state) -> 'new_a list_ne * 'state =
+  fun (first , l) state f ->
+  let (new_first , state) = f first state in
+  let aux (state , l) element = let (new_element , state) = f element state in (state , new_element :: l) in
+  let (state , l) = List.fold_left aux (state , []) l in
+  ((new_first , l), state)
