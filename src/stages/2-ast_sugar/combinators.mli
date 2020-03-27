@@ -86,7 +86,7 @@ val e_variable : ?loc:Location.t -> expression_variable -> expression
 val e_skip : ?loc:Location.t -> unit -> expression
 val e_sequence : ?loc:Location.t -> expression -> expression -> expression
 val e_cond: ?loc:Location.t -> expression -> expression -> expression -> expression
-val e_let_in : ?loc:Location.t -> ( expression_variable * type_expression option ) -> bool -> expression -> expression -> expression
+val e_let_in : ?loc:Location.t -> ( expression_variable * type_expression option ) -> bool -> bool -> expression -> expression -> expression
 val e_annotation : ?loc:Location.t -> expression -> type_expression -> expression
 val e_application : ?loc:Location.t -> expression -> expression -> expression
 val e_binop    : ?loc:Location.t -> constant' -> expression -> expression -> expression

@@ -56,10 +56,15 @@ and expression_content ppf (ec : expression_content) =
   | E_matching {matchee; cases; _} ->
       fprintf ppf "match %a with %a" expression matchee (matching expression)
         cases
-  | E_let_in { let_binder ; rhs ; let_result; inline } ->    
-    fprintf ppf "let %a = %a%a in %a" option_type_name let_binder expression rhs option_inline inline expression let_result
+  | E_let_in { let_binder ; rhs ; let_result; inline; mut} ->    
+      fprintf ppf "let %a%a = %a%a in %a" 
+        option_type_name let_binder 
+        option_mut mut
+        expression rhs 
+        option_inline inline 
+        expression let_result
   | E_sequence {expr1;expr2} ->
-      fprintf ppf "%a;\n%a" expression expr1 expression expr2
+      fprintf ppf "{ %a; %a }" expression expr1 expression expr2
   | E_ascription {anno_expr; type_annotation} ->
       fprintf ppf "%a : %a" expression anno_expr type_expression type_annotation
   | E_skip ->

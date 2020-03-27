@@ -277,7 +277,7 @@ let rec uncompile_expression : O.expression -> I.expression result =
     let%bind ty_opt = bind_map_option uncompile_type_expression ty_opt in
     let%bind rhs = uncompile_expression rhs in
     let%bind let_result = uncompile_expression let_result in
-    return @@ I.E_let_in {let_binder=(binder,ty_opt);inline;rhs;let_result}
+    return @@ I.E_let_in {let_binder=(binder,ty_opt);mut=false;inline;rhs;let_result}
   | O.E_constructor {constructor;element} ->
     let%bind element = uncompile_expression element in
     return @@ I.E_constructor {constructor;element}

@@ -54,6 +54,10 @@ and expression_content =
   | E_list of expression list
   | E_set of expression list
   | E_look_up of (expression * expression)
+  (* Imperative *)
+  | E_for of for_
+  | E_for_each of for_each
+  | E_while of while_loop
 
 and constant =
   { cons_name: constant' (* this is at the end because it is huge *)
@@ -100,6 +104,31 @@ and sequence = {
   expr1: expression ;
   expr2: expression ;
   }
+
+and for_ = {
+  binder : expression_variable;
+  start : expression;
+  final : expression;
+  increment : expression;
+  body : expression;
+}
+
+and for_each = {
+  binder : expression_variable * expression_variable option;
+  collection : expression;
+  collection_type : collect_type;
+  body : expression;
+}
+
+and collect_type = 
+ | Map
+ | Set
+ | List
+
+and while_loop = {
+  condition : expression;
+  body : expression;
+}
 
 and environment_element_definition =
   | ED_binder

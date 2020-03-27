@@ -122,8 +122,8 @@ let e_accessor ?loc a b = make_expr ?loc @@ E_record_accessor {expr = a; label= 
 let e_accessor_list ?loc a b  = List.fold_left (fun a b -> e_accessor ?loc a b) a b
 let e_variable ?loc v = make_expr ?loc @@ E_variable v
 let e_skip ?loc () = make_expr ?loc @@ E_skip
-let e_let_in ?loc (binder, ascr) inline rhs let_result = 
-  make_expr ?loc @@ E_let_in { let_binder = (binder, ascr) ; rhs ; let_result; inline }
+let e_let_in ?loc (binder, ascr) mut inline rhs let_result = 
+  make_expr ?loc @@ E_let_in { let_binder = (binder, ascr) ; rhs ; let_result; inline; mut }
 let e_annotation ?loc anno_expr ty = make_expr ?loc @@ E_ascription {anno_expr; type_annotation = ty}
 let e_application ?loc a b = make_expr ?loc @@ E_application {lamb=a ; args=b}
 let e_binop ?loc name a b  = make_expr ?loc @@ E_constant {cons_name = name ; arguments = [a ; b]}

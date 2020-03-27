@@ -66,6 +66,27 @@ and expression_content ppf (ec : expression_content) =
       fprintf ppf "%a;\n%a" expression expr1 expression expr2
   | E_skip ->
       fprintf ppf "skip"
+  | E_for {binder; start; final; increment; body} ->
+      fprintf ppf "for %a from %a to %a by %a do %a" 
+        expression_variable binder
+        expression start 
+        expression final 
+        expression increment
+        expression body
+  | E_for_each {binder; collection; body; _} ->
+      fprintf ppf "for each %a in %a do %a" 
+        option_map binder
+        expression collection
+        expression body
+  | E_while {condition; body} ->
+      fprintf ppf "while %a do %a"
+        expression condition
+        expression body
+    
+and option_map ppf (k,v_opt) =
+  match v_opt with
+  | None -> fprintf ppf "%a" expression_variable k
+  | Some v -> fprintf ppf "%a -> %a" expression_variable k expression_variable v 
 
 and option_type_name ppf
     ((n, ty_opt) : expression_variable * type_expression option) =
