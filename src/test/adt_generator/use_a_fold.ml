@@ -7,10 +7,11 @@ let () =
   let some_root : root = A [{ a1 = X (A [{ a1 = X (B [1;2;3]) ; a2 = W () ; }]) ; a2 = Z (W ()) ; }] in
   let op = {
       no_op with
-      a = fun the_a (*_info*) state continue_fold ->
-          let (a1__' , state') = continue_fold.ta1 the_a.a1 state in
-          let (a2__' , state'') = continue_fold.ta2 the_a.a2 state' in
-          ({ a1__' ; a2__' }, state'' + 1)
+      a = { no_op.a with
+            node__a = fun the_a (*_info*) state continue_fold ->
+                      let (a1__' , state') = continue_fold.ta1.node__ta1 the_a.a1 state in
+                      let (a2__' , state'') = continue_fold.ta2.node__ta2 the_a.a2 state' in
+                      ({ a1__' ; a2__' }, state'' + 1) }
     } in
   let state = 0 in
   let (_, state) = fold_map__root op some_root state in
@@ -21,7 +22,7 @@ let () =
 
 let () =
   let some_root : root = A [{ a1 = X (A [{ a1 = X (B [1;2;3]) ; a2 = W () ; }]) ; a2 = Z (W ()) ; }] in
-  let op = { no_op with a__pre_state = fun _the_a (*_info*) state -> state + 1 } in
+  let op = { no_op with a = { no_op.a with node__a__pre_state = fun _the_a (*_info*) state -> state + 1 } } in
   let state = 0 in
   let (_, state) = fold_map__root op some_root state in
   if state != 2 then
@@ -31,7 +32,7 @@ let () =
 
 let () =
   let some_root : root = A [{ a1 = X (A [{ a1 = X (B [1;2;3]) ; a2 = W () ; }]) ; a2 = Z (W ()) ; }] in
-  let op = { no_op with a__post_state = fun _the_a _new_a (*_info*) state -> state + 1 } in
+  let op = { no_op with a = { no_op.a with node__a__post_state = fun _the_a _new_a (*_info*) state -> state + 1 } } in
   let state = 0 in
   let (_, state) = fold_map__root op some_root state in
   if state != 2 then
