@@ -175,7 +175,7 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "interpret" ; "Set.literal [ (1,(2,3)) ; (2,(3,4)) ]" ; "--syntax=cameligo" ] ;
   [%expect {|
-    set[( 2 , ( 3 , 4 ) ) , ( 1 , ( 2 , 3 ) )] |}];
+    SET_ADD(( 2 , ( 3 , 4 ) ) , SET_ADD(( 1 , ( 2 , 3 ) ) , SET_EMPTY())) |}];
 
   run_ligo_bad [ "interpret" ; "Set.literal [ (1,2,3) ; (2,3,4) ]" ; "--syntax=cameligo" ] ;
   [%expect {|

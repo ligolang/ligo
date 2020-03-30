@@ -139,52 +139,13 @@ let rec assert_value_eq (a, b: (expression * expression )) : unit result =
     ok ()
   | E_record_update _, _ ->
      simple_fail "comparing record update with other expression"
-
-  | (E_map lsta, E_map lstb | E_big_map lsta, E_big_map lstb) -> (
-      let%bind lst = generic_try (simple_error "maps of different lengths")
-          (fun () ->
-             let lsta' = List.sort compare lsta in
-             let lstb' = List.sort compare lstb in
-             List.combine lsta' lstb') in
-      let aux = fun ((ka, va), (kb, vb)) ->
-        let%bind _ = assert_value_eq (ka, kb) in
-        let%bind _ = assert_value_eq (va, vb) in
-        ok () in
-      let%bind _all = bind_map_list aux lst in
-      ok ()
-    )
-  | (E_map _ | E_big_map _), _ ->
-      simple_fail "comparing map with other expression"
-
-  | E_list lsta, E_list lstb -> (
-      let%bind lst =
-        generic_try (simple_error "list of different lengths")
-          (fun () -> List.combine lsta lstb) in
-      let%bind _all = bind_map_list assert_value_eq lst in
-      ok ()
-    )
-  | E_list _, _ ->
-      simple_fail "comparing list with other expression"
-
-  | E_set lsta, E_set lstb -> (
-      let lsta' = List.sort (compare) lsta in
-      let lstb' = List.sort (compare) lstb in
-      let%bind lst =
-        generic_try (simple_error "set of different lengths")
-          (fun () -> List.combine lsta' lstb') in
-      let%bind _all = bind_map_list assert_value_eq lst in
-      ok ()
-    )
-  | E_set _, _ ->
-      simple_fail "comparing set with other expression"
-
   | (E_ascription a ,  _b') -> assert_value_eq (a.anno_expr , b)
   | (_a' , E_ascription b) -> assert_value_eq (a , b.anno_expr)
   | (E_variable _, _) | (E_lambda _, _)
   | (E_application _, _) | (E_let_in _, _)
   | (E_recursive _,_) | (E_record_accessor _, _)
-  | (E_look_up _, _) | (E_matching _, _)
-   -> simple_fail "comparing not a value"
+  | (E_matching _, _)
+  -> simple_fail "comparing not a value"
 
 let is_value_eq (a , b) = to_bool @@ assert_value_eq (a , b)
 
