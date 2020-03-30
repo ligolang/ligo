@@ -231,10 +231,6 @@ let rec compile_expression : I.expression -> O.expression result =
       let%bind anno_expr = compile_expression anno_expr in
       let%bind type_annotation = compile_type_expression type_annotation in
       return @@ O.E_ascription {anno_expr; type_annotation}
-    | I.E_sequence {expr1={expression_content=I.E_assign expr1;_}; expr2} ->
-      let%bind expr2 = compile_expression expr2 in
-      let%bind ret = compile_assign expr1 @@ expr2 in
-      return @@ ret
     | I.E_sequence {expr1; expr2} ->
       let%bind expr1 = compile_expression expr1 in
       let%bind expr2 = compile_expression expr2 in
