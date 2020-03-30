@@ -60,6 +60,7 @@ and expression_content =
   (* Advanced *)
   | E_ascription of ascription
   (* Sugar *)
+  | E_cond of conditional
   | E_sequence of sequence
   | E_skip
   | E_tuple of expression list
@@ -113,6 +114,12 @@ and matching =
   }
 
 and ascription = {anno_expr: expression; type_annotation: type_expression}
+
+and conditional = {
+  condition : expression ;
+  then_clause : expression ;
+  else_clause : expression ;
+}
 and sequence = {
   expr1: expression ;
   expr2: expression ;

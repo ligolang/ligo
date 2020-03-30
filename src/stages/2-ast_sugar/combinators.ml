@@ -122,6 +122,7 @@ let e_constant ?loc name lst = make_expr ?loc @@ E_constant {cons_name=name ; ar
 
 let e_annotation ?loc anno_expr ty = make_expr ?loc @@ E_ascription {anno_expr; type_annotation = ty}
 
+let e_cond ?loc condition then_clause else_clause = make_expr ?loc @@ E_cond {condition;then_clause;else_clause}
 let e_sequence ?loc expr1 expr2 = make_expr ?loc @@ E_sequence {expr1; expr2}
 let e_skip ?loc () = make_expr ?loc @@ E_skip
 
@@ -153,7 +154,6 @@ let make_option_typed ?loc e t_opt =
   | None -> e
   | Some t -> e_annotation ?loc e t
 
-let e_cond ?loc expr match_true match_false = e_matching expr ?loc (Match_bool {match_true; match_false})
 let e_tuple ?loc lst : expression = e_record_ez ?loc (tuple_to_record lst)
 let e_pair ?loc a b  : expression = e_tuple ?loc [a;b]
 

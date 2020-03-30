@@ -204,7 +204,8 @@ let rec assert_value_eq (a, b: (expression * expression )) : unit result =
   | (E_application _, _) | (E_let_in _, _)
   | (E_recursive _,_) 
   | (E_record_accessor _, _) | (E_tuple_accessor _, _)
-  | (E_look_up _, _) | (E_matching _, _)
+  | (E_look_up _, _) 
+  | (E_matching _, _) | (E_cond _, _)
   | (E_sequence _, _) | (E_skip, _) -> simple_fail "comparing not a value"
 
 let is_value_eq (a , b) = to_bool @@ assert_value_eq (a , b)

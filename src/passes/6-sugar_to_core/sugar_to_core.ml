@@ -154,6 +154,11 @@ let rec compile_expression : I.expression -> O.expression result =
       let%bind anno_expr = compile_expression anno_expr in
       let%bind type_annotation = idle_type_expression type_annotation in
       return @@ O.E_ascription {anno_expr; type_annotation}
+    | I.E_cond {condition; then_clause; else_clause} ->
+      let%bind matchee = compile_expression condition in
+      let%bind match_true = compile_expression then_clause in
+      let%bind match_false = compile_expression else_clause in
+      return @@ O.E_matching {matchee; cases=Match_bool{match_true;match_false}}
     | I.E_sequence {expr1; expr2} ->
       let%bind expr1 = compile_expression expr1 in
       let%bind expr2 = compile_expression expr2 in

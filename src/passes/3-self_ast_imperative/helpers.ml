@@ -76,6 +76,11 @@ let rec fold_expression : 'a folder -> 'a -> expression -> 'a result = fun f ini
   | E_recursive { lambda={result=e;_}; _} ->
       let%bind res = self init' e in
       ok res
+  | E_cond {condition; then_clause; else_clause} ->
+      let%bind res = self init' condition in
+      let%bind res = self res then_clause in
+      let%bind res = self res else_clause in
+      ok res
   | E_sequence {expr1;expr2} ->
       let ab = (expr1,expr2) in
       let%bind res = bind_fold_pair self init' ab in
@@ -217,6 +222,11 @@ let rec map_expression : exp_mapper -> expression -> expression result = fun f e
       let%bind args = bind_map_list self c.arguments in
       return @@ E_constant {c with arguments=args}
     )
+  | E_cond {condition; then_clause; else_clause} ->
+      let%bind condition   = self condition in
+      let%bind then_clause = self then_clause in
+      let%bind else_clause = self else_clause in
+      return @@ E_cond {condition;then_clause;else_clause}
   | E_sequence {expr1;expr2} -> (
       let%bind (expr1,expr2) = bind_map_pair self (expr1,expr2) in
       return @@ E_sequence {expr1;expr2}
@@ -396,6 +406,11 @@ let rec fold_map_expression : 'a fold_mapper -> 'a -> expression -> ('a * expres
       let%bind (res,args) = bind_fold_map_list self init' c.arguments in
       ok (res, return @@ E_constant {c with arguments=args})
     )
+  | E_cond {condition; then_clause; else_clause} ->
+      let%bind res,condition   = self init' condition in
+      let%bind res,then_clause = self res then_clause in
+      let%bind res,else_clause = self res else_clause in
+      ok (res, return @@ E_cond {condition;then_clause;else_clause})
   | E_sequence {expr1;expr2} -> (
       let%bind (res,(expr1,expr2)) = bind_fold_map_pair self init' (expr1,expr2) in
       ok (res, return @@ E_sequence {expr1;expr2})

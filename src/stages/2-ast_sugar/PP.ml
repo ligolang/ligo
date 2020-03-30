@@ -93,10 +93,15 @@ and expression_content ppf (ec : expression_content) =
         expression rhs 
         option_inline inline 
         expression let_result
-  | E_sequence {expr1;expr2} ->
-      fprintf ppf "{ %a; @. %a}" expression expr1 expression expr2
   | E_ascription {anno_expr; type_annotation} ->
       fprintf ppf "%a : %a" expression anno_expr type_expression type_annotation
+  | E_cond {condition; then_clause; else_clause} ->
+      fprintf ppf "if %a then %a else %a"
+        expression condition
+        expression then_clause
+        expression else_clause
+  | E_sequence {expr1;expr2} ->
+      fprintf ppf "{ %a; @. %a}" expression expr1 expression expr2
   | E_skip ->
       fprintf ppf "skip"
   | E_tuple t ->
