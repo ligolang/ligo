@@ -452,10 +452,10 @@ and type_expression : environment -> Solver.state -> ?tv_opt:O.type_expression -
    *     | Some (T_constant ("address" , [])) -> return (E_literal (Literal_address s)) (t_address ())
    *     | _ -> return (E_literal (Literal_string s)) (t_string ())
    *   ) *)
-  | E_record_accessor {expr;label} -> (
-      let%bind (base' , state') = type_expression e state expr in
+  | E_record_accessor {record;label} -> (
+      let%bind (base' , state') = type_expression e state record in
       let wrapped = Wrap.access_label ~base:base'.type_expression ~label in
-      return_wrapped (E_record_accessor {expr=base';label}) state' wrapped
+      return_wrapped (E_record_accessor {record=base';label}) state' wrapped
     )
 
   (* Sum *)
@@ -1055,8 +1055,8 @@ let rec untype_expression (e:O.expression) : (I.expression) result =
     let%bind r' = bind_smap
       @@ Map.String.map untype_expression r in
     return (e_record r')
-  | E_record_accessor {expr; label} ->
-    let%bind r' = untype_expression expr in
+  | E_record_accessor {record; label} ->
+    let%bind r' = untype_expression record in
     let Label s = label in
     return (e_accessor r' s)
   | E_record_update {record; path; update} ->

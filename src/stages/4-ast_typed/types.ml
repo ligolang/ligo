@@ -92,7 +92,7 @@ and constructor = {
   }
 
 and accessor = {
-    expr: expression ;
+    record: expression ;
     label: label ;
   }
 

@@ -182,10 +182,10 @@ module Substitution = struct
          *     let val_ = s_expression ~v ~expr val_ in
          *     ok @@ (key , val_)) aemap in
          * ok @@ T.E_record aemap *)
-      | T.E_record_accessor {expr=e;label} ->
-        let%bind expr = s_expression ~substs e in
+      | T.E_record_accessor {record=e;label} ->
+        let%bind record = s_expression ~substs e in
         let%bind label = s_label ~substs label in
-        ok @@ T.E_record_accessor {expr;label}
+        ok @@ T.E_record_accessor {record;label}
       | T.E_record_update {record;path;update}->
         let%bind record = s_expression ~substs record in
         let%bind update = s_expression ~substs update in

@@ -209,7 +209,7 @@ module Free_variables = struct
     | E_application {lamb;args} -> unions @@ List.map self [ lamb ; args ]
     | E_constructor {element;_} -> self element
     | E_record m -> unions @@ List.map self @@ LMap.to_list m
-    | E_record_accessor {expr;_} -> self expr
+    | E_record_accessor {record;_} -> self record
     | E_record_update {record; update;_} -> union (self record) @@ self update
     | E_list lst -> unions @@ List.map self lst
     | E_set lst -> unions @@ List.map self lst

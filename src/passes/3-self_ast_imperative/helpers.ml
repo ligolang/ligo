@@ -47,8 +47,8 @@ let rec fold_expression : 'a folder -> 'a -> expression -> 'a result = fun f ini
     let%bind res = fold_expression self res update in
     ok res 
   )
-  | E_record_accessor {expr} -> (
-     let%bind res = self init' expr in
+  | E_record_accessor {record} -> (
+     let%bind res = self init' record in
      ok res
     )
   | E_let_in { let_binder = _ ; rhs ; let_result } -> (
@@ -63,6 +63,9 @@ let rec fold_expression : 'a folder -> 'a -> expression -> 'a result = fun f ini
       let ab = (expr1,expr2) in
       let%bind res = bind_fold_pair self init' ab in
       ok res
+  | E_assign {variable=_;access_path=_;expression} ->
+      let%bind res = self init' expression in
+      ok res
   | E_for {body; _} ->
       let%bind res = self init' body in
       ok res
@@ -74,6 +77,7 @@ let rec fold_expression : 'a folder -> 'a -> expression -> 'a result = fun f ini
       let%bind res = self init' condition in
       let%bind res = self res body in
       ok res  
+
      
 
 and fold_cases : 'a folder -> 'a -> matching_expr -> 'a result = fun f init m ->
@@ -145,8 +149,8 @@ let rec map_expression : exp_mapper -> expression -> expression result = fun f e
       return @@ E_matching {matchee=e';cases=cases'}
     )
   | E_record_accessor acc -> (
-      let%bind e' = self acc.expr in
-      return @@ E_record_accessor {acc with expr = e'}
+      let%bind e' = self acc.record in
+      return @@ E_record_accessor {acc with record = e'}
     )
   | E_record m -> (
     let%bind m' = bind_map_lmap self m in
@@ -166,10 +170,10 @@ let rec map_expression : exp_mapper -> expression -> expression result = fun f e
       let%bind (lamb,args) = bind_map_pair self ab in
       return @@ E_application {lamb;args}
     )
-  | E_let_in { let_binder ; mut; rhs ; let_result; inline } -> (
+  | E_let_in { let_binder ; rhs ; let_result; inline } -> (
       let%bind rhs = self rhs in
       let%bind let_result = self let_result in
-      return @@ E_let_in { let_binder ; mut; rhs ; let_result; inline }
+      return @@ E_let_in { let_binder ; rhs ; let_result; inline }
     )
   | E_lambda { binder ; input_type ; output_type ; result } -> (
       let%bind result = self result in
@@ -187,6 +191,10 @@ let rec map_expression : exp_mapper -> expression -> expression result = fun f e
       let%bind (expr1,expr2) = bind_map_pair self (expr1,expr2) in
       return @@ E_sequence {expr1;expr2}
     )
+  | E_assign {variable;access_path;expression} -> (
+      let%bind expression = self expression in
+      return @@ E_assign {variable;access_path;expression}
+  )
   | E_for {binder; start; final; increment; body} ->
       let%bind body = self body in
       return @@ E_for {binder; start; final; increment; body}
@@ -303,8 +311,8 @@ let rec fold_map_expression : 'a fold_mapper -> 'a -> expression -> ('a * expres
       ok (res, return @@ E_matching {matchee=e';cases=cases'})
     )
   | E_record_accessor acc -> (
-      let%bind (res, e') = self init' acc.expr in
-      ok (res, return @@ E_record_accessor {acc with expr = e'})
+      let%bind (res, e') = self init' acc.record in
+      ok (res, return @@ E_record_accessor {acc with record = e'})
     )
   | E_record m -> (
     let%bind (res, lst') = bind_fold_map_list (fun res (k,e) -> let%bind (res,e) = self res e in ok (res,(k,e))) init' (LMap.to_kv_list m) in
@@ -325,10 +333,10 @@ let rec fold_map_expression : 'a fold_mapper -> 'a -> expression -> ('a * expres
       let%bind (res,(a,b)) = bind_fold_map_pair self init' ab in
       ok (res, return @@ E_application {lamb=a;args=b})
     )
-  | E_let_in { let_binder ; mut; rhs ; let_result; inline } -> (
+  | E_let_in { let_binder ; rhs ; let_result; inline } -> (
       let%bind (res,rhs) = self init' rhs in
       let%bind (res,let_result) = self res let_result in
-      ok (res, return @@ E_let_in { let_binder ; mut; rhs ; let_result ; inline })
+      ok (res, return @@ E_let_in { let_binder ; rhs ; let_result ; inline })
     )
   | E_lambda { binder ; input_type ; output_type ; result } -> (
       let%bind (res,result) = self init' result in
@@ -346,6 +354,9 @@ let rec fold_map_expression : 'a fold_mapper -> 'a -> expression -> ('a * expres
       let%bind (res,(expr1,expr2)) = bind_fold_map_pair self init' (expr1,expr2) in
       ok (res, return @@ E_sequence {expr1;expr2})
     )
+  | E_assign {variable;access_path;expression} ->
+      let%bind (res, expression) = self init' expression in
+      ok (res, return @@ E_assign {variable;access_path;expression})
   | E_for {binder; start; final; increment; body} ->
       let%bind (res, body) = self init' body in
       ok (res, return @@ E_for {binder; start; final; increment; body})

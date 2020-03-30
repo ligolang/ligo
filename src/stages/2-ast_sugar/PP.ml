@@ -28,7 +28,7 @@ and expression_content ppf (ec : expression_content) =
   | E_record m ->
       fprintf ppf "%a" (tuple_or_record_sep_expr expression) m
   | E_record_accessor ra ->
-      fprintf ppf "%a.%a" expression ra.expr label ra.label
+      fprintf ppf "%a.%a" expression ra.record label ra.label
   | E_record_update {record; path; update} ->
       fprintf ppf "{ %a with { %a = %a } }" expression record label path expression update
   | E_map m ->
@@ -64,7 +64,7 @@ and expression_content ppf (ec : expression_content) =
         option_inline inline 
         expression let_result
   | E_sequence {expr1;expr2} ->
-      fprintf ppf "{ %a; %a }" expression expr1 expression expr2
+      fprintf ppf "{ %a; @. %a}" expression expr1 expression expr2
   | E_ascription {anno_expr; type_annotation} ->
       fprintf ppf "%a : %a" expression anno_expr type_expression type_annotation
   | E_skip ->
