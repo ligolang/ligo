@@ -100,6 +100,7 @@ val make_option_typed : ?loc:Location.t -> expression -> type_expression option 
 val e_typed_none : ?loc:Location.t -> type_expression -> expression
 
 val e_typed_list : ?loc:Location.t -> expression list -> type_expression -> expression
+val e_typed_list_literal : ?loc:Location.t -> expression list -> type_expression -> expression
 
 val e_typed_map : ?loc:Location.t -> ( expression * expression ) list  -> type_expression -> type_expression -> expression
 val e_typed_big_map : ?loc:Location.t -> ( expression * expression ) list  -> type_expression -> type_expression -> expression

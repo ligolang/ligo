@@ -105,6 +105,8 @@ let constant ppf : constant' -> unit = function
   | C_SET_FOLD              -> fprintf ppf "SET_FOLD"
   | C_SET_MEM               -> fprintf ppf "SET_MEM"
   (* List *)
+  | C_LIST_EMPTY            -> fprintf ppf "LIST_EMPTY"
+  | C_LIST_LITERAL          -> fprintf ppf "LIST_LITERAL"
   | C_LIST_ITER             -> fprintf ppf "LIST_ITER"
   | C_LIST_MAP              -> fprintf ppf "LIST_MAP"
   | C_LIST_FOLD             -> fprintf ppf "LIST_FOLD"
@@ -263,6 +265,7 @@ module Ast_PP_type (PARAMETER : AST_PARAMETER_TYPE) = struct
       | TC_set te -> Format.asprintf "set(%a)" f te
       | TC_map (k, v) -> Format.asprintf "Map (%a,%a)" f k f v
       | TC_big_map (k, v) -> Format.asprintf "Big Map (%a,%a)" f k f v
+      | TC_map_or_big_map (k, v) -> Format.asprintf "Map Or Big Map (%a,%a)" f k f v
       | TC_arrow (k, v) -> Format.asprintf "arrow (%a,%a)" f k f v
       | TC_contract te  -> Format.asprintf "Contract (%a)" f te
     in

@@ -107,14 +107,10 @@ let e_bytes_raw ?loc (b: bytes) : expression =
   make_expr ?loc @@ E_literal (Literal_bytes b)
 let e_bytes_string ?loc (s: string) : expression =
   make_expr ?loc @@ E_literal (Literal_bytes (Hex.to_bytes (Hex.of_string s)))
-let e_big_map ?loc lst : expression = make_expr ?loc @@ E_big_map lst
 let e_some ?loc s  : expression = make_expr ?loc @@ E_constant {cons_name = C_SOME; arguments = [s]}
 let e_none ?loc () : expression = make_expr ?loc @@ E_constant {cons_name = C_NONE; arguments = []}
 let e_string_cat ?loc sl sr : expression = make_expr ?loc @@ E_constant {cons_name = C_CONCAT; arguments = [sl ; sr ]}
 let e_map_add ?loc k v old  : expression = make_expr ?loc @@ E_constant {cons_name = C_MAP_ADD; arguments = [k ; v ; old]}
-let e_map ?loc lst : expression = make_expr ?loc @@ E_map lst
-let e_set ?loc lst : expression = make_expr ?loc @@ E_set lst
-let e_list ?loc lst : expression = make_expr ?loc @@ E_list lst
 let e_constructor ?loc s a : expression = make_expr ?loc @@ E_constructor { constructor = Constructor s; element = a}
 let e_matching ?loc a b : expression = make_expr ?loc @@ E_matching {matchee=a;cases=b}
 let e_matching_bool ?loc a b c : expression = e_matching ?loc a (Match_bool {match_true = b ; match_false = c})
@@ -127,7 +123,6 @@ let e_annotation ?loc anno_expr ty = make_expr ?loc @@ E_ascription {anno_expr; 
 let e_application ?loc a b = make_expr ?loc @@ E_application {lamb=a ; args=b}
 let e_binop ?loc name a b  = make_expr ?loc @@ E_constant {cons_name = name ; arguments = [a ; b]}
 let e_constant ?loc name lst = make_expr ?loc @@ E_constant {cons_name=name ; arguments = lst}
-let e_look_up ?loc x y = make_expr ?loc @@ E_look_up (x , y)
 let e_cond ?loc expr match_true match_false = e_matching expr ?loc (Match_bool {match_true; match_false})
 (*
 let e_assign ?loc a b c = location_wrap ?loc @@ E_assign (Var.of_name a , b , c) (* TODO handlethat*)
@@ -160,15 +155,6 @@ let make_option_typed ?loc e t_opt =
 let e_typed_none ?loc t_opt =
   let type_annotation = t_option t_opt in
   e_annotation ?loc (e_none ?loc ()) type_annotation
-
-let e_typed_list ?loc lst t =
-  e_annotation ?loc (e_list lst) (t_list t)
-
-let e_typed_map ?loc lst k v = e_annotation ?loc (e_map lst) (t_map k v)
-let e_typed_big_map ?loc lst k v = e_annotation ?loc (e_big_map lst) (t_big_map k v)
-
-let e_typed_set ?loc lst k = e_annotation ?loc (e_set lst) (t_set k)
-
 
 let e_lambda ?loc (binder : expression_variable)
     (input_type : type_expression option)
@@ -221,9 +207,16 @@ let get_e_pair = fun t ->
   | _ -> simple_fail "not a pair"
 
 let get_e_list = fun t ->
-  match t with
-  | E_list lst -> ok lst
-  | _ -> simple_fail "not a list"
+  let rec aux t = 
+    match t with
+      E_constant {cons_name=C_CONS;arguments=[key;lst]} -> 
+        let%bind lst = aux lst.expression_content in
+        ok @@ key::(lst)
+    | E_constant {cons_name=C_LIST_EMPTY;arguments=[]} ->
+        ok @@ []
+    | _ -> simple_fail "not a list"
+  in
+  aux t
 
 let tuple_of_record (m: _ LMap.t) =
   let aux i = 
@@ -250,17 +243,18 @@ let extract_pair : expression -> (expression * expression) result = fun e ->
     )
   | _ -> fail @@ bad_kind "pair" e.location
 
-let extract_list : expression -> (expression list) result = fun e ->
-  match e.expression_content with
-  | E_list lst -> ok lst
-  | _ -> fail @@ bad_kind "list" e.location
-
 let extract_record : expression -> (label * expression) list result = fun e ->
   match e.expression_content with
   | E_record lst -> ok @@ LMap.to_kv_list lst
   | _ -> fail @@ bad_kind "record" e.location
 
 let extract_map : expression -> (expression * expression) list result = fun e ->
-  match e.expression_content with
-  | E_map lst -> ok lst
-  | _ -> fail @@ bad_kind "map" e.location
+  let rec aux e =
+    match e.expression_content with
+      E_constant {cons_name=C_UPDATE|C_MAP_ADD; arguments=[k;v;map]} -> 
+        let%bind map = aux map in
+        ok @@ (k,v)::map 
+    | E_constant {cons_name=C_MAP_EMPTY|C_BIG_MAP_EMPTY; arguments=[]} -> ok @@ []
+    | _ -> fail @@ bad_kind "map" e.location
+  in
+  aux e

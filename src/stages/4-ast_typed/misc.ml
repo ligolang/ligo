@@ -211,10 +211,6 @@ module Free_variables = struct
     | E_record m -> unions @@ List.map self @@ LMap.to_list m
     | E_record_accessor {record;_} -> self record
     | E_record_update {record; update;_} -> union (self record) @@ self update
-    | E_list lst -> unions @@ List.map self lst
-    | E_set lst -> unions @@ List.map self lst
-    | (E_map m | E_big_map m) -> unions @@ List.map self @@ List.concat @@ List.map (fun (a, b) -> [ a ; b ]) m
-    | E_look_up (a , b) -> unions @@ List.map self [ a ; b ]
     | E_matching {matchee; cases;_} -> union (self matchee) (matching_expression b cases)
     | E_let_in { let_binder; rhs; let_result; _} ->
       let b' = union (singleton let_binder) b in
@@ -342,10 +338,11 @@ let rec assert_type_expression_eq (a, b: (type_expression * type_expression)) : 
       | TC_list la, TC_list lb
       | TC_contract la, TC_contract lb
       | TC_set la, TC_set lb -> ok @@ ([la], [lb])
-      | TC_map (ka,va), TC_map (kb,vb)
-      | TC_big_map (ka,va), TC_big_map (kb,vb) -> ok @@ ([ka;va] ,[kb;vb]) 
-      | (TC_option _ | TC_list _ | TC_contract _ | TC_set _ | TC_map _ | TC_big_map _ | TC_arrow _),
-        (TC_option _ | TC_list _ | TC_contract _ | TC_set _ | TC_map _ | TC_big_map _ | TC_arrow _ ) -> fail @@ different_operators opa opb
+      | (TC_map (ka,va) | TC_map_or_big_map (ka,va)), (TC_map (kb,vb) | TC_map_or_big_map (kb,vb))
+      | (TC_big_map (ka,va) | TC_map_or_big_map (ka,va)), (TC_big_map (kb,vb) | TC_map_or_big_map (kb,vb))
+       -> ok @@ ([ka;va] ,[kb;vb]) 
+      | (TC_option _ | TC_list _ | TC_contract _ | TC_set _ | TC_map _ | TC_big_map _ | TC_map_or_big_map _ | TC_arrow _),
+        (TC_option _ | TC_list _ | TC_contract _ | TC_set _ | TC_map _ | TC_big_map _ | TC_map_or_big_map _ | TC_arrow _ ) -> fail @@ different_operators opa opb
       in
       if List.length lsta <> List.length lstb then
         fail @@ different_operator_number_of_arguments opa opb (List.length lsta) (List.length lstb)
@@ -497,44 +494,10 @@ let rec assert_value_eq (a, b: (expression*expression)) : unit result =
   | E_record _, _ ->
       fail @@ (different_values_because_different_types "record vs. non-record" a b)
 
-  | (E_map lsta, E_map lstb | E_big_map lsta, E_big_map lstb) -> (
-      let%bind lst = generic_try (different_size_values "maps of different lengths" a b)
-          (fun () ->
-             let lsta' = List.sort compare lsta in
-             let lstb' = List.sort compare lstb in
-             List.combine lsta' lstb') in
-      let aux = fun ((ka, va), (kb, vb)) ->
-        let%bind _ = assert_value_eq (ka, kb) in
-        let%bind _ = assert_value_eq (va, vb) in
-        ok () in
-      let%bind _all = bind_map_list aux lst in
-      ok ()
-    )
-  | (E_map _ | E_big_map _), _ ->
-      fail @@ different_values_because_different_types "map vs. non-map" a b
-
-  | E_list lsta, E_list lstb -> (
-      let%bind lst =
-        generic_try (different_size_values "lists of different lengths" a b)
-          (fun () -> List.combine lsta lstb) in
-      let%bind _all = bind_map_list assert_value_eq lst in
-      ok ()
-    )
-  | E_list _, _ ->
-      fail @@ different_values_because_different_types "list vs. non-list" a b
-  | E_set lsta, E_set lstb -> (
-      let%bind lst =
-        generic_try (different_size_values "sets of different lengths" a b)
-          (fun () -> List.combine lsta lstb) in
-      let%bind _all = bind_map_list assert_value_eq lst in
-      ok ()
-    )
-  | E_set _, _ ->
-      fail @@ different_values_because_different_types "set vs. non-set" a b
   | (E_literal _, _) | (E_variable _, _) | (E_application _, _)
   | (E_lambda _, _) | (E_let_in _, _) | (E_recursive _, _)
   | (E_record_accessor _, _) | (E_record_update _,_)
-  | (E_look_up _, _) | (E_matching _, _)
+  | (E_matching _, _)
   -> fail @@ error_uncomparable_values "can't compare sequences nor loops" a b
 
 let merge_annotation (a:type_expression option) (b:type_expression option) err : type_expression result =

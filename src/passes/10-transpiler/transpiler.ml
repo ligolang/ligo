@@ -141,6 +141,8 @@ let rec transpile_type (t:AST.type_expression) : type_value result =
   | T_operator (TC_big_map (key,value)) ->
       let%bind kv' = bind_map_pair transpile_type (key, value) in
       ok (T_big_map kv')
+  | T_operator (TC_map_or_big_map (_,_)) ->
+      fail @@ corner_case ~loc:"transpiler" "TC_map_or_big_map should have been resolved before transpilation"
   | T_operator (TC_list t) ->
       let%bind t' = transpile_type t in
       ok (T_list t')
@@ -234,7 +236,6 @@ and tree_of_sum : AST.type_expression -> (AST.constructor' * AST.type_expression
 and transpile_annotated_expression (ae:AST.expression) : expression result =
   let%bind tv = transpile_type ae.type_expression in
   let return ?(tv = tv) expr = ok @@ Combinators.Expression.make_tpl (expr, tv) in
-  let f = transpile_annotated_expression in
   let info =
     let title () = "translating expression" in
     let content () = Format.asprintf "%a" Location.pp ae.location in
@@ -391,58 +392,6 @@ and transpile_annotated_expression (ae:AST.expression) : expression result =
     transpile_lambda l io
   | E_recursive r ->
     transpile_recursive r
-  | E_list lst -> (
-      let%bind t =
-        trace_strong (corner_case ~loc:__LOC__ "not a list") @@
-        get_t_list tv in
-      let%bind lst' = bind_map_list (transpile_annotated_expression) lst in
-      let aux : expression -> expression -> expression result = fun prev cur ->
-        return @@ E_constant {cons_name=C_CONS;arguments=[cur ; prev]} in
-      let%bind (init : expression) = return @@ E_make_empty_list t in
-      bind_fold_right_list aux init lst'
-    )
-  | E_set lst -> (
-      let%bind t =
-        trace_strong (corner_case ~loc:__LOC__ "not a set") @@
-        get_t_set tv in
-      let%bind lst' = bind_map_list (transpile_annotated_expression) lst in
-      let aux : expression -> expression -> expression result = fun prev cur ->
-        return @@ E_constant {cons_name=C_SET_ADD;arguments=[cur ; prev]} in
-      let%bind (init : expression) = return @@ E_make_empty_set t in
-      bind_fold_list aux init lst'
-    )
-  | E_map m -> (
-      let%bind (src, dst) =
-        trace_strong (corner_case ~loc:__LOC__ "not a map") @@
-        Mini_c.Combinators.get_t_map tv in
-      let aux : expression result -> (AST.expression * AST.expression) -> expression result = fun prev (k, v) ->
-        let%bind prev' = prev in
-        let%bind (k', v') =
-          let v' = e_a_some v ae.environment in
-          bind_map_pair (transpile_annotated_expression) (k , v') in
-        return @@ E_constant {cons_name=C_UPDATE;arguments=[k' ; v' ; prev']}
-      in
-      let init = return @@ E_make_empty_map (src, dst) in
-      List.fold_left aux init m
-    )
-  | E_big_map m -> (
-      let%bind (src, dst) =
-        trace_strong (corner_case ~loc:__LOC__ "not a map") @@
-        Mini_c.Combinators.get_t_big_map tv in
-      let aux : expression result -> (AST.expression * AST.expression) -> expression result = fun prev (k, v) ->
-        let%bind prev' = prev in
-        let%bind (k', v') =
-          let v' = e_a_some v ae.environment in
-          bind_map_pair (transpile_annotated_expression) (k , v') in
-        return @@ E_constant {cons_name=C_UPDATE;arguments=[k' ; v' ; prev']}
-      in
-      let init = return @@ E_make_empty_big_map (src, dst) in
-      List.fold_left aux init m
-    )
-  | E_look_up dsi -> (
-      let%bind (ds', i') = bind_map_pair f dsi in
-      return @@ E_constant {cons_name=C_MAP_FIND_OPT;arguments=[i' ; ds']}
-    )
   | E_matching {matchee=expr; cases=m} -> (
       let%bind expr' = transpile_annotated_expression expr in
       match m with

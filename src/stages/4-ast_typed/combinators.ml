@@ -64,6 +64,7 @@ let t_pair a b ?s ()   : type_expression = ez_t_record [(Label "0",a) ; (Label "
 
 let t_map key value ?s () = make_t (T_operator (TC_map (key , value))) s
 let t_big_map key value ?s () = make_t (T_operator (TC_big_map (key , value))) s
+let t_map_or_big_map key value ?s () = make_t (T_operator (TC_map_or_big_map (key,value))) s
 
 let t_sum m ?s () : type_expression = make_t (T_sum m) s
 let make_t_ez_sum (lst:(constructor' * type_expression) list) : type_expression =
@@ -190,11 +191,13 @@ let get_t_record (t:type_expression) : type_expression label_map result = match 
 let get_t_map (t:type_expression) : (type_expression * type_expression) result =
   match t.type_content with
   | T_operator (TC_map (k,v)) -> ok (k, v)
+  | T_operator (TC_map_or_big_map (k,v)) -> ok (k, v)
   | _ -> fail @@ Errors.not_a_x_type "map" t ()
 
 let get_t_big_map (t:type_expression) : (type_expression * type_expression) result =
   match t.type_content with
   | T_operator (TC_big_map (k,v)) -> ok (k, v)
+  | T_operator (TC_map_or_big_map (k,v)) -> ok (k, v)
   | _ -> fail @@ Errors.not_a_x_type "big_map" t ()
 
 let get_t_map_key : type_expression -> type_expression result = fun t ->
@@ -276,8 +279,6 @@ let ez_e_record (lst : (label * expression) list) : expression_content =
 let e_some s : expression_content = E_constant {cons_name=C_SOME;arguments=[s]}
 let e_none (): expression_content = E_constant {cons_name=C_NONE; arguments=[]}
 
-let e_map lst : expression_content = E_map lst
-
 let e_unit () : expression_content =     E_literal (Literal_unit)
 let e_int n : expression_content = E_literal (Literal_int n)
 let e_nat n : expression_content = E_literal (Literal_nat n)
@@ -296,7 +297,6 @@ let e_lambda l : expression_content = E_lambda l
 let e_pair a b : expression_content = ez_e_record [(Label "0",a);(Label "1", b)]
 let e_application lamb args : expression_content = E_application {lamb;args}
 let e_variable v : expression_content = E_variable v
-let e_list lst : expression_content = E_list lst
 let e_let_in let_binder inline rhs let_result = E_let_in { let_binder ; rhs ; let_result; inline }
 
 let e_a_unit = make_a_e (e_unit ()) (t_unit ())
@@ -314,8 +314,6 @@ let e_a_record r = make_a_e (e_record r) (t_record (LMap.map get_type_expression
 let e_a_application a b = make_a_e (e_application a b) (get_type_expression b)
 let e_a_variable v ty = make_a_e (e_variable v) ty
 let ez_e_a_record r = make_a_e (ez_e_record r) (ez_t_record (List.map (fun (x, y) -> x, y.type_expression) r) ())
-let e_a_map lst k v = make_a_e (e_map lst) (t_map k v ())
-let e_a_list lst t = make_a_e (e_list lst) (t_list t ())
 let e_a_let_in binder expr body attributes = make_a_e (e_let_in binder expr body attributes) (get_type_expression body)
 
 

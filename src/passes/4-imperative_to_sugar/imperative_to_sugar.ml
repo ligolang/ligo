@@ -154,6 +154,9 @@ and compile_type_operator : I.type_operator -> O.type_operator result =
     | TC_big_map (k,v) ->
       let%bind (k,v) = bind_map_pair compile_type_expression (k,v) in
       ok @@ O.TC_big_map (k,v)
+    | TC_map_or_big_map (k,v) ->
+      let%bind (k,v) = bind_map_pair compile_type_expression (k,v) in
+      ok @@ O.TC_map_or_big_map (k,v)
     | TC_arrow (i,o) ->
       let%bind (i,o) = bind_map_pair compile_type_expression (i,o) in
       ok @@ O.TC_arrow (i,o)
@@ -569,6 +572,9 @@ and uncompile_type_operator : O.type_operator -> I.type_operator result =
     | TC_big_map (k,v) ->
       let%bind (k,v) = bind_map_pair uncompile_type_expression (k,v) in
       ok @@ I.TC_big_map (k,v)
+    | TC_map_or_big_map (k,v) ->
+      let%bind (k,v) = bind_map_pair uncompile_type_expression (k,v) in
+      ok @@ I.TC_map_or_big_map (k,v)
     | TC_arrow (i,o) ->
       let%bind (i,o) = bind_map_pair uncompile_type_expression (i,o) in
       ok @@ I.TC_arrow (i,o)

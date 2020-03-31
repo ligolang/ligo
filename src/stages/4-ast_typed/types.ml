@@ -49,13 +49,6 @@ and expression_content =
   | E_record of expression label_map
   | E_record_accessor of accessor
   | E_record_update of update
-  (* Data Structures *)
-  (* TODO : move to constant*)
-  | E_map of (expression * expression) list (*move to operator *)
-  | E_big_map of (expression * expression) list (*move to operator *)
-  | E_list of expression list
-  | E_set of expression list
-  | E_look_up of (expression * expression)
 
 and constant =
   { cons_name: constant'

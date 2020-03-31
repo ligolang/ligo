@@ -31,16 +31,6 @@ and expression_content ppf (ec : expression_content) =
       fprintf ppf "%a.%a" expression ra.record label ra.label
   | E_record_update {record; path; update} ->
       fprintf ppf "{ %a with { %a = %a } }" expression record label path expression update
-  | E_map m ->
-      fprintf ppf "map[%a]" (list_sep_d assoc_expression) m
-  | E_big_map m ->
-      fprintf ppf "big_map[%a]" (list_sep_d assoc_expression) m
-  | E_list lst ->
-      fprintf ppf "list[%a]" (list_sep_d expression) lst
-  | E_set lst ->
-      fprintf ppf "set[%a]" (list_sep_d expression) lst
-  | E_look_up (ds, ind) ->
-      fprintf ppf "(%a)[%a]" expression ds expression ind
   | E_lambda {binder; input_type; output_type; result} ->
       fprintf ppf "lambda (%a:%a) : %a return %a"
         expression_variable binder
