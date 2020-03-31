@@ -34,13 +34,21 @@ function buy_taco (const taco_kind_index : nat; var taco_shop_storage : taco_sho
     // Update the storage with the refreshed taco_kind
     taco_shop_storage[taco_kind_index] := taco_kind;
 
-    const receiver : contract (unit) = get_contract (ownerAddress);
-    const donationReceiver : contract (unit) = get_contract (donationAddress);
+    const receiver : contract (unit) = 
+      case (Tezos.get_contract_opt (ownerAddress): option(contract (unit))) of 
+        Some (contract) -> contract
+      | None -> (failwith ("Not a contract") : contract (unit))
+      end;
+    const donationReceiver : contract (unit) = 
+      case (Tezos.get_contract_opt (donationAddress): option(contract (unit))) of 
+        Some (contract) -> contract
+      | None  -> (failwith ("Not a contract") : contract (unit))
+      end;
 
     const donationAmount : tez = amount / 10n;
 
     const operations : list (operation) = list [
-      transaction (unit, amount - donationAmount, receiver);
-      transaction (unit, donationAmount, donationReceiver);
+      Tezos.transaction (unit, amount - donationAmount, receiver);
+      Tezos.transaction (unit, donationAmount, donationReceiver);
     ]
   } with (operations, taco_shop_storage)
