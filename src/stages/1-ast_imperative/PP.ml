@@ -16,8 +16,8 @@ let rec type_expression' :
   fun f ppf te ->
   match te.type_content with
   | T_sum m -> fprintf ppf "sum[%a]" (cmap_sep_d f) m
-  | T_record m -> fprintf ppf "%a" (tuple_or_record_sep_type f) m
-  | T_tuple t -> fprintf ppf "%a" (list_sep_d f) t
+  | T_record m -> fprintf ppf "{%a}" (record_sep f (const ";")) m
+  | T_tuple t -> fprintf ppf "(%a)" (list_sep_d f) t
   | T_arrow a -> fprintf ppf "%a -> %a" f a.type1 f a.type2
   | T_variable tv -> type_variable ppf tv
   | T_constant tc -> type_constant ppf tc
@@ -60,11 +60,11 @@ and expression_content ppf (ec : expression_content) =
       fprintf ppf "%a(%a)" constant c.cons_name (list_sep_d expression)
         c.arguments
   | E_record m ->
-      fprintf ppf "%a" (tuple_or_record_sep_expr expression) m
+      fprintf ppf "{%a}" (record_sep expression (const ";")) m
   | E_record_accessor ra ->
       fprintf ppf "%a.%a" expression ra.record label ra.path
   | E_record_update {record; path; update} ->
-      fprintf ppf "{ %a with { %a = %a } }" expression record label path expression update
+      fprintf ppf "{ %a with %a = %a }" expression record label path expression update
   | E_map m ->
       fprintf ppf "map[%a]" (list_sep_d assoc_expression) m
   | E_big_map m ->
@@ -101,11 +101,11 @@ and expression_content ppf (ec : expression_content) =
   | E_skip ->
       fprintf ppf "skip"
   | E_tuple t ->
-      fprintf ppf "%a" (list_sep_d expression) t
+      fprintf ppf "(%a)" (list_sep_d expression) t
   | E_tuple_accessor ta ->
       fprintf ppf "%a.%d" expression ta.tuple ta.path
   | E_tuple_update {tuple; path; update} ->
-      fprintf ppf "{ %a with { %d = %a } }" expression tuple path expression update
+      fprintf ppf "{ %a with %d = %a }" expression tuple path expression update
   | E_assign {variable; access_path; expression=e} ->
       fprintf ppf "%a%a := %a" 
         expression_variable variable
