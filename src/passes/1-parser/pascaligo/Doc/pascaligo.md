@@ -823,7 +823,7 @@ example, in verbose style:
 
     type store is
       record
-        goal     : mutez;               // Millionth of a tez
+        goal     : tez;              
         deadline : timestamp;
         backers  : map (address, nat);
         funded   : bool
