@@ -4,7 +4,6 @@ module Region = Simple_utils.Region
 
 module type IO =
   sig
-    val ext : string              (* LIGO file extension *)
     val options : EvalOpt.options (* CLI options *)
   end
 
@@ -110,9 +109,9 @@ module Make (IO : IO)
 
     let failure get_win checkpoint =
       let message = ParErr.message (state checkpoint) in
-      let message = if message = "<YOUR SYNTAX ERROR MESSAGE HERE>\n" then 
+      let message = if message = "<YOUR SYNTAX ERROR MESSAGE HERE>\n" then
         (string_of_int (state checkpoint)) ^ ": <syntax error>"
-      else 
+      else
         message
       in
       match get_win () with
@@ -141,12 +140,12 @@ module Make (IO : IO)
       and failure   = failure get_win in
       let parser    = Incr.contract buffer.Lexing.lex_curr_p in
       let ast       = I.loop_handle success failure supplier parser
-      in close (); ast
+      in flush_all (); close (); ast
 
     let incr_expr Lexer.{read; buffer; get_win; close; _} =
       let supplier   = I.lexer_lexbuf_to_supplier (read ~log) buffer
       and failure    = failure get_win in
       let parser     = Incr.interactive_expr buffer.Lexing.lex_curr_p in
       let expr       = I.loop_handle success failure supplier parser
-      in close (); expr
+      in flush_all (); close (); expr
   end

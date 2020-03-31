@@ -2,8 +2,7 @@
 
 module IO =
   struct
-    let ext = ".mligo"
-    let options = EvalOpt.read "CameLIGO" ext
+    let options = EvalOpt.(read ~lang:CameLIGO ~ext:".mligo")
   end
 
 module Parser =
@@ -98,7 +97,7 @@ let prefix =
     None | Some "-" -> "temp"
   | Some file -> Filename.(file |> basename |> remove_extension)
 
-let suffix = ".pp" ^ IO.ext
+let suffix = ".pp" ^ IO.options#ext
 
 let pp_input =
   if SSet.mem "cpp" IO.options#verbose

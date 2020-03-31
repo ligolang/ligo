@@ -5,7 +5,7 @@
   (modules E_Parser))
 
 (library
-  (name Preproc)
+  (name Preprocessor)
   (public_name ligo.preproc)
   (libraries
      getopt

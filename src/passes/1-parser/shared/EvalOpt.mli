@@ -48,11 +48,18 @@ type command = Quiet | Copy | Units | Tokens
           expressions is used, otherwise a full-fledged contract is
           expected.}
 } *)
+
+type language = PascaLIGO | CameLIGO | ReasonLIGO
+
+val lang_to_string : language -> string
+
 type options = <
   input   : string option;
   libs    : string list;
   verbose : Utils.String.Set.t;
   offsets : bool;
+  lang    : language;
+  ext     : string;   (* ".ligo", ".mligo", ".religo" *)
   mode    : [`Byte | `Point];
   cmd     : command;
   mono    : bool;
@@ -64,6 +71,8 @@ val make :
   libs:string list ->
   verbose:Utils.String.Set.t ->
   offsets:bool ->
+  lang:language ->
+  ext:string ->
   mode:[`Byte | `Point] ->
   cmd:command ->
   mono:bool ->
@@ -71,7 +80,7 @@ val make :
   options
 
 (** Parsing the command-line options on stdin.  The first parameter is
-   the name of the concrete syntax, e.g., "pascaligo", and the second
-   is the file extension, e.g., ".ligo".
- *)
-val read : string -> string -> options
+   the name of the concrete syntax, e.g., [PascaLIGO], and the second
+   is the expected file extension, e.g., ".ligo". *)
+
+val read : lang:language -> ext:string -> options

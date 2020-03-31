@@ -4,7 +4,6 @@ module Region = Simple_utils.Region
 
 module type IO =
   sig
-    val ext : string              (* LIGO file extension *)
     val options : EvalOpt.options (* CLI options *)
   end
 
@@ -94,7 +93,7 @@ module Make (Lexer: Lexer.S)
             ParserLog.pp_expr state expr;
             Buffer.output_buffer stdout output
           end
-      in close (); Ok expr
+      in flush_all (); close (); Ok expr
 
     (* Parsing a contract *)
 
@@ -129,7 +128,7 @@ module Make (Lexer: Lexer.S)
             ParserLog.pp_ast state ast;
             Buffer.output_buffer stdout output
           end
-      in close (); Ok ast
+      in flush_all (); close (); Ok ast
 
     (* Wrapper for the parsers above *)
 
@@ -180,5 +179,5 @@ module Make (Lexer: Lexer.S)
        (* I/O errors *)
 
        | exception Sys_error error ->
-           Stdlib.Error (Region.wrap_ghost error)
+           flush_all (); Stdlib.Error (Region.wrap_ghost error)
   end

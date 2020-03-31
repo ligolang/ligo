@@ -15,7 +15,7 @@ module type S =
 
     val trace :
       ?offsets:bool -> [`Byte | `Point] ->
-      file_path option -> EvalOpt.command ->
+      Lexer.input -> EvalOpt.command ->
       (unit, string Region.reg) Stdlib.result
   end
 
@@ -49,16 +49,12 @@ module Make (Lexer: Lexer.S) : (S with module Lexer = Lexer) =
 
     type file_path = string
 
-    let trace ?(offsets=true) mode file_path_opt command :
+    let trace ?(offsets=true) mode input command :
           (unit, string Region.reg) Stdlib.result =
-      let input =
-        match file_path_opt with
-          Some file_path -> Lexer.File file_path
-        | None -> Lexer.Stdin in
       match Lexer.open_token_stream input with
         Ok Lexer.{read; buffer; close; _} ->
           let log = output_token ~offsets mode command stdout
-          and close_all () = close (); close_out stdout in
+          and close_all () = flush_all (); close () in
           let rec iter () =
             match read ~log buffer with
               token ->
@@ -67,14 +63,14 @@ module Make (Lexer: Lexer.S) : (S with module Lexer = Lexer) =
                 else iter ()
             | exception Lexer.Error error ->
                 let file =
-                  match file_path_opt with
-                    None | Some "-" -> false
-                  |         Some _  -> true in
+                  match input with
+                    Lexer.File name -> name <> "-"
+                  | _  -> false in
                 let msg =
                   Lexer.format_error ~offsets mode ~file error
                 in Stdlib.Error msg in
             let result = iter ()
             in close_all (); result
         | Stdlib.Error (Lexer.File_opening msg) ->
-            close_out stdout; Stdlib.Error (Region.wrap_ghost msg)
+            flush_all (); Stdlib.Error (Region.wrap_ghost msg)
   end

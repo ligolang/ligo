@@ -254,7 +254,7 @@ module Make (Token: TOKEN) : (S with module Token = Token) =
                     Nil -> One token
     | One t | Two (t,_) -> Two (token,t)
 
-    (** Beyond tokens, the result of lexing is a state. The type
+    (* Beyond tokens, the result of lexing is a state. The type
        [state] represents the logical state of the lexing engine, that
        is, a value which is threaded during scanning and which denotes
        useful, high-level information beyond what the type
@@ -292,6 +292,7 @@ module Make (Token: TOKEN) : (S with module Token = Token) =
        it to [decoder]. See the documentation of the third-party
        library Uutf.
      *)
+
     type state = {
       units   : (Markup.t list * token) FQueue.t;
       markup  : Markup.t list;
@@ -648,21 +649,22 @@ and scan state = parse
          let state  = scan_line thread state lexbuf |> push_line
          in scan state lexbuf }
 
-  (* Management of #include CPP directives
+  (* Management of #include preprocessing directives
 
-    An input LIGO program may contain GNU CPP (C preprocessor)
-    directives, and the entry modules (named *Main.ml) run CPP on them
-    in traditional mode:
+    An input LIGO program may contain preprocessing directives, and
+    the entry modules (named *Main.ml) run the preprocessor on them,
+    as if using the GNU C preprocessor in traditional mode:
 
     https://gcc.gnu.org/onlinedocs/cpp/Traditional-Mode.html
 
-      The main interest in using CPP is that it can stand for a poor
-    man's (flat) module system for LIGO thanks to #include
-    directives, and the traditional mode leaves the markup mostly
-    undisturbed.
+      The main interest in using a preprocessor is that it can stand
+    for a poor man's (flat) module system for LIGO thanks to #include
+    directives, and the equivalent of the traditional mode leaves the
+    markup undisturbed.
 
-      Some of the #line resulting from processing #include directives
-    deal with system file headers and thus have to be ignored for our
+      Contrary to the C preprocessor, our preprocessor does not
+    generate #line resulting from processing #include directives deal
+    with system file headers and thus have to be ignored for our
     purpose. Moreover, these #line directives may also carry some
     additional flags:
 
@@ -671,7 +673,7 @@ and scan state = parse
     of which 1 and 2 indicate, respectively, the start of a new file
     and the return from a file (after its inclusion has been
     processed).
-  *)
+   *)
 
 | '#' blank* ("line" blank+)? (natural as line) blank+
     '"' (string as file) '"' {

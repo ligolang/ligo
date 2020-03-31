@@ -2,25 +2,32 @@
 
 (* The type [options] gathers the command-line options. *)
 
-type language = PascaLIGO | CameLIGO | ReasonLIGO
-
 module SSet = Set.Make (String)
 
+type language = PascaLIGO | CameLIGO | ReasonLIGO
+
+let lang_to_string = function
+  PascaLIGO  -> "PascaLIGO"
+| CameLIGO   -> "CameLIGO"
+| ReasonLIGO -> "ReasonLIGO"
+
 type options = <
-  input   : string;
+  input   : string option;
   libs    : string list;
-  lang    : language;
+  verbose : SSet.t;
   offsets : bool;
-  verbose : SSet.t
+  lang    : language;
+  ext     : string   (* ".ligo", ".mligo", ".religo" *)
 >
 
-let make ~input ~libs ~lang ~offsets ~verbose =
+let make ~input ~libs ~lang ~offsets ~verbose ~ext : options =
   object
     method input   = input
     method libs    = libs
     method lang    = lang
     method offsets = offsets
     method verbose = verbose
+    method ext     = ext
   end
 
 (* Auxiliary functions and modules *)
@@ -40,10 +47,10 @@ let abort msg =
 
 (* Help *)
 
-let help () =
+let help lang ext () =
   let file = Filename.basename Sys.argv.(0) in
-  printf "Usage: %s [<option> ...] <input>\n" file;
-  printf "where <input> is the source file,\n";
+  printf "Usage: %s [<option> ...] [<input>%s | \"-\"]\n" file ext;
+  printf "where <input>%s is the %s source file (default: stdin),\n" ext lang;
   print "and each <option> (if any) is one of the following:";
   print "  -I <paths>             Inclusion paths (colon-separated)";
   print "      --columns          Columns for source locations";
@@ -55,7 +62,6 @@ let help () =
 
 let input    = ref None
 and libs     = ref []
-and lang     = ref None
 and columns  = ref false
 and verbose  = ref SSet.empty
 and verb_str = ref ""
@@ -68,10 +74,11 @@ let add_verbose d =
   verbose := List.fold_left (fun x y -> SSet.add y x)
                             !verbose
                             (split_at_colon d)
-let specs =
+let specs lang ext =
+  let lang_str = lang_to_string lang in
   let open!Getopt in [
     'I',     nolong,    None, Some add_path;
-    'h',     "help",    Some help, None;
+    'h',     "help",    Some (help lang_str ext), None;
     noshort, "columns", set columns true, None;
     noshort, "verbose", None, Some add_verbose
   ]
@@ -80,44 +87,38 @@ let specs =
 
 let anonymous arg =
   match !input with
-    None ->
-      (match Filename.extension arg with
-         ".ligo"   -> lang := Some PascaLIGO
-       | ".mligo"  -> lang := Some CameLIGO
-       | ".religo" -> lang := Some ReasonLIGO
-       | _ -> abort (sprintf "Wrong file extension."));
-      input := Some arg
-  | Some _ -> abort (sprintf "Multiple inputs.")
+      None -> input := Some arg
+  | Some _ -> abort (sprintf "Multiple inputs")
 
 (* Checking options and exporting them as non-mutable values *)
 
-let check () =
+let check lang ext =
   let libs = !libs
 
   and offsets = not !columns
 
   and verbose = !verbose
 
-  and lang =
-    match !lang with
-      Some lang -> lang
-    | None -> assert false
-
   and input =
     match !input with
-      Some file -> file
-    | None -> abort "Missing input file."
+      None | Some "-" -> !input
+    | Some file_path ->
+        if   Filename.check_suffix file_path ext
+        then if   Sys.file_exists file_path
+             then Some file_path
+             else abort "Source file not found."
+        else abort ("Source file lacks the extension " ^ ext ^ ".")
 
- in make ~input ~libs ~lang ~offsets ~verbose
+ in make ~input ~libs ~lang ~offsets ~verbose ~ext
 
 (* Parsing the command-line options *)
 
-let read () =
+let read ~lang:(lang : language) ~ext:(ext : string) =
   try
-    Getopt.parse_cmdline specs anonymous;
+    Getopt.parse_cmdline (specs lang ext) anonymous;
     (verb_str :=
        let apply e a =
          if a = "" then e else sprintf "%s, %s" e a
        in SSet.fold apply !verbose "");
-    check ()
+    check lang ext
   with Getopt.Error msg -> abort msg

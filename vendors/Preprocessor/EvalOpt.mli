@@ -3,27 +3,30 @@
 (* The type [options] gathers the command-line options. *)
 
 type language = PascaLIGO | CameLIGO | ReasonLIGO
+val lang_to_string : language -> string
 
 module SSet : Set.S with type elt = string
 
 type options = <
-  input   : string;
+  input   : string option;
   libs    : string list;
-  lang    : language;
+  verbose : SSet.t;
   offsets : bool;
-  verbose : SSet.t
+  lang    : language;
+  ext     : string   (* ".ligo", ".mligo", ".religo" *)
 >
 
 val make :
-  input:string ->
+  input:string option ->
   libs:string list ->
   lang:language ->
   offsets:bool ->
   verbose:SSet.t ->
+  ext:string ->
   options
 
 (* Parsing the command-line options on stdin. The first parameter is
    the name of the concrete syntax. This is needed to correctly handle
    comments. *)
 
-val read : unit -> options
+val read : lang:language -> ext:string -> options

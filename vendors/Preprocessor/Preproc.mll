@@ -484,7 +484,6 @@ rule scan state = parse
         let line = Lexing.(lexbuf.lex_curr_p.pos_lnum)
         and file = Lexing.(lexbuf.lex_curr_p.pos_fname) in
         let base = Filename.basename file
-        (*        and dir  = Filename.dirname file*)
         and reg, incl_file = scan_inclusion state lexbuf in
         let incl_dir = Filename.dirname incl_file in
         let path = mk_path state in

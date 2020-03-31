@@ -1,17 +1,20 @@
+(* Standalone parser for booleans expression of preprocessing
+   directives for PascaLIGO *)
+
 module Region = Simple_utils.Region
 
 let highlight msg = Printf.eprintf "\027[31m%s\027[0m%!" msg
 
-let options = EvalOpt.read ();;
+let options = EvalOpt.read ~lang:EvalOpt.PascaLIGO ~ext:".ligo"
 
-match open_in options#input with
-  exception Sys_error msg -> highlight msg
-| cin ->
-    let buffer = Lexing.from_channel cin in
-    let open Lexing in
-    let () =
-      buffer.lex_curr_p <-
-        {buffer.lex_curr_p with pos_fname = options#input} in
+let parse in_chan =
+  let buffer = Lexing.from_channel in_chan in
+  let open Lexing in
+  let () =
+    match options#input with
+      Some "-" | None -> ()
+    | Some pos_fname ->
+        buffer.lex_curr_p <- {buffer.lex_curr_p with pos_fname} in
     let () =
       try
         let tree  = E_Parser.expr E_Lexer.scan buffer in
@@ -20,8 +23,7 @@ match open_in options#input with
       with
         E_Lexer.Error error ->
           let formatted =
-            E_Lexer.format
-              ~offsets:options#offsets ~file:true error
+            E_Lexer.format ~offsets:options#offsets ~file:true error
           in highlight formatted.Region.value
       | E_Parser.Error ->
           let region = Preproc.mk_reg buffer
@@ -31,4 +33,11 @@ match open_in options#input with
             Preproc.format ~offsets:options#offsets
                            ~file:true error
           in highlight formatted.Region.value
-    in close_in cin
+    in close_in in_chan
+
+let () =
+  match options#input with
+    Some "-" | None -> parse stdin
+  | Some file_path ->
+     try open_in file_path |> parse with
+       Sys_error msg -> highlight msg

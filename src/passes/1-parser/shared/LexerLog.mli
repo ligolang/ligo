@@ -13,7 +13,7 @@ module type S =
 
     val trace :
       ?offsets:bool -> [`Byte | `Point] ->
-      file_path option -> EvalOpt.command ->
+      Lexer.input -> EvalOpt.command ->
       (unit, string Region.reg) Stdlib.result
   end
 

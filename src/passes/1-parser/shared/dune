@@ -8,7 +8,8 @@
     simple-utils
     uutf
     getopt
-    zarith)
+    zarith
+    Preproc)
   (preprocess
     (pps bisect_ppx --conditional))
   (modules
