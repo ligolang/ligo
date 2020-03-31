@@ -335,7 +335,7 @@ let get_a_bool (t:expression) =
 
 let get_a_record_accessor = fun t ->
   match t.expression_content with
-  | E_record_accessor {record ; label} -> ok (record , label)
+  | E_record_accessor {record; path} -> ok (record, path)
   | _ -> simple_fail "not an accessor"
 
 let get_declaration_by_name : program -> string -> declaration result = fun p name ->

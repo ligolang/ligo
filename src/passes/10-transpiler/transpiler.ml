@@ -172,7 +172,7 @@ let rec transpile_type (t:AST.type_expression) : type_value result =
                       aux node in
       ok @@ snd m'
   | T_record m ->
-      let node = Append_tree.of_list @@ kv_list_of_lmap m in
+      let node = Append_tree.of_list @@ Stage_common.Helpers.kv_list_of_record_or_tuple m in
       let aux a b : type_value annotated result =
         let%bind a = a in
         let%bind b = b in
@@ -191,7 +191,7 @@ let rec transpile_type (t:AST.type_expression) : type_value result =
     )
 
 let record_access_to_lr : type_value -> type_value AST.label_map -> AST.label -> (type_value * [`Left | `Right]) list result = fun ty tym ind ->
-  let tys = kv_list_of_lmap tym in
+  let tys = Stage_common.Helpers.kv_list_of_record_or_tuple tym in
   let node_tv = Append_tree.of_list tys in
   let%bind path =
     let aux (i , _) = i = ind  in
@@ -290,7 +290,8 @@ and transpile_annotated_expression (ae:AST.expression) : expression result =
       return ~tv ae
     )
   | E_record m -> (
-      let node = Append_tree.of_list @@ list_of_lmap m in
+    (*list_of_lmap to record_to_list*)
+      let node = Append_tree.of_list @@ Stage_common.Helpers.list_of_record_or_tuple m in
       let aux a b : expression result =
         let%bind a = a in
         let%bind b = b in
@@ -302,16 +303,15 @@ and transpile_annotated_expression (ae:AST.expression) : expression result =
       trace_strong (corner_case ~loc:__LOC__ "record build") @@
       Append_tree.fold_ne (transpile_annotated_expression) aux node
     )
-  | E_record_accessor {record; label} ->
-      let ty  = get_type_expression record in
-      let%bind ty' = transpile_type ty in
+  | E_record_accessor {record; path} ->
+      let%bind ty' = transpile_type (get_type_expression record) in
       let%bind ty_lmap =
         trace_strong (corner_case ~loc:__LOC__ "not a record") @@
-        get_t_record ty in
+        get_t_record (get_type_expression record) in
       let%bind ty'_lmap = Stage_common.Helpers.bind_map_lmap transpile_type ty_lmap in
       let%bind path =
         trace_strong (corner_case ~loc:__LOC__ "record access") @@
-        record_access_to_lr ty' ty'_lmap label in
+        record_access_to_lr ty' ty'_lmap path in
       let aux = fun pred (ty, lr) ->
         let c = match lr with
           | `Left  -> C_CAR

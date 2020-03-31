@@ -232,7 +232,7 @@ let rec untranspile (v : value) (t : AST.type_expression) : AST.expression resul
       let%bind sub = untranspile v tv in
       return (E_constructor {constructor=Constructor name;element=sub})
   | T_record m ->
-      let lst = kv_list_of_lmap m in
+      let lst = Stage_common.Helpers.kv_list_of_record_or_tuple m in
       let%bind node = match Append_tree.of_list lst with
         | Empty -> fail @@ corner_case ~loc:__LOC__ "empty record"
         | Full t -> ok t in

@@ -46,3 +46,23 @@ let get_pair m =
   match (LMap.find_opt (Label "0") m , LMap.find_opt (Label "1") m) with
   | Some e1, Some e2 -> ok (e1,e2)
   | _ -> simple_fail "not a pair"
+
+let tuple_of_record (m: _ LMap.t) =
+  let aux i = 
+    let label = Label (string_of_int i) in
+    let opt = LMap.find_opt (label) m in
+    Option.bind (fun opt -> Some ((label,opt),i+1)) opt
+  in
+  Base.Sequence.to_list @@ Base.Sequence.unfold ~init:0 ~f:aux
+
+let list_of_record_or_tuple (m: _ LMap.t) =
+  if (is_tuple_lmap m) then
+    List.map snd @@ tuple_of_record m
+  else
+    List.rev @@ LMap.to_list m
+
+let kv_list_of_record_or_tuple (m: _ LMap.t) =
+  if (is_tuple_lmap m) then
+    tuple_of_record m
+  else
+    List.rev @@ LMap.to_kv_list m

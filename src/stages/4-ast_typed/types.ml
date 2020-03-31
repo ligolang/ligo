@@ -47,8 +47,8 @@ and expression_content =
   | E_matching of matching
   (* Record *)
   | E_record of expression label_map
-  | E_record_accessor of accessor
-  | E_record_update of update
+  | E_record_accessor of record_accessor
+  | E_record_update   of record_update
 
 and constant =
   { cons_name: constant'
@@ -84,12 +84,12 @@ and constructor = {
     element: expression ;
   }
 
-and accessor = {
+and record_accessor = {
     record: expression ;
-    label: label ;
+    path: label ;
   }
 
-and update = {
+and record_update = {
     record: expression ;
     path: label ;
     update: expression ;

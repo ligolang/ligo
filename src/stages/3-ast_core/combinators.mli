@@ -76,8 +76,8 @@ val e_pair : ?loc:Location.t -> expression -> expression -> expression
 val e_constructor : ?loc:Location.t -> string -> expression -> expression
 val e_matching : ?loc:Location.t -> expression -> matching_expr -> expression
 val e_matching_bool : ?loc:Location.t -> expression -> expression -> expression -> expression
-val e_accessor : ?loc:Location.t -> expression -> string -> expression
-val e_accessor_list : ?loc:Location.t -> expression -> string list -> expression
+val e_record_accessor : ?loc:Location.t -> expression -> string -> expression
+val e_record_accessor_list : ?loc:Location.t -> expression -> string list -> expression
 val e_variable : ?loc:Location.t -> expression_variable -> expression
 val e_cond: ?loc:Location.t -> expression -> expression -> expression -> expression
 val e_let_in : ?loc:Location.t -> ( expression_variable * type_expression option ) -> bool -> expression -> expression -> expression
@@ -95,14 +95,14 @@ val e_typed_none : ?loc:Location.t -> type_expression -> expression
 val e_lambda : ?loc:Location.t -> expression_variable -> type_expression option -> type_expression option -> expression -> expression
 val e_recursive : ?loc:Location.t -> expression_variable -> type_expression -> lambda -> expression
 val e_record : ?loc:Location.t -> expr Map.String.t -> expression
-val e_update : ?loc:Location.t -> expression -> string -> expression -> expression
+val e_record_update : ?loc:Location.t -> expression -> string -> expression -> expression
 val e_assign_with_let : ?loc:Location.t -> string -> string list -> expression -> ((expression_variable*type_expression option)*bool*expression*bool)
 
 (*
 val get_e_accessor : expression' -> ( expression * access_path ) result
 *)
 
-val assert_e_accessor : expression_content -> unit result
+val assert_e_record_accessor : expression_content -> unit result
 
 val get_e_pair : expression_content -> ( expression * expression ) result
 

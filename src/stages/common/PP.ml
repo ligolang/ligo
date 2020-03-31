@@ -16,15 +16,14 @@ let cmap_sep value sep ppf m =
 
 let record_sep value sep ppf (m : 'a label_map) =
   let lst = LMap.to_kv_list m in
-  let lst = List.sort (fun (Label a,_) (Label b,_) -> String.compare a b) lst in
+  let lst = List.sort_uniq (fun (Label a,_) (Label b,_) -> String.compare a b) lst in
   let new_pp ppf (k, v) = fprintf ppf "%a -> %a" label k value v in
   fprintf ppf "%a" (list_sep new_pp sep) lst
 
 let tuple_sep value sep ppf m =
   assert (Helpers.is_tuple_lmap m);
-  let lst = LMap.to_kv_list m in
-  let lst = List.sort (fun (Label a,_) (Label b,_) -> String.compare a b) lst in
-  let new_pp ppf (_k, v) = fprintf ppf "%a" value v in
+  let lst = Helpers.tuple_of_record m in
+  let new_pp ppf (_, v) = fprintf ppf "%a" value v in
   fprintf ppf "%a" (list_sep new_pp sep) lst
 
 (* Prints records which only contain the consecutive fields
@@ -156,42 +155,49 @@ let constant ppf : constant' -> unit = function
 
 let literal ppf (l : literal) =
   match l with
-  | Literal_unit ->
-      fprintf ppf "unit"
-  | Literal_void ->
-      fprintf ppf "void"
-  | Literal_bool b ->
-      fprintf ppf "%b" b
-  | Literal_int n ->
-      fprintf ppf "%d" n
-  | Literal_nat n ->
-      fprintf ppf "+%d" n
-  | Literal_timestamp n ->
-      fprintf ppf "+%d" n
-  | Literal_mutez n ->
-      fprintf ppf "%dmutez" n
-  | Literal_string s ->
-      fprintf ppf "%S" s
-  | Literal_bytes b ->
-      fprintf ppf "0x%a" Hex.pp (Hex.of_bytes b)
-  | Literal_address s ->
-      fprintf ppf "@%S" s
-  | Literal_operation _ ->
-      fprintf ppf "Operation(...bytes)"
-  | Literal_key s ->
-      fprintf ppf "key %s" s
-  | Literal_key_hash s ->
-      fprintf ppf "key_hash %s" s
-  | Literal_signature s ->
-      fprintf ppf "Signature %s" s
-  | Literal_chain_id s ->
-      fprintf ppf "Chain_id %s" s
+  | Literal_unit -> fprintf ppf "unit"
+  | Literal_void -> fprintf ppf "void"
+  | Literal_bool b -> fprintf ppf "%b" b
+  | Literal_int n -> fprintf ppf "%d" n
+  | Literal_nat n -> fprintf ppf "+%d" n
+  | Literal_timestamp n -> fprintf ppf "+%d" n
+  | Literal_mutez n -> fprintf ppf "%dmutez" n
+  | Literal_string s -> fprintf ppf "%S" s
+  | Literal_bytes b -> fprintf ppf "0x%a" Hex.pp (Hex.of_bytes b)
+  | Literal_address s -> fprintf ppf "@%S" s
+  | Literal_operation _ -> fprintf ppf "Operation(...bytes)"
+  | Literal_key s -> fprintf ppf "key %s" s
+  | Literal_key_hash s -> fprintf ppf "key_hash %s" s
+  | Literal_signature s -> fprintf ppf "Signature %s" s
+  | Literal_chain_id s -> fprintf ppf "Chain_id %s" s
+
+let type_variable ppf (t : type_variable) : unit = fprintf ppf "%a" Var.pp t
+
+and type_constant ppf (tc : type_constant) : unit =
+let s =
+    match tc with
+    | TC_unit -> "unit"
+    | TC_string -> "string"
+    | TC_bytes -> "bytes"
+    | TC_nat -> "nat"
+    | TC_int -> "int"
+    | TC_mutez -> "mutez"
+    | TC_bool -> "bool"
+    | TC_operation -> "operation"
+    | TC_address -> "address"
+    | TC_key -> "key"
+    | TC_key_hash -> "key_hash"
+    | TC_signature -> "signature"
+    | TC_timestamp -> "timestamp"
+    | TC_chain_id -> "chain_id"
+    | TC_void -> "void"
+in
+fprintf ppf "%s" s
+
 module Ast_PP_type (PARAMETER : AST_PARAMETER_TYPE) = struct
   module Agt=Ast_generic_type(PARAMETER)
   open Agt
   open Format
-
-  let type_variable ppf (t : type_variable) : unit = fprintf ppf "%a" Var.pp t
 
   let rec type_expression' :
          (formatter -> type_expression -> unit)
@@ -200,57 +206,15 @@ module Ast_PP_type (PARAMETER : AST_PARAMETER_TYPE) = struct
       -> unit =
    fun f ppf te ->
     match te.type_content with
-    | T_sum m ->
-        fprintf ppf "sum[%a]" (cmap_sep_d f) m
-    | T_record m ->
-        fprintf ppf "%a" (tuple_or_record_sep_type f) m
-    | T_arrow a ->
-        fprintf ppf "%a -> %a" f a.type1 f a.type2
-    | T_variable tv ->
-        type_variable ppf tv
-    | T_constant tc ->
-        type_constant ppf tc
-    | T_operator to_ ->
-        type_operator f ppf to_
+    | T_sum m -> fprintf ppf "sum[%a]" (cmap_sep_d f) m
+    | T_record m -> fprintf ppf "%a" (tuple_or_record_sep_type f) m
+    | T_arrow a -> fprintf ppf "%a -> %a" f a.type1 f a.type2
+    | T_variable tv -> type_variable ppf tv
+    | T_constant tc -> type_constant ppf tc
+    | T_operator to_ -> type_operator f ppf to_
 
   and type_expression ppf (te : type_expression) : unit =
     type_expression' type_expression ppf te
-
-  and type_constant ppf (tc : type_constant) : unit =
-    let s =
-      match tc with
-      | TC_unit ->
-          "unit"
-      | TC_string ->
-          "string"
-      | TC_bytes ->
-          "bytes"
-      | TC_nat ->
-          "nat"
-      | TC_int ->
-          "int"
-      | TC_mutez ->
-          "mutez"
-      | TC_bool ->
-          "bool"
-      | TC_operation ->
-          "operation"
-      | TC_address ->
-          "address"
-      | TC_key ->
-          "key"
-      | TC_key_hash ->
-          "key_hash"
-      | TC_signature ->
-          "signature"
-      | TC_timestamp ->
-          "timestamp"
-      | TC_chain_id ->
-          "chain_id"
-      | TC_void ->
-          "void"
-    in
-    fprintf ppf "%s" s
 
   and type_operator :
          (formatter -> type_expression -> unit)
