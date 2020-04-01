@@ -70,23 +70,11 @@ module Captured_variables = struct
     | E_record m ->
       let%bind lst' = bind_map_list self @@ LMap.to_list m in
       ok @@ unions lst'
-    | E_record_accessor {expr;_} -> self expr
+    | E_record_accessor {record;_} -> self record
     | E_record_update {record;update;_} -> 
       let%bind r = self record in
       let%bind e = self update in
       ok @@ union r e
-    | E_list lst ->
-      let%bind lst' = bind_map_list self lst in
-      ok @@ unions lst'
-    | E_set lst ->
-      let%bind lst' = bind_map_list self lst in
-      ok @@ unions lst'
-    | (E_map m | E_big_map m) ->
-      let%bind lst' = bind_map_list self @@ List.concat @@ List.map (fun (a, b) -> [ a ; b ]) m in
-      ok @@ unions lst'
-    | E_look_up (a , b) ->
-      let%bind lst' = bind_map_list self [ a ; b ] in
-      ok @@ unions lst'
     | E_matching {matchee;cases;_} ->
       let%bind a' = self matchee in
       let%bind cs' = matching_expression b cases in

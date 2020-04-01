@@ -6,7 +6,6 @@
     tezos-utils
     parser
     ast_imperative
-    self_ast_imperative
     operators)
   (modules cameligo pascaligo concrete_to_imperative)
   (preprocess

@@ -14,92 +14,6 @@ let pseq_to_list = function
 | Some lst -> npseq_to_list lst
 let get_value : 'a Raw.reg -> 'a = fun x -> x.value
 
-and repair_mutable_variable_in_matching (for_body : expression) (element_names : expression_variable list) (env : expression_variable) =
-  let%bind captured_names = Self_ast_imperative.fold_map_expression
-    (* TODO : these should use Variables sets *)
-    (fun (decl_var,free_var : expression_variable list * expression_variable list) (ass_exp : expression) ->
-      match ass_exp.expression_content with
-        | E_let_in {let_binder;mut=false;rhs;let_result} ->
-          let (name,_) = let_binder in
-          ok (true,(name::decl_var, free_var),e_let_in let_binder false false rhs let_result)
-        | E_let_in {let_binder;mut=true; rhs;let_result} ->
-          let (name,_) = let_binder in
-          if List.mem name decl_var then 
-            ok (true,(decl_var, free_var), e_let_in let_binder false false rhs let_result)
-          else(
-            let free_var = if (List.mem name free_var) then free_var else name::free_var in
-            let expr = e_let_in (env,None) false false (e_update (e_variable env) (Var.to_name name) (e_variable name)) let_result in
-            ok (true,(decl_var, free_var), e_let_in let_binder false  false rhs expr)
-          )
-        | E_variable name ->
-          if List.mem name decl_var || List.mem name free_var || Var.equal name env then 
-            ok (true,(decl_var, free_var), e_variable name)
-          else
-            ok (true, (decl_var, name::free_var), e_variable name)
-        | E_constant {cons_name=C_MAP_FOLD;arguments= _}
-        | E_constant {cons_name=C_SET_FOLD;arguments= _}
-        | E_constant {cons_name=C_LIST_FOLD;arguments= _} 
-        | E_matching _ -> ok @@ (false, (decl_var,free_var),ass_exp)
-      | _ -> ok (true, (decl_var, free_var),ass_exp)
-    )
-      (element_names,[])
-      for_body in
-  ok @@ captured_names
-
-and repair_mutable_variable_in_loops (for_body : expression) (element_names : expression_variable list) (env : expression_variable) =
-  let%bind captured_names = Self_ast_imperative.fold_map_expression
-    (* TODO : these should use Variables sets *)
-    (fun (decl_var,free_var : expression_variable list * expression_variable list) (ass_exp : expression) ->
-      match ass_exp.expression_content with
-        | E_let_in {let_binder;mut=false;rhs;let_result} ->
-          let (name,_) = let_binder in
-          ok (true,(name::decl_var, free_var),e_let_in let_binder false false rhs let_result)
-        | E_let_in {let_binder;mut=true; rhs;let_result} ->
-          let (name,_) = let_binder in
-          if List.mem name decl_var then 
-            ok (true,(decl_var, free_var), e_let_in let_binder false false rhs let_result)
-          else(
-            let free_var = if (List.mem name free_var) then free_var else name::free_var in
-            let expr = e_let_in (env,None) false false (
-              e_update (e_variable env) ("0") 
-              (e_update (e_accessor (e_variable env) "0") (Var.to_name name) (e_variable name))
-              )
-              let_result in
-            ok (true,(decl_var, free_var), e_let_in let_binder false  false rhs expr)
-          )
-        | E_variable name ->
-          if List.mem name decl_var || List.mem name free_var || Var.equal name env then 
-            ok (true,(decl_var, free_var), e_variable name)
-          else
-            ok (true,(decl_var, name::free_var), e_variable name)
-        | E_constant {cons_name=C_MAP_FOLD;arguments= _}
-        | E_constant {cons_name=C_SET_FOLD;arguments= _}
-        | E_constant {cons_name=C_LIST_FOLD;arguments= _} 
-        | E_matching _ -> ok @@ (false,(decl_var,free_var),ass_exp)
-      | _ -> ok (true,(decl_var, free_var),ass_exp)
-    )
-      (element_names,[])
-      for_body in
-  ok @@ captured_names
-
-and store_mutable_variable (free_vars : expression_variable list) =
-  if (List.length free_vars == 0) then
-    e_unit ()
-  else
-    let aux var = (Var.to_name var, e_variable var) in
-    e_record_ez (List.map aux free_vars)
- 
-and restore_mutable_variable (expr : expression->expression) (free_vars : expression_variable list) (env :expression_variable) =
-  let aux (f:expression -> expression) (ev:expression_variable) =
-    ok @@ fun expr -> f (e_let_in (ev,None) true false (e_accessor (e_variable env) (Var.to_name ev)) expr)
-  in
-  let%bind ef = bind_fold_list aux (fun e -> e) free_vars in
-  ok @@ fun expr'_opt -> match expr'_opt with
-  | None -> ok @@ expr (ef (e_skip ()))
-  | Some expr' -> ok @@ expr (ef expr')
- 
-
-
 module Errors = struct
   let unsupported_cst_constr p =
     let title () = "" in
@@ -218,10 +132,10 @@ let r_split = Location.r_split
    [return_statement] is used for non-let-in statements.
  *)
 
-let return_let_in ?loc binder mut inline rhs = ok @@ fun expr'_opt ->
+let return_let_in ?loc binder inline rhs = ok @@ fun expr'_opt ->
   match expr'_opt with
-  | None -> ok @@ e_let_in ?loc binder mut inline rhs (e_skip ())
-  | Some expr' -> ok @@ e_let_in ?loc binder mut inline rhs expr'
+  | None -> ok @@ e_let_in ?loc binder inline rhs (e_skip ())
+  | Some expr' -> ok @@ e_let_in ?loc binder inline rhs expr'
 
 let return_statement expr = ok @@ fun expr'_opt ->
   match expr'_opt with
@@ -433,10 +347,7 @@ let rec compile_expression (t:Raw.expr) : expr result =
       let%bind expr = compile_expression c.test in
       let%bind match_true = compile_expression c.ifso in
       let%bind match_false = compile_expression c.ifnot in
-      let match_expr = e_matching expr ~loc (Match_bool {match_true; match_false}) in
-      let env = Var.fresh () in
-      let%bind (_, match_expr) = repair_mutable_variable_in_matching match_expr [] env in
-      return @@ match_expr
+      return @@ e_matching expr ~loc (Match_bool {match_true; match_false})
 
   | ECase c -> (
       let (c , loc) = r_split c in
@@ -450,10 +361,7 @@ let rec compile_expression (t:Raw.expr) : expr result =
         @@ List.map get_value
         @@ npseq_to_list c.cases.value in
       let%bind cases = compile_cases lst in
-      let match_expr = e_matching ~loc e cases in
-      let env = Var.fresh () in
-      let%bind (_, match_expr) = repair_mutable_variable_in_matching match_expr [] env in
-      return @@ match_expr
+      return @@ e_matching ~loc e cases
     )
   | EMap (MapInj mi)  -> (
       let (mi , loc) = r_split mi in
@@ -615,7 +523,7 @@ and compile_data_declaration : Raw.data_decl -> _ result =
       let name = x.name.value in
       let%bind t = compile_type_expression x.var_type in
       let%bind expression = compile_expression x.init in
-      return_let_in ~loc (Var.of_name name, Some t) false false expression
+      return_let_in ~loc (Var.of_name name, Some t) false expression
   | LocalConst x ->
       let (x , loc) = r_split x in
       let name = x.name.value in
@@ -627,7 +535,7 @@ and compile_data_declaration : Raw.data_decl -> _ result =
         | Some {value; _} ->
            npseq_to_list value.ne_elements
            |> List.exists (fun Region.{value; _} -> value = "\"inline\"")
-      in return_let_in ~loc (Var.of_name name, Some t) false inline expression
+      in return_let_in ~loc (Var.of_name name, Some t) inline expression
   | LocalFun f  ->
       let (f , loc) = r_split f in
       let%bind (binder, expr) = compile_fun_decl ~loc f in
@@ -637,7 +545,7 @@ and compile_data_declaration : Raw.data_decl -> _ result =
         | Some {value; _} ->
            npseq_to_list value.ne_elements
            |> List.exists (fun Region.{value; _} -> value = "\"inline\"")
-      in return_let_in ~loc binder false inline expr
+      in return_let_in ~loc binder inline expr
 
 and compile_param :
       Raw.param_decl -> (string * type_expression) result =
@@ -708,7 +616,7 @@ and compile_fun_decl :
            let expr =
              e_accessor (e_variable arguments_name) (string_of_int i) in
            let type_variable = Some type_expr in
-           let ass = return_let_in (Var.of_name param , type_variable) false inline expr in
+           let ass = return_let_in (Var.of_name param , type_variable) inline expr in
            ass
          in
          bind_list @@ List.mapi aux params in
@@ -771,7 +679,7 @@ and compile_fun_expression :
          let aux = fun i (param, param_type) ->
            let expr = e_accessor (e_variable arguments_name) (string_of_int i) in
            let type_variable = Some param_type in
-           let ass = return_let_in (Var.of_name param , type_variable) false false expr in
+           let ass = return_let_in (Var.of_name param , type_variable) false expr in
            ass
          in
          bind_list @@ List.mapi aux params in
@@ -819,35 +727,6 @@ and compile_statement_list statements =
       hook (compile_data_declaration d :: acc) statements
   in bind_list @@ hook [] (List.rev statements)
 
-and get_case_variables (t:Raw.pattern) : expression_variable list result = 
-  match t with 
-    | PConstr PFalse _ 
-    | PConstr PTrue _ 
-    | PConstr PNone _ -> ok @@ [] 
-    | PConstr PSomeApp v -> (let (_,v) = v.value in get_case_variables (v.value.inside)) 
-    | PConstr PConstrApp v -> (
-      match v.value with
-      | constr, None -> ok @@ [ Var.of_name constr.value]
-      | constr, pat_opt ->
-        let%bind pat =
-          trace_option (unsupported_cst_constr t) @@
-          pat_opt in
-        let pat = npseq_to_list pat.value.inside in
-        let%bind var = bind_map_list get_case_variables pat in
-        ok @@ [Var.of_name constr.value ] @ (List.concat var)
-    )
-    | PList PNil _  -> ok @@ []
-    | PList PCons c -> (
-        match c.value with
-        | a, [(_, b)] ->
-            let%bind a = get_case_variables a in
-            let%bind b = get_case_variables b in
-            ok @@ a@b
-        | _ -> fail @@ unsupported_deep_list_patterns c
-    )
-    | PVar  v -> ok @@ [Var.of_name v.value] 
-    | p -> fail @@ unsupported_cst_constr p
-
 and compile_single_instruction : Raw.instruction -> (_ -> expression result) result =
   fun t ->
   match t with
@@ -877,14 +756,33 @@ and compile_single_instruction : Raw.instruction -> (_ -> expression result) res
       return_statement @@ e_skip ~loc ()
     )
   | Loop (While l) ->
-      compile_while_loop l.value
+      let (wl, loc) = r_split l in
+      let%bind condition = compile_expression wl.cond in
+      let%bind body = compile_block wl.block.value in
+      let%bind body = body @@ None in
+      return_statement @@ e_while ~loc condition body
   | Loop (For (ForInt fi)) -> (
-      let%bind loop = compile_for_int fi.value in
-      ok loop
+      let (fi,loc) = r_split fi in
+      let binder = Var.of_name fi.assign.value.name.value in
+      let%bind start = compile_expression fi.assign.value.expr in
+      let%bind bound = compile_expression fi.bound in
+      let increment = e_int 1 in
+      let%bind body = compile_block fi.block.value in
+      let%bind body = body @@ None in
+      return_statement @@ e_for ~loc binder start bound increment body
   )
   | Loop (For (ForCollect fc)) ->
-      let%bind loop = compile_for_collect fc.value in
-      ok loop
+      let (fc,loc) = r_split fc in
+      let binder = (Var.of_name fc.var.value, Option.map (fun x -> Var.of_name (snd x:string Raw.reg).value) fc.bind_to) in
+      let%bind collection = compile_expression fc.expr in
+      let collection_type = match fc.collection with
+        | Map _  -> Map
+        | Set _  -> Set
+        | List _ -> List
+      in
+      let%bind body = compile_block fc.block.value in
+      let%bind body = body @@ None in
+      return_statement @@ e_for_each ~loc binder collection collection_type body
   | Cond c -> (
       let (c , loc) = r_split c in
       let%bind expr = compile_expression c.test in
@@ -906,26 +804,10 @@ and compile_single_instruction : Raw.instruction -> (_ -> expression result) res
                 compile_block value
             | ShortBlock {value; _} ->
                 compile_statements @@ fst value.inside in
-      let env = Var.fresh () in
       
-      let%bind match_true' = match_true None in
-      let%bind match_false' = match_false None in
-      let%bind match_true  = match_true @@ Some (e_variable env) in
-      let%bind match_false = match_false @@ Some (e_variable env) in
-
-      let%bind ((_,free_vars_true), match_true) = repair_mutable_variable_in_matching match_true [] env in
-      let%bind ((_,free_vars_false), match_false) = repair_mutable_variable_in_matching match_false [] env in
-      let free_vars = free_vars_true @ free_vars_false in
-      if (List.length free_vars != 0) then 
-        let match_expr  = e_matching expr ~loc (Match_bool {match_true; match_false}) in
-        let return_expr = fun expr ->
-          e_let_in (env,None) false false (store_mutable_variable free_vars) @@
-          e_let_in (env,None) false false match_expr @@
-          expr 
-        in
-        restore_mutable_variable return_expr free_vars env
-      else
-        return_statement @@ e_matching expr ~loc (Match_bool {match_true=match_true'; match_false=match_false'})
+      let%bind match_true = match_true None in
+      let%bind match_false = match_false None in
+      return_statement @@ e_matching expr ~loc (Match_bool {match_true; match_false})
     )
   | Assign a -> (
       let (a , loc) = r_split a in
@@ -933,8 +815,7 @@ and compile_single_instruction : Raw.instruction -> (_ -> expression result) res
       match a.lhs with
         | Path path -> (
             let (name , path') = compile_path path in
-            let (let_binder, mut, rhs, inline) = e_assign_with_let ~loc name path' value_expr in
-            return_let_in let_binder mut inline rhs
+            return_statement @@ e_ez_assign ~loc name path' value_expr
           )
         | MapPath v -> (
             let v' = v.value in
@@ -947,16 +828,14 @@ and compile_single_instruction : Raw.instruction -> (_ -> expression result) res
             in
             let%bind key_expr = compile_expression v'.index.value.inside in
             let expr' = e_map_add key_expr value_expr map in
-            let (let_binder, mut, rhs, inline) = e_assign_with_let ~loc varname path expr' in
-            return_let_in let_binder mut inline rhs  
+            return_statement @@ e_ez_assign ~loc varname path expr'
           )
     )
   | CaseInstr c -> (
       let (c , loc) = r_split c in
       let%bind expr = compile_expression c.expr in
-      let env = Var.fresh () in
-      let%bind (fv,cases) =
-        let aux fv (x : Raw.if_clause Raw.case_clause Raw.reg) =
+      let%bind cases =
+        let aux (x : Raw.if_clause Raw.case_clause Raw.reg) =
           let%bind case_clause =
             match x.value.rhs with
               ClauseInstr i ->
@@ -967,28 +846,13 @@ and compile_single_instruction : Raw.instruction -> (_ -> expression result) res
                     compile_block value
                 | ShortBlock {value; _} ->
                   compile_statements @@ fst value.inside in
-          let%bind case_clause'= case_clause @@ None in
-          let%bind case_clause = case_clause @@ Some(e_variable env) in
-          let%bind case_vars   = get_case_variables x.value.pattern in
-          let%bind ((_,free_vars), case_clause) = repair_mutable_variable_in_matching case_clause case_vars env in
-          ok (free_vars::fv,(x.value.pattern, case_clause, case_clause')) in
-        bind_fold_map_list aux [] (npseq_to_list c.cases.value) in
-      let free_vars = List.concat fv in
-      if (List.length free_vars == 0) then (
-        let cases = List.map (fun case -> let (a,_,b) = case in (a,b)) cases in
-        let%bind m = compile_cases cases in
-        return_statement @@ e_matching ~loc expr m
-      ) else (
-        let cases = List.map (fun case -> let (a,b,_) = case in (a,b)) cases in
-        let%bind m = compile_cases cases in
-        let match_expr = e_matching ~loc expr m in
-        let return_expr = fun expr ->
-          e_let_in (env,None) false false (store_mutable_variable free_vars) @@
-          e_let_in (env,None) false false match_expr @@
-          expr 
-        in
-        restore_mutable_variable return_expr free_vars env
-      )
+          let%bind case_clause = case_clause None in
+          ok (x.value.pattern, case_clause) in
+        bind_list
+        @@ List.map aux
+        @@ npseq_to_list c.cases.value in
+      let%bind m = compile_cases cases in
+      return_statement @@ e_matching ~loc expr m
     )
   | RecordPatch r -> (
       let reg = r.region in
@@ -1004,9 +868,7 @@ and compile_single_instruction : Raw.instruction -> (_ -> expression result) res
       let u : Raw.update = {record=r.path;kwd_with=r.kwd_with; updates=update} in
       let%bind expr = compile_update {value=u;region=reg} in
       let (name , access_path) = compile_path r.path in
-      let loc = Some loc in
-      let (binder, mut, rhs, inline) = e_assign_with_let ?loc name access_path expr in
-      return_let_in binder mut inline rhs
+       return_statement @@ e_ez_assign ~loc name access_path expr
 
   )
   | MapPatch patch -> (
@@ -1029,8 +891,7 @@ and compile_single_instruction : Raw.instruction -> (_ -> expression result) res
             inj
             (e_accessor_list ~loc (e_variable (Var.of_name name)) access_path)
         in 
-        let (binder, mut, rhs, inline) = e_assign_with_let ~loc name access_path assigns in
-        return_let_in binder mut inline rhs
+       return_statement @@ e_ez_assign ~loc name access_path assigns
     )
   | SetPatch patch -> (
       let (setp, loc) = r_split patch in
@@ -1045,8 +906,7 @@ and compile_single_instruction : Raw.instruction -> (_ -> expression result) res
         let assigns = List.fold_right
           (fun hd s -> e_constant C_SET_ADD [hd ; s])
           inj (e_accessor_list ~loc (e_variable (Var.of_name name)) access_path) in
-        let (binder, mut, rhs, inline) = e_assign_with_let ~loc name access_path assigns in
-        return_let_in binder mut inline rhs
+       return_statement @@ e_ez_assign ~loc name access_path assigns
     )
   | MapRemove r -> (
       let (v , loc) = r_split r in
@@ -1060,8 +920,7 @@ and compile_single_instruction : Raw.instruction -> (_ -> expression result) res
       in
       let%bind key' = compile_expression key in
       let expr = e_constant ~loc C_MAP_REMOVE [key' ; map] in
-      let (binder, mut, rhs, inline) = e_assign_with_let ~loc varname path expr in
-      return_let_in binder mut inline rhs
+       return_statement @@ e_ez_assign ~loc varname path expr
     )
   | SetRemove r -> (
       let (set_rm, loc) = r_split r in
@@ -1074,8 +933,7 @@ and compile_single_instruction : Raw.instruction -> (_ -> expression result) res
       in
       let%bind removed' = compile_expression set_rm.element in
       let expr = e_constant ~loc C_SET_REMOVE [removed' ; set] in
-      let (binder, mut, rhs, inline) = e_assign_with_let ~loc varname path expr in
-      return_let_in binder mut inline rhs
+       return_statement @@ e_ez_assign ~loc varname path expr
     )
 
 and compile_path : Raw.path -> string * string list = fun p ->
@@ -1204,121 +1062,6 @@ and compile_statements : Raw.statements -> (_ -> expression result) result =
 and compile_block : Raw.block -> (_ -> expression result) result =
   fun t -> compile_statements t.statements
 
-and compile_while_loop : Raw.while_loop -> (_ -> expression result) result = fun wl ->
-  let env_rec = Var.fresh () in
-  let binder  = Var.fresh () in
-
-  let%bind cond = compile_expression wl.cond in
-  let ctrl = 
-    (e_variable binder)
-  in
-
-  let%bind for_body = compile_block wl.block.value in
-  let%bind for_body = for_body @@ Some( ctrl ) in
-  let%bind ((_,captured_name_list),for_body) = repair_mutable_variable_in_loops for_body [] binder in
-
-  let aux name expr=
-    e_let_in (name,None) false false (e_accessor (e_accessor (e_variable binder) "0") (Var.to_name name)) expr
-  in
-  let init_rec = e_tuple [store_mutable_variable @@ captured_name_list] in
-  let restore = fun expr -> List.fold_right aux captured_name_list expr in
-  let continue_expr = e_constant C_FOLD_CONTINUE [for_body] in
-  let stop_expr = e_constant C_FOLD_STOP [e_variable binder] in
-  let aux_func = 
-    e_lambda binder None None @@ 
-    restore @@
-    e_cond cond continue_expr stop_expr in
-  let loop = e_constant C_FOLD_WHILE [aux_func; e_variable env_rec] in
-  let return_expr = fun expr -> 
-    e_let_in (env_rec,None) false false init_rec @@
-    e_let_in (env_rec,None) false false loop @@
-    e_let_in (env_rec,None) false false (e_accessor (e_variable env_rec) "0") @@
-    expr
-  in
-  restore_mutable_variable return_expr captured_name_list env_rec 
-
-
-and compile_for_int : Raw.for_int -> (_ -> expression result) result = fun fi ->
-  let env_rec = Var.fresh () in
-  let binder  = Var.fresh () in
-  let name = fi.assign.value.name.value in
-  let it = Var.of_name name in
-  let var = e_variable it in
-  (*Make the cond and the step *)
-  let%bind value = compile_expression fi.assign.value.expr in
-  let%bind bound = compile_expression fi.bound in
-  let cond = e_annotation (e_constant C_LE [var ; bound]) t_bool in
-  let step = e_int 1 in
-  let continue_expr = e_constant C_FOLD_CONTINUE [(e_variable binder)] in
-  let ctrl = 
-    e_let_in (it,Some t_int) false false (e_constant C_ADD [ var ; step ]) @@
-    e_let_in (binder, None) false false (e_update (e_variable binder) "1" var)@@
-    continue_expr
-  in
-  (* Modify the body loop*)
-  let%bind for_body = compile_block fi.block.value in
-  let%bind for_body = for_body @@ Some ctrl in
-  let%bind ((_,captured_name_list),for_body) = repair_mutable_variable_in_loops for_body [it] binder in
-
-  let aux name expr=
-    e_let_in (name,None) false false (e_accessor (e_accessor (e_variable binder) "0") (Var.to_name name)) expr
-  in
-
-  (* restores the initial value of the free_var*)
-  let restore = fun expr -> List.fold_right aux captured_name_list expr in
-
-  (*Prep the lambda for the fold*)
-  let stop_expr = e_constant C_FOLD_STOP [e_variable binder] in
-  let aux_func = e_lambda binder None None @@ 
-                 e_let_in (it,Some t_int) false false (e_accessor (e_variable binder) "1") @@
-                 e_cond cond (restore for_body) (stop_expr) in
-
-  (* Make the fold_while en precharge the vakye *)
-  let loop = e_constant C_FOLD_WHILE [aux_func; e_variable env_rec] in
-  let init_rec = e_pair (store_mutable_variable @@ captured_name_list) var in
-
-  let return_expr = fun expr -> 
-    e_let_in (it, Some t_int) false false value @@ 
-    e_let_in (env_rec,None) false false init_rec @@
-    e_let_in (env_rec,None) false false loop @@
-    e_let_in (env_rec,None) false false (e_accessor (e_variable env_rec) "0") @@
-    expr
-  in
-  restore_mutable_variable return_expr captured_name_list env_rec 
-
-and compile_for_collect : Raw.for_collect -> (_ -> expression result) result = fun fc ->
-  let binder = Var.of_name "arguments" in
-  let%bind element_names = ok @@ match fc.bind_to with
-    | Some v -> [Var.of_name fc.var.value;Var.of_name (snd v).value]
-    | None -> [Var.of_name fc.var.value] in
-  
-  let env = Var.fresh () in
-  let%bind for_body = compile_block fc.block.value in
-  let%bind for_body = for_body @@ Some (e_accessor (e_variable binder) "0") in
-  let%bind ((_,free_vars), for_body) = repair_mutable_variable_in_loops for_body element_names binder in
-
-  let init_record = store_mutable_variable free_vars in
-  let%bind collect = compile_expression fc.expr in
-  let aux name expr=
-    e_let_in (name,None) false false (e_accessor (e_accessor (e_variable binder) "0") (Var.to_name name)) expr
-  in
-  let restore = fun expr -> List.fold_right aux free_vars expr in
-  let restore = match fc.collection with
-    | Map _ -> (match fc.bind_to with 
-      | Some v -> fun expr -> restore (e_let_in (Var.of_name  fc.var.value, None) false false (e_accessor (e_accessor (e_variable binder) "1") "0") 
-                                    (e_let_in (Var.of_name (snd v).value, None) false false (e_accessor (e_accessor (e_variable binder) "1") "1") expr))
-      | None -> fun expr -> restore (e_let_in (Var.of_name  fc.var.value, None) false false (e_accessor (e_accessor (e_variable binder) "1") "0") expr) 
-    )
-    | _ -> fun expr -> restore (e_let_in (Var.of_name fc.var.value, None) false false (e_accessor (e_variable binder) "1") expr)
-  in
-  let lambda = e_lambda binder None None (restore for_body) in
-  let op_name = match fc.collection with
-   | Map _ -> C_MAP_FOLD | Set _ -> C_SET_FOLD | List _ -> C_LIST_FOLD in
-  let fold = fun expr -> 
-    e_let_in (env,None) false false (e_constant op_name [lambda; collect ; init_record]) @@
-    expr
-  in
-  restore_mutable_variable fold free_vars env
 
 and compile_declaration_list declarations : declaration Location.wrap list result =
   let open Raw in

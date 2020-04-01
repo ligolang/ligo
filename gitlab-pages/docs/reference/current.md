@@ -21,13 +21,13 @@ type timestamp
 A date in the real world.
 
 <SyntaxTitle syntax="pascaligo">
-type mutez
+type tez
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
-type mutez
+type tez
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
-type mutez
+type tez
 </SyntaxTitle>
 
 A specific type for tokens.
@@ -83,13 +83,13 @@ type chain_id
 The identifier of a chain, used to indicate test or main chains.
 
 <SyntaxTitle syntax="pascaligo">
-function balance : mutez
+function balance : tez
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
-val balance : mutez
+val balance : tez
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
-let balance: mutez
+let balance: tez
 </SyntaxTitle>
 
 Get the balance for the contract.
@@ -263,13 +263,13 @@ let not_tomorrow: bool = (Tezos.now == in_24_hrs);
 
 
 <SyntaxTitle syntax="pascaligo">
-function amount : mutez
+function amount : tez
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
-val amount : mutez
+val amount : tez
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
-let amount: mutez
+let amount: tez
 </SyntaxTitle>
 
 Get the amount of tez provided by the sender to complete this

@@ -86,7 +86,7 @@ val e_variable : ?loc:Location.t -> expression_variable -> expression
 val e_skip : ?loc:Location.t -> unit -> expression
 val e_sequence : ?loc:Location.t -> expression -> expression -> expression
 val e_cond: ?loc:Location.t -> expression -> expression -> expression -> expression
-val e_let_in : ?loc:Location.t -> ( expression_variable * type_expression option ) -> bool -> bool -> expression -> expression -> expression
+val e_let_in : ?loc:Location.t -> ( expression_variable * type_expression option ) -> bool -> expression -> expression -> expression
 val e_annotation : ?loc:Location.t -> expression -> type_expression -> expression
 val e_application : ?loc:Location.t -> expression -> expression -> expression
 val e_binop    : ?loc:Location.t -> constant' -> expression -> expression -> expression
@@ -100,6 +100,7 @@ val make_option_typed : ?loc:Location.t -> expression -> type_expression option 
 val e_typed_none : ?loc:Location.t -> type_expression -> expression
 
 val e_typed_list : ?loc:Location.t -> expression list -> type_expression -> expression
+val e_typed_list_literal : ?loc:Location.t -> expression list -> type_expression -> expression
 
 val e_typed_map : ?loc:Location.t -> ( expression * expression ) list  -> type_expression -> type_expression -> expression
 val e_typed_big_map : ?loc:Location.t -> ( expression * expression ) list  -> type_expression -> type_expression -> expression
@@ -110,11 +111,15 @@ val e_lambda : ?loc:Location.t -> expression_variable -> type_expression option 
 val e_recursive : ?loc:Location.t -> expression_variable -> type_expression -> lambda -> expression
 val e_record : ?loc:Location.t -> expr Map.String.t -> expression
 val e_update : ?loc:Location.t -> expression -> string -> expression -> expression
-val e_assign_with_let : ?loc:Location.t -> string -> string list -> expression -> ((expression_variable*type_expression option)*bool*expression*bool)
+val e_assign : ?loc:Location.t -> expression_variable -> access list -> expression -> expression
+val e_ez_assign : ?loc:Location.t -> string -> string list -> expression -> expression
 
 (*
 val get_e_accessor : expression' -> ( expression * access_path ) result
 *)
+val e_while  : ?loc:Location.t -> expression -> expression -> expression
+val e_for     : ?loc:Location.t -> expression_variable -> expression -> expression -> expression -> expression -> expression
+val e_for_each : ?loc:Location.t -> expression_variable * expression_variable option -> expression -> collect_type -> expression -> expression
 
 val assert_e_accessor : expression_content -> unit result
 

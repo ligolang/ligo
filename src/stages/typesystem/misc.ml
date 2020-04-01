@@ -136,7 +136,7 @@ module Substitution = struct
     and s_matching_expr : T.matching_expr w = fun ~substs _ ->
       let _TODO = substs in
       failwith "TODO: subst: unimplemented case s_matching"
-    and s_accessor  : T.accessor w = fun ~substs _ ->
+    and s_accessor  : T.record_accessor w = fun ~substs _ ->
       let _TODO = substs in
       failwith "TODO: subst: unimplemented case s_access_path"
 
@@ -182,38 +182,14 @@ module Substitution = struct
          *     let val_ = s_expression ~v ~expr val_ in
          *     ok @@ (key , val_)) aemap in
          * ok @@ T.E_record aemap *)
-      | T.E_record_accessor {expr=e;label} ->
-        let%bind expr = s_expression ~substs e in
-        let%bind label = s_label ~substs label in
-        ok @@ T.E_record_accessor {expr;label}
+      | T.E_record_accessor {record=e;path} ->
+        let%bind record = s_expression ~substs e in
+        let%bind path = s_label ~substs path in
+        ok @@ T.E_record_accessor {record;path}
       | T.E_record_update {record;path;update}->
         let%bind record = s_expression ~substs record in
         let%bind update = s_expression ~substs update in
         ok @@ T.E_record_update {record;path;update}
-      | T.E_map             val_val_list ->
-        let%bind val_val_list = bind_map_list (fun (val1 , val2) ->
-            let%bind val1 = s_expression ~substs val1 in
-            let%bind val2 = s_expression ~substs val2 in
-            ok @@ (val1 , val2)
-          ) val_val_list in
-        ok @@ T.E_map val_val_list
-      | T.E_big_map         val_val_list ->
-        let%bind val_val_list = bind_map_list (fun (val1 , val2) ->
-            let%bind val1 = s_expression ~substs val1 in
-            let%bind val2 = s_expression ~substs val2 in
-            ok @@ (val1 , val2)
-          ) val_val_list in
-        ok @@ T.E_big_map val_val_list
-      | T.E_list            vals ->
-        let%bind vals = bind_map_list (s_expression ~substs) vals in
-        ok @@ T.E_list vals
-      | T.E_set             vals ->
-        let%bind vals = bind_map_list (s_expression ~substs) vals in
-        ok @@ T.E_set vals
-      | T.E_look_up         (val1, val2) ->
-        let%bind val1 = s_expression ~substs val1 in
-        let%bind val2 = s_expression ~substs val2 in
-        ok @@ T.E_look_up (val1 , val2)
       | T.E_matching   {matchee;cases} ->
         let%bind matchee = s_expression ~substs matchee in
         let%bind cases = s_matching_expr ~substs cases in

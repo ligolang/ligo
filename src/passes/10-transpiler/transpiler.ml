@@ -141,6 +141,8 @@ let rec transpile_type (t:AST.type_expression) : type_value result =
   | T_operator (TC_big_map (key,value)) ->
       let%bind kv' = bind_map_pair transpile_type (key, value) in
       ok (T_big_map kv')
+  | T_operator (TC_map_or_big_map (_,_)) ->
+      fail @@ corner_case ~loc:"transpiler" "TC_map_or_big_map should have been resolved before transpilation"
   | T_operator (TC_list t) ->
       let%bind t' = transpile_type t in
       ok (T_list t')
@@ -170,7 +172,7 @@ let rec transpile_type (t:AST.type_expression) : type_value result =
                       aux node in
       ok @@ snd m'
   | T_record m ->
-      let node = Append_tree.of_list @@ kv_list_of_lmap m in
+      let node = Append_tree.of_list @@ Stage_common.Helpers.kv_list_of_record_or_tuple m in
       let aux a b : type_value annotated result =
         let%bind a = a in
         let%bind b = b in
@@ -189,7 +191,7 @@ let rec transpile_type (t:AST.type_expression) : type_value result =
     )
 
 let record_access_to_lr : type_value -> type_value AST.label_map -> AST.label -> (type_value * [`Left | `Right]) list result = fun ty tym ind ->
-  let tys = kv_list_of_lmap tym in
+  let tys = Stage_common.Helpers.kv_list_of_record_or_tuple tym in
   let node_tv = Append_tree.of_list tys in
   let%bind path =
     let aux (i , _) = i = ind  in
@@ -234,7 +236,6 @@ and tree_of_sum : AST.type_expression -> (AST.constructor' * AST.type_expression
 and transpile_annotated_expression (ae:AST.expression) : expression result =
   let%bind tv = transpile_type ae.type_expression in
   let return ?(tv = tv) expr = ok @@ Combinators.Expression.make_tpl (expr, tv) in
-  let f = transpile_annotated_expression in
   let info =
     let title () = "translating expression" in
     let content () = Format.asprintf "%a" Location.pp ae.location in
@@ -289,7 +290,8 @@ and transpile_annotated_expression (ae:AST.expression) : expression result =
       return ~tv ae
     )
   | E_record m -> (
-      let node = Append_tree.of_list @@ list_of_lmap m in
+    (*list_of_lmap to record_to_list*)
+      let node = Append_tree.of_list @@ Stage_common.Helpers.list_of_record_or_tuple m in
       let aux a b : expression result =
         let%bind a = a in
         let%bind b = b in
@@ -301,21 +303,21 @@ and transpile_annotated_expression (ae:AST.expression) : expression result =
       trace_strong (corner_case ~loc:__LOC__ "record build") @@
       Append_tree.fold_ne (transpile_annotated_expression) aux node
     )
-  | E_record_accessor {expr; label} ->
-      let%bind ty' = transpile_type (get_type_expression expr) in
+  | E_record_accessor {record; path} ->
+      let%bind ty' = transpile_type (get_type_expression record) in
       let%bind ty_lmap =
         trace_strong (corner_case ~loc:__LOC__ "not a record") @@
-        get_t_record (get_type_expression expr) in
+        get_t_record (get_type_expression record) in
       let%bind ty'_lmap = Stage_common.Helpers.bind_map_lmap transpile_type ty_lmap in
       let%bind path =
         trace_strong (corner_case ~loc:__LOC__ "record access") @@
-        record_access_to_lr ty' ty'_lmap label in
+        record_access_to_lr ty' ty'_lmap path in
       let aux = fun pred (ty, lr) ->
         let c = match lr with
           | `Left  -> C_CAR
           | `Right -> C_CDR in
         Combinators.Expression.make_tpl (E_constant {cons_name=c;arguments=[pred]} , ty) in
-      let%bind record' = transpile_annotated_expression expr in
+      let%bind record' = transpile_annotated_expression record in
       let expr = List.fold_left aux record' path in
       ok expr
   | E_record_update {record; path; update} -> 
@@ -390,58 +392,6 @@ and transpile_annotated_expression (ae:AST.expression) : expression result =
     transpile_lambda l io
   | E_recursive r ->
     transpile_recursive r
-  | E_list lst -> (
-      let%bind t =
-        trace_strong (corner_case ~loc:__LOC__ "not a list") @@
-        get_t_list tv in
-      let%bind lst' = bind_map_list (transpile_annotated_expression) lst in
-      let aux : expression -> expression -> expression result = fun prev cur ->
-        return @@ E_constant {cons_name=C_CONS;arguments=[cur ; prev]} in
-      let%bind (init : expression) = return @@ E_make_empty_list t in
-      bind_fold_right_list aux init lst'
-    )
-  | E_set lst -> (
-      let%bind t =
-        trace_strong (corner_case ~loc:__LOC__ "not a set") @@
-        get_t_set tv in
-      let%bind lst' = bind_map_list (transpile_annotated_expression) lst in
-      let aux : expression -> expression -> expression result = fun prev cur ->
-        return @@ E_constant {cons_name=C_SET_ADD;arguments=[cur ; prev]} in
-      let%bind (init : expression) = return @@ E_make_empty_set t in
-      bind_fold_list aux init lst'
-    )
-  | E_map m -> (
-      let%bind (src, dst) =
-        trace_strong (corner_case ~loc:__LOC__ "not a map") @@
-        Mini_c.Combinators.get_t_map tv in
-      let aux : expression result -> (AST.expression * AST.expression) -> expression result = fun prev (k, v) ->
-        let%bind prev' = prev in
-        let%bind (k', v') =
-          let v' = e_a_some v ae.environment in
-          bind_map_pair (transpile_annotated_expression) (k , v') in
-        return @@ E_constant {cons_name=C_UPDATE;arguments=[k' ; v' ; prev']}
-      in
-      let init = return @@ E_make_empty_map (src, dst) in
-      List.fold_left aux init m
-    )
-  | E_big_map m -> (
-      let%bind (src, dst) =
-        trace_strong (corner_case ~loc:__LOC__ "not a map") @@
-        Mini_c.Combinators.get_t_big_map tv in
-      let aux : expression result -> (AST.expression * AST.expression) -> expression result = fun prev (k, v) ->
-        let%bind prev' = prev in
-        let%bind (k', v') =
-          let v' = e_a_some v ae.environment in
-          bind_map_pair (transpile_annotated_expression) (k , v') in
-        return @@ E_constant {cons_name=C_UPDATE;arguments=[k' ; v' ; prev']}
-      in
-      let init = return @@ E_make_empty_big_map (src, dst) in
-      List.fold_left aux init m
-    )
-  | E_look_up dsi -> (
-      let%bind (ds', i') = bind_map_pair f dsi in
-      return @@ E_constant {cons_name=C_MAP_FIND_OPT;arguments=[i' ; ds']}
-    )
   | E_matching {matchee=expr; cases=m} -> (
       let%bind expr' = transpile_annotated_expression expr in
       match m with

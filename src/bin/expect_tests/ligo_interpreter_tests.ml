@@ -43,12 +43,12 @@ let%expect_test _ =
     val map_finds = Some(2 : int)
     val map_finds_fail = "failed map find" : failure
     val map_empty = {  ; 0 = ([]) ; 1 = ([]) }
-    val m = [ ; "one" : string -> 1 : int ; "two" : string -> 2 : int ; "three" : string -> 3 : int]
+    val m = [ ; "one" : string -> 1 : int ; "three" : string -> 3 : int ; "two" : string -> 2 : int]
     val map_fold = 4 : int
     val map_iter = unit
-    val map_map = [ ; "one" : string -> 4 : int ; "two" : string -> 5 : int ; "three" : string -> 8 : int]
+    val map_map = [ ; "one" : string -> 4 : int ; "three" : string -> 8 : int ; "two" : string -> 5 : int]
     val map_mem = {  ; 0 = (true) ; 1 = (false) }
-    val map_remove = {  ; 0 = ([ ; "two" : string -> 2 : int ; "three" : string -> 3 : int]) ; 1 = ([ ; "one" : string -> 1 : int ; "two" : string -> 2 : int ; "three" : string -> 3 : int]) }
+    val map_remove = {  ; 0 = ([ ; "three" : string -> 3 : int ; "two" : string -> 2 : int]) ; 1 = ([ ; "one" : string -> 1 : int ; "three" : string -> 3 : int ; "two" : string -> 2 : int]) }
     val map_update = {  ; 0 = ([ ; "one" : string -> 1 : int]) ; 1 = ([]) ; 2 = ([]) ; 3 = ([ ; "one" : string -> 1 : int]) }
     val s = { ; 1 : int ; 2 : int ; 3 : int}
     val set_add = {  ; 0 = ({ ; 1 : int ; 2 : int ; 3 : int}) ; 1 = ({ ; 1 : int ; 2 : int ; 3 : int ; 4 : int}) ; 2 = ({ ; 1 : int}) }

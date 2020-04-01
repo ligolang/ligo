@@ -621,6 +621,20 @@ module Typer = struct
     let%bind () = assert_type_expression_eq (src , k) in
     ok m
 
+  let map_empty = typer_0 "MAP_EMPTY" @@ fun tv_opt ->
+    match tv_opt with
+    | None -> simple_fail "untyped MAP_EMPTY"
+    | Some t -> 
+      let%bind (src, dst) = get_t_map t in
+      ok @@ t_map src dst ()
+
+  let big_map_empty = typer_0 "BIG_MAP_EMPTY" @@ fun tv_opt ->
+    match tv_opt with
+    | None -> simple_fail "untyped BIG_MAP_EMPTY"
+    | Some t -> 
+      let%bind (src, dst) = get_t_big_map t in
+      ok @@ t_big_map src dst ()
+
   let map_add : typer = typer_3 "MAP_ADD" @@ fun k v m ->
     let%bind (src, dst) = bind_map_or (get_t_map , get_t_big_map) m in
     let%bind () = assert_type_expression_eq (src, k) in
@@ -949,6 +963,11 @@ module Typer = struct
     then ok (t_unit ())
     else fail @@ Operator_errors.type_error "bad set iter" key arg ()
 
+  let list_empty = typer_0 "LIST_EMPTY" @@ fun tv_opt ->
+    match tv_opt with
+    | None -> simple_fail "untyped LIST_EMPTY"
+    | Some t -> ok t
+
   let list_iter = typer_2 "LIST_ITER" @@ fun body lst ->
     let%bind (arg , res) = get_t_function body in
     let%bind () = Assert.assert_true (eq_1 res (t_unit ())) in
@@ -1145,7 +1164,6 @@ module Typer = struct
     | C_SLICE               -> ok @@ slice ;
     | C_BYTES_PACK          -> ok @@ bytes_pack ;
     | C_BYTES_UNPACK        -> ok @@ bytes_unpack ;
-    | C_CONS                -> ok @@ cons ;
     (* SET  *)
     | C_SET_EMPTY           -> ok @@ set_empty ;
     | C_SET_ADD             -> ok @@ set_add ;
@@ -1155,10 +1173,14 @@ module Typer = struct
     | C_SET_MEM             -> ok @@ set_mem ;
 
     (* LIST *)
+    | C_CONS                -> ok @@ cons ;
+    | C_LIST_EMPTY          -> ok @@ list_empty ;
     | C_LIST_ITER           -> ok @@ list_iter ;
     | C_LIST_MAP            -> ok @@ list_map ;
     | C_LIST_FOLD           -> ok @@ list_fold ;
     (* MAP *)
+    | C_MAP_EMPTY           -> ok @@ map_empty ;
+    | C_BIG_MAP_EMPTY       -> ok @@ big_map_empty ;
     | C_MAP_ADD             -> ok @@ map_add ;
     | C_MAP_REMOVE          -> ok @@ map_remove ;
     | C_MAP_UPDATE          -> ok @@ map_update ;

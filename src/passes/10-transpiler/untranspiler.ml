@@ -151,29 +151,41 @@ let rec untranspile (v : value) (t : AST.type_expression) : AST.expression resul
             ok (e_a_empty_some s')
       )
     | TC_map (k_ty,v_ty)-> (
-        let%bind lst =
+        let%bind map =
           trace_strong (wrong_mini_c_value "map" v) @@
           get_map v in
-        let%bind lst' =
+        let%bind map' =
           let aux = fun (k, v) ->
             let%bind k' = untranspile k k_ty in
             let%bind v' = untranspile v v_ty in
             ok (k', v') in
-          bind_map_list aux lst in
-        return (E_map lst')
+          bind_map_list aux map in
+        let map' = List.sort_uniq compare map' in
+        let aux = fun prev (k, v) ->
+          let (k', v') = (k , v ) in
+          return @@ E_constant {cons_name=C_MAP_ADD;arguments=[k' ; v' ; prev]}
+        in
+        let%bind init = return @@ E_constant {cons_name=C_MAP_EMPTY;arguments=[]} in
+        bind_fold_right_list aux init map'
       )
     | TC_big_map (k_ty, v_ty) -> (
-        let%bind lst =
+        let%bind big_map =
           trace_strong (wrong_mini_c_value "big_map" v) @@
           get_big_map v in
-        let%bind lst' =
+        let%bind big_map' =
           let aux = fun (k, v) ->
             let%bind k' = untranspile k k_ty in
             let%bind v' = untranspile v v_ty in
             ok (k', v') in
-          bind_map_list aux lst in
-        return (E_big_map lst')
+          bind_map_list aux big_map in
+        let big_map' = List.sort_uniq compare big_map' in
+        let aux = fun prev (k, v) ->
+          return @@ E_constant {cons_name=C_MAP_ADD;arguments=[k ; v ; prev]}
+        in
+        let%bind init = return @@ E_constant {cons_name=C_BIG_MAP_EMPTY;arguments=[]} in
+        bind_fold_right_list aux init big_map'
       )
+    | TC_map_or_big_map (_, _) -> fail @@ corner_case ~loc:"untranspiler" "TC_map_or_big_map t should not be present in mini-c"
     | TC_list ty -> (
         let%bind lst =
           trace_strong (wrong_mini_c_value "list" v) @@
@@ -181,7 +193,10 @@ let rec untranspile (v : value) (t : AST.type_expression) : AST.expression resul
         let%bind lst' =
           let aux = fun e -> untranspile e ty in
           bind_map_list aux lst in
-        return (E_list lst')
+        let aux = fun prev cur ->
+          return @@ E_constant {cons_name=C_CONS;arguments=[cur ; prev]} in
+        let%bind init  = return @@ E_constant {cons_name=C_LIST_EMPTY;arguments=[]} in
+        bind_fold_right_list aux init lst'
       )
     | TC_arrow _ -> (
         let%bind n =
@@ -196,7 +211,11 @@ let rec untranspile (v : value) (t : AST.type_expression) : AST.expression resul
         let%bind lst' =
           let aux = fun e -> untranspile e ty in
           bind_map_list aux lst in
-        return (E_set lst')
+        let lst' = List.sort_uniq compare lst' in
+        let aux = fun prev cur ->
+          return @@ E_constant {cons_name=C_SET_ADD;arguments=[cur ; prev]} in
+        let%bind init = return @@ E_constant {cons_name=C_SET_EMPTY;arguments=[]} in
+        bind_fold_list aux init lst'
       )
     | TC_contract _ ->
       fail @@ bad_untranspile "contract" v
@@ -213,7 +232,7 @@ let rec untranspile (v : value) (t : AST.type_expression) : AST.expression resul
       let%bind sub = untranspile v tv in
       return (E_constructor {constructor=Constructor name;element=sub})
   | T_record m ->
-      let lst = kv_list_of_lmap m in
+      let lst = Stage_common.Helpers.kv_list_of_record_or_tuple m in
       let%bind node = match Append_tree.of_list lst with
         | Empty -> fail @@ corner_case ~loc:__LOC__ "empty record"
         | Full t -> ok t in

@@ -2945,7 +2945,7 @@ This is an incorrect let binding.
 Examples of correct let bindings: 
 let a: int = 4;
 let (a: int, b: int) = (1, 2);
-let func = (a: int, b: int) => a + b
+let func = (a: int, b: int) => a + b;
 
 contract: Let Ident WILD
 ##
