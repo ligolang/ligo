@@ -48,7 +48,12 @@ let parse parser : ('a, string Region.reg) Stdlib.result =
     in Stdlib.Error Region.{value=error; region}
 
   (* Scoping errors *)
-
+  | SyntaxError.Error (SyntaxError.InvalidWild expr) ->
+      let msg = "It looks you are using a wild pattern where it cannot be used.\n"
+      and region = AST.expr_to_region expr in
+      let error  = Unit.short_error ~offsets:IO.options#offsets
+                                     IO.options#mode msg region
+      in Stdlib.Error Region.{value=error; region}
   | Scoping.Error (Scoping.Reserved_name name) ->
       let token =
         Lexer.Token.mk_ident name.Region.value name.Region.region in
