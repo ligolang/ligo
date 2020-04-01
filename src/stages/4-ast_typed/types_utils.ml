@@ -1,4 +1,5 @@
 module S = Ast_core
+open Simple_utils.Trace
 
 (* include Stage_common.Types *)
 (* type expression_
@@ -28,32 +29,43 @@ type packed_internal_operation = Memory_proto_alpha.Protocol.Alpha_context.packe
 type location = Location.t
 type inline = bool
 
-let fold_map__constructor_map : type a new_a state . a constructor_map -> state -> (a -> state -> new_a * state) -> new_a constructor_map * state =
-  fun m state f ->
-  let aux k v (state , m) = let (new_v , state) = f v state in (state , CMap.add k new_v m) in
-  let (state , m) = CMap.fold aux m (state, CMap.empty) in
-  (m , state)
+let fold_map__constructor_map : type a new_a state . (state -> a -> (state * new_a) result) -> state -> a constructor_map -> (state * new_a constructor_map) result =
+  fun f state m ->
+  let aux k v acc =
+    let%bind (state , m) = acc in
+    let%bind (state , new_v) = f state v in
+    ok (state , CMap.add k new_v m) in
+  let%bind (state , m) = CMap.fold aux m (ok (state, CMap.empty)) in
+  ok (state , m)
 
-let fold_map__label_map : 'a . 'a label_map -> 'state -> ('a -> 'state -> 'new_a * 'state) -> 'new_a label_map * 'state =
-  fun m state f ->
-  let aux k v (state , m) = let (new_v , state) = f v state in (state , LMap.add k new_v m) in
-  let (state , m) = LMap.fold aux m (state, LMap.empty) in
-  (m , state)
+let fold_map__label_map : type a state new_a . (state -> a -> (state * new_a) result) -> state -> a label_map -> (state * new_a label_map) result =
+  fun f state m ->
+  let aux k v acc =
+    let%bind (state , m) = acc in
+    let%bind (state , new_v) = f state v in
+    ok (state , LMap.add k new_v m) in
+  let%bind (state , m) = LMap.fold aux m (ok (state, LMap.empty)) in
+  ok (state , m)
 
-let fold_map__list : 'a . 'a list -> 'state -> ('a -> 'state -> 'new_a * 'state) -> 'new_a list * 'state =
-  fun l state f ->
-  let aux (state , l) element = let (new_element , state) = f element state in (state , new_element :: l) in
-  let (state , l) = List.fold_left aux (state , []) l in
-  (l , state)
+let fold_map__list : type a state new_a . (state -> a -> (state * new_a) result) -> state -> a list -> (state * new_a list) Simple_utils.Trace.result =
+  fun f state l ->
+  let aux acc element =
+    let%bind state , l = acc in
+    let%bind (state , new_element) = f state element in ok (state , new_element :: l) in
+  let%bind (state , l) = List.fold_left aux (ok (state , [])) l in
+  ok (state , l)
 
-let fold_map__location_wrap : 'a . 'a location_wrap -> 'state -> ('a -> 'state -> 'new_a * 'state) -> 'new_a location_wrap * 'state =
-  fun { wrap_content ; location } state f ->
-  let (state , wrap_content) = f wrap_content state in
-  ({ wrap_content ; location }, state)
+let fold_map__location_wrap : type a state new_a . (state -> a -> (state * new_a) result) -> state -> a location_wrap -> (state * new_a location_wrap) Simple_utils.Trace.result =
+  fun f state { wrap_content ; location } ->
+  let%bind ( state , wrap_content ) = f state wrap_content in
+  ok (state , ({ wrap_content ; location } : new_a location_wrap))
 
-let fold_map__list_ne : 'a . 'a list_ne -> 'state -> ('a -> 'state -> 'new_a * 'state) -> 'new_a list_ne * 'state =
-  fun (first , l) state f ->
-  let (new_first , state) = f first state in
-  let aux (state , l) element = let (new_element , state) = f element state in (state , new_element :: l) in
-  let (state , l) = List.fold_left aux (state , []) l in
-  ((new_first , l), state)
+let fold_map__list_ne : type a state new_a . (state -> a -> (state * new_a) result) -> state -> a list_ne -> (state * new_a list_ne) Simple_utils.Trace.result =
+  fun f state (first , l) ->
+  let%bind (state , new_first) = f state first in
+  let aux acc element =
+    let%bind state , l = acc in
+    let%bind (state , new_element) = f state element in
+    ok (state , new_element :: l) in
+  let%bind (state , l) = List.fold_left aux (ok (state , [])) l in
+  ok (state , (new_first , l))

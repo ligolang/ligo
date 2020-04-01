@@ -1,10 +1,14 @@
-let fold_map__list v state continue =
-  let aux = fun (lst', state) elt ->
-    let (elt', state) = continue elt state in
-    (elt' :: lst' , state) in
-  List.fold_left aux ([], state) v
+open Simple_utils.Trace
 
-let fold_map__option v state continue =
+let fold_map__list continue state v =
+  let aux = fun acc elt ->
+    let%bind (state , lst') = acc in
+    let%bind (state , elt') = continue state elt in
+    ok (state , elt' :: lst') in
+  List.fold_left aux (ok (state, [])) v
+
+
+let fold_map__option continue state v =
   match v with
-    Some x -> continue x state
-  | None -> None
+    Some x -> continue state x
+  | None -> ok None
