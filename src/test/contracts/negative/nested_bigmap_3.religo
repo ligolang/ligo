@@ -10,6 +10,6 @@ type storage = big_map(nat, foo);
 
 type return = (list (operation), storage);
 
-let main = ((ignore, store): (unit, storage)): return  => {
+let main = ((_, store): (unit, storage)): return  => {
     ([]: list(operation), store)
 };
