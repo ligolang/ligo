@@ -72,9 +72,9 @@ function SyntaxTitle(props) {
   useEffect(() => {
     setMounted(true);
   }, []);
-  return React.createElement(SyntaxContext.Consumer, null, syntax => {
+  return /*#__PURE__*/React.createElement(SyntaxContext.Consumer, null, syntax => {
     if (syntax === props.syntax) {
-      return React.createElement(Highlight, _extends({}, defaultProps, {
+      return /*#__PURE__*/React.createElement(Highlight, _extends({}, defaultProps, {
         key: mounted,
         language: props.syntax,
         code: props.children,
@@ -85,7 +85,7 @@ function SyntaxTitle(props) {
         tokens,
         getLineProps,
         getTokenProps
-      }) => React.createElement("pre", {
+      }) => /*#__PURE__*/React.createElement("pre", {
         className: className,
         style: {
           backgroundColor: 'var(--ifm-background-color)',
@@ -95,15 +95,15 @@ function SyntaxTitle(props) {
           whiteSpace: 'break-spaces',
           marginTop: '3rem'
         }
-      }, tokens.map((line, i) => React.createElement("div", getLineProps({
+      }, tokens.map((line, i) => /*#__PURE__*/React.createElement("div", getLineProps({
         line,
         key: i
-      }), line.map((token, key) => React.createElement("span", getTokenProps({
+      }), line.map((token, key) => /*#__PURE__*/React.createElement("span", getTokenProps({
         token,
         key
       })))))));
     } else {
-      return React.createElement("div", null);
+      return /*#__PURE__*/React.createElement("div", null);
     }
   });
 }

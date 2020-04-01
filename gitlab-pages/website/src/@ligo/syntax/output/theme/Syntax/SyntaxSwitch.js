@@ -2,15 +2,15 @@ import React from 'react';
 import styles from './styles.module.css';
 
 function SyntaxSwitch(props) {
-  return React.createElement("select", {
+  return /*#__PURE__*/React.createElement("select", {
     className: styles.syntaxSwitch,
     defaultValue: props.syntax,
     onChange: e => props.onSyntaxChange(e.target.value)
-  }, React.createElement("option", {
+  }, /*#__PURE__*/React.createElement("option", {
     value: "pascaligo"
-  }, "PascaLIGO"), React.createElement("option", {
+  }, "PascaLIGO"), /*#__PURE__*/React.createElement("option", {
     value: "cameligo"
-  }, "CameLIGO"), React.createElement("option", {
+  }, "CameLIGO"), /*#__PURE__*/React.createElement("option", {
     value: "reasonligo"
   }, "ReasonLIGO"));
 }
