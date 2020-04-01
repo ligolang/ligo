@@ -293,7 +293,7 @@ and uncompile_type_operator : O.type_operator -> I.type_operator result =
 
 let rec uncompile_expression : O.expression -> I.expression result =
   fun e ->
-  let return expr = ok @@ I.make_expr ~loc:e.location expr in
+  let return expr = ok @@ I.make_e ~loc:e.location expr in
   match e.expression_content with 
     O.E_literal lit -> return @@ I.E_literal lit
   | O.E_constant {cons_name;arguments} -> 

@@ -37,7 +37,7 @@ let repair_mutable_variable_in_matching (match_body : O.expression) (element_nam
             ok (true,(decl_var, free_var), O.e_let_in let_binder false false rhs let_result)
           else(
             let free_var = if (List.mem name free_var) then free_var else name::free_var in
-            let expr = O.e_let_in (env,None) false false (O.e_record_update (O.e_variable env) (Var.to_name name) (O.e_variable name)) let_result in
+            let expr = O.e_let_in (env,None) false false (O.e_record_update (O.e_variable env) (O.Label (Var.to_name name)) (O.e_variable name)) let_result in
             ok (true,(decl_var, free_var), O.e_let_in let_binder false  false rhs expr)
           )
         | E_constant {cons_name=C_MAP_FOLD;arguments= _}
@@ -70,8 +70,8 @@ and repair_mutable_variable_in_loops (for_body : O.expression) (element_names : 
           else(
             let free_var = if (List.mem name free_var) then free_var else name::free_var in
             let expr = O.e_let_in (env,None) false false (
-              O.e_record_update (O.e_variable env) ("0") 
-              (O.e_record_update (O.e_record_accessor (O.e_variable env) "0") (Var.to_name name) (O.e_variable name))
+              O.e_record_update (O.e_variable env) (Label "0") 
+              (O.e_record_update (O.e_record_accessor (O.e_variable env) (Label "0")) (Label (Var.to_name name)) (O.e_variable name))
               )
               let_result in
             ok (true,(decl_var, free_var), O.e_let_in let_binder false  false rhs expr)
@@ -90,12 +90,12 @@ and store_mutable_variable (free_vars : I.expression_variable list) =
   if (List.length free_vars == 0) then
     O.e_unit ()
   else
-    let aux var = (Var.to_name var, O.e_variable var) in
-    O.e_record_ez (List.map aux free_vars)
+    let aux var = (O.Label (Var.to_name var), O.e_variable var) in
+    O.e_record @@ O.LMap.of_list (List.map aux free_vars)
  
 and restore_mutable_variable (expr : O.expression->O.expression_content) (free_vars : O.expression_variable list) (env : O.expression_variable) =
   let aux (f: O.expression -> O.expression) (ev: O.expression_variable) =
-    fun expr -> f (O.e_let_in (ev,None) true false (O.e_record_accessor (O.e_variable env) (Var.to_name ev)) expr)
+    fun expr -> f (O.e_let_in (ev,None) true false (O.e_record_accessor (O.e_variable env) (Label (Var.to_name ev))) expr)
   in
   let ef = List.fold_left aux (fun e -> e) free_vars in
   expr (ef (O.e_skip ()))
@@ -163,7 +163,7 @@ and compile_type_operator : I.type_operator -> O.type_operator result =
 
 let rec compile_expression : I.expression -> O.expression result =
   fun e ->
-  let return expr = ok @@ O.make_expr ~loc:e.location expr in
+  let return expr = ok @@ O.make_e ~loc:e.location expr in
   match e.expression_content with
     | I.E_literal literal   -> return @@ O.E_literal literal
     | I.E_constant {cons_name;arguments} -> 
@@ -288,7 +288,7 @@ and compile_assign {variable; access_path; expression} expr =
   let accessor ?loc s a =
     match a with 
       I.Access_tuple _i -> failwith "adding tuple soon"
-    | I.Access_record a -> ok @@ O.e_record_accessor ?loc s a
+    | I.Access_record a -> ok @@ O.e_record_accessor ?loc s (Label a)
     | I.Access_map k -> 
       let%bind k = compile_expression k in
       ok @@ O.e_constant ?loc C_MAP_FIND_OPT [k;s]
@@ -296,7 +296,7 @@ and compile_assign {variable; access_path; expression} expr =
   let update ?loc (s:O.expression) a e =
     match a with
       I.Access_tuple _i -> failwith "adding tuple soon"      
-    | I.Access_record a -> ok @@ O.e_record_update ?loc s a e
+    | I.Access_record a -> ok @@ O.e_record_update ?loc s (Label a) e
     | I.Access_map k ->
       let%bind k = compile_expression k in
       ok @@ O.e_constant ?loc C_UPDATE [k;O.e_some (e);s]
@@ -430,7 +430,7 @@ and compile_while I.{condition;body} =
   let for_body = add_to_end for_body ctrl in
 
   let aux name expr=
-    O.e_let_in (name,None) false false (O.e_record_accessor (O.e_record_accessor (O.e_variable binder) "0") (Var.to_name name)) expr
+    O.e_let_in (name,None) false false (O.e_record_accessor (O.e_record_accessor (O.e_variable binder) (Label "0")) (Label (Var.to_name name))) expr
   in
   let init_rec = O.e_tuple [store_mutable_variable @@ captured_name_list] in
   let restore = fun expr -> List.fold_right aux captured_name_list expr in
@@ -445,7 +445,7 @@ and compile_while I.{condition;body} =
   let return_expr = fun expr -> 
     O.E_let_in {let_binder; mut=false; inline=false; rhs=init_rec; let_result=
     O.e_let_in let_binder false false loop @@
-    O.e_let_in let_binder false false (O.e_record_accessor (O.e_variable env_rec) "0") @@
+    O.e_let_in let_binder false false (O.e_record_accessor (O.e_variable env_rec) (Label"0")) @@
     expr
     }
   in
@@ -461,7 +461,7 @@ and compile_for I.{binder;start;final;increment;body} =
   let continue_expr = O.e_constant C_FOLD_CONTINUE [(O.e_variable env_rec)] in
   let ctrl = 
     O.e_let_in (binder,Some O.t_int) false false (O.e_constant C_ADD [ O.e_variable binder ; step ]) @@
-    O.e_let_in (env_rec, None) false false (O.e_record_update (O.e_variable env_rec) "1" @@ O.e_variable binder)@@
+    O.e_let_in (env_rec, None) false false (O.e_record_update (O.e_variable env_rec) (Label "1") @@ O.e_variable binder)@@
     continue_expr
   in
   (* Modify the body loop*)
@@ -470,7 +470,7 @@ and compile_for I.{binder;start;final;increment;body} =
   let for_body = add_to_end for_body ctrl in
 
   let aux name expr=
-    O.e_let_in (name,None) false false (O.e_record_accessor (O.e_record_accessor (O.e_variable env_rec) "0") (Var.to_name name)) expr
+    O.e_let_in (name,None) false false (O.e_record_accessor (O.e_record_accessor (O.e_variable env_rec) (Label "0")) (Label (Var.to_name name))) expr
   in
 
   (* restores the initial value of the free_var*)
@@ -479,7 +479,7 @@ and compile_for I.{binder;start;final;increment;body} =
   (*Prep the lambda for the fold*)
   let stop_expr = O.e_constant C_FOLD_STOP [O.e_variable env_rec] in
   let aux_func = O.e_lambda env_rec None None @@ 
-                 O.e_let_in (binder,Some O.t_int) false false (O.e_record_accessor (O.e_variable env_rec) "1") @@
+                 O.e_let_in (binder,Some O.t_int) false false (O.e_record_accessor (O.e_variable env_rec) (Label "1")) @@
                  O.e_cond cond (restore for_body) (stop_expr) in
 
   (* Make the fold_while en precharge the vakye *)
@@ -492,7 +492,7 @@ and compile_for I.{binder;start;final;increment;body} =
     O.E_let_in {let_binder=(binder, Some O.t_int);mut=false; inline=false;rhs=start;let_result=
     O.e_let_in let_binder false false init_rec @@
     O.e_let_in let_binder false false loop @@
-    O.e_let_in let_binder false false (O.e_record_accessor (O.e_variable env_rec) "0") @@
+    O.e_let_in let_binder false false (O.e_record_accessor (O.e_variable env_rec) (Label "0")) @@
     expr
     }
   in
@@ -508,21 +508,21 @@ and compile_for_each I.{binder;collection;collection_type; body} =
   let env = Var.fresh () in
   let%bind body = compile_expression body in
   let%bind ((_,free_vars), body) = repair_mutable_variable_in_loops body element_names args in
-  let for_body = add_to_end body @@ (O.e_record_accessor (O.e_variable args) "0") in
+  let for_body = add_to_end body @@ (O.e_record_accessor (O.e_variable args) (Label "0")) in
 
   let init_record = store_mutable_variable free_vars in
   let%bind collect = compile_expression collection in
   let aux name expr=
-    O.e_let_in (name,None) false false (O.e_record_accessor (O.e_record_accessor (O.e_variable args) "0") (Var.to_name name)) expr
+    O.e_let_in (name,None) false false (O.e_record_accessor (O.e_record_accessor (O.e_variable args) (Label "0")) (Label (Var.to_name name))) expr
   in
   let restore = fun expr -> List.fold_right aux free_vars expr in
   let restore = match collection_type with
     | Map -> (match snd binder with 
-      | Some v -> fun expr -> restore (O.e_let_in (fst binder, None) false false (O.e_record_accessor (O.e_record_accessor (O.e_variable args) "1") "0") 
-                                    (O.e_let_in (v, None) false false (O.e_record_accessor (O.e_record_accessor (O.e_variable args) "1") "1") expr))
-      | None -> fun expr -> restore (O.e_let_in (fst binder, None) false false (O.e_record_accessor (O.e_record_accessor (O.e_variable args) "1") "0") expr) 
+      | Some v -> fun expr -> restore (O.e_let_in (fst binder, None) false false (O.e_record_accessor (O.e_record_accessor (O.e_variable args) (Label "1")) (Label "0")) 
+                                    (O.e_let_in (v, None) false false (O.e_record_accessor (O.e_record_accessor (O.e_variable args) (Label "1")) (Label "1")) expr))
+      | None -> fun expr -> restore (O.e_let_in (fst binder, None) false false (O.e_record_accessor (O.e_record_accessor (O.e_variable args) (Label "1")) (Label "0")) expr) 
     )
-    | _ -> fun expr -> restore (O.e_let_in (fst binder, None) false false (O.e_record_accessor (O.e_variable args) "1") expr)
+    | _ -> fun expr -> restore (O.e_let_in (fst binder, None) false false (O.e_record_accessor (O.e_variable args) (Label "1")) expr)
   in
   let lambda = O.e_lambda args None None (restore for_body) in
   let%bind op_name = match collection_type with
