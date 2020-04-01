@@ -8,6 +8,15 @@ module Pos = Simple_utils.Pos
 
 let sprintf = Printf.sprintf
 
+(* Rolling back one lexeme _within the current semantic action_ *)
+
+let rollback buffer =
+  let open Lexing in
+  let len = String.length (lexeme buffer) in
+  let pos_cnum = buffer.lex_curr_p.pos_cnum - len in
+  buffer.lex_curr_pos <- buffer.lex_curr_pos - len;
+  buffer.lex_curr_p <- {buffer.lex_curr_p with pos_cnum}
+
 (* STRING PROCESSING *)
 
 (* The value of [mk_str len p] ("make string") is a string of length
@@ -196,7 +205,7 @@ let error_to_string = function
 let format ?(offsets=true) Region.{region; value} ~file =
   let msg   = error_to_string value
   and reg   = region#to_string ~file ~offsets `Byte in
-  let value = sprintf "Preprocessing error %s:\n%s" reg msg
+  let value = sprintf "Preprocessing error %s:\n%s\n" reg msg
   in Region.{value; region}
 
 exception Error of (Buffer.t * error Region.reg)
@@ -722,6 +731,12 @@ and in_string opening state = parse
 | eof    { stop Open_string state opening                    }
 | _      { copy state lexbuf; in_string opening state lexbuf }
 
+and preproc state = parse
+  eof { state }
+| _   { rollback lexbuf;
+        print state (sprintf "# 1 \"%s\"\n"
+                             Lexing.(lexbuf.lex_start_p.pos_fname));
+        scan state lexbuf }
 
 {
   (* START OF TRAILER *)
@@ -741,7 +756,7 @@ let lex opt buffer =
     opt;
     dir    = []
   } in
-  match scan state buffer with
+  match preproc state buffer with
     state -> List.iter close_in state.incl;
              Stdlib.Ok state.out
   | exception Error e -> Stdlib.Error e

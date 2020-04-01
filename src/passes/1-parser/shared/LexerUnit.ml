@@ -37,29 +37,29 @@ module Make (IO: IO) (Lexer: Lexer.S) =
         | Stdlib.Ok pp_buffer ->
            (* Running the lexer on the preprocessed input *)
 
-            let preproc_str = Buffer.contents pp_buffer in
-            match Lexer.open_token_stream (Lexer.String preproc_str) with
-              Ok Lexer.{read; buffer; close; _} ->
-                let close_all () = flush_all (); close () in
-                let rec read_tokens tokens =
-                  match read ~log:(fun _ _ -> ()) buffer with
-                    token ->
-                      if   Lexer.Token.is_eof token
-                      then Stdlib.Ok (List.rev tokens)
-                      else read_tokens (token::tokens)
-                  | exception Lexer.Error error ->
-                      let file =
-                        match IO.options#input with
-                          None | Some "-" -> false
-                        |         Some _  -> true in
-                      let msg =
-                        Lexer.format_error ~offsets:IO.options#offsets
-                                           IO.options#mode ~file error
-                      in Stdlib.Error msg in
-                let result = read_tokens []
-                in close_all (); result
-            | Stdlib.Error (Lexer.File_opening msg) ->
-               flush_all (); Stdlib.Error (Region.wrap_ghost msg) in
+             let source = Lexer.String (Buffer.contents pp_buffer) in
+               match Lexer.open_token_stream source with
+                 Ok Lexer.{read; buffer; close; _} ->
+                   let close_all () = flush_all (); close () in
+                   let rec read_tokens tokens =
+                     match read ~log:(fun _ _ -> ()) buffer with
+                       token ->
+                         if   Lexer.Token.is_eof token
+                         then Stdlib.Ok (List.rev tokens)
+                         else read_tokens (token::tokens)
+                     | exception Lexer.Error error ->
+                         let file =
+                           match IO.options#input with
+                             None | Some "-" -> false
+                           |         Some _  -> true in
+                         let msg =
+                           Lexer.format_error ~offsets:IO.options#offsets
+                                              IO.options#mode ~file error
+                         in Stdlib.Error msg in
+                   let result = read_tokens []
+                   in close_all (); result
+               | Stdlib.Error (Lexer.File_opening msg) ->
+                   flush_all (); Stdlib.Error (Region.wrap_ghost msg) in
       match IO.options#input with
         Some "-" | None -> preproc stdin
       | Some file_path ->
@@ -78,7 +78,7 @@ module Make (IO: IO) (Lexer: Lexer.S) =
         let () =
           match IO.options#input with
             None | Some "-" -> ()
-            | Some pos_fname ->
+          | Some pos_fname ->
                buffer.lex_curr_p <- {buffer.lex_curr_p with pos_fname} in
         match Preproc.lex IO.options buffer with
           Stdlib.Error (pp_buffer, err) ->

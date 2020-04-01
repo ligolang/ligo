@@ -402,51 +402,51 @@ module Make (Token: TOKEN) : (S with module Token = Token) =
 
     let error_to_string = function
       Invalid_utf8_sequence ->
-        "Invalid UTF-8 sequence.\n"
+        "Invalid UTF-8 sequence."
     | Unexpected_character c ->
-        sprintf "Unexpected character '%s'.\n" (Char.escaped c)
+        sprintf "Unexpected character '%s'." (Char.escaped c)
     | Undefined_escape_sequence ->
         "Undefined escape sequence.\n\
-         Hint: Remove or replace the sequence.\n"
+         Hint: Remove or replace the sequence."
     | Missing_break ->
         "Missing break.\n\
-         Hint: Insert some space.\n"
+         Hint: Insert some space."
     | Unterminated_string ->
         "Unterminated string.\n\
-         Hint: Close with double quotes.\n"
+         Hint: Close with double quotes."
     | Unterminated_integer ->
         "Unterminated integer.\n\
-         Hint: Remove the sign or proceed with a natural number.\n"
+         Hint: Remove the sign or proceed with a natural number."
     | Odd_lengthed_bytes ->
         "The length of the byte sequence is an odd number.\n\
-         Hint: Add or remove a digit.\n"
+         Hint: Add or remove a digit."
     | Unterminated_comment ->
         "Unterminated comment.\n\
-         Hint: Close with \"*)\".\n"
+         Hint: Close with \"*)\"."
     | Orphan_minus ->
         "Orphan minus sign.\n\
-         Hint: Remove the trailing space.\n"
+         Hint: Remove the trailing space."
     | Non_canonical_zero ->
         "Non-canonical zero.\n\
-         Hint: Use 0.\n"
+         Hint: Use 0."
     | Negative_byte_sequence ->
         "Negative byte sequence.\n\
-         Hint: Remove the leading minus sign.\n"
+         Hint: Remove the leading minus sign."
     | Broken_string ->
         "The string starting here is interrupted by a line break.\n\
          Hint: Remove the break, close the string before or insert a \
-         backslash.\n"
+         backslash."
     | Invalid_character_in_string ->
         "Invalid character in string.\n\
-         Hint: Remove or replace the character.\n"
+         Hint: Remove or replace the character."
     | Reserved_name s ->
         sprintf "Reserved name: \"%s\".\n\
-         Hint: Change the name.\n" s
+         Hint: Change the name." s
     | Invalid_symbol ->
         "Invalid symbol.\n\
-         Hint: Check the LIGO syntax you use.\n"
+         Hint: Check the LIGO syntax you use."
     | Invalid_natural ->
-        "Invalid natural."
+        "Invalid natural number."
     | Invalid_attribute ->
         "Invalid attribute."
 
@@ -455,7 +455,7 @@ module Make (Token: TOKEN) : (S with module Token = Token) =
     let format_error ?(offsets=true) mode Region.{region; value} ~file =
       let msg = error_to_string value
       and reg = region#to_string ~file ~offsets mode in
-      let value = sprintf "Lexical error %s:\n%s" reg msg
+      let value = sprintf "Lexical error %s:\n%s\n" reg msg
       in Region.{value; region}
 
     let fail region value = raise (Error Region.{region; value})
