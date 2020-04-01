@@ -407,7 +407,7 @@ and type_expression' : environment -> ?tv_opt:O.type_expression -> I.expression 
       | None -> ok ()
       | Some tv' -> O.assert_type_expression_eq (tv' , tv) in
     let location = ae.location in
-    ok @@ make_a_e ~location expr tv e in
+    ok @@ make_e ~location expr tv e in
   let main_error =
     let title () = "typing expression" in
     let content () = "" in
@@ -463,7 +463,7 @@ and type_expression' : environment -> ?tv_opt:O.type_expression -> I.expression 
               generic_try (bad_record_access property ae prev.type_expression ae.location)
               @@ (fun () -> I.LMap.find property r_tv) in
             let location = ae.location in
-            ok @@ make_a_e ~location (E_record_accessor {record=prev; path=property}) tv e
+            ok @@ make_e ~location (E_record_accessor {record=prev; path=property}) tv e
       in
       let%bind ae =
       trace (simple_info "accessing") @@ aux e' path in
@@ -544,7 +544,7 @@ and type_expression' : environment -> ?tv_opt:O.type_expression -> I.expression 
       let e' = Environment.add_ez_binder lname input_type e in
       let%bind body = type_expression' ?tv_opt:(Some tv_out) e' result in
       let output_type = body.type_expression in
-      let lambda' = make_a_e (E_lambda {binder = lname ; result=body}) (t_function input_type output_type ()) e' in
+      let lambda' = make_e (E_lambda {binder = lname ; result=body}) (t_function input_type output_type ()) e' in
       let lst' = [lambda'; v_col; v_initr] in
       let tv_lst = List.map get_type_expression lst' in
       let%bind (opname', tv) =
@@ -565,7 +565,7 @@ and type_expression' : environment -> ?tv_opt:O.type_expression -> I.expression 
       let e' = Environment.add_ez_binder lname input_type e in
       let%bind body = type_expression' e' result in
       let output_type = body.type_expression in
-      let lambda' = make_a_e (E_lambda {binder = lname ; result=body}) (t_function input_type output_type ()) e' in
+      let lambda' = make_e (E_lambda {binder = lname ; result=body}) (t_function input_type output_type ()) e' in
       let lst' = [lambda';v_initr] in
       let tv_lst = List.map get_type_expression lst' in
       let%bind (opname',tv) = type_constant opname tv_lst tv_opt in
@@ -782,11 +782,9 @@ let rec untype_expression (e:O.expression) : (I.expression) result =
       let Constructor n = constructor in
       return (e_constructor n p')
   | E_record r ->
-    let aux ( Label k ,v) = (k, v) in
-    let r = Map.String.of_list @@ List.map aux (LMap.to_kv_list r) in
-    let%bind r' = bind_smap
-      @@ Map.String.map untype_expression r in
-    return (e_record r')
+    let r = LMap.to_kv_list r in
+    let%bind r' = bind_map_list (fun (k,e) -> let%bind e = untype_expression e in ok (k,e)) r in
+    return (e_record @@ LMap.of_list r')
   | E_record_accessor {record; path} ->
       let%bind r' = untype_expression record in
       let Label s = path in
@@ -794,7 +792,6 @@ let rec untype_expression (e:O.expression) : (I.expression) result =
   | E_record_update {record=r; path=l; update=e} ->
     let%bind r' = untype_expression r in
     let%bind e = untype_expression e in 
-    let Label l = l in
     return (e_record_update r' l e)
   | E_matching {matchee;cases} ->
       let%bind ae' = untype_expression matchee in

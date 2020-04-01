@@ -68,7 +68,7 @@ and idle_type_operator : I.type_operator -> O.type_operator result =
 
 let rec compile_expression : I.expression -> O.expression result =
   fun e ->
-  let return expr = ok @@ O.make_expr ~loc:e.location expr in
+  let return expr = ok @@ O.make_e ~loc:e.location expr in
   match e.expression_content with
     | I.E_literal literal   -> return @@ O.E_literal literal
     | I.E_constant {cons_name;arguments} -> 
