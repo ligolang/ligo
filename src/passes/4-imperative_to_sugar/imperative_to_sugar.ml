@@ -234,6 +234,28 @@ let rec compile_expression : I.expression -> O.expression result =
       let%bind anno_expr = compile_expression anno_expr in
       let%bind type_annotation = compile_type_expression type_annotation in
       return @@ O.E_ascription {anno_expr; type_annotation}
+    | I.E_cond {condition;then_clause;else_clause} ->
+      let%bind condition   = compile_expression condition in
+      let%bind then_clause' = compile_expression then_clause in
+      let%bind else_clause' = compile_expression else_clause in
+      let env = Var.fresh () in
+      let%bind ((_,free_vars_true), then_clause) = repair_mutable_variable_in_matching then_clause' [] env in
+      let%bind ((_,free_vars_false), else_clause) = repair_mutable_variable_in_matching else_clause' [] env in
+      let then_clause  = add_to_end then_clause (O.e_variable env) in
+      let else_clause = add_to_end else_clause (O.e_variable env) in
+
+      let free_vars = List.sort_uniq Var.compare @@ free_vars_true @ free_vars_false in
+      if (List.length free_vars != 0) then 
+        let cond_expr  = O.e_cond condition then_clause else_clause in
+        let return_expr = fun expr ->
+          O.E_let_in {let_binder=(env,None); mut=false; inline=false;rhs=(store_mutable_variable free_vars);
+          let_result=O.e_let_in (env,None) false false cond_expr @@
+          expr 
+          }
+        in
+        return @@ restore_mutable_variable return_expr free_vars env
+      else
+        return @@ O.E_cond {condition; then_clause=then_clause'; else_clause=else_clause'}
     | I.E_sequence {expr1; expr2} ->
       let%bind expr1 = compile_expression expr1 in
       let%bind expr2 = compile_expression expr2 in
@@ -672,6 +694,11 @@ let rec uncompile_expression : O.expression -> I.expression result =
     let%bind anno_expr = uncompile_expression anno_expr in
     let%bind type_annotation = uncompile_type_expression type_annotation in
     return @@ I.E_ascription {anno_expr; type_annotation}
+  | O.E_cond {condition;then_clause;else_clause} ->
+    let%bind condition   = uncompile_expression condition in
+    let%bind then_clause = uncompile_expression then_clause in
+    let%bind else_clause = uncompile_expression else_clause in
+    return @@ I.E_cond {condition; then_clause; else_clause}
   | O.E_sequence {expr1; expr2} ->
     let%bind expr1 = uncompile_expression expr1 in
     let%bind expr2 = uncompile_expression expr2 in

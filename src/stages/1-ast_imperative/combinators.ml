@@ -131,7 +131,7 @@ let e_while ?loc condition body = make_expr ?loc @@ E_while {condition; body}
 let e_for ?loc binder start final increment body = make_expr ?loc @@ E_for {binder;start;final;increment;body}
 let e_for_each ?loc binder collection collection_type body = make_expr ?loc @@ E_for_each {binder;collection;collection_type;body}
 
-let e_cond ?loc expr match_true match_false = e_matching expr ?loc (Match_bool {match_true; match_false})
+let e_cond ?loc condition then_clause else_clause = make_expr ?loc @@ E_cond {condition;then_clause;else_clause}
 (*
 let e_assign ?loc a b c = location_wrap ?loc @@ E_assign (Var.of_name a , b , c) (* TODO handlethat*)
 *)
