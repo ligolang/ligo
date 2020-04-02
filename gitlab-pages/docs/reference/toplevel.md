@@ -12,49 +12,49 @@ These functions are available without any needed prefix.
 
 <SyntaxTitle syntax="pascaligo">
 function is_nat: int -> option(nat)
-</Syntax>
+</SyntaxTitle>
 <SyntaxTitle syntax="pascaligo">
 val is_nat: int -> nat option
-</Syntax>
+</SyntaxTitle>
 <SyntaxTitle syntax="pascaligo">
 let is_nat: int => option(nat)
-</Syntax>
+</SyntaxTitle>
 
 Convert an `int` to a `nat` if possible.
 
 <SyntaxTitle syntax="pascaligo">
 function abs: int -> nat
-</Syntax>
+</SyntaxTitle>
 <SyntaxTitle syntax="pascaligo">
 val abs: int -> nat
-</Syntax>
+</SyntaxTitle>
 <SyntaxTitle syntax="pascaligo">
 let abs: int => nat
-</Syntax>
+</SyntaxTitle>
 
 Cast an `int` to `nat`.
 
 <SyntaxTitle syntax="pascaligo">
 function int: nat -> int
-</Syntax>
+</SyntaxTitle>
 <SyntaxTitle syntax="pascaligo">
 val int: nat -> int
-</Syntax>
+</SyntaxTitle>
 <SyntaxTitle syntax="pascaligo">
 let int: nat => int
-</Syntax>
+</SyntaxTitle>
 
 Cast an `nat` to `int`.
 
 <SyntaxTitle syntax="pascaligo">
 const unit: unit
-</Syntax>
+</SyntaxTitle>
 <SyntaxTitle syntax="pascaligo">
 val unit: unit
-</Syntax>
+</SyntaxTitle>
 <SyntaxTitle syntax="pascaligo">
 let (): unit
-</Syntax>
+</SyntaxTitle>
 
 A helper to create a unit.
 
