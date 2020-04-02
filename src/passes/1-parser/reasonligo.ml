@@ -72,7 +72,7 @@ module Errors =
     let invalid_wild (expr: AST.expr) = 
       let title () = "" in
       let message () = 
-        "It looks you are using a wild pattern where it cannot be used."
+        "It looks like you are using a wild pattern where it cannot be used."
       in
       let expression_loc = AST.expr_to_region expr in
       let data = [
