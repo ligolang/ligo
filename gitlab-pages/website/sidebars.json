@@ -19,13 +19,15 @@
       "advanced/entrypoints-contracts",
       "advanced/include",
       "advanced/first-contract",
-      "advanced/michelson-and-ligo"
+      "advanced/michelson-and-ligo",
+      "advanced/inline"
     ],
     "Reference": [
       "api/cli-commands",
       "api/cheat-sheet"
     ],
     "API":[
+      "reference/toplevel",
       "reference/big-map-reference",
       "reference/bitwise-reference",
       "reference/bytes-reference",

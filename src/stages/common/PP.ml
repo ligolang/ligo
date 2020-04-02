@@ -11,13 +11,13 @@ let label ppf (l:label) : unit =
 let cmap_sep value sep ppf m =
   let lst = CMap.to_kv_list m in
   let lst = List.sort (fun (Constructor a,_) (Constructor b,_) -> String.compare a b) lst in
-  let new_pp ppf (k, v) = fprintf ppf "%a -> %a" constructor k value v in
+  let new_pp ppf (k, v) = fprintf ppf "@[<h>%a -> %a@]" constructor k value v in
   fprintf ppf "%a" (list_sep new_pp sep) lst
 
 let record_sep value sep ppf (m : 'a label_map) =
   let lst = LMap.to_kv_list m in
   let lst = List.sort_uniq (fun (Label a,_) (Label b,_) -> String.compare a b) lst in
-  let new_pp ppf (k, v) = fprintf ppf "%a -> %a" label k value v in
+  let new_pp ppf (k, v) = fprintf ppf "@[<h>%a -> %a@]" label k value v in
   fprintf ppf "%a" (list_sep new_pp sep) lst
 
 let tuple_sep value sep ppf m =
@@ -30,14 +30,14 @@ let tuple_sep value sep ppf m =
    0..(cardinal-1) as tuples *)
 let tuple_or_record_sep value format_record sep_record format_tuple sep_tuple ppf m =
   if Helpers.is_tuple_lmap m then
-    fprintf ppf format_tuple (tuple_sep value (const sep_tuple)) m
+    fprintf ppf format_tuple (tuple_sep value (tag sep_tuple)) m
   else
-    fprintf ppf format_record (record_sep value (const sep_record)) m
+    fprintf ppf format_record (record_sep value (tag sep_record)) m
 
-let list_sep_d x = list_sep x (const " , ")
-let cmap_sep_d x = cmap_sep x (const " , ")
-let tuple_or_record_sep_expr value = tuple_or_record_sep value "record[%a]" " , " "( %a )" " , "
-let tuple_or_record_sep_type value = tuple_or_record_sep value "record[%a]" " , " "( %a )" " * "
+let list_sep_d x = list_sep x (tag " ,@ ")
+let cmap_sep_d x = cmap_sep x (tag " ,@ ")
+let tuple_or_record_sep_expr value = tuple_or_record_sep value "@[<hv 7>record[%a]@]" " ,@ " "@[<hv 2>( %a )@]" " ,@ "
+let tuple_or_record_sep_type value = tuple_or_record_sep value "@[<hv 7>record[%a]@]" " ,@ " "@[<hv 2>( %a )@]" " *@ "
 
 let constant ppf : constant' -> unit = function
   | C_INT                   -> fprintf ppf "INT"
@@ -206,7 +206,7 @@ module Ast_PP_type (PARAMETER : AST_PARAMETER_TYPE) = struct
       -> unit =
    fun f ppf te ->
     match te.type_content with
-    | T_sum m -> fprintf ppf "sum[%a]" (cmap_sep_d f) m
+    | T_sum m -> fprintf ppf "@[<hv 4>sum[%a]@]" (cmap_sep_d f) m
     | T_record m -> fprintf ppf "%a" (tuple_or_record_sep_type f) m
     | T_arrow a -> fprintf ppf "%a -> %a" f a.type1 f a.type2
     | T_variable tv -> type_variable ppf tv
