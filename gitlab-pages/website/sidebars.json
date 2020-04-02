@@ -19,7 +19,8 @@
       "advanced/entrypoints-contracts",
       "advanced/include",
       "advanced/first-contract",
-      "advanced/michelson-and-ligo"
+      "advanced/michelson-and-ligo",
+      "advanced/inline"
     ],
     "Reference": [
       "api/cli-commands",
