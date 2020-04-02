@@ -105,7 +105,11 @@ contract with no parameters, or an implicit account.
 
 ```pascaligo group=ex1
 const ownerAddress : address = ("tz1TGu6TN5GSez2ndXXeDX6LgUDvLzPLqgYV" : address);
-const receiver : contract (unit) = get_contract (ownerAddress);
+const receiver : contract (unit) = 
+  case (Tezos.get_contract_opt (ownerAddress): option(contract(unit))) of
+    Some (contract) -> contract
+  | None -> (failwith ("Not a contract") : (contract(unit)))
+  end;
 ```
 
 > Would you like to learn more about addresses, contracts and
@@ -120,7 +124,7 @@ receiver)` within a list of operations returned at the end of our
 contract.
 
 ```pascaligo group=ex1
-const payoutOperation : operation = transaction (unit, amount, receiver) ;
+const payoutOperation : operation = Tezos.transaction (unit, amount, receiver) ;
 const operations : list (operation) = list [payoutOperation];
 ```
 
@@ -166,8 +170,13 @@ function buy_taco (const taco_kind_index : nat ; var taco_shop_storage : taco_sh
     // Update the storage with the refreshed taco_kind
     taco_shop_storage[taco_kind_index] := taco_kind;
 
-    const receiver : contract(unit) = get_contract (ownerAddress);
-    const payoutOperation : operation = transaction (unit, amount, receiver);
+    const receiver : contract (unit) = 
+      case (Tezos.get_contract_opt (ownerAddress): option(contract(unit))) of 
+        Some (contract) -> contract
+      | None -> (failwith ("Not a contract") : (contract(unit)))
+      end;
+
+    const payoutOperation : operation = Tezos.transaction (unit, amount, receiver);
     const operations : list(operation) = list [payoutOperation]
   } with ((operations : list (operation)), taco_shop_storage)
 ```
@@ -214,8 +223,16 @@ sum from each taco purchase.
 const ownerAddress : address = ("tz1TGu6TN5GSez2ndXXeDX6LgUDvLzPLqgYV" : address);
 const donationAddress : address = ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address);
 
-const receiver : contract (unit) = get_contract (ownerAddress);
-const donationReceiver : contract(unit) = get_contract (donationAddress);
+const receiver : contract (unit) = 
+  case (Tezos.get_contract_opt (ownerAddress) : option(contract(unit))) of 
+    Some (contract) -> contract
+  | None -> (failwith ("Not a contract") : contract (unit))
+  end;
+const donationReceiver : contract (unit) = 
+  case (Tezos.get_contract_opt (donationAddress) : option(contract(unit))) of 
+    Some (contract) -> contract
+  | None  -> (failwith ("Not a contract") : contract (unit))
+  end;
 
 const donationAmount : tez = amount / 10n;
 
