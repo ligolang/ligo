@@ -32,6 +32,7 @@
   .syntaxSwitch option {
       color: var(--color-primary-text);
       font-weight:normal;
+      background-color: var(--ifm-navbar-background-color);
   }
   
   

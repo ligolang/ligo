@@ -455,10 +455,10 @@ and type_expression : environment -> Solver.state -> ?tv_opt:O.type_expression -
    *     | Some (T_constant ("address" , [])) -> return (E_literal (Literal_address s)) (t_address ())
    *     | _ -> return (E_literal (Literal_string s)) (t_string ())
    *   ) *)
-  | E_record_accessor {record;label} -> (
+  | E_record_accessor {record;path} -> (
       let%bind (base' , state') = type_expression e state record in
-      let wrapped = Wrap.access_label ~base:base'.type_expression ~label in
-      return_wrapped (E_record_accessor {record=base';label}) state' wrapped
+      let wrapped = Wrap.access_label ~base:base'.type_expression ~label:path in
+      return_wrapped (E_record_accessor {record=base';path}) state' wrapped
     )
 
   (* Sum *)
@@ -917,15 +917,15 @@ let rec untype_expression (e:O.expression) : (I.expression) result =
     let%bind r' = bind_smap
       @@ Map.String.map untype_expression r in
     return (e_record r')
-  | E_record_accessor {record; label} ->
+  | E_record_accessor {record; path} ->
     let%bind r' = untype_expression record in
-    let Label s = label in
-    return (e_accessor r' s)
+    let Label s = path in
+    return (e_record_accessor r' s)
   | E_record_update {record; path; update} ->
     let%bind r' = untype_expression record in
     let%bind e = untype_expression update in 
     let Label l = path in
-    return (e_update r' l e)
+    return (e_record_update r' l e)
   | E_matching {matchee;cases} ->
     let%bind ae' = untype_expression matchee in
     let%bind m' = untype_matching untype_expression cases in
