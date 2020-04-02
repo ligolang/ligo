@@ -27,6 +27,7 @@
       "api/cheat-sheet"
     ],
     "API":[
+      "reference/toplevel",
       "reference/big-map-reference",
       "reference/bitwise-reference",
       "reference/bytes-reference",
