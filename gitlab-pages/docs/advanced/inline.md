@@ -5,13 +5,15 @@ title: Inlining
 
 import Syntax from '@theme/Syntax';
 
-When compiling a contract in LIGO some functions get inlined in the place where
-they are used and some are not. Inlining a function often results in larger 
-contracts and is therefore not aggressively done. 
+When compiling a contract in LIGO, declarations will get inlined if they are 
+only used once and pure. Inlining often results in larger contracts and is 
+therefore not aggressively done.
+
+A pure declaration is one that doesn't cause side effects like causing a 
+failure or operation.
 
 In some cases you might want to override the default behaviour of LIGO and 
-force inlining. 
-
+force inlining. The declaration still needs to be pure though.
 
 ## Inline attribute
 
