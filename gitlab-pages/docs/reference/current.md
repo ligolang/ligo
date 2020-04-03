@@ -612,7 +612,12 @@ Cause the contract to fail with an error message.
 > ⚠ Using this currently requires in general a type annotation on the
 > `failwith` call.
 
-
+<Syntax syntax="cameligo">
+Note that `Current.failwith` is deprecated. Use `Tezos.failwith` or `failwith` instead.
+</Syntax>
+<Syntax syntax="reasonligo">
+Note that `Current.failwith` is deprecated. Use `Tezos.failwith` or `failwith` instead.
+</Syntax>
 
 <Syntax syntax="pascaligo">
 
@@ -713,10 +718,19 @@ val transaction : 'parameter -> mutez -> 'parameter contract -> operation
 let transaction: 'parameter -> mutez -> contract('parameter) -> operation
 </SyntaxTitle>
 
-Create a transaction to a contract or account. 
+Transfer `tez` to an account, or run code of another smart contract.
 
 To indicate an account, use `unit` as `parameter`.
 
+<Syntax syntax="pascaligo">
+Note that `transaction` is deprecated. Please use `Tezos.transaction` instead.
+</Syntax>
+<Syntax syntax="cameligo">
+Note that `transaction` is deprecated. Please use `Tezos.transaction` instead.
+</Syntax>
+<Syntax syntax="reasonligo">
+Note that `transaction` is deprecated. Please use `Tezos.transaction` instead.
+</Syntax>
 
 <SyntaxTitle syntax="pascaligo">
 function set_delegate : option(key_hash) -> operation
@@ -728,9 +742,28 @@ val set_delegate : key_hash option -> operation
 let set_delegate: option(key_hash) => operation
 </SyntaxTitle>
 
-Create a delegation.
+Modify the 
+(delegate)[http://tezos.gitlab.io/user/glossary.html?highlight=delegate#delegate] 
+of the current contract.
 
-See also: http://tezos.gitlab.io/user/glossary.html?highlight=delegate#delegate
+The operation fails when:
+- the delegate is the same as current delegate
+- the keyhash is not of a registered delegate
+
+Use `None` to withdraw the current delegate.
+
+<Syntax syntax="pascaligo">
+Note that `set_delegate` is deprecated. Please use `Tezos.set_delegate` 
+instead.
+</Syntax>
+<Syntax syntax="cameligo">
+Note that `Operation.set_delegate` is deprecated. Please use 
+`Tezos.set_delegate` instead.
+</Syntax>
+<Syntax syntax="reasonligo">
+Note that `Operation.set_delegate` is deprecated. Please use 
+`Tezos.set_delegate` instead.
+</Syntax>
 
 <SyntaxTitle syntax="pascaligo">
 function get_contract_opt : address -> option(contract('parameter))
@@ -746,6 +779,19 @@ Get a contract from an address.
 
 When no contract is found or the contract doesn't match the type,  
 `None` is returned.
+
+<Syntax syntax="pascaligo">
+Note that `get_contract` and `get_contract_opt` are deprecated. Please use
+`Tezos.get_contract_opt` instead.
+</Syntax>
+<Syntax syntax="cameligo">
+Note that `Operation.get_contract` and `Operation.get_contract_opt` are 
+deprecated. Please use `Tezos.get_contract_opt` instead.
+</Syntax>
+<Syntax syntax="reasonligo">
+Note that `Operation.get_contract` and `Operation.get_contract_opt` are 
+deprecated. Please use `Tezos.get_contract_opt` instead.
+</Syntax>
 
 <SyntaxTitle syntax="pascaligo">
 function get_entrypoint_opt : string -> address -> option(contract('parameter))
@@ -763,3 +809,18 @@ Entrypoints are written in the form of: `%entrypoint`.
 
 When no contract is found or the contract doesn't match the type,  
 `None` is returned.
+
+<Syntax syntax="pascaligo">
+Note that `get_entrypoint` and `get_entrypoint_opt` are deprecated. Please use 
+`Tezos.get_entrypoint_opt` instead.
+</Syntax>
+
+<Syntax syntax="cameligo">
+Note that `Operation.get_entrypoint` and `Operation.get_entrypoint_opt` are 
+deprecated. Please use `Tezos.get_entrypoint_opt` instead.
+</Syntax>
+
+<Syntax syntax="reasonligo">
+Note that `Operation.get_entrypoint` and `Operation.get_entrypoint_opt` are 
+deprecated. Please use `Tezos.get_entrypoint_opt` instead.
+</Syntax>

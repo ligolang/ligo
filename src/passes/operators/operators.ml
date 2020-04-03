@@ -300,7 +300,6 @@ module Concrete_to_imperative = struct
     | "failwith"                   -> ok C_FAILWITH
     
     | "Operation.transaction"        -> ok C_CALL              (* Deprecated *)
-    | "Tezos.set_delegate"           -> ok C_SET_DELEGATE      (* Deprecated *)
     | "Operation.set_delegate"       -> ok C_SET_DELEGATE      (* Deprecated *)
     | "Operation.get_contract"       -> ok C_CONTRACT          (* Deprecated *)
     | "Operation.get_contract_opt"   -> ok C_CONTRACT_OPT      (* Deprecated *)
@@ -350,9 +349,9 @@ module Concrete_to_imperative = struct
     (* Loop module *)
 
     | "Loop.fold_while" -> ok C_FOLD_WHILE    (* Deprecated *)
-    | "Loop.resume"     -> ok C_FOLD_CONTINUE
+    | "Loop.resume"     -> ok C_FOLD_CONTINUE (* Deprecated *)
     | "continue"        -> ok C_FOLD_CONTINUE (* Deprecated *)
-    | "Loop.stop"       -> ok C_FOLD_STOP
+    | "Loop.stop"       -> ok C_FOLD_STOP     (* Deprecated *)
     | "stop"            -> ok C_FOLD_STOP     (* Deprecated *)
 
     (* Others *)
