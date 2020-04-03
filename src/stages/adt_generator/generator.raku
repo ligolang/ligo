@@ -10,8 +10,13 @@ sub poly { $^type_name }
 
 my $l = @*ARGS[0].IO.lines;
 $l = $l.map(*.subst: /^\s+/, "");
+$l = $l.list.cache;
+my $statement_re = /^((\(\*\s+)?(open|include)\s|\[\@\@\@warning\s)/;
+my $statements = $l.grep($statement_re);
+$l             = $l.grep(none $statement_re);
+$statements    = $statements.map(*.subst(/^\(\*\s+/, '').subst(/\s+\*\)$/, ''));
 $l = $l.cache.map(*.subst: /^type\s+/, "\nand ");
-$l = $l.join("\n").split(/\nand\s+/).grep(/./);
+$l = $l.join("\n").subst(/\n+/, "\n").split(/\nand\s+/).grep(/./);
 $l = $l.map(*.split("\n"));
 $l = $l.map: {
     my $ll = $_;
@@ -131,8 +136,10 @@ my $adts = (map -> (:$name , :$kind, :@ctorsOrFields) {
 say "(* This is an auto-generated file. Do not edit. *)";
 
 say "";
+for $statements -> $statement {
+  say "$statement"
+}
 say "open $moduleName";
-say "open {$moduleName}_utils";
 say "module Adt_info = Generic.Adt_info";
 
 say "";
