@@ -13,10 +13,10 @@ These functions are available without any needed prefix.
 <SyntaxTitle syntax="pascaligo">
 function is_nat: int -> option(nat)
 </SyntaxTitle>
-<SyntaxTitle syntax="pascaligo">
+<SyntaxTitle syntax="cameligo">
 val is_nat: int -> nat option
 </SyntaxTitle>
-<SyntaxTitle syntax="pascaligo">
+<SyntaxTitle syntax="reasonligo">
 let is_nat: int => option(nat)
 </SyntaxTitle>
 
@@ -25,10 +25,10 @@ Convert an `int` to a `nat` if possible.
 <SyntaxTitle syntax="pascaligo">
 function abs: int -> nat
 </SyntaxTitle>
-<SyntaxTitle syntax="pascaligo">
+<SyntaxTitle syntax="cameligo">
 val abs: int -> nat
 </SyntaxTitle>
-<SyntaxTitle syntax="pascaligo">
+<SyntaxTitle syntax="reasonligo">
 let abs: int => nat
 </SyntaxTitle>
 
@@ -37,10 +37,10 @@ Cast an `int` to `nat`.
 <SyntaxTitle syntax="pascaligo">
 function int: nat -> int
 </SyntaxTitle>
-<SyntaxTitle syntax="pascaligo">
+<SyntaxTitle syntax="cameligo">
 val int: nat -> int
 </SyntaxTitle>
-<SyntaxTitle syntax="pascaligo">
+<SyntaxTitle syntax="reasonligo">
 let int: nat => int
 </SyntaxTitle>
 
@@ -49,10 +49,10 @@ Cast an `nat` to `int`.
 <SyntaxTitle syntax="pascaligo">
 const unit: unit
 </SyntaxTitle>
-<SyntaxTitle syntax="pascaligo">
+<SyntaxTitle syntax="cameligo">
 val unit: unit
 </SyntaxTitle>
-<SyntaxTitle syntax="pascaligo">
+<SyntaxTitle syntax="reasonligo">
 let (): unit
 </SyntaxTitle>
 
@@ -62,10 +62,10 @@ A helper to create a unit.
 function failwith : string -> unit
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
-function failwith : string -> unit
+val failwith : string -> unit
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
-function failwith : string -> unit
+let failwith : string => unit
 </SyntaxTitle>
 
 Cause the contract to fail with an error message.
@@ -77,10 +77,10 @@ Cause the contract to fail with an error message.
 function assert : bool -> unit
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
-function assert : bool -> unit
+val assert : bool -> unit
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
-function assert : bool -> unit
+let assert : bool => unit
 </SyntaxTitle>
 
 Check if a certain condition has been met. If not the contract will fail.
