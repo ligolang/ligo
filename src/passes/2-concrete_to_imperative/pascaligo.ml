@@ -220,7 +220,7 @@ let compile_projection : Raw.projection Region.reg -> _ = fun p ->
       | Component index -> (Z.to_string (snd index.value))
     in
     List.map aux @@ npseq_to_list path in
-  ok @@ List.fold_left (e_accessor ~loc) var path'
+  ok @@ List.fold_left (e_record_accessor ~loc) var path'
 
 
 let rec compile_expression (t:Raw.expr) : expr result =
@@ -423,10 +423,10 @@ and compile_update = fun (u:Raw.update Region.reg) ->
   let aux ur (path, expr) = 
     let rec aux record = function
       | [] -> failwith "error in parsing"
-      | hd :: [] -> ok @@ e_update ~loc record hd expr
+      | hd :: [] -> ok @@ e_record_update ~loc record hd expr
       | hd :: tl -> 
-        let%bind expr = (aux (e_accessor ~loc record hd) tl) in
-        ok @@ e_update ~loc record hd expr 
+        let%bind expr = (aux (e_record_accessor ~loc record hd) tl) in
+        ok @@ e_record_update ~loc record hd expr 
     in
     aux ur path in
   bind_fold_list aux record updates'
@@ -614,7 +614,7 @@ and compile_fun_decl :
        let%bind tpl_declarations =
          let aux = fun i (param, type_expr) ->
            let expr =
-             e_accessor (e_variable arguments_name) (string_of_int i) in
+             e_record_accessor (e_variable arguments_name) (string_of_int i) in
            let type_variable = Some type_expr in
            let ass = return_let_in (Var.of_name param , type_variable) inline expr in
            ass
@@ -677,7 +677,7 @@ and compile_fun_expression :
          (arguments_name , type_expression) in
        let%bind tpl_declarations =
          let aux = fun i (param, param_type) ->
-           let expr = e_accessor (e_variable arguments_name) (string_of_int i) in
+           let expr = e_record_accessor (e_variable arguments_name) (string_of_int i) in
            let type_variable = Some param_type in
            let ass = return_let_in (Var.of_name param , type_variable) false expr in
            ass
