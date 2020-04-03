@@ -51,7 +51,7 @@ module TestExpressions = struct
 
   let tuple () : unit result =
     test_expression
-      I.(e_tuple [e_int 32; e_string "foo"])
+      I.(e_record @@ LMap.of_list [(Label "0",e_int 32); (Label "1",e_string "foo")])
       O.(make_t_ez_record [("0",t_int ()); ("1",t_string ())])
 
   let constructor () : unit result =
@@ -64,7 +64,7 @@ module TestExpressions = struct
 
   let record () : unit result =
     test_expression
-      I.(e_record_ez        [("foo", e_int 32);  ("bar", e_string "foo")])
+      I.(e_record @@ LMap.of_list [(Label "foo", e_int 32); (Label "bar", e_string "foo")])
       O.(make_t_ez_record [("foo", t_int ()); ("bar", t_string ())])
 
 

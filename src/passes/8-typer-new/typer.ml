@@ -367,7 +367,7 @@ and type_expression : environment -> Solver.state -> ?tv_opt:O.type_expression -
     let%bind new_state = aggregate_constraints state constraints in
     let tv = t_variable type_name () in
     let location = ae.location in
-    let expr' = make_a_e ~location expr tv e in
+    let expr' = make_e ~location expr tv e in
     ok @@ (expr' , new_state) in
   let return_wrapped expr state (constraints , expr_type) = return expr state constraints expr_type in
   let main_error =
@@ -912,11 +912,9 @@ let rec untype_expression (e:O.expression) : (I.expression) result =
       let Constructor n = constructor in
       return (e_constructor n p')
   | E_record r ->
-    let aux ( Label k ,v) = (k, v) in
-    let r = Map.String.of_list @@ List.map aux (LMap.to_kv_list r) in
-    let%bind r' = bind_smap
-      @@ Map.String.map untype_expression r in
-    return (e_record r')
+    let r = LMap.to_kv_list r in
+    let%bind r' = bind_map_list (fun (k,e) -> let%bind e = untype_expression e in ok (k,e)) r in
+    return (e_record @@ LMap.of_list r')
   | E_record_accessor {record; path} ->
     let%bind r' = untype_expression record in
     let Label s = path in
@@ -924,8 +922,7 @@ let rec untype_expression (e:O.expression) : (I.expression) result =
   | E_record_update {record; path; update} ->
     let%bind r' = untype_expression record in
     let%bind e = untype_expression update in 
-    let Label l = path in
-    return (e_record_update r' l e)
+    return (e_record_update r' path e)
   | E_matching {matchee;cases} ->
     let%bind ae' = untype_expression matchee in
     let%bind m' = untype_matching untype_expression cases in

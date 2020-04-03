@@ -1,7 +1,7 @@
 open Types
 open Combinators
 
-let make_a_e_empty expression type_annotation = make_a_e expression type_annotation Environment.full_empty
+let make_a_e_empty expression type_annotation = make_e expression type_annotation Environment.full_empty
 
 let e_a_empty_unit = e_a_unit Environment.full_empty
 let e_a_empty_int n = e_a_int n Environment.full_empty

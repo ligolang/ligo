@@ -294,7 +294,7 @@ let rec compile_expression :
         | Component index -> Z.to_string (snd index.value)
       in
       List.map aux @@ npseq_to_list path in
-    return @@ List.fold_left (e_accessor ~loc ) var path'
+    return @@ List.fold_left (e_record_accessor ~loc ) var path'
   in
   let compile_path : Raw.path -> string * label list = fun p ->
     match p with
@@ -319,7 +319,7 @@ let rec compile_expression :
     let record = match path with
     | [] -> e_variable (Var.of_name name)
     | _ ->
-      let aux expr (Label l) = e_accessor expr l in
+      let aux expr (Label l) = e_record_accessor expr l in
       List.fold_left aux (e_variable (Var.of_name name)) path in 
     let updates = u.updates.value.ne_elements in
     let%bind updates' =
@@ -333,10 +333,10 @@ let rec compile_expression :
     let aux ur (path, expr) = 
       let rec aux record = function
         | [] -> failwith "error in parsing"
-        | hd :: [] -> ok @@ e_update ~loc record hd expr
+        | hd :: [] -> ok @@ e_record_update ~loc record hd expr
         | hd :: tl -> 
-          let%bind expr = (aux (e_accessor ~loc record hd) tl) in
-          ok @@ e_update ~loc record hd expr 
+          let%bind expr = (aux (e_record_accessor ~loc record hd) tl) in
+          ok @@ e_record_update ~loc record hd expr 
       in
       aux ur path in
     bind_fold_list aux record updates'
@@ -384,11 +384,11 @@ let rec compile_expression :
         | hd :: [] ->
           if (List.length prep_vars = 1)
           then e_let_in hd inline rhs_b_expr body
-          else e_let_in hd inline (e_accessor rhs_b_expr (string_of_int ((List.length prep_vars) - 1))) body
+          else e_let_in hd inline (e_record_accessor rhs_b_expr (string_of_int ((List.length prep_vars) - 1))) body
         | hd :: tl ->
           e_let_in hd
           inline
-          (e_accessor rhs_b_expr (string_of_int ((List.length prep_vars) - (List.length tl) - 1)))
+          (e_record_accessor rhs_b_expr (string_of_int ((List.length prep_vars) - (List.length tl) - 1)))
           (chain_let_in tl body)
         | [] -> body (* Precluded by corner case assertion above *)
       in

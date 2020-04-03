@@ -3,7 +3,7 @@ open Types
 
 val make_n_t : type_variable -> type_expression -> named_type_content
 val make_t : type_content -> S.type_expression option -> type_expression
-val make_a_e : ?location:Location.t -> expression_content -> type_expression -> full_environment -> expression
+val make_e : ?location:Location.t -> expression_content -> type_expression -> full_environment -> expression
 
 val t_bool : ?s:S.type_expression -> unit -> type_expression
 val t_string : ?s:S.type_expression -> unit -> type_expression
