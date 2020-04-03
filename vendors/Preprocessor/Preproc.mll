@@ -111,8 +111,7 @@ let mk_path state =
 (* ERRORS *)
 
 type error =
-  Invalid_directive of string
-| Directive_inside_line
+  Directive_inside_line
 | Missing_endif
 | Invalid_line_indicator of string
 | No_line_indicator
@@ -139,9 +138,7 @@ type error =
 | Invalid_character of char
 
 let error_to_string = function
-  Invalid_directive name ->
-    sprintf "Invalid directive \"%s\"." name
-| Directive_inside_line ->
+  Directive_inside_line ->
     sprintf "Directive inside a line."
 | Missing_endif ->
     sprintf "Missing #endif directive."
@@ -484,9 +481,14 @@ rule scan state = parse
               scan state lexbuf }
 | directive {
     if   not (List.mem id directives)
-    then fail (Invalid_directive id) state lexbuf;
+    then begin
+           if state.mode = Copy then copy state lexbuf;
+           scan state lexbuf
+         end
+    else
     if   state.offset = Inline
-    then fail Directive_inside_line state lexbuf;
+    then fail Directive_inside_line state lexbuf
+    else
     let region = mk_reg lexbuf in
     match id with
       "include" ->
@@ -611,7 +613,7 @@ rule scan state = parse
             begin
               expand_offset state;
               copy state lexbuf;
-              if state.opt#lang = EvalOpt.ReasonLIGO then
+              if state.opt#lang = `ReasonLIGO then
                 reasonLIGO_com (mk_reg lexbuf) state lexbuf
             end;
           scan {state with offset=Inline} lexbuf }
@@ -619,8 +621,8 @@ rule scan state = parse
             begin
               expand_offset state;
               copy state lexbuf;
-              if state.opt#lang = EvalOpt.CameLIGO
-               || state.opt#lang = EvalOpt.PascaLIGO then
+              if state.opt#lang = `CameLIGO
+               || state.opt#lang = `PascaLIGO then
                 cameLIGO_com (mk_reg lexbuf) state lexbuf
             end;
           scan {state with offset=Inline} lexbuf }

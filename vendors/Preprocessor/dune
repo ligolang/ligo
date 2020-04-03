@@ -10,7 +10,7 @@
   (libraries
      getopt
      simple-utils)
-  (wrapped false)
+  (wrapped true)
   (modules EvalOpt E_Parser E_Lexer E_AST Preproc)
   (preprocess
     (pps bisect_ppx --conditional)))

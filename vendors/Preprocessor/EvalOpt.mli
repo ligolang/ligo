@@ -2,10 +2,11 @@
 
 (* The type [options] gathers the command-line options. *)
 
-type language = PascaLIGO | CameLIGO | ReasonLIGO
+type language = [`PascaLIGO | `CameLIGO | `ReasonLIGO]
+
 val lang_to_string : language -> string
 
-module SSet : Set.S with type elt = string
+module SSet : Set.S with type elt = string and type t = Set.Make(String).t
 
 type options = <
   input   : string option;

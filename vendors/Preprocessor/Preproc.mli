@@ -9,8 +9,7 @@ val mk_reg : Lexing.lexbuf -> Region.t
 (* Errors *)
 
 type error =
-  Invalid_directive of string
-| Directive_inside_line
+  Directive_inside_line
 | Missing_endif
 | Invalid_line_indicator of string
 | No_line_indicator

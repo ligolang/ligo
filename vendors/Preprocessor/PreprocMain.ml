@@ -4,7 +4,7 @@ module Region = Simple_utils.Region
 
 let highlight msg = Printf.eprintf "\027[31m%s\027[0m\n%!" msg
 
-let options = EvalOpt.read ~lang:EvalOpt.PascaLIGO ~ext:".ligo";;
+let options = EvalOpt.(read ~lang:`PascaLIGO ~ext:".ligo")
 
 let preproc cin =
   let buffer = Lexing.from_channel cin in

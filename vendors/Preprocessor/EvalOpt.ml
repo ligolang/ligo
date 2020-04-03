@@ -2,14 +2,14 @@
 
 (* The type [options] gathers the command-line options. *)
 
-module SSet = Set.Make (String)
-
-type language = PascaLIGO | CameLIGO | ReasonLIGO
+type language = [`PascaLIGO | `CameLIGO | `ReasonLIGO]
 
 let lang_to_string = function
-  PascaLIGO  -> "PascaLIGO"
-| CameLIGO   -> "CameLIGO"
-| ReasonLIGO -> "ReasonLIGO"
+  `PascaLIGO  -> "PascaLIGO"
+| `CameLIGO   -> "CameLIGO"
+| `ReasonLIGO -> "ReasonLIGO"
+
+module SSet = Set.Make (String)
 
 type options = <
   input   : string option;
