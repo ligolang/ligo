@@ -1,6 +1,6 @@
 (library
   (name UnionFind)
   (public_name UnionFind)
-  (wrapped false)
+  (wrapped true)
   (modules Partition0 Partition1 Partition2 Partition3 Partition UnionFind)
   (modules_without_implementation Partition))

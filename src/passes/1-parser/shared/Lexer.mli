@@ -135,7 +135,15 @@ module type S =
 
     val slide : token -> window -> window
 
+    type input =
+      File    of file_path (* "-" means stdin *)
+    | Stdin
+    | String  of string
+    | Channel of in_channel
+    | Buffer  of Lexing.lexbuf
+
     type instance = {
+      input    : input;
       read     : log:logger -> Lexing.lexbuf -> token;
       buffer   : Lexing.lexbuf;
       get_win  : unit -> window;
@@ -145,14 +153,10 @@ module type S =
       close    : unit -> unit
     }
 
-    type input =
-      File    of file_path (* "-" means stdin *)
-    | Stdin
-    | String  of string
-    | Channel of in_channel
-    | Buffer  of Lexing.lexbuf
-
     type open_err = File_opening of string
+
+    val lexbuf_from_input :
+      input -> (Lexing.lexbuf * (unit -> unit), open_err) Stdlib.result
 
     val open_token_stream : input -> (instance, open_err) Stdlib.result
 

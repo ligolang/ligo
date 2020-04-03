@@ -157,7 +157,15 @@ module type S =
 
     val slide : token -> window -> window
 
+    type input =
+      File    of file_path (* "-" means stdin *)
+    | Stdin
+    | String  of string
+    | Channel of in_channel
+    | Buffer  of Lexing.lexbuf
+
     type instance = {
+      input    : input;
       read     : log:logger -> Lexing.lexbuf -> token;
       buffer   : Lexing.lexbuf;
       get_win  : unit -> window;
@@ -167,14 +175,10 @@ module type S =
       close    : unit -> unit
     }
 
-    type input =
-      File    of file_path (* "-" means stdin *)
-    | Stdin
-    | String  of string
-    | Channel of in_channel
-    | Buffer  of Lexing.lexbuf
-
     type open_err = File_opening of string
+
+    val lexbuf_from_input :
+      input -> (Lexing.lexbuf * (unit -> unit), open_err) Stdlib.result
 
     val open_token_stream : input -> (instance, open_err) Stdlib.result
 
@@ -865,7 +869,15 @@ and scan_utf8 thread state = parse
 
 type logger = Markup.t list -> token -> unit
 
+type input =
+  File    of file_path (* "-" means stdin *)
+| Stdin
+| String  of string
+| Channel of in_channel
+| Buffer  of Lexing.lexbuf
+
 type instance = {
+  input    : input;
   read     : log:logger -> Lexing.lexbuf -> token;
   buffer   : Lexing.lexbuf;
   get_win  : unit -> window;
@@ -875,14 +887,27 @@ type instance = {
   close    : unit -> unit
 }
 
-type input =
-  File    of file_path (* "-" means stdin *)
-| Stdin
-| String  of string
-| Channel of in_channel
-| Buffer  of Lexing.lexbuf
-
 type open_err = File_opening of string
+
+let lexbuf_from_input = function
+  File "" | File "-" | Stdin ->
+    Ok (Lexing.from_channel stdin, fun () -> close_in stdin)
+| File path ->
+   (try
+      let chan = open_in path in
+      let close () = close_in chan in
+      let lexbuf = Lexing.from_channel chan in
+      let () =
+        let open Lexing in
+        lexbuf.lex_curr_p <- {lexbuf.lex_curr_p with pos_fname = path}
+      in Ok (lexbuf, close)
+    with Sys_error msg -> Stdlib.Error (File_opening msg))
+| String s ->
+    Ok (Lexing.from_string s, fun () -> ())
+| Channel chan ->
+    let close () = close_in chan in
+    Ok (Lexing.from_channel chan, close)
+| Buffer b -> Ok (b, fun () -> ())
 
 let open_token_stream input =
   let file_path  = match input with
@@ -968,32 +993,14 @@ let open_token_stream input =
         check_right_context token buffer;
         patch_buffer (Token.to_region token)#byte_pos buffer;
         token in
-
-  let buf_close_res =
-    match input with
-      File "" | File "-" | Stdin ->
-        Ok (Lexing.from_channel stdin, fun () -> close_in stdin)
-    | File path ->
-       (try
-          let chan = open_in path in
-          let close () = close_in chan in
-          Ok (Lexing.from_channel chan, close)
-        with
-          Sys_error msg -> Stdlib.Error (File_opening msg))
-    | String s ->
-        Ok (Lexing.from_string s, fun () -> ())
-    | Channel chan ->
-        let close () = close_in chan in
-        Ok (Lexing.from_channel chan, close)
-    | Buffer b -> Ok (b, fun () -> ()) in
-  match buf_close_res with
+  match lexbuf_from_input input with
     Ok (buffer, close) ->
       let () =
         match input with
           File path when path <> "" -> reset ~file:path buffer
         | _ -> () in
       let instance = {
-        read; buffer; get_win; get_pos; get_last; get_file; close}
+        input; read; buffer; get_win; get_pos; get_last; get_file; close}
       in Ok instance
   | Error _ as e -> e
 

@@ -1,7 +1,8 @@
-(* Functor to build a standalone LIGO lexer *)
+(* Functor to build a LIGO lexer *)
 
 module Region = Simple_utils.Region
 module Preproc = Preprocessor.Preproc
+module SSet = Set.Make (String)
 
 module type IO =
   sig
@@ -27,9 +28,10 @@ module Make (IO: IO) (Lexer: Lexer.S) =
             None | Some "-" -> ()
             | Some pos_fname ->
                buffer.lex_curr_p <- {buffer.lex_curr_p with pos_fname} in
-        match Preproc.lex IO.options buffer with
+        let opt = (IO.options :> Preprocessor.EvalOpt.options) in
+        match Preproc.lex opt buffer with
           Stdlib.Error (pp_buffer, err) ->
-            if Utils.String.Set.mem "preproc" IO.options#verbose then
+            if SSet.mem "preproc" IO.options#verbose then
               Printf.printf "%s\n%!" (Buffer.contents pp_buffer);
             let formatted =
               Preproc.format ~offsets:IO.options#offsets ~file:true err
@@ -79,17 +81,18 @@ module Make (IO: IO) (Lexer: Lexer.S) =
           match IO.options#input with
             None | Some "-" -> ()
           | Some pos_fname ->
-               buffer.lex_curr_p <- {buffer.lex_curr_p with pos_fname} in
-        match Preproc.lex IO.options buffer with
+             buffer.lex_curr_p <- {buffer.lex_curr_p with pos_fname} in
+        let opt = (IO.options :> Preprocessor.EvalOpt.options) in
+        match Preproc.lex opt buffer with
           Stdlib.Error (pp_buffer, err) ->
-            if Utils.String.Set.mem "preproc" IO.options#verbose then
+            if SSet.mem "preproc" IO.options#verbose then
               Printf.printf "%s\n%!" (Buffer.contents pp_buffer);
             let formatted =
               Preproc.format ~offsets:IO.options#offsets ~file:true err
             in Stdlib.Error formatted
         | Stdlib.Ok pp_buffer ->
             let preproc_str = Buffer.contents pp_buffer in
-            if Utils.String.Set.mem "preproc" IO.options#verbose then
+            if SSet.mem "preproc" IO.options#verbose then
               begin
                 Printf.printf "%s\n%!" (Buffer.contents pp_buffer);
                 Stdlib.Ok ()

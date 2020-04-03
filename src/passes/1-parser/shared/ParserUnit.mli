@@ -2,9 +2,25 @@
 
 module Region = Simple_utils.Region
 
-module type IO =
+type language = [`PascaLIGO | `CameLIGO | `ReasonLIGO]
+
+module SSet : Set.S with type elt = string and type t = Set.Make(String).t
+
+module type SubIO =
   sig
-    val options : EvalOpt.options (* CLI options *)
+    type options = <
+      libs    : string list;
+      verbose : SSet.t;
+      offsets : bool;
+      lang    : language;
+      ext     : string;   (* ".ligo", ".mligo", ".religo" *)
+      mode    : [`Byte | `Point];
+      cmd     : EvalOpt.command;
+      mono    : bool
+    >
+
+    val options : options
+    val make : input:string option -> expr:bool -> EvalOpt.options
   end
 
 module type Pretty =
@@ -31,7 +47,7 @@ module Make (Lexer : Lexer.S)
             (ParErr : sig val message : int -> string end)
             (ParserLog : Pretty with type ast  = AST.t
                                  and type expr = AST.expr)
-            (IO: IO) :
+            (SubIO: SubIO) :
   sig
     (* Error handling reexported from [ParserAPI] without the
        exception [Point] *)
@@ -49,10 +65,12 @@ module Make (Lexer : Lexer.S)
 
     (* Parsers *)
 
-    type 'a parser = Lexer.instance -> ('a, message Region.reg) result
+    val parse_file :
+      string -> (AST.t, message Region.reg) Stdlib.result
 
-    val apply : Lexer.instance -> 'a parser -> ('a, message Region.reg) result
+    val parse_string :
+      string -> (AST.t, message Region.reg) Stdlib.result
 
-    val parse_contract : AST.t parser
-    val parse_expr     : AST.expr parser
+    val parse_expression :
+      string -> (AST.expr, message Region.reg) Stdlib.result
   end

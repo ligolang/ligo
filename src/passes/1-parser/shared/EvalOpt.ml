@@ -5,19 +5,21 @@
 
 type command = Quiet | Copy | Units | Tokens
 
-type language = PascaLIGO | CameLIGO | ReasonLIGO
+type language = [`PascaLIGO | `CameLIGO | `ReasonLIGO]
 
 let lang_to_string = function
-  PascaLIGO -> "PascaLIGO"
-| CameLIGO -> "CameLIGO"
-| ReasonLIGO -> "ReasonLIGO"
+  `PascaLIGO -> "PascaLIGO"
+| `CameLIGO -> "CameLIGO"
+| `ReasonLIGO -> "ReasonLIGO"
 
 (* The type [options] gathers the command-line options. *)
+
+module SSet = Set.Make (String)
 
 type options = <
   input   : string option;
   libs    : string list;
-  verbose : Utils.String.Set.t;
+  verbose : SSet.t;
   offsets : bool;
   lang    : language;
   ext     : string;           (* ".ligo", ".mligo", ".religo" *)
@@ -47,8 +49,12 @@ let  printf = Printf.printf
 let sprintf = Printf.sprintf
 let   print = print_endline
 
+(* Printing a string in red to standard error *)
+
+let highlight msg = Printf.eprintf "\027[31m%s\027[0m%!" msg
+
 let abort msg =
-  Utils.highlight (sprintf "Command-line error: %s\n" msg); exit 1
+  highlight (sprintf "Command-line error: %s\n" msg); exit 1
 
 (* Help *)
 
@@ -83,7 +89,7 @@ and units    = ref false
 and quiet    = ref false
 and columns  = ref false
 and bytes    = ref false
-and verbose  = ref Utils.String.Set.empty
+and verbose  = ref SSet.empty
 and input    = ref None
 and libs     = ref []
 and verb_str = ref ""
@@ -95,7 +101,7 @@ let split_at_colon = Str.(split (regexp ":"))
 let add_path p = libs := !libs @ split_at_colon p
 
 let add_verbose d =
-  verbose := List.fold_left (Utils.swap Utils.String.Set.add)
+  verbose := List.fold_left (fun x y -> SSet.add y x)
                             !verbose
                             (split_at_colon d)
 
@@ -152,7 +158,7 @@ let print_opt () =
 
 let check lang ext =
   let () =
-    if Utils.String.Set.mem "cli" !verbose then print_opt () in
+    if SSet.mem "cli" !verbose then print_opt () in
 
   let input =
     match !input with
@@ -178,7 +184,7 @@ let check lang ext =
   and libs    = !libs in
 
   let () =
-    if Utils.String.Set.mem "cli" verbose then
+    if SSet.mem "cli" verbose then
       begin
         printf "\nEXPORTED COMMAND LINE\n";
         printf "copy     = %b\n" copy;
@@ -213,6 +219,6 @@ let read ~lang ~ext =
     (verb_str :=
        let apply e a =
          if a = "" then e else Printf.sprintf "%s, %s" e a
-       in Utils.String.Set.fold apply !verbose "");
+       in SSet.fold apply !verbose "");
     check lang ext
   with Getopt.Error msg -> abort msg

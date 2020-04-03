@@ -2,9 +2,15 @@
 
 module Region = Simple_utils.Region
 
+type options = <
+  offsets : bool;
+  mode    : [`Byte | `Point];
+  cmd     : EvalOpt.command
+>
+
 module type IO =
   sig
-    val options : EvalOpt.options (* CLI options *)
+    val options : options
   end
 
 module type PARSER =
@@ -49,7 +55,7 @@ module type PARSER =
 
 (* Main functor *)
 
-module Make (IO : IO)
+module Make (IO: IO)
             (Lexer: Lexer.S)
             (Parser: PARSER with type token = Lexer.Token.token)
             (ParErr: sig val message : int -> string end) =
@@ -132,8 +138,9 @@ module Make (IO : IO)
     module Incr = Parser.Incremental
 
     module Log = LexerLog.Make (Lexer)
-    let log    = Log.output_token ~offsets:IO.options#offsets
-                                  IO.options#mode IO.options#cmd stdout
+    let log    = Log.output_token
+                   ~offsets:IO.options#offsets
+                   IO.options#mode IO.options#cmd stdout
 
     let incr_contract Lexer.{read; buffer; get_win; close; _} =
       let supplier  = I.lexer_lexbuf_to_supplier (read ~log) buffer

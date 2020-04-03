@@ -11,8 +11,8 @@ let sprintf = Printf.sprintf
 
 module Region = Simple_utils.Region
 module Pos    = Simple_utils.Pos
-module SMap   = Utils.String.Map
-module SSet   = Utils.String.Set
+module SMap   = Map.Make (String)
+module SSet   = Set.Make (String)
 
 (* Hack to roll back one lexeme in the current semantic action *)
 (*

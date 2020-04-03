@@ -49,14 +49,16 @@ type command = Quiet | Copy | Units | Tokens
           expected.}
 } *)
 
-type language = PascaLIGO | CameLIGO | ReasonLIGO
+type language = [`PascaLIGO | `CameLIGO | `ReasonLIGO]
 
 val lang_to_string : language -> string
+
+module SSet : Set.S with type elt = string and type t = Set.Make(String).t
 
 type options = <
   input   : string option;
   libs    : string list;
-  verbose : Utils.String.Set.t;
+  verbose : SSet.t;
   offsets : bool;
   lang    : language;
   ext     : string;   (* ".ligo", ".mligo", ".religo" *)
@@ -69,7 +71,7 @@ type options = <
 val make :
   input:string option ->
   libs:string list ->
-  verbose:Utils.String.Set.t ->
+  verbose:SSet.t ->
   offsets:bool ->
   lang:language ->
   ext:string ->

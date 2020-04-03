@@ -2,7 +2,7 @@
 
 module IO =
   struct
-    let options = EvalOpt.(read ~lang:PascaLIGO ~ext:".ligo")
+    let options = EvalOpt.(read ~lang:`PascaLIGO ~ext:".ligo")
   end
 
 module Parser =
@@ -24,6 +24,8 @@ module Lexer = Lexer.Make (LexToken)
 module Unit =
   ParserUnit.Make (Lexer)(AST)(Parser)(ParErr)(ParserLog)(IO)
 
+module SSet = Set.Make (String)
+
 (* Main *)
 
 let issue_error error : ('a, string Region.reg) Stdlib.result =
@@ -38,8 +40,8 @@ let parse parser : ('a, string Region.reg) Stdlib.result =
       let token =
         Lexer.Token.mk_ident name.Region.value name.Region.region in
         (match token with
-          (* Cannot fail because [name] is a not a
-             reserved name for the lexer. *)
+           (* Cannot fail because [name] is not a reserved name for the
+             lexer. *)
            Stdlib.Error _ -> assert false
          | Ok invalid ->
              issue_error ("Duplicate parameter.\nHint: Change the name.\n",
@@ -49,8 +51,8 @@ let parse parser : ('a, string Region.reg) Stdlib.result =
       let token =
         Lexer.Token.mk_ident name.Region.value name.Region.region in
       (match token with
-         (* Cannot fail because [name] is a not a
-            reserved name for the lexer. *)
+         (* Cannot fail because [name] is not a reserved name for the
+            lexer. *)
          Stdlib.Error _ -> assert false
        | Ok invalid ->
           issue_error
@@ -68,8 +70,8 @@ let parse parser : ('a, string Region.reg) Stdlib.result =
       let token =
         Lexer.Token.mk_ident var.Region.value var.Region.region in
       (match token with
-         (* Cannot fail because [var] is a not a
-            reserved name for the lexer. *)
+         (* Cannot fail because [var] is not a reserved name for the
+            lexer. *)
          Stdlib.Error _ -> assert false
        | Ok invalid ->
            let point = "Repeated variable in this pattern.\n\
@@ -93,49 +95,6 @@ let parse parser : ('a, string Region.reg) Stdlib.result =
 
 (* Preprocessing the input source *)
 
-(*
-module SSet = Utils.String.Set
-let sprintf = Printf.sprintf
-
-(* Path for CPP inclusions (#include) *)
-
-let lib_path =
-  match IO.options#libs with
-    [] -> ""
-  | libs -> let mk_I dir path = sprintf " -I %s%s" dir path
-           in List.fold_right mk_I libs ""
-
-let prefix =
-  match IO.options#input with
-    None | Some "-" -> "temp"
-  | Some file -> Filename.(file |> basename |> remove_extension)
-
-let suffix = ".pp" ^ IO.options#ext
-
-let pp_input =
-  if SSet.mem "cpp" IO.options#verbose
-  then prefix ^ suffix
-  else let pp_input, pp_out =
-         Filename.open_temp_file prefix suffix
-       in close_out pp_out; pp_input
-
-let cpp_cmd =
-  match IO.options#input with
-    None | Some "-" ->
-      sprintf "cpp -traditional-cpp%s - > %s"
-              lib_path pp_input
-  | Some file ->
-      sprintf "cpp -traditional-cpp%s %s > %s"
-              lib_path file pp_input
-
-let () =
-  if Sys.command cpp_cmd <> 0 then
-    Printf.eprintf "External error: \"%s\" failed." cpp_cmd
- *)
-
-
-(* Preprocessing the input source *)
-
 let preproc cin : unit =
   let close () = flush_all (); close_in cin in
   let buffer = Lexing.from_channel cin in
@@ -147,7 +106,7 @@ let preproc cin : unit =
         buffer.lex_curr_p <- {buffer.lex_curr_p with pos_fname} in
   match Preproc.lex IO.options buffer with
     Stdlib.Error (pp_buffer, err) ->
-      if Utils.String.Set.mem "preproc" IO.options#verbose then
+      if SSet.mem "preproc" IO.options#verbose then
         Printf.printf "%s\n%!" (Buffer.contents pp_buffer);
       let Region.{value; _} =
         Preproc.format ~offsets:IO.options#offsets ~file:true err

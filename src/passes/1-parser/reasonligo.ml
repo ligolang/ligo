@@ -2,31 +2,51 @@ open Trace
 
 module AST         = Parser_cameligo.AST
 module LexToken    = Parser_reasonligo.LexToken
-module Lexer       = Lexer.Make(LexToken)
+module Lexer       = Lexer.Make (LexToken)
 module Scoping     = Parser_cameligo.Scoping
 module Region      = Simple_utils.Region
 module ParErr      = Parser_reasonligo.ParErr
 module SyntaxError = Parser_reasonligo.SyntaxError
-module SSet        = Utils.String.Set
+module SSet        = Set.Make (String)
 
 (* Mock IOs TODO: Fill them with CLI options *)
 
-module type IO =
-  sig
-    val ext : string
-    val options : EvalOpt.options
-  end
+type language = [`PascaLIGO | `CameLIGO | `ReasonLIGO]
 
-module PreIO =
+module SubIO =
   struct
-    let ext = ".ligo"
-    let pre_options =
-      EvalOpt.make ~libs:[]
-                   ~verbose:SSet.empty
-                   ~offsets:true
-                   ~mode:`Point
-                   ~cmd:EvalOpt.Quiet
-                   ~mono:false
+    type options = <
+      libs    : string list;
+      verbose : SSet.t;
+      offsets : bool;
+      lang    : language;
+      ext     : string;   (* ".religo" *)
+      mode    : [`Byte | `Point];
+      cmd     : EvalOpt.command;
+      mono    : bool
+    >
+
+    let options : options =
+      object
+        method libs    = []
+        method verbose = SSet.empty
+        method offsets = true
+        method lang    = `ReasonLIGO
+        method ext     = ".religo"
+        method mode    = `Point
+        method cmd     = EvalOpt.Quiet
+        method mono    = false
+      end
+
+    let make =
+      EvalOpt.make ~libs:options#libs
+                   ~verbose:options#verbose
+                   ~offsets:options#offsets
+                   ~lang:options#lang
+                   ~ext:options#ext
+                   ~mode:options#mode
+                   ~cmd:options#cmd
+                   ~mono:options#mono
   end
 
 module Parser =
@@ -43,8 +63,8 @@ module ParserLog =
     include Parser_cameligo.ParserLog
   end
 
-module PreUnit =
-  ParserUnit.Make (Lexer)(AST)(Parser)(ParErr)(ParserLog)
+module Unit =
+  ParserUnit.Make (Lexer)(AST)(Parser)(ParErr)(ParserLog)(SubIO)
 
 module Errors =
   struct
@@ -55,14 +75,14 @@ module Errors =
 
     let wrong_function_arguments (expr: AST.expr) =
       let title () = "" in
-      let message () = "It looks like you are defining a function, \
-               however we do not\n\
-               understand the parameters declaration.\n\
-               Examples of valid functions:\n\
-               let x = (a: string, b: int) : int => 3;\n\
-               let tuple = ((a, b): (int, int)) => a + b; \n\
-               let x = (a: string) : string => \"Hello, \" ++ a;\n" 
-      in
+      let message () =
+        "It looks like you are defining a function, \
+         however we do not\n\
+         understand the parameters declaration.\n\
+         Examples of valid functions:\n\
+         let x = (a: string, b: int) : int => 3;\n\
+         let tuple = ((a, b): (int, int)) => a + b; \n\
+         let x = (a: string) : string => \"Hello, \" ++ a;\n" in
       let expression_loc = AST.expr_to_region expr in
       let data = [
         ("location",
@@ -70,13 +90,12 @@ module Errors =
       in error ~data title message
   end
 
-let parse (module IO : IO) parser =
-  let module Unit = PreUnit (IO) in
+let apply parser =
   let local_fail error =
     Trace.fail
     @@ Errors.generic
-    @@ Unit.format_error ~offsets:IO.options#offsets
-                        IO.options#mode error in
+    @@ Unit.format_error ~offsets:SubIO.options#offsets
+                        SubIO.options#mode error in
   match parser () with
     Stdlib.Ok semantic_value -> Trace.ok semantic_value
 
@@ -128,71 +147,14 @@ let parse (module IO : IO) parser =
   | exception SyntaxError.Error (SyntaxError.WrongFunctionArguments expr) ->
       Trace.fail @@ Errors.wrong_function_arguments expr
 
-let parse_file (source: string) =
-  let module IO =
-    struct
-      let ext = PreIO.ext
-      let options =
-        PreIO.pre_options ~input:(Some source) ~expr:false
-    end in
-  let lib_path =
-    match IO.options#libs with
-      [] -> ""
-    | libs -> let mk_I dir path = Printf.sprintf " -I %s%s" dir path
-             in List.fold_right mk_I libs "" in
-  let prefix =
-    match IO.options#input with
-      None | Some "-" -> "temp"
-    | Some file -> Filename.(remove_extension @@ basename file) in
-  let suffix = ".pp" ^ IO.ext in
-  let pp_input =
-    if   SSet.mem "cpp" IO.options#verbose
-    then prefix ^ suffix
-    else let pp_input, pp_out =
-           Filename.open_temp_file prefix suffix
-         in close_out pp_out; pp_input in
-  let cpp_cmd =
-    match IO.options#input with
-      None | Some "-" ->
-        Printf.sprintf "cpp -traditional-cpp%s - > %s"
-                       lib_path pp_input
-    | Some file ->
-        Printf.sprintf "cpp -traditional-cpp%s %s > %s"
-                       lib_path file pp_input in
-  let open Trace in
-  let%bind () = sys_command cpp_cmd in
-  let module Unit = PreUnit (IO) in
-  match Lexer.(open_token_stream @@ File pp_input) with
-    Ok instance ->
-      let thunk () = Unit.apply instance Unit.parse_contract
-      in parse (module IO) thunk
-  | Stdlib.Error (Lexer.File_opening msg) ->
-      Trace.fail @@ Errors.generic @@ Region.wrap_ghost msg
+(* Parsing a contract in a file *)
 
-let parse_string (s: string) =
-  let module IO =
-    struct
-      let ext = PreIO.ext
-      let options = PreIO.pre_options ~input:None ~expr:false
-    end in
-  let module Unit = PreUnit (IO) in
-  match Lexer.(open_token_stream @@ String s) with
-    Ok instance ->
-      let thunk () = Unit.apply instance Unit.parse_contract
-      in parse (module IO) thunk
-  | Stdlib.Error (Lexer.File_opening msg) ->
-      Trace.fail @@ Errors.generic @@ Region.wrap_ghost msg
+let parse_file source = apply (fun () -> Unit.parse_file source)
 
-let parse_expression (s: string)  =
-  let module IO =
-    struct
-      let ext = PreIO.ext
-      let options = PreIO.pre_options ~input:None ~expr:true
-    end in
-  let module Unit = PreUnit (IO) in
-  match Lexer.(open_token_stream @@ String s) with
-    Ok instance ->
-      let thunk () = Unit.apply instance Unit.parse_expr
-      in parse (module IO) thunk
-  | Stdlib.Error (Lexer.File_opening msg) ->
-      Trace.fail @@ Errors.generic @@ Region.wrap_ghost msg
+(* Parsing a contract in a string *)
+
+let parse_string source = apply (fun () -> Unit.parse_string source)
+
+(* Parsing an expression in a string *)
+
+let parse_expression source = apply (fun () -> Unit.parse_expression source)
