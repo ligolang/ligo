@@ -2,6 +2,8 @@ open Amodule
 open Fold
 open Simple_utils.Trace
 
+let (|>) v f = f v
+
 module Errors = struct
   let test_fail msg =
     let title () = "test failed" in
@@ -17,14 +19,13 @@ let test (x : unit result) : unit = match x with
 let () =
   test @@
   let some_root : root = A [{ a1 = X (A [{ a1 = X (B [1;2;3]) ; a2 = W () ; }]) ; a2 = Z (W ()) ; }] in
-  let op = {
-      no_op with
-      a = { no_op.a with
-            node__a = fun state the_a (*_info*) continue_fold ->
-                      let%bind state, a1__' = continue_fold.ta1.node__ta1 state the_a.a1 in
-                      let%bind state, a2__' = continue_fold.ta2.node__ta2 state the_a.a2 in
-                      ok (state + 1, { a1__' ; a2__' }) }
-    } in
+  let op =
+    no_op |>
+      with__a (fun state the_a (*_info*) continue_fold ->
+          let%bind state, a1__' = continue_fold.ta1.node__ta1 state the_a.a1 in
+          let%bind state, a2__' = continue_fold.ta2.node__ta2 state the_a.a2 in
+          ok (state + 1, { a1__' ; a2__' }))
+  in
   let state = 0 in
   let%bind (state , _) = fold_map__root op state some_root in
   if state != 2 then
@@ -35,7 +36,8 @@ let () =
 let () =
   test @@
   let some_root : root = A [{ a1 = X (A [{ a1 = X (B [1;2;3]) ; a2 = W () ; }]) ; a2 = Z (W ()) ; }] in
-  let op = { no_op with a = { no_op.a with node__a__pre_state = fun state _the_a (*_info*) -> ok @@ state + 1 } } in
+  let op = no_op |>
+      with__a__pre_state (fun state _the_a (*_info*) -> ok @@ state + 1) in
   let state = 0 in
   let%bind (state , _) = fold_map__root op state some_root in
   if state != 2 then
@@ -46,7 +48,7 @@ let () =
 let () =
   test @@
   let some_root : root = A [{ a1 = X (A [{ a1 = X (B [1;2;3]) ; a2 = W () ; }]) ; a2 = Z (W ()) ; }] in
-  let op = { no_op with a = { no_op.a with node__a__post_state = fun state _the_a _new_a (*_info*) -> ok @@ state + 1 } } in
+  let op = no_op |> with__a__post_state (fun state _the_a _new_a (*_info*) -> ok @@ state + 1) in
   let state = 0 in
   let%bind (state , _) = fold_map__root op state some_root in
   if state != 2 then
@@ -75,7 +77,7 @@ let () =
             | false, arg -> true, name ^ " "  ^ arg)
         | PolyInstance { poly=_; arguments=_; poly_continue } ->
            (poly_continue nostate)
-      );
+      ) ;
       string = (fun _visitor state str -> assert_nostate state; false , "\"" ^ str ^ "\"") ;
       unit = (fun _visitor state () -> assert_nostate state; false , "()") ;
       int = (fun _visitor state i -> assert_nostate state; false , string_of_int i) ;
