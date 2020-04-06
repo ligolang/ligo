@@ -15,7 +15,7 @@ function and : nat -> nat -> nat
 val and :  nat -> nat -> nat
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
-let and: (nat, nat) -> nat
+let and: (nat, nat) => nat
 </SyntaxTitle>
 
 A bitwise `and` operation.
@@ -27,7 +27,7 @@ function or : nat -> nat -> nat
 val or :  nat -> nat -> nat
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
-let or: (nat, nat) -> nat
+let or: (nat, nat) => nat
 </SyntaxTitle>
 
 A bitwise `or` operation.
@@ -39,7 +39,7 @@ function xor : nat -> nat -> nat
 val xor :  nat -> nat -> nat
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
-let xor: (nat, nat) -> nat
+let xor: (nat, nat) => nat
 </SyntaxTitle>
 
 A bitwise `xor` operation.
@@ -51,7 +51,7 @@ function shift_left : nat -> nat -> nat
 val shift_left :  nat -> nat -> nat
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
-let shift_left: (nat, nat) -> nat
+let shift_left: (nat, nat) => nat
 </SyntaxTitle>
 
 A bitwise shift left operation.
@@ -63,7 +63,7 @@ function shift_right : nat -> nat -> nat
 val shift_right :  nat -> nat -> nat
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
-let shift_right: (nat, nat) -> nat
+let shift_right: (nat, nat) => nat
 </SyntaxTitle>
 
 A bitwise shift right operation.
