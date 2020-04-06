@@ -214,6 +214,7 @@ and constant' =
   | C_ADD
   | C_SUB
   | C_MUL
+  | C_EDIV
   | C_DIV
   | C_MOD
   (* LOGIC *)

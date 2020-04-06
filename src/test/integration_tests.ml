@@ -298,6 +298,7 @@ let arithmetic () : unit result =
   let%bind () = expect_eq_n_pos program "int_op" e_nat e_int in
   let%bind () = expect_eq_n_pos program "mod_op" e_int (fun n -> e_nat (n mod 42)) in
   let%bind () = expect_eq_n_pos program "div_op" e_int (fun n -> e_int (n / 2)) in
+  let%bind () = expect_eq_n_pos program "ediv_op" e_int (fun n -> e_some (e_pair (e_int (n/2)) (e_nat (n mod 2)))) in
   ok ()
 
 let arithmetic_mligo () : unit result =
@@ -313,6 +314,7 @@ let arithmetic_mligo () : unit result =
     ] in
   let%bind () = expect_eq_n_pos program "mod_op" e_int (fun n -> e_nat (n mod 42)) in
   let%bind () = expect_eq_n_pos program "div_op" e_int (fun n -> e_int (n / 2)) in
+  let%bind () = expect_eq_n_pos program "ediv_op" e_int (fun n -> e_some (e_pair (e_int (n/2)) (e_nat (n mod 2)))) in
   ok ()
 
 let arithmetic_religo () : unit result =
@@ -328,6 +330,7 @@ let arithmetic_religo () : unit result =
     ] in
   let%bind () = expect_eq_n_pos program "mod_op" e_int (fun n -> e_nat (n mod 42)) in
   let%bind () = expect_eq_n_pos program "div_op" e_int (fun n -> e_int (n / 2)) in
+  let%bind () = expect_eq_n_pos program "ediv_op" e_int (fun n -> e_some (e_pair (e_int (n/2)) (e_nat (n mod 2)))) in
   ok ()
 
 let bitwise_arithmetic () : unit result =

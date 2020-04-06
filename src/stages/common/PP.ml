@@ -66,6 +66,7 @@ let constant ppf : constant' -> unit = function
   | C_ADD                   -> fprintf ppf "ADD"
   | C_SUB                   -> fprintf ppf "SUB"
   | C_MUL                   -> fprintf ppf "MUL"
+  | C_EDIV                  -> fprintf ppf "EDIV"
   | C_DIV                   -> fprintf ppf "DIV"
   | C_MOD                   -> fprintf ppf "MOD"
   (* LOGIC *)
