@@ -20,7 +20,6 @@ type 'a record_elements = {
 type 'a sequence_or_record =
   PaSequence   of 'a sequence_elements
 | PaRecord     of 'a record_elements
-| PaSingleExpr of expr
 
 let (<@) f g x = f (g x)
 
@@ -912,18 +911,26 @@ expr_with_let_expr:
   expr { $1 }
 | let_expr(expr_with_let_expr) { $1 }
 
+more_field_assignments: 
+  "," sep_or_term_list(field_assignment_punning,",") {
+    let elts, _region = $2 in
+    $1, elts
+  }
+
+
 sequence_or_record_in:
-  expr_with_let_expr ";" sep_or_term_list(expr_with_let_expr,";") {
-    let elts, _region = $3 in
-    let s_elts = Utils.nsepseq_cons $1 $2 elts
-    in PaSequence {s_elts; s_terminator=None}
+  sep_or_term_list(expr_with_let_expr,";") {
+    let elts, _region = $1 in
+    PaSequence {s_elts = elts; s_terminator=None}
   }
-| field_assignment "," sep_or_term_list(field_assignment,",")  {
-    let elts, _region = $3 in
-    let r_elts = Utils.nsepseq_cons $1 $2 elts
-    in PaRecord {r_elts; r_terminator = None}
+| field_assignment more_field_assignments? {
+    match $2 with 
+    | Some (comma, elts) -> 
+      let r_elts = Utils.nsepseq_cons $1 comma elts in 
+      PaRecord {r_elts; r_terminator = None}
+    | None ->
+      PaRecord {r_elts = ($1, []); r_terminator = None}
   }
-| expr_with_let_expr ";"? { PaSingleExpr $1 }
 
 sequence_or_record:
   "{" sequence_or_record_in "}" {
@@ -939,18 +946,25 @@ sequence_or_record:
         let value = {compound;
                      ne_elements = r.r_elts;
                      terminator = r.r_terminator}
-        in ERecord {region; value}
-    | PaSingleExpr e -> e }
+        in ERecord {region; value}}
 
-field_assignment:
-  field_name {
+field_assignment_punning: 
+  (* This can only happen with multiple fields - 
+     one item punning does NOT work in ReasonML *)
+  field_name { 
     let value = {
       field_name = $1;
       assignment = ghost;
       field_expr = EVar $1 }
-    in {$1 with value}
+    in 
+    {$1 with value}
   }
-| field_name ":" expr {
+| field_assignment {
+    $1
+}
+
+field_assignment:
+  field_name ":" expr {
     let start  = $1.region in
     let stop   = expr_to_region $3 in
     let region = cover start stop in
