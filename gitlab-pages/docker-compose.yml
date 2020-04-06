@@ -16,6 +16,7 @@ services:
       # - ./website/versioned_sidebars:/app/website/versioned_sidebars
       # - ./website/versioned_docs:/app/website/versioned_docs
       - ./website/sidebars.json:/app/website/sidebars.json
+      - ./website/sitemap.xml:/app/website/sitemap.xml
       - ./website/docusaurus.config.js:/app/website/docusaurus.config.js
       # - ./website/versions.json:/app/website/versions.json
       # - ./website/core/AlgoliaSearch.js:/app/website/core/AlgoliaSearch.js
