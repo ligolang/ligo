@@ -50,6 +50,7 @@
 html[data-theme='dark'] {
   --color-primary-text: white;
   --blockquote-color: var(--ifm-navbar-background-color);
+  --light-blue: var(--ifm-navbar-background-color);
 }
 
 html {

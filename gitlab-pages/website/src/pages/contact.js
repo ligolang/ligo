@@ -11,24 +11,10 @@ const TEAM = [
     pinned: true
   },
   {
-    firstName: 'Brice',
-    lastName: 'Aldrich',
-    image: 'img/brice.jpeg',
-    link: 'https://github.com/DefinitelyNotAGoat',
-    pinned: true
-  },
-  {
     firstName: 'Gabriel',
     lastName: 'Alfour',
     image: 'img/gabriel.jpeg',
     link: 'https://gitlab.com/gabriel.alfour',
-    pinned: true
-  },
-  {
-    firstName: 'Matej',
-    lastName: 'Sima',
-    image: 'img/matej.jpeg',
-    link: 'https://github.com/maht0rz',
     pinned: true
   },
   {
