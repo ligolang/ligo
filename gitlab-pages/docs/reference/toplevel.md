@@ -92,7 +92,7 @@ function ediv : int -> int -> option (int * nat)
 function ediv : mutez -> nat -> option (mutez * mutez)
 </SyntaxTitle>
 <SyntaxTitle syntax="pascaligo">
-function ediv : mutez -> mutez -> option (mutez * nat)
+function ediv : mutez -> mutez -> option (nat * mutez)
 </SyntaxTitle>
 <SyntaxTitle syntax="pascaligo">
 function ediv : nat -> nat -> option (nat * nat)
@@ -105,7 +105,7 @@ val ediv : int -> int -> (int * nat) option
 val ediv : mutez -> nat -> (mutez * mutez) option 
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
-val ediv : mutez -> mutez -> (mutez * nat) option
+val ediv : mutez -> mutez -> (nat * mutez) option
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val ediv : nat -> nat -> (nat * nat) option
@@ -118,10 +118,10 @@ let ediv: (int, int) => option((int, nat))
 let ediv: (mutez, nat) => option((mutez, mutez))
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
-let ediv: (mutez, mutez) => option((mutez, nat))
+let ediv: (mutez, mutez) => option((nat, mutez))
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
 let ediv: (nat, nat) => option((nat, nat))
 </SyntaxTitle>
 
-Perform one operation to get both the quotient and remainder of a division.
+Compiles to Michelson `EDIV`, one operation to get both the quotient and remainder of a division. `ediv x y` returns None if `y` is zero, otherwise returns `Some (quotient, remainder)` such that `x = (quotient * y) + remainder` and `0 <= remainder < y`.
