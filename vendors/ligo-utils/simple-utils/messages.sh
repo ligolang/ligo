@@ -196,9 +196,13 @@ if test "$?" = "0"; then
       menhir --update-errors $msg.old \
              $flags $mly > $msg 2> $err
       if test "$?" = "0"; then
-        printf "done:\n"
-        emphasise "Warning: The LR items may have changed."
-        emphasise "> Check your error messages again."
+        if $(diff $msg $msg.old 2>&1 > /dev/null); then
+          echo "done."
+        else
+          printf "done:\n"
+          emphasise "Warning: The LR items may have changed."
+          emphasise "> Check your error messages again."
+        fi
         rm -f $err
       else failed "."
            touch $err

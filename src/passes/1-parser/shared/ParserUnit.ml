@@ -241,20 +241,32 @@ module Make (Lexer: Lexer.S)
 
     (* Parsing a contract in a file *)
 
-    let parse_file (source : string) =
+    let contract_in_file (source : string) =
       let options = SubIO.make ~input:(Some source) ~expr:false
       in gen_parser options (Lexer.File source) parse_contract
 
     (* Parsing a contract in a string *)
 
-    let parse_string (source : string) =
+    let contract_in_string (source : string) =
       let options = SubIO.make ~input:None ~expr:false in
       gen_parser options (Lexer.String source) parse_contract
 
+    (* Parsing a contract in stdin *)
+
+    let contract_in_stdin () =
+      let options = SubIO.make ~input:None ~expr:false in
+      gen_parser options Lexer.Stdin parse_contract
+
     (* Parsing an expression in a string *)
 
-    let parse_expression (source : string) =
+    let expr_in_string (source : string) =
       let options = SubIO.make ~input:None ~expr:true in
       gen_parser options (Lexer.String source) parse_expr
+
+    (* Parsing an expression in stdin *)
+
+    let expr_in_stdin () =
+      let options = SubIO.make ~input:None ~expr:true in
+      gen_parser options Lexer.Stdin parse_expr
 
   end

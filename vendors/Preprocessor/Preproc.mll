@@ -331,7 +331,7 @@ let expr state buffer : mode =
 
 let directives = [
   "define"; "elif"; "else"; "endif"; "endregion"; "error";
-  "if"; "include"; "line"; "region"; "undef" (* "warning" *)
+  "if"; "include"; (*"line";*) "region"; "undef" (* "; warning" *)
 ]
 
 (* END OF HEADER *)
@@ -572,12 +572,13 @@ rule scan state = parse
         in expand_offset state;
            print state ("#" ^ space ^ "endregion" ^ msg ^ "\n");
            scan (reduce_region state region) lexbuf
+(*
     | "line" ->
         expand_offset state;
         print state ("#" ^ space ^ "line");
         line_ind state lexbuf;
         scan {state with offset = Prefix 0} lexbuf
-(*
+
     | "warning" ->
         let start_p, end_p = region in
         let msg = message [] lexbuf in
@@ -643,7 +644,7 @@ and symbol state = parse
   ident as id { id, mk_reg lexbuf                }
 | _           { fail Invalid_symbol state lexbuf }
 
-
+(*
 (* Line indicator (#line) *)
 
 and line_ind state = parse
@@ -674,6 +675,7 @@ and opt_line_com state = parse
 | eof    { copy state lexbuf                            }
 | blank+ { copy state lexbuf; opt_line_com state lexbuf }
 | "//"   { print state ("//" ^ message [] lexbuf)       }
+ *)
 
 (* New lines and verbatim sequence of characters *)
 

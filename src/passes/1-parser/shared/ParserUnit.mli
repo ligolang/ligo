@@ -65,12 +65,18 @@ module Make (Lexer : Lexer.S)
 
     (* Parsers *)
 
-    val parse_file :
+    val contract_in_file :
       string -> (AST.t, message Region.reg) Stdlib.result
 
-    val parse_string :
+    val contract_in_string :
       string -> (AST.t, message Region.reg) Stdlib.result
 
-    val parse_expression :
+    val contract_in_stdin :
+      unit -> (AST.t, message Region.reg) Stdlib.result
+
+    val expr_in_string :
       string -> (AST.expr, message Region.reg) Stdlib.result
-  end
+
+    val expr_in_stdin :
+      unit -> (AST.expr, message Region.reg) Stdlib.result
+end

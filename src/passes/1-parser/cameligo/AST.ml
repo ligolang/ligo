@@ -19,6 +19,8 @@ open Utils
    denoting the _region_ of the occurrence of the keyword "and".
 *)
 
+module Region = Simple_utils.Region
+
 type 'a reg = 'a Region.reg
 
 (* Keywords of OCaml *)

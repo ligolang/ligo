@@ -3,6 +3,7 @@
 
 [@@@warning "-42"]
 
+module Region = Simple_utils.Region
 open Region
 module AST = Parser_cameligo.AST
 open! AST
@@ -541,7 +542,7 @@ fun_expr:
             in raise (Error (WrongFunctionArguments e))
     in
     let binders = fun_args_to_pattern $1 in
-    let lhs_type = match $1 with 
+    let lhs_type = match $1 with
       EAnnot {value = {inside = _ , _, t; _}; region = r} -> Some (r,t)
       | _ -> None
     in

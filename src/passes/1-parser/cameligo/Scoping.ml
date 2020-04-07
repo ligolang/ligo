@@ -1,5 +1,6 @@
 [@@@warning "-42"]
 
+module Region = Simple_utils.Region
 
 type t =
   Reserved_name      of AST.variable

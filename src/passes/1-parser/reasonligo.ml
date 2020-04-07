@@ -149,12 +149,12 @@ let apply parser =
 
 (* Parsing a contract in a file *)
 
-let parse_file source = apply (fun () -> Unit.parse_file source)
+let parse_file source = apply (fun () -> Unit.contract_in_file source)
 
 (* Parsing a contract in a string *)
 
-let parse_string source = apply (fun () -> Unit.parse_string source)
+let parse_string source = apply (fun () -> Unit.contract_in_string source)
 
 (* Parsing an expression in a string *)
 
-let parse_expression source = apply (fun () -> Unit.parse_expression source)
+let parse_expression source = apply (fun () -> Unit.expr_in_string source)
