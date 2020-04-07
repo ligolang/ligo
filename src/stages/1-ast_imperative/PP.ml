@@ -4,11 +4,45 @@ open Format
 open PP_helpers
 
 include Stage_common.PP
-include Ast_PP_type(Ast_imperative_parameter)
 
 let expression_variable ppf (ev : expression_variable) : unit =
   fprintf ppf "%a" Var.pp ev
 
+let rec type_expression' :
+        (formatter -> type_expression -> unit)
+    -> formatter
+    -> type_expression
+    -> unit =
+  fun f ppf te ->
+  match te.type_content with
+  | T_sum m -> fprintf ppf "sum[%a]" (cmap_sep_d f) m
+  | T_record m -> fprintf ppf "{%a}" (record_sep f (const ";")) m
+  | T_tuple t -> fprintf ppf "(%a)" (list_sep_d f) t
+  | T_arrow a -> fprintf ppf "%a -> %a" f a.type1 f a.type2
+  | T_variable tv -> type_variable ppf tv
+  | T_constant tc -> type_constant ppf tc
+  | T_operator to_ -> type_operator f ppf to_
+
+and type_expression ppf (te : type_expression) : unit =
+  type_expression' type_expression ppf te
+
+and type_operator :
+        (formatter -> type_expression -> unit)
+    -> formatter
+    -> type_operator
+    -> unit =
+  fun f ppf to_ ->
+  let s =
+    match to_ with
+    | TC_option te -> Format.asprintf "option(%a)" f te
+    | TC_list te -> Format.asprintf "list(%a)" f te
+    | TC_set te -> Format.asprintf "set(%a)" f te
+    | TC_map (k, v) -> Format.asprintf "Map (%a,%a)" f k f v
+    | TC_big_map (k, v) -> Format.asprintf "Big Map (%a,%a)" f k f v
+    | TC_arrow (k, v) -> Format.asprintf "arrow (%a,%a)" f k f v
+    | TC_contract te  -> Format.asprintf "Contract (%a)" f te
+  in
+  fprintf ppf "(TO_%s)" s
 
 let rec expression ppf (e : expression) =
   expression_content ppf e.expression_content
@@ -26,11 +60,11 @@ and expression_content ppf (ec : expression_content) =
       fprintf ppf "%a(%a)" constant c.cons_name (list_sep_d expression)
         c.arguments
   | E_record m ->
-      fprintf ppf "%a" (tuple_or_record_sep_expr expression) m
+      fprintf ppf "{%a}" (record_sep expression (const ";")) m
   | E_record_accessor ra ->
-      fprintf ppf "%a.%a" expression ra.expr label ra.label
+      fprintf ppf "%a.%a" expression ra.record label ra.path
   | E_record_update {record; path; update} ->
-      fprintf ppf "{ %a with { %a = %a } }" expression record label path expression update
+      fprintf ppf "{ %a with %a = %a }" expression record label path expression update
   | E_map m ->
       fprintf ppf "map[%a]" (list_sep_d assoc_expression) m
   | E_big_map m ->
@@ -57,15 +91,58 @@ and expression_content ppf (ec : expression_content) =
         expression_variable fun_name 
         type_expression fun_type
         expression_content (E_lambda lambda)
-  | E_let_in { let_binder ; mut; rhs ; let_result; inline } ->    
-      fprintf ppf "let %a%a = %a%a in %a" option_mut mut option_type_name let_binder expression rhs option_inline inline expression let_result
+  | E_let_in { let_binder ; rhs ; let_result; inline } ->    
+      fprintf ppf "let %a = %a%a in %a" option_type_name let_binder expression rhs option_inline inline expression let_result
   | E_ascription {anno_expr; type_annotation} ->
       fprintf ppf "%a : %a" expression anno_expr type_expression
         type_annotation
+  | E_cond {condition; then_clause; else_clause} ->
+      fprintf ppf "if %a then %a else %a"
+        expression condition
+        expression then_clause
+        expression else_clause
   | E_sequence {expr1;expr2} ->
-      fprintf ppf "%a;\n%a" expression expr1 expression expr2
+      fprintf ppf "{ %a; @. %a}" expression expr1 expression expr2
   | E_skip ->
       fprintf ppf "skip"
+  | E_tuple t ->
+      fprintf ppf "(%a)" (list_sep_d expression) t
+  | E_tuple_accessor ta ->
+      fprintf ppf "%a.%d" expression ta.tuple ta.path
+  | E_tuple_update {tuple; path; update} ->
+      fprintf ppf "{ %a with %d = %a }" expression tuple path expression update
+  | E_assign {variable; access_path; expression=e} ->
+      fprintf ppf "%a%a := %a" 
+        expression_variable variable
+        (list_sep (fun ppf a -> fprintf ppf ".%a" accessor a) (fun ppf () -> fprintf ppf "")) access_path
+        expression e
+  | E_for {binder; start; final; increment; body} ->
+      fprintf ppf "for %a from %a to %a by %a do %a" 
+        expression_variable binder
+        expression start 
+        expression final 
+        expression increment
+        expression body
+  | E_for_each {binder; collection; body; _} ->
+      fprintf ppf "for each %a in %a do %a" 
+        option_map binder
+        expression collection
+        expression body
+  | E_while {condition; body} ->
+      fprintf ppf "while %a do %a"
+        expression condition
+        expression body
+    
+and accessor ppf a =
+  match a with
+    | Access_tuple i  -> fprintf ppf "%d" i
+    | Access_record s -> fprintf ppf "%s" s
+    | Access_map e    -> fprintf ppf "%a" expression e
+
+and option_map ppf (k,v_opt) =
+  match v_opt with
+  | None -> fprintf ppf "%a" expression_variable k
+  | Some v -> fprintf ppf "%a -> %a" expression_variable k expression_variable v 
 
 and option_type_name ppf
     ((n, ty_opt) : expression_variable * type_expression option) =

@@ -234,7 +234,7 @@ function deny (const action : parameter; const store : storage) : return is
   else ((nil : list (operation)), store)
 ```
 
-> Note that `amount` is *deprecated*.
+> Note that `amount` is *deprecated*. Please use `Tezos.amount`.
 
 </Syntax>
 
@@ -251,7 +251,7 @@ let deny (action, store : parameter * storage) : return =
   else (([] : operation list), store)
 ```
 
-> Note that `amount` is *deprecated*.
+> Note that `amount` is *deprecated*. Please use `Tezos.amount`.
 
 </Syntax>
 <Syntax syntax="reasonligo">
@@ -268,7 +268,7 @@ let deny = ((action, store): (parameter, storage)) : return => {
 };
 ```
 
-> Note that `amount` is *deprecated*.
+> Note that `amount` is *deprecated*. Please use `Tezos.amount`.
 
 </Syntax>
 
@@ -289,7 +289,7 @@ function main (const action : parameter; const store : storage) : return is
   else ((nil : list (operation)), store)
 ```
 
-> Note that `source` is *deprecated*.
+> Note that `source` is *deprecated*. Please use `Tezos.source`.
 
 </Syntax>
 <Syntax syntax="cameligo">
@@ -302,7 +302,7 @@ let main (action, store: parameter * storage) : return =
   else (([] : operation list), store)
 ```
 
-> Note that `source` is *deprecated*.
+> Note that `source` is *deprecated*. Please use `Tezos.source`.
 
 </Syntax>
 <Syntax syntax="reasonligo">
@@ -316,7 +316,7 @@ let main = ((action, store) : (parameter, storage)) : return => {
 };
 ```
 
-> Note that `source` is *deprecated*.
+> Note that `source` is *deprecated*. Please use `Tezos.source`.
 
 </Syntax>
 

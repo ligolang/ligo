@@ -88,6 +88,18 @@ module Errors =
         ("location",
          fun () -> Format.asprintf "%a" Location.pp_lift @@ expression_loc)]
       in error ~data title message
+    
+    let invalid_wild (expr: AST.expr) = 
+      let title () = "" in
+      let message () = 
+        "It looks like you are using a wild pattern where it cannot be used."
+      in
+      let expression_loc = AST.expr_to_region expr in
+      let data = [
+        ("location",
+         fun () -> Format.asprintf "%a" Location.pp_lift @@ expression_loc)]
+      in error ~data title message
+
   end
 
 let apply parser =
@@ -145,6 +157,8 @@ let apply parser =
               None, invalid))
 
   | exception SyntaxError.Error (SyntaxError.WrongFunctionArguments expr) ->
+      Trace.fail @@ Errors.wrong_function_arguments expr
+  | exception SyntaxError.Error (SyntaxError.InvalidWild expr) ->
       Trace.fail @@ Errors.wrong_function_arguments expr
 
 (* Parsing a contract in a file *)

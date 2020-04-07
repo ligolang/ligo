@@ -40,10 +40,6 @@ let rec replace : expression -> var_name -> var_name -> expression =
   | E_variable z ->
     let z = replace_var z in
     return @@ E_variable z
-  | E_make_empty_map _ -> e
-  | E_make_empty_big_map _ -> e
-  | E_make_empty_list _ -> e
-  | E_make_empty_set _ -> e
   | E_make_none _ -> e
   | E_iterator (name, ((v, tv), body), expr) ->
     let body = replace body in
@@ -175,10 +171,7 @@ let rec subst_expression : body:expression -> x:var_name -> expr:expression -> e
   )
   (* All that follows is boilerplate *)
   | E_literal _ | E_skip | E_make_none _
-  | E_make_empty_map (_,_)
-  | E_make_empty_big_map _
-  | E_make_empty_list _
-  | E_make_empty_set _ as em -> return em
+    as em -> return em
   | E_constant (c) -> (
       let lst = List.map self c.arguments in
       return @@ E_constant {cons_name = c.cons_name; arguments = lst }
@@ -232,7 +225,7 @@ let%expect_test _ =
     ~x:x
     ~expr:unit ;
   [%expect{|
-    (V(x))[x := L(unit)] =
+    (x)[x := L(unit)] =
     L(unit) |}] ;
 
   (* other var *)
@@ -242,8 +235,8 @@ let%expect_test _ =
     ~x:x
     ~expr:unit ;
   [%expect{|
-    (V(y))[x := L(unit)] =
-    V(y)
+    (y)[x := L(unit)] =
+    y
   |}] ;
 
   (* closure shadowed *)
@@ -253,8 +246,8 @@ let%expect_test _ =
     ~x:x
     ~expr:unit ;
   [%expect{|
-    (C(fun x -> (V(x))))[x := L(unit)] =
-    C(fun x -> (V(x)))
+    (fun x -> (x))[x := L(unit)] =
+    fun x -> (x)
   |}] ;
 
   (* closure not shadowed *)
@@ -264,8 +257,8 @@ let%expect_test _ =
     ~x:x
     ~expr:unit ;
   [%expect{|
-    (C(fun y -> (V(x))))[x := L(unit)] =
-    C(fun y -> (L(unit)))
+    (fun y -> (x))[x := L(unit)] =
+    fun y -> (L(unit))
   |}] ;
 
   (* closure capture-avoidance *)
@@ -275,8 +268,8 @@ let%expect_test _ =
     ~x:x
     ~expr:(wrap (E_variable y)) ;
   [%expect{|
-    (C(fun y -> ((V(x))@(V(y)))))[x := V(y)] =
-    C(fun y#1 -> ((V(y))@(V(y#1))))
+    (fun y -> ((x)@(y)))[x := y] =
+    fun y#1 -> ((y)@(y#1))
   |}] ;
 
   (* let-in shadowed (not in rhs) *)
@@ -286,8 +279,8 @@ let%expect_test _ =
     ~x:x
     ~expr:unit ;
   [%expect{|
-    (let x = V(x) in ( V(x) ))[x := L(unit)] =
-    let x = L(unit) in ( V(x) )
+    (let x = x in x)[x := L(unit)] =
+    let x = L(unit) in x
   |}] ;
 
   (* let-in not shadowed *)
@@ -297,8 +290,8 @@ let%expect_test _ =
     ~x:x
     ~expr:unit ;
   [%expect{|
-    (let y = V(x) in ( V(x) ))[x := L(unit)] =
-    let y = L(unit) in ( L(unit) )
+    (let y = x in x)[x := L(unit)] =
+    let y = L(unit) in L(unit)
   |}] ;
 
   (* let-in capture avoidance *)
@@ -309,8 +302,8 @@ let%expect_test _ =
     ~x:x
     ~expr:(var y) ;
   [%expect{|
-    (let y = V(x) in ( (V(x))@(V(y)) ))[x := V(y)] =
-    let y#1 = V(y) in ( (V(y))@(V(y#1)) )
+    (let y = x in (x)@(y))[x := y] =
+    let y#1 = y in (y)@(y#1)
   |}] ;
 
   (* iter shadowed *)
@@ -320,8 +313,8 @@ let%expect_test _ =
     ~x:x
     ~expr:unit ;
   [%expect{|
-    (for_ITER x of V(x) do ( V(x) ))[x := L(unit)] =
-    for_ITER x of L(unit) do ( V(x) )
+    (for_ITER x of x do ( x ))[x := L(unit)] =
+    for_ITER x of L(unit) do ( x )
   |}] ;
 
   (* iter not shadowed *)
@@ -331,7 +324,7 @@ let%expect_test _ =
     ~x:x
     ~expr:unit ;
   [%expect{|
-    (for_ITER y of V(x) do ( V(x) ))[x := L(unit)] =
+    (for_ITER y of x do ( x ))[x := L(unit)] =
     for_ITER y of L(unit) do ( L(unit) )
   |}] ;
 
@@ -342,8 +335,8 @@ let%expect_test _ =
     ~x:x
     ~expr:(var y) ;
   [%expect{|
-    (for_ITER y of (V(x))@(V(y)) do ( (V(x))@(V(y)) ))[x := V(y)] =
-    for_ITER y#1 of (V(y))@(V(y)) do ( (V(y))@(V(y#1)) )
+    (for_ITER y of (x)@(y) do ( (x)@(y) ))[x := y] =
+    for_ITER y#1 of (y)@(y) do ( (y)@(y#1) )
   |}] ;
 
   (* if_cons shadowed 1 *)
@@ -356,8 +349,8 @@ let%expect_test _ =
     ~x:x
     ~expr:unit ;
   [%expect{|
-    (V(x) ?? V(x) : (x :: y) -> V(x))[x := L(unit)] =
-    L(unit) ?? L(unit) : (x :: y) -> V(x)
+    (x ?? x : (x :: y) -> x)[x := L(unit)] =
+    L(unit) ?? L(unit) : (x :: y) -> x
   |}] ;
 
   (* if_cons shadowed 2 *)
@@ -370,8 +363,8 @@ let%expect_test _ =
     ~x:x
     ~expr:unit ;
   [%expect{|
-    (V(x) ?? V(x) : (y :: x) -> V(x))[x := L(unit)] =
-    L(unit) ?? L(unit) : (y :: x) -> V(x)
+    (x ?? x : (y :: x) -> x)[x := L(unit)] =
+    L(unit) ?? L(unit) : (y :: x) -> x
   |}] ;
 
   (* if_cons not shadowed *)
@@ -384,7 +377,7 @@ let%expect_test _ =
     ~x:x
     ~expr:unit ;
   [%expect{|
-    (V(x) ?? V(x) : (y :: z) -> V(x))[x := L(unit)] =
+    (x ?? x : (y :: z) -> x)[x := L(unit)] =
     L(unit) ?? L(unit) : (y :: z) -> L(unit)
   |}] ;
 
@@ -398,8 +391,8 @@ let%expect_test _ =
     ~x:x
     ~expr:(var y) ;
   [%expect{|
-    (V(x) ?? V(x) : (y :: z) -> (V(x))@((V(y))@(V(z))))[x := V(y)] =
-    V(y) ?? V(y) : (y#1 :: z) -> (V(y))@((V(y#1))@(V(z)))
+    (x ?? x : (y :: z) -> (x)@((y)@(z)))[x := y] =
+    y ?? y : (y#1 :: z) -> (y)@((y#1)@(z))
   |}] ;
 
   (* if_cons capture avoidance 2 *)
@@ -412,8 +405,8 @@ let%expect_test _ =
     ~x:x
     ~expr:(var z) ;
   [%expect{|
-    (V(x) ?? V(x) : (y :: z) -> (V(x))@((V(y))@(V(z))))[x := V(z)] =
-    V(z) ?? V(z) : (y :: z#1) -> (V(z))@((V(y))@(V(z#1)))
+    (x ?? x : (y :: z) -> (x)@((y)@(z)))[x := z] =
+    z ?? z : (y :: z#1) -> (z)@((y)@(z#1))
   |}] ;
 
   (* old bug *)
@@ -424,6 +417,6 @@ let%expect_test _ =
     ~x:x
     ~expr:(var y) ;
   [%expect{|
-    (C(fun y -> (C(fun y#1 -> ((V(x))@((V(y))@(V(y#1))))))))[x := V(y)] =
-    C(fun y#2 -> (C(fun y#1 -> ((V(y))@((V(y#2))@(V(y#1)))))))
+    (fun y -> (fun y#1 -> ((x)@((y)@(y#1)))))[x := y] =
+    fun y#2 -> (fun y#1 -> ((y)@((y#2)@(y#1))))
   |}] ;

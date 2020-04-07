@@ -122,8 +122,12 @@ let md_files = [
   "/gitlab-pages/docs/advanced/first-contract.md";
   "/gitlab-pages/docs/advanced/entrypoints-contracts.md";
   "/gitlab-pages/docs/advanced/timestamps-addresses.md";
+  "/gitlab-pages/docs/advanced/inline.md";
   "/gitlab-pages/docs/api/cli-commands.md";
   "/gitlab-pages/docs/api/cheat-sheet.md";
+  "/gitlab-pages/docs/reference/toplevel.md";
+  "/gitlab-pages/docs/reference/bitwise.md";
+  "/gitlab-pages/docs/reference/bytes.md";
   "/gitlab-pages/docs/reference/list.md";
   "/gitlab-pages/docs/reference/map.md";
   "/gitlab-pages/docs/reference/set.md";

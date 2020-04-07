@@ -24,6 +24,13 @@ let rec idle_type_expression : I.type_expression -> O.type_expression result =
         ) record
       in
       return @@ O.T_record (O.LMap.of_list record)
+    | I.T_tuple tuple ->
+      let aux (i,acc) el = 
+        let%bind el = idle_type_expression el in
+        ok @@ (i+1,(O.Label (string_of_int i), el)::acc) in
+      let%bind (_, lst ) = bind_fold_list aux (0,[]) tuple in
+      let record = O.LMap.of_list lst in
+      return @@ O.T_record record
     | I.T_arrow {type1;type2} ->
       let%bind type1 = idle_type_expression type1 in
       let%bind type2 = idle_type_expression type2 in
@@ -61,7 +68,7 @@ and idle_type_operator : I.type_operator -> O.type_operator result =
 
 let rec compile_expression : I.expression -> O.expression result =
   fun e ->
-  let return expr = ok @@ O.make_expr ~loc:e.location expr in
+  let return expr = ok @@ O.make_e ~loc:e.location expr in
   match e.expression_content with
     | I.E_literal literal   -> return @@ O.E_literal literal
     | I.E_constant {cons_name;arguments} -> 
@@ -101,43 +108,78 @@ let rec compile_expression : I.expression -> O.expression result =
         ) record
       in
       return @@ O.E_record (O.LMap.of_list record)
-    | I.E_record_accessor {expr;label} ->
-      let%bind expr = compile_expression expr in
-      return @@ O.E_record_accessor {expr;label}
+    | I.E_record_accessor {record;path} ->
+      let%bind record = compile_expression record in
+      return @@ O.E_record_accessor {record;path}
     | I.E_record_update {record;path;update} ->
       let%bind record = compile_expression record in
       let%bind update = compile_expression update in
       return @@ O.E_record_update {record;path;update}
-    | I.E_map map ->
-      let%bind map = bind_map_list (
-        bind_map_pair compile_expression
-      ) map
+    | I.E_map map -> (
+      let map = List.sort_uniq compare map in
+      let aux = fun prev (k, v) ->
+        let%bind (k', v') = bind_map_pair (compile_expression) (k, v) in
+        return @@ E_constant {cons_name=C_MAP_ADD;arguments=[k' ; v' ; prev]}
       in
-      return @@ O.E_map map
-    | I.E_big_map big_map ->
-      let%bind big_map = bind_map_list (
-        bind_map_pair compile_expression
-      ) big_map
+      let%bind init = return @@ E_constant {cons_name=C_MAP_EMPTY;arguments=[]} in
+      bind_fold_right_list aux init map
+    )
+    | I.E_big_map big_map -> (
+      let big_map = List.sort_uniq compare big_map in
+      let aux = fun prev (k, v) ->
+        let%bind (k', v') = bind_map_pair (compile_expression) (k, v) in
+        return @@ E_constant {cons_name=C_MAP_ADD;arguments=[k' ; v' ; prev]}
       in
-      return @@ O.E_big_map big_map
+      let%bind init = return @@ E_constant {cons_name=C_BIG_MAP_EMPTY;arguments=[]} in
+      bind_fold_right_list aux init big_map
+    )
     | I.E_list lst ->
-      let%bind lst = bind_map_list compile_expression lst in
-      return @@ O.E_list lst
-    | I.E_set set ->
-      let%bind set = bind_map_list compile_expression set in
-      return @@ O.E_set set 
+      let%bind lst' = bind_map_list (compile_expression) lst in
+      let aux = fun prev cur ->
+        return @@ E_constant {cons_name=C_CONS;arguments=[cur ; prev]} in
+      let%bind init  = return @@ E_constant {cons_name=C_LIST_EMPTY;arguments=[]} in
+      bind_fold_right_list aux init lst'
+    | I.E_set set -> (
+      let%bind lst' = bind_map_list (compile_expression) set in
+      let lst' = List.sort_uniq compare lst' in
+      let aux = fun prev cur ->
+        return @@ E_constant {cons_name=C_SET_ADD;arguments=[cur ; prev]} in
+      let%bind init = return @@ E_constant {cons_name=C_SET_EMPTY;arguments=[]} in
+      bind_fold_list aux init lst'
+      )
     | I.E_look_up look_up ->
-      let%bind look_up = bind_map_pair compile_expression look_up in
-      return @@ O.E_look_up look_up
+      let%bind (path, index) = bind_map_pair compile_expression look_up in
+      return @@ O.E_constant {cons_name=C_MAP_FIND_OPT;arguments=[index;path]}
     | I.E_ascription {anno_expr; type_annotation} ->
       let%bind anno_expr = compile_expression anno_expr in
       let%bind type_annotation = idle_type_expression type_annotation in
       return @@ O.E_ascription {anno_expr; type_annotation}
+    | I.E_cond {condition; then_clause; else_clause} ->
+      let%bind matchee = compile_expression condition in
+      let%bind match_true = compile_expression then_clause in
+      let%bind match_false = compile_expression else_clause in
+      return @@ O.E_matching {matchee; cases=Match_bool{match_true;match_false}}
     | I.E_sequence {expr1; expr2} ->
       let%bind expr1 = compile_expression expr1 in
       let%bind expr2 = compile_expression expr2 in
       return @@ O.E_let_in {let_binder=(Var.of_name "_", Some O.t_unit); rhs=expr1;let_result=expr2; inline=false}
     | I.E_skip -> ok @@ O.e_unit ~loc:e.location ()
+    | I.E_tuple t ->
+      let aux (i,acc) el = 
+        let%bind el = compile_expression el in
+        ok @@ (i+1,(O.Label (string_of_int i), el)::acc) in
+      let%bind (_, lst ) = bind_fold_list aux (0,[]) t in
+      let m = O.LMap.of_list lst in
+      return @@ O.E_record m
+    | I.E_tuple_accessor {tuple;path} ->
+      let%bind record = compile_expression tuple in
+      let path        = O.Label (string_of_int path) in
+      return @@ O.E_record_accessor {record;path}
+    | I.E_tuple_update {tuple;path;update} ->
+      let%bind record = compile_expression tuple in
+      let path        = O.Label (string_of_int path) in
+      let%bind update = compile_expression update in
+      return @@ O.E_record_update {record;path;update}
 
 and compile_lambda : I.lambda -> O.lambda result =
   fun {binder;input_type;output_type;result}->
@@ -244,13 +286,14 @@ and uncompile_type_operator : O.type_operator -> I.type_operator result =
     | TC_big_map (k,v) ->
       let%bind (k,v) = bind_map_pair uncompile_type_expression (k,v) in
       ok @@ I.TC_big_map (k,v)
+    | TC_map_or_big_map _ -> failwith "TC_map_or_big_map shouldn't be uncompiled"
     | TC_arrow (i,o) ->
       let%bind (i,o) = bind_map_pair uncompile_type_expression (i,o) in
       ok @@ I.TC_arrow (i,o)
 
 let rec uncompile_expression : O.expression -> I.expression result =
   fun e ->
-  let return expr = ok @@ I.make_expr ~loc:e.location expr in
+  let return expr = ok @@ I.make_e ~loc:e.location expr in
   match e.expression_content with 
     O.E_literal lit -> return @@ I.E_literal lit
   | O.E_constant {cons_name;arguments} -> 
@@ -277,7 +320,7 @@ let rec uncompile_expression : O.expression -> I.expression result =
     let%bind ty_opt = bind_map_option uncompile_type_expression ty_opt in
     let%bind rhs = uncompile_expression rhs in
     let%bind let_result = uncompile_expression let_result in
-    return @@ I.E_let_in {let_binder=(binder,ty_opt);inline;rhs;let_result}
+    return @@ I.E_let_in {let_binder=(binder,ty_opt);mut=false;inline;rhs;let_result}
   | O.E_constructor {constructor;element} ->
     let%bind element = uncompile_expression element in
     return @@ I.E_constructor {constructor;element}
@@ -294,34 +337,13 @@ let rec uncompile_expression : O.expression -> I.expression result =
       ) record
     in
     return @@ I.E_record (O.LMap.of_list record)
-  | O.E_record_accessor {expr;label} ->
-    let%bind expr = uncompile_expression expr in
-    return @@ I.E_record_accessor {expr;label}
+  | O.E_record_accessor {record;path} ->
+    let%bind record = uncompile_expression record in
+    return @@ I.E_record_accessor {record;path}
   | O.E_record_update {record;path;update} ->
     let%bind record = uncompile_expression record in
     let%bind update = uncompile_expression update in
     return @@ I.E_record_update {record;path;update}
-  | O.E_map map ->
-    let%bind map = bind_map_list (
-      bind_map_pair uncompile_expression
-    ) map
-    in
-    return @@ I.E_map map
-  | O.E_big_map big_map ->
-    let%bind big_map = bind_map_list (
-      bind_map_pair uncompile_expression
-    ) big_map
-    in
-    return @@ I.E_big_map big_map
-  | O.E_list lst ->
-    let%bind lst = bind_map_list uncompile_expression lst in
-    return @@ I.E_list lst
-  | O.E_set set ->
-    let%bind set = bind_map_list uncompile_expression set in
-    return @@ I.E_set set 
-  | O.E_look_up look_up ->
-    let%bind look_up = bind_map_pair uncompile_expression look_up in
-    return @@ I.E_look_up look_up
   | O.E_ascription {anno_expr; type_annotation} ->
     let%bind anno_expr = uncompile_expression anno_expr in
     let%bind type_annotation = uncompile_type_expression type_annotation in

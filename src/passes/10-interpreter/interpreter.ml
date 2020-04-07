@@ -119,6 +119,7 @@ let rec apply_operator : Ast_typed.constant' -> value list -> value result =
     | ( C_OR     , [ V_Ct (C_bool a'  ) ; V_Ct (C_bool b'  ) ] ) -> return_ct @@ C_bool   (a' || b')
     | ( C_AND    , [ V_Ct (C_bool a'  ) ; V_Ct (C_bool b'  ) ] ) -> return_ct @@ C_bool   (a' && b')
     | ( C_XOR    , [ V_Ct (C_bool a'  ) ; V_Ct (C_bool b'  ) ] ) -> return_ct @@ C_bool   ( (a' || b') && (not (a' && b')) ) 
+    | ( C_LIST_EMPTY, []) -> ok @@ V_List ([])
     | ( C_LIST_MAP , [ V_Func_val (arg_name, body, env) ; V_List (elts) ] ) ->
       let%bind elts' = bind_map_list
         (fun elt ->
@@ -170,6 +171,7 @@ let rec apply_operator : Ast_typed.constant' -> value list -> value result =
           eval body env'
         )
         init elts
+    | ( C_MAP_EMPTY , []) -> ok @@ V_Map ([])
     | ( C_MAP_FOLD , [ V_Func_val (arg_name, body, env) ; V_Map kvs ; init ] ) ->
       bind_fold_list
         (fun prev kv ->
@@ -188,6 +190,7 @@ let rec apply_operator : Ast_typed.constant' -> value list -> value result =
       | "None" -> ok @@ V_Map (List.remove_assoc k kvs)
       | _ -> simple_fail "update without an option"
     )
+    | ( C_SET_EMPTY, []) -> ok @@ V_Set ([])
     | ( C_SET_ADD , [ v ; V_Set l ] ) -> ok @@ V_Set (List.sort_uniq compare (v::l))
     | ( C_SET_FOLD , [ V_Func_val (arg_name, body, env) ; V_Set elts ; init ] ) ->
       bind_fold_list
@@ -289,22 +292,6 @@ and eval : Ast_typed.expression -> env -> value result
       let%bind rhs' = eval rhs env in
       eval let_result (Env.extend env (let_binder,rhs'))
     )
-    | E_map kvlist | E_big_map kvlist ->
-      let%bind kvlist' = bind_map_list
-        (fun kv -> bind_map_pair (fun (el:Ast_typed.expression) -> eval el env) kv)
-        kvlist in
-      ok @@ V_Map kvlist'
-    | E_list expl ->
-      let%bind expl' = bind_map_list
-        (fun (exp:Ast_typed.expression) -> eval exp env)
-        expl in
-      ok @@ V_List expl'
-    | E_set expl ->
-      let%bind expl' = bind_map_list
-        (fun (exp:Ast_typed.expression) -> eval exp env)
-        (List.sort_uniq compare expl)
-      in
-      ok @@ V_Set expl'
     | E_literal l ->
       eval_literal l
     | E_variable var ->
@@ -316,12 +303,12 @@ and eval : Ast_typed.expression -> env -> value result
           ok (label,v'))
         (LMap.to_kv_list recmap) in
       ok @@ V_Record (LMap.of_list lv')
-    | E_record_accessor { expr ; label} -> (
-      let%bind record' = eval expr env in
+    | E_record_accessor { record ; path} -> (
+      let%bind record' = eval record env in
       match record' with
       | V_Record recmap ->
         let%bind a = trace_option (simple_error "unknown record field") @@
-          LMap.find_opt label recmap in
+          LMap.find_opt path recmap in
         ok a
       | _ -> simple_fail "trying to access a non-record"
     )
@@ -378,9 +365,6 @@ and eval : Ast_typed.expression -> env -> value result
     )
     | E_recursive {fun_name; fun_type=_; lambda} ->
       ok @@ V_Func_rec (fun_name, lambda.binder, lambda.result, env)
-    | E_look_up _ ->
-      let serr = Format.asprintf "Unsupported construct :\n %a\n" Ast_typed.PP.expression term in
-      simple_fail serr
 
 let dummy : Ast_typed.program -> string result =
   fun prg ->

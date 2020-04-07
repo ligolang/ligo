@@ -140,6 +140,26 @@ let rec assert_value_eq (a, b: (expression * expression )) : unit result =
   | E_record_update _, _ ->
      simple_fail "comparing record update with other expression"
 
+  | E_tuple lsta, E_tuple lstb -> (
+      let%bind lst =
+        generic_try (simple_error "tuples with different number of elements")
+          (fun () -> List.combine lsta lstb) in
+      let%bind _all = bind_list @@ List.map assert_value_eq lst in
+      ok ()
+    )
+  | E_tuple _, _ ->
+      simple_fail "comparing tuple with other expression"
+  
+  | E_tuple_update uta, E_tuple_update utb ->
+    let _ = 
+      generic_try (simple_error "Updating different tuple") @@ 
+      fun () -> assert_value_eq (uta.tuple, utb.tuple) in
+    let () = assert (uta.path == utb.path) in
+    let%bind () = assert_value_eq (uta.update,utb.update) in
+    ok ()
+  | E_tuple_update _, _ ->
+     simple_fail "comparing tuple update with other expression"
+
   | (E_map lsta, E_map lstb | E_big_map lsta, E_big_map lstb) -> (
       let%bind lst = generic_try (simple_error "maps of different lengths")
           (fun () ->
@@ -182,9 +202,14 @@ let rec assert_value_eq (a, b: (expression * expression )) : unit result =
   | (_a' , E_ascription b) -> assert_value_eq (a , b.anno_expr)
   | (E_variable _, _) | (E_lambda _, _)
   | (E_application _, _) | (E_let_in _, _)
-  | (E_recursive _,_) | (E_record_accessor _, _)
-  | (E_look_up _, _) | (E_matching _, _)
-  | (E_sequence _, _) | (E_skip, _) -> simple_fail "comparing not a value"
+  | (E_recursive _,_) 
+  | (E_record_accessor _, _) | (E_tuple_accessor _, _)
+  | (E_look_up _, _) 
+  | (E_matching _, _) | (E_cond _, _)
+  | (E_sequence _, _) | (E_skip, _) 
+  | (E_assign _, _)
+  | (E_for _, _) | (E_for_each _, _)
+  | (E_while _, _) -> simple_fail "comparing not a value"
 
 let is_value_eq (a , b) = to_bool @@ assert_value_eq (a , b)
 

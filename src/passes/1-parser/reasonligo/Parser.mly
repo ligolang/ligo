@@ -41,6 +41,13 @@ let rec curry hd = function
     in TFun {value; region}
 | [] -> hd
 
+let wild_error e = 
+  match e with 
+    | EVar { value = "_"; _} as e -> 
+      let open! SyntaxError in
+      raise (Error (InvalidWild e)) 
+    | _ -> ()
+
 (* END HEADER *)
 %}
 
@@ -263,24 +270,30 @@ let_declaration:
 
 let_binding:
   "<ident>" type_annotation? "=" expr {
+    wild_error $4;    
     Scoping.check_reserved_name $1;
     {binders = PVar $1, []; lhs_type=$2; eq=$3; let_rhs=$4}
   }
 | "_" type_annotation? "=" expr {
+    wild_error $4;   
     {binders = PWild $1, []; lhs_type=$2; eq=$3; let_rhs=$4}
   }
 | unit type_annotation? "=" expr {
+    wild_error $4;   
     {binders = PUnit $1, []; lhs_type=$2; eq=$3; let_rhs=$4}
   }
 | record_pattern type_annotation? "=" expr {
+    wild_error $4;   
     Scoping.check_pattern (PRecord $1);
     {binders = PRecord $1, []; lhs_type=$2; eq=$3; let_rhs=$4}
   }
 | par(closed_irrefutable) type_annotation? "=" expr {
+    wild_error $4;   
     Scoping.check_pattern $1.value.inside;
     {binders = PPar $1, []; lhs_type=$2; eq=$3; let_rhs=$4}
   }
 | tuple(sub_irrefutable) type_annotation? "=" expr {
+    wild_error $4;   
     Utils.nsepseq_iter Scoping.check_pattern $1;
     let hd, tl  = $1 in
     let start   = pattern_to_region hd in
@@ -409,7 +422,9 @@ expr:
   base_cond__open(expr) | switch_expr(base_cond) { $1 }
 
 base_cond__open(x):
-  base_expr(x) | conditional(expr_with_let_expr) { $1 }
+  base_expr(x) | conditional(expr_with_let_expr) { 
+    wild_error $1;
+    $1 }
 
 base_cond:
   base_cond__open(base_cond) { $1 }
@@ -445,9 +460,13 @@ fun_expr:
     let region      = cover start stop in
 
     let rec arg_to_pattern = function
-      EVar v ->
-        Scoping.check_reserved_name v;
-        PVar v
+      EVar v ->        
+        if v.value = "_" then
+          PWild v.region
+        else (
+          Scoping.check_reserved_name v;          
+          PVar v
+        )
     | EAnnot {region; value = {inside = EVar v, colon, typ; _}} ->
         Scoping.check_reserved_name v;
         let value = {pattern = PVar v; colon; type_expr = typ}
@@ -780,6 +799,7 @@ common_expr:
 | "<bytes>"                           {                     EBytes $1 }
 | "<ident>" | module_field            {                       EVar $1 }
 | projection                          {                      EProj $1 }
+| "_"                                 {   EVar {value = "_"; region = $1} }
 | update_record                       {                    EUpdate $1 }
 | "<string>"                          {           EString (String $1) }
 | unit                                {                      EUnit $1 }

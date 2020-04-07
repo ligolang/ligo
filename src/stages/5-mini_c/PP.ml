@@ -3,23 +3,21 @@ open Simple_utils.PP_helpers
 open Types
 open Format
 
-let list_sep_d x = list_sep x (const " , ")
-
-let space_sep ppf () = fprintf ppf " "
+let list_sep_d x = list_sep x (tag " ,@ ")
 
 let lr = fun ppf -> function `Left -> fprintf ppf "L" | `Right -> fprintf ppf "R"
 
 let rec type_variable ppf : type_value -> _ = function
-  | T_or(a, b) -> fprintf ppf "(%a) | (%a)" annotated a annotated b
-  | T_pair(a, b) -> fprintf ppf "(%a) & (%a)" annotated a annotated b
+  | T_or(a, b) -> fprintf ppf "@[(%a) |@ (%a)@]" annotated a annotated b
+  | T_pair(a, b) -> fprintf ppf "@[(%a) &@ (%a)@]" annotated a annotated b
   | T_base b -> type_constant ppf b
-  | T_function(a, b) -> fprintf ppf "(%a) -> (%a)" type_variable a type_variable b
-  | T_map(k, v) -> fprintf ppf "map(%a -> %a)" type_variable k type_variable v
-  | T_big_map(k, v) -> fprintf ppf "big_map(%a -> %a)" type_variable k type_variable v
-  | T_list(t) -> fprintf ppf "list(%a)" type_variable t
-  | T_set(t) -> fprintf ppf "set(%a)" type_variable t
-  | T_option(o) -> fprintf ppf "option(%a)" type_variable o
-  | T_contract(t) -> fprintf ppf "contract(%a)" type_variable t
+  | T_function(a, b) -> fprintf ppf "@[(%a) ->@ (%a)@]" type_variable a type_variable b
+  | T_map(k, v) -> fprintf ppf "@[<4>map(%a -> %a)@]" type_variable k type_variable v
+  | T_big_map(k, v) -> fprintf ppf "@[<9>big_map(%a -> %a)@]" type_variable k type_variable v
+  | T_list(t) -> fprintf ppf "@[<5>list(%a)@]" type_variable t
+  | T_set(t) -> fprintf ppf "@[<4>set(%a)@]" type_variable t
+  | T_option(o) -> fprintf ppf "@[<7>option(%a)@]" type_variable o
+  | T_contract(t) -> fprintf ppf "@[<9>contract(%a)@]" type_variable t
 
 and annotated ppf : type_value annotated -> _ = function
   | (Some ann, a) -> fprintf ppf "(%a %%%s)" type_variable a ann
@@ -80,34 +78,38 @@ and expression ppf (e:expression) =
 
 and expression' ppf (e:expression') = match e with
   | E_skip -> fprintf ppf "skip"
-  | E_closure x -> fprintf ppf "C(%a)" function_ x
-  | E_variable v -> fprintf ppf "V(%a)" Var.pp v
-  | E_application(a, b) -> fprintf ppf "(%a)@(%a)" expression a expression b
+  | E_closure x -> function_ ppf x
+  | E_variable v -> fprintf ppf "%a" Var.pp v
+  | E_application(a, b) -> fprintf ppf "@[(%a)@(%a)@]" expression a expression b
 
-  | E_constant c -> fprintf ppf "%a %a" constant c.cons_name (pp_print_list ~pp_sep:space_sep expression) c.arguments
-  | E_literal v -> fprintf ppf "L(%a)" value v
-  | E_make_empty_map _ -> fprintf ppf "map[]"
-  | E_make_empty_big_map _ -> fprintf ppf "big_map[]"
-  | E_make_empty_list _ -> fprintf ppf "list[]"
-  | E_make_empty_set _ -> fprintf ppf "set[]"
+  | E_constant c -> fprintf ppf "@[%a@[<hv 1>(%a)@]@]" constant c.cons_name (list_sep_d expression) c.arguments
+  | E_literal v -> fprintf ppf "@[L(%a)@]" value v
   | E_make_none _ -> fprintf ppf "none"
-  | E_if_bool (c, a, b) -> fprintf ppf "%a ? %a : %a" expression c expression a expression b
-  | E_if_none (c, n, ((name, _) , s)) -> fprintf ppf "%a ?? %a : %a -> %a" expression c expression n Var.pp name expression s
-  | E_if_cons (c, n, (((hd_name, _) , (tl_name, _)) , cons)) -> fprintf ppf "%a ?? %a : (%a :: %a) -> %a" expression c expression n Var.pp hd_name Var.pp tl_name expression cons
+  | E_if_bool (c, a, b) ->
+    fprintf ppf
+      "@[match %a with@ @[<hv>| True ->@;<1 2>%a@ | False ->@;<1 2>%a@]@]"
+      expression c expression a expression b
+  | E_if_none (c, n, ((name, _) , s)) ->
+    fprintf ppf
+      "@[match %a with@ @[<hv>| None ->@;<1 2>%a@ | Some %a ->@;<1 2>%a@]@]"
+      expression c expression n Var.pp name expression s
+  | E_if_cons (c, n, (((hd_name, _) , (tl_name, _)) , cons)) -> fprintf ppf "@[%a ?? %a : (%a :: %a) -> %a@]" expression c expression n Var.pp hd_name Var.pp tl_name expression cons
   | E_if_left (c, ((name_l, _) , l), ((name_r, _) , r)) ->
-      fprintf ppf "%a ?? %a -> %a : %a -> %a" expression c Var.pp name_l expression l Var.pp name_r expression r
-  | E_sequence (a , b) -> fprintf ppf "%a ;; %a" expression a expression b
+      fprintf ppf
+        "@[match %a with@ @[<hv>| Left %a ->@;<1 2>%a@ | Right %a ->@;<1 2>%a@]@]"
+        expression c Var.pp name_l expression l Var.pp name_r expression r
+  | E_sequence (a , b) -> fprintf ppf "@[%a ;; %a@]" expression a expression b
   | E_let_in ((name , _) , inline, expr , body) ->
-      fprintf ppf "let %a = %a%a in ( %a )" Var.pp name expression expr option_inline inline expression body
+      fprintf ppf "@[let %a =@;<1 2>%a%a in@ %a@]" Var.pp name expression expr option_inline inline expression body
   | E_iterator (b , ((name , _) , body) , expr) ->
-      fprintf ppf "for_%a %a of %a do ( %a )" constant b Var.pp name expression expr expression body
+      fprintf ppf "@[for_%a %a of %a do ( %a )@]" constant b Var.pp name expression expr expression body
   | E_fold (((name , _) , body) , collection , initial) ->
-      fprintf ppf "fold %a on %a with %a do ( %a )" expression collection expression initial Var.pp name expression body
+      fprintf ppf "@[fold %a on %a with %a do ( %a )@]" expression collection expression initial Var.pp name expression body
 
   | E_record_update (r, path,update) ->
-      fprintf ppf "%a with { %a = %a }" expression r (list_sep lr (const ".")) path expression update
+      fprintf ppf "@[{ %a@;<1 2>with@;<1 2>{ %a = %a } }@]" expression r (list_sep lr (const ".")) path expression update
   | E_while (e , b) ->
-      fprintf ppf "while %a do %a" expression e expression b
+      fprintf ppf "@[while %a do %a@]" expression e expression b
 
 and expression_with_type : _ -> expression -> _  = fun ppf e ->
   fprintf ppf "%a : %a"
@@ -115,24 +117,22 @@ and expression_with_type : _ -> expression -> _  = fun ppf e ->
     type_variable e.type_value
 
 and function_ ppf ({binder ; body}:anon_function) =
-  fprintf ppf "fun %a -> (%a)"
+  fprintf ppf "@[fun %a ->@ (%a)@]"
     Var.pp binder
     expression body
 
-and assignment ppf ((n, i, e):assignment) = fprintf ppf "%a = %a%a;" Var.pp n expression e option_inline i
-
 and option_inline ppf inline = 
   if inline then 
-    fprintf ppf "[@inline]"
+    fprintf ppf "[@@inline]"
   else
     fprintf ppf ""
 
-and declaration ppf ((n,i, e):assignment) = fprintf ppf "let %a = %a%a;" Var.pp n expression e option_inline i
+and declaration ppf ((n,i, e):assignment) = fprintf ppf "@[let %a =@;<1 2>%a%a@]" Var.pp n expression e option_inline i
 
-and tl_statement ppf (ass, _) = assignment ppf ass
+and tl_statement ppf (ass, _) = declaration ppf ass
 
 and program ppf (p:program) =
-  fprintf ppf "Program:\n---\n%a" (pp_print_list ~pp_sep:pp_print_newline tl_statement) p
+  fprintf ppf "@[<v>%a@]" (pp_print_list ~pp_sep:(tag "@ ") tl_statement) p
 
 and constant ppf : constant' -> unit = function
   | C_INT                   -> fprintf ppf "INT"
@@ -161,6 +161,7 @@ and constant ppf : constant' -> unit = function
   | C_ADD                   -> fprintf ppf "ADD"
   | C_SUB                   -> fprintf ppf "SUB"
   | C_MUL                   -> fprintf ppf "MUL"
+  | C_EDIV                  -> fprintf ppf "EDIV"
   | C_DIV                   -> fprintf ppf "DIV"
   | C_MOD                   -> fprintf ppf "MOD"
   (* LOGIC *)
@@ -199,6 +200,8 @@ and constant ppf : constant' -> unit = function
   | C_SET_FOLD              -> fprintf ppf "SET_FOLD"
   | C_SET_MEM               -> fprintf ppf "SET_MEM"
   (* List *)
+  | C_LIST_EMPTY            -> fprintf ppf "LIST_EMPTY"
+  | C_LIST_LITERAL          -> fprintf ppf "LIST_LITERAL"
   | C_LIST_ITER             -> fprintf ppf "LIST_ITER"
   | C_LIST_MAP              -> fprintf ppf "LIST_MAP"
   | C_LIST_FOLD             -> fprintf ppf "LIST_FOLD"
@@ -256,9 +259,9 @@ let%expect_test _ =
   let wrap e = { content = e ; type_value = dummy_type } in
   pp @@ E_closure { binder = Var.of_name "y" ; body = wrap (E_variable (Var.of_name "y")) } ;
   [%expect{|
-    C(fun y -> (V(y)))
+    fun y -> (y)
   |}] ;
   pp @@ E_closure { binder = Var.of_name "z" ; body = wrap (E_variable (Var.of_name "z")) } ;
   [%expect{|
-    C(fun z -> (V(z)))
+    fun z -> (z)
   |}]

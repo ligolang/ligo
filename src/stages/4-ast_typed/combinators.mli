@@ -3,7 +3,7 @@ open Types
 
 val make_n_t : type_variable -> type_expression -> named_type_content
 val make_t : type_content -> S.type_expression option -> type_expression
-val make_a_e : ?location:Location.t -> expression_content -> type_expression -> full_environment -> expression
+val make_e : ?location:Location.t -> expression_content -> type_expression -> full_environment -> expression
 
 val t_bool : ?s:S.type_expression -> unit -> type_expression
 val t_string : ?s:S.type_expression -> unit -> type_expression
@@ -31,6 +31,7 @@ val ez_t_record : ( label * type_expression ) list -> ?s:S.type_expression -> un
 
 val t_map : type_expression -> type_expression -> ?s:S.type_expression -> unit -> type_expression
 val t_big_map : type_expression -> type_expression -> ?s:S.type_expression -> unit -> type_expression
+val t_map_or_big_map : type_expression -> type_expression -> ?s:S.type_expression -> unit -> type_expression
 val t_sum : type_expression constructor_map -> ?s:S.type_expression -> unit -> type_expression
 val make_t_ez_sum : ( constructor' * type_expression ) list -> type_expression
 val t_function : type_expression -> type_expression -> ?s:S.type_expression -> unit -> type_expression
@@ -109,7 +110,6 @@ val ez_e_record : ( string * expression ) list -> expression
 *)
 val e_some : expression -> expression_content
 val e_none : unit -> expression_content
-val e_map : ( expression * expression ) list -> expression_content
 val e_unit : unit -> expression_content
 val e_int : int -> expression_content
 val e_nat : int -> expression_content
@@ -128,7 +128,6 @@ val e_lambda : lambda -> expression_content
 val e_pair : expression -> expression -> expression_content
 val e_application : expression -> expr -> expression_content
 val e_variable : expression_variable -> expression_content
-val e_list : expression list -> expression_content
 val e_let_in : expression_variable -> inline -> expression -> expression -> expression_content
 
 val e_a_unit : full_environment -> expression
@@ -146,8 +145,6 @@ val e_a_record : expression label_map -> full_environment -> expression
 val e_a_application : expression -> expression -> full_environment -> expression
 val e_a_variable : expression_variable -> type_expression -> full_environment -> expression
 val ez_e_a_record : ( label * expression ) list -> full_environment -> expression
-val e_a_map : ( expression * expression ) list -> type_expression -> type_expression -> full_environment -> expression
-val e_a_list : expression list -> type_expression -> full_environment -> expression
 val e_a_let_in : expression_variable -> bool -> expression -> expression -> full_environment -> expression
 
 val get_a_int : expression -> int result

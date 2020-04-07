@@ -11,7 +11,7 @@ end
 open Errors
 
 let peephole_type_expression : type_expression -> type_expression result = fun e ->
-  let return type_content = ok { e with type_content } in
+  let return type_content = ok {type_content } in
   match e.type_content with
   | T_sum cmap ->
     let%bind _uu = bind_map_cmapi

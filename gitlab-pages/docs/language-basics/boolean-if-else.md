@@ -36,6 +36,373 @@ let b : bool = false;
 
 </Syntax>
 
+Common operations:
+
+<Syntax syntax="pascaligo">
+<div className="boolean-example-table">
+  <div className="operation">
+    and
+  </div>
+  <div className="description">
+    Logical and
+  </div>
+  <div className="example">
+
+```pascaligo
+const logical_and: bool = True and True;
+```
+
+  </div>
+  <div className="operation">
+    or
+  </div>
+  <div className="description">
+    Logical or
+  </div>
+  <div className="example">
+
+```pascaligo
+const logical_or: bool = False or True;
+```
+
+  </div>
+  <div className="operation">
+    not
+  </div>
+  <div className="description">
+    Logical not
+  </div>
+  <div className="example">
+
+```pascaligo
+const logical_not: bool = not False;
+```
+
+  </div>
+  <div className="operation">
+    =
+  </div>
+  <div className="description">
+    Equals
+  </div>
+  <div className="example">
+
+```pascaligo
+const eq: bool = 2 = 3;
+```
+
+  </div>  
+  <div className="operation">
+    =/=
+  </div>
+  <div className="description">
+    Not equals
+  </div>
+  <div className="example">
+
+```pascaligo
+const not_eq: bool = 2 =/= 3;
+```
+
+  </div>
+  <div className="operation">
+    &gt;
+  </div>
+  <div className="description">
+    Greater than
+  </div>
+  <div className="example">
+
+```pascaligo
+const gt: bool = 4 > 3;
+```
+
+  </div>  
+  <div className="operation">
+    &lt;
+  </div>
+  <div className="description">
+    Less than
+  </div>
+  <div className="example">
+
+```pascaligo
+const lt: bool = 4 < 3;
+```
+
+  </div>  
+  <div className="operation">
+    &gt;=
+  </div>
+  <div className="description">
+    Greater than or equal to
+  </div>
+  <div className="example">
+
+```pascaligo
+const gte: bool = 4 >= 3;
+```
+
+  </div>    
+  <div className="operation">
+    &lt;=
+  </div>
+  <div className="description">
+    Less than or equal to
+  </div>
+  <div className="example">
+
+```pascaligo
+const lte: bool = 4 <= 3;
+```
+
+  </div>    
+</div>
+</Syntax>
+
+<Syntax syntax="cameligo">
+<div className="boolean-example-table">
+  <div className="operation">
+    &&
+  </div>
+  <div className="description">
+    Logical and
+  </div>
+  <div className="example">
+
+```cameligo
+let logical_and: bool = true && true
+```
+
+  </div>
+  <div className="operation">
+    ||
+  </div>
+  <div className="description">
+    Logical or
+  </div>
+  <div className="example">
+
+```cameligo
+let logical_or: bool = false || true
+```
+
+  </div>
+  <div className="operation">
+    !
+  </div>
+  <div className="description">
+    Logical not
+  </div>
+  <div className="example">
+
+```cameligo
+let logical_not: bool = not false
+```
+
+  </div>
+  <div className="operation">
+    =
+  </div>
+  <div className="description">
+    Equals
+  </div>
+  <div className="example">
+
+```cameligo
+let eq: bool = 2 = 3
+```
+
+  </div>  
+  <div className="operation">
+    &lt;&gt;
+  </div>
+  <div className="description">
+    Not equals
+  </div>
+  <div className="example">
+
+```cameligo
+let not_eq: bool = 2 <> 3
+```
+
+  </div>
+  <div className="operation">
+    &gt;
+  </div>
+  <div className="description">
+    Greater than
+  </div>
+  <div className="example">
+
+```cameligo
+let gt: bool = 4 > 3
+```
+
+  </div>  
+  <div className="operation">
+    &lt;
+  </div>
+  <div className="description">
+    Less than
+  </div>
+  <div className="example">
+
+```cameligo
+let lt: bool = 4 < 3
+```
+
+  </div>  
+  <div className="operation">
+    &gt;=
+  </div>
+  <div className="description">
+    Greater than or equal to
+  </div>
+  <div className="example">
+
+```cameligo
+let gte: bool = 4 >= 3
+```
+
+  </div>    
+  <div className="operation">
+    &lt;=
+  </div>
+  <div className="description">
+    Less than or equal to
+  </div>
+  <div className="example">
+
+```cameligo
+let lte: bool = 4 <= 3
+```
+
+  </div>    
+</div>
+</Syntax>
+
+<Syntax syntax="reasonligo">
+<div className="boolean-example-table">
+  <div className="operation">
+    &&
+  </div>
+  <div className="description">
+    Logical and
+  </div>
+  <div className="example">
+
+```reasonligo
+let logical_and: bool = true && true;
+```
+
+  </div>
+  <div className="operation">
+    ||
+  </div>
+  <div className="description">
+    Logical or
+  </div>
+  <div className="example">
+
+```reasonligo
+let logical_or: bool = false || true;
+```
+
+  </div>
+  <div className="operation">
+    !
+  </div>
+  <div className="description">
+    Logical not
+  </div>
+  <div className="example">
+
+```reasonligo
+let logical_not: bool = !false;
+```
+
+  </div>
+  <div className="operation">
+    ==
+  </div>
+  <div className="description">
+    Equals
+  </div>
+  <div className="example">
+
+```reasonligo
+let eq: bool = 2 == 3;
+```
+
+  </div>  
+  <div className="operation">
+    !=
+  </div>
+  <div className="description">
+    Not equals
+  </div>
+  <div className="example">
+
+```reasonligo
+let not_eq: bool = 2 != 3;
+```
+
+  </div>
+  <div className="operation">
+    &gt;
+  </div>
+  <div className="description">
+    Greater than
+  </div>
+  <div className="example">
+
+```reasonligo
+let gt: bool = 4 > 3;
+```
+
+  </div>  
+  <div className="operation">
+    &lt;
+  </div>
+  <div className="description">
+    Less than
+  </div>
+  <div className="example">
+
+```reasonligo
+let lt: bool = 4 < 3;
+```
+
+  </div>  
+  <div className="operation">
+    &gt;=
+  </div>
+  <div className="description">
+    Greater than or equal to
+  </div>
+  <div className="example">
+
+```reasonligo
+let gte: bool = 4 >= 3;
+```
+
+  </div>    
+  <div className="operation">
+    &lt;=
+  </div>
+  <div className="description">
+    Less than or equal to
+  </div>
+  <div className="example">
+
+```reasonligo
+let lte: bool = 4 <= 3;
+```
+
+  </div>    
+</div>
+</Syntax>
 
 ## Comparing Values
 
@@ -152,6 +519,7 @@ let c : bool = (a = b) // false
 
 </Syntax>
 <Syntax syntax="reasonligo">
+
 ```reasonligo group=d
 let a : tez  = 5mutez;
 let b : tez  = 10mutez;

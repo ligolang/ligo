@@ -158,7 +158,9 @@ let%expect_test _ =
 
   run_ligo_bad [ "compile-contract" ; "../../test/contracts/negative/id.mligo" ; "main" ] ;
   [%expect {|
-    ligo: in file "id.mligo", line 45, characters 4-51. Expected a different type: Expected the type option but got the type record[controller -> address , owner -> address , profile -> bytes]
+    ligo: in file "id.mligo", line 45, characters 4-51. Expected a different type: Expected the type option but got the type record[controller -> address ,
+                                                           owner -> address ,
+                                                           profile -> bytes]
 
      If you're not sure how to fix this error, you can
      do one of the following:
@@ -175,7 +177,7 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "interpret" ; "Set.literal [ (1,(2,3)) ; (2,(3,4)) ]" ; "--syntax=cameligo" ] ;
   [%expect {|
-    set[( 2 , ( 3 , 4 ) ) , ( 1 , ( 2 , 3 ) )] |}];
+    SET_ADD(( 2 , ( 3 , 4 ) ) , SET_ADD(( 1 , ( 2 , 3 ) ) , SET_EMPTY())) |}];
 
   run_ligo_bad [ "interpret" ; "Set.literal [ (1,2,3) ; (2,3,4) ]" ; "--syntax=cameligo" ] ;
   [%expect {|

@@ -41,15 +41,8 @@ and expression_content =
   | E_matching of matching
   (* Record *)
   | E_record of expression label_map
-  | E_record_accessor of accessor
-  | E_record_update of update
-  (* Data Structures *)
-  (* TODO : move to constant*)
-  | E_map of (expression * expression) list (*move to operator *)
-  | E_big_map of (expression * expression) list (*move to operator *)
-  | E_list of expression list
-  | E_set of expression list
-  | E_look_up of (expression * expression)
+  | E_record_accessor of record_accessor
+  | E_record_update   of record_update
   (* Advanced *)
   | E_ascription of ascription
 
@@ -82,9 +75,8 @@ and let_in =
 
 and constructor = {constructor: constructor'; element: expression}
 
-and accessor = {expr: expression; label: label}
-
-and update = {record: expression; path: label ; update: expression}
+and record_accessor = {record: expression; path: label}
+and record_update   = {record: expression; path: label ; update: expression}
 
 and matching_expr = (expr,unit) matching_content
 and matching =

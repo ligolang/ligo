@@ -50,6 +50,7 @@
 html[data-theme='dark'] {
   --color-primary-text: white;
   --blockquote-color: var(--ifm-navbar-background-color);
+  --light-blue: var(--ifm-navbar-background-color);
 }
 
 html {
@@ -1029,3 +1030,31 @@ a:hover {
   background-color: transparent;
 }
 
+.boolean-example-table {
+  display: grid;
+  grid-template-columns: 10% 30% 60%;
+  width: 100%;
+}
+
+.boolean-example-table .operation{
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.boolean-example-table .description {
+  display: flex;
+  align-items: center;
+}
+
+.boolean-example-table >  div:nth-child(6n+1),
+.boolean-example-table >  div:nth-child(6n+2),
+.boolean-example-table >  div:nth-child(6n+3) {
+  background-color: var(--ifm-table-stripe-background);
+}
+
+.boolean-example-table > .example pre,
+.boolean-example-table > .example .codeBlockLines_src-theme-CodeBlock- {
+  background-color: transparent;
+}
