@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+## [Michelson or type] (https://gitlab.com/ligolang/ligo/-/merge_requests/530)
+### Added
+- New type michelson_or, will give control over or types instead of relying on LIGO variants.
+
 ## [Support for self] (https://gitlab.com/ligolang/ligo/-/merge_requests/453)
 ### Added
 - support for `Tezos.self(%Entrypoint)`

@@ -60,6 +60,7 @@ let t_sum m : type_expression =
 let t_function type1 type2  : type_expression = make_t @@ T_arrow {type1; type2}
 let t_map key value         : type_expression = make_t @@ T_operator (TC_map (key, value))
 let t_big_map key value     : type_expression = make_t @@ T_operator (TC_big_map (key , value))
+let t_michelson_or l r      : type_expression = make_t @@ T_operator (TC_michelson_or (l , r))
 let t_set key               : type_expression = make_t @@ T_operator (TC_set key)
 let t_contract contract     : type_expression = make_t @@ T_operator (TC_contract contract)
 
@@ -71,6 +72,7 @@ let t_operator op lst: type_expression result =
   | TC_option _      , [t] -> ok @@ t_option t
   | TC_map (_,_)     , [kt;vt] -> ok @@ t_map kt vt
   | TC_big_map (_,_) , [kt;vt] -> ok @@ t_big_map kt vt
+  | TC_michelson_or (_,_) , [l;r] -> ok @@ t_michelson_or l r
   | TC_contract _    , [t] -> ok @@ t_contract t
   | _ , _ -> fail @@ bad_type_operator op
 

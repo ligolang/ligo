@@ -143,6 +143,10 @@ let rec transpile_type (t:AST.type_expression) : type_value result =
       ok (T_big_map kv')
   | T_operator (TC_map_or_big_map (_,_)) ->
       fail @@ corner_case ~loc:"transpiler" "TC_map_or_big_map should have been resolved before transpilation"
+  | T_operator (TC_michelson_or (l,r)) ->
+      let%bind l' = transpile_type l in
+      let%bind r' = transpile_type r in
+      ok (T_or ((None,l'),(None,r')))
   | T_operator (TC_list t) ->
       let%bind t' = transpile_type t in
       ok (T_list t')

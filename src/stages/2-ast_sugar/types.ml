@@ -21,6 +21,7 @@ and type_operator =
   | TC_list of type_expression
   | TC_set of type_expression
   | TC_map of type_expression * type_expression
+  | TC_michelson_or of type_expression * type_expression
   | TC_big_map of type_expression * type_expression
   | TC_arrow of type_expression * type_expression
 
