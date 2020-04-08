@@ -447,14 +447,14 @@ let type_program_returns_state ((env, state, p) : environment * Solver.state * I
     let%bind (e' , s' , d'_opt) = type_declaration e s (Location.unwrap d) in
     let ds' = match d'_opt with
       | None -> ds
-      | Some d' -> ds @ [Location.wrap ~loc:(Location.get_location d) d'] (* take O(n) insted of O(1) *)
+      | Some d' -> Location.wrap ~loc:(Location.get_location d) d' :: ds
     in
     ok (e' , s' , ds')
   in
   let%bind (env' , state' , declarations) =
     trace (fun () -> program_error p ()) @@
     bind_fold_list aux (env , state , []) p in
-  let () = ignore (env' , state') in
+  let declarations = List.rev declarations in (* Common hack to have O(1) append: prepend and then reverse *)
   ok (env', state', declarations)
 
 let type_and_subst_xyz (env_state_node : environment * Solver.state * 'a) (apply_substs : 'b Typesystem.Misc.Substitution.Pattern.w) (type_xyz_returns_state : (environment * Solver.state * 'a) -> (environment * Solver.state * 'b) Trace.result) : ('b * Solver.state) result =
@@ -496,25 +496,6 @@ let type_expression_subst (env : environment) (state : Solver.state) ?(tv_opt : 
   let () = ignore tv_opt in     (* For compatibility with the old typer's API, this argument can be removed once the new typer is used. *)
   type_and_subst_xyz (env , state , e) Typesystem.Misc.Substitution.Pattern.s_expression type_expression_returns_state
 
-(* TODO: Similar to type_program but use a fold_map_list and List.fold_left and add element to the left or the list which gives a better complexity *)
-let type_program' : I.program -> O.program result = fun p ->
-  let initial_state = Solver.initial_state in
-  let initial_env = Environment.full_empty in
-  let aux (env, state) (statement : I.declaration Location.wrap) =
-    let statement' = statement.wrap_content in (* TODO *)
-    let%bind (env' , state' , declaration') = type_declaration env state statement' in
-    let declaration'' = match declaration' with
-        None -> None
-      | Some x -> Some (Location.wrap ~loc:Location.(statement.location) x) in
-    ok ((env' , state') , declaration'')
-  in
-  let%bind ((env' , state') , p') = bind_fold_map_list aux (initial_env, initial_state) p in
-  let p' = List.fold_left (fun l e -> match e with None -> l | Some x -> x :: l) [] p' in
-
-  (* here, maybe ensure that there are no invalid things in env' and state' ? *)
-  let () = ignore (env' , state') in
-  ok p'
-
 let untype_type_expression  = Untyper.untype_type_expression
 let untype_expression       = Untyper.untype_expression
 
@@ -530,4 +511,3 @@ let [@warning "-32"] type_and_subst_xyz (env_state_node : environment * Solver.s
 let [@warning "-32"] type_program (p : I.program) : (O.program * Solver.state) result = type_program p
 let [@warning "-32"] type_expression_returns_state : (environment * Solver.state * I.expression) -> (environment * Solver.state * O.expression) Trace.result = type_expression_returns_state
 let [@warning "-32"] type_expression_subst (env : environment) (state : Solver.state) ?(tv_opt : O.type_expression option) (e : I.expression) : (O.expression * Solver.state) result = type_expression_subst env state ?tv_opt e
-let [@warning "-32"] type_program' : I.program -> O.program result = type_program'
