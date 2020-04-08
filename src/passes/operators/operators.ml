@@ -54,13 +54,14 @@ module Concrete_to_imperative = struct
 
   let type_operators s =
     match s with
-      "list"      -> ok @@ TC_list unit_expr
-    | "option"    -> ok @@ TC_option unit_expr
-    | "set"       -> ok @@ TC_set unit_expr
-    | "map"       -> ok @@ TC_map (unit_expr,unit_expr)
-    | "big_map"   -> ok @@ TC_big_map (unit_expr,unit_expr)
-    | "contract"  -> ok @@ TC_contract unit_expr
-    | _           -> simple_fail @@ "Not a built-in type (" ^ s ^ ")."
+      "list"         -> ok @@ TC_list unit_expr
+    | "option"       -> ok @@ TC_option unit_expr
+    | "set"          -> ok @@ TC_set unit_expr
+    | "map"          -> ok @@ TC_map (unit_expr,unit_expr)
+    | "big_map"      -> ok @@ TC_big_map (unit_expr,unit_expr)
+    | "michelson_or" -> ok @@ TC_michelson_or (unit_expr,unit_expr)
+    | "contract"     -> ok @@ TC_contract unit_expr
+    | _              -> simple_fail @@ "Not a built-in type (" ^ s ^ ")."
 
   let pseudo_modules = function
     | "Tezos.chain_id"         -> ok C_CHAIN_ID

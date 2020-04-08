@@ -341,8 +341,9 @@ let rec assert_type_expression_eq (a, b: (type_expression * type_expression)) : 
       | (TC_map (ka,va) | TC_map_or_big_map (ka,va)), (TC_map (kb,vb) | TC_map_or_big_map (kb,vb))
       | (TC_big_map (ka,va) | TC_map_or_big_map (ka,va)), (TC_big_map (kb,vb) | TC_map_or_big_map (kb,vb))
        -> ok @@ ([ka;va] ,[kb;vb]) 
-      | (TC_option _ | TC_list _ | TC_contract _ | TC_set _ | TC_map _ | TC_big_map _ | TC_map_or_big_map _ | TC_arrow _),
-        (TC_option _ | TC_list _ | TC_contract _ | TC_set _ | TC_map _ | TC_big_map _ | TC_map_or_big_map _ | TC_arrow _ ) -> fail @@ different_operators opa opb
+      | TC_michelson_or (la,ra), TC_michelson_or (lb,rb) -> ok @@ ([la;ra] , [lb;rb])
+      | (TC_option _ | TC_list _ | TC_contract _ | TC_set _ | TC_map _ | TC_big_map _ | TC_map_or_big_map _ | TC_arrow _ | TC_michelson_or _ ),
+        (TC_option _ | TC_list _ | TC_contract _ | TC_set _ | TC_map _ | TC_big_map _ | TC_map_or_big_map _ | TC_arrow _ | TC_michelson_or _ ) -> fail @@ different_operators opa opb
       in
       if List.length lsta <> List.length lstb then
         fail @@ different_operator_number_of_arguments opa opb (List.length lsta) (List.length lstb)
