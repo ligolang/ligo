@@ -90,14 +90,15 @@ in function
 *)
 
 type state = {
-  env    : Env.t;
-  mode   : mode;
-  offset : offset;
-  trace  : trace;
-  out    : Buffer.t;
-  incl   : in_channel list;
-  opt    : EvalOpt.options;
-  dir    : string list
+  env     : Env.t;
+  mode    : mode;
+  offset  : offset;
+  trace   : trace;
+  out     : Buffer.t;
+  incl    : in_channel list;
+  opt     : EvalOpt.options;
+  dir     : string list;
+  is_file : bool
 }
 
 (* Directories *)
@@ -738,8 +739,9 @@ and in_string opening state = parse
 and preproc state = parse
   eof { state }
 | _   { rollback lexbuf;
-        print state (sprintf "# 1 \"%s\"\n"
-                             Lexing.(lexbuf.lex_start_p.pos_fname));
+        if state.is_file then
+          print state (sprintf "# 1 \"%s\"\n"
+                               Lexing.(lexbuf.lex_start_p.pos_fname));
         scan state lexbuf }
 
 {
@@ -749,7 +751,7 @@ and preproc state = parse
    the trace is empty at the end.  Note that we discard the state at
    the end. *)
 
-let lex opt buffer =
+let lex ~is_file opt buffer =
   let state = {
     env    = Env.empty;
     mode   = Copy;
@@ -758,7 +760,8 @@ let lex opt buffer =
     out    = Buffer.create 80;
     incl   = [];
     opt;
-    dir    = []
+    dir    = [];
+    is_file;
   } in
   match preproc state buffer with
     state -> List.iter close_in state.incl;

@@ -5,15 +5,22 @@ module type S =
     module Lexer : Lexer.S
 
     val output_token :
-      ?offsets:bool -> [`Byte | `Point] ->
-      EvalOpt.command -> out_channel ->
-      Markup.t list -> Lexer.token -> unit
+      ?offsets:bool ->
+      [`Byte | `Point] ->
+      EvalOpt.command ->
+      out_channel ->
+      Markup.t list ->
+      Lexer.token ->
+      unit
 
     type file_path = string
 
     val trace :
-      ?offsets:bool -> [`Byte | `Point] ->
-      Lexer.input -> EvalOpt.command ->
+      ?offsets:bool ->
+      [`Byte | `Point] ->
+      EvalOpt.language ->
+      Lexer.input ->
+      EvalOpt.command ->
       (unit, string Region.reg) Stdlib.result
   end
 

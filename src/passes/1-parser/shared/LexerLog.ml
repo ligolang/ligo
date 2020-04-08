@@ -7,15 +7,22 @@ module type S =
     module Lexer : Lexer.S
 
     val output_token :
-      ?offsets:bool -> [`Byte | `Point] ->
-      EvalOpt.command -> out_channel ->
-      Markup.t list -> Lexer.token -> unit
+      ?offsets:bool ->
+      [`Byte | `Point] ->
+      EvalOpt.command ->
+      out_channel ->
+      Markup.t list ->
+      Lexer.token ->
+      unit
 
     type file_path = string
 
     val trace :
-      ?offsets:bool -> [`Byte | `Point] ->
-      Lexer.input -> EvalOpt.command ->
+      ?offsets:bool ->
+      [`Byte | `Point] ->
+      EvalOpt.language ->
+      Lexer.input ->
+      EvalOpt.command ->
       (unit, string Region.reg) Stdlib.result
   end
 
@@ -49,9 +56,9 @@ module Make (Lexer: Lexer.S) : (S with module Lexer = Lexer) =
 
     type file_path = string
 
-    let trace ?(offsets=true) mode input command :
+    let trace ?(offsets=true) mode lang input command :
           (unit, string Region.reg) Stdlib.result =
-      match Lexer.open_token_stream input with
+      match Lexer.open_token_stream lang input with
         Ok Lexer.{read; buffer; close; _} ->
           let log = output_token ~offsets mode command stdout
           and close_all () = flush_all (); close () in

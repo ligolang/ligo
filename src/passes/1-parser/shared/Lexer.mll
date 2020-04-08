@@ -164,6 +164,8 @@ module type S =
     | Channel of in_channel
     | Buffer  of Lexing.lexbuf
 
+    val is_file : input -> bool
+
     type instance = {
       input    : input;
       read     : log:logger -> Lexing.lexbuf -> token;
@@ -180,7 +182,10 @@ module type S =
     val lexbuf_from_input :
       input -> (Lexing.lexbuf * (unit -> unit), open_err) Stdlib.result
 
-    val open_token_stream : input -> (instance, open_err) Stdlib.result
+    type language = [`PascaLIGO | `CameLIGO | `ReasonLIGO]
+
+    val open_token_stream :
+      language -> input -> (instance, open_err) Stdlib.result
 
     (* Error reporting *)
 
@@ -297,6 +302,8 @@ module Make (Token: TOKEN) : (S with module Token = Token) =
        library Uutf.
      *)
 
+    type language = [`PascaLIGO | `CameLIGO | `ReasonLIGO]
+
     type state = {
       units   : (Markup.t list * token) FQueue.t;
       markup  : Markup.t list;
@@ -304,7 +311,8 @@ module Make (Token: TOKEN) : (S with module Token = Token) =
       last    : Region.t;
       pos     : Pos.t;
       decoder : Uutf.decoder;
-      supply  : Bytes.t -> int -> int -> unit
+      supply  : Bytes.t -> int -> int -> unit;
+      lang    : language
     }
 
     (* The call [enqueue (token, state)] updates functionally the
@@ -393,7 +401,7 @@ module Make (Token: TOKEN) : (S with module Token = Token) =
     | Unterminated_string
     | Unterminated_integer
     | Odd_lengthed_bytes
-    | Unterminated_comment
+    | Unterminated_comment of string
     | Orphan_minus
     | Non_canonical_zero
     | Negative_byte_sequence
@@ -424,9 +432,9 @@ module Make (Token: TOKEN) : (S with module Token = Token) =
     | Odd_lengthed_bytes ->
         "The length of the byte sequence is an odd number.\n\
          Hint: Add or remove a digit."
-    | Unterminated_comment ->
-        "Unterminated comment.\n\
-         Hint: Close with \"*)\"."
+    | Unterminated_comment ending ->
+        sprintf "Unterminated comment.\n\
+                 Hint: Close with \"%s\"." ending
     | Orphan_minus ->
         "Orphan minus sign.\n\
          Hint: Remove the trailing space."
@@ -623,16 +631,16 @@ rule init state = parse
 and scan state = parse
   nl                     { scan (push_newline state lexbuf) lexbuf }
 | ' '+                   { scan (push_space   state lexbuf) lexbuf }
-| '\t'+                  { scan (push_tabs state lexbuf) lexbuf    }
+| '\t'+                  { scan (push_tabs    state lexbuf) lexbuf }
 | ident                  { mk_ident        state lexbuf |> enqueue  }
 | constr                 { mk_constr       state lexbuf |> enqueue  }
 | bytes                  { mk_bytes seq    state lexbuf |> enqueue  }
 | natural 'n'            { mk_nat          state lexbuf |> enqueue  }
 | natural "mutez"        { mk_mutez        state lexbuf |> enqueue  }
 | natural "tz"
-| natural "tez"          { mk_tez           state lexbuf |> enqueue }
+| natural "tez"          { mk_tez          state lexbuf |> enqueue  }
 | decimal "tz"
-| decimal "tez"          { mk_tez_decimal   state lexbuf |> enqueue }
+| decimal "tez"          { mk_tez_decimal  state lexbuf |> enqueue  }
 | natural                { mk_int          state lexbuf |> enqueue  }
 | symbol                 { mk_sym          state lexbuf |> enqueue  }
 | eof                    { mk_eof          state lexbuf |> enqueue  }
@@ -643,10 +651,21 @@ and scan state = parse
          let thread = {opening; len=1; acc=['"']} in
          scan_string thread state lexbuf |> mk_string |> enqueue }
 
-| "(*" { let opening, _, state = sync state lexbuf in
-         let thread = {opening; len=2; acc=['*';'(']} in
-         let state  = scan_block thread state lexbuf |> push_block
-         in scan state lexbuf }
+| "(*" { if state.lang = `PascaLIGO || state.lang = `CameLIGO then
+           let opening, _, state = sync state lexbuf in
+           let thread = {opening; len=2; acc=['*';'(']} in
+           let state  = scan_pascaligo_block thread state lexbuf |> push_block
+           in scan state lexbuf
+         else (rollback lexbuf; scan_two_sym state lexbuf)
+       }
+
+| "/*" { if state.lang = `ReasonLIGO then
+           let opening, _, state = sync state lexbuf in
+           let thread = {opening; len=2; acc=['*';'/']} in
+           let state  = scan_reasonligo_block thread state lexbuf |> push_block
+           in scan state lexbuf
+         else (rollback lexbuf; scan_two_sym state lexbuf)
+       }
 
 | "//" { let opening, _, state = sync state lexbuf in
          let thread = {opening; len=2; acc=['/';'/']} in
@@ -720,6 +739,14 @@ and scan state = parse
 | _ as c { let region, _, _ = sync state lexbuf
            in fail region (Unexpected_character c) }
 
+(* Scanning two symbols *)
+
+and scan_two_sym state = parse
+  symbol { scan_one_sym (mk_sym state lexbuf |> enqueue) lexbuf }
+
+and scan_one_sym state = parse
+  symbol { scan (mk_sym state lexbuf |> enqueue) lexbuf }
+
 (* Scanning CPP #include flags *)
 
 and scan_flags state acc = parse
@@ -751,39 +778,70 @@ and scan_string thread state = parse
 
 (* Finishing a block comment
 
-   (Note for Emacs: ("(*")
-   The lexing of block comments must take care of embedded block
-   comments that may occur within, as well as strings, so no substring
-   "*)" may inadvertently close the block. This is the purpose
-   of the first case of the scanner [scan_block].
+   (For Emacs: ("(*") The lexing of block comments must take care of
+   embedded block comments that may occur within, as well as strings,
+   so no substring "*/" or "*)" may inadvertently close the
+   block. This is the purpose of the first case of the scanners
+   [scan_pascaligo_block] and [scan_reasonligo_block].
 *)
 
-and scan_block thread state = parse
+and scan_pascaligo_block thread state = parse
   '"' | "(*" { let opening = thread.opening in
                let opening', lexeme, state = sync state lexbuf in
                let thread = push_string lexeme thread in
                let thread = {thread with opening=opening'} in
                let next   = if lexeme = "\"" then scan_string
-                            else scan_block in
+                            else scan_pascaligo_block in
                let thread, state = next thread state lexbuf in
                let thread = {thread with opening}
-               in scan_block thread state lexbuf }
+               in scan_pascaligo_block thread state lexbuf }
 | "*)"       { let _, lexeme, state = sync state lexbuf
                in push_string lexeme thread, state }
 | nl as nl   { let ()     = Lexing.new_line lexbuf
                and state  = {state with pos = state.pos#new_line nl}
                and thread = push_string nl thread
-               in scan_block thread state lexbuf }
-| eof        { fail thread.opening Unterminated_comment }
+               in scan_pascaligo_block thread state lexbuf }
+| eof        { fail thread.opening (Unterminated_comment "*)") }
 | _          { let ()     = rollback lexbuf in
                let len    = thread.len in
                let thread,
-                   status = scan_utf8 thread state lexbuf in
+                   status = scan_utf8 "*)" thread state lexbuf in
                let delta  = thread.len - len in
                let pos    = state.pos#shift_one_uchar delta in
                match status with
-                 None -> scan_block thread {state with pos} lexbuf
-               | Some error ->
+                 Stdlib.Ok () ->
+                   scan_pascaligo_block thread {state with pos} lexbuf
+               | Error error ->
+                   let region = Region.make ~start:state.pos ~stop:pos
+                   in fail region error }
+
+and scan_reasonligo_block thread state = parse
+  '"' | "/*" { let opening = thread.opening in
+               let opening', lexeme, state = sync state lexbuf in
+               let thread = push_string lexeme thread in
+               let thread = {thread with opening=opening'} in
+               let next   = if lexeme = "\"" then scan_string
+                            else scan_reasonligo_block in
+               let thread, state = next thread state lexbuf in
+               let thread = {thread with opening}
+               in scan_reasonligo_block thread state lexbuf }
+| "*/"       { let _, lexeme, state = sync state lexbuf
+               in push_string lexeme thread, state }
+| nl as nl   { let ()     = Lexing.new_line lexbuf
+               and state  = {state with pos = state.pos#new_line nl}
+               and thread = push_string nl thread
+               in scan_reasonligo_block thread state lexbuf }
+| eof        { fail thread.opening (Unterminated_comment "*/") }
+| _          { let ()     = rollback lexbuf in
+               let len    = thread.len in
+               let thread,
+                   status = scan_utf8 "*/" thread state lexbuf in
+               let delta  = thread.len - len in
+               let pos    = state.pos#shift_one_uchar delta in
+               match status with
+                 Stdlib.Ok () ->
+                   scan_reasonligo_block thread {state with pos} lexbuf
+               | Error error ->
                    let region = Region.make ~start:state.pos ~stop:pos
                    in fail region error }
 
@@ -798,24 +856,36 @@ and scan_line thread state = parse
 | _        { let     () = rollback lexbuf in
              let len    = thread.len in
              let thread,
-                 status = scan_utf8 thread state lexbuf in
+                 status = scan_utf8_inline thread state lexbuf in
              let delta  = thread.len - len in
              let pos    = state.pos#shift_one_uchar delta in
              match status with
-               None -> scan_line thread {state with pos} lexbuf
-             | Some error ->
+               Stdlib.Ok () ->
+                 scan_line thread {state with pos} lexbuf
+             | Error error ->
                  let region = Region.make ~start:state.pos ~stop:pos
                  in fail region error }
 
-and scan_utf8 thread state = parse
-     eof { fail thread.opening Unterminated_comment }
+and scan_utf8 closing thread state = parse
+     eof { fail thread.opening (Unterminated_comment closing) }
 | _ as c { let thread = push_char c thread in
            let lexeme = Lexing.lexeme lexbuf in
            let () = state.supply (Bytes.of_string lexeme) 0 1 in
            match Uutf.decode state.decoder with
-             `Uchar _     -> thread, None
-           | `Malformed _ -> thread, Some Invalid_utf8_sequence
-           | `Await       -> scan_utf8 thread state lexbuf
+             `Uchar _     -> thread, Stdlib.Ok ()
+           | `Malformed _ -> thread, Stdlib.Error Invalid_utf8_sequence
+           | `Await       -> scan_utf8 closing thread state lexbuf
+           | `End         -> assert false }
+
+and scan_utf8_inline thread state = parse
+     eof { thread, Stdlib.Ok () }
+| _ as c { let thread = push_char c thread in
+           let lexeme = Lexing.lexeme lexbuf in
+           let () = state.supply (Bytes.of_string lexeme) 0 1 in
+           match Uutf.decode state.decoder with
+             `Uchar _     -> thread, Stdlib.Ok ()
+           | `Malformed _ -> thread, Stdlib.Error Invalid_utf8_sequence
+           | `Await       -> scan_utf8_inline thread state lexbuf
            | `End         -> assert false }
 
 (* END LEXER DEFINITION *)
@@ -876,6 +946,13 @@ type input =
 | Channel of in_channel
 | Buffer  of Lexing.lexbuf
 
+(* Checking if a lexer input is a file *)
+
+let is_file = function
+   File "-" | File "" -> false
+ | File _ -> true
+ | Stdin | String _ | Channel _ | Buffer _ -> false
+
 type instance = {
   input    : input;
   read     : log:logger -> Lexing.lexbuf -> token;
@@ -909,7 +986,7 @@ let lexbuf_from_input = function
     Ok (Lexing.from_channel chan, close)
 | Buffer b -> Ok (b, fun () -> ())
 
-let open_token_stream input =
+let open_token_stream (lang: language) input =
   let file_path  = match input with
                      File file_path ->
                        if file_path = "-" then "" else file_path
@@ -925,7 +1002,8 @@ let open_token_stream input =
                         pos;
                         markup = [];
                         decoder;
-                        supply} in
+                        supply;
+                        lang} in
 
   let get_pos  () = !state.pos
   and get_last () = !state.last

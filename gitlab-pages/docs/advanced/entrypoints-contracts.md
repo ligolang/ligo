@@ -466,8 +466,8 @@ let proxy = ((action, store): (parameter, storage)) : return => {
     | Some (contract) => contract;
     | None => (failwith ("Contract not found.") : contract (parameter));
     };
-  (* Reuse the parameter in the subsequent
-     transaction or use another one, `mock_param`. *)
+  /* Reuse the parameter in the subsequent
+     transaction or use another one, `mock_param`. */
   let mock_param : parameter = Increment (5n);
   let op : operation = Tezos.transaction (action, 0tez, counter);
   ([op], store)

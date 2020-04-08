@@ -151,15 +151,6 @@ module Make (Lexer: Lexer.S)
           end
       in flush_all (); close (); Ok ast
 
-    (* Checking if a lexer input is a file *)
-
-    let is_file input =
-      let open Lexer in
-      match input with
-        File "-" | File "" -> false
-      | File _ -> true
-      | Stdin | String _ | Channel _ | Buffer _ -> false
-
     (* Wrapper for the parsers above *)
 
     let apply lexer_inst parser =
@@ -172,7 +163,7 @@ module Make (Lexer: Lexer.S)
       (* Lexing errors *)
 
       | exception Lexer.Error err ->
-          let file = is_file lexer_inst.Lexer.input in
+          let file = Lexer.is_file lexer_inst.Lexer.input in
           let error =
             Lexer.format_error ~offsets:SubIO.options#offsets
                                SubIO.options#mode err ~file
@@ -208,8 +199,8 @@ module Make (Lexer: Lexer.S)
 
     (* Preprocessing the input source *)
 
-    let preproc options lexbuf =
-      Preproc.lex (options :> Preprocessor.EvalOpt.options) lexbuf
+    let preproc ~is_file options lexbuf =
+      Preproc.lex ~is_file (options :> Preprocessor.EvalOpt.options) lexbuf
 
     (* Parsing a contract *)
 
@@ -220,13 +211,13 @@ module Make (Lexer: Lexer.S)
       | Ok (lexbuf, close) ->
          (* Preprocessing the input source *)
 
-         match preproc options lexbuf with
+         match preproc ~is_file:(Lexer.is_file input) options lexbuf with
             Stdlib.Error (pp_buffer, err) ->
               if SSet.mem "preproc" options#verbose then
                 Printf.printf "%s\n%!" (Buffer.contents pp_buffer);
               let formatted =
                 Preproc.format ~offsets:options#offsets
-                               ~file:(is_file input)
+                               ~file:(Lexer.is_file input)
                                err
               in close (); Stdlib.Error formatted
           | Stdlib.Ok buffer ->
@@ -234,7 +225,7 @@ module Make (Lexer: Lexer.S)
 
              let () = close () in
              let input' = Lexer.String (Buffer.contents buffer) in
-             match Lexer.open_token_stream input' with
+             match Lexer.open_token_stream options#lang input' with
                Ok instance -> apply instance parser
              | Stdlib.Error (Lexer.File_opening msg) ->
                  Stdlib.Error (Region.wrap_ghost msg)

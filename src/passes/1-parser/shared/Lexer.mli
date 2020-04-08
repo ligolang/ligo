@@ -142,6 +142,8 @@ module type S =
     | Channel of in_channel
     | Buffer  of Lexing.lexbuf
 
+    val is_file : input -> bool
+
     type instance = {
       input    : input;
       read     : log:logger -> Lexing.lexbuf -> token;
@@ -158,7 +160,10 @@ module type S =
     val lexbuf_from_input :
       input -> (Lexing.lexbuf * (unit -> unit), open_err) Stdlib.result
 
-    val open_token_stream : input -> (instance, open_err) Stdlib.result
+    type language = [`PascaLIGO | `CameLIGO | `ReasonLIGO]
+
+    val open_token_stream :
+      language -> input -> (instance, open_err) Stdlib.result
 
     (* Error reporting *)
 
