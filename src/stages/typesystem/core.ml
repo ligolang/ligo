@@ -15,13 +15,14 @@ type constant_tag =
   | C_variant   (* ( label , * ) … -> * *)
   | C_map       (* * -> * -> * *)
   | C_big_map   (* * -> * -> * *)
+  | C_michelson_or (* * -> * -> * *)
   | C_list      (* * -> * *)
   | C_set       (* * -> * *)
   | C_unit      (* * *)
   | C_bool      (* * *)
   | C_string    (* * *)
   | C_nat       (* * *)
-  | C_mutez       (* * *)
+  | C_mutez     (* * *)
   | C_timestamp (* * *)
   | C_int       (* * *)
   | C_address   (* * *)
@@ -75,10 +76,11 @@ let type_expression'_of_simple_c_constant = function
   | C_set       , [x]     -> ok @@ Ast_typed.T_operator(TC_set x)
   | C_map       , [x ; y] -> ok @@ Ast_typed.T_operator(TC_map (x , y))
   | C_big_map   , [x ; y] -> ok @@ Ast_typed.T_operator(TC_big_map (x, y))
+  | C_michelson_or , [x ; y] -> ok @@ Ast_typed.T_operator(TC_michelson_or (x, y))
   | C_arrow     , [x ; y] -> ok @@ Ast_typed.T_operator(TC_arrow (x, y))
   | C_record    , _lst    -> ok @@ failwith "records are not supported yet: T_record lst"
   | C_variant   , _lst    -> ok @@ failwith "sums are not supported yet: T_sum lst"
-  | (C_contract | C_option | C_list | C_set | C_map | C_big_map | C_arrow ), _ ->
+  | (C_contract | C_option | C_list | C_set | C_map | C_big_map | C_arrow | C_michelson_or ), _ ->
      failwith "internal error: wrong number of arguments for type operator"
 
   | C_unit      , [] -> ok @@ Ast_typed.T_constant(TC_unit)

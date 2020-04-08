@@ -186,6 +186,18 @@ let rec untranspile (v : value) (t : AST.type_expression) : AST.expression resul
         bind_fold_right_list aux init big_map'
       )
     | TC_map_or_big_map (_, _) -> fail @@ corner_case ~loc:"untranspiler" "TC_map_or_big_map t should not be present in mini-c"
+    | TC_michelson_or (l_ty, r_ty) -> (
+        let%bind v' = bind_map_or (get_left , get_right) v in
+        ( match v' with
+          | D_left l  ->
+            let%bind l' = untranspile l l_ty in
+            return @@ E_constructor { constructor = Constructor "M_left" ; element = l' }
+          | D_right r ->
+            let%bind r' = untranspile r r_ty in
+            return @@ E_constructor { constructor = Constructor "M_right" ; element = r' }
+          | _ -> fail (wrong_mini_c_value "michelson_or" v)
+        )
+      )
     | TC_list ty -> (
         let%bind lst =
           trace_strong (wrong_mini_c_value "list" v) @@
