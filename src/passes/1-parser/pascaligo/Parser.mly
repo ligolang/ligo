@@ -623,11 +623,24 @@ while_loop:
 for_loop:
   "for" var_assign "to" expr block {
     let region = cover $1 $5.region in
-    let value  = {kwd_for = $1;
-                  assign  = $2;
-                  kwd_to  = $3;
-                  bound   = $4;
-                  block   = $5}
+    let value  = {kwd_for  = $1;
+                  assign   = $2;
+                  kwd_to   = $3;
+                  bound    = $4;
+                  kwd_step = None;
+                  step     = None;
+                  block    = $5}
+    in For (ForInt {region; value})
+  }
+| "for" var_assign "to" expr "step" expr block {
+    let region = cover $1 $7.region in
+    let value  = {kwd_for  = $1;
+                  assign   = $2;
+                  kwd_to   = $3;
+                  bound    = $4;
+                  kwd_step = Some $5;
+                  step     = Some $6;
+                  block    = $7}
     in For (ForInt {region; value})
   }
 | "for" var arrow_clause? "in" collection expr block {

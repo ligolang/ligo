@@ -1241,6 +1241,10 @@ let loop () : unit result =
     let make_input = e_nat in
     let make_expected = fun n -> e_int (n * (n + 1) / 2) in
     expect_eq_n_pos_mid program "for_sum" make_input make_expected in
+  let%bind () =
+    let make_input = e_nat in
+    let make_expected = fun n -> e_int (n * n) in
+    expect_eq_n_pos_mid program "for_sum_step" make_input make_expected in
   let input = e_unit () in
   let%bind () =
     let expected = e_pair (e_int 3) (e_string "totototo") in

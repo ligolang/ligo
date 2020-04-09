@@ -392,11 +392,19 @@ and print_for_loop state = function
 | ForCollect for_collect -> print_for_collect state for_collect
 
 and print_for_int state ({value; _} : for_int reg) =
-  let {kwd_for; assign; kwd_to; bound; block} = value in
+  let {kwd_for; assign; kwd_to; bound; kwd_step; step; block} = value in
   print_token      state kwd_for "for";
   print_var_assign state assign;
   print_token      state kwd_to "to";
   print_expr       state bound;
+  match kwd_step with 
+  | None -> ();
+  | Some kwd_step -> 
+  print_token      state kwd_step "step";
+  match step with
+  | None -> ();
+  | Some step ->
+  print_expr       state step;
   print_block      state block
 
 and print_var_assign state {value; _} =
