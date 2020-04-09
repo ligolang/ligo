@@ -199,7 +199,7 @@ let error_to_string = function
 let format ?(offsets=true) Region.{region; value} ~file =
   let msg   = error_to_string value
   and reg   = region#to_string ~file ~offsets `Byte in
-  let value = sprintf "Preprocessing error %s:\n%s\n" reg msg
+  let value = sprintf "Preprocessing error %s:\n%s" reg msg
   in Region.{value; region}
 
 exception Error of (Buffer.t * error Region.reg)
@@ -499,6 +499,7 @@ rule scan state = parse
           match find path incl_file state.opt#libs with
             Some p -> p
           | None -> stop (File_not_found incl_file) state reg in
+        let () = print state (sprintf "\n# 1 \"%s\" 1\n" incl_path) in
         let incl_buf = Lexing.from_channel incl_chan in
         let () =
           let open Lexing in
@@ -507,9 +508,7 @@ rule scan state = parse
         let state  = {state with incl = incl_chan::state.incl} in
         let state' =
           {state with env=Env.empty; mode=Copy; trace=[]} in
-        let state' = push_dir incl_dir state' in
-        print state (sprintf "\n# 1 \"%s\" 1\n" incl_path);
-        let state' = scan state' incl_buf in
+        let state' = scan (push_dir incl_dir state') incl_buf in
         let state  = {state with incl = state'.incl} in
         let path =
           if path = "" then base
@@ -748,6 +747,8 @@ and preproc state = parse
    the end. *)
 
 let lex opt buffer =
+  let path = buffer.Lexing.lex_curr_p.Lexing.pos_fname in
+  let dir  = [Filename.dirname path] in
   let state = {
     env    = Env.empty;
     mode   = Copy;
@@ -756,7 +757,7 @@ let lex opt buffer =
     out    = Buffer.create 80;
     incl   = [];
     opt;
-    dir    = []
+    dir
   } in
   match preproc state buffer with
     state -> List.iter close_in state.incl;
