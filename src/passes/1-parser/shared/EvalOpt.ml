@@ -162,7 +162,7 @@ let check lang ext =
 
   let input =
     match !input with
-      None | Some "-" -> !input
+      None | Some "-" -> None
     | Some file_path ->
         if   Filename.check_suffix file_path ext
         then if   Sys.file_exists file_path

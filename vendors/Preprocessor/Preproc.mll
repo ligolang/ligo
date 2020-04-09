@@ -97,8 +97,7 @@ type state = {
   out     : Buffer.t;
   incl    : in_channel list;
   opt     : EvalOpt.options;
-  dir     : string list;
-  is_file : bool
+  dir     : string list
 }
 
 (* Directories *)
@@ -118,7 +117,6 @@ type error =
 | No_line_indicator
 | End_line_indicator
 | Newline_in_string
-| Open_comment
 | Open_string
 | Dangling_endif
 | Open_region_in_conditional
@@ -153,8 +151,6 @@ let error_to_string = function
              Hint: Try a string, end of line, or a line comment."
 | Newline_in_string ->
     sprintf "Invalid newline character in string."
-| Open_comment ->
-    sprintf "Unterminated comment."
 | Open_string ->
     sprintf "Unterminated string.\n\
              Hint: Close with double quotes."
@@ -704,13 +700,13 @@ and in_line_com state = parse
 and reasonLIGO_com opening state = parse
   nl   { proc_nl state lexbuf; reasonLIGO_com opening state lexbuf }
 | "*/" { copy state lexbuf                                         }
-| eof  { stop Open_comment state opening                           }
+| eof  { ()                                                        }
 | _    { copy state lexbuf; reasonLIGO_com opening state lexbuf    }
 
 and cameLIGO_com opening state = parse
   nl   { proc_nl state lexbuf; cameLIGO_com opening state lexbuf }
 | "*)" { copy state lexbuf                                       }
-| eof  { stop Open_comment state opening                         }
+| eof  { ()                                                      }
 | _    { copy state lexbuf; cameLIGO_com opening state lexbuf    }
 
 (* Included filename *)
@@ -732,17 +728,17 @@ and in_inclusion opening acc len state = parse
 and in_string opening state = parse
   "\\\"" { copy state lexbuf; in_string opening state lexbuf }
 | '"'    { copy state lexbuf                                 }
-| nl     { fail Newline_in_string state lexbuf               }
-| eof    { stop Open_string state opening                    }
+| eof    { ()                                                }
 | _      { copy state lexbuf; in_string opening state lexbuf }
 
 and preproc state = parse
   eof { state }
-| _   { rollback lexbuf;
-        if state.is_file then
-          print state (sprintf "# 1 \"%s\"\n"
-                               Lexing.(lexbuf.lex_start_p.pos_fname));
-        scan state lexbuf }
+| _   { let open Lexing in
+        let ()   = rollback lexbuf in
+        let name = lexbuf.lex_start_p.pos_fname in
+        let ()   = if name <> "" then
+                     print state (sprintf "# 1 \"%s\"\n" name)
+        in scan state lexbuf }
 
 {
   (* START OF TRAILER *)
@@ -751,7 +747,7 @@ and preproc state = parse
    the trace is empty at the end.  Note that we discard the state at
    the end. *)
 
-let lex ~is_file opt buffer =
+let lex opt buffer =
   let state = {
     env    = Env.empty;
     mode   = Copy;
@@ -760,8 +756,7 @@ let lex ~is_file opt buffer =
     out    = Buffer.create 80;
     incl   = [];
     opt;
-    dir    = [];
-    is_file;
+    dir    = []
   } in
   match preproc state buffer with
     state -> List.iter close_in state.incl;

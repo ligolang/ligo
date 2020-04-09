@@ -69,12 +69,8 @@ module Make (Lexer: Lexer.S) : (S with module Lexer = Lexer) =
                 then Stdlib.Ok ()
                 else iter ()
             | exception Lexer.Error error ->
-                let file =
-                  match input with
-                    Lexer.File name -> name <> "-"
-                  | _  -> false in
                 let msg =
-                  Lexer.format_error ~offsets mode ~file error
+                  Lexer.format_error ~offsets mode ~file:true error
                 in Stdlib.Error msg in
             let result = iter ()
             in close_all (); result

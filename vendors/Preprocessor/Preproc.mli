@@ -14,9 +14,8 @@ type error =
 | Invalid_line_indicator of string
 | No_line_indicator
 | End_line_indicator
-| Newline_in_string                  (*XXX*)
-| Open_comment                       (*XXX*)
-| Open_string                        (*XXX*)
+| Newline_in_string (* For #include argument only *)
+| Open_string       (* For #include argument only *)
 | Dangling_endif
 | Open_region_in_conditional
 | Dangling_endregion
@@ -41,7 +40,6 @@ val format :
 (* Preprocessing a lexing buffer *)
 
 val lex :
-  is_file:bool ->
   EvalOpt.options ->
   Lexing.lexbuf ->
   (Buffer.t, Buffer.t * error Region.reg) Stdlib.result

@@ -136,13 +136,10 @@ module type S =
     val slide : token -> window -> window
 
     type input =
-      File    of file_path (* "-" means stdin *)
-    | Stdin
+      File    of file_path
     | String  of string
     | Channel of in_channel
     | Buffer  of Lexing.lexbuf
-
-    val is_file : input -> bool
 
     type instance = {
       input    : input;

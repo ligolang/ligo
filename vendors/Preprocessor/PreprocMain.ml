@@ -1,6 +1,8 @@
 (* Standalone preprocessor for PascaLIGO *)
 
-module Region = Simple_utils.Region
+module Region  = Simple_utils.Region
+module Preproc = Preprocessor.Preproc
+module EvalOpt = Preprocessor.EvalOpt
 
 let highlight msg = Printf.eprintf "\027[31m%s\027[0m\n%!" msg
 
@@ -11,7 +13,7 @@ let preproc cin =
   let open Lexing in
   let () =
     match options#input with
-      None | Some "-" -> ()
+      None -> ()
     | Some pos_fname ->
         buffer.lex_curr_p <- {buffer.lex_curr_p with pos_fname} in
   match Preproc.lex options buffer with
@@ -27,7 +29,7 @@ let preproc cin =
 
 let () =
   match options#input with
-    Some "-" | None -> preproc stdin
+    None -> preproc stdin
   | Some file_path ->
      try open_in file_path |> preproc with
        Sys_error msg -> highlight msg

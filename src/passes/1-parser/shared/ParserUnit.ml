@@ -163,10 +163,11 @@ module Make (Lexer: Lexer.S)
       (* Lexing errors *)
 
       | exception Lexer.Error err ->
-          let file = Lexer.is_file lexer_inst.Lexer.input in
+          let file =
+            lexer_inst.Lexer.buffer.Lexing.lex_curr_p.Lexing.pos_fname in
           let error =
             Lexer.format_error ~offsets:SubIO.options#offsets
-                               SubIO.options#mode err ~file
+                               SubIO.options#mode err ~file:(file <> "")
           in Stdlib.Error error
 
       (* Incremental API of Menhir *)
@@ -199,8 +200,8 @@ module Make (Lexer: Lexer.S)
 
     (* Preprocessing the input source *)
 
-    let preproc ~is_file options lexbuf =
-      Preproc.lex ~is_file (options :> Preprocessor.EvalOpt.options) lexbuf
+    let preproc options lexbuf =
+      Preproc.lex (options :> Preprocessor.EvalOpt.options) lexbuf
 
     (* Parsing a contract *)
 
@@ -210,14 +211,14 @@ module Make (Lexer: Lexer.S)
           Stdlib.Error (Region.wrap_ghost msg)
       | Ok (lexbuf, close) ->
          (* Preprocessing the input source *)
-
-         match preproc ~is_file:(Lexer.is_file input) options lexbuf with
+         let file = Lexing.(lexbuf.lex_curr_p.pos_fname) in
+         match preproc options lexbuf with
             Stdlib.Error (pp_buffer, err) ->
               if SSet.mem "preproc" options#verbose then
                 Printf.printf "%s\n%!" (Buffer.contents pp_buffer);
               let formatted =
                 Preproc.format ~offsets:options#offsets
-                               ~file:(Lexer.is_file input)
+                               ~file:(file <> "")
                                err
               in close (); Stdlib.Error formatted
           | Stdlib.Ok buffer ->
@@ -226,7 +227,11 @@ module Make (Lexer: Lexer.S)
              let () = close () in
              let input' = Lexer.String (Buffer.contents buffer) in
              match Lexer.open_token_stream options#lang input' with
-               Ok instance -> apply instance parser
+               Ok instance ->
+                 let open Lexing in
+                 instance.Lexer.buffer.lex_curr_p <-
+                   {instance.Lexer.buffer.lex_curr_p with pos_fname = file};
+                 apply instance parser
              | Stdlib.Error (Lexer.File_opening msg) ->
                  Stdlib.Error (Region.wrap_ghost msg)
 
@@ -246,7 +251,7 @@ module Make (Lexer: Lexer.S)
 
     let contract_in_stdin () =
       let options = SubIO.make ~input:None ~expr:false in
-      gen_parser options Lexer.Stdin parse_contract
+      gen_parser options (Lexer.Channel stdin) parse_contract
 
     (* Parsing an expression in a string *)
 
@@ -258,6 +263,6 @@ module Make (Lexer: Lexer.S)
 
     let expr_in_stdin () =
       let options = SubIO.make ~input:None ~expr:true in
-      gen_parser options Lexer.Stdin parse_expr
+      gen_parser options (Lexer.Channel stdin) parse_expr
 
   end

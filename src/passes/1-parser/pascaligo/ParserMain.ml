@@ -72,7 +72,5 @@ let wrap = function
 
 let () =
   match IO.options#input with
-    Some "-" | None ->
-      Unit.contract_in_stdin () |> wrap
-  | Some file_path ->
-     Unit.contract_in_file file_path |> wrap
+    None -> Unit.contract_in_stdin () |> wrap
+  | Some file_path -> Unit.contract_in_file file_path |> wrap

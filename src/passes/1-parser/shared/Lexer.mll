@@ -158,13 +158,10 @@ module type S =
     val slide : token -> window -> window
 
     type input =
-      File    of file_path (* "-" means stdin *)
-    | Stdin
+      File    of file_path
     | String  of string
     | Channel of in_channel
     | Buffer  of Lexing.lexbuf
-
-    val is_file : input -> bool
 
     type instance = {
       input    : input;
@@ -940,18 +937,10 @@ and scan_utf8_inline thread state = parse
 type logger = Markup.t list -> token -> unit
 
 type input =
-  File    of file_path (* "-" means stdin *)
-| Stdin
+  File    of file_path
 | String  of string
 | Channel of in_channel
 | Buffer  of Lexing.lexbuf
-
-(* Checking if a lexer input is a file *)
-
-let is_file = function
-   File "-" | File "" -> false
- | File _ -> true
- | Stdin | String _ | Channel _ | Buffer _ -> false
 
 type instance = {
   input    : input;
@@ -967,9 +956,7 @@ type instance = {
 type open_err = File_opening of string
 
 let lexbuf_from_input = function
-  File "" | File "-" | Stdin ->
-    Ok (Lexing.from_channel stdin, fun () -> close_in stdin)
-| File path ->
+  File path ->
    (try
       let chan = open_in path in
       let close () = close_in chan in
@@ -988,8 +975,7 @@ let lexbuf_from_input = function
 
 let open_token_stream (lang: language) input =
   let file_path  = match input with
-                     File file_path ->
-                       if file_path = "-" then "" else file_path
+                     File path -> path
                    | _ -> "" in
   let        pos = Pos.min ~file:file_path in
   let    buf_reg = ref (pos#byte, pos#byte)
