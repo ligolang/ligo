@@ -10,10 +10,10 @@ let%expect_test _ =
   [%expect {| 1872 bytes |}] ;
 
   run_ligo_good [ "measure-contract" ; contract "multisig.ligo" ; "main" ] ;
-  [%expect {| 1282 bytes |}] ;
+  [%expect {| 1267 bytes |}] ;
 
   run_ligo_good [ "measure-contract" ; contract "multisig-v2.ligo" ; "main" ] ;
-  [%expect {| 2974 bytes |}] ;
+  [%expect {| 2959 bytes |}] ;
 
   run_ligo_good [ "measure-contract" ; contract "vote.mligo" ; "main" ] ;
   [%expect {| 589 bytes |}] ;
@@ -301,9 +301,6 @@ let%expect_test _ =
       storage
         (pair (pair (list %auth key) (nat %counter)) (pair (string %id) (nat %threshold))) ;
       code { DUP ;
-             CAR ;
-             DIP { DUP ; CDR } ;
-             PAIR ;
              DUP ;
              CAR ;
              DIP { DUP } ;
@@ -768,9 +765,6 @@ let%expect_test _ =
                           CAR ;
                           PAIR } ;
                      DUP ;
-                     CAR ;
-                     DIP { DUP ; CDR } ;
-                     PAIR ;
                      DIP { DROP 17 } } ;
                  DIP { DROP } }
                { DUP ;

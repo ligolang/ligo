@@ -159,6 +159,25 @@ let betas : bool ref -> expression -> expression =
   fun changed ->
   map_expression (beta changed)
 
+let eta : bool ref -> expression -> expression =
+  fun changed e ->
+  match e.content with
+  | E_constant {cons_name = C_PAIR; arguments = [ { content = E_constant {cons_name = C_CAR; arguments = [ e1 ]} ; type_value = _ } ;
+                                                  { content = E_constant {cons_name = C_CDR; arguments = [ e2 ]} ; type_value = _ }]} ->
+    (match (e1.content, e2.content) with
+     | E_variable x1, E_variable x2 ->
+       if Var.equal x1 x2
+       then
+         (changed := true;
+          { e with content = e1.content })
+       else e
+     | _ -> e)
+  | _ -> e
+
+let etas : bool ref -> expression -> expression =
+  fun changed ->
+  map_expression (eta changed)
+
 let contract_check =
   let all = [Michelson_restrictions.self_in_lambdas] in
   let all_e = List.map Helpers.map_sub_level_expression all in
@@ -169,6 +188,7 @@ let rec all_expression : expression -> expression =
   let changed = ref false in
   let e = inline_lets changed e in
   let e = betas changed e in
+  let e = etas changed e in
   if !changed
   then all_expression e
   else e
