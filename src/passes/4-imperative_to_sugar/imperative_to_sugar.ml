@@ -103,7 +103,7 @@ and restore_mutable_variable (expr : O.expression->O.expression_content) (free_v
 
 let rec compile_type_expression : I.type_expression -> O.type_expression result =
   fun te ->
-  let return te = ok @@ O.make_t te in
+  let return tc = ok @@ O.make_t ~loc:te.location tc in
   match te.type_content with
     | I.T_sum sum -> 
       let sum = I.CMap.to_kv_list sum in
@@ -458,12 +458,12 @@ and compile_while I.{condition;body} =
 and compile_for I.{binder;start;final;increment;body} =
   let env_rec = Var.fresh () in
   (*Make the cond and the step *)
-  let cond = I.e_annotation (I.e_constant C_LE [I.e_variable binder ; final]) I.t_bool in
+  let cond = I.e_annotation (I.e_constant C_LE [I.e_variable binder ; final]) (I.t_bool ()) in
   let%bind cond = compile_expression cond in
   let%bind step = compile_expression increment in
   let continue_expr = O.e_constant C_FOLD_CONTINUE [(O.e_variable env_rec)] in
   let ctrl = 
-    O.e_let_in (binder,Some O.t_int) false false (O.e_constant C_ADD [ O.e_variable binder ; step ]) @@
+    O.e_let_in (binder,Some (O.t_int ())) false false (O.e_constant C_ADD [ O.e_variable binder ; step ]) @@
     O.e_let_in (env_rec, None) false false (O.e_record_update (O.e_variable env_rec) (Label "1") @@ O.e_variable binder)@@
     continue_expr
   in
@@ -482,7 +482,7 @@ and compile_for I.{binder;start;final;increment;body} =
   (*Prep the lambda for the fold*)
   let stop_expr = O.e_constant C_FOLD_STOP [O.e_variable env_rec] in
   let aux_func = O.e_lambda env_rec None None @@ 
-                 O.e_let_in (binder,Some O.t_int) false false (O.e_record_accessor (O.e_variable env_rec) (Label "1")) @@
+                 O.e_let_in (binder,Some (O.t_int ())) false false (O.e_record_accessor (O.e_variable env_rec) (Label "1")) @@
                  O.e_cond cond (restore for_body) (stop_expr) in
 
   (* Make the fold_while en precharge the vakye *)
@@ -492,7 +492,7 @@ and compile_for I.{binder;start;final;increment;body} =
   let%bind start = compile_expression start in
   let let_binder = (env_rec,None) in
   let return_expr = fun expr -> 
-    O.E_let_in {let_binder=(binder, Some O.t_int);mut=false; inline=false;rhs=start;let_result=
+    O.E_let_in {let_binder=(binder, Some (O.t_int ()));mut=false; inline=false;rhs=start;let_result=
     O.e_let_in let_binder false false init_rec @@
     O.e_let_in let_binder false false loop @@
     O.e_let_in let_binder false false (O.e_record_accessor (O.e_variable env_rec) (Label "0")) @@

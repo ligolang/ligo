@@ -270,7 +270,7 @@ and fold_map_program : 'a . 'a fold_mapper -> 'a -> program -> ('a * program) re
   bind_fold_list aux (init,[]) p
 
 module Errors = struct
-  let bad_contract_io entrypoint e () =
+  let bad_contract_io entrypoint (e:expression) () =
     let title = thunk "badly typed contract" in
     let message () = Format.asprintf "unexpected entrypoint type" in
     let data = [
@@ -280,7 +280,7 @@ module Errors = struct
     ] in
     error ~data title message ()
 
-  let expected_list_operation entrypoint got e () =
+  let expected_list_operation entrypoint got (e:expression) () =
     let title = thunk "bad return type" in
     let message () = Format.asprintf "expected %a, got %a"
       Ast_typed.PP.type_expression {got with type_content= T_operator (TC_list {got with type_content=T_constant TC_operation})}
@@ -292,7 +292,7 @@ module Errors = struct
     ] in
     error ~data title message ()
 
-  let expected_same entrypoint t1 t2 e () =
+  let expected_same entrypoint t1 t2 (e:expression) () =
     let title = thunk "badly typed contract" in
     let message () = Format.asprintf "expected {%a} and {%a} to be the same in the entrypoint type"
       Ast_typed.PP.type_expression t1

@@ -38,9 +38,9 @@ let (stranger_addr , stranger_contract) =
   Protocol.Alpha_context.Contract.to_b58check kt , kt
 
 let empty_op_list =
-  (e_typed_list [] t_operation)
+  (e_typed_list [] (t_operation ()))
 let empty_message = e_lambda (Var.of_name "arguments")
-  (Some t_unit) (Some (t_list t_operation))
+  (Some (t_unit ())) (Some (t_list (t_operation ())))
   empty_op_list
 
 

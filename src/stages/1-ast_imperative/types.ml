@@ -25,7 +25,7 @@ and type_operator =
   | TC_michelson_or of type_expression * type_expression
   | TC_arrow of type_expression * type_expression
 
-and type_expression = {type_content: type_content}
+and type_expression = {type_content: type_content; location: Location.t}
 
 
 type program = declaration Location.wrap list

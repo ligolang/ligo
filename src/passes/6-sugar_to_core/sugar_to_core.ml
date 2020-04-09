@@ -4,7 +4,7 @@ open Trace
 
 let rec idle_type_expression : I.type_expression -> O.type_expression result =
   fun te ->
-  let return te = ok @@ O.make_t te in
+  let return tc = ok @@ O.make_t ~loc:te.location tc in
   match te.type_content with
     | I.T_sum sum -> 
       let sum = I.CMap.to_kv_list sum in
@@ -165,7 +165,7 @@ let rec compile_expression : I.expression -> O.expression result =
     | I.E_sequence {expr1; expr2} ->
       let%bind expr1 = compile_expression expr1 in
       let%bind expr2 = compile_expression expr2 in
-      return @@ O.E_let_in {let_binder=(Var.of_name "_", Some O.t_unit); rhs=expr1;let_result=expr2; inline=false}
+      return @@ O.E_let_in {let_binder=(Var.of_name "_", Some (O.t_unit ())); rhs=expr1;let_result=expr2; inline=false}
     | I.E_skip -> ok @@ O.e_unit ~loc:e.location ()
     | I.E_tuple t ->
       let aux (i,acc) el = 
@@ -317,7 +317,7 @@ let rec uncompile_expression : O.expression -> I.expression result =
     let%bind fun_type = uncompile_type_expression fun_type in
     let%bind lambda = uncompile_lambda lambda in
     return @@ I.E_recursive {fun_name;fun_type;lambda}
-  | O.E_let_in {let_binder;inline=false;rhs=expr1;let_result=expr2} when let_binder = (Var.of_name "_", Some O.t_unit) ->
+  | O.E_let_in {let_binder;inline=false;rhs=expr1;let_result=expr2} when let_binder = (Var.of_name "_", Some (O.t_unit ())) ->
     let%bind expr1 = uncompile_expression expr1 in
     let%bind expr2 = uncompile_expression expr2 in
     return @@ I.E_sequence {expr1;expr2}

@@ -43,9 +43,9 @@ let (first_committer , first_contract) =
   Protocol.Alpha_context.Contract.to_b58check kt , kt
 
 let empty_op_list =
-  (e_typed_list [] t_operation)
+  (e_typed_list [] (t_operation ()))
 let empty_message = e_lambda (Var.of_name "arguments")
-  (Some t_unit) (Some (t_list t_operation))
+  (Some (t_unit ())) (Some (t_list (t_operation ())))
   empty_op_list
 
 
@@ -61,8 +61,8 @@ let commit () =
                                                               packed_sender]))
 
   in
-  let pre_commits = e_typed_big_map [] t_address (t_record_ez [("date", t_timestamp);
-                                                              ("salted_hash", t_bytes)])
+  let pre_commits = e_typed_big_map [] (t_address ()) (t_record_ez [("date", (t_timestamp ()));
+                                                              ("salted_hash", (t_bytes ()))])
   in
   let init_storage = storage test_hash true pre_commits in
   let commit =
@@ -91,8 +91,8 @@ let reveal_no_commit () =
   in
   let test_hash_raw = sha_256_hash (Bytes.of_string "hello world") in
   let test_hash = e_bytes_raw test_hash_raw in
-  let pre_commits = e_typed_big_map [] t_address (t_record_ez [("date", t_timestamp);
-                                                              ("salted_hash", t_bytes)])
+  let pre_commits = e_typed_big_map [] (t_address ()) (t_record_ez [("date", (t_timestamp ()));
+                                                              ("salted_hash", (t_bytes ()))])
   in
   let init_storage = storage test_hash true pre_commits in
   expect_string_failwith program "reveal"

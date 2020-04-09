@@ -23,7 +23,7 @@ module Errors = struct
     error (thunk "No declaration with the given name") message
 end
 
-let make_t type_content core = { type_content ; type_meta=core }
+let make_t ?(loc = Location.generated) type_content core = {type_content; location=loc; type_meta = core}
 let make_e ?(location = Location.generated) expression_content type_expression environment = {
   expression_content ;
   type_expression ;
@@ -32,48 +32,48 @@ let make_e ?(location = Location.generated) expression_content type_expression e
 }
 let make_n_t type_name type_value = { type_name ; type_value }
 
-let t_signature ?s ()  : type_expression = make_t (T_constant TC_signature) s
-let t_chain_id ?s ()   : type_expression = make_t (T_constant TC_chain_id) s
-let t_bool ?s ()       : type_expression = make_t (T_constant TC_bool) s
-let t_string ?s ()     : type_expression = make_t (T_constant TC_string) s
-let t_bytes ?s ()      : type_expression = make_t (T_constant TC_bytes) s
-let t_key ?s ()        : type_expression = make_t (T_constant TC_key) s
-let t_key_hash ?s ()   : type_expression = make_t (T_constant TC_key_hash) s
-let t_int ?s ()        : type_expression = make_t (T_constant TC_int) s
-let t_address ?s ()    : type_expression = make_t (T_constant TC_address) s
-let t_operation ?s ()  : type_expression = make_t (T_constant TC_operation) s
-let t_nat ?s ()        : type_expression = make_t (T_constant TC_nat) s
-let t_mutez ?s ()      : type_expression = make_t (T_constant TC_mutez) s
-let t_timestamp ?s ()  : type_expression = make_t (T_constant TC_timestamp) s
-let t_unit ?s ()       : type_expression = make_t (T_constant TC_unit) s
-let t_option o ?s ()   : type_expression = make_t (T_operator (TC_option o)) s
-let t_variable t ?s () : type_expression = make_t (T_variable t) s
-let t_list t ?s ()     : type_expression = make_t (T_operator (TC_list t)) s
-let t_set t ?s ()      : type_expression = make_t (T_operator (TC_set t)) s
-let t_contract t ?s () : type_expression = make_t (T_operator (TC_contract t)) s
+let t_signature ?loc ?s ()  : type_expression = make_t ?loc (T_constant TC_signature) s
+let t_chain_id ?loc ?s ()   : type_expression = make_t ?loc (T_constant TC_chain_id) s
+let t_bool ?loc ?s ()       : type_expression = make_t ?loc (T_constant TC_bool) s
+let t_string ?loc ?s ()     : type_expression = make_t ?loc (T_constant TC_string) s
+let t_bytes ?loc ?s ()      : type_expression = make_t ?loc (T_constant TC_bytes) s
+let t_key ?loc ?s ()        : type_expression = make_t ?loc (T_constant TC_key) s
+let t_key_hash ?loc ?s ()   : type_expression = make_t ?loc (T_constant TC_key_hash) s
+let t_int ?loc ?s ()        : type_expression = make_t ?loc (T_constant TC_int) s
+let t_address ?loc ?s ()    : type_expression = make_t ?loc (T_constant TC_address) s
+let t_operation ?loc ?s ()  : type_expression = make_t ?loc (T_constant TC_operation) s
+let t_nat ?loc ?s ()        : type_expression = make_t ?loc (T_constant TC_nat) s
+let t_mutez ?loc ?s ()      : type_expression = make_t ?loc (T_constant TC_mutez) s
+let t_timestamp ?loc ?s ()  : type_expression = make_t ?loc (T_constant TC_timestamp) s
+let t_unit ?loc ?s ()       : type_expression = make_t ?loc (T_constant TC_unit) s
+let t_option o ?loc ?s ()   : type_expression = make_t ?loc (T_operator (TC_option o)) s
+let t_variable t ?loc ?s () : type_expression = make_t ?loc (T_variable t) s
+let t_list t ?loc ?s ()     : type_expression = make_t ?loc (T_operator (TC_list t)) s
+let t_set t ?loc ?s ()      : type_expression = make_t ?loc (T_operator (TC_set t)) s
+let t_contract t ?loc ?s () : type_expression = make_t ?loc (T_operator (TC_contract t)) s
 
-let t_record m ?s () : type_expression = make_t (T_record m) s
-let make_t_ez_record (lst:(string * type_expression) list) : type_expression =
+let t_record m ?loc ?s () : type_expression = make_t ?loc (T_record m) s
+let make_t_ez_record ?loc (lst:(string * type_expression) list) : type_expression =
   let lst = List.map (fun (x,y) -> (Label x, y) ) lst in
   let map = LMap.of_list lst in
-  make_t (T_record map) None
-let ez_t_record lst ?s () : type_expression =
+  make_t ?loc (T_record map) None
+let ez_t_record lst ?loc ?s () : type_expression =
   let m = LMap.of_list lst in
-  t_record m ?s ()
-let t_pair a b ?s ()   : type_expression = ez_t_record [(Label "0",a) ; (Label "1",b)] ?s ()
+  t_record m ?loc ?s ()
+let t_pair a b ?loc ?s ()   : type_expression = ez_t_record [(Label "0",a) ; (Label "1",b)] ?loc ?s ()
 
-let t_map k v ?s () = make_t (T_operator (TC_map { k ; v })) s
-let t_big_map k v ?s () = make_t (T_operator (TC_big_map { k ; v })) s
-let t_map_or_big_map k v ?s () = make_t (T_operator (TC_map_or_big_map { k ; v })) s
+let t_map ?loc k v ?s () = make_t ?loc (T_operator (TC_map { k ; v })) s
+let t_big_map ?loc k v ?s () = make_t ?loc (T_operator (TC_big_map { k ; v })) s
+let t_map_or_big_map ?loc k v ?s () = make_t ?loc (T_operator (TC_map_or_big_map { k ; v })) s
 
-let t_sum m ?s () : type_expression = make_t (T_sum m) s
-let make_t_ez_sum (lst:(constructor' * type_expression) list) : type_expression =
+let t_sum m ?loc ?s () : type_expression = make_t ?loc (T_sum m) s
+let make_t_ez_sum ?loc (lst:(constructor' * type_expression) list) : type_expression =
   let aux prev (k, v) = CMap.add k v prev in
   let map = List.fold_left aux CMap.empty lst in
-  make_t (T_sum map) None
+  make_t ?loc (T_sum map) None
 
-let t_function param result ?s () : type_expression = make_t (T_arrow {type1=param; type2=result}) s
-let t_shallow_closure param result ?s () : type_expression = make_t (T_arrow {type1=param; type2=result}) s
+let t_function param result ?loc ?s () : type_expression = make_t ?loc (T_arrow {type1=param; type2=result}) s
+let t_shallow_closure param result ?loc ?s () : type_expression = make_t ?loc (T_arrow {type1=param; type2=result}) s
 
 let get_type_expression (x:expression) = x.type_expression
 let get_type' (x:type_expression) = x.type_content

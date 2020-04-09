@@ -221,7 +221,7 @@ let rec map_expression : exp_mapper -> expression -> expression result = fun f e
 and map_type_expression : ty_exp_mapper -> type_expression -> type_expression result = fun f te ->
   let self = map_type_expression f in
   let%bind te' = f te in
-  let return type_content = ok { type_content } in
+  let return type_content = ok { type_content; location=te.location } in
   match te'.type_content with
   | T_sum temap ->
     let%bind temap' = bind_map_cmap self temap in

@@ -4,13 +4,12 @@ module O = Ast_typed
 module Environment = O.Environment
 type environment = Environment.t
 
-let unbound_type_variable (e:environment) (tv:I.type_variable) () =
+let unbound_type_variable (e:environment) (tv:I.type_variable) (loc:Location.t) () =
   let title = (thunk "unbound type variable") in
   let message () = "" in
   let data = [
       ("variable" , fun () -> Format.asprintf "%a" I.PP.type_variable tv) ;
-      (* TODO: types don't have srclocs for now. *)
-      (* ("location" , fun () -> Format.asprintf "%a" Location.pp (n.location)) ; *)
+      ("location" , fun () -> Format.asprintf "%a" Location.pp loc) ;
       ("in" , fun () -> Format.asprintf "%a" Environment.PP.full_environment e)
     ] in
   error ~data title message ()

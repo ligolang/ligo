@@ -147,30 +147,34 @@ let rec compile_type_expression (t:Raw.type_expr) : type_expression result =
   match t with
     TPar x -> compile_type_expression x.value.inside
   | TVar v -> (
-      match type_constants v.value with
-      | Ok (s,_) -> ok @@ make_t @@ T_constant s
-      | Error _ -> ok @@ make_t @@ T_variable (Var.of_name v.value)
+      let (v,loc) = r_split v in
+      match type_constants v with
+      | Ok (s,_) -> ok @@ make_t ~loc @@ T_constant s
+      | Error _ -> ok @@ make_t ~loc @@ T_variable (Var.of_name v)
     )
   | TFun x -> (
+      let (x,loc) = r_split x in
       let%bind (a , b) =
-        let (a , _ , b) = x.value in
+        let (a , _ , b) = x in
         bind_map_pair compile_type_expression (a , b) in
-      ok @@ make_t @@ T_arrow {type1=a;type2=b}
+      ok @@ make_t ~loc @@ T_arrow {type1=a;type2=b}
     )
   | TApp x ->
-      let (name, tuple) = x.value in
+      let (x, loc) = r_split x in
+      let (name, tuple) = x in
       let lst = npseq_to_list tuple.value.inside in
       let%bind lst =
         bind_list @@ List.map compile_type_expression lst in (** TODO: fix constant and operator*)
       let%bind cst =
         trace (unknown_predefined_type name) @@
         type_operators name.value in
-      t_operator cst lst
+      t_operator ~loc cst lst
   | TProd p ->
       let%bind tpl = compile_list_type_expression
     @@ npseq_to_list p.value in
       ok tpl
   | TRecord r ->
+      let (r,loc ) = r_split r in
       let aux = fun (x, y) ->
         let%bind y = compile_type_expression y in
         ok (x, y)
@@ -180,10 +184,11 @@ let rec compile_type_expression (t:Raw.type_expr) : type_expression result =
       let%bind lst = bind_list
         @@ List.map aux
         @@ List.map apply
-        @@ npseq_to_list r.value.ne_elements in
+        @@ npseq_to_list r.ne_elements in
       let m = List.fold_left (fun m (x, y) -> LMap.add (Label x) y m) LMap.empty lst in
-      ok @@ make_t @@ T_record m
+      ok @@ make_t ~loc @@ T_record m
   | TSum s ->
+      let (s,loc) = r_split s in
       let aux (v:Raw.variant Raw.reg) =
         let args =
           match v.value.arg with
@@ -195,13 +200,13 @@ let rec compile_type_expression (t:Raw.type_expr) : type_expression result =
       in
       let%bind lst = bind_list
         @@ List.map aux
-        @@ npseq_to_list s.value in
+        @@ npseq_to_list s in
       let m = List.fold_left (fun m (x, y) -> CMap.add (Constructor x) y m) CMap.empty lst in
-      ok @@ make_t @@ T_sum m
+      ok @@ make_t ~loc @@ T_sum m
 
 and compile_list_type_expression (lst:Raw.type_expr list) : type_expression result =
   match lst with
-  | [] -> ok @@ t_unit
+  | [] -> ok @@ t_unit ()
   | [hd] -> compile_type_expression hd
   | lst ->
       let%bind lst = bind_list @@ List.map compile_type_expression lst in

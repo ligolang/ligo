@@ -41,7 +41,7 @@ module Errors = struct
 
 end
 
-let check_entrypoint_annotation_format ep exp =
+let check_entrypoint_annotation_format ep (exp: expression) =
   match String.split_on_char '%' ep with
     | [ "" ; ep'] ->
       let cap = String.capitalize_ascii ep' in
