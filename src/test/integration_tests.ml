@@ -1192,6 +1192,10 @@ let condition_religo () : unit result =
     ] in
   ok ()
 
+let sequence_mligo () : unit result =
+  let%bind program = mtype_file "./contracts/sequence.mligo" in
+  expect_eq program "y" (e_unit ()) (e_nat 1)
+
 let eq_bool_common program =
   let%bind _ =
     bind_map_list (fun ( a , b , expected ) ->
@@ -2390,6 +2394,7 @@ let main = test_suite "Integration (End to End)" [
     test "condition (ligo)" condition ;
     test "condition (mligo)" condition_mligo ;
     test "condition (religo)" condition_religo ;
+    test "sequence (mligo" sequence_mligo ;
     test "eq bool (ligo)" eq_bool ;
     test "eq bool (mligo)" eq_bool_mligo ;
     test "eq bool (religo)" eq_bool_religo ;

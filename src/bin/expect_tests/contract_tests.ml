@@ -973,6 +973,10 @@ let%expect_test _ =
              DIP { DROP } } } |}]
 
 let%expect_test _ =
+  run_ligo_good [ "print-ast-typed" ; contract "sequence.mligo" ; ];
+  [%expect {| const y = lambda (_) return let x = +1 in let _ = let x = +2 in UNIT() in let _ = let x = +23 in UNIT() in let _ = let x = +42 in UNIT() in x |}]
+
+let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; contract "bad_type_operator.ligo" ; "main" ] ;
   [%expect {|
     ligo: bad type operator (TO_Map (unit,unit)):
