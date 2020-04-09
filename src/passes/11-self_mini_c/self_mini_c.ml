@@ -103,15 +103,21 @@ let occurs_count : expression_variable -> expression -> int =
    - ?
 *)
 
-let should_inline : expression_variable -> expression -> bool =
-  fun x e ->
-  occurs_count x e <= 1
+let is_variable : expression -> bool =
+  fun e ->
+  match e.content with
+  | E_variable _ -> true
+  | _ -> false
+
+let should_inline : expression_variable -> expression -> expression -> bool =
+  fun x e1 e2 ->
+  occurs_count x e2 <= 1 || is_variable e1
 
 let inline_let : bool ref -> expression -> expression =
   fun changed e ->
   match e.content with
   | E_let_in ((x, _a), should_inline_here, e1, e2) ->
-    if is_pure e1 && (should_inline_here || should_inline x e2)
+    if is_pure e1 && (should_inline_here || should_inline x e1 e2)
     then
       let e2' = Subst.subst_expression ~body:e2 ~x:x ~expr:e1 in
       (changed := true ; e2')
