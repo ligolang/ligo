@@ -150,7 +150,7 @@ let rec untranspile (v : value) (t : AST.type_expression) : AST.expression resul
             let%bind s' = untranspile s o in
             ok (e_a_empty_some s')
       )
-    | TC_map (k_ty,v_ty)-> (
+    | TC_map {k=k_ty;v=v_ty}-> (
         let%bind map =
           trace_strong (wrong_mini_c_value "map" v) @@
           get_map v in
@@ -168,7 +168,7 @@ let rec untranspile (v : value) (t : AST.type_expression) : AST.expression resul
         let%bind init = return @@ E_constant {cons_name=C_MAP_EMPTY;arguments=[]} in
         bind_fold_right_list aux init map'
       )
-    | TC_big_map (k_ty, v_ty) -> (
+    | TC_big_map {k=k_ty; v=v_ty} -> (
         let%bind big_map =
           trace_strong (wrong_mini_c_value "big_map" v) @@
           get_big_map v in
@@ -185,8 +185,8 @@ let rec untranspile (v : value) (t : AST.type_expression) : AST.expression resul
         let%bind init = return @@ E_constant {cons_name=C_BIG_MAP_EMPTY;arguments=[]} in
         bind_fold_right_list aux init big_map'
       )
-    | TC_map_or_big_map (_, _) -> fail @@ corner_case ~loc:"untranspiler" "TC_map_or_big_map t should not be present in mini-c"
-    | TC_michelson_or (l_ty, r_ty) -> (
+    | TC_map_or_big_map _ -> fail @@ corner_case ~loc:"untranspiler" "TC_map_or_big_map t should not be present in mini-c"
+    | TC_michelson_or {l=l_ty; r=r_ty} -> (
         let%bind v' = bind_map_or (get_left , get_right) v in
         ( match v' with
           | D_left l  ->

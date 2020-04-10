@@ -32,16 +32,26 @@ and arrow = {
     type2: type_expression
   }
 
+and type_map_args = {
+    k : type_expression;
+    v : type_expression;
+  }
+
+and michelson_or_args = {
+    l : type_expression;
+    r : type_expression;
+  }
+
 and type_operator =
   | TC_contract of type_expression
   | TC_option of type_expression
   | TC_list of type_expression
   | TC_set of type_expression
-  | TC_map of type_expression * type_expression
-  | TC_big_map of type_expression * type_expression
-  | TC_map_or_big_map of type_expression * type_expression
-  | TC_michelson_or of type_expression * type_expression
-  | TC_arrow of type_expression * type_expression
+  | TC_map of type_map_args
+  | TC_big_map of type_map_args
+  | TC_map_or_big_map of type_map_args
+  | TC_michelson_or of michelson_or_args
+  | TC_arrow of arrow
 
 
 and type_expression = {

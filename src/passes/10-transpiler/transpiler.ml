@@ -250,15 +250,15 @@ let rec transpile_type (t:AST.type_expression) : type_value result =
   | T_operator (TC_contract x) ->
       let%bind x' = transpile_type x in
       ok (T_contract x')
-  | T_operator (TC_map (key,value)) ->
-      let%bind kv' = bind_map_pair transpile_type (key, value) in
+  | T_operator (TC_map {k;v}) ->
+      let%bind kv' = bind_map_pair transpile_type (k, v) in
       ok (T_map kv')
-  | T_operator (TC_big_map (key,value)) ->
-      let%bind kv' = bind_map_pair transpile_type (key, value) in
+  | T_operator (TC_big_map {k;v}) ->
+      let%bind kv' = bind_map_pair transpile_type (k, v) in
       ok (T_big_map kv')
-  | T_operator (TC_map_or_big_map (_,_)) ->
+  | T_operator (TC_map_or_big_map _) ->
       fail @@ corner_case ~loc:"transpiler" "TC_map_or_big_map should have been resolved before transpilation"
-  | T_operator (TC_michelson_or (l,r)) ->
+  | T_operator (TC_michelson_or {l;r}) ->
       let%bind l' = transpile_type l in
       let%bind r' = transpile_type r in
       ok (T_or ((None,l'),(None,r')))
@@ -271,7 +271,7 @@ let rec transpile_type (t:AST.type_expression) : type_value result =
   | T_operator (TC_option o) ->
       let%bind o' = transpile_type o in
       ok (T_option o')
-  | T_operator (TC_arrow (param , result)) -> (
+  | T_operator (TC_arrow {type1=param ; type2=result}) -> (
       let%bind param' = transpile_type param in
       let%bind result' = transpile_type result in
       ok (T_function (param', result'))

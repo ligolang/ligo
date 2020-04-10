@@ -62,9 +62,9 @@ let ez_t_record lst ?s () : type_expression =
   t_record m ?s ()
 let t_pair a b ?s ()   : type_expression = ez_t_record [(Label "0",a) ; (Label "1",b)] ?s ()
 
-let t_map key value ?s () = make_t (T_operator (TC_map (key , value))) s
-let t_big_map key value ?s () = make_t (T_operator (TC_big_map (key , value))) s
-let t_map_or_big_map key value ?s () = make_t (T_operator (TC_map_or_big_map (key,value))) s
+let t_map k v ?s () = make_t (T_operator (TC_map { k ; v })) s
+let t_big_map k v ?s () = make_t (T_operator (TC_big_map { k ; v })) s
+let t_map_or_big_map k v ?s () = make_t (T_operator (TC_map_or_big_map { k ; v })) s
 
 let t_sum m ?s () : type_expression = make_t (T_sum m) s
 let make_t_ez_sum (lst:(constructor' * type_expression) list) : type_expression =
@@ -190,14 +190,14 @@ let get_t_record (t:type_expression) : type_expression label_map result = match 
 
 let get_t_map (t:type_expression) : (type_expression * type_expression) result =
   match t.type_content with
-  | T_operator (TC_map (k,v)) -> ok (k, v)
-  | T_operator (TC_map_or_big_map (k,v)) -> ok (k, v)
+  | T_operator (TC_map { k ; v }) -> ok (k, v)
+  | T_operator (TC_map_or_big_map { k ; v }) -> ok (k, v)
   | _ -> fail @@ Errors.not_a_x_type "map" t ()
 
 let get_t_big_map (t:type_expression) : (type_expression * type_expression) result =
   match t.type_content with
-  | T_operator (TC_big_map (k,v)) -> ok (k, v)
-  | T_operator (TC_map_or_big_map (k,v)) -> ok (k, v)
+  | T_operator (TC_big_map { k ; v }) -> ok (k, v)
+  | T_operator (TC_map_or_big_map { k ; v }) -> ok (k, v)
   | _ -> fail @@ Errors.not_a_x_type "big_map" t ()
 
 let get_t_map_key : type_expression -> type_expression result = fun t ->

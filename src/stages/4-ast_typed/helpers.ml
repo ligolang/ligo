@@ -6,22 +6,22 @@ let map_type_operator f = function
   | TC_option x -> TC_option (f x)
   | TC_list x -> TC_list (f x)
   | TC_set x -> TC_set (f x)
-  | TC_map (x , y) -> TC_map (f x , f y)
-  | TC_big_map (x , y)-> TC_big_map (f x , f y)
-  | TC_map_or_big_map (x , y)-> TC_map_or_big_map (f x , f y)
-  | TC_michelson_or (x, y) -> TC_michelson_or (f x, f y)
-  | TC_arrow (x, y) -> TC_arrow (f x, f y)
+  | TC_map {k ; v} -> TC_map { k = f k ; v = f v }
+  | TC_big_map {k ; v}-> TC_big_map { k = f k ; v = f v }
+  | TC_map_or_big_map { k ; v }-> TC_map_or_big_map { k = f k ; v = f v }
+  | TC_michelson_or { l ; r } -> TC_michelson_or { l = f l ; r = f r }
+  | TC_arrow {type1 ; type2} -> TC_arrow { type1 = f type1 ; type2 = f type2 }
 
 let bind_map_type_operator f = function
     TC_contract x -> let%bind x = f x in ok @@ TC_contract x
   | TC_option x -> let%bind x = f x in ok @@ TC_option x
   | TC_list x -> let%bind x = f x in ok @@ TC_list x
   | TC_set x -> let%bind x = f x in ok @@ TC_set x
-  | TC_map (x , y) -> let%bind x = f x in let%bind y = f y in ok @@ TC_map (x , y)
-  | TC_big_map (x , y)-> let%bind x = f x in let%bind y = f y in ok @@ TC_big_map (x , y)
-  | TC_map_or_big_map (x , y)-> let%bind x = f x in let%bind y = f y in ok @@ TC_map_or_big_map (x , y)
-  | TC_michelson_or (x , y)-> let%bind x = f x in let%bind y = f y in ok @@ TC_michelson_or (x , y)
-  | TC_arrow (x , y)-> let%bind x = f x in let%bind y = f y in ok @@ TC_arrow (x , y)
+  | TC_map {k ; v} -> let%bind k = f k in let%bind v = f v in ok @@ TC_map {k ; v}
+  | TC_big_map {k ; v} -> let%bind k = f k in let%bind v = f v in ok @@ TC_big_map {k ; v}
+  | TC_map_or_big_map {k ; v} -> let%bind k = f k in let%bind v = f v in ok @@ TC_map_or_big_map {k ; v}
+  | TC_michelson_or {l ; r}-> let%bind l = f l in let%bind r = f r in ok @@ TC_michelson_or {l ; r}
+  | TC_arrow {type1 ; type2}-> let%bind type1 = f type1 in let%bind type2 = f type2 in ok @@ TC_arrow {type1 ; type2}
 
 let type_operator_name = function
     TC_contract _ -> "TC_contract"
@@ -39,8 +39,8 @@ let type_expression'_of_string = function
   | "TC_option"   , [x]     -> ok @@ T_operator(TC_option x)
   | "TC_list"     , [x]     -> ok @@ T_operator(TC_list x)
   | "TC_set"      , [x]     -> ok @@ T_operator(TC_set x)
-  | "TC_map"      , [x ; y] -> ok @@ T_operator(TC_map (x , y))
-  | "TC_big_map"  , [x ; y] -> ok @@ T_operator(TC_big_map (x, y))
+  | "TC_map"      , [k ; v] -> ok @@ T_operator(TC_map { k ; v })
+  | "TC_big_map"  , [k ; v] -> ok @@ T_operator(TC_big_map { k ; v })
   | ("TC_contract" | "TC_option" | "TC_list" | "TC_set" | "TC_map" | "TC_big_map"), _ ->
      failwith "internal error: wrong number of arguments for type operator"
 
@@ -64,15 +64,15 @@ let type_expression'_of_string = function
      failwith "internal error: unknown type operator"
 
 let string_of_type_operator = function
-  | TC_contract  x       -> "TC_contract" , [x]
-  | TC_option    x       -> "TC_option"   , [x]
-  | TC_list      x       -> "TC_list"     , [x]
-  | TC_set       x       -> "TC_set"      , [x]
-  | TC_map       (x , y) -> "TC_map"      , [x ; y]
-  | TC_big_map   (x , y) -> "TC_big_map"  , [x ; y]
-  | TC_map_or_big_map   (x , y) -> "TC_map_or_big_map"  , [x ; y]
-  | TC_michelson_or     (x , y) -> "TC_michelson_or"    , [x ; y]
-  | TC_arrow     (x , y) -> "TC_arrow"    , [x ; y]
+  | TC_contract       x                 -> "TC_contract" , [x]
+  | TC_option         x                 -> "TC_option"   , [x]
+  | TC_list           x                 -> "TC_list"     , [x]
+  | TC_set            x                 -> "TC_set"      , [x]
+  | TC_map            { k ; v }         -> "TC_map"      , [k ; v]
+  | TC_big_map        { k ; v }         -> "TC_big_map"  , [k ; v]
+  | TC_map_or_big_map { k ; v }         -> "TC_map_or_big_map"  , [k ; v]
+  | TC_michelson_or   { l ; r }         -> "TC_michelson_or"    , [l ; r]
+  | TC_arrow          { type1 ; type2 } -> "TC_arrow"    , [type1 ; type2]
 
 let string_of_type_constant = function
   | TC_unit      -> "TC_unit", []

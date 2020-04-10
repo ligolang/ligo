@@ -231,11 +231,11 @@ and type_operator :
     | TC_option te -> Format.asprintf "option(%a)" f te
     | TC_list te -> Format.asprintf "list(%a)" f te
     | TC_set te -> Format.asprintf "set(%a)" f te
-    | TC_map (k, v) -> Format.asprintf "Map (%a,%a)" f k f v
-    | TC_big_map (k, v) -> Format.asprintf "Big Map (%a,%a)" f k f v
-    | TC_map_or_big_map (k, v) -> Format.asprintf "Map Or Big Map (%a,%a)" f k f v
-    | TC_michelson_or (k, v) -> Format.asprintf "michelson_or (%a,%a)" f k f v
-    | TC_arrow (k, v) -> Format.asprintf "arrow (%a,%a)" f k f v
+    | TC_map {k; v} -> Format.asprintf "Map (%a,%a)" f k f v
+    | TC_big_map {k; v} -> Format.asprintf "Big Map (%a,%a)" f k f v
+    | TC_map_or_big_map {k; v} -> Format.asprintf "Map Or Big Map (%a,%a)" f k f v
+    | TC_michelson_or {l; r} -> Format.asprintf "michelson_or (%a,%a)" f l f r
+    | TC_arrow {type1; type2} -> Format.asprintf "arrow (%a,%a)" f type1 f type2
     | TC_contract te  -> Format.asprintf "Contract (%a)" f te
   in
   fprintf ppf "(TO_%s)" s
