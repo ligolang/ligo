@@ -238,7 +238,7 @@ and type_operator :
     | TC_arrow {type1; type2} -> Format.asprintf "arrow (%a,%a)" f type1 f type2
     | TC_contract te  -> Format.asprintf "Contract (%a)" f te
   in
-  fprintf ppf "(TO_%s)" s
+  fprintf ppf "(type_operator: %s)" s
 (* end include Stage_common.PP *)
 
 let expression_variable ppf (ev : expression_variable) : unit =

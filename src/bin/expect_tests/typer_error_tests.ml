@@ -29,7 +29,7 @@ let%expect_test _ =
 
   run_ligo_bad [ "compile-contract" ; "../../test/contracts/negative/error_function_annotation_3.mligo"; "f"];
   [%expect {|
-    ligo: in file "", line 0, characters 0-0. different kinds:  {"a":"( (TO_list(operation)) * sum[Add -> int , Sub -> int] )","b":"sum[Add -> int , Sub -> int]"}
+    ligo: in file "", line 0, characters 0-0. different kinds:  {"a":"( (type_operator: list(operation)) * sum[Add -> int , Sub -> int] )","b":"sum[Add -> int , Sub -> int]"}
 
 
      If you're not sure how to fix this error, you can
@@ -80,7 +80,7 @@ let%expect_test _ =
 
   run_ligo_bad [ "compile-contract" ; "../../test/contracts/negative/error_typer_2.mligo" ; "main" ] ;
   [%expect {|
-    ligo: in file "error_typer_2.mligo", line 3, characters 24-39. different type constructors: Expected these two n-ary type constructors to be the same, but they're different {"a":"(TO_list(string))","b":"(TO_option(int))"}
+    ligo: in file "error_typer_2.mligo", line 3, characters 24-39. different type constructors: Expected these two n-ary type constructors to be the same, but they're different {"a":"(type_operator: list(string))","b":"(type_operator: option(int))"}
 
 
      If you're not sure how to fix this error, you can
