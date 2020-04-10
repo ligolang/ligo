@@ -147,7 +147,6 @@ say "type 'a monad = 'a Simple_utils.Trace.result;;";
 say "let (>>?) v f = Simple_utils.Trace.bind f v;;";
 say "let return v = Simple_utils.Trace.ok v;;";
 say "open $moduleName;;";
-say "module Adt_info = Adt_generator.Generic.Adt_info;;";
 
 say "";
 say "(* must be provided by one of the open or include statements: *)";
@@ -224,16 +223,22 @@ say '};;';
 say "(* map from node names to their generic folds *)";
 say "type 'state generic_continue_fold = ('state generic_continue_fold_node) StringMap.t;;";
 say "";
-say "type 'state fold_config =";
+say "type ('state , 'adt_info_node_instance_info) _fold_config =";
 say '  {';
-say "    generic : 'state -> 'state Adt_info.node_instance_info -> 'state;";
+say "    generic : 'state -> 'adt_info_node_instance_info -> 'state;";
 # look for builtins, filtering out the "implicit unit-like fake argument of emtpy constructors" (represented by '')
 for $adts.map({ $_<ctorsOrFields> })[*;*].grep({$_<isBuiltin> && $_<type> ne ''}).map({$_<type>}).unique -> $builtin
-{ say "    $builtin : 'state fold_config -> 'state -> $builtin -> 'state;"; }
+{ say "    $builtin : ('state , 'adt_info_node_instance_info) _fold_config -> 'state -> $builtin -> 'state;"; }
 # look for built-in polymorphic types
 for $adts.grep({$_<kind> ne $record && $_<kind> ne $variant}).map({$_<kind>}).unique -> $poly
-{ say "    $poly : 'a . 'state fold_config -> ('state -> 'a -> 'state) -> 'state -> 'a $poly -> 'state;"; }
+{ say "    $poly : 'a . ('state , 'adt_info_node_instance_info) _fold_config -> ('state -> 'a -> 'state) -> 'state -> 'a $poly -> 'state;"; }
 say '  };;';
+say "module Arg = struct";
+say "  type nonrec ('state , 'adt_info_node_instance_info) fold_config = ('state , 'adt_info_node_instance_info) _fold_config;;";
+say "end;;";
+say "module Adt_info = Adt_generator.Generic.Adt_info (Arg);;";
+say "include Adt_info;;";
+say "type 'state fold_config = ('state , 'state Adt_info.node_instance_info) _fold_config;;";
 
 say "";
 say 'type blahblah = {';
@@ -256,7 +261,8 @@ for $adts.list -> $t
     say "";
     say "let continue_info__$t<name>__$c<name> : type qstate . blahblah -> qstate fold_config -> {$c<type> || 'unit'} -> qstate Adt_info.ctor_or_field_instance = fun blahblah visitor x -> \{";
     say "  cf = info__$t<name>__$c<name>;";
-    say "  cf_continue = fun state -> blahblah.fold__$t<name>__$c<name> blahblah visitor state x;";
+    say "  cf_continue = (fun state -> blahblah.fold__$t<name>__$c<name> blahblah visitor state x);";
+    say "  cf_new_fold = (fun visitor state -> blahblah.fold__$t<name>__$c<name> blahblah visitor state x);";
     say '};;';
     say ""; }
   say "(* info for node $t<name> *)";
@@ -461,8 +467,8 @@ say '};;';
 
 say "";
 for $adts.list -> $t
-{ say "let with__$t<name> : _ = (fun node__$t<name> op -> \{ op with $t<name> = \{ op.$t<name> with node__$t<name> \} \});;";
-  say "let with__$t<name>__pre_state : _ = (fun node__$t<name>__pre_state op -> \{ op with $t<name> = \{ op.$t<name> with node__$t<name>__pre_state \} \});;";
-  say "let with__$t<name>__post_state : _ = (fun node__$t<name>__post_state op -> \{ op with $t<name> = \{ op.$t<name> with node__$t<name>__post_state \} \});;";
+{ say "let with__$t<name> : _ -> _ fold_map_config -> _ fold_map_config = (fun node__$t<name> op -> \{ op with $t<name> = \{ op.$t<name> with node__$t<name> \} \});;";
+  say "let with__$t<name>__pre_state : _ -> _ fold_map_config -> _ fold_map_config = (fun node__$t<name>__pre_state op -> \{ op with $t<name> = \{ op.$t<name> with node__$t<name>__pre_state \} \});;";
+  say "let with__$t<name>__post_state : _ -> _ fold_map_config -> _ fold_map_config = (fun node__$t<name>__post_state op -> \{ op with $t<name> = \{ op.$t<name> with node__$t<name>__post_state \} \});;";
   for $t<ctorsOrFields>.list -> $c
-  { say "let with__$t<name>__$c<name> : _ = (fun $t<name>__$c<name> op -> \{ op with $t<name> = \{ op.$t<name> with $t<name>__$c<name> \} \});;"; } }
+  { say "let with__$t<name>__$c<name> : _ -> _ fold_map_config -> _ fold_map_config = (fun $t<name>__$c<name> op -> \{ op with $t<name> = \{ op.$t<name> with $t<name>__$c<name> \} \});;"; } }

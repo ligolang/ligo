@@ -21,6 +21,7 @@ type type_constant =
 
 type te_cmap = type_expression constructor_map
 and te_lmap = type_expression label_map
+and type_meta = ast_core_type_expression option
 
 and type_content =
   | T_sum of te_cmap
