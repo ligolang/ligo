@@ -79,4 +79,7 @@ module Make (Lexer : Lexer.S)
 
     val expr_in_stdin :
       unit -> (AST.expr, message Region.reg) Stdlib.result
+
+    val preprocess :
+      string -> (Buffer.t, message Region.reg) Stdlib.result
 end

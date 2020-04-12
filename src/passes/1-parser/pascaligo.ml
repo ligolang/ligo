@@ -152,3 +152,7 @@ let parse_string source = apply (fun () -> Unit.contract_in_string source)
 (* Parsing an expression in a string *)
 
 let parse_expression source = apply (fun () -> Unit.expr_in_string source)
+
+(* Preprocessing a contract in a file *)
+
+let preprocess source = apply (fun () -> Unit.preprocess source)

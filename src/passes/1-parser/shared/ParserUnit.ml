@@ -265,4 +265,26 @@ module Make (Lexer: Lexer.S)
       let options = SubIO.make ~input:None ~expr:true in
       gen_parser options (Lexer.Channel stdin) parse_expr
 
+    (* Preprocess only *)
+
+    let preprocess (source : string) =
+      let options = SubIO.make ~input:(Some source) ~expr:false in
+      try
+        let cin     = open_in source in
+        let lexbuf  = Lexing.from_channel cin in
+        let () =
+          lexbuf.Lexing.lex_curr_p <-
+            {lexbuf.Lexing.lex_curr_p with pos_fname = source}
+        and options = (options :> Preprocessor.EvalOpt.options) in
+        match Preprocessor.Preproc.lex options lexbuf with
+          Stdlib.Ok _ as ok  -> ok
+        | Error (_, err) ->
+            let formatted =
+              Preproc.format ~offsets:options#offsets
+                             ~file:true
+                             err
+            in close_in cin; Stdlib.Error formatted
+      with Sys_error error ->
+             flush_all (); Stdlib.Error (Region.wrap_ghost error)
+
   end

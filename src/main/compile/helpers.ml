@@ -148,18 +148,18 @@ let pretty_print_cameligo source =
       ~offsets:true
       ~mode:`Point
       ~buffer in
-  Parser.Cameligo.ParserLog.pp_ast state ast;
+  Parser_cameligo.ParserLog.pp_ast state ast;
   ok buffer
 
 let pretty_print_reasonligo source =
   let%bind ast = Parser.Reasonligo.parse_file source in
   let buffer = Buffer.create 59 in
   let state = (* TODO: Should flow from the CLI *)
-    Parser.Reasonligo.ParserLog.mk_state
+    Parser_cameligo.ParserLog.mk_state
       ~offsets:true
       ~mode:`Point
       ~buffer in
-  Parser.Reasonligo.ParserLog.pp_ast state ast;
+  Parser_cameligo.ParserLog.pp_ast state ast;
   ok buffer
 
 let pretty_print syntax source =
@@ -169,3 +169,17 @@ let pretty_print syntax source =
     PascaLIGO  -> pretty_print_pascaligo  source
   | CameLIGO   -> pretty_print_cameligo   source
   | ReasonLIGO -> pretty_print_reasonligo source
+
+let preprocess_pascaligo = Parser.Pascaligo.preprocess
+
+let preprocess_cameligo = Parser.Cameligo.preprocess
+
+let preprocess_reasonligo = Parser.Reasonligo.preprocess
+
+let preprocess syntax source =
+  let%bind v_syntax =
+    syntax_to_variant syntax (Some source) in
+  match v_syntax with
+    PascaLIGO  -> preprocess_pascaligo  source
+  | CameLIGO   -> preprocess_cameligo   source
+  | ReasonLIGO -> preprocess_reasonligo source

@@ -16,3 +16,6 @@ val parse_string : string -> AST.t Trace.result
     scenarios where you would want to parse a PascaLIGO expression
     outside of a contract. *)
 val parse_expression : string -> AST.expr Trace.result
+
+(** Preprocess a given PascaLIGO file and preprocess it. *)
+val preprocess : string -> Buffer.t Trace.result

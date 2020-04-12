@@ -88,10 +88,10 @@ module Errors =
         ("location",
          fun () -> Format.asprintf "%a" Location.pp_lift @@ expression_loc)]
       in error ~data title message
-    
-    let invalid_wild (expr: AST.expr) = 
+(*
+    let invalid_wild (expr: AST.expr) =
       let title () = "" in
-      let message () = 
+      let message () =
         "It looks like you are using a wild pattern where it cannot be used."
       in
       let expression_loc = AST.expr_to_region expr in
@@ -99,7 +99,7 @@ module Errors =
         ("location",
          fun () -> Format.asprintf "%a" Location.pp_lift @@ expression_loc)]
       in error ~data title message
-
+ *)
   end
 
 let apply parser =
@@ -172,3 +172,7 @@ let parse_string source = apply (fun () -> Unit.contract_in_string source)
 (* Parsing an expression in a string *)
 
 let parse_expression source = apply (fun () -> Unit.expr_in_string source)
+
+(* Preprocessing a contract in a file *)
+
+let preprocess source = apply (fun () -> Unit.preprocess source)
