@@ -1,5 +1,6 @@
 #!/bin/sh
 set -e
+set -x
 
 if test $# -ne 1 || test "x$1" = "-h" -o "x$1" = "x--help"; then
   echo "Usage: build_docker_image.sh TAG_NAME"

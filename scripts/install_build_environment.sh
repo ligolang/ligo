@@ -22,26 +22,29 @@ echo "Installing dependencies.."
 if [ -n "`uname -a | grep -i arch`" ]
 then
     sudo pacman -Sy --noconfirm \
+        rakudo \
         make \
         m4 \
         gcc \
         patch \
         bubblewrap \
         rsync \
-        curl 
+        curl
 fi
 
 if [ -n "`uname -a | grep -i ubuntu`" ]
 then
 sudo apt-get install -y make \
+     perl6 \
+     make \
      m4 \
      gcc \
      patch \
      bubblewrap \
      rsync \
-     curl 
+     curl
 fi
-    
+
 if [ -n "`uname -a | grep -i ubuntu`" ]
 then
     echo "ubuntu"

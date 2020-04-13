@@ -1,6 +1,6 @@
 type root =
-| A of a
-| B of int
+| A of rootA
+| B of rootB
 | C of string
 
 and a = {
@@ -15,3 +15,7 @@ and ta1 =
 and ta2 =
 | Z of ta2
 | W of unit
+
+and rootA = a list
+
+and rootB = int list
