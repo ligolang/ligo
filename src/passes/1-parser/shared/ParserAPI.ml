@@ -103,11 +103,12 @@ module Make (IO: IO)
                  Printf.sprintf ", at \"%s\"" invalid_lexeme
         | Some valid ->
             let valid_lexeme = Lexer.Token.to_lexeme valid in
-            let valid = Printf.sprintf ", after \"%s\"" valid_lexeme in
-            if Lexer.Token.is_eof invalid then valid
+            if Lexer.Token.is_eof invalid then
+              Printf.sprintf ", after \"%s\"" valid_lexeme
             else
               let invalid_lexeme = Lexer.Token.to_lexeme invalid in
-              Printf.sprintf "at \"%s\", before %s" invalid_lexeme valid in
+              Printf.sprintf " at \"%s\", after \"%s\""
+                             invalid_lexeme valid_lexeme in
       let header = header ^ trailer in
       let msg =
         header ^ (if msg = "" then ".\n" else ":\n" ^ msg)
