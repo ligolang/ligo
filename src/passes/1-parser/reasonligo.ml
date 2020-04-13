@@ -88,7 +88,7 @@ module Errors =
         ("location",
          fun () -> Format.asprintf "%a" Location.pp_lift @@ expression_loc)]
       in error ~data title message
-(*
+
     let invalid_wild (expr: AST.expr) =
       let title () = "" in
       let message () =
@@ -99,7 +99,7 @@ module Errors =
         ("location",
          fun () -> Format.asprintf "%a" Location.pp_lift @@ expression_loc)]
       in error ~data title message
- *)
+
   end
 
 let apply parser =
