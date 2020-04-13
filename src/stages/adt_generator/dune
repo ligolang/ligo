@@ -1,5 +1,7 @@
 (library
   (name adt_generator)
   (public_name ligo.adt_generator)
-  (libraries)
+  (libraries
+    simple-utils
+  )
 )

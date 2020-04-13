@@ -58,8 +58,8 @@ let () =
 
 
 (* Test that the same fold_map_config can be ascibed with different 'a type arguments *)
-let _noi : (int, [> error]) fold_map_config = no_op (* (fun _ -> ()) *)
-let _nob : (bool, [> error]) fold_map_config = no_op (* (fun _ -> ()) *)
+let _noi : (int, [> error]) fold_map_config__Amodule = no_op (* (fun _ -> ()) *)
+let _nob : (bool, [> error]) fold_map_config__Amodule = no_op (* (fun _ -> ()) *)
 
 let () =
   let some_root : root = A [ { a1 = X (A [ { a1 = X (B [ 1 ; 2 ; 3 ]) ; a2 = W () } ]) ; a2 = Z (W ()) } ] in

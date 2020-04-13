@@ -15,6 +15,7 @@ let needs_parens              = {
     z                         = (fun _ _ _ -> false) ;
     string                    = (fun _ _ _ -> false) ;
     bytes                     = (fun _ _ _ -> false) ;
+    unit                      = (fun _ _ _ -> false) ;
     packed_internal_operation = (fun _ _ _ -> false) ;
     expression_variable       = (fun _ _ _ -> false) ;
     constructor'              = (fun _ _ _ -> false) ;
@@ -28,6 +29,9 @@ let needs_parens              = {
     list_ne                   = (fun _ _ _ _ -> false) ;
     option                    = (fun _visitor _continue _state o ->
       match o with None -> false | Some _ -> true) ;
+    poly_unionfind            = (fun _ _ _ _ -> false) ;
+    poly_set                  = (fun _ _ _ _ -> false) ;
+    typeVariableMap           = (fun _ _ _ _ -> false) ;
   }
 
 let op ppf = {
@@ -49,6 +53,7 @@ let op ppf = {
     z                         = (fun _visitor () i               -> fprintf ppf "%a" Z.pp_print i) ;
     string                    = (fun _visitor () str             -> fprintf ppf "\"%s\"" str) ;
     bytes                     = (fun _visitor () _bytes          -> fprintf ppf "bytes...") ;
+    unit                      = (fun _visitor () ()              -> fprintf ppf "()") ;
     packed_internal_operation = (fun _visitor () _op             -> fprintf ppf "Operation(...bytes)") ;
     expression_variable       = (fun _visitor () ev              -> fprintf ppf "%a" Var.pp ev) ;
     constructor'              = (fun _visitor () (Constructor c) -> fprintf ppf "Constructor %s" c) ;
@@ -80,6 +85,17 @@ let op ppf = {
       match o with
       | None -> fprintf ppf "None"
       | Some v -> fprintf ppf "%a" (fun _ppf -> continue ()) v) ;
+    poly_unionfind            = (fun _visitor continue () p   ->
+      let lst = (UnionFind.Poly2.elements p) in
+      fprintf ppf "LMap [ %a ]" (list_sep (fun _ppf -> continue ()) (fun ppf () -> fprintf ppf " ; ")) lst);
+    poly_set                  = (fun _visitor continue () set   ->
+      let lst = (RedBlackTrees.PolySet.elements set) in
+      fprintf ppf "LMap [ %a ]" (list_sep (fun _ppf -> continue ()) (fun ppf () -> fprintf ppf " ; ")) lst);
+    typeVariableMap           = (fun _visitor continue () tvmap   ->
+      let lst = List.sort (fun (a, _) (b, _) -> Var.compare a b) (RedBlackTrees.PolyMap.bindings tvmap) in
+      let aux ppf (k, v) =
+        fprintf ppf "(Var %a, %a)" Var.pp k (fun _ppf -> continue ()) v in
+      fprintf ppf "typeVariableMap [ %a ]" (list_sep aux (fun ppf () -> fprintf ppf " ; ")) lst);
   }
 
 let print : (unit fold_config -> unit -> 'a -> unit) -> formatter -> 'a -> unit = fun fold ppf v ->
@@ -87,3 +103,4 @@ let print : (unit fold_config -> unit -> 'a -> unit) -> formatter -> 'a -> unit 
 
 let program = print fold__program
 let type_expression = print fold__type_expression
+let full_environment = print fold__full_environment

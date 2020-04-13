@@ -1,3 +1,15 @@
+module BlahBluh = struct
+module StringMap = Map.Make(String);;
+(* generic folds for nodes *)
+type 'state generic_continue_fold_node = {
+  continue                 : 'state -> 'state ;
+  (* generic folds for each field *)
+  continue_ctors_or_fields : ('state -> 'state) StringMap.t ;
+};;
+(* map from node names to their generic folds *)
+type 'state generic_continue_fold = ('state generic_continue_fold_node) StringMap.t;;
+end
+
 module Adt_info (M : sig type ('state , 'adt_info_node_instance_info) fold_config end) = struct
   type kind =
   | Record

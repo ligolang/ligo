@@ -20,7 +20,7 @@ type ('key, 'value) map = ('key, 'value) t
 
 val create : cmp:('key -> 'key -> int) -> ('key, 'value) t
 
-val empty : ('key, 'value) t
+val empty : ('key, 'value) t -> ('key, 'new_value) t
 
 (* Emptiness *)
 
@@ -32,6 +32,11 @@ val is_empty : ('key, 'value) t -> bool
    lost (and replaced by [value]). *)
 
 val add : 'key -> 'value -> ('key, 'value) t -> ('key, 'value) t
+
+(* The value of the call [add key value map] is a map containing all
+   the bindings of the map [map], except for the binding of [key]. *)
+
+val remove : 'key -> ('key, 'value) t -> ('key, 'value) t
 
 (* The value of the call [find key map] is the value associated to the
    [key] in the map [map]. If [key] is not bound in [map], the
@@ -46,6 +51,17 @@ val find : 'key -> ('key, 'value) t -> 'value
    otherwise. *)
 
 val find_opt : 'key -> ('key, 'value) t -> 'value option
+
+(* The value of the call [update key f map] is a map containing all
+   the bindings of the map [map], extended by the binding of [key] to
+   the value returned by [f], when [f maybe_value] returns
+   [Some value]. On the other hand, when [f maybe_value] returns
+   [None], the existing binding for [key] in [map] is removed from the
+   map, if there is one. The argument [maybe_value] passed to [f] is
+   [Some value] if the key [key] is bound to [value] in the map [map],
+   and [None] otherwise. *)
+
+val update : 'key -> ('value option -> 'value option) -> ('key, 'value) map -> ('key, 'value) map
 
 (* The value of the call [bindings map] is the association list
    containing the bindings of the map [map], sorted by increasing keys

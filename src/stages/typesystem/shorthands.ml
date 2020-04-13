@@ -1,7 +1,9 @@
+open Ast_typed.Types
 open Core
+open Ast_typed.Misc
 
-let tc type_vars allowed_list =
-  Core.C_typeclass (type_vars , allowed_list)
+let tc type_vars allowed_list : type_constraint =
+  C_typeclass {tc_args = type_vars ; typeclass = allowed_list}
 
 let forall binder f =
   let () = ignore binder in
@@ -45,32 +47,32 @@ let forall2_tc a b f =
   f a' b'
 
 let (=>) tc ty = (tc , ty)
-let (-->) arg ret = P_constant (C_arrow  , [arg; ret])
-let option t  = P_constant (C_option  , [t])
-let pair a b  = P_constant (C_record , [a; b])
-let sum  a b  = P_constant (C_variant, [a; b])
-let map  k v  = P_constant (C_map   , [k; v])
-let unit      = P_constant (C_unit    , [])
-let list   t  = P_constant (C_list    , [t])
-let set    t  = P_constant (C_set     , [t])
-let bool      = P_variable (Stage_common.Constant.t_bool)
-let string    = P_constant (C_string  , [])
-let nat       = P_constant (C_nat     , [])
-let mutez     = P_constant (C_mutez  , [])
-let timestamp = P_constant (C_timestamp , [])
-let int       = P_constant (C_int     , [])
-let address   = P_constant (C_address , [])
-let chain_id  = P_constant (C_chain_id , [])
-let bytes     = P_constant (C_bytes   , [])
-let key       = P_constant (C_key     , [])
-let key_hash  = P_constant (C_key_hash  , [])
-let signature = P_constant (C_signature , [])
-let operation = P_constant (C_operation , [])
-let contract t = P_constant (C_contract , [t])
+let (-->) arg ret = p_constant C_arrow     [arg; ret]
+let option t      = p_constant C_option    [t]
+let pair a b      = p_constant C_record    [a; b]
+let sum  a b      = p_constant C_variant   [a; b]
+let map  k v      = p_constant C_map       [k; v]
+let unit          = p_constant C_unit      []
+let list   t      = p_constant C_list      [t]
+let set    t      = p_constant C_set       [t]
+let bool          = P_variable Stage_common.Constant.t_bool
+let string        = p_constant C_string    []
+let nat           = p_constant C_nat       []
+let mutez         = p_constant C_mutez     []
+let timestamp     = p_constant C_timestamp []
+let int           = p_constant C_int       []
+let address       = p_constant C_address   []
+let chain_id      = p_constant C_chain_id  []
+let bytes         = p_constant C_bytes     []
+let key           = p_constant C_key       []
+let key_hash      = p_constant C_key_hash  []
+let signature     = p_constant C_signature []
+let operation     = p_constant C_operation []
+let contract t    = p_constant C_contract  [t]
 let ( * ) a b = pair a b
 
 (* These are used temporarily to de-curry functions that correspond to Michelson operators *)
-let tuple0       = P_constant (C_record , [])
-let tuple1 a     = P_constant (C_record , [a])
-let tuple2 a b   = P_constant (C_record , [a; b])
-let tuple3 a b c = P_constant (C_record , [a; b; c])
+let tuple0        = p_constant C_record    []
+let tuple1 a      = p_constant C_record    [a]
+let tuple2 a b    = p_constant C_record    [a; b]
+let tuple3 a b c  = p_constant C_record    [a; b; c]

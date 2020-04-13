@@ -38,11 +38,11 @@ module Errors : sig
   *)
 end
 
-val type_program : I.program -> (O.program * Solver.state) result
-val type_declaration : environment -> Solver.state -> I.declaration -> (environment * Solver.state * O.declaration option) result
+val type_program : I.program -> (O.program * O.typer_state) result
+val type_declaration : environment -> O.typer_state -> I.declaration -> (environment * O.typer_state * O.declaration option) result
 (* val type_match : (environment -> 'i -> 'o result) -> environment -> O.type_value -> 'i I.matching -> I.expression -> Location.t -> 'o O.matching result *)
 val evaluate_type : environment -> I.type_expression -> O.type_expression result
-val type_expression : environment -> Solver.state -> ?tv_opt:O.type_expression -> I.expression -> (O.expression * Solver.state) result
+val type_expression : environment -> O.typer_state -> ?tv_opt:O.type_expression -> I.expression -> (O.expression * O.typer_state) result
 val type_constant : I.constant' -> O.type_expression list -> O.type_expression option -> (O.constant' * O.type_expression) result
 (*
 val untype_type_value : O.type_value -> (I.type_expression) result

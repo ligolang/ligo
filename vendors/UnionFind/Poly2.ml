@@ -43,6 +43,7 @@ let map_empty (compare : 'item -> 'item -> int) : ('item, 'value) map = RedBlack
 let map_find : 'item 'value . 'item -> ('item, 'value) map -> 'value = RedBlackTrees.PolyMap.find
 let map_iter : 'item 'value . ('item -> 'value -> unit) -> ('item, 'value) map -> unit = RedBlackTrees.PolyMap.iter
 let map_add : 'item 'value . 'item -> 'value -> ('item, 'value) map -> ('item, 'value) map = RedBlackTrees.PolyMap.add
+let map_sorted_keys : 'item 'value . ('item, 'value) map -> 'item list = fun m -> List.map fst @@ RedBlackTrees.PolyMap.bindings m
 
 (** The type [partition] implements a partition of classes of
     equivalent items by means of a map from items to nodes of type
@@ -76,17 +77,20 @@ let is_equiv (i: 'item) (j: 'item) (p: 'item partition) : bool =
   try equal p.compare (repr i p) (repr j p) with
     Not_found -> false
 
-let get_or_set (i: 'item) (p: 'item partition) =
+let get_or_set_h (i: 'item) (p: 'item partition) =
   try seek i p, p with
     Not_found -> let n = i,0 in (n, root n p)
+
+let get_or_set (i: 'item) (p: 'item partition) =
+  let (i, _h), p = get_or_set_h i p in (i, p)
 
 let mem i p = try Some (repr i p) with Not_found -> None
 
 let repr i p = try repr i p with Not_found -> i
 
 let equiv (i: 'item) (j: 'item) (p: 'item partition) : 'item partition =
-  let (ri,hi as ni), p = get_or_set i p in
-  let (rj,hj as nj), p = get_or_set j p in
+  let (ri,hi as ni), p = get_or_set_h i p in
+  let (rj,hj as nj), p = get_or_set_h j p in
   if   equal p.compare ri rj
   then p
   else if   hi > hj
@@ -104,8 +108,8 @@ let equiv (i: 'item) (j: 'item) (p: 'item partition) : 'item partition =
     applied (which, without the constraint above, would yield a
     height-balanced new tree). *)
 let alias (i: 'item) (j: 'item) (p: 'item partition) : 'item partition =
-  let (ri,hi as ni), p = get_or_set i p in
-  let (rj,hj as nj), p = get_or_set j p in
+  let (ri,hi as ni), p = get_or_set_h i p in
+  let (rj,hj as nj), p = get_or_set_h j p in
   if   equal p.compare ri rj
   then p
   else if   hi = hj || equal p.compare ri i
@@ -113,10 +117,15 @@ let alias (i: 'item) (j: 'item) (p: 'item partition) : 'item partition =
   else if hi < hj then link ni rj p
   else link nj ri p
 
+(** {1 iteration over the elements} *)
+
+let elements : 'item . 'item partition -> 'item list =
+  fun { to_string=_; compare=_; map } ->
+  map_sorted_keys map
+
 (** {1 Printing} *)
 
-let print (p: 'item partition) =
-  let buffer = Buffer.create 80 in
+let print ppf (p: 'item partition) =
   let print i node =
     let hi, hj, j =
       match node with
@@ -124,8 +133,8 @@ let print (p: 'item partition) =
       | Link (j,hi) ->
          match map_find j p.map with
            Root hj | Link (_,hj) -> hi,hj,j in
-    let link =
-      Printf.sprintf "%s,%d -> %s,%d\n"
+    let () =
+      Format.fprintf ppf "%s,%d -> %s,%d\n"
         (p.to_string i) hi (p.to_string j) hj
-    in Buffer.add_string buffer link
-  in map_iter print p.map; buffer
+    in ()
+  in map_iter print p.map

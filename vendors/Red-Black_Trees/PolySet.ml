@@ -11,7 +11,7 @@ type 'elt set = 'elt t
 
 let create ~cmp = {tree = RB.empty; cmp}
 
-let empty = {tree = RB.empty; cmp=Pervasives.compare}
+let empty set = {tree = RB.empty; cmp=set.cmp}
 
 let is_empty set = RB.is_empty set.tree
 

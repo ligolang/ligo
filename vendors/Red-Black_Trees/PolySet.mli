@@ -19,7 +19,7 @@ type 'elt set = 'elt t
 
 val create : cmp:('elt -> 'elt -> int) -> 'elt t
 
-val empty : 'elt t
+val empty : 'elt t -> 'elt t
 
 (* Emptiness *)
 

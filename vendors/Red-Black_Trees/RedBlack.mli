@@ -26,6 +26,15 @@ type choice = Old | New
 
 val add: cmp:('a -> 'a -> int) -> choice -> 'a -> 'a t -> 'a t
 
+(* The value of the call [remove ~cmp x t] is a red-black tree
+   containing the same elements as [t] with the exception of the
+   element identified by [x]. The type of [x] can be different from
+   that of the elements of the tree, for example if the tree is used to
+   implement a map, x would be a [key], whereas the elements of the tree
+   would be [key, value] pairs. *)
+
+val remove: cmp:('a -> 'b -> int) -> 'a -> 'b t -> 'b t
+
 (* The value of the call [find ~cmp x t] is the element [y] belonging
    to a node of the tree [t], such that [cmp x y = true]. If none, the
    exception [Not_found] is raised. *)

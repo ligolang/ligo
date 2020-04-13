@@ -526,6 +526,14 @@ let program_environment (program : program) : full_environment =
   | Declaration_constant { binder=_ ; expr=_ ; inline=_ ; post_env } -> post_env
 
 let equal_variables a b : bool =
-  match a.expression_content, b.expression_content with 
+  match a.expression_content, b.expression_content with
   | E_variable a, E_variable b -> Var.equal a b
   |  _, _ -> false
+
+let p_constant (p_ctor_tag : constant_tag) (p_ctor_args : p_ctor_args) =
+  P_constant {
+      p_ctor_tag : constant_tag ;
+      p_ctor_args : p_ctor_args ;
+    }
+
+let c_equation aval bval = C_equation { aval ; bval }

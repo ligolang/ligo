@@ -50,6 +50,32 @@ let add ~cmp choice elt tree =
   in try blacken (insert tree) with
        Physical_equality -> tree
 
+let remove : type a b . cmp:(a -> b -> int) -> a -> b t -> b t = fun ~cmp elt tree ->
+  (* TODO: this leaves the tree not properly balanced. *)
+  let rec bst_shift_up : b t -> b t = function
+    | Ext -> failwith "unknown error"
+    | Int (colour, left, root, right) ->
+       (
+         ignore root; (* we delete the root *)
+         match left, right with
+         | Ext, Ext -> Ext
+         | Ext, Int (_rcolour, _rleft, rroot, _rright) ->
+            let new_right = bst_shift_up right in
+            Int (colour, Ext, rroot, new_right)
+         | Int (_lcolour, _lleft, lroot, _lright), _ ->
+            let new_left = bst_shift_up left in
+            Int (colour, new_left, lroot, right)
+       ) in
+  let rec bst_delete : a -> b t -> b t = fun elt -> function
+    | Ext -> failwith "remove in red-black tree: element not found"
+    | Int (colour, left, root, right) as current ->
+       let c = cmp elt root in
+       if      c = 0 then bst_shift_up current
+       else if c < 0 then Int (colour, bst_delete elt left, root, right)
+       else               Int (colour, left, root, bst_delete elt right)
+  in
+  bst_delete elt tree
+
 exception Not_found
 
 let rec find ~cmp elt = function
