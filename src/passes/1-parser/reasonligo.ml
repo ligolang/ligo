@@ -159,7 +159,7 @@ let apply parser =
   | exception SyntaxError.Error (SyntaxError.WrongFunctionArguments expr) ->
       Trace.fail @@ Errors.wrong_function_arguments expr
   | exception SyntaxError.Error (SyntaxError.InvalidWild expr) ->
-      Trace.fail @@ Errors.wrong_function_arguments expr
+      Trace.fail @@ Errors.invalid_wild expr
 
 (* Parsing a contract in a file *)
 
