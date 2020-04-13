@@ -176,7 +176,14 @@ let rec transpile_type (t:AST.type_expression) : type_value result =
                       aux node in
       ok @@ snd m'
   | T_record m ->
-      let node = Append_tree.of_list @@ Stage_common.Helpers.kv_list_of_record_or_tuple m in
+      let is_tuple_lmap = Stage_common.Helpers.is_tuple_lmap m in
+      let node = Append_tree.of_list @@ (
+        if is_tuple_lmap then
+          Stage_common.Helpers.tuple_of_record m
+        else 
+          List.rev @@ LMap.to_kv_list m
+        )
+      in
       let aux a b : type_value annotated result =
         let%bind a = a in
         let%bind b = b in
@@ -184,8 +191,13 @@ let rec transpile_type (t:AST.type_expression) : type_value result =
       in
       let%bind m' = Append_tree.fold_ne
                       (fun (Stage_common.Types.Label ann, a) ->
-                        let%bind a = transpile_type a in
-                        ok (Some ann, a))
+                        let%bind a = transpile_type a in                        
+                        ok ((if is_tuple_lmap then 
+                              None 
+                            else 
+                              Some ann), 
+                            a)
+                      )
                       aux node in
       ok @@ snd m'
   | T_arrow {type1;type2} -> (
