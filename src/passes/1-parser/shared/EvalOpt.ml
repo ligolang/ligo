@@ -1,45 +1,62 @@
-(** Parsing command-line options *)
+(* Parsing command-line options *)
 
-(** The type [command] denotes some possible behaviours of the
-    compiler.
-*)
+(* The type [command] denotes some possible behaviours of the
+    compiler. *)
+
 type command = Quiet | Copy | Units | Tokens
 
-(** The type [options] gathers the command-line options.
-*)
+type language = [`PascaLIGO | `CameLIGO | `ReasonLIGO]
+
+let lang_to_string = function
+  `PascaLIGO -> "PascaLIGO"
+| `CameLIGO -> "CameLIGO"
+| `ReasonLIGO -> "ReasonLIGO"
+
+(* The type [options] gathers the command-line options. *)
+
+module SSet = Set.Make (String)
+
 type options = <
   input   : string option;
   libs    : string list;
-  verbose : Utils.String.Set.t;
+  verbose : SSet.t;
   offsets : bool;
+  lang    : language;
+  ext     : string;           (* ".ligo", ".mligo", ".religo" *)
   mode    : [`Byte | `Point];
   cmd     : command;
   mono    : bool;
   expr    : bool
 >
 
-let make ~input ~libs ~verbose ~offsets ~mode ~cmd ~mono ~expr =
+let make ~input ~libs ~verbose ~offsets ~lang ~ext ~mode ~cmd ~mono ~expr : options =
   object
     method input   = input
     method libs    = libs
     method verbose = verbose
     method offsets = offsets
+    method lang    = lang
+    method ext     = ext
     method mode    = mode
     method cmd     = cmd
     method mono    = mono
     method expr    = expr
   end
 
-(** {1 Auxiliary functions} *)
+(* Auxiliary functions *)
 
 let  printf = Printf.printf
 let sprintf = Printf.sprintf
 let   print = print_endline
 
-let abort msg =
-  Utils.highlight (sprintf "Command-line error: %s\n" msg); exit 1
+(* Printing a string in red to standard error *)
 
-(** {1 Help} *)
+let highlight msg = Printf.eprintf "\027[31m%s\027[0m%!" msg
+
+let abort msg =
+  highlight (sprintf "Command-line error: %s\n" msg); exit 1
+
+(* Help *)
 
 let help language extension () =
   let file = Filename.basename Sys.argv.(0) in
@@ -55,16 +72,16 @@ let help language extension () =
   print "      --bytes            Bytes for source locations";
   print "      --mono             Use Menhir monolithic API";
   print "      --expr             Parse an expression";
-  print "      --verbose=<stages> cli, cpp, ast-tokens, ast (colon-separated)";
+  print "      --verbose=<stages> cli, preproc, ast-tokens, ast (colon-separated)";
   print "      --version          Commit hash on stdout";
   print "  -h, --help             This help";
   exit 0
 
-(** {1 Version} *)
+(* Version *)
 
 let version () = printf "%s\n" Version.version; exit 0
 
-(** {1 Specifying the command-line options a la GNU} *)
+(* Specifying the command-line options a la GNU *)
 
 let copy     = ref false
 and tokens   = ref false
@@ -72,7 +89,7 @@ and units    = ref false
 and quiet    = ref false
 and columns  = ref false
 and bytes    = ref false
-and verbose  = ref Utils.String.Set.empty
+and verbose  = ref SSet.empty
 and input    = ref None
 and libs     = ref []
 and verb_str = ref ""
@@ -84,11 +101,12 @@ let split_at_colon = Str.(split (regexp ":"))
 let add_path p = libs := !libs @ split_at_colon p
 
 let add_verbose d =
-  verbose := List.fold_left (Utils.swap Utils.String.Set.add)
+  verbose := List.fold_left (fun x y -> SSet.add y x)
                             !verbose
                             (split_at_colon d)
 
 let specs language extension =
+  let language = lang_to_string language in
   let open! Getopt in [
     'I',     nolong,    None, Some add_path;
     'c',     "copy",    set copy true, None;
@@ -105,17 +123,15 @@ let specs language extension =
   ]
 ;;
 
-(** Handler of anonymous arguments
-*)
+(* Handler of anonymous arguments *)
+
 let anonymous arg =
   match !input with
       None -> input := Some arg
-  | Some s -> Printf.printf "s=%s\n" s;
-             abort (sprintf "Multiple inputs")
-;;
+  | Some _ -> abort (sprintf "Multiple inputs")
 
-(** Checking options and exporting them as non-mutable values
-*)
+(* Checking options and exporting them as non-mutable values *)
+
 let string_of convert = function
     None -> "None"
 | Some s -> sprintf "Some %s" (convert s)
@@ -139,21 +155,20 @@ let print_opt () =
   printf "verbose  = %s\n" !verb_str;
   printf "input    = %s\n" (string_of quote !input);
   printf "libs     = %s\n" (string_of_path !libs)
-;;
 
-let check extension =
+let check lang ext =
   let () =
-    if Utils.String.Set.mem "cli" !verbose then print_opt () in
+    if SSet.mem "cli" !verbose then print_opt () in
 
   let input =
     match !input with
-      None | Some "-" -> !input
+      None | Some "-" -> None
     | Some file_path ->
-        if   Filename.check_suffix file_path extension
+        if   Filename.check_suffix file_path ext
         then if   Sys.file_exists file_path
              then Some file_path
              else abort "Source file not found."
-        else abort ("Source file lacks the extension " ^ extension ^ ".") in
+        else abort ("Source file lacks the extension " ^ ext ^ ".") in
 
   (* Exporting remaining options as non-mutable values *)
 
@@ -169,7 +184,7 @@ let check extension =
   and libs    = !libs in
 
   let () =
-    if Utils.String.Set.mem "cli" verbose then
+    if SSet.mem "cli" verbose then
       begin
         printf "\nEXPORTED COMMAND LINE\n";
         printf "copy     = %b\n" copy;
@@ -194,16 +209,16 @@ let check extension =
     | false, false, false,  true -> Tokens
     | _ -> abort "Choose one of -q, -c, -u, -t."
 
-  in make ~input ~libs ~verbose ~offsets ~mode ~cmd ~mono ~expr
+  in make ~input ~libs ~verbose ~offsets ~mode ~cmd ~mono ~expr ~lang ~ext
 
-(** {1 Parsing the command-line options} *)
+(* Parsing the command-line options *)
 
-let read language extension =
+let read ~lang ~ext =
   try
-    Getopt.parse_cmdline (specs language extension) anonymous;
+    Getopt.parse_cmdline (specs lang ext) anonymous;
     (verb_str :=
        let apply e a =
          if a = "" then e else Printf.sprintf "%s, %s" e a
-       in Utils.String.Set.fold apply !verbose "");
-    check extension
+       in SSet.fold apply !verbose "");
+    check lang ext
   with Getopt.Error msg -> abort msg

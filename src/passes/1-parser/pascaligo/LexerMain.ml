@@ -4,8 +4,7 @@ module Region = Simple_utils.Region
 
 module IO =
   struct
-    let ext = ".ligo"
-    let options = EvalOpt.read "PascaLIGO" ext
+    let options = EvalOpt.(read ~lang:`PascaLIGO ~ext:".ligo")
   end
 
 module M = LexerUnit.Make (IO) (Lexer.Make (LexToken))
@@ -13,4 +12,4 @@ module M = LexerUnit.Make (IO) (Lexer.Make (LexToken))
 let () =
   match M.trace () with
     Stdlib.Ok () -> ()
-  | Error Region.{value; _} -> Utils.highlight value
+  | Error Region.{value; _} -> Printf.eprintf "\027[31m%s\027[0m%!" value

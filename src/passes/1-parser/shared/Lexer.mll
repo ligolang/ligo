@@ -157,7 +157,14 @@ module type S =
 
     val slide : token -> window -> window
 
+    type input =
+      File    of file_path
+    | String  of string
+    | Channel of in_channel
+    | Buffer  of Lexing.lexbuf
+
     type instance = {
+      input    : input;
       read     : log:logger -> Lexing.lexbuf -> token;
       buffer   : Lexing.lexbuf;
       get_win  : unit -> window;
@@ -167,16 +174,15 @@ module type S =
       close    : unit -> unit
     }
 
-    type input =
-      File    of file_path (* "-" means stdin *)
-    | Stdin
-    | String  of string
-    | Channel of in_channel
-    | Buffer  of Lexing.lexbuf
-
     type open_err = File_opening of string
 
-    val open_token_stream : input -> (instance, open_err) Stdlib.result
+    val lexbuf_from_input :
+      input -> (Lexing.lexbuf * (unit -> unit), open_err) Stdlib.result
+
+    type language = [`PascaLIGO | `CameLIGO | `ReasonLIGO]
+
+    val open_token_stream :
+      language -> input -> (instance, open_err) Stdlib.result
 
     (* Error reporting *)
 
@@ -254,7 +260,7 @@ module Make (Token: TOKEN) : (S with module Token = Token) =
                     Nil -> One token
     | One t | Two (t,_) -> Two (token,t)
 
-    (** Beyond tokens, the result of lexing is a state. The type
+    (* Beyond tokens, the result of lexing is a state. The type
        [state] represents the logical state of the lexing engine, that
        is, a value which is threaded during scanning and which denotes
        useful, high-level information beyond what the type
@@ -292,6 +298,9 @@ module Make (Token: TOKEN) : (S with module Token = Token) =
        it to [decoder]. See the documentation of the third-party
        library Uutf.
      *)
+
+    type language = [`PascaLIGO | `CameLIGO | `ReasonLIGO]
+
     type state = {
       units   : (Markup.t list * token) FQueue.t;
       markup  : Markup.t list;
@@ -299,7 +308,8 @@ module Make (Token: TOKEN) : (S with module Token = Token) =
       last    : Region.t;
       pos     : Pos.t;
       decoder : Uutf.decoder;
-      supply  : Bytes.t -> int -> int -> unit
+      supply  : Bytes.t -> int -> int -> unit;
+      lang    : language
     }
 
     (* The call [enqueue (token, state)] updates functionally the
@@ -388,7 +398,7 @@ module Make (Token: TOKEN) : (S with module Token = Token) =
     | Unterminated_string
     | Unterminated_integer
     | Odd_lengthed_bytes
-    | Unterminated_comment
+    | Unterminated_comment of string
     | Orphan_minus
     | Non_canonical_zero
     | Negative_byte_sequence
@@ -401,51 +411,51 @@ module Make (Token: TOKEN) : (S with module Token = Token) =
 
     let error_to_string = function
       Invalid_utf8_sequence ->
-        "Invalid UTF-8 sequence.\n"
+        "Invalid UTF-8 sequence."
     | Unexpected_character c ->
-        sprintf "Unexpected character '%s'.\n" (Char.escaped c)
+        sprintf "Unexpected character '%s'." (Char.escaped c)
     | Undefined_escape_sequence ->
         "Undefined escape sequence.\n\
-         Hint: Remove or replace the sequence.\n"
+         Hint: Remove or replace the sequence."
     | Missing_break ->
         "Missing break.\n\
-         Hint: Insert some space.\n"
+         Hint: Insert some space."
     | Unterminated_string ->
         "Unterminated string.\n\
-         Hint: Close with double quotes.\n"
+         Hint: Close with double quotes."
     | Unterminated_integer ->
         "Unterminated integer.\n\
-         Hint: Remove the sign or proceed with a natural number.\n"
+         Hint: Remove the sign or proceed with a natural number."
     | Odd_lengthed_bytes ->
         "The length of the byte sequence is an odd number.\n\
-         Hint: Add or remove a digit.\n"
-    | Unterminated_comment ->
-        "Unterminated comment.\n\
-         Hint: Close with \"*)\".\n"
+         Hint: Add or remove a digit."
+    | Unterminated_comment ending ->
+        sprintf "Unterminated comment.\n\
+                 Hint: Close with \"%s\"." ending
     | Orphan_minus ->
         "Orphan minus sign.\n\
-         Hint: Remove the trailing space.\n"
+         Hint: Remove the trailing space."
     | Non_canonical_zero ->
         "Non-canonical zero.\n\
-         Hint: Use 0.\n"
+         Hint: Use 0."
     | Negative_byte_sequence ->
         "Negative byte sequence.\n\
-         Hint: Remove the leading minus sign.\n"
+         Hint: Remove the leading minus sign."
     | Broken_string ->
         "The string starting here is interrupted by a line break.\n\
          Hint: Remove the break, close the string before or insert a \
-         backslash.\n"
+         backslash."
     | Invalid_character_in_string ->
         "Invalid character in string.\n\
-         Hint: Remove or replace the character.\n"
+         Hint: Remove or replace the character."
     | Reserved_name s ->
         sprintf "Reserved name: \"%s\".\n\
-         Hint: Change the name.\n" s
+         Hint: Change the name." s
     | Invalid_symbol ->
         "Invalid symbol.\n\
-         Hint: Check the LIGO syntax you use.\n"
+         Hint: Check the LIGO syntax you use."
     | Invalid_natural ->
-        "Invalid natural."
+        "Invalid natural number."
     | Invalid_attribute ->
         "Invalid attribute."
 
@@ -454,7 +464,7 @@ module Make (Token: TOKEN) : (S with module Token = Token) =
     let format_error ?(offsets=true) mode Region.{region; value} ~file =
       let msg = error_to_string value
       and reg = region#to_string ~file ~offsets mode in
-      let value = sprintf "Lexical error %s:\n%s" reg msg
+      let value = sprintf "Lexical error %s:\n%s\n" reg msg
       in Region.{value; region}
 
     let fail region value = raise (Error Region.{region; value})
@@ -618,16 +628,16 @@ rule init state = parse
 and scan state = parse
   nl                     { scan (push_newline state lexbuf) lexbuf }
 | ' '+                   { scan (push_space   state lexbuf) lexbuf }
-| '\t'+                  { scan (push_tabs state lexbuf) lexbuf    }
+| '\t'+                  { scan (push_tabs    state lexbuf) lexbuf }
 | ident                  { mk_ident        state lexbuf |> enqueue  }
 | constr                 { mk_constr       state lexbuf |> enqueue  }
 | bytes                  { mk_bytes seq    state lexbuf |> enqueue  }
 | natural 'n'            { mk_nat          state lexbuf |> enqueue  }
 | natural "mutez"        { mk_mutez        state lexbuf |> enqueue  }
 | natural "tz"
-| natural "tez"          { mk_tez           state lexbuf |> enqueue }
+| natural "tez"          { mk_tez          state lexbuf |> enqueue  }
 | decimal "tz"
-| decimal "tez"          { mk_tez_decimal   state lexbuf |> enqueue }
+| decimal "tez"          { mk_tez_decimal  state lexbuf |> enqueue  }
 | natural                { mk_int          state lexbuf |> enqueue  }
 | symbol                 { mk_sym          state lexbuf |> enqueue  }
 | eof                    { mk_eof          state lexbuf |> enqueue  }
@@ -638,31 +648,43 @@ and scan state = parse
          let thread = {opening; len=1; acc=['"']} in
          scan_string thread state lexbuf |> mk_string |> enqueue }
 
-| "(*" { let opening, _, state = sync state lexbuf in
-         let thread = {opening; len=2; acc=['*';'(']} in
-         let state  = scan_block thread state lexbuf |> push_block
-         in scan state lexbuf }
+| "(*" { if state.lang = `PascaLIGO || state.lang = `CameLIGO then
+           let opening, _, state = sync state lexbuf in
+           let thread = {opening; len=2; acc=['*';'(']} in
+           let state  = scan_pascaligo_block thread state lexbuf |> push_block
+           in scan state lexbuf
+         else (rollback lexbuf; scan_two_sym state lexbuf)
+       }
+
+| "/*" { if state.lang = `ReasonLIGO then
+           let opening, _, state = sync state lexbuf in
+           let thread = {opening; len=2; acc=['*';'/']} in
+           let state  = scan_reasonligo_block thread state lexbuf |> push_block
+           in scan state lexbuf
+         else (rollback lexbuf; scan_two_sym state lexbuf)
+       }
 
 | "//" { let opening, _, state = sync state lexbuf in
          let thread = {opening; len=2; acc=['/';'/']} in
          let state  = scan_line thread state lexbuf |> push_line
          in scan state lexbuf }
 
-  (* Management of #include CPP directives
+  (* Management of #include preprocessing directives
 
-    An input LIGO program may contain GNU CPP (C preprocessor)
-    directives, and the entry modules (named *Main.ml) run CPP on them
-    in traditional mode:
+    An input LIGO program may contain preprocessing directives, and
+    the entry modules (named *Main.ml) run the preprocessor on them,
+    as if using the GNU C preprocessor in traditional mode:
 
     https://gcc.gnu.org/onlinedocs/cpp/Traditional-Mode.html
 
-      The main interest in using CPP is that it can stand for a poor
-    man's (flat) module system for LIGO thanks to #include
-    directives, and the traditional mode leaves the markup mostly
-    undisturbed.
+      The main interest in using a preprocessor is that it can stand
+    for a poor man's (flat) module system for LIGO thanks to #include
+    directives, and the equivalent of the traditional mode leaves the
+    markup undisturbed.
 
-      Some of the #line resulting from processing #include directives
-    deal with system file headers and thus have to be ignored for our
+      Contrary to the C preprocessor, our preprocessor does not
+    generate #line resulting from processing #include directives deal
+    with system file headers and thus have to be ignored for our
     purpose. Moreover, these #line directives may also carry some
     additional flags:
 
@@ -671,7 +693,7 @@ and scan state = parse
     of which 1 and 2 indicate, respectively, the start of a new file
     and the return from a file (after its inclusion has been
     processed).
-  *)
+   *)
 
 | '#' blank* ("line" blank+)? (natural as line) blank+
     '"' (string as file) '"' {
@@ -714,6 +736,14 @@ and scan state = parse
 | _ as c { let region, _, _ = sync state lexbuf
            in fail region (Unexpected_character c) }
 
+(* Scanning two symbols *)
+
+and scan_two_sym state = parse
+  symbol { scan_one_sym (mk_sym state lexbuf |> enqueue) lexbuf }
+
+and scan_one_sym state = parse
+  symbol { scan (mk_sym state lexbuf |> enqueue) lexbuf }
+
 (* Scanning CPP #include flags *)
 
 and scan_flags state acc = parse
@@ -745,39 +775,70 @@ and scan_string thread state = parse
 
 (* Finishing a block comment
 
-   (Note for Emacs: ("(*")
-   The lexing of block comments must take care of embedded block
-   comments that may occur within, as well as strings, so no substring
-   "*)" may inadvertently close the block. This is the purpose
-   of the first case of the scanner [scan_block].
+   (For Emacs: ("(*") The lexing of block comments must take care of
+   embedded block comments that may occur within, as well as strings,
+   so no substring "*/" or "*)" may inadvertently close the
+   block. This is the purpose of the first case of the scanners
+   [scan_pascaligo_block] and [scan_reasonligo_block].
 *)
 
-and scan_block thread state = parse
+and scan_pascaligo_block thread state = parse
   '"' | "(*" { let opening = thread.opening in
                let opening', lexeme, state = sync state lexbuf in
                let thread = push_string lexeme thread in
                let thread = {thread with opening=opening'} in
                let next   = if lexeme = "\"" then scan_string
-                            else scan_block in
+                            else scan_pascaligo_block in
                let thread, state = next thread state lexbuf in
                let thread = {thread with opening}
-               in scan_block thread state lexbuf }
+               in scan_pascaligo_block thread state lexbuf }
 | "*)"       { let _, lexeme, state = sync state lexbuf
                in push_string lexeme thread, state }
 | nl as nl   { let ()     = Lexing.new_line lexbuf
                and state  = {state with pos = state.pos#new_line nl}
                and thread = push_string nl thread
-               in scan_block thread state lexbuf }
-| eof        { fail thread.opening Unterminated_comment }
+               in scan_pascaligo_block thread state lexbuf }
+| eof        { fail thread.opening (Unterminated_comment "*)") }
 | _          { let ()     = rollback lexbuf in
                let len    = thread.len in
                let thread,
-                   status = scan_utf8 thread state lexbuf in
+                   status = scan_utf8 "*)" thread state lexbuf in
                let delta  = thread.len - len in
                let pos    = state.pos#shift_one_uchar delta in
                match status with
-                 None -> scan_block thread {state with pos} lexbuf
-               | Some error ->
+                 Stdlib.Ok () ->
+                   scan_pascaligo_block thread {state with pos} lexbuf
+               | Error error ->
+                   let region = Region.make ~start:state.pos ~stop:pos
+                   in fail region error }
+
+and scan_reasonligo_block thread state = parse
+  '"' | "/*" { let opening = thread.opening in
+               let opening', lexeme, state = sync state lexbuf in
+               let thread = push_string lexeme thread in
+               let thread = {thread with opening=opening'} in
+               let next   = if lexeme = "\"" then scan_string
+                            else scan_reasonligo_block in
+               let thread, state = next thread state lexbuf in
+               let thread = {thread with opening}
+               in scan_reasonligo_block thread state lexbuf }
+| "*/"       { let _, lexeme, state = sync state lexbuf
+               in push_string lexeme thread, state }
+| nl as nl   { let ()     = Lexing.new_line lexbuf
+               and state  = {state with pos = state.pos#new_line nl}
+               and thread = push_string nl thread
+               in scan_reasonligo_block thread state lexbuf }
+| eof        { fail thread.opening (Unterminated_comment "*/") }
+| _          { let ()     = rollback lexbuf in
+               let len    = thread.len in
+               let thread,
+                   status = scan_utf8 "*/" thread state lexbuf in
+               let delta  = thread.len - len in
+               let pos    = state.pos#shift_one_uchar delta in
+               match status with
+                 Stdlib.Ok () ->
+                   scan_reasonligo_block thread {state with pos} lexbuf
+               | Error error ->
                    let region = Region.make ~start:state.pos ~stop:pos
                    in fail region error }
 
@@ -792,24 +853,36 @@ and scan_line thread state = parse
 | _        { let     () = rollback lexbuf in
              let len    = thread.len in
              let thread,
-                 status = scan_utf8 thread state lexbuf in
+                 status = scan_utf8_inline thread state lexbuf in
              let delta  = thread.len - len in
              let pos    = state.pos#shift_one_uchar delta in
              match status with
-               None -> scan_line thread {state with pos} lexbuf
-             | Some error ->
+               Stdlib.Ok () ->
+                 scan_line thread {state with pos} lexbuf
+             | Error error ->
                  let region = Region.make ~start:state.pos ~stop:pos
                  in fail region error }
 
-and scan_utf8 thread state = parse
-     eof { fail thread.opening Unterminated_comment }
+and scan_utf8 closing thread state = parse
+     eof { fail thread.opening (Unterminated_comment closing) }
 | _ as c { let thread = push_char c thread in
            let lexeme = Lexing.lexeme lexbuf in
            let () = state.supply (Bytes.of_string lexeme) 0 1 in
            match Uutf.decode state.decoder with
-             `Uchar _     -> thread, None
-           | `Malformed _ -> thread, Some Invalid_utf8_sequence
-           | `Await       -> scan_utf8 thread state lexbuf
+             `Uchar _     -> thread, Stdlib.Ok ()
+           | `Malformed _ -> thread, Stdlib.Error Invalid_utf8_sequence
+           | `Await       -> scan_utf8 closing thread state lexbuf
+           | `End         -> assert false }
+
+and scan_utf8_inline thread state = parse
+     eof { thread, Stdlib.Ok () }
+| _ as c { let thread = push_char c thread in
+           let lexeme = Lexing.lexeme lexbuf in
+           let () = state.supply (Bytes.of_string lexeme) 0 1 in
+           match Uutf.decode state.decoder with
+             `Uchar _     -> thread, Stdlib.Ok ()
+           | `Malformed _ -> thread, Stdlib.Error Invalid_utf8_sequence
+           | `Await       -> scan_utf8_inline thread state lexbuf
            | `End         -> assert false }
 
 (* END LEXER DEFINITION *)
@@ -863,7 +936,14 @@ and scan_utf8 thread state = parse
 
 type logger = Markup.t list -> token -> unit
 
+type input =
+  File    of file_path
+| String  of string
+| Channel of in_channel
+| Buffer  of Lexing.lexbuf
+
 type instance = {
+  input    : input;
   read     : log:logger -> Lexing.lexbuf -> token;
   buffer   : Lexing.lexbuf;
   get_win  : unit -> window;
@@ -873,19 +953,29 @@ type instance = {
   close    : unit -> unit
 }
 
-type input =
-  File    of file_path (* "-" means stdin *)
-| Stdin
-| String  of string
-| Channel of in_channel
-| Buffer  of Lexing.lexbuf
-
 type open_err = File_opening of string
 
-let open_token_stream input =
+let lexbuf_from_input = function
+  File path ->
+   (try
+      let chan = open_in path in
+      let close () = close_in chan in
+      let lexbuf = Lexing.from_channel chan in
+      let () =
+        let open Lexing in
+        lexbuf.lex_curr_p <- {lexbuf.lex_curr_p with pos_fname = path}
+      in Ok (lexbuf, close)
+    with Sys_error msg -> Stdlib.Error (File_opening msg))
+| String s ->
+    Ok (Lexing.from_string s, fun () -> ())
+| Channel chan ->
+    let close () = close_in chan in
+    Ok (Lexing.from_channel chan, close)
+| Buffer b -> Ok (b, fun () -> ())
+
+let open_token_stream (lang: language) input =
   let file_path  = match input with
-                     File file_path ->
-                       if file_path = "-" then "" else file_path
+                     File path -> path
                    | _ -> "" in
   let        pos = Pos.min ~file:file_path in
   let    buf_reg = ref (pos#byte, pos#byte)
@@ -898,7 +988,8 @@ let open_token_stream input =
                         pos;
                         markup = [];
                         decoder;
-                        supply} in
+                        supply;
+                        lang} in
 
   let get_pos  () = !state.pos
   and get_last () = !state.last
@@ -966,32 +1057,14 @@ let open_token_stream input =
         check_right_context token buffer;
         patch_buffer (Token.to_region token)#byte_pos buffer;
         token in
-
-  let buf_close_res =
-    match input with
-      File "" | File "-" | Stdin ->
-        Ok (Lexing.from_channel stdin, fun () -> close_in stdin)
-    | File path ->
-       (try
-          let chan = open_in path in
-          let close () = close_in chan in
-          Ok (Lexing.from_channel chan, close)
-        with
-          Sys_error msg -> Stdlib.Error (File_opening msg))
-    | String s ->
-        Ok (Lexing.from_string s, fun () -> ())
-    | Channel chan ->
-        let close () = close_in chan in
-        Ok (Lexing.from_channel chan, close)
-    | Buffer b -> Ok (b, fun () -> ()) in
-  match buf_close_res with
+  match lexbuf_from_input input with
     Ok (buffer, close) ->
       let () =
         match input with
           File path when path <> "" -> reset ~file:path buffer
         | _ -> () in
       let instance = {
-        read; buffer; get_win; get_pos; get_last; get_file; close}
+        input; read; buffer; get_win; get_pos; get_last; get_file; close}
       in Ok instance
   | Error _ as e -> e
 

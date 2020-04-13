@@ -8,7 +8,8 @@
     simple-utils
     uutf
     getopt
-    zarith)
+    zarith
+    Preprocessor)
   (preprocess
     (pps bisect_ppx --conditional))
   (modules
@@ -17,8 +18,8 @@
     ParserAPI
     Lexer
     LexerLog
-    Utils
     Markup
+    Utils
     FQueue
     EvalOpt
     Version))

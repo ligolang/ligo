@@ -4,8 +4,7 @@ module Region = Simple_utils.Region
 
 module IO =
   struct
-    let ext = ".religo"
-    let options = EvalOpt.read "ReasonLIGO" ext
+    let options = EvalOpt.(read ~lang:`ReasonLIGO ~ext:".religo")
   end
 
 module M = LexerUnit.Make (IO) (Lexer.Make (LexToken))

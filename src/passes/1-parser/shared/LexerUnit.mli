@@ -4,7 +4,6 @@ module Region = Simple_utils.Region
 
 module type IO =
   sig
-    val ext : string              (* LIGO file extension *)
     val options : EvalOpt.options (* CLI options *)
   end
 

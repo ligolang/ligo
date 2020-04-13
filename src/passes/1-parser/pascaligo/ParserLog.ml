@@ -2,6 +2,8 @@
 [@@@coverage exclude_file]
 
 open AST
+
+module Region = Simple_utils.Region
 open! Region
 
 let sprintf = Printf.sprintf

@@ -12,14 +12,14 @@ RUN mkdir /package && mkdir /package/bin && mkdir /package/DEBIAN && mkdir /pack
 RUN cp /home/opam/.opam/4.07/bin/ligo /package/bin/ligo
 
 # @TODO: inherit version (and other details) from the ligo opam package definition
-# In our case we're using the version field to name our package accordingly, 
+# In our case we're using the version field to name our package accordingly,
 # however this is most likely not ideal
 # Also, the architecture field should not be 'all' but rather specific instead.
 RUN echo "Package: ligo\n\
 Version: $version\n\
 Architecture: all\n\
 Maintainer: info@ligolang.org\n\
-Depends: libev4, libgmp10, libgmpxx4ldbl, cpp\n\
+Depends: libev4, libgmp10, libgmpxx4ldbl\n\
 Homepage: http://ligolang.org\n\
 Description: LIGO is a statically typed high-level smart-contract language that compiles down to Michelson." >> /package/DEBIAN/control
 
