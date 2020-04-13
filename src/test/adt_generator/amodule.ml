@@ -1,3 +1,5 @@
+(* open Amodule_utils *)
+
 type root =
 | A of rootA
 | B of rootB

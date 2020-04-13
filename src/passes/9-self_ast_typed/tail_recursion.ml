@@ -63,23 +63,23 @@ and check_recursive_call_in_matching = fun n final_path c ->
     let%bind _ = check_recursive_call n final_path match_true in
     let%bind _ = check_recursive_call n final_path match_false in
     ok ()
-  | Match_list {match_nil;match_cons=(_,_,e,_)} ->
+  | Match_list {match_nil;match_cons={hd=_;tl=_;body;tv=_}} ->
     let%bind _ = check_recursive_call n final_path match_nil in
-    let%bind _ = check_recursive_call n final_path e in
+    let%bind _ = check_recursive_call n final_path body in
     ok ()
-  | Match_option {match_none; match_some=(_,e,_)} ->
+  | Match_option {match_none; match_some={opt=_;body;tv=_}} ->
     let%bind _ = check_recursive_call n final_path match_none in
-    let%bind _ = check_recursive_call n final_path e in
+    let%bind _ = check_recursive_call n final_path body in
     ok ()
-  | Match_tuple ((_,e),_) ->
-    let%bind _ = check_recursive_call n final_path e in
+  | Match_tuple {vars=_;body;tvs=_} ->
+    let%bind _ = check_recursive_call n final_path body in
     ok ()
-  | Match_variant (l,_) ->
-    let aux (_,e) =
-      let%bind _ = check_recursive_call n final_path e in
+  | Match_variant {cases;tv=_} ->
+    let aux {constructor=_; pattern=_; body} =
+      let%bind _ = check_recursive_call n final_path body in
       ok ()
     in
-    let%bind _ = bind_map_list aux l in
+    let%bind _ = bind_map_list aux cases in
     ok ()
     
 

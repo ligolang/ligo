@@ -43,12 +43,14 @@ let add_type : type_variable -> type_expression -> t -> t = fun k v -> List.Ne.h
 let get_opt : expression_variable -> t -> element option = fun k x -> List.Ne.find_map (Small.get_opt k) x
 let get_type_opt : type_variable -> t -> type_expression option = fun k x -> List.Ne.find_map (Small.get_type_opt k) x
 
-let get_constructor : constructor' -> t -> (type_expression * type_expression) option = fun k x -> (* Left is the constructor, right is the sum type *)
+let convert_constructor' (S.Constructor c) = Constructor c
+
+let get_constructor : Ast_core.constructor' -> t -> (type_expression * type_expression) option = fun k x -> (* Left is the constructor, right is the sum type *)
   let aux = fun x ->
     let aux = fun {type_variable=_ ; type_} ->
       match type_.type_content with
       | T_sum m ->
-        (match CMap.find_opt k m with
+        (match CMap.find_opt (convert_constructor' k) m with
            Some km -> Some (km , type_)
          | None -> None)
       | _ -> None

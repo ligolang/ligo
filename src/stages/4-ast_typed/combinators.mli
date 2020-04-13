@@ -126,7 +126,7 @@ val e_chain_id : string -> expression_content
 val e_operation : Memory_proto_alpha.Protocol.Alpha_context.packed_internal_operation -> expression_content
 val e_lambda : lambda -> expression_content
 val e_pair : expression -> expression -> expression_content
-val e_application : expression -> expr -> expression_content
+val e_application : expression -> expression -> expression_content
 val e_variable : expression_variable -> expression_content
 val e_let_in : expression_variable -> inline -> expression -> expression -> expression_content
 

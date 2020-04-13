@@ -77,7 +77,7 @@ and expression = {
 }
 
 and constant = {
-  cons_name : constant'; (* this is at the end because it is huge *)
+  cons_name : constant';
   arguments : expression list;
 }
 

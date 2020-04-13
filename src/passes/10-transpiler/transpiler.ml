@@ -114,6 +114,121 @@ them. please report this to the developers." in
 end
 open Errors
 
+let transpile_constant' : AST.constant' -> constant' = function
+  | C_INT -> C_INT
+  | C_UNIT -> C_UNIT
+  | C_NIL -> C_NIL
+  | C_NOW -> C_NOW
+  | C_IS_NAT -> C_IS_NAT
+  | C_SOME -> C_SOME
+  | C_NONE -> C_NONE
+  | C_ASSERTION -> C_ASSERTION
+  | C_ASSERT_INFERRED -> C_ASSERT_INFERRED
+  | C_FAILWITH -> C_FAILWITH
+  | C_UPDATE -> C_UPDATE
+  (* Loops *)
+  | C_ITER -> C_ITER
+  | C_FOLD_WHILE -> C_FOLD_WHILE
+  | C_FOLD_CONTINUE -> C_FOLD_CONTINUE
+  | C_FOLD_STOP -> C_FOLD_STOP
+  | C_LOOP_LEFT -> C_LOOP_LEFT
+  | C_LOOP_CONTINUE -> C_LOOP_CONTINUE
+  | C_LOOP_STOP -> C_LOOP_STOP
+  | C_FOLD -> C_FOLD
+  (* MATH *)
+  | C_NEG -> C_NEG
+  | C_ABS -> C_ABS
+  | C_ADD -> C_ADD
+  | C_SUB -> C_SUB
+  | C_MUL -> C_MUL
+  | C_EDIV -> C_EDIV
+  | C_DIV -> C_DIV
+  | C_MOD -> C_MOD
+  (* LOGIC *)
+  | C_NOT -> C_NOT
+  | C_AND -> C_AND
+  | C_OR -> C_OR
+  | C_XOR -> C_XOR
+  | C_LSL -> C_LSL
+  | C_LSR -> C_LSR
+  (* COMPARATOR *)
+  | C_EQ -> C_EQ
+  | C_NEQ -> C_NEQ
+  | C_LT -> C_LT
+  | C_GT -> C_GT
+  | C_LE -> C_LE
+  | C_GE -> C_GE
+  (* Bytes/ String *)
+  | C_SIZE -> C_SIZE
+  | C_CONCAT -> C_CONCAT
+  | C_SLICE -> C_SLICE
+  | C_BYTES_PACK -> C_BYTES_PACK
+  | C_BYTES_UNPACK -> C_BYTES_UNPACK
+  | C_CONS -> C_CONS
+  (* Pair *)
+  | C_PAIR -> C_PAIR
+  | C_CAR -> C_CAR
+  | C_CDR -> C_CDR
+  | C_LEFT -> C_LEFT
+  | C_RIGHT -> C_RIGHT
+  (* Set *)
+  | C_SET_EMPTY -> C_SET_EMPTY
+  | C_SET_LITERAL -> C_SET_LITERAL
+  | C_SET_ADD -> C_SET_ADD
+  | C_SET_REMOVE -> C_SET_REMOVE
+  | C_SET_ITER -> C_SET_ITER
+  | C_SET_FOLD -> C_SET_FOLD
+  | C_SET_MEM -> C_SET_MEM
+  (* List *)
+  | C_LIST_EMPTY -> C_LIST_EMPTY
+  | C_LIST_LITERAL -> C_LIST_LITERAL
+  | C_LIST_ITER -> C_LIST_ITER
+  | C_LIST_MAP -> C_LIST_MAP
+  | C_LIST_FOLD -> C_LIST_FOLD
+  (* Maps *)
+  | C_MAP -> C_MAP
+  | C_MAP_EMPTY -> C_MAP_EMPTY
+  | C_MAP_LITERAL -> C_MAP_LITERAL
+  | C_MAP_GET -> C_MAP_GET
+  | C_MAP_GET_FORCE -> C_MAP_GET_FORCE
+  | C_MAP_ADD -> C_MAP_ADD
+  | C_MAP_REMOVE -> C_MAP_REMOVE
+  | C_MAP_UPDATE -> C_MAP_UPDATE
+  | C_MAP_ITER -> C_MAP_ITER
+  | C_MAP_MAP -> C_MAP_MAP
+  | C_MAP_FOLD -> C_MAP_FOLD
+  | C_MAP_MEM -> C_MAP_MEM
+  | C_MAP_FIND -> C_MAP_FIND
+  | C_MAP_FIND_OPT -> C_MAP_FIND_OPT
+  (* Big Maps *)
+  | C_BIG_MAP -> C_BIG_MAP
+  | C_BIG_MAP_EMPTY -> C_BIG_MAP_EMPTY
+  | C_BIG_MAP_LITERAL -> C_BIG_MAP_LITERAL
+  (* Crypto *)
+  | C_SHA256 -> C_SHA256
+  | C_SHA512 -> C_SHA512
+  | C_BLAKE2b -> C_BLAKE2b
+  | C_HASH -> C_HASH
+  | C_HASH_KEY -> C_HASH_KEY
+  | C_CHECK_SIGNATURE -> C_CHECK_SIGNATURE
+  | C_CHAIN_ID -> C_CHAIN_ID
+  (* Blockchain *)
+  | C_CALL -> C_CALL
+  | C_CONTRACT -> C_CONTRACT
+  | C_CONTRACT_OPT -> C_CONTRACT_OPT
+  | C_CONTRACT_ENTRYPOINT -> C_CONTRACT_ENTRYPOINT
+  | C_CONTRACT_ENTRYPOINT_OPT -> C_CONTRACT_ENTRYPOINT_OPT
+  | C_AMOUNT -> C_AMOUNT
+  | C_BALANCE -> C_BALANCE
+  | C_SOURCE -> C_SOURCE
+  | C_SENDER -> C_SENDER
+  | C_ADDRESS -> C_ADDRESS
+  | C_SELF -> C_SELF
+  | C_SELF_ADDRESS -> C_SELF_ADDRESS
+  | C_IMPLICIT_ACCOUNT -> C_IMPLICIT_ACCOUNT
+  | C_SET_DELEGATE -> C_SET_DELEGATE
+  | C_CREATE_CONTRACT -> C_CREATE_CONTRACT
+
 let rec transpile_type (t:AST.type_expression) : type_value result =
   match t.type_content with
   | T_variable (name) -> fail @@ no_type_variable @@ name
@@ -135,15 +250,15 @@ let rec transpile_type (t:AST.type_expression) : type_value result =
   | T_operator (TC_contract x) ->
       let%bind x' = transpile_type x in
       ok (T_contract x')
-  | T_operator (TC_map (key,value)) ->
-      let%bind kv' = bind_map_pair transpile_type (key, value) in
+  | T_operator (TC_map {k;v}) ->
+      let%bind kv' = bind_map_pair transpile_type (k, v) in
       ok (T_map kv')
-  | T_operator (TC_big_map (key,value)) ->
-      let%bind kv' = bind_map_pair transpile_type (key, value) in
+  | T_operator (TC_big_map {k;v}) ->
+      let%bind kv' = bind_map_pair transpile_type (k, v) in
       ok (T_big_map kv')
-  | T_operator (TC_map_or_big_map (_,_)) ->
+  | T_operator (TC_map_or_big_map _) ->
       fail @@ corner_case ~loc:"transpiler" "TC_map_or_big_map should have been resolved before transpilation"
-  | T_operator (TC_michelson_or (l,r)) ->
+  | T_operator (TC_michelson_or {l;r}) ->
       let%bind l' = transpile_type l in
       let%bind r' = transpile_type r in
       ok (T_or ((None,l'),(None,r')))
@@ -156,7 +271,7 @@ let rec transpile_type (t:AST.type_expression) : type_value result =
   | T_operator (TC_option o) ->
       let%bind o' = transpile_type o in
       ok (T_option o')
-  | T_operator (TC_arrow (param , result)) -> (
+  | T_operator (TC_arrow {type1=param ; type2=result}) -> (
       let%bind param' = transpile_type param in
       let%bind result' = transpile_type result in
       ok (T_function (param', result'))
@@ -170,20 +285,20 @@ let rec transpile_type (t:AST.type_expression) : type_value result =
         ok (None, T_or (a, b))
       in
       let%bind m' = Append_tree.fold_ne
-                      (fun (Stage_common.Types.Constructor ann, a) ->
+                      (fun (Ast_typed.Types.Constructor ann, a) ->
                         let%bind a = transpile_type a in
                         ok (Some (String.uncapitalize_ascii ann), a))
                       aux node in
       ok @@ snd m'
   | T_record m ->
-      let node = Append_tree.of_list @@ Stage_common.Helpers.kv_list_of_record_or_tuple m in
+      let node = Append_tree.of_list @@ Ast_typed.Helpers.kv_list_of_record_or_tuple m in
       let aux a b : type_value annotated result =
         let%bind a = a in
         let%bind b = b in
         ok (None, T_pair (a, b))
       in
       let%bind m' = Append_tree.fold_ne
-                      (fun (Stage_common.Types.Label ann, a) ->
+                      (fun (Ast_typed.Types.Label ann, a) ->
                         let%bind a = transpile_type a in
                         ok (Some ann, a))
                       aux node in
@@ -195,7 +310,7 @@ let rec transpile_type (t:AST.type_expression) : type_value result =
     )
 
 let record_access_to_lr : type_value -> type_value AST.label_map -> AST.label -> (type_value * [`Left | `Right]) list result = fun ty tym ind ->
-  let tys = Stage_common.Helpers.kv_list_of_record_or_tuple tym in
+  let tys = Ast_typed.Helpers.kv_list_of_record_or_tuple tym in
   let node_tv = Append_tree.of_list tys in
   let%bind path =
     let aux (i , _) = i = ind  in
@@ -295,7 +410,7 @@ and transpile_annotated_expression (ae:AST.expression) : expression result =
     )
   | E_record m -> (
     (*list_of_lmap to record_to_list*)
-      let node = Append_tree.of_list @@ Stage_common.Helpers.list_of_record_or_tuple m in
+      let node = Append_tree.of_list @@ Ast_typed.Helpers.list_of_record_or_tuple m in
       let aux a b : expression result =
         let%bind a = a in
         let%bind b = b in
@@ -312,7 +427,7 @@ and transpile_annotated_expression (ae:AST.expression) : expression result =
       let%bind ty_lmap =
         trace_strong (corner_case ~loc:__LOC__ "not a record") @@
         get_t_record (get_type_expression record) in
-      let%bind ty'_lmap = Stage_common.Helpers.bind_map_lmap transpile_type ty_lmap in
+      let%bind ty'_lmap = Ast_typed.Helpers.bind_map_lmap transpile_type ty_lmap in
       let%bind path =
         trace_strong (corner_case ~loc:__LOC__ "record access") @@
         record_access_to_lr ty' ty'_lmap path in
@@ -329,7 +444,7 @@ and transpile_annotated_expression (ae:AST.expression) : expression result =
       let%bind ty_lmap =
         trace_strong (corner_case ~loc:__LOC__ "not a record") @@
         get_t_record (get_type_expression record) in
-      let%bind ty'_lmap = Stage_common.Helpers.bind_map_lmap transpile_type ty_lmap in
+      let%bind ty'_lmap = Ast_typed.Helpers.bind_map_lmap transpile_type ty_lmap in
       let%bind path = 
         trace_strong (corner_case ~loc:__LOC__ "record access") @@
         record_access_to_lr ty' ty'_lmap path in
@@ -388,7 +503,7 @@ and transpile_annotated_expression (ae:AST.expression) : expression result =
       | (C_MAP_FOLD , lst) -> fold lst
       | _ -> (
           let%bind lst' = bind_map_list (transpile_annotated_expression) lst in
-          return @@ E_constant {cons_name=name;arguments=lst'}
+          return @@ E_constant {cons_name=transpile_constant' name;arguments=lst'}
         )
     )
   | E_lambda l ->
@@ -402,30 +517,30 @@ and transpile_annotated_expression (ae:AST.expression) : expression result =
       | Match_bool {match_true ; match_false} ->
           let%bind (t , f) = bind_map_pair (transpile_annotated_expression) (match_true, match_false) in
           return @@ E_if_bool (expr', t, f)
-      | Match_option { match_none; match_some = (name, s, tv) } ->
+      | Match_option { match_none; match_some = {opt; body; tv} } ->
           let%bind n = transpile_annotated_expression match_none in
           let%bind (tv' , s') =
             let%bind tv' = transpile_type tv in
-            let%bind s' = transpile_annotated_expression s in
+            let%bind s' = transpile_annotated_expression body in
             ok (tv' , s')
           in
-          return @@ E_if_none (expr' , n , ((name , tv') , s'))
+          return @@ E_if_none (expr' , n , ((opt , tv') , s'))
       | Match_list {
           match_nil ;
-          match_cons = ((hd_name) , (tl_name), match_cons, ty) ;
+          match_cons = {hd; tl; body; tv} ;
         } -> (
           let%bind nil = transpile_annotated_expression match_nil in
           let%bind cons =
-            let%bind ty' = transpile_type ty in
-            let%bind match_cons' = transpile_annotated_expression match_cons in
-            ok (((hd_name , ty') , (tl_name , ty')) , match_cons')
+            let%bind ty' = transpile_type tv in
+            let%bind match_cons' = transpile_annotated_expression body in
+            ok (((hd , ty') , (tl , ty')) , match_cons')
           in
           return @@ E_if_cons (expr' , nil , cons)
         )
-      | Match_variant (lst , variant) -> (
+      | Match_variant {cases ; tv} -> (
           let%bind tree =
             trace_strong (corner_case ~loc:__LOC__ "getting lr tree") @@
-            tree_of_sum variant in
+            tree_of_sum tv in
           let%bind tree' = match tree with
             | Empty -> fail (corner_case ~loc:__LOC__ "match empty variant")
             | Full x -> ok x in
@@ -445,12 +560,14 @@ and transpile_annotated_expression (ae:AST.expression) : expression result =
 
           let rec aux top t =
             match t with
-            | ((`Leaf constructor_name) , tv) -> (
-                let%bind ((_ , name) , body) =
+            | ((`Leaf (AST.Constructor constructor_name)) , tv) -> (
+                let%bind {constructor=_ ; pattern ; body} =
                   trace_option (corner_case ~loc:__LOC__ "missing match clause") @@
-                  List.find_opt (fun ((constructor_name' , _) , _) -> constructor_name' = constructor_name) lst in
+                    let aux ({constructor = Constructor c ; pattern=_ ; body=_} : AST.matching_content_case) =
+                      (c = constructor_name) in
+                  List.find_opt aux cases in
                 let%bind body' = transpile_annotated_expression body in
-                return @@ E_let_in ((name , tv) , false , top , body')
+                return @@ E_let_in ((pattern , tv) , false , top , body')
               )
             | ((`Node (a , b)) , tv) ->
                 let%bind a' =
@@ -523,30 +640,30 @@ and transpile_recursive {fun_name; fun_type; lambda} =
       Match_bool {match_true; match_false} -> 
           let%bind (t , f) = bind_map_pair (replace_callback fun_name loop_type shadowed) (match_true, match_false) in
           return @@ E_if_bool (expr, t, f)
-      | Match_option { match_none; match_some = (name, s, tv) } ->
+      | Match_option { match_none; match_some = {opt; body; tv} } ->
           let%bind n = replace_callback fun_name loop_type shadowed match_none in
           let%bind (tv' , s') =
             let%bind tv' = transpile_type tv in
-            let%bind s' = replace_callback fun_name loop_type shadowed s in
+            let%bind s' = replace_callback fun_name loop_type shadowed body in
             ok (tv' , s')
           in
-          return @@ E_if_none (expr , n , ((name , tv') , s'))
+          return @@ E_if_none (expr , n , ((opt , tv') , s'))
       | Match_list {
           match_nil ;
-          match_cons = ((hd_name) , (tl_name), match_cons, ty) ;
+          match_cons = { hd ; tl ; body ; tv } ;
         } -> (
           let%bind nil = replace_callback fun_name loop_type shadowed match_nil in
           let%bind cons =
-            let%bind ty' = transpile_type ty in
-            let%bind match_cons' = replace_callback fun_name loop_type shadowed match_cons in
-            ok (((hd_name , ty') , (tl_name , ty')) , match_cons')
+            let%bind ty' = transpile_type tv in
+            let%bind match_cons' = replace_callback fun_name loop_type shadowed body in
+            ok (((hd , ty') , (tl , ty')) , match_cons')
           in
           return @@ E_if_cons (expr , nil , cons)
         )
-      | Match_variant (lst , variant) -> (
+      | Match_variant {cases;tv} -> (
           let%bind tree =
             trace_strong (corner_case ~loc:__LOC__ "getting lr tree") @@
-            tree_of_sum variant in
+            tree_of_sum tv in
           let%bind tree' = match tree with
             | Empty -> fail (corner_case ~loc:__LOC__ "match empty variant")
             | Full x -> ok x in
@@ -565,12 +682,14 @@ and transpile_recursive {fun_name; fun_type; lambda} =
           in
           let rec aux top t =
             match t with
-            | ((`Leaf constructor_name) , tv) -> (
-                let%bind ((_ , name) , body) =
+            | ((`Leaf (AST.Constructor constructor_name)) , tv) -> (
+                let%bind {constructor=_ ; pattern ; body} =
                   trace_option (corner_case ~loc:__LOC__ "missing match clause") @@
-                  List.find_opt (fun ((constructor_name' , _) , _) -> constructor_name' = constructor_name) lst in
+                    let aux ({constructor = Constructor c ; pattern=_ ; body=_} : AST.matching_content_case) =
+                      (c = constructor_name) in
+                  List.find_opt aux cases in
                 let%bind body' = replace_callback fun_name loop_type shadowed body in
-                return @@ E_let_in ((name , tv) , false , top , body')
+                return @@ E_let_in ((pattern , tv) , false , top , body')
               )
             | ((`Node (a , b)) , tv) ->
                 let%bind a' =
@@ -604,12 +723,11 @@ and transpile_recursive {fun_name; fun_type; lambda} =
 
 let transpile_declaration env (d:AST.declaration) : toplevel_statement result =
   match d with
-  | Declaration_constant (name,expression, inline, _) ->
-      let name = name in
-      let%bind expression = transpile_annotated_expression expression in
+  | Declaration_constant { binder ; expr ; inline ; post_env=_ } ->
+      let%bind expression = transpile_annotated_expression expr in
       let tv = Combinators.Expression.get_type expression in
-      let env' = Environment.add (name, tv) env in
-      ok @@ ((name, inline, expression), environment_wrap env env')
+      let env' = Environment.add (binder, tv) env in
+      ok @@ ((binder, inline, expression), environment_wrap env env')
 
 let transpile_program (lst : AST.program) : program result =
   let aux (prev:(toplevel_statement list * Environment.t) result) cur =

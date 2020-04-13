@@ -1,4 +1,4 @@
-open Ast_typed
+open Ast_typed.Types
 open Trace
 
 type contract_pass_data = {
@@ -63,7 +63,7 @@ let self_typing : contract_pass_data -> expression -> (bool * contract_pass_data
       | _ -> fail @@ Errors.entrypoint_annotation_not_literal entrypoint_exp.location in
     let%bind entrypoint_t = match dat.contract_type.parameter.type_content with
       | T_sum cmap -> trace_option (Errors.unmatched_entrypoint entrypoint_exp.location)
-                      @@ Stage_common.Types.CMap.find_opt (Constructor entrypoint) cmap
+                      @@ CMap.find_opt (Constructor entrypoint) cmap
       | t -> ok {dat.contract_type.parameter with type_content = t} in
     let%bind () =
       trace_strong (bad_self_err ()) @@

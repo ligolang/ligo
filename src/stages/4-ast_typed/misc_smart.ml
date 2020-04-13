@@ -2,13 +2,13 @@ open Trace
 open Types
 open Combinators
 open Misc
-open Stage_common.Types
+(* open Stage_common.Types *)
 
 let program_to_main : program -> string -> lambda result = fun p s ->
   let%bind (main , input_type , _) =
     let pred = fun d ->
       match d with
-      | Declaration_constant (d , expr, _, _) when d = Var.of_name s -> Some expr
+      | Declaration_constant { binder; expr; inline=_ ; post_env=_ } when binder = Var.of_name s -> Some expr
       | Declaration_constant _ -> None
     in
     let%bind main =
@@ -23,7 +23,7 @@ let program_to_main : program -> string -> lambda result = fun p s ->
   let env =
     let aux = fun _ d ->
       match d with
-      | Declaration_constant (_ , _, _, post_env) -> post_env in
+      | Declaration_constant {binder=_ ; expr= _ ; inline=_ ; post_env } -> post_env in
     List.fold_left aux Environment.full_empty (List.map Location.unwrap p) in
   let binder = Var.of_name "@contract_input" in
   let result =
@@ -86,27 +86,27 @@ module Captured_variables = struct
       let b' = union (singleton r.fun_name) b in
       expression_content b' env @@ E_lambda r.lambda
 
-  and matching_variant_case : type a . (bindings -> a -> bindings result) -> bindings -> ((constructor' * expression_variable) * a) -> bindings result  = fun f b ((_,n),c) ->
-    f (union (singleton n) b) c
+  and matching_variant_case : (bindings -> expression -> bindings result) -> bindings -> matching_content_case -> bindings result  = fun f b { constructor=_ ; pattern ; body } ->
+    f (union (singleton pattern) b) body
 
-  and matching : type a . (bindings -> a -> bindings result) -> bindings -> (a, 'tv) matching_content -> bindings result = fun f b m ->
+  and matching : (bindings -> expression -> bindings result) -> bindings -> matching_expr -> bindings result = fun f b m ->
     match m with
     | Match_bool { match_true = t ; match_false = fa } ->
       let%bind t' = f b t in
       let%bind fa' = f b fa in
       ok @@ union t' fa'
-    | Match_list { match_nil = n ; match_cons = (hd, tl, c, _) } ->
+    | Match_list { match_nil = n ; match_cons = {hd; tl; body; tv=_} } ->
       let%bind n' = f b n in
-      let%bind c' = f (union (of_list [hd ; tl]) b) c in
+      let%bind c' = f (union (of_list [hd ; tl]) b) body in
       ok @@ union n' c'
-    | Match_option { match_none = n ; match_some = (opt, s, _) } ->
+    | Match_option { match_none = n ; match_some = {opt; body; tv=_} } ->
       let%bind n' = f b n in
-      let%bind s' = f (union (singleton opt) b) s in
+      let%bind s' = f (union (singleton opt) b) body in
       ok @@ union n' s'
-    | Match_tuple ((lst , a),_) ->
-      f (union (of_list lst) b) a
-    | Match_variant (lst , _) ->
-      let%bind lst' = bind_map_list (matching_variant_case f b) lst in
+    | Match_tuple { vars ; body ; tvs=_ } ->
+      f (union (of_list vars) b) body
+    | Match_variant { cases ; tv=_ } ->
+      let%bind lst' = bind_map_list (matching_variant_case f b) cases in
       ok @@ unions lst'
 
   and matching_expression = fun x -> matching expression x

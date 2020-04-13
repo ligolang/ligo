@@ -74,10 +74,10 @@ let type_expression'_of_simple_c_constant = function
   | C_option    , [x]     -> ok @@ Ast_typed.T_operator(TC_option x)
   | C_list      , [x]     -> ok @@ Ast_typed.T_operator(TC_list x)
   | C_set       , [x]     -> ok @@ Ast_typed.T_operator(TC_set x)
-  | C_map       , [x ; y] -> ok @@ Ast_typed.T_operator(TC_map (x , y))
-  | C_big_map   , [x ; y] -> ok @@ Ast_typed.T_operator(TC_big_map (x, y))
-  | C_michelson_or , [x ; y] -> ok @@ Ast_typed.T_operator(TC_michelson_or (x, y))
-  | C_arrow     , [x ; y] -> ok @@ Ast_typed.T_operator(TC_arrow (x, y))
+  | C_map       , [k ; v] -> ok @@ Ast_typed.T_operator(TC_map {k ; v})
+  | C_big_map   , [k ; v] -> ok @@ Ast_typed.T_operator(TC_big_map {k ; v})
+  | C_michelson_or , [l ; r] -> ok @@ Ast_typed.T_operator(TC_michelson_or {l ; r})
+  | C_arrow     , [x ; y] -> ok @@ Ast_typed.T_operator(TC_arrow {type1=x ; type2=y})
   | C_record    , _lst    -> ok @@ failwith "records are not supported yet: T_record lst"
   | C_variant   , _lst    -> ok @@ failwith "sums are not supported yet: T_sum lst"
   | (C_contract | C_option | C_list | C_set | C_map | C_big_map | C_arrow | C_michelson_or ), _ ->

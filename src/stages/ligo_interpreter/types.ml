@@ -1,4 +1,4 @@
-include Stage_common.Types
+include Ast_typed.Types
 
 (*types*)
 module Env = Map.Make(

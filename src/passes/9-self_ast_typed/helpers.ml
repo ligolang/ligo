@@ -1,9 +1,9 @@
 open Ast_typed
 open Trace
-open Stage_common.Helpers
+open Ast_typed.Helpers
 
 type 'a folder = 'a -> expression -> 'a result
-let rec fold_expression : 'a folder -> 'a -> expression -> 'a result = fun f init e ->
+let rec fold_expression : 'a . 'a folder -> 'a -> expression -> 'a result = fun f init e ->
   let self = fold_expression f in 
   let%bind init' = f init e in
   match e.expression_content with
@@ -51,32 +51,32 @@ let rec fold_expression : 'a folder -> 'a -> expression -> 'a result = fun f ini
       ok res
     )
 
-and fold_cases : 'a folder -> 'a -> matching_expr -> 'a result = fun f init m ->
+and fold_cases : 'a . 'a folder -> 'a -> matching_expr -> 'a result = fun f init m ->
   match m with
   | Match_bool { match_true ; match_false } -> (
       let%bind res = fold_expression f init match_true in
       let%bind res = fold_expression f res match_false in
       ok res
     )
-  | Match_list { match_nil ; match_cons = (_ , _ , cons, _) } -> (
+  | Match_list { match_nil ; match_cons = {hd=_; tl=_ ; body; tv=_} } -> (
       let%bind res = fold_expression f init match_nil in
-      let%bind res = fold_expression f res cons in
+      let%bind res = fold_expression f res body in
       ok res
     )
-  | Match_option { match_none ; match_some = (_ , some, _) } -> (
+  | Match_option { match_none ; match_some = {opt=_; body; tv=_} } -> (
       let%bind res = fold_expression f init match_none in
-      let%bind res = fold_expression f res some in
+      let%bind res = fold_expression f res body in
       ok res
     )
-  | Match_tuple ((_ , e), _) -> (
-      let%bind res = fold_expression f init e in
+  | Match_tuple {vars=_ ; body; tvs=_} -> (
+      let%bind res = fold_expression f init body in
       ok res
     )
-  | Match_variant (lst, _) -> (
-      let aux init' ((_ , _) , e) =
-        let%bind res' = fold_expression f init' e in
+  | Match_variant {cases;tv=_} -> (
+      let aux init' {constructor=_; pattern=_ ; body} =
+        let%bind res' = fold_expression f init' body in
         ok res' in
-      let%bind res = bind_fold_list aux init lst in
+      let%bind res = bind_fold_list aux init cases in
       ok res
     )
 
@@ -139,42 +139,42 @@ and map_cases : mapper -> matching_expr -> matching_expr result = fun f m ->
       let%bind match_true = map_expression f match_true in
       let%bind match_false = map_expression f match_false in
       ok @@ Match_bool { match_true ; match_false }
-    )
-  | Match_list { match_nil ; match_cons = (hd , tl , cons, te) } -> (
+    ) 
+  | Match_list { match_nil ; match_cons = {hd ; tl ; body ; tv} } -> (
       let%bind match_nil = map_expression f match_nil in
-      let%bind cons = map_expression f cons in
-      ok @@ Match_list { match_nil ; match_cons = (hd , tl , cons, te) }
+      let%bind body = map_expression f body in
+      ok @@ Match_list { match_nil ; match_cons = {hd ; tl ; body; tv} }
     )
-  | Match_option { match_none ; match_some = (name , some, te) } -> (
+  | Match_option { match_none ; match_some = {opt ; body ; tv } } -> (
       let%bind match_none = map_expression f match_none in
-      let%bind some = map_expression f some in
-      ok @@ Match_option { match_none ; match_some = (name , some, te) }
+      let%bind body = map_expression f body in
+      ok @@ Match_option { match_none ; match_some = { opt ; body ; tv } }
     )
-  | Match_tuple ((names , e), te) -> (
-      let%bind e' = map_expression f e in
-      ok @@ Match_tuple ((names , e'), te)
+  | Match_tuple { vars ; body ; tvs } -> (
+      let%bind body = map_expression f body in
+      ok @@ Match_tuple { vars ; body ; tvs }
     )
-  | Match_variant (lst, te) -> (
-      let aux ((a , b) , e) =
-        let%bind e' = map_expression f e in
-        ok ((a , b) , e')
+  | Match_variant {cases;tv} -> (
+      let aux { constructor ; pattern ; body } =
+        let%bind body = map_expression f body in
+        ok {constructor;pattern;body}
       in
-      let%bind lst' = bind_map_list aux lst in
-      ok @@ Match_variant (lst', te)
+      let%bind cases = bind_map_list aux cases in
+      ok @@ Match_variant {cases ; tv}
     )
 
 and map_program : mapper -> program -> program result = fun m p ->
   let aux = fun (x : declaration) ->
     match x with
-    | Declaration_constant (n , e , i, env) -> (
-        let%bind e' = map_expression m e in
-        ok (Declaration_constant (n , e' , i, env))
+    | Declaration_constant {binder; expr ; inline ; post_env} -> (
+        let%bind expr = map_expression m expr in
+        ok (Declaration_constant {binder; expr ; inline ; post_env})
       )
   in
   bind_map_list (bind_map_location aux) p
 
 type 'a fold_mapper = 'a -> expression -> (bool * 'a * expression) result
-let rec fold_map_expression : 'a fold_mapper -> 'a -> expression -> ('a * expression) result = fun f a e ->
+let rec fold_map_expression : 'a . 'a fold_mapper -> 'a -> expression -> ('a * expression) result = fun f a e ->
   let self = fold_map_expression f in
   let%bind (continue, init',e') = f a e in
   if (not continue) then ok(init',e')
@@ -228,42 +228,42 @@ let rec fold_map_expression : 'a fold_mapper -> 'a -> expression -> ('a * expres
     )
   | E_literal _ | E_variable _ as e' -> ok (init', return e')
 
-and fold_map_cases : 'a fold_mapper -> 'a -> matching_expr -> ('a * matching_expr) result = fun f init m ->
+and fold_map_cases : 'a . 'a fold_mapper -> 'a -> matching_expr -> ('a * matching_expr) result = fun f init m ->
   match m with
   | Match_bool { match_true ; match_false } -> (
       let%bind (init, match_true) = fold_map_expression f init match_true in
       let%bind (init, match_false) = fold_map_expression f init match_false in
       ok @@ (init, Match_bool { match_true ; match_false })
     )
-  | Match_list { match_nil ; match_cons = (hd , tl , cons, te) } -> (
+  | Match_list { match_nil ; match_cons = { hd ; tl ; body ; tv } } -> (
       let%bind (init, match_nil) = fold_map_expression f init match_nil in
-      let%bind (init, cons) = fold_map_expression f init cons in
-      ok @@ (init, Match_list { match_nil ; match_cons = (hd , tl , cons, te) })
+      let%bind (init, body) = fold_map_expression f init body in
+      ok @@ (init, Match_list { match_nil ; match_cons = { hd ; tl ; body ; tv } })
     )
-  | Match_option { match_none ; match_some = (name , some, te) } -> (
+  | Match_option { match_none ; match_some = { opt ; body ; tv } } -> (
       let%bind (init, match_none) = fold_map_expression f init match_none in
-      let%bind (init, some) = fold_map_expression f init some in
-      ok @@ (init, Match_option { match_none ; match_some = (name , some, te) })
+      let%bind (init, body) = fold_map_expression f init body in
+      ok @@ (init, Match_option { match_none ; match_some = { opt ; body ; tv } })
     )
-  | Match_tuple ((names , e), te) -> (
-      let%bind (init, e') = fold_map_expression f init e in
-      ok @@ (init, Match_tuple ((names , e'), te))
+  | Match_tuple { vars ; body ; tvs } -> (
+      let%bind (init, body) = fold_map_expression f init body in
+      ok @@ (init, Match_tuple {vars ; body ; tvs })
     )
-  | Match_variant (lst, te) -> (
-      let aux init ((a , b) , e) =
-        let%bind (init,e') = fold_map_expression f init e in
-        ok (init, ((a , b) , e'))
+  | Match_variant {cases ; tv} -> (
+      let aux init {constructor ; pattern ; body} =
+        let%bind (init, body) = fold_map_expression f init body in
+        ok (init, {constructor; pattern ; body})
       in
-      let%bind (init,lst') = bind_fold_map_list aux init lst in
-      ok @@ (init, Match_variant (lst', te))
-    )  
+      let%bind (init,cases) = bind_fold_map_list aux init cases in
+      ok @@ (init, Match_variant {cases ; tv})
+    )
 
-and fold_map_program : 'a fold_mapper -> 'a -> program -> ('a * program) result = fun m init p ->
+and fold_map_program : 'a . 'a fold_mapper -> 'a -> program -> ('a * program) result = fun m init p ->
   let aux = fun (acc,acc_prg) (x : declaration Location.wrap) ->
     match Location.unwrap x with
-    | Declaration_constant (v , e , i, env) -> (
-        let%bind (acc',e') = fold_map_expression m acc e in
-        let wrap_content = Declaration_constant (v , e' , i, env) in
+    | Declaration_constant {binder ; expr ; inline ; post_env} -> (
+        let%bind (acc', expr) = fold_map_expression m acc expr in
+        let wrap_content = Declaration_constant {binder ; expr ; inline ; post_env} in
         ok (acc', List.append acc_prg [{x with wrap_content}])
       )
   in
@@ -315,28 +315,28 @@ type contract_type = {
 let fetch_contract_type : string -> program -> contract_type result = fun main_fname program ->
   let main_decl = List.rev @@ List.filter
     (fun declt ->
-      let (Declaration_constant (v , _ , _ , _)) = Location.unwrap declt in
-      String.equal (Var.to_name v) main_fname
+      let (Declaration_constant { binder ; expr=_ ; inline=_ ; post_env=_ }) = Location.unwrap declt in
+      String.equal (Var.to_name binder) main_fname
     )
     program
   in
   match main_decl with
   | (hd::_) -> (
-    let (Declaration_constant (_,e,_,_)) = Location.unwrap hd in
-    match e.type_expression.type_content with
+    let (Declaration_constant { binder=_ ; expr ; inline=_ ; post_env=_ }) = Location.unwrap hd in
+    match expr.type_expression.type_content with
     | T_arrow {type1 ; type2} -> (
       match type1.type_content , type2.type_content with
       | T_record tin , T_record tout when (is_tuple_lmap tin) && (is_tuple_lmap tout) ->
-        let%bind (parameter,storage) = Stage_common.Helpers.get_pair tin in
-        let%bind (listop,storage') = Stage_common.Helpers.get_pair tout in
-        let%bind () = trace_strong (Errors.expected_list_operation main_fname listop e) @@
+        let%bind (parameter,storage) = Ast_typed.Helpers.get_pair tin in
+        let%bind (listop,storage') = Ast_typed.Helpers.get_pair tout in
+        let%bind () = trace_strong (Errors.expected_list_operation main_fname listop expr) @@
           Ast_typed.assert_t_list_operation listop in
-        let%bind () = trace_strong (Errors.expected_same main_fname storage storage' e) @@
+        let%bind () = trace_strong (Errors.expected_same main_fname storage storage' expr) @@
           Ast_typed.assert_type_expression_eq (storage,storage') in
         (* TODO: on storage/parameter : assert_storable, assert_passable ? *)
         ok { parameter ; storage }
-      |  _ -> fail @@ Errors.bad_contract_io main_fname e
+      |  _ -> fail @@ Errors.bad_contract_io main_fname expr
       )
-    | _ -> fail @@ Errors.bad_contract_io main_fname e
+    | _ -> fail @@ Errors.bad_contract_io main_fname expr
   )
   | [] -> simple_fail ("Entrypoint '"^main_fname^"' does not exist")
