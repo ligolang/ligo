@@ -1173,7 +1173,20 @@ ligo: in file "create_contract_var.mligo", line 6, character 35 to line 10, char
              CONS ;
              DIP { DIP { DUP } ; SWAP ; CDR } ;
              PAIR ;
-             DIP { DROP 2 } } } |}]
+             DIP { DROP 2 } } } |}];
+
+  run_ligo_good [ "compile-contract" ; contract "tuples_no_annotation.religo" ; "main" ] ;
+  [%expect {|
+    { parameter int ;        
+      storage (pair (pair int string) (pair nat bool)) ;
+      code { PUSH string "2" ;
+             PUSH int 2 ;
+             PAIR ;
+             DIP { PUSH bool False ; PUSH nat 2 ; PAIR } ;
+             PAIR ;
+             NIL operation ;
+             PAIR ;
+             DIP { DROP } } } |}]
 
 let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; bad_contract "self_type_annotation.ligo" ; "main" ] ;
