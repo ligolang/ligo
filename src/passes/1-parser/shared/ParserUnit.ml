@@ -273,8 +273,8 @@ module Make (Lexer: Lexer.S)
         let cin     = open_in source in
         let lexbuf  = Lexing.from_channel cin in
         let () =
-          lexbuf.Lexing.lex_curr_p <-
-            {lexbuf.Lexing.lex_curr_p with pos_fname = source}
+          let open Lexing in
+          lexbuf.lex_curr_p <- {lexbuf.lex_curr_p with pos_fname=source}
         and options = (options :> Preprocessor.EvalOpt.options) in
         match Preprocessor.Preproc.lex options lexbuf with
           Stdlib.Ok _ as ok  -> ok
