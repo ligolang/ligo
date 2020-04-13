@@ -163,6 +163,7 @@ let rec transpile_type (t:AST.type_expression) : type_value result =
     )
   (* TODO hmm *)
   | T_sum m ->
+      let is_michelson_or = Stage_common.Helpers.is_michelson_or m in
       let node = Append_tree.of_list @@ kv_list_of_cmap m in
       let aux a b : type_value annotated result =
         let%bind a = a in
@@ -172,7 +173,12 @@ let rec transpile_type (t:AST.type_expression) : type_value result =
       let%bind m' = Append_tree.fold_ne
                       (fun (Stage_common.Types.Constructor ann, a) ->
                         let%bind a = transpile_type a in
-                        ok (Some (String.uncapitalize_ascii ann), a))
+                        ok ((
+                          if is_michelson_or then 
+                            None 
+                          else 
+                            Some (String.uncapitalize_ascii ann)), 
+                          a))
                       aux node in
       ok @@ snd m'
   | T_record m ->

@@ -24,7 +24,7 @@ val get_pair :
 val tuple_of_record : 'a LMap.t -> (label * 'a) list
 val list_of_record_or_tuple : 'a LMap.t -> 'a list
 val kv_list_of_record_or_tuple : 'a LMap.t -> (label * 'a) list
-
+val is_michelson_or : 'a Types.constructor_map -> bool
 
 
 val bind_map_lmapi : 
