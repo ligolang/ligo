@@ -10,7 +10,7 @@ let%expect_test _ =
   [%expect {| 1872 bytes |}] ;
 
   run_ligo_good [ "measure-contract" ; contract "multisig.ligo" ; "main" ] ;
-  [%expect {| 1294 bytes |}] ;
+  [%expect {| 1282 bytes |}] ;
 
   run_ligo_good [ "measure-contract" ; contract "multisig-v2.ligo" ; "main" ] ;
   [%expect {| 2974 bytes |}] ;
@@ -297,7 +297,7 @@ let%expect_test _ =
   [%expect {|
     { parameter
         (pair (pair (nat %counter) (lambda %message unit (list operation)))
-              (list %signatures (pair (key_hash %0) (signature %1)))) ;
+              (list %signatures (pair key_hash signature))) ;
       storage
         (pair (pair (list %auth key) (nat %counter)) (pair (string %id) (nat %threshold))) ;
       code { DUP ;
