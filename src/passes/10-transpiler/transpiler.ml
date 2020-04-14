@@ -278,7 +278,7 @@ let rec transpile_type (t:AST.type_expression) : type_value result =
     )
   (* TODO hmm *)
   | T_sum m ->
-      let is_michelson_or = Stage_common.Helpers.is_michelson_or m in
+      let is_michelson_or = Ast_typed.Helpers.is_michelson_or m in
       let node = Append_tree.of_list @@ kv_list_of_cmap m in
       let aux a b : type_value annotated result =
         let%bind a = a in
@@ -297,12 +297,12 @@ let rec transpile_type (t:AST.type_expression) : type_value result =
                       aux node in
       ok @@ snd m'
   | T_record m ->
-      let is_tuple_lmap = Stage_common.Helpers.is_tuple_lmap m in
+      let is_tuple_lmap = Ast_typed.Helpers.is_tuple_lmap m in
       let node = Append_tree.of_list @@ (
         if is_tuple_lmap then
-          Stage_common.Helpers.tuple_of_record m
+          Ast_typed.Helpers.tuple_of_record m
         else 
-          List.rev @@ LMap.to_kv_list m
+          List.rev @@ Ast_typed.Types.LMap.to_kv_list m
         )
       in
       let aux a b : type_value annotated result =
@@ -311,7 +311,7 @@ let rec transpile_type (t:AST.type_expression) : type_value result =
         ok (None, T_pair (a, b))
       in
       let%bind m' = Append_tree.fold_ne
-                      (fun (Stage_common.Types.Label ann, a) ->
+                      (fun (Ast_typed.Types.Label ann, a) ->
                         let%bind a = transpile_type a in                        
                         ok ((if is_tuple_lmap then 
                               None 
