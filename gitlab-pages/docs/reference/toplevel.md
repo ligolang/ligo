@@ -22,6 +22,8 @@ let is_nat: int => option(nat)
 
 Convert an `int` to a `nat` if possible.
 
+Note that `Michelson.is_nat` is deprecated. Please use `is_nat` instead.
+
 <SyntaxTitle syntax="pascaligo">
 function abs: int -> nat
 </SyntaxTitle>

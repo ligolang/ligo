@@ -235,5 +235,5 @@ module Ast_PP_type (PARAMETER : AST_PARAMETER_TYPE) = struct
       | TC_arrow (k, v) -> Format.asprintf "arrow (%a,%a)" f k f v
       | TC_contract te  -> Format.asprintf "Contract (%a)" f te
     in
-    fprintf ppf "(TO_%s)" s
+    fprintf ppf "(type_operator: %s)" s
 end

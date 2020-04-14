@@ -21,7 +21,8 @@ module LMap = Map.Make( struct type t = label let compare (Label a) (Label b) = 
 
 type 'a label_map = 'a LMap.t
 type 'a constructor_map = 'a CMap.t
-type type_meta = S.type_expression option
+type ast_core_type_expression = S.type_expression
+
 
 type 'a location_wrap = 'a Location.wrap
 type 'a list_ne = 'a List.Ne.t
@@ -69,3 +70,9 @@ let fold_map__list_ne : type a state new_a . (state -> a -> (state * new_a) resu
     ok (state , new_element :: l) in
   let%bind (state , l) = List.fold_left aux (ok (state , [])) l in
   ok (state , (new_first , l))
+
+let fold_map__option : type a state new_a . (state -> a -> (state * new_a) result) -> state -> a option -> (state * new_a option) Simple_utils.Trace.result =
+  fun f state o ->
+  match o with
+  | None -> ok (state, None)
+  | Some v -> let%bind state, v = f state v in ok (state, Some v)

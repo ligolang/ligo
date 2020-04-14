@@ -2328,6 +2328,10 @@ let tuple_list_religo () : unit result =
   let%bind _ = retype_file "./contracts/tuple_list.religo" in  
   ok ()
 
+let single_record_expr_religo () : unit result =
+  let%bind _ = retype_file "./contracts/single_record_item.religo" in  
+  ok ()
+
 let loop_bugs_ligo () : unit result =
   let%bind program = type_file "./contracts/loop_bugs.ligo" in
   let input = e_unit () in
@@ -2515,4 +2519,5 @@ let main = test_suite "Integration (End to End)" [
     test "no semicolon (religo)" no_semicolon_religo ;
     test "loop_bugs (ligo)" loop_bugs_ligo ;
     test "tuple_list (religo)" tuple_list_religo ;
+    test "single_record_expr (religo)" single_record_expr_religo ;
   ]
