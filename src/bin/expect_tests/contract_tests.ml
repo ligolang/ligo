@@ -26,7 +26,7 @@ let%expect_test _ =
 
   run_ligo_bad [ "compile-storage" ; contract "coase.ligo" ; "main" ; "Buy_single (record card_to_buy = 1n end)" ] ;
   [%expect {|
-    ligo: different kinds:  {"a":"record[card_patterns -> (TO_Map (nat,record[coefficient -> mutez , quantity -> nat])) ,\n       cards -> (TO_Map (nat,record[card_owner -> address , card_pattern -> nat])) ,\n       next_id -> nat]","b":"sum[Buy_single -> record[card_to_buy -> nat] ,\n    Sell_single -> record[card_to_sell -> nat] ,\n    Transfer_single -> record[card_to_transfer -> nat ,\n                              destination -> address]]"}
+    ligo: different kinds:  {"a":"record[card_patterns -> (type_operator: Map (nat,record[coefficient -> mutez , quantity -> nat])) ,\n       cards -> (type_operator: Map (nat,record[card_owner -> address , card_pattern -> nat])) ,\n       next_id -> nat]","b":"sum[Buy_single -> record[card_to_buy -> nat] ,\n    Sell_single -> record[card_to_sell -> nat] ,\n    Transfer_single -> record[card_to_transfer -> nat ,\n                              destination -> address]]"}
 
 
      If you're not sure how to fix this error, you can
@@ -39,7 +39,7 @@ let%expect_test _ =
 
   run_ligo_bad [ "compile-parameter" ; contract "coase.ligo" ; "main" ; "record cards = (map end : cards) ; card_patterns = (map end : card_patterns) ; next_id = 3n ; end" ] ;
   [%expect {|
-    ligo: different kinds:  {"a":"sum[Buy_single -> record[card_to_buy -> nat] ,\n    Sell_single -> record[card_to_sell -> nat] ,\n    Transfer_single -> record[card_to_transfer -> nat ,\n                              destination -> address]]","b":"record[card_patterns -> (TO_Map (nat,record[coefficient -> mutez , quantity -> nat])) ,\n       cards -> (TO_Map (nat,record[card_owner -> address , card_pattern -> nat])) ,\n       next_id -> nat]"}
+    ligo: different kinds:  {"a":"sum[Buy_single -> record[card_to_buy -> nat] ,\n    Sell_single -> record[card_to_sell -> nat] ,\n    Transfer_single -> record[card_to_transfer -> nat ,\n                              destination -> address]]","b":"record[card_patterns -> (type_operator: Map (nat,record[coefficient -> mutez , quantity -> nat])) ,\n       cards -> (type_operator: Map (nat,record[card_owner -> address , card_pattern -> nat])) ,\n       next_id -> nat]"}
 
 
      If you're not sure how to fix this error, you can
@@ -1117,7 +1117,7 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; bad_contract "create_contract_toplevel.mligo" ; "main" ] ;
   [%expect {|
-ligo: in file "create_contract_toplevel.mligo", line 4, character 35 to line 8, character 8. No free variable allowed in this lambda: variable 'store' {"expression":"CREATE_CONTRACT(lambda (#P:Some(( nat * string ))) : None return\n                let rhs#712 = #P in\n                let p = rhs#712.0 in\n                let s = rhs#712.1 in\n                ( LIST_EMPTY() : (TO_list(operation)) , store ) ,\n                NONE() : (TO_option(key_hash)) ,\n                300000000mutez ,\n                \"un\")","location":"in file \"create_contract_toplevel.mligo\", line 4, character 35 to line 8, character 8"}
+ligo: in file "create_contract_toplevel.mligo", line 4, character 35 to line 8, character 8. No free variable allowed in this lambda: variable 'store' {"expression":"CREATE_CONTRACT(lambda (#P:Some(( nat * string ))) : None return\n                let rhs#712 = #P in\n                let p = rhs#712.0 in\n                let s = rhs#712.1 in\n                ( LIST_EMPTY() : (type_operator: list(operation)) , store ) ,\n                NONE() : (type_operator: option(key_hash)) ,\n                300000000mutez ,\n                \"un\")","location":"in file \"create_contract_toplevel.mligo\", line 4, character 35 to line 8, character 8"}
 
 
  If you're not sure how to fix this error, you can
@@ -1130,7 +1130,7 @@ ligo: in file "create_contract_toplevel.mligo", line 4, character 35 to line 8, 
 
   run_ligo_bad [ "compile-contract" ; bad_contract "create_contract_var.mligo" ; "main" ] ;
   [%expect {|
-ligo: in file "create_contract_var.mligo", line 6, character 35 to line 10, character 5. No free variable allowed in this lambda: variable 'a' {"expression":"CREATE_CONTRACT(lambda (#P:Some(( nat * int ))) : None return\n                let rhs#715 = #P in\n                let p = rhs#715.0 in\n                let s = rhs#715.1 in\n                ( LIST_EMPTY() : (TO_list(operation)) , a ) ,\n                NONE() : (TO_option(key_hash)) ,\n                300000000mutez ,\n                1)","location":"in file \"create_contract_var.mligo\", line 6, character 35 to line 10, character 5"}
+ligo: in file "create_contract_var.mligo", line 6, character 35 to line 10, character 5. No free variable allowed in this lambda: variable 'a' {"expression":"CREATE_CONTRACT(lambda (#P:Some(( nat * int ))) : None return\n                let rhs#715 = #P in\n                let p = rhs#715.0 in\n                let s = rhs#715.1 in\n                ( LIST_EMPTY() : (type_operator: list(operation)) , a ) ,\n                NONE() : (type_operator: option(key_hash)) ,\n                300000000mutez ,\n                1)","location":"in file \"create_contract_var.mligo\", line 6, character 35 to line 10, character 5"}
 
 
  If you're not sure how to fix this error, you can
@@ -1178,7 +1178,7 @@ ligo: in file "create_contract_var.mligo", line 6, character 35 to line 10, char
 let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; bad_contract "self_type_annotation.ligo" ; "main" ] ;
   [%expect {|
-    ligo: in file "self_type_annotation.ligo", line 8, characters 41-64. bad self type: expected (TO_Contract (int)) but got (TO_Contract (nat)) {"location":"in file \"self_type_annotation.ligo\", line 8, characters 41-64"}
+    ligo: in file "self_type_annotation.ligo", line 8, characters 41-64. bad self type: expected (type_operator: Contract (int)) but got (type_operator: Contract (nat)) {"location":"in file \"self_type_annotation.ligo\", line 8, characters 41-64"}
 
 
      If you're not sure how to fix this error, you can
@@ -1217,7 +1217,7 @@ let%expect_test _ =
 
   run_ligo_bad [ "compile-contract" ; bad_contract "bad_contract2.mligo" ; "main" ] ;
   [%expect {|
-    ligo: in file "", line 0, characters 0-0. bad return type: expected (TO_list(operation)), got string {"location":"in file \"\", line 0, characters 0-0","entrypoint":"main"}
+    ligo: in file "", line 0, characters 0-0. bad return type: expected (type_operator: list(operation)), got string {"location":"in file \"\", line 0, characters 0-0","entrypoint":"main"}
 
 
      If you're not sure how to fix this error, you can
@@ -1230,7 +1230,7 @@ let%expect_test _ =
 
   run_ligo_bad [ "compile-contract" ; bad_contract "bad_contract3.mligo" ; "main" ] ;
   [%expect {|
-    ligo: in file "", line 0, characters 0-0. badly typed contract: expected {int} and {string} to be the same in the entrypoint type {"location":"in file \"\", line 0, characters 0-0","entrypoint":"main","entrypoint_type":"( nat * int ) -> ( (TO_list(operation)) * string )"}
+    ligo: in file "", line 0, characters 0-0. badly typed contract: expected {int} and {string} to be the same in the entrypoint type {"location":"in file \"\", line 0, characters 0-0","entrypoint":"main","entrypoint_type":"( nat * int ) -> ( (type_operator: list(operation)) * string )"}
 
 
      If you're not sure how to fix this error, you can

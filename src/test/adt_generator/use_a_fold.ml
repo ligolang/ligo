@@ -71,7 +71,7 @@ let () =
         match info.node_instance.instance_kind with
         | RecordInstance { fields } ->
            false, "{ " ^ String.concat " ; " (List.map (fun (fld : 'x Adt_info.ctor_or_field_instance) -> fld.cf.name ^ " = " ^ snd (fld.cf_continue nostate)) fields) ^ " }"
-        | VariantInstance { constructor={ cf = { name; is_builtin=_; type_=_ }; cf_continue }; variant=_ } ->
+        | VariantInstance { constructor={ cf = { name; is_builtin=_; type_=_ }; cf_continue; cf_new_fold=_ }; variant=_ } ->
            (match cf_continue nostate with
             | true,  arg -> true, name ^ " (" ^ arg ^ ")"
             | false, arg -> true, name ^ " "  ^ arg)

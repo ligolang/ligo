@@ -1,4 +1,4 @@
-module Adt_info = struct
+module Adt_info (M : sig type ('state , 'adt_info_node_instance_info) fold_config end) = struct
   type kind =
   | Record
   | Variant
@@ -39,10 +39,11 @@ module Adt_info = struct
   and 'state ctor_or_field_instance =
     {
       cf : ctor_or_field;
-      cf_continue : 'state -> 'state
+      cf_continue : 'state -> 'state;
+      cf_new_fold : 'state . ('state, ('state node_instance_info)) M.fold_config -> 'state -> 'state;
     }
 
-  type node =
+  and node =
     {
       kind : kind;
       declaration_name : string;
@@ -50,10 +51,10 @@ module Adt_info = struct
     }
 
   (* TODO: rename things a bit in this file. *)
-  type adt = node list
-  type 'state node_instance_info = {
+  and adt = node list
+  and 'state node_instance_info = {
     adt           : adt ;
     node_instance : 'state instance ;
   }
-  type 'state ctor_or_field_instance_info = adt * node * 'state ctor_or_field_instance
+  and 'state ctor_or_field_instance_info = adt * node * 'state ctor_or_field_instance
 end
