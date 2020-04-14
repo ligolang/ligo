@@ -9,7 +9,7 @@ my $record = "_ _ record";
 sub poly { $^type_name }
 
 my $l = @*ARGS[0].IO.lines;
-$l = $l.map(*.subst: /^\s+/, "");
+$l = $l.map(*.subst: /(^\s+|\s+$)/, "");
 $l = $l.list.cache;
 my $statement_re = /^((\(\*\s+)?(open|include)\s|\[\@\@\@warning\s)/;
 my $statements = $l.grep($statement_re);
