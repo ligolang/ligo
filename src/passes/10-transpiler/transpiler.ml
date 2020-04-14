@@ -278,6 +278,7 @@ let rec transpile_type (t:AST.type_expression) : type_value result =
     )
   (* TODO hmm *)
   | T_sum m ->
+      let is_michelson_or = Ast_typed.Helpers.is_michelson_or m in
       let node = Append_tree.of_list @@ kv_list_of_cmap m in
       let aux a b : type_value annotated result =
         let%bind a = a in
@@ -287,11 +288,23 @@ let rec transpile_type (t:AST.type_expression) : type_value result =
       let%bind m' = Append_tree.fold_ne
                       (fun (Ast_typed.Types.Constructor ann, a) ->
                         let%bind a = transpile_type a in
-                        ok (Some (String.uncapitalize_ascii ann), a))
+                        ok ((
+                          if is_michelson_or then 
+                            None 
+                          else 
+                            Some (String.uncapitalize_ascii ann)), 
+                          a))
                       aux node in
       ok @@ snd m'
   | T_record m ->
-      let node = Append_tree.of_list @@ Ast_typed.Helpers.kv_list_of_record_or_tuple m in
+      let is_tuple_lmap = Ast_typed.Helpers.is_tuple_lmap m in
+      let node = Append_tree.of_list @@ (
+        if is_tuple_lmap then
+          Ast_typed.Helpers.tuple_of_record m
+        else 
+          List.rev @@ Ast_typed.Types.LMap.to_kv_list m
+        )
+      in
       let aux a b : type_value annotated result =
         let%bind a = a in
         let%bind b = b in
@@ -299,8 +312,13 @@ let rec transpile_type (t:AST.type_expression) : type_value result =
       in
       let%bind m' = Append_tree.fold_ne
                       (fun (Ast_typed.Types.Label ann, a) ->
-                        let%bind a = transpile_type a in
-                        ok (Some ann, a))
+                        let%bind a = transpile_type a in                        
+                        ok ((if is_tuple_lmap then 
+                              None 
+                            else 
+                              Some ann), 
+                            a)
+                      )
                       aux node in
       ok @@ snd m'
   | T_arrow {type1;type2} -> (

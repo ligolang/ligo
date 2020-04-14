@@ -163,3 +163,9 @@ let kv_list_of_record_or_tuple (m: _ LMap.t) =
     tuple_of_record m
   else
     List.rev @@ LMap.to_kv_list m
+
+
+let is_michelson_or (t: _ constructor_map) =
+  CMap.cardinal t = 2 && 
+  (CMap.mem (Constructor "M_left") t) &&
+  (CMap.mem (Constructor "M_right") t)

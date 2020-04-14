@@ -10,7 +10,7 @@ let%expect_test _ =
   [%expect {| 1872 bytes |}] ;
 
   run_ligo_good [ "measure-contract" ; contract "multisig.ligo" ; "main" ] ;
-  [%expect {| 1294 bytes |}] ;
+  [%expect {| 1282 bytes |}] ;
 
   run_ligo_good [ "measure-contract" ; contract "multisig-v2.ligo" ; "main" ] ;
   [%expect {| 2974 bytes |}] ;
@@ -297,7 +297,7 @@ let%expect_test _ =
   [%expect {|
     { parameter
         (pair (pair (nat %counter) (lambda %message unit (list operation)))
-              (list %signatures (pair (key_hash %0) (signature %1)))) ;
+              (list %signatures (pair key_hash signature))) ;
       storage
         (pair (pair (list %auth key) (nat %counter)) (pair (string %id) (nat %threshold))) ;
       code { DUP ;
@@ -1173,7 +1173,20 @@ ligo: in file "create_contract_var.mligo", line 6, character 35 to line 10, char
              CONS ;
              DIP { DIP { DUP } ; SWAP ; CDR } ;
              PAIR ;
-             DIP { DROP 2 } } } |}]
+             DIP { DROP 2 } } } |}];
+
+  run_ligo_good [ "compile-contract" ; contract "tuples_no_annotation.religo" ; "main" ] ;
+  [%expect {|
+    { parameter int ;        
+      storage (pair (pair int string) (pair nat bool)) ;
+      code { PUSH string "2" ;
+             PUSH int 2 ;
+             PAIR ;
+             DIP { PUSH bool False ; PUSH nat 2 ; PAIR } ;
+             PAIR ;
+             NIL operation ;
+             PAIR ;
+             DIP { DROP } } } |}]
 
 let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; bad_contract "self_type_annotation.ligo" ; "main" ] ;
