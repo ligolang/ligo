@@ -1,6 +1,6 @@
 name: "ligo"
 opam-version: "2.0"
-maintainer: "ligolang@gmail.com"
+maintainer: "Galfour <contact@ligolang.org>"
 authors: [ "Galfour" ]
 homepage: "https://gitlab.com/ligolang/tezos"
 bug-reports: "https://gitlab.com/ligolang/tezos/issues"
@@ -23,6 +23,8 @@ depends: [
   "getopt"
   "terminal_size"
   "pprint"
+  "UnionFind"
+  "RedBlackTrees"
   # work around upstream in-place update
   "ocaml-migrate-parsetree" { = "1.4.0" }
 ]

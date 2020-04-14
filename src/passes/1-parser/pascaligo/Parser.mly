@@ -3,7 +3,7 @@
 
 [@@@warning "-42"]
 
-open Region
+open Simple_utils.Region
 open AST
 
 (* END HEADER *)

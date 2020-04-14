@@ -1,5 +1,6 @@
 open Trace
 open Types
+open Helpers
 
 module Errors = struct
   let different_kinds a b () =
@@ -53,7 +54,7 @@ module Errors = struct
     error ~data title message ()
 
   let different_props_in_record a b ra rb ka kb () =
-    let names () = if Stage_common.Helpers.is_tuple_lmap ra && Stage_common.Helpers.is_tuple_lmap rb then "tuples" else "records" in
+    let names () = if Helpers.is_tuple_lmap ra && Helpers.is_tuple_lmap rb then "tuples" else "records" in
     let title () = "different keys in " ^ (names ()) in
     let message () = "" in
     let data = [
@@ -65,8 +66,8 @@ module Errors = struct
     error ~data title message ()
 
   let different_kind_record_tuple a b ra rb () =
-    let name_a () = if Stage_common.Helpers.is_tuple_lmap ra then "tuple" else "record" in
-    let name_b () = if Stage_common.Helpers.is_tuple_lmap rb then "tuple" else "record" in
+    let name_a () = if Helpers.is_tuple_lmap ra then "tuple" else "record" in
+    let name_b () = if Helpers.is_tuple_lmap rb then "tuple" else "record" in
     let title () = "different keys in " ^ (name_a ()) ^ " and " ^ (name_b ()) in
     let message () = "Expected these two types to be the same, but they're different (one is a " ^ (name_a ()) ^ " and the other is a " ^ (name_b ()) ^ ")" in
     let data = [
@@ -82,7 +83,7 @@ module Errors = struct
 
   let different_size_records_tuples a b ra rb =
     different_size_type
-      (if Stage_common.Helpers.is_tuple_lmap ra && Stage_common.Helpers.is_tuple_lmap rb
+      (if Helpers.is_tuple_lmap ra && Helpers.is_tuple_lmap rb
        then "tuples"
        else "records")
       a b
@@ -228,17 +229,17 @@ module Free_variables = struct
   and expression : bindings -> expression -> bindings = fun b e ->
     expression_content b e.expression_content
 
-  and matching_variant_case : type a . (bindings -> a -> bindings) -> bindings -> ((constructor' * expression_variable) * a) -> bindings  = fun f b ((_,n),c) ->
-    f (union (singleton n) b) c
+  and matching_variant_case : (bindings -> expression -> bindings) -> bindings -> matching_content_case -> bindings  = fun f b { constructor=_ ; pattern ; body } ->
+    f (union (singleton pattern) b) body
 
-  and matching : type a . (bindings -> a -> bindings) -> bindings -> (a,'var) matching_content -> bindings = fun f b m ->
+  and matching : (bindings -> expression -> bindings) -> bindings -> matching_expr -> bindings = fun f b m ->
     match m with
     | Match_bool { match_true = t ; match_false = fa } -> union (f b t) (f b fa)
-    | Match_list { match_nil = n ; match_cons = (hd, tl, c, _) } -> union (f b n) (f (union (of_list [hd ; tl]) b) c)
-    | Match_option { match_none = n ; match_some = (opt, s, _) } -> union (f b n) (f (union (singleton opt) b) s)
-    | Match_tuple ((lst , a), _) ->
-       f (union (of_list lst) b) a    
-    | Match_variant (lst,_) -> unions @@ List.map (matching_variant_case f b) lst
+    | Match_list { match_nil = n ; match_cons = {hd; tl; body; tv=_} } -> union (f b n) (f (union (of_list [hd ; tl]) b) body)
+    | Match_option { match_none = n ; match_some = {opt; body; tv=_} } -> union (f b n) (f (union (singleton opt) b) body)
+    | Match_tuple { vars ; body ; tvs=_ } ->
+       f (union (of_list vars) b) body
+    | Match_variant { cases ; tv=_ } -> unions @@ List.map (matching_variant_case f b) cases
 
   and matching_expression = fun x -> matching expression x
 
@@ -338,12 +339,13 @@ let rec assert_type_expression_eq (a, b: (type_expression * type_expression)) : 
       | TC_list la, TC_list lb
       | TC_contract la, TC_contract lb
       | TC_set la, TC_set lb -> ok @@ ([la], [lb])
-      | (TC_map (ka,va) | TC_map_or_big_map (ka,va)), (TC_map (kb,vb) | TC_map_or_big_map (kb,vb))
-      | (TC_big_map (ka,va) | TC_map_or_big_map (ka,va)), (TC_big_map (kb,vb) | TC_map_or_big_map (kb,vb))
-       -> ok @@ ([ka;va] ,[kb;vb]) 
-      | TC_michelson_or (la,ra), TC_michelson_or (lb,rb) -> ok @@ ([la;ra] , [lb;rb])
-      | (TC_option _ | TC_list _ | TC_contract _ | TC_set _ | TC_map _ | TC_big_map _ | TC_map_or_big_map _ | TC_arrow _ | TC_michelson_or _ ),
-        (TC_option _ | TC_list _ | TC_contract _ | TC_set _ | TC_map _ | TC_big_map _ | TC_map_or_big_map _ | TC_arrow _ | TC_michelson_or _ ) -> fail @@ different_operators opa opb
+      | (TC_map {k=ka;v=va} | TC_map_or_big_map {k=ka;v=va}), (TC_map {k=kb;v=vb} | TC_map_or_big_map {k=kb;v=vb})
+      | (TC_big_map {k=ka;v=va} | TC_map_or_big_map {k=ka;v=va}), (TC_big_map {k=kb;v=vb} | TC_map_or_big_map {k=kb;v=vb})
+        -> ok @@ ([ka;va] ,[kb;vb]) 
+      | TC_michelson_or {l=la;r=ra}, TC_michelson_or {l=lb;r=rb} -> ok @@ ([la;ra] , [lb;rb])
+      | (TC_option _ | TC_list _ | TC_contract _ | TC_set _ | TC_map _ | TC_big_map _ | TC_map_or_big_map _ | TC_arrow _| TC_michelson_or _ ),
+        (TC_option _ | TC_list _ | TC_contract _ | TC_set _ | TC_map _ | TC_big_map _ | TC_map_or_big_map _ | TC_arrow _| TC_michelson_or _ )
+        -> fail @@ different_operators opa opb
       in
       if List.length lsta <> List.length lstb then
         fail @@ different_operator_number_of_arguments opa opb (List.length lsta) (List.length lstb)
@@ -369,7 +371,7 @@ let rec assert_type_expression_eq (a, b: (type_expression * type_expression)) : 
     )
   | T_sum _, _ -> fail @@ different_kinds a b
   | T_record ra, T_record rb
-       when Stage_common.Helpers.is_tuple_lmap ra <> Stage_common.Helpers.is_tuple_lmap rb -> (
+       when Helpers.is_tuple_lmap ra <> Helpers.is_tuple_lmap rb -> (
     fail @@ different_kind_record_tuple a b ra rb
   )
   | T_record ra, T_record rb -> (
@@ -489,7 +491,7 @@ let rec assert_value_eq (a, b: (expression*expression)) : unit result =
         | Some a, Some b -> Some (assert_value_eq (a, b))
         | _              -> Some (fail @@ missing_key_in_record_value k)
       in
-      let%bind _all = Stage_common.Helpers.bind_lmap @@ LMap.merge aux sma smb in
+      let%bind _all = Helpers.bind_lmap @@ LMap.merge aux sma smb in
       ok ()
     )
   | E_record _, _ ->
@@ -515,8 +517,8 @@ let merge_annotation (a:type_expression option) (b:type_expression option) err :
 let get_entry (lst : program) (name : string) : expression result =
   trace_option (Errors.missing_entry_point name) @@
   let aux x =
-    let (Declaration_constant (an , expr, _, _)) = Location.unwrap x in
-    if (an = Var.of_name name)
+    let (Declaration_constant { binder ; expr ; inline=_ ; _ }) = Location.unwrap x in
+    if Var.equal binder (Var.of_name name)
     then Some expr
     else None
   in
@@ -525,4 +527,4 @@ let get_entry (lst : program) (name : string) : expression result =
 let program_environment (program : program) : full_environment =
   let last_declaration = Location.unwrap List.(hd @@ rev program) in
   match last_declaration with
-  | Declaration_constant (_ , _, _, post_env) -> post_env
+  | Declaration_constant { binder=_ ; expr=_ ; inline=_ ; post_env } -> post_env

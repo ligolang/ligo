@@ -3,7 +3,7 @@ open Cli_expect
 let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; "../../test/contracts/negative/gitlab_111.religo" ; "main" ] ;
   [%expect {|
-    ligo: : Parse error in file "gitlab_111.religo", line 2, characters 0-3, after "=" and before "let":
+    ligo: : Parse error in file "gitlab_111.religo", line 2, characters 0-3 at "let", after "=":
           This is an incorrect let binding. 
           -
           Examples of correct let bindings: 
@@ -23,7 +23,7 @@ let%expect_test _ =
 
   run_ligo_bad [ "compile-contract" ; "../../test/contracts/negative/missing_rpar.religo" ; "main" ] ;
   [%expect {|
-    ligo: : Parse error in file "missing_rpar.religo", line 5, characters 0-3, after "m" and before "let":
+    ligo: : Parse error in file "missing_rpar.religo", line 5, characters 0-3 at "let", after "m":
           Missing `)`.
            {}
 

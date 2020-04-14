@@ -152,6 +152,18 @@ let compile_file =
   let doc = "Subcommand: Compile a contract." in
   (Term.ret term , Term.info ~doc cmdname)
 
+let preprocess =
+  let f source_file syntax display_format = (
+    toplevel ~display_format @@
+      let%bind pp =
+        Compile.Of_source.preprocess source_file (Syntax_name syntax) in
+      ok @@ Format.asprintf "%s \n" (Buffer.contents pp)
+  ) in
+  let term = Term.(const f $ source_file 0 $ syntax $ display_format) in
+  let cmdname = "preprocess" in
+  let doc = "Subcommand: Preprocess the source file.\nWarning: Intended for development of LIGO and can break at any time." in
+  (Term.ret term, Term.info ~doc cmdname)
+
 let print_cst =
   let f source_file syntax display_format = (
     toplevel ~display_format @@
@@ -470,4 +482,5 @@ let run ?argv () =
     print_ast_typed ;
     print_mini_c ;
     list_declarations ;
+    preprocess
   ]

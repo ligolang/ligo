@@ -1,11 +1,26 @@
-(* Functor to build a standalone LIGO parser *)
+(* Functor to build a LIGO parser *)
 
-module Region = Simple_utils.Region
+module Region  = Simple_utils.Region
+module Preproc = Preprocessor.Preproc
+module SSet    = Set.Make (String)
 
-module type IO =
+type language = [`PascaLIGO | `CameLIGO | `ReasonLIGO]
+
+module type SubIO =
   sig
-    val ext : string              (* LIGO file extension *)
-    val options : EvalOpt.options (* CLI options *)
+    type options = <
+      libs    : string list;
+      verbose : SSet.t;
+      offsets : bool;
+      lang    : language;
+      ext     : string;   (* ".ligo", ".mligo", ".religo" *)
+      mode    : [`Byte | `Point];
+      cmd     : EvalOpt.command;
+      mono    : bool
+    >
+
+    val options : options
+    val make : input:string option -> expr:bool -> EvalOpt.options
   end
 
 module type Pretty =
@@ -32,18 +47,18 @@ module Make (Lexer: Lexer.S)
             (ParErr: sig val message : int -> string end)
             (ParserLog: Pretty with type ast  = AST.t
                                 and type expr = AST.expr)
-            (IO: IO) =
+            (SubIO: SubIO) =
   struct
     open Printf
-    module SSet = Utils.String.Set
+    module SSet = Set.Make (String)
 
     (* Log of the lexer *)
 
     module Log = LexerLog.Make (Lexer)
 
     let log =
-      Log.output_token ~offsets:IO.options#offsets
-                       IO.options#mode IO.options#cmd stdout
+      Log.output_token ~offsets:SubIO.options#offsets
+                       SubIO.options#mode SubIO.options#cmd stdout
 
     (* Error handling (reexported from [ParserAPI]) *)
 
@@ -54,7 +69,12 @@ module Make (Lexer: Lexer.S)
 
     (* Instantiating the parser *)
 
-    module Front = ParserAPI.Make (IO)(Lexer)(Parser)(ParErr)
+    module API_IO =
+      struct
+        let options = (SubIO.options :> ParserAPI.options)
+      end
+
+    module Front = ParserAPI.Make (API_IO)(Lexer)(Parser)(ParErr)
 
     let format_error = Front.format_error
 
@@ -67,13 +87,13 @@ module Make (Lexer: Lexer.S)
       (AST.expr, message Region.reg) Stdlib.result =
       let output = Buffer.create 131 in
       let state  =
-        ParserLog.mk_state ~offsets:IO.options#offsets
-                           ~mode:IO.options#mode
+        ParserLog.mk_state ~offsets:SubIO.options#offsets
+                           ~mode:SubIO.options#mode
                            ~buffer:output in
       let close () = lexer_inst.Lexer.close () in
       let expr =
         try
-          if IO.options#mono then
+          if SubIO.options#mono then
             let tokeniser = lexer_inst.Lexer.read ~log
             and lexbuf = lexer_inst.Lexer.buffer
             in Front.mono_expr tokeniser lexbuf
@@ -81,20 +101,20 @@ module Make (Lexer: Lexer.S)
             Front.incr_expr lexer_inst
         with exn -> close (); raise exn in
       let () =
-        if SSet.mem "ast-tokens" IO.options#verbose then
+        if SSet.mem "ast-tokens" SubIO.options#verbose then
           begin
             Buffer.clear output;
             ParserLog.print_expr state expr;
             Buffer.output_buffer stdout output
           end in
       let () =
-        if SSet.mem "ast" IO.options#verbose then
+        if SSet.mem "ast" SubIO.options#verbose then
           begin
             Buffer.clear output;
             ParserLog.pp_expr state expr;
             Buffer.output_buffer stdout output
           end
-      in close (); Ok expr
+      in flush_all (); close (); Ok expr
 
     (* Parsing a contract *)
 
@@ -102,13 +122,13 @@ module Make (Lexer: Lexer.S)
       (AST.t, message Region.reg) Stdlib.result =
       let output = Buffer.create 131 in
       let state  =
-        ParserLog.mk_state ~offsets:IO.options#offsets
-                           ~mode:IO.options#mode
+        ParserLog.mk_state ~offsets:SubIO.options#offsets
+                           ~mode:SubIO.options#mode
                            ~buffer:output in
       let close () = lexer_inst.Lexer.close () in
       let ast =
         try
-          if IO.options#mono then
+          if SubIO.options#mono then
             let tokeniser = lexer_inst.Lexer.read ~log
             and lexbuf = lexer_inst.Lexer.buffer
             in Front.mono_contract tokeniser lexbuf
@@ -116,24 +136,22 @@ module Make (Lexer: Lexer.S)
             Front.incr_contract lexer_inst
         with exn -> close (); raise exn in
       let () =
-        if SSet.mem "ast-tokens" IO.options#verbose then
+        if SSet.mem "ast-tokens" SubIO.options#verbose then
           begin
             Buffer.clear output;
             ParserLog.print_tokens state ast;
             Buffer.output_buffer stdout output
           end in
       let () =
-        if SSet.mem "ast" IO.options#verbose then
+        if SSet.mem "ast" SubIO.options#verbose then
           begin
             Buffer.clear output;
             ParserLog.pp_ast state ast;
             Buffer.output_buffer stdout output
           end
-      in close (); Ok ast
+      in flush_all (); close (); Ok ast
 
     (* Wrapper for the parsers above *)
-
-    type 'a parser = Lexer.instance -> ('a, message Region.reg) result
 
     let apply lexer_inst parser =
       (* Calling the parser and filtering errors *)
@@ -146,20 +164,18 @@ module Make (Lexer: Lexer.S)
 
       | exception Lexer.Error err ->
           let file =
-            match IO.options#input with
-              None | Some "-" -> false
-            |          Some _ -> true in
+            lexer_inst.Lexer.buffer.Lexing.lex_curr_p.Lexing.pos_fname in
           let error =
-            Lexer.format_error ~offsets:IO.options#offsets
-                               IO.options#mode err ~file
+            Lexer.format_error ~offsets:SubIO.options#offsets
+                               SubIO.options#mode err ~file:(file <> "")
           in Stdlib.Error error
 
       (* Incremental API of Menhir *)
 
       | exception Front.Point point ->
           let error =
-            Front.format_error ~offsets:IO.options#offsets
-                               IO.options#mode point
+            Front.format_error ~offsets:SubIO.options#offsets
+                               SubIO.options#mode point
           in Stdlib.Error error
 
       (* Monolithic API of Menhir *)
@@ -169,16 +185,106 @@ module Make (Lexer: Lexer.S)
             match lexer_inst.Lexer.get_win () with
               Lexer.Nil ->
                   assert false (* Safe: There is always at least EOF. *)
-              | Lexer.One invalid -> invalid, None
-              | Lexer.Two (invalid, valid) -> invalid, Some valid in
+            | Lexer.One invalid -> invalid, None
+            | Lexer.Two (invalid, valid) -> invalid, Some valid in
             let point = "", valid_opt, invalid in
             let error =
-              Front.format_error ~offsets:IO.options#offsets
-                                 IO.options#mode point
+              Front.format_error ~offsets:SubIO.options#offsets
+                                 SubIO.options#mode point
             in Stdlib.Error error
 
        (* I/O errors *)
 
        | exception Sys_error error ->
-           Stdlib.Error (Region.wrap_ghost error)
+           flush_all (); Stdlib.Error (Region.wrap_ghost error)
+
+    (* Preprocessing the input source *)
+
+    let preproc options lexbuf =
+      Preproc.lex (options :> Preprocessor.EvalOpt.options) lexbuf
+
+    (* Parsing a contract *)
+
+    let gen_parser options input parser =
+      match Lexer.lexbuf_from_input input with
+        Stdlib.Error (Lexer.File_opening msg) ->
+          Stdlib.Error (Region.wrap_ghost msg)
+      | Ok (lexbuf, close) ->
+         (* Preprocessing the input source *)
+         let file = Lexing.(lexbuf.lex_curr_p.pos_fname) in
+         match preproc options lexbuf with
+            Stdlib.Error (pp_buffer, err) ->
+              if SSet.mem "preproc" options#verbose then
+                Printf.printf "%s\n%!" (Buffer.contents pp_buffer);
+              let formatted =
+                Preproc.format ~offsets:options#offsets
+                               ~file:(file <> "")
+                               err
+              in close (); Stdlib.Error formatted
+          | Stdlib.Ok buffer ->
+             (* Lexing and parsing the preprocessed input source *)
+
+             let () = close () in
+             let input' = Lexer.String (Buffer.contents buffer) in
+             match Lexer.open_token_stream options#lang input' with
+               Ok instance ->
+                 let open Lexing in
+                 instance.Lexer.buffer.lex_curr_p <-
+                   {instance.Lexer.buffer.lex_curr_p with pos_fname = file};
+                 apply instance parser
+             | Stdlib.Error (Lexer.File_opening msg) ->
+                 Stdlib.Error (Region.wrap_ghost msg)
+
+    (* Parsing a contract in a file *)
+
+    let contract_in_file (source : string) =
+      let options = SubIO.make ~input:(Some source) ~expr:false
+      in gen_parser options (Lexer.File source) parse_contract
+
+    (* Parsing a contract in a string *)
+
+    let contract_in_string (source : string) =
+      let options = SubIO.make ~input:None ~expr:false in
+      gen_parser options (Lexer.String source) parse_contract
+
+    (* Parsing a contract in stdin *)
+
+    let contract_in_stdin () =
+      let options = SubIO.make ~input:None ~expr:false in
+      gen_parser options (Lexer.Channel stdin) parse_contract
+
+    (* Parsing an expression in a string *)
+
+    let expr_in_string (source : string) =
+      let options = SubIO.make ~input:None ~expr:true in
+      gen_parser options (Lexer.String source) parse_expr
+
+    (* Parsing an expression in stdin *)
+
+    let expr_in_stdin () =
+      let options = SubIO.make ~input:None ~expr:true in
+      gen_parser options (Lexer.Channel stdin) parse_expr
+
+    (* Preprocess only *)
+
+    let preprocess (source : string) =
+      let options = SubIO.make ~input:(Some source) ~expr:false in
+      try
+        let cin     = open_in source in
+        let lexbuf  = Lexing.from_channel cin in
+        let () =
+          let open Lexing in
+          lexbuf.lex_curr_p <- {lexbuf.lex_curr_p with pos_fname=source}
+        and options = (options :> Preprocessor.EvalOpt.options) in
+        match Preprocessor.Preproc.lex options lexbuf with
+          Stdlib.Ok _ as ok  -> ok
+        | Error (_, err) ->
+            let formatted =
+              Preproc.format ~offsets:options#offsets
+                             ~file:true
+                             err
+            in close_in cin; Stdlib.Error formatted
+      with Sys_error error ->
+             flush_all (); Stdlib.Error (Region.wrap_ghost error)
+
   end

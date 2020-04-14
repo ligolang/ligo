@@ -53,6 +53,10 @@ let%expect_test _ =
            measure-contract
                Subcommand: Measure a contract's compiled size in bytes.
 
+           preprocess
+               Subcommand: Preprocess the source file. Warning: Intended for
+               development of LIGO and can break at any time.
+
            print-ast
                Subcommand: Print the AST. Warning: Intended for development of
                LIGO and can break at any time.
@@ -139,6 +143,10 @@ let%expect_test _ =
 
            measure-contract
                Subcommand: Measure a contract's compiled size in bytes.
+
+           preprocess
+               Subcommand: Preprocess the source file. Warning: Intended for
+               development of LIGO and can break at any time.
 
            print-ast
                Subcommand: Print the AST. Warning: Intended for development of

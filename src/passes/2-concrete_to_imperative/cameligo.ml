@@ -120,7 +120,7 @@ module Errors = struct
     let data = [
         ("expression" ,
          (** TODO: The labelled arguments should be flowing from the CLI. *)
-       thunk @@ Parser.Cameligo.ParserLog.expr_to_string
+       thunk @@ Parser_cameligo.ParserLog.expr_to_string
                  ~offsets:true ~mode:`Point t)]
     in error ~data title message
 
@@ -204,7 +204,7 @@ let rec typed_pattern_to_typed_vars : Raw.pattern -> _ = fun pattern ->
   | Raw.PPar pp -> typed_pattern_to_typed_vars pp.value.inside
   | Raw.PTyped pt ->
      let (p,t) = pt.value.pattern,pt.value.type_expr in
-     let%bind p = tuple_pattern_to_vars p in 
+     let%bind p = tuple_pattern_to_vars p in
      let%bind t = compile_type_expression t in
      ok @@ (p,t)
   | other -> (fail @@ wrong_pattern "parenthetical or type annotation" other)
@@ -320,7 +320,7 @@ let rec compile_expression :
     | [] -> e_variable (Var.of_name name)
     | _ ->
       let aux expr (Label l) = e_record_accessor expr l in
-      List.fold_left aux (e_variable (Var.of_name name)) path in 
+      List.fold_left aux (e_variable (Var.of_name name)) path in
     let updates = u.updates.value.ne_elements in
     let%bind updates' =
       let aux (f:Raw.field_path_assign Raw.reg) =
@@ -330,13 +330,13 @@ let rec compile_expression :
       in
       bind_map_list aux @@ npseq_to_list updates
     in
-    let aux ur (path, expr) = 
+    let aux ur (path, expr) =
       let rec aux record = function
         | [] -> failwith "error in parsing"
         | hd :: [] -> ok @@ e_record_update ~loc record hd expr
-        | hd :: tl -> 
+        | hd :: tl ->
           let%bind expr = (aux (e_record_accessor ~loc record hd) tl) in
-          ok @@ e_record_update ~loc record hd expr 
+          ok @@ e_record_update ~loc record hd expr
       in
       aux ur path in
     bind_fold_list aux record updates'
@@ -392,9 +392,9 @@ let rec compile_expression :
           (chain_let_in tl body)
         | [] -> body (* Precluded by corner case assertion above *)
       in
-      let%bind ty_opt = match ty_opt with 
-      | None -> (match let_rhs with 
-        | EFun {value={binders;lhs_type}} -> 
+      let%bind ty_opt = match ty_opt with
+      | None -> (match let_rhs with
+        | EFun {value={binders;lhs_type}} ->
           let f_args = nseq_to_list (binders) in
           let%bind lhs_type' = bind_map_option (fun x -> compile_type_expression (snd x)) lhs_type in
           let%bind ty = bind_map_list typed_pattern_to_typed_vars f_args in
@@ -409,12 +409,12 @@ let rec compile_expression :
         (* Bind the right hand side so we only evaluate it once *)
         else ok (e_let_in (rhs_b, ty_opt) inline rhs' (chain_let_in prep_vars body))
       in
-      let%bind ret_expr = match kwd_rec with 
+      let%bind ret_expr = match kwd_rec with
         | None -> ok @@ ret_expr
-        | Some _ -> 
-          match ret_expr.expression_content with 
+        | Some _ ->
+          match ret_expr.expression_content with
             | E_let_in li -> (
-              let%bind lambda = 
+              let%bind lambda =
                 let rec aux rhs = match rhs.expression_content with
                   | E_lambda l -> ok @@ l
                   | E_ascription a -> aux a.anno_expr
@@ -423,9 +423,9 @@ let rec compile_expression :
                 aux rhs'
               in
               let fun_name = fst @@ List.hd prep_vars in
-              let%bind fun_type = match ty_opt with 
+              let%bind fun_type = match ty_opt with
                 | Some t -> ok @@ t
-                | None -> match rhs'.expression_content with 
+                | None -> match rhs'.expression_content with
                       | E_ascription a -> ok a.type_annotation
                       | _ -> fail @@ untyped_recursive_function e
               in
@@ -878,9 +878,9 @@ and compile_declaration : Raw.declaration -> declaration Location.wrap list resu
           ok (Raw.EFun {region=Region.ghost ; value=fun_},List.fold_right' aux lhs_type' ty)
       in
       let%bind rhs' = compile_expression let_rhs in
-      let%bind lhs_type = match lhs_type with 
-      | None -> (match let_rhs with 
-        | EFun {value={binders;lhs_type}} -> 
+      let%bind lhs_type = match lhs_type with
+      | None -> (match let_rhs with
+        | EFun {value={binders;lhs_type}} ->
           let f_args = nseq_to_list (binders) in
           let%bind lhs_type' = bind_map_option (fun x -> compile_type_expression (snd x)) lhs_type in
           let%bind ty = bind_map_list typed_pattern_to_typed_vars f_args in
@@ -891,13 +891,13 @@ and compile_declaration : Raw.declaration -> declaration Location.wrap list resu
       | Some t -> ok @@ Some t
       in
       let binder = Var.of_name var.value in
-      let%bind rhs' = match recursive with 
-        None -> ok @@ rhs' 
-        | Some _ -> match rhs'.expression_content with 
+      let%bind rhs' = match recursive with
+        None -> ok @@ rhs'
+        | Some _ -> match rhs'.expression_content with
           E_lambda lambda ->
-            (match lhs_type with 
-              None -> fail @@ untyped_recursive_function var 
-              | Some (lhs_type) -> 
+            (match lhs_type with
+              None -> fail @@ untyped_recursive_function var
+              | Some (lhs_type) ->
               let expression_content = E_recursive {fun_name=binder;fun_type=lhs_type;lambda} in
               ok @@ {rhs' with expression_content})
           | _ -> ok @@ rhs'
@@ -996,7 +996,7 @@ and compile_cases : type a . (Raw.pattern * a) list -> (a, unit) matching_conten
          (** TODO: The labelled arguments should be flowing from the CLI. *)
         let content () =
           Printf.sprintf "Pattern : %s"
-                         (Parser.Cameligo.ParserLog.pattern_to_string
+                         (Parser_cameligo.ParserLog.pattern_to_string
                             ~offsets:true ~mode:`Point x) in
         error title content
       in

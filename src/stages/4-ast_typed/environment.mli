@@ -14,7 +14,7 @@ val add_ez_ae : expression_variable -> expression -> t -> t
 val add_type : type_variable -> type_expression -> t -> t
 val get_opt : expression_variable -> t -> element option
 val get_type_opt : type_variable -> t -> type_expression option
-val get_constructor : constructor' -> t -> (type_expression * type_expression) option
+val get_constructor : Ast_core.constructor' -> t -> (type_expression * type_expression) option
 
 module Small : sig
   type t = small_environment

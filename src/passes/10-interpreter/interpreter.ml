@@ -1,7 +1,7 @@
 open Trace
 open Ligo_interpreter.Types
 open Ligo_interpreter.Combinators
-include Stage_common.Types
+include Ast_typed.Types
 
 module Env = Ligo_interpreter.Environment
 
@@ -210,7 +210,7 @@ let rec apply_operator : Ast_typed.constant' -> value list -> value result =
     | ( C_SET_MEM    , [ v ; V_Set (elts) ] ) -> ok @@ v_bool (List.mem v elts)
     | ( C_SET_REMOVE , [ v ; V_Set (elts) ] ) -> ok @@ V_Set (List.filter (fun el -> not (el = v)) elts)
     | _ ->
-      let () = Format.printf "%a\n" Stage_common.PP.constant c in
+      let () = Format.printf "%a\n" Ast_typed.PP.constant c in
       let () = List.iter ( fun e -> Format.printf "%s\n" (Ligo_interpreter.PP.pp_value e)) operands in
       simple_fail "Unsupported constant op"
   )
@@ -338,25 +338,24 @@ and eval : Ast_typed.expression -> env -> value result
       | Match_list cases , V_List [] ->
         eval cases.match_nil env
       | Match_list cases , V_List (head::tail) ->
-        let (head_var,tail_var,body,_) = cases.match_cons in
-        let env' = Env.extend (Env.extend env (head_var,head)) (tail_var, V_List tail) in
+        let {hd;tl;body;tv=_} = cases.match_cons in
+        let env' = Env.extend (Env.extend env (hd,head)) (tl, V_List tail) in
         eval body env'
-      | Match_variant (case_list , _) , V_Construct (matched_c , proj) ->
-        let ((_, var) , body) =
+      | Match_variant {cases ; tv=_} , V_Construct (matched_c , proj) ->
+        let {constructor=_ ; pattern ; body} =
           List.find
-            (fun case ->
-              let (Constructor c , _) = fst case in
+            (fun {constructor = (Constructor c) ; pattern=_ ; body=_} ->
               String.equal matched_c c)
-            case_list in
-        let env' = Env.extend env (var, proj) in
+            cases in
+        let env' = Env.extend env (pattern, proj) in
         eval body env'
       | Match_bool cases , V_Ct (C_bool true) ->
         eval cases.match_true env
       | Match_bool cases , V_Ct (C_bool false) ->
         eval cases.match_false env
       | Match_option cases, V_Construct ("Some" , proj) ->
-        let (var,body,_) = cases.match_some in
-        let env' = Env.extend env (var,proj) in
+        let {opt;body;tv=_} = cases.match_some in
+        let env' = Env.extend env (opt,proj) in
         eval body env'
       | Match_option cases, V_Construct ("None" , V_Ct C_unit) ->
         eval cases.match_none env
@@ -370,16 +369,16 @@ let dummy : Ast_typed.program -> string result =
   fun prg ->
     let%bind (res,_) = bind_fold_list
       (fun (pp,top_env) el ->
-        let (Ast_typed.Declaration_constant (exp_name, exp , _ , _)) = Location.unwrap el in
+        let (Ast_typed.Declaration_constant {binder; expr ; inline=_ ; _}) = Location.unwrap el in
         let%bind v =
         (*TODO This TRY-CATCH is here until we properly implement effects*)
         try
-          eval exp top_env
+          eval expr top_env
         with Temporary_hack s -> ok @@ V_Failure s
         (*TODO This TRY-CATCH is here until we properly implement effects*)
         in
-        let pp' = pp^"\n val "^(Var.to_name exp_name)^" = "^(Ligo_interpreter.PP.pp_value v) in
-        let top_env' = Env.extend top_env (exp_name, v) in
+        let pp' = pp^"\n val "^(Var.to_name binder)^" = "^(Ligo_interpreter.PP.pp_value v) in
+        let top_env' = Env.extend top_env (binder, v) in
         ok @@ (pp',top_env')
       )
       ("",Env.empty_env) prg in

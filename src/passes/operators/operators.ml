@@ -595,7 +595,7 @@ module Typer = struct
       | C_SELF_ADDRESS        -> ok @@ t_self_address;
       | C_IMPLICIT_ACCOUNT    -> ok @@ t_implicit_account;
       | C_SET_DELEGATE        -> ok @@ t_set_delegate ;
-      | c                     -> simple_fail @@ Format.asprintf "Typer not implemented for consant %a" Stage_common.PP.constant c
+      | c                     -> simple_fail @@ Format.asprintf "Typer not implemented for consant %a" Ast_typed.PP.constant c
   end
 
   let none = typer_0 "NONE" @@ fun tv_opt ->

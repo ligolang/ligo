@@ -9,6 +9,7 @@ module Misc = struct
   include Misc
   include Misc_smart
 end
+module Helpers = Helpers
 
 include Types
 include Misc

@@ -2,6 +2,7 @@
 [@@@coverage exclude_file]
 
 open AST
+module Region = Simple_utils.Region
 open! Region
 
 let sprintf = Printf.sprintf
@@ -866,7 +867,7 @@ and pp_let_in state node =
   let fields = if lhs_type = None then 3 else 4 in
   let fields = if kwd_rec = None then fields else fields+1 in
   let fields = if attributes = [] then fields else fields+1 in
-  let arity = 
+  let arity =
     match kwd_rec with
       None -> 0
     | Some (_) ->

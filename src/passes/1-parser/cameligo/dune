@@ -77,8 +77,8 @@
 ;  (targets error.messages)
 ;  (deps Parser.mly ParToken.mly error.messages.checked-in)
 ;  (action
-;   (with-stdout-to %{targets} 
-;   (bash 
+;   (with-stdout-to %{targets}
+;   (bash
 ;     "menhir \
 ;       --unused-tokens \
 ;       --list-errors  \
@@ -97,11 +97,11 @@
  (targets error.messages)
  (deps Parser.mly ParToken.mly error.messages.checked-in LexToken.mli)
  (action
-  (with-stdout-to %{targets} 
-  (run 
+  (with-stdout-to %{targets}
+  (run
     menhir
       --unused-tokens
-      --update-errors error.messages.checked-in 
+      --update-errors error.messages.checked-in
       --table
       --strict
       --external-tokens LexToken.mli
@@ -115,8 +115,8 @@
 (rule
   (target error.messages.new)
   (action
-    (with-stdout-to %{target} 
-      (run 
+    (with-stdout-to %{target}
+      (run
         menhir
           --unused-tokens
           --list-errors
@@ -135,7 +135,7 @@
   (name runtest)
   (deps error.messages error.messages.new)
   (action
-    (run 
+    (run
       menhir
         --unused-tokens
         --table
@@ -156,8 +156,8 @@
  (targets ParErr.ml)
  (deps Parser.mly ParToken.mly error.messages.checked-in LexToken.mli)
  (action
-  (with-stdout-to %{targets} 
-  (run 
+  (with-stdout-to %{targets}
+  (run
     menhir
       --unused-tokens
       --table

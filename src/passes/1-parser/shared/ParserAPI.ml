@@ -2,10 +2,15 @@
 
 module Region = Simple_utils.Region
 
+type options = <
+  offsets : bool;
+  mode    : [`Byte | `Point];
+  cmd     : EvalOpt.command
+>
+
 module type IO =
   sig
-    val ext : string              (* LIGO file extension *)
-    val options : EvalOpt.options (* CLI options *)
+    val options : options
   end
 
 module type PARSER =
@@ -50,7 +55,7 @@ module type PARSER =
 
 (* Main functor *)
 
-module Make (IO : IO)
+module Make (IO: IO)
             (Lexer: Lexer.S)
             (Parser: PARSER with type token = Lexer.Token.token)
             (ParErr: sig val message : int -> string end) =
@@ -95,14 +100,15 @@ module Make (IO : IO)
           None ->
             if Lexer.Token.is_eof invalid then ""
             else let invalid_lexeme = Lexer.Token.to_lexeme invalid in
-                 Printf.sprintf ", before \"%s\"" invalid_lexeme
+                 Printf.sprintf ", at \"%s\"" invalid_lexeme
         | Some valid ->
             let valid_lexeme = Lexer.Token.to_lexeme valid in
-            let s = Printf.sprintf ", after \"%s\"" valid_lexeme in
-            if Lexer.Token.is_eof invalid then s
+            if Lexer.Token.is_eof invalid then
+              Printf.sprintf ", after \"%s\"" valid_lexeme
             else
               let invalid_lexeme = Lexer.Token.to_lexeme invalid in
-              Printf.sprintf "%s and before \"%s\"" s invalid_lexeme in
+              Printf.sprintf " at \"%s\", after \"%s\""
+                             invalid_lexeme valid_lexeme in
       let header = header ^ trailer in
       let msg =
         header ^ (if msg = "" then ".\n" else ":\n" ^ msg)
@@ -110,9 +116,9 @@ module Make (IO : IO)
 
     let failure get_win checkpoint =
       let message = ParErr.message (state checkpoint) in
-      let message = if message = "<YOUR SYNTAX ERROR MESSAGE HERE>\n" then 
+      let message = if message = "<YOUR SYNTAX ERROR MESSAGE HERE>\n" then
         (string_of_int (state checkpoint)) ^ ": <syntax error>"
-      else 
+      else
         message
       in
       match get_win () with
@@ -133,20 +139,21 @@ module Make (IO : IO)
     module Incr = Parser.Incremental
 
     module Log = LexerLog.Make (Lexer)
-    let log    = Log.output_token ~offsets:IO.options#offsets
-                                  IO.options#mode IO.options#cmd stdout
+    let log    = Log.output_token
+                   ~offsets:IO.options#offsets
+                   IO.options#mode IO.options#cmd stdout
 
     let incr_contract Lexer.{read; buffer; get_win; close; _} =
       let supplier  = I.lexer_lexbuf_to_supplier (read ~log) buffer
       and failure   = failure get_win in
       let parser    = Incr.contract buffer.Lexing.lex_curr_p in
       let ast       = I.loop_handle success failure supplier parser
-      in close (); ast
+      in flush_all (); close (); ast
 
     let incr_expr Lexer.{read; buffer; get_win; close; _} =
       let supplier   = I.lexer_lexbuf_to_supplier (read ~log) buffer
       and failure    = failure get_win in
       let parser     = Incr.interactive_expr buffer.Lexing.lex_curr_p in
       let expr       = I.loop_handle success failure supplier parser
-      in close (); expr
+      in flush_all (); close (); expr
   end

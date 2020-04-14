@@ -1,6 +1,6 @@
 name: "michelson-parser"
 opam-version: "2.0"
-maintainer: "ligolang@gmail.com"
+maintainer: "contact@ligolang.org"
 authors: [ "Galfour" ]
 homepage: "https://gitlab.com/ligolang/tezos"
 bug-reports: "https://gitlab.com/ligolang/tezos/issues"

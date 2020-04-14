@@ -1,5 +1,7 @@
 (* This module exports checks on scoping, called from the parser. *)
 
+module Region = Simple_utils.Region
+
 type t =
   Reserved_name       of AST.variable
 | Duplicate_variant   of AST.variable
