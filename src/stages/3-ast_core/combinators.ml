@@ -102,6 +102,7 @@ let e_application ?loc a b = make_e ?loc @@ E_application {lamb=a ; args=b}
 let e_lambda ?loc binder input_type output_type result =  make_e ?loc @@ E_lambda {binder; input_type; output_type; result ;  }
 let e_recursive ?loc fun_name fun_type lambda = make_e ?loc @@ E_recursive {fun_name; fun_type; lambda}
 let e_let_in ?loc (binder, ascr) inline rhs let_result = make_e ?loc @@ E_let_in { let_binder = (binder,ascr) ; rhs ; let_result; inline }
+let e_raw_code ?loc language code type_anno = make_e ?loc @@ E_raw_code {language; code; type_anno}
 
 let e_constructor ?loc s a : expression = make_e ?loc @@ E_constructor { constructor = Constructor s; element = a}
 let e_matching ?loc a b : expression = make_e ?loc @@ E_matching {matchee=a;cases=b}

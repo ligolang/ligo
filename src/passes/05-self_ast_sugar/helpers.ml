@@ -21,7 +21,7 @@ let rec fold_expression : 'a folder -> 'a -> expression -> 'a result = fun f ini
   let self = fold_expression f in 
   let%bind init' = f init e in
   match e.expression_content with
-  | E_literal _ | E_variable _ | E_skip -> ok init'
+  | E_literal _ | E_variable _ | E_raw_code _ | E_skip -> ok init'
   | E_list lst | E_set lst | E_constant {arguments=lst} -> (
     let%bind res = bind_fold_list self init' lst in
     ok res
@@ -231,7 +231,7 @@ let rec map_expression : exp_mapper -> expression -> expression result = fun f e
     let%bind t' = bind_map_list self t in
     return @@ E_tuple t'
   )
-  | E_literal _ | E_variable _ | E_skip as e' -> return e'
+  | E_literal _ | E_variable _ | E_raw_code _ | E_skip as e' -> return e'
 
 and map_type_expression : ty_exp_mapper -> type_expression -> type_expression result = fun f te ->
   let self = map_type_expression f in
@@ -403,7 +403,8 @@ let rec fold_map_expression : 'a fold_mapper -> 'a -> expression -> ('a * expres
       let%bind (res,(expr1,expr2)) = bind_fold_map_pair self init' (expr1,expr2) in
       ok (res, return @@ E_sequence {expr1;expr2})
     )
-  | E_literal _ | E_variable _ | E_skip as e' -> ok (init', return e')
+  | E_literal _ | E_variable _ | E_raw_code _ | E_skip as e' -> ok (init', return e')
+
 and fold_map_cases : 'a fold_mapper -> 'a -> matching_expr -> ('a * matching_expr) result = fun f init m ->
   match m with
   | Match_variant lst -> (

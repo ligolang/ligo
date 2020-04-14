@@ -34,6 +34,7 @@ and expression_content =
   | E_lambda of lambda
   | E_recursive of recursive
   | E_let_in of let_in
+  | E_raw_code of raw_code
   (* Variant *)
   | E_constructor of constructor (* For user defined constructors *)
   | E_matching of matching
@@ -70,6 +71,12 @@ and let_in =
   ; rhs: expression
   ; let_result: expression
   ; inline: bool }
+
+and raw_code = { 
+  language : string ;
+  code : string ;
+  type_anno : type_expression ;
+  }
 
 and constructor = {constructor: constructor'; element: expression}
 

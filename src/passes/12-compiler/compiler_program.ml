@@ -483,6 +483,7 @@ and translate_expression (expr:expression) (env:environment) : michelson result 
         i_push_unit ;
       ]
     )
+  | E_raw_michelson code -> return @@ Michelson.string code
 
 and translate_function_body ({body ; binder} : anon_function) lst input : michelson result =
   let pre_env = Environment.of_list lst in

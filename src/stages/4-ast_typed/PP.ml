@@ -291,6 +291,8 @@ and expression_content ppf (ec: expression_content) =
   | E_let_in {let_binder; rhs; let_result; inline} ->
       fprintf ppf "let %a = %a%a in %a" expression_variable let_binder expression
         rhs option_inline inline expression let_result
+  | E_raw_code {language; code; type_anno} ->
+      fprintf ppf "[%%%s {%s} : %a]" language code type_expression type_anno
   | E_recursive { fun_name;fun_type; lambda} ->
       fprintf ppf "rec (%a:%a => %a )" 
         expression_variable fun_name 

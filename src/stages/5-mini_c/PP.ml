@@ -110,6 +110,8 @@ and expression_content ppf (e:expression_content) = match e with
       fprintf ppf "@[{ %a@;<1 2>with@;<1 2>{ %a = %a } }@]" expression r (list_sep lr (const ".")) path expression update
   | E_while (e , b) ->
       fprintf ppf "@[while %a do %a@]" expression e expression b
+  | E_raw_michelson code -> 
+      fprintf ppf "{%s}" code 
 
 and expression_with_type : _ -> expression -> _  = fun ppf e ->
   fprintf ppf "%a : %a"

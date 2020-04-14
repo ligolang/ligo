@@ -77,6 +77,7 @@ module Free_variables = struct
     | E_sequence (x, y) -> union (self x) (self y)
     | E_record_update (r, _,e) -> union (self r) (self e)
     | E_while (cond , body) -> union (self cond) (self body)
+    | E_raw_michelson _ -> empty
 
   and var_name : bindings -> var_name -> bindings = fun b n ->
     if mem n b

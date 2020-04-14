@@ -71,6 +71,9 @@ let rec compile_expression : I.expression -> O.expression result =
       let%bind rhs = compile_expression rhs in
       let%bind let_result = compile_expression let_result in
       return @@ O.E_let_in {let_binder=(binder,ty_opt);inline;rhs;let_result}
+    | I.E_raw_code {language;code;type_anno} ->
+      let%bind type_anno = idle_type_expression type_anno in
+      return @@ O.E_raw_code {language;code;type_anno} 
     | I.E_constructor {constructor;element} ->
       let%bind element = compile_expression element in
       return @@ O.E_constructor {constructor;element}
@@ -328,6 +331,9 @@ let rec uncompile_expression : O.expression -> I.expression result =
     let%bind rhs = uncompile_expression rhs in
     let%bind let_result = uncompile_expression let_result in
     return @@ I.E_let_in {let_binder=(binder,ty_opt);mut=false;inline;rhs;let_result}
+  | O.E_raw_code {language;code;type_anno} ->
+    let%bind type_anno = uncompile_type_expression type_anno in
+    return @@ I.E_raw_code {language;code;type_anno} 
   | O.E_constructor {constructor;element} ->
     let%bind element = uncompile_expression element in
     return @@ I.E_constructor {constructor;element}

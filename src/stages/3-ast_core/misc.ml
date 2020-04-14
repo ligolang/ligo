@@ -140,6 +140,7 @@ let rec assert_value_eq (a, b: (expression * expression )) : unit result =
   | (_a' , E_ascription b) -> assert_value_eq (a , b.anno_expr)
   | (E_variable _, _) | (E_lambda _, _)
   | (E_application _, _) | (E_let_in _, _)
+  | (E_raw_code _, _)
   | (E_recursive _,_) | (E_record_accessor _, _)
   | (E_matching _, _)
   -> simple_fail "comparing not a value"

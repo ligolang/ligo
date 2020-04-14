@@ -936,6 +936,9 @@ and type_expression' : environment -> ?tv_opt:O.type_expression -> I.expression 
     let e' = Environment.add_ez_declaration (let_binder) rhs e in
     let%bind let_result = type_expression' e' let_result in
     return (E_let_in {let_binder; rhs; let_result; inline}) let_result.type_expression
+  | E_raw_code {language;code;type_anno} ->
+    let%bind type_anno = evaluate_type e type_anno in
+    return (E_raw_code {language;code;type_anno}) type_anno
   | E_recursive {fun_name; fun_type; lambda} ->
     let%bind fun_type = evaluate_type e fun_type in
     let e' = Environment.add_ez_binder fun_name fun_type e in
@@ -1072,6 +1075,9 @@ let rec untype_expression (e:O.expression) : (I.expression) result =
       let%bind rhs = untype_expression rhs in
       let%bind result = untype_expression let_result in
       return (e_let_in (let_binder , (Some tv)) inline rhs result)
+  | E_raw_code {language; code; type_anno} ->
+      let%bind type_anno = untype_type_expression type_anno in
+      return (e_raw_code language code type_anno)
   | E_recursive {fun_name;fun_type; lambda} ->
       let%bind fun_type = untype_type_expression fun_type in
       let%bind unty_expr= untype_expression_content ty @@ E_lambda lambda in

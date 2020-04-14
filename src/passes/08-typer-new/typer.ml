@@ -332,7 +332,10 @@ and type_expression : environment -> O'.typer_state -> ?tv_opt:O.type_expression
     let wrapped =
       Wrap.let_in rhs.type_expression rhs_tv_opt let_result.type_expression in
     return_wrapped (E_let_in {let_binder; rhs; let_result; inline}) state'' wrapped
-
+  | E_raw_code {language ; code; type_anno} ->
+    let%bind type_anno = evaluate_type e type_anno in
+    let wrapped = Wrap.raw_code type_anno in
+    return_wrapped (E_raw_code {language; code ;type_anno}) state wrapped
   | E_ascription {anno_expr;type_annotation} ->
     let%bind tv = evaluate_type e type_annotation in
     let%bind (expr' , state') = type_expression e state anno_expr in

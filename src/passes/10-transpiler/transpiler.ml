@@ -606,6 +606,7 @@ and transpile_annotated_expression (ae:AST.expression) : expression result =
           aux expr' tree''
        )
   )
+  | E_raw_code { language=_; code; _} -> return @@ E_raw_michelson code
 
 and transpile_lambda l (input_type , output_type) =
   let { binder ; result } : AST.lambda = l in

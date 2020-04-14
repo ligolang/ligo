@@ -365,6 +365,7 @@ and eval : Ast_typed.expression -> env -> value result
     )
     | E_recursive {fun_name; fun_type=_; lambda} ->
       ok @@ V_Func_rec (fun_name, lambda.binder, lambda.result, env)
+    | E_raw_code _ -> simple_fail "Can't evaluate a raw code insertion"
 
 let dummy : Ast_typed.program -> string result =
   fun prg ->
