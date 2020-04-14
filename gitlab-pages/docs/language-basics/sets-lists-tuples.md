@@ -59,6 +59,52 @@ let full_name : full_name = ("Alice", "Johnson");
 
 </Syntax>
 
+<Syntax syntax="cameligo">
+
+### Destructuring
+
+If we want to get the first and last name of the `full_name` type, we can use
+destructuring. Destructuring a tuple allows you to give names to the elements 
+inside the tuple.
+
+```cameligo group=tuple
+let (first_name, last_name) : full_name = full_name
+```
+
+This also works in functions:
+
+```cameligo group=tuple
+let first_name ((first_name, _): full_name) = first_name
+let alice = first_name full_name
+```
+
+Notice that we use the underscore to indicate that we ignore the last element 
+of the tuple.
+
+</Syntax>
+<Syntax syntax="reasonligo">
+
+### Destructuring
+
+If we want to get the first and last name of the `full_name` type, we can use
+destructuring. Destructuring a tuple allows you to give names to the elements 
+inside the tuple.
+
+```reasonligo group=tuple
+let (first_name, last_name) : full_name = full_name
+```
+
+This also works in functions:
+
+```reasonligo group=tuple
+let first_name = ((first_name, _): full_name) => first_name
+let alice = first_name(full_name)
+```
+
+Notice that we use the underscore to indicate that we ignore the last element 
+of the tuple.
+
+</Syntax>
 
 
 ### Accessing Components
