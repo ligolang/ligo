@@ -138,12 +138,10 @@ updated record.
 Let us consider defining a function that translates three-dimensional
 points on a plane.
 
-
-
 <Syntax syntax="pascaligo">
 
-In PascaLIGO, the shape of that expression is 
-`<record variable> with <record value>`. 
+In PascaLIGO, the shape of that expression is
+`<record variable> with <record value>`.
 The record variable is the record to update and the
 record value is the update itself.
 
@@ -239,17 +237,17 @@ For example if you have the following record structure:
 <Syntax syntax="pascaligo">
 
 ```pascaligo
-type color is 
-| Blue 
+type color is
+| Blue
 | Green
 
 type preferences is record [
-  color : color; 
+  color : color;
   other : int;
 ]
 
 type account is record [
-  id : int; 
+  id : int;
   preferences : preferences;
 ]
 ```
@@ -258,8 +256,8 @@ type account is record [
 <Syntax syntax="cameligo">
 
 ```cameligo
-type color = 
-  Blue 
+type color =
+  Blue
 | Green
 
 type preferences = {
@@ -277,8 +275,8 @@ type account = {
 <Syntax syntax="reasonligo">
 
 ```reasonligo
-type color = 
-  Blue 
+type color =
+  Blue
 | Green;
 
 type preferences = {
@@ -287,7 +285,7 @@ type preferences = {
 }
 
 type account = {
-  id : int, 
+  id : int,
   preferences : preferences
 }
 ```
@@ -300,18 +298,18 @@ You can update the nested record with the following code:
 
 ```pascaligo
 
-function change_color_preference (const account : account; const color : color ) : account is 
+function change_color_preference (const account : account; const color : color ) : account is
   block {
-      account := account with record [preferences.color = color] 
+      account := account with record [preferences.color = color]
   } with account
-  
+
 ```
 
 </Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo
-let change_color_preference (account : account) (color : color) : account = 
+let change_color_preference (account : account) (color : color) : account =
   { account with preferences.color = color }
 ```
 
@@ -319,7 +317,7 @@ let change_color_preference (account : account) (color : color) : account =
 <Syntax syntax="reasonligo">
 
 ```reasonligo
-let change_color_preference = (account : account, color : color): account => 
+let change_color_preference = (account : account, color : color): account =>
   { ...account, preferences.color: color };
 ```
 
@@ -348,8 +346,6 @@ points on a plane.
 type point is record [x : int; y : int; z : int]
 type vector is record [dx : int; dy : int]
 
-const origin : point = record [x = 0; y = 0; z = 0]
-
 function xy_translate (var p : point; const vec : vector) : point is
   block {
     patch p with record [x = p.x + vec.dx];
@@ -374,8 +370,6 @@ the value of `p` indeed changed. So, a shorter version would be
 type point is record [x : int; y : int; z : int]
 type vector is record [dx : int; dy : int]
 
-const origin : point = record [x = 0; y = 0; z = 0]
-
 function xy_translate (var p : point; const vec : vector) : point is
   block {
     patch p with record [x = p.x + vec.dx; y = p.y + vec.dy]
@@ -398,8 +392,6 @@ one we want to update* and use a functional update, like so:
 ```pascaligo group=records5
 type point is record [x : int; y : int; z : int]
 type vector is record [dx : int; dy : int]
-
-const origin : point = record [x = 0; y = 0; z = 0]
 
 function xy_translate (var p : point; const vec : vector) : point is
   block {
@@ -1151,4 +1143,3 @@ let updated_map : register =
 ```
 
 </Syntax>
-
