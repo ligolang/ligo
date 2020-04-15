@@ -70,7 +70,8 @@ dont-merge-to-master:
     # move internal odoc documentation to the website folder
     - mv ../../_build/default/_doc/_html/ build/odoc
   after_script:
-    - cp -r gitlab-pages/website/build public
+    - cp -r gitlab-pages/website/build public    
+    - cp -r gitlab-pages/website/sitemap.xml public/sitemap.xml
   artifacts:
     paths:
       - public
