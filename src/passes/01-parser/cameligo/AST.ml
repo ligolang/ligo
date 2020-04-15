@@ -56,6 +56,7 @@ type c_Some  = Region.t
 
 type arrow    = Region.t  (* "->" *)
 type cons     = Region.t  (* "::" *)
+type percent  = Region.t  (* "%"  *)
 type cat      = Region.t  (* "^"  *)
 type append   = Region.t  (* "@"  *)
 type dot      = Region.t  (* "."  *)
@@ -246,6 +247,7 @@ and expr =
 | ELetIn  of let_in reg
 | EFun    of fun_expr reg
 | ESeq    of expr injection reg
+| ECodeInsert of code_insert reg
 
 and annot_expr = expr * colon * type_expr
 
@@ -398,6 +400,13 @@ and cond_expr = {
   ifnot    : expr
 }
 
+and code_insert = {
+  language  : string reg;
+  code      : string reg;
+  colon     : colon;
+  type_anno : type_expr;
+  rbracket  : rbracket;
+}
 (* Projecting regions from some nodes of the AST *)
 
 let rec last to_region = function
@@ -477,11 +486,12 @@ let expr_to_region = function
 | EString e -> string_expr_to_region e
 | EList e -> list_expr_to_region e
 | EConstr e -> constr_expr_to_region e
-| EAnnot {region;_ } | ELetIn {region;_} | EFun {region;_}
-| ECond {region;_}   | ETuple {region;_} | ECase {region;_}
-| ECall {region;_}   | EVar {region; _}  | EProj {region; _}
-| EUnit {region;_}   | EPar {region;_}   | EBytes {region; _}
-| ESeq {region; _}   | ERecord {region; _} | EUpdate {region; _} -> region
+| EAnnot {region;_ } | ELetIn {region;_}   | EFun {region;_}
+| ECond {region;_}   | ETuple {region;_}   | ECase {region;_}
+| ECall {region;_}   | EVar {region; _}    | EProj {region; _}
+| EUnit {region;_}   | EPar {region;_}     | EBytes {region; _}
+| ESeq {region; _}   | ERecord {region; _} | EUpdate {region; _} 
+| ECodeInsert {region; _} -> region
 
 let selection_to_region = function
   FieldName f -> f.region

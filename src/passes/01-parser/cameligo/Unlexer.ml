@@ -43,6 +43,7 @@ let concrete = function
 | "PLUS"     -> "+"
 | "SLASH"    -> "/"
 | "TIMES"    -> "*"
+| "PERCENT"  -> "%"
 
 | "LPAR"     -> "("
 | "RPAR"     -> ")"

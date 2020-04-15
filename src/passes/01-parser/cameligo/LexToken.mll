@@ -22,10 +22,10 @@ type t =
 
   (* Arithmetics *)
 
-| MINUS of Region.t    (* "-" *)
-| PLUS  of Region.t    (* "+" *)
-| SLASH of Region.t    (* "/" *)
-| TIMES of Region.t    (* "*" *)
+| MINUS   of Region.t    (* "-" *)
+| PLUS    of Region.t    (* "+" *)
+| SLASH   of Region.t    (* "/" *)
+| TIMES   of Region.t    (* "*" *)
 
   (* Compounds *)
 
@@ -71,28 +71,29 @@ type t =
 | Verbatim of string Region.reg
 | Bytes    of (string * Hex.t) Region.reg
 | Attr     of string Region.reg
+| Insert   of string Region.reg
 
   (* Keywords *)
 
 (*| And*)
-| Begin of Region.t
-| Else  of Region.t
-| End   of Region.t
-| False of Region.t
-| Fun   of Region.t
-| Rec   of Region.t
-| If    of Region.t
-| In    of Region.t
-| Let   of Region.t
-| Match of Region.t
-| Mod   of Region.t
-| Not   of Region.t
-| Of    of Region.t
-| Or    of Region.t
-| Then  of Region.t
-| True  of Region.t
-| Type  of Region.t
-| With  of Region.t
+| Begin     of Region.t
+| Else      of Region.t
+| End       of Region.t
+| False     of Region.t
+| Fun       of Region.t
+| Rec       of Region.t
+| If        of Region.t
+| In        of Region.t
+| Let       of Region.t
+| Match     of Region.t
+| Mod       of Region.t
+| Not       of Region.t
+| Of        of Region.t
+| Or        of Region.t
+| Then      of Region.t
+| True      of Region.t
+| Type      of Region.t
+| With      of Region.t
 
   (* Data constructors *)
 
@@ -130,6 +131,8 @@ let proj_token = function
     region, sprintf "Constr %s" value
 | Attr Region.{region; value} ->
    region, sprintf "Attr \"%s\"" value
+| Insert Region.{region; value} ->
+   region, sprintf "Insert \"%s\"" value
 
   (* Symbols *)
 
@@ -204,6 +207,7 @@ let to_lexeme = function
 | Ident id   -> id.Region.value
 | Constr id  -> id.Region.value
 | Attr a     -> a.Region.value
+| Insert i   -> i.Region.value
 
   (* Symbols *)
 
@@ -277,24 +281,24 @@ let to_region token = proj_token token |> fst
 (* LEXIS *)
 
 let keywords = [
-  (fun reg -> Begin reg);
-  (fun reg -> Else  reg);
-  (fun reg -> End   reg);
-  (fun reg -> False reg);
-  (fun reg -> Fun   reg);
-  (fun reg -> Rec   reg);
-  (fun reg -> If    reg);
-  (fun reg -> In    reg);
-  (fun reg -> Let   reg);
-  (fun reg -> Match reg);
-  (fun reg -> Mod   reg);
-  (fun reg -> Not   reg);
-  (fun reg -> Of    reg);
-  (fun reg -> Or    reg);
-  (fun reg -> Then  reg);
-  (fun reg -> True  reg);
-  (fun reg -> Type  reg);
-  (fun reg -> With  reg)]
+  (fun reg -> Begin     reg);
+  (fun reg -> Else      reg);
+  (fun reg -> End       reg);
+  (fun reg -> False     reg);
+  (fun reg -> Fun       reg);
+  (fun reg -> Rec       reg);
+  (fun reg -> If        reg);
+  (fun reg -> In        reg);
+  (fun reg -> Let       reg);
+  (fun reg -> Match     reg);
+  (fun reg -> Mod       reg);
+  (fun reg -> Not       reg);
+  (fun reg -> Of        reg);
+  (fun reg -> Or        reg);
+  (fun reg -> Then      reg);
+  (fun reg -> True      reg);
+  (fun reg -> Type      reg);
+  (fun reg -> With      reg)]
 
 let reserved =
   let open SSet in
@@ -507,6 +511,9 @@ type attr_err = Invalid_attribute
 let mk_attr header lexeme region =
   if header = "[@" then Error Invalid_attribute
   else Ok (Attr Region.{value=lexeme; region})
+
+let mk_insert lexeme region =
+  Insert Region.{value=lexeme;region}
 
 (* Predicates *)
 

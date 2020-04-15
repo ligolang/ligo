@@ -45,6 +45,7 @@ let rec expression : environment -> expression -> expression = fun env expr ->
     let (lamb , args) = self_2 c.lamb c.args in
     return @@ E_application { lamb ; args }
   )
+  | E_raw_code _ -> return_id
   | E_constructor c -> (
     let element = self c.element in
     return @@ E_constructor { c with element }

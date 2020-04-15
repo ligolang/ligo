@@ -366,6 +366,7 @@ and print_expr state = function
 | ESeq seq      -> print_sequence state seq
 | ERecord e     -> print_record_expr state e
 | EConstr e     -> print_constr_expr state e
+| ECodeInsert e -> print_code_insert state e
 
 and print_constr_expr state = function
   ENone e      -> print_none_expr       state e
@@ -517,6 +518,14 @@ and print_comp_expr state = function
 
 and print_record_expr state e =
   print_ne_injection state print_field_assign e
+
+and print_code_insert state {value; _} =
+  let {language;code;colon;type_anno;rbracket} : code_insert = value in
+  print_string    state language;
+  print_string    state code;
+  print_token     state colon ":";
+  print_type_expr state type_anno;
+  print_token     state rbracket "]"
 
 and print_field_assign state {value; _} =
   let {field_name; assignment; field_expr} = value in
@@ -860,6 +869,9 @@ and pp_expr state = function
 | ESeq {value; region} ->
     pp_loc_node state "ESeq" region;
     pp_injection pp_expr state value
+| ECodeInsert {value; region} ->
+    pp_loc_node state "ECodeInsert" region;
+    pp_code_insert state value
 
 and pp_fun_expr state node =
   let {binders; lhs_type; body; _} = node in
@@ -879,6 +891,21 @@ and pp_fun_expr state node =
     let state = state#pad fields (fields - 1) in
     pp_node state "<body>";
     pp_expr (state#pad 1 0) body
+  in ()
+
+and pp_code_insert state (rc : code_insert) =
+  let () =
+    let state = state#pad 3 0 in
+    pp_node state "<language>";
+    pp_string (state#pad 1 0) rc.language in
+  let () =
+    let state = state#pad 3 1 in
+    pp_node state "<code>";
+    pp_string (state#pad 1 0) rc.code in
+  let () =
+    let state = state#pad 3 2 in
+    pp_node state "<type annotation>";
+    pp_type_expr (state#pad 1 0) rc.type_anno
   in ()
 
 and pp_let_in state node =

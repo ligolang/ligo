@@ -14,6 +14,7 @@
 %token                    <string Region.reg> Ident    "<ident>"
 %token                    <string Region.reg> Constr   "<constr>"
 %token                    <string Region.reg> Attr     "<attr>"
+%token                    <string Region.reg> Insert   "<insert>"
 
   (* Symbols *)
 

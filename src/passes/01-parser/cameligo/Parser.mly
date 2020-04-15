@@ -583,6 +583,7 @@ core_expr:
 | sequence                            {                       ESeq $1 }
 | record_expr                         {                    ERecord $1 }
 | update_record                       {                    EUpdate $1 }
+| code_insert                         {                ECodeInsert $1 }
 | par(expr)                           {                       EPar $1 }
 | par(annot_expr)                     {                     EAnnot $1 }
 
@@ -706,3 +707,14 @@ last_expr:
 
 seq_expr:
   disj_expr_level | if_then_else (seq_expr) { $1 }
+
+code_insert:
+  Insert "<verbatim>" ":" type_expr "]" {
+    let region = cover $1.region $5 in
+    let value = {
+                  language =$1;
+                  code     =$2;
+                  colon    =$3; 
+                  type_anno=$4;
+                  rbracket =$5}
+    in {region; value} }

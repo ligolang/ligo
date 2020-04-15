@@ -72,7 +72,7 @@ let rec compile_expression : I.expression -> O.expression result =
       let%bind let_result = compile_expression let_result in
       return @@ O.E_let_in {let_binder=(binder,ty_opt);inline;rhs;let_result}
     | I.E_raw_code {language;code;type_anno} ->
-      let%bind type_anno = idle_type_expression type_anno in
+      let%bind type_anno = compile_type_expression type_anno in
       return @@ O.E_raw_code {language;code;type_anno} 
     | I.E_constructor {constructor;element} ->
       let%bind element = compile_expression element in

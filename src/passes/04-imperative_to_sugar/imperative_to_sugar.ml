@@ -220,7 +220,7 @@ and compile_expression' : I.expression -> (O.expression option -> O.expression) 
       return @@ O.e_let_in ~loc (binder,ty_opt) false inline rhs let_result
     | I.E_raw_code {language;code;type_anno} ->
       let%bind type_anno  = compile_type_expression type_anno in
-      return @@ O.E_raw_code {language;code;type_anno} 
+      return @@ O.e_raw_code ~loc language code type_anno
     | I.E_constructor {constructor;element} ->
       let%bind element = compile_expression element in
       return @@ O.e_constructor ~loc constructor element

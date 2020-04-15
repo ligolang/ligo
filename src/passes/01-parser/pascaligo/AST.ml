@@ -82,6 +82,7 @@ type rbrace   = Region.t  (* "}"   *)
 type lbracket = Region.t  (* "["   *)
 type rbracket = Region.t  (* "]"   *)
 type cons     = Region.t  (* "#"   *)
+type percent  = Region.t  (* "%"   *)
 type vbar     = Region.t  (* "|"   *)
 type arrow    = Region.t  (* "->"  *)
 type assign   = Region.t  (* ":="  *)
@@ -436,6 +437,14 @@ and for_collect = {
   block      : block reg
 }
 
+and code_insert = {
+  language  : string reg;
+  code      : string reg;
+  colon     : colon;
+  type_anno : type_expr;
+  rbracket  : rbracket;
+}
+
 and collection =
   Map  of kwd_map
 | Set  of kwd_set
@@ -464,6 +473,7 @@ and expr =
 | ETuple  of tuple_expr
 | EPar    of expr par reg
 | EFun    of fun_expr reg
+| ECodeInsert of code_insert reg
 
 and annot_expr = expr * colon * type_expr
 
@@ -687,7 +697,8 @@ let rec expr_to_region = function
 | ECase  {region;_}
 | ECond  {region; _}
 | EPar   {region; _}
-| EFun   {region; _} -> region
+| EFun   {region; _}
+| ECodeInsert {region; _} -> region
 
 and tuple_expr_to_region {region; _} = region
 

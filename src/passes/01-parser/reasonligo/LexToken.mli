@@ -90,6 +90,7 @@ type t =
 | Verbatim of string Region.reg
 | Bytes    of (string * Hex.t) Region.reg
 | Attr     of string Region.reg
+| Insert   of string Region.reg
 
   (* Keywords *)
 
@@ -153,6 +154,7 @@ val mk_string   : lexeme -> Region.t -> token
 val mk_verbatim : lexeme -> Region.t -> token
 val mk_bytes    : lexeme -> Region.t -> token
 val mk_constr   : lexeme -> Region.t -> token
+val mk_insert : lexeme -> Region.t -> token
 val eof         : Region.t -> token
 
 (* Predicates *)

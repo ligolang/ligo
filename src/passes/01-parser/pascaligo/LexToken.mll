@@ -32,6 +32,7 @@ type t =
 | Mutez    of (lexeme * Z.t) Region.reg
 | Ident    of lexeme Region.reg
 | Constr   of lexeme Region.reg
+| Insert   of lexeme Region.reg
 
   (* Symbols *)
 
@@ -141,6 +142,14 @@ let proj_token = function
 | Constr Region.{region; value} ->
     region, sprintf "Constr \"%s\"" value
 
+| Insert Region.{region; value} ->
+    region, sprintf "Insert \"%s\"" value
+
+(*
+| Attr {header; string={region; value}} ->
+    region, sprintf "Attr (\"%s\",\"%s\")" header value
+ *)
+
   (* Symbols *)
 
 | SEMI     region -> region, "SEMI"
@@ -233,6 +242,7 @@ let to_lexeme = function
 | Mutez i   -> fst i.Region.value
 | Ident id
 | Constr id -> id.Region.value
+| Insert i  -> i.Region.value
 
   (* Symbols *)
 
@@ -365,7 +375,7 @@ let keywords = [
   (fun reg -> Unit       reg);
   (fun reg -> Var        reg);
   (fun reg -> While      reg);
-  (fun reg -> With       reg)
+  (fun reg -> With       reg);
 ]
 
 let reserved = SSet.empty
@@ -542,6 +552,11 @@ let mk_constr lexeme region =
 type attr_err = Invalid_attribute
 
 let mk_attr _ _ _ = Error Invalid_attribute
+
+(* Raw Code Insertion *)
+
+let mk_insert lexeme region =
+  Insert Region.{value=lexeme;region}
 
 (* Predicates *)
 

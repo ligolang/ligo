@@ -13,6 +13,7 @@
 %token   <(LexToken.lexeme * Z.t) Region.reg> Mutez    "<mutez>"
 %token           <LexToken.lexeme Region.reg> Ident    "<ident>"
 %token           <LexToken.lexeme Region.reg> Constr   "<constr>"
+%token           <LexToken.lexeme Region.reg> Insert   "<insert>"
 
   (* Symbols *)
 

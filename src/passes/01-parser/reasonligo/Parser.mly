@@ -814,6 +814,7 @@ common_expr:
 | unit                                {                      EUnit $1 }
 | "false"                             {  ELogic (BoolExpr (False $1)) }
 | "true"                              {   ELogic (BoolExpr (True $1)) }
+| code_insert                         {                ECodeInsert $1 }
 
 core_expr_2:
   common_expr   {                   $1 }
@@ -917,6 +918,17 @@ update_record:
                            terminator};
                   region = cover $4 $6};
       rbrace   = $6}
+    in {region; value} }
+
+code_insert:
+  Insert "<verbatim>" ":" type_expr "]" {
+    let region = cover $1.region $5 in
+    let value = {
+                  language =$1;
+                  code     =$2;
+                  colon    =$3; 
+                  type_anno=$4;
+                  rbracket =$5}
     in {region; value} }
 
 expr_with_let_expr:

@@ -44,6 +44,7 @@ type t =
 | Mutez    of (lexeme * Z.t) Region.reg
 | Ident    of lexeme Region.reg
 | Constr   of lexeme Region.reg
+| Insert   of lexeme Region.reg
 
   (* Symbols *)
 
@@ -161,6 +162,7 @@ val mk_verbatim : lexeme -> Region.t -> token
 val mk_bytes    : lexeme -> Region.t -> token
 val mk_constr   : lexeme -> Region.t -> token
 val mk_attr     : string -> lexeme -> Region.t -> (token, attr_err) result
+val mk_insert : lexeme -> Region.t -> token
 val eof         : Region.t -> token
 
 (* Predicates *)
