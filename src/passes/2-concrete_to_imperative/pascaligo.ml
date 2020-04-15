@@ -766,10 +766,12 @@ and compile_single_instruction : Raw.instruction -> (_ -> expression result) res
       let binder = Var.of_name fi.assign.value.name.value in
       let%bind start = compile_expression fi.assign.value.expr in
       let%bind bound = compile_expression fi.bound in
-      let increment = e_int 1 in
+      let%bind step = match fi.step with
+        | None -> ok @@ e_int 1 
+        | Some step -> compile_expression step in
       let%bind body = compile_block fi.block.value in
       let%bind body = body @@ None in
-      return_statement @@ e_for ~loc binder start bound increment body
+      return_statement @@ e_for ~loc binder start bound step body
   )
   | Loop (For (ForCollect fc)) ->
       let (fc,loc) = r_split fc in

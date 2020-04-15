@@ -103,6 +103,7 @@ type t =
 | Remove     of Region.t  (* "remove"     *)
 | Set        of Region.t  (* "set"        *)
 | Skip       of Region.t  (* "skip"       *)
+| Step       of Region.t  (* "step"       *)
 | Then       of Region.t  (* "then"       *)
 | To         of Region.t  (* "to"         *)
 | True       of Region.t  (* "True"       *)
@@ -216,6 +217,7 @@ let proj_token = function
 | Remove     region -> region, "Remove"
 | Set        region -> region, "Set"
 | Skip       region -> region, "Skip"
+| Step       region -> region, "Step"
 | Then       region -> region, "Then"
 | To         region -> region, "To"
 | True       region -> region, "True"
@@ -307,6 +309,7 @@ let to_lexeme = function
 | Remove     _ -> "remove"
 | Set        _ -> "set"
 | Skip       _ -> "skip"
+| Step       _ -> "step"
 | Then       _ -> "then"
 | To         _ -> "to"
 | True       _ -> "True"
@@ -368,6 +371,7 @@ let keywords = [
   (fun reg -> Remove     reg);
   (fun reg -> Set        reg);
   (fun reg -> Skip       reg);
+  (fun reg -> Step       reg);
   (fun reg -> Then       reg);
   (fun reg -> To         reg);
   (fun reg -> True       reg);
@@ -605,6 +609,7 @@ let is_kwd = function
 | Remove     _
 | Set        _
 | Skip       _
+| Step       _
 | Then       _
 | To         _
 | True       _

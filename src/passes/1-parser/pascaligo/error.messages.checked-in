@@ -2,7 +2,7 @@ interactive_expr: BigMap LBRACKET Unit ARROW Bytes End
 ##
 ## Ends in an error in state: 151.
 ##
-## injection(BigMap,binding) -> BigMap LBRACKET sep_or_term_list(binding,SEMI) . RBRACKET [ VBAR Type To Then TIMES SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
+## injection(BigMap,binding) -> BigMap LBRACKET sep_or_term_list(binding,SEMI) . RBRACKET [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## BigMap LBRACKET sep_or_term_list(binding,SEMI)
@@ -32,8 +32,8 @@ interactive_expr: BigMap LBRACKET With
 ##
 ## Ends in an error in state: 144.
 ##
-## injection(BigMap,binding) -> BigMap LBRACKET . sep_or_term_list(binding,SEMI) RBRACKET [ VBAR Type To Then TIMES SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
-## injection(BigMap,binding) -> BigMap LBRACKET . RBRACKET [ VBAR Type To Then TIMES SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
+## injection(BigMap,binding) -> BigMap LBRACKET . sep_or_term_list(binding,SEMI) RBRACKET [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
+## injection(BigMap,binding) -> BigMap LBRACKET . RBRACKET [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## BigMap LBRACKET
@@ -45,7 +45,7 @@ interactive_expr: BigMap Unit ARROW Bytes RBRACKET
 ##
 ## Ends in an error in state: 257.
 ##
-## injection(BigMap,binding) -> BigMap sep_or_term_list(binding,SEMI) . End [ VBAR Type To Then TIMES SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
+## injection(BigMap,binding) -> BigMap sep_or_term_list(binding,SEMI) . End [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## BigMap sep_or_term_list(binding,SEMI)
@@ -75,10 +75,10 @@ interactive_expr: BigMap With
 ##
 ## Ends in an error in state: 143.
 ##
-## injection(BigMap,binding) -> BigMap . sep_or_term_list(binding,SEMI) End [ VBAR Type To Then TIMES SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
-## injection(BigMap,binding) -> BigMap . End [ VBAR Type To Then TIMES SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
-## injection(BigMap,binding) -> BigMap . LBRACKET sep_or_term_list(binding,SEMI) RBRACKET [ VBAR Type To Then TIMES SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
-## injection(BigMap,binding) -> BigMap . LBRACKET RBRACKET [ VBAR Type To Then TIMES SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
+## injection(BigMap,binding) -> BigMap . sep_or_term_list(binding,SEMI) End [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
+## injection(BigMap,binding) -> BigMap . End [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
+## injection(BigMap,binding) -> BigMap . LBRACKET sep_or_term_list(binding,SEMI) RBRACKET [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
+## injection(BigMap,binding) -> BigMap . LBRACKET RBRACKET [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## BigMap
@@ -90,7 +90,7 @@ interactive_expr: C_Some With
 ##
 ## Ends in an error in state: 139.
 ##
-## core_expr -> C_Some . arguments [ VBAR Type To Then TIMES SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
+## core_expr -> C_Some . arguments [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## C_Some
@@ -176,7 +176,7 @@ interactive_expr: Case Unit Of LBRACKET VBAR Block
 ##
 ## Ends in an error in state: 262.
 ##
-## case(expr) -> Case expr Of LBRACKET option(VBAR) . cases(expr) RBRACKET [ VBAR Type To Then SEMI Recursive RPAR RBRACKET RBRACE Of Function From End Else EOF Const COMMA Block Begin Attributes ARROW ]
+## case(expr) -> Case expr Of LBRACKET option(VBAR) . cases(expr) RBRACKET [ VBAR Type To Then Step SEMI Recursive RPAR RBRACKET RBRACE Of Function From End Else EOF Const COMMA Block Begin Attributes ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## Case expr Of LBRACKET option(VBAR)
@@ -188,7 +188,7 @@ interactive_expr: Case Unit Of LBRACKET WILD ARROW Bytes End
 ##
 ## Ends in an error in state: 326.
 ##
-## case(expr) -> Case expr Of LBRACKET option(VBAR) cases(expr) . RBRACKET [ VBAR Type To Then SEMI Recursive RPAR RBRACKET RBRACE Of Function From End Else EOF Const COMMA Block Begin Attributes ARROW ]
+## case(expr) -> Case expr Of LBRACKET option(VBAR) cases(expr) . RBRACKET [ VBAR Type To Then Step SEMI Recursive RPAR RBRACKET RBRACE Of Function From End Else EOF Const COMMA Block Begin Attributes ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## Case expr Of LBRACKET option(VBAR) cases(expr)
@@ -218,7 +218,7 @@ interactive_expr: Case Unit Of LBRACKET With
 ##
 ## Ends in an error in state: 261.
 ##
-## case(expr) -> Case expr Of LBRACKET . option(VBAR) cases(expr) RBRACKET [ VBAR Type To Then SEMI Recursive RPAR RBRACKET RBRACE Of Function From End Else EOF Const COMMA Block Begin Attributes ARROW ]
+## case(expr) -> Case expr Of LBRACKET . option(VBAR) cases(expr) RBRACKET [ VBAR Type To Then Step SEMI Recursive RPAR RBRACKET RBRACE Of Function From End Else EOF Const COMMA Block Begin Attributes ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## Case expr Of LBRACKET
@@ -420,7 +420,7 @@ interactive_expr: Case Unit Of VBAR Block
 ##
 ## Ends in an error in state: 331.
 ##
-## case(expr) -> Case expr Of option(VBAR) . cases(expr) End [ VBAR Type To Then SEMI Recursive RPAR RBRACKET RBRACE Of Function From End Else EOF Const COMMA Block Begin Attributes ARROW ]
+## case(expr) -> Case expr Of option(VBAR) . cases(expr) End [ VBAR Type To Then Step SEMI Recursive RPAR RBRACKET RBRACE Of Function From End Else EOF Const COMMA Block Begin Attributes ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## Case expr Of option(VBAR)
@@ -432,7 +432,7 @@ interactive_expr: Case Unit Of WILD ARROW Bytes RBRACKET
 ##
 ## Ends in an error in state: 332.
 ##
-## case(expr) -> Case expr Of option(VBAR) cases(expr) . End [ VBAR Type To Then SEMI Recursive RPAR RBRACKET RBRACE Of Function From End Else EOF Const COMMA Block Begin Attributes ARROW ]
+## case(expr) -> Case expr Of option(VBAR) cases(expr) . End [ VBAR Type To Then Step SEMI Recursive RPAR RBRACKET RBRACE Of Function From End Else EOF Const COMMA Block Begin Attributes ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## Case expr Of option(VBAR) cases(expr)
@@ -583,8 +583,8 @@ interactive_expr: Case Unit Of With
 ##
 ## Ends in an error in state: 260.
 ##
-## case(expr) -> Case expr Of . option(VBAR) cases(expr) End [ VBAR Type To Then SEMI Recursive RPAR RBRACKET RBRACE Of Function From End Else EOF Const COMMA Block Begin Attributes ARROW ]
-## case(expr) -> Case expr Of . LBRACKET option(VBAR) cases(expr) RBRACKET [ VBAR Type To Then SEMI Recursive RPAR RBRACKET RBRACE Of Function From End Else EOF Const COMMA Block Begin Attributes ARROW ]
+## case(expr) -> Case expr Of . option(VBAR) cases(expr) End [ VBAR Type To Then Step SEMI Recursive RPAR RBRACKET RBRACE Of Function From End Else EOF Const COMMA Block Begin Attributes ARROW ]
+## case(expr) -> Case expr Of . LBRACKET option(VBAR) cases(expr) RBRACKET [ VBAR Type To Then Step SEMI Recursive RPAR RBRACKET RBRACE Of Function From End Else EOF Const COMMA Block Begin Attributes ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## Case expr Of
@@ -596,8 +596,8 @@ interactive_expr: Case Unit VBAR
 ##
 ## Ends in an error in state: 259.
 ##
-## case(expr) -> Case expr . Of option(VBAR) cases(expr) End [ VBAR Type To Then SEMI Recursive RPAR RBRACKET RBRACE Of Function From End Else EOF Const COMMA Block Begin Attributes ARROW ]
-## case(expr) -> Case expr . Of LBRACKET option(VBAR) cases(expr) RBRACKET [ VBAR Type To Then SEMI Recursive RPAR RBRACKET RBRACE Of Function From End Else EOF Const COMMA Block Begin Attributes ARROW ]
+## case(expr) -> Case expr . Of option(VBAR) cases(expr) End [ VBAR Type To Then Step SEMI Recursive RPAR RBRACKET RBRACE Of Function From End Else EOF Const COMMA Block Begin Attributes ARROW ]
+## case(expr) -> Case expr . Of LBRACKET option(VBAR) cases(expr) RBRACKET [ VBAR Type To Then Step SEMI Recursive RPAR RBRACKET RBRACE Of Function From End Else EOF Const COMMA Block Begin Attributes ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## Case expr
@@ -624,8 +624,8 @@ interactive_expr: Case With
 ##
 ## Ends in an error in state: 138.
 ##
-## case(expr) -> Case . expr Of option(VBAR) cases(expr) End [ VBAR Type To Then SEMI Recursive RPAR RBRACKET RBRACE Of Function From End Else EOF Const COMMA Block Begin Attributes ARROW ]
-## case(expr) -> Case . expr Of LBRACKET option(VBAR) cases(expr) RBRACKET [ VBAR Type To Then SEMI Recursive RPAR RBRACKET RBRACE Of Function From End Else EOF Const COMMA Block Begin Attributes ARROW ]
+## case(expr) -> Case . expr Of option(VBAR) cases(expr) End [ VBAR Type To Then Step SEMI Recursive RPAR RBRACKET RBRACE Of Function From End Else EOF Const COMMA Block Begin Attributes ARROW ]
+## case(expr) -> Case . expr Of LBRACKET option(VBAR) cases(expr) RBRACKET [ VBAR Type To Then Step SEMI Recursive RPAR RBRACKET RBRACE Of Function From End Else EOF Const COMMA Block Begin Attributes ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## Case
@@ -637,8 +637,8 @@ interactive_expr: Constr DOT And With
 ##
 ## Ends in an error in state: 176.
 ##
-## core_expr -> module_field . [ VBAR Type To Then TIMES SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
-## fun_call -> module_field . arguments [ VBAR Type To Then TIMES SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
+## core_expr -> module_field . [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
+## fun_call -> module_field . arguments [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## module_field
@@ -650,7 +650,7 @@ interactive_expr: Constr DOT Ident DOT With
 ##
 ## Ends in an error in state: 127.
 ##
-## projection -> Constr DOT Ident DOT . nsepseq(selection,DOT) [ With VBAR Type To Then TIMES SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LPAR LE LBRACKET GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ASS ARROW ]
+## projection -> Constr DOT Ident DOT . nsepseq(selection,DOT) [ With VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LPAR LE LBRACKET GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ASS ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## Constr DOT Ident DOT
@@ -662,8 +662,8 @@ interactive_expr: Constr DOT Ident With
 ##
 ## Ends in an error in state: 126.
 ##
-## module_fun -> Ident . [ VBAR Type To Then TIMES SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LPAR LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
-## projection -> Constr DOT Ident . DOT nsepseq(selection,DOT) [ With VBAR Type To Then TIMES SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LPAR LE LBRACKET GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ASS ARROW ]
+## module_fun -> Ident . [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LPAR LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
+## projection -> Constr DOT Ident . DOT nsepseq(selection,DOT) [ With VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LPAR LE LBRACKET GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ASS ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## Constr DOT Ident
@@ -675,8 +675,8 @@ interactive_expr: Constr DOT With
 ##
 ## Ends in an error in state: 122.
 ##
-## module_field -> Constr DOT . module_fun [ VBAR Type To Then TIMES SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LPAR LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
-## projection -> Constr DOT . Ident DOT nsepseq(selection,DOT) [ With VBAR Type To Then TIMES SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LPAR LE LBRACKET GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ASS ARROW ]
+## module_field -> Constr DOT . module_fun [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LPAR LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
+## projection -> Constr DOT . Ident DOT nsepseq(selection,DOT) [ With VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LPAR LE LBRACKET GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ASS ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## Constr DOT
@@ -688,10 +688,10 @@ interactive_expr: Constr With
 ##
 ## Ends in an error in state: 121.
 ##
-## core_expr -> Constr . arguments [ VBAR Type To Then TIMES SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
-## core_expr -> Constr . [ VBAR Type To Then TIMES SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
-## module_field -> Constr . DOT module_fun [ VBAR Type To Then TIMES SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LPAR LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
-## projection -> Constr . DOT Ident DOT nsepseq(selection,DOT) [ With VBAR Type To Then TIMES SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LPAR LE LBRACKET GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
+## core_expr -> Constr . arguments [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
+## core_expr -> Constr . [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
+## module_field -> Constr . DOT module_fun [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LPAR LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
+## projection -> Constr . DOT Ident DOT nsepseq(selection,DOT) [ With VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LPAR LE LBRACKET GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## Constr
@@ -703,7 +703,7 @@ interactive_expr: Function LPAR Const Ident COLON Ident RPAR COLON Ident Is With
 ##
 ## Ends in an error in state: 119.
 ##
-## fun_expr -> Function parameters COLON type_expr Is . expr [ VBAR Type To Then SEMI Recursive RPAR RBRACKET RBRACE Of Function From End Else EOF Const COMMA Block Begin Attributes ARROW ]
+## fun_expr -> Function parameters COLON type_expr Is . expr [ VBAR Type To Then Step SEMI Recursive RPAR RBRACKET RBRACE Of Function From End Else EOF Const COMMA Block Begin Attributes ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## Function parameters COLON type_expr Is
@@ -715,7 +715,7 @@ interactive_expr: Function LPAR Const Ident COLON Ident RPAR COLON Ident VBAR
 ##
 ## Ends in an error in state: 118.
 ##
-## fun_expr -> Function parameters COLON type_expr . Is expr [ VBAR Type To Then SEMI Recursive RPAR RBRACKET RBRACE Of Function From End Else EOF Const COMMA Block Begin Attributes ARROW ]
+## fun_expr -> Function parameters COLON type_expr . Is expr [ VBAR Type To Then Step SEMI Recursive RPAR RBRACKET RBRACE Of Function From End Else EOF Const COMMA Block Begin Attributes ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## Function parameters COLON type_expr
@@ -736,7 +736,7 @@ interactive_expr: Function LPAR Const Ident COLON Ident RPAR COLON With
 ##
 ## Ends in an error in state: 117.
 ##
-## fun_expr -> Function parameters COLON . type_expr Is expr [ VBAR Type To Then SEMI Recursive RPAR RBRACKET RBRACE Of Function From End Else EOF Const COMMA Block Begin Attributes ARROW ]
+## fun_expr -> Function parameters COLON . type_expr Is expr [ VBAR Type To Then Step SEMI Recursive RPAR RBRACKET RBRACE Of Function From End Else EOF Const COMMA Block Begin Attributes ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## Function parameters COLON
@@ -748,7 +748,7 @@ interactive_expr: Function LPAR Const Ident COLON Ident RPAR With
 ##
 ## Ends in an error in state: 116.
 ##
-## fun_expr -> Function parameters . COLON type_expr Is expr [ VBAR Type To Then SEMI Recursive RPAR RBRACKET RBRACE Of Function From End Else EOF Const COMMA Block Begin Attributes ARROW ]
+## fun_expr -> Function parameters . COLON type_expr Is expr [ VBAR Type To Then Step SEMI Recursive RPAR RBRACKET RBRACE Of Function From End Else EOF Const COMMA Block Begin Attributes ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## Function parameters
@@ -879,7 +879,7 @@ interactive_expr: Function With
 ##
 ## Ends in an error in state: 115.
 ##
-## fun_expr -> Function . parameters COLON type_expr Is expr [ VBAR Type To Then SEMI Recursive RPAR RBRACKET RBRACE Of Function From End Else EOF Const COMMA Block Begin Attributes ARROW ]
+## fun_expr -> Function . parameters COLON type_expr Is expr [ VBAR Type To Then Step SEMI Recursive RPAR RBRACKET RBRACE Of Function From End Else EOF Const COMMA Block Begin Attributes ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## Function
@@ -891,7 +891,7 @@ interactive_expr: Ident DOT Ident ASS
 ##
 ## Ends in an error in state: 154.
 ##
-## fun_call_or_par_or_projection -> projection . option(arguments) [ VBAR Type To Then TIMES SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
+## fun_call_or_par_or_projection -> projection . option(arguments) [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
 ## path -> projection . [ With LBRACKET ]
 ##
 ## The known suffix of the stack is as follows:
@@ -911,7 +911,7 @@ interactive_expr: Ident DOT Int DOT With
 ##
 ## Ends in an error in state: 131.
 ##
-## nsepseq(selection,DOT) -> selection DOT . nsepseq(selection,DOT) [ With VBAR Type To Then TIMES SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LPAR LE LBRACKET GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ASS ARROW ]
+## nsepseq(selection,DOT) -> selection DOT . nsepseq(selection,DOT) [ With VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LPAR LE LBRACKET GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ASS ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## selection DOT
@@ -923,8 +923,8 @@ interactive_expr: Ident DOT Int While
 ##
 ## Ends in an error in state: 130.
 ##
-## nsepseq(selection,DOT) -> selection . [ With VBAR Type To Then TIMES SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LPAR LE LBRACKET GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ASS ARROW ]
-## nsepseq(selection,DOT) -> selection . DOT nsepseq(selection,DOT) [ With VBAR Type To Then TIMES SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LPAR LE LBRACKET GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ASS ARROW ]
+## nsepseq(selection,DOT) -> selection . [ With VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LPAR LE LBRACKET GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ASS ARROW ]
+## nsepseq(selection,DOT) -> selection . DOT nsepseq(selection,DOT) [ With VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LPAR LE LBRACKET GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ASS ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## selection
@@ -936,7 +936,7 @@ interactive_expr: Ident DOT With
 ##
 ## Ends in an error in state: 341.
 ##
-## projection -> Ident DOT . nsepseq(selection,DOT) [ With VBAR Type To Then TIMES SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LPAR LE LBRACKET GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ASS ARROW ]
+## projection -> Ident DOT . nsepseq(selection,DOT) [ With VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LPAR LE LBRACKET GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ASS ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## Ident DOT
@@ -948,7 +948,7 @@ interactive_expr: Ident LBRACKET Unit VBAR
 ##
 ## Ends in an error in state: 241.
 ##
-## brackets(expr) -> LBRACKET expr . RBRACKET [ VBAR Type To Then TIMES SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ASS ARROW ]
+## brackets(expr) -> LBRACKET expr . RBRACKET [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ASS ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## LBRACKET expr
@@ -975,7 +975,7 @@ interactive_expr: Ident LBRACKET With
 ##
 ## Ends in an error in state: 240.
 ##
-## brackets(expr) -> LBRACKET . expr RBRACKET [ VBAR Type To Then TIMES SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ASS ARROW ]
+## brackets(expr) -> LBRACKET . expr RBRACKET [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ASS ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## LBRACKET
@@ -1027,7 +1027,7 @@ interactive_expr: Ident LPAR With
 ##
 ## Ends in an error in state: 114.
 ##
-## par(nsepseq(expr,COMMA)) -> LPAR . nsepseq(expr,COMMA) RPAR [ VBAR Type To Then TIMES SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
+## par(nsepseq(expr,COMMA)) -> LPAR . nsepseq(expr,COMMA) RPAR [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## LPAR
@@ -1039,10 +1039,10 @@ interactive_expr: Ident While
 ##
 ## Ends in an error in state: 113.
 ##
-## core_expr -> Ident . [ VBAR Type To Then TIMES SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
-## fun_call -> Ident . arguments [ VBAR Type To Then TIMES SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
+## core_expr -> Ident . [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
+## fun_call -> Ident . arguments [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
 ## path -> Ident . [ With LBRACKET ]
-## projection -> Ident . DOT nsepseq(selection,DOT) [ With VBAR Type To Then TIMES SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LPAR LE LBRACKET GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
+## projection -> Ident . DOT nsepseq(selection,DOT) [ With VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LPAR LE LBRACKET GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## Ident
@@ -1066,7 +1066,7 @@ interactive_expr: Ident With Record Ident EQ Bytes RBRACKET
 ##
 ## Ends in an error in state: 237.
 ##
-## ne_injection(Record,field_path_assignment) -> Record sep_or_term_list(field_path_assignment,SEMI) . End [ VBAR Type To Then TIMES SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
+## ne_injection(Record,field_path_assignment) -> Record sep_or_term_list(field_path_assignment,SEMI) . End [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## Record sep_or_term_list(field_path_assignment,SEMI)
@@ -1207,7 +1207,7 @@ interactive_expr: Ident With Record LBRACKET Ident EQ Bytes End
 ##
 ## Ends in an error in state: 164.
 ##
-## ne_injection(Record,field_path_assignment) -> Record LBRACKET sep_or_term_list(field_path_assignment,SEMI) . RBRACKET [ VBAR Type To Then TIMES SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
+## ne_injection(Record,field_path_assignment) -> Record LBRACKET sep_or_term_list(field_path_assignment,SEMI) . RBRACKET [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## Record LBRACKET sep_or_term_list(field_path_assignment,SEMI)
@@ -1237,7 +1237,7 @@ interactive_expr: Ident With Record LBRACKET With
 ##
 ## Ends in an error in state: 160.
 ##
-## ne_injection(Record,field_path_assignment) -> Record LBRACKET . sep_or_term_list(field_path_assignment,SEMI) RBRACKET [ VBAR Type To Then TIMES SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
+## ne_injection(Record,field_path_assignment) -> Record LBRACKET . sep_or_term_list(field_path_assignment,SEMI) RBRACKET [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## Record LBRACKET
@@ -1249,8 +1249,8 @@ interactive_expr: Ident With Record With
 ##
 ## Ends in an error in state: 159.
 ##
-## ne_injection(Record,field_path_assignment) -> Record . sep_or_term_list(field_path_assignment,SEMI) End [ VBAR Type To Then TIMES SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
-## ne_injection(Record,field_path_assignment) -> Record . LBRACKET sep_or_term_list(field_path_assignment,SEMI) RBRACKET [ VBAR Type To Then TIMES SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
+## ne_injection(Record,field_path_assignment) -> Record . sep_or_term_list(field_path_assignment,SEMI) End [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
+## ne_injection(Record,field_path_assignment) -> Record . LBRACKET sep_or_term_list(field_path_assignment,SEMI) RBRACKET [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## Record
@@ -1262,7 +1262,7 @@ interactive_expr: Ident With With
 ##
 ## Ends in an error in state: 158.
 ##
-## update_record -> path With . ne_injection(Record,field_path_assignment) [ VBAR Type To Then TIMES SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
+## update_record -> path With . ne_injection(Record,field_path_assignment) [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## path With
@@ -1274,7 +1274,7 @@ interactive_expr: If Unit Then Unit Else With
 ##
 ## Ends in an error in state: 348.
 ##
-## cond_expr -> If expr Then expr option(SEMI) Else . expr [ VBAR Type To Then SEMI Recursive RPAR RBRACKET RBRACE Of Function From End Else EOF Const COMMA Block Begin Attributes ARROW ]
+## cond_expr -> If expr Then expr option(SEMI) Else . expr [ VBAR Type To Then Step SEMI Recursive RPAR RBRACKET RBRACE Of Function From End Else EOF Const COMMA Block Begin Attributes ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## If expr Then expr option(SEMI) Else
@@ -1286,7 +1286,7 @@ interactive_expr: If Unit Then Unit SEMI EQ
 ##
 ## Ends in an error in state: 347.
 ##
-## cond_expr -> If expr Then expr option(SEMI) . Else expr [ VBAR Type To Then SEMI Recursive RPAR RBRACKET RBRACE Of Function From End Else EOF Const COMMA Block Begin Attributes ARROW ]
+## cond_expr -> If expr Then expr option(SEMI) . Else expr [ VBAR Type To Then Step SEMI Recursive RPAR RBRACKET RBRACE Of Function From End Else EOF Const COMMA Block Begin Attributes ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## If expr Then expr option(SEMI)
@@ -1298,7 +1298,7 @@ interactive_expr: If Unit Then Unit VBAR
 ##
 ## Ends in an error in state: 346.
 ##
-## cond_expr -> If expr Then expr . option(SEMI) Else expr [ VBAR Type To Then SEMI Recursive RPAR RBRACKET RBRACE Of Function From End Else EOF Const COMMA Block Begin Attributes ARROW ]
+## cond_expr -> If expr Then expr . option(SEMI) Else expr [ VBAR Type To Then Step SEMI Recursive RPAR RBRACKET RBRACE Of Function From End Else EOF Const COMMA Block Begin Attributes ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## If expr Then expr
@@ -1325,7 +1325,7 @@ interactive_expr: If Unit Then With
 ##
 ## Ends in an error in state: 345.
 ##
-## cond_expr -> If expr Then . expr option(SEMI) Else expr [ VBAR Type To Then SEMI Recursive RPAR RBRACKET RBRACE Of Function From End Else EOF Const COMMA Block Begin Attributes ARROW ]
+## cond_expr -> If expr Then . expr option(SEMI) Else expr [ VBAR Type To Then Step SEMI Recursive RPAR RBRACKET RBRACE Of Function From End Else EOF Const COMMA Block Begin Attributes ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## If expr Then
@@ -1337,7 +1337,7 @@ interactive_expr: If Unit VBAR
 ##
 ## Ends in an error in state: 344.
 ##
-## cond_expr -> If expr . Then expr option(SEMI) Else expr [ VBAR Type To Then SEMI Recursive RPAR RBRACKET RBRACE Of Function From End Else EOF Const COMMA Block Begin Attributes ARROW ]
+## cond_expr -> If expr . Then expr option(SEMI) Else expr [ VBAR Type To Then Step SEMI Recursive RPAR RBRACKET RBRACE Of Function From End Else EOF Const COMMA Block Begin Attributes ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## If expr
@@ -1364,7 +1364,7 @@ interactive_expr: If With
 ##
 ## Ends in an error in state: 112.
 ##
-## cond_expr -> If . expr Then expr option(SEMI) Else expr [ VBAR Type To Then SEMI Recursive RPAR RBRACKET RBRACE Of Function From End Else EOF Const COMMA Block Begin Attributes ARROW ]
+## cond_expr -> If . expr Then expr option(SEMI) Else expr [ VBAR Type To Then Step SEMI Recursive RPAR RBRACKET RBRACE Of Function From End Else EOF Const COMMA Block Begin Attributes ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## If
@@ -1376,7 +1376,7 @@ interactive_expr: LPAR Bytes RPAR With
 ##
 ## Ends in an error in state: 171.
 ##
-## fun_call_or_par_or_projection -> par(expr) . option(arguments) [ VBAR Type To Then TIMES SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
+## fun_call_or_par_or_projection -> par(expr) . option(arguments) [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## par(expr)
@@ -1388,7 +1388,7 @@ interactive_expr: LPAR If Unit Then Bytes Else Bytes VBAR
 ##
 ## Ends in an error in state: 352.
 ##
-## par(expr) -> LPAR expr . RPAR [ VBAR Type To Then TIMES SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LPAR LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
+## par(expr) -> LPAR expr . RPAR [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LPAR LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
 ## tuple_comp -> expr . COMMA nsepseq(expr,COMMA) [ RPAR ]
 ##
 ## The known suffix of the stack is as follows:
@@ -1418,7 +1418,7 @@ interactive_expr: LPAR Unit COLON Ident VBAR
 ##
 ## Ends in an error in state: 358.
 ##
-## annot_expr -> LPAR disj_expr COLON type_expr . RPAR [ VBAR Type To Then TIMES SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
+## annot_expr -> LPAR disj_expr COLON type_expr . RPAR [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## LPAR disj_expr COLON type_expr
@@ -1439,7 +1439,7 @@ interactive_expr: LPAR Unit COLON With
 ##
 ## Ends in an error in state: 357.
 ##
-## annot_expr -> LPAR disj_expr COLON . type_expr RPAR [ VBAR Type To Then TIMES SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
+## annot_expr -> LPAR disj_expr COLON . type_expr RPAR [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## LPAR disj_expr COLON
@@ -1463,7 +1463,7 @@ interactive_expr: LPAR Unit VBAR
 ##
 ## Ends in an error in state: 356.
 ##
-## annot_expr -> LPAR disj_expr . COLON type_expr RPAR [ VBAR Type To Then TIMES SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
+## annot_expr -> LPAR disj_expr . COLON type_expr RPAR [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
 ## disj_expr -> disj_expr . Or conj_expr [ RPAR Or COMMA COLON ]
 ## expr -> disj_expr . [ RPAR COMMA ]
 ##
@@ -1491,9 +1491,9 @@ interactive_expr: LPAR With
 ##
 ## Ends in an error in state: 110.
 ##
-## annot_expr -> LPAR . disj_expr COLON type_expr RPAR [ VBAR Type To Then TIMES SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
-## par(expr) -> LPAR . expr RPAR [ VBAR Type To Then TIMES SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LPAR LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
-## par(tuple_comp) -> LPAR . tuple_comp RPAR [ VBAR Type To Then TIMES SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
+## annot_expr -> LPAR . disj_expr COLON type_expr RPAR [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
+## par(expr) -> LPAR . expr RPAR [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LPAR LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
+## par(tuple_comp) -> LPAR . tuple_comp RPAR [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## LPAR
@@ -1505,7 +1505,7 @@ interactive_expr: List LBRACKET Unit End
 ##
 ## Ends in an error in state: 362.
 ##
-## injection(List,expr) -> List LBRACKET sep_or_term_list(expr,SEMI) . RBRACKET [ VBAR Type To Then TIMES SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
+## injection(List,expr) -> List LBRACKET sep_or_term_list(expr,SEMI) . RBRACKET [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## List LBRACKET sep_or_term_list(expr,SEMI)
@@ -1534,8 +1534,8 @@ interactive_expr: List LBRACKET With
 ##
 ## Ends in an error in state: 360.
 ##
-## injection(List,expr) -> List LBRACKET . sep_or_term_list(expr,SEMI) RBRACKET [ VBAR Type To Then TIMES SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
-## injection(List,expr) -> List LBRACKET . RBRACKET [ VBAR Type To Then TIMES SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
+## injection(List,expr) -> List LBRACKET . sep_or_term_list(expr,SEMI) RBRACKET [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
+## injection(List,expr) -> List LBRACKET . RBRACKET [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## List LBRACKET
@@ -1547,7 +1547,7 @@ interactive_expr: List Unit RBRACKET
 ##
 ## Ends in an error in state: 374.
 ##
-## injection(List,expr) -> List sep_or_term_list(expr,SEMI) . End [ VBAR Type To Then TIMES SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
+## injection(List,expr) -> List sep_or_term_list(expr,SEMI) . End [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## List sep_or_term_list(expr,SEMI)
@@ -1576,10 +1576,10 @@ interactive_expr: List With
 ##
 ## Ends in an error in state: 109.
 ##
-## injection(List,expr) -> List . sep_or_term_list(expr,SEMI) End [ VBAR Type To Then TIMES SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
-## injection(List,expr) -> List . End [ VBAR Type To Then TIMES SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
-## injection(List,expr) -> List . LBRACKET sep_or_term_list(expr,SEMI) RBRACKET [ VBAR Type To Then TIMES SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
-## injection(List,expr) -> List . LBRACKET RBRACKET [ VBAR Type To Then TIMES SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
+## injection(List,expr) -> List . sep_or_term_list(expr,SEMI) End [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
+## injection(List,expr) -> List . End [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
+## injection(List,expr) -> List . LBRACKET sep_or_term_list(expr,SEMI) RBRACKET [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
+## injection(List,expr) -> List . LBRACKET RBRACKET [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## List
@@ -1591,7 +1591,7 @@ interactive_expr: MINUS With
 ##
 ## Ends in an error in state: 108.
 ##
-## unary_expr -> MINUS . core_expr [ VBAR Type To Then TIMES SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
+## unary_expr -> MINUS . core_expr [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## MINUS
@@ -1603,7 +1603,7 @@ interactive_expr: Map LBRACKET Unit ARROW Bytes End
 ##
 ## Ends in an error in state: 379.
 ##
-## injection(Map,binding) -> Map LBRACKET sep_or_term_list(binding,SEMI) . RBRACKET [ VBAR Type To Then TIMES SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
+## injection(Map,binding) -> Map LBRACKET sep_or_term_list(binding,SEMI) . RBRACKET [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## Map LBRACKET sep_or_term_list(binding,SEMI)
@@ -1633,8 +1633,8 @@ interactive_expr: Map LBRACKET With
 ##
 ## Ends in an error in state: 377.
 ##
-## injection(Map,binding) -> Map LBRACKET . sep_or_term_list(binding,SEMI) RBRACKET [ VBAR Type To Then TIMES SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
-## injection(Map,binding) -> Map LBRACKET . RBRACKET [ VBAR Type To Then TIMES SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
+## injection(Map,binding) -> Map LBRACKET . sep_or_term_list(binding,SEMI) RBRACKET [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
+## injection(Map,binding) -> Map LBRACKET . RBRACKET [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## Map LBRACKET
@@ -1646,7 +1646,7 @@ interactive_expr: Map Unit ARROW Bytes RBRACKET
 ##
 ## Ends in an error in state: 382.
 ##
-## injection(Map,binding) -> Map sep_or_term_list(binding,SEMI) . End [ VBAR Type To Then TIMES SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
+## injection(Map,binding) -> Map sep_or_term_list(binding,SEMI) . End [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## Map sep_or_term_list(binding,SEMI)
@@ -1801,10 +1801,10 @@ interactive_expr: Map With
 ##
 ## Ends in an error in state: 107.
 ##
-## injection(Map,binding) -> Map . sep_or_term_list(binding,SEMI) End [ VBAR Type To Then TIMES SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
-## injection(Map,binding) -> Map . End [ VBAR Type To Then TIMES SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
-## injection(Map,binding) -> Map . LBRACKET sep_or_term_list(binding,SEMI) RBRACKET [ VBAR Type To Then TIMES SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
-## injection(Map,binding) -> Map . LBRACKET RBRACKET [ VBAR Type To Then TIMES SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
+## injection(Map,binding) -> Map . sep_or_term_list(binding,SEMI) End [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
+## injection(Map,binding) -> Map . End [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
+## injection(Map,binding) -> Map . LBRACKET sep_or_term_list(binding,SEMI) RBRACKET [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
+## injection(Map,binding) -> Map . LBRACKET RBRACKET [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## Map
@@ -1816,10 +1816,10 @@ interactive_expr: Not Bytes With
 ##
 ## Ends in an error in state: 173.
 ##
-## add_expr -> mult_expr . [ VBAR Type To Then SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE MINUS LT LE GT GE Function From End Else EQ EOF Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
-## mult_expr -> mult_expr . TIMES unary_expr [ VBAR Type To Then TIMES SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
-## mult_expr -> mult_expr . SLASH unary_expr [ VBAR Type To Then TIMES SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
-## mult_expr -> mult_expr . Mod unary_expr [ VBAR Type To Then TIMES SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
+## add_expr -> mult_expr . [ VBAR Type To Then Step SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE MINUS LT LE GT GE Function From End Else EQ EOF Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
+## mult_expr -> mult_expr . TIMES unary_expr [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
+## mult_expr -> mult_expr . SLASH unary_expr [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
+## mult_expr -> mult_expr . Mod unary_expr [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## mult_expr
@@ -1831,7 +1831,7 @@ interactive_expr: Not With
 ##
 ## Ends in an error in state: 103.
 ##
-## unary_expr -> Not . core_expr [ VBAR Type To Then TIMES SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
+## unary_expr -> Not . core_expr [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## Not
@@ -1843,7 +1843,7 @@ interactive_expr: Record Ident EQ Bytes RBRACKET
 ##
 ## Ends in an error in state: 397.
 ##
-## record_expr -> Record sep_or_term_list(field_assignment,SEMI) . End [ VBAR Type To Then TIMES SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
+## record_expr -> Record sep_or_term_list(field_assignment,SEMI) . End [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## Record sep_or_term_list(field_assignment,SEMI)
@@ -1983,7 +1983,7 @@ interactive_expr: Record LBRACKET Ident EQ Bytes End
 ##
 ## Ends in an error in state: 386.
 ##
-## record_expr -> Record LBRACKET sep_or_term_list(field_assignment,SEMI) . RBRACKET [ VBAR Type To Then TIMES SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
+## record_expr -> Record LBRACKET sep_or_term_list(field_assignment,SEMI) . RBRACKET [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## Record LBRACKET sep_or_term_list(field_assignment,SEMI)
@@ -2013,7 +2013,7 @@ interactive_expr: Record LBRACKET With
 ##
 ## Ends in an error in state: 100.
 ##
-## record_expr -> Record LBRACKET . sep_or_term_list(field_assignment,SEMI) RBRACKET [ VBAR Type To Then TIMES SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
+## record_expr -> Record LBRACKET . sep_or_term_list(field_assignment,SEMI) RBRACKET [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## Record LBRACKET
@@ -2025,8 +2025,8 @@ interactive_expr: Record With
 ##
 ## Ends in an error in state: 99.
 ##
-## record_expr -> Record . sep_or_term_list(field_assignment,SEMI) End [ VBAR Type To Then TIMES SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
-## record_expr -> Record . LBRACKET sep_or_term_list(field_assignment,SEMI) RBRACKET [ VBAR Type To Then TIMES SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
+## record_expr -> Record . sep_or_term_list(field_assignment,SEMI) End [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
+## record_expr -> Record . LBRACKET sep_or_term_list(field_assignment,SEMI) RBRACKET [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## Record
@@ -2038,7 +2038,7 @@ interactive_expr: Recursive Function LPAR Const Ident COLON Ident RPAR COLON Ide
 ##
 ## Ends in an error in state: 98.
 ##
-## fun_expr -> Recursive Function parameters COLON type_expr Is . expr [ VBAR Type To Then SEMI Recursive RPAR RBRACKET RBRACE Of Function From End Else EOF Const COMMA Block Begin Attributes ARROW ]
+## fun_expr -> Recursive Function parameters COLON type_expr Is . expr [ VBAR Type To Then Step SEMI Recursive RPAR RBRACKET RBRACE Of Function From End Else EOF Const COMMA Block Begin Attributes ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## Recursive Function parameters COLON type_expr Is
@@ -2050,7 +2050,7 @@ interactive_expr: Recursive Function LPAR Const Ident COLON Ident RPAR COLON Ide
 ##
 ## Ends in an error in state: 97.
 ##
-## fun_expr -> Recursive Function parameters COLON type_expr . Is expr [ VBAR Type To Then SEMI Recursive RPAR RBRACKET RBRACE Of Function From End Else EOF Const COMMA Block Begin Attributes ARROW ]
+## fun_expr -> Recursive Function parameters COLON type_expr . Is expr [ VBAR Type To Then Step SEMI Recursive RPAR RBRACKET RBRACE Of Function From End Else EOF Const COMMA Block Begin Attributes ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## Recursive Function parameters COLON type_expr
@@ -2071,7 +2071,7 @@ interactive_expr: Recursive Function LPAR Const Ident COLON Ident RPAR COLON Wit
 ##
 ## Ends in an error in state: 96.
 ##
-## fun_expr -> Recursive Function parameters COLON . type_expr Is expr [ VBAR Type To Then SEMI Recursive RPAR RBRACKET RBRACE Of Function From End Else EOF Const COMMA Block Begin Attributes ARROW ]
+## fun_expr -> Recursive Function parameters COLON . type_expr Is expr [ VBAR Type To Then Step SEMI Recursive RPAR RBRACKET RBRACE Of Function From End Else EOF Const COMMA Block Begin Attributes ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## Recursive Function parameters COLON
@@ -2083,7 +2083,7 @@ interactive_expr: Recursive Function LPAR Const Ident COLON Ident RPAR With
 ##
 ## Ends in an error in state: 95.
 ##
-## fun_expr -> Recursive Function parameters . COLON type_expr Is expr [ VBAR Type To Then SEMI Recursive RPAR RBRACKET RBRACE Of Function From End Else EOF Const COMMA Block Begin Attributes ARROW ]
+## fun_expr -> Recursive Function parameters . COLON type_expr Is expr [ VBAR Type To Then Step SEMI Recursive RPAR RBRACKET RBRACE Of Function From End Else EOF Const COMMA Block Begin Attributes ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## Recursive Function parameters
@@ -2095,7 +2095,7 @@ interactive_expr: Recursive Function With
 ##
 ## Ends in an error in state: 94.
 ##
-## fun_expr -> Recursive Function . parameters COLON type_expr Is expr [ VBAR Type To Then SEMI Recursive RPAR RBRACKET RBRACE Of Function From End Else EOF Const COMMA Block Begin Attributes ARROW ]
+## fun_expr -> Recursive Function . parameters COLON type_expr Is expr [ VBAR Type To Then Step SEMI Recursive RPAR RBRACKET RBRACE Of Function From End Else EOF Const COMMA Block Begin Attributes ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## Recursive Function
@@ -2107,7 +2107,7 @@ interactive_expr: Recursive With
 ##
 ## Ends in an error in state: 93.
 ##
-## fun_expr -> Recursive . Function parameters COLON type_expr Is expr [ VBAR Type To Then SEMI Recursive RPAR RBRACKET RBRACE Of Function From End Else EOF Const COMMA Block Begin Attributes ARROW ]
+## fun_expr -> Recursive . Function parameters COLON type_expr Is expr [ VBAR Type To Then Step SEMI Recursive RPAR RBRACKET RBRACE Of Function From End Else EOF Const COMMA Block Begin Attributes ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## Recursive
@@ -2119,7 +2119,7 @@ interactive_expr: Set LBRACKET Unit End
 ##
 ## Ends in an error in state: 402.
 ##
-## injection(Set,expr) -> Set LBRACKET sep_or_term_list(expr,SEMI) . RBRACKET [ VBAR Type To Then TIMES SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
+## injection(Set,expr) -> Set LBRACKET sep_or_term_list(expr,SEMI) . RBRACKET [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## Set LBRACKET sep_or_term_list(expr,SEMI)
@@ -2148,8 +2148,8 @@ interactive_expr: Set LBRACKET With
 ##
 ## Ends in an error in state: 400.
 ##
-## injection(Set,expr) -> Set LBRACKET . sep_or_term_list(expr,SEMI) RBRACKET [ VBAR Type To Then TIMES SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
-## injection(Set,expr) -> Set LBRACKET . RBRACKET [ VBAR Type To Then TIMES SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
+## injection(Set,expr) -> Set LBRACKET . sep_or_term_list(expr,SEMI) RBRACKET [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
+## injection(Set,expr) -> Set LBRACKET . RBRACKET [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## Set LBRACKET
@@ -2161,7 +2161,7 @@ interactive_expr: Set Unit RBRACKET
 ##
 ## Ends in an error in state: 405.
 ##
-## injection(Set,expr) -> Set sep_or_term_list(expr,SEMI) . End [ VBAR Type To Then TIMES SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
+## injection(Set,expr) -> Set sep_or_term_list(expr,SEMI) . End [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## Set sep_or_term_list(expr,SEMI)
@@ -2274,10 +2274,10 @@ interactive_expr: Set With
 ##
 ## Ends in an error in state: 92.
 ##
-## injection(Set,expr) -> Set . sep_or_term_list(expr,SEMI) End [ VBAR Type To Then TIMES SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
-## injection(Set,expr) -> Set . End [ VBAR Type To Then TIMES SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
-## injection(Set,expr) -> Set . LBRACKET sep_or_term_list(expr,SEMI) RBRACKET [ VBAR Type To Then TIMES SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
-## injection(Set,expr) -> Set . LBRACKET RBRACKET [ VBAR Type To Then TIMES SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
+## injection(Set,expr) -> Set . sep_or_term_list(expr,SEMI) End [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
+## injection(Set,expr) -> Set . End [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
+## injection(Set,expr) -> Set . LBRACKET sep_or_term_list(expr,SEMI) RBRACKET [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
+## injection(Set,expr) -> Set . LBRACKET RBRACKET [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Contains Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## Set
@@ -2289,7 +2289,7 @@ interactive_expr: Unit And With
 ##
 ## Ends in an error in state: 225.
 ##
-## conj_expr -> conj_expr And . set_membership [ VBAR Type To Then SEMI Recursive RPAR RBRACKET RBRACE Or Of Function From End Else EOF Const COMMA COLON Block Begin Attributes And ARROW ]
+## conj_expr -> conj_expr And . set_membership [ VBAR Type To Then Step SEMI Recursive RPAR RBRACKET RBRACE Or Of Function From End Else EOF Const COMMA COLON Block Begin Attributes And ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## conj_expr And
@@ -2301,7 +2301,7 @@ interactive_expr: Unit CAT With
 ##
 ## Ends in an error in state: 201.
 ##
-## cat_expr -> cons_expr CAT . cat_expr [ VBAR Type To Then SEMI Recursive RPAR RBRACKET RBRACE Or Of NE LT LE GT GE Function From End Else EQ EOF Const COMMA COLON Block Begin Attributes And ARROW ]
+## cat_expr -> cons_expr CAT . cat_expr [ VBAR Type To Then Step SEMI Recursive RPAR RBRACKET RBRACE Or Of NE LT LE GT GE Function From End Else EQ EOF Const COMMA COLON Block Begin Attributes And ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## cons_expr CAT
@@ -2313,8 +2313,8 @@ interactive_expr: Unit COLON
 ##
 ## Ends in an error in state: 195.
 ##
-## disj_expr -> disj_expr . Or conj_expr [ VBAR Type To Then SEMI Recursive RPAR RBRACKET RBRACE Or Of Function From End Else EOF Const COMMA Block Begin Attributes ARROW ]
-## expr -> disj_expr . [ VBAR Type To Then SEMI Recursive RPAR RBRACKET RBRACE Of Function From End Else EOF Const COMMA Block Begin Attributes ARROW ]
+## disj_expr -> disj_expr . Or conj_expr [ VBAR Type To Then Step SEMI Recursive RPAR RBRACKET RBRACE Or Of Function From End Else EOF Const COMMA Block Begin Attributes ARROW ]
+## expr -> disj_expr . [ VBAR Type To Then Step SEMI Recursive RPAR RBRACKET RBRACE Of Function From End Else EOF Const COMMA Block Begin Attributes ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## disj_expr
@@ -2340,7 +2340,7 @@ interactive_expr: Unit CONS With
 ##
 ## Ends in an error in state: 208.
 ##
-## cons_expr -> add_expr CONS . cons_expr [ VBAR Type To Then SEMI Recursive RPAR RBRACKET RBRACE Or Of NE LT LE GT GE Function From End Else EQ EOF Const COMMA COLON CAT Block Begin Attributes And ARROW ]
+## cons_expr -> add_expr CONS . cons_expr [ VBAR Type To Then Step SEMI Recursive RPAR RBRACKET RBRACE Or Of NE LT LE GT GE Function From End Else EQ EOF Const COMMA COLON CAT Block Begin Attributes And ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## add_expr CONS
@@ -2352,7 +2352,7 @@ interactive_expr: Unit Contains With
 ##
 ## Ends in an error in state: 198.
 ##
-## set_membership -> core_expr Contains . set_membership [ VBAR Type To Then SEMI Recursive RPAR RBRACKET RBRACE Or Of Function From End Else EOF Const COMMA COLON Block Begin Attributes And ARROW ]
+## set_membership -> core_expr Contains . set_membership [ VBAR Type To Then Step SEMI Recursive RPAR RBRACKET RBRACE Or Of Function From End Else EOF Const COMMA COLON Block Begin Attributes And ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## core_expr Contains
@@ -2364,7 +2364,7 @@ interactive_expr: Unit EQ With
 ##
 ## Ends in an error in state: 221.
 ##
-## comp_expr -> comp_expr EQ . cat_expr [ VBAR Type To Then SEMI Recursive RPAR RBRACKET RBRACE Or Of NE LT LE GT GE Function From End Else EQ EOF Const COMMA COLON Block Begin Attributes And ARROW ]
+## comp_expr -> comp_expr EQ . cat_expr [ VBAR Type To Then Step SEMI Recursive RPAR RBRACKET RBRACE Or Of NE LT LE GT GE Function From End Else EQ EOF Const COMMA COLON Block Begin Attributes And ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## comp_expr EQ
@@ -2376,7 +2376,7 @@ interactive_expr: Unit GE With
 ##
 ## Ends in an error in state: 219.
 ##
-## comp_expr -> comp_expr GE . cat_expr [ VBAR Type To Then SEMI Recursive RPAR RBRACKET RBRACE Or Of NE LT LE GT GE Function From End Else EQ EOF Const COMMA COLON Block Begin Attributes And ARROW ]
+## comp_expr -> comp_expr GE . cat_expr [ VBAR Type To Then Step SEMI Recursive RPAR RBRACKET RBRACE Or Of NE LT LE GT GE Function From End Else EQ EOF Const COMMA COLON Block Begin Attributes And ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## comp_expr GE
@@ -2388,7 +2388,7 @@ interactive_expr: Unit GT With
 ##
 ## Ends in an error in state: 217.
 ##
-## comp_expr -> comp_expr GT . cat_expr [ VBAR Type To Then SEMI Recursive RPAR RBRACKET RBRACE Or Of NE LT LE GT GE Function From End Else EQ EOF Const COMMA COLON Block Begin Attributes And ARROW ]
+## comp_expr -> comp_expr GT . cat_expr [ VBAR Type To Then Step SEMI Recursive RPAR RBRACKET RBRACE Or Of NE LT LE GT GE Function From End Else EQ EOF Const COMMA COLON Block Begin Attributes And ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## comp_expr GT
@@ -2400,7 +2400,7 @@ interactive_expr: Unit LE With
 ##
 ## Ends in an error in state: 215.
 ##
-## comp_expr -> comp_expr LE . cat_expr [ VBAR Type To Then SEMI Recursive RPAR RBRACKET RBRACE Or Of NE LT LE GT GE Function From End Else EQ EOF Const COMMA COLON Block Begin Attributes And ARROW ]
+## comp_expr -> comp_expr LE . cat_expr [ VBAR Type To Then Step SEMI Recursive RPAR RBRACKET RBRACE Or Of NE LT LE GT GE Function From End Else EQ EOF Const COMMA COLON Block Begin Attributes And ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## comp_expr LE
@@ -2412,7 +2412,7 @@ interactive_expr: Unit LT With
 ##
 ## Ends in an error in state: 213.
 ##
-## comp_expr -> comp_expr LT . cat_expr [ VBAR Type To Then SEMI Recursive RPAR RBRACKET RBRACE Or Of NE LT LE GT GE Function From End Else EQ EOF Const COMMA COLON Block Begin Attributes And ARROW ]
+## comp_expr -> comp_expr LT . cat_expr [ VBAR Type To Then Step SEMI Recursive RPAR RBRACKET RBRACE Or Of NE LT LE GT GE Function From End Else EQ EOF Const COMMA COLON Block Begin Attributes And ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## comp_expr LT
@@ -2424,10 +2424,10 @@ interactive_expr: Unit MINUS Unit With
 ##
 ## Ends in an error in state: 207.
 ##
-## add_expr -> add_expr MINUS mult_expr . [ VBAR Type To Then SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE MINUS LT LE GT GE Function From End Else EQ EOF Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
-## mult_expr -> mult_expr . TIMES unary_expr [ VBAR Type To Then TIMES SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
-## mult_expr -> mult_expr . SLASH unary_expr [ VBAR Type To Then TIMES SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
-## mult_expr -> mult_expr . Mod unary_expr [ VBAR Type To Then TIMES SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
+## add_expr -> add_expr MINUS mult_expr . [ VBAR Type To Then Step SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE MINUS LT LE GT GE Function From End Else EQ EOF Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
+## mult_expr -> mult_expr . TIMES unary_expr [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
+## mult_expr -> mult_expr . SLASH unary_expr [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
+## mult_expr -> mult_expr . Mod unary_expr [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## add_expr MINUS mult_expr
@@ -2439,7 +2439,7 @@ interactive_expr: Unit MINUS With
 ##
 ## Ends in an error in state: 206.
 ##
-## add_expr -> add_expr MINUS . mult_expr [ VBAR Type To Then SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE MINUS LT LE GT GE Function From End Else EQ EOF Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
+## add_expr -> add_expr MINUS . mult_expr [ VBAR Type To Then Step SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE MINUS LT LE GT GE Function From End Else EQ EOF Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## add_expr MINUS
@@ -2451,7 +2451,7 @@ interactive_expr: Unit Mod With
 ##
 ## Ends in an error in state: 191.
 ##
-## mult_expr -> mult_expr Mod . unary_expr [ VBAR Type To Then TIMES SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
+## mult_expr -> mult_expr Mod . unary_expr [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## mult_expr Mod
@@ -2463,7 +2463,7 @@ interactive_expr: Unit NE With
 ##
 ## Ends in an error in state: 211.
 ##
-## comp_expr -> comp_expr NE . cat_expr [ VBAR Type To Then SEMI Recursive RPAR RBRACKET RBRACE Or Of NE LT LE GT GE Function From End Else EQ EOF Const COMMA COLON Block Begin Attributes And ARROW ]
+## comp_expr -> comp_expr NE . cat_expr [ VBAR Type To Then Step SEMI Recursive RPAR RBRACKET RBRACE Or Of NE LT LE GT GE Function From End Else EQ EOF Const COMMA COLON Block Begin Attributes And ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## comp_expr NE
@@ -2475,7 +2475,7 @@ interactive_expr: Unit Or With
 ##
 ## Ends in an error in state: 196.
 ##
-## disj_expr -> disj_expr Or . conj_expr [ VBAR Type To Then SEMI Recursive RPAR RBRACKET RBRACE Or Of Function From End Else EOF Const COMMA COLON Block Begin Attributes ARROW ]
+## disj_expr -> disj_expr Or . conj_expr [ VBAR Type To Then Step SEMI Recursive RPAR RBRACKET RBRACE Or Of Function From End Else EOF Const COMMA COLON Block Begin Attributes ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## disj_expr Or
@@ -2487,10 +2487,10 @@ interactive_expr: Unit PLUS Unit With
 ##
 ## Ends in an error in state: 205.
 ##
-## add_expr -> add_expr PLUS mult_expr . [ VBAR Type To Then SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE MINUS LT LE GT GE Function From End Else EQ EOF Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
-## mult_expr -> mult_expr . TIMES unary_expr [ VBAR Type To Then TIMES SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
-## mult_expr -> mult_expr . SLASH unary_expr [ VBAR Type To Then TIMES SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
-## mult_expr -> mult_expr . Mod unary_expr [ VBAR Type To Then TIMES SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
+## add_expr -> add_expr PLUS mult_expr . [ VBAR Type To Then Step SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE MINUS LT LE GT GE Function From End Else EQ EOF Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
+## mult_expr -> mult_expr . TIMES unary_expr [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
+## mult_expr -> mult_expr . SLASH unary_expr [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
+## mult_expr -> mult_expr . Mod unary_expr [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## add_expr PLUS mult_expr
@@ -2502,7 +2502,7 @@ interactive_expr: Unit PLUS With
 ##
 ## Ends in an error in state: 204.
 ##
-## add_expr -> add_expr PLUS . mult_expr [ VBAR Type To Then SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE MINUS LT LE GT GE Function From End Else EQ EOF Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
+## add_expr -> add_expr PLUS . mult_expr [ VBAR Type To Then Step SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE MINUS LT LE GT GE Function From End Else EQ EOF Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## add_expr PLUS
@@ -2514,7 +2514,7 @@ interactive_expr: Unit SLASH With
 ##
 ## Ends in an error in state: 189.
 ##
-## mult_expr -> mult_expr SLASH . unary_expr [ VBAR Type To Then TIMES SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
+## mult_expr -> mult_expr SLASH . unary_expr [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## mult_expr SLASH
@@ -2526,7 +2526,7 @@ interactive_expr: Unit TIMES With
 ##
 ## Ends in an error in state: 174.
 ##
-## mult_expr -> mult_expr TIMES . unary_expr [ VBAR Type To Then TIMES SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
+## mult_expr -> mult_expr TIMES . unary_expr [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## mult_expr TIMES
@@ -2536,7 +2536,7 @@ interactive_expr: Unit TIMES With
 
 interactive_expr: Unit VBAR
 ##
-## Ends in an error in state: 604.
+## Ends in an error in state: 607.
 ##
 ## interactive_expr -> expr . EOF [ # ]
 ##
@@ -2565,8 +2565,8 @@ interactive_expr: Unit With
 ##
 ## Ends in an error in state: 197.
 ##
-## set_membership -> core_expr . Contains set_membership [ VBAR Type To Then SEMI Recursive RPAR RBRACKET RBRACE Or Of Function From End Else EOF Const COMMA COLON Block Begin Attributes And ARROW ]
-## unary_expr -> core_expr . [ VBAR Type To Then TIMES SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
+## set_membership -> core_expr . Contains set_membership [ VBAR Type To Then Step SEMI Recursive RPAR RBRACKET RBRACE Or Of Function From End Else EOF Const COMMA COLON Block Begin Attributes And ARROW ]
+## unary_expr -> core_expr . [ VBAR Type To Then TIMES Step SLASH SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Mod MINUS LT LE GT GE Function From End Else EQ EOF Const CONS COMMA COLON CAT Block Begin Attributes And ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## core_expr
@@ -2576,7 +2576,7 @@ interactive_expr: Unit With
 
 interactive_expr: With
 ##
-## Ends in an error in state: 602.
+## Ends in an error in state: 605.
 ##
 ## interactive_expr' -> . interactive_expr [ # ]
 ##
@@ -2588,7 +2588,7 @@ interactive_expr: With
 
 contract: Attributes LBRACKET String End
 ##
-## Ends in an error in state: 548.
+## Ends in an error in state: 551.
 ##
 ## ne_injection(Attributes,String) -> Attributes LBRACKET sep_or_term_list(String,SEMI) . RBRACKET [ Type SEMI Recursive RBRACE Function End EOF Const Attributes ]
 ##
@@ -2599,15 +2599,15 @@ contract: Attributes LBRACKET String End
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 540, spurious reduction of production nsepseq(String,SEMI) -> String 
-## In state 551, spurious reduction of production sep_or_term_list(String,SEMI) -> nsepseq(String,SEMI) 
+## In state 543, spurious reduction of production nsepseq(String,SEMI) -> String 
+## In state 554, spurious reduction of production sep_or_term_list(String,SEMI) -> nsepseq(String,SEMI) 
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
 contract: Attributes LBRACKET With
 ##
-## Ends in an error in state: 547.
+## Ends in an error in state: 550.
 ##
 ## ne_injection(Attributes,String) -> Attributes LBRACKET . sep_or_term_list(String,SEMI) RBRACKET [ Type SEMI Recursive RBRACE Function End EOF Const Attributes ]
 ##
@@ -2619,7 +2619,7 @@ contract: Attributes LBRACKET With
 
 contract: Attributes String End Attributes String End SEMI With
 ##
-## Ends in an error in state: 597.
+## Ends in an error in state: 600.
 ##
 ## seq(declaration) -> declaration . seq(declaration) [ EOF ]
 ##
@@ -2631,7 +2631,7 @@ contract: Attributes String End Attributes String End SEMI With
 
 contract: Attributes String End SEMI With
 ##
-## Ends in an error in state: 595.
+## Ends in an error in state: 598.
 ##
 ## nseq(declaration) -> declaration . seq(declaration) [ EOF ]
 ##
@@ -2643,7 +2643,7 @@ contract: Attributes String End SEMI With
 
 contract: Attributes String End With
 ##
-## Ends in an error in state: 590.
+## Ends in an error in state: 593.
 ##
 ## attr_decl -> open_attr_decl . option(SEMI) [ Type Recursive Function EOF Const Attributes ]
 ##
@@ -2655,7 +2655,7 @@ contract: Attributes String End With
 
 contract: Attributes String RBRACKET
 ##
-## Ends in an error in state: 552.
+## Ends in an error in state: 555.
 ##
 ## ne_injection(Attributes,String) -> Attributes sep_or_term_list(String,SEMI) . End [ Type SEMI Recursive RBRACE Function End EOF Const Attributes ]
 ##
@@ -2666,15 +2666,15 @@ contract: Attributes String RBRACKET
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 540, spurious reduction of production nsepseq(String,SEMI) -> String 
-## In state 551, spurious reduction of production sep_or_term_list(String,SEMI) -> nsepseq(String,SEMI) 
+## In state 543, spurious reduction of production nsepseq(String,SEMI) -> String 
+## In state 554, spurious reduction of production sep_or_term_list(String,SEMI) -> nsepseq(String,SEMI) 
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
 contract: Attributes String SEMI String SEMI With
 ##
-## Ends in an error in state: 543.
+## Ends in an error in state: 546.
 ##
 ## nsepseq(String,SEMI) -> String SEMI . nsepseq(String,SEMI) [ RBRACKET End ]
 ## seq(__anonymous_0(String,SEMI)) -> String SEMI . seq(__anonymous_0(String,SEMI)) [ RBRACKET End ]
@@ -2687,7 +2687,7 @@ contract: Attributes String SEMI String SEMI With
 
 contract: Attributes String SEMI String With
 ##
-## Ends in an error in state: 542.
+## Ends in an error in state: 545.
 ##
 ## nsepseq(String,SEMI) -> String . [ RBRACKET End ]
 ## nsepseq(String,SEMI) -> String . SEMI nsepseq(String,SEMI) [ RBRACKET End ]
@@ -2701,7 +2701,7 @@ contract: Attributes String SEMI String With
 
 contract: Attributes String SEMI With
 ##
-## Ends in an error in state: 541.
+## Ends in an error in state: 544.
 ##
 ## nsepseq(String,SEMI) -> String SEMI . nsepseq(String,SEMI) [ RBRACKET End ]
 ## nseq(__anonymous_0(String,SEMI)) -> String SEMI . seq(__anonymous_0(String,SEMI)) [ RBRACKET End ]
@@ -2714,7 +2714,7 @@ contract: Attributes String SEMI With
 
 contract: Attributes String With
 ##
-## Ends in an error in state: 540.
+## Ends in an error in state: 543.
 ##
 ## nsepseq(String,SEMI) -> String . [ RBRACKET End ]
 ## nsepseq(String,SEMI) -> String . SEMI nsepseq(String,SEMI) [ RBRACKET End ]
@@ -2728,7 +2728,7 @@ contract: Attributes String With
 
 contract: Attributes With
 ##
-## Ends in an error in state: 539.
+## Ends in an error in state: 542.
 ##
 ## ne_injection(Attributes,String) -> Attributes . sep_or_term_list(String,SEMI) End [ Type SEMI Recursive RBRACE Function End EOF Const Attributes ]
 ## ne_injection(Attributes,String) -> Attributes . LBRACKET sep_or_term_list(String,SEMI) RBRACKET [ Type SEMI Recursive RBRACE Function End EOF Const Attributes ]
@@ -2741,7 +2741,7 @@ contract: Attributes With
 
 contract: Const Ident COLON Ident EQ Bytes VBAR
 ##
-## Ends in an error in state: 588.
+## Ends in an error in state: 591.
 ##
 ## const_decl -> open_const_decl . option(SEMI) [ Type Recursive Function EOF Const Attributes ]
 ##
@@ -2762,15 +2762,15 @@ contract: Const Ident COLON Ident EQ Bytes VBAR
 ## In state 149, spurious reduction of production conj_expr -> set_membership 
 ## In state 227, spurious reduction of production disj_expr -> conj_expr 
 ## In state 195, spurious reduction of production expr -> disj_expr 
-## In state 496, spurious reduction of production unqualified_decl(EQ) -> Ident COLON type_expr EQ expr 
-## In state 497, spurious reduction of production open_const_decl -> Const unqualified_decl(EQ) 
+## In state 499, spurious reduction of production unqualified_decl(EQ) -> Ident COLON type_expr EQ expr 
+## In state 500, spurious reduction of production open_const_decl -> Const unqualified_decl(EQ) 
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
 contract: Const Ident COLON Ident EQ With
 ##
-## Ends in an error in state: 495.
+## Ends in an error in state: 498.
 ##
 ## unqualified_decl(EQ) -> Ident COLON type_expr EQ . expr [ Type SEMI Recursive RBRACE Function End EOF Const Attributes ]
 ##
@@ -2782,7 +2782,7 @@ contract: Const Ident COLON Ident EQ With
 
 contract: Const Ident COLON Ident VBAR
 ##
-## Ends in an error in state: 494.
+## Ends in an error in state: 497.
 ##
 ## unqualified_decl(EQ) -> Ident COLON type_expr . EQ expr [ Type SEMI Recursive RBRACE Function End EOF Const Attributes ]
 ##
@@ -2803,7 +2803,7 @@ contract: Const Ident COLON Ident VBAR
 
 contract: Const Ident COLON With
 ##
-## Ends in an error in state: 493.
+## Ends in an error in state: 496.
 ##
 ## unqualified_decl(EQ) -> Ident COLON . type_expr EQ expr [ Type SEMI Recursive RBRACE Function End EOF Const Attributes ]
 ##
@@ -2815,7 +2815,7 @@ contract: Const Ident COLON With
 
 contract: Const Ident With
 ##
-## Ends in an error in state: 492.
+## Ends in an error in state: 495.
 ##
 ## unqualified_decl(EQ) -> Ident . COLON type_expr EQ expr [ Type SEMI Recursive RBRACE Function End EOF Const Attributes ]
 ##
@@ -2827,7 +2827,7 @@ contract: Const Ident With
 
 contract: Const With
 ##
-## Ends in an error in state: 491.
+## Ends in an error in state: 494.
 ##
 ## open_const_decl -> Const . unqualified_decl(EQ) [ Type SEMI Recursive RBRACE Function End EOF Const Attributes ]
 ##
@@ -2839,7 +2839,7 @@ contract: Const With
 
 contract: Function Ident LPAR Const Ident COLON Ident RPAR COLON Ident Is Begin Case Unit Of LBRACKET VBAR Block
 ##
-## Ends in an error in state: 502.
+## Ends in an error in state: 505.
 ##
 ## case(if_clause) -> Case expr Of LBRACKET option(VBAR) . cases(if_clause) RBRACKET [ VBAR SEMI RBRACKET RBRACE End Else ]
 ##
@@ -2851,7 +2851,7 @@ contract: Function Ident LPAR Const Ident COLON Ident RPAR COLON Ident Is Begin 
 
 contract: Function Ident LPAR Const Ident COLON Ident RPAR COLON Ident Is Begin Case Unit Of LBRACKET WILD ARROW Skip End
 ##
-## Ends in an error in state: 531.
+## Ends in an error in state: 534.
 ##
 ## case(if_clause) -> Case expr Of LBRACKET option(VBAR) cases(if_clause) . RBRACKET [ VBAR SEMI RBRACKET RBRACE End Else ]
 ##
@@ -2862,15 +2862,15 @@ contract: Function Ident LPAR Const Ident COLON Ident RPAR COLON Ident Is Begin 
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 533, spurious reduction of production nsepseq(case_clause(if_clause),VBAR) -> case_clause(if_clause) 
-## In state 530, spurious reduction of production cases(if_clause) -> nsepseq(case_clause(if_clause),VBAR) 
+## In state 536, spurious reduction of production nsepseq(case_clause(if_clause),VBAR) -> case_clause(if_clause) 
+## In state 533, spurious reduction of production cases(if_clause) -> nsepseq(case_clause(if_clause),VBAR) 
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
 contract: Function Ident LPAR Const Ident COLON Ident RPAR COLON Ident Is Begin Case Unit Of LBRACKET With
 ##
-## Ends in an error in state: 501.
+## Ends in an error in state: 504.
 ##
 ## case(if_clause) -> Case expr Of LBRACKET . option(VBAR) cases(if_clause) RBRACKET [ VBAR SEMI RBRACKET RBRACE End Else ]
 ##
@@ -2882,7 +2882,7 @@ contract: Function Ident LPAR Const Ident COLON Ident RPAR COLON Ident Is Begin 
 
 contract: Function Ident LPAR Const Ident COLON Ident RPAR COLON Ident Is Begin Case Unit Of VBAR Block
 ##
-## Ends in an error in state: 536.
+## Ends in an error in state: 539.
 ##
 ## case(if_clause) -> Case expr Of option(VBAR) . cases(if_clause) End [ VBAR SEMI RBRACKET RBRACE End Else ]
 ##
@@ -2894,7 +2894,7 @@ contract: Function Ident LPAR Const Ident COLON Ident RPAR COLON Ident Is Begin 
 
 contract: Function Ident LPAR Const Ident COLON Ident RPAR COLON Ident Is Begin Case Unit Of WILD ARROW Skip RBRACKET
 ##
-## Ends in an error in state: 537.
+## Ends in an error in state: 540.
 ##
 ## case(if_clause) -> Case expr Of option(VBAR) cases(if_clause) . End [ VBAR SEMI RBRACKET RBRACE End Else ]
 ##
@@ -2905,15 +2905,15 @@ contract: Function Ident LPAR Const Ident COLON Ident RPAR COLON Ident Is Begin 
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 533, spurious reduction of production nsepseq(case_clause(if_clause),VBAR) -> case_clause(if_clause) 
-## In state 530, spurious reduction of production cases(if_clause) -> nsepseq(case_clause(if_clause),VBAR) 
+## In state 536, spurious reduction of production nsepseq(case_clause(if_clause),VBAR) -> case_clause(if_clause) 
+## In state 533, spurious reduction of production cases(if_clause) -> nsepseq(case_clause(if_clause),VBAR) 
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
 contract: Function Ident LPAR Const Ident COLON Ident RPAR COLON Ident Is Begin Case Unit Of WILD ARROW Skip VBAR With
 ##
-## Ends in an error in state: 534.
+## Ends in an error in state: 537.
 ##
 ## nsepseq(case_clause(if_clause),VBAR) -> case_clause(if_clause) VBAR . nsepseq(case_clause(if_clause),VBAR) [ RBRACKET End ]
 ##
@@ -2925,7 +2925,7 @@ contract: Function Ident LPAR Const Ident COLON Ident RPAR COLON Ident Is Begin 
 
 contract: Function Ident LPAR Const Ident COLON Ident RPAR COLON Ident Is Begin Case Unit Of WILD ARROW Skip With
 ##
-## Ends in an error in state: 533.
+## Ends in an error in state: 536.
 ##
 ## nsepseq(case_clause(if_clause),VBAR) -> case_clause(if_clause) . [ RBRACKET End ]
 ## nsepseq(case_clause(if_clause),VBAR) -> case_clause(if_clause) . VBAR nsepseq(case_clause(if_clause),VBAR) [ RBRACKET End ]
@@ -2938,7 +2938,7 @@ contract: Function Ident LPAR Const Ident COLON Ident RPAR COLON Ident Is Begin 
 
 contract: Function Ident LPAR Const Ident COLON Ident RPAR COLON Ident Is Begin Case Unit Of WILD ARROW With
 ##
-## Ends in an error in state: 504.
+## Ends in an error in state: 507.
 ##
 ## case_clause(if_clause) -> pattern ARROW . if_clause [ VBAR RBRACKET End ]
 ##
@@ -2950,7 +2950,7 @@ contract: Function Ident LPAR Const Ident COLON Ident RPAR COLON Ident Is Begin 
 
 contract: Function Ident LPAR Const Ident COLON Ident RPAR COLON Ident Is Begin Case Unit Of WILD RPAR
 ##
-## Ends in an error in state: 503.
+## Ends in an error in state: 506.
 ##
 ## case_clause(if_clause) -> pattern . ARROW if_clause [ VBAR RBRACKET End ]
 ##
@@ -2968,7 +2968,7 @@ contract: Function Ident LPAR Const Ident COLON Ident RPAR COLON Ident Is Begin 
 
 contract: Function Ident LPAR Const Ident COLON Ident RPAR COLON Ident Is Begin Case Unit Of With
 ##
-## Ends in an error in state: 500.
+## Ends in an error in state: 503.
 ##
 ## case(if_clause) -> Case expr Of . option(VBAR) cases(if_clause) End [ VBAR SEMI RBRACKET RBRACE End Else ]
 ## case(if_clause) -> Case expr Of . LBRACKET option(VBAR) cases(if_clause) RBRACKET [ VBAR SEMI RBRACKET RBRACE End Else ]
@@ -2981,7 +2981,7 @@ contract: Function Ident LPAR Const Ident COLON Ident RPAR COLON Ident Is Begin 
 
 contract: Function Ident LPAR Const Ident COLON Ident RPAR COLON Ident Is Begin Case Unit VBAR
 ##
-## Ends in an error in state: 499.
+## Ends in an error in state: 502.
 ##
 ## case(if_clause) -> Case expr . Of option(VBAR) cases(if_clause) End [ VBAR SEMI RBRACKET RBRACE End Else ]
 ## case(if_clause) -> Case expr . Of LBRACKET option(VBAR) cases(if_clause) RBRACKET [ VBAR SEMI RBRACKET RBRACE End Else ]
@@ -3009,7 +3009,7 @@ contract: Function Ident LPAR Const Ident COLON Ident RPAR COLON Ident Is Begin 
 
 contract: Function Ident LPAR Const Ident COLON Ident RPAR COLON Ident Is Begin Case With
 ##
-## Ends in an error in state: 498.
+## Ends in an error in state: 501.
 ##
 ## case(if_clause) -> Case . expr Of option(VBAR) cases(if_clause) End [ VBAR SEMI RBRACKET RBRACE End Else ]
 ## case(if_clause) -> Case . expr Of LBRACKET option(VBAR) cases(if_clause) RBRACKET [ VBAR SEMI RBRACKET RBRACE End Else ]
@@ -3022,7 +3022,7 @@ contract: Function Ident LPAR Const Ident COLON Ident RPAR COLON Ident Is Begin 
 
 contract: Function Ident LPAR Const Ident COLON Ident RPAR COLON Ident Is Begin Constr DOT And With
 ##
-## Ends in an error in state: 511.
+## Ends in an error in state: 514.
 ##
 ## fun_call -> module_field . arguments [ VBAR SEMI RBRACKET RBRACE End Else ]
 ##
@@ -3034,7 +3034,7 @@ contract: Function Ident LPAR Const Ident COLON Ident RPAR COLON Ident Is Begin 
 
 contract: Function Ident LPAR Const Ident COLON Ident RPAR COLON Ident Is Begin Constr With
 ##
-## Ends in an error in state: 490.
+## Ends in an error in state: 493.
 ##
 ## module_field -> Constr . DOT module_fun [ LPAR ]
 ## projection -> Constr . DOT Ident DOT nsepseq(selection,DOT) [ LBRACKET ASS ]
@@ -3069,11 +3069,51 @@ contract: Function Ident LPAR Const Ident COLON Ident RPAR COLON Ident Is Begin 
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
+contract: Function Ident LPAR Const Ident COLON Ident RPAR COLON Ident Is Begin For Ident ASS Bytes To Unit Step Unit VBAR
+##
+## Ends in an error in state: 490.
+##
+## for_loop -> For var_assign To expr Step expr . block [ VBAR SEMI RBRACKET RBRACE End Else ]
+##
+## The known suffix of the stack is as follows:
+## For var_assign To expr Step expr
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 197, spurious reduction of production unary_expr -> core_expr 
+## In state 147, spurious reduction of production mult_expr -> unary_expr 
+## In state 173, spurious reduction of production add_expr -> mult_expr 
+## In state 203, spurious reduction of production cons_expr -> add_expr 
+## In state 200, spurious reduction of production cat_expr -> cons_expr 
+## In state 223, spurious reduction of production comp_expr -> cat_expr 
+## In state 210, spurious reduction of production set_membership -> comp_expr 
+## In state 149, spurious reduction of production conj_expr -> set_membership 
+## In state 227, spurious reduction of production disj_expr -> conj_expr 
+## In state 195, spurious reduction of production expr -> disj_expr 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: Function Ident LPAR Const Ident COLON Ident RPAR COLON Ident Is Begin For Ident ASS Bytes To Unit Step With
+##
+## Ends in an error in state: 489.
+##
+## for_loop -> For var_assign To expr Step . expr block [ VBAR SEMI RBRACKET RBRACE End Else ]
+##
+## The known suffix of the stack is as follows:
+## For var_assign To expr Step
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
 contract: Function Ident LPAR Const Ident COLON Ident RPAR COLON Ident Is Begin For Ident ASS Bytes To Unit VBAR
 ##
 ## Ends in an error in state: 488.
 ##
 ## for_loop -> For var_assign To expr . block [ VBAR SEMI RBRACKET RBRACE End Else ]
+## for_loop -> For var_assign To expr . Step expr block [ VBAR SEMI RBRACKET RBRACE End Else ]
 ##
 ## The known suffix of the stack is as follows:
 ## For var_assign To expr
@@ -3101,6 +3141,7 @@ contract: Function Ident LPAR Const Ident COLON Ident RPAR COLON Ident Is Begin 
 ## Ends in an error in state: 487.
 ##
 ## for_loop -> For var_assign To . expr block [ VBAR SEMI RBRACKET RBRACE End Else ]
+## for_loop -> For var_assign To . expr Step expr block [ VBAR SEMI RBRACKET RBRACE End Else ]
 ##
 ## The known suffix of the stack is as follows:
 ## For var_assign To
@@ -3113,6 +3154,7 @@ contract: Function Ident LPAR Const Ident COLON Ident RPAR COLON Ident Is Begin 
 ## Ends in an error in state: 486.
 ##
 ## for_loop -> For var_assign . To expr block [ VBAR SEMI RBRACKET RBRACE End Else ]
+## for_loop -> For var_assign . To expr Step expr block [ VBAR SEMI RBRACKET RBRACE End Else ]
 ##
 ## The known suffix of the stack is as follows:
 ## For var_assign
@@ -3217,6 +3259,7 @@ contract: Function Ident LPAR Const Ident COLON Ident RPAR COLON Ident Is Begin 
 ## Ends in an error in state: 471.
 ##
 ## for_loop -> For . var_assign To expr block [ VBAR SEMI RBRACKET RBRACE End Else ]
+## for_loop -> For . var_assign To expr Step expr block [ VBAR SEMI RBRACKET RBRACE End Else ]
 ## for_loop -> For . Ident option(arrow_clause) In collection expr block [ VBAR SEMI RBRACKET RBRACE End Else ]
 ##
 ## The known suffix of the stack is as follows:
@@ -3227,7 +3270,7 @@ contract: Function Ident LPAR Const Ident COLON Ident RPAR COLON Ident Is Begin 
 
 contract: Function Ident LPAR Const Ident COLON Ident RPAR COLON Ident Is Begin Ident ASS With
 ##
-## Ends in an error in state: 517.
+## Ends in an error in state: 520.
 ##
 ## assignment -> lhs ASS . rhs [ VBAR SEMI RBRACKET RBRACE End Else ]
 ##
@@ -3239,7 +3282,7 @@ contract: Function Ident LPAR Const Ident COLON Ident RPAR COLON Ident Is Begin 
 
 contract: Function Ident LPAR Const Ident COLON Ident RPAR COLON Ident Is Begin Ident DOT Ident With
 ##
-## Ends in an error in state: 510.
+## Ends in an error in state: 513.
 ##
 ## lhs -> path . [ ASS ]
 ## map_lookup -> path . brackets(expr) [ ASS ]
@@ -3260,7 +3303,7 @@ contract: Function Ident LPAR Const Ident COLON Ident RPAR COLON Ident Is Begin 
 
 contract: Function Ident LPAR Const Ident COLON Ident RPAR COLON Ident Is Begin Ident LBRACKET Bytes RBRACKET With
 ##
-## Ends in an error in state: 516.
+## Ends in an error in state: 519.
 ##
 ## assignment -> lhs . ASS rhs [ VBAR SEMI RBRACKET RBRACE End Else ]
 ##
@@ -3286,7 +3329,7 @@ contract: Function Ident LPAR Const Ident COLON Ident RPAR COLON Ident Is Begin 
 
 contract: Function Ident LPAR Const Ident COLON Ident RPAR COLON Ident Is Begin If Unit Then LBRACE Skip End
 ##
-## Ends in an error in state: 568.
+## Ends in an error in state: 571.
 ##
 ## clause_block -> LBRACE sep_or_term_list(statement,SEMI) . RBRACE [ VBAR SEMI RBRACKET RBRACE End Else ]
 ##
@@ -3297,8 +3340,8 @@ contract: Function Ident LPAR Const Ident COLON Ident RPAR COLON Ident Is Begin 
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 554, spurious reduction of production nsepseq(statement,SEMI) -> statement 
-## In state 571, spurious reduction of production sep_or_term_list(statement,SEMI) -> nsepseq(statement,SEMI) 
+## In state 557, spurious reduction of production nsepseq(statement,SEMI) -> statement 
+## In state 574, spurious reduction of production sep_or_term_list(statement,SEMI) -> nsepseq(statement,SEMI) 
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
@@ -3317,7 +3360,7 @@ contract: Function Ident LPAR Const Ident COLON Ident RPAR COLON Ident Is Begin 
 
 contract: Function Ident LPAR Const Ident COLON Ident RPAR COLON Ident Is Begin If Unit Then Skip Else With
 ##
-## Ends in an error in state: 574.
+## Ends in an error in state: 577.
 ##
 ## conditional -> If expr Then if_clause option(SEMI) Else . if_clause [ VBAR SEMI RBRACKET RBRACE End Else ]
 ##
@@ -3329,7 +3372,7 @@ contract: Function Ident LPAR Const Ident COLON Ident RPAR COLON Ident Is Begin 
 
 contract: Function Ident LPAR Const Ident COLON Ident RPAR COLON Ident Is Begin If Unit Then Skip SEMI EQ
 ##
-## Ends in an error in state: 573.
+## Ends in an error in state: 576.
 ##
 ## conditional -> If expr Then if_clause option(SEMI) . Else if_clause [ VBAR SEMI RBRACKET RBRACE End Else ]
 ##
@@ -3341,7 +3384,7 @@ contract: Function Ident LPAR Const Ident COLON Ident RPAR COLON Ident Is Begin 
 
 contract: Function Ident LPAR Const Ident COLON Ident RPAR COLON Ident Is Begin If Unit Then Skip With
 ##
-## Ends in an error in state: 572.
+## Ends in an error in state: 575.
 ##
 ## conditional -> If expr Then if_clause . option(SEMI) Else if_clause [ VBAR SEMI RBRACKET RBRACE End Else ]
 ##
@@ -3856,7 +3899,7 @@ contract: Function Ident LPAR Const Ident COLON Ident RPAR COLON Ident Is Begin 
 
 contract: Function Ident LPAR Const Ident COLON Ident RPAR COLON Ident Is Begin Skip RBRACE
 ##
-## Ends in an error in state: 576.
+## Ends in an error in state: 579.
 ##
 ## block -> Begin sep_or_term_list(statement,SEMI) . End [ With VBAR SEMI RBRACKET RBRACE End Else ]
 ##
@@ -3867,15 +3910,15 @@ contract: Function Ident LPAR Const Ident COLON Ident RPAR COLON Ident Is Begin 
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 554, spurious reduction of production nsepseq(statement,SEMI) -> statement 
-## In state 571, spurious reduction of production sep_or_term_list(statement,SEMI) -> nsepseq(statement,SEMI) 
+## In state 557, spurious reduction of production nsepseq(statement,SEMI) -> statement 
+## In state 574, spurious reduction of production sep_or_term_list(statement,SEMI) -> nsepseq(statement,SEMI) 
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
 contract: Function Ident LPAR Const Ident COLON Ident RPAR COLON Ident Is Begin Skip SEMI Skip SEMI With
 ##
-## Ends in an error in state: 557.
+## Ends in an error in state: 560.
 ##
 ## nsepseq(statement,SEMI) -> statement SEMI . nsepseq(statement,SEMI) [ RBRACE End ]
 ## seq(__anonymous_0(statement,SEMI)) -> statement SEMI . seq(__anonymous_0(statement,SEMI)) [ RBRACE End ]
@@ -3888,7 +3931,7 @@ contract: Function Ident LPAR Const Ident COLON Ident RPAR COLON Ident Is Begin 
 
 contract: Function Ident LPAR Const Ident COLON Ident RPAR COLON Ident Is Begin Skip SEMI Skip With
 ##
-## Ends in an error in state: 556.
+## Ends in an error in state: 559.
 ##
 ## nsepseq(statement,SEMI) -> statement . [ RBRACE End ]
 ## nsepseq(statement,SEMI) -> statement . SEMI nsepseq(statement,SEMI) [ RBRACE End ]
@@ -3902,7 +3945,7 @@ contract: Function Ident LPAR Const Ident COLON Ident RPAR COLON Ident Is Begin 
 
 contract: Function Ident LPAR Const Ident COLON Ident RPAR COLON Ident Is Begin Skip SEMI With
 ##
-## Ends in an error in state: 555.
+## Ends in an error in state: 558.
 ##
 ## nsepseq(statement,SEMI) -> statement SEMI . nsepseq(statement,SEMI) [ RBRACE End ]
 ## nseq(__anonymous_0(statement,SEMI)) -> statement SEMI . seq(__anonymous_0(statement,SEMI)) [ RBRACE End ]
@@ -3915,7 +3958,7 @@ contract: Function Ident LPAR Const Ident COLON Ident RPAR COLON Ident Is Begin 
 
 contract: Function Ident LPAR Const Ident COLON Ident RPAR COLON Ident Is Begin Skip With
 ##
-## Ends in an error in state: 554.
+## Ends in an error in state: 557.
 ##
 ## nsepseq(statement,SEMI) -> statement . [ RBRACE End ]
 ## nsepseq(statement,SEMI) -> statement . SEMI nsepseq(statement,SEMI) [ RBRACE End ]
@@ -4049,7 +4092,7 @@ contract: Function Ident LPAR Const Ident COLON Ident RPAR COLON Ident Is Begin 
 
 contract: Function Ident LPAR Const Ident COLON Ident RPAR COLON Ident Is Block LBRACE Skip End
 ##
-## Ends in an error in state: 579.
+## Ends in an error in state: 582.
 ##
 ## block -> Block LBRACE sep_or_term_list(statement,SEMI) . RBRACE [ With VBAR SEMI RBRACKET RBRACE End Else ]
 ##
@@ -4060,8 +4103,8 @@ contract: Function Ident LPAR Const Ident COLON Ident RPAR COLON Ident Is Block 
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 554, spurious reduction of production nsepseq(statement,SEMI) -> statement 
-## In state 571, spurious reduction of production sep_or_term_list(statement,SEMI) -> nsepseq(statement,SEMI) 
+## In state 557, spurious reduction of production nsepseq(statement,SEMI) -> statement 
+## In state 574, spurious reduction of production sep_or_term_list(statement,SEMI) -> nsepseq(statement,SEMI) 
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
@@ -4092,7 +4135,7 @@ contract: Function Ident LPAR Const Ident COLON Ident RPAR COLON Ident Is Block 
 
 contract: Function Ident LPAR Const Ident COLON Ident RPAR COLON Ident Is Bytes VBAR
 ##
-## Ends in an error in state: 586.
+## Ends in an error in state: 589.
 ##
 ## fun_decl -> open_fun_decl . option(SEMI) [ Type Recursive Function EOF Const Attributes ]
 ##
@@ -4207,7 +4250,7 @@ contract: Function With
 
 contract: Recursive Function Ident LPAR Const Ident COLON Ident RPAR COLON Ident Is Begin Skip End While
 ##
-## Ends in an error in state: 582.
+## Ends in an error in state: 585.
 ##
 ## open_fun_decl -> Recursive Function Ident parameters COLON type_expr Is block . With expr [ Type SEMI Recursive RBRACE Function End EOF Const Attributes ]
 ##
@@ -4219,7 +4262,7 @@ contract: Recursive Function Ident LPAR Const Ident COLON Ident RPAR COLON Ident
 
 contract: Recursive Function Ident LPAR Const Ident COLON Ident RPAR COLON Ident Is Begin Skip End With With
 ##
-## Ends in an error in state: 583.
+## Ends in an error in state: 586.
 ##
 ## open_fun_decl -> Recursive Function Ident parameters COLON type_expr Is block With . expr [ Type SEMI Recursive RBRACE Function End EOF Const Attributes ]
 ##

@@ -74,6 +74,7 @@
 %token <Region.t> Remove      "remove"
 %token <Region.t> Set         "set"
 %token <Region.t> Skip        "skip"
+%token <Region.t> Step        "step"
 %token <Region.t> Then        "then"
 %token <Region.t> To          "to"
 %token <Region.t> True        "True"

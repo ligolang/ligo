@@ -105,6 +105,7 @@ type t =
 | Remove     of Region.t  (* "remove"     *)
 | Set        of Region.t  (* "set"        *)
 | Skip       of Region.t  (* "skip"       *)
+| Step       of Region.t  (* "step"       *)
 | Then       of Region.t  (* "then"       *)
 | To         of Region.t  (* "to"         *)
 | True       of Region.t  (* "True"       *)
