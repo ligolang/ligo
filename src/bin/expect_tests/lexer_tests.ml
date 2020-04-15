@@ -12,7 +12,7 @@ ligo: : Lexical error in file "broken_string.ligo", line 1, characters 18-19:
  If you're not sure how to fix this error, you can
  do one of the following:
 
-* Visit our documentation: https://ligolang.org/docs/intro/what-and-why/
+* Visit our documentation: https://ligolang.org/docs/intro/introduction
 * Ask a question on our Discord: https://discord.gg/9rhYaEt
 * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
 * Check the changelog by running 'ligo changelog'
@@ -29,7 +29,7 @@ ligo: : Lexical error in file "broken_string.mligo", line 1, characters 8-9:
  If you're not sure how to fix this error, you can
  do one of the following:
 
-* Visit our documentation: https://ligolang.org/docs/intro/what-and-why/
+* Visit our documentation: https://ligolang.org/docs/intro/introduction
 * Ask a question on our Discord: https://discord.gg/9rhYaEt
 * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
 * Check the changelog by running 'ligo changelog'
@@ -46,7 +46,7 @@ ligo: : Lexical error in file "broken_string.religo", line 1, characters 8-9:
  If you're not sure how to fix this error, you can
  do one of the following:
 
-* Visit our documentation: https://ligolang.org/docs/intro/what-and-why/
+* Visit our documentation: https://ligolang.org/docs/intro/introduction
 * Ask a question on our Discord: https://discord.gg/9rhYaEt
 * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
 * Check the changelog by running 'ligo changelog'
@@ -63,7 +63,7 @@ ligo: : Lexical error in file "negative_byte_sequence.ligo", line 1, characters 
  If you're not sure how to fix this error, you can
  do one of the following:
 
-* Visit our documentation: https://ligolang.org/docs/intro/what-and-why/
+* Visit our documentation: https://ligolang.org/docs/intro/introduction
 * Ask a question on our Discord: https://discord.gg/9rhYaEt
 * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
 * Check the changelog by running 'ligo changelog'
@@ -80,7 +80,7 @@ ligo: : Lexical error in file "negative_byte_sequence.mligo", line 1, characters
  If you're not sure how to fix this error, you can
  do one of the following:
 
-* Visit our documentation: https://ligolang.org/docs/intro/what-and-why/
+* Visit our documentation: https://ligolang.org/docs/intro/introduction
 * Ask a question on our Discord: https://discord.gg/9rhYaEt
 * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
 * Check the changelog by running 'ligo changelog'
@@ -97,7 +97,7 @@ ligo: : Lexical error in file "negative_byte_sequence.religo", line 1, character
  If you're not sure how to fix this error, you can
  do one of the following:
 
-* Visit our documentation: https://ligolang.org/docs/intro/what-and-why/
+* Visit our documentation: https://ligolang.org/docs/intro/introduction
 * Ask a question on our Discord: https://discord.gg/9rhYaEt
 * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
 * Check the changelog by running 'ligo changelog'
@@ -114,7 +114,7 @@ ligo: : Lexical error in file "reserved_name.ligo", line 1, characters 4-13:
  If you're not sure how to fix this error, you can
  do one of the following:
 
-* Visit our documentation: https://ligolang.org/docs/intro/what-and-why/
+* Visit our documentation: https://ligolang.org/docs/intro/introduction
 * Ask a question on our Discord: https://discord.gg/9rhYaEt
 * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
 * Check the changelog by running 'ligo changelog'
@@ -131,7 +131,7 @@ ligo: : Lexical error in file "reserved_name.religo", line 1, characters 4-7:
  If you're not sure how to fix this error, you can
  do one of the following:
 
-* Visit our documentation: https://ligolang.org/docs/intro/what-and-why/
+* Visit our documentation: https://ligolang.org/docs/intro/introduction
 * Ask a question on our Discord: https://discord.gg/9rhYaEt
 * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
 * Check the changelog by running 'ligo changelog'
@@ -148,7 +148,7 @@ ligo: : Lexical error in file "reserved_name.mligo", line 1, characters 4-10:
  If you're not sure how to fix this error, you can
  do one of the following:
 
-* Visit our documentation: https://ligolang.org/docs/intro/what-and-why/
+* Visit our documentation: https://ligolang.org/docs/intro/introduction
 * Ask a question on our Discord: https://discord.gg/9rhYaEt
 * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
 * Check the changelog by running 'ligo changelog'
@@ -164,7 +164,7 @@ ligo: : Lexical error in file "unexpected_character.ligo", line 1, characters 18
  If you're not sure how to fix this error, you can
  do one of the following:
 
-* Visit our documentation: https://ligolang.org/docs/intro/what-and-why/
+* Visit our documentation: https://ligolang.org/docs/intro/introduction
 * Ask a question on our Discord: https://discord.gg/9rhYaEt
 * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
 * Check the changelog by running 'ligo changelog'
@@ -180,7 +180,7 @@ ligo: : Lexical error in file "unexpected_character.mligo", line 1, characters 8
  If you're not sure how to fix this error, you can
  do one of the following:
 
-* Visit our documentation: https://ligolang.org/docs/intro/what-and-why/
+* Visit our documentation: https://ligolang.org/docs/intro/introduction
 * Ask a question on our Discord: https://discord.gg/9rhYaEt
 * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
 * Check the changelog by running 'ligo changelog'
@@ -196,7 +196,7 @@ ligo: : Lexical error in file "unexpected_character.religo", line 1, characters 
  If you're not sure how to fix this error, you can
  do one of the following:
 
-* Visit our documentation: https://ligolang.org/docs/intro/what-and-why/
+* Visit our documentation: https://ligolang.org/docs/intro/introduction
 * Ask a question on our Discord: https://discord.gg/9rhYaEt
 * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
 * Check the changelog by running 'ligo changelog'
@@ -213,7 +213,7 @@ ligo: : Lexical error in file "unterminated_comment.mligo", line 1, characters 0
  If you're not sure how to fix this error, you can
  do one of the following:
 
-* Visit our documentation: https://ligolang.org/docs/intro/what-and-why/
+* Visit our documentation: https://ligolang.org/docs/intro/introduction
 * Ask a question on our Discord: https://discord.gg/9rhYaEt
 * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
 * Check the changelog by running 'ligo changelog'
@@ -230,7 +230,7 @@ ligo: : Lexical error in file "invalid_symbol.ligo", line 1, characters 17-20:
  If you're not sure how to fix this error, you can
  do one of the following:
 
-* Visit our documentation: https://ligolang.org/docs/intro/what-and-why/
+* Visit our documentation: https://ligolang.org/docs/intro/introduction
 * Ask a question on our Discord: https://discord.gg/9rhYaEt
 * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
 * Check the changelog by running 'ligo changelog'
@@ -247,7 +247,7 @@ ligo: : Lexical error in file "invalid_symbol.mligo", line 1, characters 10-13:
  If you're not sure how to fix this error, you can
  do one of the following:
 
-* Visit our documentation: https://ligolang.org/docs/intro/what-and-why/
+* Visit our documentation: https://ligolang.org/docs/intro/introduction
 * Ask a question on our Discord: https://discord.gg/9rhYaEt
 * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
 * Check the changelog by running 'ligo changelog'
@@ -264,7 +264,7 @@ ligo: : Lexical error in file "invalid_symbol.religo", line 1, characters 10-11:
  If you're not sure how to fix this error, you can
  do one of the following:
 
-* Visit our documentation: https://ligolang.org/docs/intro/what-and-why/
+* Visit our documentation: https://ligolang.org/docs/intro/introduction
 * Ask a question on our Discord: https://discord.gg/9rhYaEt
 * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
 * Check the changelog by running 'ligo changelog'
@@ -281,7 +281,7 @@ ligo: : Lexical error in file "missing_break.ligo", line 1, characters 18-18:
  If you're not sure how to fix this error, you can
  do one of the following:
 
-* Visit our documentation: https://ligolang.org/docs/intro/what-and-why/
+* Visit our documentation: https://ligolang.org/docs/intro/introduction
 * Ask a question on our Discord: https://discord.gg/9rhYaEt
 * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
 * Check the changelog by running 'ligo changelog'
@@ -298,7 +298,7 @@ ligo: : Lexical error in file "missing_break.mligo", line 1, characters 11-11:
  If you're not sure how to fix this error, you can
  do one of the following:
 
-* Visit our documentation: https://ligolang.org/docs/intro/what-and-why/
+* Visit our documentation: https://ligolang.org/docs/intro/introduction
 * Ask a question on our Discord: https://discord.gg/9rhYaEt
 * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
 * Check the changelog by running 'ligo changelog'
@@ -315,7 +315,7 @@ ligo: : Lexical error in file "missing_break.religo", line 1, characters 11-11:
  If you're not sure how to fix this error, you can
  do one of the following:
 
-* Visit our documentation: https://ligolang.org/docs/intro/what-and-why/
+* Visit our documentation: https://ligolang.org/docs/intro/introduction
 * Ask a question on our Discord: https://discord.gg/9rhYaEt
 * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
 * Check the changelog by running 'ligo changelog'
@@ -332,7 +332,7 @@ ligo: : Lexical error in file "invalid_character_in_string.ligo", line 1, charac
  If you're not sure how to fix this error, you can
  do one of the following:
 
-* Visit our documentation: https://ligolang.org/docs/intro/what-and-why/
+* Visit our documentation: https://ligolang.org/docs/intro/introduction
 * Ask a question on our Discord: https://discord.gg/9rhYaEt
 * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
 * Check the changelog by running 'ligo changelog'
@@ -349,7 +349,7 @@ ligo: : Lexical error in file "invalid_character_in_string.mligo", line 1, chara
  If you're not sure how to fix this error, you can
  do one of the following:
 
-* Visit our documentation: https://ligolang.org/docs/intro/what-and-why/
+* Visit our documentation: https://ligolang.org/docs/intro/introduction
 * Ask a question on our Discord: https://discord.gg/9rhYaEt
 * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
 * Check the changelog by running 'ligo changelog'
@@ -366,7 +366,7 @@ ligo: : Lexical error in file "invalid_character_in_string.religo", line 1, char
  If you're not sure how to fix this error, you can
  do one of the following:
 
-* Visit our documentation: https://ligolang.org/docs/intro/what-and-why/
+* Visit our documentation: https://ligolang.org/docs/intro/introduction
 * Ask a question on our Discord: https://discord.gg/9rhYaEt
 * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
 * Check the changelog by running 'ligo changelog'

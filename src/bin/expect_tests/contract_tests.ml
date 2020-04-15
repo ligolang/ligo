@@ -32,7 +32,7 @@ let%expect_test _ =
      If you're not sure how to fix this error, you can
      do one of the following:
 
-    * Visit our documentation: https://ligolang.org/docs/intro/what-and-why/
+    * Visit our documentation: https://ligolang.org/docs/intro/introduction
     * Ask a question on our Discord: https://discord.gg/9rhYaEt
     * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
     * Check the changelog by running 'ligo changelog' |}] ;
@@ -45,7 +45,7 @@ let%expect_test _ =
      If you're not sure how to fix this error, you can
      do one of the following:
 
-    * Visit our documentation: https://ligolang.org/docs/intro/what-and-why/
+    * Visit our documentation: https://ligolang.org/docs/intro/introduction
     * Ask a question on our Discord: https://discord.gg/9rhYaEt
     * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
     * Check the changelog by running 'ligo changelog' |}] ;
@@ -991,7 +991,7 @@ let%expect_test _ =
      If you're not sure how to fix this error, you can
      do one of the following:
 
-    * Visit our documentation: https://ligolang.org/docs/intro/what-and-why/
+    * Visit our documentation: https://ligolang.org/docs/intro/introduction
     * Ask a question on our Discord: https://discord.gg/9rhYaEt
     * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
     * Check the changelog by running 'ligo changelog' |}]
@@ -1015,7 +1015,7 @@ let%expect_test _ =
      If you're not sure how to fix this error, you can
      do one of the following:
 
-    * Visit our documentation: https://ligolang.org/docs/intro/what-and-why/
+    * Visit our documentation: https://ligolang.org/docs/intro/introduction
     * Ask a question on our Discord: https://discord.gg/9rhYaEt
     * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
     * Check the changelog by running 'ligo changelog' |}]
@@ -1029,7 +1029,7 @@ let%expect_test _ =
      If you're not sure how to fix this error, you can
      do one of the following:
 
-    * Visit our documentation: https://ligolang.org/docs/intro/what-and-why/
+    * Visit our documentation: https://ligolang.org/docs/intro/introduction
     * Ask a question on our Discord: https://discord.gg/9rhYaEt
     * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
     * Check the changelog by running 'ligo changelog' |}]
@@ -1065,7 +1065,7 @@ let%expect_test _ =
      If you're not sure how to fix this error, you can
      do one of the following:
 
-    * Visit our documentation: https://ligolang.org/docs/intro/what-and-why/
+    * Visit our documentation: https://ligolang.org/docs/intro/introduction
     * Ask a question on our Discord: https://discord.gg/9rhYaEt
     * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
     * Check the changelog by running 'ligo changelog' |}]
@@ -1090,7 +1090,7 @@ let%expect_test _ =
      If you're not sure how to fix this error, you can
      do one of the following:
 
-    * Visit our documentation: https://ligolang.org/docs/intro/what-and-why/
+    * Visit our documentation: https://ligolang.org/docs/intro/introduction
     * Ask a question on our Discord: https://discord.gg/9rhYaEt
     * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
     * Check the changelog by running 'ligo changelog' |}]
@@ -1109,7 +1109,7 @@ let%expect_test _ =
      If you're not sure how to fix this error, you can
      do one of the following:
 
-    * Visit our documentation: https://ligolang.org/docs/intro/what-and-why/
+    * Visit our documentation: https://ligolang.org/docs/intro/introduction
     * Ask a question on our Discord: https://discord.gg/9rhYaEt
     * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
     * Check the changelog by running 'ligo changelog' |}]
@@ -1123,7 +1123,7 @@ ligo: in file "create_contract_toplevel.mligo", line 4, character 35 to line 8, 
  If you're not sure how to fix this error, you can
  do one of the following:
 
-* Visit our documentation: https://ligolang.org/docs/intro/what-and-why/
+* Visit our documentation: https://ligolang.org/docs/intro/introduction
 * Ask a question on our Discord: https://discord.gg/9rhYaEt
 * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
 * Check the changelog by running 'ligo changelog' |}] ;
@@ -1136,7 +1136,7 @@ ligo: in file "create_contract_var.mligo", line 6, character 35 to line 10, char
  If you're not sure how to fix this error, you can
  do one of the following:
 
-* Visit our documentation: https://ligolang.org/docs/intro/what-and-why/
+* Visit our documentation: https://ligolang.org/docs/intro/introduction
 * Ask a question on our Discord: https://discord.gg/9rhYaEt
 * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
 * Check the changelog by running 'ligo changelog' |}] ;
@@ -1149,7 +1149,7 @@ ligo: in file "create_contract_var.mligo", line 6, character 35 to line 10, char
      If you're not sure how to fix this error, you can
      do one of the following:
 
-    * Visit our documentation: https://ligolang.org/docs/intro/what-and-why/
+    * Visit our documentation: https://ligolang.org/docs/intro/introduction
     * Ask a question on our Discord: https://discord.gg/9rhYaEt
     * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
     * Check the changelog by running 'ligo changelog' |}] ;
@@ -1197,7 +1197,7 @@ let%expect_test _ =
      If you're not sure how to fix this error, you can
      do one of the following:
 
-    * Visit our documentation: https://ligolang.org/docs/intro/what-and-why/
+    * Visit our documentation: https://ligolang.org/docs/intro/introduction
     * Ask a question on our Discord: https://discord.gg/9rhYaEt
     * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
     * Check the changelog by running 'ligo changelog' |}] ;
@@ -1223,7 +1223,7 @@ let%expect_test _ =
      If you're not sure how to fix this error, you can
      do one of the following:
 
-    * Visit our documentation: https://ligolang.org/docs/intro/what-and-why/
+    * Visit our documentation: https://ligolang.org/docs/intro/introduction
     * Ask a question on our Discord: https://discord.gg/9rhYaEt
     * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
     * Check the changelog by running 'ligo changelog' |}] ;
@@ -1236,7 +1236,7 @@ let%expect_test _ =
      If you're not sure how to fix this error, you can
      do one of the following:
 
-    * Visit our documentation: https://ligolang.org/docs/intro/what-and-why/
+    * Visit our documentation: https://ligolang.org/docs/intro/introduction
     * Ask a question on our Discord: https://discord.gg/9rhYaEt
     * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
     * Check the changelog by running 'ligo changelog' |}] ;
@@ -1249,7 +1249,7 @@ let%expect_test _ =
      If you're not sure how to fix this error, you can
      do one of the following:
 
-    * Visit our documentation: https://ligolang.org/docs/intro/what-and-why/
+    * Visit our documentation: https://ligolang.org/docs/intro/introduction
     * Ask a question on our Discord: https://discord.gg/9rhYaEt
     * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
     * Check the changelog by running 'ligo changelog' |}]
@@ -1297,7 +1297,7 @@ let%expect_test _ =
      If you're not sure how to fix this error, you can
      do one of the following:
 
-    * Visit our documentation: https://ligolang.org/docs/intro/what-and-why/
+    * Visit our documentation: https://ligolang.org/docs/intro/introduction
     * Ask a question on our Discord: https://discord.gg/9rhYaEt
     * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
     * Check the changelog by running 'ligo changelog' |}];
@@ -1310,7 +1310,7 @@ let%expect_test _ =
      If you're not sure how to fix this error, you can
      do one of the following:
 
-    * Visit our documentation: https://ligolang.org/docs/intro/what-and-why/
+    * Visit our documentation: https://ligolang.org/docs/intro/introduction
     * Ask a question on our Discord: https://discord.gg/9rhYaEt
     * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
     * Check the changelog by running 'ligo changelog' |}];
@@ -1323,7 +1323,7 @@ let%expect_test _ =
      If you're not sure how to fix this error, you can
      do one of the following:
 
-    * Visit our documentation: https://ligolang.org/docs/intro/what-and-why/
+    * Visit our documentation: https://ligolang.org/docs/intro/introduction
     * Ask a question on our Discord: https://discord.gg/9rhYaEt
     * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
     * Check the changelog by running 'ligo changelog' |}];
@@ -1336,7 +1336,7 @@ let%expect_test _ =
      If you're not sure how to fix this error, you can
      do one of the following:
 
-    * Visit our documentation: https://ligolang.org/docs/intro/what-and-why/
+    * Visit our documentation: https://ligolang.org/docs/intro/introduction
     * Ask a question on our Discord: https://discord.gg/9rhYaEt
     * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
     * Check the changelog by running 'ligo changelog' |}];
@@ -1349,7 +1349,7 @@ let%expect_test _ =
      If you're not sure how to fix this error, you can
      do one of the following:
 
-    * Visit our documentation: https://ligolang.org/docs/intro/what-and-why/
+    * Visit our documentation: https://ligolang.org/docs/intro/introduction
     * Ask a question on our Discord: https://discord.gg/9rhYaEt
     * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
     * Check the changelog by running 'ligo changelog' |}]
