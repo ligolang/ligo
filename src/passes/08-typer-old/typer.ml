@@ -938,7 +938,8 @@ and type_expression' : environment -> ?tv_opt:O.type_expression -> I.expression 
     return (E_let_in {let_binder; rhs; let_result; inline}) let_result.type_expression
   | E_raw_code {language;code;type_anno} ->
     let%bind type_anno = evaluate_type e type_anno in
-    return (E_raw_code {language;code;type_anno}) type_anno
+    let%bind (_input_type,output_type) = get_t_function type_anno in
+    return (E_raw_code {language;code;type_anno}) output_type
   | E_recursive {fun_name; fun_type; lambda} ->
     let%bind fun_type = evaluate_type e fun_type in
     let e' = Environment.add_ez_binder fun_name fun_type e in
