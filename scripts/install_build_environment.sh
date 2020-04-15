@@ -5,16 +5,16 @@ set -e
 
 if [ -n "`which opam`" ]
 then
-    if [ -n "`opam --version | grep -P "2\..\.."`" ]
+  if [ -n "`opam --version | grep -P "2\..\.."`" ]
     then
-	echo "Opam 2.x seems to already exist, exiting..."
-	exit 1
+      echo "Opam 2.x seems to already exist, exiting..."
+      exit 1
     else
-	read -p "This script will upgrade opam to the 2.x series, are you okay with that? (y/n)" choice1
-	case "$choice1" in
-	    y|Y ) : ;;
-	    n|N ) exit ;;
-	esac
+      read -p "This script will upgrade opam to the 2.x series, are you okay with that? (y/n)" choice1
+      case "$choice1" in
+        y|Y ) : ;;
+        n|N ) exit ;;
+      esac
     fi
 fi
 
@@ -25,7 +25,6 @@ then
         rakudo \
         make \
         m4 \
-        gcc \
         patch \
         bubblewrap \
         rsync \
@@ -38,7 +37,6 @@ sudo apt-get install -y make \
      perl6 \
      make \
      m4 \
-     gcc \
      patch \
      bubblewrap \
      rsync \
@@ -87,10 +85,8 @@ else
             echo "(If you actually get this message, you should probably file an issue)"
             echo "https://gitlab.com/ligolang/ligo/issues"
             exit 1
-        fi	   	   
+        fi
     fi
 fi
 
 opam init -a --bare
-
-
