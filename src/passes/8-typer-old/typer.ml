@@ -11,7 +11,7 @@ module Solver = Typer_new.Solver
 type environment = Environment.t
 
 module Errors = struct
-  let unbound_type_variable (e:environment) (tv:I.type_variable) () =
+  let unbound_type_variable (e:environment) (tv:I.type_variable) (loc:Location.t) () =
     let name = Var.to_name tv in
     let suggestion = match name with
         | "integer" -> "int"
@@ -22,8 +22,7 @@ module Errors = struct
     let message () = "" in
     let data = [
       ("variable" , fun () -> Format.asprintf "%a" I.PP.type_variable tv) ;
-      (* TODO: types don't have srclocs for now. *)
-      (* ("location" , fun () -> Format.asprintf "%a" Location.pp (n.location)) ; *)
+      ("location" , fun () -> Format.asprintf "%a" Location.pp loc) ;
       ("in" , fun () -> Format.asprintf "%a" Environment.PP.full_environment e) ;
       ("did_you_mean" , fun () -> suggestion)
     ] in
@@ -590,7 +589,7 @@ and type_match : (environment -> I.expression -> O.expression result) -> environ
       ok (O.Match_variant { cases ; tv })
 
 and evaluate_type (e:environment) (t:I.type_expression) : O.type_expression result =
-  let return tv' = ok (make_t tv' (Some t)) in
+  let return tv' = ok (make_t ~loc:t.location tv' (Some t)) in
   match t.type_content with
   | T_arrow {type1;type2} ->
       let%bind type1 = evaluate_type e type1 in
@@ -620,7 +619,7 @@ and evaluate_type (e:environment) (t:I.type_expression) : O.type_expression resu
       return (T_record m)
   | T_variable name ->
       let%bind tv =
-        trace_option (unbound_type_variable e name)
+        trace_option (unbound_type_variable e name t.location)
         @@ Environment.get_type_opt (name) e in
       ok tv
   | T_constant cst ->

@@ -129,7 +129,7 @@ and type_match : environment -> Solver.state -> O.type_expression -> I.matching_
   type_value at the leaves
 *)
 and evaluate_type (e:environment) (t:I.type_expression) : O.type_expression result =
-  let return tv' = ok (make_t tv' (Some t)) in
+  let return tv' = ok (make_t ~loc:t.location tv' (Some t)) in
   match t.type_content with
   | T_arrow {type1;type2} ->
     let%bind type1 = evaluate_type e type1 in
@@ -153,7 +153,7 @@ and evaluate_type (e:environment) (t:I.type_expression) : O.type_expression resu
     return (T_record m)
   | T_variable name ->
     let%bind tv =
-      trace_option (unbound_type_variable e name)
+      trace_option (unbound_type_variable e name t.location)
       @@ Environment.get_type_opt (name) e in
     ok tv
   | T_constant cst ->
@@ -473,7 +473,7 @@ let type_and_subst_xyz (env_state_node : environment * Solver.state * 'a) (apply
           (Solver.TypeVariableMap.find_opt root assignments) in
       let Solver.{ tv ; c_tag ; tv_list } = assignment in
       let () = ignore tv (* I think there is an issue where the tv is stored twice (as a key and in the element itself) *) in
-      let%bind (expr : O.type_content) = Typesystem.Core.type_expression'_of_simple_c_constant (c_tag , (List.map (fun s -> O.{ type_content = T_variable s ; type_meta = None }) tv_list)) in
+      let%bind (expr : O.type_content) = Typesystem.Core.type_expression'_of_simple_c_constant (c_tag , (List.map (fun s -> O.t_variable s ()) tv_list)) in
       ok @@ expr
     in
     let p = apply_substs ~substs program in

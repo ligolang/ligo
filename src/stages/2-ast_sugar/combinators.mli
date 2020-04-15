@@ -9,42 +9,42 @@ module Errors : sig
   val bad_kind : name -> Location.t -> unit -> error
 end
 *)
-val make_t      : type_content -> type_expression
-val t_bool      : type_expression
-val t_string    : type_expression
-val t_bytes     : type_expression
-val t_int       : type_expression
-val t_operation : type_expression
-val t_nat       : type_expression
-val t_tez       : type_expression
-val t_unit      : type_expression
-val t_address   : type_expression
-val t_key       : type_expression
-val t_key_hash  : type_expression
-val t_timestamp : type_expression
-val t_signature : type_expression
+val make_t      : ?loc:Location.t -> type_content -> type_expression
+val t_bool      : ?loc:Location.t -> unit -> type_expression
+val t_string    : ?loc:Location.t -> unit -> type_expression
+val t_bytes     : ?loc:Location.t -> unit -> type_expression
+val t_int       : ?loc:Location.t -> unit -> type_expression
+val t_operation : ?loc:Location.t -> unit -> type_expression
+val t_nat       : ?loc:Location.t -> unit -> type_expression
+val t_tez       : ?loc:Location.t -> unit -> type_expression
+val t_unit      : ?loc:Location.t -> unit -> type_expression
+val t_address   : ?loc:Location.t -> unit -> type_expression
+val t_key       : ?loc:Location.t -> unit -> type_expression
+val t_key_hash  : ?loc:Location.t -> unit -> type_expression
+val t_timestamp : ?loc:Location.t -> unit -> type_expression
+val t_signature : ?loc:Location.t -> unit -> type_expression
 (*
 val t_option    : type_expression -> type_expression
 *)
-val t_list      : type_expression -> type_expression
-val t_variable  : string -> type_expression
+val t_list      : ?loc:Location.t -> type_expression -> type_expression
+val t_variable  : ?loc:Location.t -> string -> type_expression
 (*
 val t_record    : te_map -> type_expression
 *)
-val t_pair : ( type_expression * type_expression ) -> type_expression
-val t_tuple     : type_expression list -> type_expression
+val t_pair   : ?loc:Location.t -> ( type_expression * type_expression ) -> type_expression
+val t_tuple  : ?loc:Location.t -> type_expression list -> type_expression
 
-val t_record : type_expression Map.String.t -> type_expression
-val t_record_ez : (string * type_expression) list -> type_expression
+val t_record    : ?loc:Location.t -> type_expression Map.String.t -> type_expression
+val t_record_ez : ?loc:Location.t -> (string * type_expression) list -> type_expression
 
-val t_sum : type_expression Map.String.t -> type_expression
-val ez_t_sum : ( string * type_expression ) list -> type_expression
+val t_sum    : ?loc:Location.t -> type_expression Map.String.t -> type_expression
+val ez_t_sum : ?loc:Location.t -> ( string * type_expression ) list -> type_expression
 
-val t_function : type_expression -> type_expression -> type_expression
-val t_map : type_expression -> type_expression -> type_expression
+val t_function : ?loc:Location.t -> type_expression -> type_expression -> type_expression
+val t_map      : ?loc:Location.t -> type_expression -> type_expression -> type_expression
 
-val t_operator : type_operator -> type_expression list -> type_expression result
-val t_set : type_expression -> type_expression
+val t_operator : ?loc:Location.t -> type_operator -> type_expression list -> type_expression result
+val t_set      : ?loc:Location.t -> type_expression -> type_expression
 
 val make_e : ?loc:Location.t -> expression_content -> expression
 val e_literal : ?loc:Location.t -> literal -> expression

@@ -87,7 +87,7 @@ let buy_id_sender_addr () =
                                   ("controller", e_address new_addr) ;
                                   ("profile", new_website)]
   in
-  let param = e_pair owner_website (e_typed_none t_address) in
+  let param = e_pair owner_website (e_typed_none (t_address ())) in
   let new_storage = e_tuple [(e_big_map [(e_int 0, id_details_1) ;
                                          (e_int 1, id_details_2)]) ;
                               e_int 2;
@@ -297,8 +297,8 @@ let update_details_unchanged () =
                          e_tuple [e_mutez 1000000 ; e_mutez 1000000]]
   in
   let param = e_tuple [e_int 1 ; 
-                       e_typed_none t_bytes ;
-                       e_typed_none t_address] in
+                       e_typed_none (t_bytes ()) ;
+                       e_typed_none (t_address ())] in
   let%bind () = expect_eq ~options program "update_details"
       (e_pair param storage)
       (e_pair (e_list []) storage)

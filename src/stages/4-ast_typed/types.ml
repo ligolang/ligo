@@ -61,6 +61,7 @@ and type_operator =
 and type_expression = {
     type_content: type_content;
     type_meta: type_meta;
+    location: location;
   }
 
 type literal =
@@ -413,4 +414,3 @@ and named_type_content = {
     type_name : type_variable;
     type_value : type_expression;
   }
-

@@ -27,13 +27,13 @@ let compile_main () =
 open Ast_imperative
 
 let empty_op_list = 
-  (e_typed_list [] t_operation)
+  (e_typed_list [] (t_operation ()))
 let empty_message = e_lambda (Var.of_name "arguments")
-  (Some t_bytes) (Some (t_list t_operation))
+  (Some (t_bytes ())) (Some (t_list (t_operation ())))
   empty_op_list
 let empty_message2 = e_lambda (Var.of_name "arguments")
-  (Some t_bytes) (Some (t_list t_operation))
- ( e_let_in ((Var.of_name "foo"),Some t_unit) false (e_unit ()) empty_op_list)
+  (Some (t_bytes ())) (Some (t_list (t_operation ())))
+ ( e_let_in ((Var.of_name "foo"),Some (t_unit ())) false (e_unit ()) empty_op_list)
 
 let send_param msg = e_constructor "Send" msg
 let withdraw_param = e_constructor "Withdraw" empty_message
@@ -54,13 +54,13 @@ let storage {state_hash ; threshold ; max_proposal ; max_msg_size ; id_counter_l
     ([],[])
     id_counter_list in
   e_record_ez [
-    ("state_hash"          , e_bytes_raw state_hash                                ) ;
-    ("threshold"           , e_nat threshold                                       ) ;
-    ("max_proposal"        , e_nat max_proposal                                    ) ;
-    ("max_message_size"    , e_nat max_msg_size                                    ) ;
-    ("authorized_addresses", e_typed_set auth_set       t_address                  ) ;
-    ("message_store"       , e_typed_map msg_store_list t_bytes  (t_set t_address) ) ;
-    ("proposal_counters"   , e_typed_map counter_store  t_address t_nat            ) ;
+    ("state_hash"          , e_bytes_raw state_hash                                         ) ;
+    ("threshold"           , e_nat threshold                                                ) ;
+    ("max_proposal"        , e_nat max_proposal                                             ) ;
+    ("max_message_size"    , e_nat max_msg_size                                             ) ;
+    ("authorized_addresses", e_typed_set auth_set       (t_address ())                      ) ;
+    ("message_store"       , e_typed_map msg_store_list (t_bytes ()) (t_set (t_address ())) ) ;
+    ("proposal_counters"   , e_typed_map counter_store  (t_address ()) (t_nat ())           ) ;
   ]
 
 (* sender not stored in the authorized set *)
@@ -238,7 +238,7 @@ let succeeded_storing () =
   let init_storage th = {
     threshold = th ; max_proposal = 1 ;  max_msg_size = 15 ; state_hash = Bytes.empty ;
     id_counter_list = [1,0 ; 2,0 ; 3,0] ;
-    msg_store_list = [(bytes, e_typed_set [] t_address)] ;
+    msg_store_list = [(bytes, e_typed_set [] (t_address ()))] ;
   } in
   let options =
     let sender = contract 1 in

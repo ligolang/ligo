@@ -40,13 +40,13 @@ let init_storage threshold counter pkeys =
     ("id" , e_string "MULTISIG" ) ;
     ("counter" , e_nat counter ) ;
     ("threshold" , e_nat threshold) ;
-    ("auth" , e_typed_list keys t_key ) ;
+    ("auth" , e_typed_list keys (t_key ())) ;
   ]
 
 let empty_op_list = 
-  (e_typed_list [] t_operation)
+  (e_typed_list [] (t_operation ()))
 let empty_message = e_lambda (Var.of_name "arguments")
-  (Some t_unit) (Some (t_list t_operation))
+  (Some (t_unit ())) (Some (t_list (t_operation ())))
   empty_op_list
 let chain_id_zero = e_chain_id @@ Tezos_crypto.Base58.simple_encode
   Tezos_base__TzPervasives.Chain_id.b58check_encoding
@@ -71,7 +71,7 @@ let params counter msg keys is_validl f s =
     (e_record_ez [
       ("counter" , e_nat counter ) ;
       ("message" , msg) ;
-      ("signatures" , e_typed_list signed_msgs (t_pair (t_key_hash,t_signature)) ) ;
+      ("signatures" , e_typed_list signed_msgs (t_pair (t_key_hash (),t_signature ())) ) ;
     ])
 
 (* Provide one valid signature when the threshold is two of two keys *)

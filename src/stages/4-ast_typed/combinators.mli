@@ -2,40 +2,40 @@ open Trace
 open Types
 
 val make_n_t : type_variable -> type_expression -> named_type_content
-val make_t : type_content -> S.type_expression option -> type_expression
+val make_t : ?loc:Location.t -> type_content -> S.type_expression option -> type_expression
 val make_e : ?location:Location.t -> expression_content -> type_expression -> full_environment -> expression
 
-val t_bool : ?s:S.type_expression -> unit -> type_expression
-val t_string : ?s:S.type_expression -> unit -> type_expression
-val t_bytes : ?s:S.type_expression -> unit -> type_expression
-val t_key : ?s:S.type_expression -> unit -> type_expression
-val t_key_hash : ?s:S.type_expression -> unit -> type_expression
-val t_operation : ?s:S.type_expression -> unit -> type_expression
-val t_timestamp : ?s:S.type_expression -> unit -> type_expression
-val t_set : type_expression -> ?s:S.type_expression -> unit -> type_expression
-val t_contract : type_expression -> ?s:S.type_expression -> unit -> type_expression
-val t_int : ?s:S.type_expression -> unit -> type_expression
-val t_nat : ?s:S.type_expression -> unit -> type_expression
-val t_mutez : ?s:S.type_expression -> unit -> type_expression
-val t_address : ?s:S.type_expression -> unit -> type_expression
-val t_chain_id : ?s:S.type_expression -> unit -> type_expression
-val t_signature : ?s:S.type_expression -> unit -> type_expression
-val t_unit : ?s:S.type_expression -> unit -> type_expression
-val t_option : type_expression -> ?s:S.type_expression -> unit -> type_expression
-val t_pair : type_expression -> type_expression -> ?s:S.type_expression -> unit -> type_expression
-val t_list  : type_expression -> ?s:S.type_expression -> unit -> type_expression
-val t_variable : type_variable -> ?s:S.type_expression -> unit -> type_expression
-val t_record : type_expression label_map -> ?s:S.type_expression -> unit -> type_expression
-val make_t_ez_record : (string* type_expression) list -> type_expression 
-val ez_t_record : ( label * type_expression ) list -> ?s:S.type_expression -> unit -> type_expression 
+val t_bool : ?loc:Location.t -> ?s:S.type_expression -> unit -> type_expression
+val t_string : ?loc:Location.t -> ?s:S.type_expression -> unit -> type_expression
+val t_bytes : ?loc:Location.t -> ?s:S.type_expression -> unit -> type_expression
+val t_key : ?loc:Location.t -> ?s:S.type_expression -> unit -> type_expression
+val t_key_hash : ?loc:Location.t -> ?s:S.type_expression -> unit -> type_expression
+val t_operation : ?loc:Location.t -> ?s:S.type_expression -> unit -> type_expression
+val t_timestamp : ?loc:Location.t -> ?s:S.type_expression -> unit -> type_expression
+val t_set : type_expression -> ?loc:Location.t -> ?s:S.type_expression -> unit -> type_expression
+val t_contract : type_expression -> ?loc:Location.t -> ?s:S.type_expression -> unit -> type_expression
+val t_int : ?loc:Location.t -> ?s:S.type_expression -> unit -> type_expression
+val t_nat : ?loc:Location.t -> ?s:S.type_expression -> unit -> type_expression
+val t_mutez : ?loc:Location.t -> ?s:S.type_expression -> unit -> type_expression
+val t_address : ?loc:Location.t -> ?s:S.type_expression -> unit -> type_expression
+val t_chain_id : ?loc:Location.t -> ?s:S.type_expression -> unit -> type_expression
+val t_signature : ?loc:Location.t -> ?s:S.type_expression -> unit -> type_expression
+val t_unit : ?loc:Location.t -> ?s:S.type_expression -> unit -> type_expression
+val t_option : type_expression -> ?loc:Location.t -> ?s:S.type_expression -> unit -> type_expression
+val t_pair : type_expression -> type_expression -> ?loc:Location.t -> ?s:S.type_expression -> unit -> type_expression
+val t_list  : type_expression -> ?loc:Location.t -> ?s:S.type_expression -> unit -> type_expression
+val t_variable : type_variable -> ?loc:Location.t -> ?s:S.type_expression -> unit -> type_expression
+val t_record : type_expression label_map -> ?loc:Location.t -> ?s:S.type_expression -> unit -> type_expression
+val make_t_ez_record : ?loc:Location.t -> (string* type_expression) list -> type_expression 
+val ez_t_record : ( label * type_expression ) list -> ?loc:Location.t -> ?s:S.type_expression -> unit -> type_expression 
 
-val t_map : type_expression -> type_expression -> ?s:S.type_expression -> unit -> type_expression
-val t_big_map : type_expression -> type_expression -> ?s:S.type_expression -> unit -> type_expression
-val t_map_or_big_map : type_expression -> type_expression -> ?s:S.type_expression -> unit -> type_expression
-val t_sum : type_expression constructor_map -> ?s:S.type_expression -> unit -> type_expression
-val make_t_ez_sum : ( constructor' * type_expression ) list -> type_expression
-val t_function : type_expression -> type_expression -> ?s:S.type_expression -> unit -> type_expression
-val t_shallow_closure : type_expression -> type_expression -> ?s:S.type_expression -> unit -> type_expression
+val t_map : ?loc:Location.t -> type_expression -> type_expression -> ?s:S.type_expression -> unit -> type_expression
+val t_big_map : ?loc:Location.t -> type_expression -> type_expression -> ?s:S.type_expression -> unit -> type_expression
+val t_map_or_big_map : ?loc:Location.t -> type_expression -> type_expression ->  ?s:S.type_expression -> unit -> type_expression
+val t_sum : type_expression constructor_map -> ?loc:Location.t -> ?s:S.type_expression -> unit -> type_expression
+val make_t_ez_sum : ?loc:Location.t -> ( constructor' * type_expression ) list -> type_expression
+val t_function : type_expression -> type_expression -> ?loc:Location.t -> ?s:S.type_expression -> unit -> type_expression
+val t_shallow_closure : type_expression -> type_expression -> ?loc:Location.t -> ?s:S.type_expression -> unit -> type_expression
 val get_type_expression : expression -> type_expression
 val get_type' : type_expression -> type_content
 val get_environment : expression -> full_environment

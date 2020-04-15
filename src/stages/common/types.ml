@@ -58,7 +58,7 @@ module Ast_generic_type (PARAMETER : AST_PARAMETER_TYPE) = struct
     | TC_arrow of type_expression * type_expression
 
 
-  and type_expression = {type_content: type_content; type_meta: type_meta}
+  and type_expression = {type_content: type_content; location: Location.t; type_meta: type_meta}
 
   open Trace
   let map_type_operator f = function

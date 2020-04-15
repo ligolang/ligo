@@ -36,14 +36,14 @@ let card owner =
   ]
 
 let card_ty = t_record_ez [
-    ("card_owner" , t_address) ;
-    ("card_pattern" , t_nat) ;
+    ("card_owner" , t_address ()) ;
+    ("card_pattern" , t_nat ()) ;
   ]
 
 let card_ez owner = card (e_address owner)
 
 let make_cards assoc_lst =
-  let card_id_ty = t_nat in
+  let card_id_ty = t_nat () in
   e_typed_map assoc_lst card_id_ty card_ty
 
 let card_pattern (coeff , qtt) =
@@ -54,15 +54,15 @@ let card_pattern (coeff , qtt) =
 
 let card_pattern_ty =
   t_record_ez [
-    ("coefficient" , t_tez) ;
-    ("quantity" , t_nat) ;
+    ("coefficient" , t_tez ()) ;
+    ("quantity" , t_nat ()) ;
   ]
 
 let card_pattern_ez (coeff , qtt) =
   card_pattern (e_mutez coeff , e_nat qtt)
 
 let make_card_patterns lst =
-  let card_pattern_id_ty = t_nat  in
+  let card_pattern_id_ty = t_nat () in
   let assoc_lst = List.mapi (fun i x -> (e_nat i , x)) lst in
   e_typed_map assoc_lst card_pattern_id_ty card_pattern_ty
 
@@ -112,7 +112,7 @@ let buy () =
       e_pair buy_action storage
     in
     let make_expected = fun n ->
-      let ops = e_typed_list [] t_operation in
+      let ops = e_typed_list [] (t_operation ()) in
       let storage =
         let cards =
           cards_ez first_owner n @
@@ -151,7 +151,7 @@ let dispatch_buy () =
       e_pair action storage
     in
     let make_expected = fun n ->
-      let ops = e_typed_list [] t_operation in
+      let ops = e_typed_list [] (t_operation ()) in
       let storage =
         let cards =
           cards_ez first_owner n @
@@ -190,7 +190,7 @@ let transfer () =
       e_pair transfer_action storage
     in
     let make_expected = fun n ->
-      let ops = e_typed_list [] t_operation in
+      let ops = e_typed_list [] (t_operation ()) in
       let storage =
         let cards =
           let new_card = card_ez second_owner in

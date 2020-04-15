@@ -19,7 +19,7 @@ module Errors = struct
 end
 open Errors
 
-let make_t type_content = {type_content}
+let make_t ?(loc = Location.generated) type_content = {type_content; location=loc}
 
   
 let tuple_to_record lst =
@@ -27,56 +27,56 @@ let tuple_to_record lst =
   let (_, lst ) = List.fold_left aux (0,[]) lst in
   lst
 
-let t_bool         : type_expression = make_t @@ T_constant (TC_bool)
-let t_string       : type_expression = make_t @@ T_constant (TC_string)
-let t_bytes        : type_expression = make_t @@ T_constant (TC_bytes)
-let t_int          : type_expression = make_t @@ T_constant (TC_int)
-let t_operation    : type_expression = make_t @@ T_constant (TC_operation)
-let t_nat          : type_expression = make_t @@ T_constant (TC_nat)
-let t_tez          : type_expression = make_t @@ T_constant (TC_mutez)
-let t_unit         : type_expression = make_t @@ T_constant (TC_unit)
-let t_address      : type_expression = make_t @@ T_constant (TC_address)
-let t_signature    : type_expression = make_t @@ T_constant (TC_signature)
-let t_key          : type_expression = make_t @@ T_constant (TC_key)
-let t_key_hash     : type_expression = make_t @@ T_constant (TC_key_hash)
-let t_timestamp    : type_expression = make_t @@ T_constant (TC_timestamp)
-let t_option  o    : type_expression = make_t @@ T_operator (TC_option o)
-let t_list  t      : type_expression = make_t @@ T_operator (TC_list t)
-let t_variable n   : type_expression = make_t @@ T_variable (Var.of_name n)
-let t_record_ez lst =
+let t_bool ?loc ()        : type_expression = make_t ?loc @@ T_constant (TC_bool)
+let t_string ?loc ()      : type_expression = make_t ?loc @@ T_constant (TC_string)
+let t_bytes ?loc ()       : type_expression = make_t ?loc @@ T_constant (TC_bytes)
+let t_int ?loc ()         : type_expression = make_t ?loc @@ T_constant (TC_int)
+let t_operation ?loc ()   : type_expression = make_t ?loc @@ T_constant (TC_operation)
+let t_nat ?loc ()         : type_expression = make_t ?loc @@ T_constant (TC_nat)
+let t_tez ?loc ()         : type_expression = make_t ?loc @@ T_constant (TC_mutez)
+let t_unit ?loc ()        : type_expression = make_t ?loc @@ T_constant (TC_unit)
+let t_address ?loc ()     : type_expression = make_t ?loc @@ T_constant (TC_address)
+let t_signature ?loc ()   : type_expression = make_t ?loc @@ T_constant (TC_signature)
+let t_key ?loc ()         : type_expression = make_t ?loc @@ T_constant (TC_key)
+let t_key_hash ?loc ()    : type_expression = make_t ?loc @@ T_constant (TC_key_hash)
+let t_timestamp ?loc ()   : type_expression = make_t ?loc @@ T_constant (TC_timestamp)
+let t_option ?loc o       : type_expression = make_t ?loc @@ T_operator (TC_option o)
+let t_list ?loc t         : type_expression = make_t ?loc @@ T_operator (TC_list t)
+let t_variable ?loc n     : type_expression = make_t ?loc @@ T_variable (Var.of_name n)
+let t_record_ez ?loc lst =
   let lst = List.map (fun (k, v) -> (Label k, v)) lst in
   let m = LMap.of_list lst in
-  make_t @@ T_record m
-let t_record m  : type_expression =
+  make_t ?loc @@ T_record m
+let t_record ?loc m  : type_expression =
   let lst = Map.String.to_kv_list m in
-  t_record_ez lst
+  t_record_ez ?loc lst
 
-let t_pair (a , b) : type_expression = t_record_ez [("0",a) ; ("1",b)]
-let t_tuple lst    : type_expression = t_record_ez (tuple_to_record lst)
+let t_pair ?loc (a , b) : type_expression = t_record_ez ?loc [("0",a) ; ("1",b)]
+let t_tuple ?loc lst    : type_expression = t_record_ez ?loc (tuple_to_record lst)
 
-let ez_t_sum (lst:(string * type_expression) list) : type_expression =
+let ez_t_sum ?loc (lst:(string * type_expression) list) : type_expression =
   let aux prev (k, v) = CMap.add (Constructor k) v prev in
   let map = List.fold_left aux CMap.empty lst in
-  make_t @@ T_sum map
-let t_sum m : type_expression =
+  make_t ?loc @@ T_sum map
+let t_sum ?loc m : type_expression =
   let lst = Map.String.to_kv_list m in
-  ez_t_sum lst
+  ez_t_sum ?loc lst
 
-let t_function type1 type2  : type_expression = make_t @@ T_arrow {type1; type2}
-let t_map key value         : type_expression = make_t @@ T_operator (TC_map (key, value))
-let t_big_map key value     : type_expression = make_t @@ T_operator (TC_big_map (key , value))
-let t_set key               : type_expression = make_t @@ T_operator (TC_set key)
-let t_contract contract     : type_expression = make_t @@ T_operator (TC_contract contract)
+let t_function ?loc type1 type2  : type_expression = make_t ?loc @@ T_arrow {type1; type2}
+let t_map ?loc key value         : type_expression = make_t ?loc @@ T_operator (TC_map (key, value))
+let t_big_map ?loc key value     : type_expression = make_t ?loc @@ T_operator (TC_big_map (key , value))
+let t_set ?loc key               : type_expression = make_t ?loc @@ T_operator (TC_set key)
+let t_contract ?loc contract     : type_expression = make_t ?loc @@ T_operator (TC_contract contract)
 
 (* TODO find a better way than using list*)
-let t_operator op lst: type_expression result =
+let t_operator ?loc op lst: type_expression result =
   match op,lst with 
-  | TC_set _         , [t] -> ok @@ t_set t
-  | TC_list _        , [t] -> ok @@ t_list t
-  | TC_option _      , [t] -> ok @@ t_option t
-  | TC_map (_,_)     , [kt;vt] -> ok @@ t_map kt vt
-  | TC_big_map (_,_) , [kt;vt] -> ok @@ t_big_map kt vt
-  | TC_contract _    , [t] -> ok @@ t_contract t
+  | TC_set _         , [t] -> ok @@ t_set ?loc t
+  | TC_list _        , [t] -> ok @@ t_list ?loc t
+  | TC_option _      , [t] -> ok @@ t_option ?loc t
+  | TC_map (_,_)     , [kt;vt] -> ok @@ t_map ?loc kt vt
+  | TC_big_map (_,_) , [kt;vt] -> ok @@ t_big_map ?loc kt vt
+  | TC_contract _    , [t] -> ok @@ t_contract ?loc t
   | _ , _ -> fail @@ bad_type_operator op
 
 let make_e ?(loc = Location.generated) expression_content =

@@ -104,14 +104,14 @@ module Substitution = struct
       | Ast_core.T_constant constant ->
          ok @@ Ast_core.T_constant constant
 
-    and s_abstr_type_expression : Ast_core.type_expression w = fun ~substs {type_content;type_meta} ->
+    and s_abstr_type_expression : Ast_core.type_expression w = fun ~substs {type_content;location;type_meta} ->
       let%bind type_content = s_abstr_type_content ~substs type_content in
-      ok @@ Ast_core.{type_content;type_meta}
+      ok @@ Ast_core.{type_content;location;type_meta}
 
-    and s_type_expression : T.type_expression w = fun ~substs { type_content; type_meta } ->
+    and s_type_expression : T.type_expression w = fun ~substs { type_content; location; type_meta } ->
       let%bind type_content = s_type_content ~substs type_content in
       let%bind type_meta = bind_map_option (s_abstr_type_expression ~substs) type_meta in
-      ok @@ T.{ type_content; type_meta}
+      ok @@ T.{ type_content; location; type_meta}
     and s_literal : T.literal w = fun ~substs -> function
       | T.Literal_unit ->
         let () = ignore @@ substs in

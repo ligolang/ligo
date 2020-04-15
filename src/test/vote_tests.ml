@@ -21,7 +21,7 @@ let init_storage name = e_record_ez [
     ("title" , e_string name) ;
     ("yea", e_nat 0) ;
     ("nay", e_nat 0) ;
-    ("voters" , e_typed_set [] t_address) ;
+    ("voters" , e_typed_set [] (t_address ())) ;
     ("start_time" , e_timestamp 0) ;
     ("finish_time" , e_timestamp 1000000000) ;
   ]

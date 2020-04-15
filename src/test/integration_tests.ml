@@ -945,11 +945,11 @@ let option () : unit result =
     expect_eq_evaluate program "s" expected
   in
   let%bind () =
-    let expected = e_typed_none t_int in
+    let expected = e_typed_none (t_int ()) in
     expect_eq_evaluate program "n" expected
   in
   let%bind () =
-    let expected = e_typed_none t_int in
+    let expected = e_typed_none (t_int ()) in
     expect_eq program "assign" (e_int 12) expected
   in
   ok ()
@@ -961,7 +961,7 @@ let moption () : unit result =
     expect_eq_evaluate program "s" expected
   in
   let%bind () =
-    let expected = e_typed_none t_int in
+    let expected = e_typed_none (t_int ()) in
     expect_eq_evaluate program "n" expected
   in
   ok ()
@@ -973,7 +973,7 @@ let reoption () : unit result =
     expect_eq_evaluate program "s" expected
   in
   let%bind () =
-    let expected = e_typed_none t_int in
+    let expected = e_typed_none (t_int ()) in
     expect_eq_evaluate program "n" expected
   in
   ok ()
@@ -983,7 +983,7 @@ let map_ type_f path : unit result =
   let%bind program = type_f path in
   let ez lst =
     let lst' = List.map (fun (x, y) -> e_int x, e_int y) lst in
-    e_typed_map lst' t_int t_int
+    e_typed_map lst' (t_int ()) (t_int ())
   in
    let%bind () =
     let make_input = fun n ->
@@ -1036,7 +1036,7 @@ let map_ type_f path : unit result =
     expect_eq program "mem" (e_tuple [(e_int 1000) ; input_map]) (e_bool false)
   in
   let%bind () = expect_eq_evaluate program "empty_map"
-    (e_annotation (e_map []) (t_map t_int t_int)) in
+    (e_annotation (e_map []) (t_map (t_int()) (t_int()))) in
   let%bind () =
     let expected = ez @@ List.map (fun x -> (x, 23)) [144 ; 51 ; 42 ; 120 ; 421] in
     expect_eq_evaluate program "map1" expected
@@ -1071,7 +1071,7 @@ let big_map_ type_f path : unit result =
   let%bind program = type_f path in
   let ez lst =
     let lst' = List.map (fun (x, y) -> e_int x, e_int y) lst in
-    (e_typed_big_map lst' t_int t_int)
+    (e_typed_big_map lst' (t_int ()) (t_int()))
   in
   let%bind () =
     let make_input = fun n ->
@@ -1111,7 +1111,7 @@ let list () : unit result =
   let%bind program = type_file "./contracts/list.ligo" in
   let ez lst =
     let lst' = List.map e_int lst in
-    e_typed_list lst' t_int
+    e_typed_list lst' (t_int ())
   in
   let%bind () =
     let expected = ez [23 ; 42] in
@@ -1287,7 +1287,7 @@ let loop () : unit result =
   let%bind () =
     let ez lst =
       let lst' = List.map (fun (x, y) -> e_string x, e_int y) lst in
-        e_typed_map lst' t_string t_int
+        e_typed_map lst' (t_string ()) (t_int ())
     in
     let expected = ez [ ("I" , 12) ; ("am" , 12) ; ("foo" , 12) ] in
     expect_eq program "for_collection_with_patches" input expected in
@@ -1352,7 +1352,7 @@ let matching () : unit result =
     let aux n =
       let input = match n with
         | Some s -> e_some (e_int s)
-        | None -> e_typed_none t_int in
+        | None -> e_typed_none (t_int ()) in
       let expected = e_int (match n with
           | Some s -> s
           | None -> 23) in
@@ -1366,7 +1366,7 @@ let matching () : unit result =
     let aux n =
       let input = match n with
         | Some s -> e_some (e_int s)
-        | None -> e_typed_none t_int in
+        | None -> e_typed_none (t_int ()) in
       let expected = e_int (match n with
           | Some s -> s
           | None -> 42) in
@@ -1377,7 +1377,7 @@ let matching () : unit result =
       [Some 0 ; Some 2 ; Some 42 ; Some 163 ; Some (-1) ; None]
   in
   let%bind () =
-    let aux lst = e_annotation (e_list @@ List.map e_int lst) (t_list t_int) in
+    let aux lst = e_annotation (e_list @@ List.map e_int lst) (t_list (t_int ())) in
     let%bind () = expect_eq program "match_expr_list" (aux [ 14 ; 2 ; 3 ]) (e_int 14) in
     let%bind () = expect_eq program "match_expr_list" (aux [ 13 ; 2 ; 3 ]) (e_int 13) in
     let%bind () = expect_eq program "match_expr_list" (aux []) (e_int (-1)) in
@@ -1413,7 +1413,7 @@ let quote_declarations () : unit result =
 let counter_contract () : unit result =
   let%bind program = type_file "./contracts/counter.ligo" in
   let make_input = fun n-> e_pair (e_int n) (e_int 42) in
-  let make_expected = fun n -> e_pair (e_typed_list [] t_operation) (e_int (42 + n)) in
+  let make_expected = fun n -> e_pair (e_typed_list [] (t_operation ())) (e_int (42 + n)) in
   expect_eq_n program "main" make_input make_expected
 
 let super_counter_contract () : unit result =
@@ -1423,7 +1423,7 @@ let super_counter_contract () : unit result =
     e_pair (e_constructor action (e_int n)) (e_int 42) in
   let make_expected = fun n ->
     let op = if n mod 2 = 0 then (+) else (-) in
-    e_pair (e_typed_list [] t_operation) (e_int (op 42 n)) in
+    e_pair (e_typed_list [] (t_operation ())) (e_int (op 42 n)) in
   expect_eq_n program "main" make_input make_expected
 
 let super_counter_contract_mligo () : unit result =
@@ -1433,7 +1433,7 @@ let super_counter_contract_mligo () : unit result =
     e_pair (e_constructor action (e_int n)) (e_int 42) in
   let make_expected = fun n ->
     let op = if n mod 2 = 0 then (+) else (-) in
-    e_pair (e_typed_list [] t_operation) (e_int (op 42 n)) in
+    e_pair (e_typed_list [] (t_operation ())) (e_int (op 42 n)) in
   expect_eq_n program "main" make_input make_expected
 
 let super_counter_contract_religo () : unit result =
@@ -1443,7 +1443,7 @@ let super_counter_contract_religo () : unit result =
     e_pair (e_constructor action (e_int n)) (e_int 42) in
   let make_expected = fun n ->
     let op = if n mod 2 = 0 then (+) else (-) in
-    e_pair (e_typed_list [] t_operation) (e_int (op 42 n)) in
+    e_pair (e_typed_list [] (t_operation())) (e_int (op 42 n)) in
   expect_eq_n program "main" make_input make_expected
 
 
@@ -1454,13 +1454,13 @@ let dispatch_counter_contract () : unit result =
     e_pair (e_constructor action (e_int n)) (e_int 42) in
   let make_expected = fun n ->
     let op = if n mod 2 = 0 then (+) else (-) in
-    e_pair (e_typed_list [] t_operation) (e_int (op 42 n)) in
+    e_pair (e_typed_list [] (t_operation())) (e_int (op 42 n)) in
   expect_eq_n program "main" make_input make_expected
 
 let failwith_ligo () : unit result =
   let%bind program = type_file "./contracts/failwith.ligo" in
   let should_fail = expect_fail program "main" in
-  let should_work input = expect_eq program "main" input (e_pair (e_typed_list [] t_operation) (e_unit ())) in
+  let should_work input = expect_eq program "main" input (e_pair (e_typed_list [] (t_operation())) (e_unit ())) in
   let%bind _ = should_work (e_pair (e_constructor "Zero" (e_nat 0)) (e_unit ())) in
   let%bind _ = should_fail (e_pair (e_constructor "Zero" (e_nat 1)) (e_unit ())) in
   let%bind _ = should_work (e_pair (e_constructor "Pos" (e_nat 1)) (e_unit ())) in
@@ -1485,7 +1485,7 @@ let failwith_religo () : unit result =
 let assert_mligo () : unit result =
   let%bind program = mtype_file "./contracts/assert.mligo" in
   let make_input b = e_pair (e_bool b) (e_unit ()) in
-  let make_expected = e_pair (e_typed_list [] t_operation) (e_unit ()) in
+  let make_expected = e_pair (e_typed_list [] (t_operation())) (e_unit ()) in
   let%bind _ = expect_fail program "main" (make_input false) in
   let%bind _ = expect_eq program "main" (make_input true) make_expected in
   ok ()
@@ -1493,7 +1493,7 @@ let assert_mligo () : unit result =
 let assert_religo () : unit result =
   let%bind program = retype_file "./contracts/assert.religo" in
   let make_input b = e_pair (e_bool b) (e_unit ()) in
-  let make_expected = e_pair (e_typed_list [] t_operation) (e_unit ()) in
+  let make_expected = e_pair (e_typed_list [] (t_operation())) (e_unit ()) in
   let%bind _ = expect_fail program "main" (make_input false) in
   let%bind _ = expect_eq program "main" (make_input true) make_expected in
   ok ()
@@ -1541,7 +1541,7 @@ let recursion_religo () : unit result =
 let guess_string_mligo () : unit result =
   let%bind program = type_file "./contracts/guess_string.mligo" in
   let make_input = fun n -> e_pair (e_int n) (e_int 42) in
-  let make_expected = fun n -> e_pair (e_typed_list [] t_operation) (e_int (42 + n))
+  let make_expected = fun n -> e_pair (e_typed_list [] (t_operation())) (e_int (42 + n))
   in expect_eq_n program "main" make_input make_expected
 
 let basic_mligo () : unit result =
@@ -1555,13 +1555,13 @@ let basic_religo () : unit result =
 let counter_mligo () : unit result =
   let%bind program = mtype_file "./contracts/counter.mligo" in
   let make_input n = e_pair (e_int n) (e_int 42) in
-  let make_expected n = e_pair (e_typed_list [] t_operation) (e_int (42 + n)) in
+  let make_expected n = e_pair (e_typed_list [] (t_operation ())) (e_int (42 + n)) in
   expect_eq_n program "main" make_input make_expected
 
 let counter_religo () : unit result =
   let%bind program = retype_file "./contracts/counter.religo" in
   let make_input n = e_pair (e_int n) (e_int 42) in
-  let make_expected n = e_pair (e_typed_list [] t_operation) (e_int (42 + n)) in
+  let make_expected n = e_pair (e_typed_list [] (t_operation ())) (e_int (42 + n)) in
   expect_eq_n program "main" make_input make_expected
 
 
@@ -1569,14 +1569,14 @@ let let_in_mligo () : unit result =
   let%bind program = mtype_file "./contracts/letin.mligo" in
   let make_input n = e_pair (e_int n) (e_pair (e_int 3) (e_int 5)) in
   let make_expected n =
-    e_pair (e_typed_list [] t_operation) (e_pair (e_int (7+n)) (e_int (3+5)))
+    e_pair (e_typed_list [] (t_operation ())) (e_pair (e_int (7+n)) (e_int (3+5)))
   in expect_eq_n program "main" make_input make_expected
 
 let let_in_religo () : unit result =
   let%bind program = retype_file "./contracts/letin.religo" in
   let make_input n = e_pair (e_int n) (e_pair (e_int 3) (e_int 5)) in
   let make_expected n =
-    e_pair (e_typed_list [] t_operation) (e_pair (e_int (7+n)) (e_int (3+5)))
+    e_pair (e_typed_list [] (t_operation ())) (e_pair (e_int (7+n)) (e_int (3+5)))
   in expect_eq_n program "main" make_input make_expected
 
 
@@ -1586,7 +1586,7 @@ let match_variant () : unit result =
     let make_input n =
       e_pair (e_constructor "Sub" (e_int n)) (e_int 3) in
     let make_expected n =
-      e_pair (e_typed_list [] t_operation) (e_int (3-n))
+      e_pair (e_typed_list [] (t_operation ())) (e_int (3-n))
   in expect_eq_n program "main" make_input make_expected in
   let%bind () =
     let input = e_bool true in
@@ -1601,7 +1601,7 @@ let match_variant () : unit result =
     let expected = e_int 3 in
     expect_eq program "match_list" input expected in
   let%bind () =
-    let input = e_typed_list [] t_int in
+    let input = e_typed_list [] (t_int ()) in
     let expected = e_int 10 in
     expect_eq program "match_list" input expected in
   let%bind () =
@@ -1615,7 +1615,7 @@ let match_variant_re () : unit result =
   let make_input n =
     e_pair (e_constructor "Sub" (e_int n)) (e_int 3) in
   let make_expected n =
-    e_pair (e_typed_list [] t_operation) (e_int (3-n))
+    e_pair (e_typed_list [] (t_operation ())) (e_int (3-n))
   in expect_eq_n program "main" make_input make_expected
 
 
@@ -1624,7 +1624,7 @@ let match_matej () : unit result =
   let make_input n =
     e_pair (e_constructor "Decrement" (e_int n)) (e_int 3) in
   let make_expected n =
-    e_pair (e_typed_list [] t_operation) (e_int (3-n))
+    e_pair (e_typed_list [] (t_operation ())) (e_int (3-n))
   in expect_eq_n program "main" make_input make_expected
 
 let match_matej_re () : unit result =
@@ -1632,7 +1632,7 @@ let match_matej_re () : unit result =
   let make_input n =
     e_pair (e_constructor "Decrement" (e_int n)) (e_int 3) in
   let make_expected n =
-    e_pair (e_typed_list [] t_operation) (e_int (3-n))
+    e_pair (e_typed_list [] (t_operation ())) (e_int (3-n))
   in expect_eq_n program "main" make_input make_expected
 
 
@@ -1646,7 +1646,7 @@ let mligo_list () : unit result =
       e_pair (e_list [e_int n; e_int (2*n)])
         (e_pair (e_int 3) (e_list [e_int 8])) in
     let make_expected n =
-      e_pair (e_typed_list [] t_operation)
+      e_pair (e_typed_list [] (t_operation ()))
         (e_pair (e_int (n+3)) (e_list [e_int (2*n)]))
     in
     expect_eq_n program "main" make_input make_expected
@@ -1668,7 +1668,7 @@ let religo_list () : unit result =
       e_pair (e_list [e_int n; e_int (2*n)])
         (e_pair (e_int 3) (e_list [e_int 8])) in
     let make_expected n =
-      e_pair (e_typed_list [] t_operation)
+      e_pair (e_typed_list [] (t_operation ()))
         (e_pair (e_int (n+3)) (e_list [e_int (2*n)]))
     in
     expect_eq_n program "main" make_input make_expected
@@ -1721,7 +1721,7 @@ let fibo_mligo () : unit result =
 let website1_ligo () : unit result =
   let%bind program = type_file "./contracts/website1.ligo" in
   let make_input = fun n-> e_pair (e_int n) (e_int 42) in
-  let make_expected = fun _n -> e_pair (e_typed_list [] t_operation) (e_int (42 + 1)) in
+  let make_expected = fun _n -> e_pair (e_typed_list [] (t_operation ())) (e_int (42 + 1)) in
   expect_eq_n program "main" make_input make_expected
 
 let website2_ligo () : unit result =
@@ -1731,7 +1731,7 @@ let website2_ligo () : unit result =
     e_pair (e_constructor action (e_int n)) (e_int 42) in
   let make_expected = fun n ->
     let op = if n mod 2 = 0 then (+) else (-) in
-    e_pair (e_typed_list [] t_operation) (e_int (op 42 n)) in
+    e_pair (e_typed_list [] (t_operation ())) (e_int (op 42 n)) in
   expect_eq_n program "main" make_input make_expected
 
 let tez_ligo () : unit result =
@@ -1764,7 +1764,7 @@ let website2_mligo () : unit result =
     e_pair (e_constructor action (e_int n)) (e_int 42) in
   let make_expected = fun n ->
     let op = if n mod 2 = 0 then (+) else (-) in
-    e_pair (e_typed_list [] t_operation) (e_int (op 42 n)) in
+    e_pair (e_typed_list [] (t_operation ())) (e_int (op 42 n)) in
   expect_eq_n program "main" make_input make_expected
 
 let website2_religo () : unit result =
@@ -1774,7 +1774,7 @@ let website2_religo () : unit result =
     e_pair (e_constructor action (e_int n)) (e_int 42) in
   let make_expected = fun n ->
     let op = if n mod 2 = 0 then (+) else (-) in
-    e_pair (e_typed_list [] t_operation) (e_int (op 42 n)) in
+    e_pair (e_typed_list [] (t_operation ())) (e_int (op 42 n)) in
   expect_eq_n program "main" make_input make_expected
 
 
@@ -2004,7 +2004,7 @@ let deep_access_ligo () : unit result =
     expect_eq program "asymetric_tuple_access" make_input make_expected in
   let%bind () =
     let make_input = e_record_ez [ ("nesty",
-      e_record_ez [ ("mymap", e_typed_map [] t_int t_string) ] ) ; ] in
+      e_record_ez [ ("mymap", e_typed_map [] (t_int ()) (t_string ())) ] ) ; ] in
     let make_expected = e_string "one" in
     expect_eq program "nested_record" make_input make_expected in
   ok ()
@@ -2160,7 +2160,7 @@ let set_delegate () : unit result =
   let (raw_pkh,_,_) = Signature.generate_key () in
   let pkh_str = Signature.Public_key_hash.to_b58check raw_pkh in
   let%bind program = type_file "./contracts/set_delegate.ligo" in
-  let%bind () = expect_eq program "main" (e_key_hash pkh_str) (e_typed_list [] t_operation)
+  let%bind () = expect_eq program "main" (e_key_hash pkh_str) (e_typed_list [] (t_operation ()))
   in ok ()
 
 let set_delegate_mligo () : unit result =
@@ -2168,7 +2168,7 @@ let set_delegate_mligo () : unit result =
   let (raw_pkh,_,_) = Signature.generate_key () in
   let pkh_str = Signature.Public_key_hash.to_b58check raw_pkh in
   let%bind program = mtype_file "./contracts/set_delegate.mligo" in
-  let%bind () = expect_eq program "main" (e_key_hash pkh_str) (e_typed_list [] t_operation)
+  let%bind () = expect_eq program "main" (e_key_hash pkh_str) (e_typed_list [] (t_operation ()))
   in ok ()
 
 let set_delegate_religo () : unit result =
@@ -2176,7 +2176,7 @@ let set_delegate_religo () : unit result =
   let (raw_pkh,_,_) = Signature.generate_key () in
   let pkh_str = Signature.Public_key_hash.to_b58check raw_pkh in
   let%bind program = retype_file "./contracts/set_delegate.religo" in
-  let%bind () = expect_eq program "main" (e_key_hash pkh_str) (e_typed_list [] t_operation)
+  let%bind () = expect_eq program "main" (e_key_hash pkh_str) (e_typed_list [] (t_operation ()))
   in ok ()
 
 let type_tuple_destruct () : unit result =
