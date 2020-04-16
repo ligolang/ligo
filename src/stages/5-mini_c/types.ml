@@ -91,7 +91,7 @@ and expression_content =
   | E_sequence of (expression * expression)
   | E_record_update of (expression * [`Left | `Right] list * expression)
   | E_while of (expression * expression)
-  | E_raw_michelson of string
+  | E_raw_michelson of (string * type_value)
 
 and expression = {
   content : expression_content ;

@@ -616,13 +616,13 @@ and transpile_annotated_expression (ae:AST.expression) : expression result =
           aux expr' tree''
        )
   )
-  | E_raw_code { language; code; _} -> 
+  | E_raw_code { language; code; type_anno} -> 
     let backend = "Michelson" in
     let%bind () = trace_strong (language_backend_mismatch language backend ae.location) @@
     Assert.assert_true (String.equal language backend)
     in
-    let code = String.sub code 2 (String.length code - 4) in
-    return @@ E_raw_michelson code
+    let%bind type_anno' = transpile_type type_anno in
+    return @@ E_raw_michelson (code, type_anno')
 
 and transpile_lambda l (input_type , output_type) =
   let { binder ; result } : AST.lambda = l in
