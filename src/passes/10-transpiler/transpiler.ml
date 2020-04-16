@@ -92,6 +92,16 @@ them. please report this to the developers." in
     ] in
     error ~data title content
 
+  let language_backend_mismatch language backend location =
+    let title () = "Language insert - Backend Mismatch" in
+    let content () = "only provide code insertion in the language you are compiling to" in
+    let data = [
+      ("Code Insertion Language", fun () -> language);
+      ("Target backend", fun () -> backend);
+      ("Location", fun() -> Format.asprintf "%a" Location.pp location);
+    ] in
+    error ~data title content
+
 
 end
 open Errors
@@ -606,7 +616,13 @@ and transpile_annotated_expression (ae:AST.expression) : expression result =
           aux expr' tree''
        )
   )
-  | E_raw_code { language=_; code; _} -> return @@ E_raw_michelson code
+  | E_raw_code { language; code; _} -> 
+    let backend = "Michelson" in
+    let%bind () = trace_strong (language_backend_mismatch language backend ae.location) @@
+    Assert.assert_true (String.equal language backend)
+    in
+    let code = String.sub code 2 (String.length code - 4) in
+    return @@ E_raw_michelson code
 
 and transpile_lambda l (input_type , output_type) =
   let { binder ; result } : AST.lambda = l in
