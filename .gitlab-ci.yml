@@ -40,7 +40,7 @@ dont-merge-to-master:
     - build-and-package-debian-9
     - build-and-package-debian-10
     - build-and-package-ubuntu-18-04
-    - build-and-package-ubuntu-19-04
+    - build-and-package-ubuntu-19-10
   before_script:
     - export TERM=dumb
     - scripts/install_native_dependencies.sh
@@ -184,14 +184,14 @@ build-and-package-ubuntu-18-04:
     - dev
     - /^.*-run-dev$/
 
-build-and-package-ubuntu-19-04:
+build-and-package-ubuntu-19-10:
   <<: *docker
   # To run in sequence and save CPU usage, use stage: build_and_package_binaries
   stage: test
   variables:
     target_os_family: "debian"
     target_os: "ubuntu"
-    target_os_version: "19.04"
+    target_os_version: "19.10"
   <<: *build_binary
   only:
     - dev
