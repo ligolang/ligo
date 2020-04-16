@@ -67,7 +67,7 @@ let t_big_map ?loc k v ?s () = make_t ?loc (T_operator (TC_big_map { k ; v })) s
 let t_map_or_big_map ?loc k v ?s () = make_t ?loc (T_operator (TC_map_or_big_map { k ; v })) s
 
 let t_sum m ?loc ?s () : type_expression = make_t ?loc (T_sum m) s
-let make_t_ez_sum ?loc (lst:(constructor' * type_expression) list) : type_expression =
+let make_t_ez_sum ?loc (lst:(constructor' * ctor_content) list) : type_expression =
   let aux prev (k, v) = CMap.add k v prev in
   let map = List.fold_left aux CMap.empty lst in
   make_t ?loc (T_sum map) None
@@ -180,7 +180,7 @@ let get_t_function_full (t:type_expression) : (type_expression * type_expression
   let (input,output) = aux 0 t in
   ok @@ (t_record (LMap.of_list input) (),output) 
 
-let get_t_sum (t:type_expression) : type_expression constructor_map result = match t.type_content with
+let get_t_sum (t:type_expression) : ctor_content constructor_map result = match t.type_content with
   | T_sum m -> ok m
   | _ -> fail @@ Errors.not_a_x_type "sum" t ()
 

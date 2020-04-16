@@ -138,8 +138,9 @@ and evaluate_type (e:environment) (t:I.type_expression) : O.type_expression resu
   | T_sum m ->
     let aux k v prev =
       let%bind prev' = prev in
-      let%bind v' = evaluate_type e v in
-      ok @@ O.CMap.add (convert_constructor' k) v' prev'
+      let {ctor_type ; michelson_annotation} : I.ctor_content = v in
+      let%bind ctor_type = evaluate_type e ctor_type in
+      ok @@ O.CMap.add (convert_constructor' k) ({ctor_type ; michelson_annotation}:O.ctor_content) prev'
     in
     let%bind m = I.CMap.fold aux m (ok O.CMap.empty) in
     return (T_sum m)
@@ -181,10 +182,6 @@ and evaluate_type (e:environment) (t:I.type_expression) : O.type_expression resu
             let%bind k = evaluate_type e k in
             let%bind v = evaluate_type e v in
             ok @@ O.TC_map_or_big_map {k;v}
-        | TC_michelson_or (l,r) ->
-            let%bind l = evaluate_type e l in 
-            let%bind r = evaluate_type e r in 
-            ok @@ O.TC_michelson_or {l;r} 
         | TC_contract c ->
             let%bind c = evaluate_type e c in
             ok @@ O.TC_contract c

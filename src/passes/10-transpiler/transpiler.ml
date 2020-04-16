@@ -258,10 +258,6 @@ let rec transpile_type (t:AST.type_expression) : type_value result =
       ok (T_big_map kv')
   | T_operator (TC_map_or_big_map _) ->
       fail @@ corner_case ~loc:"transpiler" "TC_map_or_big_map should have been resolved before transpilation"
-  | T_operator (TC_michelson_or {l;r}) ->
-      let%bind l' = transpile_type l in
-      let%bind r' = transpile_type r in
-      ok (T_or ((None,l'),(None,r')))
   | T_operator (TC_list t) ->
       let%bind t' = transpile_type t in
       ok (T_list t')
@@ -276,9 +272,7 @@ let rec transpile_type (t:AST.type_expression) : type_value result =
       let%bind result' = transpile_type result in
       ok (T_function (param', result'))
     )
-  (* TODO hmm *)
-  | T_sum m ->
-      let is_michelson_or = Ast_typed.Helpers.is_michelson_or m in
+  | T_sum m when Ast_typed.Helpers.is_michelson_or m ->
       let node = Append_tree.of_list @@ kv_list_of_cmap m in
       let aux a b : type_value annotated result =
         let%bind a = a in
@@ -286,14 +280,22 @@ let rec transpile_type (t:AST.type_expression) : type_value result =
         ok (None, T_or (a, b))
       in
       let%bind m' = Append_tree.fold_ne
-                      (fun (Ast_typed.Types.Constructor ann, a) ->
-                        let%bind a = transpile_type a in
-                        ok ((
-                          if is_michelson_or then 
-                            None 
-                          else 
-                            Some (String.uncapitalize_ascii ann)), 
-                          a))
+                      (fun (_, ({ctor_type ; michelson_annotation}: AST.ctor_content)) ->
+                        let%bind a = transpile_type ctor_type in
+                        ok (michelson_annotation, a) )
+                      aux node in
+      ok @@ snd m'
+  | T_sum m ->
+      let node = Append_tree.of_list @@ kv_list_of_cmap m in
+      let aux a b : type_value annotated result =
+        let%bind a = a in
+        let%bind b = b in
+        ok (None, T_or (a, b))
+      in
+      let%bind m' = Append_tree.fold_ne
+                      (fun (Ast_typed.Types.Constructor ann, ({ctor_type ; _}: AST.ctor_content)) ->
+                        let%bind a = transpile_type ctor_type in
+                        ok (Some (String.uncapitalize_ascii ann), a))
                       aux node in
       ok @@ snd m'
   | T_record m ->
@@ -368,7 +370,8 @@ and transpile_environment_element_type : AST.environment_element -> type_value r
 
 and tree_of_sum : AST.type_expression -> (AST.constructor' * AST.type_expression) Append_tree.t result = fun t ->
   let%bind map_tv = get_t_sum t in
-  ok @@ Append_tree.of_list @@ kv_list_of_cmap map_tv
+  let kt_list = List.map (fun (k,({ctor_type;_}:AST.ctor_content)) -> (k,ctor_type)) (kv_list_of_cmap map_tv) in
+  ok @@ Append_tree.of_list kt_list
 
 and transpile_annotated_expression (ae:AST.expression) : expression result =
   let%bind tv = transpile_type ae.type_expression in

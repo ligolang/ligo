@@ -11,7 +11,6 @@ let type_constraint : _ -> type_constraint_simpl -> unit = fun ppf ->
       | Solver.Core.C_variant      -> failwith "variant"
       | Solver.Core.C_map          -> "map"
       | Solver.Core.C_big_map      -> "big_map"
-      | Solver.Core.C_michelson_or -> "michelson_or"
       | Solver.Core.C_list         -> "list"
       | Solver.Core.C_set          -> "set"
       | Solver.Core.C_unit         -> "unit"

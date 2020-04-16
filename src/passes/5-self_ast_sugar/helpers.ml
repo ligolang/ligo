@@ -2,6 +2,13 @@ open Ast_sugar
 open Trace
 open Stage_common.Helpers
 
+let bind_map_cmap f map = bind_cmap (
+  CMap.map 
+    (fun ({ctor_type;_} as ctor) -> 
+      let%bind ctor' = f ctor_type in
+      ok {ctor with ctor_type = ctor'}) 
+    map)
+
 type 'a folder = 'a -> expression -> 'a result
 let rec fold_expression : 'a folder -> 'a -> expression -> 'a result = fun f init e ->
   let self = fold_expression f in 

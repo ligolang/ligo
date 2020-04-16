@@ -34,7 +34,8 @@ let rec type_expression_to_type_value : T.type_expression -> O.type_value = fun 
   match te.type_content with
   | T_sum kvmap ->
      let () = failwith "fixme: don't use to_list, it drops the variant keys, rows have a differnt kind than argument lists for now!" in
-     P_constant (C_variant, T.CMap.to_list @@ T.CMap.map type_expression_to_type_value kvmap)
+     let tlist = List.map (fun ({ctor_type;_}:T.ctor_content) -> ctor_type) (T.CMap.to_list kvmap) in
+     P_constant (C_variant, List.map type_expression_to_type_value tlist)
   | T_record kvmap ->
      let () = failwith "fixme: don't use to_list, it drops the record keys, rows have a differnt kind than argument lists for now!" in
      P_constant (C_record, T.LMap.to_list @@ T.LMap.map type_expression_to_type_value kvmap)
@@ -69,7 +70,6 @@ let rec type_expression_to_type_value : T.type_expression -> O.type_value = fun 
                                 | TC_map { k ; v }           -> (C_map, [k;v])
                                 | TC_big_map { k ; v }       -> (C_big_map, [k;v])
                                 | TC_map_or_big_map { k ; v } -> (C_map, [k;v])
-                                | TC_michelson_or { l; r } -> (C_michelson_or, [l;r])
                                 | TC_arrow { type1 ; type2 } -> (C_arrow, [ type1 ; type2 ])
                                 | TC_list l                  -> (C_list, [l])
                                 | TC_contract c              -> (C_contract, [c])
@@ -81,7 +81,8 @@ let rec type_expression_to_type_value_copypasted : I.type_expression -> O.type_v
   match te.type_content with
   | T_sum kvmap ->
      let () = failwith "fixme: don't use to_list, it drops the variant keys, rows have a differnt kind than argument lists for now!" in
-     P_constant (C_variant, I.CMap.to_list @@ I.CMap.map type_expression_to_type_value_copypasted kvmap)
+     let tlist = List.map (fun ({ctor_type;_}:I.ctor_content) -> ctor_type) (I.CMap.to_list kvmap) in
+     P_constant (C_variant, List.map type_expression_to_type_value_copypasted tlist)
   | T_record kvmap ->
      let () = failwith "fixme: don't use to_list, it drops the record keys, rows have a differnt kind than argument lists for now!" in
      P_constant (C_record, I.LMap.to_list @@ I.LMap.map type_expression_to_type_value_copypasted kvmap)
@@ -104,7 +105,6 @@ let rec type_expression_to_type_value_copypasted : I.type_expression -> O.type_v
                                 | TC_map  ( k , v )      -> (C_map    , [k;v])
                                 | TC_big_map  ( k , v )  -> (C_big_map, [k;v])
                                 | TC_map_or_big_map ( k , v) -> (C_map, [k;v])
-                                | TC_michelson_or ( k , v ) -> (C_michelson_or, [k;v])
                                 | TC_contract c          -> (C_contract, [c])
                                 | TC_arrow ( arg , ret ) -> (C_arrow, [ arg ; ret ])
                           )

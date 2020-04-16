@@ -51,7 +51,7 @@ let get_constructor : Ast_core.constructor' -> t -> (type_expression * type_expr
       match type_.type_content with
       | T_sum m ->
         (match CMap.find_opt (convert_constructor' k) m with
-           Some km -> Some (km , type_)
+           Some {ctor_type ; _} -> Some (ctor_type , type_)
          | None -> None)
       | _ -> None
     in

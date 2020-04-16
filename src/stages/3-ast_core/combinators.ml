@@ -54,7 +54,7 @@ let t_record ?loc m  : type_expression =
 let t_pair ?loc (a , b) : type_expression = t_record_ez ?loc [("0",a) ; ("1",b)]
 let t_tuple ?loc lst    : type_expression = t_record_ez ?loc (tuple_to_record lst)
 
-let ez_t_sum ?loc (lst:(string * type_expression) list) : type_expression =
+let ez_t_sum ?loc (lst:(string * ctor_content) list) : type_expression =
   let aux prev (k, v) = CMap.add (Constructor k) v prev in
   let map = List.fold_left aux CMap.empty lst in
   make_t ?loc @@ T_sum map

@@ -2,6 +2,16 @@ open Ast_core
 open Trace
 open Stage_common.Helpers
 
+include Stage_common.PP
+include Stage_common.Types.Ast_generic_type(Ast_core_parameter)
+
+let bind_map_cmap f map = bind_cmap (
+  CMap.map 
+    (fun ({ctor_type;_} as ctor) -> 
+      let%bind ctor' = f ctor_type in
+      ok {ctor with ctor_type = ctor'}) 
+    map)
+
 type 'a folder = 'a -> expression -> 'a result
 let rec fold_expression : 'a folder -> 'a -> expression -> 'a result = fun f init e ->
   let self = fold_expression f in 

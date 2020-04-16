@@ -10,8 +10,10 @@ let rec idle_type_expression : I.type_expression -> O.type_expression result =
       let sum = I.CMap.to_kv_list sum in
       let%bind sum = 
         bind_map_list (fun (k,v) ->
-          let%bind v = idle_type_expression v in
-          ok @@ (k,v)
+          let {ctor_type ; michelson_annotation} : I.ctor_content = v in
+          let%bind ctor_type = idle_type_expression ctor_type in
+          let v' : O.ctor_content = {ctor_type ; michelson_annotation} in
+          ok @@ (k,v')
         ) sum
       in
       return @@ O.T_sum (O.CMap.of_list sum)
@@ -62,9 +64,6 @@ and idle_type_operator : I.type_operator -> O.type_operator result =
     | TC_big_map (k,v) ->
       let%bind (k,v) = bind_map_pair idle_type_expression (k,v) in
       ok @@ O.TC_big_map (k,v)
-    | TC_michelson_or (l,r) ->
-      let%bind (l,r) = bind_map_pair idle_type_expression (l,r) in
-      ok @@ O.TC_michelson_or (l,r)
     | TC_arrow (i,o) ->
       let%bind (i,o) = bind_map_pair idle_type_expression (i,o) in
       ok @@ O.TC_arrow (i,o)
@@ -244,8 +243,10 @@ let rec uncompile_type_expression : O.type_expression -> I.type_expression resul
       let sum = I.CMap.to_kv_list sum in
       let%bind sum = 
         bind_map_list (fun (k,v) ->
-          let%bind v = uncompile_type_expression v in
-          ok @@ (k,v)
+          let {ctor_type;michelson_annotation} : O.ctor_content = v in
+          let%bind ctor_type = uncompile_type_expression ctor_type in
+          let v' : I.ctor_content = {ctor_type;michelson_annotation} in
+          ok @@ (k,v')
         ) sum
       in
       return @@ I.T_sum (O.CMap.of_list sum)
@@ -290,9 +291,6 @@ and uncompile_type_operator : O.type_operator -> I.type_operator result =
       let%bind (k,v) = bind_map_pair uncompile_type_expression (k,v) in
       ok @@ I.TC_big_map (k,v)
     | TC_map_or_big_map _ -> failwith "TC_map_or_big_map shouldn't be uncompiled"
-    | TC_michelson_or (l,r) ->
-      let%bind (l,r) = bind_map_pair uncompile_type_expression (l,r) in
-      ok @@ I.TC_michelson_or (l,r)
     | TC_arrow (i,o) ->
       let%bind (i,o) = bind_map_pair uncompile_type_expression (i,o) in
       ok @@ I.TC_arrow (i,o)

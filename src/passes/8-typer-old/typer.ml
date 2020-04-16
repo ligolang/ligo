@@ -596,15 +596,16 @@ and evaluate_type (e:environment) (t:I.type_expression) : O.type_expression resu
       let%bind type2 = evaluate_type e type2 in
       return (T_arrow {type1;type2})
   | T_sum m ->
-      let aux k v prev =
+      let aux k ({ctor_type;michelson_annotation} : I.ctor_content) prev =
         let%bind prev' = prev in
-        let%bind v' = evaluate_type e v in
+        let%bind ctor_type = evaluate_type e ctor_type in
         let%bind () = match Environment.get_constructor k e with
           | Some _ ->
             if I.CMap.mem (Constructor "M_left") m || I.CMap.mem (Constructor "M_right") m then
               ok ()
             else fail (redundant_constructor e k)
           | None -> ok () in
+        let v' : O.ctor_content = {ctor_type;michelson_annotation} in
         ok @@ O.CMap.add (convert_constructor' k) v' prev'
       in
       let%bind m = I.CMap.fold aux m (ok O.CMap.empty) in
@@ -647,10 +648,6 @@ and evaluate_type (e:environment) (t:I.type_expression) : O.type_expression resu
             let%bind k = evaluate_type e k in 
             let%bind v = evaluate_type e v in 
             ok @@ O.TC_map_or_big_map {k;v}
-        | TC_michelson_or (l,r) ->
-            let%bind l = evaluate_type e l in 
-            let%bind r = evaluate_type e r in 
-            ok @@ O.TC_michelson_or {l;r}
         | TC_arrow ( arg , ret ) ->
             let%bind arg' = evaluate_type e arg in
             let%bind ret' = evaluate_type e ret in
@@ -744,8 +741,8 @@ and type_expression' : environment -> ?tv_opt:O.type_expression -> I.expression 
     let%bind expr' = type_expression' e element in
     ( match t.type_content with
       | T_sum c ->
-        let ct = O.CMap.find (O.Constructor s) c in
-        let%bind _assert = O.assert_type_expression_eq (expr'.type_expression, ct) in
+        let {ctor_type ; _} : O.ctor_content = O.CMap.find (O.Constructor s) c in
+        let%bind _assert = O.assert_type_expression_eq (expr'.type_expression, ctor_type) in
         return (E_constructor {constructor = Constructor s; element=expr'}) t
       | _ -> simple_fail "ll" 
     )

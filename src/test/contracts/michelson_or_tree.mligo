@@ -1,5 +1,5 @@
-type inner_storage = (int,nat) michelson_or
-type storage = (int,inner_storage) michelson_or 
+type inner_storage = (int,"one",nat,"two") michelson_or
+type storage = (int,"three",inner_storage,"four") michelson_or 
 
 type return = operation list * storage
 

@@ -3,6 +3,15 @@ module O = Ast_sugar
 open Trace
 
 module Errors = struct
+  let corner_case loc =
+    let title () = "corner case" in
+    let message () = Format.asprintf "corner case, please report to developers\n" in
+    let data = [
+      ("location",
+      fun () -> Format.asprintf  "%s" loc)
+    ] in
+    error ~data title message
+
   let bad_collection expr =
     let title () = "" in
     let message () = Format.asprintf "\nCannot loop over this collection : %a\n" I.PP.expression expr in
@@ -110,7 +119,8 @@ let rec compile_type_expression : I.type_expression -> O.type_expression result 
       let%bind sum = 
         bind_map_list (fun (k,v) ->
           let%bind v = compile_type_expression v in
-          ok @@ (k,v)
+          let content : O.ctor_content = {ctor_type = v ; michelson_annotation = None} in
+          ok @@ (k,content)
         ) sum
       in
       return @@ O.T_sum (O.CMap.of_list sum)
@@ -132,6 +142,13 @@ let rec compile_type_expression : I.type_expression -> O.type_expression result 
       return @@ T_arrow {type1;type2}
     | I.T_variable type_variable -> return @@ T_variable type_variable 
     | I.T_constant type_constant -> return @@ T_constant type_constant
+    | I.T_operator (TC_michelson_or (l,l_ann,r,r_ann)) ->
+      let%bind (l,r) = bind_map_pair compile_type_expression (l,r) in
+      let sum : (O.constructor' * O.ctor_content) list = [
+        (O.Constructor "M_left" , {ctor_type = l ; michelson_annotation = Some l_ann}); 
+        (O.Constructor "M_right", {ctor_type = r ; michelson_annotation = Some r_ann}); ]
+      in
+      return @@ O.T_sum (O.CMap.of_list sum)
     | I.T_operator type_operator ->
       let%bind type_operator = compile_type_operator type_operator in
       return @@ T_operator type_operator
@@ -157,12 +174,10 @@ and compile_type_operator : I.type_operator -> O.type_operator result =
     | TC_big_map (k,v) ->
       let%bind (k,v) = bind_map_pair compile_type_expression (k,v) in
       ok @@ O.TC_big_map (k,v)
-    | TC_michelson_or (l,r) ->
-      let%bind (l,r) = bind_map_pair compile_type_expression (l,r) in
-      ok @@ O.TC_michelson_or (l,r)
     | TC_arrow (i,o) ->
       let%bind (i,o) = bind_map_pair compile_type_expression (i,o) in
       ok @@ O.TC_arrow (i,o)
+    | TC_michelson_or _ -> fail @@ Errors.corner_case __LOC__
 
 let rec compile_expression : I.expression -> O.expression result =
   fun e ->
@@ -558,10 +573,12 @@ let rec uncompile_type_expression : O.type_expression -> I.type_expression resul
   let return te = ok @@ I.make_t te in
   match te.type_content with
     | O.T_sum sum -> 
+      (* This type sum could be a michelson_or as well, we could use is_michelson_or *)
       let sum = I.CMap.to_kv_list sum in
       let%bind sum = 
         bind_map_list (fun (k,v) ->
-          let%bind v = uncompile_type_expression v in
+          let {ctor_type;_} : O.ctor_content = v in
+          let%bind v = uncompile_type_expression ctor_type in
           ok @@ (k,v)
         ) sum
       in
@@ -609,9 +626,6 @@ and uncompile_type_operator : O.type_operator -> I.type_operator result =
     | TC_big_map (k,v) ->
       let%bind (k,v) = bind_map_pair uncompile_type_expression (k,v) in
       ok @@ I.TC_big_map (k,v)
-    | TC_michelson_or (l,r) ->
-      let%bind (l,r) = bind_map_pair uncompile_type_expression (l,r) in
-      ok @@ I.TC_michelson_or (l,r)
     | TC_arrow (i,o) ->
       let%bind (i,o) = bind_map_pair uncompile_type_expression (i,o) in
       ok @@ I.TC_arrow (i,o)

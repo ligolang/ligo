@@ -1,12 +1,8 @@
 open Trace
 
 let all_expression_mapper = [
-  Tezos_type_annotation.peephole_expression ;
-  None_variant.peephole_expression ;
-  Literals.peephole_expression ;
 ]
 let all_type_expression_mapper = [
-  Entrypoints_length_limit.peephole_type_expression ;
 ]
 
 let all_exp = List.map (fun el -> Helpers.Expression el) all_expression_mapper

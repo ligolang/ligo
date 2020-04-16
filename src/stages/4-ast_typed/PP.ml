@@ -15,8 +15,7 @@ let label ppf (l:label) : unit =
   let Label l = l in fprintf ppf "%s" l
 
 let cmap_sep value sep ppf m =
-  let lst = CMap.to_kv_list m in
-  let lst = List.sort (fun (Constructor a,_) (Constructor b,_) -> String.compare a b) lst in
+  let lst = List.sort (fun (Constructor a,_) (Constructor b,_) -> String.compare a b) m in
   let new_pp ppf (k, v) = fprintf ppf "@[<h>%a -> %a@]" constructor k value v in
   fprintf ppf "%a" (list_sep new_pp sep) lst
 
@@ -210,7 +209,7 @@ let rec type_expression' :
           -> unit =
   fun f ppf te ->
   match te.type_content with
-  | T_sum m -> fprintf ppf "@[<hv 4>sum[%a]@]" (cmap_sep_d f) m
+  | T_sum m -> fprintf ppf "@[<hv 4>sum[%a]@]" (cmap_sep_d f) (List.map (fun (c,{ctor_type;_}) -> (c,ctor_type)) (CMap.to_kv_list m))
   | T_record m -> fprintf ppf "%a" (tuple_or_record_sep_type f) m
   | T_arrow a -> fprintf ppf "%a -> %a" f a.type1 f a.type2
   | T_variable tv -> type_variable ppf tv
@@ -234,7 +233,6 @@ and type_operator :
     | TC_map {k; v} -> Format.asprintf "Map (%a,%a)" f k f v
     | TC_big_map {k; v} -> Format.asprintf "Big Map (%a,%a)" f k f v
     | TC_map_or_big_map {k; v} -> Format.asprintf "Map Or Big Map (%a,%a)" f k f v
-    | TC_michelson_or {l; r} -> Format.asprintf "michelson_or (%a,%a)" f l f r
     | TC_arrow {type1; type2} -> Format.asprintf "arrow (%a,%a)" f type1 f type2
     | TC_contract te  -> Format.asprintf "Contract (%a)" f te
   in

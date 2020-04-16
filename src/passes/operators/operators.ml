@@ -59,7 +59,7 @@ module Concrete_to_imperative = struct
     | "set"          -> ok @@ TC_set unit_expr
     | "map"          -> ok @@ TC_map (unit_expr,unit_expr)
     | "big_map"      -> ok @@ TC_big_map (unit_expr,unit_expr)
-    | "michelson_or" -> ok @@ TC_michelson_or (unit_expr,unit_expr)
+    | "michelson_or" -> ok @@ TC_michelson_or (unit_expr,"",unit_expr,"")
     | "contract"     -> ok @@ TC_contract unit_expr
     | _              -> simple_fail @@ "Not a built-in type (" ^ s ^ ")."
 

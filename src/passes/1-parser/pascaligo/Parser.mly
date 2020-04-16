@@ -161,6 +161,7 @@ cartesian:
 
 core_type:
   type_name      { TVar $1 }
+| "<string>"     { TStringLiteral $1 }
 | par(type_expr) { TPar $1 }
 | type_name type_tuple {
     let region = cover $1.region $2.region

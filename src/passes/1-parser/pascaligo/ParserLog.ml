@@ -153,6 +153,7 @@ and print_type_expr state = function
 | TFun    type_fun    -> print_type_fun    state type_fun
 | TPar    par_type    -> print_par_type    state par_type
 | TVar    type_var    -> print_var         state type_var
+| TStringLiteral s -> print_string state s
 
 and print_cartesian state {value; _} =
   print_nsepseq state "*" print_type_expr value
@@ -940,6 +941,9 @@ and pp_type_expr state = function
                     field_decl.value in
     let fields = Utils.nsepseq_to_list value.ne_elements in
     List.iteri (List.length fields |> apply) fields
+| TStringLiteral s ->
+  pp_node   state "String";
+  pp_string (state#pad 1 0) s
 
 and pp_cartesian state {value; _} =
   let apply len rank =
