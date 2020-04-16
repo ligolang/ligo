@@ -506,13 +506,11 @@ rule scan state = parse
           incl_buf.lex_curr_p <-
             {incl_buf.lex_curr_p with pos_fname = incl_file} in
         let state  = {state with incl = incl_chan::state.incl} in
-        let state' =
-          {state with env=Env.empty; mode=Copy; trace=[]} in
+        let state' = {state with mode=Copy; trace=[]} in
         let state' = scan (push_dir incl_dir state') incl_buf in
-        let state  = {state with incl = state'.incl} in
-        let path =
-          if path = "" then base
-          else path ^ Filename.dir_sep ^ base in
+        let state  = {state with env=state'.env; incl=state'.incl} in
+        let path   = if path = "" then base
+                     else path ^ Filename.dir_sep ^ base in
         print state (sprintf "\n# %i \"%s\" 2" (line+1) path);
         scan state lexbuf
     | "if" ->
