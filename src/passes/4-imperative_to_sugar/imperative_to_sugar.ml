@@ -129,7 +129,8 @@ let rec compile_type_expression : I.type_expression -> O.type_expression result 
       let%bind record = 
         bind_map_list (fun (k,v) ->
           let%bind v = compile_type_expression v in
-          ok @@ (k,v)
+          let content : O.field_content = {field_type = v ; michelson_annotation = None} in
+          ok @@ (k,content)
         ) record
       in
       return @@ O.T_record (O.LMap.of_list record)
@@ -149,6 +150,13 @@ let rec compile_type_expression : I.type_expression -> O.type_expression result 
         (O.Constructor "M_right", {ctor_type = r ; michelson_annotation = Some r_ann}); ]
       in
       return @@ O.T_sum (O.CMap.of_list sum)
+    | I.T_operator (TC_michelson_pair (l,l_ann,r,r_ann)) ->
+      let%bind (l,r) = bind_map_pair compile_type_expression (l,r) in
+      let sum : (O.label * O.field_content) list = [
+        (O.Label "M_left" , {field_type = l ; michelson_annotation = Some l_ann}); 
+        (O.Label "M_right", {field_type = r ; michelson_annotation = Some r_ann}); ]
+      in
+      return @@ O.T_record (O.LMap.of_list sum)
     | I.T_operator type_operator ->
       let%bind type_operator = compile_type_operator type_operator in
       return @@ T_operator type_operator
@@ -177,7 +185,7 @@ and compile_type_operator : I.type_operator -> O.type_operator result =
     | TC_arrow (i,o) ->
       let%bind (i,o) = bind_map_pair compile_type_expression (i,o) in
       ok @@ O.TC_arrow (i,o)
-    | TC_michelson_or _ -> fail @@ Errors.corner_case __LOC__
+    | TC_michelson_or _ | TC_michelson_pair _ -> fail @@ Errors.corner_case __LOC__
 
 let rec compile_expression : I.expression -> O.expression result =
   fun e ->
@@ -587,7 +595,8 @@ let rec uncompile_type_expression : O.type_expression -> I.type_expression resul
       let record = I.LMap.to_kv_list record in
       let%bind record = 
         bind_map_list (fun (k,v) ->
-          let%bind v = uncompile_type_expression v in
+          let {field_type;_} : O.field_content = v in
+          let%bind v = uncompile_type_expression field_type in
           ok @@ (k,v)
         ) record
       in

@@ -377,7 +377,7 @@ let rec assert_type_expression_eq (a, b: (type_expression * type_expression)) : 
       let sort_lmap r' = List.sort (fun (Label a,_) (Label b,_) -> String.compare a b) r' in
       let ra' = sort_lmap @@ LMap.to_kv_list ra in
       let rb' = sort_lmap @@ LMap.to_kv_list rb in
-      let aux ((ka, va), (kb, vb)) =
+      let aux ((ka, {field_type=va;_}), (kb, {field_type=vb;_})) =
         let%bind _ =
           trace (different_types "records" a b) @@
           let Label ka = ka in

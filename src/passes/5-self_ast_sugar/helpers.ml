@@ -9,6 +9,13 @@ let bind_map_cmap f map = bind_cmap (
       ok {ctor with ctor_type = ctor'}) 
     map)
 
+let bind_map_lmap_t f map = bind_lmap (
+  LMap.map 
+    (fun ({field_type;_} as field) -> 
+      let%bind field' = f field_type in
+      ok {field with field_type = field'}) 
+    map)
+
 type 'a folder = 'a -> expression -> 'a result
 let rec fold_expression : 'a folder -> 'a -> expression -> 'a result = fun f init e ->
   let self = fold_expression f in 
@@ -234,7 +241,7 @@ and map_type_expression : ty_exp_mapper -> type_expression -> type_expression re
     let%bind temap' = bind_map_cmap self temap in
     return @@ (T_sum temap')
   | T_record temap ->
-    let%bind temap' = bind_map_lmap self temap in
+    let%bind temap' = bind_map_lmap_t self temap in
     return @@ (T_record temap')
   | T_tuple telst ->
     let%bind telst' = bind_map_list self telst in

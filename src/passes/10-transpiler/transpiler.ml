@@ -298,6 +298,19 @@ let rec transpile_type (t:AST.type_expression) : type_value result =
                         ok (Some (String.uncapitalize_ascii ann), a))
                       aux node in
       ok @@ snd m'
+  | T_record m when Ast_typed.Helpers.is_michelson_pair m ->
+      let node = Append_tree.of_list @@ Ast_typed.Helpers.tuple_of_record m in
+      let aux a b : type_value annotated result =
+        let%bind a = a in
+        let%bind b = b in
+        ok (None, T_pair (a, b))
+      in
+      let%bind m' = Append_tree.fold_ne
+                      (fun (_, ({field_type ; michelson_annotation} : AST.field_content)) ->
+                        let%bind a = transpile_type field_type in
+                        ok (michelson_annotation, a) )
+                      aux node in
+      ok @@ snd m'
   | T_record m ->
       let is_tuple_lmap = Ast_typed.Helpers.is_tuple_lmap m in
       let node = Append_tree.of_list @@ (
@@ -313,8 +326,8 @@ let rec transpile_type (t:AST.type_expression) : type_value result =
         ok (None, T_pair (a, b))
       in
       let%bind m' = Append_tree.fold_ne
-                      (fun (Ast_typed.Types.Label ann, a) ->
-                        let%bind a = transpile_type a in                        
+                      (fun (Ast_typed.Types.Label ann, ({field_type;_}: AST.field_content)) ->
+                        let%bind a = transpile_type field_type in
                         ok ((if is_tuple_lmap then 
                               None 
                             else 
@@ -448,7 +461,7 @@ and transpile_annotated_expression (ae:AST.expression) : expression result =
       let%bind ty_lmap =
         trace_strong (corner_case ~loc:__LOC__ "not a record") @@
         get_t_record (get_type_expression record) in
-      let%bind ty'_lmap = Ast_typed.Helpers.bind_map_lmap transpile_type ty_lmap in
+      let%bind ty'_lmap = Ast_typed.Helpers.bind_map_lmap_t transpile_type ty_lmap in
       let%bind path =
         trace_strong (corner_case ~loc:__LOC__ "record access") @@
         record_access_to_lr ty' ty'_lmap path in
@@ -465,7 +478,7 @@ and transpile_annotated_expression (ae:AST.expression) : expression result =
       let%bind ty_lmap =
         trace_strong (corner_case ~loc:__LOC__ "not a record") @@
         get_t_record (get_type_expression record) in
-      let%bind ty'_lmap = Ast_typed.Helpers.bind_map_lmap transpile_type ty_lmap in
+      let%bind ty'_lmap = Ast_typed.Helpers.bind_map_lmap_t transpile_type ty_lmap in
       let%bind path = 
         trace_strong (corner_case ~loc:__LOC__ "record access") @@
         record_access_to_lr ty' ty'_lmap path in

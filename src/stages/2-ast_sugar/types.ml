@@ -10,7 +10,7 @@ end
 
 type type_content =
   | T_sum of ctor_content constructor_map
-  | T_record of type_expression label_map
+  | T_record of field_content label_map
   | T_tuple  of type_expression list
   | T_arrow of arrow
   | T_variable of type_variable
@@ -20,6 +20,8 @@ type type_content =
 and arrow = {type1: type_expression; type2: type_expression}
 
 and ctor_content = {ctor_type : type_expression ; michelson_annotation : string option}
+
+and field_content = {field_type : type_expression ; michelson_annotation : string option}
 
 and type_operator =
   | TC_contract of type_expression

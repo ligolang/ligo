@@ -62,6 +62,7 @@ let t_big_map ?loc key value     : type_expression = make_t ?loc @@ T_operator (
 let t_set ?loc key               : type_expression = make_t ?loc @@ T_operator (TC_set key)
 let t_contract ?loc contract     : type_expression = make_t ?loc @@ T_operator (TC_contract contract)
 let t_michelson_or ?loc l l_ann r r_ann : type_expression = make_t ?loc @@ T_operator (TC_michelson_or (l, l_ann, r, r_ann))
+let t_michelson_pair ?loc l l_ann r r_ann : type_expression = make_t ?loc @@ T_operator (TC_michelson_pair (l, l_ann, r, r_ann))
 
 (* TODO find a better way than using list*)
 let t_operator ?loc op lst: type_expression result =

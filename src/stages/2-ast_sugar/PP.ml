@@ -14,6 +14,13 @@ let cmap_sep value sep ppf m =
 
 let cmap_sep_d x = cmap_sep x (tag " ,@ ")
 
+let record_sep_t value sep ppf (m : 'a label_map) =
+  let lst = LMap.to_kv_list m in
+  let lst = List.sort_uniq (fun (Label a,_) (Label b,_) -> String.compare a b) lst in
+  let new_pp ppf (k, {field_type;_}) = fprintf ppf "@[<h>%a -> %a@]" label k value field_type in
+  fprintf ppf "%a" (list_sep new_pp sep) lst
+
+
 let expression_variable ppf (ev : expression_variable) : unit =
   fprintf ppf "%a" Var.pp ev
 
@@ -25,7 +32,7 @@ let rec type_expression' :
   fun f ppf te ->
   match te.type_content with
   | T_sum m -> fprintf ppf "@[<hv 4>sum[%a]@]" (cmap_sep_d f) m
-  | T_record m -> fprintf ppf "{%a}" (record_sep f (const ";")) m
+  | T_record m -> fprintf ppf "{%a}" (record_sep_t f (const ";")) m
   | T_tuple  t -> fprintf ppf "(%a)" (list_sep_d f) t
   | T_arrow  a -> fprintf ppf "%a -> %a" f a.type1 f a.type2
   | T_variable tv -> type_variable ppf tv
@@ -65,7 +72,7 @@ and expression_content ppf (ec : expression_content) =
       fprintf ppf "%a(%a)" constant c.cons_name (list_sep_d expression)
         c.arguments
   | E_record m ->
-      fprintf ppf "{%a}" (record_sep expression (const ";")) m
+      fprintf ppf "{%a}" (record_sep_expr expression (const ";")) m
   | E_record_accessor ra ->
       fprintf ppf "%a.%a" expression ra.record label ra.path
   | E_record_update {record; path; update} ->

@@ -182,6 +182,21 @@ let rec compile_type_expression (t:Raw.type_expr) : type_expression result =
             ok @@ t_michelson_or ~loc a' b' c' d'
             )
           | _ -> simple_fail "michelson_or does not have the right number of argument")
+        | "michelson_pair" ->
+          let lst = npseq_to_list tuple.value.inside in
+          (match lst with
+          | [a ; b ; c ; d ] -> (
+            let%bind b' =
+              trace_option (simple_error "second argument of michelson_pair must be a string singleton") @@
+                get_t_string_singleton_opt b in
+            let%bind d' =
+              trace_option (simple_error "fourth argument of michelson_pair must be a string singleton") @@
+                get_t_string_singleton_opt d in
+            let%bind a' = compile_type_expression a in
+            let%bind c' = compile_type_expression c in
+            ok @@ t_michelson_pair ~loc a' b' c' d'
+            )
+          | _ -> simple_fail "michelson_or does not have the right number of argument")
         | _ ->
           let lst = npseq_to_list tuple.value.inside in
           let%bind lst =

@@ -51,7 +51,9 @@ let t_record ?loc m  : type_expression =
   let lst = Map.String.to_kv_list m in
   t_record_ez ?loc lst
 
-let t_pair ?loc (a , b) : type_expression = t_record_ez ?loc [("0",a) ; ("1",b)]
+let t_pair ?loc (a , b) : type_expression = t_record_ez ?loc [
+  ("0",{field_type=a;michelson_annotation=None}) ;
+  ("1",{field_type=b;michelson_annotation=None})]
 let t_tuple ?loc lst    : type_expression = t_record_ez ?loc (tuple_to_record lst)
 
 let ez_t_sum ?loc (lst:((string * ctor_content) list)) : type_expression =

@@ -13,6 +13,12 @@ let cmap_sep value sep ppf m =
 
 let cmap_sep_d x = cmap_sep x (tag " ,@ ")
 
+let record_sep value sep ppf (m : 'a label_map) =
+  let lst = LMap.to_kv_list m in
+  let lst = List.sort_uniq (fun (Label a,_) (Label b,_) -> String.compare a b) lst in
+  let new_pp ppf (k, v) = fprintf ppf "@[<h>%a -> %a@]" label k value v in
+  fprintf ppf "%a" (list_sep new_pp sep) lst
+
 let expression_variable ppf (ev : expression_variable) : unit =
   fprintf ppf "%a" Var.pp ev
 
@@ -48,6 +54,7 @@ and type_operator :
     | TC_map (k, v) -> Format.asprintf "Map (%a,%a)" f k f v
     | TC_big_map (k, v) -> Format.asprintf "Big Map (%a,%a)" f k f v
     | TC_michelson_or (l,_, r,_) -> Format.asprintf "Michelson_or (%a,%a)" f l f r
+    | TC_michelson_pair (l,_, r,_) -> Format.asprintf "Michelson_pair (%a,%a)" f l f r
     | TC_arrow (k, v) -> Format.asprintf "arrow (%a,%a)" f k f v
     | TC_contract te  -> Format.asprintf "Contract (%a)" f te
   in

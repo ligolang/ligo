@@ -38,7 +38,8 @@ let rec type_expression_to_type_value : T.type_expression -> O.type_value = fun 
      P_constant (C_variant, List.map type_expression_to_type_value tlist)
   | T_record kvmap ->
      let () = failwith "fixme: don't use to_list, it drops the record keys, rows have a differnt kind than argument lists for now!" in
-     P_constant (C_record, T.LMap.to_list @@ T.LMap.map type_expression_to_type_value kvmap)
+     let tlist = List.map (fun ({field_type;_}:T.field_content) -> field_type) (T.LMap.to_list kvmap) in
+     P_constant (C_record, List.map type_expression_to_type_value tlist)
   | T_arrow {type1;type2} ->
      P_constant (C_arrow, List.map type_expression_to_type_value [ type1 ; type2 ])
 
@@ -85,7 +86,8 @@ let rec type_expression_to_type_value_copypasted : I.type_expression -> O.type_v
      P_constant (C_variant, List.map type_expression_to_type_value_copypasted tlist)
   | T_record kvmap ->
      let () = failwith "fixme: don't use to_list, it drops the record keys, rows have a differnt kind than argument lists for now!" in
-     P_constant (C_record, I.LMap.to_list @@ I.LMap.map type_expression_to_type_value_copypasted kvmap)
+     let tlist = List.map (fun ({field_type;_}:I.field_content) -> field_type) (I.LMap.to_list kvmap) in
+     P_constant (C_record, List.map type_expression_to_type_value_copypasted tlist)
   | T_arrow {type1;type2} ->
      P_constant (C_arrow, List.map type_expression_to_type_value_copypasted [ type1 ; type2 ])
   | T_variable type_name -> P_variable (type_name) (* eird stuff*)
@@ -184,7 +186,7 @@ let constructor
     C_equation (t_arg , c_arg)
   ] , whole_expr
 
-let record : T.type_expression T.label_map -> (constraints * T.type_variable) = fun fields ->
+let record : T.field_content T.label_map -> (constraints * T.type_variable) = fun fields ->
   let record_type = type_expression_to_type_value (T.t_record fields ()) in
   let whole_expr = Core.fresh_type_variable () in
   [C_equation (P_variable whole_expr , record_type)] , whole_expr

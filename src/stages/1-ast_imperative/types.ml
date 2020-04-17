@@ -24,8 +24,9 @@ and type_operator =
   | TC_set of type_expression
   | TC_map of type_expression * type_expression
   | TC_big_map of type_expression * type_expression
-  | TC_michelson_or of type_expression * michelson_prct_annotation * type_expression * michelson_prct_annotation
   | TC_arrow of type_expression * type_expression
+  | TC_michelson_or of type_expression * michelson_prct_annotation * type_expression * michelson_prct_annotation
+  | TC_michelson_pair of type_expression * michelson_prct_annotation * type_expression * michelson_prct_annotation
 
 and type_expression = {type_content: type_content; location: Location.t}
 

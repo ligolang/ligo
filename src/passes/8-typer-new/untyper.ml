@@ -157,9 +157,10 @@ let rec untype_type_expression (t:O.type_expression) : (I.type_expression) resul
     let%bind x' = O.CMap.fold aux x (ok I.CMap.empty) in
     ok @@ I.T_sum x'
   | O.T_record x ->
-    let aux k v acc =
+    let aux k ({field_type ; michelson_annotation} : O.field_content) acc =
       let%bind acc = acc in
-      let%bind v' = untype_type_expression v in
+      let%bind field_type = untype_type_expression field_type in
+      let v' = ({field_type ; field_annotation=michelson_annotation} : I.field_content) in
       ok @@ I.LMap.add (unconvert_label k) v' acc in
     let%bind x' = O.LMap.fold aux x (ok I.LMap.empty) in
     ok @@ I.T_record x'

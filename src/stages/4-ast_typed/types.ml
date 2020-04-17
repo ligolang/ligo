@@ -20,7 +20,7 @@ type type_constant =
     | TC_void
 
 type te_cmap = ctor_content constructor_map
-and te_lmap = type_expression label_map
+and te_lmap = field_content label_map
 and type_meta = ast_core_type_expression option
 
 and type_content =
@@ -40,6 +40,11 @@ and annot_option = string option
 
 and ctor_content = {
     ctor_type : type_expression;
+    michelson_annotation : annot_option;
+}
+
+and field_content = {
+    field_type : type_expression;
     michelson_annotation : annot_option;
 }
 

@@ -611,9 +611,10 @@ and evaluate_type (e:environment) (t:I.type_expression) : O.type_expression resu
       let%bind m = I.CMap.fold aux m (ok O.CMap.empty) in
       return (T_sum m)
   | T_record m ->
-      let aux k v prev =
+      let aux k ({field_type;field_annotation}: I.field_content) prev =
         let%bind prev' = prev in
-        let%bind v' = evaluate_type e v in
+        let%bind field_type = evaluate_type e field_type in
+        let v' = ({field_type;michelson_annotation=field_annotation} : O.field_content) in
         ok @@ O.LMap.add (convert_label k) v' prev'
       in
       let%bind m = I.LMap.fold aux m (ok O.LMap.empty) in
@@ -724,7 +725,7 @@ and type_expression' : environment -> ?tv_opt:O.type_expression -> I.expression 
             let%bind r_tv = get_t_record prev.type_expression in
             let%bind tv =
               generic_try (bad_record_access property ae prev.type_expression ae.location)
-              @@ (fun () -> O.LMap.find (convert_label property) r_tv) in
+              @@ (fun () -> let ({field_type;_} : O.field_content) = O.LMap.find (convert_label property) r_tv in field_type) in
             let location = ae.location in
             ok @@ make_e ~location (E_record_accessor {record=prev; path=convert_label property}) tv e
       in
@@ -771,7 +772,8 @@ and type_expression' : environment -> ?tv_opt:O.type_expression -> I.expression 
         ok (O.LMap.add (convert_label k) expr' prev)
       in
       let%bind m' = Stage_common.Helpers.bind_fold_lmap aux (ok O.LMap.empty) m in
-      return (E_record m') (t_record (O.LMap.map get_type_expression m') ())
+      let lmap = O.LMap.map (fun e -> ({field_type = get_type_expression e; michelson_annotation = None}:O.field_content)) m' in
+      return (E_record m') (t_record lmap ())
   | E_record_update {record; path; update} ->
     let path = convert_label path in
     let%bind record = type_expression' e record in
@@ -782,7 +784,7 @@ and type_expression' : environment -> ?tv_opt:O.type_expression -> I.expression 
       | T_record record -> (
           let field_op = O.LMap.find_opt path record in
           match field_op with
-          | Some tv -> ok (tv)
+          | Some {field_type;_} -> ok field_type
           | None -> failwith @@ Format.asprintf "field %a is not part of record %a" Ast_typed.PP.label path O.PP.type_expression wrapped
       )
       | _ -> failwith "Update an expression which is not a record"

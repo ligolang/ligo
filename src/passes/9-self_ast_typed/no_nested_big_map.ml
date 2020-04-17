@@ -45,7 +45,7 @@ let rec check_no_nested_bigmap is_in_bigmap e =
     ok ()
   | T_record elm -> 
     let es = LMap.to_list elm in
-    let%bind _ = bind_map_list (fun l -> check_no_nested_bigmap is_in_bigmap l) es in
+    let%bind _ = bind_map_list (fun {field_type;_} -> check_no_nested_bigmap is_in_bigmap field_type) es in
     ok ()
   | T_arrow { type1; type2 } -> 
     let%bind _ = check_no_nested_bigmap false type1 in    
