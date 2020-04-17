@@ -616,12 +616,14 @@ and transpile_annotated_expression (ae:AST.expression) : expression result =
           aux expr' tree''
        )
   )
-  | E_raw_code { language; code; type_anno} -> 
+  | E_raw_code { language; code} -> 
     let backend = "Michelson" in
     let%bind () = trace_strong (language_backend_mismatch language backend ae.location) @@
     Assert.assert_true (String.equal language backend)
     in
+    let type_anno  = get_type_expression code in
     let%bind type_anno' = transpile_type type_anno in
+    let%bind code = get_a_verbatim code in
     return @@ E_raw_michelson (code, type_anno')
 
 and transpile_lambda l (input_type , output_type) =

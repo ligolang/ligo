@@ -486,9 +486,8 @@ and translate_expression (expr:expression) (env:environment) : michelson result 
   | E_raw_michelson (code, type_anno) -> 
       let (code, _e) = Michelson_parser.V1.parse_expression ~check:false code in
       let code = Tezos_micheline.Micheline.root code.expanded in
-      let annot = Format.asprintf "(%a)" Mini_c.PP.type_value type_anno in
-
-  return @@ Michelson.prim ~children:[code] ~annot:[annot] I_PUSH
+      let%bind ty = Compiler_type.type_ type_anno in
+      return @@ i_push ty code
 
 and translate_function_body ({body ; binder} : anon_function) lst input : michelson result =
   let pre_env = Environment.of_list lst in

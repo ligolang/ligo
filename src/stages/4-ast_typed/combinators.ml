@@ -360,6 +360,16 @@ let get_a_int (t:expression) =
   | E_literal (Literal_int n) -> ok n
   | _ -> simple_fail "not an int"
 
+let get_a_string (t:expression) =
+  match t.expression_content with
+  | E_literal (Literal_string s) -> ok @@ Ligo_string.extract s
+  | _ -> simple_fail "not a string"
+
+let get_a_verbatim (t:expression) = 
+  match t.expression_content with
+    E_literal (Literal_string (Verbatim v)) -> ok @@ v
+  | _ -> simple_fail "not a verbatim string" 
+
 let get_a_unit (t:expression) =
   match t.expression_content with
   | E_literal (Literal_unit) -> ok ()

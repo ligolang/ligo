@@ -70,20 +70,20 @@ let rec value ppf : value -> unit = function
   | D_list lst -> fprintf ppf "List[%a]" (list_sep_d value) lst
   | D_set lst -> fprintf ppf "Set[%a]" (list_sep_d value) lst
 
-and type_value_annotated ppf : type_value annotated -> unit = fun (_, tv) ->
-  type_value ppf tv
+and type_expression_annotated ppf : type_expression annotated -> unit = fun (_, tv) ->
+  type_expression ppf tv
 
-and type_value ppf : type_value -> unit = function
-  | T_pair (a,b) -> fprintf ppf "pair %a %a" type_value_annotated a type_value_annotated b
-  | T_or    (a,b) -> fprintf ppf "or %a %a" type_value_annotated a type_value_annotated b
-  | T_function (a, b) -> fprintf ppf "lambda (%a) %a" type_value a type_value b
+and type_expression ppf : type_expression -> unit = fun te -> match te.type_content with
+  | T_pair (a,b) -> fprintf ppf "pair %a %a" type_expression_annotated a type_expression_annotated b
+  | T_or    (a,b) -> fprintf ppf "or %a %a" type_expression_annotated a type_expression_annotated b
+  | T_function (a, b) -> fprintf ppf "lambda (%a) %a" type_expression a type_expression b
   | T_base tc -> fprintf ppf "%a" type_constant tc
-  | T_map (k,v) -> fprintf ppf "Map (%a,%a)" type_value k type_value v
-  | T_big_map (k,v) -> fprintf ppf "BigMap (%a,%a)" type_value k type_value v
-  | T_list e -> fprintf ppf "List (%a)" type_value e
-  | T_set e -> fprintf ppf "Set (%a)" type_value e
-  | T_contract c -> fprintf ppf "Contract (%a)" type_value c
-  | T_option c -> fprintf ppf "Option (%a)" type_value c 
+  | T_map (k,v) -> fprintf ppf "Map (%a,%a)" type_expression k type_expression v
+  | T_big_map (k,v) -> fprintf ppf "BigMap (%a,%a)" type_expression k type_expression v
+  | T_list e -> fprintf ppf "List (%a)" type_expression e
+  | T_set e -> fprintf ppf "Set (%a)" type_expression e
+  | T_contract c -> fprintf ppf "Contract (%a)" type_expression c
+  | T_option c -> fprintf ppf "Option (%a)" type_expression c 
 
 and value_assoc ppf : (value * value) -> unit = fun (a, b) ->
   fprintf ppf "%a -> %a" value a value b

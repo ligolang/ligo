@@ -101,8 +101,7 @@ and let_in = {
 
 and raw_code = { 
   language : string ;
-  code : string ;
-  type_anno : type_expression ;
+  code : expression ;
   }
 
 and constructor = {constructor: constructor'; element: expression}

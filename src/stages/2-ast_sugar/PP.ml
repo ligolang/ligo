@@ -112,8 +112,8 @@ and expression_content ppf (ec : expression_content) =
         expression rhs 
         option_inline inline 
         expression let_result
-  | E_raw_code {language; code; type_anno} ->
-      fprintf ppf "[%%%s {%s} : %a]" language code type_expression type_anno
+  | E_raw_code {language; code} ->
+      fprintf ppf "[%%%s %a]" language expression code
   | E_ascription {anno_expr; type_annotation} ->
       fprintf ppf "%a : %a" expression anno_expr type_expression type_annotation
   | E_cond {condition; then_clause; else_clause} ->

@@ -462,9 +462,8 @@ let rec compile_expression (t:Raw.expr) : expr result =
   | ECodeInsert ci ->
     let (ci, loc) = r_split ci in
     let      language  = ci.language.value in
-    let      code      = ci.code.value in
-    let%bind type_anno = compile_type_expression ci.type_anno in
-    return @@ e_raw_code ~loc language code type_anno
+    let%bind code      = compile_expression ci.code in
+    return @@ e_raw_code ~loc language code
 
 and compile_update (u: Raw.update Region.reg) =
   let u, loc     = r_split u in

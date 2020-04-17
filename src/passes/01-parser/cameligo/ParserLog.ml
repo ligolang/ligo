@@ -520,11 +520,9 @@ and print_record_expr state e =
   print_ne_injection state print_field_assign e
 
 and print_code_insert state {value; _} =
-  let {language;code;colon;type_anno;rbracket} : code_insert = value in
+  let {language;code;rbracket} : code_insert = value in
   print_string    state language;
-  print_string    state code;
-  print_token     state colon ":";
-  print_type_expr state type_anno;
+  print_expr      state code;
   print_token     state rbracket "]"
 
 and print_field_assign state {value; _} =
@@ -901,12 +899,8 @@ and pp_code_insert state (rc : code_insert) =
   let () =
     let state = state#pad 3 1 in
     pp_node state "<code>";
-    pp_string (state#pad 1 0) rc.code in
-  let () =
-    let state = state#pad 3 2 in
-    pp_node state "<type annotation>";
-    pp_type_expr (state#pad 1 0) rc.type_anno
-  in ()
+    pp_expr (state#pad 1 0) rc.code in
+  ()
 
 and pp_let_in state node =
   let {binding; body; attributes; kwd_rec; _} = node in

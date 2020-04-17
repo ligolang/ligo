@@ -975,14 +975,12 @@ update_record:
     in {region; value} }
 
 code_insert_expr:
-  Insert "<verbatim>" ":" type_expr "]" {
-    let region = cover $1.region $5 in
+  Insert expr "]" {
+    let region = cover $1.region $3 in
     let value = {
                   language =$1;
                   code     =$2;
-                  colon    =$3; 
-                  type_anno=$4;
-                  rbracket =$5}
+                  rbracket =$3}
     in {region; value} }
 
 field_assignment:

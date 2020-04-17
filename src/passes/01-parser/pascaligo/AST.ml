@@ -439,9 +439,7 @@ and for_collect = {
 
 and code_insert = {
   language  : string reg;
-  code      : string reg;
-  colon     : colon;
-  type_anno : type_expr;
+  code      : expr;
   rbracket  : rbracket;
 }
 

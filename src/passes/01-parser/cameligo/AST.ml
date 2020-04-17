@@ -402,9 +402,7 @@ and cond_expr = {
 
 and code_insert = {
   language  : string reg;
-  code      : string reg;
-  colon     : colon;
-  type_anno : type_expr;
+  code      : expr;
   rbracket  : rbracket;
 }
 (* Projecting regions from some nodes of the AST *)

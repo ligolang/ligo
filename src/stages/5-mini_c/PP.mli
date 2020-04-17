@@ -12,7 +12,7 @@ val type_variable : formatter -> type_expression -> unit
 val environment_element : formatter -> environment_element -> unit
 val environment : formatter -> environment -> unit
 val value : formatter -> value -> unit
-val type_value : formatter -> type_value -> unit
+val type_expression : formatter -> type_expression -> unit
 
 (*
 val value_assoc : formatter -> (value * value) -> unit

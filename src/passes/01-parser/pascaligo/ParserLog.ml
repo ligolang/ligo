@@ -231,11 +231,9 @@ and print_fun_expr state {value; _} =
   print_expr       state return
 
 and print_code_insert state {value; _} =
-  let {language;code;colon;type_anno;rbracket} : code_insert = value in
+  let {language;code;rbracket} : code_insert = value in
   print_string    state language;
-  print_string    state code;
-  print_token     state colon ":";
-  print_type_expr state type_anno;
+  print_expr      state code;
   print_token     state rbracket "]"
 
 and print_parameters state {value; _} =
@@ -1027,12 +1025,8 @@ and pp_code_insert state (rc : code_insert) =
   let () =
     let state = state#pad 3 1 in
     pp_node state "<code>";
-    pp_string (state#pad 1 0) rc.code in
-  let () =
-    let state = state#pad 3 2 in
-    pp_node state "<type annotation>";
-    pp_type_expr (state#pad 1 0) rc.type_anno
-  in ()
+    pp_expr (state#pad 1 0) rc.code in
+  ()
 
 and pp_parameters state {value; _} =
   let params = Utils.nsepseq_to_list value.inside in

@@ -95,7 +95,7 @@ val e_application : ?loc:Location.t -> expression -> expression -> expression
 val e_lambda : ?loc:Location.t -> expression_variable -> type_expression option -> type_expression option -> expression -> expression
 val e_recursive : ?loc:Location.t -> expression_variable -> type_expression -> lambda -> expression
 val e_let_in : ?loc:Location.t -> ( expression_variable * type_expression option ) -> bool -> expression -> expression -> expression
-val e_raw_code : ?loc:Location.t -> string -> string -> type_expression -> expression
+val e_raw_code : ?loc:Location.t -> string -> expression -> expression
 
 val e_constructor : ?loc:Location.t -> string -> expression -> expression
 val e_matching : ?loc:Location.t -> expression -> matching_expr -> expression

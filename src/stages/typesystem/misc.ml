@@ -159,9 +159,9 @@ module Substitution = struct
         let%bind rhs = s_expression ~substs rhs in
         let%bind let_result = s_expression ~substs let_result in
         ok @@ T.E_let_in { let_binder; rhs; let_result; inline }
-      | T.E_raw_code {language; code; type_anno} ->
-        let%bind type_anno = s_type_expression ~substs type_anno in
-        ok @@ T.E_raw_code {language; code; type_anno}
+      | T.E_raw_code {language; code} ->
+        let%bind code = s_expression ~substs code in
+        ok @@ T.E_raw_code {language; code}
       | T.E_recursive { fun_name; fun_type; lambda} ->
         let%bind fun_name = s_variable ~substs fun_name in
         let%bind fun_type = s_type_expression ~substs fun_type in
