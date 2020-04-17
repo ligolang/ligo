@@ -484,7 +484,8 @@ and translate_expression (expr:expression) (env:environment) : michelson result 
       ]
     )
   | E_raw_michelson (code, type_anno) -> 
-      let (code, _e) = Michelson_parser.V1.parse_expression ~check:false code in
+      let code = trace_tzresult (simple_error "lol") @@
+      Tezos_micheline.Micheline_parser.no_parsing_error @@ Michelson_parser.V1.parse_expression ~check:false code in
       let code = Tezos_micheline.Micheline.root code.expanded in
       let%bind ty = Compiler_type.type_ type_anno in
       return @@ i_push ty code
