@@ -196,7 +196,7 @@ let rec compile_type_expression (t:Raw.type_expr) : type_expression result =
             let%bind c' = compile_type_expression c in
             ok @@ t_michelson_pair ~loc a' b' c' d'
             )
-          | _ -> simple_fail "michelson_or does not have the right number of argument")
+          | _ -> simple_fail "michelson_pair does not have the right number of argument")
         | _ ->
           let lst = npseq_to_list tuple.value.inside in
           let%bind lst =

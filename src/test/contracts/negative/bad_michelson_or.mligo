@@ -1,4 +1,4 @@
-type storage = (int,string) michelson_or 
+type storage = (int,"foo",string,"bar") michelson_or 
 
 type return = operation list * storage
 

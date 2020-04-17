@@ -153,8 +153,8 @@ let rec compile_type_expression : I.type_expression -> O.type_expression result 
     | I.T_operator (TC_michelson_pair (l,l_ann,r,r_ann)) ->
       let%bind (l,r) = bind_map_pair compile_type_expression (l,r) in
       let sum : (O.label * O.field_content) list = [
-        (O.Label "M_left" , {field_type = l ; michelson_annotation = Some l_ann}); 
-        (O.Label "M_right", {field_type = r ; michelson_annotation = Some r_ann}); ]
+        (O.Label "0" , {field_type = l ; michelson_annotation = Some l_ann}); 
+        (O.Label "1", {field_type = r ; michelson_annotation = Some r_ann}); ]
       in
       return @@ O.T_record (O.LMap.of_list sum)
     | I.T_operator type_operator ->
