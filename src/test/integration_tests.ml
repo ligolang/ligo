@@ -1759,6 +1759,21 @@ let fibo_mligo () : unit result =
   let make_expected = (e_int 42) in
   expect_eq program "main" make_input make_expected
 
+let michelson_insertion program : unit result =
+  let%bind program = program in
+  let make_input = fun n -> e_pair (e_nat n) (e_nat 1) in
+  let make_expected = fun n -> e_nat (n+1) in
+  expect_eq_n_pos program "michelson_add" make_input make_expected
+
+let michelson_insertion_ligo () : unit result =
+  michelson_insertion @@ type_file "./contracts/michelson_insertion.ligo"
+
+let michelson_insertion_mligo () : unit result =
+  michelson_insertion @@ mtype_file "./contracts/michelson_insertion.mligo"
+
+let michelson_insertion_religo () : unit result =
+  michelson_insertion @@ retype_file "./contracts/michelson_insertion.religo"
+
 let website1_ligo () : unit result =
   let%bind program = type_file "./contracts/website1.ligo" in
   let make_input = fun n-> e_pair (e_int n) (e_int 42) in
@@ -2519,6 +2534,9 @@ let main = test_suite "Integration (End to End)" [
     (* test "fibo2 (mligo)" fibo2_mligo ; *)
     (* test "fibo3 (mligo)" fibo3_mligo ; *)
     (* test "fibo4 (mligo)" fibo4_mligo ; *)
+    test "michelson inserion ligo" michelson_insertion_ligo;
+    test "michelson inserion mligo" michelson_insertion_mligo;
+    test "michelson inserion religo" michelson_insertion_religo;
     test "website1 ligo" website1_ligo ;
     test "website2 ligo" website2_ligo ;
     test "website2 (mligo)" website2_mligo ;
