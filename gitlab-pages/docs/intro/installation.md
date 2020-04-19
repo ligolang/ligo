@@ -51,7 +51,7 @@ sudo apt install ./<package_name_here>.deb
 ```
 
 - [Ubuntu 18.04](/deb/ligo_ubuntu-18.04.deb)
-- [Ubuntu 19.04](/deb/ligo_ubuntu-19.04.deb)
+- [Ubuntu 19.10](/deb/ligo_ubuntu-19.10.deb)
 - [Debian 9](/deb/ligo_debian-9.deb)
 - [Debian 10](/deb/ligo_debian-10.deb)
 
