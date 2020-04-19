@@ -59,9 +59,10 @@ let t_sum ?loc m : type_expression =
 let t_function ?loc type1 type2  : type_expression = make_t ?loc @@ T_arrow {type1; type2}
 let t_map ?loc key value         : type_expression = make_t ?loc @@ T_operator (TC_map (key, value))
 let t_big_map ?loc key value     : type_expression = make_t ?loc @@ T_operator (TC_big_map (key , value))
-let t_michelson_or ?loc l r      : type_expression = make_t ?loc @@ T_operator (TC_michelson_or (l , r))
 let t_set ?loc key               : type_expression = make_t ?loc @@ T_operator (TC_set key)
 let t_contract ?loc contract     : type_expression = make_t ?loc @@ T_operator (TC_contract contract)
+let t_michelson_or ?loc l l_ann r r_ann : type_expression = make_t ?loc @@ T_operator (TC_michelson_or (l, l_ann, r, r_ann))
+let t_michelson_pair ?loc l l_ann r r_ann : type_expression = make_t ?loc @@ T_operator (TC_michelson_pair (l, l_ann, r, r_ann))
 
 (* TODO find a better way than using list*)
 let t_operator ?loc op lst: type_expression result =
@@ -71,7 +72,7 @@ let t_operator ?loc op lst: type_expression result =
   | TC_option _      , [t] -> ok @@ t_option ?loc t
   | TC_map (_,_)     , [kt;vt] -> ok @@ t_map ?loc kt vt
   | TC_big_map (_,_) , [kt;vt] -> ok @@ t_big_map ?loc kt vt
-  | TC_michelson_or (_,_) , [l;r] -> ok @@ t_michelson_or ?loc l r
+  | TC_michelson_or (_,l_ann,_,r_ann) , [l;r] -> ok @@ t_michelson_or ?loc l l_ann r r_ann
   | TC_contract _    , [t] -> ok @@ t_contract t
   | _ , _ -> fail @@ bad_type_operator op
 

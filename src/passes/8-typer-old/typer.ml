@@ -596,23 +596,25 @@ and evaluate_type (e:environment) (t:I.type_expression) : O.type_expression resu
       let%bind type2 = evaluate_type e type2 in
       return (T_arrow {type1;type2})
   | T_sum m ->
-      let aux k v prev =
+      let aux k ({ctor_type;michelson_annotation} : I.ctor_content) prev =
         let%bind prev' = prev in
-        let%bind v' = evaluate_type e v in
+        let%bind ctor_type = evaluate_type e ctor_type in
         let%bind () = match Environment.get_constructor k e with
           | Some _ ->
             if I.CMap.mem (Constructor "M_left") m || I.CMap.mem (Constructor "M_right") m then
               ok ()
             else fail (redundant_constructor e k)
           | None -> ok () in
+        let v' : O.ctor_content = {ctor_type;michelson_annotation} in
         ok @@ O.CMap.add (convert_constructor' k) v' prev'
       in
       let%bind m = I.CMap.fold aux m (ok O.CMap.empty) in
       return (T_sum m)
   | T_record m ->
-      let aux k v prev =
+      let aux k ({field_type;field_annotation}: I.field_content) prev =
         let%bind prev' = prev in
-        let%bind v' = evaluate_type e v in
+        let%bind field_type = evaluate_type e field_type in
+        let v' = ({field_type;michelson_annotation=field_annotation} : O.field_content) in
         ok @@ O.LMap.add (convert_label k) v' prev'
       in
       let%bind m = I.LMap.fold aux m (ok O.LMap.empty) in
@@ -647,10 +649,6 @@ and evaluate_type (e:environment) (t:I.type_expression) : O.type_expression resu
             let%bind k = evaluate_type e k in 
             let%bind v = evaluate_type e v in 
             ok @@ O.TC_map_or_big_map {k;v}
-        | TC_michelson_or (l,r) ->
-            let%bind l = evaluate_type e l in 
-            let%bind r = evaluate_type e r in 
-            ok @@ O.TC_michelson_or {l;r}
         | TC_arrow ( arg , ret ) ->
             let%bind arg' = evaluate_type e arg in
             let%bind ret' = evaluate_type e ret in
@@ -727,7 +725,7 @@ and type_expression' : environment -> ?tv_opt:O.type_expression -> I.expression 
             let%bind r_tv = get_t_record prev.type_expression in
             let%bind tv =
               generic_try (bad_record_access property ae prev.type_expression ae.location)
-              @@ (fun () -> O.LMap.find (convert_label property) r_tv) in
+              @@ (fun () -> let ({field_type;_} : O.field_content) = O.LMap.find (convert_label property) r_tv in field_type) in
             let location = ae.location in
             ok @@ make_e ~location (E_record_accessor {record=prev; path=convert_label property}) tv e
       in
@@ -744,8 +742,8 @@ and type_expression' : environment -> ?tv_opt:O.type_expression -> I.expression 
     let%bind expr' = type_expression' e element in
     ( match t.type_content with
       | T_sum c ->
-        let ct = O.CMap.find (O.Constructor s) c in
-        let%bind _assert = O.assert_type_expression_eq (expr'.type_expression, ct) in
+        let {ctor_type ; _} : O.ctor_content = O.CMap.find (O.Constructor s) c in
+        let%bind _assert = O.assert_type_expression_eq (expr'.type_expression, ctor_type) in
         return (E_constructor {constructor = Constructor s; element=expr'}) t
       | _ -> simple_fail "ll" 
     )
@@ -774,7 +772,8 @@ and type_expression' : environment -> ?tv_opt:O.type_expression -> I.expression 
         ok (O.LMap.add (convert_label k) expr' prev)
       in
       let%bind m' = Stage_common.Helpers.bind_fold_lmap aux (ok O.LMap.empty) m in
-      return (E_record m') (t_record (O.LMap.map get_type_expression m') ())
+      let lmap = O.LMap.map (fun e -> ({field_type = get_type_expression e; michelson_annotation = None}:O.field_content)) m' in
+      return (E_record m') (t_record lmap ())
   | E_record_update {record; path; update} ->
     let path = convert_label path in
     let%bind record = type_expression' e record in
@@ -785,7 +784,7 @@ and type_expression' : environment -> ?tv_opt:O.type_expression -> I.expression 
       | T_record record -> (
           let field_op = O.LMap.find_opt path record in
           match field_op with
-          | Some tv -> ok (tv)
+          | Some {field_type;_} -> ok field_type
           | None -> failwith @@ Format.asprintf "field %a is not part of record %a" Ast_typed.PP.label path O.PP.type_expression wrapped
       )
       | _ -> failwith "Update an expression which is not a record"

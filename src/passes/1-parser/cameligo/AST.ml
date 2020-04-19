@@ -166,6 +166,7 @@ and type_expr =
 | TFun    of (type_expr * arrow * type_expr) reg
 | TPar    of type_expr par reg
 | TVar    of variable
+| TStringLiteral of Lexer.lexeme reg
 
 and cartesian = (type_expr, times) nsepseq reg
 
@@ -407,6 +408,7 @@ let type_expr_to_region = function
 | TApp {region; _}
 | TFun {region; _}
 | TPar {region; _}
+| TStringLiteral {region; _}
 | TVar {region; _} -> region
 
 let list_pattern_to_region = function

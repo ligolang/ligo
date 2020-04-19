@@ -206,6 +206,7 @@ type_args:
 
 core_type:
   type_name      { TVar $1 }
+| "<string>"     { TStringLiteral $1 }
 | par(fun_type)  { TPar $1 }
 | module_name "." type_name {
     let module_name = $1.value in

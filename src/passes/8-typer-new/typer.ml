@@ -138,16 +138,18 @@ and evaluate_type (e:environment) (t:I.type_expression) : O.type_expression resu
   | T_sum m ->
     let aux k v prev =
       let%bind prev' = prev in
-      let%bind v' = evaluate_type e v in
-      ok @@ O.CMap.add (convert_constructor' k) v' prev'
+      let {ctor_type ; michelson_annotation} : I.ctor_content = v in
+      let%bind ctor_type = evaluate_type e ctor_type in
+      ok @@ O.CMap.add (convert_constructor' k) ({ctor_type ; michelson_annotation}:O.ctor_content) prev'
     in
     let%bind m = I.CMap.fold aux m (ok O.CMap.empty) in
     return (T_sum m)
   | T_record m ->
     let aux k v prev =
       let%bind prev' = prev in
-      let%bind v' = evaluate_type e v in
-      ok @@ O.LMap.add (convert_label k) v' prev'
+      let {field_type ; field_annotation} : I.field_content = v in
+      let%bind field_type = evaluate_type e field_type in
+      ok @@ O.LMap.add (convert_label k) ({field_type ; michelson_annotation=field_annotation}:O.field_content) prev'
     in
     let%bind m = I.LMap.fold aux m (ok O.LMap.empty) in
     return (T_record m)
@@ -181,10 +183,6 @@ and evaluate_type (e:environment) (t:I.type_expression) : O.type_expression resu
             let%bind k = evaluate_type e k in
             let%bind v = evaluate_type e v in
             ok @@ O.TC_map_or_big_map {k;v}
-        | TC_michelson_or (l,r) ->
-            let%bind l = evaluate_type e l in 
-            let%bind r = evaluate_type e r in 
-            ok @@ O.TC_michelson_or {l;r} 
         | TC_contract c ->
             let%bind c = evaluate_type e c in
             ok @@ O.TC_contract c
@@ -314,7 +312,7 @@ and type_expression : environment -> Solver.state -> ?tv_opt:O.type_expression -
       ok (O.LMap.add (convert_label k) expr' acc , state')
     in
     let%bind (m' , state') = Stage_common.Helpers.bind_fold_lmap aux (ok (O.LMap.empty , state)) m in
-    let wrapped = Wrap.record (O.LMap.map get_type_expression m') in
+    let wrapped = Wrap.record (O.LMap.map (fun e -> ({field_type = get_type_expression e ; michelson_annotation = None}: O.field_content)) m') in
     return_wrapped (E_record m') state' wrapped
   | E_record_update {record; path; update} ->
     let%bind (record, state) = type_expression e state record in
@@ -326,7 +324,7 @@ and type_expression : environment -> Solver.state -> ?tv_opt:O.type_expression -
       | T_record record -> (
           let field_op = O.LMap.find_opt path record in
           match field_op with
-          | Some tv -> ok (record,tv)
+          | Some {field_type=tv;_} -> ok (record,tv)
           | None -> failwith @@ Format.asprintf "field %a is not part of record" O.PP.label path
       )
       | _ -> failwith "Update an expression which is not a record"

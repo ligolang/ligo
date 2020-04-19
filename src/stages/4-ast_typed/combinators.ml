@@ -54,20 +54,20 @@ let t_contract t ?loc ?s () : type_expression = make_t ?loc (T_operator (TC_cont
 
 let t_record m ?loc ?s () : type_expression = make_t ?loc (T_record m) s
 let make_t_ez_record ?loc (lst:(string * type_expression) list) : type_expression =
-  let lst = List.map (fun (x,y) -> (Label x, y) ) lst in
+  let lst = List.map (fun (x,y) -> (Label x, {field_type=y;michelson_annotation=None}) ) lst in
   let map = LMap.of_list lst in
   make_t ?loc (T_record map) None
 let ez_t_record lst ?loc ?s () : type_expression =
   let m = LMap.of_list lst in
   t_record m ?loc ?s ()
-let t_pair a b ?loc ?s ()   : type_expression = ez_t_record [(Label "0",a) ; (Label "1",b)] ?loc ?s ()
+let t_pair a b ?loc ?s ()   : type_expression = ez_t_record [(Label "0",{field_type=a;michelson_annotation=None}) ; (Label "1",{field_type=b;michelson_annotation=None})] ?loc ?s ()
 
 let t_map ?loc k v ?s () = make_t ?loc (T_operator (TC_map { k ; v })) s
 let t_big_map ?loc k v ?s () = make_t ?loc (T_operator (TC_big_map { k ; v })) s
 let t_map_or_big_map ?loc k v ?s () = make_t ?loc (T_operator (TC_map_or_big_map { k ; v })) s
 
 let t_sum m ?loc ?s () : type_expression = make_t ?loc (T_sum m) s
-let make_t_ez_sum ?loc (lst:(constructor' * type_expression) list) : type_expression =
+let make_t_ez_sum ?loc (lst:(constructor' * ctor_content) list) : type_expression =
   let aux prev (k, v) = CMap.add k v prev in
   let map = List.fold_left aux CMap.empty lst in
   make_t ?loc (T_sum map) None
@@ -150,7 +150,9 @@ let tuple_of_record (m: _ LMap.t) =
     let opt = LMap.find_opt (Label (string_of_int i)) m in
     Option.bind (fun opt -> Some (opt,i+1)) opt
   in
-  Base.Sequence.to_list @@ Base.Sequence.unfold ~init:0 ~f:aux
+  let l = Base.Sequence.to_list @@ Base.Sequence.unfold ~init:0 ~f:aux in
+  List.map (fun {field_type;_} -> field_type) l
+
 
 let get_t_tuple (t:type_expression) : type_expression list result = match t.type_content with
   | T_record lst -> ok @@ tuple_of_record lst
@@ -178,13 +180,14 @@ let get_t_function_full (t:type_expression) : (type_expression * type_expression
     | _ -> ([],t)
   in
   let (input,output) = aux 0 t in
+  let input = List.map (fun (l,t) -> (l,{field_type = t ; michelson_annotation = None})) input in
   ok @@ (t_record (LMap.of_list input) (),output) 
 
-let get_t_sum (t:type_expression) : type_expression constructor_map result = match t.type_content with
+let get_t_sum (t:type_expression) : ctor_content constructor_map result = match t.type_content with
   | T_sum m -> ok m
   | _ -> fail @@ Errors.not_a_x_type "sum" t ()
 
-let get_t_record (t:type_expression) : type_expression label_map result = match t.type_content with
+let get_t_record (t:type_expression) : field_content label_map result = match t.type_content with
   | T_record m -> ok m
   | _ -> fail @@ Errors.not_a_x_type "record" t ()
 
@@ -306,14 +309,20 @@ let e_a_mutez n = make_e (e_mutez n) (t_mutez ())
 let e_a_bool b = make_e (e_bool b) (t_bool ())
 let e_a_string s = make_e (e_string s) (t_string ())
 let e_a_address s = make_e (e_address s) (t_address ())
-let e_a_pair a b = make_e (e_pair a b) (t_pair a.type_expression b.type_expression ())
+let e_a_pair a b = make_e (e_pair a b)
+  (t_pair a.type_expression b.type_expression () )
 let e_a_some s = make_e (e_some s) (t_option s.type_expression ())
 let e_a_lambda l in_ty out_ty = make_e (e_lambda l) (t_function in_ty out_ty ())
 let e_a_none t = make_e (e_none ()) (t_option t ())
-let e_a_record r = make_e (e_record r) (t_record (LMap.map get_type_expression r) ())
+let e_a_record r = make_e (e_record r) (t_record
+  (LMap.map
+    (fun t ->
+      let field_type = get_type_expression t in
+      {field_type ; michelson_annotation=None} )
+    r ) () )
 let e_a_application a b = make_e (e_application a b) (get_type_expression b)
 let e_a_variable v ty = make_e (e_variable v) ty
-let ez_e_a_record r = make_e (ez_e_record r) (ez_t_record (List.map (fun (x, y) -> x, y.type_expression) r) ())
+let ez_e_a_record r = make_e (ez_e_record r) (ez_t_record (List.map (fun (x, y) -> x, {field_type = y.type_expression ; michelson_annotation = None}) r) ())
 let e_a_let_in binder expr body attributes = make_e (e_let_in binder expr body attributes) (get_type_expression body)
 
 

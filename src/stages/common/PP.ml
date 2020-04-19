@@ -8,36 +8,8 @@ let constructor ppf (c:constructor') : unit =
 let label ppf (l:label) : unit =
   let Label l = l in fprintf ppf "%s" l
 
-let cmap_sep value sep ppf m =
-  let lst = CMap.to_kv_list m in
-  let lst = List.sort (fun (Constructor a,_) (Constructor b,_) -> String.compare a b) lst in
-  let new_pp ppf (k, v) = fprintf ppf "@[<h>%a -> %a@]" constructor k value v in
-  fprintf ppf "%a" (list_sep new_pp sep) lst
-
-let record_sep value sep ppf (m : 'a label_map) =
-  let lst = LMap.to_kv_list m in
-  let lst = List.sort_uniq (fun (Label a,_) (Label b,_) -> String.compare a b) lst in
-  let new_pp ppf (k, v) = fprintf ppf "@[<h>%a -> %a@]" label k value v in
-  fprintf ppf "%a" (list_sep new_pp sep) lst
-
-let tuple_sep value sep ppf m =
-  assert (Helpers.is_tuple_lmap m);
-  let lst = Helpers.tuple_of_record m in
-  let new_pp ppf (_, v) = fprintf ppf "%a" value v in
-  fprintf ppf "%a" (list_sep new_pp sep) lst
-
-(* Prints records which only contain the consecutive fields
-   0..(cardinal-1) as tuples *)
-let tuple_or_record_sep value format_record sep_record format_tuple sep_tuple ppf m =
-  if Helpers.is_tuple_lmap m then
-    fprintf ppf format_tuple (tuple_sep value (tag sep_tuple)) m
-  else
-    fprintf ppf format_record (record_sep value (tag sep_record)) m
 
 let list_sep_d x = list_sep x (tag " ,@ ")
-let cmap_sep_d x = cmap_sep x (tag " ,@ ")
-let tuple_or_record_sep_expr value = tuple_or_record_sep value "@[<hv 7>record[%a]@]" " ,@ " "@[<hv 2>( %a )@]" " ,@ "
-let tuple_or_record_sep_type value = tuple_or_record_sep value "@[<hv 7>record[%a]@]" " ,@ " "@[<hv 2>( %a )@]" " *@ "
 
 let constant ppf : constant' -> unit = function
   | C_INT                   -> fprintf ppf "INT"
@@ -200,6 +172,54 @@ module Ast_PP_type (PARAMETER : AST_PARAMETER_TYPE) = struct
   open Agt
   open Format
 
+  let cmap_sep value sep ppf m =
+    let lst = CMap.to_kv_list m in
+    let lst = List.sort (fun (Constructor a,_) (Constructor b,_) -> String.compare a b) lst in
+    let new_pp ppf (k, {ctor_type;_}) = fprintf ppf "@[<h>%a -> %a@]" constructor k value ctor_type in
+    fprintf ppf "%a" (list_sep new_pp sep) lst
+  let cmap_sep_d x = cmap_sep x (tag " ,@ ")
+
+  let record_sep value sep ppf (m : 'a label_map) =
+    let lst = LMap.to_kv_list m in
+    let lst = List.sort_uniq (fun (Label a,_) (Label b,_) -> String.compare a b) lst in
+    let new_pp ppf (k, {field_type;_}) = fprintf ppf "@[<h>%a -> %a@]" label k value field_type in
+    fprintf ppf "%a" (list_sep new_pp sep) lst
+
+  let tuple_sep value sep ppf m =
+    assert (Helpers.is_tuple_lmap m);
+    let lst = Helpers.tuple_of_record m in
+    let new_pp ppf (_, {field_type;_}) = fprintf ppf "%a" value field_type in
+    fprintf ppf "%a" (list_sep new_pp sep) lst
+
+  let record_sep_expr value sep ppf (m : 'a label_map) =
+    let lst = LMap.to_kv_list m in
+    let lst = List.sort_uniq (fun (Label a,_) (Label b,_) -> String.compare a b) lst in
+    let new_pp ppf (k, v) = fprintf ppf "@[<h>%a -> %a@]" label k value v in
+    fprintf ppf "%a" (list_sep new_pp sep) lst
+
+  let tuple_sep_expr value sep ppf m =
+    assert (Helpers.is_tuple_lmap m);
+    let lst = Helpers.tuple_of_record m in
+    let new_pp ppf (_,v) = fprintf ppf "%a" value v in
+    fprintf ppf "%a" (list_sep new_pp sep) lst
+
+  (* Prints records which only contain the consecutive fields
+    0..(cardinal-1) as tuples *)
+  let tuple_or_record_sep_t value format_record sep_record format_tuple sep_tuple ppf m =
+    if Helpers.is_tuple_lmap m then
+      fprintf ppf format_tuple (tuple_sep value (tag sep_tuple)) m
+    else
+      fprintf ppf format_record (record_sep value (tag sep_record)) m
+
+  let tuple_or_record_sep_expr value format_record sep_record format_tuple sep_tuple ppf m =
+    if Helpers.is_tuple_lmap m then
+      fprintf ppf format_tuple (tuple_sep_expr value (tag sep_tuple)) m
+    else
+      fprintf ppf format_record (record_sep_expr value (tag sep_record)) m
+
+  let tuple_or_record_sep_expr value = tuple_or_record_sep_expr value "@[<hv 7>record[%a]@]" " ,@ " "@[<hv 2>( %a )@]" " ,@ "
+  let tuple_or_record_sep_type value = tuple_or_record_sep_t value "@[<hv 7>record[%a]@]" " ,@ " "@[<hv 2>( %a )@]" " *@ "
+
   let rec type_expression' :
          (formatter -> type_expression -> unit)
       -> formatter
@@ -231,7 +251,6 @@ module Ast_PP_type (PARAMETER : AST_PARAMETER_TYPE) = struct
       | TC_map (k, v) -> Format.asprintf "Map (%a,%a)" f k f v
       | TC_big_map (k, v) -> Format.asprintf "Big Map (%a,%a)" f k f v
       | TC_map_or_big_map (k, v) -> Format.asprintf "Map Or Big Map (%a,%a)" f k f v
-      | TC_michelson_or (k, v) -> Format.asprintf "michelson_or (%a,%a)" f k f v
       | TC_arrow (k, v) -> Format.asprintf "arrow (%a,%a)" f k f v
       | TC_contract te  -> Format.asprintf "Contract (%a)" f te
     in

@@ -21,5 +21,5 @@ open Environment
 
 let env_sum_type ?(env = full_empty)
     ?(type_name = Var.of_name "a_sum_type")
-    (lst : (constructor' * type_expression) list) =
+    (lst : (constructor' * ctor_content) list) =
   add_type type_name (make_t_ez_sum lst) env

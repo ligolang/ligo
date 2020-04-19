@@ -160,6 +160,10 @@ open Operators.Concrete_to_imperative.Cameligo
 
 let r_split = Location.r_split
 
+let get_t_string_singleton_opt = function
+  | Raw.TStringLiteral s -> Some (String.(sub s.value 1 ((length s.value)-2)))
+  | _ -> None
+
 let rec pattern_to_var : Raw.pattern -> _ = fun p ->
   match p with
   | Raw.PPar p -> pattern_to_var p.value.inside
@@ -236,12 +240,44 @@ and compile_type_expression : Raw.type_expr -> type_expression result = fun te -
   | TApp x -> (
       let (x,loc) = r_split x in
       let (name, tuple) = x in
-      let lst = npseq_to_list tuple.value.inside in
-      let%bind lst' = bind_map_list compile_type_expression lst in
-      let%bind cst =
-        trace (unknown_predefined_type name) @@
-        type_operators name.value in
-      t_operator ~loc cst lst'
+      ( match name.value with
+        | "michelson_or" -> 
+          let lst = npseq_to_list tuple.value.inside in
+          (match lst with
+          | [a ; b ; c ; d ] -> (
+            let%bind b' =
+              trace_option (simple_error "second argument of michelson_or must be a string singleton") @@
+                get_t_string_singleton_opt b in
+            let%bind d' =
+              trace_option (simple_error "fourth argument of michelson_or must be a string singleton") @@
+                get_t_string_singleton_opt d in
+            let%bind a' = compile_type_expression a in
+            let%bind c' = compile_type_expression c in
+            ok @@ t_michelson_or ~loc a' b' c' d'
+            )
+          | _ -> simple_fail "michelson_or does not have the right number of argument")
+        | "michelson_pair" ->
+          let lst = npseq_to_list tuple.value.inside in
+          (match lst with
+          | [a ; b ; c ; d ] -> (
+            let%bind b' =
+              trace_option (simple_error "second argument of michelson_pair must be a string singleton") @@
+                get_t_string_singleton_opt b in
+            let%bind d' =
+              trace_option (simple_error "fourth argument of michelson_pair must be a string singleton") @@
+                get_t_string_singleton_opt d in
+            let%bind a' = compile_type_expression a in
+            let%bind c' = compile_type_expression c in
+            ok @@ t_michelson_pair ~loc a' b' c' d'
+            )
+          | _ -> simple_fail "michelson_pair does not have the right number of argument")
+        | _ ->
+          let lst = npseq_to_list tuple.value.inside in
+          let%bind lst' = bind_map_list compile_type_expression lst in
+          let%bind cst =
+          trace (unknown_predefined_type name) @@
+          type_operators name.value in
+          t_operator ~loc cst lst' )
     )
   | TProd p -> (
       let%bind tpl = compile_list_type_expression  @@ npseq_to_list p.value in
@@ -274,6 +310,7 @@ and compile_type_expression : Raw.type_expr -> type_expression result = fun te -
         @@ npseq_to_list s in
       let m = List.fold_left (fun m (x, y) -> CMap.add (Constructor x) y m) CMap.empty lst in
       ok @@ make_t ~loc @@ T_sum m
+  | TStringLiteral _s -> simple_fail "we don't support singleton string type"
 
 and compile_list_type_expression (lst:Raw.type_expr list) : type_expression result =
   match lst with

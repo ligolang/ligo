@@ -31,14 +31,14 @@ val t_variable  : ?loc:Location.t -> string -> type_expression
 (*
 val t_record    : te_map -> type_expression
 *)
-val t_pair   : ?loc:Location.t -> ( type_expression * type_expression ) -> type_expression
-val t_tuple  : ?loc:Location.t -> type_expression list -> type_expression
+val t_pair   : ?loc:Location.t -> ( field_content * field_content ) -> type_expression
+val t_tuple  : ?loc:Location.t -> field_content list -> type_expression
 
-val t_record    : ?loc:Location.t -> type_expression Map.String.t -> type_expression
-val t_record_ez : ?loc:Location.t -> (string * type_expression) list -> type_expression
+val t_record    : ?loc:Location.t -> field_content Map.String.t -> type_expression
+val t_record_ez : ?loc:Location.t -> (string * field_content) list -> type_expression
 
-val t_sum    : ?loc:Location.t -> type_expression Map.String.t -> type_expression
-val ez_t_sum : ?loc:Location.t -> ( string * type_expression ) list -> type_expression
+val t_sum    : ?loc:Location.t -> Types.ctor_content Map.String.t -> type_expression
+val ez_t_sum : ?loc:Location.t -> ( string * Types.ctor_content ) list -> type_expression
 
 val t_function : ?loc:Location.t -> type_expression -> type_expression -> type_expression
 val t_map      : ?loc:Location.t -> type_expression -> type_expression -> type_expression

@@ -185,18 +185,6 @@ let rec untranspile (v : value) (t : AST.type_expression) : AST.expression resul
         bind_fold_right_list aux init big_map'
       )
     | TC_map_or_big_map _ -> fail @@ corner_case ~loc:"untranspiler" "TC_map_or_big_map t should not be present in mini-c"
-    | TC_michelson_or {l=l_ty; r=r_ty} -> (
-        let%bind v' = bind_map_or (get_left , get_right) v in
-        ( match v' with
-          | D_left l  ->
-            let%bind l' = untranspile l l_ty in
-            return @@ E_constructor { constructor = Constructor "M_left" ; element = l' }
-          | D_right r ->
-            let%bind r' = untranspile r r_ty in
-            return @@ E_constructor { constructor = Constructor "M_right" ; element = r' }
-          | _ -> fail (wrong_mini_c_value "michelson_or" v)
-        )
-      )
     | TC_list ty -> (
         let%bind lst =
           trace_strong (wrong_mini_c_value "list" v) @@
@@ -232,7 +220,7 @@ let rec untranspile (v : value) (t : AST.type_expression) : AST.expression resul
       fail @@ bad_untranspile "contract" v
   )
   | T_sum m ->
-      let lst = kv_list_of_cmap m in
+      let lst = List.map (fun (k,{ctor_type;_}) -> (k,ctor_type)) @@ kv_list_of_cmap m in
       let%bind node = match Append_tree.of_list lst with
         | Empty -> fail @@ corner_case ~loc:__LOC__ "empty sum type"
         | Full t -> ok t
@@ -243,7 +231,7 @@ let rec untranspile (v : value) (t : AST.type_expression) : AST.expression resul
       let%bind sub = untranspile v tv in
       return (E_constructor {constructor=Constructor name;element=sub})
   | T_record m ->
-      let lst = Ast_typed.Helpers.kv_list_of_record_or_tuple m in
+      let lst = List.map (fun (k,{field_type;_}) -> (k,field_type)) @@ Ast_typed.Helpers.kv_list_of_record_or_tuple m in
       let%bind node = match Append_tree.of_list lst with
         | Empty -> fail @@ corner_case ~loc:__LOC__ "empty record"
         | Full t -> ok t in

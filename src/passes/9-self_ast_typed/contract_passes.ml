@@ -62,8 +62,10 @@ let self_typing : contract_pass_data -> expression -> (bool * contract_pass_data
       | E_literal (Literal_string ep) -> check_entrypoint_annotation_format ep entrypoint_exp
       | _ -> fail @@ Errors.entrypoint_annotation_not_literal entrypoint_exp.location in
     let%bind entrypoint_t = match dat.contract_type.parameter.type_content with
-      | T_sum cmap -> trace_option (Errors.unmatched_entrypoint entrypoint_exp.location)
-                      @@ CMap.find_opt (Constructor entrypoint) cmap
+      | T_sum cmap ->
+        let%bind {ctor_type;_} = trace_option (Errors.unmatched_entrypoint entrypoint_exp.location) @@
+          CMap.find_opt (Constructor entrypoint) cmap in
+        ok ctor_type
       | t -> ok {dat.contract_type.parameter with type_content = t} in
     let%bind () =
       trace_strong (bad_self_err ()) @@

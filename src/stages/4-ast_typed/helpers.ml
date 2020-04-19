@@ -9,7 +9,6 @@ let map_type_operator f = function
   | TC_map {k ; v} -> TC_map { k = f k ; v = f v }
   | TC_big_map {k ; v}-> TC_big_map { k = f k ; v = f v }
   | TC_map_or_big_map { k ; v }-> TC_map_or_big_map { k = f k ; v = f v }
-  | TC_michelson_or { l ; r } -> TC_michelson_or { l = f l ; r = f r }
   | TC_arrow {type1 ; type2} -> TC_arrow { type1 = f type1 ; type2 = f type2 }
 
 let bind_map_type_operator f = function
@@ -20,7 +19,6 @@ let bind_map_type_operator f = function
   | TC_map {k ; v} -> let%bind k = f k in let%bind v = f v in ok @@ TC_map {k ; v}
   | TC_big_map {k ; v} -> let%bind k = f k in let%bind v = f v in ok @@ TC_big_map {k ; v}
   | TC_map_or_big_map {k ; v} -> let%bind k = f k in let%bind v = f v in ok @@ TC_map_or_big_map {k ; v}
-  | TC_michelson_or {l ; r}-> let%bind l = f l in let%bind r = f r in ok @@ TC_michelson_or {l ; r}
   | TC_arrow {type1 ; type2}-> let%bind type1 = f type1 in let%bind type2 = f type2 in ok @@ TC_arrow {type1 ; type2}
 
 let type_operator_name = function
@@ -31,7 +29,6 @@ let type_operator_name = function
   | TC_map      _ -> "TC_map"
   | TC_big_map  _ -> "TC_big_map"
   | TC_map_or_big_map _ -> "TC_map_or_big_map"
-  | TC_michelson_or   _ -> "TC_michelson_or"
   | TC_arrow    _ -> "TC_arrow"
 
 let type_expression'_of_string = function
@@ -71,7 +68,6 @@ let string_of_type_operator = function
   | TC_map            { k ; v }         -> "TC_map"      , [k ; v]
   | TC_big_map        { k ; v }         -> "TC_big_map"  , [k ; v]
   | TC_map_or_big_map { k ; v }         -> "TC_map_or_big_map"  , [k ; v]
-  | TC_michelson_or   { l ; r }         -> "TC_michelson_or"    , [l ; r]
   | TC_arrow          { type1 ; type2 } -> "TC_arrow"    , [type1 ; type2]
 
 let string_of_type_constant = function
@@ -124,6 +120,11 @@ let bind_fold_lmap f init (lmap:_ LMap.t) =
   LMap.fold aux lmap init
 
 let bind_map_lmap f map = bind_lmap (LMap.map f map)
+let bind_map_lmap_t f map = bind_lmap (
+  LMap.map 
+    (fun ({field_type;_}) -> 
+      f field_type)
+    map)
 let bind_map_cmap f map = bind_cmap (CMap.map f map)
 let bind_map_lmapi f map = bind_lmap (LMap.mapi f map)
 let bind_map_cmapi f map = bind_cmap (CMap.mapi f map)
@@ -141,7 +142,7 @@ let is_tuple_lmap m =
 let get_pair m =
   let open Trace in
   match (LMap.find_opt (Label "0") m , LMap.find_opt (Label "1") m) with
-  | Some e1, Some e2 -> ok (e1,e2)
+  | Some {field_type=e1;_}, Some {field_type=e2;_} -> ok (e1,e2)
   | _ -> simple_fail "not a pair"
 
 let tuple_of_record (m: _ LMap.t) =
@@ -169,3 +170,12 @@ let is_michelson_or (t: _ constructor_map) =
   CMap.cardinal t = 2 && 
   (CMap.mem (Constructor "M_left") t) &&
   (CMap.mem (Constructor "M_right") t)
+
+let is_michelson_pair (t: _ label_map) =
+  let l = LMap.to_list t in
+  List.fold_left
+    (fun prev {field_type=_;michelson_annotation} -> match michelson_annotation with
+      | Some _ -> true
+      | None -> prev)
+    false 
+    l

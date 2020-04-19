@@ -25,15 +25,15 @@ val t_option : type_expression -> ?loc:Location.t -> ?s:S.type_expression -> uni
 val t_pair : type_expression -> type_expression -> ?loc:Location.t -> ?s:S.type_expression -> unit -> type_expression
 val t_list  : type_expression -> ?loc:Location.t -> ?s:S.type_expression -> unit -> type_expression
 val t_variable : type_variable -> ?loc:Location.t -> ?s:S.type_expression -> unit -> type_expression
-val t_record : type_expression label_map -> ?loc:Location.t -> ?s:S.type_expression -> unit -> type_expression
+val t_record : te_lmap -> ?loc:Location.t -> ?s:S.type_expression -> unit -> type_expression
 val make_t_ez_record : ?loc:Location.t -> (string* type_expression) list -> type_expression 
-val ez_t_record : ( label * type_expression ) list -> ?loc:Location.t -> ?s:S.type_expression -> unit -> type_expression 
+val ez_t_record : ( label * field_content ) list -> ?loc:Location.t -> ?s:S.type_expression -> unit -> type_expression 
 
 val t_map : ?loc:Location.t -> type_expression -> type_expression -> ?s:S.type_expression -> unit -> type_expression
 val t_big_map : ?loc:Location.t -> type_expression -> type_expression -> ?s:S.type_expression -> unit -> type_expression
 val t_map_or_big_map : ?loc:Location.t -> type_expression -> type_expression ->  ?s:S.type_expression -> unit -> type_expression
-val t_sum : type_expression constructor_map -> ?loc:Location.t -> ?s:S.type_expression -> unit -> type_expression
-val make_t_ez_sum : ?loc:Location.t -> ( constructor' * type_expression ) list -> type_expression
+val t_sum : Types.te_cmap -> ?loc:Location.t -> ?s:S.type_expression -> unit -> type_expression
+val make_t_ez_sum : ?loc:Location.t -> ( constructor' * ctor_content ) list -> type_expression
 val t_function : type_expression -> type_expression -> ?loc:Location.t -> ?s:S.type_expression -> unit -> type_expression
 val t_shallow_closure : type_expression -> type_expression -> ?loc:Location.t -> ?s:S.type_expression -> unit -> type_expression
 val get_type_expression : expression -> type_expression
@@ -64,8 +64,8 @@ val get_t_tuple : type_expression -> type_expression list result
 val get_t_pair : type_expression -> ( type_expression * type_expression ) result
 val get_t_function : type_expression -> ( type_expression * type_expression ) result
 val get_t_function_full : type_expression -> ( type_expression * type_expression ) result
-val get_t_sum : type_expression -> type_expression constructor_map result
-val get_t_record : type_expression -> type_expression label_map result
+val get_t_sum : type_expression -> ctor_content constructor_map result
+val get_t_record : type_expression -> field_content label_map result
 val get_t_map : type_expression -> ( type_expression * type_expression ) result
 val get_t_big_map : type_expression -> ( type_expression * type_expression ) result
 val get_t_map_key : type_expression -> type_expression result

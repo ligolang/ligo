@@ -19,8 +19,8 @@ type type_constant =
     | TC_timestamp
     | TC_void
 
-type te_cmap = type_expression constructor_map
-and te_lmap = type_expression label_map
+type te_cmap = ctor_content constructor_map
+and te_lmap = field_content label_map
 and type_meta = ast_core_type_expression option
 
 and type_content =
@@ -35,6 +35,18 @@ and arrow = {
     type1: type_expression;
     type2: type_expression;
   }
+
+and annot_option = string option
+
+and ctor_content = {
+    ctor_type : type_expression;
+    michelson_annotation : annot_option;
+}
+
+and field_content = {
+    field_type : type_expression;
+    michelson_annotation : annot_option;
+}
 
 and type_map_args = {
     k : type_expression;
@@ -54,7 +66,6 @@ and type_operator =
   | TC_map of type_map_args
   | TC_big_map of type_map_args
   | TC_map_or_big_map of type_map_args
-  | TC_michelson_or of michelson_or_args
   | TC_arrow of arrow
 
 

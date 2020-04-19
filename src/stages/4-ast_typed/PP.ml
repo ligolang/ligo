@@ -15,8 +15,7 @@ let label ppf (l:label) : unit =
   let Label l = l in fprintf ppf "%s" l
 
 let cmap_sep value sep ppf m =
-  let lst = CMap.to_kv_list m in
-  let lst = List.sort (fun (Constructor a,_) (Constructor b,_) -> String.compare a b) lst in
+  let lst = List.sort (fun (Constructor a,_) (Constructor b,_) -> String.compare a b) m in
   let new_pp ppf (k, v) = fprintf ppf "@[<h>%a -> %a@]" constructor k value v in
   fprintf ppf "%a" (list_sep new_pp sep) lst
 
@@ -32,6 +31,18 @@ let tuple_sep value sep ppf m =
   let new_pp ppf (_, v) = fprintf ppf "%a" value v in
   fprintf ppf "%a" (list_sep new_pp sep) lst
 
+let record_sep_t value sep ppf (m : 'a label_map) =
+  let lst = LMap.to_kv_list m in
+  let lst = List.sort_uniq (fun (Label a,_) (Label b,_) -> String.compare a b) lst in
+  let new_pp ppf (k, {field_type;_}) = fprintf ppf "@[<h>%a -> %a@]" label k value field_type in
+  fprintf ppf "%a" (list_sep new_pp sep) lst
+
+let tuple_sep_t value sep ppf m =
+  assert (Helpers.is_tuple_lmap m);
+  let lst = Helpers.tuple_of_record m in
+  let new_pp ppf (_, {field_type;_}) = fprintf ppf "%a" value field_type in
+  fprintf ppf "%a" (list_sep new_pp sep) lst
+
 (* Prints records which only contain the consecutive fields
    0..(cardinal-1) as tuples *)
 let tuple_or_record_sep value format_record sep_record format_tuple sep_tuple ppf m =
@@ -39,11 +50,16 @@ let tuple_or_record_sep value format_record sep_record format_tuple sep_tuple pp
     fprintf ppf format_tuple (tuple_sep value (tag sep_tuple)) m
   else
     fprintf ppf format_record (record_sep value (tag sep_record)) m
+let tuple_or_record_sep_t value format_record sep_record format_tuple sep_tuple ppf m =
+  if Helpers.is_tuple_lmap m then
+    fprintf ppf format_tuple (tuple_sep_t value (tag sep_tuple)) m
+  else
+    fprintf ppf format_record (record_sep_t value (tag sep_record)) m
 
 let list_sep_d x = list_sep x (tag " ,@ ")
 let cmap_sep_d x = cmap_sep x (tag " ,@ ")
 let tuple_or_record_sep_expr value = tuple_or_record_sep value "@[<hv 7>record[%a]@]" " ,@ " "@[<hv 2>( %a )@]" " ,@ "
-let tuple_or_record_sep_type value = tuple_or_record_sep value "@[<hv 7>record[%a]@]" " ,@ " "@[<hv 2>( %a )@]" " *@ "
+let tuple_or_record_sep_type value = tuple_or_record_sep_t value "@[<hv 7>record[%a]@]" " ,@ " "@[<hv 2>( %a )@]" " *@ "
 
 let constant ppf : constant' -> unit = function
   | C_INT                   -> fprintf ppf "INT"
@@ -210,7 +226,7 @@ let rec type_expression' :
           -> unit =
   fun f ppf te ->
   match te.type_content with
-  | T_sum m -> fprintf ppf "@[<hv 4>sum[%a]@]" (cmap_sep_d f) m
+  | T_sum m -> fprintf ppf "@[<hv 4>sum[%a]@]" (cmap_sep_d f) (List.map (fun (c,{ctor_type;_}) -> (c,ctor_type)) (CMap.to_kv_list m))
   | T_record m -> fprintf ppf "%a" (tuple_or_record_sep_type f) m
   | T_arrow a -> fprintf ppf "%a -> %a" f a.type1 f a.type2
   | T_variable tv -> type_variable ppf tv
@@ -234,7 +250,6 @@ and type_operator :
     | TC_map {k; v} -> Format.asprintf "Map (%a,%a)" f k f v
     | TC_big_map {k; v} -> Format.asprintf "Big Map (%a,%a)" f k f v
     | TC_map_or_big_map {k; v} -> Format.asprintf "Map Or Big Map (%a,%a)" f k f v
-    | TC_michelson_or {l; r} -> Format.asprintf "michelson_or (%a,%a)" f l f r
     | TC_arrow {type1; type2} -> Format.asprintf "arrow (%a,%a)" f type1 f type2
     | TC_contract te  -> Format.asprintf "Contract (%a)" f te
   in

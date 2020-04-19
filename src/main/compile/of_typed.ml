@@ -15,8 +15,8 @@ let assert_equal_contract_type : check_type -> string -> Ast_typed.program -> As
   | T_arrow {type1=args} -> (
       match args.type_content with
       | T_record m when LMap.cardinal m = 2 -> (
-        let param_exp = LMap.find (Label "0") m in
-        let storage_exp = LMap.find (Label "1") m in
+        let {field_type=param_exp;_} = LMap.find (Label "0") m in
+        let {field_type=storage_exp;_} = LMap.find (Label "1") m in
           match c with
           | Check_parameter -> assert_type_expression_eq (param_exp,   param.type_expression)
           | Check_storage   -> assert_type_expression_eq (storage_exp, param.type_expression)

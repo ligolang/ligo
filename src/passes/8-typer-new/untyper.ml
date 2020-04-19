@@ -149,16 +149,18 @@ let rec untype_type_expression (t:O.type_expression) : (I.type_expression) resul
   (* TODO: or should we use t.core if present? *)
   let%bind t = match t.type_content with
   | O.T_sum x ->
-    let aux k v acc =
+    let aux k ({ctor_type ; michelson_annotation} : O.ctor_content) acc =
       let%bind acc = acc in
-      let%bind v' = untype_type_expression v in
+      let%bind ctor_type = untype_type_expression ctor_type in
+      let v' : I.ctor_content = {ctor_type ; michelson_annotation} in 
       ok @@ I.CMap.add (unconvert_constructor' k) v' acc in
     let%bind x' = O.CMap.fold aux x (ok I.CMap.empty) in
     ok @@ I.T_sum x'
   | O.T_record x ->
-    let aux k v acc =
+    let aux k ({field_type ; michelson_annotation} : O.field_content) acc =
       let%bind acc = acc in
-      let%bind v' = untype_type_expression v in
+      let%bind field_type = untype_type_expression field_type in
+      let v' = ({field_type ; field_annotation=michelson_annotation} : I.field_content) in
       ok @@ I.LMap.add (unconvert_label k) v' acc in
     let%bind x' = O.LMap.fold aux x (ok I.LMap.empty) in
     ok @@ I.T_record x'
@@ -192,10 +194,6 @@ let rec untype_type_expression (t:O.type_expression) : (I.type_expression) resul
          let%bind k = untype_type_expression k in
          let%bind v = untype_type_expression v in
          ok @@ I.TC_map_or_big_map (k,v)
-      | O.TC_michelson_or {l;r} ->     
-         let%bind l = untype_type_expression l in
-         let%bind r = untype_type_expression r in
-         ok @@ I.TC_michelson_or (l,r)
       | O.TC_arrow { type1=arg ; type2=ret } ->
          let%bind arg' = untype_type_expression arg in
          let%bind ret' = untype_type_expression ret in

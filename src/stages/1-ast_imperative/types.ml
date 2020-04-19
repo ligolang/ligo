@@ -15,6 +15,8 @@ type type_content =
 
 and arrow = {type1: type_expression; type2: type_expression}
 
+and michelson_prct_annotation = string
+
 and type_operator =
   | TC_contract of type_expression
   | TC_option of type_expression
@@ -22,8 +24,9 @@ and type_operator =
   | TC_set of type_expression
   | TC_map of type_expression * type_expression
   | TC_big_map of type_expression * type_expression
-  | TC_michelson_or of type_expression * type_expression
   | TC_arrow of type_expression * type_expression
+  | TC_michelson_or of type_expression * michelson_prct_annotation * type_expression * michelson_prct_annotation
+  | TC_michelson_pair of type_expression * michelson_prct_annotation * type_expression * michelson_prct_annotation
 
 and type_expression = {type_content: type_content; location: Location.t}
 

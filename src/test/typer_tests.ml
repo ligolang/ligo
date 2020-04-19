@@ -55,8 +55,9 @@ module TestExpressions = struct
       O.(make_t_ez_record [("0",t_int ()); ("1",t_string ())])
 
   let constructor () : unit result =
-    let variant_foo_bar =
-      O.[(Typed.Constructor "foo", t_int ()); (Constructor "bar", t_string ())]
+    let variant_foo_bar : (Typed.constructor' * Typed.ctor_content) list = [
+        (Typed.Constructor "foo", {ctor_type = Typed.t_int () ; michelson_annotation = None});
+        (Typed.Constructor "bar", {ctor_type = Typed.t_string () ; michelson_annotation = None}) ]
     in test_expression
       ~env:(E.env_sum_type variant_foo_bar)
       I.(e_constructor "foo" (e_int 32))

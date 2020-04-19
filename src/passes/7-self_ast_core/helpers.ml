@@ -1,6 +1,9 @@
-open Ast_sugar
+open Ast_core
 open Trace
 open Stage_common.Helpers
+
+include Stage_common.PP
+include Stage_common.Types.Ast_generic_type(Ast_core_parameter)
 
 let bind_map_cmap f map = bind_cmap (
   CMap.map 
@@ -21,18 +24,11 @@ let rec fold_expression : 'a folder -> 'a -> expression -> 'a result = fun f ini
   let self = fold_expression f in 
   let%bind init' = f init e in
   match e.expression_content with
-  | E_literal _ | E_variable _ | E_skip -> ok init'
-  | E_list lst | E_set lst | E_constant {arguments=lst} -> (
+  | E_literal _ | E_variable _ -> ok init'
+  | E_constant {arguments=lst} -> (
     let%bind res = bind_fold_list self init' lst in
     ok res
   )
-  | E_map lst | E_big_map lst -> (
-    let%bind res = bind_fold_list (bind_fold_pair self) init' lst in
-    ok res
-  )
-  | E_look_up ab ->
-      let%bind res = bind_fold_pair self init' ab in
-      ok res
   | E_application {lamb;args} -> (
       let ab = (lamb,args) in
       let%bind res = bind_fold_pair self init' ab in
@@ -70,36 +66,9 @@ let rec fold_expression : 'a folder -> 'a -> expression -> 'a result = fun f ini
       let%bind res = self res let_result in
       ok res
     )
-  | E_cond {condition; then_clause; else_clause} ->
-      let%bind res = self init' condition in
-      let%bind res = self res then_clause in
-      let%bind res = self res else_clause in
-      ok res
   | E_recursive { lambda={result=e;_}; _} ->
       let%bind res = self init' e in
       ok res
-  | E_sequence {expr1;expr2} ->
-      let ab = (expr1,expr2) in
-      let%bind res = bind_fold_pair self init' ab in
-      ok res
-  | E_tuple t -> (
-    let aux init'' expr =
-      let%bind res = fold_expression self init'' expr in
-      ok res
-    in
-    let%bind res = bind_fold_list aux (init') t in
-    ok res
-  )
-  | E_tuple_update {tuple;update} -> (
-    let%bind res = self init' tuple in
-    let%bind res = fold_expression self res update in
-    ok res 
-  )
-  | E_tuple_accessor {tuple} -> (
-     let%bind res = self init' tuple in
-     ok res
-    )
-     
 
 and fold_cases : 'a folder -> 'a -> matching_expr -> 'a result = fun f init m ->
   match m with
@@ -140,26 +109,6 @@ let rec map_expression : exp_mapper -> expression -> expression result = fun f e
   let%bind e' = f e in
   let return expression_content = ok { e' with expression_content } in
   match e'.expression_content with
-  | E_list lst -> (
-    let%bind lst' = bind_map_list self lst in
-    return @@ E_list lst'
-  )
-  | E_set lst -> (
-    let%bind lst' = bind_map_list self lst in
-    return @@ E_set lst'
-  )
-  | E_map lst -> (
-    let%bind lst' = bind_map_list (bind_map_pair self) lst in
-    return @@ E_map lst'
-  )
-  | E_big_map lst -> (
-    let%bind lst' = bind_map_list (bind_map_pair self) lst in
-    return @@ E_big_map lst'
-  )
-  | E_look_up ab -> (
-      let%bind ab' = bind_map_pair self ab in
-      return @@ E_look_up ab'
-    )
   | E_ascription ascr -> (
       let%bind e' = self ascr.anno_expr in
       return @@ E_ascription {ascr with anno_expr=e'}
@@ -191,10 +140,10 @@ let rec map_expression : exp_mapper -> expression -> expression result = fun f e
       let%bind (lamb,args) = bind_map_pair self ab in
       return @@ E_application {lamb;args}
     )
-  | E_let_in { let_binder ; mut; rhs ; let_result; inline } -> (
+  | E_let_in { let_binder ; rhs ; let_result; inline } -> (
       let%bind rhs = self rhs in
       let%bind let_result = self let_result in
-      return @@ E_let_in { let_binder ; mut; rhs ; let_result; inline }
+      return @@ E_let_in { let_binder ; rhs ; let_result; inline }
     )
   | E_lambda { binder ; input_type ; output_type ; result } -> (
       let%bind result = self result in
@@ -208,44 +157,19 @@ let rec map_expression : exp_mapper -> expression -> expression result = fun f e
       let%bind args = bind_map_list self c.arguments in
       return @@ E_constant {c with arguments=args}
     )
-  | E_cond {condition; then_clause; else_clause} ->
-      let%bind condition   = self condition in
-      let%bind then_clause = self then_clause in
-      let%bind else_clause = self else_clause in
-      return @@ E_cond {condition;then_clause;else_clause}
-  | E_sequence {expr1;expr2} -> (
-      let%bind (expr1,expr2) = bind_map_pair self (expr1,expr2) in
-      return @@ E_sequence {expr1;expr2}
-    )
-  | E_tuple t -> (
-    let%bind t' = bind_map_list self t in
-    return @@ E_tuple t'
-  )
-  | E_tuple_update {tuple; path; update} -> (
-    let%bind tuple  = self tuple in
-    let%bind update = self update in
-    return @@ E_tuple_update {tuple; path; update}
-  )
-  | E_tuple_accessor {tuple;path} -> (
-     let%bind tuple = self tuple in
-     return @@ E_tuple_accessor {tuple;path}
-    )
-  | E_literal _ | E_variable _ | E_skip as e' -> return e'
+  | E_literal _ | E_variable _ as e' -> return e'
 
-and map_type_expression : ty_exp_mapper -> type_expression -> type_expression result = fun f te ->
+and map_type_expression : ty_exp_mapper -> type_expression -> type_expression result = fun f ({type_content ; location ; type_meta} as te) ->
   let self = map_type_expression f in
   let%bind te' = f te in
-  let return type_content = ok { type_content; location=te.location } in
-  match te'.type_content with
+  let return type_content = ok { type_content; location ; type_meta } in
+  match type_content with
   | T_sum temap ->
     let%bind temap' = bind_map_cmap self temap in
     return @@ (T_sum temap')
   | T_record temap ->
     let%bind temap' = bind_map_lmap_t self temap in
     return @@ (T_record temap')
-  | T_tuple telst ->
-    let%bind telst' = bind_map_list self telst in
-    return @@ (T_tuple telst')
   | T_arrow {type1 ; type2} ->
     let%bind type1' = self type1 in
     let%bind type2' = self type2 in
@@ -307,26 +231,6 @@ let rec fold_map_expression : 'a fold_mapper -> 'a -> expression -> ('a * expres
   else
   let return expression_content = { e' with expression_content } in
   match e'.expression_content with
-  | E_list lst -> (
-    let%bind (res, lst') = bind_fold_map_list self init' lst in
-    ok (res, return @@ E_list lst')
-  )
-  | E_set lst -> (
-    let%bind (res, lst') = bind_fold_map_list self init' lst in
-    ok (res, return @@ E_set lst')
-  )
-  | E_map lst -> (
-    let%bind (res, lst') = bind_fold_map_list (bind_fold_map_pair self) init' lst in
-    ok (res, return @@ E_map lst')
-  )
-  | E_big_map lst -> (
-    let%bind (res, lst') = bind_fold_map_list (bind_fold_map_pair self) init' lst in
-    ok (res, return @@ E_big_map lst')
-  )
-  | E_look_up ab -> (
-      let%bind (res, ab') = bind_fold_map_pair self init' ab in
-      ok (res, return @@ E_look_up ab')
-    )
   | E_ascription ascr -> (
       let%bind (res,e') = self init' ascr.anno_expr in
       ok (res, return @@ E_ascription {ascr with anno_expr=e'})
@@ -350,19 +254,6 @@ let rec fold_map_expression : 'a fold_mapper -> 'a -> expression -> ('a * expres
     let%bind (res, update) = self res update in
     ok (res, return @@ E_record_update {record;path;update})
   )
-  | E_tuple t -> (
-    let%bind (res, t') = bind_fold_map_list self init' t in
-    ok (res, return @@ E_tuple t')
-  )
-  | E_tuple_update {tuple; path; update} -> (
-    let%bind (res, tuple) = self init' tuple in
-    let%bind (res, update) = self res update in
-    ok (res, return @@ E_tuple_update {tuple;path;update})
-  )
-  | E_tuple_accessor {tuple; path} -> (
-     let%bind (res, tuple) = self init' tuple in
-     ok (res, return @@ E_tuple_accessor {tuple; path})
-    )
   | E_constructor c -> (
       let%bind (res,e') = self init' c.element in
       ok (res, return @@ E_constructor {c with element = e'})
@@ -372,10 +263,10 @@ let rec fold_map_expression : 'a fold_mapper -> 'a -> expression -> ('a * expres
       let%bind (res,(a,b)) = bind_fold_map_pair self init' ab in
       ok (res, return @@ E_application {lamb=a;args=b})
     )
-  | E_let_in { let_binder ; mut; rhs ; let_result; inline } -> (
+  | E_let_in { let_binder ; rhs ; let_result; inline } -> (
       let%bind (res,rhs) = self init' rhs in
       let%bind (res,let_result) = self res let_result in
-      ok (res, return @@ E_let_in { let_binder ; mut; rhs ; let_result ; inline })
+      ok (res, return @@ E_let_in { let_binder ; rhs ; let_result ; inline })
     )
   | E_lambda { binder ; input_type ; output_type ; result } -> (
       let%bind (res,result) = self init' result in
@@ -389,16 +280,7 @@ let rec fold_map_expression : 'a fold_mapper -> 'a -> expression -> ('a * expres
       let%bind (res,args) = bind_fold_map_list self init' c.arguments in
       ok (res, return @@ E_constant {c with arguments=args})
     )
-  | E_cond {condition; then_clause; else_clause} ->
-      let%bind res,condition   = self init' condition in
-      let%bind res,then_clause = self res then_clause in
-      let%bind res,else_clause = self res else_clause in
-      ok (res, return @@ E_cond {condition;then_clause;else_clause})
-  | E_sequence {expr1;expr2} -> (
-      let%bind (res,(expr1,expr2)) = bind_fold_map_pair self init' (expr1,expr2) in
-      ok (res, return @@ E_sequence {expr1;expr2})
-    )
-  | E_literal _ | E_variable _ | E_skip as e' -> ok (init', return e')
+  | E_literal _ | E_variable _ as e' -> ok (init', return e')
 
 and fold_map_cases : 'a fold_mapper -> 'a -> matching_expr -> ('a * matching_expr) result = fun f init m ->
   match m with

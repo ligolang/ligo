@@ -16,4 +16,4 @@ val e_a_empty_record : expression label_map -> expression
 val ez_e_a_empty_record : ( label * expression ) list -> expression
 val e_a_empty_lambda : lambda -> type_expression -> type_expression -> expression
 
-val env_sum_type : ?env:full_environment -> ?type_name:type_variable -> (constructor' * type_expression) list ->  full_environment
+val env_sum_type : ?env:full_environment -> ?type_name:type_variable -> (constructor' * ctor_content) list ->  full_environment

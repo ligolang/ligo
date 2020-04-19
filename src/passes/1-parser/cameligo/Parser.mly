@@ -149,6 +149,7 @@ cartesian:
 core_type:
   type_name      { TVar $1 }
 | par(type_expr) { TPar $1 }
+| "<string>"     { TStringLiteral $1 }
 | module_name "." type_name {
     let module_name = $1.value in
     let type_name   = $3.value in

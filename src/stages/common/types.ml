@@ -36,15 +36,21 @@ end
 module Ast_generic_type (PARAMETER : AST_PARAMETER_TYPE) = struct
   open PARAMETER
 
+  type michelson_annotation = string
+
   type type_content =
-    | T_sum of type_expression constructor_map
-    | T_record of type_expression label_map
+    | T_sum of ctor_content constructor_map
+    | T_record of field_content label_map
     | T_arrow of arrow
     | T_variable of type_variable
     | T_constant of type_constant
     | T_operator of type_operator
 
   and arrow = {type1: type_expression; type2: type_expression}
+  
+  and ctor_content = {ctor_type : type_expression ; michelson_annotation : string option}
+
+  and field_content = {field_type : type_expression ; field_annotation : string option}
 
   and type_operator =
     | TC_contract of type_expression
@@ -54,7 +60,6 @@ module Ast_generic_type (PARAMETER : AST_PARAMETER_TYPE) = struct
     | TC_map of type_expression * type_expression
     | TC_big_map of type_expression * type_expression
     | TC_map_or_big_map of type_expression * type_expression
-    | TC_michelson_or of type_expression * type_expression
     | TC_arrow of type_expression * type_expression
 
 
@@ -69,7 +74,6 @@ module Ast_generic_type (PARAMETER : AST_PARAMETER_TYPE) = struct
     | TC_map (x , y) -> TC_map (f x , f y)
     | TC_big_map (x , y)-> TC_big_map (f x , f y)
     | TC_map_or_big_map (x , y)-> TC_map_or_big_map (f x , f y)
-    | TC_michelson_or (x , y)-> TC_michelson_or (f x , f y)
     | TC_arrow (x, y) -> TC_arrow (f x, f y)
 
   let bind_map_type_operator f = function
@@ -80,7 +84,6 @@ module Ast_generic_type (PARAMETER : AST_PARAMETER_TYPE) = struct
     | TC_map (x , y) -> let%bind x = f x in let%bind y = f y in ok @@ TC_map (x , y)
     | TC_big_map (x , y)-> let%bind x = f x in let%bind y = f y in ok @@ TC_big_map (x , y)
     | TC_map_or_big_map (x , y)-> let%bind x = f x in let%bind y = f y in ok @@ TC_map_or_big_map (x , y)
-    | TC_michelson_or (x , y)-> let%bind x = f x in let%bind y = f y in ok @@ TC_michelson_or (x , y)
     | TC_arrow (x , y)-> let%bind x = f x in let%bind y = f y in ok @@ TC_arrow (x , y)
 
   let type_operator_name = function
@@ -91,7 +94,6 @@ module Ast_generic_type (PARAMETER : AST_PARAMETER_TYPE) = struct
       | TC_map      _ -> "TC_map"
       | TC_big_map  _ -> "TC_big_map"
       | TC_map_or_big_map _ -> "TC_map_or_big_map"
-      | TC_michelson_or _ -> "TC_michelson_or"
       | TC_arrow    _ -> "TC_arrow"
 
   let type_expression'_of_string = function
@@ -131,7 +133,6 @@ module Ast_generic_type (PARAMETER : AST_PARAMETER_TYPE) = struct
     | TC_map            (x , y) -> "TC_map"          , [x ; y]
     | TC_big_map        (x , y) -> "TC_big_map"      , [x ; y]
     | TC_map_or_big_map (x , y) -> "TC_map_or_big_map"  , [x ; y]
-    | TC_michelson_or   (x , y) -> "TC_michelson_or" , [x ; y]
     | TC_arrow          (x , y) -> "TC_arrow"        , [x ; y]
 
   let string_of_type_constant = function

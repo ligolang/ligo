@@ -17,7 +17,7 @@ let%expect_test _ =
   run_ligo_good [ "compile-contract" ; contract "michelson_or_tree.mligo" ; "main" ] ;
   [%expect {|
     { parameter unit ;
-      storage (or int (or int nat)) ;
+      storage (or (int %three) (or %four (int %one) (nat %two))) ;
       code { PUSH int 1 ;
              LEFT nat ;
              RIGHT int ;

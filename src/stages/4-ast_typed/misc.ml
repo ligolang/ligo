@@ -342,9 +342,8 @@ let rec assert_type_expression_eq (a, b: (type_expression * type_expression)) : 
       | (TC_map {k=ka;v=va} | TC_map_or_big_map {k=ka;v=va}), (TC_map {k=kb;v=vb} | TC_map_or_big_map {k=kb;v=vb})
       | (TC_big_map {k=ka;v=va} | TC_map_or_big_map {k=ka;v=va}), (TC_big_map {k=kb;v=vb} | TC_map_or_big_map {k=kb;v=vb})
         -> ok @@ ([ka;va] ,[kb;vb]) 
-      | TC_michelson_or {l=la;r=ra}, TC_michelson_or {l=lb;r=rb} -> ok @@ ([la;ra] , [lb;rb])
-      | (TC_option _ | TC_list _ | TC_contract _ | TC_set _ | TC_map _ | TC_big_map _ | TC_map_or_big_map _ | TC_arrow _| TC_michelson_or _ ),
-        (TC_option _ | TC_list _ | TC_contract _ | TC_set _ | TC_map _ | TC_big_map _ | TC_map_or_big_map _ | TC_arrow _| TC_michelson_or _ )
+      | (TC_option _ | TC_list _ | TC_contract _ | TC_set _ | TC_map _ | TC_big_map _ | TC_map_or_big_map _ | TC_arrow _ ),
+        (TC_option _ | TC_list _ | TC_contract _ | TC_set _ | TC_map _ | TC_big_map _ | TC_map_or_big_map _ | TC_arrow _ )
         -> fail @@ different_operators opa opb
       in
       if List.length lsta <> List.length lstb then
@@ -357,7 +356,7 @@ let rec assert_type_expression_eq (a, b: (type_expression * type_expression)) : 
   | T_sum sa, T_sum sb -> (
       let sa' = CMap.to_kv_list sa in
       let sb' = CMap.to_kv_list sb in
-      let aux ((ka, va), (kb, vb)) =
+      let aux ((ka, {ctor_type=va;_}), (kb, {ctor_type=vb;_})) =
         let%bind _ =
           Assert.assert_true ~msg:"different keys in sum types"
           @@ (ka = kb) in
@@ -378,7 +377,7 @@ let rec assert_type_expression_eq (a, b: (type_expression * type_expression)) : 
       let sort_lmap r' = List.sort (fun (Label a,_) (Label b,_) -> String.compare a b) r' in
       let ra' = sort_lmap @@ LMap.to_kv_list ra in
       let rb' = sort_lmap @@ LMap.to_kv_list rb in
-      let aux ((ka, va), (kb, vb)) =
+      let aux ((ka, {field_type=va;_}), (kb, {field_type=vb;_})) =
         let%bind _ =
           trace (different_types "records" a b) @@
           let Label ka = ka in

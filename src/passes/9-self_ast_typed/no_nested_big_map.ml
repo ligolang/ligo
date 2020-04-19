@@ -39,17 +39,13 @@ let rec check_no_nested_bigmap is_in_bigmap e =
     let%bind _ = check_no_nested_bigmap false type1 in
     let%bind _ = check_no_nested_bigmap false type2 in
     ok ()
-  | T_operator (TC_michelson_or {l; r}) -> 
-    let%bind _ = check_no_nested_bigmap false l in
-    let%bind _ = check_no_nested_bigmap false r in
-    ok ()
   | T_sum s -> 
-    let es = CMap.to_list s in
+    let es = List.map (fun {ctor_type;_} -> ctor_type) (CMap.to_list s) in
     let%bind _ = bind_map_list (fun l -> check_no_nested_bigmap is_in_bigmap l) es in
     ok ()
   | T_record elm -> 
     let es = LMap.to_list elm in
-    let%bind _ = bind_map_list (fun l -> check_no_nested_bigmap is_in_bigmap l) es in
+    let%bind _ = bind_map_list (fun {field_type;_} -> check_no_nested_bigmap is_in_bigmap field_type) es in
     ok ()
   | T_arrow { type1; type2 } -> 
     let%bind _ = check_no_nested_bigmap false type1 in    

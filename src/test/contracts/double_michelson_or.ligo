@@ -1,5 +1,5 @@
-type storage is michelson_or (int, string)
-type foobar is michelson_or (int, int)
+type storage is michelson_or (int,"foo",string,"bar")
+type foobar is michelson_or (int,"baz",int,"fooo")
 
 type return is list (operation) * storage 
 
