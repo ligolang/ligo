@@ -27,14 +27,14 @@ end
 open Errors
 
 (* This does not makes sense to me *)
-let rec get_operator : constant' -> type_value -> expression list -> predicate result = fun s ty lst ->
+let rec get_operator : constant' -> type_expression -> expression list -> predicate result = fun s ty lst ->
   match Operators.Compiler.get_operators s with
   | Ok (x,_) -> ok x
   | Error _ -> (
       match s with
       | C_SELF -> (
           let%bind entrypoint_as_string = match lst with
-            | [{ content = E_literal (D_string s); type_value = _ }] -> (
+            | [{ content = E_literal (D_string s); type_expression = _ }] -> (
                 match String.split_on_char '%' s with
                 | ["" ; s] -> ok @@ String.concat "" ["%" ; (String.uncapitalize_ascii s)]
                 | _ -> fail @@ corner_case ~loc:__LOC__ "mini_c . SELF"
@@ -128,7 +128,7 @@ let rec get_operator : constant' -> type_value -> expression list -> predicate r
           let%bind r = get_t_contract ty in
           let%bind r_ty = Compiler_type.type_ r in
           let%bind entry = match lst with
-            | [ { content = E_literal (D_string entry); type_value = _ } ; _addr ] -> ok entry
+            | [ { content = E_literal (D_string entry); type_expression = _ } ; _addr ] -> ok entry
             | [ _entry ; _addr ] ->
                fail @@ contract_entrypoint_must_be_literal ~loc:__LOC__
             | _ ->
@@ -143,7 +143,7 @@ let rec get_operator : constant' -> type_value -> expression list -> predicate r
           let%bind r = get_t_contract tc in
           let%bind r_ty = Compiler_type.type_ r in
           let%bind entry = match lst with
-            | [ { content = E_literal (D_string entry); type_value = _ } ; _addr ] -> ok entry
+            | [ { content = E_literal (D_string entry); type_expression = _ } ; _addr ] -> ok entry
             | [ _entry ; _addr ] ->
                fail @@ contract_entrypoint_must_be_literal ~loc:__LOC__
             | _ ->
@@ -154,7 +154,7 @@ let rec get_operator : constant' -> type_value -> expression list -> predicate r
           ]
       | C_CREATE_CONTRACT ->
         let%bind ch = match lst with
-          | { content= E_closure {body;binder} ; type_value = T_function (T_pair ((_,p),(_,s)) as tin,_)} :: _ ->
+          | { content= E_closure {body;binder} ; type_expression = {type_content=T_function ({type_content=T_pair ((_,p),(_,s));_} as tin,_);_}} :: _ ->
             let%bind closure = translate_function_body {body;binder} [] tin in
             let%bind (p',s') = bind_map_pair Compiler_type.type_ (p,s) in
             ok @@ contract p' s' closure
@@ -244,14 +244,14 @@ and translate_expression (expr:expression) (env:environment) : michelson result 
       let%bind t = Compiler_type.type_ ty in
       return @@ i_push t v
   | E_closure anon -> (
-      match ty with
+      match ty.type_content with
       | T_function (input_ty , output_ty) ->
         translate_function anon env input_ty output_ty
       | _ -> simple_fail "expected function type"
     )
   | E_application (f , arg) -> (
       trace (simple_error "Compiling quote application") @@
-      let%bind f = translate_expression f (Environment.add (Var.fresh (), arg.type_value) env) in
+      let%bind f = translate_expression f (Environment.add (Var.fresh (), arg.type_expression) env) in
       let%bind arg = translate_expression arg env in
       return @@ seq [
         arg ;
@@ -281,7 +281,7 @@ and translate_expression (expr:expression) (env:environment) : michelson result 
             PP.expression expr
             Michelson.pp expr_code
             PP.environment env ;
-          let env = Environment.add (Var.fresh (), expr.type_value) env in
+          let env = Environment.add (Var.fresh (), expr.type_expression) env in
           let code = code @ [expr_code] in
           ok (code, env) in
         bind_fold_right_list aux ([], env) lst in
@@ -433,7 +433,7 @@ and translate_expression (expr:expression) (env:environment) : michelson result 
       let%bind collection' =
         translate_expression
           collection
-          (Environment.add (Var.fresh (), initial.type_value) env) in
+          (Environment.add (Var.fresh (), initial.type_expression) env) in
       let%bind initial' = translate_expression initial env in
       let%bind body' = translate_expression body (Environment.add v env) in
       let code = seq [
@@ -450,7 +450,7 @@ and translate_expression (expr:expression) (env:environment) : michelson result 
     let%bind record' = translate_expression record env in
 
     let record_var = Var.fresh () in
-    let env' = Environment.add (record_var, record.type_value) env in
+    let env' = Environment.add (record_var, record.type_expression) env in
     let%bind expr' = translate_expression expr env' in
     let modify_code =
       let aux acc step = match step with

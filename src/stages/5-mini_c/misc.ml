@@ -143,7 +143,7 @@ let aggregate_entry (lst : program) (form : form_t) : expression result =
   let wrapper =
     let aux prec cur =
       let (((name , inline, expr) , _)) = cur in
-      e_let_in name expr.type_value inline expr prec
+      e_let_in name expr.type_expression inline expr prec
     in
     fun expr -> List.fold_right' aux expr lst
   in
@@ -154,7 +154,7 @@ let aggregate_entry (lst : program) (form : form_t) : expression result =
         let l' = { l with body = wrapper l.body } in
         let e' = {
           content = E_closure l' ;
-          type_value = entry_expression.type_value ;
+          type_expression = entry_expression.type_expression ;
         } in
         ok e'
       )

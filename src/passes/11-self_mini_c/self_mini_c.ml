@@ -147,12 +147,12 @@ let inline_lets : bool ref -> expression -> expression =
 let beta : bool ref -> expression -> expression =
   fun changed e ->
   match e.content with
-  | E_application ({ content = E_closure { binder = x ; body = e1 } ; type_value = T_function (xtv, tv) }, e2) ->
+  | E_application ({ content = E_closure { binder = x ; body = e1 } ; type_expression = {type_content = T_function (xtv, tv);_ }}, e2) ->
     (changed := true ;
      Expression.make (E_let_in ((x, xtv), false, e2, e1)) tv)
 
   (* also do CAR (PAIR x y) ↦ x, or CDR (PAIR x y) ↦ y, only if x and y are pure *)
-  | E_constant {cons_name = C_CAR| C_CDR as const; arguments = [ { content = E_constant {cons_name = C_PAIR; arguments = [ e1 ; e2 ]} ; type_value = _ } ]} ->
+  | E_constant {cons_name = C_CAR| C_CDR as const; arguments = [ { content = E_constant {cons_name = C_PAIR; arguments = [ e1 ; e2 ]} ; type_expression = _ } ]} ->
     if is_pure e1 && is_pure e2
     then (changed := true ;
           match const with
@@ -169,8 +169,8 @@ let betas : bool ref -> expression -> expression =
 let eta : bool ref -> expression -> expression =
   fun changed e ->
   match e.content with
-  | E_constant {cons_name = C_PAIR; arguments = [ { content = E_constant {cons_name = C_CAR; arguments = [ e1 ]} ; type_value = _ } ;
-                                                  { content = E_constant {cons_name = C_CDR; arguments = [ e2 ]} ; type_value = _ }]} ->
+  | E_constant {cons_name = C_PAIR; arguments = [ { content = E_constant {cons_name = C_CAR; arguments = [ e1 ]} ; type_expression = _ } ;
+                                                  { content = E_constant {cons_name = C_CDR; arguments = [ e2 ]} ; type_expression = _ }]} ->
     (match (e1.content, e2.content) with
      | E_variable x1, E_variable x2 ->
        if Var.equal x1 x2

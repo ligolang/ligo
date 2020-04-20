@@ -14,7 +14,7 @@ module Environment : sig
   val get_opt : Var.t -> t -> type_value option
   val has : Var.t -> t -> bool
   *)
-  val get_i : expression_variable -> t -> (type_value * int)
+  val get_i : expression_variable -> t -> (type_expression * int)
   val of_list : element list -> t
   val to_list : t -> element list
   val get_names : t -> expression_variable list

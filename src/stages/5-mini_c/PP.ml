@@ -7,7 +7,7 @@ let list_sep_d x = list_sep x (tag " ,@ ")
 
 let lr = fun ppf -> function `Left -> fprintf ppf "L" | `Right -> fprintf ppf "R"
 
-let rec type_variable ppf : type_value -> _ = function
+let rec type_variable ppf : type_expression -> _ = fun te -> match te.type_content with
   | T_or(a, b) -> fprintf ppf "@[(%a) |@ (%a)@]" annotated a annotated b
   | T_pair(a, b) -> fprintf ppf "@[(%a) &@ (%a)@]" annotated a annotated b
   | T_base b -> type_constant ppf b
@@ -19,7 +19,7 @@ let rec type_variable ppf : type_value -> _ = function
   | T_option(o) -> fprintf ppf "@[<7>option(%a)@]" type_variable o
   | T_contract(t) -> fprintf ppf "@[<9>contract(%a)@]" type_variable t
 
-and annotated ppf : type_value annotated -> _ = function
+and annotated ppf : type_expression annotated -> _ = function
   | (Some ann, a) -> fprintf ppf "(%a %%%s)" type_variable a ann
   | (None, a) -> type_variable ppf a
 
@@ -74,9 +74,9 @@ and value_assoc ppf : (value * value) -> unit = fun (a, b) ->
   fprintf ppf "%a -> %a" value a value b
 
 and expression ppf (e:expression) =
-  fprintf ppf "%a" expression' e.content
+  fprintf ppf "%a" expression_content e.content
 
-and expression' ppf (e:expression') = match e with
+and expression_content ppf (e:expression_content) = match e with
   | E_skip -> fprintf ppf "skip"
   | E_closure x -> function_ ppf x
   | E_variable v -> fprintf ppf "%a" Var.pp v
@@ -113,8 +113,8 @@ and expression' ppf (e:expression') = match e with
 
 and expression_with_type : _ -> expression -> _  = fun ppf e ->
   fprintf ppf "%a : %a"
-    expression' e.content
-    type_variable e.type_value
+    expression_content e.content
+    type_variable e.type_expression
 
 and function_ ppf ({binder ; body}:anon_function) =
   fprintf ppf "@[fun %a ->@ (%a)@]"
@@ -254,9 +254,9 @@ let%expect_test _ =
   [%expect{| 0x666f6f |}]
 
 let%expect_test _ =
-  let pp = expression' Format.std_formatter in
-  let dummy_type = T_base TB_unit in
-  let wrap e = { content = e ; type_value = dummy_type } in
+  let pp = expression_content Format.std_formatter in
+  let dummy_type = {type_content=T_base TB_unit} in
+  let wrap e = { content = e ; type_expression = dummy_type} in
   pp @@ E_closure { binder = Var.of_name "y" ; body = wrap (E_variable (Var.of_name "y")) } ;
   [%expect{|
     fun y -> (y)

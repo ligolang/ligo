@@ -117,12 +117,11 @@ let rec subst_expression : body:expression -> x:var_name -> expr:expression -> e
   (* hack to avoid reimplementing subst_binder for 2-ary binder in E_if_cons:
      intuitively, we substitute in \hd tl. expr' as if it were \hd. \tl. expr *)
   let subst_binder2 y z expr' =
-    let dummy = T_base TB_unit in
-    let hack = { content = E_closure { binder = z ; body = expr' } ;
-                 type_value = dummy } in
+    let dummy = Expression.make_t @@ T_base TB_unit in
+    let hack = Expression.make (E_closure { binder = z ; body = expr' }) dummy in
     match subst_binder y hack with
-    | (y', { content = E_closure { binder = z' ; body = body } ; type_value = _dummy }) ->
-      (y', z', { body with type_value = expr'.type_value })
+    | (y', { content = E_closure { binder = z' ; body = body } ; type_expression = _dummy }) ->
+      (y', z', { body with type_expression = expr'.type_expression })
     | _ -> assert false in
   let return content = {body with content} in
   let return_id = body in
@@ -199,8 +198,8 @@ let rec subst_expression : body:expression -> x:var_name -> expr:expression -> e
   )
 
 let%expect_test _ =
-  let dummy_type = T_base TB_unit in
-  let wrap e = { content = e ; type_value = dummy_type } in
+  let dummy_type = Expression.make_t @@ T_base TB_unit in
+  let wrap e = Expression.make e dummy_type in
 
   let show_subst ~body ~x ~expr =
     Format.printf "(%a)[%a := %a] =@ %a"
