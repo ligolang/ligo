@@ -16,6 +16,7 @@ type type_content =
 
 and type_expression = {
   type_content : type_content;
+  location : Location.t;
 }
 
 and type_base =
@@ -94,6 +95,7 @@ and expression_content =
 and expression = {
   content : expression_content ;
   type_expression : type_expression ;
+  location : Location.t;
 }
 
 and constant = {
