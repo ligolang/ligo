@@ -152,6 +152,14 @@ module Errors = struct
     let message () = description in
     error title message
 
+  let unknown_built_in name =
+    let title () = "\n Unknown built-in function" in
+    let message () = "" in
+    let data = [
+      ("built-in", fun  () -> name);
+    ] in
+    error ~data title message
+
 end
 
 open Errors
@@ -224,8 +232,8 @@ and compile_type_expression : Raw.type_expr -> type_expression result = fun te -
   | TVar v -> (
       let (v, loc) = r_split v in
       match type_constants v with
-      | Ok (s,_) -> ok @@ make_t ~loc @@ T_constant s
-      | Error _  -> ok @@ make_t ~loc @@ T_variable (Var.of_name v)
+      | Some s -> ok @@ make_t ~loc @@ T_constant s
+      | None   -> ok @@ make_t ~loc @@ T_variable (Var.of_name v)
     )
   | TFun x -> (
       let (x,loc) = r_split x in
@@ -275,7 +283,7 @@ and compile_type_expression : Raw.type_expr -> type_expression result = fun te -
           let lst = npseq_to_list tuple.value.inside in
           let%bind lst' = bind_map_list compile_type_expression lst in
           let%bind cst =
-          trace (unknown_predefined_type name) @@
+          trace_option (unknown_predefined_type name) @@
           type_operators name.value in
           t_operator ~loc cst lst' )
     )
@@ -491,8 +499,8 @@ let rec compile_expression :
   | EVar c ->
       let (c',loc) = r_split c in
       (match constants c' with
-       | Error _  -> return @@ e_variable ~loc (Var.of_name c.value)
-       | Ok (s,_) -> return @@ e_constant s [])
+       | None   -> return @@ e_variable ~loc (Var.of_name c.value)
+       | Some s -> return @@ e_constant s [])
   | ECall x -> (
       let ((e1 , e2) , loc) = r_split x in
       let%bind args = bind_map_list compile_expression (nseq_to_list e2) in
@@ -505,8 +513,8 @@ let rec compile_expression :
       | EVar f -> (
           let (f , f_loc) = r_split f in
           match constants f with
-          | Error _ -> return @@ chain_application (e_variable ~loc:f_loc (Var.of_name f)) args
-          | Ok (s, _) -> return @@ e_constant ~loc s args
+          | None   -> return @@ chain_application (e_variable ~loc:f_loc (Var.of_name f)) args
+          | Some s -> return @@ e_constant ~loc s args
               )
       | e1 ->
           let%bind e1' = compile_expression e1 in
@@ -802,14 +810,14 @@ and compile_binop (name:string) (t:_ Raw.bin_op Region.reg) : expression result 
   let (args , loc) = r_split t in
   let%bind a = compile_expression args.arg1 in
   let%bind b = compile_expression args.arg2 in
-  let%bind name = constants name in
+  let%bind name = trace_option (unknown_built_in name) @@ constants name in
   return @@ e_constant ~loc name [ a ; b ]
 
 and compile_unop (name:string) (t:_ Raw.un_op Region.reg) : expression result =
   let return x = ok @@ x in
   let (t , loc) = r_split t in
   let%bind a = compile_expression t.arg in
-  let%bind name = constants name in
+  let%bind name = trace_option (unknown_built_in name) @@ constants name in
   return @@ e_constant ~loc name [ a ]
 
 and compile_tuple_expression ?loc (lst:Raw.expr list) : expression result =
