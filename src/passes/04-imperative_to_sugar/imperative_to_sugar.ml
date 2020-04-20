@@ -617,7 +617,7 @@ let rec uncompile_expression : O.expression -> I.expression result =
     let%bind let_result = uncompile_expression let_result in
     return @@ I.E_let_in {let_binder=(binder,ty_opt);inline;rhs;let_result}
   | O.E_raw_code {language;code} ->
-    let%bind code  = uncompile_expression' code in
+    let%bind code  = uncompile_expression code in
     return @@ I.E_raw_code {language;code} 
   | O.E_constructor {constructor;element} ->
     let%bind element = uncompile_expression element in
