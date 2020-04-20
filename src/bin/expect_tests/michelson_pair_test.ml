@@ -44,3 +44,17 @@ let%expect_test _ =
              NIL operation ;
              PAIR ;
              DIP { DROP } } } |}]
+
+let%expect_test _ =
+  run_ligo_good [ "compile-contract" ; contract "michelson_pair_tree_intermediary.ligo" ; "main" ] ;
+  [%expect {|
+    { parameter unit ;
+      storage (pair (string %three) (pair (int %one) (nat %two))) ;
+      code { PUSH nat 2 ;
+             PUSH int 1 ;
+             PAIR ;
+             PUSH string "foo" ;
+             PAIR ;
+             NIL operation ;
+             PAIR ;
+             DIP { DROP } } } |}]

@@ -39,3 +39,16 @@ let%expect_test _ =
     * Ask a question on our Discord: https://discord.gg/9rhYaEt
     * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
     * Check the changelog by running 'ligo changelog' |}]
+
+let%expect_test _ =
+  run_ligo_good [ "compile-contract" ; contract "michelson_or_tree_intermediary.ligo" ; "main" ] ;
+  [%expect {|
+    { parameter unit ;
+      storage (or (int %three) (or (int %one) (nat %two))) ;
+      code { PUSH int 1 ;
+             LEFT nat ;
+             RIGHT int ;
+             DUP ;
+             NIL operation ;
+             PAIR ;
+             DIP { DROP 2 } } } |}]
