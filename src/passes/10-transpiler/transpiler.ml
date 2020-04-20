@@ -282,7 +282,7 @@ let rec transpile_type (t:AST.type_expression) : type_value result =
       let%bind m' = Append_tree.fold_ne
                       (fun (_, ({ctor_type ; michelson_annotation}: AST.ctor_content)) ->
                         let%bind a = transpile_type ctor_type in
-                        ok (michelson_annotation, a) )
+                        ok (Ast_typed.Helpers.remove_empty_annotation michelson_annotation, a) )
                       aux node in
       ok @@ snd m'
   | T_sum m ->
@@ -308,7 +308,7 @@ let rec transpile_type (t:AST.type_expression) : type_value result =
       let%bind m' = Append_tree.fold_ne
                       (fun (_, ({field_type ; michelson_annotation} : AST.field_content)) ->
                         let%bind a = transpile_type field_type in
-                        ok (michelson_annotation, a) )
+                        ok (Ast_typed.Helpers.remove_empty_annotation michelson_annotation, a) )
                       aux node in
       ok @@ snd m'
   | T_record m ->
