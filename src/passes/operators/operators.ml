@@ -36,245 +36,244 @@ module Concrete_to_imperative = struct
 
   let type_constants s =
     match s with
-      "chain_id"  -> ok TC_chain_id
-    | "unit"      -> ok TC_unit
-    | "string"    -> ok TC_string
-    | "bytes"     -> ok TC_bytes
-    | "nat"       -> ok TC_nat
-    | "int"       -> ok TC_int
-    | "tez"       -> ok TC_mutez
-    | "bool"      -> ok TC_bool
-    | "operation" -> ok TC_operation
-    | "address"   -> ok TC_address
-    | "key"       -> ok TC_key
-    | "key_hash"  -> ok TC_key_hash
-    | "signature" -> ok TC_signature
-    | "timestamp" -> ok TC_timestamp
-    | _           -> simple_fail @@ "Not a built-in type (" ^ s ^ ")."
+      "chain_id"  -> Some TC_chain_id
+    | "unit"      -> Some TC_unit
+    | "string"    -> Some TC_string
+    | "bytes"     -> Some TC_bytes
+    | "nat"       -> Some TC_nat
+    | "int"       -> Some TC_int
+    | "tez"       -> Some TC_mutez
+    | "bool"      -> Some TC_bool
+    | "operation" -> Some TC_operation
+    | "address"   -> Some TC_address
+    | "key"       -> Some TC_key
+    | "key_hash"  -> Some TC_key_hash
+    | "signature" -> Some TC_signature
+    | "timestamp" -> Some TC_timestamp
+    | _           -> None
 
   let type_operators s =
     match s with
-      "list"         -> ok @@ TC_list unit_expr
-    | "option"       -> ok @@ TC_option unit_expr
-    | "set"          -> ok @@ TC_set unit_expr
-    | "map"          -> ok @@ TC_map (unit_expr,unit_expr)
-    | "big_map"      -> ok @@ TC_big_map (unit_expr,unit_expr)
-    | "michelson_or" -> ok @@ TC_michelson_or (unit_expr,"",unit_expr,"")
-    | "contract"     -> ok @@ TC_contract unit_expr
-    | _              -> simple_fail @@ "Not a built-in type (" ^ s ^ ")."
+      "list"         -> Some (TC_list unit_expr)
+    | "option"       -> Some (TC_option unit_expr)
+    | "set"          -> Some (TC_set unit_expr)
+    | "map"          -> Some (TC_map (unit_expr,unit_expr))
+    | "big_map"      -> Some (TC_big_map (unit_expr,unit_expr))
+    | "michelson_or" -> Some (TC_michelson_or (unit_expr,"",unit_expr,""))
+    | "contract"     -> Some (TC_contract unit_expr)
+    | _              -> None
 
   let pseudo_modules = function
-    | "Tezos.chain_id"         -> ok C_CHAIN_ID
-    | "Tezos.balance"          -> ok C_BALANCE
-    | "Tezos.now"              -> ok C_NOW
-    | "Tezos.amount"           -> ok C_AMOUNT
-    | "Tezos.sender"           -> ok C_SENDER
-    | "Tezos.address"          -> ok C_ADDRESS
-    | "Tezos.self"             -> ok C_SELF
-    | "Tezos.self_address"     -> ok C_SELF_ADDRESS
-    | "Tezos.implicit_account" -> ok C_IMPLICIT_ACCOUNT
-    | "Tezos.source"           -> ok C_SOURCE
-    | "Tezos.failwith"         -> ok C_FAILWITH
-    | "Tezos.create_contract"  -> ok C_CREATE_CONTRACT
-    | "Tezos.transaction"      -> ok C_CALL
-    | "Tezos.set_delegate"     -> ok C_SET_DELEGATE
-    | "Tezos.get_contract_opt" -> ok C_CONTRACT_OPT
-    | "Tezos.get_entrypoint_opt" -> ok C_CONTRACT_ENTRYPOINT_OPT
+    | "Tezos.chain_id"           -> Some C_CHAIN_ID
+    | "Tezos.balance"            -> Some C_BALANCE
+    | "Tezos.now"                -> Some C_NOW
+    | "Tezos.amount"             -> Some C_AMOUNT
+    | "Tezos.sender"             -> Some C_SENDER
+    | "Tezos.address"            -> Some C_ADDRESS
+    | "Tezos.self"               -> Some C_SELF
+    | "Tezos.self_address"       -> Some C_SELF_ADDRESS
+    | "Tezos.implicit_account"   -> Some C_IMPLICIT_ACCOUNT
+    | "Tezos.source"             -> Some C_SOURCE
+    | "Tezos.failwith"           -> Some C_FAILWITH
+    | "Tezos.create_contract"    -> Some C_CREATE_CONTRACT
+    | "Tezos.transaction"        -> Some C_CALL
+    | "Tezos.set_delegate"       -> Some C_SET_DELEGATE
+    | "Tezos.get_contract_opt"   -> Some C_CONTRACT_OPT
+    | "Tezos.get_entrypoint_opt" -> Some C_CONTRACT_ENTRYPOINT_OPT
 
     (* Crypto module *)
 
-    | "Crypto.check"    -> ok C_CHECK_SIGNATURE
-    | "Crypto.hash_key" -> ok C_HASH_KEY    
-    | "Crypto.blake2b"  -> ok C_BLAKE2b
-    | "Crypto.sha256"   -> ok C_SHA256    
-    | "Crypto.sha512"   -> ok C_SHA512
+    | "Crypto.check"    -> Some C_CHECK_SIGNATURE
+    | "Crypto.hash_key" -> Some C_HASH_KEY    
+    | "Crypto.blake2b"  -> Some C_BLAKE2b
+    | "Crypto.sha256"   -> Some C_SHA256    
+    | "Crypto.sha512"   -> Some C_SHA512
     
     (* Bytes module *)
 
-    | "Bytes.pack"   -> ok C_BYTES_PACK    
-    | "Bytes.unpack" -> ok C_BYTES_UNPACK
-    | "Bytes.length" -> ok C_SIZE    
-    | "Bytes.concat" -> ok C_CONCAT
-    | "Bytes.sub"    -> ok C_SLICE
+    | "Bytes.pack"   -> Some C_BYTES_PACK    
+    | "Bytes.unpack" -> Some C_BYTES_UNPACK
+    | "Bytes.length" -> Some C_SIZE    
+    | "Bytes.concat" -> Some C_CONCAT
+    | "Bytes.sub"    -> Some C_SLICE
 
     (* List module *)   
 
-    | "List.length" -> ok C_SIZE
-    | "List.size"   -> ok C_SIZE
-    | "List.iter"   -> ok C_LIST_ITER
-    | "List.map"    -> ok C_LIST_MAP
-    | "List.fold"   -> ok C_LIST_FOLD
+    | "List.length" -> Some C_SIZE
+    | "List.size"   -> Some C_SIZE
+    | "List.iter"   -> Some C_LIST_ITER
+    | "List.map"    -> Some C_LIST_MAP
+    | "List.fold"   -> Some C_LIST_FOLD
 
     (* Set module *)   
 
-    | "Set.empty"    -> ok C_SET_EMPTY
-    | "Set.literal"  -> ok C_SET_LITERAL
-    | "Set.cardinal" -> ok C_SIZE
-    | "Set.mem"     -> ok C_SET_MEM
-    | "Set.add"     -> ok C_SET_ADD
-    | "Set.remove"  -> ok C_SET_REMOVE
-    | "Set.iter"    -> ok C_SET_ITER
-    | "Set.fold"    -> ok C_SET_FOLD
+    | "Set.empty"    -> Some C_SET_EMPTY
+    | "Set.literal"  -> Some C_SET_LITERAL
+    | "Set.cardinal" -> Some C_SIZE
+    | "Set.mem"      -> Some C_SET_MEM
+    | "Set.add"      -> Some C_SET_ADD
+    | "Set.remove"   -> Some C_SET_REMOVE
+    | "Set.iter"     -> Some C_SET_ITER
+    | "Set.fold"     -> Some C_SET_FOLD
 
     (* Map module *)   
 
-    | "Map.find_opt" -> ok C_MAP_FIND_OPT
-    | "Map.update"   -> ok C_MAP_UPDATE
-    | "Map.iter"     -> ok C_MAP_ITER
-    | "Map.map"      -> ok C_MAP_MAP
-    | "Map.fold"     -> ok C_MAP_FOLD
-    | "Map.mem"      -> ok C_MAP_MEM
-    | "Map.size"     -> ok C_SIZE
-    | "Map.add"      -> ok C_MAP_ADD
-    | "Map.remove"   -> ok C_MAP_REMOVE
-    | "Map.empty"    -> ok C_MAP_EMPTY
-    | "Map.literal"  -> ok C_MAP_LITERAL
+    | "Map.find_opt" -> Some C_MAP_FIND_OPT
+    | "Map.update"   -> Some C_MAP_UPDATE
+    | "Map.iter"     -> Some C_MAP_ITER
+    | "Map.map"      -> Some C_MAP_MAP
+    | "Map.fold"     -> Some C_MAP_FOLD
+    | "Map.mem"      -> Some C_MAP_MEM
+    | "Map.size"     -> Some C_SIZE
+    | "Map.add"      -> Some C_MAP_ADD
+    | "Map.remove"   -> Some C_MAP_REMOVE
+    | "Map.empty"    -> Some C_MAP_EMPTY
+    | "Map.literal"  -> Some C_MAP_LITERAL
     
     (* Big_map module *)   
     
-    | "Big_map.find"     -> ok C_MAP_FIND
-    | "Big_map.find_opt" -> ok C_MAP_FIND_OPT
-    | "Big_map.update"   -> ok C_MAP_UPDATE
-    | "Big_map.literal"  -> ok C_BIG_MAP_LITERAL
-    | "Big_map.empty"    -> ok C_BIG_MAP_EMPTY
-    | "Big_map.mem"      -> ok C_MAP_MEM
-    | "Big_map.remove"   -> ok C_MAP_REMOVE
-    | "Big_map.add"      -> ok C_MAP_ADD
+    | "Big_map.find"     -> Some C_MAP_FIND
+    | "Big_map.find_opt" -> Some C_MAP_FIND_OPT
+    | "Big_map.update"   -> Some C_MAP_UPDATE
+    | "Big_map.literal"  -> Some C_BIG_MAP_LITERAL
+    | "Big_map.empty"    -> Some C_BIG_MAP_EMPTY
+    | "Big_map.mem"      -> Some C_MAP_MEM
+    | "Big_map.remove"   -> Some C_MAP_REMOVE
+    | "Big_map.add"      -> Some C_MAP_ADD
 
     (* Bitwise module *)
 
-    | "Bitwise.or"          -> ok C_OR
-    | "Bitwise.and"         -> ok C_AND
-    | "Bitwise.xor"         -> ok C_XOR
-    | "Bitwise.shift_left"  -> ok C_LSL
-    | "Bitwise.shift_right" -> ok C_LSR
+    | "Bitwise.or"          -> Some C_OR
+    | "Bitwise.and"         -> Some C_AND
+    | "Bitwise.xor"         -> Some C_XOR
+    | "Bitwise.shift_left"  -> Some C_LSL
+    | "Bitwise.shift_right" -> Some C_LSR
 
     (* String module *)
 
-    | "String.length"   -> ok C_SIZE
-    | "String.size"     -> ok C_SIZE  (* Deprecated *)
-    | "String.slice"    -> ok C_SLICE (* Deprecated *)
-    | "String.sub"      -> ok C_SLICE
-    | "String.concat"   -> ok C_CONCAT
+    | "String.length"   -> Some C_SIZE
+    | "String.size"     -> Some C_SIZE  (* Deprecated *)
+    | "String.slice"    -> Some C_SLICE (* Deprecated *)
+    | "String.sub"      -> Some C_SLICE
+    | "String.concat"   -> Some C_CONCAT
 
-    | _ -> simple_fail "Not a built-in"
+    | _ -> None
 
 
   module Pascaligo = struct
     let constants = function
     (* Tezos module (ex-Michelson) *)
-    | "chain_id"               -> ok C_CHAIN_ID            (* Deprecated *)
-    | "get_chain_id"           -> ok C_CHAIN_ID            (* Deprecated *)    
-    | "balance"                -> ok C_BALANCE             (* Deprecated *)    
-    | "now"                    -> ok C_NOW                 (* Deprecated *)
-    | "amount"                 -> ok C_AMOUNT              (* Deprecated *)
-    | "sender"                 -> ok C_SENDER              (* Deprecated *)
-    | "address"                    -> ok C_ADDRESS             (* Deprecated *)    
-    | "self_address"           -> ok C_SELF_ADDRESS        (* Deprecated *)
-    | "implicit_account"       -> ok C_IMPLICIT_ACCOUNT    (* Deprecated *)    
-    | "source"                 -> ok C_SOURCE              (* Deprecated *)    
-    | "failwith"               -> ok C_FAILWITH
-    | "transaction"            -> ok C_CALL                    (* Deprecated *)
-    | "set_delegate"           -> ok C_SET_DELEGATE            (* Deprecated *)
-    | "get_contract"           -> ok C_CONTRACT                (* Deprecated *)
-    | "get_contract_opt"       -> ok C_CONTRACT_OPT            (* Deprecated *)
-    | "get_entrypoint"         -> ok C_CONTRACT_ENTRYPOINT     (* Deprecated *)
-    | "get_entrypoint_opt"     -> ok C_CONTRACT_ENTRYPOINT_OPT (* Deprecated *)
+    | "chain_id"               -> Some C_CHAIN_ID            (* Deprecated *)
+    | "get_chain_id"           -> Some C_CHAIN_ID            (* Deprecated *)    
+    | "balance"                -> Some C_BALANCE             (* Deprecated *)    
+    | "now"                    -> Some C_NOW                 (* Deprecated *)
+    | "amount"                 -> Some C_AMOUNT              (* Deprecated *)
+    | "sender"                 -> Some C_SENDER              (* Deprecated *)
+    | "address"                -> Some C_ADDRESS             (* Deprecated *)    
+    | "self_address"           -> Some C_SELF_ADDRESS        (* Deprecated *)
+    | "implicit_account"       -> Some C_IMPLICIT_ACCOUNT    (* Deprecated *)    
+    | "source"                 -> Some C_SOURCE              (* Deprecated *)    
+    | "failwith"               -> Some C_FAILWITH
+    | "transaction"            -> Some C_CALL                    (* Deprecated *)
+    | "set_delegate"           -> Some C_SET_DELEGATE            (* Deprecated *)
+    | "get_contract"           -> Some C_CONTRACT                (* Deprecated *)
+    | "get_contract_opt"       -> Some C_CONTRACT_OPT            (* Deprecated *)
+    | "get_entrypoint"         -> Some C_CONTRACT_ENTRYPOINT     (* Deprecated *)
+    | "get_entrypoint_opt"     -> Some C_CONTRACT_ENTRYPOINT_OPT (* Deprecated *)
 
-    | "Michelson.is_nat" -> ok C_IS_NAT  (* Deprecated *)
-    | "is_nat"           -> ok C_IS_NAT
-    | "int"              -> ok C_INT
-    | "abs"              -> ok C_ABS
-    | "ediv"             -> ok C_EDIV
-    | "unit"             -> ok C_UNIT
+    | "Michelson.is_nat" -> Some C_IS_NAT  (* Deprecated *)
+    | "is_nat"           -> Some C_IS_NAT
+    | "int"              -> Some C_INT
+    | "abs"              -> Some C_ABS
+    | "ediv"             -> Some C_EDIV
+    | "unit"             -> Some C_UNIT
 
-    | "NEG"              -> ok C_NEG
-    | "ADD"              -> ok C_ADD
-    | "SUB"              -> ok C_SUB
-    | "TIMES"            -> ok C_MUL
-    | "DIV"              -> ok C_DIV
-    | "MOD"              -> ok C_MOD
-    | "EQ"               -> ok C_EQ
-    | "NOT"              -> ok C_NOT
-    | "AND"              -> ok C_AND
-    | "OR"               -> ok C_OR
-    | "GT"               -> ok C_GT
-    | "GE"               -> ok C_GE
-    | "LT"               -> ok C_LT
-    | "LE"               -> ok C_LE
-    | "CONS"             -> ok C_CONS
-    | "cons"             -> ok C_CONS (* Deprecated *)
-    | "NEQ"              -> ok C_NEQ
+    | "NEG"              -> Some C_NEG
+    | "ADD"              -> Some C_ADD
+    | "SUB"              -> Some C_SUB
+    | "TIMES"            -> Some C_MUL
+    | "DIV"              -> Some C_DIV
+    | "MOD"              -> Some C_MOD
+    | "EQ"               -> Some C_EQ
+    | "NOT"              -> Some C_NOT
+    | "AND"              -> Some C_AND
+    | "OR"               -> Some C_OR
+    | "GT"               -> Some C_GT
+    | "GE"               -> Some C_GE
+    | "LT"               -> Some C_LT
+    | "LE"               -> Some C_LE
+    | "CONS"             -> Some C_CONS
+    | "cons"             -> Some C_CONS (* Deprecated *)
+    | "NEQ"              -> Some C_NEQ
 
     (* Crypto module *)
 
-    | "crypto_check"    -> ok C_CHECK_SIGNATURE       (* Deprecated *)
-    | "crypto_hash_key" -> ok C_HASH_KEY              (* Deprecated *)    
-    | "blake2b"         -> ok C_BLAKE2b               (* Deprecated *)    
-    | "sha_256"         -> ok C_SHA256                (* Deprecated *)       
-    | "sha_512"         -> ok C_SHA512                (* Deprecated *)
+    | "crypto_check"    -> Some C_CHECK_SIGNATURE       (* Deprecated *)
+    | "crypto_hash_key" -> Some C_HASH_KEY              (* Deprecated *)    
+    | "blake2b"         -> Some C_BLAKE2b               (* Deprecated *)    
+    | "sha_256"         -> Some C_SHA256                (* Deprecated *)       
+    | "sha_512"         -> Some C_SHA512                (* Deprecated *)
 
     (* Bytes module *)
 
-    | "bytes_pack"   -> ok C_BYTES_PACK    (* Deprecated *)    
-    | "bytes_unpack" -> ok C_BYTES_UNPACK  (* Deprecated *)    
-    | "Bytes.size"   -> ok C_SIZE          (* Deprecated *)
-    | "bytes_concat" -> ok C_CONCAT        (* Deprecated *)    
-    | "bytes_slice"  -> ok C_SLICE         (* Deprecated *)
-    | "Bytes.slice"  -> ok C_SLICE         (* Deprecated *)
+    | "bytes_pack"   -> Some C_BYTES_PACK    (* Deprecated *)    
+    | "bytes_unpack" -> Some C_BYTES_UNPACK  (* Deprecated *)    
+    | "Bytes.size"   -> Some C_SIZE          (* Deprecated *)
+    | "bytes_concat" -> Some C_CONCAT        (* Deprecated *)    
+    | "bytes_slice"  -> Some C_SLICE         (* Deprecated *)
+    | "Bytes.slice"  -> Some C_SLICE         (* Deprecated *)
 
     (* List module *)
 
-    | "list_size"   -> ok C_SIZE       (* Deprecated *)
-    | "list_iter"   -> ok C_LIST_ITER  (* Deprecated *)    
-    | "list_map"    -> ok C_LIST_MAP   (* Deprecated *)    
-    | "list_fold"   -> ok C_LIST_FOLD  (* Deprecated *)
+    | "list_size"   -> Some C_SIZE       (* Deprecated *)
+    | "list_iter"   -> Some C_LIST_ITER  (* Deprecated *)    
+    | "list_map"    -> Some C_LIST_MAP   (* Deprecated *)    
+    | "list_fold"   -> Some C_LIST_FOLD  (* Deprecated *)
 
     (* Set module *)
 
     
-    | "Set.size"    -> ok C_SIZE        (* Deprecated *)
-    | "set_size"    -> ok C_SIZE        (* Deprecated *)
-    | "set_empty"   -> ok C_SET_EMPTY   (* Deprecated *)    
-    | "set_mem"     -> ok C_SET_MEM     (* Deprecated *)    
-    | "set_add"     -> ok C_SET_ADD     (* Deprecated *)    
-    | "set_remove"  -> ok C_SET_REMOVE  (* Deprecated *)    
-    | "set_iter"    -> ok C_SET_ITER    (* Deprecated *)    
-    | "set_fold"    -> ok C_SET_FOLD    (* Deprecated *)
+    | "Set.size"    -> Some C_SIZE        (* Deprecated *)
+    | "set_size"    -> Some C_SIZE        (* Deprecated *)
+    | "set_empty"   -> Some C_SET_EMPTY   (* Deprecated *)    
+    | "set_mem"     -> Some C_SET_MEM     (* Deprecated *)    
+    | "set_add"     -> Some C_SET_ADD     (* Deprecated *)    
+    | "set_remove"  -> Some C_SET_REMOVE  (* Deprecated *)    
+    | "set_iter"    -> Some C_SET_ITER    (* Deprecated *)    
+    | "set_fold"    -> Some C_SET_FOLD    (* Deprecated *)
 
     (* Map module *)
 
-    | "get_force"    -> ok C_MAP_FIND      (* Deprecated *)
-    | "map_get"      -> ok C_MAP_FIND_OPT  (* Deprecated *)    
-    | "map_update"   -> ok C_MAP_UPDATE    (* Deprecated *)
-    | "map_remove"   -> ok C_MAP_REMOVE    (* Deprecated *)    
-    | "map_iter"     -> ok C_MAP_ITER      (* Deprecated *)    
-    | "map_map"      -> ok C_MAP_MAP       (* Deprecated *)    
-    | "map_fold"     -> ok C_MAP_FOLD      (* Deprecated *)    
-    | "map_mem"      -> ok C_MAP_MEM       (* Deprecated *)    
-    | "map_size"     -> ok C_SIZE          (* Deprecated *)
+    | "get_force"    -> Some C_MAP_FIND      (* Deprecated *)
+    | "map_get"      -> Some C_MAP_FIND_OPT  (* Deprecated *)    
+    | "map_update"   -> Some C_MAP_UPDATE    (* Deprecated *)
+    | "map_remove"   -> Some C_MAP_REMOVE    (* Deprecated *)    
+    | "map_iter"     -> Some C_MAP_ITER      (* Deprecated *)    
+    | "map_map"      -> Some C_MAP_MAP       (* Deprecated *)    
+    | "map_fold"     -> Some C_MAP_FOLD      (* Deprecated *)    
+    | "map_mem"      -> Some C_MAP_MEM       (* Deprecated *)    
+    | "map_size"     -> Some C_SIZE          (* Deprecated *)
 
 
     (* Bitwise module *)
 
-    | "bitwise_or"          -> ok C_OR      (* Deprecated *)    
-    | "bitwise_and"         -> ok C_AND     (* Deprecated *)    
-    | "bitwise_xor"         -> ok C_XOR     (* Deprecated *)    
-    | "bitwise_lsl"         -> ok C_LSL     (* Deprecated *)    
-    | "bitwise_lsr"         -> ok C_LSR     (* Deprecated *)
+    | "bitwise_or"          -> Some C_OR      (* Deprecated *)    
+    | "bitwise_and"         -> Some C_AND     (* Deprecated *)    
+    | "bitwise_xor"         -> Some C_XOR     (* Deprecated *)    
+    | "bitwise_lsl"         -> Some C_LSL     (* Deprecated *)    
+    | "bitwise_lsr"         -> Some C_LSR     (* Deprecated *)
 
     (* String module *)
     
-    | "string_slice"    -> ok C_SLICE    (* Deprecated *)
-    | "string_concat"   -> ok C_CONCAT   (* Deprecated *)
+    | "string_slice"    -> Some C_SLICE    (* Deprecated *)
+    | "string_concat"   -> Some C_CONCAT   (* Deprecated *)
 
     (* Others *)
 
-    | "assert"          -> ok C_ASSERTION
-    | "size"            -> ok C_SIZE (* Deprecated *)
+    | "assert"          -> Some C_ASSERTION
+    | "size"            -> Some C_SIZE (* Deprecated *)
 
-    | _ as c            -> 
-      pseudo_modules c
+    | _ as c            -> pseudo_modules c
 
     let type_constants = type_constants
     let type_operators = type_operators
@@ -284,85 +283,84 @@ module Concrete_to_imperative = struct
     let constants = function
     (* Tezos (ex-Michelson, ex-Current, ex-Operation) *)
 
-    | "chain_id"                   -> ok C_CHAIN_ID            (* Deprecated *)    
-    | "Current.balance"            -> ok C_BALANCE             (* Deprecated *)
-    | "balance"                    -> ok C_BALANCE             (* Deprecated *)    
-    | "Current.time"               -> ok C_NOW                 (* Deprecated *)
-    | "time"                       -> ok C_NOW                 (* Deprecated *)    
-    | "Current.amount"             -> ok C_AMOUNT              (* Deprecated *)
-    | "amount"                     -> ok C_AMOUNT              (* Deprecated *)    
-    | "Current.sender"             -> ok C_SENDER              (* Deprecated *)
-    | "sender"                     -> ok C_SENDER              (* Deprecated *)    
-    | "Current.address"            -> ok C_ADDRESS             (* Deprecated *)    
-    | "Current.self_address"       -> ok C_SELF_ADDRESS        (* Deprecated *)    
-    | "Current.implicit_account"   -> ok C_IMPLICIT_ACCOUNT    (* Deprecated *)    
-    | "Current.source"             -> ok C_SOURCE              (* Deprecated *)
-    | "source"                     -> ok C_SOURCE              (* Deprecated *)    
-    | "Current.failwith"           -> ok C_FAILWITH            (* Deprecated *)
-    | "failwith"                   -> ok C_FAILWITH
+    | "chain_id"                   -> Some C_CHAIN_ID            (* Deprecated *)    
+    | "Current.balance"            -> Some C_BALANCE             (* Deprecated *)
+    | "balance"                    -> Some C_BALANCE             (* Deprecated *)    
+    | "Current.time"               -> Some C_NOW                 (* Deprecated *)
+    | "time"                       -> Some C_NOW                 (* Deprecated *)    
+    | "Current.amount"             -> Some C_AMOUNT              (* Deprecated *)
+    | "amount"                     -> Some C_AMOUNT              (* Deprecated *)    
+    | "Current.sender"             -> Some C_SENDER              (* Deprecated *)
+    | "sender"                     -> Some C_SENDER              (* Deprecated *)    
+    | "Current.address"            -> Some C_ADDRESS             (* Deprecated *)    
+    | "Current.self_address"       -> Some C_SELF_ADDRESS        (* Deprecated *)    
+    | "Current.implicit_account"   -> Some C_IMPLICIT_ACCOUNT    (* Deprecated *)    
+    | "Current.source"             -> Some C_SOURCE              (* Deprecated *)
+    | "source"                     -> Some C_SOURCE              (* Deprecated *)    
+    | "Current.failwith"           -> Some C_FAILWITH            (* Deprecated *)
+    | "failwith"                   -> Some C_FAILWITH
     
-    | "Operation.transaction"        -> ok C_CALL              (* Deprecated *)
-    | "Operation.set_delegate"       -> ok C_SET_DELEGATE      (* Deprecated *)
-    | "Operation.get_contract"       -> ok C_CONTRACT          (* Deprecated *)
-    | "Operation.get_contract_opt"   -> ok C_CONTRACT_OPT      (* Deprecated *)
-    | "Operation.get_entrypoint"   -> ok C_CONTRACT_ENTRYPOINT (* Deprecated *)
-    | "Operation.get_entrypoint_opt" -> ok C_CONTRACT_ENTRYPOINT_OPT (* Deprecated *)
+    | "Operation.transaction"        -> Some C_CALL              (* Deprecated *)
+    | "Operation.set_delegate"       -> Some C_SET_DELEGATE      (* Deprecated *)
+    | "Operation.get_contract"       -> Some C_CONTRACT          (* Deprecated *)
+    | "Operation.get_contract_opt"   -> Some C_CONTRACT_OPT      (* Deprecated *)
+    | "Operation.get_entrypoint"     -> Some C_CONTRACT_ENTRYPOINT (* Deprecated *)
+    | "Operation.get_entrypoint_opt" -> Some C_CONTRACT_ENTRYPOINT_OPT (* Deprecated *)
 
-    | "Michelson.is_nat" -> ok C_IS_NAT  (* Deprecated *)
-    | "is_nat"           -> ok C_IS_NAT
-    | "int"              -> ok C_INT
-    | "abs"              -> ok C_ABS
-    | "ediv"             -> ok C_EDIV
-    | "unit"             -> ok C_UNIT
+    | "Michelson.is_nat" -> Some C_IS_NAT  (* Deprecated *)
+    | "is_nat"           -> Some C_IS_NAT
+    | "int"              -> Some C_INT
+    | "abs"              -> Some C_ABS
+    | "ediv"             -> Some C_EDIV
+    | "unit"             -> Some C_UNIT
 
-    | "NEG"              -> ok C_NEG
-    | "ADD"              -> ok C_ADD
-    | "SUB"              -> ok C_SUB
-    | "TIMES"            -> ok C_MUL
-    | "DIV"              -> ok C_DIV
-    | "MOD"              -> ok C_MOD
-    | "EQ"               -> ok C_EQ
-    | "NOT"              -> ok C_NOT
-    | "AND"              -> ok C_AND
-    | "OR"               -> ok C_OR
-    | "GT"               -> ok C_GT
-    | "GE"               -> ok C_GE
-    | "LT"               -> ok C_LT
-    | "LE"               -> ok C_LE
-    | "CONS"             -> ok C_CONS
-    | "NEQ"              -> ok C_NEQ
+    | "NEG"              -> Some C_NEG
+    | "ADD"              -> Some C_ADD
+    | "SUB"              -> Some C_SUB
+    | "TIMES"            -> Some C_MUL
+    | "DIV"              -> Some C_DIV
+    | "MOD"              -> Some C_MOD
+    | "EQ"               -> Some C_EQ
+    | "NOT"              -> Some C_NOT
+    | "AND"              -> Some C_AND
+    | "OR"               -> Some C_OR
+    | "GT"               -> Some C_GT
+    | "GE"               -> Some C_GE
+    | "LT"               -> Some C_LT
+    | "LE"               -> Some C_LE
+    | "CONS"             -> Some C_CONS
+    | "NEQ"              -> Some C_NEQ
 
     (* Bytes module *)
 
-    | "Bytes.size"   -> ok C_SIZE       (* Deprecated *)
-    | "Bytes.slice"  -> ok C_SLICE      (* Deprecated *)
+    | "Bytes.size"   -> Some C_SIZE       (* Deprecated *)
+    | "Bytes.slice"  -> Some C_SLICE      (* Deprecated *)
 
     (* Set module *)   
-    | "Set.size"     -> ok C_SIZE (* Deprecated *)
+    | "Set.size"     -> Some C_SIZE (* Deprecated *)
 
     (* Map module *)
-    | "Map.find"     -> ok C_MAP_FIND     (* Deprecated *)
+    | "Map.find"     -> Some C_MAP_FIND     (* Deprecated *)
 
     (* Bitwise module *)
 
-    | "Bitwise.lor"         -> ok C_OR  (* Deprecated *)
-    | "Bitwise.land"        -> ok C_AND (* Deprecated *)
-    | "Bitwise.lxor"        -> ok C_XOR (* Deprecated *)
+    | "Bitwise.lor"         -> Some C_OR  (* Deprecated *)
+    | "Bitwise.land"        -> Some C_AND (* Deprecated *)
+    | "Bitwise.lxor"        -> Some C_XOR (* Deprecated *)
 
     (* Loop module *)
 
-    | "Loop.fold_while" -> ok C_FOLD_WHILE    (* Deprecated *)
-    | "Loop.resume"     -> ok C_FOLD_CONTINUE (* Deprecated *)
-    | "continue"        -> ok C_FOLD_CONTINUE (* Deprecated *)
-    | "Loop.stop"       -> ok C_FOLD_STOP     (* Deprecated *)
-    | "stop"            -> ok C_FOLD_STOP     (* Deprecated *)
+    | "Loop.fold_while" -> Some C_FOLD_WHILE    (* Deprecated *)
+    | "Loop.resume"     -> Some C_FOLD_CONTINUE (* Deprecated *)
+    | "continue"        -> Some C_FOLD_CONTINUE (* Deprecated *)
+    | "Loop.stop"       -> Some C_FOLD_STOP     (* Deprecated *)
+    | "stop"            -> Some C_FOLD_STOP     (* Deprecated *)
 
     (* Others *)
 
-    | "assert" -> ok C_ASSERTION
+    | "assert" -> Some C_ASSERTION
 
-    | _ as c -> 
-      pseudo_modules c
+    | _ as c -> pseudo_modules c
 
     let type_constants = type_constants
     let type_operators = type_operators

@@ -1,18 +1,17 @@
 
 module Concrete_to_imperative : sig
  open Ast_imperative
- open Trace
 
   module Pascaligo : sig
-    val constants  : string -> constant' result
-    val type_constants : string -> type_constant result
-    val type_operators : string -> type_operator result
+    val constants  : string -> constant' option
+    val type_constants : string -> type_constant option
+    val type_operators : string -> type_operator option
   end
 
   module Cameligo : sig
-    val constants  : string -> constant' result
-    val type_constants : string -> type_constant result
-    val type_operators : string -> type_operator result
+    val constants  : string -> constant' option
+    val type_constants : string -> type_constant option
+    val type_operators : string -> type_operator option
   end
 
 end

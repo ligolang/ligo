@@ -110,6 +110,15 @@ module Errors = struct
                 ~offsets:true ~mode:`Point t)
     ] in
     error ~data title message
+
+  let unknown_built_in name =
+    let title () = "\n Unknown built-in function" in
+    let message () = "" in
+    let data = [
+      ("built-in", fun  () -> name);
+    ] in
+    error ~data title message
+
 end
 
 open Errors
@@ -153,8 +162,8 @@ let rec compile_type_expression (t:Raw.type_expr) : type_expression result =
   | TVar v -> (
       let (v,loc) = r_split v in
       match type_constants v with
-      | Ok (s,_) -> ok @@ make_t ~loc @@ T_constant s
-      | Error _ -> ok @@ make_t ~loc @@ T_variable (Var.of_name v)
+      | Some s -> ok @@ make_t ~loc @@ T_constant s
+      | None -> ok @@ make_t ~loc @@ T_variable (Var.of_name v)
     )
   | TFun x -> (
       let (x,loc) = r_split x in
@@ -202,7 +211,7 @@ let rec compile_type_expression (t:Raw.type_expr) : type_expression result =
           let%bind lst =
             bind_list @@ List.map compile_type_expression lst in (** TODO: fix constant and operator*)
           let%bind cst =
-            trace (unknown_predefined_type name) @@
+            trace_option (unknown_predefined_type name) @@
             type_operators name.value in
           t_operator ~loc cst lst)
   | TProd p ->
@@ -277,8 +286,8 @@ let rec compile_expression (t:Raw.expr) : expr result =
   | EVar c -> (
       let (c' , loc) = r_split c in
       match constants c' with
-      | Error _   -> return @@ e_variable ~loc (Var.of_name c.value)
-      | Ok (s,_)  -> return @@ e_constant ~loc s []
+      | None   -> return @@ e_variable ~loc (Var.of_name c.value)
+      | Some s -> return @@ e_constant ~loc s []
     )
   | ECall x -> (
       let ((f, args) , loc) = r_split x in
@@ -288,10 +297,10 @@ let rec compile_expression (t:Raw.expr) : expr result =
       | EVar name -> (
         let (f_name , f_loc) = r_split name in
         match constants f_name with
-        | Error _ ->
+        | None ->
            let%bind arg = compile_tuple_expression ~loc:args_loc args' in
            return @@ e_application ~loc (e_variable ~loc:f_loc (Var.of_name f_name)) arg
-        | Ok (s,_) ->
+        | Some s ->
            let%bind lst = bind_map_list compile_expression args' in
            return @@ e_constant ~loc s lst
       )
@@ -538,14 +547,14 @@ and compile_binop (name:string) (t:_ Raw.bin_op Region.reg) : expression result 
   let (t , loc) = r_split t in
   let%bind a = compile_expression t.arg1 in
   let%bind b = compile_expression t.arg2 in
-  let%bind name = constants name in
+  let%bind name = trace_option (unknown_built_in name) @@ constants name in
   return @@ e_constant ~loc name [ a ; b ]
 
 and compile_unop (name:string) (t:_ Raw.un_op Region.reg) : expression result =
   let return x = ok x in
   let (t , loc) = r_split t in
   let%bind a = compile_expression t.arg in
-  let%bind name = constants name in
+  let%bind name = trace_option (unknown_built_in name) @@ constants name in
   return @@ e_constant ~loc name [ a ]
 
 and compile_tuple_expression ?loc (lst:Raw.expr list) : expression result =
@@ -780,10 +789,10 @@ and compile_single_instruction : Raw.instruction -> (_ -> expression result) res
     | EVar name -> (
       let (f_name , f_loc) = r_split name in
       match constants f_name with
-      | Error _  ->
+      | None  ->
          let%bind arg = compile_tuple_expression ~loc:args_loc args' in
          return_statement @@ e_application ~loc (e_variable ~loc:f_loc (Var.of_name f_name)) arg
-      | Ok (s,_) ->
+      | Some s ->
          let%bind lst = bind_map_list compile_expression args' in
          return_statement @@ e_constant ~loc s lst
     )
