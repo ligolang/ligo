@@ -224,15 +224,27 @@ let print_ast_typed =
   let doc = "Subcommand: Print the typed AST.\n Warning: Intended for development of LIGO and can break at any time." in
   (Term.ret term, Term.info ~doc cmdname)
 
+let optimize =
+  let open Arg in
+  let docv = "ENTRY_POINT" in
+  let doc = "Apply Mini-C optimizations as if compiling $(docv)" in
+  let info =
+    info ~docv ~doc ["optimize"] in
+  value @@ opt (some string) None info
+
 let print_mini_c =
-  let f source_file syntax display_format  = (
+  let f source_file syntax display_format optimize = (
     toplevel ~display_format @@
     let%bind typed,_    = Compile.Utils.type_file source_file syntax Env in
     let%bind mini_c     = Compile.Of_typed.compile typed in
-    ok @@ Format.asprintf "%a\n" Compile.Of_mini_c.pretty_print mini_c
+    match optimize with
+    | None -> ok @@ Format.asprintf "%a\n" Compile.Of_mini_c.pretty_print mini_c
+    | Some entry_point ->
+      let%bind mini_c = Compile.Of_mini_c.aggregate_contract mini_c entry_point in
+      ok @@ Format.asprintf "%a\n" Mini_c.PP.expression mini_c
   )
   in
-  let term = Term.(const f $ source_file 0 $ syntax $ display_format) in
+  let term = Term.(const f $ source_file 0 $ syntax $ display_format $ optimize) in
   let cmdname = "print-mini-c" in
   let doc = "Subcommand: Print Mini-C. Warning: Intended for development of LIGO and can break at any time." in
   (Term.ret term, Term.info ~doc cmdname)

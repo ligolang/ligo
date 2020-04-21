@@ -34,3 +34,15 @@ let aggregate_and_compile_expression = fun program exp ->
 
 let pretty_print program = 
   Mini_c.PP.program program
+
+
+(* TODO refactor? *)
+
+let aggregate = fun program form ->
+  let%bind aggregated = aggregate_entry program form in
+  ok @@ Self_mini_c.all_expression aggregated
+
+let aggregate_contract = fun (program : Types.program) name ->
+  let%bind (exp, idx) = get_entry program name in
+  let program' = List.take idx program in
+  aggregate program' (ContractForm exp)
