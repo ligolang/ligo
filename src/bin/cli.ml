@@ -475,6 +475,7 @@ let list_declarations =
   (Term.ret term , Term.info ~doc cmdname)
 
 let run ?argv () =
+  Var.reset_counter ();
   Term.eval_choice ?argv main [
     temp_ligo_interpreter ;
     compile_file ;
