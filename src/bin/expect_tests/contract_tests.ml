@@ -964,16 +964,6 @@ let%expect_test _ =
     * Check the changelog by running 'ligo changelog' |}]
 
 let%expect_test _ =
-  run_ligo_good [ "run-function" ; contract "failwith.ligo" ; "failer" ; "1" ] ;
-  [%expect {|
-    failwith("some_string") |}]
-
-let%expect_test _ =
-  run_ligo_good [ "run-function" ; contract "failwith.ligo" ; "failer" ; "1" ; "--format=json" ] ;
-  [%expect {|
-    {"status":"ok","content":"failwith(\"some_string\")"} |}]
-
-let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; contract "bad_address_format.religo" ; "main" ] ;
   [%expect {|
     ligo: in file "bad_address_format.religo", line 2, characters 26-48. Badly formatted literal: @"KT1badaddr" {"location":"in file \"bad_address_format.religo\", line 2, characters 26-48"}
@@ -1084,7 +1074,7 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; bad_contract "create_contract_toplevel.mligo" ; "main" ] ;
   [%expect {|
-ligo: in file "create_contract_toplevel.mligo", line 4, character 35 to line 8, character 8. No free variable allowed in this lambda: variable 'store' {"expression":"CREATE_CONTRACT(lambda (#P:Some(( nat * string ))) : None return\n                let rhs#727 = #P in\n                let p = rhs#727.0 in\n                let s = rhs#727.1 in\n                ( LIST_EMPTY() : (type_operator: list(operation)) , store ) ,\n                NONE() : (type_operator: option(key_hash)) ,\n                300000000mutez ,\n                \"un\")","location":"in file \"create_contract_toplevel.mligo\", line 4, character 35 to line 8, character 8"}
+ligo: in file "create_contract_toplevel.mligo", line 4, character 35 to line 8, character 8. No free variable allowed in this lambda: variable 'store' {"expression":"CREATE_CONTRACT(lambda (#P:Some(( nat * string ))) : None return\n                let rhs#693 = #P in\n                let p = rhs#693.0 in\n                let s = rhs#693.1 in\n                ( LIST_EMPTY() : (type_operator: list(operation)) , store ) ,\n                NONE() : (type_operator: option(key_hash)) ,\n                300000000mutez ,\n                \"un\")","location":"in file \"create_contract_toplevel.mligo\", line 4, character 35 to line 8, character 8"}
 
 
  If you're not sure how to fix this error, you can
@@ -1097,7 +1087,7 @@ ligo: in file "create_contract_toplevel.mligo", line 4, character 35 to line 8, 
 
   run_ligo_bad [ "compile-contract" ; bad_contract "create_contract_var.mligo" ; "main" ] ;
   [%expect {|
-ligo: in file "create_contract_var.mligo", line 6, character 35 to line 10, character 5. No free variable allowed in this lambda: variable 'a' {"expression":"CREATE_CONTRACT(lambda (#P:Some(( nat * int ))) : None return\n                let rhs#730 = #P in\n                let p = rhs#730.0 in\n                let s = rhs#730.1 in\n                ( LIST_EMPTY() : (type_operator: list(operation)) , a ) ,\n                NONE() : (type_operator: option(key_hash)) ,\n                300000000mutez ,\n                1)","location":"in file \"create_contract_var.mligo\", line 6, character 35 to line 10, character 5"}
+ligo: in file "create_contract_var.mligo", line 6, character 35 to line 10, character 5. No free variable allowed in this lambda: variable 'a' {"expression":"CREATE_CONTRACT(lambda (#P:Some(( nat * int ))) : None return\n                let rhs#696 = #P in\n                let p = rhs#696.0 in\n                let s = rhs#696.1 in\n                ( LIST_EMPTY() : (type_operator: list(operation)) , a ) ,\n                NONE() : (type_operator: option(key_hash)) ,\n                300000000mutez ,\n                1)","location":"in file \"create_contract_var.mligo\", line 6, character 35 to line 10, character 5"}
 
 
  If you're not sure how to fix this error, you can
