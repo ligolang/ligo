@@ -133,6 +133,65 @@ module Typer = struct
       type_expression_eq (t_bool () , b) in
     ok @@ t_bool ()
 
+  module Converter = struct
+    open Ast_typed
+
+    let record_checks kvl =
+      let%bind () = Assert.assert_true_err
+        (simple_error "converted record must have at least two elements")
+        (List.length kvl >=2) in
+      let all_undefined = List.for_all (fun (_,{decl_position;_}) -> decl_position = 0) kvl in
+      let%bind () = Assert.assert_true_err
+        (simple_error "can't retrieve declaration order in the converted record, you need to annotate it")
+        (not all_undefined) in
+      ok ()
+
+    let annotate_field (field:field_content) (ann:string) : field_content =
+      {field with michelson_annotation=Some ann}
+
+    let comb (t:type_content) : field_content =
+      let field_type = {
+        type_content = t ;
+        type_meta = None ;
+        location = Location.generated ; } in
+      {field_type ; michelson_annotation = Some "" ; decl_position = 0}
+
+    let rec to_right_comb_t l new_map =
+      match l with
+      | [] -> new_map
+      | [ (Label ann_l, field_content_l) ; (Label ann_r, field_content_r) ] ->
+        LMap.add_bindings [
+          (Label "0" , annotate_field field_content_l ann_l) ;
+          (Label "1" , annotate_field field_content_r ann_r) ] new_map
+      | (Label ann, field)::tl ->
+        let new_map' = LMap.add (Label "0") (annotate_field field ann) new_map in
+        LMap.add (Label "1") (comb (T_record (to_right_comb_t tl new_map'))) new_map'
+
+    let rec to_left_comb_t_ first l new_map =
+      match l with
+      | [] -> new_map
+      | (Label ann_l, field_content_l) :: (Label ann_r, field_content_r) ::tl when first ->
+        let new_map' = LMap.add_bindings [
+          (Label "0" , annotate_field field_content_l ann_l) ;
+          (Label "1" , annotate_field field_content_r ann_r) ] LMap.empty in
+        to_left_comb_t_ false tl new_map'
+      | (Label ann, field)::tl ->
+        let new_map' = LMap.add_bindings [
+          (Label "0" , comb (T_record new_map)) ;
+          (Label "1" , annotate_field field ann ) ;] LMap.empty in
+        to_left_comb_t_ first tl new_map'
+    
+    let to_left_comb_t = to_left_comb_t_ true
+
+    let convert_type_to_right_comb l =
+      let l' = List.sort (fun (_,{decl_position=a;_}) (_,{decl_position=b;_}) -> Int.compare a b) l in
+      T_record (to_right_comb_t l' LMap.empty)
+
+    let convert_type_to_left_comb l =
+      let l' = List.sort (fun (_,{decl_position=a;_}) (_,{decl_position=b;_}) -> Int.compare a b) l in
+      T_record (to_left_comb_t l' LMap.empty)
+  end
+
 end
 
 module Compiler = struct

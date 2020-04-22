@@ -45,6 +45,7 @@ and ctor_content = {
 and field_content = {
     field_type : type_expression;
     michelson_annotation : annot_option;
+    decl_position : int;
 }
 
 and type_map_args = {
@@ -254,6 +255,8 @@ and constant' =
   | C_IMPLICIT_ACCOUNT
   | C_SET_DELEGATE
   | C_CREATE_CONTRACT
+  | C_CONVERT_TO_LEFT_COMB
+  | C_CONVERT_TO_RIGHT_COMB
 
 and declaration_loc = declaration location_wrap
 

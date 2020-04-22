@@ -13,6 +13,12 @@ let cmap_sep value sep ppf m =
 
 let cmap_sep_d x = cmap_sep x (tag " ,@ ")
 
+let record_sep_t value sep ppf (m : 'a label_map) =
+  let lst = LMap.to_kv_list m in
+  let lst = List.sort_uniq (fun (Label a,_) (Label b,_) -> String.compare a b) lst in
+  let new_pp ppf (k, {field_type=v;_}) = fprintf ppf "@[<h>%a -> %a@]" label k value v in
+  fprintf ppf "%a" (list_sep new_pp sep) lst
+
 let record_sep value sep ppf (m : 'a label_map) =
   let lst = LMap.to_kv_list m in
   let lst = List.sort_uniq (fun (Label a,_) (Label b,_) -> String.compare a b) lst in
@@ -30,7 +36,7 @@ let rec type_expression' :
   fun f ppf te ->
   match te.type_content with
   | T_sum m -> fprintf ppf "sum[%a]" (cmap_sep_d f) m
-  | T_record m -> fprintf ppf "{%a}" (record_sep f (const ";")) m
+  | T_record m -> fprintf ppf "{%a}" (record_sep_t f (const ";")) m
   | T_tuple t -> fprintf ppf "(%a)" (list_sep_d f) t
   | T_arrow a -> fprintf ppf "%a -> %a" f a.type1 f a.type2
   | T_variable tv -> type_variable ppf tv

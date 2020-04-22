@@ -21,7 +21,7 @@ and arrow = {type1: type_expression; type2: type_expression}
 
 and ctor_content = {ctor_type : type_expression ; michelson_annotation : string option}
 
-and field_content = {field_type : type_expression ; michelson_annotation : string option}
+and field_content = {field_type : type_expression ; michelson_annotation : string option ; decl_position : int}
 
 and type_operator =
   | TC_contract of type_expression

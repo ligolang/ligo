@@ -103,6 +103,7 @@ val assert_t_nat : type_expression -> unit result
 val assert_t_bool : type_expression -> unit result
 val assert_t_unit : type_expression -> unit result
 val assert_t_contract : type_expression -> unit result
+val assert_t_record : type_expression -> unit result
 (*
 val e_record : ae_map -> expression
 val ez_e_record : ( string * expression ) list -> expression

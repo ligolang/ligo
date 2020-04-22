@@ -142,9 +142,9 @@ and evaluate_type (e:environment) (t:I.type_expression) : O.type_expression resu
   | T_record m ->
     let aux k v prev =
       let%bind prev' = prev in
-      let {field_type ; field_annotation} : I.field_content = v in
+      let {field_type ; field_annotation ; decl_position} : I.field_content = v in
       let%bind field_type = evaluate_type e field_type in
-      ok @@ O.LMap.add (convert_label k) ({field_type ; michelson_annotation=field_annotation}:O.field_content) prev'
+      ok @@ O.LMap.add (convert_label k) ({field_type ; michelson_annotation=field_annotation ; decl_position}:O.field_content) prev'
     in
     let%bind m = I.LMap.fold aux m (ok O.LMap.empty) in
     return (T_record m)
@@ -300,7 +300,7 @@ and type_expression : environment -> O.typer_state -> ?tv_opt:O.type_expression 
       ok (O.LMap.add (convert_label k) expr' acc , state')
     in
     let%bind (m' , state') = Stage_common.Helpers.bind_fold_lmap aux (ok (O.LMap.empty , state)) m in
-    let wrapped = Wrap.record (O.LMap.map (fun e -> ({field_type = get_type_expression e ; michelson_annotation = None}: O.field_content)) m') in
+    let wrapped = Wrap.record (O.LMap.map (fun e -> ({field_type = get_type_expression e ; michelson_annotation = None ; decl_position = 0}: O.field_content)) m') in
     return_wrapped (E_record m') state' wrapped
   | E_record_update {record; path; update} ->
     let%bind (record, state) = type_expression e state record in

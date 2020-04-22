@@ -6,7 +6,7 @@ include Stage_common.Types
 
 type type_content =
   | T_sum of type_expression constructor_map
-  | T_record of type_expression label_map
+  | T_record of field_content label_map
   | T_tuple  of type_expression list
   | T_arrow of arrow
   | T_variable of type_variable
@@ -14,6 +14,8 @@ type type_content =
   | T_operator of type_operator
 
 and arrow = {type1: type_expression; type2: type_expression}
+
+and field_content = {field_type :type_expression ; decl_position : int} 
 
 and michelson_prct_annotation = string
 

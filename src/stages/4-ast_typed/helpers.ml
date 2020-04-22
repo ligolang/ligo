@@ -174,7 +174,7 @@ let is_michelson_pair (t: _ label_map) =
   LMap.cardinal t = 2 && 
   let l = LMap.to_list t in
   List.fold_left
-    (fun prev {field_type=_;michelson_annotation} -> match michelson_annotation with
+    (fun prev {michelson_annotation;_} -> match michelson_annotation with
       | Some _ -> true
       | None -> prev)
     false 

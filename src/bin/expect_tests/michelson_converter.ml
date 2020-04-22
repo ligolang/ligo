@@ -1,0 +1,45 @@
+open Cli_expect
+
+let contract basename =
+  "../../test/contracts/" ^ basename
+let bad_contract basename =
+  "../../test/contracts/negative/" ^ basename
+
+let%expect_test _ =
+  run_ligo_bad [ "interpret" ; "--init-file="^(bad_contract "michelson_converter_no_annotation.mligo") ; "l4"] ;
+  [%expect {|
+    ligo: in file "michelson_converter_no_annotation.mligo", line 4, characters 9-39. can't retrieve declaration order in the converted record, you need to annotate it
+
+     If you're not sure how to fix this error, you can
+     do one of the following:
+
+    * Visit our documentation: https://ligolang.org/docs/intro/introduction
+    * Ask a question on our Discord: https://discord.gg/9rhYaEt
+    * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
+    * Check the changelog by running 'ligo changelog' |}] ;
+
+  run_ligo_bad [ "interpret" ; "--init-file="^(bad_contract "michelson_converter_short_record.mligo") ; "l1"] ;
+  [%expect {|
+    ligo: in file "michelson_converter_short_record.mligo", line 4, characters 9-44. converted record must have at least two elements
+
+     If you're not sure how to fix this error, you can
+     do one of the following:
+
+    * Visit our documentation: https://ligolang.org/docs/intro/introduction
+    * Ask a question on our Discord: https://discord.gg/9rhYaEt
+    * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
+    * Check the changelog by running 'ligo changelog' |}]
+
+let%expect_test _ =
+  run_ligo_good [ "interpret" ; "--init-file="^(contract "michelson_converter.mligo") ; "r3"] ;
+  [%expect {|
+    ( 2 , ( +3 , "q" ) ) |}] ;
+  run_ligo_good [ "interpret" ; "--init-file="^(contract "michelson_converter.mligo") ; "r4"] ;
+  [%expect {|
+    ( 2 , ( +3 , ( "q" , true ) ) ) |}] ;
+  run_ligo_good [ "interpret" ; "--init-file="^(contract "michelson_converter.mligo") ; "l3"] ;
+  [%expect {|
+    ( ( 2 , +3 ) , "q" ) |}] ;
+  run_ligo_good [ "interpret" ; "--init-file="^(contract "michelson_converter.mligo") ; "l4"] ;
+  [%expect {|
+    ( ( ( 2 , +3 ) , "q" ) , true ) |}] ;

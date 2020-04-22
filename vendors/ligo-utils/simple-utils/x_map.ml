@@ -6,6 +6,7 @@ module type S = sig
   val of_list : (key * 'a) list -> 'a t
   val to_list : 'a t -> 'a list
   val to_kv_list : 'a t -> (key * 'a) list
+  val add_bindings : (key * 'a) list -> 'a t -> 'a t
 end
 
 module Make(Ord : Map.OrderedType) : S with type key = Ord.t = struct
@@ -22,6 +23,10 @@ module Make(Ord : Map.OrderedType) : S with type key = Ord.t = struct
   let to_kv_list (t: 'a t) : (key * 'a) list =
     let aux k v prev = (k, v) :: prev in
     fold aux t []
+  
+  let add_bindings (kvl:(key * 'a) list) (m:'a t) =
+    let aux prev (k, v) = add k v prev in
+    List.fold_left aux m kvl
 end
 
 module String = Make(String)

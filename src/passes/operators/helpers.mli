@@ -53,6 +53,15 @@ module Typer : sig
   val comparator : string -> typer
   val boolean_operator_2 : string -> typer
 
+  module Converter : sig
+
+    open Ast_typed
+
+    val record_checks : (label * field_content) list -> unit result
+    val convert_type_to_right_comb : (label * field_content) list -> type_content
+    val convert_type_to_left_comb : (label * field_content) list -> type_content
+
+  end
 end
 
 module Compiler : sig

@@ -350,6 +350,8 @@ let convert_constant' : I.constant' -> O.constant' = function
   | C_IMPLICIT_ACCOUNT -> C_IMPLICIT_ACCOUNT
   | C_SET_DELEGATE -> C_SET_DELEGATE
   | C_CREATE_CONTRACT -> C_CREATE_CONTRACT
+  | C_CONVERT_TO_LEFT_COMB -> C_CONVERT_TO_LEFT_COMB
+  | C_CONVERT_TO_RIGHT_COMB -> C_CONVERT_TO_RIGHT_COMB
 
 let unconvert_constant' : O.constant' -> I.constant' = function
   | C_INT -> C_INT
@@ -465,6 +467,8 @@ let unconvert_constant' : O.constant' -> I.constant' = function
   | C_IMPLICIT_ACCOUNT -> C_IMPLICIT_ACCOUNT
   | C_SET_DELEGATE -> C_SET_DELEGATE
   | C_CREATE_CONTRACT -> C_CREATE_CONTRACT
+  | C_CONVERT_TO_LEFT_COMB -> C_CONVERT_TO_LEFT_COMB
+  | C_CONVERT_TO_RIGHT_COMB -> C_CONVERT_TO_RIGHT_COMB
 
 let rec type_program (p:I.program) : (O.program * O.typer_state) result =
   let aux (e, acc:(environment * O.declaration Location.wrap list)) (d:I.declaration Location.wrap) =
@@ -604,10 +608,10 @@ and evaluate_type (e:environment) (t:I.type_expression) : O.type_expression resu
       let%bind m = I.CMap.fold aux m (ok O.CMap.empty) in
       return (T_sum m)
   | T_record m ->
-      let aux k ({field_type;field_annotation}: I.field_content) prev =
+      let aux k ({field_type;field_annotation;decl_position}: I.field_content) prev =
         let%bind prev' = prev in
         let%bind field_type = evaluate_type e field_type in
-        let v' = ({field_type;michelson_annotation=field_annotation} : O.field_content) in
+        let v' = ({field_type;michelson_annotation=field_annotation;decl_position} : O.field_content) in
         ok @@ O.LMap.add (convert_label k) v' prev'
       in
       let%bind m = I.LMap.fold aux m (ok O.LMap.empty) in
@@ -759,7 +763,10 @@ and type_expression' : environment -> ?tv_opt:O.type_expression -> I.expression 
         ok (O.LMap.add (convert_label k) expr' prev)
       in
       let%bind m' = Stage_common.Helpers.bind_fold_lmap aux (ok O.LMap.empty) m in
-      let lmap = O.LMap.map (fun e -> ({field_type = get_type_expression e; michelson_annotation = None}:O.field_content)) m' in
+      (* let () = match tv_opt with
+        Some _ -> Format.printf "YES"
+       | None -> Format.printf "NO" in *)
+      let lmap = O.LMap.map (fun e -> ({field_type = get_type_expression e; michelson_annotation = None; decl_position=0}:O.field_content)) m' in
       return (E_record m') (t_record lmap ())
   | E_record_update {record; path; update} ->
     let path = convert_label path in

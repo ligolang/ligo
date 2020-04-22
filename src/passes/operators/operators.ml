@@ -156,6 +156,12 @@ module Concrete_to_imperative = struct
     | "String.sub"      -> Some C_SLICE
     | "String.concat"   -> Some C_CONCAT
 
+    (* michelson pair/or type converter module *)
+
+    | "Layout.convert_to_right_comb" -> Some C_CONVERT_TO_RIGHT_COMB
+    | "Layout.convert_to_left_comb" -> Some C_CONVERT_TO_LEFT_COMB
+    (* | "Layout.convert_from" -> Some C_CONVERT_FROM *)
+
     | _ -> None
 
 
@@ -271,6 +277,9 @@ module Concrete_to_imperative = struct
 
     | "assert"          -> Some C_ASSERTION
     | "size"            -> Some C_SIZE (* Deprecated *)
+    
+    | "Layout.convert_to_right_comb" -> Some C_CONVERT_TO_RIGHT_COMB
+    | "Layout.convert_to_left_comb" -> Some C_CONVERT_TO_LEFT_COMB
 
     | _ as c            -> pseudo_modules c
 
@@ -1155,6 +1164,20 @@ module Typer = struct
     let%bind () = assert_eq_1 hd elt in
     ok tl
 
+  let convert_to_right_comb = typer_1 "CONVERT_TO_RIGHT_COMB" @@ fun record ->
+    let%bind lmap = get_t_record record in
+    let kvl =  LMap.to_kv_list lmap in
+    let%bind () = Converter.record_checks kvl in
+    let pair = Converter.convert_type_to_right_comb kvl in
+    ok {record with type_content = pair}
+
+  let convert_to_left_comb = typer_1 "CONVERT_TO_LEFT_COMB" @@ fun record ->
+    let%bind lmap = get_t_record record in
+    let kvl =  LMap.to_kv_list lmap in
+    let%bind () = Converter.record_checks kvl in
+    let pair = Converter.convert_type_to_left_comb kvl in
+    ok {record with type_content = pair}
+  
   let constant_typers c : typer result = match c with
     | C_INT                 -> ok @@ int ;
     | C_UNIT                -> ok @@ unit ;
@@ -1247,6 +1270,8 @@ module Typer = struct
     | C_IMPLICIT_ACCOUNT    -> ok @@ implicit_account;
     | C_SET_DELEGATE        -> ok @@ set_delegate ;
     | C_CREATE_CONTRACT     -> ok @@ create_contract ;
+    | C_CONVERT_TO_RIGHT_COMB -> ok @@ convert_to_right_comb ;
+    | C_CONVERT_TO_LEFT_COMB  -> ok @@ convert_to_left_comb ;
     | _                     -> simple_fail @@ Format.asprintf "Typer not implemented for consant %a" PP.constant c
 
 

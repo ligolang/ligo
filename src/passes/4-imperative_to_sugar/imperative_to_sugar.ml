@@ -145,9 +145,9 @@ let rec compile_type_expression : I.type_expression -> O.type_expression result 
     | I.T_record record -> 
       let record = I.LMap.to_kv_list record in
       let%bind record = 
-        bind_map_list (fun (k,v) ->
+        bind_map_list (fun (k, ({field_type = v; decl_position ; _}:I.field_content)) ->
           let%bind v = compile_type_expression v in
-          let content : O.field_content = {field_type = v ; michelson_annotation = None} in
+          let content : O.field_content = {field_type = v; michelson_annotation = None ; decl_position} in
           ok @@ (k,content)
         ) record
       in
@@ -171,8 +171,8 @@ let rec compile_type_expression : I.type_expression -> O.type_expression result 
     | I.T_operator (TC_michelson_pair (l,l_ann,r,r_ann)) ->
       let%bind (l,r) = bind_map_pair compile_type_expression (l,r) in
       let sum : (O.label * O.field_content) list = [
-        (O.Label "0" , {field_type = l ; michelson_annotation = Some l_ann}); 
-        (O.Label "1", {field_type = r ; michelson_annotation = Some r_ann}); ]
+        (O.Label "0" , {field_type = l ; michelson_annotation = Some l_ann ; decl_position = 0}); 
+        (O.Label "1", {field_type = r ; michelson_annotation = Some r_ann ; decl_position = 0}); ]
       in
       return @@ O.T_record (O.LMap.of_list sum)
     | I.T_operator type_operator ->
@@ -600,9 +600,9 @@ let rec uncompile_type_expression : O.type_expression -> I.type_expression resul
       let record = I.LMap.to_kv_list record in
       let%bind record = 
         bind_map_list (fun (k,v) ->
-          let {field_type;_} : O.field_content = v in
+          let {field_type;decl_position} : O.field_content = v in
           let%bind v = uncompile_type_expression field_type in
-          ok @@ (k,v)
+          ok @@ (k,({field_type=v;decl_position}:I.field_content))
         ) record
       in
       return @@ I.T_record (O.LMap.of_list record)
