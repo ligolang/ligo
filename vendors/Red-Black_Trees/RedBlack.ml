@@ -67,16 +67,15 @@ let remove : type a b . cmp:(a -> b -> int) -> a -> b t -> b t = fun ~cmp elt tr
             Int (colour, new_left, lroot, right)
        ) in
   let rec bst_delete : a -> b t -> b t = fun elt -> function
-    | Ext -> failwith "remove in red-black tree: element not found"
+    | Ext -> raise Not_found
     | Int (colour, left, root, right) as current ->
        let c = cmp elt root in
        if      c = 0 then bst_shift_up current
        else if c < 0 then Int (colour, bst_delete elt left, root, right)
        else               Int (colour, left, root, bst_delete elt right)
   in
-  bst_delete elt tree
-
-exception Not_found
+  try bst_delete elt tree
+  with Not_found -> tree
 
 let rec find ~cmp elt = function
   Ext -> raise Not_found

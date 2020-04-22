@@ -39,8 +39,6 @@ val remove: cmp:('a -> 'b -> int) -> 'a -> 'b t -> 'b t
    to a node of the tree [t], such that [cmp x y = true]. If none, the
    exception [Not_found] is raised. *)
 
-exception Not_found
-
 val find: cmp:('a -> 'b -> int) -> 'a -> 'b t -> 'b
 
 (* The value of call [find_opt ~cmp x t] is [Some y] if there is an

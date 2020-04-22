@@ -17,11 +17,9 @@ let is_empty set = RB.is_empty set.tree
 
 let add elt set = {set with tree = RB.add ~cmp:set.cmp RB.New elt set.tree}
 
-exception Not_found
-
 let find elt set =
   try RB.find ~cmp:set.cmp elt set.tree with
-    RB.Not_found -> raise Not_found
+    Not_found -> raise Not_found
 
 let find_opt elt set = RB.find_opt ~cmp:set.cmp elt set.tree
 

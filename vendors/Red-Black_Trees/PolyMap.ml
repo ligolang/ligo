@@ -23,19 +23,17 @@ let remove key map =
   let cmp k1 (k2,_) = map.cmp k1 k2 in
   {map with tree = RB.remove ~cmp key map.tree}
 
-exception Not_found
-
 let find key map =
   let cmp k1 (k2,_) = map.cmp k1 k2 in
   try snd (RB.find ~cmp key map.tree) with
-    RB.Not_found -> raise Not_found
+    Not_found -> raise Not_found
 
 let find_opt key map =
   try Some (find key map) with Not_found -> None
 
 let update key updater map =
   match updater (find_opt key map) with
-  | None -> failwith "TODO: RedBlackTrees: remove not implemented" (* TODO: remove key *)
+  | None -> remove key map
   | Some v -> add key v map
 
 let bindings map =

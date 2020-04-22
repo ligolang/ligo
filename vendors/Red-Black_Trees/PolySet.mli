@@ -38,8 +38,6 @@ val add : 'elt -> 'elt t -> 'elt t
    function of [set] (see [create]). If [elt] is not in [set], then
    the exception [Not_found] is raised. *)
 
-exception Not_found
-
 val find : 'elt -> 'elt t -> 'elt
 
 (* The call [find_opt elt set] is similar to [find elt set], except
