@@ -933,6 +933,17 @@ sequence_or_record_in:
     | None ->
       PaRecord {r_elts = ($1, []); r_terminator = None}
   }
+| field_name more_field_assignments {
+  let value = {
+    field_name = $1;
+    assignment = ghost;
+    field_expr = EVar $1 }
+  in 
+  let field_name = {$1 with value} in
+  let (comma, elts) = $2 in
+  let r_elts = Utils.nsepseq_cons field_name comma elts in 
+  PaRecord {r_elts; r_terminator = None}
+}
 
 sequence_or_record:
   "{" sequence_or_record_in "}" {
