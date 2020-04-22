@@ -19,7 +19,7 @@ them. please report this to the developers." in
     error ~data title content
 
   let wrong_mini_c_value expected_type actual =
-    let title () = "illed typed intermediary value" in
+    let title () = "untranspiler: illed typed intermediary value" in
     let content () = "type of intermediary value doesn't match what was expected" in
     let data = [
       ("expected_type" , fun () -> expected_type) ;
@@ -44,6 +44,18 @@ let rec untranspile (v : value) (t : AST.type_expression) : AST.expression resul
   let open! AST in
   let return e = ok (make_a_e_empty e t) in
   match t.type_content with
+  | T_variable (name) when Var.equal name Stage_common.Constant.t_bool -> (
+        let%bind b =
+          trace_strong (wrong_mini_c_value "bool" v) @@
+          get_bool v in
+        return (e_bool b Environment.full_empty)
+      )
+  | T_sum m when m = CMap.of_list [(Constructor "true",{ctor_type=t_unit ();michelson_annotation=None});(Constructor "false",{ctor_type=t_unit ();michelson_annotation=None})] -> (
+        let%bind b =
+          trace_strong (wrong_mini_c_value "bool" v) @@
+          get_bool v in
+        return (e_bool b Environment.full_empty)
+      )
   | T_constant type_constant -> (
     match type_constant with
     | TC_unit -> (
@@ -51,12 +63,6 @@ let rec untranspile (v : value) (t : AST.type_expression) : AST.expression resul
           trace_strong (wrong_mini_c_value "unit" v) @@
           get_unit v in
         return (E_literal Literal_unit)
-      )
-    | TC_bool -> (
-        let%bind b =
-          trace_strong (wrong_mini_c_value "bool" v) @@
-          get_bool v in
-        return (E_literal (Literal_bool b))
       )
     | TC_int -> (
         let%bind n =

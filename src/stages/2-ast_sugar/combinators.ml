@@ -27,7 +27,7 @@ let tuple_to_record lst =
   let (_, lst ) = List.fold_left aux (0,[]) lst in
   lst
 
-let t_bool ?loc ()        : type_expression = make_t ?loc @@ T_constant (TC_bool)
+let t_bool ?loc ()        : type_expression = make_t ?loc @@ T_variable (Stage_common.Constant.t_bool)
 let t_string ?loc ()      : type_expression = make_t ?loc @@ T_constant (TC_string)
 let t_bytes ?loc ()       : type_expression = make_t ?loc @@ T_constant (TC_bytes)
 let t_int ?loc ()         : type_expression = make_t ?loc @@ T_constant (TC_int)
@@ -90,7 +90,6 @@ let e_unit ?loc () : expression = make_e ?loc @@ E_literal (Literal_unit)
 let e_int ?loc n : expression = make_e ?loc @@ E_literal (Literal_int n)
 let e_nat ?loc n : expression = make_e ?loc @@ E_literal (Literal_nat n)
 let e_timestamp ?loc n : expression = make_e ?loc @@ E_literal (Literal_timestamp n)
-let e_bool ?loc   b : expression = make_e ?loc @@ E_literal (Literal_bool b)
 let e_string ?loc s : expression = make_e ?loc @@ E_literal (Literal_string s)
 let e_address ?loc s : expression = make_e ?loc @@ E_literal (Literal_address s)
 let e_mutez ?loc s : expression = make_e ?loc @@ E_literal (Literal_mutez s)
@@ -141,6 +140,8 @@ let e_set ?loc lst : expression = make_e ?loc @@ E_set lst
 let e_map ?loc lst : expression = make_e ?loc @@ E_map lst
 let e_big_map ?loc lst : expression = make_e ?loc @@ E_big_map lst
 let e_look_up ?loc a b : expression = make_e ?loc @@ E_look_up (a,b)
+
+let e_bool ?loc   b : expression = e_constructor ?loc (Constructor (string_of_bool b)) (e_unit ())
 
 let make_option_typed ?loc e t_opt =
   match t_opt with

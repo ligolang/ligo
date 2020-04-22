@@ -93,7 +93,7 @@ let%expect_test _ =
 
   run_ligo_bad [ "compile-contract" ; "../../test/contracts/negative/error_typer_3.mligo" ; "main" ] ;
   [%expect {|
-    ligo: in file "error_typer_3.mligo", line 3, characters 34-53. tuples have different sizes: Expected these two types to be the same, but they're different (both are tuples, but with a different number of arguments) {"a":"( int * string * bool )","b":"( int * string )"}
+    ligo: in file "error_typer_3.mligo", line 3, characters 34-53. tuples have different sizes: Expected these two types to be the same, but they're different (both are tuples, but with a different number of arguments) {"a":"( int * string * sum[false -> unit , true -> unit] )","b":"( int * string )"}
 
 
      If you're not sure how to fix this error, you can
@@ -106,7 +106,7 @@ let%expect_test _ =
 
   run_ligo_bad [ "compile-contract" ; "../../test/contracts/negative/error_typer_4.mligo" ; "main" ] ;
   [%expect {|
-    ligo: in file "error_typer_4.mligo", line 4, characters 17-56. different keys in records:  {"key_a":"c","key_b":"b","a":"record[a -> int , c -> bool , d -> string]","b":"record[a -> int , b -> string , c -> bool]"}
+    ligo: in file "error_typer_4.mligo", line 4, characters 17-56. different keys in records:  {"key_a":"c","key_b":"b","a":"record[a -> int , c -> sum[false -> unit , true -> unit] , d -> string]","b":"record[a -> int , b -> string , c -> sum[false -> unit , true -> unit]]"}
 
 
      If you're not sure how to fix this error, you can
@@ -119,7 +119,7 @@ let%expect_test _ =
 
   run_ligo_bad [ "compile-contract" ; "../../test/contracts/negative/error_typer_5.mligo" ; "main" ] ;
   [%expect {|
-    ligo: in file "error_typer_5.mligo", line 1, characters 10-17. unbound type variable:  {"variable":"boolean","location":"in file \"error_typer_5.mligo\", line 1, characters 10-17","in":"- E[]\tT[] ]","did_you_mean":"bool"}
+    ligo: in file "error_typer_5.mligo", line 1, characters 10-17. unbound type variable:  {"variable":"boolean","location":"in file \"error_typer_5.mligo\", line 1, characters 10-17","in":"- E[]\tT[] - E[]\tT[bool -> sum[false -> unit , true -> unit]]]","did_you_mean":"bool"}
 
 
      If you're not sure how to fix this error, you can
@@ -132,7 +132,7 @@ let%expect_test _ =
 
   run_ligo_bad [ "compile-contract" ; "../../test/contracts/negative/error_typer_6.mligo" ; "main" ] ;
   [%expect {|
-    ligo: in file "error_typer_6.mligo", line 1, characters 30-64. different type constructors: Expected these two constant type constructors to be the same, but they're different {"a":"string","b":"bool"}
+    ligo: in file "error_typer_6.mligo", line 1, characters 30-64. different kinds:  {"a":"string","b":"sum[false -> unit , true -> unit]"}
 
 
      If you're not sure how to fix this error, you can
@@ -145,7 +145,7 @@ let%expect_test _ =
 
   run_ligo_bad [ "compile-contract" ; "../../test/contracts/negative/error_typer_7.mligo" ; "main" ] ;
   [%expect {|
-    ligo: in file "error_typer_7.mligo", line 4, characters 18-48. records have different sizes: Expected these two types to be the same, but they're different (both are records, but with a different number of arguments) {"a":"record[a -> int , b -> string]","b":"record[a -> int , b -> string , c -> bool]"}
+    ligo: in file "error_typer_7.mligo", line 4, characters 18-48. records have different sizes: Expected these two types to be the same, but they're different (both are records, but with a different number of arguments) {"a":"record[a -> int , b -> string]","b":"record[a -> int , b -> string , c -> sum[false -> unit , true -> unit]]"}
 
 
      If you're not sure how to fix this error, you can

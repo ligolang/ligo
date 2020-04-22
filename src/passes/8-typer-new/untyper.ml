@@ -13,7 +13,6 @@ let unconvert_type_constant : O.type_constant -> I.type_constant = function
     | TC_nat -> TC_nat
     | TC_int -> TC_int
     | TC_mutez -> TC_mutez
-    | TC_bool -> TC_bool
     | TC_operation -> TC_operation
     | TC_address -> TC_address
     | TC_key -> TC_key
@@ -219,7 +218,6 @@ let untype_literal (l:O.literal) : I.literal result =
   match l with
   | Literal_unit -> ok Literal_unit
   | Literal_void -> ok Literal_void
-  | Literal_bool b -> ok (Literal_bool b)
   | Literal_nat n -> ok (Literal_nat n)
   | Literal_timestamp n -> ok (Literal_timestamp n)
   | Literal_mutez n -> ok (Literal_mutez n)

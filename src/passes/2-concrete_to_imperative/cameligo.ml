@@ -768,11 +768,11 @@ and compile_logic_expression ?te_annot (t:Raw.logic_expr) : expr result =
   match t with
   | BoolExpr (False reg) -> (
       let loc = Location.lift reg in
-      return @@ e_literal ~loc (Literal_bool false)
+      return @@ e_bool ~loc false
     )
   | BoolExpr (True reg) -> (
       let loc = Location.lift reg in
-      return @@ e_literal ~loc (Literal_bool true)
+      return @@ e_bool ~loc true
     )
   | BoolExpr (Or b) ->
       compile_binop "OR" b

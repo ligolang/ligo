@@ -487,11 +487,11 @@ and compile_logic_expression (t:Raw.logic_expr) : expression result =
   match t with
   | BoolExpr (False reg) -> (
       let loc = Location.lift reg in
-      return @@ e_literal ~loc (Literal_bool false)
+      return @@ e_bool ~loc false
     )
   | BoolExpr (True reg) -> (
       let loc = Location.lift reg in
-      return @@ e_literal ~loc (Literal_bool true)
+      return @@ e_bool ~loc true
     )
   | BoolExpr (Or b) ->
       compile_binop "OR" b

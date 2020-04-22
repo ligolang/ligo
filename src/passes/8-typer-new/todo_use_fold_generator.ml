@@ -10,7 +10,6 @@ let convert_type_constant : I.type_constant -> O.type_constant = function
     | TC_nat -> TC_nat
     | TC_int -> TC_int
     | TC_mutez -> TC_mutez
-    | TC_bool -> TC_bool
     | TC_operation -> TC_operation
     | TC_address -> TC_address
     | TC_key -> TC_key

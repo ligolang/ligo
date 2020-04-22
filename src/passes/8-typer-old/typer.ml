@@ -4,6 +4,7 @@ module I = Ast_core
 module O = Ast_typed
 open O.Combinators
 
+module DEnv = Environment
 module Environment = O.Environment
 
 module Solver = Typer_new.Solver
@@ -226,7 +227,6 @@ let convert_type_constant : I.type_constant -> O.type_constant = function
     | TC_nat -> TC_nat
     | TC_int -> TC_int
     | TC_mutez -> TC_mutez
-    | TC_bool -> TC_bool
     | TC_operation -> TC_operation
     | TC_address -> TC_address
     | TC_key -> TC_key
@@ -477,7 +477,7 @@ let rec type_program (p:I.program) : (O.program * Solver.state) result =
   in
   let%bind (_, lst) =
     trace (fun () -> program_error p ()) @@
-    bind_fold_list aux (Environment.full_empty, []) p in
+    bind_fold_list aux (DEnv.default, []) p in
   ok @@ (List.rev lst , (Solver.placeholder_for_state_of_new_typer ()))
 
 and type_declaration env (_placeholder_for_state_of_new_typer : Solver.state) : I.declaration -> (environment * Solver.state * O.declaration option) result = function
@@ -689,8 +689,6 @@ and type_expression' : environment -> ?tv_opt:O.type_expression -> I.expression 
         trace_option (unbound_variable e name ae.location)
         @@ Environment.get_opt name e in
       return (E_variable name) tv'.type_value
-  | E_literal (Literal_bool b) ->
-      return (E_literal (Literal_bool b)) (t_bool ())
   | E_literal Literal_unit ->
       return (E_literal (Literal_unit)) (t_unit ())
   | E_literal Literal_void -> return (E_literal (Literal_void)) (t_unit ()) (* TODO : IS this really a t_unit ?*)
@@ -1015,7 +1013,6 @@ let untype_literal (l:O.literal) : I.literal result =
   match l with
   | Literal_unit -> ok Literal_unit
   | Literal_void -> ok Literal_void
-  | Literal_bool b -> ok (Literal_bool b)
   | Literal_nat n -> ok (Literal_nat n)
   | Literal_timestamp n -> ok (Literal_timestamp n)
   | Literal_mutez n -> ok (Literal_mutez n)
