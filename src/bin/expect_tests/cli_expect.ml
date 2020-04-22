@@ -10,6 +10,7 @@ exception Should_exit_bad
 let () = Unix.putenv "TERM" "dumb"
 
 let run_ligo args =
+  Var.reset_counter ();
   let argv = Array.of_list ("ligo" :: args) in
   let result = Cli.run ~argv () in
   Term.exit_status_of_result result
