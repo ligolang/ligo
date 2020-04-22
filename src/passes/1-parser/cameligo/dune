@@ -95,7 +95,7 @@
 
 (rule
  (targets error.messages)
- (mode promote-until-clean)
+ (mode (promote (until-clean) (only *))))
  (deps Parser.mly ParToken.mly error.messages.checked-in LexToken.mli)
  (action
   (with-stdout-to %{targets}
@@ -115,7 +115,7 @@
 
 (rule
   (target error.messages.new)
-  (mode promote-until-clean)
+  (mode (promote (until-clean) (only *))))
   (action
     (with-stdout-to %{target}
       (run
@@ -156,7 +156,7 @@
 
 (rule
  (targets ParErr.ml)
- (mode promote-until-clean)
+ (mode (promote (until-clean) (only *))))
  (deps Parser.mly ParToken.mly error.messages.checked-in LexToken.mli)
  (action
   (with-stdout-to %{targets}
