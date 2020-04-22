@@ -528,7 +528,7 @@ let program_environment (program : program) : full_environment =
   match last_declaration with
   | Declaration_constant { binder=_ ; expr=_ ; inline=_ ; post_env } -> post_env
 
-let expression_eq a b : bool =
+let equal_variables a b : bool =
   match a.expression_content, b.expression_content with 
   | E_variable a, E_variable b -> Var.equal a b
   |  _, _ -> false
