@@ -2582,6 +2582,11 @@ binary-extensions@^1.0.0:
   resolved "https://registry.yarnpkg.com/binary-extensions/-/binary-extensions-1.13.1.tgz#598afe54755b2868a5330d2aff9d4ebb53209b65"
   integrity sha512-Un7MIEDdUC5gNpcGDV97op1Ywk748MpHcFTHoYs6qnj1Z3j7I53VG3nwZhKzoBZmbdRNnb6WRdFlwl7tSDuZGw==
 
+bintrees@1.0.1:
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/bintrees/-/bintrees-1.0.1.tgz#0e655c9b9c2435eaab68bf4027226d2b55a34524"
+  integrity sha1-DmVcm5wkNeqraL9AJyJtK1WjRSQ=
+
 bip39@^3.0.2:
   version "3.0.2"
   resolved "https://registry.yarnpkg.com/bip39/-/bip39-3.0.2.tgz#2baf42ff3071fc9ddd5103de92e8f80d9257ee32"
@@ -4013,7 +4018,7 @@ delegates@^1.0.0:
   resolved "https://registry.yarnpkg.com/delegates/-/delegates-1.0.0.tgz#84c6e159b81904fdca59a0ef44cd870d31250f9a"
   integrity sha1-hMbhWbgZBP3KWaDvRM2HDTElD5o=
 
-depd@~1.1.2:
+depd@~1.1.0, depd@~1.1.2:
   version "1.1.2"
   resolved "https://registry.yarnpkg.com/depd/-/depd-1.1.2.tgz#9bcd52e14c097763e749b274c4346ed2e560b5a9"
   integrity sha1-m81S4UwJd2PnSbJ0xDRu0uVgtak=
@@ -4763,6 +4768,16 @@ expect@^24.9.0:
     jest-message-util "^24.9.0"
     jest-regex-util "^24.9.0"
 
+express-prometheus-middleware@^0.8.5:
+  version "0.8.5"
+  resolved "https://registry.yarnpkg.com/express-prometheus-middleware/-/express-prometheus-middleware-0.8.5.tgz#097b2871184e2bba997c5ce6db4eec289b61e192"
+  integrity sha512-DhQZzp8RDZYh72zJCIr8/t5wY15hHpNQXAnr7xpuizOk+nolLDTpcqCIdHfkgXOwK/I29tMydiJzX686N6bzyw==
+  dependencies:
+    express "^4.16.3"
+    prom-client "^11.1.1"
+    response-time "^2.3.2"
+    url-value-parser "^2.0.0"
+
 express-winston@^4.0.1:
   version "4.0.1"
   resolved "https://registry.yarnpkg.com/express-winston/-/express-winston-4.0.1.tgz#98c74d099b9a7fdeedc56eb839c223968bc33990"
@@ -4771,7 +4786,7 @@ express-winston@^4.0.1:
     chalk "^2.4.1"
     lodash "^4.17.10"
 
-express@^4.16.2, express@^4.17.1:
+express@^4.16.2, express@^4.16.3, express@^4.17.1:
   version "4.17.1"
   resolved "https://registry.yarnpkg.com/express/-/express-4.17.1.tgz#4491fc38605cf51f8629d39c2b5d026f98a4c134"
   integrity sha512-mHJ9O79RqluphRrcw2X/GTh3k9tVv8YcoyY4Kkh4WDMUYKRZUq0h1o0w2rrrxBqM7VoeUVqgb27xlEMXTnYt4g==
@@ -8323,7 +8338,7 @@ on-finished@~2.3.0:
   dependencies:
     ee-first "1.1.1"
 
-on-headers@~1.0.2:
+on-headers@~1.0.1, on-headers@~1.0.2:
   version "1.0.2"
   resolved "https://registry.yarnpkg.com/on-headers/-/on-headers-1.0.2.tgz#772b0ae6aaa525c399e489adfad90c403eb3c28f"
   integrity sha512-pZAE+FJLoyITytdqK0U5s+FIpjN0JP3OzFi/u8Rx+EV5/W+JTWGXG8xFzevE7AjBfDqHv/8vL8qQsIhHnqRkrA==
@@ -9504,6 +9519,13 @@ progress@^2.0.0, progress@^2.0.1:
   resolved "https://registry.yarnpkg.com/progress/-/progress-2.0.3.tgz#7e8cf8d8f5b8f239c1bc68beb4eb78567d572ef8"
   integrity sha512-7PiHtLll5LdnKIMw100I+8xJXR5gW2QwWYkT6iJva0bXitZKa/XMrSbdmg3r2Xnaidz9Qumd0VPaMrZlF9V9sA==
 
+prom-client@^11.1.1:
+  version "11.5.3"
+  resolved "https://registry.yarnpkg.com/prom-client/-/prom-client-11.5.3.tgz#5fedfce1083bac6c2b223738e966d0e1643756f8"
+  integrity sha512-iz22FmTbtkyL2vt0MdDFY+kWof+S9UB/NACxSn2aJcewtw+EERsen0urSkZ2WrHseNdydsvcxCTAnPcSMZZv4Q==
+  dependencies:
+    tdigest "^0.1.1"
+
 promise-inflight@^1.0.1:
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/promise-inflight/-/promise-inflight-1.0.1.tgz#98472870bf228132fcbdd868129bad12c3c029e3"
@@ -10290,6 +10312,14 @@ resolve@1.12.0, resolve@1.x, resolve@^1.10.0, resolve@^1.10.1, resolve@^1.11.0, 
   integrity sha512-B/dOmuoAik5bKcD6s6nXDCjzUKnaDvdkRyAk6rsmsKLipWj4797iothd7jmmUhWTfinVMU+wc56rYKsit2Qy4w==
   dependencies:
     path-parse "^1.0.6"
+
+response-time@^2.3.2:
+  version "2.3.2"
+  resolved "https://registry.yarnpkg.com/response-time/-/response-time-2.3.2.tgz#ffa71bab952d62f7c1d49b7434355fbc68dffc5a"
+  integrity sha1-/6cbq5UtYvfB1Jt0NDVfvGjf/Fo=
+  dependencies:
+    depd "~1.1.0"
+    on-headers "~1.0.1"
 
 restore-cursor@^2.0.0:
   version "2.0.0"
@@ -11301,6 +11331,13 @@ tar@^4:
     safe-buffer "^5.1.2"
     yallist "^3.0.3"
 
+tdigest@^0.1.1:
+  version "0.1.1"
+  resolved "https://registry.yarnpkg.com/tdigest/-/tdigest-0.1.1.tgz#2e3cb2c39ea449e55d1e6cd91117accca4588021"
+  integrity sha1-Ljyyw56kSeVdHmzZEReszKRYgCE=
+  dependencies:
+    bintrees "1.0.1"
+
 teeny-request@^5.2.1:
   version "5.3.0"
   resolved "https://registry.yarnpkg.com/teeny-request/-/teeny-request-5.3.0.tgz#c80287b5a51a7c25eef2347ff5467c95e07dac5a"
@@ -11824,6 +11861,11 @@ url-parse@^1.4.3:
   dependencies:
     querystringify "^2.1.1"
     requires-port "^1.0.0"
+
+url-value-parser@^2.0.0:
+  version "2.0.1"
+  resolved "https://registry.yarnpkg.com/url-value-parser/-/url-value-parser-2.0.1.tgz#c8179a095ab9ec1f5aa17ca36af5af396b4e95ed"
+  integrity sha512-bexECeREBIueboLGM3Y1WaAzQkIn+Tca/Xjmjmfd0S/hFHSCEoFkNh0/D0l9G4K74MkEP/lLFRlYnxX3d68Qgw==
 
 url@^0.11.0:
   version "0.11.0"
