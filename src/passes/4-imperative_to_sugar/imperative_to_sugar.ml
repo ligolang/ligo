@@ -52,8 +52,16 @@ let repair_mutable_variable_in_matching (match_body : O.expression) (element_nam
         | E_constant {cons_name=C_MAP_FOLD;arguments= _}
         | E_constant {cons_name=C_SET_FOLD;arguments= _}
         | E_constant {cons_name=C_LIST_FOLD;arguments= _} 
+        | E_cond _
         | E_matching _ -> ok @@ (false, (decl_var,free_var),ass_exp)
-      | _ -> ok (true, (decl_var, free_var),ass_exp)
+      | E_constant _
+      | E_skip
+      | E_literal _ | E_variable _
+      | E_application _ | E_lambda _| E_recursive _
+      | E_constructor _ | E_record _| E_record_accessor _|E_record_update _
+      | E_ascription _  | E_sequence _ | E_tuple _ | E_tuple_accessor _ | E_tuple_update _
+      | E_map _ | E_big_map _ |E_list _ | E_set _ |E_look_up _
+       -> ok (true, (decl_var, free_var),ass_exp)
     )
       (element_names,[])
       match_body in
@@ -88,8 +96,16 @@ and repair_mutable_variable_in_loops (for_body : O.expression) (element_names : 
         | E_constant {cons_name=C_MAP_FOLD;arguments= _}
         | E_constant {cons_name=C_SET_FOLD;arguments= _}
         | E_constant {cons_name=C_LIST_FOLD;arguments= _} 
+        | E_cond _
         | E_matching _ -> ok @@ (false,(decl_var,free_var),ass_exp)
-      | _ -> ok (true,(decl_var, free_var),ass_exp)
+      | E_constant _
+      | E_skip
+      | E_literal _ | E_variable _
+      | E_application _ | E_lambda _| E_recursive _
+      | E_constructor _ | E_record _| E_record_accessor _|E_record_update _
+      | E_ascription _  | E_sequence _ | E_tuple _ | E_tuple_accessor _ | E_tuple_update _
+      | E_map _ | E_big_map _ |E_list _ | E_set _ |E_look_up _
+       -> ok (true, (decl_var, free_var),ass_exp)
     )
       (element_names,[])
       for_body in
@@ -536,13 +552,14 @@ and compile_for I.{binder;start;final;increment;body} =
   ok @@ restore_mutable_variable return_expr captured_name_list env_rec 
 
 and compile_for_each I.{binder;collection;collection_type; body} =
+  let env_rec = Var.fresh () in
   let args = Var.fresh () in
+
   let%bind element_names = ok @@ match snd binder with
     | Some v -> [fst binder;v]
     | None -> [fst binder] 
   in
   
-  let env = Var.fresh () in
   let%bind body = compile_expression body in
   let%bind ((_,free_vars), body) = repair_mutable_variable_in_loops body element_names args in
   let for_body = add_to_end body @@ (O.e_record_accessor (O.e_variable args) (Label "0")) in
@@ -566,9 +583,9 @@ and compile_for_each I.{binder;collection;collection_type; body} =
    | Map -> ok @@ O.C_MAP_FOLD | Set -> ok @@ O.C_SET_FOLD | List -> ok @@ O.C_LIST_FOLD 
   in
   let fold = fun expr -> 
-    O.e_let_in (env,None) false false (O.e_constant op_name [lambda; collect ; init_record]) expr
+    O.e_let_in (env_rec,None) false false (O.e_constant op_name [lambda; collect ; init_record]) expr
   in
-  ok @@ restore_mutable_variable fold free_vars env
+  ok @@ restore_mutable_variable fold free_vars env_rec
 
 let compile_declaration : I.declaration Location.wrap -> _ =
   fun {wrap_content=declaration;location} ->
