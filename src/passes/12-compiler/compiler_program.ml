@@ -494,8 +494,7 @@ and translate_expression (expr:expression) (env:environment) : michelson result 
       ]
     )
   | E_raw_michelson (code, type_anno) -> 
-      let r = Str.regexp "^{|\\(.*\\)|}$\\|^\"\\(.*\\)\"" in
-      let code = Str.replace_first r "{\\1}" code in (*remplace the string quotes or varbatim symbol by michelson's code delimiters  *)
+      let code = Format.asprintf "{%s}" code in 
       let%bind code = Proto_alpha_utils.Trace.trace_tzresult (raw_michelson_parsing_error code) @@
       Tezos_micheline.Micheline_parser.no_parsing_error @@ Michelson_parser.V1.parse_expression ~check:false code in
       let code = Tezos_micheline.Micheline.root code.expanded in

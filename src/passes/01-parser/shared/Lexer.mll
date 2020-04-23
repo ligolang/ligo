@@ -395,7 +395,7 @@ and scan state = parse
 | eof                    { mk_eof          state lexbuf }
 | "[@"  (attr as a) "]"  { mk_attr "[@"  a state lexbuf }
 | "[@@" (attr as a) "]"  { mk_attr "[@@" a state lexbuf }
-| "[%" (insert as i) "]" { mk_insert     i state lexbuf }
+| "[%" (insert as i)     { mk_insert     i state lexbuf }
 
   (* Management of #include preprocessing directives
 
