@@ -474,14 +474,29 @@ and transpile_annotated_expression (ae:AST.expression) : expression result =
       let expr = List.fold_left aux record' path in
       ok expr
   | E_record_update {record; path; update} -> 
-      let%bind ty' = transpile_type (get_type_expression record) in 
-      let%bind ty_lmap =
-        trace_strong (corner_case ~loc:__LOC__ "not a record") @@
-        get_t_record (get_type_expression record) in
-      let%bind ty'_lmap = Ast_typed.Helpers.bind_map_lmap_t transpile_type ty_lmap in
-      let%bind path = 
-        trace_strong (corner_case ~loc:__LOC__ "record access") @@
-        record_access_to_lr ty' ty'_lmap path in
+      let rec aux res (r,p,up) =
+        let ty = get_type_expression r in
+        let%bind ty_lmap =
+          trace_strong (corner_case ~loc:__LOC__ "not a record") @@
+          get_t_record (ty) in
+        let%bind ty' = transpile_type (ty) in 
+        let%bind ty'_lmap = Ast_typed.Helpers.bind_map_lmap_t transpile_type ty_lmap in
+        let%bind p' = 
+          trace_strong (corner_case ~loc:__LOC__ "record access") @@
+          record_access_to_lr ty' ty'_lmap p in
+        let res' = res @ p' in
+        match (up:AST.expression).expression_content with
+        | AST.E_record_update {record=record'; path=path'; update=update'} -> (
+          match record'.expression_content with 
+            | AST.E_record_accessor {record;path} ->
+              if (AST.Misc.equal_variables record r && path = p) then
+                aux res' (record',path',update')
+              else ok @@ (up,res')
+            | _ -> ok @@ (up,res')
+        )
+        | _ -> ok @@ (up,res')
+      in
+      let%bind (update, path) = aux [] (record, path, update) in
       let path = List.map snd path in
       let%bind update = transpile_annotated_expression update in
       let%bind record = transpile_annotated_expression record in

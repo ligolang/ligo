@@ -10,6 +10,8 @@ val merge_annotation : type_expression option -> type_expression option -> error
 (* No information about what made it fail *)
 val type_expression_eq : ( type_expression * type_expression ) -> bool
 
+val equal_variables : expression -> expression -> bool
+
 module Free_variables : sig
   type bindings = expression_variable list
 
