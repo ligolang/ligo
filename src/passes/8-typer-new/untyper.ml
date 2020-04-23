@@ -295,10 +295,6 @@ and untype_lambda ty {binder; result} : I.lambda result =
 and untype_matching : (O.expression -> I.expression result) -> O.matching_expr -> I.matching_expr result = fun f m ->
   let open I in
   match m with
-  | Match_bool {match_true ; match_false} ->
-      let%bind match_true = f match_true in
-      let%bind match_false = f match_false in
-      ok @@ Match_bool {match_true ; match_false}
   | Match_tuple { vars ; body ; tvs=_ } ->
       let%bind b = f body in
       ok @@ I.Match_tuple ((vars, b),[])

@@ -53,11 +53,6 @@ let rec fold_expression : 'a . 'a folder -> 'a -> expression -> 'a result = fun 
 
 and fold_cases : 'a . 'a folder -> 'a -> matching_expr -> 'a result = fun f init m ->
   match m with
-  | Match_bool { match_true ; match_false } -> (
-      let%bind res = fold_expression f init match_true in
-      let%bind res = fold_expression f res match_false in
-      ok res
-    )
   | Match_list { match_nil ; match_cons = {hd=_; tl=_ ; body; tv=_} } -> (
       let%bind res = fold_expression f init match_nil in
       let%bind res = fold_expression f res body in
@@ -135,11 +130,6 @@ let rec map_expression : mapper -> expression -> expression result = fun f e ->
 
 and map_cases : mapper -> matching_expr -> matching_expr result = fun f m ->
   match m with
-  | Match_bool { match_true ; match_false } -> (
-      let%bind match_true = map_expression f match_true in
-      let%bind match_false = map_expression f match_false in
-      ok @@ Match_bool { match_true ; match_false }
-    ) 
   | Match_list { match_nil ; match_cons = {hd ; tl ; body ; tv} } -> (
       let%bind match_nil = map_expression f match_nil in
       let%bind body = map_expression f body in
@@ -230,11 +220,6 @@ let rec fold_map_expression : 'a . 'a fold_mapper -> 'a -> expression -> ('a * e
 
 and fold_map_cases : 'a . 'a fold_mapper -> 'a -> matching_expr -> ('a * matching_expr) result = fun f init m ->
   match m with
-  | Match_bool { match_true ; match_false } -> (
-      let%bind (init, match_true) = fold_map_expression f init match_true in
-      let%bind (init, match_false) = fold_map_expression f init match_false in
-      ok @@ (init, Match_bool { match_true ; match_false })
-    )
   | Match_list { match_nil ; match_cons = { hd ; tl ; body ; tv } } -> (
       let%bind (init, match_nil) = fold_map_expression f init match_nil in
       let%bind (init, body) = fold_map_expression f init body in

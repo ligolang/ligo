@@ -560,9 +560,6 @@ and transpile_annotated_expression (ae:AST.expression) : expression result =
   | E_matching {matchee=expr; cases=m} -> (
       let%bind expr' = transpile_annotated_expression expr in
       match m with
-      | Match_bool {match_true ; match_false} ->
-          let%bind (t , f) = bind_map_pair (transpile_annotated_expression) (match_true, match_false) in
-          return @@ E_if_bool (expr', t, f)
       | Match_option { match_none; match_some = {opt; body; tv} } ->
           let%bind n = transpile_annotated_expression match_none in
           let%bind (tv' , s') =
@@ -583,6 +580,9 @@ and transpile_annotated_expression (ae:AST.expression) : expression result =
           in
           return @@ E_if_cons (expr' , nil , cons)
         )
+      | Match_variant {cases=[{constructor=Constructor "true";body=match_true};{constructor=Constructor "false";body=match_false}];_} ->
+          let%bind (t , f) = bind_map_pair (transpile_annotated_expression) (match_true, match_false) in
+          return @@ E_if_bool (expr', t, f)
       | Match_variant {cases ; tv} -> (
           let%bind tree =
             trace_strong (corner_case ~loc:__LOC__ "getting lr tree") @@
@@ -683,9 +683,6 @@ and transpile_recursive {fun_name; fun_type; lambda} =
     let return ret = ok @@ Expression.make ret @@ ty in
     let%bind expr = transpile_annotated_expression m.matchee in
     match m.cases with
-      Match_bool {match_true; match_false} -> 
-          let%bind (t , f) = bind_map_pair (replace_callback fun_name loop_type shadowed) (match_true, match_false) in
-          return @@ E_if_bool (expr, t, f)
       | Match_option { match_none; match_some = {opt; body; tv} } ->
           let%bind n = replace_callback fun_name loop_type shadowed match_none in
           let%bind (tv' , s') =
@@ -706,6 +703,9 @@ and transpile_recursive {fun_name; fun_type; lambda} =
           in
           return @@ E_if_cons (expr , nil , cons)
         )
+      | Match_variant {cases=[{constructor=Constructor "true";body=match_true};{constructor=Constructor "false";body=match_false}];_} ->
+          let%bind (t , f) = bind_map_pair (replace_callback fun_name loop_type shadowed) (match_true, match_false) in
+          return @@ E_if_bool (expr, t, f)
       | Match_variant {cases;tv} -> (
           let%bind tree =
             trace_strong (corner_case ~loc:__LOC__ "getting lr tree") @@

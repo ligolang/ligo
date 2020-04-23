@@ -34,13 +34,6 @@ let rec type_declaration env state : I.declaration -> (environment * O.typer_sta
 
 and type_match : environment -> O.typer_state -> O.type_expression -> I.matching_expr -> I.expression -> Location.t -> (O.matching_expr * O.typer_state) result =
   fun e state t i ae loc -> match i with
-    | Match_bool {match_true ; match_false} ->
-      let%bind _ =
-        trace_strong (match_error ~expected:i ~actual:t loc)
-        @@ get_t_bool t in
-      let%bind (match_true , state') = type_expression e state match_true in
-      let%bind (match_false , state'') = type_expression e state' match_false in
-      ok (O.Match_bool {match_true ; match_false} , state'')
     | Match_option {match_none ; match_some} ->
       let%bind tv =
         trace_strong (match_error ~expected:i ~actual:t loc)
@@ -361,7 +354,6 @@ and type_expression : environment -> O.typer_state -> ?tv_opt:O.type_expression 
       let tvs =
         let aux (cur : O.matching_expr) =
           match cur with
-          | Match_bool { match_true ; match_false } -> [ match_true ; match_false ]
           | Match_list { match_nil ; match_cons = { hd=_ ; tl=_ ; body ; tv=_} } -> [ match_nil ; body ]
           | Match_option { match_none ; match_some = {opt=_; body; tv=_} } -> [ match_none ; body ]
           | Match_tuple { vars=_ ; body ; tvs=_ } -> [ body ]

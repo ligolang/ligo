@@ -1056,7 +1056,7 @@ and compile_cases : (Raw.pattern * expression) list -> matching_expr result = fu
   match patterns with
   | [(PConstr PFalse _ , f) ; (PConstr PTrue _ , t)]
   | [(PConstr PTrue _ , t) ; (PConstr PFalse _ , f)] ->
-      ok @@ Match_bool {match_true = t ; match_false = f}
+      ok @@ Match_variant ([((Constructor "true", Var.of_name "_"), t); ((Constructor "false", Var.of_name "_"), f)], ())
   | [(PConstr PSomeApp v , some) ; (PConstr PNone _ , none)]
   | [(PConstr PNone _ , none) ; (PConstr PSomeApp v , some)] -> (
       let (_, v) = v.value in

@@ -381,26 +381,6 @@ and compile_matching : I.matching -> (O.expression option -> O.expression) resul
   in
   let%bind matchee = compile_expression matchee in
   match cases with 
-    | I.Match_bool {match_true;match_false} ->
-      let%bind match_true' = compile_expression match_true in
-      let%bind match_false' = compile_expression match_false in
-      let env = Var.fresh () in
-      let%bind ((_,free_vars_true), match_true) = repair_mutable_variable_in_matching match_true' [] env in
-      let%bind ((_,free_vars_false), match_false) = repair_mutable_variable_in_matching match_false' [] env in
-      let match_true  = add_to_end match_true (O.e_variable env) in
-      let match_false = add_to_end match_false (O.e_variable env) in
-
-      let free_vars = List.sort_uniq Var.compare @@ free_vars_true @ free_vars_false in
-      if (List.length free_vars != 0) then 
-        let match_expr  = O.e_matching matchee (O.Match_bool {match_true; match_false}) in
-        let return_expr = fun expr ->
-          O.e_let_in (env,None) false false (store_mutable_variable free_vars) @@
-          O.e_let_in (env,None) false false match_expr @@
-          expr 
-        in
-        ok @@ restore_mutable_variable return_expr free_vars env
-      else
-        return @@ O.e_matching matchee @@ O.Match_bool {match_true=match_true';match_false=match_false'}
     | I.Match_option {match_none;match_some} ->
       let%bind match_none' = compile_expression match_none in
       let (n,expr,tv) = match_some in
@@ -765,10 +745,6 @@ and uncompile_lambda : O.lambda -> I.lambda result =
 and uncompile_matching : O.matching_expr -> I.matching_expr result =
   fun m -> 
   match m with 
-    | O.Match_bool {match_true;match_false} ->
-      let%bind match_true = uncompile_expression' match_true in
-      let%bind match_false = uncompile_expression' match_false in
-      ok @@ I.Match_bool {match_true;match_false}
     | O.Match_list {match_nil;match_cons} ->
       let%bind match_nil = uncompile_expression' match_nil in
       let (hd,tl,expr,tv) = match_cons in
