@@ -52,8 +52,16 @@ let repair_mutable_variable_in_matching (match_body : O.expression) (element_nam
         | E_constant {cons_name=C_MAP_FOLD;arguments= _}
         | E_constant {cons_name=C_SET_FOLD;arguments= _}
         | E_constant {cons_name=C_LIST_FOLD;arguments= _} 
+        | E_cond _
         | E_matching _ -> ok @@ (false, (decl_var,free_var),ass_exp)
-      | _ -> ok (true, (decl_var, free_var),ass_exp)
+      | E_constant _
+      | E_skip
+      | E_literal _ | E_variable _
+      | E_application _ | E_lambda _| E_recursive _
+      | E_constructor _ | E_record _| E_record_accessor _|E_record_update _
+      | E_ascription _  | E_sequence _ | E_tuple _ | E_tuple_accessor _ | E_tuple_update _
+      | E_map _ | E_big_map _ |E_list _ | E_set _ |E_look_up _
+       -> ok (true, (decl_var, free_var),ass_exp)
     )
       (element_names,[])
       match_body in
@@ -88,8 +96,16 @@ and repair_mutable_variable_in_loops (for_body : O.expression) (element_names : 
         | E_constant {cons_name=C_MAP_FOLD;arguments= _}
         | E_constant {cons_name=C_SET_FOLD;arguments= _}
         | E_constant {cons_name=C_LIST_FOLD;arguments= _} 
+        | E_cond _
         | E_matching _ -> ok @@ (false,(decl_var,free_var),ass_exp)
-      | _ -> ok (true,(decl_var, free_var),ass_exp)
+      | E_constant _
+      | E_skip
+      | E_literal _ | E_variable _
+      | E_application _ | E_lambda _| E_recursive _
+      | E_constructor _ | E_record _| E_record_accessor _|E_record_update _
+      | E_ascription _  | E_sequence _ | E_tuple _ | E_tuple_accessor _ | E_tuple_update _
+      | E_map _ | E_big_map _ |E_list _ | E_set _ |E_look_up _
+       -> ok (true, (decl_var, free_var),ass_exp)
     )
       (element_names,[])
       for_body in

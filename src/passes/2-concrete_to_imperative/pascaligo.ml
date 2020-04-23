@@ -398,7 +398,7 @@ let rec compile_expression (t:Raw.expr) : expr result =
       let%bind expr = compile_expression c.test in
       let%bind match_true = compile_expression c.ifso in
       let%bind match_false = compile_expression c.ifnot in
-      return @@ e_matching expr ~loc (Match_bool {match_true; match_false})
+      return @@ e_cond ~loc expr match_true match_false
 
   | ECase c -> (
       let (c , loc) = r_split c in
@@ -860,7 +860,7 @@ and compile_single_instruction : Raw.instruction -> (_ -> expression result) res
       
       let%bind match_true = match_true None in
       let%bind match_false = match_false None in
-      return_statement @@ e_matching expr ~loc (Match_bool {match_true; match_false})
+      return_statement @@ e_cond ~loc expr match_true match_false
     )
   | Assign a -> (
       let (a , loc) = r_split a in

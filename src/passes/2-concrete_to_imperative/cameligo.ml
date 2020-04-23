@@ -649,7 +649,7 @@ let rec compile_expression :
       let%bind expr = compile_expression c.test in
       let%bind match_true = compile_expression c.ifso in
       let%bind match_false = compile_expression c.ifnot in
-      return @@ e_matching ~loc expr (Match_bool {match_true; match_false})
+      return @@ e_cond ~loc expr match_true match_false
     )
 
 and compile_fun lamb' : expr result =
