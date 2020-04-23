@@ -649,10 +649,6 @@ and evaluate_type (e:environment) (t:I.type_expression) : O.type_expression resu
             let%bind k = evaluate_type e k in 
             let%bind v = evaluate_type e v in 
             ok @@ O.TC_map_or_big_map {k;v}
-        | TC_arrow ( arg , ret ) ->
-            let%bind arg' = evaluate_type e arg in
-            let%bind ret' = evaluate_type e ret in
-            ok @@ O.TC_arrow { type1=arg' ; type2=ret' }
         | TC_contract c ->
             let%bind c = evaluate_type e c in
             ok @@ O.TC_contract c

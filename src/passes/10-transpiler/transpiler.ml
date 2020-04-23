@@ -268,11 +268,6 @@ let rec transpile_type (t:AST.type_expression) : type_value result =
   | T_operator (TC_option o) ->
       let%bind o' = transpile_type o in
       ok (T_option o')
-  | T_operator (TC_arrow {type1=param ; type2=result}) -> (
-      let%bind param' = transpile_type param in
-      let%bind result' = transpile_type result in
-      ok (T_function (param', result'))
-    )
   | T_sum m when Ast_typed.Helpers.is_michelson_or m ->
       let node = Append_tree.of_list @@ kv_list_of_cmap m in
       let aux a b : type_value annotated result =

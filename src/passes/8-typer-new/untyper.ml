@@ -193,10 +193,6 @@ let rec untype_type_expression (t:O.type_expression) : (I.type_expression) resul
          let%bind k = untype_type_expression k in
          let%bind v = untype_type_expression v in
          ok @@ I.TC_map_or_big_map (k,v)
-      | O.TC_arrow { type1=arg ; type2=ret } ->
-         let%bind arg' = untype_type_expression arg in
-         let%bind ret' = untype_type_expression ret in
-         ok @@ I.TC_arrow ( arg' , ret' )
       | O.TC_contract c->
          let%bind c = untype_type_expression c in
          ok @@ I.TC_contract c

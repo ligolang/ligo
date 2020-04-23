@@ -65,8 +65,6 @@ and type_operator =
   | TC_map of type_map_args
   | TC_big_map of type_map_args
   | TC_map_or_big_map of type_map_args
-  | TC_arrow of arrow
-
 
 and type_expression = {
     type_content: type_content;
