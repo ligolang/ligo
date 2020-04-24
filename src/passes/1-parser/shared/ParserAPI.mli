@@ -55,7 +55,7 @@ module type PARSER =
   end
 
 module Make (IO: IO)
-            (Lexer: Lexer.S)
+            (Lexer: LexerLib.S)
             (Parser: PARSER with type token = Lexer.Token.token)
             (ParErr: sig val message : int -> string end) :
   sig

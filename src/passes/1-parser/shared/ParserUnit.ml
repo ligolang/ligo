@@ -4,16 +4,15 @@ module Region  = Simple_utils.Region
 module Preproc = Preprocessor.Preproc
 module SSet    = Set.Make (String)
 
-type language = [`PascaLIGO | `CameLIGO | `ReasonLIGO]
-
 module type SubIO =
   sig
     type options = <
       libs    : string list;
       verbose : SSet.t;
       offsets : bool;
-      lang    : language;
-      ext     : string;   (* ".ligo", ".mligo", ".religo" *)
+      block   : EvalOpt.block_comment option;
+      line    : EvalOpt.line_comment option;
+      ext     : string;
       mode    : [`Byte | `Point];
       cmd     : EvalOpt.command;
       mono    : bool
@@ -23,7 +22,7 @@ module type SubIO =
     val make : input:string option -> expr:bool -> EvalOpt.options
   end
 
-module type Pretty =
+module type Printer =
   sig
     type state
     type ast
@@ -38,14 +37,14 @@ module type Pretty =
     val print_expr   : state -> expr -> unit
   end
 
-module Make (Lexer: Lexer.S)
+module Make (Lexer: LexerLib.S)
             (AST: sig type t type expr end)
             (Parser: ParserAPI.PARSER
                      with type ast   = AST.t
                       and type expr  = AST.expr
                       and type token = Lexer.token)
             (ParErr: sig val message : int -> string end)
-            (ParserLog: Pretty with type ast  = AST.t
+            (ParserLog: Printer with type ast  = AST.t
                                 and type expr = AST.expr)
             (SubIO: SubIO) =
   struct
@@ -183,10 +182,10 @@ module Make (Lexer: Lexer.S)
       | exception Parser.Error ->
           let invalid, valid_opt =
             match lexer_inst.Lexer.get_win () with
-              Lexer.Nil ->
+              LexerLib.Nil ->
                   assert false (* Safe: There is always at least EOF. *)
-            | Lexer.One invalid -> invalid, None
-            | Lexer.Two (invalid, valid) -> invalid, Some valid in
+            | LexerLib.One invalid -> invalid, None
+            | LexerLib.Two (invalid, valid) -> invalid, Some valid in
             let point = "", valid_opt, invalid in
             let error =
               Front.format_error ~offsets:SubIO.options#offsets
@@ -226,11 +225,14 @@ module Make (Lexer: Lexer.S)
 
              let () = close () in
              let input' = Lexer.String (Buffer.contents buffer) in
-             match Lexer.open_token_stream options#lang input' with
+             match Lexer.open_token_stream ?line:options#line
+                                           ?block:options#block
+                                           input'
+             with
                Ok instance ->
                  let open Lexing in
                  instance.Lexer.buffer.lex_curr_p <-
-                   {instance.Lexer.buffer.lex_curr_p with pos_fname = file};
+                   {instance.Lexer.buffer.lex_curr_p with pos_fname=file};
                  apply instance parser
              | Stdlib.Error (Lexer.File_opening msg) ->
                  Stdlib.Error (Region.wrap_ghost msg)

@@ -4,7 +4,7 @@ module Region = Simple_utils.Region
 
 module type S =
   sig
-    module Lexer : Lexer.S
+    module Lexer : LexerLib.S
 
     val output_token :
       ?offsets:bool ->
@@ -20,13 +20,14 @@ module type S =
     val trace :
       ?offsets:bool ->
       [`Byte | `Point] ->
-      EvalOpt.language ->
+      ?block:EvalOpt.block_comment ->
+      ?line:EvalOpt.line_comment ->
       Lexer.input ->
       EvalOpt.command ->
       (unit, string Region.reg) Stdlib.result
   end
 
-module Make (Lexer: Lexer.S) : (S with module Lexer = Lexer) =
+module Make (Lexer: LexerLib.S) : (S with module Lexer = Lexer) =
   struct
     module Lexer = Lexer
     module Token = Lexer.Token
@@ -56,9 +57,9 @@ module Make (Lexer: Lexer.S) : (S with module Lexer = Lexer) =
 
     type file_path = string
 
-    let trace ?(offsets=true) mode lang input command :
+    let trace ?(offsets=true) mode ?block ?line input command :
           (unit, string Region.reg) Stdlib.result =
-      match Lexer.open_token_stream lang input with
+      match Lexer.open_token_stream ?line ?block input with
         Ok Lexer.{read; buffer; close; _} ->
           let log = output_token ~offsets mode command stdout
           and close_all () = flush_all (); close () in

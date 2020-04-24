@@ -7,7 +7,7 @@ module type IO =
     val options : EvalOpt.options (* CLI options *)
   end
 
-module Make (IO: IO) (Lexer: Lexer.S) :
+module Make (IO: IO) (Lexer: LexerLib.S) :
   sig
     val scan  : unit -> (Lexer.token list, string Region.reg) Stdlib.result
     val trace : unit -> (unit, string Region.reg) Stdlib.result

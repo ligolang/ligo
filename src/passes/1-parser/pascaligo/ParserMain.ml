@@ -5,7 +5,10 @@ module SSet   = Set.Make (String)
 
 module IO =
   struct
-    let options = EvalOpt.(read ~lang:`PascaLIGO ~ext:".ligo")
+    let options =
+      let open EvalOpt in
+      let block = mk_block ~opening:"(*" ~closing:"*)"
+      in read ~block ~line:"//" ".ligo"
   end
 
 module SubIO =
@@ -14,7 +17,8 @@ module SubIO =
       libs    : string list;
       verbose : SSet.t;
       offsets : bool;
-      lang    : EvalOpt.language;
+      block   : EvalOpt.block_comment option;
+      line    : EvalOpt.line_comment option;
       ext     : string;
       mode    : [`Byte | `Point];
       cmd     : EvalOpt.command;
@@ -26,7 +30,8 @@ module SubIO =
         method libs    = IO.options#libs
         method verbose = IO.options#verbose
         method offsets = IO.options#offsets
-        method lang    = IO.options#lang
+        method block   = IO.options#block
+        method line    = IO.options#line
         method ext     = IO.options#ext
         method mode    = IO.options#mode
         method cmd     = IO.options#cmd
@@ -37,7 +42,8 @@ module SubIO =
       EvalOpt.make ~libs:options#libs
                    ~verbose:options#verbose
                    ~offsets:options#offsets
-                   ~lang:options#lang
+                   ?block:options#block
+                   ?line:options#line
                    ~ext:options#ext
                    ~mode:options#mode
                    ~cmd:options#cmd

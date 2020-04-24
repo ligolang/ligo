@@ -483,17 +483,16 @@ type nat_err =
 | Non_canonical_zero_nat
 
 let mk_nat lexeme region =
-  match (String.index_opt lexeme 'n') with
-  | None -> Error Invalid_natural
-  | Some _ -> (
-    let z =
-      Str.(global_replace (regexp "_") "" lexeme) |>
-      Str.(global_replace (regexp "n") "") |>
-      Z.of_string in
-    if Z.equal z Z.zero && lexeme <> "0n"
-    then Error Non_canonical_zero_nat
-    else Ok (Nat Region.{region; value = lexeme,z})
-  )
+  match String.index_opt lexeme 'n' with
+    None -> Error Invalid_natural
+  | Some _ ->
+      let z =
+        Str.(global_replace (regexp "_") "" lexeme) |>
+        Str.(global_replace (regexp "n") "") |>
+        Z.of_string in
+      if Z.equal z Z.zero && lexeme <> "0n"
+      then Error Non_canonical_zero_nat
+      else Ok (Nat Region.{region; value = lexeme,z})
 
 let mk_mutez lexeme region =
   let z =
@@ -563,99 +562,60 @@ let mk_attr _header _string _region =
 
 (* Predicates *)
 
-let is_string = function
-  String _ -> true
-|        _ -> false
+let is_string = function String _ -> true | _ -> false
+let is_bytes  = function Bytes _ -> true | _ -> false
+let is_int    = function Int _ -> true | _ -> false
+let is_ident  = function Ident _ -> true | _ -> false
+let is_eof    = function EOF _ -> true | _ -> false
 
-let is_bytes = function
-  Bytes _ -> true
-|       _ -> false
+(* Errors *)
 
-let is_int = function
-  Int _ -> true
-|     _ -> false
+type error =
+  Odd_lengthed_bytes
+| Missing_break
 
-let is_ident = function
-  Ident _ -> true
-|       _ -> false
+let error_to_string = function
+  Odd_lengthed_bytes ->
+    "The length of the byte sequence is an odd number.\n\
+     Hint: Add or remove a digit."
+| Missing_break ->
+    "Missing break.\n\
+     Hint: Insert some space."
 
-let is_kwd = function
-  And        _
-| Attributes _
-| Begin      _
-| BigMap     _
-| Block      _
-| Case       _
-| Const      _
-| Contains   _
-| Else       _
-| End        _
-| False      _
-| For        _
-| From       _
-| Function   _
-| If         _
-| In         _
-| Is         _
-| List       _
-| Map        _
-| Mod        _
-| Nil        _
-| Not        _
-| Of         _
-| Or         _
-| Patch      _
-| Record     _
-| Remove     _
-| Set        _
-| Skip       _
-| Step       _
-| Then       _
-| To         _
-| True       _
-| Type       _
-| Unit       _
-| Var        _
-| While      _
-| With       _ -> true
-|            _ -> false
+exception Error of error Region.reg
 
-let is_constr = function
-  Constr  _
-| C_None  _
-| C_Some  _ -> true
-|         _ -> false
+let format_error ?(offsets=true) mode Region.{region; value} ~file =
+  let msg = error_to_string value
+  and reg = region#to_string ~file ~offsets mode in
+  let value = sprintf "Lexical error %s:\n%s\n" reg msg
+  in Region.{value; region}
 
-let is_sym = function
-  SEMI     _
-| COMMA    _
-| LPAR     _
-| RPAR     _
-| LBRACE   _
-| RBRACE   _
-| LBRACKET _
-| RBRACKET _
-| CONS     _
-| VBAR     _
-| ARROW    _
-| ASS      _
-| EQ       _
-| COLON    _
-| LT       _
-| LE       _
-| GT       _
-| GE       _
-| NE       _
-| PLUS     _
-| MINUS    _
-| SLASH    _
-| TIMES    _
-| DOT      _
-| WILD     _
-| CAT      _ -> true
-|          _ -> false
+let fail region value = raise (Error Region.{region; value})
 
-let is_eof = function EOF _ -> true | _ -> false
+let check_right_context token next_token buffer : unit =
+  if not (is_eof token) then
+    if is_int token || is_bytes token then
+      match next_token buffer with
+        Some ([], next) ->
+          let pos    = (to_region token)#stop in
+          let region = Region.make ~start:pos ~stop:pos in
+          if is_int next then
+            fail region Odd_lengthed_bytes
+          else
+            if is_ident next || is_string next || is_bytes next then
+              fail region Missing_break
+      | Some (_::_, _) | None -> ()
+    else
+      if is_ident token || is_string token then
+        match next_token buffer with
+          Some ([], next) ->
+          if is_ident next || is_string next
+             || is_bytes next || is_int next
+          then
+            let pos    = (to_region token)#stop in
+            let region = Region.make ~start:pos ~stop:pos
+            in fail region Missing_break
+        | Some (_::_, _) | None -> ()
 
 (* END TRAILER *)
 }

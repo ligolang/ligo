@@ -2,7 +2,7 @@ module Region = Simple_utils.Region
 
 module type S =
   sig
-    module Lexer : Lexer.S
+    module Lexer : LexerLib.S
 
     val output_token :
       ?offsets:bool ->
@@ -18,10 +18,11 @@ module type S =
     val trace :
       ?offsets:bool ->
       [`Byte | `Point] ->
-      EvalOpt.language ->
+      ?block:EvalOpt.block_comment ->
+      ?line:EvalOpt.line_comment ->
       Lexer.input ->
       EvalOpt.command ->
       (unit, string Region.reg) Stdlib.result
   end
 
-module Make (Lexer: Lexer.S) : S with module Lexer = Lexer
+module Make (Lexer: LexerLib.S) : S with module Lexer = Lexer

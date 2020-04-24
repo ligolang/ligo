@@ -49,19 +49,21 @@ type command = Quiet | Copy | Units | Tokens
           expected.}
 } *)
 
-type language = [`PascaLIGO | `CameLIGO | `ReasonLIGO]
-
-val lang_to_string : language -> string
-
 module SSet : Set.S with type elt = string and type t = Set.Make(String).t
+
+type line_comment = string (* Opening of a line comment *)
+type block_comment = <opening : string; closing : string>
+
+val mk_block : opening:string -> closing:string -> block_comment
 
 type options = <
   input   : string option;
   libs    : string list;
   verbose : SSet.t;
   offsets : bool;
-  lang    : language;
-  ext     : string;   (* ".ligo", ".mligo", ".religo" *)
+  block   : block_comment option;
+  line    : line_comment option;
+  ext     : string;
   mode    : [`Byte | `Point];
   cmd     : command;
   mono    : bool;
@@ -73,7 +75,8 @@ val make :
   libs:string list ->
   verbose:SSet.t ->
   offsets:bool ->
-  lang:language ->
+  ?block:block_comment ->
+  ?line:line_comment ->
   ext:string ->
   mode:[`Byte | `Point] ->
   cmd:command ->
@@ -81,8 +84,9 @@ val make :
   expr:bool ->
   options
 
-(** Parsing the command-line options on stdin.  The first parameter is
-   the name of the concrete syntax, e.g., [PascaLIGO], and the second
-   is the expected file extension, e.g., ".ligo". *)
+(** Parsing the command-line options on stdin. *)
 
-val read : lang:language -> ext:string -> options
+type extension = string
+
+val read :
+  ?block:block_comment -> ?line:line_comment -> extension -> options

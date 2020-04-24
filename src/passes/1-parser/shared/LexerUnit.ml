@@ -9,7 +9,7 @@ module type IO =
     val options : EvalOpt.options (* CLI options *)
   end
 
-module Make (IO: IO) (Lexer: Lexer.S) =
+module Make (IO: IO) (Lexer: LexerLib.S) =
   struct
     (* Error printing and exception tracing *)
 
@@ -40,30 +40,42 @@ module Make (IO: IO) (Lexer: Lexer.S) =
            (* Running the lexer on the preprocessed input *)
 
             let source = Lexer.String (Buffer.contents pp_buffer) in
-              match Lexer.open_token_stream IO.options#lang source with
-                Ok Lexer.{read; buffer; close; _} ->
-                  let close_all () = flush_all (); close () in
-                  let rec read_tokens tokens =
-                    match read ~log:(fun _ _ -> ()) buffer with
-                      token ->
-                        if   Lexer.Token.is_eof token
-                        then Stdlib.Ok (List.rev tokens)
-                        else read_tokens (token::tokens)
-                    | exception Lexer.Error error ->
-                        let file =
-                          match IO.options#input with
-                            None | Some "-" -> false
-                          |         Some _  -> true in
-                        let () =
-                          Printf.eprintf "[LexerUnit] file = %b\n%!" file in
-                        let msg =
-                          Lexer.format_error ~offsets:IO.options#offsets
-                                             IO.options#mode ~file error
-                        in Stdlib.Error msg in
-                  let result = read_tokens []
-                  in close_all (); result
-              | Stdlib.Error (Lexer.File_opening msg) ->
-                  flush_all (); Stdlib.Error (Region.wrap_ghost msg) in
+            match Lexer.open_token_stream ?line:IO.options#line
+                                          ?block:IO.options#block
+                                          source with
+              Ok Lexer.{read; buffer; close; _} ->
+                let close_all () = flush_all (); close () in
+                let rec read_tokens tokens =
+                  match read ~log:(fun _ _ -> ()) buffer with
+                    token ->
+                      if   Lexer.Token.is_eof token
+                      then Stdlib.Ok (List.rev tokens)
+                      else read_tokens (token::tokens)
+(*                  | exception _ ->
+                              Printf.eprintf "Here\n%!"; exit 1
+ *)                  | exception Lexer.Token.Error error ->
+                      let file =
+                        match IO.options#input with
+                          None | Some "-" -> false
+                        |         Some _  -> true in
+                      let msg =
+                        Lexer.Token.format_error
+                          ~offsets:IO.options#offsets
+                          IO.options#mode ~file error
+                      in Stdlib.Error msg
+                  | exception Lexer.Error error ->
+                      let file =
+                        match IO.options#input with
+                          None | Some "-" -> false
+                        |         Some _  -> true in
+                      let msg =
+                        Lexer.format_error ~offsets:IO.options#offsets
+                                           IO.options#mode ~file error
+                      in Stdlib.Error msg in
+                let result = read_tokens []
+                in close_all (); result
+            | Stdlib.Error (Lexer.File_opening msg) ->
+                flush_all (); Stdlib.Error (Region.wrap_ghost msg) in
       match IO.options#input with
         None -> preproc stdin
       | Some file_path ->
@@ -101,7 +113,8 @@ module Make (IO: IO) (Lexer: Lexer.S) =
               end
             else Log.trace ~offsets:IO.options#offsets
                            IO.options#mode
-                           IO.options#lang
+                           ?block:IO.options#block
+                           ?line:IO.options#line
                            (Lexer.String preproc_str)
                            IO.options#cmd
       in match IO.options#input with

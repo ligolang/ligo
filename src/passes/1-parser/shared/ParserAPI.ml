@@ -56,7 +56,7 @@ module type PARSER =
 (* Main functor *)
 
 module Make (IO: IO)
-            (Lexer: Lexer.S)
+            (Lexer: LexerLib.S)
             (Parser: PARSER with type token = Lexer.Token.token)
             (ParErr: sig val message : int -> string end) =
   struct
@@ -122,10 +122,10 @@ module Make (IO: IO)
         message
       in
       match get_win () with
-        Lexer.Nil -> assert false
-      | Lexer.One invalid ->
+        LexerLib.Nil -> assert false
+      | LexerLib.One invalid ->
           raise (Point (message, None, invalid))
-      | Lexer.Two (invalid, valid) ->
+      | LexerLib.Two (invalid, valid) ->
           raise (Point (message, Some valid, invalid))
 
     (* The monolithic API of Menhir *)
