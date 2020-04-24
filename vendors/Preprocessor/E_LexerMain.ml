@@ -5,7 +5,7 @@ module Region = Simple_utils.Region
 
 let highlight msg = Printf.eprintf "\027[31m%s\027[0m%!" msg
 
-let options = EvalOpt.(read ~lang:`PascaLIGO ~ext:".ligo")
+let options = EvalOpt.read ".ligo" (* No comments allowed *)
 
 let lex in_chan =
   let buffer = Lexing.from_channel in_chan in

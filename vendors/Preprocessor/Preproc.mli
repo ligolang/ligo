@@ -14,8 +14,8 @@ type error =
 | Invalid_line_indicator of string
 | No_line_indicator
 | End_line_indicator
-| Newline_in_string (* For #include argument only *)
-| Open_string       (* For #include argument only *)
+| Newline_in_string    (* For #include argument only *)
+| Unterminated_string  (* For #include argument only *)
 | Dangling_endif
 | Open_region_in_conditional
 | Dangling_endregion
@@ -29,10 +29,10 @@ type error =
 | Multiply_defined_symbol of string
 | Error_directive of string
 | Parse_error
-| No_line_comment_or_blank
 | Invalid_symbol
 | File_not_found of string
 | Invalid_character of char
+| Unterminated_comment of string
 
 val format :
   ?offsets:bool -> error Region.reg -> file:bool -> string Region.reg
