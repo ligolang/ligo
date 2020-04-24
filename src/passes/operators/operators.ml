@@ -58,8 +58,9 @@ module Concrete_to_imperative = struct
     | "set"          -> Some (TC_set unit_expr)
     | "map"          -> Some (TC_map (unit_expr,unit_expr))
     | "big_map"      -> Some (TC_big_map (unit_expr,unit_expr))
-    | "michelson_or" -> Some (TC_michelson_or (unit_expr,"",unit_expr,""))
     | "contract"     -> Some (TC_contract unit_expr)
+    | "michelson_right_comb" -> Some (TC_michelson_right_comb unit_expr)
+    | "michelson_left_comb" -> Some (TC_michelson_left_comb unit_expr)
     | _              -> None
 
   let pseudo_modules = function
@@ -424,6 +425,8 @@ module Typer = struct
 
   open Helpers.Typer
   open Ast_typed
+
+  module Converter = Converter
 
   module Operators_types = struct
     open Typesystem.Shorthands

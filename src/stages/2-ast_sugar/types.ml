@@ -30,6 +30,8 @@ and type_operator =
   | TC_set of type_expression
   | TC_map of type_expression * type_expression
   | TC_big_map of type_expression * type_expression
+  | TC_michelson_right_comb of type_expression
+  | TC_michelson_left_comb of type_expression
 
 and type_expression = {type_content: type_content; location: Location.t}
 

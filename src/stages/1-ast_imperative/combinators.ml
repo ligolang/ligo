@@ -63,6 +63,8 @@ let t_set ?loc key               : type_expression = make_t ?loc @@ T_operator (
 let t_contract ?loc contract     : type_expression = make_t ?loc @@ T_operator (TC_contract contract)
 let t_michelson_or ?loc l l_ann r r_ann : type_expression = make_t ?loc @@ T_operator (TC_michelson_or (l, l_ann, r, r_ann))
 let t_michelson_pair ?loc l l_ann r r_ann : type_expression = make_t ?loc @@ T_operator (TC_michelson_pair (l, l_ann, r, r_ann))
+let t_michelson_right_comb ?loc c : type_expression = make_t ?loc @@ T_operator (TC_michelson_right_comb c) 
+let t_michelson_left_comb ?loc c : type_expression = make_t ?loc @@ T_operator (TC_michelson_left_comb c) 
 
 (* TODO find a better way than using list*)
 let t_operator ?loc op lst: type_expression result =
@@ -74,6 +76,8 @@ let t_operator ?loc op lst: type_expression result =
   | TC_big_map (_,_) , [kt;vt] -> ok @@ t_big_map ?loc kt vt
   | TC_michelson_or (_,l_ann,_,r_ann) , [l;r] -> ok @@ t_michelson_or ?loc l l_ann r r_ann
   | TC_contract _    , [t] -> ok @@ t_contract t
+  | TC_michelson_right_comb _ , [c] -> ok @@ t_michelson_right_comb c
+  | TC_michelson_left_comb _ , [c] -> ok @@ t_michelson_left_comb c
   | _ , _ -> fail @@ bad_type_operator op
 
 let make_e ?(loc = Location.generated) expression_content =

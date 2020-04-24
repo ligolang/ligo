@@ -12,6 +12,14 @@ module Solver = Typer_new.Solver
 type environment = Environment.t
 
 module Errors = struct
+  let michelson_comb_no_record (loc:Location.t) () =
+    let title = (thunk "bad michelson_right_comb type parameter") in
+    let message () = "michelson_right_comb type operator must be used on a record type" in
+    let data = [
+      ("location" , fun () -> Format.asprintf "%a" Location.pp loc) ;
+    ] in
+    error ~data title message ()
+
   let unbound_type_variable (e:environment) (tv:I.type_variable) (loc:Location.t) () =
     let name = Var.to_name tv in
     let suggestion = match name with
@@ -623,34 +631,46 @@ and evaluate_type (e:environment) (t:I.type_expression) : O.type_expression resu
       ok tv
   | T_constant cst ->
       return (T_constant (convert_type_constant cst))
-  | T_operator opt ->
-      let%bind opt = match opt with
-        | TC_set s -> 
-            let%bind s = evaluate_type e s in 
-            ok @@ O.TC_set (s) 
-        | TC_option o -> 
-            let%bind o = evaluate_type e o in 
-            ok @@ O.TC_option (o) 
-        | TC_list l -> 
-            let%bind l = evaluate_type e l in 
-            ok @@ O.TC_list (l) 
-        | TC_map (k,v) ->
-            let%bind k = evaluate_type e k in 
-            let%bind v = evaluate_type e v in 
-            ok @@ O.TC_map {k;v}
-        | TC_big_map (k,v) ->
-            let%bind k = evaluate_type e k in 
-            let%bind v = evaluate_type e v in 
-            ok @@ O.TC_big_map {k;v}
-        | TC_map_or_big_map (k,v) ->
-            let%bind k = evaluate_type e k in 
-            let%bind v = evaluate_type e v in 
-            ok @@ O.TC_map_or_big_map {k;v}
-        | TC_contract c ->
-            let%bind c = evaluate_type e c in
-            ok @@ O.TC_contract c
-        in
-      return (T_operator (opt))
+  | T_operator opt -> ( match opt with
+    | TC_set s -> 
+        let%bind s = evaluate_type e s in 
+        return @@ T_operator (O.TC_set (s))
+    | TC_option o -> 
+        let%bind o = evaluate_type e o in 
+        return @@ T_operator (O.TC_option (o))
+    | TC_list l -> 
+        let%bind l = evaluate_type e l in 
+        return @@ T_operator (O.TC_list (l))
+    | TC_map (k,v) ->
+        let%bind k = evaluate_type e k in 
+        let%bind v = evaluate_type e v in 
+        return @@ T_operator (O.TC_map {k;v})
+    | TC_big_map (k,v) ->
+        let%bind k = evaluate_type e k in 
+        let%bind v = evaluate_type e v in 
+        return @@ T_operator (O.TC_big_map {k;v})
+    | TC_map_or_big_map (k,v) ->
+        let%bind k = evaluate_type e k in 
+        let%bind v = evaluate_type e v in 
+        return @@ T_operator (O.TC_map_or_big_map {k;v})
+    | TC_contract c ->
+        let%bind c = evaluate_type e c in
+        return @@ T_operator (O.TC_contract c)
+    | TC_michelson_right_comb c ->
+        let%bind c' = evaluate_type e c in
+        let%bind lmap = match c'.type_content with
+          | T_record lmap when (not (Ast_typed.Helpers.is_tuple_lmap lmap)) -> ok lmap
+          | _ -> fail (michelson_comb_no_record t.location) in
+        let record = Operators.Typer.Converter.convert_type_to_right_comb (Ast_typed.LMap.to_kv_list lmap) in
+        return @@ record
+    | TC_michelson_left_comb c ->
+        let%bind c' = evaluate_type e c in
+        let%bind lmap = match c'.type_content with
+          | T_record lmap when (not (Ast_typed.Helpers.is_tuple_lmap lmap)) -> ok lmap
+          | _ -> fail (michelson_comb_no_record t.location) in
+        let record = Operators.Typer.Converter.convert_type_to_left_comb (Ast_typed.LMap.to_kv_list lmap) in
+        return @@ record
+  )
 
 and type_expression : environment -> O.typer_state -> ?tv_opt:O.type_expression -> I.expression -> (O.expression * O.typer_state) result
   = fun e _placeholder_for_state_of_new_typer ?tv_opt ae ->

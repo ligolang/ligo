@@ -181,6 +181,9 @@ and evaluate_type (e:environment) (t:I.type_expression) : O.type_expression resu
         | TC_contract c ->
             let%bind c = evaluate_type e c in
             ok @@ O.TC_contract c
+        | TC_michelson_right_comb _c | TC_michelson_left_comb _c ->
+          (* not really sure what to do in the new typer, should be converted to a pair using functions defined in Helpers.Typer.Converter *)
+          simple_fail "to be implemented"
         in
       return (T_operator (opt))
 

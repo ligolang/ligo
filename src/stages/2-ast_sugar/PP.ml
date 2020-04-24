@@ -52,6 +52,8 @@ and type_operator : (formatter -> type_expression -> unit) -> formatter -> type_
     | TC_map (k, v) -> Format.asprintf "Map (%a,%a)" f k f v
     | TC_big_map (k, v) -> Format.asprintf "Big Map (%a,%a)" f k f v
     | TC_contract te  -> Format.asprintf "Contract (%a)" f te
+    | TC_michelson_right_comb c -> Format.asprintf "michelson_right_comb (%a)" f c
+    | TC_michelson_left_comb c -> Format.asprintf "michelson_left_comb (%a)" f c
   in
   fprintf ppf "(TO_%s)" s
 

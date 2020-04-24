@@ -42,4 +42,17 @@ let%expect_test _ =
     ( ( 2 , +3 ) , "q" ) |}] ;
   run_ligo_good [ "interpret" ; "--init-file="^(contract "michelson_converter.mligo") ; "l4"] ;
   [%expect {|
-    ( ( ( 2 , +3 ) , "q" ) , true ) |}] ;
+    ( ( ( 2 , +3 ) , "q" ) , true ) |}]
+
+let%expect_test _ =
+  run_ligo_good [ "compile-contract" ; contract "michelson_comb_type_operators.mligo" ; "main_r"] ;
+  [%expect {|
+    { parameter (pair (int %foo) (pair (nat %bar) (string %baz))) ;
+      storage unit ;
+      code { UNIT ; NIL operation ; PAIR ; DIP { DROP } } } |}] ;
+
+  run_ligo_good [ "compile-contract" ; contract "michelson_comb_type_operators.mligo" ; "main_l"] ;
+  [%expect {|
+    { parameter (pair (pair (int %foo) (nat %bar)) (string %baz)) ;
+      storage unit ;
+      code { UNIT ; NIL operation ; PAIR ; DIP { DROP } } } |}]
