@@ -1,13 +1,14 @@
 import React from 'react';
-import styled, { css } from 'styled-components';
+import styled from 'styled-components';
 
 const Container = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
 
-  padding: 0.2em 1em;
+  padding: 0.5em 1em;
   font-family: 'DM Sans', 'Open Sans', sans-serif;
+
   box-shadow: 0px 1px 1px 0px rgba(0, 0, 0, 0.3);
 `;
 
@@ -16,42 +17,27 @@ const Group = styled.div`
   align-items: center;
 `;
 
-const Logo = styled.div`
-  font-size: 1.25em;
+const Logo = styled.img`
+  height: 32px;
 `;
 
 const Link = styled.a`
   text-decoration: none;
   color: black;
-  padding: 0.5em 1em;
+  padding: 0em 1em;
 
   &:hover {
-    color: #3aa0ff;
+    color: #0e74ff;
   }
-
-  ${(props: { versionStyle?: boolean }) =>
-    props.versionStyle &&
-    css`
-      background-color: #efefef;
-      font-weight: 600;
-      margin-left: 3em;
-
-      &:hover {
-        color: black;
-      }
-    `}
 `;
 
 export const HeaderComponent = () => {
   return (
     <Container>
       <Group>
-        <Link href="https://ligolang.org">
-          <Logo>LIGO</Logo>
-        </Link>
-        <Link versionStyle href="https://ligolang.org/versions">
-          next
-        </Link>
+        <a href="https://ligolang.org">
+          <Logo src="logo.svg" />
+        </a>
       </Group>
       <Group>
         <Link href="https://ligolang.org/docs/intro/installation">Docs</Link>
