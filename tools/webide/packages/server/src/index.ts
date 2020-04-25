@@ -1,3 +1,4 @@
+import cors from 'cors';
 import express from 'express';
 import fs from 'fs';
 import { dirname, join } from 'path';
@@ -24,6 +25,15 @@ const APP_PORT = 8080;
 
 const metrics = express();
 const METRICS_PORT = 8081;
+
+const corsOptions = {
+  origin: [
+    'https://ligolang.org',
+    'http://localhost:3000',
+    'http://localhost:1234'
+  ],
+  optionsSuccessStatus: 200
+};
 
 const appRootDirectory =
   process.env['STATIC_ASSETS'] ||
@@ -60,6 +70,9 @@ app.use('^/$', async (_, res) =>
   res.send(template(JSON.stringify(await loadDefaultState(appBundleDirectory))))
 );
 app.use(express.static(appBundleDirectory));
+
+app.options('/api/share', cors(corsOptions));
+
 app.get(
   `/p/:hash([0-9a-zA-Z\-\_]+)`,
   sharedLinkHandler(appBundleDirectory, template)
@@ -68,7 +81,7 @@ app.post('/api/compile-contract', compileContractHandler);
 app.post('/api/compile-expression', compileExpressionHandler);
 app.post('/api/compile-storage', compileStorageHandler);
 app.post('/api/dry-run', dryRunHandler);
-app.post('/api/share', shareHandler);
+app.post('/api/share', cors(corsOptions), shareHandler);
 app.post('/api/evaluate-value', evaluateValueHandler);
 app.post('/api/run-function', runFunctionHandler);
 app.post('/api/deploy', deployHandler);
