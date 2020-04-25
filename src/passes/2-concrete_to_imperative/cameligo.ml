@@ -634,22 +634,22 @@ let rec compile_expression :
   | ESeq s -> (
       let (s , loc) = r_split s in
       let items : Raw.expr list = pseq_to_list s.elements in
-      (match items with
+      (match List.rev items with
          [] -> return @@ e_skip ~loc ()
        | expr::more ->
           let expr' = compile_expression expr in
-          let apply (e1: Raw.expr) (e2: expression Trace.result) =
-            let%bind a = compile_expression e1 in
-            let%bind e2' = e2 in
-            return @@ e_sequence a e2'
-          in List.fold_right apply more expr')
+          let apply e1 e2 =
+            let%bind a = compile_expression e2 in
+            let%bind e1' = e1 in
+            return @@ e_sequence a e1'
+          in List.fold_left apply expr' more)
     )
   | ECond c -> (
       let (c , loc) = r_split c in
       let%bind expr = compile_expression c.test in
       let%bind match_true = compile_expression c.ifso in
       let%bind match_false = compile_expression c.ifnot in
-      return @@ e_matching ~loc expr (Match_bool {match_true; match_false})
+      return @@ e_cond ~loc expr match_true match_false
     )
 
 and compile_fun lamb' : expr result =

@@ -5,10 +5,13 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-import React, {useEffect, useState, useRef} from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import classnames from 'classnames';
-import Highlight, {defaultProps} from 'prism-react-renderer';
-const {Prism} = require("prism-react-renderer");
+import Highlight, { defaultProps } from 'prism-react-renderer';
+import { CompactLigoIde } from '@ligolang/compact-ligo-ide';
+
+const { Prism } = require("prism-react-renderer");
+
 Prism.languages = {
   ...Prism.languages,
   pascaligo: {
@@ -58,21 +61,24 @@ Prism.languages = {
     ],
     'punctuation': /\(\.|\.\)|[()\[\]:;,.]/
   },
-  reasonligo: 
-  {...Prism.languages.reason, 
+  reasonligo:
+  {
+    ...Prism.languages.reason,
     'comment': [
       /(^|[^\\])\/\*[\s\S]*?\*\//,
-      /\(\*[\s\S]*?\*\)/,   
-      /\/\/.*/   
+      /\(\*[\s\S]*?\*\)/,
+      /\/\/.*/
     ]
-      
+
   },
-  cameligo: {...Prism.languages.ocaml, 
-  'comment': [
+  cameligo: {
+    ...Prism.languages.ocaml,
+    'comment': [
       /(^|[^\\])\/\*[\s\S]*?\*\//,
-      /\(\*[\s\S]*?\*\)/,   
-      /\/\/.*/   
-    ]}
+      /\(\*[\s\S]*?\*\)/,
+      /\/\/.*/
+    ]
+  }
 };
 import defaultTheme from 'prism-react-renderer/themes/palenight';
 import Clipboard from 'clipboard';
@@ -84,10 +90,10 @@ import styles from './styles.module.css';
 
 const highlightLinesRangeRegex = /{([\d,-]+)}/;
 
-export default ({children, className: languageClassName, metastring}) => {
+export default ({ children, className: languageClassName, metastring }) => {
   const {
     siteConfig: {
-      themeConfig: {prism = {}},
+      themeConfig: { prism = {} },
     },
   } = useDocusaurusContext();
 
@@ -108,7 +114,7 @@ export default ({children, className: languageClassName, metastring}) => {
   const button = useRef(null);
   let highlightLines = [];
 
-  const {isDarkTheme} = useThemeContext();
+  const { isDarkTheme } = useThemeContext();
   const lightModeTheme = prism.theme || defaultTheme;
   const darkModeTheme = prism.darkTheme || lightModeTheme;
   const prismTheme = isDarkTheme ? darkModeTheme : lightModeTheme;
@@ -134,6 +140,21 @@ export default ({children, className: languageClassName, metastring}) => {
     };
   }, [button.current, target.current]);
 
+  // Compact Ligo IDE support - begin
+  if (languageClassName === 'language-compactLigoIde') {
+    const theme = isDarkTheme ? 'dark' : 'light';
+    const webIdeUrlRegex = /webIdeUrl=(.*)/;
+
+    if (metastring && webIdeUrlRegex.test(metastring)) {
+      const webIdeUrl = metastring.match(webIdeUrlRegex)[1];
+
+      return <CompactLigoIde webIdeUrl={webIdeUrl} theme={theme}>{children}</CompactLigoIde>
+    }
+
+    return <CompactLigoIde theme={theme}>{children}</CompactLigoIde>
+  }
+  // Compact Ligo IDE support -- end
+
   let language =
     languageClassName && languageClassName.replace(/language-/, '');
 
@@ -155,7 +176,7 @@ export default ({children, className: languageClassName, metastring}) => {
       theme={prismTheme}
       code={children.trim()}
       language={language}>
-      {({className, style, tokens, getLineProps, getTokenProps}) => (
+      {({ className, style, tokens, getLineProps, getTokenProps }) => (
         <pre className={classnames(className, styles.codeBlock)}>
           <button
             ref={button}
@@ -172,7 +193,7 @@ export default ({children, className: languageClassName, metastring}) => {
                 line[0].content = '\n'; // eslint-disable-line no-param-reassign
               }
 
-              const lineProps = getLineProps({line, key: i});
+              const lineProps = getLineProps({ line, key: i });
 
               if (highlightLines.includes(i + 1)) {
                 lineProps.className = `${lineProps.className} docusaurus-highlight-code-line`;
@@ -181,7 +202,7 @@ export default ({children, className: languageClassName, metastring}) => {
               return (
                 <div key={i} {...lineProps}>
                   {line.map((token, key) => (
-                    <span key={key} {...getTokenProps({token, key})} />
+                    <span key={key} {...getTokenProps({ token, key })} />
                   ))}
                 </div>
               );

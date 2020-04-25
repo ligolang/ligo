@@ -29,7 +29,7 @@ function foobar (const i : int) : int is
     }
     else
       case p of
-        Zero (n) -> failwith ("wooo")
+        Zero (n) -> failwith(42n)
       | Pos (n)  -> skip
       end
   } with
@@ -39,5 +39,5 @@ function foobar (const i : int) : int is
       end
 
 function failer (const p : int) : int is block {
-  if p = 1 then failwith ("some_string") else skip
+  if p = 1 then failwith (42) else skip
 } with p

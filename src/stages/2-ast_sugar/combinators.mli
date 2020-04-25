@@ -68,7 +68,7 @@ val e_some : ?loc:Location.t -> expression -> expression
 val e_none : ?loc:Location.t -> unit -> expression
 
 val e_variable : ?loc:Location.t -> expression_variable -> expression
-val e_constructor : ?loc:Location.t -> string -> expression -> expression
+val e_constructor : ?loc:Location.t -> constructor' -> expression -> expression
 val e_constant : ?loc:Location.t -> constant' -> expression list -> expression
 
 val e_lambda : ?loc:Location.t -> expression_variable -> type_expression option -> type_expression option -> expression -> expression

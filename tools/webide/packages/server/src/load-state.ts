@@ -19,6 +19,10 @@ export async function loadDefaultState(appBundleDirectory: string) {
   );
   const examplesList = JSON.parse(examples);
   const defaultState = {
+    version: {
+      branch: process.env['GIT_TAG'],
+      revision: process.env['GIT_COMMIT']
+    },
     compile: {},
     dryRun: {},
     deploy: {},

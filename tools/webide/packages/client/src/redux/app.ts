@@ -12,8 +12,10 @@ import generateCommand, { GenerateCommandState } from './generate-command';
 import loading, { LoadingState } from './loading';
 import result, { ResultState } from './result';
 import share, { ShareState } from './share';
+import version, { VersionState } from './version';
 
 export interface AppState {
+  version: VersionState;
   editor: EditorState;
   share: ShareState;
   compile: CompileState;
@@ -40,5 +42,6 @@ export default combineReducers({
   result,
   command,
   examples,
-  loading
+  loading,
+  version
 });

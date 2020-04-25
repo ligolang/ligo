@@ -702,9 +702,21 @@ module Typer = struct
                    [i ; j ; s] ()
 
   let failwith_ = typer_1_opt "FAILWITH" @@ fun t opt ->
-    let%bind () =
-      Assert.assert_true @@
-      (is_t_string t) in
+    let%bind _ =
+      if eq_1 t (t_string ())
+      then ok ()
+      else if eq_1 t (t_nat ())
+      then ok ()
+      else if eq_1 t (t_int ())
+      then ok ()
+      else
+        fail @@ Operator_errors.typeclass_error "Failwith with disallowed type" "failwith"
+          [
+            [t_string()] ;
+            [t_nat()] ;
+            [t_int()] ;
+          ]
+          [t] () in
     let default = t_unit () in
     ok @@ Simple_utils.Option.unopt ~default opt
 
