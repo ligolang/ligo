@@ -1058,3 +1058,11 @@ a:hover {
 .boolean-example-table > .example .codeBlockLines_src-theme-CodeBlock- {
   background-color: transparent;
 }
+
+.compactLigoIde {
+  height: 400px;
+}
+
+.compactLigoIde pre {
+  border-radius: 0px;
+}
