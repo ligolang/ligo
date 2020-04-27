@@ -44,7 +44,8 @@ let op ppf = {
       | VariantInstance { constructor ; _ } ->
          if constructor.cf_new_fold needs_parens false
          then fprintf ppf "%s (%a)" constructor.cf.name (fun _ppf -> constructor.cf_continue) ()
-         else fprintf ppf "%s %a" constructor.cf.name (fun _ppf -> constructor.cf_continue) ()
+         else let spc = if String.equal constructor.cf.type_ "" then "" else " " in
+              fprintf ppf "%s%s%a" constructor.cf.name spc (fun _ppf -> constructor.cf_continue) ()
       | PolyInstance { poly=_; arguments=_; poly_continue } ->
          (poly_continue ())
     );
