@@ -1,8 +1,6 @@
 (** Persistent implementation of the Union/Find algorithm with
     height-balanced forests and no path compression. *)
 
-(* type item = Item.t *)
-
 let equal compare i j = compare i j = 0
 
 type height = int
@@ -122,6 +120,30 @@ let alias (i: 'item) (j: 'item) (p: 'item partition) : 'item partition =
 let elements : 'item . 'item partition -> 'item list =
   fun { to_string=_; compare=_; map } ->
   map_sorted_keys map
+
+let partitions : 'item . 'item partition -> 'item list list =
+  let compare_lists_by_first cmp la lb =
+    match la,lb with
+      | [],[] -> 0
+      | [],_ -> -1
+      | _,[] -> 1
+      | a::_, b::_ -> cmp a b in
+  fun ({ to_string=_; compare; map } as p) ->
+  let aux acc elt =
+    RedBlackTrees.PolyMap.update
+      (repr elt p)
+      (function None -> Some [elt] | Some l -> Some (elt::l))
+      acc in
+  let grouped = List.fold_left
+    aux
+    (RedBlackTrees.PolyMap.create ~cmp:compare)
+    (map_sorted_keys map) in
+  let partitions = RedBlackTrees.PolyMap.bindings grouped in
+  (* Sort the elements within partitions and partitions by their smallest element *)
+  let partitions = List.map snd partitions in
+  let partitions = List.map (List.sort compare) partitions in
+  let partitions = List.sort (compare_lists_by_first compare) partitions in
+  partitions
 
 (** {1 Printing} *)
 

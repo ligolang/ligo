@@ -47,6 +47,13 @@ val mem : 'item -> 'item partition -> 'item option
     ordered in ascending order *)
 val elements : 'item partition -> 'item list
 
+(** The value of the call [partitions p] is a list of the partitions
+   of p. A partition is a list of elements. The elements and
+   partitions are returned with a deterministic order (regardless of
+   the way the aliases have been made, the same partition will always
+   have the same order). *)
+val partitions : 'item partition -> 'item list list
+
 (** The call [print p] is a value of type [Buffer.t] containing
         strings denoting the partition [p], based on
         [Ord.to_string]. *)

@@ -87,8 +87,12 @@ let op ppf = {
       | None -> fprintf ppf "None"
       | Some v -> fprintf ppf "%a" (fun _ppf -> continue ()) v) ;
     poly_unionfind            = (fun _visitor continue () p   ->
-      let lst = (UnionFind.Poly2.elements p) in
-      fprintf ppf "LMap [ %a ]" (list_sep (fun _ppf -> continue ()) (fun ppf () -> fprintf ppf " ; ")) lst);
+      let lst = (UnionFind.Poly2.partitions p) in
+      let aux1 l = fprintf ppf "[@,@[<hv 2> (*%a*) %a @]@,]"
+                     (fun _ppf -> continue ()) (UnionFind.Poly2.repr (List.hd l) p)
+                     (list_sep (fun _ppf -> continue ()) (fun ppf () -> fprintf ppf " ;@ ")) l in
+      let aux2 = list_sep (fun _ppf -> aux1) (fun ppf () -> fprintf ppf " ;@ ") in
+      fprintf ppf "UnionFind [@,@[<hv 2> %a @]@,]" aux2 lst);
     poly_set                  = (fun _visitor continue () set   ->
       let lst = (RedBlackTrees.PolySet.elements set) in
       fprintf ppf "Set [@,@[<hv 2> %a @]@,]" (list_sep (fun _ppf -> continue ()) (fun ppf () -> fprintf ppf " ;@ ")) lst);
