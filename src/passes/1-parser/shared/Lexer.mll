@@ -33,16 +33,17 @@ module type TOKEN =
 
     (* Injections *)
 
-    val mk_int    : lexeme -> Region.t -> (token,   int_err) result
-    val mk_nat    : lexeme -> Region.t -> (token,   nat_err) result
-    val mk_mutez  : lexeme -> Region.t -> (token,   int_err) result
-    val mk_ident  : lexeme -> Region.t -> (token, ident_err) result
-    val mk_sym    : lexeme -> Region.t -> (token,   sym_err) result
-    val mk_string : lexeme -> Region.t -> token
-    val mk_bytes  : lexeme -> Region.t -> token
-    val mk_constr : lexeme -> Region.t -> token
-    val mk_attr   : string -> lexeme -> Region.t -> (token, attr_err) result
-    val eof       : Region.t -> token
+    val mk_int      : lexeme -> Region.t -> (token,   int_err) result
+    val mk_nat      : lexeme -> Region.t -> (token,   nat_err) result
+    val mk_mutez    : lexeme -> Region.t -> (token,   int_err) result
+    val mk_ident    : lexeme -> Region.t -> (token, ident_err) result
+    val mk_sym      : lexeme -> Region.t -> (token,   sym_err) result
+    val mk_string   : lexeme -> Region.t -> token
+    val mk_verbatim : lexeme -> Region.t -> token
+    val mk_bytes    : lexeme -> Region.t -> token
+    val mk_constr   : lexeme -> Region.t -> token
+    val mk_attr     : string -> lexeme -> Region.t -> (token, attr_err) result
+    val eof         : Region.t -> token
 
     (* Predicates *)
 
@@ -111,6 +112,7 @@ module Make (Token : TOKEN) : (S with module Token = Token) =
     | Unexpected_character of char
     | Undefined_escape_sequence
     | Unterminated_string
+    | Unterminated_verbatim
     | Unterminated_comment of string
     | Non_canonical_zero
     | Broken_string
@@ -133,6 +135,9 @@ module Make (Token : TOKEN) : (S with module Token = Token) =
     | Unterminated_string ->
         "Unterminated string.\n\
          Hint: Close with double quotes."
+    | Unterminated_verbatim ->
+        "Unterminated verbatim.\n\
+         Hint: Close with \"|}\"."
     | Unterminated_comment ending ->
         sprintf "Unterminated comment.\n\
                  Hint: Close with \"%s\"." ending
@@ -177,6 +182,14 @@ module Make (Token : TOKEN) : (S with module Token = Token) =
       let region = Region.make ~start ~stop in
       let lexeme = thread#to_string in
       let token  = Token.mk_string lexeme region
+      in state#enqueue token
+
+    let mk_verbatim (thread, state) =
+      let start  = thread#opening#start in
+      let stop   = state#pos in
+      let region = Region.make ~start ~stop in
+      let lexeme = thread#to_string in
+      let token  = Token.mk_verbatim lexeme region
       in state#enqueue token
 
     let mk_bytes bytes state buffer =
@@ -414,9 +427,13 @@ and scan state = parse
 
 (* String *)
 
-| '"' { let opening, lexeme, state = state#sync lexbuf in
-        let thread = LexerLib.mk_thread opening lexeme in
+| '"' { let opening, _, state = state#sync lexbuf in
+        let thread = LexerLib.mk_thread opening "" in
         scan_string thread state lexbuf |> mk_string }
+
+| "{|" { let opening, _, state = state#sync lexbuf in
+        let thread = LexerLib.mk_thread opening "" in
+        scan_verbatim thread state lexbuf |> mk_verbatim }
 
 (* Comments *)
 
@@ -484,7 +501,7 @@ and scan_string thread state = parse
          { let region, _, _ = state#sync lexbuf
            in fail region Invalid_character_in_string }
 | '"'    { let _, _, state = state#sync lexbuf
-           in thread#push_char '"', state }
+           in thread, state }
 | esc    { let _, lexeme, state = state#sync lexbuf in
            let thread = thread#push_string lexeme
            in scan_string thread state lexbuf }
@@ -492,6 +509,13 @@ and scan_string thread state = parse
            in fail region Undefined_escape_sequence }
 | _ as c { let _, _, state = state#sync lexbuf in
            scan_string (thread#push_char c) state lexbuf }
+
+and scan_verbatim thread state = parse
+| eof        { fail thread#opening Unterminated_verbatim}
+| "|}"       { let _, _, state = state#sync lexbuf 
+               in thread, state }
+| _ as c     { let _, _, state = state#sync lexbuf in
+               scan_verbatim (thread#push_char c) state lexbuf }
 
 (* Finishing a block comment
 

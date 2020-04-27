@@ -592,6 +592,8 @@ and print_string_expr state = function
     print_expr  state arg2
 | String s ->
     print_string state s
+| Verbatim v ->
+    print_string state v
 
 and print_list_expr state = function
   ECons {value = {arg1; op; arg2}; _} ->
@@ -1572,6 +1574,9 @@ and pp_string_expr state = function
 | String s ->
     pp_node   state "String";
     pp_string (state#pad 1 0) s
+| Verbatim v ->
+    pp_node   state "Verbatim";
+    pp_string (state#pad 1 0) v
 
 and pp_annotated state (expr, t_expr) =
   pp_expr      (state#pad 2 0) expr;

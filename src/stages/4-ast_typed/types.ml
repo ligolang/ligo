@@ -80,7 +80,7 @@ type literal =
   | Literal_nat of z
   | Literal_timestamp of z
   | Literal_mutez of z
-  | Literal_string of string
+  | Literal_string of ligo_string
   | Literal_bytes of bytes
   | Literal_address of string
   | Literal_signature of string

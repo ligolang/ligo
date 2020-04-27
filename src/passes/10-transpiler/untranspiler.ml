@@ -92,6 +92,7 @@ let rec untranspile (v : value) (t : AST.type_expression) : AST.expression resul
         let%bind n =
           trace_strong (wrong_mini_c_value "string" v) @@
           get_string v in
+        let n = Ligo_string.Standard n in
         return (E_literal (Literal_string n))
       )
     | TC_bytes -> (
@@ -246,6 +247,7 @@ let rec untranspile (v : value) (t : AST.type_expression) : AST.expression resul
       let%bind n =
         trace_strong (wrong_mini_c_value "lambda as string" v) @@
         get_string v in
+      let n = Ligo_string.Standard n in
       return (E_literal (Literal_string n))
   | T_variable _ ->
     fail @@ corner_case ~loc:__LOC__ "trying to untranspile at variable type"

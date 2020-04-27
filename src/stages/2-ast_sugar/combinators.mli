@@ -53,7 +53,7 @@ val e_int : ?loc:Location.t -> Z.t -> expression
 val e_nat : ?loc:Location.t -> Z.t -> expression
 val e_timestamp : ?loc:Location.t -> Z.t -> expression
 val e_bool : ?loc:Location.t -> bool -> expression
-val e_string : ?loc:Location.t -> string -> expression
+val e_string : ?loc:Location.t -> ligo_string -> expression
 val e_address : ?loc:Location.t -> string -> expression 
 val e_signature : ?loc:Location.t -> string -> expression 
 val e_key : ?loc:Location.t -> string -> expression 

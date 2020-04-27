@@ -3,6 +3,7 @@ and expression_variable = expression_ Var.t
 type type_
 and type_variable = type_ Var.t
 
+type ligo_string = Simple_utils.Ligo_string.t
 
 type constructor' = Constructor of string
 type label = Label of string
@@ -178,7 +179,7 @@ type literal =
   | Literal_nat of Z.t
   | Literal_timestamp of Z.t
   | Literal_mutez of Z.t
-  | Literal_string of string
+  | Literal_string of ligo_string
   | Literal_bytes of bytes
   | Literal_address of string
   | Literal_signature of string
