@@ -40,7 +40,7 @@ let op ppf = {
       | RecordInstance { fields } ->
          let aux ppf (fld : 'x Adt_info.ctor_or_field_instance) =
            fprintf ppf "%s = %a" fld.cf.name (fun _ppf -> fld.cf_continue) () in
-         fprintf ppf "{ %a }" (list_sep aux (fun ppf () -> fprintf ppf " ; ")) fields
+         fprintf ppf "{@,@[<hv 2> %a @]@,}" (list_sep aux (fun ppf () -> fprintf ppf " ;@ ")) fields
       | VariantInstance { constructor ; _ } ->
          if constructor.cf_new_fold needs_parens false
          then fprintf ppf "%s (%a)" constructor.cf.name (fun _ppf -> constructor.cf_continue) ()
@@ -64,23 +64,23 @@ let op ppf = {
       let lst = List.sort (fun (Constructor a, _) (Constructor b, _) -> String.compare a b) (CMap.bindings cmap) in
       let aux ppf (Constructor k, v) =
         fprintf ppf "(Constructor %s, %a)" k (fun _ppf -> continue ()) v in
-      fprintf ppf "CMap [ %a ]" (list_sep aux (fun ppf () -> fprintf ppf " ; ")) lst);
+      fprintf ppf "CMap [@,@[<hv 2> %a @]@,]" (list_sep aux (fun ppf () -> fprintf ppf " ; ")) lst);
     label_map                 = (fun _visitor continue () lmap   ->
       let lst = List.sort (fun (Label a, _) (Label b, _) -> String.compare a b) (LMap.bindings lmap) in
       let aux ppf (Label k, v) =
         fprintf ppf "(Constructor %s, %a)" k (fun _ppf -> continue ()) v in
-      fprintf ppf "LMap [ %a ]" (list_sep aux (fun ppf () -> fprintf ppf " ; ")) lst);
+      fprintf ppf "LMap [@,@[<hv 2> %a @]@,]" (list_sep aux (fun ppf () -> fprintf ppf " ; ")) lst);
     list                      = (fun _visitor continue () lst ->
       let aux ppf elt =
         fprintf ppf "%a" (fun _ppf -> continue ()) elt in
-      fprintf ppf "[ %a ]" (list_sep aux (fun ppf () -> fprintf ppf " ; ")) lst);
+      fprintf ppf "[@,@[<hv 2> %a @]@,]" (list_sep aux (fun ppf () -> fprintf ppf " ;@ ")) lst);
     location_wrap             = (fun _visitor continue () lwrap  ->
       let ({ wrap_content; location } : _ Location.wrap) = lwrap in
       fprintf ppf "{ wrap_content = %a ; location = %a }" (fun _ppf -> continue ()) wrap_content Location.pp location);
     list_ne = (fun _visitor continue () (first, lst) ->
       let aux ppf elt =
         fprintf ppf "%a" (fun _ppf -> continue ()) elt in
-      fprintf ppf "[ %a ]" (list_sep aux (fun ppf () -> fprintf ppf " ; ")) (first::lst));
+      fprintf ppf "[@,@[<hv 2> %a @]@,]" (list_sep aux (fun ppf () -> fprintf ppf " ;@ ")) (first::lst));
     option = (fun _visitor continue () o ->
       match o with
       | None -> fprintf ppf "None"
@@ -90,12 +90,12 @@ let op ppf = {
       fprintf ppf "LMap [ %a ]" (list_sep (fun _ppf -> continue ()) (fun ppf () -> fprintf ppf " ; ")) lst);
     poly_set                  = (fun _visitor continue () set   ->
       let lst = (RedBlackTrees.PolySet.elements set) in
-      fprintf ppf "LMap [ %a ]" (list_sep (fun _ppf -> continue ()) (fun ppf () -> fprintf ppf " ; ")) lst);
+      fprintf ppf "Set [@,@[<hv 2> %a @]@,]" (list_sep (fun _ppf -> continue ()) (fun ppf () -> fprintf ppf " ;@ ")) lst);
     typeVariableMap           = (fun _visitor continue () tvmap   ->
       let lst = List.sort (fun (a, _) (b, _) -> Var.compare a b) (RedBlackTrees.PolyMap.bindings tvmap) in
       let aux ppf (k, v) =
         fprintf ppf "(Var %a, %a)" Var.pp k (fun _ppf -> continue ()) v in
-      fprintf ppf "typeVariableMap [ %a ]" (list_sep aux (fun ppf () -> fprintf ppf " ; ")) lst);
+      fprintf ppf "typeVariableMap [@,@[<hv 2> %a @]@,]" (list_sep aux (fun ppf () -> fprintf ppf " ;@ ")) lst);
   }
 
 let print : (unit fold_config -> unit -> 'a -> unit) -> formatter -> 'a -> unit = fun fold ppf v ->
