@@ -111,13 +111,13 @@ val ez_e_record : ( string * expression ) list -> expression
 val e_some : expression -> expression_content
 val e_none : unit -> expression_content
 val e_unit : unit -> expression_content
-val e_int : int -> expression_content
-val e_nat : int -> expression_content
-val e_mutez : int -> expression_content
+val e_int : Z.t -> expression_content
+val e_nat : Z.t -> expression_content
+val e_mutez : Z.t -> expression_content
 val e_bool : bool -> expression_content
 val e_string : string -> expression_content
 val e_bytes : bytes -> expression_content
-val e_timestamp : int -> expression_content
+val e_timestamp : Z.t -> expression_content
 val e_address : string -> expression_content
 val e_signature : string -> expression_content
 val e_key : string -> expression_content
@@ -131,9 +131,9 @@ val e_variable : expression_variable -> expression_content
 val e_let_in : expression_variable -> inline -> expression -> expression -> expression_content
 
 val e_a_unit : full_environment -> expression
-val e_a_int : int -> full_environment -> expression
-val e_a_nat : int -> full_environment -> expression
-val e_a_mutez : int -> full_environment -> expression
+val e_a_int : Z.t -> full_environment -> expression
+val e_a_nat : Z.t -> full_environment -> expression
+val e_a_mutez : Z.t -> full_environment -> expression
 val e_a_bool : bool -> full_environment -> expression
 val e_a_string : string -> full_environment -> expression
 val e_a_address : string -> full_environment -> expression
@@ -147,7 +147,7 @@ val e_a_variable : expression_variable -> type_expression -> full_environment ->
 val ez_e_a_record : ( label * expression ) list -> full_environment -> expression
 val e_a_let_in : expression_variable -> bool -> expression -> expression -> full_environment -> expression
 
-val get_a_int : expression -> int result
+val get_a_int : expression -> Z.t result
 val get_a_unit : expression -> unit result
 val get_a_bool : expression -> bool result
 val get_a_record_accessor : expression -> (expression * label) result

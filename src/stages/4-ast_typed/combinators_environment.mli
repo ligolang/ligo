@@ -3,9 +3,9 @@ open Types
 val make_a_e_empty : expression_content -> type_expression -> expression
 
 val e_a_empty_unit : expression
-val e_a_empty_int : int -> expression
-val e_a_empty_nat : int -> expression
-val e_a_empty_mutez : int -> expression
+val e_a_empty_int : Z.t -> expression
+val e_a_empty_nat : Z.t -> expression
+val e_a_empty_mutez : Z.t -> expression
 val e_a_empty_bool : bool -> expression
 val e_a_empty_string : string -> expression
 val e_a_empty_address : string -> expression

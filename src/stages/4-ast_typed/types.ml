@@ -78,10 +78,10 @@ and type_expression = {
 type literal =
   | Literal_unit
   | Literal_bool of bool
-  | Literal_int of int
-  | Literal_nat of int
-  | Literal_timestamp of int
-  | Literal_mutez of int
+  | Literal_int of z
+  | Literal_nat of z
+  | Literal_timestamp of z
+  | Literal_mutez of z
   | Literal_string of string
   | Literal_bytes of bytes
   | Literal_address of string

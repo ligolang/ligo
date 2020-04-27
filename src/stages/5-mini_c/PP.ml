@@ -52,10 +52,10 @@ and type_constant ppf (tc:type_constant) : unit =
 let rec value ppf : value -> unit = function
   | D_bool b -> fprintf ppf "%b" b
   | D_operation _ -> fprintf ppf "operation[...bytes]"
-  | D_int n -> fprintf ppf "%d" n
-  | D_nat n -> fprintf ppf "+%d" n
-  | D_timestamp n -> fprintf ppf "+%d" n
-  | D_mutez n -> fprintf ppf "%dmutez" n
+  | D_int n -> fprintf ppf "%a" Z.pp_print n
+  | D_nat n -> fprintf ppf "+%a" Z.pp_print n
+  | D_timestamp n -> fprintf ppf "+%a" Z.pp_print n
+  | D_mutez n -> fprintf ppf "%amutez" Z.pp_print n
   | D_unit -> fprintf ppf "unit"
   | D_string s -> fprintf ppf "\"%s\"" s
   | D_bytes x ->

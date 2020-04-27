@@ -54,6 +54,9 @@ val make_e : ?loc:Location.t -> expression_content -> expression
 
 val e_literal : ?loc:Location.t -> literal -> expression
 val e_unit : ?loc:Location.t -> unit -> expression
+val e_int_z : ?loc:Location.t -> Z.t -> expression 
+val e_nat_z : ?loc:Location.t -> Z.t -> expression
+val e_timestamp_z : ?loc:Location.t -> Z.t -> expression
 val e_int : ?loc:Location.t -> int -> expression 
 val e_nat : ?loc:Location.t -> int -> expression
 val e_timestamp : ?loc:Location.t -> int -> expression
@@ -64,6 +67,7 @@ val e_signature : ?loc:Location.t -> string -> expression
 val e_key : ?loc:Location.t -> string -> expression 
 val e_key_hash : ?loc:Location.t -> string -> expression 
 val e_chain_id : ?loc:Location.t -> string -> expression 
+val e_mutez_z : ?loc:Location.t -> Z.t -> expression
 val e_mutez : ?loc:Location.t -> int -> expression
 val e'_bytes : string -> expression_content result
 val e_bytes_hex : ?loc:Location.t -> string -> expression result

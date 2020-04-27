@@ -8,7 +8,7 @@ module Simplified = Ast_core
 
 let int () : unit result =
   let open Combinators in
-  let pre = e_int 32 in
+  let pre = e_int (Z.of_int 32) in
   let open Typer in
   let e = Environment.full_empty in
   let state = Typer.Solver.initial_state in
@@ -37,7 +37,7 @@ module TestExpressions = struct
   module E = O
 
   let unit   () : unit result = test_expression I.(e_unit ())    O.(t_unit ())
-  let int    () : unit result = test_expression I.(e_int 32)     O.(t_int ())
+  let int    () : unit result = test_expression I.(e_int (Z.of_int 32))     O.(t_int ())
   let bool   () : unit result = test_expression I.(e_bool true)  O.(t_bool ())
   let string () : unit result = test_expression I.(e_string "s") O.(t_string ())
   let bytes  () : unit result =
@@ -51,7 +51,7 @@ module TestExpressions = struct
 
   let tuple () : unit result =
     test_expression
-      I.(e_record @@ LMap.of_list [(Label "0",e_int 32); (Label "1",e_string "foo")])
+      I.(e_record @@ LMap.of_list [(Label "0",e_int (Z.of_int 32)); (Label "1",e_string "foo")])
       O.(make_t_ez_record [("0",t_int ()); ("1",t_string ())])
 
   let constructor () : unit result =
@@ -60,12 +60,12 @@ module TestExpressions = struct
         (Typed.Constructor "bar", {ctor_type = Typed.t_string () ; michelson_annotation = None}) ]
     in test_expression
       ~env:(E.env_sum_type variant_foo_bar)
-      I.(e_constructor "foo" (e_int 32))
+      I.(e_constructor "foo" (e_int (Z.of_int 32)))
       O.(make_t_ez_sum variant_foo_bar)
 
   let record () : unit result =
     test_expression
-      I.(e_record @@ LMap.of_list [(Label "foo", e_int 32); (Label "bar", e_string "foo")])
+      I.(e_record @@ LMap.of_list [(Label "foo", e_int (Z.of_int 32)); (Label "bar", e_string "foo")])
       O.(make_t_ez_record [("foo", t_int ()); ("bar", t_string ())])
 
 

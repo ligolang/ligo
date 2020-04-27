@@ -170,10 +170,10 @@ let rec get_operator : constant' -> type_value -> expression list -> predicate r
 
 and translate_value (v:value) ty : michelson result = match v with
   | D_bool b -> ok @@ prim (if b then D_True else D_False)
-  | D_int n -> ok @@ int (Z.of_int n)
-  | D_nat n -> ok @@ int (Z.of_int n)
-  | D_timestamp n -> ok @@ int (Z.of_int n)
-  | D_mutez n -> ok @@ int (Z.of_int n)
+  | D_int n -> ok @@ int n
+  | D_nat n -> ok @@ int n
+  | D_timestamp n -> ok @@ int n
+  | D_mutez n -> ok @@ int n
   | D_string s -> ok @@ string s
   | D_bytes s -> ok @@ bytes s
   | D_unit -> ok @@ prim D_Unit
