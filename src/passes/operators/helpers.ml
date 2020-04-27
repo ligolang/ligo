@@ -135,6 +135,7 @@ module Typer = struct
 
   module Converter = struct
     open Ast_typed
+    open Trace
 
     let record_checks kvl =
       let%bind () = Assert.assert_true_err
@@ -167,21 +168,20 @@ module Typer = struct
         let new_map' = LMap.add (Label "0") (annotate_field field ann) new_map in
         LMap.add (Label "1") (comb (T_record (to_right_comb_t tl new_map'))) new_map'
 
-    let rec to_left_comb_t_ first l new_map =
+    let rec to_left_comb_t' first l new_map =
       match l with
       | [] -> new_map
       | (Label ann_l, field_content_l) :: (Label ann_r, field_content_r) ::tl when first ->
         let new_map' = LMap.add_bindings [
           (Label "0" , annotate_field field_content_l ann_l) ;
           (Label "1" , annotate_field field_content_r ann_r) ] LMap.empty in
-        to_left_comb_t_ false tl new_map'
+        to_left_comb_t' false tl new_map'
       | (Label ann, field)::tl ->
         let new_map' = LMap.add_bindings [
           (Label "0" , comb (T_record new_map)) ;
           (Label "1" , annotate_field field ann ) ;] LMap.empty in
-        to_left_comb_t_ first tl new_map'
-    
-    let to_left_comb_t = to_left_comb_t_ true
+        to_left_comb_t' first tl new_map'
+    let to_left_comb_t = to_left_comb_t' true
 
     let convert_type_to_right_comb l =
       let l' = List.sort (fun (_,{decl_position=a;_}) (_,{decl_position=b;_}) -> Int.compare a b) l in
@@ -190,6 +190,41 @@ module Typer = struct
     let convert_type_to_left_comb l =
       let l' = List.sort (fun (_,{decl_position=a;_}) (_,{decl_position=b;_}) -> Int.compare a b) l in
       T_record (to_left_comb_t l' LMap.empty)
+
+    let rec from_right_comb (l:field_content label_map) (size:int) : (field_content list) result =
+      let l' = List.rev @@ LMap.to_kv_list l in
+      match l' , size with
+      | [ (_,l) ; (_,r) ] , 2 -> ok [ l ; r ]
+      | [ (_,l) ; (_,{field_type=tr;_}) ], _ ->
+        let%bind comb_lmap = get_t_record tr in
+        let%bind next = from_right_comb comb_lmap (size-1) in
+        ok (l :: next)
+      | _ -> simple_fail "Could not convert michelson_right_comb pair to a record"
+
+    let rec from_left_comb (l:field_content label_map) (size:int) : (field_content list) result =
+      let l' = List.rev @@ LMap.to_kv_list l in
+      match l' , size with
+      | [ (_,l) ; (_,r) ] , 2 -> ok [ l ; r ]
+      | [ (_,{field_type=tl;_}) ; (_,r) ], _ ->
+        let%bind comb_lmap = get_t_record tl in
+        let%bind next = from_left_comb comb_lmap (size-1) in
+        ok (List.append next [r])
+      | _ -> simple_fail "Could not convert michelson_left_comb pair to a record"
+    
+    let convert_from_right_comb (src: field_content label_map) (dst: field_content label_map) : type_content result =
+      let%bind fields = from_right_comb src (LMap.cardinal dst) in
+      let labels = List.map (fun (l,_) -> l) @@
+        List.sort (fun (_,{decl_position=a;_}) (_,{decl_position=b;_}) -> Int.compare a b ) @@
+        LMap.to_kv_list dst in
+      ok @@ (T_record (LMap.of_list @@ List.combine labels fields))
+
+    let convert_from_left_comb (src: field_content label_map) (dst: field_content label_map) : type_content result =
+      let%bind fields = from_left_comb src (LMap.cardinal dst) in
+      let labels = List.map (fun (l,_) -> l) @@
+        List.sort (fun (_,{decl_position=a;_}) (_,{decl_position=b;_}) -> Int.compare a b ) @@
+        LMap.to_kv_list dst in
+      ok @@ (T_record (LMap.of_list @@ List.combine labels fields))
+
   end
 
 end

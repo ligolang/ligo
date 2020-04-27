@@ -45,6 +45,52 @@ let%expect_test _ =
     ( ( ( 2 , +3 ) , "q" ) , true ) |}]
 
 let%expect_test _ =
+  run_ligo_good [ "dry-run" ; (contract "michelson_converter.mligo") ; "main_r" ; "test_input_pair_r" ; "s"] ;
+  [%expect {|
+    ( LIST_EMPTY() , "eqeq" ) |}] ;
+  run_ligo_good [ "compile-contract" ; (contract "michelson_converter.mligo") ; "main_r" ] ;
+  [%expect {|
+    { parameter (pair (int %one) (pair (nat %two) (pair (string %three) (bool %four)))) ;
+      storage string ;
+      code { DUP ;
+             CAR ;
+             DUP ;
+             CDR ;
+             CDR ;
+             CAR ;
+             DIG 1 ;
+             DUP ;
+             DUG 2 ;
+             CDR ;
+             CDR ;
+             CAR ;
+             CONCAT ;
+             NIL operation ;
+             PAIR ;
+             DIP { DROP 2 } } } |}];
+  run_ligo_good [ "dry-run" ; (contract "michelson_converter.mligo") ; "main_l" ; "test_input_pair_l" ; "s"] ;
+  [%expect {|
+    ( LIST_EMPTY() , "eqeq" ) |}] ;
+  run_ligo_good [ "compile-contract" ; (contract "michelson_converter.mligo") ; "main_l" ] ;
+  [%expect {|
+    { parameter (pair (pair (pair (int %one) (nat %two)) (string %three)) (bool %four)) ;
+      storage string ;
+      code { DUP ;
+             CAR ;
+             DUP ;
+             CAR ;
+             CDR ;
+             DIG 1 ;
+             DUP ;
+             DUG 2 ;
+             CAR ;
+             CDR ;
+             CONCAT ;
+             NIL operation ;
+             PAIR ;
+             DIP { DROP 2 } } } |}]
+
+let%expect_test _ =
   run_ligo_good [ "compile-contract" ; contract "michelson_comb_type_operators.mligo" ; "main_r"] ;
   [%expect {|
     { parameter (pair (int %foo) (pair (nat %bar) (string %baz))) ;

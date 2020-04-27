@@ -60,6 +60,8 @@ module Typer : sig
     val record_checks : (label * field_content) list -> unit result
     val convert_type_to_right_comb : (label * field_content) list -> type_content
     val convert_type_to_left_comb : (label * field_content) list -> type_content
+    val convert_from_right_comb : field_content label_map -> field_content label_map -> type_content result
+    val convert_from_left_comb : field_content label_map -> field_content label_map -> type_content result
 
   end
 end

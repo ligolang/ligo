@@ -360,6 +360,8 @@ let convert_constant' : I.constant' -> O.constant' = function
   | C_CREATE_CONTRACT -> C_CREATE_CONTRACT
   | C_CONVERT_TO_LEFT_COMB -> C_CONVERT_TO_LEFT_COMB
   | C_CONVERT_TO_RIGHT_COMB -> C_CONVERT_TO_RIGHT_COMB
+  | C_CONVERT_FROM_LEFT_COMB -> C_CONVERT_FROM_LEFT_COMB
+  | C_CONVERT_FROM_RIGHT_COMB -> C_CONVERT_FROM_RIGHT_COMB
 
 let unconvert_constant' : O.constant' -> I.constant' = function
   | C_INT -> C_INT
@@ -477,6 +479,8 @@ let unconvert_constant' : O.constant' -> I.constant' = function
   | C_CREATE_CONTRACT -> C_CREATE_CONTRACT
   | C_CONVERT_TO_LEFT_COMB -> C_CONVERT_TO_LEFT_COMB
   | C_CONVERT_TO_RIGHT_COMB -> C_CONVERT_TO_RIGHT_COMB
+  | C_CONVERT_FROM_LEFT_COMB -> C_CONVERT_FROM_LEFT_COMB
+  | C_CONVERT_FROM_RIGHT_COMB -> C_CONVERT_FROM_RIGHT_COMB
 
 let rec type_program (p:I.program) : (O.program * O.typer_state) result =
   let aux (e, acc:(environment * O.declaration Location.wrap list)) (d:I.declaration Location.wrap) =

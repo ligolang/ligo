@@ -161,7 +161,8 @@ module Concrete_to_imperative = struct
 
     | "Layout.convert_to_right_comb" -> Some C_CONVERT_TO_RIGHT_COMB
     | "Layout.convert_to_left_comb" -> Some C_CONVERT_TO_LEFT_COMB
-    (* | "Layout.convert_from" -> Some C_CONVERT_FROM *)
+    | "Layout.convert_from_right_comb" -> Some C_CONVERT_FROM_RIGHT_COMB
+    | "Layout.convert_from_left_comb" -> Some C_CONVERT_FROM_LEFT_COMB
 
     | _ -> None
 
@@ -603,7 +604,7 @@ module Typer = struct
       | C_SELF_ADDRESS        -> ok @@ t_self_address;
       | C_IMPLICIT_ACCOUNT    -> ok @@ t_implicit_account;
       | C_SET_DELEGATE        -> ok @@ t_set_delegate ;
-      | c                     -> simple_fail @@ Format.asprintf "Typer not implemented for consant %a" Ast_typed.PP.constant c
+      | c                     -> simple_fail @@ Format.asprintf "Typer not implemented for constant %a" Ast_typed.PP.constant c
   end
 
   let none = typer_0 "NONE" @@ fun tv_opt ->
@@ -1180,6 +1181,20 @@ module Typer = struct
     let%bind () = Converter.record_checks kvl in
     let pair = Converter.convert_type_to_left_comb kvl in
     ok {record with type_content = pair}
+
+  let convert_from_right_comb = typer_1_opt "CONVERT_FROM_RIGHT_COMB" @@ fun pair opt ->
+    let%bind dst_t = trace_option (simple_error "convert_from_right_comb must be annotated") opt in
+    let%bind dst_lmap = get_t_record dst_t in
+    let%bind src_lmap = get_t_record pair in
+    let%bind record = Converter.convert_from_right_comb src_lmap dst_lmap in
+    ok {pair with type_content = record}
+
+  let convert_from_left_comb = typer_1_opt "CONVERT_FROM_LEFT_COMB" @@ fun pair opt ->
+    let%bind dst_t = trace_option (simple_error "convert_from_left_comb must be annotated") opt in
+    let%bind dst_lmap = get_t_record dst_t in
+    let%bind src_lmap = get_t_record pair in
+    let%bind record = Converter.convert_from_left_comb src_lmap dst_lmap in
+    ok {pair with type_content = record}
   
   let constant_typers c : typer result = match c with
     | C_INT                 -> ok @@ int ;
@@ -1275,7 +1290,9 @@ module Typer = struct
     | C_CREATE_CONTRACT     -> ok @@ create_contract ;
     | C_CONVERT_TO_RIGHT_COMB -> ok @@ convert_to_right_comb ;
     | C_CONVERT_TO_LEFT_COMB  -> ok @@ convert_to_left_comb ;
-    | _                     -> simple_fail @@ Format.asprintf "Typer not implemented for consant %a" PP.constant c
+    | C_CONVERT_FROM_RIGHT_COMB -> ok @@ convert_from_right_comb ;
+    | C_CONVERT_FROM_LEFT_COMB  -> ok @@ convert_from_left_comb ;
+    | _                     -> simple_fail @@ Format.asprintf "Typer not implemented for constant %a" PP.constant c
 
 
 

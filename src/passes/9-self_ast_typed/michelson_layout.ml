@@ -1,62 +1,115 @@
 open Ast_typed
 open Trace
 
-let get_label_map_from_env (v:expression_variable) (env: full_environment) : expression_label_map result = 
-  let%bind a = trace_option (simple_error "corner case") @@
-    Environment.get_opt v env in
-  ( match a.definition with
-    | ED_declaration { expr = {expression_content = E_record lmap_e;_} ; _} -> ok lmap_e
-    | _ -> simple_fail "corner case" )
+let to_sorted_kv_list lmap =
+  List.sort (fun (_,{decl_position=a;_}) (_,{decl_position=b;}) -> Int.compare a b) @@
+  LMap.to_kv_list lmap
 
-let rec to_right_comb_e l new_map =
+let accessor (record:expression) (path:label) (t:type_expression) =
+  { expression_content = E_record_accessor {record; path} ;
+    location = Location.generated ;
+    type_expression = t ;
+    environment = record.environment}
+
+let rec to_left_comb' first prev l conv_map =
   match l with
-  | [] -> new_map 
-  | [ (_, expl) ; (_ , expr) ] ->
-    LMap.add_bindings [ (Label "0" , expl) ; (Label "1" , expr) ] new_map
-  | (_, exp)::tl ->
-    let new_map' = LMap.add (Label "0") exp new_map in
-    LMap.add (Label "1") ({exp with expression_content = E_record (to_right_comb_e tl new_map')}) new_map'
+  | [] -> conv_map 
+  | (label_l, {field_type=t_l}) :: (label_r, {field_type=t_r})::tl when first ->
+    let exp_l = accessor prev label_l t_l in
+    let exp_r = accessor prev label_r t_r in
+    let conv_map' = LMap.add_bindings [ (Label "0" , exp_l) ; (Label "1" , exp_r) ] LMap.empty in
+    to_left_comb' false prev tl conv_map'
+  | (label, {field_type=t})::tl ->
+    let conv_map' = LMap.add_bindings [
+        (Label "0" , {prev with expression_content = E_record conv_map});
+        (Label "1" , accessor prev label t)]
+      LMap.empty in
+    to_left_comb' first prev tl conv_map'
 
-let rec to_left_comb_e_ first l new_map =
+let to_left_comb = to_left_comb' true
+
+let rec to_right_comb
+    (prev:expression)
+    (l:(label * field_content) list)
+    (conv_map: expression label_map) : expression label_map =
   match l with
-  | [] -> new_map 
-  | (_, expl) :: (_, expr) ::tl when first ->
-    let new_map' = LMap.add_bindings [ (Label "0" , expl) ; (Label "1" , expr) ] LMap.empty in
-    to_left_comb_e_ false tl new_map'
-  | (_,exp)::tl ->
-    let new_map' = LMap.add_bindings [
-      (Label "0" , {exp with expression_content = E_record new_map});
-      (Label "1" , exp ) ;] LMap.empty in
-    to_left_comb_e_ first tl new_map'
+  | [] -> conv_map 
+  | [ (label_l,{field_type=tl}) ; (label_r,{field_type=tr}) ] ->
+    let exp_l = accessor prev label_l tl in
+    let exp_r = accessor prev label_r tr in
+    LMap.add_bindings [ (Label "0" , exp_l) ; (Label "1" , exp_r) ] conv_map
+  | (label,{field_type})::tl ->
+    let exp = { expression_content = E_record_accessor {record = prev ; path = label } ;
+                location = Location.generated ;
+                type_expression = field_type ;
+                environment = prev.environment } in
+    let conv_map' = LMap.add (Label "0") exp conv_map in
+    LMap.add (Label "1") ({exp with expression_content = E_record (to_right_comb prev tl conv_map')}) conv_map'
 
-let to_left_comb_e = to_left_comb_e_ true
+let rec from_right_comb
+    (prev:expression) 
+    (src_lmap: field_content label_map)
+    (dst_kvl:(label * field_content) list)
+    (conv_map:expression label_map) : expression label_map =
+  match dst_kvl with
+  | (label , {field_type;_}) :: (_::_ as tl) ->
+    let intermediary_type = LMap.find (Label "1") src_lmap in
+    let src_lmap' = match intermediary_type.field_type.type_content with
+      | T_record a -> a
+      | _ -> src_lmap in
+    let conv_map' = LMap.add label (accessor prev (Label "0") field_type) conv_map in
+    let next = accessor prev (Label "1") intermediary_type.field_type in
+    from_right_comb next src_lmap' tl conv_map'
+  | [(label,_)] -> LMap.add label prev conv_map
+  | [] -> conv_map
 
-let to_sorted_kv_list (l_e:expression_label_map) (l_t:te_lmap) : (label * expression) list =
-  let l = List.combine (LMap.to_kv_list l_e) (LMap.to_kv_list l_t) in
-  let sorted' = List.sort
-    (fun (_,(_,{decl_position=a;_})) (_,(_,{decl_position=b;_})) -> Int.compare a b) l in
-  List.map (fun (e,_t) -> e) sorted'
+let rec from_left_comb'
+    (prev:expression) 
+    (src_lmap: field_content label_map)
+    (dst_kvl:(label * field_content) list)
+    (conv_map:expression label_map) : expression label_map =
+  match dst_kvl with
+  | (label , {field_type;_}) :: (_::_ as tl) ->
+    let intermediary_type = LMap.find (Label "0") src_lmap in
+    let src_lmap' = match intermediary_type.field_type.type_content with
+      | T_record a -> a
+      | _ -> src_lmap in
+    let conv_map' = LMap.add label (accessor prev (Label "1") field_type) conv_map in
+    let next = accessor prev (Label "0") intermediary_type.field_type in
+    from_left_comb' next src_lmap' tl conv_map'
+  | [(label,_)] -> LMap.add label prev conv_map
+  | [] -> conv_map
 
+let from_left_comb prev src_lmap dst_kvl conv_map =
+  from_left_comb' prev src_lmap (List.rev dst_kvl) conv_map
+
+(**
+  converts pair/record of a given layout to record/pair to another
+  - foo = (a,(b,(c,d))) -> foo_converted = { a=foo.0 ; b=foo.1.0 ; c=foo.1.1.0 ; d=foo.1.1.1 }
+**)
 let peephole_expression : expression -> expression result = fun e ->
   let return expression_content = ok { e with expression_content } in
   match e.expression_content with
-  | E_constant {cons_name= (C_CONVERT_TO_RIGHT_COMB | C_CONVERT_TO_LEFT_COMB ) as converter;
-                arguments= [ {
-                  expression_content = record_exp;
-                  type_expression = {type_content = T_record lmap_t} }
-                ] } ->
-
-    let%bind lmap_e = match record_exp with
-      | E_record lmap_e -> ok lmap_e
-      | E_variable v -> get_label_map_from_env v e.environment
-      | _ -> simple_fail "corner case" in
-
-    let kvl = to_sorted_kv_list lmap_e lmap_t in 
-    let converted_exp = match converter with
-      | C_CONVERT_TO_RIGHT_COMB -> E_record (to_right_comb_e kvl LMap.empty)
-      | C_CONVERT_TO_LEFT_COMB -> E_record (to_left_comb_e kvl LMap.empty)
-      | _ -> e.expression_content
-    in
-
-    return converted_exp
+  | E_constant {cons_name= (C_CONVERT_TO_LEFT_COMB);
+                arguments= [ to_convert ] } ->
+    let%bind src_lmap = get_t_record to_convert.type_expression in
+    let src_kvl = to_sorted_kv_list src_lmap in
+    return @@ E_record (to_left_comb to_convert src_kvl LMap.empty)
+  | E_constant {cons_name= (C_CONVERT_TO_RIGHT_COMB);
+                arguments= [ to_convert ] } ->
+    let%bind src_lmap = get_t_record to_convert.type_expression in
+    let src_kvl = to_sorted_kv_list src_lmap in
+    return @@ E_record (to_right_comb to_convert src_kvl LMap.empty)
+  | E_constant {cons_name= (C_CONVERT_FROM_RIGHT_COMB);
+                arguments= [ to_convert ] } ->
+    let%bind dst_lmap = get_t_record e.type_expression in
+    let%bind src_lmap = get_t_record to_convert.type_expression in
+    let dst_kvl = to_sorted_kv_list dst_lmap in
+    return @@ E_record (from_right_comb to_convert src_lmap dst_kvl LMap.empty)
+  | E_constant {cons_name= (C_CONVERT_FROM_LEFT_COMB);
+                arguments= [ to_convert ] } ->
+    let%bind dst_lmap = get_t_record e.type_expression in
+    let%bind src_lmap = get_t_record to_convert.type_expression in
+    let dst_kvl = to_sorted_kv_list dst_lmap in
+    return @@ E_record (from_left_comb to_convert src_lmap dst_kvl LMap.empty)
   | _ as e -> return e

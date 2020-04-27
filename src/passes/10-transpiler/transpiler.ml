@@ -230,6 +230,8 @@ let transpile_constant' : AST.constant' -> constant' = function
   | C_CREATE_CONTRACT -> C_CREATE_CONTRACT
   | C_CONVERT_TO_LEFT_COMB -> C_CONVERT_TO_LEFT_COMB
   | C_CONVERT_TO_RIGHT_COMB -> C_CONVERT_TO_RIGHT_COMB
+  | C_CONVERT_FROM_LEFT_COMB -> C_CONVERT_FROM_LEFT_COMB
+  | C_CONVERT_FROM_RIGHT_COMB -> C_CONVERT_FROM_RIGHT_COMB
 
 let rec transpile_type (t:AST.type_expression) : type_value result =
   match t.type_content with
