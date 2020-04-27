@@ -14,4 +14,4 @@ module Tree = Tree
 module Region = Region
 module Pos = Pos
 module Var = Var
-
+module Ligo_string = X_string
