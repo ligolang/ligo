@@ -465,3 +465,9 @@ for $adts.list -> $t
   say "let with__$t<name>__post_state : _ -> _ fold_map_config__$moduleName -> _ fold_map_config__$moduleName = (fun node__$t<name>__post_state op -> \{ op with $t<name> = \{ op.$t<name> with node__$t<name>__post_state \} \});;";
   for $t<ctorsOrFields>.list -> $c
   { say "let with__$t<name>__$c<name> : _ -> _ fold_map_config__$moduleName -> _ fold_map_config__$moduleName = (fun $t<name>__$c<name> op -> \{ op with $t<name> = \{ op.$t<name> with $t<name>__$c<name> \} \});;"; } }
+
+say "";
+say "module Folds (M : sig type state type 'a t val f : (state fold_config -> state -> 'a -> state) -> 'a t  end) = struct";
+for $adts.list -> $t
+{ say "let $t<name> = M.f fold__$t<name>;;"; }
+say "end";
