@@ -119,10 +119,8 @@ module type S =
     module Token : TOKEN
     type token = Token.token
 
-    (* The scanner [init] is meant to be called first to read the
-       BOM. Then [scan] is called. *)
+    (* The scanner *)
 
-    val init : token LexerLib.state -> Lexing.lexbuf -> token LexerLib.state
     val scan : token LexerLib.state -> Lexing.lexbuf -> token LexerLib.state
 
     (* Errors (specific to the generic lexer, not to the tokens) *)

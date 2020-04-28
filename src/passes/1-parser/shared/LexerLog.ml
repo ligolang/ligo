@@ -69,7 +69,6 @@ module Make (Lexer: Lexer.S) : (S with module Lexer = Lexer) =
               ~token_to_region ~style input command :
           (unit, string Region.reg) Stdlib.result =
       match LexerLib.open_token_stream
-              ~init:Lexer.init
               ~scan:Lexer.scan
               ~token_to_region
               ~style

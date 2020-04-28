@@ -151,11 +151,6 @@ let mk_thread region lexeme : thread =
    the scanning rule [scan]). The function [patch_buffer] is, of
    course, also called just before returning the token, so the parser
    has a view of the lexing buffer consistent with the token.
-
-     Note that an additional reference [first_call] is needed to
-   distinguish the first call to the function [scan], as the first
-   scanning rule is actually [init] (which can handle the BOM), not
-   [scan].
 *)
 
 type 'token window =
@@ -319,14 +314,13 @@ let lexbuf_from_input = function
       in Ok (lexbuf, close)
     with Sys_error msg -> Stdlib.Error (File_opening msg)
 
-let open_token_stream ?line ?block ~init ~scan
+let open_token_stream ?line ?block ~scan
                       ~token_to_region ~style input =
   let file_path  = match input with
                      File path -> path
                    | _ -> "" in
   let        pos = Pos.min ~file:file_path in
   let    buf_reg = ref (pos#byte, pos#byte)
-  and first_call = ref true
   and    decoder = Uutf.decoder ~encoding:`UTF_8 `Manual in
   let     supply = Uutf.Manual.src decoder in
   let      state = ref (mk_state
@@ -354,33 +348,31 @@ let open_token_stream ?line ?block ~init ~scan
   and save_region buffer =
     buf_reg := Lexing.(buffer.lex_start_p, buffer.lex_curr_p) in
 
-  let scan' init scan buffer =
+  let scan' scan buffer =
     patch_buffer !buf_reg buffer;
-    (if   !first_call
-     then (state := init !state buffer; first_call := false)
-     else state := scan !state buffer);
+    state := scan !state buffer;
     save_region buffer in
 
-  let next_token init scan buffer =
-    scan' init scan buffer;
+  let next_token scan buffer =
+    scan' scan buffer;
     match FQueue.peek !state#units with
       None -> None
     | Some (units, ext_token) ->
         state := !state#set_units units; Some ext_token in
 
-  let rec read init scan ~token_to_region ~style ~log buffer =
+  let rec read scan ~token_to_region ~style ~log buffer =
     match FQueue.deq !state#units with
       None ->
-        scan' init scan buffer;
-        read init scan ~token_to_region ~style ~log buffer
+        scan' scan buffer;
+        read scan ~token_to_region ~style ~log buffer
     | Some (units, (left_mark, token)) ->
-       log left_mark token;
-       state := ((!state#set_units units)
-                   #set_last (token_to_region token))
-                  #slide_token token;
-       style token (next_token init scan) buffer;
-       patch_buffer (token_to_region token)#byte_pos buffer;
-       token in
+        log left_mark token;
+        state := ((!state#set_units units)
+                    #set_last (token_to_region token))
+                   #slide_token token;
+        style token (next_token scan) buffer;
+        patch_buffer (token_to_region token)#byte_pos buffer;
+        token in
 
   match lexbuf_from_input input with
     Ok (buffer, close) ->
@@ -389,7 +381,7 @@ let open_token_stream ?line ?block ~init ~scan
           File path when path <> "" -> reset ~file:path buffer
         | _ -> () in
       let instance = {
-        read = read init scan ~token_to_region ~style;
+        read = read scan ~token_to_region ~style;
         input; buffer; get_win; get_pos; get_last; get_file; close}
       in Ok instance
   | Error _ as e -> e

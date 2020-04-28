@@ -234,7 +234,6 @@ module Make (Lexer: Lexer.S)
              let () = close () in
              let input' = LexerLib.String (Buffer.contents buffer) in
              match LexerLib.open_token_stream
-                     ~init:Lexer.init
                      ~scan:Lexer.scan
                      ~token_to_region:Lexer.Token.to_region
                      ~style:Lexer.Token.check_right_context

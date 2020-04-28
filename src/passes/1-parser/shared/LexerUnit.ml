@@ -43,7 +43,6 @@ module Make (IO: IO) (Lexer: Lexer.S) =
             match LexerLib.open_token_stream
                     ?line:IO.options#line
                     ?block:IO.options#block
-                    ~init:Lexer.init
                     ~scan:Lexer.scan
                     ~token_to_region:Lexer.Token.to_region
                     ~style:Lexer.Token.check_right_context

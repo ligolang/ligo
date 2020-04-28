@@ -85,8 +85,8 @@ module type S =
     module Token : TOKEN
     type token = Token.token
 
-    val init : token LexerLib.state -> Lexing.lexbuf -> token LexerLib.state
-    val scan : token LexerLib.state -> Lexing.lexbuf -> token LexerLib.state
+    val scan :
+      token LexerLib.state -> Lexing.lexbuf -> token LexerLib.state
 
     type error
 
@@ -601,6 +601,14 @@ and scan_utf8_inline thread state = parse
 
 {
 (* START TRAILER *)
+
+let scan =
+  let first_call = ref true in
+  fun state lexbuf ->
+    if   !first_call
+    then (first_call := false; init state lexbuf)
+    else scan state lexbuf
+
 end (* of functor [Make] in HEADER *)
 (* END TRAILER *)
 }
