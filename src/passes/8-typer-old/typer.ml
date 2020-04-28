@@ -13,8 +13,8 @@ type environment = Environment.t
 
 module Errors = struct
   let michelson_comb_no_record (loc:Location.t) () =
-    let title = (thunk "bad michelson_right_comb type parameter") in
-    let message () = "michelson_right_comb type operator must be used on a record type" in
+    let title = (thunk "bad michelson_pair_right_comb type parameter") in
+    let message () = "michelson_pair_right_comb type operator must be used on a record type" in
     let data = [
       ("location" , fun () -> Format.asprintf "%a" Location.pp loc) ;
     ] in
@@ -660,14 +660,14 @@ and evaluate_type (e:environment) (t:I.type_expression) : O.type_expression resu
     | TC_contract c ->
         let%bind c = evaluate_type e c in
         return @@ T_operator (O.TC_contract c)
-    | TC_michelson_right_comb c ->
+    | TC_michelson_pair_right_comb c ->
         let%bind c' = evaluate_type e c in
         let%bind lmap = match c'.type_content with
           | T_record lmap when (not (Ast_typed.Helpers.is_tuple_lmap lmap)) -> ok lmap
           | _ -> fail (michelson_comb_no_record t.location) in
         let record = Operators.Typer.Converter.convert_type_to_right_comb (Ast_typed.LMap.to_kv_list lmap) in
         return @@ record
-    | TC_michelson_left_comb c ->
+    | TC_michelson_pair_left_comb c ->
         let%bind c' = evaluate_type e c in
         let%bind lmap = match c'.type_content with
           | T_record lmap when (not (Ast_typed.Helpers.is_tuple_lmap lmap)) -> ok lmap

@@ -17,8 +17,8 @@ let l4 = Layout.convert_to_left_comb (v4:t4)
 let s = "eq"
 let test_input_pair_r = (1,(2n,(s,true)))
 let test_input_pair_l = (((1,2n), s), true)
-type param_r = t4 michelson_right_comb
-type param_l = t4 michelson_left_comb
+type param_r = t4 michelson_pair_right_comb
+type param_l = t4 michelson_pair_left_comb
 
 let main_r (p, s : param_r * string) : (operation list * string) =
   let r4 : t4 = Layout.convert_from_right_comb p in

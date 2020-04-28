@@ -199,7 +199,7 @@ module Typer = struct
         let%bind comb_lmap = get_t_record tr in
         let%bind next = from_right_comb comb_lmap (size-1) in
         ok (l :: next)
-      | _ -> simple_fail "Could not convert michelson_right_comb pair to a record"
+      | _ -> simple_fail "Could not convert michelson_pair_right_comb pair to a record"
 
     let rec from_left_comb (l:field_content label_map) (size:int) : (field_content list) result =
       let l' = List.rev @@ LMap.to_kv_list l in
@@ -209,7 +209,7 @@ module Typer = struct
         let%bind comb_lmap = get_t_record tl in
         let%bind next = from_left_comb comb_lmap (size-1) in
         ok (List.append next [r])
-      | _ -> simple_fail "Could not convert michelson_left_comb pair to a record"
+      | _ -> simple_fail "Could not convert michelson_pair_left_comb pair to a record"
     
     let convert_from_right_comb (src: field_content label_map) (dst: field_content label_map) : type_content result =
       let%bind fields = from_right_comb src (LMap.cardinal dst) in

@@ -254,8 +254,8 @@ module Ast_PP_type (PARAMETER : AST_PARAMETER_TYPE) = struct
       | TC_big_map (k, v) -> Format.asprintf "Big Map (%a,%a)" f k f v
       | TC_map_or_big_map (k, v) -> Format.asprintf "Map Or Big Map (%a,%a)" f k f v
       | TC_contract te  -> Format.asprintf "Contract (%a)" f te
-      | TC_michelson_right_comb c -> Format.asprintf "Michelson_right_comb (%a)" f c
-      | TC_michelson_left_comb c -> Format.asprintf "Michelson_left_comb (%a)" f c
+      | TC_michelson_pair_right_comb c -> Format.asprintf "michelson_pair_right_comb (%a)" f c
+      | TC_michelson_pair_left_comb c -> Format.asprintf "michelson_pair_left_comb (%a)" f c
     in
     fprintf ppf "(type_operator: %s)" s
 end

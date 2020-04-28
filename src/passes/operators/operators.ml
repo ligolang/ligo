@@ -59,8 +59,8 @@ module Concrete_to_imperative = struct
     | "map"          -> Some (TC_map (unit_expr,unit_expr))
     | "big_map"      -> Some (TC_big_map (unit_expr,unit_expr))
     | "contract"     -> Some (TC_contract unit_expr)
-    | "michelson_right_comb" -> Some (TC_michelson_right_comb unit_expr)
-    | "michelson_left_comb" -> Some (TC_michelson_left_comb unit_expr)
+    | "michelson_pair_right_comb" -> Some (TC_michelson_pair_right_comb unit_expr)
+    | "michelson_pair_left_comb" -> Some (TC_michelson_pair_left_comb unit_expr)
     | _              -> None
 
   let pseudo_modules = function

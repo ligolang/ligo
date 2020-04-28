@@ -201,12 +201,12 @@ and compile_type_operator : I.type_operator -> O.type_operator result =
       let%bind (k,v) = bind_map_pair compile_type_expression (k,v) in
       ok @@ O.TC_big_map (k,v)
     | TC_michelson_or _ | TC_michelson_pair _ -> fail @@ Errors.corner_case __LOC__
-    | TC_michelson_right_comb c ->
+    | TC_michelson_pair_right_comb c ->
       let%bind c = compile_type_expression c in
-      ok @@ O.TC_michelson_right_comb c
-    | TC_michelson_left_comb c ->
+      ok @@ O.TC_michelson_pair_right_comb c
+    | TC_michelson_pair_left_comb c ->
       let%bind c = compile_type_expression c in
-      ok @@ O.TC_michelson_left_comb c
+      ok @@ O.TC_michelson_pair_left_comb c
 
 let rec compile_expression : I.expression -> O.expression result =
   fun e ->
@@ -646,12 +646,12 @@ and uncompile_type_operator : O.type_operator -> I.type_operator result =
     | TC_big_map (k,v) ->
       let%bind (k,v) = bind_map_pair uncompile_type_expression (k,v) in
       ok @@ I.TC_big_map (k,v)
-    | TC_michelson_right_comb c ->
+    | TC_michelson_pair_right_comb c ->
       let%bind c = uncompile_type_expression c in
-      ok @@ I.TC_michelson_right_comb c
-    | TC_michelson_left_comb c ->
+      ok @@ I.TC_michelson_pair_right_comb c
+    | TC_michelson_pair_left_comb c ->
       let%bind c = uncompile_type_expression c in
-      ok @@ I.TC_michelson_left_comb c
+      ok @@ I.TC_michelson_pair_left_comb c
 
 let rec uncompile_expression' : O.expression -> I.expression result =
   fun e ->
