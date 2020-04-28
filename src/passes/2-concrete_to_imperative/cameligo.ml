@@ -565,17 +565,17 @@ let rec compile_expression :
       compile_binop "MOD" c
   | EArith (Int n) -> (
       let (n , loc) = r_split n in
-      let n = Z.to_int @@ snd @@ n in
+      let n = snd @@ n in
       return @@ e_literal ~loc (Literal_int n)
     )
   | EArith (Nat n) -> (
       let (n , loc) = r_split n in
-      let n = Z.to_int @@ snd @@ n in
+      let n = snd @@ n in
       return @@ e_literal ~loc (Literal_nat n)
     )
   | EArith (Mutez n) -> (
       let (n , loc) = r_split n in
-      let n = Z.to_int @@ snd @@ n in
+      let n = snd @@ n in
       return @@ e_literal ~loc (Literal_mutez n)
     )
   | EArith (Neg e) -> compile_unop "NEG" e

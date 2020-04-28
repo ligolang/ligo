@@ -82,13 +82,17 @@ let make_e ?(loc = Location.generated) expression_content =
 
 let e_literal ?loc l : expression = make_e ?loc @@ E_literal l
 let e_unit ?loc () : expression = make_e ?loc @@ E_literal (Literal_unit)
-let e_int ?loc n : expression = make_e ?loc @@ E_literal (Literal_int n)
-let e_nat ?loc n : expression = make_e ?loc @@ E_literal (Literal_nat n)
-let e_timestamp ?loc n : expression = make_e ?loc @@ E_literal (Literal_timestamp n)
+let e_int_z ?loc n : expression = make_e ?loc @@ E_literal (Literal_int n)
+let e_int ?loc n : expression = e_int_z ?loc @@ Z.of_int n
+let e_nat_z ?loc n : expression = make_e ?loc @@ E_literal (Literal_nat n)
+let e_nat ?loc n : expression = e_nat_z ?loc @@ Z.of_int n
+let e_timestamp_z ?loc n : expression = make_e ?loc @@ E_literal (Literal_timestamp n)
+let e_timestamp ?loc n : expression = e_timestamp_z ?loc @@ Z.of_int n
 let e_bool ?loc   b : expression = make_e ?loc @@ E_literal (Literal_bool b)
 let e_string ?loc s : expression = make_e ?loc @@ E_literal (Literal_string s)
 let e_address ?loc s : expression = make_e ?loc @@ E_literal (Literal_address s)
-let e_mutez ?loc s : expression = make_e ?loc @@ E_literal (Literal_mutez s)
+let e_mutez_z ?loc s : expression = make_e ?loc @@ E_literal (Literal_mutez s)
+let e_mutez ?loc s : expression = e_mutez_z ?loc @@ Z.of_int s
 let e_signature ?loc s : expression = make_e ?loc @@ E_literal (Literal_signature s)
 let e_key ?loc s : expression = make_e ?loc @@ E_literal (Literal_key s)
 let e_key_hash ?loc s : expression = make_e ?loc @@ E_literal (Literal_key_hash s)

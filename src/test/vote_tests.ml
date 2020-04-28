@@ -45,7 +45,7 @@ let init_vote () =
 (*  let votes = List.assoc (Label "voters") storage' in
   let%bind votes' = extract_map votes in *)
   let yea = List.assoc (Label "yea") storage' in
-  let%bind () = Ast_core.Misc.assert_value_eq (yea, Ast_core.e_nat 1) in
+  let%bind () = Ast_core.Misc.assert_value_eq (yea, Ast_core.e_nat Z.one) in
   ok ()
 
 let main = test_suite "Vote" [

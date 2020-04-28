@@ -163,10 +163,10 @@ end
 type literal =
   | Literal_unit
   | Literal_bool of bool
-  | Literal_int of int
-  | Literal_nat of int
-  | Literal_timestamp of int
-  | Literal_mutez of int
+  | Literal_int of Z.t
+  | Literal_nat of Z.t
+  | Literal_timestamp of Z.t
+  | Literal_mutez of Z.t
   | Literal_string of string
   | Literal_bytes of bytes
   | Literal_address of string

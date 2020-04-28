@@ -13,8 +13,8 @@ let apply_comparison : Ast_typed.constant' -> value list -> value result =
     | ( comp , [ V_Ct (C_mutez a'    ) ; V_Ct (C_mutez b'    ) ] )
     | ( comp , [ V_Ct (C_timestamp a') ; V_Ct (C_timestamp b') ] ) ->
       let f_op = match comp with
-        | C_EQ -> Int.equal
-        | C_NEQ -> fun a b -> not (Int.equal a b)
+        | C_EQ -> Z.equal
+        | C_NEQ -> fun a b -> not (Z.equal a b)
         | C_LT -> (<)
         | C_LE -> (<=)
         | C_GT -> (>)
@@ -68,17 +68,17 @@ let rec apply_operator : Ast_typed.constant' -> value list -> value result =
       raise (Temporary_hack a')
       (*TODO This raise is here until we properly implement effects*)
 
-    | ( C_SIZE   , [(V_Set l | V_List l)] ) -> return_ct @@ C_nat (List.length l)
-    | ( C_SIZE   , [ V_Map l            ] ) -> return_ct @@ C_nat (List.length l)
-    | ( C_SIZE   , [ V_Ct (C_string s ) ] ) -> return_ct @@ C_nat (String.length s)
-    | ( C_SIZE   , [ V_Ct (C_bytes b  ) ] ) -> return_ct @@ C_nat (Bytes.length b)
+    | ( C_SIZE   , [(V_Set l | V_List l)] ) -> return_ct @@ C_nat (Z.of_int @@ List.length l)
+    | ( C_SIZE   , [ V_Map l            ] ) -> return_ct @@ C_nat (Z.of_int @@ List.length l)
+    | ( C_SIZE   , [ V_Ct (C_string s ) ] ) -> return_ct @@ C_nat (Z.of_int @@ String.length s)
+    | ( C_SIZE   , [ V_Ct (C_bytes b  ) ] ) -> return_ct @@ C_nat (Z.of_int @@ Bytes.length b)
     | ( C_NOT    , [ V_Ct (C_bool a'  ) ] ) -> return_ct @@ C_bool (not a')
     | ( C_INT    , [ V_Ct (C_nat a')    ] ) -> return_ct @@ C_int a'
-    | ( C_ABS    , [ V_Ct (C_int a')    ] ) -> return_ct @@ C_int (abs a')
-    | ( C_NEG    , [ V_Ct (C_int a')    ] ) -> return_ct @@ C_int (-a')
+    | ( C_ABS    , [ V_Ct (C_int a')    ] ) -> return_ct @@ C_int (Z.abs a')
+    | ( C_NEG    , [ V_Ct (C_int a')    ] ) -> return_ct @@ C_int (Z.neg a')
     | ( C_SOME   , [ v                  ] ) -> return_some v
     | ( C_IS_NAT , [ V_Ct (C_int a')    ] ) ->
-      if a' > 0 then return_some @@ V_Ct (C_nat a')
+      if a' > Z.zero then return_some @@ V_Ct (C_nat a')
       else return_none ()
     | ( C_FOLD_CONTINUE  , [ v ] ) -> ok @@ v_pair (v_bool true  , v)
     | ( C_FOLD_STOP      , [ v ] ) -> ok @@ v_pair (v_bool false , v)
@@ -96,24 +96,24 @@ let rec apply_operator : Ast_typed.constant' -> value list -> value result =
     )
     (* binary *)
     | ( (C_EQ | C_NEQ | C_LT | C_LE | C_GT | C_GE) , _ ) -> apply_comparison c operands
-    | ( C_SUB    , [ V_Ct (C_int a' | C_nat a') ; V_Ct (C_int b' | C_nat b') ] ) -> return_ct @@ C_int (a' - b')
+    | ( C_SUB    , [ V_Ct (C_int a' | C_nat a') ; V_Ct (C_int b' | C_nat b') ] ) -> return_ct @@ C_int (Z.sub a' b')
     | ( C_CONS   , [ v                  ; V_List vl          ] ) -> ok @@ V_List (v::vl)
-    | ( C_ADD    , [ V_Ct (C_int a'  )  ; V_Ct (C_int b'  )  ] ) -> return_ct @@ C_int   (a' + b')
-    | ( C_ADD    , [ V_Ct (C_nat a'  )  ; V_Ct (C_nat b'  )  ] ) -> return_ct @@ C_nat   (a' + b')
-    | ( C_ADD    , [ V_Ct (C_nat a'  )  ; V_Ct (C_int b'  )  ] ) -> return_ct @@ C_int   (a' + b')
-    | ( C_ADD    , [ V_Ct (C_int a'  )  ; V_Ct (C_nat b'  )  ] ) -> return_ct @@ C_int   (a' + b')
-    | ( C_MUL    , [ V_Ct (C_int a'  )  ; V_Ct (C_int b'  )  ] ) -> return_ct @@ C_int   (a' * b')
-    | ( C_MUL    , [ V_Ct (C_nat a'  )  ; V_Ct (C_nat b'  )  ] ) -> return_ct @@ C_nat   (a' * b')
-    | ( C_MUL    , [ V_Ct (C_nat a'  )  ; V_Ct (C_mutez b')  ] ) -> return_ct @@ C_mutez (a' * b')
-    | ( C_MUL    , [ V_Ct (C_mutez a')  ; V_Ct (C_mutez b')  ] ) -> return_ct @@ C_mutez (a' * b')
-    | ( C_DIV    , [ V_Ct (C_int a'  )  ; V_Ct (C_int b'  )  ] ) -> return_ct @@ C_int   (a' / b')
-    | ( C_DIV    , [ V_Ct (C_nat a'  )  ; V_Ct (C_nat b'  )  ] ) -> return_ct @@ C_nat   (a' / b')
-    | ( C_DIV    , [ V_Ct (C_mutez a')  ; V_Ct (C_nat b'  )  ] ) -> return_ct @@ C_mutez (a' / b')
-    | ( C_DIV    , [ V_Ct (C_mutez a')  ; V_Ct (C_mutez b')  ] ) -> return_ct @@ C_nat   (a' / b')
-    | ( C_MOD    , [ V_Ct (C_int a')    ; V_Ct (C_int b')    ] ) -> return_ct @@ C_nat   (a' mod b')
-    | ( C_MOD    , [ V_Ct (C_nat a')    ; V_Ct (C_nat b')    ] ) -> return_ct @@ C_nat   (a' mod b')
-    | ( C_MOD    , [ V_Ct (C_nat a')    ; V_Ct (C_int b')    ] ) -> return_ct @@ C_nat   (a' mod b')
-    | ( C_MOD    , [ V_Ct (C_int a')    ; V_Ct (C_nat b')    ] ) -> return_ct @@ C_nat   (a' mod b')
+    | ( C_ADD    , [ V_Ct (C_int a'  )  ; V_Ct (C_int b'  )  ] ) -> return_ct @@ C_int   (Z.add a' b')
+    | ( C_ADD    , [ V_Ct (C_nat a'  )  ; V_Ct (C_nat b'  )  ] ) -> return_ct @@ C_nat   (Z.add a' b')
+    | ( C_ADD    , [ V_Ct (C_nat a'  )  ; V_Ct (C_int b'  )  ] ) -> return_ct @@ C_int   (Z.add a' b')
+    | ( C_ADD    , [ V_Ct (C_int a'  )  ; V_Ct (C_nat b'  )  ] ) -> return_ct @@ C_int   (Z.add a' b')
+    | ( C_MUL    , [ V_Ct (C_int a'  )  ; V_Ct (C_int b'  )  ] ) -> return_ct @@ C_int   (Z.mul a' b')
+    | ( C_MUL    , [ V_Ct (C_nat a'  )  ; V_Ct (C_nat b'  )  ] ) -> return_ct @@ C_nat   (Z.mul a' b')
+    | ( C_MUL    , [ V_Ct (C_nat a'  )  ; V_Ct (C_mutez b')  ] ) -> return_ct @@ C_mutez (Z.mul a' b')
+    | ( C_MUL    , [ V_Ct (C_mutez a')  ; V_Ct (C_mutez b')  ] ) -> return_ct @@ C_mutez (Z.mul a' b')
+    | ( C_DIV    , [ V_Ct (C_int a'  )  ; V_Ct (C_int b'  )  ] ) -> return_ct @@ C_int   (Z.div a' b')
+    | ( C_DIV    , [ V_Ct (C_nat a'  )  ; V_Ct (C_nat b'  )  ] ) -> return_ct @@ C_nat   (Z.div a' b')
+    | ( C_DIV    , [ V_Ct (C_mutez a')  ; V_Ct (C_nat b'  )  ] ) -> return_ct @@ C_mutez (Z.div a' b')
+    | ( C_DIV    , [ V_Ct (C_mutez a')  ; V_Ct (C_mutez b')  ] ) -> return_ct @@ C_nat   (Z.div a' b')
+    | ( C_MOD    , [ V_Ct (C_int a')    ; V_Ct (C_int b')    ] ) -> return_ct @@ C_nat   (Z.rem a' b')
+    | ( C_MOD    , [ V_Ct (C_nat a')    ; V_Ct (C_nat b')    ] ) -> return_ct @@ C_nat   (Z.rem a' b')
+    | ( C_MOD    , [ V_Ct (C_nat a')    ; V_Ct (C_int b')    ] ) -> return_ct @@ C_nat   (Z.rem a' b')
+    | ( C_MOD    , [ V_Ct (C_int a')    ; V_Ct (C_nat b')    ] ) -> return_ct @@ C_nat   (Z.rem a' b')
     | ( C_CONCAT , [ V_Ct (C_string a') ; V_Ct (C_string b') ] ) -> return_ct @@ C_string (a' ^ b')
     | ( C_CONCAT , [ V_Ct (C_bytes a' ) ; V_Ct (C_bytes b' ) ] ) -> return_ct @@ C_bytes  (Bytes.cat a' b')
     | ( C_OR     , [ V_Ct (C_bool a'  ) ; V_Ct (C_bool b'  ) ] ) -> return_ct @@ C_bool   (a' || b')
@@ -161,7 +161,7 @@ let rec apply_operator : Ast_typed.constant' -> value list -> value result =
     (* tertiary *)
     | ( C_SLICE , [ V_Ct (C_nat st) ; V_Ct (C_nat ed) ; V_Ct (C_string s) ] ) ->
       generic_try (simple_error "bad slice") @@ (fun () ->
-        V_Ct (C_string (String.sub s st ed))
+        V_Ct (C_string (String.sub s (Z.to_int st) (Z.to_int ed)))
       )
     | ( C_LIST_FOLD , [ V_Func_val (arg_name, body, env) ; V_List elts ; init ] ) ->
       bind_fold_list

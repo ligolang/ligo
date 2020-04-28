@@ -17,10 +17,10 @@ module Expression : sig
 end
 
 val get_bool : value ->bool result
-val get_int : value -> int result
-val get_nat : value -> int result
-val get_mutez : value -> int result
-val get_timestamp : value -> int result
+val get_int : value -> Z.t result
+val get_nat : value -> Z.t result
+val get_mutez : value -> Z.t result
+val get_timestamp : value -> Z.t result
 val get_string : value -> string result
 val get_bytes : value -> bytes result
 val get_unit : value -> unit result

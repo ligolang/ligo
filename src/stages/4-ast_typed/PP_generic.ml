@@ -12,7 +12,7 @@ let needs_parens              = {
     );
     type_variable             = (fun _ _ _ -> false) ;
     bool                      = (fun _ _ _ -> false) ;
-    int                       = (fun _ _ _ -> false) ;
+    z                         = (fun _ _ _ -> false) ;
     string                    = (fun _ _ _ -> false) ;
     bytes                     = (fun _ _ _ -> false) ;
     packed_internal_operation = (fun _ _ _ -> false) ;
@@ -46,7 +46,7 @@ let op ppf = {
     );
     type_variable             = (fun _visitor () type_variable   -> fprintf ppf "%a" Var.pp type_variable) ;
     bool                      = (fun _visitor () b               -> fprintf ppf "%s" (if b then "true" else "false")) ;
-    int                       = (fun _visitor () i               -> fprintf ppf "%d" i) ;
+    z                         = (fun _visitor () i               -> fprintf ppf "%a" Z.pp_print i) ;
     string                    = (fun _visitor () str             -> fprintf ppf "\"%s\"" str) ;
     bytes                     = (fun _visitor () _bytes          -> fprintf ppf "bytes...") ;
     packed_internal_operation = (fun _visitor () _op             -> fprintf ppf "Operation(...bytes)") ;

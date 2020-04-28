@@ -16,10 +16,10 @@ type env = value Env.t
 and constant_val =
   | C_unit
   | C_bool of bool
-  | C_int of int
-  | C_nat of int
-  | C_timestamp of int
-  | C_mutez of int
+  | C_int of Z.t
+  | C_nat of Z.t
+  | C_timestamp of Z.t
+  | C_mutez of Z.t
   | C_string of string
   | C_bytes of bytes
   | C_address of string

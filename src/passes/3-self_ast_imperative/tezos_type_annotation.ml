@@ -25,7 +25,7 @@ let peephole_expression : expression -> expression result = fun e ->
         let%bind time =
           trace_option (bad_string_timestamp str e'.location)
           @@ Memory_proto_alpha.Protocol.Alpha_context.Timestamp.of_notation str in
-        let itime = Int64.to_int @@ Tezos_utils.Time.Protocol.to_seconds time in
+        let itime = Z.of_int64 @@ Tezos_utils.Time.Protocol.to_seconds time in
         return @@ E_literal (Literal_timestamp itime)
       | (E_literal (Literal_string str) , T_constant (TC_address)) -> return @@ E_literal (Literal_address str)
       | (E_literal (Literal_string str) , T_constant (TC_bytes)) -> (

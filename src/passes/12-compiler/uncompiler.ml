@@ -22,14 +22,10 @@ let rec translate_value (Ex_typed_value (ty, value)) : value result =
       ok @@ D_right b
     )
   | (Int_t _), n ->
-      let%bind n =
-        trace_option (simple_error "too big to fit an int") @@
-        Alpha_context.Script_int.to_int n in
+      let n = Alpha_context.Script_int.to_zint n in
       ok @@ D_int n
   | (Nat_t _), n ->
-      let%bind n =
-        trace_option (simple_error "too big to fit an int") @@
-        Alpha_context.Script_int.to_int n in
+      let n = Alpha_context.Script_int.to_zint n in
       ok @@ D_nat n
   | (Chain_id_t _), id ->
     let str = Tezos_crypto.Base58.simple_encode
@@ -43,14 +39,12 @@ let rec translate_value (Ex_typed_value (ty, value)) : value result =
   | (Signature_t _ ), n ->
     ok @@ D_string (Signature.to_b58check n)
   | (Timestamp_t _), n ->
-      let n =
-        Z.to_int @@
-        Alpha_context.Script_timestamp.to_zint n in
+      let n = Alpha_context.Script_timestamp.to_zint n in
       ok @@ D_timestamp n
   | (Mutez_t _), n ->
       let%bind n =
         generic_try (simple_error "too big to fit an int") @@
-        (fun () -> Int64.to_int @@ Alpha_context.Tez.to_mutez n) in
+        (fun () -> Z.of_int64 @@ Alpha_context.Tez.to_mutez n) in
       ok @@ D_mutez n
   | (Bool_t _), b ->
       ok @@ D_bool b
