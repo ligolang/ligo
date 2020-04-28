@@ -620,10 +620,10 @@ and evaluate_type (e:environment) (t:I.type_expression) : O.type_expression resu
       let%bind m = I.CMap.fold aux m (ok O.CMap.empty) in
       return (T_sum m)
   | T_record m ->
-      let aux k ({field_type;field_annotation;decl_position}: I.field_content) prev =
+      let aux k ({field_type;field_annotation;field_decl_pos}: I.field_content) prev =
         let%bind prev' = prev in
         let%bind field_type = evaluate_type e field_type in
-        let v' = ({field_type;michelson_annotation=field_annotation;decl_position} : O.field_content) in
+        let v' = ({field_type;michelson_annotation=field_annotation;field_decl_pos} : O.field_content) in
         ok @@ O.LMap.add (convert_label k) v' prev'
       in
       let%bind m = I.LMap.fold aux m (ok O.LMap.empty) in
@@ -790,7 +790,7 @@ and type_expression' : environment -> ?tv_opt:O.type_expression -> I.expression 
       (* let () = match tv_opt with
         Some _ -> Format.printf "YES"
        | None -> Format.printf "NO" in *)
-      let lmap = O.LMap.map (fun e -> ({field_type = get_type_expression e; michelson_annotation = None; decl_position=0}:O.field_content)) m' in
+      let lmap = O.LMap.map (fun e -> ({field_type = get_type_expression e; michelson_annotation = None; field_decl_pos=0}:O.field_content)) m' in
       return (E_record m') (t_record lmap ())
   | E_record_update {record; path; update} ->
     let path = convert_label path in

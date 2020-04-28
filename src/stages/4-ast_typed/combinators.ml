@@ -54,7 +54,7 @@ let t_contract t ?loc ?s () : type_expression = make_t ?loc (T_operator (TC_cont
 
 let t_record m ?loc ?s () : type_expression = make_t ?loc (T_record m) s
 let make_t_ez_record ?loc (lst:(string * type_expression) list) : type_expression =
-  let lst = List.mapi (fun i (x,y) -> (Label x, {field_type=y;michelson_annotation=None;decl_position=i}) ) lst in
+  let lst = List.mapi (fun i (x,y) -> (Label x, {field_type=y;michelson_annotation=None;field_decl_pos=i}) ) lst in
   let map = LMap.of_list lst in
   make_t ?loc (T_record map) None
 let ez_t_record lst ?loc ?s () : type_expression =
@@ -62,8 +62,8 @@ let ez_t_record lst ?loc ?s () : type_expression =
   t_record m ?loc ?s ()
 let t_pair a b ?loc ?s () : type_expression =
   ez_t_record [
-    (Label "0",{field_type=a;michelson_annotation=None ; decl_position = 0}) ;
-    (Label "1",{field_type=b;michelson_annotation=None ; decl_position = 0}) ] ?loc ?s ()
+    (Label "0",{field_type=a;michelson_annotation=None ; field_decl_pos = 0}) ;
+    (Label "1",{field_type=b;michelson_annotation=None ; field_decl_pos = 0}) ] ?loc ?s ()
 
 let t_map ?loc k v ?s () = make_t ?loc (T_operator (TC_map { k ; v })) s
 let t_big_map ?loc k v ?s () = make_t ?loc (T_operator (TC_big_map { k ; v })) s
@@ -187,7 +187,7 @@ let get_t_function_full (t:type_expression) : (type_expression * type_expression
     | _ -> ([],t)
   in
   let (input,output) = aux 0 t in
-  let input = List.map (fun (l,t) -> (l,{field_type = t ; michelson_annotation = None ; decl_position = 0})) input in
+  let input = List.map (fun (l,t) -> (l,{field_type = t ; michelson_annotation = None ; field_decl_pos = 0})) input in
   ok @@ (t_record (LMap.of_list input) (),output) 
 
 let get_t_sum (t:type_expression) : ctor_content constructor_map result = match t.type_content with
@@ -332,11 +332,11 @@ let e_a_record r = make_e (e_record r) (t_record
   (LMap.map
     (fun t ->
       let field_type = get_type_expression t in
-      {field_type ; michelson_annotation=None ; decl_position = 0} )
+      {field_type ; michelson_annotation=None ; field_decl_pos = 0} )
     r ) () )
 let e_a_application a b = make_e (e_application a b) (get_type_expression b)
 let e_a_variable v ty = make_e (e_variable v) ty
-let ez_e_a_record r = make_e (ez_e_record r) (ez_t_record (List.mapi (fun i (x, y) -> x, {field_type = y.type_expression ; michelson_annotation = None ; decl_position = i}) r) ())
+let ez_e_a_record r = make_e (ez_e_record r) (ez_t_record (List.mapi (fun i (x, y) -> x, {field_type = y.type_expression ; michelson_annotation = None ; field_decl_pos = i}) r) ())
 let e_a_let_in binder expr body attributes = make_e (e_let_in binder expr body attributes) (get_type_expression body)
 
 

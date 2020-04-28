@@ -141,7 +141,7 @@ module Typer = struct
       let%bind () = Assert.assert_true_err
         (simple_error "converted record must have at least two elements")
         (List.length kvl >=2) in
-      let all_undefined = List.for_all (fun (_,{decl_position;_}) -> decl_position = 0) kvl in
+      let all_undefined = List.for_all (fun (_,{field_decl_pos;_}) -> field_decl_pos = 0) kvl in
       let%bind () = Assert.assert_true_err
         (simple_error "can't retrieve declaration order in the converted record, you need to annotate it")
         (not all_undefined) in
@@ -155,7 +155,7 @@ module Typer = struct
         type_content = t ;
         type_meta = None ;
         location = Location.generated ; } in
-      {field_type ; michelson_annotation = Some "" ; decl_position = 0}
+      {field_type ; michelson_annotation = Some "" ; field_decl_pos = 0}
 
     let rec to_right_comb_t l new_map =
       match l with
@@ -184,11 +184,11 @@ module Typer = struct
     let to_left_comb_t = to_left_comb_t' true
 
     let convert_type_to_right_comb l =
-      let l' = List.sort (fun (_,{decl_position=a;_}) (_,{decl_position=b;_}) -> Int.compare a b) l in
+      let l' = List.sort (fun (_,{field_decl_pos=a;_}) (_,{field_decl_pos=b;_}) -> Int.compare a b) l in
       T_record (to_right_comb_t l' LMap.empty)
 
     let convert_type_to_left_comb l =
-      let l' = List.sort (fun (_,{decl_position=a;_}) (_,{decl_position=b;_}) -> Int.compare a b) l in
+      let l' = List.sort (fun (_,{field_decl_pos=a;_}) (_,{field_decl_pos=b;_}) -> Int.compare a b) l in
       T_record (to_left_comb_t l' LMap.empty)
 
     let rec from_right_comb (l:field_content label_map) (size:int) : (field_content list) result =
@@ -214,14 +214,14 @@ module Typer = struct
     let convert_from_right_comb (src: field_content label_map) (dst: field_content label_map) : type_content result =
       let%bind fields = from_right_comb src (LMap.cardinal dst) in
       let labels = List.map (fun (l,_) -> l) @@
-        List.sort (fun (_,{decl_position=a;_}) (_,{decl_position=b;_}) -> Int.compare a b ) @@
+        List.sort (fun (_,{field_decl_pos=a;_}) (_,{field_decl_pos=b;_}) -> Int.compare a b ) @@
         LMap.to_kv_list dst in
       ok @@ (T_record (LMap.of_list @@ List.combine labels fields))
 
     let convert_from_left_comb (src: field_content label_map) (dst: field_content label_map) : type_content result =
       let%bind fields = from_left_comb src (LMap.cardinal dst) in
       let labels = List.map (fun (l,_) -> l) @@
-        List.sort (fun (_,{decl_position=a;_}) (_,{decl_position=b;_}) -> Int.compare a b ) @@
+        List.sort (fun (_,{field_decl_pos=a;_}) (_,{field_decl_pos=b;_}) -> Int.compare a b ) @@
         LMap.to_kv_list dst in
       ok @@ (T_record (LMap.of_list @@ List.combine labels fields))
 

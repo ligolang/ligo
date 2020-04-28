@@ -38,7 +38,7 @@ let t_option ?loc o       : type_expression = make_t ?loc @@ T_operator (TC_opti
 let t_list ?loc t         : type_expression = make_t ?loc @@ T_operator (TC_list t)
 let t_variable ?loc n     : type_expression = make_t ?loc @@ T_variable (Var.of_name n)
 let t_record_ez ?loc lst =
-  let lst = List.mapi (fun i (k, v) -> (Label k, {field_type=v;decl_position=i})) lst in
+  let lst = List.mapi (fun i (k, v) -> (Label k, {field_type=v;field_decl_pos=i})) lst in
   let m = LMap.of_list lst in
   make_t ?loc @@ T_record m
 let t_record ?loc m  : type_expression =

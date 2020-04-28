@@ -15,7 +15,7 @@ type type_content =
 
 and arrow = {type1: type_expression; type2: type_expression}
 
-and field_content = {field_type :type_expression ; decl_position : int} 
+and field_content = {field_type :type_expression ; field_decl_pos : int} 
 
 and michelson_prct_annotation = string
 

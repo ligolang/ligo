@@ -49,7 +49,7 @@ module Ast_generic_type (PARAMETER : AST_PARAMETER_TYPE) = struct
   
   and ctor_content = {ctor_type : type_expression ; michelson_annotation : string option}
 
-  and field_content = {field_type : type_expression ; field_annotation : string option ; decl_position : int}
+  and field_content = {field_type : type_expression ; field_annotation : string option ; field_decl_pos : int}
 
   and type_operator =
     | TC_contract of type_expression

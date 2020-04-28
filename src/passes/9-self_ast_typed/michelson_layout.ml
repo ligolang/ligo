@@ -2,7 +2,7 @@ open Ast_typed
 open Trace
 
 let to_sorted_kv_list lmap =
-  List.sort (fun (_,{decl_position=a;_}) (_,{decl_position=b;}) -> Int.compare a b) @@
+  List.sort (fun (_,{field_decl_pos=a;_}) (_,{field_decl_pos=b;}) -> Int.compare a b) @@
   LMap.to_kv_list lmap
 
 let accessor (record:expression) (path:label) (t:type_expression) =

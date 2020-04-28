@@ -21,9 +21,9 @@ let rec idle_type_expression : I.type_expression -> O.type_expression result =
       let record = I.LMap.to_kv_list record in
       let%bind record = 
         bind_map_list (fun (k,v) ->
-          let {field_type ; michelson_annotation ; decl_position} : I.field_content = v in
+          let {field_type ; michelson_annotation ; field_decl_pos} : I.field_content = v in
           let%bind field_type = idle_type_expression field_type in
-          let v' : O.field_content = {field_type ; field_annotation=michelson_annotation ; decl_position} in
+          let v' : O.field_content = {field_type ; field_annotation=michelson_annotation ; field_decl_pos} in
           ok @@ (k,v')
         ) record
       in
@@ -31,7 +31,7 @@ let rec idle_type_expression : I.type_expression -> O.type_expression result =
     | I.T_tuple tuple ->
       let aux (i,acc) el = 
         let%bind el = idle_type_expression el in
-        ok @@ (i+1,(O.Label (string_of_int i), ({field_type=el;field_annotation=None;decl_position=0}:O.field_content))::acc) in
+        ok @@ (i+1,(O.Label (string_of_int i), ({field_type=el;field_annotation=None;field_decl_pos=0}:O.field_content))::acc) in
       let%bind (_, lst ) = bind_fold_list aux (0,[]) tuple in
       let record = O.LMap.of_list lst in
       return @@ O.T_record record
@@ -255,9 +255,9 @@ let rec uncompile_type_expression : O.type_expression -> I.type_expression resul
       let record = I.LMap.to_kv_list record in
       let%bind record = 
         bind_map_list (fun (k,v) ->
-          let {field_type;field_annotation;decl_position} : O.field_content = v in
+          let {field_type;field_annotation;field_decl_pos} : O.field_content = v in
           let%bind field_type = uncompile_type_expression field_type in
-          let v' : I.field_content = {field_type ; michelson_annotation=field_annotation ; decl_position} in
+          let v' : I.field_content = {field_type ; michelson_annotation=field_annotation ; field_decl_pos} in
           ok @@ (k,v')
         ) record
       in

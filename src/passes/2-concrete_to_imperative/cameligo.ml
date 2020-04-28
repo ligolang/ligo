@@ -303,7 +303,7 @@ and compile_type_expression : Raw.type_expr -> type_expression result = fun te -
         @@ List.mapi order
         @@ List.map apply
         @@ npseq_to_list r.ne_elements in
-      let m = List.fold_left (fun m ((x,i), y) -> LMap.add (Label x) {field_type=y;decl_position=i} m) LMap.empty lst in
+      let m = List.fold_left (fun m ((x,i), y) -> LMap.add (Label x) {field_type=y;field_decl_pos=i} m) LMap.empty lst in
       ok @@ make_t ~loc @@ T_record m
   | TSum s ->
       let (s,loc) = r_split s in

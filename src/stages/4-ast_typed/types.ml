@@ -45,7 +45,7 @@ and ctor_content = {
 and field_content = {
     field_type : type_expression;
     michelson_annotation : annot_option;
-    decl_position : int;
+    field_decl_pos : int;
 }
 
 and type_map_args = {
