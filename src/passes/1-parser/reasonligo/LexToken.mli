@@ -31,48 +31,49 @@ type lexeme = string
 type t =
   (* Symbols *)
 
-  CAT of Region.t      (* "++"  *)
+  CAT of Region.t (* "++"  *)
 
   (* Arithmetics *)
 
-| MINUS of Region.t    (* "-" *)
-| PLUS of Region.t     (* "+" *)
-| SLASH of Region.t    (* "/" *)
-| TIMES of Region.t   (* "*" *)
+| MINUS of Region.t (* "-" *)
+| PLUS  of Region.t (* "+" *)
+| SLASH of Region.t (* "/" *)
+| TIMES of Region.t (* "*" *)
 
   (* Compounds *)
 
-| LPAR of Region.t    (* "(" *)
-| RPAR of Region.t   (* ")" *)
+| LPAR     of Region.t (* "(" *)
+| RPAR     of Region.t (* ")" *)
 | LBRACKET of Region.t (* "[" *)
 | RBRACKET of Region.t (* "]" *)
-| LBRACE of Region.t  (* "{" *)
-| RBRACE of Region.t  (* "}" *)
+| LBRACE   of Region.t (* "{" *)
+| RBRACE   of Region.t (* "}" *)
 
   (* Separators *)
 
-| COMMA of Region.t   (* "," *)
-| SEMI  of Region.t   (* ";" *)
-| VBAR of Region.t    (* "|" *)
-| COLON of Region.t   (* ":" *)
-| DOT of Region.t     (* "." *)
+| COMMA    of Region.t (* ","   *)
+| SEMI     of Region.t (* ";"   *)
+| VBAR     of Region.t (* "|"   *)
+| COLON    of Region.t (* ":"   *)
+| DOT      of Region.t (* "."   *)
 | ELLIPSIS of Region.t (* "..." *)
+| ARROW    of Region.t (* "=>"  *)
 
   (* Wildcard *)
 
-| WILD of Region.t    (* "_" *)
+| WILD of Region.t     (* "_" *)
 
   (* Comparisons *)
 
-| EQ of Region.t      (* "="  *)
-| EQEQ of Region.t    (* "==" *)
-| NE of Region.t      (* "!=" *)
-| LT of Region.t      (* "<"  *)
-| GT of Region.t      (* ">"  *)
-| LE of Region.t      (* "=<" *)
-| GE of Region.t      (* ">=" *)
+| EQ   of Region.t (* "="  *)
+| EQEQ of Region.t (* "==" *)
+| NE   of Region.t (* "!=" *)
+| LT   of Region.t (* "<"  *)
+| GT   of Region.t (* ">"  *)
+| LE   of Region.t (* "<=" *)
+| GE   of Region.t (* ">=" *)
 
-| ARROW of Region.t   (* "=>" *)
+  (* Logic *)
 
 | BOOL_OR  of Region.t (* "||" *)
 | BOOL_AND of Region.t (* "&&" *)
@@ -91,18 +92,18 @@ type t =
 
   (* Keywords *)
 
-| Else of Region.t
-| False of Region.t
-| If of Region.t
-| Let of Region.t
-| Rec of Region.t
+| Else   of Region.t
+| False  of Region.t
+| If     of Region.t
+| Let    of Region.t
+| Mod    of Region.t
+| Or     of Region.t
+| Rec    of Region.t
 | Switch of Region.t
-| Mod of Region.t
-| Or of Region.t
-| True of Region.t
-| Type of Region.t
+| True   of Region.t
+| Type   of Region.t
 
-(* Data constructors *)
+  (* Data constructors *)
 
 | C_None  of Region.t  (* "None"  *)
 | C_Some  of Region.t  (* "Some"  *)
@@ -111,8 +112,6 @@ type t =
 
 | EOF of Region.t (* End of file *)
 
-type token = t
-
 (* Projections
 
    The difference between extracting the lexeme and a string from a
@@ -120,6 +119,8 @@ type token = t
    value denoting the token (its abstract syntax), rather than its
    lexeme (concrete syntax).
 *)
+
+type token = t
 
 val to_lexeme : token -> lexeme
 val to_string : token -> ?offsets:bool -> [`Byte | `Point] -> string

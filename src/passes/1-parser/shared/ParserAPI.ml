@@ -56,8 +56,8 @@ module type PARSER =
 (* Main functor *)
 
 module Make (IO: IO)
-            (Lexer: LexerLib.S)
-            (Parser: PARSER with type token = Lexer.Token.token)
+            (Lexer: Lexer.S)
+            (Parser: PARSER with type token = Lexer.token)
             (ParErr: sig val message : int -> string end) =
   struct
     module I = Parser.MenhirInterpreter
@@ -143,14 +143,14 @@ module Make (IO: IO)
                    ~offsets:IO.options#offsets
                    IO.options#mode IO.options#cmd stdout
 
-    let incr_contract Lexer.{read; buffer; get_win; close; _} =
+    let incr_contract LexerLib.{read; buffer; get_win; close; _} =
       let supplier  = I.lexer_lexbuf_to_supplier (read ~log) buffer
       and failure   = failure get_win in
       let parser    = Incr.contract buffer.Lexing.lex_curr_p in
       let ast       = I.loop_handle success failure supplier parser
       in flush_all (); close (); ast
 
-    let incr_expr Lexer.{read; buffer; get_win; close; _} =
+    let incr_expr LexerLib.{read; buffer; get_win; close; _} =
       let supplier   = I.lexer_lexbuf_to_supplier (read ~log) buffer
       and failure    = failure get_win in
       let parser     = Incr.interactive_expr buffer.Lexing.lex_curr_p in

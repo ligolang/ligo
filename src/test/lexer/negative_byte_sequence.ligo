@@ -1,1 +1,1 @@
-const a: string = -0x222;
+const a: string = - (**) 0x2222

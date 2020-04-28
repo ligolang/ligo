@@ -2,6 +2,7 @@ $HOME/git/OCaml-build/Makefile
 
 ../shared/Lexer.mli
 ../shared/Lexer.mll
+../shared/LexerLib.mli
 ../shared/LexerLib.ml
 ../shared/EvalOpt.ml
 ../shared/EvalOpt.mli

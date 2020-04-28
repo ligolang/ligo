@@ -8,12 +8,6 @@ module Pos = Simple_utils.Pos
 
 (* START HEADER *)
 
-type lexeme = string
-
-(* ALIASES *)
-
-let sprintf = Printf.sprintf
-
 (* TOKENS *)
 
 (* The signature [TOKEN] exports an abstract type [token], so a lexer
@@ -21,6 +15,8 @@ let sprintf = Printf.sprintf
    construct tokens are provided. Note predicate [is_eof], which
    caracterises the virtual token for end-of-file, because it requires
    special handling. *)
+
+type lexeme = string
 
 module type TOKEN =
   sig
@@ -84,16 +80,29 @@ module type TOKEN =
    submodule in [S].
  *)
 
-module Make (Token: TOKEN) : (LexerLib.S with module Token = Token) =
+module type S =
+  sig
+    module Token : TOKEN
+    type token = Token.token
+
+    val init : token LexerLib.state -> Lexing.lexbuf -> token LexerLib.state
+    val scan : token LexerLib.state -> Lexing.lexbuf -> token LexerLib.state
+
+    type error
+
+    val error_to_string : error -> string
+
+    exception Error of error Region.reg
+
+    val format_error :
+      ?offsets:bool -> [`Byte | `Point] ->
+      error Region.reg -> file:bool -> string Region.reg
+  end
+
+module Make (Token : TOKEN) : (S with module Token = Token) =
   struct
     module Token = Token
     type token = Token.token
-
-    type file_path = string
-
-    type line_comment = LexerLib.line_comment
-    type block_comment = LexerLib.block_comment
-    let mk_block = LexerLib.mk_block
 
     (* ERRORS *)
 
@@ -101,20 +110,17 @@ module Make (Token: TOKEN) : (LexerLib.S with module Token = Token) =
       Invalid_utf8_sequence
     | Unexpected_character of char
     | Undefined_escape_sequence
-    (*    | Missing_break*)
     | Unterminated_string
-    (*    | Unterminated_integer*)
-    (*    | Odd_lengthed_bytes*)
     | Unterminated_comment of string
-    (*    | Orphan_minus*)
     | Non_canonical_zero
-    (*    | Negative_byte_sequence *)
     | Broken_string
     | Invalid_character_in_string
     | Reserved_name of string
     | Invalid_symbol
     | Invalid_natural
     | Invalid_attribute
+
+    let sprintf = Printf.sprintf
 
     let error_to_string = function
       Invalid_utf8_sequence ->
@@ -124,30 +130,15 @@ module Make (Token: TOKEN) : (LexerLib.S with module Token = Token) =
     | Undefined_escape_sequence ->
         "Undefined escape sequence.\n\
          Hint: Remove or replace the sequence."
-(*    | Missing_break ->
-        "Missing break.\n\
-         Hint: Insert some space."
- *)    | Unterminated_string ->
+    | Unterminated_string ->
         "Unterminated string.\n\
          Hint: Close with double quotes."
-(*    | Unterminated_integer ->
-        "Unterminated integer.\n\
-         Hint: Remove the sign or proceed with a natural number." *)
-(*    | Odd_lengthed_bytes ->
-        "The length of the byte sequence is an odd number.\n\
-         Hint: Add or remove a digit."
- *)    | Unterminated_comment ending ->
+    | Unterminated_comment ending ->
         sprintf "Unterminated comment.\n\
                  Hint: Close with \"%s\"." ending
-(*    | Orphan_minus ->
-        "Orphan minus sign.\n\
-         Hint: Remove the trailing space." *)
     | Non_canonical_zero ->
         "Non-canonical zero.\n\
          Hint: Use 0."
-(*    | Negative_byte_sequence ->
-        "Negative byte sequence.\n\
-         Hint: Remove the leading minus sign." *)
     | Broken_string ->
         "The string starting here is interrupted by a line break.\n\
          Hint: Remove the break, close the string before or insert a \
@@ -319,13 +310,13 @@ let symbol = common_sym | pascaligo_sym | cameligo_sym | reasonligo_sym
 
 (* Comments *)
 
-let pascaligo_block_comment_opening = "(*"
-let pascaligo_block_comment_closing = "*)"
-let pascaligo_line_comment          = "//"
+let pascaligo_block_comment_opening  = "(*"
+let pascaligo_block_comment_closing  = "*)"
+let pascaligo_line_comment           = "//"
 
-let cameligo_block_comment_opening = "(*"
-let cameligo_block_comment_closing = "*)"
-let cameligo_line_comment          = "//"
+let cameligo_block_comment_opening   = "(*"
+let cameligo_block_comment_closing   = "*)"
+let cameligo_line_comment            = "//"
 
 let reasonligo_block_comment_opening = "/*"
 let reasonligo_block_comment_closing = "*/"
@@ -369,6 +360,7 @@ and scan state = parse
   nl                     { scan (state#push_newline lexbuf) lexbuf }
 | ' '+                   { scan (state#push_space   lexbuf) lexbuf }
 | '\t'+                  { scan (state#push_tabs    lexbuf) lexbuf }
+
 | ident                  { mk_ident        state lexbuf }
 | constr                 { mk_constr       state lexbuf }
 | bytes                  { mk_bytes seq    state lexbuf }
@@ -420,26 +412,13 @@ and scan state = parse
     let state        = state#set_pos pos in
     scan state lexbuf }
 
-(* Some special errors *)
-
-(*
-| '-' { let region, _, state = state#sync lexbuf in
-        let state = scan state lexbuf in
-        let open Markup in
-        match FQueue.peek state#units with
-          None -> assert false
-        | Some (_, ((Space _ | Tabs _)::_, token))
-            when Token.is_int token -> fail region Orphan_minus
-        | _ -> fail region Unterminated_integer }
-
-| "-0x" byte_seq?
-      { let region, _, _ = state#sync lexbuf
-        in fail region Negative_byte_sequence }
- *)
+(* String *)
 
 | '"' { let opening, lexeme, state = state#sync lexbuf in
         let thread = LexerLib.mk_thread opening lexeme in
         scan_string thread state lexbuf |> mk_string }
+
+(* Comments *)
 
 | block_comment_openings {
     let lexeme = Lexing.lexeme lexbuf in
@@ -495,8 +474,6 @@ and scan_flags state acc = parse
 | nl              { List.rev acc, state#push_newline lexbuf }
 | eof             { let _, _, state = state#sync lexbuf
                     in List.rev acc, state                  }
-
-(* TODO: Move below to [LexerCommon.mll] *)
 
 (* Finishing a string *)
 
@@ -624,164 +601,6 @@ and scan_utf8_inline thread state = parse
 
 {
 (* START TRAILER *)
-
-
-(* Scanning the lexing buffer for tokens (and markup, as a
-   side-effect).
-
-     Because we want the lexer to have access to the right lexical
-   context of a recognised lexeme (to enforce stylistic constraints or
-   report special error patterns), we need to keep a hidden reference
-   to a queue of recognised lexical units (that is, tokens and markup)
-   that acts as a mutable state between the calls to [read]. When
-   [read] is called, that queue is examined first and, if it contains
-   at least one token, that token is returned; otherwise, the lexing
-   buffer is scanned for at least one more new token. That is the
-   general principle: we put a high-level buffer (our queue) on top of
-   the low-level lexing buffer.
-
-     One tricky and important detail is that we must make any parser
-   generated by Menhir (and calling [read]) believe that the last
-   region of the input source that was matched indeed corresponds to
-   the returned token, despite that many tokens and markup may have
-   been matched since it was actually read from the input. In other
-   words, the parser requests a token that is taken from the
-   high-level buffer, but the parser requests the source regions from
-   the _low-level_ lexing buffer, and they may disagree if more than
-   one token has actually been recognised.
-
-     Consequently, in order to maintain a consistent view for the
-   parser, we have to patch some fields of the lexing buffer, namely
-   [lex_start_p] and [lex_curr_p], as these fields are read by parsers
-   generated by Menhir when querying source positions (regions). This
-   is the purpose of the function [patch_buffer]. After reading one
-   or more tokens and markup by the scanning rule [scan], we have to
-   save in the hidden reference [buf_reg] the region of the source
-   that was matched by [scan]. This atomic sequence of patching,
-   scanning and saving is implemented by the _function_ [scan]
-   (beware: it shadows the scanning rule [scan]). The function
-   [patch_buffer] is, of course, also called just before returning the
-   token, so the parser has a view of the lexing buffer consistent
-   with the token.
-
-     Note that an additional reference [first_call] is needed to
-   distinguish the first call to the function [scan], as the first
-   scanning rule is actually [init] (which can handle the BOM), not
-   [scan].
- *)
-
-type logger = Markup.t list -> token -> unit
-
-type input =
-  File    of file_path
-| String  of string
-| Channel of in_channel
-| Buffer  of Lexing.lexbuf
-
-type instance = {
-  input    : input;
-  read     : log:logger -> Lexing.lexbuf -> token;
-  buffer   : Lexing.lexbuf;
-  get_win  : unit -> token LexerLib.window;
-  get_pos  : unit -> Pos.t;
-  get_last : unit -> Region.t;
-  get_file : unit -> file_path;
-  close    : unit -> unit
-}
-
-type open_err = File_opening of string
-
-let lexbuf_from_input = function
-  File path ->
-   (try
-      let chan = open_in path in
-      let close () = close_in chan in
-      let lexbuf = Lexing.from_channel chan in
-      let () =
-        let open Lexing in
-        lexbuf.lex_curr_p <- {lexbuf.lex_curr_p with pos_fname=path}
-      in Ok (lexbuf, close)
-    with Sys_error msg -> Stdlib.Error (File_opening msg))
-| String s ->
-    Ok (Lexing.from_string s, fun () -> ())
-| Channel chan ->
-    let close () = close_in chan in
-    Ok (Lexing.from_channel chan, close)
-| Buffer b -> Ok (b, fun () -> ())
-
-let open_token_stream ?line ?block input =
-  let file_path  = match input with
-                     File path -> path
-                   | _ -> "" in
-  let        pos = Pos.min ~file:file_path in
-  let    buf_reg = ref (pos#byte, pos#byte)
-  and first_call = ref true
-  and    decoder = Uutf.decoder ~encoding:`UTF_8 `Manual in
-  let     supply = Uutf.Manual.src decoder in
-  let      state = ref (LexerLib.mk_state
-                          ~units:FQueue.empty
-                          ~last:Region.ghost
-                          ~window:LexerLib.Nil
-                          ~pos
-                          ~markup:[]
-                          ~decoder
-                          ~supply
-                          ?block
-                          ?line
-                          ()) in
-
-  let get_pos  () = !state#pos
-  and get_last () = !state#last
-  and get_win  () = !state#window
-  and get_file () = file_path in
-
-  let patch_buffer (start, stop) buffer =
-    let open Lexing in
-    let file_path = buffer.lex_curr_p.pos_fname in
-    buffer.lex_start_p <- {start with pos_fname = file_path};
-    buffer.lex_curr_p  <- {stop  with pos_fname = file_path}
-
-  and save_region buffer =
-    buf_reg := Lexing.(buffer.lex_start_p, buffer.lex_curr_p) in
-
-  let scan buffer =
-    patch_buffer !buf_reg buffer;
-    (if   !first_call
-     then (state := init !state buffer; first_call := false)
-     else state := scan !state buffer);
-    save_region buffer in
-
-  let next_token buffer =
-    scan buffer;
-    match FQueue.peek !state#units with
-                         None -> None
-    | Some (units, ext_token) ->
-        state := !state#set_units units; Some ext_token in
-
-  let rec read ~log buffer =
-    match FQueue.deq !state#units with
-      None ->
-        scan buffer;
-        read ~log buffer
-    | Some (units, (left_mark, token)) ->
-        log left_mark token;
-        state := ((!state#set_units units)
-                  #set_last (Token.to_region token))
-                  #slide_token token;
-        Token.check_right_context token next_token buffer;
-        patch_buffer (Token.to_region token)#byte_pos buffer;
-        token in
-  match lexbuf_from_input input with
-    Ok (buffer, close) ->
-      let () =
-        match input with
-          File path when path <> "" -> LexerLib.reset ~file:path buffer
-        | _ -> () in
-      let instance = {
-        input; read; buffer; get_win; get_pos; get_last; get_file; close}
-      in Ok instance
-  | Error _ as e -> e
-
 end (* of functor [Make] in HEADER *)
 (* END TRAILER *)
 }

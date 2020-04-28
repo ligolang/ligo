@@ -38,8 +38,6 @@
 module Region = Simple_utils.Region
 module Pos = Simple_utils.Pos
 
-type lexeme = string
-
 (* TOKENS *)
 
 (* The signature [TOKEN] exports an abstract type [token], so a lexer
@@ -53,6 +51,8 @@ type lexeme = string
    the type [int_err] etc. These errors can be better understood by
    reading the ocamllex specification for the lexer ([Lexer.mll]).
 *)
+
+type lexeme = string
 
 module type TOKEN =
   sig
@@ -112,10 +112,36 @@ module type TOKEN =
       unit
   end
 
+(* The signature of the lexer *)
+
+module type S =
+  sig
+    module Token : TOKEN
+    type token = Token.token
+
+    (* The scanner [init] is meant to be called first to read the
+       BOM. Then [scan] is called. *)
+
+    val init : token LexerLib.state -> Lexing.lexbuf -> token LexerLib.state
+    val scan : token LexerLib.state -> Lexing.lexbuf -> token LexerLib.state
+
+    (* Errors (specific to the generic lexer, not to the tokens) *)
+
+    type error
+
+    val error_to_string : error -> string
+
+    exception Error of error Region.reg
+
+    val format_error :
+      ?offsets:bool -> [`Byte | `Point] ->
+      error Region.reg -> file:bool -> string Region.reg
+  end
+
 (* The functorised interface
 
    Note that the module parameter [Token] is re-exported as a
    submodule in [S].
 *)
 
-module Make (Token: TOKEN) : LexerLib.S with module Token = Token
+module Make (Token : TOKEN) : S with module Token = Token

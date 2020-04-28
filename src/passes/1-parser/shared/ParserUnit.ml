@@ -37,7 +37,7 @@ module type Printer =
     val print_expr   : state -> expr -> unit
   end
 
-module Make (Lexer: LexerLib.S)
+module Make (Lexer: Lexer.S)
             (AST: sig type t type expr end)
             (Parser: ParserAPI.PARSER
                      with type ast   = AST.t
@@ -89,12 +89,12 @@ module Make (Lexer: LexerLib.S)
         ParserLog.mk_state ~offsets:SubIO.options#offsets
                            ~mode:SubIO.options#mode
                            ~buffer:output in
-      let close () = lexer_inst.Lexer.close () in
+      let close () = lexer_inst.LexerLib.close () in
       let expr =
         try
           if SubIO.options#mono then
-            let tokeniser = lexer_inst.Lexer.read ~log
-            and lexbuf = lexer_inst.Lexer.buffer
+            let tokeniser = lexer_inst.LexerLib.read ~log
+            and lexbuf = lexer_inst.LexerLib.buffer
             in Front.mono_expr tokeniser lexbuf
           else
             Front.incr_expr lexer_inst
@@ -124,12 +124,12 @@ module Make (Lexer: LexerLib.S)
         ParserLog.mk_state ~offsets:SubIO.options#offsets
                            ~mode:SubIO.options#mode
                            ~buffer:output in
-      let close () = lexer_inst.Lexer.close () in
+      let close () = lexer_inst.LexerLib.close () in
       let ast =
         try
           if SubIO.options#mono then
-            let tokeniser = lexer_inst.Lexer.read ~log
-            and lexbuf = lexer_inst.Lexer.buffer
+            let tokeniser = lexer_inst.LexerLib.read ~log
+            and lexbuf = lexer_inst.LexerLib.buffer
             in Front.mono_contract tokeniser lexbuf
           else
             Front.incr_contract lexer_inst
@@ -163,10 +163,18 @@ module Make (Lexer: LexerLib.S)
 
       | exception Lexer.Error err ->
           let file =
-            lexer_inst.Lexer.buffer.Lexing.lex_curr_p.Lexing.pos_fname in
-          let error =
-            Lexer.format_error ~offsets:SubIO.options#offsets
-                               SubIO.options#mode err ~file:(file <> "")
+            lexer_inst.LexerLib.buffer.Lexing.lex_curr_p.Lexing.pos_fname in
+          let error = Lexer.format_error
+                        ~offsets:SubIO.options#offsets
+                        SubIO.options#mode err ~file:(file <> "")
+          in Stdlib.Error error
+
+      | exception Lexer.Token.Error err ->
+          let file =
+            lexer_inst.LexerLib.buffer.Lexing.lex_curr_p.Lexing.pos_fname in
+          let error = Lexer.Token.format_error
+                        ~offsets:SubIO.options#offsets
+                        SubIO.options#mode err ~file:(file <> "")
           in Stdlib.Error error
 
       (* Incremental API of Menhir *)
@@ -181,7 +189,7 @@ module Make (Lexer: LexerLib.S)
 
       | exception Parser.Error ->
           let invalid, valid_opt =
-            match lexer_inst.Lexer.get_win () with
+            match lexer_inst.LexerLib.get_win () with
               LexerLib.Nil ->
                   assert false (* Safe: There is always at least EOF. *)
             | LexerLib.One invalid -> invalid, None
@@ -205,8 +213,8 @@ module Make (Lexer: LexerLib.S)
     (* Parsing a contract *)
 
     let gen_parser options input parser =
-      match Lexer.lexbuf_from_input input with
-        Stdlib.Error (Lexer.File_opening msg) ->
+      match LexerLib.lexbuf_from_input input with
+        Stdlib.Error (LexerLib.File_opening msg) ->
           Stdlib.Error (Region.wrap_ghost msg)
       | Ok (lexbuf, close) ->
          (* Preprocessing the input source *)
@@ -224,48 +232,53 @@ module Make (Lexer: LexerLib.S)
              (* Lexing and parsing the preprocessed input source *)
 
              let () = close () in
-             let input' = Lexer.String (Buffer.contents buffer) in
-             match Lexer.open_token_stream ?line:options#line
-                                           ?block:options#block
-                                           input'
+             let input' = LexerLib.String (Buffer.contents buffer) in
+             match LexerLib.open_token_stream
+                     ~init:Lexer.init
+                     ~scan:Lexer.scan
+                     ~token_to_region:Lexer.Token.to_region
+                     ~style:Lexer.Token.check_right_context
+                     ?line:options#line
+                     ?block:options#block
+                     input'
              with
                Ok instance ->
                  let open Lexing in
-                 instance.Lexer.buffer.lex_curr_p <-
-                   {instance.Lexer.buffer.lex_curr_p with pos_fname=file};
+                 instance.LexerLib.buffer.lex_curr_p <-
+                   {instance.LexerLib.buffer.lex_curr_p with pos_fname=file};
                  apply instance parser
-             | Stdlib.Error (Lexer.File_opening msg) ->
+             | Stdlib.Error (LexerLib.File_opening msg) ->
                  Stdlib.Error (Region.wrap_ghost msg)
 
     (* Parsing a contract in a file *)
 
     let contract_in_file (source : string) =
       let options = SubIO.make ~input:(Some source) ~expr:false
-      in gen_parser options (Lexer.File source) parse_contract
+      in gen_parser options (LexerLib.File source) parse_contract
 
     (* Parsing a contract in a string *)
 
     let contract_in_string (source : string) =
       let options = SubIO.make ~input:None ~expr:false in
-      gen_parser options (Lexer.String source) parse_contract
+      gen_parser options (LexerLib.String source) parse_contract
 
     (* Parsing a contract in stdin *)
 
     let contract_in_stdin () =
       let options = SubIO.make ~input:None ~expr:false in
-      gen_parser options (Lexer.Channel stdin) parse_contract
+      gen_parser options (LexerLib.Channel stdin) parse_contract
 
     (* Parsing an expression in a string *)
 
     let expr_in_string (source : string) =
       let options = SubIO.make ~input:None ~expr:true in
-      gen_parser options (Lexer.String source) parse_expr
+      gen_parser options (LexerLib.String source) parse_expr
 
     (* Parsing an expression in stdin *)
 
     let expr_in_stdin () =
       let options = SubIO.make ~input:None ~expr:true in
-      gen_parser options (Lexer.Channel stdin) parse_expr
+      gen_parser options (LexerLib.Channel stdin) parse_expr
 
     (* Preprocess only *)
 

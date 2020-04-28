@@ -43,7 +43,7 @@ module type Printer =
 
 (* Main functor to make the parser *)
 
-module Make (Lexer : LexerLib.S)
+module Make (Lexer : Lexer.S)
             (AST : sig type t type expr end)
             (Parser : ParserAPI.PARSER
                       with type ast   = AST.t

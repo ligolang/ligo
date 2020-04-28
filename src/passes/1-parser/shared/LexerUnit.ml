@@ -9,7 +9,7 @@ module type IO =
     val options : EvalOpt.options (* CLI options *)
   end
 
-module Make (IO: IO) (Lexer: LexerLib.S) =
+module Make (IO: IO) (Lexer: Lexer.S) =
   struct
     (* Error printing and exception tracing *)
 
@@ -39,11 +39,16 @@ module Make (IO: IO) (Lexer: LexerLib.S) =
         | Stdlib.Ok pp_buffer ->
            (* Running the lexer on the preprocessed input *)
 
-            let source = Lexer.String (Buffer.contents pp_buffer) in
-            match Lexer.open_token_stream ?line:IO.options#line
-                                          ?block:IO.options#block
-                                          source with
-              Ok Lexer.{read; buffer; close; _} ->
+            let source = LexerLib.String (Buffer.contents pp_buffer) in
+            match LexerLib.open_token_stream
+                    ?line:IO.options#line
+                    ?block:IO.options#block
+                    ~init:Lexer.init
+                    ~scan:Lexer.scan
+                    ~token_to_region:Lexer.Token.to_region
+                    ~style:Lexer.Token.check_right_context
+                    source with
+              Ok LexerLib.{read; buffer; close; _} ->
                 let close_all () = flush_all (); close () in
                 let rec read_tokens tokens =
                   match read ~log:(fun _ _ -> ()) buffer with
@@ -51,9 +56,7 @@ module Make (IO: IO) (Lexer: LexerLib.S) =
                       if   Lexer.Token.is_eof token
                       then Stdlib.Ok (List.rev tokens)
                       else read_tokens (token::tokens)
-(*                  | exception _ ->
-                              Printf.eprintf "Here\n%!"; exit 1
- *)                  | exception Lexer.Token.Error error ->
+                  | exception Lexer.Token.Error error ->
                       let file =
                         match IO.options#input with
                           None | Some "-" -> false
@@ -74,7 +77,7 @@ module Make (IO: IO) (Lexer: LexerLib.S) =
                       in Stdlib.Error msg in
                 let result = read_tokens []
                 in close_all (); result
-            | Stdlib.Error (Lexer.File_opening msg) ->
+            | Stdlib.Error (LexerLib.File_opening msg) ->
                 flush_all (); Stdlib.Error (Region.wrap_ghost msg) in
       match IO.options#input with
         None -> preproc stdin
@@ -115,7 +118,9 @@ module Make (IO: IO) (Lexer: LexerLib.S) =
                            IO.options#mode
                            ?block:IO.options#block
                            ?line:IO.options#line
-                           (Lexer.String preproc_str)
+                           ~token_to_region:Lexer.Token.to_region
+                           ~style:Lexer.Token.check_right_context
+                           (LexerLib.String preproc_str)
                            IO.options#cmd
       in match IO.options#input with
            None -> preproc stdin
