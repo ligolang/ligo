@@ -1,14 +1,14 @@
 open Types
 
 let rec pp_value : value -> string = function
-  | V_Ct (C_int i) -> Format.asprintf "%i : int" i
-  | V_Ct (C_nat n) -> Format.asprintf "%i : nat" n
+  | V_Ct (C_int i) -> Format.asprintf "%a : int" Z.pp_print i
+  | V_Ct (C_nat n) -> Format.asprintf "%a : nat" Z.pp_print n
   | V_Ct (C_string s) -> Format.asprintf "\"%s\" : string" s
   | V_Ct (C_unit) -> Format.asprintf "unit"
   | V_Ct (C_bool true) -> Format.asprintf "true"
   | V_Ct (C_bool false) -> Format.asprintf "false"
   | V_Ct (C_bytes b) -> Format.asprintf "0x%a : bytes" Hex.pp (Hex.of_bytes b)
-  | V_Ct (C_mutez i) -> Format.asprintf "%i : mutez" i 
+  | V_Ct (C_mutez i) -> Format.asprintf "%a : mutez" Z.pp_print i 
   | V_Ct (C_address s) -> Format.asprintf "\"%s\" : address" s
   | V_Ct _ -> Format.asprintf "PP, TODO"
   | V_Failure s -> Format.asprintf "\"%s\" : failure " s

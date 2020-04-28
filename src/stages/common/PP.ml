@@ -131,10 +131,10 @@ let literal ppf (l : literal) =
   | Literal_unit -> fprintf ppf "unit"
   | Literal_void -> fprintf ppf "void"
   | Literal_bool b -> fprintf ppf "%b" b
-  | Literal_int n -> fprintf ppf "%d" n
-  | Literal_nat n -> fprintf ppf "+%d" n
-  | Literal_timestamp n -> fprintf ppf "+%d" n
-  | Literal_mutez n -> fprintf ppf "%dmutez" n
+  | Literal_int z -> fprintf ppf "%a" Z.pp_print z
+  | Literal_nat z -> fprintf ppf "+%a" Z.pp_print z
+  | Literal_timestamp z -> fprintf ppf "+%a" Z.pp_print z
+  | Literal_mutez z -> fprintf ppf "%amutez" Z.pp_print z
   | Literal_string s -> fprintf ppf "%S" s
   | Literal_bytes b -> fprintf ppf "0x%a" Hex.pp (Hex.of_bytes b)
   | Literal_address s -> fprintf ppf "@%S" s

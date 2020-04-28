@@ -364,17 +364,17 @@ let rec compile_expression (t:Raw.expr) : expr result =
       compile_binop "MOD" c
   | EArith (Int n) -> (
       let (n , loc) = r_split n in
-      let n = Z.to_int @@ snd n in
+      let n = snd n in
       return @@ e_literal ~loc (Literal_int n)
     )
   | EArith (Nat n) -> (
       let (n , loc) = r_split n in
-      let n = Z.to_int @@ snd @@ n in
+      let n = snd @@ n in
       return @@ e_literal ~loc (Literal_nat n)
     )
   | EArith (Mutez n) -> (
     let (n , loc) = r_split n in
-    let n = Z.to_int @@ snd @@ n in
+    let n = snd @@ n in
     return @@ e_literal ~loc (Literal_mutez n)
   )
   | EArith (Neg e) -> compile_unop "NEG" e
@@ -818,7 +818,7 @@ and compile_single_instruction : Raw.instruction -> (_ -> expression result) res
       let%bind start = compile_expression fi.assign.value.expr in
       let%bind bound = compile_expression fi.bound in
       let%bind step = match fi.step with
-        | None -> ok @@ e_int 1 
+        | None -> ok @@ e_int_z Z.one
         | Some step -> compile_expression step in
       let%bind body = compile_block fi.block.value in
       let%bind body = body @@ None in

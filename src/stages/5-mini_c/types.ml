@@ -32,10 +32,10 @@ type inline = bool
 type value =
   | D_unit
   | D_bool of bool
-  | D_nat of int
-  | D_timestamp of int
-  | D_mutez of int
-  | D_int of int
+  | D_nat of Z.t
+  | D_timestamp of Z.t
+  | D_mutez of Z.t
+  | D_int of Z.t
   | D_string of string
   | D_bytes of bytes
   | D_pair of value * value
