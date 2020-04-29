@@ -1,4 +1,5 @@
 open Trace
+open Ast_typed.Misc
 module Core = Typesystem.Core
 
 module I = Ast_core
@@ -35,17 +36,17 @@ let rec type_expression_to_type_value : T.type_expression -> O.type_value = fun 
   | T_sum kvmap ->
      let () = failwith "fixme: don't use to_list, it drops the variant keys, rows have a differnt kind than argument lists for now!" in
      let tlist = List.map (fun ({ctor_type;_}:T.ctor_content) -> ctor_type) (T.CMap.to_list kvmap) in
-     P_constant (C_variant, List.map type_expression_to_type_value tlist)
+     p_constant C_variant (List.map type_expression_to_type_value tlist)
   | T_record kvmap ->
      let () = failwith "fixme: don't use to_list, it drops the record keys, rows have a differnt kind than argument lists for now!" in
      let tlist = List.map (fun ({field_type;_}:T.field_content) -> field_type) (T.LMap.to_list kvmap) in
-     P_constant (C_record, List.map type_expression_to_type_value tlist)
+     p_constant C_record (List.map type_expression_to_type_value tlist)
   | T_arrow {type1;type2} ->
-     P_constant (C_arrow, List.map type_expression_to_type_value [ type1 ; type2 ])
+     p_constant C_arrow (List.map type_expression_to_type_value [ type1 ; type2 ])
 
   | T_variable (type_name) -> P_variable type_name
   | T_constant (type_name) ->
-     let csttag = Core.(match type_name with
+     let csttag = T.(match type_name with
                         | TC_unit      -> C_unit
                         | TC_string    -> C_string
                         | TC_nat       -> C_nat
@@ -62,9 +63,9 @@ let rec type_expression_to_type_value : T.type_expression -> O.type_value = fun 
                         | TC_void      -> C_unit    (* TODO : replace with void *)
                   )
      in
-     P_constant (csttag, [])
+     p_constant csttag []
   | T_operator (type_operator) ->
-     let (csttag, args) = Core.(match type_operator with
+     let (csttag, args) = T.(match type_operator with
                                 | TC_option o                -> (C_option, [o])
                                 | TC_set s                   -> (C_set, [s])
                                 | TC_map { k ; v }           -> (C_map, [k;v])
@@ -75,30 +76,30 @@ let rec type_expression_to_type_value : T.type_expression -> O.type_value = fun 
                                 | TC_contract c              -> (C_contract, [c])
                           )
      in
-     P_constant (csttag, List.map type_expression_to_type_value args)
+     p_constant csttag (List.map type_expression_to_type_value args)
 
 let rec type_expression_to_type_value_copypasted : I.type_expression -> O.type_value = fun te ->
   match te.type_content with
   | T_sum kvmap ->
      let () = failwith "fixme: don't use to_list, it drops the variant keys, rows have a differnt kind than argument lists for now!" in
      let tlist = List.map (fun ({ctor_type;_}:I.ctor_content) -> ctor_type) (I.CMap.to_list kvmap) in
-     P_constant (C_variant, List.map type_expression_to_type_value_copypasted tlist)
+     p_constant C_variant (List.map type_expression_to_type_value_copypasted tlist)
   | T_record kvmap ->
      let () = failwith "fixme: don't use to_list, it drops the record keys, rows have a differnt kind than argument lists for now!" in
      let tlist = List.map (fun ({field_type;_}:I.field_content) -> field_type) (I.LMap.to_list kvmap) in
-     P_constant (C_record, List.map type_expression_to_type_value_copypasted tlist)
+     p_constant C_record (List.map type_expression_to_type_value_copypasted tlist)
   | T_arrow {type1;type2} ->
-     P_constant (C_arrow, List.map type_expression_to_type_value_copypasted [ type1 ; type2 ])
+     p_constant C_arrow (List.map type_expression_to_type_value_copypasted [ type1 ; type2 ])
   | T_variable type_name -> P_variable (type_name) (* eird stuff*)
   | T_constant (type_name) ->
-     let csttag = Core.(match type_name with
+     let csttag = T.(match type_name with
                         | TC_unit   -> C_unit
                         | TC_string -> C_string
                         | _        -> failwith "unknown type constructor")
      in
-     P_constant (csttag,[])
+     p_constant csttag []
   | T_operator (type_name) ->
-     let (csttag, args) = Core.(match type_name with
+     let (csttag, args) = T.(match type_name with
                                 | TC_option o            -> (C_option , [o])
                                 | TC_list l              -> (C_list   , [l])
                                 | TC_set  s              -> (C_set    , [s])
@@ -109,7 +110,7 @@ let rec type_expression_to_type_value_copypasted : I.type_expression -> O.type_v
                                 | TC_arrow ( arg , ret ) -> (C_arrow, [ arg ; ret ])
                           )
      in
-     P_constant (csttag, List.map type_expression_to_type_value_copypasted args)
+     p_constant csttag (List.map type_expression_to_type_value_copypasted args)
 
 let failwith_ : unit -> (constraints * O.type_variable) = fun () ->
   let type_name = Core.fresh_type_variable () in
@@ -118,12 +119,12 @@ let failwith_ : unit -> (constraints * O.type_variable) = fun () ->
 let variable : I.expression_variable -> T.type_expression -> (constraints * T.type_variable) = fun _name expr ->
   let pattern = type_expression_to_type_value expr in
   let type_name = Core.fresh_type_variable () in
-  [C_equation (P_variable (type_name) , pattern)] , type_name
+  [C_equation { aval = P_variable type_name ; bval = pattern }] , type_name
 
 let literal : T.type_expression -> (constraints * T.type_variable) = fun t ->
   let pattern = type_expression_to_type_value t in
   let type_name = Core.fresh_type_variable () in
-  [C_equation (P_variable (type_name) , pattern)] , type_name
+  [C_equation { aval = P_variable type_name ; bval = pattern }] , type_name
 
 (*
   let literal_bool : unit -> (constraints * O.type_variable) = fun () ->
@@ -139,9 +140,9 @@ let literal : T.type_expression -> (constraints * T.type_variable) = fun t ->
 
 let tuple : T.type_expression list -> (constraints * T.type_variable) = fun tys ->
   let patterns = List.map type_expression_to_type_value tys in
-  let pattern = O.(P_constant (C_record , patterns)) in
+  let pattern = p_constant C_record patterns in
   let type_name = Core.fresh_type_variable () in
-  [C_equation (P_variable (type_name) , pattern)] , type_name
+  [C_equation { aval = P_variable type_name ; bval = pattern}] , type_name
 
 (* let t_tuple         = ('label:int, 'v) … -> record ('label : 'v) … *)
 (* let t_constructor   = ('label:string, 'v) -> variant ('label : 'v) *)
@@ -170,8 +171,9 @@ end
 let access_label ~(base : T.type_expression) ~(label : O.accessor) : (constraints * T.type_variable) =
   let base' = type_expression_to_type_value base in
   let expr_type = Core.fresh_type_variable () in
-  [O.C_access_label (base' , label , expr_type)] , expr_type
+  [T.C_access_label { c_access_label_tval = base' ; accessor = label ; c_access_label_tvar = expr_type }] , expr_type
 
+open Ast_typed.Misc
 let constructor
     : T.type_expression -> T.type_expression -> T.type_expression -> (constraints * T.type_variable)
   = fun t_arg c_arg sum ->
@@ -180,64 +182,64 @@ let constructor
   let sum = type_expression_to_type_value sum in
   let whole_expr = Core.fresh_type_variable () in
   [
-    C_equation (P_variable (whole_expr) , sum) ;
-    C_equation (t_arg , c_arg)
+    c_equation (P_variable whole_expr) sum ;
+    c_equation t_arg c_arg ;
   ] , whole_expr
 
 let record : T.field_content T.label_map -> (constraints * T.type_variable) = fun fields ->
   let record_type = type_expression_to_type_value (T.t_record fields ()) in
   let whole_expr = Core.fresh_type_variable () in
-  [C_equation (P_variable whole_expr , record_type)] , whole_expr
+  [c_equation (P_variable whole_expr) record_type] , whole_expr
 
 let collection : O.constant_tag -> T.type_expression list -> (constraints * T.type_variable) =
   fun ctor element_tys ->
-  let elttype = O.P_variable (Core.fresh_type_variable ()) in
+  let elttype = T.P_variable (Core.fresh_type_variable ()) in
   let aux elt =
     let elt' = type_expression_to_type_value elt
-    in O.C_equation (elttype , elt') in
+    in c_equation elttype elt' in
   let equations = List.map aux element_tys in
   let whole_expr = Core.fresh_type_variable () in
-  O.[
-      C_equation (P_variable whole_expr , O.P_constant (ctor , [elttype]))
+  [
+      c_equation (P_variable whole_expr) (p_constant ctor [elttype]) ;
   ] @ equations , whole_expr
 
-let list = collection O.C_list
-let set  = collection O.C_set
+let list = collection T.C_list
+let set  = collection T.C_set
 
 let map : (T.type_expression * T.type_expression) list -> (constraints * T.type_variable) =
   fun kv_tys ->
-  let k_type = O.P_variable (Core.fresh_type_variable ()) in
-  let v_type = O.P_variable (Core.fresh_type_variable ()) in
+  let k_type = T.P_variable (Core.fresh_type_variable ()) in
+  let v_type = T.P_variable (Core.fresh_type_variable ()) in
   let aux_k (k , _v) =
     let k' = type_expression_to_type_value k in
-    O.C_equation (k_type , k') in
+    c_equation k_type k' in
   let aux_v (_k , v) =
     let v' = type_expression_to_type_value v in
-    O.C_equation (v_type , v') in
+    c_equation v_type v' in
   let equations_k = List.map aux_k kv_tys in
   let equations_v = List.map aux_v kv_tys in
   let whole_expr = Core.fresh_type_variable () in
-  O.[
-      C_equation (P_variable whole_expr , O.P_constant (C_map , [k_type ; v_type]))
+  [
+      c_equation (P_variable whole_expr) (p_constant C_map [k_type ; v_type]) ;
   ] @ equations_k @ equations_v , whole_expr
 
 let big_map : (T.type_expression * T.type_expression) list -> (constraints * T.type_variable) =
   fun kv_tys ->
-  let k_type = O.P_variable (Core.fresh_type_variable ()) in
-  let v_type = O.P_variable (Core.fresh_type_variable ()) in
+  let k_type = T.P_variable (Core.fresh_type_variable ()) in
+  let v_type = T.P_variable (Core.fresh_type_variable ()) in
   let aux_k (k , _v) =
     let k' = type_expression_to_type_value k in
-    O.C_equation (k_type , k') in
+    c_equation k_type k' in
   let aux_v (_k , v) =
     let v' = type_expression_to_type_value v in
-    O.C_equation (v_type , v') in
+    c_equation v_type v' in
   let equations_k = List.map aux_k kv_tys in
   let equations_v = List.map aux_v kv_tys in
   let whole_expr = Core.fresh_type_variable () in
-  O.[
+  [
       (* TODO: this doesn't tag big_maps uniquely (i.e. if two
            big_map have the same type, they can be swapped. *)
-      C_equation (P_variable whole_expr , O.P_constant (C_big_map , [k_type ; v_type]))
+      c_equation (P_variable whole_expr) (p_constant C_big_map [k_type ; v_type]) ;
   ] @ equations_k @ equations_v , whole_expr
 
 let application : T.type_expression -> T.type_expression -> (constraints * T.type_variable) =
@@ -245,8 +247,8 @@ let application : T.type_expression -> T.type_expression -> (constraints * T.typ
   let whole_expr = Core.fresh_type_variable () in
   let f'   = type_expression_to_type_value f in
   let arg' = type_expression_to_type_value arg in
-  O.[
-      C_equation (f' , P_constant (C_arrow , [arg' ; P_variable whole_expr]))
+  [
+      c_equation f' (p_constant C_arrow [arg' ; P_variable whole_expr]) ;
   ] , whole_expr
 
 let look_up : T.type_expression -> T.type_expression -> (constraints * T.type_variable) =
@@ -255,9 +257,9 @@ let look_up : T.type_expression -> T.type_expression -> (constraints * T.type_va
   let ind' = type_expression_to_type_value ind in
   let whole_expr = Core.fresh_type_variable () in
   let v = Core.fresh_type_variable () in
-  O.[
-      C_equation (ds' , P_constant (C_map, [ind' ; P_variable v])) ;
-      C_equation (P_variable whole_expr , P_constant (C_option , [P_variable v]))
+  [
+      c_equation ds' (p_constant C_map [ind' ; P_variable v]) ;
+      c_equation (P_variable whole_expr) (p_constant C_option [P_variable v]) ;
   ] , whole_expr
 
 let sequence : T.type_expression -> T.type_expression -> (constraints * T.type_variable) =
@@ -265,9 +267,9 @@ let sequence : T.type_expression -> T.type_expression -> (constraints * T.type_v
   let a' = type_expression_to_type_value a in
   let b' = type_expression_to_type_value b in
   let whole_expr = Core.fresh_type_variable () in
-  O.[
-      C_equation (a' , P_constant (C_unit , [])) ;
-      C_equation (b' , P_variable whole_expr)
+  [
+      c_equation a' (p_constant C_unit []) ;
+      c_equation b' (P_variable whole_expr) ;
   ] , whole_expr
 
 let loop : T.type_expression -> T.type_expression -> (constraints * T.type_variable) =
@@ -275,10 +277,10 @@ let loop : T.type_expression -> T.type_expression -> (constraints * T.type_varia
   let expr' = type_expression_to_type_value expr in
   let body' = type_expression_to_type_value body in
   let whole_expr = Core.fresh_type_variable () in
-  O.[
-      C_equation (expr'                 , P_variable (Stage_common.Constant.t_bool)) ;
-      C_equation (body'                 , P_constant (C_unit , [])) ;
-      C_equation (P_variable whole_expr , P_constant (C_unit , []))
+  [
+      c_equation expr'                   (P_variable (Stage_common.Constant.t_bool)) ;
+      c_equation body'                   (p_constant C_unit []) ;
+      c_equation (P_variable whole_expr) (p_constant C_unit [])
   ] , whole_expr
 
 let let_in : T.type_expression -> T.type_expression option -> T.type_expression -> (constraints * T.type_variable) =
@@ -287,18 +289,18 @@ let let_in : T.type_expression -> T.type_expression option -> T.type_expression 
   let result'     = type_expression_to_type_value result in
   let rhs_tv_opt' = match rhs_tv_opt with
       None -> []
-    | Some annot -> O.[C_equation (rhs' , type_expression_to_type_value annot)] in
+    | Some annot -> [c_equation rhs' (type_expression_to_type_value annot)] in
   let whole_expr = Core.fresh_type_variable () in
-  O.[
-      C_equation (result' , P_variable whole_expr)
+  [
+      c_equation result' (P_variable whole_expr) ;
   ] @ rhs_tv_opt', whole_expr
 
 let recursive : T.type_expression -> (constraints * T.type_variable) =
   fun fun_type ->
   let fun_type = type_expression_to_type_value fun_type in
   let whole_expr = Core.fresh_type_variable () in
-  O.[
-      C_equation (fun_type, P_variable whole_expr)
+  [
+      c_equation fun_type (P_variable whole_expr) ;
   ], whole_expr
 
 let assign : T.type_expression -> T.type_expression -> (constraints * T.type_variable) =
@@ -306,9 +308,9 @@ let assign : T.type_expression -> T.type_expression -> (constraints * T.type_var
   let v' = type_expression_to_type_value v in
   let e' = type_expression_to_type_value e in
   let whole_expr = Core.fresh_type_variable () in
-  O.[
-      C_equation (v' , e') ;
-      C_equation (P_variable whole_expr , P_constant (C_unit , []))
+  [
+      c_equation v'  e' ;
+      c_equation (P_variable whole_expr) (p_constant C_unit []) ;
   ] , whole_expr
 
 let annotation : T.type_expression -> T.type_expression -> (constraints * T.type_variable) =
@@ -316,16 +318,16 @@ let annotation : T.type_expression -> T.type_expression -> (constraints * T.type
   let e' = type_expression_to_type_value e in
   let annot' = type_expression_to_type_value annot in
   let whole_expr = Core.fresh_type_variable () in
-  O.[
-      C_equation (e' , annot') ;
-      C_equation (e' , P_variable whole_expr)
+  [
+      c_equation e' annot' ;
+      c_equation e' (P_variable whole_expr) ;
   ] , whole_expr
 
 let matching : T.type_expression list -> (constraints * T.type_variable) =
   fun es ->
   let whole_expr = Core.fresh_type_variable () in
   let type_expressions = (List.map type_expression_to_type_value es) in
-  let cs = List.map (fun e -> O.C_equation (P_variable whole_expr , e)) type_expressions
+  let cs = List.map (fun e -> c_equation (P_variable whole_expr) e) type_expressions
   in cs, whole_expr
 
 let fresh_binder () =
@@ -342,15 +344,15 @@ let lambda
   let unification_body = Core.fresh_type_variable () in
   let arg'  = match arg with
       None -> []
-    | Some arg -> O.[C_equation (P_variable unification_arg , type_expression_to_type_value arg)] in
+    | Some arg -> [c_equation (P_variable unification_arg) (type_expression_to_type_value arg)] in
   let body'  = match body with
       None -> []
-    | Some body -> O.[C_equation (P_variable unification_body , type_expression_to_type_value body)]
-  in O.[
-      C_equation (type_expression_to_type_value fresh , P_variable unification_arg) ;
-      C_equation (P_variable whole_expr ,
-                  P_constant (C_arrow , [P_variable unification_arg ;
-                                         P_variable unification_body]))
+    | Some body -> [c_equation (P_variable unification_body) (type_expression_to_type_value body)]
+  in [
+      c_equation (type_expression_to_type_value fresh) (P_variable unification_arg) ;
+      c_equation (P_variable whole_expr)
+                 (p_constant C_arrow ([P_variable unification_arg ;
+                                       P_variable unification_body]))
      ] @ arg' @ body' , whole_expr
 
 (* This is pretty much a wrapper for an n-ary function. *)
@@ -358,7 +360,7 @@ let constant : O.type_value -> T.type_expression list -> (constraints * T.type_v
   fun f args ->
   let whole_expr = Core.fresh_type_variable () in
   let args'      = List.map type_expression_to_type_value args in
-  let args_tuple = O.P_constant (C_record , args') in
-  O.[
-      C_equation (f , P_constant (C_arrow , [args_tuple ; P_variable whole_expr]))
+  let args_tuple = p_constant C_record args' in
+  [
+      c_equation f (p_constant C_arrow ([args_tuple ; P_variable whole_expr]))
   ] , whole_expr

@@ -11,7 +11,7 @@ type ('key, 'value) map = ('key, 'value) t
 
 let create ~cmp = {tree = RB.empty; cmp}
 
-let empty = {tree = RB.empty; cmp=Pervasives.compare}
+let empty map = {tree = RB.empty; cmp=map.cmp}
 
 let is_empty map = RB.is_empty map.tree
 
@@ -19,15 +19,22 @@ let add key value map =
   let cmp (k1,_) (k2,_) = map.cmp k1 k2 in
   {map with tree = RB.add ~cmp RB.New (key, value) map.tree}
 
-exception Not_found
+let remove key map =
+  let cmp k1 (k2,_) = map.cmp k1 k2 in
+  {map with tree = RB.remove ~cmp key map.tree}
 
 let find key map =
   let cmp k1 (k2,_) = map.cmp k1 k2 in
   try snd (RB.find ~cmp key map.tree) with
-    RB.Not_found -> raise Not_found
+    Not_found -> raise Not_found
 
 let find_opt key map =
   try Some (find key map) with Not_found -> None
+
+let update key updater map =
+  match updater (find_opt key map) with
+  | None -> remove key map
+  | Some v -> add key v map
 
 let bindings map =
   RB.fold_dec (fun ~elt ~acc -> elt::acc) ~init:[] map.tree

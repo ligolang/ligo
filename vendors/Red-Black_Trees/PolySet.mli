@@ -19,7 +19,7 @@ type 'elt set = 'elt t
 
 val create : cmp:('elt -> 'elt -> int) -> 'elt t
 
-val empty : 'elt t
+val empty : 'elt t -> 'elt t
 
 (* Emptiness *)
 
@@ -37,8 +37,6 @@ val add : 'elt -> 'elt t -> 'elt t
    [set] such that [cmp y elt = true], where [cmp] is the comparison
    function of [set] (see [create]). If [elt] is not in [set], then
    the exception [Not_found] is raised. *)
-
-exception Not_found
 
 val find : 'elt -> 'elt t -> 'elt
 

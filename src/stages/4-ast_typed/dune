@@ -14,6 +14,7 @@
     ast_core ; Is that a good idea?
     stage_common
     adt_generator
+    UnionFind
   )
   (preprocess
     (pps ppx_let bisect_ppx --conditional)
