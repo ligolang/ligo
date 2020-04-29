@@ -2,7 +2,11 @@ ARG target
 FROM ocaml/opam2:${target}
 
 ARG ci_job_id
+ARG ci_commit_sha
+ARG commit_date
 ENV CI_JOB_ID=$ci_job_id
+ENV CI_COMMIT_SHA=$ci_commit_sha
+ENV COMMIT_DATE=$commit_date
 
 RUN opam switch 4.07 && eval $(opam env)
 
